@@ -1,0 +1,190 @@
+{
+    "schemaVersion": "1.0",
+    "solution": {
+        "name": "MinimalSolution",
+        "version": "0.1.0"
+    },
+    "settings": {
+        "standards": {
+            "cxx_standard": 20
+        },
+        "defaults": {
+            "library_type": "INTERFACE",
+            "executable_type": "CONSOLE"
+        },
+      "sources": {
+        "mode": "explicit"
+      }
+    },
+    "externals": {
+    "doctest": {
+      "description": "",
+      "skip": false,
+      "path": "externals/doctest"
+    },
+    "googletest": {
+      "description": "",
+      "skip": true,
+      "git": "https://github.com/google/googletest.git",
+      "tag": "v1.14.0"
+    },
+    "catch2": {
+      "description": "",
+      "skip": true,
+      "git": "https://github.com/catchorg/Catch2.git",
+      "tag": "v3.5.2"
+    },
+
+      "Qt6": {
+        "description": "Qt6 UI Framework",
+        "skip": false,
+        "system": true,
+        "package": "Qt6",
+        "components": [ "Core", "Widgets", "Gui", "OpenGL", "OpenGLWidgets" ],
+        "hints": [ "${QT_ROOT}" ]
+      },
+      "qt-ads": {
+        "description": "Advanced Docking System for Qt",
+        "skip": false,
+        "git": "https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System.git",
+        "tag": "4.3.1",
+        "components": [ "qtadvanceddocking" ]
+      },
+    
+    
+    "bass": {
+      "description": "BASS Audio Library for playback and FFT",
+      "skip": true,
+      "path": "externals/bass"
+    },
+    "glad": {
+      "description": "OpenGL Loader",
+      "skip": true,
+      "path": "externals/glad"
+    },
+    "glm": {
+      "description": "OpenGL Mathematics Library",
+      "skip": true,
+      "git": "https://github.com/g-truc/glm.git",
+      "tag": "1.0.1"
+    },
+    "projectm-eval": {
+      "description": "projectM Audio Visualizer Library",
+      "skip": true,
+      "git": "https://github.com/projectM-visualizer/projectm-eval.git",
+      "tag": "v1.0.0"
+    },
+    "lua54": {
+      "description": "Lua 5.4 Scripting Language",
+      "skip": true,
+      "path": "externals/lua54"
+    },
+    "sol2": {
+      "description": "C++ Library for Lua Bindings",
+      "skip": true,
+      "git": "https://github.com/ThePhD/sol2.git",
+      "tag": "v3.3.1"
+    },
+    "stb": {
+      "description": "Single-header libraries for graphics and image loading",
+      "skip": true,
+      "git": "https://github.com/nothings/stb.git",
+      "branch": "master",
+      "cmakeSupport": false
+    },
+    "onnxruntime": {
+      "description": "ONNX Runtime for Machine Learning Inference",
+      "skip": true,
+      "system": true,
+      "package": "onnxruntime"
+    }
+    
+  },
+    "libraries": [
+      {
+        "name": "BasicLogger",
+        "skip": false,
+        "version": "1.0.0",
+        "type": "INTERFACE",
+        "public_headers": "projects/libs/BasicLogger/include"
+      }
+    ],
+    "executables": [
+    ],
+    "apps": [
+      {
+        "name": "MyViz",
+        "description": "",
+        "skip": false,
+        "displayName": "MyViz",
+        "version": "0.1.0",
+
+        "core": {
+          "dependencies": [ "BasicLogger" ],
+          "externals": [ "Qt6" ]
+        },
+
+        "runner": {
+          "type": "GUI",
+          "dependencies": [ "BasicLogger" ],
+          "externals": [ "Qt6" ]
+        },
+
+        "pch": {
+          "enabled": true,
+          "header": "pch.h"
+        },
+
+        "tests": {
+          "skip": false,
+          "framework": "doctest",
+          "targets": [
+            {
+              "name": "x_UnitTests",
+              "description": "",
+              "skip": true,
+              "type": "unit",
+              "path": "tests/unit/x_UnitTests",
+              "timeout": 30,
+              "labels": [ "unit", "core", "fast" ],
+              "externals": []
+            },
+            {
+              "name": "x_integralTest",
+              "description": "",
+              "skip": true,
+              "type": "integration",
+              "path": "tests/integration/x_integralTest",
+              "externals": []
+            },
+            {
+              "name": "x_performanceTest",
+              "description": "",
+              "skip": true,
+              "type": "performance",
+              "path": "tests/performance/x_performanceTest",
+              "externals": []
+            },
+            {
+              "name": "x_smokeTest",
+              "description": "",
+              "skip": true,
+              "type": "smoke",
+              "path": "tests/smoke/x_smokeTest",
+              "externals": []
+            },
+            {
+              "name": "x_systemTest",
+              "description": "",
+              "skip": true,
+              "type": "system",
+              "path": "tests/system/x_systemTest",
+              "externals": []
+            }
+          ]
+        },
+        "platforms": [ "windows", "linux", "macos" ]
+      }
+  ],
+    "tests": []
+}

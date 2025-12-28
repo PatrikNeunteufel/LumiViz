@@ -1,0 +1,134 @@
+# C/C++ clang-tidy Configuration
+# Version: 0.1.0
+# Blueprint: Documentations/Blueprints/ClangTidy_Blueprint_v0_1_0.md
+# Profile: Dev-Gentle
+# Date: 2025-12-05
+# ========================================================================================
+#
+# This setup supports multiple workflows (Dev, CI, API, Engine, ...).
+# Default profile: "Dev-Gentle" for daily development.
+#
+# Stricter modes via CLI flags:
+#   Dev-Strict:    -warnings-as-errors=clang-analyzer-*,bugprone-*
+#   API-Gate:      -checks=* -warnings-as-errors=* -header-filter=.*\.(hpp|h)$
+#   Engine/Perf:   -checks=clang-analyzer-*,bugprone-*,performance*,-modernize-*
+#   Modernize:     -checks=modernize-* -fix -fix-errors -export-fixes=fixes.yaml
+#
+# ========================================================================================
+
+# ========================================================================================
+# Default Checks (Dev-Gentle)
+# ========================================================================================
+Checks: >
+  -clang-diagnostic-*,
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  readability-*,
+  modernize-*,
+  cppcoreguidelines-avoid-magic-numbers,
+  -clang-analyzer-osx-*,
+  -readability-magic-numbers,
+  -readability-identifier-naming,
+  -readability-else-after-return,
+  -readability-function-cognitive-complexity,
+  -readability-implicit-bool-conversion,
+  -readability-convert-member-functions-to-static,
+  -modernize-use-trailing-return-type,
+  -modernize-use-auto,
+  -modernize-pass-by-value,
+  -modernize-use-nodiscard,
+  -modernize-use-override,
+  -modernize-use-using,
+  -modernize-use-emplace,
+  -modernize-use-default-member-init,
+  -modernize-avoid-c-arrays,
+  -modernize-return-braced-init-list,
+  -modernize-redundant-void-arg,
+  -modernize-use-noexcept,
+  -modernize-use-transparent-functors,
+  -modernize-concat-nested-namespaces,
+  -modernize-unary-static-assert,
+  -modernize-use-equals-default,
+  -modernize-use-equals-delete,
+  -modernize-use-if-null,
+  -modernize-use-bool-literals,
+  -modernize-use-std-numbers,
+  -modernize-raw-string-literal,
+  -modernize-avoid-bind,
+  -modernize-loop-convert
+
+# ========================================================================================
+# Global Options
+# ========================================================================================
+
+# Warnings remain warnings (use CLI flags for stricter mode)
+WarningsAsErrors: ''
+
+# Header filter: Exclude third-party headers
+HeaderFilterRegex: '^(?!.*[/\\](external|third_party|deps)[/\\]).*'
+
+# Analyze temporary destructors
+AnalyzeTemporaryDtors: true
+
+# Format integration (use .clang-format)
+FormatStyle: file
+
+# ========================================================================================
+# Check-specific Configuration
+# ========================================================================================
+CheckOptions:
+  # -------------------------------------------------------------------------------------
+  # Magic Numbers: Pragmatic set of allowed values
+  # -------------------------------------------------------------------------------------
+  - { key: cppcoreguidelines-avoid-magic-numbers.IgnoredIntegerValues,
+      value: '-1;0;1;2' }
+  - { key: cppcoreguidelines-avoid-magic-numbers.IgnorePowersOf2IntegerValues,
+      value: '1' }
+
+  # -------------------------------------------------------------------------------------
+  # Performance: Value types that may be passed by value
+  # -------------------------------------------------------------------------------------
+  - { key: performance-unnecessary-value-param.AllowedTypes,
+      value: 'std::string_view;std::span;std::optional' }
+
+  # -------------------------------------------------------------------------------------
+  # Naming Conventions (readability-identifier-naming)
+  # -------------------------------------------------------------------------------------
+  - { key: readability-identifier-naming.NamespaceCase,           value: lower_case }
+  - { key: readability-identifier-naming.ClassCase,               value: CamelCase }
+  - { key: readability-identifier-naming.StructCase,              value: CamelCase }
+  - { key: readability-identifier-naming.EnumCase,                value: CamelCase }
+  - { key: readability-identifier-naming.EnumConstantCase,        value: CamelCase }
+  - { key: readability-identifier-naming.TypedefCase,             value: CamelCase }
+  - { key: readability-identifier-naming.TypeAliasCase,           value: CamelCase }
+  - { key: readability-identifier-naming.FunctionCase,            value: camelBack }
+  - { key: readability-identifier-naming.ParameterCase,           value: camelBack }
+  - { key: readability-identifier-naming.VariableCase,            value: camelBack }
+  - { key: readability-identifier-naming.MemberCase,              value: camelBack }
+  - { key: readability-identifier-naming.GlobalConstantCase,      value: UPPER_CASE }
+  - { key: readability-identifier-naming.MacroDefinitionCase,     value: UPPER_CASE }
+  - { key: readability-identifier-naming.PrivateMemberPrefix,     value: 'm_' }
+  - { key: readability-identifier-naming.ProtectedMemberPrefix,   value: 'm_' }
+  - { key: readability-identifier-naming.IgnoreMainLikeFunctions, value: '1' }
+
+  # Allow g_ and s_ prefixes for globals/statics
+  - { key: readability-identifier-naming.IgnoredRegexp,
+      value: '^(g|s)_[A-Za-z0-9_]*$' }
+
+  # -------------------------------------------------------------------------------------
+  # modernize-use-nullptr: NULL macros
+  # -------------------------------------------------------------------------------------
+  - { key: modernize-use-nullptr.NullMacros, value: 'NULL' }
+
+  # -------------------------------------------------------------------------------------
+  # HICPP: Allow sole default destructor
+  # -------------------------------------------------------------------------------------
+  - { key: hicpp-special-member-functions.AllowSoleDefaultDtor, value: '1' }
+
+# ========================================================================================
+# Notes:
+# - Powers-of-two are automatically tolerated (bitmasks, alignment)
+# - Domain values (44100 Hz, 2.2 gamma) should be named as constexpr/enum
+# - Third-party code: Exclude headers via regex, sources via CMake target properties
+# ========================================================================================

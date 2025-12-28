@@ -1,0 +1,301 @@
+# cmake/project/LibraryCreate.cmake
+# ==================================
+# Creates library targets from prepared Context
+#
+# Version: 1.0.0
+# Date:    2025-12-26
+# Status:  Release
+# Author:  CMake Architecture Team
+#
+# Dependencies:
+#   - cmake/core/Context.cmake
+#   - cmake/core/Errors.cmake
+#   - cmake/core/Debug.cmake
+#   - cmake/core/OutputDirs.cmake
+#   - cmake/core/Warnings.cmake
+#   - cmake/core/CompilerOptions.cmake
+#
+# Provides:
+#   - _create_library_target(CTX)
+#
+# Used by:
+#   - Libraries.cmake
+
+include_guard(GLOBAL)
+
+# ============================================================================
+# _create_library_target - Creates CMake library from Context
+# ============================================================================
+#[[
+    _create_library_target(CTX)
+    
+    Creates the CMake library target from a prepared Context.
+    Handles STATIC/SHARED/INTERFACE distinction, sources, dependencies,
+    externals, and applies standard modules (Warnings, CompilerOptions, OutputDirs).
+    
+    Parameters:
+        CTX - Mandatory: Context prefix (e.g. LIB_0, LIB_1)
+    
+    Expected Context Keys:
+        NAME, PATH, TYPE, VERSION, PUBLIC_HEADERS,
+        PCH_ENABLED, PCH_HEADER, PCH_PATH,
+        DEPENDENCIES, EXTERNALS, EXTERNAL_OPTIONS
+    
+    Example:
+        ctx_create(LIB_0)
+        _collect_library("${_lib_json}" LIB_0)
+        _create_library_target(LIB_0)
+]]
+function(_create_library_target CTX)
+    
+    # --------------------------------------------------------------------------
+    # Read Context Data
+    # --------------------------------------------------------------------------
+    
+    ctx_get(${CTX} NAME _name)
+    ctx_get(${CTX} PATH _path)
+    ctx_get(${CTX} TYPE _type)
+    ctx_get(${CTX} VERSION _version)
+    ctx_get(${CTX} PUBLIC_HEADERS _public_headers)
+    ctx_get(${CTX} PCH_ENABLED _pch_enabled)
+    ctx_get(${CTX} PCH_HEADER _pch_header)
+    ctx_get(${CTX} PCH_PATH _pch_custom_path)
+    ctx_get(${CTX} DEPENDENCIES _dependencies)
+    ctx_get(${CTX} EXTERNALS _externals)
+    ctx_get(${CTX} EXTERNAL_OPTIONS _external_options)
+    
+    # --------------------------------------------------------------------------
+    # Handle INTERFACE Libraries (Header-Only)
+    # --------------------------------------------------------------------------
+    
+    if(_type STREQUAL "INTERFACE")
+        # INTERFACE libraries have no sources
+        add_library(${_name} INTERFACE)
+        
+        dbg(${DBG_RARE} "    add_library(${_name} INTERFACE)" ID LIBRARIES)
+        
+        # Set public include directories
+        if(NOT "${_public_headers}" STREQUAL "")
+            target_include_directories(${_name} INTERFACE
+                "${CMAKE_SOURCE_DIR}/${_public_headers}"
+            )
+            dbg(${DBG_RARE} "    Include: ${_public_headers}" ID LIBRARIES)
+            # Nach Zeile 76 in LibraryCreate.cmake:
+            dbg(${DBG_RARE} "  INTERFACE include: ${CMAKE_SOURCE_DIR}/${_public_headers}" ID LIBRARIES)
+        endif()
+        
+        # Link dependencies (INTERFACE only)
+        foreach(_dep IN LISTS _dependencies)
+            if(TARGET ${_dep})
+                target_link_libraries(${_name} INTERFACE ${_dep})
+                dbg(${DBG_RARE} "    Link: ${_dep} (internal)" ID LIBRARIES)
+            else()
+                cmake_fatal("E101" "Dependency '${_dep}' for '${_name}' does not exist")
+            endif()
+        endforeach()
+        
+        # External dependencies
+        foreach(_ext IN LISTS _externals)
+            get_property(_externals_json GLOBAL PROPERTY SOLUTION_EXTERNALS_JSON)
+            _json_has_key("${_externals_json}" "${_ext}" _ext_defined)
+            
+            if(NOT _ext_defined)
+                cmake_fatal("E010" "External '${_ext}' not defined in externals block")
+            endif()
+            
+            if(TARGET ${_ext})
+                target_link_libraries(${_name} INTERFACE ${_ext})
+                dbg(${DBG_RARE} "    Link: ${_ext} (external)" ID LIBRARIES)
+            else()
+                dbg(${DBG_RARE} "    External pending: ${_ext}" ID LIBRARIES)
+            endif()
+        endforeach()
+        
+        # Version as target property
+        if(NOT "${_version}" STREQUAL "")
+            set_target_properties(${_name} PROPERTIES
+                VERSION "${_version}"
+            )
+        endif()
+        
+        return()
+    endif()
+    
+    # --------------------------------------------------------------------------
+    # Validate Source Directory (for STATIC/SHARED)
+    # --------------------------------------------------------------------------
+    
+    set(_src_dir "${CMAKE_SOURCE_DIR}/${_path}")
+    
+    if(NOT EXISTS "${_src_dir}")
+        cmake_fatal("E001" "Library '${_name}': Source path does not exist: ${_path}")
+    endif()
+    
+    # --------------------------------------------------------------------------
+    # Collect Sources (via SourceCollect.cmake)
+    # --------------------------------------------------------------------------
+    
+    # Mode is determined by SOLUTION_SOURCE_MODE (explicit/glob/auto)
+    collect_sources(
+        ${_name}
+        "${_src_dir}"
+        _sources
+        _headers
+        _extras
+        _modules
+        _includes
+    )
+    
+    if(NOT _sources)
+        cmake_warn("W101" "Library '${_name}': No source files found in ${_path}")
+    endif()
+    
+    # --------------------------------------------------------------------------
+    # Create Library Target
+    # --------------------------------------------------------------------------
+    
+    add_library(${_name} ${_type} ${_sources} ${_headers} ${_extras} ${_modules})
+    
+    dbg(${DBG_RARE} "    add_library(${_name} ${_type})" ID LIBRARIES)
+    dbg(${DBG_RARE} "    Sources: ${_sources}" ID LIBRARIES)
+    
+    # --------------------------------------------------------------------------
+    # Include Directories
+    # --------------------------------------------------------------------------
+    
+    # Private: source directory
+    target_include_directories(${_name} PRIVATE "${_src_dir}")
+    
+    # Additional includes from Source.cmake
+    foreach(_inc IN LISTS _includes)
+        if(IS_ABSOLUTE "${_inc}")
+            target_include_directories(${_name} PRIVATE "${_inc}")
+        else()
+            target_include_directories(${_name} PRIVATE "${_src_dir}/${_inc}")
+        endif()
+    endforeach()
+    
+    # Public: public_headers if defined
+    if(NOT "${_public_headers}" STREQUAL "")
+        target_include_directories(${_name} PUBLIC
+            "${CMAKE_SOURCE_DIR}/${_public_headers}"
+        )
+        dbg(${DBG_RARE} "    Public Include: ${_public_headers}" ID LIBRARIES)
+    endif()
+    
+    # Additionally: If there is a pch/ subdirectory
+    if(EXISTS "${_src_dir}/pch")
+        target_include_directories(${_name} PRIVATE "${_src_dir}/pch")
+    endif()
+    
+    # --------------------------------------------------------------------------
+    # Precompiled Headers
+    # --------------------------------------------------------------------------
+    
+    if(_pch_enabled)
+        set(_pch_found_path "")
+        
+        # If custom path specified, use it (relative to CMAKE_SOURCE_DIR/projects/)
+        if(NOT "${_pch_custom_path}" STREQUAL "")
+            set(_custom_full_path "${CMAKE_SOURCE_DIR}/projects/${_pch_custom_path}/${_pch_header}")
+            if(EXISTS "${_custom_full_path}")
+                set(_pch_found_path "${_custom_full_path}")
+            endif()
+        else()
+            # Search priority: 1. pch/, 2. src/, 3. root
+            if(EXISTS "${_src_dir}/pch/${_pch_header}")
+                set(_pch_found_path "${_src_dir}/pch/${_pch_header}")
+            elseif(EXISTS "${_src_dir}/${_pch_header}")
+                set(_pch_found_path "${_src_dir}/${_pch_header}")
+            elseif(EXISTS "${CMAKE_SOURCE_DIR}/${_path}/${_pch_header}")
+                set(_pch_found_path "${CMAKE_SOURCE_DIR}/${_path}/${_pch_header}")
+            endif()
+        endif()
+        
+        if(_pch_found_path)
+            target_precompile_headers(${_name} PRIVATE "${_pch_found_path}")
+            dbg(${DBG_RARE} "    PCH: ${_pch_found_path}" ID LIBRARIES)
+        else()
+            cmake_warn("W101" "Library '${_name}': PCH enabled but '${_pch_header}' not found in pch/, src/, or root")
+        endif()
+    endif()
+    
+    # --------------------------------------------------------------------------
+    # Internal Dependencies (other Libraries)
+    # --------------------------------------------------------------------------
+    
+    foreach(_dep IN LISTS _dependencies)
+        if(TARGET ${_dep})
+            target_link_libraries(${_name} PUBLIC ${_dep})
+            dbg(${DBG_RARE} "    Link: ${_dep} (internal)" ID LIBRARIES)
+        else()
+            cmake_fatal("E101" "Dependency '${_dep}' for '${_name}' does not exist")
+        endif()
+    endforeach()
+    
+    # --------------------------------------------------------------------------
+    # External Dependencies (via Orchestrator)
+    # --------------------------------------------------------------------------
+    
+    foreach(_ext IN LISTS _externals)
+        # Check if external is defined in central block
+        get_property(_externals_json GLOBAL PROPERTY SOLUTION_EXTERNALS_JSON)
+        _json_has_key("${_externals_json}" "${_ext}" _ext_defined)
+        
+        if(NOT _ext_defined)
+            cmake_fatal("E010" "External '${_ext}' not defined in externals block")
+        endif()
+        
+        # Get options for this external from the target's external_options
+        set(_ext_opts "{}")
+        if(NOT "${_external_options}" STREQUAL "")
+            _json_has_key("${_external_options}" "${_ext}" _has_ext_opts)
+            if(_has_ext_opts)
+                _json_get_object("${_external_options}" "${_ext}" _ext_opts)
+            endif()
+        endif()
+        
+        # Apply external via Orchestrator
+        apply_external_to_target("${_name}" "${_ext}" "${_ext_opts}")
+        
+        dbg(${DBG_RARE} "    External: ${_ext} applied" ID LIBRARIES)
+    endforeach()
+    
+    # --------------------------------------------------------------------------
+    # Apply Standard Modules
+    # --------------------------------------------------------------------------
+    
+    # Warnings (from Warnings.cmake)
+    apply_warnings(${_name})
+    
+    # Compiler options (from CompilerOptions.cmake)
+    apply_compiler_options(${_name})
+    
+    # Output directories (from OutputDirs.cmake)
+    setup_output_dirs(${_name})
+    
+    # --------------------------------------------------------------------------
+    # Version as Target Property
+    # --------------------------------------------------------------------------
+    
+    if(NOT "${_version}" STREQUAL "")
+        set_target_properties(${_name} PROPERTIES
+            VERSION "${_version}"
+        )
+    endif()
+    
+    # --------------------------------------------------------------------------
+    # SHARED Library: Set SOVERSION
+    # --------------------------------------------------------------------------
+    
+    if(_type STREQUAL "SHARED" AND NOT "${_version}" STREQUAL "")
+        # Extract major version for SOVERSION
+        string(REGEX MATCH "^([0-9]+)" _major_version "${_version}")
+        if(_major_version)
+            set_target_properties(${_name} PROPERTIES
+                SOVERSION "${_major_version}"
+            )
+        endif()
+    endif()
+    
+endfunction()
