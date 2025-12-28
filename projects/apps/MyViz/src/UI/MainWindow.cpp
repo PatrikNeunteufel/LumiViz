@@ -2,45 +2,32 @@
  ****************************************************************************************
  * @file   MainWindow.cpp
  * @brief  Main Application Window Implementation - Qt6 Tutorial
- *         Demonstrates basic QMainWindow setup without menu
+ *         Contains VisualizerWidget as central widget
  *
  * @author Patrik Neunteufel
  * @date   December 2025
  ****************************************************************************************
  */
 
- // =============================================================================
- // Includes
- // =============================================================================
+// =============================================================================
+// Includes
+// =============================================================================
 
- // Precompiled Header (must be first if PCH is enabled)
 #include "pch.h"
-
-// Corresponding header (always include your own header first after PCH)
 #include "UI/MainWindow.hpp"
+#include "UI/widget/VisualizerWidget.hpp"
 
-// Qt includes (already in PCH, but shown for tutorial clarity)
-#include <QWidget>
+// BasicLogger
+#include <BasicLogger.h>
 
 // =============================================================================
 // Construction / Destruction
 // =============================================================================
 
 MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(parent)  // Initialize base class with parent
+    : QMainWindow(parent)
 {
-    // -------------------------------------------------------------------------
-    // Qt6 Tutorial: Constructor Initialization
-    // -------------------------------------------------------------------------
-    // In Qt, the constructor typically:
-    // 1. Initializes the base class with the parent
-    // 2. Calls a setup method for UI configuration
-    //
-    // We separate UI setup from construction because:
-    // - It keeps the constructor clean
-    // - It allows for potential re-initialization
-    // - It makes the code easier to read and maintain
-
+    BasicLogger::logDebug("MainWindow constructor");
     setupUi();
 }
 
@@ -49,15 +36,43 @@ MainWindow::~MainWindow()
     // -------------------------------------------------------------------------
     // Qt6 Tutorial: Destructor
     // -------------------------------------------------------------------------
-    // Qt's parent-child system handles memory management:
-    // - All child widgets are automatically deleted when parent is deleted
-    // - We don't need to manually delete widgets created with 'this' as parent
+    // Qt's parent-child system handles memory management.
+    // VisualizerWidget is owned by MainWindow and will be deleted automatically.
     //
-    // The destructor is defaulted here (= default would also work).
-    // We leave it empty to show where cleanup code would go if needed.
+    // We don't need to delete m_pVisualizer - Qt does it for us!
 
-    // Note: If we had non-Qt resources (file handles, custom allocations),
-    // we would clean them up here.
+    BasicLogger::logDebug("MainWindow destructor");
+}
+
+// =============================================================================
+// Public Interface
+// =============================================================================
+
+VisualizerWidget* MainWindow::visualizer() const noexcept
+{
+    return m_pVisualizer;
+}
+
+void MainWindow::requestRender()
+{
+    // -------------------------------------------------------------------------
+    // Qt6 Tutorial: Triggering Repaints
+    // -------------------------------------------------------------------------
+    // update() schedules a paint event for the widget.
+    //
+    // Key points:
+    //   - Non-blocking: Returns immediately
+    //   - Coalesced: Multiple update() calls become one paint event
+    //   - Efficient: Only repaints when event loop processes it
+    //
+    // For VSync rendering:
+    // When the event loop processes the paint event, paintGL() is called,
+    // and then swapBuffers() waits for the vertical blank.
+
+    if (m_pVisualizer != nullptr)
+    {
+        m_pVisualizer->update();
+    }
 }
 
 // =============================================================================
@@ -66,70 +81,63 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupUi()
 {
+    BasicLogger::logDebug("MainWindow::setupUi()");
+
     // -------------------------------------------------------------------------
-    // Qt6 Tutorial: Window Configuration
+    // Window Configuration
     // -------------------------------------------------------------------------
 
-    // --- Window Title ---
-    // setWindowTitle() sets the text shown in the title bar.
-    // This is the first thing users see, so make it descriptive.
     setWindowTitle(QStringLiteral("MyViz - Audio Visualizer"));
-
-    // --- Window Size ---
-    // resize() sets the initial size of the window in pixels.
-    // Users can still resize the window unless we set fixed size.
-    //
-    // Common resolutions:
-    //   - 1280x720  (HD)
-    //   - 1920x1080 (Full HD)
-    //   - 800x600   (Small window)
     resize(1280, 720);
-
-    // --- Minimum Size (Optional) ---
-    // setMinimumSize() prevents the window from being resized too small.
-    // This ensures UI elements remain visible and usable.
     setMinimumSize(800, 600);
 
+    BasicLogger::logDebug("  Window size: 1280x720 (min: 800x600)");
+
     // -------------------------------------------------------------------------
-    // Qt6 Tutorial: Central Widget
+    // Qt6 Tutorial: VisualizerWidget as Central Widget
     // -------------------------------------------------------------------------
-    // QMainWindow REQUIRES a central widget. The central widget is the main
-    // content area of the window (see diagram in MainWindow.hpp).
+    // Instead of an empty QWidget, we now use our OpenGL widget.
     //
-    // Here we create an empty QWidget as placeholder. Later, this will be
-    // replaced with our visualization widget.
+    // The VisualizerWidget:
+    //   - Provides hardware-accelerated rendering
+    //   - Handles VSync automatically (if enabled in QSurfaceFormat)
+    //   - Can receive audio data for visualization (TODO)
     //
-    // IMPORTANT: The 'new' without 'delete' is intentional!
-    // Qt's parent-child system takes ownership. When MainWindow is deleted,
-    // it automatically deletes all its children, including this widget.
+    // 'this' makes MainWindow the parent, so:
+    //   - Qt manages memory (auto-delete on MainWindow destruction)
+    //   - VisualizerWidget inherits some properties
+    //   - Proper widget hierarchy for event propagation
 
-    auto* pCentralWidget = new QWidget(this);  // 'this' = MainWindow is parent
-    setCentralWidget(pCentralWidget);
+    m_pVisualizer = new VisualizerWidget(this);
+    setCentralWidget(m_pVisualizer);
+
+    BasicLogger::logDebug("  VisualizerWidget created and set as central widget");
 
     // -------------------------------------------------------------------------
-    // Qt6 Tutorial: No Menu Bar
+    // Qt6 Tutorial: Focus Policy
     // -------------------------------------------------------------------------
-    // By default, QMainWindow has no menu bar until you call menuBar().
-    // We explicitly set it to nullptr to ensure no menu bar appears.
-    // This is for clarity - in a real app, you'd likely have a menu.
+    // Set focus policy so the visualizer can receive keyboard events.
+    // StrongFocus: Can receive focus via Tab and mouse click.
+
+    m_pVisualizer->setFocusPolicy(Qt::StrongFocus);
+
+    // -------------------------------------------------------------------------
+    // Future: Menu Bar
+    // -------------------------------------------------------------------------
+    // QMenuBar* pMenuBar = menuBar();
+    // QMenu* pFileMenu = pMenuBar->addMenu("&File");
+    // pFileMenu->addAction("&Open...", this, &MainWindow::onOpenFile);
+    // pFileMenu->addSeparator();
+    // pFileMenu->addAction("E&xit", this, &QWidget::close, QKeySequence::Quit);
     //
-    // To add a menu later:
-    //   QMenuBar* pMenuBar = menuBar();  // Creates if doesn't exist
-    //   QMenu* pFileMenu = pMenuBar->addMenu("&File");
-    //   pFileMenu->addAction("&Exit", this, &QWidget::close);
-
-    // Note: setMenuBar(nullptr) is optional here since we're not creating one.
-    // Shown for tutorial purposes to make the intention explicit.
+    // QMenu* pViewMenu = pMenuBar->addMenu("&View");
+    // pViewMenu->addAction("&Fullscreen", this, &MainWindow::toggleFullscreen, Qt::Key_F11);
 
     // -------------------------------------------------------------------------
-    // Qt6 Tutorial: Background Color (Optional)
+    // Future: Status Bar
     // -------------------------------------------------------------------------
-    // We can set a background color using stylesheets.
-    // This makes it clear the window is working, even with no content.
-    //
-    // Qt Stylesheets use CSS-like syntax:
-    //   background-color: #1a1a2e;  <- Dark blue-gray (good for visualizers)
+    // statusBar()->showMessage("Ready");
+    // // Later: Show FPS, audio info, etc.
 
-    pCentralWidget->setStyleSheet(
-        QStringLiteral("background-color: #1a1a2e;"));
+    BasicLogger::logDebug("  UI setup complete");
 }

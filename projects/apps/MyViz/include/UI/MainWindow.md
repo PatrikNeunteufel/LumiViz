@@ -1,13 +1,13 @@
-﻿# MainWindow — Hauptfenster der Anwendung
+# MainWindow — Hauptfenster der Anwendung
 
-> **Version:** 1.0.0  
+> **Version:** 1.1.0  
 > **Datum:** 2025-12-28  
 > **Typ:** CppModuleDoc  
 > **Status:** In Entwicklung  
 > **Modul:** MyViz::UI::MainWindow  
 > **Dateien:** MainWindow.hpp, MainWindow.cpp  
 > **Namespace:** (global)  
-> **Abhängigkeiten:** Qt6::Widgets (QMainWindow, QWidget)  
+> **Abhängigkeiten:** Qt6::Widgets, VisualizerWidget  
 > **Zielgruppe:** Entwickler  
 > **Sprache:** Deutsch  
 
@@ -18,9 +18,9 @@
 1. [Übersicht](#1-übersicht)
 2. [Abhängigkeiten](#2-abhängigkeiten)
 3. [API](#3-api)
-4. [Verwendung](#4-verwendung)
-5. [Thread-Sicherheit](#5-thread-sicherheit)
-6. [Fehlerbehandlung](#6-fehlerbehandlung)
+4. [Architektur](#4-architektur)
+5. [Verwendung](#5-verwendung)
+6. [Thread-Sicherheit](#6-thread-sicherheit)
 7. [Qt6-Konzepte](#7-qt6-konzepte)
 8. [Changelog](#8-changelog)
 
@@ -30,19 +30,21 @@
 
 ### 1.1 Zweck
 
-MainWindow ist das Hauptfenster der MyViz-Anwendung. Es erbt von `QMainWindow` und stellt den Container für alle UI-Elemente bereit.
+MainWindow ist das Hauptfenster der MyViz-Anwendung. Es erbt von `QMainWindow` und hostet das `VisualizerWidget` als Central Widget für OpenGL-Rendering.
 
 ### 1.2 Verantwortlichkeiten
 
-- Fenster-Konfiguration (Titel, Größe)
-- Hosting des Central Widget
-- (Zukünftig: Menü, Toolbar, StatusBar)
+- Fenster-Konfiguration (Titel, Größe, Minimum)
+- Hosting des VisualizerWidget als Central Widget
+- Weiterleitung von Render-Anfragen
+- (Zukünftig: Menü, Toolbar, StatusBar, Docking)
 
 ### 1.3 Nicht-Verantwortlichkeiten
 
 - Anwendungs-Lifecycle (→ Application)
+- Event-Loop (→ Application)
 - Audio-Verarbeitung (→ AudioEngine)
-- Visualisierung (→ VisualizerWidget)
+- OpenGL-Rendering (→ VisualizerWidget)
 
 ---
 
@@ -50,43 +52,129 @@ MainWindow ist das Hauptfenster der MyViz-Anwendung. Es erbt von `QMainWindow` u
 
 | Dependency | Typ | Zweck |
 |------------|-----|-------|
-| Qt6::Widgets | Extern | QMainWindow, QWidget Basisklassen |
-| Qt6::Gui | Extern | GUI-Grundfunktionen |
-| Qt6::Core | Extern | Qt Kernsystem (Q_OBJECT, Signals/Slots) |
+| Qt6::Widgets | Extern | QMainWindow Basisklasse |
+| VisualizerWidget | Intern | OpenGL Central Widget |
+| BasicLogger | Intern | Logging |
 
 ---
 
 ## 3. API
 
-### 3.1 Konstruktion
+### 3.1 Konstruktor / Destruktor
+
 ```cpp
 explicit MainWindow(QWidget* parent = nullptr);
 ~MainWindow() override;
 ```
 
-| Parameter | Typ | Default | Beschreibung |
-|-----------|-----|---------|--------------|
-| `parent` | `QWidget*` | `nullptr` | Parent-Widget für Ownership |
-
 ### 3.2 Öffentliche Methoden
 
-Aktuell keine zusätzlichen öffentlichen Methoden. Alle Funktionalität wird über geerbte QMainWindow-Methoden bereitgestellt.
+| Methode | Parameter | Rückgabe | Beschreibung |
+|---------|-----------|----------|--------------|
+| `visualizer()` | — | `VisualizerWidget*` | Gibt das Visualizer-Widget zurück |
+| `requestRender()` | — | `void` | Fordert Neuzeichnung an |
 
 ### 3.3 Geerbte Methoden (wichtigste)
 
 | Methode | Quelle | Beschreibung |
 |---------|--------|--------------|
-| `show()` | QWidget | Zeigt das Fenster an |
-| `hide()` | QWidget | Versteckt das Fenster |
+| `show()` | QWidget | Zeigt das Fenster |
 | `close()` | QWidget | Schließt das Fenster |
-| `resize(w, h)` | QWidget | Ändert Fenstergröße |
-| `setWindowTitle(title)` | QWidget | Setzt Fenstertitel |
+| `isVisible()` | QWidget | Prüft Sichtbarkeit |
+| `resize(w, h)` | QWidget | Ändert Größe |
 
 ---
 
-## 4. Verwendung
+## 4. Architektur
 
-### 4.1 Einfaches Beispiel
+### 4.1 Widget-Hierarchie
+
+```
+MainWindow (QMainWindow)
+    │
+    └── VisualizerWidget (QOpenGLWidget) ◄── Central Widget
+            │
+            ├── initializeGL()
+            ├── resizeGL()
+            └── paintGL()
+```
+
+### 4.2 Fenster-Layout
+
+```
++------------------------------------------+
+|  MyViz - Audio Visualizer        [_][□][X]|
++------------------------------------------+
+|              (Menu Bar - TODO)            |
++------------------------------------------+
+|                                          |
+|         VisualizerWidget                 |
+|         (OpenGL Rendering)               |
+|                                          |
+|    ┌────────────────────────────────┐    |
+|    │                                │    |
+|    │   Audio Visualization          │    |
+|    │   - Spectrum Bars              │    |
+|    │   - Waveform                   │    |
+|    │   - 3D Effects                 │    |
+|    │                                │    |
+|    └────────────────────────────────┘    |
+|                                          |
++------------------------------------------+
+|              (Status Bar - TODO)          |
++------------------------------------------+
+```
+
+### 4.3 Render-Flow
+
+```
+Application::run()
+      │
+      └── requestRender()
+               │
+               ▼
+      MainWindow::requestRender()
+               │
+               ▼
+      VisualizerWidget::update()
+               │
+               ▼
+         [Paint Event]
+               │
+               ▼
+         paintGL()
+               │
+               ▼
+         swapBuffers() (VSync)
+```
+
+---
+
+## 5. Verwendung
+
+### 5.1 Mit Application-Klasse (Standard)
+
+```cpp
+// In Application::init()
+m_pMainWindow = std::make_unique<MainWindow>();
+m_pMainWindow->show();
+
+// In Application::run() - jeden Frame
+m_pMainWindow->requestRender();
+```
+
+### 5.2 Zugriff auf Visualizer
+
+```cpp
+// Audio-Daten an Visualizer übergeben (zukünftig)
+m_pMainWindow->visualizer()->setAudioData(spectrum, size);
+
+// Hintergrundfarbe ändern
+m_pMainWindow->visualizer()->setClearColor(0.1f, 0.1f, 0.2f);
+```
+
+### 5.3 Standalone (ohne Application)
+
 ```cpp
 #include "UI/MainWindow.hpp"
 #include <QApplication>
@@ -102,31 +190,13 @@ int main(int argc, char* argv[])
 }
 ```
 
-### 4.2 Mit Application-Klasse
-```cpp
-// In Application::init()
-m_pMainWindow = std::make_unique<MainWindow>();
-m_pMainWindow->show();
-
-// In Application::run()
-return m_pQtApp->exec();
-```
-
 ---
 
-## 5. Thread-Sicherheit
+## 6. Thread-Sicherheit
 
-**Nicht thread-safe.** 
+**Nicht thread-safe.**
 
-Alle Qt-Widget-Operationen müssen vom Main-Thread (GUI-Thread) erfolgen. Dies ist eine Qt-Grundregel.
-
----
-
-## 6. Fehlerbehandlung
-
-- Keine Exceptions
-- Qt-Widgets melden Fehler über Return-Werte oder Signals
-- Bei kritischen Fehlern: `qFatal()` oder `Q_ASSERT()`
+Alle Qt-Widget-Operationen müssen vom Main-Thread (GUI-Thread) erfolgen.
 
 ---
 
@@ -134,31 +204,24 @@ Alle Qt-Widget-Operationen müssen vom Main-Thread (GUI-Thread) erfolgen. Dies i
 
 ### 7.1 Q_OBJECT Macro
 
-Das `Q_OBJECT` Macro ist erforderlich für:
-- Signals und Slots
-- Meta-Object System (`qobject_cast`)
-- Property System
-- Übersetzungen (`tr()`)
+Erforderlich für Signals/Slots und Meta-Object System.
 
 ### 7.2 Parent-Child Ownership
 
-Qt verwendet ein Parent-Child-Modell für Memory Management:
-- Parent besitzt seine Children
-- Beim Löschen des Parents werden Children automatisch gelöscht
-- Top-Level-Fenster (parent = nullptr) werden bei QApplication-Ende gelöscht
+```cpp
+// VisualizerWidget wird von MainWindow geowned
+m_pVisualizer = new VisualizerWidget(this);  // 'this' = parent
+setCentralWidget(m_pVisualizer);
 
-### 7.3 QMainWindow Layout
+// Kein delete nötig! Qt löscht automatisch.
 ```
-+------------------------------------------+
-|              Menu Bar                    |
-+------------------------------------------+
-|              Tool Bar                    |
-+------+---------------------------+-------+
-| Dock |      Central Widget       | Dock  |
-+------+---------------------------+-------+
-|              Status Bar                  |
-+------------------------------------------+
-```
+
+### 7.3 update() vs repaint()
+
+| Methode | Verhalten | Empfehlung |
+|---------|-----------|------------|
+| `update()` | Asynchron, coalesced | ✅ Verwenden |
+| `repaint()` | Synchron, blockiert | ❌ Vermeiden |
 
 ---
 
@@ -166,4 +229,5 @@ Qt verwendet ein Parent-Child-Modell für Memory Management:
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **1.0.0** | **2025-12-28** | **Initial: Leeres Fenster ohne Menü** |
+| **1.1.0** | **2025-12-28** | **VisualizerWidget als Central Widget, requestRender()** |
+| 1.0.0 | 2025-12-28 | Initial: Leeres Fenster |
