@@ -14,6 +14,7 @@ set(_local_sources
 set(_local_headers
     # (headers - *.h; *.hpp)
     "${CMAKE_CURRENT_LIST_DIR}/MainWindow.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/DockManager.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

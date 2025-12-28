@@ -1,13 +1,13 @@
-# MainWindow — Hauptfenster der Anwendung
+# MainWindow — Hauptfenster mit Qt-ADS Docking
 
-> **Version:** 1.1.0  
+> **Version:** 2.0.0  
 > **Datum:** 2025-12-28  
 > **Typ:** CppModuleDoc  
-> **Status:** In Entwicklung  
+> **Status:** Implementiert  
 > **Modul:** MyViz::UI::MainWindow  
 > **Dateien:** MainWindow.hpp, MainWindow.cpp  
 > **Namespace:** (global)  
-> **Abhängigkeiten:** Qt6::Widgets, VisualizerWidget  
+> **Abhängigkeiten:** Qt6::Widgets, DockManager, VisualizerWidget  
 > **Zielgruppe:** Entwickler  
 > **Sprache:** Deutsch  
 
@@ -19,10 +19,8 @@
 2. [Abhängigkeiten](#2-abhängigkeiten)
 3. [API](#3-api)
 4. [Architektur](#4-architektur)
-5. [Verwendung](#5-verwendung)
-6. [Thread-Sicherheit](#6-thread-sicherheit)
-7. [Qt6-Konzepte](#7-qt6-konzepte)
-8. [Changelog](#8-changelog)
+5. [Menüstruktur](#5-menüstruktur)
+6. [Changelog](#6-changelog)
 
 ---
 
@@ -30,21 +28,34 @@
 
 ### 1.1 Zweck
 
-MainWindow ist das Hauptfenster der MyViz-Anwendung. Es erbt von `QMainWindow` und hostet das `VisualizerWidget` als Central Widget für OpenGL-Rendering.
+MainWindow ist das Hauptfenster der MyViz-Anwendung. Es verwendet Qt-ADS (Advanced Docking System) für eine flexible Multi-Visualizer-Oberfläche.
 
-### 1.2 Verantwortlichkeiten
+### 1.2 Features
 
-- Fenster-Konfiguration (Titel, Größe, Minimum)
-- Hosting des VisualizerWidget als Central Widget
-- Weiterleitung von Render-Anfragen
-- (Zukünftig: Menü, Toolbar, StatusBar, Docking)
+- Dockbare Visualizer-Panels
+- Tabs bei Überlagerung
+- Menüleiste mit View-Menü
+- Status-Bar mit FPS-Anzeige
+- Layout speichern/laden (Perspectives)
 
-### 1.3 Nicht-Verantwortlichkeiten
+### 1.3 UI-Layout
 
-- Anwendungs-Lifecycle (→ Application)
-- Event-Loop (→ Application)
-- Audio-Verarbeitung (→ AudioEngine)
-- OpenGL-Rendering (→ VisualizerWidget)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ File   View   Settings   Help                                   │
+├─────────────────────────────────────────────────────────────────┤
+│ ┌───────────────────────────────────────────────────────────┐   │
+│ │ Spectrum Analyzer │ Waveform │ 3D Effects │              │   │
+│ ├───────────────────────────────────────────────────────────┤   │
+│ │                                                           │   │
+│ │              [Active VisualizerWidget]                    │   │
+│ │                                                           │   │
+│ │                                                           │   │
+│ └───────────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────────┤
+│ Ready                                              FPS: 60.0    │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -52,8 +63,9 @@ MainWindow ist das Hauptfenster der MyViz-Anwendung. Es erbt von `QMainWindow` u
 
 | Dependency | Typ | Zweck |
 |------------|-----|-------|
-| Qt6::Widgets | Extern | QMainWindow Basisklasse |
-| VisualizerWidget | Intern | OpenGL Central Widget |
+| Qt6::Widgets | Extern | QMainWindow, QMenu, QStatusBar |
+| DockManager | Intern | Qt-ADS Wrapper |
+| VisualizerWidget | Intern | OpenGL Rendering |
 | BasicLogger | Intern | Logging |
 
 ---
@@ -69,165 +81,105 @@ explicit MainWindow(QWidget* parent = nullptr);
 
 ### 3.2 Öffentliche Methoden
 
-| Methode | Parameter | Rückgabe | Beschreibung |
-|---------|-----------|----------|--------------|
-| `visualizer()` | — | `VisualizerWidget*` | Gibt das Visualizer-Widget zurück |
-| `requestRender()` | — | `void` | Fordert Neuzeichnung an |
+| Methode | Rückgabe | Beschreibung |
+|---------|----------|--------------|
+| `dockManager()` | `DockManager*` | Zugriff auf Docking-System |
+| `visualizers()` | `vector<VisualizerWidget*>` | Alle Visualizer |
+| `primaryVisualizer()` | `VisualizerWidget*` | Erster Visualizer |
+| `requestRender()` | `void` | Update alle Visualizer |
 
-### 3.3 Geerbte Methoden (wichtigste)
+### 3.3 Public Slots
 
-| Methode | Quelle | Beschreibung |
-|---------|--------|--------------|
-| `show()` | QWidget | Zeigt das Fenster |
-| `close()` | QWidget | Schließt das Fenster |
-| `isVisible()` | QWidget | Prüft Sichtbarkeit |
-| `resize(w, h)` | QWidget | Ändert Größe |
+| Slot | Beschreibung |
+|------|--------------|
+| `updateFpsDisplay(fps)` | FPS in Status-Bar anzeigen |
+| `onNewVisualizer()` | Neuen Visualizer erstellen |
 
 ---
 
 ## 4. Architektur
 
-### 4.1 Widget-Hierarchie
+### 4.1 Komponenten-Hierarchie
 
 ```
 MainWindow (QMainWindow)
-    │
-    └── VisualizerWidget (QOpenGLWidget) ◄── Central Widget
-            │
-            ├── initializeGL()
-            ├── resizeGL()
-            └── paintGL()
+├── QMenuBar
+│   ├── File Menu
+│   ├── View Menu (DockManager)
+│   ├── Settings Menu
+│   └── Help Menu
+├── DockManager (unique_ptr)
+│   └── ads::CDockManager
+│       ├── CDockWidget "Spectrum"
+│       │   └── VisualizerWidget #1
+│       ├── CDockWidget "Waveform"
+│       │   └── VisualizerWidget #2
+│       └── ...
+└── QStatusBar
+    └── QLabel (FPS)
 ```
 
-### 4.2 Fenster-Layout
-
-```
-+------------------------------------------+
-|  MyViz - Audio Visualizer        [_][□][X]|
-+------------------------------------------+
-|              (Menu Bar - TODO)            |
-+------------------------------------------+
-|                                          |
-|         VisualizerWidget                 |
-|         (OpenGL Rendering)               |
-|                                          |
-|    ┌────────────────────────────────┐    |
-|    │                                │    |
-|    │   Audio Visualization          │    |
-|    │   - Spectrum Bars              │    |
-|    │   - Waveform                   │    |
-|    │   - 3D Effects                 │    |
-|    │                                │    |
-|    └────────────────────────────────┘    |
-|                                          |
-+------------------------------------------+
-|              (Status Bar - TODO)          |
-+------------------------------------------+
-```
-
-### 4.3 Render-Flow
+### 4.2 Render-Flow
 
 ```
 Application::run()
       │
-      └── requestRender()
+      └── MainWindow::requestRender()
                │
-               ▼
-      MainWindow::requestRender()
-               │
-               ▼
-      VisualizerWidget::update()
-               │
-               ▼
-         [Paint Event]
-               │
-               ▼
-         paintGL()
-               │
-               ▼
-         swapBuffers() (VSync)
+               └── DockManager::requestRenderAll()
+                        │
+                        ├── VisualizerWidget #1 → update()
+                        ├── VisualizerWidget #2 → update()
+                        └── ...
 ```
 
 ---
 
-## 5. Verwendung
+## 5. Menüstruktur
 
-### 5.1 Mit Application-Klasse (Standard)
+### 5.1 File
 
-```cpp
-// In Application::init()
-m_pMainWindow = std::make_unique<MainWindow>();
-m_pMainWindow->show();
-
-// In Application::run() - jeden Frame
-m_pMainWindow->requestRender();
+```
+File
+├── Open Audio...     (Ctrl+O)
+├── ─────────────────
+└── Exit              (Alt+F4)
 ```
 
-### 5.2 Zugriff auf Visualizer
+### 5.2 View
 
-```cpp
-// Audio-Daten an Visualizer übergeben (zukünftig)
-m_pMainWindow->visualizer()->setAudioData(spectrum, size);
-
-// Hintergrundfarbe ändern
-m_pMainWindow->visualizer()->setClearColor(0.1f, 0.1f, 0.2f);
+```
+View
+├── New Visualizer    (Ctrl+N)
+├── ─────────────────
+├── Panels ►
+│   ├── ☑ Spectrum Analyzer
+│   ├── ☑ Waveform
+│   └── ...
+├── Perspectives ►
+│   ├── Save Current...
+│   ├── ─────────────────
+│   └── Default
+├── ─────────────────
+└── Reset Layout
 ```
 
-### 5.3 Standalone (ohne Application)
+### 5.3 Settings
 
-```cpp
-#include "UI/MainWindow.hpp"
-#include <QApplication>
-
-int main(int argc, char* argv[])
-{
-    QApplication app(argc, argv);
-    
-    MainWindow window;
-    window.show();
-    
-    return app.exec();
-}
+```
+Settings
+└── Frame Mode ►
+    ├── ◉ Limited (60 FPS)
+    ├── ○ Unlimited
+    └── ○ VSync
 ```
 
 ---
 
-## 6. Thread-Sicherheit
-
-**Nicht thread-safe.**
-
-Alle Qt-Widget-Operationen müssen vom Main-Thread (GUI-Thread) erfolgen.
-
----
-
-## 7. Qt6-Konzepte
-
-### 7.1 Q_OBJECT Macro
-
-Erforderlich für Signals/Slots und Meta-Object System.
-
-### 7.2 Parent-Child Ownership
-
-```cpp
-// VisualizerWidget wird von MainWindow geowned
-m_pVisualizer = new VisualizerWidget(this);  // 'this' = parent
-setCentralWidget(m_pVisualizer);
-
-// Kein delete nötig! Qt löscht automatisch.
-```
-
-### 7.3 update() vs repaint()
-
-| Methode | Verhalten | Empfehlung |
-|---------|-----------|------------|
-| `update()` | Asynchron, coalesced | ✅ Verwenden |
-| `repaint()` | Synchron, blockiert | ❌ Vermeiden |
-
----
-
-## 8. Changelog
+## 6. Changelog
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **1.1.0** | **2025-12-28** | **VisualizerWidget als Central Widget, requestRender()** |
+| **2.0.0** | **2025-12-28** | **Qt-ADS Integration, Multi-Visualizer, Menüs, Status-Bar** |
+| 1.1.0 | 2025-12-28 | VisualizerWidget als Central Widget |
 | 1.0.0 | 2025-12-28 | Initial: Leeres Fenster |

@@ -121,13 +121,13 @@
 
         "core": {
           "dependencies": [ "BasicLogger" ],
-          "externals": [ "Qt6" ]
+          "externals": [ "Qt6", "qt-ads" ]
         },
 
         "runner": {
           "type": "GUI",
           "dependencies": [ "BasicLogger" ],
-          "externals": [ "Qt6" ]
+          "externals": [ "Qt6", "qt-ads" ]
         },
 
         "pch": {

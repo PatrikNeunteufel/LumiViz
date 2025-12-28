@@ -27,10 +27,6 @@
 
 #include "Application.hpp"
 
-#if defined(_WIN32)
-    #include <Windows.h>
-#endif
-
 // =============================================================================
 // Common Entry Point
 // =============================================================================
@@ -60,28 +56,17 @@ int commonMain(int argc, char* argv[])
 } // namespace
 
 // =============================================================================
-// Platform-specific Entry Points
+// Entry Point
 // =============================================================================
+// On Windows GUI applications, Qt6EntryPoint library provides wWinMain
+// which then calls main(). So we only need to define main() here.
+//
+// This works on all platforms:
+//   - Windows GUI: Qt6EntryPoint::wWinMain → main()
+//   - Windows Console: main() directly
+//   - Linux/macOS: main() directly
 
-#if defined(_WIN32) && defined(APP_WINDOWS_GUI)
-
-// Windows GUI: WinMain entry point (no console window)
-int WINAPI WinMain(
-    [[maybe_unused]] HINSTANCE hInstance,
-    [[maybe_unused]] HINSTANCE hPrevInstance,
-    [[maybe_unused]] LPSTR lpCmdLine,
-    [[maybe_unused]] int nCmdShow
-)
-{
-    return commonMain(__argc, __argv);
-}
-
-#else
-
-// Console / Linux / macOS: Standard main
 int main(int argc, char* argv[])
 {
     return commonMain(argc, argv);
 }
-
-#endif

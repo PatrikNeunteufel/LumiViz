@@ -2,7 +2,7 @@
  ****************************************************************************************
  * @file   MainWindow.hpp
  * @brief  Main Application Window - Qt6 Tutorial
- *         Contains VisualizerWidget as central widget
+ *         Uses Qt-ADS for dockable visualizer panels
  *
  * @author Patrik Neunteufel
  * @date   December 2025
@@ -10,9 +10,28 @@
  * @details
  * This file is part of the Qt6 Tutorial series for MyViz.
  * It demonstrates:
- *   - QMainWindow inheritance
- *   - Embedding QOpenGLWidget as central widget
- *   - Q_OBJECT macro usage
+ *   - QMainWindow with Qt-ADS docking
+ *   - Multiple visualizer widgets
+ *   - Tabbed and split layouts
+ *   - Menu and status bar integration
+ *
+ * ## Qt-ADS Docking Layout
+ *
+ * ```
+ * +------------------------------------------+
+ * |              Menu Bar                    |
+ * +------------------------------------------+
+ * | ┌──────────────┬───────────────────────┐ |
+ * | │ Spectrum     │ Waveform   │ 3D       │ | ◄─ Tabs
+ * | ├──────────────┴───────────────────────┤ |
+ * | │                                      │ |
+ * | │        [Active Visualizer]           │ |
+ * | │                                      │ |
+ * | └──────────────────────────────────────┘ |
+ * +------------------------------------------+
+ * |              Status Bar (FPS)            |
+ * +------------------------------------------+
+ * ```
  *
  * @see MainWindow.md for detailed documentation
  ****************************************************************************************
@@ -25,46 +44,31 @@
 // =============================================================================
 
 #include <QMainWindow>
+#include <memory>
+#include <vector>
 
 // =============================================================================
 // Forward Declarations
 // =============================================================================
-// Forward declarations avoid including headers in .hpp files.
-// This reduces compilation time and circular dependencies.
 
 QT_BEGIN_NAMESPACE
 class QWidget;
+class QMenu;
+class QLabel;
 QT_END_NAMESPACE
 
-class VisualizerWidget;  // Our OpenGL visualization widget
+class DockManager;
+class VisualizerWidget;
 
 /**
  * @class MainWindow
- * @brief Main application window for MyViz.
+ * @brief Main application window with dockable visualizer panels.
  *
- * MainWindow is the primary window of the application. It contains the
- * VisualizerWidget (QOpenGLWidget) as its central widget.
- *
- * ## Qt6 Tutorial: Window Structure
- *
- * ```
- * +------------------------------------------+
- * |              Menu Bar (TODO)             |
- * +------------------------------------------+
- * |                                          |
- * |        VisualizerWidget (OpenGL)         |
- * |                                          |
- * |       ┌────────────────────────┐         |
- * |       │  Audio Visualization   │         |
- * |       │  (Spectrum, Waveform)  │         |
- * |       └────────────────────────┘         |
- * |                                          |
- * +------------------------------------------+
- * |              Status Bar (TODO)           |
- * +------------------------------------------+
- * ```
- *
- * The VisualizerWidget handles all OpenGL rendering with VSync support.
+ * MainWindow uses Qt-ADS (Advanced Docking System) for a flexible
+ * multi-visualizer layout. Users can:
+ *   - Create multiple visualizer panels
+ *   - Arrange them as tabs, splits, or floating windows
+ *   - Save and restore layouts (perspectives)
  */
 class MainWindow : public QMainWindow
 {
@@ -94,35 +98,64 @@ public:
     MainWindow& operator=(MainWindow&&) = delete;
 
     // =========================================================================
-    // Public Interface
+    // Dock Manager Access
     // =========================================================================
 
     /**
-     * @brief Gets the visualizer widget.
+     * @brief Gets the dock manager.
      *
-     * Use this to:
-     *   - Trigger repaints (update())
-     *   - Pass audio data for visualization
-     *   - Configure rendering options
-     *
-     * @return Pointer to the VisualizerWidget (never null after construction)
+     * Use to create visualizers, manage layout, etc.
      */
-    [[nodiscard]] VisualizerWidget* visualizer() const noexcept;
+    [[nodiscard]] DockManager* dockManager() const noexcept;
+
+    // =========================================================================
+    // Visualizer Access
+    // =========================================================================
 
     /**
-     * @brief Requests a repaint of the visualizer.
+     * @brief Gets all visualizer widgets.
+     */
+    [[nodiscard]] std::vector<VisualizerWidget*> visualizers() const;
+
+    /**
+     * @brief Gets the first (primary) visualizer.
      *
-     * Call this from the main loop to trigger rendering.
-     * With VSync enabled, this will synchronize with the monitor refresh.
+     * @return Primary visualizer or nullptr if none exist
+     */
+    [[nodiscard]] VisualizerWidget* primaryVisualizer() const;
+
+    // =========================================================================
+    // Render Control
+    // =========================================================================
+
+    /**
+     * @brief Requests a repaint of all visualizers.
      *
-     * ## Qt6 Tutorial: update() vs repaint()
-     *
-     * - update()  : Schedules a paint event (non-blocking, coalesced)
-     * - repaint() : Immediate repaint (blocking, not recommended)
-     *
-     * Always prefer update() for smooth rendering.
+     * Call this from the main loop to trigger rendering on all panels.
      */
     void requestRender();
+
+public slots:
+    // =========================================================================
+    // Public Slots
+    // =========================================================================
+
+    /**
+     * @brief Updates the FPS display in the status bar.
+     */
+    void updateFpsDisplay(double fps);
+
+    /**
+     * @brief Creates a new visualizer panel.
+     */
+    void onNewVisualizer();
+
+private slots:
+    // =========================================================================
+    // Private Slots
+    // =========================================================================
+
+    void onVisualizerCreated(VisualizerWidget* pVisualizer);
 
 private:
     // =========================================================================
@@ -131,17 +164,28 @@ private:
 
     /**
      * @brief Sets up the user interface.
-     *
-     * Creates and configures:
-     *   - VisualizerWidget as central widget
-     *   - Window title and size
-     *   - (Future: menu bar, status bar)
      */
     void setupUi();
+
+    /**
+     * @brief Creates the menu bar.
+     */
+    void setupMenuBar();
+
+    /**
+     * @brief Creates the status bar.
+     */
+    void setupStatusBar();
+
+    /**
+     * @brief Creates the default visualizer layout.
+     */
+    void setupDefaultLayout();
 
     // =========================================================================
     // Private Members
     // =========================================================================
 
-    VisualizerWidget* m_pVisualizer{nullptr};  // Owned by Qt parent-child system
+    std::unique_ptr<DockManager> m_pDockManager;
+    QLabel* m_pFpsLabel{nullptr};  // Owned by status bar (Qt parent-child)
 };

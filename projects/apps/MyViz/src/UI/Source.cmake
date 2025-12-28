@@ -11,6 +11,7 @@ dbg(DBG_OFTEN
 set(_local_sources
     # (no sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/MainWindow.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/DockManager.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)

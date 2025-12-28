@@ -10,7 +10,8 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     # (no sources - *.c; *.cpp)
-    # "${CMAKE_CURRENT_LIST_DIR}/.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/GpuInfo.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/GpuSelector.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)

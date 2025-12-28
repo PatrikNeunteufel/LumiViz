@@ -13,7 +13,8 @@ set(_local_sources
 )
 set(_local_headers
     # (headers - *.h; *.hpp)
-    # "${CMAKE_CURRENT_LIST_DIR}/.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/GpuInfo.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/GpuSelector.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

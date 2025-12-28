@@ -27,6 +27,8 @@
 #include "pch.h"
 #include "Application.hpp"
 #include "UI/MainWindow.hpp"
+#include "core/GpuInfo.hpp"
+#include "core/GpuSelector.hpp"
 
 // Qt includes
 #include <QApplication>
@@ -37,6 +39,17 @@
 // Standard Library
 #include <chrono>
 #include <thread>
+
+// =============================================================================
+// GPU Export Flags for Hybrid Graphics (NVIDIA Optimus / AMD PowerXpress)
+// =============================================================================
+// These symbols are read by GPU drivers BEFORE the application starts.
+// They hint the driver to use the dedicated GPU instead of integrated.
+//
+// Safe to include even if no dedicated GPU exists - flags are just ignored.
+// The actual GPU selection is configured via gpu.ini (see GpuSelector).
+
+MYVIZ_ENABLE_HIGH_PERFORMANCE_GPU
 
 // =============================================================================
 // Helper: FrameMode to String
@@ -81,6 +94,12 @@ struct Application::Impl
     // -------------------------------------------------------------------------
     std::unique_ptr<QApplication> pQtApp;
     std::unique_ptr<MainWindow> pMainWindow;
+
+    // -------------------------------------------------------------------------
+    // GPU Selection
+    // -------------------------------------------------------------------------
+    GpuSelector gpuSelector;
+    std::vector<GpuDevice> availableGpus;
 
     // -------------------------------------------------------------------------
     // Frame Mode Configuration
@@ -218,6 +237,27 @@ bool Application::init(int argc, char* argv[])
     }
 
     // -------------------------------------------------------------------------
+    // GPU Enumeration and Selection
+    // -------------------------------------------------------------------------
+    // Enumerate GPUs BEFORE creating QApplication (for logging purposes)
+    // The actual GPU used depends on driver settings and export flags in main.cpp
+    
+    BasicLogger::logInfo("Enumerating GPUs...");
+    m_impl->availableGpus = GpuInfo::enumerate();
+    GpuInfo::logGpuInfo(m_impl->availableGpus);
+    
+    // Load GPU preferences (create default config if not exists)
+    m_impl->gpuSelector.createDefaultConfig("gpu.ini");
+    m_impl->gpuSelector.loadConfig("gpu.ini");
+    
+    // Select preferred GPU (for mismatch checking later)
+    const GpuDevice* preferredGpu = m_impl->gpuSelector.selectGpu(m_impl->availableGpus);
+    if (preferredGpu != nullptr)
+    {
+        BasicLogger::logInfo("Preferred GPU: " + preferredGpu->name);
+    }
+
+    // -------------------------------------------------------------------------
     // Create QApplication
     // -------------------------------------------------------------------------
     BasicLogger::logDebug("Creating QApplication...");
@@ -228,11 +268,18 @@ bool Application::init(int argc, char* argv[])
     m_impl->pQtApp->setOrganizationName(QStringLiteral("MyViz Project"));
 
     // -------------------------------------------------------------------------
-    // Create MainWindow
+    // Create MainWindow (this creates the OpenGL context)
     // -------------------------------------------------------------------------
     BasicLogger::logDebug("Creating MainWindow...");
     m_impl->pMainWindow = std::make_unique<MainWindow>();
     m_impl->pMainWindow->show();
+
+    // -------------------------------------------------------------------------
+    // GPU Mismatch Check
+    // -------------------------------------------------------------------------
+    // After OpenGL context is created, check if the correct GPU is being used
+    // The actual GPU name is logged by VisualizerWidget::initializeGL()
+    // We'll check in run() after the first frame when we know the active GPU
 
     // -------------------------------------------------------------------------
     // Initialize frame timing
@@ -314,6 +361,9 @@ int Application::run()
         // 4. Measure FPS
         // ---------------------------------------------------------------------
         m_impl->measureFps();
+        
+        // Update FPS display in status bar (every measurement update)
+        m_impl->pMainWindow->updateFpsDisplay(m_impl->currentFps);
 
         // Log FPS every 5 seconds
         auto now = std::chrono::steady_clock::now();
