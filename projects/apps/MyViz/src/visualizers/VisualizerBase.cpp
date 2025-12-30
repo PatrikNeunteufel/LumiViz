@@ -1,0 +1,128 @@
+/**
+ ****************************************************************************************
+ * @file   VisualizerBase.cpp
+ * @brief  VisualizerBase implementation
+ *
+ * @author Patrik Neunteufel
+ * @date   December 2025
+ * @version 1.0.0
+ ****************************************************************************************
+ */
+
+#include "visualizers/VisualizerBase.hpp"
+
+#include <QMutexLocker>
+
+// =============================================================================
+// Construction
+// =============================================================================
+
+VisualizerBase::VisualizerBase(const QString& id,
+                               const QString& name,
+                               const QString& description)
+    : m_id(id)
+    , m_name(name)
+    , m_description(description)
+{
+}
+
+// =============================================================================
+// IVisualizer Implementation
+// =============================================================================
+
+void VisualizerBase::initialize()
+{
+    if (m_initialized)
+    {
+        return;
+    }
+
+    onInitialize();
+    m_initialized = true;
+}
+
+void VisualizerBase::render(float deltaTime)
+{
+    if (!m_initialized)
+    {
+        return;
+    }
+
+    onRender(deltaTime);
+}
+
+void VisualizerBase::resize(const QSize& size)
+{
+    m_viewportSize = size;
+
+    if (m_initialized)
+    {
+        onResize(size);
+    }
+}
+
+void VisualizerBase::cleanup()
+{
+    if (!m_initialized)
+    {
+        return;
+    }
+
+    onCleanup();
+    m_initialized = false;
+}
+
+// =============================================================================
+// Audio Data (Thread-Safe)
+// =============================================================================
+
+void VisualizerBase::updateSpectrum(const float* spectrum, int count)
+{
+    QMutexLocker locker(&m_audioMutex);
+
+    m_spectrum.assign(spectrum, spectrum + count);
+    m_hasNewAudioData = true;
+}
+
+void VisualizerBase::updateWaveform(const float* waveform, int count)
+{
+    QMutexLocker locker(&m_audioMutex);
+
+    m_waveform.assign(waveform, waveform + count);
+    m_hasNewAudioData = true;
+}
+
+// =============================================================================
+// Protected Accessors
+// =============================================================================
+
+float VisualizerBase::aspectRatio() const
+{
+    if (m_viewportSize.height() == 0)
+    {
+        return 1.0f;
+    }
+    return static_cast<float>(m_viewportSize.width()) / 
+           static_cast<float>(m_viewportSize.height());
+}
+
+std::vector<float> VisualizerBase::getSpectrum() const
+{
+    QMutexLocker locker(&m_audioMutex);
+    return m_spectrum;
+}
+
+std::vector<float> VisualizerBase::getWaveform() const
+{
+    QMutexLocker locker(&m_audioMutex);
+    return m_waveform;
+}
+
+bool VisualizerBase::hasNewAudioData()
+{
+    QMutexLocker locker(&m_audioMutex);
+
+    bool result = m_hasNewAudioData;
+    m_hasNewAudioData = false;
+    return result;
+}

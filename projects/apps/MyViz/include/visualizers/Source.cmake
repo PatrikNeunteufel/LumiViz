@@ -10,10 +10,12 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     # (no sources - *.c; *.cpp)
-    # "${CMAKE_CURRENT_LIST_DIR}/.hpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)
+    "${CMAKE_CURRENT_LIST_DIR}/IVisualizer.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/PulsingVisualizer.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/VisualizerBase.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)
