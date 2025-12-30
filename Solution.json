@@ -40,15 +40,15 @@
         "skip": false,
         "system": true,
         "package": "Qt6",
-        "components": [ "Core", "Widgets", "Gui", "OpenGL", "OpenGLWidgets" ],
+        "components": [ "Core", "Widgets", "Gui", "OpenGL", "OpenGLWidgets", "GuiPrivate" ],
         "hints": [ "${QT_ROOT}" ]
       },
       "qt-ads": {
         "description": "Advanced Docking System for Qt",
         "skip": false,
         "git": "https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System.git",
-        "tag": "4.3.1",
-        "components": [ "qtadvanceddocking" ]
+        "tag": "4.4.1",
+        "components": [ "qtadvanceddocking-qt6" ]
       },
     
     

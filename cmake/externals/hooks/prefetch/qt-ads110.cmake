@@ -2,8 +2,8 @@
 # =============================================
 # PreFetch hook for Qt Advanced Docking System
 #
-# Version: 2.1.0
-# Date:    2025-12-30
+# Version: 1.1.0
+# Date:    2025-12-27
 # Status:  Release
 # Author:  CMake Architecture Team
 #
@@ -13,10 +13,6 @@
 # Purpose:
 #   Sets CMake cache variables BEFORE FetchContent_MakeAvailable()
 #   to configure qt-ads build options.
-#
-# Supported Versions:
-#   - 4.3.x: Original configuration
-#   - 4.4.x: Requires Qt6::GuiPrivate (Breaking Change!)
 #
 # Key Decision: BUILD AS STATIC LIBRARY
 #   Building qt-ads as a static library eliminates all DLL deployment
@@ -32,41 +28,17 @@ include_guard(GLOBAL)
 message(STATUS "[qt-ads] PreFetch: Configuring build options")
 
 # ==============================================================================
-# Qt6 Private Modules (Required for Qt-ADS 4.4.x)
-# ==============================================================================
-# Qt-ADS 4.4.x uses Qt private APIs and requires Qt6::GuiPrivate
-# This must be loaded BEFORE FetchContent_MakeAvailable() processes qt-ads
-
-find_package(Qt6 QUIET COMPONENTS GuiPrivate)
-if(TARGET Qt6::GuiPrivate)
-    message(STATUS "[qt-ads]   Qt6::GuiPrivate: Found")
-else()
-    message(STATUS "[qt-ads]   Qt6::GuiPrivate: Not found, attempting to load...")
-    # Try to find it - Qt6 should provide this if Gui is found
-    find_package(Qt6 REQUIRED COMPONENTS Gui)
-    # GuiPrivate is typically available alongside Gui
-    if(NOT TARGET Qt6::GuiPrivate)
-        message(WARNING "[qt-ads] Qt6::GuiPrivate not available - Qt-ADS 4.4.x may fail to configure")
-        message(WARNING "[qt-ads] Consider using Qt-ADS 4.3.1 or ensuring Qt6 private headers are installed")
-    endif()
-endif()
-
-# ==============================================================================
 # Build Options
 # ==============================================================================
 
 # Build as STATIC library - this is the key fix!
 # IMPORTANT: The variable name is BUILD_STATIC (not ADS_BUILD_STATIC)
-# See: https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System/blob/master/CMakeLists.txt
+# See: https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System/blob/master/src/CMakeLists.txt
 set(BUILD_STATIC ON CACHE BOOL "Build qt-ads as static library" FORCE)
 
 # Disable examples - we don't need them
 set(BUILD_EXAMPLES OFF CACHE BOOL "Don't build qt-ads examples" FORCE)
 
-# Disable installation - we use FetchContent
-set(ADS_INSTALL OFF CACHE BOOL "Don't install qt-ads" FORCE)
-
 message(STATUS "[qt-ads]   BUILD_STATIC: ON (static library)")
 message(STATUS "[qt-ads]   BUILD_EXAMPLES: OFF")
-message(STATUS "[qt-ads]   ADS_INSTALL: OFF")
 message(STATUS "[qt-ads] PreFetch complete")
