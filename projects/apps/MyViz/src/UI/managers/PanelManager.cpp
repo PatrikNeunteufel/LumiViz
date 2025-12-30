@@ -259,7 +259,8 @@ ads::CDockWidget* PanelManager::createDockWidget(const QString& panelId,
                                                   QWidget* content,
                                                   const QString& title)
 {
-    auto* dockWidget = new ads::CDockWidget(title);
+    // Use Qt-ADS 4.4.x Factory API
+    auto* dockWidget = m_dockManager->createDockWidget(title);
     dockWidget->setObjectName(panelId);
     dockWidget->setWidget(content);
 

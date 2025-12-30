@@ -10,7 +10,10 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     # (sources - *.c; *.cpp)
-    # "${CMAKE_CURRENT_LIST_DIR}/.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/AudioAnalyzer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/AudioPlayer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/BassEngine.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Playlist.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)

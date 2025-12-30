@@ -160,8 +160,8 @@ VisualizerWidget* DockManager::createVisualizer(
     // Create the OpenGL widget with ServiceContainer
     auto* pVisualizer = new VisualizerWidget(*m_impl->pServices);
     
-    // Create dock widget wrapper
-    auto* pDock = new ads::CDockWidget(title);
+    // Create dock widget wrapper (Qt-ADS 4.4.x Factory API)
+    auto* pDock = m_impl->pAdsDockManager->createDockWidget(title);
     pDock->setWidget(pVisualizer);
     pDock->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true);
     pDock->setFeature(ads::CDockWidget::DockWidgetFloatable, true);
@@ -213,8 +213,8 @@ VisualizerWidget* DockManager::createVisualizerRelativeTo(
     // Create the OpenGL widget with ServiceContainer
     auto* pVisualizer = new VisualizerWidget(*m_impl->pServices);
     
-    // Create dock widget wrapper
-    auto* pDock = new ads::CDockWidget(title);
+    // Create dock widget wrapper (Qt-ADS 4.4.x Factory API)
+    auto* pDock = m_impl->pAdsDockManager->createDockWidget(title);
     pDock->setWidget(pVisualizer);
     pDock->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true);
     pDock->setFeature(ads::CDockWidget::DockWidgetFloatable, true);
@@ -266,7 +266,8 @@ ads::CDockWidget* DockManager::createDockWidget(
 {
     BasicLogger::logDebug("Creating dock widget: " + title.toStdString());
     
-    auto* pDock = new ads::CDockWidget(title);
+    // Use Qt-ADS 4.4.x Factory API
+    auto* pDock = m_impl->pAdsDockManager->createDockWidget(title);
     pDock->setWidget(pContent);
     pDock->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true);
     pDock->setFeature(ads::CDockWidget::DockWidgetFloatable, true);

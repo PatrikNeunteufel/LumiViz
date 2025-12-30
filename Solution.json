@@ -54,7 +54,7 @@
     
     "bass": {
       "description": "BASS Audio Library for playback and FFT",
-      "skip": true,
+      "skip": false,
       "path": "externals/bass"
     },
     "glad": {
@@ -121,13 +121,19 @@
 
         "core": {
           "dependencies": [ "BasicLogger" ],
-          "externals": [ "Qt6", "qt-ads" ]
+          "externals": [ "Qt6", "qt-ads", "bass" ],
+          "external_options": {
+            "bass": { "BASS_FLAC": true }
+          }
         },
 
         "runner": {
           "type": "GUI",
           "dependencies": [ "BasicLogger" ],
-          "externals": [ "Qt6", "qt-ads" ]
+          "externals": [ "Qt6", "qt-ads", "bass" ],
+          "external_options": {
+            "bass": { "BASS_FLAC": true }
+          }
         },
 
         "pch": {
