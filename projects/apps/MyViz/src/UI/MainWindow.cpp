@@ -15,7 +15,7 @@
 
 #include "pch.h"
 #include "UI/MainWindow.hpp"
-#include "UI/DockManager.hpp"
+#include "UI/managers/DockManager.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 
 // Qt

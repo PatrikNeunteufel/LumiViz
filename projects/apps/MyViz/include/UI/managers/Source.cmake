@@ -10,10 +10,13 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     # (no sources - *.c; *.cpp)
-    "${CMAKE_CURRENT_LIST_DIR}/MainWindow.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)
+    "${CMAKE_CURRENT_LIST_DIR}/DialogManager.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/DockManager.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/MenuManager.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/PanelManager.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)
@@ -67,7 +70,3 @@ unset(_local_includes)
 
 dbg(DBG_ULTRA_RARE "include subfolders:" ID INCLUDE_MSG)
 # Include subfolders recursively (activate as needed)
-include("${CMAKE_CURRENT_LIST_DIR}/dialogs/Source.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/managers/Source.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/panels/Source.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/widgets/Source.cmake")
