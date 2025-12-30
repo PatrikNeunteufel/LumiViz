@@ -1,5 +1,5 @@
 # ==============================================================================
-# Source.cmake for src/
+# Source.cmake for include/
 # CMake Architecture V2 - App-Container Template
 # ==============================================================================
 
@@ -9,11 +9,16 @@ dbg(DBG_OFTEN
 
 # Set local lists for this directory
 set(_local_sources
-    # (sources - *.c; *.cpp)
-    "${CMAKE_CURRENT_LIST_DIR}/Application.cpp"
+    # (no sources - *.c; *.cpp)
 )
 set(_local_headers
     # (headers - *.h; *.hpp)
+    "${CMAKE_CURRENT_LIST_DIR}/IPanel.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/PanelBase.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ConfigPanel.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/PlayerPanel.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/PlaylistPanel.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/VisualSelectPanel.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)
@@ -68,9 +73,3 @@ unset(_local_includes)
 dbg(DBG_ULTRA_RARE "include subfolders:" ID INCLUDE_MSG)
 # Include subfolders recursively (activate as needed)
 # include("${CMAKE_CURRENT_LIST_DIR}/subfolder/Source.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/audio/Source.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/core/Source.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/services/Source.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/UI/Source.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/visuals/Source.cmake")
-

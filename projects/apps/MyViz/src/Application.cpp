@@ -32,6 +32,7 @@
 
 // Qt includes
 #include <QApplication>
+#include <QTimer>
 
 // BasicLogger - Logging for GUI Applications
 #include <BasicLogger.h>
@@ -94,6 +95,7 @@ struct Application::Impl
     // -------------------------------------------------------------------------
     std::unique_ptr<QApplication> pQtApp;
     std::unique_ptr<MainWindow> pMainWindow;
+    QTimer* pFrameTimer{nullptr};  // Owned by QApplication (parent-child)
 
     // -------------------------------------------------------------------------
     // GPU Selection
@@ -170,6 +172,42 @@ struct Application::Impl
         currentFps = 0.0;
         fpsFrameCount = 0;
         fpsStartTime = std::chrono::steady_clock::now();
+    }
+    
+    /**
+     * @brief Updates the frame timer interval based on current frame mode.
+     */
+    void updateTimerInterval()
+    {
+        if (pFrameTimer == nullptr)
+        {
+            return;
+        }
+        
+        switch (frameMode)
+        {
+            case FrameMode::Limited:
+            {
+                int intervalMs = 1000 / targetFps;
+                pFrameTimer->setInterval(intervalMs);
+                BasicLogger::logDebug("Timer interval set to " + std::to_string(intervalMs) + "ms (Limited)");
+                break;
+            }
+            
+            case FrameMode::Unlimited:
+            {
+                pFrameTimer->setInterval(0);
+                BasicLogger::logDebug("Timer interval set to 0ms (Unlimited)");
+                break;
+            }
+            
+            case FrameMode::VSync:
+            {
+                pFrameTimer->setInterval(1);
+                BasicLogger::logDebug("Timer interval set to 1ms (VSync)");
+                break;
+            }
+        }
     }
 };
 
@@ -328,48 +366,40 @@ int Application::run()
     auto lastFpsLog = std::chrono::steady_clock::now();
 
     // -------------------------------------------------------------------------
-    // Main Loop
+    // Qt6 Tutorial: Event Loop with exec()
     // -------------------------------------------------------------------------
-    while (m_running)
-    {
-        auto frameStart = std::chrono::steady_clock::now();
-
-        // ---------------------------------------------------------------------
-        // 1. Process Qt Events
-        // ---------------------------------------------------------------------
-        m_impl->pQtApp->processEvents(QEventLoop::AllEvents);
-
-        // ---------------------------------------------------------------------
-        // 2. Check if window was closed
-        // ---------------------------------------------------------------------
+    // Using Qt's native event loop instead of manual processEvents() loop.
+    // This avoids timing issues with update() being asynchronous.
+    //
+    // For frame-rate control:
+    //   - VSync mode: Let swapBuffers handle timing (most efficient)
+    //   - Limited mode: Use QTimer for consistent frame rate
+    //   - Unlimited: Request continuous updates
+    
+    // Create a timer for frame updates (stored in Impl for mode changes)
+    m_impl->pFrameTimer = new QTimer(m_impl->pQtApp.get());
+    m_impl->pFrameTimer->setTimerType(Qt::PreciseTimer);
+    
+    // Connect timer to render update
+    QObject::connect(m_impl->pFrameTimer, &QTimer::timeout, [this, &lastFpsLog]() {
+        // Check if window was closed
         if (!m_impl->pMainWindow->isVisible())
         {
             BasicLogger::logInfo("MainWindow closed - exiting loop");
-            m_running = false;
-            break;
+            m_impl->pQtApp->quit();
+            return;
         }
-
-        // ---------------------------------------------------------------------
-        // 3. Update Logic (TODO: Audio, Visualization)
-        // ---------------------------------------------------------------------
-        // m_impl->pAudioEngine->update();
         
-        // Request rendering - triggers paintGL() in VisualizerWidget
+        // Request rendering
         m_impl->pMainWindow->requestRender();
-
-        // ---------------------------------------------------------------------
-        // 4. Measure FPS
-        // ---------------------------------------------------------------------
-        m_impl->measureFps();
         
-        // Update FPS display in status bar (every measurement update)
+        // Measure FPS
+        m_impl->measureFps();
         m_impl->pMainWindow->updateFpsDisplay(m_impl->currentFps);
-
+        
         // Log FPS every 5 seconds
         auto now = std::chrono::steady_clock::now();
-        auto sinceLastLog = std::chrono::duration_cast<std::chrono::seconds>(
-            now - lastFpsLog);
-
+        auto sinceLastLog = std::chrono::duration_cast<std::chrono::seconds>(now - lastFpsLog);
         if (sinceLastLog.count() >= 5)
         {
             BasicLogger::logDebug("FPS: " + std::to_string(static_cast<int>(m_impl->currentFps)) +
@@ -377,49 +407,47 @@ int Application::run()
                                   " | Frame: " + std::to_string(m_impl->frameCount));
             lastFpsLog = now;
         }
-
-        // ---------------------------------------------------------------------
-        // 5. Frame Timing (depends on FrameMode)
-        // ---------------------------------------------------------------------
-        switch (m_impl->frameMode)
+    });
+    
+    // -------------------------------------------------------------------------
+    // Connect MainWindow frame mode change signal
+    // -------------------------------------------------------------------------
+    QObject::connect(m_impl->pMainWindow.get(), &MainWindow::frameModeChangeRequested,
+                     [this](int mode) {
+        switch (mode)
         {
-            case FrameMode::Limited:
-            {
-                // Software frame limiting with sleep
-                auto frameEnd = std::chrono::steady_clock::now();
-                auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
-                    frameEnd - frameStart);
-
-                if (elapsed < m_impl->frameDuration)
-                {
-                    std::this_thread::sleep_for(m_impl->frameDuration - elapsed);
-                }
+            case 0: 
+                m_impl->frameMode = FrameMode::Limited;
+                m_impl->pMainWindow->setVSyncOnAllVisualizers(false);
                 break;
-            }
-
-            case FrameMode::Unlimited:
-            {
-                // No waiting - run as fast as possible
-                // (100% CPU usage!)
+            case 1: 
+                m_impl->frameMode = FrameMode::Unlimited;
+                m_impl->pMainWindow->setVSyncOnAllVisualizers(false);
                 break;
-            }
-
-            case FrameMode::VSync:
-            {
-                // TODO: When OpenGL Widget is implemented, SwapBuffers handles VSync
-                // For now, fallback to 60 FPS limited
-                auto frameEnd = std::chrono::steady_clock::now();
-                auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
-                    frameEnd - frameStart);
-
-                constexpr auto vsyncDuration = std::chrono::microseconds(16667);  // ~60 FPS
-                if (elapsed < vsyncDuration)
-                {
-                    std::this_thread::sleep_for(vsyncDuration - elapsed);
-                }
+            case 2: 
+                m_impl->frameMode = FrameMode::VSync;
+                m_impl->pMainWindow->setVSyncOnAllVisualizers(true);
                 break;
-            }
         }
+        m_impl->updateTimerInterval();
+    });
+    
+    // Set initial timer interval based on frame mode
+    m_impl->updateTimerInterval();
+    m_impl->pFrameTimer->start();
+    
+    // Set initial VSync state based on frame mode
+    m_impl->pMainWindow->setVSyncOnAllVisualizers(m_impl->frameMode == FrameMode::VSync);
+    
+    // -------------------------------------------------------------------------
+    // Run Qt Event Loop
+    // -------------------------------------------------------------------------
+    int result = m_impl->pQtApp->exec();
+    
+    m_running = false;
+    if (m_impl->pFrameTimer != nullptr)
+    {
+        m_impl->pFrameTimer->stop();
     }
 
     // -------------------------------------------------------------------------
@@ -429,7 +457,7 @@ int Application::run()
     BasicLogger::logInfo("  Total frames: " + std::to_string(m_impl->frameCount));
     BasicLogger::logInfo("  Final FPS: " + std::to_string(static_cast<int>(m_impl->currentFps)));
 
-    return 0;
+    return result;
 }
 
 void Application::shutdown()
@@ -472,6 +500,7 @@ void Application::setFrameMode(FrameMode mode)
                              std::string(frameModeToString(m_impl->frameMode)) +
                              " -> " + frameModeToString(mode));
         m_impl->frameMode = mode;
+        m_impl->updateTimerInterval();
     }
 }
 

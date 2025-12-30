@@ -14,10 +14,47 @@
 // =============================================================================
 
 #include "pch.h"
-#include "UI/widget/VisualizerWidget.hpp"
+#include "UI/widgets/VisualizerWidget.hpp"
+
+// Qt
+#include <QOpenGLContext>
+#include <QGuiApplication>
+#include <QWindow>
+#include <QString>
 
 // BasicLogger
 #include <BasicLogger.h>
+
+// =============================================================================
+// Platform-specific VSync Support
+// =============================================================================
+
+#if defined(_WIN32)
+    // Windows: wglSwapIntervalEXT
+    typedef int (*PFNWGLSWAPINTERVALEXTPROC)(int interval);
+    static PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = nullptr;
+#elif defined(__linux__) && !defined(__ANDROID__)
+    // Linux: Multiple options depending on display server
+    #include <QtGui/qpa/qplatformnativeinterface.h>
+    
+    // GLX (X11)
+    typedef void (*PFNGLXSWAPINTERVALEXTPROC)(void* display, unsigned long drawable, int interval);
+    typedef int (*PFNGLXSWAPINTERVALMESAPROC)(int interval);
+    static PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT = nullptr;
+    static PFNGLXSWAPINTERVALMESAPROC glXSwapIntervalMESA = nullptr;
+    
+    // EGL (Wayland, also works on X11 with EGL)
+    // eglSwapInterval is a core EGL function, not an extension
+    // We load it dynamically to avoid linking against libEGL
+    typedef unsigned int (*PFNEGLSWAPINTERVALPROC)(void* display, int interval);
+    static PFNEGLSWAPINTERVALPROC eglSwapIntervalFunc = nullptr;
+    
+    // Try to load eglSwapInterval from libEGL
+    #include <dlfcn.h>
+    static void* libEGL = nullptr;
+#elif defined(__APPLE__)
+    #include <OpenGL/OpenGL.h>
+#endif
 
 // =============================================================================
 // Construction / Destruction
@@ -59,14 +96,14 @@ VisualizerWidget::VisualizerWidget(QWidget* parent)
     format.setVersion(3, 3);                              // OpenGL 3.3
     format.setProfile(QSurfaceFormat::CoreProfile);       // Core Profile (modern)
     format.setSwapBehavior(QSurfaceFormat::DoubleBuffer); // Double buffering
-    format.setSwapInterval(1);                            // VSync ON (1 = wait for vsync)
+    format.setSwapInterval(0);                            // VSync OFF - we do software timing
     format.setDepthBufferSize(24);                        // 24-bit depth buffer
     format.setSamples(4);                                 // 4x MSAA
 
     setFormat(format);
 
     BasicLogger::logDebug("  Requested OpenGL 3.3 Core Profile");
-    BasicLogger::logDebug("  VSync: ON (SwapInterval = 1)");
+    BasicLogger::logDebug("  VSync: OFF (using software frame limiting)");
     BasicLogger::logDebug("  MSAA: 4x samples");
 }
 
@@ -114,6 +151,192 @@ void VisualizerWidget::setClearColor(float r, float g, float b, float a)
 
     // Request repaint to show new color
     update();
+}
+
+void VisualizerWidget::setVSync(bool enabled)
+{
+    // -------------------------------------------------------------------------
+    // Qt6 Tutorial: Runtime VSync Control
+    // -------------------------------------------------------------------------
+    // QSurfaceFormat::setSwapInterval() only works BEFORE context creation.
+    // To change VSync at runtime, we need platform-specific APIs.
+    //
+    // The swap interval controls how many vertical retraces to wait:
+    //   0 = No VSync (immediate swap, may tear)
+    //   1 = VSync ON (wait for 1 retrace, typically 60Hz)
+    //   2 = Half refresh rate (30Hz on 60Hz monitor)
+    
+    int interval = enabled ? 1 : 0;
+    
+    // Make our context current
+    makeCurrent();
+    
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    if (ctx == nullptr)
+    {
+        BasicLogger::logWarning("setVSync: No OpenGL context available");
+        doneCurrent();
+        return;
+    }
+    
+#if defined(_WIN32)
+    // -------------------------------------------------------------------------
+    // Windows: wglSwapIntervalEXT
+    // -------------------------------------------------------------------------
+    if (wglSwapIntervalEXT == nullptr)
+    {
+        // Load the extension function
+        wglSwapIntervalEXT = reinterpret_cast<PFNWGLSWAPINTERVALEXTPROC>(
+            ctx->getProcAddress("wglSwapIntervalEXT"));
+    }
+    
+    if (wglSwapIntervalEXT != nullptr)
+    {
+        wglSwapIntervalEXT(interval);
+        BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
+                             " (wglSwapIntervalEXT)");
+    }
+    else
+    {
+        BasicLogger::logWarning("wglSwapIntervalEXT not available");
+    }
+    
+#elif defined(__linux__) && !defined(__ANDROID__)
+    // -------------------------------------------------------------------------
+    // Linux: GLX (X11) or EGL (Wayland/X11)
+    // -------------------------------------------------------------------------
+    // Strategy:
+    // 1. Detect if running on Wayland or X11
+    // 2. Try EGL first (works on both Wayland and modern X11)
+    // 3. Fall back to Mesa GLX extension
+    // 4. Fall back to GLX EXT extension
+    
+    QPlatformNativeInterface* native = QGuiApplication::platformNativeInterface();
+    QString platform = QGuiApplication::platformName();
+    
+    bool success = false;
+    
+    // -------------------------------------------------------------------------
+    // Option 1: EGL (Wayland or X11 with EGL)
+    // -------------------------------------------------------------------------
+    if (!success && native != nullptr)
+    {
+        // Try to get EGL display
+        void* eglDisplay = native->nativeResourceForIntegration("egldisplay");
+        
+        if (eglDisplay != nullptr)
+        {
+            // Load eglSwapInterval from libEGL if not already loaded
+            if (eglSwapIntervalFunc == nullptr)
+            {
+                // First try to get it via Qt's getProcAddress
+                eglSwapIntervalFunc = reinterpret_cast<PFNEGLSWAPINTERVALPROC>(
+                    ctx->getProcAddress("eglSwapInterval"));
+                
+                // If that fails, try loading libEGL directly
+                if (eglSwapIntervalFunc == nullptr)
+                {
+                    if (libEGL == nullptr)
+                    {
+                        libEGL = dlopen("libEGL.so.1", RTLD_LAZY);
+                        if (libEGL == nullptr)
+                        {
+                            libEGL = dlopen("libEGL.so", RTLD_LAZY);
+                        }
+                    }
+                    
+                    if (libEGL != nullptr)
+                    {
+                        eglSwapIntervalFunc = reinterpret_cast<PFNEGLSWAPINTERVALPROC>(
+                            dlsym(libEGL, "eglSwapInterval"));
+                    }
+                }
+            }
+            
+            if (eglSwapIntervalFunc != nullptr)
+            {
+                if (eglSwapIntervalFunc(eglDisplay, interval))
+                {
+                    BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
+                                         " (eglSwapInterval - " + platform.toStdString() + ")");
+                    success = true;
+                }
+            }
+        }
+    }
+    
+    // -------------------------------------------------------------------------
+    // Option 2: Mesa GLX extension (X11, simple API)
+    // -------------------------------------------------------------------------
+    if (!success && platform == "xcb")
+    {
+        if (glXSwapIntervalMESA == nullptr)
+        {
+            glXSwapIntervalMESA = reinterpret_cast<PFNGLXSWAPINTERVALMESAPROC>(
+                ctx->getProcAddress("glXSwapIntervalMESA"));
+        }
+        
+        if (glXSwapIntervalMESA != nullptr)
+        {
+            glXSwapIntervalMESA(interval);
+            BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
+                                 " (glXSwapIntervalMESA)");
+            success = true;
+        }
+    }
+    
+    // -------------------------------------------------------------------------
+    // Option 3: GLX EXT extension (X11, needs Display + Drawable)
+    // -------------------------------------------------------------------------
+    if (!success && platform == "xcb" && native != nullptr)
+    {
+        if (glXSwapIntervalEXT == nullptr)
+        {
+            glXSwapIntervalEXT = reinterpret_cast<PFNGLXSWAPINTERVALEXTPROC>(
+                ctx->getProcAddress("glXSwapIntervalEXT"));
+        }
+        
+        if (glXSwapIntervalEXT != nullptr)
+        {
+            void* display = native->nativeResourceForWindow("display", windowHandle());
+            void* drawable = native->nativeResourceForWindow("drawable", windowHandle());
+            
+            if (display != nullptr && drawable != nullptr)
+            {
+                unsigned long glxDrawable = *reinterpret_cast<unsigned long*>(drawable);
+                glXSwapIntervalEXT(display, glxDrawable, interval);
+                BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
+                                     " (glXSwapIntervalEXT)");
+                success = true;
+            }
+        }
+    }
+    
+    if (!success)
+    {
+        BasicLogger::logWarning("VSync control not available on " + platform.toStdString() + 
+                                " (tried EGL, Mesa GLX, GLX EXT)");
+    }
+    
+#elif defined(__APPLE__)
+    // -------------------------------------------------------------------------
+    // macOS: CGLSetParameter
+    // -------------------------------------------------------------------------
+    CGLContextObj cglContext = CGLGetCurrentContext();
+    if (cglContext != nullptr)
+    {
+        GLint swapInterval = interval;
+        CGLSetParameter(cglContext, kCGLCPSwapInterval, &swapInterval);
+        BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
+                             " (CGLSetParameter)");
+    }
+    else
+    {
+        BasicLogger::logWarning("CGLGetCurrentContext returned null");
+    }
+#endif
+
+    doneCurrent();
 }
 
 // =============================================================================

@@ -153,6 +153,20 @@ public:
      */
     void setClearColor(float r, float g, float b, float a = 1.0f);
 
+    /**
+     * @brief Enables or disables VSync at runtime.
+     *
+     * @param enabled true = VSync ON, false = VSync OFF
+     *
+     * Uses platform-specific APIs:
+     *   - Windows: wglSwapIntervalEXT
+     *   - Linux: glXSwapIntervalEXT
+     *   - macOS: CGLSetParameter
+     *
+     * @note Must be called after OpenGL context is initialized.
+     */
+    void setVSync(bool enabled);
+
     // =========================================================================
     // Future Interface (TODO)
     // =========================================================================

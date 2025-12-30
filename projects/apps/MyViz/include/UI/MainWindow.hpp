@@ -149,6 +149,25 @@ public slots:
      * @brief Creates a new visualizer panel.
      */
     void onNewVisualizer();
+    
+    /**
+     * @brief Sets VSync on all visualizers.
+     *
+     * @param enabled true = VSync ON, false = VSync OFF
+     */
+    void setVSyncOnAllVisualizers(bool enabled);
+
+signals:
+    // =========================================================================
+    // Signals
+    // =========================================================================
+
+    /**
+     * @brief Emitted when user changes frame mode via menu.
+     *
+     * @param mode 0=Limited, 1=Unlimited, 2=VSync
+     */
+    void frameModeChangeRequested(int mode);
 
 private slots:
     // =========================================================================

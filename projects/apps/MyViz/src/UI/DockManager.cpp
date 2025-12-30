@@ -14,7 +14,7 @@
 
 #include "pch.h"
 #include "UI/DockManager.hpp"
-#include "UI/widget/VisualizerWidget.hpp"
+#include "UI/widgets/VisualizerWidget.hpp"
 
 // Qt-ADS
 #include <DockManager.h>

@@ -16,7 +16,7 @@
 #include "pch.h"
 #include "UI/MainWindow.hpp"
 #include "UI/DockManager.hpp"
-#include "UI/widget/VisualizerWidget.hpp"
+#include "UI/widgets/VisualizerWidget.hpp"
 
 // Qt
 #include <QMenuBar>
@@ -139,6 +139,20 @@ void MainWindow::onNewVisualizer()
         
         BasicLogger::logInfo("Created new visualizer: " + title.toStdString());
     }
+}
+
+void MainWindow::setVSyncOnAllVisualizers(bool enabled)
+{
+    auto vizList = visualizers();
+    for (auto* pViz : vizList)
+    {
+        if (pViz != nullptr)
+        {
+            pViz->setVSync(enabled);
+        }
+    }
+    BasicLogger::logDebug("VSync " + std::string(enabled ? "enabled" : "disabled") + 
+                          " on " + std::to_string(vizList.size()) + " visualizer(s)");
 }
 
 // =============================================================================
@@ -283,6 +297,22 @@ void MainWindow::setupMenuBar()
     pFrameModeGroup->addAction(pLimitedAction);
     pFrameModeGroup->addAction(pUnlimitedAction);
     pFrameModeGroup->addAction(pVSyncAction);
+    
+    // Connect actions to signal
+    connect(pLimitedAction, &QAction::triggered, this, [this]() {
+        BasicLogger::logInfo("Frame mode changed to: Limited");
+        emit frameModeChangeRequested(0);  // 0 = Limited
+    });
+    
+    connect(pUnlimitedAction, &QAction::triggered, this, [this]() {
+        BasicLogger::logInfo("Frame mode changed to: Unlimited");
+        emit frameModeChangeRequested(1);  // 1 = Unlimited
+    });
+    
+    connect(pVSyncAction, &QAction::triggered, this, [this]() {
+        BasicLogger::logInfo("Frame mode changed to: VSync");
+        emit frameModeChangeRequested(2);  // 2 = VSync
+    });
 
     // -------------------------------------------------------------------------
     // Help Menu
