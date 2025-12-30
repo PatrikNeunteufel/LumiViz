@@ -29,6 +29,7 @@
 #include "UI/MainWindow.hpp"
 #include "core/GpuInfo.hpp"
 #include "core/GpuSelector.hpp"
+#include "visualizers/VisualizerInit.hpp"
 
 // Qt includes
 #include <QApplication>
@@ -304,6 +305,12 @@ bool Application::init(int argc, char* argv[])
     m_impl->pQtApp->setApplicationName(QString::fromStdString(m_impl->name));
     m_impl->pQtApp->setApplicationVersion(QString::fromStdString(m_impl->version));
     m_impl->pQtApp->setOrganizationName(QStringLiteral("MyViz Project"));
+
+    // -------------------------------------------------------------------------
+    // Initialize Visualizers (force static registration)
+    // -------------------------------------------------------------------------
+    BasicLogger::logDebug("Initializing visualizers...");
+    initializeVisualizers();
 
     // -------------------------------------------------------------------------
     // Create MainWindow (this creates the OpenGL context)

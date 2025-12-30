@@ -19,6 +19,7 @@ set(_local_headers
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)
+    "${CMAKE_CURRENT_LIST_DIR}/WidgetBase.tpp"
 )
 set(_local_inlines
     # (no inlines - *.inl)

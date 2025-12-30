@@ -17,6 +17,9 @@
 #include "UI/MainWindow.hpp"
 #include "UI/managers/DockManager.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "services/ServiceContainer.hpp"
+#include "services/IEventBus.hpp"
+#include "services/EventBus.hpp"
 
 // Qt
 #include <QMenuBar>
@@ -38,6 +41,13 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
     BasicLogger::logDebug("MainWindow constructor");
+    
+    // Create ServiceContainer
+    m_pServices = std::make_unique<ServiceContainer>();
+    
+    // Register EventBus service
+    m_pServices->registerSingleton<IEventBus, EventBus>();
+    
     setupUi();
 }
 
@@ -204,7 +214,7 @@ void MainWindow::setupUi()
     // DockManager creates the Qt-ADS CDockManager internally.
     // It takes over the central area of MainWindow.
 
-    m_pDockManager = std::make_unique<DockManager>(this);
+    m_pDockManager = std::make_unique<DockManager>(*m_pServices, this);
 
     // Connect signals
     connect(m_pDockManager.get(), &DockManager::visualizerCreated,

@@ -56,6 +56,7 @@ namespace ads
 }
 
 class VisualizerWidget;
+class ServiceContainer;
 
 // =============================================================================
 // DockPosition Enum
@@ -113,9 +114,10 @@ public:
     /**
      * @brief Constructs the DockManager.
      *
+     * @param services ServiceContainer for dependency injection
      * @param pMainWindow Parent main window (required for Qt-ADS)
      */
-    explicit DockManager(QMainWindow* pMainWindow);
+    explicit DockManager(ServiceContainer& services, QMainWindow* pMainWindow);
 
     /**
      * @brief Destructor.

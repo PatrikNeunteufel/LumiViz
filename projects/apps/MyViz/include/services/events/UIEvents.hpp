@@ -179,3 +179,37 @@ struct FpsUpdateEvent : public Event
         , frameCount(count)
     {}
 };
+
+// =============================================================================
+// Visualizer Events
+// =============================================================================
+
+/**
+ * @brief Request to change the active visualizer
+ */
+struct ChangeVisualizerEvent : public Event
+{
+    EVENT_TYPE_NAME("ChangeVisualizerEvent")
+
+    std::string visualizerId;
+
+    explicit ChangeVisualizerEvent(std::string id)
+        : visualizerId(std::move(id))
+    {}
+};
+
+/**
+ * @brief Emitted when the visualizer has changed
+ */
+struct VisualizerChangedEvent : public Event
+{
+    EVENT_TYPE_NAME("VisualizerChangedEvent")
+
+    std::string visualizerId;
+    std::string visualizerName;
+
+    VisualizerChangedEvent(std::string id, std::string name)
+        : visualizerId(std::move(id))
+        , visualizerName(std::move(name))
+    {}
+};

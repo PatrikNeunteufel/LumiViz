@@ -12,6 +12,7 @@ set(_local_sources
     # (no sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/PulsingVisualizer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerBase.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/VisualizerInit.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)

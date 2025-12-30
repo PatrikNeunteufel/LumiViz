@@ -15,6 +15,7 @@
 #include "pch.h"
 #include "UI/managers/DockManager.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "services/ServiceContainer.hpp"
 
 // Qt-ADS
 #include <DockManager.h>
@@ -37,6 +38,7 @@
 
 struct DockManager::Impl
 {
+    ServiceContainer* pServices{nullptr};
     QMainWindow* pMainWindow{nullptr};
     ads::CDockManager* pAdsDockManager{nullptr};
     
@@ -80,12 +82,13 @@ ads::DockWidgetArea positionToDockArea(DockPosition pos)
 // Construction / Destruction
 // =============================================================================
 
-DockManager::DockManager(QMainWindow* pMainWindow)
+DockManager::DockManager(ServiceContainer& services, QMainWindow* pMainWindow)
     : QObject(pMainWindow)
     , m_impl(std::make_unique<Impl>())
 {
     BasicLogger::logDebug("DockManager constructor");
     
+    m_impl->pServices = &services;
     m_impl->pMainWindow = pMainWindow;
     
     // -------------------------------------------------------------------------
@@ -154,8 +157,8 @@ VisualizerWidget* DockManager::createVisualizer(
 {
     BasicLogger::logDebug("Creating visualizer: " + title.toStdString());
     
-    // Create the OpenGL widget
-    auto* pVisualizer = new VisualizerWidget();
+    // Create the OpenGL widget with ServiceContainer
+    auto* pVisualizer = new VisualizerWidget(*m_impl->pServices);
     
     // Create dock widget wrapper
     auto* pDock = new ads::CDockWidget(title);
@@ -207,8 +210,8 @@ VisualizerWidget* DockManager::createVisualizerRelativeTo(
 {
     BasicLogger::logDebug("Creating visualizer relative: " + title.toStdString());
     
-    // Create the OpenGL widget
-    auto* pVisualizer = new VisualizerWidget();
+    // Create the OpenGL widget with ServiceContainer
+    auto* pVisualizer = new VisualizerWidget(*m_impl->pServices);
     
     // Create dock widget wrapper
     auto* pDock = new ads::CDockWidget(title);

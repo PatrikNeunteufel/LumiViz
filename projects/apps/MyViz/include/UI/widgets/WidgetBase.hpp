@@ -1,35 +1,58 @@
 /**
  ****************************************************************************************
  * @file   WidgetBase.hpp
- * @brief  Base class for registerable widgets
+ * @brief  Template base class for registerable widgets
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @details
- * ## Qt6 Tutorial: Widget-Basisklasse
+ * ## Qt6 Tutorial: Widget-Basisklasse (Template)
  *
- * WidgetBase bietet:
- *   - IWidget-Implementierung
- *   - ServiceContainer-Zugriff
- *   - EventBus-Convenience-Methoden
+ * WidgetBase ist jetzt ein Template, das verschiedene Qt-Widget-Basisklassen
+ * unterstützt. Dies ermöglicht einheitlichen ServiceContainer/EventBus-Zugriff
+ * für alle Widget-Typen.
+ *
+ * ### Unterstützte Basisklassen
+ *
+ * | Basisklasse       | Include                    | Verwendung                    |
+ * |-------------------|----------------------------|-------------------------------|
+ * | QWidget           | `<QWidget>`                | Standard-Widgets              |
+ * | QOpenGLWidget     | `<QOpenGLWidget>`          | OpenGL-Rendering              |
+ * | QFrame            | `<QFrame>`                 | Widgets mit Rahmen            |
+ * | QAbstractScrollArea | `<QAbstractScrollArea>`  | Scrollbare Bereiche           |
+ * | QGraphicsView     | `<QGraphicsView>`          | 2D-Szenen                     |
+ * | QQuickWidget      | `<QQuickWidget>`           | QML-Integration               |
  *
  * ### Verwendung
  *
  * ```cpp
- * class VolumeWidget : public WidgetBase {
+ * // Standard-Widget
+ * class VolumeWidget : public WidgetBase<QWidget> {
  *     Q_OBJECT
  * public:
  *     VolumeWidget(ServiceContainer& services, QWidget* parent = nullptr)
  *         : WidgetBase(services, "volume", tr("Volume"), parent)
- *     {
- *         setupUI();
- *     }
+ *     {}
  * };
  *
- * // Self-registration:
- * REGISTER_WIDGET("volume", "Volume Control", VolumeWidget)
+ * // OpenGL-Widget
+ * class VisualizerWidget : public WidgetBase<QOpenGLWidget>,
+ *                          protected QOpenGLFunctions {
+ *     Q_OBJECT
+ * public:
+ *     VisualizerWidget(ServiceContainer& services, QWidget* parent = nullptr)
+ *         : WidgetBase(services, "visualizer", tr("Visualizer"), parent)
+ *     {}
+ * };
+ * ```
+ *
+ * ### Type Aliases
+ *
+ * ```cpp
+ * using StandardWidgetBase = WidgetBase<QWidget>;
+ * using OpenGLWidgetBase = WidgetBase<QOpenGLWidget>;
  * ```
  ****************************************************************************************
  */
@@ -47,13 +70,20 @@ class IEventBus;
 
 /**
  * @class WidgetBase
- * @brief Abstract base class for registerable widgets
+ * @brief Template base class for registerable widgets
  *
- * Implements IWidget and provides common functionality.
+ * @tparam BaseWidget Qt widget base class (QWidget, QOpenGLWidget, etc.)
+ *
+ * Implements IWidget and provides:
+ *   - ServiceContainer access
+ *   - EventBus convenience methods
+ *   - Auto start/stop on show/hide
  */
-class WidgetBase : public QWidget, public IWidget
+template<typename BaseWidget = QWidget>
+class WidgetBase : public BaseWidget, public IWidget
 {
-    Q_OBJECT
+    // Note: Q_OBJECT cannot be used in templates directly.
+    // Derived classes must add Q_OBJECT themselves.
 
 public:
     /**
@@ -86,27 +116,15 @@ public:
      */
     [[nodiscard]] bool isUpdating() const { return m_isUpdating; }
 
-public Q_SLOTS:
     /**
      * @brief Start widget updates
      */
-    void start();
+    void startUpdates() override;
 
     /**
      * @brief Stop widget updates
      */
-    void stop();
-
-Q_SIGNALS:
-    /**
-     * @brief Emitted when updates start
-     */
-    void updatesStarted();
-
-    /**
-     * @brief Emitted when updates stop
-     */
-    void updatesStopped();
+    void stopUpdates() override;
 
 protected:
     /**
@@ -117,8 +135,23 @@ protected:
 
     /**
      * @brief Access the event bus (convenience)
+     * @return EventBus pointer or nullptr if not registered
      */
-    [[nodiscard]] IEventBus* eventBus() const;
+    [[nodiscard]] IEventBus* eventBus();
+
+    /**
+     * @brief Called when updates start
+     *
+     * Override to start timers, animations, etc.
+     */
+    virtual void onStartUpdates() {}
+
+    /**
+     * @brief Called when updates stop
+     *
+     * Override to stop timers, cleanup, etc.
+     */
+    virtual void onStopUpdates() {}
 
     /**
      * @brief Show event - auto-starts updates
@@ -136,3 +169,21 @@ private:
     QString m_name;
     bool m_isUpdating = false;
 };
+
+// =============================================================================
+// Type Aliases for Common Base Classes
+// =============================================================================
+
+/**
+ * @brief Standard widget base (QWidget)
+ */
+using StandardWidgetBase = WidgetBase<QWidget>;
+
+// Note: OpenGLWidgetBase requires #include <QOpenGLWidget> before use
+// using OpenGLWidgetBase = WidgetBase<QOpenGLWidget>;
+
+// =============================================================================
+// Template Implementation
+// =============================================================================
+
+#include "WidgetBase.tpp"

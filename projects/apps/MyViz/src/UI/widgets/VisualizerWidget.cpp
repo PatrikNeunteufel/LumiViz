@@ -6,6 +6,7 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
+ * @version 2.1.0
  ****************************************************************************************
  */
 
@@ -15,6 +16,10 @@
 
 #include "pch.h"
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "visualizers/IVisualizer.hpp"
+#include "services/VisualizerRegistry.hpp"
+#include "services/IEventBus.hpp"
+#include "services/events/UIEvents.hpp"
 
 // Qt
 #include <QOpenGLContext>
@@ -31,25 +36,22 @@
 
 #if defined(_WIN32)
     // Windows: wglSwapIntervalEXT
-    typedef int (*PFNWGLSWAPINTERVALEXTPROC)(int interval);
+    using PFNWGLSWAPINTERVALEXTPROC = int (*)(int interval);
     static PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = nullptr;
 #elif defined(__linux__) && !defined(__ANDROID__)
     // Linux: Multiple options depending on display server
     #include <QtGui/qpa/qplatformnativeinterface.h>
     
     // GLX (X11)
-    typedef void (*PFNGLXSWAPINTERVALEXTPROC)(void* display, unsigned long drawable, int interval);
-    typedef int (*PFNGLXSWAPINTERVALMESAPROC)(int interval);
+    using PFNGLXSWAPINTERVALEXTPROC = void (*)(void* display, unsigned long drawable, int interval);
+    using PFNGLXSWAPINTERVALMESAPROC = int (*)(int interval);
     static PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT = nullptr;
     static PFNGLXSWAPINTERVALMESAPROC glXSwapIntervalMESA = nullptr;
     
     // EGL (Wayland, also works on X11 with EGL)
-    // eglSwapInterval is a core EGL function, not an extension
-    // We load it dynamically to avoid linking against libEGL
-    typedef unsigned int (*PFNEGLSWAPINTERVALPROC)(void* display, int interval);
+    using PFNEGLSWAPINTERVALPROC = unsigned int (*)(void* display, int interval);
     static PFNEGLSWAPINTERVALPROC eglSwapIntervalFunc = nullptr;
     
-    // Try to load eglSwapInterval from libEGL
     #include <dlfcn.h>
     static void* libEGL = nullptr;
 #elif defined(__APPLE__)
@@ -60,38 +62,18 @@
 // Construction / Destruction
 // =============================================================================
 
-VisualizerWidget::VisualizerWidget(QWidget* parent)
-    : QOpenGLWidget(parent)
+VisualizerWidget::VisualizerWidget(ServiceContainer& services, QWidget* parent)
+    : OpenGLWidgetBase(services, 
+                       QStringLiteral("visualizer"), 
+                       tr("Visualizer"), 
+                       parent)
     , QOpenGLFunctions()
 {
-    // -------------------------------------------------------------------------
-    // Qt6 Tutorial: Constructor
-    // -------------------------------------------------------------------------
-    // Keep the constructor lightweight!
-    //
-    // DON'T do any OpenGL calls here - the context doesn't exist yet.
-    // OpenGL setup happens in initializeGL().
-    //
-    // What we CAN do here:
-    //   - Set widget attributes
-    //   - Connect signals/slots
-    //   - Initialize non-OpenGL members
-
     BasicLogger::logDebug("VisualizerWidget constructor");
 
     // -------------------------------------------------------------------------
-    // Qt6 Tutorial: Surface Format
+    // Surface Format Configuration
     // -------------------------------------------------------------------------
-    // QSurfaceFormat controls the OpenGL context properties.
-    // We can request specific features here.
-    //
-    // Common settings:
-    //   - setVersion(major, minor) - OpenGL version
-    //   - setProfile(CoreProfile)  - Modern OpenGL (no deprecated functions)
-    //   - setSwapBehavior(...)     - Single/Double/Triple buffering
-    //   - setSwapInterval(1)       - VSync (1 = on, 0 = off)
-    //   - setSamples(4)            - MSAA anti-aliasing
-
     QSurfaceFormat format;
     format.setVersion(3, 3);                              // OpenGL 3.3
     format.setProfile(QSurfaceFormat::CoreProfile);       // Core Profile (modern)
@@ -102,6 +84,9 @@ VisualizerWidget::VisualizerWidget(QWidget* parent)
 
     setFormat(format);
 
+    // Start frame timer
+    m_frameTimer.start();
+
     BasicLogger::logDebug("  Requested OpenGL 3.3 Core Profile");
     BasicLogger::logDebug("  VSync: OFF (using software frame limiting)");
     BasicLogger::logDebug("  MSAA: 4x samples");
@@ -109,33 +94,169 @@ VisualizerWidget::VisualizerWidget(QWidget* parent)
 
 VisualizerWidget::~VisualizerWidget()
 {
-    // -------------------------------------------------------------------------
-    // Qt6 Tutorial: Destructor Cleanup
-    // -------------------------------------------------------------------------
-    // The OpenGL context is still valid here, so we can cleanup OpenGL resources.
-    //
-    // IMPORTANT: Call makeCurrent() before deleting OpenGL objects!
-    // This ensures we're working with the correct context.
-
     BasicLogger::logDebug("VisualizerWidget destructor");
     BasicLogger::logDebug("  Total frames rendered: " + std::to_string(m_frameCount));
 
-    // Make our context current for cleanup
+    // Make context current for cleanup
     makeCurrent();
 
-    // TODO: Delete OpenGL resources here
-    // if (m_vao != 0)
-    // {
-    //     glDeleteVertexArrays(1, &m_vao);
-    // }
-    // if (m_vbo != 0)
-    // {
-    //     glDeleteBuffers(1, &m_vbo);
-    // }
-    // m_pShaderProgram.reset();
+    // Cleanup active visualizer
+    cleanupVisualizer();
 
-    // Release context
     doneCurrent();
+}
+
+// =============================================================================
+// WidgetBase Overrides
+// =============================================================================
+
+void VisualizerWidget::onStartUpdates()
+{
+    BasicLogger::logDebug("VisualizerWidget::onStartUpdates()");
+    // Could start a render timer here if needed
+    update();
+}
+
+void VisualizerWidget::onStopUpdates()
+{
+    BasicLogger::logDebug("VisualizerWidget::onStopUpdates()");
+    // Could stop render timer here
+}
+
+// =============================================================================
+// Visualizer Management
+// =============================================================================
+
+bool VisualizerWidget::setVisualizer(const QString& id)
+{
+    BasicLogger::logInfo("VisualizerWidget::setVisualizer(\"" + id.toStdString() + "\")");
+
+    // Check if already active
+    if (id == m_currentVisualizerId && m_visualizer != nullptr)
+    {
+        BasicLogger::logDebug("  Visualizer already active");
+        return true;
+    }
+
+    // Check if registered
+    auto& registry = VisualizerRegistry::instance();
+    if (!registry.has(id.toStdString()))
+    {
+        QString error = QStringLiteral("Visualizer not found: ") + id;
+        BasicLogger::logWarning("  " + error.toStdString());
+        Q_EMIT visualizerError(id, error);
+        return false;
+    }
+
+    // Make context current for OpenGL operations
+    makeCurrent();
+
+    // Cleanup current visualizer
+    cleanupVisualizer();
+
+    // Create new visualizer
+    m_visualizer = registry.create(id.toStdString());
+    if (m_visualizer == nullptr)
+    {
+        QString error = QStringLiteral("Failed to create visualizer: ") + id;
+        BasicLogger::logError("  " + error.toStdString());
+        Q_EMIT visualizerError(id, error);
+        doneCurrent();
+        return false;
+    }
+
+    m_currentVisualizerId = id;
+
+    // Initialize if OpenGL is ready
+    if (m_glInitialized)
+    {
+        m_visualizer->initialize();
+        m_visualizer->resize(size());
+        BasicLogger::logInfo("  Visualizer initialized: " + 
+                             m_visualizer->visualizerName().toStdString());
+    }
+
+    doneCurrent();
+
+    // Publish event via EventBus
+    auto* bus = eventBus();
+    if (bus != nullptr)
+    {
+        bus->publish(VisualizerChangedEvent{
+            id.toStdString(),
+            m_visualizer->visualizerName().toStdString()
+        });
+    }
+
+    Q_EMIT visualizerChanged(id);
+    update(); // Request repaint
+
+    return true;
+}
+
+QString VisualizerWidget::currentVisualizerName() const
+{
+    if (m_visualizer != nullptr)
+    {
+        return m_visualizer->visualizerName();
+    }
+    return QString();
+}
+
+void VisualizerWidget::loadDefaultVisualizer()
+{
+    // Try to load "pulsing" as default
+    if (!setVisualizer(QStringLiteral("pulsing")))
+    {
+        // If pulsing not available, try first registered visualizer
+        auto& registry = VisualizerRegistry::instance();
+        auto descriptors = registry.descriptors();
+        
+        if (!descriptors.empty())
+        {
+            setVisualizer(QString::fromStdString(descriptors[0].id));
+        }
+        else
+        {
+            BasicLogger::logWarning("No visualizers registered!");
+        }
+    }
+}
+
+void VisualizerWidget::cleanupVisualizer()
+{
+    if (m_visualizer != nullptr)
+    {
+        BasicLogger::logDebug("Cleaning up visualizer: " + m_currentVisualizerId.toStdString());
+        
+        if (m_visualizer->isInitialized())
+        {
+            m_visualizer->cleanup();
+        }
+        
+        m_visualizer.reset();
+        m_currentVisualizerId.clear();
+    }
+}
+
+// =============================================================================
+// Audio Data Pass-Through
+// =============================================================================
+
+void VisualizerWidget::updateSpectrum(const float* spectrum, int count)
+{
+    if (m_visualizer != nullptr)
+    {
+        m_visualizer->updateSpectrum(spectrum, count);
+    }
+}
+
+void VisualizerWidget::updateWaveform(const float* waveform, int count)
+{
+    if (m_visualizer != nullptr)
+    {
+        m_visualizer->updateWaveform(waveform, count);
+    }
 }
 
 // =============================================================================
@@ -148,27 +269,13 @@ void VisualizerWidget::setClearColor(float r, float g, float b, float a)
     m_clearG = g;
     m_clearB = b;
     m_clearA = a;
-
-    // Request repaint to show new color
     update();
 }
 
 void VisualizerWidget::setVSync(bool enabled)
 {
-    // -------------------------------------------------------------------------
-    // Qt6 Tutorial: Runtime VSync Control
-    // -------------------------------------------------------------------------
-    // QSurfaceFormat::setSwapInterval() only works BEFORE context creation.
-    // To change VSync at runtime, we need platform-specific APIs.
-    //
-    // The swap interval controls how many vertical retraces to wait:
-    //   0 = No VSync (immediate swap, may tear)
-    //   1 = VSync ON (wait for 1 retrace, typically 60Hz)
-    //   2 = Half refresh rate (30Hz on 60Hz monitor)
-    
     int interval = enabled ? 1 : 0;
     
-    // Make our context current
     makeCurrent();
     
     QOpenGLContext* ctx = QOpenGLContext::currentContext();
@@ -180,12 +287,8 @@ void VisualizerWidget::setVSync(bool enabled)
     }
     
 #if defined(_WIN32)
-    // -------------------------------------------------------------------------
-    // Windows: wglSwapIntervalEXT
-    // -------------------------------------------------------------------------
     if (wglSwapIntervalEXT == nullptr)
     {
-        // Load the extension function
         wglSwapIntervalEXT = reinterpret_cast<PFNWGLSWAPINTERVALEXTPROC>(
             ctx->getProcAddress("wglSwapIntervalEXT"));
     }
@@ -202,108 +305,69 @@ void VisualizerWidget::setVSync(bool enabled)
     }
     
 #elif defined(__linux__) && !defined(__ANDROID__)
-    // -------------------------------------------------------------------------
-    // Linux: GLX (X11) or EGL (Wayland/X11)
-    // -------------------------------------------------------------------------
-    // Strategy:
-    // 1. Detect if running on Wayland or X11
-    // 2. Try EGL first (works on both Wayland and modern X11)
-    // 3. Fall back to Mesa GLX extension
-    // 4. Fall back to GLX EXT extension
-    
-    QPlatformNativeInterface* native = QGuiApplication::platformNativeInterface();
+    // Try EGL first (works on both Wayland and X11 with EGL)
+    bool success = false;
     QString platform = QGuiApplication::platformName();
     
-    bool success = false;
-    
-    // -------------------------------------------------------------------------
-    // Option 1: EGL (Wayland or X11 with EGL)
-    // -------------------------------------------------------------------------
-    if (!success && native != nullptr)
+    if (libEGL == nullptr)
     {
-        // Try to get EGL display
-        void* eglDisplay = native->nativeResourceForIntegration("egldisplay");
-        
-        if (eglDisplay != nullptr)
+        libEGL = dlopen("libEGL.so.1", RTLD_LAZY);
+        if (libEGL != nullptr)
         {
-            // Load eglSwapInterval from libEGL if not already loaded
-            if (eglSwapIntervalFunc == nullptr)
+            eglSwapIntervalFunc = reinterpret_cast<PFNEGLSWAPINTERVALPROC>(
+                dlsym(libEGL, "eglSwapInterval"));
+        }
+    }
+    
+    if (eglSwapIntervalFunc != nullptr)
+    {
+        QPlatformNativeInterface* native = QGuiApplication::platformNativeInterface();
+        if (native != nullptr)
+        {
+            void* eglDisplay = native->nativeResourceForWindow("egldisplay", windowHandle());
+            if (eglDisplay != nullptr)
             {
-                // First try to get it via Qt's getProcAddress
-                eglSwapIntervalFunc = reinterpret_cast<PFNEGLSWAPINTERVALPROC>(
-                    ctx->getProcAddress("eglSwapInterval"));
-                
-                // If that fails, try loading libEGL directly
-                if (eglSwapIntervalFunc == nullptr)
-                {
-                    if (libEGL == nullptr)
-                    {
-                        libEGL = dlopen("libEGL.so.1", RTLD_LAZY);
-                        if (libEGL == nullptr)
-                        {
-                            libEGL = dlopen("libEGL.so", RTLD_LAZY);
-                        }
-                    }
-                    
-                    if (libEGL != nullptr)
-                    {
-                        eglSwapIntervalFunc = reinterpret_cast<PFNEGLSWAPINTERVALPROC>(
-                            dlsym(libEGL, "eglSwapInterval"));
-                    }
-                }
-            }
-            
-            if (eglSwapIntervalFunc != nullptr)
-            {
-                if (eglSwapIntervalFunc(eglDisplay, interval))
-                {
-                    BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
-                                         " (eglSwapInterval - " + platform.toStdString() + ")");
-                    success = true;
-                }
+                eglSwapIntervalFunc(eglDisplay, interval);
+                BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
+                                     " (eglSwapInterval)");
+                success = true;
             }
         }
     }
     
-    // -------------------------------------------------------------------------
-    // Option 2: Mesa GLX extension (X11, simple API)
-    // -------------------------------------------------------------------------
-    if (!success && platform == "xcb")
+    // Try GLX Mesa extension
+    if (!success && glXSwapIntervalMESA == nullptr)
     {
-        if (glXSwapIntervalMESA == nullptr)
-        {
-            glXSwapIntervalMESA = reinterpret_cast<PFNGLXSWAPINTERVALMESAPROC>(
-                ctx->getProcAddress("glXSwapIntervalMESA"));
-        }
-        
-        if (glXSwapIntervalMESA != nullptr)
-        {
-            glXSwapIntervalMESA(interval);
-            BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
-                                 " (glXSwapIntervalMESA)");
-            success = true;
-        }
+        glXSwapIntervalMESA = reinterpret_cast<PFNGLXSWAPINTERVALMESAPROC>(
+            ctx->getProcAddress("glXSwapIntervalMESA"));
     }
     
-    // -------------------------------------------------------------------------
-    // Option 3: GLX EXT extension (X11, needs Display + Drawable)
-    // -------------------------------------------------------------------------
-    if (!success && platform == "xcb" && native != nullptr)
+    if (!success && glXSwapIntervalMESA != nullptr)
     {
-        if (glXSwapIntervalEXT == nullptr)
-        {
-            glXSwapIntervalEXT = reinterpret_cast<PFNGLXSWAPINTERVALEXTPROC>(
-                ctx->getProcAddress("glXSwapIntervalEXT"));
-        }
-        
-        if (glXSwapIntervalEXT != nullptr)
+        glXSwapIntervalMESA(interval);
+        BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
+                             " (glXSwapIntervalMESA)");
+        success = true;
+    }
+    
+    // Try GLX EXT extension
+    if (!success && glXSwapIntervalEXT == nullptr)
+    {
+        glXSwapIntervalEXT = reinterpret_cast<PFNGLXSWAPINTERVALEXTPROC>(
+            ctx->getProcAddress("glXSwapIntervalEXT"));
+    }
+    
+    if (!success && glXSwapIntervalEXT != nullptr)
+    {
+        QPlatformNativeInterface* native = QGuiApplication::platformNativeInterface();
+        if (native != nullptr)
         {
             void* display = native->nativeResourceForWindow("display", windowHandle());
             void* drawable = native->nativeResourceForWindow("drawable", windowHandle());
             
             if (display != nullptr && drawable != nullptr)
             {
-                unsigned long glxDrawable = *reinterpret_cast<unsigned long*>(drawable);
+                auto glxDrawable = *reinterpret_cast<unsigned long*>(drawable);
                 glXSwapIntervalEXT(display, glxDrawable, interval);
                 BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
                                      " (glXSwapIntervalEXT)");
@@ -314,14 +378,10 @@ void VisualizerWidget::setVSync(bool enabled)
     
     if (!success)
     {
-        BasicLogger::logWarning("VSync control not available on " + platform.toStdString() + 
-                                " (tried EGL, Mesa GLX, GLX EXT)");
+        BasicLogger::logWarning("VSync control not available on " + platform.toStdString());
     }
     
 #elif defined(__APPLE__)
-    // -------------------------------------------------------------------------
-    // macOS: CGLSetParameter
-    // -------------------------------------------------------------------------
     CGLContextObj cglContext = CGLGetCurrentContext();
     if (cglContext != nullptr)
     {
@@ -345,30 +405,12 @@ void VisualizerWidget::setVSync(bool enabled)
 
 void VisualizerWidget::initializeGL()
 {
-    // -------------------------------------------------------------------------
-    // Qt6 Tutorial: initializeGL()
-    // -------------------------------------------------------------------------
-    // Called ONCE when the OpenGL context is first created.
-    // This happens when the widget is first shown.
-    //
-    // MUST call initializeOpenGLFunctions() first!
-    // This sets up the function pointers for OpenGL calls.
-
     BasicLogger::logInfo("VisualizerWidget::initializeGL()");
 
-    // -------------------------------------------------------------------------
-    // Step 1: Initialize OpenGL Functions
-    // -------------------------------------------------------------------------
-    // This is REQUIRED before any gl* calls!
-    // QOpenGLFunctions provides cross-platform function loading.
-
+    // Initialize OpenGL functions
     initializeOpenGLFunctions();
 
-    // -------------------------------------------------------------------------
-    // Log OpenGL Information
-    // -------------------------------------------------------------------------
-    // Useful for debugging and verifying the correct context was created.
-
+    // Log OpenGL information
     const char* vendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
     const char* renderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
     const char* version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
@@ -380,124 +422,70 @@ void VisualizerWidget::initializeGL()
     BasicLogger::logInfo("  OpenGL Version:  " + std::string(version ? version : "N/A"));
     BasicLogger::logInfo("  GLSL Version:    " + std::string(glsl ? glsl : "N/A"));
 
-    // -------------------------------------------------------------------------
-    // Step 2: Set Initial OpenGL State
-    // -------------------------------------------------------------------------
-    // Configure OpenGL defaults that won't change during rendering.
-
-    // Set clear color (background)
+    // Set initial OpenGL state
     glClearColor(m_clearR, m_clearG, m_clearB, m_clearA);
-
-    // Enable depth testing (for 3D rendering later)
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-
-    // Enable blending (for transparency)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    BasicLogger::logDebug("  Depth test: ENABLED");
-    BasicLogger::logDebug("  Blending: ENABLED (SRC_ALPHA, ONE_MINUS_SRC_ALPHA)");
+    m_glInitialized = true;
 
-    // -------------------------------------------------------------------------
-    // Step 3: Create Shaders (TODO)
-    // -------------------------------------------------------------------------
-    // Here we would compile and link our shader programs.
-    //
-    // Example:
-    // m_pShaderProgram = std::make_unique<QOpenGLShaderProgram>();
-    // m_pShaderProgram->addShaderFromSourceCode(QOpenGLShader::Vertex, vertexSrc);
-    // m_pShaderProgram->addShaderFromSourceCode(QOpenGLShader::Fragment, fragSrc);
-    // m_pShaderProgram->link();
-
-    // -------------------------------------------------------------------------
-    // Step 4: Create Geometry (TODO)
-    // -------------------------------------------------------------------------
-    // Here we would create VAOs and VBOs for our visualization geometry.
-    //
-    // Example:
-    // glGenVertexArrays(1, &m_vao);
-    // glGenBuffers(1, &m_vbo);
-    // ...
+    // Initialize visualizer if already set
+    if (m_visualizer != nullptr && !m_visualizer->isInitialized())
+    {
+        m_visualizer->initialize();
+        m_visualizer->resize(size());
+    }
+    else
+    {
+        // Load default visualizer
+        loadDefaultVisualizer();
+    }
 
     BasicLogger::logInfo("  Initialization complete");
 }
 
 void VisualizerWidget::resizeGL(int w, int h)
 {
-    // -------------------------------------------------------------------------
-    // Qt6 Tutorial: resizeGL()
-    // -------------------------------------------------------------------------
-    // Called whenever the widget is resized, and once after initializeGL().
-    //
-    // Update the viewport to match the new size.
-    // Also update projection matrices if needed.
-
     BasicLogger::logDebug("VisualizerWidget::resizeGL(" +
                           std::to_string(w) + ", " + std::to_string(h) + ")");
 
-    // -------------------------------------------------------------------------
-    // Update Viewport
-    // -------------------------------------------------------------------------
-    // glViewport tells OpenGL which portion of the window to render to.
-    // (0, 0) is bottom-left corner.
-
     glViewport(0, 0, w, h);
 
-    // -------------------------------------------------------------------------
-    // Update Projection Matrix (TODO)
-    // -------------------------------------------------------------------------
-    // For 2D visualizations (spectrum bars, waveform):
-    //   Use orthographic projection
-    //
-    // For 3D visualizations (MilkDrop-style):
-    //   Use perspective projection
-    //
-    // Example orthographic (2D):
-    // m_projection = glm::ortho(0.0f, (float)w, 0.0f, (float)h);
-    //
-    // Example perspective (3D):
-    // float aspect = (float)w / (float)h;
-    // m_projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+    // Notify visualizer
+    if (m_visualizer != nullptr && m_visualizer->isInitialized())
+    {
+        m_visualizer->resize(QSize(w, h));
+    }
 }
 
 void VisualizerWidget::paintGL()
 {
-    // -------------------------------------------------------------------------
-    // Qt6 Tutorial: paintGL()
-    // -------------------------------------------------------------------------
-    // Called every time the widget needs to be repainted.
-    // After paintGL() returns, Qt calls swapBuffers() automatically.
+    // Calculate delta time
+    float currentTime = m_frameTimer.elapsed() / 1000.0f;
+    float deltaTime = currentTime - m_lastFrameTime;
+    m_lastFrameTime = currentTime;
 
-    // -------------------------------------------------------------------------
-    // Demo Animation: Pulsing Rainbow
-    // -------------------------------------------------------------------------
-    // Use time-based animation (not frame-based) for consistent speed.
-    // This creates a visible color cycle to verify rendering works.
+    // Delegate rendering to active visualizer
+    if (m_visualizer != nullptr && m_visualizer->isInitialized())
+    {
+        m_visualizer->render(deltaTime);
+    }
+    else
+    {
+        // Fallback: clear with default color
+        glClearColor(m_clearR, m_clearG, m_clearB, m_clearA);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
 
-    // Get time in seconds since start
-    static auto startTime = std::chrono::steady_clock::now();
-    auto now = std::chrono::steady_clock::now();
-    float time = std::chrono::duration<float>(now - startTime).count();
-
-    // Create rainbow pulse effect (cycle through colors)
-    float r = 0.5f + 0.5f * std::sin(time * 2.0f);           // Red
-    float g = 0.5f + 0.5f * std::sin(time * 2.0f + 2.094f);  // Green (120° offset)
-    float b = 0.5f + 0.5f * std::sin(time * 2.0f + 4.189f);  // Blue (240° offset)
-
-    // Clear with animated color
-    glClearColor(r, g, b, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // -------------------------------------------------------------------------
-    // Frame Counter (for statistics)
-    // -------------------------------------------------------------------------
+    // Frame counter
     m_frameCount++;
 
-    // Log every 300 frames to verify paintGL is being called
     if ((m_frameCount % 300) == 0)
     {
         BasicLogger::logDebug("VisualizerWidget::paintGL() frame " + 
-                              std::to_string(m_frameCount));
+                              std::to_string(m_frameCount) +
+                              " (visualizer: " + m_currentVisualizerId.toStdString() + ")");
     }
 }

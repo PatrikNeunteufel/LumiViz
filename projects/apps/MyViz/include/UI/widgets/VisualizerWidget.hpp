@@ -6,34 +6,30 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
+ * @version 2.1.0
  *
  * @details
- * This file demonstrates:
- *   - QOpenGLWidget inheritance
- *   - OpenGL context management
- *   - VSync through SwapBuffers
- *   - Protected virtual methods (initializeGL, paintGL, resizeGL)
+ * ## Version 2.1.0 Changes
  *
- * ## Qt6 Tutorial: QOpenGLWidget
+ * - Now inherits from WidgetBase<QOpenGLWidget> for consistency
+ * - ServiceContainer and EventBus access via base class
+ * - Auto start/stop updates on show/hide
  *
- * QOpenGLWidget is Qt's integration of OpenGL into the widget system.
- * It provides:
- *   - Automatic OpenGL context creation
- *   - Double buffering with VSync
- *   - Integration with Qt's event system
- *   - Resize handling
- *
- * ### Key Virtual Methods
+ * ## Visualizer Architecture
  *
  * ```
- * initializeGL()  → Called once when context is created
- *                   Setup shaders, VAOs, textures here
- *
- * resizeGL(w, h)  → Called when widget size changes
- *                   Update viewport, projection matrix here
- *
- * paintGL()       → Called every frame (or on update())
- *                   Do all rendering here
+ * WidgetBase<QOpenGLWidget>
+ *       │
+ *       └── VisualizerWidget
+ *             │
+ *             ├── OpenGL Context Management
+ *             ├── VSync Control
+ *             └── Active Visualizer (IVisualizer*)
+ *                   │
+ *                   ├── initialize()
+ *                   ├── render(deltaTime)
+ *                   ├── resize(size)
+ *                   └── cleanup()
  * ```
  *
  * @see VisualizerWidget.md for detailed documentation
@@ -43,63 +39,57 @@
 #pragma once
 
 // =============================================================================
-// Qt Includes
+// Includes
 // =============================================================================
 
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
+#include "WidgetBase.hpp"
 
-// =============================================================================
-// Forward Declarations
-// =============================================================================
+#include <QString>
+#include <QElapsedTimer>
+#include <memory>
+
+// Forward declarations
+class IVisualizer;
 
 QT_BEGIN_NAMESPACE
 class QOpenGLShaderProgram;
 QT_END_NAMESPACE
 
 /**
+ * @brief Type alias for OpenGL-based widget base
+ */
+using OpenGLWidgetBase = WidgetBase<QOpenGLWidget>;
+
+/**
  * @class VisualizerWidget
  * @brief OpenGL widget for audio visualization rendering.
  *
  * VisualizerWidget provides a hardware-accelerated canvas for rendering
- * audio visualizations. It inherits from QOpenGLWidget and QOpenGLFunctions.
+ * audio visualizations. It manages an active IVisualizer instance and
+ * delegates rendering to it.
  *
- * ## Qt6 Tutorial: Inheritance
+ * ## Inheritance
  *
- * We inherit from TWO classes:
+ * - WidgetBase<QOpenGLWidget>: ServiceContainer, EventBus, auto start/stop
+ * - QOpenGLFunctions: OpenGL function pointers
  *
- * 1. **QOpenGLWidget** - Provides the widget with OpenGL context
- *    - Handles context creation/destruction
- *    - Manages double buffering
- *    - Integrates with Qt's paint system
+ * ## Visualizer Management
  *
- * 2. **QOpenGLFunctions** - Provides OpenGL function pointers
- *    - Cross-platform OpenGL function access
- *    - No need for GLAD/GLEW in simple cases
- *    - Call initializeOpenGLFunctions() in initializeGL()
+ * ```cpp
+ * // Set visualizer by ID (from VisualizerRegistry)
+ * widget->setVisualizer("spectrum");
  *
- * ## Rendering Flow
+ * // Get current visualizer ID
+ * QString current = widget->visualizerId();
  *
- * ```
- * Widget created
- *       │
- *       ▼
- * initializeGL() ─────► Setup (once)
- *       │
- *       ▼
- * resizeGL(w,h) ──────► Viewport setup
- *       │
- *       ▼
- * ┌─────────────┐
- * │  paintGL()  │◄───── Called on update() or timer
- * │  (render)   │
- * └─────────────┘
- *       │
- *       ▼
- * [SwapBuffers] ──────► VSync wait happens here
+ * // Connect to change signal
+ * connect(widget, &VisualizerWidget::visualizerChanged,
+ *         this, &MyClass::onVisualizerChanged);
  * ```
  */
-class VisualizerWidget : public QOpenGLWidget, protected QOpenGLFunctions
+class VisualizerWidget : public OpenGLWidgetBase, protected QOpenGLFunctions
 {
     Q_OBJECT
 
@@ -110,24 +100,13 @@ public:
 
     /**
      * @brief Constructs the VisualizerWidget.
-     *
+     * @param services ServiceContainer for dependency injection
      * @param parent Parent widget (typically MainWindow's central widget)
-     *
-     * ## Qt6 Tutorial: Constructor
-     *
-     * The constructor should be lightweight. Don't call any OpenGL functions
-     * here - the context doesn't exist yet!
-     *
-     * OpenGL initialization happens in initializeGL(), which is called
-     * automatically when the widget is first shown.
      */
-    explicit VisualizerWidget(QWidget* parent = nullptr);
+    explicit VisualizerWidget(ServiceContainer& services, QWidget* parent = nullptr);
 
     /**
-     * @brief Destructor.
-     *
-     * Cleanup OpenGL resources here. The context is still valid in the
-     * destructor, so it's safe to delete shaders, buffers, etc.
+     * @brief Destructor - cleans up active visualizer.
      */
     ~VisualizerWidget() override;
 
@@ -138,132 +117,146 @@ public:
     VisualizerWidget& operator=(VisualizerWidget&&) = delete;
 
     // =========================================================================
+    // Visualizer Management
+    // =========================================================================
+
+    /**
+     * @brief Set active visualizer by ID
+     * @param id Visualizer ID from VisualizerRegistry (e.g., "pulsing", "spectrum")
+     * @return true if visualizer was loaded successfully
+     *
+     * The visualizer is loaded from VisualizerRegistry and initialized.
+     * If the ID is not found, the current visualizer remains active.
+     */
+    bool setVisualizer(const QString& id);
+
+    /**
+     * @brief Get current visualizer ID
+     * @return Active visualizer ID or empty string if none
+     */
+    [[nodiscard]] QString currentVisualizerId() const { return m_currentVisualizerId; }
+
+    /**
+     * @brief Get current visualizer name
+     * @return Active visualizer display name or empty string
+     */
+    [[nodiscard]] QString currentVisualizerName() const;
+
+    /**
+     * @brief Check if a visualizer is active
+     */
+    [[nodiscard]] bool hasVisualizer() const { return m_visualizer != nullptr; }
+
+    // =========================================================================
     // Public Interface
     // =========================================================================
 
     /**
      * @brief Sets the clear color (background).
-     *
      * @param r Red component (0.0 - 1.0)
      * @param g Green component (0.0 - 1.0)
      * @param b Blue component (0.0 - 1.0)
      * @param a Alpha component (0.0 - 1.0), default 1.0
-     *
-     * Takes effect on next paintGL() call.
      */
     void setClearColor(float r, float g, float b, float a = 1.0f);
 
     /**
      * @brief Enables or disables VSync at runtime.
-     *
      * @param enabled true = VSync ON, false = VSync OFF
-     *
-     * Uses platform-specific APIs:
-     *   - Windows: wglSwapIntervalEXT
-     *   - Linux: glXSwapIntervalEXT
-     *   - macOS: CGLSetParameter
-     *
-     * @note Must be called after OpenGL context is initialized.
      */
     void setVSync(bool enabled);
 
     // =========================================================================
-    // Future Interface (TODO)
+    // Audio Data (pass-through to visualizer)
     // =========================================================================
 
-    // void setAudioData(const float* spectrum, int size);
-    // void setVisualizationMode(VisualizationMode mode);
+    /**
+     * @brief Update visualizer with spectrum data
+     * @param spectrum Frequency spectrum (0.0 - 1.0)
+     * @param count Number of spectrum bands
+     */
+    void updateSpectrum(const float* spectrum, int count);
+
+    /**
+     * @brief Update visualizer with waveform data
+     * @param waveform Waveform samples (-1.0 to 1.0)
+     * @param count Number of samples
+     */
+    void updateWaveform(const float* waveform, int count);
+
+Q_SIGNALS:
+    /**
+     * @brief Emitted when the active visualizer changes
+     * @param id New visualizer ID
+     */
+    void visualizerChanged(const QString& id);
+
+    /**
+     * @brief Emitted when visualizer loading fails
+     * @param id Attempted visualizer ID
+     * @param error Error message
+     */
+    void visualizerError(const QString& id, const QString& error);
 
 protected:
+    // =========================================================================
+    // WidgetBase Overrides
+    // =========================================================================
+
+    /**
+     * @brief Called when updates start (widget shown)
+     */
+    void onStartUpdates() override;
+
+    /**
+     * @brief Called when updates stop (widget hidden)
+     */
+    void onStopUpdates() override;
+
     // =========================================================================
     // QOpenGLWidget Virtual Methods
     // =========================================================================
 
-    /**
-     * @brief Called once when the OpenGL context is created.
-     *
-     * ## Qt6 Tutorial: initializeGL()
-     *
-     * This is where you set up all OpenGL resources:
-     *   - Initialize OpenGL functions (initializeOpenGLFunctions())
-     *   - Create and compile shaders
-     *   - Create VAOs and VBOs
-     *   - Load textures
-     *   - Set initial OpenGL state
-     *
-     * @warning Called ONCE, not every frame. Don't do per-frame work here.
-     */
     void initializeGL() override;
-
-    /**
-     * @brief Called when the widget is resized.
-     *
-     * @param w New width in pixels
-     * @param h New height in pixels
-     *
-     * ## Qt6 Tutorial: resizeGL()
-     *
-     * Update the viewport and projection matrix here:
-     *
-     * ```cpp
-     * void resizeGL(int w, int h)
-     * {
-     *     glViewport(0, 0, w, h);
-     *     // Update projection matrix...
-     * }
-     * ```
-     *
-     * Also called once after initializeGL() with initial size.
-     */
     void resizeGL(int w, int h) override;
-
-    /**
-     * @brief Called every frame to render.
-     *
-     * ## Qt6 Tutorial: paintGL()
-     *
-     * This is your render loop. Called when:
-     *   - Widget needs repainting (expose, resize)
-     *   - You call update() to request a repaint
-     *
-     * Typical structure:
-     *
-     * ```cpp
-     * void paintGL()
-     * {
-     *     // 1. Clear
-     *     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-     *
-     *     // 2. Set up transformations
-     *     // ...
-     *
-     *     // 3. Draw
-     *     glDrawArrays(...);
-     *     // or glDrawElements(...)
-     * }
-     * ```
-     *
-     * @note SwapBuffers is called automatically after paintGL().
-     *       This is where VSync waiting happens.
-     */
     void paintGL() override;
 
 private:
     // =========================================================================
+    // Private Methods
+    // =========================================================================
+
+    /**
+     * @brief Load default visualizer (pulsing)
+     */
+    void loadDefaultVisualizer();
+
+    /**
+     * @brief Cleanup current visualizer
+     */
+    void cleanupVisualizer();
+
+    // =========================================================================
     // Private Members
     // =========================================================================
 
-    // Clear color (background)
-    float m_clearR{0.1f};   // Dark blue-gray default
+    // Active visualizer
+    std::unique_ptr<IVisualizer> m_visualizer;
+    QString m_currentVisualizerId;
+
+    // Clear color (fallback when no visualizer)
+    float m_clearR{0.1f};
     float m_clearG{0.1f};
     float m_clearB{0.15f};
     float m_clearA{1.0f};
 
+    // Timing
+    QElapsedTimer m_frameTimer;
+    float m_lastFrameTime{0.0f};
+
     // Frame counter (for debugging)
     uint64_t m_frameCount{0};
 
-    // TODO: Add when implementing actual visualization
-    // std::unique_ptr<QOpenGLShaderProgram> m_pShaderProgram;
-    // GLuint m_vao{0};
-    // GLuint m_vbo{0};
+    // OpenGL initialized flag
+    bool m_glInitialized{false};
 };

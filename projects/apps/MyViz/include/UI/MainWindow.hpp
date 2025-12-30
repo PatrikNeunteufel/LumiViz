@@ -59,6 +59,7 @@ QT_END_NAMESPACE
 
 class DockManager;
 class VisualizerWidget;
+class ServiceContainer;
 
 /**
  * @class MainWindow
@@ -205,6 +206,7 @@ private:
     // Private Members
     // =========================================================================
 
+    std::unique_ptr<ServiceContainer> m_pServices;
     std::unique_ptr<DockManager> m_pDockManager;
     QLabel* m_pFpsLabel{nullptr};  // Owned by status bar (Qt parent-child)
 };
