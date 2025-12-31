@@ -1,11 +1,11 @@
 # Registries — Self-Registration Pattern
 
-> **Version:** 1.1.0  
+> **Version:** 2.0.0  
 > **Datum:** 2025-12-31  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert  
 > **Modul:** MyViz::Services::Registries  
-> **Dateien:** PanelRegistry.hpp, DialogRegistry.hpp, MenuRegistry.hpp, VisualizerRegistry.hpp, WidgetRegistry.hpp  
+> **Dateien:** PanelRegistry.hpp/cpp, DialogRegistry.hpp/cpp, MenuRegistry.hpp/cpp, VisualizerRegistry.hpp/cpp, WidgetRegistry.hpp/cpp + *AutoReg.cpp  
 > **Namespace:** (global)  
 > **Abhängigkeiten:** C++17 STL, ServiceContainer  
 > **Zielgruppe:** Entwickler  
@@ -16,9 +16,9 @@
 ## Inhaltsverzeichnis
 
 1. [Übersicht](#1-übersicht)
-2. [Architektur](#2-architektur)
+2. [Lazy-Init Pattern](#2-lazy-init-pattern)
 3. [Registry-Typen](#3-registry-typen)
-4. [Self-Registration Makros](#4-self-registration-makros)
+4. [AutoReg-Dateien](#4-autoreg-dateien)
 5. [Verwendung](#5-verwendung)
 6. [Best Practices](#6-best-practices)
 7. [Changelog](#7-changelog)
@@ -29,120 +29,68 @@
 
 ### 1.1 Zweck
 
-Die **Registries** implementieren das **Self-Registration Pattern** für automatische Komponenten-Registrierung beim Programmstart. Anstatt alle Panels, Dialoge, Visualizer etc. zentral aufzulisten, registriert sich jede Komponente selbst.
+Die **Registries** implementieren das **Self-Registration Pattern** mit **Lazy-Init** für automatische Komponenten-Registrierung. Anstatt alle Panels, Dialoge, Visualizer etc. zentral aufzulisten, werden sie in separaten `*AutoReg.cpp` Dateien registriert.
 
-### 1.2 Vorteile
+### 1.2 Die 5 Registries
+
+| Registry | Zweck | AutoReg-Datei |
+|----------|-------|---------------|
+| **MenuRegistry** | Menü-Struktur | `src/UI/managers/MenuAutoReg.cpp` |
+| **PanelRegistry** | Dock-Panels | `src/UI/panels/PanelAutoReg.cpp` |
+| **DialogRegistry** | Modale Dialoge | `src/UI/dialogs/DialogAutoReg.cpp` |
+| **WidgetRegistry** | Widgets | `src/UI/widgets/WidgetAutoReg.cpp` |
+| **VisualizerRegistry** | Visualizer-Effekte | `src/visualizers/VisualizerAutoReg.cpp` |
+
+### 1.3 Vorteile
 
 | Aspekt | Zentrale Registrierung | Self-Registration |
 |--------|------------------------|-------------------|
-| **Wartung** | Eine große Liste | Dezentral in jeder Datei |
-| **Erweiterung** | Zentralen Code ändern | Nur neue Datei hinzufügen |
-| **Kopplung** | Alle Includes nötig | Keine Abhängigkeiten |
-| **Build-Abhängigkeit** | Zentraldatei muss neu bauen | Nur geänderte Datei |
-
-### 1.3 Wie es funktioniert
-
-```cpp
-// Am Ende von SpectrumPanel.cpp:
-REGISTER_PANEL("spectrum", "Spectrum Analyzer", true, SpectrumPanel)
-```
-
-Das Makro erzeugt eine **statische Variable**, deren Konstruktor beim Programmstart ausgeführt wird:
-
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                          Programmstart                                    │
-├──────────────────────────────────────────────────────────────────────────┤
-│                                                                           │
-│  1. Static Initialization Phase                                           │
-│     ┌───────────────────┐                                                │
-│     │ SpectrumPanel.cpp │───► PanelRegistry::registerPanel("spectrum")  │
-│     └───────────────────┘                                                │
-│     ┌───────────────────┐                                                │
-│     │ WaveformPanel.cpp │───► PanelRegistry::registerPanel("waveform")  │
-│     └───────────────────┘                                                │
-│     ┌───────────────────┐                                                │
-│     │  AboutDialog.cpp  │───► DialogRegistry::registerDialog("about")   │
-│     └───────────────────┘                                                │
-│                                                                           │
-│  2. main() wird aufgerufen                                                │
-│     ┌───────────────────┐                                                │
-│     │ Application::init │───► Panels aus Registry erstellen             │
-│     └───────────────────┘                                                │
-│                                                                           │
-└──────────────────────────────────────────────────────────────────────────┘
-```
+| **Wartung** | Eine große Liste | Dezentral in AutoReg |
+| **Erweiterung** | Zentralen Code ändern | Nur AutoReg erweitern |
+| **Kopplung** | Alle Includes nötig | Framework/App getrennt |
+| **Linkage** | Probleme bei statischen Libs | ✅ Garantiert durch extern |
 
 ---
 
-## 2. Architektur
+## 2. Lazy-Init Pattern
 
-### 2.1 Gemeinsame Struktur
+### 2.1 Das Problem
 
-Alle Registries folgen dem gleichen Pattern:
+Bei statischen Libraries entfernt der Linker unreferenzierte Translation Units ("dead code elimination"). Statische `REGISTER_*` Makros werden als "unused" betrachtet und entfernt.
 
-```
-┌────────────────────────────────────────────────────────────────┐
-│                    XxxRegistry (Singleton)                      │
-├────────────────────────────────────────────────────────────────┤
-│ + static instance() : XxxRegistry&                             │
-│ + registerXxx(descriptor, factory)                             │
-│ + has(id) : bool                                               │
-│ + create(id, services) : unique_ptr<Xxx>                       │
-│ + descriptors() : vector<XxxDescriptor>                        │
-├────────────────────────────────────────────────────────────────┤
-│ - m_descriptors : map<string, XxxDescriptor>                   │
-│ - m_factories   : map<string, Factory>                         │
-│ - m_mutex       : mutex                                        │
-└────────────────────────────────────────────────────────────────┘
-```
-
-### 2.2 Descriptor-Struktur
-
-Jede Registry hat einen Descriptor mit Metadaten:
+### 2.2 Die Lösung: Erzwungene Linkage
 
 ```cpp
-struct PanelDescriptor {
-    std::string id;              // Unique ID
-    std::string title;           // Display name
-    int order = 0;               // Sort order
-    bool defaultVisible = false; // Initial visibility
-    std::string menuPath;        // Menu location
-};
+// In XxxRegistry.cpp (Framework):
+extern void initXxxDefaults(XxxRegistry& registry);  // ← Deklaration
 
-struct DialogDescriptor {
-    std::string id;
-    std::string title;
-    int width = 400;
-    int height = 300;
-};
-
-struct VisualizerDescriptor {
-    std::string id;
-    std::string name;
-    std::string description;
-    std::string category;
-    std::string thumbnailPath;
-};
-```
-
-### 2.3 Factory-Pattern
-
-```cpp
-// Factory-Typ: Erstellt Instanz mit ServiceContainer
-using Factory = std::function<std::unique_ptr<QWidget>(ServiceContainer&)>;
-
-// Registrierung mit Factory
-registry.registerPanel(
-    PanelDescriptor{"spectrum", "Spectrum", 0, true},
-    [](ServiceContainer& svc) {
-        return std::make_unique<SpectrumPanel>(svc);
+XxxRegistry& XxxRegistry::instance()
+{
+    static XxxRegistry registry;
+    static bool initialized = false;
+    
+    if (!initialized)
+    {
+        initialized = true;
+        initXxxDefaults(registry);  // ← Aufruf erzwingt Linkage
     }
-);
+    
+    return registry;
+}
 
-// Später: Instanz erstellen
-auto panel = registry.create("spectrum", services);
+// In XxxAutoReg.cpp (App-spezifisch):
+void initXxxDefaults(XxxRegistry& registry)  // ← Definition MUSS existieren
+{
+    registry.registerXxx(...);
+    registry.registerXxx(...);
+}
 ```
+
+### 2.3 Warum funktioniert das?
+
+1. `extern` Deklaration ohne Definition = Linker-Fehler
+2. Linker MUSS `XxxAutoReg.cpp` einbinden
+3. → Registrierungen werden garantiert ausgeführt
 
 ---
 
@@ -150,208 +98,223 @@ auto panel = registry.create("spectrum", services);
 
 ### 3.1 PanelRegistry
 
-Für Dock-Panels (Qt-ADS CDockWidget).
-
 ```cpp
-// Registrierung
-REGISTER_PANEL("playlist", "Playlist", true, PlaylistPanel)
-REGISTER_PANEL_ORDERED("config", "Settings", 100, false, ConfigPanel)
-REGISTER_PANEL_MENU("debug", "Debug", "View/Debug", 900, false, DebugPanel)
+struct PanelDescriptor {
+    std::string id;              // Unique ID (= objectName für Layout)
+    std::string title;           // Display name
+    int order = 0;               // Sort order (100er Schritte)
+    bool defaultVisible = true;  // Initial visibility
+    std::string menuPath;        // Menu location
+};
 
-// Verwendung im PanelManager
-for (const auto& desc : PanelRegistry::instance().descriptors()) {
-    auto panel = PanelRegistry::instance().create(desc.id, m_services);
-    createDockWidget(desc.id, desc.title, panel.release());
-}
+// Factory
+using PanelFactory = std::function<std::unique_ptr<QWidget>(ServiceContainer&)>;
 ```
+
+**Registrierte Panels:**
+
+| ID | Titel | Order | Default Visible |
+|----|-------|-------|-----------------|
+| player | Player | 100 | ✅ |
+| playlist | Playlist | 200 | ✅ |
+| config | Settings | 300 | ❌ |
+| visual_select | Visualizers | 400 | ✅ |
 
 ### 3.2 DialogRegistry
 
-Für modale/nichtmodale Dialoge.
-
 ```cpp
-// Registrierung
-REGISTER_DIALOG("about", "About MyViz", AboutDialog)
-REGISTER_DIALOG_SIZE("preferences", "Preferences", 600, 400, PreferencesDialog)
+struct DialogDescriptor {
+    std::string id;
+    std::string title;
+    int order = 0;
+    bool modal = true;
+    std::string menuPath;
+    std::string shortcut;
+};
 
-// Verwendung
-void MainWindow::showAbout() {
-    auto dialog = DialogRegistry::instance().create("about", m_services);
-    dialog->exec();
-}
+// Factory
+using DialogFactory = std::function<std::unique_ptr<QDialog>(ServiceContainer&, QWidget*)>;
 ```
 
-### 3.3 MenuRegistry
+**Registrierte Dialoge:**
 
-Für Menü-Einträge und Actions. **Hinweis:** Verwendet seit v2.1.0 direkte Registrierung statt Makros, um Linker-Probleme bei statischen Libraries zu vermeiden.
+| ID | Titel | Modal | Shortcut |
+|----|-------|-------|----------|
+| about | About MyViz | ✅ | F1 |
+
+### 3.3 WidgetRegistry
 
 ```cpp
-// Direkte Registrierung (empfohlen für statische Libraries)
-void initMenuItemsAutoReg()
-{
-    auto& registry = MenuRegistry::instance();
-    
-    registry.registerItem(
-        MenuItemDesc{
-            {"menu.file.open", "menu.file", 100},
-            "Open Audio...",
-            [](ServiceContainer& svc) { /* ... */ },
-            {},      // isChecked
-            {},      // isEnabled
-            "Ctrl+O" // shortcut
-        },
-        false);
-}
-
-// Container mit exclusive Flag (QActionGroup)
-registry.registerContainer(
-    MenuContainerDesc{
-        {"menu.settings.framemode", "menu.settings", 100},
-        "Frame Mode",
-        true  // exclusive = Radio-Button-Stil
-    },
-    false);
+struct WidgetDescriptor {
+    std::string id;
+    std::string name;
+    std::string category;
+    std::string description;
+    int order = 0;
+    bool allowMultiple = false;  // ← NEU: Erlaubt mehrere Instanzen
+};
 ```
 
-**Siehe auch:** [MenuRegistry.md](MenuRegistry.md) und [MenuManager.md](../UI/managers/MenuManager.md) für Details.
+**Registrierte Widgets:**
+
+| ID | Name | allowMultiple |
+|----|------|---------------|
+| visualizer | Visualizer | ❌ |
 
 ### 3.4 VisualizerRegistry
 
-Für Visualizer-Effekte.
-
 ```cpp
-// Registrierung
-REGISTER_VISUALIZER("pulsing", "Pulsing Circles", 
-                    "Audio-reactive circles", PulsingVisualizer)
-REGISTER_VISUALIZER_CAT("spectrum", "Spectrum Bars", 
-                        "FFT visualization", "Spectrum", SpectrumVisualizer)
+struct VisualizerDescriptor {
+    std::string id;
+    std::string name;
+    std::string category;
+    std::string description;
+    int order = 0;
+};
 
-// Verwendung
-void VisualizerWidget::setVisualizer(const QString& id) {
-    m_visualizer = VisualizerRegistry::instance().create(id.toStdString(), m_services);
-}
+// Factory
+using VisualizerFactory = std::function<std::unique_ptr<IVisualizer>()>;
 ```
 
-### 3.5 WidgetRegistry
+**Registrierte Visualizer:**
 
-Für allgemeine Widgets.
+| ID | Name | Kategorie |
+|----|------|-----------|
+| pulsing | Pulsing | Effects |
 
-```cpp
-// Registrierung
-REGISTER_WIDGET("gpu-selector", "GPU Selector", GpuSelectorWidget)
+### 3.5 MenuRegistry
 
-// Verwendung
-auto widget = WidgetRegistry::instance().create("gpu-selector", m_services);
-```
+Siehe [MenuRegistry.md](MenuRegistry.md) und [MenuManager.md](../UI/managers/MenuManager.md) für Details.
 
 ---
 
-## 4. Self-Registration Makros
+## 4. AutoReg-Dateien
 
-### 4.1 Panel-Makros
+### 4.1 Struktur
+
+Jede Registry hat eine zugehörige AutoReg-Datei:
+
+| Registry | AutoReg-Datei | Pfad |
+|----------|---------------|------|
+| MenuRegistry | MenuAutoReg.cpp | `src/UI/managers/` |
+| PanelRegistry | PanelAutoReg.cpp | `src/UI/panels/` |
+| DialogRegistry | DialogAutoReg.cpp | `src/UI/dialogs/` |
+| WidgetRegistry | WidgetAutoReg.cpp | `src/UI/widgets/` |
+| VisualizerRegistry | VisualizerAutoReg.cpp | `src/visualizers/` |
+
+### 4.2 Beispiel: PanelAutoReg.cpp
 
 ```cpp
-// Basis-Makro
-REGISTER_PANEL(ID, TITLE, DEFAULT_VISIBLE, TYPE)
+#include "services/PanelRegistry.hpp"
+#include "UI/panels/PlayerPanel.hpp"
+#include "UI/panels/PlaylistPanel.hpp"
+#include "UI/panels/ConfigPanel.hpp"
+#include "UI/panels/VisualSelectPanel.hpp"
 
-// Mit Sort-Order
-REGISTER_PANEL_ORDERED(ID, TITLE, ORDER, DEFAULT_VISIBLE, TYPE)
-
-// Mit Menü-Pfad
-REGISTER_PANEL_MENU(ID, TITLE, MENU_PATH, ORDER, DEFAULT_VISIBLE, TYPE)
+void initPanelDefaults(PanelRegistry& registry)
+{
+    // Player Panel
+    registry.registerPanel(
+        PanelDescriptor{
+            "player",           // id (= objectName)
+            "Player",           // title
+            100,                // order
+            true,               // defaultVisible
+            "View/Panels"       // menuPath
+        },
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<PlayerPanel>(svc);
+        });
+    
+    // Playlist Panel
+    registry.registerPanel(
+        PanelDescriptor{"playlist", "Playlist", 200, true, "View/Panels"},
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<PlaylistPanel>(svc);
+        });
+    
+    // Config Panel (Settings) - hidden by default
+    registry.registerPanel(
+        PanelDescriptor{"config", "Settings", 300, false, "View/Panels"},
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<ConfigPanel>(svc);
+        });
+    
+    // Visual Select Panel
+    registry.registerPanel(
+        PanelDescriptor{"visual_select", "Visualizers", 400, true, "View/Panels"},
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<VisualSelectPanel>(svc);
+        });
+}
 ```
 
-### 4.2 Dialog-Makros
+### 4.3 Beispiel: WidgetAutoReg.cpp
 
 ```cpp
-// Basis-Makro
-REGISTER_DIALOG(ID, TITLE, TYPE)
+#include "services/WidgetRegistry.hpp"
+#include "UI/widgets/VisualizerWidget.hpp"
 
-// Mit Größe
-REGISTER_DIALOG_SIZE(ID, TITLE, WIDTH, HEIGHT, TYPE)
-```
-
-### 4.3 Visualizer-Makros
-
-```cpp
-// Basis-Makro
-REGISTER_VISUALIZER(ID, NAME, DESCRIPTION, TYPE)
-
-// Mit Kategorie
-REGISTER_VISUALIZER_CAT(ID, NAME, DESCRIPTION, CATEGORY, TYPE)
-
-// Mit Thumbnail
-REGISTER_VISUALIZER_FULL(ID, NAME, DESCRIPTION, CATEGORY, THUMBNAIL, TYPE)
-```
-
-### 4.4 Makro-Implementierung
-
-```cpp
-#define REGISTER_PANEL(ID_STR, TITLE_STR, DEFAULT_VIS, TYPE)              \
-    namespace {                                                            \
-        struct TYPE##__AutoPanelReg {                                     \
-            TYPE##__AutoPanelReg() {                                      \
-                PanelRegistry::instance().registerPanel(                   \
-                    PanelDescriptor{ID_STR, TITLE_STR, 0, DEFAULT_VIS},   \
-                    [](ServiceContainer& svc) -> std::unique_ptr<QWidget> \
-                    { return std::make_unique<TYPE>(svc); },              \
-                    false                                                  \
-                );                                                         \
-            }                                                              \
-        } TYPE##__autoPanelRegInstance;                                   \
-    }
+void initWidgetDefaults(WidgetRegistry& registry)
+{
+    // VisualizerWidget - allowMultiple = false
+    registry.registerWidget(
+        WidgetDescriptor{
+            "visualizer",
+            "Visualizer",
+            "Visualizers",
+            "OpenGL visualization widget",
+            100,
+            false  // allowMultiple
+        },
+        [](ServiceContainer& svc, QWidget* parent) -> std::unique_ptr<QWidget> {
+            return std::make_unique<VisualizerWidget>(svc, parent);
+        });
+}
 ```
 
 ---
 
 ## 5. Verwendung
 
-### 5.1 Panel implementieren
+### 5.1 Neues Panel hinzufügen
 
 ```cpp
-// SpectrumPanel.hpp
-class SpectrumPanel : public PanelBase
-{
-    Q_OBJECT
-public:
-    explicit SpectrumPanel(ServiceContainer& services, QWidget* parent = nullptr);
-    // ...
-};
+// 1. Panel-Klasse erstellen
+class MyPanel : public PanelBase { ... };
 
-// SpectrumPanel.cpp
-#include "SpectrumPanel.hpp"
-#include "services/PanelRegistry.hpp"
-
-SpectrumPanel::SpectrumPanel(ServiceContainer& services, QWidget* parent)
-    : PanelBase(services, parent)
+// 2. In PanelAutoReg.cpp registrieren
+void initPanelDefaults(PanelRegistry& registry)
 {
-    // ...
+    // ... bestehende Panels ...
+    
+    registry.registerPanel(
+        PanelDescriptor{"mypanel", "My Panel", 500, true, "View/Panels"},
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<MyPanel>(svc);
+        });
 }
 
-// Am Ende der Datei:
-REGISTER_PANEL("spectrum", "Spectrum Analyzer", true, SpectrumPanel)
+// 3. FERTIG - Erscheint automatisch im Menü und DockManager
 ```
 
-### 5.2 Visualizer implementieren
+### 5.2 Neuen Visualizer hinzufügen
 
 ```cpp
-// PulsingVisualizer.hpp
-class PulsingVisualizer : public VisualizerBase
+// 1. Visualizer-Klasse erstellen
+class MyVisualizer : public IVisualizer { ... };
+
+// 2. In VisualizerAutoReg.cpp registrieren
+void initVisualizerDefaults(VisualizerRegistry& registry)
 {
-public:
-    explicit PulsingVisualizer(ServiceContainer& services);
-    void render(float deltaTime) override;
-    // ...
-};
+    registry.registerVisualizer(
+        VisualizerDescriptor{"myvis", "My Visualizer", "Effects", "Cool effect", 200},
+        []() -> std::unique_ptr<IVisualizer> {
+            return std::make_unique<MyVisualizer>();
+        });
+}
 
-// PulsingVisualizer.cpp
-#include "PulsingVisualizer.hpp"
-#include "services/VisualizerRegistry.hpp"
-
-// Am Ende der Datei:
-REGISTER_VISUALIZER("pulsing", "Pulsing Circles", 
-                    "Audio-reactive pulsing circles", 
-                    PulsingVisualizer)
+// 3. FERTIG - Erscheint automatisch in VisualSelectPanel
 ```
 
 ### 5.3 Alle registrierten Komponenten auflisten
@@ -375,43 +338,32 @@ void Application::listComponents()
 
 ## 6. Best Practices
 
-### 6.1 Eindeutige IDs verwenden
+### 6.1 IDs
+
+- **Lowercase, keine Leerzeichen:** `player`, `visual_select`
+- **Eindeutig** innerhalb der Registry
+- **Stabil** - ändern bricht Layout-Persistence!
+
+### 6.2 Order-Werte
+
+100er-Schritte für Erweiterbarkeit:
 
 ```cpp
-// ❌ Schlecht: Generische IDs
-REGISTER_PANEL("panel1", ...)
-REGISTER_PANEL("main", ...)
-
-// ✅ Gut: Beschreibende, eindeutige IDs
-REGISTER_PANEL("spectrum-analyzer", ...)
-REGISTER_PANEL("playlist-manager", ...)
+// 0-99:     Reserved
+// 100-199:  Core Panels (Player, Playlist)
+// 200-299:  Content Panels
+// 300-399:  Configuration
+// 400-499:  Selection
+// 900-999:  Debug/Development
 ```
 
-### 6.2 Registrierung am Datei-Ende
+### 6.3 Factories
+
+- Lambda mit `ServiceContainer&` Parameter
+- `std::make_unique` für Ownership
+- Keine globalen Abhängigkeiten!
 
 ```cpp
-// ❌ Schlecht: Am Anfang (vor Klassen-Definition)
-REGISTER_PANEL(...)  // TYPE ist noch nicht definiert!
-
-class MyPanel { ... };
-
-// ✅ Gut: Am Ende der .cpp Datei
-class MyPanel { ... };
-
-MyPanel::MyPanel() { ... }
-
-// HIER: Nach allen Implementierungen
-REGISTER_PANEL("mypanel", "My Panel", false, MyPanel)
-```
-
-### 6.3 Abhängigkeiten über ServiceContainer
-
-```cpp
-// ❌ Schlecht: Globale Abhängigkeiten
-[](ServiceContainer&) {
-    return std::make_unique<MyPanel>(g_audioEngine);  // Global!
-}
-
 // ✅ Gut: Aus ServiceContainer
 [](ServiceContainer& svc) {
     return std::make_unique<MyPanel>(
@@ -419,46 +371,25 @@ REGISTER_PANEL("mypanel", "My Panel", false, MyPanel)
         svc.resolve<IEventBus>()
     );
 }
-```
 
-### 6.4 Order-Werte strukturieren
-
-```cpp
-// Empfohlene Order-Bereiche:
-// 0-99:     Core Panels (Player, Playlist)
-// 100-199:  Visualizer Panels
-// 200-299:  Analysis Panels
-// 300-399:  Configuration
-// 900-999:  Debug/Development
-
-REGISTER_PANEL_ORDERED("player", "Player", 10, true, PlayerPanel)
-REGISTER_PANEL_ORDERED("playlist", "Playlist", 20, true, PlaylistPanel)
-REGISTER_PANEL_ORDERED("spectrum", "Spectrum", 100, true, SpectrumPanel)
-REGISTER_PANEL_ORDERED("config", "Settings", 300, false, ConfigPanel)
-REGISTER_PANEL_ORDERED("debug", "Debug Log", 900, false, DebugPanel)
-```
-
-### 6.5 Linker-Problem bei statischen Libraries
-
-⚠️ **Wichtig:** Bei statischen Libraries (.lib/.a) können Makro-basierte Registrierungen vom Linker entfernt werden ("dead code elimination").
-
-```cpp
-// ❌ Problem: Statische Makros werden vom Linker entfernt
-// In SpectrumPanel.cpp:
-REGISTER_PANEL("spectrum", ...)  // Wird möglicherweise entfernt!
-
-// ✅ Lösung: Explizite Init-Funktion mit direkter Registrierung
-// In PanelAutoReg.cpp:
-void initPanelRegistrations()
-{
-    PanelRegistry::instance().registerPanel(...);  // Direkt
+// ❌ Schlecht: Globale Abhängigkeiten
+[](ServiceContainer&) {
+    return std::make_unique<MyPanel>(g_audioEngine);  // Global!
 }
-
-// In main.cpp oder Application.cpp:
-initPanelRegistrations();  // Aufruf erzwingt Linkage
 ```
 
-**Siehe auch:** MenuRegistry verwendet dieses Pattern seit v2.1.0.
+### 6.4 Source.cmake
+
+AutoReg-Dateien müssen in Source.cmake eingetragen sein:
+
+```cmake
+# src/UI/panels/Source.cmake
+set(_local_sources
+    "${CMAKE_CURRENT_LIST_DIR}/PanelAutoReg.cpp"  # ← Wichtig!
+    "${CMAKE_CURRENT_LIST_DIR}/PlayerPanel.cpp"
+    # ...
+)
+```
 
 ---
 
@@ -466,5 +397,6 @@ initPanelRegistrations();  // Aufruf erzwingt Linkage
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **1.1.0** | **2025-12-31** | **MenuRegistry: Direkte Registrierung statt Makros (Linker-Fix), +exclusive Container** |
+| **2.0.0** | **2025-12-31** | **Lazy-Init Pattern für alle Registries, +allowMultiple in WidgetRegistry, alte Makros entfernt** |
+| 1.1.0 | 2025-12-31 | MenuRegistry: Direkte Registrierung statt Makros |
 | 1.0.0 | 2025-12-31 | Initial: Panel, Dialog, Menu, Visualizer, Widget Registries |
