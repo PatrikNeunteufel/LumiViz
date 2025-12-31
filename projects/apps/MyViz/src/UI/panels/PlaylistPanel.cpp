@@ -118,7 +118,7 @@ void PlaylistPanel::subscribeToEvents()
     // Playback mode (shuffle/loop) changed
     int id3 = eventBus->subscribe<PlaybackModeChangedEvent>(
         [this](const PlaybackModeChangedEvent& e) {
-            onPlaybackModeChanged(e.shuffle, e.loop);
+            onPlaybackModeChanged(e.shuffle, e.repeatMode);
         });
     m_subscriptionIds.push_back(id3);
     
@@ -410,12 +410,12 @@ void PlaylistPanel::onPlaylistIndexChanged(int newIndex, int /*oldIndex*/)
     highlightCurrentTrack(newIndex);
 }
 
-void PlaylistPanel::onPlaybackModeChanged(bool shuffle, bool loop)
+void PlaylistPanel::onPlaybackModeChanged(bool shuffle, int repeatMode)
 {
     m_shuffleEnabled = shuffle;
-    m_loopEnabled = loop;
+    m_loopEnabled = (repeatMode == 2);  // 2 = RepeatMode::All (playlist loop)
     updateShuffleButton(shuffle);
-    updateLoopButton(loop);
+    updateLoopButton(m_loopEnabled);
 }
 
 void PlaylistPanel::updateShuffleButton(bool enabled)

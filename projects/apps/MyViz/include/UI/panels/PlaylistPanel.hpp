@@ -91,7 +91,7 @@ private:
     // Event handlers
     void onPlaylistChanged();
     void onPlaylistIndexChanged(int newIndex, int oldIndex);
-    void onPlaybackModeChanged(bool shuffle, bool loop);
+    void onPlaybackModeChanged(bool shuffle, int repeatMode);
 
     // UI Elements
     QLineEdit* m_pSearchEdit = nullptr;

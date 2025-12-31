@@ -600,6 +600,6 @@ void AudioPlayer::publishPlaybackModeChanged()
 {
     PlaybackModeChangedEvent event;
     event.shuffle = m_impl->shuffle;
-    event.loop = (m_impl->repeatMode == RepeatMode::All);
+    event.repeatMode = static_cast<int>(m_impl->repeatMode);  // 0=None, 1=One, 2=All
     m_impl->eventBus.publish(event);
 }

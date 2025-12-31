@@ -119,6 +119,16 @@ void PlayerPanel::subscribeToEvents()
         });
     m_subscriptionIds.push_back(id4);
     
+    // Playback mode changed (shuffle/repeat)
+    int id5 = eventBus->subscribe<PlaybackModeChangedEvent>(
+        [this](const PlaybackModeChangedEvent& e) {
+            // repeatMode: 0=None, 1=One (single track), 2=All (playlist)
+            bool loopOne = (e.repeatMode == 1);
+            m_loopEnabled = loopOne;
+            updateLoopButton(loopOne);
+        });
+    m_subscriptionIds.push_back(id5);
+    
     BasicLogger::logDebug("PlayerPanel: Subscribed to audio events");
 }
 
@@ -327,6 +337,40 @@ void PlayerPanel::updateMuteButton(bool muted)
     }
 }
 
+void PlayerPanel::onLoopClicked()
+{
+    auto* player = services().tryResolve<IAudioPlayer>();
+    if (player == nullptr)
+    {
+        return;
+    }
+    
+    m_loopEnabled = !m_loopEnabled;
+    player->setRepeatMode(m_loopEnabled ? IAudioPlayer::RepeatMode::One 
+                                        : IAudioPlayer::RepeatMode::None);
+    updateLoopButton(m_loopEnabled);
+    
+    BasicLogger::logDebug("PlayerPanel: Single-track loop " + 
+                          std::string(m_loopEnabled ? "enabled" : "disabled"));
+}
+
+void PlayerPanel::updateLoopButton(bool enabled)
+{
+    m_pLoopButton->setChecked(enabled);
+    
+    if (enabled)
+    {
+        m_pLoopButton->setStyleSheet(
+            "QPushButton { background-color: #4a6fa5; border-radius: 4px; }");
+        m_pLoopButton->setToolTip(tr("Repeat current track (ON)"));
+    }
+    else
+    {
+        m_pLoopButton->setStyleSheet(QString());
+        m_pLoopButton->setToolTip(tr("Repeat current track"));
+    }
+}
+
 // =============================================================================
 // UI Setup
 // =============================================================================
@@ -388,6 +432,14 @@ void PlayerPanel::setupUI()
     m_pNextButton->setFixedSize(32, 32);
     buttonLayout->addWidget(m_pNextButton);
 
+    // Loop button (single track repeat)
+    m_pLoopButton = new QPushButton(this);
+    m_pLoopButton->setText(QStringLiteral("🔂"));  // Unicode single repeat symbol
+    m_pLoopButton->setCheckable(true);
+    m_pLoopButton->setToolTip(tr("Repeat current track"));
+    m_pLoopButton->setFixedSize(32, 32);
+    buttonLayout->addWidget(m_pLoopButton);
+
     buttonLayout->addSpacing(20);
 
     // Volume section
@@ -417,6 +469,7 @@ void PlayerPanel::setupConnections()
     connect(m_pPrevButton, &QPushButton::clicked, this, &PlayerPanel::onPrevClicked);
     connect(m_pNextButton, &QPushButton::clicked, this, &PlayerPanel::onNextClicked);
     connect(m_pMuteButton, &QPushButton::clicked, this, &PlayerPanel::onMuteClicked);
+    connect(m_pLoopButton, &QPushButton::clicked, this, &PlayerPanel::onLoopClicked);
     
     // Volume slider
     connect(m_pVolumeSlider, &QSlider::valueChanged, this, &PlayerPanel::onVolumeChanged);

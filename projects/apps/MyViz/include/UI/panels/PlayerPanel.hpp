@@ -70,6 +70,7 @@ private Q_SLOTS:
     void onPrevClicked();
     void onNextClicked();
     void onMuteClicked();
+    void onLoopClicked();
     
     // Slider handlers
     void onVolumeChanged(int value);
@@ -93,6 +94,7 @@ private:
     static QString formatTime(int ms);
     void updatePlayButton(bool isPlaying);
     void updateMuteButton(bool muted);
+    void updateLoopButton(bool enabled);
 
     // UI Elements
     QLabel* m_pTrackLabel = nullptr;
@@ -103,11 +105,13 @@ private:
     QPushButton* m_pPrevButton = nullptr;
     QPushButton* m_pNextButton = nullptr;
     QPushButton* m_pMuteButton = nullptr;
+    QPushButton* m_pLoopButton = nullptr;
     QSlider* m_pVolumeSlider = nullptr;
     QSlider* m_pProgressSlider = nullptr;
     
     // State
     bool m_isSeeking = false;           ///< True while user is dragging progress
+    bool m_loopEnabled = false;         ///< True when single-track loop is active
     int m_currentDurationMs = 0;        ///< Current track duration
     std::vector<int> m_subscriptionIds; ///< Event subscription IDs for cleanup
 };

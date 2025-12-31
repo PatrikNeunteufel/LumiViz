@@ -254,12 +254,12 @@ struct AudioDeviceChangedEvent : public Event
 
 /**
  * @struct PlaybackModeChangedEvent
- * @brief Emitted when shuffle or loop mode changes
+ * @brief Emitted when shuffle or repeat mode changes
  */
 struct PlaybackModeChangedEvent : public Event
 {
     EVENT_TYPE_NAME("PlaybackModeChangedEvent")
     
-    bool shuffle = false;   ///< Shuffle mode enabled
-    bool loop = false;      ///< Loop playlist mode enabled (RepeatMode::All)
+    bool shuffle = false;    ///< Shuffle mode enabled
+    int repeatMode = 0;      ///< 0=None, 1=One (single track), 2=All (playlist)
 };
