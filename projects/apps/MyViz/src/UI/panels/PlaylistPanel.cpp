@@ -5,7 +5,7 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 2.0.0
+ * @version 2.1.0
  ****************************************************************************************
  */
 
@@ -24,6 +24,8 @@
 #include <QStyle>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFile>
+#include <QTextStream>
 
 #include <BasicLogger.h>
 
@@ -56,10 +58,16 @@ void PlaylistPanel::onActivate()
     subscribeToEvents();
     refreshPlaylist();
     
-    // Sync current playing index
+    // Sync with player state
     if (auto* player = services().tryResolve<IAudioPlayer>())
     {
         highlightCurrentTrack(player->playlistIndex());
+        
+        // Sync shuffle/loop state
+        m_shuffleEnabled = player->shuffle();
+        m_loopEnabled = (player->repeatMode() == IAudioPlayer::RepeatMode::All);
+        updateShuffleButton(m_shuffleEnabled);
+        updateLoopButton(m_loopEnabled);
     }
 }
 
@@ -106,6 +114,13 @@ void PlaylistPanel::subscribeToEvents()
             onPlaylistIndexChanged(e.currentIndex, e.previousIndex);
         });
     m_subscriptionIds.push_back(id2);
+    
+    // Playback mode (shuffle/loop) changed
+    int id3 = eventBus->subscribe<PlaybackModeChangedEvent>(
+        [this](const PlaybackModeChangedEvent& e) {
+            onPlaybackModeChanged(e.shuffle, e.loop);
+        });
+    m_subscriptionIds.push_back(id3);
     
     BasicLogger::logDebug("PlaylistPanel: Subscribed to playlist events");
 }
@@ -232,6 +247,155 @@ void PlaylistPanel::onSelectionChanged()
     m_pRemoveButton->setEnabled(hasSelection);
 }
 
+void PlaylistPanel::onShuffleClicked()
+{
+    auto* player = services().tryResolve<IAudioPlayer>();
+    if (player == nullptr)
+    {
+        return;
+    }
+    
+    m_shuffleEnabled = !m_shuffleEnabled;
+    player->setShuffle(m_shuffleEnabled);
+    updateShuffleButton(m_shuffleEnabled);
+    
+    BasicLogger::logDebug("PlaylistPanel: Shuffle " + 
+                          std::string(m_shuffleEnabled ? "enabled" : "disabled"));
+}
+
+void PlaylistPanel::onLoopClicked()
+{
+    auto* player = services().tryResolve<IAudioPlayer>();
+    if (player == nullptr)
+    {
+        return;
+    }
+    
+    m_loopEnabled = !m_loopEnabled;
+    player->setRepeatMode(m_loopEnabled ? IAudioPlayer::RepeatMode::All 
+                                        : IAudioPlayer::RepeatMode::None);
+    updateLoopButton(m_loopEnabled);
+    
+    BasicLogger::logDebug("PlaylistPanel: Loop " + 
+                          std::string(m_loopEnabled ? "enabled" : "disabled"));
+}
+
+void PlaylistPanel::onSaveClicked()
+{
+    auto* playlist = services().tryResolve<IPlaylist>();
+    if (playlist == nullptr || playlist->isEmpty())
+    {
+        return;
+    }
+    
+    QString filePath = QFileDialog::getSaveFileName(
+        this,
+        tr("Save Playlist"),
+        QString(),
+        tr("M3U Playlist (*.m3u);;All Files (*)")
+    );
+    
+    if (filePath.isEmpty())
+    {
+        return;
+    }
+    
+    // Ensure .m3u extension
+    if (!filePath.endsWith(".m3u", Qt::CaseInsensitive))
+    {
+        filePath += ".m3u";
+    }
+    
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        BasicLogger::logError("Failed to save playlist: " + filePath.toStdString());
+        return;
+    }
+    
+    QTextStream out(&file);
+    out << "#EXTM3U\n";
+    
+    for (int i = 0; i < playlist->count(); ++i)
+    {
+        QString trackPath = playlist->filePathAt(i);
+        out << trackPath << "\n";
+    }
+    
+    file.close();
+    BasicLogger::logInfo("Playlist saved: " + filePath.toStdString() + 
+                         " (" + std::to_string(playlist->count()) + " tracks)");
+}
+
+void PlaylistPanel::onLoadClicked()
+{
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        tr("Load Playlist"),
+        QString(),
+        tr("Playlist Files (*.m3u *.m3u8 *.pls);;All Files (*)")
+    );
+    
+    if (filePath.isEmpty())
+    {
+        return;
+    }
+    
+    auto* playlist = services().tryResolve<IPlaylist>();
+    if (playlist == nullptr)
+    {
+        return;
+    }
+    
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        BasicLogger::logError("Failed to load playlist: " + filePath.toStdString());
+        return;
+    }
+    
+    // Clear current playlist
+    playlist->clear();
+    
+    QTextStream in(&file);
+    QFileInfo playlistFileInfo(filePath);
+    QString playlistDir = playlistFileInfo.absolutePath();
+    int addedCount = 0;
+    
+    while (!in.atEnd())
+    {
+        QString line = in.readLine().trimmed();
+        
+        // Skip empty lines and comments
+        if (line.isEmpty() || line.startsWith('#'))
+        {
+            continue;
+        }
+        
+        // Handle relative paths
+        QString trackPath = line;
+        if (!QFileInfo(trackPath).isAbsolute())
+        {
+            trackPath = playlistDir + "/" + line;
+        }
+        
+        // Check if file exists
+        if (QFile::exists(trackPath))
+        {
+            playlist->addTrack(trackPath);
+            addedCount++;
+        }
+        else
+        {
+            BasicLogger::logWarning("Playlist track not found: " + trackPath.toStdString());
+        }
+    }
+    
+    file.close();
+    BasicLogger::logInfo("Playlist loaded: " + filePath.toStdString() + 
+                         " (" + std::to_string(addedCount) + " tracks)");
+}
+
 // =============================================================================
 // Event Handlers
 // =============================================================================
@@ -244,6 +408,56 @@ void PlaylistPanel::onPlaylistChanged()
 void PlaylistPanel::onPlaylistIndexChanged(int newIndex, int /*oldIndex*/)
 {
     highlightCurrentTrack(newIndex);
+}
+
+void PlaylistPanel::onPlaybackModeChanged(bool shuffle, bool loop)
+{
+    m_shuffleEnabled = shuffle;
+    m_loopEnabled = loop;
+    updateShuffleButton(shuffle);
+    updateLoopButton(loop);
+}
+
+void PlaylistPanel::updateShuffleButton(bool enabled)
+{
+    if (m_pShuffleButton == nullptr)
+    {
+        return;
+    }
+    
+    m_pShuffleButton->setChecked(enabled);
+    
+    // Visual feedback - change style when active
+    if (enabled)
+    {
+        m_pShuffleButton->setStyleSheet(
+            "QPushButton { background-color: #4a6fa5; border: 1px solid #6a8fc5; }");
+    }
+    else
+    {
+        m_pShuffleButton->setStyleSheet("");
+    }
+}
+
+void PlaylistPanel::updateLoopButton(bool enabled)
+{
+    if (m_pLoopButton == nullptr)
+    {
+        return;
+    }
+    
+    m_pLoopButton->setChecked(enabled);
+    
+    // Visual feedback - change style when active
+    if (enabled)
+    {
+        m_pLoopButton->setStyleSheet(
+            "QPushButton { background-color: #4a6fa5; border: 1px solid #6a8fc5; }");
+    }
+    else
+    {
+        m_pLoopButton->setStyleSheet("");
+    }
 }
 
 // =============================================================================
@@ -329,7 +543,7 @@ void PlaylistPanel::setupUI()
     m_pListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     mainLayout->addWidget(m_pListWidget, 1);
 
-    // Buttons
+    // All buttons in one row
     auto* buttonLayout = new QHBoxLayout();
 
     m_pAddButton = new QPushButton(this);
@@ -343,12 +557,41 @@ void PlaylistPanel::setupUI()
     m_pRemoveButton->setEnabled(false);
     buttonLayout->addWidget(m_pRemoveButton);
 
-    buttonLayout->addStretch();
-
     m_pClearButton = new QPushButton(this);
     m_pClearButton->setIcon(style()->standardIcon(QStyle::SP_DialogResetButton));
     m_pClearButton->setToolTip(tr("Clear playlist"));
     buttonLayout->addWidget(m_pClearButton);
+
+    buttonLayout->addSpacing(8);
+
+    // Save/Load buttons
+    m_pSaveButton = new QPushButton(this);
+    m_pSaveButton->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
+    m_pSaveButton->setToolTip(tr("Save playlist"));
+    buttonLayout->addWidget(m_pSaveButton);
+
+    m_pLoadButton = new QPushButton(this);
+    m_pLoadButton->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
+    m_pLoadButton->setToolTip(tr("Load playlist"));
+    buttonLayout->addWidget(m_pLoadButton);
+
+    buttonLayout->addStretch();
+
+    // Shuffle button with icon
+    m_pShuffleButton = new QPushButton(this);
+    m_pShuffleButton->setText(QStringLiteral("🔀"));  // Unicode shuffle symbol
+    m_pShuffleButton->setCheckable(true);
+    m_pShuffleButton->setToolTip(tr("Shuffle mode - play random next track"));
+    m_pShuffleButton->setFixedWidth(32);
+    buttonLayout->addWidget(m_pShuffleButton);
+
+    // Loop button with icon
+    m_pLoopButton = new QPushButton(this);
+    m_pLoopButton->setIcon(style()->standardIcon(QStyle::SP_BrowserReload));
+    m_pLoopButton->setCheckable(true);
+    m_pLoopButton->setToolTip(tr("Loop playlist - restart from beginning after last track"));
+    m_pLoopButton->setFixedWidth(32);
+    buttonLayout->addWidget(m_pLoopButton);
 
     mainLayout->addLayout(buttonLayout);
 }
@@ -361,6 +604,14 @@ void PlaylistPanel::setupConnections()
             this, &PlaylistPanel::onRemoveClicked);
     connect(m_pClearButton, &QPushButton::clicked, 
             this, &PlaylistPanel::onClearClicked);
+    connect(m_pSaveButton, &QPushButton::clicked,
+            this, &PlaylistPanel::onSaveClicked);
+    connect(m_pLoadButton, &QPushButton::clicked,
+            this, &PlaylistPanel::onLoadClicked);
+    connect(m_pShuffleButton, &QPushButton::clicked,
+            this, &PlaylistPanel::onShuffleClicked);
+    connect(m_pLoopButton, &QPushButton::clicked,
+            this, &PlaylistPanel::onLoopClicked);
     connect(m_pListWidget, &QListWidget::itemDoubleClicked,
             this, &PlaylistPanel::onItemDoubleClicked);
     connect(m_pListWidget, &QListWidget::itemSelectionChanged,

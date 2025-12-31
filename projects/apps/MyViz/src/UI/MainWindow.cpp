@@ -24,6 +24,14 @@
 #include "services/MenuRegistry.hpp"
 #include "services/events/UIEvents.hpp"
 
+// Audio Services
+#include "audio/IAudioEngine.hpp"
+#include "audio/BassEngine.hpp"
+#include "audio/IAudioPlayer.hpp"
+#include "audio/AudioPlayer.hpp"
+#include "audio/IPlaylist.hpp"
+#include "audio/Playlist.hpp"
+
 // Qt
 #include <QMenuBar>
 #include <QMenu>
@@ -32,6 +40,7 @@
 #include <QStatusBar>
 #include <QLabel>
 #include <QKeySequence>
+#include <QTimer>
 
 // BasicLogger
 #include <BasicLogger.h>
@@ -51,7 +60,26 @@ MainWindow::MainWindow(QWidget* parent)
     // Register EventBus service
     m_pServices->registerSingleton<IEventBus, EventBus>();
     
+    // Setup Audio Services
+    setupAudioServices();
+    
     setupUi();
+    
+    // -------------------------------------------------------------------------
+    // Audio Update Timer
+    // -------------------------------------------------------------------------
+    // AudioPlayer::update() must be called regularly to:
+    // - Detect track end
+    // - Publish position events for UI updates
+    //
+    // 30 Hz (33ms) is sufficient for smooth progress bar updates
+    
+    m_pAudioUpdateTimer = new QTimer(this);
+    m_pAudioUpdateTimer->setInterval(33);  // ~30 Hz
+    connect(m_pAudioUpdateTimer, &QTimer::timeout, this, &MainWindow::onAudioUpdate);
+    m_pAudioUpdateTimer->start();
+    
+    BasicLogger::logDebug("Audio update timer started (30 Hz)");
 }
 
 MainWindow::~MainWindow()
@@ -75,6 +103,15 @@ MainWindow::~MainWindow()
         m_pDockManager->closeAll();
         m_pDockManager.reset();
     }
+    
+    // -------------------------------------------------------------------------
+    // Cleanup Services
+    // -------------------------------------------------------------------------
+    // Audio services are managed by ServiceContainer and will be cleaned up
+    // when m_pServices is destroyed (automatic via unique_ptr destructor)
+    
+    BasicLogger::logDebug("MainWindow destructor - cleaning up ServiceContainer");
+    m_pServices.reset();
     
     BasicLogger::logDebug("MainWindow destructor complete");
 }
@@ -375,4 +412,92 @@ void MainWindow::setupEventHandlers()
     });
 
     BasicLogger::logDebug("  Event handlers registered");
+}
+
+void MainWindow::onAudioUpdate()
+{
+    // -------------------------------------------------------------------------
+    // Audio Update Callback
+    // -------------------------------------------------------------------------
+    // Called ~30 times per second to update audio playback state.
+    // This triggers position events for UI updates (progress bar, time display).
+    
+    auto* pPlayer = m_pServices->tryResolve<IAudioPlayer>();
+    if (pPlayer != nullptr)
+    {
+        pPlayer->update();
+    }
+}
+
+void MainWindow::setupAudioServices()
+{
+    // -------------------------------------------------------------------------
+    // Audio Services Initialization
+    // -------------------------------------------------------------------------
+    // IMPORTANT: ServiceContainer uses std::mutex (not recursive_mutex).
+    // Calling resolve() inside a factory causes deadlock because the mutex
+    // is already held by the outer tryResolve() call.
+    //
+    // Solution: Register services without nested resolve() calls, then
+    // manually wire them together after all are created.
+    
+    // 1. Register BassEngine (no dependencies)
+    m_pServices->registerSingleton<IAudioEngine>([](ServiceContainer& /*c*/) {
+        auto engine = std::make_unique<BassEngine>();
+        if (!engine->initialize())
+        {
+            BasicLogger::logError("Failed to initialize BassEngine!");
+            return std::unique_ptr<IAudioEngine>(nullptr);
+        }
+        BasicLogger::logDebug("  BassEngine initialized");
+        return std::unique_ptr<IAudioEngine>(engine.release());
+    });
+    
+    // 2. Get EventBus reference (already registered, no factory call)
+    auto& eventBus = m_pServices->resolve<IEventBus>();
+    
+    // 3. Force BassEngine initialization now
+    auto* pEngine = m_pServices->tryResolve<IAudioEngine>();
+    if (pEngine == nullptr)
+    {
+        BasicLogger::logError("Failed to create BassEngine!");
+        return;
+    }
+    
+    // 4. Register Playlist with captured EventBus reference
+    m_pServices->registerSingleton<IPlaylist>([&eventBus](ServiceContainer& /*c*/) {
+        auto playlist = std::make_unique<Playlist>(eventBus);
+        BasicLogger::logDebug("  Playlist created");
+        return std::unique_ptr<IPlaylist>(playlist.release());
+    });
+    
+    // 5. Force Playlist initialization
+    auto* pPlaylist = m_pServices->tryResolve<IPlaylist>();
+    
+    // 6. Register AudioPlayer with captured references (no resolve() in factory!)
+    m_pServices->registerSingleton<IAudioPlayer>(
+        [pEngine, &eventBus, pPlaylist](ServiceContainer& /*c*/) {
+            auto player = std::make_unique<AudioPlayer>(*pEngine, eventBus);
+            
+            if (pPlaylist != nullptr)
+            {
+                player->setPlaylist(pPlaylist);
+                BasicLogger::logDebug("  AudioPlayer connected to Playlist");
+            }
+            
+            BasicLogger::logDebug("  AudioPlayer created");
+            return std::unique_ptr<IAudioPlayer>(player.release());
+        });
+    
+    // 7. Force AudioPlayer initialization
+    auto* pPlayer = m_pServices->tryResolve<IAudioPlayer>();
+    
+    if (pEngine != nullptr && pPlaylist != nullptr && pPlayer != nullptr)
+    {
+        BasicLogger::logInfo("Audio services initialized successfully");
+    }
+    else
+    {
+        BasicLogger::logError("Failed to initialize some audio services!");
+    }
 }

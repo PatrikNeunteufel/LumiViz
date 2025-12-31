@@ -150,5 +150,6 @@ private:
     void setState(PlaybackState newState);
     void publishTrackChanged();
     void publishPositionEvent();
+    void publishPlaybackModeChanged();
     void handleTrackEnd();
 };

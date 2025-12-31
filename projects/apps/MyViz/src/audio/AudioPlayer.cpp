@@ -19,6 +19,7 @@
 
 #include <QFileInfo>
 #include <algorithm>
+#include <random>
 
 // =============================================================================
 // Private Implementation
@@ -193,13 +194,40 @@ void AudioPlayer::stop()
 
 bool AudioPlayer::next()
 {
-    if (!m_impl->playlist)
+    if (!m_impl->playlist || m_impl->playlist->isEmpty())
     {
         return false;
     }
     
-    bool wrap = (m_impl->repeatMode == RepeatMode::All);
-    int newIndex = m_impl->playlist->next(wrap);
+    int newIndex = -1;
+    
+    if (m_impl->shuffle)
+    {
+        // Shuffle mode: Select random track (different from current if possible)
+        int trackCount = m_impl->playlist->count();
+        if (trackCount == 1)
+        {
+            newIndex = 0;
+        }
+        else
+        {
+            // Random index different from current
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<> dist(0, trackCount - 1);
+            
+            do
+            {
+                newIndex = dist(gen);
+            } while (newIndex == m_impl->playlistIndex && trackCount > 1);
+        }
+    }
+    else
+    {
+        // Normal mode: Next track with optional wrap
+        bool wrap = (m_impl->repeatMode == RepeatMode::All);
+        newIndex = m_impl->playlist->next(wrap);
+    }
     
     if (newIndex >= 0)
     {
@@ -440,7 +468,10 @@ AudioPlayer::RepeatMode AudioPlayer::repeatMode() const
 
 void AudioPlayer::setRepeatMode(RepeatMode mode)
 {
+    if (m_impl->repeatMode == mode) return;
+    
     m_impl->repeatMode = mode;
+    publishPlaybackModeChanged();
 }
 
 bool AudioPlayer::shuffle() const
@@ -450,7 +481,10 @@ bool AudioPlayer::shuffle() const
 
 void AudioPlayer::setShuffle(bool enabled)
 {
+    if (m_impl->shuffle == enabled) return;
+    
     m_impl->shuffle = enabled;
+    publishPlaybackModeChanged();
 }
 
 // =============================================================================
@@ -553,11 +587,19 @@ void AudioPlayer::handleTrackEnd()
             
         case RepeatMode::All:
         case RepeatMode::None:
-            // Try to play next
+            // Try to play next (will use shuffle if enabled)
             if (!next())
             {
                 setState(PlaybackState::Stopped);
             }
             break;
     }
+}
+
+void AudioPlayer::publishPlaybackModeChanged()
+{
+    PlaybackModeChangedEvent event;
+    event.shuffle = m_impl->shuffle;
+    event.loop = (m_impl->repeatMode == RepeatMode::All);
+    m_impl->eventBus.publish(event);
 }

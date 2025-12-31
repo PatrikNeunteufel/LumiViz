@@ -5,17 +5,19 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 2.0.0
+ * @version 2.1.0
  *
  * @details
  * ## PlaylistPanel
  *
  * Provides playlist management:
- * - Track list display with current track highlight
+ * - Track list display with current track highlight (bold)
  * - Add/Remove tracks via file dialog
  * - Search/Filter functionality
  * - Drag & Drop reordering
  * - Double-click to play
+ * - Shuffle mode (random next track)
+ * - Loop mode (repeat playlist)
  *
  * ## Integration
  *
@@ -66,6 +68,10 @@ private Q_SLOTS:
     void onAddClicked();
     void onRemoveClicked();
     void onClearClicked();
+    void onShuffleClicked();
+    void onLoopClicked();
+    void onSaveClicked();
+    void onLoadClicked();
     void onItemDoubleClicked(QListWidgetItem* item);
     void onSearchChanged(const QString& text);
     void onSelectionChanged();
@@ -79,10 +85,13 @@ private:
     // Sync with playlist service
     void refreshPlaylist();
     void highlightCurrentTrack(int index);
+    void updateShuffleButton(bool enabled);
+    void updateLoopButton(bool enabled);
     
     // Event handlers
     void onPlaylistChanged();
     void onPlaylistIndexChanged(int newIndex, int oldIndex);
+    void onPlaybackModeChanged(bool shuffle, bool loop);
 
     // UI Elements
     QLineEdit* m_pSearchEdit = nullptr;
@@ -90,8 +99,14 @@ private:
     QPushButton* m_pAddButton = nullptr;
     QPushButton* m_pRemoveButton = nullptr;
     QPushButton* m_pClearButton = nullptr;
+    QPushButton* m_pSaveButton = nullptr;
+    QPushButton* m_pLoadButton = nullptr;
+    QPushButton* m_pShuffleButton = nullptr;
+    QPushButton* m_pLoopButton = nullptr;
     
     // State
     int m_currentPlayingIndex = -1;
+    bool m_shuffleEnabled = false;
+    bool m_loopEnabled = false;
     std::vector<int> m_subscriptionIds;
 };

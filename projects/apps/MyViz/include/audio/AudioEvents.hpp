@@ -251,3 +251,15 @@ struct AudioDeviceChangedEvent : public Event
     QString deviceName;     ///< New device name
     int deviceId = -1;      ///< Backend-specific device ID
 };
+
+/**
+ * @struct PlaybackModeChangedEvent
+ * @brief Emitted when shuffle or loop mode changes
+ */
+struct PlaybackModeChangedEvent : public Event
+{
+    EVENT_TYPE_NAME("PlaybackModeChangedEvent")
+    
+    bool shuffle = false;   ///< Shuffle mode enabled
+    bool loop = false;      ///< Loop playlist mode enabled (RepeatMode::All)
+};

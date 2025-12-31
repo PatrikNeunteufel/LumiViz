@@ -20,6 +20,8 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QByteArray>
+#include <QCoreApplication>
 
 #include <cmath>
 #include <algorithm>
@@ -171,6 +173,22 @@ bool BassEngine::initialize(int deviceId, int sampleRate)
     m_impl->initialized = true;
     m_impl->deviceId = device;
     m_impl->sampleRate = sampleRate;
+    
+    // -------------------------------------------------------------------------
+    // Auto-load plugins from executable directory
+    // -------------------------------------------------------------------------
+    // BASS plugins (bassflac.dll, etc.) must be loaded for format support
+    // and proper tag reading. Look in same directory as executable.
+    QString exePath = QCoreApplication::applicationDirPath();
+    int pluginCount = loadPlugins(exePath);
+    if (pluginCount > 0)
+    {
+        BasicLogger::logInfo("Loaded " + std::to_string(pluginCount) + " BASS plugins");
+    }
+    else
+    {
+        BasicLogger::logWarning("No BASS plugins found in: " + exePath.toStdString());
+    }
     
     // Get actual device info
     BASS_INFO info;
@@ -514,6 +532,220 @@ bool BassEngine::getChannelLevels(AudioStreamHandle stream, float& left, float& 
 // Metadata
 // =============================================================================
 
+// =============================================================================
+// ID3v2 Tag Parser Helper
+// =============================================================================
+
+namespace
+{
+
+/**
+ * @brief Parse a single ID3v2 text frame
+ *
+ * ID3v2 text frames have an encoding byte followed by the text:
+ * - 0x00: ISO-8859-1 (Latin-1)
+ * - 0x01: UTF-16 with BOM
+ * - 0x02: UTF-16BE without BOM
+ * - 0x03: UTF-8
+ */
+QString parseId3v2TextFrame(const char* data, int size)
+{
+    if (size < 1) return QString();
+    
+    unsigned char encoding = static_cast<unsigned char>(data[0]);
+    const char* text = data + 1;
+    int textSize = size - 1;
+    
+    if (textSize <= 0) return QString();
+    
+    switch (encoding)
+    {
+        case 0:  // ISO-8859-1 (Latin-1)
+            return QString::fromLatin1(text, textSize).trimmed();
+            
+        case 1:  // UTF-16 with BOM
+        {
+            if (textSize < 2) return QString();
+            
+            // Check BOM
+            unsigned char bom1 = static_cast<unsigned char>(text[0]);
+            unsigned char bom2 = static_cast<unsigned char>(text[1]);
+            
+            if (bom1 == 0xFF && bom2 == 0xFE)
+            {
+                // Little-endian UTF-16
+                return QString::fromUtf16(
+                    reinterpret_cast<const char16_t*>(text + 2),
+                    (textSize - 2) / 2).trimmed();
+            }
+            else if (bom1 == 0xFE && bom2 == 0xFF)
+            {
+                // Big-endian UTF-16 - need to swap bytes
+                QByteArray swapped;
+                swapped.reserve(textSize - 2);
+                for (int i = 2; i + 1 < textSize; i += 2)
+                {
+                    swapped.append(text[i + 1]);
+                    swapped.append(text[i]);
+                }
+                return QString::fromUtf16(
+                    reinterpret_cast<const char16_t*>(swapped.constData()),
+                    swapped.size() / 2).trimmed();
+            }
+            // No valid BOM, try as UTF-16LE anyway
+            return QString::fromUtf16(
+                reinterpret_cast<const char16_t*>(text),
+                textSize / 2).trimmed();
+        }
+            
+        case 2:  // UTF-16BE without BOM
+        {
+            // Swap bytes for big-endian
+            QByteArray swapped;
+            swapped.reserve(textSize);
+            for (int i = 0; i + 1 < textSize; i += 2)
+            {
+                swapped.append(text[i + 1]);
+                swapped.append(text[i]);
+            }
+            return QString::fromUtf16(
+                reinterpret_cast<const char16_t*>(swapped.constData()),
+                swapped.size() / 2).trimmed();
+        }
+            
+        case 3:  // UTF-8
+            return QString::fromUtf8(text, textSize).trimmed();
+            
+        default:
+            // Unknown encoding, try Latin-1 as fallback
+            return QString::fromLatin1(text, textSize).trimmed();
+    }
+}
+
+/**
+ * @brief Parse ID3v2 tags from raw data
+ *
+ * ID3v2 structure:
+ * - Header (10 bytes): "ID3" + version + flags + size
+ * - Frames: Frame ID (4 bytes) + Size (4 bytes) + Flags (2 bytes) + Data
+ */
+bool parseId3v2Tags(const char* data, QString& title, QString& artist, QString& album)
+{
+    if (data == nullptr) return false;
+    
+    // Check header "ID3"
+    if (data[0] != 'I' || data[1] != 'D' || data[2] != '3')
+    {
+        return false;
+    }
+    
+    unsigned char majorVersion = static_cast<unsigned char>(data[3]);
+    // unsigned char minorVersion = static_cast<unsigned char>(data[4]);
+    // unsigned char flags = static_cast<unsigned char>(data[5]);
+    
+    // Syncsafe size (7 bits per byte)
+    int tagSize = ((data[6] & 0x7F) << 21) |
+                  ((data[7] & 0x7F) << 14) |
+                  ((data[8] & 0x7F) << 7) |
+                  (data[9] & 0x7F);
+    
+    // Frame parsing starts after header
+    const char* pos = data + 10;
+    const char* end = data + 10 + tagSize;
+    
+    bool foundAny = false;
+    
+    while (pos + 10 < end)
+    {
+        // Frame ID (4 bytes for ID3v2.3/2.4, 3 bytes for ID3v2.2)
+        char frameId[5] = {0};
+        int headerSize = 10;
+        int frameSize = 0;
+        
+        if (majorVersion >= 3)
+        {
+            // ID3v2.3 or ID3v2.4
+            frameId[0] = pos[0];
+            frameId[1] = pos[1];
+            frameId[2] = pos[2];
+            frameId[3] = pos[3];
+            
+            if (majorVersion == 4)
+            {
+                // ID3v2.4: syncsafe size
+                frameSize = ((static_cast<unsigned char>(pos[4]) & 0x7F) << 21) |
+                            ((static_cast<unsigned char>(pos[5]) & 0x7F) << 14) |
+                            ((static_cast<unsigned char>(pos[6]) & 0x7F) << 7) |
+                            (static_cast<unsigned char>(pos[7]) & 0x7F);
+            }
+            else
+            {
+                // ID3v2.3: big-endian size
+                frameSize = (static_cast<unsigned char>(pos[4]) << 24) |
+                            (static_cast<unsigned char>(pos[5]) << 16) |
+                            (static_cast<unsigned char>(pos[6]) << 8) |
+                            static_cast<unsigned char>(pos[7]);
+            }
+        }
+        else
+        {
+            // ID3v2.2: 3-byte frame ID, 3-byte size
+            frameId[0] = pos[0];
+            frameId[1] = pos[1];
+            frameId[2] = pos[2];
+            frameId[3] = '\0';
+            
+            frameSize = (static_cast<unsigned char>(pos[3]) << 16) |
+                        (static_cast<unsigned char>(pos[4]) << 8) |
+                        static_cast<unsigned char>(pos[5]);
+            headerSize = 6;
+        }
+        
+        // Check for padding (null frame ID)
+        if (frameId[0] == '\0')
+        {
+            break;
+        }
+        
+        // Sanity check
+        if (frameSize <= 0 || frameSize > (end - pos - headerSize))
+        {
+            break;
+        }
+        
+        const char* frameData = pos + headerSize;
+        
+        // Parse known frames
+        QString frameIdStr = QString::fromLatin1(frameId);
+        
+        if (frameIdStr == "TIT2" || frameIdStr == "TT2")  // Title
+        {
+            title = parseId3v2TextFrame(frameData, frameSize);
+            if (!title.isEmpty()) foundAny = true;
+        }
+        else if (frameIdStr == "TPE1" || frameIdStr == "TP1")  // Artist
+        {
+            artist = parseId3v2TextFrame(frameData, frameSize);
+            if (!artist.isEmpty()) foundAny = true;
+        }
+        else if (frameIdStr == "TALB" || frameIdStr == "TAL")  // Album
+        {
+            album = parseId3v2TextFrame(frameData, frameSize);
+            if (!album.isEmpty()) foundAny = true;
+        }
+        
+        pos += headerSize + frameSize;
+    }
+    
+    return foundAny;
+}
+
+} // anonymous namespace
+
+// =============================================================================
+// Metadata Extraction
+// =============================================================================
+
 bool BassEngine::getMetadata(AudioStreamHandle stream,
                              QString& title,
                              QString& artist,
@@ -521,21 +753,139 @@ bool BassEngine::getMetadata(AudioStreamHandle stream,
 {
     if (stream == INVALID_STREAM) return false;
     
-    // Try to get ID3v2 tags first, then ID3v1
-    const char* tags = BASS_ChannelGetTags(static_cast<HSTREAM>(stream), BASS_TAG_ID3V2);
-    
-    if (tags == nullptr)
-    {
-        // Try OGG comments
-        tags = BASS_ChannelGetTags(static_cast<HSTREAM>(stream), BASS_TAG_OGG);
-    }
-    
-    // For now, return empty - full tag parsing would require more code
     title.clear();
     artist.clear();
     album.clear();
     
-    // Simple fallback: could parse tags here
+    HSTREAM hStream = static_cast<HSTREAM>(stream);
+    
+    // -------------------------------------------------------------------------
+    // Try ID3v2 tags first (most common for MP3, supports Unicode)
+    // -------------------------------------------------------------------------
+    const char* id3v2 = BASS_ChannelGetTags(hStream, BASS_TAG_ID3V2);
+    if (id3v2 != nullptr)
+    {
+        if (parseId3v2Tags(id3v2, title, artist, album))
+        {
+            BasicLogger::logDebug("Metadata from ID3v2: " + title.toStdString() + 
+                                  " - " + artist.toStdString());
+            return true;
+        }
+    }
+    
+    // -------------------------------------------------------------------------
+    // Try ID3v1 tags (fallback for MP3, Latin-1 only, 30 char limit)
+    // -------------------------------------------------------------------------
+    const TAG_ID3* id3v1 = reinterpret_cast<const TAG_ID3*>(
+        BASS_ChannelGetTags(hStream, BASS_TAG_ID3));
+    if (id3v1 != nullptr)
+    {
+        title = QString::fromLatin1(id3v1->title, 30).trimmed();
+        artist = QString::fromLatin1(id3v1->artist, 30).trimmed();
+        album = QString::fromLatin1(id3v1->album, 30).trimmed();
+        
+        if (!title.isEmpty() || !artist.isEmpty())
+        {
+            BasicLogger::logDebug("Metadata from ID3v1: " + title.toStdString() + 
+                                  " - " + artist.toStdString());
+            return true;
+        }
+    }
+    
+    // -------------------------------------------------------------------------
+    // Try OGG/Vorbis/FLAC comments (UTF-8)
+    // -------------------------------------------------------------------------
+    const char* vorbis = BASS_ChannelGetTags(hStream, BASS_TAG_OGG);
+    if (vorbis != nullptr)
+    {
+        const char* p = vorbis;
+        while (*p)
+        {
+            QString tag = QString::fromUtf8(p);
+            int eq = tag.indexOf('=');
+            if (eq > 0)
+            {
+                QString key = tag.left(eq).toUpper();
+                QString value = tag.mid(eq + 1);
+                
+                if (key == "TITLE") title = value;
+                else if (key == "ARTIST") artist = value;
+                else if (key == "ALBUM") album = value;
+            }
+            p += strlen(p) + 1;
+        }
+        
+        if (!title.isEmpty() || !artist.isEmpty())
+        {
+            BasicLogger::logDebug("Metadata from Vorbis: " + title.toStdString() + 
+                                  " - " + artist.toStdString());
+            return true;
+        }
+    }
+    
+    // -------------------------------------------------------------------------
+    // Try APE tags (UTF-8) - used by some FLAC/APE/WavPack/MP3 files
+    // -------------------------------------------------------------------------
+    const char* ape = BASS_ChannelGetTags(hStream, BASS_TAG_APE);
+    if (ape != nullptr)
+    {
+        const char* p = ape;
+        while (*p)
+        {
+            QString tag = QString::fromUtf8(p);
+            int eq = tag.indexOf('=');
+            if (eq > 0)
+            {
+                QString key = tag.left(eq).toUpper();
+                QString value = tag.mid(eq + 1);
+                
+                if (key == "TITLE") title = value;
+                else if (key == "ARTIST") artist = value;
+                else if (key == "ALBUM") album = value;
+            }
+            p += strlen(p) + 1;
+        }
+        
+        if (!title.isEmpty() || !artist.isEmpty())
+        {
+            BasicLogger::logDebug("Metadata from APE: " + title.toStdString() + 
+                                  " - " + artist.toStdString());
+            return true;
+        }
+    }
+    
+    // -------------------------------------------------------------------------
+    // Try MP4/M4A/AAC tags
+    // -------------------------------------------------------------------------
+    const char* mp4 = BASS_ChannelGetTags(hStream, BASS_TAG_MP4);
+    if (mp4 != nullptr)
+    {
+        const char* p = mp4;
+        while (*p)
+        {
+            QString tag = QString::fromUtf8(p);
+            int eq = tag.indexOf('=');
+            if (eq > 0)
+            {
+                QString key = tag.left(eq).toUpper();
+                QString value = tag.mid(eq + 1);
+                
+                // MP4 uses different tag names
+                if (key == "©NAM" || key == "TITLE") title = value;
+                else if (key == "©ART" || key == "ARTIST") artist = value;
+                else if (key == "©ALB" || key == "ALBUM") album = value;
+            }
+            p += strlen(p) + 1;
+        }
+        
+        if (!title.isEmpty() || !artist.isEmpty())
+        {
+            BasicLogger::logDebug("Metadata from MP4: " + title.toStdString() + 
+                                  " - " + artist.toStdString());
+            return true;
+        }
+    }
+    
     return false;
 }
 
@@ -576,6 +926,8 @@ int BassEngine::loadPlugins(const QString& pluginDir)
         return 0;
     }
     
+    BasicLogger::logDebug("Searching for BASS plugins in: " + pluginDir.toStdString());
+    
     int count = 0;
     
     // Look for BASS plugins (bass*.dll on Windows, libbass*.so on Linux)
@@ -586,9 +938,17 @@ int BassEngine::loadPlugins(const QString& pluginDir)
 #endif
     
     QFileInfoList files = dir.entryInfoList(filters, QDir::Files);
+    BasicLogger::logDebug("Found " + std::to_string(files.size()) + " potential plugin files");
     
     for (const QFileInfo& file : files)
     {
+        // Skip the main bass.dll - it's not a plugin
+        if (file.fileName().compare("bass.dll", Qt::CaseInsensitive) == 0)
+        {
+            continue;
+        }
+        
+        BasicLogger::logDebug("  Trying to load: " + file.fileName().toStdString());
         std::string path = file.absoluteFilePath().toLocal8Bit().constData();
         HPLUGIN plugin = BASS_PluginLoad(path.c_str(), 0);
         
@@ -614,14 +974,23 @@ int BassEngine::loadPlugins(const QString& pluginDir)
                         }
                     }
                 }
+                BasicLogger::logInfo("Loaded BASS plugin: " + file.fileName().toStdString() + 
+                                     " (formats: " + std::to_string(info->formatc) + ")");
             }
-            
-            BasicLogger::logInfo("Loaded BASS plugin: " + file.fileName().toStdString());
+            else
+            {
+                BasicLogger::logInfo("Loaded BASS plugin: " + file.fileName().toStdString());
+            }
             count++;
+        }
+        else
+        {
+            int err = BASS_ErrorGetCode();
+            BasicLogger::logWarning("Failed to load plugin: " + file.fileName().toStdString() + 
+                                    " (error: " + std::to_string(err) + ")");
         }
     }
     
-    BasicLogger::logInfo("Loaded " + std::to_string(count) + " BASS plugins");
     return count;
 }
 

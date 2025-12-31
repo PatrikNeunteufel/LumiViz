@@ -55,6 +55,7 @@ QT_BEGIN_NAMESPACE
 class QWidget;
 class QMenu;
 class QLabel;
+class QTimer;
 QT_END_NAMESPACE
 
 class DockManager;
@@ -177,6 +178,11 @@ private slots:
     // =========================================================================
 
     void onVisualizerCreated(VisualizerWidget* pVisualizer);
+    
+    /**
+     * @brief Called periodically to update audio playback state.
+     */
+    void onAudioUpdate();
 
 private:
     // =========================================================================
@@ -208,6 +214,11 @@ private:
      */
     void setupEventHandlers();
 
+    /**
+     * @brief Sets up audio services (Engine, Player, Playlist).
+     */
+    void setupAudioServices();
+
     // =========================================================================
     // Private Members
     // =========================================================================
@@ -216,4 +227,8 @@ private:
     std::unique_ptr<DockManager> m_pDockManager;
     std::unique_ptr<MenuManager> m_pMenuManager;
     QLabel* m_pFpsLabel{nullptr};  // Owned by status bar (Qt parent-child)
+    QTimer* m_pAudioUpdateTimer{nullptr};  // Owned by this (Qt parent-child)
+    
+    // Note: Audio services (BassEngine, AudioPlayer, Playlist) are managed by
+    // ServiceContainer via registerSingleton factories, not stored here.
 };
