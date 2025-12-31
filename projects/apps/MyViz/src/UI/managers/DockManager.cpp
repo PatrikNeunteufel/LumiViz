@@ -160,8 +160,14 @@ VisualizerWidget* DockManager::createVisualizer(
     // Create the OpenGL widget with ServiceContainer
     auto* pVisualizer = new VisualizerWidget(*m_impl->pServices);
     
+    // Generate dynamic title
+    int vizNumber = m_impl->visualizerCounter + 1;
+    QString dynamicTitle = (vizNumber == 1) 
+        ? QStringLiteral("Visualizer") 
+        : QStringLiteral("Visualizer %1").arg(vizNumber);
+    
     // Create dock widget wrapper (Qt-ADS 4.4.x Factory API)
-    auto* pDock = m_impl->pAdsDockManager->createDockWidget(title);
+    auto* pDock = m_impl->pAdsDockManager->createDockWidget(dynamicTitle);
     pDock->setWidget(pVisualizer);
     pDock->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true);
     pDock->setFeature(ads::CDockWidget::DockWidgetFloatable, true);
@@ -171,6 +177,32 @@ VisualizerWidget* DockManager::createVisualizer(
     // Track the visualizer
     m_impl->visualizers.push_back(pVisualizer);
     m_impl->visualizerCounter++;
+    
+    // Update dock title when visualizer changes
+    connect(pVisualizer, &VisualizerWidget::visualizerChanged, this, 
+        [pDock, vizNumber](const QString& vizId) {
+            Q_UNUSED(vizId);
+            // Get the visualizer widget to retrieve name
+            auto* viz = qobject_cast<VisualizerWidget*>(pDock->widget());
+            if (viz)
+            {
+                QString vizName = viz->currentVisualizerName();
+                QString newTitle;
+                if (vizName.isEmpty())
+                {
+                    newTitle = (vizNumber == 1) 
+                        ? QStringLiteral("Visualizer") 
+                        : QStringLiteral("Visualizer %1").arg(vizNumber);
+                }
+                else
+                {
+                    newTitle = (vizNumber == 1)
+                        ? QStringLiteral("Visualizer: %1").arg(vizName)
+                        : QStringLiteral("Visualizer %1: %2").arg(vizNumber).arg(vizName);
+                }
+                pDock->setWindowTitle(newTitle);
+            }
+        });
     
     // Handle close - remove from tracking
     connect(pDock, &ads::CDockWidget::closed, this, [this, pVisualizer]() {

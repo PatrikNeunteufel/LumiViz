@@ -29,7 +29,6 @@
 #include "UI/MainWindow.hpp"
 #include "core/GpuInfo.hpp"
 #include "core/GpuSelector.hpp"
-#include "visualizers/VisualizerInit.hpp"
 
 // Qt includes
 #include <QApplication>
@@ -307,14 +306,10 @@ bool Application::init(int argc, char* argv[])
     m_impl->pQtApp->setOrganizationName(QStringLiteral("MyViz Project"));
 
     // -------------------------------------------------------------------------
-    // Initialize Visualizers (force static registration)
-    // -------------------------------------------------------------------------
-    BasicLogger::logDebug("Initializing visualizers...");
-    initializeVisualizers();
-
-    // -------------------------------------------------------------------------
     // Create MainWindow (this creates the OpenGL context)
     // -------------------------------------------------------------------------
+    // NOTE: Visualizers are registered automatically via lazy-init when
+    // VisualizerRegistry::instance() is first accessed (in VisualizerAutoReg.cpp)
     BasicLogger::logDebug("Creating MainWindow...");
     m_impl->pMainWindow = std::make_unique<MainWindow>();
     m_impl->pMainWindow->show();

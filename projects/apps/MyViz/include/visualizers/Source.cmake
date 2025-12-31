@@ -16,7 +16,6 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/IVisualizer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PulsingVisualizer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerBase.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/VisualizerInit.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

@@ -11,6 +11,7 @@ dbg(DBG_OFTEN
 set(_local_sources
     # (no sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/AboutDialog.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/DialogAutoReg.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/DialogBase.cpp"
 )
 set(_local_headers

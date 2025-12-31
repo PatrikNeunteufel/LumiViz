@@ -5,7 +5,7 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 1.0.0
+ * @version 2.2.0
  ****************************************************************************************
  */
 
@@ -14,12 +14,35 @@
 #include <algorithm>
 
 // =============================================================================
+// External Init Function (implemented in MenuAutoReg.cpp)
+// =============================================================================
+
+/**
+ * @brief Register application-specific default menus
+ * 
+ * This function is implemented in MenuAutoReg.cpp and called automatically
+ * on first access to MenuRegistry::instance().
+ * 
+ * By declaring it here and implementing it elsewhere, we ensure the linker
+ * includes MenuAutoReg.cpp even in static libraries.
+ */
+extern void initMenuDefaults(MenuRegistry& registry);
+
+// =============================================================================
 // Singleton
 // =============================================================================
 
 MenuRegistry& MenuRegistry::instance()
 {
     static MenuRegistry registry;
+    static bool initialized = false;
+    
+    if (!initialized)
+    {
+        initialized = true;
+        initMenuDefaults(registry);
+    }
+    
     return registry;
 }
 
@@ -32,7 +55,7 @@ const std::string& MenuRegistry::rootId()
 MenuRegistry::MenuRegistry()
 {
     // Register the root container
-    m_containers["toplevel"] = MenuContainerDesc{{"toplevel", "", 0}, "MenuBar"};
+    m_containers["toplevel"] = MenuContainerDesc{{"toplevel", "", 0}, "MenuBar", false};
 }
 
 // =============================================================================

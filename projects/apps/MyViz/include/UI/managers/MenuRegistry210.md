@@ -1,11 +1,11 @@
 # MenuRegistry — Menu Self-Registration Registry
 
-> **Version:** 2.2.0  
+> **Version:** 2.1.0  
 > **Datum:** 2025-12-31  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert  
 > **Modul:** MyViz::Services::MenuRegistry  
-> **Dateien:** MenuRegistry.hpp, MenuRegistry.cpp, MenuAutoReg.cpp  
+> **Dateien:** MenuRegistry.hpp, MenuRegistry.cpp  
 > **Namespace:** (global)  
 > **Abhängigkeiten:** ServiceContainer  
 > **Zielgruppe:** Entwickler  
@@ -35,21 +35,7 @@ MenuRegistry ist ein Singleton, das alle Menu-Definitionen speichert:
 - **Groups:** Separatoren/Trennlinien
 - **Items:** Klickbare Einträge mit Callbacks
 
-### 1.2 Framework vs. App
-
-```
-┌──────────────────────────────────┐     ┌──────────────────────────────┐
-│ MenuRegistry.hpp/.cpp            │     │ MenuAutoReg.cpp              │
-│ (Framework - wiederverwendbar)   │     │ (App-spezifisch - MyViz)     │
-├──────────────────────────────────┤     ├──────────────────────────────┤
-│ • Singleton mit Lazy-Init        │     │ void initMenuDefaults(reg)   │
-│ • Container/Group/Item Storage   │────►│   - Alle Menüs registrieren  │
-│ • Query-Methoden                 │     │   - Event-Callbacks          │
-│ • extern initMenuDefaults()      │     │                              │
-└──────────────────────────────────┘     └──────────────────────────────┘
-```
-
-### 1.3 Hierarchie
+### 1.2 Hierarchie
 
 ```
 toplevel
@@ -186,32 +172,13 @@ struct MenuNode
 
 ## 4. Registrierung
 
-### 4.1 Lazy-Init (Automatisch)
-
-Die Default-Menüs werden automatisch beim ersten `MenuRegistry::instance()` Aufruf registriert:
+### 4.1 Direkte Registrierung (Empfohlen)
 
 ```cpp
-// MenuRegistry.cpp
-extern void initMenuDefaults(MenuRegistry& registry);  // In MenuAutoReg.cpp
-
-MenuRegistry& MenuRegistry::instance()
+void initMenuAutoReg()
 {
-    static MenuRegistry registry;
-    static bool initialized = false;
-    if (!initialized) {
-        initialized = true;
-        initMenuDefaults(registry);  // Automatisch!
-    }
-    return registry;
-}
-```
-
-### 4.2 In MenuAutoReg.cpp implementieren
-
-```cpp
-// MenuAutoReg.cpp
-void initMenuDefaults(MenuRegistry& registry)
-{
+    auto& registry = MenuRegistry::instance();
+    
     // Container
     registry.registerContainer(
         MenuContainerDesc{
@@ -235,7 +202,7 @@ void initMenuDefaults(MenuRegistry& registry)
 }
 ```
 
-### 4.3 Makros (Nur für nicht-statische Libraries)
+### 4.2 Makros (Nur für nicht-statische Libraries)
 
 ⚠️ **Warnung:** Funktioniert NICHT zuverlässig bei statischen Libraries!
 
@@ -400,7 +367,6 @@ for (size_t i = 0; i < recentFiles.size(); ++i)
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **2.2.0** | **2025-12-31** | **Lazy-Init: extern initMenuDefaults(), Trennung Framework/App** |
-| 2.1.0 | 2025-12-31 | +exclusive Flag, +REGISTER_MENU_CONTAINER_EXCLUSIVE |
+| **2.1.0** | **2025-12-31** | **+exclusive Flag, +REGISTER_MENU_CONTAINER_EXCLUSIVE** |
 | 2.0.0 | 2025-12-31 | Refactoring für Self-Registration Pattern |
 | 1.0.0 | 2025-12-28 | Initial: Container, Group, Item, Makros |

@@ -136,11 +136,6 @@ void PulsingVisualizer::onCleanup()
 // =============================================================================
 // SELF-REGISTRATION
 // =============================================================================
-
-REGISTER_VISUALIZER_CATEGORY(
-    "pulsing",
-    "Pulsing",
-    "Simple rainbow pulsing effect - time-based color cycling",
-    "Basic",
-    PulsingVisualizer
-)
+// NOTE: Registration is now handled centrally in VisualizerAutoReg.cpp
+// to avoid linker issues with static libraries (dead code elimination).
+// The REGISTER_VISUALIZER_CATEGORY macro is no longer used here.

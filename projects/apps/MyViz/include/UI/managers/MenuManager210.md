@@ -1,11 +1,11 @@
 # MenuManager — Self-Registration Menu System
 
-> **Version:** 2.2.0  
+> **Version:** 2.1.0  
 > **Datum:** 2025-12-31  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert  
 > **Modul:** MyViz::UI::MenuManager  
-> **Dateien:** MenuManager.hpp, MenuManager.cpp, MenuRegistry.hpp, MenuRegistry.cpp  
+> **Dateien:** MenuManager.hpp, MenuManager.cpp, MenuInit.hpp, MenuAutoReg.cpp, MenuItemsAutoReg.cpp  
 > **Namespace:** (global)  
 > **Abhängigkeiten:** Qt6::Widgets, MenuRegistry, ServiceContainer, EventBus  
 > **Zielgruppe:** Entwickler  
@@ -43,33 +43,36 @@ Das Menu-System ermöglicht:
 │                         Menu System                                      │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
-│  ┌──────────────────────────────┐     ┌──────────────────────────────┐  │
-│  │ MenuRegistry.hpp/.cpp        │     │ MenuAutoReg.cpp              │  │
-│  │ (Framework)                  │     │ (MyViz-spezifisch)           │  │
-│  ├──────────────────────────────┤     ├──────────────────────────────┤  │
-│  │ • Singleton + Lazy-Init      │     │ void initMenuDefaults(reg)   │  │
-│  │ • extern initMenuDefaults()──┼────►│   - File, View, Settings     │  │
-│  │                              │     │   - Help, alle Items         │  │
-│  └──────────────┬───────────────┘     └──────────────────────────────┘  │
-│                 │                                                        │
-│                 │ Erster instance() Aufruf                               │
-│                 ▼                                                        │
-│        ┌─────────────────────────────────────┐                           │
-│        │          MenuManager                │                           │
-│        │       buildMenuBar()                │                           │
-│        └──────────────┬──────────────────────┘                           │
+│  ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐    │
+│  │ MenuAutoReg.cpp │     │MenuItemsAutoReg │     │   MenuInit.hpp  │    │
+│  │ (Container)     │     │     .cpp        │     │ (Deklarationen) │    │
+│  └────────┬────────┘     └────────┬────────┘     └─────────────────┘    │
+│           │                       │                                      │
+│           └───────────┬───────────┘                                      │
+│                       │ initMenuRegistrations()                          │
+│                       ▼                                                  │
+│              ┌─────────────────┐                                         │
+│              │  MenuRegistry   │ ◄── Singleton, speichert alle Menüs     │
+│              │  (Singleton)    │                                         │
+│              └────────┬────────┘                                         │
 │                       │                                                  │
-│        ┌──────────────┼──────────────┐                                   │
-│        ▼              ▼              ▼                                    │
-│    QMenuBar        QMenu         QAction                                 │
-│                                      │                                   │
-│                                      │ triggered()                       │
-│                                      ▼                                   │
-│                                 EventBus                                 │
-│                                      │                                   │
-│                                      ▼                                   │
-│                                MainWindow                                │
-│                             (Event Handler)                              │
+│                       ▼                                                  │
+│              ┌─────────────────┐                                         │
+│              │  MenuManager    │ ◄── Baut QMenuBar aus Registry          │
+│              │                 │                                         │
+│              └────────┬────────┘                                         │
+│                       │                                                  │
+│           ┌───────────┼───────────┐                                      │
+│           ▼           ▼           ▼                                      │
+│       QMenuBar     QMenu      QAction                                    │
+│                                   │                                      │
+│                                   │ triggered()                          │
+│                                   ▼                                      │
+│                              EventBus                                    │
+│                                   │                                      │
+│                                   ▼                                      │
+│                             MainWindow                                   │
+│                          (Event Handler)                                 │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -343,19 +346,39 @@ inline void initMenuRegistrations()
 
 **Problem:** Leere Menüleiste nach Build.
 
-**Mögliche Ursachen:**
-1. MenuAutoReg.cpp nicht im Build (Source.cmake prüfen)
-2. MenuRegistry::instance() wird nie aufgerufen
+**Ursache:** `initMenuRegistrations()` wird nicht aufgerufen.
 
-**Lösung:** Prüfen, ob MenuAutoReg.cpp in `src/UI/managers/Source.cmake` eingetragen ist.
+**Lösung:**
+```cpp
+void MainWindow::setupMenuBar()
+{
+    initMenuRegistrations();  // ← MUSS HIER STEHEN!
+    m_pMenuManager->buildMenuBar(menuBar());
+}
+```
 
-### 7.2 Checkboxen werden nicht aktualisiert
+### 7.2 Linker entfernt Registrierungen
+
+**Problem:** Bei statischen Libraries werden unreferenzierte TUs entfernt.
+
+**Ursache:** Statische Makros (REGISTER_MENU_ITEM) erzeugen keine externen Symbole.
+
+**Lösung (v2.1):** Direkte Registrierung in Init-Funktionen:
+```cpp
+void initMenuAutoReg()
+{
+    // Direkte Registrierung, NICHT statische Makros
+    MenuRegistry::instance().registerContainer(...);
+}
+```
+
+### 7.3 Checkboxen werden nicht aktualisiert
 
 **Problem:** Frame-Mode-Auswahl wird nicht angezeigt.
 
 **Lösung:** `updateCheckStates()` nach Änderung aufrufen oder `isChecked`-Callback korrekt implementieren.
 
-### 7.3 Exclusive Items funktionieren nicht
+### 7.4 Exclusive Items funktionieren nicht
 
 **Problem:** Mehrere Items gleichzeitig ausgewählt.
 
@@ -376,7 +399,6 @@ registry.registerContainer(
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **2.2.0** | **2025-12-31** | **Lazy-Init: Automatische Registrierung, extern initMenuDefaults(), Trennung Framework/App** |
-| 2.1.0 | 2025-12-31 | Fix: Direkte Registrierung in Init-Funktionen (Linker-Problem) |
+| **2.1.0** | **2025-12-31** | **Fix: Direkte Registrierung in Init-Funktionen (Linker-Problem)** |
 | 2.0.0 | 2025-12-31 | Refactoring: Self-Registration, Event-Driven, QActionGroup |
 | 1.0.0 | 2025-12-28 | Initial: MenuRegistry, MenuManager, Basis-Makros |

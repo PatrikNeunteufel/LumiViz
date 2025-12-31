@@ -17,7 +17,6 @@
 #include "UI/MainWindow.hpp"
 #include "UI/managers/DockManager.hpp"
 #include "UI/managers/MenuManager.hpp"
-#include "UI/managers/MenuInit.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
@@ -248,20 +247,12 @@ void MainWindow::setupMenuBar()
     // -------------------------------------------------------------------------
     // Qt6 Tutorial: Menu Bar Setup with Self-Registration
     // -------------------------------------------------------------------------
-    // Das Menü wird jetzt über das MenuRegistry-System aufgebaut.
-    // Die Basis-Container sind in MenuAutoReg.cpp definiert.
-    // Feature-spezifische Items werden dezentral in den jeweiligen
-    // Komponenten-Dateien registriert.
+    // Das Menü wird über das MenuRegistry-System aufgebaut.
+    // Die Default-Menüs werden automatisch beim ersten Zugriff auf
+    // MenuRegistry::instance() registriert (lazy-init in initDefaults()).
     //
     // MenuManager baut die QMenuBar aus dem Registry auf und
     // integriert DockManager für Panels/Perspectives.
-    //
-    // WICHTIG: initMenuRegistrations() muss VOR buildMenuBar() aufgerufen werden,
-    // um sicherzustellen, dass die statischen Registrierungen vom Linker
-    // nicht entfernt wurden (Dead Code Elimination).
-
-    // Ensure menu registrations are linked (prevents linker optimization)
-    initMenuRegistrations();
 
     // Create MenuManager
     m_pMenuManager = std::make_unique<MenuManager>(*m_pServices, this);
@@ -326,12 +317,14 @@ void MainWindow::setupDefaultLayout()
     //
     // Single visualizer for now. User can add more via menu.
 
-    auto* pSpectrum = m_pDockManager->createVisualizer(
-        tr("Spectrum Analyzer"), DockPosition::Center);
+    auto* pVisualizer = m_pDockManager->createVisualizer(
+        QString(), DockPosition::Center);  // Title is now dynamic
 
-    if (pSpectrum != nullptr)
+    if (pVisualizer != nullptr)
     {
-        BasicLogger::logDebug("  Default visualizer created");
+        // Set default visualizer to Pulsing
+        pVisualizer->setVisualizer(QStringLiteral("pulsing"));
+        BasicLogger::logDebug("  Default visualizer created with Pulsing effect");
     }
 
     // Save this as the default perspective
@@ -374,7 +367,7 @@ void MainWindow::setupEventHandlers()
     });
 
     // Open Dialog event
-    pEventBus->subscribe<OpenDialogEvent>([this](const OpenDialogEvent& e) {
+    pEventBus->subscribe<OpenDialogEvent>([](const OpenDialogEvent& e) {
         if (e.dialogId == "about")
         {
             // TODO: Open About dialog via DialogManager

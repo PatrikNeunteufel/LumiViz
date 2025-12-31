@@ -5,7 +5,7 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 1.0.0
+ * @version 2.0.0
  ****************************************************************************************
  */
 
@@ -16,12 +16,35 @@
 #include <algorithm>
 
 // =============================================================================
+// External Init Function (implemented in DialogAutoReg.cpp)
+// =============================================================================
+
+/**
+ * @brief Register application-specific default dialogs
+ * 
+ * This function is implemented in DialogAutoReg.cpp and called automatically
+ * on first access to DialogRegistry::instance().
+ * 
+ * By declaring it here and implementing it elsewhere, we ensure the linker
+ * includes DialogAutoReg.cpp even in static libraries.
+ */
+extern void initDialogDefaults(DialogRegistry& registry);
+
+// =============================================================================
 // Singleton
 // =============================================================================
 
 DialogRegistry& DialogRegistry::instance()
 {
     static DialogRegistry registry;
+    static bool initialized = false;
+    
+    if (!initialized)
+    {
+        initialized = true;
+        initDialogDefaults(registry);
+    }
+    
     return registry;
 }
 

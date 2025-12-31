@@ -5,7 +5,7 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 1.0.0
+ * @version 2.0.0
  ****************************************************************************************
  */
 
@@ -14,12 +14,35 @@
 #include <algorithm>
 
 // =============================================================================
+// External Init Function (implemented in PanelAutoReg.cpp)
+// =============================================================================
+
+/**
+ * @brief Register application-specific default panels
+ * 
+ * This function is implemented in PanelAutoReg.cpp and called automatically
+ * on first access to PanelRegistry::instance().
+ * 
+ * By declaring it here and implementing it elsewhere, we ensure the linker
+ * includes PanelAutoReg.cpp even in static libraries.
+ */
+extern void initPanelDefaults(PanelRegistry& registry);
+
+// =============================================================================
 // Singleton
 // =============================================================================
 
 PanelRegistry& PanelRegistry::instance()
 {
     static PanelRegistry registry;
+    static bool initialized = false;
+    
+    if (!initialized)
+    {
+        initialized = true;
+        initPanelDefaults(registry);
+    }
+    
     return registry;
 }
 

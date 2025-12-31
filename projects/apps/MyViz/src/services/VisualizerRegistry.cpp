@@ -5,7 +5,7 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 1.0.0
+ * @version 2.0.0
  ****************************************************************************************
  */
 
@@ -16,12 +16,35 @@
 #include <set>
 
 // =============================================================================
+// External Init Function (implemented in VisualizerAutoReg.cpp)
+// =============================================================================
+
+/**
+ * @brief Register application-specific default visualizers
+ * 
+ * This function is implemented in VisualizerAutoReg.cpp and called automatically
+ * on first access to VisualizerRegistry::instance().
+ * 
+ * By declaring it here and implementing it elsewhere, we ensure the linker
+ * includes VisualizerAutoReg.cpp even in static libraries.
+ */
+extern void initVisualizerDefaults(VisualizerRegistry& registry);
+
+// =============================================================================
 // Singleton
 // =============================================================================
 
 VisualizerRegistry& VisualizerRegistry::instance()
 {
     static VisualizerRegistry registry;
+    static bool initialized = false;
+    
+    if (!initialized)
+    {
+        initialized = true;
+        initVisualizerDefaults(registry);
+    }
+    
     return registry;
 }
 

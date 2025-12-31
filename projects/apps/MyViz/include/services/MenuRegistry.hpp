@@ -135,12 +135,18 @@ struct MenuItemDesc : MenuBaseDesc
 /**
  * @class MenuRegistry
  * @brief Singleton registry for menu structure
+ * 
+ * @details
+ * Default menus are automatically registered on first access via instance().
+ * No manual initialization required.
  */
 class MenuRegistry
 {
 public:
     /**
      * @brief Get singleton instance
+     * 
+     * On first call, automatically registers all default menus (File, View, etc.)
      */
     static MenuRegistry& instance();
 
