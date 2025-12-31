@@ -18,6 +18,7 @@
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
+#include "services/WidgetRegistry.hpp"
 #include "services/events/UIEvents.hpp"
 
 // Qt-ADS
@@ -31,6 +32,9 @@
 #include <QMenu>
 #include <QAction>
 #include <QSettings>
+
+// STL
+#include <algorithm>
 
 // BasicLogger
 #include <BasicLogger.h>
@@ -128,6 +132,15 @@ DockManager::DockManager(ServiceContainer& services, QMainWindow* pMainWindow)
     // Connect signals
     connect(m_impl->pAdsDockManager, &ads::CDockManager::dockWidgetRemoved,
             this, [this](ads::CDockWidget* pDock) {
+                // Remove visualizer from tracking list if applicable
+                QWidget* widget = pDock->widget();
+                auto* visualizer = qobject_cast<VisualizerWidget*>(widget);
+                if (visualizer != nullptr)
+                {
+                    auto& v = m_impl->visualizers;
+                    v.erase(std::remove(v.begin(), v.end(), visualizer), v.end());
+                    BasicLogger::logDebug("Visualizer removed from tracking");
+                }
                 emit dockWidgetClosed(pDock->objectName());
             });
     
@@ -148,6 +161,21 @@ DockManager::DockManager(ServiceContainer& services, QMainWindow* pMainWindow)
     BasicLogger::logDebug("  PanelManager created, panels loaded");
     
     // -------------------------------------------------------------------------
+    // Restore Layout or Create Default
+    // -------------------------------------------------------------------------
+    
+    if (!restoreLayoutFromSettings())
+    {
+        // No saved layout - save current as default
+        m_impl->defaultState = m_impl->pAdsDockManager->saveState();
+        BasicLogger::logDebug("  Default layout saved");
+    }
+    else
+    {
+        BasicLogger::logDebug("  Layout restored from settings");
+    }
+    
+    // -------------------------------------------------------------------------
     // Subscribe to Events (dezentral - keine MainWindow Änderungen nötig)
     // -------------------------------------------------------------------------
     
@@ -157,6 +185,9 @@ DockManager::DockManager(ServiceContainer& services, QMainWindow* pMainWindow)
 DockManager::~DockManager()
 {
     BasicLogger::logDebug("DockManager destructor");
+    
+    // Save current layout for next session
+    saveLayoutToSettings();
     
     // Unsubscribe from events
     unsubscribeFromEvents();
@@ -557,7 +588,30 @@ void DockManager::subscribeToEvents()
     int id1 = eventBus->subscribe<CreateVisualizerEvent>(
         [this](const CreateVisualizerEvent& e) {
             // Check if multiple instances are allowed via WidgetRegistry
-            // For now, just create
+            const auto* desc = WidgetRegistry::instance().descriptor("visualizer");
+            if (desc != nullptr && !desc->allowMultiple)
+            {
+                // Check if visualizer already exists
+                if (!m_impl->visualizers.empty())
+                {
+                    BasicLogger::logInfo("Multiple visualizers not allowed - focusing existing");
+                    // Focus existing visualizer instead of creating new one
+                    if (m_impl->visualizers[0] != nullptr)
+                    {
+                        // Find the dock widget containing this visualizer and raise it
+                        for (auto* dock : m_impl->pAdsDockManager->dockWidgetsMap())
+                        {
+                            if (dock->widget() == m_impl->visualizers[0])
+                            {
+                                dock->raise();
+                                break;
+                            }
+                        }
+                    }
+                    return;
+                }
+            }
+            
             QString title = e.title.empty() 
                 ? QString()  // DockManager will generate dynamic title
                 : QString::fromStdString(e.title);
@@ -599,6 +653,13 @@ void DockManager::subscribeToEvents()
         });
     m_impl->subscriptionIds.push_back(id4);
     
+    // Save Default Layout event
+    int id5 = eventBus->subscribe<SaveDefaultLayoutEvent>(
+        [this](const SaveDefaultLayoutEvent& /*e*/) {
+            saveDefaultLayout();
+        });
+    m_impl->subscriptionIds.push_back(id5);
+    
     BasicLogger::logDebug("  DockManager subscribed to events");
 }
 
@@ -615,4 +676,98 @@ void DockManager::unsubscribeFromEvents()
         eventBus->unsubscribe(id);
     }
     m_impl->subscriptionIds.clear();
+}
+
+// =============================================================================
+// Layout Persistence (Private)
+// =============================================================================
+
+namespace
+{
+    constexpr const char* SETTINGS_GROUP = "DockManager";
+    constexpr const char* SETTINGS_STATE = "State";
+    constexpr const char* SETTINGS_PERSPECTIVES = "Perspectives";
+    constexpr const char* SETTINGS_VERSION = "Version";
+    constexpr int LAYOUT_VERSION = 3;  // Increment when panel structure changes
+}
+
+bool DockManager::restoreLayoutFromSettings()
+{
+    QSettings settings;
+    settings.beginGroup(SETTINGS_GROUP);
+    
+    // Check version - ignore incompatible old layouts
+    int savedVersion = settings.value(SETTINGS_VERSION, 0).toInt();
+    if (savedVersion != LAYOUT_VERSION)
+    {
+        BasicLogger::logInfo("DockManager: Ignoring old layout (version " + 
+                             std::to_string(savedVersion) + " != " + 
+                             std::to_string(LAYOUT_VERSION) + ")");
+        
+        // Clear old settings
+        settings.remove("");  // Remove all keys in current group
+        settings.endGroup();
+        
+        return false;
+    }
+    
+    QByteArray state = settings.value(SETTINGS_STATE).toByteArray();
+    
+    if (state.isEmpty())
+    {
+        settings.endGroup();
+        return false;
+    }
+    
+    // Restore dock state
+    bool success = m_impl->pAdsDockManager->restoreState(state);
+    
+    settings.endGroup();
+    
+    // Also save as default for reset
+    if (success)
+    {
+        m_impl->defaultState = state;
+        BasicLogger::logInfo("DockManager: Layout restored successfully");
+    }
+    else
+    {
+        BasicLogger::logWarning("DockManager: Failed to restore layout");
+    }
+    
+    return success;
+}
+
+void DockManager::saveLayoutToSettings()
+{
+    if (m_impl->pAdsDockManager == nullptr)
+    {
+        return;
+    }
+    
+    QSettings settings;
+    settings.beginGroup(SETTINGS_GROUP);
+    
+    // Save version for compatibility check
+    settings.setValue(SETTINGS_VERSION, LAYOUT_VERSION);
+    
+    // Save current dock state
+    QByteArray state = m_impl->pAdsDockManager->saveState();
+    settings.setValue(SETTINGS_STATE, state);
+    
+    // Save perspective names
+    QStringList perspNames = m_impl->pAdsDockManager->perspectiveNames();
+    settings.setValue(SETTINGS_PERSPECTIVES, perspNames);
+    
+    settings.endGroup();
+    settings.sync();
+    
+    BasicLogger::logDebug("DockManager: Layout saved to settings (version " + 
+                          std::to_string(LAYOUT_VERSION) + ")");
+}
+
+void DockManager::saveDefaultLayout()
+{
+    m_impl->defaultState = m_impl->pAdsDockManager->saveState();
+    BasicLogger::logDebug("DockManager: Default layout captured");
 }

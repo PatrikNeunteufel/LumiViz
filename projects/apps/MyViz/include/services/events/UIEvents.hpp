@@ -240,3 +240,11 @@ struct ResetLayoutEvent : public Event
 {
     EVENT_TYPE_NAME("ResetLayoutEvent")
 };
+
+/**
+ * @brief Request to save current layout as default
+ */
+struct SaveDefaultLayoutEvent : public Event
+{
+    EVENT_TYPE_NAME("SaveDefaultLayoutEvent")
+};

@@ -180,6 +180,24 @@ void initMenuDefaults(MenuRegistry& registry)
         },
         false);
     
+    // Save Layout as Default
+    registry.registerItem(
+        MenuItemDesc{
+            {"menu.view.savedefault", "menu.view", 910},
+            "Save Layout as Default",
+            [](ServiceContainer& svc) {
+                if (auto* eventBus = svc.tryResolve<IEventBus>())
+                {
+                    eventBus->publish(SaveDefaultLayoutEvent{});
+                }
+                BasicLogger::logDebug("Save Layout as Default clicked");
+            },
+            {},  // isChecked
+            {},  // isEnabled
+            {}   // shortcut
+        },
+        false);
+    
     // =========================================================================
     // SETTINGS MENU (300)
     // =========================================================================

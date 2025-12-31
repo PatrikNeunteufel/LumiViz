@@ -324,6 +324,14 @@ public slots:
      * @brief Closes all dock widgets.
      */
     void closeAll();
+    
+    /**
+     * @brief Saves current layout as the new default.
+     * 
+     * Call this after arranging panels to your liking.
+     * This layout will be restored on "Reset Layout".
+     */
+    void saveDefaultLayout();
 
 private:
     // =========================================================================
@@ -349,4 +357,15 @@ private:
      * @brief Unsubscribe from EventBus events.
      */
     void unsubscribeFromEvents();
+    
+    /**
+     * @brief Restore layout from QSettings.
+     * @return true if layout was restored, false if no saved layout exists
+     */
+    bool restoreLayoutFromSettings();
+    
+    /**
+     * @brief Save current layout to QSettings.
+     */
+    void saveLayoutToSettings();
 };

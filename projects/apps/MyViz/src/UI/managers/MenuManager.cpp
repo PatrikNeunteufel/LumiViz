@@ -234,19 +234,13 @@ void MenuManager::buildMenuRecursive(QMenu* parentMenu, const QString& parentId)
             {
                 QString title = QString::fromStdString(desc->title);
 
-                // Special handling for "Panels" container
-                if (nodeId.endsWith(".panels") || title == "Panels")
-                {
-                    QMenu* panelsMenu = createMenu(nodeId, title, parentMenu);
-                    parentMenu->addMenu(panelsMenu);
-                    buildPanelsMenu(panelsMenu);
-                }
-                else
-                {
-                    QMenu* subMenu = createMenu(nodeId, title, parentMenu);
-                    parentMenu->addMenu(subMenu);
-                    buildMenuRecursive(subMenu, nodeId);
-                }
+                // Create submenu and recurse
+                // Note: "Panels" and "Perspectives" submenus are populated 
+                // externally by DockManager::populatePanelsMenu() and 
+                // populatePerspectivesMenu() for proper toggle action support.
+                QMenu* subMenu = createMenu(nodeId, title, parentMenu);
+                parentMenu->addMenu(subMenu);
+                buildMenuRecursive(subMenu, nodeId);
             }
             break;
         }
