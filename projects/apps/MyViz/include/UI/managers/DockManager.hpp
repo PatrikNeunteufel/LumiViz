@@ -332,6 +332,16 @@ public slots:
      * This layout will be restored on "Reset Layout".
      */
     void saveDefaultLayout();
+    
+    /**
+     * @brief Restore layout from settings or apply defaults.
+     * 
+     * IMPORTANT: Call this AFTER all widgets (Panels, Visualizers) are created!
+     * Qt-ADS can only restore positions for widgets that already exist.
+     * 
+     * @return true if saved layout was restored, false if defaults were applied
+     */
+    bool restoreLayout();
 
 private:
     // =========================================================================

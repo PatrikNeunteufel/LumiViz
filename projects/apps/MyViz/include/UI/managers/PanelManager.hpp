@@ -78,8 +78,18 @@ public:
      * @brief Create all registered panels
      *
      * Iterates through PanelRegistry and creates DockWidgets for each.
+     * NOTE: Does not set visibility - call applyDefaultVisibility() after
+     * if no layout was restored.
      */
     void createAllPanels();
+
+    /**
+     * @brief Apply default visibility from PanelDescriptor
+     *
+     * Call this ONLY if no saved layout was restored.
+     * Closes panels where defaultVisible=false.
+     */
+    void applyDefaultVisibility();
 
     /**
      * @brief Create a specific panel

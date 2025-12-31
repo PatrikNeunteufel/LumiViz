@@ -307,16 +307,13 @@ void MainWindow::setupDefaultLayout()
     // -------------------------------------------------------------------------
     // Qt6 Tutorial: Default Docking Layout
     // -------------------------------------------------------------------------
-    // Create the initial visualizer panels.
-    // Users can rearrange these via drag-and-drop.
-    //
-    // Default layout:
-    // +----------------------------------+
-    // | Spectrum (Center)                |
-    // +----------------------------------+
-    //
-    // Single visualizer for now. User can add more via menu.
-
+    // -------------------------------------------------------------------------
+    // Create Initial Visualizer BEFORE Layout Restore
+    // -------------------------------------------------------------------------
+    // Qt-ADS restoreState() can only position widgets that already exist.
+    // So we must create the visualizer first, then restore the layout.
+    // The layout will then move the visualizer to its saved position.
+    
     auto* pVisualizer = m_pDockManager->createVisualizer(
         QString(), DockPosition::Center);  // Title is now dynamic
 
@@ -326,9 +323,20 @@ void MainWindow::setupDefaultLayout()
         pVisualizer->setVisualizer(QStringLiteral("pulsing"));
         BasicLogger::logDebug("  Default visualizer created with Pulsing effect");
     }
+    
+    // -------------------------------------------------------------------------
+    // Restore Layout AFTER all widgets are created
+    // -------------------------------------------------------------------------
+    // Now all widgets exist (Panels from DockManager constructor, Visualizer above).
+    // Qt-ADS can restore their positions from the saved state.
+    
+    m_pDockManager->restoreLayout();
 
-    // Save this as the default perspective
-    m_pDockManager->savePerspective("Default");
+    // Save this as the default perspective (only if no perspectives exist)
+    if (m_pDockManager->perspectiveNames().isEmpty())
+    {
+        m_pDockManager->savePerspective("Default");
+    }
 }
 
 void MainWindow::setupEventHandlers()

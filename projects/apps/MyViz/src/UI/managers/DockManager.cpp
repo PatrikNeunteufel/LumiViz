@@ -32,6 +32,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QSettings>
+#include <QCoreApplication>
 
 // STL
 #include <algorithm>
@@ -160,34 +161,35 @@ DockManager::DockManager(ServiceContainer& services, QMainWindow* pMainWindow)
     
     BasicLogger::logDebug("  PanelManager created, panels loaded");
     
-    // -------------------------------------------------------------------------
-    // Restore Layout or Create Default
-    // -------------------------------------------------------------------------
-    
-    if (!restoreLayoutFromSettings())
-    {
-        // No saved layout - save current as default
-        m_impl->defaultState = m_impl->pAdsDockManager->saveState();
-        BasicLogger::logDebug("  Default layout saved");
-    }
-    else
-    {
-        BasicLogger::logDebug("  Layout restored from settings");
-    }
+    // NOTE: Layout restore is NOT done here!
+    // MainWindow must call restoreLayout() AFTER creating all widgets (including Visualizer).
+    // Otherwise Qt-ADS cannot restore positions for widgets that don't exist yet.
     
     // -------------------------------------------------------------------------
     // Subscribe to Events (dezentral - keine MainWindow Änderungen nötig)
     // -------------------------------------------------------------------------
     
     subscribeToEvents();
+    
+    // -------------------------------------------------------------------------
+    // Connect to aboutToQuit to save layout before destruction
+    // -------------------------------------------------------------------------
+    // IMPORTANT: We save layout here instead of in destructor because
+    // Qt destroys child objects (including ads::CDockManager) before our
+    // destructor is called, making it impossible to save state there.
+    
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
+        BasicLogger::logDebug("aboutToQuit - saving layout");
+        saveLayoutToSettings();
+    });
 }
 
 DockManager::~DockManager()
 {
     BasicLogger::logDebug("DockManager destructor");
     
-    // Save current layout for next session
-    saveLayoutToSettings();
+    // NOTE: Layout is saved in response to QCoreApplication::aboutToQuit signal,
+    // NOT in destructor, because Qt-ADS DockManager might already be destroyed.
     
     // Unsubscribe from events
     unsubscribeFromEvents();
@@ -226,6 +228,16 @@ VisualizerWidget* DockManager::createVisualizer(
     
     // Create dock widget wrapper (Qt-ADS 4.4.x Factory API)
     auto* pDock = m_impl->pAdsDockManager->createDockWidget(dynamicTitle);
+    
+    // IMPORTANT: Set a fixed objectName for layout persistence!
+    // Qt-ADS uses objectName to identify widgets when restoring state.
+    // The title can change (e.g., "Visualizer" → "Visualizer: Pulsing"),
+    // but the objectName must stay the same.
+    QString objectName = (vizNumber == 1)
+        ? QStringLiteral("visualizer")
+        : QStringLiteral("visualizer_%1").arg(vizNumber);
+    pDock->setObjectName(objectName);
+    
     pDock->setWidget(pVisualizer);
     pDock->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true);
     pDock->setFeature(ads::CDockWidget::DockWidgetFloatable, true);
@@ -303,8 +315,23 @@ VisualizerWidget* DockManager::createVisualizerRelativeTo(
     // Create the OpenGL widget with ServiceContainer
     auto* pVisualizer = new VisualizerWidget(*m_impl->pServices);
     
+    // Generate title
+    int vizNumber = m_impl->visualizerCounter + 1;
+    QString dynamicTitle = title.isEmpty() 
+        ? ((vizNumber == 1) 
+            ? QStringLiteral("Visualizer") 
+            : QStringLiteral("Visualizer %1").arg(vizNumber))
+        : title;
+    
     // Create dock widget wrapper (Qt-ADS 4.4.x Factory API)
-    auto* pDock = m_impl->pAdsDockManager->createDockWidget(title);
+    auto* pDock = m_impl->pAdsDockManager->createDockWidget(dynamicTitle);
+    
+    // IMPORTANT: Set a fixed objectName for layout persistence!
+    QString objectName = (vizNumber == 1)
+        ? QStringLiteral("visualizer")
+        : QStringLiteral("visualizer_%1").arg(vizNumber);
+    pDock->setObjectName(objectName);
+    
     pDock->setWidget(pVisualizer);
     pDock->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true);
     pDock->setFeature(ads::CDockWidget::DockWidgetFloatable, true);
@@ -571,6 +598,28 @@ void DockManager::closeAll()
     m_impl->visualizers.clear();
 }
 
+bool DockManager::restoreLayout()
+{
+    BasicLogger::logDebug("DockManager::restoreLayout() called");
+    
+    if (restoreLayoutFromSettings())
+    {
+        BasicLogger::logInfo("Layout restored from settings");
+        return true;
+    }
+    else
+    {
+        // No saved layout - apply default visibility and save as default
+        if (m_impl->pPanelManager != nullptr)
+        {
+            m_impl->pPanelManager->applyDefaultVisibility();
+        }
+        m_impl->defaultState = m_impl->pAdsDockManager->saveState();
+        BasicLogger::logInfo("No saved layout - applied defaults");
+        return false;
+    }
+}
+
 // =============================================================================
 // Event Subscription (Private)
 // =============================================================================
@@ -688,7 +737,7 @@ namespace
     constexpr const char* SETTINGS_STATE = "State";
     constexpr const char* SETTINGS_PERSPECTIVES = "Perspectives";
     constexpr const char* SETTINGS_VERSION = "Version";
-    constexpr int LAYOUT_VERSION = 3;  // Increment when panel structure changes
+    constexpr int LAYOUT_VERSION = 4;  // Increment when dock widget structure changes
 }
 
 bool DockManager::restoreLayoutFromSettings()

@@ -57,11 +57,27 @@ void PanelManager::createAllPanels()
         auto* dockWidget = createPanel(panelId);
         if (dockWidget != nullptr)
         {
-            // Set initial visibility based on descriptor
-            if (!desc.defaultVisible)
-            {
-                dockWidget->closeDockWidget();
-            }
+            // NOTE: Do NOT set visibility here based on defaultVisible!
+            // The DockManager will either:
+            // 1. Restore layout from settings (which includes visibility)
+            // 2. Or call applyDefaultVisibility() if no saved layout exists
+        }
+    }
+}
+
+void PanelManager::applyDefaultVisibility()
+{
+    auto& registry = PanelRegistry::instance();
+    auto descriptors = registry.descriptors();
+
+    for (const auto& desc : descriptors)
+    {
+        QString panelId = QString::fromStdString(desc.id);
+        auto* dockWidget = m_dockWidgets.value(panelId, nullptr);
+        
+        if (dockWidget != nullptr && !desc.defaultVisible)
+        {
+            dockWidget->closeDockWidget();
         }
     }
 }
