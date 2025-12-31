@@ -58,6 +58,7 @@ class QLabel;
 QT_END_NAMESPACE
 
 class DockManager;
+class MenuManager;
 class VisualizerWidget;
 class ServiceContainer;
 
@@ -202,11 +203,17 @@ private:
      */
     void setupDefaultLayout();
 
+    /**
+     * @brief Sets up event handlers for menu actions.
+     */
+    void setupEventHandlers();
+
     // =========================================================================
     // Private Members
     // =========================================================================
 
     std::unique_ptr<ServiceContainer> m_pServices;
     std::unique_ptr<DockManager> m_pDockManager;
+    std::unique_ptr<MenuManager> m_pMenuManager;
     QLabel* m_pFpsLabel{nullptr};  // Owned by status bar (Qt parent-child)
 };

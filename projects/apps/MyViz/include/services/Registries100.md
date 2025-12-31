@@ -1,6 +1,6 @@
 # Registries — Self-Registration Pattern
 
-> **Version:** 1.1.0  
+> **Version:** 1.0.0  
 > **Datum:** 2025-12-31  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert  
@@ -183,37 +183,18 @@ void MainWindow::showAbout() {
 
 ### 3.3 MenuRegistry
 
-Für Menü-Einträge und Actions. **Hinweis:** Verwendet seit v2.1.0 direkte Registrierung statt Makros, um Linker-Probleme bei statischen Libraries zu vermeiden.
+Für Menü-Einträge und Actions.
 
 ```cpp
-// Direkte Registrierung (empfohlen für statische Libraries)
-void initMenuItemsAutoReg()
-{
-    auto& registry = MenuRegistry::instance();
-    
-    registry.registerItem(
-        MenuItemDesc{
-            {"menu.file.open", "menu.file", 100},
-            "Open Audio...",
-            [](ServiceContainer& svc) { /* ... */ },
-            {},      // isChecked
-            {},      // isEnabled
-            "Ctrl+O" // shortcut
-        },
-        false);
+// Registrierung
+REGISTER_MENU_ACTION("file/open", "Open File...", "Ctrl+O", openFile)
+REGISTER_MENU_ACTION("edit/undo", "Undo", "Ctrl+Z", undo)
+
+// Verwendung im MenuManager
+for (const auto& desc : MenuRegistry::instance().descriptors()) {
+    createMenuAction(desc.path, desc.title, desc.shortcut, desc.action);
 }
-
-// Container mit exclusive Flag (QActionGroup)
-registry.registerContainer(
-    MenuContainerDesc{
-        {"menu.settings.framemode", "menu.settings", 100},
-        "Frame Mode",
-        true  // exclusive = Radio-Button-Stil
-    },
-    false);
 ```
-
-**Siehe auch:** [MenuRegistry.md](MenuRegistry.md) und [MenuManager.md](../UI/managers/MenuManager.md) für Details.
 
 ### 3.4 VisualizerRegistry
 
@@ -438,33 +419,10 @@ REGISTER_PANEL_ORDERED("config", "Settings", 300, false, ConfigPanel)
 REGISTER_PANEL_ORDERED("debug", "Debug Log", 900, false, DebugPanel)
 ```
 
-### 6.5 Linker-Problem bei statischen Libraries
-
-⚠️ **Wichtig:** Bei statischen Libraries (.lib/.a) können Makro-basierte Registrierungen vom Linker entfernt werden ("dead code elimination").
-
-```cpp
-// ❌ Problem: Statische Makros werden vom Linker entfernt
-// In SpectrumPanel.cpp:
-REGISTER_PANEL("spectrum", ...)  // Wird möglicherweise entfernt!
-
-// ✅ Lösung: Explizite Init-Funktion mit direkter Registrierung
-// In PanelAutoReg.cpp:
-void initPanelRegistrations()
-{
-    PanelRegistry::instance().registerPanel(...);  // Direkt
-}
-
-// In main.cpp oder Application.cpp:
-initPanelRegistrations();  // Aufruf erzwingt Linkage
-```
-
-**Siehe auch:** MenuRegistry verwendet dieses Pattern seit v2.1.0.
-
 ---
 
 ## 7. Changelog
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **1.1.0** | **2025-12-31** | **MenuRegistry: Direkte Registrierung statt Makros (Linker-Fix), +exclusive Container** |
-| 1.0.0 | 2025-12-31 | Initial: Panel, Dialog, Menu, Visualizer, Widget Registries |
+| **1.0.0** | **2025-12-31** | **Initial: Panel, Dialog, Menu, Visualizer, Widget Registries** |

@@ -185,6 +185,21 @@ struct FpsUpdateEvent : public Event
 // =============================================================================
 
 /**
+ * @brief Request to create a new visualizer
+ */
+struct CreateVisualizerEvent : public Event
+{
+    EVENT_TYPE_NAME("CreateVisualizerEvent")
+    
+    std::string title;  // Optional title, empty = auto-generate
+    
+    CreateVisualizerEvent() = default;
+    explicit CreateVisualizerEvent(std::string t)
+        : title(std::move(t))
+    {}
+};
+
+/**
  * @brief Request to change the active visualizer
  */
 struct ChangeVisualizerEvent : public Event
@@ -212,4 +227,16 @@ struct VisualizerChangedEvent : public Event
         : visualizerId(std::move(id))
         , visualizerName(std::move(name))
     {}
+};
+
+// =============================================================================
+// Layout Events
+// =============================================================================
+
+/**
+ * @brief Request to reset the window layout to default
+ */
+struct ResetLayoutEvent : public Event
+{
+    EVENT_TYPE_NAME("ResetLayoutEvent")
 };

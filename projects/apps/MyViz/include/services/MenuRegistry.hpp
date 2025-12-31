@@ -91,7 +91,8 @@ struct MenuBaseDesc
  */
 struct MenuContainerDesc : MenuBaseDesc
 {
-    std::string title;  ///< Display label (e.g., "File")
+    std::string title;    ///< Display label (e.g., "File")
+    bool exclusive = false;  ///< If true, child items are mutually exclusive (radio-like)
 };
 
 /**
@@ -274,7 +275,24 @@ private:
 #define REGISTER_MENU_CONTAINER(ID_STR, TITLE_STR, PARENT_ID, ORDER)            \
     MENU_REG_AUTOREG(                                                            \
         MenuRegistry::instance().registerContainer(                              \
-            MenuContainerDesc{{(ID_STR), (PARENT_ID), (ORDER)}, (TITLE_STR)},   \
+            MenuContainerDesc{{(ID_STR), (PARENT_ID), (ORDER)}, (TITLE_STR), false}, \
+            false);                                                              \
+    )
+
+/**
+ * @brief Register an exclusive menu container (radio-button style)
+ *
+ * Items in this container will be mutually exclusive (only one checked at a time).
+ *
+ * @param ID_STR Unique ID
+ * @param TITLE_STR Display title
+ * @param PARENT_ID Parent container ID
+ * @param ORDER Sort order
+ */
+#define REGISTER_MENU_CONTAINER_EXCLUSIVE(ID_STR, TITLE_STR, PARENT_ID, ORDER)  \
+    MENU_REG_AUTOREG(                                                            \
+        MenuRegistry::instance().registerContainer(                              \
+            MenuContainerDesc{{(ID_STR), (PARENT_ID), (ORDER)}, (TITLE_STR), true}, \
             false);                                                              \
     )
 

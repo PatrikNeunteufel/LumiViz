@@ -246,8 +246,33 @@ public:
      *
      * @param pParent Parent menu bar or widget
      * @return The created menu (ownership: Qt parent-child)
+     * 
+     * @deprecated Use populatePanelsMenu() and populatePerspectivesMenu() instead
+     *             for integration with MenuRegistry system.
      */
     QMenu* createViewMenu(QWidget* pParent);
+
+    /**
+     * @brief Populates a Panels submenu with dock widget toggle actions.
+     *
+     * For use with MenuRegistry system. Adds checkable actions for each
+     * registered dock widget (panels, visualizers, etc.)
+     *
+     * @param pMenu Target menu to populate
+     */
+    void populatePanelsMenu(QMenu* pMenu);
+
+    /**
+     * @brief Populates a Perspectives submenu with layout presets.
+     *
+     * For use with MenuRegistry system. Adds:
+     *   - "Save Current..." action
+     *   - Separator
+     *   - Action for each saved perspective
+     *
+     * @param pMenu Target menu to populate
+     */
+    void populatePerspectivesMenu(QMenu* pMenu);
 
     // =========================================================================
     // Qt-ADS Access

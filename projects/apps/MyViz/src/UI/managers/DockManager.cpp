@@ -387,6 +387,53 @@ QMenu* DockManager::createViewMenu(QWidget* pParent)
     return pMenu;
 }
 
+void DockManager::populatePanelsMenu(QMenu* pMenu)
+{
+    if (pMenu == nullptr || m_impl->pAdsDockManager == nullptr)
+    {
+        return;
+    }
+    
+    // Add toggle actions for each dock widget
+    for (auto* pDock : m_impl->pAdsDockManager->dockWidgetsMap())
+    {
+        if (pDock != nullptr)
+        {
+            pMenu->addAction(pDock->toggleViewAction());
+        }
+    }
+}
+
+void DockManager::populatePerspectivesMenu(QMenu* pMenu)
+{
+    if (pMenu == nullptr)
+    {
+        return;
+    }
+    
+    // Save Current action
+    auto* pSaveAction = pMenu->addAction(tr("&Save Current..."));
+    connect(pSaveAction, &QAction::triggered, this, [this]() {
+        // TODO: Show dialog for perspective name input
+        savePerspective("Custom");
+    });
+    
+    // Separator before saved perspectives
+    if (!perspectiveNames().isEmpty())
+    {
+        pMenu->addSeparator();
+        
+        // Add action for each saved perspective
+        for (const QString& name : perspectiveNames())
+        {
+            auto* pAction = pMenu->addAction(name);
+            connect(pAction, &QAction::triggered, this, [this, name]() {
+                loadPerspective(name);
+            });
+        }
+    }
+}
+
 // =============================================================================
 // Qt-ADS Access
 // =============================================================================

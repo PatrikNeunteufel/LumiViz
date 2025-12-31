@@ -18,6 +18,7 @@
 #include <QMenuBar>
 #include <QMenu>
 #include <QAction>
+#include <QActionGroup>
 #include <QKeySequence>
 
 // =============================================================================
@@ -210,6 +211,15 @@ void MenuManager::buildMenuRecursive(QMenu* parentMenu, const QString& parentId)
     auto children = registry.childrenOf(parentId.toStdString());
 
     int lastGroupOrder = -1;
+    
+    // Check if parent container is exclusive
+    const auto* parentDesc = registry.container(parentId.toStdString());
+    QActionGroup* pActionGroup = nullptr;
+    if (parentDesc != nullptr && parentDesc->exclusive)
+    {
+        pActionGroup = new QActionGroup(parentMenu);
+        pActionGroup->setExclusive(true);
+    }
 
     for (const auto& node : children)
     {
@@ -257,6 +267,11 @@ void MenuManager::buildMenuRecursive(QMenu* parentMenu, const QString& parentId)
             QAction* action = createAction(nodeId, parentMenu);
             if (action != nullptr)
             {
+                // Add to action group if parent is exclusive
+                if (pActionGroup != nullptr)
+                {
+                    pActionGroup->addAction(action);
+                }
                 parentMenu->addAction(action);
             }
             break;
