@@ -434,7 +434,7 @@ void PlayerPanel::setupUI()
 
     // Loop button (single track repeat)
     m_pLoopButton = new QPushButton(this);
-    m_pLoopButton->setText(QStringLiteral("🔂"));  // Unicode single repeat symbol
+    m_pLoopButton->setIcon(style()->standardIcon(QStyle::SP_BrowserReload));
     m_pLoopButton->setCheckable(true);
     m_pLoopButton->setToolTip(tr("Repeat current track"));
     m_pLoopButton->setFixedSize(32, 32);

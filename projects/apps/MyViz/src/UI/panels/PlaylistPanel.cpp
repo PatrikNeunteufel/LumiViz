@@ -587,7 +587,7 @@ void PlaylistPanel::setupUI()
 
     // Loop button with icon
     m_pLoopButton = new QPushButton(this);
-    m_pLoopButton->setIcon(style()->standardIcon(QStyle::SP_BrowserReload));
+    m_pLoopButton->setText(QStringLiteral("🔁"));  // Unicode repeat symbol
     m_pLoopButton->setCheckable(true);
     m_pLoopButton->setToolTip(tr("Loop playlist - restart from beginning after last track"));
     m_pLoopButton->setFixedWidth(32);
