@@ -1,16 +1,20 @@
 /**
  ****************************************************************************************
  * @file   PlaylistPanel.cpp
- * @brief  PlaylistPanel implementation (Stub)
+ * @brief  PlaylistPanel implementation with full playlist integration
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 1.0.0
+ * @version 2.0.0
  ****************************************************************************************
  */
 
 #include "UI/panels/PlaylistPanel.hpp"
-#include "services/PanelRegistry.hpp"
+#include "services/ServiceContainer.hpp"
+#include "services/IEventBus.hpp"
+#include "audio/IPlaylist.hpp"
+#include "audio/IAudioPlayer.hpp"
+#include "audio/AudioEvents.hpp"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -19,6 +23,9 @@
 #include <QLineEdit>
 #include <QStyle>
 #include <QFileDialog>
+#include <QFileInfo>
+
+#include <BasicLogger.h>
 
 // =============================================================================
 // Construction
@@ -46,24 +53,76 @@ int PlaylistPanel::preferredArea() const
 
 void PlaylistPanel::onActivate()
 {
-    // TODO: Refresh playlist from service
+    subscribeToEvents();
+    refreshPlaylist();
+    
+    // Sync current playing index
+    if (auto* player = services().tryResolve<IAudioPlayer>())
+    {
+        highlightCurrentTrack(player->playlistIndex());
+    }
 }
 
 void PlaylistPanel::onDeactivate()
 {
-    // Nothing to do
+    unsubscribeFromEvents();
 }
 
 void PlaylistPanel::saveState()
 {
     PanelBase::saveState();
-    // TODO: Save playlist to settings
+    // Playlist is saved by the Playlist service itself
 }
 
 void PlaylistPanel::restoreState()
 {
     PanelBase::restoreState();
-    // TODO: Restore playlist from settings
+    refreshPlaylist();
+}
+
+// =============================================================================
+// Event Subscription
+// =============================================================================
+
+void PlaylistPanel::subscribeToEvents()
+{
+    auto* eventBus = services().tryResolve<IEventBus>();
+    if (eventBus == nullptr)
+    {
+        BasicLogger::logWarning("PlaylistPanel: EventBus not available");
+        return;
+    }
+    
+    // Playlist content changed
+    int id1 = eventBus->subscribe<PlaylistChangedEvent>(
+        [this](const PlaylistChangedEvent& /*e*/) {
+            onPlaylistChanged();
+        });
+    m_subscriptionIds.push_back(id1);
+    
+    // Current track index changed
+    int id2 = eventBus->subscribe<PlaylistIndexChangedEvent>(
+        [this](const PlaylistIndexChangedEvent& e) {
+            onPlaylistIndexChanged(e.currentIndex, e.previousIndex);
+        });
+    m_subscriptionIds.push_back(id2);
+    
+    BasicLogger::logDebug("PlaylistPanel: Subscribed to playlist events");
+}
+
+void PlaylistPanel::unsubscribeFromEvents()
+{
+    auto* eventBus = services().tryResolve<IEventBus>();
+    if (eventBus == nullptr)
+    {
+        return;
+    }
+    
+    for (int id : m_subscriptionIds)
+    {
+        eventBus->unsubscribe(id);
+    }
+    m_subscriptionIds.clear();
 }
 
 // =============================================================================
@@ -79,29 +138,80 @@ void PlaylistPanel::onAddClicked()
         tr("Audio Files (*.mp3 *.wav *.flac *.ogg *.m4a);;All Files (*)")
     );
 
+    if (files.isEmpty())
+    {
+        return;
+    }
+    
+    auto* playlist = services().tryResolve<IPlaylist>();
+    if (playlist == nullptr)
+    {
+        // Fallback: Just add to UI (will be lost)
+        for (const QString& file : files)
+        {
+            QFileInfo fi(file);
+            m_pListWidget->addItem(fi.fileName());
+        }
+        return;
+    }
+    
+    // Add to playlist service
     for (const QString& file : files)
     {
-        m_pListWidget->addItem(file);
+        playlist->addTrack(file);
     }
+    
+    BasicLogger::logInfo("PlaylistPanel: Added " + std::to_string(files.size()) + " files");
 }
 
 void PlaylistPanel::onRemoveClicked()
 {
-    auto* item = m_pListWidget->currentItem();
-    if (item != nullptr)
+    int currentRow = m_pListWidget->currentRow();
+    if (currentRow < 0)
     {
-        delete m_pListWidget->takeItem(m_pListWidget->row(item));
+        return;
+    }
+    
+    auto* playlist = services().tryResolve<IPlaylist>();
+    if (playlist != nullptr)
+    {
+        playlist->removeTrack(currentRow);
+    }
+    else
+    {
+        // Fallback: Just remove from UI
+        delete m_pListWidget->takeItem(currentRow);
     }
 }
 
 void PlaylistPanel::onClearClicked()
 {
-    m_pListWidget->clear();
+    auto* playlist = services().tryResolve<IPlaylist>();
+    if (playlist != nullptr)
+    {
+        playlist->clear();
+    }
+    else
+    {
+        m_pListWidget->clear();
+    }
 }
 
-void PlaylistPanel::onItemDoubleClicked()
+void PlaylistPanel::onItemDoubleClicked(QListWidgetItem* item)
 {
-    // TODO: Play selected track via EventBus
+    if (item == nullptr)
+    {
+        return;
+    }
+    
+    int index = m_pListWidget->row(item);
+    
+    // Play this track
+    auto* player = services().tryResolve<IAudioPlayer>();
+    if (player != nullptr)
+    {
+        player->playIndex(index);
+    }
 }
 
 void PlaylistPanel::onSearchChanged(const QString& text)
@@ -115,8 +225,89 @@ void PlaylistPanel::onSearchChanged(const QString& text)
     }
 }
 
+void PlaylistPanel::onSelectionChanged()
+{
+    // Enable/disable remove button based on selection
+    bool hasSelection = m_pListWidget->currentRow() >= 0;
+    m_pRemoveButton->setEnabled(hasSelection);
+}
+
 // =============================================================================
-// Private Methods
+// Event Handlers
+// =============================================================================
+
+void PlaylistPanel::onPlaylistChanged()
+{
+    refreshPlaylist();
+}
+
+void PlaylistPanel::onPlaylistIndexChanged(int newIndex, int /*oldIndex*/)
+{
+    highlightCurrentTrack(newIndex);
+}
+
+// =============================================================================
+// Playlist Sync
+// =============================================================================
+
+void PlaylistPanel::refreshPlaylist()
+{
+    m_pListWidget->clear();
+    
+    auto* playlist = services().tryResolve<IPlaylist>();
+    if (playlist == nullptr)
+    {
+        return;
+    }
+    
+    int count = playlist->count();
+    for (int i = 0; i < count; ++i)
+    {
+        QString filePath = playlist->filePathAt(i);
+        QFileInfo fi(filePath);
+        
+        auto* item = new QListWidgetItem(fi.fileName(), m_pListWidget);
+        item->setData(Qt::UserRole, filePath);
+        item->setToolTip(filePath);
+    }
+    
+    // Restore highlight
+    highlightCurrentTrack(m_currentPlayingIndex);
+    
+    BasicLogger::logDebug("PlaylistPanel: Refreshed playlist with " + 
+                          std::to_string(count) + " tracks");
+}
+
+void PlaylistPanel::highlightCurrentTrack(int index)
+{
+    m_currentPlayingIndex = index;
+    
+    // Reset all items
+    for (int i = 0; i < m_pListWidget->count(); ++i)
+    {
+        auto* item = m_pListWidget->item(i);
+        QFont font = item->font();
+        font.setBold(false);
+        item->setFont(font);
+        item->setBackground(Qt::transparent);
+    }
+    
+    // Highlight current
+    if (index >= 0 && index < m_pListWidget->count())
+    {
+        auto* item = m_pListWidget->item(index);
+        QFont font = item->font();
+        font.setBold(true);
+        item->setFont(font);
+        item->setBackground(QColor(60, 60, 80));
+        
+        // Scroll to make visible
+        m_pListWidget->scrollToItem(item);
+    }
+}
+
+// =============================================================================
+// UI Setup
 // =============================================================================
 
 void PlaylistPanel::setupUI()
@@ -135,6 +326,7 @@ void PlaylistPanel::setupUI()
     m_pListWidget = new QListWidget(this);
     m_pListWidget->setAlternatingRowColors(true);
     m_pListWidget->setDragDropMode(QAbstractItemView::InternalMove);
+    m_pListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     mainLayout->addWidget(m_pListWidget, 1);
 
     // Buttons
@@ -148,6 +340,7 @@ void PlaylistPanel::setupUI()
     m_pRemoveButton = new QPushButton(this);
     m_pRemoveButton->setIcon(style()->standardIcon(QStyle::SP_TrashIcon));
     m_pRemoveButton->setToolTip(tr("Remove selected"));
+    m_pRemoveButton->setEnabled(false);
     buttonLayout->addWidget(m_pRemoveButton);
 
     buttonLayout->addStretch();
@@ -170,6 +363,8 @@ void PlaylistPanel::setupConnections()
             this, &PlaylistPanel::onClearClicked);
     connect(m_pListWidget, &QListWidget::itemDoubleClicked,
             this, &PlaylistPanel::onItemDoubleClicked);
+    connect(m_pListWidget, &QListWidget::itemSelectionChanged,
+            this, &PlaylistPanel::onSelectionChanged);
     connect(m_pSearchEdit, &QLineEdit::textChanged,
             this, &PlaylistPanel::onSearchChanged);
 }
@@ -177,5 +372,6 @@ void PlaylistPanel::setupConnections()
 // =============================================================================
 // SELF-REGISTRATION
 // =============================================================================
-
-REGISTER_PANEL("playlist", "Playlist", true, PlaylistPanel)
+// NOTE: Registration is now handled centrally in PanelAutoReg.cpp
+// to avoid linker issues with static libraries (dead code elimination).
+// The REGISTER_PANEL macro is no longer used here.

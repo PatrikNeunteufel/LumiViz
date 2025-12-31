@@ -339,6 +339,10 @@ void MainWindow::setupEventHandlers()
     // Menu items trigger Events via EventBus. MainWindow subscribes to these
     // events and executes the actual actions. This decouples menu definitions
     // from the implementation.
+    //
+    // NOTE: Most dock-related events (CreateVisualizer, ResetLayout, ChangeVisualizer,
+    // TogglePanel) are now handled by DockManager. MainWindow only handles
+    // events that require MainWindow-specific actions.
 
     auto* pEventBus = m_pServices->tryResolve<IEventBus>();
     if (pEventBus == nullptr)
@@ -347,20 +351,7 @@ void MainWindow::setupEventHandlers()
         return;
     }
 
-    // Create Visualizer event
-    pEventBus->subscribe<CreateVisualizerEvent>([this](const CreateVisualizerEvent& e) {
-        QString title = e.title.empty() 
-            ? tr("Visualizer %1").arg(m_pDockManager->dockWidgetCount() + 1)
-            : QString::fromStdString(e.title);
-        m_pDockManager->createVisualizer(title, DockPosition::Center);
-    });
-
-    // Reset Layout event
-    pEventBus->subscribe<ResetLayoutEvent>([this](const ResetLayoutEvent& /*e*/) {
-        m_pDockManager->resetLayout();
-    });
-
-    // Frame Mode Changed event
+    // Frame Mode Changed event - MainWindow-specific (emits signal)
     pEventBus->subscribe<FrameModeChangedEvent>([this](const FrameModeChangedEvent& e) {
         BasicLogger::logInfo("Frame mode changed to: " + std::to_string(e.mode));
         emit frameModeChangeRequested(e.mode);

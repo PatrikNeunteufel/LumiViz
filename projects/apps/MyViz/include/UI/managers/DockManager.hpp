@@ -339,4 +339,14 @@ private:
     static ads::CDockAreaWidget* positionToArea(
         ads::CDockManager* pManager,
         DockPosition position);
+    
+    /**
+     * @brief Subscribe to EventBus events.
+     */
+    void subscribeToEvents();
+    
+    /**
+     * @brief Unsubscribe from EventBus events.
+     */
+    void unsubscribeFromEvents();
 };

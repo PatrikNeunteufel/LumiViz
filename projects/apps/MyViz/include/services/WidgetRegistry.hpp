@@ -58,11 +58,12 @@ class QWidget;
  */
 struct WidgetDescriptor
 {
-    std::string id;           ///< Unique ID (e.g., "volume", "waveform")
-    std::string name;         ///< Display name
-    std::string category;     ///< Category for grouping (e.g., "Controls", "Visualizers")
-    std::string description;  ///< Brief description
-    int order = 0;            ///< Sort order within category
+    std::string id;             ///< Unique ID (e.g., "volume", "waveform")
+    std::string name;           ///< Display name
+    std::string category;       ///< Category for grouping (e.g., "Controls", "Visualizers")
+    std::string description;    ///< Brief description
+    int order = 0;              ///< Sort order within category
+    bool allowMultiple = false; ///< Allow multiple instances (like documents in Word)
 };
 
 /**
@@ -159,7 +160,7 @@ private:
 #endif
 
 /**
- * @brief Register a widget with self-registration
+ * @brief Register a widget with self-registration (singleton, allowMultiple=false)
  *
  * @param ID_STR Unique ID string
  * @param NAME_STR Display name
@@ -170,7 +171,7 @@ private:
         struct WIDGET_REG_CAT(TYPE, __AutoWidgetReg) {                          \
             WIDGET_REG_CAT(TYPE, __AutoWidgetReg)() {                           \
                 WidgetRegistry::instance().registerWidget(                       \
-                    WidgetDescriptor{(ID_STR), (NAME_STR), "", "", 0},          \
+                    WidgetDescriptor{(ID_STR), (NAME_STR), "", "", 0, false},   \
                     [](ServiceContainer& svc, QWidget* parent) -> std::unique_ptr<QWidget> { \
                         return std::make_unique<TYPE>(svc, parent);              \
                     },                                                           \
@@ -181,7 +182,7 @@ private:
     }
 
 /**
- * @brief Register a widget with category
+ * @brief Register a widget with category (singleton, allowMultiple=false)
  *
  * @param ID_STR Unique ID string
  * @param NAME_STR Display name
@@ -193,7 +194,7 @@ private:
         struct WIDGET_REG_CAT(TYPE, __AutoWidgetRegCat) {                       \
             WIDGET_REG_CAT(TYPE, __AutoWidgetRegCat)() {                        \
                 WidgetRegistry::instance().registerWidget(                       \
-                    WidgetDescriptor{(ID_STR), (NAME_STR), (CATEGORY), "", 0},  \
+                    WidgetDescriptor{(ID_STR), (NAME_STR), (CATEGORY), "", 0, false}, \
                     [](ServiceContainer& svc, QWidget* parent) -> std::unique_ptr<QWidget> { \
                         return std::make_unique<TYPE>(svc, parent);              \
                     },                                                           \
@@ -211,14 +212,15 @@ private:
  * @param CATEGORY Category for grouping
  * @param DESC Description
  * @param ORDER Sort order
+ * @param ALLOW_MULTI Allow multiple instances (true/false)
  * @param TYPE Widget class type
  */
-#define REGISTER_WIDGET_FULL(ID_STR, NAME_STR, CATEGORY, DESC, ORDER, TYPE)     \
+#define REGISTER_WIDGET_FULL(ID_STR, NAME_STR, CATEGORY, DESC, ORDER, ALLOW_MULTI, TYPE) \
     namespace {                                                                  \
         struct WIDGET_REG_CAT(TYPE, __AutoWidgetRegFull) {                      \
             WIDGET_REG_CAT(TYPE, __AutoWidgetRegFull)() {                       \
                 WidgetRegistry::instance().registerWidget(                       \
-                    WidgetDescriptor{(ID_STR), (NAME_STR), (CATEGORY), (DESC), (ORDER)}, \
+                    WidgetDescriptor{(ID_STR), (NAME_STR), (CATEGORY), (DESC), (ORDER), (ALLOW_MULTI)}, \
                     [](ServiceContainer& svc, QWidget* parent) -> std::unique_ptr<QWidget> { \
                         return std::make_unique<TYPE>(svc, parent);              \
                     },                                                           \
@@ -226,4 +228,27 @@ private:
                 );                                                               \
             }                                                                    \
         } WIDGET_REG_CAT(TYPE, __autoWidgetRegFullInstance);                    \
+    }
+
+/**
+ * @brief Register a multi-instance widget (like documents in Word)
+ *
+ * @param ID_STR Unique ID string
+ * @param NAME_STR Display name
+ * @param CATEGORY Category for grouping
+ * @param TYPE Widget class type
+ */
+#define REGISTER_WIDGET_MULTI(ID_STR, NAME_STR, CATEGORY, TYPE)                 \
+    namespace {                                                                  \
+        struct WIDGET_REG_CAT(TYPE, __AutoWidgetRegMulti) {                     \
+            WIDGET_REG_CAT(TYPE, __AutoWidgetRegMulti)() {                      \
+                WidgetRegistry::instance().registerWidget(                       \
+                    WidgetDescriptor{(ID_STR), (NAME_STR), (CATEGORY), "", 0, true}, \
+                    [](ServiceContainer& svc, QWidget* parent) -> std::unique_ptr<QWidget> { \
+                        return std::make_unique<TYPE>(svc, parent);              \
+                    },                                                           \
+                    false                                                        \
+                );                                                               \
+            }                                                                    \
+        } WIDGET_REG_CAT(TYPE, __autoWidgetRegMultiInstance);                   \
     }

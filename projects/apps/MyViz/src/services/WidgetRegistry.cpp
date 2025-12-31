@@ -5,7 +5,7 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 1.0.0
+ * @version 2.0.0
  ****************************************************************************************
  */
 
@@ -15,12 +15,35 @@
 #include <set>
 
 // =============================================================================
+// External Init Function (implemented in WidgetAutoReg.cpp)
+// =============================================================================
+
+/**
+ * @brief Register application-specific default widgets
+ * 
+ * This function is implemented in WidgetAutoReg.cpp and called automatically
+ * on first access to WidgetRegistry::instance().
+ * 
+ * By declaring it here and implementing it elsewhere, we ensure the linker
+ * includes WidgetAutoReg.cpp even in static libraries.
+ */
+extern void initWidgetDefaults(WidgetRegistry& registry);
+
+// =============================================================================
 // Singleton
 // =============================================================================
 
 WidgetRegistry& WidgetRegistry::instance()
 {
     static WidgetRegistry registry;
+    static bool initialized = false;
+    
+    if (!initialized)
+    {
+        initialized = true;
+        initWidgetDefaults(registry);
+    }
+    
     return registry;
 }
 

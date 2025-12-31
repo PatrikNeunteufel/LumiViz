@@ -14,8 +14,11 @@
 
 #include "pch.h"
 #include "UI/managers/DockManager.hpp"
+#include "UI/managers/PanelManager.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "services/ServiceContainer.hpp"
+#include "services/IEventBus.hpp"
+#include "services/events/UIEvents.hpp"
 
 // Qt-ADS
 #include <DockManager.h>
@@ -41,6 +44,7 @@ struct DockManager::Impl
     ServiceContainer* pServices{nullptr};
     QMainWindow* pMainWindow{nullptr};
     ads::CDockManager* pAdsDockManager{nullptr};
+    PanelManager* pPanelManager{nullptr};  // Manages all panels
     
     // Track all visualizers for batch operations
     std::vector<VisualizerWidget*> visualizers;
@@ -50,6 +54,9 @@ struct DockManager::Impl
     
     // Default layout state (for reset)
     QByteArray defaultState;
+    
+    // Event subscription IDs
+    std::vector<int> subscriptionIds;
 };
 
 // =============================================================================
@@ -130,14 +137,34 @@ DockManager::DockManager(ServiceContainer& services, QMainWindow* pMainWindow)
             this, &DockManager::layoutChanged);
     
     BasicLogger::logDebug("  Qt-ADS DockManager created");
+    
+    // -------------------------------------------------------------------------
+    // Create PanelManager and load all registered panels
+    // -------------------------------------------------------------------------
+    
+    m_impl->pPanelManager = new PanelManager(services, m_impl->pAdsDockManager, this);
+    m_impl->pPanelManager->createAllPanels();
+    
+    BasicLogger::logDebug("  PanelManager created, panels loaded");
+    
+    // -------------------------------------------------------------------------
+    // Subscribe to Events (dezentral - keine MainWindow Änderungen nötig)
+    // -------------------------------------------------------------------------
+    
+    subscribeToEvents();
 }
 
 DockManager::~DockManager()
 {
     BasicLogger::logDebug("DockManager destructor");
     
+    // Unsubscribe from events
+    unsubscribeFromEvents();
+    
     // Clear tracking lists first
     m_impl->visualizers.clear();
+    
+    // PanelManager is owned by us (parent-child), will be deleted automatically
     
     // Qt-ADS DockManager is owned by MainWindow (parent-child)
     // But we should disconnect signals to avoid callbacks during destruction
@@ -511,4 +538,81 @@ void DockManager::closeAll()
     }
     
     m_impl->visualizers.clear();
+}
+
+// =============================================================================
+// Event Subscription (Private)
+// =============================================================================
+
+void DockManager::subscribeToEvents()
+{
+    auto* eventBus = m_impl->pServices->tryResolve<IEventBus>();
+    if (eventBus == nullptr)
+    {
+        BasicLogger::logWarning("DockManager: EventBus not available");
+        return;
+    }
+    
+    // Create Visualizer event
+    int id1 = eventBus->subscribe<CreateVisualizerEvent>(
+        [this](const CreateVisualizerEvent& e) {
+            // Check if multiple instances are allowed via WidgetRegistry
+            // For now, just create
+            QString title = e.title.empty() 
+                ? QString()  // DockManager will generate dynamic title
+                : QString::fromStdString(e.title);
+            createVisualizer(title, DockPosition::Center);
+        });
+    m_impl->subscriptionIds.push_back(id1);
+    
+    // Reset Layout event
+    int id2 = eventBus->subscribe<ResetLayoutEvent>(
+        [this](const ResetLayoutEvent& /*e*/) {
+            resetLayout();
+        });
+    m_impl->subscriptionIds.push_back(id2);
+    
+    // Change Visualizer event - apply to first visualizer
+    int id3 = eventBus->subscribe<ChangeVisualizerEvent>(
+        [this](const ChangeVisualizerEvent& e) {
+            if (m_impl->visualizers.empty())
+            {
+                BasicLogger::logWarning("No visualizer to change");
+                return;
+            }
+            
+            // Apply to first visualizer (TODO: apply to focused one)
+            QString vizId = QString::fromStdString(e.visualizerId);
+            m_impl->visualizers[0]->setVisualizer(vizId);
+            BasicLogger::logInfo("Changed visualizer to: " + e.visualizerId);
+        });
+    m_impl->subscriptionIds.push_back(id3);
+    
+    // Toggle Panel event
+    int id4 = eventBus->subscribe<TogglePanelEvent>(
+        [this](const TogglePanelEvent& e) {
+            if (m_impl->pPanelManager != nullptr)
+            {
+                QString panelId = QString::fromStdString(e.panelId);
+                m_impl->pPanelManager->togglePanel(panelId);
+            }
+        });
+    m_impl->subscriptionIds.push_back(id4);
+    
+    BasicLogger::logDebug("  DockManager subscribed to events");
+}
+
+void DockManager::unsubscribeFromEvents()
+{
+    auto* eventBus = m_impl->pServices->tryResolve<IEventBus>();
+    if (eventBus == nullptr)
+    {
+        return;
+    }
+    
+    for (int id : m_impl->subscriptionIds)
+    {
+        eventBus->unsubscribe(id);
+    }
+    m_impl->subscriptionIds.clear();
 }

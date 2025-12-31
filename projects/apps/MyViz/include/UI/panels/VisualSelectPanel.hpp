@@ -5,7 +5,29 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 1.0.0
+ * @version 2.0.0
+ *
+ * @details
+ * ## VisualSelectPanel
+ *
+ * Provides visualization selection:
+ * - List of available visualizers from VisualizerRegistry
+ * - Category grouping
+ * - Preview and description
+ * - Apply to active VisualizerWidget
+ *
+ * ## Integration
+ *
+ * ```
+ * ┌────────────────────┐
+ * │ VisualizerRegistry │
+ * └─────────┬──────────┘
+ *           │ descriptors()
+ *           ▼
+ * ┌─────────────────────┐     apply      ┌──────────────────┐
+ * │  VisualSelectPanel  │ ──────────────►│ VisualizerWidget │
+ * └─────────────────────┘                 └──────────────────┘
+ * ```
  ****************************************************************************************
  */
 
@@ -13,21 +35,17 @@
 
 #include "PanelBase.hpp"
 
+#include <vector>
+
 class QListWidget;
+class QListWidgetItem;
 class QStackedWidget;
 class QLabel;
+class QPushButton;
 
 /**
  * @class VisualSelectPanel
  * @brief Panel for selecting and configuring visualizations
- *
- * Provides:
- *   - List of available visualizers (Spectrum, Waveform, etc.)
- *   - Preview thumbnails
- *   - Per-visualizer settings
- *
- * Note: Visualizers are NOT panels - they render in the main VisualizerWidget.
- * This panel just controls which visualizer is active.
  */
 class VisualSelectPanel : public PanelBase
 {
@@ -51,15 +69,23 @@ protected:
 
 private Q_SLOTS:
     void onSelectionChanged();
+    void onApplyClicked();
+    void onItemDoubleClicked(QListWidgetItem* item);
 
 private:
     void setupUI();
     void setupConnections();
     void populateVisualizers();
+    void applySelectedVisualizer();
 
     // UI Elements
     QListWidget* m_pVisualizerList = nullptr;
     QLabel* m_pPreviewLabel = nullptr;
     QLabel* m_pDescriptionLabel = nullptr;
+    QLabel* m_pCategoryLabel = nullptr;
+    QPushButton* m_pApplyButton = nullptr;
     QStackedWidget* m_pSettingsStack = nullptr;
+    
+    // State
+    QString m_selectedVisualizerId;
 };

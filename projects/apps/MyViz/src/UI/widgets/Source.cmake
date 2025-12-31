@@ -11,6 +11,7 @@ dbg(DBG_OFTEN
 set(_local_sources
     # (no sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/WidgetBase.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/WidgetAutoReg.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerWidget.cpp"
 )
 set(_local_headers

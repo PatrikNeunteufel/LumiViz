@@ -5,13 +5,29 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 1.0.0
+ * @version 2.0.0
+ *
+ * @details
+ * ## ConfigPanel
+ *
+ * Provides application settings:
+ * - Audio device selection and configuration
+ * - Visualization settings (smoothing, colors)
+ * - Performance settings (frame mode, VSync)
+ *
+ * ## Tabs
+ *
+ * 1. **Audio** - Device, buffer size, sample rate
+ * 2. **Visuals** - Smoothing, peak hold, color scheme
+ * 3. **Performance** - Frame mode, target FPS, VSync
  ****************************************************************************************
  */
 
 #pragma once
 
 #include "PanelBase.hpp"
+
+#include <vector>
 
 class QTabWidget;
 class QComboBox;
@@ -22,12 +38,6 @@ class QSlider;
 /**
  * @class ConfigPanel
  * @brief Panel for application settings
- *
- * Provides:
- *   - Audio device selection
- *   - Visualization settings
- *   - Performance settings
- *   - Theme selection
  */
 class ConfigPanel : public PanelBase
 {
@@ -40,18 +50,25 @@ public:
     [[nodiscard]] int preferredArea() const override;
 
 protected:
+    void onActivate() override;
+    void onDeactivate() override;
     void saveState() override;
     void restoreState() override;
 
 private Q_SLOTS:
     void onAudioDeviceChanged(int index);
     void onFrameModeChanged(int index);
+    void onTargetFpsChanged(int value);
+    void onVSyncChanged(bool checked);
     void onSmoothingChanged(int value);
 
 private:
     void setupUI();
     void setupConnections();
+    void subscribeToEvents();
+    void unsubscribeFromEvents();
     void populateAudioDevices();
+    void syncWithCurrentSettings();
 
     QWidget* createAudioTab();
     QWidget* createVisualsTab();
@@ -74,4 +91,8 @@ private:
     QComboBox* m_pFrameModeCombo = nullptr;
     QSpinBox* m_pTargetFpsSpinBox = nullptr;
     QCheckBox* m_pVSyncCheckBox = nullptr;
+    
+    // State
+    std::vector<int> m_subscriptionIds;
+    bool m_isUpdating = false;  ///< Prevent feedback loops
 };
