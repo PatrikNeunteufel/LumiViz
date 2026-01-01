@@ -290,7 +290,12 @@ void GradientBarWidget::mouseDoubleClickEvent(QMouseEvent* event)
         return;
     }
     
-    // Double-click on bar to add new stop
+    // Double-click on bar to add new stop (max 4 stops for shader)
+    if (m_gradient->stopCount() >= 4)
+    {
+        return;  // Silently ignore - limit reached
+    }
+    
     QRect barRect(MARGIN, 5, width() - 2 * MARGIN, BAR_HEIGHT);
     if (barRect.contains(event->pos()))
     {
@@ -317,6 +322,7 @@ GradientEditorDialog::GradientEditorDialog(modules::ColorGradientModule* gradien
     setMinimumSize(450, 300);
     setupUi();
     updatePresetCombo();
+    updateStopControls();  // Initialize button states (add button limit)
 }
 
 void GradientEditorDialog::setupUi()
@@ -347,7 +353,9 @@ void GradientEditorDialog::setupUi()
     m_positionLabel = new QLabel(tr("Position: --"), this);
     stopLayout->addWidget(m_positionLabel);
     
-    m_addButton = new QPushButton(tr("+ Add"), this);
+    m_addButton = new QPushButton(tr("+ Add (2/4)"), this);
+    m_addButton->setToolTip(tr("Add a color stop (max 4 for GPU shader)"));
+    m_addButton->setMinimumWidth(100);
     stopLayout->addWidget(m_addButton);
     
     m_removeButton = new QPushButton(tr("- Remove"), this);
@@ -406,7 +414,10 @@ void GradientEditorDialog::setupUi()
     connect(m_gradientBar, &GradientBarWidget::stopColorChanged,
             this, &GradientEditorDialog::onColorButtonClicked);
     connect(m_gradientBar, &GradientBarWidget::gradientChanged,
-            this, &GradientEditorDialog::notifyChange);
+            this, [this]() {
+                updateStopControls();  // Update add button state
+                notifyChange();
+            });
     
     connect(m_colorButton, &QPushButton::clicked,
             this, &GradientEditorDialog::onColorButtonClicked);
@@ -434,6 +445,22 @@ void GradientEditorDialog::updateStopControls()
     bool hasStop = m_currentStop >= 0;
     m_colorButton->setEnabled(hasStop);
     m_removeButton->setEnabled(hasStop && m_gradient->stopCount() > 2);
+    
+    // Disable add button when max stops reached (shader limit = 4)
+    bool atLimit = m_gradient->stopCount() >= 4;
+    m_addButton->setEnabled(!atLimit);
+    
+    // Update button text to show limit status
+    if (atLimit)
+    {
+        m_addButton->setText(tr("+ Add (Max 4)"));
+        m_addButton->setStyleSheet("color: #888;");
+    }
+    else
+    {
+        m_addButton->setText(tr("+ Add (%1/4)").arg(m_gradient->stopCount()));
+        m_addButton->setStyleSheet("");
+    }
     
     if (hasStop && m_currentStop < static_cast<int>(m_gradient->stops().size()))
     {
@@ -530,11 +557,21 @@ void GradientEditorDialog::onColorButtonClicked()
 
 void GradientEditorDialog::onAddStopClicked()
 {
+    // Shader only supports 4 color stops - block adding more
+    if (m_gradient->stopCount() >= 4)
+    {
+        QMessageBox::warning(this, tr("Stop Limit Reached"),
+            tr("The GPU shader supports a maximum of 4 color stops.\n"
+               "Remove an existing stop before adding a new one."));
+        return;
+    }
+    
     // Add a new stop at 0.5 with interpolated color
     float pos = 0.5f;
     auto color = m_gradient->sample(pos);
     m_gradient->addStop(pos, color);
     m_gradientBar->updateDisplay();
+    updateStopControls();  // Update add button state
     notifyChange();
 }
 

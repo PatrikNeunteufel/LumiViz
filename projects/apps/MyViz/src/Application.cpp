@@ -29,9 +29,11 @@
 #include "UI/MainWindow.hpp"
 #include "core/GpuInfo.hpp"
 #include "core/GpuSelector.hpp"
+#include "visualizers/modules/ColorGradientModule.hpp"
 
 // Qt includes
 #include <QApplication>
+#include <QStandardPaths>
 #include <QTimer>
 
 // BasicLogger - Logging for GUI Applications
@@ -304,6 +306,16 @@ bool Application::init(int argc, char* argv[])
     m_impl->pQtApp->setApplicationName(QString::fromStdString(m_impl->name));
     m_impl->pQtApp->setApplicationVersion(QString::fromStdString(m_impl->version));
     m_impl->pQtApp->setOrganizationName(QStringLiteral("MyViz Project"));
+
+    // -------------------------------------------------------------------------
+    // Initialize User Presets Directory
+    // -------------------------------------------------------------------------
+    // Must be done AFTER QApplication (for QStandardPaths) but BEFORE MainWindow
+    // (which creates visualizers that need to load user presets)
+    QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    std::string gradientPresetsDir = (appData + "/presets/gradients").toStdString();
+    lumi::modules::ColorGradientModule::setUserPresetsDirectory(gradientPresetsDir);
+    BasicLogger::logInfo("User presets directory: " + gradientPresetsDir);
 
     // -------------------------------------------------------------------------
     // Create MainWindow (this creates the OpenGL context)

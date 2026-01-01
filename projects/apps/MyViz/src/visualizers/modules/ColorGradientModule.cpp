@@ -479,22 +479,19 @@ void ColorGradientModule::initBuiltinPresets()
         m_builtinPresets["Neon"] = p;
     }
     
-    // Rainbow
+    // Rainbow (simplified to 4 stops for shader compatibility)
     {
         GradientPreset p;
         p.name = "Rainbow";
         p.mode = GradientMode::Linear;
         p.angle = 0.0f;  // Horizontal
         p.stops = {
-            {0.0f,  {1.0f, 0.0f, 0.0f, 1.0f}},  // Red
-            {0.17f, {1.0f, 0.5f, 0.0f, 1.0f}},  // Orange
-            {0.33f, {1.0f, 1.0f, 0.0f, 1.0f}},  // Yellow
-            {0.5f,  {0.0f, 1.0f, 0.0f, 1.0f}},  // Green
-            {0.67f, {0.0f, 1.0f, 1.0f, 1.0f}},  // Cyan
-            {0.83f, {0.0f, 0.0f, 1.0f, 1.0f}},  // Blue
-            {1.0f,  {0.5f, 0.0f, 1.0f, 1.0f}}   // Violet
+            {0.0f,   {1.0f, 0.0f, 0.0f, 1.0f}},  // Red
+            {0.33f,  {1.0f, 1.0f, 0.0f, 1.0f}},  // Yellow
+            {0.66f,  {0.0f, 1.0f, 0.0f, 1.0f}},  // Green
+            {1.0f,   {0.0f, 0.5f, 1.0f, 1.0f}}   // Blue
         };
-        p.midpoints = {{0.5f}, {0.5f}, {0.5f}, {0.5f}, {0.5f}, {0.5f}};
+        p.midpoints = {{0.5f}, {0.5f}, {0.5f}};
         m_builtinPresets["Rainbow"] = p;
     }
     
@@ -616,6 +613,13 @@ void ColorGradientModule::loadPreset(const std::string& name)
 
 std::vector<std::string> ColorGradientModule::presetNames() const
 {
+    // Lazy-load user presets on first access
+    // (Directory might not be set during construction)
+    if (!m_userPresetsLoaded && !s_userPresetsDir.empty())
+    {
+        const_cast<ColorGradientModule*>(this)->loadUserPresetsFromDisk();
+    }
+    
     std::vector<std::string> names;
     
     // Add builtin presets first
@@ -825,8 +829,12 @@ void ColorGradientModule::loadUserPresetsFromDisk()
 {
     if (s_userPresetsDir.empty())
     {
+        // Don't mark as loaded if directory not set yet
+        // presetNames() will retry later
         return;
     }
+    
+    m_userPresetsLoaded = true;  // Mark as loaded (even if file doesn't exist)
     
     std::string filePath = s_userPresetsDir + "/gradient_presets.json";
     
@@ -834,6 +842,7 @@ void ColorGradientModule::loadUserPresetsFromDisk()
     if (!file.is_open())
     {
         // No user presets file yet - that's OK
+        BasicLogger::logDebug("ColorGradientModule: No user presets file at " + filePath);
         return;
     }
     
@@ -980,7 +989,7 @@ void ColorGradientModule::loadUserPresetsFromDisk()
     }
     
     BasicLogger::logInfo("ColorGradientModule: Loaded " + 
-                         std::to_string(m_userPresets.size()) + " user presets");
+                         std::to_string(m_userPresets.size()) + " user presets from " + filePath);
 }
 
 void ColorGradientModule::saveUserPresetsToDisk() const

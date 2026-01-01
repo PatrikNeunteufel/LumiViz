@@ -843,6 +843,49 @@ void ConfigPanel::openGradientEditor(const std::string& /*paramId*/)
     
     dialog.exec();
     
+    // Update the gradient preset dropdown with new preset names
+    // (in case user saved a new preset in the editor)
+    auto newPresetNames = gradient->presetNames();
+    for (auto it = m_paramWidgets.begin(); it != m_paramWidgets.end(); ++it)
+    {
+        const QString& key = it.key();
+        ParamWidgetInfo& info = it.value();
+        
+        if (key.contains("preset") && key.contains("color"))
+        {
+            auto* combo = qobject_cast<QComboBox*>(info.control);
+            if (combo)
+            {
+                // Remember current selection
+                int currentIndex = combo->currentIndex();
+                QString currentText = combo->currentText();
+                
+                // Update options
+                combo->blockSignals(true);
+                combo->clear();
+                for (const auto& name : newPresetNames)
+                {
+                    combo->addItem(QString::fromStdString(name));
+                }
+                
+                // Try to restore selection
+                int newIndex = combo->findText(currentText);
+                if (newIndex >= 0)
+                {
+                    combo->setCurrentIndex(newIndex);
+                }
+                else if (currentIndex < combo->count())
+                {
+                    combo->setCurrentIndex(currentIndex);
+                }
+                combo->blockSignals(false);
+                
+                BasicLogger::logDebug("ConfigPanel: Updated gradient preset dropdown with " + 
+                                      std::to_string(newPresetNames.size()) + " presets");
+            }
+        }
+    }
+    
     // Sync all widgets to reflect changes made in the editor
     syncFromVisualizer();
     

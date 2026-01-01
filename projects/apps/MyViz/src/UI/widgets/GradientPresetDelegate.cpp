@@ -32,14 +32,28 @@ void GradientPresetDelegate::paint(QPainter* painter,
 {
     painter->save();
     
-    // Draw selection/hover background
     QStyleOptionViewItem opt = option;
     initStyleOption(&opt, index);
     
-    QStyle* style = opt.widget ? opt.widget->style() : QApplication::style();
+    bool isSelected = opt.state & QStyle::State_Selected;
+    bool isHovered = opt.state & QStyle::State_MouseOver;
     
-    // Draw background
-    style->drawPrimitive(QStyle::PE_PanelItemViewItem, &opt, painter, opt.widget);
+    // Draw background ourselves for consistent appearance
+    if (isSelected)
+    {
+        painter->fillRect(opt.rect, opt.palette.highlight());
+    }
+    else if (isHovered)
+    {
+        // Use a lighter highlight color for hover
+        QColor hoverColor = opt.palette.highlight().color();
+        hoverColor.setAlpha(128);
+        painter->fillRect(opt.rect, hoverColor);
+    }
+    else
+    {
+        painter->fillRect(opt.rect, opt.palette.base());
+    }
     
     // Get preset name
     QString text = index.data(Qt::DisplayRole).toString();
@@ -63,9 +77,20 @@ void GradientPresetDelegate::paint(QPainter* painter,
     // Draw gradient preview
     drawGradientPreview(painter, previewRect, presetName);
     
-    // Draw text
-    painter->setPen(opt.palette.color(
-        (opt.state & QStyle::State_Selected) ? QPalette::HighlightedText : QPalette::Text));
+    // Draw text with appropriate contrast
+    if (isSelected)
+    {
+        painter->setPen(opt.palette.highlightedText().color());
+    }
+    else if (isHovered)
+    {
+        // Dark text on light hover background
+        painter->setPen(opt.palette.text().color());
+    }
+    else
+    {
+        painter->setPen(opt.palette.text().color());
+    }
     painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, text);
     
     painter->restore();

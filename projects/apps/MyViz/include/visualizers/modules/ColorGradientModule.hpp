@@ -201,6 +201,7 @@ private:
     std::map<std::string, GradientPreset> m_builtinPresets;
     std::map<std::string, GradientPreset> m_userPresets;
     std::string m_currentPreset;
+    bool m_userPresetsLoaded = false;  ///< Flag to track if user presets were loaded
     
     static std::string s_userPresetsDir;
 };
