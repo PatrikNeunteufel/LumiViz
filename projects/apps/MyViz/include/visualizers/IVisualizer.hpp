@@ -5,7 +5,7 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 1.0.0
+ * @version 2.0.0 - Added module parameter introspection
  *
  * @details
  * ## Qt6 Tutorial: Visualizer Interface
@@ -14,6 +14,7 @@
  *   - Eindeutige ID und Name
  *   - OpenGL Lifecycle (initialize, render, resize)
  *   - Optional: Audio-Daten empfangen
+ *   - Modul-Parameter für ConfigPanel
  *
  * ### Wichtig
  *
@@ -26,6 +27,10 @@
 
 #include <QString>
 #include <QSize>
+#include <vector>
+#include <string>
+
+#include "visualizers/modules/IModule.hpp"
 
 /**
  * @class IVisualizer
@@ -142,4 +147,59 @@ public:
      * @return true if visualizer reacts to audio
      */
     [[nodiscard]] virtual bool usesAudio() const { return false; }
+
+    // =========================================================================
+    // Module Parameter Introspection (for ConfigPanel)
+    // =========================================================================
+
+    /**
+     * @brief Check if visualizer supports parameter introspection
+     * @return true if paramDescs/getParam/setParam are implemented
+     */
+    [[nodiscard]] virtual bool hasParameterSupport() const { return false; }
+
+    /**
+     * @brief Get all parameter descriptors from all modules
+     * @return Vector of parameter descriptors
+     *
+     * Parameters are grouped by module and can have hierarchical IDs
+     * like "audio.smooth.timeMs".
+     */
+    [[nodiscard]] virtual std::vector<lumi::modules::ModuleParamDesc> paramDescs() const
+    {
+        return {};
+    }
+
+    /**
+     * @brief Get parameter value by hierarchical path
+     * @param id Parameter path (e.g., "audio.smooth.timeMs", "color.scheme")
+     * @param out Output value
+     * @return true if parameter found
+     */
+    [[nodiscard]] virtual bool getParam(const std::string& id,
+                                        lumi::modules::ParamValue& out) const
+    {
+        Q_UNUSED(id)
+        Q_UNUSED(out)
+        return false;
+    }
+
+    /**
+     * @brief Set parameter value by hierarchical path
+     * @param id Parameter path
+     * @param value New value
+     * @return true if parameter set successfully
+     */
+    virtual bool setParam(const std::string& id,
+                          const lumi::modules::ParamValue& value)
+    {
+        Q_UNUSED(id)
+        Q_UNUSED(value)
+        return false;
+    }
+
+    /**
+     * @brief Reset all parameters to defaults
+     */
+    virtual void resetToDefaults() {}
 };

@@ -6,9 +6,14 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 2.1.0
+ * @version 2.2.0 - Added Config Event Support
  *
  * @details
+ * ## Version 2.2.0 Changes
+ *
+ * - Added subscribeToConfigEvents() for receiving ConfigPanel events
+ * - Color scheme, smoothing, peak hold can now be changed at runtime
+ *
  * ## Version 2.1.0 Changes
  *
  * - Now inherits from WidgetBase<QOpenGLWidget> for consistency
@@ -49,6 +54,7 @@
 #include <QString>
 #include <QElapsedTimer>
 #include <memory>
+#include <vector>
 
 // Forward declarations
 class IVisualizer;
@@ -236,6 +242,16 @@ private:
      */
     void cleanupVisualizer();
 
+    /**
+     * @brief Subscribe to config events from ConfigPanel
+     */
+    void subscribeToConfigEvents();
+
+    /**
+     * @brief Unsubscribe from config events
+     */
+    void unsubscribeFromConfigEvents();
+
     // =========================================================================
     // Private Members
     // =========================================================================
@@ -259,4 +275,7 @@ private:
 
     // OpenGL initialized flag
     bool m_glInitialized{false};
+
+    // Config event subscription IDs
+    std::vector<int> m_configSubscriptionIds;
 };

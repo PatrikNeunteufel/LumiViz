@@ -1,14 +1,11 @@
 /**
  ****************************************************************************************
  * @file   PulsingVisualizer.cpp
- * @brief  MINIMAL DEBUG VERSION - Guaranteed visible rendering
- *
- * This version removes all complexity and guarantees a visible pulsing circle.
- * Uses BasicLogger for all debug output (not qDebug).
+ * @brief  DEBUG VERSION with centered circle and event support
  *
  * @author LumiPulse Team
  * @date   January 2026
- * @version DEBUG-4.1
+ * @version DEBUG-5.0 - Centered + Events
  ****************************************************************************************
  */
 
@@ -23,7 +20,7 @@
 #include <algorithm>
 
 // =============================================================================
-// Simple Shader Source - NO COMPLEXITY
+// Shader Source - CENTERED VERSION
 // =============================================================================
 
 namespace {
@@ -38,15 +35,14 @@ uniform float uSize;
 
 void main()
 {
+    // Scale by size
     vec2 pos = aPosition * uSize;
     
-    // Correct for aspect ratio
-    if (uAspect > 1.0) {
-        pos.x /= uAspect;
-    } else {
-        pos.y *= uAspect;
-    }
+    // Correct for aspect ratio - keep circle circular
+    // Divide X by aspect ratio to prevent horizontal stretching
+    pos.x /= uAspect;
     
+    // Position is already centered (vertices are -1 to 1, center at 0,0)
     gl_Position = vec4(pos, 0.0, 1.0);
 }
 )";
@@ -60,7 +56,6 @@ uniform vec3 uColor;
 
 void main()
 {
-    // ALWAYS output the color at full brightness
     fragColor = vec4(uColor, 1.0);
 }
 )";
@@ -80,7 +75,7 @@ PulsingVisualizer::PulsingVisualizer()
 {
     BasicLogger::logDebug("PulsingVisualizer: Constructor called");
     
-    // Simple defaults
+    // Defaults
     m_colorScheme.setScheme(lumi::modules::ColorSchemeType::Neon);
     m_pulseShape.setShape(lumi::modules::PulseShape::Circle);
     m_pulseShape.setBaseSize(0.6f);
@@ -89,12 +84,12 @@ PulsingVisualizer::PulsingVisualizer()
 PulsingVisualizer::~PulsingVisualizer() = default;
 
 // =============================================================================
-// IModule-style Parameter Access (NEW in v3.0)
+// IModule-style Parameter Access
 // =============================================================================
 
 std::vector<lumi::modules::ModuleParamDesc> PulsingVisualizer::paramDescs() const
 {
-    return {}; // Simplified for debug
+    return {};
 }
 
 bool PulsingVisualizer::getParam(const std::string& id, 
@@ -144,6 +139,8 @@ int PulsingVisualizer::sides() const
 void PulsingVisualizer::setColorScheme(lumi::modules::ColorSchemeType scheme)
 {
     m_colorScheme.setScheme(scheme);
+    BasicLogger::logDebug("PulsingVisualizer: Color scheme set to " + 
+                          std::to_string(static_cast<int>(scheme)));
 }
 
 lumi::modules::ColorSchemeType PulsingVisualizer::colorScheme() const
@@ -245,7 +242,7 @@ void PulsingVisualizer::setAudioRotationEnabled(bool enabled)
 
 bool PulsingVisualizer::audioRotationEnabled() const
 {
-    return false; // Simplified
+    return false;
 }
 
 // =============================================================================
@@ -271,6 +268,8 @@ float PulsingVisualizer::beatSensitivity() const
 void PulsingVisualizer::setSmoothingTime(float milliseconds)
 {
     m_audioSource.smoothing().setTimeMs(milliseconds);
+    BasicLogger::logDebug("PulsingVisualizer: Smoothing set to " + 
+                          std::to_string(milliseconds) + "ms");
 }
 
 float PulsingVisualizer::smoothingTime() const
@@ -366,7 +365,7 @@ void PulsingVisualizer::onInitialize()
     m_vertexBuffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
     BasicLogger::logDebug("  VBO created OK");
     
-    // Generate circle vertices - SIMPLE VERSION
+    // Generate circle vertices
     generateCircleVertices(64);
     
     BasicLogger::logInfo("PulsingVisualizer::onInitialize() - COMPLETE, vertexCount=" + 
@@ -381,11 +380,11 @@ void PulsingVisualizer::generateCircleVertices(int segments)
     const float PI = 3.14159265358979323846f;
     const float TWO_PI = 2.0f * PI;
     
-    // Center vertex
+    // Center vertex at origin (0,0)
     vertices.push_back(0.0f);
     vertices.push_back(0.0f);
     
-    // Outer vertices
+    // Outer vertices - unit circle (will be scaled by uSize in shader)
     for (int i = 0; i <= segments; ++i)
     {
         float angle = (static_cast<float>(i) / segments) * TWO_PI;
@@ -425,50 +424,69 @@ void PulsingVisualizer::onRender(float deltaTime)
     m_totalTime += deltaTime;
     
     // =========================================================================
-    // CRITICAL: Ensure viewport is set correctly
+    // Get viewport from OpenGL state (most reliable)
     // =========================================================================
-    int vpWidth = width();
-    int vpHeight = height();
-    if (vpWidth > 0 && vpHeight > 0)
+    GLint viewport[4];
+    gl->glGetIntegerv(GL_VIEWPORT, viewport);
+    int vpWidth = viewport[2];
+    int vpHeight = viewport[3];
+    
+    // Calculate aspect ratio from actual viewport
+    float aspect = 1.0f;
+    if (vpHeight > 0)
     {
-        gl->glViewport(0, 0, vpWidth, vpHeight);
+        aspect = static_cast<float>(vpWidth) / static_cast<float>(vpHeight);
     }
     
     // =========================================================================
-    // Animation: Time-based pulsing (IGNORE audio for now to debug)
+    // Animation
     // =========================================================================
     
-    // Size pulses between 0.4 and 0.9 - LARGE and visible!
+    // Size pulses between 0.4 and 0.9
     float pulseSize = 0.65f + 0.25f * std::sin(m_totalTime * 2.0f);
     
-    // Bright cycling colors - FULL SATURATION
-    float hue = std::fmod(m_totalTime * 0.2f, 1.0f);  // Slow color cycle
+    // Get audio level if available
+    auto spectrum = getSpectrum();
+    float audioLevel = 0.0f;
+    if (!spectrum.empty())
+    {
+        float sum = 0.0f;
+        int count = std::min(static_cast<int>(spectrum.size()), 32);
+        for (int i = 0; i < count; ++i)
+        {
+            sum += spectrum[i];
+        }
+        audioLevel = sum / count;
+        
+        // Modulate size with audio
+        pulseSize = 0.4f + 0.5f * audioLevel + 0.1f * std::sin(m_totalTime * 2.0f);
+        pulseSize = std::clamp(pulseSize, 0.3f, 1.0f);
+    }
     
-    // HSV to RGB (simplified, hue only)
-    float r, g, b;
-    float h = hue * 6.0f;
-    int i = static_cast<int>(h);
-    float f = h - i;
-    switch (i % 6) {
-        case 0: r = 1.0f; g = f;    b = 0.0f; break;
-        case 1: r = 1-f;  g = 1.0f; b = 0.0f; break;
-        case 2: r = 0.0f; g = 1.0f; b = f;    break;
-        case 3: r = 0.0f; g = 1-f;  b = 1.0f; break;
-        case 4: r = f;    g = 0.0f; b = 1.0f; break;
-        case 5: r = 1.0f; g = 0.0f; b = 1-f;  break;
-        default: r = 1.0f; g = 0.0f; b = 1.0f; break;
+    // Get color from color scheme module
+    auto color = m_colorScheme.sampleAnimated(audioLevel);
+    float r = color.r;
+    float g = color.g;
+    float b = color.b;
+    
+    // Ensure color is bright enough
+    float maxC = std::max({r, g, b});
+    if (maxC < 0.3f)
+    {
+        float boost = 0.5f / (maxC + 0.01f);
+        r = std::min(1.0f, r * boost);
+        g = std::min(1.0f, g * boost);
+        b = std::min(1.0f, b * boost);
     }
     
     // =========================================================================
-    // Clear with VERY DARK background (almost black)
+    // Render
     // =========================================================================
+    
     gl->glClearColor(0.0f, 0.0f, 0.02f, 1.0f);
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    // Disable depth test - we're doing 2D
     gl->glDisable(GL_DEPTH_TEST);
-    
-    // Disable blending - we want solid colors
     gl->glDisable(GL_BLEND);
     
     if (!m_shader || !m_vao || m_vertexCount == 0)
@@ -476,23 +494,13 @@ void PulsingVisualizer::onRender(float deltaTime)
         static int warnCount = 0;
         if (warnCount++ < 5)
         {
-            BasicLogger::logWarning("renderPulse: shader=" + 
-                std::to_string(m_shader != nullptr) + 
-                " vao=" + std::to_string(m_vao != nullptr) + 
-                " vertexCount=" + std::to_string(m_vertexCount));
+            BasicLogger::logWarning("renderPulse: not ready");
         }
         return;
     }
     
     m_shader->bind();
     m_vao->bind();
-    
-    // Get aspect ratio with safety check
-    float aspect = aspectRatio();
-    if (aspect <= 0.0f || std::isnan(aspect) || std::isinf(aspect))
-    {
-        aspect = 1.0f;
-    }
     
     // Debug log first 10 frames
     static int frameCount = 0;
@@ -506,20 +514,13 @@ void PulsingVisualizer::onRender(float deltaTime)
                               std::to_string(g) + "," + std::to_string(b) + ")");
     }
     
-    // Set uniforms - use explicit uniform locations
+    // Set uniforms
     gl->glUniform3f(m_uniformColor, r, g, b);
-    gl->glUniform1f(m_uniformIntensity, pulseSize);  // This is "uSize"
+    gl->glUniform1f(m_uniformIntensity, pulseSize);
     gl->glUniform1f(m_uniformAspect, aspect);
     
-    // Draw circle as triangle fan
+    // Draw
     gl->glDrawArrays(GL_TRIANGLE_FAN, 0, m_vertexCount);
-    
-    // Check for OpenGL errors
-    GLenum err = gl->glGetError();
-    if (err != GL_NO_ERROR && frameCount <= 5)
-    {
-        BasicLogger::logError("OpenGL error after draw: " + std::to_string(err));
-    }
     
     m_vao->release();
     m_shader->release();
@@ -542,24 +543,10 @@ void PulsingVisualizer::onCleanup()
 }
 
 // =============================================================================
-// Unused methods (stubs for now)
+// Unused stubs
 // =============================================================================
 
-bool PulsingVisualizer::createShaders() 
-{ 
-    return true; 
-}
-
-void PulsingVisualizer::updateVertexBuffer() 
-{
-}
-
-void PulsingVisualizer::renderPulse(float, float) 
-{
-}
-
-float PulsingVisualizer::detectBeat(float bassLevel) 
-{ 
-    (void)bassLevel;
-    return 0.0f; 
-}
+bool PulsingVisualizer::createShaders() { return true; }
+void PulsingVisualizer::updateVertexBuffer() {}
+void PulsingVisualizer::renderPulse(float, float) {}
+float PulsingVisualizer::detectBeat(float) { return 0.0f; }

@@ -90,14 +90,19 @@ public:
     ~PulsingVisualizer() override;
 
     // =========================================================================
-    // IModule-style Parameter Access (NEW in v3.0)
+    // IVisualizer Parameter Interface (overrides)
     // =========================================================================
+
+    /**
+     * @brief Check if visualizer supports parameter introspection
+     */
+    [[nodiscard]] bool hasParameterSupport() const override { return true; }
 
     /**
      * @brief Get all parameter descriptors for ConfigPanel
      * @return Vector of parameter descriptors from all modules
      */
-    [[nodiscard]] std::vector<lumi::modules::ModuleParamDesc> paramDescs() const;
+    [[nodiscard]] std::vector<lumi::modules::ModuleParamDesc> paramDescs() const override;
 
     /**
      * @brief Get parameter value by hierarchical path
@@ -106,7 +111,7 @@ public:
      * @return true if parameter found
      */
     [[nodiscard]] bool getParam(const std::string& id, 
-                                lumi::modules::ParamValue& out) const;
+                                lumi::modules::ParamValue& out) const override;
 
     /**
      * @brief Set parameter value by hierarchical path
@@ -115,7 +120,7 @@ public:
      * @return true if parameter set successfully
      */
     bool setParam(const std::string& id, 
-                  const lumi::modules::ParamValue& value);
+                  const lumi::modules::ParamValue& value) override;
 
     // =========================================================================
     // Module Access

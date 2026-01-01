@@ -6,7 +6,7 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 2.1.0
+ * @version 2.2.0 - Added Config Event Support
  ****************************************************************************************
  */
 
@@ -17,6 +17,7 @@
 #include "pch.h"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "visualizers/IVisualizer.hpp"
+#include "visualizers/PulsingVisualizer.hpp"
 #include "services/VisualizerRegistry.hpp"
 #include "services/IEventBus.hpp"
 #include "services/events/UIEvents.hpp"
@@ -87,6 +88,9 @@ VisualizerWidget::VisualizerWidget(ServiceContainer& services, QWidget* parent)
     // Start frame timer
     m_frameTimer.start();
 
+    // Subscribe to config events from ConfigPanel
+    subscribeToConfigEvents();
+
     BasicLogger::logDebug("  Requested OpenGL 3.3 Core Profile");
     BasicLogger::logDebug("  VSync: OFF (using software frame limiting)");
     BasicLogger::logDebug("  MSAA: 4x samples");
@@ -96,6 +100,9 @@ VisualizerWidget::~VisualizerWidget()
 {
     BasicLogger::logDebug("VisualizerWidget destructor");
     BasicLogger::logDebug("  Total frames rendered: " + std::to_string(m_frameCount));
+
+    // Unsubscribe from config events
+    unsubscribeFromConfigEvents();
 
     // Make context current for cleanup
     makeCurrent();
@@ -121,6 +128,103 @@ void VisualizerWidget::onStopUpdates()
 {
     BasicLogger::logDebug("VisualizerWidget::onStopUpdates()");
     // Could stop render timer here
+}
+
+// =============================================================================
+// Config Event Subscription
+// =============================================================================
+
+void VisualizerWidget::subscribeToConfigEvents()
+{
+    auto* bus = eventBus();
+    if (!bus)
+    {
+        BasicLogger::logWarning("VisualizerWidget: No EventBus available for config events");
+        return;
+    }
+    
+    // Color Scheme Event
+    m_configSubscriptionIds.push_back(
+        bus->subscribe<VisualizerColorSchemeEvent>(
+            [this](const VisualizerColorSchemeEvent& evt) {
+                if (!m_visualizer)
+                {
+                    return;
+                }
+                
+                // Try to cast to PulsingVisualizer
+                auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer.get());
+                if (pulsing)
+                {
+                    auto scheme = static_cast<lumi::modules::ColorSchemeType>(evt.schemeIndex);
+                    pulsing->setColorScheme(scheme);
+                    BasicLogger::logDebug("VisualizerWidget: Applied color scheme " + 
+                                          std::to_string(evt.schemeIndex));
+                }
+            }
+        )
+    );
+    
+    // Smoothing Event
+    m_configSubscriptionIds.push_back(
+        bus->subscribe<VisualizerSmoothingEvent>(
+            [this](const VisualizerSmoothingEvent& evt) {
+                if (!m_visualizer)
+                {
+                    return;
+                }
+                
+                auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer.get());
+                if (pulsing)
+                {
+                    // Convert 0-1 to milliseconds (0-500ms range)
+                    float ms = evt.smoothingFactor * 500.0f;
+                    pulsing->setSmoothingTime(ms);
+                    BasicLogger::logDebug("VisualizerWidget: Applied smoothing " + 
+                                          std::to_string(ms) + "ms");
+                }
+            }
+        )
+    );
+    
+    // Peak Hold Event
+    m_configSubscriptionIds.push_back(
+        bus->subscribe<VisualizerPeakHoldEvent>(
+            [this](const VisualizerPeakHoldEvent& evt) {
+                if (!m_visualizer)
+                {
+                    return;
+                }
+                
+                auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer.get());
+                if (pulsing)
+                {
+                    pulsing->setBeatBrightnessEnabled(evt.enabled);
+                    BasicLogger::logDebug("VisualizerWidget: Peak hold " + 
+                                          std::string(evt.enabled ? "enabled" : "disabled"));
+                }
+            }
+        )
+    );
+    
+    BasicLogger::logDebug("VisualizerWidget: Subscribed to config events");
+}
+
+void VisualizerWidget::unsubscribeFromConfigEvents()
+{
+    auto* bus = eventBus();
+    if (!bus)
+    {
+        return;
+    }
+    
+    for (int id : m_configSubscriptionIds)
+    {
+        bus->unsubscribe(id);
+    }
+    m_configSubscriptionIds.clear();
+    
+    BasicLogger::logDebug("VisualizerWidget: Unsubscribed from config events");
 }
 
 // =============================================================================

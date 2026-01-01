@@ -10,9 +10,11 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     # (no sources - *.c; *.cpp)
-    "${CMAKE_CURRENT_LIST_DIR}/WidgetBase.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/WidgetAutoReg.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/CollapsibleGroupBox.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ModuleConfigWidget.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerWidget.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/WidgetAutoReg.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/WidgetBase.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)

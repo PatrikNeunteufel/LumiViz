@@ -13,9 +13,11 @@ set(_local_sources
 )
 set(_local_headers
     # (headers - *.h; *.hpp)
+    "${CMAKE_CURRENT_LIST_DIR}/CollapsibleGroupBox.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/IWidget.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/WidgetBase.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ModuleConfigWidget.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerWidget.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/WidgetBase.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)
