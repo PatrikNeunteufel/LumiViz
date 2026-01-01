@@ -166,6 +166,15 @@ public:
     void savePreset(const std::string& name);
     bool deletePreset(const std::string& name);
     void reset();
+    
+    /// Set directory for user presets (call before using presets)
+    static void setUserPresetsDirectory(const std::string& path);
+    
+    /// Load user presets from disk
+    void loadUserPresetsFromDisk();
+    
+    /// Save user presets to disk
+    void saveUserPresetsToDisk() const;
 
     // =========================================================================
     // Serialization
@@ -183,7 +192,7 @@ private:
 
     GradientMode m_mode = GradientMode::Solid;
     float m_angle = 0.0f;
-    float m_outlineWidth = 0.05f;  ///< Width for Outline mode
+    float m_outlineWidth = 3.0f;  ///< Width for Outline mode (pixels)
     Color4f m_solidColor = {1.0f, 0.0f, 1.0f, 1.0f};
 
     std::vector<ColorStop> m_stops;
@@ -192,6 +201,8 @@ private:
     std::map<std::string, GradientPreset> m_builtinPresets;
     std::map<std::string, GradientPreset> m_userPresets;
     std::string m_currentPreset;
+    
+    static std::string s_userPresetsDir;
 };
 
 } // namespace lumi::modules

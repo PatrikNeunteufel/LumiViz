@@ -43,6 +43,7 @@
 #include <QWidget>
 #include <QMap>
 #include <vector>
+#include <memory>
 
 // Forward declarations
 class QScrollArea;
@@ -53,8 +54,13 @@ class QComboBox;
 class QCheckBox;
 class QLabel;
 class QLineEdit;
+class QPushButton;
 class CollapsibleGroupBox;
 class IVisualizer;
+
+namespace lumi {
+class VisualizerPresetManager;
+}
 
 /**
  * @class ConfigPanel
@@ -66,7 +72,7 @@ class ConfigPanel : public PanelBase
 
 public:
     explicit ConfigPanel(ServiceContainer& services, QWidget* parent = nullptr);
-    ~ConfigPanel() override = default;
+    ~ConfigPanel() override;
 
     // IPanel
     [[nodiscard]] int preferredArea() const override;
@@ -124,6 +130,13 @@ private:
     // Event subscription
     void subscribeToEvents();
     void unsubscribeFromEvents();
+    
+    // Preset management
+    void setupPresetUI();
+    void refreshPresetList();
+    void onPresetSelected(int index);
+    void onSavePresetClicked();
+    void onDeletePresetClicked();
 
     // --- Members ---
     IVisualizer* m_visualizer = nullptr;
@@ -144,6 +157,12 @@ private:
         lumi::modules::ModuleParamDesc desc;
     };
     QMap<QString, ParamWidgetInfo> m_paramWidgets;
+    
+    // Preset UI
+    QComboBox* m_presetCombo = nullptr;
+    QPushButton* m_savePresetBtn = nullptr;
+    QPushButton* m_deletePresetBtn = nullptr;
+    std::unique_ptr<lumi::VisualizerPresetManager> m_presetManager;
 
     // State
     bool m_isUpdating = false;

@@ -14,6 +14,7 @@ set(_local_sources
 set(_local_headers
     # (headers - *.h; *.hpp)
     "${CMAKE_CURRENT_LIST_DIR}/CollapsibleGroupBox.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/GradientPresetDelegate.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/IWidget.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/ModuleConfigWidget.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerWidget.hpp"

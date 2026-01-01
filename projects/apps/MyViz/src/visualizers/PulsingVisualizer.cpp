@@ -108,44 +108,59 @@ uniform vec4 uColor1;
 uniform vec4 uColor2;
 uniform vec4 uColor3;
 uniform vec4 uStopPos;      // Positions of stops (x=stop0, y=stop1, etc.)
+uniform vec4 uMidpoints;    // Midpoints between stops (0.0-1.0, default 0.5)
 uniform int uStopCount;     // Number of active stops (2-4)
 uniform int uColorMode;     // 0=Solid, 1=Linear, 2=Radial, 3=Outline
 uniform float uGradientAngle;
 uniform float uInnerRadius;
 uniform float uOutlineWidth;
 
+// Apply midpoint adjustment to local t
+float applyMidpoint(float t, float mid)
+{
+    // mid < 0.5: shift towards start color
+    // mid > 0.5: shift towards end color
+    // mid == 0.5: linear (unchanged)
+    if (abs(mid - 0.5) < 0.01) return t;
+    
+    if (mid < 0.5) {
+        float power = 0.5 / max(mid, 0.01);
+        return pow(t, power);
+    } else {
+        float power = (1.0 - mid) / 0.5;
+        return 1.0 - pow(1.0 - t, power);
+    }
+}
+
 vec4 sampleGradient(float t)
 {
     t = clamp(t, 0.0, 1.0);
     
-    // Find segment
+    // Handle edge cases
     if (uStopCount <= 1 || t <= uStopPos.x) return uColor0;
-    if (uStopCount == 2 || t >= uStopPos.y) {
-        if (uStopCount == 2) {
-            float localT = (t - uStopPos.x) / max(uStopPos.y - uStopPos.x, 0.001);
-            return mix(uColor0, uColor1, localT);
-        }
-    }
+    if (t >= uStopPos.w && uStopCount == 4) return uColor3;
+    if (t >= uStopPos.z && uStopCount == 3) return uColor2;
+    if (t >= uStopPos.y && uStopCount == 2) return uColor1;
     
-    // Multi-stop gradient
+    // Find segment and interpolate with midpoint
     if (t < uStopPos.y) {
         float localT = (t - uStopPos.x) / max(uStopPos.y - uStopPos.x, 0.001);
+        localT = applyMidpoint(localT, uMidpoints.x);
         return mix(uColor0, uColor1, localT);
     }
-    if (uStopCount == 3 || t >= uStopPos.z) {
-        if (uStopCount == 3) {
-            float localT = (t - uStopPos.y) / max(uStopPos.z - uStopPos.y, 0.001);
-            return mix(uColor1, uColor2, localT);
-        }
-    }
-    if (t < uStopPos.z) {
+    if (uStopCount >= 3 && t < uStopPos.z) {
         float localT = (t - uStopPos.y) / max(uStopPos.z - uStopPos.y, 0.001);
+        localT = applyMidpoint(localT, uMidpoints.y);
         return mix(uColor1, uColor2, localT);
     }
+    if (uStopCount >= 4 && t < uStopPos.w) {
+        float localT = (t - uStopPos.z) / max(uStopPos.w - uStopPos.z, 0.001);
+        localT = applyMidpoint(localT, uMidpoints.z);
+        return mix(uColor2, uColor3, localT);
+    }
     
-    // Last segment (stop2 to stop3)
-    float localT = (t - uStopPos.z) / max(uStopPos.w - uStopPos.z, 0.001);
-    return mix(uColor2, uColor3, localT);
+    // Fallback
+    return uColor1;
 }
 
 void main()
@@ -172,14 +187,10 @@ void main()
         float t = dist;
         color = sampleGradient(t);
     }
-    // Mode 3: Outline only
+    // Mode 3: Outline - handled separately via GL_LINE_LOOP
+    // This branch shouldn't be reached for outline mode
     else if (uColorMode == 3)
     {
-        // Only draw near the edge
-        if (dist < (1.0 - uOutlineWidth))
-        {
-            discard;
-        }
         color = uColor0;
     }
     else
@@ -740,6 +751,7 @@ void PulsingVisualizer::onInitialize()
     m_uniformColor2 = m_shader->uniformLocation("uColor2");
     m_uniformColor3 = m_shader->uniformLocation("uColor3");
     m_uniformStopPos = m_shader->uniformLocation("uStopPos");
+    m_uniformMidpoints = m_shader->uniformLocation("uMidpoints");
     m_uniformStopCount = m_shader->uniformLocation("uStopCount");
     
     // Create VAO
@@ -960,6 +972,15 @@ void PulsingVisualizer::onRender(float deltaTime)
     gl->glUniform4f(m_uniformColor2, colors[2][0], colors[2][1], colors[2][2], colors[2][3]);
     gl->glUniform4f(m_uniformColor3, colors[3][0], colors[3][1], colors[3][2], colors[3][3]);
     gl->glUniform4f(m_uniformStopPos, positions[0], positions[1], positions[2], positions[3]);
+    
+    // Midpoints - get from gradient module
+    const auto& midpoints = m_colorGradient.midpoints();
+    float mid0 = midpoints.size() > 0 ? midpoints[0].position : 0.5f;
+    float mid1 = midpoints.size() > 1 ? midpoints[1].position : 0.5f;
+    float mid2 = midpoints.size() > 2 ? midpoints[2].position : 0.5f;
+    float mid3 = midpoints.size() > 3 ? midpoints[3].position : 0.5f;
+    gl->glUniform4f(m_uniformMidpoints, mid0, mid1, mid2, mid3);
+    
     gl->glUniform1i(m_uniformStopCount, static_cast<int>(stopCount));
     
     // Inner radius only for Ring
@@ -967,11 +988,45 @@ void PulsingVisualizer::onRender(float deltaTime)
                    ? m_innerRadius : 0.0f;
     gl->glUniform1f(m_uniformInnerRadius, innerR);
     
-    // Outline width
-    gl->glUniform1f(m_uniformOutlineWidth, m_colorGradient.outlineWidth());
+    // Outline width (convert pixels to normalized units)
+    float outlinePixels = m_colorGradient.outlineWidth();
+    float outlineNorm = outlinePixels / static_cast<float>(std::min(viewport[2], viewport[3]));
+    gl->glUniform1f(m_uniformOutlineWidth, outlineNorm);
     
     // Draw
-    gl->glDrawArrays(GL_TRIANGLE_FAN, 0, m_vertexCount);
+    if (colorMode == 3)  // Outline mode - use double-draw technique
+    {
+        // glLineWidth is often capped at 1.0 on modern GPUs
+        // Instead: draw shape larger, then draw smaller shape with background color
+        
+        // Get the solid color for outline
+        auto solidColor = m_colorGradient.solidColor();
+        
+        // Apply beat brightness to outline color too
+        if (m_beatBrightnessEnabled)
+        {
+            float brightnessMod = 0.5f + 0.5f * audioLevel;
+            solidColor[0] *= brightnessMod;
+            solidColor[1] *= brightnessMod;
+            solidColor[2] *= brightnessMod;
+        }
+        
+        // 1. Draw outer shape (larger) with solid color
+        float outerSize = size + outlineNorm * 2.0f;
+        gl->glUniform1f(m_uniformSize, outerSize);
+        gl->glUniform1i(m_uniformColorMode, 0);  // Solid color mode
+        gl->glUniform4f(m_uniformColor0, solidColor[0], solidColor[1], solidColor[2], solidColor[3]);
+        gl->glDrawArrays(GL_TRIANGLE_FAN, 0, m_vertexCount);
+        
+        // 2. Draw inner shape with background color (punch out center)
+        gl->glUniform1f(m_uniformSize, size);
+        gl->glUniform4f(m_uniformColor0, m_bgColorR, m_bgColorG, m_bgColorB, 1.0f);
+        gl->glDrawArrays(GL_TRIANGLE_FAN, 0, m_vertexCount);
+    }
+    else
+    {
+        gl->glDrawArrays(GL_TRIANGLE_FAN, 0, m_vertexCount);
+    }
     
     m_vao->release();
     m_shader->release();

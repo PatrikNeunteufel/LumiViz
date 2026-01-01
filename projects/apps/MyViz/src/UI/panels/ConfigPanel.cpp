@@ -12,9 +12,11 @@
 #include "UI/panels/ConfigPanel.hpp"
 #include "UI/widgets/CollapsibleGroupBox.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "UI/widgets/GradientPresetDelegate.hpp"
 #include "UI/dialogs/GradientEditorDialog.hpp"
 #include "visualizers/IVisualizer.hpp"
 #include "visualizers/PulsingVisualizer.hpp"
+#include "visualizers/VisualizerPresetManager.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/events/UIEvents.hpp"
@@ -31,6 +33,9 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QColorDialog>
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QGroupBox>
 
 #include <BasicLogger.h>
 
@@ -64,6 +69,7 @@ static QString groupIcon(const QString& groupName)
 
 ConfigPanel::ConfigPanel(ServiceContainer& services, QWidget* parent)
     : PanelBase(services, QStringLiteral("config"), tr("Visualizer Config"), parent)
+    , m_presetManager(std::make_unique<lumi::VisualizerPresetManager>())
 {
     // Scroll area for many controls
     m_scrollArea = new QScrollArea(this);
@@ -80,6 +86,9 @@ ConfigPanel::ConfigPanel(ServiceContainer& services, QWidget* parent)
     // Main layout
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
+    
+    // Preset controls at top
+    setupPresetUI();
     mainLayout->addWidget(m_scrollArea);
 
     // Placeholder
@@ -89,6 +98,8 @@ ConfigPanel::ConfigPanel(ServiceContainer& services, QWidget* parent)
     m_contentLayout->addWidget(placeholder);
     m_contentLayout->addStretch();
 }
+
+ConfigPanel::~ConfigPanel() = default;
 
 int ConfigPanel::preferredArea() const
 {
@@ -167,6 +178,9 @@ void ConfigPanel::rebuildUI()
                          " with " + std::to_string(params.size()) + " parameters");
 
     buildUIFromParams(params);
+    
+    // Refresh preset list for this visualizer
+    refreshPresetList();
 }
 
 void ConfigPanel::syncFromVisualizer()
@@ -212,11 +226,23 @@ void ConfigPanel::syncFromVisualizer()
                     float range = desc.maxValue - desc.minValue;
                     int sliderVal = static_cast<int>((*f - desc.minValue) / range * 1000);
                     slider->setValue(sliderVal);
+                    
+                    // Update value label if present
+                    if (it->valueLabel)
+                    {
+                        it->valueLabel->setText(QString::number(*f, 'f', 2));
+                    }
                 }
             }
             else if (auto* i = std::get_if<int>(&value))
             {
                 slider->setValue(*i);
+                
+                // Update value label if present
+                if (it->valueLabel)
+                {
+                    it->valueLabel->setText(QString::number(*i));
+                }
             }
         }
         else if (auto* combo = qobject_cast<QComboBox*>(it->control))
@@ -231,6 +257,17 @@ void ConfigPanel::syncFromVisualizer()
             if (auto* s = std::get_if<std::string>(&value))
             {
                 lineEdit->setText(QString::fromStdString(*s));
+            }
+        }
+        else if (auto* colorBtn = qobject_cast<QPushButton*>(it->control))
+        {
+            // Color button - update background color
+            if (desc.type == ParamType::Color && value.index() == 7)
+            {
+                const auto& c = std::get<7>(value);  // Color4f
+                QColor qc = QColor::fromRgbF(c[0], c[1], c[2], c[3]);
+                colorBtn->setStyleSheet(
+                    QString("background-color: %1; border: 1px solid gray;").arg(qc.name()));
             }
         }
     }
@@ -559,6 +596,23 @@ QWidget* ConfigPanel::createEnumWidget(const ModuleParamDesc& desc)
         combo->addItem(QString::fromStdString(option));
     }
     combo->setToolTip(QString::fromStdString(desc.tooltip));
+    
+    // Check if this is a gradient preset dropdown - add preview delegate
+    if (desc.id.find("preset") != std::string::npos && 
+        desc.id.find("color") != std::string::npos)
+    {
+        // Try to get the ColorGradientModule for preview
+        auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer);
+        if (pulsing && pulsing->colorGradient())
+        {
+            auto* delegate = new lumi::ui::GradientPresetDelegate(combo);
+            delegate->setGradientModule(pulsing->colorGradient());
+            combo->setItemDelegate(delegate);
+            
+            // Make combo taller to show preview
+            combo->setMinimumHeight(28);
+        }
+    }
 
     connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             [this, id = desc.id](int index) {
@@ -716,6 +770,14 @@ void ConfigPanel::onParamChanged(const std::string& paramId, const ParamValue& v
     {
         BasicLogger::logDebug("ConfigPanel: Set " + paramId);
         updateVisibility();
+        
+        // If a preset was loaded, sync all widgets to show the new values
+        // The preset parameter is prefixed with the group path
+        if (paramId.find("preset") != std::string::npos)
+        {
+            BasicLogger::logDebug("ConfigPanel: Preset changed, syncing widgets...");
+            syncFromVisualizer();
+        }
     }
     else
     {
@@ -781,5 +843,190 @@ void ConfigPanel::openGradientEditor(const std::string& /*paramId*/)
     
     dialog.exec();
     
-    BasicLogger::logInfo("ConfigPanel: Gradient editor closed");
+    // Sync all widgets to reflect changes made in the editor
+    syncFromVisualizer();
+    
+    BasicLogger::logInfo("ConfigPanel: Gradient editor closed, widgets synced");
+}
+
+// =============================================================================
+// Preset Management
+// =============================================================================
+
+void ConfigPanel::setupPresetUI()
+{
+    auto* presetGroup = new QGroupBox(tr("Presets"), this);
+    auto* layout = new QHBoxLayout(presetGroup);
+    layout->setContentsMargins(4, 4, 4, 4);
+    layout->setSpacing(4);
+    
+    m_presetCombo = new QComboBox(presetGroup);
+    m_presetCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    m_presetCombo->addItem(tr("(Default)"));
+    layout->addWidget(m_presetCombo);
+    
+    m_savePresetBtn = new QPushButton(tr("Save"), presetGroup);
+    m_savePresetBtn->setFixedWidth(60);
+    layout->addWidget(m_savePresetBtn);
+    
+    m_deletePresetBtn = new QPushButton(tr("Delete"), presetGroup);
+    m_deletePresetBtn->setFixedWidth(60);
+    m_deletePresetBtn->setEnabled(false);
+    layout->addWidget(m_deletePresetBtn);
+    
+    // Insert at top of main layout
+    auto* mainLayout = qobject_cast<QVBoxLayout*>(this->layout());
+    if (mainLayout)
+    {
+        mainLayout->insertWidget(0, presetGroup);
+    }
+    
+    // Connect signals
+    connect(m_presetCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &ConfigPanel::onPresetSelected);
+    connect(m_savePresetBtn, &QPushButton::clicked,
+            this, &ConfigPanel::onSavePresetClicked);
+    connect(m_deletePresetBtn, &QPushButton::clicked,
+            this, &ConfigPanel::onDeletePresetClicked);
+}
+
+void ConfigPanel::refreshPresetList()
+{
+    if (!m_visualizer || !m_presetCombo)
+    {
+        return;
+    }
+    
+    m_presetCombo->blockSignals(true);
+    m_presetCombo->clear();
+    m_presetCombo->addItem(tr("(Default)"));
+    
+    QString vizId = m_visualizer->visualizerId();
+    QStringList presets = m_presetManager->availablePresets(vizId);
+    
+    for (const QString& preset : presets)
+    {
+        m_presetCombo->addItem(preset);
+    }
+    
+    m_presetCombo->blockSignals(false);
+    m_deletePresetBtn->setEnabled(false);
+    
+    BasicLogger::logDebug("ConfigPanel: Found " + std::to_string(presets.size()) + 
+                          " presets for " + vizId.toStdString());
+}
+
+void ConfigPanel::onPresetSelected(int index)
+{
+    if (!m_visualizer || index < 0)
+    {
+        return;
+    }
+    
+    // Index 0 is "(Default)" - do nothing special
+    if (index == 0)
+    {
+        m_deletePresetBtn->setEnabled(false);
+        return;
+    }
+    
+    QString presetName = m_presetCombo->currentText();
+    QString vizId = m_visualizer->visualizerId();
+    
+    auto preset = m_presetManager->loadPreset(vizId, presetName);
+    if (preset)
+    {
+        m_presetManager->applyPreset(m_visualizer, *preset);
+        syncFromVisualizer();
+        m_deletePresetBtn->setEnabled(true);
+        BasicLogger::logInfo("ConfigPanel: Applied preset '" + presetName.toStdString() + "'");
+    }
+    else
+    {
+        BasicLogger::logWarning("ConfigPanel: Failed to load preset '" + presetName.toStdString() + "'");
+    }
+}
+
+void ConfigPanel::onSavePresetClicked()
+{
+    if (!m_visualizer)
+    {
+        return;
+    }
+    
+    bool ok;
+    QString name = QInputDialog::getText(this, tr("Save Preset"),
+                                         tr("Preset name:"), QLineEdit::Normal,
+                                         QString(), &ok);
+    
+    if (!ok || name.isEmpty())
+    {
+        return;
+    }
+    
+    // Check if preset exists
+    QString vizId = m_visualizer->visualizerId();
+    if (m_presetManager->presetExists(vizId, name))
+    {
+        int result = QMessageBox::question(this, tr("Overwrite Preset"),
+                                           tr("A preset named '%1' already exists. Overwrite?").arg(name),
+                                           QMessageBox::Yes | QMessageBox::No);
+        if (result != QMessageBox::Yes)
+        {
+            return;
+        }
+    }
+    
+    // Capture and save
+    auto preset = m_presetManager->capturePreset(m_visualizer, name);
+    if (m_presetManager->savePreset(preset))
+    {
+        refreshPresetList();
+        
+        // Select the new preset
+        int index = m_presetCombo->findText(name);
+        if (index >= 0)
+        {
+            m_presetCombo->setCurrentIndex(index);
+        }
+        
+        QMessageBox::information(this, tr("Preset Saved"),
+                                 tr("Preset '%1' saved successfully.").arg(name));
+    }
+    else
+    {
+        QMessageBox::warning(this, tr("Save Failed"),
+                             tr("Failed to save preset '%1'.").arg(name));
+    }
+}
+
+void ConfigPanel::onDeletePresetClicked()
+{
+    if (!m_visualizer || m_presetCombo->currentIndex() <= 0)
+    {
+        return;
+    }
+    
+    QString presetName = m_presetCombo->currentText();
+    QString vizId = m_visualizer->visualizerId();
+    
+    int result = QMessageBox::question(this, tr("Delete Preset"),
+                                       tr("Delete preset '%1'?").arg(presetName),
+                                       QMessageBox::Yes | QMessageBox::No);
+    
+    if (result != QMessageBox::Yes)
+    {
+        return;
+    }
+    
+    if (m_presetManager->deletePreset(vizId, presetName))
+    {
+        refreshPresetList();
+        BasicLogger::logInfo("ConfigPanel: Deleted preset '" + presetName.toStdString() + "'");
+    }
+    else
+    {
+        QMessageBox::warning(this, tr("Delete Failed"),
+                             tr("Failed to delete preset '%1'.").arg(presetName));
+    }
 }

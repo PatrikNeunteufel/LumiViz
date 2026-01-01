@@ -148,6 +148,7 @@ private:
     int m_uniformColor2 = -1;
     int m_uniformColor3 = -1;
     int m_uniformStopPos = -1;   // vec4 with up to 4 stop positions
+    int m_uniformMidpoints = -1; // vec4 with midpoints between stops
     int m_uniformStopCount = -1;
 
     // =========================================================================

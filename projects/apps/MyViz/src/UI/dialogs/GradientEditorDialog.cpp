@@ -116,23 +116,31 @@ void GradientBarWidget::paintEvent(QPaintEvent* /*event*/)
         return;
     }
     
-    // Draw gradient bar
-    const auto& stops = m_gradient->stops();
+    // Draw gradient bar - sample pixel by pixel to respect midpoints
+    QRect barRect(MARGIN, 5, width() - 2 * MARGIN, BAR_HEIGHT);
+    int barWidth = barRect.width();
     
-    QLinearGradient gradient(MARGIN, 0, width() - MARGIN, 0);
-    for (const auto& stop : stops)
+    for (int x = 0; x < barWidth; ++x)
     {
-        const auto& c = stop.color;
-        gradient.setColorAt(stop.position, 
-            QColor::fromRgbF(c[0], c[1], c[2], c[3]));
+        float t = static_cast<float>(x) / static_cast<float>(barWidth);
+        auto c = m_gradient->sample(t);  // This respects midpoints!
+        QColor color = QColor::fromRgbF(
+            std::clamp(c[0], 0.0f, 1.0f),
+            std::clamp(c[1], 0.0f, 1.0f),
+            std::clamp(c[2], 0.0f, 1.0f),
+            std::clamp(c[3], 0.0f, 1.0f));
+        painter.setPen(color);
+        painter.drawLine(barRect.x() + x, barRect.y(), 
+                         barRect.x() + x, barRect.y() + barRect.height());
     }
     
-    QRect barRect(MARGIN, 5, width() - 2 * MARGIN, BAR_HEIGHT);
-    painter.fillRect(barRect, gradient);
+    // Draw border
     painter.setPen(Qt::black);
+    painter.setBrush(Qt::NoBrush);
     painter.drawRect(barRect);
     
     // Draw color stops (triangles pointing up)
+    const auto& stops = m_gradient->stops();
     int stopY = BAR_HEIGHT + 5;
     for (size_t i = 0; i < stops.size(); ++i)
     {
