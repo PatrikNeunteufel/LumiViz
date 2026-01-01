@@ -130,6 +130,7 @@ void VisualizerWidget::onStopUpdates()
 bool VisualizerWidget::setVisualizer(const QString& id)
 {
     BasicLogger::logInfo("VisualizerWidget::setVisualizer(\"" + id.toStdString() + "\")");
+    BasicLogger::logDebug("  m_glInitialized=" + std::to_string(m_glInitialized));
 
     // Check if already active
     if (id == m_currentVisualizerId && m_visualizer != nullptr)
@@ -140,6 +141,8 @@ bool VisualizerWidget::setVisualizer(const QString& id)
 
     // Check if registered
     auto& registry = VisualizerRegistry::instance();
+    BasicLogger::logDebug("  Registry has " + std::to_string(registry.descriptors().size()) + " visualizers");
+    
     if (!registry.has(id.toStdString()))
     {
         QString error = QStringLiteral("Visualizer not found: ") + id;
@@ -155,6 +158,7 @@ bool VisualizerWidget::setVisualizer(const QString& id)
     cleanupVisualizer();
 
     // Create new visualizer
+    BasicLogger::logDebug("  Creating visualizer from registry...");
     m_visualizer = registry.create(id.toStdString());
     if (m_visualizer == nullptr)
     {
@@ -164,16 +168,24 @@ bool VisualizerWidget::setVisualizer(const QString& id)
         doneCurrent();
         return false;
     }
+    BasicLogger::logDebug("  Visualizer created: " + std::to_string(reinterpret_cast<uintptr_t>(m_visualizer.get())));
 
     m_currentVisualizerId = id;
 
     // Initialize if OpenGL is ready
     if (m_glInitialized)
     {
+        BasicLogger::logInfo("  Calling visualizer->initialize()...");
         m_visualizer->initialize();
+        BasicLogger::logInfo("  isInitialized after initialize(): " + std::to_string(m_visualizer->isInitialized()));
+        
         m_visualizer->resize(size());
         BasicLogger::logInfo("  Visualizer initialized: " + 
                              m_visualizer->visualizerName().toStdString());
+    }
+    else
+    {
+        BasicLogger::logWarning("  OpenGL NOT initialized yet - visualizer will be initialized in initializeGL()");
     }
 
     doneCurrent();
@@ -432,15 +444,27 @@ void VisualizerWidget::initializeGL()
     m_glInitialized = true;
 
     // Initialize visualizer if already set
+    BasicLogger::logDebug("  Checking visualizer: ptr=" + 
+                          std::to_string(reinterpret_cast<uintptr_t>(m_visualizer.get())) +
+                          ", id=" + m_currentVisualizerId.toStdString());
+    
     if (m_visualizer != nullptr && !m_visualizer->isInitialized())
     {
+        BasicLogger::logInfo("  Initializing existing visualizer: " + m_currentVisualizerId.toStdString());
         m_visualizer->initialize();
         m_visualizer->resize(size());
+        BasicLogger::logInfo("  Visualizer initialized, isInitialized=" + 
+                             std::to_string(m_visualizer->isInitialized()));
+    }
+    else if (m_visualizer == nullptr)
+    {
+        BasicLogger::logDebug("  No visualizer set, loading default");
+        // Load default visualizer
+        loadDefaultVisualizer();
     }
     else
     {
-        // Load default visualizer
-        loadDefaultVisualizer();
+        BasicLogger::logDebug("  Visualizer already initialized");
     }
 
     BasicLogger::logInfo("  Initialization complete");
@@ -467,6 +491,18 @@ void VisualizerWidget::paintGL()
     float deltaTime = currentTime - m_lastFrameTime;
     m_lastFrameTime = currentTime;
 
+    // DEBUG: Log state for first frames
+    static int debugCount = 0;
+    debugCount++;
+    
+    if (debugCount <= 10 || debugCount % 300 == 0)
+    {
+        BasicLogger::logDebug("paintGL frame " + std::to_string(debugCount) +
+                              ": visualizer=" + std::to_string(reinterpret_cast<uintptr_t>(m_visualizer.get())) +
+                              ", initialized=" + std::to_string(m_visualizer ? m_visualizer->isInitialized() : -1) +
+                              ", id=" + m_currentVisualizerId.toStdString());
+    }
+
     // Delegate rendering to active visualizer
     if (m_visualizer != nullptr && m_visualizer->isInitialized())
     {
@@ -474,9 +510,14 @@ void VisualizerWidget::paintGL()
     }
     else
     {
-        // Fallback: clear with default color
-        glClearColor(m_clearR, m_clearG, m_clearB, m_clearA);
+        // Fallback: clear with RED so we see there's a problem!
+        glClearColor(0.8f, 0.0f, 0.0f, 1.0f);  // RED = no visualizer!
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        if (debugCount <= 10)
+        {
+            BasicLogger::logWarning("paintGL: Using fallback clear (RED) - visualizer not ready!");
+        }
     }
 
     // Frame counter

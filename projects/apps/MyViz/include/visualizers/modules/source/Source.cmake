@@ -13,13 +13,7 @@ set(_local_sources
 )
 set(_local_headers
     # (headers - *.h; *.hpp)
-    "${CMAKE_CURRENT_LIST_DIR}/IPanel.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/PanelBase.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/ConfigPanel.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/PlayerPanel.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/PlaylistPanel.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/SettingsPanel.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/VisualSelectPanel.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/AudioSourceModule.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

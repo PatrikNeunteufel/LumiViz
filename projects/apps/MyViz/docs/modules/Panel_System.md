@@ -1,6 +1,6 @@
 # Panel System
 
-> **Version:** 2.0.0  
+> **Version:** 2.1.0  
 > **Datum:** 2025-12-31  
 > **Status:** Aktuell
 
@@ -41,37 +41,11 @@ Das Panel-System verwendet Qt-ADS für dockbare Panels mit Self-Registration.
 
 | ID | Titel | Order | Default Visible | Beschreibung |
 |----|-------|-------|-----------------|--------------|
-| player | Player | 100 | ✅ | Audio Player Controls |
-| playlist | Playlist | 200 | ✅ | Playlist Management |
-| config | Settings | 300 | ❌ | Visualizer Configuration |
-| visual_select | Visualizers | 400 | ✅ | Visualizer Selection |
-
----
-
-## PanelBase
-
-Basisklasse für alle Panels:
-
-```cpp
-class PanelBase : public QWidget
-{
-    Q_OBJECT
-
-public:
-    explicit PanelBase(ServiceContainer& services, QWidget* parent = nullptr);
-    virtual ~PanelBase();
-    
-    // Lifecycle
-    virtual void onActivate() {}    // Panel wird sichtbar
-    virtual void onDeactivate() {}  // Panel wird versteckt
-    
-    // Area Preference
-    virtual int preferredArea() const { return Qt::LeftDockWidgetArea; }
-
-protected:
-    ServiceContainer& m_services;
-};
-```
+| `player` | Player | 100 | ✅ | Audio Player Controls |
+| `playlist` | Playlist | 200 | ✅ | Playlist Management |
+| `config` | Visualizer Config | 300 | ❌ | Visualizer-Konfiguration |
+| `settings` | Settings | 350 | ❌ | Audio & Performance Settings |
+| `visual_select` | Visualizers | 400 | ✅ | Visualizer Selection |
 
 ---
 
@@ -79,102 +53,142 @@ protected:
 
 ### PlayerPanel
 
-```cpp
-class PlayerPanel : public PanelBase
-{
-    Q_OBJECT
+Audio-Wiedergabe-Steuerung mit Loop-Button für Single-Track-Repeat.
 
-public:
-    explicit PlayerPanel(ServiceContainer& services, QWidget* parent = nullptr);
-    
-    int preferredArea() const override { return Qt::BottomDockWidgetArea; }
-    void onActivate() override;
-    void onDeactivate() override;
-
-private:
-    void setupUI();
-    void connectEvents();
-    
-    // UI Elements
-    QPushButton* m_pPlayButton = nullptr;
-    QPushButton* m_pStopButton = nullptr;
-    QSlider* m_pVolumeSlider = nullptr;
-    QSlider* m_pProgressSlider = nullptr;
-    QLabel* m_pTrackLabel = nullptr;
-    QLabel* m_pTimeLabel = nullptr;
-    
-    // Event Subscriptions
-    std::vector<int> m_subscriptionIds;
-};
 ```
+┌─────────────────────────────────────────────────────────┐
+│                    Track Title                           │
+│                    Artist Name                           │
+│  ○━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                   00:45 / 03:30                          │
+│                                                          │
+│      [⏮]  [▶/⏸]  [⏹]  [⏭]  [🔁]      🔊━━━━━━━○        │
+│       ↑      ↑     ↑     ↑     ↑           ↑             │
+│      Prev  Play  Stop  Next  Loop      Volume            │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Loop-Button (🔁)**: Aktiviert `RepeatMode::One` - wiederholt nur aktuellen Track
+
+**Events:**
+- Subscribed: `TrackChangedEvent`, `PlaybackStateEvent`, `PlaybackPositionEvent`, `VolumeChangedEvent`, `PlaybackModeChangedEvent`
+- Published: Keine (nutzt IAudioPlayer direkt)
+
+---
 
 ### PlaylistPanel
 
-```cpp
-class PlaylistPanel : public PanelBase
-{
-    Q_OBJECT
+Playlist-Verwaltung mit Multi-Selection und Shuffle/Loop-Buttons.
 
-public:
-    explicit PlaylistPanel(ServiceContainer& services, QWidget* parent = nullptr);
-    
-    int preferredArea() const override { return Qt::RightDockWidgetArea; }
-
-private:
-    void setupUI();
-    void connectEvents();
-    
-    QListWidget* m_pTrackList = nullptr;
-    QPushButton* m_pAddButton = nullptr;
-    QPushButton* m_pRemoveButton = nullptr;
-    QPushButton* m_pClearButton = nullptr;
-    
-    std::vector<int> m_subscriptionIds;
-};
+```
+┌─────────────────────────────────────────────────────────┐
+│  [+] [🗑️] [🔄]  [💾] [📂]              [🔀] [🔁]        │
+│   ↑    ↑    ↑     ↑    ↑                ↑    ↑          │
+│  Add Remove Clear Save Load         Shuffle Loop        │
+├─────────────────────────────────────────────────────────┤
+│  ▸ 01. Track One                                        │
+│    02. Track Two                                        │
+│  ▸ 03. Track Three (selected)                           │
+│    04. Track Four                                       │
+│  ▸ 05. Track Five (selected)                            │
+│  ▸ **06. Current Track** (bold = playing)               │
+│    07. Track Seven                                      │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### ConfigPanel
+**Multi-Selection:**
 
-```cpp
-class ConfigPanel : public PanelBase
-{
-    Q_OBJECT
+| Aktion | Verhalten |
+|--------|-----------|
+| Klick | Nur dieses Item |
+| Ctrl+Klick | Toggle (hinzufügen/entfernen) |
+| Shift+Klick | Bereich vom Anker bis Klick |
+| Ctrl+Shift+Klick | Bereich zur Auswahl hinzufügen |
 
-public:
-    explicit ConfigPanel(ServiceContainer& services, QWidget* parent = nullptr);
-    
-    int preferredArea() const override { return Qt::RightDockWidgetArea; }
+**Aktueller Track:** Nur **fette Schrift**, keine Hintergrundfarbe
 
-private:
-    void setupUI();
-    
-    QComboBox* m_pVisualizerCombo = nullptr;
-    QSlider* m_pSensitivitySlider = nullptr;
-    QCheckBox* m_pSmoothingCheck = nullptr;
-};
+**Shuffle-Button (🔀)**: Zufällige Wiedergabe
+
+**Loop-Button (🔁)**: `RepeatMode::All` - Playlist-Loop
+
+---
+
+### ConfigPanel (Visualizer Config)
+
+Konfiguration für den **aktiven** Visualizer.
+
 ```
+┌─────────────────────────────────────────────────────────┐
+│  ┌─ Smoothing ─────────────────────────────────────┐    │
+│  │  ━━━━━━━━━━━━━━━━━○━━━━━━━━━━━━━━━━━━━  50%    │    │
+│  └─────────────────────────────────────────────────┘    │
+│                                                          │
+│  ┌─ Display Options ───────────────────────────────┐    │
+│  │  ☑ Show Peak Hold                               │    │
+│  └─────────────────────────────────────────────────┘    │
+│                                                          │
+│  ┌─ Color Scheme ──────────────────────────────────┐    │
+│  │  [▼ Classic                                   ] │    │
+│  │     Fire                                        │    │
+│  │     Ocean                                       │    │
+│  │     Neon                                        │    │
+│  │     Monochrome                                  │    │
+│  │     Rainbow                                     │    │
+│  └─────────────────────────────────────────────────┘    │
+│                                                          │
+│         Settings apply to the active visualizer          │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+### SettingsPanel (NEU)
+
+Globale Anwendungseinstellungen (Audio, Performance).
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  [Audio] [Performance]                                   │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  Device:      [▼ Default Device              ]          │
+│                                                          │
+│  Buffer Size: [▲▼ 1024] samples                         │
+│                                                          │
+│  Sample Rate: [▲▼ 44100] Hz                             │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────┐
+│  [Audio] [Performance]                                   │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  Frame Mode:  [▼ Limited (60 FPS)            ]          │
+│               [  Unlimited                    ]          │
+│               [  VSync                        ]          │
+│                                                          │
+│  Target FPS:  [▲▼ 60] FPS                               │
+│                                                          │
+│  VSync:       ☐ Enable                                  │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
 
 ### VisualSelectPanel
 
-```cpp
-class VisualSelectPanel : public PanelBase
-{
-    Q_OBJECT
+Visualizer-Auswahl.
 
-public:
-    explicit VisualSelectPanel(ServiceContainer& services, QWidget* parent = nullptr);
-    
-    int preferredArea() const override { return Qt::LeftDockWidgetArea; }
-
-private:
-    void setupUI();
-    void populateVisualizers();
-    void onVisualizerSelected(const QString& vizId);
-    
-    QListWidget* m_pVisualizerList = nullptr;
-    
-    std::vector<int> m_subscriptionIds;
-};
+```
+┌─────────────────────────────────────────────────────────┐
+│  Available Visualizers                                   │
+├─────────────────────────────────────────────────────────┤
+│  ▸ Pulsing (selected)                                   │
+│    Spectrum                                             │
+│    Waveform                                             │
+│    Bars                                                 │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -186,205 +200,41 @@ private:
 #include "UI/panels/PlayerPanel.hpp"
 #include "UI/panels/PlaylistPanel.hpp"
 #include "UI/panels/ConfigPanel.hpp"
+#include "UI/panels/SettingsPanel.hpp"
 #include "UI/panels/VisualSelectPanel.hpp"
 
 void initPanelDefaults(PanelRegistry& registry)
 {
     // Player Panel
     registry.registerPanel(
-        PanelDescriptor{
-            "player",           // id
-            "Player",           // title
-            100,                // order
-            true,               // defaultVisible
-            "View/Panels"       // menuPath
-        },
-        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
-            return std::make_unique<PlayerPanel>(svc);
-        });
+        PanelDescriptor{"player", "Player", 100, true, "View/Panels"},
+        [](ServiceContainer& svc) { return std::make_unique<PlayerPanel>(svc); });
     
     // Playlist Panel
     registry.registerPanel(
-        PanelDescriptor{
-            "playlist",
-            "Playlist",
-            200,
-            true,
-            "View/Panels"
-        },
-        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
-            return std::make_unique<PlaylistPanel>(svc);
-        });
+        PanelDescriptor{"playlist", "Playlist", 200, true, "View/Panels"},
+        [](ServiceContainer& svc) { return std::make_unique<PlaylistPanel>(svc); });
     
-    // Config Panel (Settings) - hidden by default
+    // Config Panel (Visualizer Config)
     registry.registerPanel(
-        PanelDescriptor{
-            "config",
-            "Settings",
-            300,
-            false,              // defaultVisible = false
-            "View/Panels"
-        },
-        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
-            return std::make_unique<ConfigPanel>(svc);
-        });
+        PanelDescriptor{"config", "Visualizer Config", 300, false, "View/Panels"},
+        [](ServiceContainer& svc) { return std::make_unique<ConfigPanel>(svc); });
+    
+    // Settings Panel (Audio + Performance)
+    registry.registerPanel(
+        PanelDescriptor{"settings", "Settings", 350, false, "View/Panels"},
+        [](ServiceContainer& svc) { return std::make_unique<SettingsPanel>(svc); });
     
     // Visual Select Panel
     registry.registerPanel(
-        PanelDescriptor{
-            "visual_select",
-            "Visualizers",
-            400,
-            true,
-            "View/Panels"
-        },
-        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
-            return std::make_unique<VisualSelectPanel>(svc);
-        });
+        PanelDescriptor{"visual_select", "Visualizers", 400, true, "View/Panels"},
+        [](ServiceContainer& svc) { return std::make_unique<VisualSelectPanel>(svc); });
 }
 ```
 
 ---
 
-## Event-Integration
-
-### EventBus Subscriptions
-
-```cpp
-void PlayerPanel::onActivate()
-{
-    auto* eventBus = m_services.tryResolve<IEventBus>();
-    if (!eventBus) return;
-    
-    // Playback State
-    m_subscriptionIds.push_back(
-        eventBus->subscribe<PlaybackStateEvent>(
-            [this](const PlaybackStateEvent& e) {
-                bool playing = (e.state == PlaybackState::Playing);
-                m_pPlayButton->setIcon(playing ? pauseIcon() : playIcon());
-            }));
-    
-    // Track Changed
-    m_subscriptionIds.push_back(
-        eventBus->subscribe<TrackChangedEvent>(
-            [this](const TrackChangedEvent& e) {
-                m_pTrackLabel->setText(QString::fromStdString(e.track.title));
-            }));
-    
-    // Position Update
-    m_subscriptionIds.push_back(
-        eventBus->subscribe<PlaybackPositionEvent>(
-            [this](const PlaybackPositionEvent& e) {
-                m_pProgressSlider->setValue(static_cast<int>(e.progress * 100));
-            }));
-}
-
-void PlayerPanel::onDeactivate()
-{
-    auto* eventBus = m_services.tryResolve<IEventBus>();
-    if (!eventBus) return;
-    
-    for (int id : m_subscriptionIds) {
-        eventBus->unsubscribe(id);
-    }
-    m_subscriptionIds.clear();
-}
-```
-
-### Event Publishing
-
-```cpp
-void VisualSelectPanel::onVisualizerSelected(const QString& vizId)
-{
-    auto* eventBus = m_services.tryResolve<IEventBus>();
-    if (eventBus) {
-        eventBus->publish(ChangeVisualizerEvent{vizId.toStdString()});
-    }
-}
-```
-
----
-
-## Dezentrale Event-Architektur
-
-DockManager handhabt alle Panel-Events:
-
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                              EventBus                                     │
-├──────────────────────────────────────────────────────────────────────────┤
-│  CreateVisualizerEvent ──► DockManager                                   │
-│  ResetLayoutEvent      ──► DockManager                                   │
-│  ChangeVisualizerEvent ──► DockManager                                   │
-│  TogglePanelEvent      ──► DockManager (via PanelManager)                │
-│  SaveDefaultLayoutEvent──► DockManager                                   │
-└──────────────────────────────────────────────────────────────────────────┘
-```
-
-### Vorteil
-
-Neue Panels erfordern KEINE Änderung an MainWindow:
-1. Panel-Klasse erstellen
-2. In PanelAutoReg.cpp registrieren
-3. **Fertig**
-
----
-
-## PanelManager
-
-Verwaltet Panel-Instanzen:
-
-```cpp
-class PanelManager : public QObject
-{
-public:
-    PanelManager(ServiceContainer& services, ads::CDockManager* dockManager, QObject* parent);
-    
-    void createAllPanels();
-    void applyDefaultVisibility();
-    
-    PanelBase* panel(const QString& panelId) const;
-    ads::CDockWidget* dockWidget(const QString& panelId) const;
-    
-    bool isPanelVisible(const QString& panelId) const;
-    void showPanel(const QString& panelId);
-    void hidePanel(const QString& panelId);
-    void togglePanel(const QString& panelId);
-
-private:
-    ServiceContainer& m_services;
-    ads::CDockManager* m_dockManager;
-    QHash<QString, PanelBase*> m_panels;
-    QHash<QString, ads::CDockWidget*> m_dockWidgets;
-};
-```
-
-### Wichtig: createAllPanels vs. applyDefaultVisibility
-
-```cpp
-void PanelManager::createAllPanels()
-{
-    // NUR erstellen, KEINE Sichtbarkeit setzen!
-    // (wegen Layout-Restore)
-    for (const auto& desc : descriptors) {
-        createPanel(desc.id);
-    }
-}
-
-void PanelManager::applyDefaultVisibility()
-{
-    // NUR aufrufen wenn KEIN Layout restored wurde!
-    for (const auto& desc : descriptors) {
-        if (!desc.defaultVisible) {
-            m_dockWidgets[desc.id]->closeDockWidget();
-        }
-    }
-}
-```
-
----
-
-## Neues Panel hinzufügen
+## Neues Panel hinzufügen - Checkliste
 
 ### 1. Panel-Klasse erstellen
 
@@ -402,19 +252,6 @@ private:
     void setupUI();
     std::vector<int> m_subscriptionIds;
 };
-
-// src/UI/panels/MyPanel.cpp
-MyPanel::MyPanel(ServiceContainer& services, QWidget* parent)
-    : PanelBase(services, parent)
-{
-    setupUI();
-}
-
-void MyPanel::setupUI()
-{
-    auto* layout = new QVBoxLayout(this);
-    layout->addWidget(new QLabel("My Panel Content"));
-}
 ```
 
 ### 2. In PanelAutoReg.cpp registrieren
@@ -422,38 +259,82 @@ void MyPanel::setupUI()
 ```cpp
 #include "UI/panels/MyPanel.hpp"
 
-void initPanelDefaults(PanelRegistry& registry)
-{
-    // ... bestehende Panels ...
-    
-    // My Panel
-    registry.registerPanel(
-        PanelDescriptor{
-            "mypanel",
-            "My Panel",
-            500,
-            true,
-            "View/Panels"
-        },
-        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
-            return std::make_unique<MyPanel>(svc);
-        });
-}
+// In initPanelDefaults():
+registry.registerPanel(
+    PanelDescriptor{"mypanel", "My Panel", 500, true, "View/Panels"},
+    [](ServiceContainer& svc) { return std::make_unique<MyPanel>(svc); });
 ```
 
 ### 3. In Source.cmake eintragen
 
 ```cmake
+# include/UI/panels/Source.cmake
+set(_local_headers
+    # ...
+    "${CMAKE_CURRENT_LIST_DIR}/MyPanel.hpp"
+)
+
 # src/UI/panels/Source.cmake
 set(_local_sources
-    "${CMAKE_CURRENT_LIST_DIR}/PanelAutoReg.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/PlayerPanel.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/PlaylistPanel.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/ConfigPanel.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/VisualSelectPanel.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/MyPanel.cpp"  # ← NEU
+    # ...
+    "${CMAKE_CURRENT_LIST_DIR}/MyPanel.cpp"
 )
 ```
+
+### 4. CMake reconfigure
+
+```bash
+cmake --preset windows-ninja-debug-clang
+```
+
+---
+
+## PlaybackModeChangedEvent Synchronisation
+
+PlayerPanel und PlaylistPanel synchronisieren sich über `PlaybackModeChangedEvent`:
+
+```cpp
+struct PlaybackModeChangedEvent : public Event {
+    bool shuffle;      // Shuffle enabled
+    int repeatMode;    // 0=None, 1=One, 2=All
+};
+```
+
+### PlayerPanel (RepeatMode::One)
+
+```cpp
+void PlayerPanel::onLoopClicked()
+{
+    m_loopEnabled = !m_loopEnabled;
+    player->setRepeatMode(m_loopEnabled ? RepeatMode::One : RepeatMode::None);
+}
+
+// Subscription:
+eventBus->subscribe<PlaybackModeChangedEvent>(
+    [this](const PlaybackModeChangedEvent& e) {
+        m_loopEnabled = (e.repeatMode == 1);  // One
+        updateLoopButton(m_loopEnabled);
+    });
+```
+
+### PlaylistPanel (RepeatMode::All)
+
+```cpp
+void PlaylistPanel::onLoopClicked()
+{
+    m_loopEnabled = !m_loopEnabled;
+    player->setRepeatMode(m_loopEnabled ? RepeatMode::All : RepeatMode::None);
+}
+
+// Subscription:
+eventBus->subscribe<PlaybackModeChangedEvent>(
+    [this](const PlaybackModeChangedEvent& e) {
+        m_loopEnabled = (e.repeatMode == 2);  // All
+        updateLoopButton(m_loopEnabled);
+    });
+```
+
+**Verhalten:** Wenn PlayerPanel Loop aktiviert → PlaylistPanel Loop deaktiviert (und umgekehrt).
 
 ---
 
@@ -464,7 +345,6 @@ set(_local_sources
 ```cpp
 void MyPanel::onDeactivate()
 {
-    // IMMER Subscriptions aufräumen!
     auto* eventBus = m_services.tryResolve<IEventBus>();
     if (eventBus) {
         for (int id : m_subscriptionIds) {
@@ -475,15 +355,26 @@ void MyPanel::onDeactivate()
 }
 ```
 
-### 2. Stabile objectName
+### 2. Stabile Panel-ID
 
 - Panel-ID = objectName (für Layout-Persistence)
-- ID niemals ändern nach Release!
+- **ID niemals ändern nach Release!**
 
-### 3. preferredArea
+### 3. Multi-Selection für Listen
 
-- Sinnvolle Default-Position wählen
-- User kann per Drag&Drop ändern
+```cpp
+m_pListWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+
+// Remove multiple items (back to front)
+QList<int> indices;
+for (auto* item : m_pListWidget->selectedItems()) {
+    indices.append(m_pListWidget->row(item));
+}
+std::sort(indices.begin(), indices.end(), std::greater<int>());
+for (int idx : indices) {
+    playlist->removeTrack(idx);
+}
+```
 
 ---
 
@@ -491,4 +382,15 @@ void MyPanel::onDeactivate()
 
 - [Registry Architecture](../architecture/Registry_Architecture.md) - Registry Grundlagen
 - [Layout Persistence](../architecture/Layout_Persistence.md) - Layout-Speicherung
+- [Audio System](Audio_System.md) - Audio Events
 - [Event Architecture](../architecture/Event_Architecture.md) - EventBus Details
+
+---
+
+## Changelog
+
+| Version | Datum | Änderungen |
+|---------|-------|------------|
+| 2.1.0 | 2025-12-31 | SettingsPanel (NEU), ConfigPanel nur für Visualizer, PlayerPanel Loop-Button (RepeatMode::One), PlaylistPanel Multi-Selection (ExtendedSelection), Icons getauscht (🔁↔SP_BrowserReload), Aktueller Track nur bold (kein Background), PlaybackModeChangedEvent Synchronisation |
+| 2.0.0 | 2025-12-31 | PlaylistPanel Shuffle/Loop Buttons, M3U Save/Load |
+| 1.0.0 | 2025-12-30 | Initial: PanelRegistry, PanelManager, PlayerPanel, PlaylistPanel, ConfigPanel, VisualSelectPanel |

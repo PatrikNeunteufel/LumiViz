@@ -12,6 +12,7 @@
 #include "visualizers/VisualizerBase.hpp"
 
 #include <QMutexLocker>
+#include <QDebug>
 
 // =============================================================================
 // Construction
@@ -32,19 +33,38 @@ VisualizerBase::VisualizerBase(const QString& id,
 
 void VisualizerBase::initialize()
 {
+    qDebug() << "VisualizerBase::initialize() - m_initialized was:" << m_initialized;
+    
     if (m_initialized)
     {
+        qDebug() << "  Already initialized, returning";
         return;
     }
 
+    qDebug() << "  Calling onInitialize()...";
     onInitialize();
     m_initialized = true;
+    
+    qDebug() << "  onInitialize() complete, m_initialized=" << m_initialized;
 }
 
 void VisualizerBase::render(float deltaTime)
 {
+    static int s_renderCount = 0;
+    s_renderCount++;
+    
+    if (s_renderCount <= 5)
+    {
+        qDebug() << "VisualizerBase::render() - m_initialized=" << m_initialized 
+                 << ", deltaTime=" << deltaTime;
+    }
+    
     if (!m_initialized)
     {
+        if (s_renderCount <= 5)
+        {
+            qDebug() << "  NOT initialized, skipping render!";
+        }
         return;
     }
 

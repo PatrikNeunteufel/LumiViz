@@ -69,4 +69,4 @@ unset(_local_includes)
 
 dbg(DBG_ULTRA_RARE "include subfolders:" ID INCLUDE_MSG)
 # Include subfolders recursively (activate as needed)
-# include("${CMAKE_CURRENT_LIST_DIR}/subfolder/Source.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/modules/Source.cmake")

@@ -1,0 +1,653 @@
+/**
+ ****************************************************************************************
+ * @file   SmoothingModule.hpp
+ * @brief  Smoothing Module - Temporal smoothing algorithms for audio visualization
+ *
+ * @author LumiPulse Team
+ * @date   January 2026
+ * @version 1.0.0
+ *
+ * @details
+ * ## Overview
+ *
+ * SmoothingModule provides various temporal smoothing algorithms:
+ *   - None (pass-through)
+ *   - SMA (Simple Moving Average)
+ *   - EMA (Exponential Moving Average) - recommended
+ *   - WMA (Weighted Moving Average)
+ *   - DEMA (Double Exponential Moving Average)
+ *
+ * ## Algorithm Comparison
+ *
+ * ```
+ * Input:    ╱╲    ╱╲╱╲      ╱╲
+ *          ╱  ╲  ╱    ╲    ╱  ╲
+ *
+ * None:     ╱╲    ╱╲╱╲      ╱╲     (identical)
+ *
+ * EMA:     ╱╲    ╱─╲       ╱╲     (rounded)
+ *
+ * SMA:    ╱──╲  ╱───╲     ╱──╲    (delayed + smooth)
+ *
+ * DEMA:    ╱╲   ╱╲╱╲      ╱╲       (less lag)
+ * ```
+ *
+ * @see LumiPulse_VisualSystem_Architecture.md Section 4.2.1
+ ****************************************************************************************
+ */
+
+#pragma once
+
+#include "visualizers/modules/IModule.hpp"
+
+#include <deque>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+
+namespace lumi::modules
+{
+
+// =============================================================================
+// Smoothing Algorithm Enum
+// =============================================================================
+
+/**
+ * @brief Available smoothing algorithms
+ */
+enum class SmoothingAlgorithm
+{
+    None,   ///< No smoothing (pass-through)
+    SMA,    ///< Simple Moving Average
+    EMA,    ///< Exponential Moving Average (recommended)
+    WMA,    ///< Weighted Moving Average
+    DEMA    ///< Double Exponential Moving Average
+};
+
+/**
+ * @brief Preset smoothing configurations
+ */
+enum class SmoothingPreset
+{
+    Instant,    ///< No smoothing (0 ms)
+    Reactive,   ///< Very responsive (20 ms)
+    Balanced,   ///< Good balance (50 ms) - default
+    Smooth,     ///< Smooth motion (100 ms)
+    Sluggish    ///< Very smooth (200 ms)
+};
+
+// =============================================================================
+// SmoothingModule
+// =============================================================================
+
+/**
+ * @class SmoothingModule
+ * @brief Temporal smoothing for audio-reactive values
+ *
+ * Processes float values through various smoothing algorithms.
+ * Can be embedded in other modules (e.g., AudioSourceModule).
+ *
+ * @par Example Usage
+ * @code
+ * SmoothingModule smooth;
+ * smooth.setAlgorithm(SmoothingAlgorithm::EMA);
+ * smooth.setTimeMs(50.0f);
+ *
+ * // In update loop:
+ * float smoothed = smooth.process(rawValue, deltaTime);
+ * @endcode
+ */
+class SmoothingModule : public IModule
+{
+public:
+    // =========================================================================
+    // Construction
+    // =========================================================================
+    
+    SmoothingModule();
+    ~SmoothingModule() override = default;
+    
+    // =========================================================================
+    // IModule Interface
+    // =========================================================================
+    
+    [[nodiscard]] const char* moduleId() const override { return "smoothing"; }
+    [[nodiscard]] const char* displayName() const override { return "Smoothing"; }
+    [[nodiscard]] const char* category() const override { return "Processing"; }
+    [[nodiscard]] const char* description() const override
+    {
+        return "Temporal smoothing algorithms (SMA/EMA/WMA/DEMA)";
+    }
+    
+    [[nodiscard]] std::vector<ModuleParamDesc> paramDescs() const override;
+    [[nodiscard]] bool getParam(const std::string& id, ParamValue& out) const override;
+    bool setParam(const std::string& id, const ParamValue& value) override;
+    void resetToDefaults() override;
+    
+    // =========================================================================
+    // Processing
+    // =========================================================================
+    
+    /**
+     * @brief Process a single value through smoothing
+     * @param value Raw input value
+     * @param deltaTime Time since last update (seconds)
+     * @return Smoothed value
+     */
+    float process(float value, float deltaTime);
+    
+    /**
+     * @brief Process an array of values
+     * @param values Input array
+     * @param count Number of values
+     * @param deltaTime Time since last update (seconds)
+     * @param output Output array (must be pre-allocated)
+     */
+    void processArray(const float* values, int count, float deltaTime, float* output);
+    
+    /**
+     * @brief Reset smoothing state (clears history)
+     */
+    void reset();
+    
+    /**
+     * @brief Prime the smoother with initial value
+     * @param value Initial value to fill history with
+     */
+    void prime(float value);
+    
+    // =========================================================================
+    // Configuration
+    // =========================================================================
+    
+    /**
+     * @brief Set smoothing algorithm
+     */
+    void setAlgorithm(SmoothingAlgorithm algo);
+    
+    /**
+     * @brief Get current algorithm
+     */
+    [[nodiscard]] SmoothingAlgorithm algorithm() const { return m_algorithm; }
+    
+    /**
+     * @brief Set smoothing time in milliseconds
+     * @param ms Smoothing time (0-500)
+     */
+    void setTimeMs(float ms);
+    
+    /**
+     * @brief Get smoothing time
+     */
+    [[nodiscard]] float timeMs() const { return m_timeMs; }
+    
+    /**
+     * @brief Apply a preset configuration
+     */
+    void applyPreset(SmoothingPreset preset);
+    
+    /**
+     * @brief Get current preset (if matching)
+     */
+    [[nodiscard]] SmoothingPreset preset() const { return m_preset; }
+    
+    /**
+     * @brief Enable/disable priming first frame
+     */
+    void setPrimeFirstFrame(bool enabled) { m_primeFirstFrame = enabled; }
+    
+    /**
+     * @brief Check if priming is enabled
+     */
+    [[nodiscard]] bool primeFirstFrame() const { return m_primeFirstFrame; }
+    
+    // =========================================================================
+    // Output
+    // =========================================================================
+    
+    /**
+     * @brief Get last smoothed value
+     */
+    [[nodiscard]] float lastValue() const { return m_lastOutput; }
+    
+    // =========================================================================
+    // Utility
+    // =========================================================================
+    
+    /**
+     * @brief Get algorithm name as string
+     */
+    static const char* algorithmName(SmoothingAlgorithm algo);
+    
+    /**
+     * @brief Get preset name as string
+     */
+    static const char* presetName(SmoothingPreset preset);
+    
+    /**
+     * @brief Get all algorithm names
+     */
+    static std::vector<std::string> algorithmNames();
+    
+    /**
+     * @brief Get all preset names
+     */
+    static std::vector<std::string> presetNames();
+    
+private:
+    // =========================================================================
+    // Internal Processing
+    // =========================================================================
+    
+    float processSMA(float value);
+    float processEMA(float value, float deltaTime);
+    float processWMA(float value);
+    float processDEMA(float value, float deltaTime);
+    
+    // =========================================================================
+    // Configuration
+    // =========================================================================
+    
+    SmoothingAlgorithm m_algorithm = SmoothingAlgorithm::EMA;
+    SmoothingPreset m_preset = SmoothingPreset::Balanced;
+    float m_timeMs = 50.0f;
+    bool m_primeFirstFrame = true;
+    
+    // =========================================================================
+    // State
+    // =========================================================================
+    
+    // SMA/WMA buffer
+    std::deque<float> m_buffer;
+    int m_windowSize = 8;
+    
+    // EMA state
+    float m_emaValue = 0.0f;
+    
+    // DEMA state
+    float m_demaValue1 = 0.0f;
+    float m_demaValue2 = 0.0f;
+    
+    // General state
+    float m_lastOutput = 0.0f;
+    bool m_primed = false;
+    
+    // =========================================================================
+    // Constants
+    // =========================================================================
+    
+    static constexpr int MIN_WINDOW_SIZE = 2;
+    static constexpr int MAX_WINDOW_SIZE = 60;
+    static constexpr float MIN_TIME_MS = 0.0f;
+    static constexpr float MAX_TIME_MS = 500.0f;
+};
+
+// =============================================================================
+// Implementation (Header-only for now)
+// =============================================================================
+
+inline SmoothingModule::SmoothingModule()
+{
+    resetToDefaults();
+}
+
+inline std::vector<ModuleParamDesc> SmoothingModule::paramDescs() const
+{
+    return {
+        ParamBuilder("algorithm", ParamType::Enum)
+            .displayName("Algorithm")
+            .enumOptions(algorithmNames())
+            .defaultValue(static_cast<int>(SmoothingAlgorithm::EMA))
+            .tooltip("Smoothing algorithm type")
+            .order(0)
+            .build(),
+            
+        ParamBuilder("timeMs", ParamType::Float)
+            .displayName("Time")
+            .range(MIN_TIME_MS, MAX_TIME_MS, 1.0f)
+            .defaultValue(50.0f)
+            .unit("ms")
+            .tooltip("Smoothing time constant")
+            .order(1)
+            .build(),
+            
+        ParamBuilder("preset", ParamType::Enum)
+            .displayName("Preset")
+            .enumOptions(presetNames())
+            .defaultValue(static_cast<int>(SmoothingPreset::Balanced))
+            .tooltip("Predefined smoothing configurations")
+            .order(2)
+            .build(),
+            
+        ParamBuilder("primeFirstFrame", ParamType::Bool)
+            .displayName("Prime First Frame")
+            .defaultValue(true)
+            .tooltip("Initialize with first input value")
+            .advanced(true)
+            .order(10)
+            .build()
+    };
+}
+
+inline bool SmoothingModule::getParam(const std::string& id, ParamValue& out) const
+{
+    if (id == "algorithm")
+    {
+        out = static_cast<int>(m_algorithm);
+        return true;
+    }
+    if (id == "timeMs")
+    {
+        out = m_timeMs;
+        return true;
+    }
+    if (id == "preset")
+    {
+        out = static_cast<int>(m_preset);
+        return true;
+    }
+    if (id == "primeFirstFrame")
+    {
+        out = m_primeFirstFrame;
+        return true;
+    }
+    return false;
+}
+
+inline bool SmoothingModule::setParam(const std::string& id, const ParamValue& value)
+{
+    if (id == "algorithm")
+    {
+        if (std::holds_alternative<int>(value))
+        {
+            setAlgorithm(static_cast<SmoothingAlgorithm>(std::get<int>(value)));
+            return true;
+        }
+    }
+    else if (id == "timeMs")
+    {
+        if (std::holds_alternative<float>(value))
+        {
+            setTimeMs(std::get<float>(value));
+            return true;
+        }
+    }
+    else if (id == "preset")
+    {
+        if (std::holds_alternative<int>(value))
+        {
+            applyPreset(static_cast<SmoothingPreset>(std::get<int>(value)));
+            return true;
+        }
+    }
+    else if (id == "primeFirstFrame")
+    {
+        if (std::holds_alternative<bool>(value))
+        {
+            m_primeFirstFrame = std::get<bool>(value);
+            return true;
+        }
+    }
+    return false;
+}
+
+inline void SmoothingModule::resetToDefaults()
+{
+    m_algorithm = SmoothingAlgorithm::EMA;
+    m_preset = SmoothingPreset::Balanced;
+    m_timeMs = 50.0f;
+    m_primeFirstFrame = true;
+    reset();
+}
+
+inline float SmoothingModule::process(float value, float deltaTime)
+{
+    // Prime on first call if enabled
+    if (!m_primed && m_primeFirstFrame)
+    {
+        prime(value);
+    }
+    
+    float result = 0.0f;
+    
+    switch (m_algorithm)
+    {
+    case SmoothingAlgorithm::None:
+        result = value;
+        break;
+        
+    case SmoothingAlgorithm::SMA:
+        result = processSMA(value);
+        break;
+        
+    case SmoothingAlgorithm::EMA:
+        result = processEMA(value, deltaTime);
+        break;
+        
+    case SmoothingAlgorithm::WMA:
+        result = processWMA(value);
+        break;
+        
+    case SmoothingAlgorithm::DEMA:
+        result = processDEMA(value, deltaTime);
+        break;
+    }
+    
+    m_lastOutput = result;
+    return result;
+}
+
+inline void SmoothingModule::processArray(const float* values, int count, 
+                                          float deltaTime, float* output)
+{
+    for (int i = 0; i < count; ++i)
+    {
+        output[i] = process(values[i], deltaTime);
+    }
+}
+
+inline void SmoothingModule::reset()
+{
+    m_buffer.clear();
+    m_emaValue = 0.0f;
+    m_demaValue1 = 0.0f;
+    m_demaValue2 = 0.0f;
+    m_lastOutput = 0.0f;
+    m_primed = false;
+}
+
+inline void SmoothingModule::prime(float value)
+{
+    m_emaValue = value;
+    m_demaValue1 = value;
+    m_demaValue2 = value;
+    m_lastOutput = value;
+    
+    // Fill buffer for SMA/WMA
+    m_buffer.clear();
+    for (int i = 0; i < m_windowSize; ++i)
+    {
+        m_buffer.push_back(value);
+    }
+    
+    m_primed = true;
+}
+
+inline void SmoothingModule::setAlgorithm(SmoothingAlgorithm algo)
+{
+    if (m_algorithm != algo)
+    {
+        m_algorithm = algo;
+        // Keep current value as starting point
+        prime(m_lastOutput);
+    }
+}
+
+inline void SmoothingModule::setTimeMs(float ms)
+{
+    m_timeMs = std::clamp(ms, MIN_TIME_MS, MAX_TIME_MS);
+    
+    // Recalculate window size for SMA/WMA (assuming ~60 fps)
+    m_windowSize = std::clamp(
+        static_cast<int>(m_timeMs / 16.67f),  // ~60 fps
+        MIN_WINDOW_SIZE,
+        MAX_WINDOW_SIZE
+    );
+}
+
+inline void SmoothingModule::applyPreset(SmoothingPreset preset)
+{
+    m_preset = preset;
+    
+    switch (preset)
+    {
+    case SmoothingPreset::Instant:
+        m_algorithm = SmoothingAlgorithm::None;
+        m_timeMs = 0.0f;
+        break;
+        
+    case SmoothingPreset::Reactive:
+        m_algorithm = SmoothingAlgorithm::EMA;
+        m_timeMs = 20.0f;
+        break;
+        
+    case SmoothingPreset::Balanced:
+        m_algorithm = SmoothingAlgorithm::EMA;
+        m_timeMs = 50.0f;
+        break;
+        
+    case SmoothingPreset::Smooth:
+        m_algorithm = SmoothingAlgorithm::EMA;
+        m_timeMs = 100.0f;
+        break;
+        
+    case SmoothingPreset::Sluggish:
+        m_algorithm = SmoothingAlgorithm::DEMA;
+        m_timeMs = 200.0f;
+        break;
+    }
+    
+    setTimeMs(m_timeMs);  // Update window size
+}
+
+inline float SmoothingModule::processSMA(float value)
+{
+    m_buffer.push_back(value);
+    
+    while (static_cast<int>(m_buffer.size()) > m_windowSize)
+    {
+        m_buffer.pop_front();
+    }
+    
+    if (m_buffer.empty())
+    {
+        return value;
+    }
+    
+    float sum = std::accumulate(m_buffer.begin(), m_buffer.end(), 0.0f);
+    return sum / static_cast<float>(m_buffer.size());
+}
+
+inline float SmoothingModule::processEMA(float value, float deltaTime)
+{
+    if (m_timeMs <= 0.0f || deltaTime <= 0.0f)
+    {
+        m_emaValue = value;
+        return value;
+    }
+    
+    // Time constant τ = timeMs / 1000
+    // α = 1 - e^(-deltaTime / τ)
+    float tau = m_timeMs / 1000.0f;
+    float alpha = 1.0f - std::exp(-deltaTime / tau);
+    
+    m_emaValue = alpha * value + (1.0f - alpha) * m_emaValue;
+    return m_emaValue;
+}
+
+inline float SmoothingModule::processWMA(float value)
+{
+    m_buffer.push_back(value);
+    
+    while (static_cast<int>(m_buffer.size()) > m_windowSize)
+    {
+        m_buffer.pop_front();
+    }
+    
+    if (m_buffer.empty())
+    {
+        return value;
+    }
+    
+    float weightSum = 0.0f;
+    float valueSum = 0.0f;
+    int weight = 1;
+    
+    for (float val : m_buffer)
+    {
+        valueSum += val * static_cast<float>(weight);
+        weightSum += static_cast<float>(weight);
+        ++weight;
+    }
+    
+    return valueSum / weightSum;
+}
+
+inline float SmoothingModule::processDEMA(float value, float deltaTime)
+{
+    if (m_timeMs <= 0.0f || deltaTime <= 0.0f)
+    {
+        m_demaValue1 = value;
+        m_demaValue2 = value;
+        return value;
+    }
+    
+    float tau = m_timeMs / 1000.0f;
+    float alpha = 1.0f - std::exp(-deltaTime / tau);
+    
+    // Double EMA: EMA of EMA
+    m_demaValue1 = alpha * value + (1.0f - alpha) * m_demaValue1;
+    m_demaValue2 = alpha * m_demaValue1 + (1.0f - alpha) * m_demaValue2;
+    
+    // DEMA = 2 * EMA1 - EMA2 (reduces lag)
+    return 2.0f * m_demaValue1 - m_demaValue2;
+}
+
+inline const char* SmoothingModule::algorithmName(SmoothingAlgorithm algo)
+{
+    switch (algo)
+    {
+    case SmoothingAlgorithm::None: return "None";
+    case SmoothingAlgorithm::SMA:  return "SMA";
+    case SmoothingAlgorithm::EMA:  return "EMA";
+    case SmoothingAlgorithm::WMA:  return "WMA";
+    case SmoothingAlgorithm::DEMA: return "DEMA";
+    default: return "Unknown";
+    }
+}
+
+inline const char* SmoothingModule::presetName(SmoothingPreset preset)
+{
+    switch (preset)
+    {
+    case SmoothingPreset::Instant:  return "Instant";
+    case SmoothingPreset::Reactive: return "Reactive";
+    case SmoothingPreset::Balanced: return "Balanced";
+    case SmoothingPreset::Smooth:   return "Smooth";
+    case SmoothingPreset::Sluggish: return "Sluggish";
+    default: return "Unknown";
+    }
+}
+
+inline std::vector<std::string> SmoothingModule::algorithmNames()
+{
+    return {"None", "SMA", "EMA", "WMA", "DEMA"};
+}
+
+inline std::vector<std::string> SmoothingModule::presetNames()
+{
+    return {"Instant", "Reactive", "Balanced", "Smooth", "Sluggish"};
+}
+
+} // namespace lumi::modules

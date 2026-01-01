@@ -29,6 +29,9 @@
 
 #include <BasicLogger.h>
 
+#include <algorithm>
+#include <functional>
+
 // =============================================================================
 // Construction
 // =============================================================================
@@ -181,21 +184,35 @@ void PlaylistPanel::onAddClicked()
 
 void PlaylistPanel::onRemoveClicked()
 {
-    int currentRow = m_pListWidget->currentRow();
-    if (currentRow < 0)
+    QList<QListWidgetItem*> selectedItems = m_pListWidget->selectedItems();
+    if (selectedItems.isEmpty())
     {
         return;
     }
     
+    // Get indices and sort descending (remove from back to front to keep indices valid)
+    QList<int> indices;
+    for (auto* item : selectedItems)
+    {
+        indices.append(m_pListWidget->row(item));
+    }
+    std::sort(indices.begin(), indices.end(), std::greater<int>());
+    
     auto* playlist = services().tryResolve<IPlaylist>();
     if (playlist != nullptr)
     {
-        playlist->removeTrack(currentRow);
+        for (int idx : indices)
+        {
+            playlist->removeTrack(idx);
+        }
     }
     else
     {
         // Fallback: Just remove from UI
-        delete m_pListWidget->takeItem(currentRow);
+        for (int idx : indices)
+        {
+            delete m_pListWidget->takeItem(idx);
+        }
     }
 }
 
@@ -243,7 +260,7 @@ void PlaylistPanel::onSearchChanged(const QString& text)
 void PlaylistPanel::onSelectionChanged()
 {
     // Enable/disable remove button based on selection
-    bool hasSelection = m_pListWidget->currentRow() >= 0;
+    bool hasSelection = !m_pListWidget->selectedItems().isEmpty();
     m_pRemoveButton->setEnabled(hasSelection);
 }
 
@@ -496,24 +513,22 @@ void PlaylistPanel::highlightCurrentTrack(int index)
 {
     m_currentPlayingIndex = index;
     
-    // Reset all items
+    // Reset all items to normal font
     for (int i = 0; i < m_pListWidget->count(); ++i)
     {
         auto* item = m_pListWidget->item(i);
         QFont font = item->font();
         font.setBold(false);
         item->setFont(font);
-        item->setBackground(Qt::transparent);
     }
     
-    // Highlight current
+    // Highlight current with bold font only (no background)
     if (index >= 0 && index < m_pListWidget->count())
     {
         auto* item = m_pListWidget->item(index);
         QFont font = item->font();
         font.setBold(true);
         item->setFont(font);
-        item->setBackground(QColor(60, 60, 80));
         
         // Scroll to make visible
         m_pListWidget->scrollToItem(item);
@@ -540,7 +555,7 @@ void PlaylistPanel::setupUI()
     m_pListWidget = new QListWidget(this);
     m_pListWidget->setAlternatingRowColors(true);
     m_pListWidget->setDragDropMode(QAbstractItemView::InternalMove);
-    m_pListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_pListWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
     mainLayout->addWidget(m_pListWidget, 1);
 
     // All buttons in one row

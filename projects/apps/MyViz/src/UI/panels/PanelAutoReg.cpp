@@ -5,7 +5,7 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 2.0.0
+ * @version 2.1.0
  *
  * @details
  * Diese Datei definiert die **MyViz-spezifischen Panels**.
@@ -17,7 +17,8 @@
  * |----|-------|-----------------|--------------|
  * | player | Player | true | Audio Player Controls |
  * | playlist | Playlist | true | Playlist Management |
- * | config | Settings | false | Visualizer Configuration |
+ * | config | Visualizer Config | false | Active Visualizer Configuration |
+ * | settings | Settings | false | Audio & Performance Settings |
  * | visual_select | Visualizers | true | Visualizer Selection |
  *
  * ## Trennung Framework vs. App
@@ -45,6 +46,7 @@
 #include "UI/panels/PlayerPanel.hpp"
 #include "UI/panels/PlaylistPanel.hpp"
 #include "UI/panels/ConfigPanel.hpp"
+#include "UI/panels/SettingsPanel.hpp"
 #include "UI/panels/VisualSelectPanel.hpp"
 
 // =============================================================================
@@ -98,20 +100,38 @@ void initPanelDefaults(PanelRegistry& registry)
         false);
     
     // =========================================================================
-    // CONFIG PANEL (Settings)
+    // CONFIG PANEL (Visualizer Config)
     // =========================================================================
-    // Visualizer configuration and settings
+    // Configuration for the currently active visualizer
     
     registry.registerPanel(
         PanelDescriptor{
             "config",           // id
-            "Settings",         // title
+            "Visualizer Config", // title
             300,                // order
             false,              // defaultVisible (hidden by default)
             "View/Panels"       // menuPath
         },
         [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
             return std::make_unique<ConfigPanel>(svc);
+        },
+        false);
+    
+    // =========================================================================
+    // SETTINGS PANEL
+    // =========================================================================
+    // Global application settings (Audio, Performance)
+    
+    registry.registerPanel(
+        PanelDescriptor{
+            "settings",         // id
+            "Settings",         // title
+            350,                // order
+            false,              // defaultVisible (hidden by default)
+            "View/Panels"       // menuPath
+        },
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<SettingsPanel>(svc);
         },
         false);
     

@@ -422,10 +422,60 @@ void MainWindow::onAudioUpdate()
     // Called ~30 times per second to update audio playback state.
     // This triggers position events for UI updates (progress bar, time display).
     
+    static int updateCount = 0;
+    updateCount++;
+    
     auto* pPlayer = m_pServices->tryResolve<IAudioPlayer>();
     if (pPlayer != nullptr)
     {
         pPlayer->update();
+        
+        // =====================================================================
+        // Audio Data → Visualizer
+        // =====================================================================
+        // Get audio stream and FFT data, then forward to visualizers
+        
+        auto* pEngine = m_pServices->tryResolve<IAudioEngine>();
+        if (pEngine != nullptr)
+        {
+            // Cast to AudioPlayer to get stream handle
+            auto* audioPlayer = dynamic_cast<AudioPlayer*>(pPlayer);
+            if (audioPlayer != nullptr)
+            {
+                AudioStreamHandle stream = audioPlayer->currentStream();
+                
+                if (stream != 0)  // Valid stream
+                {
+                    // Get FFT spectrum data (512 bins is good for visualization)
+                    constexpr int FFT_SIZE = 1024;
+                    std::vector<float> spectrum(FFT_SIZE);
+                    
+                    if (pEngine->getFFTData(stream, spectrum.data(), FFT_SIZE))
+                    {
+                        // Debug: Log first few updates
+                        if (updateCount <= 5 || updateCount % 150 == 0)
+                        {
+                            float sum = 0.0f;
+                            for (int i = 0; i < 32; ++i) sum += spectrum[i];
+                            BasicLogger::logDebug("Audio FFT data: sum(0-31)=" + 
+                                                  std::to_string(sum) +
+                                                  ", visualizers=" + 
+                                                  std::to_string(visualizers().size()));
+                        }
+                        
+                        // Forward to all visualizers
+                        for (auto* pViz : visualizers())
+                        {
+                            if (pViz != nullptr)
+                            {
+                                // Send first half of FFT (useful frequency bins)
+                                pViz->updateSpectrum(spectrum.data(), FFT_SIZE / 2);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -13,13 +13,9 @@ set(_local_sources
 )
 set(_local_headers
     # (headers - *.h; *.hpp)
-    "${CMAKE_CURRENT_LIST_DIR}/IPanel.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/PanelBase.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/ConfigPanel.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/PlayerPanel.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/PlaylistPanel.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/SettingsPanel.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/VisualSelectPanel.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ColorSchemeModule.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/IModule.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/PulseShapeModule.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)
@@ -73,4 +69,5 @@ unset(_local_includes)
 
 dbg(DBG_ULTRA_RARE "include subfolders:" ID INCLUDE_MSG)
 # Include subfolders recursively (activate as needed)
-# include("${CMAKE_CURRENT_LIST_DIR}/subfolder/Source.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/processing/Source.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/source/Source.cmake")
