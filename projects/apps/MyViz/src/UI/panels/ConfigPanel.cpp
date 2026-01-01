@@ -11,6 +11,7 @@
 
 #include "UI/panels/ConfigPanel.hpp"
 #include "UI/widgets/CollapsibleGroupBox.hpp"
+#include "UI/widgets/VisualizerWidget.hpp"
 #include "visualizers/IVisualizer.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
@@ -95,6 +96,17 @@ int ConfigPanel::preferredArea() const
 void ConfigPanel::onActivate()
 {
     subscribeToEvents();
+    
+    // Try to find VisualizerWidget through Qt widget hierarchy
+    QWidget* mainWindow = window();
+    if (mainWindow != nullptr)
+    {
+        auto* vizWidget = mainWindow->findChild<VisualizerWidget*>();
+        if (vizWidget != nullptr && vizWidget->hasVisualizer())
+        {
+            setVisualizer(vizWidget->visualizer());
+        }
+    }
 }
 
 void ConfigPanel::onDeactivate()
@@ -239,9 +251,13 @@ void ConfigPanel::subscribeToEvents()
 
     m_subscriptionIds.push_back(
         bus->subscribe<VisualizerChangedEvent>(
-            [](const VisualizerChangedEvent& evt) {
+            [this](const VisualizerChangedEvent& evt) {
                 BasicLogger::logDebug("ConfigPanel: Visualizer changed to " + evt.visualizerName);
-                // The VisualizerWidget should call setVisualizer() when this happens
+                if (evt.visualizerPtr != nullptr)
+                {
+                    auto* viz = static_cast<IVisualizer*>(evt.visualizerPtr);
+                    setVisualizer(viz);
+                }
             }
         )
     );

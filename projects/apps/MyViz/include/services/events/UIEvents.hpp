@@ -222,10 +222,12 @@ struct VisualizerChangedEvent : public Event
 
     std::string visualizerId;
     std::string visualizerName;
+    void* visualizerPtr;  ///< Pointer to IVisualizer (cast to avoid include)
 
-    VisualizerChangedEvent(std::string id, std::string name)
+    VisualizerChangedEvent(std::string id, std::string name, void* vizPtr = nullptr)
         : visualizerId(std::move(id))
         , visualizerName(std::move(name))
+        , visualizerPtr(vizPtr)
     {}
 };
 

@@ -153,6 +153,12 @@ public:
      */
     [[nodiscard]] bool hasVisualizer() const { return m_visualizer != nullptr; }
 
+    /**
+     * @brief Get the active visualizer
+     * @return Pointer to active IVisualizer, or nullptr if none
+     */
+    [[nodiscard]] IVisualizer* visualizer() const { return m_visualizer.get(); }
+
     // =========================================================================
     // Public Interface
     // =========================================================================

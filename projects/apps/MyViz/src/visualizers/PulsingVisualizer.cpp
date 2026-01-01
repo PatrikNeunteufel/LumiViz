@@ -89,22 +89,341 @@ PulsingVisualizer::~PulsingVisualizer() = default;
 
 std::vector<lumi::modules::ModuleParamDesc> PulsingVisualizer::paramDescs() const
 {
-    return {};
+    using namespace lumi::modules;
+    std::vector<ModuleParamDesc> params;
+
+    // =========================================================================
+    // Color Scheme Parameters
+    // =========================================================================
+    
+    {
+        ModuleParamDesc p;
+        p.id = "color.scheme";
+        p.displayName = "Color Scheme";
+        p.tooltip = "Select the color scheme for the visualization";
+        p.type = ParamType::Enum;
+        p.defaultValue = static_cast<int>(ColorSchemeType::Neon);
+        p.enumOptions = {"Fire", "Ocean", "Neon", "Rainbow", "Sunset", 
+                         "Forest", "Ice", "Lava", "Galaxy", "Monochrome"};
+        p.group = "Color";
+        p.order = 0;
+        params.push_back(p);
+    }
+    
+    {
+        ModuleParamDesc p;
+        p.id = "color.animSpeed";
+        p.displayName = "Animation Speed";
+        p.tooltip = "Color cycling speed (cycles per second)";
+        p.type = ParamType::Float;
+        p.minValue = 0.0f;
+        p.maxValue = 5.0f;
+        p.defaultValue = 0.5f;
+        p.group = "Color";
+        p.order = 1;
+        params.push_back(p);
+    }
+    
+    {
+        ModuleParamDesc p;
+        p.id = "color.beatBrightness";
+        p.displayName = "Beat Brightness";
+        p.tooltip = "Enable brightness response to beats";
+        p.type = ParamType::Bool;
+        p.defaultValue = true;
+        p.group = "Color";
+        p.order = 2;
+        params.push_back(p);
+    }
+
+    // =========================================================================
+    // Shape Parameters
+    // =========================================================================
+    
+    {
+        ModuleParamDesc p;
+        p.id = "shape.type";
+        p.displayName = "Shape";
+        p.tooltip = "Select the pulse shape";
+        p.type = ParamType::Enum;
+        p.defaultValue = static_cast<int>(PulseShape::Circle);
+        p.enumOptions = {"Circle", "Ring", "NGon", "Star", "Flash", "Wave"};
+        p.group = "Shape";
+        p.order = 0;
+        params.push_back(p);
+    }
+    
+    {
+        ModuleParamDesc p;
+        p.id = "shape.sides";
+        p.displayName = "Sides";
+        p.tooltip = "Number of sides for N-gon and Star shapes";
+        p.type = ParamType::Int;
+        p.minValue = 3.0f;
+        p.maxValue = 64.0f;
+        p.defaultValue = 6;
+        p.group = "Shape";
+        p.order = 1;
+        params.push_back(p);
+    }
+    
+    {
+        ModuleParamDesc p;
+        p.id = "shape.baseSize";
+        p.displayName = "Base Size";
+        p.tooltip = "Base size of the shape (0-2)";
+        p.type = ParamType::Float;
+        p.minValue = 0.1f;
+        p.maxValue = 2.0f;
+        p.defaultValue = 0.6f;
+        p.group = "Shape";
+        p.order = 2;
+        params.push_back(p);
+    }
+    
+    {
+        ModuleParamDesc p;
+        p.id = "shape.innerRadius";
+        p.displayName = "Inner Radius";
+        p.tooltip = "Inner radius ratio for Ring shape (0-1)";
+        p.type = ParamType::Float;
+        p.minValue = 0.0f;
+        p.maxValue = 0.99f;
+        p.defaultValue = 0.5f;
+        p.group = "Shape";
+        p.order = 3;
+        params.push_back(p);
+    }
+
+    // =========================================================================
+    // Animation Parameters
+    // =========================================================================
+    
+    {
+        ModuleParamDesc p;
+        p.id = "anim.trigger";
+        p.displayName = "Trigger Mode";
+        p.tooltip = "What triggers the pulse animation";
+        p.type = ParamType::Enum;
+        p.defaultValue = static_cast<int>(PulseTrigger::Continuous);
+        p.enumOptions = {"Continuous", "Beat", "Threshold"};
+        p.group = "Animation";
+        p.order = 0;
+        params.push_back(p);
+    }
+    
+    {
+        ModuleParamDesc p;
+        p.id = "anim.decay";
+        p.displayName = "Decay Mode";
+        p.tooltip = "How the pulse fades out";
+        p.type = ParamType::Enum;
+        p.defaultValue = static_cast<int>(PulseDecay::Linear);
+        p.enumOptions = {"Linear", "Exponential", "Instant"};
+        p.group = "Animation";
+        p.order = 1;
+        params.push_back(p);
+    }
+    
+    {
+        ModuleParamDesc p;
+        p.id = "anim.decayTime";
+        p.displayName = "Decay Time";
+        p.tooltip = "Time for pulse to fade (seconds)";
+        p.type = ParamType::Float;
+        p.minValue = 0.01f;
+        p.maxValue = 5.0f;
+        p.defaultValue = 0.5f;
+        p.group = "Animation";
+        p.order = 2;
+        params.push_back(p);
+    }
+    
+    {
+        ModuleParamDesc p;
+        p.id = "anim.rotationSpeed";
+        p.displayName = "Rotation Speed";
+        p.tooltip = "Shape rotation speed (degrees/second)";
+        p.type = ParamType::Float;
+        p.minValue = -360.0f;
+        p.maxValue = 360.0f;
+        p.defaultValue = 0.0f;
+        p.group = "Animation";
+        p.order = 3;
+        params.push_back(p);
+    }
+
+    return params;
 }
 
 bool PulsingVisualizer::getParam(const std::string& id, 
                                   lumi::modules::ParamValue& out) const
 {
-    (void)id;
-    (void)out;
+    using namespace lumi::modules;
+    
+    // Color parameters
+    if (id == "color.scheme")
+    {
+        out = static_cast<int>(m_colorScheme.scheme());
+        return true;
+    }
+    if (id == "color.animSpeed")
+    {
+        out = m_colorScheme.animationSpeed();
+        return true;
+    }
+    if (id == "color.beatBrightness")
+    {
+        out = m_colorScheme.beatBrightnessEnabled();
+        return true;
+    }
+    
+    // Shape parameters
+    if (id == "shape.type")
+    {
+        out = static_cast<int>(m_pulseShape.shape());
+        return true;
+    }
+    if (id == "shape.sides")
+    {
+        out = m_pulseShape.sides();
+        return true;
+    }
+    if (id == "shape.baseSize")
+    {
+        out = m_pulseShape.baseSize();
+        return true;
+    }
+    if (id == "shape.innerRadius")
+    {
+        out = m_pulseShape.innerRadiusRatio();
+        return true;
+    }
+    
+    // Animation parameters
+    if (id == "anim.trigger")
+    {
+        out = static_cast<int>(m_pulseShape.triggerMode());
+        return true;
+    }
+    if (id == "anim.decay")
+    {
+        out = static_cast<int>(m_pulseShape.decay());
+        return true;
+    }
+    if (id == "anim.decayTime")
+    {
+        out = m_pulseShape.decayTime();
+        return true;
+    }
+    if (id == "anim.rotationSpeed")
+    {
+        out = m_pulseShape.rotationSpeed();
+        return true;
+    }
+    
     return false;
 }
 
 bool PulsingVisualizer::setParam(const std::string& id, 
                                   const lumi::modules::ParamValue& value)
 {
-    (void)id;
-    (void)value;
+    using namespace lumi::modules;
+    
+    // Color parameters
+    if (id == "color.scheme")
+    {
+        if (auto* v = std::get_if<int>(&value))
+        {
+            m_colorScheme.setScheme(static_cast<ColorSchemeType>(*v));
+            return true;
+        }
+    }
+    if (id == "color.animSpeed")
+    {
+        if (auto* v = std::get_if<float>(&value))
+        {
+            m_colorScheme.setAnimationSpeed(*v);
+            return true;
+        }
+    }
+    if (id == "color.beatBrightness")
+    {
+        if (auto* v = std::get_if<bool>(&value))
+        {
+            m_colorScheme.setBeatBrightnessEnabled(*v);
+            return true;
+        }
+    }
+    
+    // Shape parameters
+    if (id == "shape.type")
+    {
+        if (auto* v = std::get_if<int>(&value))
+        {
+            m_pulseShape.setShape(static_cast<PulseShape>(*v));
+            return true;
+        }
+    }
+    if (id == "shape.sides")
+    {
+        if (auto* v = std::get_if<int>(&value))
+        {
+            m_pulseShape.setSides(*v);
+            return true;
+        }
+    }
+    if (id == "shape.baseSize")
+    {
+        if (auto* v = std::get_if<float>(&value))
+        {
+            m_pulseShape.setBaseSize(*v);
+            return true;
+        }
+    }
+    if (id == "shape.innerRadius")
+    {
+        if (auto* v = std::get_if<float>(&value))
+        {
+            m_pulseShape.setInnerRadiusRatio(*v);
+            return true;
+        }
+    }
+    
+    // Animation parameters
+    if (id == "anim.trigger")
+    {
+        if (auto* v = std::get_if<int>(&value))
+        {
+            m_pulseShape.setTrigger(static_cast<PulseTrigger>(*v));
+            return true;
+        }
+    }
+    if (id == "anim.decay")
+    {
+        if (auto* v = std::get_if<int>(&value))
+        {
+            m_pulseShape.setDecay(static_cast<PulseDecay>(*v));
+            return true;
+        }
+    }
+    if (id == "anim.decayTime")
+    {
+        if (auto* v = std::get_if<float>(&value))
+        {
+            m_pulseShape.setDecayTime(*v);
+            return true;
+        }
+    }
+    if (id == "anim.rotationSpeed")
+    {
+        if (auto* v = std::get_if<float>(&value))
+        {
+            m_pulseShape.setRotationSpeed(*v);
+            return true;
+        }
+    }
+    
     return false;
 }
 

@@ -300,7 +300,8 @@ bool VisualizerWidget::setVisualizer(const QString& id)
     {
         bus->publish(VisualizerChangedEvent{
             id.toStdString(),
-            m_visualizer->visualizerName().toStdString()
+            m_visualizer->visualizerName().toStdString(),
+            static_cast<void*>(m_visualizer.get())
         });
     }
 
