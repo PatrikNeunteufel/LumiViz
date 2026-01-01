@@ -1,11 +1,11 @@
 /**
  ****************************************************************************************
  * @file   PulsingVisualizer.cpp
- * @brief  DEBUG VERSION with centered circle and event support
+ * @brief  Audio-reactive pulsing visualizer with shapes and gradients
  *
  * @author LumiPulse Team
  * @date   January 2026
- * @version DEBUG-5.0 - Centered + Events
+ * @version 4.0.0
  ****************************************************************************************
  */
 
@@ -18,47 +18,255 @@
 
 #include <cmath>
 #include <algorithm>
+#include <vector>
 
 // =============================================================================
-// Shader Source - CENTERED VERSION
+// Shape Enum Mapping
 // =============================================================================
+// PulseShape enum has Flash at index 2, but we don't expose it in UI.
+// UI: Circle=0, Ring=1, NGon=2, Star=3
+// Enum: Circle=0, Ring=1, Flash=2, Ngon=3, Star=4
 
 namespace {
+
+// Map from UI dropdown index to PulseShape enum
+lumi::modules::PulseShape uiIndexToShape(int index)
+{
+    switch (index)
+    {
+        case 0: return lumi::modules::PulseShape::Circle;
+        case 1: return lumi::modules::PulseShape::Ring;
+        case 2: return lumi::modules::PulseShape::Ngon;
+        case 3: return lumi::modules::PulseShape::Star;
+        default: return lumi::modules::PulseShape::Circle;
+    }
+}
+
+// Map from PulseShape enum to UI dropdown index
+int shapeToUiIndex(lumi::modules::PulseShape shape)
+{
+    switch (shape)
+    {
+        case lumi::modules::PulseShape::Circle: return 0;
+        case lumi::modules::PulseShape::Ring: return 1;
+        case lumi::modules::PulseShape::Ngon: return 2;
+        case lumi::modules::PulseShape::Star: return 3;
+        default: return 0;
+    }
+}
+
+// =============================================================================
+// Shader Source - With Multi-Stop Gradient Support
+// =============================================================================
 
 const char* VERTEX_SHADER_SOURCE = R"(
 #version 330 core
 
 layout(location = 0) in vec2 aPosition;
+layout(location = 1) in vec2 aUV;
+
+out vec2 vUV;
+out vec2 vPosition;
 
 uniform float uAspect;
 uniform float uSize;
+uniform float uRotation;
 
 void main()
 {
-    // Scale by size
-    vec2 pos = aPosition * uSize;
+    // Apply rotation
+    float c = cos(uRotation);
+    float s = sin(uRotation);
+    vec2 rotated = vec2(
+        aPosition.x * c - aPosition.y * s,
+        aPosition.x * s + aPosition.y * c
+    );
     
-    // Correct for aspect ratio - keep circle circular
-    // Divide X by aspect ratio to prevent horizontal stretching
+    // Scale by size
+    vec2 pos = rotated * uSize;
+    
+    // Correct for aspect ratio
     pos.x /= uAspect;
     
-    // Position is already centered (vertices are -1 to 1, center at 0,0)
     gl_Position = vec4(pos, 0.0, 1.0);
+    vUV = aUV;
+    vPosition = aPosition;
 }
 )";
 
 const char* FRAGMENT_SHADER_SOURCE = R"(
 #version 330 core
 
+in vec2 vUV;
+in vec2 vPosition;
+
 out vec4 fragColor;
 
-uniform vec3 uColor;
+// Up to 4 color stops
+uniform vec4 uColor0;
+uniform vec4 uColor1;
+uniform vec4 uColor2;
+uniform vec4 uColor3;
+uniform vec4 uStopPos;      // Positions of stops (x=stop0, y=stop1, etc.)
+uniform int uStopCount;     // Number of active stops (2-4)
+uniform int uColorMode;     // 0=Solid, 1=Linear, 2=Radial, 3=Outline
+uniform float uGradientAngle;
+uniform float uInnerRadius;
+uniform float uOutlineWidth;
+
+vec4 sampleGradient(float t)
+{
+    t = clamp(t, 0.0, 1.0);
+    
+    // Find segment
+    if (uStopCount <= 1 || t <= uStopPos.x) return uColor0;
+    if (uStopCount == 2 || t >= uStopPos.y) {
+        if (uStopCount == 2) {
+            float localT = (t - uStopPos.x) / max(uStopPos.y - uStopPos.x, 0.001);
+            return mix(uColor0, uColor1, localT);
+        }
+    }
+    
+    // Multi-stop gradient
+    if (t < uStopPos.y) {
+        float localT = (t - uStopPos.x) / max(uStopPos.y - uStopPos.x, 0.001);
+        return mix(uColor0, uColor1, localT);
+    }
+    if (uStopCount == 3 || t >= uStopPos.z) {
+        if (uStopCount == 3) {
+            float localT = (t - uStopPos.y) / max(uStopPos.z - uStopPos.y, 0.001);
+            return mix(uColor1, uColor2, localT);
+        }
+    }
+    if (t < uStopPos.z) {
+        float localT = (t - uStopPos.y) / max(uStopPos.z - uStopPos.y, 0.001);
+        return mix(uColor1, uColor2, localT);
+    }
+    
+    // Last segment (stop2 to stop3)
+    float localT = (t - uStopPos.z) / max(uStopPos.w - uStopPos.z, 0.001);
+    return mix(uColor2, uColor3, localT);
+}
 
 void main()
 {
-    fragColor = vec4(uColor, 1.0);
+    vec4 color;
+    float dist = length(vPosition);
+    
+    // Mode 0: Solid color
+    if (uColorMode == 0)
+    {
+        color = uColor0;
+    }
+    // Mode 1: Linear gradient with angle
+    else if (uColorMode == 1)
+    {
+        float c = cos(uGradientAngle);
+        float s = sin(uGradientAngle);
+        float t = dot(vPosition, vec2(c, s)) * 0.5 + 0.5;
+        color = sampleGradient(t);
+    }
+    // Mode 2: Radial gradient
+    else if (uColorMode == 2)
+    {
+        float t = dist;
+        color = sampleGradient(t);
+    }
+    // Mode 3: Outline only
+    else if (uColorMode == 3)
+    {
+        // Only draw near the edge
+        if (dist < (1.0 - uOutlineWidth))
+        {
+            discard;
+        }
+        color = uColor0;
+    }
+    else
+    {
+        color = uColor0;
+    }
+    
+    // Ring cutout (for Ring shape)
+    if (uInnerRadius > 0.0 && uColorMode != 3)
+    {
+        if (dist < uInnerRadius)
+        {
+            discard;
+        }
+    }
+    
+    fragColor = color;
 }
 )";
+
+// Vertex structure with position and UV
+struct Vertex
+{
+    float x, y;
+    float u, v;
+};
+
+constexpr float PI = 3.14159265358979323846f;
+
+// =============================================================================
+// Local Vertex Generation Functions
+// =============================================================================
+
+void generateCircleVerts(std::vector<Vertex>& vertices, int segments)
+{
+    vertices.clear();
+    vertices.reserve(segments + 2);
+    
+    vertices.push_back({0.0f, 0.0f, 0.5f, 0.5f});
+    
+    for (int i = 0; i <= segments; ++i)
+    {
+        float angle = 2.0f * PI * static_cast<float>(i) / static_cast<float>(segments);
+        float x = std::cos(angle);
+        float y = std::sin(angle);
+        vertices.push_back({x, y, x * 0.5f + 0.5f, y * 0.5f + 0.5f});
+    }
+}
+
+void generateNGonVerts(std::vector<Vertex>& vertices, int sides)
+{
+    vertices.clear();
+    vertices.reserve(sides + 2);
+    
+    vertices.push_back({0.0f, 0.0f, 0.5f, 0.5f});
+    
+    for (int i = 0; i <= sides; ++i)
+    {
+        float angle = 2.0f * PI * static_cast<float>(i) / static_cast<float>(sides);
+        angle -= PI / 2.0f;  // Start at top
+        float x = std::cos(angle);
+        float y = std::sin(angle);
+        vertices.push_back({x, y, x * 0.5f + 0.5f, y * 0.5f + 0.5f});
+    }
+}
+
+void generateStarVerts(std::vector<Vertex>& vertices, int points)
+{
+    vertices.clear();
+    int totalVertices = points * 2;
+    vertices.reserve(totalVertices + 2);
+    
+    vertices.push_back({0.0f, 0.0f, 0.5f, 0.5f});
+    
+    float innerRadiusRatio = 0.4f;
+    
+    for (int i = 0; i <= totalVertices; ++i)
+    {
+        float angle = 2.0f * PI * static_cast<float>(i) / static_cast<float>(totalVertices);
+        angle -= PI / 2.0f;  // Start at top
+        
+        float r = (i % 2 == 0) ? 1.0f : innerRadiusRatio;
+        float x = r * std::cos(angle);
+        float y = r * std::sin(angle);
+        vertices.push_back({x, y, x * 0.5f + 0.5f, y * 0.5f + 0.5f});
+    }
+}
 
 } // anonymous namespace
 
@@ -75,10 +283,8 @@ PulsingVisualizer::PulsingVisualizer()
 {
     BasicLogger::logDebug("PulsingVisualizer: Constructor called");
     
-    // Defaults
-    m_colorScheme.setScheme(lumi::modules::ColorSchemeType::Neon);
     m_pulseShape.setShape(lumi::modules::PulseShape::Circle);
-    m_pulseShape.setBaseSize(0.6f);
+    m_colorGradient.loadPreset("Neon");
 }
 
 PulsingVisualizer::~PulsingVisualizer() = default;
@@ -93,51 +299,19 @@ std::vector<lumi::modules::ModuleParamDesc> PulsingVisualizer::paramDescs() cons
     std::vector<ModuleParamDesc> params;
 
     // =========================================================================
-    // Color Scheme Parameters
+    // 1. Audio Source Parameters
     // =========================================================================
     
+    for (const auto& p : m_audioSource.paramDescs())
     {
-        ModuleParamDesc p;
-        p.id = "color.scheme";
-        p.displayName = "Color Scheme";
-        p.tooltip = "Select the color scheme for the visualization";
-        p.type = ParamType::Enum;
-        p.defaultValue = static_cast<int>(ColorSchemeType::Neon);
-        p.enumOptions = {"Fire", "Ocean", "Neon", "Rainbow", "Sunset", 
-                         "Forest", "Ice", "Lava", "Galaxy", "Monochrome"};
-        p.group = "Color";
-        p.order = 0;
-        params.push_back(p);
-    }
-    
-    {
-        ModuleParamDesc p;
-        p.id = "color.animSpeed";
-        p.displayName = "Animation Speed";
-        p.tooltip = "Color cycling speed (cycles per second)";
-        p.type = ParamType::Float;
-        p.minValue = 0.0f;
-        p.maxValue = 5.0f;
-        p.defaultValue = 0.5f;
-        p.group = "Color";
-        p.order = 1;
-        params.push_back(p);
-    }
-    
-    {
-        ModuleParamDesc p;
-        p.id = "color.beatBrightness";
-        p.displayName = "Beat Brightness";
-        p.tooltip = "Enable brightness response to beats";
-        p.type = ParamType::Bool;
-        p.defaultValue = true;
-        p.group = "Color";
-        p.order = 2;
-        params.push_back(p);
+        ModuleParamDesc prefixed = p;
+        prefixed.id = "audio." + p.id;
+        prefixed.group = "1. Audio";
+        params.push_back(prefixed);
     }
 
     // =========================================================================
-    // Shape Parameters
+    // 2. Shape Parameters (including Color as sub-section)
     // =========================================================================
     
     {
@@ -146,9 +320,9 @@ std::vector<lumi::modules::ModuleParamDesc> PulsingVisualizer::paramDescs() cons
         p.displayName = "Shape";
         p.tooltip = "Select the pulse shape";
         p.type = ParamType::Enum;
-        p.defaultValue = static_cast<int>(PulseShape::Circle);
-        p.enumOptions = {"Circle", "Ring", "NGon", "Star", "Flash", "Wave"};
-        p.group = "Shape";
+        p.defaultValue = 0;
+        p.enumOptions = {"Circle", "Ring", "NGon", "Star"};
+        p.group = "2. Shape";
         p.order = 0;
         params.push_back(p);
     }
@@ -156,28 +330,14 @@ std::vector<lumi::modules::ModuleParamDesc> PulsingVisualizer::paramDescs() cons
     {
         ModuleParamDesc p;
         p.id = "shape.sides";
-        p.displayName = "Sides";
-        p.tooltip = "Number of sides for N-gon and Star shapes";
+        p.displayName = "Sides/Points";
+        p.tooltip = "Number of sides (NGon) or points (Star)";
         p.type = ParamType::Int;
         p.minValue = 3.0f;
-        p.maxValue = 64.0f;
+        p.maxValue = 32.0f;
         p.defaultValue = 6;
-        p.group = "Shape";
+        p.group = "2. Shape";
         p.order = 1;
-        params.push_back(p);
-    }
-    
-    {
-        ModuleParamDesc p;
-        p.id = "shape.baseSize";
-        p.displayName = "Base Size";
-        p.tooltip = "Base size of the shape (0-2)";
-        p.type = ParamType::Float;
-        p.minValue = 0.1f;
-        p.maxValue = 2.0f;
-        p.defaultValue = 0.6f;
-        p.group = "Shape";
-        p.order = 2;
         params.push_back(p);
     }
     
@@ -185,89 +345,94 @@ std::vector<lumi::modules::ModuleParamDesc> PulsingVisualizer::paramDescs() cons
         ModuleParamDesc p;
         p.id = "shape.innerRadius";
         p.displayName = "Inner Radius";
-        p.tooltip = "Inner radius ratio for Ring shape (0-1)";
+        p.tooltip = "Inner radius for Ring (0 = filled)";
         p.type = ParamType::Float;
         p.minValue = 0.0f;
-        p.maxValue = 0.99f;
+        p.maxValue = 0.95f;
         p.defaultValue = 0.5f;
-        p.group = "Shape";
-        p.order = 3;
-        params.push_back(p);
-    }
-
-    // =========================================================================
-    // Animation Parameters
-    // =========================================================================
-    
-    {
-        ModuleParamDesc p;
-        p.id = "anim.trigger";
-        p.displayName = "Trigger Mode";
-        p.tooltip = "What triggers the pulse animation";
-        p.type = ParamType::Enum;
-        p.defaultValue = static_cast<int>(PulseTrigger::Continuous);
-        p.enumOptions = {"Continuous", "Beat", "Threshold"};
-        p.group = "Animation";
-        p.order = 0;
-        params.push_back(p);
-    }
-    
-    {
-        ModuleParamDesc p;
-        p.id = "anim.decay";
-        p.displayName = "Decay Mode";
-        p.tooltip = "How the pulse fades out";
-        p.type = ParamType::Enum;
-        p.defaultValue = static_cast<int>(PulseDecay::Linear);
-        p.enumOptions = {"Linear", "Exponential", "Instant"};
-        p.group = "Animation";
-        p.order = 1;
-        params.push_back(p);
-    }
-    
-    {
-        ModuleParamDesc p;
-        p.id = "anim.decayTime";
-        p.displayName = "Decay Time";
-        p.tooltip = "Time for pulse to fade (seconds)";
-        p.type = ParamType::Float;
-        p.minValue = 0.01f;
-        p.maxValue = 5.0f;
-        p.defaultValue = 0.5f;
-        p.group = "Animation";
+        p.group = "2. Shape";
         p.order = 2;
         params.push_back(p);
     }
     
     {
         ModuleParamDesc p;
-        p.id = "anim.rotationSpeed";
+        p.id = "shape.minSize";
+        p.displayName = "Min Size";
+        p.tooltip = "Minimum size at silence";
+        p.type = ParamType::Float;
+        p.minValue = 0.05f;
+        p.maxValue = 1.5f;
+        p.defaultValue = 0.3f;
+        p.group = "2. Shape";
+        p.order = 3;
+        params.push_back(p);
+    }
+    
+    {
+        ModuleParamDesc p;
+        p.id = "shape.maxSize";
+        p.displayName = "Max Size";
+        p.tooltip = "Maximum size at peak audio";
+        p.type = ParamType::Float;
+        p.minValue = 0.1f;
+        p.maxValue = 2.0f;
+        p.defaultValue = 0.9f;
+        p.group = "2. Shape";
+        p.order = 4;
+        params.push_back(p);
+    }
+    
+    {
+        ModuleParamDesc p;
+        p.id = "shape.rotation";
         p.displayName = "Rotation Speed";
-        p.tooltip = "Shape rotation speed (degrees/second)";
+        p.tooltip = "Degrees per second";
         p.type = ParamType::Float;
         p.minValue = -360.0f;
         p.maxValue = 360.0f;
         p.defaultValue = 0.0f;
-        p.group = "Animation";
-        p.order = 3;
+        p.group = "2. Shape";
+        p.order = 5;
+        params.push_back(p);
+    }
+    
+    {
+        ModuleParamDesc p;
+        p.id = "shape.beatReverse";
+        p.displayName = "Beat Reverse";
+        p.tooltip = "Reverse rotation direction on beat";
+        p.type = ParamType::Bool;
+        p.defaultValue = false;
+        p.group = "2. Shape";
+        p.order = 6;
         params.push_back(p);
     }
 
     // =========================================================================
-    // Audio Source Parameters (aggregated from AudioSourceModule)
+    // Color Sub-Section (under Shape group)
     // =========================================================================
     
-    for (const auto& p : m_audioSource.paramDescs())
+    // Delegate to ColorGradientModule params
+    for (const auto& p : m_colorGradient.paramDescs())
     {
         ModuleParamDesc prefixed = p;
-        prefixed.id = "audio." + p.id;
-        // Remap groups to Audio prefix
-        if (p.group == "Mapping" || p.group == "Normalization" || 
-            p.group == "Gain" || p.group == "Smoothing")
-        {
-            prefixed.group = "Audio";
-        }
+        prefixed.id = "shape.color." + p.id;
+        prefixed.group = "2. Shape";
+        prefixed.order = 10 + p.order;  // After shape params
         params.push_back(prefixed);
+    }
+    
+    {
+        ModuleParamDesc p;
+        p.id = "shape.color.beatBrightness";
+        p.displayName = "Beat Brightness";
+        p.tooltip = "Modulate brightness with audio";
+        p.type = ParamType::Bool;
+        p.defaultValue = true;
+        p.group = "2. Shape";
+        p.order = 20;
+        params.push_back(p);
     }
 
     return params;
@@ -278,27 +443,30 @@ bool PulsingVisualizer::getParam(const std::string& id,
 {
     using namespace lumi::modules;
     
-    // Color parameters
-    if (id == "color.scheme")
+    // Audio parameters
+    if (id.rfind("audio.", 0) == 0)
     {
-        out = static_cast<int>(m_colorScheme.scheme());
-        return true;
+        return m_audioSource.getParam(id.substr(6), out);
     }
-    if (id == "color.animSpeed")
+    
+    // Color gradient parameters (under shape.color.*)
+    if (id.rfind("shape.color.", 0) == 0)
     {
-        out = m_colorScheme.animationSpeed();
-        return true;
-    }
-    if (id == "color.beatBrightness")
-    {
-        out = m_colorScheme.beatBrightnessEnabled();
-        return true;
+        std::string gradientId = id.substr(12);  // Remove "shape.color."
+        
+        if (gradientId == "beatBrightness")
+        {
+            out = m_beatBrightnessEnabled;
+            return true;
+        }
+        
+        return m_colorGradient.getParam(gradientId, out);
     }
     
     // Shape parameters
     if (id == "shape.type")
     {
-        out = static_cast<int>(m_pulseShape.shape());
+        out = shapeToUiIndex(m_pulseShape.shape());
         return true;
     }
     if (id == "shape.sides")
@@ -306,43 +474,30 @@ bool PulsingVisualizer::getParam(const std::string& id,
         out = m_pulseShape.sides();
         return true;
     }
-    if (id == "shape.baseSize")
-    {
-        out = m_pulseShape.baseSize();
-        return true;
-    }
     if (id == "shape.innerRadius")
     {
-        out = m_pulseShape.innerRadiusRatio();
+        out = m_innerRadius;
         return true;
     }
-    
-    // Animation parameters
-    if (id == "anim.trigger")
+    if (id == "shape.minSize")
     {
-        out = static_cast<int>(m_pulseShape.triggerMode());
+        out = m_minSize;
         return true;
     }
-    if (id == "anim.decay")
+    if (id == "shape.maxSize")
     {
-        out = static_cast<int>(m_pulseShape.decay());
+        out = m_maxSize;
         return true;
     }
-    if (id == "anim.decayTime")
+    if (id == "shape.rotation")
     {
-        out = m_pulseShape.decayTime();
+        out = m_rotationSpeed;
         return true;
     }
-    if (id == "anim.rotationSpeed")
+    if (id == "shape.beatReverse")
     {
-        out = m_pulseShape.rotationSpeed();
+        out = m_beatReverseRotation;
         return true;
-    }
-    
-    // Audio parameters (delegate to AudioSourceModule)
-    if (id.rfind("audio.", 0) == 0)
-    {
-        return m_audioSource.getParam(id.substr(6), out);
     }
     
     return false;
@@ -353,30 +508,27 @@ bool PulsingVisualizer::setParam(const std::string& id,
 {
     using namespace lumi::modules;
     
-    // Color parameters
-    if (id == "color.scheme")
+    // Audio parameters
+    if (id.rfind("audio.", 0) == 0)
     {
-        if (auto* v = std::get_if<int>(&value))
-        {
-            m_colorScheme.setScheme(static_cast<ColorSchemeType>(*v));
-            return true;
-        }
+        return m_audioSource.setParam(id.substr(6), value);
     }
-    if (id == "color.animSpeed")
+    
+    // Color gradient parameters
+    if (id.rfind("shape.color.", 0) == 0)
     {
-        if (auto* v = std::get_if<float>(&value))
+        std::string gradientId = id.substr(12);
+        
+        if (gradientId == "beatBrightness")
         {
-            m_colorScheme.setAnimationSpeed(*v);
-            return true;
+            if (auto* v = std::get_if<bool>(&value))
+            {
+                m_beatBrightnessEnabled = *v;
+                return true;
+            }
         }
-    }
-    if (id == "color.beatBrightness")
-    {
-        if (auto* v = std::get_if<bool>(&value))
-        {
-            m_colorScheme.setBeatBrightnessEnabled(*v);
-            return true;
-        }
+        
+        return m_colorGradient.setParam(gradientId, value);
     }
     
     // Shape parameters
@@ -384,7 +536,8 @@ bool PulsingVisualizer::setParam(const std::string& id,
     {
         if (auto* v = std::get_if<int>(&value))
         {
-            m_pulseShape.setShape(static_cast<PulseShape>(*v));
+            m_pulseShape.setShape(uiIndexToShape(*v));
+            m_needsRebuild = true;
             return true;
         }
     }
@@ -393,14 +546,7 @@ bool PulsingVisualizer::setParam(const std::string& id,
         if (auto* v = std::get_if<int>(&value))
         {
             m_pulseShape.setSides(*v);
-            return true;
-        }
-    }
-    if (id == "shape.baseSize")
-    {
-        if (auto* v = std::get_if<float>(&value))
-        {
-            m_pulseShape.setBaseSize(*v);
+            m_needsRebuild = true;
             return true;
         }
     }
@@ -408,61 +554,54 @@ bool PulsingVisualizer::setParam(const std::string& id,
     {
         if (auto* v = std::get_if<float>(&value))
         {
-            m_pulseShape.setInnerRadiusRatio(*v);
+            m_innerRadius = std::clamp(*v, 0.0f, 0.95f);
             return true;
         }
     }
-    
-    // Animation parameters
-    if (id == "anim.trigger")
-    {
-        if (auto* v = std::get_if<int>(&value))
-        {
-            m_pulseShape.setTrigger(static_cast<PulseTrigger>(*v));
-            return true;
-        }
-    }
-    if (id == "anim.decay")
-    {
-        if (auto* v = std::get_if<int>(&value))
-        {
-            m_pulseShape.setDecay(static_cast<PulseDecay>(*v));
-            return true;
-        }
-    }
-    if (id == "anim.decayTime")
+    if (id == "shape.minSize")
     {
         if (auto* v = std::get_if<float>(&value))
         {
-            m_pulseShape.setDecayTime(*v);
+            m_minSize = std::clamp(*v, 0.05f, 1.5f);
             return true;
         }
     }
-    if (id == "anim.rotationSpeed")
+    if (id == "shape.maxSize")
     {
         if (auto* v = std::get_if<float>(&value))
         {
-            m_pulseShape.setRotationSpeed(*v);
+            m_maxSize = std::clamp(*v, 0.1f, 2.0f);
             return true;
         }
     }
-    
-    // Audio parameters (delegate to AudioSourceModule)
-    if (id.rfind("audio.", 0) == 0)
+    if (id == "shape.rotation")
     {
-        return m_audioSource.setParam(id.substr(6), value);
+        if (auto* v = std::get_if<float>(&value))
+        {
+            m_rotationSpeed = *v;
+            return true;
+        }
+    }
+    if (id == "shape.beatReverse")
+    {
+        if (auto* v = std::get_if<bool>(&value))
+        {
+            m_beatReverseRotation = *v;
+            return true;
+        }
     }
     
     return false;
 }
 
 // =============================================================================
-// Legacy API - Shape Configuration
+// Legacy API
 // =============================================================================
 
 void PulsingVisualizer::setShape(lumi::modules::PulseShape shape)
 {
     m_pulseShape.setShape(shape);
+    m_needsRebuild = true;
 }
 
 lumi::modules::PulseShape PulsingVisualizer::shape() const
@@ -473,6 +612,7 @@ lumi::modules::PulseShape PulsingVisualizer::shape() const
 void PulsingVisualizer::setSides(int sides)
 {
     m_pulseShape.setSides(sides);
+    m_needsRebuild = true;
 }
 
 int PulsingVisualizer::sides() const
@@ -480,127 +620,39 @@ int PulsingVisualizer::sides() const
     return m_pulseShape.sides();
 }
 
-// =============================================================================
-// Legacy API - Color Configuration
-// =============================================================================
-
-void PulsingVisualizer::setColorScheme(lumi::modules::ColorSchemeType scheme)
+void PulsingVisualizer::loadGradientPreset(const std::string& name)
 {
-    m_colorScheme.setScheme(scheme);
-    BasicLogger::logDebug("PulsingVisualizer: Color scheme set to " + 
-                          std::to_string(static_cast<int>(scheme)));
+    m_colorGradient.loadPreset(name);
 }
-
-lumi::modules::ColorSchemeType PulsingVisualizer::colorScheme() const
-{
-    return m_colorScheme.scheme();
-}
-
-void PulsingVisualizer::setColorAnimationSpeed(float cyclesPerSecond)
-{
-    m_colorScheme.setAnimationSpeed(cyclesPerSecond);
-}
-
-float PulsingVisualizer::colorAnimationSpeed() const
-{
-    return m_colorScheme.animationSpeed();
-}
-
-void PulsingVisualizer::setBeatBrightnessEnabled(bool enabled)
-{
-    m_colorScheme.setBeatBrightnessEnabled(enabled);
-}
-
-bool PulsingVisualizer::beatBrightnessEnabled() const
-{
-    return m_colorScheme.beatBrightnessEnabled();
-}
-
-// =============================================================================
-// Legacy API - Animation Configuration
-// =============================================================================
-
-void PulsingVisualizer::setTrigger(lumi::modules::PulseTrigger trigger)
-{
-    m_pulseShape.setTrigger(trigger);
-}
-
-lumi::modules::PulseTrigger PulsingVisualizer::trigger() const
-{
-    return m_pulseShape.triggerMode();
-}
-
-void PulsingVisualizer::setDecay(lumi::modules::PulseDecay decay)
-{
-    m_pulseShape.setDecay(decay);
-}
-
-lumi::modules::PulseDecay PulsingVisualizer::decay() const
-{
-    return m_pulseShape.decay();
-}
-
-void PulsingVisualizer::setDecayTime(float seconds)
-{
-    m_pulseShape.setDecayTime(seconds);
-}
-
-float PulsingVisualizer::decayTime() const
-{
-    return m_pulseShape.decayTime();
-}
-
-// =============================================================================
-// Legacy API - Size Configuration
-// =============================================================================
-
-void PulsingVisualizer::setBaseSize(float size)
-{
-    m_pulseShape.setBaseSize(size);
-}
-
-float PulsingVisualizer::baseSize() const
-{
-    return m_pulseShape.baseSize();
-}
-
-void PulsingVisualizer::setSizeRange(float min, float max)
-{
-    m_pulseShape.setSizeRange(min, max);
-}
-
-// =============================================================================
-// Legacy API - Rotation Configuration
-// =============================================================================
 
 void PulsingVisualizer::setRotationSpeed(float degreesPerSecond)
 {
-    m_pulseShape.setRotationSpeed(degreesPerSecond);
+    m_rotationSpeed = degreesPerSecond;
 }
 
 float PulsingVisualizer::rotationSpeed() const
 {
-    return m_pulseShape.rotationSpeed();
+    return m_rotationSpeed;
 }
 
-void PulsingVisualizer::setAudioRotationEnabled(bool enabled)
+void PulsingVisualizer::setBeatReverseRotation(bool enabled)
 {
-    m_pulseShape.setAudioRotation(enabled);
+    m_beatReverseRotation = enabled;
 }
 
-bool PulsingVisualizer::audioRotationEnabled() const
+bool PulsingVisualizer::beatReverseRotation() const
 {
-    return false;
+    return m_beatReverseRotation;
 }
 
-// =============================================================================
-// Legacy API - Audio Configuration
-// =============================================================================
-
-void PulsingVisualizer::setAudioRange(int lowBand, int highBand)
+void PulsingVisualizer::setBeatBrightnessEnabled(bool enabled)
 {
-    m_lowBand = lowBand;
-    m_highBand = highBand;
+    m_beatBrightnessEnabled = enabled;
+}
+
+bool PulsingVisualizer::beatBrightnessEnabled() const
+{
+    return m_beatBrightnessEnabled;
 }
 
 void PulsingVisualizer::setBeatSensitivity(float sensitivity)
@@ -616,18 +668,12 @@ float PulsingVisualizer::beatSensitivity() const
 void PulsingVisualizer::setSmoothingTime(float milliseconds)
 {
     m_audioSource.smoothing().setTimeMs(milliseconds);
-    BasicLogger::logDebug("PulsingVisualizer: Smoothing set to " + 
-                          std::to_string(milliseconds) + "ms");
 }
 
 float PulsingVisualizer::smoothingTime() const
 {
     return m_audioSource.smoothing().timeMs();
 }
-
-// =============================================================================
-// Legacy API - Background Configuration
-// =============================================================================
 
 void PulsingVisualizer::setBackgroundSolid(bool solid)
 {
@@ -661,7 +707,6 @@ void PulsingVisualizer::onInitialize()
         return;
     }
     
-    // Create shader program
     m_shader = std::make_unique<QOpenGLShaderProgram>();
     
     if (!m_shader->addShaderFromSourceCode(QOpenGLShader::Vertex, VERTEX_SHADER_SOURCE))
@@ -669,96 +714,106 @@ void PulsingVisualizer::onInitialize()
         BasicLogger::logError("Vertex shader failed: " + m_shader->log().toStdString());
         return;
     }
-    BasicLogger::logDebug("  Vertex shader compiled OK");
     
     if (!m_shader->addShaderFromSourceCode(QOpenGLShader::Fragment, FRAGMENT_SHADER_SOURCE))
     {
         BasicLogger::logError("Fragment shader failed: " + m_shader->log().toStdString());
         return;
     }
-    BasicLogger::logDebug("  Fragment shader compiled OK");
     
     if (!m_shader->link())
     {
         BasicLogger::logError("Shader link failed: " + m_shader->log().toStdString());
         return;
     }
-    BasicLogger::logDebug("  Shader linked OK");
     
     // Get uniform locations
-    m_uniformColor = m_shader->uniformLocation("uColor");
     m_uniformAspect = m_shader->uniformLocation("uAspect");
-    m_uniformIntensity = m_shader->uniformLocation("uSize");
-    
-    BasicLogger::logDebug("  Uniforms: color=" + std::to_string(m_uniformColor) + 
-                          " aspect=" + std::to_string(m_uniformAspect) +
-                          " size=" + std::to_string(m_uniformIntensity));
+    m_uniformSize = m_shader->uniformLocation("uSize");
+    m_uniformRotation = m_shader->uniformLocation("uRotation");
+    m_uniformInnerRadius = m_shader->uniformLocation("uInnerRadius");
+    m_uniformOutlineWidth = m_shader->uniformLocation("uOutlineWidth");
+    m_uniformColorMode = m_shader->uniformLocation("uColorMode");
+    m_uniformGradientAngle = m_shader->uniformLocation("uGradientAngle");
+    m_uniformColor0 = m_shader->uniformLocation("uColor0");
+    m_uniformColor1 = m_shader->uniformLocation("uColor1");
+    m_uniformColor2 = m_shader->uniformLocation("uColor2");
+    m_uniformColor3 = m_shader->uniformLocation("uColor3");
+    m_uniformStopPos = m_shader->uniformLocation("uStopPos");
+    m_uniformStopCount = m_shader->uniformLocation("uStopCount");
     
     // Create VAO
     m_vao = std::make_unique<QOpenGLVertexArrayObject>();
     if (!m_vao->create())
     {
-        BasicLogger::logError("Failed to create VAO!");
+        BasicLogger::logError("VAO creation failed");
         return;
     }
-    BasicLogger::logDebug("  VAO created OK");
     
     // Create VBO
     m_vertexBuffer = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
     if (!m_vertexBuffer->create())
     {
-        BasicLogger::logError("Failed to create VBO!");
+        BasicLogger::logError("VBO creation failed");
         return;
     }
-    m_vertexBuffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
-    BasicLogger::logDebug("  VBO created OK");
     
-    // Generate circle vertices
-    generateCircleVertices(64);
+    rebuildShape();
     
-    BasicLogger::logInfo("PulsingVisualizer::onInitialize() - COMPLETE, vertexCount=" + 
-                         std::to_string(m_vertexCount));
+    BasicLogger::logInfo("PulsingVisualizer::onInitialize() - SUCCESS");
 }
 
-void PulsingVisualizer::generateCircleVertices(int segments)
+void PulsingVisualizer::rebuildShape()
 {
-    std::vector<float> vertices;
-    vertices.reserve((segments + 2) * 2);
+    using namespace lumi::modules;
     
-    const float PI = 3.14159265358979323846f;
-    const float TWO_PI = 2.0f * PI;
+    std::vector<Vertex> vertices;
     
-    // Center vertex at origin (0,0)
-    vertices.push_back(0.0f);
-    vertices.push_back(0.0f);
+    PulseShape shape = m_pulseShape.shape();
+    int sides = m_pulseShape.sides();
     
-    // Outer vertices - unit circle (will be scaled by uSize in shader)
-    for (int i = 0; i <= segments; ++i)
+    switch (shape)
     {
-        float angle = (static_cast<float>(i) / segments) * TWO_PI;
-        vertices.push_back(std::cos(angle));
-        vertices.push_back(std::sin(angle));
+        case PulseShape::Circle:
+        case PulseShape::Ring:
+            generateCircleVerts(vertices, 64);
+            break;
+            
+        case PulseShape::Ngon:
+            generateNGonVerts(vertices, sides);
+            break;
+            
+        case PulseShape::Star:
+            generateStarVerts(vertices, sides);
+            break;
+            
+        default:
+            generateCircleVerts(vertices, 64);
+            break;
     }
     
-    m_vertexCount = static_cast<int>(vertices.size() / 2);
-    
-    // Upload to GPU
+    m_shader->bind();
     m_vao->bind();
     m_vertexBuffer->bind();
     m_vertexBuffer->allocate(vertices.data(), 
-                              static_cast<int>(vertices.size() * sizeof(float)));
+                             static_cast<int>(vertices.size() * sizeof(Vertex)));
     
-    QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
-    if (gl)
-    {
-        gl->glEnableVertexAttribArray(0);
-        gl->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
-    }
+    m_shader->enableAttributeArray(0);
+    m_shader->setAttributeBuffer(0, GL_FLOAT, 0, 2, sizeof(Vertex));
+    
+    m_shader->enableAttributeArray(1);
+    m_shader->setAttributeBuffer(1, GL_FLOAT, 2 * sizeof(float), 2, sizeof(Vertex));
     
     m_vertexBuffer->release();
     m_vao->release();
+    m_shader->release();
     
-    BasicLogger::logDebug("  Circle vertices generated: " + std::to_string(m_vertexCount));
+    m_vertexCount = static_cast<int>(vertices.size());
+    m_needsRebuild = false;
+    
+    BasicLogger::logDebug("PulsingVisualizer: Shape rebuilt (" + 
+                          std::to_string(static_cast<int>(shape)) + 
+                          ") with " + std::to_string(m_vertexCount) + " vertices");
 }
 
 void PulsingVisualizer::onRender(float deltaTime)
@@ -771,39 +826,19 @@ void PulsingVisualizer::onRender(float deltaTime)
     
     m_totalTime += deltaTime;
     
-    // =========================================================================
-    // Update Modules
-    // =========================================================================
-    
-    m_colorScheme.update(deltaTime);
-    m_pulseShape.update(deltaTime);
-    
-    // =========================================================================
-    // Get viewport from OpenGL state (most reliable)
-    // =========================================================================
-    GLint viewport[4];
-    gl->glGetIntegerv(GL_VIEWPORT, viewport);
-    int vpWidth = viewport[2];
-    int vpHeight = viewport[3];
-    
-    // Calculate aspect ratio from actual viewport
-    float aspect = 1.0f;
-    if (vpHeight > 0)
+    // Rebuild shape if needed
+    if (m_needsRebuild)
     {
-        aspect = static_cast<float>(vpWidth) / static_cast<float>(vpHeight);
+        rebuildShape();
     }
     
     // =========================================================================
-    // Animation
+    // Get Audio Data
     // =========================================================================
     
-    // Use base size from module, with small pulse animation
-    float baseSize = m_pulseShape.baseSize();
-    float pulseSize = baseSize + 0.05f * std::sin(m_totalTime * 2.0f);
-    
-    // Get audio level if available
     auto spectrum = getSpectrum();
     float audioLevel = 0.0f;
+    
     if (!spectrum.empty())
     {
         float sum = 0.0f;
@@ -812,69 +847,128 @@ void PulsingVisualizer::onRender(float deltaTime)
         {
             sum += spectrum[i];
         }
-        audioLevel = sum / count;
-        
-        // Modulate size with audio (around base size)
-        float audioModulation = 0.3f * audioLevel;
-        pulseSize = baseSize * (1.0f + audioModulation) + 0.05f * std::sin(m_totalTime * 2.0f);
-        pulseSize = std::clamp(pulseSize, 0.1f, 2.0f);
+        audioLevel = sum / static_cast<float>(count);
+        audioLevel *= m_audioSource.gain();
+        audioLevel = std::clamp(audioLevel, 0.0f, 1.0f);
     }
     
-    // Get color from color scheme module
-    auto color = m_colorScheme.sampleAnimated(audioLevel);
-    float r = color.r;
-    float g = color.g;
-    float b = color.b;
+    // =========================================================================
+    // Beat Detection for Rotation Reversal
+    // =========================================================================
     
-    // Ensure color is bright enough
-    float maxC = std::max({r, g, b});
-    if (maxC < 0.3f)
+    if (m_beatReverseRotation)
     {
-        float boost = 0.5f / (maxC + 0.01f);
-        r = std::min(1.0f, r * boost);
-        g = std::min(1.0f, g * boost);
-        b = std::min(1.0f, b * boost);
+        // Simple beat detection
+        float beatLevel = audioLevel * m_beatSensitivity;
+        if (beatLevel > m_beatThreshold && m_lastBassLevel <= m_beatThreshold)
+        {
+            // Beat detected - reverse direction
+            m_rotationDirection *= -1.0f;
+        }
+        m_lastBassLevel = beatLevel;
+    }
+    
+    // Update rotation
+    m_currentRotation += m_rotationSpeed * m_rotationDirection * deltaTime;
+    
+    // =========================================================================
+    // Calculate Size
+    // =========================================================================
+    
+    float size = m_minSize + (m_maxSize - m_minSize) * audioLevel;
+    size = std::clamp(size, m_minSize, m_maxSize);
+    
+    // =========================================================================
+    // Get Colors from Gradient
+    // =========================================================================
+    
+    const auto& stops = m_colorGradient.stops();
+    size_t stopCount = std::min(stops.size(), static_cast<size_t>(4));
+    
+    // Prepare colors for shader
+    lumi::modules::Color4f colors[4];
+    float positions[4] = {0.0f, 1.0f, 1.0f, 1.0f};
+    
+    for (size_t i = 0; i < stopCount; ++i)
+    {
+        colors[i] = stops[i].color;
+        positions[i] = stops[i].position;
+    }
+    
+    // Fill remaining with last color
+    for (size_t i = stopCount; i < 4; ++i)
+    {
+        colors[i] = stopCount > 0 ? colors[stopCount - 1] : lumi::modules::Color4f{1, 1, 1, 1};
+    }
+    
+    // Apply beat brightness
+    if (m_beatBrightnessEnabled)
+    {
+        float brightnessMod = 0.5f + 0.5f * audioLevel;
+        for (size_t i = 0; i < 4; ++i)
+        {
+            colors[i][0] *= brightnessMod;
+            colors[i][1] *= brightnessMod;
+            colors[i][2] *= brightnessMod;
+        }
+    }
+    
+    // =========================================================================
+    // Get Viewport
+    // =========================================================================
+    
+    GLint viewport[4];
+    gl->glGetIntegerv(GL_VIEWPORT, viewport);
+    float aspect = 1.0f;
+    if (viewport[3] > 0)
+    {
+        aspect = static_cast<float>(viewport[2]) / static_cast<float>(viewport[3]);
     }
     
     // =========================================================================
     // Render
     // =========================================================================
     
-    gl->glClearColor(0.0f, 0.0f, 0.02f, 1.0f);
+    gl->glClearColor(m_bgColorR, m_bgColorG, m_bgColorB, 1.0f);
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     gl->glDisable(GL_DEPTH_TEST);
-    gl->glDisable(GL_BLEND);
+    gl->glEnable(GL_BLEND);
+    gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     if (!m_shader || !m_vao || m_vertexCount == 0)
     {
-        static int warnCount = 0;
-        if (warnCount++ < 5)
-        {
-            BasicLogger::logWarning("renderPulse: not ready");
-        }
         return;
     }
     
     m_shader->bind();
     m_vao->bind();
     
-    // Debug log first 10 frames
-    static int frameCount = 0;
-    if (frameCount++ < 10)
-    {
-        BasicLogger::logDebug("Frame " + std::to_string(frameCount) + 
-                              ": size=" + std::to_string(pulseSize) +
-                              " aspect=" + std::to_string(aspect) +
-                              " viewport=" + std::to_string(vpWidth) + "x" + std::to_string(vpHeight) +
-                              " color=(" + std::to_string(r) + "," + 
-                              std::to_string(g) + "," + std::to_string(b) + ")");
-    }
-    
     // Set uniforms
-    gl->glUniform3f(m_uniformColor, r, g, b);
-    gl->glUniform1f(m_uniformIntensity, pulseSize);
     gl->glUniform1f(m_uniformAspect, aspect);
+    gl->glUniform1f(m_uniformSize, size);
+    gl->glUniform1f(m_uniformRotation, m_currentRotation * PI / 180.0f);
+    
+    // Color mode
+    int colorMode = static_cast<int>(m_colorGradient.mode());
+    gl->glUniform1i(m_uniformColorMode, colorMode);
+    gl->glUniform1f(m_uniformGradientAngle, m_colorGradient.angle() * PI / 180.0f);
+    
+    // Colors
+    gl->glUniform4f(m_uniformColor0, colors[0][0], colors[0][1], colors[0][2], colors[0][3]);
+    gl->glUniform4f(m_uniformColor1, colors[1][0], colors[1][1], colors[1][2], colors[1][3]);
+    gl->glUniform4f(m_uniformColor2, colors[2][0], colors[2][1], colors[2][2], colors[2][3]);
+    gl->glUniform4f(m_uniformColor3, colors[3][0], colors[3][1], colors[3][2], colors[3][3]);
+    gl->glUniform4f(m_uniformStopPos, positions[0], positions[1], positions[2], positions[3]);
+    gl->glUniform1i(m_uniformStopCount, static_cast<int>(stopCount));
+    
+    // Inner radius only for Ring
+    float innerR = (m_pulseShape.shape() == lumi::modules::PulseShape::Ring) 
+                   ? m_innerRadius : 0.0f;
+    gl->glUniform1f(m_uniformInnerRadius, innerR);
+    
+    // Outline width
+    gl->glUniform1f(m_uniformOutlineWidth, m_colorGradient.outlineWidth());
     
     // Draw
     gl->glDrawArrays(GL_TRIANGLE_FAN, 0, m_vertexCount);
@@ -900,10 +994,10 @@ void PulsingVisualizer::onCleanup()
 }
 
 // =============================================================================
-// Unused stubs
+// Stubs
 // =============================================================================
 
 bool PulsingVisualizer::createShaders() { return true; }
-void PulsingVisualizer::updateVertexBuffer() {}
+void PulsingVisualizer::updateVertexBuffer() { rebuildShape(); }
 void PulsingVisualizer::renderPulse(float, float) {}
 float PulsingVisualizer::detectBeat(float) { return 0.0f; }

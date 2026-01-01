@@ -156,10 +156,17 @@ void VisualizerWidget::subscribeToConfigEvents()
                 auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer.get());
                 if (pulsing)
                 {
-                    auto scheme = static_cast<lumi::modules::ColorSchemeType>(evt.schemeIndex);
-                    pulsing->setColorScheme(scheme);
-                    BasicLogger::logDebug("VisualizerWidget: Applied color scheme " + 
-                                          std::to_string(evt.schemeIndex));
+                    // Map scheme index to preset name
+                    static const char* presetNames[] = {
+                        "Fire", "Ocean", "Neon", "Rainbow", "Sunset",
+                        "Forest", "Ice", "Lava", "Galaxy", "Monochrome"
+                    };
+                    if (evt.schemeIndex >= 0 && evt.schemeIndex < 10)
+                    {
+                        pulsing->loadGradientPreset(presetNames[evt.schemeIndex]);
+                        BasicLogger::logDebug("VisualizerWidget: Applied gradient preset " + 
+                                              std::string(presetNames[evt.schemeIndex]));
+                    }
                 }
             }
         )

@@ -13,6 +13,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/AboutDialog.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/DialogAutoReg.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/DialogBase.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/GradientEditorDialog.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)

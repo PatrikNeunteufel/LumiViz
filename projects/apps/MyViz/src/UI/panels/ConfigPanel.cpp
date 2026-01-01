@@ -12,7 +12,9 @@
 #include "UI/panels/ConfigPanel.hpp"
 #include "UI/widgets/CollapsibleGroupBox.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "UI/dialogs/GradientEditorDialog.hpp"
 #include "visualizers/IVisualizer.hpp"
+#include "visualizers/PulsingVisualizer.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/events/UIEvents.hpp"
@@ -582,26 +584,66 @@ QWidget* ConfigPanel::createStringWidget(const ModuleParamDesc& desc)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(8);
 
-    auto* label = new QLabel(QString::fromStdString(desc.displayName), container);
-    label->setMinimumWidth(100);
-    layout->addWidget(label);
+    // Check if this should be a button (displayName ends with "...")
+    bool isButton = desc.displayName.find("...") != std::string::npos;
+    
+    if (isButton)
+    {
+        // Create a button instead of a text field
+        auto* button = new QPushButton(QString::fromStdString(desc.displayName), container);
+        button->setToolTip(QString::fromStdString(desc.tooltip));
+        
+        // Special handling for gradient editor
+        if (desc.id.find("editGradient") != std::string::npos)
+        {
+            connect(button, &QPushButton::clicked,
+                    [this, id = desc.id]() {
+                        openGradientEditor(id);
+                    });
+        }
+        else
+        {
+            // Generic button click - just notify param changed
+            connect(button, &QPushButton::clicked,
+                    [this, id = desc.id]() {
+                        onParamChanged(id, std::string("clicked"));
+                    });
+        }
+        
+        layout->addWidget(button);
+        layout->addStretch();
+        
+        // Track widget
+        ParamWidgetInfo info;
+        info.container = container;
+        info.control = button;
+        info.desc = desc;
+        m_paramWidgets[QString::fromStdString(desc.id)] = info;
+    }
+    else
+    {
+        // Standard text field
+        auto* label = new QLabel(QString::fromStdString(desc.displayName), container);
+        label->setMinimumWidth(100);
+        layout->addWidget(label);
 
-    auto* lineEdit = new QLineEdit(container);
-    lineEdit->setToolTip(QString::fromStdString(desc.tooltip));
+        auto* lineEdit = new QLineEdit(container);
+        lineEdit->setToolTip(QString::fromStdString(desc.tooltip));
 
-    connect(lineEdit, &QLineEdit::textChanged,
-            [this, id = desc.id](const QString& text) {
-                onParamChanged(id, text.toStdString());
-            });
+        connect(lineEdit, &QLineEdit::textChanged,
+                [this, id = desc.id](const QString& text) {
+                    onParamChanged(id, text.toStdString());
+                });
 
-    layout->addWidget(lineEdit, 1);
+        layout->addWidget(lineEdit, 1);
 
-    // Track widget
-    ParamWidgetInfo info;
-    info.container = container;
-    info.control = lineEdit;
-    info.desc = desc;
-    m_paramWidgets[QString::fromStdString(desc.id)] = info;
+        // Track widget
+        ParamWidgetInfo info;
+        info.container = container;
+        info.control = lineEdit;
+        info.desc = desc;
+        m_paramWidgets[QString::fromStdString(desc.id)] = info;
+    }
 
     return container;
 }
@@ -699,4 +741,45 @@ void ConfigPanel::updateVisibility()
             it->container->setVisible(visible);
         }
     }
+}
+
+// =============================================================================
+// Gradient Editor Dialog
+// =============================================================================
+
+void ConfigPanel::openGradientEditor(const std::string& /*paramId*/)
+{
+    if (!m_visualizer)
+    {
+        BasicLogger::logWarning("ConfigPanel: No visualizer set for gradient editor");
+        return;
+    }
+    
+    // Try to cast to PulsingVisualizer to get access to gradient module
+    auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer);
+    if (!pulsing)
+    {
+        BasicLogger::logWarning("ConfigPanel: Gradient editor only supported for PulsingVisualizer");
+        return;
+    }
+    
+    auto* gradient = pulsing->colorGradient();
+    if (!gradient)
+    {
+        BasicLogger::logError("ConfigPanel: ColorGradientModule is null");
+        return;
+    }
+    
+    // Create and show dialog
+    lumi::ui::GradientEditorDialog dialog(gradient, this);
+    
+    // When gradient changes, notify the visualizer
+    dialog.setChangeCallback([]() {
+        // Trigger a repaint or parameter sync if needed
+        BasicLogger::logDebug("ConfigPanel: Gradient changed via editor");
+    });
+    
+    dialog.exec();
+    
+    BasicLogger::logInfo("ConfigPanel: Gradient editor closed");
 }

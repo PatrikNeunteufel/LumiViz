@@ -117,6 +117,9 @@ private:
 
     // Update widget visibility based on dependencies
     void updateVisibility();
+    
+    // Open gradient editor dialog
+    void openGradientEditor(const std::string& paramId);
 
     // Event subscription
     void subscribeToEvents();
