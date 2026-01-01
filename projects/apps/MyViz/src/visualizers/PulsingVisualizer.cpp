@@ -253,6 +253,23 @@ std::vector<lumi::modules::ModuleParamDesc> PulsingVisualizer::paramDescs() cons
         params.push_back(p);
     }
 
+    // =========================================================================
+    // Audio Source Parameters (aggregated from AudioSourceModule)
+    // =========================================================================
+    
+    for (const auto& p : m_audioSource.paramDescs())
+    {
+        ModuleParamDesc prefixed = p;
+        prefixed.id = "audio." + p.id;
+        // Remap groups to Audio prefix
+        if (p.group == "Mapping" || p.group == "Normalization" || 
+            p.group == "Gain" || p.group == "Smoothing")
+        {
+            prefixed.group = "Audio";
+        }
+        params.push_back(prefixed);
+    }
+
     return params;
 }
 
@@ -320,6 +337,12 @@ bool PulsingVisualizer::getParam(const std::string& id,
     {
         out = m_pulseShape.rotationSpeed();
         return true;
+    }
+    
+    // Audio parameters (delegate to AudioSourceModule)
+    if (id.rfind("audio.", 0) == 0)
+    {
+        return m_audioSource.getParam(id.substr(6), out);
     }
     
     return false;
@@ -422,6 +445,12 @@ bool PulsingVisualizer::setParam(const std::string& id,
             m_pulseShape.setRotationSpeed(*v);
             return true;
         }
+    }
+    
+    // Audio parameters (delegate to AudioSourceModule)
+    if (id.rfind("audio.", 0) == 0)
+    {
+        return m_audioSource.setParam(id.substr(6), value);
     }
     
     return false;
@@ -743,6 +772,13 @@ void PulsingVisualizer::onRender(float deltaTime)
     m_totalTime += deltaTime;
     
     // =========================================================================
+    // Update Modules
+    // =========================================================================
+    
+    m_colorScheme.update(deltaTime);
+    m_pulseShape.update(deltaTime);
+    
+    // =========================================================================
     // Get viewport from OpenGL state (most reliable)
     // =========================================================================
     GLint viewport[4];
@@ -761,8 +797,9 @@ void PulsingVisualizer::onRender(float deltaTime)
     // Animation
     // =========================================================================
     
-    // Size pulses between 0.4 and 0.9
-    float pulseSize = 0.65f + 0.25f * std::sin(m_totalTime * 2.0f);
+    // Use base size from module, with small pulse animation
+    float baseSize = m_pulseShape.baseSize();
+    float pulseSize = baseSize + 0.05f * std::sin(m_totalTime * 2.0f);
     
     // Get audio level if available
     auto spectrum = getSpectrum();
@@ -777,9 +814,10 @@ void PulsingVisualizer::onRender(float deltaTime)
         }
         audioLevel = sum / count;
         
-        // Modulate size with audio
-        pulseSize = 0.4f + 0.5f * audioLevel + 0.1f * std::sin(m_totalTime * 2.0f);
-        pulseSize = std::clamp(pulseSize, 0.3f, 1.0f);
+        // Modulate size with audio (around base size)
+        float audioModulation = 0.3f * audioLevel;
+        pulseSize = baseSize * (1.0f + audioModulation) + 0.05f * std::sin(m_totalTime * 2.0f);
+        pulseSize = std::clamp(pulseSize, 0.1f, 2.0f);
     }
     
     // Get color from color scheme module
