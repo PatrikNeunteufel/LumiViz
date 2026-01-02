@@ -366,6 +366,13 @@ std::vector<lumi::modules::ModuleParamDesc> PulsingVisualizer::paramDescs() cons
         ModuleParamDesc prefixed = p;
         prefixed.id = "audio." + p.id;
         prefixed.group = "1. Audio";
+        
+        // Also prefix the dependsOn reference if set
+        if (!prefixed.dependsOn.empty())
+        {
+            prefixed.dependsOn = "audio." + prefixed.dependsOn;
+        }
+        
         params.push_back(prefixed);
     }
 
@@ -397,6 +404,8 @@ std::vector<lumi::modules::ModuleParamDesc> PulsingVisualizer::paramDescs() cons
         p.defaultValue = 6;
         p.group = "2. Shape";
         p.order = 1;
+        p.dependsOn = "shape.type";
+        p.dependsValues = {2, 3};  // NGon=2, Star=3
         params.push_back(p);
     }
     
@@ -411,6 +420,8 @@ std::vector<lumi::modules::ModuleParamDesc> PulsingVisualizer::paramDescs() cons
         p.defaultValue = 0.5f;
         p.group = "2. Shape";
         p.order = 2;
+        p.dependsOn = "shape.type";
+        p.dependsValues = {1};  // Ring=1
         params.push_back(p);
     }
     
@@ -479,6 +490,13 @@ std::vector<lumi::modules::ModuleParamDesc> PulsingVisualizer::paramDescs() cons
         prefixed.id = "shape.color." + p.id;
         prefixed.group = "2. Shape";
         prefixed.order = 10 + p.order;  // After shape params
+        
+        // Also prefix the dependsOn reference if set
+        if (!prefixed.dependsOn.empty())
+        {
+            prefixed.dependsOn = "shape.color." + prefixed.dependsOn;
+        }
+        
         params.push_back(prefixed);
     }
     

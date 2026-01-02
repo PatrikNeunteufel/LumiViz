@@ -153,7 +153,7 @@ private:
     {
         QWidget* container = nullptr;
         QWidget* control = nullptr;
-        QLabel* valueLabel = nullptr;
+        QWidget* valueLabel = nullptr;  // Can be QSpinBox, QDoubleSpinBox, or QLabel
         lumi::modules::ModuleParamDesc desc;
     };
     QMap<QString, ParamWidgetInfo> m_paramWidgets;

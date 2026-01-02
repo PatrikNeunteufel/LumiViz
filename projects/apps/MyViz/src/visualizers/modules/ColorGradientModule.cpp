@@ -43,7 +43,7 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
 {
     std::vector<ModuleParamDesc> params;
 
-    // Mode selection
+    // Mode selection (always visible)
     {
         ModuleParamDesc p;
         p.id = "mode";
@@ -56,7 +56,7 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
         params.push_back(p);
     }
 
-    // Solid color (visible when mode == Solid)
+    // Solid color (visible when mode == Solid or Outline)
     {
         ModuleParamDesc p;
         p.id = "solidColor";
@@ -64,6 +64,8 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
         p.tooltip = "Solid fill color (for Solid/Outline mode)";
         p.type = ParamType::Color;
         p.order = 1;
+        p.dependsOn = "mode";
+        p.dependsValues = {0, 3};  // Solid=0, Outline=3
         params.push_back(p);
     }
 
@@ -78,10 +80,12 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
         p.maxValue = 360.0f;
         p.defaultValue = 0.0f;
         p.order = 2;
+        p.dependsOn = "mode";
+        p.dependsValues = {1};  // Linear=1
         params.push_back(p);
     }
 
-    // Preset selection
+    // Preset selection (visible when mode == Linear or Radial)
     {
         ModuleParamDesc p;
         p.id = "preset";
@@ -91,11 +95,12 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
         p.defaultValue = 0;
         p.enumOptions = presetNames();
         p.order = 3;
+        p.dependsOn = "mode";
+        p.dependsValues = {1, 2};  // Linear=1, Radial=2
         params.push_back(p);
     }
     
-    // Edit Gradient button (triggers dialog)
-    // Note: displayName ending with "..." signals to UI to show as button
+    // Edit Gradient button (visible when mode == Linear or Radial)
     {
         ModuleParamDesc p;
         p.id = "editGradient";
@@ -103,11 +108,12 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
         p.tooltip = "Open gradient editor dialog";
         p.type = ParamType::String;
         p.order = 4;
+        p.dependsOn = "mode";
+        p.dependsValues = {1, 2};  // Linear=1, Radial=2
         params.push_back(p);
     }
     
     // Outline width (visible when mode == Outline)
-    // Value is in pixels (1-15)
     {
         ModuleParamDesc p;
         p.id = "outlineWidth";
@@ -118,6 +124,8 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
         p.maxValue = 15.0f;
         p.defaultValue = 3.0f;
         p.order = 5;
+        p.dependsOn = "mode";
+        p.dependsValues = {3};  // Outline=3
         params.push_back(p);
     }
 

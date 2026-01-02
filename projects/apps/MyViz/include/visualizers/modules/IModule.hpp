@@ -173,8 +173,8 @@ struct ModuleParamDesc
     // Dependencies (conditional visibility)
     // -------------------------------------------------------------------------
     
-    std::string dependsOn;      ///< Other param ID
-    ParamValue dependsValue;    ///< Required value for visibility
+    std::string dependsOn;                   ///< Other param ID
+    std::vector<ParamValue> dependsValues;   ///< Any of these values makes param visible (OR logic)
     
     // -------------------------------------------------------------------------
     // Units & Formatting
@@ -478,10 +478,19 @@ public:
         return *this;
     }
     
+    /// @brief Set single dependency value
     ParamBuilder& dependsOn(std::string paramId, ParamValue val)
     {
         m_desc.dependsOn = std::move(paramId);
-        m_desc.dependsValue = std::move(val);
+        m_desc.dependsValues = {std::move(val)};
+        return *this;
+    }
+    
+    /// @brief Set multiple dependency values (OR logic - visible if ANY matches)
+    ParamBuilder& dependsOn(std::string paramId, std::vector<ParamValue> vals)
+    {
+        m_desc.dependsOn = std::move(paramId);
+        m_desc.dependsValues = std::move(vals);
         return *this;
     }
     

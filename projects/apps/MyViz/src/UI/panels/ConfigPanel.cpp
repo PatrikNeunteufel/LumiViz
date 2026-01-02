@@ -36,6 +36,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QGroupBox>
+#include <QSignalBlocker>
 
 #include <BasicLogger.h>
 
@@ -227,10 +228,11 @@ void ConfigPanel::syncFromVisualizer()
                     int sliderVal = static_cast<int>((*f - desc.minValue) / range * 1000);
                     slider->setValue(sliderVal);
                     
-                    // Update value label if present
-                    if (it->valueLabel)
+                    // Update value spinbox if present
+                    if (auto* dspinbox = qobject_cast<QDoubleSpinBox*>(it->valueLabel))
                     {
-                        it->valueLabel->setText(QString::number(*f, 'f', 2));
+                        QSignalBlocker blocker(dspinbox);
+                        dspinbox->setValue(*f);
                     }
                 }
             }
@@ -238,10 +240,11 @@ void ConfigPanel::syncFromVisualizer()
             {
                 slider->setValue(*i);
                 
-                // Update value label if present
-                if (it->valueLabel)
+                // Update value spinbox if present
+                if (auto* ispinbox = qobject_cast<QSpinBox*>(it->valueLabel))
                 {
-                    it->valueLabel->setText(QString::number(*i));
+                    QSignalBlocker blocker(ispinbox);
+                    ispinbox->setValue(*i);
                 }
             }
         }
@@ -473,7 +476,7 @@ QWidget* ConfigPanel::createIntWidget(const ModuleParamDesc& desc)
 
     QWidget* control = nullptr;
 
-    // Use spinbox for large ranges, slider otherwise
+    // Use spinbox for large ranges, slider+spinbox otherwise
     int range = static_cast<int>(desc.maxValue - desc.minValue);
     
     if (desc.widget == ParamWidget::Spinbox || range > 100)
@@ -493,31 +496,46 @@ QWidget* ConfigPanel::createIntWidget(const ModuleParamDesc& desc)
     }
     else
     {
+        // Slider + SpinBox combination for smaller ranges
         auto* slider = new QSlider(Qt::Horizontal, container);
         slider->setRange(static_cast<int>(desc.minValue), static_cast<int>(desc.maxValue));
         slider->setToolTip(QString::fromStdString(desc.tooltip));
 
-        auto* valueLabel = new QLabel(container);
-        valueLabel->setMinimumWidth(50);
-        valueLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        auto* spinbox = new QSpinBox(container);
+        spinbox->setRange(static_cast<int>(desc.minValue), static_cast<int>(desc.maxValue));
+        spinbox->setSingleStep(desc.step > 0 ? static_cast<int>(desc.step) : 1);
+        spinbox->setMinimumWidth(50);
+        spinbox->setMaximumWidth(70);
+        if (!desc.unit.empty())
+        {
+            spinbox->setSuffix(QString::fromStdString(" " + desc.unit));
+        }
 
-        QString unit = QString::fromStdString(desc.unit);
-
+        // Slider -> SpinBox + param change
         connect(slider, &QSlider::valueChanged,
-                [this, id = desc.id, valueLabel, unit](int value) {
-                    valueLabel->setText(QString::number(value) + unit);
+                [this, id = desc.id, spinbox](int value) {
+                    QSignalBlocker blocker(spinbox);
+                    spinbox->setValue(value);
+                    onParamChanged(id, value);
+                });
+
+        // SpinBox -> Slider + param change
+        connect(spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
+                [this, id = desc.id, slider](int value) {
+                    QSignalBlocker blocker(slider);
+                    slider->setValue(value);
                     onParamChanged(id, value);
                 });
 
         control = slider;
         layout->addWidget(slider, 1);
-        layout->addWidget(valueLabel);
+        layout->addWidget(spinbox);
 
-        // Track value label
+        // Track widgets
         ParamWidgetInfo info;
         info.container = container;
         info.control = slider;
-        info.valueLabel = valueLabel;
+        info.valueLabel = spinbox;
         info.desc = desc;
         m_paramWidgets[QString::fromStdString(desc.id)] = info;
 
@@ -550,29 +568,54 @@ QWidget* ConfigPanel::createFloatWidget(const ModuleParamDesc& desc)
     slider->setRange(0, 1000);
     slider->setToolTip(QString::fromStdString(desc.tooltip));
 
-    auto* valueLabel = new QLabel(container);
-    valueLabel->setMinimumWidth(60);
-    valueLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    // Editable spinbox for direct value input
+    auto* spinbox = new QDoubleSpinBox(container);
+    spinbox->setRange(desc.minValue, desc.maxValue);
+    spinbox->setDecimals(2);
+    spinbox->setSingleStep((desc.maxValue - desc.minValue) / 100.0);
+    spinbox->setMinimumWidth(70);
+    spinbox->setMaximumWidth(90);
+    if (!desc.unit.empty())
+    {
+        spinbox->setSuffix(QString::fromStdString(" " + desc.unit));
+    }
 
-    QString unit = QString::fromStdString(desc.unit);
     float range = desc.maxValue - desc.minValue;
     float minVal = desc.minValue;
 
+    // Slider -> SpinBox + param change
     connect(slider, &QSlider::valueChanged,
-            [this, id = desc.id, valueLabel, unit, minVal, range](int sliderVal) {
+            [this, id = desc.id, spinbox, minVal, range](int sliderVal) {
                 float value = minVal + (sliderVal / 1000.0f) * range;
-                valueLabel->setText(QString::number(value, 'f', 2) + unit);
+                
+                // Block signals to prevent recursion
+                QSignalBlocker blocker(spinbox);
+                spinbox->setValue(value);
+                
                 onParamChanged(id, value);
             });
 
+    // SpinBox -> Slider + param change
+    connect(spinbox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            [this, id = desc.id, slider, minVal, range](double value) {
+                int sliderVal = static_cast<int>(((value - minVal) / range) * 1000.0);
+                sliderVal = std::clamp(sliderVal, 0, 1000);
+                
+                // Block signals to prevent recursion
+                QSignalBlocker blocker(slider);
+                slider->setValue(sliderVal);
+                
+                onParamChanged(id, static_cast<float>(value));
+            });
+
     layout->addWidget(slider, 1);
-    layout->addWidget(valueLabel);
+    layout->addWidget(spinbox);
 
     // Track widget
     ParamWidgetInfo info;
     info.container = container;
     info.control = slider;
-    info.valueLabel = valueLabel;
+    info.valueLabel = spinbox;  // Now a spinbox, not a label
     info.desc = desc;
     m_paramWidgets[QString::fromStdString(desc.id)] = info;
 
@@ -799,7 +842,16 @@ void ConfigPanel::updateVisibility()
         ParamValue depValue;
         if (m_visualizer->getParam(desc.dependsOn, depValue))
         {
-            bool visible = (depValue == desc.dependsValue);
+            // Check if current value matches ANY of the required values (OR logic)
+            bool visible = false;
+            for (const auto& reqValue : desc.dependsValues)
+            {
+                if (depValue == reqValue)
+                {
+                    visible = true;
+                    break;
+                }
+            }
             it->container->setVisible(visible);
         }
     }

@@ -499,7 +499,16 @@ void ModuleConfigWidget::updateVisibility()
         ParamValue depValue;
         if (m_module->getParam(desc.dependsOn, depValue))
         {
-            bool visible = (depValue == desc.dependsValue);
+            // Check if current value matches ANY of the required values (OR logic)
+            bool visible = false;
+            for (const auto& reqValue : desc.dependsValues)
+            {
+                if (depValue == reqValue)
+                {
+                    visible = true;
+                    break;
+                }
+            }
             it->widget->setVisible(visible);
         }
     }

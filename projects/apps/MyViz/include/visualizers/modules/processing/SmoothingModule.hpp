@@ -303,21 +303,22 @@ inline std::vector<ModuleParamDesc> SmoothingModule::paramDescs() const
             .order(0)
             .build(),
             
+        ParamBuilder("preset", ParamType::Enum)
+            .displayName("Preset")
+            .enumOptions(presetNames())
+            .defaultValue(static_cast<int>(SmoothingPreset::Balanced))
+            .tooltip("Predefined smoothing configurations")
+            .order(1)
+            .build(),
+            
         ParamBuilder("timeMs", ParamType::Float)
             .displayName("Time")
             .range(MIN_TIME_MS, MAX_TIME_MS, 1.0f)
             .defaultValue(50.0f)
             .unit("ms")
             .tooltip("Smoothing time constant")
-            .order(1)
-            .build(),
-            
-        ParamBuilder("preset", ParamType::Enum)
-            .displayName("Preset")
-            .enumOptions(presetNames())
-            .defaultValue(static_cast<int>(SmoothingPreset::Balanced))
-            .tooltip("Predefined smoothing configurations")
             .order(2)
+            .dependsOn("algorithm", std::vector<ParamValue>{1, 2, 3, 4})  // SMA, EMA, WMA, DEMA
             .build(),
             
         ParamBuilder("primeFirstFrame", ParamType::Bool)
@@ -326,6 +327,7 @@ inline std::vector<ModuleParamDesc> SmoothingModule::paramDescs() const
             .tooltip("Initialize with first input value")
             .advanced(true)
             .order(10)
+            .dependsOn("algorithm", std::vector<ParamValue>{1, 2, 3, 4})  // SMA, EMA, WMA, DEMA
             .build()
     };
 }

@@ -472,6 +472,13 @@ inline std::vector<ModuleParamDesc> AudioSourceModule::paramDescs() const
         ModuleParamDesc prefixed = p;
         prefixed.id = "smooth." + p.id;
         prefixed.group = "Smoothing";
+        
+        // Also prefix the dependsOn reference if set
+        if (!prefixed.dependsOn.empty())
+        {
+            prefixed.dependsOn = "smooth." + prefixed.dependsOn;
+        }
+        
         params.push_back(prefixed);
     }
     
