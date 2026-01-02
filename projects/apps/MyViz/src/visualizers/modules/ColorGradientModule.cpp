@@ -649,8 +649,53 @@ void ColorGradientModule::savePreset(const std::string& name)
     m_userPresets[name] = preset;
     m_currentPreset = name;
     
-    // Persist to disk
-    saveUserPresetsToDisk();
+    // Save to individual .grad file
+    if (s_userPresetsDir.empty())
+    {
+        BasicLogger::logWarning("ColorGradientModule: No user presets dir set, cannot save");
+        return;
+    }
+    
+    std::filesystem::create_directories(s_userPresetsDir);
+    std::string filePath = s_userPresetsDir + "/" + name + ".grad";
+    
+    std::ofstream file(filePath);
+    if (!file.is_open())
+    {
+        BasicLogger::logError("ColorGradientModule: Cannot write to " + filePath);
+        return;
+    }
+    
+    // Write JSON
+    file << "{\n";
+    file << "  \"name\": \"" << name << "\",\n";
+    file << "  \"mode\": " << static_cast<int>(preset.mode) << ",\n";
+    file << "  \"angle\": " << preset.angle << ",\n";
+    
+    // Stops
+    file << "  \"stops\": [";
+    for (size_t i = 0; i < preset.stops.size(); ++i)
+    {
+        const auto& s = preset.stops[i];
+        if (i > 0) file << ", ";
+        file << "[" << s.position << "," 
+             << s.color[0] << "," << s.color[1] << "," 
+             << s.color[2] << "," << s.color[3] << "]";
+    }
+    file << "],\n";
+    
+    // Midpoints
+    file << "  \"midpoints\": [";
+    for (size_t i = 0; i < preset.midpoints.size(); ++i)
+    {
+        if (i > 0) file << ", ";
+        file << preset.midpoints[i].position;
+    }
+    file << "]\n";
+    
+    file << "}\n";
+    
+    BasicLogger::logInfo("ColorGradientModule: Saved gradient preset '" + name + "' to " + filePath);
 }
 
 bool ColorGradientModule::deletePreset(const std::string& name)
@@ -666,8 +711,13 @@ bool ColorGradientModule::deletePreset(const std::string& name)
     {
         m_userPresets.erase(it);
         
-        // Persist to disk
-        saveUserPresetsToDisk();
+        // Delete .grad file
+        if (!s_userPresetsDir.empty())
+        {
+            std::string filePath = s_userPresetsDir + "/" + name + ".grad";
+            std::filesystem::remove(filePath);
+            BasicLogger::logInfo("ColorGradientModule: Deleted gradient preset '" + name + "'");
+        }
         return true;
     }
     
@@ -790,28 +840,31 @@ float ColorGradientModule::applyMidpoint(float t, size_t segmentIndex) const
     
     float mid = m_midpoints[segmentIndex].position;
     
-    // Apply non-linear interpolation based on midpoint
-    // mid < 0.5: shift towards start color
-    // mid > 0.5: shift towards end color
-    // mid == 0.5: linear (t unchanged)
+    // The midpoint defines WHERE the 50/50 blend occurs
+    // Remap t so that t=mid maps to 0.5 (50% blend)
+    // t ∈ [0, mid] → [0, 0.5]
+    // t ∈ [mid, 1] → [0.5, 1]
     
-    if (std::abs(mid - 0.5f) < 0.001f)
+    // Handle edge cases
+    if (mid <= 0.001f)
     {
-        return t;
+        return t < 0.001f ? 0.5f : 0.5f + t * 0.5f;
+    }
+    if (mid >= 0.999f)
+    {
+        return t > 0.999f ? 0.5f : t * 0.5f;
     }
     
-    // Use power curve for smooth adjustment
-    if (mid < 0.5f)
+    // Piecewise linear remapping
+    if (t <= mid)
     {
-        // Shift towards start
-        float power = 0.5f / mid;
-        return std::pow(t, power);
+        // Map [0, mid] to [0, 0.5]
+        return t * 0.5f / mid;
     }
     else
     {
-        // Shift towards end
-        float power = (1.0f - mid) / 0.5f;
-        return 1.0f - std::pow(1.0f - t, power);
+        // Map [mid, 1] to [0.5, 1]
+        return 0.5f + (t - mid) * 0.5f / (1.0f - mid);
     }
 }
 
@@ -834,111 +887,116 @@ void ColorGradientModule::loadUserPresetsFromDisk()
         return;
     }
     
-    m_userPresetsLoaded = true;  // Mark as loaded (even if file doesn't exist)
+    m_userPresetsLoaded = true;  // Mark as loaded (even if no files exist)
     
-    std::string filePath = s_userPresetsDir + "/gradient_presets.json";
-    
-    std::ifstream file(filePath);
-    if (!file.is_open())
+    // Scan directory for .grad files
+    std::filesystem::path dirPath(s_userPresetsDir);
+    if (!std::filesystem::exists(dirPath))
     {
-        // No user presets file yet - that's OK
-        BasicLogger::logDebug("ColorGradientModule: No user presets file at " + filePath);
+        BasicLogger::logDebug("ColorGradientModule: User presets dir does not exist yet: " + s_userPresetsDir);
         return;
     }
     
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    std::string content = buffer.str();
-    
-    // Parse JSON manually (simple format)
-    // Format: { "presets": [ { "name": "...", "mode": 0, "angle": 0, 
-    //           "stops": [[pos,r,g,b,a],...], "midpoints": [0.5,...] }, ... ] }
-    
-    // Find presets array
-    size_t presetsStart = content.find("\"presets\"");
-    if (presetsStart == std::string::npos)
+    int loadedCount = 0;
+    for (const auto& entry : std::filesystem::directory_iterator(dirPath))
     {
-        return;
-    }
-    
-    size_t arrayStart = content.find('[', presetsStart);
-    if (arrayStart == std::string::npos)
-    {
-        return;
-    }
-    
-    // Parse each preset object
-    size_t pos = arrayStart + 1;
-    while (pos < content.size())
-    {
-        // Find next preset object
-        size_t objStart = content.find('{', pos);
-        if (objStart == std::string::npos || objStart >= content.size())
+        if (!entry.is_regular_file())
         {
-            break;
+            continue;
         }
         
-        // Find matching closing brace
-        int braceCount = 1;
-        size_t objEnd = objStart + 1;
-        while (objEnd < content.size() && braceCount > 0)
+        std::string ext = entry.path().extension().string();
+        if (ext != ".grad")
         {
-            if (content[objEnd] == '{') ++braceCount;
-            else if (content[objEnd] == '}') --braceCount;
-            ++objEnd;
+            continue;
         }
         
-        if (braceCount != 0)
+        // Load single preset file
+        std::ifstream file(entry.path());
+        if (!file.is_open())
         {
-            break;
+            continue;
         }
         
-        std::string objStr = content.substr(objStart, objEnd - objStart);
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        std::string content = buffer.str();
         
-        // Parse preset fields
         GradientPreset preset;
-        
-        // Name
-        size_t namePos = objStr.find("\"name\"");
-        if (namePos != std::string::npos)
+        if (parseGradientFile(content, preset))
         {
-            size_t valStart = objStr.find('"', namePos + 6);
-            size_t valEnd = objStr.find('"', valStart + 1);
-            if (valStart != std::string::npos && valEnd != std::string::npos)
-            {
-                preset.name = objStr.substr(valStart + 1, valEnd - valStart - 1);
-            }
+            m_userPresets[preset.name] = preset;
+            ++loadedCount;
+            BasicLogger::logDebug("ColorGradientModule: Loaded '" + preset.name + "' from " + 
+                                  entry.path().filename().string());
         }
-        
-        // Mode
-        size_t modePos = objStr.find("\"mode\"");
-        if (modePos != std::string::npos)
+    }
+    
+    BasicLogger::logInfo("ColorGradientModule: Loaded " + 
+                         std::to_string(loadedCount) + " user gradient presets");
+}
+
+bool ColorGradientModule::parseGradientFile(const std::string& content, GradientPreset& preset)
+{
+    // Parse single .grad JSON file
+    // Format: { "name": "...", "mode": 0, "angle": 0, 
+    //           "stops": [[pos,r,g,b,a],...], "midpoints": [0.5,...] }
+    
+    // Name
+    size_t namePos = content.find("\"name\"");
+    if (namePos != std::string::npos)
+    {
+        size_t valStart = content.find('"', namePos + 6);
+        size_t valEnd = content.find('"', valStart + 1);
+        if (valStart != std::string::npos && valEnd != std::string::npos)
         {
-            size_t valStart = objStr.find(':', modePos) + 1;
-            while (valStart < objStr.size() && std::isspace(objStr[valStart])) ++valStart;
-            int mode = std::stoi(objStr.substr(valStart));
+            preset.name = content.substr(valStart + 1, valEnd - valStart - 1);
+        }
+    }
+    
+    // Mode
+    size_t modePos = content.find("\"mode\"");
+    if (modePos != std::string::npos)
+    {
+        size_t valStart = content.find(':', modePos) + 1;
+        while (valStart < content.size() && std::isspace(content[valStart])) ++valStart;
+        try {
+            int mode = std::stoi(content.substr(valStart));
             preset.mode = static_cast<GradientMode>(mode);
-        }
-        
-        // Angle
-        size_t anglePos = objStr.find("\"angle\"");
-        if (anglePos != std::string::npos)
+        } catch (...) {}
+    }
+    
+    // Angle
+    size_t anglePos = content.find("\"angle\"");
+    if (anglePos != std::string::npos)
+    {
+        size_t valStart = content.find(':', anglePos) + 1;
+        while (valStart < content.size() && std::isspace(content[valStart])) ++valStart;
+        try {
+            preset.angle = std::stof(content.substr(valStart));
+        } catch (...) {}
+    }
+    
+    // Stops array - need to find matching bracket (nested arrays!)
+    size_t stopsPos = content.find("\"stops\"");
+    if (stopsPos != std::string::npos)
+    {
+        size_t arrStart = content.find('[', stopsPos);
+        if (arrStart != std::string::npos)
         {
-            size_t valStart = objStr.find(':', anglePos) + 1;
-            while (valStart < objStr.size() && std::isspace(objStr[valStart])) ++valStart;
-            preset.angle = std::stof(objStr.substr(valStart));
-        }
-        
-        // Stops array
-        size_t stopsPos = objStr.find("\"stops\"");
-        if (stopsPos != std::string::npos)
-        {
-            size_t arrStart = objStr.find('[', stopsPos);
-            size_t arrEnd = objStr.find(']', arrStart);
-            if (arrStart != std::string::npos && arrEnd != std::string::npos)
+            // Find matching closing bracket by counting
+            int bracketCount = 1;
+            size_t arrEnd = arrStart + 1;
+            while (arrEnd < content.size() && bracketCount > 0)
             {
-                std::string stopsStr = objStr.substr(arrStart + 1, arrEnd - arrStart - 1);
-                // Parse each stop: [pos,r,g,b,a]
+                if (content[arrEnd] == '[') ++bracketCount;
+                else if (content[arrEnd] == ']') --bracketCount;
+                ++arrEnd;
+            }
+            
+            if (bracketCount == 0)
+            {
+                std::string stopsStr = content.substr(arrStart + 1, arrEnd - arrStart - 2);
                 size_t stopPos = 0;
                 while ((stopPos = stopsStr.find('[', stopPos)) != std::string::npos)
                 {
@@ -957,103 +1015,35 @@ void ColorGradientModule::loadUserPresetsFromDisk()
                 }
             }
         }
-        
-        // Midpoints array
-        size_t midPos = objStr.find("\"midpoints\"");
-        if (midPos != std::string::npos)
-        {
-            size_t arrStart = objStr.find('[', midPos);
-            size_t arrEnd = objStr.find(']', arrStart);
-            if (arrStart != std::string::npos && arrEnd != std::string::npos)
-            {
-                std::string midsStr = objStr.substr(arrStart + 1, arrEnd - arrStart - 1);
-                std::istringstream ss(midsStr);
-                float val;
-                while (ss >> val)
-                {
-                    preset.midpoints.push_back({val});
-                    char c;
-                    ss >> c;  // Skip comma
-                }
-            }
-        }
-        
-        // Add to user presets if valid
-        if (!preset.name.empty() && !preset.stops.empty())
-        {
-            m_userPresets[preset.name] = preset;
-            BasicLogger::logDebug("ColorGradientModule: Loaded user preset '" + preset.name + "'");
-        }
-        
-        pos = objEnd;
     }
     
-    BasicLogger::logInfo("ColorGradientModule: Loaded " + 
-                         std::to_string(m_userPresets.size()) + " user presets from " + filePath);
+    // Midpoints array
+    size_t midPos = content.find("\"midpoints\"");
+    if (midPos != std::string::npos)
+    {
+        size_t arrStart = content.find('[', midPos);
+        size_t arrEnd = content.find(']', arrStart);
+        if (arrStart != std::string::npos && arrEnd != std::string::npos)
+        {
+            std::string midsStr = content.substr(arrStart + 1, arrEnd - arrStart - 1);
+            std::istringstream ss(midsStr);
+            float val;
+            while (ss >> val)
+            {
+                preset.midpoints.push_back({val});
+                char c;
+                ss >> c;  // Skip comma
+            }
+        }
+    }
+    
+    return !preset.name.empty() && !preset.stops.empty();
 }
 
 void ColorGradientModule::saveUserPresetsToDisk() const
 {
-    if (s_userPresetsDir.empty())
-    {
-        BasicLogger::logWarning("ColorGradientModule: No user presets dir set, cannot save");
-        return;
-    }
-    
-    // Create directory if needed
-    std::filesystem::create_directories(s_userPresetsDir);
-    
-    std::string filePath = s_userPresetsDir + "/gradient_presets.json";
-    
-    std::ofstream file(filePath);
-    if (!file.is_open())
-    {
-        BasicLogger::logError("ColorGradientModule: Cannot write to " + filePath);
-        return;
-    }
-    
-    // Write JSON
-    file << "{\n  \"presets\": [\n";
-    
-    bool first = true;
-    for (const auto& [name, preset] : m_userPresets)
-    {
-        if (!first) file << ",\n";
-        first = false;
-        
-        file << "    {\n";
-        file << "      \"name\": \"" << name << "\",\n";
-        file << "      \"mode\": " << static_cast<int>(preset.mode) << ",\n";
-        file << "      \"angle\": " << preset.angle << ",\n";
-        
-        // Stops
-        file << "      \"stops\": [";
-        for (size_t i = 0; i < preset.stops.size(); ++i)
-        {
-            const auto& s = preset.stops[i];
-            if (i > 0) file << ", ";
-            file << "[" << s.position << "," 
-                 << s.color[0] << "," << s.color[1] << "," 
-                 << s.color[2] << "," << s.color[3] << "]";
-        }
-        file << "],\n";
-        
-        // Midpoints
-        file << "      \"midpoints\": [";
-        for (size_t i = 0; i < preset.midpoints.size(); ++i)
-        {
-            if (i > 0) file << ", ";
-            file << preset.midpoints[i].position;
-        }
-        file << "]\n";
-        
-        file << "    }";
-    }
-    
-    file << "\n  ]\n}\n";
-    
-    BasicLogger::logInfo("ColorGradientModule: Saved " + 
-                         std::to_string(m_userPresets.size()) + " user presets to " + filePath);
+    // This is now a no-op - individual presets are saved via savePreset()
+    // Kept for API compatibility
 }
 
 } // namespace lumi::modules

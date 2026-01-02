@@ -116,19 +116,24 @@ uniform float uInnerRadius;
 uniform float uOutlineWidth;
 
 // Apply midpoint adjustment to local t
+// The midpoint defines WHERE the 50/50 blend occurs
 float applyMidpoint(float t, float mid)
 {
-    // mid < 0.5: shift towards start color
-    // mid > 0.5: shift towards end color
-    // mid == 0.5: linear (unchanged)
-    if (abs(mid - 0.5) < 0.01) return t;
+    // Handle edge cases
+    if (mid <= 0.001) {
+        return t < 0.001 ? 0.5 : 0.5 + t * 0.5;
+    }
+    if (mid >= 0.999) {
+        return t > 0.999 ? 0.5 : t * 0.5;
+    }
     
-    if (mid < 0.5) {
-        float power = 0.5 / max(mid, 0.01);
-        return pow(t, power);
+    // Piecewise linear remapping
+    // t in [0, mid] -> [0, 0.5]
+    // t in [mid, 1] -> [0.5, 1]
+    if (t <= mid) {
+        return t * 0.5 / mid;
     } else {
-        float power = (1.0 - mid) / 0.5;
-        return 1.0 - pow(1.0 - t, power);
+        return 0.5 + (t - mid) * 0.5 / (1.0 - mid);
     }
 }
 

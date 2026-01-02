@@ -189,6 +189,7 @@ private:
     void updateMidpointsCount();
     [[nodiscard]] float applyMidpoint(float t, size_t segmentIndex) const;
     void initBuiltinPresets();
+    [[nodiscard]] bool parseGradientFile(const std::string& content, GradientPreset& preset);
 
     GradientMode m_mode = GradientMode::Solid;
     float m_angle = 0.0f;

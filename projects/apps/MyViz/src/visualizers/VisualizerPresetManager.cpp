@@ -11,7 +11,6 @@
 
 #include "visualizers/VisualizerPresetManager.hpp"
 #include "visualizers/IVisualizer.hpp"
-#include "visualizers/modules/ColorGradientModule.hpp"
 
 #include <QDir>
 #include <QFile>
@@ -36,9 +35,8 @@ VisualizerPresetManager::VisualizerPresetManager()
     QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     m_presetsDir = appData + "/presets";
     
-    // Also set the gradient presets directory for ColorGradientModule
-    std::string gradientPresetsDir = (appData + "/presets/gradients").toStdString();
-    modules::ColorGradientModule::setUserPresetsDirectory(gradientPresetsDir);
+    // Note: Gradient presets directory is set in Application::init() 
+    // before any visualizers are created
 }
 
 // =============================================================================
@@ -260,16 +258,32 @@ bool VisualizerPresetManager::applyPreset(IVisualizer* visualizer,
     
     int applied = 0;
     int failed = 0;
-    int skipped = 0;
     
+    // FIRST: Apply preset parameters (like color_gradient.preset)
+    // These load default values that may be overridden by subsequent parameters
     for (const auto& [paramId, value] : preset.parameters)
     {
-        // SKIP gradient preset parameters - they would override the actual values!
-        // The individual color/mode/angle values are stored separately.
         if (paramId.find(".preset") != std::string::npos)
         {
-            ++skipped;
-            BasicLogger::logDebug("PresetManager: Skipping nested preset param '" + paramId + "'");
+            if (visualizer->setParam(paramId, value))
+            {
+                ++applied;
+                BasicLogger::logDebug("PresetManager: Applied preset param '" + paramId + "'");
+            }
+            else
+            {
+                BasicLogger::logWarning("PresetManager: Failed to set preset param '" + paramId + "'");
+                ++failed;
+            }
+        }
+    }
+    
+    // THEN: Apply all other parameters (may override preset defaults)
+    for (const auto& [paramId, value] : preset.parameters)
+    {
+        // Skip preset parameters (already applied above)
+        if (paramId.find(".preset") != std::string::npos)
+        {
             continue;
         }
         
@@ -286,7 +300,6 @@ bool VisualizerPresetManager::applyPreset(IVisualizer* visualizer,
     
     BasicLogger::logInfo("PresetManager: Applied preset '" + preset.name.toStdString() +
                          "' (" + std::to_string(applied) + " applied, " +
-                         std::to_string(skipped) + " skipped, " +
                          std::to_string(failed) + " failed)");
     
     return failed == 0;
