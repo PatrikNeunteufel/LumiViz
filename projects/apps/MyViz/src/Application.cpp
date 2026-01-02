@@ -30,6 +30,8 @@
 #include "core/GpuInfo.hpp"
 #include "core/GpuSelector.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
+#include "visualizers/modules/processing/SmoothingModule.hpp"
+#include "visualizers/modules/source/AudioSourceModule.hpp"
 
 // Qt includes
 #include <QApplication>
@@ -313,9 +315,18 @@ bool Application::init(int argc, char* argv[])
     // Must be done AFTER QApplication (for QStandardPaths) but BEFORE MainWindow
     // (which creates visualizers that need to load user presets)
     QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    
     std::string gradientPresetsDir = (appData + "/presets/gradients").toStdString();
     lumi::modules::ColorGradientModule::setUserPresetsDirectory(gradientPresetsDir);
-    BasicLogger::logInfo("User presets directory: " + gradientPresetsDir);
+    BasicLogger::logInfo("Gradient presets directory: " + gradientPresetsDir);
+    
+    std::string smoothingPresetsDir = (appData + "/presets/smoothing").toStdString();
+    lumi::modules::SmoothingModule::setUserPresetsDirectory(smoothingPresetsDir);
+    BasicLogger::logInfo("Smoothing presets directory: " + smoothingPresetsDir);
+    
+    std::string audioPresetsDir = (appData + "/presets/audio").toStdString();
+    lumi::modules::AudioSourceModule::setUserPresetsDirectory(audioPresetsDir);
+    BasicLogger::logInfo("Audio presets directory: " + audioPresetsDir);
 
     // -------------------------------------------------------------------------
     // Create MainWindow (this creates the OpenGL context)

@@ -52,6 +52,7 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
         p.type = ParamType::Enum;
         p.defaultValue = static_cast<int>(GradientMode::Solid);
         p.enumOptions = {"Solid", "Linear Gradient", "Radial Gradient", "Outline"};
+        p.subGroup = "Color";
         p.order = 0;
         params.push_back(p);
     }
@@ -63,6 +64,7 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
         p.displayName = "Color";
         p.tooltip = "Solid fill color (for Solid/Outline mode)";
         p.type = ParamType::Color;
+        p.subGroup = "Color";
         p.order = 1;
         p.dependsOn = "mode";
         p.dependsValues = {0, 3};  // Solid=0, Outline=3
@@ -79,6 +81,7 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
         p.minValue = 0.0f;
         p.maxValue = 360.0f;
         p.defaultValue = 0.0f;
+        p.subGroup = "Color";
         p.order = 2;
         p.dependsOn = "mode";
         p.dependsValues = {1};  // Linear=1
@@ -94,6 +97,7 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
         p.type = ParamType::Enum;
         p.defaultValue = 0;
         p.enumOptions = presetNames();
+        p.subGroup = "Color";
         p.order = 3;
         p.dependsOn = "mode";
         p.dependsValues = {1, 2};  // Linear=1, Radial=2
@@ -107,6 +111,7 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
         p.displayName = "Edit Gradient...";
         p.tooltip = "Open gradient editor dialog";
         p.type = ParamType::String;
+        p.subGroup = "Color";
         p.order = 4;
         p.dependsOn = "mode";
         p.dependsValues = {1, 2};  // Linear=1, Radial=2
@@ -123,6 +128,7 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
         p.minValue = 1.0f;
         p.maxValue = 15.0f;
         p.defaultValue = 3.0f;
+        p.subGroup = "Color";
         p.order = 5;
         p.dependsOn = "mode";
         p.dependsValues = {3};  // Outline=3
@@ -178,6 +184,7 @@ bool ColorGradientModule::setParam(const std::string& id, const ParamValue& valu
         if (auto* v = std::get_if<int>(&value))
         {
             setMode(static_cast<GradientMode>(*v));
+            m_currentPreset = "[Custom]";  // Manual change -> Custom
             return true;
         }
     }
@@ -186,6 +193,7 @@ bool ColorGradientModule::setParam(const std::string& id, const ParamValue& valu
         if (value.index() == 7)
         {
             m_solidColor = std::get<7>(value);
+            m_currentPreset = "[Custom]";  // Manual change -> Custom
             return true;
         }
     }
@@ -194,6 +202,7 @@ bool ColorGradientModule::setParam(const std::string& id, const ParamValue& valu
         if (auto* v = std::get_if<float>(&value))
         {
             setAngle(*v);
+            m_currentPreset = "[Custom]";  // Manual change -> Custom
             return true;
         }
     }
@@ -275,6 +284,7 @@ size_t ColorGradientModule::addStop(float position, const Color4f& color)
     m_stops.push_back(stop);
     sortStops();
     updateMidpointsCount();
+    m_currentPreset = "[Custom]";  // Manual change -> Custom
     
     // Find index of the added stop
     for (size_t i = 0; i < m_stops.size(); ++i)
@@ -297,6 +307,7 @@ bool ColorGradientModule::removeStop(size_t index)
     
     m_stops.erase(m_stops.begin() + static_cast<ptrdiff_t>(index));
     updateMidpointsCount();
+    m_currentPreset = "[Custom]";  // Manual change -> Custom
     return true;
 }
 
@@ -310,6 +321,7 @@ void ColorGradientModule::updateStop(size_t index, float position, const Color4f
     m_stops[index].position = std::clamp(position, 0.0f, 1.0f);
     m_stops[index].color = color;
     sortStops();
+    m_currentPreset = "[Custom]";  // Manual change -> Custom
 }
 
 void ColorGradientModule::clearStops()
@@ -317,6 +329,7 @@ void ColorGradientModule::clearStops()
     m_stops.clear();
     m_midpoints.clear();
     ensureMinimumStops();
+    m_currentPreset = "[Custom]";  // Manual change -> Custom
 }
 
 // =============================================================================
@@ -328,6 +341,7 @@ void ColorGradientModule::setMidpoint(size_t index, float position)
     if (index < m_midpoints.size())
     {
         m_midpoints[index].position = std::clamp(position, 0.0f, 1.0f);
+        m_currentPreset = "[Custom]";  // Manual change -> Custom
     }
 }
 
@@ -595,6 +609,19 @@ void ColorGradientModule::initBuiltinPresets()
 
 void ColorGradientModule::loadPreset(const std::string& name)
 {
+    // [Custom] is not a real preset - just keep current values
+    if (name == "[Custom]")
+    {
+        m_currentPreset = "[Custom]";
+        return;
+    }
+    
+    // Skip separator
+    if (name == "---")
+    {
+        return;
+    }
+    
     // Check builtin presets
     auto it = m_builtinPresets.find(name);
     if (it != m_builtinPresets.end())
@@ -633,16 +660,25 @@ std::vector<std::string> ColorGradientModule::presetNames() const
     
     std::vector<std::string> names;
     
-    // Add builtin presets first
+    // Add [Custom] as first entry (shown when user modifies values)
+    names.push_back("[Custom]");
+    
+    // Add builtin presets
     for (const auto& pair : m_builtinPresets)
     {
         names.push_back(pair.first);
     }
     
-    // Then user presets
-    for (const auto& pair : m_userPresets)
+    // Separator if user presets exist
+    if (!m_userPresets.empty())
     {
-        names.push_back(pair.first);
+        names.push_back("---");  // Separator
+        
+        // User presets
+        for (const auto& pair : m_userPresets)
+        {
+            names.push_back(pair.first);
+        }
     }
     
     return names;
@@ -748,7 +784,7 @@ void ColorGradientModule::reset()
     m_midpoints.clear();
     m_midpoints.push_back({0.5f});
     
-    m_currentPreset.clear();
+    m_currentPreset = "[Custom]";  // Default to custom
 }
 
 // =============================================================================

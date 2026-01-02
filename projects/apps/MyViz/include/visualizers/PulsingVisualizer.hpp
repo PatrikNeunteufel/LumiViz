@@ -66,6 +66,12 @@ public:
      * @return Pointer to the gradient module (never null)
      */
     [[nodiscard]] lumi::modules::ColorGradientModule* colorGradient() { return &m_colorGradient; }
+    
+    /**
+     * @brief Get access to the audio source module
+     * @return Pointer to the audio source module (never null)
+     */
+    [[nodiscard]] lumi::modules::AudioSourceModule* audioSource() { return &m_audioSource; }
 
     void setRotationSpeed(float degreesPerSecond);
     [[nodiscard]] float rotationSpeed() const;

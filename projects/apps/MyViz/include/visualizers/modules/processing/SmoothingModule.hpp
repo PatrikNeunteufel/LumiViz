@@ -45,6 +45,11 @@
 #include <algorithm>
 #include <numeric>
 #include <cmath>
+#include <map>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <filesystem>
 
 namespace lumi::modules
 {
@@ -74,7 +79,20 @@ enum class SmoothingPreset
     Reactive,   ///< Very responsive (20 ms)
     Balanced,   ///< Good balance (50 ms) - default
     Smooth,     ///< Smooth motion (100 ms)
-    Sluggish    ///< Very smooth (200 ms)
+    Sluggish,   ///< Very smooth (200 ms)
+    Custom      ///< User-modified settings
+};
+
+/**
+ * @struct SmoothingPresetData
+ * @brief Data structure for saveable smoothing presets
+ */
+struct SmoothingPresetData
+{
+    std::string name;
+    SmoothingAlgorithm algorithm = SmoothingAlgorithm::EMA;
+    float timeMs = 50.0f;
+    bool primeFirstFrame = true;
 };
 
 // =============================================================================
@@ -231,9 +249,57 @@ public:
     static std::vector<std::string> algorithmNames();
     
     /**
-     * @brief Get all preset names
+     * @brief Get all preset names (builtin + user)
      */
-    static std::vector<std::string> presetNames();
+    std::vector<std::string> presetNames() const;
+    
+    /**
+     * @brief Get builtin preset names only (static version)
+     */
+    static std::vector<std::string> builtinPresetNames();
+    
+    // =========================================================================
+    // User Preset Management
+    // =========================================================================
+    
+    /**
+     * @brief Save current settings as a named preset
+     * @param name Preset name
+     */
+    void savePreset(const std::string& name);
+    
+    /**
+     * @brief Load a preset by name (builtin or user)
+     * @param name Preset name
+     */
+    void loadPreset(const std::string& name);
+    
+    /**
+     * @brief Delete a user preset
+     * @param name Preset name
+     * @return true if deleted
+     */
+    bool deletePreset(const std::string& name);
+    
+    /**
+     * @brief Check if a preset is a user preset (deletable)
+     */
+    [[nodiscard]] bool isUserPreset(const std::string& name) const;
+    
+    /**
+     * @brief Get current preset name
+     */
+    [[nodiscard]] const std::string& currentPresetName() const { return m_currentPresetName; }
+    
+    /**
+     * @brief Set directory for user presets
+     */
+    static void setUserPresetsDirectory(const std::string& dir);
+    
+    /**
+     * @brief Get user presets directory
+     */
+    static const std::string& userPresetsDirectory() { return s_userPresetsDir; }
     
 private:
     // =========================================================================
@@ -281,6 +347,19 @@ private:
     static constexpr int MAX_WINDOW_SIZE = 60;
     static constexpr float MIN_TIME_MS = 0.0f;
     static constexpr float MAX_TIME_MS = 500.0f;
+    
+    // =========================================================================
+    // User Presets
+    // =========================================================================
+    
+    std::string m_currentPresetName = "Balanced";
+    std::map<std::string, SmoothingPresetData> m_userPresets;
+    mutable bool m_userPresetsLoaded = false;
+    
+    void loadUserPresetsFromDisk();
+    bool parsePresetFile(const std::string& filePath, SmoothingPresetData& outPreset);
+    
+    inline static std::string s_userPresetsDir;
 };
 
 // =============================================================================
@@ -295,19 +374,21 @@ inline SmoothingModule::SmoothingModule()
 inline std::vector<ModuleParamDesc> SmoothingModule::paramDescs() const
 {
     return {
-        ParamBuilder("algorithm", ParamType::Enum)
-            .displayName("Algorithm")
-            .enumOptions(algorithmNames())
-            .defaultValue(static_cast<int>(SmoothingAlgorithm::EMA))
-            .tooltip("Smoothing algorithm type")
-            .order(0)
-            .build(),
-            
         ParamBuilder("preset", ParamType::Enum)
             .displayName("Preset")
             .enumOptions(presetNames())
             .defaultValue(static_cast<int>(SmoothingPreset::Balanced))
             .tooltip("Predefined smoothing configurations")
+            .subGroup("Smoothing")
+            .order(0)
+            .build(),
+            
+        ParamBuilder("algorithm", ParamType::Enum)
+            .displayName("Algorithm")
+            .enumOptions(algorithmNames())
+            .defaultValue(static_cast<int>(SmoothingAlgorithm::EMA))
+            .tooltip("Smoothing algorithm type")
+            .subGroup("Smoothing")
             .order(1)
             .build(),
             
@@ -317,6 +398,7 @@ inline std::vector<ModuleParamDesc> SmoothingModule::paramDescs() const
             .defaultValue(50.0f)
             .unit("ms")
             .tooltip("Smoothing time constant")
+            .subGroup("Smoothing")
             .order(2)
             .dependsOn("algorithm", std::vector<ParamValue>{1, 2, 3, 4})  // SMA, EMA, WMA, DEMA
             .build(),
@@ -325,6 +407,7 @@ inline std::vector<ModuleParamDesc> SmoothingModule::paramDescs() const
             .displayName("Prime First Frame")
             .defaultValue(true)
             .tooltip("Initialize with first input value")
+            .subGroup("Smoothing")
             .advanced(true)
             .order(10)
             .dependsOn("algorithm", std::vector<ParamValue>{1, 2, 3, 4})  // SMA, EMA, WMA, DEMA
@@ -346,7 +429,17 @@ inline bool SmoothingModule::getParam(const std::string& id, ParamValue& out) co
     }
     if (id == "preset")
     {
-        out = static_cast<int>(m_preset);
+        // Find current preset in list
+        auto names = presetNames();
+        for (size_t i = 0; i < names.size(); ++i)
+        {
+            if (names[i] == m_currentPresetName)
+            {
+                out = static_cast<int>(i);
+                return true;
+            }
+        }
+        out = 0;  // Default to [Custom]
         return true;
     }
     if (id == "primeFirstFrame")
@@ -364,6 +457,8 @@ inline bool SmoothingModule::setParam(const std::string& id, const ParamValue& v
         if (std::holds_alternative<int>(value))
         {
             setAlgorithm(static_cast<SmoothingAlgorithm>(std::get<int>(value)));
+            m_preset = SmoothingPreset::Custom;
+            m_currentPresetName = "[Custom]";
             return true;
         }
     }
@@ -372,6 +467,8 @@ inline bool SmoothingModule::setParam(const std::string& id, const ParamValue& v
         if (std::holds_alternative<float>(value))
         {
             setTimeMs(std::get<float>(value));
+            m_preset = SmoothingPreset::Custom;
+            m_currentPresetName = "[Custom]";
             return true;
         }
     }
@@ -379,7 +476,12 @@ inline bool SmoothingModule::setParam(const std::string& id, const ParamValue& v
     {
         if (std::holds_alternative<int>(value))
         {
-            applyPreset(static_cast<SmoothingPreset>(std::get<int>(value)));
+            int idx = std::get<int>(value);
+            auto names = presetNames();
+            if (idx >= 0 && idx < static_cast<int>(names.size()))
+            {
+                loadPreset(names[idx]);
+            }
             return true;
         }
     }
@@ -528,6 +630,10 @@ inline void SmoothingModule::applyPreset(SmoothingPreset preset)
         m_algorithm = SmoothingAlgorithm::DEMA;
         m_timeMs = 200.0f;
         break;
+        
+    case SmoothingPreset::Custom:
+        // Custom: keep current values, don't change anything
+        return;
     }
     
     setTimeMs(m_timeMs);  // Update window size
@@ -647,9 +753,263 @@ inline std::vector<std::string> SmoothingModule::algorithmNames()
     return {"None", "SMA", "EMA", "WMA", "DEMA"};
 }
 
-inline std::vector<std::string> SmoothingModule::presetNames()
+inline std::vector<std::string> SmoothingModule::builtinPresetNames()
 {
     return {"Instant", "Reactive", "Balanced", "Smooth", "Sluggish"};
+}
+
+inline std::vector<std::string> SmoothingModule::presetNames() const
+{
+    // Lazy-load user presets
+    if (!m_userPresetsLoaded && !s_userPresetsDir.empty())
+    {
+        const_cast<SmoothingModule*>(this)->loadUserPresetsFromDisk();
+    }
+    
+    std::vector<std::string> names;
+    
+    // [Custom] first
+    names.push_back("[Custom]");
+    
+    // Builtin presets
+    auto builtins = builtinPresetNames();
+    for (const auto& name : builtins)
+    {
+        names.push_back(name);
+    }
+    
+    // Separator if user presets exist
+    if (!m_userPresets.empty())
+    {
+        names.push_back("---");  // Separator
+        
+        // User presets
+        for (const auto& pair : m_userPresets)
+        {
+            names.push_back(pair.first);
+        }
+    }
+    
+    return names;
+}
+
+inline void SmoothingModule::setUserPresetsDirectory(const std::string& dir)
+{
+    s_userPresetsDir = dir;
+}
+
+inline void SmoothingModule::savePreset(const std::string& name)
+{
+    SmoothingPresetData preset;
+    preset.name = name;
+    preset.algorithm = m_algorithm;
+    preset.timeMs = m_timeMs;
+    preset.primeFirstFrame = m_primeFirstFrame;
+    
+    m_userPresets[name] = preset;
+    m_currentPresetName = name;
+    m_preset = SmoothingPreset::Custom;  // Now it's a named custom preset
+    
+    // Save to .smooth file
+    if (s_userPresetsDir.empty())
+    {
+        return;
+    }
+    
+    std::filesystem::create_directories(s_userPresetsDir);
+    std::string filePath = s_userPresetsDir + "/" + name + ".smooth";
+    
+    std::ofstream file(filePath);
+    if (!file.is_open())
+    {
+        return;
+    }
+    
+    // Write JSON
+    file << "{\n";
+    file << "  \"name\": \"" << name << "\",\n";
+    file << "  \"algorithm\": " << static_cast<int>(preset.algorithm) << ",\n";
+    file << "  \"timeMs\": " << preset.timeMs << ",\n";
+    file << "  \"primeFirstFrame\": " << (preset.primeFirstFrame ? "true" : "false") << "\n";
+    file << "}\n";
+    file.close();
+}
+
+inline void SmoothingModule::loadPreset(const std::string& name)
+{
+    // Skip [Custom] and separator
+    if (name == "[Custom]" || name == "---")
+    {
+        return;
+    }
+    
+    // Check builtin presets first
+    if (name == "Instant")
+    {
+        applyPreset(SmoothingPreset::Instant);
+        m_currentPresetName = name;
+        return;
+    }
+    if (name == "Reactive")
+    {
+        applyPreset(SmoothingPreset::Reactive);
+        m_currentPresetName = name;
+        return;
+    }
+    if (name == "Balanced")
+    {
+        applyPreset(SmoothingPreset::Balanced);
+        m_currentPresetName = name;
+        return;
+    }
+    if (name == "Smooth")
+    {
+        applyPreset(SmoothingPreset::Smooth);
+        m_currentPresetName = name;
+        return;
+    }
+    if (name == "Sluggish")
+    {
+        applyPreset(SmoothingPreset::Sluggish);
+        m_currentPresetName = name;
+        return;
+    }
+    
+    // Check user presets
+    auto it = m_userPresets.find(name);
+    if (it != m_userPresets.end())
+    {
+        const auto& preset = it->second;
+        m_algorithm = preset.algorithm;
+        m_timeMs = preset.timeMs;
+        m_primeFirstFrame = preset.primeFirstFrame;
+        m_preset = SmoothingPreset::Custom;
+        m_currentPresetName = name;
+    }
+}
+
+inline bool SmoothingModule::deletePreset(const std::string& name)
+{
+    auto it = m_userPresets.find(name);
+    if (it == m_userPresets.end())
+    {
+        return false;  // Not a user preset
+    }
+    
+    m_userPresets.erase(it);
+    
+    // Delete .smooth file
+    if (!s_userPresetsDir.empty())
+    {
+        std::string filePath = s_userPresetsDir + "/" + name + ".smooth";
+        std::filesystem::remove(filePath);
+    }
+    
+    return true;
+}
+
+inline bool SmoothingModule::isUserPreset(const std::string& name) const
+{
+    return m_userPresets.find(name) != m_userPresets.end();
+}
+
+inline void SmoothingModule::loadUserPresetsFromDisk()
+{
+    m_userPresetsLoaded = true;
+    
+    if (s_userPresetsDir.empty())
+    {
+        return;
+    }
+    
+    if (!std::filesystem::exists(s_userPresetsDir))
+    {
+        return;
+    }
+    
+    for (const auto& entry : std::filesystem::directory_iterator(s_userPresetsDir))
+    {
+        if (!entry.is_regular_file())
+        {
+            continue;
+        }
+        
+        std::string ext = entry.path().extension().string();
+        if (ext != ".smooth")
+        {
+            continue;
+        }
+        
+        SmoothingPresetData preset;
+        if (parsePresetFile(entry.path().string(), preset))
+        {
+            m_userPresets[preset.name] = preset;
+        }
+    }
+}
+
+inline bool SmoothingModule::parsePresetFile(const std::string& filePath, SmoothingPresetData& outPreset)
+{
+    std::ifstream file(filePath);
+    if (!file.is_open())
+    {
+        return false;
+    }
+    
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string content = buffer.str();
+    
+    // Simple JSON parsing (name, algorithm, timeMs, primeFirstFrame)
+    auto extractString = [&content](const std::string& key) -> std::string {
+        std::string searchKey = "\"" + key + "\":";
+        size_t pos = content.find(searchKey);
+        if (pos == std::string::npos) return "";
+        pos = content.find("\"", pos + searchKey.length());
+        if (pos == std::string::npos) return "";
+        size_t end = content.find("\"", pos + 1);
+        if (end == std::string::npos) return "";
+        return content.substr(pos + 1, end - pos - 1);
+    };
+    
+    auto extractFloat = [&content](const std::string& key) -> float {
+        std::string searchKey = "\"" + key + "\":";
+        size_t pos = content.find(searchKey);
+        if (pos == std::string::npos) return 0.0f;
+        pos += searchKey.length();
+        while (pos < content.size() && (content[pos] == ' ' || content[pos] == '\t')) ++pos;
+        return std::stof(content.substr(pos));
+    };
+    
+    auto extractInt = [&content](const std::string& key) -> int {
+        std::string searchKey = "\"" + key + "\":";
+        size_t pos = content.find(searchKey);
+        if (pos == std::string::npos) return 0;
+        pos += searchKey.length();
+        while (pos < content.size() && (content[pos] == ' ' || content[pos] == '\t')) ++pos;
+        return std::stoi(content.substr(pos));
+    };
+    
+    auto extractBool = [&content](const std::string& key) -> bool {
+        std::string searchKey = "\"" + key + "\":";
+        size_t pos = content.find(searchKey);
+        if (pos == std::string::npos) return false;
+        return content.find("true", pos) < content.find(",", pos);
+    };
+    
+    outPreset.name = extractString("name");
+    if (outPreset.name.empty())
+    {
+        // Use filename as fallback
+        std::filesystem::path p(filePath);
+        outPreset.name = p.stem().string();
+    }
+    
+    outPreset.algorithm = static_cast<SmoothingAlgorithm>(extractInt("algorithm"));
+    outPreset.timeMs = extractFloat("timeMs");
+    outPreset.primeFirstFrame = extractBool("primeFirstFrame");
+    
+    return true;
 }
 
 } // namespace lumi::modules

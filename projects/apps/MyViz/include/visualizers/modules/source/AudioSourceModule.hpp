@@ -58,6 +58,11 @@
 #include <array>
 #include <cmath>
 #include <algorithm>
+#include <map>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <filesystem>
 
 namespace lumi::modules
 {
@@ -74,6 +79,38 @@ enum class FrequencyScale
     Linear,     ///< Linear mapping
     Log,        ///< Logarithmic mapping (default, perceptually uniform)
     Mel         ///< Mel scale (speech-optimized)
+};
+
+/**
+ * @brief Preset audio processing configurations
+ */
+enum class AudioPreset
+{
+    Default,        ///< Balanced settings for general use
+    BassHeavy,      ///< Emphasizes bass frequencies
+    Vocals,         ///< Optimized for vocals and mid frequencies
+    Electronic,     ///< Fast response for electronic music
+    Ambient,        ///< Smooth, slow response for ambient music
+    Custom          ///< User-modified settings
+};
+
+/**
+ * @struct AudioPresetData
+ * @brief Data structure for saveable audio presets
+ */
+struct AudioPresetData
+{
+    std::string name;
+    FrequencyScale scale = FrequencyScale::Log;
+    int bands = 64;
+    float floorDb = -60.0f;
+    float ceilDb = 0.0f;
+    bool clamp01 = true;
+    float gain = 1.0f;
+    
+    // Embedded smoothing settings
+    SmoothingAlgorithm smoothAlgorithm = SmoothingAlgorithm::EMA;
+    float smoothTimeMs = 50.0f;
 };
 
 // =============================================================================
@@ -317,6 +354,73 @@ public:
     [[nodiscard]] const SmoothingModule& smoothing() const { return m_smoothing; }
     
     // =========================================================================
+    // Presets
+    // =========================================================================
+    
+    /**
+     * @brief Apply a preset configuration
+     */
+    void applyPreset(AudioPreset preset);
+    
+    /**
+     * @brief Get current preset
+     */
+    [[nodiscard]] AudioPreset preset() const { return m_preset; }
+    
+    /**
+     * @brief Get all preset names (builtin + user)
+     */
+    std::vector<std::string> presetNames() const;
+    
+    /**
+     * @brief Get builtin preset names only
+     */
+    static std::vector<std::string> builtinPresetNames();
+    
+    // =========================================================================
+    // User Preset Management
+    // =========================================================================
+    
+    /**
+     * @brief Save current settings as a named preset
+     * @param name Preset name
+     */
+    void savePreset(const std::string& name);
+    
+    /**
+     * @brief Load a preset by name (builtin or user)
+     * @param name Preset name
+     */
+    void loadPreset(const std::string& name);
+    
+    /**
+     * @brief Delete a user preset
+     * @param name Preset name
+     * @return true if deleted
+     */
+    bool deletePreset(const std::string& name);
+    
+    /**
+     * @brief Check if a preset is a user preset (deletable)
+     */
+    [[nodiscard]] bool isUserPreset(const std::string& name) const;
+    
+    /**
+     * @brief Get current preset name
+     */
+    [[nodiscard]] const std::string& currentPresetName() const { return m_currentPresetName; }
+    
+    /**
+     * @brief Set directory for user presets
+     */
+    static void setUserPresetsDirectory(const std::string& dir);
+    
+    /**
+     * @brief Get user presets directory
+     */
+    static const std::string& userPresetsDirectory() { return s_userPresetsDir; }
+    
+    // =========================================================================
     // Utility
     // =========================================================================
     
@@ -351,6 +455,7 @@ private:
     float m_ceilDb = 0.0f;
     bool m_clamp01 = true;
     float m_gain = 1.0f;
+    AudioPreset m_preset = AudioPreset::Default;
     
     // =========================================================================
     // Embedded Modules
@@ -378,6 +483,19 @@ private:
     static constexpr float MAX_FLOOR_DB = 0.0f;
     static constexpr float MIN_CEIL_DB = -60.0f;
     static constexpr float MAX_CEIL_DB = 20.0f;
+    
+    // =========================================================================
+    // User Presets
+    // =========================================================================
+    
+    std::string m_currentPresetName = "Default";
+    std::map<std::string, AudioPresetData> m_userPresets;
+    mutable bool m_userPresetsLoaded = false;
+    
+    void loadUserPresetsFromDisk();
+    bool parsePresetFile(const std::string& filePath, AudioPresetData& outPreset);
+    
+    inline static std::string s_userPresetsDir;
 };
 
 // =============================================================================
@@ -398,6 +516,17 @@ inline std::vector<ModuleParamDesc> AudioSourceModule::paramDescs() const
 {
     std::vector<ModuleParamDesc> params;
     
+    // Preset at the top
+    params.push_back(
+        ParamBuilder("preset", ParamType::Enum)
+            .displayName("Audio Preset")
+            .enumOptions(presetNames())
+            .defaultValue(static_cast<int>(AudioPreset::Default))
+            .tooltip("Predefined audio processing configurations")
+            .order(-1)  // Always first
+            .build()
+    );
+    
     // Own parameters
     params.push_back(
         ParamBuilder("scale", ParamType::Enum)
@@ -405,7 +534,7 @@ inline std::vector<ModuleParamDesc> AudioSourceModule::paramDescs() const
             .enumOptions(scaleNames())
             .defaultValue(static_cast<int>(FrequencyScale::Log))
             .tooltip("How frequencies map to bands")
-            .group("Mapping")
+            .subGroup("Mapping")
             .order(0)
             .build()
     );
@@ -416,7 +545,7 @@ inline std::vector<ModuleParamDesc> AudioSourceModule::paramDescs() const
             .range(static_cast<float>(MIN_BANDS), static_cast<float>(MAX_BANDS), 8.0f)
             .defaultValue(64)
             .tooltip("Number of output frequency bands")
-            .group("Mapping")
+            .subGroup("Mapping")
             .order(1)
             .build()
     );
@@ -428,7 +557,7 @@ inline std::vector<ModuleParamDesc> AudioSourceModule::paramDescs() const
             .defaultValue(-60.0f)
             .unit("dB")
             .tooltip("Values below map to 0")
-            .group("Normalization")
+            .subGroup("Normalization")
             .order(10)
             .build()
     );
@@ -440,7 +569,7 @@ inline std::vector<ModuleParamDesc> AudioSourceModule::paramDescs() const
             .defaultValue(0.0f)
             .unit("dB")
             .tooltip("Values above map to 1")
-            .group("Normalization")
+            .subGroup("Normalization")
             .order(11)
             .build()
     );
@@ -450,7 +579,7 @@ inline std::vector<ModuleParamDesc> AudioSourceModule::paramDescs() const
             .displayName("Clamp to 0-1")
             .defaultValue(true)
             .tooltip("Constrain output to [0,1] range")
-            .group("Normalization")
+            .subGroup("Normalization")
             .order(12)
             .build()
     );
@@ -461,7 +590,7 @@ inline std::vector<ModuleParamDesc> AudioSourceModule::paramDescs() const
             .range(0.1f, 5.0f, 0.1f)
             .defaultValue(1.0f)
             .tooltip("Input signal multiplier")
-            .group("Gain")
+            .subGroup("Gain")
             .order(20)
             .build()
     );
@@ -494,6 +623,21 @@ inline bool AudioSourceModule::getParam(const std::string& id, ParamValue& out) 
     }
     
     // Own parameters
+    if (id == "preset")
+    {
+        // Find current preset in list
+        auto names = presetNames();
+        for (size_t i = 0; i < names.size(); ++i)
+        {
+            if (names[i] == m_currentPresetName)
+            {
+                out = static_cast<int>(i);
+                return true;
+            }
+        }
+        out = 0;  // Default to [Custom]
+        return true;
+    }
     if (id == "scale")
     {
         out = static_cast<int>(m_scale);
@@ -533,15 +677,36 @@ inline bool AudioSourceModule::setParam(const std::string& id, const ParamValue&
     // Check for smooth.* prefix
     if (id.rfind("smooth.", 0) == 0)
     {
-        return m_smoothing.setParam(id.substr(7), value);
+        bool result = m_smoothing.setParam(id.substr(7), value);
+        if (result)
+        {
+            m_preset = AudioPreset::Custom;
+            m_currentPresetName = "[Custom]";
+        }
+        return result;
     }
     
     // Own parameters
-    if (id == "scale")
+    if (id == "preset")
+    {
+        if (std::holds_alternative<int>(value))
+        {
+            int idx = std::get<int>(value);
+            auto names = presetNames();
+            if (idx >= 0 && idx < static_cast<int>(names.size()))
+            {
+                loadPreset(names[idx]);
+            }
+            return true;
+        }
+    }
+    else if (id == "scale")
     {
         if (std::holds_alternative<int>(value))
         {
             setScale(static_cast<FrequencyScale>(std::get<int>(value)));
+            m_preset = AudioPreset::Custom;
+            m_currentPresetName = "[Custom]";
             return true;
         }
     }
@@ -550,6 +715,8 @@ inline bool AudioSourceModule::setParam(const std::string& id, const ParamValue&
         if (std::holds_alternative<int>(value))
         {
             setBands(std::get<int>(value));
+            m_preset = AudioPreset::Custom;
+            m_currentPresetName = "[Custom]";
             return true;
         }
     }
@@ -558,6 +725,8 @@ inline bool AudioSourceModule::setParam(const std::string& id, const ParamValue&
         if (std::holds_alternative<float>(value))
         {
             setFloorDb(std::get<float>(value));
+            m_preset = AudioPreset::Custom;
+            m_currentPresetName = "[Custom]";
             return true;
         }
     }
@@ -566,6 +735,8 @@ inline bool AudioSourceModule::setParam(const std::string& id, const ParamValue&
         if (std::holds_alternative<float>(value))
         {
             setCeilingDb(std::get<float>(value));
+            m_preset = AudioPreset::Custom;
+            m_currentPresetName = "[Custom]";
             return true;
         }
     }
@@ -574,6 +745,8 @@ inline bool AudioSourceModule::setParam(const std::string& id, const ParamValue&
         if (std::holds_alternative<bool>(value))
         {
             m_clamp01 = std::get<bool>(value);
+            m_preset = AudioPreset::Custom;
+            m_currentPresetName = "[Custom]";
             return true;
         }
     }
@@ -582,6 +755,8 @@ inline bool AudioSourceModule::setParam(const std::string& id, const ParamValue&
         if (std::holds_alternative<float>(value))
         {
             setGain(std::get<float>(value));
+            m_preset = AudioPreset::Custom;
+            m_currentPresetName = "[Custom]";
             return true;
         }
     }
@@ -812,6 +987,349 @@ inline const char* AudioSourceModule::scaleName(FrequencyScale scale)
 inline std::vector<std::string> AudioSourceModule::scaleNames()
 {
     return {"Linear", "Logarithmic", "Mel"};
+}
+
+inline std::vector<std::string> AudioSourceModule::builtinPresetNames()
+{
+    return {"Default", "Bass Heavy", "Vocals", "Electronic", "Ambient"};
+}
+
+inline std::vector<std::string> AudioSourceModule::presetNames() const
+{
+    // Lazy-load user presets
+    if (!m_userPresetsLoaded && !s_userPresetsDir.empty())
+    {
+        const_cast<AudioSourceModule*>(this)->loadUserPresetsFromDisk();
+    }
+    
+    std::vector<std::string> names;
+    
+    // [Custom] first
+    names.push_back("[Custom]");
+    
+    // Builtin presets
+    auto builtins = builtinPresetNames();
+    for (const auto& name : builtins)
+    {
+        names.push_back(name);
+    }
+    
+    // Separator if user presets exist
+    if (!m_userPresets.empty())
+    {
+        names.push_back("---");  // Separator
+        
+        // User presets
+        for (const auto& pair : m_userPresets)
+        {
+            names.push_back(pair.first);
+        }
+    }
+    
+    return names;
+}
+
+inline void AudioSourceModule::setUserPresetsDirectory(const std::string& dir)
+{
+    s_userPresetsDir = dir;
+}
+
+inline void AudioSourceModule::savePreset(const std::string& name)
+{
+    AudioPresetData preset;
+    preset.name = name;
+    preset.scale = m_scale;
+    preset.bands = m_bands;
+    preset.floorDb = m_floorDb;
+    preset.ceilDb = m_ceilDb;
+    preset.clamp01 = m_clamp01;
+    preset.gain = m_gain;
+    preset.smoothAlgorithm = m_smoothing.algorithm();
+    preset.smoothTimeMs = m_smoothing.timeMs();
+    
+    m_userPresets[name] = preset;
+    m_currentPresetName = name;
+    m_preset = AudioPreset::Custom;
+    
+    // Save to .audio file
+    if (s_userPresetsDir.empty())
+    {
+        return;
+    }
+    
+    std::filesystem::create_directories(s_userPresetsDir);
+    std::string filePath = s_userPresetsDir + "/" + name + ".audio";
+    
+    std::ofstream file(filePath);
+    if (!file.is_open())
+    {
+        return;
+    }
+    
+    // Write JSON
+    file << "{\n";
+    file << "  \"name\": \"" << name << "\",\n";
+    file << "  \"scale\": " << static_cast<int>(preset.scale) << ",\n";
+    file << "  \"bands\": " << preset.bands << ",\n";
+    file << "  \"floorDb\": " << preset.floorDb << ",\n";
+    file << "  \"ceilDb\": " << preset.ceilDb << ",\n";
+    file << "  \"clamp01\": " << (preset.clamp01 ? "true" : "false") << ",\n";
+    file << "  \"gain\": " << preset.gain << ",\n";
+    file << "  \"smoothAlgorithm\": " << static_cast<int>(preset.smoothAlgorithm) << ",\n";
+    file << "  \"smoothTimeMs\": " << preset.smoothTimeMs << "\n";
+    file << "}\n";
+    file.close();
+}
+
+inline void AudioSourceModule::loadPreset(const std::string& name)
+{
+    // Skip [Custom] and separator
+    if (name == "[Custom]" || name == "---")
+    {
+        return;
+    }
+    
+    // Check builtin presets first
+    if (name == "Default")
+    {
+        applyPreset(AudioPreset::Default);
+        m_currentPresetName = name;
+        return;
+    }
+    if (name == "Bass Heavy")
+    {
+        applyPreset(AudioPreset::BassHeavy);
+        m_currentPresetName = name;
+        return;
+    }
+    if (name == "Vocals")
+    {
+        applyPreset(AudioPreset::Vocals);
+        m_currentPresetName = name;
+        return;
+    }
+    if (name == "Electronic")
+    {
+        applyPreset(AudioPreset::Electronic);
+        m_currentPresetName = name;
+        return;
+    }
+    if (name == "Ambient")
+    {
+        applyPreset(AudioPreset::Ambient);
+        m_currentPresetName = name;
+        return;
+    }
+    
+    // Check user presets
+    auto it = m_userPresets.find(name);
+    if (it != m_userPresets.end())
+    {
+        const auto& preset = it->second;
+        m_scale = preset.scale;
+        m_bands = preset.bands;
+        m_floorDb = preset.floorDb;
+        m_ceilDb = preset.ceilDb;
+        m_clamp01 = preset.clamp01;
+        m_gain = preset.gain;
+        m_smoothing.setAlgorithm(preset.smoothAlgorithm);
+        m_smoothing.setTimeMs(preset.smoothTimeMs);
+        m_preset = AudioPreset::Custom;
+        m_currentPresetName = name;
+        
+        // Resize spectrum buffers
+        m_spectrum.resize(m_bands, 0.0f);
+        m_rawSpectrum.resize(m_bands, 0.0f);
+    }
+}
+
+inline bool AudioSourceModule::deletePreset(const std::string& name)
+{
+    auto it = m_userPresets.find(name);
+    if (it == m_userPresets.end())
+    {
+        return false;  // Not a user preset
+    }
+    
+    m_userPresets.erase(it);
+    
+    // Delete .audio file
+    if (!s_userPresetsDir.empty())
+    {
+        std::string filePath = s_userPresetsDir + "/" + name + ".audio";
+        std::filesystem::remove(filePath);
+    }
+    
+    return true;
+}
+
+inline bool AudioSourceModule::isUserPreset(const std::string& name) const
+{
+    return m_userPresets.find(name) != m_userPresets.end();
+}
+
+inline void AudioSourceModule::loadUserPresetsFromDisk()
+{
+    m_userPresetsLoaded = true;
+    
+    if (s_userPresetsDir.empty())
+    {
+        return;
+    }
+    
+    if (!std::filesystem::exists(s_userPresetsDir))
+    {
+        return;
+    }
+    
+    for (const auto& entry : std::filesystem::directory_iterator(s_userPresetsDir))
+    {
+        if (!entry.is_regular_file())
+        {
+            continue;
+        }
+        
+        std::string ext = entry.path().extension().string();
+        if (ext != ".audio")
+        {
+            continue;
+        }
+        
+        AudioPresetData preset;
+        if (parsePresetFile(entry.path().string(), preset))
+        {
+            m_userPresets[preset.name] = preset;
+        }
+    }
+}
+
+inline bool AudioSourceModule::parsePresetFile(const std::string& filePath, AudioPresetData& outPreset)
+{
+    std::ifstream file(filePath);
+    if (!file.is_open())
+    {
+        return false;
+    }
+    
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string content = buffer.str();
+    
+    // Simple JSON parsing
+    auto extractString = [&content](const std::string& key) -> std::string {
+        std::string searchKey = "\"" + key + "\":";
+        size_t pos = content.find(searchKey);
+        if (pos == std::string::npos) return "";
+        pos = content.find("\"", pos + searchKey.length());
+        if (pos == std::string::npos) return "";
+        size_t end = content.find("\"", pos + 1);
+        if (end == std::string::npos) return "";
+        return content.substr(pos + 1, end - pos - 1);
+    };
+    
+    auto extractFloat = [&content](const std::string& key) -> float {
+        std::string searchKey = "\"" + key + "\":";
+        size_t pos = content.find(searchKey);
+        if (pos == std::string::npos) return 0.0f;
+        pos += searchKey.length();
+        while (pos < content.size() && (content[pos] == ' ' || content[pos] == '\t')) ++pos;
+        return std::stof(content.substr(pos));
+    };
+    
+    auto extractInt = [&content](const std::string& key) -> int {
+        std::string searchKey = "\"" + key + "\":";
+        size_t pos = content.find(searchKey);
+        if (pos == std::string::npos) return 0;
+        pos += searchKey.length();
+        while (pos < content.size() && (content[pos] == ' ' || content[pos] == '\t')) ++pos;
+        return std::stoi(content.substr(pos));
+    };
+    
+    auto extractBool = [&content](const std::string& key) -> bool {
+        std::string searchKey = "\"" + key + "\":";
+        size_t pos = content.find(searchKey);
+        if (pos == std::string::npos) return false;
+        return content.find("true", pos) < content.find(",", pos);
+    };
+    
+    outPreset.name = extractString("name");
+    if (outPreset.name.empty())
+    {
+        std::filesystem::path p(filePath);
+        outPreset.name = p.stem().string();
+    }
+    
+    outPreset.scale = static_cast<FrequencyScale>(extractInt("scale"));
+    outPreset.bands = extractInt("bands");
+    outPreset.floorDb = extractFloat("floorDb");
+    outPreset.ceilDb = extractFloat("ceilDb");
+    outPreset.clamp01 = extractBool("clamp01");
+    outPreset.gain = extractFloat("gain");
+    outPreset.smoothAlgorithm = static_cast<SmoothingAlgorithm>(extractInt("smoothAlgorithm"));
+    outPreset.smoothTimeMs = extractFloat("smoothTimeMs");
+    
+    return true;
+}
+
+inline void AudioSourceModule::applyPreset(AudioPreset preset)
+{
+    m_preset = preset;
+    
+    switch (preset)
+    {
+    case AudioPreset::Default:
+        m_scale = FrequencyScale::Log;
+        m_bands = 64;
+        m_floorDb = -60.0f;
+        m_ceilDb = 0.0f;
+        m_gain = 1.0f;
+        m_smoothing.applyPreset(SmoothingPreset::Balanced);
+        break;
+        
+    case AudioPreset::BassHeavy:
+        m_scale = FrequencyScale::Log;
+        m_bands = 32;
+        m_floorDb = -50.0f;
+        m_ceilDb = 0.0f;
+        m_gain = 1.5f;
+        m_smoothing.applyPreset(SmoothingPreset::Smooth);
+        break;
+        
+    case AudioPreset::Vocals:
+        m_scale = FrequencyScale::Mel;
+        m_bands = 64;
+        m_floorDb = -55.0f;
+        m_ceilDb = -5.0f;
+        m_gain = 1.2f;
+        m_smoothing.applyPreset(SmoothingPreset::Balanced);
+        break;
+        
+    case AudioPreset::Electronic:
+        m_scale = FrequencyScale::Log;
+        m_bands = 128;
+        m_floorDb = -70.0f;
+        m_ceilDb = 0.0f;
+        m_gain = 1.0f;
+        m_smoothing.applyPreset(SmoothingPreset::Reactive);
+        break;
+        
+    case AudioPreset::Ambient:
+        m_scale = FrequencyScale::Log;
+        m_bands = 32;
+        m_floorDb = -55.0f;
+        m_ceilDb = -10.0f;
+        m_gain = 0.8f;
+        m_smoothing.applyPreset(SmoothingPreset::Sluggish);
+        break;
+        
+    case AudioPreset::Custom:
+        // Keep current values, don't change anything
+        return;
+    }
+    
+    // Resize spectrum buffers
+    m_spectrum.resize(m_bands, 0.0f);
+    m_rawSpectrum.resize(m_bands, 0.0f);
 }
 
 } // namespace lumi::modules

@@ -37,6 +37,7 @@
 #include <QMessageBox>
 #include <QGroupBox>
 #include <QSignalBlocker>
+#include <QStandardItemModel>
 
 #include <BasicLogger.h>
 
@@ -338,16 +339,18 @@ void ConfigPanel::clearUI()
     }
 
     m_groups.clear();
+    m_subGroups.clear();
     m_paramWidgets.clear();
 }
 
 void ConfigPanel::buildUIFromParams(const std::vector<ModuleParamDesc>& params)
 {
-    // Sort by group, then order
+    // Sort by group, subGroup, then order
     auto sortedParams = params;
     std::sort(sortedParams.begin(), sortedParams.end(),
               [](const ModuleParamDesc& a, const ModuleParamDesc& b) {
                   if (a.group != b.group) return a.group < b.group;
+                  if (a.subGroup != b.subGroup) return a.subGroup < b.subGroup;
                   return a.order < b.order;
               });
 
@@ -396,7 +399,48 @@ void ConfigPanel::buildUIFromParams(const std::vector<ModuleParamDesc>& params)
             }
 
             auto* group = getOrCreateGroup(groupName);
-            group->addWidget(widget);
+            
+            // Check for subGroup - add to framed container
+            if (!desc.subGroup.empty())
+            {
+                QString subGroupKey = groupName + "|" + QString::fromStdString(desc.subGroup);
+                QGroupBox* subGroup = nullptr;
+                
+                if (m_subGroups.contains(subGroupKey))
+                {
+                    subGroup = m_subGroups[subGroupKey];
+                }
+                else
+                {
+                    // Create new subGroup with frame
+                    subGroup = new QGroupBox(QString::fromStdString(desc.subGroup), m_scrollWidget);
+                    subGroup->setStyleSheet(
+                        "QGroupBox { "
+                        "  border: 1px solid #555; "
+                        "  border-radius: 4px; "
+                        "  margin-top: 8px; "
+                        "  padding-top: 4px; "
+                        "} "
+                        "QGroupBox::title { "
+                        "  subcontrol-origin: margin; "
+                        "  left: 8px; "
+                        "  padding: 0 4px; "
+                        "}"
+                    );
+                    auto* subLayout = new QVBoxLayout(subGroup);
+                    subLayout->setContentsMargins(8, 12, 8, 8);
+                    subLayout->setSpacing(4);
+                    
+                    m_subGroups[subGroupKey] = subGroup;
+                    group->addWidget(subGroup);
+                }
+                
+                subGroup->layout()->addWidget(widget);
+            }
+            else
+            {
+                group->addWidget(widget);
+            }
         }
     }
 
@@ -634,9 +678,25 @@ QWidget* ConfigPanel::createEnumWidget(const ModuleParamDesc& desc)
     layout->addWidget(label);
 
     auto* combo = new QComboBox(container);
-    for (const auto& option : desc.enumOptions)
+    for (size_t i = 0; i < desc.enumOptions.size(); ++i)
     {
+        const auto& option = desc.enumOptions[i];
         combo->addItem(QString::fromStdString(option));
+        
+        // Disable separator items ("---")
+        if (option == "---")
+        {
+            auto* model = qobject_cast<QStandardItemModel*>(combo->model());
+            if (model)
+            {
+                auto* item = model->item(static_cast<int>(i));
+                if (item)
+                {
+                    item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
+                    item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
+                }
+            }
+        }
     }
     combo->setToolTip(QString::fromStdString(desc.tooltip));
     
@@ -663,6 +723,26 @@ QWidget* ConfigPanel::createEnumWidget(const ModuleParamDesc& desc)
             });
 
     layout->addWidget(combo, 1);
+    
+    // Add Save button for module preset dropdowns (Smoothing, Audio, Gradient)
+    bool isModulePreset = desc.id.find("preset") != std::string::npos &&
+                          (desc.id.find("smooth") != std::string::npos ||
+                           desc.id.find("audio") != std::string::npos ||
+                           desc.id.find("color") != std::string::npos);
+    
+    if (isModulePreset)
+    {
+        auto* saveBtn = new QPushButton(tr("Save"), container);
+        saveBtn->setFixedWidth(50);
+        saveBtn->setToolTip(tr("Save current settings as a new preset"));
+        
+        connect(saveBtn, &QPushButton::clicked,
+                [this, id = desc.id]() {
+                    onModulePresetSave(id);
+                });
+        
+        layout->addWidget(saveBtn);
+    }
 
     // Track widget
     ParamWidgetInfo info;
@@ -1123,5 +1203,144 @@ void ConfigPanel::onDeletePresetClicked()
     {
         QMessageBox::warning(this, tr("Delete Failed"),
                              tr("Failed to delete preset '%1'.").arg(presetName));
+    }
+}
+
+// =============================================================================
+// Module Preset Save
+// =============================================================================
+
+void ConfigPanel::onModulePresetSave(const std::string& paramId)
+{
+    if (!m_visualizer)
+    {
+        return;
+    }
+    
+    auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer);
+    if (!pulsing)
+    {
+        BasicLogger::logWarning("ConfigPanel: Module preset save only supported for PulsingVisualizer");
+        return;
+    }
+    
+    // Get preset name from user
+    QString name = QInputDialog::getText(this, tr("Save Preset"),
+                                          tr("Preset name:"));
+    if (name.isEmpty())
+    {
+        return;
+    }
+    
+    // Validate name (no special characters)
+    if (name.contains('/') || name.contains('\\') || name.contains('.'))
+    {
+        QMessageBox::warning(this, tr("Invalid Name"),
+                             tr("Preset name cannot contain /, \\, or ."));
+        return;
+    }
+    
+    std::string presetName = name.toStdString();
+    
+    // Determine which module to save based on paramId
+    // Note: "audio.smooth.preset" contains both "audio" and "smooth"
+    // Check for "smooth" first (more specific)
+    if (paramId.find("smooth") != std::string::npos)
+    {
+        // Smoothing preset - access via AudioSourceModule's embedded smoothing
+        if (auto* audio = pulsing->audioSource())
+        {
+            audio->smoothing().savePreset(presetName);
+            BasicLogger::logInfo("ConfigPanel: Saved smoothing preset '" + presetName + "'");
+            
+            // Refresh the dropdown
+            refreshModulePresetDropdown(paramId, audio->smoothing().presetNames());
+            
+            QMessageBox::information(this, tr("Preset Saved"),
+                                     tr("Smoothing preset '%1' saved successfully.").arg(name));
+        }
+    }
+    else if (paramId.find("audio") != std::string::npos)
+    {
+        // Audio preset (includes smoothing settings)
+        if (auto* audio = pulsing->audioSource())
+        {
+            audio->savePreset(presetName);
+            BasicLogger::logInfo("ConfigPanel: Saved audio preset '" + presetName + "'");
+            
+            // Refresh the dropdown
+            refreshModulePresetDropdown(paramId, audio->presetNames());
+            
+            QMessageBox::information(this, tr("Preset Saved"),
+                                     tr("Audio preset '%1' saved successfully.").arg(name));
+        }
+    }
+    else if (paramId.find("color") != std::string::npos)
+    {
+        // Gradient preset
+        if (auto* gradient = pulsing->colorGradient())
+        {
+            gradient->savePreset(presetName);
+            BasicLogger::logInfo("ConfigPanel: Saved gradient preset '" + presetName + "'");
+            
+            // Refresh the dropdown
+            refreshModulePresetDropdown(paramId, gradient->presetNames());
+            
+            QMessageBox::information(this, tr("Preset Saved"),
+                                     tr("Gradient preset '%1' saved successfully.").arg(name));
+        }
+    }
+}
+
+void ConfigPanel::refreshModulePresetDropdown(const std::string& paramId, 
+                                               const std::vector<std::string>& presetNames)
+{
+    QString key = QString::fromStdString(paramId);
+    auto it = m_paramWidgets.find(key);
+    if (it == m_paramWidgets.end())
+    {
+        return;
+    }
+    
+    auto* combo = qobject_cast<QComboBox*>(it->control);
+    if (!combo)
+    {
+        return;
+    }
+    
+    // Block signals while updating
+    QSignalBlocker blocker(combo);
+    
+    // Remember current selection
+    QString currentText = combo->currentText();
+    
+    // Clear and repopulate
+    combo->clear();
+    for (size_t i = 0; i < presetNames.size(); ++i)
+    {
+        const auto& name = presetNames[i];
+        combo->addItem(QString::fromStdString(name));
+        
+        // Disable separator items
+        if (name == "---")
+        {
+            auto* model = qobject_cast<QStandardItemModel*>(combo->model());
+            if (model)
+            {
+                auto* item = model->item(static_cast<int>(i));
+                if (item)
+                {
+                    item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
+                    item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
+                }
+            }
+        }
+    }
+    
+    // Try to restore selection
+    int idx = combo->findText(currentText);
+    if (idx >= 0)
+    {
+        combo->setCurrentIndex(idx);
     }
 }

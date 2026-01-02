@@ -55,6 +55,7 @@ class QCheckBox;
 class QLabel;
 class QLineEdit;
 class QPushButton;
+class QGroupBox;
 class CollapsibleGroupBox;
 class IVisualizer;
 
@@ -137,6 +138,11 @@ private:
     void onPresetSelected(int index);
     void onSavePresetClicked();
     void onDeletePresetClicked();
+    
+    // Module preset save (for Smoothing, Audio, Gradient presets)
+    void onModulePresetSave(const std::string& paramId);
+    void refreshModulePresetDropdown(const std::string& paramId, 
+                                      const std::vector<std::string>& presetNames);
 
     // --- Members ---
     IVisualizer* m_visualizer = nullptr;
@@ -147,6 +153,7 @@ private:
 
     // Group management
     QMap<QString, CollapsibleGroupBox*> m_groups;
+    QMap<QString, QGroupBox*> m_subGroups;  // key = "group|subGroup"
 
     // Widget tracking for sync and dependencies
     struct ParamWidgetInfo
