@@ -39,15 +39,6 @@ docs/
 │   ├── AudioSourceModule.md             # NEU: FFT-Verarbeitung
 │   ├── ColorGradientModule.md           # NEU: Gradient-System
 │   └── Preset_System.md                 # NEU: File-basierte Presets
-├── reference/                           # Referenzen
-│   ├── Parameter_Reference.md           # NEU: Alle Parameter-IDs
-│   ├── Enum_Reference.md                # NEU: Alle Enum-Werte
-│   ├── FileFormat_Reference.md          # NEU: JSON-Preset-Formate
-│   └── API_Cheatsheet.md                # NEU: Schnellreferenz
-├── guides/                              # Benutzerhandbücher
-│   ├── Visualizer_Modules_UserGuide.md  # NEU: Modul-System Guide
-│   ├── Preset_System_UserGuide.md       # NEU: Preset-System Guide
-│   └── ConfigPanel_UserGuide.md         # NEU: UI Guide
 │
 └── integration/                         # Integration Guides
     └── Application_Integration.md       # Wie alles zusammenspielt

@@ -72,6 +72,11 @@ public:
      * @return Pointer to the audio source module (never null)
      */
     [[nodiscard]] lumi::modules::AudioSourceModule* audioSource() { return &m_audioSource; }
+    
+    /**
+     * @brief Reset all parameters to hardcoded defaults
+     */
+    void resetToDefaults() override;
 
     void setRotationSpeed(float degreesPerSecond);
     [[nodiscard]] float rotationSpeed() const;

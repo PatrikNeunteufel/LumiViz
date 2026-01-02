@@ -894,7 +894,15 @@ void ConfigPanel::onParamChanged(const std::string& paramId, const ParamValue& v
         BasicLogger::logDebug("ConfigPanel: Set " + paramId);
         updateVisibility();
         
-        // If a preset was loaded, sync all widgets to show the new values
+        // Any parameter change means the visualizer preset is now modified
+        // Set to [Custom] which indicates modified state
+        if (m_presetCombo && m_presetCombo->currentIndex() != 0)
+        {
+            QSignalBlocker blocker(m_presetCombo);
+            m_presetCombo->setCurrentIndex(0);  // [Custom] = modified
+        }
+        
+        // If a module preset was loaded, sync all widgets to show the new values
         if (paramId.find("preset") != std::string::npos)
         {
             BasicLogger::logDebug("ConfigPanel: Preset changed, syncing widgets...");
@@ -902,7 +910,7 @@ void ConfigPanel::onParamChanged(const std::string& paramId, const ParamValue& v
         }
         else
         {
-            // A non-preset parameter was changed - update the related preset widget
+            // A non-preset parameter was changed - update the related module preset widget
             // The module has already set its preset to [Custom], now sync the UI
             updateRelatedPresetWidget(paramId);
         }
@@ -915,14 +923,7 @@ void ConfigPanel::onParamChanged(const std::string& paramId, const ParamValue& v
 
 void ConfigPanel::updateRelatedPresetWidget(const std::string& paramId)
 {
-    // Any parameter change means the visualizer preset is now modified
-    if (m_presetCombo && m_presetCombo->currentIndex() != 0)
-    {
-        QSignalBlocker blocker(m_presetCombo);
-        m_presetCombo->setCurrentIndex(0);  // (Default) = modified
-    }
-    
-    // Also update the specific module preset if applicable
+    // Determine which module preset widget needs to be updated
     std::string presetId;
     
     // Check for embedded smoothing parameters (audio.smooth.*)
@@ -1110,7 +1111,9 @@ void ConfigPanel::setupPresetUI()
     
     m_presetCombo = new QComboBox(presetGroup);
     m_presetCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    m_presetCombo->addItem(tr("(Default)"));
+    // Placeholder - will be populated by refreshPresetList()
+    m_presetCombo->addItem(tr("[Custom]"));
+    m_presetCombo->addItem(tr("Default"));
     layout->addWidget(m_presetCombo);
     
     m_savePresetBtn = new QPushButton(tr("Save"), presetGroup);
@@ -1147,18 +1150,46 @@ void ConfigPanel::refreshPresetList()
     
     m_presetCombo->blockSignals(true);
     m_presetCombo->clear();
-    m_presetCombo->addItem(tr("(Default)"));
+    
+    // [Custom] - shown when parameters are manually modified
+    m_presetCombo->addItem(tr("[Custom]"));
+    
+    // Default - the hardcoded initial state
+    m_presetCombo->addItem(tr("Default"));
     
     QString vizId = m_visualizer->visualizerId();
     QStringList presets = m_presetManager->availablePresets(vizId);
     
-    for (const QString& preset : presets)
+    // Add separator if user presets exist
+    if (!presets.isEmpty())
     {
-        m_presetCombo->addItem(preset);
+        m_presetCombo->addItem(tr("---"));
+        
+        // Disable separator
+        auto* model = qobject_cast<QStandardItemModel*>(m_presetCombo->model());
+        if (model)
+        {
+            int separatorIdx = m_presetCombo->count() - 1;
+            auto* item = model->item(separatorIdx);
+            if (item)
+            {
+                item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
+                item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
+            }
+        }
+        
+        // Add user presets
+        for (const QString& preset : presets)
+        {
+            m_presetCombo->addItem(preset);
+        }
     }
     
     m_presetCombo->blockSignals(false);
     m_deletePresetBtn->setEnabled(false);
+    
+    // Start with "Default" selected (index 1)
+    m_presetCombo->setCurrentIndex(1);
     
     BasicLogger::logDebug("ConfigPanel: Found " + std::to_string(presets.size()) + 
                           " presets for " + vizId.toStdString());
@@ -1171,14 +1202,36 @@ void ConfigPanel::onPresetSelected(int index)
         return;
     }
     
-    // Index 0 is "(Default)" - do nothing special
+    // Index 0 = [Custom] - do nothing, just indicates modified state
     if (index == 0)
     {
         m_deletePresetBtn->setEnabled(false);
         return;
     }
     
+    // Index 1 = Default - reset to hardcoded defaults
+    if (index == 1)
+    {
+        m_visualizer->resetToDefaults();
+        syncFromVisualizer();
+        m_deletePresetBtn->setEnabled(false);
+        BasicLogger::logInfo("ConfigPanel: Reset to defaults");
+        return;
+    }
+    
+    // Index 2 = --- Separator - should not be selectable, but handle anyway
     QString presetName = m_presetCombo->currentText();
+    if (presetName == "---")
+    {
+        // Revert to Default
+        m_presetCombo->blockSignals(true);
+        m_presetCombo->setCurrentIndex(1);
+        m_presetCombo->blockSignals(false);
+        m_deletePresetBtn->setEnabled(false);
+        return;
+    }
+    
+    // Index 3+ = User presets
     QString vizId = m_visualizer->visualizerId();
     
     auto preset = m_presetManager->loadPreset(vizId, presetName);
@@ -1186,7 +1239,7 @@ void ConfigPanel::onPresetSelected(int index)
     {
         m_presetManager->applyPreset(m_visualizer, *preset);
         syncFromVisualizer();
-        m_deletePresetBtn->setEnabled(true);
+        m_deletePresetBtn->setEnabled(true);  // User presets can be deleted
         BasicLogger::logInfo("ConfigPanel: Applied preset '" + presetName.toStdString() + "'");
     }
     else
@@ -1250,7 +1303,8 @@ void ConfigPanel::onSavePresetClicked()
 
 void ConfigPanel::onDeletePresetClicked()
 {
-    if (!m_visualizer || m_presetCombo->currentIndex() <= 0)
+    // Index 0 = [Custom], Index 1 = Default, Index 2 = ---, Index 3+ = User presets
+    if (!m_visualizer || m_presetCombo->currentIndex() <= 2)
     {
         return;
     }

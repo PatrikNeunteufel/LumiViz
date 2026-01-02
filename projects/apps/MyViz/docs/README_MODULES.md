@@ -1,175 +1,144 @@
-# LumiPulse Module Integration v3.0
+# LumiPulse Module System — Kurzreferenz
 
-## Neue Ordnerstruktur
+> **Version:** 4.0.0  
+> **Datum:** 2026-01-02  
+> **Typ:** Reference  
+> **Status:** Aktuell  
+> **Zielgruppe:** Entwickler  
+> **Sprache:** Deutsch  
+
+---
+
+## Inhaltsverzeichnis
+
+1. [Übersicht](#1-übersicht)
+2. [Ordnerstruktur](#2-ordnerstruktur)
+3. [Parameter-Hierarchie](#3-parameter-hierarchie)
+4. [Preset-System](#4-preset-system)
+5. [Smoothing-Algorithmen](#5-smoothing-algorithmen)
+6. [Verwendung](#6-verwendung)
+7. [Siehe auch](#7-siehe-auch)
+
+---
+
+## 1. Übersicht
+
+Das Visualizer Module System bietet modulare, wiederverwendbare Komponenten mit einheitlichem Parameter-Interface und dateibasiertem Preset-System.
+
+---
+
+## 2. Ordnerstruktur
 
 ```
 include/visualizers/
 ├── modules/
-│   ├── IModule.hpp                 ← NEU: Interface für alle Module
-│   │
-│   ├── source/                     ← NEU: Ordner
-│   │   └── AudioSourceModule.hpp   ← NEU: FFT + Smoothing
-│   │
-│   ├── processing/                 ← NEU: Ordner
-│   │   └── SmoothingModule.hpp     ← NEU: SMA/EMA/WMA/DEMA
-│   │
-│   ├── ColorSchemeModule.hpp       ← Bestehend
-│   └── PulseShapeModule.hpp        ← Bestehend
-│
-├── PulsingVisualizer.hpp           ← Aktualisiert (v3)
-└── ...
-
-src/visualizers/
-├── PulsingVisualizer.cpp           ← Aktualisiert (v3)
-└── ...
+│   ├── IModule.hpp                 ← Interface + ParamBuilder
+│   ├── source/
+│   │   └── AudioSourceModule.hpp   ← FFT + Embedded Smoothing
+│   ├── processing/
+│   │   └── SmoothingModule.hpp     ← SMA/EMA/WMA/DEMA
+│   ├── ColorGradientModule.hpp     ← Farb-Gradients
+│   └── PulseShapeModule.hpp        ← Form-Geometrie
+├── PulsingVisualizer.hpp
+├── IVisualizer.hpp
+└── VisualizerBase.hpp
 ```
 
-## Installation
+---
 
-### 1. Neue Module-Dateien kopieren:
+## 3. Parameter-Hierarchie
 
 ```
-include/visualizers/modules/IModule.hpp
-include/visualizers/modules/source/AudioSourceModule.hpp
-include/visualizers/modules/processing/SmoothingModule.hpp
+audio.*                         ← AudioSourceModule
+├── audio.preset               ← [Custom], Default, User-Presets
+├── audio.scale                ← Linear/Log/Mel
+├── audio.bands                ← 8-512
+├── audio.floorDb              ← -120 bis 0 dB
+├── audio.ceilDb               ← -60 bis +20 dB
+├── audio.clamp01              ← Bool
+├── audio.gain                 ← 0.1-5.0
+└── audio.smooth.*             ← Embedded SmoothingModule
+    ├── audio.smooth.preset    ← [Custom], Builtin, User
+    ├── audio.smooth.algorithm ← None/SMA/EMA/WMA/DEMA
+    ├── audio.smooth.timeMs    ← 1-500 ms (EMA/DEMA)
+    └── audio.smooth.windowSize← 2-60 (SMA/WMA)
+
+shape.*                         ← PulseShapeModule
+├── shape.shape                ← Circle/Ring/Ngon/Star/Wave/Flash
+├── shape.sides                ← 3-12
+├── shape.innerRadius          ← 0-1
+└── shape.color.*              ← ColorGradientModule
+    ├── shape.color.preset     ← [Custom], Fire, Ocean, User
+    ├── shape.color.mode       ← Solid/Linear/Radial
+    ├── shape.color.angle      ← 0-360°
+    └── shape.color.outlineWidth ← 1-15
 ```
 
-### 2. PulsingVisualizer ersetzen:
+---
 
-Ersetze die bestehenden Dateien mit den v3 Versionen:
-- `PulsingVisualizer_v3.hpp` → `PulsingVisualizer.hpp`
-- `PulsingVisualizer_v3.cpp` → `PulsingVisualizer.cpp`
+## 4. Preset-System
 
-### 3. Source.cmake aktualisieren
+### Dropdown-Struktur
 
-In `include/visualizers/modules/Source.cmake`:
-
-```cmake
-# Add subdirectories for module categories
-add_subdirectory(source)
-add_subdirectory(processing)
+```
+[Custom]     ← Index 0: Manuell geändert
+Default      ← Index 1: Hardcoded Defaults
+---          ← Separator (disabled)
+UserPreset1  ← Index 3+: User-Presets
 ```
 
-Neue Datei `include/visualizers/modules/source/Source.cmake`:
-```cmake
-set(MODULE_SOURCE_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/AudioSourceModule.hpp
-)
-list(APPEND MYLIB_HEADERS ${MODULE_SOURCE_HEADERS})
-```
+### Datei-Formate
 
-Neue Datei `include/visualizers/modules/processing/Source.cmake`:
-```cmake
-set(MODULE_PROCESSING_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/SmoothingModule.hpp
-)
-list(APPEND MYLIB_HEADERS ${MODULE_PROCESSING_HEADERS})
-```
+| Modul | Endung | Speicherort |
+|-------|--------|-------------|
+| Visualizer | `.lvp` | `presets/visualizer/{vizId}/` |
+| Smoothing | `.smooth` | `presets/smoothing/` |
+| Audio | `.audio` | `presets/audio/` |
+| Gradient | `.grad` | `presets/gradients/` |
 
-## Neue Features
+---
 
-### Parameter-System
+## 5. Smoothing-Algorithmen
+
+| Algorithmus | Parameter | Beschreibung |
+|-------------|-----------|--------------|
+| None | — | Pass-through |
+| SMA | windowSize | Simple Moving Average |
+| **EMA** | timeMs | Exponential Moving Average (empfohlen) |
+| WMA | windowSize | Weighted Moving Average |
+| DEMA | timeMs | Double EMA (reduzierter Lag) |
+
+**Visibility:** `timeMs` erscheint nur bei EMA/DEMA, `windowSize` nur bei SMA/WMA.
+
+---
+
+## 6. Verwendung
 
 ```cpp
 PulsingVisualizer viz;
 
-// Alle Parameter abfragen (für ConfigPanel)
-auto params = viz.paramDescs();
-
-// Parameter per Pfad setzen
-viz.setParam("audio.smooth.timeMs", 100.0f);
+// Parameter setzen
 viz.setParam("audio.gain", 1.5f);
-viz.setParam("color.scheme", 1);  // Neon
+viz.setParam("audio.smooth.algorithm", 2);  // EMA
+viz.setParam("shape.color.preset", 3);      // Ocean
 
-// Parameter abfragen
-lumi::modules::ParamValue val;
-viz.getParam("audio.smooth.algorithm", val);
+// Modul-Zugriff
+viz.audioSource()->setGain(1.5f);
+viz.audioSource()->smoothing().setTimeMs(100.0f);
+
+// Preset speichern
+viz.audioSource()->smoothing().savePreset("MySmooth");
+
+// Auf Defaults zurücksetzen
+viz.resetToDefaults();
 ```
 
-### Parameter-Hierarchie
+---
 
-```
-audio.*                    ← AudioSourceModule
-├── audio.scale           ← FrequencyScale (Linear/Log/Mel)
-├── audio.bands           ← Anzahl Bänder (8-512)
-├── audio.floorDb         ← Floor in dB (-120 bis 0)
-├── audio.ceilDb          ← Ceiling in dB (-60 bis +20)
-├── audio.gain            ← Eingangsverstärkung (0.1-5.0)
-└── audio.smooth.*        ← Eingebettetes SmoothingModule
-    ├── audio.smooth.algorithm  ← None/SMA/EMA/WMA/DEMA
-    ├── audio.smooth.timeMs     ← Glättungszeit (0-500ms)
-    └── audio.smooth.preset     ← Instant/Reactive/Balanced/Smooth/Sluggish
+## 7. Siehe auch
 
-shape.*                   ← PulseShapeModule  
-├── shape.type           ← Circle/Ring/Flash/N-gon/Star/Wave
-├── shape.baseSize       ← Basisgröße (0.1-1.5)
-├── shape.sides          ← Anzahl Seiten (3-12)
-└── shape.rotationSpeed  ← Rotationsgeschwindigkeit (°/s)
-
-anim.*                    ← Animation
-├── anim.decay           ← Linear/Exponential/Hold/Bounce
-└── anim.decayTime       ← Abklingzeit (0.05-2.0s)
-
-color.*                   ← ColorSchemeModule
-├── color.scheme         ← Classic/Neon/Fire/Ice/Ocean/...
-├── color.animSpeed      ← Animationsgeschwindigkeit (Hz)
-└── color.beatFlash      ← Beat-Flash aktivieren
-
-bg.*                      ← Hintergrund
-└── bg.fade              ← Hintergrund-Fade (0-1)
-```
-
-### Modul-Zugriff
-
-```cpp
-// Direkter Zugriff auf Module
-viz.audioSource().setGain(1.5f);
-viz.audioSource().smoothing().setTimeMs(100.0f);
-
-viz.colorSchemeModule().setScheme(lumi::modules::ColorSchemeType::Fire);
-viz.pulseShapeModule().setShape(lumi::modules::PulseShape::Ring);
-```
-
-## Smoothing-Algorithmen
-
-| Algorithmus | Beschreibung | Lag | Verwendung |
-|-------------|--------------|-----|------------|
-| None | Kein Smoothing | 0 | Beat-reaktive Effekte |
-| SMA | Simple Moving Average | Hoch | Sehr glatte Bewegung |
-| EMA | Exponential Moving Average | Mittel | **Empfohlen** - gute Balance |
-| WMA | Weighted Moving Average | Mittel | Kompromiss SMA/EMA |
-| DEMA | Double EMA | Niedrig | Reaktiv aber glatt |
-
-## Presets
-
-```cpp
-// SmoothingModule Presets
-viz.audioSource().smoothing().applyPreset(lumi::modules::SmoothingPreset::Balanced);
-
-// Verfügbar:
-// - Instant   (0 ms, None)
-// - Reactive  (20 ms, EMA)
-// - Balanced  (50 ms, EMA)  ← Default
-// - Smooth    (100 ms, EMA)
-// - Sluggish  (200 ms, DEMA)
-```
-
-## JSON Serialisierung (Phase 3)
-
-```json
-{
-  "type": "pulsing",
-  "version": "3.0",
-  "params": {
-    "audio.scale": "log",
-    "audio.bands": 64,
-    "audio.gain": 1.2,
-    "audio.smooth.algorithm": "EMA",
-    "audio.smooth.timeMs": 50,
-    "shape.type": "circle",
-    "shape.baseSize": 0.6,
-    "color.scheme": "neon",
-    "color.beatFlash": true
-  }
-}
-```
+- [IModule.md](modules/IModule.md) — Interface-Dokumentation
+- [SmoothingModule.md](modules/SmoothingModule.md) — Smoothing-Algorithmen
+- [AudioSourceModule.md](modules/AudioSourceModule.md) — FFT-Verarbeitung
+- [ColorGradientModule.md](modules/ColorGradientModule.md) — Gradient-System
+- [Preset_System.md](modules/Preset_System.md) — File-basierte Presets

@@ -1,7 +1,7 @@
 # MyViz Dokumentationsübersicht
 
-> **Version:** 1.2.0  
-> **Datum:** 2026-01-02  
+> **Version:** 1.1.0  
+> **Datum:** 2025-12-31  
 > **Status:** Aktuell
 
 ---
@@ -22,7 +22,6 @@
 ```
 docs/
 ├── OVERVIEW.md                          # Diese Datei
-├── README_MODULES.md                    # Modul-System Kurzreferenz
 │
 ├── architecture/                        # Architektur-Entscheidungen
 │   ├── Registry_Architecture.md         # Registry Pattern + Self-Registration
@@ -33,21 +32,7 @@ docs/
 ├── modules/                             # Modul-Dokumentation
 │   ├── Audio_System.md                  # BASS Audio Engine
 │   ├── Menu_System.md                   # MenuRegistry + MenuManager
-│   ├── Panel_System.md                  # PanelRegistry + DockManager
-│   ├── IModule.md                       # NEU: Basis-Interface
-│   ├── SmoothingModule.md               # NEU: Smoothing-Algorithmen
-│   ├── AudioSourceModule.md             # NEU: FFT-Verarbeitung
-│   ├── ColorGradientModule.md           # NEU: Gradient-System
-│   └── Preset_System.md                 # NEU: File-basierte Presets
-├── reference/                           # Referenzen
-│   ├── Parameter_Reference.md           # NEU: Alle Parameter-IDs
-│   ├── Enum_Reference.md                # NEU: Alle Enum-Werte
-│   ├── FileFormat_Reference.md          # NEU: JSON-Preset-Formate
-│   └── API_Cheatsheet.md                # NEU: Schnellreferenz
-├── guides/                              # Benutzerhandbücher
-│   ├── Visualizer_Modules_UserGuide.md  # NEU: Modul-System Guide
-│   ├── Preset_System_UserGuide.md       # NEU: Preset-System Guide
-│   └── ConfigPanel_UserGuide.md         # NEU: UI Guide
+│   └── Panel_System.md                  # PanelRegistry + DockManager
 │
 └── integration/                         # Integration Guides
     └── Application_Integration.md       # Wie alles zusammenspielt
@@ -69,7 +54,6 @@ Diese Dokumentation befindet sich direkt bei den Header-Dateien:
 | DockManager | `include/UI/managers/DockManager.md` | Qt-ADS Integration |
 | MenuManager | `include/UI/managers/MenuManager.md` | Menü-Aufbau |
 | PanelBase | `include/UI/panels/PanelBase.md` | Panel-Basisklasse |
-| ConfigPanel | `include/UI/panels/ConfigPanel.md` | Visualizer-Konfiguration |
 | WidgetBase | `include/UI/widgets/WidgetBase.md` | Widget-Basisklasse |
 | VisualizerWidget | `include/UI/widgets/VisualizerWidget.md` | OpenGL Canvas |
 | Visualizers | `include/visualizers/Visualizers.md` | Visualizer-Effekte |

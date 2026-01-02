@@ -211,6 +211,9 @@ public:
     bool setParam(const std::string& id, const ParamValue& value) override;
     void resetToDefaults() override;
     
+    // Bring base class update into scope to avoid hiding warning
+    using IModule::update;
+    
     // =========================================================================
     // Audio Input
     // =========================================================================
@@ -769,6 +772,8 @@ inline void AudioSourceModule::resetToDefaults()
     m_ceilDb = 0.0f;
     m_clamp01 = true;
     m_gain = 1.0f;
+    m_preset = AudioPreset::Default;
+    m_currentPresetName = "Default";
     
     m_smoothing.resetToDefaults();
     

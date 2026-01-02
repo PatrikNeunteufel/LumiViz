@@ -702,6 +702,40 @@ void PulsingVisualizer::loadGradientPreset(const std::string& name)
     m_colorGradient.loadPreset(name);
 }
 
+void PulsingVisualizer::resetToDefaults()
+{
+    // Reset modules to their defaults
+    m_audioSource.resetToDefaults();
+    m_colorGradient.reset();   // ColorGradientModule uses reset()
+    m_pulseShape.reset();      // PulseShapeModule uses reset()
+    
+    // Reset shape parameters
+    m_innerRadius = 0.5f;
+    m_minSize = 0.3f;
+    m_maxSize = 0.9f;
+    m_rotationSpeed = 0.0f;
+    m_currentRotation = 0.0f;
+    m_beatReverseRotation = false;
+    m_rotationDirection = 1.0f;
+    
+    // Reset audio state
+    m_beatIntensity = 0.0f;
+    m_lastBassLevel = 0.0f;
+    m_beatThreshold = 0.4f;
+    m_beatSensitivity = 1.0f;
+    m_beatBrightnessEnabled = true;
+    
+    // Reset background
+    m_backgroundSolid = true;
+    m_bgColorR = 0.02f;
+    m_bgColorG = 0.02f;
+    m_bgColorB = 0.05f;
+    
+    m_needsRebuild = true;
+    
+    BasicLogger::logInfo("PulsingVisualizer: Reset to defaults");
+}
+
 void PulsingVisualizer::setRotationSpeed(float degreesPerSecond)
 {
     m_rotationSpeed = degreesPerSecond;
