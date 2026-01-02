@@ -38,9 +38,9 @@
 
 #include "services/VisualizerRegistry.hpp"
 #include "visualizers/PulsingVisualizer.hpp"
+#include "visualizers/WaveformVisualizer.hpp"
 // TODO: Zukünftige Visualizer hier inkludieren:
 // #include "visualizers/SpectrumVisualizer.hpp"
-// #include "visualizers/WaveformVisualizer.hpp"
 // #include "visualizers/ParticleVisualizer.hpp"
 
 // =============================================================================
@@ -90,17 +90,23 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
     //     false);
     
     // =========================================================================
-    // WAVEFORM CATEGORY (TODO)
+    // WAVEFORM CATEGORY
     // =========================================================================
     
-    // TODO: Waveform Visualizer - Audio waveform display
-    // registry.registerVisualizer(
-    //     VisualizerDescriptor{
-    //         "waveform", "Waveform",
-    //         "Real-time audio waveform display", "Waveform", 100, true
-    //     },
-    //     []() { return std::make_unique<WaveformVisualizer>(); },
-    //     false);
+    // Waveform Visualizer - Audio waveform display
+    registry.registerVisualizer(
+        VisualizerDescriptor{
+            "waveform",                                          // id
+            "Waveform",                                          // name
+            "Real-time audio waveform oscilloscope display",     // description
+            "Waveform",                                          // category
+            100,                                                 // order
+            true                                                 // usesAudio
+        },
+        []() -> std::unique_ptr<IVisualizer> {
+            return std::make_unique<WaveformVisualizer>();
+        },
+        false);
     
     // =========================================================================
     // PARTICLE CATEGORY (TODO)

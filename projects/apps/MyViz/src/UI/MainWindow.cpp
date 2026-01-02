@@ -450,7 +450,14 @@ void MainWindow::onAudioUpdate()
                     constexpr int FFT_SIZE = 1024;
                     std::vector<float> spectrum(FFT_SIZE);
                     
-                    if (pEngine->getFFTData(stream, spectrum.data(), FFT_SIZE))
+                    // Get waveform data for oscilloscope-style visualizers
+                    constexpr int WAVEFORM_SIZE = 1024;
+                    std::vector<float> waveform(WAVEFORM_SIZE);
+                    
+                    bool hasSpectrum = pEngine->getFFTData(stream, spectrum.data(), FFT_SIZE);
+                    bool hasWaveform = pEngine->getWaveformData(stream, waveform.data(), WAVEFORM_SIZE);
+                    
+                    if (hasSpectrum || hasWaveform)
                     {
                         // Debug: Log first few updates
                         if (updateCount <= 5 || updateCount % 150 == 0)
@@ -469,7 +476,16 @@ void MainWindow::onAudioUpdate()
                             if (pViz != nullptr)
                             {
                                 // Send first half of FFT (useful frequency bins)
-                                pViz->updateSpectrum(spectrum.data(), FFT_SIZE / 2);
+                                if (hasSpectrum)
+                                {
+                                    pViz->updateSpectrum(spectrum.data(), FFT_SIZE / 2);
+                                }
+                                
+                                // Send waveform data for oscilloscope-style visualizers
+                                if (hasWaveform)
+                                {
+                                    pViz->updateWaveform(waveform.data(), WAVEFORM_SIZE);
+                                }
                             }
                         }
                     }

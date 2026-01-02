@@ -17,6 +17,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/PulsingVisualizer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerBase.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerPresetManager.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/WaveformVisualizer.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

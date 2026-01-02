@@ -14,6 +14,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerAutoReg.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerBase.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerPresetManager.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/WaveformVisualizer.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)

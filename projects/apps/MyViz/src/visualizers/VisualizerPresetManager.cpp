@@ -335,7 +335,7 @@ QString VisualizerPresetManager::getPresetPath(const QString& visualizerId,
 
 QString VisualizerPresetManager::getVisualizerDir(const QString& visualizerId) const
 {
-    return m_presetsDir + "/" + visualizerId;
+    return m_presetsDir + "/visuals/" + visualizerId;
 }
 
 // =============================================================================

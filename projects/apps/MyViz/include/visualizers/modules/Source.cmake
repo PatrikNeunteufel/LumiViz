@@ -18,6 +18,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/ColorSchemeTraits.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/IModule.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PulseShapeModule.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/WaveformModule.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)
