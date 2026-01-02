@@ -1,15 +1,11 @@
 /**
  ****************************************************************************************
  * @file   WaveformVisualizer.hpp
- * @brief  Audio waveform visualizer with multiple display styles
+ * @brief  Advanced audio waveform visualizer with 8-stop gradient and per-channel settings
  *
  * @author LumiPulse Team
  * @date   January 2026
- * @version 2.0.0
- *
- * @details
- * Displays audio waveform data as an oscillating line, bars, or mirrored display.
- * Uses modular architecture with AudioSourceModule and WaveformModule.
+ * @version 4.0.0
  ****************************************************************************************
  */
 
@@ -26,17 +22,21 @@
 
 #include <memory>
 #include <vector>
-#include <chrono>
+#include <deque>
+
+/**
+ * @brief Held frame for fade effect
+ */
+struct HeldWaveformFrame
+{
+    std::vector<float> samples;
+    float age = 0.0f;
+    float alpha = 1.0f;
+};
 
 /**
  * @class WaveformVisualizer
- * @brief Audio waveform display with multiple styles
- *
- * Visualizes audio waveform data in real-time with customizable appearance.
- * 
- * @par Module Architecture
- * - AudioSourceModule: Audio input and preprocessing
- * - WaveformModule: Display style and appearance (includes ColorGradientModule)
+ * @brief Advanced audio waveform with per-channel settings and 8-stop gradient
  */
 class WaveformVisualizer : public VisualizerBase
 {
@@ -65,39 +65,53 @@ public:
     // Module Access
     // =========================================================================
 
-    /**
-     * @brief Get access to the audio source module
-     * @return Pointer to the audio source module (never null)
-     */
     [[nodiscard]] lumi::modules::AudioSourceModule* audioSource() { return &m_audioSource; }
-
-    /**
-     * @brief Get access to the waveform display module
-     * @return Pointer to the waveform module (never null)
-     */
     [[nodiscard]] lumi::modules::WaveformModule* waveform() { return &m_waveform; }
 
-    /**
-     * @brief Reset all parameters to hardcoded defaults
-     */
     void resetToDefaults() override;
 
 protected:
-    // =========================================================================
-    // VisualizerBase Implementation
-    // =========================================================================
-
     void onInitialize() override;
     void onRender(float deltaTime) override;
     void onResize(const QSize& size) override;
     void onCleanup() override;
 
 private:
-    // =========================================================================
-    // Private Methods
-    // =========================================================================
-
     bool createShaders();
+    
+    void splitStereoData(const std::vector<float>& interleaved,
+                         std::vector<float>& left,
+                         std::vector<float>& right);
+    
+    void resampleWaveform(const std::vector<float>& source,
+                          std::vector<float>& target,
+                          std::vector<float>& smoothed,
+                          int targetSize,
+                          float smoothing,
+                          float gain);
+    
+    void buildThickLineVertices(const std::vector<float>& samples,
+                                float offset,
+                                float amplitude,
+                                float lineWidth,
+                                std::vector<float>& vertices);
+    
+    void buildFillVertices(const std::vector<float>& samples,
+                           float offset,
+                           float amplitude,
+                           std::vector<float>& vertices);
+    
+    void updateHeldFrames(float deltaTime);
+    
+    /// @brief Render a single channel
+    /// @param channelIndex 0=Mono, 1=Left, 2=Right
+    void renderChannel(int channelIndex,
+                       const std::vector<float>& samples,
+                       const lumi::modules::WaveformChannelConfig& config,
+                       float alpha);
+    
+    /// @brief Upload gradient uniforms to shader for specific channel
+    void uploadGradientUniforms(QOpenGLShaderProgram* shader, int channelIndex, bool isLine);
 
     // =========================================================================
     // Modules
@@ -110,38 +124,54 @@ private:
     // OpenGL Resources
     // =========================================================================
 
-    std::unique_ptr<QOpenGLShaderProgram> m_shader;
-    std::unique_ptr<QOpenGLShaderProgram> m_glowShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_lineShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_fillShader;
     std::unique_ptr<QOpenGLBuffer> m_vertexBuffer;
     std::unique_ptr<QOpenGLVertexArrayObject> m_vao;
 
-    // Uniform locations
-    int m_uniformAspect = -1;
-    int m_uniformAmplitude = -1;
-    int m_uniformColorMode = -1;
-    int m_uniformColor0 = -1;
-    int m_uniformColor1 = -1;
-    int m_uniformTime = -1;
+    // Line shader uniforms (8-stop gradient)
+    int m_lineUniColor[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+    int m_lineUniStopPos = -1;
+    int m_lineUniStopPos2 = -1;
+    int m_lineUniStopCount = -1;
+    int m_lineUniGradientMode = -1;
+    int m_lineUniGradientAngle = -1;
+    int m_lineUniAlpha = -1;
+    
+    // Fill shader uniforms (8-stop gradient)
+    int m_fillUniColor[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+    int m_fillUniStopPos = -1;
+    int m_fillUniStopPos2 = -1;
+    int m_fillUniStopCount = -1;
+    int m_fillUniGradientMode = -1;
+    int m_fillUniGradientAngle = -1;
+    int m_fillUniAlpha = -1;
+    int m_fillUniBrightness = -1;
 
     // =========================================================================
-    // Waveform Display Buffer
+    // Waveform Data Buffers
     // =========================================================================
 
-    std::vector<float> m_smoothedWaveform;
-    std::vector<float> m_displayWaveform;
+    std::vector<float> m_rawWaveformLeft;
+    std::vector<float> m_rawWaveformRight;
+    std::vector<float> m_smoothedLeft;
+    std::vector<float> m_smoothedRight;
+    std::vector<float> m_smoothedMono;
+    std::vector<float> m_displayLeft;
+    std::vector<float> m_displayRight;
+    std::vector<float> m_displayMono;
 
     // =========================================================================
-    // Background
+    // Hold/Fade Buffers (per channel)
     // =========================================================================
 
-    float m_bgColorR = 0.02f;
-    float m_bgColorG = 0.02f;
-    float m_bgColorB = 0.05f;
+    std::deque<HeldWaveformFrame> m_heldFramesMono;
+    std::deque<HeldWaveformFrame> m_heldFramesLeft;
+    std::deque<HeldWaveformFrame> m_heldFramesRight;
 
     // =========================================================================
-    // Animation
+    // State
     // =========================================================================
 
     float m_totalTime = 0.0f;
-    std::chrono::steady_clock::time_point m_startTime;
 };

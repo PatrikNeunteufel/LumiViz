@@ -16,6 +16,7 @@
 #include "UI/dialogs/GradientEditorDialog.hpp"
 #include "visualizers/IVisualizer.hpp"
 #include "visualizers/PulsingVisualizer.hpp"
+#include "visualizers/WaveformVisualizer.hpp"
 #include "visualizers/VisualizerPresetManager.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
@@ -529,6 +530,18 @@ QWidget* ConfigPanel::createIntWidget(const ModuleParamDesc& desc)
         spinbox->setRange(static_cast<int>(desc.minValue), static_cast<int>(desc.maxValue));
         spinbox->setSingleStep(desc.step > 0 ? static_cast<int>(desc.step) : 1);
         spinbox->setToolTip(QString::fromStdString(desc.tooltip));
+        spinbox->setButtonSymbols(QAbstractSpinBox::UpDownArrows);
+        spinbox->setAccelerated(true);  // Accelerate when holding buttons
+        spinbox->setKeyboardTracking(false);
+        spinbox->setMinimumWidth(100);
+        spinbox->setMaximumWidth(150);
+        
+        // Ensure buttons are visible
+        spinbox->setStyleSheet(
+            "QSpinBox { padding-right: 20px; }"
+            "QSpinBox::up-button { width: 16px; }"
+            "QSpinBox::down-button { width: 16px; }"
+        );
 
         connect(spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
                 [this, id = desc.id](int value) {
@@ -702,14 +715,27 @@ QWidget* ConfigPanel::createEnumWidget(const ModuleParamDesc& desc)
     
     // Check if this is a gradient preset dropdown - add preview delegate
     if (desc.id.find("preset") != std::string::npos && 
-        desc.id.find("color") != std::string::npos)
+        (desc.id.find("color") != std::string::npos || desc.id.find("Color") != std::string::npos ||
+         desc.id.find("lineColor") != std::string::npos))
     {
-        // Try to get the ColorGradientModule for preview
-        auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer);
-        if (pulsing && pulsing->colorGradient())
+        // Try to get the ColorGradientModule for preview from any visualizer
+        lumi::modules::ColorGradientModule* gradientModule = nullptr;
+        
+        // PulsingVisualizer
+        if (auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer))
+        {
+            gradientModule = pulsing->colorGradient();
+        }
+        // WaveformVisualizer
+        else if (auto* waveform = dynamic_cast<WaveformVisualizer*>(m_visualizer))
+        {
+            gradientModule = &waveform->waveform()->colorGradient();
+        }
+        
+        if (gradientModule)
         {
             auto* delegate = new lumi::ui::GradientPresetDelegate(combo);
-            delegate->setGradientModule(pulsing->colorGradient());
+            delegate->setGradientModule(gradientModule);
             combo->setItemDelegate(delegate);
             
             // Make combo taller to show preview
@@ -1023,18 +1049,23 @@ void ConfigPanel::openGradientEditor(const std::string& /*paramId*/)
         return;
     }
     
-    // Try to cast to PulsingVisualizer to get access to gradient module
-    auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer);
-    if (!pulsing)
+    // Try to get ColorGradientModule from any supported visualizer
+    lumi::modules::ColorGradientModule* gradient = nullptr;
+    
+    // PulsingVisualizer
+    if (auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer))
     {
-        BasicLogger::logWarning("ConfigPanel: Gradient editor only supported for PulsingVisualizer");
-        return;
+        gradient = pulsing->colorGradient();
+    }
+    // WaveformVisualizer
+    else if (auto* waveform = dynamic_cast<WaveformVisualizer*>(m_visualizer))
+    {
+        gradient = &waveform->waveform()->colorGradient();
     }
     
-    auto* gradient = pulsing->colorGradient();
     if (!gradient)
     {
-        BasicLogger::logError("ConfigPanel: ColorGradientModule is null");
+        BasicLogger::logWarning("ConfigPanel: Gradient editor not supported for this visualizer");
         return;
     }
     

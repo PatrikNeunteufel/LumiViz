@@ -1,14 +1,11 @@
 /**
  ****************************************************************************************
  * @file   WaveformModule.hpp
- * @brief  Waveform display module for audio visualizers
- *
- * Provides waveform rendering parameters and styles.
- * Embeds ColorGradientModule for consistent color handling.
+ * @brief  Advanced waveform display module with per-channel settings
  *
  * @author LumiPulse Team
  * @date   January 2026
- * @version 1.0.0
+ * @version 3.0.0
  ****************************************************************************************
  */
 
@@ -19,33 +16,57 @@
 
 #include <string>
 #include <vector>
+#include <array>
 
 namespace lumi::modules {
 
 // =============================================================================
-// Waveform Style Types
+// Waveform Enums
 // =============================================================================
 
 /**
- * @brief Available waveform display styles
+ * @brief Line drawing style
  */
-enum class WaveformStyle
+enum class WaveformLineStyle
 {
-    Line = 0,       ///< Connected line through sample points
-    Bars,           ///< Vertical bars for each sample
-    Mirror,         ///< Mirrored waveform (top and bottom)
-    Filled,         ///< Filled area under waveform
-    Dots            ///< Individual dots at sample points
+    Line = 0,       ///< Continuous connected line
+    Dots,           ///< Individual dots at sample points
+    Dashed          ///< Dashed line segments
 };
 
 /**
- * @brief Waveform orientation
+ * @brief Channel display mode
  */
-enum class WaveformOrientation
+enum class WaveformChannelMode
 {
-    Horizontal = 0, ///< Left to right (standard oscilloscope)
-    Vertical,       ///< Bottom to top
-    Circular        ///< Arranged in a circle
+    Mono = 0,       ///< Single mono channel only
+    Stereo,         ///< Left and right separate (no mono)
+    Both            ///< Mono, Left, and Right (all three)
+};
+
+// =============================================================================
+// Per-Channel Settings Structure
+// =============================================================================
+
+/**
+ * @brief Complete settings for a single audio channel
+ */
+struct WaveformChannelConfig
+{
+    // Layout
+    float lineOffset = 0.0f;        ///< Vertical offset [-1..1]
+    float amplitude = 0.8f;         ///< Amplitude scale [0.1..2.0]
+    
+    // Line style
+    float lineWidth = 2.0f;         ///< Line width in pixels
+    
+    // Fill
+    bool fillEnabled = false;       ///< Fill to zero line
+    float fillOpacity = 0.3f;       ///< Fill opacity [0..1]
+    float fillBrightness = -0.3f;   ///< Brightness relative to line
+    
+    // Visibility
+    bool visible = true;            ///< Channel visibility
 };
 
 // =============================================================================
@@ -54,25 +75,22 @@ enum class WaveformOrientation
 
 /**
  * @class WaveformModule
- * @brief Module for waveform display configuration
+ * @brief Advanced waveform display with per-channel configuration
  *
- * Manages waveform rendering parameters including style, size, and colors.
- * Embeds ColorGradientModule for consistent gradient handling.
- *
- * @par Example Usage
- * @code
- * WaveformModule waveform;
- * waveform.setStyle(WaveformStyle::Mirror);
- * waveform.setLineWidth(3.0f);
- * waveform.colorGradient().loadPreset("Neon");
- *
- * // Get params for ConfigPanel:
- * auto params = waveform.paramDescs();
- * @endcode
+ * Each channel (Mono, Left, Right) has independent settings for:
+ * - Offset and Amplitude
+ * - Line Width
+ * - Fill settings
+ * - Color gradient
  */
 class WaveformModule
 {
 public:
+    // Channel indices
+    static constexpr int CHANNEL_MONO = 0;
+    static constexpr int CHANNEL_LEFT = 1;
+    static constexpr int CHANNEL_RIGHT = 2;
+
     // =========================================================================
     // Construction
     // =========================================================================
@@ -87,219 +105,135 @@ public:
     [[nodiscard]] static const char* moduleName() { return "Waveform"; }
     [[nodiscard]] static const char* moduleDescription()
     {
-        return "Waveform display configuration";
+        return "Advanced waveform display with per-channel settings";
     }
 
-    /// @brief Reset to default state
     void reset();
 
     // =========================================================================
     // IModule-style Parameter Interface
     // =========================================================================
 
-    /**
-     * @brief Get all parameter descriptors
-     * @return Vector of parameter descriptors (including color subgroup)
-     */
     [[nodiscard]] std::vector<ModuleParamDesc> paramDescs() const;
-
-    /**
-     * @brief Get parameter value by ID
-     * @param id Parameter ID (e.g., "style", "color.mode")
-     * @param out Output value
-     * @return true if parameter found
-     */
     [[nodiscard]] bool getParam(const std::string& id, ParamValue& out) const;
-
-    /**
-     * @brief Set parameter value by ID
-     * @param id Parameter ID
-     * @param value New value
-     * @return true if parameter set successfully
-     */
     bool setParam(const std::string& id, const ParamValue& value);
 
     // =========================================================================
-    // Style Configuration
+    // Channel Mode
     // =========================================================================
 
-    /**
-     * @brief Set waveform display style
-     * @param style The display style
-     */
-    void setStyle(WaveformStyle style) { m_style = style; }
-
-    /**
-     * @brief Get current style
-     */
-    [[nodiscard]] WaveformStyle style() const { return m_style; }
-
-    /**
-     * @brief Set waveform orientation
-     * @param orientation Display orientation
-     */
-    void setOrientation(WaveformOrientation orientation) { m_orientation = orientation; }
-
-    /**
-     * @brief Get current orientation
-     */
-    [[nodiscard]] WaveformOrientation orientation() const { return m_orientation; }
+    void setChannelMode(WaveformChannelMode mode);
+    [[nodiscard]] WaveformChannelMode channelMode() const { return m_channelMode; }
 
     // =========================================================================
-    // Display Parameters
+    // Per-Channel Settings Access
     // =========================================================================
 
-    /**
-     * @brief Set line width in pixels
-     * @param width Width (1-10)
-     */
-    void setLineWidth(float width) { m_lineWidth = std::clamp(width, 1.0f, 10.0f); }
+    /// @brief Get channel config (0=Mono, 1=Left, 2=Right)
+    [[nodiscard]] WaveformChannelConfig& channelConfig(int channel);
+    [[nodiscard]] const WaveformChannelConfig& channelConfig(int channel) const;
 
-    /**
-     * @brief Get line width
-     */
-    [[nodiscard]] float lineWidth() const { return m_lineWidth; }
+    // =========================================================================
+    // Global Settings
+    // =========================================================================
 
-    /**
-     * @brief Set amplitude scale
-     * @param amplitude Vertical scale (0.1-2.0)
-     */
-    void setAmplitude(float amplitude) { m_amplitude = std::clamp(amplitude, 0.1f, 2.0f); }
+    void setLineStyle(WaveformLineStyle style) { m_lineStyle = style; }
+    [[nodiscard]] WaveformLineStyle lineStyle() const { return m_lineStyle; }
 
-    /**
-     * @brief Get amplitude scale
-     */
-    [[nodiscard]] float amplitude() const { return m_amplitude; }
-
-    /**
-     * @brief Set sample count for display
-     * @param count Number of samples (64-1024)
-     */
-    void setSampleCount(int count) { m_sampleCount = std::clamp(count, 64, 1024); }
-
-    /**
-     * @brief Get sample count
-     */
+    void setSampleCount(int count) { m_sampleCount = std::clamp(count, 64, 2048); }
     [[nodiscard]] int sampleCount() const { return m_sampleCount; }
 
-    /**
-     * @brief Set temporal smoothing factor
-     * @param smoothing Smoothing (0-0.95)
-     */
     void setSmoothing(float smoothing) { m_smoothing = std::clamp(smoothing, 0.0f, 0.95f); }
-
-    /**
-     * @brief Get smoothing factor
-     */
     [[nodiscard]] float smoothing() const { return m_smoothing; }
 
-    // =========================================================================
-    // Glow Effect
-    // =========================================================================
+    void setDisplayWidth(float width) { m_displayWidth = std::clamp(width, 0.1f, 1.0f); }
+    [[nodiscard]] float displayWidth() const { return m_displayWidth; }
 
-    /**
-     * @brief Enable/disable glow effect
-     * @param enabled True to enable glow
-     */
-    void setGlowEnabled(bool enabled) { m_glowEnabled = enabled; }
+    // Dash settings (global)
+    void setDashLength(float length) { m_dashLength = std::clamp(length, 2.0f, 50.0f); }
+    [[nodiscard]] float dashLength() const { return m_dashLength; }
 
-    /**
-     * @brief Check if glow is enabled
-     */
-    [[nodiscard]] bool glowEnabled() const { return m_glowEnabled; }
-
-    /**
-     * @brief Set glow intensity
-     * @param intensity Glow intensity (0-1)
-     */
-    void setGlowIntensity(float intensity) { m_glowIntensity = std::clamp(intensity, 0.0f, 1.0f); }
-
-    /**
-     * @brief Get glow intensity
-     */
-    [[nodiscard]] float glowIntensity() const { return m_glowIntensity; }
+    void setDashGap(float gap) { m_dashGap = std::clamp(gap, 1.0f, 50.0f); }
+    [[nodiscard]] float dashGap() const { return m_dashGap; }
 
     // =========================================================================
-    // Mirror Mode Parameters
+    // Effects (Global)
     // =========================================================================
 
-    /**
-     * @brief Set mirror gap (space between top/bottom halves)
-     * @param gap Gap as fraction of height (0-0.5)
-     */
-    void setMirrorGap(float gap) { m_mirrorGap = std::clamp(gap, 0.0f, 0.5f); }
+    void setMirrorEnabled(bool enabled) { m_mirrorEnabled = enabled; }
+    [[nodiscard]] bool mirrorEnabled() const { return m_mirrorEnabled; }
 
-    /**
-     * @brief Get mirror gap
-     */
-    [[nodiscard]] float mirrorGap() const { return m_mirrorGap; }
+    void setHoldEnabled(bool enabled) { m_holdEnabled = enabled; }
+    [[nodiscard]] bool holdEnabled() const { return m_holdEnabled; }
+
+    void setFadeTime(float seconds) { m_fadeTime = std::clamp(seconds, 0.1f, 5.0f); }
+    [[nodiscard]] float fadeTime() const { return m_fadeTime; }
+
+    void setMaxHoldFrames(int frames) { m_maxHoldFrames = std::clamp(frames, 1, 120); }
+    [[nodiscard]] int maxHoldFrames() const { return m_maxHoldFrames; }
 
     // =========================================================================
-    // Color Gradient Access
+    // Color Gradient Access (per channel)
     // =========================================================================
 
-    /**
-     * @brief Get access to the color gradient module
-     * @return Reference to the embedded color gradient
-     */
-    [[nodiscard]] ColorGradientModule& colorGradient() { return m_colorGradient; }
-
-    /**
-     * @brief Get const access to the color gradient module
-     */
-    [[nodiscard]] const ColorGradientModule& colorGradient() const { return m_colorGradient; }
+    /// @brief Get color gradient for channel (0=Mono, 1=Left, 2=Right)
+    [[nodiscard]] ColorGradientModule& colorGradient(int channel);
+    [[nodiscard]] const ColorGradientModule& colorGradient(int channel) const;
+    
+    /// @brief Convenience: Mono gradient
+    [[nodiscard]] ColorGradientModule& colorGradient() { return m_colorGradients[CHANNEL_MONO]; }
+    [[nodiscard]] const ColorGradientModule& colorGradient() const { return m_colorGradients[CHANNEL_MONO]; }
 
     // =========================================================================
     // Utility
     // =========================================================================
 
-    /**
-     * @brief Get style name as string
-     * @param style Style type
-     * @return Human-readable name
-     */
-    static const char* styleName(WaveformStyle style);
-
-    /**
-     * @brief Get all available style names
-     */
-    static std::vector<const char*> availableStyles();
+    static const char* lineStyleName(WaveformLineStyle style);
+    static const char* channelModeName(WaveformChannelMode mode);
 
 private:
     // =========================================================================
-    // Embedded Modules
+    // Channel Mode
     // =========================================================================
 
-    ColorGradientModule m_colorGradient;
+    WaveformChannelMode m_channelMode = WaveformChannelMode::Mono;
 
     // =========================================================================
-    // Style Configuration
+    // Per-Channel Configs: [0]=Mono, [1]=Left, [2]=Right
     // =========================================================================
 
-    WaveformStyle m_style = WaveformStyle::Line;
-    WaveformOrientation m_orientation = WaveformOrientation::Horizontal;
+    std::array<WaveformChannelConfig, 3> m_channelConfigs;
 
     // =========================================================================
-    // Display Parameters
+    // Global Line Style
     // =========================================================================
 
-    float m_lineWidth = 2.0f;
-    float m_amplitude = 0.8f;
-    int m_sampleCount = 256;
+    WaveformLineStyle m_lineStyle = WaveformLineStyle::Line;
+    float m_dashLength = 10.0f;
+    float m_dashGap = 5.0f;
+
+    // =========================================================================
+    // Global Layout
+    // =========================================================================
+
+    int m_sampleCount = 512;
     float m_smoothing = 0.3f;
+    float m_displayWidth = 1.0f;
 
     // =========================================================================
-    // Glow Effect
+    // Effects (Global)
     // =========================================================================
 
-    bool m_glowEnabled = true;
-    float m_glowIntensity = 0.5f;
+    bool m_mirrorEnabled = false;
+    bool m_holdEnabled = false;
+    float m_fadeTime = 1.0f;
+    int m_maxHoldFrames = 60;
 
     // =========================================================================
-    // Mirror Mode
+    // Color (per channel): [0]=Mono, [1]=Left, [2]=Right
     // =========================================================================
 
-    float m_mirrorGap = 0.05f;
+    std::array<ColorGradientModule, 3> m_colorGradients;
 };
 
 } // namespace lumi::modules
