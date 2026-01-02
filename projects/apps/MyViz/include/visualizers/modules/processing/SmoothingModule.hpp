@@ -91,7 +91,8 @@ struct SmoothingPresetData
 {
     std::string name;
     SmoothingAlgorithm algorithm = SmoothingAlgorithm::EMA;
-    float timeMs = 50.0f;
+    float timeMs = 50.0f;           ///< For EMA/DEMA
+    int windowSize = 8;             ///< For SMA/WMA
     bool primeFirstFrame = true;
 };
 
@@ -192,6 +193,7 @@ public:
     /**
      * @brief Set smoothing time in milliseconds
      * @param ms Smoothing time (0-500)
+     * @note Only used by EMA and DEMA algorithms
      */
     void setTimeMs(float ms);
     
@@ -199,6 +201,18 @@ public:
      * @brief Get smoothing time
      */
     [[nodiscard]] float timeMs() const { return m_timeMs; }
+    
+    /**
+     * @brief Set window size for SMA/WMA algorithms
+     * @param size Number of samples (2-60)
+     * @note Only used by SMA and WMA algorithms
+     */
+    void setWindowSize(int size);
+    
+    /**
+     * @brief Get window size
+     */
+    [[nodiscard]] int windowSize() const { return m_windowSize; }
     
     /**
      * @brief Apply a preset configuration
@@ -387,30 +401,50 @@ inline std::vector<ModuleParamDesc> SmoothingModule::paramDescs() const
             .displayName("Algorithm")
             .enumOptions(algorithmNames())
             .defaultValue(static_cast<int>(SmoothingAlgorithm::EMA))
-            .tooltip("Smoothing algorithm type")
+            .tooltip("Smoothing algorithm type:\n"
+                     "• None: Pass-through (no smoothing)\n"
+                     "• SMA: Simple Moving Average (window-based)\n"
+                     "• EMA: Exponential Moving Average (time-based, recommended)\n"
+                     "• WMA: Weighted Moving Average (window-based, newer samples weighted more)\n"
+                     "• DEMA: Double EMA (time-based, reduced lag)")
             .subGroup("Smoothing")
             .order(1)
             .build(),
             
         ParamBuilder("timeMs", ParamType::Float)
-            .displayName("Time")
+            .displayName("Time Constant")
             .range(MIN_TIME_MS, MAX_TIME_MS, 1.0f)
             .defaultValue(50.0f)
             .unit("ms")
-            .tooltip("Smoothing time constant")
+            .tooltip("Smoothing time constant (τ)\n"
+                     "Higher = smoother but more lag\n"
+                     "Lower = more responsive but jittery")
             .subGroup("Smoothing")
             .order(2)
-            .dependsOn("algorithm", std::vector<ParamValue>{1, 2, 3, 4})  // SMA, EMA, WMA, DEMA
+            .dependsOn("algorithm", std::vector<ParamValue>{2, 4})  // EMA, DEMA only
+            .build(),
+            
+        ParamBuilder("windowSize", ParamType::Int)
+            .displayName("Window Size")
+            .range(MIN_WINDOW_SIZE, MAX_WINDOW_SIZE, 1)
+            .defaultValue(8)
+            .unit("samples")
+            .tooltip("Number of samples to average\n"
+                     "Higher = smoother but more lag\n"
+                     "Lower = more responsive but jittery")
+            .subGroup("Smoothing")
+            .order(3)
+            .dependsOn("algorithm", std::vector<ParamValue>{1, 3})  // SMA, WMA only
             .build(),
             
         ParamBuilder("primeFirstFrame", ParamType::Bool)
             .displayName("Prime First Frame")
             .defaultValue(true)
-            .tooltip("Initialize with first input value")
+            .tooltip("Initialize with first input value to avoid startup transients")
             .subGroup("Smoothing")
             .advanced(true)
             .order(10)
-            .dependsOn("algorithm", std::vector<ParamValue>{1, 2, 3, 4})  // SMA, EMA, WMA, DEMA
+            .dependsOn("algorithm", std::vector<ParamValue>{1, 2, 3, 4})  // All except None
             .build()
     };
 }
@@ -425,6 +459,11 @@ inline bool SmoothingModule::getParam(const std::string& id, ParamValue& out) co
     if (id == "timeMs")
     {
         out = m_timeMs;
+        return true;
+    }
+    if (id == "windowSize")
+    {
+        out = m_windowSize;
         return true;
     }
     if (id == "preset")
@@ -472,6 +511,16 @@ inline bool SmoothingModule::setParam(const std::string& id, const ParamValue& v
             return true;
         }
     }
+    else if (id == "windowSize")
+    {
+        if (std::holds_alternative<int>(value))
+        {
+            setWindowSize(std::get<int>(value));
+            m_preset = SmoothingPreset::Custom;
+            m_currentPresetName = "[Custom]";
+            return true;
+        }
+    }
     else if (id == "preset")
     {
         if (std::holds_alternative<int>(value))
@@ -490,6 +539,8 @@ inline bool SmoothingModule::setParam(const std::string& id, const ParamValue& v
         if (std::holds_alternative<bool>(value))
         {
             m_primeFirstFrame = std::get<bool>(value);
+            m_preset = SmoothingPreset::Custom;
+            m_currentPresetName = "[Custom]";
             return true;
         }
     }
@@ -501,7 +552,9 @@ inline void SmoothingModule::resetToDefaults()
     m_algorithm = SmoothingAlgorithm::EMA;
     m_preset = SmoothingPreset::Balanced;
     m_timeMs = 50.0f;
+    m_windowSize = 8;
     m_primeFirstFrame = true;
+    m_currentPresetName = "Balanced";
     reset();
 }
 
@@ -591,13 +644,17 @@ inline void SmoothingModule::setAlgorithm(SmoothingAlgorithm algo)
 inline void SmoothingModule::setTimeMs(float ms)
 {
     m_timeMs = std::clamp(ms, MIN_TIME_MS, MAX_TIME_MS);
+}
+
+inline void SmoothingModule::setWindowSize(int size)
+{
+    m_windowSize = std::clamp(size, MIN_WINDOW_SIZE, MAX_WINDOW_SIZE);
     
-    // Recalculate window size for SMA/WMA (assuming ~60 fps)
-    m_windowSize = std::clamp(
-        static_cast<int>(m_timeMs / 16.67f),  // ~60 fps
-        MIN_WINDOW_SIZE,
-        MAX_WINDOW_SIZE
-    );
+    // Resize buffer if needed
+    while (static_cast<int>(m_buffer.size()) > m_windowSize)
+    {
+        m_buffer.pop_front();
+    }
 }
 
 inline void SmoothingModule::applyPreset(SmoothingPreset preset)
@@ -609,34 +666,37 @@ inline void SmoothingModule::applyPreset(SmoothingPreset preset)
     case SmoothingPreset::Instant:
         m_algorithm = SmoothingAlgorithm::None;
         m_timeMs = 0.0f;
+        m_windowSize = 2;
         break;
         
     case SmoothingPreset::Reactive:
         m_algorithm = SmoothingAlgorithm::EMA;
         m_timeMs = 20.0f;
+        m_windowSize = 3;    // ~50ms @60fps
         break;
         
     case SmoothingPreset::Balanced:
         m_algorithm = SmoothingAlgorithm::EMA;
         m_timeMs = 50.0f;
+        m_windowSize = 8;    // ~133ms @60fps
         break;
         
     case SmoothingPreset::Smooth:
         m_algorithm = SmoothingAlgorithm::EMA;
         m_timeMs = 100.0f;
+        m_windowSize = 12;   // ~200ms @60fps
         break;
         
     case SmoothingPreset::Sluggish:
         m_algorithm = SmoothingAlgorithm::DEMA;
         m_timeMs = 200.0f;
+        m_windowSize = 20;   // ~333ms @60fps
         break;
         
     case SmoothingPreset::Custom:
         // Custom: keep current values, don't change anything
         return;
     }
-    
-    setTimeMs(m_timeMs);  // Update window size
 }
 
 inline float SmoothingModule::processSMA(float value)
@@ -804,6 +864,7 @@ inline void SmoothingModule::savePreset(const std::string& name)
     preset.name = name;
     preset.algorithm = m_algorithm;
     preset.timeMs = m_timeMs;
+    preset.windowSize = m_windowSize;
     preset.primeFirstFrame = m_primeFirstFrame;
     
     m_userPresets[name] = preset;
@@ -830,6 +891,7 @@ inline void SmoothingModule::savePreset(const std::string& name)
     file << "  \"name\": \"" << name << "\",\n";
     file << "  \"algorithm\": " << static_cast<int>(preset.algorithm) << ",\n";
     file << "  \"timeMs\": " << preset.timeMs << ",\n";
+    file << "  \"windowSize\": " << preset.windowSize << ",\n";
     file << "  \"primeFirstFrame\": " << (preset.primeFirstFrame ? "true" : "false") << "\n";
     file << "}\n";
     file.close();
@@ -882,6 +944,7 @@ inline void SmoothingModule::loadPreset(const std::string& name)
         const auto& preset = it->second;
         m_algorithm = preset.algorithm;
         m_timeMs = preset.timeMs;
+        m_windowSize = preset.windowSize;
         m_primeFirstFrame = preset.primeFirstFrame;
         m_preset = SmoothingPreset::Custom;
         m_currentPresetName = name;
@@ -960,7 +1023,7 @@ inline bool SmoothingModule::parsePresetFile(const std::string& filePath, Smooth
     buffer << file.rdbuf();
     std::string content = buffer.str();
     
-    // Simple JSON parsing (name, algorithm, timeMs, primeFirstFrame)
+    // Simple JSON parsing
     auto extractString = [&content](const std::string& key) -> std::string {
         std::string searchKey = "\"" + key + "\":";
         size_t pos = content.find(searchKey);
@@ -981,10 +1044,10 @@ inline bool SmoothingModule::parsePresetFile(const std::string& filePath, Smooth
         return std::stof(content.substr(pos));
     };
     
-    auto extractInt = [&content](const std::string& key) -> int {
+    auto extractInt = [&content](const std::string& key, int defaultVal = 0) -> int {
         std::string searchKey = "\"" + key + "\":";
         size_t pos = content.find(searchKey);
-        if (pos == std::string::npos) return 0;
+        if (pos == std::string::npos) return defaultVal;
         pos += searchKey.length();
         while (pos < content.size() && (content[pos] == ' ' || content[pos] == '\t')) ++pos;
         return std::stoi(content.substr(pos));
@@ -1007,6 +1070,7 @@ inline bool SmoothingModule::parsePresetFile(const std::string& filePath, Smooth
     
     outPreset.algorithm = static_cast<SmoothingAlgorithm>(extractInt("algorithm"));
     outPreset.timeMs = extractFloat("timeMs");
+    outPreset.windowSize = extractInt("windowSize", 8);  // Default 8 for old presets
     outPreset.primeFirstFrame = extractBool("primeFirstFrame");
     
     return true;

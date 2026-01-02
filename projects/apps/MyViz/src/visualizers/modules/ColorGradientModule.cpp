@@ -223,6 +223,7 @@ bool ColorGradientModule::setParam(const std::string& id, const ParamValue& valu
         if (auto* v = std::get_if<float>(&value))
         {
             m_outlineWidth = std::clamp(*v, 1.0f, 15.0f);
+            m_currentPreset = "[Custom]";  // Manual change -> Custom
             return true;
         }
     }

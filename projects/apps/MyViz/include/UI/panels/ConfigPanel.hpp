@@ -125,6 +125,9 @@ private:
     // Update widget visibility based on dependencies
     void updateVisibility();
     
+    // Update related preset widget when a parameter changes
+    void updateRelatedPresetWidget(const std::string& paramId);
+    
     // Open gradient editor dialog
     void openGradientEditor(const std::string& paramId);
 

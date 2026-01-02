@@ -677,13 +677,10 @@ inline bool AudioSourceModule::setParam(const std::string& id, const ParamValue&
     // Check for smooth.* prefix
     if (id.rfind("smooth.", 0) == 0)
     {
-        bool result = m_smoothing.setParam(id.substr(7), value);
-        if (result)
-        {
-            m_preset = AudioPreset::Custom;
-            m_currentPresetName = "[Custom]";
-        }
-        return result;
+        // Delegate to embedded smoothing module
+        // Note: SmoothingModule will set its own preset to Custom
+        // We don't change AudioPreset here - smoothing has its own preset
+        return m_smoothing.setParam(id.substr(7), value);
     }
     
     // Own parameters

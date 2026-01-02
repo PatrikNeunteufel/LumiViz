@@ -895,16 +895,89 @@ void ConfigPanel::onParamChanged(const std::string& paramId, const ParamValue& v
         updateVisibility();
         
         // If a preset was loaded, sync all widgets to show the new values
-        // The preset parameter is prefixed with the group path
         if (paramId.find("preset") != std::string::npos)
         {
             BasicLogger::logDebug("ConfigPanel: Preset changed, syncing widgets...");
             syncFromVisualizer();
         }
+        else
+        {
+            // A non-preset parameter was changed - update the related preset widget
+            // The module has already set its preset to [Custom], now sync the UI
+            updateRelatedPresetWidget(paramId);
+        }
     }
     else
     {
         BasicLogger::logWarning("ConfigPanel: Failed to set " + paramId);
+    }
+}
+
+void ConfigPanel::updateRelatedPresetWidget(const std::string& paramId)
+{
+    // Any parameter change means the visualizer preset is now modified
+    if (m_presetCombo && m_presetCombo->currentIndex() != 0)
+    {
+        QSignalBlocker blocker(m_presetCombo);
+        m_presetCombo->setCurrentIndex(0);  // (Default) = modified
+    }
+    
+    // Also update the specific module preset if applicable
+    std::string presetId;
+    
+    // Check for embedded smoothing parameters (audio.smooth.*)
+    if (paramId.find("smooth.") != std::string::npos)
+    {
+        // Smoothing parameter changed -> update smooth.preset
+        size_t smoothPos = paramId.find("smooth.");
+        presetId = paramId.substr(0, smoothPos) + "smooth.preset";
+    }
+    // Check for audio parameters (audio.* but not audio.smooth.*)
+    else if (paramId.rfind("audio.", 0) == 0)
+    {
+        // Audio parameter changed -> update audio.preset
+        presetId = "audio.preset";
+    }
+    // Check for color/gradient parameters (shape.color.*)
+    else if (paramId.rfind("shape.color.", 0) == 0)
+    {
+        // Color/Gradient parameter changed -> update shape.color.preset
+        presetId = "shape.color.preset";
+    }
+    
+    if (presetId.empty())
+    {
+        return;
+    }
+    
+    // Find and update the preset widget
+    QString key = QString::fromStdString(presetId);
+    auto it = m_paramWidgets.find(key);
+    if (it == m_paramWidgets.end())
+    {
+        return;
+    }
+    
+    auto* combo = qobject_cast<QComboBox*>(it->control);
+    if (!combo)
+    {
+        return;
+    }
+    
+    // Get the current preset value from the module
+    ParamValue presetValue;
+    if (m_visualizer->getParam(presetId, presetValue))
+    {
+        if (std::holds_alternative<int>(presetValue))
+        {
+            int idx = std::get<int>(presetValue);
+            if (combo->currentIndex() != idx)
+            {
+                QSignalBlocker blocker(combo);
+                combo->setCurrentIndex(idx);
+                BasicLogger::logDebug("ConfigPanel: Updated " + presetId + " to index " + std::to_string(idx));
+            }
+        }
     }
 }
 
