@@ -479,19 +479,22 @@ void ColorGradientModule::initBuiltinPresets()
         m_builtinPresets["Neon"] = p;
     }
     
-    // Rainbow (simplified to 4 stops for shader compatibility)
+    // Rainbow (full 7-color spectrum)
     {
         GradientPreset p;
         p.name = "Rainbow";
         p.mode = GradientMode::Linear;
         p.angle = 0.0f;  // Horizontal
         p.stops = {
-            {0.0f,   {1.0f, 0.0f, 0.0f, 1.0f}},  // Red
-            {0.33f,  {1.0f, 1.0f, 0.0f, 1.0f}},  // Yellow
-            {0.66f,  {0.0f, 1.0f, 0.0f, 1.0f}},  // Green
-            {1.0f,   {0.0f, 0.5f, 1.0f, 1.0f}}   // Blue
+            {0.000f, {1.0f, 0.0f, 0.0f, 1.0f}},  // Red
+            {0.167f, {1.0f, 0.5f, 0.0f, 1.0f}},  // Orange
+            {0.333f, {1.0f, 1.0f, 0.0f, 1.0f}},  // Yellow
+            {0.500f, {0.0f, 1.0f, 0.0f, 1.0f}},  // Green
+            {0.667f, {0.0f, 1.0f, 1.0f, 1.0f}},  // Cyan
+            {0.833f, {0.0f, 0.0f, 1.0f, 1.0f}},  // Blue
+            {1.000f, {0.5f, 0.0f, 1.0f, 1.0f}}   // Violet
         };
-        p.midpoints = {{0.5f}, {0.5f}, {0.5f}};
+        p.midpoints = {{0.5f}, {0.5f}, {0.5f}, {0.5f}, {0.5f}, {0.5f}};
         m_builtinPresets["Rainbow"] = p;
     }
     

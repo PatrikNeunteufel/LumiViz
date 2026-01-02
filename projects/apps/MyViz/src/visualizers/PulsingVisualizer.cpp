@@ -102,14 +102,20 @@ in vec2 vPosition;
 
 out vec4 fragColor;
 
-// Up to 4 color stops
+// Up to 8 color stops
 uniform vec4 uColor0;
 uniform vec4 uColor1;
 uniform vec4 uColor2;
 uniform vec4 uColor3;
-uniform vec4 uStopPos;      // Positions of stops (x=stop0, y=stop1, etc.)
-uniform vec4 uMidpoints;    // Midpoints between stops (0.0-1.0, default 0.5)
-uniform int uStopCount;     // Number of active stops (2-4)
+uniform vec4 uColor4;
+uniform vec4 uColor5;
+uniform vec4 uColor6;
+uniform vec4 uColor7;
+uniform vec4 uStopPos;      // Positions of stops 0-3
+uniform vec4 uStopPos2;     // Positions of stops 4-7
+uniform vec4 uMidpoints;    // Midpoints for segments 0-3
+uniform vec4 uMidpoints2;   // Midpoints for segments 4-6
+uniform int uStopCount;     // Number of active stops (2-8)
 uniform int uColorMode;     // 0=Solid, 1=Linear, 2=Radial, 3=Outline
 uniform float uGradientAngle;
 uniform float uInnerRadius;
@@ -137,35 +143,72 @@ float applyMidpoint(float t, float mid)
     }
 }
 
+// Get color at index (0-7)
+vec4 getColor(int idx)
+{
+    if (idx == 0) return uColor0;
+    if (idx == 1) return uColor1;
+    if (idx == 2) return uColor2;
+    if (idx == 3) return uColor3;
+    if (idx == 4) return uColor4;
+    if (idx == 5) return uColor5;
+    if (idx == 6) return uColor6;
+    return uColor7;
+}
+
+// Get stop position at index (0-7)
+float getStopPos(int idx)
+{
+    if (idx < 4) {
+        if (idx == 0) return uStopPos.x;
+        if (idx == 1) return uStopPos.y;
+        if (idx == 2) return uStopPos.z;
+        return uStopPos.w;
+    } else {
+        if (idx == 4) return uStopPos2.x;
+        if (idx == 5) return uStopPos2.y;
+        if (idx == 6) return uStopPos2.z;
+        return uStopPos2.w;
+    }
+}
+
+// Get midpoint at index (0-6, for segments between stops)
+float getMidpoint(int idx)
+{
+    if (idx < 4) {
+        if (idx == 0) return uMidpoints.x;
+        if (idx == 1) return uMidpoints.y;
+        if (idx == 2) return uMidpoints.z;
+        return uMidpoints.w;
+    } else {
+        if (idx == 4) return uMidpoints2.x;
+        if (idx == 5) return uMidpoints2.y;
+        return uMidpoints2.z;
+    }
+}
+
 vec4 sampleGradient(float t)
 {
     t = clamp(t, 0.0, 1.0);
     
     // Handle edge cases
-    if (uStopCount <= 1 || t <= uStopPos.x) return uColor0;
-    if (t >= uStopPos.w && uStopCount == 4) return uColor3;
-    if (t >= uStopPos.z && uStopCount == 3) return uColor2;
-    if (t >= uStopPos.y && uStopCount == 2) return uColor1;
+    if (uStopCount <= 1 || t <= getStopPos(0)) return uColor0;
+    if (t >= getStopPos(uStopCount - 1)) return getColor(uStopCount - 1);
     
-    // Find segment and interpolate with midpoint
-    if (t < uStopPos.y) {
-        float localT = (t - uStopPos.x) / max(uStopPos.y - uStopPos.x, 0.001);
-        localT = applyMidpoint(localT, uMidpoints.x);
-        return mix(uColor0, uColor1, localT);
-    }
-    if (uStopCount >= 3 && t < uStopPos.z) {
-        float localT = (t - uStopPos.y) / max(uStopPos.z - uStopPos.y, 0.001);
-        localT = applyMidpoint(localT, uMidpoints.y);
-        return mix(uColor1, uColor2, localT);
-    }
-    if (uStopCount >= 4 && t < uStopPos.w) {
-        float localT = (t - uStopPos.z) / max(uStopPos.w - uStopPos.z, 0.001);
-        localT = applyMidpoint(localT, uMidpoints.z);
-        return mix(uColor2, uColor3, localT);
+    // Find segment and interpolate
+    for (int i = 0; i < uStopCount - 1; i++) {
+        float pos0 = getStopPos(i);
+        float pos1 = getStopPos(i + 1);
+        
+        if (t >= pos0 && t < pos1) {
+            float localT = (t - pos0) / max(pos1 - pos0, 0.001);
+            localT = applyMidpoint(localT, getMidpoint(i));
+            return mix(getColor(i), getColor(i + 1), localT);
+        }
     }
     
     // Fallback
-    return uColor1;
+    return uColor0;
 }
 
 void main()
@@ -755,8 +798,14 @@ void PulsingVisualizer::onInitialize()
     m_uniformColor1 = m_shader->uniformLocation("uColor1");
     m_uniformColor2 = m_shader->uniformLocation("uColor2");
     m_uniformColor3 = m_shader->uniformLocation("uColor3");
+    m_uniformColor4 = m_shader->uniformLocation("uColor4");
+    m_uniformColor5 = m_shader->uniformLocation("uColor5");
+    m_uniformColor6 = m_shader->uniformLocation("uColor6");
+    m_uniformColor7 = m_shader->uniformLocation("uColor7");
     m_uniformStopPos = m_shader->uniformLocation("uStopPos");
+    m_uniformStopPos2 = m_shader->uniformLocation("uStopPos2");
     m_uniformMidpoints = m_shader->uniformLocation("uMidpoints");
+    m_uniformMidpoints2 = m_shader->uniformLocation("uMidpoints2");
     m_uniformStopCount = m_shader->uniformLocation("uStopCount");
     
     // Create VAO
@@ -896,15 +945,15 @@ void PulsingVisualizer::onRender(float deltaTime)
     size = std::clamp(size, m_minSize, m_maxSize);
     
     // =========================================================================
-    // Get Colors from Gradient
+    // Get Colors from Gradient (up to 8 stops)
     // =========================================================================
     
     const auto& stops = m_colorGradient.stops();
-    size_t stopCount = std::min(stops.size(), static_cast<size_t>(4));
+    size_t stopCount = std::min(stops.size(), static_cast<size_t>(8));
     
-    // Prepare colors for shader
-    lumi::modules::Color4f colors[4];
-    float positions[4] = {0.0f, 1.0f, 1.0f, 1.0f};
+    // Prepare colors and positions for shader
+    lumi::modules::Color4f colors[8];
+    float positions[8] = {0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
     
     for (size_t i = 0; i < stopCount; ++i)
     {
@@ -913,7 +962,7 @@ void PulsingVisualizer::onRender(float deltaTime)
     }
     
     // Fill remaining with last color
-    for (size_t i = stopCount; i < 4; ++i)
+    for (size_t i = stopCount; i < 8; ++i)
     {
         colors[i] = stopCount > 0 ? colors[stopCount - 1] : lumi::modules::Color4f{1, 1, 1, 1};
     }
@@ -922,7 +971,7 @@ void PulsingVisualizer::onRender(float deltaTime)
     if (m_beatBrightnessEnabled)
     {
         float brightnessMod = 0.5f + 0.5f * audioLevel;
-        for (size_t i = 0; i < 4; ++i)
+        for (size_t i = 0; i < 8; ++i)
         {
             colors[i][0] *= brightnessMod;
             colors[i][1] *= brightnessMod;
@@ -971,20 +1020,31 @@ void PulsingVisualizer::onRender(float deltaTime)
     gl->glUniform1i(m_uniformColorMode, colorMode);
     gl->glUniform1f(m_uniformGradientAngle, m_colorGradient.angle() * PI / 180.0f);
     
-    // Colors
+    // Colors (8 stops)
     gl->glUniform4f(m_uniformColor0, colors[0][0], colors[0][1], colors[0][2], colors[0][3]);
     gl->glUniform4f(m_uniformColor1, colors[1][0], colors[1][1], colors[1][2], colors[1][3]);
     gl->glUniform4f(m_uniformColor2, colors[2][0], colors[2][1], colors[2][2], colors[2][3]);
     gl->glUniform4f(m_uniformColor3, colors[3][0], colors[3][1], colors[3][2], colors[3][3]);
-    gl->glUniform4f(m_uniformStopPos, positions[0], positions[1], positions[2], positions[3]);
+    gl->glUniform4f(m_uniformColor4, colors[4][0], colors[4][1], colors[4][2], colors[4][3]);
+    gl->glUniform4f(m_uniformColor5, colors[5][0], colors[5][1], colors[5][2], colors[5][3]);
+    gl->glUniform4f(m_uniformColor6, colors[6][0], colors[6][1], colors[6][2], colors[6][3]);
+    gl->glUniform4f(m_uniformColor7, colors[7][0], colors[7][1], colors[7][2], colors[7][3]);
     
-    // Midpoints - get from gradient module
+    // Stop positions (2x vec4)
+    gl->glUniform4f(m_uniformStopPos, positions[0], positions[1], positions[2], positions[3]);
+    gl->glUniform4f(m_uniformStopPos2, positions[4], positions[5], positions[6], positions[7]);
+    
+    // Midpoints - get from gradient module (7 midpoints for 8 stops)
     const auto& midpoints = m_colorGradient.midpoints();
     float mid0 = midpoints.size() > 0 ? midpoints[0].position : 0.5f;
     float mid1 = midpoints.size() > 1 ? midpoints[1].position : 0.5f;
     float mid2 = midpoints.size() > 2 ? midpoints[2].position : 0.5f;
     float mid3 = midpoints.size() > 3 ? midpoints[3].position : 0.5f;
+    float mid4 = midpoints.size() > 4 ? midpoints[4].position : 0.5f;
+    float mid5 = midpoints.size() > 5 ? midpoints[5].position : 0.5f;
+    float mid6 = midpoints.size() > 6 ? midpoints[6].position : 0.5f;
     gl->glUniform4f(m_uniformMidpoints, mid0, mid1, mid2, mid3);
+    gl->glUniform4f(m_uniformMidpoints2, mid4, mid5, mid6, 0.5f);
     
     gl->glUniform1i(m_uniformStopCount, static_cast<int>(stopCount));
     

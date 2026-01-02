@@ -291,7 +291,7 @@ void GradientBarWidget::mouseDoubleClickEvent(QMouseEvent* event)
     }
     
     // Double-click on bar to add new stop (max 4 stops for shader)
-    if (m_gradient->stopCount() >= 4)
+    if (m_gradient->stopCount() >= 8)
     {
         return;  // Silently ignore - limit reached
     }
@@ -353,7 +353,7 @@ void GradientEditorDialog::setupUi()
     m_positionLabel = new QLabel(tr("Position: --"), this);
     stopLayout->addWidget(m_positionLabel);
     
-    m_addButton = new QPushButton(tr("+ Add (2/4)"), this);
+    m_addButton = new QPushButton(tr("+ Add (2/8)"), this);
     m_addButton->setToolTip(tr("Add a color stop (max 4 for GPU shader)"));
     m_addButton->setMinimumWidth(100);
     stopLayout->addWidget(m_addButton);
@@ -447,18 +447,18 @@ void GradientEditorDialog::updateStopControls()
     m_removeButton->setEnabled(hasStop && m_gradient->stopCount() > 2);
     
     // Disable add button when max stops reached (shader limit = 4)
-    bool atLimit = m_gradient->stopCount() >= 4;
+    bool atLimit = m_gradient->stopCount() >= 8;
     m_addButton->setEnabled(!atLimit);
     
     // Update button text to show limit status
     if (atLimit)
     {
-        m_addButton->setText(tr("+ Add (Max 4)"));
+        m_addButton->setText(tr("+ Add (Max 8)"));
         m_addButton->setStyleSheet("color: #888;");
     }
     else
     {
-        m_addButton->setText(tr("+ Add (%1/4)").arg(m_gradient->stopCount()));
+        m_addButton->setText(tr("+ Add (%1/8)").arg(m_gradient->stopCount()));
         m_addButton->setStyleSheet("");
     }
     
@@ -558,10 +558,10 @@ void GradientEditorDialog::onColorButtonClicked()
 void GradientEditorDialog::onAddStopClicked()
 {
     // Shader only supports 4 color stops - block adding more
-    if (m_gradient->stopCount() >= 4)
+    if (m_gradient->stopCount() >= 8)
     {
         QMessageBox::warning(this, tr("Stop Limit Reached"),
-            tr("The GPU shader supports a maximum of 4 color stops.\n"
+            tr("The GPU shader supports a maximum of 8 color stops.\n"
                "Remove an existing stop before adding a new one."));
         return;
     }
