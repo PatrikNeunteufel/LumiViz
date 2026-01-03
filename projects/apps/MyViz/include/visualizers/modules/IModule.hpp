@@ -167,6 +167,7 @@ struct ModuleParamDesc
     ParamWidget widget = ParamWidget::Default;
     int order = 0;              ///< Sort order within group
     bool advanced = false;      ///< Hide in "Advanced" section
+    bool hidden = false;        ///< Completely hidden from UI (for internal serialization)
     bool canBeInput = true;     ///< Can be converted to node input
     
     // -------------------------------------------------------------------------

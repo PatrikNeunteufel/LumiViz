@@ -386,6 +386,12 @@ void ConfigPanel::buildUIFromParams(const std::vector<ModuleParamDesc>& params)
         {
             continue;
         }
+        
+        // Skip hidden parameters (used for internal serialization)
+        if (desc.hidden)
+        {
+            continue;
+        }
 
         QWidget* widget = nullptr;
 

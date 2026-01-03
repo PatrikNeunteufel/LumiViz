@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cmath>
 #include <sstream>
+#include <iomanip>
 #include <fstream>
 #include <filesystem>
 
@@ -134,6 +135,34 @@ std::vector<ModuleParamDesc> ColorGradientModule::paramDescs() const
         p.dependsValues = {3};  // Outline=3
         params.push_back(p);
     }
+    
+    // =========================================================================
+    // Hidden parameters for preset serialization
+    // =========================================================================
+    
+    // Gradient preset name - used to reload preset by name if available
+    {
+        ModuleParamDesc p;
+        p.id = "gradientPresetName";
+        p.displayName = "Gradient Preset Name";
+        p.tooltip = "Internal: Name of the loaded gradient preset";
+        p.type = ParamType::String;
+        p.hidden = true;
+        p.order = 998;
+        params.push_back(p);
+    }
+    
+    // Gradient data - fallback if preset not found or is [Custom]
+    {
+        ModuleParamDesc p;
+        p.id = "gradientData";
+        p.displayName = "Gradient Data";
+        p.tooltip = "Internal: Serialized gradient stop data";
+        p.type = ParamType::String;
+        p.hidden = true;
+        p.order = 999;
+        params.push_back(p);
+    }
 
     return params;
 }
@@ -172,6 +201,29 @@ bool ColorGradientModule::getParam(const std::string& id, ParamValue& out) const
     {
         // Return empty string - this is a button trigger
         out = std::string("");
+        return true;
+    }
+    if (id == "gradientPresetName")
+    {
+        // Return the current preset name for serialization
+        out = m_currentPreset;
+        return true;
+    }
+    if (id == "gradientData")
+    {
+        // Serialize gradient stops to string format: "pos,r,g,b,a;pos,r,g,b,a;..."
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(4);
+        for (size_t i = 0; i < m_stops.size(); ++i)
+        {
+            if (i > 0) oss << ";";
+            oss << m_stops[i].position << ","
+                << m_stops[i].color[0] << ","
+                << m_stops[i].color[1] << ","
+                << m_stops[i].color[2] << ","
+                << m_stops[i].color[3];
+        }
+        out = oss.str();
         return true;
     }
     return false;
@@ -232,6 +284,99 @@ bool ColorGradientModule::setParam(const std::string& id, const ParamValue& valu
         // Button was clicked - this is handled by the UI
         // The UI should open a GradientEditorDialog
         return true;
+    }
+    if (id == "gradientPresetName")
+    {
+        if (auto* v = std::get_if<std::string>(&value))
+        {
+            // Store the preset name
+            // If it's a valid preset name (not [Custom]), try to load it
+            if (!v->empty() && *v != "[Custom]")
+            {
+                auto names = presetNames();
+                if (std::find(names.begin(), names.end(), *v) != names.end())
+                {
+                    // Preset exists on this system - load it
+                    loadPreset(*v);
+                    return true;
+                }
+            }
+            // Preset not found or is [Custom] - just store the name
+            // The gradientData parameter will provide the actual stops
+            m_currentPreset = *v;
+            return true;
+        }
+    }
+    if (id == "gradientData")
+    {
+        if (auto* v = std::get_if<std::string>(&value))
+        {
+            // Only apply gradient data if preset is [Custom] or wasn't found
+            // This is checked by seeing if m_currentPreset matches a known preset
+            // If loadPreset() was called in gradientPresetName, stops are already set
+            
+            if (v->empty())
+            {
+                return true;  // Empty data is valid (keep current stops)
+            }
+            
+            // Check if we should use this data
+            // Use it if current preset is [Custom] or not in our preset list
+            bool useGradientData = (m_currentPreset == "[Custom]");
+            if (!useGradientData)
+            {
+                auto names = presetNames();
+                useGradientData = (std::find(names.begin(), names.end(), m_currentPreset) == names.end());
+            }
+            
+            if (!useGradientData)
+            {
+                // Preset was loaded successfully, ignore gradientData
+                return true;
+            }
+            
+            // Parse string format: "pos,r,g,b,a;pos,r,g,b,a;..."
+            std::vector<ColorStop> newStops;
+            std::istringstream iss(*v);
+            std::string stopStr;
+            
+            while (std::getline(iss, stopStr, ';'))
+            {
+                if (stopStr.empty()) continue;
+                
+                std::istringstream stopStream(stopStr);
+                std::string token;
+                std::vector<float> values;
+                
+                while (std::getline(stopStream, token, ','))
+                {
+                    try
+                    {
+                        values.push_back(std::stof(token));
+                    }
+                    catch (...)
+                    {
+                        values.clear();
+                        break;
+                    }
+                }
+                
+                if (values.size() == 5)
+                {
+                    ColorStop stop;
+                    stop.position = std::clamp(values[0], 0.0f, 1.0f);
+                    stop.color = {values[1], values[2], values[3], values[4]};
+                    newStops.push_back(stop);
+                }
+            }
+            
+            if (newStops.size() >= 2)
+            {
+                m_stops = std::move(newStops);
+                // Keep m_currentPreset as set by gradientPresetName
+                return true;
+            }
+        }
     }
     return false;
 }
