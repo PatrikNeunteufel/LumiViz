@@ -12,6 +12,7 @@ set(_local_sources
     # (no sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/ColorGradientModule.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/ColorSchemeModule.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/OscilloscopeModule.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PulseShapeModule.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/WaveformModule.cpp"
 )

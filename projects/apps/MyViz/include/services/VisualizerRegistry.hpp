@@ -54,7 +54,6 @@ struct VisualizerDescriptor
     std::string description;  ///< Brief description
     std::string category;     ///< Category for grouping (e.g., "Basic", "Audio")
     int order = 0;            ///< Sort order within category
-    bool usesAudio = false;   ///< Whether visualizer reacts to audio
 };
 
 /**
@@ -121,11 +120,6 @@ public:
      */
     [[nodiscard]] std::vector<std::string> categories() const;
 
-    /**
-     * @brief Get IDs of visualizers that use audio
-     */
-    [[nodiscard]] std::vector<std::string> audioVisualizers() const;
-
     // Non-copyable singleton
     VisualizerRegistry(const VisualizerRegistry&) = delete;
     VisualizerRegistry& operator=(const VisualizerRegistry&) = delete;
@@ -163,7 +157,7 @@ private:
         struct VIZ_REG_CAT(TYPE, __AutoVizReg) {                                \
             VIZ_REG_CAT(TYPE, __AutoVizReg)() {                                 \
                 VisualizerRegistry::instance().registerVisualizer(               \
-                    VisualizerDescriptor{(ID_STR), (NAME_STR), (DESC_STR), "", 0, false}, \
+                    VisualizerDescriptor{(ID_STR), (NAME_STR), (DESC_STR), "", 0}, \
                     []() -> std::unique_ptr<IVisualizer> {                       \
                         return std::make_unique<TYPE>();                         \
                     },                                                           \
@@ -187,7 +181,7 @@ private:
         struct VIZ_REG_CAT(TYPE, __AutoVizRegCat) {                             \
             VIZ_REG_CAT(TYPE, __AutoVizRegCat)() {                              \
                 VisualizerRegistry::instance().registerVisualizer(               \
-                    VisualizerDescriptor{(ID_STR), (NAME_STR), (DESC_STR), (CATEGORY), 0, false}, \
+                    VisualizerDescriptor{(ID_STR), (NAME_STR), (DESC_STR), (CATEGORY), 0}, \
                     []() -> std::unique_ptr<IVisualizer> {                       \
                         return std::make_unique<TYPE>();                         \
                     },                                                           \
@@ -198,7 +192,7 @@ private:
     }
 
 /**
- * @brief Register an audio-reactive visualizer
+ * @brief Register a visualizer with full options
  *
  * @param ID_STR Unique ID string
  * @param NAME_STR Display name
@@ -207,17 +201,17 @@ private:
  * @param ORDER Sort order
  * @param TYPE Visualizer class type
  */
-#define REGISTER_VISUALIZER_AUDIO(ID_STR, NAME_STR, DESC_STR, CATEGORY, ORDER, TYPE) \
+#define REGISTER_VISUALIZER_FULL(ID_STR, NAME_STR, DESC_STR, CATEGORY, ORDER, TYPE) \
     namespace {                                                                  \
-        struct VIZ_REG_CAT(TYPE, __AutoVizRegAudio) {                           \
-            VIZ_REG_CAT(TYPE, __AutoVizRegAudio)() {                            \
+        struct VIZ_REG_CAT(TYPE, __AutoVizRegFull) {                            \
+            VIZ_REG_CAT(TYPE, __AutoVizRegFull)() {                             \
                 VisualizerRegistry::instance().registerVisualizer(               \
-                    VisualizerDescriptor{(ID_STR), (NAME_STR), (DESC_STR), (CATEGORY), (ORDER), true}, \
+                    VisualizerDescriptor{(ID_STR), (NAME_STR), (DESC_STR), (CATEGORY), (ORDER)}, \
                     []() -> std::unique_ptr<IVisualizer> {                       \
                         return std::make_unique<TYPE>();                         \
                     },                                                           \
                     false                                                        \
                 );                                                               \
             }                                                                    \
-        } VIZ_REG_CAT(TYPE, __autoVizRegAudioInstance);                         \
+        } VIZ_REG_CAT(TYPE, __autoVizRegFullInstance);                          \
     }

@@ -13,9 +13,11 @@
  *
  * ## Visualizer-Liste
  *
- * | ID | Name | Kategorie | Audio |
- * |----|------|-----------|-------|
- * | pulsing | Pulsing | Basic | Nein |
+ * | ID | Name | Kategorie |
+ * |----|------|-----------|
+ * | pulsing | Pulsing | Basic |
+ * | waveform | Waveform | Waveform |
+ * | oscilloscope | Oscilloscope | Waveform |
  *
  * ## Trennung Framework vs. App
  *
@@ -37,6 +39,7 @@
  */
 
 #include "services/VisualizerRegistry.hpp"
+#include "visualizers/OscilloscopeVisualizer.hpp"
 #include "visualizers/PulsingVisualizer.hpp"
 #include "visualizers/WaveformVisualizer.hpp"
 // TODO: Zukünftige Visualizer hier inkludieren:
@@ -61,15 +64,14 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
     // BASIC CATEGORY
     // =========================================================================
     
-    // Pulsing Visualizer - Simple rainbow pulsing effect
+    // Pulsing Visualizer - Audio-reactive pulsing shape
     registry.registerVisualizer(
         VisualizerDescriptor{
             "pulsing",                                           // id
             "Pulsing",                                           // name
-            "Simple rainbow pulsing effect - time-based color cycling",  // description
+            "Audio-reactive pulsing shape with beat detection",  // description
             "Basic",                                             // category
-            100,                                                 // order
-            false                                                // usesAudio
+            100                                                  // order
         },
         []() -> std::unique_ptr<IVisualizer> {
             return std::make_unique<PulsingVisualizer>();
@@ -84,7 +86,7 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
     // registry.registerVisualizer(
     //     VisualizerDescriptor{
     //         "spectrum", "Spectrum Analyzer",
-    //         "FFT-based spectrum visualization", "Spectrum", 100, true
+    //         "FFT-based spectrum visualization", "Spectrum", 100
     //     },
     //     []() { return std::make_unique<SpectrumVisualizer>(); },
     //     false);
@@ -100,11 +102,24 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
             "Waveform",                                          // name
             "Real-time audio waveform oscilloscope display",     // description
             "Waveform",                                          // category
-            100,                                                 // order
-            true                                                 // usesAudio
+            100                                                  // order
         },
         []() -> std::unique_ptr<IVisualizer> {
             return std::make_unique<WaveformVisualizer>();
+        },
+        false);
+    
+    // Oscilloscope Visualizer - Classic oscilloscope with trigger
+    registry.registerVisualizer(
+        VisualizerDescriptor{
+            "oscilloscope",                                      // id
+            "Oscilloscope",                                      // name
+            "Classic oscilloscope with trigger synchronization", // description
+            "Waveform",                                          // category
+            200                                                  // order
+        },
+        []() -> std::unique_ptr<IVisualizer> {
+            return std::make_unique<OscilloscopeVisualizer>();
         },
         false);
     
@@ -116,7 +131,7 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
     // registry.registerVisualizer(
     //     VisualizerDescriptor{
     //         "particles", "Particle Storm",
-    //         "Audio-reactive particle system", "Effects", 100, true
+    //         "Audio-reactive particle system", "Effects", 100
     //     },
     //     []() { return std::make_unique<ParticleVisualizer>(); },
     //     false);

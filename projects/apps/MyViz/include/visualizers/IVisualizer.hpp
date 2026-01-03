@@ -142,12 +142,6 @@ public:
         Q_UNUSED(count)
     }
 
-    /**
-     * @brief Check if visualizer uses audio data
-     * @return true if visualizer reacts to audio
-     */
-    [[nodiscard]] virtual bool usesAudio() const { return false; }
-
     // =========================================================================
     // Module Parameter Introspection (for ConfigPanel)
     // =========================================================================

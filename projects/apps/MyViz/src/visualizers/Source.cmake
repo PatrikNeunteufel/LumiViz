@@ -10,6 +10,7 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     # (no sources - *.c; *.cpp)
+    "${CMAKE_CURRENT_LIST_DIR}/OscilloscopeVisualizer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PulsingVisualizer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerAutoReg.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerBase.cpp"

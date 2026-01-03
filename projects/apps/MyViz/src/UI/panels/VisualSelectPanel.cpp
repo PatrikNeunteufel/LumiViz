@@ -243,12 +243,6 @@ void VisualSelectPanel::populateVisualizers()
         auto* item = new QListWidgetItem(name, m_pVisualizerList);
         item->setData(Qt::UserRole, id);
         item->setToolTip(description);
-        
-        // Add audio indicator if uses audio
-        if (desc.usesAudio)
-        {
-            item->setText(name + " 🎵");
-        }
     }
     
     // If no visualizers registered, show placeholder

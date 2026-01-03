@@ -1057,6 +1057,13 @@ void ConfigPanel::updateVisibility()
         if (dependsOn.size() < suffix.size()) return false;
         return dependsOn.compare(dependsOn.size() - suffix.size(), suffix.size(), suffix) == 0;
     };
+    
+    // Helper to check if dependsOn refers to a .visible parameter (for Oscilloscope channels)
+    auto isVisibleDependency = [](const std::string& dependsOn) -> bool {
+        const std::string suffix = ".visible";
+        if (dependsOn.size() < suffix.size()) return false;
+        return dependsOn.compare(dependsOn.size() - suffix.size(), suffix.size(), suffix) == 0;
+    };
 
     // Step 1: Find channelMode parameter and get its value
     std::string channelModeParamId;
@@ -1085,7 +1092,7 @@ void ConfigPanel::updateVisibility()
     }
     
     // Step 2: Determine which subGroups should be completely hidden
-    // A subGroup starting with "Line Color" is hidden if its channelMode dependency isn't met
+    // A subGroup starting with "Line Color" is hidden if its channelMode or .visible dependency isn't met
     std::set<QString> hiddenSubGroups;
     std::set<QString> processedSubGroups;
     
@@ -1102,27 +1109,58 @@ void ConfigPanel::updateVisibility()
         // Only hide "Line Color" subGroups completely
         if (desc.subGroup.find("Line Color") == std::string::npos) continue;
         
-        if (!isChannelModeDependency(desc.dependsOn)) continue;
-        
-        processedSubGroups.insert(key);
-        
-        // Check if this subGroup should be visible
-        bool shouldBeVisible = false;
-        for (const auto& reqValue : desc.dependsValues)
+        // Handle channelMode dependency (int values)
+        if (isChannelModeDependency(desc.dependsOn))
         {
-            if (auto* intVal = std::get_if<int>(&reqValue))
+            processedSubGroups.insert(key);
+            
+            // Check if this subGroup should be visible
+            bool shouldBeVisible = false;
+            for (const auto& reqValue : desc.dependsValues)
             {
-                if (*intVal == currentChannelMode)
+                if (auto* intVal = std::get_if<int>(&reqValue))
                 {
-                    shouldBeVisible = true;
-                    break;
+                    if (*intVal == currentChannelMode)
+                    {
+                        shouldBeVisible = true;
+                        break;
+                    }
                 }
             }
+            
+            if (!shouldBeVisible)
+            {
+                hiddenSubGroups.insert(key);
+            }
+            continue;
         }
         
-        if (!shouldBeVisible)
+        // Handle .visible dependency (bool values) - for Oscilloscope channel visibility
+        if (isVisibleDependency(desc.dependsOn))
         {
-            hiddenSubGroups.insert(key);
+            processedSubGroups.insert(key);
+            
+            ParamValue visibleValue;
+            bool shouldBeVisible = true;  // Default visible if can't get param
+            
+            if (m_visualizer->getParam(desc.dependsOn, visibleValue))
+            {
+                shouldBeVisible = false;
+                for (const auto& reqValue : desc.dependsValues)
+                {
+                    if (visibleValue == reqValue)
+                    {
+                        shouldBeVisible = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!shouldBeVisible)
+            {
+                hiddenSubGroups.insert(key);
+            }
+            continue;
         }
     }
     

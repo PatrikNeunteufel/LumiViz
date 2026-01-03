@@ -1,11 +1,11 @@
 /**
  ****************************************************************************************
- * @file   WaveformVisualizer.hpp
- * @brief  Advanced audio waveform visualizer with 8-stop gradient and per-channel settings
+ * @file   OscilloscopeVisualizer.hpp
+ * @brief  Classic oscilloscope-style audio visualizer with trigger and grid
  *
  * @author LumiPulse Team
  * @date   January 2026
- * @version 4.0.0
+ * @version 1.0.0
  ****************************************************************************************
  */
 
@@ -14,7 +14,7 @@
 #include "VisualizerBase.hpp"
 #include "visualizers/modules/IModule.hpp"
 #include "visualizers/modules/source/AudioSourceModule.hpp"
-#include "visualizers/modules/WaveformModule.hpp"
+#include "visualizers/modules/OscilloscopeModule.hpp"
 
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
@@ -28,9 +28,9 @@
 class QOpenGLContext;
 
 /**
- * @brief Held frame for fade effect
+ * @brief Phosphor persistence frame for fade effect
  */
-struct HeldWaveformFrame
+struct PhosphorFrame
 {
     std::vector<float> samples;
     float age = 0.0f;
@@ -38,14 +38,22 @@ struct HeldWaveformFrame
 };
 
 /**
- * @class WaveformVisualizer
- * @brief Advanced audio waveform with per-channel settings and 8-stop gradient
+ * @class OscilloscopeVisualizer
+ * @brief Classic oscilloscope-style audio visualizer
+ *
+ * Features:
+ * - Trigger synchronization (rising/falling edge)
+ * - Timebase control (time/division)
+ * - Dual channel support (Left/Right)
+ * - Grid with divisions (10x8)
+ * - Phosphor persistence effect
+ * - Classic green/yellow/cyan color schemes
  */
-class WaveformVisualizer : public VisualizerBase
+class OscilloscopeVisualizer : public VisualizerBase
 {
 public:
-    WaveformVisualizer();
-    ~WaveformVisualizer() override;
+    OscilloscopeVisualizer();
+    ~OscilloscopeVisualizer() override;
 
     // =========================================================================
     // IVisualizer Parameter Interface
@@ -68,7 +76,7 @@ public:
     // =========================================================================
 
     [[nodiscard]] lumi::modules::AudioSourceModule* audioSource() { return &m_audioSource; }
-    [[nodiscard]] lumi::modules::WaveformModule* waveform() { return &m_waveform; }
+    [[nodiscard]] lumi::modules::OscilloscopeModule* oscilloscope() { return &m_oscilloscope; }
 
     void resetToDefaults() override;
 
@@ -79,55 +87,50 @@ protected:
     void onCleanup() override;
 
 private:
+    // =========================================================================
+    // Private Methods
+    // =========================================================================
+
     bool createShaders();
-    
+
     void splitStereoData(const std::vector<float>& interleaved,
                          std::vector<float>& left,
                          std::vector<float>& right);
-    
+
     void resampleWaveform(const std::vector<float>& source,
                           std::vector<float>& target,
-                          std::vector<float>& smoothed,
                           int targetSize,
-                          float smoothing,
                           float gain);
-    
-    void buildThickLineVertices(const std::vector<float>& samples,
-                                float offset,
-                                float amplitude,
-                                float lineWidth,
-                                std::vector<float>& vertices);
-    
-    void buildFillVertices(const std::vector<float>& samples,
-                           float offset,
-                           float amplitude,
+
+    void buildLineVertices(const std::vector<float>& samples,
+                           float yOffset,
+                           float yScale,
+                           float lineWidth,
                            std::vector<float>& vertices);
-    
-    void updateHeldFrames(float deltaTime);
-    
-    /// @brief Render a single channel
-    /// @param channelIndex 0=Mono, 1=Left, 2=Right
+
+    void renderGrid();
     void renderChannel(int channelIndex,
                        const std::vector<float>& samples,
-                       const lumi::modules::WaveformChannelConfig& config,
-                       float alpha);
-    
-    /// @brief Upload gradient uniforms to shader for specific channel
-    void uploadGradientUniforms(QOpenGLShaderProgram* shader, int channelIndex, bool isLine);
+                       const lumi::modules::ChannelConfigBase& config);
+    void renderTriggerLevel();
+
+    void uploadGradientUniforms(int channelIndex);
+
+    void updatePhosphorFrames(float deltaTime);
 
     // =========================================================================
     // Modules
     // =========================================================================
 
     lumi::modules::AudioSourceModule m_audioSource;
-    lumi::modules::WaveformModule m_waveform;
+    lumi::modules::OscilloscopeModule m_oscilloscope;
 
     // =========================================================================
     // OpenGL Resources
     // =========================================================================
 
     std::unique_ptr<QOpenGLShaderProgram> m_lineShader;
-    std::unique_ptr<QOpenGLShaderProgram> m_fillShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_gridShader;
     std::unique_ptr<QOpenGLBuffer> m_vertexBuffer;
     std::unique_ptr<QOpenGLVertexArrayObject> m_vao;
 
@@ -139,16 +142,9 @@ private:
     int m_lineUniGradientMode = -1;
     int m_lineUniGradientAngle = -1;
     int m_lineUniAlpha = -1;
-    
-    // Fill shader uniforms (8-stop gradient)
-    int m_fillUniColor[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
-    int m_fillUniStopPos = -1;
-    int m_fillUniStopPos2 = -1;
-    int m_fillUniStopCount = -1;
-    int m_fillUniGradientMode = -1;
-    int m_fillUniGradientAngle = -1;
-    int m_fillUniAlpha = -1;
-    int m_fillUniBrightness = -1;
+
+    // Grid shader uniforms
+    int m_gridUniColor = -1;
 
     // =========================================================================
     // Waveform Data Buffers
@@ -156,30 +152,34 @@ private:
 
     std::vector<float> m_rawWaveformLeft;
     std::vector<float> m_rawWaveformRight;
-    std::vector<float> m_smoothedLeft;
-    std::vector<float> m_smoothedRight;
-    std::vector<float> m_smoothedMono;
-    std::vector<float> m_displayLeft;
-    std::vector<float> m_displayRight;
-    std::vector<float> m_displayMono;
+    
+    // Processed channel data (6 channels: CH1-CH4, M1-M2)
+    std::array<std::vector<float>, lumi::modules::OscilloscopeModule::TOTAL_CHANNELS> m_processedChannels;
+    std::array<std::vector<float>, lumi::modules::OscilloscopeModule::TOTAL_CHANNELS> m_displayChannels;
 
     // =========================================================================
-    // Hold/Fade Buffers (per channel)
+    // Phosphor Persistence Buffers (per channel)
     // =========================================================================
 
-    std::deque<HeldWaveformFrame> m_heldFramesMono;
-    std::deque<HeldWaveformFrame> m_heldFramesLeft;
-    std::deque<HeldWaveformFrame> m_heldFramesRight;
+    std::array<std::deque<PhosphorFrame>, lumi::modules::OscilloscopeModule::TOTAL_CHANNELS> m_phosphorBuffers;
+
+    // =========================================================================
+    // Trigger State
+    // =========================================================================
+
+    int m_lastTriggerPoint = 0;
+    bool m_triggered = false;
+    float m_holdoffTimer = 0.0f;
 
     // =========================================================================
     // State
     // =========================================================================
 
     float m_totalTime = 0.0f;
-    
+
     // =========================================================================
     // OpenGL Context Tracking
     // =========================================================================
-    
+
     QOpenGLContext* m_lastContext = nullptr;  ///< Track context for resource validity
 };

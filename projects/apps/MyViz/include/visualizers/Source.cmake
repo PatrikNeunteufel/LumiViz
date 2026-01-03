@@ -14,6 +14,7 @@ set(_local_sources
 set(_local_headers
     # (headers - *.h; *.hpp)
     "${CMAKE_CURRENT_LIST_DIR}/IVisualizer.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/OscilloscopeVisualizer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PulsingVisualizer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerBase.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerPresetManager.hpp"

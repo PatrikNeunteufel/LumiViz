@@ -167,20 +167,3 @@ std::vector<std::string> VisualizerRegistry::categories() const
 
     return {categorySet.begin(), categorySet.end()};
 }
-
-std::vector<std::string> VisualizerRegistry::audioVisualizers() const
-{
-    std::lock_guard<std::mutex> lock(m_mutex);
-
-    std::vector<std::string> result;
-
-    for (const auto& [id, desc] : m_descriptors)
-    {
-        if (desc.usesAudio)
-        {
-            result.push_back(id);
-        }
-    }
-
-    return result;
-}
