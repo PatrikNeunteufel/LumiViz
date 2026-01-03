@@ -26,6 +26,9 @@
 #include <vector>
 #include <chrono>
 
+// Forward declarations
+class QOpenGLContext;
+
 /**
  * @class PulsingVisualizer
  * @brief Audio-reactive pulsing effect visualizer
@@ -208,4 +211,10 @@ private:
 
     std::chrono::steady_clock::time_point m_startTime;
     float m_totalTime = 0.0f;
+    
+    // =========================================================================
+    // OpenGL Context Tracking
+    // =========================================================================
+    
+    QOpenGLContext* m_lastContext = nullptr;  ///< Track context for resource validity
 };

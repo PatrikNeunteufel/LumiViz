@@ -24,6 +24,9 @@
 #include <vector>
 #include <deque>
 
+// Forward declarations
+class QOpenGLContext;
+
 /**
  * @brief Held frame for fade effect
  */
@@ -174,4 +177,10 @@ private:
     // =========================================================================
 
     float m_totalTime = 0.0f;
+    
+    // =========================================================================
+    // OpenGL Context Tracking
+    // =========================================================================
+    
+    QOpenGLContext* m_lastContext = nullptr;  ///< Track context for resource validity
 };

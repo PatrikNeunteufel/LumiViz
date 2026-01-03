@@ -438,7 +438,24 @@ void WaveformVisualizer::onInitialize()
     m_vertexBuffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
     m_vertexBuffer->allocate(131072 * sizeof(float));  // Large buffer
     
-    QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
+    // CRITICAL: Check context BEFORE calling functions() to prevent crash
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    if (!ctx)
+    {
+        BasicLogger::logWarning("WaveformVisualizer: No OpenGL context during initialization!");
+        m_vertexBuffer->release();
+        m_vao->release();
+        return;
+    }
+    
+    QOpenGLFunctions* gl = ctx->functions();
+    if (!gl)
+    {
+        BasicLogger::logWarning("WaveformVisualizer: No OpenGL functions during initialization!");
+        m_vertexBuffer->release();
+        m_vao->release();
+        return;
+    }
     
     // Position (2 floats) + Amplitude (1 float)
     gl->glEnableVertexAttribArray(0);
@@ -450,6 +467,9 @@ void WaveformVisualizer::onInitialize()
     
     m_vertexBuffer->release();
     m_vao->release();
+    
+    // Store context for change detection
+    m_lastContext = ctx;
     
     BasicLogger::logInfo("WaveformVisualizer: Initialized successfully");
 }
@@ -585,10 +605,21 @@ void WaveformVisualizer::buildThickLineVertices(const std::vector<float>& sample
     int count = static_cast<int>(samples.size());
     float displayWidth = m_waveform.displayWidth();
     
-    QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
-    GLint viewport[4];
-    gl->glGetIntegerv(GL_VIEWPORT, viewport);
-    float pixelHeight = viewport[3] > 0 ? 2.0f / static_cast<float>(viewport[3]) : 0.002f;
+    // CRITICAL: Check context BEFORE calling functions() to prevent crash on undocking
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    float pixelHeight = 0.002f;  // Default fallback
+    
+    if (ctx)
+    {
+        QOpenGLFunctions* gl = ctx->functions();
+        if (gl)
+        {
+            GLint viewport[4];
+            gl->glGetIntegerv(GL_VIEWPORT, viewport);
+            pixelHeight = viewport[3] > 0 ? 2.0f / static_cast<float>(viewport[3]) : 0.002f;
+        }
+    }
+    
     float halfWidth = lineWidth * pixelHeight * 0.5f;
     
     for (int i = 0; i < count; ++i)
@@ -674,7 +705,18 @@ void WaveformVisualizer::buildFillVertices(const std::vector<float>& samples,
 
 void WaveformVisualizer::uploadGradientUniforms(QOpenGLShaderProgram* /*shader*/, int channelIndex, bool isLine)
 {
-    QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
+    // CRITICAL: Check context BEFORE calling functions() to prevent crash on undocking
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    if (!ctx)
+    {
+        return;
+    }
+    
+    QOpenGLFunctions* gl = ctx->functions();
+    if (!gl)
+    {
+        return;
+    }
     
     // Get gradient for the specific channel
     const auto& gradient = m_waveform.colorGradient(channelIndex);
@@ -786,7 +828,14 @@ void WaveformVisualizer::renderChannel(int channelIndex,
                                         const WaveformChannelConfig& config,
                                         float alpha)
 {
-    QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
+    // CRITICAL: Check context BEFORE calling functions() to prevent crash on undocking
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    if (!ctx)
+    {
+        return;
+    }
+    
+    QOpenGLFunctions* gl = ctx->functions();
     if (!gl || samples.empty()) return;
     
     // Safety check for OpenGL resources
@@ -877,8 +926,45 @@ void WaveformVisualizer::renderChannel(int channelIndex,
 
 void WaveformVisualizer::onRender(float deltaTime)
 {
-    QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
-    if (!gl || !m_lineShader || !m_vao) return;
+    // CRITICAL: Check context BEFORE calling functions() to prevent crash on undocking
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    if (!ctx)
+    {
+        return;
+    }
+    
+    QOpenGLFunctions* gl = ctx->functions();
+    if (!gl) return;
+    
+    // =========================================================================
+    // Context Change Detection - Reinitialize if context changed
+    // =========================================================================
+    
+    if (m_lastContext != ctx)
+    {
+        BasicLogger::logInfo("WaveformVisualizer: OpenGL context changed, reinitializing resources...");
+        
+        // Clean up old resources (they're invalid in new context anyway)
+        m_lineShader.reset();
+        m_fillShader.reset();
+        m_vertexBuffer.reset();
+        m_vao.reset();
+        
+        // Reinitialize in new context
+        onInitialize();
+        
+        // Track new context
+        m_lastContext = ctx;
+        
+        // If initialization failed, skip rendering
+        if (!m_lineShader || !m_vao)
+        {
+            BasicLogger::logWarning("WaveformVisualizer: Reinitialization failed");
+            return;
+        }
+    }
+    
+    if (!m_lineShader || !m_vao) return;
     
     m_totalTime += deltaTime;
     
@@ -1022,7 +1108,14 @@ void WaveformVisualizer::onRender(float deltaTime)
 
 void WaveformVisualizer::onResize(const QSize& size)
 {
-    QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
+    // CRITICAL: Check context BEFORE calling functions() to prevent crash on undocking
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    if (!ctx)
+    {
+        return;
+    }
+    
+    QOpenGLFunctions* gl = ctx->functions();
     if (gl)
     {
         gl->glViewport(0, 0, size.width(), size.height());

@@ -811,7 +811,15 @@ void PulsingVisualizer::onInitialize()
 {
     BasicLogger::logInfo("PulsingVisualizer::onInitialize() - START");
     
-    QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
+    // CRITICAL: Check context BEFORE calling functions() to prevent crash
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    if (!ctx)
+    {
+        BasicLogger::logError("PulsingVisualizer::onInitialize() - No OpenGL context (ctx is null)!");
+        return;
+    }
+    
+    QOpenGLFunctions* gl = ctx->functions();
     if (!gl)
     {
         BasicLogger::logError("PulsingVisualizer::onInitialize() - No OpenGL context!");
@@ -878,6 +886,9 @@ void PulsingVisualizer::onInitialize()
     
     rebuildShape();
     
+    // Store context for change detection
+    m_lastContext = ctx;
+    
     BasicLogger::logInfo("PulsingVisualizer::onInitialize() - SUCCESS");
 }
 
@@ -936,10 +947,45 @@ void PulsingVisualizer::rebuildShape()
 
 void PulsingVisualizer::onRender(float deltaTime)
 {
-    QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
+    // CRITICAL: Check context BEFORE calling functions() to prevent crash on undocking
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    if (!ctx)
+    {
+        return;
+    }
+    
+    QOpenGLFunctions* gl = ctx->functions();
     if (!gl)
     {
         return;
+    }
+    
+    // =========================================================================
+    // Context Change Detection - Reinitialize if context changed
+    // =========================================================================
+    
+    if (m_lastContext != ctx)
+    {
+        BasicLogger::logInfo("PulsingVisualizer: OpenGL context changed, reinitializing resources...");
+        
+        // Clean up old resources (they're invalid in new context anyway)
+        m_shader.reset();
+        m_vertexBuffer.reset();
+        m_vao.reset();
+        m_vertexCount = 0;
+        
+        // Reinitialize in new context
+        onInitialize();
+        
+        // Track new context
+        m_lastContext = ctx;
+        
+        // If initialization failed, skip rendering
+        if (!m_shader || !m_vao)
+        {
+            BasicLogger::logWarning("PulsingVisualizer: Reinitialization failed");
+            return;
+        }
     }
     
     m_totalTime += deltaTime;
@@ -1151,7 +1197,14 @@ void PulsingVisualizer::onRender(float deltaTime)
 
 void PulsingVisualizer::onResize(const QSize& size)
 {
-    QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
+    // CRITICAL: Check context BEFORE calling functions() to prevent crash on undocking
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    if (!ctx)
+    {
+        return;
+    }
+    
+    QOpenGLFunctions* gl = ctx->functions();
     if (gl)
     {
         gl->glViewport(0, 0, size.width(), size.height());
