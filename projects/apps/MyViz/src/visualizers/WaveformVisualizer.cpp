@@ -678,25 +678,47 @@ void WaveformVisualizer::uploadGradientUniforms(QOpenGLShaderProgram* /*shader*/
     
     // Get gradient for the specific channel
     const auto& gradient = m_waveform.colorGradient(channelIndex);
-    const auto& stops = gradient.stops();
-    int stopCount = std::min(static_cast<int>(stops.size()), 8);
+    auto mode = gradient.mode();
     
-    // Upload colors
+    // Upload colors - for Solid/Outline mode use solidColor, otherwise use gradient stops
     int* colorUniforms = isLine ? m_lineUniColor : m_fillUniColor;
-    for (int i = 0; i < 8; ++i)
+    
+    if (mode == lumi::modules::GradientMode::Solid || mode == lumi::modules::GradientMode::Outline)
     {
-        if (i < stopCount)
+        // Use solid color for uColor0
+        const auto& c = gradient.solidColor();
+        gl->glUniform4f(colorUniforms[0], c[0], c[1], c[2], c[3]);
+        
+        // Fill remaining with same color (not really used but be safe)
+        for (int i = 1; i < 8; ++i)
         {
-            const auto& c = stops[i].color;
             gl->glUniform4f(colorUniforms[i], c[0], c[1], c[2], c[3]);
         }
-        else
+    }
+    else
+    {
+        // Use gradient stops
+        const auto& stops = gradient.stops();
+        int stopCount = std::min(static_cast<int>(stops.size()), 8);
+        
+        for (int i = 0; i < 8; ++i)
         {
-            gl->glUniform4f(colorUniforms[i], 0.0f, 0.0f, 0.0f, 1.0f);
+            if (i < stopCount)
+            {
+                const auto& c = stops[i].color;
+                gl->glUniform4f(colorUniforms[i], c[0], c[1], c[2], c[3]);
+            }
+            else
+            {
+                gl->glUniform4f(colorUniforms[i], 0.0f, 0.0f, 0.0f, 1.0f);
+            }
         }
     }
     
-    // Upload stop positions
+    // Upload stop positions (only relevant for gradient modes)
+    const auto& stops = gradient.stops();
+    int stopCount = std::min(static_cast<int>(stops.size()), 8);
+    
     float stopPos[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float stopPos2[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     
@@ -718,7 +740,7 @@ void WaveformVisualizer::uploadGradientUniforms(QOpenGLShaderProgram* /*shader*/
     gl->glUniform4f(stopPosLoc, stopPos[0], stopPos[1], stopPos[2], stopPos[3]);
     gl->glUniform4f(stopPos2Loc, stopPos2[0], stopPos2[1], stopPos2[2], stopPos2[3]);
     gl->glUniform1i(stopCountLoc, stopCount);
-    gl->glUniform1i(modeLoc, static_cast<int>(gradient.mode()));
+    gl->glUniform1i(modeLoc, static_cast<int>(mode));
     gl->glUniform1f(angleLoc, gradient.angle());
 }
 
@@ -767,10 +789,16 @@ void WaveformVisualizer::renderChannel(int channelIndex,
     QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
     if (!gl || samples.empty()) return;
     
+    // Safety check for OpenGL resources
+    if (!m_vao || !m_vertexBuffer || !m_lineShader)
+    {
+        return;
+    }
+    
     bool mirror = m_waveform.mirrorEnabled();
     
     // Render fill first (behind line)
-    if (config.fillEnabled)
+    if (config.fillEnabled && m_fillShader)
     {
         std::vector<float> fillVertices;
         buildFillVertices(samples, config.lineOffset, config.amplitude, fillVertices);
