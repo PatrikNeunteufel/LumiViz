@@ -346,12 +346,33 @@ void ConfigPanel::clearUI()
 
 void ConfigPanel::buildUIFromParams(const std::vector<ModuleParamDesc>& params)
 {
-    // Sort by group, subGroup, then order
+    // Calculate minimum order for each subGroup (for proper sorting)
+    std::map<std::string, int> subGroupMinOrder;
+    for (const auto& p : params)
+    {
+        std::string key = p.group + "|" + p.subGroup;
+        if (subGroupMinOrder.find(key) == subGroupMinOrder.end())
+        {
+            subGroupMinOrder[key] = p.order;
+        }
+        else
+        {
+            subGroupMinOrder[key] = std::min(subGroupMinOrder[key], p.order);
+        }
+    }
+
+    // Sort by group, then by subGroup's minimum order, then by individual order
     auto sortedParams = params;
     std::sort(sortedParams.begin(), sortedParams.end(),
-              [](const ModuleParamDesc& a, const ModuleParamDesc& b) {
+              [&subGroupMinOrder](const ModuleParamDesc& a, const ModuleParamDesc& b) {
                   if (a.group != b.group) return a.group < b.group;
-                  if (a.subGroup != b.subGroup) return a.subGroup < b.subGroup;
+                  
+                  std::string keyA = a.group + "|" + a.subGroup;
+                  std::string keyB = b.group + "|" + b.subGroup;
+                  int minOrderA = subGroupMinOrder[keyA];
+                  int minOrderB = subGroupMinOrder[keyB];
+                  
+                  if (minOrderA != minOrderB) return minOrderA < minOrderB;
                   return a.order < b.order;
               });
 
@@ -1010,20 +1031,97 @@ void ConfigPanel::updateRelatedPresetWidget(const std::string& paramId)
 
 void ConfigPanel::updateVisibility()
 {
+    // Helper to create consistent keys (same logic as buildUIFromParams)
+    auto makeSubGroupKey = [](const ModuleParamDesc& desc) -> QString {
+        QString groupName = QString::fromStdString(desc.group);
+        if (groupName.isEmpty())
+        {
+            groupName = "General";
+        }
+        return groupName + "|" + QString::fromStdString(desc.subGroup);
+    };
+
+    // Step 1: Determine which subGroups should be HIDDEN based on channelMode
+    std::set<QString> hiddenSubGroups;
+    
+    ParamValue channelModeValue;
+    bool hasChannelMode = m_visualizer && m_visualizer->getParam("channelMode", channelModeValue);
+    
+    if (hasChannelMode)
+    {
+        int currentChannelMode = 0;
+        if (auto* v = std::get_if<int>(&channelModeValue))
+        {
+            currentChannelMode = *v;
+        }
+        
+        // Find all subGroups that have a channelMode-dependent param
+        for (const auto& pw : m_paramWidgets)
+        {
+            const auto& desc = pw.desc;
+            if (desc.subGroup.empty()) continue;
+            if (desc.dependsOn != "channelMode") continue;
+            
+            QString key = makeSubGroupKey(desc);
+            
+            // Check if current channelMode matches any required value
+            bool shouldBeVisible = false;
+            for (const auto& reqValue : desc.dependsValues)
+            {
+                if (auto* intVal = std::get_if<int>(&reqValue))
+                {
+                    if (*intVal == currentChannelMode)
+                    {
+                        shouldBeVisible = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!shouldBeVisible)
+            {
+                hiddenSubGroups.insert(key);
+            }
+        }
+    }
+    
+    // Step 2: Apply visibility to all params
     for (auto it = m_paramWidgets.begin(); it != m_paramWidgets.end(); ++it)
     {
         const auto& desc = it->desc;
-
-        if (desc.dependsOn.empty())
+        QString subGroupKey;
+        if (!desc.subGroup.empty())
         {
+            subGroupKey = makeSubGroupKey(desc);
+        }
+        
+        // If this param's subGroup should be hidden, hide the param
+        if (!subGroupKey.isEmpty() && hiddenSubGroups.count(subGroupKey) > 0)
+        {
+            it->container->setVisible(false);
             continue;
         }
-
-        ParamValue depValue;
-        if (m_visualizer->getParam(desc.dependsOn, depValue))
+        
+        // No dependency - always visible
+        if (desc.dependsOn.empty())
         {
-            // Check if current value matches ANY of the required values (OR logic)
-            bool visible = false;
+            it->container->setVisible(true);
+            continue;
+        }
+        
+        // channelMode dependency already handled at subGroup level
+        if (desc.dependsOn == "channelMode")
+        {
+            it->container->setVisible(true);
+            continue;
+        }
+        
+        // Normal dependsOn logic (e.g., mode-based visibility within a color group)
+        ParamValue depValue;
+        bool visible = true;
+        if (m_visualizer && m_visualizer->getParam(desc.dependsOn, depValue))
+        {
+            visible = false;
             for (const auto& reqValue : desc.dependsValues)
             {
                 if (depValue == reqValue)
@@ -1032,8 +1130,15 @@ void ConfigPanel::updateVisibility()
                     break;
                 }
             }
-            it->container->setVisible(visible);
         }
+        it->container->setVisible(visible);
+    }
+    
+    // Step 3: Update subGroup box visibility
+    for (auto it = m_subGroups.begin(); it != m_subGroups.end(); ++it)
+    {
+        bool hidden = hiddenSubGroups.count(it.key()) > 0;
+        it.value()->setVisible(!hidden);
     }
 }
 

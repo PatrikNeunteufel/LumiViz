@@ -659,12 +659,12 @@ std::vector<ModuleParamDesc> WaveformModule::paramDescs() const
     {
         ModuleParamDesc prefixed = p;
         prefixed.id = "monoColor." + p.id;
-        prefixed.displayName = "Mono " + p.displayName;
-        prefixed.subGroup = "Mono Color";
+        prefixed.displayName = p.displayName;  // No prefix - subGroup name has it
+        prefixed.subGroup = "Line Color Mono";
         prefixed.order = 200 + p.order;
         
-        // If original param has no dependsOn, make it depend on channelMode
-        // If it has dependsOn, prefix it and keep the dependsValues
+        // First-level params (no dependsOn) depend on channelMode
+        // Nested params (with dependsOn) keep their dependency but prefixed
         if (p.dependsOn.empty())
         {
             prefixed.dependsOn = "channelMode";
@@ -684,8 +684,8 @@ std::vector<ModuleParamDesc> WaveformModule::paramDescs() const
     {
         ModuleParamDesc prefixed = p;
         prefixed.id = "leftColor." + p.id;
-        prefixed.displayName = "Left " + p.displayName;
-        prefixed.subGroup = "Left Color";
+        prefixed.displayName = p.displayName;  // No prefix
+        prefixed.subGroup = "Line Color Left";
         prefixed.order = 300 + p.order;
         
         if (p.dependsOn.empty())
@@ -707,8 +707,8 @@ std::vector<ModuleParamDesc> WaveformModule::paramDescs() const
     {
         ModuleParamDesc prefixed = p;
         prefixed.id = "rightColor." + p.id;
-        prefixed.displayName = "Right " + p.displayName;
-        prefixed.subGroup = "Right Color";
+        prefixed.displayName = p.displayName;  // No prefix
+        prefixed.subGroup = "Line Color Right";
         prefixed.order = 400 + p.order;
         
         if (p.dependsOn.empty())
