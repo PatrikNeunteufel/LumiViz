@@ -634,103 +634,84 @@ int OscilloscopeModule::findTriggerPoint(const float* samples, int count) const
         return 0;
     }
 
-    // Tolerance in divisions (1 div = 2.0/8 = 0.25 in normalized coordinates)
-    constexpr float DIV_SIZE = 2.0f / static_cast<float>(DIVISIONS_Y);
+    // Tolerance as absolute value (1 div = 0.25 in normalized -1 to 1 range)
+    constexpr float DIV_SIZE = 2.0f / static_cast<float>(DIVISIONS_Y);  // 0.25
     const float tolerance = m_triggerTolerance * DIV_SIZE;
     
-    // Trigger zone boundaries
-    const float levelLow = m_triggerLevel - tolerance;
-    const float levelHigh = m_triggerLevel + tolerance;
+    // The trigger level with tolerance zone
+    const float levelMin = m_triggerLevel - tolerance;
+    const float levelMax = m_triggerLevel + tolerance;
 
-    // Search through ALL available samples
+    // Track min/max for debugging
+    float minSample = samples[0];
+    float maxSample = samples[0];
+
+    // Search through samples for a crossing
     for (int i = 1; i < count; ++i)
     {
         float prev = samples[i - 1];
         float curr = samples[i];
-        bool trig = false;
+        
+        minSample = std::min(minSample, curr);
+        maxSample = std::max(maxSample, curr);
+        
+        bool triggered = false;
+        
+        // Simple crossing detection:
+        // Rising = signal goes from below level to at/above level
+        // Falling = signal goes from above level to at/below level
         
         switch (m_triggerEdge)
         {
             case TriggerEdge::Rising:
-                // Signal must cross upward through the trigger level
-                // prev below level (with tolerance), curr at or above level (with tolerance)
-                if (tolerance > 0.001f)
-                {
-                    // With tolerance: prev below zone, curr in or above zone
-                    trig = (prev < levelLow && curr >= levelLow);
-                }
-                else
-                {
-                    // Exact: prev below level, curr at or above level
-                    trig = (prev < m_triggerLevel && curr >= m_triggerLevel);
-                }
+                // prev must be below trigger zone, curr must be in or above zone
+                triggered = (prev < levelMin) && (curr >= levelMin);
                 break;
                 
             case TriggerEdge::Falling:
-                // Signal must cross downward through the trigger level
-                if (tolerance > 0.001f)
-                {
-                    // With tolerance: prev above zone, curr in or below zone
-                    trig = (prev > levelHigh && curr <= levelHigh);
-                }
-                else
-                {
-                    // Exact: prev above level, curr at or below level
-                    trig = (prev > m_triggerLevel && curr <= m_triggerLevel);
-                }
+                // prev must be above trigger zone, curr must be in or below zone
+                triggered = (prev > levelMax) && (curr <= levelMax);
                 break;
                 
             case TriggerEdge::Both:
-                if (tolerance > 0.001f)
-                {
-                    trig = (prev < levelLow && curr >= levelLow) ||
-                           (prev > levelHigh && curr <= levelHigh);
-                }
-                else
-                {
-                    trig = (prev < m_triggerLevel && curr >= m_triggerLevel) ||
-                           (prev > m_triggerLevel && curr <= m_triggerLevel);
-                }
+                triggered = ((prev < levelMin) && (curr >= levelMin)) ||
+                            ((prev > levelMax) && (curr <= levelMax));
                 break;
         }
         
-        if (trig)
+        if (triggered)
         {
-            // Log trigger event (rate-limited to ~1 per second)
-            static int lastLogFrame = -100;
-            static int frameCounter = 0;
-            frameCounter++;
-            if (frameCounter - lastLogFrame > 60)
+            // Log trigger found (rate-limited)
+            static int triggerLogCounter = 0;
+            if (++triggerLogCounter % 60 == 0)
             {
                 std::ostringstream oss;
-                oss << "Trigger: idx=" << i << "/" << count
-                    << " prev=" << prev << " curr=" << curr 
-                    << " level=" << m_triggerLevel 
-                    << " tol=" << m_triggerTolerance << "div";
+                oss << "TRIGGER FOUND: idx=" << i << " prev=" << prev << " curr=" << curr
+                    << " level=" << m_triggerLevel << " tol=" << tolerance;
                 BasicLogger::logDebug(oss.str());
-                lastLogFrame = frameCounter;
             }
             return i;
         }
     }
     
-    // No trigger found
-    if (m_triggerMode == TriggerMode::Auto)
-    {
-        return 0;  // Auto mode: just use start
-    }
-    
-    // Normal/Single mode: signal that no trigger was found
-    static int noTrigCounter = 0;
-    if (++noTrigCounter % 120 == 0)  // Log every 2 seconds
+    // No trigger found - log sample range for debugging
+    static int noTrigLogCounter = 0;
+    if (++noTrigLogCounter % 120 == 0)
     {
         std::ostringstream oss;
-        oss << "No trigger: level=" << m_triggerLevel
-            << " tol=" << m_triggerTolerance << "div"
-            << " mode=" << triggerModeName(m_triggerMode);
+        oss << "NO TRIGGER: level=" << m_triggerLevel 
+            << " levelMin=" << levelMin << " levelMax=" << levelMax
+            << " samples=[" << minSample << "," << maxSample << "]"
+            << " edge=" << triggerEdgeName(m_triggerEdge);
         BasicLogger::logDebug(oss.str());
     }
-    return -1;
+    
+    if (m_triggerMode == TriggerMode::Auto)
+    {
+        return 0;  // Auto mode: show from start
+    }
+    
+    return -1;  // Signal: no trigger
 }
 
 // =============================================================================
