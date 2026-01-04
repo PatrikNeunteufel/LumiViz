@@ -17,6 +17,7 @@
 #include "visualizers/IVisualizer.hpp"
 #include "visualizers/PulsingVisualizer.hpp"
 #include "visualizers/WaveformVisualizer.hpp"
+#include "visualizers/OscilloscopeVisualizer.hpp"
 #include "visualizers/VisualizerPresetManager.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
@@ -760,6 +761,22 @@ QWidget* ConfigPanel::createEnumWidget(const ModuleParamDesc& desc)
         {
             gradientModule = &waveform->waveform()->colorGradient();
         }
+        // OscilloscopeVisualizer - extract channel from parameter ID
+        // Parameter IDs are like "ch1Color.preset", "ch2Color.preset", etc.
+        // or "m1Color.preset", "m2Color.preset" for math channels
+        else if (auto* oscilloscope = dynamic_cast<OscilloscopeVisualizer*>(m_visualizer))
+        {
+            int channelIndex = 0;  // Default to CH1
+            
+            if (desc.id.find("ch1Color.") != std::string::npos) channelIndex = 0;
+            else if (desc.id.find("ch2Color.") != std::string::npos) channelIndex = 1;
+            else if (desc.id.find("ch3Color.") != std::string::npos) channelIndex = 2;
+            else if (desc.id.find("ch4Color.") != std::string::npos) channelIndex = 3;
+            else if (desc.id.find("m1Color.") != std::string::npos) channelIndex = 4;
+            else if (desc.id.find("m2Color.") != std::string::npos) channelIndex = 5;
+            
+            gradientModule = &oscilloscope->oscilloscope()->colorGradient(channelIndex);
+        }
         
         if (gradientModule)
         {
@@ -1237,7 +1254,7 @@ void ConfigPanel::updateVisibility()
 // Gradient Editor Dialog
 // =============================================================================
 
-void ConfigPanel::openGradientEditor(const std::string& /*paramId*/)
+void ConfigPanel::openGradientEditor(const std::string& paramId)
 {
     if (!m_visualizer)
     {
@@ -1257,6 +1274,21 @@ void ConfigPanel::openGradientEditor(const std::string& /*paramId*/)
     else if (auto* waveform = dynamic_cast<WaveformVisualizer*>(m_visualizer))
     {
         gradient = &waveform->waveform()->colorGradient();
+    }
+    // OscilloscopeVisualizer - extract channel from parameter ID
+    // Parameter IDs are like "ch1Color.editGradient", "ch2Color.editGradient", etc.
+    else if (auto* oscilloscope = dynamic_cast<OscilloscopeVisualizer*>(m_visualizer))
+    {
+        int channelIndex = 0;  // Default to CH1
+        
+        if (paramId.find("ch1Color.") != std::string::npos) channelIndex = 0;
+        else if (paramId.find("ch2Color.") != std::string::npos) channelIndex = 1;
+        else if (paramId.find("ch3Color.") != std::string::npos) channelIndex = 2;
+        else if (paramId.find("ch4Color.") != std::string::npos) channelIndex = 3;
+        else if (paramId.find("m1Color.") != std::string::npos) channelIndex = 4;
+        else if (paramId.find("m2Color.") != std::string::npos) channelIndex = 5;
+        
+        gradient = &oscilloscope->oscilloscope()->colorGradient(channelIndex);
     }
     
     if (!gradient)

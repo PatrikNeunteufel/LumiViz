@@ -1,7 +1,7 @@
 # ColorGradientModule — Gradient Color System
 
-> **Version:** 1.0.0  
-> **Datum:** 2026-01-02  
+> **Version:** 1.1.0  
+> **Datum:** 2026-01-04  
 > **Typ:** CppModuleDoc  
 > **Status:** Stabil  
 > **Modul:** lumi::modules::ColorGradientModule  
@@ -185,6 +185,57 @@ gradient.loadPreset("MySunset");
 gradient.deletePreset("MySunset");
 ```
 
+### 4.5 ConfigPanel Integration
+
+Das ConfigPanel zeigt für Gradient-Preset-Dropdowns eine **Farbvorschau** an.
+
+**Unterstützte Visualizer:**
+
+| Visualizer | Parameter-Präfix | Beispiel |
+|------------|-----------------|----------|
+| PulsingVisualizer | `shape.color.` | `shape.color.preset` |
+| WaveformVisualizer | `lineColor.` | `lineColor.preset` |
+| OscilloscopeVisualizer | `ch1Color.`, `ch2Color.`, `ch3Color.`, `ch4Color.`, `m1Color.`, `m2Color.` | `ch1Color.preset` |
+
+**Implementierung im ConfigPanel:**
+
+```cpp
+// ConfigPanel.cpp - createEnumWidget()
+if (desc.id.find("preset") != std::string::npos && 
+    (desc.id.find("color") != std::string::npos || 
+     desc.id.find("Color") != std::string::npos))
+{
+    // Gradient-Modul ermitteln (visualizer-spezifisch)
+    ColorGradientModule* gradientModule = nullptr;
+    
+    if (auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer))
+        gradientModule = pulsing->colorGradient();
+    else if (auto* waveform = dynamic_cast<WaveformVisualizer*>(m_visualizer))
+        gradientModule = &waveform->waveform()->colorGradient();
+    else if (auto* oscilloscope = dynamic_cast<OscilloscopeVisualizer*>(m_visualizer))
+    {
+        // Kanal aus Parameter-ID extrahieren
+        int channel = 0;
+        if (desc.id.find("ch1Color.") != std::string::npos) channel = 0;
+        else if (desc.id.find("ch2Color.") != std::string::npos) channel = 1;
+        // ... etc.
+        gradientModule = &oscilloscope->oscilloscope()->colorGradient(channel);
+    }
+    
+    if (gradientModule)
+    {
+        auto* delegate = new GradientPresetDelegate(combo);
+        delegate->setGradientModule(gradientModule);
+        combo->setItemDelegate(delegate);
+        combo->setMinimumHeight(28);  // Höher für Vorschau
+    }
+}
+```
+
+**Hinweis:** Der `GradientPresetDelegate` rendert eine horizontale Farbverlauf-Vorschau 
+für jeden Eintrag im Dropdown. Die Vorschau basiert auf den aktuellen Gradient-Stops 
+des jeweiligen Presets.
+
 ---
 
 ## 5. Interna
@@ -281,4 +332,5 @@ float remapWithMidpoint(float t, float midpoint)
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **1.0.0** | **2026-01-02** | **Initial: Gradient System, Midpoints, File-Presets, outlineWidth** |
+| **1.1.0** | **2026-01-04** | **ConfigPanel: Gradient-Vorschau für alle Visualizer inkl. Oscilloscope, setParam() akzeptiert int/float** |
+| 1.0.0 | 2026-01-02 | Initial: Gradient System, Midpoints, File-Presets, outlineWidth |

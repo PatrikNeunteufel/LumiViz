@@ -239,6 +239,12 @@ bool ColorGradientModule::setParam(const std::string& id, const ParamValue& valu
             m_currentPreset = "[Custom]";  // Manual change -> Custom
             return true;
         }
+        if (auto* v = std::get_if<float>(&value))
+        {
+            setMode(static_cast<GradientMode>(static_cast<int>(*v)));
+            m_currentPreset = "[Custom]";  // Manual change -> Custom
+            return true;
+        }
     }
     if (id == "solidColor")
     {
@@ -257,15 +263,31 @@ bool ColorGradientModule::setParam(const std::string& id, const ParamValue& valu
             m_currentPreset = "[Custom]";  // Manual change -> Custom
             return true;
         }
+        if (auto* v = std::get_if<int>(&value))
+        {
+            setAngle(static_cast<float>(*v));
+            m_currentPreset = "[Custom]";  // Manual change -> Custom
+            return true;
+        }
     }
     if (id == "preset")
     {
+        int index = -1;
         if (auto* v = std::get_if<int>(&value))
         {
+            index = *v;
+        }
+        else if (auto* v = std::get_if<float>(&value))
+        {
+            index = static_cast<int>(*v);
+        }
+        
+        if (index >= 0)
+        {
             auto names = presetNames();
-            if (*v >= 0 && *v < static_cast<int>(names.size()))
+            if (index < static_cast<int>(names.size()))
             {
-                loadPreset(names[*v]);
+                loadPreset(names[index]);
                 return true;
             }
         }
@@ -275,6 +297,12 @@ bool ColorGradientModule::setParam(const std::string& id, const ParamValue& valu
         if (auto* v = std::get_if<float>(&value))
         {
             m_outlineWidth = std::clamp(*v, 1.0f, 15.0f);
+            m_currentPreset = "[Custom]";  // Manual change -> Custom
+            return true;
+        }
+        if (auto* v = std::get_if<int>(&value))
+        {
+            m_outlineWidth = std::clamp(static_cast<float>(*v), 1.0f, 15.0f);
             m_currentPreset = "[Custom]";  // Manual change -> Custom
             return true;
         }

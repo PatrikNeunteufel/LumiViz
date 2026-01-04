@@ -406,16 +406,10 @@ std::optional<VisualizerPreset> VisualizerPresetManager::jsonToPreset(
             }
             else if (jsonValue.isDouble())
             {
-                // Could be int or float - store as float, let setParam handle conversion
+                // JSON doesn't distinguish int/float - always store as float
+                // The setParam implementations should handle both types
                 double d = jsonValue.toDouble();
-                if (d == std::floor(d) && d >= INT_MIN && d <= INT_MAX)
-                {
-                    preset.parameters[paramId.toStdString()] = static_cast<int>(d);
-                }
-                else
-                {
-                    preset.parameters[paramId.toStdString()] = static_cast<float>(d);
-                }
+                preset.parameters[paramId.toStdString()] = static_cast<float>(d);
             }
             else if (jsonValue.isString())
             {

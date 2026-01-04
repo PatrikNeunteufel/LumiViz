@@ -1,7 +1,7 @@
 # ConfigPanel — Benutzerhandbuch
 
-> **Version:** 1.0.0  
-> **Datum:** 2026-01-02  
+> **Version:** 1.1.0  
+> **Datum:** 2026-01-04  
 > **Typ:** Guide  
 > **Status:** Stabil  
 > **Zielgruppe:** Endbenutzer, UI-Designer  
@@ -113,6 +113,33 @@ Für Auswahl-Parameter (Enum):
 │ DEMA            │
 └─────────────────┘
 ```
+
+#### 4.2.1 Gradient-Dropdowns mit Vorschau
+
+Gradient-Preset-Dropdowns zeigen eine **Farbvorschau** für jeden Eintrag:
+
+```
+┌───────────────────────────────┐
+│ [▓▓▒▒░░▒▒▓▓] Fire          ▼  │  ← Aktuelle Auswahl mit Vorschau
+├───────────────────────────────┤
+│ [▓▓▒▒░░▒▒▓▓] Fire             │
+│ [░░▒▒▓▓▓▓▓▓] Ocean            │
+│ [▓▓░░▒▒▓▓░░] Neon          ●  │  ← Auswahl mit Vorschau
+│ [░▒▓▓▓▓▓▓▒░] Rainbow          │
+│ [▓▓▓▓▓▓▓▓▓▓] Monochrome       │
+└───────────────────────────────┘
+```
+
+Diese Vorschau ist verfügbar für:
+
+| Visualizer | Ort im ConfigPanel |
+|------------|-------------------|
+| **Pulsing** | Shape → Color → Preset |
+| **Waveform** | Line Color → Preset |
+| **Oscilloscope** | CH1-CH4 Color → Preset, M1-M2 Color → Preset |
+
+**Tipp:** Die Vorschau zeigt den tatsächlichen Farbverlauf des Presets, 
+sodass du vor dem Auswählen siehst, wie die Farben aussehen werden.
 
 ### 4.3 Checkbox verwenden
 
@@ -364,4 +391,5 @@ Klicke auf den Gruppen-Header, um sie ein-/auszuklappen:
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **1.0.0** | **2026-01-02** | **Initial: Vollständiges Benutzerhandbuch** |
+| **1.1.0** | **2026-01-04** | **Neu: Gradient-Vorschau in Dropdowns (Abschnitt 4.2.1)** |
+| 1.0.0 | 2026-01-02 | Initial: Vollständiges Benutzerhandbuch |

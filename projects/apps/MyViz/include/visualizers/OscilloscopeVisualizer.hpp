@@ -113,7 +113,6 @@ private:
                        const std::vector<float>& samples,
                        const lumi::modules::ChannelConfigBase& config);
     void renderTriggerLevel();
-    void renderTriggerBump();  ///< Render the trigger bump effect
 
     void uploadGradientUniforms(int channelIndex);
 
@@ -171,11 +170,6 @@ private:
     int m_lastTriggerPoint = 0;
     bool m_triggered = false;
     float m_holdoffTimer = 0.0f;
-    
-    // Trigger Bump Effect
-    float m_triggerBumpAlpha = 0.0f;   ///< Current alpha of trigger bump (0-1)
-    float m_triggerBumpX = 0.0f;       ///< X position of bump in NDC (-1 to 1)
-    float m_triggerBumpY = 0.0f;       ///< Y position of bump in NDC (-1 to 1)
 
     // =========================================================================
     // State

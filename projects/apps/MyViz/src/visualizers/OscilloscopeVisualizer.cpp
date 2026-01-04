@@ -620,42 +620,7 @@ void OscilloscopeVisualizer::onRender(float deltaTime)
                     triggerPoint = 0;
                 }
             }
-            else
-            {
-                // Trigger was found! Update the bump effect
-                bool shouldActivateBump = false;
-                
-                if (m_oscilloscope.triggerMode() == TriggerMode::Normal)
-                {
-                    // Normal mode: Always activate bump on trigger
-                    shouldActivateBump = true;
-                }
-                else if (m_oscilloscope.triggerMode() == TriggerMode::Single)
-                {
-                    // Single mode: Only activate if bump has faded below 5%
-                    shouldActivateBump = (m_triggerBumpAlpha < 0.05f);
-                }
-                else // Auto mode
-                {
-                    // Auto mode: Always activate bump
-                    shouldActivateBump = true;
-                }
-                
-                if (shouldActivateBump)
-                {
-                    m_triggerBumpAlpha = 1.0f;
-                    
-                    // Calculate bump position based on trigger position setting
-                    // triggerPosition = 0.0 → left edge (X = -1)
-                    // triggerPosition = 0.5 → center (X = 0)
-                    // triggerPosition = 1.0 → right edge (X = 1)
-                    float triggerPosX = m_oscilloscope.triggerPosition();
-                    m_triggerBumpX = (triggerPosX * 2.0f) - 1.0f;
-                    
-                    // Y position is the trigger level
-                    m_triggerBumpY = m_oscilloscope.triggerLevel();
-                }
-            }
+            // triggerPoint >= 0: Trigger found, continue with normal processing
         }
     }
 
@@ -727,28 +692,6 @@ void OscilloscopeVisualizer::onRender(float deltaTime)
 render_section:
     // Update phosphor frames
     updatePhosphorFrames(deltaTime);
-    
-    // Update trigger bump fade
-    if (m_triggerBumpAlpha > 0.0f)
-    {
-        float fadeTime = m_oscilloscope.triggerFadeTime();
-        if (fadeTime > 0.001f)
-        {
-            // Exponential decay based on fade time
-            float decayRate = 3.0f / fadeTime;  // ~95% fade in fadeTime seconds
-            m_triggerBumpAlpha *= std::exp(-decayRate * deltaTime);
-            
-            if (m_triggerBumpAlpha < 0.001f)
-            {
-                m_triggerBumpAlpha = 0.0f;
-            }
-        }
-        else
-        {
-            // Instant fade if fadeTime is 0
-            m_triggerBumpAlpha = 0.0f;
-        }
-    }
 
     // =========================================================================
     // Render
@@ -784,12 +727,6 @@ render_section:
         {
             renderChannel(c, m_displayChannels[c], config);
         }
-    }
-    
-    // Render trigger bump effect (on top of everything)
-    if (m_oscilloscope.triggerEnabled() && m_triggerBumpAlpha > 0.01f)
-    {
-        renderTriggerBump();
     }
 }
 
@@ -1318,127 +1255,4 @@ void OscilloscopeVisualizer::updatePhosphorFrames(float deltaTime)
             updateQueue(m_phosphorBuffers[c], config.phosphorDecay);
         }
     }
-}
-
-void OscilloscopeVisualizer::renderTriggerBump()
-{
-    QOpenGLContext* ctx = QOpenGLContext::currentContext();
-    if (!ctx)
-    {
-        return;
-    }
-
-    QOpenGLFunctions* gl = ctx->functions();
-    if (!gl || !m_gridShader || !m_vao || !m_vertexBuffer)
-    {
-        return;
-    }
-
-    // Use additive blending for glow effect
-    gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-    m_gridShader->bind();
-    m_vao->bind();
-    m_vertexBuffer->bind();
-
-    // Build a "bump" shape - a filled circle with radial fade
-    // We'll use triangles to approximate a circle
-    constexpr int SEGMENTS = 32;
-    constexpr float BUMP_RADIUS = 0.08f;  // Size of the bump in NDC
-    
-    std::vector<float> vertices;
-    vertices.reserve(SEGMENTS * 9);  // SEGMENTS triangles, 3 vertices each, 3 floats per vertex
-    
-    float centerX = m_triggerBumpX;
-    float centerY = m_triggerBumpY;
-    
-    // Create triangle fan (as individual triangles for GL_TRIANGLES)
-    for (int i = 0; i < SEGMENTS; ++i)
-    {
-        float angle1 = (2.0f * 3.14159f * i) / SEGMENTS;
-        float angle2 = (2.0f * 3.14159f * (i + 1)) / SEGMENTS;
-        
-        // Center vertex
-        vertices.push_back(centerX);
-        vertices.push_back(centerY);
-        vertices.push_back(0.0f);
-        
-        // First edge vertex
-        vertices.push_back(centerX + BUMP_RADIUS * std::cos(angle1));
-        vertices.push_back(centerY + BUMP_RADIUS * std::sin(angle1));
-        vertices.push_back(0.0f);
-        
-        // Second edge vertex
-        vertices.push_back(centerX + BUMP_RADIUS * std::cos(angle2));
-        vertices.push_back(centerY + BUMP_RADIUS * std::sin(angle2));
-        vertices.push_back(0.0f);
-    }
-
-    m_vertexBuffer->write(0, vertices.data(), static_cast<int>(vertices.size() * sizeof(float)));
-
-    // Set color: bright cyan/white with alpha based on bump intensity
-    float intensity = m_triggerBumpAlpha;
-    gl->glUniform4f(m_gridUniColor, 
-                    0.3f + 0.7f * intensity,   // R: white when bright
-                    0.8f + 0.2f * intensity,   // G: cyan-ish
-                    1.0f,                       // B: full blue
-                    intensity * 0.8f);          // A: fade with intensity
-
-    gl->glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size() / 3));
-
-    // Draw outer glow ring
-    std::vector<float> ringVertices;
-    constexpr float RING_INNER = BUMP_RADIUS;
-    constexpr float RING_OUTER = BUMP_RADIUS * 2.0f;
-    
-    for (int i = 0; i < SEGMENTS; ++i)
-    {
-        float angle1 = (2.0f * 3.14159f * i) / SEGMENTS;
-        float angle2 = (2.0f * 3.14159f * (i + 1)) / SEGMENTS;
-        
-        // Two triangles per segment to form a quad
-        // Triangle 1
-        ringVertices.push_back(centerX + RING_INNER * std::cos(angle1));
-        ringVertices.push_back(centerY + RING_INNER * std::sin(angle1));
-        ringVertices.push_back(0.0f);
-        
-        ringVertices.push_back(centerX + RING_OUTER * std::cos(angle1));
-        ringVertices.push_back(centerY + RING_OUTER * std::sin(angle1));
-        ringVertices.push_back(0.0f);
-        
-        ringVertices.push_back(centerX + RING_OUTER * std::cos(angle2));
-        ringVertices.push_back(centerY + RING_OUTER * std::sin(angle2));
-        ringVertices.push_back(0.0f);
-        
-        // Triangle 2
-        ringVertices.push_back(centerX + RING_INNER * std::cos(angle1));
-        ringVertices.push_back(centerY + RING_INNER * std::sin(angle1));
-        ringVertices.push_back(0.0f);
-        
-        ringVertices.push_back(centerX + RING_OUTER * std::cos(angle2));
-        ringVertices.push_back(centerY + RING_OUTER * std::sin(angle2));
-        ringVertices.push_back(0.0f);
-        
-        ringVertices.push_back(centerX + RING_INNER * std::cos(angle2));
-        ringVertices.push_back(centerY + RING_INNER * std::sin(angle2));
-        ringVertices.push_back(0.0f);
-    }
-    
-    m_vertexBuffer->write(0, ringVertices.data(), static_cast<int>(ringVertices.size() * sizeof(float)));
-    
-    // Outer glow is more transparent
-    gl->glUniform4f(m_gridUniColor,
-                    0.2f + 0.5f * intensity,
-                    0.6f + 0.2f * intensity,
-                    1.0f,
-                    intensity * 0.3f);
-    
-    gl->glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(ringVertices.size() / 3));
-
-    m_vertexBuffer->release();
-    m_vao->release();
-    m_gridShader->release();
-
-    // Restore normal blending
-    gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }

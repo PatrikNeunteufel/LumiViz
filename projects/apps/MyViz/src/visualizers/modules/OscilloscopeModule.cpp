@@ -443,19 +443,49 @@ bool OscilloscopeModule::setParam(const std::string& id, const ParamValue& value
     }
 
     // Timebase
-    if (id == "timePerDiv") { if (auto* v = std::get_if<float>(&value)) { setTimePerDiv(*v); return true; } }
-    if (id == "sampleCount") { if (auto* v = std::get_if<int>(&value)) { setSampleCount(*v); return true; } }
+    if (id == "timePerDiv") { 
+        if (auto* v = std::get_if<float>(&value)) { setTimePerDiv(*v); return true; }
+        if (auto* v = std::get_if<int>(&value)) { setTimePerDiv(static_cast<float>(*v)); return true; }
+    }
+    if (id == "sampleCount") { 
+        if (auto* v = std::get_if<int>(&value)) { setSampleCount(*v); return true; }
+        if (auto* v = std::get_if<float>(&value)) { setSampleCount(static_cast<int>(*v)); return true; }
+    }
 
     // Trigger
     if (id == "triggerEnabled") { if (auto* v = std::get_if<bool>(&value)) { m_triggerEnabled = *v; return true; } }
-    if (id == "triggerLevel") { if (auto* v = std::get_if<float>(&value)) { setTriggerLevel(*v); return true; } }
-    if (id == "triggerTolerance") { if (auto* v = std::get_if<float>(&value)) { setTriggerTolerance(*v); return true; } }
-    if (id == "triggerPosition") { if (auto* v = std::get_if<float>(&value)) { setTriggerPosition(*v); return true; } }
-    if (id == "triggerEdge") { if (auto* v = std::get_if<int>(&value)) { m_triggerEdge = static_cast<TriggerEdge>(*v); return true; } }
-    if (id == "triggerMode") { if (auto* v = std::get_if<int>(&value)) { m_triggerMode = static_cast<TriggerMode>(*v); return true; } }
-    if (id == "triggerIndicator") { if (auto* v = std::get_if<int>(&value)) { m_triggerIndicatorStyle = static_cast<TriggerIndicatorStyle>(*v); return true; } }
-    if (id == "triggerChannel") { if (auto* v = std::get_if<int>(&value)) { setTriggerChannel(*v); return true; } }
-    if (id == "triggerFadeTime") { if (auto* v = std::get_if<float>(&value)) { setTriggerFadeTime(*v); return true; } }
+    if (id == "triggerLevel") { 
+        if (auto* v = std::get_if<float>(&value)) { setTriggerLevel(*v); return true; }
+        if (auto* v = std::get_if<int>(&value)) { setTriggerLevel(static_cast<float>(*v)); return true; }
+    }
+    if (id == "triggerTolerance") { 
+        if (auto* v = std::get_if<float>(&value)) { setTriggerTolerance(*v); return true; }
+        if (auto* v = std::get_if<int>(&value)) { setTriggerTolerance(static_cast<float>(*v)); return true; }
+    }
+    if (id == "triggerPosition") { 
+        if (auto* v = std::get_if<float>(&value)) { setTriggerPosition(*v); return true; }
+        if (auto* v = std::get_if<int>(&value)) { setTriggerPosition(static_cast<float>(*v)); return true; }
+    }
+    if (id == "triggerEdge") { 
+        if (auto* v = std::get_if<int>(&value)) { m_triggerEdge = static_cast<TriggerEdge>(*v); return true; }
+        if (auto* v = std::get_if<float>(&value)) { m_triggerEdge = static_cast<TriggerEdge>(static_cast<int>(*v)); return true; }
+    }
+    if (id == "triggerMode") { 
+        if (auto* v = std::get_if<int>(&value)) { m_triggerMode = static_cast<TriggerMode>(*v); return true; }
+        if (auto* v = std::get_if<float>(&value)) { m_triggerMode = static_cast<TriggerMode>(static_cast<int>(*v)); return true; }
+    }
+    if (id == "triggerIndicator") { 
+        if (auto* v = std::get_if<int>(&value)) { m_triggerIndicatorStyle = static_cast<TriggerIndicatorStyle>(*v); return true; }
+        if (auto* v = std::get_if<float>(&value)) { m_triggerIndicatorStyle = static_cast<TriggerIndicatorStyle>(static_cast<int>(*v)); return true; }
+    }
+    if (id == "triggerChannel") { 
+        if (auto* v = std::get_if<int>(&value)) { setTriggerChannel(*v); return true; }
+        if (auto* v = std::get_if<float>(&value)) { setTriggerChannel(static_cast<int>(*v)); return true; }
+    }
+    if (id == "triggerFadeTime") { 
+        if (auto* v = std::get_if<float>(&value)) { setTriggerFadeTime(*v); return true; }
+        if (auto* v = std::get_if<int>(&value)) { setTriggerFadeTime(static_cast<float>(*v)); return true; }
+    }
 
     // Signal channels
     for (int ch = 0; ch < SIGNAL_CHANNELS; ++ch)
@@ -463,12 +493,30 @@ bool OscilloscopeModule::setParam(const std::string& id, const ParamValue& value
         std::string pfx = "ch" + std::to_string(ch + 1) + ".";
         auto& cfg = m_signalChannels[ch];
         if (id == pfx + "visible") { if (auto* v = std::get_if<bool>(&value)) { cfg.visible = *v; return true; } }
-        if (id == pfx + "source") { if (auto* v = std::get_if<int>(&value)) { cfg.source = static_cast<SignalSource>(*v); return true; } }
-        if (id == pfx + "mode") { if (auto* v = std::get_if<int>(&value)) { cfg.mode = static_cast<SignalMode>(*v); return true; } }
-        if (id == pfx + "coupling") { if (auto* v = std::get_if<int>(&value)) { cfg.coupling = static_cast<CouplingMode>(*v); m_acCouplingStates[ch].reset(); return true; } }
-        if (id == pfx + "voltsPerDiv") { if (auto* v = std::get_if<float>(&value)) { cfg.voltsPerDiv = std::clamp(*v, 0.01f, 2.0f); return true; } }
-        if (id == pfx + "offset") { if (auto* v = std::get_if<float>(&value)) { cfg.offset = std::clamp(*v, -4.0f, 4.0f); return true; } }
-        if (id == pfx + "lineWidth") { if (auto* v = std::get_if<float>(&value)) { cfg.lineWidth = std::clamp(*v, 1.0f, 5.0f); return true; } }
+        if (id == pfx + "source") { 
+            if (auto* v = std::get_if<int>(&value)) { cfg.source = static_cast<SignalSource>(*v); return true; }
+            if (auto* v = std::get_if<float>(&value)) { cfg.source = static_cast<SignalSource>(static_cast<int>(*v)); return true; }
+        }
+        if (id == pfx + "mode") { 
+            if (auto* v = std::get_if<int>(&value)) { cfg.mode = static_cast<SignalMode>(*v); return true; }
+            if (auto* v = std::get_if<float>(&value)) { cfg.mode = static_cast<SignalMode>(static_cast<int>(*v)); return true; }
+        }
+        if (id == pfx + "coupling") { 
+            if (auto* v = std::get_if<int>(&value)) { cfg.coupling = static_cast<CouplingMode>(*v); m_acCouplingStates[ch].reset(); return true; }
+            if (auto* v = std::get_if<float>(&value)) { cfg.coupling = static_cast<CouplingMode>(static_cast<int>(*v)); m_acCouplingStates[ch].reset(); return true; }
+        }
+        if (id == pfx + "voltsPerDiv") { 
+            if (auto* v = std::get_if<float>(&value)) { cfg.voltsPerDiv = std::clamp(*v, 0.01f, 2.0f); return true; }
+            if (auto* v = std::get_if<int>(&value)) { cfg.voltsPerDiv = std::clamp(static_cast<float>(*v), 0.01f, 2.0f); return true; }
+        }
+        if (id == pfx + "offset") { 
+            if (auto* v = std::get_if<float>(&value)) { cfg.offset = std::clamp(*v, -4.0f, 4.0f); return true; }
+            if (auto* v = std::get_if<int>(&value)) { cfg.offset = std::clamp(static_cast<float>(*v), -4.0f, 4.0f); return true; }
+        }
+        if (id == pfx + "lineWidth") { 
+            if (auto* v = std::get_if<float>(&value)) { cfg.lineWidth = std::clamp(*v, 1.0f, 5.0f); return true; }
+            if (auto* v = std::get_if<int>(&value)) { cfg.lineWidth = std::clamp(static_cast<float>(*v), 1.0f, 5.0f); return true; }
+        }
     }
 
     // Math channels
@@ -477,20 +525,53 @@ bool OscilloscopeModule::setParam(const std::string& id, const ParamValue& value
         std::string pfx = "m" + std::to_string(m + 1) + ".";
         auto& cfg = m_mathChannels[m];
         if (id == pfx + "visible") { if (auto* v = std::get_if<bool>(&value)) { cfg.visible = *v; return true; } }
-        if (id == pfx + "operation") { if (auto* v = std::get_if<int>(&value)) { cfg.operation = static_cast<MathOperation>(*v); return true; } }
-        if (id == pfx + "sourceA") { if (auto* v = std::get_if<int>(&value)) { cfg.sourceA = std::clamp(*v, 0, SIGNAL_CHANNELS - 1); return true; } }
-        if (id == pfx + "sourceB") { if (auto* v = std::get_if<int>(&value)) { cfg.sourceB = std::clamp(*v, 0, SIGNAL_CHANNELS - 1); return true; } }
-        if (id == pfx + "voltsPerDiv") { if (auto* v = std::get_if<float>(&value)) { cfg.voltsPerDiv = std::clamp(*v, 0.01f, 2.0f); return true; } }
-        if (id == pfx + "offset") { if (auto* v = std::get_if<float>(&value)) { cfg.offset = std::clamp(*v, -4.0f, 4.0f); return true; } }
-        if (id == pfx + "lineWidth") { if (auto* v = std::get_if<float>(&value)) { cfg.lineWidth = std::clamp(*v, 1.0f, 5.0f); return true; } }
+        if (id == pfx + "operation") { 
+            if (auto* v = std::get_if<int>(&value)) { cfg.operation = static_cast<MathOperation>(*v); return true; }
+            if (auto* v = std::get_if<float>(&value)) { cfg.operation = static_cast<MathOperation>(static_cast<int>(*v)); return true; }
+        }
+        if (id == pfx + "sourceA") { 
+            if (auto* v = std::get_if<int>(&value)) { cfg.sourceA = std::clamp(*v, 0, SIGNAL_CHANNELS - 1); return true; }
+            if (auto* v = std::get_if<float>(&value)) { cfg.sourceA = std::clamp(static_cast<int>(*v), 0, SIGNAL_CHANNELS - 1); return true; }
+        }
+        if (id == pfx + "sourceB") { 
+            if (auto* v = std::get_if<int>(&value)) { cfg.sourceB = std::clamp(*v, 0, SIGNAL_CHANNELS - 1); return true; }
+            if (auto* v = std::get_if<float>(&value)) { cfg.sourceB = std::clamp(static_cast<int>(*v), 0, SIGNAL_CHANNELS - 1); return true; }
+        }
+        if (id == pfx + "voltsPerDiv") { 
+            if (auto* v = std::get_if<float>(&value)) { cfg.voltsPerDiv = std::clamp(*v, 0.01f, 2.0f); return true; }
+            if (auto* v = std::get_if<int>(&value)) { cfg.voltsPerDiv = std::clamp(static_cast<float>(*v), 0.01f, 2.0f); return true; }
+        }
+        if (id == pfx + "offset") { 
+            if (auto* v = std::get_if<float>(&value)) { cfg.offset = std::clamp(*v, -4.0f, 4.0f); return true; }
+            if (auto* v = std::get_if<int>(&value)) { cfg.offset = std::clamp(static_cast<float>(*v), -4.0f, 4.0f); return true; }
+        }
+        if (id == pfx + "lineWidth") { 
+            if (auto* v = std::get_if<float>(&value)) { cfg.lineWidth = std::clamp(*v, 1.0f, 5.0f); return true; }
+            if (auto* v = std::get_if<int>(&value)) { cfg.lineWidth = std::clamp(static_cast<float>(*v), 1.0f, 5.0f); return true; }
+        }
     }
 
     // Grid & Display
-    if (id == "gridStyle") { if (auto* v = std::get_if<int>(&value)) { m_gridStyle = static_cast<GridStyle>(*v); return true; } }
-    if (id == "gridBrightness") { if (auto* v = std::get_if<float>(&value)) { setGridBrightness(*v); return true; } }
-    if (id == "gridLineWidth") { if (auto* v = std::get_if<float>(&value)) { setGridLineWidth(*v); return true; } }
-    if (id == "gridDotSize") { if (auto* v = std::get_if<float>(&value)) { setGridDotSize(*v); return true; } }
-    if (id == "gridCrossSize") { if (auto* v = std::get_if<float>(&value)) { setGridCrossSize(*v); return true; } }
+    if (id == "gridStyle") { 
+        if (auto* v = std::get_if<int>(&value)) { m_gridStyle = static_cast<GridStyle>(*v); return true; }
+        if (auto* v = std::get_if<float>(&value)) { m_gridStyle = static_cast<GridStyle>(static_cast<int>(*v)); return true; }
+    }
+    if (id == "gridBrightness") { 
+        if (auto* v = std::get_if<float>(&value)) { setGridBrightness(*v); return true; }
+        if (auto* v = std::get_if<int>(&value)) { setGridBrightness(static_cast<float>(*v)); return true; }
+    }
+    if (id == "gridLineWidth") { 
+        if (auto* v = std::get_if<float>(&value)) { setGridLineWidth(*v); return true; }
+        if (auto* v = std::get_if<int>(&value)) { setGridLineWidth(static_cast<float>(*v)); return true; }
+    }
+    if (id == "gridDotSize") { 
+        if (auto* v = std::get_if<float>(&value)) { setGridDotSize(*v); return true; }
+        if (auto* v = std::get_if<int>(&value)) { setGridDotSize(static_cast<float>(*v)); return true; }
+    }
+    if (id == "gridCrossSize") { 
+        if (auto* v = std::get_if<float>(&value)) { setGridCrossSize(*v); return true; }
+        if (auto* v = std::get_if<int>(&value)) { setGridCrossSize(static_cast<float>(*v)); return true; }
+    }
     if (id == "interpolation") { if (auto* v = std::get_if<bool>(&value)) { m_interpolation = *v; return true; } }
 
     return false;

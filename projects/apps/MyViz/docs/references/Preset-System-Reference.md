@@ -1,6 +1,6 @@
 # Preset System Reference
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Date:** January 2026
 
 ---
@@ -65,6 +65,37 @@
 | Enum | number | `2` (index into enumOptions) |
 | String | string | `"Neon"` |
 | Color | array[4] | `[1.0, 0.0, 1.0, 1.0]` (RGBA) |
+
+### 2.1 Type Conversion
+
+**Wichtig:** JSON unterscheidet nicht zwischen Int und Float - alle Zahlen sind `number`.
+
+Beim Laden von Presets werden alle numerischen Werte als `float` interpretiert. 
+Die `setParam()`-Implementierungen müssen daher **beide Typen** akzeptieren:
+
+```cpp
+// Korrekte Implementierung für Int-Parameter:
+if (id == "sampleCount") { 
+    if (auto* v = std::get_if<int>(&value)) { setSampleCount(*v); return true; }
+    if (auto* v = std::get_if<float>(&value)) { setSampleCount(static_cast<int>(*v)); return true; }
+}
+
+// Korrekte Implementierung für Float-Parameter:
+if (id == "timePerDiv") { 
+    if (auto* v = std::get_if<float>(&value)) { setTimePerDiv(*v); return true; }
+    if (auto* v = std::get_if<int>(&value)) { setTimePerDiv(static_cast<float>(*v)); return true; }
+}
+
+// Korrekte Implementierung für Enum-Parameter:
+if (id == "triggerMode") { 
+    if (auto* v = std::get_if<int>(&value)) { m_triggerMode = static_cast<TriggerMode>(*v); return true; }
+    if (auto* v = std::get_if<float>(&value)) { m_triggerMode = static_cast<TriggerMode>(static_cast<int>(*v)); return true; }
+}
+```
+
+**Grund:** Wenn ein Wert wie `74.0` in JSON gespeichert wird, kann er beim Laden als 
+`float` (74.0f) interpretiert werden. Ohne den Fallback würde `std::get_if<int>()` 
+`nullptr` zurückgeben und der Parameter würde ignoriert.
 
 ---
 
@@ -303,6 +334,33 @@ bool VisualizerPresetManager::applyPreset(IVisualizer* visualizer,
 - Check parameter ID hasn't changed
 - Verify parameter is in `paramDescs()` output
 - Check `hidden` flag is set correctly for internal params
+
+### 9.4 Numeric Parameter Not Applied
+
+**Symptom:** Parameter wie `timePerDiv`, `gain`, oder Enum-Werte werden beim 
+Preset-Laden ignoriert, obwohl sie in der JSON-Datei vorhanden sind.
+
+**Ursache:** `setParam()` prüft nur auf einen Typ (`float` oder `int`), aber 
+JSON-Werte wie `74.0` werden möglicherweise als anderer Typ geladen.
+
+**Diagnose:** Im Log erscheint:
+```
+PresetManager: Failed to set param 'scope.timePerDiv'
+```
+
+**Lösung:** `setParam()` muss beide numerischen Typen akzeptieren:
+
+```cpp
+// FALSCH - funktioniert nicht für alle JSON-Werte:
+if (auto* v = std::get_if<float>(&value)) { setTimePerDiv(*v); return true; }
+
+// RICHTIG - akzeptiert beide Typen:
+if (auto* v = std::get_if<float>(&value)) { setTimePerDiv(*v); return true; }
+if (auto* v = std::get_if<int>(&value)) { setTimePerDiv(static_cast<float>(*v)); return true; }
+```
+
+**Betroffene Module:** OscilloscopeModule, ColorGradientModule, WaveformModule, 
+und alle anderen Module mit Float/Int/Enum-Parametern.
 
 ---
 
