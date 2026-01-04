@@ -1296,6 +1296,11 @@ void ConfigPanel::openGradientEditor(const std::string& paramId)
         
         gradient = &oscilloscope->oscilloscope()->colorGradient(channelIndex);
     }
+    // SuperscopeVisualizer
+    else if (auto* superscope = dynamic_cast<SuperscopeVisualizer*>(m_visualizer))
+    {
+        gradient = &superscope->superscope()->colorGradient();
+    }
     
     if (!gradient)
     {
