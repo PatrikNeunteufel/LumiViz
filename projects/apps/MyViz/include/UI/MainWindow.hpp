@@ -44,6 +44,8 @@
 // =============================================================================
 
 #include <QMainWindow>
+#include <QRect>
+#include <QByteArray>
 #include <memory>
 #include <vector>
 
@@ -56,6 +58,7 @@ class QWidget;
 class QMenu;
 class QLabel;
 class QTimer;
+class QKeyEvent;
 QT_END_NAMESPACE
 
 class DockManager;
@@ -160,6 +163,11 @@ public slots:
      */
     void setVSyncOnAllVisualizers(bool enabled);
 
+    /**
+     * @brief Toggles fullscreen mode.
+     */
+    void toggleFullscreen();
+
 signals:
     // =========================================================================
     // Signals
@@ -171,6 +179,16 @@ signals:
      * @param mode 0=Limited, 1=Unlimited, 2=VSync
      */
     void frameModeChangeRequested(int mode);
+
+protected:
+    // =========================================================================
+    // QMainWindow Overrides
+    // =========================================================================
+
+    /**
+     * @brief Handle key press events (Esc to exit fullscreen)
+     */
+    void keyPressEvent(QKeyEvent* event) override;
 
 private slots:
     // =========================================================================
@@ -219,6 +237,16 @@ private:
      */
     void setupAudioServices();
 
+    /**
+     * @brief Enter fullscreen mode for the active visualizer
+     */
+    void enterFullscreen();
+
+    /**
+     * @brief Exit fullscreen mode
+     */
+    void exitFullscreen();
+
     // =========================================================================
     // Private Members
     // =========================================================================
@@ -228,6 +256,13 @@ private:
     std::unique_ptr<MenuManager> m_pMenuManager;
     QLabel* m_pFpsLabel{nullptr};  // Owned by status bar (Qt parent-child)
     QTimer* m_pAudioUpdateTimer{nullptr};  // Owned by this (Qt parent-child)
+    
+    // Fullscreen support
+    bool m_isFullscreen{false};                 // Current fullscreen state
+    bool m_wasMaximized{false};                 // Was window maximized before fullscreen?
+    QRect m_normalGeometry;                     // Window geometry before fullscreen
+    QByteArray m_dockStateBeforeFullscreen;     // Complete dock state before fullscreen
+    VisualizerWidget* m_pFullscreenVisualizer{nullptr};  // Active visualizer in fullscreen
     
     // Note: Audio services (BassEngine, AudioPlayer, Playlist) are managed by
     // ServiceContainer via registerSingleton factories, not stored here.

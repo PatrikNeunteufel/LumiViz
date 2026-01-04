@@ -40,7 +40,12 @@
 #include <QStatusBar>
 #include <QLabel>
 #include <QKeySequence>
+#include <QKeyEvent>
 #include <QTimer>
+
+// Qt-ADS (needed for fullscreen dock state save/restore)
+#include <DockManager.h>
+#include <DockWidget.h>
 
 // BasicLogger
 #include <BasicLogger.h>
@@ -411,6 +416,20 @@ void MainWindow::setupEventHandlers()
         }
     });
 
+    // Fullscreen Toggle event
+    pEventBus->subscribe<ToggleFullscreenEvent>([this](const ToggleFullscreenEvent&) {
+        toggleFullscreen();
+    });
+
+    // Fullscreen Exit event (Esc key)
+    pEventBus->subscribe<ExitFullscreenEvent>([this](const ExitFullscreenEvent&) {
+        if (isFullScreen())
+        {
+            showNormal();
+            BasicLogger::logDebug("Exited fullscreen mode");
+        }
+    });
+
     BasicLogger::logDebug("  Event handlers registered");
 }
 
@@ -566,4 +585,131 @@ void MainWindow::setupAudioServices()
     {
         BasicLogger::logError("Failed to initialize some audio services!");
     }
+}
+
+// =============================================================================
+// Fullscreen
+// =============================================================================
+
+void MainWindow::toggleFullscreen()
+{
+    if (m_isFullscreen)
+    {
+        exitFullscreen();
+    }
+    else
+    {
+        enterFullscreen();
+    }
+}
+
+void MainWindow::enterFullscreen()
+{
+    if (m_isFullscreen)
+    {
+        return;
+    }
+    
+    // Get the primary visualizer
+    VisualizerWidget* visualizer = primaryVisualizer();
+    if (visualizer == nullptr)
+    {
+        BasicLogger::logWarning("No visualizer available for fullscreen");
+        return;
+    }
+    
+    m_pFullscreenVisualizer = visualizer;
+    m_isFullscreen = true;
+    
+    // Store current window state
+    m_wasMaximized = isMaximized();
+    m_normalGeometry = geometry();
+    
+    // Hide all UI elements except the visualizer
+    menuBar()->hide();
+    statusBar()->hide();
+    
+    // Hide all dock widgets except the one containing our visualizer
+    if (m_pDockManager)
+    {
+        auto* adsMgr = m_pDockManager->adsDockManager();
+        if (adsMgr)
+        {
+            // Save complete dock state BEFORE modifying anything
+            m_dockStateBeforeFullscreen = adsMgr->saveState();
+            
+            // Now hide all dock widgets except the visualizer
+            for (auto* dockWidget : adsMgr->dockWidgetsMap())
+            {
+                if (dockWidget && dockWidget->widget() != visualizer)
+                {
+                    dockWidget->closeDockWidget();
+                }
+            }
+        }
+    }
+    
+    // Make the main window fullscreen
+    showFullScreen();
+    
+    // Ensure visualizer is visible and focused
+    visualizer->show();
+    visualizer->setFocus();
+    visualizer->raise();
+    
+    BasicLogger::logInfo("Entered fullscreen mode");
+}
+
+void MainWindow::exitFullscreen()
+{
+    if (!m_isFullscreen)
+    {
+        return;
+    }
+    
+    m_isFullscreen = false;
+    
+    // Restore window state
+    if (m_wasMaximized)
+    {
+        showMaximized();
+    }
+    else
+    {
+        showNormal();
+        setGeometry(m_normalGeometry);
+    }
+    
+    // Show UI elements
+    menuBar()->show();
+    statusBar()->show();
+    
+    // Restore dock state from before fullscreen
+    if (m_pDockManager)
+    {
+        auto* adsMgr = m_pDockManager->adsDockManager();
+        if (adsMgr && !m_dockStateBeforeFullscreen.isEmpty())
+        {
+            adsMgr->restoreState(m_dockStateBeforeFullscreen);
+            m_dockStateBeforeFullscreen.clear();
+        }
+    }
+    
+    m_pFullscreenVisualizer = nullptr;
+    
+    BasicLogger::logInfo("Exited fullscreen mode");
+}
+
+void MainWindow::keyPressEvent(QKeyEvent* event)
+{
+    // Esc exits fullscreen
+    if (event->key() == Qt::Key_Escape && m_isFullscreen)
+    {
+        exitFullscreen();
+        event->accept();
+        return;
+    }
+    
+    // Pass to parent for normal handling
+    QMainWindow::keyPressEvent(event);
 }

@@ -147,6 +147,24 @@ void initMenuDefaults(MenuRegistry& registry)
         },
         false);
     
+    // Fullscreen (F11)
+    registry.registerItem(
+        MenuItemDesc{
+            {"menu.view.fullscreen", "menu.view", 150},
+            "Fullscreen",
+            [](ServiceContainer& svc) {
+                if (auto* eventBus = svc.tryResolve<IEventBus>())
+                {
+                    eventBus->publish(ToggleFullscreenEvent{});
+                }
+                BasicLogger::logDebug("Fullscreen toggled");
+            },
+            {},  // isChecked
+            {},  // isEnabled
+            "F11"
+        },
+        false);
+    
     // Panels submenu - auto-populated by MenuManager from PanelRegistry
     registry.registerContainer(
         MenuContainerDesc{{"menu.view.panels", "menu.view", 100}, "Panels", false},

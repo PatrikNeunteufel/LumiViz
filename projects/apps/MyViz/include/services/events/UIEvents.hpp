@@ -312,3 +312,23 @@ struct SaveDefaultLayoutEvent : public Event
 {
     EVENT_TYPE_NAME("SaveDefaultLayoutEvent")
 };
+
+// =============================================================================
+// Fullscreen Events
+// =============================================================================
+
+/**
+ * @brief Request to toggle fullscreen mode
+ */
+struct ToggleFullscreenEvent : public Event
+{
+    EVENT_TYPE_NAME("ToggleFullscreenEvent")
+};
+
+/**
+ * @brief Request to exit fullscreen mode
+ */
+struct ExitFullscreenEvent : public Event
+{
+    EVENT_TYPE_NAME("ExitFullscreenEvent")
+};

@@ -61,6 +61,7 @@ class IVisualizer;
 
 QT_BEGIN_NAMESPACE
 class QOpenGLShaderProgram;
+class QMouseEvent;
 QT_END_NAMESPACE
 
 /**
@@ -232,6 +233,11 @@ protected:
     void initializeGL() override;
     void resizeGL(int w, int h) override;
     void paintGL() override;
+
+    /**
+     * @brief Handle double-click to toggle fullscreen
+     */
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
 
 private:
     // =========================================================================

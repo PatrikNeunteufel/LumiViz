@@ -36,6 +36,7 @@
 
 // STL
 #include <algorithm>
+#include <unordered_map>
 
 // BasicLogger
 #include <BasicLogger.h>
@@ -53,6 +54,9 @@ struct DockManager::Impl
     
     // Track all visualizers for batch operations
     std::vector<VisualizerWidget*> visualizers;
+    
+    // Map visualizers to their dock widgets (for re-docking after fullscreen)
+    std::unordered_map<VisualizerWidget*, ads::CDockWidget*> visualizerToDock;
     
     // Counter for unique dock widget names
     int visualizerCounter{0};
@@ -246,6 +250,7 @@ VisualizerWidget* DockManager::createVisualizer(
     
     // Track the visualizer
     m_impl->visualizers.push_back(pVisualizer);
+    m_impl->visualizerToDock[pVisualizer] = pDock;
     m_impl->visualizerCounter++;
     
     // Update dock title when visualizer changes
@@ -278,6 +283,7 @@ VisualizerWidget* DockManager::createVisualizer(
     connect(pDock, &ads::CDockWidget::closed, this, [this, pVisualizer]() {
         auto& v = m_impl->visualizers;
         v.erase(std::remove(v.begin(), v.end(), pVisualizer), v.end());
+        m_impl->visualizerToDock.erase(pVisualizer);
     });
     
     // Add to dock manager
@@ -340,12 +346,14 @@ VisualizerWidget* DockManager::createVisualizerRelativeTo(
     
     // Track the visualizer
     m_impl->visualizers.push_back(pVisualizer);
+    m_impl->visualizerToDock[pVisualizer] = pDock;
     m_impl->visualizerCounter++;
     
     // Handle close
     connect(pDock, &ads::CDockWidget::closed, this, [this, pVisualizer]() {
         auto& v = m_impl->visualizers;
         v.erase(std::remove(v.begin(), v.end(), pVisualizer), v.end());
+        m_impl->visualizerToDock.erase(pVisualizer);
     });
     
     // Get reference area
@@ -819,4 +827,37 @@ void DockManager::saveDefaultLayout()
 {
     m_impl->defaultState = m_impl->pAdsDockManager->saveState();
     BasicLogger::logDebug("DockManager: Default layout captured");
+}
+
+void DockManager::redockVisualizer(VisualizerWidget* pVisualizer)
+{
+    if (pVisualizer == nullptr)
+    {
+        return;
+    }
+    
+    // Find the dock widget for this visualizer
+    auto it = m_impl->visualizerToDock.find(pVisualizer);
+    if (it == m_impl->visualizerToDock.end())
+    {
+        BasicLogger::logWarning("DockManager: Cannot redock - visualizer not found in map");
+        return;
+    }
+    
+    ads::CDockWidget* pDock = it->second;
+    if (pDock == nullptr)
+    {
+        BasicLogger::logWarning("DockManager: Cannot redock - dock widget is null");
+        return;
+    }
+    
+    // Reparent the visualizer back to the dock widget
+    pVisualizer->setParent(pDock);
+    pDock->setWidget(pVisualizer);
+    pVisualizer->show();
+    
+    // Make sure the dock widget is visible
+    pDock->toggleView(true);
+    
+    BasicLogger::logDebug("DockManager: Visualizer re-docked successfully");
 }

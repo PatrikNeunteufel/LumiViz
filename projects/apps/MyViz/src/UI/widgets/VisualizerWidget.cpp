@@ -27,6 +27,7 @@
 #include <QGuiApplication>
 #include <QWindow>
 #include <QString>
+#include <QMouseEvent>
 
 // BasicLogger
 #include <BasicLogger.h>
@@ -641,4 +642,26 @@ void VisualizerWidget::paintGL()
                               std::to_string(m_frameCount) +
                               " (visualizer: " + m_currentVisualizerId.toStdString() + ")");
     }
+}
+
+// =============================================================================
+// Mouse Events
+// =============================================================================
+
+void VisualizerWidget::mouseDoubleClickEvent(QMouseEvent* event)
+{
+    if (event->button() == Qt::LeftButton)
+    {
+        // Publish fullscreen toggle event
+        auto* eventBus = services().tryResolve<IEventBus>();
+        if (eventBus)
+        {
+            eventBus->publish(ToggleFullscreenEvent{});
+            BasicLogger::logDebug("VisualizerWidget: Double-click -> Toggle Fullscreen");
+        }
+        event->accept();
+        return;
+    }
+    
+    QOpenGLWidget::mouseDoubleClickEvent(event);
 }

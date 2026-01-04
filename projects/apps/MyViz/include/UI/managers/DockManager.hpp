@@ -321,6 +321,13 @@ public slots:
     void resetLayout();
 
     /**
+     * @brief Re-docks a visualizer after fullscreen mode.
+     * 
+     * @param pVisualizer The visualizer to re-dock
+     */
+    void redockVisualizer(VisualizerWidget* pVisualizer);
+
+    /**
      * @brief Closes all dock widgets.
      */
     void closeAll();
