@@ -635,15 +635,18 @@ void MainWindow::enterFullscreen()
         auto* adsMgr = m_pDockManager->adsDockManager();
         if (adsMgr)
         {
-            // Save complete dock state BEFORE modifying anything
-            m_dockStateBeforeFullscreen = adsMgr->saveState();
+            // Just hide the dock widgets - don't close them or save state
+            m_hiddenDocksForFullscreen.clear();
             
-            // Now hide all dock widgets except the visualizer
             for (auto* dockWidget : adsMgr->dockWidgetsMap())
             {
                 if (dockWidget && dockWidget->widget() != visualizer)
                 {
-                    dockWidget->closeDockWidget();
+                    if (!dockWidget->isClosed())
+                    {
+                        m_hiddenDocksForFullscreen.push_back(dockWidget);
+                        dockWidget->hide();
+                    }
                 }
             }
         }
@@ -684,16 +687,15 @@ void MainWindow::exitFullscreen()
     menuBar()->show();
     statusBar()->show();
     
-    // Restore dock state from before fullscreen
-    if (m_pDockManager)
+    // Show the dock widgets that were hidden for fullscreen
+    for (auto* dockWidget : m_hiddenDocksForFullscreen)
     {
-        auto* adsMgr = m_pDockManager->adsDockManager();
-        if (adsMgr && !m_dockStateBeforeFullscreen.isEmpty())
+        if (dockWidget)
         {
-            adsMgr->restoreState(m_dockStateBeforeFullscreen);
-            m_dockStateBeforeFullscreen.clear();
+            dockWidget->show();
         }
     }
+    m_hiddenDocksForFullscreen.clear();
     
     m_pFullscreenVisualizer = nullptr;
     

@@ -1147,5 +1147,13 @@ void WaveformVisualizer::updateWaveform(const float* waveform, int count)
 
 void WaveformVisualizer::updateSpectrum(const float* spectrum, int count)
 {
+    if (!spectrum || count <= 0) return;
+    
+    // Store raw data in base class
     VisualizerBase::updateSpectrum(spectrum, count);
+    
+    // Process through AudioSourceModule pipeline
+    // This applies: Frequency Mapping (Linear/Log/Mel), dB Normalization, Smoothing
+    constexpr float deltaTime = 1.0f / 60.0f;  // Assume 60fps
+    m_audioSource.update(spectrum, count, deltaTime);
 }

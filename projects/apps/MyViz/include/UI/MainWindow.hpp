@@ -45,7 +45,6 @@
 
 #include <QMainWindow>
 #include <QRect>
-#include <QByteArray>
 #include <memory>
 #include <vector>
 
@@ -60,6 +59,9 @@ class QLabel;
 class QTimer;
 class QKeyEvent;
 QT_END_NAMESPACE
+
+// Qt-ADS Forward Declaration
+namespace ads { class CDockWidget; }
 
 class DockManager;
 class MenuManager;
@@ -261,7 +263,7 @@ private:
     bool m_isFullscreen{false};                 // Current fullscreen state
     bool m_wasMaximized{false};                 // Was window maximized before fullscreen?
     QRect m_normalGeometry;                     // Window geometry before fullscreen
-    QByteArray m_dockStateBeforeFullscreen;     // Complete dock state before fullscreen
+    std::vector<ads::CDockWidget*> m_hiddenDocksForFullscreen;  // Docks hidden during fullscreen
     VisualizerWidget* m_pFullscreenVisualizer{nullptr};  // Active visualizer in fullscreen
     
     // Note: Audio services (BassEngine, AudioPlayer, Playlist) are managed by

@@ -135,6 +135,12 @@ private:
     std::vector<float> m_waveformRight;
     std::vector<float> m_spectrumLeft;
     std::vector<float> m_spectrumRight;
+    
+    // Smoothed buffers (for EMA smoothing)
+    std::vector<float> m_smoothedWaveformLeft;
+    std::vector<float> m_smoothedWaveformRight;
+    std::vector<float> m_smoothedSpectrumLeft;
+    std::vector<float> m_smoothedSpectrumRight;
 
     // =========================================================================
     // Beat Detection State

@@ -349,6 +349,23 @@ PulsingVisualizer::PulsingVisualizer()
 PulsingVisualizer::~PulsingVisualizer() = default;
 
 // =============================================================================
+// Audio Pipeline
+// =============================================================================
+
+void PulsingVisualizer::updateSpectrum(const float* spectrum, int count)
+{
+    if (!spectrum || count <= 0) return;
+    
+    // Store raw data in base class for backward compatibility
+    VisualizerBase::updateSpectrum(spectrum, count);
+    
+    // Process through AudioSourceModule pipeline
+    // This applies: Frequency Mapping (Linear/Log/Mel), dB Normalization, Smoothing
+    constexpr float deltaTime = 1.0f / 60.0f;  // Assume 60fps
+    m_audioSource.update(spectrum, count, deltaTime);
+}
+
+// =============================================================================
 // IModule-style Parameter Access
 // =============================================================================
 
@@ -997,24 +1014,31 @@ void PulsingVisualizer::onRender(float deltaTime)
     }
     
     // =========================================================================
-    // Get Audio Data
+    // Get Audio Data from AudioSourceModule (processed pipeline)
     // =========================================================================
     
-    auto spectrum = getSpectrum();
-    float audioLevel = 0.0f;
+    // Use the processed overall level from AudioSourceModule
+    // This includes: Frequency Mapping, dB Normalization, and Smoothing
+    float audioLevel = m_audioSource.overallLevel();
     
-    if (!spectrum.empty())
+    // Fallback to raw data if AudioSourceModule hasn't been updated yet
+    if (audioLevel <= 0.0f)
     {
-        float sum = 0.0f;
-        int count = std::min(static_cast<int>(spectrum.size()), 32);
-        for (int i = 0; i < count; ++i)
+        auto spectrum = getSpectrum();
+        if (!spectrum.empty())
         {
-            sum += spectrum[i];
+            float sum = 0.0f;
+            int count = std::min(static_cast<int>(spectrum.size()), 32);
+            for (int i = 0; i < count; ++i)
+            {
+                sum += spectrum[i];
+            }
+            audioLevel = sum / static_cast<float>(count);
+            audioLevel *= m_audioSource.gain();
         }
-        audioLevel = sum / static_cast<float>(count);
-        audioLevel *= m_audioSource.gain();
-        audioLevel = std::clamp(audioLevel, 0.0f, 1.0f);
     }
+    
+    audioLevel = std::clamp(audioLevel, 0.0f, 1.0f);
     
     // =========================================================================
     // Beat Detection for Rotation Reversal

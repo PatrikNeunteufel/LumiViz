@@ -254,6 +254,12 @@ void SuperscopeModule::executeInit()
             m_variables["r"] = 3.0;
             break;
 
+        case SuperscopePreset::DNA:
+            m_variables["coils"] = 3.0;        // Current number of coils
+            m_variables["targetCoils"] = 3.0;  // Target for smooth interpolation
+            m_variables["avgAmp"] = 0.0;       // Running average amplitude
+            break;
+
         default:
             break;
     }
@@ -298,6 +304,21 @@ void SuperscopeModule::executeBeat()
             std::uniform_int_distribution<> distr(1, 3);
             m_variables["R"] = distR(gen);
             m_variables["r"] = distr(gen);
+            break;
+        }
+
+        case SuperscopePreset::DNA:
+        {
+            // On beat: set new target coils based on average amplitude
+            // avgAmp is updated every frame, ranges 0-1
+            double avgAmp = m_variables.count("avgAmp") ? m_variables["avgAmp"] : 0.5;
+            
+            // Map amplitude to coils: low amp = more coils (tighter), high amp = fewer coils (looser)
+            // Range: 2-5 coils
+            double newTarget = 5.0 - avgAmp * 3.0;  // High amp -> 2 coils, low amp -> 5 coils
+            newTarget = std::clamp(newTarget, 2.0, 5.0);
+            
+            m_variables["targetCoils"] = newTarget;
             break;
         }
 
@@ -550,42 +571,92 @@ void SuperscopeModule::executeHardcodedPreset(float i, float v)
 
         case SuperscopePreset::DNA:
         {
-            // DNA double helix - smooth winding strands
-            // Uses i to traverse vertically, alternates between strands smoothly
-            double phase = i * m_pi * 6.0 + t * 0.03;  // Coil rotation
+            // DNA double helix with "rungs" going to center and back
+            // Pattern: sin:y1, sin:y2, CENTER:y2, sin:y2(back!), sin:y3, sin:y4, sin:y5, CENTER:y5, sin:y5, ...
+            // Key: after center, return to SAME Y position on sine
             
-            // Vertical position (bottom to top)
-            m_y = i * 1.8 - 0.9;
+            // === Dynamic coil count based on audio ===
+            // Update average amplitude (EMA)
+            double currentAvgAmp = m_variables.count("avgAmp") ? m_variables["avgAmp"] : 0.0;
+            currentAvgAmp = currentAvgAmp * 0.95 + std::abs(v) * 0.05;  // Slow EMA
+            m_variables["avgAmp"] = currentAvgAmp;
             
-            // Horizontal position based on sine wave (helix shape)
-            double helixRadius = 0.3 + v * 0.15;
+            // Get target coils (set on beat)
+            double targetCoils = m_variables.count("targetCoils") ? m_variables["targetCoils"] : 3.0;
             
-            // Smoothly alternate between strands using sine
-            // This creates the illusion of two intertwined strands
-            double strandBlend = std::sin(i * m_pi * 16.0);  // Faster oscillation
+            // Smoothly interpolate current coils toward target
+            double currentCoils = m_variables.count("coils") ? m_variables["coils"] : 3.0;
+            currentCoils = currentCoils * 0.98 + targetCoils * 0.02;  // Slow interpolation
+            m_variables["coils"] = currentCoils;
             
-            if (strandBlend > 0.2)
+            double numCoils = std::clamp(currentCoils, 2.0, 5.0);
+            double phase = t * 0.05;  // Slow rotation
+            double coilRadius = 0.4;
+            
+            int totalPoints = static_cast<int>(m_n);
+            int pointIdx = static_cast<int>(i * totalPoints);
+            int halfPoints = totalPoints / 2;
+            
+            // Cycle: sin,sin,sin,sin,center,back = 6 points
+            // Y advances for first 4, stays same for center+back
+            int cycleLength = 6;
+            
+            int localIdx;
+            int strandPoints;
+            double phaseOffset;
+            
+            if (pointIdx < halfPoints)
             {
-                // Front strand
-                m_x = std::sin(phase) * helixRadius;
+                // Strand 1
+                localIdx = pointIdx;
+                strandPoints = halfPoints;
+                phaseOffset = 0.0;
             }
-            else if (strandBlend < -0.2)
+            else if (pointIdx == halfPoints)
             {
-                // Back strand (pi offset)
-                m_x = std::sin(phase + m_pi) * helixRadius;
+                // Skip to break line
+                m_skip = 1.0;
+                break;
             }
             else
             {
-                // Connection between strands (rungs of the ladder)
-                double rungPhase = std::fmod(i * 8.0, 1.0);
-                if (rungPhase < 0.5)
-                {
-                    m_x = std::sin(phase) * helixRadius * (1.0 - rungPhase * 2.0);
-                }
-                else
-                {
-                    m_x = std::sin(phase + m_pi) * helixRadius * ((rungPhase - 0.5) * 2.0);
-                }
+                // Strand 2 (180° offset)
+                localIdx = pointIdx - halfPoints - 1;
+                strandPoints = totalPoints - halfPoints - 1;
+                phaseOffset = m_pi;
+            }
+            
+            int cycle = localIdx / cycleLength;
+            int posInCycle = localIdx % cycleLength;
+            
+            // Logical Y step (doesn't advance during center/back)
+            int yStep;
+            if (posInCycle < 4) {
+                yStep = cycle * 4 + posInCycle;
+            } else {
+                yStep = cycle * 4 + 3;  // Stay at same Y for center and back
+            }
+            
+            // Total Y steps for this strand
+            int totalYSteps = (strandPoints / cycleLength) * 4 + std::min(strandPoints % cycleLength, 4);
+            
+            double progress = static_cast<double>(yStep) / static_cast<double>(std::max(1, totalYSteps - 1));
+            progress = std::min(1.0, progress);
+            
+            double coilAngle = progress * m_pi2 * numCoils + phase + phaseOffset;
+            double audioMod = v * 0.15;
+            double radius = coilRadius + audioMod;
+            double sinX = std::sin(coilAngle) * radius;
+            
+            m_y = progress * 1.8 - 0.9;
+            
+            if (posInCycle == 4) {
+                // Center point - go toward x=0
+                double centerAmount = 0.4 + std::abs(v) * 0.5;
+                m_x = sinX * (1.0 - centerAmount);
+            } else {
+                // On sine (including "back" position which is same as before center)
+                m_x = sinX;
             }
             break;
         }

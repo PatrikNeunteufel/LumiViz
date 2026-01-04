@@ -230,9 +230,15 @@ void OscilloscopeVisualizer::updateWaveform(const float* waveform, int count)
     }
 }
 
-void OscilloscopeVisualizer::updateSpectrum(const float* /*spectrum*/, int /*count*/)
+void OscilloscopeVisualizer::updateSpectrum(const float* spectrum, int count)
 {
-    // Oscilloscope doesn't use spectrum data
+    if (!spectrum || count <= 0) return;
+    
+    // Process through AudioSourceModule pipeline
+    // Even though Oscilloscope primarily uses waveform data,
+    // we still process spectrum to make AudioSource parameters functional
+    constexpr float deltaTime = 1.0f / 60.0f;  // Assume 60fps
+    m_audioSource.update(spectrum, count, deltaTime);
 }
 
 // =============================================================================

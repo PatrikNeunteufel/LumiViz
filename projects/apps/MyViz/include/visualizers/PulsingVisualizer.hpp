@@ -49,6 +49,12 @@ public:
     bool setParam(const std::string& id, const lumi::modules::ParamValue& value) override;
 
     // =========================================================================
+    // IVisualizer Audio Interface
+    // =========================================================================
+
+    void updateSpectrum(const float* spectrum, int count) override;
+
+    // =========================================================================
     // Legacy API - Shape Configuration
     // =========================================================================
 

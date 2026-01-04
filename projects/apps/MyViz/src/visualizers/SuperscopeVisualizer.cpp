@@ -202,19 +202,44 @@ void SuperscopeVisualizer::updateWaveform(const float* waveform, int count)
 {
     if (!waveform || count <= 0) return;
 
-    // Get gain from AudioSourceModule
+    // Get parameters from AudioSourceModule
     float gain = m_audioSource.gain();
+    float smoothTimeMs = m_audioSource.smoothing().timeMs();
+    
+    // Calculate EMA alpha (smoothing factor)
+    constexpr float deltaTime = 1.0f / 60.0f;  // Assume 60fps
+    float alpha = 1.0f;
+    if (smoothTimeMs > 0.0f)
+    {
+        float tau = smoothTimeMs / 1000.0f;
+        alpha = 1.0f - std::exp(-deltaTime / tau);
+    }
 
     // Assume interleaved stereo
     int samplesPerChannel = count / 2;
     
-    m_waveformLeft.resize(samplesPerChannel);
-    m_waveformRight.resize(samplesPerChannel);
+    // Resize buffers if needed
+    if (static_cast<int>(m_waveformLeft.size()) != samplesPerChannel)
+    {
+        m_waveformLeft.resize(samplesPerChannel, 0.0f);
+        m_waveformRight.resize(samplesPerChannel, 0.0f);
+        m_smoothedWaveformLeft.resize(samplesPerChannel, 0.0f);
+        m_smoothedWaveformRight.resize(samplesPerChannel, 0.0f);
+    }
 
     for (int i = 0; i < samplesPerChannel; ++i)
     {
-        m_waveformLeft[i] = waveform[i * 2] * gain;
-        m_waveformRight[i] = waveform[i * 2 + 1] * gain;
+        // Apply gain
+        float rawL = waveform[i * 2] * gain;
+        float rawR = waveform[i * 2 + 1] * gain;
+        
+        // Apply EMA smoothing
+        m_smoothedWaveformLeft[i] = alpha * rawL + (1.0f - alpha) * m_smoothedWaveformLeft[i];
+        m_smoothedWaveformRight[i] = alpha * rawR + (1.0f - alpha) * m_smoothedWaveformRight[i];
+        
+        // Store final values
+        m_waveformLeft[i] = m_smoothedWaveformLeft[i];
+        m_waveformRight[i] = m_smoothedWaveformRight[i];
     }
 
     // Simple beat detection based on energy
@@ -236,19 +261,121 @@ void SuperscopeVisualizer::updateSpectrum(const float* spectrum, int count)
 {
     if (!spectrum || count <= 0) return;
 
-    // Get gain from AudioSourceModule
+    // =========================================================================
+    // Process through AudioSourceModule pipeline (for band-based output)
+    // =========================================================================
+    
+    constexpr float deltaTime = 1.0f / 60.0f;  // Assume 60fps
+    m_audioSource.update(spectrum, count, deltaTime);
+    
+    // =========================================================================
+    // Get parameters from AudioSourceModule
+    // =========================================================================
+    
     float gain = m_audioSource.gain();
+    float floorDb = m_audioSource.floorDb();
+    float ceilDb = m_audioSource.ceilingDb();
+    float rangeDb = ceilDb - floorDb;
+    float smoothTimeMs = m_audioSource.smoothing().timeMs();
+    auto scale = m_audioSource.scale();
+    
+    // Calculate EMA alpha (smoothing factor)
+    float alpha = 1.0f;
+    if (smoothTimeMs > 0.0f)
+    {
+        float tau = smoothTimeMs / 1000.0f;
+        alpha = 1.0f - std::exp(-deltaTime / tau);
+    }
 
     // Assume interleaved stereo spectrum
     int binsPerChannel = count / 2;
     
-    m_spectrumLeft.resize(binsPerChannel);
-    m_spectrumRight.resize(binsPerChannel);
+    // Resize buffers if needed
+    if (static_cast<int>(m_spectrumLeft.size()) != binsPerChannel)
+    {
+        m_spectrumLeft.resize(binsPerChannel, 0.0f);
+        m_spectrumRight.resize(binsPerChannel, 0.0f);
+        m_smoothedSpectrumLeft.resize(binsPerChannel, 0.0f);
+        m_smoothedSpectrumRight.resize(binsPerChannel, 0.0f);
+    }
+
+    // =========================================================================
+    // Frequency Mapping Constants
+    // =========================================================================
+    
+    constexpr float MIN_FREQ = 20.0f;
+    constexpr float MAX_FREQ = 20000.0f;
+    constexpr int SAMPLE_RATE = 48000;
+    
+    // Pre-calculate Mel constants if needed
+    float melMin = 2595.0f * std::log10(1.0f + MIN_FREQ / 700.0f);
+    float melMax = 2595.0f * std::log10(1.0f + MAX_FREQ / 700.0f);
 
     for (int i = 0; i < binsPerChannel; ++i)
     {
-        m_spectrumLeft[i] = spectrum[i * 2] * gain;
-        m_spectrumRight[i] = spectrum[i * 2 + 1] * gain;
+        // =====================================================================
+        // Step 1: Calculate source bin based on frequency scale
+        // =====================================================================
+        
+        // t = normalized position in output (0 to 1)
+        float t = static_cast<float>(i) / static_cast<float>(binsPerChannel - 1);
+        float freq = 0.0f;
+        
+        switch (scale)
+        {
+        case lumi::modules::FrequencyScale::Linear:
+            // Linear: direct mapping
+            freq = MIN_FREQ + t * (MAX_FREQ - MIN_FREQ);
+            break;
+            
+        case lumi::modules::FrequencyScale::Log:
+            // Logarithmic: more resolution at low frequencies
+            freq = MIN_FREQ * std::pow(MAX_FREQ / MIN_FREQ, t);
+            break;
+            
+        case lumi::modules::FrequencyScale::Mel:
+            // Mel scale: perceptually uniform
+            {
+                float mel = melMin + t * (melMax - melMin);
+                freq = 700.0f * (std::pow(10.0f, mel / 2595.0f) - 1.0f);
+            }
+            break;
+        }
+        
+        // Convert frequency to FFT bin index
+        int srcBin = static_cast<int>(freq * count / SAMPLE_RATE);
+        srcBin = std::clamp(srcBin, 0, binsPerChannel - 1);
+        
+        // =====================================================================
+        // Step 2: Get raw values and apply gain
+        // =====================================================================
+        
+        float rawL = spectrum[srcBin * 2] * gain;
+        float rawR = spectrum[srcBin * 2 + 1] * gain;
+        
+        // =====================================================================
+        // Step 3: dB Normalization
+        // =====================================================================
+        
+        if (rangeDb > 0.0f)
+        {
+            float dbL = (rawL > 1e-10f) ? (20.0f * std::log10(rawL)) : -120.0f;
+            float dbR = (rawR > 1e-10f) ? (20.0f * std::log10(rawR)) : -120.0f;
+            
+            rawL = std::clamp((dbL - floorDb) / rangeDb, 0.0f, 1.0f);
+            rawR = std::clamp((dbR - floorDb) / rangeDb, 0.0f, 1.0f);
+        }
+        
+        // =====================================================================
+        // Step 4: EMA Smoothing
+        // =====================================================================
+        
+        m_smoothedSpectrumLeft[i] = alpha * rawL + (1.0f - alpha) * m_smoothedSpectrumLeft[i];
+        m_smoothedSpectrumRight[i] = alpha * rawR + (1.0f - alpha) * m_smoothedSpectrumRight[i];
+        
+        // Store final processed values
+        m_spectrumLeft[i] = m_smoothedSpectrumLeft[i];
+        m_spectrumRight[i] = m_smoothedSpectrumRight[i];
     }
 }
 
@@ -353,13 +480,54 @@ bool SuperscopeVisualizer::createShaders()
 
 void SuperscopeVisualizer::onRender(float deltaTime)
 {
-    auto* f = QOpenGLContext::currentContext()->functions();
-    
-    // Check for context change
-    if (QOpenGLContext::currentContext() != m_lastContext)
+    // CRITICAL: Check context BEFORE calling functions() to prevent crash on undocking
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    if (!ctx)
     {
-        onCleanup();
+        return;
+    }
+
+    auto* f = ctx->functions();
+    if (!f)
+    {
+        return;
+    }
+    
+    // =========================================================================
+    // Context Change Detection - Reinitialize if context changed
+    // =========================================================================
+
+    if (m_lastContext != nullptr && ctx != m_lastContext)
+    {
+        qDebug("SuperscopeVisualizer: OpenGL context changed, reinitializing...");
+
+        // Clean up old resources (they're invalid in new context anyway)
+        m_pointShader.reset();
+        m_lineShader.reset();
+        m_vertexBuffer.reset();
+        m_vao.reset();
+        m_heldFrames.clear();
+
+        // Reinitialize in new context
         onInitialize();
+
+        // If initialization failed, skip rendering
+        if (!m_pointShader || !m_vao)
+        {
+            qWarning("SuperscopeVisualizer: Reinitialization failed");
+            return;
+        }
+    }
+    else if (m_lastContext == nullptr)
+    {
+        // First render after creation or cleanup - initialize
+        onInitialize();
+        
+        if (!m_pointShader || !m_vao)
+        {
+            qWarning("SuperscopeVisualizer: Initial initialization failed");
+            return;
+        }
     }
 
     if (!m_vao || !m_vertexBuffer || !m_pointShader || !m_lineShader)
