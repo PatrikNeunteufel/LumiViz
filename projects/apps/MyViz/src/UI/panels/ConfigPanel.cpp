@@ -18,6 +18,7 @@
 #include "visualizers/PulsingVisualizer.hpp"
 #include "visualizers/WaveformVisualizer.hpp"
 #include "visualizers/OscilloscopeVisualizer.hpp"
+#include "visualizers/SuperscopeVisualizer.hpp"
 #include "visualizers/VisualizerPresetManager.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
@@ -776,6 +777,11 @@ QWidget* ConfigPanel::createEnumWidget(const ModuleParamDesc& desc)
             else if (desc.id.find("m2Color.") != std::string::npos) channelIndex = 5;
             
             gradientModule = &oscilloscope->oscilloscope()->colorGradient(channelIndex);
+        }
+        // SuperscopeVisualizer - color gradient is in superscope module
+        else if (auto* superscope = dynamic_cast<SuperscopeVisualizer*>(m_visualizer))
+        {
+            gradientModule = &superscope->superscope()->colorGradient();
         }
         
         if (gradientModule)

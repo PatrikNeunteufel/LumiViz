@@ -18,6 +18,7 @@
  * | pulsing | Pulsing | Basic |
  * | waveform | Waveform | Waveform |
  * | oscilloscope | Oscilloscope | Waveform |
+ * | superscope | Superscope | Waveform |
  *
  * ## Trennung Framework vs. App
  *
@@ -41,6 +42,7 @@
 #include "services/VisualizerRegistry.hpp"
 #include "visualizers/OscilloscopeVisualizer.hpp"
 #include "visualizers/PulsingVisualizer.hpp"
+#include "visualizers/SuperscopeVisualizer.hpp"
 #include "visualizers/WaveformVisualizer.hpp"
 // TODO: Zukünftige Visualizer hier inkludieren:
 // #include "visualizers/SpectrumVisualizer.hpp"
@@ -120,6 +122,20 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
         },
         []() -> std::unique_ptr<IVisualizer> {
             return std::make_unique<OscilloscopeVisualizer>();
+        },
+        false);
+    
+    // Superscope Visualizer - Programmable point/line visualizer
+    registry.registerVisualizer(
+        VisualizerDescriptor{
+            "superscope",                                        // id
+            "Superscope",                                        // name
+            "Programmable point/line visualizer with presets",   // description
+            "Waveform",                                          // category
+            300                                                  // order
+        },
+        []() -> std::unique_ptr<IVisualizer> {
+            return std::make_unique<SuperscopeVisualizer>();
         },
         false);
     

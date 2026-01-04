@@ -12,6 +12,7 @@ set(_local_sources
     # (no sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/OscilloscopeVisualizer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PulsingVisualizer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/SuperscopeVisualizer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerAutoReg.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerBase.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerPresetManager.cpp"

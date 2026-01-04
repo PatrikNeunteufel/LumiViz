@@ -14,6 +14,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/ColorSchemeModule.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/OscilloscopeModule.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PulseShapeModule.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/SuperscopeModule.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/WaveformModule.cpp"
 )
 set(_local_headers
