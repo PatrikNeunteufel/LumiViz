@@ -588,8 +588,18 @@ void OscilloscopeVisualizer::onRender(float deltaTime)
     {
         int triggerChannel = m_oscilloscope.triggerChannel();
         
-        if (triggerChannel < OscilloscopeModule::TOTAL_CHANNELS &&
-            !m_processedChannels[triggerChannel].empty())
+        // Check if trigger channel is valid AND visible (enabled)
+        bool triggerChannelValid = (triggerChannel < OscilloscopeModule::TOTAL_CHANNELS &&
+                                    !m_processedChannels[triggerChannel].empty());
+        bool triggerChannelEnabled = false;
+        
+        if (triggerChannelValid)
+        {
+            // Check if the channel is actually enabled/visible
+            triggerChannelEnabled = m_oscilloscope.channelBase(triggerChannel).visible;
+        }
+        
+        if (triggerChannelValid && triggerChannelEnabled)
         {
             int procSize = static_cast<int>(m_processedChannels[triggerChannel].size());
             
@@ -627,6 +637,12 @@ void OscilloscopeVisualizer::onRender(float deltaTime)
                 }
             }
             // triggerPoint >= 0: Trigger found, continue with normal processing
+        }
+        else if (!triggerChannelEnabled && m_oscilloscope.triggerMode() != TriggerMode::Auto)
+        {
+            // Trigger channel is disabled and not in Auto mode: don't trigger
+            // Keep showing last triggered frame
+            goto render_section;
         }
     }
 

@@ -686,25 +686,51 @@ inline bool AudioSourceModule::setParam(const std::string& id, const ParamValue&
         return m_smoothing.setParam(id.substr(7), value);
     }
     
+    // Helper to extract int (from int or float)
+    auto getInt = [&value]() -> std::optional<int> {
+        if (std::holds_alternative<int>(value))
+            return std::get<int>(value);
+        if (std::holds_alternative<float>(value))
+            return static_cast<int>(std::get<float>(value));
+        return std::nullopt;
+    };
+    
+    // Helper to extract float (from int or float)
+    auto getFloat = [&value]() -> std::optional<float> {
+        if (std::holds_alternative<float>(value))
+            return std::get<float>(value);
+        if (std::holds_alternative<int>(value))
+            return static_cast<float>(std::get<int>(value));
+        return std::nullopt;
+    };
+    
+    // Helper to extract bool
+    auto getBool = [&value]() -> std::optional<bool> {
+        if (std::holds_alternative<bool>(value))
+            return std::get<bool>(value);
+        if (std::holds_alternative<int>(value))
+            return std::get<int>(value) != 0;
+        return std::nullopt;
+    };
+    
     // Own parameters
     if (id == "preset")
     {
-        if (std::holds_alternative<int>(value))
+        if (auto idx = getInt())
         {
-            int idx = std::get<int>(value);
             auto names = presetNames();
-            if (idx >= 0 && idx < static_cast<int>(names.size()))
+            if (*idx >= 0 && *idx < static_cast<int>(names.size()))
             {
-                loadPreset(names[idx]);
+                loadPreset(names[*idx]);
             }
             return true;
         }
     }
     else if (id == "scale")
     {
-        if (std::holds_alternative<int>(value))
+        if (auto v = getInt())
         {
-            setScale(static_cast<FrequencyScale>(std::get<int>(value)));
+            setScale(static_cast<FrequencyScale>(*v));
             m_preset = AudioPreset::Custom;
             m_currentPresetName = "[Custom]";
             return true;
@@ -712,9 +738,9 @@ inline bool AudioSourceModule::setParam(const std::string& id, const ParamValue&
     }
     else if (id == "bands")
     {
-        if (std::holds_alternative<int>(value))
+        if (auto v = getInt())
         {
-            setBands(std::get<int>(value));
+            setBands(*v);
             m_preset = AudioPreset::Custom;
             m_currentPresetName = "[Custom]";
             return true;
@@ -722,9 +748,9 @@ inline bool AudioSourceModule::setParam(const std::string& id, const ParamValue&
     }
     else if (id == "floorDb")
     {
-        if (std::holds_alternative<float>(value))
+        if (auto v = getFloat())
         {
-            setFloorDb(std::get<float>(value));
+            setFloorDb(*v);
             m_preset = AudioPreset::Custom;
             m_currentPresetName = "[Custom]";
             return true;
@@ -732,9 +758,9 @@ inline bool AudioSourceModule::setParam(const std::string& id, const ParamValue&
     }
     else if (id == "ceilDb")
     {
-        if (std::holds_alternative<float>(value))
+        if (auto v = getFloat())
         {
-            setCeilingDb(std::get<float>(value));
+            setCeilingDb(*v);
             m_preset = AudioPreset::Custom;
             m_currentPresetName = "[Custom]";
             return true;
@@ -742,9 +768,9 @@ inline bool AudioSourceModule::setParam(const std::string& id, const ParamValue&
     }
     else if (id == "clamp01")
     {
-        if (std::holds_alternative<bool>(value))
+        if (auto v = getBool())
         {
-            m_clamp01 = std::get<bool>(value);
+            m_clamp01 = *v;
             m_preset = AudioPreset::Custom;
             m_currentPresetName = "[Custom]";
             return true;
@@ -752,9 +778,9 @@ inline bool AudioSourceModule::setParam(const std::string& id, const ParamValue&
     }
     else if (id == "gain")
     {
-        if (std::holds_alternative<float>(value))
+        if (auto v = getFloat())
         {
-            setGain(std::get<float>(value));
+            setGain(*v);
             m_preset = AudioPreset::Custom;
             m_currentPresetName = "[Custom]";
             return true;

@@ -19,6 +19,7 @@
 #include "visualizers/WaveformVisualizer.hpp"
 #include "visualizers/OscilloscopeVisualizer.hpp"
 #include "visualizers/SuperscopeVisualizer.hpp"
+#include "visualizers/EqualizerVisualizer.hpp"
 #include "visualizers/VisualizerPresetManager.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
@@ -782,6 +783,11 @@ QWidget* ConfigPanel::createEnumWidget(const ModuleParamDesc& desc)
         else if (auto* superscope = dynamic_cast<SuperscopeVisualizer*>(m_visualizer))
         {
             gradientModule = &superscope->superscope()->colorGradient();
+        }
+        // EqualizerVisualizer - color gradient is in equalizer module
+        else if (auto* equalizer = dynamic_cast<EqualizerVisualizer*>(m_visualizer))
+        {
+            gradientModule = &equalizer->equalizerModule().colorGradient();
         }
         
         if (gradientModule)

@@ -40,12 +40,12 @@
  */
 
 #include "services/VisualizerRegistry.hpp"
+#include "visualizers/EqualizerVisualizer.hpp"
 #include "visualizers/OscilloscopeVisualizer.hpp"
 #include "visualizers/PulsingVisualizer.hpp"
 #include "visualizers/SuperscopeVisualizer.hpp"
 #include "visualizers/WaveformVisualizer.hpp"
 // TODO: Zukünftige Visualizer hier inkludieren:
-// #include "visualizers/SpectrumVisualizer.hpp"
 // #include "visualizers/ParticleVisualizer.hpp"
 
 // =============================================================================
@@ -72,7 +72,7 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
             "pulsing",                                           // id
             "Pulsing",                                           // name
             "Audio-reactive pulsing shape with beat detection",  // description
-            "static Parametring",                                             // category
+            "static Parametring shape",                                             // category
             100                                                  // order
         },
         []() -> std::unique_ptr<IVisualizer> {
@@ -81,17 +81,22 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
         false);
     
     // =========================================================================
-    // SPECTRUM CATEGORY (TODO)
+    // SPECTRUM CATEGORY
     // =========================================================================
     
-    // TODO: Spectrum Visualizer - FFT-based spectrum bars
-    // registry.registerVisualizer(
-    //     VisualizerDescriptor{
-    //         "spectrum", "Spectrum Analyzer",
-    //         "FFT-based spectrum visualization", "Spectrum", 100
-    //     },
-    //     []() { return std::make_unique<SpectrumVisualizer>(); },
-    //     false);
+    // Equalizer Visualizer - FFT-based spectrum bars with peak markers
+    registry.registerVisualizer(
+        VisualizerDescriptor{
+            "equalizer",                                           // id
+            "Equalizer",                                           // name
+            "Spectrum analyzer with bars and peak markers",        // description
+            "static Parametring spectrum",                                            // category
+            100                                                    // order
+        },
+        []() -> std::unique_ptr<IVisualizer> {
+            return std::make_unique<EqualizerVisualizer>();
+        },
+        false);
     
     // =========================================================================
     // WAVEFORM CATEGORY
@@ -103,7 +108,7 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
             "waveform",                                          // id
             "Waveform",                                          // name
             "Real-time audio waveform oscilloscope display",     // description
-            "static Parametring",                                          // category
+            "static Parametring waveform",                                          // category
             100                                                  // order
         },
         []() -> std::unique_ptr<IVisualizer> {
@@ -117,7 +122,7 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
             "oscilloscope",                                      // id
             "Oscilloscope",                                      // name
             "Classic oscilloscope with trigger synchronization", // description
-            "static Parametring",                                          // category
+            "static Parametring waveform",                                          // category
             200                                                  // order
         },
         []() -> std::unique_ptr<IVisualizer> {
@@ -131,7 +136,7 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
             "superscope",                                        // id
             "Superscope",                                        // name
             "Programmable point/line visualizer with presets",   // description
-            "static Parametring",                                          // category
+            "static Parametring waveform",                                          // category
             300                                                  // order
         },
         []() -> std::unique_ptr<IVisualizer> {

@@ -180,8 +180,8 @@ struct MathChannelConfig : ChannelConfigBase
 struct ACCouplingState
 {
     float prevInput = 0.0f;          ///< Previous input sample x[n-1]
-    float prevOutput = 0.0f;         ///< Previous output sample y[n-1]
-    float alpha = 0.995f;            ///< Filter coefficient (0.99-0.999 typical)
+    float prevOutput = 0.0f;         ///< Smoothed DC offset
+    float alpha = 0.9f;              ///< DC offset smoothing (lower = faster adaptation)
     
     void reset() 
     { 

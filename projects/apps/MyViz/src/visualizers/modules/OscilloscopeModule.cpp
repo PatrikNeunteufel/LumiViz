@@ -671,23 +671,24 @@ void OscilloscopeModule::processSignals(const float* left, const float* right, i
 
 void OscilloscopeModule::applyACCoupling(float* samples, int count, ACCouplingState& state)
 {
-    // Classic first-order IIR high-pass filter:
-    // y[n] = alpha * (y[n-1] + x[n] - x[n-1])
-    //
-    // This removes DC offset and shows only signal changes:
-    // - Constant signal → output decays to 0
-    // - Rising signal → positive output proportional to rate of change
-    // - Falling signal → negative output proportional to rate of change
+    if (count <= 0) return;
     
+    // Calculate DC offset as running average of the entire buffer
+    // This gives a stable reference for AC coupling
+    float dcOffset = 0.0f;
     for (int i = 0; i < count; ++i)
     {
-        float input = samples[i];
-        float output = state.alpha * (state.prevOutput + input - state.prevInput);
-        
-        state.prevInput = input;
-        state.prevOutput = output;
-        
-        samples[i] = output;
+        dcOffset += samples[i];
+    }
+    dcOffset /= static_cast<float>(count);
+    
+    // Smooth the DC offset using EMA to avoid sudden jumps
+    state.prevOutput = state.alpha * state.prevOutput + (1.0f - state.alpha) * dcOffset;
+    
+    // Subtract the smoothed DC offset from all samples
+    for (int i = 0; i < count; ++i)
+    {
+        samples[i] -= state.prevOutput;
     }
 }
 

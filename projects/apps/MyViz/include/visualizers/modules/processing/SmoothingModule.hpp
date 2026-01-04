@@ -491,11 +491,38 @@ inline bool SmoothingModule::getParam(const std::string& id, ParamValue& out) co
 
 inline bool SmoothingModule::setParam(const std::string& id, const ParamValue& value)
 {
+    // Helper to extract int (from int or float)
+    auto getInt = [&value]() -> std::optional<int> {
+        if (std::holds_alternative<int>(value))
+            return std::get<int>(value);
+        if (std::holds_alternative<float>(value))
+            return static_cast<int>(std::get<float>(value));
+        return std::nullopt;
+    };
+    
+    // Helper to extract float (from int or float)
+    auto getFloat = [&value]() -> std::optional<float> {
+        if (std::holds_alternative<float>(value))
+            return std::get<float>(value);
+        if (std::holds_alternative<int>(value))
+            return static_cast<float>(std::get<int>(value));
+        return std::nullopt;
+    };
+    
+    // Helper to extract bool
+    auto getBool = [&value]() -> std::optional<bool> {
+        if (std::holds_alternative<bool>(value))
+            return std::get<bool>(value);
+        if (std::holds_alternative<int>(value))
+            return std::get<int>(value) != 0;
+        return std::nullopt;
+    };
+
     if (id == "algorithm")
     {
-        if (std::holds_alternative<int>(value))
+        if (auto v = getInt())
         {
-            setAlgorithm(static_cast<SmoothingAlgorithm>(std::get<int>(value)));
+            setAlgorithm(static_cast<SmoothingAlgorithm>(*v));
             m_preset = SmoothingPreset::Custom;
             m_currentPresetName = "[Custom]";
             return true;
@@ -503,9 +530,9 @@ inline bool SmoothingModule::setParam(const std::string& id, const ParamValue& v
     }
     else if (id == "timeMs")
     {
-        if (std::holds_alternative<float>(value))
+        if (auto v = getFloat())
         {
-            setTimeMs(std::get<float>(value));
+            setTimeMs(*v);
             m_preset = SmoothingPreset::Custom;
             m_currentPresetName = "[Custom]";
             return true;
@@ -513,9 +540,9 @@ inline bool SmoothingModule::setParam(const std::string& id, const ParamValue& v
     }
     else if (id == "windowSize")
     {
-        if (std::holds_alternative<int>(value))
+        if (auto v = getInt())
         {
-            setWindowSize(std::get<int>(value));
+            setWindowSize(*v);
             m_preset = SmoothingPreset::Custom;
             m_currentPresetName = "[Custom]";
             return true;
@@ -523,22 +550,21 @@ inline bool SmoothingModule::setParam(const std::string& id, const ParamValue& v
     }
     else if (id == "preset")
     {
-        if (std::holds_alternative<int>(value))
+        if (auto idx = getInt())
         {
-            int idx = std::get<int>(value);
             auto names = presetNames();
-            if (idx >= 0 && idx < static_cast<int>(names.size()))
+            if (*idx >= 0 && *idx < static_cast<int>(names.size()))
             {
-                loadPreset(names[idx]);
+                loadPreset(names[*idx]);
             }
             return true;
         }
     }
     else if (id == "primeFirstFrame")
     {
-        if (std::holds_alternative<bool>(value))
+        if (auto v = getBool())
         {
-            m_primeFirstFrame = std::get<bool>(value);
+            m_primeFirstFrame = *v;
             m_preset = SmoothingPreset::Custom;
             m_currentPresetName = "[Custom]";
             return true;
