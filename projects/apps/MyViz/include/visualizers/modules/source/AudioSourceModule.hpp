@@ -599,11 +599,15 @@ inline std::vector<ModuleParamDesc> AudioSourceModule::paramDescs() const
     );
     
     // Aggregate smoothing params with "smooth." prefix
+    // Place them between Mapping (order 0-1) and Normalization (order 10-12)
+    int smoothOrder = 5;
     for (const auto& p : m_smoothing.paramDescs())
     {
         ModuleParamDesc prefixed = p;
         prefixed.id = "smooth." + p.id;
-        prefixed.group = "Smoothing";
+        // Don't override group - let the visualizer set it
+        // Set order to place between Mapping and Normalization
+        prefixed.order = smoothOrder++;
         
         // Also prefix the dependsOn reference if set
         if (!prefixed.dependsOn.empty())

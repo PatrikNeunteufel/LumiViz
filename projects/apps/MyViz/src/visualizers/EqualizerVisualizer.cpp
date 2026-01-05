@@ -198,7 +198,6 @@ std::vector<ModuleParamDesc> EqualizerVisualizer::paramDescs() const
     // =========================================================================
     // 1. Audio Source Parameters
     // =========================================================================
-    int audioOrder = 0;
     for (const auto& p : m_audioSource.paramDescs())
     {
         // Skip "bands" - we use eq.bands instead and sync automatically
@@ -208,10 +207,7 @@ std::vector<ModuleParamDesc> EqualizerVisualizer::paramDescs() const
         ModuleParamDesc prefixed = p;
         prefixed.id = "audio." + p.id;
         prefixed.group = "1. Audio";
-        prefixed.order = audioOrder++;  // Sequential order
-        
-        // Keep subGroup for UI organization
-        // prefixed.subGroup is already set from AudioSourceModule
+        // Keep original order from AudioSourceModule for consistent UI layout
         
         if (!prefixed.dependsOn.empty())
         {

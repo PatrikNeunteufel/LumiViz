@@ -12,6 +12,7 @@
 #include "visualizers/modules/WaveformModule.hpp"
 
 #include <algorithm>
+#include <optional>
 
 namespace lumi::modules {
 
@@ -921,6 +922,27 @@ bool WaveformModule::getParam(const std::string& id, ParamValue& out) const
 
 bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
 {
+    // Helper to extract int (from int or float)
+    auto getInt = [&value]() -> std::optional<int> {
+        if (auto* v = std::get_if<int>(&value)) return *v;
+        if (auto* v = std::get_if<float>(&value)) return static_cast<int>(*v);
+        return std::nullopt;
+    };
+    
+    // Helper to extract float (from int or float)
+    auto getFloat = [&value]() -> std::optional<float> {
+        if (auto* v = std::get_if<float>(&value)) return *v;
+        if (auto* v = std::get_if<int>(&value)) return static_cast<float>(*v);
+        return std::nullopt;
+    };
+    
+    // Helper to extract bool
+    auto getBool = [&value]() -> std::optional<bool> {
+        if (auto* v = std::get_if<bool>(&value)) return *v;
+        if (auto* v = std::get_if<int>(&value)) return *v != 0;
+        return std::nullopt;
+    };
+
     // Per-channel color gradient parameters
     if (id.rfind("monoColor.", 0) == 0)
     {
@@ -944,7 +966,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     // Channel mode
     if (id == "channelMode")
     {
-        if (auto* v = std::get_if<int>(&value))
+        if (auto v = getInt())
         {
             m_channelMode = static_cast<WaveformChannelMode>(std::clamp(*v, 0, 2));
             return true;
@@ -954,7 +976,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     // Mono channel
     if (id == "monoOffset")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_MONO].lineOffset = std::clamp(*v, -1.0f, 1.0f);
             return true;
@@ -962,7 +984,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "monoAmplitude")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_MONO].amplitude = std::clamp(*v, 0.1f, 2.0f);
             return true;
@@ -970,7 +992,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "monoLineWidth")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_MONO].lineWidth = std::clamp(*v, 1.0f, 10.0f);
             return true;
@@ -978,7 +1000,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "monoFillEnabled")
     {
-        if (auto* v = std::get_if<bool>(&value))
+        if (auto v = getBool())
         {
             m_channelConfigs[CHANNEL_MONO].fillEnabled = *v;
             return true;
@@ -986,7 +1008,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "monoFillOpacity")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_MONO].fillOpacity = std::clamp(*v, 0.0f, 1.0f);
             return true;
@@ -994,7 +1016,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "monoFillBrightness")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_MONO].fillBrightness = std::clamp(*v, -1.0f, 1.0f);
             return true;
@@ -1004,7 +1026,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     // Left channel
     if (id == "leftOffset")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_LEFT].lineOffset = std::clamp(*v, -1.0f, 1.0f);
             return true;
@@ -1012,7 +1034,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "leftAmplitude")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_LEFT].amplitude = std::clamp(*v, 0.1f, 2.0f);
             return true;
@@ -1020,7 +1042,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "leftLineWidth")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_LEFT].lineWidth = std::clamp(*v, 1.0f, 10.0f);
             return true;
@@ -1028,7 +1050,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "leftFillEnabled")
     {
-        if (auto* v = std::get_if<bool>(&value))
+        if (auto v = getBool())
         {
             m_channelConfigs[CHANNEL_LEFT].fillEnabled = *v;
             return true;
@@ -1036,7 +1058,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "leftFillOpacity")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_LEFT].fillOpacity = std::clamp(*v, 0.0f, 1.0f);
             return true;
@@ -1044,7 +1066,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "leftFillBrightness")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_LEFT].fillBrightness = std::clamp(*v, -1.0f, 1.0f);
             return true;
@@ -1054,7 +1076,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     // Right channel
     if (id == "rightOffset")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_RIGHT].lineOffset = std::clamp(*v, -1.0f, 1.0f);
             return true;
@@ -1062,7 +1084,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "rightAmplitude")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_RIGHT].amplitude = std::clamp(*v, 0.1f, 2.0f);
             return true;
@@ -1070,7 +1092,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "rightLineWidth")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_RIGHT].lineWidth = std::clamp(*v, 1.0f, 10.0f);
             return true;
@@ -1078,7 +1100,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "rightFillEnabled")
     {
-        if (auto* v = std::get_if<bool>(&value))
+        if (auto v = getBool())
         {
             m_channelConfigs[CHANNEL_RIGHT].fillEnabled = *v;
             return true;
@@ -1086,7 +1108,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "rightFillOpacity")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_RIGHT].fillOpacity = std::clamp(*v, 0.0f, 1.0f);
             return true;
@@ -1094,7 +1116,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "rightFillBrightness")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_channelConfigs[CHANNEL_RIGHT].fillBrightness = std::clamp(*v, -1.0f, 1.0f);
             return true;
@@ -1104,7 +1126,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     // Global layout
     if (id == "displayWidth")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_displayWidth = std::clamp(*v, 0.1f, 1.0f);
             return true;
@@ -1112,7 +1134,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "sampleCount")
     {
-        if (auto* v = std::get_if<int>(&value))
+        if (auto v = getInt())
         {
             m_sampleCount = std::clamp(*v, 64, 2048);
             return true;
@@ -1120,7 +1142,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "smoothing")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_smoothing = std::clamp(*v, 0.0f, 0.95f);
             return true;
@@ -1130,7 +1152,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     // Line style
     if (id == "lineStyle")
     {
-        if (auto* v = std::get_if<int>(&value))
+        if (auto v = getInt())
         {
             m_lineStyle = static_cast<WaveformLineStyle>(std::clamp(*v, 0, 2));
             return true;
@@ -1138,7 +1160,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "dashLength")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_dashLength = std::clamp(*v, 2.0f, 50.0f);
             return true;
@@ -1146,7 +1168,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "dashGap")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_dashGap = std::clamp(*v, 1.0f, 50.0f);
             return true;
@@ -1156,7 +1178,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     // Fill brightness (apply to all channels)
     if (id == "fillBrightness")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             float brightness = std::clamp(*v, -1.0f, 1.0f);
             m_channelConfigs[CHANNEL_MONO].fillBrightness = brightness;
@@ -1169,7 +1191,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     // Effects
     if (id == "mirrorEnabled")
     {
-        if (auto* v = std::get_if<bool>(&value))
+        if (auto v = getBool())
         {
             m_mirrorEnabled = *v;
             return true;
@@ -1177,7 +1199,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "holdEnabled")
     {
-        if (auto* v = std::get_if<bool>(&value))
+        if (auto v = getBool())
         {
             m_holdEnabled = *v;
             return true;
@@ -1185,7 +1207,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "fadeTime")
     {
-        if (auto* v = std::get_if<float>(&value))
+        if (auto v = getFloat())
         {
             m_fadeTime = std::clamp(*v, 0.1f, 5.0f);
             return true;
@@ -1193,7 +1215,7 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
     }
     if (id == "maxHoldFrames")
     {
-        if (auto* v = std::get_if<int>(&value))
+        if (auto v = getInt())
         {
             m_maxHoldFrames = std::clamp(*v, 1, 120);
             return true;

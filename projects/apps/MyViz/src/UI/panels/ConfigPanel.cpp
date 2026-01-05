@@ -1307,6 +1307,11 @@ void ConfigPanel::openGradientEditor(const std::string& paramId)
     {
         gradient = &superscope->superscope()->colorGradient();
     }
+    // EqualizerVisualizer
+    else if (auto* equalizer = dynamic_cast<EqualizerVisualizer*>(m_visualizer))
+    {
+        gradient = &equalizer->equalizerModule().colorGradient();
+    }
     
     if (!gradient)
     {

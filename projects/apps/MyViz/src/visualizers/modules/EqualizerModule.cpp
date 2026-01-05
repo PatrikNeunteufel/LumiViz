@@ -22,11 +22,9 @@ namespace lumi::modules {
 
 EqualizerModule::EqualizerModule()
 {
-    // Initialize gradient with default colors
+    // Initialize gradient with "Ocean" preset
     m_colorGradient.setMode(GradientMode::Linear);
-    m_colorGradient.clearStops();
-    m_colorGradient.addStop(0.0f, {0.0f, 0.8f, 1.0f, 1.0f});  // Cyan
-    m_colorGradient.addStop(1.0f, {1.0f, 0.2f, 0.2f, 1.0f});  // Red
+    m_colorGradient.loadPreset("Ocean");
 
     resizeBands(m_bandCount);
 }
@@ -533,9 +531,8 @@ void EqualizerModule::resetToDefaults()
     m_peakColorConfig = PeakColorConfig{};
     m_drawPeaksBehindBars = false;
 
-    m_colorGradient.clearStops();
-    m_colorGradient.addStop(0.0f, {0.0f, 0.8f, 1.0f, 1.0f});
-    m_colorGradient.addStop(1.0f, {1.0f, 0.2f, 0.2f, 1.0f});
+    // Load "Ocean" gradient preset as default
+    m_colorGradient.loadPreset("Ocean");
 
     resizeBands(m_bandCount);
 }
