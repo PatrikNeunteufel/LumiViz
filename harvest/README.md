@@ -15,3 +15,4 @@
 | [config-pipeline/](config-pipeline/README.md) | Equalizer-Parameter-Vollreferenz + Ideen zu Preview-Viewern, Default-Buttons, Gruppen-Presets, AudioSource je Visual vs. gemeinsam | GreatVisual, better_wave, lose Notizen | **Phase 4** — Anforderungen für die einheitliche Config-Pipeline |
 | [konzepte/](konzepte/README.md) | Node-Editor-Referenz, Taxonomie/Basisklassen, Plug-in-System-Analyse, Auto-Menü, Dialog-Manager | Viz2025, NewViz2025, lose Dateien | Zukunft (nach Phase 4) — Roadmap-Material |
 | ~~prozess/~~ | ✅ **eingearbeitet** (2026-07-18): Muster liegen lokal in `.claude/sessions/_vorlagen_aus_newviz2025/`; Konventionen in `.claude/sessions/README.md` | NewViz2025 | ~~Phase 2~~ erledigt |
+| [old_docs/](old_docs/README.md) | Alte MyViz-App-Doku (Stand vor Neuordnung Session 29) — Quelle für die neue Domänen-Doku | LumiViz `projects/apps/MyViz/docs/` | **Phase 4** — Doku-Neuaufbau; nach Übernahme löschen |
