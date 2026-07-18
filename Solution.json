@@ -154,7 +154,7 @@
               "timeout": 30,
               "labels": [ "unit", "core", "fast" ],
               "dependencies": [ "MyViz.Core" ],
-              "externals": [ "Qt6" ]
+              "externals": [ "Qt6", "bass" ]
             },
             {
               "name": "x_integralTest",

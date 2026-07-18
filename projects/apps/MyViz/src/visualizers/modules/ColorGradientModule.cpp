@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <sstream>
 #include <iomanip>
 #include <fstream>
@@ -1001,10 +1002,102 @@ std::string ColorGradientModule::toJson() const
     return ss.str();
 }
 
-bool ColorGradientModule::fromJson(const std::string& /*json*/)
+bool ColorGradientModule::fromJson(const std::string& json)
 {
-    // TODO: Implement JSON parsing
-    return false;
+    // Parst exakt das von toJson() erzeugte Format (bewusst KEIN generischer
+    // JSON-Parser — das Modul bleibt Qt-/Fremdbibliotheks-frei).
+    // Strong guarantee: bei Parse-Fehler bleibt der Modulzustand unveraendert.
+    const size_t npos = std::string::npos;
+
+    auto numberAfterKey = [&json, npos](const char* key, size_t from, float& out) -> size_t {
+        size_t k = json.find(std::string("\"") + key + "\"", from);
+        if (k == npos) return npos;
+        size_t colon = json.find(':', k);
+        if (colon == npos) return npos;
+        char* end = nullptr;
+        out = std::strtof(json.c_str() + colon + 1, &end);
+        if (end == json.c_str() + colon + 1) return npos;
+        return static_cast<size_t>(end - json.c_str());
+    };
+
+    // Liest alle Zahlen zwischen '[' und dem zugehoerigen ']' (nur flache Arrays!)
+    auto flatArrayAfterKey = [&json, npos](const char* key, size_t from,
+                                           std::vector<float>& out) -> size_t {
+        size_t k = json.find(std::string("\"") + key + "\"", from);
+        if (k == npos) return npos;
+        size_t open = json.find('[', k);
+        if (open == npos) return npos;
+        size_t close = json.find(']', open);
+        if (close == npos) return npos;
+        out.clear();
+        const char* p = json.c_str() + open + 1;
+        const char* stop = json.c_str() + close;
+        while (p < stop)
+        {
+            char* end = nullptr;
+            float v = std::strtof(p, &end);
+            if (end == p) { ++p; continue; }
+            out.push_back(v);
+            p = end;
+        }
+        return close;
+    };
+
+    // --- Pflichtfelder ---
+    float modeF = 0.0f;
+    if (numberAfterKey("mode", 0, modeF) == npos) return false;
+    const int modeI = static_cast<int>(modeF);
+    if (modeI < 0 || modeI > static_cast<int>(GradientMode::Outline)) return false;
+
+    float angle = 0.0f;
+    if (numberAfterKey("angle", 0, angle) == npos) return false;
+
+    std::vector<float> solid;
+    if (flatArrayAfterKey("solidColor", 0, solid) == npos || solid.size() != 4) return false;
+
+    // --- Stops (Array von Objekten: je "position" + "color"[4]) ---
+    const size_t stopsBegin = json.find("\"stops\"");
+    const size_t stopsEnd = json.find("\"midpoints\"");
+    if (stopsBegin == npos || stopsEnd == npos || stopsEnd < stopsBegin) return false;
+
+    std::vector<ColorStop> stops;
+    size_t cursor = stopsBegin;
+    while (true)
+    {
+        float pos = 0.0f;
+        size_t afterPos = numberAfterKey("position", cursor, pos);
+        if (afterPos == npos || afterPos >= stopsEnd) break;
+
+        std::vector<float> col;
+        size_t afterCol = flatArrayAfterKey("color", afterPos, col);
+        if (afterCol == npos || afterCol >= stopsEnd || col.size() != 4) return false;
+
+        ColorStop s;
+        s.position = pos;
+        s.color = {col[0], col[1], col[2], col[3]};
+        stops.push_back(s);
+        cursor = afterCol;
+    }
+    if (stops.empty()) return false;
+
+    // --- Midpoints (flaches Zahlen-Array, darf leer sein) ---
+    std::vector<float> mids;
+    if (flatArrayAfterKey("midpoints", stopsEnd, mids) == npos) return false;
+
+    // --- Erst jetzt den Zustand uebernehmen ---
+    m_mode = static_cast<GradientMode>(modeI);
+    m_angle = angle;
+    m_solidColor = {solid[0], solid[1], solid[2], solid[3]};
+    m_stops = std::move(stops);
+    sortStops();
+    ensureMinimumStops();
+    updateMidpointsCount();
+    for (size_t i = 0; i < m_midpoints.size() && i < mids.size(); ++i)
+    {
+        m_midpoints[i].position = std::clamp(mids[i], 0.0f, 1.0f);
+    }
+
+    return true;
 }
 
 // =============================================================================

@@ -17,6 +17,9 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_main.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ServiceContainer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_EventBus.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_ColorGradientModule.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_Playlist.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_VisualizerPresetManager.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)
