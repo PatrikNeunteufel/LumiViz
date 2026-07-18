@@ -381,3 +381,15 @@ FodyWeavers.xsd
 # no old folder
 old/
 /Archive
+
+# HINWEIS: BASS-Binaries unter externals/ (win/c/x64/*.lib, win/x64/*.dll, linux/libs/, bin/)
+# sind aus LIZENZGRUENDEN bewusst NICHT getrackt (proprietaer, un4seen.com).
+# Beschaffung bei Bedarf: siehe externals/bass/SETUP.md
+
+# Build-System-Quellcode und Doku sind NIE Build-Output (VS-Regeln wie **/packages/* greifen sonst!)
+!cmake/**
+!docs/**
+cmake/**/*.bak
+cmake/**/*.zip
+docs/**/*.bak
+docs/**/*.zip

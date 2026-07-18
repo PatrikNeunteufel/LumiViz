@@ -1,0 +1,7 @@
+audiosource
+je typ einen Viewer, welcher die werte als raw. zum audio anzeigt. kein wiklicher visual Effekt, aber alle einstellungen zum schauen, was die einstellungen für einen Effekt haben (default button)
+
+Effekte
+je Effekt (balken (mit/ohne peakhold; Partikel), wave, usw anzeige, welche in Periode min/max oder min/mid/max ausschläge anzeigen und einstellungen ausgetestet werden können... default button
+
+… usw

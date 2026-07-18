@@ -36,7 +36,9 @@ cmake_minimum_required(VERSION 3.25)
 # ==============================================================================
 
 option(BUILD_TESTS "Build project tests" OFF)
-option(RUN_BUILD_SYSTEM_TESTS "Run build system phase tests" ON)
+# Default OFF: Konsumenten-Projekte brauchen die Build-System-Selbsttests nicht.
+# Im CMakeCraft-Repo selbst: Preset "craft-selftest" nutzen (oder -DRUN_BUILD_SYSTEM_TESTS=ON).
+option(RUN_BUILD_SYSTEM_TESTS "Run build system phase tests" OFF)
 set(TEST_PHASE "" CACHE STRING "Specific phase to test (empty = all completed phases)")
 
 # ==============================================================================
@@ -148,19 +150,19 @@ if(RUN_BUILD_SYSTEM_TESTS)
     # Phase 1 Test: Core Modules
     if("${TEST_PHASE}" STREQUAL "" OR "1" IN_LIST TEST_PHASE)
         dbgspace(ID BUILD_TEST)
-        include(cmake/buildSystemTest/Phase1.cmake)
+        include(cmake/buildSystemTest/phase1.cmake)
     endif()
     
     # Phase 2 Test: Solution Configuration
     if("${TEST_PHASE}" STREQUAL "" OR "2" IN_LIST TEST_PHASE)
         dbgspace(ID BUILD_TEST)
-        include(cmake/buildSystemTest/Phase2.cmake)
+        include(cmake/buildSystemTest/phase2.cmake)
     endif()
     
     # Phase 3 Test: Executable Pipeline
     if("${TEST_PHASE}" STREQUAL "" OR "3" IN_LIST TEST_PHASE)
         dbgspace(ID BUILD_TEST)
-        include(cmake/buildSystemTest/Phase3.cmake)
+        include(cmake/buildSystemTest/phase3.cmake)
     endif()
     
     # Phase 4 Test: Library Pipeline
@@ -172,31 +174,31 @@ if(RUN_BUILD_SYSTEM_TESTS)
     # Phase 5 Test: Local Externals Pipeline
     if("${TEST_PHASE}" STREQUAL "" OR "5" IN_LIST TEST_PHASE)
         dbgspace(ID BUILD_TEST)
-        include(cmake/buildSystemTest/Phase5.cmake)
+        include(cmake/buildSystemTest/phase5.cmake)
     endif()
     
     # Phase 6 Test: Git Externals + Hooks
     if("${TEST_PHASE}" STREQUAL "" OR "6" IN_LIST TEST_PHASE)
         dbgspace(ID BUILD_TEST)
-        include(cmake/buildSystemTest/Phase6.cmake)
+        include(cmake/buildSystemTest/phase6.cmake)
     endif()
     
     # Phase 7 Test: Test Pipeline
     if("${TEST_PHASE}" STREQUAL "" OR "7" IN_LIST TEST_PHASE)
         dbgspace(ID BUILD_TEST)
-        include(cmake/buildSystemTest/Phase7.cmake)
+        include(cmake/buildSystemTest/phase7.cmake)
     endif()
     
     # Phase 8 Test: App-Container Pipeline
     if("${TEST_PHASE}" STREQUAL "" OR "8" IN_LIST TEST_PHASE)
         dbgspace(ID BUILD_TEST)
-        include(cmake/buildSystemTest/Phase8.cmake)
+        include(cmake/buildSystemTest/phase8.cmake)
     endif()
 
     # Phase 9 Test: System Externals
     if("${TEST_PHASE}" STREQUAL "" OR "9" IN_LIST TEST_PHASE)
         dbgspace(ID BUILD_TEST)
-        include(cmake/buildSystemTest/Phase9.cmake)
+        include(cmake/buildSystemTest/phase9.cmake)
     endif()
     
     dbgspace(ID BUILD_TEST)

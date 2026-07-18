@@ -1,4 +1,4 @@
-# cmake/externals/Hooks/PostFetch/imgui.cmake
+# cmake/externals/hooks/postfetch/imgui.cmake
 # ============================================
 # PostFetch hook for Dear ImGui - creates target manually (no CMakeLists.txt)
 #

@@ -1,4 +1,4 @@
-# cmake/externals/Hooks/PreFetch/glfw.cmake
+# cmake/externals/hooks/prefetch/glfw.cmake
 # ==========================================
 # PreFetch hook for GLFW - disables examples, tests, and documentation
 #

@@ -1,0 +1,4 @@
+für kompletten Effekt
+oder nur je Gruppe/Untergruppe/Parameter (Effect -> Audiosource ->…; Effect ->bands->n usw; Effect -> Peak Hold -> Spawner ->Color usw; ->Effect -> Peak Hold -> Spawner -> Particle ->grvity usw; …)
+
+Presets je gruppe?

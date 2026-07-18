@@ -1,4 +1,4 @@
-# cmake/externals/Local/Attach.cmake
+# cmake/externals/local/Attach.cmake
 # ===================================
 # Local external handler - validates and registers path-based externals
 #

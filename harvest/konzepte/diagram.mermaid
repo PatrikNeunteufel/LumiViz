@@ -1,0 +1,107 @@
+classDiagram
+%% Project: PlugInSystem (src-only, excluding /external)
+%% Structs/Enums are annotated via notes for compatibility.
+
+%% ====== Classes ======
+class Application
+class ServiceContainer
+class IPlayerControl
+class IPlayerData
+class IPlaylists
+class PlayerEngine
+class AudioManager
+class CommandBus
+class EventBus
+class Logger
+class Settings
+class MainWindow
+class Menu
+class WindowSystem
+class FileDialogController
+class UiController
+class AboutDialog
+class IDialog
+class DialogBase
+class PathDialogBase
+class OpenDialog
+class SaveDialog
+class OpenDialogRequest
+class SaveDialogRequest
+class PathDialogCommon
+class FileFilter
+class DialogManager
+class DialogDescriptor
+class DialogRegistry
+class PanelManager
+class PanelDescriptor
+class PanelRegistry
+class IPanel
+class PanelBase
+class SettingsPanel
+class RenderWindow
+class IVisualizer
+class PresetController
+class VisualizerManager
+class VisualizerRegistry
+class vizcfg__Value
+class vizcfg__Type
+
+%% ====== Inheritance ======
+IPlayerControl <|.. PlayerEngine
+IPlayerData <|.. PlayerEngine
+IPlaylists <|.. PlayerEngine
+
+IDialog <|-- DialogBase
+DialogBase <|-- AboutDialog
+DialogBase <|-- PathDialogBase
+PathDialogBase <|-- OpenDialog
+PathDialogBase <|-- SaveDialog
+
+IPanel <|.. PanelBase
+PanelBase <|-- SettingsPanel
+
+%% ====== Aggregations / Compositions (by members) ======
+Application o-- ServiceContainer
+MainWindow o-- ServiceContainer
+Menu o-- ServiceContainer
+FileDialogController o-- ServiceContainer
+DialogBase o-- ServiceContainer
+PanelBase o-- ServiceContainer
+VisualizerManager o-- ServiceContainer
+AudioManager o-- ServiceContainer
+
+PlayerEngine o-- EventBus
+UiController o-- EventBus
+PresetController o-- EventBus
+
+UiController o-- WindowSystem
+UiController o-- Settings
+PresetController o-- Settings
+
+DialogManager o-- DialogDescriptor
+PanelManager o-- PanelDescriptor
+
+OpenDialogRequest o-- FileFilter
+OpenDialogRequest o-- PathDialogCommon
+SaveDialogRequest o-- FileFilter
+SaveDialogRequest o-- PathDialogCommon
+
+vizcfg__Value o-- vizcfg__Type
+VisualizerManager o-- VisualizerRegistry
+DialogManager o-- DialogRegistry
+PanelManager o-- PanelRegistry
+
+RenderWindow ..> IVisualizer : uses
+VisualizerRegistry ..> IVisualizer : registers
+
+%% ====== Notes: mark Structs / Enums ======
+note for ServiceContainer "struct"
+note for OpenDialogRequest "struct"
+note for SaveDialogRequest "struct"
+note for FileFilter "struct"
+note for DialogDescriptor "struct"
+note for PanelDescriptor "struct"
+note for PathDialogCommon "struct"
+note for vizcfg__Value "struct"
+
+note for vizcfg__Type "enum"

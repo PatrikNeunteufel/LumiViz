@@ -1,4 +1,4 @@
-# cmake/externals/Registry/Targets.cmake
+# cmake/externals/registry/Targets.cmake
 # =======================================
 # External target registry - tracks targets and provides lookup
 #

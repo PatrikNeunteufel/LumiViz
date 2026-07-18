@@ -8,7 +8,6 @@
     }
   },
   "configurePresets": [
-    /* ===================== Common MSVC CRT (hidden building blocks) ===================== */
     {
       "name": "MultiThreaded_Static",
       "hidden": true,
@@ -38,7 +37,6 @@
       }
     },
 
-    /* ================= Windows • Visual Studio (Multi-Config) ================= */
     {
       "name": "windows-vs-base",
       "hidden": true,
@@ -55,7 +53,6 @@
         "CMAKE_CONFIGURATION_TYPES": "Debug;Release;Testing",
         "ACTIVE_CONFIGURE_PRESET": "${presetName}",
 
-        /* === V2 Build System Variables === */
         "BUILD_TESTS": "ON",
         "BUILD_ONLY": "",
         "ENABLE_CLANG_TIDY": "OFF",
@@ -68,7 +65,6 @@
       }
     },
 
-    /* Arch bases */
     {
       "name": "vs-Win32-base",
       "hidden": true,
@@ -102,7 +98,6 @@
       }
     },
 
-    /* Toolset bases */
     {
       "name": "windows-vs-x64-msvc",
       "hidden": true,
@@ -132,7 +127,6 @@
       }
     },
 
-    /* --- Blessed visible VS presets (MSVC & clang-cl) --- */
     {
       "name": "windows-vs-x64-debug_dynamic",
       "displayName": "Windows • VS (MSVC) • x64 • Debug • /MDd",
@@ -159,7 +153,6 @@
       "cacheVariables": { "ENABLE_ASAN": "ON" }
     },
 
-    /* --- VS Testing convenience (Multi-Config) --- */
     {
       "name": "windows-vs-x64-testing_dynamic",
       "displayName": "Windows • VS (MSVC) • x64 • Testing • /MD",
@@ -168,7 +161,6 @@
       "cacheVariables": { "ENABLE_TESTING_CONFIG": "ON" }
     },
 
-    /* === NEW: Quality Check Presets === */
     {
       "name": "windows-vs-x64-debug_quality",
       "displayName": "Windows • VS (MSVC) • x64 • Debug • Quality Checks",
@@ -179,7 +171,6 @@
       }
     },
 
-    /* === NEW: Selective Build Presets === */
     {
       "name": "windows-vs-x64-debug_apps-only",
       "displayName": "Windows • VS (MSVC) • x64 • Debug • Apps Only",
@@ -190,7 +181,6 @@
       }
     },
 
-    /* ================= Windows • Ninja (Single/Multi) ==================== */
     {
       "name": "windows-ninja-base",
       "hidden": true,
@@ -205,7 +195,6 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "ACTIVE_CONFIGURE_PRESET": "${presetName}",
 
-        /* === V2 Build System Variables === */
         "BUILD_TESTS": "ON",
         "BUILD_ONLY": "",
         "ENABLE_CLANG_TIDY": "OFF",
@@ -231,7 +220,6 @@
       }
     },
 
-    /* Compiler bases for Ninja on Windows */
     {
       "name": "win-ninja-msvc",
       "hidden": true,
@@ -252,7 +240,17 @@
       "inherits": [ "windows-ninja-base", "ninja-multi" ]
     },
 
-    /* Blessed Ninja visible */
+    {
+      "name": "craft-selftest",
+      "displayName": "CMakeCraft • Selftest • Ninja Clang Debug",
+      "description": "Build-System-Phasentests (RUN_BUILD_SYSTEM_TESTS=ON). In Konsumenten-Projekten nur als Smoke-Check nach einem Snapshot-Sync noetig.",
+      "inherits": [ "win-ninja-clang" ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "RUN_BUILD_SYSTEM_TESTS": "ON"
+      }
+    },
+
     {
       "name": "windows-ninja-debug-msvc",
       "displayName": "Windows • Ninja • MSVC • Debug",
@@ -328,7 +326,6 @@
       }
     },
 
-    /* ================= Linux • Ninja ==================== */
     {
       "name": "linux-base",
       "hidden": true,
@@ -342,7 +339,6 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "ACTIVE_CONFIGURE_PRESET": "${presetName}",
 
-        /* === V2 Build System Variables === */
         "BUILD_TESTS": "ON",
         "BUILD_ONLY": "",
         "ENABLE_CLANG_TIDY": "OFF",
@@ -375,7 +371,6 @@
       }
     },
 
-    /* Blessed Linux visible */
     {
       "name": "linux-gcc-debug",
       "displayName": "Linux • GCC • Debug",
@@ -442,7 +437,6 @@
       }
     },
 
-    /* ================= macOS • Xcode & Ninja ==================== */
     {
       "name": "macos-base",
       "hidden": true,
@@ -456,7 +450,6 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "ACTIVE_CONFIGURE_PRESET": "${presetName}",
 
-        /* === V2 Build System Variables === */
         "BUILD_TESTS": "ON",
         "BUILD_ONLY": "",
         "ENABLE_CLANG_TIDY": "OFF",
@@ -484,7 +477,6 @@
       "generator": "Ninja"
     },
 
-    /* Blessed macOS visible */
     {
       "name": "macos-xcode-arm64",
       "displayName": "macOS • Xcode • ARM64",
@@ -525,7 +517,6 @@
   ],
 
   "buildPresets": [
-    /* Windows — Visual Studio */
     {
       "name": "build-vs-x64-Debug",
       "displayName": "Build • VS x64 • Debug",
@@ -555,7 +546,6 @@
       "configuration": "Release"
     },
 
-    /* Windows — Ninja Single */
     {
       "name": "build-ninja-debug-msvc",
       "displayName": "Build • Ninja • MSVC • Debug",
@@ -594,7 +584,6 @@
       "configurePreset": "windows-ninja-testing-clang"
     },
 
-    /* Windows — Ninja Multi */
     {
       "name": "build-ninja-multi-Debug",
       "displayName": "Build • Ninja Multi • Debug",
@@ -617,7 +606,6 @@
       "configuration": "Testing"
     },
 
-    /* Linux — GCC & Clang */
     {
       "name": "build-linux-gcc-Debug",
       "displayName": "Build • Linux GCC • Debug",
@@ -661,7 +649,6 @@
       "configurePreset": "linux-clang-debug-asan"
     },
 
-    /* macOS — Xcode & Ninja */
     {
       "name": "build-macos-xcode-Debug",
       "displayName": "Build • macOS Xcode • Debug",
@@ -691,13 +678,20 @@
   ],
 
   "testPresets": [
-    /* Windows — Visual Studio */
     {
       "name": "ctest-vs-x64-Debug",
       "displayName": "CTest • VS x64 • Debug",
       "description": "Runs CTest for VS x64 Debug.",
       "configurePreset": "windows-vs-x64-debug_dynamic",
       "configuration": "Debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "ctest-vs-x64-Release",
+      "displayName": "CTest • VS x64 • Release",
+      "description": "Runs CTest for VS x64 Release (fuer Release-Workflows).",
+      "configurePreset": "windows-vs-x64-release_dynamic",
+      "configuration": "Release",
       "output": { "outputOnFailure": true }
     },
     {
@@ -709,7 +703,6 @@
       "output": { "outputOnFailure": true }
     },
 
-    /* Ninja Multi */
     {
       "name": "ctest-ninja-multi-Debug",
       "displayName": "CTest • Ninja Multi • Debug",
@@ -727,7 +720,6 @@
       "output": { "outputOnFailure": true }
     },
 
-    /* Linux & macOS */
     {
       "name": "ctest-linux-gcc-Testing",
       "displayName": "CTest • Linux GCC • Testing",
@@ -774,7 +766,6 @@
   ],
 
   "packagePresets": [
-    /* Windows — Inno Setup (requires Inno Setup 6+) */
     {
       "name": "package-windows-inno-Release",
       "displayName": "Package • Windows • Inno Setup • Release",
@@ -784,7 +775,6 @@
       "configurations": [ "Release" ]
     },
 
-    /* macOS — DMG (External Generator) */
     {
       "name": "package-macos-dmg-Release",
       "displayName": "Package • macOS • DMG • Release",
@@ -794,7 +784,6 @@
       "configurations": [ "Release" ]
     },
 
-    /* Linux — TGZ */
     {
       "name": "package-linux-tgz-Release",
       "displayName": "Package • Linux • TGZ • Release",
@@ -821,7 +810,7 @@
         },
         {
           "type": "test",
-          "name": "ctest-vs-x64-Debug"
+          "name": "ctest-vs-x64-Release"
         },
         {
           "type": "package",

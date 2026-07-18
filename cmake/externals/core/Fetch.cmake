@@ -1,4 +1,4 @@
-# cmake/externals/Core/Fetch.cmake
+# cmake/externals/core/Fetch.cmake
 # =================================
 # FetchContent wrapper with .externals/ caching
 #

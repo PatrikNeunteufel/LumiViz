@@ -1,4 +1,4 @@
-# cmake/externals/Fetched/Handler.cmake
+# cmake/externals/fetched/Handler.cmake
 # ======================================
 # Handler for git-based externals - orchestrates fetch process with hooks
 #
@@ -11,9 +11,9 @@
 #   - cmake/core/Errors.cmake
 #   - cmake/core/Debug.cmake
 #   - cmake/core/Json.cmake
-#   - cmake/externals/Core/Fetch.cmake
-#   - cmake/externals/Hooks/HookLoader.cmake
-#   - cmake/externals/Registry/Targets.cmake
+#   - cmake/externals/core/Fetch.cmake
+#   - cmake/externals/hooks/HookLoader.cmake
+#   - cmake/externals/registry/Targets.cmake
 #
 # Provides:
 #   - _handle_fetched_external(EXT_NAME EXT_JSON)

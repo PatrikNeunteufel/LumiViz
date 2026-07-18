@@ -1,4 +1,4 @@
-# cmake/externals/Hooks/PreFetch/googletest.cmake
+# cmake/externals/hooks/prefetch/googletest.cmake
 # ================================================
 # PreFetch hook for GoogleTest - configures build and fixes Windows CRT
 #

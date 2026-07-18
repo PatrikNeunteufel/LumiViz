@@ -1,4 +1,4 @@
-# cmake/externals/Hooks/HookLoader.cmake
+# cmake/externals/hooks/HookLoader.cmake
 # =======================================
 # Hook system for externals - loads PreFetch and PostFetch hooks
 #
@@ -19,8 +19,8 @@
 #   - _check_hook_requirements(EXT_NAME EXT_JSON OUT_NEEDS_POSTFETCH)
 #
 # Convention Paths:
-#   - PreFetch:  cmake/externals/Hooks/PreFetch/${name}.cmake
-#   - PostFetch: cmake/externals/Hooks/PostFetch/${name}.cmake
+#   - PreFetch:  cmake/externals/hooks/prefetch/${name}.cmake
+#   - PostFetch: cmake/externals/hooks/postfetch/${name}.cmake
 #
 # Hook Variables (available in hooks):
 #   - HOOK_EXTERNAL_NAME  - Name of the external
@@ -93,7 +93,7 @@ endfunction()
         HOOK_EXTERNAL_NAME - Name of the external (use for target names!)
         HOOK_EXTERNAL_JSON - JSON definition
     
-    Example Hook (cmake/externals/Hooks/PreFetch/glfw.cmake):
+    Example Hook (cmake/externals/hooks/prefetch/glfw.cmake):
         set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
         set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
         set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -211,7 +211,7 @@ endfunction()
     IMPORTANT: Always use ${HOOK_EXTERNAL_NAME} for target names!
     This allows hook reuse for variants (e.g. imgui / imgui_docking).
     
-    Example Hook (cmake/externals/Hooks/PostFetch/imgui.cmake):
+    Example Hook (cmake/externals/hooks/postfetch/imgui.cmake):
         add_library(${HOOK_EXTERNAL_NAME} STATIC
             ${HOOK_SOURCE_DIR}/imgui.cpp
             ...

@@ -1,4 +1,4 @@
-# cmake/externals/Hooks/PreFetch/catch2.cmake
+# cmake/externals/hooks/prefetch/catch2.cmake
 # ============================================
 # PreFetch hook for Catch2 v3 - configures build and defines target mappings
 #

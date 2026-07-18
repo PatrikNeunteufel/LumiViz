@@ -1,0 +1,8 @@
+Equalizer
+waveform
+spectrum
+fractal
+superscope
+bump
+mit shader (Pixel, vertex, usw)
+Option auf 3d Darstellung(wenn 3d Monitor verfügbar)
