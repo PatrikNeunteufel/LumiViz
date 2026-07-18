@@ -146,14 +146,15 @@
           "framework": "doctest",
           "targets": [
             {
-              "name": "x_UnitTests",
-              "description": "",
-              "skip": true,
+              "name": "UnitTests",
+              "description": "Unit-Tests (doctest): ServiceContainer, EventBus",
+              "skip": false,
               "type": "unit",
-              "path": "tests/unit/x_UnitTests",
+              "path": "tests/unit/UnitTests",
               "timeout": 30,
               "labels": [ "unit", "core", "fast" ],
-              "externals": []
+              "dependencies": [ "MyViz.Core" ],
+              "externals": [ "Qt6" ]
             },
             {
               "name": "x_integralTest",

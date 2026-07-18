@@ -10,7 +10,7 @@
 
 | Gruppe | Inhalt | Quelle | Ziel-Phase |
 |---|---|---|---|
-| [tests/](tests/README.md) | ~2.300 Zeilen Catch2-Unit-Tests (EventBus, ServiceContainer, CommandBus, BaseTypes) | NewViz2025 | **Phase 3** — auf doctest/MyViz-API portieren |
+| [tests/](tests/README.md) | ~2.300 Zeilen Catch2-Unit-Tests (EventBus, ServiceContainer, CommandBus, BaseTypes) | NewViz2025 | **Phase 3 ⏳ teilweise:** ServiceContainer + EventBus ✅ portiert (2026-07-18, `tests/unit/UnitTests/`, deckten 2 echte Bugs auf); CommandBus-/BaseTypes-Tests warten auf Phase 4 (Modul-Einführung) |
 | [core-module/](core-module/README.md) | CommandBus komplett (Undo/Redo), EventBus mit RAII/Weak-Abos, ServiceContainer, BaseTypes + Usage-Guides/Cheatsheets | NewViz2025 (`viz::core`-Generation) | **Phase 4** — CommandBus einführen, EventBus-Features nachrüsten |
 | [config-pipeline/](config-pipeline/README.md) | Equalizer-Parameter-Vollreferenz + Ideen zu Preview-Viewern, Default-Buttons, Gruppen-Presets, AudioSource je Visual vs. gemeinsam | GreatVisual, better_wave, lose Notizen | **Phase 4** — Anforderungen für die einheitliche Config-Pipeline |
 | [konzepte/](konzepte/README.md) | Node-Editor-Referenz, Taxonomie/Basisklassen, Plug-in-System-Analyse, Auto-Menü, Dialog-Manager | Viz2025, NewViz2025, lose Dateien | Zukunft (nach Phase 4) — Roadmap-Material |

@@ -80,7 +80,8 @@
  *   - **Factory:** Lazy Instantiation mit Zugriff auf Container
  *   - **Instance:** Direktes Registrieren einer existierenden Instanz
  *
- * Thread-Sicherheit:
+ * Thread-Sicherheit (rekursiver Mutex seit 2026-07-18 — Factories duerfen resolve() fuer
+ * Abhaengigkeiten aufrufen, wie in der Verwendung dokumentiert; vorher Deadlock):
  *   - Registrierung: Thread-safe (mutex-geschützt)
  *   - Auflösung: Thread-safe für Singletons nach Initialisierung
  */
@@ -120,7 +121,7 @@ public:
         static_assert(std::is_base_of_v<TInterface, TImpl>,
             "TImpl must derive from TInterface");
 
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto key = std::type_index(typeid(TInterface));
         m_factories[key] = [](ServiceContainer&) -> InstancePtr {
@@ -147,7 +148,7 @@ public:
     template<typename TInterface>
     void registerSingleton(std::function<std::unique_ptr<TInterface>(ServiceContainer&)> factory)
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto key = std::type_index(typeid(TInterface));
         m_factories[key] = [factory = std::move(factory)](ServiceContainer& c) -> InstancePtr {
@@ -172,7 +173,7 @@ public:
     template<typename TInterface>
     void registerInstance(std::unique_ptr<TInterface> instance)
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto key = std::type_index(typeid(TInterface));
         InstancePtr ptr{instance.release(), [](void* p) { delete static_cast<TInterface*>(p); }};
@@ -197,7 +198,7 @@ public:
         static_assert(std::is_base_of_v<TInterface, TImpl>,
             "TImpl must derive from TInterface");
 
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto key = std::type_index(typeid(TInterface));
         m_factories[key] = [](ServiceContainer&) -> InstancePtr {
@@ -249,7 +250,7 @@ public:
     template<typename T>
     T* tryResolve()
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto key = std::type_index(typeid(T));
 
@@ -295,7 +296,7 @@ public:
     template<typename T>
     std::unique_ptr<T> createTransient()
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto key = std::type_index(typeid(T));
 
@@ -324,7 +325,7 @@ public:
     template<typename T>
     [[nodiscard]] bool has() const
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto key = std::type_index(typeid(T));
         return m_factories.find(key) != m_factories.end() ||
@@ -343,7 +344,7 @@ public:
     template<typename T>
     void unregister()
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         auto key = std::type_index(typeid(T));
         m_factories.erase(key);
@@ -356,7 +357,7 @@ public:
      */
     void clear()
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
         m_factories.clear();
         m_instances.clear();
@@ -376,7 +377,7 @@ private:
     // Private Members
     // =========================================================================
 
-    mutable std::mutex m_mutex;
+    mutable std::recursive_mutex m_mutex;
     std::unordered_map<std::type_index, Factory> m_factories;
     std::unordered_map<std::type_index, InstancePtr> m_instances;
     std::unordered_map<std::type_index, bool> m_isTransient;

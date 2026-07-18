@@ -15,7 +15,8 @@
 set(_local_sources
     # (sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/test_main.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/Application_Tests.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_ServiceContainer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_EventBus.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)
