@@ -14,4 +14,4 @@
 | [core-module/](core-module/README.md) | CommandBus komplett (Undo/Redo), EventBus mit RAII/Weak-Abos, ServiceContainer, BaseTypes + Usage-Guides/Cheatsheets | NewViz2025 (`viz::core`-Generation) | **Phase 4** — CommandBus einführen, EventBus-Features nachrüsten |
 | [config-pipeline/](config-pipeline/README.md) | Equalizer-Parameter-Vollreferenz + Ideen zu Preview-Viewern, Default-Buttons, Gruppen-Presets, AudioSource je Visual vs. gemeinsam | GreatVisual, better_wave, lose Notizen | **Phase 4** — Anforderungen für die einheitliche Config-Pipeline |
 | [konzepte/](konzepte/README.md) | Node-Editor-Referenz, Taxonomie/Basisklassen, Plug-in-System-Analyse, Auto-Menü, Dialog-Manager | Viz2025, NewViz2025, lose Dateien | Zukunft (nach Phase 4) — Roadmap-Material |
-| [prozess/](prozess/README.md) | Chat-Index + Sprint-Report-Muster aus der KI-gestützten Arbeit | NewViz2025 | **Phase 2** — Vorlage für `.claude/sessions/` |
+| ~~prozess/~~ | ✅ **eingearbeitet** (2026-07-18): Muster liegen lokal in `.claude/sessions/_vorlagen_aus_newviz2025/`; Konventionen in `.claude/sessions/README.md` | NewViz2025 | ~~Phase 2~~ erledigt |
