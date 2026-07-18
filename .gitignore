@@ -364,6 +364,13 @@ FodyWeavers.xsd
 
 # custom ignores #
 
+# Claude-Systemdaten (Projekt-Root; UART/ hat eigene, committete Claude-Dateien)
+/CLAUDE.md
+/.claude/
+
+# zur Build-Zeit gefetchte Git-Externals
+/.externals/
+
 
 # no zip
 *.zip
