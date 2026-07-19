@@ -10,6 +10,9 @@ Einstieg in die App-Dokumentation, geordnet nach **Domänen** (Neuordnung Sessio
 **Modul-Doku liegt bei den Headern** (`include/**/[Modul].md`, Format: CppModuleDoc) —
 hier liegt alles Übergreifende je Domäne.
 
+**Für Anwender:** [Benutzerhandbuch](Benutzerhandbuch.md) — Bedienung der App als
+Ganzes (Player, Playlist, Visualizer, Vollbild, Docking, Einstellungen).
+
 | Domäne | Inhalt |
 |---|---|
 | [core-services/](core-services/) | Service-Fundament: [Event-System](core-services/Event_System.md) · [Registries](core-services/Registries.md) (inkl. Lazy-Init) · [Bootstrap/DI-Verdrahtung](core-services/Bootstrap_Integration.md) |

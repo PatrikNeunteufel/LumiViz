@@ -3,7 +3,7 @@
 > **Version:** 1.0.0
 > **Datum:** 2026-07-19
 > **Typ:** Entwurf (Freigabe-Gate für die Umsetzung)
-> **Status:** Umgesetzt (Session 31) — Sichttests Fullscreen/Config ✅; Undock-Runde alle 5 Visualizer + 6.3-Vergleichsmessung offen
+> **Status:** Umgesetzt & abgenommen (Session 31) — Sichttests ✅, Vergleichsmessung ✅: stabile 60 fps auch beim Panel-Scrollen mit offenen Previews (Akzeptanzkriterium §7 erfüllt). Preview-Tick bleibt bei 20 Hz (Neubewertung 2026-07-20: Motivation entfallen)
 > **Bezug:** [OpenGL_Context_Handling.md](OpenGL_Context_Handling.md) ·
 > [Visualizer_Architecture.md](Visualizer_Architecture.md) ·
 > 6.3-Frametime-Messung (Session 30) · Auftrag Patrik 2026-07-19

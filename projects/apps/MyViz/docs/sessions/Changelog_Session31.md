@@ -32,6 +32,10 @@
   QSettings) und beim nächsten Start wiederhergestellt — ohne Autoplay; eine
   leere Playlist räumt die Session-Datei weg
   ([Audio_System.md §5](../audio/Audio_System.md)).
+- **Benutzerhandbuch** ([Benutzerhandbuch.md](../Benutzerhandbuch.md)):
+  eigenständiges Anwender-Handbuch über die App als Ganzes (Player, Playlist,
+  Visualizer, Vollbild, Docking, Einstellungen, Tastenkürzel); Panel-Bedienung
+  bleibt im ConfigPanel-Guide §2 (verlinkt statt dupliziert).
 
 ## Gefixt
 
@@ -56,7 +60,10 @@
   GUI-Umleitung beibehalten.
 - `deleteLater` erreicht beim App-Ende keinen Destruktor mehr —
   Render-Threads stoppen deterministisch am `aboutToQuit`.
-- Offen aus Session 31: Undock-Sichttest-Runde über alle 5 Visualizer,
-  6.3-Vergleichsmessung (Scroll/Previews), Neubewertung Preview-Tick
-  20→10 Hz, Defaults-Mismatch `PulsingVisualizer::resetToDefaults()`
-  (liefert Solid statt des konstruierten Gradients).
+- **Vergleichsmessung bestanden (2026-07-20):** stabile 60 fps auch beim
+  Panel-Scrollen mit offenen Previews (vorher 45–52) — Akzeptanzkriterium des
+  Entwurfs erfüllt. **Preview-Tick bleibt bei 20 Hz** (die geplante Absenkung
+  auf 10 Hz ist mit der Entkopplung gegenstandslos).
+- Offen aus Session 31: Undock-Dauertest über alle 5 Visualizer,
+  Defaults-Mismatch `PulsingVisualizer::resetToDefaults()` (liefert Solid
+  statt des konstruierten Gradients), `File → Open Audio…` ist Stub.
