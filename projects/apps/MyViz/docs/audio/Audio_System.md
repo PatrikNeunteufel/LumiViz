@@ -1,7 +1,7 @@
 # Audio-System — Wiedergabe, Analyse und Signalkette zur Visualisierung
 
-> **Version:** 1.0.0
-> **Datum:** 2026-07-18
+> **Version:** 1.1.0
+> **Datum:** 2026-07-19
 > **Typ:** Guide
 > **Status:** Aktiv
 > **Sprache:** Deutsch
@@ -145,6 +145,13 @@ sie für `next()/previous()/playIndex()`.
   `currentIndex`; außerdem Umsortieren (`moveTrack`, `swapTracks`, `sort` nach
   title/artist/album/duration/path) und `shuffle()` (mischt die Listen-Reihenfolge
   einmalig — nicht zu verwechseln mit dem Shuffle-*Modus* des Players).
+- **Session-Playlist (automatisch):** Beim Beenden speichert MainWindow die
+  aktuelle Playlist (falls nicht leer) nach `AppDataLocation/session.m3u8` und
+  merkt sich den aktuellen Index in QSettings (`playlist/sessionIndex`); beim
+  nächsten Start wird beides wiederhergestellt (ohne Wiedergabestart). Eine
+  leere Playlist beim Beenden löscht die Session-Datei. Gleiches
+  `aboutToQuit`-Muster wie die Layout-Persistenz
+  ([Layout_Persistence.md](../presets/Layout_Persistence.md)).
 
 ### 5.1 Shuffle & Repeat (AudioPlayer)
 
@@ -242,4 +249,5 @@ Git-Historie (bis Commit „Phase 4 Schritt 0").
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.1.0 | 2026-07-19 | Session-Playlist dokumentiert (Auto-Save bei Exit, Auto-Restore bei Start — MainWindow, Session 31) |
 | 1.0.0 | 2026-07-18 | Konsolidiert aus harvest/old_docs (Audio_System, AudioSourceModule, SmoothingModule), gegen Code abgeglichen (Ist-Stand: Direkt-Push statt Analyzer-Events, 30-Hz-Timer, PLS/JSON-Persistenz) |

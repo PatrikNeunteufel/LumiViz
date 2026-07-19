@@ -241,6 +241,23 @@ private:
     void setupAudioServices();
 
     /**
+     * @brief Saves the current playlist as session playlist (on quit).
+     *
+     * Writes the playlist to AppDataLocation/session.m3u8 and remembers the
+     * current track index in QSettings. An empty playlist removes the session
+     * file so the next start does not restore stale data.
+     */
+    void saveSessionPlaylist();
+
+    /**
+     * @brief Restores the session playlist saved by saveSessionPlaylist().
+     *
+     * Called once at startup (after audio services and panels exist, so the
+     * Loaded event reaches the PlaylistPanel). Does not start playback.
+     */
+    void restoreSessionPlaylist();
+
+    /**
      * @brief Enter fullscreen mode for the active visualizer
      */
     void enterFullscreen();

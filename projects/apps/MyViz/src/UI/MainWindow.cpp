@@ -45,6 +45,10 @@
 #include <QKeySequence>
 #include <QKeyEvent>
 #include <QTimer>
+#include <QSettings>
+#include <QStandardPaths>
+#include <QDir>
+#include <QFile>
 
 // Qt-ADS (needed for fullscreen dock state save/restore)
 #include <DockManager.h>
@@ -75,9 +79,22 @@ MainWindow::MainWindow(QWidget* parent)
 
     // Setup Audio Services
     setupAudioServices();
-    
+
     setupUi();
-    
+
+    // -------------------------------------------------------------------------
+    // Session Playlist
+    // -------------------------------------------------------------------------
+    // Restore AFTER setupUi(): the panels must exist so the Loaded event
+    // reaches the PlaylistPanel. Save on aboutToQuit (same pattern as the
+    // dock layout persistence in DockManager).
+
+    restoreSessionPlaylist();
+
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
+        saveSessionPlaylist();
+    });
+
     // -------------------------------------------------------------------------
     // Audio Update Timer
     // -------------------------------------------------------------------------
@@ -601,6 +618,99 @@ void MainWindow::setupAudioServices()
     {
         BasicLogger::logError("Failed to initialize some audio services!");
     }
+}
+
+// =============================================================================
+// Session Playlist Persistence
+// =============================================================================
+
+namespace
+{
+    /**
+     * @brief Directory + file path of the auto-saved session playlist.
+     */
+    QString sessionPlaylistDir()
+    {
+        return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    }
+
+    QString sessionPlaylistPath()
+    {
+        return sessionPlaylistDir() + QStringLiteral("/session.m3u8");
+    }
+
+    constexpr const char* SESSION_INDEX_KEY = "playlist/sessionIndex";
+}
+
+void MainWindow::saveSessionPlaylist()
+{
+    auto* pPlaylist = m_pServices->tryResolve<IPlaylist>();
+    if (pPlaylist == nullptr)
+    {
+        return;
+    }
+
+    const QString filePath = sessionPlaylistPath();
+    QSettings settings;
+
+    if (pPlaylist->isEmpty())
+    {
+        // No playlist loaded: remove session data so the next start
+        // does not restore a stale list
+        QFile::remove(filePath);
+        settings.remove(QLatin1String(SESSION_INDEX_KEY));
+        BasicLogger::logDebug("Session playlist: empty - nothing to save");
+        return;
+    }
+
+    QDir().mkpath(sessionPlaylistDir());
+
+    if (pPlaylist->save(filePath))
+    {
+        settings.setValue(QLatin1String(SESSION_INDEX_KEY), pPlaylist->currentIndex());
+        BasicLogger::logInfo("Session playlist saved: " + filePath.toStdString() +
+                             " (" + std::to_string(pPlaylist->count()) + " tracks)");
+    }
+    else
+    {
+        BasicLogger::logWarning("Failed to save session playlist: " +
+                                filePath.toStdString());
+    }
+}
+
+void MainWindow::restoreSessionPlaylist()
+{
+    auto* pPlaylist = m_pServices->tryResolve<IPlaylist>();
+    if (pPlaylist == nullptr)
+    {
+        return;
+    }
+
+    const QString filePath = sessionPlaylistPath();
+    if (!QFile::exists(filePath))
+    {
+        BasicLogger::logDebug("Session playlist: no session file - starting empty");
+        return;
+    }
+
+    if (!pPlaylist->load(filePath))
+    {
+        BasicLogger::logWarning("Failed to load session playlist: " +
+                                filePath.toStdString());
+        return;
+    }
+
+    // Restore current track selection (does NOT start playback)
+    const QSettings settings;
+    const int index = settings.value(QLatin1String(SESSION_INDEX_KEY), -1).toInt();
+    if (index >= 0 && index < pPlaylist->count())
+    {
+        pPlaylist->setCurrentIndex(index);
+    }
+
+    BasicLogger::logInfo("Session playlist restored: " +
+                         std::to_string(pPlaylist->count()) + " tracks" +
+                         (index >= 0 ? ", current index " + std::to_string(index) : ""));
 }
 
 // =============================================================================
