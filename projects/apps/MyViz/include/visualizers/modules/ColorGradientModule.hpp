@@ -72,6 +72,19 @@ enum class GradientMode
     Outline     ///< Outline/stroke only (fill transparent)
 };
 
+/**
+ * @brief Gradient domain - what controls the color
+ *
+ * Moved here from the removed ColorSchemeModule (Phase 4, step 0).
+ */
+enum class GradientDomain
+{
+    Position,   ///< Color based on position (e.g., band index)
+    Amplitude,  ///< Color based on audio amplitude
+    Time,       ///< Color cycles over time
+    Beat        ///< Color pulses with beat
+};
+
 // =============================================================================
 // Gradient Preset
 // =============================================================================

@@ -198,15 +198,12 @@ private:
     float m_beatThreshold = 0.4f;
     float m_beatSensitivity = 1.0f;
     bool m_beatBrightnessEnabled = true;
-    int m_lowBand = 0;
-    int m_highBand = 8;
 
     // =========================================================================
     // Background
     // =========================================================================
 
     bool m_backgroundSolid = true;
-    float m_backgroundFade = 0.1f;
     float m_bgColorR = 0.02f;
     float m_bgColorG = 0.02f;
     float m_bgColorB = 0.05f;

@@ -12,7 +12,6 @@ set(_local_sources
     # (no sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/CollapsibleGroupBox.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/GradientPresetDelegate.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/ModuleConfigWidget.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerWidget.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/WidgetAutoReg.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/WidgetBase.cpp"

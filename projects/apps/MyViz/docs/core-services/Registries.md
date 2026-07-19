@@ -69,11 +69,11 @@ App-Einstellungen (Audio/Performance, u. a. Frame-Mode). Die Panel-ID ist zuglei
 
 | ID | Name | Kategorie (im Code) | Order |
 |----|------|---------------------|-------|
-| `pulsing` | Pulsing | `static Parametring shape` | 100 |
-| `equalizer` | Equalizer | `static Parametring spectrum` | 100 |
-| `waveform` | Waveform | `static Parametring waveform` | 100 |
-| `oscilloscope` | Oscilloscope | `static Parametring waveform` | 200 |
-| `superscope` | Superscope | `static Parametring waveform` | 300 |
+| `pulsing` | Pulsing | `shape` | 100 |
+| `equalizer` | Equalizer | `spectrum` | 100 |
+| `waveform` | Waveform | `waveform` | 100 |
+| `oscilloscope` | Oscilloscope | `waveform` | 200 |
+| `superscope` | Superscope | `waveform` | 300 |
 
 Descriptor-Feldreihenfolge ist `id, name, description, category, order`
 (siehe `VisualizerRegistry.hpp`); die Kategorie-Strings oben sind die tatsächlich im

@@ -17,9 +17,10 @@
  *            ──► PlaybackStateEvent    ──► PlayerPanel
  *            ──► PlaybackPositionEvent ──► PlayerPanel (Progress)
  *            ──► VolumeChangedEvent    ──► PlayerPanel (Volume Slider)
- *
- * AudioAnalyzer ──► AudioDataEvent     ──► VisualizerWidget (Spectrum/Waveform)
  * ```
+ *
+ * Hinweis: Der Spectrum/Waveform-Datenweg läuft NICHT über Events, sondern
+ * über MainWindow::onAudioUpdate() (QTimer) direkt zum VisualizerWidget.
  ****************************************************************************************
  */
 
@@ -157,47 +158,9 @@ struct PlaylistIndexChangedEvent : public Event
 // =============================================================================
 // Audio Analysis Events
 // =============================================================================
-
-/**
- * @struct AudioDataEvent
- * @brief Emitted with audio analysis data (spectrum + waveform)
- *
- * This event is published at the frame rate (60 Hz typically) and contains
- * real-time audio analysis data for visualization.
- *
- * ## Usage in Visualizer
- *
- * ```cpp
- * eventBus.subscribe<AudioDataEvent>([this](const AudioDataEvent& e) {
- *     m_visualizer->updateSpectrum(e.spectrum.data(), e.spectrum.size());
- *     m_visualizer->updateWaveform(e.waveform.data(), e.waveform.size());
- * });
- * ```
- */
-struct AudioDataEvent : public Event
-{
-    EVENT_TYPE_NAME("AudioDataEvent")
-    
-    /// Spectrum data (FFT magnitudes, typically 512-2048 bands)
-    /// Values are normalized 0.0 - 1.0
-    std::vector<float> spectrum;
-    
-    /// Waveform data (raw audio samples, typically 512-2048 samples)
-    /// Values are -1.0 to 1.0
-    std::vector<float> waveform;
-    
-    /// Left channel level (0.0 - 1.0)
-    float levelLeft = 0.0f;
-    
-    /// Right channel level (0.0 - 1.0)
-    float levelRight = 0.0f;
-    
-    /// Beat detected this frame
-    bool beatDetected = false;
-    
-    /// Timestamp in milliseconds
-    std::uint64_t timestampMs = 0;
-};
+// Note: AudioDataEvent was removed in Phase 4 step 0 together with the
+// unwired AudioAnalyzer (its only publisher). The spectrum/waveform data
+// path is MainWindow::onAudioUpdate() → VisualizerWidget.
 
 /**
  * @struct BeatEvent

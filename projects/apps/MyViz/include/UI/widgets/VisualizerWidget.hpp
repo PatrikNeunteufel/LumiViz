@@ -6,13 +6,14 @@
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 2.2.0 - Added Config Event Support
+ * @version 2.3.0 - Removed dead config event channel
  *
  * @details
- * ## Version 2.2.0 Changes
+ * ## Version 2.3.0 Changes
  *
- * - Added subscribeToConfigEvents() for receiving ConfigPanel events
- * - Color scheme, smoothing, peak hold can now be changed at runtime
+ * - Removed subscribeToConfigEvents()/unsubscribeFromConfigEvents(): the
+ *   subscribed events had no publisher (dead legacy channel, Phase 4 step 0).
+ *   Visualizer configuration goes through IVisualizer::setParam().
  *
  * ## Version 2.1.0 Changes
  *
@@ -254,16 +255,6 @@ private:
      */
     void cleanupVisualizer();
 
-    /**
-     * @brief Subscribe to config events from ConfigPanel
-     */
-    void subscribeToConfigEvents();
-
-    /**
-     * @brief Unsubscribe from config events
-     */
-    void unsubscribeFromConfigEvents();
-
     // =========================================================================
     // Private Members
     // =========================================================================
@@ -287,7 +278,4 @@ private:
 
     // OpenGL initialized flag
     bool m_glInitialized{false};
-
-    // Config event subscription IDs
-    std::vector<int> m_configSubscriptionIds;
 };

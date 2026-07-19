@@ -409,10 +409,9 @@ private:
     double m_t = 0.0;       ///< Time accumulator
     double m_x = 0.0;       ///< Output X
     double m_y = 0.0;       ///< Output Y
-    double m_red = 1.0;     ///< Output red
-    double m_green = 1.0;   ///< Output green
-    double m_blue = 1.0;    ///< Output blue
     double m_skip = 0.0;    ///< Skip this point
+    // Note: red/green/blue output variables were removed (never wired into the
+    // expression engine). They return with the Lua color expressions (import phase).
 
     // Convenience constants
     double m_pi = 3.14159265358979323846;

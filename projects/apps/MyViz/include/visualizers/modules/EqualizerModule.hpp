@@ -9,20 +9,20 @@
  *
  * @details
  * Equalizer visualization module with:
- * - FFT → Band mapping with configurable scales (Linear/Log/Mel)
  * - Color gradient mapping by position or amplitude
  * - Peak-hold spawners with physics (hold/gravity/spring)
  * - Optional peak particles with spawn/fade effects
  * - Configurable bar rendering (orientation, gap, z-order)
+ *
+ * Band mapping/smoothing/dB-normalization is done by AudioSourceModule —
+ * this module consumes pre-processed bands via updateFromProcessed().
  ****************************************************************************************
  */
 
 #pragma once
 
-#include "IModule.hpp"
-#include "ColorGradientModule.hpp"
-#include "ColorSchemeModule.hpp"  // For GradientDomain
-#include "source/AudioSourceModule.hpp"  // For FrequencyScale
+#include "IModule.hpp"  // For Color4f
+#include "ColorGradientModule.hpp"  // For GradientDomain, gradient sampling
 
 #include <vector>
 #include <array>
@@ -160,42 +160,25 @@ struct PeakColorConfig
 
 /**
  * @brief Equalizer visualization module
+ *
+ * Helper module (not derived from IModule) — parameters are declared and
+ * routed by EqualizerVisualizer via the configuration accessors below.
  */
-class EqualizerModule : public IModule
+class EqualizerModule
 {
 public:
     static constexpr int MAX_BANDS = 256;
     static constexpr int MAX_PARTICLES_TOTAL = 2048;
 
     EqualizerModule();
-    ~EqualizerModule() override = default;
+    ~EqualizerModule() = default;
 
-    // =========================================================================
-    // IModule Interface
-    // =========================================================================
-
-    [[nodiscard]] const char* moduleId() const override { return "equalizer"; }
-    [[nodiscard]] const char* displayName() const override { return "Equalizer"; }
-    [[nodiscard]] const char* category() const override { return "Visualization"; }
-    [[nodiscard]] const char* description() const override { return "Spectrum analyzer with bars and peak markers"; }
-
-    [[nodiscard]] std::vector<ModuleParamDesc> paramDescs() const override;
-    [[nodiscard]] bool getParam(const std::string& id, ParamValue& out) const override;
-    bool setParam(const std::string& id, const ParamValue& value) override;
-    void resetToDefaults() override;
+    /// @brief Reset all configuration to defaults
+    void resetToDefaults();
 
     // =========================================================================
     // Processing
     // =========================================================================
-
-    /**
-     * @brief Update with new spectrum data (raw FFT)
-     * @param spectrum Raw FFT data
-     * @param count Number of FFT bins
-     * @param deltaTime Time since last frame (seconds)
-     * @note This applies internal mapping, smoothing, and normalization
-     */
-    void processSpectrum(const float* spectrum, int count, float deltaTime);
 
     /**
      * @brief Update with already processed spectrum data (from AudioSourceModule)
@@ -247,22 +230,6 @@ public:
     void setOrientation(BarOrientation o) { m_orientation = o; }
     [[nodiscard]] BarOrientation orientation() const { return m_orientation; }
 
-    // --- Audio/FFT ---
-    void setFrequencyScale(FrequencyScale scale) { m_frequencyScale = scale; }
-    [[nodiscard]] FrequencyScale frequencyScale() const { return m_frequencyScale; }
-
-    void setEmaAlpha(float alpha) { m_emaAlpha = std::clamp(alpha, 0.0f, 1.0f); }
-    [[nodiscard]] float emaAlpha() const { return m_emaAlpha; }
-
-    void setFloorDb(float db) { m_floorDb = db; }
-    [[nodiscard]] float floorDb() const { return m_floorDb; }
-
-    void setCeilDb(float db) { m_ceilDb = db; }
-    [[nodiscard]] float ceilDb() const { return m_ceilDb; }
-
-    void setClamp01(bool clamp) { m_clamp01 = clamp; }
-    [[nodiscard]] bool clamp01() const { return m_clamp01; }
-
     // --- Gradient ---
     void setGradientDomain(GradientDomain domain) { m_gradientDomain = domain; }
     [[nodiscard]] GradientDomain gradientDomain() const { return m_gradientDomain; }
@@ -303,16 +270,11 @@ private:
     // =========================================================================
 
     void resizeBands(int count);
-    void mapSpectrum(const float* spectrum, int count);
-    void applyEMA(float deltaTime);
-    void normalizeDb();
     void updateColors();
     void updateSpawners(float deltaTime);
     void updateParticles(float deltaTime);
     void spawnParticle(int bandIndex, float position, const Color4f& color);
     void removeDeadParticles();
-
-    [[nodiscard]] float mapFrequencyToBin(float normalizedPos, int fftSize) const;
 
     // =========================================================================
     // Configuration
@@ -322,13 +284,6 @@ private:
     float m_gain = 1.0f;
     float m_barGapPx = 2.0f;
     BarOrientation m_orientation = BarOrientation::BottomUp;
-
-    // Audio/FFT
-    FrequencyScale m_frequencyScale = FrequencyScale::Linear;
-    float m_emaAlpha = 0.0f;
-    float m_floorDb = -60.0f;
-    float m_ceilDb = 0.0f;
-    bool m_clamp01 = true;
 
     // Gradient
     GradientDomain m_gradientDomain = GradientDomain::Position;
@@ -345,13 +300,10 @@ private:
     // =========================================================================
 
     std::vector<float> m_bands;              ///< Processed band values [0..1]
-    std::vector<float> m_rawBands;           ///< Pre-EMA band values
     std::vector<Color4f> m_bandColors;       ///< Colors per band
     std::vector<PeakSpawner> m_spawners;     ///< Peak spawners per band
     std::vector<PeakParticle> m_particles;   ///< Active particles
     std::vector<float> m_lastSpawnTime;      ///< Time since last spawn per band
-
-    bool m_primed = false;                   ///< EMA primed with first frame
 };
 
 // =============================================================================

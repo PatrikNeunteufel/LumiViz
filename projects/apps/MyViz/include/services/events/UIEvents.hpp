@@ -232,70 +232,11 @@ struct VisualizerChangedEvent : public Event
 };
 
 // =============================================================================
-// Visualizer Configuration Events (NEW)
-// =============================================================================
-
-/**
- * @brief Request to change visualizer color scheme
- */
-struct VisualizerColorSchemeEvent : public Event
-{
-    EVENT_TYPE_NAME("VisualizerColorSchemeEvent")
-
-    int schemeIndex;        ///< 0=Classic, 1=Fire, 2=Ocean, 3=Neon, 4=Monochrome, 5=Rainbow
-    std::string schemeName; ///< Human-readable name
-
-    explicit VisualizerColorSchemeEvent(int index, std::string name = "")
-        : schemeIndex(index)
-        , schemeName(std::move(name))
-    {}
-};
-
-/**
- * @brief Request to change visualizer smoothing
- */
-struct VisualizerSmoothingEvent : public Event
-{
-    EVENT_TYPE_NAME("VisualizerSmoothingEvent")
-
-    float smoothingFactor;  ///< 0.0 to 1.0
-
-    explicit VisualizerSmoothingEvent(float factor)
-        : smoothingFactor(factor)
-    {}
-};
-
-/**
- * @brief Request to toggle peak hold display
- */
-struct VisualizerPeakHoldEvent : public Event
-{
-    EVENT_TYPE_NAME("VisualizerPeakHoldEvent")
-
-    bool enabled;
-
-    explicit VisualizerPeakHoldEvent(bool enable)
-        : enabled(enable)
-    {}
-};
-
-/**
- * @brief Request to change visualizer shape (for PulsingVisualizer)
- */
-struct VisualizerShapeEvent : public Event
-{
-    EVENT_TYPE_NAME("VisualizerShapeEvent")
-
-    int shapeIndex;  ///< 0=Circle, 1=Ring, 2=Flash, etc.
-
-    explicit VisualizerShapeEvent(int index)
-        : shapeIndex(index)
-    {}
-};
-
-// =============================================================================
 // Layout Events
 // =============================================================================
+// Note: The legacy "Visualizer Configuration Events" (ColorScheme/Smoothing/
+// PeakHold/Shape) were removed in Phase 4 step 0 — they had no publisher;
+// visualizer configuration goes through IVisualizer::setParam().
 
 /**
  * @brief Request to reset the window layout to default

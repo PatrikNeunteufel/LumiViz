@@ -1,9 +1,9 @@
 # Config-Pipeline — Konzept (Phase 4)
 
-> **Version:** 0.1.0
-> **Datum:** 2026-07-18
+> **Version:** 0.3.0
+> **Datum:** 2026-07-19
 > **Typ:** Concept
-> **Status:** In Entwicklung (Entwurf zur Freigabe)
+> **Status:** Aktiv (Kernentscheidungen freigegeben 2026-07-19)
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** visualizers/ (alle), UI/panels/ConfigPanel, services/EventBus, Preset-System
 > **Sprache:** Deutsch
@@ -111,7 +111,9 @@ statt String-Präfix-Konvention. Darauf bauen vier Säulen:
 Dazu die UX-Anforderungen aus dem Pflichtenheft als Schema-Features:
 **Default-Reset je Ebene** (Parameter/Untergruppe/Stufe/Visualizer),
 **Presets je Gruppe** (Modul-Presets verallgemeinert — für alle Visualizer, nicht nur
-Pulsing) und **Preview je Gruppe** (Raw-Anzeige der Stufen-Ausgangsdaten, §8).
+Pulsing) und **Preview je Gruppe** (Raw-Anzeige der Stufen-Ausgangsdaten —
+**fester Bestandteil von Phase 4**, Entscheid 2026-07-19; dafür definiert das Schema
+die Stufen-Ausgänge als benannte, abonnierbare Tap-Points).
 
 ## 4. Architektur
 
@@ -308,6 +310,10 @@ spätere Option offen.
 
 ## 7. Umsetzungsplan
 
+> **Detailplan mit Checklisten und Datei-Ankern:**
+> [Config_Pipeline_Umsetzungsplan.md](Config_Pipeline_Umsetzungsplan.md) —
+> die Tabelle hier ist die Kurzübersicht.
+
 | Schritt | Inhalt | Absicherung |
 |---|---|---|
 | 4.0 | Tote Systeme entfernen (EqualizerModule-Params/Audio-Pipeline, ModuleConfigWidget, ColorSchemeModule-Rest) | Build + Suite grün |
@@ -317,7 +323,8 @@ spätere Option offen.
 | 4.4 | ConfigPanel generisch (Stage-Gruppen, zentrale Stage-Tabelle, Handles statt dynamic_cast); Default-Reset je Ebene; Gruppen-Presets für alle | UI-Smoke + Preset-Tests |
 | 4.5 | Preset-Migration: formatVersion-Auswertung + Alias-Map | Roundtrip-Tests alt→neu |
 | 4.6 | Visualizer migrieren: Equalizer → Pulsing → Waveform → Oscilloscope → Superscope; dabei Modul-Konsolidierung (§4.5) | je Visualizer: Suite + manueller Sichttest |
-| 4.7 | Kür: Preview je Gruppe, Beat-/PostFx-Ausbau (Ideen E1–E7) | — |
+| 4.7 | **Preview je Gruppe** (fest, Entscheid 2026-07-19): Mini-Entwurf → Tap-Point-Viewer → Performance-Check | Sichttest + Frametime-Messung |
+| 4.8 | Kür: Beat-/PostFx-Ausbau (Ideen E1–E7) | — |
 
 Kleinfixes unterwegs (aus Handover): Transient-resolve()-Dangling (Skip-Test
 aktivieren), `Event::consume()` const-fähig, ungenutzte Felder
@@ -325,17 +332,21 @@ PulsingVisualizer/SuperscopeModule.
 
 ## 8. Offene Punkte
 
-- [ ] **Freigabe dieses Konzepts durch Patrik** (insb. 5.3 AudioSource-Frage und
-      Key-Konvention §4.3)
-- [ ] Preview-Viewer je Parametergruppe (Pflichtenheft-Idee): technischer Entwurf
-      (woher kommen Stufen-Zwischendaten performant?) — Schritt 4.7
-- [ ] `AudioAnalyzer` ist implementiert, aber nicht verdrahtet (Datenweg läuft über
-      `MainWindow::onAudioUpdate`-QTimer) — verdrahten oder entfernen?
-- [ ] Visualizer-Kategorie-Strings sehen nach vertauschten Argumenten aus
-      („static Parametring …" in VisualizerAutoReg) — klären
-- [ ] `DialogManager` existiert, wird aber nicht instanziiert (About-Dialog öffnet
-      nicht) — separater Kleinfix
-- [ ] en-Übersetzungen der neuen Doku (Doku-Standard-Hook meldet sie)
+**Entschieden am 2026-07-19** (Q&A mit Patrik): Key-Umbenennung mit Alias-Map (§4.3) ✓ ·
+AudioSource pro Visual + geteilte Presets (§5.3) ✓ · Leitplanken §5.6 verbindlich ✓ ·
+`AudioAnalyzer` wird in Schritt 0 **entfernt** (sauberer Audio-Verteil-Service kommt
+erst mit der Import-/Audio-Phase) ✓ · `DialogManager`-Instanziierung als Kleinfix in
+Schritt 1 ✓ · Visualizer-Kategorie-Strings („static Parametring …") werden in Schritt 0
+gefixt ✓ · **Preview je Gruppe ist fester Phase-4-Bestandteil** (Schritt 4.7) ✓ ·
+en-Doku: wie CMakeCraft — de ist SSOT, en wird später nachgezogen ✓
+
+Noch offen:
+
+- [ ] Key-Migrationstabellen im Detail (Plan Schritt 3.3) — Review durch Patrik
+      vor der Visualizer-Migration
+- [ ] Preview-Viewer: technischer Mini-Entwurf (Datenabgriff/Tap-Points, Darstellung,
+      Performance) — vor Umsetzung von Schritt 4.7
+- [ ] en-Übersetzungen der neuen App-Doku nachziehen (de=SSOT, wie CMakeCraft)
 - [ ] **Analyse der Referenz-Repos** in `../ref/` (vis_avs, projectm, MilkDrop3,
       milkdrop2077, winamp_orig) für die Import-Phase: Preset-Formate (.avs/.milk),
       EEL-Sprachumfang vs. Lua, projectM-Renderarchitektur — eigene Session nach Phase 4
@@ -355,5 +366,6 @@ PulsingVisualizer/SuperscopeModule.
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **0.2.0** | **2026-07-18** | **Neu: Langfrist-Ziel AVS/MilkDrop-Import (§1) + Leitplanken 5.6 + ref/-Analyse als offener Punkt** |
+| **0.3.0** | **2026-07-19** | **Kernentscheidungen freigegeben (Q&A): Keys+Alias, AudioSource pro Visual, Leitplanken, Analyzer-Entfernung, Preview fest in Phase 4 (Tap-Points im Schema)** |
+| 0.2.0 | 2026-07-18 | Langfrist-Ziel AVS/MilkDrop-Import (§1) + Leitplanken 5.6 + ref/-Analyse als offener Punkt |
 | 0.1.0 | 2026-07-18 | Initial (Session 29): Stufenmodell, Schema, Entscheidungen 5.1–5.5, Umsetzungsplan |

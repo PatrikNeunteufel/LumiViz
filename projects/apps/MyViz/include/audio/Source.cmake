@@ -14,11 +14,9 @@ set(_local_sources
 set(_local_headers
     # (headers - *.h; *.hpp)
     # "${CMAKE_CURRENT_LIST_DIR}/.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/AudioAnalyzer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/AudioEvents.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/AudioPlayer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/BassEngine.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/IAudioAnalyzer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/IAudioEngine.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/IAudioPlayer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/IPlaylist.hpp"

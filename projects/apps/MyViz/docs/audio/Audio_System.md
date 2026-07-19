@@ -18,7 +18,7 @@ BASS-Library:
 |---|---|---|---|
 | Engine | [`IAudioEngine.hpp`](../../include/audio/IAudioEngine.hpp) | [`BassEngine.hpp`](../../include/audio/BassEngine.hpp) | BASS-Abstraktion: Devices, Streams, FFT/Waveform, Metadaten, Plugins |
 | Player | [`IAudioPlayer.hpp`](../../include/audio/IAudioPlayer.hpp) | [`AudioPlayer.hpp`](../../include/audio/AudioPlayer.hpp) | Play/Pause/Stop/Seek, Volume/Mute, Playlist-Navigation, Shuffle/Repeat |
-| Analyzer | [`IAudioAnalyzer.hpp`](../../include/audio/IAudioAnalyzer.hpp) | [`AudioAnalyzer.hpp`](../../include/audio/AudioAnalyzer.hpp) | FFT-Spektrum, Bänder, Beat-Detection — **derzeit nicht verdrahtet** (siehe 7.3) |
+| ~~Analyzer~~ | — | — | **entfernt** (Phase 4 Schritt 0) — war nie verdrahtet, siehe 7.3 |
 | Playlist | [`IPlaylist.hpp`](../../include/audio/IPlaylist.hpp) | [`Playlist.hpp`](../../include/audio/Playlist.hpp) | Track-Verwaltung, Sortierung, Persistenz (M3U/PLS/JSON) |
 
 ```
@@ -48,7 +48,7 @@ Die Engine ist stream-basiert: `createStream(filePath)` liefert ein opakes
 handle-freie High-Level-API (`load`, `play`, `next`, `seekFraction`, …).
 
 Dateien: Header in [`include/audio/`](../../include/audio/), Implementierungen in
-`src/audio/` (`BassEngine.cpp`, `AudioPlayer.cpp`, `AudioAnalyzer.cpp`, `Playlist.cpp`).
+`src/audio/` (`BassEngine.cpp`, `AudioPlayer.cpp`, `Playlist.cpp`).
 
 ---
 
@@ -64,7 +64,7 @@ die Instanz per `tryResolve()` sofort erzeugt („Force-Init"):
 2. `IPlaylist` → `Playlist(eventBus)`
 3. `IAudioPlayer` → `AudioPlayer(engine, eventBus)` + `setPlaylist(playlist)`
 
-`IAudioAnalyzer` wird derzeit **nicht** registriert (siehe 7.3).
+Ein Analyzer-Service existiert nicht mehr (entfernt, siehe 7.3).
 
 **Update-Takt:** Ein `QTimer` in `MainWindow` (Intervall 33 ms, ~30 Hz) ruft
 `onAudioUpdate()` auf. Das ruft `IAudioPlayer::update()` (publiziert
@@ -89,7 +89,7 @@ Alle Events sind in [`AudioEvents.hpp`](../../include/audio/AudioEvents.hpp) def
 | `PlaylistIndexChangedEvent` | Playlist | aktueller/vorheriger Index |
 | `AudioEngineErrorEvent` | Engine/Player | Fehlertyp (InitFailed, FileNotFound, FormatNotSupported, …) |
 | `AudioDeviceChangedEvent` | Engine | Gerätewechsel |
-| `AudioDataEvent`, `BeatEvent` | AudioAnalyzer | Spektrum/Waveform/Level bzw. Beat — **derzeit ungenutzt**, da der Analyzer nicht verdrahtet ist (7.3) |
+| `BeatEvent` | — | definiert, derzeit ohne Publisher (`AudioDataEvent` wurde mit dem Analyzer entfernt, 7.3) |
 
 `TrackInfo` (ebenfalls `AudioEvents.hpp`) trägt die Metadaten: `filePath`, `title`,
 `artist`, `album`, `durationMs`, `sampleRate`, `channels`, `bitrate`.
@@ -219,13 +219,13 @@ Details (Parameter, Algorithmen, Presets, Fehlerverhalten) stehen header-nah:
 
 ### 7.3 Status AudioAnalyzer
 
-`AudioAnalyzer` (Interface + Implementierung inkl. Beat-Detection, `AudioDataEvent`/
-`BeatEvent`-Publikation) ist vollständig vorhanden und wird mitgebaut, aber **nicht
-als Service registriert und von niemandem aufgerufen**. Der produktive Datenweg ist
-der direkte Push aus `MainWindow::onAudioUpdate()` (7.1). Ältere Doku, die eine
-event-basierte 60-Hz-Kette `AudioAnalyzer → AudioDataEvent → VisualizerWidget`
-beschreibt, gibt einen nie verdrahteten Zielzustand wieder — Kandidat für die
-Config-Pipeline-Session (Umbau-Plan Phase 4).
+`AudioAnalyzer`/`IAudioAnalyzer` (samt `AudioDataEvent`) wurden **entfernt**
+(Phase 4, Schritt 0 — 2026-07-19): Die Implementierung war vollständig, aber nie
+als Service registriert und ohne einen einzigen Aufrufer; der produktive Datenweg
+ist der direkte Push aus `MainWindow::onAudioUpdate()` (7.1). Eine saubere
+Audio-Verteilstelle (Service statt MainWindow-QTimer) wird mit der
+Import-/Audio-Phase neu entworfen; die alte Implementierung liegt in der
+Git-Historie (bis Commit „Phase 4 Schritt 0").
 
 ---
 

@@ -14,8 +14,7 @@
 
 #pragma once
 
-#include "ColorSchemeModule.hpp"
-
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <functional>

@@ -14,8 +14,6 @@ set(_local_sources
 set(_local_headers
     # (headers - *.h; *.hpp)
     "${CMAKE_CURRENT_LIST_DIR}/ColorGradientModule.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/ColorSchemeModule.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/ColorSchemeTraits.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/EqualizerModule.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/IModule.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/OscilloscopeModule.hpp"

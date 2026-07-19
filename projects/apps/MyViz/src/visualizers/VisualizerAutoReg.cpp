@@ -72,7 +72,7 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
             "pulsing",                                           // id
             "Pulsing",                                           // name
             "Audio-reactive pulsing shape with beat detection",  // description
-            "static Parametring shape",                                             // category
+            "shape",                                             // category
             100                                                  // order
         },
         []() -> std::unique_ptr<IVisualizer> {
@@ -90,7 +90,7 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
             "equalizer",                                           // id
             "Equalizer",                                           // name
             "Spectrum analyzer with bars and peak markers",        // description
-            "static Parametring spectrum",                                            // category
+            "spectrum",                                            // category
             100                                                    // order
         },
         []() -> std::unique_ptr<IVisualizer> {
@@ -108,7 +108,7 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
             "waveform",                                          // id
             "Waveform",                                          // name
             "Real-time audio waveform oscilloscope display",     // description
-            "static Parametring waveform",                                          // category
+            "waveform",                                          // category
             100                                                  // order
         },
         []() -> std::unique_ptr<IVisualizer> {
@@ -122,7 +122,7 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
             "oscilloscope",                                      // id
             "Oscilloscope",                                      // name
             "Classic oscilloscope with trigger synchronization", // description
-            "static Parametring waveform",                                          // category
+            "waveform",                                          // category
             200                                                  // order
         },
         []() -> std::unique_ptr<IVisualizer> {
@@ -136,7 +136,7 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
             "superscope",                                        // id
             "Superscope",                                        // name
             "Programmable point/line visualizer with presets",   // description
-            "static Parametring waveform",                                          // category
+            "waveform",                                          // category
             300                                                  // order
         },
         []() -> std::unique_ptr<IVisualizer> {
