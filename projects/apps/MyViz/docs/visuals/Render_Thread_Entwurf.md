@@ -1,9 +1,9 @@
 # MyViz — Render-Thread-Entkopplung (Entwurf)
 
-> **Version:** 0.1.0
+> **Version:** 1.0.0
 > **Datum:** 2026-07-19
 > **Typ:** Entwurf (Freigabe-Gate für die Umsetzung)
-> **Status:** Zur Freigabe durch Patrik
+> **Status:** Umgesetzt (Session 31) — Sichttests Fullscreen/Config ✅; Undock-Runde alle 5 Visualizer + 6.3-Vergleichsmessung offen
 > **Bezug:** [OpenGL_Context_Handling.md](OpenGL_Context_Handling.md) ·
 > [Visualizer_Architecture.md](Visualizer_Architecture.md) ·
 > 6.3-Frametime-Messung (Session 30) · Auftrag Patrik 2026-07-19
@@ -181,4 +181,6 @@ Audio-Thread, kein Multi-Window-übergreifendes Context-Sharing, keine
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.0.0 | 2026-07-19 | Umsetzung abgeschlossen inkl. Nacharbeiten: DPI-korrekte Viewports (physische Pixel), ConfigPanel-Preset-Combo-Bestandsbug (Reset bei jedem Rebuild) gefixt, echtes Fullscreen (Widget top-level statt Dock-Verstecken; Esc via GL-Fenster-Fokus; Native-Handle-Recreate gegen versetzte Fenster nach Reparent — per Fenster-Diff verifiziert), Fullscreen folgt der Event-Quelle. Doku-Nachzug (Schritt 5) erledigt. Offen: Undock-Sichttest-Runde alle 5 Visualizer, 6.3-Vergleichsmessung |
+| 0.2.0 | 2026-07-19 | Freigegeben; Spike bestanden (Befunde: BasicLogger nicht thread-safe → FPS via Queued-Signal; deleteLater erreicht bei App-Ende keinen Destruktor → Thread-Stop am aboutToQuit). Schritte 0–3 umgesetzt (VisualizerRenderThread + VisualizerWidget-Fassade, Taktgeber-Umbau, Render-Mutex-Guards inkl. GradientEditor/SetParamCommand); Limited-Pacing mit absolutem Frame-Fahrplan |
 | 0.1.0 | 2026-07-19 | Initial (Session 31) — zur Freigabe |

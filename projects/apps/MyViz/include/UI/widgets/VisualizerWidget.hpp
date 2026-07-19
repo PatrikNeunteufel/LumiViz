@@ -1,44 +1,40 @@
 /**
  ****************************************************************************************
  * @file   VisualizerWidget.hpp
- * @brief  OpenGL Visualization Widget - Qt6 Tutorial
- *         Hardware-accelerated rendering with VSync support
+ * @brief  Facade widget for visualizer rendering on a dedicated render thread
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 2.3.0 - Removed dead config event channel
+ * @version 3.0.0 - Render thread decoupling (Render_Thread_Entwurf.md)
  *
  * @details
- * ## Version 2.3.0 Changes
+ * ## Version 3.0.0 Changes
  *
- * - Removed subscribeToConfigEvents()/unsubscribeFromConfigEvents(): the
- *   subscribed events had no publisher (dead legacy channel, Phase 4 step 0).
- *   Visualizer configuration goes through IVisualizer::setParam().
- *
- * ## Version 2.1.0 Changes
- *
- * - Now inherits from WidgetBase<QOpenGLWidget> for consistency
- * - ServiceContainer and EventBus access via base class
- * - Auto start/stop updates on show/hide
- *
- * ## Visualizer Architecture
+ * VisualizerWidget is no longer a QOpenGLWidget: GL rendering moved off the
+ * main thread. The widget is now a thin FACADE around
  *
  * ```
- * WidgetBase<QOpenGLWidget>
+ * WidgetBase<QWidget>
  *       │
- *       └── VisualizerWidget
- *             │
- *             ├── OpenGL Context Management
- *             ├── VSync Control
- *             └── Active Visualizer (IVisualizer*)
- *                   │
- *                   ├── initialize()
- *                   ├── render(deltaTime)
- *                   ├── resize(size)
- *                   └── cleanup()
+ *       └── VisualizerWidget (facade — public API unchanged)
+ *             ├── createWindowContainer(…)
+ *             ├── VisualizerGLWindow : QWindow   (embedded native window)
+ *             ├── QOpenGLContext                 (owned, on the render thread)
+ *             └── VisualizerRenderThread         (render loop + pacing + FPS)
  * ```
  *
- * @see VisualizerWidget.md for detailed documentation
+ * - The visualizer's GL lifecycle runs ONLY on the render thread; undocking
+ *   no longer recreates the context (the context is ours) — the visualizers'
+ *   context-tracking pattern remains as a safety net.
+ * - UI access to the active visualizer (setParam/getParam/gradients/
+ *   tapPoints/audioSourceModule/presets) MUST hold renderMutex();
+ *   VisualizerChangedEvent carries the mutex to subscribers.
+ * - Audio data is handed over via snapshot buffer (updateSpectrum/
+ *   updateWaveform write; the thread applies at frame start).
+ * - Frame pacing (Limited/Unlimited/VSync) and the FPS measurement live on
+ *   the render thread; FPS arrives via the fpsMeasured() signal.
+ *
+ * @see VisualizerRenderThread.hpp and docs/visuals/Render_Thread_Entwurf.md
  ****************************************************************************************
  */
 
@@ -48,40 +44,20 @@
 // Includes
 // =============================================================================
 
-#include <QOpenGLWidget>
-#include <QOpenGLFunctions>
 #include "WidgetBase.hpp"
+#include "UI/widgets/VisualizerRenderThread.hpp"  // RenderPacing, window, thread
 
 #include <QString>
-#include <QElapsedTimer>
+#include <QMutex>
 #include <memory>
-#include <vector>
 
 // Forward declarations
 class IVisualizer;
-
-QT_BEGIN_NAMESPACE
-class QOpenGLShaderProgram;
-class QMouseEvent;
-QT_END_NAMESPACE
-
-/**
- * @brief Type alias for OpenGL-based widget base
- */
-using OpenGLWidgetBase = WidgetBase<QOpenGLWidget>;
+class QOpenGLContext;
 
 /**
  * @class VisualizerWidget
- * @brief OpenGL widget for audio visualization rendering.
- *
- * VisualizerWidget provides a hardware-accelerated canvas for rendering
- * audio visualizations. It manages an active IVisualizer instance and
- * delegates rendering to it.
- *
- * ## Inheritance
- *
- * - WidgetBase<QOpenGLWidget>: ServiceContainer, EventBus, auto start/stop
- * - QOpenGLFunctions: OpenGL function pointers
+ * @brief Facade widget hosting a visualizer rendered on a dedicated thread.
  *
  * ## Visualizer Management
  *
@@ -96,8 +72,13 @@ using OpenGLWidgetBase = WidgetBase<QOpenGLWidget>;
  * connect(widget, &VisualizerWidget::visualizerChanged,
  *         this, &MyClass::onVisualizerChanged);
  * ```
+ *
+ * ## Thread safety
+ *
+ * Any call into visualizer() beyond immutable identity data must hold
+ * renderMutex() — see class details above.
  */
-class VisualizerWidget : public OpenGLWidgetBase, protected QOpenGLFunctions
+class VisualizerWidget : public StandardWidgetBase
 {
     Q_OBJECT
 
@@ -109,12 +90,12 @@ public:
     /**
      * @brief Constructs the VisualizerWidget.
      * @param services ServiceContainer for dependency injection
-     * @param parent Parent widget (typically MainWindow's central widget)
+     * @param parent Parent widget (typically a dock content area)
      */
     explicit VisualizerWidget(ServiceContainer& services, QWidget* parent = nullptr);
 
     /**
-     * @brief Destructor - cleans up active visualizer.
+     * @brief Destructor - stops the render thread and cleans up.
      */
     ~VisualizerWidget() override;
 
@@ -133,8 +114,9 @@ public:
      * @param id Visualizer ID from VisualizerRegistry (e.g., "pulsing", "spectrum")
      * @return true if visualizer was loaded successfully
      *
-     * The visualizer is loaded from VisualizerRegistry and initialized.
-     * If the ID is not found, the current visualizer remains active.
+     * The visualizer is created from VisualizerRegistry on the GUI thread;
+     * its GL initialization happens on the render thread before the first
+     * frame. If the ID is not found, the current visualizer remains active.
      */
     bool setVisualizer(const QString& id);
 
@@ -158,30 +140,46 @@ public:
     /**
      * @brief Get the active visualizer
      * @return Pointer to active IVisualizer, or nullptr if none
+     *
+     * @warning Parameter/gradient/tap access on the returned pointer must
+     *          hold renderMutex() (the render thread renders concurrently).
      */
     [[nodiscard]] IVisualizer* visualizer() const { return m_visualizer.get(); }
 
+    /**
+     * @brief Render mutex guarding UI access against the render thread
+     */
+    [[nodiscard]] QMutex& renderMutex() { return m_renderMutex; }
+
     // =========================================================================
-    // Public Interface
+    // Frame Pacing
     // =========================================================================
 
     /**
-     * @brief Sets the clear color (background).
-     * @param r Red component (0.0 - 1.0)
-     * @param g Green component (0.0 - 1.0)
-     * @param b Blue component (0.0 - 1.0)
-     * @param a Alpha component (0.0 - 1.0), default 1.0
+     * @brief Set frame pacing of the render thread
+     * @param pacing Limited (software target FPS) / Unlimited / VSync
+     * @param targetFps Target FPS for Limited mode
      */
-    void setClearColor(float r, float g, float b, float a = 1.0f);
+    void setFrameMode(RenderPacing pacing, int targetFps);
 
     /**
-     * @brief Enables or disables VSync at runtime.
-     * @param enabled true = VSync ON, false = VSync OFF
+     * @brief Give keyboard focus to the embedded GL window (fullscreen: Esc)
      */
-    void setVSync(bool enabled);
+    void activateGLWindow();
+
+    /**
+     * @brief Drop and recreate the native window handles.
+     *
+     * After reparenting FROM top-level (fullscreen exit) Qt leaves the
+     * facade's native window at a stale absolute position (visible as a
+     * displaced strip). Recreating the handles rebuilds the native parent
+     * chain; for the render thread this is the same surface-destroy/expose
+     * cycle as undocking.
+     */
+    void recreateNativeWindow();
 
     // =========================================================================
-    // Audio Data (pass-through to visualizer)
+    // Audio Data (snapshot hand-over to the render thread)
     // =========================================================================
 
     /**
@@ -212,6 +210,11 @@ Q_SIGNALS:
      */
     void visualizerError(const QString& id, const QString& error);
 
+    /**
+     * @brief FPS measured on the render thread (~1 s interval)
+     */
+    void fpsMeasured(double fps);
+
 protected:
     // =========================================================================
     // WidgetBase Overrides
@@ -219,6 +222,9 @@ protected:
 
     /**
      * @brief Called when updates start (widget shown)
+     *
+     * The render thread pauses/resumes on expose events by itself — nothing
+     * to do here.
      */
     void onStartUpdates() override;
 
@@ -227,18 +233,11 @@ protected:
      */
     void onStopUpdates() override;
 
-    // =========================================================================
-    // QOpenGLWidget Virtual Methods
-    // =========================================================================
-
-    void initializeGL() override;
-    void resizeGL(int w, int h) override;
-    void paintGL() override;
-
     /**
-     * @brief Handle double-click to toggle fullscreen
+     * @brief Esc fallback when focus sits on the container instead of the
+     *        embedded GL window (fullscreen exit)
      */
-    void mouseDoubleClickEvent(QMouseEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
 
 private:
     // =========================================================================
@@ -250,32 +249,17 @@ private:
      */
     void loadDefaultVisualizer();
 
-    /**
-     * @brief Cleanup current visualizer
-     */
-    void cleanupVisualizer();
-
     // =========================================================================
     // Private Members
     // =========================================================================
 
-    // Active visualizer
+    // Render infrastructure (Entwurf §1)
+    VisualizerGLWindow* m_glWindow = nullptr;  ///< owned by the container widget
+    std::unique_ptr<QOpenGLContext> m_context;
+    std::unique_ptr<VisualizerRenderThread> m_thread;
+    QMutex m_renderMutex;
+
+    // Active visualizer (owned here; GL lifecycle on the render thread)
     std::unique_ptr<IVisualizer> m_visualizer;
     QString m_currentVisualizerId;
-
-    // Clear color (fallback when no visualizer)
-    float m_clearR{0.1f};
-    float m_clearG{0.1f};
-    float m_clearB{0.15f};
-    float m_clearA{1.0f};
-
-    // Timing
-    QElapsedTimer m_frameTimer;
-    float m_lastFrameTime{0.0f};
-
-    // Frame counter (for debugging)
-    uint64_t m_frameCount{0};
-
-    // OpenGL initialized flag
-    bool m_glInitialized{false};
 };

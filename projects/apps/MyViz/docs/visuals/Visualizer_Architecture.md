@@ -1,6 +1,6 @@
 # Visualizer-Architektur — IVisualizer, Modul-System und Parameter-Mechanik
 
-> **Version:** 1.1.0
+> **Version:** 1.2.0
 > **Datum:** 2026-07-19
 > **Typ:** Guide
 > **Status:** Aktiv
@@ -26,7 +26,8 @@ Bei Abweichungen zwischen Alt-Doku und Code gilt der Code.
 9. [Tap-Points und Stage-Previews](#9-tap-points-und-stage-previews)
 10. [Registrierung](#10-registrierung)
 11. [Altlasten-Bilanz (nach Phase 4)](#11-altlasten-bilanz-nach-phase-4)
-12. [Siehe auch](#12-siehe-auch)
+12. [Threading — Render-Thread-Entkopplung](#12-threading--render-thread-entkopplung)
+13. [Siehe auch](#13-siehe-auch)
 
 ---
 
@@ -616,7 +617,64 @@ Phase 4 (Schritte 0–6, 2026-07-19) weitgehend aufgelöst:
 
 ---
 
-## 12. Siehe auch
+## 12. Threading — Render-Thread-Entkopplung
+
+Seit der Render-Thread-Entkopplung (Session 31,
+[Render_Thread_Entwurf.md](Render_Thread_Entwurf.md)) läuft der komplette
+GL-Lebenszyklus der Visualizer (`initialize/render/resize/cleanup`) **nicht mehr
+im Main-Thread**, sondern in einem dedizierten Render-Thread je
+Visualizer-Fenster:
+
+```
+VisualizerWidget (Fassade, QWidget — Main-Thread)
+  ├── createWindowContainer(…)
+  ├── VisualizerGLWindow : QWindow        (Events kommen im Main-Thread an)
+  ├── QOpenGLContext                      (gehört dem Render-Thread)
+  └── VisualizerRenderThread : QThread
+        Schleife: warten bis exposed → Kommandos (Visualizer-Swap, Pacing,
+        Resize) → Audio-Snapshot übernehmen → render() unter Render-Mutex
+        → swapBuffers (AUSSERHALB des Mutex) → Pacing (Limited/Unlimited/VSync)
+```
+
+### 12.1 Vertrag für UI-Zugriffe (Render-Mutex)
+
+Der Render-Thread hält während `render(dt)` den **Render-Mutex** der Fassade
+(`VisualizerWidget::renderMutex()`); `VisualizerChangedEvent` transportiert ihn
+zu den Abonnenten. Es gilt:
+
+| Zugriff | Regel |
+|---|---|
+| GUI **schreibt** (setParam, applyPreset, resetToDefaults, Gradient-Mutation) | unter Render-Mutex (SetParamCommand lockt selbst — Undo/Redo läuft am Panel vorbei) |
+| GUI **liest Konfiguration** (paramDescs, getParam, gradients) | ohne Lock zulässig — Config-Werte schreibt nur die GUI |
+| GUI **liest Arbeitsdaten** (`TapPoint::sample()`) | unter Render-Mutex — der Thread schreibt sie jeden Frame |
+| Identitätsdaten (visualizerId/Name/Description) | immer frei (unveränderlich) |
+
+Die **Visualizer selbst sind unverändert single-threaded** — die gesamte
+Synchronisation liegt in Fassade/Panel/Commands (0 Änderungen in den 5
+Visualizern, Entwurfs-Akzeptanzkriterium).
+
+### 12.2 Lebenszyklus-Regeln
+
+- `VisualizerRegistry::create()` läuft im Main-Thread (Konstruktor ist GL-frei);
+  die GL-Initialisierung übernimmt der Render-Thread vor dem ersten Frame.
+- Visualizer-Wechsel ist ein Kommando an den Thread: der alte wird dort
+  GL-bereinigt und gelöscht, der neue initialisiert.
+- Audio kommt als **Snapshot** (Double-Buffer): der 30-Hz-Tick schreibt, der
+  Thread ruft `updateSpectrum/updateWaveform` selbst am Frame-Anfang auf.
+- Undocking/Fullscreen zerstören nur die **Surface**, nie den Kontext — das
+  Context-Tracking-Pattern der Visualizer ist dadurch Sicherheitsnetz statt
+  Routinepfad ([OpenGL_Context_Handling.md](OpenGL_Context_Handling.md)).
+- **BasicLogger ist nicht thread-safe:** aus dem Render-Thread wird nie direkt
+  geloggt; Diagnose (FPS) verlässt den Thread per Queued-Signal.
+- Beim App-Ende stoppt die Fassade den Thread deterministisch am
+  `aboutToQuit` (deleteLater erreicht ohne Event-Loop keinen Destruktor).
+
+Details: [`VisualizerRenderThread.md`](../../include/UI/widgets/VisualizerRenderThread.md)
+und [`VisualizerWidget.md`](../../include/UI/widgets/VisualizerWidget.md).
+
+---
+
+## 13. Siehe auch
 
 - [Parameter_Reference.md](Parameter_Reference.md) — SSOT-Referenz aller Parameter
   im Pipeline-Schema (alle 5 Visualizer, aus dem Code erhoben)
@@ -637,5 +695,6 @@ Phase 4 (Schritte 0–6, 2026-07-19) weitgehend aufgelöst:
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| **1.2.0** | **2026-07-19** | **Neuer §12 Threading: Render-Thread-Entkopplung (Session 31) — GL-Lebenszyklus im Render-Thread, Render-Mutex-Vertrag für UI-Zugriffe, Audio-Snapshot, Context-Tracking als Sicherheitsnetz** |
 | **1.1.0** | **2026-07-19** | **Phase-4-Nachzug (Schritte 0–6): Pipeline-Stage-Schema (§1/§4.3/§4.5), Key-Routing über Sub-ID↔Key-Übersetzungstabellen statt Präfix-Wildwuchs (§6), Gradient-Handles statt dynamic_cast (§8.3), neuer §9 Tap-Points/Stage-Previews, Shared-Module BeatModule/HoldFadeEffectT/AudioUtil/JsonPresetParser (§3.2), Ist-Stand aller 5 Visualizer aktualisiert (§7), Altlasten-Abschnitt zur Bilanz aufgelöst (§11)** |
 | 1.0.0 | 2026-07-18 | Initial: konsolidiert aus harvest/old_docs (IModule, Visualizer-Architecture-Reference, ColorGradientModule, README_MODULES), gegen Code verifiziert; ParamValue/ParamType korrigiert; Ist-Stand aller 5 Visualizer; Altlasten-Abschnitt für Phase 4 |

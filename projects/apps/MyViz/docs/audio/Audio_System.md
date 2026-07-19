@@ -1,6 +1,6 @@
 # Audio-System — Wiedergabe, Analyse und Signalkette zur Visualisierung
 
-> **Version:** 1.1.0
+> **Version:** 1.2.0
 > **Datum:** 2026-07-19
 > **Typ:** Guide
 > **Status:** Aktiv
@@ -189,10 +189,14 @@ sie für `next()/previous()/playIndex()`.
 
 ```
 BassEngine (BASS-FFT, 1024 Bins + Waveform 1024 Samples)
-    │   Pull im QTimer ~30 Hz (MainWindow::onAudioUpdate)
+    │   Pull im QTimer ~30 Hz (MainWindow::onAudioUpdate, Main-Thread)
     ▼
 VisualizerWidget::updateSpectrum(512 Bins) / updateWaveform(1024)
     │   (untere FFT-Hälfte = nutzbare Frequenz-Bins)
+    ▼
+Audio-Snapshot-Puffer (Double-Buffer, Mutex)   ← Thread-Grenze!
+    │   Render-Thread übernimmt den jüngsten Stand am Frame-Anfang
+    │   und ruft updateSpectrum/updateWaveform des Visualizers auf
     ▼
 Visualizer (Equalizer/Oscilloscope/Pulsing/…), je Instanz eigenes
     ▼
@@ -203,8 +207,13 @@ AudioSourceModule            ── Band-Mapping (Linear/Log/Mel),
     ▼
 SmoothingModule (eingebettet) ── None / SMA / EMA / WMA / DEMA
     ▼
-normalisiertes Spektrum (0–1) → Rendering
+normalisiertes Spektrum (0–1) → Rendering (im Render-Thread)
 ```
+
+Seit der Render-Thread-Entkopplung (Session 31) endet der Main-Thread-Anteil
+am Snapshot-Puffer: alles ab dem Visualizer läuft im Render-Thread des
+jeweiligen Fensters ([Render-Thread-Entwurf](../visuals/Render_Thread_Entwurf.md),
+Threading-Vertrag: [Visualizer_Architecture.md §12](../visuals/Visualizer_Architecture.md)).
 
 Jeder Visualizer besitzt ein eigenes `AudioSourceModule` (`m_audioSource`) und ruft
 pro Frame `m_audioSource.update(spectrum, count, deltaTime)` auf. Die Parameter des
@@ -249,5 +258,6 @@ Git-Historie (bis Commit „Phase 4 Schritt 0").
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.2.0 | 2026-07-19 | Signalkette §7.1: Audio-Snapshot-Puffer als Thread-Grenze (Render-Thread-Entkopplung, Session 31) |
 | 1.1.0 | 2026-07-19 | Session-Playlist dokumentiert (Auto-Save bei Exit, Auto-Restore bei Start — MainWindow, Session 31) |
 | 1.0.0 | 2026-07-18 | Konsolidiert aus harvest/old_docs (Audio_System, AudioSourceModule, SmoothingModule), gegen Code abgeglichen (Ist-Stand: Direkt-Push statt Analyzer-Events, 30-Hz-Timer, PLS/JSON-Persistenz) |

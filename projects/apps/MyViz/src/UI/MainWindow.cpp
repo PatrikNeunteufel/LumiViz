@@ -44,7 +44,9 @@
 #include <QLabel>
 #include <QKeySequence>
 #include <QKeyEvent>
+#include <QCloseEvent>
 #include <QTimer>
+#include <QPointer>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QDir>
@@ -180,34 +182,24 @@ VisualizerWidget* MainWindow::primaryVisualizer() const
 }
 
 // =============================================================================
-// Render Control
-// =============================================================================
-
-void MainWindow::requestRender()
-{
-    // -------------------------------------------------------------------------
-    // Qt6 Tutorial: Rendering All Visualizers
-    // -------------------------------------------------------------------------
-    // With multiple visualizers, we need to update all of them.
-    // Each VisualizerWidget has its own OpenGL context.
-    //
-    // DockManager::requestRenderAll() calls update() on each visualizer.
-
-    if (m_pDockManager)
-    {
-        m_pDockManager->requestRenderAll();
-    }
-}
-
-// =============================================================================
 // Public Slots
 // =============================================================================
+// Note: The former requestRender()/frame timer path is gone — every
+// VisualizerWidget renders on its own thread (Render_Thread_Entwurf.md).
 
 void MainWindow::updateFpsDisplay(double fps)
 {
     if (m_pFpsLabel != nullptr)
     {
         m_pFpsLabel->setText(QString("FPS: %1").arg(fps, 0, 'f', 1));
+    }
+
+    // Throttled FPS log (~5 s) — successor of the old frame-timer log
+    static int callCount = 0;
+    if ((callCount++ % 5) == 0)
+    {
+        BasicLogger::logDebug("FPS (render thread): " +
+                              std::to_string(static_cast<int>(fps)));
     }
 }
 
@@ -226,18 +218,28 @@ void MainWindow::onNewVisualizer()
     }
 }
 
-void MainWindow::setVSyncOnAllVisualizers(bool enabled)
+void MainWindow::setFrameModeOnAllVisualizers(int mode, int targetFps)
 {
+    // Menu index → render pacing (0 = Limited, 1 = Unlimited, 2 = VSync)
+    RenderPacing pacing = RenderPacing::Limited;
+    switch (mode)
+    {
+        case 1: pacing = RenderPacing::Unlimited; break;
+        case 2: pacing = RenderPacing::VSync; break;
+        default: break;
+    }
+
     auto vizList = visualizers();
     for (auto* pViz : vizList)
     {
         if (pViz != nullptr)
         {
-            pViz->setVSync(enabled);
+            pViz->setFrameMode(pacing, targetFps);
         }
     }
-    BasicLogger::logDebug("VSync " + std::string(enabled ? "enabled" : "disabled") + 
-                          " on " + std::to_string(vizList.size()) + " visualizer(s)");
+    BasicLogger::logDebug("Frame mode " + std::to_string(mode) + " (target " +
+                          std::to_string(targetFps) + " fps) on " +
+                          std::to_string(vizList.size()) + " visualizer(s)");
 }
 
 // =============================================================================
@@ -258,10 +260,14 @@ void MainWindow::onVisualizerCreated(VisualizerWidget* pVisualizer)
     if (pVisualizer != nullptr)
     {
         BasicLogger::logDebug("New visualizer connected");
-        
-        // Future: Connect audio data
-        // connect(m_pAudioEngine, &AudioEngine::fftDataReady,
-        //         pVisualizer, &VisualizerWidget::setAudioData);
+
+        // Status bar shows the FPS of the PRIMARY visualizer (the first one);
+        // the value arrives queued from its render thread.
+        if (visualizers().size() == 1 || primaryVisualizer() == pVisualizer)
+        {
+            connect(pVisualizer, &VisualizerWidget::fpsMeasured,
+                    this, &MainWindow::updateFpsDisplay);
+        }
     }
 }
 
@@ -419,6 +425,7 @@ void MainWindow::setupDefaultLayout()
     {
         m_pDockManager->savePerspective("Default");
     }
+
 }
 
 void MainWindow::setupEventHandlers()
@@ -449,9 +456,16 @@ void MainWindow::setupEventHandlers()
 
     // OpenDialogEvent is handled by the DialogManager (created in setupUI).
 
-    // Fullscreen Toggle event
-    pEventBus->subscribe<ToggleFullscreenEvent>([this](const ToggleFullscreenEvent&) {
-        toggleFullscreen();
+    // Fullscreen Toggle event — carries the requesting visualizer (or null)
+    pEventBus->subscribe<ToggleFullscreenEvent>([this](const ToggleFullscreenEvent& e) {
+        if (m_isFullscreen)
+        {
+            exitFullscreen();
+        }
+        else
+        {
+            enterFullscreen(static_cast<VisualizerWidget*>(e.sourceVisualizer));
+        }
     });
 
     // Fullscreen Exit event (Esc key)
@@ -540,6 +554,7 @@ void MainWindow::onAudioUpdate()
                                 }
                             }
                         }
+
                     }
                 }
             }
@@ -729,64 +744,60 @@ void MainWindow::toggleFullscreen()
     }
 }
 
-void MainWindow::enterFullscreen()
+void MainWindow::enterFullscreen(VisualizerWidget* requested)
 {
     if (m_isFullscreen)
     {
         return;
     }
-    
-    // Get the primary visualizer
-    VisualizerWidget* visualizer = primaryVisualizer();
+
+    // The requesting visualizer (double-click/Esc source) wins; menu/F11
+    // fall back to the primary one
+    VisualizerWidget* visualizer = (requested != nullptr) ? requested
+                                                          : primaryVisualizer();
     if (visualizer == nullptr)
     {
         BasicLogger::logWarning("No visualizer available for fullscreen");
         return;
     }
-    
-    m_pFullscreenVisualizer = visualizer;
-    m_isFullscreen = true;
-    
-    // Store current window state
-    m_wasMaximized = isMaximized();
-    m_normalGeometry = geometry();
-    
-    // Hide all UI elements except the visualizer
-    menuBar()->hide();
-    statusBar()->hide();
-    
-    // Hide all dock widgets except the one containing our visualizer
-    if (m_pDockManager)
+
+    // Find the ADS dock hosting the visualizer (to re-embed on exit)
+    ads::CDockWidget* dock = nullptr;
+    for (QWidget* p = visualizer->parentWidget(); p != nullptr; p = p->parentWidget())
     {
-        auto* adsMgr = m_pDockManager->adsDockManager();
-        if (adsMgr)
+        dock = qobject_cast<ads::CDockWidget*>(p);
+        if (dock != nullptr)
         {
-            // Just hide the dock widgets - don't close them or save state
-            m_hiddenDocksForFullscreen.clear();
-            
-            for (auto* dockWidget : adsMgr->dockWidgetsMap())
-            {
-                if (dockWidget && dockWidget->widget() != visualizer)
-                {
-                    if (!dockWidget->isClosed())
-                    {
-                        m_hiddenDocksForFullscreen.push_back(dockWidget);
-                        dockWidget->hide();
-                    }
-                }
-            }
+            break;
         }
     }
-    
-    // Make the main window fullscreen
-    showFullScreen();
-    
-    // Ensure visualizer is visible and focused
-    visualizer->show();
+    if (dock == nullptr)
+    {
+        BasicLogger::logWarning("Fullscreen: no hosting dock found");
+        return;
+    }
+
+    m_pFullscreenVisualizer = visualizer;
+    m_pFullscreenDock = dock;
+    m_isFullscreen = true;
+
+    // TRUE fullscreen: take the widget OUT of the dock and show it as a
+    // borderless top-level window — no tab bar, no dock title, no side tabs.
+    // The main window stays untouched behind it. The GL surface is recreated
+    // by the reparenting; the render thread handles that (Entwurf §4).
+    // Hide BEFORE reparenting: no transient top-level flash / stale regions.
+    visualizer->hide();
+    dock->takeWidget();
+    visualizer->setParent(nullptr);
+    visualizer->showFullScreen();
+
+    // Keyboard focus must land in the embedded GL window, otherwise Esc
+    // never reaches it (the reparented native child starts unfocused)
+    visualizer->activateWindow();
     visualizer->setFocus();
-    visualizer->raise();
-    
-    BasicLogger::logInfo("Entered fullscreen mode");
+    visualizer->activateGLWindow();
+
+    BasicLogger::logInfo("Entered fullscreen mode (top-level visualizer)");
 }
 
 void MainWindow::exitFullscreen()
@@ -795,36 +806,38 @@ void MainWindow::exitFullscreen()
     {
         return;
     }
-    
+
     m_isFullscreen = false;
-    
-    // Restore window state
-    if (m_wasMaximized)
+
+    // Re-embed the visualizer into its dock. Order matters: hide FIRST and
+    // drop the fullscreen state invisibly — showNormal() on the still
+    // top-level widget briefly showed a plain window and left stale
+    // native-window regions behind.
+    if (m_pFullscreenVisualizer != nullptr && m_pFullscreenDock != nullptr)
     {
-        showMaximized();
+        m_pFullscreenVisualizer->hide();
+        m_pFullscreenVisualizer->setWindowState(Qt::WindowNoState);
+        m_pFullscreenDock->setWidget(m_pFullscreenVisualizer);
+        m_pFullscreenVisualizer->show();
+        m_pFullscreenDock->raise();
+
+        // Native handle resync: after reparenting FROM top-level, Qt leaves
+        // the facade's native window at a stale absolute position (measured
+        // -7,-30 — the "doubled bar" strip). Recreating the native handles
+        // rebuilds the parent chain; the render thread rides the same
+        // surface-destroy/expose cycle as when undocking.
+        QPointer<VisualizerWidget> viz = m_pFullscreenVisualizer;
+        QTimer::singleShot(0, this, [viz]() {
+            if (viz != nullptr)
+            {
+                viz->recreateNativeWindow();
+            }
+        });
     }
-    else
-    {
-        showNormal();
-        setGeometry(m_normalGeometry);
-    }
-    
-    // Show UI elements
-    menuBar()->show();
-    statusBar()->show();
-    
-    // Show the dock widgets that were hidden for fullscreen
-    for (auto* dockWidget : m_hiddenDocksForFullscreen)
-    {
-        if (dockWidget)
-        {
-            dockWidget->show();
-        }
-    }
-    m_hiddenDocksForFullscreen.clear();
-    
+
     m_pFullscreenVisualizer = nullptr;
-    
+    m_pFullscreenDock = nullptr;
+
     BasicLogger::logInfo("Exited fullscreen mode");
 }
 
@@ -837,7 +850,14 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
         event->accept();
         return;
     }
-    
+
     // Pass to parent for normal handling
     QMainWindow::keyPressEvent(event);
+}
+
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    BasicLogger::logInfo("MainWindow closed - quitting application");
+    QMainWindow::closeEvent(event);
+    QCoreApplication::quit();
 }

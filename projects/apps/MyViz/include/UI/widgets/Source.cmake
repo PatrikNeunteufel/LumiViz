@@ -17,6 +17,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/GradientPresetDelegate.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/IWidget.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/TapPreviewWidget.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/VisualizerRenderThread.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerWidget.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/WidgetBase.hpp"
 )

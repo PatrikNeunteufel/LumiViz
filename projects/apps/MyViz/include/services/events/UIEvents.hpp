@@ -14,6 +14,8 @@
 #include "Event.hpp"
 #include <string>
 
+class QMutex;  // render mutex in VisualizerChangedEvent (pointer only)
+
 // =============================================================================
 // Panel Events
 // =============================================================================
@@ -215,6 +217,10 @@ struct ChangeVisualizerEvent : public Event
 
 /**
  * @brief Emitted when the visualizer has changed
+ *
+ * Since the render-thread decoupling the event also carries the render mutex
+ * of the publishing VisualizerWidget: any parameter/gradient/tap access on
+ * visualizerPtr must hold it (the render thread renders concurrently).
  */
 struct VisualizerChangedEvent : public Event
 {
@@ -222,12 +228,15 @@ struct VisualizerChangedEvent : public Event
 
     std::string visualizerId;
     std::string visualizerName;
-    void* visualizerPtr;  ///< Pointer to IVisualizer (cast to avoid include)
+    void* visualizerPtr;    ///< Pointer to IVisualizer (cast to avoid include)
+    QMutex* renderMutex;    ///< Guards UI access against the render thread
 
-    VisualizerChangedEvent(std::string id, std::string name, void* vizPtr = nullptr)
+    VisualizerChangedEvent(std::string id, std::string name,
+                           void* vizPtr = nullptr, QMutex* mutex = nullptr)
         : visualizerId(std::move(id))
         , visualizerName(std::move(name))
         , visualizerPtr(vizPtr)
+        , renderMutex(mutex)
     {}
 };
 
@@ -260,10 +269,19 @@ struct SaveDefaultLayoutEvent : public Event
 
 /**
  * @brief Request to toggle fullscreen mode
+ *
+ * sourceVisualizer (a VisualizerWidget*, cast to avoid the include) names the
+ * widget that requested the toggle (double-click/Esc) — fullscreen then shows
+ * THAT visualizer. nullptr (menu/F11) falls back to the primary one.
  */
 struct ToggleFullscreenEvent : public Event
 {
     EVENT_TYPE_NAME("ToggleFullscreenEvent")
+
+    void* sourceVisualizer = nullptr;
+
+    ToggleFullscreenEvent() = default;
+    explicit ToggleFullscreenEvent(void* source) : sourceVisualizer(source) {}
 };
 
 /**

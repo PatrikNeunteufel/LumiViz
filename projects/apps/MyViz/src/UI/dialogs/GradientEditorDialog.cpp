@@ -244,7 +244,10 @@ void GradientBarWidget::mouseMoveEvent(QMouseEvent* event)
                              stops[m_selectedStop + 1].position - 0.01f);
         }
         
-        m_gradient->updateStop(m_selectedStop, pos, stops[m_selectedStop].color);
+        {
+            QMutexLocker lock(m_renderMutex);
+            m_gradient->updateStop(m_selectedStop, pos, stops[m_selectedStop].color);
+        }
         emit stopMoved(m_selectedStop, pos);
         emit gradientChanged();
         update();
@@ -263,7 +266,10 @@ void GradientBarWidget::mouseMoveEvent(QMouseEvent* event)
             {
                 float relativePos = (pos - startPos) / segmentLength;
                 relativePos = std::clamp(relativePos, 0.1f, 0.9f);
-                m_gradient->setMidpoint(m_selectedMidpoint, relativePos);
+                {
+                    QMutexLocker lock(m_renderMutex);
+                    m_gradient->setMidpoint(m_selectedMidpoint, relativePos);
+                }
                 emit midpointMoved(m_selectedMidpoint, relativePos);
                 emit gradientChanged();
                 update();
@@ -303,7 +309,10 @@ void GradientBarWidget::mouseDoubleClickEvent(QMouseEvent* event)
         
         // Sample color at this position
         auto color = m_gradient->sample(pos);
-        m_gradient->addStop(pos, color);
+        {
+            QMutexLocker lock(m_renderMutex);
+            m_gradient->addStop(pos, color);
+        }
         emit gradientChanged();
         update();
     }
@@ -312,6 +321,15 @@ void GradientBarWidget::mouseDoubleClickEvent(QMouseEvent* event)
 // =============================================================================
 // GradientEditorDialog Implementation
 // =============================================================================
+
+void GradientEditorDialog::setRenderMutex(QMutex* mutex)
+{
+    m_renderMutex = mutex;
+    if (m_gradientBar != nullptr)
+    {
+        m_gradientBar->setRenderMutex(mutex);
+    }
+}
 
 GradientEditorDialog::GradientEditorDialog(modules::ColorGradientModule* gradient,
                                            QWidget* parent)
@@ -548,7 +566,10 @@ void GradientEditorDialog::onColorButtonClicked()
             static_cast<float>(color.blueF()),
             static_cast<float>(color.alphaF())
         };
-        m_gradient->updateStop(m_currentStop, stop.position, newColor);
+        {
+            QMutexLocker lock(m_renderMutex);
+            m_gradient->updateStop(m_currentStop, stop.position, newColor);
+        }
         m_gradientBar->updateDisplay();
         updateStopControls();
         notifyChange();
@@ -569,7 +590,10 @@ void GradientEditorDialog::onAddStopClicked()
     // Add a new stop at 0.5 with interpolated color
     float pos = 0.5f;
     auto color = m_gradient->sample(pos);
-    m_gradient->addStop(pos, color);
+    {
+        QMutexLocker lock(m_renderMutex);
+        m_gradient->addStop(pos, color);
+    }
     m_gradientBar->updateDisplay();
     updateStopControls();  // Update add button state
     notifyChange();
@@ -579,7 +603,10 @@ void GradientEditorDialog::onRemoveStopClicked()
 {
     if (m_currentStop >= 0 && m_gradient->stopCount() > 2)
     {
-        m_gradient->removeStop(m_currentStop);
+        {
+            QMutexLocker lock(m_renderMutex);
+            m_gradient->removeStop(m_currentStop);
+        }
         m_currentStop = -1;
         m_gradientBar->updateDisplay();
         updateStopControls();
@@ -594,7 +621,10 @@ void GradientEditorDialog::onPresetChanged(int index)
     auto names = m_gradient->presetNames();
     if (index - 1 < static_cast<int>(names.size()))
     {
-        m_gradient->loadPreset(names[index - 1]);
+        {
+            QMutexLocker lock(m_renderMutex);
+            m_gradient->loadPreset(names[index - 1]);
+        }
         m_gradientBar->updateDisplay();
         m_currentStop = -1;
         updateStopControls();
@@ -624,7 +654,10 @@ void GradientEditorDialog::onSavePresetClicked()
 
 void GradientEditorDialog::onResetClicked()
 {
-    m_gradient->reset();
+    {
+        QMutexLocker lock(m_renderMutex);
+        m_gradient->reset();
+    }
     m_gradientBar->updateDisplay();
     m_currentStop = -1;
     m_presetCombo->setCurrentIndex(0);
@@ -637,7 +670,10 @@ void GradientEditorDialog::onMidpointSliderChanged(int value)
     if (m_currentStop >= 0 && m_currentStop < static_cast<int>(m_gradient->midpoints().size()))
     {
         float pos = static_cast<float>(value) / 100.0f;
-        m_gradient->setMidpoint(m_currentStop, pos);
+        {
+            QMutexLocker lock(m_renderMutex);
+            m_gradient->setMidpoint(m_currentStop, pos);
+        }
         m_midpointLabel->setText(tr("Position: %1%").arg(value));
         m_gradientBar->updateDisplay();
         notifyChange();

@@ -1,7 +1,7 @@
 # OpenGL-Context-Handling — Context-Tracking gegen Qt-ADS-Undock-Crashes
 
-> **Version:** 1.0.0
-> **Datum:** 2026-07-18
+> **Version:** 1.1.0
+> **Datum:** 2026-07-19
 > **Typ:** Guide
 > **Status:** Aktiv
 > **Sprache:** Deutsch
@@ -11,6 +11,17 @@ gegen den Code verifiziert (Stand 2026-07-18): Das Pattern ist in **allen 5 Visu
 umgesetzt (je ein `m_lastContext`-Member in Pulsing/Waveform/Oscilloscope/Superscope/
 Equalizer). `VisualizerBase` selbst enthält **kein** Context-Tracking — es ist bewusst
 ein Implementierungs-Pattern der abgeleiteten Klassen.
+
+> **Rollenwechsel seit der Render-Thread-Entkopplung (Session 31):** Der
+> GL-Kontext gehört jetzt dem `VisualizerWidget` selbst und lebt im
+> Render-Thread ([Render_Thread_Entwurf.md](Render_Thread_Entwurf.md)) — er
+> **überlebt Undocking, Tab-Wechsel und Fullscreen**; Qt zerstört dabei nur
+> noch die *Surface*, die der Thread per Handshake freigibt und neu bindet
+> (`SurfaceAboutToBeDestroyed` → `doneCurrent()` → Re-Expose). Ein
+> Kontext-Wechsel ist damit nicht mehr der Routinepfad beim Abdocken, sondern
+> die Ausnahme (z. B. Treiber-Reset). Das hier beschriebene Pattern **bleibt
+> verpflichtend** — als Sicherheitsnetz und weil es die Null-Kontext-Checks
+> (§8) mit abdeckt.
 
 ---
 
@@ -587,4 +598,5 @@ if (m_lastContext != ctx)
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| **1.1.0** | **2026-07-19** | **Rollenwechsel dokumentiert: Kontext überlebt Undocking seit der Render-Thread-Entkopplung (eigener Kontext im Render-Thread, Surface-Handshake) — Pattern bleibt als Sicherheitsnetz verpflichtend** |
 | **1.0.0** | **2026-07-18** | **Initial: übernommen aus harvest/old_docs (UserGuide v1.0.0, 2026-01-03), gegen VisualizerBase.hpp und die 5 Visualizer-Implementierungen verifiziert; toten EN-Link entfernt; Klarstellung: Tracking liegt in den Visualizern, nicht in VisualizerBase** |

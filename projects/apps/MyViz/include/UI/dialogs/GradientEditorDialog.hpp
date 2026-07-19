@@ -21,6 +21,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QMutex>
 
 #include <vector>
 #include <functional>
@@ -45,7 +46,12 @@ public:
 
     // Set the gradient module to edit
     void setGradient(modules::ColorGradientModule* gradient);
-    
+
+    // Render mutex of the owning VisualizerWidget: gradient MUTATIONS are
+    // guarded with it against the concurrent render thread (reads stay
+    // unguarded — only the GUI thread writes). Null tolerated.
+    void setRenderMutex(QMutex* mutex) { m_renderMutex = mutex; }
+
     // Refresh the display
     void updateDisplay();
 
@@ -72,6 +78,7 @@ private:
     int hitTestMidpoint(const QPoint& pos) const;
 
     modules::ColorGradientModule* m_gradient = nullptr;
+    QMutex* m_renderMutex = nullptr;  ///< non-owning; guards gradient writes
     int m_selectedStop = -1;
     int m_selectedMidpoint = -1;
     bool m_dragging = false;
@@ -109,6 +116,10 @@ public:
     using ChangeCallback = std::function<void()>;
     void setChangeCallback(ChangeCallback callback) { m_changeCallback = callback; }
 
+    // Render mutex guarding gradient mutations against the render thread
+    // (forwarded to the embedded GradientBarWidget). Null tolerated.
+    void setRenderMutex(QMutex* mutex);
+
 signals:
     void gradientChanged();
 
@@ -129,6 +140,7 @@ private:
     void notifyChange();
 
     modules::ColorGradientModule* m_gradient;
+    QMutex* m_renderMutex = nullptr;  ///< non-owning; guards gradient writes
     ChangeCallback m_changeCallback;
 
     // UI Elements

@@ -572,17 +572,6 @@ ads::CDockManager* DockManager::adsDockManager() const noexcept
 // Slots
 // =============================================================================
 
-void DockManager::requestRenderAll()
-{
-    for (auto* pVisualizer : m_impl->visualizers)
-    {
-        if (pVisualizer != nullptr)
-        {
-            pVisualizer->update();
-        }
-    }
-}
-
 void DockManager::resetLayout()
 {
     BasicLogger::logDebug("Resetting layout to default");

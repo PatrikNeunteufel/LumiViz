@@ -393,47 +393,12 @@ int Application::run()
     // -------------------------------------------------------------------------
     // Qt6 Tutorial: Event Loop with exec()
     // -------------------------------------------------------------------------
-    // Using Qt's native event loop instead of manual processEvents() loop.
-    // This avoids timing issues with update() being asynchronous.
-    //
-    // For frame-rate control:
-    //   - VSync mode: Let swapBuffers handle timing (most efficient)
-    //   - Limited mode: Use QTimer for consistent frame rate
-    //   - Unlimited: Request continuous updates
-    
-    // Create a timer for frame updates (stored in Impl for mode changes)
-    m_impl->pFrameTimer = new QTimer(m_impl->pQtApp.get());
-    m_impl->pFrameTimer->setTimerType(Qt::PreciseTimer);
-    
-    // Connect timer to render update
-    QObject::connect(m_impl->pFrameTimer, &QTimer::timeout, [this, &lastFpsLog]() {
-        // Check if window was closed
-        if (!m_impl->pMainWindow->isVisible())
-        {
-            BasicLogger::logInfo("MainWindow closed - exiting loop");
-            m_impl->pQtApp->quit();
-            return;
-        }
-        
-        // Request rendering
-        m_impl->pMainWindow->requestRender();
-        
-        // Measure FPS
-        m_impl->measureFps();
-        m_impl->pMainWindow->updateFpsDisplay(m_impl->currentFps);
-        
-        // Log FPS every 5 seconds
-        auto now = std::chrono::steady_clock::now();
-        auto sinceLastLog = std::chrono::duration_cast<std::chrono::seconds>(now - lastFpsLog);
-        if (sinceLastLog.count() >= 5)
-        {
-            BasicLogger::logDebug("FPS: " + std::to_string(static_cast<int>(m_impl->currentFps)) +
-                                  " | Mode: " + frameModeToString(m_impl->frameMode) +
-                                  " | Frame: " + std::to_string(m_impl->frameCount));
-            lastFpsLog = now;
-        }
-    });
-    
+    // Frame pacing lives on the visualizers' render threads now
+    // (Render_Thread_Entwurf.md): no application frame timer anymore. The
+    // main thread only runs the Qt event loop; the status-bar FPS comes from
+    // the primary visualizer's render thread (queued signal).
+    Q_UNUSED(lastFpsLog)
+
     // -------------------------------------------------------------------------
     // Connect MainWindow frame mode change signal
     // -------------------------------------------------------------------------
@@ -441,46 +406,34 @@ int Application::run()
                      [this](int mode) {
         switch (mode)
         {
-            case 0: 
-                m_impl->frameMode = FrameMode::Limited;
-                m_impl->pMainWindow->setVSyncOnAllVisualizers(false);
-                break;
-            case 1: 
-                m_impl->frameMode = FrameMode::Unlimited;
-                m_impl->pMainWindow->setVSyncOnAllVisualizers(false);
-                break;
-            case 2: 
-                m_impl->frameMode = FrameMode::VSync;
-                m_impl->pMainWindow->setVSyncOnAllVisualizers(true);
-                break;
+            case 0: m_impl->frameMode = FrameMode::Limited;   break;
+            case 1: m_impl->frameMode = FrameMode::Unlimited; break;
+            case 2: m_impl->frameMode = FrameMode::VSync;     break;
         }
-        m_impl->updateTimerInterval();
+        m_impl->pMainWindow->setFrameModeOnAllVisualizers(mode, m_impl->targetFps);
     });
-    
-    // Set initial timer interval based on frame mode
-    m_impl->updateTimerInterval();
-    m_impl->pFrameTimer->start();
-    
-    // Set initial VSync state based on frame mode
-    m_impl->pMainWindow->setVSyncOnAllVisualizers(m_impl->frameMode == FrameMode::VSync);
-    
+
+    // Apply the initial frame mode to the render threads
+    int initialMode = 0;
+    switch (m_impl->frameMode)
+    {
+        case FrameMode::Limited:   initialMode = 0; break;
+        case FrameMode::Unlimited: initialMode = 1; break;
+        case FrameMode::VSync:     initialMode = 2; break;
+    }
+    m_impl->pMainWindow->setFrameModeOnAllVisualizers(initialMode, m_impl->targetFps);
+
     // -------------------------------------------------------------------------
     // Run Qt Event Loop
     // -------------------------------------------------------------------------
+    // quitOnLastWindowClosed ends the loop when the main window (and any
+    // floating docks) are gone; MainWindow::closeEvent quits explicitly so
+    // floating visualizer windows cannot keep the app alive.
     int result = m_impl->pQtApp->exec();
-    
-    m_running = false;
-    if (m_impl->pFrameTimer != nullptr)
-    {
-        m_impl->pFrameTimer->stop();
-    }
 
-    // -------------------------------------------------------------------------
-    // Loop ended
-    // -------------------------------------------------------------------------
+    m_running = false;
+
     BasicLogger::logInfo("Event loop exited");
-    BasicLogger::logInfo("  Total frames: " + std::to_string(m_impl->frameCount));
-    BasicLogger::logInfo("  Final FPS: " + std::to_string(static_cast<int>(m_impl->currentFps)));
 
     return result;
 }

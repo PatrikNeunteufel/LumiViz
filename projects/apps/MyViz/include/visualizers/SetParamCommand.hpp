@@ -14,6 +14,8 @@
 #include "services/ICommand.hpp"
 #include "visualizers/IVisualizer.hpp"
 
+#include <QMutex>
+
 #include <string>
 #include <utility>
 
@@ -23,6 +25,10 @@
  *
  * Consecutive changes to the SAME parameter of the SAME visualizer merge into
  * one undo step (slider-drag coalescing via ICommand::canMergeWith).
+ *
+ * Since the render-thread decoupling the command locks the visualizer's
+ * render mutex around setParam — undo/redo fires from the menu and bypasses
+ * the ConfigPanel, so the guard must live HERE (QMutexLocker is null-safe).
  *
  * @warning Holds a reference to the visualizer. Whoever owns the CommandBus
  *          history MUST clear() it when the visualizer changes or dies
@@ -36,21 +42,25 @@ public:
     SetParamCommand(IVisualizer& visualizer,
                     std::string paramId,
                     ParamValue oldValue,
-                    ParamValue newValue)
+                    ParamValue newValue,
+                    QMutex* renderMutex = nullptr)
         : m_visualizer(visualizer)
         , m_paramId(std::move(paramId))
         , m_oldValue(std::move(oldValue))
         , m_newValue(std::move(newValue))
+        , m_renderMutex(renderMutex)
     {
     }
 
     bool execute() override
     {
+        QMutexLocker lock(m_renderMutex);
         return m_visualizer.setParam(m_paramId, m_newValue);
     }
 
     void undo() override
     {
+        QMutexLocker lock(m_renderMutex);
         m_visualizer.setParam(m_paramId, m_oldValue);
     }
 
@@ -79,4 +89,5 @@ private:
     std::string m_paramId;
     ParamValue m_oldValue;
     ParamValue m_newValue;
+    QMutex* m_renderMutex;  ///< non-owning; guards against the render thread
 };

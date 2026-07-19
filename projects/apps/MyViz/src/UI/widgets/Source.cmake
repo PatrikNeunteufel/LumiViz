@@ -13,6 +13,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/CollapsibleGroupBox.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/GradientPresetDelegate.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/TapPreviewWidget.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/VisualizerRenderThread.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerWidget.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/WidgetAutoReg.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/WidgetBase.cpp"

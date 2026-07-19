@@ -45,6 +45,7 @@
 #include <QGroupBox>
 #include <QMenu>
 #include <QSettings>
+#include <QMutex>
 #include <QSignalBlocker>
 #include <QStandardItemModel>
 #include <QTimer>
@@ -259,7 +260,9 @@ void ConfigPanel::onActivate()
         auto* vizWidget = mainWindow->findChild<VisualizerWidget*>();
         if (vizWidget != nullptr && vizWidget->hasVisualizer())
         {
-            setVisualizer(vizWidget->visualizer());
+            // Always hand over the widget's render mutex — passing null here
+            // would silently drop the render-thread guards
+            setVisualizer(vizWidget->visualizer(), &vizWidget->renderMutex());
         }
     }
 
@@ -280,10 +283,11 @@ void ConfigPanel::onDeactivate()
 // Visualizer Management
 // =============================================================================
 
-void ConfigPanel::setVisualizer(IVisualizer* visualizer)
+void ConfigPanel::setVisualizer(IVisualizer* visualizer, QMutex* renderMutex)
 {
     if (m_visualizer == visualizer)
     {
+        m_renderMutex = renderMutex;
         return;
     }
 
@@ -295,6 +299,7 @@ void ConfigPanel::setVisualizer(IVisualizer* visualizer)
     }
 
     m_visualizer = visualizer;
+    m_renderMutex = renderMutex;
     rebuildUI();
 }
 
@@ -456,7 +461,7 @@ void ConfigPanel::subscribeToEvents()
                 if (evt.visualizerPtr != nullptr)
                 {
                     auto* viz = static_cast<IVisualizer*>(evt.visualizerPtr);
-                    setVisualizer(viz);
+                    setVisualizer(viz, evt.renderMutex);
                 }
             }
         )
@@ -1192,11 +1197,13 @@ void ConfigPanel::onParamChanged(const std::string& paramId, const ParamValue& v
     auto* commandBus = services().tryResolve<ICommandBus>();
     if (commandBus && m_visualizer->getParam(paramId, oldValue))
     {
+        // The command locks the render mutex itself (undo/redo bypasses us)
         applied = commandBus->execute(std::make_unique<SetParamCommand>(
-            *m_visualizer, paramId, oldValue, value));
+            *m_visualizer, paramId, oldValue, value, m_renderMutex));
     }
     else
     {
+        QMutexLocker lock(m_renderMutex);
         applied = m_visualizer->setParam(paramId, value);
     }
 
@@ -1481,8 +1488,10 @@ void ConfigPanel::openGradientEditor(const std::string& paramId)
         return;
     }
 
-    // Create and show dialog
+    // Create and show dialog; gradient mutations inside the editor are
+    // guarded against the render thread via the render mutex
     lumi::ui::GradientEditorDialog dialog(gradient, this);
+    dialog.setRenderMutex(m_renderMutex);
 
     // When gradient changes, notify the visualizer
     dialog.setChangeCallback([]() {
@@ -1593,11 +1602,14 @@ void ConfigPanel::refreshPresetList()
         }
     }
     
+    // Start with "Default" selected (index 1) — still under the signal
+    // block: this is initial UI state, NOT a user action. Unblocked it fired
+    // onPresetSelected(1) -> resetToDefaults() on EVERY rebuild (the visible
+    // color jump when opening the panel).
+    m_presetCombo->setCurrentIndex(1);
+
     m_presetCombo->blockSignals(false);
     m_deletePresetBtn->setEnabled(false);
-    
-    // Start with "Default" selected (index 1)
-    m_presetCombo->setCurrentIndex(1);
     
     BasicLogger::logDebug("ConfigPanel: Found " + std::to_string(presets.size()) + 
                           " presets for " + vizId.toStdString());
@@ -1620,7 +1632,10 @@ void ConfigPanel::onPresetSelected(int index)
     // Index 1 = Default - reset to hardcoded defaults
     if (index == 1)
     {
-        m_visualizer->resetToDefaults();
+        {
+            QMutexLocker lock(m_renderMutex);
+            m_visualizer->resetToDefaults();
+        }
         syncFromVisualizer();
         m_deletePresetBtn->setEnabled(false);
         BasicLogger::logInfo("ConfigPanel: Reset to defaults");
@@ -1645,7 +1660,10 @@ void ConfigPanel::onPresetSelected(int index)
     auto preset = m_presetManager->loadPreset(vizId, presetName);
     if (preset)
     {
-        m_presetManager->applyPreset(m_visualizer, *preset);
+        {
+            QMutexLocker lock(m_renderMutex);
+            m_presetManager->applyPreset(m_visualizer, *preset);
+        }
         syncFromVisualizer();
         m_deletePresetBtn->setEnabled(true);  // User presets can be deleted
         BasicLogger::logInfo("ConfigPanel: Applied preset '" + presetName.toStdString() + "'");
@@ -2025,11 +2043,19 @@ void ConfigPanel::onPreviewTick()
         {
             if (entry.sample)
             {
-                entry.widget->setData(entry.sample());
+                // sample() copies stage working data that the render thread
+                // writes every frame — take the copy under the render mutex
+                std::vector<float> data;
+                {
+                    QMutexLocker lock(m_renderMutex);
+                    data = entry.sample();
+                }
+                entry.widget->setData(std::move(data));
             }
             else
             {
                 // Color strip: repaints only if the gradient actually changed
+                // (gradient stops are written by the GUI thread only)
                 entry.widget->refreshGradient();
             }
         }

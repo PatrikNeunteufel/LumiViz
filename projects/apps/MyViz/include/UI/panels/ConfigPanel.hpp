@@ -62,6 +62,7 @@ class QToolButton;
 class CollapsibleGroupBox;
 class TapPreviewWidget;
 class IVisualizer;
+class QMutex;
 
 namespace lumi {
 class VisualizerPresetManager;
@@ -85,8 +86,11 @@ public:
     /**
      * @brief Set the visualizer to configure
      * @param visualizer Pointer to active visualizer (not owned)
+     * @param renderMutex Render mutex of the owning VisualizerWidget — every
+     *        parameter/gradient/tap access is guarded with it against the
+     *        render thread (nullptr tolerated: QMutexLocker is null-safe)
      */
-    void setVisualizer(IVisualizer* visualizer);
+    void setVisualizer(IVisualizer* visualizer, QMutex* renderMutex = nullptr);
 
     /**
      * @brief Get current visualizer
@@ -164,6 +168,7 @@ private:
 
     // --- Members ---
     IVisualizer* m_visualizer = nullptr;
+    QMutex* m_renderMutex = nullptr;  ///< non-owning; guards m_visualizer access
     
     QScrollArea* m_scrollArea = nullptr;
     QWidget* m_scrollWidget = nullptr;

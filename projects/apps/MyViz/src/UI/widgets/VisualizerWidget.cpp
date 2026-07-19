@@ -1,12 +1,11 @@
 /**
  ****************************************************************************************
  * @file   VisualizerWidget.cpp
- * @brief  OpenGL Visualization Widget Implementation - Qt6 Tutorial
- *         Hardware-accelerated rendering with VSync support
+ * @brief  Facade widget for visualizer rendering on a dedicated render thread
  *
  * @author Patrik Neunteufel
  * @date   December 2025
- * @version 2.2.0 - Added Config Event Support
+ * @version 3.0.0 - Render thread decoupling (Render_Thread_Entwurf.md)
  ****************************************************************************************
  */
 
@@ -23,88 +22,121 @@
 
 // Qt
 #include <QOpenGLContext>
-#include <QGuiApplication>
-#include <QWindow>
+#include <QCoreApplication>
+#include <QVBoxLayout>
 #include <QString>
-#include <QMouseEvent>
+#include <QKeyEvent>
 
 // BasicLogger
 #include <BasicLogger.h>
-
-// =============================================================================
-// Platform-specific VSync Support
-// =============================================================================
-
-#if defined(_WIN32)
-    // Windows: wglSwapIntervalEXT
-    using PFNWGLSWAPINTERVALEXTPROC = int (*)(int interval);
-    static PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = nullptr;
-#elif defined(__linux__) && !defined(__ANDROID__)
-    // Linux: Multiple options depending on display server
-    #include <QtGui/qpa/qplatformnativeinterface.h>
-    
-    // GLX (X11)
-    using PFNGLXSWAPINTERVALEXTPROC = void (*)(void* display, unsigned long drawable, int interval);
-    using PFNGLXSWAPINTERVALMESAPROC = int (*)(int interval);
-    static PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT = nullptr;
-    static PFNGLXSWAPINTERVALMESAPROC glXSwapIntervalMESA = nullptr;
-    
-    // EGL (Wayland, also works on X11 with EGL)
-    using PFNEGLSWAPINTERVALPROC = unsigned int (*)(void* display, int interval);
-    static PFNEGLSWAPINTERVALPROC eglSwapIntervalFunc = nullptr;
-    
-    #include <dlfcn.h>
-    static void* libEGL = nullptr;
-#elif defined(__APPLE__)
-    #include <OpenGL/OpenGL.h>
-#endif
 
 // =============================================================================
 // Construction / Destruction
 // =============================================================================
 
 VisualizerWidget::VisualizerWidget(ServiceContainer& services, QWidget* parent)
-    : OpenGLWidgetBase(services, 
-                       QStringLiteral("visualizer"), 
-                       tr("Visualizer"), 
-                       parent)
-    , QOpenGLFunctions()
+    : StandardWidgetBase(services,
+                         QStringLiteral("visualizer"),
+                         tr("Visualizer"),
+                         parent)
 {
-    BasicLogger::logDebug("VisualizerWidget constructor");
+    BasicLogger::logDebug("VisualizerWidget constructor (render thread facade)");
 
     // -------------------------------------------------------------------------
-    // Surface Format Configuration
+    // GL window + context + render thread (Entwurf §1)
     // -------------------------------------------------------------------------
-    QSurfaceFormat format;
-    format.setVersion(3, 3);                              // OpenGL 3.3
-    format.setProfile(QSurfaceFormat::CoreProfile);       // Core Profile (modern)
-    format.setSwapBehavior(QSurfaceFormat::DoubleBuffer); // Double buffering
-    format.setSwapInterval(0);                            // VSync OFF - we do software timing
-    format.setDepthBufferSize(24);                        // 24-bit depth buffer
-    format.setSamples(4);                                 // 4x MSAA
 
-    setFormat(format);
+    m_glWindow = new VisualizerGLWindow();
 
-    // Start frame timer
-    m_frameTimer.start();
+    m_context = std::make_unique<QOpenGLContext>();
+    m_context->setFormat(m_glWindow->requestedFormat());
+    if (!m_context->create())
+    {
+        BasicLogger::logError("VisualizerWidget: QOpenGLContext creation FAILED");
+    }
 
-    BasicLogger::logDebug("  Requested OpenGL 3.3 Core Profile");
-    BasicLogger::logDebug("  VSync: OFF (using software frame limiting)");
-    BasicLogger::logDebug("  MSAA: 4x samples");
+    m_thread = std::make_unique<VisualizerRenderThread>(
+        *m_glWindow, *m_context, m_renderMutex);
+    m_glWindow->attachThread(m_thread.get());
+
+    // The context belongs to the render thread from now on (makeCurrent there)
+    m_context->moveToThread(m_thread.get());
+
+    // createWindowContainer takes ownership of the window
+    auto* container = QWidget::createWindowContainer(m_glWindow, this);
+    container->setMinimumSize(120, 90);
+
+    // Key events (Esc in fullscreen) must reach the embedded GL window:
+    // route focus through the container, which forwards it to the window
+    container->setFocusPolicy(Qt::StrongFocus);
+    setFocusProxy(container);
+
+    auto* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(container);
+
+    // -------------------------------------------------------------------------
+    // Signal wiring (all on the GUI thread; fpsMeasured arrives queued)
+    // -------------------------------------------------------------------------
+
+    connect(m_thread.get(), &VisualizerRenderThread::fpsMeasured,
+            this, &VisualizerWidget::fpsMeasured);
+
+    // Double-click inside the GL area toggles fullscreen for THIS widget
+    connect(m_glWindow, &VisualizerGLWindow::doubleClicked, this, [this]() {
+        if (auto* bus = eventBus())
+        {
+            bus->publish(ToggleFullscreenEvent{static_cast<void*>(this)});
+            BasicLogger::logDebug("VisualizerWidget: Double-click -> Toggle Fullscreen");
+        }
+    });
+
+    // Esc leaves fullscreen — only toggle when we actually ARE fullscreen
+    // (otherwise Esc in normal mode would ENTER fullscreen)
+    connect(m_glWindow, &VisualizerGLWindow::escapePressed, this, [this]() {
+        if (window()->isFullScreen())
+        {
+            if (auto* bus = eventBus())
+            {
+                bus->publish(ToggleFullscreenEvent{static_cast<void*>(this)});
+                BasicLogger::logDebug("VisualizerWidget: Esc -> exit fullscreen");
+            }
+        }
+    });
+
+    // On application quit no event loop is left for deleteLater() — stop the
+    // render thread deterministically BEFORE the QApplication teardown.
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
+        if (m_thread != nullptr)
+        {
+            m_thread->stopAndWait();
+        }
+    });
+
+    m_thread->start();
+
+    // Default visualizer (previously loaded lazily in initializeGL): an
+    // explicit setVisualizer() afterwards is a cheap no-op if it is the same
+    loadDefaultVisualizer();
 }
 
 VisualizerWidget::~VisualizerWidget()
 {
     BasicLogger::logDebug("VisualizerWidget destructor");
-    BasicLogger::logDebug("  Total frames rendered: " + std::to_string(m_frameCount));
 
-    // Make context current for cleanup
-    makeCurrent();
+    if (m_thread != nullptr)
+    {
+        // Joins the thread; the thread GL-cleans the active visualizer and
+        // moves the context back to the GUI thread.
+        m_thread->stopAndWait();
+    }
+    if (m_glWindow != nullptr)
+    {
+        // The window dies with the container in ~QWidget — ignore its events
+        m_glWindow->attachThread(nullptr);
+    }
 
-    // Cleanup active visualizer
-    cleanupVisualizer();
-
-    doneCurrent();
+    // m_visualizer (GL already cleaned) and m_context die via unique_ptr.
 }
 
 // =============================================================================
@@ -113,15 +145,14 @@ VisualizerWidget::~VisualizerWidget()
 
 void VisualizerWidget::onStartUpdates()
 {
+    // Render thread resumes via expose events — nothing to do.
     BasicLogger::logDebug("VisualizerWidget::onStartUpdates()");
-    // Could start a render timer here if needed
-    update();
 }
 
 void VisualizerWidget::onStopUpdates()
 {
+    // Render thread pauses via expose events — nothing to do.
     BasicLogger::logDebug("VisualizerWidget::onStopUpdates()");
-    // Could stop render timer here
 }
 
 // =============================================================================
@@ -131,7 +162,6 @@ void VisualizerWidget::onStopUpdates()
 bool VisualizerWidget::setVisualizer(const QString& id)
 {
     BasicLogger::logInfo("VisualizerWidget::setVisualizer(\"" + id.toStdString() + "\")");
-    BasicLogger::logDebug("  m_glInitialized=" + std::to_string(m_glInitialized));
 
     // Check if already active
     if (id == m_currentVisualizerId && m_visualizer != nullptr)
@@ -142,8 +172,6 @@ bool VisualizerWidget::setVisualizer(const QString& id)
 
     // Check if registered
     auto& registry = VisualizerRegistry::instance();
-    BasicLogger::logDebug("  Registry has " + std::to_string(registry.descriptors().size()) + " visualizers");
-    
     if (!registry.has(id.toStdString()))
     {
         QString error = QStringLiteral("Visualizer not found: ") + id;
@@ -152,59 +180,43 @@ bool VisualizerWidget::setVisualizer(const QString& id)
         return false;
     }
 
-    // Make context current for OpenGL operations
-    makeCurrent();
-
-    // Cleanup current visualizer
-    cleanupVisualizer();
-
-    // Create new visualizer
-    BasicLogger::logDebug("  Creating visualizer from registry...");
-    m_visualizer = registry.create(id.toStdString());
-    if (m_visualizer == nullptr)
+    // Create the new instance on the GUI thread (no GL involved — the render
+    // thread initializes it before its first frame)
+    std::unique_ptr<IVisualizer> next = registry.create(id.toStdString());
+    if (next == nullptr)
     {
         QString error = QStringLiteral("Failed to create visualizer: ") + id;
         BasicLogger::logError("  " + error.toStdString());
         Q_EMIT visualizerError(id, error);
-        doneCurrent();
         return false;
     }
-    BasicLogger::logDebug("  Visualizer created: " + std::to_string(reinterpret_cast<uintptr_t>(m_visualizer.get())));
 
+    // Hand the swap to the render thread: it GL-cleans and deletes the old
+    // instance and initializes the new one. The facade keeps ownership of
+    // the new instance (UI reads paramDescs etc. — under renderMutex()).
+    std::unique_ptr<IVisualizer> retire = std::move(m_visualizer);
+    m_visualizer = std::move(next);
     m_currentVisualizerId = id;
+    m_thread->setVisualizer(m_visualizer.get(), std::move(retire));
 
-    // Initialize if OpenGL is ready
-    if (m_glInitialized)
-    {
-        BasicLogger::logInfo("  Calling visualizer->initialize()...");
-        m_visualizer->initialize();
-        BasicLogger::logInfo("  isInitialized after initialize(): " + std::to_string(m_visualizer->isInitialized()));
-        
-        m_visualizer->resize(size());
-        BasicLogger::logInfo("  Visualizer initialized: " + 
-                             m_visualizer->visualizerName().toStdString());
-    }
-    else
-    {
-        BasicLogger::logWarning("  OpenGL NOT initialized yet - visualizer will be initialized in initializeGL()");
-    }
+    BasicLogger::logInfo("  Visualizer created: " +
+                         m_visualizer->visualizerName().toStdString() +
+                         " (GL init on render thread)");
 
-    doneCurrent();
-
-    // Publish event via EventBus
+    // Publish event via EventBus — carries the render mutex so subscribers
+    // (ConfigPanel, commands) can guard their accesses
     auto* bus = eventBus();
     if (bus != nullptr)
     {
         bus->publish(VisualizerChangedEvent{
             id.toStdString(),
             m_visualizer->visualizerName().toStdString(),
-            static_cast<void*>(m_visualizer.get())
+            static_cast<void*>(m_visualizer.get()),
+            &m_renderMutex
         });
     }
 
     Q_EMIT visualizerChanged(id);
-    update(); // Request repaint
-
     return true;
 }
 
@@ -212,6 +224,7 @@ QString VisualizerWidget::currentVisualizerName() const
 {
     if (m_visualizer != nullptr)
     {
+        // Immutable identity data — safe without the render mutex
         return m_visualizer->visualizerName();
     }
     return QString();
@@ -225,7 +238,7 @@ void VisualizerWidget::loadDefaultVisualizer()
         // If pulsing not available, try first registered visualizer
         auto& registry = VisualizerRegistry::instance();
         auto descriptors = registry.descriptors();
-        
+
         if (!descriptors.empty())
         {
             setVisualizer(QString::fromStdString(descriptors[0].id));
@@ -237,320 +250,66 @@ void VisualizerWidget::loadDefaultVisualizer()
     }
 }
 
-void VisualizerWidget::cleanupVisualizer()
+// =============================================================================
+// Frame Pacing
+// =============================================================================
+
+void VisualizerWidget::setFrameMode(RenderPacing pacing, int targetFps)
 {
-    if (m_visualizer != nullptr)
+    if (m_thread != nullptr)
     {
-        BasicLogger::logDebug("Cleaning up visualizer: " + m_currentVisualizerId.toStdString());
-        
-        if (m_visualizer->isInitialized())
-        {
-            m_visualizer->cleanup();
-        }
-        
-        m_visualizer.reset();
-        m_currentVisualizerId.clear();
+        m_thread->setPacing(pacing, targetFps);
     }
 }
 
+void VisualizerWidget::activateGLWindow()
+{
+    if (m_glWindow != nullptr)
+    {
+        m_glWindow->requestActivate();
+    }
+}
+
+void VisualizerWidget::recreateNativeWindow()
+{
+    hide();
+    destroy();  // drops stale native handles (children included)
+    show();     // recreates them along the CURRENT parent chain
+}
+
+void VisualizerWidget::keyPressEvent(QKeyEvent* event)
+{
+    // Fallback for fullscreen exit: if the focus sits on the container
+    // widget (not the embedded GL window), the Esc arrives here
+    if (event->key() == Qt::Key_Escape && window()->isFullScreen())
+    {
+        if (auto* bus = eventBus())
+        {
+            bus->publish(ToggleFullscreenEvent{static_cast<void*>(this)});
+            BasicLogger::logDebug("VisualizerWidget: Esc (widget) -> exit fullscreen");
+        }
+        event->accept();
+        return;
+    }
+    StandardWidgetBase::keyPressEvent(event);
+}
+
 // =============================================================================
-// Audio Data Pass-Through
+// Audio Data (snapshot hand-over)
 // =============================================================================
 
 void VisualizerWidget::updateSpectrum(const float* spectrum, int count)
 {
-    if (m_visualizer != nullptr)
+    if (m_thread != nullptr)
     {
-        m_visualizer->updateSpectrum(spectrum, count);
+        m_thread->updateAudio(spectrum, count, nullptr, 0);
     }
 }
 
 void VisualizerWidget::updateWaveform(const float* waveform, int count)
 {
-    if (m_visualizer != nullptr)
+    if (m_thread != nullptr)
     {
-        m_visualizer->updateWaveform(waveform, count);
+        m_thread->updateAudio(nullptr, 0, waveform, count);
     }
-}
-
-// =============================================================================
-// Public Interface
-// =============================================================================
-
-void VisualizerWidget::setClearColor(float r, float g, float b, float a)
-{
-    m_clearR = r;
-    m_clearG = g;
-    m_clearB = b;
-    m_clearA = a;
-    update();
-}
-
-void VisualizerWidget::setVSync(bool enabled)
-{
-    int interval = enabled ? 1 : 0;
-    
-    makeCurrent();
-    
-    QOpenGLContext* ctx = QOpenGLContext::currentContext();
-    if (ctx == nullptr)
-    {
-        BasicLogger::logWarning("setVSync: No OpenGL context available");
-        doneCurrent();
-        return;
-    }
-    
-#if defined(_WIN32)
-    if (wglSwapIntervalEXT == nullptr)
-    {
-        wglSwapIntervalEXT = reinterpret_cast<PFNWGLSWAPINTERVALEXTPROC>(
-            ctx->getProcAddress("wglSwapIntervalEXT"));
-    }
-    
-    if (wglSwapIntervalEXT != nullptr)
-    {
-        wglSwapIntervalEXT(interval);
-        BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
-                             " (wglSwapIntervalEXT)");
-    }
-    else
-    {
-        BasicLogger::logWarning("wglSwapIntervalEXT not available");
-    }
-    
-#elif defined(__linux__) && !defined(__ANDROID__)
-    // Try EGL first (works on both Wayland and X11 with EGL)
-    bool success = false;
-    QString platform = QGuiApplication::platformName();
-    
-    if (libEGL == nullptr)
-    {
-        libEGL = dlopen("libEGL.so.1", RTLD_LAZY);
-        if (libEGL != nullptr)
-        {
-            eglSwapIntervalFunc = reinterpret_cast<PFNEGLSWAPINTERVALPROC>(
-                dlsym(libEGL, "eglSwapInterval"));
-        }
-    }
-    
-    if (eglSwapIntervalFunc != nullptr)
-    {
-        QPlatformNativeInterface* native = QGuiApplication::platformNativeInterface();
-        if (native != nullptr)
-        {
-            void* eglDisplay = native->nativeResourceForWindow("egldisplay", windowHandle());
-            if (eglDisplay != nullptr)
-            {
-                eglSwapIntervalFunc(eglDisplay, interval);
-                BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
-                                     " (eglSwapInterval)");
-                success = true;
-            }
-        }
-    }
-    
-    // Try GLX Mesa extension
-    if (!success && glXSwapIntervalMESA == nullptr)
-    {
-        glXSwapIntervalMESA = reinterpret_cast<PFNGLXSWAPINTERVALMESAPROC>(
-            ctx->getProcAddress("glXSwapIntervalMESA"));
-    }
-    
-    if (!success && glXSwapIntervalMESA != nullptr)
-    {
-        glXSwapIntervalMESA(interval);
-        BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
-                             " (glXSwapIntervalMESA)");
-        success = true;
-    }
-    
-    // Try GLX EXT extension
-    if (!success && glXSwapIntervalEXT == nullptr)
-    {
-        glXSwapIntervalEXT = reinterpret_cast<PFNGLXSWAPINTERVALEXTPROC>(
-            ctx->getProcAddress("glXSwapIntervalEXT"));
-    }
-    
-    if (!success && glXSwapIntervalEXT != nullptr)
-    {
-        QPlatformNativeInterface* native = QGuiApplication::platformNativeInterface();
-        if (native != nullptr)
-        {
-            void* display = native->nativeResourceForWindow("display", windowHandle());
-            void* drawable = native->nativeResourceForWindow("drawable", windowHandle());
-            
-            if (display != nullptr && drawable != nullptr)
-            {
-                auto glxDrawable = *reinterpret_cast<unsigned long*>(drawable);
-                glXSwapIntervalEXT(display, glxDrawable, interval);
-                BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
-                                     " (glXSwapIntervalEXT)");
-                success = true;
-            }
-        }
-    }
-    
-    if (!success)
-    {
-        BasicLogger::logWarning("VSync control not available on " + platform.toStdString());
-    }
-    
-#elif defined(__APPLE__)
-    CGLContextObj cglContext = CGLGetCurrentContext();
-    if (cglContext != nullptr)
-    {
-        GLint swapInterval = interval;
-        CGLSetParameter(cglContext, kCGLCPSwapInterval, &swapInterval);
-        BasicLogger::logInfo("VSync " + std::string(enabled ? "ENABLED" : "DISABLED") + 
-                             " (CGLSetParameter)");
-    }
-    else
-    {
-        BasicLogger::logWarning("CGLGetCurrentContext returned null");
-    }
-#endif
-
-    doneCurrent();
-}
-
-// =============================================================================
-// QOpenGLWidget Virtual Methods
-// =============================================================================
-
-void VisualizerWidget::initializeGL()
-{
-    BasicLogger::logInfo("VisualizerWidget::initializeGL()");
-
-    // Initialize OpenGL functions
-    initializeOpenGLFunctions();
-
-    // Log OpenGL information
-    const char* vendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
-    const char* renderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
-    const char* version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
-    const char* glsl = reinterpret_cast<const char*>(
-        glGetString(GL_SHADING_LANGUAGE_VERSION));
-
-    BasicLogger::logInfo("  OpenGL Vendor:   " + std::string(vendor ? vendor : "N/A"));
-    BasicLogger::logInfo("  OpenGL Renderer: " + std::string(renderer ? renderer : "N/A"));
-    BasicLogger::logInfo("  OpenGL Version:  " + std::string(version ? version : "N/A"));
-    BasicLogger::logInfo("  GLSL Version:    " + std::string(glsl ? glsl : "N/A"));
-
-    // Set initial OpenGL state
-    glClearColor(m_clearR, m_clearG, m_clearB, m_clearA);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    m_glInitialized = true;
-
-    // Initialize visualizer if already set
-    BasicLogger::logDebug("  Checking visualizer: ptr=" + 
-                          std::to_string(reinterpret_cast<uintptr_t>(m_visualizer.get())) +
-                          ", id=" + m_currentVisualizerId.toStdString());
-    
-    if (m_visualizer != nullptr && !m_visualizer->isInitialized())
-    {
-        BasicLogger::logInfo("  Initializing existing visualizer: " + m_currentVisualizerId.toStdString());
-        m_visualizer->initialize();
-        m_visualizer->resize(size());
-        BasicLogger::logInfo("  Visualizer initialized, isInitialized=" + 
-                             std::to_string(m_visualizer->isInitialized()));
-    }
-    else if (m_visualizer == nullptr)
-    {
-        BasicLogger::logDebug("  No visualizer set, loading default");
-        // Load default visualizer
-        loadDefaultVisualizer();
-    }
-    else
-    {
-        BasicLogger::logDebug("  Visualizer already initialized");
-    }
-
-    BasicLogger::logInfo("  Initialization complete");
-}
-
-void VisualizerWidget::resizeGL(int w, int h)
-{
-    BasicLogger::logDebug("VisualizerWidget::resizeGL(" +
-                          std::to_string(w) + ", " + std::to_string(h) + ")");
-
-    glViewport(0, 0, w, h);
-
-    // Notify visualizer
-    if (m_visualizer != nullptr && m_visualizer->isInitialized())
-    {
-        m_visualizer->resize(QSize(w, h));
-    }
-}
-
-void VisualizerWidget::paintGL()
-{
-    // Calculate delta time
-    float currentTime = m_frameTimer.elapsed() / 1000.0f;
-    float deltaTime = currentTime - m_lastFrameTime;
-    m_lastFrameTime = currentTime;
-
-    // DEBUG: Log state for first frames
-    static int debugCount = 0;
-    debugCount++;
-    
-    if (debugCount <= 10 || debugCount % 300 == 0)
-    {
-        BasicLogger::logDebug("paintGL frame " + std::to_string(debugCount) +
-                              ": visualizer=" + std::to_string(reinterpret_cast<uintptr_t>(m_visualizer.get())) +
-                              ", initialized=" + std::to_string(m_visualizer ? m_visualizer->isInitialized() : -1) +
-                              ", id=" + m_currentVisualizerId.toStdString());
-    }
-
-    // Delegate rendering to active visualizer
-    if (m_visualizer != nullptr && m_visualizer->isInitialized())
-    {
-        m_visualizer->render(deltaTime);
-    }
-    else
-    {
-        // Fallback: clear with RED so we see there's a problem!
-        glClearColor(0.8f, 0.0f, 0.0f, 1.0f);  // RED = no visualizer!
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        if (debugCount <= 10)
-        {
-            BasicLogger::logWarning("paintGL: Using fallback clear (RED) - visualizer not ready!");
-        }
-    }
-
-    // Frame counter
-    m_frameCount++;
-
-    if ((m_frameCount % 300) == 0)
-    {
-        BasicLogger::logDebug("VisualizerWidget::paintGL() frame " + 
-                              std::to_string(m_frameCount) +
-                              " (visualizer: " + m_currentVisualizerId.toStdString() + ")");
-    }
-}
-
-// =============================================================================
-// Mouse Events
-// =============================================================================
-
-void VisualizerWidget::mouseDoubleClickEvent(QMouseEvent* event)
-{
-    if (event->button() == Qt::LeftButton)
-    {
-        // Publish fullscreen toggle event
-        auto* eventBus = services().tryResolve<IEventBus>();
-        if (eventBus)
-        {
-            eventBus->publish(ToggleFullscreenEvent{});
-            BasicLogger::logDebug("VisualizerWidget: Double-click -> Toggle Fullscreen");
-        }
-        event->accept();
-        return;
-    }
-    
-    QOpenGLWidget::mouseDoubleClickEvent(event);
 }

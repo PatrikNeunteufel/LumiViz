@@ -133,16 +133,8 @@ public:
      */
     [[nodiscard]] VisualizerWidget* primaryVisualizer() const;
 
-    // =========================================================================
-    // Render Control
-    // =========================================================================
-
-    /**
-     * @brief Requests a repaint of all visualizers.
-     *
-     * Call this from the main loop to trigger rendering on all panels.
-     */
-    void requestRender();
+    // Note: The former requestRender() main-loop hook is gone — every
+    // VisualizerWidget renders on its own thread (Render_Thread_Entwurf.md).
 
 public slots:
     // =========================================================================
@@ -160,11 +152,12 @@ public slots:
     void onNewVisualizer();
     
     /**
-     * @brief Sets VSync on all visualizers.
+     * @brief Applies the frame mode to all visualizers' render threads.
      *
-     * @param enabled true = VSync ON, false = VSync OFF
+     * @param mode 0=Limited, 1=Unlimited, 2=VSync (menu index)
+     * @param targetFps Target FPS for Limited mode
      */
-    void setVSyncOnAllVisualizers(bool enabled);
+    void setFrameModeOnAllVisualizers(int mode, int targetFps);
 
     /**
      * @brief Toggles fullscreen mode.
@@ -192,6 +185,14 @@ protected:
      * @brief Handle key press events (Esc to exit fullscreen)
      */
     void keyPressEvent(QKeyEvent* event) override;
+
+    /**
+     * @brief Closing the main window quits the application.
+     *
+     * Replaces the former frame-timer visibility poll: floating dock windows
+     * must not keep the app alive after the main window is gone.
+     */
+    void closeEvent(QCloseEvent* event) override;
 
 private slots:
     // =========================================================================
@@ -258,9 +259,11 @@ private:
     void restoreSessionPlaylist();
 
     /**
-     * @brief Enter fullscreen mode for the active visualizer
+     * @brief Enter fullscreen mode for a visualizer
+     * @param requested Visualizer that requested fullscreen (double-click/
+     *        Esc source); nullptr (menu/F11) uses the primary visualizer
      */
-    void enterFullscreen();
+    void enterFullscreen(VisualizerWidget* requested = nullptr);
 
     /**
      * @brief Exit fullscreen mode
@@ -278,12 +281,11 @@ private:
     QLabel* m_pFpsLabel{nullptr};  // Owned by status bar (Qt parent-child)
     QTimer* m_pAudioUpdateTimer{nullptr};  // Owned by this (Qt parent-child)
     
-    // Fullscreen support
-    bool m_isFullscreen{false};                 // Current fullscreen state
-    bool m_wasMaximized{false};                 // Was window maximized before fullscreen?
-    QRect m_normalGeometry;                     // Window geometry before fullscreen
-    std::vector<ads::CDockWidget*> m_hiddenDocksForFullscreen;  // Docks hidden during fullscreen
+    // Fullscreen support: the visualizer is taken OUT of its dock and shown
+    // as a borderless top-level window (true fullscreen, no docking chrome)
+    bool m_isFullscreen{false};                          // Current fullscreen state
     VisualizerWidget* m_pFullscreenVisualizer{nullptr};  // Active visualizer in fullscreen
+    ads::CDockWidget* m_pFullscreenDock{nullptr};        // Dock to re-embed into on exit
     
     // Note: Audio services (BassEngine, AudioPlayer, Playlist) are managed by
     // ServiceContainer via registerSingleton factories, not stored here.

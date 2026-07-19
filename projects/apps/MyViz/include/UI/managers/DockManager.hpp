@@ -311,11 +311,6 @@ public slots:
     // =========================================================================
 
     /**
-     * @brief Requests a render update on all visualizers.
-     */
-    void requestRenderAll();
-
-    /**
      * @brief Resets to default layout.
      */
     void resetLayout();
