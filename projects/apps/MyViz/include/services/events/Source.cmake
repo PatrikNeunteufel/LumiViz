@@ -13,6 +13,7 @@ set(_local_sources
 )
 set(_local_headers
     # (headers - *.h; *.hpp)
+    "${CMAKE_CURRENT_LIST_DIR}/CommandEvents.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/Event.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/UIEvents.hpp"
 )

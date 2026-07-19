@@ -21,9 +21,12 @@
 #include "visualizers/SuperscopeVisualizer.hpp"
 #include "visualizers/EqualizerVisualizer.hpp"
 #include "visualizers/VisualizerPresetManager.hpp"
+#include "visualizers/SetParamCommand.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
+#include "services/ICommandBus.hpp"
 #include "services/events/UIEvents.hpp"
+#include "services/events/CommandEvents.hpp"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -144,6 +147,13 @@ void ConfigPanel::setVisualizer(IVisualizer* visualizer)
     if (m_visualizer == visualizer)
     {
         return;
+    }
+
+    // The undo history holds SetParamCommands referencing the OLD visualizer
+    // instance — drop it before switching (dangling-reference safety).
+    if (auto* commandBus = services().tryResolve<ICommandBus>())
+    {
+        commandBus->clear();
     }
 
     m_visualizer = visualizer;
@@ -306,6 +316,20 @@ void ConfigPanel::subscribeToEvents()
                 {
                     auto* viz = static_cast<IVisualizer*>(evt.visualizerPtr);
                     setVisualizer(viz);
+                }
+            }
+        )
+    );
+
+    // Undo/Redo changed parameter values behind the widgets' back — re-sync.
+    m_eventSubscriptions.push_back(
+        bus->subscribeScoped<CommandHistoryChangedEvent>(
+            [this](const CommandHistoryChangedEvent& evt) {
+                using Cause = CommandHistoryChangedEvent::Cause;
+                if (evt.cause == Cause::Undone || evt.cause == Cause::Redone)
+                {
+                    syncFromVisualizer();
+                    updateVisibility();
                 }
             }
         )
@@ -964,7 +988,24 @@ void ConfigPanel::onParamChanged(const std::string& paramId, const ParamValue& v
         return;
     }
 
-    if (m_visualizer->setParam(paramId, value))
+    // Route through the CommandBus so the change is undo-able (Ctrl+Z).
+    // Consecutive changes to the same parameter merge into one undo step
+    // (slider drags). Fallback: direct setParam if the bus is missing or the
+    // parameter has no readable old value (e.g. trigger buttons).
+    bool applied = false;
+    ParamValue oldValue;
+    auto* commandBus = services().tryResolve<ICommandBus>();
+    if (commandBus && m_visualizer->getParam(paramId, oldValue))
+    {
+        applied = commandBus->execute(std::make_unique<SetParamCommand>(
+            *m_visualizer, paramId, oldValue, value));
+    }
+    else
+    {
+        applied = m_visualizer->setParam(paramId, value);
+    }
+
+    if (applied)
     {
         BasicLogger::logDebug("ConfigPanel: Set " + paramId);
         updateVisibility();

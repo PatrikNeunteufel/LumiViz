@@ -19,6 +19,10 @@
  * ├── ─────────────── (800)  [Separator]
  * └── Exit (900)             [Alt+F4]
  *
+ * Edit (150)
+ * ├── Undo (100)             [Ctrl+Z]
+ * └── Redo (200)             [Ctrl+Y]
+ *
  * View (200)
  * ├── New Visualizer (100)   [Ctrl+N]
  * ├── ─────────────── (50)   [Separator]
@@ -53,6 +57,7 @@
 #include "services/MenuRegistry.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
+#include "services/ICommandBus.hpp"
 #include "services/events/UIEvents.hpp"
 
 #include <QApplication>
@@ -117,9 +122,53 @@ void initMenuDefaults(MenuRegistry& registry)
         false);
     
     // =========================================================================
+    // EDIT MENU (150) — Undo/Redo via CommandBus (Phase 4)
+    // =========================================================================
+
+    registry.registerContainer(
+        MenuContainerDesc{{"menu.edit", "toplevel", 150}, "Edit", false},
+        false);
+
+    registry.registerGroup(
+        MenuGroupDesc{{"menu.edit.group.history", "menu.edit", 100}},
+        false);
+
+    registry.registerItem(
+        MenuItemDesc{
+            {"menu.edit.undo", "menu.edit", 100},
+            "Undo",
+            [](ServiceContainer& svc) {
+                if (auto* commandBus = svc.tryResolve<ICommandBus>())
+                {
+                    commandBus->undo();
+                }
+            },
+            {},  // isChecked
+            {},  // isEnabled (no-op undo on empty history is harmless)
+            "Ctrl+Z"
+        },
+        false);
+
+    registry.registerItem(
+        MenuItemDesc{
+            {"menu.edit.redo", "menu.edit", 200},
+            "Redo",
+            [](ServiceContainer& svc) {
+                if (auto* commandBus = svc.tryResolve<ICommandBus>())
+                {
+                    commandBus->redo();
+                }
+            },
+            {},  // isChecked
+            {},  // isEnabled
+            "Ctrl+Y"
+        },
+        false);
+
+    // =========================================================================
     // VIEW MENU (200)
     // =========================================================================
-    
+
     registry.registerContainer(
         MenuContainerDesc{{"menu.view", "toplevel", 200}, "View", false},
         false);

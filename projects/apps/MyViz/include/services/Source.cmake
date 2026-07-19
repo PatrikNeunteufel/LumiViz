@@ -13,8 +13,11 @@ set(_local_sources
 )
 set(_local_headers
     # (headers - *.h; *.hpp)
+    "${CMAKE_CURRENT_LIST_DIR}/CommandBus.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/DialogRegistry.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/EventBus.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ICommand.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ICommandBus.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/IEventBus.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/MenuRegistry.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PanelRegistry.hpp"

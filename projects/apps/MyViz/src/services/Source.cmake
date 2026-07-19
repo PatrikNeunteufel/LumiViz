@@ -10,6 +10,7 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     # (sources - *.c; *.cpp)
+    "${CMAKE_CURRENT_LIST_DIR}/CommandBus.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/DialogRegistry.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/EventBus.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/MenuRegistry.cpp"

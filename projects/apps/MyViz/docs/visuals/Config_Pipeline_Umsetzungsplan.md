@@ -3,7 +3,7 @@
 > **Version:** 0.2.0
 > **Datum:** 2026-07-19
 > **Typ:** Implementierungsplan
-> **Status:** In Umsetzung (Schritte 0–1 ✅ 2026-07-19; Schritt 2 anstehend)
+> **Status:** In Umsetzung (Schritte 0–2 ✅ 2026-07-19; Schritt 3 anstehend)
 > **Zielgruppe:** Entwickler
 > **Bezug:** [Config_Pipeline_Concept.md](Config_Pipeline_Concept.md) v0.3.0
 > **Phase:** 4
@@ -98,13 +98,13 @@
 |---------|--------------|----------|----------|--------|
 | 0 | Tote Systeme entfernen | 7 | 7 | ✅ |
 | 1 | EventBus + Lifetime | 5 | 5 | ✅ |
-| 2 | CommandBus | 3 | 0 | ⬜ |
+| 2 | CommandBus | 3 | 3 | ✅ |
 | 3 | Schema | 6 | 0 | ⬜ |
 | 4 | ConfigPanel | 6 | 0 | ⬜ |
 | 5 | Migration + Module | 6 | 0 | ⬜ |
 | 6 | Preview-Viewer | 3 | 0 | ⬜ |
 | 7 | Dokumentation | 4 | 0 | ⬜ |
-| **Σ** | **Gesamt** | **40** | **12** | **30 %** |
+| **Σ** | **Gesamt** | **40** | **15** | **38 %** |
 
 ---
 
@@ -238,9 +238,9 @@ Dateien in der jeweiligen `Source.cmake` pflegen. Preset-JSONs kommentarfrei.
 
 **Ziel:** Parameter-Änderungen und Gradient-Edits sind undo-fähig, bevor die UI neu entsteht.
 
-- [ ] 2.1 `harvest/core-module/commandbus/` portieren; harvest-Tests (Catch2) auf doctest umziehen (RED→GREEN)
-- [ ] 2.2 CommandBus im ServiceContainer registrieren (Bootstrap_Integration.md nachziehen → Schritt 6)
-- [ ] 2.3 `SetParamCommand` (Visualizer, paramId, alt→neu) + Undo/Redo-Aktionen ins ConfigPanel/Menü; Gradient-Editor-Änderungen als Commands
+- [x] 2.1 `harvest/core-module/commandbus/` portieren; harvest-Tests (Catch2) auf doctest umziehen (RED→GREEN)
+- [x] 2.2 CommandBus im ServiceContainer registrieren (Bootstrap_Integration.md nachziehen → Schritt 6)
+- [x] 2.3 `SetParamCommand` (Visualizer, paramId, alt→neu) + Undo/Redo-Aktionen ins ConfigPanel/Menü; Gradient-Editor-Änderungen als Commands
 
 ---
 

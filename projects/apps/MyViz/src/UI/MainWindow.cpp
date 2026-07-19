@@ -22,6 +22,8 @@
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/EventBus.hpp"
+#include "services/ICommandBus.hpp"
+#include "services/CommandBus.hpp"
 #include "services/MenuRegistry.hpp"
 #include "services/events/UIEvents.hpp"
 
@@ -65,7 +67,12 @@ MainWindow::MainWindow(QWidget* parent)
     
     // Register EventBus service
     m_pServices->registerSingleton<IEventBus, EventBus>();
-    
+
+    // Register CommandBus (undo/redo) — publishes history events on the EventBus
+    m_pServices->registerSingleton<ICommandBus>([](ServiceContainer& c) {
+        return std::make_unique<CommandBus>(c.tryResolve<IEventBus>());
+    });
+
     // Setup Audio Services
     setupAudioServices();
     
