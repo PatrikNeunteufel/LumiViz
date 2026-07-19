@@ -107,10 +107,10 @@ TEST_CASE("EventBus: consume() stoppt die Weitergabe an spaetere Subscriber")
     EventBus bus;
     int afterConsumeCalls = 0;
 
-    // API-Wart (Phase-4-Notiz): Handler erhalten const&, consume() ist aber
-    // nicht-const -> Konsumieren erfordert aktuell einen const_cast.
+    // consume() ist const (Dispatch-Steuerflag, seit Phase 4 Schritt 1) —
+    // Konsumieren direkt aus dem const&-Handler, ohne const_cast.
     bus.subscribe<ValueEvent>([](const ValueEvent& e) {
-        const_cast<ValueEvent&>(e).consume();
+        e.consume();
     }, 0);
     bus.subscribe<ValueEvent>([&](const ValueEvent&) { ++afterConsumeCalls; }, 1);
 
@@ -172,4 +172,114 @@ TEST_CASE("EventBus: queue stellt erst bei dispatchQueued zu")
 
     bus.dispatchQueued(); // Queue ist geleert — keine Doppelzustellung
     CHECK(received.size() == 2);
+}
+
+// =============================================================================
+// RAII-SubscriberHandle (subscribeScoped) - Phase 4 Schritt 1
+// =============================================================================
+
+TEST_CASE("EventBus: SubscriberHandle unsubscribed automatisch bei Zerstoerung")
+{
+    EventBus bus;
+    int calls = 0;
+
+    {
+        auto handle = bus.subscribeScoped<ValueEvent>(
+            [&](const ValueEvent&) { ++calls; });
+        CHECK(static_cast<bool>(handle));
+        CHECK(bus.subscriberCount<ValueEvent>() == 1);
+
+        bus.publish(ValueEvent{1});
+        CHECK(calls == 1);
+    } // handle stirbt -> Abo weg
+
+    CHECK(bus.subscriberCount<ValueEvent>() == 0);
+    bus.publish(ValueEvent{2});
+    CHECK(calls == 1); // kein weiterer Aufruf
+}
+
+TEST_CASE("EventBus: SubscriberHandle reset() ist sofort wirksam und idempotent")
+{
+    EventBus bus;
+    int calls = 0;
+
+    auto handle = bus.subscribeScoped<ValueEvent>(
+        [&](const ValueEvent&) { ++calls; });
+
+    handle.reset();
+    CHECK_FALSE(static_cast<bool>(handle));
+    handle.reset(); // idempotent
+
+    bus.publish(ValueEvent{1});
+    CHECK(calls == 0);
+}
+
+TEST_CASE("EventBus: SubscriberHandle ist movable, Abo wandert mit")
+{
+    EventBus bus;
+    int calls = 0;
+
+    auto a = bus.subscribeScoped<ValueEvent>(
+        [&](const ValueEvent&) { ++calls; });
+    auto b = std::move(a);
+    CHECK_FALSE(static_cast<bool>(a));
+    CHECK(static_cast<bool>(b));
+
+    bus.publish(ValueEvent{1});
+    CHECK(calls == 1);
+
+    b.reset();
+    bus.publish(ValueEvent{2});
+    CHECK(calls == 1);
+}
+
+// =============================================================================
+// Weak-Abos (subscribeWeak) - Phase 4 Schritt 1
+// =============================================================================
+
+namespace
+{
+    struct WeakOwner { int lastValue = 0; };
+} // namespace
+
+TEST_CASE("EventBus: subscribeWeak feuert nur solange der Owner lebt")
+{
+    EventBus bus;
+    auto owner = std::make_shared<WeakOwner>();
+
+    bus.subscribeWeak<ValueEvent>(owner,
+        std::function<void(const ValueEvent&)>(
+            [w = std::weak_ptr<WeakOwner>(owner)](const ValueEvent& e) {
+                if (auto o = w.lock()) { o->lastValue = e.value; }
+            }));
+
+    bus.publish(ValueEvent{42});
+    CHECK(owner->lastValue == 42);
+    CHECK(bus.subscriberCount<ValueEvent>() == 1);
+
+    owner.reset(); // Owner stirbt
+
+    bus.publish(ValueEvent{7});  // Handler darf nicht mehr feuern; Abo wird gepurgt
+    CHECK(bus.subscriberCount<ValueEvent>() == 0);
+}
+
+TEST_CASE("EventBus: subscribeScopedWeak - Handle UND Owner begrenzen die Lebensdauer")
+{
+    EventBus bus;
+    int calls = 0;
+    auto owner = std::make_shared<WeakOwner>();
+
+    auto handle = bus.subscribeScopedWeak<ValueEvent>(owner,
+        std::function<void(const ValueEvent&)>(
+            [&calls](const ValueEvent&) { ++calls; }));
+
+    bus.publish(ValueEvent{1});
+    CHECK(calls == 1);
+
+    owner.reset(); // Owner weg -> Handler inaktiv, naechster publish purgt
+    bus.publish(ValueEvent{2});
+    CHECK(calls == 1);
+    CHECK(bus.subscriberCount<ValueEvent>() == 0);
+
+    handle.reset(); // Handle-Reset nach Purge bleibt harmlos (idempotent)
 }

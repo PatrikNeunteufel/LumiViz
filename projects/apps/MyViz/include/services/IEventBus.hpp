@@ -69,6 +69,63 @@ public:
     /// Subscriber-Handle für Unsubscription
     using SubscriberId = std::uint64_t;
 
+    /**
+     * @class SubscriberHandle
+     * @brief RAII handle — unsubscribes automatically on destruction
+     *
+     * Move-only. Obtain via subscribeScoped()/subscribeScopedWeak(). The handle
+     * must not outlive the EventBus it was created from (in MyViz the bus lives
+     * in the ServiceContainer and outlives all panels/widgets).
+     */
+    class SubscriberHandle
+    {
+    public:
+        SubscriberHandle() = default;
+        explicit SubscriberHandle(std::function<void()> unsubscriber) noexcept
+            : m_unsubscriber(std::move(unsubscriber)) {}
+
+        SubscriberHandle(SubscriberHandle&& other) noexcept
+            : m_unsubscriber(std::move(other.m_unsubscriber))
+        {
+            other.m_unsubscriber = nullptr;
+        }
+
+        SubscriberHandle& operator=(SubscriberHandle&& other) noexcept
+        {
+            if (this != &other)
+            {
+                reset();
+                m_unsubscriber = std::move(other.m_unsubscriber);
+                other.m_unsubscriber = nullptr;
+            }
+            return *this;
+        }
+
+        SubscriberHandle(const SubscriberHandle&) = delete;
+        SubscriberHandle& operator=(const SubscriberHandle&) = delete;
+
+        ~SubscriberHandle() { reset(); }
+
+        /// @brief Unsubscribe now (idempotent)
+        void reset() noexcept
+        {
+            if (m_unsubscriber)
+            {
+                m_unsubscriber();
+                m_unsubscriber = nullptr;
+            }
+        }
+
+        /// @brief True while the subscription is active
+        [[nodiscard]] explicit operator bool() const noexcept
+        {
+            return static_cast<bool>(m_unsubscriber);
+        }
+
+    private:
+        std::function<void()> m_unsubscriber{};
+    };
+
     virtual ~IEventBus() = default;
 
     // =========================================================================
@@ -112,7 +169,76 @@ public:
             handler(static_cast<const T&>(e));
         };
 
-        return doSubscribe(typeid(T), std::move(wrapper), priority);
+        return doSubscribe(typeid(T), std::move(wrapper), priority,
+                           std::weak_ptr<void>{}, false);
+    }
+
+    /**
+     * @brief Subscribe bound to an owner's lifetime (weak subscription)
+     *
+     * The handler is only invoked while the owner is alive; expired
+     * subscriptions are purged automatically on the next publish.
+     *
+     * @tparam T Event type (must derive from Event)
+     * @tparam Owner Owner object type (held via shared_ptr/weak_ptr)
+     * @param owner Owner whose lifetime gates the subscription
+     * @param handler Callback function
+     * @param priority Lower values are called first (default: 0)
+     * @return Subscriber ID (manual unsubscribe optional)
+     */
+    template<typename T, typename Owner>
+    SubscriberId subscribeWeak(const std::weak_ptr<Owner>& owner,
+                               std::function<void(const T&)> handler,
+                               int priority = 0)
+    {
+        static_assert(std::is_base_of_v<Event, T>,
+                      "T must derive from Event");
+
+        auto wrapper = [owner, handler = std::move(handler)](const Event& e) {
+            if (auto locked = owner.lock())
+            {
+                handler(static_cast<const T&>(e));
+            }
+        };
+
+        return doSubscribe(typeid(T), std::move(wrapper), priority,
+                           std::weak_ptr<void>(owner), true);
+    }
+
+    /// @brief Convenience overload taking a shared_ptr owner
+    template<typename T, typename Owner>
+    SubscriberId subscribeWeak(const std::shared_ptr<Owner>& owner,
+                               std::function<void(const T&)> handler,
+                               int priority = 0)
+    {
+        return subscribeWeak<T, Owner>(std::weak_ptr<Owner>(owner),
+                                       std::move(handler), priority);
+    }
+
+    /**
+     * @brief Subscribe with RAII lifetime (auto-unsubscribe on handle destruction)
+     *
+     * @code
+     * m_eventSubscriptions.push_back(
+     *     bus->subscribeScoped<VisualizerChangedEvent>([this](const auto& e) { ... }));
+     * @endcode
+     */
+    template<typename T>
+    [[nodiscard]] SubscriberHandle subscribeScoped(
+        std::function<void(const T&)> handler, int priority = 0)
+    {
+        auto id = subscribe<T>(std::move(handler), priority);
+        return makeHandle(id);
+    }
+
+    /// @brief RAII handle + owner-gated handler in one (see subscribeWeak)
+    template<typename T, typename Owner>
+    [[nodiscard]] SubscriberHandle subscribeScopedWeak(
+        const std::shared_ptr<Owner>& owner,
+        std::function<void(const T&)> handler, int priority = 0)
+    {
+        auto id = subscribeWeak<T, Owner>(owner, std::move(handler), priority);
+        return makeHandle(id);
     }
 
     /**
@@ -192,11 +318,31 @@ public:
     virtual void clear() = 0;
 
 protected:
+    /**
+     * @brief Build a teardown-safe RAII handle for the given subscription
+     *
+     * The handle checks the bus liveness token before calling back — if the
+     * bus was already destroyed (teardown-order!), reset() is a no-op instead
+     * of an access violation.
+     */
+    [[nodiscard]] SubscriberHandle makeHandle(SubscriberId id)
+    {
+        return SubscriberHandle(
+            [this, id, token = std::weak_ptr<void>(m_liveToken)]() {
+                if (auto alive = token.lock())
+                {
+                    unsubscribe(id);
+                }
+            });
+    }
+
     // Internal virtual methods for template dispatch
     virtual SubscriberId doSubscribe(
         const std::type_info& type,
         std::function<void(const Event&)> handler,
-        int priority) = 0;
+        int priority,
+        std::weak_ptr<void> owner,
+        bool hasOwner) = 0;
 
     virtual void doPublish(const std::type_info& type, const Event& event) = 0;
 
@@ -204,4 +350,8 @@ protected:
                          std::unique_ptr<Event> event) = 0;
 
     virtual std::size_t doSubscriberCount(const std::type_info& type) const = 0;
+
+private:
+    /// Liveness token — expires with the bus; guards RAII handles (makeHandle).
+    std::shared_ptr<void> m_liveToken = std::make_shared<char>('\0');
 };

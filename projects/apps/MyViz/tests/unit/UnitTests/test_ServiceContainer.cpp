@@ -170,19 +170,22 @@ TEST_CASE("ServiceContainer: createTransient auf Unregistriertes wirft"
     CHECK_THROWS_AS((void)c.createTransient<ICounter>(), std::runtime_error);
 }
 
-// BEKANNTER BUG (dokumentiert 2026-07-18, Fix fuer Phase 4 vorgemerkt):
-// tryResolve()/resolve() auf einen TRANSIENT-Service gibt einen Pointer auf eine
-// Instanz zurueck, die beim Verlassen von tryResolve() zerstoert wird (die lokale
-// InstancePtr wird bei Transient nicht in m_instances gespeichert) -> Dangling
-// Pointer / UB beim Zugriff. Fuer Transients ist ausschliesslich createTransient()
-// sicher. Test ist geskippt, weil er UB ausfuehren wuerde.
-TEST_CASE("ServiceContainer: resolve auf Transient (BEKANNTER BUG: dangling pointer)"
-          * doctest::skip(true))
+// Bug behoben (Phase 4 Schritt 1, 2026-07-19): tryResolve()/resolve() lieferten
+// fuer TRANSIENT-Services einen Pointer auf eine sofort zerstoerte Instanz
+// (Dangling/UB). Neue Semantik: Transients sind ueber resolve/tryResolve NICHT
+// beziehbar (tryResolve -> nullptr, resolve -> wirft) — Ownership nur ueber
+// createTransient().
+TEST_CASE("ServiceContainer: resolve/tryResolve auf Transient liefert nullptr bzw. wirft")
 {
     ServiceContainer c;
     c.registerTransient<ICounter, Counter>();
-    auto& dangling = c.resolve<ICounter>(); // Instanz stirbt schon in tryResolve()
-    (void)dangling.next();                  // <- UB
+
+    CHECK(c.tryResolve<ICounter>() == nullptr);
+    CHECK_THROWS_AS((void)c.resolve<ICounter>(), std::runtime_error);
+
+    // createTransient bleibt der gueltige Weg
+    auto counter = c.createTransient<ICounter>();
+    CHECK(counter->next() == 1);
 }
 
 // =============================================================================

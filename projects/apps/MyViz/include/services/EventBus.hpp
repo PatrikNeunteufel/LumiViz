@@ -50,7 +50,9 @@ protected:
     SubscriberId doSubscribe(
         const std::type_info& type,
         std::function<void(const Event&)> handler,
-        int priority) override;
+        int priority,
+        std::weak_ptr<void> owner,
+        bool hasOwner) override;
 
     void doPublish(const std::type_info& type, const Event& event) override;
 
@@ -69,6 +71,13 @@ private:
         SubscriberId id;
         int priority;
         std::function<void(const Event&)> handler;
+        std::weak_ptr<void> owner;  ///< Lifetime gate (only if hasOwner)
+        bool hasOwner = false;      ///< True for subscribeWeak subscriptions
+
+        [[nodiscard]] bool expired() const
+        {
+            return hasOwner && owner.expired();
+        }
 
         bool operator<(const Subscriber& other) const
         {

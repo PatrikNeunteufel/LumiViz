@@ -58,12 +58,15 @@ public:
 
     /**
      * @brief Mark event as consumed (stops propagation)
+     *
+     * Const on purpose: handlers receive `const Event&`; consumption is a
+     * dispatch-control flag, not a payload mutation (hence `mutable`).
      */
-    void consume() { m_consumed = true; }
+    void consume() const { m_consumed = true; }
 
 protected:
     TimePoint m_timestamp;
-    bool m_consumed = false;
+    mutable bool m_consumed = false;
 };
 
 /**

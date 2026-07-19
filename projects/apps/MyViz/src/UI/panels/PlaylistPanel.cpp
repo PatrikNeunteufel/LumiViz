@@ -105,42 +105,30 @@ void PlaylistPanel::subscribeToEvents()
     }
     
     // Playlist content changed
-    int id1 = eventBus->subscribe<PlaylistChangedEvent>(
+    m_eventSubscriptions.push_back(eventBus->subscribeScoped<PlaylistChangedEvent>(
         [this](const PlaylistChangedEvent& /*e*/) {
             onPlaylistChanged();
-        });
-    m_subscriptionIds.push_back(id1);
-    
+        }));
+
     // Current track index changed
-    int id2 = eventBus->subscribe<PlaylistIndexChangedEvent>(
+    m_eventSubscriptions.push_back(eventBus->subscribeScoped<PlaylistIndexChangedEvent>(
         [this](const PlaylistIndexChangedEvent& e) {
             onPlaylistIndexChanged(e.currentIndex, e.previousIndex);
-        });
-    m_subscriptionIds.push_back(id2);
-    
+        }));
+
     // Playback mode (shuffle/loop) changed
-    int id3 = eventBus->subscribe<PlaybackModeChangedEvent>(
+    m_eventSubscriptions.push_back(eventBus->subscribeScoped<PlaybackModeChangedEvent>(
         [this](const PlaybackModeChangedEvent& e) {
             onPlaybackModeChanged(e.shuffle, e.repeatMode);
-        });
-    m_subscriptionIds.push_back(id3);
-    
+        }));
+
     BasicLogger::logDebug("PlaylistPanel: Subscribed to playlist events");
 }
 
 void PlaylistPanel::unsubscribeFromEvents()
 {
-    auto* eventBus = services().tryResolve<IEventBus>();
-    if (eventBus == nullptr)
-    {
-        return;
-    }
-    
-    for (int id : m_subscriptionIds)
-    {
-        eventBus->unsubscribe(id);
-    }
-    m_subscriptionIds.clear();
+    // RAII handles unsubscribe on destruction; clearing releases them now.
+    m_eventSubscriptions.clear();
 }
 
 // =============================================================================

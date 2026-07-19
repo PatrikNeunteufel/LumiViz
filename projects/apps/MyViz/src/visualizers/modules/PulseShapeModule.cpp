@@ -235,14 +235,9 @@ std::vector<ShapeVertex> PulseShapeModule::generateVertices(int segments) const
             std::vector<ShapeVertex> allVertices;
             for (int w = 0; w < m_waveCount; ++w)
             {
-                float phaseOffset = static_cast<float>(w) / m_waveCount;
-                float wavePhase = std::fmod(m_state.phase + phaseOffset, 1.0f);
-
-                // Create ring at wave position
-                float innerR = wavePhase * 0.9f;
-                float outerR = innerR + 0.1f;
-
-                // Store temporarily, would need modification for multi-ring
+                // TODO(Phase 4, Migration Pulsing): generateRing() ignoriert die
+                // Wellen-Phase — alle Ringe fallen zusammen. Echtes Multi-Ring
+                // braucht Radien aus m_state.phase + w/m_waveCount.
                 auto ring = generateRing(segments);
                 allVertices.insert(allVertices.end(), ring.begin(), ring.end());
             }

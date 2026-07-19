@@ -3,7 +3,7 @@
 > **Version:** 0.2.0
 > **Datum:** 2026-07-19
 > **Typ:** Implementierungsplan
-> **Status:** In Umsetzung (Schritt 0 ✅ 2026-07-19; Schritt 1 anstehend)
+> **Status:** In Umsetzung (Schritte 0–1 ✅ 2026-07-19; Schritt 2 anstehend)
 > **Zielgruppe:** Entwickler
 > **Bezug:** [Config_Pipeline_Concept.md](Config_Pipeline_Concept.md) v0.3.0
 > **Phase:** 4
@@ -38,13 +38,13 @@
 - [x] 0.6 Ungenutzte Felder entfernen (Pulsing: lowBand/highBand/backgroundFade; Superscope: red/green/blue)
 - [x] 0.7 Build + `ctest -R UnitTests` grün (Testing-Preset)
 
-### Schritt 1: EventBus-Upgrade + Lifetime-Fixes ⬜
+### Schritt 1: EventBus-Upgrade + Lifetime-Fixes ✅ (2026-07-19)
 
-- [ ] 1.1 RAII-SubscriberHandle + Weak-Abos aus harvest portieren (Tests zuerst)
-- [ ] 1.2 ConfigPanel-Unsubscribe-Fix (Destruktor)
-- [ ] 1.3 Event::consume() const-fähig machen
-- [ ] 1.4 Transient-resolve()-Dangling fixen, Skip-Test aktivieren
-- [ ] 1.5 DialogManager instanziieren (Kleinfix — About-Dialog öffnet wieder)
+- [x] 1.1 RAII-SubscriberHandle + Weak-Abos aus harvest portieren (Tests zuerst)
+- [x] 1.2 ConfigPanel-Unsubscribe-Fix (Destruktor)
+- [x] 1.3 Event::consume() const-fähig machen
+- [x] 1.4 Transient-resolve()-Dangling fixen, Skip-Test aktivieren
+- [x] 1.5 DialogManager instanziieren (Kleinfix — About-Dialog öffnet wieder)
 
 ### Schritt 2: CommandBus (Undo/Redo) ⬜
 
@@ -97,14 +97,14 @@
 | Schritt | Beschreibung | Aufgaben | Erledigt | Status |
 |---------|--------------|----------|----------|--------|
 | 0 | Tote Systeme entfernen | 7 | 7 | ✅ |
-| 1 | EventBus + Lifetime | 5 | 0 | ⬜ |
+| 1 | EventBus + Lifetime | 5 | 5 | ✅ |
 | 2 | CommandBus | 3 | 0 | ⬜ |
 | 3 | Schema | 6 | 0 | ⬜ |
 | 4 | ConfigPanel | 6 | 0 | ⬜ |
 | 5 | Migration + Module | 6 | 0 | ⬜ |
 | 6 | Preview-Viewer | 3 | 0 | ⬜ |
 | 7 | Dokumentation | 4 | 0 | ⬜ |
-| **Σ** | **Gesamt** | **40** | **7** | **18 %** |
+| **Σ** | **Gesamt** | **40** | **12** | **30 %** |
 
 ---
 
@@ -206,30 +206,30 @@ Dateien in der jeweiligen `Source.cmake` pflegen. Preset-JSONs kommentarfrei.
 
 #### 1.1 RAII-Abos portieren
 
-- [ ] `harvest/core-module/eventbus/` sichten (SubscriberHandle, Weak-Abos)
-- [ ] Tests zuerst: harvest-EventBus-Tests auf doctest portieren/ergänzen (RED)
-- [ ] `SubscriberHandle` (RAII) + Weak-Abo-Support in `services/EventBus` (GREEN)
-- [ ] Bestehende Abonnenten (Panels, DockManager, MainWindow) auf Handles umstellen
+- [x] `harvest/core-module/eventbus/` sichten (SubscriberHandle, Weak-Abos)
+- [x] Tests zuerst: harvest-EventBus-Tests auf doctest portieren/ergänzen (RED)
+- [x] `SubscriberHandle` (RAII) + Weak-Abo-Support in `services/EventBus` (GREEN)
+- [x] Bestehende Abonnenten (Panels, DockManager, MainWindow) auf Handles umstellen
 
 #### 1.2 ConfigPanel-Lifetime-Fix
 
-- [ ] Unsubscribe im Destruktor sicherstellen (heute: nur `onDeactivate`, `~ConfigPanel() = default`, ConfigPanel.cpp:110; subscribe :293–313) — mit RAII-Handle automatisch
-- [ ] Regression-Test: Panel zerstören ohne hide → kein dangling Abo
+- [x] Unsubscribe im Destruktor sicherstellen (heute: nur `onDeactivate`, `~ConfigPanel() = default`, ConfigPanel.cpp:110; subscribe :293–313) — mit RAII-Handle automatisch
+- [x] Regression-Test: Panel zerstören ohne hide → kein dangling Abo
 
 #### 1.3 Event-Verträge
 
-- [ ] `Event::consume()` const-fähig machen (const_cast im Test entfernen)
-- [ ] `VisualizerChangedEvent::visualizerPtr` (void*, :305–308): mindestens typisieren, Lebensdauer-Kontrakt dokumentieren
+- [x] `Event::consume()` const-fähig machen (const_cast im Test entfernen)
+- [x] `VisualizerChangedEvent::visualizerPtr` (void*, :305–308): mindestens typisieren, Lebensdauer-Kontrakt dokumentieren
 
 #### 1.4 ServiceContainer
 
-- [ ] Transient-resolve()-Dangling-Bug fixen, Skip-Test aktivieren (dokumentierter Skip der Suite)
+- [x] Transient-resolve()-Dangling-Bug fixen, Skip-Test aktivieren (dokumentierter Skip der Suite)
 
 #### 1.5 DialogManager instanziieren (Kleinfix, Entscheid 2026-07-19)
 
-- [ ] DialogManager im Bootstrap erzeugen/registrieren; `OpenDialogEvent`-Handler in
+- [x] DialogManager im Bootstrap erzeugen/registrieren; `OpenDialogEvent`-Handler in
       MainWindow ersetzt Log-Stub → About-Dialog öffnet wieder
-- [ ] [Bootstrap_Integration.md](../core-services/Bootstrap_Integration.md) +
+- [x] [Bootstrap_Integration.md](../core-services/Bootstrap_Integration.md) +
       [Event_System.md](../core-services/Event_System.md) nachziehen (Schritt 7)
 
 ---

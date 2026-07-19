@@ -85,8 +85,8 @@ Code stehenden Werte. Ein Particle-Visualizer ist als TODO auskommentiert.
 |----|-------|-------|-------|-----------|----------|
 | `about` | About MyViz | 900 | ja | Help | F1 |
 
-Ein Settings-Dialog ist als TODO auskommentiert. Hinweis: Der `about`-Dialog ist zwar
-registriert, wird aber derzeit von keinem Handler geöffnet
+Ein Settings-Dialog ist als TODO auskommentiert. Der `about`-Dialog wird seit
+Phase 4 Schritt 1 vom `DialogManager` geöffnet
 (siehe [Event_System.md](Event_System.md), Abschnitt DialogManager).
 
 ### 3.4 Widgets (`WidgetAutoReg.cpp`)

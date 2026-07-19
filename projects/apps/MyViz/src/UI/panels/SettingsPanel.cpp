@@ -73,7 +73,7 @@ void SettingsPanel::subscribeToEvents()
     }
     
     // Listen for frame mode changes from elsewhere
-    int id1 = eventBus->subscribe<FrameModeChangedEvent>(
+    m_eventSubscriptions.push_back(eventBus->subscribeScoped<FrameModeChangedEvent>(
         [this](const FrameModeChangedEvent& e) {
             if (!m_isUpdating)
             {
@@ -81,23 +81,13 @@ void SettingsPanel::subscribeToEvents()
                 m_pFrameModeCombo->setCurrentIndex(e.mode);
                 m_isUpdating = false;
             }
-        });
-    m_subscriptionIds.push_back(id1);
+        }));
 }
 
 void SettingsPanel::unsubscribeFromEvents()
 {
-    auto* eventBus = services().tryResolve<IEventBus>();
-    if (eventBus == nullptr)
-    {
-        return;
-    }
-    
-    for (int id : m_subscriptionIds)
-    {
-        eventBus->unsubscribe(id);
-    }
-    m_subscriptionIds.clear();
+    // RAII handles unsubscribe on destruction; clearing releases them now.
+    m_eventSubscriptions.clear();
 }
 
 // =============================================================================

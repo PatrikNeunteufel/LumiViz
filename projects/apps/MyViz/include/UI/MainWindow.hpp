@@ -65,6 +65,7 @@ namespace ads { class CDockWidget; }
 
 class DockManager;
 class MenuManager;
+class DialogManager;
 class VisualizerWidget;
 class ServiceContainer;
 
@@ -256,6 +257,7 @@ private:
     std::unique_ptr<ServiceContainer> m_pServices;
     std::unique_ptr<DockManager> m_pDockManager;
     std::unique_ptr<MenuManager> m_pMenuManager;
+    std::unique_ptr<DialogManager> m_pDialogManager;
     QLabel* m_pFpsLabel{nullptr};  // Owned by status bar (Qt parent-child)
     QTimer* m_pAudioUpdateTimer{nullptr};  // Owned by this (Qt parent-child)
     

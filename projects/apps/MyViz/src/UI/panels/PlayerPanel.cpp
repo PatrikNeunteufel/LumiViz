@@ -90,61 +90,47 @@ void PlayerPanel::subscribeToEvents()
     }
     
     // Track changed
-    int id1 = eventBus->subscribe<TrackChangedEvent>(
+    m_eventSubscriptions.push_back(eventBus->subscribeScoped<TrackChangedEvent>(
         [this](const TrackChangedEvent& e) {
             onTrackChanged(e.track.title, e.track.artist, e.track.durationMs);
-        });
-    m_subscriptionIds.push_back(id1);
-    
+        }));
+
     // Playback state changed
-    int id2 = eventBus->subscribe<PlaybackStateEvent>(
+    m_eventSubscriptions.push_back(eventBus->subscribeScoped<PlaybackStateEvent>(
         [this](const PlaybackStateEvent& e) {
             bool isPlaying = (e.state == PlaybackState::Playing);
             bool isPaused = (e.state == PlaybackState::Paused);
             onPlaybackStateChanged(isPlaying, isPaused);
-        });
-    m_subscriptionIds.push_back(id2);
-    
+        }));
+
     // Position changed
-    int id3 = eventBus->subscribe<PlaybackPositionEvent>(
+    m_eventSubscriptions.push_back(eventBus->subscribeScoped<PlaybackPositionEvent>(
         [this](const PlaybackPositionEvent& e) {
             onPlaybackPositionChanged(e.positionMs, e.durationMs);
-        });
-    m_subscriptionIds.push_back(id3);
-    
+        }));
+
     // Volume changed
-    int id4 = eventBus->subscribe<VolumeChangedEvent>(
+    m_eventSubscriptions.push_back(eventBus->subscribeScoped<VolumeChangedEvent>(
         [this](const VolumeChangedEvent& e) {
             onVolumeChangedEvent(e.volume, e.muted);
-        });
-    m_subscriptionIds.push_back(id4);
-    
+        }));
+
     // Playback mode changed (shuffle/repeat)
-    int id5 = eventBus->subscribe<PlaybackModeChangedEvent>(
+    m_eventSubscriptions.push_back(eventBus->subscribeScoped<PlaybackModeChangedEvent>(
         [this](const PlaybackModeChangedEvent& e) {
             // repeatMode: 0=None, 1=One (single track), 2=All (playlist)
             bool loopOne = (e.repeatMode == 1);
             m_loopEnabled = loopOne;
             updateLoopButton(loopOne);
-        });
-    m_subscriptionIds.push_back(id5);
-    
+        }));
+
     BasicLogger::logDebug("PlayerPanel: Subscribed to audio events");
 }
 
 void PlayerPanel::unsubscribeFromEvents()
 {
-    auto* eventBus = services().tryResolve<IEventBus>();
-    if (eventBus == nullptr)
-    {
-        return;
-    }
-    
-    for (int id : m_subscriptionIds)
-    {
-        eventBus->unsubscribe(id);
-    }
-    m_subscriptionIds.clear();
+    // RAII handles unsubscribe on destruction; clearing releases them now.
+    m_eventSubscriptions.clear();
     
     BasicLogger::logDebug("PlayerPanel: Unsubscribed from audio events");
 }

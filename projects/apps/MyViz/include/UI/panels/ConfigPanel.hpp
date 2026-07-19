@@ -176,5 +176,4 @@ private:
 
     // State
     bool m_isUpdating = false;
-    std::vector<int> m_subscriptionIds;
 };

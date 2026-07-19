@@ -17,6 +17,7 @@
 #include "UI/MainWindow.hpp"
 #include "UI/managers/DockManager.hpp"
 #include "UI/managers/MenuManager.hpp"
+#include "UI/managers/DialogManager.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
@@ -108,13 +109,18 @@ MainWindow::~MainWindow()
         m_pDockManager->closeAll();
         m_pDockManager.reset();
     }
-    
+
+    // DialogManager unsubscribes from the EventBus in its destructor —
+    // it MUST die before m_pServices.reset() below (member order alone
+    // would destroy it AFTER the explicit reset → access violation).
+    m_pDialogManager.reset();
+
     // -------------------------------------------------------------------------
     // Cleanup Services
     // -------------------------------------------------------------------------
     // Audio services are managed by ServiceContainer and will be cleaned up
     // when m_pServices is destroyed (automatic via unique_ptr destructor)
-    
+
     BasicLogger::logDebug("MainWindow destructor - cleaning up ServiceContainer");
     m_pServices.reset();
     
@@ -268,6 +274,16 @@ void MainWindow::setupUi()
     BasicLogger::logDebug("  DockManager created");
 
     // -------------------------------------------------------------------------
+    // Create Dialog Manager
+    // -------------------------------------------------------------------------
+    // Opens dialogs from the DialogRegistry on OpenDialogEvent (e.g. "about").
+
+    m_pDialogManager = std::make_unique<DialogManager>(*m_pServices, this);
+    m_pDialogManager->subscribeToEvents();
+
+    BasicLogger::logDebug("  DialogManager created");
+
+    // -------------------------------------------------------------------------
     // Setup UI Components
     // -------------------------------------------------------------------------
 
@@ -407,14 +423,7 @@ void MainWindow::setupEventHandlers()
         emit frameModeChangeRequested(e.mode);
     });
 
-    // Open Dialog event
-    pEventBus->subscribe<OpenDialogEvent>([](const OpenDialogEvent& e) {
-        if (e.dialogId == "about")
-        {
-            // TODO: Open About dialog via DialogManager
-            BasicLogger::logDebug("About dialog requested");
-        }
-    });
+    // OpenDialogEvent is handled by the DialogManager (created in setupUI).
 
     // Fullscreen Toggle event
     pEventBus->subscribe<ToggleFullscreenEvent>([this](const ToggleFullscreenEvent&) {

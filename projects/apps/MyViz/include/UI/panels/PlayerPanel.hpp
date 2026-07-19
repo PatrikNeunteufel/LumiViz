@@ -113,5 +113,4 @@ private:
     bool m_isSeeking = false;           ///< True while user is dragging progress
     bool m_loopEnabled = false;         ///< True when single-track loop is active
     int m_currentDurationMs = 0;        ///< Current track duration
-    std::vector<int> m_subscriptionIds; ///< Event subscription IDs for cleanup
 };

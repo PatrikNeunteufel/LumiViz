@@ -18,7 +18,9 @@
 IEventBus::SubscriberId EventBus::doSubscribe(
     const std::type_info& type,
     std::function<void(const Event&)> handler,
-    int priority)
+    int priority,
+    std::weak_ptr<void> owner,
+    bool hasOwner)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -26,7 +28,8 @@ IEventBus::SubscriberId EventBus::doSubscribe(
     auto id = m_nextId++;
 
     auto& subscribers = m_subscribers[key];
-    subscribers.push_back(Subscriber{id, priority, std::move(handler)});
+    subscribers.push_back(
+        Subscriber{id, priority, std::move(handler), std::move(owner), hasOwner});
 
     // Sort by priority (lower first)
     std::sort(subscribers.begin(), subscribers.end());
@@ -65,8 +68,15 @@ void EventBus::doPublish(const std::type_info& type, const Event& event)
             return;
         }
 
+        // Purge expired weak subscriptions (owner died)
+        auto& subscribers = it->second;
+        subscribers.erase(
+            std::remove_if(subscribers.begin(), subscribers.end(),
+                [](const Subscriber& s) { return s.expired(); }),
+            subscribers.end());
+
         // Copy subscribers to avoid holding lock during callbacks
-        subscribersCopy = it->second;
+        subscribersCopy = subscribers;
     }
 
     // Dispatch to all subscribers
@@ -114,7 +124,14 @@ void EventBus::dispatchQueued()
                 continue;
             }
 
-            subscribersCopy = it->second;
+            // Purge expired weak subscriptions (owner died)
+            auto& subscribers = it->second;
+            subscribers.erase(
+                std::remove_if(subscribers.begin(), subscribers.end(),
+                    [](const Subscriber& s) { return s.expired(); }),
+                subscribers.end());
+
+            subscribersCopy = subscribers;
         }
 
         for (const auto& subscriber : subscribersCopy)

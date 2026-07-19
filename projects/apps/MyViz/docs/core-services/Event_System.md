@@ -108,17 +108,15 @@ Wichtige Publisher: `MenuAutoReg.cpp` (Menü-Aktionen → `CreateVisualizerEvent
 
 ---
 
-## 6. DialogManager (Stand 2026-07-18)
+## 6. DialogManager (Stand 2026-07-19)
 
-Der im alten Doc als TODO vermerkte `DialogManager` **existiert inzwischen als Klasse**
-([`include/UI/managers/DialogManager.hpp`](../../include/UI/managers/DialogManager.hpp),
-`src/UI/managers/DialogManager.cpp`, wird mitkompiliert): `show()`/`showModeless()`
-erzeugen Dialoge aus der `DialogRegistry`, `subscribeToEvents()` abonniert
-`OpenDialogEvent`, Unsubscribe im Destruktor.
+`DialogManager` ([`include/UI/managers/DialogManager.hpp`](../../include/UI/managers/DialogManager.hpp)):
+`show()`/`showModeless()` erzeugen Dialoge aus der `DialogRegistry`,
+`subscribeToEvents()` abonniert `OpenDialogEvent`, Unsubscribe im Destruktor.
 
-**Er ist aber noch nicht verdrahtet:** keine Stelle instanziiert ihn. Der
-`OpenDialogEvent`-Handler in `MainWindow` trägt weiterhin das TODO und loggt nur —
-der About-Dialog wird aktuell über das Menü (Help → About, F1) **nicht geöffnet**.
+**Seit Phase 4 Schritt 1 verdrahtet:** `MainWindow::setupUI()` erzeugt den
+DialogManager (`m_pDialogManager`) und ruft `subscribeToEvents()` — der
+About-Dialog (Help → About, F1) öffnet über `OpenDialogEvent` → DialogManager.
 
 ---
 

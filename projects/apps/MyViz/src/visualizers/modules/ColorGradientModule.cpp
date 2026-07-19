@@ -274,13 +274,13 @@ bool ColorGradientModule::setParam(const std::string& id, const ParamValue& valu
     if (id == "preset")
     {
         int index = -1;
-        if (auto* v = std::get_if<int>(&value))
+        if (auto* iv = std::get_if<int>(&value))
         {
-            index = *v;
+            index = *iv;
         }
-        else if (auto* v = std::get_if<float>(&value))
+        else if (auto* fv = std::get_if<float>(&value))
         {
-            index = static_cast<int>(*v);
+            index = static_cast<int>(*fv);
         }
         
         if (index >= 0)
@@ -1009,7 +1009,7 @@ bool ColorGradientModule::fromJson(const std::string& json)
     // Strong guarantee: bei Parse-Fehler bleibt der Modulzustand unveraendert.
     const size_t npos = std::string::npos;
 
-    auto numberAfterKey = [&json, npos](const char* key, size_t from, float& out) -> size_t {
+    auto numberAfterKey = [&json](const char* key, size_t from, float& out) -> size_t {
         size_t k = json.find(std::string("\"") + key + "\"", from);
         if (k == npos) return npos;
         size_t colon = json.find(':', k);
@@ -1021,8 +1021,8 @@ bool ColorGradientModule::fromJson(const std::string& json)
     };
 
     // Liest alle Zahlen zwischen '[' und dem zugehoerigen ']' (nur flache Arrays!)
-    auto flatArrayAfterKey = [&json, npos](const char* key, size_t from,
-                                           std::vector<float>& out) -> size_t {
+    auto flatArrayAfterKey = [&json](const char* key, size_t from,
+                                     std::vector<float>& out) -> size_t {
         size_t k = json.find(std::string("\"") + key + "\"", from);
         if (k == npos) return npos;
         size_t open = json.find('[', k);

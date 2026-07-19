@@ -80,6 +80,5 @@ private:
     QCheckBox* m_pVSyncCheckBox = nullptr;
     
     // State
-    std::vector<int> m_subscriptionIds;
     bool m_isUpdating = false;
 };

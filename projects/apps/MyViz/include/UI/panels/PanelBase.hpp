@@ -43,9 +43,12 @@
 #pragma once
 
 #include "IPanel.hpp"
+#include "services/IEventBus.hpp"
 
 #include <QWidget>
 #include <QString>
+
+#include <vector>
 
 // Forward declarations
 class ServiceContainer;
@@ -149,6 +152,16 @@ protected:
      * @brief Hide event - triggers deactivation
      */
     void hideEvent(QHideEvent* event) override;
+
+    /**
+     * @brief RAII storage for EventBus subscriptions of this panel
+     *
+     * Push handles from IEventBus::subscribeScoped() here. They unsubscribe
+     * automatically when cleared (onDeactivate) AND on panel destruction —
+     * a panel can therefore never leave a dangling handler on the bus, even
+     * if it is destroyed without a preceding hide event.
+     */
+    std::vector<IEventBus::SubscriberHandle> m_eventSubscriptions;
 
 private:
     ServiceContainer& m_services;

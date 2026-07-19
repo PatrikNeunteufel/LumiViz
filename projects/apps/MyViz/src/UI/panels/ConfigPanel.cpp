@@ -298,8 +298,8 @@ void ConfigPanel::subscribeToEvents()
         return;
     }
 
-    m_subscriptionIds.push_back(
-        bus->subscribe<VisualizerChangedEvent>(
+    m_eventSubscriptions.push_back(
+        bus->subscribeScoped<VisualizerChangedEvent>(
             [this](const VisualizerChangedEvent& evt) {
                 BasicLogger::logDebug("ConfigPanel: Visualizer changed to " + evt.visualizerName);
                 if (evt.visualizerPtr != nullptr)
@@ -314,17 +314,8 @@ void ConfigPanel::subscribeToEvents()
 
 void ConfigPanel::unsubscribeFromEvents()
 {
-    auto* bus = services().tryResolve<IEventBus>();
-    if (!bus)
-    {
-        return;
-    }
-
-    for (int id : m_subscriptionIds)
-    {
-        bus->unsubscribe(id);
-    }
-    m_subscriptionIds.clear();
+    // RAII handles unsubscribe on destruction; clearing releases them now.
+    m_eventSubscriptions.clear();
 }
 
 // =============================================================================

@@ -108,5 +108,4 @@ private:
     int m_currentPlayingIndex = -1;
     bool m_shuffleEnabled = false;
     bool m_loopEnabled = false;
-    std::vector<int> m_subscriptionIds;
 };

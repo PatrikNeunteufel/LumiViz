@@ -268,16 +268,19 @@ public:
             return nullptr;
         }
 
-        // Instanz erstellen
+        // Transient? Nicht über resolve/tryResolve beziehbar: Die Instanz
+        // würde beim Verlassen dieser Funktion sterben (Dangling-Pointer,
+        // Bug bis 2026-07-19). Transients gibt es nur via createTransient().
+        auto transientIt = m_isTransient.find(key);
+        if (transientIt != m_isTransient.end() && transientIt->second)
+        {
+            return nullptr;
+        }
+
+        // Singleton: Instanz erstellen und speichern
         auto instance = factoryIt->second(*this);
         T* ptr = static_cast<T*>(instance.get());
-
-        // Bei Singleton speichern
-        auto transientIt = m_isTransient.find(key);
-        if (transientIt == m_isTransient.end() || !transientIt->second)
-        {
-            m_instances.insert_or_assign(key, std::move(instance));
-        }
+        m_instances.insert_or_assign(key, std::move(instance));
 
         return ptr;
     }
