@@ -245,6 +245,14 @@ public:
     // Tap Points (Phase 4 — preview foundation)
     // =========================================================================
 
+    /// @brief How a tap point's data wants to be drawn (Schritt 6 — declared
+    ///        by the visualizer, no panel heuristics)
+    enum class TapDisplay
+    {
+        Bars,   ///< band amplitudes 0..1 (mini equalizer)
+        Curve   ///< sample data -1..1 (polyline)
+    };
+
     /**
      * @brief A named probe on a pipeline-stage output (pull-based)
      *
@@ -257,6 +265,7 @@ public:
         std::string displayName;                   ///< e.g. "Analyse (Baender)"
         lumi::modules::PipelineStage stage = lumi::modules::PipelineStage::None;
         std::function<std::vector<float>()> sample;  ///< copy of current data
+        TapDisplay display = TapDisplay::Bars;     ///< how to draw the data
     };
 
     /// @brief All tap points of this visualizer (empty if none wired yet)

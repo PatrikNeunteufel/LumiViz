@@ -10,6 +10,7 @@
  */
 
 #include "visualizers/PulsingVisualizer.hpp"
+#include "visualizers/VisualizerPresetManager.hpp"
 
 #include <QOpenGLFunctions>
 #include <QOpenGLContext>
@@ -18,42 +19,11 @@
 
 #include <cmath>
 #include <algorithm>
+#include <map>
+#include <string>
 #include <vector>
 
-// =============================================================================
-// Shape Enum Mapping
-// =============================================================================
-// PulseShape enum has Flash at index 2, but we don't expose it in UI.
-// UI: Circle=0, Ring=1, NGon=2, Star=3
-// Enum: Circle=0, Ring=1, Flash=2, Ngon=3, Star=4
-
 namespace {
-
-// Map from UI dropdown index to PulseShape enum
-lumi::modules::PulseShape uiIndexToShape(int index)
-{
-    switch (index)
-    {
-        case 0: return lumi::modules::PulseShape::Circle;
-        case 1: return lumi::modules::PulseShape::Ring;
-        case 2: return lumi::modules::PulseShape::Ngon;
-        case 3: return lumi::modules::PulseShape::Star;
-        default: return lumi::modules::PulseShape::Circle;
-    }
-}
-
-// Map from PulseShape enum to UI dropdown index
-int shapeToUiIndex(lumi::modules::PulseShape shape)
-{
-    switch (shape)
-    {
-        case lumi::modules::PulseShape::Circle: return 0;
-        case lumi::modules::PulseShape::Ring: return 1;
-        case lumi::modules::PulseShape::Ngon: return 2;
-        case lumi::modules::PulseShape::Star: return 3;
-        default: return 0;
-    }
-}
 
 // =============================================================================
 // Shader Source - With Multi-Stop Gradient Support
@@ -327,6 +297,50 @@ void generateStarVerts(std::vector<Vertex>& vertices, int points)
     }
 }
 
+// =============================================================================
+// Legacy-Key-Migration (Phase 4 Schritt 5.2)
+// =============================================================================
+
+/**
+ * @brief Alias map old→new schema (Parameter_Key_Migration.md §2)
+ *
+ * Applies to presets with formatVersion < 2. Unchanged keys are registered
+ * as identity entries so the map doubles as the loader's key whitelist (§9).
+ */
+void registerLegacyKeyAliases()
+{
+    std::map<std::string, std::string> aliases;
+
+    // Stage 1: audio.* unchanged (identity) — incl. audio.bands (E2: only the
+    // Equalizer replaces it; every other visualizer keeps it in stage 1)
+    for (const char* key : {"preset", "scale", "bands", "floorDb", "ceilDb", "clamp01",
+                            "gain", "smooth.preset", "smooth.algorithm", "smooth.timeMs",
+                            "smooth.windowSize", "smooth.primeFirstFrame"})
+    {
+        aliases.emplace(std::string("audio.") + key, std::string("audio.") + key);
+    }
+
+    // Stage 4: shape.* → render.*
+    for (const char* key : {"type", "sides", "innerRadius", "minSize", "maxSize",
+                            "rotation", "beatReverse"})
+    {
+        aliases.emplace(std::string("shape.") + key, std::string("render.") + key);
+    }
+
+    // Stage 3: shape.color.* → color.main.* (8 gradient sub-keys + the
+    // beatBrightness own-parameter with its special routing)
+    for (const char* key : {"mode", "solidColor", "angle", "preset", "editGradient",
+                            "outlineWidth", "gradientPresetName", "gradientData",
+                            "beatBrightness"})
+    {
+        aliases.emplace(std::string("shape.color.") + key,
+                        std::string("color.main.") + key);
+    }
+
+    lumi::VisualizerPresetManager::registerKeyAliases(QStringLiteral("pulsing"),
+                                                      std::move(aliases));
+}
+
 } // anonymous namespace
 
 // =============================================================================
@@ -341,7 +355,11 @@ PulsingVisualizer::PulsingVisualizer()
     , m_startTime(std::chrono::steady_clock::now())
 {
     BasicLogger::logDebug("PulsingVisualizer: Constructor called");
-    
+
+    // Idempotent on every construction — a magic static would not survive
+    // clearKeyAliases() (tests) since the registration would never re-fire
+    registerLegacyKeyAliases();
+
     m_pulseShape.setShape(lumi::modules::PulseShape::Circle);
     m_colorGradient.loadPreset("Neon");
 }
@@ -375,157 +393,86 @@ std::vector<lumi::modules::ModuleParamDesc> PulsingVisualizer::paramDescs() cons
     std::vector<ModuleParamDesc> params;
 
     // =========================================================================
-    // 1. Audio Source Parameters
+    // Stage 1: Audio Source
     // =========================================================================
-    
+
     for (const auto& p : m_audioSource.paramDescs())
     {
         ModuleParamDesc prefixed = p;
         prefixed.id = "audio." + p.id;
-        prefixed.group = "1. Audio";
-        
-        // Also prefix the dependsOn reference if set
+        prefixed.group = "Audio";
+        prefixed.stage = PipelineStage::AudioSource;
+
         if (!prefixed.dependsOn.empty())
         {
             prefixed.dependsOn = "audio." + prefixed.dependsOn;
         }
-        
+
         params.push_back(prefixed);
     }
 
     // =========================================================================
-    // 2. Shape Parameters (including Color as sub-section)
+    // Stage 3: Color (gradient handle "main" + beatBrightness own-parameter)
     // =========================================================================
-    
-    {
-        ModuleParamDesc p;
-        p.id = "shape.type";
-        p.displayName = "Shape";
-        p.tooltip = "Select the pulse shape";
-        p.type = ParamType::Enum;
-        p.defaultValue = 0;
-        p.enumOptions = {"Circle", "Ring", "NGon", "Star"};
-        p.group = "2. Shape";
-        p.order = 0;
-        params.push_back(p);
-    }
-    
-    {
-        ModuleParamDesc p;
-        p.id = "shape.sides";
-        p.displayName = "Sides/Points";
-        p.tooltip = "Number of sides (NGon) or points (Star)";
-        p.type = ParamType::Int;
-        p.minValue = 3.0f;
-        p.maxValue = 32.0f;
-        p.defaultValue = 6;
-        p.group = "2. Shape";
-        p.order = 1;
-        p.dependsOn = "shape.type";
-        p.dependsValues = {2, 3};  // NGon=2, Star=3
-        params.push_back(p);
-    }
-    
-    {
-        ModuleParamDesc p;
-        p.id = "shape.innerRadius";
-        p.displayName = "Inner Radius";
-        p.tooltip = "Inner radius for Ring (0 = filled)";
-        p.type = ParamType::Float;
-        p.minValue = 0.0f;
-        p.maxValue = 0.95f;
-        p.defaultValue = 0.5f;
-        p.group = "2. Shape";
-        p.order = 2;
-        p.dependsOn = "shape.type";
-        p.dependsValues = {1};  // Ring=1
-        params.push_back(p);
-    }
-    
-    {
-        ModuleParamDesc p;
-        p.id = "shape.minSize";
-        p.displayName = "Min Size";
-        p.tooltip = "Minimum size at silence";
-        p.type = ParamType::Float;
-        p.minValue = 0.05f;
-        p.maxValue = 1.5f;
-        p.defaultValue = 0.3f;
-        p.group = "2. Shape";
-        p.order = 3;
-        params.push_back(p);
-    }
-    
-    {
-        ModuleParamDesc p;
-        p.id = "shape.maxSize";
-        p.displayName = "Max Size";
-        p.tooltip = "Maximum size at peak audio";
-        p.type = ParamType::Float;
-        p.minValue = 0.1f;
-        p.maxValue = 2.0f;
-        p.defaultValue = 0.9f;
-        p.group = "2. Shape";
-        p.order = 4;
-        params.push_back(p);
-    }
-    
-    {
-        ModuleParamDesc p;
-        p.id = "shape.rotation";
-        p.displayName = "Rotation Speed";
-        p.tooltip = "Degrees per second";
-        p.type = ParamType::Float;
-        p.minValue = -360.0f;
-        p.maxValue = 360.0f;
-        p.defaultValue = 0.0f;
-        p.group = "2. Shape";
-        p.order = 5;
-        params.push_back(p);
-    }
-    
-    {
-        ModuleParamDesc p;
-        p.id = "shape.beatReverse";
-        p.displayName = "Beat Reverse";
-        p.tooltip = "Reverse rotation direction on beat";
-        p.type = ParamType::Bool;
-        p.defaultValue = false;
-        p.group = "2. Shape";
-        p.order = 6;
-        params.push_back(p);
-    }
 
-    // =========================================================================
-    // Color Sub-Section (under Shape group)
-    // =========================================================================
-    
-    // Delegate to ColorGradientModule params
     for (const auto& p : m_colorGradient.paramDescs())
     {
         ModuleParamDesc prefixed = p;
-        prefixed.id = "shape.color." + p.id;
-        prefixed.group = "2. Shape";
-        prefixed.order = 10 + p.order;  // After shape params
-        
-        // Also prefix the dependsOn reference if set
+        prefixed.id = "color.main." + p.id;
+        prefixed.group = "Color";
+        prefixed.stage = PipelineStage::Color;
+        prefixed.order = 10 + p.order;
+
         if (!prefixed.dependsOn.empty())
         {
-            prefixed.dependsOn = "shape.color." + prefixed.dependsOn;
+            prefixed.dependsOn = "color.main." + prefixed.dependsOn;
         }
-        
+
         params.push_back(prefixed);
     }
-    
+
     {
         ModuleParamDesc p;
-        p.id = "shape.color.beatBrightness";
+        p.id = "color.main.beatBrightness";
         p.displayName = "Beat Brightness";
         p.tooltip = "Modulate brightness with audio";
         p.type = ParamType::Bool;
         p.defaultValue = true;
-        p.group = "2. Shape";
+        p.group = "Color";
+        p.stage = PipelineStage::Color;
         p.order = 20;
+        params.push_back(p);
+    }
+
+    // =========================================================================
+    // Stage 4: Render (shape schema comes from PulseShapeModule, 5.2)
+    // =========================================================================
+
+    for (const auto& p : m_pulseShape.paramDescs())
+    {
+        ModuleParamDesc prefixed = p;
+        prefixed.id = "render." + p.id;
+        prefixed.group = "Render";
+        prefixed.stage = PipelineStage::Render;
+
+        if (!prefixed.dependsOn.empty())
+        {
+            prefixed.dependsOn = "render." + prefixed.dependsOn;
+        }
+
+        params.push_back(prefixed);
+    }
+
+    {
+        ModuleParamDesc p;
+        p.id = "render.beatReverse";
+        p.displayName = "Beat Reverse";
+        p.tooltip = "Reverse rotation direction on beat";
+        p.type = ParamType::Bool;
+        p.defaultValue = false;
+        p.group = "Render";
+        p.stage = PipelineStage::Render;
+        p.order = 6;  // After the module params (orders 0-5)
         params.push_back(p);
     }
 
@@ -542,58 +489,32 @@ bool PulsingVisualizer::getParam(const std::string& id,
     {
         return m_audioSource.getParam(id.substr(6), out);
     }
-    
-    // Color gradient parameters (under shape.color.*)
-    if (id.rfind("shape.color.", 0) == 0)
+
+    // Color parameters (handle "main"; beatBrightness keeps its special routing)
+    if (id.rfind("color.main.", 0) == 0)
     {
-        std::string gradientId = id.substr(12);  // Remove "shape.color."
-        
+        std::string gradientId = id.substr(11);
+
         if (gradientId == "beatBrightness")
         {
             out = m_beatBrightnessEnabled;
             return true;
         }
-        
+
         return m_colorGradient.getParam(gradientId, out);
     }
-    
-    // Shape parameters
-    if (id == "shape.type")
-    {
-        out = shapeToUiIndex(m_pulseShape.shape());
-        return true;
-    }
-    if (id == "shape.sides")
-    {
-        out = m_pulseShape.sides();
-        return true;
-    }
-    if (id == "shape.innerRadius")
-    {
-        out = m_innerRadius;
-        return true;
-    }
-    if (id == "shape.minSize")
-    {
-        out = m_minSize;
-        return true;
-    }
-    if (id == "shape.maxSize")
-    {
-        out = m_maxSize;
-        return true;
-    }
-    if (id == "shape.rotation")
-    {
-        out = m_rotationSpeed;
-        return true;
-    }
-    if (id == "shape.beatReverse")
+
+    // Render parameters (shape schema lives in PulseShapeModule)
+    if (id == "render.beatReverse")
     {
         out = m_beatReverseRotation;
         return true;
     }
-    
+    if (id.rfind("render.", 0) == 0)
+    {
+        return m_pulseShape.getParam(id.substr(7), out);
+    }
+
     return false;
 }
 
@@ -607,12 +528,12 @@ bool PulsingVisualizer::setParam(const std::string& id,
     {
         return m_audioSource.setParam(id.substr(6), value);
     }
-    
-    // Color gradient parameters
-    if (id.rfind("shape.color.", 0) == 0)
+
+    // Color parameters (handle "main"; beatBrightness keeps its special routing)
+    if (id.rfind("color.main.", 0) == 0)
     {
-        std::string gradientId = id.substr(12);
-        
+        std::string gradientId = id.substr(11);
+
         if (gradientId == "beatBrightness")
         {
             if (auto* v = std::get_if<bool>(&value))
@@ -620,71 +541,37 @@ bool PulsingVisualizer::setParam(const std::string& id,
                 m_beatBrightnessEnabled = *v;
                 return true;
             }
+            return false;
         }
-        
+
         return m_colorGradient.setParam(gradientId, value);
     }
-    
-    // Shape parameters
-    if (id == "shape.type")
-    {
-        if (auto* v = std::get_if<int>(&value))
-        {
-            m_pulseShape.setShape(uiIndexToShape(*v));
-            m_needsRebuild = true;
-            return true;
-        }
-    }
-    if (id == "shape.sides")
-    {
-        if (auto* v = std::get_if<int>(&value))
-        {
-            m_pulseShape.setSides(*v);
-            m_needsRebuild = true;
-            return true;
-        }
-    }
-    if (id == "shape.innerRadius")
-    {
-        if (auto* v = std::get_if<float>(&value))
-        {
-            m_innerRadius = std::clamp(*v, 0.0f, 0.95f);
-            return true;
-        }
-    }
-    if (id == "shape.minSize")
-    {
-        if (auto* v = std::get_if<float>(&value))
-        {
-            m_minSize = std::clamp(*v, 0.05f, 1.5f);
-            return true;
-        }
-    }
-    if (id == "shape.maxSize")
-    {
-        if (auto* v = std::get_if<float>(&value))
-        {
-            m_maxSize = std::clamp(*v, 0.1f, 2.0f);
-            return true;
-        }
-    }
-    if (id == "shape.rotation")
-    {
-        if (auto* v = std::get_if<float>(&value))
-        {
-            m_rotationSpeed = *v;
-            return true;
-        }
-    }
-    if (id == "shape.beatReverse")
+
+    // Render parameters (shape schema lives in PulseShapeModule)
+    if (id == "render.beatReverse")
     {
         if (auto* v = std::get_if<bool>(&value))
         {
             m_beatReverseRotation = *v;
             return true;
         }
+        return false;
     }
-    
+    if (id.rfind("render.", 0) == 0)
+    {
+        const std::string shapeId = id.substr(7);
+        if (!m_pulseShape.setParam(shapeId, value))
+        {
+            return false;
+        }
+        // Geometry changes require a vertex rebuild
+        if (shapeId == "type" || shapeId == "sides")
+        {
+            m_needsRebuild = true;
+        }
+        return true;
+    }
+
     return false;
 }
 
@@ -721,25 +608,16 @@ void PulsingVisualizer::loadGradientPreset(const std::string& name)
 
 void PulsingVisualizer::resetToDefaults()
 {
-    // Reset modules to their defaults
+    // Reset modules to their defaults (PulseShapeModule covers the shape params)
     m_audioSource.resetToDefaults();
     m_colorGradient.reset();   // ColorGradientModule uses reset()
-    m_pulseShape.reset();      // PulseShapeModule uses reset()
-    
-    // Reset shape parameters
-    m_innerRadius = 0.5f;
-    m_minSize = 0.3f;
-    m_maxSize = 0.9f;
-    m_rotationSpeed = 0.0f;
+    m_pulseShape.reset();
+    m_beat.resetToDefaults();
+
+    // Reset rotation/beat state
     m_currentRotation = 0.0f;
     m_beatReverseRotation = false;
     m_rotationDirection = 1.0f;
-    
-    // Reset audio state
-    m_beatIntensity = 0.0f;
-    m_lastBassLevel = 0.0f;
-    m_beatThreshold = 0.4f;
-    m_beatSensitivity = 1.0f;
     m_beatBrightnessEnabled = true;
     
     // Reset background
@@ -755,12 +633,12 @@ void PulsingVisualizer::resetToDefaults()
 
 void PulsingVisualizer::setRotationSpeed(float degreesPerSecond)
 {
-    m_rotationSpeed = degreesPerSecond;
+    m_pulseShape.setRotationSpeed(degreesPerSecond);
 }
 
 float PulsingVisualizer::rotationSpeed() const
 {
-    return m_rotationSpeed;
+    return m_pulseShape.rotationSpeed();
 }
 
 void PulsingVisualizer::setBeatReverseRotation(bool enabled)
@@ -785,12 +663,12 @@ bool PulsingVisualizer::beatBrightnessEnabled() const
 
 void PulsingVisualizer::setBeatSensitivity(float sensitivity)
 {
-    m_beatSensitivity = sensitivity;
+    m_beat.setSensitivity(sensitivity);
 }
 
 float PulsingVisualizer::beatSensitivity() const
 {
-    return m_beatSensitivity;
+    return m_beat.sensitivity();
 }
 
 void PulsingVisualizer::setSmoothingTime(float milliseconds)
@@ -1041,30 +919,26 @@ void PulsingVisualizer::onRender(float deltaTime)
     audioLevel = std::clamp(audioLevel, 0.0f, 1.0f);
     
     // =========================================================================
-    // Beat Detection for Rotation Reversal
+    // Beat Detection for Rotation Reversal (BeatModule, 5.6)
     // =========================================================================
-    
-    if (m_beatReverseRotation)
+
+    if (m_beatReverseRotation && m_beat.update(audioLevel))
     {
-        // Simple beat detection
-        float beatLevel = audioLevel * m_beatSensitivity;
-        if (beatLevel > m_beatThreshold && m_lastBassLevel <= m_beatThreshold)
-        {
-            // Beat detected - reverse direction
-            m_rotationDirection *= -1.0f;
-        }
-        m_lastBassLevel = beatLevel;
+        // Beat detected - reverse direction
+        m_rotationDirection *= -1.0f;
     }
-    
+
     // Update rotation
-    m_currentRotation += m_rotationSpeed * m_rotationDirection * deltaTime;
-    
+    m_currentRotation += m_pulseShape.rotationSpeed() * m_rotationDirection * deltaTime;
+
     // =========================================================================
     // Calculate Size
     // =========================================================================
-    
-    float size = m_minSize + (m_maxSize - m_minSize) * audioLevel;
-    size = std::clamp(size, m_minSize, m_maxSize);
+
+    const float minSize = m_pulseShape.sizeMin();
+    const float maxSize = m_pulseShape.sizeMax();
+    float size = minSize + (maxSize - minSize) * audioLevel;
+    size = std::clamp(size, minSize, maxSize);
     
     // =========================================================================
     // Get Colors from Gradient (up to 8 stops)
@@ -1171,8 +1045,8 @@ void PulsingVisualizer::onRender(float deltaTime)
     gl->glUniform1i(m_uniformStopCount, static_cast<int>(stopCount));
     
     // Inner radius only for Ring
-    float innerR = (m_pulseShape.shape() == lumi::modules::PulseShape::Ring) 
-                   ? m_innerRadius : 0.0f;
+    float innerR = (m_pulseShape.shape() == lumi::modules::PulseShape::Ring)
+                   ? m_pulseShape.innerRadiusRatio() : 0.0f;
     gl->glUniform1f(m_uniformInnerRadius, innerR);
     
     // Outline width (convert pixels to normalized units)
@@ -1248,5 +1122,3 @@ void PulsingVisualizer::onCleanup()
 
 bool PulsingVisualizer::createShaders() { return true; }
 void PulsingVisualizer::updateVertexBuffer() { rebuildShape(); }
-void PulsingVisualizer::renderPulse(float, float) {}
-float PulsingVisualizer::detectBeat(float) { return 0.0f; }

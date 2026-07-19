@@ -1,4 +1,4 @@
-/**
+﻿/**
  ****************************************************************************************
  * @file   WaveformVisualizer.cpp
  * @brief  Advanced audio waveform visualizer with 8-stop gradient
@@ -10,6 +10,9 @@
  */
 
 #include "visualizers/WaveformVisualizer.hpp"
+#include "visualizers/PipelineKeys.hpp"
+#include "visualizers/VisualizerPresetManager.hpp"
+#include "visualizers/modules/AudioUtil.hpp"
 
 #include <QOpenGLFunctions>
 #include <QOpenGLContext>
@@ -18,6 +21,8 @@
 
 #include <cmath>
 #include <algorithm>
+#include <map>
+#include <string>
 
 using namespace lumi::modules;
 
@@ -268,6 +273,160 @@ void main()
 }
 )";
 
+// =============================================================================
+// Key-Schema (Phase 4 Schritt 5.3) -- module sub-id <-> pipeline key
+// =============================================================================
+
+// Scalar sub-ids of WaveformModule -> new pipeline keys (Parameter_Key_Migration.md §3).
+// Gradient blocks are handled by prefix (monoColor. -> color.mono. etc., below).
+const std::map<std::string, std::string>& subIdKeyTable()
+{
+    static const std::map<std::string, std::string> table = {
+        {"channelMode", "map.channelMode"},
+        {"sampleCount", "map.sampleCount"},
+        {"monoOffset", "render.mono.offset"},
+        {"monoAmplitude", "render.mono.amplitude"},
+        {"leftOffset", "render.left.offset"},
+        {"leftAmplitude", "render.left.amplitude"},
+        {"rightOffset", "render.right.offset"},
+        {"rightAmplitude", "render.right.amplitude"},
+        {"displayWidth", "render.displayWidth"},
+        {"lineStyle", "render.lineStyle"},
+        {"monoLineWidth", "render.mono.lineWidth"},
+        {"leftLineWidth", "render.left.lineWidth"},
+        {"rightLineWidth", "render.right.lineWidth"},
+        {"dashLength", "render.dashLength"},
+        {"dashGap", "render.dashGap"},
+        {"monoFillEnabled", "render.mono.fillEnabled"},
+        {"monoFillOpacity", "render.mono.fillOpacity"},
+        {"monoFillBrightness", "render.mono.fillBrightness"},
+        {"leftFillEnabled", "render.left.fillEnabled"},
+        {"leftFillOpacity", "render.left.fillOpacity"},
+        {"leftFillBrightness", "render.left.fillBrightness"},
+        {"rightFillEnabled", "render.right.fillEnabled"},
+        {"rightFillOpacity", "render.right.fillOpacity"},
+        {"rightFillBrightness", "render.right.fillBrightness"},
+        {"mirrorEnabled", "post.mirror.enabled"},
+        {"holdEnabled", "post.hold.enabled"},
+        {"fadeTime", "post.hold.fadeTime"},
+        {"maxHoldFrames", "post.hold.maxFrames"},
+    };
+    return table;
+}
+
+struct PrefixPair
+{
+    const char* subPrefix;  ///< module-internal gradient prefix
+    const char* keyPrefix;  ///< pipeline color-handle prefix
+};
+
+constexpr PrefixPair kGradientPrefixes[] = {
+    {"monoColor.", "color.mono."},
+    {"leftColor.", "color.left."},
+    {"rightColor.", "color.right."},
+};
+
+/// Module sub-id -> pipeline key ("" if unknown)
+std::string subIdToKey(const std::string& subId)
+{
+    for (const auto& [subPrefix, keyPrefix] : kGradientPrefixes)
+    {
+        if (subId.rfind(subPrefix, 0) == 0)
+        {
+            return keyPrefix + subId.substr(std::string(subPrefix).size());
+        }
+    }
+    auto it = subIdKeyTable().find(subId);
+    return it == subIdKeyTable().end() ? std::string{} : it->second;
+}
+
+/// Pipeline key -> module sub-id ("" if unknown)
+std::string keyToSubId(const std::string& key)
+{
+    for (const auto& [subPrefix, keyPrefix] : kGradientPrefixes)
+    {
+        if (key.rfind(keyPrefix, 0) == 0)
+        {
+            return subPrefix + key.substr(std::string(keyPrefix).size());
+        }
+    }
+    static const std::map<std::string, std::string> reverse = [] {
+        std::map<std::string, std::string> r;
+        for (const auto& [subId, newKey] : subIdKeyTable())
+        {
+            r.emplace(newKey, subId);
+        }
+        return r;
+    }();
+    auto it = reverse.find(key);
+    return it == reverse.end() ? std::string{} : it->second;
+}
+
+// stageForKey/groupForStage: shared helpers from visualizers/PipelineKeys.hpp
+
+// =============================================================================
+// Legacy-Key-Migration (Phase 4 Schritt 5.3)
+// =============================================================================
+
+/**
+ * @brief Alias map old->new schema (Parameter_Key_Migration.md §3)
+ *
+ * Old keys were "waveform." + module sub-id -- generated from the same tables
+ * that drive the live schema. Includes the audio.* identity whitelist, the
+ * waveform.color.* legacy alias (§7.4) and the E3 value converter.
+ */
+void registerLegacyKeyAliases()
+{
+    std::map<std::string, std::string> aliases;
+
+    // Stage 1: audio.* unchanged (identity) -- incl. audio.bands (E2: Equalizer only)
+    for (const char* key : {"preset", "scale", "bands", "floorDb", "ceilDb", "clamp01",
+                            "gain", "smooth.preset", "smooth.algorithm", "smooth.timeMs",
+                            "smooth.windowSize", "smooth.primeFirstFrame"})
+    {
+        aliases.emplace(std::string("audio.") + key, std::string("audio.") + key);
+    }
+
+    // Scalars: waveform.<subId> -> new key
+    for (const auto& [subId, newKey] : subIdKeyTable())
+    {
+        aliases.emplace("waveform." + subId, newKey);
+    }
+
+    // Gradient blocks: waveform.monoColor.* -> color.mono.* etc.; plus the
+    // waveform.color.* legacy alias (mono, §7.4)
+    for (const char* sub : {"mode", "solidColor", "angle", "preset", "editGradient",
+                            "outlineWidth", "gradientPresetName", "gradientData"})
+    {
+        for (const auto& [subPrefix, keyPrefix] : kGradientPrefixes)
+        {
+            aliases.emplace(std::string("waveform.") + subPrefix + sub,
+                            std::string(keyPrefix) + sub);
+        }
+        aliases.emplace(std::string("waveform.color.") + sub,
+                        std::string("color.mono.") + sub);
+    }
+
+    lumi::VisualizerPresetManager::registerKeyAliases(QStringLiteral("waveform"),
+                                                      std::move(aliases));
+
+    // E3 (Hybrid): waveform.smoothing (EMA factor s) -> audio.smooth.timeMs,
+    // timeMs ~ -16.67/ln(s) (60-FPS assumption); s <= 0 -> 0 ms, s >= 1 clamped
+    lumi::VisualizerPresetManager::registerKeyConverter(
+        QStringLiteral("waveform"), "waveform.smoothing", "audio.smooth.timeMs",
+        [](const lumi::modules::ParamValue& value) -> lumi::modules::ParamValue {
+            float s = 0.0f;
+            if (auto* f = std::get_if<float>(&value)) s = *f;
+            else if (auto* i = std::get_if<int>(&value)) s = static_cast<float>(*i);
+            if (s <= 0.0f)
+            {
+                return 0.0f;  // no smoothing
+            }
+            const float clamped = std::min(s, 0.999f);
+            return -16.67f / std::log(clamped);
+        });
+}
+
 } // anonymous namespace
 
 // =============================================================================
@@ -281,14 +440,17 @@ WaveformVisualizer::WaveformVisualizer()
           QObject::tr("Advanced audio waveform oscilloscope"))
 {
     BasicLogger::logDebug("WaveformVisualizer: Constructor called");
-    
+
+    // Idempotent on every construction — a magic static would not survive
+    // clearKeyAliases() (tests) since the registration would never re-fire
+    registerLegacyKeyAliases();
+
     int sampleCount = m_waveform.sampleCount();
     m_displayLeft.resize(sampleCount, 0.0f);
     m_displayRight.resize(sampleCount, 0.0f);
     m_displayMono.resize(sampleCount, 0.0f);
-    m_smoothedLeft.resize(sampleCount, 0.0f);
-    m_smoothedRight.resize(sampleCount, 0.0f);
-    m_smoothedMono.resize(sampleCount, 0.0f);
+
+    syncDisplaySmoothing();
 }
 
 WaveformVisualizer::~WaveformVisualizer()
@@ -307,37 +469,45 @@ std::vector<ModuleParamDesc> WaveformVisualizer::paramDescs() const
 {
     std::vector<ModuleParamDesc> params;
 
-    // Audio Source Parameters
+    // Stage 1: Audio Source
     for (const auto& p : m_audioSource.paramDescs())
     {
         ModuleParamDesc prefixed = p;
         prefixed.id = "audio." + p.id;
-        prefixed.group = "1. Audio";
-        
+        prefixed.group = "Audio";
+        prefixed.stage = PipelineStage::AudioSource;
+
         if (!prefixed.dependsOn.empty())
         {
             prefixed.dependsOn = "audio." + prefixed.dependsOn;
         }
-        
+
         params.push_back(prefixed);
     }
 
-    // Waveform Parameters
+    // Stages 2/3/4/6: module schema translated to the pipeline keys (5.3)
     for (const auto& p : m_waveform.paramDescs())
     {
+        const std::string newKey = subIdToKey(p.id);
+        if (newKey.empty())
+        {
+            BasicLogger::logWarning("WaveformVisualizer: No pipeline key for '" + p.id + "'");
+            continue;
+        }
+
         ModuleParamDesc prefixed = p;
-        prefixed.id = "waveform." + p.id;
-        prefixed.group = "2. Waveform";
-        prefixed.order = 100 + p.order;
-        
+        prefixed.id = newKey;
+        prefixed.stage = lumi::stageForKey(newKey);
+        prefixed.group = lumi::groupForStage(prefixed.stage);
+
         if (!prefixed.dependsOn.empty())
         {
-            prefixed.dependsOn = "waveform." + prefixed.dependsOn;
+            prefixed.dependsOn = subIdToKey(prefixed.dependsOn);
         }
-        
+
         params.push_back(prefixed);
     }
-    
+
     return params;
 }
 
@@ -347,13 +517,9 @@ bool WaveformVisualizer::getParam(const std::string& id, ParamValue& out) const
     {
         return m_audioSource.getParam(id.substr(6), out);
     }
-    
-    if (id.rfind("waveform.", 0) == 0)
-    {
-        return m_waveform.getParam(id.substr(9), out);
-    }
-    
-    return false;
+
+    const std::string subId = keyToSubId(id);
+    return subId.empty() ? false : m_waveform.getParam(subId, out);
 }
 
 bool WaveformVisualizer::setParam(const std::string& id, const ParamValue& value)
@@ -362,26 +528,25 @@ bool WaveformVisualizer::setParam(const std::string& id, const ParamValue& value
     {
         return m_audioSource.setParam(id.substr(6), value);
     }
-    
-    if (id.rfind("waveform.", 0) == 0)
+
+    const std::string subId = keyToSubId(id);
+    if (subId.empty())
     {
-        bool result = m_waveform.setParam(id.substr(9), value);
-        
-        if (result && id == "waveform.sampleCount")
-        {
-            int newCount = m_waveform.sampleCount();
-            m_displayLeft.resize(newCount, 0.0f);
-            m_displayRight.resize(newCount, 0.0f);
-            m_displayMono.resize(newCount, 0.0f);
-            m_smoothedLeft.resize(newCount, 0.0f);
-            m_smoothedRight.resize(newCount, 0.0f);
-            m_smoothedMono.resize(newCount, 0.0f);
-        }
-        
-        return result;
+        return false;
     }
-    
-    return false;
+
+    bool result = m_waveform.setParam(subId, value);
+
+    // Buffer-resize coupling (§7.2)
+    if (result && id == "map.sampleCount")
+    {
+        int newCount = m_waveform.sampleCount();
+        m_displayLeft.resize(newCount, 0.0f);
+        m_displayRight.resize(newCount, 0.0f);
+        m_displayMono.resize(newCount, 0.0f);
+    }
+
+    return result;
 }
 
 void WaveformVisualizer::resetToDefaults()
@@ -397,10 +562,12 @@ void WaveformVisualizer::resetToDefaults()
     m_displayLeft.assign(sampleCount, 0.0f);
     m_displayRight.assign(sampleCount, 0.0f);
     m_displayMono.assign(sampleCount, 0.0f);
-    m_smoothedLeft.assign(sampleCount, 0.0f);
-    m_smoothedRight.assign(sampleCount, 0.0f);
-    m_smoothedMono.assign(sampleCount, 0.0f);
-    
+
+    m_displaySmoothMono.reset();
+    m_displaySmoothLeft.reset();
+    m_displaySmoothRight.reset();
+    syncDisplaySmoothing();
+
     BasicLogger::logInfo("WaveformVisualizer: Reset to defaults");
 }
 
@@ -553,42 +720,18 @@ bool WaveformVisualizer::createShaders()
 // Audio Processing
 // =============================================================================
 
-void WaveformVisualizer::splitStereoData(const std::vector<float>& interleaved,
-                                          std::vector<float>& left,
-                                          std::vector<float>& right)
-{
-    size_t samples = interleaved.size() / 2;
-    left.resize(samples);
-    right.resize(samples);
-    
-    for (size_t i = 0; i < samples; ++i)
-    {
-        left[i] = interleaved[i * 2];
-        right[i] = interleaved[i * 2 + 1];
-    }
-}
+// splitStereoData/resampleNearest: shared helpers from modules/AudioUtil.hpp (5.6)
 
-void WaveformVisualizer::resampleWaveform(const std::vector<float>& source,
-                                           std::vector<float>& target,
-                                           std::vector<float>& smoothed,
-                                           int targetSize,
-                                           float smoothing,
-                                           float gain)
+void WaveformVisualizer::syncDisplaySmoothing()
 {
-    if (source.empty()) return;
-    
-    target.resize(targetSize);
-    smoothed.resize(targetSize);
-    
-    for (int i = 0; i < targetSize; ++i)
+    // The stage-1 smoothing config (audio.smooth.*) is the single source of
+    // truth (E3) -- mirror it into the per-channel display smoothers.
+    const SmoothingModule& config = m_audioSource.smoothing();
+    for (SmoothingModule* smoother :
+         {&m_displaySmoothMono, &m_displaySmoothLeft, &m_displaySmoothRight})
     {
-        float t = static_cast<float>(i) / static_cast<float>(targetSize - 1);
-        int srcIdx = static_cast<int>(t * (source.size() - 1));
-        srcIdx = std::clamp(srcIdx, 0, static_cast<int>(source.size()) - 1);
-        
-        float value = source[srcIdx] * gain;
-        smoothed[i] = smoothing * smoothed[i] + (1.0f - smoothing) * value;
-        target[i] = smoothed[i];
+        smoother->setAlgorithm(config.algorithm());
+        smoother->setTimeMs(config.timeMs());
     }
 }
 
@@ -792,31 +935,11 @@ void WaveformVisualizer::uploadGradientUniforms(QOpenGLShaderProgram* /*shader*/
 
 void WaveformVisualizer::updateHeldFrames(float deltaTime)
 {
-    float fadeTime = m_waveform.fadeTime();
-    int maxFrames = m_waveform.maxHoldFrames();
-    
-    auto updateQueue = [deltaTime, fadeTime, maxFrames](std::deque<HeldWaveformFrame>& frames) {
-        for (auto& frame : frames)
-        {
-            frame.age += deltaTime;
-            frame.alpha = 1.0f - (frame.age / fadeTime);
-            frame.alpha = std::max(0.0f, frame.alpha);
-        }
-        
-        while (!frames.empty() && frames.front().alpha <= 0.0f)
-        {
-            frames.pop_front();
-        }
-        
-        while (frames.size() > static_cast<size_t>(maxFrames))
-        {
-            frames.pop_front();
-        }
-    };
-    
-    updateQueue(m_heldFramesMono);
-    updateQueue(m_heldFramesLeft);
-    updateQueue(m_heldFramesRight);
+    // Frame mechanics live in the shared HoldFadeEffect (PostFxModule, 5.6)
+    const float fadeTime = m_waveform.fadeTime();
+    m_heldFramesMono.update(deltaTime, fadeTime);
+    m_heldFramesLeft.update(deltaTime, fadeTime);
+    m_heldFramesRight.update(deltaTime, fadeTime);
 }
 
 // =============================================================================
@@ -970,64 +1093,57 @@ void WaveformVisualizer::onRender(float deltaTime)
     
     // Get settings
     int sampleCount = m_waveform.sampleCount();
-    float smoothing = m_waveform.smoothing();
     float gain = m_audioSource.gain();
     WaveformChannelMode channelMode = m_waveform.channelMode();
-    
+
     // Ensure buffers match
     if (static_cast<int>(m_displayLeft.size()) != sampleCount)
     {
         m_displayLeft.resize(sampleCount, 0.0f);
         m_displayRight.resize(sampleCount, 0.0f);
         m_displayMono.resize(sampleCount, 0.0f);
-        m_smoothedLeft.resize(sampleCount, 0.0f);
-        m_smoothedRight.resize(sampleCount, 0.0f);
-        m_smoothedMono.resize(sampleCount, 0.0f);
     }
-    
+
     // Get waveform data
     std::vector<float> rawWaveform = getWaveform();
-    
+
     if (!rawWaveform.empty())
     {
         splitStereoData(rawWaveform, m_rawWaveformLeft, m_rawWaveformRight);
-        
-        resampleWaveform(m_rawWaveformLeft, m_displayLeft, m_smoothedLeft,
-                         sampleCount, smoothing, gain);
-        resampleWaveform(m_rawWaveformRight, m_displayRight, m_smoothedRight,
-                         sampleCount, smoothing, gain);
-        
-        // Create mono mix
+
+        // Display smoothing via the shared SmoothingModule (E3): config
+        // mirrors audio.smooth.*, per-index state lives in the smoothers
+        syncDisplaySmoothing();
+
+        resampleNearest(m_rawWaveformLeft, m_displayLeft, sampleCount, gain);
+        resampleNearest(m_rawWaveformRight, m_displayRight, sampleCount, gain);
+        m_displaySmoothLeft.processArrayPerIndex(m_displayLeft.data(), sampleCount,
+                                                 deltaTime, m_displayLeft.data());
+        m_displaySmoothRight.processArrayPerIndex(m_displayRight.data(), sampleCount,
+                                                  deltaTime, m_displayRight.data());
+
+        // Mono mix of the smoothed channels, then its own smoothing pass
+        // (parity with the previous double-EMA behavior)
         for (int i = 0; i < sampleCount; ++i)
         {
-            float monoVal = (m_displayLeft[i] + m_displayRight[i]) * 0.5f;
-            m_smoothedMono[i] = smoothing * m_smoothedMono[i] + (1.0f - smoothing) * monoVal;
-            m_displayMono[i] = m_smoothedMono[i];
+            m_displayMono[i] = (m_displayLeft[i] + m_displayRight[i]) * 0.5f;
         }
-        
-        // Add to hold buffers
+        m_displaySmoothMono.processArrayPerIndex(m_displayMono.data(), sampleCount,
+                                                 deltaTime, m_displayMono.data());
+
+        // Add to hold trails (shared HoldFadeEffect, 5.6)
         if (m_waveform.holdEnabled())
         {
+            const int maxFrames = m_waveform.maxHoldFrames();
             if (channelMode == WaveformChannelMode::Mono || channelMode == WaveformChannelMode::Both)
             {
-                HeldWaveformFrame frame;
-                frame.samples = m_displayMono;
-                frame.age = 0.0f;
-                frame.alpha = 1.0f;
-                m_heldFramesMono.push_back(frame);
+                m_heldFramesMono.push(m_displayMono, maxFrames);
             }
-            
+
             if (channelMode == WaveformChannelMode::Stereo || channelMode == WaveformChannelMode::Both)
             {
-                HeldWaveformFrame frameL, frameR;
-                frameL.samples = m_displayLeft;
-                frameL.age = 0.0f;
-                frameL.alpha = 1.0f;
-                frameR.samples = m_displayRight;
-                frameR.age = 0.0f;
-                frameR.alpha = 1.0f;
-                m_heldFramesLeft.push_back(frameL);
-                m_heldFramesRight.push_back(frameR);
+                m_heldFramesLeft.push(m_displayLeft, maxFrames);
+                m_heldFramesRight.push(m_displayRight, maxFrames);
             }
         }
     }
@@ -1055,29 +1171,29 @@ void WaveformVisualizer::onRender(float deltaTime)
     {
         if (channelMode == WaveformChannelMode::Mono || channelMode == WaveformChannelMode::Both)
         {
-            for (const auto& frame : m_heldFramesMono)
+            for (const auto& frame : m_heldFramesMono.frames())
             {
                 if (frame.alpha > 0.01f)
                 {
-                    renderChannel(WaveformModule::CHANNEL_MONO, frame.samples, monoConfig, frame.alpha);
+                    renderChannel(WaveformModule::CHANNEL_MONO, frame.data, monoConfig, frame.alpha);
                 }
             }
         }
-        
+
         if (channelMode == WaveformChannelMode::Stereo || channelMode == WaveformChannelMode::Both)
         {
-            for (const auto& frame : m_heldFramesLeft)
+            for (const auto& frame : m_heldFramesLeft.frames())
             {
                 if (frame.alpha > 0.01f)
                 {
-                    renderChannel(WaveformModule::CHANNEL_LEFT, frame.samples, leftConfig, frame.alpha);
+                    renderChannel(WaveformModule::CHANNEL_LEFT, frame.data, leftConfig, frame.alpha);
                 }
             }
-            for (const auto& frame : m_heldFramesRight)
+            for (const auto& frame : m_heldFramesRight.frames())
             {
                 if (frame.alpha > 0.01f)
                 {
-                    renderChannel(WaveformModule::CHANNEL_RIGHT, frame.samples, rightConfig, frame.alpha);
+                    renderChannel(WaveformModule::CHANNEL_RIGHT, frame.data, rightConfig, frame.alpha);
                 }
             }
         }

@@ -24,6 +24,9 @@
 #include "visualizers/modules/IModule.hpp"
 #include "visualizers/modules/source/AudioSourceModule.hpp"
 #include "visualizers/modules/SuperscopeModule.hpp"
+#include "visualizers/modules/processing/BeatModule.hpp"
+#include "visualizers/modules/processing/SmoothingModule.hpp"
+#include "visualizers/modules/postfx/PostFxModule.hpp"
 
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
@@ -31,7 +34,6 @@
 
 #include <memory>
 #include <vector>
-#include <deque>
 
 // Forward declarations
 class QOpenGLContext;
@@ -83,7 +85,26 @@ public:
     /// @brief Gradient handles (Phase 4 — generic editor/preview access)
     [[nodiscard]] std::vector<GradientHandle> gradients() override
     {
-        return {{"main", "Color", "scope.color.", &m_superscope.colorGradient()}};
+        return {{"main", "Color", "color.main.", &m_superscope.colorGradient()}};
+    }
+
+    /// @brief Tap points (Phase 4 Schritt 6) — stage outputs for the group preview
+    [[nodiscard]] std::vector<TapPoint> tapPoints() override
+    {
+        using lumi::modules::PipelineStage;
+        return {
+            {"tap.audio", "Analyse (Baender)", PipelineStage::AudioSource,
+             [this]() {
+                 const float* data = m_audioSource.spectrum();
+                 const int count = m_audioSource.bandCount();
+                 return (data != nullptr && count > 0)
+                     ? std::vector<float>(data, data + count)
+                     : std::vector<float>{};
+             },
+             TapDisplay::Bars},
+            {"tap.map", "Mapping (Waveform L)", PipelineStage::Mapping,
+             [this]() { return m_waveformLeft; }, TapDisplay::Curve},
+        };
     }
 
     void resetToDefaults() override;
@@ -101,10 +122,6 @@ private:
 
     bool createShaders();
 
-    void splitStereoData(const std::vector<float>& interleaved,
-                         std::vector<float>& left,
-                         std::vector<float>& right);
-
     void renderPoints(const std::vector<lumi::modules::SuperscopePoint>& points);
     void renderLines(const std::vector<lumi::modules::SuperscopePoint>& points);
     void renderLinesAsTriangleStrip(const std::vector<lumi::modules::SuperscopePoint>& points, float lineWidth);
@@ -118,6 +135,16 @@ private:
 
     lumi::modules::AudioSourceModule m_audioSource;
     lumi::modules::SuperscopeModule m_superscope;
+    lumi::modules::BeatModule m_beat;
+
+    // Script-input smoothing (E3 — config mirrors audio.smooth.*, per-index state)
+    lumi::modules::SmoothingModule m_smoothWaveformLeft;
+    lumi::modules::SmoothingModule m_smoothWaveformRight;
+    lumi::modules::SmoothingModule m_smoothSpectrumLeft;
+    lumi::modules::SmoothingModule m_smoothSpectrumRight;
+
+    /// @brief Mirror the stage-1 smoothing config into the script-input smoothers
+    void syncInputSmoothing();
 
     // =========================================================================
     // OpenGL Resources
@@ -144,33 +171,18 @@ private:
     std::vector<float> m_waveformRight;
     std::vector<float> m_spectrumLeft;
     std::vector<float> m_spectrumRight;
-    
-    // Smoothed buffers (for EMA smoothing)
-    std::vector<float> m_smoothedWaveformLeft;
-    std::vector<float> m_smoothedWaveformRight;
-    std::vector<float> m_smoothedSpectrumLeft;
-    std::vector<float> m_smoothedSpectrumRight;
 
     // =========================================================================
-    // Beat Detection State
+    // Beat Detection State (detector lives in BeatModule)
     // =========================================================================
 
-    float m_beatEnergy = 0.0f;
-    float m_beatThreshold = 0.0f;
     bool m_isBeat = false;
 
     // =========================================================================
-    // Hold/Fade Frame History
+    // Hold/Fade Trail (shared PostFx mechanics, 5.6)
     // =========================================================================
 
-    struct HeldFrame
-    {
-        std::vector<lumi::modules::SuperscopePoint> points;
-        float age = 0.0f;
-        float alpha = 1.0f;
-    };
-
-    std::deque<HeldFrame> m_heldFrames;
+    lumi::modules::HoldFadeEffectT<std::vector<lumi::modules::SuperscopePoint>> m_heldFrames;
 
     void updateHeldFrames(float deltaTime);
     void renderHeldFrames();

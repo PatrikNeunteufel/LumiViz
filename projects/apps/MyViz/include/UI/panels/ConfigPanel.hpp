@@ -42,6 +42,7 @@
 
 #include <QWidget>
 #include <QMap>
+#include <functional>
 #include <vector>
 #include <memory>
 
@@ -56,7 +57,10 @@ class QLabel;
 class QLineEdit;
 class QPushButton;
 class QGroupBox;
+class QTimer;
+class QToolButton;
 class CollapsibleGroupBox;
+class TapPreviewWidget;
 class IVisualizer;
 
 namespace lumi {
@@ -148,8 +152,15 @@ private:
     
     // Module preset save (for Smoothing, Audio, Gradient presets)
     void onModulePresetSave(const std::string& paramId);
-    void refreshModulePresetDropdown(const std::string& paramId, 
+    void refreshModulePresetDropdown(const std::string& paramId,
                                       const std::vector<std::string>& presetNames);
+
+    // Stage previews (Phase 4 Schritt 6 — tap points + gradient strips)
+    void buildStagePreviews();
+    void onPreviewToggled(const QString& groupKey, bool visible);
+    void onPreviewTick();
+    void updatePreviewTimer();
+    void updatePreviewVisibility();
 
     // --- Members ---
     IVisualizer* m_visualizer = nullptr;
@@ -174,6 +185,22 @@ private:
     };
     QMap<QString, ParamWidgetInfo> m_paramWidgets;
     
+    // Stage previews (Phase 4 Schritt 6): one eye toggle per stage group,
+    // fed by a shared timer that only runs while a preview is visible (N7)
+    struct PreviewEntry
+    {
+        TapPreviewWidget* widget = nullptr;
+        std::function<std::vector<float>()> sample;  ///< empty for color strips
+        QString visibilityParamId;  ///< follow this param's visibility (color strips)
+    };
+    struct StagePreviewGroup
+    {
+        QToolButton* toggle = nullptr;
+        std::vector<PreviewEntry> entries;
+    };
+    QMap<QString, StagePreviewGroup> m_stagePreviews;  ///< key = "stage:N"
+    QTimer* m_previewTimer = nullptr;
+
     // Preset UI
     QComboBox* m_presetCombo = nullptr;
     QPushButton* m_savePresetBtn = nullptr;

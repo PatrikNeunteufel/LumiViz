@@ -10,6 +10,7 @@
  */
 
 #include "visualizers/EqualizerVisualizer.hpp"
+#include "visualizers/VisualizerPresetManager.hpp"
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
@@ -19,6 +20,8 @@
 
 #include <cmath>
 #include <algorithm>
+#include <map>
+#include <string>
 
 using namespace lumi::modules;
 
@@ -165,6 +168,72 @@ void main()
 }
 )";
 
+// =============================================================================
+// Legacy-Key-Migration (Phase 4 Schritt 5.1)
+// =============================================================================
+
+/**
+ * @brief Alias map old→new schema (Parameter_Key_Migration.md §6/§7.1)
+ *
+ * Applies to presets with formatVersion < 2. Unchanged keys are registered
+ * as identity entries so the map doubles as the loader's key whitelist (§9).
+ */
+void registerLegacyKeyAliases()
+{
+    std::map<std::string, std::string> aliases;
+
+    // Stage 1: audio.* unchanged (identity) — WITHOUT audio.bands (E2, below)
+    for (const char* key : {"preset", "scale", "floorDb", "ceilDb", "clamp01", "gain",
+                            "smooth.preset", "smooth.algorithm", "smooth.timeMs",
+                            "smooth.windowSize", "smooth.primeFirstFrame"})
+    {
+        aliases.emplace(std::string("audio.") + key, std::string("audio.") + key);
+    }
+
+    // E2: ONE key map.bands replaces the eq.bands ↔ audio.bands pair. Both old
+    // keys translate to it; on conflicting values eq.bands wins (§7.1) because
+    // preset.parameters iterates in key order — "audio.bands" < "eq.bands",
+    // so eq.bands is applied last.
+    aliases.emplace("eq.bands", "map.bands");
+    aliases.emplace("audio.bands", "map.bands");
+    aliases.emplace("eq.orientation", "map.orientation");
+    aliases.emplace("eq.barGap", "render.barGap");
+    // render.heightScale is NEW (E1) — no legacy key, nothing to register
+
+    // Stage 3: color.* → color.main.* (domain + the 8 gradient sub-keys)
+    aliases.emplace("color.domain", "color.main.domain");
+    for (const char* key : {"mode", "solidColor", "angle", "preset", "editGradient",
+                            "outlineWidth", "gradientPresetName", "gradientData"})
+    {
+        aliases.emplace(std::string("color.") + key, std::string("color.main.") + key);
+    }
+
+    // Stage 5: peak.* / particle.* unchanged (identity)
+    for (const char* key : {"peak.enabled", "peak.holdDelay", "peak.gravity",
+                            "peak.falloff", "peak.bounce", "peak.respawnOnLeave",
+                            "peak.behind", "particle.spawn", "particle.minDelta",
+                            "particle.minInterval", "particle.maxPerBand",
+                            "particle.freezeColor", "particle.bindToSpawner"})
+    {
+        aliases.emplace(key, key);
+    }
+
+    // Stage 5: thickness/spring/peakColor pulled under peak.*
+    aliases.emplace("thickness.mode", "peak.thickness.mode");
+    aliases.emplace("thickness.base", "peak.thickness.base");
+    aliases.emplace("thickness.scale", "peak.thickness.scale");
+    aliases.emplace("spring.enabled", "peak.spring.enabled");
+    aliases.emplace("spring.k", "peak.spring.k");
+    aliases.emplace("spring.damping", "peak.spring.damping");
+    aliases.emplace("spring.useDelay", "peak.spring.useDelay");
+    aliases.emplace("peakColor.auto", "peak.color.auto");
+    aliases.emplace("peakColor.fixed", "peak.color.fixed");
+    aliases.emplace("peakColor.freeze", "peak.color.freeze");
+
+    lumi::VisualizerPresetManager::registerKeyAliases(QStringLiteral("equalizer"),
+                                                      std::move(aliases));
+}
+
 } // anonymous namespace
 
 // =============================================================================
@@ -176,8 +245,12 @@ EqualizerVisualizer::EqualizerVisualizer()
                      QObject::tr("Equalizer"),
                      QObject::tr("Spectrum analyzer with bars and peak markers"))
 {
+    // Idempotent on every construction — a magic static would not survive
+    // clearKeyAliases() (tests) since the registration would never re-fire
+    registerLegacyKeyAliases();
+
     m_spectrumData.resize(2048, 0.0f);
-    
+
     // Sync AudioSourceModule bands with Equalizer bands
     m_audioSource.setBands(m_equalizer.bandCount());
 }
@@ -196,37 +269,39 @@ std::vector<ModuleParamDesc> EqualizerVisualizer::paramDescs() const
     std::vector<ModuleParamDesc> params;
 
     // =========================================================================
-    // 1. Audio Source Parameters
+    // Stage 1: Audio Source
     // =========================================================================
     for (const auto& p : m_audioSource.paramDescs())
     {
-        // Skip "bands" - we use eq.bands instead and sync automatically
+        // Skip "bands" - replaced by map.bands (E2), which drives both modules
         if (p.id == "bands")
             continue;
-            
+
         ModuleParamDesc prefixed = p;
         prefixed.id = "audio." + p.id;
-        prefixed.group = "1. Audio";
+        prefixed.group = "Audio";
+        prefixed.stage = PipelineStage::AudioSource;
         // Keep original order from AudioSourceModule for consistent UI layout
-        
+
         if (!prefixed.dependsOn.empty())
         {
             prefixed.dependsOn = "audio." + prefixed.dependsOn;
         }
-        
+
         params.push_back(prefixed);
     }
 
     // =========================================================================
-    // 2. Equalizer Display Parameters
+    // Stage 2: Mapping
     // =========================================================================
-    
-    // Bands
+
+    // Bands (replaces the old eq.bands ↔ audio.bands pair, E2)
     {
         ModuleParamDesc p;
-        p.id = "eq.bands";
+        p.id = "map.bands";
         p.displayName = "Bands";
-        p.group = "2. Equalizer";
+        p.group = "Mapping";
+        p.stage = PipelineStage::Mapping;
         p.type = ParamType::Int;
         p.defaultValue = 64;
         p.minValue = 8;
@@ -236,13 +311,86 @@ std::vector<ModuleParamDesc> EqualizerVisualizer::paramDescs() const
         p.order = 0;
         params.push_back(p);
     }
-    
+
+    // Orientation
+    {
+        ModuleParamDesc p;
+        p.id = "map.orientation";
+        p.displayName = "Orientation";
+        p.group = "Mapping";
+        p.stage = PipelineStage::Mapping;
+        p.type = ParamType::Enum;
+        p.defaultValue = 0;
+        p.enumOptions = {"Bottom Up", "Top Down"};
+        p.tooltip = "Bar growth direction";
+        p.order = 1;
+        params.push_back(p);
+    }
+
+    // =========================================================================
+    // Stage 3: Color
+    // =========================================================================
+
+    // Gradient Domain (Position, Amplitude, Time, Beat)
+    {
+        ModuleParamDesc p;
+        p.id = "color.main.domain";
+        p.displayName = "Color Mapping";
+        p.group = "Color";
+        p.stage = PipelineStage::Color;
+        p.type = ParamType::Enum;
+        p.defaultValue = 0;  // Position
+        p.enumOptions = {"Position", "Amplitude", "Time", "Beat"};
+        p.tooltip = "What drives the gradient color";
+        p.order = 0;
+        params.push_back(p);
+    }
+
+    // Color Gradient Parameters (from ColorGradientModule), handle "main"
+    for (const auto& p : m_equalizer.colorGradient().paramDescs())
+    {
+        ModuleParamDesc prefixed = p;
+        prefixed.id = "color.main." + p.id;
+        prefixed.group = "Color";
+        prefixed.stage = PipelineStage::Color;
+        prefixed.order = 10 + p.order;  // After domain
+
+        if (!prefixed.dependsOn.empty())
+        {
+            prefixed.dependsOn = "color.main." + prefixed.dependsOn;
+        }
+
+        params.push_back(prefixed);
+    }
+
+    // =========================================================================
+    // Stage 4: Render
+    // =========================================================================
+
+    // Height Scale (NEW, E1 — display scaling of bar heights, no legacy key)
+    {
+        ModuleParamDesc p;
+        p.id = "render.heightScale";
+        p.displayName = "Height Scale";
+        p.group = "Render";
+        p.stage = PipelineStage::Render;
+        p.type = ParamType::Float;
+        p.defaultValue = 1.0f;
+        p.minValue = 0.0f;
+        p.maxValue = 4.0f;
+        p.step = 0.05f;
+        p.tooltip = "Display scaling of bar heights";
+        p.order = 0;
+        params.push_back(p);
+    }
+
     // Bar Gap
     {
         ModuleParamDesc p;
-        p.id = "eq.barGap";
+        p.id = "render.barGap";
         p.displayName = "Bar Gap";
-        p.group = "2. Equalizer";
+        p.group = "Render";
+        p.stage = PipelineStage::Render;
         p.type = ParamType::Float;
         p.defaultValue = 2.0f;
         p.minValue = 0.0f;
@@ -252,78 +400,37 @@ std::vector<ModuleParamDesc> EqualizerVisualizer::paramDescs() const
         p.order = 1;
         params.push_back(p);
     }
-    
-    // Orientation
-    {
-        ModuleParamDesc p;
-        p.id = "eq.orientation";
-        p.displayName = "Orientation";
-        p.group = "2. Equalizer";
-        p.type = ParamType::Enum;
-        p.defaultValue = 0;
-        p.enumOptions = {"Bottom Up", "Top Down"};
-        p.tooltip = "Bar growth direction";
-        p.order = 2;
-        params.push_back(p);
-    }
 
     // =========================================================================
-    // 3. Color Parameters
+    // Stage 5: Peak / Particles (sub-groups: Peak Hold, Thickness, Spring
+    // Physics, Particles, Peak Color — ordered via order offsets 0/10/20/30/40)
     // =========================================================================
-    
-    // Gradient Domain (Position, Amplitude, Time, Beat)
-    {
-        ModuleParamDesc p;
-        p.id = "color.domain";
-        p.displayName = "Color Mapping";
-        p.group = "3. Color";
-        p.type = ParamType::Enum;
-        p.defaultValue = 0;  // Position
-        p.enumOptions = {"Position", "Amplitude", "Time", "Beat"};
-        p.tooltip = "What drives the gradient color";
-        p.order = 0;
-        params.push_back(p);
-    }
-    
-    // Color Gradient Parameters (from ColorGradientModule)
-    for (const auto& p : m_equalizer.colorGradient().paramDescs())
-    {
-        ModuleParamDesc prefixed = p;
-        prefixed.id = "color." + p.id;
-        prefixed.group = "3. Color";
-        prefixed.order = 10 + p.order;  // After domain
-        
-        if (!prefixed.dependsOn.empty())
-        {
-            prefixed.dependsOn = "color." + prefixed.dependsOn;
-        }
-        
-        params.push_back(prefixed);
-    }
 
-    // =========================================================================
-    // 4. Peak Hold / Spawner Parameters
-    // =========================================================================
-    
+    // --- Peak Hold (spawner) ---
+
     // Enable Peaks
     {
         ModuleParamDesc p;
         p.id = "peak.enabled";
         p.displayName = "Enable Peaks";
-        p.group = "4. Peak Hold";
+        p.group = "Peaks";
+        p.subGroup = "Peak Hold";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Bool;
         p.defaultValue = true;
         p.tooltip = "Show peak hold markers";
         p.order = 0;
         params.push_back(p);
     }
-    
+
     // Hold Delay
     {
         ModuleParamDesc p;
         p.id = "peak.holdDelay";
         p.displayName = "Hold Delay";
-        p.group = "4. Peak Hold";
+        p.group = "Peaks";
+        p.subGroup = "Peak Hold";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Float;
         p.defaultValue = 120.0f;
         p.minValue = 0.0f;
@@ -335,13 +442,15 @@ std::vector<ModuleParamDesc> EqualizerVisualizer::paramDescs() const
         p.dependsValues = {true};
         params.push_back(p);
     }
-    
+
     // Gravity (-15 to +15: negative=float up, 0=stay, positive=fall down)
     {
         ModuleParamDesc p;
         p.id = "peak.gravity";
         p.displayName = "Gravity";
-        p.group = "4. Peak Hold";
+        p.group = "Peaks";
+        p.subGroup = "Peak Hold";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Float;
         p.defaultValue = 9.81f;
         p.minValue = -15.0f;
@@ -352,13 +461,15 @@ std::vector<ModuleParamDesc> EqualizerVisualizer::paramDescs() const
         p.dependsValues = {true};
         params.push_back(p);
     }
-    
+
     // Air Resistance / Falloff
     {
         ModuleParamDesc p;
         p.id = "peak.falloff";
         p.displayName = "Air Resistance";
-        p.group = "4. Peak Hold";
+        p.group = "Peaks";
+        p.subGroup = "Peak Hold";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Float;
         p.defaultValue = 0.5f;
         p.minValue = 0.0f;
@@ -369,13 +480,15 @@ std::vector<ModuleParamDesc> EqualizerVisualizer::paramDescs() const
         p.dependsValues = {true};
         params.push_back(p);
     }
-    
+
     // Bounce Elasticity
     {
         ModuleParamDesc p;
         p.id = "peak.bounce";
         p.displayName = "Bounce";
-        p.group = "4. Peak Hold";
+        p.group = "Peaks";
+        p.subGroup = "Peak Hold";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Float;
         p.defaultValue = 0.25f;
         p.minValue = 0.0f;
@@ -386,13 +499,15 @@ std::vector<ModuleParamDesc> EqualizerVisualizer::paramDescs() const
         p.dependsValues = {true};
         params.push_back(p);
     }
-    
+
     // Respawn on Leave
     {
         ModuleParamDesc p;
         p.id = "peak.respawnOnLeave";
         p.displayName = "Respawn On Leave";
-        p.group = "4. Peak Hold";
+        p.group = "Peaks";
+        p.subGroup = "Peak Hold";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Bool;
         p.defaultValue = false;
         p.tooltip = "Respawn peak when it leaves visible range";
@@ -401,13 +516,15 @@ std::vector<ModuleParamDesc> EqualizerVisualizer::paramDescs() const
         p.dependsValues = {true};
         params.push_back(p);
     }
-    
+
     // Draw peaks behind bars
     {
         ModuleParamDesc p;
         p.id = "peak.behind";
         p.displayName = "Peaks Behind Bars";
-        p.group = "4. Peak Hold";
+        p.group = "Peaks";
+        p.subGroup = "Peak Hold";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Bool;
         p.defaultValue = false;
         p.tooltip = "Draw peak markers behind bars";
@@ -417,274 +534,298 @@ std::vector<ModuleParamDesc> EqualizerVisualizer::paramDescs() const
         params.push_back(p);
     }
 
-    // =========================================================================
-    // 5. Peak Thickness Parameters
-    // =========================================================================
-    
+    // --- Thickness (peak markers) ---
+
     // Thickness Mode
     {
         ModuleParamDesc p;
-        p.id = "thickness.mode";
+        p.id = "peak.thickness.mode";
         p.displayName = "Thickness Mode";
-        p.group = "5. Peak Thickness";
+        p.group = "Peaks";
+        p.subGroup = "Thickness";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Enum;
-        p.defaultValue = 0;  // Off
+        p.defaultValue = 0;  // Fixed
         p.enumOptions = {"Fixed", "Direct (thicker at high)", "Inverse (thicker at low)"};
         p.tooltip = "How peak thickness changes with amplitude";
-        p.order = 0;
+        p.order = 10;
         p.dependsOn = "peak.enabled";
         p.dependsValues = {true};
         params.push_back(p);
     }
-    
+
     // Base Thickness
     {
         ModuleParamDesc p;
-        p.id = "thickness.base";
+        p.id = "peak.thickness.base";
         p.displayName = "Base Thickness";
-        p.group = "5. Peak Thickness";
+        p.group = "Peaks";
+        p.subGroup = "Thickness";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Float;
         p.defaultValue = 2.0f;
         p.minValue = 1.0f;
         p.maxValue = 20.0f;
         p.unit = "px";
         p.tooltip = "Base thickness in pixels";
-        p.order = 1;
+        p.order = 11;
         p.dependsOn = "peak.enabled";
         p.dependsValues = {true};
         params.push_back(p);
     }
-    
+
     // Scale Thickness (only when mode != Off)
     {
         ModuleParamDesc p;
-        p.id = "thickness.scale";
+        p.id = "peak.thickness.scale";
         p.displayName = "Thickness Scale";
-        p.group = "5. Peak Thickness";
+        p.group = "Peaks";
+        p.subGroup = "Thickness";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Float;
         p.defaultValue = 4.0f;
         p.minValue = 0.0f;
         p.maxValue = 20.0f;
         p.unit = "px";
         p.tooltip = "Additional thickness based on amplitude";
-        p.order = 2;
-        p.dependsOn = "thickness.mode";
+        p.order = 12;
+        p.dependsOn = "peak.thickness.mode";
         p.dependsValues = {1, 2};  // Direct, Inverse
         params.push_back(p);
     }
 
-    // =========================================================================
-    // 6. Spring Physics Parameters
-    // =========================================================================
-    
+    // --- Spring Physics ---
+
     // Enable Spring
     {
         ModuleParamDesc p;
-        p.id = "spring.enabled";
+        p.id = "peak.spring.enabled";
         p.displayName = "Enable Spring";
-        p.group = "6. Spring Physics";
+        p.group = "Peaks";
+        p.subGroup = "Spring Physics";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Bool;
         p.defaultValue = false;
         p.tooltip = "Use spring physics instead of gravity";
-        p.order = 0;
+        p.order = 20;
         p.dependsOn = "peak.enabled";
         p.dependsValues = {true};
         params.push_back(p);
     }
-    
+
     // Spring Constant
     {
         ModuleParamDesc p;
-        p.id = "spring.k";
+        p.id = "peak.spring.k";
         p.displayName = "Spring Constant";
-        p.group = "6. Spring Physics";
+        p.group = "Peaks";
+        p.subGroup = "Spring Physics";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Float;
         p.defaultValue = 40.0f;
         p.minValue = 1.0f;
         p.maxValue = 200.0f;
         p.tooltip = "Spring stiffness (higher = faster oscillation)";
-        p.order = 1;
-        p.dependsOn = "spring.enabled";
+        p.order = 21;
+        p.dependsOn = "peak.spring.enabled";
         p.dependsValues = {true};
         params.push_back(p);
     }
-    
+
     // Spring Damping
     {
         ModuleParamDesc p;
-        p.id = "spring.damping";
+        p.id = "peak.spring.damping";
         p.displayName = "Spring Damping";
-        p.group = "6. Spring Physics";
+        p.group = "Peaks";
+        p.subGroup = "Spring Physics";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Float;
         p.defaultValue = 10.0f;
         p.minValue = 0.0f;
         p.maxValue = 50.0f;
         p.tooltip = "Damping (higher = less oscillation)";
-        p.order = 2;
-        p.dependsOn = "spring.enabled";
-        p.dependsValues = {true};
-        params.push_back(p);
-    }
-    
-    // Use Delay in Spring Mode
-    {
-        ModuleParamDesc p;
-        p.id = "spring.useDelay";
-        p.displayName = "Use Hold Delay";
-        p.group = "6. Spring Physics";
-        p.type = ParamType::Bool;
-        p.defaultValue = true;
-        p.tooltip = "Apply hold delay before spring starts";
-        p.order = 3;
-        p.dependsOn = "spring.enabled";
+        p.order = 22;
+        p.dependsOn = "peak.spring.enabled";
         p.dependsValues = {true};
         params.push_back(p);
     }
 
-    // =========================================================================
-    // 7. Particle System Parameters
-    // =========================================================================
-    
+    // Use Delay in Spring Mode
+    {
+        ModuleParamDesc p;
+        p.id = "peak.spring.useDelay";
+        p.displayName = "Use Hold Delay";
+        p.group = "Peaks";
+        p.subGroup = "Spring Physics";
+        p.stage = PipelineStage::PeakParticle;
+        p.type = ParamType::Bool;
+        p.defaultValue = true;
+        p.tooltip = "Apply hold delay before spring starts";
+        p.order = 23;
+        p.dependsOn = "peak.spring.enabled";
+        p.dependsValues = {true};
+        params.push_back(p);
+    }
+
+    // --- Particles ---
+
     // Spawn Particles
     {
         ModuleParamDesc p;
         p.id = "particle.spawn";
         p.displayName = "Spawn Particles";
-        p.group = "7. Particles";
+        p.group = "Peaks";
+        p.subGroup = "Particles";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Bool;
         p.defaultValue = false;
         p.tooltip = "Spawn particles on peak hits";
-        p.order = 0;
+        p.order = 30;
         p.dependsOn = "peak.enabled";
         p.dependsValues = {true};
         params.push_back(p);
     }
-    
+
     // Min Delta to Spawn
     {
         ModuleParamDesc p;
         p.id = "particle.minDelta";
         p.displayName = "Min Rise";
-        p.group = "7. Particles";
+        p.group = "Peaks";
+        p.subGroup = "Particles";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Float;
         p.defaultValue = 0.0f;
         p.minValue = 0.0f;
         p.maxValue = 1.0f;
         p.tooltip = "Minimum amplitude rise to spawn a particle";
-        p.order = 1;
+        p.order = 31;
         p.dependsOn = "particle.spawn";
         p.dependsValues = {true};
         params.push_back(p);
     }
-    
+
     // Min Interval
     {
         ModuleParamDesc p;
         p.id = "particle.minInterval";
         p.displayName = "Min Interval";
-        p.group = "7. Particles";
+        p.group = "Peaks";
+        p.subGroup = "Particles";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Float;
         p.defaultValue = 0.0f;
         p.minValue = 0.0f;
         p.maxValue = 1000.0f;
         p.unit = "ms";
         p.tooltip = "Minimum time between particle spawns";
-        p.order = 2;
-        p.dependsOn = "particle.spawn";
-        p.dependsValues = {true};
-        params.push_back(p);
-    }
-    
-    // Max Particles Per Band
-    {
-        ModuleParamDesc p;
-        p.id = "particle.maxPerBand";
-        p.displayName = "Max Per Band";
-        p.group = "7. Particles";
-        p.type = ParamType::Int;
-        p.defaultValue = 8;
-        p.minValue = 1;
-        p.maxValue = 32;
-        p.tooltip = "Maximum particles per frequency band";
-        p.order = 3;
-        p.dependsOn = "particle.spawn";
-        p.dependsValues = {true};
-        params.push_back(p);
-    }
-    
-    // Freeze Particle Color
-    {
-        ModuleParamDesc p;
-        p.id = "particle.freezeColor";
-        p.displayName = "Freeze Color";
-        p.group = "7. Particles";
-        p.type = ParamType::Bool;
-        p.defaultValue = false;
-        p.tooltip = "Keep color from spawn moment";
-        p.order = 4;
-        p.dependsOn = "particle.spawn";
-        p.dependsValues = {true};
-        params.push_back(p);
-    }
-    
-    // Bind Particle Color to Spawner
-    {
-        ModuleParamDesc p;
-        p.id = "particle.bindToSpawner";
-        p.displayName = "Bind to Spawner";
-        p.group = "7. Particles";
-        p.type = ParamType::Bool;
-        p.defaultValue = false;
-        p.tooltip = "Particle follows spawner color live";
-        p.order = 5;
+        p.order = 32;
         p.dependsOn = "particle.spawn";
         p.dependsValues = {true};
         params.push_back(p);
     }
 
-    // =========================================================================
-    // 8. Peak Color Parameters
-    // =========================================================================
-    
+    // Max Particles Per Band
+    {
+        ModuleParamDesc p;
+        p.id = "particle.maxPerBand";
+        p.displayName = "Max Per Band";
+        p.group = "Peaks";
+        p.subGroup = "Particles";
+        p.stage = PipelineStage::PeakParticle;
+        p.type = ParamType::Int;
+        p.defaultValue = 8;
+        p.minValue = 1;
+        p.maxValue = 32;
+        p.tooltip = "Maximum particles per frequency band";
+        p.order = 33;
+        p.dependsOn = "particle.spawn";
+        p.dependsValues = {true};
+        params.push_back(p);
+    }
+
+    // Freeze Particle Color
+    {
+        ModuleParamDesc p;
+        p.id = "particle.freezeColor";
+        p.displayName = "Freeze Color";
+        p.group = "Peaks";
+        p.subGroup = "Particles";
+        p.stage = PipelineStage::PeakParticle;
+        p.type = ParamType::Bool;
+        p.defaultValue = false;
+        p.tooltip = "Keep color from spawn moment";
+        p.order = 34;
+        p.dependsOn = "particle.spawn";
+        p.dependsValues = {true};
+        params.push_back(p);
+    }
+
+    // Bind Particle Color to Spawner
+    {
+        ModuleParamDesc p;
+        p.id = "particle.bindToSpawner";
+        p.displayName = "Bind to Spawner";
+        p.group = "Peaks";
+        p.subGroup = "Particles";
+        p.stage = PipelineStage::PeakParticle;
+        p.type = ParamType::Bool;
+        p.defaultValue = false;
+        p.tooltip = "Particle follows spawner color live";
+        p.order = 35;
+        p.dependsOn = "particle.spawn";
+        p.dependsValues = {true};
+        params.push_back(p);
+    }
+
+    // --- Peak Color ---
+
     // Auto Color (use gradient)
     {
         ModuleParamDesc p;
-        p.id = "peakColor.auto";
+        p.id = "peak.color.auto";
         p.displayName = "Auto Color";
-        p.group = "8. Peak Color";
+        p.group = "Peaks";
+        p.subGroup = "Peak Color";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Bool;
         p.defaultValue = true;
         p.tooltip = "Use gradient for peak colors";
-        p.order = 0;
+        p.order = 40;
         p.dependsOn = "peak.enabled";
         p.dependsValues = {true};
         params.push_back(p);
     }
-    
+
     // Fixed Peak Color
     {
         ModuleParamDesc p;
-        p.id = "peakColor.fixed";
+        p.id = "peak.color.fixed";
         p.displayName = "Fixed Color";
-        p.group = "8. Peak Color";
+        p.group = "Peaks";
+        p.subGroup = "Peak Color";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Color;
         p.tooltip = "Fixed color when auto is off";
-        p.order = 1;
-        p.dependsOn = "peakColor.auto";
+        p.order = 41;
+        p.dependsOn = "peak.color.auto";
         p.dependsValues = {false};
         params.push_back(p);
     }
-    
+
     // Freeze Spawner Color
     {
         ModuleParamDesc p;
-        p.id = "peakColor.freeze";
+        p.id = "peak.color.freeze";
         p.displayName = "Freeze Spawner Color";
-        p.group = "8. Peak Color";
+        p.group = "Peaks";
+        p.subGroup = "Peak Color";
+        p.stage = PipelineStage::PeakParticle;
         p.type = ParamType::Bool;
         p.defaultValue = false;
         p.tooltip = "Don't update spawner color live";
-        p.order = 2;
+        p.order = 42;
         p.dependsOn = "peak.enabled";
         p.dependsValues = {true};
         params.push_back(p);
@@ -701,22 +842,25 @@ bool EqualizerVisualizer::getParam(const std::string& id, ParamValue& out) const
         return m_audioSource.getParam(id.substr(6), out);
     }
     
-    // Color parameters
-    if (id == "color.domain")
+    // Color parameters (handle "main")
+    if (id == "color.main.domain")
     {
         out = static_cast<int>(m_equalizer.gradientDomain());
         return true;
     }
-    if (id.rfind("color.", 0) == 0)
+    if (id.rfind("color.main.", 0) == 0)
     {
-        return m_equalizer.colorGradient().getParam(id.substr(6), out);
+        return m_equalizer.colorGradient().getParam(id.substr(11), out);
     }
-    
-    // Equalizer parameters
-    if (id == "eq.bands") { out = m_equalizer.bandCount(); return true; }
-    if (id == "eq.barGap") { out = m_equalizer.barGapPx(); return true; }
-    if (id == "eq.orientation") { out = static_cast<int>(m_equalizer.orientation()); return true; }
-    
+
+    // Mapping parameters
+    if (id == "map.bands") { out = m_equalizer.bandCount(); return true; }
+    if (id == "map.orientation") { out = static_cast<int>(m_equalizer.orientation()); return true; }
+
+    // Render parameters
+    if (id == "render.heightScale") { out = m_equalizer.heightScale(); return true; }
+    if (id == "render.barGap") { out = m_equalizer.barGapPx(); return true; }
+
     // Peak parameters
     const auto& spawnerCfg = m_equalizer.spawnerConfig();
     if (id == "peak.enabled") { out = spawnerCfg.enabled; return true; }
@@ -729,16 +873,16 @@ bool EqualizerVisualizer::getParam(const std::string& id, ParamValue& out) const
     
     // Thickness parameters
     const auto& thickCfg = spawnerCfg.thickness;
-    if (id == "thickness.mode") { out = static_cast<int>(thickCfg.mode); return true; }
-    if (id == "thickness.base") { out = thickCfg.basePx; return true; }
-    if (id == "thickness.scale") { out = thickCfg.scalePx; return true; }
-    
+    if (id == "peak.thickness.mode") { out = static_cast<int>(thickCfg.mode); return true; }
+    if (id == "peak.thickness.base") { out = thickCfg.basePx; return true; }
+    if (id == "peak.thickness.scale") { out = thickCfg.scalePx; return true; }
+
     // Spring parameters
     const auto& springCfg = spawnerCfg.spring;
-    if (id == "spring.enabled") { out = springCfg.enabled; return true; }
-    if (id == "spring.k") { out = springCfg.k; return true; }
-    if (id == "spring.damping") { out = springCfg.damping; return true; }
-    if (id == "spring.useDelay") { out = spawnerCfg.useDelay; return true; }
+    if (id == "peak.spring.enabled") { out = springCfg.enabled; return true; }
+    if (id == "peak.spring.k") { out = springCfg.k; return true; }
+    if (id == "peak.spring.damping") { out = springCfg.damping; return true; }
+    if (id == "peak.spring.useDelay") { out = spawnerCfg.useDelay; return true; }
     
     // Particle parameters
     const auto& particleCfg = m_equalizer.particleConfig();
@@ -751,9 +895,9 @@ bool EqualizerVisualizer::getParam(const std::string& id, ParamValue& out) const
     
     // Peak color parameters
     const auto& peakColorCfg = m_equalizer.peakColorConfig();
-    if (id == "peakColor.auto") { out = peakColorCfg.autoColor; return true; }
-    if (id == "peakColor.fixed") { out.emplace<7>(peakColorCfg.fixedColor); return true; }
-    if (id == "peakColor.freeze") { out = peakColorCfg.freezeSpawner; return true; }
+    if (id == "peak.color.auto") { out = peakColorCfg.autoColor; return true; }
+    if (id == "peak.color.fixed") { out = makeColorValue(peakColorCfg.fixedColor); return true; }
+    if (id == "peak.color.freeze") { out = peakColorCfg.freezeSpawner; return true; }
     
     return false;
 }
@@ -766,19 +910,25 @@ bool EqualizerVisualizer::setParam(const std::string& id, const ParamValue& valu
         return m_audioSource.setParam(id.substr(6), value);
     }
     
-    // Color parameters
-    if (id == "color.domain")
+    // Color parameters (handle "main")
+    if (id == "color.main.domain")
     {
+        // float-für-int-Vertrag: JSON-geladene Presets liefern Zahlen als float
         if (auto* v = std::get_if<int>(&value))
         {
             m_equalizer.setGradientDomain(static_cast<GradientDomain>(*v));
             return true;
         }
+        if (auto* v = std::get_if<float>(&value))
+        {
+            m_equalizer.setGradientDomain(static_cast<GradientDomain>(static_cast<int>(*v)));
+            return true;
+        }
         return false;
     }
-    if (id.rfind("color.", 0) == 0)
+    if (id.rfind("color.main.", 0) == 0)
     {
-        return m_equalizer.colorGradient().setParam(id.substr(6), value);
+        return m_equalizer.colorGradient().setParam(id.substr(11), value);
     }
     
     // Helper lambdas
@@ -798,21 +948,23 @@ bool EqualizerVisualizer::setParam(const std::string& id, const ParamValue& valu
         return false;
     };
     auto getColor = [&]() -> Color4f {
-        // Color4f is at index 7 in ParamValue variant
-        if (value.index() == 7) return std::get<7>(value);
+        if (holdsColor(value)) return lumi::modules::getColor(value);
         return Color4f{1, 1, 1, 1};
     };
     
-    // Equalizer parameters
-    if (id == "eq.bands") 
-    { 
+    // Mapping parameters — map.bands drives BOTH modules (buffer-resize coupling, §7.2)
+    if (id == "map.bands")
+    {
         int bands = getInt();
-        m_equalizer.setBandCount(bands); 
-        m_audioSource.setBands(bands);  // Keep AudioSourceModule in sync
-        return true; 
+        m_equalizer.setBandCount(bands);
+        m_audioSource.setBands(bands);
+        return true;
     }
-    if (id == "eq.barGap") { m_equalizer.setBarGapPx(getFloat()); return true; }
-    if (id == "eq.orientation") { m_equalizer.setOrientation(static_cast<BarOrientation>(getInt())); return true; }
+    if (id == "map.orientation") { m_equalizer.setOrientation(static_cast<BarOrientation>(getInt())); return true; }
+
+    // Render parameters
+    if (id == "render.heightScale") { m_equalizer.setHeightScale(getFloat()); return true; }
+    if (id == "render.barGap") { m_equalizer.setBarGapPx(getFloat()); return true; }
     
     // Peak parameters
     auto& spawnerCfg = m_equalizer.spawnerConfig();
@@ -826,16 +978,16 @@ bool EqualizerVisualizer::setParam(const std::string& id, const ParamValue& valu
     
     // Thickness parameters
     auto& thickCfg = spawnerCfg.thickness;
-    if (id == "thickness.mode") { thickCfg.mode = static_cast<ThicknessMode>(getInt()); return true; }
-    if (id == "thickness.base") { thickCfg.basePx = getFloat(); return true; }
-    if (id == "thickness.scale") { thickCfg.scalePx = getFloat(); return true; }
-    
+    if (id == "peak.thickness.mode") { thickCfg.mode = static_cast<ThicknessMode>(getInt()); return true; }
+    if (id == "peak.thickness.base") { thickCfg.basePx = getFloat(); return true; }
+    if (id == "peak.thickness.scale") { thickCfg.scalePx = getFloat(); return true; }
+
     // Spring parameters
     auto& springCfg = spawnerCfg.spring;
-    if (id == "spring.enabled") { springCfg.enabled = getBool(); return true; }
-    if (id == "spring.k") { springCfg.k = getFloat(); return true; }
-    if (id == "spring.damping") { springCfg.damping = getFloat(); return true; }
-    if (id == "spring.useDelay") { spawnerCfg.useDelay = getBool(); return true; }
+    if (id == "peak.spring.enabled") { springCfg.enabled = getBool(); return true; }
+    if (id == "peak.spring.k") { springCfg.k = getFloat(); return true; }
+    if (id == "peak.spring.damping") { springCfg.damping = getFloat(); return true; }
+    if (id == "peak.spring.useDelay") { spawnerCfg.useDelay = getBool(); return true; }
     
     // Particle parameters
     auto& particleCfg = m_equalizer.particleConfig();
@@ -848,9 +1000,9 @@ bool EqualizerVisualizer::setParam(const std::string& id, const ParamValue& valu
     
     // Peak color parameters
     auto& peakColorCfg = m_equalizer.peakColorConfig();
-    if (id == "peakColor.auto") { peakColorCfg.autoColor = getBool(); return true; }
-    if (id == "peakColor.fixed") { peakColorCfg.fixedColor = getColor(); return true; }
-    if (id == "peakColor.freeze") { peakColorCfg.freezeSpawner = getBool(); return true; }
+    if (id == "peak.color.auto") { peakColorCfg.autoColor = getBool(); return true; }
+    if (id == "peak.color.fixed") { peakColorCfg.fixedColor = getColor(); return true; }
+    if (id == "peak.color.freeze") { peakColorCfg.freezeSpawner = getBool(); return true; }
     
     return false;
 }

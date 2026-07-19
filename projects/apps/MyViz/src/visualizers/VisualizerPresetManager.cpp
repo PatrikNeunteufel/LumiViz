@@ -261,8 +261,9 @@ bool VisualizerPresetManager::applyPreset(IVisualizer* visualizer,
 
     // Legacy presets (old key schema) are translated through the alias map
     const bool translate = preset.formatVersion < CURRENT_FORMAT_VERSION;
-    auto resolveKey = [&](const std::string& key) {
-        return translate ? translateLegacyKey(preset.visualizerId, key) : key;
+    auto resolve = [&](const std::string& key, const modules::ParamValue& value) {
+        return translate ? translateLegacyParam(preset.visualizerId, key, value)
+                         : std::make_pair(key, value);
     };
 
     // FIRST: Apply preset parameters (like color_gradient.preset)
@@ -271,7 +272,8 @@ bool VisualizerPresetManager::applyPreset(IVisualizer* visualizer,
     {
         if (paramId.find(".preset") != std::string::npos)
         {
-            if (visualizer->setParam(resolveKey(paramId), value))
+            auto [key, resolved] = resolve(paramId, value);
+            if (visualizer->setParam(key, resolved))
             {
                 ++applied;
                 BasicLogger::logDebug("PresetManager: Applied preset param '" + paramId + "'");
@@ -293,7 +295,8 @@ bool VisualizerPresetManager::applyPreset(IVisualizer* visualizer,
             continue;
         }
 
-        if (visualizer->setParam(resolveKey(paramId), value))
+        auto [key, resolved] = resolve(paramId, value);
+        if (visualizer->setParam(key, resolved))
         {
             ++applied;
         }
@@ -317,12 +320,30 @@ bool VisualizerPresetManager::applyPreset(IVisualizer* visualizer,
 
 namespace
 {
-    using AliasMap = std::map<std::string, std::string>;
+    struct AliasEntry
+    {
+        std::string newKey;
+        VisualizerPresetManager::ValueConverter convert;  ///< empty = key rename only
+    };
+
+    using AliasMap = std::map<std::string, AliasEntry>;
 
     std::map<QString, AliasMap>& aliasRegistry()
     {
         static std::map<QString, AliasMap> registry;
         return registry;
+    }
+
+    const AliasEntry* findAlias(const QString& visualizerId, const std::string& key)
+    {
+        const auto& registry = aliasRegistry();
+        auto it = registry.find(visualizerId);
+        if (it == registry.end())
+        {
+            return nullptr;
+        }
+        auto keyIt = it->second.find(key);
+        return keyIt == it->second.end() ? nullptr : &keyIt->second;
     }
 } // namespace
 
@@ -332,21 +353,37 @@ void VisualizerPresetManager::registerKeyAliases(const QString& visualizerId,
     auto& entry = aliasRegistry()[visualizerId];
     for (auto& [oldKey, newKey] : aliases)
     {
-        entry.insert_or_assign(oldKey, newKey);
+        entry.insert_or_assign(oldKey, AliasEntry{newKey, {}});
     }
+}
+
+void VisualizerPresetManager::registerKeyConverter(const QString& visualizerId,
+                                                   const std::string& oldKey,
+                                                   std::string newKey,
+                                                   ValueConverter converter)
+{
+    aliasRegistry()[visualizerId].insert_or_assign(
+        oldKey, AliasEntry{std::move(newKey), std::move(converter)});
 }
 
 std::string VisualizerPresetManager::translateLegacyKey(const QString& visualizerId,
                                                         const std::string& key)
 {
-    const auto& registry = aliasRegistry();
-    auto it = registry.find(visualizerId);
-    if (it == registry.end())
+    const AliasEntry* alias = findAlias(visualizerId, key);
+    return alias == nullptr ? key : alias->newKey;
+}
+
+std::pair<std::string, modules::ParamValue> VisualizerPresetManager::translateLegacyParam(
+    const QString& visualizerId,
+    const std::string& key,
+    const modules::ParamValue& value)
+{
+    const AliasEntry* alias = findAlias(visualizerId, key);
+    if (alias == nullptr)
     {
-        return key;
+        return {key, value};
     }
-    auto keyIt = it->second.find(key);
-    return keyIt == it->second.end() ? key : keyIt->second;
+    return {alias->newKey, alias->convert ? alias->convert(value) : value};
 }
 
 void VisualizerPresetManager::clearKeyAliases()

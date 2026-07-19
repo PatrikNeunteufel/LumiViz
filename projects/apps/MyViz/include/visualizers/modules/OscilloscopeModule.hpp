@@ -14,7 +14,6 @@
  * - AC/DC coupling
  * - Trigger system with edge detection
  * - Timebase control
- * - Phosphor persistence
  ****************************************************************************************
  */
 
@@ -136,10 +135,9 @@ struct ChannelConfigBase
     // Display
     bool visible = false;           ///< Channel visibility
     float lineWidth = 2.0f;         ///< Line width in pixels
-    
-    // Phosphor effect
-    bool phosphorEnabled = false;   ///< Phosphor persistence effect
-    float phosphorDecay = 0.9f;     ///< Decay rate per frame [0..1]
+
+    // NOTE: The former phosphor fields were dead (never pushed/rendered, no
+    // param keys — E7). A real phosphor effect comes via PostFxModule (5.6).
 };
 
 /**

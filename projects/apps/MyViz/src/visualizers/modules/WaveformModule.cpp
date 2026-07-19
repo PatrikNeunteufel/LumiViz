@@ -110,7 +110,6 @@ void WaveformModule::reset()
     m_dashLength = 10.0f;
     m_dashGap = 5.0f;
     m_sampleCount = 512;
-    m_smoothing = 0.3f;
     m_displayWidth = 1.0f;
 
     // Effects
@@ -331,19 +330,8 @@ std::vector<ModuleParamDesc> WaveformModule::paramDescs() const
         params.push_back(p);
     }
 
-    {
-        ModuleParamDesc p;
-        p.id = "smoothing";
-        p.displayName = "Smoothing";
-        p.tooltip = "Temporal smoothing factor";
-        p.type = ParamType::Float;
-        p.minValue = 0.0f;
-        p.maxValue = 0.95f;
-        p.defaultValue = 0.3f;
-        p.subGroup = "Layout";
-        p.order = order++;
-        params.push_back(p);
-    }
+    // NOTE: The former "smoothing" scalar is gone (E3) — display smoothing is
+    // driven by the stage-1 SmoothingModule config (audio.smooth.*).
 
     // =========================================================================
     // Line Style SubGroup
@@ -865,11 +853,6 @@ bool WaveformModule::getParam(const std::string& id, ParamValue& out) const
         out = m_sampleCount;
         return true;
     }
-    if (id == "smoothing")
-    {
-        out = m_smoothing;
-        return true;
-    }
 
     // Line style
     if (id == "lineStyle")
@@ -1140,15 +1123,6 @@ bool WaveformModule::setParam(const std::string& id, const ParamValue& value)
             return true;
         }
     }
-    if (id == "smoothing")
-    {
-        if (auto v = getFloat())
-        {
-            m_smoothing = std::clamp(*v, 0.0f, 0.95f);
-            return true;
-        }
-    }
-
     // Line style
     if (id == "lineStyle")
     {

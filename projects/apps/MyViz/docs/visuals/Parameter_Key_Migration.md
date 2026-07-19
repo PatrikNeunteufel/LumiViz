@@ -5,7 +5,7 @@
 > **Typ:** Reference
 > **Status:** Aktiv (Review abgeschlossen 2026-07-19)
 > **Zielgruppe:** App-Entwickler
-> **Bezug:** [Config_Pipeline_Concept.md](Config_Pipeline_Concept.md) v0.3.0 (§4.2 PipelineStage, §4.3 Key-Konvention, §4.4 Alias-Map) · [Parameter_Reference.md](Parameter_Reference.md) v1.0.0 (Ist-SSOT)
+> **Bezug:** [Config_Pipeline_Concept.md](Config_Pipeline_Concept.md) v1.0.0 (§4.2 PipelineStage, §4.3 Key-Konvention, §4.4 Alias-Map) · [Parameter_Reference.md](Parameter_Reference.md) v2.0.0 (SSOT, neues Schema — dieses Dokument ist die Alt→Neu-Übersetzung)
 > **Sprache:** Deutsch
 
 Vollständige Migrationstabellen aller Parameter-Keys der 5 Visualizer vom Ist-Schema

@@ -20,6 +20,47 @@ namespace {
     constexpr float PI = 3.14159265358979323846f;
     constexpr float TWO_PI = 2.0f * PI;
     constexpr float DEG_TO_RAD = PI / 180.0f;
+
+    // UI dropdown exposes only 4 of the PulseShape values.
+    // UI: Circle=0, Ring=1, NGon=2, Star=3 / Enum: Circle=0, Ring=1, Flash=2, Ngon=3, Star=4
+    PulseShape uiIndexToShape(int index)
+    {
+        switch (index)
+        {
+            case 0: return PulseShape::Circle;
+            case 1: return PulseShape::Ring;
+            case 2: return PulseShape::Ngon;
+            case 3: return PulseShape::Star;
+            default: return PulseShape::Circle;
+        }
+    }
+
+    int shapeToUiIndex(PulseShape shape)
+    {
+        switch (shape)
+        {
+            case PulseShape::Circle: return 0;
+            case PulseShape::Ring: return 1;
+            case PulseShape::Ngon: return 2;
+            case PulseShape::Star: return 3;
+            default: return 0;
+        }
+    }
+
+    // Preset contract: JSON-loaded numbers always arrive as float
+    int toInt(const ParamValue& value, int fallback)
+    {
+        if (auto* v = std::get_if<int>(&value)) return *v;
+        if (auto* v = std::get_if<float>(&value)) return static_cast<int>(*v);
+        return fallback;
+    }
+
+    bool toFloat(const ParamValue& value, float& out)
+    {
+        if (auto* v = std::get_if<float>(&value)) { out = *v; return true; }
+        if (auto* v = std::get_if<int>(&value)) { out = static_cast<float>(*v); return true; }
+        return false;
+    }
 }
 
 // =============================================================================
@@ -33,9 +74,122 @@ PulseShapeModule::PulseShapeModule()
 
 void PulseShapeModule::reset()
 {
+    // Config parameters (UI defaults)
+    m_shape = PulseShape::Circle;
+    m_sides = 6;
+    m_innerRadiusRatio = 0.5f;
+    m_sizeMin = 0.3f;
+    m_sizeMax = 0.9f;
+    m_rotationSpeed = 0.0f;
+
+    // Runtime state
     m_state = PulseState{};
     m_currentAudioLevel = 0.0f;
     m_accumulatedRotation = 0.0f;
+}
+
+// =============================================================================
+// Parameter Interface (Phase 4 Schritt 5.2)
+// =============================================================================
+
+std::vector<ModuleParamDesc> PulseShapeModule::paramDescs() const
+{
+    std::vector<ModuleParamDesc> params;
+
+    params.push_back(ParamBuilder("type", ParamType::Enum)
+                         .displayName("Shape")
+                         .tooltip("Select the pulse shape")
+                         .defaultValue(0)
+                         .enumOptions({"Circle", "Ring", "NGon", "Star"})
+                         .order(0)
+                         .build());
+
+    params.push_back(ParamBuilder("sides", ParamType::Int)
+                         .displayName("Sides/Points")
+                         .tooltip("Number of sides (NGon) or points (Star)")
+                         .range(3.0f, 32.0f, 1.0f)
+                         .defaultValue(6)
+                         .order(1)
+                         .dependsOn("type", std::vector<ParamValue>{2, 3})  // NGon, Star
+                         .build());
+
+    params.push_back(ParamBuilder("innerRadius", ParamType::Float)
+                         .displayName("Inner Radius")
+                         .tooltip("Inner radius for Ring (0 = filled)")
+                         .range(0.0f, 0.95f)
+                         .defaultValue(0.5f)
+                         .order(2)
+                         .dependsOn("type", std::vector<ParamValue>{1})  // Ring
+                         .build());
+
+    params.push_back(ParamBuilder("minSize", ParamType::Float)
+                         .displayName("Min Size")
+                         .tooltip("Minimum size at silence")
+                         .range(0.05f, 1.5f)
+                         .defaultValue(0.3f)
+                         .order(3)
+                         .build());
+
+    params.push_back(ParamBuilder("maxSize", ParamType::Float)
+                         .displayName("Max Size")
+                         .tooltip("Maximum size at peak audio")
+                         .range(0.1f, 2.0f)
+                         .defaultValue(0.9f)
+                         .order(4)
+                         .build());
+
+    params.push_back(ParamBuilder("rotation", ParamType::Float)
+                         .displayName("Rotation Speed")
+                         .tooltip("Degrees per second")
+                         .range(-360.0f, 360.0f)
+                         .defaultValue(0.0f)
+                         .order(5)
+                         .build());
+
+    return params;
+}
+
+bool PulseShapeModule::getParam(const std::string& id, ParamValue& out) const
+{
+    if (id == "type") { out = shapeToUiIndex(m_shape); return true; }
+    if (id == "sides") { out = m_sides; return true; }
+    if (id == "innerRadius") { out = m_innerRadiusRatio; return true; }
+    if (id == "minSize") { out = m_sizeMin; return true; }
+    if (id == "maxSize") { out = m_sizeMax; return true; }
+    if (id == "rotation") { out = m_rotationSpeed; return true; }
+    return false;
+}
+
+bool PulseShapeModule::setParam(const std::string& id, const ParamValue& value)
+{
+    float f = 0.0f;
+    if (id == "type") { setShape(uiIndexToShape(toInt(value, 0))); return true; }
+    if (id == "sides") { setSides(toInt(value, m_sides)); return true; }
+    if (id == "innerRadius")
+    {
+        if (!toFloat(value, f)) return false;
+        m_innerRadiusRatio = std::clamp(f, 0.0f, 0.95f);
+        return true;
+    }
+    if (id == "minSize")
+    {
+        if (!toFloat(value, f)) return false;
+        m_sizeMin = std::clamp(f, 0.05f, 1.5f);
+        return true;
+    }
+    if (id == "maxSize")
+    {
+        if (!toFloat(value, f)) return false;
+        m_sizeMax = std::clamp(f, 0.1f, 2.0f);
+        return true;
+    }
+    if (id == "rotation")
+    {
+        if (!toFloat(value, f)) return false;
+        m_rotationSpeed = f;
+        return true;
+    }
+    return false;
 }
 
 // =============================================================================

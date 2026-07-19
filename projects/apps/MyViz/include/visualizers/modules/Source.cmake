@@ -13,9 +13,11 @@ set(_local_sources
 )
 set(_local_headers
     # (headers - *.h; *.hpp)
+    "${CMAKE_CURRENT_LIST_DIR}/AudioUtil.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/ColorGradientModule.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/EqualizerModule.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/IModule.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/JsonPresetParser.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/OscilloscopeModule.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PulseShapeModule.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/SuperscopeModule.hpp"
@@ -73,5 +75,6 @@ unset(_local_includes)
 
 dbg(DBG_ULTRA_RARE "include subfolders:" ID INCLUDE_MSG)
 # Include subfolders recursively (activate as needed)
+include("${CMAKE_CURRENT_LIST_DIR}/postfx/Source.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/processing/Source.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/source/Source.cmake")

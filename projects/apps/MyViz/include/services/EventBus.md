@@ -1,7 +1,7 @@
 # EventBus — Publish/Subscribe Event System
 
-> **Version:** 1.0.0  
-> **Datum:** 2025-12-31  
+> **Version:** 1.1.0  
+> **Datum:** 2026-07-19  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert  
 > **Modul:** MyViz::Services::EventBus  
@@ -23,7 +23,8 @@
 6. [Existierende Events](#6-existierende-events)
 7. [Best Practices](#7-best-practices)
 8. [Thread-Sicherheit](#8-thread-sicherheit)
-9. [Changelog](#9-changelog)
+9. [RAII-Abos (Phase 4)](#9-raii-abos-phase-4)
+10. [Changelog](#10-changelog)
 
 ---
 
@@ -484,8 +485,40 @@ void MainThread::update() {
 
 ---
 
-## 9. Changelog
+## 9. RAII-Abos (Phase 4)
+
+Seit Phase 4 Schritt 1 gibt es teardown-sichere Abos — das manuelle
+`unsubscribe()` im Destruktor entfällt:
+
+```cpp
+// SubscriberHandle: meldet beim Zerstören automatisch ab (move-only)
+IEventBus::SubscriberHandle handle =
+    eventBus.subscribeScoped<VisualizerChangedEvent>([this](const auto& e) { ... });
+
+// Weak-Variante: Handler feuert nur, solange das Owner-Objekt lebt
+auto id = eventBus.subscribeWeak<PlaybackEvent>(sharedThis, callback);
+```
+
+- **`subscribeScoped`** → `IEventBus::SubscriberHandle` (RAII, move-only):
+  Handle fallen lassen = abmelden. Ein internes Liveness-Token macht das auch
+  während eines laufenden Dispatch sicher (kein use-after-free bei
+  Panel-Zerstörung ohne vorheriges hide).
+- **`subscribeWeak`** (→ `SubscriberId`): koppelt den Handler an eine
+  `std::weak_ptr`-Lebensdauer; tote Abos werden automatisch ausgetragen
+  (Auto-Purge). **`subscribeScopedWeak`** kombiniert beides (RAII-Handle +
+  Owner-Kopplung).
+- Alle Panels legen ihre Handles in der PanelBase-RAII-Ablage
+  `m_eventSubscriptions` ab (`UI/panels/PanelBase.hpp`) — ein Panel kann damit
+  nie einen hängenden Handler auf dem Bus hinterlassen.
+
+Das klassische `subscribe()`/`unsubscribe()`-Paar existiert weiter, ist für
+neuen Code aber zweite Wahl.
+
+---
+
+## 10. Changelog
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **1.0.0** | **2025-12-31** | **Initial: Publish/Subscribe, Queue, Priority** |
+| **1.1.0** | **2026-07-19** | **RAII-Abos dokumentiert (Phase 4 Schritt 1): SubscriberHandle, subscribeScoped/Weak/ScopedWeak, Liveness-Token, PanelBase-Ablage** |
+| 1.0.0 | 2025-12-31 | Initial: Publish/Subscribe, Queue, Priority |

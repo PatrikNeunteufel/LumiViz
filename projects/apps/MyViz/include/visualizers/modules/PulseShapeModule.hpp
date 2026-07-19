@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include "visualizers/modules/IModule.hpp"
+
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -142,8 +144,26 @@ public:
         return "Pulse shape generation and animation";
     }
 
-    /// @brief Reset to default state
+    /// @brief Reset to default state (runtime state AND config parameters)
     void reset();
+
+    // =========================================================================
+    // Parameter Interface (Phase 4 Schritt 5.2 — module owns its param schema)
+    // =========================================================================
+
+    /**
+     * @brief Parameter descriptors of the UI-facing shape parameters
+     *
+     * Unprefixed ids (type, sides, innerRadius, minSize, maxSize, rotation) —
+     * the hosting visualizer prefixes them (render.*) and assigns the stage.
+     */
+    [[nodiscard]] std::vector<ModuleParamDesc> paramDescs() const;
+
+    /// @brief Get parameter by unprefixed id ("type" returns the UI dropdown index)
+    [[nodiscard]] bool getParam(const std::string& id, ParamValue& out) const;
+
+    /// @brief Set parameter by unprefixed id (accepts float for int params — preset contract)
+    bool setParam(const std::string& id, const ParamValue& value);
 
     // =========================================================================
     // Shape Configuration
@@ -202,14 +222,20 @@ public:
 
     /**
      * @brief Set size range for audio modulation
-     * @param min Minimum size multiplier
-     * @param max Maximum size multiplier
+     * @param min Size at silence (viewport fraction)
+     * @param max Size at peak audio
      */
     void setSizeRange(float min, float max)
     {
         m_sizeMin = min;
         m_sizeMax = max;
     }
+
+    /// @brief Size at silence
+    [[nodiscard]] float sizeMin() const { return m_sizeMin; }
+
+    /// @brief Size at peak audio
+    [[nodiscard]] float sizeMax() const { return m_sizeMax; }
 
     /**
      * @brief Set center position
@@ -457,14 +483,14 @@ private:
     PulseTrigger m_trigger = PulseTrigger::Continuous;
     PulseDecay m_decay = PulseDecay::Exponential;
 
-    // Shape parameters
+    // Shape parameters (defaults = UI defaults of the Pulsing visualizer)
     int m_sides = 6;
-    float m_innerRadiusRatio = 0.7f;
+    float m_innerRadiusRatio = 0.5f;
 
     // Size
     float m_baseSize = 0.5f;
-    float m_sizeMin = 0.8f;
-    float m_sizeMax = 1.2f;
+    float m_sizeMin = 0.3f;
+    float m_sizeMax = 0.9f;
 
     // Position
     float m_centerX = 0.0f;

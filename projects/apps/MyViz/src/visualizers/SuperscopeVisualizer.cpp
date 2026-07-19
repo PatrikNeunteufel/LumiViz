@@ -10,12 +10,16 @@
  */
 
 #include "visualizers/SuperscopeVisualizer.hpp"
+#include "visualizers/PipelineKeys.hpp"
+#include "visualizers/VisualizerPresetManager.hpp"
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 
 #include <algorithm>
 #include <cmath>
+#include <map>
+#include <string>
 
 // =============================================================================
 // Shader Sources
@@ -99,12 +103,125 @@ void main()
 )";
 
 // =============================================================================
+// Key-Schema (Phase 4 Schritt 5.5) -- module sub-id <-> pipeline key
+// =============================================================================
+
+namespace
+{
+
+// Scalar sub-ids of SuperscopeModule -> new pipeline keys
+// (Parameter_Key_Migration.md §5). The gradient block is handled by prefix.
+const std::map<std::string, std::string>& subIdKeyTable()
+{
+    static const std::map<std::string, std::string> table = {
+        {"preset", "render.preset"},          // E6: shape/script preset stays stage 4
+        {"pointCount", "map.pointCount"},
+        {"renderMode", "render.mode"},
+        {"lineWidth", "render.lineWidth"},
+        {"dotSize", "render.dotSize"},
+        {"blendMode", "render.blendMode"},
+        {"audioSource", "map.audioSource"},   // resolves the double "Audio" group
+        {"audioChannel", "map.audioChannel"},
+        {"glowEnabled", "post.glow.enabled"},
+        {"glowIntensity", "post.glow.intensity"},
+        {"glowSize", "post.glow.size"},
+        {"holdEnabled", "post.hold.enabled"},
+        {"fadeTime", "post.hold.fadeTime"},
+        {"maxHoldFrames", "post.hold.maxFrames"},
+        {"aspectCorrection", "render.aspectCorrection"},
+        {"stretchX", "render.stretchX"},
+        {"stretchY", "render.stretchY"},
+    };
+    return table;
+}
+
+constexpr const char* kGradientSubPrefix = "color.";      // module-internal
+constexpr const char* kGradientKeyPrefix = "color.main."; // pipeline handle
+
+/// Module sub-id -> pipeline key ("" if unknown)
+std::string subIdToKey(const std::string& subId)
+{
+    if (subId.rfind(kGradientSubPrefix, 0) == 0)
+    {
+        return kGradientKeyPrefix + subId.substr(std::string(kGradientSubPrefix).size());
+    }
+    auto it = subIdKeyTable().find(subId);
+    return it == subIdKeyTable().end() ? std::string{} : it->second;
+}
+
+/// Pipeline key -> module sub-id ("" if unknown)
+std::string keyToSubId(const std::string& key)
+{
+    if (key.rfind(kGradientKeyPrefix, 0) == 0)
+    {
+        return kGradientSubPrefix + key.substr(std::string(kGradientKeyPrefix).size());
+    }
+    static const std::map<std::string, std::string> reverse = [] {
+        std::map<std::string, std::string> r;
+        for (const auto& [subId, newKey] : subIdKeyTable())
+        {
+            r.emplace(newKey, subId);
+        }
+        return r;
+    }();
+    auto it = reverse.find(key);
+    return it == reverse.end() ? std::string{} : it->second;
+}
+
+// =============================================================================
+// Legacy-Key-Migration (Phase 4 Schritt 5.5)
+// =============================================================================
+
+/**
+ * @brief Alias map old->new schema (Parameter_Key_Migration.md §5)
+ *
+ * Old keys were "scope." + module sub-id -- generated from the same tables
+ * that drive the live schema. Strictly per visualizer: Oscilloscope shares
+ * the old "scope." prefix (§7.5), its own map lives there.
+ */
+void registerLegacyKeyAliases()
+{
+    std::map<std::string, std::string> aliases;
+
+    // Stage 1: audio.* unchanged (identity) -- incl. audio.bands (E2: Equalizer only)
+    for (const char* key : {"preset", "scale", "bands", "floorDb", "ceilDb", "clamp01",
+                            "gain", "smooth.preset", "smooth.algorithm", "smooth.timeMs",
+                            "smooth.windowSize", "smooth.primeFirstFrame"})
+    {
+        aliases.emplace(std::string("audio.") + key, std::string("audio.") + key);
+    }
+
+    // Scalars: scope.<subId> -> new key
+    for (const auto& [subId, newKey] : subIdKeyTable())
+    {
+        aliases.emplace("scope." + subId, newKey);
+    }
+
+    // Gradient block: scope.color.* -> color.main.*
+    for (const char* sub : {"mode", "solidColor", "angle", "preset", "editGradient",
+                            "outlineWidth", "gradientPresetName", "gradientData"})
+    {
+        aliases.emplace(std::string("scope.color.") + sub,
+                        std::string("color.main.") + sub);
+    }
+
+    lumi::VisualizerPresetManager::registerKeyAliases(QStringLiteral("superscope"),
+                                                      std::move(aliases));
+}
+
+} // anonymous namespace
+
+// =============================================================================
 // Construction / Destruction
 // =============================================================================
 
 SuperscopeVisualizer::SuperscopeVisualizer()
     : VisualizerBase("superscope", "Superscope", "Programmable point/line visualizer")
 {
+    // Idempotent on every construction — a magic static would not survive
+    // clearKeyAliases() (tests) since the registration would never re-fire
+    registerLegacyKeyAliases();
+
     // Set default preset
     m_superscope.setPreset(lumi::modules::SuperscopePreset::Spiral);
 }
@@ -124,35 +241,47 @@ std::vector<lumi::modules::ModuleParamDesc> SuperscopeVisualizer::paramDescs() c
     std::vector<ModuleParamDesc> params;
 
     // =========================================================================
-    // 1. Audio Section (AudioSourceModule)
+    // Stage 1: Audio Source
     // =========================================================================
     for (const auto& p : m_audioSource.paramDescs())
     {
         ModuleParamDesc prefixed = p;
         prefixed.id = "audio." + p.id;
-        prefixed.group = "1. Audio";
-        
+        prefixed.group = "Audio";
+        prefixed.stage = PipelineStage::AudioSource;
+
         // Prefix dependsOn if set
         if (!prefixed.dependsOn.empty())
         {
             prefixed.dependsOn = "audio." + prefixed.dependsOn;
         }
-        
+
         params.push_back(prefixed);
     }
 
     // =========================================================================
-    // 2. Superscope Parameters (with "scope." prefix)
+    // Stages 2/3/4/6: module schema translated to the pipeline keys (5.5) —
+    // resolves the former double "Audio" group (scope.audioSource → map.*)
     // =========================================================================
-    auto scopeParams = m_superscope.paramDescs("scope.");
-    for (auto& p : scopeParams)
+    for (const auto& p : m_superscope.paramDescs(""))
     {
-        // Set group to "2. Superscope" if not already set
-        if (p.group.empty())
+        const std::string newKey = subIdToKey(p.id);
+        if (newKey.empty())
         {
-            p.group = "2. Superscope";
+            continue;
         }
-        params.push_back(std::move(p));
+
+        ModuleParamDesc prefixed = p;
+        prefixed.id = newKey;
+        prefixed.stage = lumi::stageForKey(newKey);
+        prefixed.group = lumi::groupForStage(prefixed.stage);
+
+        if (!prefixed.dependsOn.empty())
+        {
+            prefixed.dependsOn = subIdToKey(prefixed.dependsOn);
+        }
+
+        params.push_back(std::move(prefixed));
     }
 
     return params;
@@ -166,14 +295,8 @@ bool SuperscopeVisualizer::getParam(const std::string& id, lumi::modules::ParamV
         return m_audioSource.getParam(id.substr(6), out);
     }
 
-    // Superscope module parameters
-    if (id.rfind("scope.", 0) == 0)
-    {
-        std::string moduleId = id.substr(6);  // Remove "scope."
-        return m_superscope.getParam(moduleId, out);
-    }
-
-    return false;
+    const std::string subId = keyToSubId(id);
+    return subId.empty() ? false : m_superscope.getParam(subId, out);
 }
 
 bool SuperscopeVisualizer::setParam(const std::string& id, const lumi::modules::ParamValue& value)
@@ -184,65 +307,60 @@ bool SuperscopeVisualizer::setParam(const std::string& id, const lumi::modules::
         return m_audioSource.setParam(id.substr(6), value);
     }
 
-    // Superscope module parameters
-    if (id.rfind("scope.", 0) == 0)
-    {
-        std::string moduleId = id.substr(6);  // Remove "scope."
-        return m_superscope.setParam(moduleId, value);
-    }
-
-    return false;
+    // map.pointCount resizes the generator's point buffer inside the module (§7.2)
+    const std::string subId = keyToSubId(id);
+    return subId.empty() ? false : m_superscope.setParam(subId, value);
 }
 
 // =============================================================================
 // IVisualizer Audio Interface
 // =============================================================================
 
+void SuperscopeVisualizer::syncInputSmoothing()
+{
+    // The stage-1 smoothing config (audio.smooth.*) is the single source of
+    // truth (E3) -- mirror it into the script-input smoothers.
+    const lumi::modules::SmoothingModule& config = m_audioSource.smoothing();
+    for (lumi::modules::SmoothingModule* smoother :
+         {&m_smoothWaveformLeft, &m_smoothWaveformRight,
+          &m_smoothSpectrumLeft, &m_smoothSpectrumRight})
+    {
+        smoother->setAlgorithm(config.algorithm());
+        smoother->setTimeMs(config.timeMs());
+    }
+}
+
 void SuperscopeVisualizer::updateWaveform(const float* waveform, int count)
 {
     if (!waveform || count <= 0) return;
 
-    // Get parameters from AudioSourceModule
     float gain = m_audioSource.gain();
-    float smoothTimeMs = m_audioSource.smoothing().timeMs();
-    
-    // Calculate EMA alpha (smoothing factor)
     constexpr float deltaTime = 1.0f / 60.0f;  // Assume 60fps
-    float alpha = 1.0f;
-    if (smoothTimeMs > 0.0f)
-    {
-        float tau = smoothTimeMs / 1000.0f;
-        alpha = 1.0f - std::exp(-deltaTime / tau);
-    }
+    syncInputSmoothing();
 
     // Assume interleaved stereo
     int samplesPerChannel = count / 2;
-    
+
     // Resize buffers if needed
     if (static_cast<int>(m_waveformLeft.size()) != samplesPerChannel)
     {
         m_waveformLeft.resize(samplesPerChannel, 0.0f);
         m_waveformRight.resize(samplesPerChannel, 0.0f);
-        m_smoothedWaveformLeft.resize(samplesPerChannel, 0.0f);
-        m_smoothedWaveformRight.resize(samplesPerChannel, 0.0f);
     }
 
     for (int i = 0; i < samplesPerChannel; ++i)
     {
-        // Apply gain
-        float rawL = waveform[i * 2] * gain;
-        float rawR = waveform[i * 2 + 1] * gain;
-        
-        // Apply EMA smoothing
-        m_smoothedWaveformLeft[i] = alpha * rawL + (1.0f - alpha) * m_smoothedWaveformLeft[i];
-        m_smoothedWaveformRight[i] = alpha * rawR + (1.0f - alpha) * m_smoothedWaveformRight[i];
-        
-        // Store final values
-        m_waveformLeft[i] = m_smoothedWaveformLeft[i];
-        m_waveformRight[i] = m_smoothedWaveformRight[i];
+        m_waveformLeft[i] = waveform[i * 2] * gain;
+        m_waveformRight[i] = waveform[i * 2 + 1] * gain;
     }
 
-    // Simple beat detection based on energy
+    // Smoothing via the shared SmoothingModule (E3, per-index state)
+    m_smoothWaveformLeft.processArrayPerIndex(m_waveformLeft.data(), samplesPerChannel,
+                                              deltaTime, m_waveformLeft.data());
+    m_smoothWaveformRight.processArrayPerIndex(m_waveformRight.data(), samplesPerChannel,
+                                               deltaTime, m_waveformRight.data());
+
+    // Beat detection via the shared BeatModule (adaptive energy threshold)
     float energy = 0.0f;
     for (int i = 0; i < samplesPerChannel; ++i)
     {
@@ -250,11 +368,7 @@ void SuperscopeVisualizer::updateWaveform(const float* waveform, int count)
         energy += sample * sample;
     }
     energy = std::sqrt(energy / samplesPerChannel);
-
-    // Adaptive threshold
-    m_beatThreshold = m_beatThreshold * 0.95f + energy * 0.05f;
-    m_isBeat = (energy > m_beatThreshold * 1.5f && energy > 0.1f);
-    m_beatEnergy = energy;
+    m_isBeat = m_beat.updateAdaptive(energy);
 }
 
 void SuperscopeVisualizer::updateSpectrum(const float* spectrum, int count)
@@ -276,27 +390,17 @@ void SuperscopeVisualizer::updateSpectrum(const float* spectrum, int count)
     float floorDb = m_audioSource.floorDb();
     float ceilDb = m_audioSource.ceilingDb();
     float rangeDb = ceilDb - floorDb;
-    float smoothTimeMs = m_audioSource.smoothing().timeMs();
     auto scale = m_audioSource.scale();
-    
-    // Calculate EMA alpha (smoothing factor)
-    float alpha = 1.0f;
-    if (smoothTimeMs > 0.0f)
-    {
-        float tau = smoothTimeMs / 1000.0f;
-        alpha = 1.0f - std::exp(-deltaTime / tau);
-    }
+    syncInputSmoothing();
 
     // Assume interleaved stereo spectrum
     int binsPerChannel = count / 2;
-    
+
     // Resize buffers if needed
     if (static_cast<int>(m_spectrumLeft.size()) != binsPerChannel)
     {
         m_spectrumLeft.resize(binsPerChannel, 0.0f);
         m_spectrumRight.resize(binsPerChannel, 0.0f);
-        m_smoothedSpectrumLeft.resize(binsPerChannel, 0.0f);
-        m_smoothedSpectrumRight.resize(binsPerChannel, 0.0f);
     }
 
     // =========================================================================
@@ -366,17 +470,19 @@ void SuperscopeVisualizer::updateSpectrum(const float* spectrum, int count)
             rawR = std::clamp((dbR - floorDb) / rangeDb, 0.0f, 1.0f);
         }
         
-        // =====================================================================
-        // Step 4: EMA Smoothing
-        // =====================================================================
-        
-        m_smoothedSpectrumLeft[i] = alpha * rawL + (1.0f - alpha) * m_smoothedSpectrumLeft[i];
-        m_smoothedSpectrumRight[i] = alpha * rawR + (1.0f - alpha) * m_smoothedSpectrumRight[i];
-        
-        // Store final processed values
-        m_spectrumLeft[i] = m_smoothedSpectrumLeft[i];
-        m_spectrumRight[i] = m_smoothedSpectrumRight[i];
+        // Store mapped/normalized values; smoothing follows below
+        m_spectrumLeft[i] = rawL;
+        m_spectrumRight[i] = rawR;
     }
+
+    // =========================================================================
+    // Step 4: Smoothing via the shared SmoothingModule (E3, per-index state)
+    // =========================================================================
+
+    m_smoothSpectrumLeft.processArrayPerIndex(m_spectrumLeft.data(), binsPerChannel,
+                                              deltaTime, m_spectrumLeft.data());
+    m_smoothSpectrumRight.processArrayPerIndex(m_spectrumRight.data(), binsPerChannel,
+                                               deltaTime, m_spectrumRight.data());
 }
 
 // =============================================================================
@@ -387,6 +493,15 @@ void SuperscopeVisualizer::resetToDefaults()
 {
     m_superscope.setPreset(lumi::modules::SuperscopePreset::Spiral);
     m_superscope.resetState();
+
+    m_audioSource.resetToDefaults();
+    m_beat.resetToDefaults();
+    m_smoothWaveformLeft.reset();
+    m_smoothWaveformRight.reset();
+    m_smoothSpectrumLeft.reset();
+    m_smoothSpectrumRight.reset();
+    m_heldFrames.clear();
+    m_isBeat = false;
 }
 
 // =============================================================================
@@ -583,11 +698,7 @@ void SuperscopeVisualizer::onRender(float deltaTime)
         renderHeldFrames();
 
         // Add current frame to history
-        HeldFrame frame;
-        frame.points = points;
-        frame.age = 0.0f;
-        frame.alpha = 1.0f;
-        m_heldFrames.push_back(std::move(frame));
+        m_heldFrames.push(points, m_superscope.maxHoldFrames());
     }
 
     // Render current frame based on mode
@@ -963,41 +1074,21 @@ void SuperscopeVisualizer::renderThickLines(const std::vector<lumi::modules::Sup
 
 void SuperscopeVisualizer::updateHeldFrames(float deltaTime)
 {
-    float fadeTime = m_superscope.fadeTime();
-    int maxFrames = m_superscope.maxHoldFrames();
-
-    // Update age and alpha for each held frame
-    for (auto& frame : m_heldFrames)
-    {
-        frame.age += deltaTime;
-        frame.alpha = 1.0f - (frame.age / fadeTime);
-        frame.alpha = std::max(0.0f, frame.alpha);
-    }
-
-    // Remove frames that have fully faded
-    while (!m_heldFrames.empty() && m_heldFrames.front().alpha <= 0.0f)
-    {
-        m_heldFrames.pop_front();
-    }
-
-    // Limit to max frames
-    while (m_heldFrames.size() > static_cast<size_t>(maxFrames))
-    {
-        m_heldFrames.pop_front();
-    }
+    // Frame mechanics live in the shared HoldFadeEffect (PostFxModule, 5.6)
+    m_heldFrames.update(deltaTime, m_superscope.fadeTime());
 }
 
 void SuperscopeVisualizer::renderHeldFrames()
 {
-    if (m_heldFrames.empty()) return;
+    if (m_heldFrames.frames().empty()) return;
 
     // Render each held frame with reduced alpha
-    for (const auto& frame : m_heldFrames)
+    for (const auto& frame : m_heldFrames.frames())
     {
         if (frame.alpha <= 0.01f) continue;
 
         // Create a modified copy with adjusted alpha
-        std::vector<lumi::modules::SuperscopePoint> fadedPoints = frame.points;
+        std::vector<lumi::modules::SuperscopePoint> fadedPoints = frame.data;
         for (auto& pt : fadedPoints)
         {
             pt.a *= frame.alpha;
@@ -1077,17 +1168,3 @@ void SuperscopeVisualizer::onCleanup()
 // Stereo Split Helper
 // =============================================================================
 
-void SuperscopeVisualizer::splitStereoData(const std::vector<float>& interleaved,
-                                            std::vector<float>& left,
-                                            std::vector<float>& right)
-{
-    int samplesPerChannel = static_cast<int>(interleaved.size()) / 2;
-    left.resize(samplesPerChannel);
-    right.resize(samplesPerChannel);
-
-    for (int i = 0; i < samplesPerChannel; ++i)
-    {
-        left[i] = interleaved[i * 2];
-        right[i] = interleaved[i * 2 + 1];
-    }
-}

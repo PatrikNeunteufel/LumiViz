@@ -143,8 +143,6 @@ public:
     void setSampleCount(int count) { m_sampleCount = std::clamp(count, 64, 2048); }
     [[nodiscard]] int sampleCount() const { return m_sampleCount; }
 
-    void setSmoothing(float smoothing) { m_smoothing = std::clamp(smoothing, 0.0f, 0.95f); }
-    [[nodiscard]] float smoothing() const { return m_smoothing; }
 
     void setDisplayWidth(float width) { m_displayWidth = std::clamp(width, 0.1f, 1.0f); }
     [[nodiscard]] float displayWidth() const { return m_displayWidth; }
@@ -217,7 +215,6 @@ private:
     // =========================================================================
 
     int m_sampleCount = 512;
-    float m_smoothing = 0.3f;
     float m_displayWidth = 1.0f;
 
     // =========================================================================

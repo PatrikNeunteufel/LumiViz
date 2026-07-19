@@ -49,7 +49,12 @@ CollapsibleGroupBox::CollapsibleGroupBox(const QString& title, QWidget* parent)
     connect(m_toggleButton, &QToolButton::clicked,
             this, &CollapsibleGroupBox::onToggleClicked);
 
-    mainLayout->addWidget(m_toggleButton);
+    // Header row: toggle button plus optional extra widgets (addHeaderWidget)
+    m_headerLayout = new QHBoxLayout();
+    m_headerLayout->setContentsMargins(0, 0, 0, 0);
+    m_headerLayout->setSpacing(0);
+    m_headerLayout->addWidget(m_toggleButton, 1);
+    mainLayout->addLayout(m_headerLayout);
 
     // Content frame
     m_contentFrame = new QFrame(this);
@@ -76,6 +81,17 @@ CollapsibleGroupBox::CollapsibleGroupBox(const QString& title, QWidget* parent)
     contentAnimation->setDuration(150);
     contentAnimation->setEasingCurve(QEasingCurve::InOutQuad);
     m_animation->addAnimation(contentAnimation);
+
+    // After expanding, release the height cap again. The animation ends on the
+    // height measured at animation start — leaving it as maximumHeight would
+    // squeeze/clip anything that appears later (dependsOn visibility, stage
+    // previews) inside the group.
+    connect(m_animation, &QParallelAnimationGroup::finished, this, [this]() {
+        if (!m_collapsed)
+        {
+            m_contentFrame->setMaximumHeight(QWIDGETSIZE_MAX);
+        }
+    });
 
     // Start expanded
     m_collapsed = false;
@@ -138,6 +154,11 @@ void CollapsibleGroupBox::addLayout(QLayout* layout)
 void CollapsibleGroupBox::setTitle(const QString& title)
 {
     m_toggleButton->setText(title);
+}
+
+void CollapsibleGroupBox::addHeaderWidget(QWidget* widget)
+{
+    m_headerLayout->addWidget(widget, 0);
 }
 
 // =============================================================================

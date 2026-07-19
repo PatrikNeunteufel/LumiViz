@@ -11,6 +11,7 @@
 
 #include "UI/panels/ConfigPanel.hpp"
 #include "UI/widgets/CollapsibleGroupBox.hpp"
+#include "UI/widgets/TapPreviewWidget.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "UI/widgets/GradientPresetDelegate.hpp"
 #include "UI/dialogs/GradientEditorDialog.hpp"
@@ -43,8 +44,11 @@
 #include <QMessageBox>
 #include <QGroupBox>
 #include <QMenu>
+#include <QSettings>
 #include <QSignalBlocker>
 #include <QStandardItemModel>
+#include <QTimer>
+#include <QToolButton>
 
 #include <BasicLogger.h>
 
@@ -229,6 +233,12 @@ ConfigPanel::ConfigPanel(ServiceContainer& services, QWidget* parent)
     placeholder->setStyleSheet("color: gray;");
     m_contentLayout->addWidget(placeholder);
     m_contentLayout->addStretch();
+
+    // Shared preview timer (Schritt 6): 20 Hz, runs ONLY while a preview
+    // is visible (started/stopped in updatePreviewTimer, N7)
+    m_previewTimer = new QTimer(this);
+    m_previewTimer->setInterval(50);
+    connect(m_previewTimer, &QTimer::timeout, this, [this]() { onPreviewTick(); });
 }
 
 ConfigPanel::~ConfigPanel() = default;
@@ -252,11 +262,18 @@ void ConfigPanel::onActivate()
             setVisualizer(vizWidget->visualizer());
         }
     }
+
+    // Resume preview polling if a preview is toggled on (no-op otherwise)
+    updatePreviewTimer();
 }
 
 void ConfigPanel::onDeactivate()
 {
     unsubscribeFromEvents();
+    if (m_previewTimer != nullptr)
+    {
+        m_previewTimer->stop();
+    }
 }
 
 // =============================================================================
@@ -317,7 +334,10 @@ void ConfigPanel::rebuildUI()
                          " with " + std::to_string(params.size()) + " parameters");
 
     buildUIFromParams(params);
-    
+
+    // Stage previews (Schritt 6): tap points + gradient strips per stage group
+    buildStagePreviews();
+
     // Refresh preset list for this visualizer
     refreshPresetList();
 }
@@ -483,6 +503,14 @@ void ConfigPanel::clearUI()
     m_groups.clear();
     m_subGroups.clear();
     m_paramWidgets.clear();
+
+    // Preview widgets/toggles are children of the group boxes (already
+    // deleted above) — drop the bookkeeping and stop polling
+    m_stagePreviews.clear();
+    if (m_previewTimer != nullptr)
+    {
+        m_previewTimer->stop();
+    }
 }
 
 void ConfigPanel::buildUIFromParams(const std::vector<ModuleParamDesc>& params)
@@ -1362,6 +1390,10 @@ void ConfigPanel::updateVisibility()
     {
         it.value()->setVisible(groupHasVisible.value(it.key(), true));
     }
+
+    // Color strips follow their handle's parameter visibility (Schritt 6) —
+    // e.g. hiding a channel via channelMode hides its strip too
+    updatePreviewVisibility();
 }
 
 // =============================================================================
@@ -1840,5 +1872,189 @@ void ConfigPanel::refreshModulePresetDropdown(const std::string& paramId,
     if (idx >= 0)
     {
         combo->setCurrentIndex(idx);
+    }
+}
+
+// =============================================================================
+// Stage Previews (Phase 4 Schritt 6)
+// =============================================================================
+
+void ConfigPanel::buildStagePreviews()
+{
+    if (!m_visualizer)
+    {
+        return;
+    }
+
+    const QString vizId = m_visualizer->visualizerId();
+    QSettings settings;
+
+    // Insert previews at the top of their stage group, keeping tap order
+    QMap<QString, int> insertIndex;
+
+    auto ensureToggle = [&](const QString& groupKey) -> StagePreviewGroup* {
+        auto* group = m_groups.value(groupKey, nullptr);
+        if (group == nullptr)
+        {
+            return nullptr;
+        }
+        auto it = m_stagePreviews.find(groupKey);
+        if (it != m_stagePreviews.end())
+        {
+            return &it.value();
+        }
+
+        auto* toggle = new QToolButton(group);
+        toggle->setText(QStringLiteral("👁"));
+        toggle->setToolTip(tr("Show/hide stage preview"));
+        toggle->setCheckable(true);
+        toggle->setAutoRaise(true);
+        group->addHeaderWidget(toggle);
+
+        connect(toggle, &QToolButton::toggled, this,
+                [this, groupKey](bool checked) { onPreviewToggled(groupKey, checked); });
+
+        return &m_stagePreviews.insert(groupKey, StagePreviewGroup{toggle, {}}).value();
+    };
+
+    auto addPreview = [&](const QString& groupKey, TapPreviewWidget* widget,
+                          std::function<std::vector<float>()> sample,
+                          const QString& visibilityParamId = {}) {
+        auto* group = m_groups.value(groupKey, nullptr);
+        auto* preview = ensureToggle(groupKey);
+        if (group == nullptr || preview == nullptr)
+        {
+            delete widget;
+            return;
+        }
+        widget->setVisible(false);  // default off; toggle applies persistence below
+        group->contentLayout()->insertWidget(insertIndex[groupKey]++, widget);
+        preview->entries.push_back(
+            PreviewEntry{widget, std::move(sample), visibilityParamId});
+    };
+
+    // Tap points (stages 1/2 — bars or curve, declared by the visualizer)
+    for (const auto& tap : m_visualizer->tapPoints())
+    {
+        const QString groupKey = QStringLiteral("stage:%1").arg(static_cast<int>(tap.stage));
+        const auto mode = (tap.display == IVisualizer::TapDisplay::Curve)
+                              ? TapPreviewWidget::Mode::Curve
+                              : TapPreviewWidget::Mode::Bars;
+        auto* widget = new TapPreviewWidget(mode);
+        widget->setToolTip(QString::fromStdString(tap.displayName));
+        addPreview(groupKey, widget, tap.sample);
+    }
+
+    // Gradient handles (stage 3 — one color strip per handle). Each strip
+    // follows the visibility of its handle's "mode" parameter, so channel
+    // strips disappear with their channel (e.g. Waveform channelMode).
+    const QString colorKey =
+        QStringLiteral("stage:%1").arg(static_cast<int>(PipelineStage::Color));
+    for (const auto& handle : m_visualizer->gradients())
+    {
+        auto* widget = new TapPreviewWidget(TapPreviewWidget::Mode::ColorStrip);
+        widget->setGradient(handle.gradient);
+        widget->setToolTip(QString::fromStdString(handle.displayName));
+        addPreview(colorKey, widget, {},
+                   QString::fromStdString(handle.paramPrefix + "mode"));
+    }
+
+    // Restore persisted visibility (default off) — toggling fires the handler,
+    // which shows the widgets, persists, and starts the timer
+    for (auto it = m_stagePreviews.begin(); it != m_stagePreviews.end(); ++it)
+    {
+        const QString key =
+            QStringLiteral("configpanel/preview/%1/%2").arg(vizId, it.key());
+        if (settings.value(key, false).toBool())
+        {
+            it->toggle->setChecked(true);
+        }
+    }
+}
+
+void ConfigPanel::onPreviewToggled(const QString& groupKey, bool visible)
+{
+    if (!m_stagePreviews.contains(groupKey))
+    {
+        return;
+    }
+
+    updatePreviewVisibility();
+
+    if (m_visualizer != nullptr)
+    {
+        QSettings settings;
+        settings.setValue(QStringLiteral("configpanel/preview/%1/%2")
+                              .arg(m_visualizer->visualizerId(), groupKey),
+                          visible);
+    }
+
+    updatePreviewTimer();
+}
+
+void ConfigPanel::updatePreviewVisibility()
+{
+    for (auto it = m_stagePreviews.begin(); it != m_stagePreviews.end(); ++it)
+    {
+        const bool toggledOn = it->toggle->isChecked();
+        for (auto& entry : it->entries)
+        {
+            bool paramVisible = true;
+            if (!entry.visibilityParamId.isEmpty())
+            {
+                auto paramIt = m_paramWidgets.find(entry.visibilityParamId);
+                if (paramIt != m_paramWidgets.end() && paramIt->container != nullptr)
+                {
+                    paramVisible = !paramIt->container->isHidden();
+                }
+            }
+            entry.widget->setVisible(toggledOn && paramVisible);
+        }
+    }
+}
+
+void ConfigPanel::onPreviewTick()
+{
+    for (auto it = m_stagePreviews.begin(); it != m_stagePreviews.end(); ++it)
+    {
+        if (!it->toggle->isChecked())
+        {
+            continue;
+        }
+        for (auto& entry : it->entries)
+        {
+            if (entry.sample)
+            {
+                entry.widget->setData(entry.sample());
+            }
+            else
+            {
+                // Color strip: repaints only if the gradient actually changed
+                entry.widget->refreshGradient();
+            }
+        }
+    }
+}
+
+void ConfigPanel::updatePreviewTimer()
+{
+    bool anyVisible = false;
+    for (auto it = m_stagePreviews.begin(); it != m_stagePreviews.end(); ++it)
+    {
+        if (it->toggle->isChecked())
+        {
+            anyVisible = true;
+            break;
+        }
+    }
+
+    // Tap nur bei Abonnent aktiv (N7): no visible preview -> no timer
+    if (anyVisible && isVisible())
+    {
+        m_previewTimer->start();
+    }
+    else
+    {
+        m_previewTimer->stop();
     }
 }

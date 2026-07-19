@@ -1,9 +1,9 @@
 # Config-Pipeline — Konzept (Phase 4)
 
-> **Version:** 0.3.0
+> **Version:** 1.0.0
 > **Datum:** 2026-07-19
 > **Typ:** Concept
-> **Status:** Aktiv (Kernentscheidungen freigegeben 2026-07-19)
+> **Status:** Stabil (umgesetzt in Phase 4, Schritte 0–6 — Session 30; Umsetzungs-Details: [Config_Pipeline_Umsetzungsplan.md](Config_Pipeline_Umsetzungsplan.md))
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** visualizers/ (alle), UI/panels/ConfigPanel, services/EventBus, Preset-System
 > **Sprache:** Deutsch
@@ -370,6 +370,7 @@ Noch offen:
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **0.3.0** | **2026-07-19** | **Kernentscheidungen freigegeben (Q&A): Keys+Alias, AudioSource pro Visual, Leitplanken, Analyzer-Entfernung, Preview fest in Phase 4 (Tap-Points im Schema)** |
+| **1.0.0** | **2026-07-19** | **Status Stabil: Konzept vollständig umgesetzt (Phase 4 Schritte 0–6, Session 30) — alle 5 Visualizer auf Stufen-Schema, Alias-Maps + Wert-Konverter aktiv (formatVersion 2), Shared-Module (Smoothing/Beat/HoldFade/AudioUtil/JsonPresetParser), Stage-Previews im ConfigPanel** |
+| 0.3.0 | 2026-07-19 | Kernentscheidungen freigegeben (Q&A): Keys+Alias, AudioSource pro Visual, Leitplanken, Analyzer-Entfernung, Preview fest in Phase 4 (Tap-Points im Schema) |
 | 0.2.0 | 2026-07-18 | Langfrist-Ziel AVS/MilkDrop-Import (§1) + Leitplanken 5.6 + ref/-Analyse als offener Punkt |
 | 0.1.0 | 2026-07-18 | Initial (Session 29): Stufenmodell, Schema, Entscheidungen 5.1–5.5, Umsetzungsplan |

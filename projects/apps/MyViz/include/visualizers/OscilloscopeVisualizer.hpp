@@ -20,22 +20,12 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLVertexArrayObject>
 
+#include <array>
 #include <memory>
 #include <vector>
-#include <deque>
 
 // Forward declarations
 class QOpenGLContext;
-
-/**
- * @brief Phosphor persistence frame for fade effect
- */
-struct PhosphorFrame
-{
-    std::vector<float> samples;
-    float age = 0.0f;
-    float alpha = 1.0f;
-};
 
 /**
  * @class OscilloscopeVisualizer
@@ -46,7 +36,6 @@ struct PhosphorFrame
  * - Timebase control (time/division)
  * - Dual channel support (Left/Right)
  * - Grid with divisions (10x8)
- * - Phosphor persistence effect
  * - Classic green/yellow/cyan color schemes
  */
 class OscilloscopeVisualizer : public VisualizerBase
@@ -81,16 +70,35 @@ public:
     /// @brief Audio-source handle (Phase 4 — generic module-preset access)
     [[nodiscard]] lumi::modules::AudioSourceModule* audioSourceModule() override { return &m_audioSource; }
 
+    /// @brief Tap points (Phase 4 Schritt 6) — stage outputs for the group preview
+    [[nodiscard]] std::vector<TapPoint> tapPoints() override
+    {
+        using lumi::modules::PipelineStage;
+        return {
+            {"tap.audio", "Analyse (Baender)", PipelineStage::AudioSource,
+             [this]() {
+                 const float* data = m_audioSource.spectrum();
+                 const int count = m_audioSource.bandCount();
+                 return (data != nullptr && count > 0)
+                     ? std::vector<float>(data, data + count)
+                     : std::vector<float>{};
+             },
+             TapDisplay::Bars},
+            {"tap.map", "Mapping (CH1)", PipelineStage::Mapping,
+             [this]() { return m_processedChannels[0]; }, TapDisplay::Curve},
+        };
+    }
+
     /// @brief Gradient handles (Phase 4) — one per channel, no paramId parsing
     [[nodiscard]] std::vector<GradientHandle> gradients() override
     {
         return {
-            {"ch1", "Channel 1", "ch1Color.", &m_oscilloscope.colorGradient(0)},
-            {"ch2", "Channel 2", "ch2Color.", &m_oscilloscope.colorGradient(1)},
-            {"ch3", "Channel 3", "ch3Color.", &m_oscilloscope.colorGradient(2)},
-            {"ch4", "Channel 4", "ch4Color.", &m_oscilloscope.colorGradient(3)},
-            {"m1", "Math 1", "m1Color.", &m_oscilloscope.colorGradient(4)},
-            {"m2", "Math 2", "m2Color.", &m_oscilloscope.colorGradient(5)},
+            {"ch1", "Channel 1", "color.ch1.", &m_oscilloscope.colorGradient(0)},
+            {"ch2", "Channel 2", "color.ch2.", &m_oscilloscope.colorGradient(1)},
+            {"ch3", "Channel 3", "color.ch3.", &m_oscilloscope.colorGradient(2)},
+            {"ch4", "Channel 4", "color.ch4.", &m_oscilloscope.colorGradient(3)},
+            {"m1", "Math 1", "color.m1.", &m_oscilloscope.colorGradient(4)},
+            {"m2", "Math 2", "color.m2.", &m_oscilloscope.colorGradient(5)},
         };
     }
 
@@ -109,15 +117,6 @@ private:
 
     bool createShaders();
 
-    void splitStereoData(const std::vector<float>& interleaved,
-                         std::vector<float>& left,
-                         std::vector<float>& right);
-
-    void resampleWaveform(const std::vector<float>& source,
-                          std::vector<float>& target,
-                          int targetSize,
-                          float gain);
-
     void buildLineVertices(const std::vector<float>& samples,
                            float yOffset,
                            float yScale,
@@ -131,8 +130,6 @@ private:
     void renderTriggerLevel();
 
     void uploadGradientUniforms(int channelIndex);
-
-    void updatePhosphorFrames(float deltaTime);
 
     // =========================================================================
     // Modules
@@ -172,20 +169,6 @@ private:
     // Processed channel data (6 channels: CH1-CH4, M1-M2)
     std::array<std::vector<float>, lumi::modules::OscilloscopeModule::TOTAL_CHANNELS> m_processedChannels;
     std::array<std::vector<float>, lumi::modules::OscilloscopeModule::TOTAL_CHANNELS> m_displayChannels;
-
-    // =========================================================================
-    // Phosphor Persistence Buffers (per channel)
-    // =========================================================================
-
-    std::array<std::deque<PhosphorFrame>, lumi::modules::OscilloscopeModule::TOTAL_CHANNELS> m_phosphorBuffers;
-
-    // =========================================================================
-    // Trigger State
-    // =========================================================================
-
-    int m_lastTriggerPoint = 0;
-    bool m_triggered = false;
-    float m_holdoffTimer = 0.0f;
 
     // =========================================================================
     // State

@@ -32,7 +32,9 @@
 #include <QJsonObject>
 #include <QStringList>
 
+#include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 #include <map>
 #include <optional>
@@ -211,6 +213,9 @@ public:
     // Legacy-Key-Migration (Phase 4)
     // =========================================================================
 
+    /// Optional per-alias value conversion (old-schema value → new-schema value)
+    using ValueConverter = std::function<modules::ParamValue(const modules::ParamValue&)>;
+
     /**
      * @brief Register old→new parameter-key aliases for one visualizer
      *
@@ -222,15 +227,32 @@ public:
     static void registerKeyAliases(const QString& visualizerId,
                                    std::map<std::string, std::string> aliases);
 
+    /**
+     * @brief Register an alias whose VALUE must be converted as well (E3)
+     *
+     * Example: waveform.smoothing (EMA factor s) → audio.smooth.timeMs with
+     * timeMs ≈ −16.67/ln(s). Overwrites a plain alias for the same old key.
+     */
+    static void registerKeyConverter(const QString& visualizerId,
+                                     const std::string& oldKey,
+                                     std::string newKey,
+                                     ValueConverter converter);
+
     /// @brief Translate a legacy key ("" stays ""); unknown keys pass through
     [[nodiscard]] static std::string translateLegacyKey(const QString& visualizerId,
                                                         const std::string& key);
 
+    /// @brief Translate key AND value; without registered converter the value passes through
+    [[nodiscard]] static std::pair<std::string, modules::ParamValue> translateLegacyParam(
+        const QString& visualizerId,
+        const std::string& key,
+        const modules::ParamValue& value);
+
     /// @brief Drop all registered aliases (tests)
     static void clearKeyAliases();
 
-    /// Bump to 2 when a visualizer's keys migrate to the pipeline schema (step 5)
-    static constexpr int CURRENT_FORMAT_VERSION = 1;
+    /// Format 2 = pipeline key schema (step 5; Equalizer migrated first, 5.1)
+    static constexpr int CURRENT_FORMAT_VERSION = 2;
 };
 
 } // namespace lumi

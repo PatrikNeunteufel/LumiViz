@@ -1,10 +1,11 @@
 # Dateiformate — Referenz der Preset-Formate (.lvp, .smooth, .audio, .grad)
 
-> **Version:** 1.0.0
-> **Datum:** 2026-07-18
+> **Version:** 1.1.0
+> **Datum:** 2026-07-19
 > **Typ:** Reference
 > **Status:** Aktiv
 > **Sprache:** Deutsch
+> **Änderung 1.1.0:** formatVersion 2 (Pipeline-Key-Schema, Phase 4 Schritt 5) — Loader wertet formatVersion aus und übersetzt Alt-Presets per Alias-Map; Beispiel auf neue Keys
 
 ---
 
@@ -82,8 +83,8 @@ Top-Level besteht aus **`header`** und **`parameters`** (das flache
 | `header.description` | string | — | Beschreibung |
 | `header.author` | string | — | Autor |
 | `header.version` | number (int) | — (Default 1) | Preset-Version |
-| `header.formatVersion` | number (int) | — | Format-Version, aktuell `1` (`CURRENT_FORMAT_VERSION`); wird beim Speichern geschrieben, beim Laden derzeit nicht ausgewertet |
-| `parameters` | object | — | Parameter-ID → Wert |
+| `header.formatVersion` | number (int) | — (Default 1) | Key-Schema-Version, aktuell `2` (`CURRENT_FORMAT_VERSION`, Pipeline-Schema seit Phase 4 Schritt 5). Beim Speichern wird immer `2` geschrieben. **Beim Laden ausgewertet:** Presets mit `formatVersion < 2` (auch ohne Feld) laufen in `applyPreset()` durch die Alias-Map des jeweiligen Visualizers — jeder Alt-Key wird auf den Pipeline-Key übersetzt, einzelne Einträge zusätzlich wert-konvertiert (z. B. `waveform.smoothing` → `audio.smooth.timeMs`). Quelle der Tabellen: [Parameter_Key_Migration.md](../visuals/Parameter_Key_Migration.md) |
+| `parameters` | object | — | Parameter-ID → Wert (neues Schema: Stufen-Präfixe `audio.` / `map.` / `color.<handle>.` / `render.` / `peak.`/`particle.` / `post.`) |
 
 ### 3.2 Beispiel
 
@@ -97,22 +98,26 @@ erzeugten Format:
         "visualizerId": "pulsing",
         "description": "Vibrant neon pulsing effect",
         "author": "MyViz Team",
-        "version": 1,
-        "formatVersion": 1
+        "version": 2,
+        "formatVersion": 2
     },
     "parameters": {
         "audio.gain": 1.2,
-        "audio.smoothing.algorithm": 1,
-        "audio.smoothing.timeConstant": 50.0,
-        "shape.type": 0,
-        "shape.minSize": 0.2,
-        "shape.color.mode": 1,
-        "shape.color.gradientPresetName": "Neon",
-        "shape.color.gradientData": "0.0000,1.0000,0.0000,1.0000,1.0000;0.5000,0.0000,1.0000,1.0000,1.0000;1.0000,1.0000,0.0000,1.0000,1.0000",
-        "shape.color.angle": 0.0
+        "audio.smooth.algorithm": 1,
+        "audio.smooth.timeMs": 50.0,
+        "render.type": 0,
+        "render.minSize": 0.2,
+        "color.main.mode": 1,
+        "color.main.gradientPresetName": "Neon",
+        "color.main.gradientData": "0.0000,1.0000,0.0000,1.0000,1.0000;0.5000,0.0000,1.0000,1.0000,1.0000;1.0000,1.0000,0.0000,1.0000,1.0000",
+        "color.main.angle": 0.0
     }
 }
 ```
+
+Alt-Presets (formatVersion 1, Keys wie `shape.type` oder `shape.color.mode`) bleiben
+ladbar — die Alias-Map übersetzt sie beim Anwenden; beim nächsten Speichern liegt die
+Datei im neuen Schema mit `formatVersion: 2` vor (kein Dual-Write).
 
 ### 3.3 Wertetypen in `parameters`
 

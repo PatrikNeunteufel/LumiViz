@@ -10,6 +10,7 @@
  */
 
 #include "visualizers/modules/ColorGradientModule.hpp"
+#include "visualizers/modules/JsonPresetParser.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -1252,105 +1253,44 @@ void ColorGradientModule::loadUserPresetsFromDisk()
 
 bool ColorGradientModule::parseGradientFile(const std::string& content, GradientPreset& preset)
 {
-    // Parse single .grad JSON file
-    // Format: { "name": "...", "mode": 0, "angle": 0, 
+    // Parse single .grad JSON file via the shared preset parser (5.6)
+    // Format: { "name": "...", "mode": 0, "angle": 0,
     //           "stops": [[pos,r,g,b,a],...], "midpoints": [0.5,...] }
-    
-    // Name
-    size_t namePos = content.find("\"name\"");
-    if (namePos != std::string::npos)
+    JsonPresetParser parser(content);
+
+    preset.name = parser.getString("name");
+    preset.mode = static_cast<GradientMode>(parser.getInt("mode"));
+    preset.angle = parser.getFloat("angle");
+
+    // Stops: nested array [[pos,r,g,b,a],...]
+    const std::string stopsStr = parser.getArrayContent("stops");
+    size_t stopPos = 0;
+    while ((stopPos = stopsStr.find('[', stopPos)) != std::string::npos)
     {
-        size_t valStart = content.find('"', namePos + 6);
-        size_t valEnd = content.find('"', valStart + 1);
-        if (valStart != std::string::npos && valEnd != std::string::npos)
+        size_t stopEnd = stopsStr.find(']', stopPos);
+        if (stopEnd == std::string::npos) break;
+
+        std::string stopStr = stopsStr.substr(stopPos + 1, stopEnd - stopPos - 1);
+        std::istringstream ss(stopStr);
+        float p, r, g, b, a;
+        char comma;
+        if (ss >> p >> comma >> r >> comma >> g >> comma >> b >> comma >> a)
         {
-            preset.name = content.substr(valStart + 1, valEnd - valStart - 1);
+            preset.stops.push_back({p, {r, g, b, a}});
         }
+        stopPos = stopEnd + 1;
     }
-    
-    // Mode
-    size_t modePos = content.find("\"mode\"");
-    if (modePos != std::string::npos)
+
+    // Midpoints: flat array [0.5,...]
+    std::istringstream ss(parser.getArrayContent("midpoints"));
+    float val;
+    while (ss >> val)
     {
-        size_t valStart = content.find(':', modePos) + 1;
-        while (valStart < content.size() && std::isspace(content[valStart])) ++valStart;
-        try {
-            int mode = std::stoi(content.substr(valStart));
-            preset.mode = static_cast<GradientMode>(mode);
-        } catch (...) {}
+        preset.midpoints.push_back({val});
+        char c;
+        ss >> c;  // Skip comma
     }
-    
-    // Angle
-    size_t anglePos = content.find("\"angle\"");
-    if (anglePos != std::string::npos)
-    {
-        size_t valStart = content.find(':', anglePos) + 1;
-        while (valStart < content.size() && std::isspace(content[valStart])) ++valStart;
-        try {
-            preset.angle = std::stof(content.substr(valStart));
-        } catch (...) {}
-    }
-    
-    // Stops array - need to find matching bracket (nested arrays!)
-    size_t stopsPos = content.find("\"stops\"");
-    if (stopsPos != std::string::npos)
-    {
-        size_t arrStart = content.find('[', stopsPos);
-        if (arrStart != std::string::npos)
-        {
-            // Find matching closing bracket by counting
-            int bracketCount = 1;
-            size_t arrEnd = arrStart + 1;
-            while (arrEnd < content.size() && bracketCount > 0)
-            {
-                if (content[arrEnd] == '[') ++bracketCount;
-                else if (content[arrEnd] == ']') --bracketCount;
-                ++arrEnd;
-            }
-            
-            if (bracketCount == 0)
-            {
-                std::string stopsStr = content.substr(arrStart + 1, arrEnd - arrStart - 2);
-                size_t stopPos = 0;
-                while ((stopPos = stopsStr.find('[', stopPos)) != std::string::npos)
-                {
-                    size_t stopEnd = stopsStr.find(']', stopPos);
-                    if (stopEnd == std::string::npos) break;
-                    
-                    std::string stopStr = stopsStr.substr(stopPos + 1, stopEnd - stopPos - 1);
-                    std::istringstream ss(stopStr);
-                    float p, r, g, b, a;
-                    char comma;
-                    if (ss >> p >> comma >> r >> comma >> g >> comma >> b >> comma >> a)
-                    {
-                        preset.stops.push_back({p, {r, g, b, a}});
-                    }
-                    stopPos = stopEnd + 1;
-                }
-            }
-        }
-    }
-    
-    // Midpoints array
-    size_t midPos = content.find("\"midpoints\"");
-    if (midPos != std::string::npos)
-    {
-        size_t arrStart = content.find('[', midPos);
-        size_t arrEnd = content.find(']', arrStart);
-        if (arrStart != std::string::npos && arrEnd != std::string::npos)
-        {
-            std::string midsStr = content.substr(arrStart + 1, arrEnd - arrStart - 1);
-            std::istringstream ss(midsStr);
-            float val;
-            while (ss >> val)
-            {
-                preset.midpoints.push_back({val});
-                char c;
-                ss >> c;  // Skip comma
-            }
-        }
-    }
-    
+
     return !preset.name.empty() && !preset.stops.empty();
 }
 

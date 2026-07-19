@@ -10,6 +10,8 @@
  */
 
 #include "visualizers/OscilloscopeVisualizer.hpp"
+#include "visualizers/PipelineKeys.hpp"
+#include "visualizers/VisualizerPresetManager.hpp"
 
 #include <QOpenGLFunctions>
 #include <QOpenGLContext>
@@ -18,7 +20,9 @@
 
 #include <cmath>
 #include <algorithm>
+#include <map>
 #include <sstream>
+#include <string>
 
 using namespace lumi::modules;
 
@@ -171,6 +175,157 @@ void main()
 }
 )";
 
+// =============================================================================
+// Key-Schema (Phase 4 Schritt 5.4) — module sub-id ↔ pipeline key
+// =============================================================================
+
+// Scalar sub-ids of OscilloscopeModule → new pipeline keys
+// (Parameter_Key_Migration.md §4). Gradient blocks are handled by prefix.
+const std::map<std::string, std::string>& subIdKeyTable()
+{
+    static const std::map<std::string, std::string> table = [] {
+        std::map<std::string, std::string> t = {
+            {"timePerDiv", "map.timePerDiv"},
+            {"sampleCount", "map.sampleCount"},
+            {"triggerEnabled", "map.trigger.enabled"},
+            {"triggerLevel", "map.trigger.level"},
+            {"triggerTolerance", "map.trigger.tolerance"},
+            {"triggerPosition", "map.trigger.position"},
+            {"triggerEdge", "map.trigger.edge"},
+            {"triggerMode", "map.trigger.mode"},
+            {"triggerChannel", "map.trigger.channel"},
+            {"triggerIndicator", "render.triggerIndicator"},  // E4: display overlay
+            {"triggerFadeTime", "post.trigger.fadeTime"},     // frame afterglow → Post
+            {"gridStyle", "render.gridStyle"},
+            {"gridBrightness", "render.gridBrightness"},
+            {"gridLineWidth", "render.gridLineWidth"},
+            {"gridDotSize", "render.gridDotSize"},
+            {"gridCrossSize", "render.gridCrossSize"},
+            {"interpolation", "render.interpolation"},
+        };
+
+        // Per channel: visible/voltsPerDiv/offset/lineWidth → render (E5),
+        // data selection/derivation → map
+        for (const char* ch : {"ch1", "ch2", "ch3", "ch4", "m1", "m2"})
+        {
+            const std::string c = ch;
+            t.emplace(c + ".visible", "render." + c + ".visible");
+            t.emplace(c + ".voltsPerDiv", "render." + c + ".voltsPerDiv");
+            t.emplace(c + ".offset", "render." + c + ".offset");
+            t.emplace(c + ".lineWidth", "render." + c + ".lineWidth");
+        }
+        for (const char* ch : {"ch1", "ch2", "ch3", "ch4"})
+        {
+            const std::string c = ch;
+            t.emplace(c + ".source", "map." + c + ".source");
+            t.emplace(c + ".mode", "map." + c + ".mode");
+            t.emplace(c + ".coupling", "map." + c + ".coupling");
+        }
+        for (const char* m : {"m1", "m2"})
+        {
+            const std::string c = m;
+            t.emplace(c + ".operation", "map." + c + ".operation");
+            t.emplace(c + ".sourceA", "map." + c + ".sourceA");
+            t.emplace(c + ".sourceB", "map." + c + ".sourceB");
+        }
+        return t;
+    }();
+    return table;
+}
+
+struct PrefixPair
+{
+    const char* subPrefix;  ///< module-internal gradient prefix
+    const char* keyPrefix;  ///< pipeline color-handle prefix
+};
+
+constexpr PrefixPair kGradientPrefixes[] = {
+    {"ch1Color.", "color.ch1."}, {"ch2Color.", "color.ch2."},
+    {"ch3Color.", "color.ch3."}, {"ch4Color.", "color.ch4."},
+    {"m1Color.", "color.m1."},   {"m2Color.", "color.m2."},
+};
+
+/// Module sub-id → pipeline key ("" if unknown)
+std::string subIdToKey(const std::string& subId)
+{
+    for (const auto& [subPrefix, keyPrefix] : kGradientPrefixes)
+    {
+        if (subId.rfind(subPrefix, 0) == 0)
+        {
+            return keyPrefix + subId.substr(std::string(subPrefix).size());
+        }
+    }
+    auto it = subIdKeyTable().find(subId);
+    return it == subIdKeyTable().end() ? std::string{} : it->second;
+}
+
+/// Pipeline key → module sub-id ("" if unknown)
+std::string keyToSubId(const std::string& key)
+{
+    for (const auto& [subPrefix, keyPrefix] : kGradientPrefixes)
+    {
+        if (key.rfind(keyPrefix, 0) == 0)
+        {
+            return subPrefix + key.substr(std::string(keyPrefix).size());
+        }
+    }
+    static const std::map<std::string, std::string> reverse = [] {
+        std::map<std::string, std::string> r;
+        for (const auto& [subId, newKey] : subIdKeyTable())
+        {
+            r.emplace(newKey, subId);
+        }
+        return r;
+    }();
+    auto it = reverse.find(key);
+    return it == reverse.end() ? std::string{} : it->second;
+}
+
+// =============================================================================
+// Legacy-Key-Migration (Phase 4 Schritt 5.4)
+// =============================================================================
+
+/**
+ * @brief Alias map old→new schema (Parameter_Key_Migration.md §4)
+ *
+ * Old keys were "scope." + module sub-id — generated from the same tables that
+ * drive the live schema. Strictly per visualizer: Superscope shares the old
+ * "scope." prefix (§7.5), its own map lives there. scope.phosphor* never
+ * existed in code (E7) — nothing to translate.
+ */
+void registerLegacyKeyAliases()
+{
+    std::map<std::string, std::string> aliases;
+
+    // Stage 1: audio.* unchanged (identity) — incl. audio.bands (E2: Equalizer only)
+    for (const char* key : {"preset", "scale", "bands", "floorDb", "ceilDb", "clamp01",
+                            "gain", "smooth.preset", "smooth.algorithm", "smooth.timeMs",
+                            "smooth.windowSize", "smooth.primeFirstFrame"})
+    {
+        aliases.emplace(std::string("audio.") + key, std::string("audio.") + key);
+    }
+
+    // Scalars + channel params: scope.<subId> → new key
+    for (const auto& [subId, newKey] : subIdKeyTable())
+    {
+        aliases.emplace("scope." + subId, newKey);
+    }
+
+    // Gradient blocks: scope.ch1Color.* → color.ch1.* etc.
+    for (const char* sub : {"mode", "solidColor", "angle", "preset", "editGradient",
+                            "outlineWidth", "gradientPresetName", "gradientData"})
+    {
+        for (const auto& [subPrefix, keyPrefix] : kGradientPrefixes)
+        {
+            aliases.emplace(std::string("scope.") + subPrefix + sub,
+                            std::string(keyPrefix) + sub);
+        }
+    }
+
+    lumi::VisualizerPresetManager::registerKeyAliases(QStringLiteral("oscilloscope"),
+                                                      std::move(aliases));
+}
+
 } // anonymous namespace
 
 // =============================================================================
@@ -184,6 +339,10 @@ OscilloscopeVisualizer::OscilloscopeVisualizer()
           QObject::tr("Classic oscilloscope display with trigger"))
 {
     BasicLogger::logDebug("OscilloscopeVisualizer: Constructor called");
+
+    // Idempotent on every construction — a magic static would not survive
+    // clearKeyAliases() (tests) since the registration would never re-fire
+    registerLegacyKeyAliases();
 
     // Initialize buffers for all channels
     int sampleCount = m_oscilloscope.sampleCount();
@@ -249,12 +408,13 @@ std::vector<ModuleParamDesc> OscilloscopeVisualizer::paramDescs() const
 {
     std::vector<ModuleParamDesc> params;
 
-    // Audio Source Parameters
+    // Stage 1: Audio Source
     for (const auto& p : m_audioSource.paramDescs())
     {
         ModuleParamDesc prefixed = p;
         prefixed.id = "audio." + p.id;
-        prefixed.group = "1. Audio";
+        prefixed.group = "Audio";
+        prefixed.stage = PipelineStage::AudioSource;
 
         if (!prefixed.dependsOn.empty())
         {
@@ -264,17 +424,24 @@ std::vector<ModuleParamDesc> OscilloscopeVisualizer::paramDescs() const
         params.push_back(prefixed);
     }
 
-    // Oscilloscope Parameters
+    // Stages 2/3/4/6: module schema translated to the pipeline keys (5.4)
     for (const auto& p : m_oscilloscope.paramDescs())
     {
+        const std::string newKey = subIdToKey(p.id);
+        if (newKey.empty())
+        {
+            BasicLogger::logWarning("OscilloscopeVisualizer: No pipeline key for '" + p.id + "'");
+            continue;
+        }
+
         ModuleParamDesc prefixed = p;
-        prefixed.id = "scope." + p.id;
-        prefixed.group = "2. Oscilloscope";
-        prefixed.order = 100 + p.order;
+        prefixed.id = newKey;
+        prefixed.stage = lumi::stageForKey(newKey);
+        prefixed.group = lumi::groupForStage(prefixed.stage);
 
         if (!prefixed.dependsOn.empty())
         {
-            prefixed.dependsOn = "scope." + prefixed.dependsOn;
+            prefixed.dependsOn = subIdToKey(prefixed.dependsOn);
         }
 
         params.push_back(prefixed);
@@ -290,12 +457,8 @@ bool OscilloscopeVisualizer::getParam(const std::string& id, ParamValue& out) co
         return m_audioSource.getParam(id.substr(6), out);
     }
 
-    if (id.rfind("scope.", 0) == 0)
-    {
-        return m_oscilloscope.getParam(id.substr(6), out);
-    }
-
-    return false;
+    const std::string subId = keyToSubId(id);
+    return subId.empty() ? false : m_oscilloscope.getParam(subId, out);
 }
 
 bool OscilloscopeVisualizer::setParam(const std::string& id, const ParamValue& value)
@@ -305,36 +468,32 @@ bool OscilloscopeVisualizer::setParam(const std::string& id, const ParamValue& v
         return m_audioSource.setParam(id.substr(6), value);
     }
 
-    if (id.rfind("scope.", 0) == 0)
+    const std::string subId = keyToSubId(id);
+    if (subId.empty())
     {
-        bool result = m_oscilloscope.setParam(id.substr(6), value);
-
-        if (result && id == "scope.sampleCount")
-        {
-            int newCount = m_oscilloscope.sampleCount();
-            for (int c = 0; c < OscilloscopeModule::TOTAL_CHANNELS; ++c)
-            {
-                m_displayChannels[c].resize(newCount, 0.0f);
-                m_processedChannels[c].resize(newCount, 0.0f);
-            }
-        }
-
-        return result;
+        return false;
     }
 
-    return false;
+    bool result = m_oscilloscope.setParam(subId, value);
+
+    // Buffer-resize coupling of ALL channels (§7.2)
+    if (result && id == "map.sampleCount")
+    {
+        int newCount = m_oscilloscope.sampleCount();
+        for (int c = 0; c < OscilloscopeModule::TOTAL_CHANNELS; ++c)
+        {
+            m_displayChannels[c].resize(newCount, 0.0f);
+            m_processedChannels[c].resize(newCount, 0.0f);
+        }
+    }
+
+    return result;
 }
 
 void OscilloscopeVisualizer::resetToDefaults()
 {
     m_audioSource.resetToDefaults();
     m_oscilloscope.reset();
-
-    // Clear phosphor buffers for all channels
-    for (int c = 0; c < OscilloscopeModule::TOTAL_CHANNELS; ++c)
-    {
-        m_phosphorBuffers[c].clear();
-    }
 
     // Reset display buffers
     int sampleCount = m_oscilloscope.sampleCount();
@@ -343,10 +502,6 @@ void OscilloscopeVisualizer::resetToDefaults()
         m_displayChannels[c].assign(sampleCount, 0.0f);
         m_processedChannels[c].assign(sampleCount, 0.0f);
     }
-
-    m_lastTriggerPoint = 0;
-    m_triggered = false;
-    m_holdoffTimer = 0.0f;
 
     BasicLogger::logInfo("OscilloscopeVisualizer: Reset to defaults");
 }
@@ -712,9 +867,6 @@ void OscilloscopeVisualizer::onRender(float deltaTime)
     }
 
 render_section:
-    // Update phosphor frames
-    updatePhosphorFrames(deltaTime);
-
     // =========================================================================
     // Render
     // =========================================================================
@@ -780,51 +932,6 @@ void OscilloscopeVisualizer::onCleanup()
 // =============================================================================
 // Private Methods
 // =============================================================================
-
-void OscilloscopeVisualizer::splitStereoData(const std::vector<float>& interleaved,
-                                              std::vector<float>& left,
-                                              std::vector<float>& right)
-{
-    int stereoSamples = static_cast<int>(interleaved.size()) / 2;
-    left.resize(stereoSamples);
-    right.resize(stereoSamples);
-
-    for (int i = 0; i < stereoSamples; ++i)
-    {
-        left[i] = interleaved[i * 2];
-        right[i] = interleaved[i * 2 + 1];
-    }
-}
-
-void OscilloscopeVisualizer::resampleWaveform(const std::vector<float>& source,
-                                               std::vector<float>& target,
-                                               int targetSize,
-                                               float gain)
-{
-    if (source.empty())
-    {
-        std::fill(target.begin(), target.end(), 0.0f);
-        return;
-    }
-
-    target.resize(targetSize);
-
-    float step = static_cast<float>(source.size()) / static_cast<float>(targetSize);
-
-    for (int i = 0; i < targetSize; ++i)
-    {
-        float srcIndex = i * step;
-        int idx0 = static_cast<int>(srcIndex);
-        int idx1 = std::min(idx0 + 1, static_cast<int>(source.size()) - 1);
-        float frac = srcIndex - idx0;
-
-        // Linear interpolation
-        float value = source[idx0] * (1.0f - frac) + source[idx1] * frac;
-        value *= gain;
-
-        target[i] = std::clamp(value, -1.0f, 1.0f);
-    }
-}
 
 void OscilloscopeVisualizer::buildLineVertices(const std::vector<float>& samples,
                                                 float yOffset,
@@ -1250,31 +1357,3 @@ void OscilloscopeVisualizer::uploadGradientUniforms(int channelIndex)
     gl->glUniform1f(m_lineUniGradientAngle, gradient.angle() * 3.14159f / 180.0f);
 }
 
-void OscilloscopeVisualizer::updatePhosphorFrames(float deltaTime)
-{
-    auto updateQueue = [deltaTime](std::deque<PhosphorFrame>& queue, float decay)
-    {
-        for (auto& frame : queue)
-        {
-            frame.age += deltaTime;
-            frame.alpha *= decay;
-        }
-
-        // Remove faded frames
-        while (!queue.empty() && queue.front().alpha < 0.01f)
-        {
-            queue.pop_front();
-        }
-    };
-
-    // Update phosphor for all channels
-    for (int c = 0; c < OscilloscopeModule::TOTAL_CHANNELS; ++c)
-    {
-        const auto& config = m_oscilloscope.channelBase(c);
-        
-        if (config.phosphorEnabled)
-        {
-            updateQueue(m_phosphorBuffers[c], config.phosphorDecay);
-        }
-    }
-}

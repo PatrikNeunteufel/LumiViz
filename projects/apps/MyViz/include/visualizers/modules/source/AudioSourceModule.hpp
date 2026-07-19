@@ -52,6 +52,7 @@
 #pragma once
 
 #include "visualizers/modules/IModule.hpp"
+#include "visualizers/modules/JsonPresetParser.hpp"
 #include "visualizers/modules/processing/SmoothingModule.hpp"
 
 #include <vector>
@@ -1237,69 +1238,29 @@ inline void AudioSourceModule::loadUserPresetsFromDisk()
 
 inline bool AudioSourceModule::parsePresetFile(const std::string& filePath, AudioPresetData& outPreset)
 {
-    std::ifstream file(filePath);
-    if (!file.is_open())
+    // Shared preset-JSON extraction (5.6) — one parser for all module presets
+    auto parser = JsonPresetParser::fromFile(filePath);
+    if (!parser)
     {
         return false;
     }
-    
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    std::string content = buffer.str();
-    
-    // Simple JSON parsing
-    auto extractString = [&content](const std::string& key) -> std::string {
-        std::string searchKey = "\"" + key + "\":";
-        size_t pos = content.find(searchKey);
-        if (pos == std::string::npos) return "";
-        pos = content.find("\"", pos + searchKey.length());
-        if (pos == std::string::npos) return "";
-        size_t end = content.find("\"", pos + 1);
-        if (end == std::string::npos) return "";
-        return content.substr(pos + 1, end - pos - 1);
-    };
-    
-    auto extractFloat = [&content](const std::string& key) -> float {
-        std::string searchKey = "\"" + key + "\":";
-        size_t pos = content.find(searchKey);
-        if (pos == std::string::npos) return 0.0f;
-        pos += searchKey.length();
-        while (pos < content.size() && (content[pos] == ' ' || content[pos] == '\t')) ++pos;
-        return std::stof(content.substr(pos));
-    };
-    
-    auto extractInt = [&content](const std::string& key) -> int {
-        std::string searchKey = "\"" + key + "\":";
-        size_t pos = content.find(searchKey);
-        if (pos == std::string::npos) return 0;
-        pos += searchKey.length();
-        while (pos < content.size() && (content[pos] == ' ' || content[pos] == '\t')) ++pos;
-        return std::stoi(content.substr(pos));
-    };
-    
-    auto extractBool = [&content](const std::string& key) -> bool {
-        std::string searchKey = "\"" + key + "\":";
-        size_t pos = content.find(searchKey);
-        if (pos == std::string::npos) return false;
-        return content.find("true", pos) < content.find(",", pos);
-    };
-    
-    outPreset.name = extractString("name");
+
+    outPreset.name = parser->getString("name");
     if (outPreset.name.empty())
     {
         std::filesystem::path p(filePath);
         outPreset.name = p.stem().string();
     }
-    
-    outPreset.scale = static_cast<FrequencyScale>(extractInt("scale"));
-    outPreset.bands = extractInt("bands");
-    outPreset.floorDb = extractFloat("floorDb");
-    outPreset.ceilDb = extractFloat("ceilDb");
-    outPreset.clamp01 = extractBool("clamp01");
-    outPreset.gain = extractFloat("gain");
-    outPreset.smoothAlgorithm = static_cast<SmoothingAlgorithm>(extractInt("smoothAlgorithm"));
-    outPreset.smoothTimeMs = extractFloat("smoothTimeMs");
-    
+
+    outPreset.scale = static_cast<FrequencyScale>(parser->getInt("scale"));
+    outPreset.bands = parser->getInt("bands");
+    outPreset.floorDb = parser->getFloat("floorDb");
+    outPreset.ceilDb = parser->getFloat("ceilDb");
+    outPreset.clamp01 = parser->getBool("clamp01");
+    outPreset.gain = parser->getFloat("gain");
+    outPreset.smoothAlgorithm = static_cast<SmoothingAlgorithm>(parser->getInt("smoothAlgorithm"));
+    outPreset.smoothTimeMs = parser->getFloat("smoothTimeMs");
+
     return true;
 }
 

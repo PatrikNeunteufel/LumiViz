@@ -82,6 +82,12 @@ public:
      */
     void setTitle(const QString& title);
 
+    /**
+     * @brief Add a small widget to the right side of the header row
+     *        (e.g. the preview eye toggle, Phase 4 Schritt 6)
+     */
+    void addHeaderWidget(QWidget* widget);
+
 Q_SIGNALS:
     /**
      * @brief Emitted when collapsed state changes
@@ -96,6 +102,7 @@ private:
     void updateToggleButton();
 
     QToolButton* m_toggleButton = nullptr;
+    QHBoxLayout* m_headerLayout = nullptr;
     QFrame* m_contentFrame = nullptr;
     QVBoxLayout* m_contentLayout = nullptr;
     QParallelAnimationGroup* m_animation = nullptr;

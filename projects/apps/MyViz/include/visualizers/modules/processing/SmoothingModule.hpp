@@ -39,6 +39,7 @@
 #pragma once
 
 #include "visualizers/modules/IModule.hpp"
+#include "visualizers/modules/JsonPresetParser.hpp"
 
 #include <deque>
 #include <vector>
@@ -164,7 +165,23 @@ public:
      * @param output Output array (must be pre-allocated)
      */
     void processArray(const float* values, int count, float deltaTime, float* output);
-    
+
+    /**
+     * @brief Temporally smooth an array with INDEPENDENT per-index state
+     *
+     * For per-sample display smoothing (e.g. waveform buffers, E3): every index
+     * keeps its own EMA state, primed with the first frame and re-primed when
+     * the count changes. Uses the module's EMA time constant (timeMs);
+     * algorithm None (or timeMs <= 0) passes through. SMA/WMA/DEMA fall back
+     * to EMA here — per-index window buffers are not worth their memory.
+     *
+     * @param values Input array
+     * @param count Number of values
+     * @param deltaTime Time since last update (seconds)
+     * @param output Output array (must be pre-allocated; may alias values)
+     */
+    void processArrayPerIndex(const float* values, int count, float deltaTime, float* output);
+
     /**
      * @brief Reset smoothing state (clears history)
      */
@@ -352,6 +369,9 @@ private:
     // General state
     float m_lastOutput = 0.0f;
     bool m_primed = false;
+
+    // Per-index EMA state (processArrayPerIndex)
+    std::vector<float> m_perIndexState;
     
     // =========================================================================
     // Constants
@@ -621,12 +641,44 @@ inline float SmoothingModule::process(float value, float deltaTime)
     return result;
 }
 
-inline void SmoothingModule::processArray(const float* values, int count, 
+inline void SmoothingModule::processArray(const float* values, int count,
                                           float deltaTime, float* output)
 {
     for (int i = 0; i < count; ++i)
     {
         output[i] = process(values[i], deltaTime);
+    }
+}
+
+inline void SmoothingModule::processArrayPerIndex(const float* values, int count,
+                                                  float deltaTime, float* output)
+{
+    if (count <= 0)
+    {
+        return;
+    }
+
+    if (m_algorithm == SmoothingAlgorithm::None || m_timeMs <= 0.0f || deltaTime <= 0.0f)
+    {
+        m_perIndexState.assign(values, values + count);
+        std::copy(values, values + count, output);
+        return;
+    }
+
+    // Prime with the first frame (also on count change)
+    if (static_cast<int>(m_perIndexState.size()) != count)
+    {
+        m_perIndexState.assign(values, values + count);
+    }
+
+    // Same EMA math as processEMA(): α = 1 - e^(-Δt/τ), τ = timeMs / 1000
+    const float tau = m_timeMs / 1000.0f;
+    const float alpha = 1.0f - std::exp(-deltaTime / tau);
+
+    for (int i = 0; i < count; ++i)
+    {
+        m_perIndexState[i] = alpha * values[i] + (1.0f - alpha) * m_perIndexState[i];
+        output[i] = m_perIndexState[i];
     }
 }
 
@@ -638,6 +690,7 @@ inline void SmoothingModule::reset()
     m_demaValue2 = 0.0f;
     m_lastOutput = 0.0f;
     m_primed = false;
+    m_perIndexState.clear();
 }
 
 inline void SmoothingModule::prime(float value)
@@ -1039,66 +1092,26 @@ inline void SmoothingModule::loadUserPresetsFromDisk()
 
 inline bool SmoothingModule::parsePresetFile(const std::string& filePath, SmoothingPresetData& outPreset)
 {
-    std::ifstream file(filePath);
-    if (!file.is_open())
+    // Shared preset-JSON extraction (5.6) — one parser for all module presets
+    auto parser = JsonPresetParser::fromFile(filePath);
+    if (!parser)
     {
         return false;
     }
-    
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    std::string content = buffer.str();
-    
-    // Simple JSON parsing
-    auto extractString = [&content](const std::string& key) -> std::string {
-        std::string searchKey = "\"" + key + "\":";
-        size_t pos = content.find(searchKey);
-        if (pos == std::string::npos) return "";
-        pos = content.find("\"", pos + searchKey.length());
-        if (pos == std::string::npos) return "";
-        size_t end = content.find("\"", pos + 1);
-        if (end == std::string::npos) return "";
-        return content.substr(pos + 1, end - pos - 1);
-    };
-    
-    auto extractFloat = [&content](const std::string& key) -> float {
-        std::string searchKey = "\"" + key + "\":";
-        size_t pos = content.find(searchKey);
-        if (pos == std::string::npos) return 0.0f;
-        pos += searchKey.length();
-        while (pos < content.size() && (content[pos] == ' ' || content[pos] == '\t')) ++pos;
-        return std::stof(content.substr(pos));
-    };
-    
-    auto extractInt = [&content](const std::string& key, int defaultVal = 0) -> int {
-        std::string searchKey = "\"" + key + "\":";
-        size_t pos = content.find(searchKey);
-        if (pos == std::string::npos) return defaultVal;
-        pos += searchKey.length();
-        while (pos < content.size() && (content[pos] == ' ' || content[pos] == '\t')) ++pos;
-        return std::stoi(content.substr(pos));
-    };
-    
-    auto extractBool = [&content](const std::string& key) -> bool {
-        std::string searchKey = "\"" + key + "\":";
-        size_t pos = content.find(searchKey);
-        if (pos == std::string::npos) return false;
-        return content.find("true", pos) < content.find(",", pos);
-    };
-    
-    outPreset.name = extractString("name");
+
+    outPreset.name = parser->getString("name");
     if (outPreset.name.empty())
     {
         // Use filename as fallback
         std::filesystem::path p(filePath);
         outPreset.name = p.stem().string();
     }
-    
-    outPreset.algorithm = static_cast<SmoothingAlgorithm>(extractInt("algorithm"));
-    outPreset.timeMs = extractFloat("timeMs");
-    outPreset.windowSize = extractInt("windowSize", 8);  // Default 8 for old presets
-    outPreset.primeFirstFrame = extractBool("primeFirstFrame");
-    
+
+    outPreset.algorithm = static_cast<SmoothingAlgorithm>(parser->getInt("algorithm"));
+    outPreset.timeMs = parser->getFloat("timeMs");
+    outPreset.windowSize = parser->getInt("windowSize", 8);  // Default 8 for old presets
+    outPreset.primeFirstFrame = parser->getBool("primeFirstFrame");
+
     return true;
 }
 

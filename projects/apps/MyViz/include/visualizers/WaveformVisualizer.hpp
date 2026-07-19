@@ -15,6 +15,8 @@
 #include "visualizers/modules/IModule.hpp"
 #include "visualizers/modules/source/AudioSourceModule.hpp"
 #include "visualizers/modules/WaveformModule.hpp"
+#include "visualizers/modules/processing/SmoothingModule.hpp"
+#include "visualizers/modules/postfx/PostFxModule.hpp"
 
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
@@ -22,20 +24,9 @@
 
 #include <memory>
 #include <vector>
-#include <deque>
 
 // Forward declarations
 class QOpenGLContext;
-
-/**
- * @brief Held frame for fade effect
- */
-struct HeldWaveformFrame
-{
-    std::vector<float> samples;
-    float age = 0.0f;
-    float alpha = 1.0f;
-};
 
 /**
  * @class WaveformVisualizer
@@ -73,14 +64,33 @@ public:
     /// @brief Audio-source handle (Phase 4 — generic module-preset access)
     [[nodiscard]] lumi::modules::AudioSourceModule* audioSourceModule() override { return &m_audioSource; }
 
+    /// @brief Tap points (Phase 4 Schritt 6) — stage outputs for the group preview
+    [[nodiscard]] std::vector<TapPoint> tapPoints() override
+    {
+        using lumi::modules::PipelineStage;
+        return {
+            {"tap.audio", "Analyse (Baender)", PipelineStage::AudioSource,
+             [this]() {
+                 const float* data = m_audioSource.spectrum();
+                 const int count = m_audioSource.bandCount();
+                 return (data != nullptr && count > 0)
+                     ? std::vector<float>(data, data + count)
+                     : std::vector<float>{};
+             },
+             TapDisplay::Bars},
+            {"tap.map", "Mapping (Samples Mono)", PipelineStage::Mapping,
+             [this]() { return m_displayMono; }, TapDisplay::Curve},
+        };
+    }
+
     /// @brief Gradient handles (Phase 4) — makes Left/Right editable too
     [[nodiscard]] std::vector<GradientHandle> gradients() override
     {
         using WM = lumi::modules::WaveformModule;
         return {
-            {"mono", "Mono", "monoColor.", &m_waveform.colorGradient(WM::CHANNEL_MONO)},
-            {"left", "Left", "leftColor.", &m_waveform.colorGradient(WM::CHANNEL_LEFT)},
-            {"right", "Right", "rightColor.", &m_waveform.colorGradient(WM::CHANNEL_RIGHT)},
+            {"mono", "Mono", "color.mono.", &m_waveform.colorGradient(WM::CHANNEL_MONO)},
+            {"left", "Left", "color.left.", &m_waveform.colorGradient(WM::CHANNEL_LEFT)},
+            {"right", "Right", "color.right.", &m_waveform.colorGradient(WM::CHANNEL_RIGHT)},
         };
     }
 
@@ -94,17 +104,9 @@ protected:
 
 private:
     bool createShaders();
-    
-    void splitStereoData(const std::vector<float>& interleaved,
-                         std::vector<float>& left,
-                         std::vector<float>& right);
-    
-    void resampleWaveform(const std::vector<float>& source,
-                          std::vector<float>& target,
-                          std::vector<float>& smoothed,
-                          int targetSize,
-                          float smoothing,
-                          float gain);
+
+    /// @brief Mirror the stage-1 smoothing config into the display smoothers (E3)
+    void syncDisplaySmoothing();
     
     void buildThickLineVertices(const std::vector<float>& samples,
                                 float offset,
@@ -135,6 +137,11 @@ private:
 
     lumi::modules::AudioSourceModule m_audioSource;
     lumi::modules::WaveformModule m_waveform;
+
+    // Display smoothing (E3 — config mirrors audio.smooth.*, per-index state)
+    lumi::modules::SmoothingModule m_displaySmoothMono;
+    lumi::modules::SmoothingModule m_displaySmoothLeft;
+    lumi::modules::SmoothingModule m_displaySmoothRight;
 
     // =========================================================================
     // OpenGL Resources
@@ -170,20 +177,17 @@ private:
 
     std::vector<float> m_rawWaveformLeft;
     std::vector<float> m_rawWaveformRight;
-    std::vector<float> m_smoothedLeft;
-    std::vector<float> m_smoothedRight;
-    std::vector<float> m_smoothedMono;
     std::vector<float> m_displayLeft;
     std::vector<float> m_displayRight;
     std::vector<float> m_displayMono;
 
     // =========================================================================
-    // Hold/Fade Buffers (per channel)
+    // Hold/Fade Trails (per channel — shared PostFx mechanics, 5.6)
     // =========================================================================
 
-    std::deque<HeldWaveformFrame> m_heldFramesMono;
-    std::deque<HeldWaveformFrame> m_heldFramesLeft;
-    std::deque<HeldWaveformFrame> m_heldFramesRight;
+    lumi::modules::HoldFadeEffect m_heldFramesMono;
+    lumi::modules::HoldFadeEffect m_heldFramesLeft;
+    lumi::modules::HoldFadeEffect m_heldFramesRight;
 
     // =========================================================================
     // State

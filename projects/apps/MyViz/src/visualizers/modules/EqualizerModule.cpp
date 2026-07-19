@@ -36,7 +36,7 @@ EqualizerModule::EqualizerModule()
 void EqualizerModule::resetToDefaults()
 {
     m_bandCount = 64;
-    m_gain = 1.0f;
+    m_heightScale = 1.0f;
     m_barGapPx = 2.0f;
     m_orientation = BarOrientation::BottomUp;
 
@@ -68,10 +68,11 @@ void EqualizerModule::updateFromProcessed(const float* processedBands, int count
         setBandCount(count);
     }
 
-    // Copy pre-processed bands directly (already mapped, smoothed, normalized by AudioSourceModule)
+    // Copy pre-processed bands directly (already mapped, smoothed, normalized by
+    // AudioSourceModule); heightScale is display-only scaling (render.heightScale, E1)
     for (int i = 0; i < m_bandCount && i < count; ++i)
     {
-        m_bands[i] = std::clamp(processedBands[i], 0.0f, 1.0f);
+        m_bands[i] = std::clamp(processedBands[i] * m_heightScale, 0.0f, 1.0f);
     }
 
     // Update colors based on current bands

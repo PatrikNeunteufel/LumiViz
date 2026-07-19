@@ -16,6 +16,7 @@
 #include "visualizers/modules/source/AudioSourceModule.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 #include "visualizers/modules/PulseShapeModule.hpp"
+#include "visualizers/modules/processing/BeatModule.hpp"
 
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
@@ -79,7 +80,24 @@ public:
     /// @brief Gradient handles (Phase 4 — generic editor/preview access)
     [[nodiscard]] std::vector<GradientHandle> gradients() override
     {
-        return {{"main", "Color", "shape.color.", &m_colorGradient}};
+        return {{"main", "Color", "color.main.", &m_colorGradient}};
+    }
+
+    /// @brief Tap points (Phase 4 Schritt 6) — stage outputs for the group preview
+    [[nodiscard]] std::vector<TapPoint> tapPoints() override
+    {
+        using lumi::modules::PipelineStage;
+        return {
+            {"tap.audio", "Analyse (Baender)", PipelineStage::AudioSource,
+             [this]() {
+                 const float* data = m_audioSource.spectrum();
+                 const int count = m_audioSource.bandCount();
+                 return (data != nullptr && count > 0)
+                     ? std::vector<float>(data, data + count)
+                     : std::vector<float>{};
+             },
+             TapDisplay::Bars},
+        };
     }
     
     /**
@@ -139,10 +157,8 @@ private:
     // Private Methods
     // =========================================================================
 
-    float detectBeat(float bassLevel);
     bool createShaders();
     void updateVertexBuffer();
-    void renderPulse(float audioLevel, float beatIntensity);
     void rebuildShape();
 
     // =========================================================================
@@ -152,6 +168,7 @@ private:
     lumi::modules::AudioSourceModule m_audioSource;
     lumi::modules::ColorGradientModule m_colorGradient;
     lumi::modules::PulseShapeModule m_pulseShape;
+    lumi::modules::BeatModule m_beat;
 
     // =========================================================================
     // OpenGL Resources
@@ -187,25 +204,17 @@ private:
     int m_uniformStopCount = -1;
 
     // =========================================================================
-    // Shape Parameters
+    // Shape/Rotation State (shape config values live in PulseShapeModule)
     // =========================================================================
 
-    float m_innerRadius = 0.5f;
-    float m_minSize = 0.3f;
-    float m_maxSize = 0.9f;
-    float m_rotationSpeed = 0.0f;
     float m_currentRotation = 0.0f;
     bool m_beatReverseRotation = false;  ///< Reverse rotation on beat
     float m_rotationDirection = 1.0f;    ///< Current direction (+1 or -1)
 
     // =========================================================================
-    // Audio State
+    // Audio State (beat detection lives in BeatModule)
     // =========================================================================
 
-    float m_beatIntensity = 0.0f;
-    float m_lastBassLevel = 0.0f;
-    float m_beatThreshold = 0.4f;
-    float m_beatSensitivity = 1.0f;
     bool m_beatBrightnessEnabled = true;
 
     // =========================================================================

@@ -1,9 +1,9 @@
 # MyViz — Implementierungsplan Phase 4 (Config-Pipeline)
 
-> **Version:** 0.2.0
+> **Version:** 1.0.0
 > **Datum:** 2026-07-19
 > **Typ:** Implementierungsplan
-> **Status:** In Umsetzung (Schritte 0–4 ✅ 2026-07-19; Schritt 5 anstehend; Key-Review ✅)
+> **Status:** ✅ ABGESCHLOSSEN (40/40, Session 30 — Suite 91 Cases / 2080 Assertions grün, Sichttests + 6.3-Messung bestanden)
 > **Zielgruppe:** Entwickler
 > **Bezug:** [Config_Pipeline_Concept.md](Config_Pipeline_Concept.md) v0.3.0
 > **Phase:** 4
@@ -46,20 +46,20 @@
 - [x] 1.4 Transient-resolve()-Dangling fixen, Skip-Test aktivieren
 - [x] 1.5 DialogManager instanziieren (Kleinfix — About-Dialog öffnet wieder)
 
-### Schritt 2: CommandBus (Undo/Redo) ⬜
+### Schritt 2: CommandBus (Undo/Redo) ✅ (2026-07-19)
 
-- [ ] 2.1 CommandBus aus harvest portieren (Tests zuerst)
-- [ ] 2.2 Als Service registrieren
-- [ ] 2.3 SetParam-Command als erste Anwendung (Undo/Redo im ConfigPanel)
+- [x] 2.1 CommandBus aus harvest portieren (Tests zuerst)
+- [x] 2.2 Als Service registrieren
+- [x] 2.3 SetParam-Command als erste Anwendung (Undo/Redo im ConfigPanel)
 
-### Schritt 3: Gemeinsames Schema ⬜
+### Schritt 3: Gemeinsames Schema ✅ (2026-07-19)
 
-- [ ] 3.1 PipelineStage-Enum + ModuleParamDesc::stage
-- [ ] 3.2 Gradient-Handles im IVisualizer-Interface
-- [ ] 3.3 Key-Migrationstabellen je Visualizer festlegen
-- [ ] 3.4 Preset-Loader: formatVersion-Auswertung + Alias-Map
-- [ ] 3.5 Tap-Points: Stufen-Ausgänge als benannte, abonnierbare Daten (Preview-Fundament)
-- [ ] 3.6 Schema-/Migrations-Tests
+- [x] 3.1 PipelineStage-Enum + ModuleParamDesc::stage
+- [x] 3.2 Gradient-Handles im IVisualizer-Interface
+- [x] 3.3 Key-Migrationstabellen je Visualizer festlegen
+- [x] 3.4 Preset-Loader: formatVersion-Auswertung + Alias-Map
+- [x] 3.5 Tap-Points: Stufen-Ausgänge als benannte, abonnierbare Daten (Preview-Fundament)
+- [x] 3.6 Schema-/Migrations-Tests
 
 ### Schritt 4: ConfigPanel generisch ✅ (2026-07-19)
 
@@ -70,27 +70,27 @@
 - [x] 4.5 Default-Reset per Kontextmenue je Parameter/SubGruppe/Gruppe (undo-faehig via CommandBus)
 - [x] 4.6 Variant-Haertung: kParamValueColorIndex + holdsColor/getColor/makeColorValue als SSOT (holds_alternative unmoeglich: Vec4f=Color4f-Alias); Reststellen -> Schritt 5
 
-### Schritt 5: Visualizer-Migration + Modul-Konsolidierung ⬜
+### Schritt 5: Visualizer-Migration + Modul-Konsolidierung ✅ (2026-07-19, Sichttests ✅)
 
-- [ ] 5.1 Equalizer (Referenz-Migration)
-- [ ] 5.2 Pulsing (+ PulseShapeModule-paramDescs)
-- [ ] 5.3 Waveform (+ SmoothingModule statt m_smoothing; Handles mono/left/right)
-- [ ] 5.4 Oscilloscope (+ PostFx statt Phosphor-Inline; 6 Handles)
-- [ ] 5.5 Superscope (+ SmoothingModule statt Hand-EMA; Audio-Doppelgruppe auflösen)
-- [ ] 5.6 Shared-Module: AudioUtil, PostFxModule, BeatModule, JSON-Preset-Helper
+- [x] 5.1 Equalizer (Referenz-Migration) — 2026-07-19; Sichttest ✅
+- [x] 5.2 Pulsing (+ PulseShapeModule-paramDescs, BeatModule als erster 5.6-Baustein) — 2026-07-19; Sichttest ✅
+- [x] 5.3 Waveform (+ SmoothingModule statt m_smoothing; Handles mono/left/right; HoldFadeEffect) — 2026-07-19; Sichttest ✅
+- [x] 5.4 Oscilloscope (6 Handles; toter Phosphor-/Trigger-Fade-Code entfernt statt umgezogen — war nie funktional, E7) — 2026-07-19; Sichttest ✅
+- [x] 5.5 Superscope (+ SmoothingModule statt Hand-EMA; Audio-Doppelgruppe aufgelöst; BeatModule adaptiv; HoldFadeEffect generisch) — 2026-07-19; Sichttest ✅
+- [x] 5.6 Shared-Module: AudioUtil, PostFxModule (HoldFade), BeatModule, JSON-Preset-Helper — 2026-07-19 (Phosphor/Shader-Glow = künftige Features, keine Konsolidierung mehr offen)
 
-### Schritt 6: Preview-Viewer je Parametergruppe ⬜
+### Schritt 6: Preview-Viewer je Parametergruppe ✅ (2026-07-19)
 
-- [ ] 6.1 Mini-Entwurf: Tap-Point-Abgriff, Darstellung je Stufe, Abschaltbarkeit
-- [ ] 6.2 Preview-Widget im ConfigPanel (je Stufe/Untergruppe einblendbar)
-- [ ] 6.3 Performance-Check (Frametime mit/ohne Preview) + Review gegen Pflichtenheft
+- [x] 6.1 Mini-Entwurf (`Preview_Viewer_Entwurf.md`) — 2026-07-19 von Patrik freigegeben
+- [x] 6.2 Preview-Widget im ConfigPanel — 2026-07-19; Sichttest ✅ (inkl. Fixes: Gruppen-Höhensperre, Streifen-Kanal-Sichtbarkeit, Solid-Farbe)
+- [x] 6.3 Performance-Check ✅ (2026-07-19, Messung Patrik): Preview aus = Basis 60 fps (N7 ✓); Live-Previews eingeblendet ~52 fps, Scroll-Spitzen ~45; Farbstreifen nach Optimierung (QLinearGradient + Change-Detection) 60 fps
 
-### Schritt 7: Dokumentation (PFLICHT, letzter Schritt) ⬜
+### Schritt 7: Dokumentation (PFLICHT, letzter Schritt) ✅ (2026-07-19)
 
-- [ ] 7.1 Parameter_Reference auf neue Keys umstellen
-- [ ] 7.2 Visualizer_Architecture + ConfigPanel_Guide + FileFormat_Reference nachziehen
-- [ ] 7.3 CppModuleDoc für neue Module (PostFx, Beat, AudioUtil)
-- [ ] 7.4 Konzept-Status auf „Stabil", Produkt-Changelog schreiben
+- [x] 7.1 Parameter_Reference auf neue Keys umstellen (v2.0.0)
+- [x] 7.2 Visualizer_Architecture (v1.1.0, Altlasten-Bilanz) + ConfigPanel_Guide (v2.0.0) + FileFormat_Reference (v1.1.0, formatVersion 2)
+- [x] 7.3 CppModuleDoc für neue Module (PostFx, Beat, AudioUtil, JsonPresetParser) + EventBus.md-RAII-Nachzug
+- [x] 7.4 Konzept-Status auf „Stabil" (v1.0.0), Produkt-Changelog `Changelog_Session30.md`
 
 ### Fortschritt
 
@@ -101,10 +101,10 @@
 | 2 | CommandBus | 3 | 3 | ✅ |
 | 3 | Schema | 6 | 6 | ✅ |
 | 4 | ConfigPanel | 6 | 6 | ✅ |
-| 5 | Migration + Module | 6 | 0 | ⬜ |
-| 6 | Preview-Viewer | 3 | 0 | ⬜ |
-| 7 | Dokumentation | 4 | 0 | ⬜ |
-| **Σ** | **Gesamt** | **40** | **27** | **68 %** |
+| 5 | Migration + Module | 6 | 6 | ✅ |
+| 6 | Preview-Viewer | 3 | 3 | ✅ |
+| 7 | Dokumentation | 4 | 4 | ✅ |
+| **Σ** | **Gesamt** | **40** | **40** | **100 %** |
 
 ---
 
@@ -305,40 +305,85 @@ Dateien in der jeweiligen `Source.cmake` pflegen. Preset-JSONs kommentarfrei.
 
 **Ziel:** Jeder Visualizer einzeln auf Schema/Stufen; dabei Duplikate in Shared-Module überführen. Reihenfolge fix; nach jedem Teilschritt Suite + manueller Sichttest.
 
-#### 5.1 Equalizer (Referenz)
+#### 5.1 Equalizer (Referenz) ✅ (2026-07-19, Sichttest ✅)
 
-- [ ] Gruppen „1.–8." → Stufen 1–5 (Post fehlt zulässig); Keys nach Migrationstabelle
-- [ ] `eq.bands`↔`audio.bands`-Sync (EqualizerVisualizer.cpp:203–205) auflösen → ein Key `map.bands`
-- [ ] Alias-Map Equalizer; Sichttest gegen `harvest/config-pipeline/`-Blaupause (Defaults/Ranges)
+- [x] Gruppen „1.–8." → Stufen 1–5 (Post fehlt zulässig); Keys nach Migrationstabelle;
+      `render.heightScale` NEU implementiert (E1, wirkt in `updateFromProcessed`);
+      `CURRENT_FORMAT_VERSION` = 2; Alias-Mechanik vorab um **Wert-Konverter** erweitert
+      (`registerKeyConverter`/`translateLegacyParam`, E3-Formel getestet)
+- [x] `eq.bands`↔`audio.bands`-Sync auflösen → ein Key `map.bands` (treibt beide Module;
+      Alias: beide Alt-Keys → `map.bands`, `eq.bands` gewinnt per Map-Reihenfolge)
+- [x] Alias-Map Equalizer (36 Einträge inkl. Identitäts-Whitelist) + Roundtrip-Tests
+      (`test_EqualizerMigration.cpp`, 6 Cases; dabei float-für-int-Vertrag von
+      `color.main.domain` gefixt) — Sichttest gegen `harvest/config-pipeline/`-Blaupause
+      ✅ (2026-07-19)
 
-#### 5.2 Pulsing
+#### 5.2 Pulsing ✅ (2026-07-19, Sichttest ✅)
 
-- [ ] PulseShapeModule bekommt eigene paramDescs (heute: manuelle Deklaration im Visualizer)
-- [ ] `shape.color.*` → `color.main.*`; Shape → `render.*`; Beat-Params → BeatModule-Anschluss (5.6)
+- [x] PulseShapeModule bekommt eigene paramDescs/getParam/setParam (type/sides/innerRadius/
+      minSize/maxSize/rotation; UI-Enum-Mapping wandert ins Modul; Modul ist jetzt SSOT der
+      Shape-Werte — Visualizer-Duplikat-Member entfernt; float-für-int-Vertrag eingebaut)
+- [x] `shape.color.*` → `color.main.*` (beatBrightness-Sonder-Routing beibehalten);
+      Shape → `render.*`; Beat-Detection → **BeatModule** (neu,
+      `modules/processing/BeatModule.hpp` — erster 5.6-Baustein; tote Stubs
+      detectBeat/renderPulse entfernt). Alias-Map (28 Einträge) + Tests
+      (`test_PulsingMigration.cpp`, 5 Cases) — Sichttest ✅ (2026-07-19)
 
-#### 5.3 Waveform
+#### 5.3 Waveform ✅ (2026-07-19, Sichttest ✅)
 
-- [ ] `m_smoothing`-Eigenglättung (WaveformModule.hpp:146, Anwendung WaveformVisualizer.cpp:590) → SmoothingModule
-- [ ] 3 Farb-Handles (mono/left/right) — Editor erreicht jetzt alle (heute nur Mono, ConfigPanel.cpp:1288)
-- [ ] SubGroup „Effects" (Mirror/Hold/Fade) → `post.*` (PostFxModule, 5.6)
+- [x] `m_smoothing`-Eigenglättung → SmoothingModule: Param entfällt (E3), Display-Glättung
+      läuft über 3 SmoothingModule-Instanzen (Config gespiegelt aus `audio.smooth.*`;
+      neues `processArrayPerIndex` mit unabhängigem per-Index-Zustand); Wert-Konverter
+      `waveform.smoothing` → `audio.smooth.timeMs` registriert
+- [x] 3 Farb-Handles (mono/left/right) auf `color.<handle>.*` — Editor erreicht alle;
+      Keys kanal-strukturiert (E8: `render.mono.offset` usw., Übersetzungstabelle
+      Sub-ID ↔ Pipeline-Key ist zugleich Quelle der Alias-Map)
+- [x] SubGroup „Effects" → `post.*` (`post.mirror.enabled`, `post.hold.*`);
+      Hold/Fade-Mechanik → **HoldFadeEffect** (neu, `modules/postfx/PostFxModule.hpp`
+      — zweiter 5.6-Baustein); Alias-Map (77 Einträge inkl. `waveform.color.*`-Legacy
+      §7.4) + Tests (`test_WaveformMigration.cpp`, 6 Cases) — Sichttest ✅ (2026-07-19)
 
-#### 5.4 Oscilloscope
+#### 5.4 Oscilloscope ✅ (2026-07-19, Sichttest ✅)
 
-- [ ] 6 Farb-Handles (ch1–ch4, m1, m2) statt paramId-Parsing (:1296–1303)
-- [ ] Phosphor/Trigger-Fade → `post.*`; Timebase/Trigger → `map.*`
+- [x] 6 Farb-Handles (ch1–ch4, m1, m2) auf `color.<handle>.*` — Editor erreicht alle;
+      Übersetzungstabelle Sub-ID ↔ Pipeline-Key (E5: voltsPerDiv/offset → `render.chN/mN.*`,
+      Datenwahl → `map.*`; E4: `render.triggerIndicator`)
+- [x] Timebase/Trigger → `map.*` (`map.timePerDiv`, `map.trigger.*`), Grid/Display →
+      `render.*`, `post.trigger.fadeTime` (Key migriert; Wirkung kommt mit PostFxModule).
+      **Befund:** Phosphor-Inline war komplett tot (nie gepusht/gerendert, keine Param-Keys
+      — deckt E7) → entfernt statt umgezogen (PhosphorFrame, m_phosphorBuffers,
+      updatePhosphorFrames, config-Felder, tote Trigger-State-Member); echtes Phosphor
+      folgt als PostFxModule-Feature (5.6). Alias-Map (119 Einträge) + Tests
+      (`test_OscilloscopeMigration.cpp`, 4 Cases) — Sichttest ✅ (2026-07-19)
 
-#### 5.5 Superscope
+#### 5.5 Superscope ✅ (2026-07-19, Sichttest ✅)
 
-- [ ] Hand-EMA (SuperscopeVisualizer.cpp:211–215, 283–287) → SmoothingModule
-- [ ] Doppelte „Audio"-Semantik auflösen: `scope.audioSource/audioChannel` → Stufe 2 (`map.*`)
-- [ ] Glow/Hold-Fade → `post.*`; Expressions unangetastet (Lua-Umstellung = Import-Phase)
+- [x] Hand-EMA → SmoothingModule (`processArrayPerIndex`, 4 Instanzen für Waveform/Spektrum
+      L/R; Config gespiegelt aus `audio.smooth.*`); Ad-hoc-Beat → **BeatModule** (neuer
+      adaptiver Energie-Modus `updateAdaptive`; tote `m_beatEnergy` entfernt)
+- [x] Doppelte „Audio"-Semantik aufgelöst: `scope.audioSource/audioChannel` → `map.*` (Stufe 2)
+- [x] Glow/Hold → `post.glow.*`/`post.hold.*`; Hold-Frames über **HoldFadeEffectT**
+      (Template — trägt jetzt auch Punktlisten); `render.preset` (E6), `render.mode`;
+      Expressions unangetastet. Alias-Map (38 Einträge, strikt getrennt vom
+      Oscilloscope-`scope.`-Präfix §7.5 — eigener Test) + Tests
+      (`test_SuperscopeMigration.cpp`, 5 Cases) — Sichttest ✅ (2026-07-19)
 
-#### 5.6 Shared-Module (begleitend, jeweils beim ersten Nutzer extrahieren)
+#### 5.6 Shared-Module ✅ (2026-07-19 — alle existierenden Duplikate konsolidiert)
 
-- [ ] AudioUtil: `splitStereoData`/`resampleWaveform` (3 Kopien: Waveform/Oscilloscope/Superscope)
-- [ ] PostFxModule: Hold/Fade/Phosphor/Mirror/Glow (4 Frame-Fade-Kopien; shader-erweiterbar — Konzept §5.6 Leitplanke 1)
-- [ ] BeatModule: 3 Ad-hoc-Detektoren (Pulsing :1051, Superscope :255–257, Equalizer GradientDomain::Beat)
-- [ ] Ein JSON-Preset-Helper statt 3 Mini-Parser (AudioSourceModule.hpp:1238–1304, SmoothingModule.hpp:1040–1101, ColorGradientModule)
+- [x] AudioUtil (`modules/AudioUtil.hpp`): `splitStereoData` + `resampleNearest` — aktiver
+      Nutzer Waveform. **Befund:** Die Kopien in Oscilloscope (split + resample) und
+      Superscope (split) waren tot (nie aufgerufen) → entfernt; das Oscilloscope-eigene
+      Inline-Display-Resampling (linear + clamp) ist bewusst eigenständig geblieben
+- [x] PostFxModule: HoldFadeEffectT (generisch, Sample-/Punkt-Frames) — Waveform +
+      Superscope angeschlossen; Oscilloscope-Phosphor war tot und ist entfernt (E7).
+      Echtes Phosphor/Shader-Glow = künftige Features (Konzept §5.6 Leitplanke 1),
+      keine Duplikat-Konsolidierung mehr offen
+- [x] BeatModule: Kanten-Trigger (Pulsing) + adaptiver Energie-Modus (Superscope)
+      angeschlossen; Equalizer GradientDomain::Beat hat keinen Detektor (Enum-Fall
+      fällt auf Position zurück) — nichts zu konsolidieren, Detektor wäre neues Feature
+- [x] JSON-Preset-Helper (`modules/JsonPresetParser.hpp`): ersetzt die 3 Mini-Parser in
+      AudioSourceModule, SmoothingModule und ColorGradientModule (Skalare + Arrays via
+      Klammerzählung; Semantik 1:1 erhalten; direkte Tests in `test_PipelineSchema.cpp`)
 
 ---
 
@@ -347,13 +392,27 @@ Dateien in der jeweiligen `Source.cmake` pflegen. Preset-JSONs kommentarfrei.
 **Ziel:** Je Pipeline-Stufe/Untergruppe ist eine Live-Vorschau der Roh-/Zwischendaten
 einblendbar (Pflichtenheft-Idee, fest beauftragt 2026-07-19).
 
-- [ ] 6.1 Mini-Entwurf (½ Seite, vor Implementierung absegnen): welche Tap-Points (3.5)
-      wie darstellen (Balken/Kurve/Farbstreifen je Stufe), Ein-/Ausblenden je Gruppe,
-      Update-Rate, Abschaltbarkeit (Default aus)
-- [ ] 6.2 Preview-Widget im ConfigPanel: einblendbar je Stufe/Untergruppe, gespeist
-      aus Tap-Points; Default-Zustand pro Panel persistieren
-- [ ] 6.3 Performance-Check: Frametime mit/ohne aktives Preview messen; kein messbarer
-      Einfluss bei ausgeblendetem Preview (Tap nur bei Abonnent aktiv)
+- [x] 6.1 Mini-Entwurf [Preview_Viewer_Entwurf.md](Preview_Viewer_Entwurf.md) ✅
+      freigegeben 2026-07-19: Balken/Kurve je Tap (vom Visualizer via
+      `TapPoint::display` deklariert), Farbstreifen je Gradient-Handle (Stufe 3),
+      Auge-Toggle im Gruppen-Header, 20 Hz, Default aus
+- [x] 6.2 Preview-Widget ✅ (2026-07-19, Sichttest offen): `TapPreviewWidget`
+      (QPainter, 3 Modi) + `CollapsibleGroupBox::addHeaderWidget`; Taps in allen
+      5 Visualizern (Stufe 1 Bänder überall; Stufe 2 Kurve bei Waveform/Oscilloscope/
+      Superscope, Balken beim Equalizer); gemeinsamer 20-Hz-Timer läuft NUR bei
+      sichtbarem Preview; Zustand je Visualizer+Stufe in QSettings
+      (`configpanel/preview/<viz>/<stage>`), Default aus. **Dabei Bestandsbug
+      gefixt:** CollapsibleGroupBox ließ nach der Expand-Animation
+      `maximumHeight` eingefroren — später wachsender Inhalt (Previews,
+      dependsOn-Einblendungen) wurde gequetscht/abgeschnitten; Höhe wird jetzt
+      nach dem Aufklappen wieder freigegeben
+- [x] 6.3 Performance-Check ✅ (2026-07-19, Messwerte Patrik, FPS-Anzeige):
+      Basis ~60 fps · Panel offen, Previews aus = ~60 (**N7 erfüllt** — konstruktiv:
+      ohne Abonnent kein Timer/`sample()`) · Live-Previews (Balken/Kurve) an ~52,
+      beim Scrollen kurz ~45 · Farbstreifen 60 (Scrollen ~50) nach Optimierung
+      (QLinearGradient-Fill, Repaint nur bei Gradient-Änderung, Kurven-Dezimierung).
+      Restkosten eingeblendeter Live-Previews + Scroll-Repaints = Main-Thread-Teilung
+      Qt↔GL — Entkopplung (Render-Thread) als Post-Phase-4-Kandidat notiert
 
 ---
 
@@ -361,10 +420,19 @@ einblendbar (Pflichtenheft-Idee, fest beauftragt 2026-07-19).
 
 **Ziel:** Doku beschreibt den neuen Ist-Stand; Phase 4 gilt erst danach als abgeschlossen.
 
-- [ ] 7.1 [Parameter_Reference.md](Parameter_Reference.md) auf neue Keys/Stufen umstellen (SSOT), Alias-Tabellen anhängen
-- [ ] 7.2 [Visualizer_Architecture.md](Visualizer_Architecture.md) (Altlasten-Abschnitt auflösen), [../ui/ConfigPanel_Guide.md](../ui/ConfigPanel_Guide.md) (Einschränkungen raus, Preview dokumentieren), [../presets/FileFormat_Reference.md](../presets/FileFormat_Reference.md) (neue formatVersion)
-- [ ] 7.3 CppModuleDoc neben den Headern für neue Module (PostFx, Beat, AudioUtil; SubscriberHandle in EventBus.md)
-- [ ] 7.4 [Config_Pipeline_Concept.md](Config_Pipeline_Concept.md) → Status „Stabil"; Produkt-Changelog `../sessions/` schreiben
+- [x] 7.1 [Parameter_Reference.md](Parameter_Reference.md) v2.0.0: alle Key-Tabellen auf
+      die Stufen-Keys (gegen die paramDescs im Code verifiziert), `render.heightScale`
+      ergänzt, `waveform.smoothing` raus (E3-Konverter dokumentiert), §9 Alias-Verweise
+- [x] 7.2 [Visualizer_Architecture.md](Visualizer_Architecture.md) v1.1.0 (Altlasten →
+      §11 Bilanz; Ist-Stand Stage-Schema/Handles/Taps/Shared-Module),
+      [../ui/ConfigPanel_Guide.md](../ui/ConfigPanel_Guide.md) v2.0.0 (Stufen-Gruppen,
+      Previews, Einschränkungen aufgelöst), [../presets/FileFormat_Reference.md](../presets/FileFormat_Reference.md)
+      v1.1.0 (formatVersion 2 + Migrations-Semantik)
+- [x] 7.3 CppModuleDoc: BeatModule.md, PostFxModule.md, AudioUtil.md, JsonPresetParser.md
+      (neben den Headern); EventBus.md §9 RAII-Abos (SubscriberHandle)
+- [x] 7.4 [Config_Pipeline_Concept.md](Config_Pipeline_Concept.md) → **Stabil** (v1.0.0);
+      Produkt-Changelog [../sessions/Changelog_Session30.md](../sessions/Changelog_Session30.md);
+      INDEX.md nachgezogen
 
 ---
 
@@ -409,7 +477,7 @@ Expression-Umschaltung pro Parameter, Multieffekt-Host.
 ### 6.2 Offene Entscheidungen
 
 - [x] Key-Migrationstabellen-Review durch Patrik (3.3) — ✅ 2026-07-19, F1-F8 entschieden (Details: Parameter_Key_Migration.md); NEU fuer Schritt 5: Alias-Mechanik braucht optionale Wert-Konverter (F3)
-- [ ] Preview-Mini-Entwurf absegnen (6.1) — blockiert 6.2/6.3
+- [x] Preview-Mini-Entwurf absegnen (6.1) — ✅ 2026-07-19 freigegeben (Preview_Viewer_Entwurf.md)
 
 Alle übrigen Entscheidungen sind gefallen (2026-07-19, siehe Konzept §8):
 Keys+Alias ✓ · AudioSource pro Visual ✓ · Leitplanken ✓ · Analyzer entfernen (0.4) ✓ ·
@@ -422,5 +490,15 @@ en-Doku später wie CMakeCraft ✓
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **0.2.0** | **2026-07-19** | **Freigabe eingearbeitet: +0.4 Analyzer-Entfernung, +0.5 Kategorie-Fix, +1.5 DialogManager, +3.5 Tap-Points, Schritt 6 = Preview-Viewer (fest), Doku → Schritt 7 (40 Aufgaben)** |
+| **1.0.0** | **2026-07-19** | **PHASE 4 ABGESCHLOSSEN (40/40): 6.3-Messung bestanden (N7 ✓ — Preview aus = Basis 60 fps; Farbstreifen nach QLinearGradient-Optimierung gratis); Render-Thread-Entkopplung als Post-Phase-4-Kandidat notiert** |
+| 0.3.0 | 2026-07-19 | Schritt 7 komplett (Session 30): Parameter_Reference v2.0.0, Visualizer_Architecture v1.1.0, ConfigPanel_Guide v2.0.0, FileFormat_Reference v1.1.0, 4 neue CppModuleDocs + EventBus-RAII, Konzept → Stabil v1.0.0, Changelog_Session30; 6.2-Sichttest ✅ inkl. 3 Preview-Fixes; 39/40 (98 %) — offen nur 6.3-Messung |
+| 0.2.8 | 2026-07-19 | 6.1 freigegeben + 6.2 umgesetzt (Session 30): TapPreviewWidget (Balken/Kurve/Farbstreifen), TapPoint::display, Taps in allen 5 Visualizern, Auge-Toggle (CollapsibleGroupBox::addHeaderWidget), 20-Hz-Timer nur bei sichtbarem Preview, QSettings-Persistenz; 35/40 (88 %); 6.2-Sichttest + 6.3-Messung offen |
+| 0.2.7 | 2026-07-19 | Sichttests 5.1–5.5 bestanden (Patrik, VS-Lauf) — Schritt 5 vollständig abgenommen |
+| 0.2.6 | 2026-07-19 | 5.6 abgeschlossen → Schritt 5 komplett (Session 30): AudioUtil (tote Kopien in Oscilloscope/Superscope entfernt), JsonPresetParser ersetzt 3 Mini-Parser; 33/40 (83 %); Sichttests 5.1–5.5 offen |
+| 0.2.5 | 2026-07-19 | 5.5 Superscope migriert (Session 30) — alle 5 Visualizer auf Pipeline-Schema: Hand-EMA → SmoothingModule, Beat → BeatModule (adaptiver Modus), Hold → HoldFadeEffectT (generisch), Audio-Doppelgruppe → `map.*` (E6 `render.preset`); Alias-Registrierung je Konstruktion (Magic-Static überlebte clearKeyAliases nicht); 32/40 (80 %); Sichttests 5.1–5.5 offen |
+| 0.2.4 | 2026-07-19 | 5.4 Oscilloscope migriert (Session 30): Trigger → `map.trigger.*` (E4: `render.triggerIndicator`), voltsPerDiv/offset → `render.chN/mN.*` (E5), 6 Farb-Handles `color.chN/mN.*`, `post.trigger.fadeTime`; toter Phosphor-Code entfernt (E7-Befund); `PipelineKeys.hpp` (stageForKey/groupForStage als SSOT); 31/40 (78 %); Sichttests 5.1–5.4 offen |
+| 0.2.3 | 2026-07-19 | 5.3 Waveform migriert (Session 30): Übersetzungstabelle Sub-ID↔Pipeline-Key (kanal-strukturiert E8), `waveform.smoothing` entfällt (E3-Konverter aktiv, Display-Glättung via SmoothingModule `processArrayPerIndex`), HoldFadeEffect extrahiert (PostFxModule-Baustein), `waveform.color.*`-Legacy-Alias; 30/40 (75 %); Sichttests 5.1–5.3 offen |
+| 0.2.2 | 2026-07-19 | 5.2 Pulsing migriert (Session 30): PulseShapeModule-paramDescs (Modul = SSOT der Shape-Werte), BeatModule extrahiert (erster 5.6-Baustein), `shape.*`→`render.*`, `shape.color.*`→`color.main.*`, Alias-Map + Tests; 29/40 (73 %); Sichttests 5.1/5.2 offen |
+| 0.2.1 | 2026-07-19 | 5.1 Equalizer migriert (Session 30): Wert-Konverter in Alias-Mechanik (E3), Alias-Map + Roundtrip-Tests, `render.heightScale` (E1), `map.bands` (E2), formatVersion 2; Checkboxen 2/3 nachgezogen; 28/40 (70 %); Sichttest 5.1 offen |
+| 0.2.0 | 2026-07-19 | Freigabe eingearbeitet: +0.4 Analyzer-Entfernung, +0.5 Kategorie-Fix, +1.5 DialogManager, +3.5 Tap-Points, Schritt 6 = Preview-Viewer (fest), Doku → Schritt 7 (40 Aufgaben) |
 | 0.1.0 | 2026-07-19 | Initial: Schritte 0–6 mit Datei:Zeile-Ankern aus der Session-29-Analyse |

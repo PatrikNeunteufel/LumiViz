@@ -221,8 +221,9 @@ public:
     void setBandCount(int count);
     [[nodiscard]] int bandCount() const { return m_bandCount; }
 
-    void setGain(float gain) { m_gain = std::max(0.0f, gain); }
-    [[nodiscard]] float gain() const { return m_gain; }
+    /// @brief Display scaling of bar heights (render.heightScale, E1)
+    void setHeightScale(float scale) { m_heightScale = std::max(0.0f, scale); }
+    [[nodiscard]] float heightScale() const { return m_heightScale; }
 
     void setBarGapPx(float gap) { m_barGapPx = std::max(0.0f, gap); }
     [[nodiscard]] float barGapPx() const { return m_barGapPx; }
@@ -281,7 +282,7 @@ private:
     // =========================================================================
 
     int m_bandCount = 64;
-    float m_gain = 1.0f;
+    float m_heightScale = 1.0f;
     float m_barGapPx = 2.0f;
     BarOrientation m_orientation = BarOrientation::BottomUp;
 

@@ -75,7 +75,7 @@ public:
     /// @brief Gradient handles (Phase 4 — generic editor/preview access)
     [[nodiscard]] std::vector<GradientHandle> gradients() override
     {
-        return {{"main", "Color", "color.", &m_equalizer.colorGradient()}};
+        return {{"main", "Color", "color.main.", &m_equalizer.colorGradient()}};
     }
 
     /// @brief Tap points (Phase 4 pilot) — stage outputs for the group preview
