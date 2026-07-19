@@ -32,6 +32,12 @@
 
 #include "visualizers/modules/IModule.hpp"
 
+namespace lumi::modules
+{
+class ColorGradientModule;
+class AudioSourceModule;
+}
+
 /**
  * @class IVisualizer
  * @brief Interface for OpenGL visualizers
@@ -196,4 +202,63 @@ public:
      * @brief Reset all parameters to defaults
      */
     virtual void resetToDefaults() {}
+
+    // =========================================================================
+    // Gradient Handles (Phase 4)
+    // =========================================================================
+
+    /**
+     * @brief A named color gradient exposed by this visualizer
+     *
+     * The generic UI (gradient editor, preview, module-preset save) works
+     * exclusively through these handles — no dynamic_cast on concrete
+     * visualizer types. `paramPrefix` is the parameter-ID prefix of the
+     * gradient's parameters (e.g. "shape.color." / "ch1Color.").
+     */
+    struct GradientHandle
+    {
+        std::string id;                                ///< e.g. "main", "left", "ch1"
+        std::string displayName;                       ///< e.g. "Left Channel"
+        std::string paramPrefix;                       ///< param-ID prefix incl. trailing '.'
+        lumi::modules::ColorGradientModule* gradient;  ///< non-owning, visualizer-owned
+    };
+
+    /**
+     * @brief All gradients of this visualizer (empty if it has none)
+     *
+     * Pointers stay valid for the visualizer's lifetime.
+     */
+    [[nodiscard]] virtual std::vector<GradientHandle> gradients() { return {}; }
+
+    /**
+     * @brief The visualizer's audio-source module (generic module-preset access)
+     *
+     * Analogous to gradients(): the ConfigPanel saves/loads audio and
+     * smoothing module presets exclusively through this accessor — no
+     * dynamic_cast on concrete visualizer types.
+     *
+     * @return nullptr if the visualizer has no audio-source module
+     */
+    [[nodiscard]] virtual lumi::modules::AudioSourceModule* audioSourceModule() { return nullptr; }
+
+    // =========================================================================
+    // Tap Points (Phase 4 — preview foundation)
+    // =========================================================================
+
+    /**
+     * @brief A named probe on a pipeline-stage output (pull-based)
+     *
+     * `sample()` copies the stage's current output; it costs nothing unless
+     * called (the preview polls only while visible). Main/UI thread only.
+     */
+    struct TapPoint
+    {
+        std::string id;                            ///< e.g. "tap.audio", "tap.map"
+        std::string displayName;                   ///< e.g. "Analyse (Baender)"
+        lumi::modules::PipelineStage stage = lumi::modules::PipelineStage::None;
+        std::function<std::vector<float>()> sample;  ///< copy of current data
+    };
+
+    /// @brief All tap points of this visualizer (empty if none wired yet)
+    [[nodiscard]] virtual std::vector<TapPoint> tapPoints() { return {}; }
 };

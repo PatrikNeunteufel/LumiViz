@@ -75,12 +75,21 @@ public:
      * @return Pointer to the gradient module (never null)
      */
     [[nodiscard]] lumi::modules::ColorGradientModule* colorGradient() { return &m_colorGradient; }
+
+    /// @brief Gradient handles (Phase 4 — generic editor/preview access)
+    [[nodiscard]] std::vector<GradientHandle> gradients() override
+    {
+        return {{"main", "Color", "shape.color.", &m_colorGradient}};
+    }
     
     /**
      * @brief Get access to the audio source module
      * @return Pointer to the audio source module (never null)
      */
     [[nodiscard]] lumi::modules::AudioSourceModule* audioSource() { return &m_audioSource; }
+
+    /// @brief Audio-source handle (Phase 4 — generic module-preset access)
+    [[nodiscard]] lumi::modules::AudioSourceModule* audioSourceModule() override { return &m_audioSource; }
     
     /**
      * @brief Reset all parameters to hardcoded defaults

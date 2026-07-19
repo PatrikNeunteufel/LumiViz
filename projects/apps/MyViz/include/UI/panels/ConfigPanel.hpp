@@ -116,14 +116,18 @@ private:
     QWidget* createStringWidget(const lumi::modules::ModuleParamDesc& desc);
     QWidget* createColorWidget(const lumi::modules::ModuleParamDesc& desc);
 
-    // Get or create collapsible group
-    CollapsibleGroupBox* getOrCreateGroup(const QString& groupName);
+    // Get or create collapsible group (key identifies, title is displayed)
+    CollapsibleGroupBox* getOrCreateGroup(const QString& groupKey, const QString& displayTitle);
 
     // Parameter change handler
     void onParamChanged(const std::string& paramId, const lumi::modules::ParamValue& value);
 
     // Update widget visibility based on dependencies
     void updateVisibility();
+
+    // Default-reset context menus (parameter / sub-group / group level)
+    void showParamContextMenu(QWidget* anchor, const QPoint& pos, const std::string& paramId);
+    void resetGroupToDefaults(const QString& groupKey, const QString& subGroupKey);
     
     // Update related preset widget when a parameter changes
     void updateRelatedPresetWidget(const std::string& paramId);
@@ -165,6 +169,8 @@ private:
         QWidget* control = nullptr;
         QWidget* valueLabel = nullptr;  // Can be QSpinBox, QDoubleSpinBox, or QLabel
         lumi::modules::ModuleParamDesc desc;
+        QString groupKey;               // Resolved group key (stage or legacy group name)
+        QString subGroupKey;            // groupKey + "|" + subGroup (empty if none)
     };
     QMap<QString, ParamWidgetInfo> m_paramWidgets;
     

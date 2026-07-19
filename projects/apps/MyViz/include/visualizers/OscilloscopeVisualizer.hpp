@@ -78,6 +78,22 @@ public:
     [[nodiscard]] lumi::modules::AudioSourceModule* audioSource() { return &m_audioSource; }
     [[nodiscard]] lumi::modules::OscilloscopeModule* oscilloscope() { return &m_oscilloscope; }
 
+    /// @brief Audio-source handle (Phase 4 — generic module-preset access)
+    [[nodiscard]] lumi::modules::AudioSourceModule* audioSourceModule() override { return &m_audioSource; }
+
+    /// @brief Gradient handles (Phase 4) — one per channel, no paramId parsing
+    [[nodiscard]] std::vector<GradientHandle> gradients() override
+    {
+        return {
+            {"ch1", "Channel 1", "ch1Color.", &m_oscilloscope.colorGradient(0)},
+            {"ch2", "Channel 2", "ch2Color.", &m_oscilloscope.colorGradient(1)},
+            {"ch3", "Channel 3", "ch3Color.", &m_oscilloscope.colorGradient(2)},
+            {"ch4", "Channel 4", "ch4Color.", &m_oscilloscope.colorGradient(3)},
+            {"m1", "Math 1", "m1Color.", &m_oscilloscope.colorGradient(4)},
+            {"m2", "Math 2", "m2Color.", &m_oscilloscope.colorGradient(5)},
+        };
+    }
+
     void resetToDefaults() override;
 
 protected:

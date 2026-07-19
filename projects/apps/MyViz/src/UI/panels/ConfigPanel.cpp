@@ -15,11 +15,8 @@
 #include "UI/widgets/GradientPresetDelegate.hpp"
 #include "UI/dialogs/GradientEditorDialog.hpp"
 #include "visualizers/IVisualizer.hpp"
-#include "visualizers/PulsingVisualizer.hpp"
-#include "visualizers/WaveformVisualizer.hpp"
-#include "visualizers/OscilloscopeVisualizer.hpp"
-#include "visualizers/SuperscopeVisualizer.hpp"
-#include "visualizers/EqualizerVisualizer.hpp"
+#include "visualizers/modules/ColorGradientModule.hpp"
+#include "visualizers/modules/source/AudioSourceModule.hpp"
 #include "visualizers/VisualizerPresetManager.hpp"
 #include "visualizers/SetParamCommand.hpp"
 #include "services/ServiceContainer.hpp"
@@ -45,6 +42,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QGroupBox>
+#include <QMenu>
 #include <QSignalBlocker>
 #include <QStandardItemModel>
 
@@ -55,10 +53,49 @@
 using namespace lumi::modules;
 
 // =============================================================================
-// Group Icons
+// Pipeline Stage Table (Phase 4)
 // =============================================================================
 
-static QString groupIcon(const QString& groupName)
+namespace
+{
+
+/// Display title + icon per pipeline stage — the UI follows the data flow.
+/// Single source of truth for stage naming/ordering in the panel; used as
+/// soon as a visualizer declares ModuleParamDesc::stage (Schritt 5 migration).
+struct StageInfo
+{
+    QString icon;
+    QString title;
+};
+
+const StageInfo* stageInfo(PipelineStage stage)
+{
+    static const std::map<PipelineStage, StageInfo> table = {
+        {PipelineStage::AudioSource,  {QStringLiteral("🎵 "), QStringLiteral("1. Audio / Analysis")}},
+        {PipelineStage::Mapping,      {QStringLiteral("🔀 "), QStringLiteral("2. Mapping")}},
+        {PipelineStage::Color,        {QStringLiteral("🎨 "), QStringLiteral("3. Color")}},
+        {PipelineStage::Render,       {QStringLiteral("🖼️ "), QStringLiteral("4. Rendering")}},
+        {PipelineStage::PeakParticle, {QStringLiteral("✨ "), QStringLiteral("5. Peak / Particles")}},
+        {PipelineStage::Post,         {QStringLiteral("🌟 "), QStringLiteral("6. Post FX")}},
+    };
+    auto it = table.find(stage);
+    return (it != table.end()) ? &it->second : nullptr;
+}
+
+/// Sort rank for unmigrated groups: leading digit of the legacy group name
+/// ("3. Color" -> 3); groups without a digit prefix sort last (99).
+int legacyGroupRank(const std::string& group)
+{
+    if (!group.empty() && group.front() >= '1' && group.front() <= '9')
+    {
+        return group.front() - '0';
+    }
+    return 99;
+}
+
+/// Legacy emoji heuristic — only for groups of unmigrated visualizers
+/// (declared stages take their icon from the stage table instead).
+QString groupIcon(const QString& groupName)
 {
     if (groupName.contains("Audio", Qt::CaseInsensitive))
         return QStringLiteral("🎵 ");
@@ -73,6 +110,90 @@ static QString groupIcon(const QString& groupName)
         return QStringLiteral("✨ ");
     return QString();
 }
+
+/// @brief Does paramId end with the given suffix?
+bool endsWith(const std::string& paramId, const std::string& suffix)
+{
+    return paramId.size() >= suffix.size() &&
+           paramId.compare(paramId.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+/// @brief Find the gradient handle whose paramPrefix matches paramId (or null)
+lumi::modules::ColorGradientModule* gradientForParam(IVisualizer* visualizer,
+                                                     const std::string& paramId,
+                                                     std::string* prefixOut = nullptr)
+{
+    if (!visualizer)
+    {
+        return nullptr;
+    }
+    for (const auto& handle : visualizer->gradients())
+    {
+        if (paramId.rfind(handle.paramPrefix, 0) == 0)
+        {
+            if (prefixOut)
+            {
+                *prefixOut = handle.paramPrefix;
+            }
+            return handle.gradient;
+        }
+    }
+    return nullptr;
+}
+
+/// @brief Is desc.defaultValue usable for a reset (matches the declared type)?
+///
+/// A default-constructed ParamValue holds `bool false` — for e.g. Color
+/// parameters without an explicit default that would be a wrong reset, so
+/// the reset action is disabled instead.
+bool hasUsableDefault(const ModuleParamDesc& desc)
+{
+    switch (desc.type)
+    {
+    case ParamType::Bool:
+        return std::holds_alternative<bool>(desc.defaultValue);
+    case ParamType::Int:
+    case ParamType::Enum:
+        return std::holds_alternative<int>(desc.defaultValue) ||
+               std::holds_alternative<float>(desc.defaultValue);
+    case ParamType::Float:
+        return std::holds_alternative<float>(desc.defaultValue) ||
+               std::holds_alternative<int>(desc.defaultValue);
+    case ParamType::String:
+        return std::holds_alternative<std::string>(desc.defaultValue);
+    case ParamType::Color:
+        return holdsColor(desc.defaultValue);
+    default:
+        return false;
+    }
+}
+
+/// @brief Default value coerced to the declared type (int<->float tolerant)
+ParamValue coercedDefault(const ModuleParamDesc& desc)
+{
+    const ParamValue& def = desc.defaultValue;
+    switch (desc.type)
+    {
+    case ParamType::Int:
+    case ParamType::Enum:
+        if (auto* f = std::get_if<float>(&def))
+        {
+            return static_cast<int>(*f);
+        }
+        break;
+    case ParamType::Float:
+        if (auto* i = std::get_if<int>(&def))
+        {
+            return static_cast<float>(*i);
+        }
+        break;
+    default:
+        break;
+    }
+    return def;
+}
+
+}  // namespace
 
 // =============================================================================
 // Construction
@@ -282,9 +403,9 @@ void ConfigPanel::syncFromVisualizer()
         else if (auto* colorBtn = qobject_cast<QPushButton*>(it->control))
         {
             // Color button - update background color
-            if (desc.type == ParamType::Color && value.index() == 7)
+            if (desc.type == ParamType::Color && holdsColor(value))
             {
-                const auto& c = std::get<7>(value);  // Color4f
+                const auto& c = getColor(value);
                 QColor qc = QColor::fromRgbF(c[0], c[1], c[2], c[3]);
                 colorBtn->setStyleSheet(
                     QString("background-color: %1; border: 1px solid gray;").arg(qc.name()));
@@ -366,6 +487,29 @@ void ConfigPanel::clearUI()
 
 void ConfigPanel::buildUIFromParams(const std::vector<ModuleParamDesc>& params)
 {
+    // Effective stage per group: a declared ModuleParamDesc::stage wins,
+    // otherwise the legacy "1. Audio"-style digit prefix ranks the group.
+    // This keeps today's order for unmigrated visualizers and switches to
+    // real stage ordering automatically once a visualizer is migrated.
+    std::map<std::string, PipelineStage> groupDeclaredStage;
+    for (const auto& p : params)
+    {
+        if (p.stage != PipelineStage::None &&
+            groupDeclaredStage.find(p.group) == groupDeclaredStage.end())
+        {
+            groupDeclaredStage[p.group] = p.stage;
+        }
+    }
+
+    auto groupRank = [&groupDeclaredStage](const std::string& group) -> int {
+        auto it = groupDeclaredStage.find(group);
+        if (it != groupDeclaredStage.end())
+        {
+            return static_cast<int>(it->second);
+        }
+        return legacyGroupRank(group);
+    };
+
     // Calculate minimum order for each subGroup (for proper sorting)
     std::map<std::string, int> subGroupMinOrder;
     for (const auto& p : params)
@@ -381,17 +525,22 @@ void ConfigPanel::buildUIFromParams(const std::vector<ModuleParamDesc>& params)
         }
     }
 
-    // Sort by group, then by subGroup's minimum order, then by individual order
+    // Sort by effective stage, then group, then subGroup's minimum order,
+    // then individual order
     auto sortedParams = params;
     std::sort(sortedParams.begin(), sortedParams.end(),
-              [&subGroupMinOrder](const ModuleParamDesc& a, const ModuleParamDesc& b) {
+              [&subGroupMinOrder, &groupRank](const ModuleParamDesc& a, const ModuleParamDesc& b) {
+                  int rankA = groupRank(a.group);
+                  int rankB = groupRank(b.group);
+                  if (rankA != rankB) return rankA < rankB;
+
                   if (a.group != b.group) return a.group < b.group;
-                  
+
                   std::string keyA = a.group + "|" + a.subGroup;
                   std::string keyB = b.group + "|" + b.subGroup;
                   int minOrderA = subGroupMinOrder[keyA];
                   int minOrderB = subGroupMinOrder[keyB];
-                  
+
                   if (minOrderA != minOrderB) return minOrderA < minOrderB;
                   return a.order < b.order;
               });
@@ -440,20 +589,39 @@ void ConfigPanel::buildUIFromParams(const std::vector<ModuleParamDesc>& params)
 
         if (widget)
         {
-            QString groupName = QString::fromStdString(desc.group);
-            if (groupName.isEmpty())
+            // Resolve group key + display title: declared stages share one
+            // group per stage (title/icon from the stage table); legacy
+            // groups keep their name and the emoji keyword heuristic.
+            QString groupKey;
+            QString groupTitle;
+            auto stageIt = groupDeclaredStage.find(desc.group);
+            if (stageIt != groupDeclaredStage.end())
             {
-                groupName = tr("General");
+                const StageInfo* info = stageInfo(stageIt->second);
+                groupKey = QStringLiteral("stage:%1").arg(static_cast<int>(stageIt->second));
+                groupTitle = info ? (info->icon + info->title)
+                                  : QString::fromStdString(desc.group);
+            }
+            else
+            {
+                QString groupName = QString::fromStdString(desc.group);
+                if (groupName.isEmpty())
+                {
+                    groupName = tr("General");
+                }
+                groupKey = groupName;
+                groupTitle = groupIcon(groupName) + groupName;
             }
 
-            auto* group = getOrCreateGroup(groupName);
-            
+            auto* group = getOrCreateGroup(groupKey, groupTitle);
+
             // Check for subGroup - add to framed container
+            QString subGroupKey;
             if (!desc.subGroup.empty())
             {
-                QString subGroupKey = groupName + "|" + QString::fromStdString(desc.subGroup);
+                subGroupKey = groupKey + "|" + QString::fromStdString(desc.subGroup);
                 QGroupBox* subGroup = nullptr;
-                
+
                 if (m_subGroups.contains(subGroupKey))
                 {
                     subGroup = m_subGroups[subGroupKey];
@@ -478,16 +646,43 @@ void ConfigPanel::buildUIFromParams(const std::vector<ModuleParamDesc>& params)
                     auto* subLayout = new QVBoxLayout(subGroup);
                     subLayout->setContentsMargins(8, 12, 8, 8);
                     subLayout->setSpacing(4);
-                    
+
                     m_subGroups[subGroupKey] = subGroup;
                     group->addWidget(subGroup);
+
+                    // Right-click: reset all parameters of this sub-group
+                    subGroup->setContextMenuPolicy(Qt::CustomContextMenu);
+                    connect(subGroup, &QWidget::customContextMenuRequested,
+                            this, [this, subGroup, groupKey, subGroupKey](const QPoint& pos) {
+                                QMenu menu(this);
+                                QAction* resetAct = menu.addAction(tr("Reset group to defaults"));
+                                if (menu.exec(subGroup->mapToGlobal(pos)) == resetAct)
+                                {
+                                    resetGroupToDefaults(groupKey, subGroupKey);
+                                }
+                            });
                 }
-                
+
                 subGroup->layout()->addWidget(widget);
             }
             else
             {
                 group->addWidget(widget);
+            }
+
+            // Remember resolved keys + attach the per-parameter reset menu
+            auto infoIt = m_paramWidgets.find(QString::fromStdString(desc.id));
+            if (infoIt != m_paramWidgets.end())
+            {
+                infoIt->groupKey = groupKey;
+                infoIt->subGroupKey = subGroupKey;
+
+                QWidget* container = infoIt->container;
+                container->setContextMenuPolicy(Qt::CustomContextMenu);
+                connect(container, &QWidget::customContextMenuRequested,
+                        this, [this, container, id = desc.id](const QPoint& pos) {
+                            showParamContextMenu(container, pos, id);
+                        });
             }
         }
     }
@@ -506,17 +701,28 @@ void ConfigPanel::buildUIFromParams(const std::vector<ModuleParamDesc>& params)
     syncFromVisualizer();
 }
 
-CollapsibleGroupBox* ConfigPanel::getOrCreateGroup(const QString& groupName)
+CollapsibleGroupBox* ConfigPanel::getOrCreateGroup(const QString& groupKey, const QString& displayTitle)
 {
-    if (m_groups.contains(groupName))
+    if (m_groups.contains(groupKey))
     {
-        return m_groups[groupName];
+        return m_groups[groupKey];
     }
 
-    QString displayName = groupIcon(groupName) + groupName;
-    auto* group = new CollapsibleGroupBox(displayName, m_scrollWidget);
-    m_groups[groupName] = group;
+    auto* group = new CollapsibleGroupBox(displayTitle, m_scrollWidget);
+    m_groups[groupKey] = group;
     m_contentLayout->addWidget(group);
+
+    // Right-click on the group header: reset all parameters of this group
+    group->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(group, &QWidget::customContextMenuRequested,
+            this, [this, group, groupKey](const QPoint& pos) {
+                QMenu menu(this);
+                QAction* resetAct = menu.addAction(tr("Reset group to defaults"));
+                if (menu.exec(group->mapToGlobal(pos)) == resetAct)
+                {
+                    resetGroupToDefaults(groupKey, QString());
+                }
+            });
 
     return group;
 }
@@ -760,60 +966,22 @@ QWidget* ConfigPanel::createEnumWidget(const ModuleParamDesc& desc)
     }
     combo->setToolTip(QString::fromStdString(desc.tooltip));
     
-    // Check if this is a gradient preset dropdown - add preview delegate
-    if (desc.id.find("preset") != std::string::npos && 
-        (desc.id.find("color") != std::string::npos || desc.id.find("Color") != std::string::npos ||
-         desc.id.find("lineColor") != std::string::npos))
+    // Gradient preset dropdown? The matching gradient handle provides the
+    // ColorGradientModule for the preview delegate — per channel, no casts.
+    lumi::modules::ColorGradientModule* gradientModule = nullptr;
+    if (endsWith(desc.id, "preset"))
     {
-        // Try to get the ColorGradientModule for preview from any visualizer
-        lumi::modules::ColorGradientModule* gradientModule = nullptr;
-        
-        // PulsingVisualizer
-        if (auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer))
-        {
-            gradientModule = pulsing->colorGradient();
-        }
-        // WaveformVisualizer
-        else if (auto* waveform = dynamic_cast<WaveformVisualizer*>(m_visualizer))
-        {
-            gradientModule = &waveform->waveform()->colorGradient();
-        }
-        // OscilloscopeVisualizer - extract channel from parameter ID
-        // Parameter IDs are like "ch1Color.preset", "ch2Color.preset", etc.
-        // or "m1Color.preset", "m2Color.preset" for math channels
-        else if (auto* oscilloscope = dynamic_cast<OscilloscopeVisualizer*>(m_visualizer))
-        {
-            int channelIndex = 0;  // Default to CH1
-            
-            if (desc.id.find("ch1Color.") != std::string::npos) channelIndex = 0;
-            else if (desc.id.find("ch2Color.") != std::string::npos) channelIndex = 1;
-            else if (desc.id.find("ch3Color.") != std::string::npos) channelIndex = 2;
-            else if (desc.id.find("ch4Color.") != std::string::npos) channelIndex = 3;
-            else if (desc.id.find("m1Color.") != std::string::npos) channelIndex = 4;
-            else if (desc.id.find("m2Color.") != std::string::npos) channelIndex = 5;
-            
-            gradientModule = &oscilloscope->oscilloscope()->colorGradient(channelIndex);
-        }
-        // SuperscopeVisualizer - color gradient is in superscope module
-        else if (auto* superscope = dynamic_cast<SuperscopeVisualizer*>(m_visualizer))
-        {
-            gradientModule = &superscope->superscope()->colorGradient();
-        }
-        // EqualizerVisualizer - color gradient is in equalizer module
-        else if (auto* equalizer = dynamic_cast<EqualizerVisualizer*>(m_visualizer))
-        {
-            gradientModule = &equalizer->equalizerModule().colorGradient();
-        }
-        
-        if (gradientModule)
-        {
-            auto* delegate = new lumi::ui::GradientPresetDelegate(combo);
-            delegate->setGradientModule(gradientModule);
-            combo->setItemDelegate(delegate);
-            
-            // Make combo taller to show preview
-            combo->setMinimumHeight(28);
-        }
+        gradientModule = gradientForParam(m_visualizer, desc.id);
+    }
+
+    if (gradientModule)
+    {
+        auto* delegate = new lumi::ui::GradientPresetDelegate(combo);
+        delegate->setGradientModule(gradientModule);
+        combo->setItemDelegate(delegate);
+
+        // Make combo taller to show preview
+        combo->setMinimumHeight(28);
     }
 
     connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -822,13 +990,13 @@ QWidget* ConfigPanel::createEnumWidget(const ModuleParamDesc& desc)
             });
 
     layout->addWidget(combo, 1);
-    
+
     // Add Save button for module preset dropdowns (Smoothing, Audio, Gradient)
-    bool isModulePreset = desc.id.find("preset") != std::string::npos &&
-                          (desc.id.find("smooth") != std::string::npos ||
-                           desc.id.find("audio") != std::string::npos ||
-                           desc.id.find("color") != std::string::npos);
-    
+    bool isModulePreset = endsWith(desc.id, "preset") &&
+                          (gradientModule != nullptr ||
+                           desc.id.find("smooth") != std::string::npos ||
+                           desc.id.find("audio") != std::string::npos);
+
     if (isModulePreset)
     {
         auto* saveBtn = new QPushButton(tr("Save"), container);
@@ -951,16 +1119,15 @@ QWidget* ConfigPanel::createColorWidget(const ModuleParamDesc& desc)
                 if (color.isValid())
                 {
                     updateButtonColor(color);
-                    // Create array first, then construct variant
+                    // Create array first, then construct variant (type-checked
+                    // via the kParamValueColorIndex helpers)
                     Color4f colorArray = {
                         static_cast<float>(color.redF()),
                         static_cast<float>(color.greenF()),
                         static_cast<float>(color.blueF()),
                         static_cast<float>(color.alphaF())
                     };
-                    ParamValue colorValue;
-                    colorValue.emplace<7>(colorArray);
-                    onParamChanged(id, colorValue);
+                    onParamChanged(id, makeColorValue(colorArray));
                 }
             });
 
@@ -1041,7 +1208,7 @@ void ConfigPanel::updateRelatedPresetWidget(const std::string& paramId)
 {
     // Determine which module preset widget needs to be updated
     std::string presetId;
-    
+
     // Check for embedded smoothing parameters (audio.smooth.*)
     if (paramId.find("smooth.") != std::string::npos)
     {
@@ -1055,13 +1222,16 @@ void ConfigPanel::updateRelatedPresetWidget(const std::string& paramId)
         // Audio parameter changed -> update audio.preset
         presetId = "audio.preset";
     }
-    // Check for color/gradient parameters (shape.color.*)
-    else if (paramId.rfind("shape.color.", 0) == 0)
+    // Check for gradient parameters — the matching handle names the widget
+    else
     {
-        // Color/Gradient parameter changed -> update shape.color.preset
-        presetId = "shape.color.preset";
+        std::string gradientPrefix;
+        if (gradientForParam(m_visualizer, paramId, &gradientPrefix))
+        {
+            presetId = gradientPrefix + "preset";
+        }
     }
-    
+
     if (presetId.empty())
     {
         return;
@@ -1101,197 +1271,160 @@ void ConfigPanel::updateRelatedPresetWidget(const std::string& paramId)
 void ConfigPanel::updateVisibility()
 {
     if (!m_visualizer) return;
-    
-    // Helper to create consistent keys (same logic as buildUIFromParams)
-    auto makeSubGroupKey = [](const ModuleParamDesc& desc) -> QString {
-        QString groupName = QString::fromStdString(desc.group);
-        if (groupName.isEmpty())
-        {
-            groupName = "General";
-        }
-        return groupName + "|" + QString::fromStdString(desc.subGroup);
-    };
-    
-    // Helper to check if dependsOn refers to a channelMode parameter
-    auto isChannelModeDependency = [](const std::string& dependsOn) -> bool {
-        const std::string suffix = "channelMode";
-        if (dependsOn.size() < suffix.size()) return false;
-        return dependsOn.compare(dependsOn.size() - suffix.size(), suffix.size(), suffix) == 0;
-    };
-    
-    // Helper to check if dependsOn refers to a .visible parameter (for Oscilloscope channels)
-    auto isVisibleDependency = [](const std::string& dependsOn) -> bool {
-        const std::string suffix = ".visible";
-        if (dependsOn.size() < suffix.size()) return false;
-        return dependsOn.compare(dependsOn.size() - suffix.size(), suffix.size(), suffix) == 0;
-    };
 
-    // Step 1: Find channelMode parameter and get its value
-    std::string channelModeParamId;
-    int currentChannelMode = 0;
-    
-    for (auto it = m_paramWidgets.begin(); it != m_paramWidgets.end(); ++it)
-    {
-        const auto& desc = it.value().desc;
-        if (isChannelModeDependency(desc.dependsOn))
-        {
-            channelModeParamId = desc.dependsOn;
-            break;
-        }
-    }
-    
-    if (!channelModeParamId.empty())
-    {
-        ParamValue channelModeValue;
-        if (m_visualizer->getParam(channelModeParamId, channelModeValue))
-        {
-            if (auto* v = std::get_if<int>(&channelModeValue))
+    // Purely generic dependsOn/dependsValues evaluation — no parameter-name
+    // special cases. Visibility is transitive: a parameter is effectively
+    // visible only if its own condition holds AND the parameter it depends
+    // on is itself effectively visible. Dependency chains like
+    // solidColor -> mode -> channelMode thereby collapse whole sub-groups
+    // (e.g. the per-channel "Line Color" boxes) without heuristics.
+    QMap<QString, bool> visCache;
+
+    std::function<bool(const QString&)> isEffectivelyVisible =
+        [this, &visCache, &isEffectivelyVisible](const QString& paramKey) -> bool {
+            auto cached = visCache.find(paramKey);
+            if (cached != visCache.end())
             {
-                currentChannelMode = *v;
+                return cached.value();
             }
-        }
-    }
-    
-    // Step 2: Determine which subGroups should be completely hidden
-    // A subGroup starting with "Line Color" is hidden if its channelMode or .visible dependency isn't met
-    std::set<QString> hiddenSubGroups;
-    std::set<QString> processedSubGroups;
-    
-    for (auto it = m_paramWidgets.begin(); it != m_paramWidgets.end(); ++it)
-    {
-        const auto& desc = it.value().desc;
-        if (desc.subGroup.empty()) continue;
-        
-        QString key = makeSubGroupKey(desc);
-        
-        // Only process each subGroup once (use first channelMode param we find)
-        if (processedSubGroups.count(key) > 0) continue;
-        
-        // Only hide "Line Color" subGroups completely
-        if (desc.subGroup.find("Line Color") == std::string::npos) continue;
-        
-        // Handle channelMode dependency (int values)
-        if (isChannelModeDependency(desc.dependsOn))
-        {
-            processedSubGroups.insert(key);
-            
-            // Check if this subGroup should be visible
-            bool shouldBeVisible = false;
-            for (const auto& reqValue : desc.dependsValues)
+            // Cycle guard: assume visible while resolving this chain
+            visCache.insert(paramKey, true);
+
+            auto it = m_paramWidgets.find(paramKey);
+            if (it == m_paramWidgets.end())
             {
-                if (auto* intVal = std::get_if<int>(&reqValue))
+                // Dependency target has no widget (e.g. hidden param) —
+                // treat as visible, only the value condition applies.
+                return true;
+            }
+
+            const auto& desc = it->desc;
+            bool visible = true;
+            if (!desc.dependsOn.empty())
+            {
+                // Value condition (OR over dependsValues); unreadable
+                // dependency values leave the parameter visible.
+                ParamValue depValue;
+                if (m_visualizer->getParam(desc.dependsOn, depValue))
                 {
-                    if (*intVal == currentChannelMode)
+                    visible = false;
+                    for (const auto& reqValue : desc.dependsValues)
                     {
-                        shouldBeVisible = true;
-                        break;
+                        if (depValue == reqValue)
+                        {
+                            visible = true;
+                            break;
+                        }
                     }
                 }
-            }
-            
-            if (!shouldBeVisible)
-            {
-                hiddenSubGroups.insert(key);
-            }
-            continue;
-        }
-        
-        // Handle .visible dependency (bool values) - for Oscilloscope channel visibility
-        if (isVisibleDependency(desc.dependsOn))
-        {
-            processedSubGroups.insert(key);
-            
-            ParamValue visibleValue;
-            bool shouldBeVisible = true;  // Default visible if can't get param
-            
-            if (m_visualizer->getParam(desc.dependsOn, visibleValue))
-            {
-                shouldBeVisible = false;
-                for (const auto& reqValue : desc.dependsValues)
+
+                // Transitive: the dependency target must be visible itself
+                if (visible)
                 {
-                    if (visibleValue == reqValue)
-                    {
-                        shouldBeVisible = true;
-                        break;
-                    }
+                    visible = isEffectivelyVisible(QString::fromStdString(desc.dependsOn));
                 }
             }
-            
-            if (!shouldBeVisible)
-            {
-                hiddenSubGroups.insert(key);
-            }
-            continue;
-        }
-    }
-    
-    // Step 3: Apply visibility to all params
+
+            visCache.insert(paramKey, visible);
+            return visible;
+        };
+
+    // Apply per-parameter visibility; track which (sub-)groups still have
+    // at least one visible parameter.
+    QMap<QString, bool> subGroupHasVisible;
+    QMap<QString, bool> groupHasVisible;
+
     for (auto it = m_paramWidgets.begin(); it != m_paramWidgets.end(); ++it)
     {
-        const auto& desc = it.value().desc;
-        QString subGroupKey;
-        if (!desc.subGroup.empty())
-        {
-            subGroupKey = makeSubGroupKey(desc);
-        }
-        
-        // If this param's subGroup should be hidden, hide the param
-        if (!subGroupKey.isEmpty() && hiddenSubGroups.count(subGroupKey) > 0)
-        {
-            it.value().container->setVisible(false);
-            continue;
-        }
-        
-        // No dependency - always visible
-        if (desc.dependsOn.empty())
-        {
-            it.value().container->setVisible(true);
-            continue;
-        }
-        
-        // channelMode dependency - check visibility (for params outside hidden subGroups)
-        if (isChannelModeDependency(desc.dependsOn))
-        {
-            bool visible = false;
-            for (const auto& reqValue : desc.dependsValues)
-            {
-                if (auto* intVal = std::get_if<int>(&reqValue))
-                {
-                    if (*intVal == currentChannelMode)
-                    {
-                        visible = true;
-                        break;
-                    }
-                }
-            }
-            it.value().container->setVisible(visible);
-            continue;
-        }
-        
-        // Normal dependsOn logic (e.g., mode-based visibility within a color group)
-        ParamValue depValue;
-        bool visible = true;
-        if (m_visualizer->getParam(desc.dependsOn, depValue))
-        {
-            visible = false;
-            for (const auto& reqValue : desc.dependsValues)
-            {
-                if (depValue == reqValue)
-                {
-                    visible = true;
-                    break;
-                }
-            }
-        }
+        const bool visible = isEffectivelyVisible(it.key());
         it.value().container->setVisible(visible);
+
+        if (!it.value().groupKey.isEmpty())
+        {
+            groupHasVisible[it.value().groupKey] =
+                groupHasVisible.value(it.value().groupKey, false) || visible;
+        }
+        if (!it.value().subGroupKey.isEmpty())
+        {
+            subGroupHasVisible[it.value().subGroupKey] =
+                subGroupHasVisible.value(it.value().subGroupKey, false) || visible;
+        }
     }
-    
-    // Step 4: Update subGroup box visibility
+
+    // A sub-group box is hidden when ALL of its parameters are invisible
     for (auto it = m_subGroups.begin(); it != m_subGroups.end(); ++it)
     {
-        bool hidden = hiddenSubGroups.count(it.key()) > 0;
-        it.value()->setVisible(!hidden);
+        it.value()->setVisible(subGroupHasVisible.value(it.key(), true));
     }
+
+    // Same rule for top-level groups (empty group -> hidden)
+    for (auto it = m_groups.begin(); it != m_groups.end(); ++it)
+    {
+        it.value()->setVisible(groupHasVisible.value(it.key(), true));
+    }
+}
+
+// =============================================================================
+// Default Reset (Phase 4 — per parameter / sub-group / group, undo-able)
+// =============================================================================
+
+void ConfigPanel::showParamContextMenu(QWidget* anchor, const QPoint& pos, const std::string& paramId)
+{
+    auto it = m_paramWidgets.find(QString::fromStdString(paramId));
+    if (it == m_paramWidgets.end() || !m_visualizer)
+    {
+        return;
+    }
+
+    const ModuleParamDesc desc = it->desc;
+
+    // Parent the menu to the panel (not the widget) — a UI rebuild during
+    // the nested exec() loop must not delete the open menu.
+    QMenu menu(this);
+    QAction* resetAct = menu.addAction(tr("Reset to default"));
+    // Parameters without a typed default (e.g. colors whose defaultValue is
+    // an empty variant) cannot be reset safely — disable instead of guessing.
+    resetAct->setEnabled(hasUsableDefault(desc));
+
+    if (menu.exec(anchor->mapToGlobal(pos)) == resetAct)
+    {
+        // Routed through onParamChanged -> CommandBus, so the reset is
+        // one undo step like any other edit.
+        onParamChanged(desc.id, coercedDefault(desc));
+        syncFromVisualizer();
+    }
+}
+
+void ConfigPanel::resetGroupToDefaults(const QString& groupKey, const QString& subGroupKey)
+{
+    if (!m_visualizer)
+    {
+        return;
+    }
+
+    // Reset every parameter of the (sub-)group that has a usable default.
+    // Each reset is its own command (multiple undo steps — a composite
+    // command is a later refinement).
+    for (auto it = m_paramWidgets.begin(); it != m_paramWidgets.end(); ++it)
+    {
+        const auto& info = it.value();
+        if (info.groupKey != groupKey)
+        {
+            continue;
+        }
+        if (!subGroupKey.isEmpty() && info.subGroupKey != subGroupKey)
+        {
+            continue;
+        }
+        if (!hasUsableDefault(info.desc))
+        {
+            continue;
+        }
+
+        onParamChanged(info.desc.id, coercedDefault(info.desc));
+    }
+
+    syncFromVisualizer();
 }
 
 // =============================================================================
@@ -1305,109 +1438,39 @@ void ConfigPanel::openGradientEditor(const std::string& paramId)
         BasicLogger::logWarning("ConfigPanel: No visualizer set for gradient editor");
         return;
     }
-    
-    // Try to get ColorGradientModule from any supported visualizer
-    lumi::modules::ColorGradientModule* gradient = nullptr;
-    
-    // PulsingVisualizer
-    if (auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer))
-    {
-        gradient = pulsing->colorGradient();
-    }
-    // WaveformVisualizer
-    else if (auto* waveform = dynamic_cast<WaveformVisualizer*>(m_visualizer))
-    {
-        gradient = &waveform->waveform()->colorGradient();
-    }
-    // OscilloscopeVisualizer - extract channel from parameter ID
-    // Parameter IDs are like "ch1Color.editGradient", "ch2Color.editGradient", etc.
-    else if (auto* oscilloscope = dynamic_cast<OscilloscopeVisualizer*>(m_visualizer))
-    {
-        int channelIndex = 0;  // Default to CH1
-        
-        if (paramId.find("ch1Color.") != std::string::npos) channelIndex = 0;
-        else if (paramId.find("ch2Color.") != std::string::npos) channelIndex = 1;
-        else if (paramId.find("ch3Color.") != std::string::npos) channelIndex = 2;
-        else if (paramId.find("ch4Color.") != std::string::npos) channelIndex = 3;
-        else if (paramId.find("m1Color.") != std::string::npos) channelIndex = 4;
-        else if (paramId.find("m2Color.") != std::string::npos) channelIndex = 5;
-        
-        gradient = &oscilloscope->oscilloscope()->colorGradient(channelIndex);
-    }
-    // SuperscopeVisualizer
-    else if (auto* superscope = dynamic_cast<SuperscopeVisualizer*>(m_visualizer))
-    {
-        gradient = &superscope->superscope()->colorGradient();
-    }
-    // EqualizerVisualizer
-    else if (auto* equalizer = dynamic_cast<EqualizerVisualizer*>(m_visualizer))
-    {
-        gradient = &equalizer->equalizerModule().colorGradient();
-    }
-    
+
+    // The gradient handle whose paramPrefix matches identifies the module —
+    // per channel (Oscilloscope ch1..m2, Waveform mono/left/right), no casts.
+    lumi::modules::ColorGradientModule* gradient = gradientForParam(m_visualizer, paramId);
+
     if (!gradient)
     {
-        BasicLogger::logWarning("ConfigPanel: Gradient editor not supported for this visualizer");
+        BasicLogger::logWarning("ConfigPanel: No gradient handle matches " + paramId);
         return;
     }
-    
+
     // Create and show dialog
     lumi::ui::GradientEditorDialog dialog(gradient, this);
-    
+
     // When gradient changes, notify the visualizer
     dialog.setChangeCallback([]() {
         // Trigger a repaint or parameter sync if needed
         BasicLogger::logDebug("ConfigPanel: Gradient changed via editor");
     });
-    
+
     dialog.exec();
-    
-    // Update the gradient preset dropdown with new preset names
-    // (in case user saved a new preset in the editor)
-    auto newPresetNames = gradient->presetNames();
-    for (auto it = m_paramWidgets.begin(); it != m_paramWidgets.end(); ++it)
+
+    // Update every gradient preset dropdown with its handle's preset names
+    // (in case the user saved a new preset in the editor)
+    for (const auto& handle : m_visualizer->gradients())
     {
-        const QString& key = it.key();
-        ParamWidgetInfo& info = it.value();
-        
-        if (key.contains("preset") && key.contains("color"))
-        {
-            auto* combo = qobject_cast<QComboBox*>(info.control);
-            if (combo)
-            {
-                // Remember current selection
-                int currentIndex = combo->currentIndex();
-                QString currentText = combo->currentText();
-                
-                // Update options
-                combo->blockSignals(true);
-                combo->clear();
-                for (const auto& name : newPresetNames)
-                {
-                    combo->addItem(QString::fromStdString(name));
-                }
-                
-                // Try to restore selection
-                int newIndex = combo->findText(currentText);
-                if (newIndex >= 0)
-                {
-                    combo->setCurrentIndex(newIndex);
-                }
-                else if (currentIndex < combo->count())
-                {
-                    combo->setCurrentIndex(currentIndex);
-                }
-                combo->blockSignals(false);
-                
-                BasicLogger::logDebug("ConfigPanel: Updated gradient preset dropdown with " + 
-                                      std::to_string(newPresetNames.size()) + " presets");
-            }
-        }
+        refreshModulePresetDropdown(handle.paramPrefix + "preset",
+                                    handle.gradient->presetNames());
     }
-    
+
     // Sync all widgets to reflect changes made in the editor
     syncFromVisualizer();
-    
+
     BasicLogger::logInfo("ConfigPanel: Gradient editor closed, widgets synced");
 }
 
@@ -1656,14 +1719,24 @@ void ConfigPanel::onModulePresetSave(const std::string& paramId)
     {
         return;
     }
-    
-    auto* pulsing = dynamic_cast<PulsingVisualizer*>(m_visualizer);
-    if (!pulsing)
+
+    // Resolve the target module generically — works for every visualizer:
+    // smoothing/audio via the audio-source handle, gradients via prefix match.
+    // Note: "audio.smooth.preset" contains both "audio" and "smooth" —
+    // check for "smooth" first (more specific).
+    const bool isSmoothing = paramId.find("smooth") != std::string::npos;
+    const bool isAudio = !isSmoothing && paramId.find("audio") != std::string::npos;
+
+    auto* audio = m_visualizer->audioSourceModule();
+    lumi::modules::ColorGradientModule* gradient =
+        (isSmoothing || isAudio) ? nullptr : gradientForParam(m_visualizer, paramId);
+
+    if (((isSmoothing || isAudio) && !audio) || (!isSmoothing && !isAudio && !gradient))
     {
-        BasicLogger::logWarning("ConfigPanel: Module preset save only supported for PulsingVisualizer");
+        BasicLogger::logWarning("ConfigPanel: No module for preset save of " + paramId);
         return;
     }
-    
+
     // Get preset name from user
     QString name = QInputDialog::getText(this, tr("Save Preset"),
                                           tr("Preset name:"));
@@ -1671,7 +1744,7 @@ void ConfigPanel::onModulePresetSave(const std::string& paramId)
     {
         return;
     }
-    
+
     // Validate name (no special characters)
     if (name.contains('/') || name.contains('\\') || name.contains('.'))
     {
@@ -1679,56 +1752,41 @@ void ConfigPanel::onModulePresetSave(const std::string& paramId)
                              tr("Preset name cannot contain /, \\, or ."));
         return;
     }
-    
+
     std::string presetName = name.toStdString();
-    
-    // Determine which module to save based on paramId
-    // Note: "audio.smooth.preset" contains both "audio" and "smooth"
-    // Check for "smooth" first (more specific)
-    if (paramId.find("smooth") != std::string::npos)
+
+    if (isSmoothing)
     {
         // Smoothing preset - access via AudioSourceModule's embedded smoothing
-        if (auto* audio = pulsing->audioSource())
-        {
-            audio->smoothing().savePreset(presetName);
-            BasicLogger::logInfo("ConfigPanel: Saved smoothing preset '" + presetName + "'");
-            
-            // Refresh the dropdown
-            refreshModulePresetDropdown(paramId, audio->smoothing().presetNames());
-            
-            QMessageBox::information(this, tr("Preset Saved"),
-                                     tr("Smoothing preset '%1' saved successfully.").arg(name));
-        }
+        audio->smoothing().savePreset(presetName);
+        BasicLogger::logInfo("ConfigPanel: Saved smoothing preset '" + presetName + "'");
+
+        refreshModulePresetDropdown(paramId, audio->smoothing().presetNames());
+
+        QMessageBox::information(this, tr("Preset Saved"),
+                                 tr("Smoothing preset '%1' saved successfully.").arg(name));
     }
-    else if (paramId.find("audio") != std::string::npos)
+    else if (isAudio)
     {
         // Audio preset (includes smoothing settings)
-        if (auto* audio = pulsing->audioSource())
-        {
-            audio->savePreset(presetName);
-            BasicLogger::logInfo("ConfigPanel: Saved audio preset '" + presetName + "'");
-            
-            // Refresh the dropdown
-            refreshModulePresetDropdown(paramId, audio->presetNames());
-            
-            QMessageBox::information(this, tr("Preset Saved"),
-                                     tr("Audio preset '%1' saved successfully.").arg(name));
-        }
+        audio->savePreset(presetName);
+        BasicLogger::logInfo("ConfigPanel: Saved audio preset '" + presetName + "'");
+
+        refreshModulePresetDropdown(paramId, audio->presetNames());
+
+        QMessageBox::information(this, tr("Preset Saved"),
+                                 tr("Audio preset '%1' saved successfully.").arg(name));
     }
-    else if (paramId.find("color") != std::string::npos)
+    else
     {
-        // Gradient preset
-        if (auto* gradient = pulsing->colorGradient())
-        {
-            gradient->savePreset(presetName);
-            BasicLogger::logInfo("ConfigPanel: Saved gradient preset '" + presetName + "'");
-            
-            // Refresh the dropdown
-            refreshModulePresetDropdown(paramId, gradient->presetNames());
-            
-            QMessageBox::information(this, tr("Preset Saved"),
-                                     tr("Gradient preset '%1' saved successfully.").arg(name));
-        }
+        // Gradient preset — the handle matched via paramPrefix
+        gradient->savePreset(presetName);
+        BasicLogger::logInfo("ConfigPanel: Saved gradient preset '" + presetName + "'");
+
+        refreshModulePresetDropdown(paramId, gradient->presetNames());
+
+        QMessageBox::information(this, tr("Preset Saved"),
+                                 tr("Gradient preset '%1' saved successfully.").arg(name));
     }
 }
 

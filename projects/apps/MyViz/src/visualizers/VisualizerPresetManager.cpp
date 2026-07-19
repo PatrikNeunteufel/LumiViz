@@ -258,14 +258,20 @@ bool VisualizerPresetManager::applyPreset(IVisualizer* visualizer,
     
     int applied = 0;
     int failed = 0;
-    
+
+    // Legacy presets (old key schema) are translated through the alias map
+    const bool translate = preset.formatVersion < CURRENT_FORMAT_VERSION;
+    auto resolveKey = [&](const std::string& key) {
+        return translate ? translateLegacyKey(preset.visualizerId, key) : key;
+    };
+
     // FIRST: Apply preset parameters (like color_gradient.preset)
     // These load default values that may be overridden by subsequent parameters
     for (const auto& [paramId, value] : preset.parameters)
     {
         if (paramId.find(".preset") != std::string::npos)
         {
-            if (visualizer->setParam(paramId, value))
+            if (visualizer->setParam(resolveKey(paramId), value))
             {
                 ++applied;
                 BasicLogger::logDebug("PresetManager: Applied preset param '" + paramId + "'");
@@ -277,7 +283,7 @@ bool VisualizerPresetManager::applyPreset(IVisualizer* visualizer,
             }
         }
     }
-    
+
     // THEN: Apply all other parameters (may override preset defaults)
     for (const auto& [paramId, value] : preset.parameters)
     {
@@ -286,8 +292,8 @@ bool VisualizerPresetManager::applyPreset(IVisualizer* visualizer,
         {
             continue;
         }
-        
-        if (visualizer->setParam(paramId, value))
+
+        if (visualizer->setParam(resolveKey(paramId), value))
         {
             ++applied;
         }
@@ -303,6 +309,49 @@ bool VisualizerPresetManager::applyPreset(IVisualizer* visualizer,
                          std::to_string(failed) + " failed)");
     
     return failed == 0;
+}
+
+// =============================================================================
+// Legacy-Key-Migration (Phase 4)
+// =============================================================================
+
+namespace
+{
+    using AliasMap = std::map<std::string, std::string>;
+
+    std::map<QString, AliasMap>& aliasRegistry()
+    {
+        static std::map<QString, AliasMap> registry;
+        return registry;
+    }
+} // namespace
+
+void VisualizerPresetManager::registerKeyAliases(const QString& visualizerId,
+                                                 std::map<std::string, std::string> aliases)
+{
+    auto& entry = aliasRegistry()[visualizerId];
+    for (auto& [oldKey, newKey] : aliases)
+    {
+        entry.insert_or_assign(oldKey, newKey);
+    }
+}
+
+std::string VisualizerPresetManager::translateLegacyKey(const QString& visualizerId,
+                                                        const std::string& key)
+{
+    const auto& registry = aliasRegistry();
+    auto it = registry.find(visualizerId);
+    if (it == registry.end())
+    {
+        return key;
+    }
+    auto keyIt = it->second.find(key);
+    return keyIt == it->second.end() ? key : keyIt->second;
+}
+
+void VisualizerPresetManager::clearKeyAliases()
+{
+    aliasRegistry().clear();
 }
 
 // =============================================================================
@@ -384,6 +433,8 @@ std::optional<VisualizerPreset> VisualizerPresetManager::jsonToPreset(
     preset.description = header["description"].toString();
     preset.author = header["author"].toString();
     preset.version = header["version"].toInt(1);
+    // Missing formatVersion = legacy file from before the field existed
+    preset.formatVersion = header["formatVersion"].toInt(1);
     
     if (!preset.isValid())
     {

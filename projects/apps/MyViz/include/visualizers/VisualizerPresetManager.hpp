@@ -56,7 +56,8 @@ struct VisualizerPreset
     QString visualizerId;            ///< ID of the visualizer this preset is for
     QString description;             ///< Optional description
     QString author;                  ///< Optional author name
-    int version = 1;                 ///< Preset format version
+    int version = 1;                 ///< Preset content version (user-facing)
+    int formatVersion = 1;           ///< Key-schema version (drives legacy-key migration)
     
     // Parameters
     std::map<std::string, modules::ParamValue> parameters;
@@ -202,9 +203,33 @@ private:
     std::optional<modules::ParamValue> jsonToParamValue(
         const QJsonValue& json, 
         modules::ParamType expectedType) const;
-    
+
     QString m_presetsDir;
-    
+
+public:
+    // =========================================================================
+    // Legacy-Key-Migration (Phase 4)
+    // =========================================================================
+
+    /**
+     * @brief Register old→new parameter-key aliases for one visualizer
+     *
+     * Presets with formatVersion < CURRENT_FORMAT_VERSION are translated
+     * through this map on load; saving always writes the current schema.
+     * The tables live in docs/visuals/Parameter_Key_Migration.md and are
+     * registered by each visualizer's migration (step 5).
+     */
+    static void registerKeyAliases(const QString& visualizerId,
+                                   std::map<std::string, std::string> aliases);
+
+    /// @brief Translate a legacy key ("" stays ""); unknown keys pass through
+    [[nodiscard]] static std::string translateLegacyKey(const QString& visualizerId,
+                                                        const std::string& key);
+
+    /// @brief Drop all registered aliases (tests)
+    static void clearKeyAliases();
+
+    /// Bump to 2 when a visualizer's keys migrate to the pipeline schema (step 5)
     static constexpr int CURRENT_FORMAT_VERSION = 1;
 };
 

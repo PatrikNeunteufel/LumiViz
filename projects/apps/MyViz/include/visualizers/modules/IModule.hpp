@@ -44,8 +44,10 @@
 #include <vector>
 #include <variant>
 #include <array>
+#include <cstdint>
 #include <functional>
 #include <memory>
+#include <type_traits>
 
 namespace lumi::modules
 {
@@ -77,6 +79,40 @@ using ParamValue = std::variant<
     Vec4f,
     Color4f
 >;
+
+// -----------------------------------------------------------------------------
+// Color access helpers
+//
+// Vec4f and Color4f alias the same std::array type, so the variant contains
+// that alternative twice and type-based access (std::holds_alternative<Color4f>,
+// std::get<Color4f>) would be ill-formed. These helpers are the single place
+// that knows the Color4f alternative's index — no scattered magic numbers.
+// -----------------------------------------------------------------------------
+
+/// Index of the Color4f alternative in ParamValue
+inline constexpr std::size_t kParamValueColorIndex = 7;
+
+static_assert(std::is_same_v<std::variant_alternative_t<kParamValueColorIndex, ParamValue>,
+                             Color4f>,
+              "kParamValueColorIndex must address the Color4f alternative");
+
+/// @brief Does the value hold a color (the Color4f alternative)?
+[[nodiscard]] inline bool holdsColor(const ParamValue& value) noexcept
+{
+    return value.index() == kParamValueColorIndex;
+}
+
+/// @brief Read the color alternative (only valid if holdsColor() is true)
+[[nodiscard]] inline const Color4f& getColor(const ParamValue& value)
+{
+    return *std::get_if<kParamValueColorIndex>(&value);
+}
+
+/// @brief Construct a ParamValue holding a color
+[[nodiscard]] inline ParamValue makeColorValue(const Color4f& color)
+{
+    return ParamValue(std::in_place_index<kParamValueColorIndex>, color);
+}
 
 // =============================================================================
 // Parameter Type Enum
@@ -121,6 +157,29 @@ enum class ParamWidget
 };
 
 // =============================================================================
+// Pipeline Stage (Phase 4)
+// =============================================================================
+
+/**
+ * @brief The config-pipeline stage a parameter belongs to
+ *
+ * The ConfigPanel renders parameter groups strictly in this order — the UI
+ * follows the data flow (Config_Pipeline_Concept.md §4.1/§4.2). `None` marks
+ * parameters of not-yet-migrated visualizers; the panel then falls back to
+ * the legacy "1. Audio"-style group-name prefix.
+ */
+enum class PipelineStage : std::uint8_t
+{
+    None         = 0,  ///< Unmigrated — legacy group-prefix ordering applies
+    AudioSource  = 1,  ///< Analysis: FFT size, scale, smoothing, dB floor/ceil
+    Mapping      = 2,  ///< Band/data mapping: bands, gain, sampleCount, trigger
+    Color        = 3,  ///< Gradient/solid color (gradient handles)
+    Render       = 4,  ///< Geometry/rendering: bars, lines, shapes, display
+    PeakParticle = 5,  ///< Peak spawner physics and particles
+    Post         = 6   ///< Post processing: hold/fade, phosphor, mirror, glow
+};
+
+// =============================================================================
 // Parameter Descriptor
 // =============================================================================
 
@@ -137,12 +196,13 @@ struct ModuleParamDesc
     // -------------------------------------------------------------------------
     // Identification
     // -------------------------------------------------------------------------
-    
+
     std::string id;             ///< Unique within module (e.g., "emaAlpha")
     std::string displayName;    ///< UI label (e.g., "EMA Alpha")
     std::string group;          ///< Collapsible group (e.g., "Smoothing")
     std::string subGroup;       ///< Nested group (e.g., "Advanced")
     std::string tooltip;        ///< Help text
+    PipelineStage stage = PipelineStage::None;  ///< Pipeline stage (Phase 4)
     
     // -------------------------------------------------------------------------
     // Type & Value
@@ -414,6 +474,13 @@ public:
     ParamBuilder& subGroup(std::string sub)
     {
         m_desc.subGroup = std::move(sub);
+        return *this;
+    }
+
+    /// @brief Assign the config-pipeline stage (Phase 4)
+    ParamBuilder& stage(PipelineStage s)
+    {
+        m_desc.stage = s;
         return *this;
     }
     

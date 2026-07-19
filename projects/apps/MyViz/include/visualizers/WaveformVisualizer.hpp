@@ -70,6 +70,20 @@ public:
     [[nodiscard]] lumi::modules::AudioSourceModule* audioSource() { return &m_audioSource; }
     [[nodiscard]] lumi::modules::WaveformModule* waveform() { return &m_waveform; }
 
+    /// @brief Audio-source handle (Phase 4 — generic module-preset access)
+    [[nodiscard]] lumi::modules::AudioSourceModule* audioSourceModule() override { return &m_audioSource; }
+
+    /// @brief Gradient handles (Phase 4) — makes Left/Right editable too
+    [[nodiscard]] std::vector<GradientHandle> gradients() override
+    {
+        using WM = lumi::modules::WaveformModule;
+        return {
+            {"mono", "Mono", "monoColor.", &m_waveform.colorGradient(WM::CHANNEL_MONO)},
+            {"left", "Left", "leftColor.", &m_waveform.colorGradient(WM::CHANNEL_LEFT)},
+            {"right", "Right", "rightColor.", &m_waveform.colorGradient(WM::CHANNEL_RIGHT)},
+        };
+    }
+
     void resetToDefaults() override;
 
 protected:

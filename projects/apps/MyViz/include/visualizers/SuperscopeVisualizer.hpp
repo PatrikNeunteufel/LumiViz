@@ -77,6 +77,15 @@ public:
     [[nodiscard]] lumi::modules::AudioSourceModule* audioSource() { return &m_audioSource; }
     [[nodiscard]] lumi::modules::SuperscopeModule* superscope() { return &m_superscope; }
 
+    /// @brief Audio-source handle (Phase 4 — generic module-preset access)
+    [[nodiscard]] lumi::modules::AudioSourceModule* audioSourceModule() override { return &m_audioSource; }
+
+    /// @brief Gradient handles (Phase 4 — generic editor/preview access)
+    [[nodiscard]] std::vector<GradientHandle> gradients() override
+    {
+        return {{"main", "Color", "scope.color.", &m_superscope.colorGradient()}};
+    }
+
     void resetToDefaults() override;
 
 protected:

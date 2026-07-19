@@ -65,8 +65,36 @@ public:
     // =========================================================================
 
     [[nodiscard]] lumi::modules::AudioSourceModule* audioSource() { return &m_audioSource; }
+
+    /// @brief Audio-source handle (Phase 4 — generic module-preset access)
+    [[nodiscard]] lumi::modules::AudioSourceModule* audioSourceModule() override { return &m_audioSource; }
+
     [[nodiscard]] lumi::modules::EqualizerModule& equalizerModule() { return m_equalizer; }
     [[nodiscard]] const lumi::modules::EqualizerModule& equalizerModule() const { return m_equalizer; }
+
+    /// @brief Gradient handles (Phase 4 — generic editor/preview access)
+    [[nodiscard]] std::vector<GradientHandle> gradients() override
+    {
+        return {{"main", "Color", "color.", &m_equalizer.colorGradient()}};
+    }
+
+    /// @brief Tap points (Phase 4 pilot) — stage outputs for the group preview
+    [[nodiscard]] std::vector<TapPoint> tapPoints() override
+    {
+        using lumi::modules::PipelineStage;
+        return {
+            {"tap.audio", "Analyse (Baender)", PipelineStage::AudioSource,
+             [this]() {
+                 const float* data = m_audioSource.spectrum();
+                 const int count = m_audioSource.bandCount();
+                 return (data != nullptr && count > 0)
+                     ? std::vector<float>(data, data + count)
+                     : std::vector<float>{};
+             }},
+            {"tap.map", "Mapping (Bandwerte)", PipelineStage::Mapping,
+             [this]() { return m_equalizer.bands(); }},
+        };
+    }
 
 protected:
     // =========================================================================

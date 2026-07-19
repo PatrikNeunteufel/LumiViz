@@ -3,7 +3,7 @@
 > **Version:** 0.2.0
 > **Datum:** 2026-07-19
 > **Typ:** Implementierungsplan
-> **Status:** In Umsetzung (Schritte 0–2 ✅ 2026-07-19; Schritt 3 anstehend)
+> **Status:** In Umsetzung (Schritte 0–4 ✅ 2026-07-19; Schritt 5 anstehend; Key-Review ✅)
 > **Zielgruppe:** Entwickler
 > **Bezug:** [Config_Pipeline_Concept.md](Config_Pipeline_Concept.md) v0.3.0
 > **Phase:** 4
@@ -61,14 +61,14 @@
 - [ ] 3.5 Tap-Points: Stufen-Ausgänge als benannte, abonnierbare Daten (Preview-Fundament)
 - [ ] 3.6 Schema-/Migrations-Tests
 
-### Schritt 4: ConfigPanel generisch ⬜
+### Schritt 4: ConfigPanel generisch ✅ (2026-07-19)
 
-- [ ] 4.1 Zentrale Stage-Tabelle (Titel/Icons), Sortierung nach stage
-- [ ] 4.2 dynamic_cast-Kaskaden durch Gradient-Handles ersetzen
-- [ ] 4.3 Modul-Preset-Save für ALLE Visualizer
-- [ ] 4.4 updateVisibility ohne String-Sonderfälle
-- [ ] 4.5 Default-Reset je Ebene (Parameter/Untergruppe/Stufe/Visualizer)
-- [ ] 4.6 Variant-Zugriffe härten (holds_alternative statt index()==7)
+- [x] 4.1 Zentrale Stage-Tabelle + stage-Sortierung mit Legacy-Ziffern-Fallback (Reihenfolge unveraendert bis Migration)
+- [x] 4.2 Gradient-Handles statt dynamic_cast; 5 Visualizer-Includes raus; Waveform L/R + Oscilloscope-Kanaele generisch erreichbar
+- [x] 4.3 Modul-Preset-Save fuer alle (IVisualizer::audioSourceModule() + Handle-Prefixe)
+- [x] 4.4 updateVisibility: nur dependsOn, transitiv (memoisiert); leere (Sub-)Gruppen automatisch aus; String-Sonderfaelle raus
+- [x] 4.5 Default-Reset per Kontextmenue je Parameter/SubGruppe/Gruppe (undo-faehig via CommandBus)
+- [x] 4.6 Variant-Haertung: kParamValueColorIndex + holdsColor/getColor/makeColorValue als SSOT (holds_alternative unmoeglich: Vec4f=Color4f-Alias); Reststellen -> Schritt 5
 
 ### Schritt 5: Visualizer-Migration + Modul-Konsolidierung ⬜
 
@@ -99,12 +99,12 @@
 | 0 | Tote Systeme entfernen | 7 | 7 | ✅ |
 | 1 | EventBus + Lifetime | 5 | 5 | ✅ |
 | 2 | CommandBus | 3 | 3 | ✅ |
-| 3 | Schema | 6 | 0 | ⬜ |
-| 4 | ConfigPanel | 6 | 0 | ⬜ |
+| 3 | Schema | 6 | 6 | ✅ |
+| 4 | ConfigPanel | 6 | 6 | ✅ |
 | 5 | Migration + Module | 6 | 0 | ⬜ |
 | 6 | Preview-Viewer | 3 | 0 | ⬜ |
 | 7 | Dokumentation | 4 | 0 | ⬜ |
-| **Σ** | **Gesamt** | **40** | **15** | **38 %** |
+| **Σ** | **Gesamt** | **40** | **27** | **68 %** |
 
 ---
 
@@ -250,38 +250,38 @@ Dateien in der jeweiligen `Source.cmake` pflegen. Preset-JSONs kommentarfrei.
 
 #### 3.1 PipelineStage
 
-- [ ] Enum `PipelineStage` (AudioSource=1 … Post=6) in IModule.hpp
-- [ ] `ModuleParamDesc::stage` + ParamBuilder-Setter; `group`-Präfixe „1.–8." obsolet
-- [ ] Übergangs-Mapping: solange ein Visualizer unmigriert ist, leitet ConfigPanel stage aus dem alten group-Präfix ab (Kompatibilitätsschicht, fliegt nach Schritt 5)
+- [x] Enum `PipelineStage` (AudioSource=1 … Post=6) in IModule.hpp
+- [x] `ModuleParamDesc::stage` + ParamBuilder-Setter; `group`-Präfixe „1.–8." obsolet
+- [x] Übergangs-Mapping: solange ein Visualizer unmigriert ist, leitet ConfigPanel stage aus dem alten group-Präfix ab (Kompatibilitätsschicht, fliegt nach Schritt 5)
 
 #### 3.2 Gradient-Handles
 
-- [ ] `IVisualizer::gradients()` → Liste (handleId/paramPrefix, ColorGradientModule*)
-- [ ] Default-Implementierung leer; Visualizer liefern ihre Handles (Waveform: mono/left/right!)
+- [x] `IVisualizer::gradients()` → Liste (handleId/paramPrefix, ColorGradientModule*)
+- [x] Default-Implementierung leer; Visualizer liefern ihre Handles (Waveform: mono/left/right!)
 
 #### 3.3 Key-Migrationstabellen
 
-- [ ] Je Visualizer Tabelle „alter Key → neuer Key" nach Konzept §4.3 (`map.` / `color.<handle>.` / `render.` / `peak.` / `particle.` / `post.`)
-- [ ] Review durch Patrik (Namens-Feinschliff) **vor** Schritt 5
+- [x] Je Visualizer Tabelle „alter Key → neuer Key" nach Konzept §4.3 (`map.` / `color.<handle>.` / `render.` / `peak.` / `particle.` / `post.`)
+- [x] Review durch Patrik (Namens-Feinschliff) **vor** Schritt 5
 
 #### 3.4 Preset-Migration
 
-- [ ] `formatVersion` beim Laden auswerten (heute nur geschrieben — VisualizerPresetManager)
-- [ ] Alias-Map-Mechanik: Loader übersetzt alte IDs; Speichern nur neues Schema
-- [ ] Puffer-Resize-Sonderfälle an neue IDs koppeln (eq.bands→map.bands: EqualizerVisualizer.cpp:1015–1018; sampleCount: WaveformVisualizer.cpp:370–379, OscilloscopeVisualizer.cpp:312–320)
+- [x] `formatVersion` beim Laden auswerten (heute nur geschrieben — VisualizerPresetManager)
+- [x] Alias-Map-Mechanik: Loader übersetzt alte IDs; Speichern nur neues Schema
+- [x] Puffer-Resize-Sonderfälle an neue IDs koppeln (eq.bands→map.bands: EqualizerVisualizer.cpp:1015–1018; sampleCount: WaveformVisualizer.cpp:370–379, OscilloscopeVisualizer.cpp:312–320)
 
 #### 3.5 Tap-Points (Preview-Fundament, Entscheid 2026-07-19)
 
-- [ ] Stufen-Ausgänge als benannte, abonnierbare Daten definieren (z. B.
+- [x] Stufen-Ausgänge als benannte, abonnierbare Daten definieren (z. B.
       `tap.audio` = normalisierte Bänder, `tap.map` = gemappte Daten, `tap.color` =
       Farbwerte je Element) — leichtgewichtig, nur bei aktivem Abonnenten befüllt
-- [ ] In AudioSourceModule + je einem Pilot-Visualizer (Equalizer) verdrahten;
+- [x] In AudioSourceModule + je einem Pilot-Visualizer (Equalizer) verdrahten;
       Rest folgt mit der Migration (Schritt 5)
 
 #### 3.6 Tests
 
-- [ ] Schema-Tests (stage gesetzt, Builder), Handle-Tests, Tap-Point-Tests
-- [ ] Migrations-Roundtrip: altes .lvp (Fixture) → laden → neue Keys korrekt; float-für-int-Vertrag bleibt (bestehender Test)
+- [x] Schema-Tests (stage gesetzt, Builder), Handle-Tests, Tap-Point-Tests
+- [x] Migrations-Roundtrip: altes .lvp (Fixture) → laden → neue Keys korrekt; float-für-int-Vertrag bleibt (bestehender Test)
 
 ---
 
@@ -289,12 +289,12 @@ Dateien in der jeweiligen `Source.cmake` pflegen. Preset-JSONs kommentarfrei.
 
 **Ziel:** ConfigPanel kennt keine konkreten Visualizer mehr; Reihenfolge/Verhalten kommen aus dem Schema.
 
-- [ ] 4.1 Zentrale Stage-Tabelle (Titel, Icon, Reihenfolge) ersetzt Emoji-Keyword-Heuristik (ConfigPanel.cpp:58–72) und String-Sortierung (:371–382)
-- [ ] 4.2 `openGradientEditor` (:1269–1380) + Preview-Delegate (:748–802) auf Handles umstellen; die fünf Visualizer-`#include`s (:18–22) entfernen
-- [ ] 4.3 `onModulePresetSave` (:1621–1701, Early-Return :1628) + `updateRelatedPresetWidget` (:1008–1067) generisch über Handles/Präfixe — Save-Button funktioniert bei allen Visualizern
-- [ ] 4.4 `updateVisibility` (:1069–1264): nur noch dependsOn/dependsValues, Sonderfälle („Line Color"-Substring :1139, channelMode-Hardcode) entfernen
-- [ ] 4.5 Default-Reset je Ebene: Parameter (Kontext/Button), Untergruppe, Stufe, Visualizer (bestehender Default-Eintrag) — als Commands (Undo-fähig)
-- [ ] 4.6 Variant-Zugriffe härten: `std::holds_alternative<Color4f>` statt `value.index()==7` (:275, :947)
+- [x] 4.1 Zentrale Stage-Tabelle (Titel, Icon, Reihenfolge) ersetzt Emoji-Keyword-Heuristik (ConfigPanel.cpp:58–72) und String-Sortierung (:371–382)
+- [x] 4.2 `openGradientEditor` (:1269–1380) + Preview-Delegate (:748–802) auf Handles umstellen; die fünf Visualizer-`#include`s (:18–22) entfernen
+- [x] 4.3 `onModulePresetSave` (:1621–1701, Early-Return :1628) + `updateRelatedPresetWidget` (:1008–1067) generisch über Handles/Präfixe — Save-Button funktioniert bei allen Visualizern
+- [x] 4.4 `updateVisibility` (:1069–1264): nur noch dependsOn/dependsValues, Sonderfälle („Line Color"-Substring :1139, channelMode-Hardcode) entfernen
+- [x] 4.5 Default-Reset je Ebene: Parameter (Kontext/Button), Untergruppe, Stufe, Visualizer (bestehender Default-Eintrag) — als Commands (Undo-fähig)
+- [x] 4.6 Variant-Zugriffe härten: `std::holds_alternative<Color4f>` statt `value.index()==7` (:275, :947)
 
 **Erwartetes Ergebnis:** Pulsing (unmigriert, via Kompatibilitätsschicht) und Equalizer
 (nach 5.1) rendern beide korrekt in Stage-Reihenfolge.
@@ -408,7 +408,7 @@ Expression-Umschaltung pro Parameter, Multieffekt-Host.
 
 ### 6.2 Offene Entscheidungen
 
-- [ ] Key-Migrationstabellen-Review durch Patrik (3.3) — blockiert Schritt 5
+- [x] Key-Migrationstabellen-Review durch Patrik (3.3) — ✅ 2026-07-19, F1-F8 entschieden (Details: Parameter_Key_Migration.md); NEU fuer Schritt 5: Alias-Mechanik braucht optionale Wert-Konverter (F3)
 - [ ] Preview-Mini-Entwurf absegnen (6.1) — blockiert 6.2/6.3
 
 Alle übrigen Entscheidungen sind gefallen (2026-07-19, siehe Konzept §8):

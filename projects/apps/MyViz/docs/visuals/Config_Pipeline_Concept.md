@@ -166,7 +166,7 @@ Emoji-Keyword-Heuristik).
 | Stufe | Präfix | Beispiele (Soll) | Heutige Keys (Auszug) |
 |---|---|---|---|
 | 1 | `audio.` | `audio.scale`, `audio.smooth.timeMs` | unverändert ✓ |
-| 2 | `map.` | `map.bands`, `map.gain`, `map.sampleCount`, `map.trigger.level` | `eq.bands`, `waveform.sampleCount`, `scope.timePerDiv` |
+| 2 | `map.` | `map.bands` (nur Equalizer — F2), `map.sampleCount`, `map.trigger.level` | `eq.bands`, `waveform.sampleCount`, `scope.timePerDiv` |
 | 3 | `color.` | `color.mode`, `color.<handle>.preset` | `shape.color.*`, `monoColor.*`, `ch1Color.*`, `color.*` |
 | 4 | `render.` | `render.orientation`, `render.lineWidth` | `shape.*`, `waveform.*`, `scope.*` (Rest) |
 | 5 | `peak.` / `particle.` | `peak.gravity`, `particle.maxPerBand` | `eq.peak*`, `peakColor.*`, `particle.*` |
@@ -340,10 +340,14 @@ Schritt 1 ✓ · Visualizer-Kategorie-Strings („static Parametring …") werde
 gefixt ✓ · **Preview je Gruppe ist fester Phase-4-Bestandteil** (Schritt 4.7) ✓ ·
 en-Doku: wie CMakeCraft — de ist SSOT, en wird später nachgezogen ✓
 
-Noch offen:
+**Key-Review abgeschlossen (2026-07-19):** Alle 8 Fragen (F1–F8) entschieden — siehe
+[Parameter_Key_Migration.md](Parameter_Key_Migration.md). Kernpunkte: kein `map.gain`
+(Equalizer-gain → `render.heightScale`, wird in 5.1 neu verdrahtet); `map.bands` nur
+beim Equalizer, sonst bleibt `audio.bands`; `waveform.smoothing` entfällt mit
+Wert-Konverter für Alt-Presets (Alias-Mechanik braucht Wert-Konverter in Schritt 5);
+kanal-strukturierte Render-Keys (`render.mono.offset`).
 
-- [ ] Key-Migrationstabellen im Detail (Plan Schritt 3.3) — Review durch Patrik
-      vor der Visualizer-Migration
+Noch offen:
 - [ ] Preview-Viewer: technischer Mini-Entwurf (Datenabgriff/Tap-Points, Darstellung,
       Performance) — vor Umsetzung von Schritt 4.7
 - [ ] en-Übersetzungen der neuen App-Doku nachziehen (de=SSOT, wie CMakeCraft)
