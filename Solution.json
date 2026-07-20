@@ -107,6 +107,13 @@
         "version": "1.0.0",
         "type": "INTERFACE",
         "public_headers": "projects/libs/BasicLogger/include"
+      },
+      {
+        "name": "EelTranspiler",
+        "skip": false,
+        "version": "1.0.0",
+        "type": "INTERFACE",
+        "public_headers": "projects/libs/EelTranspiler/include"
       }
     ],
     "executables": [
@@ -120,7 +127,7 @@
         "version": "0.1.0",
 
         "core": {
-          "dependencies": [ "BasicLogger" ],
+          "dependencies": [ "BasicLogger", "EelTranspiler" ],
           "externals": [ "Qt6", "qt-ads", "bass", "lua54" ],
           "external_options": {
             "bass": { "BASS_FLAC": true },
@@ -155,7 +162,7 @@
               "path": "tests/unit/UnitTests",
               "timeout": 30,
               "labels": [ "unit", "core", "fast" ],
-              "dependencies": [ "MyViz.Core" ],
+              "dependencies": [ "MyViz.Core", "EelTranspiler" ],
               "externals": [ "Qt6", "bass", "lua54" ],
               "external_options": {
                 "lua54": { "LUA_EMBEDDED": false }

@@ -1,6 +1,6 @@
 # AVS-/MilkDrop-Import — Analyse der Referenz-Repos
 
-> **Version:** 1.2.0
+> **Version:** 1.3.0
 > **Datum:** 2026-07-20
 > **Typ:** Analyse
 > **Status:** Aktiv (Grundlage der Import-Phase)
@@ -398,9 +398,13 @@ den nächsten Entwurf informiert (bewährtes Muster: Entwurf → Freigabe → Um
    Test-Cases (Sandbox, Prelude-Golden-Tests, Superscope, Performance) — Suite
    107/107. **Gemessen: 1000 Punkte ≈ 0,3–0,6 ms/Frame (~3 % des
    60-fps-Budgets)** — Prognose §7.4 bestätigt, LuaJIT unnötig (§10.5).
-2. **EEL→Lua-Transpiler** (§7.4) als eigenständige, UI-freie Komponente mit
-   Golden-Test-Suite; AVS-Dialekt zuerst (Superscope-Skripte aus echten Presets als
-   Testkorpus).
+2. ✅ **EEL→Lua-Transpiler** *(Session 32, 2026-07-20)*: Lib
+   `projects/libs/EelTranspiler` (header-only, Qt-frei; Doku:
+   `include/EelTranspiler.md`) — Lexer/Pratt-Parser/Codegen mit Hoisting,
+   Lazy-Konstrukten, eel-Prelude-Mapping, Dialekt-Flag (AVS-Cap 4096 /
+   MilkDrop 2^20), 8-Zeichen-Aliasing-Warnung (§10.2). AVS-Dialekt komplett,
+   MilkDrop-Kern (Infix, `?:`, Kompound-Zuweisung, `buf[]`/`gmem[]`).
+   25 Golden-Cases end-to-end (EEL → Lua → Sandbox-Ausführung) — Suite 132/132.
 3. **.avs-Parser** (Container + Kern-Effekt-Blobs) + Import-Report-Gerüst; Testkorpus
    `avs/vis_avs/presets/`.
 4. **Feedback-/Skript-Modul-Fundament** (§8.2 Bausteine 1–2 + 4–6) als Entwurf mit
@@ -441,6 +445,7 @@ den nächsten Entwurf informiert (bewährtes Muster: Entwurf → Freigabe → Um
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.3.0 | 2026-07-20 | §9.2 umgesetzt: EelTranspiler-Lib (Lexer/Parser/Codegen, 25 Golden-Cases) — Session 32 |
 | 1.2.0 | 2026-07-20 | §9.1 umgesetzt: Lua-Fundament im Superscope (LuaScriptEngine, eel-Prelude, Messwerte) — Session 32 |
 | 1.1.0 | 2026-07-20 | §10: alle fünf offenen Fragen entschieden (rand=Integer, kein 8-Zeichen-Aliasing + Warnung, reg/gmegabuf preset-lokal + globales Atomic-Register-Set, Lib EelTranspiler, Lua 5.4 fix) |
 | 1.0.0 | 2026-07-20 | Erstfassung — Analyse der ref/-Repos (Session 32): AVS/projectM/MilkDrop3-Befunde, Lizenzmatrix, EEL→Lua-Mapping, Architektur-Lücken, Roadmap |
