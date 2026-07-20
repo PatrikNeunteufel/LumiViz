@@ -202,6 +202,41 @@ struct CreateVisualizerEvent : public Event
 };
 
 /**
+ * @brief Request to import an AVS preset into the active Multi Effect visualizer
+ *        (Import Roadmap 5.7 — handled by MainWindow: file dialog + loadAvsFile).
+ */
+struct ImportAvsPresetEvent : public Event
+{
+    EVENT_TYPE_NAME("ImportAvsPresetEvent")
+};
+
+/**
+ * @brief Request to load a host effect-chain preset (.lvfx) into the active
+ *        Multi Effect visualizer.
+ */
+struct LoadEffectChainEvent : public Event
+{
+    EVENT_TYPE_NAME("LoadEffectChainEvent")
+};
+
+/**
+ * @brief Request to save the active Multi Effect visualizer's chain (.lvfx).
+ */
+struct SaveEffectChainEvent : public Event
+{
+    EVENT_TYPE_NAME("SaveEffectChainEvent")
+};
+
+/**
+ * @brief Emitted after the Multi Effect host's chain was replaced (import/load),
+ *        so the chain editor panel can rebuild its tree.
+ */
+struct EffectChainChangedEvent : public Event
+{
+    EVENT_TYPE_NAME("EffectChainChangedEvent")
+};
+
+/**
  * @brief Request to change the active visualizer
  */
 struct ChangeVisualizerEvent : public Event

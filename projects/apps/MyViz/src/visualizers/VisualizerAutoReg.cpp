@@ -41,6 +41,7 @@
 
 #include "services/VisualizerRegistry.hpp"
 #include "visualizers/EqualizerVisualizer.hpp"
+#include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/OscilloscopeVisualizer.hpp"
 #include "visualizers/PulsingVisualizer.hpp"
 #include "visualizers/SuperscopeVisualizer.hpp"
@@ -144,6 +145,24 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
         },
         false);
     
+    // =========================================================================
+    // EFFECTS CATEGORY
+    // =========================================================================
+
+    // Multi Effect Host - AVS-style effect chain (import target, Roadmap 5)
+    registry.registerVisualizer(
+        VisualizerDescriptor{
+            "multieffect",                                       // id
+            "Multi Effect",                                      // name
+            "AVS-style effect chain host (import target)",       // description
+            "effects",                                           // category
+            100                                                  // order
+        },
+        []() -> std::unique_ptr<IVisualizer> {
+            return std::make_unique<MultiEffectVisualizer>();
+        },
+        false);
+
     // =========================================================================
     // PARTICLE CATEGORY (TODO)
     // =========================================================================

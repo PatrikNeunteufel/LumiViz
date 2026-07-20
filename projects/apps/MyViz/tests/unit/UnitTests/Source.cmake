@@ -28,9 +28,12 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LuaScriptEngine.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_EelTranspiler.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_AvsParser.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_AvsChainTranslator.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_ChainSerializer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ScriptContext.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ScriptModules.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_BeatEstimator.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_EffectChain.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_Playlist.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_VisualizerPresetManager.cpp"
 )

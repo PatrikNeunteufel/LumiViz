@@ -382,6 +382,11 @@ FodyWeavers.xsd
 old/
 /Archive
 
+# no presets
+/avs/
+/effectchain/
+
+
 # HINWEIS: BASS-Binaries unter externals/ (win/c/x64/*.lib, win/x64/*.dll, linux/libs/, bin/)
 # sind aus LIZENZGRUENDEN bewusst NICHT getrackt (proprietaer, un4seen.com).
 # Beschaffung bei Bedarf: siehe externals/bass/SETUP.md

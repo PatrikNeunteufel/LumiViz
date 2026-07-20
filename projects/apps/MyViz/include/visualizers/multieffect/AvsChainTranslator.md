@@ -1,0 +1,47 @@
+# AvsChainTranslator
+
+> **Modul:** `lumi::multieffect` · `include/visualizers/multieffect/AvsChainTranslator.hpp` +
+> `src/visualizers/AvsChainTranslator.cpp` · GL-frei ·
+> **Seit:** Import-Phase Roadmap 5.5 (Session 34) ·
+> **Steuerdokument:** `docs/visuals/Import_Multieffekt_Host_Entwurf.md` (E4/E7)
+
+Übersetzt einen geparsten AVS-Baum (`lumi::avs::ParseResult` aus der Qt-freien
+`AvsParser`-Lib) in eine Host-[`EffectChain`](EffectChain.md). Lebt im App-Modul
+(E7 — mappt Parser-Daten auf Host-Runtime-Params, kein GL, aber App-Typen).
+
+```cpp
+lumi::avs::ParseResult parsed = lumi::avs::parseFile(path);
+TranslationResult t = translateAvsTree(parsed);   // t.root ist compiled
+// t.report: Parser-Warnungen + "nicht unterstützt"-Einträge (pfad-präfixiert)
+```
+
+Der Host bietet `MultiEffectVisualizer::loadAvsFile(path, &report)` als
+GUI-Einstieg (unter `renderMutex()`; setzt ein Reset-Flag, damit der
+Render-Thread die alten Knoten-Runtimes freigibt — Knoten-IDs werden neu vergeben).
+
+## Mapping-Regeln
+
+- **Effektlisten** → `ListParams` (Blend In/Out aus `ListInfo`, Adjustable-Alpha
+  aus `in/outBlendVal`, OnBeat, `clearEveryFrame`, EEL Init/Frame-Slots).
+- **17 dekodierte Kern-Effekte** → ihre `EffectParams` (Feldnamen 1:1 aus dem
+  AvsParser-Decoder verifiziert).
+- **Set Render Mode (40)** wird **ausgerollt** (E4): Linienbreite (Bits 16–23)
+  wandert in die *folgenden* SuperScope-Effekte; der Knoten wird Passthrough+Notiz.
+- **Movement ohne Point-Code** (Builtin-Formel) → Passthrough (die 23 Formeln
+  sind noch nicht portiert).
+- **Alles andere** (unbekannt, `decoded=false`, exotisch) → `PassthroughParams`
+  (Quell-ID + Notiz) + Report-Eintrag. **Nie werfen** (AVS-Philosophie).
+- **Farben:** AVS-COLORREF `0x00BBGGRR` → Host `0x00RRGGBB` (R/B getauscht).
+
+## Bewusste Näherungen (Sichttest-Feinschliff, im Code markiert)
+
+- **Blitter/Roto Feedback** Zoom-/Rotations-Mapping (`scale`/`zoom_scale`/`rot_dir`
+  → Faktor) ist approximativ — exakte AVS-Slider-Kurve später kalibrieren.
+- **SuperScope-Farbtabelle** (`colors[]`) wird nicht übernommen — Farben kommen
+  aus dem Punkt-Skript; geteilter ScriptContext für den Scope steht noch aus.
+
+## Absicherung
+
+`tests/unit/UnitTests/test_AvsChainTranslator.cpp` — Feld-Mapping, COLORREF-Swap,
+Passthrough, SRM-Unroll, verschachtelte Liste; **Korpus-Smoke: 35/35
+Referenz-Presets übersetzen ohne Crash** (163 Knoten, umgebungsabhängig).

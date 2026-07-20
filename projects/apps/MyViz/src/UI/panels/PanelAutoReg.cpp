@@ -46,6 +46,7 @@
 #include "UI/panels/PlayerPanel.hpp"
 #include "UI/panels/PlaylistPanel.hpp"
 #include "UI/panels/ConfigPanel.hpp"
+#include "UI/panels/MultiEffectPanel.hpp"
 #include "UI/panels/SettingsPanel.hpp"
 #include "UI/panels/VisualSelectPanel.hpp"
 
@@ -117,6 +118,24 @@ void initPanelDefaults(PanelRegistry& registry)
         },
         false);
     
+    // =========================================================================
+    // MULTI EFFECT CHAIN PANEL (Import Roadmap 5.7b)
+    // =========================================================================
+    // Tree editor for the Multi Effect host's effect chain
+
+    registry.registerPanel(
+        PanelDescriptor{
+            "multieffect_chain",      // id
+            "Effect Chain",           // title
+            320,                      // order
+            false,                    // defaultVisible (hidden by default)
+            "View/Panels"             // menuPath
+        },
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<MultiEffectPanel>(svc);
+        },
+        false);
+
     // =========================================================================
     // SETTINGS PANEL
     // =========================================================================

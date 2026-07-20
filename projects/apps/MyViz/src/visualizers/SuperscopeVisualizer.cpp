@@ -319,11 +319,11 @@ std::vector<lumi::modules::ModuleParamDesc> SuperscopeVisualizer::paramDescs() c
         ModuleParamDesc p;
         p.id = "post.trail.decay";
         p.displayName = "Trail Decay";
-        p.tooltip = "Brightness kept per frame (1 = infinite trail)";
+        p.tooltip = "Brightness kept per frame (higher = longer trail; capped below 1 to avoid additive white-out)";
         p.type = ParamType::Float;
         p.defaultValue = 0.9f;
         p.minValue = 0.5f;
-        p.maxValue = 1.0f;
+        p.maxValue = 0.98f;
         p.step = 0.01f;
         p.subGroup = "Trail";
         p.dependsOn = "post.trail.enabled";
@@ -420,7 +420,7 @@ bool SuperscopeVisualizer::setParam(const std::string& id, const lumi::modules::
         if (const float* v = std::get_if<float>(&value)) number = *v;
         else if (const int* i = std::get_if<int>(&value)) number = static_cast<float>(*i);
         else return false;
-        if (id == "post.trail.decay") m_trailDecay = std::clamp(number, 0.5f, 1.0f);
+        if (id == "post.trail.decay") m_trailDecay = std::clamp(number, 0.5f, 0.98f);
         else m_trailZoom = std::clamp(number, 0.9f, 1.2f);
         return true;
     }

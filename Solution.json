@@ -169,7 +169,7 @@
               "path": "tests/unit/UnitTests",
               "timeout": 30,
               "labels": [ "unit", "core", "fast" ],
-              "dependencies": [ "MyViz.Core", "EelTranspiler" ],
+              "dependencies": [ "MyViz.Core", "EelTranspiler", "AvsParser" ],
               "externals": [ "Qt6", "bass", "lua54" ],
               "external_options": {
                 "lua54": { "LUA_EMBEDDED": false }

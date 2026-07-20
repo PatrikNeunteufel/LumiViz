@@ -104,6 +104,47 @@ void initMenuDefaults(MenuRegistry& registry)
         },
         false);
     
+    // Group for AVS/effect-chain import & host presets (Import Roadmap 5.7)
+    registry.registerGroup(
+        MenuGroupDesc{{"menu.file.group.import", "menu.file", 300}},
+        false);
+
+    registry.registerItem(
+        MenuItemDesc{
+            {"menu.file.importavs", "menu.file", 300},
+            "Import AVS Preset...",
+            [](ServiceContainer& svc) {
+                if (auto* eventBus = svc.tryResolve<IEventBus>())
+                    eventBus->publish(ImportAvsPresetEvent{});
+            },
+            {}, {}, "Ctrl+I"
+        },
+        false);
+
+    registry.registerItem(
+        MenuItemDesc{
+            {"menu.file.loadchain", "menu.file", 310},
+            "Load Effect Chain...",
+            [](ServiceContainer& svc) {
+                if (auto* eventBus = svc.tryResolve<IEventBus>())
+                    eventBus->publish(LoadEffectChainEvent{});
+            },
+            {}, {}, ""
+        },
+        false);
+
+    registry.registerItem(
+        MenuItemDesc{
+            {"menu.file.savechain", "menu.file", 320},
+            "Save Effect Chain...",
+            [](ServiceContainer& svc) {
+                if (auto* eventBus = svc.tryResolve<IEventBus>())
+                    eventBus->publish(SaveEffectChainEvent{});
+            },
+            {}, {}, ""
+        },
+        false);
+
     // Group for exit (separator before exit)
     registry.registerGroup(
         MenuGroupDesc{{"menu.file.group.exit", "menu.file", 800}},

@@ -19,6 +19,7 @@
 #include "UI/managers/MenuManager.hpp"
 #include "UI/managers/DialogManager.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "visualizers/MultiEffectVisualizer.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/EventBus.hpp"
@@ -51,6 +52,9 @@
 #include <QStandardPaths>
 #include <QDir>
 #include <QFile>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QMutexLocker>
 
 // Qt-ADS (needed for fullscreen dock state save/restore)
 #include <DockManager.h>
@@ -476,6 +480,107 @@ void MainWindow::setupEventHandlers()
             BasicLogger::logDebug("Exited fullscreen mode");
         }
     });
+
+    // -------------------------------------------------------------------------
+    // AVS import + host effect-chain presets (Import Roadmap 5.7)
+    // -------------------------------------------------------------------------
+    // The active visualizer must be the Multi Effect host; chain mutation runs
+    // under the widget's renderMutex() (the render thread walks the chain).
+    auto findMultiEffect =
+        [this]() -> std::pair<VisualizerWidget*, MultiEffectVisualizer*> {
+        VisualizerWidget* widget = primaryVisualizer();
+        if (widget == nullptr) return {nullptr, nullptr};
+        return {widget, dynamic_cast<MultiEffectVisualizer*>(widget->visualizer())};
+    };
+    auto requireMultiEffect =
+        [this, findMultiEffect](const char* title)
+        -> std::pair<VisualizerWidget*, MultiEffectVisualizer*> {
+        auto pair = findMultiEffect();
+        if (pair.second == nullptr)
+        {
+            QMessageBox::information(this, title,
+                                     tr("Select the \"Multi Effect\" visualizer first."));
+        }
+        return pair;
+    };
+
+    pEventBus->subscribe<ImportAvsPresetEvent>(
+        [this, requireMultiEffect, pEventBus](const ImportAvsPresetEvent&) {
+            auto [widget, host] = requireMultiEffect("Import AVS Preset");
+            if (host == nullptr) return;
+            const QString path = QFileDialog::getOpenFileName(
+                this, tr("Import AVS Preset"), QString(),
+                tr("AVS Presets (*.avs);;All Files (*)"));
+            if (path.isEmpty()) return;
+
+            QStringList report;
+            bool ok = false;
+            {
+                QMutexLocker lock(&widget->renderMutex());
+                ok = host->loadAvsFile(path, &report);
+            }
+            if (!ok)
+            {
+                QMessageBox::warning(this, tr("Import AVS Preset"),
+                                     tr("Not a valid AVS preset:\n%1").arg(path));
+                return;
+            }
+            pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
+            if (!report.isEmpty())
+            {
+                QMessageBox::information(
+                    this, tr("Import AVS Preset"),
+                    tr("Imported with %1 note(s):\n\n%2")
+                        .arg(report.size())
+                        .arg(report.mid(0, 20).join("\n")));
+            }
+        });
+
+    pEventBus->subscribe<LoadEffectChainEvent>(
+        [this, requireMultiEffect, pEventBus](const LoadEffectChainEvent&) {
+            auto [widget, host] = requireMultiEffect("Load Effect Chain");
+            if (host == nullptr) return;
+            const QString path = QFileDialog::getOpenFileName(
+                this, tr("Load Effect Chain"), QString(),
+                tr("LumiViz Effect Chain (*.lvfx);;All Files (*)"));
+            if (path.isEmpty()) return;
+
+            QStringList report;
+            bool ok = false;
+            {
+                QMutexLocker lock(&widget->renderMutex());
+                ok = host->loadChainFile(path, &report);
+            }
+            if (!ok)
+            {
+                QMessageBox::warning(this, tr("Load Effect Chain"),
+                                     tr("Could not load:\n%1").arg(path));
+                return;
+            }
+            pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
+        });
+
+    pEventBus->subscribe<SaveEffectChainEvent>(
+        [this, requireMultiEffect](const SaveEffectChainEvent&) {
+            auto [widget, host] = requireMultiEffect("Save Effect Chain");
+            if (host == nullptr) return;
+            QString path = QFileDialog::getSaveFileName(
+                this, tr("Save Effect Chain"), QString(),
+                tr("LumiViz Effect Chain (*.lvfx)"));
+            if (path.isEmpty()) return;
+            if (!path.endsWith(".lvfx", Qt::CaseInsensitive)) path += ".lvfx";
+
+            bool ok = false;
+            {
+                QMutexLocker lock(&widget->renderMutex());
+                ok = host->saveChainFile(path);
+            }
+            if (!ok)
+            {
+                QMessageBox::warning(this, tr("Save Effect Chain"),
+                                     tr("Could not save:\n%1").arg(path));
+            }
+        });
 
     BasicLogger::logDebug("  Event handlers registered");
 }
