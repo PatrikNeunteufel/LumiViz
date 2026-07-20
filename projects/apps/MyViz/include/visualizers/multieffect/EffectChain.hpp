@@ -376,6 +376,52 @@ struct ScatterParams
 {
 };
 
+/** AVS "Trans / Water" (ID 20): color-space water ripple — neighbour average of
+ *  the current frame minus the previous frame (r_water.cpp). No parameters;
+ *  needs a persistent per-node "last frame" buffer. */
+struct WaterParams
+{
+};
+
+/**
+ * AVS "Trans / Water Bump" (ID 31): a height-field water simulation — waves
+ * propagate on a persistent height buffer and refract the image (r_waterbump).
+ * On a beat a drop is added (`randomDrop` = random spot, else `dropX/dropY`
+ * position code 0/1/2 = near/mid/far). `density` damps the waves, `depth` sets
+ * the drop strength. `displaceScale` tunes the refraction (sight-test).
+ */
+struct WaterBumpParams
+{
+    int density = 5;        ///< wave damping (higher = longer-lived waves)
+    int depth = 600;        ///< drop amplitude
+    bool randomDrop = true; ///< random drop spot vs. fixed dropX/dropY
+    int dropX = 1;          ///< 0 near / 1 mid / 2 far (position code)
+    int dropY = 1;
+    int dropRadius = 40;    ///< drop radius (px)
+    float displaceScale = 6.0f;  ///< refraction strength (host tuning)
+};
+
+/**
+ * AVS "Trans / Bump" (ID 29): per-pixel bump lighting from the image luminance
+ * gradient, lit by a movable light source (r_bump.cpp). The light position
+ * `x,y` comes from EEL (init/frame/beat, `x,y` output; `t` script-owned). On a
+ * beat `depth` can jump to `depth2` for `durationFrames`. `blend` 0 replace,
+ * 1 additive, 2 50/50. `oldStyle` scales script x,y by 1/100 (legacy presets).
+ */
+struct BumpParams
+{
+    int depth = 30;            ///< bump strength 0..100
+    int depth2 = 100;          ///< on-beat strength
+    bool onBeat = false;       ///< jump to depth2 on beat, ease back
+    int durationFrames = 15;   ///< ease-back length
+    bool invert = false;       ///< invert the depth (luminance)
+    bool oldStyle = false;     ///< legacy x,y in 0..100 instead of 0..1
+    int blend = 0;             ///< 0 replace, 1 additive, 2 50/50
+    std::string initCode = "t=0;";
+    std::string frameCode = "x=0.5+cos(t)*0.3;\ny=0.5+sin(t)*0.3;\nt=t+0.1;";
+    std::string beatCode;
+};
+
 /**
  * AVS "Trans / Interferences" (ID 41): `points` rotated copies of the image
  * accumulated with `alpha` (r_interf.cpp). The rotation advances by
@@ -397,6 +443,110 @@ struct InterferencesParams
     bool onBeat = false;     ///< morph to the *2 set on a beat
     float speed = 0.2f;      ///< beat-morph transition speed
     int blend = 0;           ///< 0 replace, 1 additive, 2 50/50
+};
+
+/**
+ * AVS "Render / Starfield" (ID 27): a 3D star field flying towards the viewer
+ * (r_stars.cpp). Stars move by `warpSpeed` (jumping to `beatSpeed` for
+ * `durationFrames` on a beat); brightness rises as they approach. `color`
+ * tints them. Drawn additively via the shared ScopeRenderer.
+ */
+struct StarfieldParams
+{
+    uint32_t color = 0xFFFFFF;   ///< tint 0x00RRGGBB
+    float warpSpeed = 6.0f;      ///< base fly-through speed
+    int maxStars = 350;          ///< star count
+    bool onBeat = false;         ///< jump to beatSpeed on a beat
+    float beatSpeed = 4.0f;      ///< on-beat speed
+    int durationFrames = 15;     ///< ease-back length
+};
+
+/**
+ * AVS "Render / Timescope" (ID 39): a scrolling spectrogram — one spectrum
+ * column is drawn per frame at an advancing x, building up over time
+ * (r_timescope.cpp). `color` tints it; `bands` sets the vertical resolution;
+ * `blend` 0 replace, 1 additive, 2 50/50 with the existing image.
+ */
+struct TimescopeParams
+{
+    uint32_t color = 0xFFFFFF;  ///< tint 0x00RRGGBB
+    int blend = 0;              ///< 0 replace, 1 additive, 2 50/50
+    int channel = 2;           ///< 0 L, 1 R, 2 center
+    int bands = 576;           ///< vertical spectrum resolution
+};
+
+/** AVS "Render / Dot Grid" (ID 17): a scrolling grid of dots whose colour cycles
+ *  through `colors` (r_dotgrid.cpp). `spacing` px, `xMove/yMove` scroll speed. */
+struct DotGridParams
+{
+    std::vector<uint32_t> colors{0xFFFFFF};  ///< cycled colour table
+    int spacing = 8;   ///< grid spacing (px)
+    int xMove = 128;   ///< horizontal scroll (fixed-point /256 per frame)
+    int yMove = 128;   ///< vertical scroll
+    int blend = 0;     ///< 0 replace, 1 additive, 2 50/50
+};
+
+/** AVS "Render / Dot Plane" (ID 1): a rotating audio-reactive point plane, height
+ *  from the spectrum, coloured by a 5-stop gradient (r_dotpln.cpp). 3D projection
+ *  scale is host tuning (sight-test). */
+struct DotPlaneParams
+{
+    uint32_t colors[5] = {0x0000FF, 0x00FFFF, 0x00FF00, 0xFFFF00, 0xFF0000};
+    int rotVel = 16;   ///< rotation speed (-50..50 in AVS)
+    int angle = -20;   ///< viewing tilt angle
+};
+
+/** AVS "Render / Dot Fountain" (ID 19): a 3D particle fountain coloured by a
+ *  5-stop gradient, rotating (r_dotfnt.cpp). Simplified particle model here;
+ *  projection/physics scale is host tuning (sight-test). */
+struct DotFountainParams
+{
+    uint32_t colors[5] = {0x0000FF, 0x00FFFF, 0x00FF00, 0xFFFF00, 0xFF0000};
+    int rotVel = 16;
+    int angle = -20;
+};
+
+/** AVS APE "Channel Shift": permute the R/G/B channels (r_chanshift). `mode`
+ *  0 RGB, 1 RBG, 2 GBR, 3 GRB, 4 BRG, 5 BGR; `onBeat` picks a random one each beat. */
+struct ChannelShiftParams
+{
+    int mode = 1;         ///< channel permutation 0..5
+    bool onBeat = false;  ///< random permutation on each beat
+};
+
+/** AVS APE "Color Reduction": quantise each channel to 2^`levels` values
+ *  (r_colorreduction). levels 1..8 (8 = unchanged). */
+struct ColorReductionParams
+{
+    int levels = 8;  ///< bit depth per channel 1..8
+};
+
+/** AVS APE "Multiplier": scale pixel values (r_multiplier). `mode` 0 saturate,
+ *  1 x8, 2 x4, 3 x2, 4 x0.5, 5 x0.25, 6 x0.125, 7 zero-else-keep. */
+struct MultiplierParams
+{
+    int mode = 3;  ///< 0..7 (see above)
+};
+
+/** AVS APE "Video Delay" (Holden04): output the image from `delay` frames ago
+ *  via a per-node frame ring buffer (r_videodelay). `useBeats` measures the
+ *  delay in beats instead of frames. */
+struct VideoDelayParams
+{
+    bool useBeats = false;  ///< delay in beats vs frames
+    int delay = 10;         ///< delay amount (frames, capped for VRAM)
+};
+
+/** AVS APE "Multi Delay" (Holden05): one of 6 host-shared frame ring buffers
+ *  (r_multidelay). `mode` 0 none, 1 input (write this frame), 2 output (read the
+ *  delayed frame). `buffer` 0..5 selects the shared ring; `delay`/`useBeats` set
+ *  its length (input nodes size the ring). */
+struct MultiDelayParams
+{
+    int mode = 0;           ///< 0 none, 1 input, 2 output
+    int buffer = 0;         ///< shared buffer index 0..5
+    int delay = 10;         ///< delay length
+    bool useBeats = false;  ///< delay in beats vs frames
 };
 
 /**
@@ -424,7 +574,11 @@ using EffectParams =
                  MovementParams, DynamicMovementParams, BlitterFeedbackParams,
                  RotoBlitterParams, BufferSaveParams, CustomBpmParams,
                  SuperScopeParams, MosaicParams, GrainParams, ScatterParams,
-                 InterferencesParams, DebugBarsParams, PassthroughParams>;
+                 InterferencesParams, WaterParams, BumpParams, WaterBumpParams,
+                 StarfieldParams, TimescopeParams, DotGridParams, DotPlaneParams,
+                 DotFountainParams, ChannelShiftParams, ColorReductionParams,
+                 MultiplierParams, VideoDelayParams, MultiDelayParams,
+                 DebugBarsParams, PassthroughParams>;
 
 // =============================================================================
 // Chain node
@@ -499,6 +653,19 @@ struct CompileResult
         const char* operator()(const GrainParams&) const { return "Grain"; }
         const char* operator()(const ScatterParams&) const { return "Scatter"; }
         const char* operator()(const InterferencesParams&) const { return "Interferences"; }
+        const char* operator()(const WaterParams&) const { return "Water"; }
+        const char* operator()(const BumpParams&) const { return "Bump"; }
+        const char* operator()(const WaterBumpParams&) const { return "Water Bump"; }
+        const char* operator()(const StarfieldParams&) const { return "Starfield"; }
+        const char* operator()(const TimescopeParams&) const { return "Timescope"; }
+        const char* operator()(const DotGridParams&) const { return "Dot Grid"; }
+        const char* operator()(const DotPlaneParams&) const { return "Dot Plane"; }
+        const char* operator()(const DotFountainParams&) const { return "Dot Fountain"; }
+        const char* operator()(const ChannelShiftParams&) const { return "Channel Shift"; }
+        const char* operator()(const ColorReductionParams&) const { return "Color Reduction"; }
+        const char* operator()(const MultiplierParams&) const { return "Multiplier"; }
+        const char* operator()(const VideoDelayParams&) const { return "Video Delay"; }
+        const char* operator()(const MultiDelayParams&) const { return "Multi Delay"; }
         const char* operator()(const DebugBarsParams&) const { return "Debug Bars"; }
         const char* operator()(const PassthroughParams&) const { return "Passthrough"; }
     };

@@ -128,6 +128,24 @@ private:
         }
     };
 
+    /** One Starfield particle (normalized coords, z in (0,1]). */
+    struct Star
+    {
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 1.0f;
+        float speed = 0.5f;
+    };
+
+    /** One Dot-Fountain particle (polar around the fountain axis). */
+    struct FountainP
+    {
+        float a = 0.0f;   ///< azimuth angle
+        float r = 0.0f;   ///< radius from the axis
+        float h = 0.0f;   ///< height
+        float vh = 0.0f;  ///< vertical velocity
+    };
+
     /** Per-leaf render-thread state (beat counters, scripts), keyed by nodeId. */
     struct LeafRuntime
     {
@@ -166,6 +184,48 @@ private:
         bool interfSeeded = false;
         float interfRotation = 0.0f;  ///< persistent rotation accumulator (0..255 units)
         float interfStatus = 0.0f;    ///< beat-morph phase (0..pi)
+
+        // Water: previous frame buffer (r_water lastframe); render-thread owned
+        std::unique_ptr<QOpenGLFramebufferObject> waterLast;
+        int waterW = 0;
+        int waterH = 0;
+
+        // Bump: EEL light-position script + eased depth (r_bump)
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> bumpHost;
+        std::string bumpCompiled;
+        float bumpX = 0.5f;      ///< light position (0..1)
+        float bumpY = 0.5f;
+        float bumpDepth = 0.0f;  ///< eased strength (0 = uninitialised)
+        int bumpFramesLeft = 0;  ///< frames left easing depth back
+
+        // Water Bump: RGBA16F height ping-pong (.r current, .g previous height)
+        std::unique_ptr<QOpenGLFramebufferObject> wbHeight[2];
+        int wbCur = 0;   ///< index of the current height buffer
+        int wbW = 0;
+        int wbH = 0;
+
+        // Starfield: CPU star particles + warp-speed ease (r_stars)
+        std::vector<Star> stars;
+        float starSpeed = 0.0f;    ///< eased current warp speed (0 = uninitialised)
+        int starBeatFrames = 0;    ///< frames left easing back to warpSpeed
+
+        int timescopeX = 0;        ///< Timescope: current spectrogram column
+
+        // Dot Grid / Plane / Fountain (r_dotgrid/dotpln/dotfnt)
+        float dotColorPos = 0.0f;  ///< Dot Grid: colour-table cycle position
+        float dotOffX = 0.0f;      ///< Dot Grid: scroll offset
+        float dotOffY = 0.0f;
+        float dotRot = 0.0f;       ///< Dot Plane/Fountain: accumulating rotation
+        std::vector<FountainP> fountain;  ///< Dot Fountain particles
+
+        int apeChanMode = -1;      ///< Channel Shift on-beat held permutation
+
+        // Video Delay: per-node frame ring buffer (r_videodelay)
+        std::vector<std::unique_ptr<QOpenGLFramebufferObject>> delayRing;
+        int delayHead = 0;
+        int delayFilled = 0;
+        int delayW = 0;
+        int delayH = 0;
     };
 
     /** Render-thread state of one list node, keyed by ChainNode::nodeId. */
@@ -235,6 +295,29 @@ private:
     void runScatter(const lumi::multieffect::ScatterParams& params);
     void runInterferences(const lumi::multieffect::ChainNode& node,
                           const lumi::multieffect::InterferencesParams& params);
+    void runWater(const lumi::multieffect::ChainNode& node,
+                  const lumi::multieffect::WaterParams& params);
+    void runBump(const lumi::multieffect::ChainNode& node,
+                 const lumi::multieffect::BumpParams& params);
+    void runWaterBump(const lumi::multieffect::ChainNode& node,
+                      const lumi::multieffect::WaterBumpParams& params);
+    void runStarfield(const lumi::multieffect::ChainNode& node,
+                      const lumi::multieffect::StarfieldParams& params);
+    void runTimescope(const lumi::multieffect::ChainNode& node,
+                      const lumi::multieffect::TimescopeParams& params);
+    void runDotGrid(const lumi::multieffect::ChainNode& node,
+                    const lumi::multieffect::DotGridParams& params);
+    void runDotPlane(const lumi::multieffect::ChainNode& node,
+                     const lumi::multieffect::DotPlaneParams& params);
+    void runDotFountain(const lumi::multieffect::ChainNode& node,
+                        const lumi::multieffect::DotFountainParams& params);
+    void runChannelShift(const lumi::multieffect::ChainNode& node,
+                         const lumi::multieffect::ChannelShiftParams& params);
+    void runColorReduction(const lumi::multieffect::ColorReductionParams& params);
+    void runMultiplier(const lumi::multieffect::MultiplierParams& params);
+    void runVideoDelay(const lumi::multieffect::ChainNode& node,
+                       const lumi::multieffect::VideoDelayParams& params);
+    void runMultiDelay(const lumi::multieffect::MultiDelayParams& params);
 
     [[nodiscard]] uint32_t nextRandom();  ///< host LCG (Mirror onbeat-random)
 
@@ -283,6 +366,20 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_grainShader;
     std::unique_ptr<QOpenGLShaderProgram> m_scatterShader;
     std::unique_ptr<QOpenGLShaderProgram> m_interfShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_waterShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_bumpShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_wbPropShader;  ///< water-bump wave propagation
+    std::unique_ptr<QOpenGLShaderProgram> m_wbDispShader;  ///< water-bump refraction
+    std::unique_ptr<QOpenGLShaderProgram> m_timescopeShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_apeShader;  ///< Channel Shift / Color Reduction / Multiplier
+    unsigned int m_specTex = 0;  ///< 1D spectrum upload for Timescope (deleted in onCleanup)
+
+    // Multi Delay: 6 host-shared frame ring buffers (r_multidelay), cleared with
+    // the runtimes. Input nodes fill them; output nodes read the delayed frame.
+    std::vector<std::unique_ptr<QOpenGLFramebufferObject>> m_mdRing[6];
+    int m_mdHead[6] = {0, 0, 0, 0, 0, 0};
+    int m_mdW = 0;
+    int m_mdH = 0;
     std::unique_ptr<QOpenGLVertexArrayObject> m_quadVao;
     std::unique_ptr<QOpenGLBuffer> m_quadVbo;
     std::unique_ptr<QOpenGLVertexArrayObject> m_warpVao;

@@ -274,6 +274,166 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(std::holds_alternative<ScatterParams>(t.root.children[0].params));
     }
 
+    TEST_CASE("Water -> WaterParams (parameterlos)")
+    {
+        const TranslationResult t = translateAvsTree(makeParsed({builtin(20)}));
+        REQUIRE(t.root.children.size() == 1);
+        CHECK(std::holds_alternative<WaterParams>(t.root.children[0].params));
+    }
+
+    TEST_CASE("APE-Dispatch: Channel Shift / Color Reduction / Multiplier")
+    {
+        auto ape = [](const char* id) {
+            EffectNode n;
+            n.id = lumi::avs::kApeIdBase;
+            n.apeId = id;
+            n.decoded = true;
+            return n;
+        };
+
+        EffectNode cs = ape("Channel Shift");
+        cs.fields = {{"mode", 1020}, {"onbeat", 1}};  // IDC_RBG -> 1
+        const auto tcs = translateAvsTree(makeParsed({cs}));
+        const auto& pcs = std::get<ChannelShiftParams>(tcs.root.children[0].params);
+        CHECK(pcs.mode == 1);
+        CHECK(pcs.onBeat);
+
+        EffectNode cr = ape("Color Reduction");
+        cr.fields = {{"levels", 4}};
+        const auto tcr = translateAvsTree(makeParsed({cr}));
+        CHECK(std::get<ColorReductionParams>(tcr.root.children[0].params).levels == 4);
+
+        EffectNode ml = ape("Multiplier");
+        ml.fields = {{"ml", 2}};
+        const auto tml = translateAvsTree(makeParsed({ml}));
+        CHECK(std::get<MultiplierParams>(tml.root.children[0].params).mode == 2);
+
+        EffectNode vd = ape("Holden04: Video Delay");
+        vd.fields = {{"enabled", 1}, {"usebeats", 0}, {"delay", 20}};
+        const auto tvd = translateAvsTree(makeParsed({vd}));
+        const auto& pvd = std::get<VideoDelayParams>(tvd.root.children[0].params);
+        CHECK(pvd.delay == 20);
+        CHECK_FALSE(pvd.useBeats);
+
+        // Multi Delay: mode/buffer + per-buffer delay picked by activebuffer.
+        EffectNode md = ape("Holden05: Multi Delay");
+        md.fields = {{"mode", 2}, {"activebuffer", 3},
+                     {"ub3", 0}, {"dl3", 45}};
+        const auto tmd = translateAvsTree(makeParsed({md}));
+        const auto& pmd = std::get<MultiDelayParams>(tmd.root.children[0].params);
+        CHECK(pmd.mode == 2);
+        CHECK(pmd.buffer == 3);
+        CHECK(pmd.delay == 45);
+    }
+
+    TEST_CASE("Dot Grid: Farbtabelle (Swap) + Felder gemappt")
+    {
+        EffectNode dg = builtin(17);
+        dg.colors = {0x000000FF, 0x00FF0000};  // COLORREF
+        dg.fields = {{"num_colors", 2}, {"spacing", 12}, {"x_move", 64},
+                     {"y_move", -64}, {"blend", 1}};
+        const TranslationResult t = translateAvsTree(makeParsed({dg}));
+        const auto& p = std::get<DotGridParams>(t.root.children[0].params);
+        REQUIRE(p.colors.size() == 2);
+        CHECK(p.colors[0] == 0xFF0000u);
+        CHECK(p.spacing == 12);
+        CHECK(p.xMove == 64);
+        CHECK(p.blend == 1);
+    }
+
+    TEST_CASE("Dot Plane / Fountain: 5 Farben (Swap) + rotVel/angle")
+    {
+        EffectNode dp = builtin(1);
+        dp.colors = {0x000000FF, 0x0000FF00, 0x00FF0000, 0x00FFFFFF, 0x00000000};
+        dp.fields = {{"rotvel", 24}, {"angle", -30}};
+        const TranslationResult t = translateAvsTree(makeParsed({dp}));
+        const auto& p = std::get<DotPlaneParams>(t.root.children[0].params);
+        CHECK(p.colors[0] == 0xFF0000u);
+        CHECK(p.colors[1] == 0x00FF00u);
+        CHECK(p.rotVel == 24);
+        CHECK(p.angle == -30);
+
+        EffectNode df = builtin(19);
+        df.colors = {0x000000FF};
+        df.fields = {{"rotvel", 8}, {"angle", 10}};
+        const TranslationResult t2 = translateAvsTree(makeParsed({df}));
+        CHECK(std::holds_alternative<DotFountainParams>(t2.root.children[0].params));
+    }
+
+    TEST_CASE("Timescope: Felder + Color-Swap gemappt")
+    {
+        EffectNode ts = builtin(39);
+        ts.fields = {{"color", 0x0000FF00},  // COLORREF -> RRGGBB gruen
+                     {"blend", 0}, {"blendavg", 1}, {"which_ch", 2}, {"nbands", 128}};
+        const TranslationResult t = translateAvsTree(makeParsed({ts}));
+        REQUIRE(t.root.children.size() == 1);
+        const auto& p = std::get<TimescopeParams>(t.root.children[0].params);
+        CHECK(p.color == 0x00FF00u);
+        CHECK(p.blend == 2);   // blendavg -> 50/50
+        CHECK(p.channel == 2);
+        CHECK(p.bands == 128);
+    }
+
+    TEST_CASE("Starfield: Felder, Color-Swap + float-Bits gemappt")
+    {
+        std::int32_t warpBits = 0, beatBits = 0;
+        const float warp = 8.0f, beat = 3.0f;
+        std::memcpy(&warpBits, &warp, sizeof(float));
+        std::memcpy(&beatBits, &beat, sizeof(float));
+
+        EffectNode st = builtin(27);
+        st.fields = {{"color", 0x000000FF},           // COLORREF -> RRGGBB rot
+                     {"blend", 0}, {"blendavg", 0},
+                     {"warpSpeed_bits", warpBits},     {"maxStars", 500},
+                     {"onbeat", 1}, {"beatSpeed_bits", beatBits}, {"durFrames", 12}};
+
+        const TranslationResult t = translateAvsTree(makeParsed({st}));
+        REQUIRE(t.root.children.size() == 1);
+        const auto& p = std::get<StarfieldParams>(t.root.children[0].params);
+        CHECK(p.color == 0xFF0000u);
+        CHECK(p.warpSpeed == doctest::Approx(8.0f));
+        CHECK(p.maxStars == 500);
+        CHECK(p.onBeat);
+        CHECK(p.beatSpeed == doctest::Approx(3.0f));
+    }
+
+    TEST_CASE("Water Bump: Felder gemappt + geklammert")
+    {
+        EffectNode wb = builtin(31);
+        wb.fields = {{"density", 20},  {"depth", 800},   {"random_drop", 0},
+                     {"drop_x", 5},    {"drop_y", 2},    {"drop_radius", 0},
+                     {"method", 0}};
+        const TranslationResult t = translateAvsTree(makeParsed({wb}));
+        REQUIRE(t.root.children.size() == 1);
+        const auto& p = std::get<WaterBumpParams>(t.root.children[0].params);
+        CHECK(p.density == 12);       // 20 -> clamp 12
+        CHECK(p.depth == 800);
+        CHECK_FALSE(p.randomDrop);
+        CHECK(p.dropX == 2);          // 5 -> clamp 2
+        CHECK(p.dropY == 2);
+        CHECK(p.dropRadius == 1);     // 0 -> max 1
+    }
+
+    TEST_CASE("Bump: Felder + Licht-Code-Slots gemappt")
+    {
+        EffectNode b = builtin(29);
+        b.fields = {{"depth", 40},  {"depth2", 90}, {"onbeat", 1}, {"durFrames", 10},
+                    {"blend", 1},   {"blendavg", 0}, {"invert", 1}, {"oldstyle", 1}};
+        b.code = {{"frame", "x=0.5"}, {"beat", ""}, {"init", "t=0"}};
+
+        const TranslationResult t = translateAvsTree(makeParsed({b}));
+        REQUIRE(t.root.children.size() == 1);
+        const auto& p = std::get<BumpParams>(t.root.children[0].params);
+        CHECK(p.depth == 40);
+        CHECK(p.depth2 == 90);
+        CHECK(p.onBeat);
+        CHECK(p.invert);
+        CHECK(p.oldStyle);
+        CHECK(p.blend == 1);
+        CHECK(p.frameCode == "x=0.5");
+        CHECK(p.initCode == "t=0");
+    }
+
     TEST_CASE("Interferences: Felder + speed-Bitmuster (float) gemappt")
     {
         std::int32_t speedBits = 0;

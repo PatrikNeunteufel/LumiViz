@@ -181,7 +181,8 @@ inline void parseListBody(Reader& r, EffectNode& node, ParseResult& result,
             }
             else if (isBuiltinApe(apeId))
             {
-                child.name = apeId;   // known, but no core-set decoder yet
+                child.name = apeId;
+                decodeApe(apeId, config, child);   // core-set APE fields (else raw blob)
             }
             else
             {

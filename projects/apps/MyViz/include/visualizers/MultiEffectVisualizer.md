@@ -32,7 +32,33 @@ nach dem AVS-Render-Modell (Analyse §5.1). Import-Ziel für .avs-Presets
   Blend, Hash-Noise) · **Scatter** (`r_scat` — per-Pixel-Zufallsversatz ±4 px) ·
   **Interferences** (`r_interf` — ≤8 gedrehte Kopien, per-Frame akkumulierende
   Rotation + OnBeat-Morph zum *2-Satz, optional RGB-Kanaltrennung; LeafRuntime-
-  State `interfRotation/interfStatus`).
+  State `interfRotation/interfStatus`) · **Water** (`r_water` — Farb-Ripple:
+  Nachbar-Mittel des aktuellen Frames minus Vorframe; persistenter Per-Node-
+  `waterLast`-FBO im LeafRuntime, Blit-Back nach jedem Pass) · **Bump**
+  (`r_bump` — Bump-Lighting aus Luminanz-Gradient; Lichtposition per EEL
+  init/frame/beat → x,y über `ScriptSlotHost`; Depth-OnBeat-Ease wie Mosaic) ·
+  **Water Bump** (`r_waterbump` — Höhenfeld-Wellensimulation: RGBA16F-Ping-Pong
+  (.r aktuell/.g vorher), 8-Nachbar-Propagation + Dämpfung, Beat-Tropfen, dann
+  Refraktion des Bildes über den Höhengradienten; `displaceScale` sichttest-kalibriert).
+- **§5.2-Renderer (Content):** **Starfield** (`r_stars` — CPU-Sternfeld, Z→0
+  pro Frame + Projektion `x/z`, Helligkeit ~(1−z)·speed, WarpSpeed-OnBeat-Ease;
+  additiv über den `ScopeRenderer` gezeichnet; per-Node `stars`-Vektor im LeafRuntime) ·
+  **Timescope** (`r_timescope` — scrollendes Spektrogramm: pro Frame eine
+  Spektrum-Spalte an vorrückender x-Position, per Scissor + Spektrum-Textur
+  in-place ins persistente Bild; Blend Replace/Additiv/50-50) · **Dot Grid**
+  (`r_dotgrid` — scrollendes Farb-Punktraster, zyklende Farbtabelle) · **Dot
+  Plane** (`r_dotpln` — rotierende Audio-Punktebene, Höhe aus Spektrum, 5-Stop-
+  Gradient) · **Dot Fountain** (`r_dotfnt` — 3D-Partikel-Fontäne, per-Node-
+  `fountain`-Vektor). Die 3D-Projektions-/Physik-Skalen sind sichttest-kalibriert.
+- **§5.2-Builtin-APEs (ein `uType`-Shader):** **Channel Shift** (RGB-Permutation,
+  OnBeat-Zufall) · **Color Reduction** (Quantisierung auf 2^levels) · **Multiplier**
+  (Skalierung x8..x0.125). Dispatch per `apeId`-String (Parser `decodeApe`,
+  Translator `mapApe`; Channel-Shift-`mode` = Windows-IDC → 0..5 gemappt).
+- **§5.2-Delays:** **Video Delay** (`r_videodelay`, APE Holden04 — Bild von N
+  Frames zurück; per-Node FBO-Ringpuffer im LeafRuntime) · **Multi Delay**
+  (`r_multidelay`, APE Holden05 — **6 host-globale** FBO-Ringpuffer `m_mdRing[6]`,
+  effektübergreifend geteilt: Input-Knoten füllen, Output-Knoten lesen das
+  verzögerte Bild). `delay` auf 128 gedeckelt; `useBeats` grob ~30 Frames/Beat.
 - **Skript-Effekte (5.4):** Color Modifier (`ScriptLutModule`→256-LUT-Shader),
   Movement/Dynamic Movement (`ScriptGridModule`→per-Frame-Warp-Mesh), Custom BPM
   (Beat-Mutation), Blitter/Roto Feedback (Roto/Zoom-Feedback-Shader), Buffer Save

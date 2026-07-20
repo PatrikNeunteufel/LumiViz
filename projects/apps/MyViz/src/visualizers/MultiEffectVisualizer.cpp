@@ -16,6 +16,7 @@
 
 #include <QOpenGLContext>
 #include <QOpenGLExtraFunctions>
+#include <QOpenGLFramebufferObjectFormat>
 #include <QOpenGLFunctions>
 #include <QString>
 
@@ -400,6 +401,180 @@ void main()
 }
 )";
 
+// AVS "Trans / Water" (ID 20): neighbour average of the current frame minus the
+// previous frame -> a color-space ripple (r_water.cpp). uCur = this frame,
+// uLast = the previous frame's image.
+const char* kWaterFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uCur;
+uniform sampler2D uLast;
+uniform vec2 uTexel;
+out vec4 fragColor;
+void main()
+{
+    vec3 l = texture(uCur, vTex + vec2(-uTexel.x, 0.0)).rgb;
+    vec3 r = texture(uCur, vTex + vec2( uTexel.x, 0.0)).rgb;
+    vec3 u = texture(uCur, vTex + vec2(0.0, -uTexel.y)).rgb;
+    vec3 d = texture(uCur, vTex + vec2(0.0,  uTexel.y)).rgb;
+    vec3 avg = (l + r + u + d) * 0.5;               // wave equation term
+    vec3 last = texture(uLast, vTex).rgb;
+    fragColor = vec4(clamp(avg - last, 0.0, 1.0), 1.0);
+}
+)";
+
+// AVS "Trans / Bump" (ID 29): per-pixel bump lighting from the luminance
+// gradient, lit by a movable source at uLight (r_bump.cpp). Bright near the
+// light where the surface is flat; falls off with distance.
+const char* kBumpFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform vec2 uRes;
+uniform vec2 uLight;
+uniform float uDepth;
+uniform int uInvert;
+uniform int uBlend;
+out vec4 fragColor;
+float dpth(vec2 uv)
+{
+    vec3 c = texture(uTex, uv).rgb;
+    float m = max(max(c.r, c.g), c.b);
+    return uInvert == 1 ? 1.0 - m : m;
+}
+void main()
+{
+    vec3 orig = texture(uTex, vTex).rgb;
+    vec2 t = 1.0 / uRes;
+    float gx = (dpth(vTex + vec2(t.x, 0.0)) - dpth(vTex - vec2(t.x, 0.0))) * 255.0;
+    float gy = (dpth(vTex + vec2(0.0, t.y)) - dpth(vTex - vec2(0.0, t.y))) * 255.0;
+    float lx = (vTex.x - uLight.x) * uRes.x;
+    float ly = (vTex.y - uLight.y) * uRes.y;
+    float c1 = 127.0 - abs(gx - lx);
+    float c2 = 127.0 - abs(gy - ly);
+    float bright = (c1 <= 0.0 || c2 <= 0.0) ? 0.0 : c1 * c2 * uDepth / 16384.0;
+    vec3 lit = orig * clamp(bright / 255.0, 0.0, 1.0);
+    vec3 r;
+    if (uBlend == 1)      r = min(orig + lit, vec3(1.0));
+    else if (uBlend == 2) r = (orig + lit) * 0.5;
+    else                  r = lit;
+    fragColor = vec4(r, 1.0);
+}
+)";
+
+// AVS "Trans / Water Bump" (ID 31): height-field wave propagation. The height
+// buffer packs .r = current, .g = previous; a beat adds a drop. (r_waterbump)
+const char* kWaterBumpPropShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uH;
+uniform vec2 uTexel;
+uniform float uDamp;
+uniform int uDrop;
+uniform vec2 uDropC;
+uniform float uDropR;
+uniform float uDropAmp;
+out vec4 fragColor;
+void main()
+{
+    vec2 t = uTexel;
+    float s =
+        texture(uH, vTex + vec2( t.x, 0.0)).r + texture(uH, vTex + vec2(-t.x, 0.0)).r +
+        texture(uH, vTex + vec2(0.0,  t.y)).r + texture(uH, vTex + vec2(0.0, -t.y)).r +
+        texture(uH, vTex + vec2( t.x,  t.y)).r + texture(uH, vTex + vec2(-t.x,  t.y)).r +
+        texture(uH, vTex + vec2( t.x, -t.y)).r + texture(uH, vTex + vec2(-t.x, -t.y)).r;
+    float cur = texture(uH, vTex).r;
+    float prev = texture(uH, vTex).g;
+    float nh = s * 0.25 - prev;   // wave equation (AVS sum8>>2 - prev)
+    nh -= nh * uDamp;             // damping
+    if (uDrop == 1)
+    {
+        float d = distance(vTex, uDropC) / max(uDropR, 1e-4);
+        if (d < 1.0) nh += cos(d * 1.5707963) * uDropAmp;
+    }
+    fragColor = vec4(nh, cur, 0.0, 1.0);   // new height, old current -> previous
+}
+)";
+
+// Water Bump refraction: displace the image by the height gradient (r_waterbump).
+const char* kWaterBumpDispShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uImg;
+uniform sampler2D uH;
+uniform vec2 uTexel;
+uniform vec2 uRes;
+uniform float uScale;
+out vec4 fragColor;
+void main()
+{
+    float hc = texture(uH, vTex).r;
+    float hr = texture(uH, vTex + vec2(uTexel.x, 0.0)).r;
+    float hd = texture(uH, vTex + vec2(0.0, uTexel.y)).r;
+    vec2 off = vec2(hc - hr, hc - hd) * uScale / uRes;
+    fragColor = vec4(texture(uImg, vTex + off).rgb, 1.0);
+}
+)";
+
+// AVS "Render / Timescope" (ID 39): one spectrum column, tinted by uColor.
+// Drawn scissored to a single x each frame (r_timescope.cpp).
+const char* kTimescopeFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uSpec;
+uniform vec3 uColor;
+uniform float uBands;
+out vec4 fragColor;
+void main()
+{
+    float band = floor(vTex.y * uBands) / uBands;
+    float c = texture(uSpec, vec2(band, 0.5)).r;
+    fragColor = vec4(uColor * c, 1.0);
+}
+)";
+
+// AVS core-set APEs: Channel Shift (uType 0), Color Reduction (1), Multiplier (2).
+const char* kApeFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform int uType;
+uniform int uMode;
+uniform float uLevels;
+out vec4 fragColor;
+void main()
+{
+    vec3 c = texture(uTex, vTex).rgb;
+    vec3 r = c;
+    if (uType == 0)          // channel shift (permute)
+    {
+        if (uMode == 1)      r = c.rbg;
+        else if (uMode == 2) r = c.gbr;
+        else if (uMode == 3) r = c.grb;
+        else if (uMode == 4) r = c.brg;
+        else if (uMode == 5) r = c.bgr;
+        else                 r = c.rgb;
+    }
+    else if (uType == 1)     // colour reduction (quantise per channel)
+    {
+        float L = max(uLevels - 1.0, 1.0);
+        r = floor(c * L + 0.5) / L;
+    }
+    else                     // multiplier
+    {
+        if (uMode == 1)      r = c * 8.0;
+        else if (uMode == 2) r = c * 4.0;
+        else if (uMode == 3) r = c * 2.0;
+        else if (uMode == 4) r = c * 0.5;
+        else if (uMode == 5) r = c * 0.25;
+        else if (uMode == 6) r = c * 0.125;
+        else if (uMode == 0) r = c * 8.0;   // saturate-ish
+        else                 r = c;         // 7: keep
+    }
+    fragColor = vec4(clamp(r, 0.0, 1.0), 1.0);
+}
+)";
+
 QVector3D colorToVec(uint32_t color)
 {
     return {static_cast<float>((color >> 16) & 0xFF) / 255.0f,
@@ -547,6 +722,18 @@ void MultiEffectVisualizer::onCleanup()
     m_grainShader.reset();
     m_scatterShader.reset();
     m_interfShader.reset();
+    m_waterShader.reset();
+    m_bumpShader.reset();
+    m_wbPropShader.reset();
+    m_wbDispShader.reset();
+    m_timescopeShader.reset();
+    m_apeShader.reset();
+    if (m_specTex != 0)
+    {
+        if (auto* ctx = QOpenGLContext::currentContext())
+            ctx->functions()->glDeleteTextures(1, &m_specTex);
+        m_specTex = 0;
+    }
     m_quadVao.reset();
     m_quadVbo.reset();
     m_warpVao.reset();
@@ -583,6 +770,12 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_grainShader = makeProgram(kQuadVertexShader, kGrainFragmentShader);
     m_scatterShader = makeProgram(kQuadVertexShader, kScatterFragmentShader);
     m_interfShader = makeProgram(kQuadVertexShader, kInterfFragmentShader);
+    m_waterShader = makeProgram(kQuadVertexShader, kWaterFragmentShader);
+    m_bumpShader = makeProgram(kQuadVertexShader, kBumpFragmentShader);
+    m_wbPropShader = makeProgram(kQuadVertexShader, kWaterBumpPropShader);
+    m_wbDispShader = makeProgram(kQuadVertexShader, kWaterBumpDispShader);
+    m_timescopeShader = makeProgram(kQuadVertexShader, kTimescopeFragmentShader);
+    m_apeShader = makeProgram(kQuadVertexShader, kApeFragmentShader);
     if (m_fadeShader == nullptr || m_invertShader == nullptr ||
         m_barsShader == nullptr || m_blendShader == nullptr ||
         m_brightShader == nullptr || m_blurShader == nullptr ||
@@ -590,7 +783,10 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_lutShader == nullptr || m_warpShader == nullptr ||
         m_feedbackShader == nullptr || m_mosaicShader == nullptr ||
         m_grainShader == nullptr || m_scatterShader == nullptr ||
-        m_interfShader == nullptr)
+        m_interfShader == nullptr || m_waterShader == nullptr ||
+        m_bumpShader == nullptr || m_wbPropShader == nullptr ||
+        m_wbDispShader == nullptr || m_timescopeShader == nullptr ||
+        m_apeShader == nullptr)
     {
         m_fadeShader.reset();
         m_invertShader.reset();
@@ -607,6 +803,12 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_grainShader.reset();
         m_scatterShader.reset();
         m_interfShader.reset();
+        m_waterShader.reset();
+        m_bumpShader.reset();
+        m_wbPropShader.reset();
+        m_wbDispShader.reset();
+        m_timescopeShader.reset();
+        m_apeShader.reset();
         return false;
     }
 
@@ -687,6 +889,10 @@ void MultiEffectVisualizer::resetRuntimes()
     m_listRuntimes.clear();  // slot hosts / FBOs die with their GL-frame owner
     m_leafRuntimes.clear();
     m_bufferPool.clear();
+    for (auto& ring : m_mdRing) ring.clear();  // Multi Delay shared rings
+    for (int& head : m_mdHead) head = 0;
+    m_mdW = 0;
+    m_mdH = 0;
 }
 
 void MultiEffectVisualizer::destroySurfaces()
@@ -834,6 +1040,19 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const GrainParams& params) const { self.runGrain(params); }
         void operator()(const ScatterParams& params) const { self.runScatter(params); }
         void operator()(const InterferencesParams& params) const { self.runInterferences(node, params); }
+        void operator()(const WaterParams& params) const { self.runWater(node, params); }
+        void operator()(const BumpParams& params) const { self.runBump(node, params); }
+        void operator()(const WaterBumpParams& params) const { self.runWaterBump(node, params); }
+        void operator()(const StarfieldParams& params) const { self.runStarfield(node, params); }
+        void operator()(const TimescopeParams& params) const { self.runTimescope(node, params); }
+        void operator()(const DotGridParams& params) const { self.runDotGrid(node, params); }
+        void operator()(const DotPlaneParams& params) const { self.runDotPlane(node, params); }
+        void operator()(const DotFountainParams& params) const { self.runDotFountain(node, params); }
+        void operator()(const ChannelShiftParams& params) const { self.runChannelShift(node, params); }
+        void operator()(const ColorReductionParams& params) const { self.runColorReduction(params); }
+        void operator()(const MultiplierParams& params) const { self.runMultiplier(params); }
+        void operator()(const VideoDelayParams& params) const { self.runVideoDelay(node, params); }
+        void operator()(const MultiDelayParams& params) const { self.runMultiDelay(params); }
         void operator()(const DebugBarsParams& params) const { self.runDebugBars(params); }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
@@ -1569,6 +1788,680 @@ void MultiEffectVisualizer::runInterferences(const ChainNode& node,
     if (rt.interfRotation > 255.0f) rt.interfRotation -= 255.0f;
     if (rt.interfRotation < -255.0f) rt.interfRotation += 255.0f;
     rt.interfStatus = std::min(rt.interfStatus + params.speed, kPi);
+}
+
+void MultiEffectVisualizer::runWater(const ChainNode& node, const WaterParams&)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    // Persistent previous-frame buffer (r_water lastframe), (re)created on resize.
+    if (rt.waterLast == nullptr || rt.waterW != m_surfaceWidth ||
+        rt.waterH != m_surfaceHeight)
+    {
+        rt.waterLast =
+            std::make_unique<QOpenGLFramebufferObject>(m_surfaceWidth, m_surfaceHeight);
+        rt.waterW = m_surfaceWidth;
+        rt.waterH = m_surfaceHeight;
+        rt.waterLast->bind();
+        f->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        f->glClear(GL_COLOR_BUFFER_BIT);
+        rt.waterLast->release();
+    }
+    if (!rt.waterLast->isValid()) return;
+
+    SurfacePair& pair = active();
+    QOpenGLFramebufferObject* curFbo = pair.current();
+    const unsigned int curTex = curFbo->texture();
+
+    // Ripple: neighbour average of the current frame minus the previous frame.
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    m_waterShader->bind();
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, curTex);
+    m_waterShader->setUniformValue("uCur", 0);
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.waterLast->texture());
+    m_waterShader->setUniformValue("uLast", 1);
+    f->glActiveTexture(GL_TEXTURE0);
+    m_waterShader->setUniformValue(
+        "uTexel", QVector2D(1.0f / static_cast<float>(m_surfaceWidth),
+                            1.0f / static_cast<float>(m_surfaceHeight)));
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    m_waterShader->release();
+    pair.partner()->release();
+    pair.swap();
+
+    // Save THIS frame's input as the previous frame for the next pass.
+    if (QOpenGLFramebufferObject::hasOpenGLFramebufferBlit())
+    {
+        auto* extra = QOpenGLContext::currentContext()->extraFunctions();
+        extra->glBindFramebuffer(GL_READ_FRAMEBUFFER, curFbo->handle());
+        extra->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, rt.waterLast->handle());
+        extra->glBlitFramebuffer(0, 0, m_surfaceWidth, m_surfaceHeight, 0, 0,
+                                 m_surfaceWidth, m_surfaceHeight, GL_COLOR_BUFFER_BIT,
+                                 GL_NEAREST);
+    }
+    bindActive();
+}
+
+void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Light-position script (init/frame/beat -> x, y). Errors disable a slot.
+    const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode;
+    if (rt.bumpHost == nullptr || rt.bumpCompiled != combined)
+    {
+        rt.bumpHost = std::make_unique<ScriptSlotHost>("bump", m_scriptContext,
+                                                       ScriptSlotHost::Dialect::Avs);
+        rt.bumpHost->setSource(Slot::Init, params.initCode);
+        rt.bumpHost->setSource(Slot::Frame, params.frameCode);
+        rt.bumpHost->setSource(Slot::Beat, params.beatCode);
+        rt.bumpHost->compileAll();
+        rt.bumpCompiled = combined;
+        auto& engine = rt.bumpHost->engine();
+        engine.setNumber("x", 0.5);
+        engine.setNumber("y", 0.5);
+        engine.setNumber("bi", 1.0);
+        rt.bumpHost->run(Slot::Init);
+    }
+    {
+        auto& engine = rt.bumpHost->engine();
+        engine.setNumber("isbeat", m_frameBeat ? 1.0 : 0.0);
+        engine.setNumber("islbeat", m_frameBeat ? 1.0 : 0.0);
+        if (rt.bumpHost->has(Slot::Frame)) rt.bumpHost->run(Slot::Frame);
+        if (m_frameBeat && rt.bumpHost->has(Slot::Beat)) rt.bumpHost->run(Slot::Beat);
+        double lx = engine.number("x");
+        double ly = engine.number("y");
+        if (params.oldStyle) { lx /= 100.0; ly /= 100.0; }
+        rt.bumpX = static_cast<float>(lx);
+        rt.bumpY = static_cast<float>(ly);
+    }
+
+    // Depth ease on beat (r_bump thisDepth/nF, same shape as Mosaic).
+    if (rt.bumpDepth <= 0.0f) rt.bumpDepth = static_cast<float>(params.depth);
+    if (params.onBeat && m_frameBeat)
+    {
+        rt.bumpDepth = static_cast<float>(params.depth2);
+        rt.bumpFramesLeft = std::max(1, params.durationFrames);
+    }
+    else if (rt.bumpFramesLeft == 0)
+    {
+        rt.bumpDepth = static_cast<float>(params.depth);
+    }
+    const float thisDepth = rt.bumpDepth;
+    if (rt.bumpFramesLeft > 0)
+    {
+        if (--rt.bumpFramesLeft > 0)
+        {
+            const float step = std::abs(static_cast<float>(params.depth - params.depth2)) /
+                               static_cast<float>(std::max(1, params.durationFrames));
+            rt.bumpDepth += params.depth2 > params.depth ? -step : step;
+        }
+        else
+        {
+            rt.bumpDepth = static_cast<float>(params.depth);
+        }
+    }
+
+    m_bumpShader->bind();
+    m_bumpShader->setUniformValue("uRes",
+                                  QVector2D(static_cast<float>(m_surfaceWidth),
+                                            static_cast<float>(m_surfaceHeight)));
+    m_bumpShader->setUniformValue("uLight", QVector2D(rt.bumpX, rt.bumpY));
+    m_bumpShader->setUniformValue("uDepth", thisDepth * 256.0f / 100.0f);
+    m_bumpShader->setUniformValue("uInvert", params.invert ? 1 : 0);
+    m_bumpShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_bumpShader->release();
+    transformPass(*m_bumpShader);
+}
+
+void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
+                                         const WaterBumpParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    // RGBA16F height ping-pong (.r current, .g previous), (re)made on resize.
+    if (rt.wbHeight[0] == nullptr || rt.wbW != m_surfaceWidth ||
+        rt.wbH != m_surfaceHeight)
+    {
+        QOpenGLFramebufferObjectFormat fmt;
+        fmt.setInternalTextureFormat(GL_RGBA16F);
+        for (auto& fbo : rt.wbHeight)
+        {
+            fbo = std::make_unique<QOpenGLFramebufferObject>(m_surfaceWidth,
+                                                             m_surfaceHeight, fmt);
+            fbo->bind();
+            f->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            f->glClear(GL_COLOR_BUFFER_BIT);
+            fbo->release();
+        }
+        rt.wbCur = 0;
+        rt.wbW = m_surfaceWidth;
+        rt.wbH = m_surfaceHeight;
+    }
+    if (!rt.wbHeight[0]->isValid() || !rt.wbHeight[1]->isValid()) return;
+
+    const QVector2D texel(1.0f / static_cast<float>(m_surfaceWidth),
+                          1.0f / static_cast<float>(m_surfaceHeight));
+
+    // Drop on beat: random spot or a position code (0 near / 1 mid / 2 far).
+    int drop = 0;
+    QVector2D dropC(0.5f, 0.5f);
+    if (m_frameBeat)
+    {
+        drop = 1;
+        if (params.randomDrop)
+        {
+            dropC = QVector2D(static_cast<float>(nextRandom() & 0xffff) / 65535.0f,
+                              static_cast<float>(nextRandom() & 0xffff) / 65535.0f);
+        }
+        else
+        {
+            auto code = [](int c) { return c <= 0 ? 0.25f : (c >= 2 ? 0.75f : 0.5f); };
+            dropC = QVector2D(code(params.dropX), code(params.dropY));
+        }
+    }
+
+    // --- Wave propagation: current page -> the other page --------------------
+    const int src = rt.wbCur;
+    const int dst = 1 - rt.wbCur;
+    rt.wbHeight[dst]->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    m_wbPropShader->bind();
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, rt.wbHeight[src]->texture());
+    m_wbPropShader->setUniformValue("uH", 0);
+    m_wbPropShader->setUniformValue("uTexel", texel);
+    m_wbPropShader->setUniformValue(
+        "uDamp", 1.0f / static_cast<float>(1 << std::clamp(params.density, 1, 12)));
+    m_wbPropShader->setUniformValue("uDrop", drop);
+    m_wbPropShader->setUniformValue("uDropC", dropC);
+    m_wbPropShader->setUniformValue(
+        "uDropR", static_cast<float>(params.dropRadius) / static_cast<float>(m_surfaceWidth));
+    m_wbPropShader->setUniformValue("uDropAmp", -static_cast<float>(params.depth) / 100.0f);
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    m_wbPropShader->release();
+    rt.wbHeight[dst]->release();
+    rt.wbCur = dst;
+
+    // --- Refraction: warp the image by the new height gradient ---------------
+    SurfacePair& pair = active();
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    m_wbDispShader->bind();
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    m_wbDispShader->setUniformValue("uImg", 0);
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.wbHeight[rt.wbCur]->texture());
+    m_wbDispShader->setUniformValue("uH", 1);
+    f->glActiveTexture(GL_TEXTURE0);
+    m_wbDispShader->setUniformValue("uTexel", texel);
+    m_wbDispShader->setUniformValue("uRes",
+                                    QVector2D(static_cast<float>(m_surfaceWidth),
+                                              static_cast<float>(m_surfaceHeight)));
+    m_wbDispShader->setUniformValue("uScale", params.displaceScale);
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    m_wbDispShader->release();
+    pair.partner()->release();
+    pair.swap();
+    bindActive();
+}
+
+void MultiEffectVisualizer::runStarfield(const ChainNode& node,
+                                         const StarfieldParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    const int count = std::clamp(params.maxStars, 1, 8192);
+    auto frand = [this] { return static_cast<float>(nextRandom() & 0xffff) / 65535.0f; };
+    auto respawn = [&](Star& s) {
+        s.x = frand() * 2.0f - 1.0f;
+        s.y = frand() * 2.0f - 1.0f;
+        s.z = 0.02f + frand() * 0.98f;
+        s.speed = 0.1f + frand() * 0.8f;
+    };
+
+    if (static_cast<int>(rt.stars.size()) != count)
+    {
+        rt.stars.resize(static_cast<std::size_t>(count));
+        for (Star& s : rt.stars) respawn(s);
+    }
+
+    // Warp-speed ease on beat (r_stars incBeat, same shape as Mosaic depth).
+    if (rt.starSpeed <= 0.0f) rt.starSpeed = params.warpSpeed;
+    if (params.onBeat && m_frameBeat)
+    {
+        rt.starSpeed = params.beatSpeed;
+        rt.starBeatFrames = std::max(1, params.durationFrames);
+    }
+    else if (rt.starBeatFrames == 0)
+    {
+        rt.starSpeed = params.warpSpeed;
+    }
+    if (rt.starBeatFrames > 0)
+    {
+        if (--rt.starBeatFrames > 0)
+        {
+            const float step = (params.warpSpeed - params.beatSpeed) /
+                               static_cast<float>(std::max(1, params.durationFrames));
+            rt.starSpeed += step;
+        }
+        else
+        {
+            rt.starSpeed = params.warpSpeed;
+        }
+    }
+
+    const QVector3D tint = colorToVec(params.color);
+    std::vector<lumi::modules::SuperscopePoint> points;
+    points.reserve(rt.stars.size());
+    for (Star& s : rt.stars)
+    {
+        s.z -= s.speed * rt.starSpeed / 255.0f;
+        if (s.z <= 0.02f) { respawn(s); continue; }
+        const float px = s.x / s.z;
+        const float py = s.y / s.z;
+        if (px <= -1.0f || px >= 1.0f || py <= -1.0f || py >= 1.0f) continue;
+        const float bright = std::clamp((1.0f - s.z) * s.speed * 1.6f, 0.0f, 1.0f);
+        lumi::modules::SuperscopePoint p;
+        p.x = px;
+        p.y = py;
+        p.r = tint.x();
+        p.g = tint.y();
+        p.b = tint.z();
+        p.a = bright;
+        points.push_back(p);
+    }
+
+    if (points.empty() || !m_scopeRenderer.ready()) return;
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glEnable(GL_BLEND);
+    f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    lumi::render::ScopeRenderer::Params rp;
+    rp.mode = lumi::modules::SuperscopeRenderMode::Dots;
+    rp.dotSize = 2.0f;
+    rp.glowEnabled = false;
+    m_scopeRenderer.draw(points, rp);
+    f->glDisable(GL_BLEND);
+}
+
+void MultiEffectVisualizer::runTimescope(const ChainNode& node,
+                                         const TimescopeParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+    if (m_surfaceWidth <= 0) return;
+    rt.timescopeX = (rt.timescopeX + 1) % m_surfaceWidth;
+
+    // Upload this frame's spectrum to a 1D texture (R32F).
+    const std::vector<float> spec = getSpectrum();
+    static const float kZero = 0.0f;
+    const int n = spec.empty() ? 1 : static_cast<int>(spec.size());
+    if (m_specTex == 0) f->glGenTextures(1, &m_specTex);
+    f->glBindTexture(GL_TEXTURE_2D, m_specTex);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    f->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, n, 1, 0, GL_RED, GL_FLOAT,
+                    spec.empty() ? &kZero : spec.data());
+
+    // Draw one column in place (no swap) into the working buffer.
+    SurfacePair& pair = active();
+    pair.current()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    f->glEnable(GL_SCISSOR_TEST);
+    f->glScissor(rt.timescopeX, 0, 1, m_surfaceHeight);
+    if (params.blend == 1)
+    {
+        f->glEnable(GL_BLEND);
+        f->glBlendFunc(GL_ONE, GL_ONE);  // additive
+    }
+    else if (params.blend == 2)
+    {
+        f->glEnable(GL_BLEND);
+        f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+        f->glBlendColor(0.0f, 0.0f, 0.0f, 0.5f);  // 50/50
+    }
+    else
+    {
+        f->glDisable(GL_BLEND);
+    }
+
+    m_timescopeShader->bind();
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, m_specTex);
+    m_timescopeShader->setUniformValue("uSpec", 0);
+    m_timescopeShader->setUniformValue("uColor", colorToVec(params.color));
+    m_timescopeShader->setUniformValue("uBands",
+                                       static_cast<float>(std::clamp(params.bands, 1, 576)));
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    m_timescopeShader->release();
+
+    f->glDisable(GL_SCISSOR_TEST);
+    f->glDisable(GL_BLEND);
+    pair.current()->release();
+    bindActive();
+}
+
+namespace {
+// Draw a batch of points additively via the scope renderer (Dot renderers).
+void drawDots(lumi::render::ScopeRenderer& renderer,
+              const std::vector<lumi::modules::SuperscopePoint>& points, float dotSize)
+{
+    if (points.empty() || !renderer.ready()) return;
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glEnable(GL_BLEND);
+    f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    lumi::render::ScopeRenderer::Params rp;
+    rp.mode = lumi::modules::SuperscopeRenderMode::Dots;
+    rp.dotSize = dotSize;
+    rp.glowEnabled = false;
+    renderer.draw(points, rp);
+    f->glDisable(GL_BLEND);
+}
+
+// 5-stop colour gradient (Dot Plane/Fountain), t in [0,1] -> rgb.
+QVector3D grad5(const uint32_t (&colors)[5], float t)
+{
+    t = std::clamp(t, 0.0f, 1.0f) * 4.0f;
+    const int i = std::min(3, static_cast<int>(t));
+    const float f = t - static_cast<float>(i);
+    auto rgb = [](uint32_t c) {
+        return QVector3D(static_cast<float>((c >> 16) & 0xFF) / 255.0f,
+                         static_cast<float>((c >> 8) & 0xFF) / 255.0f,
+                         static_cast<float>(c & 0xFF) / 255.0f);
+    };
+    return rgb(colors[i]) * (1.0f - f) + rgb(colors[i + 1]) * f;
+}
+}  // namespace
+
+void MultiEffectVisualizer::runDotGrid(const ChainNode& node, const DotGridParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    const int spacing = std::max(2, params.spacing);
+    const int nc = static_cast<int>(params.colors.size());
+    if (nc == 0) return;
+
+    // Cycle the colour table over time (r_dotgrid color_pos).
+    rt.dotColorPos += 1.0f;
+    const float span = static_cast<float>(nc) * 64.0f;
+    if (rt.dotColorPos >= span) rt.dotColorPos -= span;
+    const int cp = static_cast<int>(rt.dotColorPos);
+    const int p0 = cp / 64;
+    const float cf = static_cast<float>(cp % 64) / 64.0f;
+    auto rgb = [](uint32_t c) {
+        return QVector3D(static_cast<float>((c >> 16) & 0xFF) / 255.0f,
+                         static_cast<float>((c >> 8) & 0xFF) / 255.0f,
+                         static_cast<float>(c & 0xFF) / 255.0f);
+    };
+    const QVector3D col =
+        rgb(params.colors[static_cast<size_t>(p0)]) * (1.0f - cf) +
+        rgb(params.colors[static_cast<size_t>((p0 + 1) % nc)]) * cf;
+
+    rt.dotOffX += static_cast<float>(params.xMove) / 256.0f;
+    rt.dotOffY += static_cast<float>(params.yMove) / 256.0f;
+    const float ox = std::fmod(rt.dotOffX, static_cast<float>(spacing));
+    const float oy = std::fmod(rt.dotOffY, static_cast<float>(spacing));
+
+    std::vector<lumi::modules::SuperscopePoint> pts;
+    for (float py = oy; py < m_surfaceHeight; py += spacing)
+    {
+        for (float px = ox; px < m_surfaceWidth; px += spacing)
+        {
+            lumi::modules::SuperscopePoint p;
+            p.x = px / static_cast<float>(m_surfaceWidth) * 2.0f - 1.0f;
+            p.y = py / static_cast<float>(m_surfaceHeight) * 2.0f - 1.0f;
+            p.r = col.x(); p.g = col.y(); p.b = col.z(); p.a = 1.0f;
+            pts.push_back(p);
+        }
+    }
+    drawDots(m_scopeRenderer, pts, 2.0f);
+}
+
+void MultiEffectVisualizer::runDotPlane(const ChainNode& node, const DotPlaneParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    rt.dotRot += static_cast<float>(params.rotVel) * 0.002f;
+
+    constexpr int kN = 28;
+    const std::vector<float> spec = getSpectrum();
+    const int sl = spec.empty() ? 1 : static_cast<int>(spec.size());
+    const float ca = std::cos(rt.dotRot);
+    const float sa = std::sin(rt.dotRot);
+    const float tilt = static_cast<float>(params.angle) / 90.0f;  // viewing tilt
+
+    std::vector<lumi::modules::SuperscopePoint> pts;
+    pts.reserve(kN * kN);
+    for (int fz = 0; fz < kN; ++fz)
+    {
+        const float z = static_cast<float>(fz) / (kN - 1) * 2.0f - 1.0f;
+        for (int fx = 0; fx < kN; ++fx)
+        {
+            const float x = static_cast<float>(fx) / (kN - 1) * 2.0f - 1.0f;
+            const float hgt = spec[static_cast<size_t>(fx * sl / kN)] * 0.8f;
+            const float rx = x * ca - z * sa;   // rotate around the vertical axis
+            const float rz = x * sa + z * ca;
+            const float wz = rz + 2.5f;          // push away from the camera
+            if (wz <= 0.1f) continue;
+            const float sx = rx / wz * 1.6f;
+            const float sy = (hgt - 0.4f - rz * tilt) / wz * 1.6f;
+            if (sx <= -1.0f || sx >= 1.0f || sy <= -1.0f || sy >= 1.0f) continue;
+            const QVector3D c = grad5(params.colors, hgt / 0.8f);
+            lumi::modules::SuperscopePoint p;
+            p.x = sx; p.y = sy; p.r = c.x(); p.g = c.y(); p.b = c.z(); p.a = 1.0f;
+            pts.push_back(p);
+        }
+    }
+    drawDots(m_scopeRenderer, pts, 2.0f);
+}
+
+void MultiEffectVisualizer::runDotFountain(const ChainNode& node,
+                                           const DotFountainParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    constexpr int kCount = 400;
+    auto frand = [this] { return static_cast<float>(nextRandom() & 0xffff) / 65535.0f; };
+    if (static_cast<int>(rt.fountain.size()) != kCount)
+        rt.fountain.assign(kCount, FountainP{});
+
+    rt.dotRot += static_cast<float>(params.rotVel) * 0.002f;
+    const float level = 0.3f + m_audioLevel * 0.9f;  // emission speed from audio
+    const float tilt = static_cast<float>(params.angle) / 90.0f;
+
+    std::vector<lumi::modules::SuperscopePoint> pts;
+    pts.reserve(kCount);
+    for (FountainP& fp : rt.fountain)
+    {
+        if (fp.vh == 0.0f && fp.h == 0.0f)  // (re)spawn at the nozzle
+        {
+            fp.a = frand() * 6.2831853f;
+            fp.r = 0.0f;
+            fp.h = 0.0f;
+            fp.vh = 0.02f + frand() * 0.03f * level;
+        }
+        fp.h += fp.vh;
+        fp.vh -= 0.0016f;   // gravity
+        fp.r += 0.012f;     // spread outward
+        if (fp.h < 0.0f) { fp.vh = 0.0f; fp.h = 0.0f; continue; }
+
+        const float wx = fp.r * std::cos(fp.a + rt.dotRot);
+        const float wz = fp.r * std::sin(fp.a + rt.dotRot) + 2.0f;
+        if (wz <= 0.1f) continue;
+        const float sx = wx / wz * 1.6f;
+        const float sy = (fp.h - 0.3f - wz * tilt * 0.2f) / wz * 1.6f;
+        if (sx <= -1.0f || sx >= 1.0f || sy <= -1.0f || sy >= 1.0f) continue;
+        const QVector3D c = grad5(params.colors, std::clamp(fp.h * 1.5f, 0.0f, 1.0f));
+        lumi::modules::SuperscopePoint p;
+        p.x = sx; p.y = sy; p.r = c.x(); p.g = c.y(); p.b = c.z(); p.a = 1.0f;
+        pts.push_back(p);
+    }
+    drawDots(m_scopeRenderer, pts, 2.0f);
+}
+
+void MultiEffectVisualizer::runChannelShift(const ChainNode& node,
+                                            const ChannelShiftParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    int mode = std::clamp(params.mode, 0, 5);
+    if (params.onBeat)
+    {
+        if (m_frameBeat || rt.apeChanMode < 0)
+            rt.apeChanMode = static_cast<int>(nextRandom() % 6u);
+        mode = rt.apeChanMode;
+    }
+    m_apeShader->bind();
+    m_apeShader->setUniformValue("uType", 0);
+    m_apeShader->setUniformValue("uMode", mode);
+    m_apeShader->release();
+    transformPass(*m_apeShader);
+}
+
+void MultiEffectVisualizer::runColorReduction(const ColorReductionParams& params)
+{
+    const int levels = std::clamp(params.levels, 1, 8);
+    m_apeShader->bind();
+    m_apeShader->setUniformValue("uType", 1);
+    m_apeShader->setUniformValue("uLevels", static_cast<float>(1 << levels));
+    m_apeShader->release();
+    transformPass(*m_apeShader);
+}
+
+void MultiEffectVisualizer::runMultiplier(const MultiplierParams& params)
+{
+    m_apeShader->bind();
+    m_apeShader->setUniformValue("uType", 2);
+    m_apeShader->setUniformValue("uMode", std::clamp(params.mode, 0, 7));
+    m_apeShader->release();
+    transformPass(*m_apeShader);
+}
+
+void MultiEffectVisualizer::runVideoDelay(const ChainNode& node,
+                                          const VideoDelayParams& params)
+{
+    if (!QOpenGLFramebufferObject::hasOpenGLFramebufferBlit()) return;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* extra = QOpenGLContext::currentContext()->extraFunctions();
+
+    // ~30 frames/beat is a rough conversion (no per-node BPM here); capped for VRAM.
+    const int delay =
+        std::clamp(params.useBeats ? params.delay * 30 : params.delay, 1, 128);
+    const int size = delay + 1;
+
+    if (static_cast<int>(rt.delayRing.size()) != size || rt.delayW != m_surfaceWidth ||
+        rt.delayH != m_surfaceHeight)
+    {
+        rt.delayRing.clear();
+        auto* f = QOpenGLContext::currentContext()->functions();
+        for (int i = 0; i < size; ++i)
+        {
+            auto fbo = std::make_unique<QOpenGLFramebufferObject>(m_surfaceWidth,
+                                                                  m_surfaceHeight);
+            fbo->bind();
+            f->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            f->glClear(GL_COLOR_BUFFER_BIT);
+            fbo->release();
+            rt.delayRing.push_back(std::move(fbo));
+        }
+        rt.delayHead = 0;
+        rt.delayFilled = 0;
+        rt.delayW = m_surfaceWidth;
+        rt.delayH = m_surfaceHeight;
+    }
+
+    QOpenGLFramebufferObject* cur = active().current();
+    auto blit = [&](GLuint from, GLuint to) {
+        extra->glBindFramebuffer(GL_READ_FRAMEBUFFER, from);
+        extra->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, to);
+        extra->glBlitFramebuffer(0, 0, m_surfaceWidth, m_surfaceHeight, 0, 0,
+                                 m_surfaceWidth, m_surfaceHeight, GL_COLOR_BUFFER_BIT,
+                                 GL_NEAREST);
+    };
+
+    // Store this frame, then replace the working image with the delayed one.
+    blit(cur->handle(), rt.delayRing[static_cast<size_t>(rt.delayHead)]->handle());
+    const int srcIdx = rt.delayFilled >= delay
+                           ? (rt.delayHead - delay + size) % size
+                           : rt.delayHead;  // not enough history yet -> current
+    blit(rt.delayRing[static_cast<size_t>(srcIdx)]->handle(), cur->handle());
+
+    rt.delayHead = (rt.delayHead + 1) % size;
+    if (rt.delayFilled < size) ++rt.delayFilled;
+    bindActive();
+}
+
+void MultiEffectVisualizer::runMultiDelay(const MultiDelayParams& params)
+{
+    if (params.mode == 0) return;  // inactive
+    if (!QOpenGLFramebufferObject::hasOpenGLFramebufferBlit()) return;
+    const int b = std::clamp(params.buffer, 0, 5);
+    auto* extra = QOpenGLContext::currentContext()->extraFunctions();
+
+    // Shared rings are dropped on a surface-size change.
+    if (m_mdW != m_surfaceWidth || m_mdH != m_surfaceHeight)
+    {
+        for (auto& ring : m_mdRing) ring.clear();
+        for (int& head : m_mdHead) head = 0;
+        m_mdW = m_surfaceWidth;
+        m_mdH = m_surfaceHeight;
+    }
+
+    const int delay =
+        std::clamp(params.useBeats ? params.delay * 30 : params.delay, 1, 128);
+    auto& ring = m_mdRing[static_cast<size_t>(b)];
+    int& head = m_mdHead[static_cast<size_t>(b)];
+    QOpenGLFramebufferObject* cur = active().current();
+    auto blit = [&](GLuint from, GLuint to) {
+        extra->glBindFramebuffer(GL_READ_FRAMEBUFFER, from);
+        extra->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, to);
+        extra->glBlitFramebuffer(0, 0, m_surfaceWidth, m_surfaceHeight, 0, 0,
+                                 m_surfaceWidth, m_surfaceHeight, GL_COLOR_BUFFER_BIT,
+                                 GL_NEAREST);
+    };
+
+    if (params.mode == 1)  // input: (re)size the ring, store this frame
+    {
+        const int size = delay + 1;
+        if (static_cast<int>(ring.size()) != size)
+        {
+            ring.clear();
+            auto* f = QOpenGLContext::currentContext()->functions();
+            for (int i = 0; i < size; ++i)
+            {
+                auto fbo = std::make_unique<QOpenGLFramebufferObject>(m_surfaceWidth,
+                                                                      m_surfaceHeight);
+                fbo->bind();
+                f->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                f->glClear(GL_COLOR_BUFFER_BIT);
+                fbo->release();
+                ring.push_back(std::move(fbo));
+            }
+            head = 0;
+        }
+        blit(cur->handle(), ring[static_cast<size_t>(head)]->handle());
+        head = (head + 1) % size;
+    }
+    else if (params.mode == 2 && !ring.empty())  // output: read the delayed frame
+    {
+        const int size = static_cast<int>(ring.size());
+        const int d = std::min(delay, size - 1);
+        const int srcIdx = (head - d - 1 + size) % size;  // head points past newest
+        blit(ring[static_cast<size_t>(srcIdx)]->handle(), cur->handle());
+    }
+    bindActive();
 }
 
 // =============================================================================

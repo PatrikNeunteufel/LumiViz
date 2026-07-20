@@ -194,6 +194,30 @@ struct WriteVisitor
         o["blend"] = p.blend;
     }
     void operator()(const ScatterParams&) const {}
+    void operator()(const WaterParams&) const {}
+    void operator()(const BumpParams& p) const
+    {
+        o["depth"] = p.depth;
+        o["depth2"] = p.depth2;
+        o["onBeat"] = p.onBeat;
+        o["durationFrames"] = p.durationFrames;
+        o["invert"] = p.invert;
+        o["oldStyle"] = p.oldStyle;
+        o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
+    void operator()(const WaterBumpParams& p) const
+    {
+        o["density"] = p.density;
+        o["depth"] = p.depth;
+        o["randomDrop"] = p.randomDrop;
+        o["dropX"] = p.dropX;
+        o["dropY"] = p.dropY;
+        o["dropRadius"] = p.dropRadius;
+        o["displaceScale"] = p.displaceScale;
+    }
     void operator()(const InterferencesParams& p) const
     {
         o["points"] = p.points;
@@ -208,6 +232,67 @@ struct WriteVisitor
         o["onBeat"] = p.onBeat;
         o["speed"] = p.speed;
         o["blend"] = p.blend;
+    }
+    void operator()(const StarfieldParams& p) const
+    {
+        o["color"] = static_cast<double>(p.color);
+        o["warpSpeed"] = p.warpSpeed;
+        o["maxStars"] = p.maxStars;
+        o["onBeat"] = p.onBeat;
+        o["beatSpeed"] = p.beatSpeed;
+        o["durationFrames"] = p.durationFrames;
+    }
+    void operator()(const TimescopeParams& p) const
+    {
+        o["color"] = static_cast<double>(p.color);
+        o["blend"] = p.blend;
+        o["channel"] = p.channel;
+        o["bands"] = p.bands;
+    }
+    void operator()(const DotGridParams& p) const
+    {
+        QJsonArray cols;
+        for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
+        o["colors"] = cols;
+        o["spacing"] = p.spacing;
+        o["xMove"] = p.xMove;
+        o["yMove"] = p.yMove;
+        o["blend"] = p.blend;
+    }
+    void operator()(const DotPlaneParams& p) const
+    {
+        QJsonArray cols;
+        for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
+        o["colors"] = cols;
+        o["rotVel"] = p.rotVel;
+        o["angle"] = p.angle;
+    }
+    void operator()(const DotFountainParams& p) const
+    {
+        QJsonArray cols;
+        for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
+        o["colors"] = cols;
+        o["rotVel"] = p.rotVel;
+        o["angle"] = p.angle;
+    }
+    void operator()(const ChannelShiftParams& p) const
+    {
+        o["mode"] = p.mode;
+        o["onBeat"] = p.onBeat;
+    }
+    void operator()(const ColorReductionParams& p) const { o["levels"] = p.levels; }
+    void operator()(const MultiplierParams& p) const { o["mode"] = p.mode; }
+    void operator()(const VideoDelayParams& p) const
+    {
+        o["useBeats"] = p.useBeats;
+        o["delay"] = p.delay;
+    }
+    void operator()(const MultiDelayParams& p) const
+    {
+        o["mode"] = p.mode;
+        o["buffer"] = p.buffer;
+        o["delay"] = p.delay;
+        o["useBeats"] = p.useBeats;
     }
     void operator()(const DebugBarsParams& p) const
     {
@@ -388,6 +473,35 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     }
     if (type == "scatter")
         return ScatterParams{};
+    if (type == "water")
+        return WaterParams{};
+    if (type == "waterBump")
+    {
+        WaterBumpParams p;
+        p.density = getInt(o, "density", 5);
+        p.depth = getInt(o, "depth", 600);
+        p.randomDrop = getBool(o, "randomDrop", true);
+        p.dropX = getInt(o, "dropX", 1);
+        p.dropY = getInt(o, "dropY", 1);
+        p.dropRadius = getInt(o, "dropRadius", 40);
+        p.displaceScale = static_cast<float>(getDouble(o, "displaceScale", 6.0));
+        return p;
+    }
+    if (type == "bump")
+    {
+        BumpParams p;
+        p.depth = getInt(o, "depth", 30);
+        p.depth2 = getInt(o, "depth2", 100);
+        p.onBeat = getBool(o, "onBeat", false);
+        p.durationFrames = getInt(o, "durationFrames", 15);
+        p.invert = getBool(o, "invert", false);
+        p.oldStyle = getBool(o, "oldStyle", false);
+        p.blend = getInt(o, "blend", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
     if (type == "interferences")
     {
         InterferencesParams p;
@@ -403,6 +517,77 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.onBeat = getBool(o, "onBeat", false);
         p.speed = static_cast<float>(getDouble(o, "speed", 0.2));
         p.blend = getInt(o, "blend", 0);
+        return p;
+    }
+    if (type == "starfield")
+    {
+        StarfieldParams p;
+        p.color = getColor(o, "color", 0xFFFFFF);
+        p.warpSpeed = static_cast<float>(getDouble(o, "warpSpeed", 6.0));
+        p.maxStars = getInt(o, "maxStars", 350);
+        p.onBeat = getBool(o, "onBeat", false);
+        p.beatSpeed = static_cast<float>(getDouble(o, "beatSpeed", 4.0));
+        p.durationFrames = getInt(o, "durationFrames", 15);
+        return p;
+    }
+    if (type == "timescope")
+    {
+        TimescopeParams p;
+        p.color = getColor(o, "color", 0xFFFFFF);
+        p.blend = getInt(o, "blend", 0);
+        p.channel = getInt(o, "channel", 2);
+        p.bands = getInt(o, "bands", 576);
+        return p;
+    }
+    if (type == "dotGrid")
+    {
+        DotGridParams p;
+        p.colors.clear();
+        for (const QJsonValue& v : o.value("colors").toArray())
+            p.colors.push_back(static_cast<uint32_t>(v.toDouble()));
+        if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
+        p.spacing = getInt(o, "spacing", 8);
+        p.xMove = getInt(o, "xMove", 128);
+        p.yMove = getInt(o, "yMove", 128);
+        p.blend = getInt(o, "blend", 0);
+        return p;
+    }
+    if (type == "dotPlane" || type == "dotFountain")
+    {
+        const QJsonArray cols = o.value("colors").toArray();
+        auto fill = [&](uint32_t (&dst)[5]) {
+            for (int i = 0; i < 5 && i < cols.size(); ++i)
+                dst[i] = static_cast<uint32_t>(cols[i].toDouble());
+        };
+        if (type == "dotPlane")
+        {
+            DotPlaneParams p;
+            fill(p.colors);
+            p.rotVel = getInt(o, "rotVel", 16);
+            p.angle = getInt(o, "angle", -20);
+            return p;
+        }
+        DotFountainParams p;
+        fill(p.colors);
+        p.rotVel = getInt(o, "rotVel", 16);
+        p.angle = getInt(o, "angle", -20);
+        return p;
+    }
+    if (type == "channelShift")
+        return ChannelShiftParams{getInt(o, "mode", 1), getBool(o, "onBeat", false)};
+    if (type == "colorReduction")
+        return ColorReductionParams{getInt(o, "levels", 8)};
+    if (type == "multiplier")
+        return MultiplierParams{getInt(o, "mode", 3)};
+    if (type == "videoDelay")
+        return VideoDelayParams{getBool(o, "useBeats", false), getInt(o, "delay", 10)};
+    if (type == "multiDelay")
+    {
+        MultiDelayParams p;
+        p.mode = getInt(o, "mode", 0);
+        p.buffer = getInt(o, "buffer", 0);
+        p.delay = getInt(o, "delay", 10);
+        p.useBeats = getBool(o, "useBeats", false);
         return p;
     }
     if (type == "debugBars")
@@ -439,7 +624,20 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const MosaicParams&) const { return "mosaic"; }
         QString operator()(const GrainParams&) const { return "grain"; }
         QString operator()(const ScatterParams&) const { return "scatter"; }
+        QString operator()(const WaterParams&) const { return "water"; }
+        QString operator()(const BumpParams&) const { return "bump"; }
+        QString operator()(const WaterBumpParams&) const { return "waterBump"; }
         QString operator()(const InterferencesParams&) const { return "interferences"; }
+        QString operator()(const StarfieldParams&) const { return "starfield"; }
+        QString operator()(const TimescopeParams&) const { return "timescope"; }
+        QString operator()(const DotGridParams&) const { return "dotGrid"; }
+        QString operator()(const DotPlaneParams&) const { return "dotPlane"; }
+        QString operator()(const DotFountainParams&) const { return "dotFountain"; }
+        QString operator()(const ChannelShiftParams&) const { return "channelShift"; }
+        QString operator()(const ColorReductionParams&) const { return "colorReduction"; }
+        QString operator()(const MultiplierParams&) const { return "multiplier"; }
+        QString operator()(const VideoDelayParams&) const { return "videoDelay"; }
+        QString operator()(const MultiDelayParams&) const { return "multiDelay"; }
         QString operator()(const DebugBarsParams&) const { return "debugBars"; }
         QString operator()(const PassthroughParams&) const { return "passthrough"; }
     };

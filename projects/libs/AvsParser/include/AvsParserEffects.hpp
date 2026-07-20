@@ -366,6 +366,78 @@ inline void decodeScatter(Reader& r, EffectNode& n)   // r_scat.cpp
     readField(r, n, "enabled");
 }
 
+inline void decodeWater(Reader& r, EffectNode& n)   // r_water.cpp
+{
+    readField(r, n, "enabled");
+}
+
+inline void decodeDotGrid(Reader& r, EffectNode& n)   // r_dotgrid.cpp
+{
+    std::int32_t nc = 0;
+    if (!r.tryI32(nc)) return;
+    if (nc <= 16)
+    {
+        std::int32_t c = 0;
+        while (static_cast<std::int32_t>(n.colors.size()) < nc && r.tryI32(c))
+            n.colors.push_back(static_cast<std::uint32_t>(c));
+    }
+    else nc = 0;
+    addField(n, "num_colors", nc);
+    readField(r, n, "spacing") && readField(r, n, "x_move") &&
+        readField(r, n, "y_move") && readField(r, n, "blend");
+}
+
+inline void decodeDotPlaneFountain(Reader& r, EffectNode& n)   // r_dotpln / r_dotfnt
+{
+    readField(r, n, "rotvel");
+    std::int32_t c = 0;
+    for (int i = 0; i < 5 && r.tryI32(c); ++i)
+        n.colors.push_back(static_cast<std::uint32_t>(c));
+    readField(r, n, "angle");
+    readField(r, n, "r_raw");
+}
+
+inline void decodeTimescope(Reader& r, EffectNode& n)   // r_timescope.cpp
+{
+    readField(r, n, "enabled") && readField(r, n, "color") &&
+        readField(r, n, "blend") && readField(r, n, "blendavg") &&
+        readField(r, n, "which_ch") && readField(r, n, "nbands");
+}
+
+inline void decodeStarfield(Reader& r, EffectNode& n)   // r_stars.cpp
+{
+    // warpSpeed / beatSpeed are float32; stored as int32 bits, cast in translator.
+    readField(r, n, "enabled") && readField(r, n, "color") &&
+        readField(r, n, "blend") && readField(r, n, "blendavg") &&
+        readField(r, n, "warpSpeed_bits") && readField(r, n, "maxStars") &&
+        readField(r, n, "onbeat") && readField(r, n, "beatSpeed_bits") &&
+        readField(r, n, "durFrames");
+}
+
+inline void decodeWaterBump(Reader& r, EffectNode& n)   // r_waterbump.cpp
+{
+    readField(r, n, "enabled") && readField(r, n, "density") &&
+        readField(r, n, "depth") && readField(r, n, "random_drop") &&
+        readField(r, n, "drop_x") && readField(r, n, "drop_y") &&
+        readField(r, n, "drop_radius") && readField(r, n, "method");
+}
+
+inline void decodeBump(Reader& r, EffectNode& n)   // r_bump.cpp
+{
+    readField(r, n, "enabled") && readField(r, n, "onbeat") &&
+        readField(r, n, "durFrames") && readField(r, n, "depth") &&
+        readField(r, n, "depth2") && readField(r, n, "blend") &&
+        readField(r, n, "blendavg");
+    // Three length-prefixed EEL strings: code1 = frame, code2 = beat, code3 = init.
+    n.code.push_back(CodeSlot{"frame", r.loadString()});
+    n.code.push_back(CodeSlot{"beat", r.loadString()});
+    n.code.push_back(CodeSlot{"init", r.loadString()});
+    readFieldOr(r, n, "showlight", 0);
+    readFieldOr(r, n, "invert", 0);
+    readFieldOr(r, n, "oldstyle", 1);   // absent -> legacy scaling
+    readFieldOr(r, n, "buffern", 0);
+}
+
 inline void decodeInterferences(Reader& r, EffectNode& n)   // r_interf.cpp
 {
     // `speed` is a float32 on disk; stored as its raw int32 bit pattern here and
@@ -419,8 +491,11 @@ inline bool decodeBuiltin(std::int32_t builtinIndex, Reader& r, EffectNode& node
 {
     switch (builtinIndex)
     {
+        case 1:  decodeDotPlaneFountain(r, node); break;
         case 3:  decodeFadeout(r, node); break;
         case 4:  decodeBlitterFeedback(r, node); break;
+        case 17: decodeDotGrid(r, node); break;
+        case 19: decodeDotPlaneFountain(r, node); break;
         case 5:  decodeOnBeatClear(r, node); break;
         case 6:  decodeBlur(r, node); break;
         case 9:  decodeRotoBlitter(r, node); break;
@@ -430,10 +505,15 @@ inline bool decodeBuiltin(std::int32_t builtinIndex, Reader& r, EffectNode& node
         case 22: decodeBrightness(r, node); break;
         case 25: decodeClearScreen(r, node); break;
         case 16: decodeScatter(r, node); break;
+        case 20: decodeWater(r, node); break;
         case 24: decodeGrain(r, node); break;
         case 26: decodeMirror(r, node); break;
+        case 27: decodeStarfield(r, node); break;
+        case 29: decodeBump(r, node); break;
         case 30: decodeMosaic(r, node); break;
+        case 31: decodeWaterBump(r, node); break;
         case 33: decodeCustomBpm(r, node); break;
+        case 39: decodeTimescope(r, node); break;
         case 41: decodeInterferences(r, node); break;
         case 36: decodeSuperScope(r, node); break;
         case 37: decodeInvert(r, node); break;
@@ -443,6 +523,35 @@ inline bool decodeBuiltin(std::int32_t builtinIndex, Reader& r, EffectNode& node
         case 45: decodeColorModifier(r, node); break;
         default: return false;
     }
+    node.decoded = true;
+    return true;
+}
+
+/// @brief Decode the config blob of a compiled-in builtin APE (by id string).
+///        Returns true (and sets decoded) for the core-set APEs.
+inline bool decodeApe(std::string_view apeId, Reader& r, EffectNode& node)
+{
+    if (apeId == "Channel Shift")
+        readField(r, node, "mode") && readField(r, node, "onbeat");
+    else if (apeId == "Color Reduction")
+        readField(r, node, "levels");
+    else if (apeId == "Multiplier")
+        readField(r, node, "ml");
+    else if (apeId == "Holden04: Video Delay")
+        readField(r, node, "enabled") && readField(r, node, "usebeats") &&
+            readField(r, node, "delay");
+    else if (apeId == "Holden05: Multi Delay")
+    {
+        readField(r, node, "mode");
+        readField(r, node, "activebuffer");
+        for (int i = 0; i < 6; ++i)   // 6 shared buffers: usebeats + delay each
+        {
+            readField(r, node, ("ub" + std::to_string(i)).c_str());
+            readField(r, node, ("dl" + std::to_string(i)).c_str());
+        }
+    }
+    else
+        return false;  // unknown APE: raw blob preserved
     node.decoded = true;
     return true;
 }

@@ -78,6 +78,19 @@ const std::vector<EffectType>& effectPalette()
         {"Mosaic", [] { return EffectParams{MosaicParams{}}; }},
         {"Grain", [] { return EffectParams{GrainParams{}}; }},
         {"Scatter", [] { return EffectParams{ScatterParams{}}; }},
+        {"Water", [] { return EffectParams{WaterParams{}}; }},
+        {"Bump", [] { return EffectParams{BumpParams{}}; }},
+        {"Water Bump", [] { return EffectParams{WaterBumpParams{}}; }},
+        {"Starfield", [] { return EffectParams{StarfieldParams{}}; }},
+        {"Timescope", [] { return EffectParams{TimescopeParams{}}; }},
+        {"Dot Grid", [] { return EffectParams{DotGridParams{}}; }},
+        {"Dot Plane", [] { return EffectParams{DotPlaneParams{}}; }},
+        {"Dot Fountain", [] { return EffectParams{DotFountainParams{}}; }},
+        {"Channel Shift", [] { return EffectParams{ChannelShiftParams{}}; }},
+        {"Color Reduction", [] { return EffectParams{ColorReductionParams{}}; }},
+        {"Multiplier", [] { return EffectParams{MultiplierParams{}}; }},
+        {"Video Delay", [] { return EffectParams{VideoDelayParams{}}; }},
+        {"Multi Delay", [] { return EffectParams{MultiDelayParams{}}; }},
         {"Interferences", [] { return EffectParams{InterferencesParams{}}; }},
         {"Debug Bars", [] { return EffectParams{DebugBarsParams{}}; }},
     };
@@ -1125,6 +1138,35 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         info->setWordWrap(true);
         form->addRow(info);
     }
+    else if (std::get_if<WaterParams>(&params) != nullptr)
+    {
+        auto* info = new QLabel(tr("Water ripple — neighbour average minus the previous frame (no parameters)."), m_propPage);
+        info->setWordWrap(true);
+        form->addRow(info);
+    }
+    else if (auto* p = std::get_if<BumpParams>(&params))
+    {
+        addInt(tr("Depth"), p->depth, 0, 100, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).depth = v; });
+        addBool(tr("Invert"), p->invert, [](ChainNode& n, bool v) { std::get<BumpParams>(n.params).invert = v; });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).blend = v; });
+        addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<BumpParams>(n.params).onBeat = v; });
+        addInt(tr("Beat depth"), p->depth2, 0, 100, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).depth2 = v; });
+        addInt(tr("Duration (frames)"), p->durationFrames, 1, 200, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).durationFrames = v; });
+        addBool(tr("Old-style x,y (0..100)"), p->oldStyle, [](ChainNode& n, bool v) { std::get<BumpParams>(n.params).oldStyle = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BumpParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame (light x,y)"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BumpParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BumpParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<WaterBumpParams>(&params))
+    {
+        addInt(tr("Density (damping)"), p->density, 1, 12, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).density = v; });
+        addInt(tr("Drop depth"), p->depth, 0, 2000, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).depth = v; });
+        addDouble(tr("Refraction"), p->displaceScale, 0.0, 40.0, 0.5, [](ChainNode& n, double v) { std::get<WaterBumpParams>(n.params).displaceScale = static_cast<float>(v); });
+        addBool(tr("Random drop"), p->randomDrop, [](ChainNode& n, bool v) { std::get<WaterBumpParams>(n.params).randomDrop = v; });
+        addEnum(tr("Drop X"), p->dropX, {"Near", "Mid", "Far"}, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).dropX = v; });
+        addEnum(tr("Drop Y"), p->dropY, {"Near", "Mid", "Far"}, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).dropY = v; });
+        addInt(tr("Drop radius"), p->dropRadius, 1, 200, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).dropRadius = v; });
+    }
     else if (auto* p = std::get_if<InterferencesParams>(&params))
     {
         addInt(tr("Points"), p->points, 1, 8, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).points = v; });
@@ -1139,6 +1181,70 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         addInt(tr("Beat alpha"), p->alpha2, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).alpha2 = v; });
         addInt(tr("Beat rotation/frame"), p->rotationInc2, -64, 64, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).rotationInc2 = v; });
         addDouble(tr("Beat speed"), p->speed, 0.01, 2.0, 0.01, [](ChainNode& n, double v) { std::get<InterferencesParams>(n.params).speed = static_cast<float>(v); });
+    }
+    else if (auto* p = std::get_if<StarfieldParams>(&params))
+    {
+        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<StarfieldParams>(n.params).color = v; });
+        addInt(tr("Stars"), p->maxStars, 1, 8192, [](ChainNode& n, int v) { std::get<StarfieldParams>(n.params).maxStars = v; });
+        addDouble(tr("Warp speed"), p->warpSpeed, 0.1, 50.0, 0.5, [](ChainNode& n, double v) { std::get<StarfieldParams>(n.params).warpSpeed = static_cast<float>(v); });
+        addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<StarfieldParams>(n.params).onBeat = v; });
+        addDouble(tr("Beat speed"), p->beatSpeed, 0.1, 50.0, 0.5, [](ChainNode& n, double v) { std::get<StarfieldParams>(n.params).beatSpeed = static_cast<float>(v); });
+        addInt(tr("Duration (frames)"), p->durationFrames, 1, 200, [](ChainNode& n, int v) { std::get<StarfieldParams>(n.params).durationFrames = v; });
+    }
+    else if (auto* p = std::get_if<TimescopeParams>(&params))
+    {
+        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<TimescopeParams>(n.params).color = v; });
+        addInt(tr("Bands"), p->bands, 1, 576, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).bands = v; });
+        addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).channel = v; });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).blend = v; });
+    }
+    else if (auto* p = std::get_if<DotGridParams>(&params))
+    {
+        addInt(tr("Spacing"), p->spacing, 2, 128, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).spacing = v; });
+        addInt(tr("X move"), p->xMove, -1024, 1024, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).xMove = v; });
+        addInt(tr("Y move"), p->yMove, -1024, 1024, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).yMove = v; });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).blend = v; });
+        if (!p->colors.empty())
+            addColor(tr("Color 1"), p->colors[0], [](ChainNode& n, uint32_t v) { std::get<DotGridParams>(n.params).colors[0] = v; });
+    }
+    else if (auto* p = std::get_if<DotPlaneParams>(&params))
+    {
+        addInt(tr("Rotation speed"), p->rotVel, -50, 50, [](ChainNode& n, int v) { std::get<DotPlaneParams>(n.params).rotVel = v; });
+        addInt(tr("Angle"), p->angle, -90, 90, [](ChainNode& n, int v) { std::get<DotPlaneParams>(n.params).angle = v; });
+        for (int i = 0; i < 5; ++i)
+            addColor(tr("Color %1").arg(i + 1), p->colors[i], [i](ChainNode& n, uint32_t v) { std::get<DotPlaneParams>(n.params).colors[i] = v; });
+    }
+    else if (auto* p = std::get_if<DotFountainParams>(&params))
+    {
+        addInt(tr("Rotation speed"), p->rotVel, -50, 50, [](ChainNode& n, int v) { std::get<DotFountainParams>(n.params).rotVel = v; });
+        addInt(tr("Angle"), p->angle, -90, 90, [](ChainNode& n, int v) { std::get<DotFountainParams>(n.params).angle = v; });
+        for (int i = 0; i < 5; ++i)
+            addColor(tr("Color %1").arg(i + 1), p->colors[i], [i](ChainNode& n, uint32_t v) { std::get<DotFountainParams>(n.params).colors[i] = v; });
+    }
+    else if (auto* p = std::get_if<ChannelShiftParams>(&params))
+    {
+        addEnum(tr("Mode"), p->mode, {"RGB", "RBG", "GBR", "GRB", "BRG", "BGR"}, [](ChainNode& n, int v) { std::get<ChannelShiftParams>(n.params).mode = v; });
+        addBool(tr("On beat (random)"), p->onBeat, [](ChainNode& n, bool v) { std::get<ChannelShiftParams>(n.params).onBeat = v; });
+    }
+    else if (auto* p = std::get_if<ColorReductionParams>(&params))
+    {
+        addInt(tr("Levels (bits)"), p->levels, 1, 8, [](ChainNode& n, int v) { std::get<ColorReductionParams>(n.params).levels = v; });
+    }
+    else if (auto* p = std::get_if<MultiplierParams>(&params))
+    {
+        addEnum(tr("Factor"), p->mode, {"Saturate", "x8", "x4", "x2", "x0.5", "x0.25", "x0.125", "Keep"}, [](ChainNode& n, int v) { std::get<MultiplierParams>(n.params).mode = v; });
+    }
+    else if (auto* p = std::get_if<VideoDelayParams>(&params))
+    {
+        addInt(tr("Delay"), p->delay, 1, 128, [](ChainNode& n, int v) { std::get<VideoDelayParams>(n.params).delay = v; });
+        addBool(tr("In beats"), p->useBeats, [](ChainNode& n, bool v) { std::get<VideoDelayParams>(n.params).useBeats = v; });
+    }
+    else if (auto* p = std::get_if<MultiDelayParams>(&params))
+    {
+        addEnum(tr("Mode"), p->mode, {"None", "Input (write)", "Output (read)"}, [](ChainNode& n, int v) { std::get<MultiDelayParams>(n.params).mode = v; });
+        addInt(tr("Buffer"), p->buffer, 0, 5, [](ChainNode& n, int v) { std::get<MultiDelayParams>(n.params).buffer = v; });
+        addInt(tr("Delay"), p->delay, 1, 128, [](ChainNode& n, int v) { std::get<MultiDelayParams>(n.params).delay = v; });
+        addBool(tr("In beats"), p->useBeats, [](ChainNode& n, bool v) { std::get<MultiDelayParams>(n.params).useBeats = v; });
     }
     else if (auto* p = std::get_if<DebugBarsParams>(&params))
     {

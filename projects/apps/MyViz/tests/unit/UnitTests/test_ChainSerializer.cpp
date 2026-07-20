@@ -125,6 +125,168 @@ TEST_SUITE("ChainSerializer")
         CHECK(std::holds_alternative<ScatterParams>(restored.children[1].params));
         CHECK(effectTypeKey(EffectParams{ScatterParams{}}) == "scatter");
         CHECK(effectTypeKey(EffectParams{GrainParams{}}) == "grain");
+        CHECK(effectTypeKey(EffectParams{WaterParams{}}) == "water");
+        // Water round-trips as a bare type key
+        ChainNode wroot; wroot.params = ListParams{};
+        ChainNode w; w.params = WaterParams{}; wroot.children.push_back(std::move(w));
+        const ChainNode wrestored = chainFromJson(chainToJson(wroot), nullptr);
+        REQUIRE(wrestored.children.size() == 1);
+        CHECK(std::holds_alternative<WaterParams>(wrestored.children[0].params));
+    }
+
+    TEST_CASE("APE-Effekte ueberleben den Round-Trip")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode cs; cs.params = ChannelShiftParams{4, true};
+        ChainNode cr; cr.params = ColorReductionParams{3};
+        ChainNode ml; ml.params = MultiplierParams{5};
+        root.children.push_back(std::move(cs));
+        root.children.push_back(std::move(cr));
+        root.children.push_back(std::move(ml));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 3);
+        const auto& c = std::get<ChannelShiftParams>(r.children[0].params);
+        CHECK(c.mode == 4);
+        CHECK(c.onBeat == true);
+        CHECK(std::get<ColorReductionParams>(r.children[1].params).levels == 3);
+        CHECK(std::get<MultiplierParams>(r.children[2].params).mode == 5);
+        CHECK(effectTypeKey(EffectParams{ColorReductionParams{}}) == "colorReduction");
+
+        // Video Delay round-trip
+        ChainNode vroot; vroot.params = ListParams{};
+        ChainNode vd; vd.params = VideoDelayParams{true, 42}; vroot.children.push_back(std::move(vd));
+        const ChainNode vr = chainFromJson(chainToJson(vroot), nullptr);
+        const auto& vp = std::get<VideoDelayParams>(vr.children[0].params);
+        CHECK(vp.useBeats == true);
+        CHECK(vp.delay == 42);
+        CHECK(effectTypeKey(EffectParams{VideoDelayParams{}}) == "videoDelay");
+
+        // Multi Delay round-trip
+        ChainNode mroot; mroot.params = ListParams{};
+        ChainNode md; md.params = MultiDelayParams{2, 4, 33, true}; mroot.children.push_back(std::move(md));
+        const ChainNode mr = chainFromJson(chainToJson(mroot), nullptr);
+        const auto& mp = std::get<MultiDelayParams>(mr.children[0].params);
+        CHECK(mp.mode == 2);
+        CHECK(mp.buffer == 4);
+        CHECK(mp.delay == 33);
+        CHECK(mp.useBeats == true);
+        CHECK(effectTypeKey(EffectParams{MultiDelayParams{}}) == "multiDelay");
+    }
+
+    TEST_CASE("Dot-Renderer ueberleben den Round-Trip")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode g; DotGridParams gp; gp.colors = {0x112233u, 0x445566u};
+        gp.spacing = 16; gp.xMove = 32; gp.yMove = -32; gp.blend = 2; g.params = gp;
+        ChainNode pl; DotPlaneParams pp; pp.colors[0] = 0xABCDEFu; pp.rotVel = 20; pp.angle = -25; pl.params = pp;
+        ChainNode fn; DotFountainParams fpp; fpp.colors[4] = 0x010203u; fpp.rotVel = 9; fn.params = fpp;
+        root.children.push_back(std::move(g));
+        root.children.push_back(std::move(pl));
+        root.children.push_back(std::move(fn));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 3);
+        const auto& g2 = std::get<DotGridParams>(r.children[0].params);
+        CHECK(g2.colors.size() == 2);
+        CHECK(g2.colors[0] == 0x112233u);
+        CHECK(g2.spacing == 16);
+        CHECK(g2.blend == 2);
+        const auto& p2 = std::get<DotPlaneParams>(r.children[1].params);
+        CHECK(p2.colors[0] == 0xABCDEFu);
+        CHECK(p2.rotVel == 20);
+        CHECK(p2.angle == -25);
+        const auto& f2 = std::get<DotFountainParams>(r.children[2].params);
+        CHECK(f2.colors[4] == 0x010203u);
+        CHECK(f2.rotVel == 9);
+        CHECK(effectTypeKey(EffectParams{DotFountainParams{}}) == "dotFountain");
+    }
+
+    TEST_CASE("Timescope-Parameter ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        leaf.params = TimescopeParams{0x00FF80u, 1, 0, 200};
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<TimescopeParams>(restored.children[0].params);
+        CHECK(p.color == 0x00FF80u);
+        CHECK(p.blend == 1);
+        CHECK(p.channel == 0);
+        CHECK(p.bands == 200);
+        CHECK(effectTypeKey(EffectParams{TimescopeParams{}}) == "timescope");
+    }
+
+    TEST_CASE("Starfield-Parameter ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        StarfieldParams sp;
+        sp.color = 0x8040FF; sp.warpSpeed = 9.5f; sp.maxStars = 700;
+        sp.onBeat = true; sp.beatSpeed = 2.5f; sp.durationFrames = 20;
+        leaf.params = sp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<StarfieldParams>(restored.children[0].params);
+        CHECK(p.color == 0x8040FFu);
+        CHECK(p.warpSpeed == doctest::Approx(9.5f));
+        CHECK(p.maxStars == 700);
+        CHECK(p.onBeat == true);
+        CHECK(p.beatSpeed == doctest::Approx(2.5f));
+        CHECK(effectTypeKey(EffectParams{StarfieldParams{}}) == "starfield");
+    }
+
+    TEST_CASE("Water-Bump-Parameter ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        WaterBumpParams wp;
+        wp.density = 7; wp.depth = 900; wp.randomDrop = false;
+        wp.dropX = 2; wp.dropY = 0; wp.dropRadius = 55; wp.displaceScale = 9.5f;
+        leaf.params = wp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<WaterBumpParams>(restored.children[0].params);
+        CHECK(p.density == 7);
+        CHECK(p.depth == 900);
+        CHECK_FALSE(p.randomDrop);
+        CHECK(p.dropX == 2);
+        CHECK(p.dropRadius == 55);
+        CHECK(p.displaceScale == doctest::Approx(9.5f));
+        CHECK(effectTypeKey(EffectParams{WaterBumpParams{}}) == "waterBump");
+    }
+
+    TEST_CASE("Bump-Parameter + Licht-Code ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        BumpParams bp;
+        bp.depth = 55; bp.depth2 = 80; bp.onBeat = true; bp.durationFrames = 8;
+        bp.invert = true; bp.oldStyle = true; bp.blend = 2;
+        bp.initCode = "t=0"; bp.frameCode = "x=0.7;y=0.3"; bp.beatCode = "t=0";
+        leaf.params = bp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<BumpParams>(restored.children[0].params);
+        CHECK(p.depth == 55);
+        CHECK(p.onBeat == true);
+        CHECK(p.invert == true);
+        CHECK(p.oldStyle == true);
+        CHECK(p.blend == 2);
+        CHECK(p.frameCode == "x=0.7;y=0.3");
+        CHECK(effectTypeKey(EffectParams{BumpParams{}}) == "bump");
     }
 
     TEST_CASE("Interferences-Parameter ueberleben den Round-Trip")

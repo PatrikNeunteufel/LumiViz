@@ -23,8 +23,11 @@ using lumi::avs::EffectNode;
 // AVS builtin effect ids (registration order == preset id, analysis §5.2).
 enum AvsId
 {
+    kDotPlane = 1,
     kFadeout = 3,
     kBlitterFeedback = 4,
+    kDotGrid = 17,
+    kDotFountain = 19,
     kOnBeatClear = 5,
     kBlur = 6,
     kRotoBlitter = 9,
@@ -34,12 +37,17 @@ enum AvsId
     kBrightness = 22,
     kClearScreen = 25,
     kScatter = 16,
+    kWater = 20,
     kGrain = 24,
     kMirror = 26,
+    kStarfield = 27,
+    kBump = 29,
     kMosaic = 30,
+    kWaterBump = 31,
     kCustomBpm = 33,
     kSuperScope = 36,
     kInvert = 37,
+    kTimescope = 39,
     kSetRenderMode = 40,
     kInterferences = 41,
     kDynamicMovement = 43,
@@ -168,9 +176,63 @@ struct MovementFormula
 ChainNode translateNode(const EffectNode& src, const std::string& path, Context& ctx);
 
 /** Map one decoded builtin leaf; returns false if not mappable here. */
+/** Map a compiled-in builtin APE (dispatched by id string). */
+bool mapApe(const EffectNode& src, ChainNode& out)
+{
+    if (src.apeId == "Channel Shift")
+    {
+        // Stored mode is a Windows IDC id; map it to our 0..5 permutation index.
+        ChannelShiftParams p;
+        switch (src.field("mode"))
+        {
+            case 1183: p.mode = 0; break;  // RGB
+            case 1020: p.mode = 1; break;  // RBG
+            case 1018: p.mode = 2; break;  // GBR
+            case 1022: p.mode = 3; break;  // GRB
+            case 1019: p.mode = 4; break;  // BRG
+            case 1021: p.mode = 5; break;  // BGR
+            default: p.mode = std::clamp(src.field("mode"), 0, 5); break;
+        }
+        p.onBeat = src.field("onbeat") != 0;
+        out.params = p;
+        return true;
+    }
+    if (src.apeId == "Color Reduction")
+    {
+        out.params = ColorReductionParams{std::clamp(src.field("levels"), 1, 8)};
+        return true;
+    }
+    if (src.apeId == "Multiplier")
+    {
+        out.params = MultiplierParams{std::clamp(src.field("ml"), 0, 7)};
+        return true;
+    }
+    if (src.apeId == "Holden04: Video Delay")
+    {
+        VideoDelayParams p;
+        p.useBeats = src.field("usebeats") != 0;
+        p.delay = std::clamp(src.field("delay"), 1, 128);
+        out.params = p;
+        return true;
+    }
+    if (src.apeId == "Holden05: Multi Delay")
+    {
+        MultiDelayParams p;
+        p.mode = std::clamp(src.field("mode"), 0, 2);
+        p.buffer = std::clamp(src.field("activebuffer"), 0, 5);
+        const std::string sub = std::to_string(p.buffer);
+        p.useBeats = src.field(("ub" + sub).c_str()) != 0;
+        p.delay = std::clamp(src.field(("dl" + sub).c_str()), 1, 128);
+        out.params = p;
+        return true;
+    }
+    return false;
+}
+
 bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
                 ChainNode& out)
 {
+    if (!src.apeId.empty() && mapApe(src, out)) return true;
     switch (src.id)
     {
         case kFadeout:
@@ -332,6 +394,108 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
         case kScatter:
             out.params = ScatterParams{};
             return true;
+
+        case kWater:
+            out.params = WaterParams{};
+            return true;
+
+        case kDotGrid:
+        {
+            DotGridParams p;
+            p.colors.clear();
+            for (std::uint32_t c : src.colors)
+                p.colors.push_back(avsColor(static_cast<std::int32_t>(c)));
+            if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
+            p.spacing = std::max(2, src.field("spacing"));
+            p.xMove = src.field("x_move");
+            p.yMove = src.field("y_move");
+            p.blend = src.field("blend") != 0 ? 1 : (src.field("blendavg") != 0 ? 2 : 0);
+            out.params = std::move(p);
+            return true;
+        }
+
+        case kDotPlane:
+        {
+            DotPlaneParams p;
+            for (std::size_t i = 0; i < src.colors.size() && i < 5; ++i)
+                p.colors[i] = avsColor(static_cast<std::int32_t>(src.colors[i]));
+            p.rotVel = src.field("rotvel");
+            p.angle = src.field("angle");
+            out.params = p;
+            return true;
+        }
+
+        case kDotFountain:
+        {
+            DotFountainParams p;
+            for (std::size_t i = 0; i < src.colors.size() && i < 5; ++i)
+                p.colors[i] = avsColor(static_cast<std::int32_t>(src.colors[i]));
+            p.rotVel = src.field("rotvel");
+            p.angle = src.field("angle");
+            out.params = p;
+            return true;
+        }
+
+        case kTimescope:
+        {
+            TimescopeParams p;
+            p.color = avsColor(src.field("color"));
+            p.blend = src.field("blend") != 0 ? 1 : (src.field("blendavg") != 0 ? 2 : 0);
+            p.channel = std::clamp(src.field("which_ch"), 0, 2);
+            p.bands = src.field("nbands") > 0 ? std::clamp(src.field("nbands"), 1, 576) : 576;
+            out.params = p;
+            return true;
+        }
+
+        case kStarfield:
+        {
+            auto bitsToFloat = [](std::int32_t bits, float def) {
+                float v = 0.0f;
+                std::memcpy(&v, &bits, sizeof(float));
+                return (v > 0.0f && v < 1000.0f) ? v : def;
+            };
+            StarfieldParams p;
+            p.color = avsColor(src.field("color"));
+            p.warpSpeed = bitsToFloat(src.field("warpSpeed_bits"), 6.0f);
+            p.maxStars = src.field("maxStars") > 0
+                             ? std::clamp(src.field("maxStars"), 1, 8192)
+                             : 350;
+            p.onBeat = src.field("onbeat") != 0;
+            p.beatSpeed = bitsToFloat(src.field("beatSpeed_bits"), 4.0f);
+            p.durationFrames = std::max(1, src.field("durFrames"));
+            out.params = p;
+            return true;
+        }
+
+        case kWaterBump:
+        {
+            WaterBumpParams p;
+            p.density = std::clamp(src.field("density"), 1, 12);
+            p.depth = src.field("depth");
+            p.randomDrop = src.field("random_drop") != 0;
+            p.dropX = std::clamp(src.field("drop_x"), 0, 2);
+            p.dropY = std::clamp(src.field("drop_y"), 0, 2);
+            p.dropRadius = std::max(1, src.field("drop_radius"));
+            out.params = p;
+            return true;
+        }
+
+        case kBump:
+        {
+            BumpParams p;
+            p.depth = std::clamp(src.field("depth"), 0, 100);
+            p.depth2 = std::clamp(src.field("depth2"), 0, 100);
+            p.onBeat = src.field("onbeat") != 0;
+            p.durationFrames = std::max(1, src.field("durFrames"));
+            p.invert = src.field("invert") != 0;
+            p.oldStyle = src.field("oldstyle") != 0;
+            p.blend = src.field("blend") != 0 ? 1 : (src.field("blendavg") != 0 ? 2 : 0);
+            p.initCode = slotStr(src, "init");
+            p.frameCode = slotStr(src, "frame");
+            p.beatCode = slotStr(src, "beat");
+            out.params = std::move(p);
+            return true;
+        }
 
         case kInterferences:
         {

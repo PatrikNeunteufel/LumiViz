@@ -301,6 +301,19 @@ TEST_SUITE("EffectChain")
         CHECK(std::string(effectTypeName(EffectParams{GrainParams{}})) == "Grain");
         CHECK(std::string(effectTypeName(EffectParams{ScatterParams{}})) == "Scatter");
         CHECK(std::string(effectTypeName(EffectParams{InterferencesParams{}})) == "Interferences");
+        CHECK(std::string(effectTypeName(EffectParams{WaterParams{}})) == "Water");
+        CHECK(std::string(effectTypeName(EffectParams{BumpParams{}})) == "Bump");
+        CHECK(std::string(effectTypeName(EffectParams{WaterBumpParams{}})) == "Water Bump");
+        CHECK(std::string(effectTypeName(EffectParams{StarfieldParams{}})) == "Starfield");
+        CHECK(std::string(effectTypeName(EffectParams{TimescopeParams{}})) == "Timescope");
+        CHECK(std::string(effectTypeName(EffectParams{DotGridParams{}})) == "Dot Grid");
+        CHECK(std::string(effectTypeName(EffectParams{DotPlaneParams{}})) == "Dot Plane");
+        CHECK(std::string(effectTypeName(EffectParams{DotFountainParams{}})) == "Dot Fountain");
+        CHECK(std::string(effectTypeName(EffectParams{ChannelShiftParams{}})) == "Channel Shift");
+        CHECK(std::string(effectTypeName(EffectParams{ColorReductionParams{}})) == "Color Reduction");
+        CHECK(std::string(effectTypeName(EffectParams{MultiplierParams{}})) == "Multiplier");
+        CHECK(std::string(effectTypeName(EffectParams{VideoDelayParams{}})) == "Video Delay");
+        CHECK(std::string(effectTypeName(EffectParams{MultiDelayParams{}})) == "Multi Delay");
     }
 
     TEST_CASE("Buffer-Save-Slot/Alpha werden geklammert (Restore-Blend jetzt implementiert)")
