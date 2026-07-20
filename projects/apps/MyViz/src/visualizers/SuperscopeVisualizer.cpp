@@ -115,6 +115,7 @@ const std::map<std::string, std::string>& subIdKeyTable()
 {
     static const std::map<std::string, std::string> table = {
         {"preset", "render.preset"},          // E6: shape/script preset stays stage 4
+        {"script.lua", "render.script.lua"},  // Import-Phase Roadmap 1: Lua mode
         {"pointCount", "map.pointCount"},
         {"renderMode", "render.mode"},
         {"lineWidth", "render.lineWidth"},

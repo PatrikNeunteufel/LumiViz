@@ -1,5 +1,5 @@
 # ==============================================================================
-# Source.cmake for include/
+# Source.cmake for include/scripting/
 # CMake Architecture V2 - App-Container Template
 # ==============================================================================
 
@@ -13,7 +13,7 @@ set(_local_sources
 )
 set(_local_headers
     # (headers - *.h; *.hpp)
-    "${CMAKE_CURRENT_LIST_DIR}/Application.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/LuaScriptEngine.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)
@@ -33,11 +33,6 @@ set(_local_includes
 
 dbg(DBG_NORMAL "Found sources  : ${_local_sources}" ID DEB_FOUND_MSG)
 dbg(DBG_NORMAL "Found headers  : ${_local_headers}" ID DEB_FOUND_MSG)
-dbg(DBG_NORMAL "Found templates: ${_local_templates}" ID DEB_FOUND_MSG)
-dbg(DBG_NORMAL "Found inlines  : ${_local_inlines}" ID DEB_FOUND_MSG)
-dbg(DBG_NORMAL "Found impl     : ${_local_impl}" ID DEB_FOUND_MSG)
-dbg(DBG_NORMAL "Found modules  : ${_local_modules}" ID DEB_FOUND_MSG)
-dbg(DBG_NORMAL "Found includes : ${_local_includes}" ID DEB_FOUND_MSG)
 
 # Aggregate to parent scope
 list(APPEND ${TARGET_NAME}_SOURCES ${_local_sources})
@@ -47,14 +42,6 @@ list(APPEND ${TARGET_NAME}_INLINES ${_local_inlines})
 list(APPEND ${TARGET_NAME}_IMPL ${_local_impl})
 list(APPEND ${TARGET_NAME}_MODULES ${_local_modules})
 list(APPEND ${TARGET_NAME}_INCLUDES ${_local_includes})
-
-dbg(DBG_NORMAL "Aggregated sources  : ${${TARGET_NAME}_SOURCES}" ID DEB_AGG)
-dbg(DBG_NORMAL "Aggregated headers  : ${${TARGET_NAME}_HEADERS}" ID DEB_AGG)
-dbg(DBG_NORMAL "Aggregated templates: ${${TARGET_NAME}_TEMPLATES}" ID DEB_AGG)
-dbg(DBG_NORMAL "Aggregated inlines  : ${${TARGET_NAME}_INLINES}" ID DEB_AGG)
-dbg(DBG_NORMAL "Aggregated impl     : ${${TARGET_NAME}_IMPL}" ID DEB_AGG)
-dbg(DBG_NORMAL "Aggregated modules  : ${${TARGET_NAME}_MODULES}" ID DEB_AGG)
-dbg(DBG_NORMAL "Aggregated includes : ${${TARGET_NAME}_INCLUDES}" ID DEB_AGG)
 
 # Optional cleanup (cosmetic)
 unset(_local_sources)
@@ -67,9 +54,4 @@ unset(_local_includes)
 
 dbg(DBG_ULTRA_RARE "include subfolders:" ID INCLUDE_MSG)
 # Include subfolders recursively (activate as needed)
-include("${CMAKE_CURRENT_LIST_DIR}/audio/Source.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/core/Source.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/scripting/Source.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/services/Source.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/UI/Source.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/visualizers/Source.cmake")
+# include("${CMAKE_CURRENT_LIST_DIR}/subfolder/Source.cmake")

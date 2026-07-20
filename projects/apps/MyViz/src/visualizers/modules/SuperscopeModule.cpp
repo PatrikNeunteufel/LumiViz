@@ -11,6 +11,8 @@
 
 #include "visualizers/modules/SuperscopeModule.hpp"
 
+#include "scripting/LuaScriptEngine.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <random>
@@ -31,6 +33,8 @@ SuperscopeModule::SuperscopeModule()
     resetState();
 }
 
+SuperscopeModule::~SuperscopeModule() = default;
+
 // =============================================================================
 // Expression Code
 // =============================================================================
@@ -45,19 +49,74 @@ void SuperscopeModule::setInitCode(const std::string& code)
 void SuperscopeModule::setBeatCode(const std::string& code)
 {
     m_beatCode = code;
+    m_initExecuted = false;  // Lua mode recompiles via executeInit()
     m_preset = SuperscopePreset::Custom;
 }
 
 void SuperscopeModule::setFrameCode(const std::string& code)
 {
     m_frameCode = code;
+    m_initExecuted = false;
     m_preset = SuperscopePreset::Custom;
 }
 
 void SuperscopeModule::setPointCode(const std::string& code)
 {
     m_pointCode = code;
+    m_initExecuted = false;
     m_preset = SuperscopePreset::Custom;
+}
+
+// =============================================================================
+// Lua Script Mode
+// =============================================================================
+
+void SuperscopeModule::setLuaMode(bool enabled)
+{
+    if (m_luaMode == enabled) return;
+    m_luaMode = enabled;
+    m_initExecuted = false;  // (re)compile + Init at next execute()
+}
+
+void SuperscopeModule::initializeLuaScripts()
+{
+    using scripting::LuaScriptEngine;
+
+    if (m_lua == nullptr)
+    {
+        m_lua = std::make_unique<LuaScriptEngine>();
+    }
+    m_lastScriptError.clear();
+
+    const auto compileSlot = [this](LuaScriptEngine::Slot slot, const std::string& src,
+                                    const char* name) {
+        if (!m_lua->compile(slot, src, name) && m_lastScriptError.empty())
+        {
+            m_lastScriptError = m_lua->lastError();
+        }
+    };
+    compileSlot(LuaScriptEngine::Slot::Init, m_initCode, "superscope.init");
+    compileSlot(LuaScriptEngine::Slot::Beat, m_beatCode, "superscope.beat");
+    compileSlot(LuaScriptEngine::Slot::Frame, m_frameCode, "superscope.frame");
+    compileSlot(LuaScriptEngine::Slot::Point, m_pointCode, "superscope.point");
+
+    // Point scripts that mention colors take over coloring (else: gradient)
+    m_scriptSetsColor = m_pointCode.find("red") != std::string::npos ||
+                        m_pointCode.find("green") != std::string::npos ||
+                        m_pointCode.find("blue") != std::string::npos;
+
+    // Seed the environment before Init runs
+    m_lua->setNumber("n", static_cast<double>(m_pointCount));
+    m_lua->setNumber("w", m_w);
+    m_lua->setNumber("h", m_h);
+    m_lua->setNumber("t", m_t);
+    m_lua->setNumber("b", 0.0);
+
+    if (m_lua->has(LuaScriptEngine::Slot::Init) &&
+        !m_lua->run(LuaScriptEngine::Slot::Init))
+    {
+        m_lastScriptError = m_lua->lastError();
+    }
 }
 
 // =============================================================================
@@ -264,6 +323,12 @@ void SuperscopeModule::executeInit()
             break;
     }
 
+    // Lua mode: (re)compile the four slots and run the Init script
+    if (m_luaMode)
+    {
+        initializeLuaScripts();
+    }
+
     m_initExecuted = true;
 }
 
@@ -355,21 +420,51 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
 
     // Beat handling
     m_b = isBeat ? 1.0 : 0.0;
-    if (isBeat)
+
+    using scripting::LuaScriptEngine;
+    const bool luaActive = m_luaMode && m_lua != nullptr;
+    int effectiveCount = m_pointCount;
+
+    if (luaActive)
+    {
+        // Frame contract: inputs n, w, h, t, dt, b — Frame code may adjust n
+        m_lua->setNumber("n", static_cast<double>(m_pointCount));
+        m_lua->setNumber("w", m_w);
+        m_lua->setNumber("h", m_h);
+        m_lua->setNumber("t", m_t);
+        m_lua->setNumber("dt", static_cast<double>(deltaTime));
+        m_lua->setNumber("b", m_b);
+
+        if (isBeat && m_lua->has(LuaScriptEngine::Slot::Beat) &&
+            !m_lua->run(LuaScriptEngine::Slot::Beat))
+        {
+            m_lastScriptError = m_lua->lastError();
+        }
+        if (m_lua->has(LuaScriptEngine::Slot::Frame) &&
+            !m_lua->run(LuaScriptEngine::Slot::Frame))
+        {
+            m_lastScriptError = m_lua->lastError();
+        }
+
+        effectiveCount = std::clamp(static_cast<int>(m_lua->number("n")), 8, 4096);
+    }
+    else if (isBeat)
     {
         executeBeat();
     }
 
+    const bool luaPoint = luaActive && m_lua->has(LuaScriptEngine::Slot::Point);
+
     // Generate points
     std::vector<SuperscopePoint> points;
-    points.reserve(m_pointCount);
+    points.reserve(effectiveCount);
 
-    for (int p = 0; p < m_pointCount; ++p)
+    for (int p = 0; p < effectiveCount; ++p)
     {
-        float i = static_cast<float>(p) / static_cast<float>(m_pointCount - 1);
+        float i = static_cast<float>(p) / static_cast<float>(effectiveCount - 1);
         float v = getAudioValue(i, waveformL, waveformR, spectrumL, spectrumR, sampleCount);
 
-        SuperscopePoint pt = executePoint(i, v, isBeat);
+        SuperscopePoint pt = luaPoint ? executePointLua(i, v) : executePoint(i, v, isBeat);
 
         // Apply aspect correction (skip for scope-style presets that should fill width)
         if (m_aspectCorrection && height > 0)
@@ -464,6 +559,47 @@ SuperscopePoint SuperscopeModule::executePoint(float i, float v, bool isBeat)
     pt.g = color[1];
     pt.b = color[2];
     pt.a = color[3];
+
+    return pt;
+}
+
+SuperscopePoint SuperscopeModule::executePointLua(float i, float v)
+{
+    using scripting::LuaScriptEngine;
+
+    // Point contract: inputs i, v (b/n/w/h/t already set per frame);
+    // outputs x, y, skip — plus red/green/blue when the script mentions them
+    m_lua->setNumber("i", static_cast<double>(i));
+    m_lua->setNumber("v", static_cast<double>(v));
+    m_lua->setNumber("skip", 0.0);
+
+    if (!m_lua->run(LuaScriptEngine::Slot::Point))
+    {
+        // Runtime error: the slot disabled itself — fall back to preset math
+        m_lastScriptError = m_lua->lastError();
+        return executePoint(i, v, m_b > 0.5);
+    }
+
+    SuperscopePoint pt;
+    pt.x = static_cast<float>(m_lua->number("x"));
+    pt.y = static_cast<float>(m_lua->number("y"));
+    pt.skip = m_lua->number("skip") > 0.5;
+
+    if (m_scriptSetsColor)
+    {
+        pt.r = std::clamp(static_cast<float>(m_lua->number("red")), 0.0f, 1.0f);
+        pt.g = std::clamp(static_cast<float>(m_lua->number("green")), 0.0f, 1.0f);
+        pt.b = std::clamp(static_cast<float>(m_lua->number("blue")), 0.0f, 1.0f);
+        pt.a = 1.0f;
+    }
+    else
+    {
+        const Color4f color = m_colorGradient.sample(i);
+        pt.r = color[0];
+        pt.g = color[1];
+        pt.b = color[2];
+        pt.a = color[3];
+    }
 
     return pt;
 }
@@ -743,6 +879,10 @@ void SuperscopeModule::executeHardcodedPreset(float i, float v)
 
 double SuperscopeModule::getVariable(const std::string& name) const
 {
+    if (m_luaMode && m_lua != nullptr)
+    {
+        return m_lua->number(name.c_str());
+    }
     auto it = m_variables.find(name);
     if (it != m_variables.end())
     {
@@ -753,6 +893,11 @@ double SuperscopeModule::getVariable(const std::string& name) const
 
 void SuperscopeModule::setVariable(const std::string& name, double value)
 {
+    if (m_luaMode && m_lua != nullptr)
+    {
+        m_lua->setNumber(name.c_str(), value);
+        return;
+    }
     m_variables[name] = value;
 }
 
@@ -765,6 +910,8 @@ void SuperscopeModule::resetState()
     m_t = 0.0;
     m_totalTime = 0.0f;
     m_initExecuted = false;
+    m_lua.reset();  // fresh sandbox on next Lua-mode init
+    m_lastScriptError.clear();
 }
 
 // =============================================================================
@@ -786,6 +933,19 @@ std::vector<ModuleParamDesc> SuperscopeModule::paramDescs(const std::string& pre
         p.enumOptions = {"Custom", "Horizontal Scope", "Vertical Scope", "Circle", "Spiral",
                          "Lissajous", "Flower", "Star", "Starburst", "Heart", "DNA",
                          "Spectrum Bars", "Circular Spectrum", "Butterfly", "Hypocycloid"};
+        p.subGroup = "Preset";
+        p.order = order++;
+        params.push_back(p);
+    }
+
+    // Script (Lua) — Import-Phase Roadmap 1
+    {
+        ModuleParamDesc p;
+        p.id = prefix + "script.lua";
+        p.displayName = "Lua Script";
+        p.tooltip = "Run the Init/Beat/Frame/Point code slots as sandboxed Lua";
+        p.type = ParamType::Bool;
+        p.defaultValue = false;
         p.subGroup = "Preset";
         p.order = order++;
         params.push_back(p);
@@ -1034,6 +1194,7 @@ bool SuperscopeModule::getParam(const std::string& id, ParamValue& out) const
     }
 
     if (id == "preset") { out = static_cast<int>(m_preset); return true; }
+    if (id == "script.lua") { out = m_luaMode; return true; }
     if (id == "pointCount") { out = m_pointCount; return true; }
     if (id == "renderMode") { out = static_cast<int>(m_renderMode); return true; }
     if (id == "lineWidth") { out = m_lineWidth; return true; }
@@ -1080,6 +1241,11 @@ bool SuperscopeModule::setParam(const std::string& id, const ParamValue& value)
     {
         setPreset(static_cast<SuperscopePreset>(getInt()));
         return true;
+    }
+    if (id == "script.lua")
+    {
+        if (auto* v = std::get_if<bool>(&value)) { setLuaMode(*v); return true; }
+        return false;
     }
     if (id == "pointCount")
     {

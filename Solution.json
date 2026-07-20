@@ -76,7 +76,7 @@
     },
     "lua54": {
       "description": "Lua 5.4 Scripting Language",
-      "skip": true,
+      "skip": false,
       "path": "externals/lua54"
     },
     "sol2": {
@@ -121,18 +121,20 @@
 
         "core": {
           "dependencies": [ "BasicLogger" ],
-          "externals": [ "Qt6", "qt-ads", "bass" ],
+          "externals": [ "Qt6", "qt-ads", "bass", "lua54" ],
           "external_options": {
-            "bass": { "BASS_FLAC": true }
+            "bass": { "BASS_FLAC": true },
+            "lua54": { "LUA_EMBEDDED": false }
           }
         },
 
         "runner": {
           "type": "GUI",
           "dependencies": [ "BasicLogger" ],
-          "externals": [ "Qt6", "qt-ads", "bass" ],
+          "externals": [ "Qt6", "qt-ads", "bass", "lua54" ],
           "external_options": {
-            "bass": { "BASS_FLAC": true }
+            "bass": { "BASS_FLAC": true },
+            "lua54": { "LUA_EMBEDDED": false }
           }
         },
 
@@ -154,7 +156,10 @@
               "timeout": 30,
               "labels": [ "unit", "core", "fast" ],
               "dependencies": [ "MyViz.Core" ],
-              "externals": [ "Qt6", "bass" ]
+              "externals": [ "Qt6", "bass", "lua54" ],
+              "external_options": {
+                "lua54": { "LUA_EMBEDDED": false }
+              }
             },
             {
               "name": "x_integralTest",

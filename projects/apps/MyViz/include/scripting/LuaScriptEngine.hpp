@@ -1,0 +1,145 @@
+/**
+ ****************************************************************************************
+ * @file   LuaScriptEngine.hpp
+ * @brief  Sandboxed Lua 5.4 engine for visualizer scripts (Superscope first)
+ *
+ * @author LumiPulse Team
+ * @date   July 2026
+ * @version 1.0.0
+ *
+ * @details
+ * One engine = one sandboxed script environment for one preset/visualizer instance.
+ * Holds a private lua_State plus a whitelisted environment table (_ENV) shared by
+ * up to four script slots (Init/Beat/Frame/Point — the AVS execution model).
+ *
+ * Sandbox contract (Import-Analyse §7.5):
+ * - Chunks load in text mode only ("t"), with a custom _ENV — scripts never see _G.
+ * - Environment whitelist: math subset (unqualified: sin, cos, ...), constants
+ *   (pi, pi2), rand (own deterministic PRNG — no math.random), the `eel` prelude
+ *   (EEL-faithful semantics for the transpiler), and `app` (small app-global
+ *   atomic register set, decision §10.3).
+ * - Unknown variable reads yield 0.0 (EEL semantics), enforced via __index.
+ * - reg00..reg99 need no special support: they are plain environment variables
+ *   (preset-local by decision §10.3); megabuf/gmegabuf are engine-local buffers.
+ *
+ * Threading: NOT thread-safe. Use from one thread at a time — the owning module
+ * is protected by the visualizer render-mutex contract (Visualizer_Architecture §12).
+ ****************************************************************************************
+ */
+
+#pragma once
+
+#include <array>
+#include <cstdint>
+#include <random>
+#include <string>
+#include <unordered_map>
+
+struct lua_State;
+
+namespace lumi::scripting {
+
+/**
+ * @class LuaScriptEngine
+ * @brief Sandboxed Lua 5.4 state with the AVS-style 4-slot execution model
+ */
+class LuaScriptEngine
+{
+public:
+    /// Script slots in the AVS execution model
+    enum class Slot : int
+    {
+        Init = 0,   ///< Once after (re)compile or reset
+        Beat,       ///< On detected beat
+        Frame,      ///< Once per frame
+        Point       ///< Once per point (hot path)
+    };
+    static constexpr int kSlotCount = 4;
+
+    /// Capacity clamp for megabuf/gmegabuf indices (original: 8M doubles max)
+    static constexpr std::int64_t kBufCapacity = 8'388'608;
+
+    /// Number of app-global atomic register slots (decision Import-Analyse §10.3)
+    static constexpr int kAppGlobalSlots = 32;
+
+    LuaScriptEngine();
+    ~LuaScriptEngine();
+
+    LuaScriptEngine(const LuaScriptEngine&) = delete;
+    LuaScriptEngine& operator=(const LuaScriptEngine&) = delete;
+
+    // =========================================================================
+    // Compilation
+    // =========================================================================
+
+    /**
+     * @brief Compile Lua source into a slot (replaces previous content)
+     * @param slot      Target slot
+     * @param source    Lua source; empty/whitespace clears the slot
+     * @param chunkName Name shown in error messages (e.g. "superscope.point")
+     * @return true on success (or clear); false → slot disabled, lastError() set
+     */
+    bool compile(Slot slot, const std::string& source, const char* chunkName);
+
+    /// @brief Remove a slot's compiled chunk
+    void clear(Slot slot);
+
+    /// @brief True if the slot holds a runnable chunk
+    [[nodiscard]] bool has(Slot slot) const;
+
+    // =========================================================================
+    // Execution
+    // =========================================================================
+
+    /**
+     * @brief Run a slot. On runtime error the slot is disabled (no per-frame
+     *        error spam) and lastError() is set.
+     * @return false if the slot is empty or errored
+     */
+    bool run(Slot slot);
+
+    // =========================================================================
+    // Environment variables (numbers only — the script data model)
+    // =========================================================================
+
+    void setNumber(const char* name, double value);
+    [[nodiscard]] double number(const char* name) const;  ///< 0.0 if unset/non-number
+
+    // =========================================================================
+    // Diagnostics / tests
+    // =========================================================================
+
+    /// @brief Evaluate a Lua expression in the sandbox and return its number value
+    bool evalNumber(const std::string& expr, double& out);
+
+    [[nodiscard]] const std::string& lastError() const { return m_lastError; }
+    void clearError() { m_lastError.clear(); }
+
+    /// @brief Seed the deterministic PRNG behind rand()/eel.rand()
+    void seedRandom(std::uint64_t seed) { m_rng.seed(seed); }
+
+private:
+    void buildSandbox();
+    bool pushEnv() const;  ///< pushes env table onto the Lua stack
+
+    // C closures bound into the sandbox (upvalue = engine pointer)
+    static int lRand(lua_State* L);
+    static int lMbRead(lua_State* L);
+    static int lMbWrite(lua_State* L);
+    static int lGmbRead(lua_State* L);
+    static int lGmbWrite(lua_State* L);
+    static int lAppGet(lua_State* L);
+    static int lAppSet(lua_State* L);
+
+    lua_State* m_state = nullptr;
+    int m_envRef = -2;  // LUA_NOREF
+    std::array<int, kSlotCount> m_slotRefs;
+    std::string m_lastError;
+    std::mt19937_64 m_rng{0x4141f00dULL};  // MilkDrop's fixed seed as default
+
+    // Engine-local (= preset-local, decision §10.3) script buffers
+    std::unordered_map<std::int64_t, double> m_megabuf;
+    std::unordered_map<std::int64_t, double> m_gmegabuf;
+};
+
+} // namespace lumi::scripting

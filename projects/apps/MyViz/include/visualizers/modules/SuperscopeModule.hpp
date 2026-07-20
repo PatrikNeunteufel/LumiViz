@@ -23,11 +23,14 @@
 #include "IModule.hpp"
 #include "ColorGradientModule.hpp"
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <functional>
 #include <unordered_map>
 #include <cmath>
+
+namespace lumi::scripting { class LuaScriptEngine; }
 
 namespace lumi::modules {
 
@@ -139,7 +142,7 @@ class SuperscopeModule
 {
 public:
     SuperscopeModule();
-    ~SuperscopeModule() = default;
+    ~SuperscopeModule();  // out-of-line: unique_ptr<LuaScriptEngine> member
 
     // =========================================================================
     // Expression Code
@@ -156,6 +159,25 @@ public:
 
     void setPointCode(const std::string& code);
     [[nodiscard]] const std::string& pointCode() const { return m_pointCode; }
+
+    // =========================================================================
+    // Lua Script Mode (Import-Phase Roadmap 1 — Keimzelle)
+    // =========================================================================
+
+    /**
+     * @brief Enable/disable Lua execution of the four code slots
+     *
+     * When enabled, Init/Beat/Frame/Point run as sandboxed Lua chunks
+     * (LuaScriptEngine). Contract per point: inputs i, v, b, n, w, h, t, dt;
+     * outputs x, y, skip — and red/green/blue [0..1] if the point code
+     * mentions them (otherwise the color gradient applies as before).
+     * Without a compiled point script the hardcoded preset math is used.
+     */
+    void setLuaMode(bool enabled);
+    [[nodiscard]] bool luaMode() const { return m_luaMode; }
+
+    /// @brief Last compile/runtime error of the script slots (empty = none)
+    [[nodiscard]] const std::string& lastScriptError() const { return m_lastScriptError; }
 
     // =========================================================================
     // Preset System
@@ -327,6 +349,14 @@ private:
     SuperscopePoint executePoint(float i, float v, bool isBeat);
 
     /**
+     * @brief Execute the Lua point script for a single point
+     */
+    SuperscopePoint executePointLua(float i, float v);
+
+    /// @brief Create the engine and (re)compile all four slots; runs Init
+    void initializeLuaScripts();
+
+    /**
      * @brief Apply hardcoded preset function
      */
     void executeHardcodedPreset(float i, float v);
@@ -423,6 +453,15 @@ private:
 
     bool m_initExecuted = false;
     float m_totalTime = 0.0f;
+
+    // =========================================================================
+    // Lua Script State
+    // =========================================================================
+
+    bool m_luaMode = false;
+    bool m_scriptSetsColor = false;  ///< point code mentions red/green/blue
+    std::unique_ptr<scripting::LuaScriptEngine> m_lua;
+    std::string m_lastScriptError;
 };
 
 } // namespace lumi::modules
