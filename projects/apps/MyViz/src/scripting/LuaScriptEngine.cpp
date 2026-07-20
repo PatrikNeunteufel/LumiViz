@@ -201,13 +201,7 @@ int LuaScriptEngine::lGmbRead(lua_State* L)
 {
     auto* self = static_cast<LuaScriptEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
     const std::int64_t idx = bufIndex(luaL_checknumber(L, 1));
-    if (idx < 0)
-    {
-        lua_pushnumber(L, 0.0);
-        return 1;
-    }
-    const auto it = self->m_gmegabuf.find(idx);
-    lua_pushnumber(L, it != self->m_gmegabuf.end() ? it->second : 0.0);
+    lua_pushnumber(L, idx >= 0 ? self->m_context->gmbRead(idx) : 0.0);
     return 1;
 }
 
@@ -216,7 +210,7 @@ int LuaScriptEngine::lGmbWrite(lua_State* L)
     auto* self = static_cast<LuaScriptEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
     const std::int64_t idx = bufIndex(luaL_checknumber(L, 1));
     const double value = luaL_checknumber(L, 2);
-    if (idx >= 0) self->m_gmegabuf[idx] = value;
+    if (idx >= 0) self->m_context->gmbWrite(idx, value);
     lua_pushnumber(L, value);
     return 1;
 }
@@ -245,7 +239,9 @@ int LuaScriptEngine::lAppSet(lua_State* L)
 // Construction / Destruction
 // =============================================================================
 
-LuaScriptEngine::LuaScriptEngine()
+LuaScriptEngine::LuaScriptEngine(std::shared_ptr<ScriptContext> context)
+    : m_context(context != nullptr ? std::move(context)
+                                   : std::make_shared<ScriptContext>())
 {
     m_slotRefs.fill(LUA_NOREF);
     m_state = luaL_newstate();

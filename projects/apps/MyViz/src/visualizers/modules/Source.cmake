@@ -14,6 +14,8 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/EqualizerModule.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/OscilloscopeModule.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PulseShapeModule.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ScriptGridModule.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ScriptLutModule.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/SuperscopeModule.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/WaveformModule.cpp"
 )

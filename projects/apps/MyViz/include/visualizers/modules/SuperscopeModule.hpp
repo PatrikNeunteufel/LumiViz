@@ -30,7 +30,7 @@
 #include <unordered_map>
 #include <cmath>
 
-namespace lumi::scripting { class LuaScriptEngine; }
+namespace lumi::scripting { class ScriptSlotHost; }
 
 namespace lumi::modules {
 
@@ -142,7 +142,7 @@ class SuperscopeModule
 {
 public:
     SuperscopeModule();
-    ~SuperscopeModule();  // out-of-line: unique_ptr<LuaScriptEngine> member
+    ~SuperscopeModule();  // out-of-line: unique_ptr<ScriptSlotHost> member
 
     // =========================================================================
     // Expression Code
@@ -462,7 +462,7 @@ private:
 
     bool m_luaMode = false;
     bool m_scriptSetsColor = false;  ///< point code mentions red/green/blue
-    std::unique_ptr<scripting::LuaScriptEngine> m_lua;
+    std::unique_ptr<scripting::ScriptSlotHost> m_script;  ///< EEL quartet + Engine
     std::string m_lastScriptError;
 };
 

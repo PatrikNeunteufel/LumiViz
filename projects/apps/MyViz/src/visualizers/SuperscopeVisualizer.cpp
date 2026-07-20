@@ -12,6 +12,7 @@
 #include "visualizers/SuperscopeVisualizer.hpp"
 #include "visualizers/PipelineKeys.hpp"
 #include "visualizers/VisualizerPresetManager.hpp"
+#include "visualizers/render/FeedbackBuffer.hpp"
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
@@ -285,6 +286,72 @@ std::vector<lumi::modules::ModuleParamDesc> SuperscopeVisualizer::paramDescs() c
         params.push_back(std::move(prefixed));
     }
 
+    // Own parameter: predictive beat (BeatEstimator, Import-Fundament 4.4)
+    {
+        ModuleParamDesc p;
+        p.id = "map.beat.predict";
+        p.displayName = "Predictive Beat";
+        p.tooltip = "BPM estimator keeps the beat going through fade-outs (AVS smart beat)";
+        p.type = ParamType::Bool;
+        p.defaultValue = false;
+        p.subGroup = "Beat";
+        p.stage = lumi::stageForKey(p.id);
+        p.group = lumi::groupForStage(p.stage);
+        p.order = 90;
+        params.push_back(std::move(p));
+    }
+
+    // Own parameters: GL feedback trail (FeedbackBuffer, Import-Fundament 4.3)
+    {
+        ModuleParamDesc p;
+        p.id = "post.trail.enabled";
+        p.displayName = "GL Trail";
+        p.tooltip = "Echo of the previous frame, dimmed and zoomed (AVS blitter feedback)";
+        p.type = ParamType::Bool;
+        p.defaultValue = false;
+        p.subGroup = "Trail";
+        p.stage = lumi::stageForKey(p.id);
+        p.group = lumi::groupForStage(p.stage);
+        p.order = 60;
+        params.push_back(std::move(p));
+    }
+    {
+        ModuleParamDesc p;
+        p.id = "post.trail.decay";
+        p.displayName = "Trail Decay";
+        p.tooltip = "Brightness kept per frame (1 = infinite trail)";
+        p.type = ParamType::Float;
+        p.defaultValue = 0.9f;
+        p.minValue = 0.5f;
+        p.maxValue = 1.0f;
+        p.step = 0.01f;
+        p.subGroup = "Trail";
+        p.dependsOn = "post.trail.enabled";
+        p.dependsValues = {true};
+        p.stage = lumi::stageForKey(p.id);
+        p.group = lumi::groupForStage(p.stage);
+        p.order = 61;
+        params.push_back(std::move(p));
+    }
+    {
+        ModuleParamDesc p;
+        p.id = "post.trail.zoom";
+        p.displayName = "Trail Zoom";
+        p.tooltip = "Echo scale per frame (>1 drifts outward, <1 inward)";
+        p.type = ParamType::Float;
+        p.defaultValue = 1.02f;
+        p.minValue = 0.9f;
+        p.maxValue = 1.2f;
+        p.step = 0.005f;
+        p.subGroup = "Trail";
+        p.dependsOn = "post.trail.enabled";
+        p.dependsValues = {true};
+        p.stage = lumi::stageForKey(p.id);
+        p.group = lumi::groupForStage(p.stage);
+        p.order = 62;
+        params.push_back(std::move(p));
+    }
+
     return params;
 }
 
@@ -294,6 +361,27 @@ bool SuperscopeVisualizer::getParam(const std::string& id, lumi::modules::ParamV
     if (id.rfind("audio.", 0) == 0)
     {
         return m_audioSource.getParam(id.substr(6), out);
+    }
+
+    if (id == "map.beat.predict")
+    {
+        out = m_beatPredict;
+        return true;
+    }
+    if (id == "post.trail.enabled")
+    {
+        out = m_trailEnabled;
+        return true;
+    }
+    if (id == "post.trail.decay")
+    {
+        out = m_trailDecay;
+        return true;
+    }
+    if (id == "post.trail.zoom")
+    {
+        out = m_trailZoom;
+        return true;
     }
 
     const std::string subId = keyToSubId(id);
@@ -306,6 +394,35 @@ bool SuperscopeVisualizer::setParam(const std::string& id, const lumi::modules::
     if (id.rfind("audio.", 0) == 0)
     {
         return m_audioSource.setParam(id.substr(6), value);
+    }
+
+    if (id == "map.beat.predict")
+    {
+        if (const bool* v = std::get_if<bool>(&value))
+        {
+            m_beatPredict = *v;
+            return true;
+        }
+        return false;
+    }
+    if (id == "post.trail.enabled")
+    {
+        if (const bool* v = std::get_if<bool>(&value))
+        {
+            m_trailEnabled = *v;
+            return true;
+        }
+        return false;
+    }
+    if (id == "post.trail.decay" || id == "post.trail.zoom")
+    {
+        float number = 0.0f;
+        if (const float* v = std::get_if<float>(&value)) number = *v;
+        else if (const int* i = std::get_if<int>(&value)) number = static_cast<float>(*i);
+        else return false;
+        if (id == "post.trail.decay") m_trailDecay = std::clamp(number, 0.5f, 1.0f);
+        else m_trailZoom = std::clamp(number, 0.9f, 1.2f);
+        return true;
     }
 
     // map.pointCount resizes the generator's point buffer inside the module (§7.2)
@@ -369,7 +486,11 @@ void SuperscopeVisualizer::updateWaveform(const float* waveform, int count)
         energy += sample * sample;
     }
     energy = std::sqrt(energy / samplesPerChannel);
-    m_isBeat = m_beat.updateAdaptive(energy);
+    // Onset feeds the estimator every frame (warm even while predict is off)
+    const bool onset = m_beat.updateAdaptive(energy);
+    const bool refined = m_beatEstimator.refine(
+        onset, lumi::modules::BeatEstimator::steadyNowMs());
+    m_isBeat = m_beatPredict ? refined : onset;
 }
 
 void SuperscopeVisualizer::updateSpectrum(const float* spectrum, int count)
@@ -497,6 +618,11 @@ void SuperscopeVisualizer::resetToDefaults()
 
     m_audioSource.resetToDefaults();
     m_beat.resetToDefaults();
+    m_beatEstimator.reset(lumi::modules::BeatEstimator::steadyNowMs());
+    m_beatPredict = false;
+    m_trailEnabled = false;
+    m_trailDecay = 0.9f;
+    m_trailZoom = 1.02f;
     m_smoothWaveformLeft.reset();
     m_smoothWaveformRight.reset();
     m_smoothSpectrumLeft.reset();
@@ -622,6 +748,7 @@ void SuperscopeVisualizer::onRender(float deltaTime)
         m_lineShader.reset();
         m_vertexBuffer.reset();
         m_vao.reset();
+        m_feedback.reset();
         m_heldFrames.clear();
 
         // Reinitialize in new context
@@ -651,9 +778,36 @@ void SuperscopeVisualizer::onRender(float deltaTime)
 
     m_totalTime += deltaTime;
 
+    // Get viewport size (needed before the feedback buffer binds)
+    GLint viewport[4];
+    f->glGetIntegerv(GL_VIEWPORT, viewport);
+    int width = viewport[2];
+    int height = viewport[3];
+
+    // GL trail (Import-Fundament 4.3): render the frame into the feedback
+    // buffer; the previous frame is drawn first as a dimmed/zoomed echo
+    bool trailActive = false;
+    if (m_trailEnabled && width > 0 && height > 0)
+    {
+        if (m_feedback == nullptr)
+        {
+            m_feedback = std::make_unique<lumi::render::FeedbackBuffer>();
+        }
+        trailActive = m_feedback->ensure(width, height);
+        if (trailActive)
+        {
+            m_feedback->beginFrame();
+        }
+    }
+
     // Clear background
     f->glClearColor(0.02f, 0.02f, 0.05f, 1.0f);
     f->glClear(GL_COLOR_BUFFER_BIT);
+
+    if (trailActive)
+    {
+        m_feedback->drawPrevious(m_trailDecay, m_trailZoom);
+    }
 
     // Setup blending based on mode
     switch (m_superscope.blendMode())
@@ -672,12 +826,6 @@ void SuperscopeVisualizer::onRender(float deltaTime)
             f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             break;
     }
-
-    // Get viewport size
-    GLint viewport[4];
-    f->glGetIntegerv(GL_VIEWPORT, viewport);
-    int width = viewport[2];
-    int height = viewport[3];
 
     // Execute superscope to generate points
     const float* waveL = m_waveformLeft.empty() ? nullptr : m_waveformLeft.data();
@@ -716,6 +864,11 @@ void SuperscopeVisualizer::onRender(float deltaTime)
         case lumi::modules::SuperscopeRenderMode::ThickLines:
             renderThickLines(points);
             break;
+    }
+
+    if (trailActive)
+    {
+        m_feedback->endFrame(ctx->defaultFramebufferObject(), width, height);
     }
 
     // Reset beat flag
@@ -1161,6 +1314,11 @@ void SuperscopeVisualizer::onCleanup()
     m_lineShader.reset();
     m_vertexBuffer.reset();
     m_vao.reset();
+    if (m_feedback != nullptr)
+    {
+        m_feedback->destroy();
+        m_feedback.reset();
+    }
     m_lastContext = nullptr;
     m_heldFrames.clear();
 }

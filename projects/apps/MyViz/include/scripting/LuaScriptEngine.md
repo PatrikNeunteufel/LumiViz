@@ -1,6 +1,6 @@
 # LuaScriptEngine — Sandboxed Lua 5.4 für Visualizer-Skripte
 
-> **Version:** 1.0.0  
+> **Version:** 1.1.0  
 > **Datum:** 2026-07-20  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert (Import-Phase Roadmap 1 — Keimzelle Superscope)  
@@ -52,8 +52,12 @@ Lua-Skripte aus (Superscope).
 - **Unbekannte Variablen lesen 0.0** (EEL-Semantik, via `__index`).
 - `rand` ist ein eigener, **deterministisch seedbarer** PRNG (`seedRandom`) —
   `math.random` wird nicht durchgereicht.
-- `reg00..reg99` brauchen keinen Sondersupport: einfache Env-Variablen
-  (preset-lokal per Entscheid §10.3); `megabuf`/`gmegabuf` sind engine-lokale Puffer.
+- `reg00..reg99`/`q1..q64` sind einfache Env-Variablen; der
+  [ScriptSlotHost](ScriptSlotHost.md) synchronisiert sie an Slot-Grenzen mit dem
+  geteilten [ScriptContext](ScriptContext.md) (preset-lokal, Entscheid §10.3).
+  `megabuf` ist engine-lokal; **`gmegabuf` lebt im ScriptContext** — Engines mit
+  demselben Kontext teilen ihn (Roadmap 4.1). Ohne expliziten Kontext erhält
+  jede Engine einen privaten (Alt-Verhalten).
 - App-globales Register-Set: `app.gget(i)`/`app.gset(i, v)` — 32 Slots als
   `std::atomic<double>` prozessweit; jeder Slot einzeln atomar, keine
   Transaktions-Garantie über mehrere Slots (Entscheid §10.3).
@@ -146,4 +150,5 @@ sind DIESELBE Variable (Lissajous-`b`- und Hypocycloid-`R/r`-Bug, Session 32).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.1.0 | 2026-07-20 | Roadmap 4.1: Konstruktor nimmt shared ScriptContext; gmegabuf wandert in den Kontext; Superscope läuft über ScriptSlotHost (Session 33) |
 | 1.0.0 | 2026-07-20 | Erstfassung — Sandbox, eel-Prelude, 4-Slot-Modell, app-globales Atomic-Register-Set, Superscope-Anbindung (Session 32) |

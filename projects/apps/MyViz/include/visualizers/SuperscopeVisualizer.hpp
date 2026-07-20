@@ -24,6 +24,7 @@
 #include "visualizers/modules/IModule.hpp"
 #include "visualizers/modules/source/AudioSourceModule.hpp"
 #include "visualizers/modules/SuperscopeModule.hpp"
+#include "visualizers/modules/processing/BeatEstimator.hpp"
 #include "visualizers/modules/processing/BeatModule.hpp"
 #include "visualizers/modules/processing/SmoothingModule.hpp"
 #include "visualizers/modules/postfx/PostFxModule.hpp"
@@ -34,6 +35,8 @@
 
 #include <memory>
 #include <vector>
+
+namespace lumi::render { class FeedbackBuffer; }
 
 // Forward declarations
 class QOpenGLContext;
@@ -136,6 +139,14 @@ private:
     lumi::modules::AudioSourceModule m_audioSource;
     lumi::modules::SuperscopeModule m_superscope;
     lumi::modules::BeatModule m_beat;
+    lumi::modules::BeatEstimator m_beatEstimator{0};  ///< predictive BPM (4.4)
+    bool m_beatPredict = false;                       ///< map.beat.predict
+
+    // GL feedback trail (Import-Fundament 4.3) — post.trail.*
+    std::unique_ptr<lumi::render::FeedbackBuffer> m_feedback;
+    bool m_trailEnabled = false;
+    float m_trailDecay = 0.9f;
+    float m_trailZoom = 1.02f;
 
     // Script-input smoothing (E3 — config mirrors audio.smooth.*, per-index state)
     lumi::modules::SmoothingModule m_smoothWaveformLeft;

@@ -19,8 +19,10 @@
  *   (EEL-faithful semantics for the transpiler), and `app` (small app-global
  *   atomic register set, decision §10.3).
  * - Unknown variable reads yield 0.0 (EEL semantics), enforced via __index.
- * - reg00..reg99 need no special support: they are plain environment variables
- *   (preset-local by decision §10.3); megabuf/gmegabuf are engine-local buffers.
+ * - megabuf is engine-local; gmegabuf lives in the ScriptContext — engines of
+ *   the same preset share it (decision §10.3, Import-Fundament-Entwurf §1).
+ *   reg00..reg99/q1..q64 are plain environment variables; the ScriptSlotHost
+ *   syncs them with the shared ScriptContext at slot boundaries.
  *
  * Threading: NOT thread-safe. Use from one thread at a time — the owning module
  * is protected by the visualizer render-mutex contract (Visualizer_Architecture §12).
@@ -29,8 +31,11 @@
 
 #pragma once
 
+#include "scripting/ScriptContext.hpp"
+
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <random>
 #include <string>
 #include <unordered_map>
@@ -62,11 +67,22 @@ public:
     /// Number of app-global atomic register slots (decision Import-Analyse §10.3)
     static constexpr int kAppGlobalSlots = 32;
 
-    LuaScriptEngine();
+    /**
+     * @brief Create an engine, optionally on a shared preset context
+     * @param context Shared state (gmegabuf; reg/q via ScriptSlotHost-Sync).
+     *                nullptr → private context (isolated, previous behavior).
+     */
+    explicit LuaScriptEngine(std::shared_ptr<ScriptContext> context = {});
     ~LuaScriptEngine();
 
     LuaScriptEngine(const LuaScriptEngine&) = delete;
     LuaScriptEngine& operator=(const LuaScriptEngine&) = delete;
+
+    /// @brief The (shared or private) preset context of this engine
+    [[nodiscard]] const std::shared_ptr<ScriptContext>& context() const
+    {
+        return m_context;
+    }
 
     // =========================================================================
     // Compilation
@@ -137,9 +153,10 @@ private:
     std::string m_lastError;
     std::mt19937_64 m_rng{0x4141f00dULL};  // MilkDrop's fixed seed as default
 
-    // Engine-local (= preset-local, decision §10.3) script buffers
+    // Engine-local script buffer (AVS: megabuf is per effect)
     std::unordered_map<std::int64_t, double> m_megabuf;
-    std::unordered_map<std::int64_t, double> m_gmegabuf;
+    // Preset context: gmegabuf home; shared when engines get the same context
+    std::shared_ptr<ScriptContext> m_context;
 };
 
 } // namespace lumi::scripting

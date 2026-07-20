@@ -11,6 +11,7 @@ dbg(DBG_OFTEN
 set(_local_sources
     # (sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/LuaScriptEngine.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ScriptSlotHost.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)

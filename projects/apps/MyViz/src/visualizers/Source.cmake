@@ -11,6 +11,7 @@ dbg(DBG_OFTEN
 set(_local_sources
     # (no sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/EqualizerVisualizer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/FeedbackBuffer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/OscilloscopeVisualizer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PulsingVisualizer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/SuperscopeVisualizer.cpp"

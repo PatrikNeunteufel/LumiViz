@@ -16,6 +16,7 @@
 #include "visualizers/modules/source/AudioSourceModule.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 #include "visualizers/modules/PulseShapeModule.hpp"
+#include "visualizers/modules/processing/BeatEstimator.hpp"
 #include "visualizers/modules/processing/BeatModule.hpp"
 
 #include <QOpenGLShaderProgram>
@@ -169,6 +170,8 @@ private:
     lumi::modules::ColorGradientModule m_colorGradient;
     lumi::modules::PulseShapeModule m_pulseShape;
     lumi::modules::BeatModule m_beat;
+    lumi::modules::BeatEstimator m_beatEstimator{0};  ///< predictive BPM (4.4)
+    bool m_beatPredict = false;                       ///< map.beat.predict
 
     // =========================================================================
     // OpenGL Resources

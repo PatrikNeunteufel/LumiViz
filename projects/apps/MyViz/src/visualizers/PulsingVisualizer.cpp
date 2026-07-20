@@ -476,6 +476,21 @@ std::vector<lumi::modules::ModuleParamDesc> PulsingVisualizer::paramDescs() cons
         params.push_back(p);
     }
 
+    // Stage 2: predictive beat (BeatEstimator, Import-Fundament 4.4)
+    {
+        ModuleParamDesc p;
+        p.id = "map.beat.predict";
+        p.displayName = "Predictive Beat";
+        p.tooltip = "BPM estimator keeps the beat going through fade-outs (AVS smart beat)";
+        p.type = ParamType::Bool;
+        p.defaultValue = false;
+        p.subGroup = "Beat";
+        p.group = "Mapping";
+        p.stage = PipelineStage::Mapping;
+        p.order = 90;
+        params.push_back(p);
+    }
+
     return params;
 }
 
@@ -508,6 +523,11 @@ bool PulsingVisualizer::getParam(const std::string& id,
     if (id == "render.beatReverse")
     {
         out = m_beatReverseRotation;
+        return true;
+    }
+    if (id == "map.beat.predict")
+    {
+        out = m_beatPredict;
         return true;
     }
     if (id.rfind("render.", 0) == 0)
@@ -553,6 +573,15 @@ bool PulsingVisualizer::setParam(const std::string& id,
         if (auto* v = std::get_if<bool>(&value))
         {
             m_beatReverseRotation = *v;
+            return true;
+        }
+        return false;
+    }
+    if (id == "map.beat.predict")
+    {
+        if (auto* v = std::get_if<bool>(&value))
+        {
+            m_beatPredict = *v;
             return true;
         }
         return false;
@@ -613,6 +642,8 @@ void PulsingVisualizer::resetToDefaults()
     m_colorGradient.reset();   // ColorGradientModule uses reset()
     m_pulseShape.reset();
     m_beat.resetToDefaults();
+    m_beatEstimator.reset(lumi::modules::BeatEstimator::steadyNowMs());
+    m_beatPredict = false;
 
     // Reset rotation/beat state
     m_currentRotation = 0.0f;
@@ -922,7 +953,13 @@ void PulsingVisualizer::onRender(float deltaTime)
     // Beat Detection for Rotation Reversal (BeatModule, 5.6)
     // =========================================================================
 
-    if (m_beatReverseRotation && m_beat.update(audioLevel))
+    // Onset feeds the estimator every frame (warm even while predict is off)
+    const bool beatOnset = m_beat.update(audioLevel);
+    const bool beatRefined = m_beatEstimator.refine(
+        beatOnset, lumi::modules::BeatEstimator::steadyNowMs());
+    const bool beatNow = m_beatPredict ? beatRefined : beatOnset;
+
+    if (m_beatReverseRotation && beatNow)
     {
         // Beat detected - reverse direction
         m_rotationDirection *= -1.0f;
