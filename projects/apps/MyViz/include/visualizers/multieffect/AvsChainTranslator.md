@@ -27,8 +27,9 @@ Render-Thread die alten Knoten-Runtimes freigibt — Knoten-IDs werden neu verge
   AvsParser-Decoder verifiziert).
 - **Set Render Mode (40)** wird **ausgerollt** (E4): Linienbreite (Bits 16–23)
   wandert in die *folgenden* SuperScope-Effekte; der Knoten wird Passthrough+Notiz.
-- **Movement ohne Point-Code** (Builtin-Formel) → Passthrough (die 23 Formeln
-  sind noch nicht portiert).
+- **Movement-Builtin-Formeln** → `MovementParams` mit dem AVS-Point-Code aus
+  `movementBuiltinFormula()` (23 Formeln 1:1 als `eval_desc`; #0/#1/#7 sind keine
+  Remaps → Passthrough). `ScriptGridModule` teilt dafür die AVS-Polar-Konvention.
 - **Alles andere** (unbekannt, `decoded=false`, exotisch) → `PassthroughParams`
   (Quell-ID + Notiz) + Report-Eintrag. **Nie werfen** (AVS-Philosophie).
 - **Farben:** AVS-COLORREF `0x00BBGGRR` → Host `0x00RRGGBB` (R/B getauscht).

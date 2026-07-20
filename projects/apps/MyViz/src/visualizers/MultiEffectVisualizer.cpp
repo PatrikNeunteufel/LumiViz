@@ -19,6 +19,7 @@
 #include <QOpenGLFunctions>
 #include <QString>
 
+#include <algorithm>
 #include <cmath>
 #include <filesystem>
 
@@ -71,28 +72,50 @@ void main()
 }
 )";
 
-// List blend engine, batch 1 (decision E3). Mode values == BlendMode enum;
-// unimplemented modes fall back to Replace (the compile pass already warned).
+// List blend engine (decision E3). Mode values == BlendMode enum; the full AVS
+// set is covered (batch 2, Session 35 added Subtractive/Every-other/XOR/Buffer).
+// Reference math: r_list.cpp render_list in/out switch (o == dst, tfb == src).
 const char* kBlendFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
 uniform sampler2D uDst;
 uniform sampler2D uSrc;
+uniform sampler2D uBuf;   // global buffer for mode 12 (Buffer)
 uniform int uMode;
 uniform float uAlpha;
+uniform bool uBufInvert;
 out vec4 fragColor;
 void main()
 {
     vec3 d = texture(uDst, vTex).rgb;
     vec3 s = texture(uSrc, vTex).rgb;
     vec3 r;
-    if (uMode == 2)       r = (d + s) * 0.5;        // 50/50
-    else if (uMode == 3)  r = max(d, s);            // Maximum
+    if (uMode == 2)       r = (d + s) * 0.5;         // 50/50
+    else if (uMode == 3)  r = max(d, s);             // Maximum
     else if (uMode == 4)  r = min(d + s, vec3(1.0)); // Additive
-    else if (uMode == 10) r = mix(d, s, uAlpha);    // Adjustable
-    else if (uMode == 11) r = d * s;                // Multiply
-    else if (uMode == 13) r = min(d, s);            // Minimum
-    else                  r = s;                    // Replace (+ fallback)
+    else if (uMode == 5)  r = max(d - s, vec3(0.0)); // Subtractive 1-2 (dst-src)
+    else if (uMode == 6)  r = max(s - d, vec3(0.0)); // Subtractive 2-1 (src-dst)
+    else if (uMode == 7)                             // Every other line
+        r = ((int(gl_FragCoord.y) & 1) == 0) ? s : d;
+    else if (uMode == 8)                             // Every other pixel (checkerboard)
+        r = (((int(gl_FragCoord.x) + int(gl_FragCoord.y)) & 1) == 0) ? s : d;
+    else if (uMode == 9)                             // XOR (per 8-bit channel)
+    {
+        ivec3 di = ivec3(d * 255.0 + 0.5);
+        ivec3 si = ivec3(s * 255.0 + 0.5);
+        r = vec3(di ^ si) / 255.0;
+    }
+    else if (uMode == 10) r = mix(d, s, uAlpha);     // Adjustable
+    else if (uMode == 11) r = d * s;                 // Multiply
+    else if (uMode == 12)                            // Buffer: depth of buffer -> alpha
+    {
+        vec3 b = texture(uBuf, vTex).rgb;
+        float v = max(max(b.r, b.g), b.b);           // depthof(): max channel
+        if (uBufInvert) v = 1.0 - v;
+        r = mix(d, s, v);                            // BLEND_ADJ(src, dst, v)
+    }
+    else if (uMode == 13) r = min(d, s);             // Minimum
+    else                  r = s;                     // Replace (+ safety fallback)
     fragColor = vec4(r, 1.0);
 }
 )";
@@ -274,6 +297,109 @@ void main()
 }
 )";
 
+// AVS "Trans / Mosaic" (ID 30): sample the image on a coarse uCells x uCells
+// grid (block centre, like r_mosaic's half-cell start), optionally blended with
+// the untouched image. uBlend: 0 replace, 1 additive, 2 50/50.
+const char* kMosaicFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform float uCells;
+uniform int uBlend;
+out vec4 fragColor;
+void main()
+{
+    vec3 orig = texture(uTex, vTex).rgb;
+    vec2 muv = (floor(vTex * uCells) + 0.5) / uCells;  // block centre
+    vec3 mos = texture(uTex, muv).rgb;
+    vec3 r;
+    if (uBlend == 1)      r = min(orig + mos, vec3(1.0));  // additive
+    else if (uBlend == 2) r = (orig + mos) * 0.5;          // 50/50
+    else                  r = mos;                         // replace
+    fragColor = vec4(r, 1.0);
+}
+)";
+
+// AVS "Trans / Grain" (ID 24): darken a random subset of pixels by a random
+// factor (r_grain.cpp). uAmount = gated fraction; uSeed 0 = static noise.
+const char* kGrainFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform vec2 uRes;
+uniform float uAmount;
+uniform float uSeed;
+uniform int uBlend;
+out vec4 fragColor;
+float h(vec2 p, float s) { return fract(sin(dot(p, vec2(127.1, 311.7)) + s) * 43758.5453); }
+void main()
+{
+    vec3 o = texture(uTex, vTex).rgb;
+    vec2 px = floor(vTex * uRes);
+    float g = h(px, uSeed);          // gate
+    float s = h(px, uSeed + 7.3);    // darkening factor
+    vec3 c = (g < uAmount) ? o * s : vec3(0.0);
+    vec3 r;
+    if (uBlend == 1)      r = min(o + c, vec3(1.0));  // additive
+    else if (uBlend == 2) r = (o + c) * 0.5;          // 50/50
+    else                  r = c;                      // replace
+    fragColor = vec4(r, 1.0);
+}
+)";
+
+// AVS "Trans / Scatter" (ID 16): per-pixel random displacement in a ~4px window
+// (r_scat.cpp), refreshed each frame via uSeed.
+const char* kScatterFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform vec2 uRes;
+uniform float uSeed;
+uniform float uRange;
+out vec4 fragColor;
+float h(vec2 p, float s) { return fract(sin(dot(p, vec2(127.1, 311.7)) + s) * 43758.5453); }
+void main()
+{
+    vec2 px = floor(vTex * uRes);
+    float rx = h(px, uSeed) * 2.0 - 1.0;
+    float ry = h(px, uSeed + 31.7) * 2.0 - 1.0;
+    vec2 off = vec2(rx, ry) * uRange / uRes;
+    fragColor = vec4(texture(uTex, vTex + off).rgb, 1.0);
+}
+)";
+
+// AVS "Trans / Interferences" (ID 41): accumulate uPoints rotated copies of the
+// image, each weighted by uAlpha (r_interf.cpp). uRgb splits copies across the
+// R/G/B channels; uBlend combines with the original.
+const char* kInterfFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform int uPoints;
+uniform vec2 uOffsets[8];
+uniform float uAlpha;
+uniform int uRgb;
+uniform int uBlend;
+out vec4 fragColor;
+void main()
+{
+    vec3 orig = texture(uTex, vTex).rgb;
+    vec3 acc = vec3(0.0);
+    for (int i = 0; i < uPoints && i < 8; ++i)
+    {
+        vec3 s = texture(uTex, vTex - uOffsets[i]).rgb * uAlpha;
+        if (uRgb == 1) { int ch = i - (i / 3) * 3; acc[ch] += s[ch]; }
+        else acc += s;
+    }
+    acc = min(acc, vec3(1.0));
+    vec3 r;
+    if (uBlend == 1)      r = min(orig + acc, vec3(1.0));  // additive
+    else if (uBlend == 2) r = (orig + acc) * 0.5;          // 50/50
+    else                  r = acc;                         // replace
+    fragColor = vec4(r, 1.0);
+}
+)";
+
 QVector3D colorToVec(uint32_t color)
 {
     return {static_cast<float>((color >> 16) & 0xFF) / 255.0f,
@@ -417,6 +543,10 @@ void MultiEffectVisualizer::onCleanup()
     m_lutShader.reset();
     m_warpShader.reset();
     m_feedbackShader.reset();
+    m_mosaicShader.reset();
+    m_grainShader.reset();
+    m_scatterShader.reset();
+    m_interfShader.reset();
     m_quadVao.reset();
     m_quadVbo.reset();
     m_warpVao.reset();
@@ -449,12 +579,18 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_lutShader = makeProgram(kQuadVertexShader, kLutFragmentShader);
     m_warpShader = makeProgram(kWarpVertexShader, kWarpFragmentShader);
     m_feedbackShader = makeProgram(kQuadVertexShader, kFeedbackFragmentShader);
+    m_mosaicShader = makeProgram(kQuadVertexShader, kMosaicFragmentShader);
+    m_grainShader = makeProgram(kQuadVertexShader, kGrainFragmentShader);
+    m_scatterShader = makeProgram(kQuadVertexShader, kScatterFragmentShader);
+    m_interfShader = makeProgram(kQuadVertexShader, kInterfFragmentShader);
     if (m_fadeShader == nullptr || m_invertShader == nullptr ||
         m_barsShader == nullptr || m_blendShader == nullptr ||
         m_brightShader == nullptr || m_blurShader == nullptr ||
         m_mirrorShader == nullptr || m_colorfadeShader == nullptr ||
         m_lutShader == nullptr || m_warpShader == nullptr ||
-        m_feedbackShader == nullptr)
+        m_feedbackShader == nullptr || m_mosaicShader == nullptr ||
+        m_grainShader == nullptr || m_scatterShader == nullptr ||
+        m_interfShader == nullptr)
     {
         m_fadeShader.reset();
         m_invertShader.reset();
@@ -467,6 +603,10 @@ bool MultiEffectVisualizer::ensurePipelines()
             m_lutShader.reset();
         m_warpShader.reset();
         m_feedbackShader.reset();
+        m_mosaicShader.reset();
+        m_grainShader.reset();
+        m_scatterShader.reset();
+        m_interfShader.reset();
         return false;
     }
 
@@ -690,6 +830,10 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const BufferSaveParams& params) const { self.runBufferSave(params); }
         void operator()(const CustomBpmParams& params) const { self.runCustomBpm(node, params); }
         void operator()(const SuperScopeParams& params) const { self.runSuperScope(node, params); }
+        void operator()(const MosaicParams& params) const { self.runMosaic(node, params); }
+        void operator()(const GrainParams& params) const { self.runGrain(params); }
+        void operator()(const ScatterParams& params) const { self.runScatter(params); }
+        void operator()(const InterferencesParams& params) const { self.runInterferences(node, params); }
         void operator()(const DebugBarsParams& params) const { self.runDebugBars(params); }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
@@ -779,7 +923,10 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
     const unsigned int parentTexture = active().current()->texture();
     if (params.blendIn != BlendMode::Ignore)
     {
-        blendPass(runtime.surface, parentTexture, params.blendIn, alphaIn);
+        const unsigned int bufTex =
+            params.blendIn == BlendMode::Buffer ? poolTexture(params.bufferIn) : 0;
+        blendPass(runtime.surface, parentTexture, params.blendIn, alphaIn, bufTex,
+                  params.bufferInInvert);
     }
 
     // --- Children render on the list surface
@@ -795,8 +942,10 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
     // --- Out-blend: list buffer -> parent
     if (params.blendOut != BlendMode::Ignore)
     {
+        const unsigned int bufTex =
+            params.blendOut == BlendMode::Buffer ? poolTexture(params.bufferOut) : 0;
         blendPass(active(), runtime.surface.current()->texture(), params.blendOut,
-                  alphaOut);
+                  alphaOut, bufTex, params.bufferOutInvert);
     }
     bindActive();  // chain continues on the parent's (possibly swapped) buffer
 }
@@ -1232,6 +1381,7 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
         rt.scope->setFrameCode(params.frameCode);
         rt.scope->setPointCode(params.pointCode);
         rt.scopeCompiled = combined;
+        rt.scopeGradientLoaded.clear();  // fresh module defaults to Neon -> reload
     }
     rt.scope->setPointCount(params.pointCount);
     rt.scope->setRenderMode(
@@ -1240,6 +1390,18 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     rt.scope->setDotSize(params.dotSize);
     rt.scope->setAudioChannel(
         static_cast<lumi::modules::SuperscopeAudioChannel>(params.audioChannel));
+    // Keep the module's gradient in sync (it bakes it into points when the point
+    // code sets no color); reload only on change.
+    if (rt.scopeGradientLoaded != params.gradientPreset)
+    {
+        rt.scope->colorGradient().loadPreset(params.gradientPreset);
+        rt.scopeGradientLoaded = params.gradientPreset;
+    }
+    // Base color (gradient x cycled table, per mode). The module pre-seeds
+    // red/green/blue with it before the point script runs (AVS r_sscope).
+    rt.scope->setColorTable(params.colors);
+    rt.scope->setColorBlend(params.colorBlend);
+    rt.scope->setColorCycleFrames(params.colorCycleFrames);
 
     // Audio: mono waveform/spectrum fed to both channels (host has no L/R split
     // yet); a zero buffer keeps the base shape visible without a track.
@@ -1294,6 +1456,121 @@ void MultiEffectVisualizer::runDebugBars(const DebugBarsParams& params)
     m_barsShader->release();
 }
 
+void MultiEffectVisualizer::runMosaic(const ChainNode& node, const MosaicParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    if (rt.mosaicQuality <= 0.0f) rt.mosaicQuality = static_cast<float>(params.quality);
+
+    // Pick this frame's block count, then step the ease-back (r_mosaic.cpp).
+    if (params.onBeat && m_frameBeat)
+    {
+        rt.mosaicQuality = static_cast<float>(params.quality2);
+        rt.mosaicFramesLeft = std::max(1, params.durationFrames);
+    }
+    else if (rt.mosaicFramesLeft == 0)
+    {
+        rt.mosaicQuality = static_cast<float>(params.quality);
+    }
+    const float thisQuality = rt.mosaicQuality;
+    if (rt.mosaicFramesLeft > 0)
+    {
+        if (--rt.mosaicFramesLeft > 0)
+        {
+            const float step = std::abs(static_cast<float>(params.quality - params.quality2)) /
+                               static_cast<float>(std::max(1, params.durationFrames));
+            rt.mosaicQuality += params.quality2 > params.quality ? -step : step;
+        }
+        else
+        {
+            rt.mosaicQuality = static_cast<float>(params.quality);
+        }
+    }
+
+    const int cells = std::clamp(static_cast<int>(thisQuality), 1, 100);
+    if (cells >= 100) return;  // no pixelation (AVS gate: thisQuality < 100)
+
+    m_mosaicShader->bind();
+    m_mosaicShader->setUniformValue("uCells", static_cast<float>(cells));
+    m_mosaicShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_mosaicShader->release();
+    transformPass(*m_mosaicShader);
+}
+
+void MultiEffectVisualizer::runGrain(const GrainParams& params)
+{
+    const QVector2D res(static_cast<float>(m_surfaceWidth),
+                        static_cast<float>(m_surfaceHeight));
+    m_grainShader->bind();
+    m_grainShader->setUniformValue("uRes", res);
+    m_grainShader->setUniformValue("uAmount",
+                                   std::clamp(params.amount, 0, 100) / 100.0f);
+    // Static = frozen pattern; else advance the seed so the grain shimmers.
+    m_grainShader->setUniformValue("uSeed", params.staticGrain ? 0.0f : m_time * 60.0f);
+    m_grainShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_grainShader->release();
+    transformPass(*m_grainShader);
+}
+
+void MultiEffectVisualizer::runScatter(const ScatterParams&)
+{
+    const QVector2D res(static_cast<float>(m_surfaceWidth),
+                        static_cast<float>(m_surfaceHeight));
+    m_scatterShader->bind();
+    m_scatterShader->setUniformValue("uRes", res);
+    m_scatterShader->setUniformValue("uSeed", m_time * 60.0f);
+    m_scatterShader->setUniformValue("uRange", 4.0f);  // r_scat ~4px window
+    m_scatterShader->release();
+    transformPass(*m_scatterShader);
+}
+
+void MultiEffectVisualizer::runInterferences(const ChainNode& node,
+                                             const InterferencesParams& params)
+{
+    constexpr float kPi = 3.14159265358979323846f;
+    const int points = std::clamp(params.points, 1, 8);
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    if (!rt.interfSeeded)
+    {
+        rt.interfRotation = static_cast<float>(params.rotation);
+        rt.interfStatus = kPi;
+        rt.interfSeeded = true;
+    }
+
+    // Beat morph between the two parameter sets via sin(status) (r_interf).
+    if (params.onBeat && m_frameBeat && rt.interfStatus >= kPi) rt.interfStatus = 0.0f;
+    const float s = std::sin(rt.interfStatus);
+    const float rotInc =
+        params.rotationInc + (params.rotationInc2 - params.rotationInc) * s;
+    const float alpha = params.alpha + (params.alpha2 - params.alpha) * s;
+    const float dist = params.distance + (params.distance2 - params.distance) * s;
+
+    // Copy offsets, evenly spaced around the accumulating rotation `a`.
+    float a = rt.interfRotation / 255.0f * 2.0f * kPi;
+    const float angle = 2.0f * kPi / static_cast<float>(points);
+    QVector2D offsets[8];
+    for (int i = 0; i < points; ++i)
+    {
+        offsets[i] = QVector2D(std::cos(a) * dist / static_cast<float>(m_surfaceWidth),
+                               std::sin(a) * dist / static_cast<float>(m_surfaceHeight));
+        a += angle;
+    }
+
+    m_interfShader->bind();
+    m_interfShader->setUniformValue("uPoints", points);
+    m_interfShader->setUniformValueArray("uOffsets", offsets, 8);
+    m_interfShader->setUniformValue("uAlpha", std::clamp(alpha, 0.0f, 255.0f) / 255.0f);
+    m_interfShader->setUniformValue("uRgb", params.rgb ? 1 : 0);
+    m_interfShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_interfShader->release();
+    transformPass(*m_interfShader);
+
+    // Advance rotation + morph phase for the next frame.
+    rt.interfRotation += rotInc;
+    if (rt.interfRotation > 255.0f) rt.interfRotation -= 255.0f;
+    if (rt.interfRotation < -255.0f) rt.interfRotation += 255.0f;
+    rt.interfStatus = std::min(rt.interfStatus + params.speed, kPi);
+}
+
 // =============================================================================
 // Passes
 // =============================================================================
@@ -1321,14 +1598,22 @@ void MultiEffectVisualizer::transformPass(QOpenGLShaderProgram& shader)
     bindActive();  // chain continues on the (new) current buffer
 }
 
+unsigned int MultiEffectVisualizer::poolTexture(int n)
+{
+    QOpenGLFramebufferObject* pool =
+        m_bufferPool.get(n, m_surfaceWidth, m_surfaceHeight, false);
+    return pool != nullptr ? pool->texture() : 0u;
+}
+
 void MultiEffectVisualizer::blendPass(SurfacePair& dst, unsigned int srcTexture,
-                                      BlendMode mode, int adjustAlpha)
+                                      BlendMode mode, int adjustAlpha,
+                                      unsigned int bufferTexture, bool bufferInvert)
 {
     if (mode == BlendMode::Ignore) return;
-    auto* f = QOpenGLContext::currentContext()->functions();
+    // Buffer blend with no allocated source buffer: leave dst as-is (AVS breaks).
+    if (mode == BlendMode::Buffer && bufferTexture == 0) return;
 
-    // Unimplemented batch-2 modes render as Replace (decision E3; the compile
-    // pass already emitted the warning).
+    auto* f = QOpenGLContext::currentContext()->functions();
     const int shaderMode =
         isBlendModeImplemented(mode) ? static_cast<int>(mode)
                                      : static_cast<int>(BlendMode::Replace);
@@ -1344,10 +1629,16 @@ void MultiEffectVisualizer::blendPass(SurfacePair& dst, unsigned int srcTexture,
     f->glActiveTexture(GL_TEXTURE1);
     f->glBindTexture(GL_TEXTURE_2D, srcTexture);
     m_blendShader->setUniformValue("uSrc", 1);
+    // Unit 2 is only sampled for Buffer mode; bind srcTexture as a harmless
+    // filler otherwise so no driver samples an unbound unit.
+    f->glActiveTexture(GL_TEXTURE2);
+    f->glBindTexture(GL_TEXTURE_2D, bufferTexture != 0 ? bufferTexture : srcTexture);
+    m_blendShader->setUniformValue("uBuf", 2);
     f->glActiveTexture(GL_TEXTURE0);
     m_blendShader->setUniformValue("uMode", shaderMode);
     m_blendShader->setUniformValue("uAlpha",
                                    static_cast<float>(adjustAlpha) / 255.0f);
+    m_blendShader->setUniformValue("uBufInvert", bufferInvert);
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_blendShader->release();

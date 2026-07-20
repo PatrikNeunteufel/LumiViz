@@ -14,8 +14,10 @@ von `ChainNode::params` — aktuell: `ListParams` (mit Blend/OnBeat/EEL-Slots),
 mit den 5.x-Schritten, Entscheid E2).
 
 `ListParams` trägt die 14 `BlendMode`-Werte (In/Out, AVS-Reihenfolge =
-Enum-Wert). `isBlendModeImplemented()` markiert Batch 1 (E3); der Rest fällt im
-Host auf Replace zurück, der Compile-Pass warnt.
+Enum-Wert). Seit Batch 2 (Session 35) sind **alle 14 Modi implementiert**
+(`isBlendModeImplemented()` == true durchweg) — der frühere Replace-Fallback
+entfällt. `BlendMode::Buffer` nutzt zusätzlich `bufferIn/bufferOut` (Pool-Slot
+0..7) + `bufferInInvert/bufferOutInvert` (AVS `ininvert/outinvert`).
 
 ## Verwendung
 

@@ -12,6 +12,7 @@
 #include "visualizers/multieffect/AvsChainTranslator.hpp"
 
 #include <algorithm>
+#include <cstring>
 
 namespace lumi::multieffect {
 
@@ -32,11 +33,15 @@ enum AvsId
     kBufferSave = 18,
     kBrightness = 22,
     kClearScreen = 25,
+    kScatter = 16,
+    kGrain = 24,
     kMirror = 26,
+    kMosaic = 30,
     kCustomBpm = 33,
     kSuperScope = 36,
     kInvert = 37,
     kSetRenderMode = 40,
+    kInterferences = 41,
     kDynamicMovement = 43,
     kFastBrightness = 44,
     kColorModifier = 45,
@@ -85,12 +90,78 @@ ListParams listParamsFrom(const lumi::avs::ListInfo& info)
     lp.blendOut = static_cast<BlendMode>(std::clamp(info.blendOut(), 0, 13));
     lp.inAdjustAlpha = std::clamp(info.inBlendVal, 0, 255);
     lp.outAdjustAlpha = std::clamp(info.outBlendVal, 0, 255);
+    lp.bufferIn = std::clamp(info.bufferIn, 0, 7);
+    lp.bufferOut = std::clamp(info.bufferOut, 0, 7);
+    lp.bufferInInvert = info.inInvert != 0;
+    lp.bufferOutInvert = info.outInvert != 0;
     lp.onBeatRender = info.beatRender != 0;
     lp.onBeatFrames = std::max(1, info.beatRenderFrames);
     lp.useCode = info.useCode != 0;
     lp.initCode = info.initCode;
     lp.frameCode = info.frameCode;
     return lp;
+}
+
+/**
+ * The 23 built-in Movement formulas (r_trans.cpp `descriptions[].eval_desc`).
+ * These are the exact AVS point-code strings; our ScriptGridModule now shares
+ * AVS' polar convention (d normalised to corner=1, r + pi/2), so they render
+ * faithfully. Index 0 (none) plus 1 (slight fuzzify) and 7 (blocky partial out)
+ * are not coordinate remaps -> nullptr -> passthrough. `rect` mirrors the AVS
+ * uses_rect flag; formulas that need it read/write x,y instead of d,r.
+ */
+struct MovementFormula
+{
+    const char* code;  ///< nullptr = not a remap (passthrough)
+    bool rect;
+};
+[[nodiscard]] MovementFormula movementBuiltinFormula(int effect)
+{
+    static const MovementFormula kTable[] = {
+        {nullptr, false},                                        // 0 none
+        {nullptr, false},                                        // 1 slight fuzzify
+        {"x=x+1/32;", true},                                     // 2 shift rotate left
+        {"r = r + (0.1 - (0.2 * d));\nd = d * 0.96;", false},    // 3 big swirl out
+        {"d = d * (0.99 * (1.0 - sin(r-$PI*0.5) / 32.0));\n"
+         "r = r + (0.03 * sin(d * $PI * 4));", false},           // 4 medium swirl
+        {"d = d * (0.94 + (cos((r-$PI*0.5) * 32.0) * 0.06));", false},  // 5 sunburster
+        {"d = d * (1.01 + (cos((r-$PI*0.5) * 4) * 0.04));\n"
+         "r = r + (0.03 * sin(d * $PI * 4));", false},           // 6 swirl to center
+        {nullptr, false},                                        // 7 blocky partial out
+        {"r = r + (0.1 * sin(d * $PI * 5));", false},            // 8 swirling both ways
+        {"t = sin(d * $PI);\n"
+         "d = d - (8*t*t*t*t*t)/sqrt((sw*sw+sh*sh)/4);", false}, // 9 bubbling outward
+        {"t = sin(d * $PI);\n"
+         "d = d - (8*t*t*t*t*t)/sqrt((sw*sw+sh*sh)/4);\n"
+         "t=cos(d*$PI/2.0);\nr= r + 0.1*t*t*t;", false},         // 10 bubbling + swirl
+        {"d = d * (0.95 + (cos(((r-$PI*0.5) * 5.0) - ($PI / 2.50)) * 0.03));", false},  // 11
+        {"r = r + 0.04;\nd = d * (0.96 + cos(d * $PI) * 0.05);", false},  // 12 tunneling
+        {"t = cos(d * $PI);\nr = r + (0.07 * t);\n"
+         "d = d * (0.98 + t * 0.10);", false},                   // 13 bleedin'
+        {"d=sqrt(x*x+y*y); r=atan2(y,x);\n"
+         "r=r+0.1-0.2*d; d=d*0.96;\n"
+         "x=cos(r)*d + 8/128; y=sin(r)*d;", true},               // 14 shifted big swirl
+        {"d = 0.15", false},                                     // 15 psychotic beaming
+        {"r = cos(r * 3)", false},                               // 16 cosine radial 3-way
+        {"d = d * (1 - ((d - .35) * .5));\nr = r + .1;", false}, // 17 spinny tube
+        {"d = d * (1 - (sin((r-$PI*0.5) * 7) * .03));\n"
+         "r = r + (cos(d * 12) * .03);", false},                 // 18 radial swirlies
+        {"d = d * (1 - (sin((r - $PI*0.5) * 12) * .05));\n"
+         "r = r + (cos(d * 18) * .05);\n"
+         "d = d * (1-((d - .4) * .03));\n"
+         "r = r + ((d - .4) * .13)", false},                     // 19 swill
+        {"x = x + (cos(y * 18) * .02);\n"
+         "y = y + (sin(x * 14) * .03);", true},                  // 20 gridley
+        {"x = x + (cos(abs(y-.5) * 8) * .02);\n"
+         "y = y + (sin(abs(x-.5) * 8) * .05);\n"
+         "x = x * .95;\ny = y * .95;", true},                    // 21 grapevine
+        {"y = y * ( 1 + (sin(r + $PI/2) * .3) );\n"
+         "x = x * ( 1 + (cos(r + $PI/2) * .3) );\n"
+         "x = x * .995;\ny = y * .995;", true},                  // 22 quadrant
+        {"y = (r*6)/($PI); x = d;", true},                       // 23 6-way kaleida
+    };
+    if (effect < 0 || effect > 23) return {nullptr, false};
+    return kTable[effect];
 }
 
 // Forward decl for recursion.
@@ -190,11 +261,22 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
 
         case kMovement:
         {
-            const std::string code = slotStr(src, "point");
-            if (code.empty()) return false;  // built-in formula -> passthrough
             MovementParams p;
-            p.code = code;
-            p.rectCoords = src.field("rectangular") != 0;
+            const std::string code = slotStr(src, "point");
+            if (!code.empty())
+            {
+                // User expression (AVS effect id 32767).
+                p.code = code;
+                p.rectCoords = src.field("rectangular") != 0;
+            }
+            else
+            {
+                // Built-in formula: look it up by index; nullptr -> passthrough.
+                const MovementFormula f = movementBuiltinFormula(src.field("effect"));
+                if (f.code == nullptr) return false;
+                p.code = f.code;
+                p.rectCoords = f.rect;
+            }
             p.wrap = src.field("wrap") != 0;
             out.params = std::move(p);
             return true;
@@ -237,6 +319,55 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             return true;
         }
 
+        case kGrain:
+        {
+            GrainParams p;
+            p.amount = std::clamp(src.field("smax"), 0, 100);
+            p.staticGrain = src.field("staticgrain") != 0;
+            p.blend = src.field("blend") != 0 ? 1 : (src.field("blendavg") != 0 ? 2 : 0);
+            out.params = p;
+            return true;
+        }
+
+        case kScatter:
+            out.params = ScatterParams{};
+            return true;
+
+        case kInterferences:
+        {
+            InterferencesParams p;
+            p.points = std::clamp(src.field("nPoints"), 1, 8);
+            p.distance = src.field("distance");
+            p.alpha = std::clamp(src.field("alpha"), 0, 255);
+            p.rotation = src.field("rotation");
+            p.rotationInc = src.field("rotationinc");
+            p.distance2 = src.field("distance2");
+            p.alpha2 = std::clamp(src.field("alpha2"), 0, 255);
+            p.rotationInc2 = src.field("rotationinc2");
+            p.rgb = src.field("rgb") != 0;
+            p.onBeat = src.field("onbeat") != 0;
+            const std::int32_t bits = src.field("speed_bits");
+            float speed = 0.0f;
+            std::memcpy(&speed, &bits, sizeof(float));
+            p.speed = (speed > 0.0f && speed < 100.0f) ? speed : 0.2f;  // sanity
+            p.blend = src.field("blend") != 0 ? 1 : (src.field("blendavg") != 0 ? 2 : 0);
+            out.params = p;
+            return true;
+        }
+
+        case kMosaic:
+        {
+            MosaicParams p;
+            p.quality = std::clamp(src.field("quality"), 1, 100);
+            p.quality2 = std::clamp(src.field("quality2"), 1, 100);
+            p.onBeat = src.field("onbeat") != 0;
+            p.durationFrames = std::max(1, src.field("durFrames"));
+            // AVS stores two flags; host uses one mode (0 replace,1 add,2 50/50).
+            p.blend = src.field("blend") != 0 ? 1 : (src.field("blendavg") != 0 ? 2 : 0);
+            out.params = p;
+            return true;
+        }
+
         case kBufferSave:
         {
             BufferSaveParams p;
@@ -271,6 +402,11 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.pointCode = slotStr(src, "point");
             p.renderMode = (src.field("drawmode") & 1) ? 1 : 0;  // lines / dots
             p.audioChannel = std::clamp(src.field("which_ch"), 0, 4);
+            // AVS color table (COLORREF -> host RRGGBB). Point code that sets
+            // red/green/blue still overrides it at render time.
+            for (std::uint32_t c : src.colors)
+                p.colors.push_back(avsColor(static_cast<std::int32_t>(c)));
+            p.colorBlend = p.colors.empty() ? 0 : 1;  // table mode iff AVS had colors
             if (ctx.lineWidth > 0)
             {
                 p.lineWidth = static_cast<float>(ctx.lineWidth);  // Set-Render-Mode unroll

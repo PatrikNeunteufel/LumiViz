@@ -24,12 +24,14 @@ unverändert).
 
 ## 2. Knoten-Vertrag
 
-- **Inputs je Knoten:** `x, y` (−1..1), `d` (Abstand vom Zentrum,
-  `sqrt(x²+y²)`), `r` (Winkel, `atan2(y,x)`); je Frame: `w, h, time, dt, b`.
-  **`t` schreibt der Host nie** (Skript-Eigentum, wie Superscope).
-- **Outputs:** Polar-Modus (Default, AVS-treu): `d, r` → `u=cos(r)·d`,
-  `v=sin(r)·d`. Rect-Modus (`setRectCoords(true)`): `x, y` direkt.
-  `alpha` (0..1) nur, wenn das Point-Skript es erwähnt (sonst 1).
+- **Inputs je Knoten:** `x, y` (−1..1); **AVS-Polar-Konvention** (`r_trans.cpp`):
+  `d` = Abstand normiert auf **Ecke=1** (`sqrt(x²+y²)·1/√2`), `r` = `atan2(y,x) + π/2`;
+  je Frame: `w, h`, zusätzlich `sw, sh` (= Flächenmaße, AVS-Alias für Movement-Code),
+  `time, dt, b`. **`t` schreibt der Host nie** (Skript-Eigentum, wie Superscope).
+- **Outputs:** Polar-Modus (Default): Rückkonversion `d·√2`, `r−π/2` →
+  `u=cos(r)·d`, `v=sin(r)·d` (macht AVS-Formeln mit absolutem `d` treu; reine
+  Skalier-/Rotier-Skripte bleiben identisch). Rect-Modus (`setRectCoords(true)`):
+  `x, y` direkt. `alpha` (0..1) nur, wenn das Point-Skript es erwähnt (sonst 1).
 - Slots: Init (einmal), Beat (bei Beat), Frame (je execute), Point (je Knoten) —
   EEL via [ScriptSlotHost](../../../scripting/ScriptSlotHost.md); geteilter
   [ScriptContext](../../../scripting/ScriptContext.md) verbindet reg/q/gmegabuf

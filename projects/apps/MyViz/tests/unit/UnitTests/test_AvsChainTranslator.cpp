@@ -12,6 +12,7 @@
 
 #include "visualizers/multieffect/AvsChainTranslator.hpp"
 
+#include <cstring>
 #include <filesystem>
 
 using namespace lumi::multieffect;
@@ -121,15 +122,41 @@ TEST_SUITE("AvsChainTranslator")
               == doctest::Approx(5.0f));
     }
 
-    TEST_CASE("Movement ohne Point-Code (Builtin-Formel) -> Passthrough")
+    TEST_CASE("Movement-Builtin-Formel -> MovementParams mit AVS-Point-Code")
     {
         EffectNode move = builtin(15);
-        move.fields = {{"effect", 3}, {"blend", 0}, {"rectangular", 0}};
-        // kein code["point"]
+        move.fields = {{"effect", 3}, {"blend", 0}, {"wrap", 1}};  // 3 = big swirl out
+        // kein code["point"] -> Formel aus der Tabelle
 
         const TranslationResult t = translateAvsTree(makeParsed({move}));
         REQUIRE(t.root.children.size() == 1);
-        CHECK(std::holds_alternative<PassthroughParams>(t.root.children[0].params));
+        REQUIRE(std::holds_alternative<MovementParams>(t.root.children[0].params));
+        const auto& p = std::get<MovementParams>(t.root.children[0].params);
+        CHECK(p.code.find("d = d * 0.96") != std::string::npos);
+        CHECK_FALSE(p.rectCoords);  // formula 3 is polar
+        CHECK(p.wrap);
+    }
+
+    TEST_CASE("Movement rect-Builtin (gridley) setzt rectCoords")
+    {
+        EffectNode move = builtin(15);
+        move.fields = {{"effect", 20}};  // 20 = gridley (uses_rect)
+        const TranslationResult t = translateAvsTree(makeParsed({move}));
+        const auto& p = std::get<MovementParams>(t.root.children[0].params);
+        CHECK(p.rectCoords);
+        CHECK(p.code.find("cos(y * 18)") != std::string::npos);
+    }
+
+    TEST_CASE("Movement Nicht-Remap-Builtins (none/fuzzify/blocky) -> Passthrough")
+    {
+        for (int effect : {0, 1, 7})
+        {
+            EffectNode move = builtin(15);
+            move.fields = {{"effect", effect}};
+            const TranslationResult t = translateAvsTree(makeParsed({move}));
+            REQUIRE(t.root.children.size() == 1);
+            CHECK(std::holds_alternative<PassthroughParams>(t.root.children[0].params));
+        }
     }
 
     TEST_CASE("verschachtelte Liste mit Blend wird uebernommen")
@@ -154,6 +181,122 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(lp.blendIn == BlendMode::Additive);
         CHECK(lp.inAdjustAlpha == 200);
         CHECK(t.root.children[0].children.size() == 1);
+    }
+
+    TEST_CASE("Buffer-Blend: Index + Invert werden uebernommen und geklammert")
+    {
+        EffectNode inner;
+        inner.isList = true;
+        inner.id = lumi::avs::kListId;
+        // in-blend = Buffer (12, bits 8-12); out-blend = Buffer -> (12^1)=13 in bits 16-20
+        inner.list.mode = (12 << 8) | (13 << 16);
+        inner.list.bufferIn = 3;
+        inner.list.bufferOut = 99;   // ausserhalb 0..7 -> clamp auf 7
+        inner.list.inInvert = 1;
+        inner.list.outInvert = 0;
+
+        const TranslationResult t = translateAvsTree(makeParsed({inner}));
+        REQUIRE(t.root.children.size() == 1);
+        const auto& lp = std::get<ListParams>(t.root.children[0].params);
+        CHECK(lp.blendIn == BlendMode::Buffer);
+        CHECK(lp.blendOut == BlendMode::Buffer);
+        CHECK(lp.bufferIn == 3);
+        CHECK(lp.bufferOut == 7);
+        CHECK(lp.bufferInInvert);
+        CHECK_FALSE(lp.bufferOutInvert);
+    }
+
+    TEST_CASE("Mosaic: Felder gemappt, Blend-Flags -> Modus, Werte geklammert")
+    {
+        EffectNode mos = builtin(30);
+        mos.fields = {{"enabled", 1}, {"quality", 200}, {"quality2", 0},
+                      {"blend", 0},   {"blendavg", 1}, {"onbeat", 1},
+                      {"durFrames", 8}};
+
+        const TranslationResult t = translateAvsTree(makeParsed({mos}));
+        REQUIRE(t.root.children.size() == 1);
+        const auto& p = std::get<MosaicParams>(t.root.children[0].params);
+        CHECK(p.quality == 100);   // 200 -> clamp 100
+        CHECK(p.quality2 == 1);    // 0   -> clamp 1
+        CHECK(p.onBeat);
+        CHECK(p.durationFrames == 8);
+        CHECK(p.blend == 2);       // blendavg set -> 50/50
+    }
+
+    TEST_CASE("Mosaic: additiver Blend hat Vorrang vor blendavg")
+    {
+        EffectNode mos = builtin(30);
+        mos.fields = {{"quality", 50}, {"blend", 1}, {"blendavg", 1}};
+        const TranslationResult t = translateAvsTree(makeParsed({mos}));
+        const auto& p = std::get<MosaicParams>(t.root.children[0].params);
+        CHECK(p.blend == 1);  // additive wins
+    }
+
+    TEST_CASE("SuperScope: AVS-Farbtabelle -> colors (COLORREF-Swap) + Table-Modus")
+    {
+        EffectNode ss = builtin(36);
+        ss.colors = {0x000000FFu, 0x00FF0000u};  // AVS COLORREF 0x00BBGGRR
+
+        const TranslationResult t = translateAvsTree(makeParsed({ss}));
+        REQUIRE(t.root.children.size() == 1);
+        const auto& p = std::get<SuperScopeParams>(t.root.children[0].params);
+        CHECK(p.colorBlend == 1);  // colors present -> table mode
+        REQUIRE(p.colors.size() == 2);
+        CHECK(p.colors[0] == 0xFF0000u);  // -> RRGGBB red
+        CHECK(p.colors[1] == 0x0000FFu);  // -> RRGGBB blue
+    }
+
+    TEST_CASE("SuperScope ohne AVS-Farben bleibt im Gradient-Modus")
+    {
+        const TranslationResult t = translateAvsTree(makeParsed({builtin(36)}));
+        const auto& p = std::get<SuperScopeParams>(t.root.children[0].params);
+        CHECK(p.colorBlend == 0);
+        CHECK(p.colors.empty());
+    }
+
+    TEST_CASE("Grain: Felder + Blend-Flags gemappt")
+    {
+        EffectNode g = builtin(24);
+        g.fields = {{"enabled", 1}, {"blend", 0}, {"blendavg", 1},
+                    {"smax", 60},   {"staticgrain", 1}};
+        const TranslationResult t = translateAvsTree(makeParsed({g}));
+        REQUIRE(t.root.children.size() == 1);
+        const auto& p = std::get<GrainParams>(t.root.children[0].params);
+        CHECK(p.amount == 60);
+        CHECK(p.staticGrain);
+        CHECK(p.blend == 2);  // blendavg -> 50/50
+    }
+
+    TEST_CASE("Scatter -> ScatterParams (parameterlos)")
+    {
+        const TranslationResult t = translateAvsTree(makeParsed({builtin(16)}));
+        REQUIRE(t.root.children.size() == 1);
+        CHECK(std::holds_alternative<ScatterParams>(t.root.children[0].params));
+    }
+
+    TEST_CASE("Interferences: Felder + speed-Bitmuster (float) gemappt")
+    {
+        std::int32_t speedBits = 0;
+        const float sp = 0.5f;
+        std::memcpy(&speedBits, &sp, sizeof(float));
+
+        EffectNode e = builtin(41);
+        e.fields = {{"nPoints", 4},    {"rotation", 10},    {"distance", 20},
+                    {"alpha", 100},    {"rotationinc", 5},  {"blend", 1},
+                    {"blendavg", 0},   {"distance2", 40},   {"alpha2", 200},
+                    {"rotationinc2", 15}, {"rgb", 1},        {"onbeat", 1},
+                    {"speed_bits", speedBits}};
+
+        const TranslationResult t = translateAvsTree(makeParsed({e}));
+        REQUIRE(t.root.children.size() == 1);
+        const auto& p = std::get<InterferencesParams>(t.root.children[0].params);
+        CHECK(p.points == 4);
+        CHECK(p.alpha == 100);
+        CHECK(p.distance2 == 40);
+        CHECK(p.rgb);
+        CHECK(p.onBeat);
+        CHECK(p.blend == 1);
+        CHECK(p.speed == doctest::Approx(0.5f));
     }
 
     // Korpus-Smoke: alle Referenz-Presets uebersetzen ohne Absturz (umgebungsabh.)

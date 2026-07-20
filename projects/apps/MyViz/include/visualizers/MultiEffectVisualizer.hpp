@@ -154,6 +154,18 @@ private:
         // Custom BPM
         std::int64_t customLastMs = 0;  ///< arbitrary-mode last emit time
         int customSkipCount = 0;        ///< skip-mode beat counter
+
+        // Mosaic: on-beat quality ease-back (r_mosaic thisQuality/nF)
+        float mosaicQuality = 0.0f;  ///< current interpolated block count (0 = init)
+        int mosaicFramesLeft = 0;    ///< frames left easing back to `quality`
+
+        // SuperScope: gradient preset the module currently holds (reload on change)
+        std::string scopeGradientLoaded;
+
+        // Interferences: accumulating rotation + on-beat morph state (r_interf)
+        bool interfSeeded = false;
+        float interfRotation = 0.0f;  ///< persistent rotation accumulator (0..255 units)
+        float interfStatus = 0.0f;    ///< beat-morph phase (0..pi)
     };
 
     /** Render-thread state of one list node, keyed by ChainNode::nodeId. */
@@ -217,6 +229,12 @@ private:
     void runSuperScope(const lumi::multieffect::ChainNode& node,
                        const lumi::multieffect::SuperScopeParams& params);
     void runDebugBars(const lumi::multieffect::DebugBarsParams& params);
+    void runMosaic(const lumi::multieffect::ChainNode& node,
+                   const lumi::multieffect::MosaicParams& params);
+    void runGrain(const lumi::multieffect::GrainParams& params);
+    void runScatter(const lumi::multieffect::ScatterParams& params);
+    void runInterferences(const lumi::multieffect::ChainNode& node,
+                          const lumi::multieffect::InterferencesParams& params);
 
     [[nodiscard]] uint32_t nextRandom();  ///< host LCG (Mirror onbeat-random)
 
@@ -225,10 +243,16 @@ private:
 
     /**
      * Blend src over dst.current() into dst.partner(), then swap dst.
-     * Unimplemented modes fall back to Replace (decision E3); Ignore is a no-op.
+     * Ignore is a no-op. For BlendMode::Buffer, `bufferTexture` supplies the
+     * global-buffer depth source (`bufferInvert` flips it); a missing buffer
+     * (bufferTexture == 0) leaves dst untouched, matching AVS' `if (!buf) break`.
      */
     void blendPass(SurfacePair& dst, unsigned int srcTexture,
-                   lumi::multieffect::BlendMode mode, int adjustAlpha);
+                   lumi::multieffect::BlendMode mode, int adjustAlpha,
+                   unsigned int bufferTexture = 0, bool bufferInvert = false);
+
+    /** Texture of pool slot `n` at the surface size, or 0 if nothing is saved. */
+    unsigned int poolTexture(int n);
 
     lumi::multieffect::ChainNode m_root;
 
@@ -255,6 +279,10 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_lutShader;
     std::unique_ptr<QOpenGLShaderProgram> m_warpShader;
     std::unique_ptr<QOpenGLShaderProgram> m_feedbackShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_mosaicShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_grainShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_scatterShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_interfShader;
     std::unique_ptr<QOpenGLVertexArrayObject> m_quadVao;
     std::unique_ptr<QOpenGLBuffer> m_quadVbo;
     std::unique_ptr<QOpenGLVertexArrayObject> m_warpVao;

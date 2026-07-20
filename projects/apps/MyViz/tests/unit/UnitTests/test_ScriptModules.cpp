@@ -13,13 +13,16 @@
 
 #include "visualizers/modules/scripting/ScriptGridModule.hpp"
 #include "visualizers/modules/scripting/ScriptLutModule.hpp"
+#include "visualizers/modules/SuperscopeModule.hpp"
 
 #include <cmath>
 #include <memory>
+#include <vector>
 
 using lumi::modules::GridNode;
 using lumi::modules::ScriptGridModule;
 using lumi::modules::ScriptLutModule;
+using lumi::modules::SuperscopeModule;
 using lumi::scripting::ScriptContext;
 
 // =============================================================================
@@ -84,6 +87,22 @@ TEST_CASE("ScriptGridModule: Polar-Modus (AVS-Default) — d-Manipulation")
     // Zentrum bleibt im Zentrum
     CHECK(grid.node(1, 1).u == doctest::Approx(0.0f));
     CHECK(grid.node(1, 1).v == doctest::Approx(0.0f));
+}
+
+TEST_CASE("ScriptGridModule: absolutes d nutzt AVS-Normierung (Ecke=1)")
+{
+    // AVS-Builtin #15 "psychotic beaming": d=0.15 setzt den Radius absolut.
+    // Neue Konvention: d ist auf die Ecke (=1) normiert, zurueck * sqrt(2) ->
+    // die Ecke landet bei cos(225°)*0.15*sqrt(2) = -0.15 (alt waere -0.106).
+    ScriptGridModule grid;
+    grid.setGridSize(3, 3);
+    grid.setPointCode("d = 0.15");
+    grid.execute(100.0f, 100.0f, false, 0.016f);
+    CHECK(grid.lastScriptError().empty());
+
+    const GridNode& corner = grid.node(0, 0);
+    CHECK(corner.u == doctest::Approx(-0.15f).epsilon(0.01));
+    CHECK(corner.v == doctest::Approx(-0.15f).epsilon(0.01));
 }
 
 TEST_CASE("ScriptGridModule: Rotation um 90 Grad im Polar-Modus")
@@ -229,4 +248,45 @@ TEST_CASE("ScriptLutModule: geteilter Kontext speist das Level-Skript")
     lut.setLevelCode("red=red*reg03; green=green*reg03; blue=blue*reg03");
     lut.execute(false, 0.016f);
     CHECK(lut.lut(0, 255) == doctest::Approx(0.5f));
+}
+
+// =============================================================================
+// SuperscopeModule — Basisfarbe wird vor dem Point-Code vorbelegt (AVS r_sscope)
+// =============================================================================
+
+TEST_CASE("SuperscopeModule: Table-Basisfarbe wird vorbelegt; Code kann modulieren")
+{
+    const std::vector<float> silence(576, 0.0f);
+    auto run = [&](const char* point) {
+        SuperscopeModule ss;
+        ss.setLuaMode(true);
+        ss.setPointCount(4);
+        ss.setColorTable({0x00FF0000u});  // reine Rot-Tabelle
+        ss.setColorBlend(1);              // Table only
+        ss.setPointCode(point);
+        return ss.execute(silence.data(), silence.data(), silence.data(),
+                          silence.data(), 576, 100, 100, false, 0.016f);
+    };
+
+    SUBCASE("Code ohne Farbe -> behaelt die Basisfarbe")
+    {
+        const auto pts = run("x=i*2-1; y=0");
+        REQUIRE(!pts.empty());
+        CHECK(pts[0].r == doctest::Approx(1.0f));
+        CHECK(pts[0].g == doctest::Approx(0.0f));
+        CHECK(pts[0].b == doctest::Approx(0.0f));
+    }
+    SUBCASE("Code moduliert die Basisfarbe (red=red*0.5)")
+    {
+        const auto pts = run("x=i*2-1; y=0; red=red*0.5");
+        REQUIRE(!pts.empty());
+        CHECK(pts[0].r == doctest::Approx(0.5f));
+    }
+    SUBCASE("Code ueberschreibt die Basisfarbe absolut")
+    {
+        const auto pts = run("x=i*2-1; y=0; blue=1; red=0");
+        REQUIRE(!pts.empty());
+        CHECK(pts[0].r == doctest::Approx(0.0f));
+        CHECK(pts[0].b == doctest::Approx(1.0f));
+    }
 }

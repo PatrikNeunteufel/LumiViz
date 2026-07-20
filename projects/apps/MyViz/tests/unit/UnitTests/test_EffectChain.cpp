@@ -147,23 +147,22 @@ TEST_SUITE("EffectChain")
 
     // --- 5.2: Blend-Modi, nodeId, OnBeat/Adjustable-Clamps -------------------
 
-    TEST_CASE("Blend-Batch-1 gilt als implementiert, exotische nicht")
+    TEST_CASE("Alle 14 AVS-Blend-Modi gelten als implementiert (Batch 2)")
     {
+        CHECK(isBlendModeImplemented(BlendMode::Ignore));
         CHECK(isBlendModeImplemented(BlendMode::Replace));
-        CHECK(isBlendModeImplemented(BlendMode::Additive));
         CHECK(isBlendModeImplemented(BlendMode::FiftyFifty));
         CHECK(isBlendModeImplemented(BlendMode::Maximum));
-        CHECK(isBlendModeImplemented(BlendMode::Minimum));
-        CHECK(isBlendModeImplemented(BlendMode::Multiply));
+        CHECK(isBlendModeImplemented(BlendMode::Additive));
+        CHECK(isBlendModeImplemented(BlendMode::Subtractive12));
+        CHECK(isBlendModeImplemented(BlendMode::Subtractive21));
+        CHECK(isBlendModeImplemented(BlendMode::EveryOtherLine));
+        CHECK(isBlendModeImplemented(BlendMode::EveryOtherPixel));
+        CHECK(isBlendModeImplemented(BlendMode::Xor));
         CHECK(isBlendModeImplemented(BlendMode::Adjustable));
-        CHECK(isBlendModeImplemented(BlendMode::Ignore));
-
-        CHECK_FALSE(isBlendModeImplemented(BlendMode::Xor));
-        CHECK_FALSE(isBlendModeImplemented(BlendMode::EveryOtherLine));
-        CHECK_FALSE(isBlendModeImplemented(BlendMode::EveryOtherPixel));
-        CHECK_FALSE(isBlendModeImplemented(BlendMode::Subtractive12));
-        CHECK_FALSE(isBlendModeImplemented(BlendMode::Subtractive21));
-        CHECK_FALSE(isBlendModeImplemented(BlendMode::Buffer));
+        CHECK(isBlendModeImplemented(BlendMode::Multiply));
+        CHECK(isBlendModeImplemented(BlendMode::Buffer));
+        CHECK(isBlendModeImplemented(BlendMode::Minimum));
     }
 
     TEST_CASE("Enum-Wert entspricht der AVS-Reihenfolge (Shader-uMode)")
@@ -174,20 +173,23 @@ TEST_SUITE("EffectChain")
         CHECK(static_cast<int>(BlendMode::Minimum) == 13);
     }
 
-    TEST_CASE("nicht implementierte Blend-Modi ergeben eine Compile-Warnung")
+    TEST_CASE("Das vollstaendige Blend-Set kompiliert warnungsfrei")
     {
-        ChainNode root = makeList();
-        ChainNode list = makeList();
-        auto& lp = std::get<ListParams>(list.params);
-        lp.blendIn = BlendMode::Xor;         // nicht implementiert
-        lp.blendOut = BlendMode::Additive;   // implementiert
-        root.children.push_back(std::move(list));
+        // Batch 2: jeder frueher exotische Modus wird jetzt gerendert -> keine
+        // Fallback-Warnung mehr, egal ob als In- oder Out-Blend.
+        for (int m = 0; m <= 13; ++m)
+        {
+            ChainNode root = makeList();
+            ChainNode list = makeList();
+            auto& lp = std::get<ListParams>(list.params);
+            lp.blendIn = static_cast<BlendMode>(m);
+            lp.blendOut = static_cast<BlendMode>(m);
+            root.children.push_back(std::move(list));
 
-        const CompileResult result = compileChain(root);
-        CHECK(result.ok);
-        REQUIRE(result.warnings.size() == 1);
-        CHECK(result.warnings[0].path == "root/0");
-        CHECK(result.warnings[0].text.find("XOR") != std::string::npos);
+            const CompileResult result = compileChain(root);
+            CHECK(result.ok);
+            CHECK(result.warnings.empty());
+        }
     }
 
     TEST_CASE("Adjustable-Alpha und OnBeat-Frames werden geklammert")
@@ -295,9 +297,13 @@ TEST_SUITE("EffectChain")
         CHECK(std::string(effectTypeName(EffectParams{BlitterFeedbackParams{}})) == "Blitter Feedback");
         CHECK(std::string(effectTypeName(EffectParams{RotoBlitterParams{}})) == "Roto Blitter");
         CHECK(std::string(effectTypeName(EffectParams{BufferSaveParams{}})) == "Buffer Save");
+        CHECK(std::string(effectTypeName(EffectParams{MosaicParams{}})) == "Mosaic");
+        CHECK(std::string(effectTypeName(EffectParams{GrainParams{}})) == "Grain");
+        CHECK(std::string(effectTypeName(EffectParams{ScatterParams{}})) == "Scatter");
+        CHECK(std::string(effectTypeName(EffectParams{InterferencesParams{}})) == "Interferences");
     }
 
-    TEST_CASE("Buffer-Save-Slot/Alpha werden geklammert, Restore warnt bei Exot-Blend")
+    TEST_CASE("Buffer-Save-Slot/Alpha werden geklammert (Restore-Blend jetzt implementiert)")
     {
         ChainNode root = makeList();
         root.children.push_back(makeLeaf(BufferSaveParams{99, false, BlendMode::Xor, 999}));
@@ -307,18 +313,7 @@ TEST_SUITE("EffectChain")
         const auto& s = std::get<BufferSaveParams>(root.children[0].params);
         CHECK(s.slot == 7);
         CHECK(s.adjustAlpha == 255);
-        REQUIRE(result.warnings.size() == 1);  // Restore mit XOR-Blend
-        CHECK(result.warnings[0].text.find("XOR") != std::string::npos);
-    }
-
-    TEST_CASE("Buffer Save als Save (nicht Restore) warnt nicht bei Exot-Blend")
-    {
-        ChainNode root = makeList();
-        root.children.push_back(makeLeaf(BufferSaveParams{0, true, BlendMode::Xor, 128}));
-
-        const CompileResult result = compileChain(root);
-        CHECK(result.ok);
-        CHECK(result.warnings.empty());  // Save nutzt den Blend-Modus nicht
+        CHECK(result.warnings.empty());  // XOR ist seit Batch 2 implementiert
     }
 
     TEST_CASE("SuperScope: Anzeigename + Parameter-Clamps")

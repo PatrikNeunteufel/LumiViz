@@ -19,12 +19,20 @@ nach dem AVS-Render-Modell (Analyse §5.1). Import-Ziel für .avs-Presets
   (`transformPass`).
 - **Verschachtelung (5.2):** Nicht-Root-Listen halten einen persistenten
   `thisfb` (eigenes Paar, keyed by `nodeId`): Parent → In-Blend → Kinder →
-  Out-Blend → Parent. 14 Blend-Modi als ein Shader (`uMode`); Batch 1 (E3)
-  echt, Rest Fallback Replace. OnBeat-Aktivierung + EEL-Listen-Slots
+  Out-Blend → Parent. Alle 14 Blend-Modi als ein Shader (`uMode`) — seit
+  Batch 2 auch Subtractive 1-2/2-1, Every-other-line/-pixel, XOR und Buffer
+  (Pool-Depth als Alpha, `bufferIn/out` + Invert). OnBeat-Aktivierung + EEL-Listen-Slots
   (`enabled/clear/beat/alphain/alphaout`) über `ScriptSlotHost` mit geteiltem
   `ScriptContext`.
 - **Effekt-Portierungen (5.3)** sind 1:1 aus `ref/vis_avs` (r_bright, r_fastbright,
   r_blur, r_mirror, r_nfclr, r_colorfade) — Konvention `0x00RRGGBB` = GLSL-RGB.
+- **§5.2-Effekte (Shader):** **Mosaic** (`r_mosaic` — `quality`×`quality`-Block­
+  raster, OnBeat→`quality2` mit Ease-Back, Blend Replace/Additiv/50-50) ·
+  **Grain** (`r_grain` — Zufalls-Verdunkelung gegateter Pixel, `amount`/static/
+  Blend, Hash-Noise) · **Scatter** (`r_scat` — per-Pixel-Zufallsversatz ±4 px) ·
+  **Interferences** (`r_interf` — ≤8 gedrehte Kopien, per-Frame akkumulierende
+  Rotation + OnBeat-Morph zum *2-Satz, optional RGB-Kanaltrennung; LeafRuntime-
+  State `interfRotation/interfStatus`).
 - **Skript-Effekte (5.4):** Color Modifier (`ScriptLutModule`→256-LUT-Shader),
   Movement/Dynamic Movement (`ScriptGridModule`→per-Frame-Warp-Mesh), Custom BPM
   (Beat-Mutation), Blitter/Roto Feedback (Roto/Zoom-Feedback-Shader), Buffer Save

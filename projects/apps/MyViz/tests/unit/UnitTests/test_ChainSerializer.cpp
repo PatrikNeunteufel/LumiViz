@@ -44,9 +44,13 @@ ChainNode buildRichChain()
 
     ChainNode nested;
     ListParams nestedList;
-    nestedList.blendIn = BlendMode::Additive;
+    nestedList.blendIn = BlendMode::Buffer;
     nestedList.blendOut = BlendMode::FiftyFifty;
     nestedList.inAdjustAlpha = 200;
+    nestedList.bufferIn = 4;
+    nestedList.bufferOut = 2;
+    nestedList.bufferInInvert = true;
+    nestedList.bufferOutInvert = false;
     nestedList.onBeatRender = true;
     nestedList.onBeatFrames = 5;
     nestedList.useCode = true;
@@ -75,7 +79,96 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{ListParams{}}) == "list");
         CHECK(effectTypeKey(EffectParams{SuperScopeParams{}}) == "superScope");
         CHECK(effectTypeKey(EffectParams{ColorModifierParams{}}) == "colorModifier");
+        CHECK(effectTypeKey(EffectParams{MosaicParams{}}) == "mosaic");
         CHECK(effectTypeKey(EffectParams{PassthroughParams{}}) == "passthrough");
+    }
+
+    TEST_CASE("SuperScope-Farbfelder ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        SuperScopeParams sp;
+        sp.colorBlend = 3;  // multiply
+        sp.colorCycleFrames = 42;
+        sp.gradientPreset = "Fire";
+        sp.colors = {0x112233u, 0x445566u, 0x778899u};
+        leaf.params = sp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<SuperScopeParams>(restored.children[0].params);
+        CHECK(p.colorBlend == 3);
+        CHECK(p.colorCycleFrames == 42);
+        CHECK(p.gradientPreset == "Fire");
+        REQUIRE(p.colors.size() == 3);
+        CHECK(p.colors[0] == 0x112233u);
+        CHECK(p.colors[2] == 0x778899u);
+    }
+
+    TEST_CASE("Grain/Scatter ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode g;  g.params = GrainParams{40, true, 1};
+        ChainNode s;  s.params = ScatterParams{};
+        root.children.push_back(std::move(g));
+        root.children.push_back(std::move(s));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 2);
+        const auto& gp = std::get<GrainParams>(restored.children[0].params);
+        CHECK(gp.amount == 40);
+        CHECK(gp.staticGrain == true);
+        CHECK(gp.blend == 1);
+        CHECK(std::holds_alternative<ScatterParams>(restored.children[1].params));
+        CHECK(effectTypeKey(EffectParams{ScatterParams{}}) == "scatter");
+        CHECK(effectTypeKey(EffectParams{GrainParams{}}) == "grain");
+    }
+
+    TEST_CASE("Interferences-Parameter ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        InterferencesParams ip;
+        ip.points = 6; ip.distance = 24; ip.alpha = 100; ip.rotation = 30;
+        ip.rotationInc = 4; ip.distance2 = 50; ip.alpha2 = 210;
+        ip.rotationInc2 = 12; ip.rgb = true; ip.onBeat = true;
+        ip.speed = 0.35f; ip.blend = 2;
+        leaf.params = ip;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<InterferencesParams>(restored.children[0].params);
+        CHECK(p.points == 6);
+        CHECK(p.distance == 24);
+        CHECK(p.alpha2 == 210);
+        CHECK(p.rgb == true);
+        CHECK(p.onBeat == true);
+        CHECK(p.speed == doctest::Approx(0.35f));
+        CHECK(p.blend == 2);
+        CHECK(effectTypeKey(EffectParams{InterferencesParams{}}) == "interferences");
+    }
+
+    TEST_CASE("Mosaic-Parameter ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        leaf.params = MosaicParams{30, 90, true, 24, 2};
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<MosaicParams>(restored.children[0].params);
+        CHECK(p.quality == 30);
+        CHECK(p.quality2 == 90);
+        CHECK(p.onBeat == true);
+        CHECK(p.durationFrames == 24);
+        CHECK(p.blend == 2);
     }
 
     TEST_CASE("Round-Trip erhaelt Struktur und Parameter")
@@ -111,9 +204,13 @@ TEST_SUITE("ChainSerializer")
         // Verschachtelte Liste + Blend + Code
         REQUIRE(restored.children[2].isList());
         const auto& nl = std::get<ListParams>(restored.children[2].params);
-        CHECK(nl.blendIn == BlendMode::Additive);
+        CHECK(nl.blendIn == BlendMode::Buffer);
         CHECK(nl.blendOut == BlendMode::FiftyFifty);
         CHECK(nl.inAdjustAlpha == 200);
+        CHECK(nl.bufferIn == 4);
+        CHECK(nl.bufferOut == 2);
+        CHECK(nl.bufferInInvert == true);
+        CHECK(nl.bufferOutInvert == false);
         CHECK(nl.onBeatRender == true);
         CHECK(nl.onBeatFrames == 5);
         CHECK(nl.useCode == true);

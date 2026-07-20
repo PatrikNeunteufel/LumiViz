@@ -11,8 +11,10 @@
 
 #include "UI/panels/MultiEffectPanel.hpp"
 
+#include "UI/widgets/GradientPresetDelegate.hpp"          // gradient combo previews
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
+#include "visualizers/modules/SuperscopeModule.hpp"      // figure preset library (SSOT)
 #include "visualizers/multieffect/ChainSerializer.hpp"  // effectTypeKey
 #include "services/IEventBus.hpp"
 #include "services/events/UIEvents.hpp"
@@ -20,10 +22,12 @@
 #include <QAbstractItemView>
 #include <QCheckBox>
 #include <QColorDialog>
+#include <QDropEvent>
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QHeaderView>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMutex>
@@ -35,6 +39,9 @@
 #include <QToolButton>
 #include <QTreeWidget>
 #include <QVBoxLayout>
+
+#include <algorithm>
+#include <utility>
 
 using namespace lumi::multieffect;
 
@@ -68,6 +75,10 @@ const std::vector<EffectType>& effectPalette()
         {"Roto Blitter", [] { return EffectParams{RotoBlitterParams{}}; }},
         {"Buffer Save", [] { return EffectParams{BufferSaveParams{}}; }},
         {"Custom BPM", [] { return EffectParams{CustomBpmParams{}}; }},
+        {"Mosaic", [] { return EffectParams{MosaicParams{}}; }},
+        {"Grain", [] { return EffectParams{GrainParams{}}; }},
+        {"Scatter", [] { return EffectParams{ScatterParams{}}; }},
+        {"Interferences", [] { return EffectParams{InterferencesParams{}}; }},
         {"Debug Bars", [] { return EffectParams{DebugBarsParams{}}; }},
     };
     return kPalette;
@@ -84,6 +95,20 @@ uint32_t u32FromColor(const QColor& c)
            (static_cast<uint32_t>(c.green()) << 8) | static_cast<uint32_t>(c.blue());
 }
 
+// The SuperScope figure presets offered in the editor dropdown. The code lives
+// in SuperscopeModule::loadPresetCode (single source of truth); we only pick the
+// shape figures here (Custom = no-op, DNA = native-only/empty code are skipped).
+const std::vector<lumi::modules::SuperscopePreset>& superscopeFigures()
+{
+    using P = lumi::modules::SuperscopePreset;
+    static const std::vector<P> kList = {
+        P::HorizontalScope, P::VerticalScope,   P::Circle,     P::Spiral,
+        P::Lissajous,       P::Flower,          P::Star,       P::Starburst,
+        P::Heart,           P::SpectrumBars,    P::CircularSpectrum,
+        P::Butterfly,       P::Hypocycloid};
+    return kList;
+}
+
 QVariantList pathToVariant(const QList<int>& path)
 {
     QVariantList v;
@@ -98,6 +123,30 @@ QList<int> pathFromVariant(const QVariant& v)
 }
 
 } // namespace
+
+void ChainTreeWidget::dropEvent(QDropEvent* event)
+{
+    QTreeWidgetItem* target = itemAt(event->position().toPoint());
+    ChainDrop where = ChainDrop::Viewport;
+    switch (dropIndicatorPosition())  // protected enum: only readable in-subclass
+    {
+        case QAbstractItemView::OnItem:     where = ChainDrop::OnItem; break;
+        case QAbstractItemView::AboveItem:  where = ChainDrop::Above;  break;
+        case QAbstractItemView::BelowItem:  where = ChainDrop::Below;  break;
+        case QAbstractItemView::OnViewport: where = ChainDrop::Viewport; break;
+    }
+    QTreeWidgetItem* src = currentItem();  // single-selection: dragged == current
+    if (onDrop && src != nullptr)
+    {
+        onDrop(src, target, where);
+    }
+    // Consume without calling the base: the chain owns ordering and the tree is
+    // rebuilt from it, so the view must not move items on its own. IgnoreAction
+    // (not MoveAction) stops QAbstractItemView::startDrag from also deleting the
+    // source rows after our rebuild already replaced every item.
+    event->setDropAction(Qt::IgnoreAction);
+    event->accept();
+}
 
 MultiEffectPanel::MultiEffectPanel(ServiceContainer& services, QWidget* parent)
     : PanelBase(services, "multieffect_chain", tr("Effect Chain"), parent)
@@ -130,20 +179,38 @@ void MultiEffectPanel::setupUI()
     };
     m_addButton = makeButton("+", tr("Add effect (into the selected list, else root)"));
     m_removeButton = makeButton("-", tr("Remove selected"));
+    m_cloneButton = makeButton(QString::fromUtf8("⧉"), tr("Clone selected (with its subtree)"));
     m_upButton = makeButton(QString::fromUtf8("↑"), tr("Move up"));
     m_downButton = makeButton(QString::fromUtf8("↓"), tr("Move down"));
     toolbar->addWidget(m_addButton);
     toolbar->addWidget(m_removeButton);
+    toolbar->addWidget(m_cloneButton);
     toolbar->addWidget(m_upButton);
     toolbar->addWidget(m_downButton);
     root->addLayout(toolbar);
 
-    m_tree = new QTreeWidget(this);
-    m_tree->setHeaderLabels({tr("Name"), tr("Type"), tr("Description")});
-    m_tree->setColumnCount(3);
+    m_tree = new ChainTreeWidget(this);
+    m_tree->setHeaderLabels({tr("Name"), QString(), tr("Type"), tr("Description")});
+    m_tree->setColumnCount(4);
+    m_tree->setColumnWidth(1, 30);  // narrow eye toggle column (col 1)
+    m_tree->header()->setSectionResizeMode(1, QHeaderView::Fixed);
+    m_tree->header()->setStretchLastSection(true);
+    // Column 0 (Name) is the tree column: show the expand decoration + a clear
+    // per-level indent so nested Effect Lists read as nested across levels.
     m_tree->setRootIsDecorated(true);
+    m_tree->setIndentation(18);
     m_tree->setEditTriggers(QAbstractItemView::DoubleClicked |
                             QAbstractItemView::EditKeyPressed);
+    // Drag & drop re-parents/reorders effects (into / out of groups). We handle
+    // the drop ourselves (onDrop) and rebuild from the model.
+    m_tree->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_tree->setDragEnabled(true);
+    m_tree->setAcceptDrops(true);
+    m_tree->setDropIndicatorShown(true);
+    m_tree->setDragDropMode(QAbstractItemView::InternalMove);
+    m_tree->onDrop = [this](QTreeWidgetItem* s, QTreeWidgetItem* t, ChainDrop w) {
+        onDropRequested(s, t, w);
+    };
     root->addWidget(m_tree, 1);
 
     m_propScroll = new QScrollArea(this);
@@ -156,6 +223,7 @@ void MultiEffectPanel::setupUI()
 
     connect(m_addButton, &QToolButton::clicked, this, &MultiEffectPanel::onAddEffect);
     connect(m_removeButton, &QToolButton::clicked, this, &MultiEffectPanel::onRemove);
+    connect(m_cloneButton, &QToolButton::clicked, this, &MultiEffectPanel::onClone);
     connect(m_upButton, &QToolButton::clicked, this, [this] { onMove(-1); });
     connect(m_downButton, &QToolButton::clicked, this, [this] { onMove(1); });
     connect(m_tree, &QTreeWidget::itemChanged, this, &MultiEffectPanel::onItemChanged);
@@ -201,6 +269,7 @@ void MultiEffectPanel::setHost(MultiEffectVisualizer* host, QMutex* mutex)
     m_addTypeCombo->setEnabled(active);
     m_addButton->setEnabled(active);
     m_removeButton->setEnabled(active);
+    m_cloneButton->setEnabled(active);
     m_upButton->setEnabled(active);
     m_downButton->setEnabled(active);
     rebuildTree();
@@ -232,17 +301,36 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
                                    QList<int> path)
 {
     auto* item = new QTreeWidgetItem();
+    // Column 0 = name (the tree column: gets the expand arrow + per-level indent,
+    // so nesting stays visible); 1 = eye toggle (widget); 2 = type; 3 = desc.
     item->setText(0, QString::fromStdString(
                          node.displayName.empty() ? effectTypeName(node.params)
                                                   : node.displayName));
-    item->setText(1, QString::fromStdString(effectTypeName(node.params)));
-    item->setText(2, QString::fromStdString(node.description));
-    item->setFlags(item->flags() | Qt::ItemIsUserCheckable | Qt::ItemIsEditable);
-    item->setCheckState(0, node.enabled ? Qt::Checked : Qt::Unchecked);
+    item->setText(2, QString::fromStdString(effectTypeName(node.params)));
+    item->setText(3, QString::fromStdString(node.description));
+    item->setFlags((item->flags() | Qt::ItemIsEditable | Qt::ItemIsDragEnabled |
+                    Qt::ItemIsDropEnabled));
     item->setData(0, Qt::UserRole, pathToVariant(path));
 
     if (parentItem != nullptr) parentItem->addChild(item);
     else m_tree->addTopLevelItem(item);
+
+    // Eye toggle (hide/show like the stage previews) in its own narrow column so
+    // it never fights the tree indentation. Toggling `enabled` is not structural,
+    // so no rebuild is needed and the captured path stays valid.
+    auto* eye = new QToolButton(m_tree);
+    eye->setCheckable(true);
+    eye->setAutoRaise(true);
+    eye->setChecked(node.enabled);
+    eye->setText(node.enabled ? QString::fromUtf8("\xF0\x9F\x91\x81")   // 👁
+                              : QString::fromUtf8("\xE2\x80\x94"));      // —
+    eye->setToolTip(tr("Show / hide this effect"));
+    connect(eye, &QToolButton::toggled, this, [this, eye, path](bool on) {
+        eye->setText(on ? QString::fromUtf8("\xF0\x9F\x91\x81")
+                        : QString::fromUtf8("\xE2\x80\x94"));
+        setNodeEnabled(path, on);
+    });
+    m_tree->setItemWidget(item, 1, eye);
 
     if (node.isList())
     {
@@ -356,6 +444,35 @@ void MultiEffectPanel::onRemove()
     });
 }
 
+void MultiEffectPanel::onClone()
+{
+    const QList<int> path = currentPath();
+    if (path.isEmpty()) return;  // root is not clonable
+    QList<int> finalPath;
+    mutateStructure([&] {
+        QList<int> parentPath = path;
+        const int idx = parentPath.takeLast();
+        ChainNode* parent = nodeAtPath(parentPath);
+        if (parent == nullptr || idx < 0 ||
+            idx >= static_cast<int>(parent->children.size()))
+        {
+            return;
+        }
+        ChainNode copy = parent->children[static_cast<size_t>(idx)];  // deep copy
+        // Fresh identities: compileChain only assigns to nodeId==0, so a copied
+        // (non-zero) id would collide with the original -> zero the whole subtree.
+        std::function<void(ChainNode&)> clearIds = [&](ChainNode& n) {
+            n.nodeId = 0;
+            for (ChainNode& c : n.children) clearIds(c);
+        };
+        clearIds(copy);
+        parent->children.insert(parent->children.begin() + idx + 1, std::move(copy));
+        finalPath = parentPath;
+        finalPath.append(idx + 1);
+    });
+    if (!finalPath.isEmpty()) selectByPath(finalPath);
+}
+
 void MultiEffectPanel::onMove(int delta)
 {
     const QList<int> path = currentPath();
@@ -376,23 +493,199 @@ void MultiEffectPanel::onMove(int delta)
     });
 }
 
+void MultiEffectPanel::setNodeEnabled(const QList<int>& path, bool enabled)
+{
+    if (m_host == nullptr || m_mutex == nullptr) return;
+    QMutexLocker lock(m_mutex);
+    if (ChainNode* node = nodeAtPath(path))
+    {
+        node->enabled = enabled;
+        m_host->recompileChain();  // no structural change -> paths stay valid
+    }
+}
+
+void MultiEffectPanel::applySuperScopePreset(const QList<int>& path, int presetIndex)
+{
+    const auto& figures = superscopeFigures();
+    if (presetIndex < 0 || presetIndex >= static_cast<int>(figures.size())) return;
+    if (m_host == nullptr || m_mutex == nullptr) return;
+
+    // Reuse the standalone module's preset library (single source of truth).
+    lumi::modules::SuperscopeModule tmp;
+    tmp.loadPresetCode(figures[static_cast<std::size_t>(presetIndex)]);
+    const std::string init = tmp.initCode();
+    const std::string frame = tmp.frameCode();
+    const std::string beat = tmp.beatCode();
+    const std::string point = tmp.pointCode();
+    const int count = tmp.pointCount();
+
+    QMutexLocker lock(m_mutex);
+    ChainNode* node = nodeAtPath(path);
+    if (node == nullptr) return;
+    if (auto* p = std::get_if<SuperScopeParams>(&node->params))
+    {
+        p->initCode = init;
+        p->frameCode = frame;
+        p->beatCode = beat;
+        p->pointCode = point;
+        p->pointCount = count;
+        m_host->recompileChain();
+    }
+}
+
+// --- Drag & drop re-parenting ------------------------------------------------
+
+void MultiEffectPanel::onDropRequested(QTreeWidgetItem* src, QTreeWidgetItem* target,
+                                       ChainDrop where)
+{
+    if (src == nullptr) return;
+    const QList<int> srcPath = pathFromVariant(src->data(0, Qt::UserRole));
+    if (srcPath.isEmpty()) return;
+    QList<int> targetPath;
+    if (target != nullptr) targetPath = pathFromVariant(target->data(0, Qt::UserRole));
+
+    // Defer the actual move: we are inside the tree's own dropEvent, and the
+    // rebuild would delete the items the drag machinery still touches. Paths are
+    // value copies, so they survive the queued hop.
+    QMetaObject::invokeMethod(
+        this,
+        [this, srcPath, targetPath, where] {
+            QList<int> finalPath;
+            bool moved = false;
+            mutateStructure(
+                [&] { moved = moveNodeLocked(srcPath, targetPath, where, finalPath); });
+            if (moved) selectByPath(finalPath);
+        },
+        Qt::QueuedConnection);
+}
+
+bool MultiEffectPanel::moveNodeLocked(const QList<int>& srcPath,
+                                      const QList<int>& targetPath, ChainDrop where,
+                                      QList<int>& finalPath)
+{
+    if (m_host == nullptr || srcPath.isEmpty()) return false;
+
+    QList<int> srcParentPath = srcPath;
+    const int srcIdx = srcParentPath.takeLast();
+
+    // --- Resolve the destination (parent path + insertion index) -------------
+    QList<int> dstParentPath;
+    int dstIndex = 0;
+    if (targetPath.isEmpty() || where == ChainDrop::Viewport)
+    {
+        dstParentPath = {};  // dropped on empty space -> end of root
+        dstIndex = static_cast<int>(m_host->chain().children.size());
+    }
+    else
+    {
+        QList<int> targetParentPath = targetPath;
+        const int targetIdx = targetParentPath.takeLast();
+        if (where == ChainDrop::OnItem)
+        {
+            ChainNode* tnode = nodeAtPath(targetPath);
+            if (tnode != nullptr && tnode->isList())
+            {
+                dstParentPath = targetPath;  // drop INTO the group (append)
+                dstIndex = static_cast<int>(tnode->children.size());
+            }
+            else  // onto a leaf -> place right after it
+            {
+                dstParentPath = targetParentPath;
+                dstIndex = targetIdx + 1;
+            }
+        }
+        else if (where == ChainDrop::Above)
+        {
+            dstParentPath = targetParentPath;
+            dstIndex = targetIdx;
+        }
+        else  // ChainDrop::Below
+        {
+            dstParentPath = targetParentPath;
+            dstIndex = targetIdx + 1;
+        }
+    }
+
+    // --- Guards: no self-drop / into own subtree, and no no-op ---------------
+    const int sp = static_cast<int>(srcParentPath.size());
+    const bool intoSubtree = dstParentPath.size() >= srcPath.size() &&
+                             dstParentPath.mid(0, srcPath.size()) == srcPath;
+    if (dstParentPath == srcPath || intoSubtree) return false;
+    if (dstParentPath == srcParentPath && (dstIndex == srcIdx || dstIndex == srcIdx + 1))
+    {
+        return false;  // dropped back onto its own slot
+    }
+
+    // --- Extract from source, then insert (adjust dst for the removal) -------
+    ChainNode* srcParent = nodeAtPath(srcParentPath);
+    if (srcParent == nullptr || srcIdx < 0 ||
+        srcIdx >= static_cast<int>(srcParent->children.size()))
+    {
+        return false;
+    }
+    ChainNode moved = std::move(srcParent->children[static_cast<size_t>(srcIdx)]);
+    srcParent->children.erase(srcParent->children.begin() + srcIdx);
+
+    // The erase shifts indices at/after srcIdx within srcParent's vector.
+    if (dstParentPath.size() > sp && dstParentPath.mid(0, sp) == srcParentPath &&
+        dstParentPath[sp] > srcIdx)
+    {
+        dstParentPath[sp] -= 1;  // dst lives under a sibling that shifted down
+    }
+    else if (dstParentPath == srcParentPath && dstIndex > srcIdx)
+    {
+        dstIndex -= 1;
+    }
+
+    ChainNode* dstParent = nodeAtPath(dstParentPath);
+    if (dstParent == nullptr)
+    {
+        // Should not happen after the guards; fall back to root append.
+        dstParent = &m_host->chain();
+        dstParentPath = {};
+        dstIndex = static_cast<int>(dstParent->children.size());
+    }
+    dstIndex = std::clamp(dstIndex, 0, static_cast<int>(dstParent->children.size()));
+    dstParent->children.insert(dstParent->children.begin() + dstIndex, std::move(moved));
+
+    finalPath = dstParentPath;
+    finalPath.append(dstIndex);
+    return true;
+}
+
+QTreeWidgetItem* MultiEffectPanel::itemAtPath(const QList<int>& path) const
+{
+    if (path.isEmpty()) return nullptr;
+    QTreeWidgetItem* item = m_tree->topLevelItem(path[0]);
+    for (int i = 1; i < path.size() && item != nullptr; ++i)
+    {
+        item = item->child(path[i]);
+    }
+    return item;
+}
+
+void MultiEffectPanel::selectByPath(const QList<int>& path)
+{
+    if (QTreeWidgetItem* item = itemAtPath(path))
+    {
+        m_tree->setCurrentItem(item);
+        m_tree->scrollToItem(item);
+    }
+}
+
 void MultiEffectPanel::onItemChanged(QTreeWidgetItem* item, int column)
 {
     if (m_updating || item == nullptr) return;
     const QList<int> path = pathFromVariant(item->data(0, Qt::UserRole));
     if (column == 0)
     {
-        // Column 0 carries both the enable checkbox and the (editable) name.
-        const bool enabled = item->checkState(0) == Qt::Checked;
+        // Column 0 is the editable name (enable lives on the eye toggle now).
         const std::string name = item->text(0).toStdString();
-        mutate(path, [&](ChainNode& n) {
-            n.enabled = enabled;
-            n.displayName = name;
-        });
+        mutate(path, [&](ChainNode& n) { n.displayName = name; });
     }
-    else if (column == 2)
+    else if (column == 3)
     {
-        const std::string desc = item->text(2).toStdString();
+        const std::string desc = item->text(3).toStdString();
         mutate(path, [&](ChainNode& n) { n.description = desc; });
     }
 }
@@ -554,6 +847,15 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
                [](ChainNode& n, int v) { std::get<ListParams>(n.params).inAdjustAlpha = v; });
         addInt(tr("Out Alpha"), p->outAdjustAlpha, 0, 255,
                [](ChainNode& n, int v) { std::get<ListParams>(n.params).outAdjustAlpha = v; });
+        // Only relevant when the matching blend is "Buffer": pool slot + invert.
+        addInt(tr("In Buffer"), p->bufferIn, 0, 7,
+               [](ChainNode& n, int v) { std::get<ListParams>(n.params).bufferIn = v; });
+        addInt(tr("Out Buffer"), p->bufferOut, 0, 7,
+               [](ChainNode& n, int v) { std::get<ListParams>(n.params).bufferOut = v; });
+        addBool(tr("In Buffer invert"), p->bufferInInvert,
+                [](ChainNode& n, bool v) { std::get<ListParams>(n.params).bufferInInvert = v; });
+        addBool(tr("Out Buffer invert"), p->bufferOutInvert,
+                [](ChainNode& n, bool v) { std::get<ListParams>(n.params).bufferOutInvert = v; });
         addBool(tr("OnBeat render"), p->onBeatRender,
                 [](ChainNode& n, bool v) { std::get<ListParams>(n.params).onBeatRender = v; });
         addInt(tr("OnBeat frames"), p->onBeatFrames, 1, 200,
@@ -672,15 +974,171 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
     }
     else if (auto* p = std::get_if<SuperScopeParams>(&params))
     {
+        // Figure preset dropdown: loads the shape's EEL into the code fields
+        // below (source: SuperscopeModule::loadPresetCode). Index 0 is a label.
+        auto* presetCombo = new QComboBox(m_propContainer);
+        presetCombo->addItem(tr("— Load figure preset —"));
+        for (lumi::modules::SuperscopePreset fig : superscopeFigures())
+            presetCombo->addItem(lumi::modules::SuperscopeModule::presetName(fig));
+        connect(presetCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+                [this, path](int idx) {
+                    if (idx <= 0) return;  // the label row
+                    // Defer: applying rebuilds this editor (deletes the combo).
+                    QMetaObject::invokeMethod(
+                        this,
+                        [this, path, idx] {
+                            applySuperScopePreset(path, idx - 1);
+                            buildPropertyEditor(path);
+                        },
+                        Qt::QueuedConnection);
+                });
+        form->addRow(tr("Figure"), presetCombo);
+
         addInt(tr("Point count"), p->pointCount, 1, 4096, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).pointCount = v; });
         addEnum(tr("Draw mode"), p->renderMode, {"Dots", "Lines", "Thick"}, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).renderMode = v; });
         addDouble(tr("Line width"), p->lineWidth, 1.0, 20.0, 0.5, [](ChainNode& n, double v) { std::get<SuperScopeParams>(n.params).lineWidth = static_cast<float>(v); });
         addDouble(tr("Dot size"), p->dotSize, 1.0, 50.0, 1.0, [](ChainNode& n, double v) { std::get<SuperScopeParams>(n.params).dotSize = static_cast<float>(v); });
         addEnum(tr("Channel"), p->audioChannel, {"Left", "Right", "Mono", "Mid", "Side"}, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).audioChannel = v; });
+
+        // --- Color: gradient (per point) x table (cycled) combined by mode ----
+        // The base color pre-seeds red/green/blue before the point code, which
+        // may keep, modulate (red=red*v) or override it (AVS r_sscope).
+        {
+            auto* modeCombo = new QComboBox(m_propContainer);
+            modeCombo->addItems({tr("Gradient (per point)"), tr("Color table (cycled)"),
+                                 tr("Additive (both)"), tr("Multiply (both)"),
+                                 tr("Average (both)")});
+            modeCombo->setCurrentIndex(std::clamp(p->colorBlend, 0, 4));
+            modeCombo->setToolTip(
+                tr("Base color for red/green/blue before the point code runs; the "
+                   "code may keep, modulate or override it."));
+            connect(modeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+                    [this, path](int v) {
+                        mutate(path, [&](ChainNode& n) {
+                            std::get<SuperScopeParams>(n.params).colorBlend = v;
+                        });
+                    });
+            form->addRow(tr("Color mode"), modeCombo);
+        }
+        {
+            const std::vector<std::string> gradNames = m_gradientPreview.presetNames();
+            auto* gradCombo = new QComboBox(m_propContainer);
+            gradCombo->setMinimumHeight(28);  // room for the preview strip
+            int curGrad = 0;
+            for (int gi = 0; gi < static_cast<int>(gradNames.size()); ++gi)
+            {
+                gradCombo->addItem(QString::fromStdString(gradNames[static_cast<size_t>(gi)]));
+                if (gradNames[static_cast<size_t>(gi)] == p->gradientPreset) curGrad = gi;
+            }
+            // Preview delegate: draws each preset's gradient strip beside its name.
+            auto* delegate = new lumi::ui::GradientPresetDelegate(gradCombo);
+            delegate->setGradientModule(&m_gradientPreview);
+            gradCombo->setItemDelegate(delegate);
+            gradCombo->setCurrentIndex(curGrad);
+            connect(gradCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+                    [this, path, gradNames](int gi) {
+                        if (gi < 0 || gi >= static_cast<int>(gradNames.size())) return;
+                        const std::string name = gradNames[static_cast<size_t>(gi)];
+                        mutate(path, [&](ChainNode& n) {
+                            std::get<SuperScopeParams>(n.params).gradientPreset = name;
+                        });
+                    });
+            form->addRow(tr("Gradient"), gradCombo);
+        }
+        addInt(tr("Cycle frames"), p->colorCycleFrames, 1, 600, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).colorCycleFrames = v; });
+        {
+            // AVS color table: cycled over time in the "Color table"/blend modes.
+            // One swatch per entry + add/remove.
+            auto* colorsWidget = new QWidget(m_propContainer);
+            auto* row = new QHBoxLayout(colorsWidget);
+            row->setContentsMargins(0, 0, 0, 0);
+            for (int ci = 0; ci < static_cast<int>(p->colors.size()); ++ci)
+            {
+                const uint32_t initC = p->colors[static_cast<size_t>(ci)];
+                auto* sw = new QPushButton(colorsWidget);
+                sw->setFixedSize(24, 20);
+                sw->setStyleSheet(QString("background:%1").arg(colorFromU32(initC).name()));
+                connect(sw, &QPushButton::clicked, this, [this, path, ci, initC, sw]() {
+                    const QColor picked = QColorDialog::getColor(colorFromU32(initC), this);
+                    if (!picked.isValid()) return;
+                    const uint32_t c = u32FromColor(picked);
+                    sw->setStyleSheet(QString("background:%1").arg(picked.name()));
+                    mutate(path, [&](ChainNode& n) {
+                        auto& cs = std::get<SuperScopeParams>(n.params).colors;
+                        if (ci < static_cast<int>(cs.size())) cs[static_cast<size_t>(ci)] = c;
+                    });
+                });
+                row->addWidget(sw);
+            }
+            auto* addC = new QToolButton(colorsWidget);
+            addC->setText("+");
+            addC->setToolTip(tr("Add color"));
+            connect(addC, &QToolButton::clicked, this, [this, path]() {
+                mutate(path, [](ChainNode& n) {
+                    std::get<SuperScopeParams>(n.params).colors.push_back(0xFFFFFF);
+                });
+                QMetaObject::invokeMethod(
+                    this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
+            });
+            auto* delC = new QToolButton(colorsWidget);
+            delC->setText(QString::fromUtf8("−"));
+            delC->setToolTip(tr("Remove last color"));
+            connect(delC, &QToolButton::clicked, this, [this, path]() {
+                mutate(path, [](ChainNode& n) {
+                    auto& cs = std::get<SuperScopeParams>(n.params).colors;
+                    if (!cs.empty()) cs.pop_back();
+                });
+                QMetaObject::invokeMethod(
+                    this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
+            });
+            row->addWidget(addC);
+            row->addWidget(delC);
+            row->addStretch();
+            colorsWidget->setToolTip(
+                tr("AVS color table — the scope cycles through these over time in "
+                   "the Color table / blend modes (one step every 'Cycle frames')."));
+            form->addRow(tr("Color table"), colorsWidget);
+        }
+
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).frameCode = std::move(v); });
         addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).beatCode = std::move(v); });
         addScript(tr("Point"), p->pointCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).pointCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<MosaicParams>(&params))
+    {
+        addInt(tr("Quality"), p->quality, 1, 100, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).quality = v; });
+        addInt(tr("OnBeat quality"), p->quality2, 1, 100, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).quality2 = v; });
+        addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<MosaicParams>(n.params).onBeat = v; });
+        addInt(tr("Duration (frames)"), p->durationFrames, 1, 200, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).durationFrames = v; });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).blend = v; });
+    }
+    else if (auto* p = std::get_if<GrainParams>(&params))
+    {
+        addInt(tr("Amount"), p->amount, 0, 100, [](ChainNode& n, int v) { std::get<GrainParams>(n.params).amount = v; });
+        addBool(tr("Static"), p->staticGrain, [](ChainNode& n, bool v) { std::get<GrainParams>(n.params).staticGrain = v; });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<GrainParams>(n.params).blend = v; });
+    }
+    else if (std::get_if<ScatterParams>(&params) != nullptr)
+    {
+        auto* info = new QLabel(tr("Per-pixel random displacement (no parameters)."), m_propPage);
+        info->setWordWrap(true);
+        form->addRow(info);
+    }
+    else if (auto* p = std::get_if<InterferencesParams>(&params))
+    {
+        addInt(tr("Points"), p->points, 1, 8, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).points = v; });
+        addInt(tr("Distance"), p->distance, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).distance = v; });
+        addInt(tr("Alpha"), p->alpha, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).alpha = v; });
+        addInt(tr("Rotation"), p->rotation, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).rotation = v; });
+        addInt(tr("Rotation/frame"), p->rotationInc, -64, 64, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).rotationInc = v; });
+        addBool(tr("RGB split"), p->rgb, [](ChainNode& n, bool v) { std::get<InterferencesParams>(n.params).rgb = v; });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).blend = v; });
+        addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<InterferencesParams>(n.params).onBeat = v; });
+        addInt(tr("Beat distance"), p->distance2, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).distance2 = v; });
+        addInt(tr("Beat alpha"), p->alpha2, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).alpha2 = v; });
+        addInt(tr("Beat rotation/frame"), p->rotationInc2, -64, 64, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).rotationInc2 = v; });
+        addDouble(tr("Beat speed"), p->speed, 0.01, 2.0, 0.01, [](ChainNode& n, double v) { std::get<InterferencesParams>(n.params).speed = static_cast<float>(v); });
     }
     else if (auto* p = std::get_if<DebugBarsParams>(&params))
     {

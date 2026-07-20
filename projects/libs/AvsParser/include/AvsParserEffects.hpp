@@ -346,6 +346,39 @@ inline void decodeInvert(Reader& r, EffectNode& n)   // r_invert.cpp
     readField(r, n, "enabled");
 }
 
+inline void decodeMosaic(Reader& r, EffectNode& n)   // r_mosaic.cpp
+{
+    readField(r, n, "enabled") && readField(r, n, "quality") &&
+        readField(r, n, "quality2") && readField(r, n, "blend") &&
+        readField(r, n, "blendavg") && readField(r, n, "onbeat") &&
+        readField(r, n, "durFrames");
+}
+
+inline void decodeGrain(Reader& r, EffectNode& n)   // r_grain.cpp
+{
+    readField(r, n, "enabled") && readField(r, n, "blend") &&
+        readField(r, n, "blendavg") && readField(r, n, "smax") &&
+        readField(r, n, "staticgrain");
+}
+
+inline void decodeScatter(Reader& r, EffectNode& n)   // r_scat.cpp
+{
+    readField(r, n, "enabled");
+}
+
+inline void decodeInterferences(Reader& r, EffectNode& n)   // r_interf.cpp
+{
+    // `speed` is a float32 on disk; stored as its raw int32 bit pattern here and
+    // reinterpreted in the translator (the reader only yields int32 fields).
+    readField(r, n, "enabled") && readField(r, n, "nPoints") &&
+        readField(r, n, "rotation") && readField(r, n, "distance") &&
+        readField(r, n, "alpha") && readField(r, n, "rotationinc") &&
+        readField(r, n, "blend") && readField(r, n, "blendavg") &&
+        readField(r, n, "distance2") && readField(r, n, "alpha2") &&
+        readField(r, n, "rotationinc2") && readField(r, n, "rgb") &&
+        readField(r, n, "onbeat") && readField(r, n, "speed_bits");
+}
+
 inline void decodeSetRenderMode(Reader& r, EffectNode& n)   // r_linemode.cpp
 {
     // packed: bits 0-7 blend mode, 8-15 adjustable-blend value, 16-23 line width,
@@ -396,8 +429,12 @@ inline bool decodeBuiltin(std::int32_t builtinIndex, Reader& r, EffectNode& node
         case 18: decodeBufferSave(r, node); break;
         case 22: decodeBrightness(r, node); break;
         case 25: decodeClearScreen(r, node); break;
+        case 16: decodeScatter(r, node); break;
+        case 24: decodeGrain(r, node); break;
         case 26: decodeMirror(r, node); break;
+        case 30: decodeMosaic(r, node); break;
         case 33: decodeCustomBpm(r, node); break;
+        case 41: decodeInterferences(r, node); break;
         case 36: decodeSuperScope(r, node); break;
         case 37: decodeInvert(r, node); break;
         case 40: decodeSetRenderMode(r, node); break;

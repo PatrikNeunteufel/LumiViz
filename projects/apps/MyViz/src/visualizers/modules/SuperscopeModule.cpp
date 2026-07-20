@@ -14,10 +14,58 @@
 #include "scripting/ScriptSlotHost.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <random>
 
 namespace lumi::modules {
+
+namespace {
+
+/// 0x00RRGGBB -> normalized RGB.
+std::array<float, 3> u32ToRgb(std::uint32_t c)
+{
+    return {static_cast<float>((c >> 16) & 0xFF) / 255.0f,
+            static_cast<float>((c >> 8) & 0xFF) / 255.0f,
+            static_cast<float>(c & 0xFF) / 255.0f};
+}
+
+/// Linear-interpolated, wrapping sample of a color table at position `pos`.
+/// Empty table -> white (so table/blend never black out).
+std::array<float, 3> sampleTable(const std::vector<std::uint32_t>& colors, float pos)
+{
+    if (colors.empty()) return {1.0f, 1.0f, 1.0f};
+    const int n = static_cast<int>(colors.size());
+    if (n == 1) return u32ToRgb(colors[0]);
+    const float wrapped = pos - std::floor(pos / n) * n;  // [0, n)
+    const int i0 = static_cast<int>(wrapped) % n;
+    const int i1 = (i0 + 1) % n;
+    const float f = wrapped - std::floor(wrapped);
+    const auto a = u32ToRgb(colors[static_cast<std::size_t>(i0)]);
+    const auto b = u32ToRgb(colors[static_cast<std::size_t>(i1)]);
+    return {a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f,
+            a[2] + (b[2] - a[2]) * f};
+}
+
+/// Combine the cycled table color with the gradient color per blend mode.
+std::array<float, 3> blendBase(int mode, const std::array<float, 3>& table, float gr,
+                               float gg, float gb)
+{
+    switch (mode)
+    {
+        case 1: return table;  // table only
+        case 2:
+            return {std::min(1.0f, table[0] + gr), std::min(1.0f, table[1] + gg),
+                    std::min(1.0f, table[2] + gb)};  // additive
+        case 3: return {table[0] * gr, table[1] * gg, table[2] * gb};  // multiply
+        case 4:
+            return {(table[0] + gr) * 0.5f, (table[1] + gg) * 0.5f,
+                    (table[2] + gb) * 0.5f};  // average
+        default: return {gr, gg, gb};  // 0 = gradient only
+    }
+}
+
+}  // namespace
 
 // =============================================================================
 // Construction
@@ -100,11 +148,6 @@ void SuperscopeModule::initializeLuaScripts()
     {
         m_lastScriptError = m_script->lastError();
     }
-
-    // Point scripts that mention colors take over coloring (else: gradient)
-    m_scriptSetsColor = m_script->sourceMentions(Slot::Point, "red") ||
-                        m_script->sourceMentions(Slot::Point, "green") ||
-                        m_script->sourceMentions(Slot::Point, "blue");
 
     // Seed the environment before Init runs. NOTE: the host never writes `t` —
     // scripts own it (AVS style: frame code accumulates `t=t+0.02` itself);
@@ -465,6 +508,18 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
 
     const bool luaPoint = luaActive && m_script->has(Slot::Point);
 
+    // This frame's cycled table color (temporal), then advance for next frame.
+    const auto tab = sampleTable(m_colorTable, m_colorPos);
+    m_frameTableR = tab[0];
+    m_frameTableG = tab[1];
+    m_frameTableB = tab[2];
+    if (!m_colorTable.empty())
+    {
+        m_colorPos += 1.0f / static_cast<float>(m_colorCycleFrames);
+        const float n = static_cast<float>(m_colorTable.size());
+        if (m_colorPos >= n) m_colorPos -= n;
+    }
+
     // Generate points
     std::vector<SuperscopePoint> points;
     points.reserve(effectiveCount);
@@ -584,6 +639,15 @@ SuperscopePoint SuperscopeModule::executePointLua(float i, float v)
     engine.setNumber("v", static_cast<double>(v));
     engine.setNumber("skip", 0.0);
 
+    // Pre-seed red/green/blue with the base color (AVS r_sscope): the point code
+    // may leave it (-> base color), modulate it (red=red*v) or override it.
+    const Color4f grad = m_colorGradient.sample(i);
+    const auto base = blendBase(m_colorBlend, {m_frameTableR, m_frameTableG, m_frameTableB},
+                                grad[0], grad[1], grad[2]);
+    engine.setNumber("red", static_cast<double>(base[0]));
+    engine.setNumber("green", static_cast<double>(base[1]));
+    engine.setNumber("blue", static_cast<double>(base[2]));
+
     if (!m_script->run(Slot::Point))
     {
         // Runtime error: the slot disabled itself — fall back to preset math
@@ -596,21 +660,11 @@ SuperscopePoint SuperscopeModule::executePointLua(float i, float v)
     pt.y = static_cast<float>(engine.number("y"));
     pt.skip = engine.number("skip") > 0.5;
 
-    if (m_scriptSetsColor)
-    {
-        pt.r = std::clamp(static_cast<float>(engine.number("red")), 0.0f, 1.0f);
-        pt.g = std::clamp(static_cast<float>(engine.number("green")), 0.0f, 1.0f);
-        pt.b = std::clamp(static_cast<float>(engine.number("blue")), 0.0f, 1.0f);
-        pt.a = 1.0f;
-    }
-    else
-    {
-        const Color4f color = m_colorGradient.sample(i);
-        pt.r = color[0];
-        pt.g = color[1];
-        pt.b = color[2];
-        pt.a = color[3];
-    }
+    // Always read back: the script may have kept, modulated or overridden it.
+    pt.r = std::clamp(static_cast<float>(engine.number("red")), 0.0f, 1.0f);
+    pt.g = std::clamp(static_cast<float>(engine.number("green")), 0.0f, 1.0f);
+    pt.b = std::clamp(static_cast<float>(engine.number("blue")), 0.0f, 1.0f);
+    pt.a = 1.0f;
 
     return pt;
 }

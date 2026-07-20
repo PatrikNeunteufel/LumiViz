@@ -60,7 +60,11 @@ enum class BlendMode : int
     Minimum = 13,
 };
 
-/** Batch 1 per decision E3 (Buffer needs the pool users from step 5.4). */
+/**
+ * True for every mode the blend engine can render. Batch 1 (E3) covered the
+ * arithmetic modes; batch 2 (Session 35) added the exotic ones (Subtractive,
+ * Every-other-line/-pixel, XOR, Buffer), so the whole set is now implemented.
+ */
 [[nodiscard]] inline bool isBlendModeImplemented(BlendMode mode)
 {
     switch (mode)
@@ -70,13 +74,18 @@ enum class BlendMode : int
         case BlendMode::FiftyFifty:
         case BlendMode::Maximum:
         case BlendMode::Additive:
+        case BlendMode::Subtractive12:
+        case BlendMode::Subtractive21:
+        case BlendMode::EveryOtherLine:
+        case BlendMode::EveryOtherPixel:
+        case BlendMode::Xor:
         case BlendMode::Adjustable:
         case BlendMode::Multiply:
+        case BlendMode::Buffer:
         case BlendMode::Minimum:
             return true;
-        default:
-            return false;
     }
+    return false;
 }
 
 [[nodiscard]] inline const char* blendModeName(BlendMode mode)
@@ -118,6 +127,14 @@ struct ListParams
     BlendMode blendOut = BlendMode::Replace;  ///< list buffer -> parent
     int inAdjustAlpha = 128;                  ///< Adjustable in-alpha 0..255
     int outAdjustAlpha = 128;                 ///< Adjustable out-alpha 0..255
+
+    // Buffer blend mode (E3 batch 2): a global buffer's per-pixel depth drives
+    // the mix. Index = OffscreenBufferPool slot (0..7, same numbering as Buffer
+    // Save); invert flips depth (AVS ininvert/outinvert).
+    int bufferIn = 0;             ///< pool slot for Buffer in-blend
+    int bufferOut = 0;            ///< pool slot for Buffer out-blend
+    bool bufferInInvert = false;  ///< invert in-blend buffer depth
+    bool bufferOutInvert = false; ///< invert out-blend buffer depth
 
     bool onBeatRender = false;  ///< render only for N frames after a beat
     int onBeatFrames = 1;       ///< N (>= 1)
@@ -315,6 +332,71 @@ struct SuperScopeParams
     float lineWidth = 2.0f;
     float dotSize = 4.0f;
     int audioChannel = 2;  ///< 0=L 1=R 2=mono 3=mid 4=side
+
+    // Base color (point code that sets red/green/blue always overrides this).
+    // Two orthogonal sources — a time-cycled AVS color table and a per-point
+    // gradient — combined by `colorBlend`. Default (0 + Neon) = the historical
+    // look, so existing chains render unchanged.
+    int colorBlend = 0;  ///< 0 gradient, 1 table, 2 additive, 3 multiply, 4 average
+    std::vector<uint32_t> colors;         ///< AVS color table (0x00RRGGBB), cycled
+    int colorCycleFrames = 60;            ///< frames per table step (>= 1)
+    std::string gradientPreset = "Neon";  ///< ColorGradientModule preset name
+};
+
+/**
+ * AVS "Trans / Mosaic" (ID 30): pixelate into `quality`×`quality` blocks. On a
+ * beat it can jump to `quality2` and ease linearly back to `quality` over
+ * `durationFrames` (r_mosaic.cpp). quality 100 = no pixelation. `blend` mixes
+ * the mosaic with the untouched image: 0 replace, 1 additive, 2 50/50.
+ */
+struct MosaicParams
+{
+    int quality = 50;         ///< block resolution 1..100 (100 = off)
+    int quality2 = 50;        ///< on-beat resolution 1..100
+    bool onBeat = false;      ///< jump to quality2 on beat, then ease back
+    int durationFrames = 16;  ///< ease-back length in frames (>= 1)
+    int blend = 0;            ///< 0 replace, 1 additive, 2 50/50
+};
+
+/**
+ * AVS "Trans / Grain" (ID 24): darken a random subset of (non-black) pixels by
+ * a random factor (r_grain.cpp). `amount` 0..100 = the gated fraction; `blend`
+ * 0 replace, 1 additive, 2 50/50; `staticGrain` freezes the noise pattern.
+ */
+struct GrainParams
+{
+    int amount = 100;         ///< gated pixel fraction 0..100 (smax)
+    bool staticGrain = false; ///< frozen noise vs. per-frame shimmer
+    int blend = 0;            ///< 0 replace, 1 additive, 2 50/50
+};
+
+/** AVS "Trans / Scatter" (ID 16): per-pixel random displacement within a small
+ *  (~4 px) window (r_scat.cpp). No parameters. */
+struct ScatterParams
+{
+};
+
+/**
+ * AVS "Trans / Interferences" (ID 41): `points` rotated copies of the image
+ * accumulated with `alpha` (r_interf.cpp). The rotation advances by
+ * `rotationInc`/frame; on a beat it morphs to the *2 parameter set over
+ * `speed`. `rgb` splits copies across R/G/B channels. `blend` 0 replace,
+ * 1 additive, 2 50/50 with the original.
+ */
+struct InterferencesParams
+{
+    int points = 2;          ///< number of copies 1..8
+    int distance = 10;       ///< copy offset radius (px)
+    int alpha = 128;         ///< per-copy weight 0..255
+    int rotation = 0;        ///< initial rotation 0..255 (of a full turn)
+    int rotationInc = 0;     ///< rotation delta per frame
+    int distance2 = 32;      ///< on-beat target distance
+    int alpha2 = 192;        ///< on-beat target alpha
+    int rotationInc2 = 25;   ///< on-beat target rotation delta
+    bool rgb = false;        ///< split copies across channels
+    bool onBeat = false;     ///< morph to the *2 set on a beat
+    float speed = 0.2f;      ///< beat-morph transition speed
+    int blend = 0;           ///< 0 replace, 1 additive, 2 50/50
 };
 
 /**
@@ -341,7 +423,8 @@ using EffectParams =
                  OnBeatClearParams, ColorfadeParams, ColorModifierParams,
                  MovementParams, DynamicMovementParams, BlitterFeedbackParams,
                  RotoBlitterParams, BufferSaveParams, CustomBpmParams,
-                 SuperScopeParams, DebugBarsParams, PassthroughParams>;
+                 SuperScopeParams, MosaicParams, GrainParams, ScatterParams,
+                 InterferencesParams, DebugBarsParams, PassthroughParams>;
 
 // =============================================================================
 // Chain node
@@ -412,6 +495,10 @@ struct CompileResult
         const char* operator()(const BufferSaveParams&) const { return "Buffer Save"; }
         const char* operator()(const CustomBpmParams&) const { return "Custom BPM"; }
         const char* operator()(const SuperScopeParams&) const { return "SuperScope"; }
+        const char* operator()(const MosaicParams&) const { return "Mosaic"; }
+        const char* operator()(const GrainParams&) const { return "Grain"; }
+        const char* operator()(const ScatterParams&) const { return "Scatter"; }
+        const char* operator()(const InterferencesParams&) const { return "Interferences"; }
         const char* operator()(const DebugBarsParams&) const { return "Debug Bars"; }
         const char* operator()(const PassthroughParams&) const { return "Passthrough"; }
     };

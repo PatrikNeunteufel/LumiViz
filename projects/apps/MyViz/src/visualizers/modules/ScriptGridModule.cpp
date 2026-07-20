@@ -21,6 +21,12 @@ namespace lumi::modules {
 using scripting::ScriptSlotHost;
 using Slot = ScriptSlotHost::Slot;
 
+namespace {
+constexpr double kSqrt2 = 1.41421356237309504880;
+constexpr double kInvSqrt2 = 0.70710678118654752440;
+constexpr double kHalfPi = 1.57079632679489661923;
+}  // namespace
+
 ScriptGridModule::ScriptGridModule(std::shared_ptr<scripting::ScriptContext> context)
     : m_context(std::move(context))
 {
@@ -94,6 +100,8 @@ void ScriptGridModule::initializeScripts()
     auto& engine = m_script->engine();
     engine.setNumber("w", 0.0);
     engine.setNumber("h", 0.0);
+    engine.setNumber("sw", 0.0);
+    engine.setNumber("sh", 0.0);
     engine.setNumber("time", static_cast<double>(m_totalTime));
     engine.setNumber("b", 0.0);
 
@@ -116,6 +124,10 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
     auto& engine = m_script->engine();
     engine.setNumber("w", static_cast<double>(width));
     engine.setNumber("h", static_cast<double>(height));
+    // AVS registers the surface size as sw/sh for Movement point code
+    // (r_trans.cpp); built-in formulas #9/#10 divide by sqrt((sw^2+sh^2)/4).
+    engine.setNumber("sw", static_cast<double>(width));
+    engine.setNumber("sh", static_cast<double>(height));
     engine.setNumber("time", static_cast<double>(m_totalTime));
     engine.setNumber("dt", static_cast<double>(deltaTime));
     engine.setNumber("b", isBeat ? 1.0 : 0.0);
@@ -143,8 +155,13 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
         for (int gx = 0; gx < m_xres; ++gx, ++idx)
         {
             const double x = static_cast<double>(gx) / (m_xres - 1) * 2.0 - 1.0;
-            const double d = std::sqrt(x * x + y * y);
-            const double r = std::atan2(y, x);
+            // AVS polar convention (r_trans.cpp render loop): d is normalised so
+            // the corner maps to 1 (grid corner dist = sqrt(2)), and r carries a
+            // +pi/2 offset. Both are undone on the way back below. This makes the
+            // built-in movement formulas and user polar code AVS-faithful; pure
+            // scale/rotate stay identical (the factors cancel).
+            const double d = std::sqrt(x * x + y * y) * kInvSqrt2;
+            const double r = std::atan2(y, x) + kHalfPi;
 
             engine.setNumber("x", x);
             engine.setNumber("y", y);
@@ -168,8 +185,8 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
             }
             else
             {
-                const double dOut = engine.number("d");
-                const double rOut = engine.number("r");
+                const double dOut = engine.number("d") * kSqrt2;  // denormalise
+                const double rOut = engine.number("r") - kHalfPi;
                 out.u = static_cast<float>(std::cos(rOut) * dOut);
                 out.v = static_cast<float>(std::sin(rOut) * dOut);
             }

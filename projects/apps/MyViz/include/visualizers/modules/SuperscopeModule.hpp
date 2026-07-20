@@ -23,6 +23,7 @@
 #include "IModule.hpp"
 #include "ColorGradientModule.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -189,6 +190,17 @@ public:
     [[nodiscard]] SuperscopePreset preset() const { return m_preset; }
 
     void loadPresetCode(SuperscopePreset preset);
+
+    // =========================================================================
+    // Base color (AVS r_sscope): red/green/blue are pre-seeded with this before
+    // the point script runs, so the script reads/modifies/overrides it. Base =
+    // gradient(i) x cycled color table, combined per `colorBlend`. Empty table +
+    // colorBlend 0 = gradient only (historical behaviour).
+    // =========================================================================
+
+    void setColorTable(const std::vector<uint32_t>& colors) { m_colorTable = colors; }
+    void setColorBlend(int mode) { m_colorBlend = mode; }  ///< 0 grad 1 table 2 add 3 mul 4 avg
+    void setColorCycleFrames(int frames) { m_colorCycleFrames = frames < 1 ? 1 : frames; }
 
     // =========================================================================
     // Render Settings
@@ -378,6 +390,15 @@ private:
 
     SuperscopePreset m_preset = SuperscopePreset::Spiral;
 
+    // Base color table (cycled over time; combined with the gradient by m_colorBlend)
+    std::vector<uint32_t> m_colorTable;
+    int m_colorBlend = 0;         ///< 0 gradient, 1 table, 2 add, 3 multiply, 4 average
+    int m_colorCycleFrames = 60;  ///< frames per table step
+    float m_colorPos = 0.0f;      ///< current position in the color table
+    float m_frameTableR = 1.0f;   ///< this frame's cycled table color
+    float m_frameTableG = 1.0f;
+    float m_frameTableB = 1.0f;
+
     // =========================================================================
     // Render Settings
     // =========================================================================
@@ -461,7 +482,6 @@ private:
     // =========================================================================
 
     bool m_luaMode = false;
-    bool m_scriptSetsColor = false;  ///< point code mentions red/green/blue
     std::unique_ptr<scripting::ScriptSlotHost> m_script;  ///< EEL quartet + Engine
     std::string m_lastScriptError;
 };
