@@ -1,6 +1,6 @@
 # AVS-/MilkDrop-Import — Analyse der Referenz-Repos
 
-> **Version:** 1.3.0
+> **Version:** 1.4.0
 > **Datum:** 2026-07-20
 > **Typ:** Analyse
 > **Status:** Aktiv (Grundlage der Import-Phase)
@@ -405,8 +405,14 @@ den nächsten Entwurf informiert (bewährtes Muster: Entwurf → Freigabe → Um
    MilkDrop 2^20), 8-Zeichen-Aliasing-Warnung (§10.2). AVS-Dialekt komplett,
    MilkDrop-Kern (Infix, `?:`, Kompound-Zuweisung, `buf[]`/`gmem[]`).
    25 Golden-Cases end-to-end (EEL → Lua → Sandbox-Ausführung) — Suite 132/132.
-3. **.avs-Parser** (Container + Kern-Effekt-Blobs) + Import-Report-Gerüst; Testkorpus
-   `avs/vis_avs/presets/`.
+3. ✅ **.avs-Parser** *(Session 33, 2026-07-20)*: Lib `projects/libs/AvsParser`
+   (header-only, Qt-frei; Doku: `include/AvsParser.md`) — Container-TLV
+   (Signatur 0.1/0.2, verschachtelte Listen inkl. Extended-Data + Listen-EEL,
+   APE-ID-Strings + Alias-Tabelle, Altformat-Strings), Blob-Decoder der
+   Kernmenge (~17 Effekte + Effect List), Import-Report-Gerüst
+   (pfad-präfixierte Warnungen, nie hart abbrechen). 17 Test-Cases inkl.
+   Korpus-Lauf: **35/35 Referenz-Presets parsen ok** (170 Effekte, 5 Warnungen
+   = Community-APE FunkyFX). Suite 152/152.
 4. **Feedback-/Skript-Modul-Fundament** (§8.2 Bausteine 1–2 + 4–6) als Entwurf mit
    Freigabe — hier fließt alles Gelernte aus 1–3 ein.
 5. **Multieffekt-Host** (Baustein 3) + Übersetzung der AVS-Kernmenge (§5.2).
@@ -445,6 +451,7 @@ den nächsten Entwurf informiert (bewährtes Muster: Entwurf → Freigabe → Um
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.4.0 | 2026-07-20 | §9.3 umgesetzt: AvsParser-Lib (Container-TLV, Kernmengen-Decoder, Import-Report; Korpus 35/35) — Session 33 |
 | 1.3.0 | 2026-07-20 | §9.2 umgesetzt: EelTranspiler-Lib (Lexer/Parser/Codegen, 25 Golden-Cases) — Session 32 |
 | 1.2.0 | 2026-07-20 | §9.1 umgesetzt: Lua-Fundament im Superscope (LuaScriptEngine, eel-Prelude, Messwerte) — Session 32 |
 | 1.1.0 | 2026-07-20 | §10: alle fünf offenen Fragen entschieden (rand=Integer, kein 8-Zeichen-Aliasing + Warnung, reg/gmegabuf preset-lokal + globales Atomic-Register-Set, Lib EelTranspiler, Lua 5.4 fix) |

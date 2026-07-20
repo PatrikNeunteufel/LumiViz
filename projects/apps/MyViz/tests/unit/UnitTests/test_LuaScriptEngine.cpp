@@ -16,6 +16,7 @@
 #include "scripting/LuaScriptEngine.hpp"
 #include "visualizers/modules/SuperscopeModule.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <vector>
@@ -293,6 +294,78 @@ TEST_CASE("Superscope-Lua: Laufzeitfehler im Point-Skript -> Fallback statt Abst
     const auto points = runScope(scope);
     REQUIRE_FALSE(points.empty());  // Fallback-Geometrie
     CHECK(scope.lastScriptError().find("kaputt") != std::string::npos);
+}
+
+TEST_CASE("Superscope-Lua: Builtin-Preset laeuft als EEL-Skript, t gehoert dem Skript")
+{
+    // Regression (Session 32): der Host darf `t` nie ueberschreiben — die
+    // Preset-Strings akkumulieren es selbst (Spiral: Frame "t=t+0.015").
+    lumi::modules::SuperscopeModule scope;
+    scope.setPreset(lumi::modules::SuperscopePreset::Spiral);
+    scope.setLuaMode(true);
+
+    runScope(scope);
+    runScope(scope);
+    CAPTURE(scope.lastScriptError());
+    CHECK(scope.lastScriptError().empty());
+    // 2 Frames x 0.015 — waere t von der Host-Zeit geklobbert, stuende hier ~2.0
+    CHECK(scope.getVariable("t") == doctest::Approx(0.03));
+}
+
+TEST_CASE("Superscope-Lua: Preset-Variablen kollidieren nicht mit Host-Namen")
+{
+    // Regression (Session 32b): Lissajous nutzte `b` (= Host-Beat-Variable,
+    // wird jeden Frame geklobbert) und Hypocycloid `R`+`r` (EEL/Lua sind
+    // case-insensitiv -> dieselbe Variable, R-r=0 -> Punktkollaps).
+
+    // Lissajous: y muss ueber i variieren (fb-Frequenz), nicht konstant sein
+    {
+        lumi::modules::SuperscopeModule scope;
+        scope.setPreset(lumi::modules::SuperscopePreset::Lissajous);
+        scope.setLuaMode(true);
+        const auto points = runScope(scope, 0.0f);  // v=0 -> reine Kurvenform
+        CAPTURE(scope.lastScriptError());
+        REQUIRE_FALSE(points.empty());
+        float minY = points.front().y;
+        float maxY = points.front().y;
+        for (const auto& pt : points)
+        {
+            minY = std::min(minY, pt.y);
+            maxY = std::max(maxY, pt.y);
+        }
+        CHECK(maxY - minY > 0.5f);  // cos-Spanne ±0.8 — vor dem Fix ~0
+        CHECK(scope.lastScriptError().empty());
+    }
+
+    // Hypocycloid: Punkte duerfen nicht alle auf einem Fleck liegen
+    {
+        lumi::modules::SuperscopeModule scope;
+        scope.setPreset(lumi::modules::SuperscopePreset::Hypocycloid);
+        scope.setLuaMode(true);
+        const auto points = runScope(scope, 0.0f);
+        CAPTURE(scope.lastScriptError());
+        REQUIRE_FALSE(points.empty());
+        float minX = points.front().x;
+        float maxX = points.front().x;
+        for (const auto& pt : points)
+        {
+            minX = std::min(minX, pt.x);
+            maxX = std::max(maxX, pt.x);
+        }
+        CHECK(maxX - minX > 0.1f);  // vor dem Fix: ein einziger Punkt
+        CHECK(scope.lastScriptError().empty());
+    }
+}
+
+TEST_CASE("Superscope-Lua: DNA hat leere Slots und faellt auf C++ zurueck")
+{
+    lumi::modules::SuperscopeModule scope;
+    scope.setPreset(lumi::modules::SuperscopePreset::DNA);
+    scope.setLuaMode(true);
+
+    const auto points = runScope(scope, 0.5f);
+    CHECK(scope.lastScriptError().empty());
+    REQUIRE_FALSE(points.empty());  // native DNA-Geometrie rendert
 }
 
 TEST_CASE("Superscope-Lua: Param-Schnittstelle script.lua schaltet den Modus")

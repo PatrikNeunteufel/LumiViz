@@ -20,7 +20,7 @@ Ganzes (Player, Playlist, Visualizer, Vollbild, Docking, Einstellungen).
 | [visuals/](visuals/) | Visualizer-Domäne: [Visualizer-Architektur](visuals/Visualizer_Architecture.md) (IVisualizer, Modul-System, Parameter) · [Parameter-Referenz](visuals/Parameter_Reference.md) (alle Visualizer, Pipeline-Schema!) · [OpenGL-Context-Handling](visuals/OpenGL_Context_Handling.md) · [Config-Pipeline-Konzept](visuals/Config_Pipeline_Concept.md) (Phase 4, **Stabil**) · [Umsetzungsplan](visuals/Config_Pipeline_Umsetzungsplan.md) · [Key-Migration Alt→Neu](visuals/Parameter_Key_Migration.md) · [Preview-Viewer-Entwurf](visuals/Preview_Viewer_Entwurf.md) · [Render-Thread-Entwurf](visuals/Render_Thread_Entwurf.md) (umgesetzt) · [Import-Analyse AVS/MilkDrop](visuals/Import_Analyse_AVS_MilkDrop.md) (ref/-Repos, EEL→Lua, Import-Roadmap) |
 | [ui/](ui/) | UI-Domäne: [Panel-System](ui/Panel_System.md) (Qt-ADS-Docking) · [Menü-System](ui/Menu_System.md) · [ConfigPanel-Guide](ui/ConfigPanel_Guide.md) |
 | [presets/](presets/) | Persistenz-Domäne: [Preset-System](presets/Preset_System.md) · [Dateiformat-Referenz](presets/FileFormat_Reference.md) · [Layout-Persistenz](presets/Layout_Persistence.md) |
-| [sessions/](sessions/) | **Produkt-Changelogs** je Arbeitsphase ([jüngster Stand](sessions/Changelog_Session31.md)) |
+| [sessions/](sessions/) | **Produkt-Changelogs** je Arbeitsphase ([jüngster Stand](sessions/Changelog_Session32.md)) |
 
 ## Regeln
 

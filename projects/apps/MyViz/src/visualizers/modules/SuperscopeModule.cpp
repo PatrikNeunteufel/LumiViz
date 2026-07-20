@@ -13,6 +13,8 @@
 
 #include "scripting/LuaScriptEngine.hpp"
 
+#include <EelTranspiler.hpp>
+
 #include <algorithm>
 #include <cmath>
 #include <random>
@@ -88,9 +90,21 @@ void SuperscopeModule::initializeLuaScripts()
     }
     m_lastScriptError.clear();
 
+    // Slots are EEL (AVS-treu) — transpiled to Lua at compile time. A transpile
+    // error means "slot is empty" (AVS behavior) + recorded error message.
     const auto compileSlot = [this](LuaScriptEngine::Slot slot, const std::string& src,
                                     const char* name) {
-        if (!m_lua->compile(slot, src, name) && m_lastScriptError.empty())
+        const auto eel = lumi::eel::transpile(src, lumi::eel::Dialect::Avs);
+        if (!eel.ok)
+        {
+            m_lua->clear(slot);
+            if (m_lastScriptError.empty())
+            {
+                m_lastScriptError = std::string(name) + ": " + eel.error;
+            }
+            return;
+        }
+        if (!m_lua->compile(slot, eel.lua, name) && m_lastScriptError.empty())
         {
             m_lastScriptError = m_lua->lastError();
         }
@@ -105,11 +119,13 @@ void SuperscopeModule::initializeLuaScripts()
                         m_pointCode.find("green") != std::string::npos ||
                         m_pointCode.find("blue") != std::string::npos;
 
-    // Seed the environment before Init runs
+    // Seed the environment before Init runs. NOTE: the host never writes `t` —
+    // scripts own it (AVS style: frame code accumulates `t=t+0.02` itself);
+    // host time is provided as `time` (absolute) and `dt` (per frame).
     m_lua->setNumber("n", static_cast<double>(m_pointCount));
     m_lua->setNumber("w", m_w);
     m_lua->setNumber("h", m_h);
-    m_lua->setNumber("t", m_t);
+    m_lua->setNumber("time", static_cast<double>(m_totalTime));
     m_lua->setNumber("b", 0.0);
 
     if (m_lua->has(LuaScriptEngine::Slot::Init) &&
@@ -173,10 +189,12 @@ void SuperscopeModule::loadPresetCode(SuperscopePreset preset)
             break;
 
         case SuperscopePreset::Lissajous:
-            m_initCode = "n=400; t=0; pi=acos(-1); a=3; b=4";
-            m_beatCode = "a=rand(5)+1; b=rand(5)+2";
+            // NICHT a/b als Frequenzen: `b` ist die Host-Beat-Variable (wird
+            // jeden Frame ueberschrieben) -> fa/fb
+            m_initCode = "n=400; t=0; pi=acos(-1); fa=3; fb=4";
+            m_beatCode = "fa=rand(5)+1; fb=rand(5)+2";
             m_frameCode = "t=t+0.01";
-            m_pointCode = "x=sin(a*i*pi*2+t)*0.8; y=cos(b*i*pi*2)*0.8+v*0.2";
+            m_pointCode = "x=sin(fa*i*pi*2+t)*0.8; y=cos(fb*i*pi*2)*0.8+v*0.2";
             m_pointCount = 400;
             break;
 
@@ -217,11 +235,13 @@ void SuperscopeModule::loadPresetCode(SuperscopePreset preset)
             break;
 
         case SuperscopePreset::DNA:
-            m_initCode = "n=200; t=0; pi=acos(-1)";
+            // Kein Skript-Äquivalent: die native DNA-Implementierung (Rungs,
+            // Coil-Interpolation) ist strukturell reicher als jede Kurzformel —
+            // leere Slots lassen den Lua-Modus sauber auf C++ zurueckfallen.
+            m_initCode = "";
             m_beatCode = "";
-            m_frameCode = "t=t+0.03";
-            m_pointCode = "y=i*2-1; x1=sin(i*pi*6+t)*0.3; x2=sin(i*pi*6+t+pi)*0.3; "
-                          "x=if(sin(i*10)>0,x1,x2)+v*0.1";
+            m_frameCode = "";
+            m_pointCode = "";
             m_pointCount = 200;
             break;
 
@@ -254,12 +274,14 @@ void SuperscopeModule::loadPresetCode(SuperscopePreset preset)
             break;
 
         case SuperscopePreset::Hypocycloid:
-            m_initCode = "n=400; t=0; pi=acos(-1); R=5; r=3";
-            m_beatCode = "R=rand(5)+3; r=rand(3)+1";
+            // NICHT R/r: EEL/Lua sind case-insensitiv — R und r waeren dieselbe
+            // Variable (R-r=0 -> Punktkollaps) -> br (big) / sr (small)
+            m_initCode = "n=400; t=0; pi=acos(-1); br=5; sr=3";
+            m_beatCode = "br=rand(5)+3; sr=rand(3)+1";
             m_frameCode = "t=t+0.01";
-            m_pointCode = "th=i*pi*2*r+t; sc=0.15+v*0.05; "
-                          "x=sc*((R-r)*cos(th)+r*cos((R-r)/r*th)); "
-                          "y=sc*((R-r)*sin(th)-r*sin((R-r)/r*th))";
+            m_pointCode = "th=i*pi*2*sr+t; sc=0.15+v*0.05; "
+                          "x=sc*((br-sr)*cos(th)+sr*cos((br-sr)/sr*th)); "
+                          "y=sc*((br-sr)*sin(th)-sr*sin((br-sr)/sr*th))";
             m_pointCount = 400;
             break;
 
@@ -427,11 +449,12 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
 
     if (luaActive)
     {
-        // Frame contract: inputs n, w, h, t, dt, b — Frame code may adjust n
+        // Frame contract: inputs n, w, h, time, dt, b — Frame code may adjust n.
+        // `t` is intentionally NOT written: it belongs to the script.
         m_lua->setNumber("n", static_cast<double>(m_pointCount));
         m_lua->setNumber("w", m_w);
         m_lua->setNumber("h", m_h);
-        m_lua->setNumber("t", m_t);
+        m_lua->setNumber("time", static_cast<double>(m_totalTime));
         m_lua->setNumber("dt", static_cast<double>(deltaTime));
         m_lua->setNumber("b", m_b);
 

@@ -424,7 +424,7 @@ private:
         // --- direct pass-through (sandbox env: math subset + host functions) ---
         static const std::set<std::string> kDirect = {
             "sin", "cos", "tan", "asin", "acos", "atan", "atan2", "floor", "ceil",
-            "exp", "log", "abs", "min", "max", "rand",
+            "exp", "log", "abs", "min", "max", "rand", "mod",  // mod = env-fmod
             "getosc", "getspec", "gettime"
         };
         if (kDirect.count(fn) > 0)

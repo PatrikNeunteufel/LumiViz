@@ -165,11 +165,13 @@ public:
     // =========================================================================
 
     /**
-     * @brief Enable/disable Lua execution of the four code slots
+     * @brief Enable/disable script execution of the four code slots
      *
-     * When enabled, Init/Beat/Frame/Point run as sandboxed Lua chunks
-     * (LuaScriptEngine). Contract per point: inputs i, v, b, n, w, h, t, dt;
-     * outputs x, y, skip — and red/green/blue [0..1] if the point code
+     * When enabled, Init/Beat/Frame/Point are transpiled from EEL (AVS dialect,
+     * EelTranspiler) and run as sandboxed Lua chunks (LuaScriptEngine).
+     * Contract: host inputs i, v, b, n, w, h, time, dt — `t` is NEVER written
+     * by the host, scripts own and accumulate it (AVS style: "t=t+0.02").
+     * Outputs: x, y, skip — and red/green/blue [0..1] if the point code
      * mentions them (otherwise the color gradient applies as before).
      * Without a compiled point script the hardcoded preset math is used.
      */

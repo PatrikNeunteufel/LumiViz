@@ -116,17 +116,30 @@ LuaJIT ist nicht nötig (Entscheid §10.5). GC läuft generational (`LUA_GCGEN`)
 
 ## 7. Verwendung (Superscope)
 
-`SuperscopeModule` (Param `render.script.lua`): Bei aktivem Lua-Modus laufen die vier
-Code-Slots als Lua. Punkt-Vertrag: Inputs `i, v, b, n, w, h, t, dt` — Outputs
-`x, y, skip`, plus `red/green/blue` [0..1] **wenn der Point-Code sie erwähnt**
-(sonst färbt der Gradient wie bisher). Der Frame-Code darf `n` (Punktzahl, Clamp
-8–4096) ändern. Ohne kompilierten Point-Code rendert die hartkodierte Preset-Mathematik.
+`SuperscopeModule` (Param `render.script.lua`): Bei aktivem Skript-Modus werden die
+vier Code-Slots als **EEL** (AVS-Dialekt) durch den
+[EelTranspiler](../../../../libs/EelTranspiler/include/EelTranspiler.md) übersetzt
+und als Lua ausgeführt — auch die Builtin-Preset-Strings laufen so als echte
+Skripte. Vertrag: Host-Inputs `i, v, b, n, w, h, time, dt` — **`t` schreibt der
+Host nie**, es gehört dem Skript (AVS-Stil: Frame-Code akkumuliert `t=t+0.02`).
+Outputs: `x, y, skip`, plus `red/green/blue` [0..1] **wenn der Point-Code sie
+erwähnt** (sonst färbt der Gradient wie bisher). Der Frame-Code darf `n`
+(Punktzahl, Clamp 8–4096) ändern. Ohne kompilierten Point-Code (leer oder
+Transpile-Fehler) rendert die hartkodierte Preset-Mathematik (z. B. DNA).
+Rohes Lua ist weiterhin direkt an der Engine möglich (compile/run) — die
+Superscope-Slots sind bewusst EEL (Import-treu).
 
-```lua
--- Frame:  n = 512
--- Point:  r = 0.5 + v*0.3; a = i*pi2 + t*0.02
---         x = sin(a)*r; y = cos(a)*r
---         red = i; green = 0.2; blue = 1 - i
+**Reservierte Namen (Host-Vertrag):** `i, v, b, n, w, h, time, dt` (Inputs —
+`b` wird JEDEN Frame überschrieben!) und `x, y, skip, red, green, blue`
+(Outputs). Skripte dürfen sie lesen bzw. als Output schreiben, aber **nie als
+freie Variablen zweckentfremden**. Achtung Case-Insensitivität: `R` und `r`
+sind DIESELBE Variable (Lissajous-`b`- und Hypocycloid-`R/r`-Bug, Session 32).
+
+```
+-- Frame:  t=t+0.02; n=512
+-- Point:  r=0.5+v*0.3; a=i*$PI*2+t;
+--         x=sin(a)*r; y=cos(a)*r;
+--         red=i; green=0.2; blue=1-i
 ```
 
 ## 8. Changelog

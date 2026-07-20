@@ -114,6 +114,13 @@
         "version": "1.0.0",
         "type": "INTERFACE",
         "public_headers": "projects/libs/EelTranspiler/include"
+      },
+      {
+        "name": "AvsParser",
+        "skip": false,
+        "version": "1.0.0",
+        "type": "INTERFACE",
+        "public_headers": "projects/libs/AvsParser/include"
       }
     ],
     "executables": [
@@ -127,7 +134,7 @@
         "version": "0.1.0",
 
         "core": {
-          "dependencies": [ "BasicLogger", "EelTranspiler" ],
+          "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser" ],
           "externals": [ "Qt6", "qt-ads", "bass", "lua54" ],
           "external_options": {
             "bass": { "BASS_FLAC": true },
