@@ -198,6 +198,21 @@ private:
         float bumpDepth = 0.0f;  ///< eased strength (0 = uninitialised)
         int bumpFramesLeft = 0;  ///< frames left easing depth back
 
+        // Dynamic Shift: EEL global-offset script (r_shift)
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> shiftHost;
+        std::string shiftCompiled;
+
+        // Dynamic Distance Modifier: EEL radial-distance script (r_ddm)
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> ddmHost;
+        std::string ddmCompiled;
+
+        // Moving Particle: spring-particle state (r_parts)
+        bool mpSeeded = false;
+        float mpCx = 0.0f, mpCy = 0.0f;   ///< spring target (randomized on beat)
+        float mpVx = 0.0f, mpVy = 0.0f;   ///< velocity
+        float mpPx = 0.0f, mpPy = 0.0f;   ///< position (-1..1)
+        float mpSize = 8.0f;              ///< eased radius
+
         // Water Bump: RGBA16F height ping-pong (.r current, .g previous height)
         std::unique_ptr<QOpenGLFramebufferObject> wbHeight[2];
         int wbCur = 0;   ///< index of the current height buffer
@@ -274,6 +289,13 @@ private:
                           const lumi::multieffect::ColorModifierParams& params);
     void runMovement(const lumi::multieffect::ChainNode& node,
                      const lumi::multieffect::MovementParams& params);
+    void runDynamicShift(const lumi::multieffect::ChainNode& node,
+                         const lumi::multieffect::DynamicShiftParams& params);
+    void runDynamicDistanceModifier(
+        const lumi::multieffect::ChainNode& node,
+        const lumi::multieffect::DynamicDistanceModifierParams& params);
+    void runMovingParticle(const lumi::multieffect::ChainNode& node,
+                           const lumi::multieffect::MovingParticleParams& params);
     void runDynamicMovement(const lumi::multieffect::ChainNode& node,
                             const lumi::multieffect::DynamicMovementParams& params);
     /** Shared grid-warp: run the module, build the mesh, sample current→partner. */
@@ -368,6 +390,8 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_interfShader;
     std::unique_ptr<QOpenGLShaderProgram> m_waterShader;
     std::unique_ptr<QOpenGLShaderProgram> m_bumpShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_shiftShader;  ///< Dynamic Shift (r_shift)
+    std::unique_ptr<QOpenGLShaderProgram> m_ddmShader;    ///< Dynamic Distance Modifier (r_ddm)
     std::unique_ptr<QOpenGLShaderProgram> m_wbPropShader;  ///< water-bump wave propagation
     std::unique_ptr<QOpenGLShaderProgram> m_wbDispShader;  ///< water-bump refraction
     std::unique_ptr<QOpenGLShaderProgram> m_timescopeShader;

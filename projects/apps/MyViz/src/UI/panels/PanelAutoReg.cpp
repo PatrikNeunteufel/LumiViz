@@ -45,6 +45,7 @@
 // Panel Headers
 #include "UI/panels/PlayerPanel.hpp"
 #include "UI/panels/PlaylistPanel.hpp"
+#include "UI/panels/ImportBrowserPanel.hpp"
 #include "UI/panels/ConfigPanel.hpp"
 #include "UI/panels/MultiEffectPanel.hpp"
 #include "UI/panels/SettingsPanel.hpp"
@@ -101,10 +102,28 @@ void initPanelDefaults(PanelRegistry& registry)
         false);
     
     // =========================================================================
+    // IMPORT BROWSER PANEL (AVS/MilkDrop preset folder browser)
+    // =========================================================================
+    // Browse a folder of .avs/.milk presets; double-click imports into the host.
+
+    registry.registerPanel(
+        PanelDescriptor{
+            "import_browser",   // id
+            "Import Browser",   // title
+            250,                // order
+            false,              // defaultVisible (hidden by default)
+            "View/Panels"       // menuPath
+        },
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<ImportBrowserPanel>(svc);
+        },
+        false);
+
+    // =========================================================================
     // CONFIG PANEL (Visualizer Config)
     // =========================================================================
     // Configuration for the currently active visualizer
-    
+
     registry.registerPanel(
         PanelDescriptor{
             "config",           // id

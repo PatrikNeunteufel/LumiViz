@@ -172,6 +172,7 @@ struct WriteVisitor
         o["lineWidth"] = p.lineWidth;
         o["dotSize"] = p.dotSize;
         o["audioChannel"] = p.audioChannel;
+        o["lineBlend"] = p.lineBlend;
         o["colorBlend"] = p.colorBlend;
         o["colorCycleFrames"] = p.colorCycleFrames;
         o["gradientPreset"] = QString::fromStdString(p.gradientPreset);
@@ -195,6 +196,32 @@ struct WriteVisitor
     }
     void operator()(const ScatterParams&) const {}
     void operator()(const WaterParams&) const {}
+    void operator()(const DynamicShiftParams& p) const
+    {
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+        o["blend"] = p.blend;
+        o["bilinear"] = p.bilinear;
+    }
+    void operator()(const DynamicDistanceModifierParams& p) const
+    {
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+        o["pixelCode"] = QString::fromStdString(p.pixelCode);
+        o["blend"] = p.blend;
+        o["bilinear"] = p.bilinear;
+    }
+    void operator()(const MovingParticleParams& p) const
+    {
+        o["color"] = static_cast<double>(p.color);
+        o["maxDistance"] = p.maxDistance;
+        o["size"] = p.size;
+        o["size2"] = p.size2;
+        o["onBeatSize"] = p.onBeatSize;
+        o["blend"] = p.blend;
+    }
     void operator()(const BumpParams& p) const
     {
         o["depth"] = p.depth;
@@ -445,6 +472,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.lineWidth = static_cast<float>(getDouble(o, "lineWidth", 2.0));
         p.dotSize = static_cast<float>(getDouble(o, "dotSize", 4.0));
         p.audioChannel = getInt(o, "audioChannel", 2);
+        p.lineBlend = getInt(o, "lineBlend", 1);
         p.colorBlend = getInt(o, "colorBlend", 0);
         p.colorCycleFrames = getInt(o, "colorCycleFrames", 60);
         p.gradientPreset = o.contains("gradientPreset") ? getStr(o, "gradientPreset")
@@ -485,6 +513,38 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.dropY = getInt(o, "dropY", 1);
         p.dropRadius = getInt(o, "dropRadius", 40);
         p.displaceScale = static_cast<float>(getDouble(o, "displaceScale", 6.0));
+        return p;
+    }
+    if (type == "dynamicShift")
+    {
+        DynamicShiftParams p;
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        p.blend = getBool(o, "blend", false);
+        p.bilinear = getBool(o, "bilinear", true);
+        return p;
+    }
+    if (type == "dynamicDistanceModifier")
+    {
+        DynamicDistanceModifierParams p;
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        p.pixelCode = getStr(o, "pixelCode");
+        p.blend = getBool(o, "blend", false);
+        p.bilinear = getBool(o, "bilinear", true);
+        return p;
+    }
+    if (type == "movingParticle")
+    {
+        MovingParticleParams p;
+        p.color = getColor(o, "color", 0xFFFFFF);
+        p.maxDistance = getInt(o, "maxDistance", 16);
+        p.size = getInt(o, "size", 8);
+        p.size2 = getInt(o, "size2", 8);
+        p.onBeatSize = getBool(o, "onBeatSize", false);
+        p.blend = getInt(o, "blend", 1);
         return p;
     }
     if (type == "bump")
@@ -625,6 +685,9 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const GrainParams&) const { return "grain"; }
         QString operator()(const ScatterParams&) const { return "scatter"; }
         QString operator()(const WaterParams&) const { return "water"; }
+        QString operator()(const DynamicShiftParams&) const { return "dynamicShift"; }
+        QString operator()(const DynamicDistanceModifierParams&) const { return "dynamicDistanceModifier"; }
+        QString operator()(const MovingParticleParams&) const { return "movingParticle"; }
         QString operator()(const BumpParams&) const { return "bump"; }
         QString operator()(const WaterBumpParams&) const { return "waterBump"; }
         QString operator()(const InterferencesParams&) const { return "interferences"; }

@@ -267,6 +267,57 @@ struct DynamicMovementParams
 };
 
 /**
+ * AVS "Trans / Dynamic Distance Modifier" (ID 35): a scripted RADIAL remap. The
+ * pixel EEL runs once per distance ring (`d` normalized 0..1 in/out); the host
+ * builds a 1-D distance→distance LUT and a shader resamples each pixel at the
+ * remapped distance along its angle (r_ddm.cpp). `blend` = 50/50 with the
+ * original; `bilinear` = subpixel sampling. Vars: d (in/out), b, plus init/frame.
+ */
+struct DynamicDistanceModifierParams
+{
+    std::string initCode = "u=1;t=0";
+    std::string frameCode =
+        "t=t+u;t=min(100,t);t=max(0,t);u=if(equal(t,100),-1,u);u=if(equal(t,0),1,u)";
+    std::string beatCode;
+    std::string pixelCode = "d=d-sigmoid((t-50)/100,2)";
+    bool blend = false;    ///< 50/50 with the original image
+    bool bilinear = true;  ///< subpixel (bilinear) sampling
+};
+
+/**
+ * AVS "Render / Moving Particle" (ID 8): a single spring-driven particle that
+ * bounces around (target re-randomized on beat) and is drawn as a filled circle
+ * (r_parts.cpp). `maxDistance` scales the travel radius; `size`/`size2` the
+ * radius (size2 on beat when `onBeatSize`); `blend` 0 replace, 1 additive,
+ * 2 50/50, 3 line (~additive). Rendered as a sized dot via the ScopeRenderer.
+ */
+struct MovingParticleParams
+{
+    uint32_t color = 0xFFFFFF;  ///< particle colour 0x00RRGGBB
+    int maxDistance = 16;       ///< travel-radius scale (AVS maxdist)
+    int size = 8;               ///< particle radius (px)
+    int size2 = 8;              ///< on-beat radius
+    bool onBeatSize = false;    ///< jump to size2 on beat (AVS enabled bit 1)
+    int blend = 1;              ///< 0 replace, 1 additive, 2 50/50, 3 line
+};
+
+/**
+ * AVS "Trans / Dynamic Shift" (ID 42): a scripted GLOBAL image translation. The
+ * frame/beat EEL sets `x,y` (pixel offset); the whole image is shifted by (x,y)
+ * with black fill (decision: uniform offset, not a grid remap — r_shift is
+ * image-global affine). `blend` = 50/50 with the original by `alpha`; `bilinear`
+ * = subpixel sampling. Variables: x,y (out, pixels), w,h, b, alpha (default 0.5).
+ */
+struct DynamicShiftParams
+{
+    std::string initCode = "d=0;";
+    std::string frameCode = "x=sin(d)*1.4; y=1.4*cos(d); d=d+0.01;";
+    std::string beatCode = "d=d+2.0";
+    bool blend = false;    ///< 50/50 with the original image
+    bool bilinear = true;  ///< subpixel (bilinear) sampling
+};
+
+/**
  * AVS "Trans / Blitter Feedback" (ID 4): zoom the current image and blend it
  * with itself — a scale-feedback trail. Zoom is a direct factor (1 = none);
  * the exact AVS scale-slider mapping is applied by the 5.5 translator.
@@ -332,6 +383,8 @@ struct SuperScopeParams
     float lineWidth = 2.0f;
     float dotSize = 4.0f;
     int audioChannel = 2;  ///< 0=L 1=R 2=mono 3=mid 4=side
+    int lineBlend = 1;     ///< onto framebuffer: 0 replace, 1 additive, 2 50/50
+                           ///< (set by a preceding Set Render Mode; default additive)
 
     // Base color (point code that sets red/green/blue always overrides this).
     // Two orthogonal sources — a time-cycled AVS color table and a per-point
@@ -571,7 +624,9 @@ using EffectParams =
     std::variant<ListParams, ClearParams, FadeoutParams, InvertParams,
                  BrightnessParams, FastBrightnessParams, BlurParams, MirrorParams,
                  OnBeatClearParams, ColorfadeParams, ColorModifierParams,
-                 MovementParams, DynamicMovementParams, BlitterFeedbackParams,
+                 MovementParams, DynamicMovementParams, DynamicShiftParams,
+                 DynamicDistanceModifierParams, MovingParticleParams,
+                 BlitterFeedbackParams,
                  RotoBlitterParams, BufferSaveParams, CustomBpmParams,
                  SuperScopeParams, MosaicParams, GrainParams, ScatterParams,
                  InterferencesParams, WaterParams, BumpParams, WaterBumpParams,
@@ -644,6 +699,9 @@ struct CompileResult
         const char* operator()(const ColorModifierParams&) const { return "Color Modifier"; }
         const char* operator()(const MovementParams&) const { return "Movement"; }
         const char* operator()(const DynamicMovementParams&) const { return "Dynamic Movement"; }
+        const char* operator()(const DynamicShiftParams&) const { return "Dynamic Shift"; }
+        const char* operator()(const DynamicDistanceModifierParams&) const { return "Dynamic Distance Modifier"; }
+        const char* operator()(const MovingParticleParams&) const { return "Moving Particle"; }
         const char* operator()(const BlitterFeedbackParams&) const { return "Blitter Feedback"; }
         const char* operator()(const RotoBlitterParams&) const { return "Roto Blitter"; }
         const char* operator()(const BufferSaveParams&) const { return "Buffer Save"; }
@@ -766,6 +824,7 @@ inline void compileNode(ChainNode& node, const std::string& path,
         scope->audioChannel = std::clamp(scope->audioChannel, 0, 4);
         scope->lineWidth = std::clamp(scope->lineWidth, 1.0f, 20.0f);
         scope->dotSize = std::clamp(scope->dotSize, 1.0f, 50.0f);
+        scope->lineBlend = std::clamp(scope->lineBlend, 0, 2);
     }
     if (auto* list = std::get_if<ListParams>(&node.params))
     {

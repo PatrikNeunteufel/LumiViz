@@ -71,6 +71,9 @@ const std::vector<EffectType>& effectPalette()
         {"Color Modifier", [] { return EffectParams{ColorModifierParams{}}; }},
         {"Movement", [] { return EffectParams{MovementParams{}}; }},
         {"Dynamic Movement", [] { return EffectParams{DynamicMovementParams{}}; }},
+        {"Dynamic Shift", [] { return EffectParams{DynamicShiftParams{}}; }},
+        {"Dynamic Distance Modifier", [] { return EffectParams{DynamicDistanceModifierParams{}}; }},
+        {"Moving Particle", [] { return EffectParams{MovingParticleParams{}}; }},
         {"Blitter Feedback", [] { return EffectParams{BlitterFeedbackParams{}}; }},
         {"Roto Blitter", [] { return EffectParams{RotoBlitterParams{}}; }},
         {"Buffer Save", [] { return EffectParams{BufferSaveParams{}}; }},
@@ -957,6 +960,32 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).frameCode = std::move(v); });
         addScript(tr("Point"), p->pointCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).pointCode = std::move(v); });
     }
+    else if (auto* p = std::get_if<DynamicShiftParams>(&params))
+    {
+        addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicShiftParams>(n.params).blend = v; });
+        addBool(tr("Bilinear"), p->bilinear, [](ChainNode& n, bool v) { std::get<DynamicShiftParams>(n.params).bilinear = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame (x,y shift)"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<DynamicDistanceModifierParams>(&params))
+    {
+        addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicDistanceModifierParams>(n.params).blend = v; });
+        addBool(tr("Bilinear"), p->bilinear, [](ChainNode& n, bool v) { std::get<DynamicDistanceModifierParams>(n.params).bilinear = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).beatCode = std::move(v); });
+        addScript(tr("Pixel (d in/out)"), p->pixelCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).pixelCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<MovingParticleParams>(&params))
+    {
+        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<MovingParticleParams>(n.params).color = v; });
+        addInt(tr("Max distance"), p->maxDistance, 1, 256, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).maxDistance = v; });
+        addInt(tr("Size"), p->size, 1, 128, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).size = v; });
+        addInt(tr("On-beat size"), p->size2, 1, 128, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).size2 = v; });
+        addBool(tr("Resize on beat"), p->onBeatSize, [](ChainNode& n, bool v) { std::get<MovingParticleParams>(n.params).onBeatSize = v; });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line"}, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).blend = v; });
+    }
     else if (auto* p = std::get_if<BlitterFeedbackParams>(&params))
     {
         addDouble(tr("Zoom"), p->zoom, 0.5, 2.0, 0.01, [](ChainNode& n, double v) { std::get<BlitterFeedbackParams>(n.params).zoom = static_cast<float>(v); });
@@ -1012,6 +1041,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         addDouble(tr("Line width"), p->lineWidth, 1.0, 20.0, 0.5, [](ChainNode& n, double v) { std::get<SuperScopeParams>(n.params).lineWidth = static_cast<float>(v); });
         addDouble(tr("Dot size"), p->dotSize, 1.0, 50.0, 1.0, [](ChainNode& n, double v) { std::get<SuperScopeParams>(n.params).dotSize = static_cast<float>(v); });
         addEnum(tr("Channel"), p->audioChannel, {"Left", "Right", "Mono", "Mid", "Side"}, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).audioChannel = v; });
+        addEnum(tr("Line blend"), p->lineBlend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).lineBlend = v; });
 
         // --- Color: gradient (per point) x table (cycled) combined by mode ----
         // The base color pre-seeds red/green/blue before the point code, which

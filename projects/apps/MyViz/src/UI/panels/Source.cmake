@@ -11,6 +11,7 @@ dbg(DBG_OFTEN
 set(_local_sources
     # (no sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/ConfigPanel.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ImportBrowserPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/MultiEffectPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PanelAutoReg.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PanelBase.cpp"

@@ -462,6 +462,63 @@ void main()
 }
 )";
 
+// AVS "Trans / Dynamic Shift" (ID 42): a global image translation by uOffset
+// (normalized; output pixel samples input at vTex-uOffset), black fill outside,
+// optional 50/50 blend with the original (r_shift.cpp). The EEL that drives the
+// offset runs on the CPU (ScriptSlotHost); this shader just applies it.
+const char* kDynamicShiftFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform vec2 uOffset;
+uniform int uBlend;
+uniform float uAlpha;
+out vec4 fragColor;
+void main()
+{
+    vec2 uv = vTex - uOffset;
+    vec3 shifted = vec3(0.0);
+    if (uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0)
+        shifted = texture(uTex, uv).rgb;
+    vec3 orig = texture(uTex, vTex).rgb;
+    vec3 r = (uBlend == 1) ? mix(shifted, orig, clamp(uAlpha, 0.0, 1.0)) : shifted;
+    fragColor = vec4(r, 1.0);
+}
+)";
+
+// AVS "Trans / Dynamic Distance Modifier" (ID 35): radial resample. uLut[256]
+// maps input distance (0..1 of half-diagonal uMaxD) to output distance; each
+// pixel samples the source at the remapped distance along its own angle
+// (r_ddm.cpp). uBlend 1 = 50/50 with the original.
+const char* kDdmFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform vec2 uRes;
+uniform float uMaxD;
+uniform float uLut[256];
+uniform int uBlend;
+out vec4 fragColor;
+void main()
+{
+    vec2 p = (vTex - vec2(0.5)) * uRes;   // pixels from center
+    float dist = length(p);
+    vec3 orig = texture(uTex, vTex).rgb;
+    vec3 res = orig;
+    if (dist > 0.0001)
+    {
+        float din = clamp(dist / uMaxD, 0.0, 1.0);
+        float fidx = din * 255.0;
+        int i0 = int(floor(fidx));
+        int i1 = min(i0 + 1, 255);
+        float dout = mix(uLut[i0], uLut[i1], fidx - float(i0));
+        vec2 uv = clamp(vec2(0.5) + (p / dist) * (dout * uMaxD) / uRes, 0.0, 1.0);
+        res = texture(uTex, uv).rgb;
+    }
+    fragColor = vec4(uBlend == 1 ? (res + orig) * 0.5 : res, 1.0);
+}
+)";
+
 // AVS "Trans / Water Bump" (ID 31): height-field wave propagation. The height
 // buffer packs .r = current, .g = previous; a beat adds a drop. (r_waterbump)
 const char* kWaterBumpPropShader = R"(
@@ -724,6 +781,8 @@ void MultiEffectVisualizer::onCleanup()
     m_interfShader.reset();
     m_waterShader.reset();
     m_bumpShader.reset();
+    m_shiftShader.reset();
+    m_ddmShader.reset();
     m_wbPropShader.reset();
     m_wbDispShader.reset();
     m_timescopeShader.reset();
@@ -772,6 +831,8 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_interfShader = makeProgram(kQuadVertexShader, kInterfFragmentShader);
     m_waterShader = makeProgram(kQuadVertexShader, kWaterFragmentShader);
     m_bumpShader = makeProgram(kQuadVertexShader, kBumpFragmentShader);
+    m_shiftShader = makeProgram(kQuadVertexShader, kDynamicShiftFragmentShader);
+    m_ddmShader = makeProgram(kQuadVertexShader, kDdmFragmentShader);
     m_wbPropShader = makeProgram(kQuadVertexShader, kWaterBumpPropShader);
     m_wbDispShader = makeProgram(kQuadVertexShader, kWaterBumpDispShader);
     m_timescopeShader = makeProgram(kQuadVertexShader, kTimescopeFragmentShader);
@@ -784,7 +845,8 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_feedbackShader == nullptr || m_mosaicShader == nullptr ||
         m_grainShader == nullptr || m_scatterShader == nullptr ||
         m_interfShader == nullptr || m_waterShader == nullptr ||
-        m_bumpShader == nullptr || m_wbPropShader == nullptr ||
+        m_bumpShader == nullptr || m_shiftShader == nullptr ||
+        m_ddmShader == nullptr || m_wbPropShader == nullptr ||
         m_wbDispShader == nullptr || m_timescopeShader == nullptr ||
         m_apeShader == nullptr)
     {
@@ -1031,6 +1093,9 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const ColorModifierParams& params) const { self.runColorModifier(node, params); }
         void operator()(const MovementParams& params) const { self.runMovement(node, params); }
         void operator()(const DynamicMovementParams& params) const { self.runDynamicMovement(node, params); }
+        void operator()(const DynamicShiftParams& params) const { self.runDynamicShift(node, params); }
+        void operator()(const DynamicDistanceModifierParams& params) const { self.runDynamicDistanceModifier(node, params); }
+        void operator()(const MovingParticleParams& params) const { self.runMovingParticle(node, params); }
         void operator()(const BlitterFeedbackParams& params) const { self.runBlitterFeedback(params); }
         void operator()(const RotoBlitterParams& params) const { self.runRotoBlitter(node, params); }
         void operator()(const BufferSaveParams& params) const { self.runBufferSave(params); }
@@ -1636,11 +1701,17 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
         w, w, s, s, sampleCount, m_surfaceWidth, m_surfaceHeight, m_frameBeat,
         m_deltaTime);
 
-    // Draw additively onto the current working buffer (AVS scope default).
+    // Blend onto the working buffer. AVS default is additive; a preceding Set
+    // Render Mode can switch it to replace or 50/50 (params.lineBlend).
     if (!m_scopeRenderer.ready()) return;
     auto* f = QOpenGLContext::currentContext()->functions();
     f->glEnable(GL_BLEND);
-    f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    switch (params.lineBlend)
+    {
+        case 0:  f->glBlendFunc(GL_ONE, GL_ZERO); break;                       // replace
+        case 2:  f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;  // 50/50
+        default: f->glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;                  // additive
+    }
     lumi::render::ScopeRenderer::Params rp;
     rp.mode = static_cast<lumi::modules::SuperscopeRenderMode>(params.renderMode);
     rp.lineWidth = params.lineWidth;
@@ -1919,6 +1990,194 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
     m_bumpShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
     m_bumpShader->release();
     transformPass(*m_bumpShader);
+}
+
+void MultiEffectVisualizer::runDynamicShift(const ChainNode& node,
+                                            const DynamicShiftParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Global-offset script (init/frame/beat -> x, y in pixels). Errors disable a slot.
+    const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode;
+    if (rt.shiftHost == nullptr || rt.shiftCompiled != combined)
+    {
+        rt.shiftHost = std::make_unique<ScriptSlotHost>("dshift", m_scriptContext,
+                                                        ScriptSlotHost::Dialect::Avs);
+        rt.shiftHost->setSource(Slot::Init, params.initCode);
+        rt.shiftHost->setSource(Slot::Frame, params.frameCode);
+        rt.shiftHost->setSource(Slot::Beat, params.beatCode);
+        rt.shiftHost->compileAll();
+        rt.shiftCompiled = combined;
+        auto& engine = rt.shiftHost->engine();
+        engine.setNumber("x", 0.0);
+        engine.setNumber("y", 0.0);
+        engine.setNumber("w", static_cast<double>(m_surfaceWidth));
+        engine.setNumber("h", static_cast<double>(m_surfaceHeight));
+        engine.setNumber("alpha", 0.5);
+        rt.shiftHost->run(Slot::Init);
+    }
+
+    double ox = 0.0;
+    double oy = 0.0;
+    double alpha = 0.5;
+    {
+        auto& engine = rt.shiftHost->engine();
+        engine.setNumber("w", static_cast<double>(m_surfaceWidth));
+        engine.setNumber("h", static_cast<double>(m_surfaceHeight));
+        engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+        if (rt.shiftHost->has(Slot::Frame)) rt.shiftHost->run(Slot::Frame);
+        if (m_frameBeat && rt.shiftHost->has(Slot::Beat)) rt.shiftHost->run(Slot::Beat);
+        ox = engine.number("x");
+        oy = engine.number("y");
+        alpha = engine.number("alpha");
+    }
+
+    const float offX = m_surfaceWidth > 0
+                           ? static_cast<float>(ox) / static_cast<float>(m_surfaceWidth)
+                           : 0.0f;
+    const float offY = m_surfaceHeight > 0
+                           ? static_cast<float>(oy) / static_cast<float>(m_surfaceHeight)
+                           : 0.0f;
+
+    m_shiftShader->bind();
+    m_shiftShader->setUniformValue("uOffset", QVector2D(offX, offY));
+    m_shiftShader->setUniformValue("uBlend", params.blend ? 1 : 0);
+    m_shiftShader->setUniformValue(
+        "uAlpha", static_cast<float>(std::clamp(alpha, 0.0, 1.0)));
+    m_shiftShader->release();
+    transformPass(*m_shiftShader);
+}
+
+void MultiEffectVisualizer::runDynamicDistanceModifier(
+    const ChainNode& node, const DynamicDistanceModifierParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + '\n' + params.pixelCode;
+    if (rt.ddmHost == nullptr || rt.ddmCompiled != combined)
+    {
+        rt.ddmHost = std::make_unique<ScriptSlotHost>("ddm", m_scriptContext,
+                                                      ScriptSlotHost::Dialect::Avs);
+        rt.ddmHost->setSource(Slot::Init, params.initCode);
+        rt.ddmHost->setSource(Slot::Frame, params.frameCode);
+        rt.ddmHost->setSource(Slot::Beat, params.beatCode);
+        rt.ddmHost->setSource(Slot::Point, params.pixelCode);
+        rt.ddmHost->compileAll();
+        rt.ddmCompiled = combined;
+        rt.ddmHost->engine().setNumber("d", 0.0);
+        rt.ddmHost->engine().setNumber("b", 0.0);
+        rt.ddmHost->run(Slot::Init);
+    }
+
+    auto& engine = rt.ddmHost->engine();
+    engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+    if (rt.ddmHost->has(Slot::Frame)) rt.ddmHost->run(Slot::Frame);
+    if (m_frameBeat && rt.ddmHost->has(Slot::Beat)) rt.ddmHost->run(Slot::Beat);
+
+    // 1-D distance LUT: input ring distance (0..1) -> output distance (0..1).
+    std::array<float, 256> lut{};
+    const bool hasPixel = rt.ddmHost->has(Slot::Point);
+    for (int i = 0; i < 256; ++i)
+    {
+        const double din = static_cast<double>(i) / 255.0;
+        if (hasPixel)
+        {
+            engine.setNumber("d", din);
+            rt.ddmHost->run(Slot::Point);
+            lut[static_cast<std::size_t>(i)] = static_cast<float>(engine.number("d"));
+        }
+        else
+        {
+            lut[static_cast<std::size_t>(i)] = static_cast<float>(din);
+        }
+    }
+
+    const float maxD = 0.5f * std::sqrt(static_cast<float>(m_surfaceWidth) *
+                                            static_cast<float>(m_surfaceWidth) +
+                                        static_cast<float>(m_surfaceHeight) *
+                                            static_cast<float>(m_surfaceHeight));
+    m_ddmShader->bind();
+    m_ddmShader->setUniformValue("uRes",
+                                 QVector2D(static_cast<float>(m_surfaceWidth),
+                                           static_cast<float>(m_surfaceHeight)));
+    m_ddmShader->setUniformValue("uMaxD", maxD);
+    m_ddmShader->setUniformValueArray("uLut", lut.data(), 256, 1);
+    m_ddmShader->setUniformValue("uBlend", params.blend ? 1 : 0);
+    m_ddmShader->release();
+    transformPass(*m_ddmShader);
+}
+
+void MultiEffectVisualizer::runMovingParticle(const ChainNode& node,
+                                              const MovingParticleParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    if (!rt.mpSeeded)
+    {
+        rt.mpPx = -0.6f;
+        rt.mpPy = 0.3f;
+        rt.mpVx = -0.01551f;
+        rt.mpVy = 0.0f;
+        rt.mpCx = 0.0f;
+        rt.mpCy = 0.0f;
+        rt.mpSize = static_cast<float>(params.size);
+        rt.mpSeeded = true;
+    }
+
+    auto rnd = [this] {
+        return (static_cast<int>(nextRandom() % 33) - 16) / 48.0f;
+    };
+    if (m_frameBeat)
+    {
+        rt.mpCx = rnd();
+        rt.mpCy = rnd();
+    }
+    rt.mpVx -= 0.004f * (rt.mpPx - rt.mpCx);
+    rt.mpVy -= 0.004f * (rt.mpPy - rt.mpCy);
+    rt.mpPx += rt.mpVx;
+    rt.mpPy += rt.mpVy;
+    rt.mpVx *= 0.991f;
+    rt.mpVy *= 0.991f;
+
+    // Size ease (r_parts s_pos): jump to size2 on beat, then relax to size.
+    if (m_frameBeat && params.onBeatSize) rt.mpSize = static_cast<float>(params.size2);
+    const float sz = rt.mpSize;
+    rt.mpSize = (rt.mpSize + static_cast<float>(params.size)) * 0.5f;
+
+    const float ss = std::min(static_cast<float>(m_surfaceHeight) * 0.5f,
+                              static_cast<float>(m_surfaceWidth) * 3.0f / 8.0f);
+    const float scale = ss * static_cast<float>(params.maxDistance) / 32.0f;
+    const float halfW = static_cast<float>(m_surfaceWidth) * 0.5f;
+    const float halfH = static_cast<float>(m_surfaceHeight) * 0.5f;
+    if (halfW <= 0.0f || halfH <= 0.0f || !m_scopeRenderer.ready()) return;
+
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glEnable(GL_BLEND);
+    float alpha = 1.0f;
+    switch (params.blend)
+    {
+        case 0:  f->glBlendFunc(GL_ONE, GL_ZERO); break;              // replace
+        case 2:  f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); alpha = 0.5f; break;  // 50/50
+        default: f->glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;        // additive / line
+    }
+
+    lumi::modules::SuperscopePoint pt;
+    pt.x = std::clamp(rt.mpPx * scale / halfW, -1.0f, 1.0f);
+    pt.y = std::clamp(-rt.mpPy * scale / halfH, -1.0f, 1.0f);  // AVS y is top-down
+    const QVector3D c = colorToVec(params.color);
+    pt.r = c.x();
+    pt.g = c.y();
+    pt.b = c.z();
+    pt.a = alpha;
+    const std::vector<lumi::modules::SuperscopePoint> points{pt};
+
+    lumi::render::ScopeRenderer::Params rp;
+    rp.mode = lumi::modules::SuperscopeRenderMode::Dots;
+    rp.dotSize = std::clamp(sz, 1.0f, 128.0f);
+    rp.glowEnabled = false;
+    m_scopeRenderer.draw(points, rp);
+    f->glDisable(GL_BLEND);
 }
 
 void MultiEffectVisualizer::runWaterBump(const ChainNode& node,

@@ -289,6 +289,82 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{BumpParams{}}) == "bump");
     }
 
+    TEST_CASE("Dynamic-Shift-Parameter + Code ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        DynamicShiftParams sp;
+        sp.initCode = "d=0";
+        sp.frameCode = "x=10;y=-5;d=d+0.1";
+        sp.beatCode = "d=d+2";
+        sp.blend = true;
+        sp.bilinear = false;
+        leaf.params = sp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<DynamicShiftParams>(restored.children[0].params);
+        CHECK(p.initCode == "d=0");
+        CHECK(p.frameCode == "x=10;y=-5;d=d+0.1");
+        CHECK(p.beatCode == "d=d+2");
+        CHECK(p.blend == true);
+        CHECK(p.bilinear == false);
+        CHECK(effectTypeKey(EffectParams{DynamicShiftParams{}}) == "dynamicShift");
+    }
+
+    TEST_CASE("Dynamic-Distance-Modifier-Parameter ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        DynamicDistanceModifierParams dp;
+        dp.initCode = "t=0";
+        dp.frameCode = "t=t+1";
+        dp.beatCode = "t=0";
+        dp.pixelCode = "d=d*0.8";
+        dp.blend = true;
+        dp.bilinear = false;
+        leaf.params = dp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<DynamicDistanceModifierParams>(restored.children[0].params);
+        CHECK(p.pixelCode == "d=d*0.8");
+        CHECK(p.initCode == "t=0");
+        CHECK(p.blend == true);
+        CHECK(p.bilinear == false);
+        CHECK(effectTypeKey(EffectParams{DynamicDistanceModifierParams{}}) == "dynamicDistanceModifier");
+    }
+
+    TEST_CASE("Moving-Particle-Parameter ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        MovingParticleParams mp;
+        mp.color = 0x123456;
+        mp.maxDistance = 24;
+        mp.size = 10;
+        mp.size2 = 30;
+        mp.onBeatSize = true;
+        mp.blend = 2;
+        leaf.params = mp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<MovingParticleParams>(restored.children[0].params);
+        CHECK(p.color == 0x123456u);
+        CHECK(p.maxDistance == 24);
+        CHECK(p.size2 == 30);
+        CHECK(p.onBeatSize == true);
+        CHECK(p.blend == 2);
+        CHECK(effectTypeKey(EffectParams{MovingParticleParams{}}) == "movingParticle");
+    }
+
     TEST_CASE("Interferences-Parameter ueberleben den Round-Trip")
     {
         ChainNode root;

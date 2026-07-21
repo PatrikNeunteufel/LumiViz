@@ -203,11 +203,59 @@ struct CreateVisualizerEvent : public Event
 
 /**
  * @brief Request to import an AVS preset into the active Multi Effect visualizer
- *        (Import Roadmap 5.7 — handled by MainWindow: file dialog + loadAvsFile).
+ *        (Import Roadmap 5.7 — handled by MainWindow: loadAvsFile).
+ *
+ * `path` empty  → MainWindow opens a file dialog (menu entry).
+ * `path` set    → import that file directly (Import Browser panel double-click).
+ * The handler auto-activates the Multi Effect host if it is not the active
+ * visualizer.
  */
 struct ImportAvsPresetEvent : public Event
 {
     EVENT_TYPE_NAME("ImportAvsPresetEvent")
+
+    std::string path;  ///< empty = ask via file dialog
+
+    ImportAvsPresetEvent() = default;
+    explicit ImportAvsPresetEvent(std::string p)
+        : path(std::move(p))
+    {}
+};
+
+/**
+ * @brief Request to import a MilkDrop preset (.milk). Reserved for Import
+ *        Roadmap 6 — currently answered with a "not yet supported" notice.
+ */
+struct ImportMilkPresetEvent : public Event
+{
+    EVENT_TYPE_NAME("ImportMilkPresetEvent")
+
+    std::string path;  ///< empty = ask via file dialog
+
+    ImportMilkPresetEvent() = default;
+    explicit ImportMilkPresetEvent(std::string p)
+        : path(std::move(p))
+    {}
+};
+
+/**
+ * @brief Emitted after an AVS import attempt so a browsing panel can show a
+ *        non-modal status. noteCount is the number of import report lines
+ *        (passthrough/parser notes); 0 on a clean import.
+ */
+struct AvsImportResultEvent : public Event
+{
+    EVENT_TYPE_NAME("AvsImportResultEvent")
+
+    std::string path;
+    bool ok = false;
+    int noteCount = 0;
+
+    AvsImportResultEvent(std::string p, bool success, int notes)
+        : path(std::move(p))
+        , ok(success)
+        , noteCount(notes)
+    {}
 };
 
 /**

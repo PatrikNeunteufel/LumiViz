@@ -470,6 +470,43 @@ inline void decodeDynamicMovement(Reader& r, EffectNode& n)   // r_dmove.cpp
     }
 }
 
+inline void decodeDynamicDistanceModifier(Reader& r, EffectNode& n)   // r_ddm.cpp
+{
+    // File slot order = quartet [pixel/point, frame, beat, init], then blend/subpixel.
+    readCodeQuartet(r, n, kPointSlots);
+    readField(r, n, "blend") && readField(r, n, "subpixel");
+}
+
+inline void decodeMovingParticle(Reader& r, EffectNode& n)   // r_parts.cpp
+{
+    readField(r, n, "enabled") && readField(r, n, "colors") &&
+        readField(r, n, "maxdist") && readField(r, n, "size") &&
+        readField(r, n, "size2") && readField(r, n, "blend");
+}
+
+inline void decodeDynamicShift(Reader& r, EffectNode& n)   // r_shift.cpp
+{
+    // File slot order (r_shift load_config): [0]=init, [1]=frame, [2]=beat.
+    static constexpr std::array<const char*, 3> kShiftSlots = {"init", "frame", "beat"};
+    if (r.peekByte() == 1)
+    {
+        r.skip(1);
+        for (const char* name : kShiftSlots)
+            n.code.push_back(CodeSlot{name, r.loadString()});
+    }
+    else
+    {
+        const std::uint8_t* block = nullptr;
+        if (r.tryBytes(3 * 256, block))
+        {
+            for (int i = 0; i < 3; ++i)
+                n.code.push_back(
+                    CodeSlot{kShiftSlots[i], r.fixedString(block + i * 256, 256)});
+        }
+    }
+    readField(r, n, "blend") && readField(r, n, "subpixel");
+}
+
 inline void decodeFastBrightness(Reader& r, EffectNode& n)   // r_fastbright.cpp
 {
     readFieldOr(r, n, "dir", 0);
@@ -518,6 +555,9 @@ inline bool decodeBuiltin(std::int32_t builtinIndex, Reader& r, EffectNode& node
         case 36: decodeSuperScope(r, node); break;
         case 37: decodeInvert(r, node); break;
         case 40: decodeSetRenderMode(r, node); break;
+        case 8:  decodeMovingParticle(r, node); break;
+        case 35: decodeDynamicDistanceModifier(r, node); break;
+        case 42: decodeDynamicShift(r, node); break;
         case 43: decodeDynamicMovement(r, node); break;
         case 44: decodeFastBrightness(r, node); break;
         case 45: decodeColorModifier(r, node); break;

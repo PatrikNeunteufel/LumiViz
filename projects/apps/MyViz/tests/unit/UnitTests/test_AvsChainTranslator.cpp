@@ -122,6 +122,24 @@ TEST_SUITE("AvsChainTranslator")
               == doctest::Approx(5.0f));
     }
 
+    TEST_CASE("Set Render Mode: Blend-Modus wird in Folge-Scope uebernommen")
+    {
+        EffectNode srm = builtin(40);
+        // enabled (bit 31) | line width 6 (bits 16-23) | blend 3 = 50/50 (bits 0-7)
+        srm.fields = {{"newmode", static_cast<int32_t>(0x80000000u) | (6 << 16) | 3}};
+
+        EffectNode scope = builtin(36);
+        scope.code = {{"point", "x=i;y=v"}};
+        scope.fields = {{"which_ch", 0}, {"num_colors", 0}, {"drawmode", 1}};
+
+        const TranslationResult t = translateAvsTree(makeParsed({srm, scope}));
+        REQUIRE(t.root.children.size() == 2);
+        REQUIRE(std::holds_alternative<SuperScopeParams>(t.root.children[1].params));
+        const auto& p = std::get<SuperScopeParams>(t.root.children[1].params);
+        CHECK(p.lineWidth == doctest::Approx(6.0f));
+        CHECK(p.lineBlend == 2);  // 50/50
+    }
+
     TEST_CASE("Movement-Builtin-Formel -> MovementParams mit AVS-Point-Code")
     {
         EffectNode move = builtin(15);
@@ -157,6 +175,64 @@ TEST_SUITE("AvsChainTranslator")
             REQUIRE(t.root.children.size() == 1);
             CHECK(std::holds_alternative<PassthroughParams>(t.root.children[0].params));
         }
+    }
+
+    TEST_CASE("Dynamic Shift (id 42) -> DynamicShiftParams mit Code + Flags")
+    {
+        EffectNode shift = builtin(42);
+        shift.code = {{"init", "d=0"}, {"frame", "x=sin(d);y=cos(d)"}, {"beat", "d=d+2"}};
+        shift.fields = {{"blend", 1}, {"subpixel", 0}};
+        const TranslationResult t = translateAvsTree(makeParsed({shift}));
+        REQUIRE(t.root.children.size() == 1);
+        REQUIRE(std::holds_alternative<DynamicShiftParams>(t.root.children[0].params));
+        const auto& p = std::get<DynamicShiftParams>(t.root.children[0].params);
+        CHECK(p.initCode == "d=0");
+        CHECK(p.frameCode == "x=sin(d);y=cos(d)");
+        CHECK(p.beatCode == "d=d+2");
+        CHECK(p.blend);
+        CHECK_FALSE(p.bilinear);
+    }
+
+    TEST_CASE("Dynamic Distance Modifier (id 35) -> Params mit Pixel-Code")
+    {
+        EffectNode ddm = builtin(35);
+        ddm.code = {{"point", "d=d*0.9"}, {"frame", "t=t+1"}, {"beat", ""}, {"init", "t=0"}};
+        ddm.fields = {{"blend", 0}, {"subpixel", 1}};
+        const TranslationResult t = translateAvsTree(makeParsed({ddm}));
+        REQUIRE(std::holds_alternative<DynamicDistanceModifierParams>(t.root.children[0].params));
+        const auto& p = std::get<DynamicDistanceModifierParams>(t.root.children[0].params);
+        CHECK(p.pixelCode == "d=d*0.9");
+        CHECK(p.initCode == "t=0");
+        CHECK_FALSE(p.blend);
+        CHECK(p.bilinear);
+    }
+
+    TEST_CASE("Moving Particle (id 8) -> Params; enabled-Bits gemappt")
+    {
+        EffectNode mp = builtin(8);
+        mp.fields = {{"enabled", 1 | 2}, {"colors", 0x0000FF /* COLORREF: rot */},
+                     {"maxdist", 24}, {"size", 10}, {"size2", 30}, {"blend", 2}};
+        const TranslationResult t = translateAvsTree(makeParsed({mp}));
+        REQUIRE(std::holds_alternative<MovingParticleParams>(t.root.children[0].params));
+        const auto& p = std::get<MovingParticleParams>(t.root.children[0].params);
+        CHECK(p.color == 0xFF0000u);  // COLORREF -> host RRGGBB
+        CHECK(p.maxDistance == 24);
+        CHECK(p.size2 == 30);
+        CHECK(p.onBeatSize);          // enabled bit 1
+        CHECK(p.blend == 2);
+        CHECK(t.root.children[0].enabled);  // enabled bit 0
+    }
+
+    TEST_CASE("Comment (id 21) -> stiller no-op ohne Report-Notiz")
+    {
+        EffectNode comment;
+        comment.id = 21;
+        comment.name = "Comment";
+        const TranslationResult t = translateAvsTree(makeParsed({comment}));
+        REQUIRE(t.root.children.size() == 1);
+        CHECK(std::holds_alternative<PassthroughParams>(t.root.children[0].params));
+        CHECK(t.passthroughCount == 0);  // not counted as an unrendered passthrough
+        CHECK(t.report.empty());         // no warning line
     }
 
     TEST_CASE("verschachtelte Liste mit Blend wird uebernommen")

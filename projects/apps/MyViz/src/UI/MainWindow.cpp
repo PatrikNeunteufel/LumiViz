@@ -411,9 +411,9 @@ void MainWindow::setupDefaultLayout()
 
     if (pVisualizer != nullptr)
     {
-        // Set default visualizer to Pulsing
-        pVisualizer->setVisualizer(QStringLiteral("pulsing"));
-        BasicLogger::logDebug("  Default visualizer created with Pulsing effect");
+        // Set default visualizer to the Multi Effect host (AVS import target)
+        pVisualizer->setVisualizer(QStringLiteral("multieffect"));
+        BasicLogger::logDebug("  Default visualizer created with Multi Effect host");
     }
     
     // -------------------------------------------------------------------------
@@ -505,12 +505,30 @@ void MainWindow::setupEventHandlers()
     };
 
     pEventBus->subscribe<ImportAvsPresetEvent>(
-        [this, requireMultiEffect, pEventBus](const ImportAvsPresetEvent&) {
-            auto [widget, host] = requireMultiEffect("Import AVS Preset");
-            if (host == nullptr) return;
-            const QString path = QFileDialog::getOpenFileName(
-                this, tr("Import AVS Preset"), QString(),
-                tr("AVS Presets (*.avs);;All Files (*)"));
+        [this, findMultiEffect, pEventBus](const ImportAvsPresetEvent& ev) {
+            // Auto-activate the Multi Effect host if it is not already active
+            // (lets the Import Browser panel import without a manual switch).
+            auto [widget, host] = findMultiEffect();
+            if (host == nullptr && widget != nullptr)
+            {
+                widget->setVisualizer(QStringLiteral("multieffect"));
+                host = dynamic_cast<MultiEffectVisualizer*>(widget->visualizer());
+            }
+            if (host == nullptr)
+            {
+                QMessageBox::information(
+                    this, tr("Import AVS Preset"),
+                    tr("No visualizer available to import into."));
+                return;
+            }
+
+            QString path = QString::fromStdString(ev.path);
+            if (path.isEmpty())
+            {
+                path = QFileDialog::getOpenFileName(
+                    this, tr("Import AVS Preset"), QString(),
+                    tr("AVS Presets (*.avs);;All Files (*)"));
+            }
             if (path.isEmpty()) return;
 
             QStringList report;
@@ -523,9 +541,12 @@ void MainWindow::setupEventHandlers()
             {
                 QMessageBox::warning(this, tr("Import AVS Preset"),
                                      tr("Not a valid AVS preset:\n%1").arg(path));
+                pEventBus->publish(AvsImportResultEvent{path.toStdString(), false, 0});
                 return;
             }
             pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
+            // Notes are import problems (passthrough/parser) — surface them; a
+            // clean import stays silent (dialog only on problems).
             if (!report.isEmpty())
             {
                 QMessageBox::information(
@@ -534,6 +555,16 @@ void MainWindow::setupEventHandlers()
                         .arg(report.size())
                         .arg(report.mid(0, 20).join("\n")));
             }
+            pEventBus->publish(AvsImportResultEvent{
+                path.toStdString(), true, static_cast<int>(report.size())});
+        });
+
+    pEventBus->subscribe<ImportMilkPresetEvent>(
+        [this](const ImportMilkPresetEvent&) {
+            // Reserved for Import Roadmap 6 (MilkDrop). No importer yet.
+            QMessageBox::information(
+                this, tr("Import MilkDrop Preset"),
+                tr("MilkDrop import is not available yet (Import Roadmap 6)."));
         });
 
     pEventBus->subscribe<LoadEffectChainEvent>(

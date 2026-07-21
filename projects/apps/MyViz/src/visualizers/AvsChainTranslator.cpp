@@ -23,6 +23,9 @@ using lumi::avs::EffectNode;
 // AVS builtin effect ids (registration order == preset id, analysis §5.2).
 enum AvsId
 {
+    kMovingParticle = 8,
+    kComment = 21,
+    kDynamicDistanceModifier = 35,
     kDotPlane = 1,
     kFadeout = 3,
     kBlitterFeedback = 4,
@@ -50,6 +53,7 @@ enum AvsId
     kTimescope = 39,
     kSetRenderMode = 40,
     kInterferences = 41,
+    kDynamicShift = 42,
     kDynamicMovement = 43,
     kFastBrightness = 44,
     kColorModifier = 45,
@@ -72,6 +76,7 @@ std::string slotStr(const EffectNode& n, const char* name)
 struct Context
 {
     int lineWidth = 0;  ///< current Set-Render-Mode line width (0 = unset)
+    int lineBlend = 1;  ///< current Set-Render-Mode line blend (0 replace,1 add,2 50/50)
     std::vector<std::string>& report;
     int effectCount = 0;
     int passthroughCount = 0;
@@ -344,6 +349,45 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             return true;
         }
 
+        case kDynamicDistanceModifier:
+        {
+            DynamicDistanceModifierParams p;
+            p.initCode = slotStr(src, "init");
+            p.frameCode = slotStr(src, "frame");
+            p.beatCode = slotStr(src, "beat");
+            p.pixelCode = slotStr(src, "point");
+            p.blend = src.field("blend") != 0;
+            p.bilinear = src.field("subpixel") != 0;
+            out.params = std::move(p);
+            return true;
+        }
+
+        case kMovingParticle:
+        {
+            MovingParticleParams p;
+            p.color = avsColor(src.field("colors"));
+            p.maxDistance = src.field("maxdist");
+            p.size = src.field("size");
+            p.size2 = src.field("size2");
+            p.onBeatSize = (src.field("enabled") & 2) != 0;
+            p.blend = src.field("blend");
+            out.enabled = (src.field("enabled") & 1) != 0;  // AVS enabled bit 0
+            out.params = std::move(p);
+            return true;
+        }
+
+        case kDynamicShift:
+        {
+            DynamicShiftParams p;
+            p.initCode = slotStr(src, "init");
+            p.frameCode = slotStr(src, "frame");
+            p.beatCode = slotStr(src, "beat");
+            p.blend = src.field("blend") != 0;
+            p.bilinear = src.field("subpixel") != 0;
+            out.params = std::move(p);
+            return true;
+        }
+
         case kDynamicMovement:
         {
             DynamicMovementParams p;
@@ -571,6 +615,7 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             for (std::uint32_t c : src.colors)
                 p.colors.push_back(avsColor(static_cast<std::int32_t>(c)));
             p.colorBlend = p.colors.empty() ? 0 : 1;  // table mode iff AVS had colors
+            p.lineBlend = ctx.lineBlend;  // from a preceding Set Render Mode
             if (ctx.lineWidth > 0)
             {
                 p.lineWidth = static_cast<float>(ctx.lineWidth);  // Set-Render-Mode unroll
@@ -600,14 +645,39 @@ ChainNode translateNode(const EffectNode& src, const std::string& path, Context&
         return node;
     }
 
-    // Set Render Mode: unroll into the following scopes (decision E4).
+    // Set Render Mode: unroll into the following scopes (decision E4). Carries
+    // both the line width (bits 16-23) and the line blend mode (bits 0-7); bit 31
+    // enables it. The blend maps onto the SuperScope framebuffer blend.
     if (src.id == kSetRenderMode)
     {
         const uint32_t packed = static_cast<uint32_t>(src.field("newmode"));
         const int width = static_cast<int>((packed >> 16) & 0xFF);
+        const int blendBits = static_cast<int>(packed & 0xFF);
+        const bool enabled = (packed & 0x80000000u) != 0;
         if (width > 0) ctx.lineWidth = width;
-        return passthrough(src, path, "Set Render Mode (line width " +
-                                          std::to_string(width) + ") unrolled", ctx);
+        // AVS line blend -> host (0 replace, 1 additive, 2 50/50); default additive.
+        if (enabled)
+            ctx.lineBlend = blendBits == 0 ? 0 : (blendBits == 3 ? 2 : 1);
+        else
+            ctx.lineBlend = 1;
+        return passthrough(src, path,
+                           "Set Render Mode (line width " + std::to_string(width) +
+                               ", blend " + std::to_string(ctx.lineBlend) +
+                               ") unrolled",
+                           ctx);
+    }
+
+    // Comment: informational only (holds preset text). Conserve as a silent no-op
+    // — no report warning, not counted as an unrendered passthrough.
+    if (src.id == kComment)
+    {
+        ChainNode node;
+        PassthroughParams p;
+        p.sourceId = src.id;
+        p.note = "Comment";
+        node.params = std::move(p);
+        node.displayName = "Comment";
+        return node;
     }
 
     if (!src.decoded)
@@ -649,7 +719,7 @@ TranslationResult translateAvsTree(const lumi::avs::ParseResult& parsed)
         result.report.push_back("parser: " + warning);
     }
 
-    Context ctx{0, result.report, 0, 0};
+    Context ctx{0, 1, result.report, 0, 0};
     result.root = translateNode(parsed.root, "root", ctx);
     // The root of a preset is always a list; guarantee it even if the parser
     // handed us something odd.
