@@ -37,10 +37,11 @@ Panel + Tests). Das Bau-Rezept dazu: [Import_Modul_Umsetzungsplan.md](Import_Mod
 - `A` = schwer testbar (Bild-/Video-/GDI-/externe-DLL-Bindung).
 - `—` = kein Render (no-op/Meta), nichts sichtzutesten.
 
-**Ist-Stand:** 42 Builtins ✅ + Set Render Mode ◐ · 12 APEs ✅ + Framerate Limiter ◐.
-Bild-Lader (base64-Einbettung) steht → Picture ✅. Nur noch offen: Text (Builtin, GDI),
-Texer II/Picture II/Texer/Triangle (APEs). Unit-Suite grün (283 Cases); GL-Sichttest
-von Batch A–F + §5.2-Block steht aus.
+**Ist-Stand:** **Import-Abdeckung vollständig** — alle darstellbaren Effekte umgesetzt
+(42 Builtins ✅ + 16 APEs ✅). ◐ = bewusste Sonderfälle (Set Render Mode unroll, Text/
+Framerate no-op); ✖ = verworfen (SVP/AVI/closed APEs). Unit-Suite grün (287 Cases);
+**GL-Sichttest von Batch A–G + §5.2-Block steht aus** (v. a. die sprite-/EEL-/approximierten
+Effekte: Texer II, Triangle, MultiFilter, Scope-Geometrie).
 
 ---
 
@@ -79,7 +80,7 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 25 | Clear Screen | Render | ✅ | `ClearParams` | U·S offen |
 | 26 | Mirror | Trans | ✅ | `MirrorParams` | U·S offen |
 | 27 | Starfield | Render | ✅ | `StarfieldParams` | U·S offen |
-| 28 | Text | Render | ⬜ | `r_text.cpp` (GDI) — Batch G | A·S |
+| 28 | Text | Render | ◐ | no-op + Import-Notiz (GDI-Textrendering ist separate Aufgabe) | — |
 | 29 | Bump | Trans | ✅ | `BumpParams` | U·S offen |
 | 30 | Mosaic | Trans | ✅ | `MosaicParams` | U·S offen |
 | 31 | Water Bump | Trans | ✅ | `WaterBumpParams` | U·S offen |
@@ -98,7 +99,7 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 44 | Fast Brightness | Trans | ✅ | `FastBrightnessParams` | U·S offen |
 | 45 | Color Modifier | Trans | ✅ | `ColorModifierParams` | U·S offen |
 
-**Builtin-Bilanz:** ✅ 42 · ◐ 1 (Set Render Mode) · ⬜ 1 (Text) · ✖ 2.
+**Builtin-Bilanz:** ✅ 42 · ◐ 2 (Set Render Mode, Text) · ⬜ 0 · ✖ 2.
 
 ---
 
@@ -116,7 +117,7 @@ Referenz für Strings + Feld-Layouts: `grandchild/AVS-File-Decoder`
 | `Holden04: Video Delay` | Video Delay | Trans | ✅ | `VideoDelayParams` (per-Node-Ring) | U·S offen | hoch |
 | `Holden05: Multi Delay` | Multi Delay | Trans | ✅ | `MultiDelayParams` (6 host-globale Ringe) | U·S offen | mittel–hoch |
 | `Color Map` | Color Map | Trans | ✅ | `ColorMapParams` (256-LUT-Textur + Blend-Shader) | U·S offen | sehr hoch |
-| `Acko.net: Texer II` | Texer II | Render | ⬜ | Bild+EEL+Punktschleife — Batch F | A·S | sehr hoch |
+| `Acko.net: Texer II` | Texer II | Render | ✅ | `TexerIIParams` (Sprite an EEL-Punkten, Bild eingebettet) | U·A·S offen | sehr hoch |
 | `Holden03: Convolution Filter` | Convolution | Trans | ✅ | `ConvolutionParams` (7×7-Kernel-Shader, 2-Pass) | U·S offen | hoch |
 | `Misc: Buffer blend` | Buffer Blend | Misc | ✅ | `BufferBlendParams` (2-Textur-Blend, 11 Modi) | U·S offen | mittel–hoch |
 | `Jheriko: Global` | Global Variables | Misc | ✅ | `JherikoGlobalParams` (EEL → reg/gmegabuf via ScriptContext) | U·S offen | mittel |
@@ -124,9 +125,9 @@ Referenz für Strings + Feld-Layouts: `grandchild/AVS-File-Decoder`
 | `Jheriko : MULTIFILTER` | MultiFilter | Misc | ✅ | `MultiFilterParams` (Chrome/Root, **approximiert**) ⚠ Space vor `:` | U·S offen | mittel |
 | `Virtual Effect: Addborders` | Add Borders | Misc | ✅ | `AddBordersParams` (Rahmen-Shader) | U·S offen | niedrig–mittel |
 | `VFX FRAMERATE LIMITER` | Framerate Limiter | Misc | ◐ | no-op + Import-Notiz (Host taktet) | — | niedrig–mittel |
-| `Render: Triangle` | Triangle | Render | ⬜ | EEL+Tri-Raster — Batch G | U*·S | mittel |
-| `Picture II` | Picture II | Misc | ⬜ | Bild-Lader — Batch G | A·S | mittel |
-| `Texer` | Texer (I) | Render | ⬜ | Bild-Lader — Batch G | A·S | niedrig |
+| `Render: Triangle` | Triangle | Render | ✅ | `TriangleParams` (EEL-Dreiecke, Wireframe-Näherung) | U·S offen | mittel |
+| `Picture II` | Picture II | Misc | ✅ | `PictureIIParams` (Bild eingebettet + Blend) | U·A·S offen | mittel |
+| `Texer` | Texer (I) | Render | ✅ | `TexerParams` (Sprite an Wellenform-Punkten) | U·A·S offen | niedrig |
 | `Misc: AVSTrans Automation` | Trans Automation | Misc | ✖ | Meta/eigenwillig | — | niedrig |
 | `FunkyFX FyrewurX v1` | FyrewurX | Misc | ✖ | closed-source | — | niedrig–mittel |
 | `GeissFluid` | Fluid | Misc | ✖ | closed-source (Fluid-Sim) | — | niedrig |
@@ -134,7 +135,7 @@ Referenz für Strings + Feld-Layouts: `grandchild/AVS-File-Decoder`
 | `Nullsoft Pixelcorps: MIDItrace ` | MIDI Trace | Misc | ✖ | MIDI-Input ⚠ Trailing-Space | — | sehr niedrig |
 | `VFX AVI PLAYER` | AVI Player | Misc | ✖ | Video-Decode | — | sehr niedrig |
 
-**APE-Bilanz:** ✅ 12 · ◐ 1 (Framerate Limiter) · ⬜ 4 · ✖ 6.
+**APE-Bilanz:** ✅ 16 · ◐ 1 (Framerate Limiter) · ⬜ 0 · ✖ 6.
 
 **Parser-Fallstricke (Exakt-Match!):** `Jheriko : MULTIFILTER` hat ein **Leerzeichen
 vor dem Doppelpunkt**; `Nullsoft Pixelcorps: MIDItrace ` endet mit **Leerzeichen**.

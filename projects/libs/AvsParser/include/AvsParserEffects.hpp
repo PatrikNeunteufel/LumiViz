@@ -606,6 +606,46 @@ inline void decodeColorModifier(Reader& r, EffectNode& n)   // r_dcolormod.cpp
  * Colours are 0x00RRGGBB (no COLORREF swap). The first enabled non-empty map is
  * captured into colors[] + cmpos<k> fields; map cycling is not imported yet.
  */
+inline void decodeTexer(Reader& r, EffectNode& n)   // "Texer" APE
+{
+    std::int32_t v = 0;
+    for (int i = 0; i < 4; ++i) r.tryI32(v);  // null0[4]
+    n.code.push_back(CodeSlot{"filename", r.loadString()});  // SizeString
+    readField(r, n, "flags") && readField(r, n, "particles");
+}
+
+inline void decodeTexerII(Reader& r, EffectNode& n)   // "Acko.net: Texer II" APE
+{
+    std::int32_t v = 0;
+    r.tryI32(v);  // null0
+    n.code.push_back(CodeSlot{"filename", r.loadString()});  // imageSrc SizeString
+    readField(r, n, "resizing") && readField(r, n, "wrapAround") &&
+        readField(r, n, "colorFiltering");
+    r.tryI32(v);  // null1
+    // CodeIFBP: 4 length-prefixed strings, order init, frame, beat, point.
+    n.code.push_back(CodeSlot{"init", r.loadString()});
+    n.code.push_back(CodeSlot{"frame", r.loadString()});
+    n.code.push_back(CodeSlot{"beat", r.loadString()});
+    n.code.push_back(CodeSlot{"point", r.loadString()});
+}
+
+inline void decodeTriangle(Reader& r, EffectNode& n)   // "Render: Triangle" APE
+{
+    // NtCodeIFBP: 4 NUL-terminated strings, order init, frame, beat, point.
+    n.code.push_back(CodeSlot{"init", r.loadCString()});
+    n.code.push_back(CodeSlot{"frame", r.loadCString()});
+    n.code.push_back(CodeSlot{"beat", r.loadCString()});
+    n.code.push_back(CodeSlot{"point", r.loadCString()});
+}
+
+inline void decodePictureII(Reader& r, EffectNode& n)   // "Picture II" APE
+{
+    n.code.push_back(CodeSlot{"filename", r.loadCString()});  // NtString image path
+    readField(r, n, "blendMode") && readField(r, n, "onBeatOutput") &&
+        readField(r, n, "bilinear") && readField(r, n, "onBeatBilinear") &&
+        readField(r, n, "adjustBlend") && readField(r, n, "onBeatAdjustBlend");
+}
+
 inline void decodeColorMap(Reader& r, EffectNode& n)   // "Color Map" APE
 {
     std::int32_t key = 0;
@@ -807,6 +847,14 @@ inline bool decodeApe(std::string_view apeId, Reader& r, EffectNode& node)
         decodeAddBorders(r, node);
     else if (apeId == "VFX FRAMERATE LIMITER")
         decodeFramerateLimiter(r, node);
+    else if (apeId == "Picture II")
+        decodePictureII(r, node);
+    else if (apeId == "Texer")
+        decodeTexer(r, node);
+    else if (apeId == "Acko.net: Texer II")
+        decodeTexerII(r, node);
+    else if (apeId == "Render: Triangle")
+        decodeTriangle(r, node);
     else
         return false;  // unknown APE: raw blob preserved
     node.decoded = true;

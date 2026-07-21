@@ -163,10 +163,16 @@ private:
         unsigned int cmTexture = 0;   ///< GL 256x1 RGB texture (deleted in onCleanup)
         std::string cmSnapshot;       ///< stop snapshot the texture was built from
 
-        // Picture: decoded image texture (r_picture)
+        // Picture / Texer: decoded image texture (r_picture / Texer / Texer II)
         unsigned int picTexture = 0;  ///< GL RGBA texture (deleted in onCleanup)
         int picW = 0;
         int picH = 0;
+
+        // Texer II / Triangle: EEL point-loop scripts
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> texerHost;
+        std::string texerCompiled;
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> triHost;
+        std::string triCompiled;
 
         // Movement / Dynamic Movement: scripted displacement grid
         std::unique_ptr<lumi::modules::ScriptGridModule> grid;
@@ -347,6 +353,19 @@ private:
                           const lumi::multieffect::RotatingStarsParams& params);
     void runPicture(const lumi::multieffect::ChainNode& node,
                     const lumi::multieffect::PictureParams& params);
+    void runPictureII(const lumi::multieffect::ChainNode& node,
+                      const lumi::multieffect::PictureIIParams& params);
+    void runTexer(const lumi::multieffect::ChainNode& node,
+                  const lumi::multieffect::TexerParams& params);
+    void runTexerII(const lumi::multieffect::ChainNode& node,
+                    const lumi::multieffect::TexerIIParams& params);
+    void runTriangle(const lumi::multieffect::ChainNode& node,
+                     const lumi::multieffect::TriangleParams& params);
+    /// Decode the base64 image into rt.picTexture once; true when ready.
+    bool ensureEmbeddedTexture(LeafRuntime& rt, const std::string& imageData);
+    /// Draw an embedded (base64) image over the frame, blended.
+    void drawEmbeddedImage(LeafRuntime& rt, const std::string& imageData, int blend,
+                           bool keepAspect);
     /// Draw a scope point-list (additive) via the shared ScopeRenderer.
     void drawScopeShape(const std::vector<lumi::modules::SuperscopePoint>& pts, bool dots);
     void runDynamicMovement(const lumi::multieffect::ChainNode& node,
@@ -448,6 +467,7 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_colorMapShader;  ///< Color Map APE
     std::unique_ptr<QOpenGLShaderProgram> m_bufferBlendShader;  ///< Buffer blend APE
     std::unique_ptr<QOpenGLShaderProgram> m_pictureShader;      ///< Picture (r_picture)
+    std::unique_ptr<QOpenGLShaderProgram> m_spriteShader;       ///< Texer / Texer II sprites
     std::unique_ptr<QOpenGLShaderProgram> m_colorClipShader;    ///< Color Clip (r_contrast)
     std::unique_ptr<QOpenGLShaderProgram> m_uniqueToneShader;   ///< Unique Tone (r_onetone)
     std::unique_ptr<QOpenGLShaderProgram> m_interleaveShader;   ///< Interleave (r_interleave)

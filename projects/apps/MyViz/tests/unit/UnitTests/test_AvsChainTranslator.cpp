@@ -432,6 +432,53 @@ TEST_SUITE("AvsChainTranslator")
         REQUIRE(c.colors.size() == 2);
     }
 
+    TEST_CASE("Texer / Texer II / Triangle (APEs) + Text-no-op")
+    {
+        auto ape = [](const char* id) {
+            EffectNode n;
+            n.id = lumi::avs::kApeIdBase;
+            n.apeId = id;
+            n.decoded = true;
+            return n;
+        };
+        EffectNode tx = ape("Texer");
+        tx.code = {{"filename", "p.bmp"}};
+        tx.fields = {{"flags", 4}, {"particles", 50}};
+        EffectNode t2 = ape("Acko.net: Texer II");
+        t2.code = {{"filename", "s.png"}, {"init", "n=10"}, {"frame", ""},
+                   {"beat", ""}, {"point", "x=i"}};
+        t2.fields = {{"colorFiltering", 1}};
+        EffectNode tr = ape("Render: Triangle");
+        tr.code = {{"init", ""}, {"frame", "n=1"}, {"beat", ""}, {"point", "x1=-1"}};
+        EffectNode txt;
+        txt.id = 28;
+        txt.name = "Text";
+
+        const TranslationResult t = translateAvsTree(makeParsed({tx, t2, tr, txt}));
+        CHECK(std::get<TexerParams>(t.root.children[0].params).particles == 50);
+        CHECK(std::get<TexerParams>(t.root.children[0].params).blend == 1);  // flags bit 2
+        CHECK(std::get<TexerIIParams>(t.root.children[1].params).pointCode == "x=i");
+        CHECK(std::get<TexerIIParams>(t.root.children[1].params).colorFiltering);
+        CHECK(std::get<TriangleParams>(t.root.children[2].params).frameCode == "n=1");
+        CHECK(std::holds_alternative<PassthroughParams>(t.root.children[3].params));  // Text
+    }
+
+    TEST_CASE("Picture II (APE): Dateiname + Blend")
+    {
+        EffectNode pic;
+        pic.id = lumi::avs::kApeIdBase;
+        pic.apeId = "Picture II";
+        pic.decoded = true;
+        pic.code = {{"filename", "logo.png"}};
+        pic.fields = {{"blendMode", 1}};
+        const TranslationResult t = translateAvsTree(makeParsed({pic}));
+        REQUIRE(std::holds_alternative<PictureIIParams>(t.root.children[0].params));
+        const auto& p = std::get<PictureIIParams>(t.root.children[0].params);
+        CHECK(p.filename == "logo.png");
+        CHECK(p.blend == 1);
+        CHECK(p.imageData.empty());
+    }
+
     TEST_CASE("Picture (id 34): Dateiname + Blend/Aspect, kein Embed im Translator")
     {
         EffectNode pic = builtin(34);

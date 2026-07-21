@@ -25,6 +25,7 @@ enum AvsId
 {
     kSimple = 0,
     kOscStar = 2,
+    kText = 28,
     kBassSpin = 7,
     kRotatingStars = 13,
     kOscRing = 14,
@@ -266,6 +267,49 @@ bool mapApe(const EffectNode& src, ChainNode& out)
         p.initCode = slotStr(src, "init");
         p.frameCode = slotStr(src, "frame");
         p.beatCode = slotStr(src, "beat");
+        out.params = std::move(p);
+        return true;
+    }
+    if (src.apeId == "Texer")
+    {
+        TexerParams p;
+        p.filename = slotStr(src, "filename");
+        const int flags = src.field("flags");
+        p.blend = (flags & 4) != 0 ? 1 : 0;  // bit 2 = additive-ish (sight-test)
+        p.particles = src.field("particles") > 0 ? src.field("particles") : 100;
+        out.params = std::move(p);
+        return true;
+    }
+    if (src.apeId == "Acko.net: Texer II")
+    {
+        TexerIIParams p;
+        p.filename = slotStr(src, "filename");
+        p.resizing = src.field("resizing") != 0;
+        p.wrapAround = src.field("wrapAround") != 0;
+        p.colorFiltering = src.field("colorFiltering") != 0;
+        p.initCode = slotStr(src, "init");
+        p.frameCode = slotStr(src, "frame");
+        p.beatCode = slotStr(src, "beat");
+        p.pointCode = slotStr(src, "point");
+        out.params = std::move(p);
+        return true;
+    }
+    if (src.apeId == "Render: Triangle")
+    {
+        TriangleParams p;
+        p.initCode = slotStr(src, "init");
+        p.frameCode = slotStr(src, "frame");
+        p.beatCode = slotStr(src, "beat");
+        p.pointCode = slotStr(src, "point");
+        out.params = std::move(p);
+        return true;
+    }
+    if (src.apeId == "Picture II")
+    {
+        PictureIIParams p;
+        p.filename = slotStr(src, "filename");
+        const int bm = src.field("blendMode");
+        p.blend = bm == 0 ? 0 : (bm == 1 ? 1 : 2);  // approx -> replace/additive/50-50
         out.params = std::move(p);
         return true;
     }
@@ -886,6 +930,20 @@ ChainNode translateNode(const EffectNode& src, const std::string& path, Context&
         node.params = std::move(p);
         node.displayName = "Framerate Limiter";
         ctx.report.push_back(path + ": Framerate Limiter ignored (host controls pacing)");
+        return node;
+    }
+
+    // Text (id 28): GDI font rendering is not ported yet — conserve as a no-op
+    // with a note (a dedicated text renderer is a separate task).
+    if (src.id == kText)
+    {
+        ChainNode node;
+        PassthroughParams p;
+        p.sourceId = src.id;
+        p.note = "Text";
+        node.params = std::move(p);
+        node.displayName = "Text";
+        ctx.report.push_back(path + ": Text not rendered yet (GDI font) - passthrough");
         return node;
     }
 

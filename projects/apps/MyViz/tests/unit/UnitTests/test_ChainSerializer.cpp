@@ -569,6 +569,56 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{RotatingStarsParams{}}) == "rotatingStars");
     }
 
+    TEST_CASE("Texer II / Triangle ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode a;
+        TexerIIParams t2;
+        t2.filename = "s.png"; t2.imageData = "QQ=="; t2.colorFiltering = true;
+        t2.initCode = "n=10"; t2.pointCode = "x=i;y=0";
+        a.params = t2;
+        root.children.push_back(std::move(a));
+        ChainNode b;
+        TriangleParams tr;
+        tr.frameCode = "n=2"; tr.pointCode = "x1=-1;y1=-1";
+        b.params = tr;
+        root.children.push_back(std::move(b));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 2);
+        const auto& pa = std::get<TexerIIParams>(restored.children[0].params);
+        CHECK(pa.filename == "s.png");
+        CHECK(pa.pointCode == "x=i;y=0");
+        CHECK(pa.colorFiltering);
+        const auto& pb = std::get<TriangleParams>(restored.children[1].params);
+        CHECK(pb.frameCode == "n=2");
+        CHECK(effectTypeKey(EffectParams{TexerParams{}}) == "texer");
+        CHECK(effectTypeKey(EffectParams{TexerIIParams{}}) == "texerII");
+        CHECK(effectTypeKey(EffectParams{TriangleParams{}}) == "triangle");
+    }
+
+    TEST_CASE("Picture-II-Parameter ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        PictureIIParams pp;
+        pp.filename = "a.png";
+        pp.imageData = "QUJD";
+        pp.blend = 1;
+        leaf.params = pp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<PictureIIParams>(restored.children[0].params);
+        CHECK(p.filename == "a.png");
+        CHECK(p.imageData == "QUJD");
+        CHECK(p.blend == 1);
+        CHECK(effectTypeKey(EffectParams{PictureIIParams{}}) == "pictureII");
+    }
+
     TEST_CASE("Picture-Parameter + eingebettetes Bild ueberleben den Round-Trip")
     {
         ChainNode root;

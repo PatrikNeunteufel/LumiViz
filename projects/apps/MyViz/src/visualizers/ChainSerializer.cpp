@@ -298,6 +298,38 @@ struct WriteVisitor
         o["blend"] = p.blend;
         o["keepAspect"] = p.keepAspect;
     }
+    void operator()(const PictureIIParams& p) const
+    {
+        o["filename"] = QString::fromStdString(p.filename);
+        o["imageData"] = QString::fromStdString(p.imageData);
+        o["blend"] = p.blend;
+    }
+    void operator()(const TexerParams& p) const
+    {
+        o["filename"] = QString::fromStdString(p.filename);
+        o["imageData"] = QString::fromStdString(p.imageData);
+        o["blend"] = p.blend;
+        o["particles"] = p.particles;
+    }
+    void operator()(const TexerIIParams& p) const
+    {
+        o["filename"] = QString::fromStdString(p.filename);
+        o["imageData"] = QString::fromStdString(p.imageData);
+        o["resizing"] = p.resizing;
+        o["wrapAround"] = p.wrapAround;
+        o["colorFiltering"] = p.colorFiltering;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+        o["pointCode"] = QString::fromStdString(p.pointCode);
+    }
+    void operator()(const TriangleParams& p) const
+    {
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+        o["pointCode"] = QString::fromStdString(p.pointCode);
+    }
     void operator()(const ConvolutionParams& p) const
     {
         o["edgeMode"] = p.edgeMode;
@@ -763,6 +795,46 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.keepAspect = getBool(o, "keepAspect", true);
         return p;
     }
+    if (type == "pictureII")
+    {
+        PictureIIParams p;
+        p.filename = getStr(o, "filename");
+        p.imageData = getStr(o, "imageData");
+        p.blend = getInt(o, "blend", 2);
+        return p;
+    }
+    if (type == "texer")
+    {
+        TexerParams p;
+        p.filename = getStr(o, "filename");
+        p.imageData = getStr(o, "imageData");
+        p.blend = getInt(o, "blend", 1);
+        p.particles = getInt(o, "particles", 100);
+        return p;
+    }
+    if (type == "texerII")
+    {
+        TexerIIParams p;
+        p.filename = getStr(o, "filename");
+        p.imageData = getStr(o, "imageData");
+        p.resizing = getBool(o, "resizing", false);
+        p.wrapAround = getBool(o, "wrapAround", false);
+        p.colorFiltering = getBool(o, "colorFiltering", true);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        p.pointCode = getStr(o, "pointCode");
+        return p;
+    }
+    if (type == "triangle")
+    {
+        TriangleParams p;
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        p.pointCode = getStr(o, "pointCode");
+        return p;
+    }
     if (type == "convolution")
     {
         ConvolutionParams p;
@@ -971,6 +1043,10 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const OscRingParams&) const { return "oscRing"; }
         QString operator()(const RotatingStarsParams&) const { return "rotatingStars"; }
         QString operator()(const PictureParams&) const { return "picture"; }
+        QString operator()(const PictureIIParams&) const { return "pictureII"; }
+        QString operator()(const TexerParams&) const { return "texer"; }
+        QString operator()(const TexerIIParams&) const { return "texerII"; }
+        QString operator()(const TriangleParams&) const { return "triangle"; }
         QString operator()(const ConvolutionParams&) const { return "convolution"; }
         QString operator()(const NormaliseParams&) const { return "normalise"; }
         QString operator()(const MultiFilterParams&) const { return "multiFilter"; }

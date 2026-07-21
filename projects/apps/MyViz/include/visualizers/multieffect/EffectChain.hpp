@@ -301,6 +301,17 @@ struct PictureParams
     bool keepAspect = true;  ///< preserve the image aspect (letterbox)
 };
 
+/**
+ * AVS APE "Picture II": display an embedded image stretched to fill, blended per
+ * `blend` (community APE). Like Picture but always fills the frame (bilinear).
+ */
+struct PictureIIParams
+{
+    std::string filename;
+    std::string imageData;   ///< base64 of the raw image ("" = unresolved)
+    int blend = 2;           ///< 0 replace, 1 additive, 2 50/50
+};
+
 /** AVS "Trans / Fast Brightness" (ID 44): dir 0 = x2, 1 = x0.5, 2 = off. */
 struct FastBrightnessParams
 {
@@ -761,6 +772,51 @@ struct AddBordersParams
 };
 
 /**
+ * AVS APE "Texer": draw an embedded image (sprite) at points along the waveform
+ * (community APE, no EEL). `blend` 0 replace, 1 additive, 2 50/50; `particles`
+ * = number of sprites. Sprite geometry is sight-test-calibrated.
+ */
+struct TexerParams
+{
+    std::string filename;
+    std::string imageData;
+    int blend = 1;
+    int particles = 100;
+};
+
+/**
+ * AVS APE "Acko.net: Texer II": draw an embedded image at each point of a scoped
+ * point loop (community APE). The point EEL sets, per point, `x,y` (-1..1),
+ * `sizex,sizey` (scale), `red,green,blue` (tint when colorFiltering); `n` = point
+ * count. EEL variable contract + sprite geometry are sight-test-calibrated.
+ */
+struct TexerIIParams
+{
+    std::string filename;
+    std::string imageData;
+    bool resizing = false;
+    bool wrapAround = false;
+    bool colorFiltering = true;
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+    std::string pointCode = "x=(i*2)-1; y=0;";
+};
+
+/**
+ * AVS APE "Render: Triangle": draw EEL-scripted filled triangles. The point EEL
+ * sets, per triangle, `x1,y1,x2,y2,x3,y3` (-1..1) and `red,green,blue`; `n` =
+ * triangle count. EEL variable contract is sight-test-calibrated.
+ */
+struct TriangleParams
+{
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+    std::string pointCode;
+};
+
+/**
  * AVS APE "Color Map": map a per-pixel input value (selected channel) through a
  * gradient LUT, then blend the result onto the image (UnConeD, community APE —
  * format per grandchild/AVS-File-Decoder). `key` picks the input (0 red, 1 green,
@@ -856,7 +912,8 @@ using EffectParams =
                  InterleaveParams, ConvolutionParams, NormaliseParams,
                  MultiFilterParams, AddBordersParams, SimpleScopeParams,
                  BassSpinParams, OscStarParams, OscRingParams, RotatingStarsParams,
-                 PictureParams, ChannelShiftParams, ColorReductionParams,
+                 PictureParams, PictureIIParams, TexerParams, TexerIIParams,
+                 TriangleParams, ChannelShiftParams, ColorReductionParams,
                  MultiplierParams, VideoDelayParams, MultiDelayParams,
                  DebugBarsParams, PassthroughParams>;
 
@@ -960,6 +1017,10 @@ struct CompileResult
         const char* operator()(const OscRingParams&) const { return "Ring"; }
         const char* operator()(const RotatingStarsParams&) const { return "Rotating Stars"; }
         const char* operator()(const PictureParams&) const { return "Picture"; }
+        const char* operator()(const PictureIIParams&) const { return "Picture II"; }
+        const char* operator()(const TexerParams&) const { return "Texer"; }
+        const char* operator()(const TexerIIParams&) const { return "Texer II"; }
+        const char* operator()(const TriangleParams&) const { return "Triangle"; }
         const char* operator()(const ChannelShiftParams&) const { return "Channel Shift"; }
         const char* operator()(const ColorReductionParams&) const { return "Color Reduction"; }
         const char* operator()(const MultiplierParams&) const { return "Multiplier"; }

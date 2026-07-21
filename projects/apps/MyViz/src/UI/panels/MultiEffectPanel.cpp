@@ -105,6 +105,10 @@ const std::vector<EffectType>& effectPalette()
         {"Ring", [] { return EffectParams{OscRingParams{}}; }},
         {"Rotating Stars", [] { return EffectParams{RotatingStarsParams{}}; }},
         {"Picture", [] { return EffectParams{PictureParams{}}; }},
+        {"Picture II", [] { return EffectParams{PictureIIParams{}}; }},
+        {"Texer", [] { return EffectParams{TexerParams{}}; }},
+        {"Texer II", [] { return EffectParams{TexerIIParams{}}; }},
+        {"Triangle", [] { return EffectParams{TriangleParams{}}; }},
         {"Channel Shift", [] { return EffectParams{ChannelShiftParams{}}; }},
         {"Color Reduction", [] { return EffectParams{ColorReductionParams{}}; }},
         {"Multiplier", [] { return EffectParams{MultiplierParams{}}; }},
@@ -1122,6 +1126,38 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         auto* info = new QLabel(status, m_propContainer);
         info->setWordWrap(true);
         form->addRow(info);
+    }
+    else if (auto* p = std::get_if<PictureIIParams>(&params))
+    {
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<PictureIIParams>(n.params).blend = v; });
+        const QString status = p->imageData.empty()
+            ? tr("⚠ image not embedded: %1").arg(QString::fromStdString(p->filename))
+            : tr("✓ image embedded (%1 KB)").arg(static_cast<int>(p->imageData.size() * 3 / 4 / 1024));
+        auto* info = new QLabel(status, m_propContainer);
+        info->setWordWrap(true);
+        form->addRow(info);
+    }
+    else if (auto* p = std::get_if<TexerParams>(&params))
+    {
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive"}, [](ChainNode& n, int v) { std::get<TexerParams>(n.params).blend = v; });
+        addInt(tr("Particles"), p->particles, 1, 4096, [](ChainNode& n, int v) { std::get<TexerParams>(n.params).particles = v; });
+        const QString status = p->imageData.empty() ? tr("⚠ image not embedded: %1").arg(QString::fromStdString(p->filename)) : tr("✓ image embedded");
+        auto* info = new QLabel(status, m_propContainer); info->setWordWrap(true); form->addRow(info);
+    }
+    else if (auto* p = std::get_if<TexerIIParams>(&params))
+    {
+        addBool(tr("Color filtering"), p->colorFiltering, [](ChainNode& n, bool v) { std::get<TexerIIParams>(n.params).colorFiltering = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Point (x,y,sizex,sizey,rgb)"), p->pointCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).pointCode = std::move(v); });
+        const QString status = p->imageData.empty() ? tr("⚠ image not embedded: %1").arg(QString::fromStdString(p->filename)) : tr("✓ image embedded");
+        auto* info = new QLabel(status, m_propContainer); info->setWordWrap(true); form->addRow(info);
+    }
+    else if (auto* p = std::get_if<TriangleParams>(&params))
+    {
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame (set n)"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Point (x1..y3,rgb)"), p->pointCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).pointCode = std::move(v); });
     }
     else if (auto* p = std::get_if<BlitterFeedbackParams>(&params))
     {
