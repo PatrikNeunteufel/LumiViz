@@ -89,6 +89,7 @@ const std::vector<EffectType>& effectPalette()
         {"Dot Grid", [] { return EffectParams{DotGridParams{}}; }},
         {"Dot Plane", [] { return EffectParams{DotPlaneParams{}}; }},
         {"Dot Fountain", [] { return EffectParams{DotFountainParams{}}; }},
+        {"Color Map", [] { return EffectParams{ColorMapParams{}}; }},
         {"Channel Shift", [] { return EffectParams{ChannelShiftParams{}}; }},
         {"Color Reduction", [] { return EffectParams{ColorReductionParams{}}; }},
         {"Multiplier", [] { return EffectParams{MultiplierParams{}}; }},
@@ -985,6 +986,15 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         addInt(tr("On-beat size"), p->size2, 1, 128, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).size2 = v; });
         addBool(tr("Resize on beat"), p->onBeatSize, [](ChainNode& n, bool v) { std::get<MovingParticleParams>(n.params).onBeatSize = v; });
         addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line"}, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).blend = v; });
+    }
+    else if (auto* p = std::get_if<ColorMapParams>(&params))
+    {
+        addEnum(tr("Input"), p->key, {"Red", "Green", "Blue", "(R+G+B)/2", "Max", "(R+G+B)/3"}, [](ChainNode& n, int v) { std::get<ColorMapParams>(n.params).key = v; });
+        addEnum(tr("Blend"), p->blendMode, {"Replace", "Additive", "Maximum", "Minimum", "50/50", "Sub d-s", "Sub s-d", "Multiply", "XOR", "Adjustable"}, [](ChainNode& n, int v) { std::get<ColorMapParams>(n.params).blendMode = v; });
+        addInt(tr("Adjustable"), p->adjustBlend, 0, 255, [](ChainNode& n, int v) { std::get<ColorMapParams>(n.params).adjustBlend = v; });
+        auto* info = new QLabel(tr("%1 gradient stops (imported, read-only)").arg(p->stopPos.size()), m_propContainer);
+        info->setWordWrap(true);
+        form->addRow(info);
     }
     else if (auto* p = std::get_if<BlitterFeedbackParams>(&params))
     {

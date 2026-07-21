@@ -27,6 +27,7 @@
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <string>
 #include <string_view>
 
 namespace lumi::avs::detail {
@@ -518,6 +519,71 @@ inline void decodeColorModifier(Reader& r, EffectNode& n)   // r_dcolormod.cpp
     readField(r, n, "recompute");
 }
 
+/**
+ * @brief Decode the "Color Map" APE blob (format: grandchild/AVS-File-Decoder).
+ *
+ * Layout: key/blendMode/mapCycleMode (int32) · 4 packed bytes (adjustBlend, null,
+ * dontSkipFastBeats, cycleSpeed) · 8 fixed 60-byte map headers (enabled, num, id,
+ * 48-byte filename) · then per map `num` colour entries (position, colour, id).
+ * Colours are 0x00RRGGBB (no COLORREF swap). The first enabled non-empty map is
+ * captured into colors[] + cmpos<k> fields; map cycling is not imported yet.
+ */
+inline void decodeColorMap(Reader& r, EffectNode& n)   // "Color Map" APE
+{
+    std::int32_t key = 0;
+    std::int32_t blend = 0;
+    std::int32_t cycle = 0;
+    if (!(r.tryI32(key) && r.tryI32(blend) && r.tryI32(cycle))) return;
+    addField(n, "key", key);
+    addField(n, "blendMode", blend);
+    addField(n, "mapCycleMode", cycle);
+
+    const std::uint8_t* packed = nullptr;
+    std::int32_t adjust = 128;
+    if (r.tryBytes(4, packed)) adjust = packed[0];  // adjustBlend, null, dsfb, speed
+    addField(n, "adjustBlend", adjust);
+
+    std::array<std::int32_t, 8> enabled{};
+    std::array<std::int32_t, 8> num{};
+    for (int i = 0; i < 8; ++i)
+    {
+        std::int32_t en = 0;
+        std::int32_t nm = 0;
+        std::int32_t id = 0;
+        if (!(r.tryI32(en) && r.tryI32(nm) && r.tryI32(id))) return;
+        enabled[static_cast<std::size_t>(i)] = en;
+        num[static_cast<std::size_t>(i)] = nm;
+        const std::uint8_t* nameBytes = nullptr;
+        if (!r.tryBytes(48, nameBytes)) return;  // skip 48-byte filename
+    }
+
+    int chosen = -1;
+    for (int i = 0; i < 8; ++i)
+    {
+        const std::int32_t cnt = num[static_cast<std::size_t>(i)];
+        const bool take = chosen == -1 && enabled[static_cast<std::size_t>(i)] != 0 &&
+                          cnt > 0;
+        for (std::int32_t k = 0; k < cnt; ++k)
+        {
+            std::int32_t pos = 0;
+            std::int32_t col = 0;
+            std::int32_t cid = 0;
+            if (!(r.tryI32(pos) && r.tryI32(col) && r.tryI32(cid))) return;
+            if (take)
+            {
+                n.colors.push_back(static_cast<std::uint32_t>(col) & 0x00FFFFFFu);
+                addField(n, ("cmpos" + std::to_string(k)).c_str(), pos);
+            }
+        }
+        if (take)
+        {
+            chosen = i;
+            addField(n, "cmcount", cnt);
+        }
+    }
+    if (chosen == -1) addField(n, "cmcount", 0);
+}
+
 // =====================================================================================
 // Dispatch
 // =====================================================================================
@@ -590,6 +656,8 @@ inline bool decodeApe(std::string_view apeId, Reader& r, EffectNode& node)
             readField(r, node, ("dl" + std::to_string(i)).c_str());
         }
     }
+    else if (apeId == "Color Map")
+        decodeColorMap(r, node);
     else
         return false;  // unknown APE: raw blob preserved
     node.decoded = true;

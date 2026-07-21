@@ -37,8 +37,8 @@ Panel + Tests). Das Bau-Rezept dazu: [Import_Modul_Umsetzungsplan.md](Import_Mod
 - `A` = schwer testbar (Bild-/Video-/GDI-/externe-DLL-Bindung).
 - `—` = kein Render (no-op/Meta), nichts sichtzutesten.
 
-**Ist-Stand:** 33 Builtins ✅ + Set Render Mode ◐ · 5 APEs ✅. Unit-Suite grün
-(259 Cases); GL-Sichttest von Batch A + §5.2-Block steht aus.
+**Ist-Stand:** 33 Builtins ✅ + Set Render Mode ◐ · 6 APEs ✅ (inkl. Color Map).
+Unit-Suite grün (262 Cases); GL-Sichttest von Batch A/B + §5.2-Block steht aus.
 
 ---
 
@@ -113,7 +113,7 @@ Referenz für Strings + Feld-Layouts: `grandchild/AVS-File-Decoder`
 | `Multiplier` | Multiplier | Trans | ✅ | `MultiplierParams` | U·S offen | hoch |
 | `Holden04: Video Delay` | Video Delay | Trans | ✅ | `VideoDelayParams` (per-Node-Ring) | U·S offen | hoch |
 | `Holden05: Multi Delay` | Multi Delay | Trans | ✅ | `MultiDelayParams` (6 host-globale Ringe) | U·S offen | mittel–hoch |
-| `Color Map` | Color Map | Trans | ⬜ | `ColorGradient`+`ScriptLut` — Batch B | U*·S | sehr hoch |
+| `Color Map` | Color Map | Trans | ✅ | `ColorMapParams` (256-LUT-Textur + Blend-Shader) | U·S offen | sehr hoch |
 | `Acko.net: Texer II` | Texer II | Render | ⬜ | Bild+EEL+Punktschleife — Batch F | A·S | sehr hoch |
 | `Holden03: Convolution Filter` | Convolution | Trans | ⬜ | 7×7-Kernel-Shader — Batch D | U*·S | hoch |
 | `Misc: Buffer blend` | Buffer Blend | Misc | ⬜ | `OffscreenBufferPool` — Batch C (Screenshot) | U*·S | mittel–hoch |
@@ -132,7 +132,7 @@ Referenz für Strings + Feld-Layouts: `grandchild/AVS-File-Decoder`
 | `Nullsoft Pixelcorps: MIDItrace ` | MIDI Trace | Misc | ✖ | MIDI-Input ⚠ Trailing-Space | — | sehr niedrig |
 | `VFX AVI PLAYER` | AVI Player | Misc | ✖ | Video-Decode | — | sehr niedrig |
 
-**APE-Bilanz:** ✅ 5 · ⬜ 12 · ✖ 6.
+**APE-Bilanz:** ✅ 6 · ⬜ 11 · ✖ 6.
 
 **Parser-Fallstricke (Exakt-Match!):** `Jheriko : MULTIFILTER` hat ein **Leerzeichen
 vor dem Doppelpunkt**; `Nullsoft Pixelcorps: MIDItrace ` endet mit **Leerzeichen**.

@@ -519,6 +519,44 @@ void main()
 }
 )";
 
+// AVS APE "Color Map": pick an input value per pixel (uKey selects the channel),
+// look it up in a 256-entry gradient LUT (uLut), and blend the mapped colour onto
+// the image per uBlend (0..9). uAdjust is the ADJUSTABLE weight.
+const char* kColorMapFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform sampler2D uLut;
+uniform int uKey;
+uniform int uBlend;
+uniform float uAdjust;
+out vec4 fragColor;
+void main()
+{
+    vec3 c = texture(uTex, vTex).rgb;
+    float idx;
+    if (uKey == 0)      idx = c.r;
+    else if (uKey == 1) idx = c.g;
+    else if (uKey == 2) idx = c.b;
+    else if (uKey == 3) idx = (c.r + c.g + c.b) * 0.5;
+    else if (uKey == 4) idx = max(max(c.r, c.g), c.b);
+    else                idx = (c.r + c.g + c.b) / 3.0;
+    vec3 m = texture(uLut, vec2(clamp(idx, 0.0, 1.0), 0.5)).rgb;
+    vec3 r;
+    if (uBlend == 0)      r = m;
+    else if (uBlend == 1) r = min(c + m, vec3(1.0));
+    else if (uBlend == 2) r = max(c, m);
+    else if (uBlend == 3) r = min(c, m);
+    else if (uBlend == 4) r = (c + m) * 0.5;
+    else if (uBlend == 5) r = clamp(c - m, 0.0, 1.0);
+    else if (uBlend == 6) r = clamp(m - c, 0.0, 1.0);
+    else if (uBlend == 7) r = c * m;
+    else if (uBlend == 8) r = vec3(ivec3(c * 255.0) ^ ivec3(m * 255.0)) / 255.0;
+    else                  r = mix(c, m, clamp(uAdjust, 0.0, 1.0));
+    fragColor = vec4(r, 1.0);
+}
+)";
+
 // AVS "Trans / Water Bump" (ID 31): height-field wave propagation. The height
 // buffer packs .r = current, .g = previous; a beat adds a drop. (r_waterbump)
 const char* kWaterBumpPropShader = R"(
@@ -783,6 +821,7 @@ void MultiEffectVisualizer::onCleanup()
     m_bumpShader.reset();
     m_shiftShader.reset();
     m_ddmShader.reset();
+    m_colorMapShader.reset();
     m_wbPropShader.reset();
     m_wbDispShader.reset();
     m_timescopeShader.reset();
@@ -833,6 +872,7 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_bumpShader = makeProgram(kQuadVertexShader, kBumpFragmentShader);
     m_shiftShader = makeProgram(kQuadVertexShader, kDynamicShiftFragmentShader);
     m_ddmShader = makeProgram(kQuadVertexShader, kDdmFragmentShader);
+    m_colorMapShader = makeProgram(kQuadVertexShader, kColorMapFragmentShader);
     m_wbPropShader = makeProgram(kQuadVertexShader, kWaterBumpPropShader);
     m_wbDispShader = makeProgram(kQuadVertexShader, kWaterBumpDispShader);
     m_timescopeShader = makeProgram(kQuadVertexShader, kTimescopeFragmentShader);
@@ -846,7 +886,8 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_grainShader == nullptr || m_scatterShader == nullptr ||
         m_interfShader == nullptr || m_waterShader == nullptr ||
         m_bumpShader == nullptr || m_shiftShader == nullptr ||
-        m_ddmShader == nullptr || m_wbPropShader == nullptr ||
+        m_ddmShader == nullptr || m_colorMapShader == nullptr ||
+        m_wbPropShader == nullptr ||
         m_wbDispShader == nullptr || m_timescopeShader == nullptr ||
         m_apeShader == nullptr)
     {
@@ -946,6 +987,7 @@ void MultiEffectVisualizer::resetRuntimes()
         for (auto& [id, rt] : m_leafRuntimes)
         {
             if (rt.lutTexture != 0) f->glDeleteTextures(1, &rt.lutTexture);
+            if (rt.cmTexture != 0) f->glDeleteTextures(1, &rt.cmTexture);
         }
     }
     m_listRuntimes.clear();  // slot hosts / FBOs die with their GL-frame owner
@@ -1113,6 +1155,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const DotGridParams& params) const { self.runDotGrid(node, params); }
         void operator()(const DotPlaneParams& params) const { self.runDotPlane(node, params); }
         void operator()(const DotFountainParams& params) const { self.runDotFountain(node, params); }
+        void operator()(const ColorMapParams& params) const { self.runColorMap(node, params); }
         void operator()(const ChannelShiftParams& params) const { self.runChannelShift(node, params); }
         void operator()(const ColorReductionParams& params) const { self.runColorReduction(params); }
         void operator()(const MultiplierParams& params) const { self.runMultiplier(params); }
@@ -2047,6 +2090,110 @@ void MultiEffectVisualizer::runDynamicShift(const ChainNode& node,
         "uAlpha", static_cast<float>(std::clamp(alpha, 0.0, 1.0)));
     m_shiftShader->release();
     transformPass(*m_shiftShader);
+}
+
+namespace {
+/// Build a 256-entry RGB LUT (row-major RGB bytes) from Color Map gradient stops.
+void buildColorMapLut(const ColorMapParams& params, std::array<unsigned char, 768>& px)
+{
+    auto put = [&](int i, float r, float g, float b) {
+        px[static_cast<std::size_t>(i) * 3 + 0] =
+            static_cast<unsigned char>(std::clamp(r, 0.0f, 255.0f));
+        px[static_cast<std::size_t>(i) * 3 + 1] =
+            static_cast<unsigned char>(std::clamp(g, 0.0f, 255.0f));
+        px[static_cast<std::size_t>(i) * 3 + 2] =
+            static_cast<unsigned char>(std::clamp(b, 0.0f, 255.0f));
+    };
+    std::vector<std::pair<int, uint32_t>> stops;
+    for (std::size_t i = 0; i < params.stopPos.size() && i < params.stopColor.size(); ++i)
+        stops.emplace_back(std::clamp(params.stopPos[i], 0, 255), params.stopColor[i]);
+    std::sort(stops.begin(), stops.end(),
+              [](const auto& a, const auto& b) { return a.first < b.first; });
+    if (stops.empty())  // no gradient imported: identity greyscale ramp
+    {
+        for (int i = 0; i < 256; ++i)
+            put(i, static_cast<float>(i), static_cast<float>(i), static_cast<float>(i));
+        return;
+    }
+    auto rgb = [](uint32_t c, int shift) { return static_cast<float>((c >> shift) & 0xFF); };
+    for (int i = 0; i < 256; ++i)
+    {
+        if (i <= stops.front().first)
+        {
+            const uint32_t c = stops.front().second;
+            put(i, rgb(c, 16), rgb(c, 8), rgb(c, 0));
+            continue;
+        }
+        if (i >= stops.back().first)
+        {
+            const uint32_t c = stops.back().second;
+            put(i, rgb(c, 16), rgb(c, 8), rgb(c, 0));
+            continue;
+        }
+        std::size_t s = 0;
+        while (s + 1 < stops.size() && stops[s + 1].first <= i) ++s;
+        const int p0 = stops[s].first;
+        const int p1 = stops[s + 1].first;
+        const uint32_t c0 = stops[s].second;
+        const uint32_t c1 = stops[s + 1].second;
+        const float t = p1 > p0 ? static_cast<float>(i - p0) / static_cast<float>(p1 - p0)
+                                : 0.0f;
+        put(i, rgb(c0, 16) + (rgb(c1, 16) - rgb(c0, 16)) * t,
+            rgb(c0, 8) + (rgb(c1, 8) - rgb(c0, 8)) * t,
+            rgb(c0, 0) + (rgb(c1, 0) - rgb(c0, 0)) * t);
+    }
+}
+}  // namespace
+
+void MultiEffectVisualizer::runColorMap(const ChainNode& node,
+                                        const ColorMapParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    // Rebuild the LUT texture only when the stops change.
+    std::string snap;
+    for (std::size_t i = 0; i < params.stopPos.size() && i < params.stopColor.size(); ++i)
+    {
+        snap += std::to_string(params.stopPos[i]);
+        snap += ':';
+        snap += std::to_string(params.stopColor[i]);
+        snap += ';';
+    }
+    if (rt.cmTexture == 0 || rt.cmSnapshot != snap)
+    {
+        std::array<unsigned char, 768> pixels{};
+        buildColorMapLut(params, pixels);
+        if (rt.cmTexture == 0)
+        {
+            f->glGenTextures(1, &rt.cmTexture);
+            f->glBindTexture(GL_TEXTURE_2D, rt.cmTexture);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        else
+        {
+            f->glBindTexture(GL_TEXTURE_2D, rt.cmTexture);
+        }
+        f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, 1, 0, GL_RGB, GL_UNSIGNED_BYTE,
+                        pixels.data());
+        rt.cmSnapshot = snap;
+    }
+
+    m_colorMapShader->bind();
+    m_colorMapShader->setUniformValue("uKey", std::clamp(params.key, 0, 5));
+    m_colorMapShader->setUniformValue("uBlend", std::clamp(params.blendMode, 0, 9));
+    m_colorMapShader->setUniformValue(
+        "uAdjust", static_cast<float>(params.adjustBlend) / 255.0f);
+    m_colorMapShader->setUniformValue("uLut", 1);
+    m_colorMapShader->release();
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.cmTexture);
+    f->glActiveTexture(GL_TEXTURE0);
+    transformPass(*m_colorMapShader);
 }
 
 void MultiEffectVisualizer::runDynamicDistanceModifier(

@@ -179,16 +179,16 @@ inline void parseListBody(Reader& r, EffectNode& node, ParseResult& result,
                 child.name = kBuiltinNames[static_cast<std::size_t>(aliasIndex)];
                 decodeBuiltin(aliasIndex, config, child);
             }
-            else if (isBuiltinApe(apeId))
-            {
-                child.name = apeId;
-                decodeApe(apeId, config, child);   // core-set APE fields (else raw blob)
-            }
             else
             {
+                // decodeApe handles the core-set + community APEs (Color Map, …);
+                // false = genuinely unknown -> raw blob conserved + warning.
                 child.name = apeId;
-                warn(result, childPath + " " + child.name,
-                     "unbekannter APE-Effekt — Roh-Blob konserviert");
+                if (!decodeApe(apeId, config, child))
+                {
+                    warn(result, childPath + " " + child.name,
+                         "unbekannter APE-Effekt — Roh-Blob konserviert");
+                }
             }
         }
         else

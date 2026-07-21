@@ -222,6 +222,18 @@ struct WriteVisitor
         o["onBeatSize"] = p.onBeatSize;
         o["blend"] = p.blend;
     }
+    void operator()(const ColorMapParams& p) const
+    {
+        o["key"] = p.key;
+        o["blendMode"] = p.blendMode;
+        o["adjustBlend"] = p.adjustBlend;
+        QJsonArray pos;
+        for (int v : p.stopPos) pos.append(v);
+        QJsonArray col;
+        for (uint32_t c : p.stopColor) col.append(static_cast<double>(c));
+        o["stopPos"] = pos;
+        o["stopColor"] = col;
+    }
     void operator()(const BumpParams& p) const
     {
         o["depth"] = p.depth;
@@ -547,6 +559,18 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.blend = getInt(o, "blend", 1);
         return p;
     }
+    if (type == "colorMap")
+    {
+        ColorMapParams p;
+        p.key = getInt(o, "key", 0);
+        p.blendMode = getInt(o, "blendMode", 0);
+        p.adjustBlend = getInt(o, "adjustBlend", 128);
+        const QJsonArray pos = o.value("stopPos").toArray();
+        const QJsonArray col = o.value("stopColor").toArray();
+        for (const auto& v : pos) p.stopPos.push_back(v.toInt());
+        for (const auto& v : col) p.stopColor.push_back(static_cast<uint32_t>(v.toDouble()));
+        return p;
+    }
     if (type == "bump")
     {
         BumpParams p;
@@ -688,6 +712,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const DynamicShiftParams&) const { return "dynamicShift"; }
         QString operator()(const DynamicDistanceModifierParams&) const { return "dynamicDistanceModifier"; }
         QString operator()(const MovingParticleParams&) const { return "movingParticle"; }
+        QString operator()(const ColorMapParams&) const { return "colorMap"; }
         QString operator()(const BumpParams&) const { return "bump"; }
         QString operator()(const WaterBumpParams&) const { return "waterBump"; }
         QString operator()(const InterferencesParams&) const { return "interferences"; }

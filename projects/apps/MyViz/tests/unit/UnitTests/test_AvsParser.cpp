@@ -217,6 +217,41 @@ TEST_CASE("AvsParser: mehrere Effekte in Reihenfolge")
     CHECK(r.root.children[1].field("roundmode") == 2);
 }
 
+TEST_CASE("AvsParser: Color Map APE — Header + erste aktive Map dekodiert")
+{
+    const char name48[48] = {};
+    Bytes cm;
+    cm.i32(2)    // key = blue
+        .i32(1)  // blendMode = additive
+        .i32(0)  // mapCycleMode = single
+        .u8(150).u8(0).u8(0).u8(0);  // adjustBlend=150 + 3 padding bytes
+    // 8 fixed 60-byte headers: map0 disabled (num=1), map1 enabled (num=2), rest empty
+    cm.i32(0).i32(1).i32(0).raw(name48, 48);
+    cm.i32(1).i32(2).i32(0).raw(name48, 48);
+    for (int i = 0; i < 6; ++i) cm.i32(0).i32(0).i32(0).raw(name48, 48);
+    // colour data per map (position, colour 0x00RRGGBB, id)
+    cm.i32(50).i32(0x111111).i32(0);          // map0's single entry (skipped)
+    cm.i32(0).i32(0x000000).i32(0);           // map1 entry 0
+    cm.i32(255).i32(0x00FF00).i32(0);         // map1 entry 1
+
+    Bytes b;
+    b.signature().u8(0x00).apeEffect("Color Map", cm);
+
+    const ParseResult r = parse(b.vec());
+    REQUIRE(r.ok);
+    REQUIRE(r.effectCount() == 1);
+    const EffectNode& fx = r.root.children[0];
+    CHECK(fx.decoded);
+    CHECK(fx.apeId == "Color Map");
+    CHECK(fx.field("key") == 2);
+    CHECK(fx.field("blendMode") == 1);
+    CHECK(fx.field("adjustBlend") == 150);
+    CHECK(fx.field("cmcount") == 2);             // captured map1, not map0
+    REQUIRE(fx.colors.size() == 2);
+    CHECK(fx.colors[1] == 0x00FF00u);
+    CHECK(fx.field("cmpos1") == 255);
+}
+
 TEST_CASE("AvsParser: unbekannte Builtin-ID -> Roh-Blob + Warnung")
 {
     Bytes blob;

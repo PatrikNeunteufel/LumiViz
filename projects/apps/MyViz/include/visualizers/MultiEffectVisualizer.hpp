@@ -159,6 +159,10 @@ private:
         unsigned int lutTexture = 0;  ///< GL 256x1 RGB texture (deleted in onCleanup)
         std::string lutCompiled;      ///< source snapshot the module was built from
 
+        // Color Map: 256x1 gradient LUT texture built from the stops (r_colormap)
+        unsigned int cmTexture = 0;   ///< GL 256x1 RGB texture (deleted in onCleanup)
+        std::string cmSnapshot;       ///< stop snapshot the texture was built from
+
         // Movement / Dynamic Movement: scripted displacement grid
         std::unique_ptr<lumi::modules::ScriptGridModule> grid;
         std::string gridCompiled;
@@ -296,6 +300,8 @@ private:
         const lumi::multieffect::DynamicDistanceModifierParams& params);
     void runMovingParticle(const lumi::multieffect::ChainNode& node,
                            const lumi::multieffect::MovingParticleParams& params);
+    void runColorMap(const lumi::multieffect::ChainNode& node,
+                     const lumi::multieffect::ColorMapParams& params);
     void runDynamicMovement(const lumi::multieffect::ChainNode& node,
                             const lumi::multieffect::DynamicMovementParams& params);
     /** Shared grid-warp: run the module, build the mesh, sample current→partner. */
@@ -392,6 +398,7 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_bumpShader;
     std::unique_ptr<QOpenGLShaderProgram> m_shiftShader;  ///< Dynamic Shift (r_shift)
     std::unique_ptr<QOpenGLShaderProgram> m_ddmShader;    ///< Dynamic Distance Modifier (r_ddm)
+    std::unique_ptr<QOpenGLShaderProgram> m_colorMapShader;  ///< Color Map APE
     std::unique_ptr<QOpenGLShaderProgram> m_wbPropShader;  ///< water-bump wave propagation
     std::unique_ptr<QOpenGLShaderProgram> m_wbDispShader;  ///< water-bump refraction
     std::unique_ptr<QOpenGLShaderProgram> m_timescopeShader;

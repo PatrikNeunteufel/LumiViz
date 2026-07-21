@@ -202,6 +202,22 @@ bool mapApe(const EffectNode& src, ChainNode& out)
         out.params = p;
         return true;
     }
+    if (src.apeId == "Color Map")
+    {
+        ColorMapParams p;
+        p.key = std::clamp(src.field("key"), 0, 5);
+        p.blendMode = std::clamp(src.field("blendMode"), 0, 9);
+        p.adjustBlend = std::clamp(src.field("adjustBlend"), 0, 255);
+        const int count = src.field("cmcount");
+        for (int k = 0; k < count && k < static_cast<int>(src.colors.size()); ++k)
+        {
+            p.stopPos.push_back(
+                std::clamp(src.field("cmpos" + std::to_string(k)), 0, 255));
+            p.stopColor.push_back(src.colors[static_cast<std::size_t>(k)]);  // 0x00RRGGBB
+        }
+        out.params = std::move(p);
+        return true;
+    }
     if (src.apeId == "Color Reduction")
     {
         out.params = ColorReductionParams{std::clamp(src.field("levels"), 1, 8)};

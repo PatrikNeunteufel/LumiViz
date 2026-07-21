@@ -365,6 +365,32 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{MovingParticleParams{}}) == "movingParticle");
     }
 
+    TEST_CASE("Color-Map-Parameter + Gradient ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        ColorMapParams cp;
+        cp.key = 4;
+        cp.blendMode = 7;
+        cp.adjustBlend = 200;
+        cp.stopPos = {0, 128, 255};
+        cp.stopColor = {0x000000, 0x00FF00, 0xFFFFFF};
+        leaf.params = cp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<ColorMapParams>(restored.children[0].params);
+        CHECK(p.key == 4);
+        CHECK(p.blendMode == 7);
+        CHECK(p.adjustBlend == 200);
+        REQUIRE(p.stopPos.size() == 3);
+        CHECK(p.stopPos[1] == 128);
+        CHECK(p.stopColor[1] == 0x00FF00u);
+        CHECK(effectTypeKey(EffectParams{ColorMapParams{}}) == "colorMap");
+    }
+
     TEST_CASE("Interferences-Parameter ueberleben den Round-Trip")
     {
         ChainNode root;

@@ -235,6 +235,27 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(t.report.empty());         // no warning line
     }
 
+    TEST_CASE("Color Map (APE) -> ColorMapParams mit Gradient-Stops")
+    {
+        EffectNode cm;
+        cm.id = lumi::avs::kApeIdBase;
+        cm.apeId = "Color Map";
+        cm.decoded = true;
+        cm.fields = {{"key", 1}, {"blendMode", 4}, {"adjustBlend", 200},
+                     {"cmcount", 2}, {"cmpos0", 0}, {"cmpos1", 255}};
+        cm.colors = {0x000000, 0xFFFFFF};
+        const TranslationResult t = translateAvsTree(makeParsed({cm}));
+        REQUIRE(t.root.children.size() == 1);
+        REQUIRE(std::holds_alternative<ColorMapParams>(t.root.children[0].params));
+        const auto& p = std::get<ColorMapParams>(t.root.children[0].params);
+        CHECK(p.key == 1);
+        CHECK(p.blendMode == 4);
+        CHECK(p.adjustBlend == 200);
+        REQUIRE(p.stopPos.size() == 2);
+        CHECK(p.stopPos[1] == 255);
+        CHECK(p.stopColor[1] == 0xFFFFFFu);
+    }
+
     TEST_CASE("verschachtelte Liste mit Blend wird uebernommen")
     {
         EffectNode inner;

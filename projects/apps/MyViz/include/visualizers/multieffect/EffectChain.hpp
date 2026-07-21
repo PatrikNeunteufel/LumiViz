@@ -559,6 +559,25 @@ struct DotFountainParams
     int angle = -20;
 };
 
+/**
+ * AVS APE "Color Map": map a per-pixel input value (selected channel) through a
+ * gradient LUT, then blend the result onto the image (UnConeD, community APE —
+ * format per grandchild/AVS-File-Decoder). `key` picks the input (0 red, 1 green,
+ * 2 blue, 3 (r+g+b)/2, 4 max, 5 (r+g+b)/3). `blendMode` 0..9 (replace/additive/
+ * max/min/50-50/sub d-s/sub s-d/multiply/xor/adjustable). The gradient is a list
+ * of stops (position 0..255 + 0x00RRGGBB); the host interpolates a 256-entry LUT.
+ * On-beat map cycling (mapCycleMode) is not imported yet — the first enabled map
+ * is used.
+ */
+struct ColorMapParams
+{
+    int key = 0;              ///< input selector 0..5
+    int blendMode = 0;        ///< 0..9 (see above)
+    int adjustBlend = 128;    ///< ADJUSTABLE weight 0..255
+    std::vector<int> stopPos;         ///< gradient stop positions 0..255
+    std::vector<uint32_t> stopColor;  ///< gradient stop colours 0x00RRGGBB
+};
+
 /** AVS APE "Channel Shift": permute the R/G/B channels (r_chanshift). `mode`
  *  0 RGB, 1 RBG, 2 GBR, 3 GRB, 4 BRG, 5 BGR; `onBeat` picks a random one each beat. */
 struct ChannelShiftParams
@@ -631,7 +650,7 @@ using EffectParams =
                  SuperScopeParams, MosaicParams, GrainParams, ScatterParams,
                  InterferencesParams, WaterParams, BumpParams, WaterBumpParams,
                  StarfieldParams, TimescopeParams, DotGridParams, DotPlaneParams,
-                 DotFountainParams, ChannelShiftParams, ColorReductionParams,
+                 DotFountainParams, ColorMapParams, ChannelShiftParams, ColorReductionParams,
                  MultiplierParams, VideoDelayParams, MultiDelayParams,
                  DebugBarsParams, PassthroughParams>;
 
@@ -719,6 +738,7 @@ struct CompileResult
         const char* operator()(const DotGridParams&) const { return "Dot Grid"; }
         const char* operator()(const DotPlaneParams&) const { return "Dot Plane"; }
         const char* operator()(const DotFountainParams&) const { return "Dot Fountain"; }
+        const char* operator()(const ColorMapParams&) const { return "Color Map"; }
         const char* operator()(const ChannelShiftParams&) const { return "Channel Shift"; }
         const char* operator()(const ColorReductionParams&) const { return "Color Reduction"; }
         const char* operator()(const MultiplierParams&) const { return "Multiplier"; }
