@@ -247,6 +247,52 @@ struct WriteVisitor
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
     }
+    void operator()(const ConvolutionParams& p) const
+    {
+        o["edgeMode"] = p.edgeMode;
+        o["absolute"] = p.absolute;
+        o["twoPass"] = p.twoPass;
+        o["bias"] = p.bias;
+        o["scale"] = p.scale;
+        QJsonArray k;
+        for (int v : p.kernel) k.append(v);
+        o["kernel"] = k;
+    }
+    void operator()(const NormaliseParams&) const {}
+    void operator()(const MultiFilterParams& p) const
+    {
+        o["effect"] = p.effect;
+        o["onBeat"] = p.onBeat;
+    }
+    void operator()(const AddBordersParams& p) const
+    {
+        o["color"] = static_cast<double>(p.color);
+        o["size"] = p.size;
+    }
+    void operator()(const ColorClipParams& p) const
+    {
+        o["mode"] = p.mode;
+        o["clipColor"] = static_cast<double>(p.clipColor);
+        o["outColor"] = static_cast<double>(p.outColor);
+        o["distance"] = p.distance;
+    }
+    void operator()(const UniqueToneParams& p) const
+    {
+        o["color"] = static_cast<double>(p.color);
+        o["invert"] = p.invert;
+        o["blend"] = p.blend;
+    }
+    void operator()(const InterleaveParams& p) const
+    {
+        o["x"] = p.x;
+        o["y"] = p.y;
+        o["color"] = static_cast<double>(p.color);
+        o["blend"] = p.blend;
+        o["onBeat"] = p.onBeat;
+        o["x2"] = p.x2;
+        o["y2"] = p.y2;
+        o["beatDuration"] = p.beatDuration;
+    }
     void operator()(const BumpParams& p) const
     {
         o["depth"] = p.depth;
@@ -601,6 +647,64 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.beatCode = getStr(o, "beatCode");
         return p;
     }
+    if (type == "convolution")
+    {
+        ConvolutionParams p;
+        p.edgeMode = getInt(o, "edgeMode", 0);
+        p.absolute = getBool(o, "absolute", false);
+        p.twoPass = getBool(o, "twoPass", false);
+        p.bias = getInt(o, "bias", 0);
+        p.scale = getInt(o, "scale", 1);
+        const QJsonArray k = o.value("kernel").toArray();
+        for (int i = 0; i < 49 && i < k.size(); ++i)
+            p.kernel[static_cast<std::size_t>(i)] = k[i].toInt();
+        return p;
+    }
+    if (type == "normalise") return NormaliseParams{};
+    if (type == "multiFilter")
+    {
+        MultiFilterParams p;
+        p.effect = getInt(o, "effect", 0);
+        p.onBeat = getBool(o, "onBeat", false);
+        return p;
+    }
+    if (type == "addBorders")
+    {
+        AddBordersParams p;
+        p.color = getColor(o, "color", 0xFFFFFF);
+        p.size = getInt(o, "size", 2);
+        return p;
+    }
+    if (type == "colorClip")
+    {
+        ColorClipParams p;
+        p.mode = getInt(o, "mode", 1);
+        p.clipColor = getColor(o, "clipColor", 0x202020);
+        p.outColor = getColor(o, "outColor", 0x202020);
+        p.distance = getInt(o, "distance", 10);
+        return p;
+    }
+    if (type == "uniqueTone")
+    {
+        UniqueToneParams p;
+        p.color = getColor(o, "color", 0xFFFFFF);
+        p.invert = getBool(o, "invert", false);
+        p.blend = getInt(o, "blend", 0);
+        return p;
+    }
+    if (type == "interleave")
+    {
+        InterleaveParams p;
+        p.x = getInt(o, "x", 1);
+        p.y = getInt(o, "y", 1);
+        p.color = getColor(o, "color", 0);
+        p.blend = getInt(o, "blend", 0);
+        p.onBeat = getBool(o, "onBeat", false);
+        p.x2 = getInt(o, "x2", 1);
+        p.y2 = getInt(o, "y2", 1);
+        p.beatDuration = getInt(o, "beatDuration", 4);
+        return p;
+    }
     if (type == "bump")
     {
         BumpParams p;
@@ -745,6 +849,13 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const ColorMapParams&) const { return "colorMap"; }
         QString operator()(const BufferBlendParams&) const { return "bufferBlend"; }
         QString operator()(const JherikoGlobalParams&) const { return "jherikoGlobal"; }
+        QString operator()(const ConvolutionParams&) const { return "convolution"; }
+        QString operator()(const NormaliseParams&) const { return "normalise"; }
+        QString operator()(const MultiFilterParams&) const { return "multiFilter"; }
+        QString operator()(const AddBordersParams&) const { return "addBorders"; }
+        QString operator()(const ColorClipParams&) const { return "colorClip"; }
+        QString operator()(const UniqueToneParams&) const { return "uniqueTone"; }
+        QString operator()(const InterleaveParams&) const { return "interleave"; }
         QString operator()(const BumpParams&) const { return "bump"; }
         QString operator()(const WaterBumpParams&) const { return "waterBump"; }
         QString operator()(const InterferencesParams&) const { return "interferences"; }

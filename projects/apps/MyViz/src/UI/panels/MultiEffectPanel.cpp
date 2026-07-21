@@ -92,6 +92,13 @@ const std::vector<EffectType>& effectPalette()
         {"Color Map", [] { return EffectParams{ColorMapParams{}}; }},
         {"Buffer Blend", [] { return EffectParams{BufferBlendParams{}}; }},
         {"Global Variables", [] { return EffectParams{JherikoGlobalParams{}}; }},
+        {"Color Clip", [] { return EffectParams{ColorClipParams{}}; }},
+        {"Unique Tone", [] { return EffectParams{UniqueToneParams{}}; }},
+        {"Interleave", [] { return EffectParams{InterleaveParams{}}; }},
+        {"Convolution", [] { return EffectParams{ConvolutionParams{}}; }},
+        {"Normalise", [] { return EffectParams{NormaliseParams{}}; }},
+        {"MultiFilter", [] { return EffectParams{MultiFilterParams{}}; }},
+        {"Add Borders", [] { return EffectParams{AddBordersParams{}}; }},
         {"Channel Shift", [] { return EffectParams{ChannelShiftParams{}}; }},
         {"Color Reduction", [] { return EffectParams{ColorReductionParams{}}; }},
         {"Multiplier", [] { return EffectParams{MultiplierParams{}}; }},
@@ -1011,6 +1018,56 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).frameCode = std::move(v); });
         addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<ColorClipParams>(&params))
+    {
+        addEnum(tr("Mode"), p->mode - 1, {"Below", "Above", "Near"}, [](ChainNode& n, int v) { std::get<ColorClipParams>(n.params).mode = v + 1; });
+        addColor(tr("Threshold"), p->clipColor, [](ChainNode& n, uint32_t v) { std::get<ColorClipParams>(n.params).clipColor = v; });
+        addColor(tr("Replace with"), p->outColor, [](ChainNode& n, uint32_t v) { std::get<ColorClipParams>(n.params).outColor = v; });
+        addInt(tr("Distance"), p->distance, 0, 255, [](ChainNode& n, int v) { std::get<ColorClipParams>(n.params).distance = v; });
+    }
+    else if (auto* p = std::get_if<UniqueToneParams>(&params))
+    {
+        addColor(tr("Tone"), p->color, [](ChainNode& n, uint32_t v) { std::get<UniqueToneParams>(n.params).color = v; });
+        addBool(tr("Invert"), p->invert, [](ChainNode& n, bool v) { std::get<UniqueToneParams>(n.params).invert = v; });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<UniqueToneParams>(n.params).blend = v; });
+    }
+    else if (auto* p = std::get_if<InterleaveParams>(&params))
+    {
+        addInt(tr("X spacing"), p->x, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).x = v; });
+        addInt(tr("Y spacing"), p->y, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).y = v; });
+        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<InterleaveParams>(n.params).color = v; });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).blend = v; });
+        addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<InterleaveParams>(n.params).onBeat = v; });
+        addInt(tr("Beat X"), p->x2, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).x2 = v; });
+        addInt(tr("Beat Y"), p->y2, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).y2 = v; });
+        addInt(tr("Beat duration"), p->beatDuration, 1, 100, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).beatDuration = v; });
+    }
+    else if (auto* p = std::get_if<ConvolutionParams>(&params))
+    {
+        addEnum(tr("Edge"), p->edgeMode, {"Extend", "Wrap"}, [](ChainNode& n, int v) { std::get<ConvolutionParams>(n.params).edgeMode = v; });
+        addBool(tr("Absolute"), p->absolute, [](ChainNode& n, bool v) { std::get<ConvolutionParams>(n.params).absolute = v; });
+        addBool(tr("Two pass"), p->twoPass, [](ChainNode& n, bool v) { std::get<ConvolutionParams>(n.params).twoPass = v; });
+        addInt(tr("Bias"), p->bias, -255, 255, [](ChainNode& n, int v) { std::get<ConvolutionParams>(n.params).bias = v; });
+        addInt(tr("Scale"), p->scale, 1, 1000, [](ChainNode& n, int v) { std::get<ConvolutionParams>(n.params).scale = v; });
+        auto* info = new QLabel(tr("7×7 kernel (imported, read-only)"), m_propContainer);
+        form->addRow(info);
+    }
+    else if (std::holds_alternative<NormaliseParams>(params))
+    {
+        auto* info = new QLabel(tr("Auto-levels — no parameters"), m_propContainer);
+        info->setWordWrap(true);
+        form->addRow(info);
+    }
+    else if (auto* p = std::get_if<MultiFilterParams>(&params))
+    {
+        addEnum(tr("Effect"), p->effect, {"Chrome", "Double chrome", "Triple chrome", "Infinite root"}, [](ChainNode& n, int v) { std::get<MultiFilterParams>(n.params).effect = v; });
+        addBool(tr("On beat only"), p->onBeat, [](ChainNode& n, bool v) { std::get<MultiFilterParams>(n.params).onBeat = v; });
+    }
+    else if (auto* p = std::get_if<AddBordersParams>(&params))
+    {
+        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<AddBordersParams>(n.params).color = v; });
+        addInt(tr("Size"), p->size, 0, 200, [](ChainNode& n, int v) { std::get<AddBordersParams>(n.params).size = v; });
     }
     else if (auto* p = std::get_if<BlitterFeedbackParams>(&params))
     {

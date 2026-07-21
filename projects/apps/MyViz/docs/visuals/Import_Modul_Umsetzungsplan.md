@@ -114,6 +114,39 @@ Presets zum Laufen bringen; nur bestehende Infra.
 - **Render: Triangle** (`Render: Triangle`) — EEL-Dreiecke (Tri-Rasterizer im `ScopeRenderer`).
 - **Text** (Builtin 28, `r_text.cpp`) — **GDI-Textrendering** (Font/Layout); höchster Aufwand.
 
+### Batch H — Fraktal-Module (original, **kein** Import) — nach E–G
+
+Eigenständige, **host-native** Fraktal-Generatoren als Content-Quellen (wie
+SuperScope) — kein AVS-Effekt. **Rezept-Abweichung: nur 5 Schichten** (Param ·
+Render · Serializer · Panel · Tests) — Decoder + Translator entfallen, weil keine
+`.avs`-Herkunft. Alle **dynamisch modifizierbar**: ein EEL-Frame/Beat-Slot
+(`ScriptSlotHost`) setzt die Kernparameter pro Frame, plus optionale
+Audio-Bindung (bass/mid/treble/beat → Parameter). Farbe über eine gemeinsame
+Gradient-LUT (wie Color Map).
+
+1. **Fractal2D** (Escape-Time-Fragment-Shader). Typen: **Mandelbrot, Julia,
+   Burning Ship, Tricorn, Multibrot (Potenz p), Newton**. Params: `type`,
+   `center(x,y)`, `zoom`, `maxIter`, `juliaC(x,y)`, `power`, `escapeR`,
+   Farb-LUT + Cycle, Innen-/Außenfärbung (smooth iteration count). EEL setzt
+   center/zoom/juliaC/power → Zoom-Fahrten, Julia-Morph, Audio-Puls.
+2. **Fractal3D** (Raymarched Distance-Estimator). Typen: **Mandelbulb (Potenz 8,
+   variabel), Mandelbox (Scale/Fold), Menger-Schwamm, Quaternion-Julia**. Params:
+   Kamera (Pos/Orbit/FOV), `power`/`scale`/`fold`, `maxSteps`, `maxIter`, Licht
+   (Richtung/Ambient/AO), Farbe, Fog. EEL/Audio moduliert power/rotation/orbit/fold.
+3. **Drittes Modul** — Auswahl (§6.5):
+   - **(a) Domain-Warp fBm** (organischer Noise-Fraktal, fBm + Domain-Warping):
+     billig, sehr audio-reaktiv, „Plasma/Nebel"-Look. **Empfehlung** (bester
+     Aufwand/Nutzen, ergänzt 2D/3D).
+   - **(b) Flame / IFS** (Iterated Function System, Apophysis-Stil): Punkt-
+     Akkumulation über Feedback/Compute, spektakulär, sehr reaktiv. Aufwand hoch.
+   - **(c) Fractal-Zoomer** (Fractal2D + `FeedbackBuffer` = Endlos-Zoom-Trip),
+     nutzt vorhandene Infra.
+
+**Querschnitt:** gemeinsame Fraktal-Farbpalette (ColorGradient-LUT) + optionale
+**Audio-Parameter-Bindung** (Modul-übergreifend). **Backlog-Ideen:** Kleinian/
+hyperbolische Kachelung, Lyapunov-Fraktal, Buddhabrot, Apollonian-Gasket,
+Quaternion-Mandelbrot-Slices.
+
 ---
 
 ## 4. Neue Querschnitts-Infrastruktur
@@ -167,10 +200,18 @@ Alle vier festgelegt — verbindlich für den Bau:
    (max. Preset-Abdeckung), Texer II + Bild-Lader + Text danach. Entscheid #1 kann
    während Phase 1 vorbereitet werden.
 
+**Offen:**
+
+5. **Fraktal-Modul #3 (Batch H):** Domain-Warp fBm (Empfehlung) · Flame/IFS ·
+   Fractal-Zoomer — oder mehrere. Umsetzung erst **nach E–G**.
+
 ---
 
 ## 7. Changelog
 
+- **0.4.0** (2026-07-21): **Batch H — Fraktal-Module** (original, host-native, 5-Schichten-
+  Rezept): Fractal2D (Mandelbrot/Julia/…), Fractal3D (Mandelbulb/Mandelbox/…), drittes
+  Modul zur Auswahl (Domain-Warp fBm empfohlen); Audio/EEL-Modulation; §6.5 offen.
 - **0.3.0** (2026-07-21): §6 von „offen" auf **Entscheide** (Patrik) — Assets einbacken,
   Dynamic Shift Uniform-Offset, FPS-Limiter no-op+Notiz, Reihenfolge Phase 1 A–E → F–G.
 - **0.2.0** (2026-07-21): Moving Particle + Set-Render-Mode-Blend-Vervollständigung

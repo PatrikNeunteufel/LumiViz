@@ -215,6 +215,11 @@ private:
         std::string jherikoCompiled;
         bool jherikoInited = false;
 
+        // Interleave: eased stripe spacing (r_interleave cur_x/cur_y)
+        bool interSeeded = false;
+        float interCurX = 1.0f;
+        float interCurY = 1.0f;
+
         // Moving Particle: spring-particle state (r_parts)
         bool mpSeeded = false;
         float mpCx = 0.0f, mpCy = 0.0f;   ///< spring target (randomized on beat)
@@ -310,6 +315,14 @@ private:
     void runBufferBlend(const lumi::multieffect::BufferBlendParams& params);
     void runJherikoGlobal(const lumi::multieffect::ChainNode& node,
                           const lumi::multieffect::JherikoGlobalParams& params);
+    void runColorClip(const lumi::multieffect::ColorClipParams& params);
+    void runUniqueTone(const lumi::multieffect::UniqueToneParams& params);
+    void runInterleave(const lumi::multieffect::ChainNode& node,
+                       const lumi::multieffect::InterleaveParams& params);
+    void runConvolution(const lumi::multieffect::ConvolutionParams& params);
+    void runNormalise();
+    void runMultiFilter(const lumi::multieffect::MultiFilterParams& params);
+    void runAddBorders(const lumi::multieffect::AddBordersParams& params);
     void runDynamicMovement(const lumi::multieffect::ChainNode& node,
                             const lumi::multieffect::DynamicMovementParams& params);
     /** Shared grid-warp: run the module, build the mesh, sample current→partner. */
@@ -408,6 +421,14 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_ddmShader;    ///< Dynamic Distance Modifier (r_ddm)
     std::unique_ptr<QOpenGLShaderProgram> m_colorMapShader;  ///< Color Map APE
     std::unique_ptr<QOpenGLShaderProgram> m_bufferBlendShader;  ///< Buffer blend APE
+    std::unique_ptr<QOpenGLShaderProgram> m_colorClipShader;    ///< Color Clip (r_contrast)
+    std::unique_ptr<QOpenGLShaderProgram> m_uniqueToneShader;   ///< Unique Tone (r_onetone)
+    std::unique_ptr<QOpenGLShaderProgram> m_interleaveShader;   ///< Interleave (r_interleave)
+    std::unique_ptr<QOpenGLShaderProgram> m_convolutionShader;  ///< Convolution APE
+    std::unique_ptr<QOpenGLShaderProgram> m_normaliseShader;    ///< Normalise APE
+    std::unique_ptr<QOpenGLShaderProgram> m_multiFilterShader;  ///< MultiFilter APE
+    std::unique_ptr<QOpenGLShaderProgram> m_addBordersShader;   ///< Add Borders APE
+    std::unique_ptr<QOpenGLFramebufferObject> m_reduceFbo;      ///< Normalise min/max readback (32x32)
     std::unique_ptr<QOpenGLShaderProgram> m_wbPropShader;  ///< water-bump wave propagation
     std::unique_ptr<QOpenGLShaderProgram> m_wbDispShader;  ///< water-bump refraction
     std::unique_ptr<QOpenGLShaderProgram> m_timescopeShader;

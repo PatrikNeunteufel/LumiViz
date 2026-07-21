@@ -547,6 +547,182 @@ void main()
 }
 )";
 
+// AVS APE "Holden03: Convolution Filter": 7x7 kernel over the image.
+const char* kConvolutionFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform vec2 uRes;
+uniform float uKernel[49];
+uniform float uScale;
+uniform float uBias;
+uniform int uAbsolute;
+uniform int uEdge;
+out vec4 fragColor;
+vec2 sampleUV(vec2 uv) { return uEdge == 1 ? fract(uv) : clamp(uv, 0.0, 1.0); }
+void main()
+{
+    vec2 texel = 1.0 / uRes;
+    vec3 sum = vec3(0.0);
+    for (int j = 0; j < 7; j++)
+        for (int i = 0; i < 7; i++)
+        {
+            float k = uKernel[j * 7 + i];
+            vec2 off = vec2(float(i - 3), float(j - 3)) * texel;
+            sum += texture(uTex, sampleUV(vTex + off)).rgb * k;
+        }
+    vec3 r = sum / uScale + vec3(uBias / 255.0);
+    if (uAbsolute == 1) r = abs(r);
+    fragColor = vec4(clamp(r, 0.0, 1.0), 1.0);
+}
+)";
+
+// AVS APE "Trans: Normalise": stretch the image between measured min/max.
+const char* kNormaliseFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform float uLo;
+uniform float uHi;
+out vec4 fragColor;
+void main()
+{
+    vec3 c = texture(uTex, vTex).rgb;
+    float d = max(uHi - uLo, 1.0 / 255.0);
+    fragColor = vec4(clamp((c - vec3(uLo)) / d, 0.0, 1.0), 1.0);
+}
+)";
+
+// AVS APE "Jheriko : MULTIFILTER": fixed chrome/root filters (math approximated).
+const char* kMultiFilterFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform int uEffect;
+out vec4 fragColor;
+vec3 chrome(vec3 c) { return vec3(1.0) - abs(2.0 * c - vec3(1.0)); }
+void main()
+{
+    vec3 c = texture(uTex, vTex).rgb;
+    vec3 r;
+    if (uEffect == 0)      r = chrome(c);
+    else if (uEffect == 1) r = chrome(chrome(c));
+    else if (uEffect == 2) r = chrome(chrome(chrome(c)));
+    else                   r = sqrt(c);
+    fragColor = vec4(r, 1.0);
+}
+)";
+
+// AVS APE "Virtual Effect: Addborders": solid border of uColor, uSize pixels.
+const char* kAddBordersFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform vec2 uRes;
+uniform vec3 uColor;
+uniform int uSize;
+out vec4 fragColor;
+void main()
+{
+    vec3 c = texture(uTex, vTex).rgb;
+    ivec2 p = ivec2(vTex * uRes);
+    ivec2 res = ivec2(uRes);
+    bool border = p.x < uSize || p.y < uSize ||
+                  p.x >= res.x - uSize || p.y >= res.y - uSize;
+    fragColor = vec4(border ? uColor : c, 1.0);
+}
+)";
+
+// AVS "Trans / Color Clip" (ID 12): replace pixels matching a colour threshold.
+const char* kColorClipFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform int uMode;
+uniform vec3 uClip;
+uniform vec3 uOut;
+uniform float uDist;
+out vec4 fragColor;
+void main()
+{
+    vec3 c = texture(uTex, vTex).rgb;
+    bool hit;
+    if (uMode == 1)      hit = all(lessThanEqual(c, uClip));
+    else if (uMode == 2) hit = all(greaterThanEqual(c, uClip));
+    else { vec3 d = c - uClip; hit = dot(d, d) <= uDist * uDist; }
+    fragColor = vec4(hit ? uOut : c, 1.0);
+}
+)";
+
+// AVS "Trans / Unique Tone" (ID 38): tint to a single hue by luminance.
+const char* kUniqueToneFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform vec3 uColor;
+uniform int uInvert;
+uniform int uBlend;
+out vec4 fragColor;
+void main()
+{
+    vec3 c = texture(uTex, vTex).rgb;
+    float d = max(max(c.r, c.g), c.b);
+    if (uInvert == 1) d = 1.0 - d;
+    vec3 tone = uColor * d;
+    vec3 r;
+    if (uBlend == 1)      r = min(c + tone, vec3(1.0));
+    else if (uBlend == 2) r = (c + tone) * 0.5;
+    else                  r = tone;
+    fragColor = vec4(r, 1.0);
+}
+)";
+
+// AVS "Trans / Interleave" (ID 23): overlay a stripe/grid of uColor at spacing
+// uSpacing (px; component 0 = that axis off), matching r_interleave's toggling.
+const char* kInterleaveFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform vec2 uRes;
+uniform ivec2 uSpacing;
+uniform vec3 uColor;
+uniform int uBlend;
+out vec4 fragColor;
+void main()
+{
+    vec3 c = texture(uTex, vTex).rgb;
+    int px = int(vTex.x * uRes.x);
+    int py = int(vTex.y * uRes.y);
+    int tx = uSpacing.x;
+    int ty = uSpacing.y;
+    bool colored = false;
+    if (ty > 0)
+    {
+        int yy = py + (int(uRes.y) % ty) / 2;
+        bool ystat = ((yy / ty) & 1) == 1;
+        if (!ystat) colored = true;
+        else if (tx > 0)
+        {
+            int xx = px + (int(uRes.x) % tx) / 2;
+            if (((xx / tx) & 1) == 0) colored = true;
+        }
+    }
+    else if (tx > 0)
+    {
+        int xx = px + (int(uRes.x) % tx) / 2;
+        if (((xx / tx) & 1) == 0) colored = true;
+    }
+    vec3 r = c;
+    if (colored)
+    {
+        if (uBlend == 1)      r = min(c + uColor, vec3(1.0));
+        else if (uBlend == 2) r = (c + uColor) * 0.5;
+        else                  r = uColor;
+    }
+    fragColor = vec4(r, 1.0);
+}
+)";
+
 // AVS APE "Color Map": pick an input value per pixel (uKey selects the channel),
 // look it up in a 256-entry gradient LUT (uLut), and blend the mapped colour onto
 // the image per uBlend (0..9). uAdjust is the ADJUSTABLE weight.
@@ -851,6 +1027,14 @@ void MultiEffectVisualizer::onCleanup()
     m_ddmShader.reset();
     m_colorMapShader.reset();
     m_bufferBlendShader.reset();
+    m_colorClipShader.reset();
+    m_uniqueToneShader.reset();
+    m_interleaveShader.reset();
+    m_convolutionShader.reset();
+    m_normaliseShader.reset();
+    m_multiFilterShader.reset();
+    m_addBordersShader.reset();
+    m_reduceFbo.reset();
     m_wbPropShader.reset();
     m_wbDispShader.reset();
     m_timescopeShader.reset();
@@ -903,6 +1087,13 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_ddmShader = makeProgram(kQuadVertexShader, kDdmFragmentShader);
     m_colorMapShader = makeProgram(kQuadVertexShader, kColorMapFragmentShader);
     m_bufferBlendShader = makeProgram(kQuadVertexShader, kBufferBlendFragmentShader);
+    m_colorClipShader = makeProgram(kQuadVertexShader, kColorClipFragmentShader);
+    m_uniqueToneShader = makeProgram(kQuadVertexShader, kUniqueToneFragmentShader);
+    m_interleaveShader = makeProgram(kQuadVertexShader, kInterleaveFragmentShader);
+    m_convolutionShader = makeProgram(kQuadVertexShader, kConvolutionFragmentShader);
+    m_normaliseShader = makeProgram(kQuadVertexShader, kNormaliseFragmentShader);
+    m_multiFilterShader = makeProgram(kQuadVertexShader, kMultiFilterFragmentShader);
+    m_addBordersShader = makeProgram(kQuadVertexShader, kAddBordersFragmentShader);
     m_wbPropShader = makeProgram(kQuadVertexShader, kWaterBumpPropShader);
     m_wbDispShader = makeProgram(kQuadVertexShader, kWaterBumpDispShader);
     m_timescopeShader = makeProgram(kQuadVertexShader, kTimescopeFragmentShader);
@@ -917,7 +1108,11 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_interfShader == nullptr || m_waterShader == nullptr ||
         m_bumpShader == nullptr || m_shiftShader == nullptr ||
         m_ddmShader == nullptr || m_colorMapShader == nullptr ||
-        m_bufferBlendShader == nullptr || m_wbPropShader == nullptr ||
+        m_bufferBlendShader == nullptr || m_colorClipShader == nullptr ||
+        m_uniqueToneShader == nullptr || m_interleaveShader == nullptr ||
+        m_convolutionShader == nullptr || m_normaliseShader == nullptr ||
+        m_multiFilterShader == nullptr || m_addBordersShader == nullptr ||
+        m_wbPropShader == nullptr ||
         m_wbDispShader == nullptr || m_timescopeShader == nullptr ||
         m_apeShader == nullptr)
     {
@@ -1188,6 +1383,13 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const ColorMapParams& params) const { self.runColorMap(node, params); }
         void operator()(const BufferBlendParams& params) const { self.runBufferBlend(params); }
         void operator()(const JherikoGlobalParams& params) const { self.runJherikoGlobal(node, params); }
+        void operator()(const ColorClipParams& params) const { self.runColorClip(params); }
+        void operator()(const UniqueToneParams& params) const { self.runUniqueTone(params); }
+        void operator()(const InterleaveParams& params) const { self.runInterleave(node, params); }
+        void operator()(const ConvolutionParams& params) const { self.runConvolution(params); }
+        void operator()(const NormaliseParams&) const { self.runNormalise(); }
+        void operator()(const MultiFilterParams& params) const { self.runMultiFilter(params); }
+        void operator()(const AddBordersParams& params) const { self.runAddBorders(params); }
         void operator()(const ChannelShiftParams& params) const { self.runChannelShift(node, params); }
         void operator()(const ColorReductionParams& params) const { self.runColorReduction(params); }
         void operator()(const MultiplierParams& params) const { self.runMultiplier(params); }
@@ -2256,6 +2458,149 @@ void MultiEffectVisualizer::runBufferBlend(const BufferBlendParams& params)
     pair.partner()->release();
     pair.swap();
     bindActive();
+}
+
+void MultiEffectVisualizer::runColorClip(const ColorClipParams& params)
+{
+    const QVector3D clip = colorToVec(params.clipColor);
+    const QVector3D outc = colorToVec(params.outColor);
+    m_colorClipShader->bind();
+    m_colorClipShader->setUniformValue("uMode", std::clamp(params.mode, 1, 3));
+    m_colorClipShader->setUniformValue("uClip", clip);
+    m_colorClipShader->setUniformValue("uOut", outc);
+    m_colorClipShader->setUniformValue(
+        "uDist", static_cast<float>(params.distance) * 2.0f / 255.0f);
+    m_colorClipShader->release();
+    transformPass(*m_colorClipShader);
+}
+
+void MultiEffectVisualizer::runUniqueTone(const UniqueToneParams& params)
+{
+    m_uniqueToneShader->bind();
+    m_uniqueToneShader->setUniformValue("uColor", colorToVec(params.color));
+    m_uniqueToneShader->setUniformValue("uInvert", params.invert ? 1 : 0);
+    m_uniqueToneShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_uniqueToneShader->release();
+    transformPass(*m_uniqueToneShader);
+}
+
+void MultiEffectVisualizer::runInterleave(const ChainNode& node,
+                                          const InterleaveParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    if (!rt.interSeeded)
+    {
+        rt.interCurX = static_cast<float>(params.x);
+        rt.interCurY = static_cast<float>(params.y);
+        rt.interSeeded = true;
+    }
+    // Ease towards x/y (r_interleave sc1), jump to x2/y2 on beat.
+    const float sc1 = (static_cast<float>(params.beatDuration) + 512.0f - 64.0f) / 512.0f;
+    rt.interCurX = rt.interCurX * sc1 + static_cast<float>(params.x) * (1.0f - sc1);
+    rt.interCurY = rt.interCurY * sc1 + static_cast<float>(params.y) * (1.0f - sc1);
+    if (m_frameBeat && params.onBeat)
+    {
+        rt.interCurX = static_cast<float>(params.x2);
+        rt.interCurY = static_cast<float>(params.y2);
+    }
+
+    m_interleaveShader->bind();
+    m_interleaveShader->setUniformValue("uRes",
+                                        QVector2D(static_cast<float>(m_surfaceWidth),
+                                                  static_cast<float>(m_surfaceHeight)));
+    m_interleaveShader->setUniformValue(
+        "uSpacing", QPoint(std::max(0, static_cast<int>(rt.interCurX)),
+                           std::max(0, static_cast<int>(rt.interCurY))));
+    m_interleaveShader->setUniformValue("uColor", colorToVec(params.color));
+    m_interleaveShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_interleaveShader->release();
+    transformPass(*m_interleaveShader);
+}
+
+void MultiEffectVisualizer::runConvolution(const ConvolutionParams& params)
+{
+    std::array<float, 49> kf{};
+    for (int i = 0; i < 49; ++i)
+        kf[static_cast<std::size_t>(i)] = static_cast<float>(params.kernel[static_cast<std::size_t>(i)]);
+    const float scale = params.scale != 0 ? static_cast<float>(params.scale) : 1.0f;
+
+    auto pass = [&] {
+        m_convolutionShader->bind();
+        m_convolutionShader->setUniformValue(
+            "uRes", QVector2D(static_cast<float>(m_surfaceWidth),
+                              static_cast<float>(m_surfaceHeight)));
+        m_convolutionShader->setUniformValueArray("uKernel", kf.data(), 49, 1);
+        m_convolutionShader->setUniformValue("uScale", scale);
+        m_convolutionShader->setUniformValue("uBias", static_cast<float>(params.bias));
+        m_convolutionShader->setUniformValue("uAbsolute", params.absolute ? 1 : 0);
+        m_convolutionShader->setUniformValue("uEdge", std::clamp(params.edgeMode, 0, 1));
+        m_convolutionShader->release();
+        transformPass(*m_convolutionShader);
+    };
+    pass();
+    if (params.twoPass) pass();
+}
+
+void MultiEffectVisualizer::runNormalise()
+{
+    auto* f = QOpenGLContext::currentContext()->functions();
+    auto* extra = QOpenGLContext::currentContext()->extraFunctions();
+    constexpr int kR = 32;
+    if (m_reduceFbo == nullptr)
+    {
+        m_reduceFbo = std::make_unique<QOpenGLFramebufferObject>(kR, kR);
+    }
+
+    // Downscale the current buffer into the small FBO, then read it back to find
+    // the luminance min/max (small readback — one GPU sync per Normalise node).
+    SurfacePair& pair = active();
+    extra->glBindFramebuffer(GL_READ_FRAMEBUFFER, pair.current()->handle());
+    extra->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_reduceFbo->handle());
+    extra->glBlitFramebuffer(0, 0, m_surfaceWidth, m_surfaceHeight, 0, 0, kR, kR,
+                             GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+    m_reduceFbo->bind();
+    std::array<unsigned char, kR * kR * 4> px{};
+    f->glReadPixels(0, 0, kR, kR, GL_RGBA, GL_UNSIGNED_BYTE, px.data());
+    m_reduceFbo->release();
+
+    float lo = 1.0f;
+    float hi = 0.0f;
+    for (int i = 0; i < kR * kR; ++i)
+    {
+        const float m = static_cast<float>(std::max({px[i * 4], px[i * 4 + 1],
+                                                      px[i * 4 + 2]})) / 255.0f;
+        lo = std::min(lo, m);
+        hi = std::max(hi, m);
+    }
+
+    bindActive();  // restore the working surface before the stretch pass
+    m_normaliseShader->bind();
+    m_normaliseShader->setUniformValue("uLo", lo);
+    m_normaliseShader->setUniformValue("uHi", hi);
+    m_normaliseShader->release();
+    transformPass(*m_normaliseShader);
+}
+
+void MultiEffectVisualizer::runMultiFilter(const MultiFilterParams& params)
+{
+    if (params.onBeat && !m_frameBeat) return;  // only on beat frames
+    m_multiFilterShader->bind();
+    m_multiFilterShader->setUniformValue("uEffect", std::clamp(params.effect, 0, 3));
+    m_multiFilterShader->release();
+    transformPass(*m_multiFilterShader);
+}
+
+void MultiEffectVisualizer::runAddBorders(const AddBordersParams& params)
+{
+    m_addBordersShader->bind();
+    m_addBordersShader->setUniformValue("uRes",
+                                        QVector2D(static_cast<float>(m_surfaceWidth),
+                                                  static_cast<float>(m_surfaceHeight)));
+    m_addBordersShader->setUniformValue("uColor", colorToVec(params.color));
+    m_addBordersShader->setUniformValue("uSize", std::max(0, params.size));
+    m_addBordersShader->release();
+    transformPass(*m_addBordersShader);
 }
 
 void MultiEffectVisualizer::runJherikoGlobal(const ChainNode& node,

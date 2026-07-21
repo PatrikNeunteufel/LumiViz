@@ -37,9 +37,8 @@ Panel + Tests). Das Bau-Rezept dazu: [Import_Modul_Umsetzungsplan.md](Import_Mod
 - `A` = schwer testbar (Bild-/Video-/GDI-/externe-DLL-Bindung).
 - `—` = kein Render (no-op/Meta), nichts sichtzutesten.
 
-**Ist-Stand:** 33 Builtins ✅ + Set Render Mode ◐ · 8 APEs ✅ (inkl. Color Map,
-Buffer blend, Jheriko Global). Unit-Suite grün (268 Cases); GL-Sichttest von
-Batch A/B/C + §5.2-Block steht aus.
+**Ist-Stand:** 36 Builtins ✅ + Set Render Mode ◐ · 12 APEs ✅ + Framerate Limiter ◐.
+Unit-Suite grün (275 Cases); GL-Sichttest von Batch A–D + §5.2-Block steht aus.
 
 ---
 
@@ -62,7 +61,7 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 9 | Roto Blitter | Trans | ✅ | `RotoBlitterParams` | U·S offen |
 | 10 | SVP Loader | Render | ✖ | externe UVS/SVP-DLL | — |
 | 11 | Colorfade | Trans | ✅ | `ColorfadeParams` | U·S offen |
-| 12 | Color Clip | Trans | ⬜ | `r_contrast.cpp` — Batch D | U*·S |
+| 12 | Color Clip | Trans | ✅ | `ColorClipParams` (below/above/near) | U·S offen |
 | 13 | Rotating Stars | Render | ⬜ | `r_rotstar.cpp` — Batch E | U*·S |
 | 14 | Ring | Render | ⬜ | `r_oscring.cpp` — Batch E | U*·S |
 | 15 | Movement | Trans | ✅ | `MovementParams` (+23 Builtin-Formeln) | U·S offen |
@@ -73,7 +72,7 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 20 | Water | Trans | ✅ | `WaterParams` | U·S offen |
 | 21 | Comment | Misc | ✅ | stiller no-op (keine Passthrough-Warnung) | — |
 | 22 | Brightness | Trans | ✅ | `BrightnessParams` | U·S offen |
-| 23 | Interleave | Trans | ⬜ | `r_interleave.cpp` — Batch D | U*·S |
+| 23 | Interleave | Trans | ✅ | `InterleaveParams` (Streifen + Beat-Ease) | U·S offen |
 | 24 | Grain | Trans | ✅ | `GrainParams` | U·S offen |
 | 25 | Clear Screen | Render | ✅ | `ClearParams` | U·S offen |
 | 26 | Mirror | Trans | ✅ | `MirrorParams` | U·S offen |
@@ -88,7 +87,7 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 35 | **Dynamic Distance Modifier** | Trans | ✅ | `DynamicDistanceModifierParams` (radiale d-LUT) | U·S offen |
 | 36 | SuperScope | Render | ✅ | `SuperScopeParams` (+Figuren/Farbe) | U·S offen |
 | 37 | Invert | Trans | ✅ | `InvertParams` | U·S offen |
-| 38 | Unique Tone | Trans | ⬜ | `r_onetone.cpp` — Batch D | U*·S |
+| 38 | Unique Tone | Trans | ✅ | `UniqueToneParams` (Tönung color×depth) | U·S offen |
 | 39 | Timescope | Render | ✅ | `TimescopeParams` | U·S offen |
 | 40 | **Set Render Mode** | Misc | ◐ | „unrolled": setzt **Linienbreite + Blend-Mode** folgender Scopes (Bits 0–7 → SuperScope `lineBlend`). Kein eigener Effekt | U (Unroll) |
 | 41 | Interferences | Trans | ✅ | `InterferencesParams` | U·S offen |
@@ -97,7 +96,7 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 44 | Fast Brightness | Trans | ✅ | `FastBrightnessParams` | U·S offen |
 | 45 | Color Modifier | Trans | ✅ | `ColorModifierParams` | U·S offen |
 
-**Builtin-Bilanz:** ✅ 33 · ◐ 1 (Set Render Mode) · ⬜ 10 · ✖ 2.
+**Builtin-Bilanz:** ✅ 36 · ◐ 1 (Set Render Mode) · ⬜ 7 · ✖ 2.
 
 ---
 
@@ -116,13 +115,13 @@ Referenz für Strings + Feld-Layouts: `grandchild/AVS-File-Decoder`
 | `Holden05: Multi Delay` | Multi Delay | Trans | ✅ | `MultiDelayParams` (6 host-globale Ringe) | U·S offen | mittel–hoch |
 | `Color Map` | Color Map | Trans | ✅ | `ColorMapParams` (256-LUT-Textur + Blend-Shader) | U·S offen | sehr hoch |
 | `Acko.net: Texer II` | Texer II | Render | ⬜ | Bild+EEL+Punktschleife — Batch F | A·S | sehr hoch |
-| `Holden03: Convolution Filter` | Convolution | Trans | ⬜ | 7×7-Kernel-Shader — Batch D | U*·S | hoch |
+| `Holden03: Convolution Filter` | Convolution | Trans | ✅ | `ConvolutionParams` (7×7-Kernel-Shader, 2-Pass) | U·S offen | hoch |
 | `Misc: Buffer blend` | Buffer Blend | Misc | ✅ | `BufferBlendParams` (2-Textur-Blend, 11 Modi) | U·S offen | mittel–hoch |
 | `Jheriko: Global` | Global Variables | Misc | ✅ | `JherikoGlobalParams` (EEL → reg/gmegabuf via ScriptContext) | U·S offen | mittel |
-| `Trans: Normalise` | Normalise | Trans | ⬜ | Min/Max-Reduktion — Batch D | U*·S | mittel |
-| `Jheriko : MULTIFILTER` | MultiFilter | Misc | ⬜ | Fest-Pixelfilter — Batch D ⚠ Space vor `:` | U*·S | mittel |
-| `Virtual Effect: Addborders` | Add Borders | Misc | ⬜ | Rahmen-Shader — Batch D | U*·S | niedrig–mittel |
-| `VFX FRAMERATE LIMITER` | Framerate Limiter | Misc | ⬜ | vmtl. no-op — Batch D | — | niedrig–mittel |
+| `Trans: Normalise` | Normalise | Trans | ✅ | `NormaliseParams` (32×32-Readback → Min/Max-Stretch) | U·S offen | mittel |
+| `Jheriko : MULTIFILTER` | MultiFilter | Misc | ✅ | `MultiFilterParams` (Chrome/Root, **approximiert**) ⚠ Space vor `:` | U·S offen | mittel |
+| `Virtual Effect: Addborders` | Add Borders | Misc | ✅ | `AddBordersParams` (Rahmen-Shader) | U·S offen | niedrig–mittel |
+| `VFX FRAMERATE LIMITER` | Framerate Limiter | Misc | ◐ | no-op + Import-Notiz (Host taktet) | — | niedrig–mittel |
 | `Render: Triangle` | Triangle | Render | ⬜ | EEL+Tri-Raster — Batch G | U*·S | mittel |
 | `Picture II` | Picture II | Misc | ⬜ | Bild-Lader — Batch G | A·S | mittel |
 | `Texer` | Texer (I) | Render | ⬜ | Bild-Lader — Batch G | A·S | niedrig |
@@ -133,7 +132,7 @@ Referenz für Strings + Feld-Layouts: `grandchild/AVS-File-Decoder`
 | `Nullsoft Pixelcorps: MIDItrace ` | MIDI Trace | Misc | ✖ | MIDI-Input ⚠ Trailing-Space | — | sehr niedrig |
 | `VFX AVI PLAYER` | AVI Player | Misc | ✖ | Video-Decode | — | sehr niedrig |
 
-**APE-Bilanz:** ✅ 8 · ⬜ 9 · ✖ 6.
+**APE-Bilanz:** ✅ 12 · ◐ 1 (Framerate Limiter) · ⬜ 4 · ✖ 6.
 
 **Parser-Fallstricke (Exakt-Match!):** `Jheriko : MULTIFILTER` hat ein **Leerzeichen
 vor dem Doppelpunkt**; `Nullsoft Pixelcorps: MIDItrace ` endet mit **Leerzeichen**.

@@ -26,6 +26,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <string>
 #include <variant>
@@ -177,6 +178,48 @@ struct BrightnessParams
     bool exclude = false;       ///< leave pixels near `color` untouched
     uint32_t color = 0x000000;  ///< exclusion color 0x00RRGGBB
     int distance = 16;          ///< exclusion radius 0..255
+};
+
+/**
+ * AVS "Trans / Color Clip" (ID 12, r_contrast.cpp): replace pixels matching a
+ * colour threshold with `outColor`. `mode` 1 below (all channels <= clip),
+ * 2 above (all >= clip), 3 near (within `distance` of clip). COLORREF-swapped.
+ */
+struct ColorClipParams
+{
+    int mode = 1;                    ///< 1 below, 2 above, 3 near
+    uint32_t clipColor = 0x202020;   ///< threshold colour 0x00RRGGBB
+    uint32_t outColor = 0x202020;    ///< replacement colour
+    int distance = 10;               ///< match radius (near mode)
+};
+
+/**
+ * AVS "Trans / Unique Tone" (ID 38, r_onetone.cpp): tint the image to a single
+ * hue — output = `color` * luminance(max channel), optionally inverted. `blend`
+ * 0 replace, 1 additive, 2 50/50.
+ */
+struct UniqueToneParams
+{
+    uint32_t color = 0xFFFFFF;  ///< tone colour 0x00RRGGBB
+    bool invert = false;        ///< invert the depth ramp
+    int blend = 0;              ///< 0 replace, 1 additive, 2 50/50
+};
+
+/**
+ * AVS "Trans / Interleave" (ID 23, r_interleave.cpp): overlay a stripe/grid of
+ * `color` at spacings `x`/`y` (0 = that axis off). On beat the spacing eases to
+ * `x2`/`y2` over `beatDuration`. `blend` 0 replace, 1 additive, 2 50/50.
+ */
+struct InterleaveParams
+{
+    int x = 1;                  ///< horizontal stripe spacing (px, 0 = off)
+    int y = 1;                  ///< vertical stripe spacing (px, 0 = off)
+    uint32_t color = 0x000000;  ///< stripe colour 0x00RRGGBB
+    int blend = 0;              ///< 0 replace, 1 additive, 2 50/50
+    bool onBeat = false;        ///< ease to x2/y2 on beat
+    int x2 = 1;
+    int y2 = 1;
+    int beatDuration = 4;       ///< ease length
 };
 
 /** AVS "Trans / Fast Brightness" (ID 44): dir 0 = x2, 1 = x0.5, 2 = off. */
@@ -588,6 +631,57 @@ struct JherikoGlobalParams
 };
 
 /**
+ * AVS APE "Holden03: Convolution Filter": a 7x7 convolution kernel over the image
+ * (community APE). `edgeMode` 0 extend (clamp), 1 wrap. `absolute` takes |result|.
+ * `twoPass` applies the kernel twice. `kernel` is 49 ints (row-major); the sum is
+ * divided by `scale` (0 -> 1) and offset by `bias`.
+ */
+struct ConvolutionParams
+{
+    bool absolute = false;
+    bool twoPass = false;
+    int edgeMode = 0;   ///< 0 extend, 1 wrap
+    int bias = 0;
+    int scale = 1;
+    std::array<int, 49> kernel = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+                                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  ///< identity (center=1)
+};
+
+/**
+ * AVS APE "Trans: Normalise": auto-levels — stretch the image so the darkest
+ * pixel becomes black and the brightest white (community APE). No parameters
+ * (enabled maps to the node's enabled flag). Min/max are measured on the GPU
+ * frame each render.
+ */
+struct NormaliseParams
+{
+};
+
+/**
+ * AVS APE "Jheriko : MULTIFILTER" (note the space before the colon): applies one
+ * of a few fixed pixel filters (community APE, closed source — the exact math is
+ * approximated). `effect` 0 chrome, 1 double, 2 triple, 3 infinite-root. `onBeat`
+ * only applies on beat frames.
+ */
+struct MultiFilterParams
+{
+    int effect = 0;       ///< 0 chrome, 1 double chrome, 2 triple chrome, 3 root
+    bool onBeat = false;  ///< apply only on beat frames
+};
+
+/**
+ * AVS APE "Virtual Effect: Addborders": draw a solid border of `color` and
+ * `size` pixels around the image (community APE).
+ */
+struct AddBordersParams
+{
+    uint32_t color = 0xFFFFFF;  ///< border colour 0x00RRGGBB
+    int size = 2;               ///< border width (px)
+};
+
+/**
  * AVS APE "Color Map": map a per-pixel input value (selected channel) through a
  * gradient LUT, then blend the result onto the image (UnConeD, community APE —
  * format per grandchild/AVS-File-Decoder). `key` picks the input (0 red, 1 green,
@@ -679,7 +773,10 @@ using EffectParams =
                  InterferencesParams, WaterParams, BumpParams, WaterBumpParams,
                  StarfieldParams, TimescopeParams, DotGridParams, DotPlaneParams,
                  DotFountainParams, ColorMapParams, BufferBlendParams,
-                 JherikoGlobalParams, ChannelShiftParams, ColorReductionParams,
+                 JherikoGlobalParams, ColorClipParams, UniqueToneParams,
+                 InterleaveParams, ConvolutionParams, NormaliseParams,
+                 MultiFilterParams, AddBordersParams,
+                 ChannelShiftParams, ColorReductionParams,
                  MultiplierParams, VideoDelayParams, MultiDelayParams,
                  DebugBarsParams, PassthroughParams>;
 
@@ -770,6 +867,13 @@ struct CompileResult
         const char* operator()(const ColorMapParams&) const { return "Color Map"; }
         const char* operator()(const BufferBlendParams&) const { return "Buffer Blend"; }
         const char* operator()(const JherikoGlobalParams&) const { return "Global Variables"; }
+        const char* operator()(const ColorClipParams&) const { return "Color Clip"; }
+        const char* operator()(const UniqueToneParams&) const { return "Unique Tone"; }
+        const char* operator()(const InterleaveParams&) const { return "Interleave"; }
+        const char* operator()(const ConvolutionParams&) const { return "Convolution"; }
+        const char* operator()(const NormaliseParams&) const { return "Normalise"; }
+        const char* operator()(const MultiFilterParams&) const { return "MultiFilter"; }
+        const char* operator()(const AddBordersParams&) const { return "Add Borders"; }
         const char* operator()(const ChannelShiftParams&) const { return "Channel Shift"; }
         const char* operator()(const ColorReductionParams&) const { return "Color Reduction"; }
         const char* operator()(const MultiplierParams&) const { return "Multiplier"; }

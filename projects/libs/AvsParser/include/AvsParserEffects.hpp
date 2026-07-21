@@ -508,6 +508,31 @@ inline void decodeDynamicShift(Reader& r, EffectNode& n)   // r_shift.cpp
     readField(r, n, "blend") && readField(r, n, "subpixel");
 }
 
+inline void decodeColorClip(Reader& r, EffectNode& n)   // r_contrast.cpp
+{
+    if (!readField(r, n, "enabled")) return;
+    if (!readField(r, n, "color_clip")) return;
+    std::int32_t out = 0;
+    if (r.tryI32(out)) addField(n, "color_clip_out", out);
+    else addField(n, "color_clip_out", n.field("color_clip"));  // old files: same
+    readField(r, n, "color_dist");
+}
+
+inline void decodeUniqueTone(Reader& r, EffectNode& n)   // r_onetone.cpp
+{
+    readField(r, n, "enabled") && readField(r, n, "color") &&
+        readField(r, n, "blend") && readField(r, n, "blendavg") &&
+        readField(r, n, "invert");
+}
+
+inline void decodeInterleave(Reader& r, EffectNode& n)   // r_interleave.cpp
+{
+    readField(r, n, "enabled") && readField(r, n, "x") && readField(r, n, "y") &&
+        readField(r, n, "color") && readField(r, n, "blend") &&
+        readField(r, n, "blendavg") && readField(r, n, "onbeat") &&
+        readField(r, n, "x2") && readField(r, n, "y2") && readField(r, n, "beatdur");
+}
+
 inline void decodeFastBrightness(Reader& r, EffectNode& n)   // r_fastbright.cpp
 {
     readFieldOr(r, n, "dir", 0);
@@ -584,6 +609,35 @@ inline void decodeColorMap(Reader& r, EffectNode& n)   // "Color Map" APE
     if (chosen == -1) addField(n, "cmcount", 0);
 }
 
+inline void decodeConvolution(Reader& r, EffectNode& n)   // "Holden03: Convolution Filter"
+{
+    readField(r, n, "enabled") && readField(r, n, "edgeMode") &&
+        readField(r, n, "absolute") && readField(r, n, "twoPass");
+    for (int i = 0; i < 49; ++i) readField(r, n, ("k" + std::to_string(i)).c_str());
+    readField(r, n, "bias") && readField(r, n, "scale");
+}
+
+inline void decodeNormalise(Reader& r, EffectNode& n)   // "Trans: Normalise"
+{
+    readField(r, n, "enabled");
+}
+
+inline void decodeMultiFilter(Reader& r, EffectNode& n)   // "Jheriko : MULTIFILTER"
+{
+    readField(r, n, "enabled") && readField(r, n, "effect") &&
+        readField(r, n, "onbeat") && readField(r, n, "null0");
+}
+
+inline void decodeAddBorders(Reader& r, EffectNode& n)   // "Virtual Effect: Addborders"
+{
+    readField(r, n, "enabled") && readField(r, n, "color") && readField(r, n, "size");
+}
+
+inline void decodeFramerateLimiter(Reader& r, EffectNode& n)   // "VFX FRAMERATE LIMITER"
+{
+    readField(r, n, "enabled") && readField(r, n, "limit");
+}
+
 inline void decodeBufferBlend(Reader& r, EffectNode& n)   // "Misc: Buffer blend" APE
 {
     readField(r, n, "enabled") && readField(r, n, "bufferB") &&
@@ -641,6 +695,9 @@ inline bool decodeBuiltin(std::int32_t builtinIndex, Reader& r, EffectNode& node
         case 37: decodeInvert(r, node); break;
         case 40: decodeSetRenderMode(r, node); break;
         case 8:  decodeMovingParticle(r, node); break;
+        case 12: decodeColorClip(r, node); break;
+        case 23: decodeInterleave(r, node); break;
+        case 38: decodeUniqueTone(r, node); break;
         case 35: decodeDynamicDistanceModifier(r, node); break;
         case 42: decodeDynamicShift(r, node); break;
         case 43: decodeDynamicMovement(r, node); break;
@@ -681,6 +738,16 @@ inline bool decodeApe(std::string_view apeId, Reader& r, EffectNode& node)
         decodeBufferBlend(r, node);
     else if (apeId == "Jheriko: Global")
         decodeJherikoGlobal(r, node);
+    else if (apeId == "Holden03: Convolution Filter")
+        decodeConvolution(r, node);
+    else if (apeId == "Trans: Normalise")
+        decodeNormalise(r, node);
+    else if (apeId == "Jheriko : MULTIFILTER")   // note: space before the colon
+        decodeMultiFilter(r, node);
+    else if (apeId == "Virtual Effect: Addborders")
+        decodeAddBorders(r, node);
+    else if (apeId == "VFX FRAMERATE LIMITER")
+        decodeFramerateLimiter(r, node);
     else
         return false;  // unknown APE: raw blob preserved
     node.decoded = true;

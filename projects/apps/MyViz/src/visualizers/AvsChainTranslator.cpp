@@ -24,6 +24,9 @@ using lumi::avs::EffectNode;
 enum AvsId
 {
     kMovingParticle = 8,
+    kColorClip = 12,
+    kInterleave = 23,
+    kUniqueTone = 38,
     kComment = 21,
     kDynamicDistanceModifier = 35,
     kDotPlane = 1,
@@ -199,6 +202,44 @@ bool mapApe(const EffectNode& src, ChainNode& out)
             default: p.mode = std::clamp(src.field("mode"), 0, 5); break;
         }
         p.onBeat = src.field("onbeat") != 0;
+        out.params = p;
+        return true;
+    }
+    if (src.apeId == "Holden03: Convolution Filter")
+    {
+        ConvolutionParams p;
+        p.edgeMode = std::clamp(src.field("edgeMode"), 0, 1);
+        p.absolute = src.field("absolute") != 0;
+        p.twoPass = src.field("twoPass") != 0;
+        p.bias = src.field("bias");
+        p.scale = src.field("scale");
+        for (int i = 0; i < 49; ++i)
+            p.kernel[static_cast<std::size_t>(i)] = src.field("k" + std::to_string(i));
+        out.enabled = src.field("enabled") != 0;
+        out.params = std::move(p);
+        return true;
+    }
+    if (src.apeId == "Trans: Normalise")
+    {
+        out.enabled = src.field("enabled") != 0;
+        out.params = NormaliseParams{};
+        return true;
+    }
+    if (src.apeId == "Jheriko : MULTIFILTER")
+    {
+        MultiFilterParams p;
+        p.effect = std::clamp(src.field("effect"), 0, 3);
+        p.onBeat = src.field("onbeat") != 0;
+        out.enabled = src.field("enabled") != 0;
+        out.params = p;
+        return true;
+    }
+    if (src.apeId == "Virtual Effect: Addborders")
+    {
+        AddBordersParams p;
+        p.color = avsColor(src.field("color"));
+        p.size = std::max(0, src.field("size"));
+        out.enabled = src.field("enabled") != 0;
         out.params = p;
         return true;
     }
@@ -395,6 +436,46 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.blend = src.field("blend") != 0;
             p.bilinear = src.field("subpixel") != 0;
             out.params = std::move(p);
+            return true;
+        }
+
+        case kColorClip:
+        {
+            ColorClipParams p;
+            const int en = src.field("enabled");
+            p.mode = en == 0 ? 1 : std::clamp(en, 1, 3);
+            p.clipColor = avsColor(src.field("color_clip"));
+            p.outColor = avsColor(src.field("color_clip_out"));
+            p.distance = src.field("color_dist");
+            out.enabled = en != 0;
+            out.params = p;
+            return true;
+        }
+
+        case kUniqueTone:
+        {
+            UniqueToneParams p;
+            p.color = avsColor(src.field("color"));
+            p.invert = src.field("invert") != 0;
+            p.blend = src.field("blend") != 0 ? 1 : (src.field("blendavg") != 0 ? 2 : 0);
+            out.enabled = src.field("enabled") != 0;
+            out.params = p;
+            return true;
+        }
+
+        case kInterleave:
+        {
+            InterleaveParams p;
+            p.x = std::max(0, src.field("x"));
+            p.y = std::max(0, src.field("y"));
+            p.color = avsColor(src.field("color"));
+            p.blend = src.field("blend") != 0 ? 1 : (src.field("blendavg") != 0 ? 2 : 0);
+            p.onBeat = src.field("onbeat") != 0;
+            p.x2 = std::max(0, src.field("x2"));
+            p.y2 = std::max(0, src.field("y2"));
+            p.beatDuration = std::max(1, src.field("beatdur"));
+            out.enabled = src.field("enabled") != 0;
+            out.params = p;
             return true;
         }
 
@@ -701,6 +782,20 @@ ChainNode translateNode(const EffectNode& src, const std::string& path, Context&
                                ", blend " + std::to_string(ctx.lineBlend) +
                                ") unrolled",
                            ctx);
+    }
+
+    // Framerate Limiter: the host owns frame pacing — import as a no-op with a
+    // note (decision: no-op + Notiz), not an "unsupported" passthrough.
+    if (src.apeId == "VFX FRAMERATE LIMITER")
+    {
+        ChainNode node;
+        PassthroughParams p;
+        p.sourceId = src.id;
+        p.note = "Framerate Limiter";
+        node.params = std::move(p);
+        node.displayName = "Framerate Limiter";
+        ctx.report.push_back(path + ": Framerate Limiter ignored (host controls pacing)");
+        return node;
     }
 
     // Comment: informational only (holds preset text). Conserve as a silent no-op

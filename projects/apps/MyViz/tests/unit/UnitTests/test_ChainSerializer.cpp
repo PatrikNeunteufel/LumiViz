@@ -431,6 +431,80 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{JherikoGlobalParams{}}) == "jherikoGlobal");
     }
 
+    TEST_CASE("Color-Clip / Unique-Tone / Interleave ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode a;
+        a.params = ColorClipParams{2, 0x112233, 0x445566, 25};
+        root.children.push_back(std::move(a));
+        ChainNode b;
+        UniqueToneParams ut; ut.color = 0x00FF00; ut.invert = true; ut.blend = 1;
+        b.params = ut;
+        root.children.push_back(std::move(b));
+        ChainNode c;
+        InterleaveParams il; il.x = 4; il.y = 0; il.color = 0x123456; il.blend = 2;
+        il.onBeat = true; il.x2 = 8; il.y2 = 2; il.beatDuration = 6;
+        c.params = il;
+        root.children.push_back(std::move(c));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 3);
+        const auto& pa = std::get<ColorClipParams>(restored.children[0].params);
+        CHECK(pa.mode == 2);
+        CHECK(pa.clipColor == 0x112233u);
+        CHECK(pa.distance == 25);
+        const auto& pb = std::get<UniqueToneParams>(restored.children[1].params);
+        CHECK(pb.color == 0x00FF00u);
+        CHECK(pb.invert == true);
+        CHECK(pb.blend == 1);
+        const auto& pc = std::get<InterleaveParams>(restored.children[2].params);
+        CHECK(pc.x == 4);
+        CHECK(pc.y == 0);
+        CHECK(pc.onBeat == true);
+        CHECK(pc.beatDuration == 6);
+        CHECK(effectTypeKey(EffectParams{ColorClipParams{}}) == "colorClip");
+        CHECK(effectTypeKey(EffectParams{UniqueToneParams{}}) == "uniqueTone");
+        CHECK(effectTypeKey(EffectParams{InterleaveParams{}}) == "interleave");
+    }
+
+    TEST_CASE("Convolution / MultiFilter / Add Borders ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode a;
+        ConvolutionParams cv;
+        cv.edgeMode = 1; cv.absolute = true; cv.twoPass = true; cv.bias = 5; cv.scale = 9;
+        cv.kernel[24] = 4; cv.kernel[0] = -1;
+        a.params = cv;
+        root.children.push_back(std::move(a));
+        ChainNode b;
+        b.params = MultiFilterParams{2, true};
+        root.children.push_back(std::move(b));
+        ChainNode c;
+        c.params = AddBordersParams{0x123456, 7};
+        root.children.push_back(std::move(c));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 3);
+        const auto& pa = std::get<ConvolutionParams>(restored.children[0].params);
+        CHECK(pa.edgeMode == 1);
+        CHECK(pa.twoPass == true);
+        CHECK(pa.scale == 9);
+        CHECK(pa.kernel[24] == 4);
+        CHECK(pa.kernel[0] == -1);
+        const auto& pb = std::get<MultiFilterParams>(restored.children[1].params);
+        CHECK(pb.effect == 2);
+        CHECK(pb.onBeat == true);
+        const auto& pc = std::get<AddBordersParams>(restored.children[2].params);
+        CHECK(pc.color == 0x123456u);
+        CHECK(pc.size == 7);
+        CHECK(effectTypeKey(EffectParams{ConvolutionParams{}}) == "convolution");
+        CHECK(effectTypeKey(EffectParams{NormaliseParams{}}) == "normalise");
+        CHECK(effectTypeKey(EffectParams{MultiFilterParams{}}) == "multiFilter");
+        CHECK(effectTypeKey(EffectParams{AddBordersParams{}}) == "addBorders");
+    }
+
     TEST_CASE("Interferences-Parameter ueberleben den Round-Trip")
     {
         ChainNode root;

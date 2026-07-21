@@ -288,6 +288,96 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(p.frameCode == "reg00=reg00+1");
     }
 
+    TEST_CASE("Color Clip (id 12): Modus + Farben; enabled=0 -> disabled")
+    {
+        EffectNode cc = builtin(12);
+        cc.fields = {{"enabled", 2}, {"color_clip", 0x0000FF /* COLORREF rot */},
+                     {"color_clip_out", 0x00FF00 /* gruen */}, {"color_dist", 20}};
+        const TranslationResult t = translateAvsTree(makeParsed({cc}));
+        REQUIRE(std::holds_alternative<ColorClipParams>(t.root.children[0].params));
+        const auto& p = std::get<ColorClipParams>(t.root.children[0].params);
+        CHECK(p.mode == 2);
+        CHECK(p.clipColor == 0xFF0000u);  // COLORREF -> RRGGBB
+        CHECK(p.outColor == 0x00FF00u);
+        CHECK(p.distance == 20);
+        CHECK(t.root.children[0].enabled);
+    }
+
+    TEST_CASE("Unique Tone (id 38) + Interleave (id 23) mappen Blend/Color")
+    {
+        EffectNode ut = builtin(38);
+        ut.fields = {{"enabled", 1}, {"color", 0x00FFFF}, {"blend", 0},
+                     {"blendavg", 1}, {"invert", 1}};
+        EffectNode il = builtin(23);
+        il.fields = {{"enabled", 1}, {"x", 4}, {"y", 0}, {"color", 0x123456},
+                     {"blend", 1}, {"blendavg", 0}, {"onbeat", 1}, {"x2", 8},
+                     {"y2", 2}, {"beatdur", 6}};
+        const TranslationResult t = translateAvsTree(makeParsed({ut, il}));
+        const auto& u = std::get<UniqueToneParams>(t.root.children[0].params);
+        CHECK(u.invert);
+        CHECK(u.blend == 2);  // blendavg -> 50/50
+        const auto& i = std::get<InterleaveParams>(t.root.children[1].params);
+        CHECK(i.x == 4);
+        CHECK(i.y == 0);
+        CHECK(i.blend == 1);  // blend -> additive
+        CHECK(i.onBeat);
+        CHECK(i.x2 == 8);
+        CHECK(i.beatDuration == 6);
+    }
+
+    TEST_CASE("Convolution (APE) -> Kernel + Flags gemappt")
+    {
+        EffectNode cv;
+        cv.id = lumi::avs::kApeIdBase;
+        cv.apeId = "Holden03: Convolution Filter";
+        cv.decoded = true;
+        cv.fields = {{"enabled", 1}, {"edgeMode", 1}, {"absolute", 1},
+                     {"twoPass", 1}, {"bias", 5}, {"scale", 9}, {"k24", 4}};
+        const TranslationResult t = translateAvsTree(makeParsed({cv}));
+        REQUIRE(std::holds_alternative<ConvolutionParams>(t.root.children[0].params));
+        const auto& p = std::get<ConvolutionParams>(t.root.children[0].params);
+        CHECK(p.edgeMode == 1);
+        CHECK(p.absolute);
+        CHECK(p.twoPass);
+        CHECK(p.scale == 9);
+        CHECK(p.kernel[24] == 4);  // center weight
+    }
+
+    TEST_CASE("MultiFilter + Add Borders (APEs) gemappt")
+    {
+        EffectNode mf;
+        mf.id = lumi::avs::kApeIdBase;
+        mf.apeId = "Jheriko : MULTIFILTER";
+        mf.decoded = true;
+        mf.fields = {{"enabled", 1}, {"effect", 2}, {"onbeat", 1}, {"null0", 0}};
+        EffectNode ab;
+        ab.id = lumi::avs::kApeIdBase;
+        ab.apeId = "Virtual Effect: Addborders";
+        ab.decoded = true;
+        ab.fields = {{"enabled", 1}, {"color", 0x0000FF}, {"size", 7}};
+        const TranslationResult t = translateAvsTree(makeParsed({mf, ab}));
+        const auto& m = std::get<MultiFilterParams>(t.root.children[0].params);
+        CHECK(m.effect == 2);
+        CHECK(m.onBeat);
+        const auto& b = std::get<AddBordersParams>(t.root.children[1].params);
+        CHECK(b.color == 0xFF0000u);  // COLORREF -> RRGGBB
+        CHECK(b.size == 7);
+    }
+
+    TEST_CASE("Framerate Limiter (APE) -> stiller no-op mit Notiz")
+    {
+        EffectNode fl;
+        fl.id = lumi::avs::kApeIdBase;
+        fl.apeId = "VFX FRAMERATE LIMITER";
+        fl.decoded = true;
+        fl.fields = {{"enabled", 1}, {"limit", 30}};
+        const TranslationResult t = translateAvsTree(makeParsed({fl}));
+        CHECK(std::holds_alternative<PassthroughParams>(t.root.children[0].params));
+        CHECK(t.passthroughCount == 0);  // not counted as unsupported
+        REQUIRE(t.report.size() == 1);
+        CHECK(t.report[0].find("Framerate Limiter") != std::string::npos);
+    }
+
     TEST_CASE("verschachtelte Liste mit Blend wird uebernommen")
     {
         EffectNode inner;
