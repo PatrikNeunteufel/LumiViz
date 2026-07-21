@@ -180,19 +180,27 @@ void main()
 )";
 
 // AVS Mirror (ID 26): reflect one half onto the other (r_mirror.cpp:166-247).
+// r_mirror: four directed half-copies with per-direction smooth factors
+// (BLEND_ADAPT divisor 0..16 -> uF 0..1). Sequential-buffer semantics are
+// approximated in one pass: each stage mixes with the ORIGINAL texture, which
+// differs from AVS only when opposing directions are active simultaneously.
 const char* kMirrorFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
 uniform sampler2D uTex;
-uniform bool uLeftToRight;  // right half mirrors the left
-uniform bool uTopToBottom;  // bottom half mirrors the top
+uniform vec4 uF;  // factors: x=top->bottom, y=bottom->top, z=left->right, w=right->left
 out vec4 fragColor;
 void main()
 {
     vec2 uv = vTex;
-    if (uLeftToRight && uv.x > 0.5) uv.x = 1.0 - uv.x;
-    if (uTopToBottom && uv.y < 0.5) uv.y = 1.0 - uv.y;
-    fragColor = vec4(texture(uTex, uv).rgb, 1.0);
+    vec3 c = texture(uTex, uv).rgb;
+    vec3 mx = texture(uTex, vec2(1.0 - uv.x, uv.y)).rgb;
+    vec3 my = texture(uTex, vec2(uv.x, 1.0 - uv.y)).rgb;
+    if (uv.x > 0.5) c = mix(c, mx, uF.z);   // left -> right
+    if (uv.x < 0.5) c = mix(c, mx, uF.w);   // right -> left
+    if (uv.y < 0.5) c = mix(c, my, uF.x);   // top -> bottom
+    if (uv.y > 0.5) c = mix(c, my, uF.y);   // bottom -> top
+    fragColor = vec4(c, 1.0);
 }
 )";
 
@@ -242,24 +250,45 @@ const char* kWarpVertexShader = R"(
 #version 330 core
 layout(location = 0) in vec2 aPos;
 layout(location = 1) in vec2 aTex;
+layout(location = 2) in float aAlpha;
 out vec2 vTex;
+out vec2 vOrigTex;
+out float vAlpha;
 void main()
 {
     vTex = aTex;
+    vOrigTex = aPos * 0.5 + 0.5;  // unwarped screen position of this vertex
+    vAlpha = aAlpha;
     gl_Position = vec4(aPos, 0.0, 1.0);
 }
 )";
 
+// r_dmove.cpp LOOPS: with `blend` the moved pixel is mixed onto the ORIGINAL
+// image by the script's per-cell alpha (BLEND_ADJ(moved, orig, a)); `nomove`
+// skips the displacement and fades the original by alpha (no buffern source
+// wired yet -> BLEND_ADJ(0, orig, a) = orig*(1-a)). Without blend the alpha
+// output is ignored, exactly like the original.
 const char* kWarpFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
+in vec2 vOrigTex;
+in float vAlpha;
 uniform sampler2D uTex;
 uniform bool uWrap;
+uniform bool uBlend;
+uniform bool uNomove;
 out vec4 fragColor;
 void main()
 {
     vec2 uv = uWrap ? fract(vTex) : clamp(vTex, 0.0, 1.0);
-    fragColor = vec4(texture(uTex, uv).rgb, 1.0);
+    float a = clamp(vAlpha, 0.0, 1.0);
+    vec3 orig = texture(uTex, vOrigTex).rgb;
+    vec3 moved = texture(uTex, uv).rgb;
+    vec3 c;
+    if (uNomove)      c = orig * (1.0 - a);
+    else if (uBlend)  c = mix(orig, moved, a);
+    else              c = moved;
+    fragColor = vec4(c, 1.0);
 }
 )";
 
@@ -465,7 +494,9 @@ void main()
     float c1 = 127.0 - abs(gx - lx);
     float c2 = 127.0 - abs(gy - ly);
     float bright = (c1 <= 0.0 || c2 <= 0.0) ? 0.0 : c1 * c2 * uDepth / 16384.0;
-    vec3 lit = orig * clamp(bright / 255.0, 0.0, 1.0);
+    // r_bump setdepth(): per-channel orig + brightness, capped at 254 (ADDITIVE
+    // light on top of the image; bright=0 keeps the pixel).
+    vec3 lit = min(orig + vec3(clamp(bright / 255.0, 0.0, 1.0)), vec3(254.0 / 255.0));
     vec3 r;
     if (uBlend == 1)      r = min(orig + lit, vec3(1.0));
     else if (uBlend == 2) r = (orig + lit) * 0.5;
@@ -1778,7 +1809,8 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_quadVao->release();
     m_quadVbo->release();
 
-    // Dynamic mesh for the grid-warp effects (pos.xy + tex.xy, re-uploaded/frame).
+    // Dynamic mesh for the grid-warp effects (pos.xy + tex.xy + alpha,
+    // re-uploaded per frame).
     m_warpVao = std::make_unique<QOpenGLVertexArrayObject>();
     m_warpVao->create();
     m_warpVao->bind();
@@ -1788,10 +1820,13 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_warpVbo->bind();
     m_warpVbo->allocate(nullptr, 0);
     f->glEnableVertexAttribArray(0);
-    f->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
+    f->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
     f->glEnableVertexAttribArray(1);
-    f->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+    f->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                              reinterpret_cast<void*>(2 * sizeof(float)));
+    f->glEnableVertexAttribArray(2);
+    f->glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                             reinterpret_cast<void*>(4 * sizeof(float)));
     m_warpVao->release();
     m_warpVbo->release();
 
@@ -1852,6 +1887,7 @@ void MultiEffectVisualizer::resetRuntimes()
 void MultiEffectVisualizer::destroySurfaces()
 {
     m_rootSurface.destroy();
+    m_bufferScratch.destroy();
     for (auto& [id, runtime] : m_listRuntimes)
     {
         runtime.surface.destroy();
@@ -1888,7 +1924,7 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         m_firstFrame = true;
     }
 
-    // Waveform RMS: smoothed level for DebugBars + onset energy for the beat.
+    // Waveform RMS: smoothed level for DebugBars/vol.
     const std::vector<float> waveform = getWaveform();
     float rms = 0.0f;
     if (!waveform.empty())
@@ -1899,11 +1935,22 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         m_audioLevel += (rms - m_audioLevel) * 0.3f;
     }
 
-    // Chain-scoped beat: onset feeds the estimator every frame (kept warm);
-    // list scripts and later Custom BPM may mutate m_frameBeat mid-chain.
-    const bool onset = m_beat.updateAdaptive(rms);
-    m_beatEstimator.refine(onset, lumi::modules::BeatEstimator::steadyNowMs());
-    m_frameBeat = onset;
+    // Chain-scoped beat, AVS-faithful (ref main.cpp:290-329): onset from the
+    // per-channel mean |waveform| (max of L/R), then refined/predicted by the
+    // bpm.cpp port — its return value IS the beat, exactly like the original
+    // (b=refineBeat(avs_beat)). List scripts and Custom BPM may still mutate
+    // m_frameBeat mid-chain.
+    auto meanAbs = [](const std::vector<float>& v) {
+        if (v.empty()) return 0.0f;
+        float sum = 0.0f;
+        for (float sample : v) sum += std::abs(sample);
+        return sum / static_cast<float>(v.size());
+    };
+    const float level =
+        std::max(meanAbs(getWaveformChannel(0)), meanAbs(getWaveformChannel(1)));
+    const bool onset = m_beat.updateAvsOnset(level);
+    m_frameBeat =
+        m_beatEstimator.refine(onset, lumi::modules::BeatEstimator::steadyNowMs());
 
     // Working surface in physical pixels (the GL viewport is authoritative).
     GLint viewport[4];
@@ -1967,7 +2014,14 @@ void MultiEffectVisualizer::onRender(float deltaTime)
 
 void MultiEffectVisualizer::renderNode(const ChainNode& node)
 {
-    if (!node.enabled) return;
+    if (!node.enabled)
+    {
+        // r_list fake_enabled (r_list.h:162): a statically DISABLED list with
+        // "on beat render" still activates for N frames after each beat — the
+        // window gate lives in renderList; everything else stays skipped.
+        const auto* list = std::get_if<ListParams>(&node.params);
+        if (list == nullptr || !list->onBeatRender) return;
+    }
 
     struct Visitor
     {
@@ -1992,7 +2046,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const MovingParticleParams& params) const { self.runMovingParticle(node, params); }
         void operator()(const BlitterFeedbackParams& params) const { self.runBlitterFeedback(params); }
         void operator()(const RotoBlitterParams& params) const { self.runRotoBlitter(node, params); }
-        void operator()(const BufferSaveParams& params) const { self.runBufferSave(params); }
+        void operator()(const BufferSaveParams& params) const { self.runBufferSave(node, params); }
         void operator()(const CustomBpmParams& params) const { self.runCustomBpm(node, params); }
         void operator()(const SetRenderModeParams& params) const { self.runSetRenderMode(params); }
         void operator()(const SuperScopeParams& params) const { self.runSuperScope(node, params); }
@@ -2003,6 +2057,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const WaterParams& params) const { self.runWater(node, params); }
         void operator()(const BumpParams& params) const { self.runBump(node, params); }
         void operator()(const WaterBumpParams& params) const { self.runWaterBump(node, params); }
+        void operator()(const FyrewurXParams& params) const { self.runFyrewurX(node, params); }
         void operator()(const StarfieldParams& params) const { self.runStarfield(node, params); }
         void operator()(const TimescopeParams& params) const { self.runTimescope(node, params); }
         void operator()(const DotGridParams& params) const { self.runDotGrid(node, params); }
@@ -2081,8 +2136,9 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
             auto& engine = runtime.slotHost->engine();
             engine.setNumber("enabled", 1.0);
             engine.setNumber("clear", 0.0);
-            engine.setNumber("alphain", static_cast<double>(alphaIn));
-            engine.setNumber("alphaout", static_cast<double>(alphaOut));
+            // EEL contract uses 0.0..1.0 (r_list.cpp:404 use_inblendval/255.0)
+            engine.setNumber("alphain", static_cast<double>(alphaIn) / 255.0);
+            engine.setNumber("alphaout", static_cast<double>(alphaOut) / 255.0);
             runtime.slotHost->run(Slot::Init);
         }
         if (runtime.slotHost->has(Slot::Frame))
@@ -2096,14 +2152,19 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
             scriptEnabled = engine.number("enabled") != 0.0;
             scriptClear = engine.number("clear") != 0.0;
             m_frameBeat = engine.number("beat") != 0.0;  // beat is mutable (§5.1)
-            alphaIn = static_cast<int>(engine.number("alphain"));
-            alphaOut = static_cast<int>(engine.number("alphaout"));
+            // Back from the EEL 0..1 scale (r_list.cpp:413 alphain*255)
+            alphaIn = std::clamp(
+                static_cast<int>(engine.number("alphain") * 255.0), 0, 255);
+            alphaOut = std::clamp(
+                static_cast<int>(engine.number("alphaout") * 255.0), 0, 255);
         }
     }
     if (!scriptEnabled) return;
 
-    // --- OnBeat activation window
-    if (params.onBeatRender)
+    // --- OnBeat activation window: gates ONLY statically disabled lists
+    // (r_list enabled() = !bit1 || fake_enabled — an enabled list always
+    // renders, beat_render has no effect on it).
+    if (params.onBeatRender && !node.enabled)
     {
         if (m_frameBeat) runtime.beatFramesLeft = params.onBeatFrames;
         if (runtime.beatFramesLeft <= 0) return;
@@ -2168,8 +2229,39 @@ void MultiEffectVisualizer::runClear(const ClearParams& params)
     if (params.onlyFirst && !m_firstFrame) return;
     auto* f = QOpenGLContext::currentContext()->functions();
     const QVector3D color = colorToVec(params.color);
-    f->glClearColor(color.x(), color.y(), color.z(), 1.0f);
-    f->glClear(GL_COLOR_BUFFER_BIT);
+
+    // Blend mode 3 follows the current Set-Render-Mode line blend (BLEND_LINE).
+    int mode = params.blend;
+    if (mode == 3) mode = m_renderMode.lineBlend;
+
+    if (mode == 0)
+    {
+        f->glClearColor(color.x(), color.y(), color.z(), 1.0f);
+        f->glClear(GL_COLOR_BUFFER_BIT);
+        return;
+    }
+
+    // Additive / 50-50 clear: full-screen color quad with GL blending
+    // (same pattern as runOnBeatClear).
+    f->glEnable(GL_BLEND);
+    if (mode == 1)
+    {
+        f->glBlendFunc(GL_ONE, GL_ONE);
+    }
+    else
+    {
+        f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+        f->glBlendColor(0.0f, 0.0f, 0.0f, 0.5f);
+    }
+    m_barsShader->bind();
+    m_quadVao->bind();
+    m_barsShader->setUniformValue("uCenter", QVector2D(0.0f, 0.0f));
+    m_barsShader->setUniformValue("uSize", QVector2D(1.0f, 1.0f));
+    m_barsShader->setUniformValue("uColor", color);
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    m_barsShader->release();
+    f->glDisable(GL_BLEND);
 }
 
 void MultiEffectVisualizer::runFadeout(const FadeoutParams& params)
@@ -2239,27 +2331,45 @@ void MultiEffectVisualizer::runBlur(const BlurParams& params)
 void MultiEffectVisualizer::runMirror(const ChainNode& node,
                                       const MirrorParams& params)
 {
-    bool left = params.leftToRight;
-    bool top = params.topToBottom;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
+    // Active direction bits this frame (r_mirror.cpp:146 rbeat=(rand()%16)&mode).
+    int target = params.mode & 15;
     if (params.onBeatRandom)
     {
-        // On beat pick a random subset of the enabled axes (r_mirror.cpp:146).
-        LeafRuntime& rt = m_leafRuntimes[node.nodeId];
         if (m_frameBeat)
         {
-            const uint32_t bits = nextRandom();
-            rt.mirrorV = params.leftToRight && (bits & 1u);
-            rt.mirrorH = params.topToBottom && (bits & 2u);
+            rt.mirrorRBeat = static_cast<int>(nextRandom() % 16u) & params.mode;
         }
-        left = rt.mirrorV;
-        top = rt.mirrorH;
+        target = rt.mirrorRBeat;
     }
 
-    if (!left && !top) return;  // nothing to mirror this frame
+    // Per-direction factors: hard switch, or a 16-step ramp advancing every
+    // `slower` frames (BLEND_ADAPT divisors, r_mirror.cpp:249-257).
+    const bool step = params.smooth &&
+                      (++rt.mirrorFrames % std::max(1, params.slower)) == 0;
+    bool any = false;
+    for (int i = 0; i < 4; ++i)
+    {
+        const float goal = ((target >> i) & 1) != 0 ? 1.0f : 0.0f;
+        float& fac = rt.mirrorF[i];
+        if (!params.smooth)
+        {
+            fac = goal;
+        }
+        else if (step)
+        {
+            const float delta = 1.0f / 16.0f;
+            fac = goal > fac ? std::min(goal, fac + delta)
+                             : std::max(goal, fac - delta);
+        }
+        if (fac > 0.0f) any = true;
+    }
+    if (!any) return;  // nothing to mirror this frame
+
     m_mirrorShader->bind();
-    m_mirrorShader->setUniformValue("uLeftToRight", left);
-    m_mirrorShader->setUniformValue("uTopToBottom", top);
+    m_mirrorShader->setUniformValue(
+        "uF", QVector4D(rt.mirrorF[0], rt.mirrorF[1], rt.mirrorF[2], rt.mirrorF[3]));
     m_mirrorShader->release();
     transformPass(*m_mirrorShader);
 }
@@ -2397,7 +2507,10 @@ void MultiEffectVisualizer::runMovement(const ChainNode& node,
     if (params.code.empty()) return;  // built-in formulas -> passthrough (5.4)
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
-    constexpr int kXres = 32, kYres = 24;  // AVS Movement default working grid
+    // Movement formulas are STATIC (r_trans builds a per-pixel table once per
+    // size/effect change) — so the grid can be fine: it is evaluated only on
+    // compile/resize, not per frame (staticField below).
+    constexpr int kXres = 96, kYres = 72;
     const std::string combined = "M:" + params.code;
     if (rt.grid == nullptr || rt.gridCompiled != combined)
     {
@@ -2407,7 +2520,10 @@ void MultiEffectVisualizer::runMovement(const ChainNode& node,
         rt.gridCompiled = combined;
     }
     rt.grid->setRectCoords(params.rectCoords);
-    applyGridWarp(rt, kXres, kYres, params.wrap);
+    // r_trans `blend` = 50/50 of moved and original; the warp path realizes it
+    // via the alpha default 0.5 (no script sets alpha in Movement code).
+    applyGridWarp(rt, kXres, kYres, params.wrap, params.blend, false,
+                  /*staticField=*/true);
 }
 
 void MultiEffectVisualizer::runDynamicMovement(const ChainNode& node,
@@ -2430,33 +2546,47 @@ void MultiEffectVisualizer::runDynamicMovement(const ChainNode& node,
         rt.gridCompiled = combined;
     }
     rt.grid->setRectCoords(params.rectCoords);
-    applyGridWarp(rt, params.xres, params.yres, params.wrap);
+    applyGridWarp(rt, params.xres, params.yres, params.wrap, params.blend,
+                  params.nomove);
 }
 
 void MultiEffectVisualizer::applyGridWarp(LeafRuntime& rt, int xres, int yres,
-                                          bool wrap)
+                                          bool wrap, bool blend, bool nomove,
+                                          bool staticField)
 {
     if (rt.grid == nullptr || xres < 2 || yres < 2) return;
 
-    rt.grid->setVisData(m_visdata.data(), m_time);  // getspec/getosc for the point code
+    // Static fields (Movement) are evaluated once per compile/resize; dynamic
+    // ones (Dynamic Movement) run their frame/beat/point scripts every frame.
+    const bool needExecute = !staticField || rt.grid->field().empty() ||
+                             rt.gridFieldW != m_surfaceWidth ||
+                             rt.gridFieldH != m_surfaceHeight;
+    if (needExecute)
     {
-        float bass, mid, treble;
-        computeAudioBands(getSpectrum(), bass, mid, treble);
-        rt.grid->setVariable("bass", bass);
-        rt.grid->setVariable("mid", mid);
-        rt.grid->setVariable("treb", treble);
-        rt.grid->setVariable("treble", treble);
-        rt.grid->setVariable("vol", m_audioLevel);
-        rt.grid->setVariable("beat", m_frameBeat ? 1.0 : 0.0);
+        rt.grid->setVisData(m_visdata.data(), m_time);  // getspec/getosc backing
+        {
+            float bass, mid, treble;
+            computeAudioBands(getSpectrum(), bass, mid, treble);
+            rt.grid->setVariable("bass", bass);
+            rt.grid->setVariable("mid", mid);
+            rt.grid->setVariable("treb", treble);
+            rt.grid->setVariable("treble", treble);
+            rt.grid->setVariable("vol", m_audioLevel);
+            rt.grid->setVariable("beat", m_frameBeat ? 1.0 : 0.0);
+        }
+        rt.grid->execute(static_cast<float>(m_surfaceWidth),
+                         static_cast<float>(m_surfaceHeight), m_frameBeat,
+                         m_deltaTime);
+        rt.gridFieldW = m_surfaceWidth;
+        rt.gridFieldH = m_surfaceHeight;
     }
-    rt.grid->execute(static_cast<float>(m_surfaceWidth),
-                     static_cast<float>(m_surfaceHeight), m_frameBeat, m_deltaTime);
     const auto& field = rt.grid->field();
     if (static_cast<int>(field.size()) < xres * yres) return;
 
-    // Build the triangulated grid mesh: vertex at grid NDC, texcoord = (u,v).
+    // Build the triangulated grid mesh: vertex at grid NDC, texcoord = (u,v),
+    // plus the script's per-cell alpha (r_dmove blend weight).
     m_warpVertices.clear();
-    m_warpVertices.reserve(static_cast<size_t>(xres - 1) * (yres - 1) * 6 * 4);
+    m_warpVertices.reserve(static_cast<size_t>(xres - 1) * (yres - 1) * 6 * 5);
     auto pushVertex = [&](int gx, int gy) {  // NB: not "emit" — Qt reserves it
         const float px = -1.0f + 2.0f * static_cast<float>(gx) / (xres - 1);
         const float py = -1.0f + 2.0f * static_cast<float>(gy) / (yres - 1);
@@ -2465,6 +2595,7 @@ void MultiEffectVisualizer::applyGridWarp(LeafRuntime& rt, int xres, int yres,
         m_warpVertices.push_back(py);
         m_warpVertices.push_back(n.u * 0.5f + 0.5f);
         m_warpVertices.push_back(n.v * 0.5f + 0.5f);
+        m_warpVertices.push_back(n.alpha);
     };
     for (int gy = 0; gy < yres - 1; ++gy)
     {
@@ -2486,6 +2617,8 @@ void MultiEffectVisualizer::applyGridWarp(LeafRuntime& rt, int xres, int yres,
 
     m_warpShader->bind();
     m_warpShader->setUniformValue("uWrap", wrap);
+    m_warpShader->setUniformValue("uBlend", blend);
+    m_warpShader->setUniformValue("uNomove", nomove);
     m_warpVao->bind();
     m_warpVbo->bind();
     m_warpVbo->allocate(m_warpVertices.data(),
@@ -2493,7 +2626,7 @@ void MultiEffectVisualizer::applyGridWarp(LeafRuntime& rt, int xres, int yres,
     f->glActiveTexture(GL_TEXTURE0);
     f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
     m_warpShader->setUniformValue("uTex", 0);
-    f->glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(m_warpVertices.size() / 4));
+    f->glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(m_warpVertices.size() / 5));
     m_warpVbo->release();
     m_warpVao->release();
     m_warpShader->release();
@@ -2533,18 +2666,56 @@ void MultiEffectVisualizer::feedbackPass(float zoom, float angleRad, bool blend)
     transformPass(*m_feedbackShader);
 }
 
-void MultiEffectVisualizer::runBufferSave(const BufferSaveParams& params)
+void MultiEffectVisualizer::runBufferSave(const ChainNode& node,
+                                          const BufferSaveParams& params)
 {
-    if (params.save)
+    // Direction per frame (r_stack.cpp:125-126): dir 0/1 are fixed, dir 2/3
+    // alternate save/restore every render via the per-node toggle.
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    int tDir = params.dir;
+    if (params.dir >= 2)
     {
-        // Copy the current working buffer into global buffer `slot`.
+        tDir = (params.dir & 1) ^ (rt.bufDirCh ? 1 : 0);
+        rt.bufDirCh = !rt.bufDirCh;
+    }
+
+    if (tDir == 0)
+    {
+        // Write the current working buffer into global buffer `slot`. The blend
+        // applies in BOTH directions in AVS (fbin/fbout swap, r_stack.cpp:127).
         QOpenGLFramebufferObject* pool =
             m_bufferPool.get(params.slot, m_surfaceWidth, m_surfaceHeight, true);
         if (pool == nullptr) return;
-        if (QOpenGLFramebufferObject::hasOpenGLFramebufferBlit())
+        const bool hasBlit = QOpenGLFramebufferObject::hasOpenGLFramebufferBlit();
+        if (params.blend == BlendMode::Replace || !hasBlit ||
+            !ensureSurfacePair(m_bufferScratch, m_surfaceWidth, m_surfaceHeight,
+                               nullptr))
         {
+            if (hasBlit)
+            {
+                auto* extra = QOpenGLContext::currentContext()->extraFunctions();
+                extra->glBindFramebuffer(GL_READ_FRAMEBUFFER,
+                                         active().current()->handle());
+                extra->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, pool->handle());
+                extra->glBlitFramebuffer(0, 0, m_surfaceWidth, m_surfaceHeight, 0, 0,
+                                         m_surfaceWidth, m_surfaceHeight,
+                                         GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            }
+        }
+        else
+        {
+            // pool -> scratch, blend the frame onto it, scratch -> pool.
             auto* extra = QOpenGLContext::currentContext()->extraFunctions();
-            extra->glBindFramebuffer(GL_READ_FRAMEBUFFER, active().current()->handle());
+            extra->glBindFramebuffer(GL_READ_FRAMEBUFFER, pool->handle());
+            extra->glBindFramebuffer(GL_DRAW_FRAMEBUFFER,
+                                     m_bufferScratch.current()->handle());
+            extra->glBlitFramebuffer(0, 0, m_surfaceWidth, m_surfaceHeight, 0, 0,
+                                     m_surfaceWidth, m_surfaceHeight,
+                                     GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            blendPass(m_bufferScratch, active().current()->texture(), params.blend,
+                      params.adjustAlpha);
+            extra->glBindFramebuffer(GL_READ_FRAMEBUFFER,
+                                     m_bufferScratch.current()->handle());
             extra->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, pool->handle());
             extra->glBlitFramebuffer(0, 0, m_surfaceWidth, m_surfaceHeight, 0, 0,
                                      m_surfaceWidth, m_surfaceHeight,
@@ -2599,11 +2770,12 @@ void MultiEffectVisualizer::runCustomBpm(const ChainNode& node,
 void MultiEffectVisualizer::runSetRenderMode(const SetRenderModeParams& params)
 {
     // No visual output — sets the host render mode for the following render
-    // effects (AVS r_linemode). enabled toggles the blend override; a width of 0
-    // leaves each effect's own line width.
+    // effects (AVS r_linemode). A disabled node leaves the current blend
+    // UNCHANGED (r_linemode.cpp:96-104 writes only when bit31 is set); a width
+    // of 0 leaves each effect's own line width.
     m_renderMode.set = true;
     if (params.lineWidth > 0) m_renderMode.lineWidth = params.lineWidth;
-    m_renderMode.lineBlend = params.enabled ? std::clamp(params.lineBlend, 0, 2) : 1;
+    if (params.enabled) m_renderMode.lineBlend = std::clamp(params.lineBlend, 0, 2);
     m_renderMode.alpha = std::clamp(params.adjustAlpha, 0, 255);
 }
 
@@ -2692,6 +2864,14 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     lumi::render::ScopeRenderer::Params rp;
     rp.mode = static_cast<lumi::modules::SuperscopeRenderMode>(params.renderMode);
     rp.lineWidth = effLineWidth;
+    // Scripted drawmode/linesize win over UI params (r_sscope EEL vars).
+    if (rt.scope->scriptDrawModeActive())
+    {
+        rp.mode = rt.scope->scriptWantsLines()
+                      ? lumi::modules::SuperscopeRenderMode::Lines
+                      : lumi::modules::SuperscopeRenderMode::Dots;
+    }
+    if (rt.scope->scriptLineSizeActive()) rp.lineWidth = rt.scope->scriptLineSize();
     rp.dotSize = params.dotSize;
     rp.glowEnabled = false;
     m_scopeRenderer.draw(points, rp);
@@ -4079,7 +4259,98 @@ void MultiEffectVisualizer::runStarfield(const ChainNode& node,
     if (points.empty() || !m_scopeRenderer.ready()) return;
     auto* f = QOpenGLContext::currentContext()->functions();
     f->glEnable(GL_BLEND);
-    f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    // r_stars.cpp:245 BLEND/BLEND_AVG/replace; brightness stays premodulated
+    // via the point alpha, so "replace" keeps SRC_ALPHA weighting into black.
+    switch (params.blend)
+    {
+        case 1:  f->glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;                  // additive
+        case 2:  f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+                 f->glBlendColor(0.0f, 0.0f, 0.0f, 0.5f); break;               // 50/50
+        default: f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;  // replace
+    }
+    lumi::render::ScopeRenderer::Params rp;
+    rp.mode = lumi::modules::SuperscopeRenderMode::Dots;
+    rp.dotSize = 2.0f;
+    rp.glowEnabled = false;
+    m_scopeRenderer.draw(points, rp);
+    f->glDisable(GL_BLEND);
+}
+
+void MultiEffectVisualizer::runFyrewurX(const ChainNode& node,
+                                        const FyrewurXParams& params)
+{
+    // Behavioral rebuild of the closed-source "FunkyFX FyrewurX v1" APE:
+    // every beat launches a firework burst; sparks fly out radially, gravity
+    // pulls them down (AVS convention: +y = screen bottom), and they fade out
+    // over their lifetime. Constants are sight-calibration points.
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    if (m_frameBeat && rt.fwSparks.size() < 4096)
+    {
+        auto frand = [this] { return (nextRandom() % 10000u) / 10000.0f; };
+        const float cx = frand() * 1.6f - 0.8f;         // burst center
+        const float cy = frand() * 1.0f - 0.7f;         // upper screen area
+        // Firework hue per burst: bright saturated color, slight per-spark drift.
+        const float hue = frand() * 6.0f;
+        auto hueRgb = [](float h, float& r, float& g, float& b) {
+            const float x = 1.0f - std::abs(std::fmod(h, 2.0f) - 1.0f);
+            switch (static_cast<int>(h) % 6)
+            {
+                case 0: r = 1; g = x; b = 0; break;
+                case 1: r = x; g = 1; b = 0; break;
+                case 2: r = 0; g = 1; b = x; break;
+                case 3: r = 0; g = x; b = 1; break;
+                case 4: r = x; g = 0; b = 1; break;
+                default: r = 1; g = 0; b = x; break;
+            }
+        };
+        for (int i = 0; i < params.sparks; ++i)
+        {
+            FwSpark s;
+            const float ang = frand() * 6.2831853f;
+            const float spd = params.speed * (0.25f + 0.75f * frand());
+            s.x = cx;
+            s.y = cy;
+            s.vx = std::cos(ang) * spd;
+            s.vy = std::sin(ang) * spd;
+            s.lifeMax = params.lifeSeconds * (0.6f + 0.4f * frand());
+            s.life = s.lifeMax;
+            hueRgb(hue + (frand() - 0.5f) * 0.6f, s.r, s.g, s.b);
+            rt.fwSparks.push_back(s);
+        }
+    }
+
+    // Integrate + cull.
+    const float dt = std::clamp(m_deltaTime, 0.0f, 0.1f);
+    for (FwSpark& s : rt.fwSparks)
+    {
+        s.vy += params.gravity * dt;
+        s.x += s.vx * dt;
+        s.y += s.vy * dt;
+        s.life -= dt;
+    }
+    std::erase_if(rt.fwSparks, [](const FwSpark& s) {
+        return s.life <= 0.0f || s.x < -1.2f || s.x > 1.2f || s.y > 1.2f;
+    });
+    if (rt.fwSparks.empty() || !m_scopeRenderer.ready()) return;
+
+    std::vector<lumi::modules::SuperscopePoint> points;
+    points.reserve(rt.fwSparks.size());
+    for (const FwSpark& s : rt.fwSparks)
+    {
+        lumi::modules::SuperscopePoint p;
+        p.x = s.x;
+        p.y = s.y;
+        p.r = s.r;
+        p.g = s.g;
+        p.b = s.b;
+        p.a = std::clamp(s.life / s.lifeMax, 0.0f, 1.0f);  // fade out
+        points.push_back(p);
+    }
+
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glEnable(GL_BLEND);
+    f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);  // additive sparks
     lumi::render::ScopeRenderer::Params rp;
     rp.mode = lumi::modules::SuperscopeRenderMode::Dots;
     rp.dotSize = 2.0f;
@@ -4776,10 +5047,18 @@ void MultiEffectVisualizer::buildVisData()
     const std::vector<float> specR = getSpectrumChannel(1);
     const std::vector<float> waveL = getWaveformChannel(0);
     const std::vector<float> waveR = getWaveformChannel(1);
+    // AVS pipes every Winamp spectrum byte through g_logtab (ref main.cpp:242-249):
+    // a = log(x*60/255+1)/log(60). Linear FFT magnitudes are far too small in the
+    // upper bands presets sample via getspec(0.5..0.8) — without this curve their
+    // beat-driven motion (ti=getspec(...)) stalls near zero. kSpecGain approximates
+    // the Winamp byte scale before the curve (visual calibration point).
+    constexpr float kSpecGain = 12.0f;
     auto specByte = [](const std::vector<float>& v, int i) -> unsigned char {
         if (v.empty()) return 0;
         const float s = v[static_cast<size_t>(i) * v.size() / 576];
-        return static_cast<unsigned char>(std::clamp(s, 0.0f, 1.0f) * 255.0f);
+        const float lin = std::clamp(s * kSpecGain, 0.0f, 1.0f);
+        const float logv = std::log(lin * 60.0f + 1.0f) / std::log(60.0f);
+        return static_cast<unsigned char>(std::clamp(logv, 0.0f, 1.0f) * 255.0f);
     };
     // Waveform -> signed byte (two's complement); getvis decodes (b^128)-128.
     auto waveByte = [](const std::vector<float>& v, int i) -> unsigned char {

@@ -150,6 +150,9 @@ struct ClearParams
 {
     uint32_t color = 0x000000;  ///< 0x00RRGGBB
     bool onlyFirst = false;     ///< clear only on the first frame
+    /// 0 = replace, 1 = additive, 2 = 50/50, 3 = current line-blend
+    /// (r_clear.cpp: blend==1 -> BLEND, blendavg -> BLEND_AVG, blend==2 -> BLEND_LINE)
+    int blend = 0;
 };
 
 /** AVS "Trans / Fadeout" (ID 3): per-frame clamped step towards a target color. */
@@ -328,9 +331,13 @@ struct BlurParams
 /** AVS "Trans / Mirror" (ID 26): reflect one screen half onto the other. */
 struct MirrorParams
 {
-    bool leftToRight = true;   ///< left half onto right
-    bool topToBottom = false;  ///< top half onto bottom
-    bool onBeatRandom = false; ///< randomize active edges on beat
+    /// r_mirror direction bits: 1 = top->bottom (HORIZONTAL1),
+    /// 2 = bottom->top (HORIZONTAL2), 4 = left->right (VERTICAL1),
+    /// 8 = right->left (VERTICAL2)
+    int mode = 4;
+    bool onBeatRandom = false;  ///< randomize active edges on beat
+    bool smooth = false;        ///< gradual transition (BLEND_ADAPT ramp)
+    int slower = 4;             ///< frames per ramp step (1..16)
 };
 
 /** AVS "Render / OnBeat Clear" (ID 5): clear every N beats. */
@@ -381,6 +388,7 @@ struct MovementParams
     std::string code;         ///< AVS point expression (empty = identity)
     bool rectCoords = false;  ///< true = x/y, false (AVS default) = polar d/r
     bool wrap = false;        ///< wrap sampling coordinates instead of clamp
+    bool blend = false;       ///< 50/50 blend of moved pixel with original (r_trans)
 };
 
 /**
@@ -397,6 +405,10 @@ struct DynamicMovementParams
     int yres = 12;
     bool rectCoords = false;
     bool wrap = false;
+    /// r_dmove flags: `blend` mixes the moved pixel onto the original by the
+    /// script's per-cell alpha; `nomove` skips displacement and only alpha-fades.
+    bool blend = false;
+    bool nomove = false;
 };
 
 /**
@@ -481,9 +493,11 @@ struct RotoBlitterParams
 struct BufferSaveParams
 {
     int slot = 0;                          ///< global buffer index 0..7
-    bool save = true;                      ///< true = save, false = restore
-    BlendMode blend = BlendMode::Replace;  ///< restore blend mode
-    int adjustAlpha = 128;                 ///< Adjustable restore alpha 0..255
+    /// Direction (r_stack.cpp): 0 = save, 1 = restore,
+    /// 2 = alternate starting with save, 3 = alternate starting with restore
+    int dir = 0;
+    BlendMode blend = BlendMode::Replace;  ///< blend mode (applies both directions)
+    int adjustAlpha = 128;                 ///< Adjustable blend alpha 0..255
 };
 
 /**
@@ -655,6 +669,21 @@ struct InterferencesParams
  * `durationFrames` on a beat); brightness rises as they approach. `color`
  * tints them. Drawn additively via the shared ScopeRenderer.
  */
+/**
+ * Community APE "FunkyFX FyrewurX v1" (closed source) — behavioral REBUILD, no
+ * original code: on-beat firework bursts of gravity-bound sparks, drawn as
+ * additive dots. The original's config word was never varied in the wild (all
+ * 146 corpus instances carry identical bytes), so the parameters here are our
+ * own, sight-calibrated ones.
+ */
+struct FyrewurXParams
+{
+    int sparks = 80;           ///< sparks per burst
+    float speed = 0.7f;        ///< initial spark speed scale (NDC/s)
+    float gravity = 0.8f;      ///< downward pull (NDC/s^2)
+    float lifeSeconds = 1.6f;  ///< spark lifetime
+};
+
 struct StarfieldParams
 {
     uint32_t color = 0xFFFFFF;   ///< tint 0x00RRGGBB
@@ -663,6 +692,7 @@ struct StarfieldParams
     bool onBeat = false;         ///< jump to beatSpeed on a beat
     float beatSpeed = 4.0f;      ///< on-beat speed
     int durationFrames = 15;     ///< ease-back length
+    int blend = 0;               ///< 0 replace, 1 additive, 2 50/50 (r_stars)
 };
 
 /**
@@ -1191,6 +1221,7 @@ using EffectParams =
                  RotoBlitterParams, BufferSaveParams, CustomBpmParams,
                  SuperScopeParams, MosaicParams, GrainParams, ScatterParams,
                  InterferencesParams, WaterParams, BumpParams, WaterBumpParams,
+                 FyrewurXParams,
                  StarfieldParams, TimescopeParams, DotGridParams, DotPlaneParams,
                  DotFountainParams, ColorMapParams, BufferBlendParams,
                  JherikoGlobalParams, ColorClipParams, UniqueToneParams,
@@ -1284,6 +1315,7 @@ struct CompileResult
         const char* operator()(const WaterParams&) const { return "Water"; }
         const char* operator()(const BumpParams&) const { return "Bump"; }
         const char* operator()(const WaterBumpParams&) const { return "Water Bump"; }
+        const char* operator()(const FyrewurXParams&) const { return "FyrewurX"; }
         const char* operator()(const StarfieldParams&) const { return "Starfield"; }
         const char* operator()(const TimescopeParams&) const { return "Timescope"; }
         const char* operator()(const DotGridParams&) const { return "Dot Grid"; }
@@ -1411,11 +1443,19 @@ inline void compileNode(ChainNode& node, const std::string& path,
         dmove->xres = std::clamp(dmove->xres, 2, 96);
         dmove->yres = std::clamp(dmove->yres, 2, 72);
     }
+    if (auto* fw = std::get_if<FyrewurXParams>(&node.params))
+    {
+        fw->sparks = std::clamp(fw->sparks, 1, 1024);
+        fw->speed = std::clamp(fw->speed, 0.05f, 5.0f);
+        fw->gravity = std::clamp(fw->gravity, 0.0f, 10.0f);
+        fw->lifeSeconds = std::clamp(fw->lifeSeconds, 0.1f, 10.0f);
+    }
     if (auto* save = std::get_if<BufferSaveParams>(&node.params))
     {
         save->slot = std::clamp(save->slot, 0, 7);
+        save->dir = std::clamp(save->dir, 0, 3);
         save->adjustAlpha = std::clamp(save->adjustAlpha, 0, 255);
-        if (!save->save) warnFallbackBlend(save->blend, "restore", path, result);
+        if (save->dir != 0) warnFallbackBlend(save->blend, "restore", path, result);
     }
     if (auto* scope = std::get_if<SuperScopeParams>(&node.params))
     {

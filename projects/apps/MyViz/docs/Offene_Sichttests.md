@@ -90,3 +90,29 @@ Additive/50-50) über die Kette korrekt? ⬜ Audio-EEL (`bass/mid/treble/vol/bea
 - ⬜ Gruppen verschieben per ↑/↓-Buttons (Block) + Entf/Backspace entfernt Gruppe?
 - ⬜ **Multi-Drag zwischen verschiedenen Listen** (Block-Reparenting) — Index-
   Mathematik nur compile-verifiziert, genau prüfen; bei Bugs → absichern.
+
+---
+
+## 7. Import-Treue-Fixes (Session 38) — Sicht-/Hoertests
+
+Steuerdokument: `docs/visuals/Import_Treue_Fixplan.md` (Befund + Umsetzungsstand).
+Referenz-Presets: `asset/avs/greatwho2006/4resample/EyeCandy2` (Symptomliste in
+Fixplan §2 — jedes der 10 Presets sollte jetzt deutlich naeher am Original sein).
+
+- [ ] **getspec-Gain kalibrieren:** `kSpecGain` (MultiEffectVisualizer::buildVisData,
+      aktuell 12.0) — Bewegungstempo der EyeCandy-Presets mit Winamp-Original
+      vergleichen; zu traege -> Gain rauf, hektisch/uebersteuert -> runter.
+- [ ] **Beat-Verhalten:** AVS-Onset + refine() — feuern Beats musikalisch?
+      06_Stargate: kehrt die Rotation jetzt gelegentlich? 02_flowers: dmx/dmy-Flips?
+- [ ] **Bump additiv:** 02_flowers / 05_wormhole / 08_noname — Licht statt Abdunkeln?
+- [ ] **Buffer-Save-Blends:** 01/05 — keine Ueberbelichtung mehr (50/50 statt additiv)?
+- [ ] **Clear-Screen-Blends:** 08_noname — weiches Abklingen statt Schwarz-Clear?
+- [ ] **DM-alpha:** 01/02/05/08/10 — weiches Layering, `nomove`-Faelle korrekt?
+- [ ] **SuperScope n=800/n=2:** Punktdichte der Spiralen; Wormhole-Linien (n=2) da?
+- [ ] **Weiss-Default-Farbe:** 05_wormhole Scope 1 — gruenstichig wie im Original?
+- [ ] **Mirror smooth/Richtungen:** 05_wormhole — weiche Uebergaenge, richtige Haelfte?
+- [ ] **Movement 96x72 + Cache:** 07/08/09/10 — Achsen-Schmier scharf genug? FPS ok?
+- [ ] **FyrewurX (Nachbau):** Presets in greatwho2006_2 — Feuerwerks-Bursts auf Beat;
+      Kalibrierpunkte: sparks=80, speed=0.7, gravity=0.8, life=1.6 s, dotSize=2;
+      Gravitations-RICHTUNG pruefen (AVS +y = unten; ggf. Vorzeichen kippen).
+- [ ] **Listen-fake_enabled:** Presets mit "on beat render"-Listen blitzen auf Beat auf?

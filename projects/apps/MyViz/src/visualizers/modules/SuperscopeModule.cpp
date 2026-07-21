@@ -159,6 +159,20 @@ void SuperscopeModule::initializeLuaScripts()
     engine.setNumber("time", static_cast<double>(m_totalTime));
     engine.setNumber("b", 0.0);
 
+    // Scriptable render vars (r_sscope): seeded from the UI state once; slots
+    // that mention them can override per frame (readback in execute()).
+    const bool lines = m_renderMode == SuperscopeRenderMode::Lines;
+    engine.setNumber("drawmode", lines ? 1.0 : 0.0);
+    engine.setNumber("linesize", static_cast<double>(m_lineWidth));
+    auto mentionsAny = [this](std::string_view word) {
+        return m_script->sourceMentions(Slot::Init, word) ||
+               m_script->sourceMentions(Slot::Frame, word) ||
+               m_script->sourceMentions(Slot::Beat, word) ||
+               m_script->sourceMentions(Slot::Point, word);
+    };
+    m_scriptSetsDrawMode = mentionsAny("drawmode");
+    m_scriptSetsLineSize = mentionsAny("linesize");
+
     if (m_script->has(Slot::Init) && !m_script->run(Slot::Init) &&
         m_lastScriptError.empty())
     {
@@ -329,8 +343,19 @@ void SuperscopeModule::loadPresetCode(SuperscopePreset preset)
 
 void SuperscopeModule::setPointCount(int count)
 {
-    m_pointCount = std::clamp(count, 8, 4096);
+    // Lower bound 1, not 8: AVS scopes legitimately use n=2 (plain lines).
+    const int clamped = std::clamp(count, 1, 4096);
+    const bool changed = clamped != m_pointCount;
+    m_pointCount = clamped;
     m_n = static_cast<double>(m_pointCount);
+    // Lua mode: `n` lives in the script environment. AVS writes it only at
+    // compile time (r_sscope.cpp:210) — scripts own it afterwards (init n=800
+    // must persist). Reseed ONLY when the host/UI value actually changes; the
+    // host calls this every frame with the unchanged param.
+    if (changed && m_luaMode && m_script != nullptr)
+    {
+        m_script->engine().setNumber("n", static_cast<double>(m_pointCount));
+    }
 }
 
 // =============================================================================
@@ -480,10 +505,11 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
 
     if (luaActive)
     {
-        // Frame contract: inputs n, w, h, time, dt, b — Frame code may adjust n.
+        // Frame contract: inputs w, h, time, dt, b — beat/frame code may adjust
+        // n, which persists across frames (AVS r_sscope: the host writes n only
+        // at compile time; init n=800 etc. must stick).
         // `t` is intentionally NOT written: it belongs to the script.
         auto& engine = m_script->engine();
-        engine.setNumber("n", static_cast<double>(m_pointCount));
         engine.setNumber("w", m_w);
         engine.setNumber("h", m_h);
         engine.setNumber("time", static_cast<double>(m_totalTime));
@@ -499,7 +525,12 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
             m_lastScriptError = m_script->lastError();
         }
 
-        effectiveCount = std::clamp(static_cast<int>(engine.number("n")), 8, 4096);
+        effectiveCount = std::clamp(static_cast<int>(engine.number("n")), 1, 4096);
+
+        // Frame-level readback of scripted render vars (per-point switching is
+        // not supported — the host draws one primitive batch per frame).
+        if (m_scriptSetsDrawMode) m_scriptDrawMode = engine.number("drawmode");
+        if (m_scriptSetsLineSize) m_scriptLineSize = engine.number("linesize");
     }
     else if (isBeat)
     {

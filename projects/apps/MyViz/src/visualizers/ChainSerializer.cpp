@@ -69,6 +69,7 @@ struct WriteVisitor
     {
         o["color"] = static_cast<double>(p.color);
         o["onlyFirst"] = p.onlyFirst;
+        o["blend"] = p.blend;
     }
     void operator()(const FadeoutParams& p) const
     {
@@ -93,9 +94,10 @@ struct WriteVisitor
     }
     void operator()(const MirrorParams& p) const
     {
-        o["leftToRight"] = p.leftToRight;
-        o["topToBottom"] = p.topToBottom;
+        o["mode"] = p.mode;
         o["onBeatRandom"] = p.onBeatRandom;
+        o["smooth"] = p.smooth;
+        o["slower"] = p.slower;
     }
     void operator()(const OnBeatClearParams& p) const
     {
@@ -124,6 +126,7 @@ struct WriteVisitor
         o["code"] = QString::fromStdString(p.code);
         o["rectCoords"] = p.rectCoords;
         o["wrap"] = p.wrap;
+        o["blend"] = p.blend;
     }
     void operator()(const DynamicMovementParams& p) const
     {
@@ -134,6 +137,8 @@ struct WriteVisitor
         o["xres"] = p.xres;   o["yres"] = p.yres;
         o["rectCoords"] = p.rectCoords;
         o["wrap"] = p.wrap;
+        o["blend"] = p.blend;
+        o["nomove"] = p.nomove;
     }
     void operator()(const BlitterFeedbackParams& p) const
     {
@@ -149,7 +154,7 @@ struct WriteVisitor
     void operator()(const BufferSaveParams& p) const
     {
         o["slot"] = p.slot;
-        o["save"] = p.save;
+        o["dir"] = p.dir;
         o["blend"] = static_cast<int>(p.blend);
         o["adjustAlpha"] = p.adjustAlpha;
     }
@@ -595,6 +600,13 @@ struct WriteVisitor
         o["speed"] = p.speed;
         o["blend"] = p.blend;
     }
+    void operator()(const FyrewurXParams& p) const
+    {
+        o["sparks"] = p.sparks;
+        o["speed"] = p.speed;
+        o["gravity"] = p.gravity;
+        o["lifeSeconds"] = p.lifeSeconds;
+    }
     void operator()(const StarfieldParams& p) const
     {
         o["color"] = static_cast<double>(p.color);
@@ -603,6 +615,7 @@ struct WriteVisitor
         o["onBeat"] = p.onBeat;
         o["beatSpeed"] = p.beatSpeed;
         o["durationFrames"] = p.durationFrames;
+        o["blend"] = p.blend;
     }
     void operator()(const TimescopeParams& p) const
     {
@@ -691,7 +704,8 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         return p;
     }
     if (type == "clear")
-        return ClearParams{getColor(o, "color", 0), getBool(o, "onlyFirst", false)};
+        return ClearParams{getColor(o, "color", 0), getBool(o, "onlyFirst", false),
+                           getInt(o, "blend", 0)};
     if (type == "fadeout")
         return FadeoutParams{getInt(o, "fadeLen", 16), getColor(o, "color", 0)};
     if (type == "invert") return InvertParams{};
@@ -710,9 +724,17 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     if (type == "blur")
         return BlurParams{getInt(o, "strength", 1), getBool(o, "roundUp", true)};
     if (type == "mirror")
-        return MirrorParams{getBool(o, "leftToRight", true),
-                            getBool(o, "topToBottom", false),
-                            getBool(o, "onBeatRandom", false)};
+    {
+        MirrorParams p;
+        // Legacy files carry two bools; current files the r_mirror bit mode.
+        const int legacy = (getBool(o, "topToBottom", false) ? 1 : 0) |
+                           (getBool(o, "leftToRight", true) ? 4 : 0);
+        p.mode = getInt(o, "mode", legacy) & 15;
+        p.onBeatRandom = getBool(o, "onBeatRandom", false);
+        p.smooth = getBool(o, "smooth", false);
+        p.slower = getInt(o, "slower", 4);
+        return p;
+    }
     if (type == "onBeatClear")
         return OnBeatClearParams{getColor(o, "color", 0), getInt(o, "everyNBeats", 1),
                                  getBool(o, "blend", false)};
@@ -744,6 +766,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.code = getStr(o, "code");
         p.rectCoords = getBool(o, "rectCoords", false);
         p.wrap = getBool(o, "wrap", false);
+        p.blend = getBool(o, "blend", false);
         return p;
     }
     if (type == "dynamicMovement")
@@ -757,6 +780,8 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.yres = getInt(o, "yres", 12);
         p.rectCoords = getBool(o, "rectCoords", false);
         p.wrap = getBool(o, "wrap", false);
+        p.blend = getBool(o, "blend", false);
+        p.nomove = getBool(o, "nomove", false);
         return p;
     }
     if (type == "blitterFeedback")
@@ -780,7 +805,8 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     {
         BufferSaveParams p;
         p.slot = getInt(o, "slot", 0);
-        p.save = getBool(o, "save", true);
+        // Legacy files carry bool "save"; current files carry "dir" 0..3.
+        p.dir = getInt(o, "dir", getBool(o, "save", true) ? 0 : 1);
         p.blend = static_cast<BlendMode>(getInt(o, "blend", 1));
         p.adjustAlpha = getInt(o, "adjustAlpha", 128);
         return p;
@@ -1317,6 +1343,15 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.blend = getInt(o, "blend", 0);
         return p;
     }
+    if (type == "fyrewurx")
+    {
+        FyrewurXParams p;
+        p.sparks = getInt(o, "sparks", 80);
+        p.speed = static_cast<float>(getDouble(o, "speed", 0.7));
+        p.gravity = static_cast<float>(getDouble(o, "gravity", 0.8));
+        p.lifeSeconds = static_cast<float>(getDouble(o, "lifeSeconds", 1.6));
+        return p;
+    }
     if (type == "starfield")
     {
         StarfieldParams p;
@@ -1326,6 +1361,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.onBeat = getBool(o, "onBeat", false);
         p.beatSpeed = static_cast<float>(getDouble(o, "beatSpeed", 4.0));
         p.durationFrames = getInt(o, "durationFrames", 15);
+        p.blend = getInt(o, "blend", 1);  // legacy files rendered additively
         return p;
     }
     if (type == "timescope")
@@ -1449,6 +1485,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const BumpParams&) const { return "bump"; }
         QString operator()(const WaterBumpParams&) const { return "waterBump"; }
         QString operator()(const InterferencesParams&) const { return "interferences"; }
+        QString operator()(const FyrewurXParams&) const { return "fyrewurx"; }
         QString operator()(const StarfieldParams&) const { return "starfield"; }
         QString operator()(const TimescopeParams&) const { return "timescope"; }
         QString operator()(const DotGridParams&) const { return "dotGrid"; }

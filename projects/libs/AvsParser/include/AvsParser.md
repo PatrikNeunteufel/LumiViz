@@ -136,4 +136,5 @@ fehlt der Korpus, läuft nur der synthetische Teil). Korpus-Stand: 35/35 ok,
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.1.0 | 2026-07-22 | `decodeApe`: FunkyFX FyrewurX v1 (enabled + opakes Config-Wort) — kein „unbekannter APE"-Report mehr (Session 38) |
 | 1.0.0 | 2026-07-20 | Erstfassung — Container-TLV, Kernmengen-Decoder, Import-Report-Gerüst (Session 33) |

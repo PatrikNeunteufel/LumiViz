@@ -224,6 +224,14 @@ bool mapApe(const EffectNode& src, ChainNode& out)
         out.params = std::move(p);
         return true;
     }
+    if (src.apeId == "FunkyFX FyrewurX v1")
+    {
+        // Behavioral rebuild (closed source) with host-own parameters; every
+        // known preset carries identical config bytes anyway.
+        out.enabled = src.field("enabled") != 0;
+        out.params = FyrewurXParams{};
+        return true;
+    }
     if (src.apeId == "Trans: Normalise")
     {
         out.enabled = src.field("enabled") != 0;
@@ -403,11 +411,11 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
 
         case kMirror:
         {
-            const int mode = src.field("mode");
             MirrorParams p;
-            p.leftToRight = (mode & (4 | 8)) != 0;  // VERTICAL1|VERTICAL2
-            p.topToBottom = (mode & (1 | 2)) != 0;  // HORIZONTAL1|HORIZONTAL2
+            p.mode = src.field("mode") & 15;  // 4 directed bits, 1:1 (r_mirror)
             p.onBeatRandom = src.field("onbeat") != 0;
+            p.smooth = src.field("smooth") != 0;
+            p.slower = std::clamp(src.field("slower"), 1, 16);
             out.enabled = src.field("enabled") != 0;
             out.params = p;
             return true;
@@ -420,10 +428,17 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             return true;
 
         case kClearScreen:
+        {
             out.enabled = src.field("enabled") != 0;
+            // r_clear precedence: blend==2 -> line blend, blend==1 -> additive,
+            // blendavg -> 50/50, else replace.
+            const int b = src.field("blend");
+            const int mode = b == 2 ? 3
+                                    : (b == 1 ? 1 : (src.field("blendavg") != 0 ? 2 : 0));
             out.params = ClearParams{avsColor(src.field("color")),
-                                     src.field("onlyfirst") != 0};
+                                     src.field("onlyfirst") != 0, mode};
             return true;
+        }
 
         case kColorfade:
         {
@@ -470,6 +485,7 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
                 p.rectCoords = f.rect;
             }
             p.wrap = src.field("wrap") != 0;
+            p.blend = src.field("blend") != 0;
             out.params = std::move(p);
             return true;
         }
@@ -649,6 +665,8 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.yres = src.field("yres") > 0 ? src.field("yres") : 12;
             p.rectCoords = src.field("rectcoords") != 0;
             p.wrap = src.field("wrap") != 0;
+            p.blend = src.field("blend") != 0;
+            p.nomove = src.field("nomove") != 0;
             out.params = std::move(p);
             return true;
         }
@@ -757,6 +775,10 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.onBeat = src.field("onbeat") != 0;
             p.beatSpeed = bitsToFloat(src.field("beatSpeed_bits"), 4.0f);
             p.durationFrames = std::max(1, src.field("durFrames"));
+            p.blend = src.field("blend") != 0
+                          ? 1
+                          : (src.field("blendavg") != 0 ? 2 : 0);
+            out.enabled = src.field("enabled") != 0;
             out.params = p;
             return true;
         }
@@ -830,10 +852,23 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
         {
             BufferSaveParams p;
             p.slot = std::clamp(src.field("which"), 0, 7);
-            p.save = src.field("dir") == 0;  // 0=save, 1=restore
-            const int b = src.field("blend");
-            p.blend = b == 1 ? BlendMode::Additive
-                             : (b == 2 ? BlendMode::FiftyFifty : BlendMode::Replace);
+            p.dir = std::clamp(src.field("dir"), 0, 3);
+            // r_stack.cpp:128-231 blend codes -> host BlendMode (1=50/50! 2=add!)
+            switch (src.field("blend"))
+            {
+                case 1: p.blend = BlendMode::FiftyFifty; break;
+                case 2: p.blend = BlendMode::Additive; break;
+                case 3: p.blend = BlendMode::EveryOtherPixel; break;
+                case 4: p.blend = BlendMode::Subtractive12; break;
+                case 5: p.blend = BlendMode::EveryOtherLine; break;
+                case 6: p.blend = BlendMode::Xor; break;
+                case 7: p.blend = BlendMode::Maximum; break;
+                case 8: p.blend = BlendMode::Minimum; break;
+                case 9: p.blend = BlendMode::Subtractive21; break;
+                case 10: p.blend = BlendMode::Multiply; break;
+                case 11: p.blend = BlendMode::Adjustable; break;
+                default: p.blend = BlendMode::Replace; break;
+            }
             p.adjustAlpha = std::clamp(src.field("adjblend_val"), 0, 255);
             out.params = p;
             return true;
@@ -858,13 +893,17 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.frameCode = slotStr(src, "frame");
             p.beatCode = slotStr(src, "beat");
             p.pointCode = slotStr(src, "point");
+            p.pointCount = 100;  // AVS default *var_n=100 (init code overrides)
             p.renderMode = (src.field("drawmode") & 1) ? 1 : 0;  // lines / dots
             p.audioChannel = std::clamp(src.field("which_ch"), 0, 4);
             // AVS color table (COLORREF -> host RRGGBB). Point code that sets
-            // red/green/blue still overrides it at render time.
+            // red/green/blue still overrides it at render time. A preset with
+            // NO colors gets AVS' default white (r_sscope ctor: 1x 0xFFFFFF) —
+            // channels the script leaves untouched must start at 1.0.
             for (std::uint32_t c : src.colors)
                 p.colors.push_back(avsColor(static_cast<std::int32_t>(c)));
-            p.colorBlend = p.colors.empty() ? 0 : 1;  // table mode iff AVS had colors
+            if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
+            p.colorBlend = 1;  // table mode (frame-constant base, AVS-faithful)
             // Line width/blend now come from a live Set Render Mode node at render
             // time (host render mode), not baked here.
             out.params = std::move(p);

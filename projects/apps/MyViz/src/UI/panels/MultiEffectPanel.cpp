@@ -111,6 +111,7 @@ const std::vector<EffectType>& effectPalette()
         {"Bass Spin", [] { return EffectParams{BassSpinParams{}}; }},
         {"Moving Particle", [] { return EffectParams{MovingParticleParams{}}; }},
         {"Starfield", [] { return EffectParams{StarfieldParams{}}; }},
+        {"FyrewurX", [] { return EffectParams{FyrewurXParams{}}; }},
         {"Timescope", [] { return EffectParams{TimescopeParams{}}; }},
         {"Dot Grid", [] { return EffectParams{DotGridParams{}}; }},
         {"Dot Plane", [] { return EffectParams{DotPlaneParams{}}; }},
@@ -1721,6 +1722,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
     {
         addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<ClearParams>(n.params).color = v; });
         addBool(tr("Only first frame"), p->onlyFirst, [](ChainNode& n, bool v) { std::get<ClearParams>(n.params).onlyFirst = v; });
+        const QStringList kClearBlendNames = {tr("Replace"), tr("Additive"),
+                                              tr("50/50"), tr("Line blend")};
+        addEnum(tr("Blend"), p->blend, kClearBlendNames, [](ChainNode& n, int v) { std::get<ClearParams>(n.params).blend = v; });
     }
     else if (auto* p = std::get_if<FadeoutParams>(&params))
     {
@@ -1751,9 +1755,19 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
     }
     else if (auto* p = std::get_if<MirrorParams>(&params))
     {
-        addBool(tr("Left -> Right"), p->leftToRight, [](ChainNode& n, bool v) { std::get<MirrorParams>(n.params).leftToRight = v; });
-        addBool(tr("Top -> Bottom"), p->topToBottom, [](ChainNode& n, bool v) { std::get<MirrorParams>(n.params).topToBottom = v; });
+        auto setModeBit = [](int bit) {
+            return [bit](ChainNode& n, bool v) {
+                int& m = std::get<MirrorParams>(n.params).mode;
+                m = v ? (m | bit) : (m & ~bit);
+            };
+        };
+        addBool(tr("Top -> Bottom"), (p->mode & 1) != 0, setModeBit(1));
+        addBool(tr("Bottom -> Top"), (p->mode & 2) != 0, setModeBit(2));
+        addBool(tr("Left -> Right"), (p->mode & 4) != 0, setModeBit(4));
+        addBool(tr("Right -> Left"), (p->mode & 8) != 0, setModeBit(8));
         addBool(tr("OnBeat random"), p->onBeatRandom, [](ChainNode& n, bool v) { std::get<MirrorParams>(n.params).onBeatRandom = v; });
+        addBool(tr("Smooth transition"), p->smooth, [](ChainNode& n, bool v) { std::get<MirrorParams>(n.params).smooth = v; });
+        addInt(tr("Slower (frames/step)"), p->slower, 1, 16, [](ChainNode& n, int v) { std::get<MirrorParams>(n.params).slower = v; });
     }
     else if (auto* p = std::get_if<OnBeatClearParams>(&params))
     {
@@ -1782,6 +1796,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
     {
         addBool(tr("Rect coords"), p->rectCoords, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).rectCoords = v; });
         addBool(tr("Wrap"), p->wrap, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).wrap = v; });
+        addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).blend = v; });
         addScript(tr("Point code"), p->code, [](ChainNode& n, std::string v) { std::get<MovementParams>(n.params).code = std::move(v); });
     }
     else if (auto* p = std::get_if<DynamicMovementParams>(&params))
@@ -1790,8 +1805,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         addInt(tr("Grid Y"), p->yres, 2, 72, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).yres = v; });
         addBool(tr("Rect coords"), p->rectCoords, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).rectCoords = v; });
         addBool(tr("Wrap"), p->wrap, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).wrap = v; });
+        addBool(tr("Blend (alpha)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).blend = v; });
+        addBool(tr("No move"), p->nomove, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).nomove = v; });
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).beatCode = std::move(v); });
         addScript(tr("Point"), p->pointCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).pointCode = std::move(v); });
     }
     else if (auto* p = std::get_if<DynamicShiftParams>(&params))
@@ -1994,9 +2012,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
     else if (auto* p = std::get_if<BufferSaveParams>(&params))
     {
         addInt(tr("Buffer slot"), p->slot, 0, 7, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).slot = v; });
-        addBool(tr("Save (else restore)"), p->save, [](ChainNode& n, bool v) { std::get<BufferSaveParams>(n.params).save = v; });
-        addEnum(tr("Restore blend"), static_cast<int>(p->blend), kBlendNames, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).blend = static_cast<BlendMode>(v); });
-        addInt(tr("Restore alpha"), p->adjustAlpha, 0, 255, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).adjustAlpha = v; });
+        const QStringList kDirNames = {tr("Save"), tr("Restore"),
+                                       tr("Alternate (save first)"),
+                                       tr("Alternate (restore first)")};
+        addEnum(tr("Direction"), p->dir, kDirNames, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).dir = v; });
+        addEnum(tr("Blend"), static_cast<int>(p->blend), kBlendNames, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).blend = static_cast<BlendMode>(v); });
+        addInt(tr("Blend alpha"), p->adjustAlpha, 0, 255, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).adjustAlpha = v; });
     }
     else if (auto* p = std::get_if<CustomBpmParams>(&params))
     {
@@ -2204,6 +2225,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         addInt(tr("Beat rotation/frame"), p->rotationInc2, -64, 64, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).rotationInc2 = v; });
         addDouble(tr("Beat speed"), p->speed, 0.01, 2.0, 0.01, [](ChainNode& n, double v) { std::get<InterferencesParams>(n.params).speed = static_cast<float>(v); });
     }
+    else if (auto* p = std::get_if<FyrewurXParams>(&params))
+    {
+        addInt(tr("Sparks per burst"), p->sparks, 1, 1024, [](ChainNode& n, int v) { std::get<FyrewurXParams>(n.params).sparks = v; });
+        addDouble(tr("Speed"), p->speed, 0.05, 5.0, 0.05, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).speed = static_cast<float>(v); });
+        addDouble(tr("Gravity"), p->gravity, 0.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).gravity = static_cast<float>(v); });
+        addDouble(tr("Life (s)"), p->lifeSeconds, 0.1, 10.0, 0.1, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).lifeSeconds = static_cast<float>(v); });
+    }
     else if (auto* p = std::get_if<StarfieldParams>(&params))
     {
         addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<StarfieldParams>(n.params).color = v; });
@@ -2212,6 +2240,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<StarfieldParams>(n.params).onBeat = v; });
         addDouble(tr("Beat speed"), p->beatSpeed, 0.1, 50.0, 0.5, [](ChainNode& n, double v) { std::get<StarfieldParams>(n.params).beatSpeed = static_cast<float>(v); });
         addInt(tr("Duration (frames)"), p->durationFrames, 1, 200, [](ChainNode& n, int v) { std::get<StarfieldParams>(n.params).durationFrames = v; });
+        const QStringList kStarBlendNames = {tr("Replace"), tr("Additive"), tr("50/50")};
+        addEnum(tr("Blend"), p->blend, kStarBlendNames, [](ChainNode& n, int v) { std::get<StarfieldParams>(n.params).blend = v; });
     }
     else if (auto* p = std::get_if<TimescopeParams>(&params))
     {

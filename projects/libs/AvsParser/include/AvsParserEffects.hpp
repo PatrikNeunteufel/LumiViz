@@ -5,7 +5,7 @@
  *
  * @author LumiPulse Team
  * @date   July 2026
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @details
  * Each decoder is a 1:1 transcription of the respective load_config in
@@ -814,6 +814,10 @@ inline bool decodeApe(std::string_view apeId, Reader& r, EffectNode& node)
 {
     if (apeId == "Channel Shift")
         readField(r, node, "mode") && readField(r, node, "onbeat");
+    else if (apeId == "FunkyFX FyrewurX v1")
+        // Closed-source APE: enabled + one opaque config word (identical in
+        // every known preset — the host rebuild uses its own parameters).
+        readField(r, node, "enabled") && readField(r, node, "config");
     else if (apeId == "Color Reduction")
         readField(r, node, "levels");
     else if (apeId == "Multiplier")

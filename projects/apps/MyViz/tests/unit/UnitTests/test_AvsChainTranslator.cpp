@@ -277,6 +277,25 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(t.root.children[0].enabled);
     }
 
+    TEST_CASE("FyrewurX (APE) -> FyrewurXParams (Nachbau, enabled gemappt)")
+    {
+        EffectNode fw;
+        fw.id = lumi::avs::kApeIdBase;
+        fw.apeId = "FunkyFX FyrewurX v1";
+        fw.decoded = true;
+        fw.fields = {{"enabled", 1}, {"config", 0x00050401}};
+
+        EffectNode off = fw;
+        off.fields = {{"enabled", 0}, {"config", 0x00050401}};
+
+        const TranslationResult t = translateAvsTree(makeParsed({fw, off}));
+        REQUIRE(t.root.children.size() == 2);
+        REQUIRE(std::holds_alternative<FyrewurXParams>(t.root.children[0].params));
+        CHECK(t.root.children[0].enabled);
+        CHECK_FALSE(t.root.children[1].enabled);
+        CHECK(std::string(effectTypeName(t.root.children[0].params)) == "FyrewurX");
+    }
+
     TEST_CASE("Jheriko: Global (APE) -> JherikoGlobalParams mit Code")
     {
         EffectNode jg;
@@ -585,12 +604,16 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(p.colors[1] == 0x0000FFu);  // -> RRGGBB blue
     }
 
-    TEST_CASE("SuperScope ohne AVS-Farben bleibt im Gradient-Modus")
+    TEST_CASE("SuperScope ohne AVS-Farben bekommt das AVS-Default-Weiss")
     {
+        // r_sscope-Konstruktor: num_colors=1, RGB(255,255,255). Kanäle, die der
+        // Point-Code nicht anfasst, muessen bei 1.0 starten (Session 38, B4).
         const TranslationResult t = translateAvsTree(makeParsed({builtin(36)}));
         const auto& p = std::get<SuperScopeParams>(t.root.children[0].params);
-        CHECK(p.colorBlend == 0);
-        CHECK(p.colors.empty());
+        CHECK(p.colorBlend == 1);  // Tabellen-Modus, frame-konstant
+        REQUIRE(p.colors.size() == 1);
+        CHECK(p.colors[0] == 0xFFFFFFu);
+        CHECK(p.pointCount == 100);  // AVS-Default *var_n=100
     }
 
     TEST_CASE("Grain: Felder + Blend-Flags gemappt")
@@ -823,5 +846,48 @@ TEST_SUITE("AvsChainTranslator")
         }
         CHECK(files >= 1);
         MESSAGE("Korpus: " << files << " Presets, " << totalEffects << " Knoten uebersetzt");
+    }
+
+    TEST_CASE("Buffer Save (id 18): dir + r_stack-Blend-Codes (1=50/50, 2=additiv)")
+    {
+        EffectNode save = builtin(18);
+        save.fields = {{"dir", 2}, {"which", 3}, {"blend", 1}, {"adjblend_val", 77}};
+
+        EffectNode restore = builtin(18);
+        restore.fields = {{"dir", 1}, {"which", 9}, {"blend", 2}, {"adjblend_val", 300}};
+
+        const TranslationResult t = translateAvsTree(makeParsed({save, restore}));
+        REQUIRE(t.root.children.size() == 2);
+
+        const auto& s = std::get<BufferSaveParams>(t.root.children[0].params);
+        CHECK(s.dir == 2);                             // alternierend (save zuerst)
+        CHECK(s.slot == 3);
+        CHECK(s.blend == lumi::multieffect::BlendMode::FiftyFifty);  // 1 = 50/50!
+        CHECK(s.adjustAlpha == 77);
+
+        const auto& r = std::get<BufferSaveParams>(t.root.children[1].params);
+        CHECK(r.dir == 1);
+        CHECK(r.slot == 7);                            // geklammert 0..7
+        CHECK(r.blend == lumi::multieffect::BlendMode::Additive);    // 2 = additiv!
+        CHECK(r.adjustAlpha == 255);                   // geklammert
+    }
+
+    TEST_CASE("Clear Screen (id 25): blend/blendavg -> Modus (r_clear-Vorrang)")
+    {
+        EffectNode line = builtin(25);
+        line.fields = {{"enabled", 1}, {"color", 0}, {"blend", 2}, {"blendavg", 1}};
+        EffectNode add = builtin(25);
+        add.fields = {{"enabled", 1}, {"color", 0}, {"blend", 1}, {"blendavg", 1}};
+        EffectNode avg = builtin(25);
+        avg.fields = {{"enabled", 1}, {"color", 0}, {"blend", 0}, {"blendavg", 1}};
+        EffectNode repl = builtin(25);
+        repl.fields = {{"enabled", 1}, {"color", 0}, {"blend", 0}, {"blendavg", 0}};
+
+        const TranslationResult t = translateAvsTree(makeParsed({line, add, avg, repl}));
+        REQUIRE(t.root.children.size() == 4);
+        CHECK(std::get<ClearParams>(t.root.children[0].params).blend == 3);
+        CHECK(std::get<ClearParams>(t.root.children[1].params).blend == 1);
+        CHECK(std::get<ClearParams>(t.root.children[2].params).blend == 2);
+        CHECK(std::get<ClearParams>(t.root.children[3].params).blend == 0);
     }
 }

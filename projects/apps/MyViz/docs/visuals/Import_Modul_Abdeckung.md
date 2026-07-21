@@ -129,13 +129,14 @@ Referenz für Strings + Feld-Layouts: `grandchild/AVS-File-Decoder`
 | `Picture II` | Picture II | Misc | ✅ | `PictureIIParams` (Bild eingebettet + Blend) | U·A·S offen | mittel |
 | `Texer` | Texer (I) | Render | ✅ | `TexerParams` (Sprite an Wellenform-Punkten) | U·A·S offen | niedrig |
 | `Misc: AVSTrans Automation` | Trans Automation | Misc | ✖ | Meta/eigenwillig | — | niedrig |
-| `FunkyFX FyrewurX v1` | FyrewurX | Misc | ✖ | closed-source | — | niedrig–mittel |
+| `FunkyFX FyrewurX v1` | FyrewurX | Misc | ✅ | `FyrewurXParams` — **Verhaltens-Nachbau** (S38, Entscheid Patrik; closed-source, kein Code): Beat-Feuerwerks-Bursts, Gravitations-Funken, additiv. In 68/612 Korpus-Presets (11 %), Config-Bytes überall identisch → Parameter host-eigen | U·A·S offen | mittel |
 | `GeissFluid` | Fluid | Misc | ✖ | closed-source (Fluid-Sim) | — | niedrig |
 | `ParticleSystem` | Particle System | Render | ✖ | Partikel-Engine | — | niedrig |
 | `Nullsoft Pixelcorps: MIDItrace ` | MIDI Trace | Misc | ✖ | MIDI-Input ⚠ Trailing-Space | — | sehr niedrig |
 | `VFX AVI PLAYER` | AVI Player | Misc | ✖ | Video-Decode | — | sehr niedrig |
 
-**APE-Bilanz:** ✅ 16 · ◐ 1 (Framerate Limiter) · ⬜ 0 · ✖ 6.
+**APE-Bilanz:** ✅ 17 · ◐ 1 (Framerate Limiter) · ⬜ 0 · ✖ 5 (Stand Session 38:
+FyrewurX nachgebaut).
 
 **Parser-Fallstricke (Exakt-Match!):** `Jheriko : MULTIFILTER` hat ein **Leerzeichen
 vor dem Doppelpunkt**; `Nullsoft Pixelcorps: MIDItrace ` endet mit **Leerzeichen**.

@@ -104,6 +104,9 @@ void ScriptGridModule::initializeScripts()
     engine.setNumber("sh", 0.0);
     engine.setNumber("time", static_cast<double>(m_totalTime));
     engine.setNumber("b", 0.0);
+    // AVS seeds alpha=0.5 once (r_dmove.cpp:295); the script owns it afterwards
+    // (persistent like every EEL var, NOT reset per point).
+    engine.setNumber("alpha", 0.5);
 
     if (m_script->has(Slot::Init) && !m_script->run(Slot::Init) &&
         m_lastScriptError.empty())
@@ -167,7 +170,6 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
             engine.setNumber("y", y);
             engine.setNumber("d", d);
             engine.setNumber("r", r);
-            if (m_scriptSetsAlpha) engine.setNumber("alpha", 1.0);
 
             GridNode& out = m_field[idx];
             if (!m_script->run(Slot::Point))
@@ -193,7 +195,7 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
             out.alpha = m_scriptSetsAlpha
                             ? std::clamp(static_cast<float>(engine.number("alpha")),
                                          0.0f, 1.0f)
-                            : 1.0f;
+                            : 0.5f;  // AVS default (*var_alpha = 0.5)
         }
     }
 }

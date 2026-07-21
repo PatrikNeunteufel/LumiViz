@@ -128,6 +128,16 @@ private:
         }
     };
 
+    /** One FyrewurX spark (NDC position/velocity, remaining life). */
+    struct FwSpark
+    {
+        float x = 0.0f, y = 0.0f;
+        float vx = 0.0f, vy = 0.0f;
+        float life = 0.0f;     ///< seconds remaining
+        float lifeMax = 1.0f;  ///< spawn lifetime (for the fade)
+        float r = 1.0f, g = 1.0f, b = 1.0f;
+    };
+
     /** One Starfield particle (normalized coords, z in (0,1]). */
     struct Star
     {
@@ -151,8 +161,9 @@ private:
     {
         int beatCounter = 0;     ///< OnBeat Clear: beats since last clear
         int beatFramesLeft = 0;  ///< Colorfade: frames the beat faders stay on
-        bool mirrorH = true;     ///< Mirror onbeat-random: active horizontal axis
-        bool mirrorV = false;    ///< Mirror onbeat-random: active vertical axis
+        int mirrorRBeat = 0;     ///< Mirror onbeat-random: current direction bits
+        float mirrorF[4] = {0.0f, 0.0f, 0.0f, 0.0f};  ///< smooth factors per direction
+        int mirrorFrames = 0;    ///< Mirror: frame counter for the `slower` ramp
 
         // Color Modifier: scripted 256-entry LUT + its GL upload
         std::unique_ptr<lumi::modules::ScriptLutModule> lut;
@@ -177,6 +188,8 @@ private:
         // Movement / Dynamic Movement: scripted displacement grid
         std::unique_ptr<lumi::modules::ScriptGridModule> grid;
         std::string gridCompiled;
+        int gridFieldW = 0;  ///< surface size the static field was computed for
+        int gridFieldH = 0;
 
         // SuperScope: scripted point generator (drawn via the shared renderer)
         std::unique_ptr<lumi::modules::SuperscopeModule> scope;
@@ -191,6 +204,12 @@ private:
         // Mosaic: on-beat quality ease-back (r_mosaic thisQuality/nF)
         float mosaicQuality = 0.0f;  ///< current interpolated block count (0 = init)
         int mosaicFramesLeft = 0;    ///< frames left easing back to `quality`
+
+        // Buffer Save: alternate-direction toggle (r_stack dir_ch)
+        bool bufDirCh = false;
+
+        // FyrewurX: live sparks (spawned per beat, gravity-integrated)
+        std::vector<FwSpark> fwSparks;
 
         // SuperScope: gradient preset the module currently holds (reload on change)
         std::string scopeGradientLoaded;
@@ -392,13 +411,18 @@ private:
     void runDynamicMovement(const lumi::multieffect::ChainNode& node,
                             const lumi::multieffect::DynamicMovementParams& params);
     /** Shared grid-warp: run the module, build the mesh, sample current→partner. */
-    void applyGridWarp(LeafRuntime& rt, int xres, int yres, bool wrap);
+    void applyGridWarp(LeafRuntime& rt, int xres, int yres, bool wrap,
+                       bool blend = false, bool nomove = false,
+                       bool staticField = false);
     void runBlitterFeedback(const lumi::multieffect::BlitterFeedbackParams& params);
     void runRotoBlitter(const lumi::multieffect::ChainNode& node,
                         const lumi::multieffect::RotoBlitterParams& params);
     /** Shared roto/zoom feedback pass: sample current transformed, blend, swap. */
     void feedbackPass(float zoom, float angleRad, bool blend);
-    void runBufferSave(const lumi::multieffect::BufferSaveParams& params);
+    void runBufferSave(const lumi::multieffect::ChainNode& node,
+                       const lumi::multieffect::BufferSaveParams& params);
+    void runFyrewurX(const lumi::multieffect::ChainNode& node,
+                     const lumi::multieffect::FyrewurXParams& params);
     void runCustomBpm(const lumi::multieffect::ChainNode& node,
                       const lumi::multieffect::CustomBpmParams& params);
     void runSetRenderMode(const lumi::multieffect::SetRenderModeParams& params);
@@ -483,6 +507,8 @@ private:
 
     // GL state (render thread only)
     SurfacePair m_rootSurface;
+    /// Scratch ping-pong for blended Buffer-Save writes into pool FBOs
+    SurfacePair m_bufferScratch;
     std::vector<SurfacePair*> m_surfaceStack;
     std::unordered_map<uint64_t, ListRuntime> m_listRuntimes;
     int m_surfaceWidth = 0;

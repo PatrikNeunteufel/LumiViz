@@ -221,6 +221,17 @@ public:
     void setBlendMode(SuperscopeBlendMode mode) { m_blendMode = mode; }
     [[nodiscard]] SuperscopeBlendMode blendMode() const { return m_blendMode; }
 
+    /// Lua mode: the EEL vars drawmode/linesize are scriptable (r_sscope).
+    /// Frame-level readback — true when any slot mentions the var; the host
+    /// then applies the script value instead of the UI parameter.
+    [[nodiscard]] bool scriptDrawModeActive() const { return m_scriptSetsDrawMode; }
+    [[nodiscard]] bool scriptWantsLines() const { return m_scriptDrawMode >= 0.00001; }
+    [[nodiscard]] bool scriptLineSizeActive() const { return m_scriptSetsLineSize; }
+    [[nodiscard]] float scriptLineSize() const
+    {
+        return std::clamp(static_cast<float>(m_scriptLineSize), 1.0f, 20.0f);
+    }
+
     // =========================================================================
     // Audio Settings
     // =========================================================================
@@ -402,6 +413,12 @@ private:
     float m_frameTableR = 1.0f;   ///< this frame's cycled table color
     float m_frameTableG = 1.0f;
     float m_frameTableB = 1.0f;
+
+    // Scripted drawmode/linesize (r_sscope EEL vars, frame-level readback)
+    bool m_scriptSetsDrawMode = false;
+    bool m_scriptSetsLineSize = false;
+    double m_scriptDrawMode = 0.0;
+    double m_scriptLineSize = 1.0;
 
     // =========================================================================
     // Render Settings

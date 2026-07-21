@@ -138,3 +138,54 @@ TEST_CASE("BeatEstimator: Reset liefert Lernzustand")
     CHECK(sim.est.bpm() >= 118);
     CHECK(sim.est.bpm() <= 122);
 }
+
+// =====================================================================================
+// BeatModule::updateAvsOnset — AVS-treuer Onset-Detektor (Import-Treue-Fixplan A3)
+// =====================================================================================
+
+#include "visualizers/modules/processing/BeatModule.hpp"
+
+using lumi::modules::BeatModule;
+
+TEST_CASE("BeatModule AVS-Onset: Stille und Leise unter dem Floor feuern nie")
+{
+    BeatModule beat;
+    int fired = 0;
+    for (int i = 0; i < 200; ++i)
+    {
+        if (beat.updateAvsOnset(0.0f)) ++fired;
+        // Floor des Originals: Summe > 576*16  <=>  Mittel|sample| > 16/128 = 0.125
+        if (beat.updateAvsOnset(0.10f)) ++fired;
+    }
+    CHECK(fired == 0);
+}
+
+TEST_CASE("BeatModule AVS-Onset: Puls-Folge feuert diskret pro Puls")
+{
+    BeatModule beat;
+    int fired = 0;
+    for (int pulse = 0; pulse < 10; ++pulse)
+    {
+        for (int q = 0; q < 9; ++q)
+        {
+            if (beat.updateAvsOnset(0.05f)) ++fired;   // Grundrauschen
+        }
+        if (beat.updateAvsOnset(0.6f)) ++fired;        // Schlag
+    }
+    // Jeder Schlag genau ein Event (Peak-Anhebung + Refire-Guard)
+    CHECK(fired == 10);
+}
+
+TEST_CASE("BeatModule AVS-Onset: Dauer-Pegel erzeugt keinen Beat-Burst")
+{
+    BeatModule beat;
+    // Einschwingen auf konstant laut: die Schwelle zieht nach wenigen Frames
+    // ueber den Pegel (peak1 -> (lt+peak) / 2), danach Ruhe.
+    int fired = 0;
+    for (int i = 0; i < 100; ++i)
+    {
+        if (beat.updateAvsOnset(0.5f)) ++fired;
+    }
+    CHECK(fired >= 1);      // der Einsatz selbst ist ein Beat
+    CHECK(fired <= 4);      // aber kein Dauerfeuer ueber 100 Frames
+}

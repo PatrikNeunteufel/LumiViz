@@ -1,7 +1,7 @@
 # BeatModule — Gemeinsame Beat-Detection
 
-> **Version:** 1.0.0  
-> **Datum:** 2026-07-19  
+> **Version:** 1.1.0  
+> **Datum:** 2026-07-22  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert  
 > **Modul:** MyViz::Visualizers::Modules::BeatModule  
@@ -22,6 +22,7 @@ Konsolidiert die früheren Ad-hoc-Beat-Detektoren der Visualizer
 |---|---|---|---|
 | Kanten-Trigger | `update(level)` | `level × sensitivity` überschreitet `threshold` aufsteigend (Flanke) | PulsingVisualizer (Beat-Reverse-Rotation) |
 | Adaptiv | `updateAdaptive(energy)` | mitlaufender Schwellwert (Running Average, Trägheit 0.95); Beat bei `energy > 1.5 × Schwellwert` und über dem Rauschboden 0.1 | SuperscopeVisualizer (Script-Variable `b`) |
+| AVS-Onset | `updateAvsOnset(meanAbs)` | Port des vis_avs-Detektors (ref main.cpp:290-329): Peak-Tracker `peak1` (träge, mischt `peak2` ein), Beat bei `Level ≥ peak1×34/32` über dem Floor (Ø-Betrag 16/128), danach Schwellen-Anhebung `(Level+letzter Peak)/2` + Refire-Guard (`beat_cnt`) — diskrete Events statt Mehr-Frame-Bursts | MultiEffectVisualizer (AVS-Import; danach `BeatEstimator::refine`) |
 
 ## 2. API
 
@@ -31,6 +32,7 @@ beat.setThreshold(0.4f);      // Kanten-Modus
 beat.setSensitivity(1.0f);
 bool onBeat = beat.update(audioLevel);        // Flanken-Erkennung
 bool isBeat = beat.updateAdaptive(rmsEnergy); // adaptiver Energie-Modus
+bool onset  = beat.updateAvsOnset(meanAbs);   // AVS-treuer Onset (Ø|Waveform|, max L/R)
 beat.reset();                 // Detektions-Zustand löschen (Config bleibt)
 beat.resetToDefaults();       // Config + Zustand
 ```
@@ -50,4 +52,5 @@ nicht konfigurierbar (Verhalten = bisheriger Superscope-Detektor).
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
+| 1.1.0 | 2026-07-22 | `updateAvsOnset`: AVS-treuer Onset-Detektor (main.cpp-Port) für den MultiEffect-Host (Import-Treue-Fixplan A3) |
 | 1.0.0 | 2026-07-19 | Initial (Phase 4 Schritt 5.2/5.5): Kanten-Trigger + adaptiver Energie-Modus; ersetzt Inline-Detektoren in Pulsing und Superscope |

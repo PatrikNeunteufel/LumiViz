@@ -242,6 +242,32 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{StarfieldParams{}}) == "starfield");
     }
 
+    TEST_CASE("Starfield-Blend + FyrewurX ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode star;
+        StarfieldParams sp;
+        sp.blend = 2;
+        star.params = sp;
+        root.children.push_back(std::move(star));
+        ChainNode fw;
+        FyrewurXParams fp;
+        fp.sparks = 200; fp.speed = 1.2f; fp.gravity = 0.5f; fp.lifeSeconds = 2.5f;
+        fw.params = fp;
+        root.children.push_back(std::move(fw));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 2);
+        CHECK(std::get<StarfieldParams>(restored.children[0].params).blend == 2);
+        const auto& p = std::get<FyrewurXParams>(restored.children[1].params);
+        CHECK(p.sparks == 200);
+        CHECK(p.speed == doctest::Approx(1.2f));
+        CHECK(p.gravity == doctest::Approx(0.5f));
+        CHECK(p.lifeSeconds == doctest::Approx(2.5f));
+        CHECK(effectTypeKey(EffectParams{FyrewurXParams{}}) == "fyrewurx");
+    }
+
     TEST_CASE("Water-Bump-Parameter ueberleben den Round-Trip")
     {
         ChainNode root;

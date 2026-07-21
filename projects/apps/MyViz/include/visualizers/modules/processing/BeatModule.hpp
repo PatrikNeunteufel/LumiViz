@@ -76,11 +76,58 @@ public:
         return energy > m_adaptiveThreshold * kAdaptiveRatio && energy > kAdaptiveMinEnergy;
     }
 
+    /**
+     * @brief AVS-faithful onset detection on the mean |waveform| level
+     *
+     * Port of the vis_avs render() detector (ref main.cpp:290-329): a slow peak
+     * tracker (peak1) mixed with a fast decaying runner-up (peak2); a beat fires
+     * when the level exceeds peak1*34/32 and the noise floor, raises the bar to
+     * (level+lastPeak)/2 and guards against a same-frame refire via the counter.
+     * Feed once per frame; combine stereo by passing max(meanAbsL, meanAbsR).
+     *
+     * @param meanAbs Mean of |sample| over the frame's waveform, samples in -1..1
+     * @return true exactly on onset frames (discrete events, no bursts)
+     */
+    [[nodiscard]] bool updateAvsOnset(float meanAbs)
+    {
+        // Original works on the SUM of 576 abs bytes (0..128 each); replicate
+        // that scale so the constants (floor 576*16) keep their meaning.
+        const float lt = meanAbs * 128.0f * 576.0f;
+
+        m_avsPeak1 = (m_avsPeak1 * 125.0f + m_avsPeak2 * 3.0f) / 128.0f;
+        ++m_avsCnt;
+
+        bool beat = false;
+        if (lt >= m_avsPeak1 * (34.0f / 32.0f) && lt > 576.0f * 16.0f)
+        {
+            if (m_avsCnt > 0)
+            {
+                m_avsCnt = 0;
+                beat = true;
+            }
+            m_avsPeak1 = (lt + m_avsPeak1Peak) * 0.5f;
+            m_avsPeak1Peak = lt;
+        }
+        else if (lt > m_avsPeak2)
+        {
+            m_avsPeak2 = lt;
+        }
+        else
+        {
+            m_avsPeak2 = m_avsPeak2 * (14.0f / 16.0f);
+        }
+        return beat;
+    }
+
     /// @brief Reset detection state (config stays)
     void reset()
     {
         m_lastLevel = 0.0f;
         m_adaptiveThreshold = 0.0f;
+        m_avsPeak1 = 0.0f;
+        m_avsPeak2 = 0.0f;
+        m_avsPeak1Peak = 0.0f;
+        m_avsCnt = 0;
     }
 
     /// @brief Reset config AND state to defaults
@@ -100,6 +147,12 @@ private:
     float m_sensitivity = 1.0f;
     float m_lastLevel = 0.0f;
     float m_adaptiveThreshold = 0.0f;
+
+    // AVS onset tracker state (ref main.cpp beat_peak1/beat_peak2/beat_cnt)
+    float m_avsPeak1 = 0.0f;
+    float m_avsPeak2 = 0.0f;
+    float m_avsPeak1Peak = 0.0f;
+    int m_avsCnt = 0;
 };
 
 } // namespace lumi::modules

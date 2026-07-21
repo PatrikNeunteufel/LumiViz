@@ -393,7 +393,7 @@ TEST_SUITE("EffectChain")
     TEST_CASE("Buffer-Save-Slot/Alpha werden geklammert (Restore-Blend jetzt implementiert)")
     {
         ChainNode root = makeList();
-        root.children.push_back(makeLeaf(BufferSaveParams{99, false, BlendMode::Xor, 999}));
+        root.children.push_back(makeLeaf(BufferSaveParams{99, 1, BlendMode::Xor, 999}));
 
         const CompileResult result = compileChain(root);
         CHECK(result.ok);
