@@ -37,8 +37,9 @@ Panel + Tests). Das Bau-Rezept dazu: [Import_Modul_Umsetzungsplan.md](Import_Mod
 - `A` = schwer testbar (Bild-/Video-/GDI-/externe-DLL-Bindung).
 - `—` = kein Render (no-op/Meta), nichts sichtzutesten.
 
-**Ist-Stand:** 33 Builtins ✅ + Set Render Mode ◐ · 6 APEs ✅ (inkl. Color Map).
-Unit-Suite grün (262 Cases); GL-Sichttest von Batch A/B + §5.2-Block steht aus.
+**Ist-Stand:** 33 Builtins ✅ + Set Render Mode ◐ · 8 APEs ✅ (inkl. Color Map,
+Buffer blend, Jheriko Global). Unit-Suite grün (268 Cases); GL-Sichttest von
+Batch A/B/C + §5.2-Block steht aus.
 
 ---
 
@@ -116,8 +117,8 @@ Referenz für Strings + Feld-Layouts: `grandchild/AVS-File-Decoder`
 | `Color Map` | Color Map | Trans | ✅ | `ColorMapParams` (256-LUT-Textur + Blend-Shader) | U·S offen | sehr hoch |
 | `Acko.net: Texer II` | Texer II | Render | ⬜ | Bild+EEL+Punktschleife — Batch F | A·S | sehr hoch |
 | `Holden03: Convolution Filter` | Convolution | Trans | ⬜ | 7×7-Kernel-Shader — Batch D | U*·S | hoch |
-| `Misc: Buffer blend` | Buffer Blend | Misc | ⬜ | `OffscreenBufferPool` — Batch C (Screenshot) | U*·S | mittel–hoch |
-| `Jheriko: Global` | Global Variables | Misc | ⬜ | `ScriptContext` reg/gmegabuf — Batch C (Screenshot) | U*·S | mittel |
+| `Misc: Buffer blend` | Buffer Blend | Misc | ✅ | `BufferBlendParams` (2-Textur-Blend, 11 Modi) | U·S offen | mittel–hoch |
+| `Jheriko: Global` | Global Variables | Misc | ✅ | `JherikoGlobalParams` (EEL → reg/gmegabuf via ScriptContext) | U·S offen | mittel |
 | `Trans: Normalise` | Normalise | Trans | ⬜ | Min/Max-Reduktion — Batch D | U*·S | mittel |
 | `Jheriko : MULTIFILTER` | MultiFilter | Misc | ⬜ | Fest-Pixelfilter — Batch D ⚠ Space vor `:` | U*·S | mittel |
 | `Virtual Effect: Addborders` | Add Borders | Misc | ⬜ | Rahmen-Shader — Batch D | U*·S | niedrig–mittel |
@@ -132,7 +133,7 @@ Referenz für Strings + Feld-Layouts: `grandchild/AVS-File-Decoder`
 | `Nullsoft Pixelcorps: MIDItrace ` | MIDI Trace | Misc | ✖ | MIDI-Input ⚠ Trailing-Space | — | sehr niedrig |
 | `VFX AVI PLAYER` | AVI Player | Misc | ✖ | Video-Decode | — | sehr niedrig |
 
-**APE-Bilanz:** ✅ 6 · ⬜ 11 · ✖ 6.
+**APE-Bilanz:** ✅ 8 · ⬜ 9 · ✖ 6.
 
 **Parser-Fallstricke (Exakt-Match!):** `Jheriko : MULTIFILTER` hat ein **Leerzeichen
 vor dem Doppelpunkt**; `Nullsoft Pixelcorps: MIDItrace ` endet mit **Leerzeichen**.

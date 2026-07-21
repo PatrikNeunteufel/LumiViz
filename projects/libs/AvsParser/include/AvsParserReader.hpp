@@ -91,6 +91,19 @@ public:
         return toCString(begin, static_cast<std::size_t>(size));
     }
 
+    /**
+     * @brief Null-terminated string (mirrors the community "NtString": raw bytes
+     *        up to a NUL, which is consumed). Used by e.g. Jheriko: Global.
+     */
+    std::string loadCString()
+    {
+        const std::size_t start = m_pos;
+        while (m_pos < m_size && m_data[m_pos] != 0) ++m_pos;
+        std::string s(reinterpret_cast<const char*>(m_data + start), m_pos - start);
+        if (m_pos < m_size) ++m_pos;  // consume the terminator
+        return s;
+    }
+
     /// @brief Fixed-size block treated as C string (old fixed-256/1024 formats)
     std::string fixedString(const std::uint8_t* block, std::size_t size) const
     {

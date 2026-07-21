@@ -90,6 +90,8 @@ const std::vector<EffectType>& effectPalette()
         {"Dot Plane", [] { return EffectParams{DotPlaneParams{}}; }},
         {"Dot Fountain", [] { return EffectParams{DotFountainParams{}}; }},
         {"Color Map", [] { return EffectParams{ColorMapParams{}}; }},
+        {"Buffer Blend", [] { return EffectParams{BufferBlendParams{}}; }},
+        {"Global Variables", [] { return EffectParams{JherikoGlobalParams{}}; }},
         {"Channel Shift", [] { return EffectParams{ChannelShiftParams{}}; }},
         {"Color Reduction", [] { return EffectParams{ColorReductionParams{}}; }},
         {"Multiplier", [] { return EffectParams{MultiplierParams{}}; }},
@@ -995,6 +997,20 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         auto* info = new QLabel(tr("%1 gradient stops (imported, read-only)").arg(p->stopPos.size()), m_propContainer);
         info->setWordWrap(true);
         form->addRow(info);
+    }
+    else if (auto* p = std::get_if<BufferBlendParams>(&params))
+    {
+        const QStringList bufs{"Buffer 1", "Buffer 2", "Buffer 3", "Buffer 4", "Buffer 5", "Buffer 6", "Buffer 7", "Buffer 8", "Current"};
+        addEnum(tr("Buffer A"), p->bufferA, bufs, [](ChainNode& n, int v) { std::get<BufferBlendParams>(n.params).bufferA = v; });
+        addEnum(tr("Buffer B"), p->bufferB, bufs, [](ChainNode& n, int v) { std::get<BufferBlendParams>(n.params).bufferB = v; });
+        addEnum(tr("Mode"), p->mode, {"Replace", "Additive", "Maximum", "50/50", "Sub A-B", "Sub B-A", "Multiply", "Adjustable", "XOR", "Minimum", "Abs diff"}, [](ChainNode& n, int v) { std::get<BufferBlendParams>(n.params).mode = v; });
+    }
+    else if (auto* p = std::get_if<JherikoGlobalParams>(&params))
+    {
+        addEnum(tr("Load"), p->loadMode, {"None", "Once", "Code control", "Every frame"}, [](ChainNode& n, int v) { std::get<JherikoGlobalParams>(n.params).loadMode = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<BlitterFeedbackParams>(&params))
     {

@@ -584,6 +584,25 @@ inline void decodeColorMap(Reader& r, EffectNode& n)   // "Color Map" APE
     if (chosen == -1) addField(n, "cmcount", 0);
 }
 
+inline void decodeBufferBlend(Reader& r, EffectNode& n)   // "Misc: Buffer blend" APE
+{
+    readField(r, n, "enabled") && readField(r, n, "bufferB") &&
+        readField(r, n, "bufferA") && readField(r, n, "mode");
+}
+
+inline void decodeJherikoGlobal(Reader& r, EffectNode& n)   // "Jheriko: Global" APE
+{
+    std::int32_t load = 1;
+    if (!r.tryI32(load)) return;
+    addField(n, "load", load);
+    r.skip(6 * 4);  // null0: 6 reserved int32
+    // NtCodeIFB: three NUL-terminated strings in order init, frame, beat
+    n.code.push_back(CodeSlot{"init", r.loadCString()});
+    n.code.push_back(CodeSlot{"frame", r.loadCString()});
+    n.code.push_back(CodeSlot{"beat", r.loadCString()});
+    // file, saveRegRange, saveBufRange (NtString) — not imported
+}
+
 // =====================================================================================
 // Dispatch
 // =====================================================================================
@@ -658,6 +677,10 @@ inline bool decodeApe(std::string_view apeId, Reader& r, EffectNode& node)
     }
     else if (apeId == "Color Map")
         decodeColorMap(r, node);
+    else if (apeId == "Misc: Buffer blend")
+        decodeBufferBlend(r, node);
+    else if (apeId == "Jheriko: Global")
+        decodeJherikoGlobal(r, node);
     else
         return false;  // unknown APE: raw blob preserved
     node.decoded = true;

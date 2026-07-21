@@ -391,6 +391,46 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{ColorMapParams{}}) == "colorMap");
     }
 
+    TEST_CASE("Buffer-Blend-Parameter ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        leaf.params = BufferBlendParams{3, 8, 6};
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<BufferBlendParams>(restored.children[0].params);
+        CHECK(p.bufferA == 3);
+        CHECK(p.bufferB == 8);
+        CHECK(p.mode == 6);
+        CHECK(effectTypeKey(EffectParams{BufferBlendParams{}}) == "bufferBlend");
+    }
+
+    TEST_CASE("Jheriko-Global-Parameter + Code ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        JherikoGlobalParams jp;
+        jp.loadMode = 3;
+        jp.initCode = "reg00=0";
+        jp.frameCode = "reg00=reg00+1";
+        jp.beatCode = "reg01=1";
+        leaf.params = jp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<JherikoGlobalParams>(restored.children[0].params);
+        CHECK(p.loadMode == 3);
+        CHECK(p.initCode == "reg00=0");
+        CHECK(p.frameCode == "reg00=reg00+1");
+        CHECK(p.beatCode == "reg01=1");
+        CHECK(effectTypeKey(EffectParams{JherikoGlobalParams{}}) == "jherikoGlobal");
+    }
+
     TEST_CASE("Interferences-Parameter ueberleben den Round-Trip")
     {
         ChainNode root;

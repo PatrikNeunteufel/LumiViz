@@ -560,6 +560,34 @@ struct DotFountainParams
 };
 
 /**
+ * AVS APE "Misc: Buffer blend": combine two buffers (A and B) with a blend mode
+ * and output the result (community APE, format per grandchild/AVS-File-Decoder).
+ * `bufferA`/`bufferB` select a global pool slot 0..7 or 8 = CURRENT frame; `mode`
+ * 0..10 (replace/additive/max/50-50/sub d-s/sub s-d/multiply/adjustable/xor/min/
+ * abs-diff). Uses the shared OffscreenBufferPool (same slots as Buffer Save).
+ */
+struct BufferBlendParams
+{
+    int bufferA = 8;  ///< 0..7 pool slot, 8 = current frame
+    int bufferB = 8;  ///< 0..7 pool slot, 8 = current frame
+    int mode = 0;     ///< BufferBlendMode 0..10
+};
+
+/**
+ * AVS APE "Jheriko: Global": runs EEL that sets preset-global registers/gmegabuf,
+ * persisting them across frames for other effects (community APE). Init/frame/beat
+ * code shares this preset's ScriptContext. `loadMode` 0 none, 1 once, 2 code, 3
+ * every-frame. File I/O + save-ranges are not imported. No visual output.
+ */
+struct JherikoGlobalParams
+{
+    int loadMode = 1;  ///< 0 none, 1 once, 2 code-control, 3 every-frame
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+};
+
+/**
  * AVS APE "Color Map": map a per-pixel input value (selected channel) through a
  * gradient LUT, then blend the result onto the image (UnConeD, community APE —
  * format per grandchild/AVS-File-Decoder). `key` picks the input (0 red, 1 green,
@@ -650,7 +678,8 @@ using EffectParams =
                  SuperScopeParams, MosaicParams, GrainParams, ScatterParams,
                  InterferencesParams, WaterParams, BumpParams, WaterBumpParams,
                  StarfieldParams, TimescopeParams, DotGridParams, DotPlaneParams,
-                 DotFountainParams, ColorMapParams, ChannelShiftParams, ColorReductionParams,
+                 DotFountainParams, ColorMapParams, BufferBlendParams,
+                 JherikoGlobalParams, ChannelShiftParams, ColorReductionParams,
                  MultiplierParams, VideoDelayParams, MultiDelayParams,
                  DebugBarsParams, PassthroughParams>;
 
@@ -739,6 +768,8 @@ struct CompileResult
         const char* operator()(const DotPlaneParams&) const { return "Dot Plane"; }
         const char* operator()(const DotFountainParams&) const { return "Dot Fountain"; }
         const char* operator()(const ColorMapParams&) const { return "Color Map"; }
+        const char* operator()(const BufferBlendParams&) const { return "Buffer Blend"; }
+        const char* operator()(const JherikoGlobalParams&) const { return "Global Variables"; }
         const char* operator()(const ChannelShiftParams&) const { return "Channel Shift"; }
         const char* operator()(const ColorReductionParams&) const { return "Color Reduction"; }
         const char* operator()(const MultiplierParams&) const { return "Multiplier"; }

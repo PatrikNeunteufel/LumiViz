@@ -217,6 +217,46 @@ TEST_CASE("AvsParser: mehrere Effekte in Reihenfolge")
     CHECK(r.root.children[1].field("roundmode") == 2);
 }
 
+TEST_CASE("AvsParser: Jheriko Global APE — reserved-Skip + NUL-Codes")
+{
+    Bytes jg;
+    jg.i32(1);                          // load = once
+    for (int i = 0; i < 6; ++i) jg.i32(0);  // null0: 6 reserved int32
+    jg.text("reg00=5").u8(0);           // init (NUL-terminated)
+    jg.text("reg00=reg00+1").u8(0);     // frame
+    jg.u8(0);                           // beat (empty)
+    jg.u8(0).u8(0).u8(0);               // file, saveRegRange, saveBufRange (empty)
+
+    Bytes b;
+    b.signature().u8(0x00).apeEffect("Jheriko: Global", jg);
+
+    const ParseResult r = parse(b.vec());
+    REQUIRE(r.ok);
+    REQUIRE(r.effectCount() == 1);
+    const EffectNode& fx = r.root.children[0];
+    CHECK(fx.decoded);
+    CHECK(fx.field("load") == 1);
+    CHECK(fx.slot("init") == "reg00=5");
+    CHECK(fx.slot("frame") == "reg00=reg00+1");
+    CHECK(fx.slot("beat") == "");
+}
+
+TEST_CASE("AvsParser: Buffer blend APE — vier Felder")
+{
+    Bytes bb;
+    bb.i32(1).i32(8).i32(3).i32(2);  // enabled, bufferB=current, bufferA=4, mode=max
+    Bytes b;
+    b.signature().u8(0x00).apeEffect("Misc: Buffer blend", bb);
+
+    const ParseResult r = parse(b.vec());
+    REQUIRE(r.ok);
+    const EffectNode& fx = r.root.children[0];
+    CHECK(fx.decoded);
+    CHECK(fx.field("bufferB") == 8);
+    CHECK(fx.field("bufferA") == 3);
+    CHECK(fx.field("mode") == 2);
+}
+
 TEST_CASE("AvsParser: Color Map APE — Header + erste aktive Map dekodiert")
 {
     const char name48[48] = {};

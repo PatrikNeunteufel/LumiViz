@@ -256,6 +256,38 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(p.stopColor[1] == 0xFFFFFFu);
     }
 
+    TEST_CASE("Buffer blend (APE) -> BufferBlendParams")
+    {
+        EffectNode bb;
+        bb.id = lumi::avs::kApeIdBase;
+        bb.apeId = "Misc: Buffer blend";
+        bb.decoded = true;
+        bb.fields = {{"enabled", 1}, {"bufferB", 8}, {"bufferA", 2}, {"mode", 3}};
+        const TranslationResult t = translateAvsTree(makeParsed({bb}));
+        REQUIRE(std::holds_alternative<BufferBlendParams>(t.root.children[0].params));
+        const auto& p = std::get<BufferBlendParams>(t.root.children[0].params);
+        CHECK(p.bufferA == 2);
+        CHECK(p.bufferB == 8);  // CURRENT
+        CHECK(p.mode == 3);
+        CHECK(t.root.children[0].enabled);
+    }
+
+    TEST_CASE("Jheriko: Global (APE) -> JherikoGlobalParams mit Code")
+    {
+        EffectNode jg;
+        jg.id = lumi::avs::kApeIdBase;
+        jg.apeId = "Jheriko: Global";
+        jg.decoded = true;
+        jg.fields = {{"load", 3}};
+        jg.code = {{"init", "reg00=0"}, {"frame", "reg00=reg00+1"}, {"beat", ""}};
+        const TranslationResult t = translateAvsTree(makeParsed({jg}));
+        REQUIRE(std::holds_alternative<JherikoGlobalParams>(t.root.children[0].params));
+        const auto& p = std::get<JherikoGlobalParams>(t.root.children[0].params);
+        CHECK(p.loadMode == 3);
+        CHECK(p.initCode == "reg00=0");
+        CHECK(p.frameCode == "reg00=reg00+1");
+    }
+
     TEST_CASE("verschachtelte Liste mit Blend wird uebernommen")
     {
         EffectNode inner;

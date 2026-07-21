@@ -234,6 +234,19 @@ struct WriteVisitor
         o["stopPos"] = pos;
         o["stopColor"] = col;
     }
+    void operator()(const BufferBlendParams& p) const
+    {
+        o["bufferA"] = p.bufferA;
+        o["bufferB"] = p.bufferB;
+        o["mode"] = p.mode;
+    }
+    void operator()(const JherikoGlobalParams& p) const
+    {
+        o["loadMode"] = p.loadMode;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
     void operator()(const BumpParams& p) const
     {
         o["depth"] = p.depth;
@@ -571,6 +584,23 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         for (const auto& v : col) p.stopColor.push_back(static_cast<uint32_t>(v.toDouble()));
         return p;
     }
+    if (type == "bufferBlend")
+    {
+        BufferBlendParams p;
+        p.bufferA = getInt(o, "bufferA", 8);
+        p.bufferB = getInt(o, "bufferB", 8);
+        p.mode = getInt(o, "mode", 0);
+        return p;
+    }
+    if (type == "jherikoGlobal")
+    {
+        JherikoGlobalParams p;
+        p.loadMode = getInt(o, "loadMode", 1);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
     if (type == "bump")
     {
         BumpParams p;
@@ -713,6 +743,8 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const DynamicDistanceModifierParams&) const { return "dynamicDistanceModifier"; }
         QString operator()(const MovingParticleParams&) const { return "movingParticle"; }
         QString operator()(const ColorMapParams&) const { return "colorMap"; }
+        QString operator()(const BufferBlendParams&) const { return "bufferBlend"; }
+        QString operator()(const JherikoGlobalParams&) const { return "jherikoGlobal"; }
         QString operator()(const BumpParams&) const { return "bump"; }
         QString operator()(const WaterBumpParams&) const { return "waterBump"; }
         QString operator()(const InterferencesParams&) const { return "interferences"; }

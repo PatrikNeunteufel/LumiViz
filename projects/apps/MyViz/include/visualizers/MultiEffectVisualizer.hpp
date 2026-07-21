@@ -210,6 +210,11 @@ private:
         std::unique_ptr<lumi::scripting::ScriptSlotHost> ddmHost;
         std::string ddmCompiled;
 
+        // Jheriko: Global — EEL that sets preset-global reg/gmegabuf
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> jherikoHost;
+        std::string jherikoCompiled;
+        bool jherikoInited = false;
+
         // Moving Particle: spring-particle state (r_parts)
         bool mpSeeded = false;
         float mpCx = 0.0f, mpCy = 0.0f;   ///< spring target (randomized on beat)
@@ -302,6 +307,9 @@ private:
                            const lumi::multieffect::MovingParticleParams& params);
     void runColorMap(const lumi::multieffect::ChainNode& node,
                      const lumi::multieffect::ColorMapParams& params);
+    void runBufferBlend(const lumi::multieffect::BufferBlendParams& params);
+    void runJherikoGlobal(const lumi::multieffect::ChainNode& node,
+                          const lumi::multieffect::JherikoGlobalParams& params);
     void runDynamicMovement(const lumi::multieffect::ChainNode& node,
                             const lumi::multieffect::DynamicMovementParams& params);
     /** Shared grid-warp: run the module, build the mesh, sample current→partner. */
@@ -399,6 +407,7 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_shiftShader;  ///< Dynamic Shift (r_shift)
     std::unique_ptr<QOpenGLShaderProgram> m_ddmShader;    ///< Dynamic Distance Modifier (r_ddm)
     std::unique_ptr<QOpenGLShaderProgram> m_colorMapShader;  ///< Color Map APE
+    std::unique_ptr<QOpenGLShaderProgram> m_bufferBlendShader;  ///< Buffer blend APE
     std::unique_ptr<QOpenGLShaderProgram> m_wbPropShader;  ///< water-bump wave propagation
     std::unique_ptr<QOpenGLShaderProgram> m_wbDispShader;  ///< water-bump refraction
     std::unique_ptr<QOpenGLShaderProgram> m_timescopeShader;

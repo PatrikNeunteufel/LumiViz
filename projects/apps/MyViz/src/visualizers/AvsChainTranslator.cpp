@@ -202,6 +202,26 @@ bool mapApe(const EffectNode& src, ChainNode& out)
         out.params = p;
         return true;
     }
+    if (src.apeId == "Misc: Buffer blend")
+    {
+        BufferBlendParams p;
+        p.bufferA = std::clamp(src.field("bufferA"), 0, 8);
+        p.bufferB = std::clamp(src.field("bufferB"), 0, 8);
+        p.mode = std::clamp(src.field("mode"), 0, 10);
+        out.enabled = src.field("enabled") != 0;
+        out.params = p;
+        return true;
+    }
+    if (src.apeId == "Jheriko: Global")
+    {
+        JherikoGlobalParams p;
+        p.loadMode = std::clamp(src.field("load"), 0, 3);
+        p.initCode = slotStr(src, "init");
+        p.frameCode = slotStr(src, "frame");
+        p.beatCode = slotStr(src, "beat");
+        out.params = std::move(p);
+        return true;
+    }
     if (src.apeId == "Color Map")
     {
         ColorMapParams p;

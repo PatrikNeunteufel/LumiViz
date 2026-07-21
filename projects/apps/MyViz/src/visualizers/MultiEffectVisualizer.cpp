@@ -519,6 +519,34 @@ void main()
 }
 )";
 
+// AVS APE "Misc: Buffer blend": combine two textures (uSrcA, uSrcB) per uMode.
+const char* kBufferBlendFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uSrcA;
+uniform sampler2D uSrcB;
+uniform int uMode;
+out vec4 fragColor;
+void main()
+{
+    vec3 a = texture(uSrcA, vTex).rgb;
+    vec3 b = texture(uSrcB, vTex).rgb;
+    vec3 r;
+    if (uMode == 0)      r = b;                       // replace
+    else if (uMode == 1) r = min(a + b, vec3(1.0));   // additive
+    else if (uMode == 2) r = max(a, b);               // maximum
+    else if (uMode == 3) r = (a + b) * 0.5;           // 50/50
+    else if (uMode == 4) r = clamp(a - b, 0.0, 1.0);  // sub dest-src
+    else if (uMode == 5) r = clamp(b - a, 0.0, 1.0);  // sub src-dest
+    else if (uMode == 6) r = a * b;                   // multiply
+    else if (uMode == 7) r = (a + b) * 0.5;           // adjustable (no weight -> 50/50)
+    else if (uMode == 8) r = vec3(ivec3(a * 255.0) ^ ivec3(b * 255.0)) / 255.0;  // xor
+    else if (uMode == 9) r = min(a, b);               // minimum
+    else                 r = abs(a - b);              // absolute difference
+    fragColor = vec4(r, 1.0);
+}
+)";
+
 // AVS APE "Color Map": pick an input value per pixel (uKey selects the channel),
 // look it up in a 256-entry gradient LUT (uLut), and blend the mapped colour onto
 // the image per uBlend (0..9). uAdjust is the ADJUSTABLE weight.
@@ -822,6 +850,7 @@ void MultiEffectVisualizer::onCleanup()
     m_shiftShader.reset();
     m_ddmShader.reset();
     m_colorMapShader.reset();
+    m_bufferBlendShader.reset();
     m_wbPropShader.reset();
     m_wbDispShader.reset();
     m_timescopeShader.reset();
@@ -873,6 +902,7 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_shiftShader = makeProgram(kQuadVertexShader, kDynamicShiftFragmentShader);
     m_ddmShader = makeProgram(kQuadVertexShader, kDdmFragmentShader);
     m_colorMapShader = makeProgram(kQuadVertexShader, kColorMapFragmentShader);
+    m_bufferBlendShader = makeProgram(kQuadVertexShader, kBufferBlendFragmentShader);
     m_wbPropShader = makeProgram(kQuadVertexShader, kWaterBumpPropShader);
     m_wbDispShader = makeProgram(kQuadVertexShader, kWaterBumpDispShader);
     m_timescopeShader = makeProgram(kQuadVertexShader, kTimescopeFragmentShader);
@@ -887,7 +917,7 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_interfShader == nullptr || m_waterShader == nullptr ||
         m_bumpShader == nullptr || m_shiftShader == nullptr ||
         m_ddmShader == nullptr || m_colorMapShader == nullptr ||
-        m_wbPropShader == nullptr ||
+        m_bufferBlendShader == nullptr || m_wbPropShader == nullptr ||
         m_wbDispShader == nullptr || m_timescopeShader == nullptr ||
         m_apeShader == nullptr)
     {
@@ -1156,6 +1186,8 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const DotPlaneParams& params) const { self.runDotPlane(node, params); }
         void operator()(const DotFountainParams& params) const { self.runDotFountain(node, params); }
         void operator()(const ColorMapParams& params) const { self.runColorMap(node, params); }
+        void operator()(const BufferBlendParams& params) const { self.runBufferBlend(params); }
+        void operator()(const JherikoGlobalParams& params) const { self.runJherikoGlobal(node, params); }
         void operator()(const ChannelShiftParams& params) const { self.runChannelShift(node, params); }
         void operator()(const ColorReductionParams& params) const { self.runColorReduction(params); }
         void operator()(const MultiplierParams& params) const { self.runMultiplier(params); }
@@ -2194,6 +2226,65 @@ void MultiEffectVisualizer::runColorMap(const ChainNode& node,
     f->glBindTexture(GL_TEXTURE_2D, rt.cmTexture);
     f->glActiveTexture(GL_TEXTURE0);
     transformPass(*m_colorMapShader);
+}
+
+void MultiEffectVisualizer::runBufferBlend(const BufferBlendParams& params)
+{
+    auto* f = QOpenGLContext::currentContext()->functions();
+    SurfacePair& pair = active();
+    const unsigned int cur = pair.current()->texture();
+    unsigned int texA = params.bufferA >= 8 ? cur : poolTexture(params.bufferA);
+    unsigned int texB = params.bufferB >= 8 ? cur : poolTexture(params.bufferB);
+    if (texA == 0) texA = cur;  // empty pool slot -> current frame
+    if (texB == 0) texB = cur;
+
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    m_bufferBlendShader->bind();
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, texA);
+    m_bufferBlendShader->setUniformValue("uSrcA", 0);
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, texB);
+    m_bufferBlendShader->setUniformValue("uSrcB", 1);
+    f->glActiveTexture(GL_TEXTURE0);
+    m_bufferBlendShader->setUniformValue("uMode", std::clamp(params.mode, 0, 10));
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    m_bufferBlendShader->release();
+    pair.partner()->release();
+    pair.swap();
+    bindActive();
+}
+
+void MultiEffectVisualizer::runJherikoGlobal(const ChainNode& node,
+                                             const JherikoGlobalParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode;
+    if (rt.jherikoHost == nullptr || rt.jherikoCompiled != combined)
+    {
+        rt.jherikoHost = std::make_unique<ScriptSlotHost>("jheriko", m_scriptContext,
+                                                          ScriptSlotHost::Dialect::Avs);
+        rt.jherikoHost->setSource(Slot::Init, params.initCode);
+        rt.jherikoHost->setSource(Slot::Frame, params.frameCode);
+        rt.jherikoHost->setSource(Slot::Beat, params.beatCode);
+        rt.jherikoHost->compileAll();
+        rt.jherikoCompiled = combined;
+        rt.jherikoInited = false;
+    }
+    // load 0 none / 1 once / 2 code / 3 every-frame (file reload not imported —
+    // here it only governs when Init re-runs).
+    if ((!rt.jherikoInited || params.loadMode == 3) && rt.jherikoHost->has(Slot::Init))
+    {
+        rt.jherikoHost->run(Slot::Init);
+    }
+    rt.jherikoInited = true;
+    if (rt.jherikoHost->has(Slot::Frame)) rt.jherikoHost->run(Slot::Frame);
+    if (m_frameBeat && rt.jherikoHost->has(Slot::Beat)) rt.jherikoHost->run(Slot::Beat);
+    // No visual output — globals are shared through the ScriptContext.
 }
 
 void MultiEffectVisualizer::runDynamicDistanceModifier(
