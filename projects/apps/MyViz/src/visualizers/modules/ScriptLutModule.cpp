@@ -191,6 +191,15 @@ void ScriptLutModule::setVariable(const std::string& name, double value)
     }
 }
 
+void ScriptLutModule::setVisData(const unsigned char* data, double scriptTime)
+{
+    if (m_script != nullptr)
+    {
+        m_script->engine().setVisData(data);
+        m_script->engine().setScriptTime(scriptTime);
+    }
+}
+
 void ScriptLutModule::resetState()
 {
     m_script.reset();

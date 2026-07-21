@@ -148,6 +148,21 @@ public:
         Q_UNUSED(count)
     }
 
+    /**
+     * @brief Feed per-channel (stereo) audio (interleaved). Optional — default
+     *        does nothing; VisualizerBase de-interleaves into L/R buffers.
+     */
+    virtual void updateAudioStereo(const float* specInterleaved, int binsPerCh,
+                                   const float* waveInterleaved, int frames,
+                                   int channels)
+    {
+        Q_UNUSED(specInterleaved)
+        Q_UNUSED(binsPerCh)
+        Q_UNUSED(waveInterleaved)
+        Q_UNUSED(frames)
+        Q_UNUSED(channels)
+    }
+
     // =========================================================================
     // Module Parameter Introspection (for ConfigPanel)
     // =========================================================================

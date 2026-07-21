@@ -323,6 +323,10 @@ public:
     [[nodiscard]] double getVariable(const std::string& name) const;
     void setVariable(const std::string& name, double value);
 
+    /// Feed AVS-layout visualisation data (576*4 bytes) + gettime clock to the
+    /// scope's script engine, so its point/frame code can call getspec/getosc.
+    void setVisData(const unsigned char* data576x4, double scriptTime);
+
     // =========================================================================
     // IModule-style Parameter Interface
     // =========================================================================

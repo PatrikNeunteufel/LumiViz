@@ -116,6 +116,13 @@ Presets zum Laufen bringen; nur bestehende Infra.
 
 ### Batch H — Fraktal-Module (original, **kein** Import) — nach E–G
 
+> **Status (Session 37): ✅ alle 9 Module gebaut** (5-Schichten-Slices,
+> Suite grün — 296 Cases, 0 Skips). **GL-Sichttest steht komplett aus** (Shader
+> kompilieren erst zur Laufzeit). Sichttest-kalibrieren: Newton/Magnet/Nova-Färbung
+> (Fractal2D), Kleinian-Geometrie (stilisiert, nicht rigoroses {p,q}), fBm-/RD-/
+> Attraktor-Defaults, Flame-IFS-Anker. Typ-Erweiterungen Phoenix/Magnet/Nova (2D)
+> ✅; KIFS (3D) ✅. Nova als 2D-Typ statt Fractal2D-Typ-Erw. umgesetzt.
+
 Eigenständige, **host-native** Fraktal-Generatoren als Content-Quellen (wie
 SuperScope) — kein AVS-Effekt. **Rezept-Abweichung: nur 5 Schichten** (Param ·
 Render · Serializer · Panel · Tests) — Decoder + Translator entfallen, weil keine
@@ -124,8 +131,9 @@ Render · Serializer · Panel · Tests) — Decoder + Translator entfallen, weil
 Audio-Bindung (bass/mid/treble/beat → Parameter). Farbe über eine gemeinsame
 Gradient-LUT (wie Color Map).
 
-1. **Fractal2D** (Escape-Time-Fragment-Shader). Typen: **Mandelbrot, Julia,
-   Burning Ship, Tricorn, Multibrot (Potenz p), Newton**. Params: `type`,
+1. ✅ **Fractal2D** (Escape-Time-Fragment-Shader, Session 37 — 5 Schichten grün,
+   Sichttest offen). Typen: **Mandelbrot, Julia, Burning Ship, Tricorn, Multibrot
+   (Potenz p), Newton, Phoenix, Magnet, Nova** (Typ-Erw. inklusive). Params: `type`,
    `center(x,y)`, `zoom`, `maxIter`, `juliaC(x,y)`, `power`, `escapeR`,
    Farb-LUT + Cycle, Innen-/Außenfärbung (smooth iteration count). EEL setzt
    center/zoom/juliaC/power → Zoom-Fahrten, Julia-Morph, Audio-Puls.
@@ -133,8 +141,9 @@ Gradient-LUT (wie Color Map).
    variabel), Mandelbox (Scale/Fold), Menger-Schwamm, Quaternion-Julia**. Params:
    Kamera (Pos/Orbit/FOV), `power`/`scale`/`fold`, `maxSteps`, `maxIter`, Licht
    (Richtung/Ambient/AO), Farbe, Fog. EEL/Audio moduliert power/rotation/orbit/fold.
-3. **Domain-Warp fBm** (organischer Noise-Fraktal, fBm + Domain-Warping): billig,
-   sehr audio-reaktiv, „Plasma/Nebel"-Look. Fullscreen-Shader.
+3. ✅ **Domain-Warp fBm** (organischer Noise-Fraktal, fBm + Domain-Warping,
+   Session 37 — 5 Schichten grün, Sichttest offen): billig, sehr audio-reaktiv,
+   „Plasma/Nebel"-Look. Fullscreen-Shader.
 4. **Flame / IFS** (Iterated Function System, Apophysis-Stil): Punkt-Akkumulation
    über `FeedbackBuffer`/Akkumulationspuffer + Ton-Mapping; spektakulär, sehr
    reaktiv (Variationen/Gewichte per Audio). Aufwand hoch.
@@ -225,6 +234,29 @@ Alle vier festgelegt — verbindlich für den Bau:
 
 ## 7. Changelog
 
+- **0.7.0** (2026-07-21, Session 37): **Set Render Mode als Live-Node** (statt
+  Import-Zeit-Unroll + Passthrough): neuer nativer Zustands-Knoten
+  `SetRenderModeParams`, der beim Rendern den Host-Render-Mode
+  (`m_renderMode`: lineWidth/lineBlend/alpha) für die folgenden Render-Effekte
+  setzt (Muster wie Custom BPM). Translator emittiert echten Knoten (keine Notiz,
+  kein Passthrough mehr); SuperScope liest den Live-Mode zur Laufzeit. Damit
+  **Batch-A-Punkt „Set Render Mode vervollständigen" erledigt.** Blaupause für
+  künftige globale Effekte. Außerdem: Panel-Palette nach 6 Kategorien gegliedert
+  (nicht-wählbare Titel) + Origin-Marker („· AVS" / „· LumiViz", Icon-Platzhalter).
+- **0.6.0** (2026-07-21, Session 37): **Batch H komplett** — die restlichen 7 Module
+  gebaut (Fractal3D-Raymarch mit 5 DE-Typen inkl. KIFS, Lyapunov, Kleinian-Kachelung,
+  Fractal-Zoomer mit Feedback-Trail, Strange Attractors Lorenz/Clifford/DeJong/Aizawa,
+  Flame/IFS-Chaos-Game, Reaction-Diffusion Gray-Scott mit RGBA16F-Ping-Pong).
+  Jeweils 5-Schichten-Slice; Point-Cloud-Module (Attractor/Flame) über `ScopeRenderer`,
+  RD über eigenes Sim-Buffer-Paar; gemeinsamer `ensureFractalLut`-Helfer + CPU-LUT
+  für Punktfärbung. Suite grün (296 Cases, 0 Skips). **GL-Sichttest offen.**
+- **0.5.0** (2026-07-21, Session 37): **Batch H Baustart** — Modul 1 **Fractal2D**
+  (Escape-Time, 9 Typen inkl. Phoenix/Magnet/Nova) + Modul 3 **Domain-Warp fBm**
+  als vollständige 5-Schichten-Slices (Param · Render · Serializer · Panel · Tests),
+  Suite grün (291 Cases, 0 Skips). Gemeinsames Batch-H-Gerüst etabliert:
+  Gradient-LUT-Palette (ColorGradientModule), EEL-Modulationsslots (init/frame/beat)
+  mit Audio-Variablen (bass/mid/treble/vol/beat/time) und Blend-Compositing.
+  **GL-Sichttest offen** (Shader kompilieren erst zur Laufzeit).
 - **0.4.0** (2026-07-21): **Batch H — Fraktal-Module** (original, host-native, 5-Schichten-
   Rezept): 9 Module beschlossen (Fractal2D, Fractal3D, Domain-Warp fBm, Flame/IFS,
   Fractal-Zoomer, Strange Attractors, Reaction-Diffusion, Kleinian, Lyapunov) +

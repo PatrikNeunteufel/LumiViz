@@ -96,6 +96,8 @@ public:
     // FFT / Audio Analysis
     bool getFFTData(AudioStreamHandle stream, float* data, int size) override;
     bool getWaveformData(AudioStreamHandle stream, float* data, int size) override;
+    bool getFFTDataStereo(AudioStreamHandle stream, float* data, int size) override;
+    int getStreamChannels(AudioStreamHandle stream) override;
     bool getChannelLevels(AudioStreamHandle stream, float& left, float& right) override;
 
     // Metadata

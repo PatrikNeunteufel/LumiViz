@@ -257,6 +257,20 @@ public:
     virtual bool getWaveformData(AudioStreamHandle stream, float* data, int size) = 0;
 
     /**
+     * @brief Per-channel FFT (BASS_DATA_FFT_INDIVIDUAL): `data` receives
+     *        size × channels interleaved bins (bin*channels + channel).
+     *        Default returns false (engines without stereo FFT fall back to mono).
+     */
+    virtual bool getFFTDataStereo(AudioStreamHandle /*stream*/, float* /*data*/,
+                                  int /*size*/)
+    {
+        return false;
+    }
+
+    /** @brief Channel count of a stream (1 mono, 2 stereo). Default 1. */
+    virtual int getStreamChannels(AudioStreamHandle /*stream*/) { return 1; }
+
+    /**
      * @brief Get channel levels
      *
      * @param stream Stream handle

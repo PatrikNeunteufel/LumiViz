@@ -500,6 +500,24 @@ struct CustomBpmParams
 };
 
 /**
+ * AVS "Render / Set Render Mode" (ID 40): a stateful command that sets the line
+ * width + blend used by the render effects that FOLLOW it in the chain (it draws
+ * nothing itself). Modelled as a live host node — at render time it writes the
+ * host's current render mode, which the following scope effects read (the AVS
+ * behaviour; previously import-time-unrolled into the next SuperScope). `enabled`
+ * = AVS bit 31 (override the blend; when false the blend falls back to additive);
+ * `lineWidth` px (0 = leave each effect's own); `lineBlend` 0 replace, 1 additive,
+ * 2 50/50; `adjustAlpha` the Adjustable-blend alpha 0..255 (bits 8-15).
+ */
+struct SetRenderModeParams
+{
+    bool enabled = true;    ///< override the blend (AVS bit 31)
+    int lineWidth = 1;      ///< line width for following scopes (px, 0 = leave)
+    int lineBlend = 1;      ///< 0 replace, 1 additive, 2 50/50
+    int adjustAlpha = 128;  ///< Adjustable-blend alpha 0..255
+};
+
+/**
  * AVS "Render / SuperScope" (ID 36): a scripted point/line scope. The point
  * script (EEL quartet) is run by a SuperscopeModule; the host draws the points
  * via the shared ScopeRenderer (decision E6). `renderMode` 0=dots 1=lines
@@ -889,6 +907,273 @@ struct DebugBarsParams
     float orbitSpeed = 1.0f;    ///< revolutions factor (1 = one turn per ~6.3 s)
 };
 
+/**
+ * Batch H (host-native, no AVS origin): an escape-time 2-D fractal generator.
+ * A fullscreen fragment shader evaluates the iteration per pixel and colours it
+ * through a gradient LUT (smooth iteration count). `type` selects the formula
+ * (Mandelbrot, Julia, Burning Ship, Tricorn, Multibrot, Newton, Phoenix, Magnet,
+ * Nova). The optional EEL slots (init/frame/beat) drive the view live: they read
+ * audio (bass/mid/treble/vol, beat, time) and write cx,cy,zoom,rot,jx,jy,power —
+ * so a preset can zoom, morph the Julia seed, spin or pulse to the beat. `blend`
+ * composites the result over the current image (0 replace, 1 additive, 2 50/50).
+ */
+struct Fractal2DParams
+{
+    int type = 0;           ///< 0 Mandelbrot 1 Julia 2 Burning Ship 3 Tricorn
+                            ///< 4 Multibrot 5 Newton 6 Phoenix 7 Magnet 8 Nova
+    float centerX = -0.5f;  ///< view centre (real part)
+    float centerY = 0.0f;   ///< view centre (imag part)
+    float zoom = 1.0f;      ///< view scale (>1 magnifies)
+    float rotation = 0.0f;  ///< view rotation (radians)
+    int maxIter = 128;      ///< escape-time iteration cap
+    float juliaX = -0.8f;   ///< Julia / Phoenix seed (real)
+    float juliaY = 0.156f;  ///< Julia / Phoenix seed (imag)
+    float power = 2.0f;     ///< Multibrot / Nova exponent
+    float escapeR = 4.0f;   ///< escape radius (|z|^2 threshold)
+
+    bool smooth = true;               ///< continuous (fractional) iteration colouring
+    float colorScale = 0.05f;         ///< iteration→LUT position factor
+    float colorCycle = 0.0f;          ///< LUT offset advance per second (palette drift)
+    uint32_t insideColor = 0x000000;  ///< colour of the non-escaping set (0x00RRGGBB)
+    std::string gradientPreset = "Neon";  ///< ColorGradientModule palette name
+
+    int blend = 0;  ///< 0 replace, 1 additive, 2 50/50 over the current image
+
+    std::string initCode;   ///< EEL, once (seed cx,cy,zoom,…)
+    std::string frameCode;  ///< EEL, per frame (audio-reactive view)
+    std::string beatCode;   ///< EEL, on beat
+};
+
+/**
+ * Batch H (host-native): a domain-warped fBm field — the "plasma / nebula" look.
+ * A fullscreen shader sums `octaves` of value noise (fBm), warps the sample point
+ * by two further fBm fields (`warp` strength), animates it over time (`speed`) and
+ * colours the result through the shared gradient LUT. Cheap and very audio-reactive:
+ * the optional EEL slots read audio (bass/mid/treble/vol/beat/time) and write
+ * scale,warp,speed,ox,oy. `blend` composites over the current image.
+ */
+struct DomainWarpParams
+{
+    int octaves = 5;          ///< fBm octave count (1..10)
+    float lacunarity = 2.0f;  ///< frequency multiplier per octave
+    float gain = 0.5f;        ///< amplitude falloff per octave
+    float scale = 3.0f;       ///< base spatial frequency
+    float warp = 0.5f;        ///< domain-warp strength
+    float warpScale = 1.0f;   ///< warp-field frequency relative to base
+    float speed = 0.2f;       ///< time-evolution speed
+    float offsetX = 0.0f;     ///< pan (x)
+    float offsetY = 0.0f;     ///< pan (y)
+
+    float colorScale = 1.0f;  ///< field→LUT position factor
+    float colorCycle = 0.0f;  ///< LUT offset advance per second
+    std::string gradientPreset = "Neon";  ///< ColorGradientModule palette
+
+    int blend = 0;  ///< 0 replace, 1 additive, 2 50/50 over the current image
+
+    std::string initCode;   ///< EEL, once
+    std::string frameCode;  ///< EEL, per frame (audio-reactive field)
+    std::string beatCode;   ///< EEL, on beat
+};
+
+/**
+ * Batch H (host-native): a raymarched 3-D distance-estimator fractal. A fullscreen
+ * shader marches a ray per pixel through a signed-distance field and shades the hit
+ * with a normal-lit gradient. `type` selects the field (Mandelbulb, Mandelbox,
+ * Menger sponge, Quaternion-Julia, KIFS). EEL (init/frame/beat) reads audio and
+ * writes yaw,pitch,dist,power,scale,fold for live camera / morph. `blend`
+ * composites over the current image.
+ */
+struct Fractal3DParams
+{
+    int type = 0;         ///< 0 Mandelbulb 1 Mandelbox 2 Menger 3 Quaternion-Julia 4 KIFS
+    float yaw = 0.6f;     ///< camera orbit azimuth (radians)
+    float pitch = 0.3f;   ///< camera orbit elevation (radians)
+    float dist = 3.2f;    ///< camera distance from origin
+    float fov = 1.0f;     ///< field-of-view scale
+    float power = 8.0f;   ///< Mandelbulb exponent
+    float scale = 2.0f;   ///< Mandelbox / KIFS scale
+    float fold = 1.0f;    ///< Mandelbox fold limit
+    int maxSteps = 96;    ///< raymarch step cap
+    int maxIter = 8;      ///< DE iteration count
+    float juliaX = 0.2f;  ///< Quaternion-Julia seed
+    float juliaY = 0.3f;
+    float juliaZ = 0.1f;
+    float juliaW = 0.0f;
+    float lightYaw = 0.7f;    ///< key-light direction (azimuth)
+    float lightPitch = 0.8f;  ///< key-light direction (elevation)
+    float ambient = 0.2f;     ///< ambient floor
+    bool ao = true;           ///< cheap ambient occlusion
+
+    float colorScale = 1.0f;
+    float colorCycle = 0.0f;
+    std::string gradientPreset = "Neon";
+    uint32_t background = 0x000000;  ///< miss colour (0x00RRGGBB)
+
+    int blend = 0;
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+};
+
+/**
+ * Batch H (host-native): the Markus-Lyapunov fractal ("Zircon Zity"). For each
+ * point of an (a,b) plane the logistic map is iterated with r alternating between
+ * a and b along the `sequence` string (e.g. "AB"), and the Lyapunov exponent is
+ * accumulated: negative (stable/ordered) zones get `negColor`, positive (chaotic)
+ * zones map through the gradient. EEL writes the view rectangle (aMin/aMax/bMin/bMax).
+ */
+struct LyapunovParams
+{
+    std::string sequence = "AB";  ///< a/b pattern (A/B chars; others ignored)
+    float aMin = 2.5f;            ///< view rectangle (a axis)
+    float aMax = 4.0f;
+    float bMin = 2.5f;            ///< view rectangle (b axis)
+    float bMax = 4.0f;
+    int warmup = 100;            ///< settle iterations before measuring
+    int iterations = 400;        ///< measured iterations
+    uint32_t negColor = 0x000030;  ///< ordered-zone colour (negative exponent)
+
+    float colorScale = 1.0f;
+    float colorCycle = 0.0f;
+    std::string gradientPreset = "Fire";
+
+    int blend = 0;
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+};
+
+/**
+ * Batch H (host-native): a hyperbolic {p,q} tiling on the Poincaré disk, rendered
+ * by repeated inversion into the fundamental domain. `morph` animates the tiling,
+ * `zoom`/`rotation` frame it. Colour comes from the reflection count through the
+ * gradient LUT. EEL writes p,q (as floats),morph,zoom,rotation.
+ */
+struct KleinianParams
+{
+    int p = 5;            ///< polygon sides
+    int q = 4;            ///< polygons per vertex (1/p + 1/q < 1/2 → hyperbolic)
+    int iterations = 30;  ///< inversion iteration cap
+    float morph = 0.0f;   ///< tiling morph phase
+    float zoom = 1.0f;
+    float rotation = 0.0f;
+
+    float colorScale = 1.0f;
+    float colorCycle = 0.0f;
+    std::string gradientPreset = "Neon";
+
+    int blend = 0;
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+};
+
+/**
+ * Batch H (host-native): an endless-zoom trip — an escape-time fractal whose zoom
+ * (and optional rotation) advances every frame, blended with the previous frame
+ * (`feedback`) for motion trails. `type` 0 Mandelbrot 1 Julia 2 Burning Ship. EEL
+ * writes centerX,centerY (zoom target),zoomSpeed,rotationSpeed.
+ */
+struct FractalZoomerParams
+{
+    int type = 0;            ///< 0 Mandelbrot 1 Julia 2 Burning Ship
+    float centerX = -0.743643887f;  ///< zoom target (a classic Misiurewicz point)
+    float centerY = 0.131825904f;
+    float juliaX = -0.8f;
+    float juliaY = 0.156f;
+    int maxIter = 200;
+    float zoomSpeed = 1.02f;      ///< per-frame zoom factor (>1 zooms in)
+    float rotationSpeed = 0.0f;   ///< radians per frame
+    float feedback = 0.5f;        ///< trail persistence 0..1 (0 = no trails)
+
+    float colorScale = 0.05f;
+    float colorCycle = 0.0f;
+    std::string gradientPreset = "Neon";
+    uint32_t insideColor = 0x000000;
+
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+};
+
+/**
+ * Batch H (host-native): a strange-attractor point cloud. Each frame iterates the
+ * chosen map for `points` steps and draws the orbit as additive dots (shared
+ * ScopeRenderer). `type` 0 Lorenz 1 Clifford 2 De Jong 3 Aizawa; a,b,c,d are the
+ * map coefficients. EEL writes a,b,c,d,rotation for live morphing.
+ */
+struct StrangeAttractorParams
+{
+    int type = 0;      ///< 0 Lorenz 1 Clifford 2 De Jong 3 Aizawa
+    float a = 1.4f;
+    float b = 1.6f;
+    float c = 1.0f;
+    float d = 0.7f;
+    int points = 6000;
+    float scale = 0.28f;
+    float rotation = 0.0f;
+    float rotationSpeed = 0.08f;
+
+    uint32_t color = 0x66CCFF;
+    bool useGradient = true;      ///< colour dots along the orbit via the gradient
+    std::string gradientPreset = "Neon";
+    float dotSize = 2.0f;
+    int blend = 1;                ///< 0 replace, 1 additive, 2 50/50
+
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+};
+
+/**
+ * Batch H (host-native): a Flame / IFS (chaos-game) renderer. Each frame runs the
+ * chaos game for `points` iterations over a small affine function system with a
+ * non-linear `variation`, drawing the samples as additive dots. `functions`
+ * selects the preset system (2..4 maps). EEL writes variation params / rotation.
+ */
+struct FlameParams
+{
+    int variation = 0;   ///< 0 linear 1 sinusoidal 2 spherical 3 swirl 4 horseshoe
+    int functions = 3;   ///< affine map count (2..4)
+    int points = 20000;
+    float scale = 0.5f;
+    float rotation = 0.0f;
+    float rotationSpeed = 0.04f;
+
+    std::string gradientPreset = "Fire";
+    float dotSize = 1.5f;
+    int blend = 1;
+
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+};
+
+/**
+ * Batch H (host-native): a Gray-Scott reaction-diffusion simulation on a persistent
+ * ping-pong buffer (chemical A in .r, B in .g). `stepsPerFrame` sim iterations run
+ * per frame; B's concentration maps through the gradient LUT. On a beat a fresh
+ * seed blob is stamped (`seedOnBeat`). EEL writes feed,kill for live pattern shifts.
+ */
+struct ReactionDiffusionParams
+{
+    float feed = 0.055f;      ///< feed rate
+    float kill = 0.062f;      ///< kill rate
+    float diffA = 1.0f;       ///< diffusion rate of A
+    float diffB = 0.5f;       ///< diffusion rate of B
+    int stepsPerFrame = 8;    ///< sim iterations per rendered frame
+    bool seedOnBeat = true;   ///< stamp a new seed blob on a beat
+
+    float colorScale = 1.0f;
+    float colorCycle = 0.0f;
+    std::string gradientPreset = "Neon";
+
+    int blend = 0;
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+};
+
 /** Conserved effect the host cannot render yet — passes the buffer through. */
 struct PassthroughParams
 {
@@ -915,7 +1200,10 @@ using EffectParams =
                  PictureParams, PictureIIParams, TexerParams, TexerIIParams,
                  TriangleParams, ChannelShiftParams, ColorReductionParams,
                  MultiplierParams, VideoDelayParams, MultiDelayParams,
-                 DebugBarsParams, PassthroughParams>;
+                 Fractal2DParams, DomainWarpParams, Fractal3DParams,
+                 LyapunovParams, KleinianParams, FractalZoomerParams,
+                 StrangeAttractorParams, FlameParams, ReactionDiffusionParams,
+                 SetRenderModeParams, DebugBarsParams, PassthroughParams>;
 
 // =============================================================================
 // Chain node
@@ -1026,6 +1314,16 @@ struct CompileResult
         const char* operator()(const MultiplierParams&) const { return "Multiplier"; }
         const char* operator()(const VideoDelayParams&) const { return "Video Delay"; }
         const char* operator()(const MultiDelayParams&) const { return "Multi Delay"; }
+        const char* operator()(const Fractal2DParams&) const { return "Fractal 2D"; }
+        const char* operator()(const DomainWarpParams&) const { return "Domain Warp"; }
+        const char* operator()(const Fractal3DParams&) const { return "Fractal 3D"; }
+        const char* operator()(const LyapunovParams&) const { return "Lyapunov"; }
+        const char* operator()(const KleinianParams&) const { return "Kleinian"; }
+        const char* operator()(const FractalZoomerParams&) const { return "Fractal Zoomer"; }
+        const char* operator()(const StrangeAttractorParams&) const { return "Strange Attractor"; }
+        const char* operator()(const FlameParams&) const { return "Flame"; }
+        const char* operator()(const ReactionDiffusionParams&) const { return "Reaction Diffusion"; }
+        const char* operator()(const SetRenderModeParams&) const { return "Set Render Mode"; }
         const char* operator()(const DebugBarsParams&) const { return "Debug Bars"; }
         const char* operator()(const PassthroughParams&) const { return "Passthrough"; }
     };
@@ -1127,6 +1425,72 @@ inline void compileNode(ChainNode& node, const std::string& path,
         scope->lineWidth = std::clamp(scope->lineWidth, 1.0f, 20.0f);
         scope->dotSize = std::clamp(scope->dotSize, 1.0f, 50.0f);
         scope->lineBlend = std::clamp(scope->lineBlend, 0, 2);
+    }
+    if (auto* frac = std::get_if<Fractal2DParams>(&node.params))
+    {
+        frac->type = std::clamp(frac->type, 0, 8);
+        frac->maxIter = std::clamp(frac->maxIter, 1, 2048);
+        frac->zoom = std::max(frac->zoom, 1e-6f);
+        frac->power = std::clamp(frac->power, 1.0f, 16.0f);
+        frac->escapeR = std::max(frac->escapeR, 1.0f);
+        frac->blend = std::clamp(frac->blend, 0, 2);
+    }
+    if (auto* warp = std::get_if<DomainWarpParams>(&node.params))
+    {
+        warp->octaves = std::clamp(warp->octaves, 1, 10);
+        warp->blend = std::clamp(warp->blend, 0, 2);
+    }
+    if (auto* f3 = std::get_if<Fractal3DParams>(&node.params))
+    {
+        f3->type = std::clamp(f3->type, 0, 4);
+        f3->maxSteps = std::clamp(f3->maxSteps, 8, 512);
+        f3->maxIter = std::clamp(f3->maxIter, 1, 64);
+        f3->power = std::clamp(f3->power, 1.0f, 16.0f);
+        f3->dist = std::max(f3->dist, 0.1f);
+        f3->blend = std::clamp(f3->blend, 0, 2);
+    }
+    if (auto* ly = std::get_if<LyapunovParams>(&node.params))
+    {
+        ly->warmup = std::clamp(ly->warmup, 0, 2000);
+        ly->iterations = std::clamp(ly->iterations, 1, 4000);
+        ly->blend = std::clamp(ly->blend, 0, 2);
+    }
+    if (auto* kl = std::get_if<KleinianParams>(&node.params))
+    {
+        kl->p = std::clamp(kl->p, 3, 20);
+        kl->q = std::clamp(kl->q, 3, 20);
+        kl->iterations = std::clamp(kl->iterations, 1, 200);
+        kl->blend = std::clamp(kl->blend, 0, 2);
+    }
+    if (auto* fz = std::get_if<FractalZoomerParams>(&node.params))
+    {
+        fz->type = std::clamp(fz->type, 0, 2);
+        fz->maxIter = std::clamp(fz->maxIter, 1, 2048);
+        fz->feedback = std::clamp(fz->feedback, 0.0f, 1.0f);
+    }
+    if (auto* sa = std::get_if<StrangeAttractorParams>(&node.params))
+    {
+        sa->type = std::clamp(sa->type, 0, 3);
+        sa->points = std::clamp(sa->points, 1, 100000);
+        sa->blend = std::clamp(sa->blend, 0, 2);
+    }
+    if (auto* fl = std::get_if<FlameParams>(&node.params))
+    {
+        fl->variation = std::clamp(fl->variation, 0, 4);
+        fl->functions = std::clamp(fl->functions, 2, 4);
+        fl->points = std::clamp(fl->points, 1, 200000);
+        fl->blend = std::clamp(fl->blend, 0, 2);
+    }
+    if (auto* rd = std::get_if<ReactionDiffusionParams>(&node.params))
+    {
+        rd->stepsPerFrame = std::clamp(rd->stepsPerFrame, 1, 64);
+        rd->blend = std::clamp(rd->blend, 0, 2);
+    }
+    if (auto* srm = std::get_if<SetRenderModeParams>(&node.params))
+    {
+        srm->lineWidth = std::clamp(srm->lineWidth, 0, 255);
+        srm->lineBlend = std::clamp(srm->lineBlend, 0, 2);
+        srm->adjustAlpha = std::clamp(srm->adjustAlpha, 0, 255);
     }
     if (auto* list = std::get_if<ListParams>(&node.params))
     {

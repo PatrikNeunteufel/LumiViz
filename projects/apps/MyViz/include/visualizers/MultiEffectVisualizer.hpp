@@ -267,6 +267,27 @@ private:
 
         int apeChanMode = -1;      ///< Channel Shift on-beat held permutation
 
+        // Fractal 2D (Batch H): EEL view-driver + gradient palette LUT
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> fracHost;
+        std::string fracCompiled;      ///< source snapshot the host was built from
+        bool fracInited = false;       ///< init slot has run once
+        unsigned int fracLut = 0;      ///< GL 256x1 RGB palette (deleted in onCleanup)
+        std::string fracLutSnapshot;   ///< gradient preset the LUT was baked from
+        float fracColorPhase = 0.0f;   ///< accumulated palette drift (colorCycle)
+        float fracTime = 0.0f;         ///< accumulated animation phase (Domain Warp / Zoomer log-zoom)
+
+        // Strange Attractor / Flame (Batch H): persistent orbit + view rotation
+        double saX = 0.1, saY = 0.0, saZ = 0.0;  ///< current orbit position
+        float saRot = 0.0f;            ///< accumulated view rotation
+        bool saSeeded = false;
+
+        // Reaction-Diffusion (Batch H): RGBA16F ping-pong (A in .r, B in .g)
+        std::unique_ptr<QOpenGLFramebufferObject> rdBuf[2];
+        int rdCur = 0;
+        int rdW = 0;
+        int rdH = 0;
+        bool rdSeeded = false;
+
         // Video Delay: per-node frame ring buffer (r_videodelay)
         std::vector<std::unique_ptr<QOpenGLFramebufferObject>> delayRing;
         int delayHead = 0;
@@ -380,6 +401,7 @@ private:
     void runBufferSave(const lumi::multieffect::BufferSaveParams& params);
     void runCustomBpm(const lumi::multieffect::ChainNode& node,
                       const lumi::multieffect::CustomBpmParams& params);
+    void runSetRenderMode(const lumi::multieffect::SetRenderModeParams& params);
     void runSuperScope(const lumi::multieffect::ChainNode& node,
                        const lumi::multieffect::SuperScopeParams& params);
     void runDebugBars(const lumi::multieffect::DebugBarsParams& params);
@@ -412,6 +434,32 @@ private:
     void runVideoDelay(const lumi::multieffect::ChainNode& node,
                        const lumi::multieffect::VideoDelayParams& params);
     void runMultiDelay(const lumi::multieffect::MultiDelayParams& params);
+    void runFractal2D(const lumi::multieffect::ChainNode& node,
+                      const lumi::multieffect::Fractal2DParams& params);
+    void runDomainWarp(const lumi::multieffect::ChainNode& node,
+                       const lumi::multieffect::DomainWarpParams& params);
+    void runFractal3D(const lumi::multieffect::ChainNode& node,
+                      const lumi::multieffect::Fractal3DParams& params);
+    void runLyapunov(const lumi::multieffect::ChainNode& node,
+                     const lumi::multieffect::LyapunovParams& params);
+    void runKleinian(const lumi::multieffect::ChainNode& node,
+                     const lumi::multieffect::KleinianParams& params);
+    void runFractalZoomer(const lumi::multieffect::ChainNode& node,
+                          const lumi::multieffect::FractalZoomerParams& params);
+    void runStrangeAttractor(const lumi::multieffect::ChainNode& node,
+                             const lumi::multieffect::StrangeAttractorParams& params);
+    void runFlame(const lumi::multieffect::ChainNode& node,
+                  const lumi::multieffect::FlameParams& params);
+    void runReactionDiffusion(const lumi::multieffect::ChainNode& node,
+                              const lumi::multieffect::ReactionDiffusionParams& params);
+    /// Bake a gradient preset into a node's 256x1 palette LUT (Batch H shared).
+    void ensureFractalLut(LeafRuntime& rt, const std::string& preset);
+
+    /// Rebuild m_visdata (AVS layout) from this frame's waveform + spectrum.
+    void buildVisData();
+    /// Feed the shared audio contract (visdata + gettime + bass/mid/treb/vol/beat/
+    /// time) into a script engine — every scripted module gets the same set (E1).
+    void feedAudio(lumi::scripting::LuaScriptEngine& engine);
 
     [[nodiscard]] uint32_t nextRandom();  ///< host LCG (Mirror onbeat-random)
 
@@ -480,6 +528,12 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_wbDispShader;  ///< water-bump refraction
     std::unique_ptr<QOpenGLShaderProgram> m_timescopeShader;
     std::unique_ptr<QOpenGLShaderProgram> m_apeShader;  ///< Channel Shift / Color Reduction / Multiplier
+    std::unique_ptr<QOpenGLShaderProgram> m_fractal2DShader;  ///< Fractal 2D escape-time (Batch H)
+    std::unique_ptr<QOpenGLShaderProgram> m_domainWarpShader;  ///< Domain-warp fBm (Batch H)
+    std::unique_ptr<QOpenGLShaderProgram> m_fractal3DShader;   ///< Fractal 3D raymarch (Batch H)
+    std::unique_ptr<QOpenGLShaderProgram> m_lyapunovShader;    ///< Lyapunov (Batch H)
+    std::unique_ptr<QOpenGLShaderProgram> m_kleinianShader;    ///< Kleinian tiling (Batch H)
+    std::unique_ptr<QOpenGLShaderProgram> m_rdShader;          ///< Reaction-Diffusion sim/show (Batch H)
     unsigned int m_specTex = 0;  ///< 1D spectrum upload for Timescope (deleted in onCleanup)
 
     // Multi Delay: 6 host-shared frame ring buffers (r_multidelay), cleared with
@@ -503,6 +557,21 @@ private:
     lumi::modules::BeatModule m_beat;
     lumi::modules::BeatEstimator m_beatEstimator{0};
     bool m_frameBeat = false;  ///< beat flag effects/list scripts may mutate
+
+    // Live render mode set by a Set Render Mode node for the following render
+    // effects (AVS semantics). Reset at frame start; `set` means "override".
+    struct RenderMode
+    {
+        bool set = false;    ///< a Set Render Mode node applied this frame
+        int lineWidth = 1;   ///< line width for following scopes (px)
+        int lineBlend = 1;   ///< 0 replace, 1 additive, 2 50/50
+        int alpha = 128;     ///< Adjustable-blend alpha 0..255
+    };
+    RenderMode m_renderMode;
+
+    // AVS-layout visualisation data (spectrum L/R + waveform L/R, 576 each),
+    // rebuilt once per frame and fed to every scripted engine (getspec/getosc).
+    std::array<unsigned char, 576 * 4> m_visdata{};
 
     // Preset-local shared script state (decision §10.3)
     std::shared_ptr<lumi::scripting::ScriptContext> m_scriptContext;

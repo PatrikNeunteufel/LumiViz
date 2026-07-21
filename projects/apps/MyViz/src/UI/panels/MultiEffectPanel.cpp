@@ -15,6 +15,7 @@
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/modules/SuperscopeModule.hpp"      // figure preset library (SSOT)
+#include "visualizers/modules/ColorGradientModule.hpp"   // fractal palette presets
 #include "visualizers/multieffect/ChainSerializer.hpp"  // effectTypeKey
 #include "services/IEventBus.hpp"
 #include "services/events/UIEvents.hpp"
@@ -24,10 +25,22 @@
 #include <QColorDialog>
 #include <QDropEvent>
 #include <QComboBox>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QDoubleSpinBox>
+#include <QFont>
+#include <QRegularExpression>
+#include <QSet>
+#include <QSplitter>
+#include <QStandardItemModel>
+#include <QSyntaxHighlighter>
+#include <QTextBrowser>
+#include <QTextCharFormat>
+#include <QTextDocument>
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMutex>
@@ -41,81 +54,120 @@
 #include <QVBoxLayout>
 
 #include <algorithm>
+#include <array>
+#include <type_traits>
+#include <variant>
 #include <utility>
 
 using namespace lumi::multieffect;
 
 namespace {
 
-// The palette of effects that "Add" can insert (name -> default params).
+// The palette of effects that "Add" can insert (name -> default params). Entries
+// with make == nullptr are non-selectable category headers (grouped in the combo).
+//
+// Origin marks where a module comes from: Avs = ported from a Nullsoft AVS effect
+// (import target), Native = original LumiViz module (no AVS counterpart, e.g. the
+// Batch-H fractals + Debug Bars). Drives a combo marker now; a per-origin icon
+// slot later. Default is Avs, so only the native entries carry an explicit tag.
+enum class Origin
+{
+    Avs,
+    Native
+};
+
 struct EffectType
 {
     const char* name;
     EffectParams (*make)();
+    Origin origin = Origin::Avs;
+
+    [[nodiscard]] bool isHeader() const { return make == nullptr; }
 };
 
 const std::vector<EffectType>& effectPalette()
 {
     static const std::vector<EffectType> kPalette = {
+        {"— Structure & Control —", nullptr},
         {"Effect List", [] { return EffectParams{ListParams{}}; }},
-        {"SuperScope", [] { return EffectParams{SuperScopeParams{}}; }},
         {"Clear", [] { return EffectParams{ClearParams{}}; }},
         {"Fadeout", [] { return EffectParams{FadeoutParams{}}; }},
-        {"Invert", [] { return EffectParams{InvertParams{}}; }},
-        {"Brightness", [] { return EffectParams{BrightnessParams{}}; }},
-        {"Fast Brightness", [] { return EffectParams{FastBrightnessParams{}}; }},
-        {"Blur", [] { return EffectParams{BlurParams{}}; }},
-        {"Mirror", [] { return EffectParams{MirrorParams{}}; }},
         {"OnBeat Clear", [] { return EffectParams{OnBeatClearParams{}}; }},
-        {"Colorfade", [] { return EffectParams{ColorfadeParams{}}; }},
-        {"Color Modifier", [] { return EffectParams{ColorModifierParams{}}; }},
-        {"Movement", [] { return EffectParams{MovementParams{}}; }},
-        {"Dynamic Movement", [] { return EffectParams{DynamicMovementParams{}}; }},
-        {"Dynamic Shift", [] { return EffectParams{DynamicShiftParams{}}; }},
-        {"Dynamic Distance Modifier", [] { return EffectParams{DynamicDistanceModifierParams{}}; }},
-        {"Moving Particle", [] { return EffectParams{MovingParticleParams{}}; }},
-        {"Blitter Feedback", [] { return EffectParams{BlitterFeedbackParams{}}; }},
-        {"Roto Blitter", [] { return EffectParams{RotoBlitterParams{}}; }},
         {"Buffer Save", [] { return EffectParams{BufferSaveParams{}}; }},
+        {"Buffer Blend", [] { return EffectParams{BufferBlendParams{}}; }},
         {"Custom BPM", [] { return EffectParams{CustomBpmParams{}}; }},
-        {"Mosaic", [] { return EffectParams{MosaicParams{}}; }},
-        {"Grain", [] { return EffectParams{GrainParams{}}; }},
-        {"Scatter", [] { return EffectParams{ScatterParams{}}; }},
-        {"Water", [] { return EffectParams{WaterParams{}}; }},
-        {"Bump", [] { return EffectParams{BumpParams{}}; }},
-        {"Water Bump", [] { return EffectParams{WaterBumpParams{}}; }},
+        {"Set Render Mode", [] { return EffectParams{SetRenderModeParams{}}; }},
+        {"Global Variables", [] { return EffectParams{JherikoGlobalParams{}}; }},
+        {"Video Delay", [] { return EffectParams{VideoDelayParams{}}; }},
+        {"Multi Delay", [] { return EffectParams{MultiDelayParams{}}; }},
+        {"Debug Bars", [] { return EffectParams{DebugBarsParams{}}; }, Origin::Native},
+
+        {"— Scopes & Sources —", nullptr},
+        {"SuperScope", [] { return EffectParams{SuperScopeParams{}}; }},
+        {"Simple (Scope)", [] { return EffectParams{SimpleScopeParams{}}; }},
+        {"Oscilliscope Star", [] { return EffectParams{OscStarParams{}}; }},
+        {"Ring", [] { return EffectParams{OscRingParams{}}; }},
+        {"Rotating Stars", [] { return EffectParams{RotatingStarsParams{}}; }},
+        {"Bass Spin", [] { return EffectParams{BassSpinParams{}}; }},
+        {"Moving Particle", [] { return EffectParams{MovingParticleParams{}}; }},
         {"Starfield", [] { return EffectParams{StarfieldParams{}}; }},
         {"Timescope", [] { return EffectParams{TimescopeParams{}}; }},
         {"Dot Grid", [] { return EffectParams{DotGridParams{}}; }},
         {"Dot Plane", [] { return EffectParams{DotPlaneParams{}}; }},
         {"Dot Fountain", [] { return EffectParams{DotFountainParams{}}; }},
+
+        {"— Fractals —", nullptr},
+        {"Fractal 2D", [] { return EffectParams{Fractal2DParams{}}; }, Origin::Native},
+        {"Fractal 3D", [] { return EffectParams{Fractal3DParams{}}; }, Origin::Native},
+        {"Domain Warp", [] { return EffectParams{DomainWarpParams{}}; }, Origin::Native},
+        {"Fractal Zoomer", [] { return EffectParams{FractalZoomerParams{}}; }, Origin::Native},
+        {"Lyapunov", [] { return EffectParams{LyapunovParams{}}; }, Origin::Native},
+        {"Kleinian", [] { return EffectParams{KleinianParams{}}; }, Origin::Native},
+        {"Strange Attractor", [] { return EffectParams{StrangeAttractorParams{}}; }, Origin::Native},
+        {"Flame", [] { return EffectParams{FlameParams{}}; }, Origin::Native},
+        {"Reaction Diffusion", [] { return EffectParams{ReactionDiffusionParams{}}; }, Origin::Native},
+
+        {"— Images —", nullptr},
+        {"Picture", [] { return EffectParams{PictureParams{}}; }},
+        {"Picture II", [] { return EffectParams{PictureIIParams{}}; }},
+        {"Texer", [] { return EffectParams{TexerParams{}}; }},
+        {"Texer II", [] { return EffectParams{TexerIIParams{}}; }},
+        {"Triangle", [] { return EffectParams{TriangleParams{}}; }},
+
+        {"— Motion & Distortion —", nullptr},
+        {"Movement", [] { return EffectParams{MovementParams{}}; }},
+        {"Dynamic Movement", [] { return EffectParams{DynamicMovementParams{}}; }},
+        {"Dynamic Shift", [] { return EffectParams{DynamicShiftParams{}}; }},
+        {"Dynamic Distance Modifier", [] { return EffectParams{DynamicDistanceModifierParams{}}; }},
+        {"Blitter Feedback", [] { return EffectParams{BlitterFeedbackParams{}}; }},
+        {"Roto Blitter", [] { return EffectParams{RotoBlitterParams{}}; }},
+        {"Mosaic", [] { return EffectParams{MosaicParams{}}; }},
+        {"Water", [] { return EffectParams{WaterParams{}}; }},
+        {"Water Bump", [] { return EffectParams{WaterBumpParams{}}; }},
+        {"Bump", [] { return EffectParams{BumpParams{}}; }},
+        {"Interferences", [] { return EffectParams{InterferencesParams{}}; }},
+        {"Scatter", [] { return EffectParams{ScatterParams{}}; }},
+        {"Mirror", [] { return EffectParams{MirrorParams{}}; }},
+
+        {"— Color & Pixel —", nullptr},
+        {"Brightness", [] { return EffectParams{BrightnessParams{}}; }},
+        {"Fast Brightness", [] { return EffectParams{FastBrightnessParams{}}; }},
+        {"Blur", [] { return EffectParams{BlurParams{}}; }},
+        {"Invert", [] { return EffectParams{InvertParams{}}; }},
+        {"Colorfade", [] { return EffectParams{ColorfadeParams{}}; }},
+        {"Color Modifier", [] { return EffectParams{ColorModifierParams{}}; }},
         {"Color Map", [] { return EffectParams{ColorMapParams{}}; }},
-        {"Buffer Blend", [] { return EffectParams{BufferBlendParams{}}; }},
-        {"Global Variables", [] { return EffectParams{JherikoGlobalParams{}}; }},
         {"Color Clip", [] { return EffectParams{ColorClipParams{}}; }},
         {"Unique Tone", [] { return EffectParams{UniqueToneParams{}}; }},
         {"Interleave", [] { return EffectParams{InterleaveParams{}}; }},
         {"Convolution", [] { return EffectParams{ConvolutionParams{}}; }},
         {"Normalise", [] { return EffectParams{NormaliseParams{}}; }},
         {"MultiFilter", [] { return EffectParams{MultiFilterParams{}}; }},
-        {"Add Borders", [] { return EffectParams{AddBordersParams{}}; }},
-        {"Simple (Scope)", [] { return EffectParams{SimpleScopeParams{}}; }},
-        {"Bass Spin", [] { return EffectParams{BassSpinParams{}}; }},
-        {"Oscilliscope Star", [] { return EffectParams{OscStarParams{}}; }},
-        {"Ring", [] { return EffectParams{OscRingParams{}}; }},
-        {"Rotating Stars", [] { return EffectParams{RotatingStarsParams{}}; }},
-        {"Picture", [] { return EffectParams{PictureParams{}}; }},
-        {"Picture II", [] { return EffectParams{PictureIIParams{}}; }},
-        {"Texer", [] { return EffectParams{TexerParams{}}; }},
-        {"Texer II", [] { return EffectParams{TexerIIParams{}}; }},
-        {"Triangle", [] { return EffectParams{TriangleParams{}}; }},
         {"Channel Shift", [] { return EffectParams{ChannelShiftParams{}}; }},
         {"Color Reduction", [] { return EffectParams{ColorReductionParams{}}; }},
         {"Multiplier", [] { return EffectParams{MultiplierParams{}}; }},
-        {"Video Delay", [] { return EffectParams{VideoDelayParams{}}; }},
-        {"Multi Delay", [] { return EffectParams{MultiDelayParams{}}; }},
-        {"Interferences", [] { return EffectParams{InterferencesParams{}}; }},
-        {"Debug Bars", [] { return EffectParams{DebugBarsParams{}}; }},
+        {"Grain", [] { return EffectParams{GrainParams{}}; }},
+        {"Add Borders", [] { return EffectParams{AddBordersParams{}}; }},
     };
     return kPalette;
 }
@@ -158,6 +210,445 @@ QList<int> pathFromVariant(const QVariant& v)
     return path;
 }
 
+// =============================================================================
+// Script editing: EEL syntax highlighter + per-module symbol reference
+// =============================================================================
+
+// SSOT variable categories (Skript_Variablen_Konzept §3). Drives highlighting
+// (§4) and error marking (§6). Only ReadOnly + Constant are "write = error".
+enum class SymCat
+{
+    None,          // custom-local (unknown identifier) — default colour
+    ReadOnly,      // host sets, script must not write (w, h, dt)
+    Input,         // host sets per frame/point, script reads (audio, i, v, beat)
+    Output,        // script sets, host reads (x, y, red/green/blue, skip)
+    InOut,         // both (accumulators, driven params)
+    Constant,      // fixed (pi, pi2)
+    CustomGlobal   // preset-global user vars (reg00-99, q1-64, gmegabuf)
+};
+
+// Global (module-independent) classification. The per-module ⓘ reference gives
+// the precise contract; this is the broad map for colouring + error marking. The
+// ReadOnly/Constant sets are kept small on purpose (no false-positive errors).
+SymCat symbolCategory(const QString& n)
+{
+    static const QSet<QString> kReadOnly = {"w", "h", "dt"};
+    static const QSet<QString> kConstant = {"pi", "pi2", "phi", "e"};
+    static const QSet<QString> kInput = {"i", "v", "b", "bass", "mid", "treb",
+                                         "treble", "vol", "beat", "time"};
+    static const QSet<QString> kOutput = {"x",  "y",     "skip",  "x1",   "y1",
+                                          "x2", "y2",    "x3",    "y3",   "sizex",
+                                          "sizey"};
+    static const QSet<QString> kInOut = {
+        "n",     "t",       "red",    "green", "blue",  "cx",    "cy",   "zoom",
+        "rot",   "jx",      "jy",     "power", "scale", "warp",  "warpscale",
+        "speed", "ox",      "oy",     "morph", "feed",  "kill",  "a",    "c",
+        "d",     "r",       "amin",   "amax",  "bmin",  "bmax",  "alpha","dist",
+        "yaw",   "pitch",   "fold",   "zoomspeed", "rotspeed", "rotation",
+        "enabled", "clear", "alphain", "alphaout"};
+    if (kReadOnly.contains(n)) return SymCat::ReadOnly;
+    if (kConstant.contains(n)) return SymCat::Constant;
+    if (kInput.contains(n)) return SymCat::Input;
+    if (kOutput.contains(n)) return SymCat::Output;
+    if (kInOut.contains(n)) return SymCat::InOut;
+    static const QRegularExpression kGlobal("^(reg\\d\\d|q\\d+|gmegabuf)$");
+    if (kGlobal.match(n).hasMatch()) return SymCat::CustomGlobal;
+    return SymCat::None;
+}
+
+// Detect an `initCode` member generically, so nodeInitCode covers every effect
+// type that has one without a per-type switch.
+template <class T, class = void>
+struct HasInit : std::false_type {};
+template <class T>
+struct HasInit<T, std::void_t<decltype(std::declval<const T&>().initCode)>>
+    : std::true_type {};
+
+QString nodeInitCode(const EffectParams& params)
+{
+    return std::visit(
+        [](auto&& p) -> QString {
+            using T = std::decay_t<decltype(p)>;
+            if constexpr (HasInit<T>::value) return QString::fromStdString(p.initCode);
+            else return QString();
+        },
+        params);
+}
+
+// Preset-global names (regNN / qN) written in a node's init code.
+void addInitGlobalWrites(const QString& init, QSet<QString>& out)
+{
+    static const QRegularExpression re("\\b(reg\\d\\d|q\\d+)\\s*=(?![=<>])");
+    auto it = re.globalMatch(init);
+    while (it.hasNext()) out.insert(it.next().captured(1));
+}
+
+// Collect init-declared globals of every node EXCEPT `skip` (recursive).
+void collectInitGlobalsExcept(const ChainNode& node, const ChainNode* skip,
+                              QSet<QString>& out)
+{
+    if (&node != skip) addInitGlobalWrites(nodeInitCode(node.params), out);
+    for (const ChainNode& child : node.children)
+        collectInitGlobalsExcept(child, skip, out);
+}
+
+// EEL/expression highlighter (no Q_OBJECT: only overrides a virtual). Colours
+// functions/numbers/comments + variables by category, and red-underlines writes
+// to read-only / constant identifiers and to conflicting (double-declared) globals.
+class EelHighlighter : public QSyntaxHighlighter
+{
+public:
+    explicit EelHighlighter(QTextDocument* doc, QSet<QString> conflicts = {})
+        : QSyntaxHighlighter(doc), m_conflicts(std::move(conflicts))
+    {
+        m_func.setForeground(QColor(0x4F, 0xC1, 0xFF));
+        m_num.setForeground(QColor(0xB5, 0xCE, 0xA8));
+        m_comment.setForeground(QColor(0x6A, 0x99, 0x55));
+        m_comment.setFontItalic(true);
+        m_cat[static_cast<int>(SymCat::ReadOnly)].setForeground(QColor(0x9C, 0xDC, 0xFE));
+        m_cat[static_cast<int>(SymCat::Input)].setForeground(QColor(0x4E, 0xC9, 0xB0));
+        m_cat[static_cast<int>(SymCat::Output)].setForeground(QColor(0xDC, 0xDC, 0xAA));
+        m_cat[static_cast<int>(SymCat::InOut)].setForeground(QColor(0xC5, 0x86, 0xC0));
+        m_cat[static_cast<int>(SymCat::Constant)].setForeground(QColor(0x4F, 0xC1, 0xFF));
+        m_cat[static_cast<int>(SymCat::Constant)].setFontItalic(true);
+        m_cat[static_cast<int>(SymCat::CustomGlobal)].setForeground(QColor(0xD7, 0xBA, 0x7D));
+        m_error.setForeground(QColor(0xF4, 0x47, 0x47));
+        m_error.setUnderlineStyle(QTextCharFormat::WaveUnderline);
+        m_error.setUnderlineColor(QColor(0xF4, 0x47, 0x47));
+
+        static const QStringList kFns = {
+            "sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sqrt", "sqr",
+            "invsqrt", "pow", "exp", "log", "abs", "sign", "min", "max", "floor",
+            "ceil", "mod", "rand", "sigmoid", "if", "above", "below", "equal",
+            "bnot", "band", "bor", "assign", "loop", "while", "megabuf", "gmegabuf",
+            "getspec", "getosc", "gettime"};
+        for (const QString& f : kFns) m_funcNames.insert(f);
+        m_funcRe = QRegularExpression("\\b(" + kFns.join('|') + ")\\b");
+        m_numRe = QRegularExpression("\\b\\d+(\\.\\d+)?\\b");
+        m_identRe = QRegularExpression("\\b[A-Za-z_]\\w*\\b");
+        m_assignRe = QRegularExpression("\\b([A-Za-z_]\\w*)\\s*=(?![=<>])");
+        m_commentRe = QRegularExpression("//[^\\n]*");
+    }
+
+protected:
+    void highlightBlock(const QString& text) override
+    {
+        // 1. Variables by category (functions handled below, skip them here).
+        auto ids = m_identRe.globalMatch(text);
+        while (ids.hasNext())
+        {
+            const QRegularExpressionMatch m = ids.next();
+            const QString name = m.captured();
+            if (m_funcNames.contains(name)) continue;
+            const SymCat cat = symbolCategory(name);
+            if (cat != SymCat::None)
+                setFormat(static_cast<int>(m.capturedStart()),
+                          static_cast<int>(m.capturedLength()),
+                          m_cat[static_cast<int>(cat)]);
+        }
+        // 2. Numbers + functions.
+        auto apply = [&](const QRegularExpression& re, const QTextCharFormat& fmt) {
+            auto it = re.globalMatch(text);
+            while (it.hasNext())
+            {
+                const QRegularExpressionMatch m = it.next();
+                setFormat(static_cast<int>(m.capturedStart()),
+                          static_cast<int>(m.capturedLength()), fmt);
+            }
+        };
+        apply(m_numRe, m_num);
+        apply(m_funcRe, m_func);
+        // 3. Error: writing to a read-only / constant identifier, or re-declaring
+        //    a global already initialised in another node (conflict set).
+        auto as = m_assignRe.globalMatch(text);
+        while (as.hasNext())
+        {
+            const QRegularExpressionMatch m = as.next();
+            const QString name = m.captured(1);
+            const SymCat cat = symbolCategory(name);
+            if (cat == SymCat::ReadOnly || cat == SymCat::Constant ||
+                m_conflicts.contains(name))
+                setFormat(static_cast<int>(m.capturedStart(1)),
+                          static_cast<int>(m.capturedLength(1)), m_error);
+        }
+        // 4. Comments last — they win over any token inside them.
+        apply(m_commentRe, m_comment);
+    }
+
+private:
+    QTextCharFormat m_func, m_num, m_comment, m_error;
+    std::array<QTextCharFormat, 7> m_cat;  // indexed by SymCat
+    QSet<QString> m_funcNames;
+    QSet<QString> m_conflicts;  // globals double-declared elsewhere (init slot)
+    QRegularExpression m_funcRe, m_numRe, m_identRe, m_assignRe, m_commentRe;
+};
+
+QString refRow(const char* name, const char* type, const char* range, const char* desc)
+{
+    return QStringLiteral("<tr><td><b>%1</b></td><td><i>%2</i></td><td>%3</td><td>%4</td></tr>")
+        .arg(QString::fromUtf8(name), QString::fromUtf8(type), QString::fromUtf8(range),
+             QString::fromUtf8(desc));
+}
+
+// One function-reference row: signature (with params) · return · description.
+QString fnRow(const char* sig, const char* ret, const char* desc)
+{
+    return QStringLiteral("<tr><td><code>%1</code></td><td><i>%2</i></td><td>%3</td></tr>")
+        .arg(QString::fromUtf8(sig), QString::fromUtf8(ret), QString::fromUtf8(desc));
+}
+QString fnTable(const QString& rows)
+{
+    return QStringLiteral(
+               "<table cellspacing='0' cellpadding='4' style='border-collapse:collapse'>"
+               "<tr><th align='left'>Function</th><th align='left'>Returns</th>"
+               "<th align='left'>Description</th></tr>%1</table>")
+        .arg(rows);
+}
+
+// The EEL built-ins shared by every scripted module (functions + constants).
+QString builtinsHtml()
+{
+    const QString math = fnTable(
+        fnRow("sin(x) · cos(x) · tan(x)", "number", "trigonometry, x in radians") +
+        fnRow("asin(x) · acos(x) · atan(x)", "radians", "inverse trigonometry") +
+        fnRow("atan2(y, x)", "radians [-π,π]", "angle of the vector (x,y), quadrant-correct") +
+        fnRow("sqrt(x)", "number", "square root (√x)") +
+        fnRow("sqr(x)", "number", "square (x·x)") +
+        fnRow("invsqrt(x)", "number", "fast inverse square root (1/√x)") +
+        fnRow("pow(base, exp)", "number", "base raised to exp (base^exp)") +
+        fnRow("exp(x)", "number", "e^x") +
+        fnRow("log(x [, base])", "number", "natural log; log(x,10) for base-10") +
+        fnRow("abs(x)", "number", "absolute value |x|") +
+        fnRow("sign(x)", "-1 / 0 / 1", "sign of x") +
+        fnRow("min(a, b) · max(a, b)", "number", "smaller / larger of a and b") +
+        fnRow("mod(a, b)", "number", "floating-point remainder of a/b (fmod)") +
+        fnRow("rand(n)", "integer 0..n-1", "pseudo-random integer (deterministic, seedable)") +
+        fnRow("sigmoid(x, k)", "≈ 0..1", "smooth ramp; k = steepness"));
+
+    const QString logic = fnTable(
+        fnRow("if(cond, a, b)", "a or b", "returns a if cond≠0 else b (both args evaluated)") +
+        fnRow("above(a, b)", "0 / 1", "1 if a > b") +
+        fnRow("below(a, b)", "0 / 1", "1 if a < b") +
+        fnRow("equal(a, b)", "0 / 1", "1 if |a-b| < 1e-5 (epsilon)") +
+        fnRow("band(a, b)", "0 / 1", "logical AND (a≠0 and b≠0)") +
+        fnRow("bor(a, b)", "0 / 1", "logical OR") +
+        fnRow("bnot(a)", "0 / 1", "logical NOT (1 if a=0)"));
+
+    const QString mem = fnTable(
+        fnRow("megabuf(i)", "number", "read module-local buffer slot i (write: megabuf(i)=v)") +
+        fnRow("gmegabuf(i)", "number", "read preset-global buffer slot i (write: gmegabuf(i)=v)"));
+
+    const QString ctrl = fnTable(
+        fnRow("loop(n, expr)", "—", "evaluate expr n times") +
+        fnRow("while(cond)", "—", "loop while cond≠0 (with a body block)"));
+
+    const QString audio = fnTable(
+        fnRow("getspec(band, width, ch)", "≈ 0..1",
+              "spectrum energy. band 0..1 (low→high), width 0..1 (averaging window), "
+              "ch 0=both 1=left 2=right") +
+        fnRow("getosc(band, width, ch)", "≈ -1..1",
+              "waveform (oscilloscope) sample; same band/width/ch as getspec") +
+        fnRow("gettime(sc)", "seconds", "seconds since start minus sc (use gettime(0))"));
+
+    return QStringLiteral(
+               "<h3>Math</h3>%1"
+               "<h3>Logic (EEL, → 0/1)</h3>%2"
+               "<h3>Memory</h3>%3"
+               "<h3>Control</h3>%4"
+               "<h3>Audio (all modules)</h3>"
+               "<p><b>Variables:</b> <code>bass</code> <code>mid</code> <code>treb</code> "
+               "(≈0..1 band energy) · <code>vol</code> (level) · <code>beat</code> (0/1) · "
+               "<code>time</code> (seconds)</p>%5"
+               "<h3>Constants</h3>"
+               "<p><code>pi</code> ≈ 3.14159 · <code>pi2</code> ≈ 6.28319 (2·pi)</p>"
+               "<p style='color:#888'>All values are floating-point. Assignment: "
+               "<code>x = expr;</code> — statements separated by <code>;</code>. "
+               "Comments: <code>// …</code></p>")
+        .arg(math).arg(logic).arg(mem).arg(ctrl).arg(audio);
+}
+
+// Module-specific variable table (accurate for the modules wired so far).
+QString scriptReferenceHtml(const EffectParams& params)
+{
+    const char* title = effectTypeName(params);
+    QString vars;
+    auto table = [](const QString& rows) {
+        return QStringLiteral(
+                   "<table cellspacing='0' cellpadding='4' "
+                   "style='border-collapse:collapse'>"
+                   "<tr><th align='left'>Name</th><th align='left'>Type</th>"
+                   "<th align='left'>Range</th><th align='left'>Meaning</th></tr>%1</table>")
+            .arg(rows);
+    };
+    // Shared by every Batch-H fractal: audio + time inputs.
+    const QString audioIn =
+        refRow("bass / mid / treble", "in", "0..~1", "spectrum thirds (low/mid/high energy)") +
+        refRow("vol", "in", "0..1", "smoothed overall level") +
+        refRow("beat", "in", "0/1", "1 on a detected beat") +
+        refRow("time", "in", "seconds", "seconds since start");
+
+    if (std::holds_alternative<SuperScopeParams>(params))
+        vars = table(
+            refRow("n", "in/out", "8..4096", "point count (frame code may change it)") +
+            refRow("i", "in", "0..1", "point index, normalised (per point)") +
+            refRow("v", "in", "-1..1", "waveform sample at this point") +
+            refRow("b", "in", "0/1", "1 on a beat") +
+            refRow("w / h", "in", "px", "surface width / height") +
+            refRow("t", "in/out", "any", "your own accumulator (persists)") +
+            refRow("x / y", "out", "-1..1", "point position (per point)") +
+            refRow("red / green / blue", "in/out", "0..1", "point colour (pre-seeded)") +
+            refRow("skip", "out", "0/1", ">0.5 hides this point"));
+    else if (std::holds_alternative<Fractal2DParams>(params))
+        vars = table(audioIn + refRow("cx / cy", "in/out", "any", "view centre (re/im)") +
+                     refRow("zoom", "in/out", ">0", "view scale (higher = closer)") +
+                     refRow("rot", "in/out", "rad", "view rotation") +
+                     refRow("jx / jy", "in/out", "-2..2", "Julia / Phoenix seed") +
+                     refRow("power", "in/out", "1..16", "Multibrot / Nova exponent"));
+    else if (std::holds_alternative<Fractal3DParams>(params))
+        vars = table(audioIn + refRow("yaw / pitch", "in/out", "rad", "camera orbit") +
+                     refRow("dist", "in/out", ">0.1", "camera distance") +
+                     refRow("power", "in/out", "1..16", "Mandelbulb exponent") +
+                     refRow("scale / fold", "in/out", "any", "Mandelbox / KIFS params"));
+    else if (std::holds_alternative<DomainWarpParams>(params))
+        vars = table(audioIn + refRow("scale", "in/out", ">0", "base frequency") +
+                     refRow("warp", "in/out", "0..8", "domain-warp strength") +
+                     refRow("speed", "in/out", "any", "time evolution") +
+                     refRow("ox / oy", "in/out", "any", "pan offset"));
+    else if (std::holds_alternative<FractalZoomerParams>(params))
+        vars = table(audioIn + refRow("cx / cy", "in/out", "any", "zoom target") +
+                     refRow("zoomspeed", "in/out", "~1", "per-frame zoom factor") +
+                     refRow("rotspeed", "in/out", "rad", "per-frame rotation"));
+    else if (std::holds_alternative<LyapunovParams>(params))
+        vars = table(audioIn + refRow("amin / amax", "in/out", "0..4", "a-axis view range") +
+                     refRow("bmin / bmax", "in/out", "0..4", "b-axis view range"));
+    else if (std::holds_alternative<KleinianParams>(params))
+        vars = table(audioIn + refRow("morph", "in/out", "any", "tiling morph phase") +
+                     refRow("zoom", "in/out", ">0", "view scale") +
+                     refRow("rot", "in/out", "rad", "view rotation"));
+    else if (std::holds_alternative<StrangeAttractorParams>(params))
+        vars = table(audioIn + refRow("a / b / c / d", "in/out", "any", "map coefficients") +
+                     refRow("rotation", "in/out", "rad", "extra view rotation"));
+    else if (std::holds_alternative<FlameParams>(params))
+        vars = table(audioIn + refRow("rotation", "in/out", "rad", "extra view rotation"));
+    else if (std::holds_alternative<ReactionDiffusionParams>(params))
+        vars = table(audioIn + refRow("feed", "in/out", "0..0.1", "Gray-Scott feed rate") +
+                     refRow("kill", "in/out", "0..0.1", "Gray-Scott kill rate"));
+    else if (std::holds_alternative<MovementParams>(params))
+        vars = table(refRow("d", "in/out", "0..1", "distance from centre (polar; remap it)") +
+                     refRow("r", "in/out", "rad", "angle (polar)") +
+                     refRow("x / y", "in/out", "-1..1", "used instead of d/r when Rect coords is on"));
+    else if (std::holds_alternative<DynamicMovementParams>(params))
+        vars = table(refRow("d / r", "in/out", "0..1 / rad", "polar source coord (point code)") +
+                     refRow("x / y", "in/out", "-1..1", "rect source coord when Rect coords is on") +
+                     refRow("w / h", "in", "px", "surface size") +
+                     refRow("b", "in", "0/1", "beat") +
+                     refRow("alpha", "out", "0..1", "per-pixel blend (if used)"));
+    else if (std::holds_alternative<DynamicShiftParams>(params))
+        vars = table(refRow("x / y", "out", "px", "global image offset") +
+                     refRow("w / h", "in", "px", "surface size") +
+                     refRow("b", "in", "0/1", "beat") +
+                     refRow("alpha", "out", "0..1", "50/50 blend weight"));
+    else if (std::holds_alternative<DynamicDistanceModifierParams>(params))
+        vars = table(refRow("d", "in/out", "0..1", "ring distance (remap it)") +
+                     refRow("b", "in", "0/1", "beat"));
+    else if (std::holds_alternative<BumpParams>(params))
+        vars = table(refRow("x / y", "out", "0..1", "light position") +
+                     refRow("t", "in/out", "any", "your own accumulator"));
+    else if (std::holds_alternative<TexerIIParams>(params))
+        vars = table(refRow("n", "in/out", "count", "sprite count") +
+                     refRow("i", "in", "0..1", "point index (per point)") +
+                     refRow("x / y", "out", "-1..1", "sprite centre") +
+                     refRow("sizex / sizey", "out", "scale", "sprite size") +
+                     refRow("red / green / blue", "out", "0..1", "sprite tint"));
+    else if (std::holds_alternative<TriangleParams>(params))
+        vars = table(refRow("n", "in/out", "count", "triangle count") +
+                     refRow("i", "in", "0..1", "triangle index (per point)") +
+                     refRow("x1..y3", "out", "-1..1", "the three vertices") +
+                     refRow("red / green / blue", "out", "0..1", "fill colour"));
+    else if (std::holds_alternative<ColorModifierParams>(params))
+        vars = table(refRow("red / green / blue", "in/out", "0..1",
+                            "channel value (level code maps in→out)"));
+    else if (std::holds_alternative<JherikoGlobalParams>(params))
+        vars = table(refRow("reg00..reg99", "in/out", "any",
+                            "preset-global registers (shared across effects)") +
+                     refRow("gmegabuf(i)", "in/out", "any", "global scratch buffer"));
+    else if (std::holds_alternative<ListParams>(params))
+        vars = table(refRow("enabled", "out", "0/1", "render the list this frame?") +
+                     refRow("clear", "out", "0/1", "clear the list buffer first?") +
+                     refRow("beat", "in/out", "0/1", "beat (may be mutated)") +
+                     refRow("alphain / alphaout", "out", "0..255", "blend alphas") +
+                     refRow("w / h", "in", "px", "surface size"));
+    else
+        vars = QStringLiteral(
+            "<p><i>No dedicated variable reference for this module yet.</i></p>");
+
+    const QString legend = QStringLiteral(
+        "<h3>Highlight colours</h3><p>"
+        "<span style='color:#9CDCFE'>read-only</span> &nbsp; "
+        "<span style='color:#4EC9B0'>input</span> &nbsp; "
+        "<span style='color:#DCDCAA'>output</span> &nbsp; "
+        "<span style='color:#C586C0'>in/out</span> &nbsp; "
+        "<span style='color:#4FC1FF'><i>constant</i></span> &nbsp; "
+        "<span style='color:#D7BA7D'>custom-global</span> &nbsp; "
+        "custom-local &nbsp; "
+        "<span style='color:#F44747'>error</span> (writing a read-only/constant)</p>");
+    return QStringLiteral("<h2>%1 — script variables</h2>%2%3%4")
+        .arg(QString::fromUtf8(title), vars, builtinsHtml(), legend);
+}
+
+// Read-only reference popup (resizable window).
+void showScriptReference(QWidget* parent, const QString& html)
+{
+    QDialog dlg(parent);
+    dlg.setWindowTitle(QObject::tr("Script reference"));
+    dlg.resize(560, 540);
+    auto* lay = new QVBoxLayout(&dlg);
+    auto* browser = new QTextBrowser(&dlg);
+    browser->setHtml(html);
+    lay->addWidget(browser, 1);
+    auto* bb = new QDialogButtonBox(QDialogButtonBox::Close, &dlg);
+    QObject::connect(bb, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+    lay->addWidget(bb);
+    dlg.exec();
+}
+
+// Full, resizable editor: big code pane + the module's reference side-by-side.
+// Returns true and fills `out` when accepted ("expand full" / "collapse full").
+bool openScriptEditor(QWidget* parent, const QString& label, const QString& text,
+                      const QString& refHtml, QString& out,
+                      const QSet<QString>& conflicts = {})
+{
+    QDialog dlg(parent);
+    dlg.setWindowTitle(QObject::tr("Edit script — %1").arg(label));
+    dlg.resize(920, 620);
+    auto* lay = new QVBoxLayout(&dlg);
+    auto* split = new QSplitter(Qt::Horizontal, &dlg);
+    auto* editor = new QPlainTextEdit(split);
+    editor->setPlainText(text);
+    editor->setLineWrapMode(QPlainTextEdit::NoWrap);
+    QFont mono(QStringLiteral("Consolas"));
+    mono.setStyleHint(QFont::Monospace);
+    editor->setFont(mono);
+    new EelHighlighter(editor->document(), conflicts);
+    auto* ref = new QTextBrowser(split);
+    ref->setHtml(refHtml);
+    split->addWidget(editor);
+    split->addWidget(ref);
+    split->setStretchFactor(0, 3);
+    split->setStretchFactor(1, 2);
+    lay->addWidget(split, 1);
+    auto* bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
+    QObject::connect(bb, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+    QObject::connect(bb, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+    lay->addWidget(bb);
+    if (dlg.exec() == QDialog::Accepted)
+    {
+        out = editor->toPlainText();
+        return true;
+    }
+    return false;
+}
+
 } // namespace
 
 void ChainTreeWidget::dropEvent(QDropEvent* event)
@@ -184,6 +675,18 @@ void ChainTreeWidget::dropEvent(QDropEvent* event)
     event->accept();
 }
 
+void ChainTreeWidget::keyPressEvent(QKeyEvent* event)
+{
+    if ((event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) &&
+        onDeleteKey)
+    {
+        onDeleteKey();
+        event->accept();
+        return;
+    }
+    QTreeWidget::keyPressEvent(event);
+}
+
 MultiEffectPanel::MultiEffectPanel(ServiceContainer& services, QWidget* parent)
     : PanelBase(services, "multieffect_chain", tr("Effect Chain"), parent)
 {
@@ -204,7 +707,36 @@ void MultiEffectPanel::setupUI()
     // Toolbar: add-type combo + add / remove / up / down.
     auto* toolbar = new QHBoxLayout();
     m_addTypeCombo = new QComboBox(this);
-    for (const EffectType& t : effectPalette()) m_addTypeCombo->addItem(t.name);
+    auto* comboModel = qobject_cast<QStandardItemModel*>(m_addTypeCombo->model());
+    const std::vector<EffectType>& palette = effectPalette();
+    for (size_t i = 0; i < palette.size(); ++i)
+    {
+        const EffectType& t = palette[i];
+        // Origin marker (placeholder for a per-origin icon): AVS-ported vs native.
+        QString label = QString::fromUtf8(t.name);
+        if (!t.isHeader())
+            label += t.origin == Origin::Avs ? QStringLiteral("   · AVS")
+                                             : QStringLiteral("   · LumiViz");
+        m_addTypeCombo->addItem(label);
+        if (comboModel == nullptr) continue;
+        QStandardItem* item = comboModel->item(static_cast<int>(i));
+        if (item == nullptr) continue;
+        if (t.isHeader())
+        {
+            item->setFlags(item->flags() & ~(Qt::ItemIsSelectable | Qt::ItemIsEnabled));
+            QFont f = item->font();
+            f.setBold(true);
+            item->setFont(f);
+        }
+        else
+        {
+            item->setToolTip(t.origin == Origin::Avs ? tr("AVS-ported module")
+                                                     : tr("Native LumiViz module"));
+        }
+    }
+    // Start on the first selectable (non-header) entry, not a category title.
+    for (size_t i = 0; i < palette.size(); ++i)
+        if (!palette[i].isHeader()) { m_addTypeCombo->setCurrentIndex(static_cast<int>(i)); break; }
     toolbar->addWidget(m_addTypeCombo, 1);
 
     auto makeButton = [this](const QString& text, const QString& tip) {
@@ -239,7 +771,7 @@ void MultiEffectPanel::setupUI()
                             QAbstractItemView::EditKeyPressed);
     // Drag & drop re-parents/reorders effects (into / out of groups). We handle
     // the drop ourselves (onDrop) and rebuild from the model.
-    m_tree->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_tree->setSelectionMode(QAbstractItemView::ExtendedSelection);  // Shift/Ctrl multi
     m_tree->setDragEnabled(true);
     m_tree->setAcceptDrops(true);
     m_tree->setDropIndicatorShown(true);
@@ -247,6 +779,7 @@ void MultiEffectPanel::setupUI()
     m_tree->onDrop = [this](QTreeWidgetItem* s, QTreeWidgetItem* t, ChainDrop w) {
         onDropRequested(s, t, w);
     };
+    m_tree->onDeleteKey = [this] { onRemove(); };
     root->addWidget(m_tree, 1);
 
     m_propScroll = new QScrollArea(this);
@@ -446,8 +979,10 @@ void MultiEffectPanel::onAddEffect()
     if (m_host == nullptr) return;
     const int typeIdx = m_addTypeCombo->currentIndex();
     if (typeIdx < 0) return;
+    const EffectType& chosen = effectPalette()[static_cast<size_t>(typeIdx)];
+    if (chosen.isHeader()) return;  // category title, not an insertable effect
     ChainNode fresh;
-    fresh.params = effectPalette()[static_cast<size_t>(typeIdx)].make();
+    fresh.params = chosen.make();
 
     const QList<int> sel = currentPath();
     mutateStructure([&] {
@@ -466,17 +1001,19 @@ void MultiEffectPanel::onAddEffect()
 
 void MultiEffectPanel::onRemove()
 {
-    const QList<int> path = currentPath();
-    if (path.isEmpty()) return;  // never remove the root
+    const QList<QList<int>> paths = selectedPaths();
+    if (paths.isEmpty()) return;  // never remove the root
+    QList<int> parentPath = paths.first();
+    parentPath.removeLast();
+    QList<int> idxs;
+    for (const QList<int>& p : paths) idxs.append(p.last());
+    std::sort(idxs.begin(), idxs.end(), std::greater<int>());  // erase high -> low
     mutateStructure([&] {
-        QList<int> parentPath = path;
-        const int idx = parentPath.takeLast();
         ChainNode* parent = nodeAtPath(parentPath);
-        if (parent != nullptr && idx >= 0 &&
-            idx < static_cast<int>(parent->children.size()))
-        {
-            parent->children.erase(parent->children.begin() + idx);
-        }
+        if (parent == nullptr) return;
+        for (int idx : idxs)
+            if (idx >= 0 && idx < static_cast<int>(parent->children.size()))
+                parent->children.erase(parent->children.begin() + idx);
     });
 }
 
@@ -511,22 +1048,51 @@ void MultiEffectPanel::onClone()
 
 void MultiEffectPanel::onMove(int delta)
 {
-    const QList<int> path = currentPath();
-    if (path.isEmpty()) return;
+    const QList<QList<int>> paths = selectedPaths();
+    if (paths.isEmpty()) return;
+    QList<int> parentPath = paths.first();
+    parentPath.removeLast();
+    QList<int> idxs;
+    for (const QList<int>& p : paths) idxs.append(p.last());
+    std::sort(idxs.begin(), idxs.end());
+    const int count = static_cast<int>(idxs.size());
+    const int minI = idxs.first();
+    const bool contiguous = (idxs.last() - minI + 1 == count);
+
+    QList<QList<int>> newSel;
     mutateStructure([&] {
-        QList<int> parentPath = path;
-        const int idx = parentPath.takeLast();
         ChainNode* parent = nodeAtPath(parentPath);
         if (parent == nullptr) return;
-        const int target = idx + delta;
-        if (idx < 0 || idx >= static_cast<int>(parent->children.size()) || target < 0 ||
-            target >= static_cast<int>(parent->children.size()))
+        const int n = static_cast<int>(parent->children.size());
+        const int newBase = std::clamp(minI + delta, 0, n - count);
+        if (newBase == minI && contiguous) return;  // already there, can't move
+
+        const QSet<int> sel(idxs.begin(), idxs.end());
+        std::vector<ChainNode> picked, rest;
+        for (int i = 0; i < n; ++i)
         {
-            return;
+            if (sel.contains(i))
+                picked.push_back(std::move(parent->children[static_cast<size_t>(i)]));
+            else
+                rest.push_back(std::move(parent->children[static_cast<size_t>(i)]));
         }
-        std::swap(parent->children[static_cast<size_t>(idx)],
-                  parent->children[static_cast<size_t>(target)]);
+        std::vector<ChainNode> result;
+        result.reserve(static_cast<size_t>(n));
+        for (int i = 0; i < newBase; ++i)
+            result.push_back(std::move(rest[static_cast<size_t>(i)]));
+        for (ChainNode& node : picked) result.push_back(std::move(node));
+        for (int i = newBase; i < static_cast<int>(rest.size()); ++i)
+            result.push_back(std::move(rest[static_cast<size_t>(i)]));
+        parent->children = std::move(result);
+
+        for (int k = 0; k < count; ++k)
+        {
+            QList<int> np = parentPath;
+            np.append(newBase + k);
+            newSel.append(np);
+        }
     });
+    if (!newSel.isEmpty()) selectPaths(newSel);
 }
 
 void MultiEffectPanel::setNodeEnabled(const QList<int>& path, bool enabled)
@@ -580,19 +1146,127 @@ void MultiEffectPanel::onDropRequested(QTreeWidgetItem* src, QTreeWidgetItem* ta
     QList<int> targetPath;
     if (target != nullptr) targetPath = pathFromVariant(target->data(0, Qt::UserRole));
 
+    // Move the whole (same-level) selection as a block; if the dragged item is
+    // not part of the selection, move just it.
+    QList<QList<int>> srcPaths = selectedPaths();
+    bool srcInSel = false;
+    for (const QList<int>& p : srcPaths) if (p == srcPath) srcInSel = true;
+    if (!srcInSel) srcPaths = {srcPath};
+
     // Defer the actual move: we are inside the tree's own dropEvent, and the
     // rebuild would delete the items the drag machinery still touches. Paths are
     // value copies, so they survive the queued hop.
     QMetaObject::invokeMethod(
         this,
-        [this, srcPath, targetPath, where] {
-            QList<int> finalPath;
+        [this, srcPaths, targetPath, where] {
+            QList<QList<int>> finalPaths;
             bool moved = false;
             mutateStructure(
-                [&] { moved = moveNodeLocked(srcPath, targetPath, where, finalPath); });
-            if (moved) selectByPath(finalPath);
+                [&] { moved = moveNodesLocked(srcPaths, targetPath, where, finalPaths); });
+            if (moved) selectPaths(finalPaths);
         },
         Qt::QueuedConnection);
+}
+
+bool MultiEffectPanel::moveNodesLocked(const QList<QList<int>>& srcPaths,
+                                       const QList<int>& targetPath, ChainDrop where,
+                                       QList<QList<int>>& finalPaths)
+{
+    if (m_host == nullptr || srcPaths.isEmpty()) return false;
+    if (srcPaths.size() == 1)  // single node: the well-tested path
+    {
+        QList<int> fp;
+        if (!moveNodeLocked(srcPaths.first(), targetPath, where, fp)) return false;
+        finalPaths.append(fp);
+        return true;
+    }
+
+    // All selected share one parent (enforced by the selection constraint).
+    QList<int> srcParentPath = srcPaths.first();
+    srcParentPath.removeLast();
+    QList<int> srcIdxs;
+    for (const QList<int>& p : srcPaths) srcIdxs.append(p.last());
+    std::sort(srcIdxs.begin(), srcIdxs.end());
+
+    // Resolve the destination parent + index (same rules as moveNodeLocked).
+    QList<int> dstParentPath;
+    int dstIndex = 0;
+    if (targetPath.isEmpty() || where == ChainDrop::Viewport)
+    {
+        dstIndex = static_cast<int>(m_host->chain().children.size());
+    }
+    else
+    {
+        QList<int> targetParentPath = targetPath;
+        const int targetIdx = targetParentPath.takeLast();
+        if (where == ChainDrop::OnItem)
+        {
+            ChainNode* tnode = nodeAtPath(targetPath);
+            if (tnode != nullptr && tnode->isList())
+            {
+                dstParentPath = targetPath;
+                dstIndex = static_cast<int>(tnode->children.size());
+            }
+            else { dstParentPath = targetParentPath; dstIndex = targetIdx + 1; }
+        }
+        else if (where == ChainDrop::Above) { dstParentPath = targetParentPath; dstIndex = targetIdx; }
+        else { dstParentPath = targetParentPath; dstIndex = targetIdx + 1; }
+    }
+
+    // Never drop the block into one of its own subtrees.
+    for (const QList<int>& sp : srcPaths)
+    {
+        const bool intoSub = dstParentPath.size() >= sp.size() &&
+                             dstParentPath.mid(0, sp.size()) == sp;
+        if (dstParentPath == sp || intoSub) return false;
+    }
+
+    ChainNode* srcParent = nodeAtPath(srcParentPath);
+    if (srcParent == nullptr) return false;
+    for (int i : srcIdxs)
+        if (i < 0 || i >= static_cast<int>(srcParent->children.size())) return false;
+
+    // Extract (asc) then erase (desc) from the source.
+    std::vector<ChainNode> picked;
+    for (int i : srcIdxs)
+        picked.push_back(std::move(srcParent->children[static_cast<size_t>(i)]));
+    for (int j = static_cast<int>(srcIdxs.size()) - 1; j >= 0; --j)
+        srcParent->children.erase(srcParent->children.begin() + srcIdxs[j]);
+
+    // Adjust the destination for the removals.
+    const int sp = static_cast<int>(srcParentPath.size());
+    if (dstParentPath == srcParentPath)
+    {
+        int before = 0;
+        for (int i : srcIdxs) if (i < dstIndex) ++before;
+        dstIndex -= before;
+    }
+    else if (dstParentPath.size() > sp && dstParentPath.mid(0, sp) == srcParentPath)
+    {
+        int shift = 0;
+        for (int i : srcIdxs) if (i < dstParentPath[sp]) ++shift;
+        dstParentPath[sp] -= shift;
+    }
+
+    ChainNode* dstParent = nodeAtPath(dstParentPath);
+    if (dstParent == nullptr)
+    {
+        dstParent = &m_host->chain();
+        dstParentPath = {};
+        dstIndex = static_cast<int>(dstParent->children.size());
+    }
+    dstIndex = std::clamp(dstIndex, 0, static_cast<int>(dstParent->children.size()));
+    for (int k = 0; k < static_cast<int>(picked.size()); ++k)
+        dstParent->children.insert(dstParent->children.begin() + dstIndex + k,
+                                   std::move(picked[static_cast<size_t>(k)]));
+
+    for (int k = 0; k < static_cast<int>(picked.size()); ++k)
+    {
+        QList<int> np = dstParentPath;
+        np.append(dstIndex + k);
+        finalPaths.append(np);
+    }
+    return true;
 }
 
 bool MultiEffectPanel::moveNodeLocked(const QList<int>& srcPath,
@@ -728,7 +1402,71 @@ void MultiEffectPanel::onItemChanged(QTreeWidgetItem* item, int column)
 
 void MultiEffectPanel::onSelectionChanged()
 {
+    enforceSameLevelSelection();
     buildPropertyEditor(currentPath());
+}
+
+QList<QList<int>> MultiEffectPanel::selectedPaths() const
+{
+    QList<QList<int>> out;
+    const QList<QTreeWidgetItem*> items = m_tree->selectedItems();
+    for (QTreeWidgetItem* it : items)
+    {
+        const QList<int> p = pathFromVariant(it->data(0, Qt::UserRole));
+        if (!p.isEmpty()) out.append(p);
+    }
+    if (out.isEmpty())
+    {
+        const QList<int> cur = currentPath();
+        if (!cur.isEmpty()) out.append(cur);
+    }
+    std::sort(out.begin(), out.end(), [](const QList<int>& a, const QList<int>& b) {
+        for (int i = 0; i < a.size() && i < b.size(); ++i)
+            if (a[i] != b[i]) return a[i] < b[i];
+        return a.size() < b.size();
+    });
+    return out;
+}
+
+void MultiEffectPanel::enforceSameLevelSelection()
+{
+    if (m_selecting) return;
+    QTreeWidgetItem* anchor = m_tree->currentItem();
+    if (anchor == nullptr) return;
+    QList<int> anchorParent = pathFromVariant(anchor->data(0, Qt::UserRole));
+    if (anchorParent.isEmpty()) return;
+    anchorParent.removeLast();  // the effect-list level of the anchor
+
+    m_selecting = true;
+    for (QTreeWidgetItem* it : m_tree->selectedItems())
+    {
+        QList<int> p = pathFromVariant(it->data(0, Qt::UserRole));
+        QList<int> parent = p;
+        if (!parent.isEmpty()) parent.removeLast();
+        if (p.isEmpty() || parent != anchorParent) it->setSelected(false);
+    }
+    m_selecting = false;
+}
+
+void MultiEffectPanel::selectPaths(const QList<QList<int>>& paths)
+{
+    m_selecting = true;
+    m_tree->clearSelection();
+    QTreeWidgetItem* last = nullptr;
+    for (const QList<int>& p : paths)
+    {
+        if (QTreeWidgetItem* it = itemAtPath(p))
+        {
+            it->setSelected(true);
+            last = it;
+        }
+    }
+    m_selecting = false;
+    if (last != nullptr)
+    {
+        m_tree->setCurrentItem(last);
+        m_tree->scrollToItem(last);
+    }
 }
 
 // =============================================================================
@@ -847,22 +1585,98 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
                 });
         form->addRow(label, combo);
     };
+    const QString scriptRef = scriptReferenceHtml(params);
+
+    // Global conflict set: globals this node's init declares that another node's
+    // init also declares (Skript_Variablen_Konzept §6.3) — flagged red in init.
+    QSet<QString> initConflicts;
+    {
+        QSet<QString> cur, others;
+        addInitGlobalWrites(nodeInitCode(params), cur);
+        if (!cur.isEmpty() && m_host != nullptr && m_mutex != nullptr)
+        {
+            QMutexLocker lock(m_mutex);
+            const ChainNode* node = nodeAtPath(path);
+            collectInitGlobalsExcept(m_host->chain(), node, others);
+        }
+        for (const QString& g : cur)
+            if (others.contains(g)) initConflicts.insert(g);
+    }
+
     auto addScript = [&](const QString& label, const std::string& value,
                          std::function<void(ChainNode&, std::string)> set) {
+        const bool isInit = label.startsWith(QLatin1String("Init"));
+        const QSet<QString> conflicts = isInit ? initConflicts : QSet<QString>{};
         auto* edit = new QPlainTextEdit(m_propContainer);
         edit->setPlainText(QString::fromStdString(value));
         edit->setPlaceholderText(tr("EEL expression"));
-        edit->setMaximumHeight(70);
+        edit->setLineWrapMode(QPlainTextEdit::NoWrap);
+        edit->setMinimumHeight(54);
+        edit->setMaximumHeight(200);  // taller inline; full editing via Expand
+        QFont mono(QStringLiteral("Consolas"));
+        mono.setStyleHint(QFont::Monospace);
+        edit->setFont(mono);
+        new EelHighlighter(edit->document(), conflicts);
         connect(edit, &QPlainTextEdit::textChanged, this, [this, path, set, edit]() {
             const std::string text = edit->toPlainText().toStdString();
             mutate(path, [&](ChainNode& n) { set(n, text); });
         });
+
+        // Header: label + reference (ⓘ) and expand-to-large-editor (⤢) buttons.
+        auto* header = new QWidget(m_propContainer);
+        auto* hl = new QHBoxLayout(header);
+        hl->setContentsMargins(0, 0, 0, 0);
+        hl->addWidget(new QLabel(label, header));
+        hl->addStretch(1);
+        auto* varsBtn = new QToolButton(header);
+        varsBtn->setText(QString::fromUtf8("ⓘ"));  // ⓘ
+        varsBtn->setToolTip(tr("Show this module's script variables"));
+        auto* expandBtn = new QToolButton(header);
+        expandBtn->setText(QString::fromUtf8("⤢"));  // ⤢
+        expandBtn->setToolTip(tr("Expand to a large, resizable editor"));
+        hl->addWidget(varsBtn);
+        hl->addWidget(expandBtn);
+        connect(varsBtn, &QToolButton::clicked, this,
+                [this, scriptRef]() { showScriptReference(this, scriptRef); });
+        connect(expandBtn, &QToolButton::clicked, this,
+                [this, edit, label, scriptRef, conflicts]() {
+                    QString out;
+                    if (openScriptEditor(this, label, edit->toPlainText(), scriptRef,
+                                         out, conflicts))
+                    {
+                        edit->setPlainText(out);  // triggers textChanged -> mutate
+                    }
+                });
+
         auto* box = new QWidget(m_propContainer);
         auto* v = new QVBoxLayout(box);
         v->setContentsMargins(0, 0, 0, 0);
-        v->addWidget(new QLabel(label, box));
+        v->addWidget(header);
         v->addWidget(edit);
         form->addRow(box);
+    };
+    auto addGradient = [&](const QString& label, const std::string& value,
+                           std::function<void(ChainNode&, std::string)> set) {
+        auto* combo = new QComboBox(m_propContainer);
+        lumi::modules::ColorGradientModule grad;
+        for (const std::string& name : grad.presetNames())
+            combo->addItem(QString::fromStdString(name));
+        combo->setCurrentText(QString::fromStdString(value));
+        connect(combo, &QComboBox::currentTextChanged, this,
+                [this, path, set](const QString& t) {
+                    const std::string name = t.toStdString();
+                    mutate(path, [&](ChainNode& n) { set(n, name); });
+                });
+        form->addRow(label, combo);
+    };
+    auto addText = [&](const QString& label, const std::string& value,
+                       std::function<void(ChainNode&, std::string)> set) {
+        auto* edit = new QLineEdit(QString::fromStdString(value), m_propContainer);
+        connect(edit, &QLineEdit::editingFinished, this, [this, path, set, edit]() {
+            const std::string t = edit->text().toStdString();
+            mutate(path, [&](ChainNode& n) { set(n, t); });
+        });
+        form->addRow(label, edit);
     };
 
     const QStringList kBlendNames = {"Ignore", "Replace", "50/50", "Maximum",
@@ -1024,6 +1838,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
     }
     else if (auto* p = std::get_if<JherikoGlobalParams>(&params))
     {
+        form->addRow(new QLabel(tr("The variable-set module: declare preset-global "
+                                   "variables (reg00…reg99, gmegabuf) in Init; other "
+                                   "effects can read them. Re-declaring a global that "
+                                   "another node's Init already sets is flagged red."),
+                                m_propContainer));
         addEnum(tr("Load"), p->loadMode, {"None", "Once", "Code control", "Every frame"}, [](ChainNode& n, int v) { std::get<JherikoGlobalParams>(n.params).loadMode = v; });
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).frameCode = std::move(v); });
@@ -1448,6 +2267,219 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         addInt(tr("Buffer"), p->buffer, 0, 5, [](ChainNode& n, int v) { std::get<MultiDelayParams>(n.params).buffer = v; });
         addInt(tr("Delay"), p->delay, 1, 128, [](ChainNode& n, int v) { std::get<MultiDelayParams>(n.params).delay = v; });
         addBool(tr("In beats"), p->useBeats, [](ChainNode& n, bool v) { std::get<MultiDelayParams>(n.params).useBeats = v; });
+    }
+    else if (auto* p = std::get_if<Fractal2DParams>(&params))
+    {
+        addEnum(tr("Type"), p->type,
+                {"Mandelbrot", "Julia", "Burning Ship", "Tricorn", "Multibrot",
+                 "Newton", "Phoenix", "Magnet", "Nova"},
+                [](ChainNode& n, int v) { std::get<Fractal2DParams>(n.params).type = v; });
+        addDouble(tr("Center X"), p->centerX, -4.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).centerX = static_cast<float>(v); });
+        addDouble(tr("Center Y"), p->centerY, -4.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).centerY = static_cast<float>(v); });
+        addDouble(tr("Zoom"), p->zoom, 0.001, 100000.0, 0.1, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).zoom = static_cast<float>(v); });
+        addDouble(tr("Rotation"), p->rotation, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).rotation = static_cast<float>(v); });
+        addInt(tr("Max iterations"), p->maxIter, 1, 2048, [](ChainNode& n, int v) { std::get<Fractal2DParams>(n.params).maxIter = v; });
+        addDouble(tr("Julia X"), p->juliaX, -2.0, 2.0, 0.001, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).juliaX = static_cast<float>(v); });
+        addDouble(tr("Julia Y"), p->juliaY, -2.0, 2.0, 0.001, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).juliaY = static_cast<float>(v); });
+        addDouble(tr("Power"), p->power, 1.0, 16.0, 0.1, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).power = static_cast<float>(v); });
+        addDouble(tr("Escape R^2"), p->escapeR, 1.0, 1024.0, 1.0, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).escapeR = static_cast<float>(v); });
+        addBool(tr("Smooth colour"), p->smooth, [](ChainNode& n, bool v) { std::get<Fractal2DParams>(n.params).smooth = v; });
+        addDouble(tr("Colour scale"), p->colorScale, 0.001, 4.0, 0.005, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).colorCycle = static_cast<float>(v); });
+        addColor(tr("Inside colour"), p->insideColor, [](ChainNode& n, uint32_t v) { std::get<Fractal2DParams>(n.params).insideColor = v; });
+        {
+            auto* combo = new QComboBox(m_propContainer);
+            lumi::modules::ColorGradientModule grad;
+            for (const std::string& name : grad.presetNames())
+                combo->addItem(QString::fromStdString(name));
+            combo->setCurrentText(QString::fromStdString(p->gradientPreset));
+            connect(combo, &QComboBox::currentTextChanged, this,
+                    [this, path](const QString& t) {
+                        const std::string name = t.toStdString();
+                        mutate(path, [&](ChainNode& n) {
+                            std::get<Fractal2DParams>(n.params).gradientPreset = name;
+                        });
+                    });
+            form->addRow(tr("Palette"), combo);
+        }
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<Fractal2DParams>(n.params).blend = v; });
+        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<Fractal2DParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Fractal2DParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Fractal2DParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<DomainWarpParams>(&params))
+    {
+        addInt(tr("Octaves"), p->octaves, 1, 10, [](ChainNode& n, int v) { std::get<DomainWarpParams>(n.params).octaves = v; });
+        addDouble(tr("Lacunarity"), p->lacunarity, 1.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).lacunarity = static_cast<float>(v); });
+        addDouble(tr("Gain"), p->gain, 0.0, 1.0, 0.02, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).gain = static_cast<float>(v); });
+        addDouble(tr("Scale"), p->scale, 0.1, 32.0, 0.1, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).scale = static_cast<float>(v); });
+        addDouble(tr("Warp"), p->warp, 0.0, 8.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).warp = static_cast<float>(v); });
+        addDouble(tr("Warp scale"), p->warpScale, 0.1, 8.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).warpScale = static_cast<float>(v); });
+        addDouble(tr("Speed"), p->speed, -4.0, 4.0, 0.02, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).speed = static_cast<float>(v); });
+        addDouble(tr("Offset X"), p->offsetX, -32.0, 32.0, 0.1, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).offsetX = static_cast<float>(v); });
+        addDouble(tr("Offset Y"), p->offsetY, -32.0, 32.0, 0.1, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).offsetY = static_cast<float>(v); });
+        addDouble(tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).colorCycle = static_cast<float>(v); });
+        {
+            auto* combo = new QComboBox(m_propContainer);
+            lumi::modules::ColorGradientModule grad;
+            for (const std::string& name : grad.presetNames())
+                combo->addItem(QString::fromStdString(name));
+            combo->setCurrentText(QString::fromStdString(p->gradientPreset));
+            connect(combo, &QComboBox::currentTextChanged, this,
+                    [this, path](const QString& t) {
+                        const std::string name = t.toStdString();
+                        mutate(path, [&](ChainNode& n) {
+                            std::get<DomainWarpParams>(n.params).gradientPreset = name;
+                        });
+                    });
+            form->addRow(tr("Palette"), combo);
+        }
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<DomainWarpParams>(n.params).blend = v; });
+        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<DomainWarpParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DomainWarpParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DomainWarpParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<SetRenderModeParams>(&params))
+    {
+        form->addRow(new QLabel(tr("Sets line width + blend for the render effects that follow."), m_propContainer));
+        addBool(tr("Override blend"), p->enabled, [](ChainNode& n, bool v) { std::get<SetRenderModeParams>(n.params).enabled = v; });
+        addInt(tr("Line width"), p->lineWidth, 0, 255, [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).lineWidth = v; });
+        addEnum(tr("Line blend"), p->lineBlend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).lineBlend = v; });
+        addInt(tr("Adjustable alpha"), p->adjustAlpha, 0, 255, [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).adjustAlpha = v; });
+    }
+    else if (auto* p = std::get_if<Fractal3DParams>(&params))
+    {
+        addEnum(tr("Type"), p->type, {"Mandelbulb", "Mandelbox", "Menger", "Quaternion-Julia", "KIFS"}, [](ChainNode& n, int v) { std::get<Fractal3DParams>(n.params).type = v; });
+        addDouble(tr("Yaw"), p->yaw, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).yaw = static_cast<float>(v); });
+        addDouble(tr("Pitch"), p->pitch, -1.5, 1.5, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).pitch = static_cast<float>(v); });
+        addDouble(tr("Distance"), p->dist, 0.5, 12.0, 0.1, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).dist = static_cast<float>(v); });
+        addDouble(tr("FOV"), p->fov, 0.3, 3.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).fov = static_cast<float>(v); });
+        addDouble(tr("Power"), p->power, 1.0, 16.0, 0.1, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).power = static_cast<float>(v); });
+        addDouble(tr("Scale"), p->scale, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).scale = static_cast<float>(v); });
+        addDouble(tr("Fold"), p->fold, 0.1, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).fold = static_cast<float>(v); });
+        addInt(tr("Max steps"), p->maxSteps, 8, 512, [](ChainNode& n, int v) { std::get<Fractal3DParams>(n.params).maxSteps = v; });
+        addInt(tr("DE iterations"), p->maxIter, 1, 64, [](ChainNode& n, int v) { std::get<Fractal3DParams>(n.params).maxIter = v; });
+        addDouble(tr("Julia X"), p->juliaX, -2.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).juliaX = static_cast<float>(v); });
+        addDouble(tr("Julia Y"), p->juliaY, -2.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).juliaY = static_cast<float>(v); });
+        addDouble(tr("Julia Z"), p->juliaZ, -2.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).juliaZ = static_cast<float>(v); });
+        addDouble(tr("Julia W"), p->juliaW, -2.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).juliaW = static_cast<float>(v); });
+        addDouble(tr("Light yaw"), p->lightYaw, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).lightYaw = static_cast<float>(v); });
+        addDouble(tr("Light pitch"), p->lightPitch, -1.5, 1.5, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).lightPitch = static_cast<float>(v); });
+        addDouble(tr("Ambient"), p->ambient, 0.0, 1.0, 0.02, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).ambient = static_cast<float>(v); });
+        addBool(tr("AO"), p->ao, [](ChainNode& n, bool v) { std::get<Fractal3DParams>(n.params).ao = v; });
+        addDouble(tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).colorCycle = static_cast<float>(v); });
+        addColor(tr("Background"), p->background, [](ChainNode& n, uint32_t v) { std::get<Fractal3DParams>(n.params).background = v; });
+        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<Fractal3DParams>(n.params).gradientPreset = std::move(v); });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<Fractal3DParams>(n.params).blend = v; });
+        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<Fractal3DParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Fractal3DParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Fractal3DParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<LyapunovParams>(&params))
+    {
+        addText(tr("Sequence"), p->sequence, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).sequence = std::move(v); });
+        addDouble(tr("a min"), p->aMin, 0.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).aMin = static_cast<float>(v); });
+        addDouble(tr("a max"), p->aMax, 0.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).aMax = static_cast<float>(v); });
+        addDouble(tr("b min"), p->bMin, 0.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).bMin = static_cast<float>(v); });
+        addDouble(tr("b max"), p->bMax, 0.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).bMax = static_cast<float>(v); });
+        addInt(tr("Warmup"), p->warmup, 0, 2000, [](ChainNode& n, int v) { std::get<LyapunovParams>(n.params).warmup = v; });
+        addInt(tr("Iterations"), p->iterations, 1, 4000, [](ChainNode& n, int v) { std::get<LyapunovParams>(n.params).iterations = v; });
+        addColor(tr("Ordered colour"), p->negColor, [](ChainNode& n, uint32_t v) { std::get<LyapunovParams>(n.params).negColor = v; });
+        addDouble(tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).colorCycle = static_cast<float>(v); });
+        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).gradientPreset = std::move(v); });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<LyapunovParams>(n.params).blend = v; });
+        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<KleinianParams>(&params))
+    {
+        addInt(tr("p"), p->p, 3, 20, [](ChainNode& n, int v) { std::get<KleinianParams>(n.params).p = v; });
+        addInt(tr("q"), p->q, 3, 20, [](ChainNode& n, int v) { std::get<KleinianParams>(n.params).q = v; });
+        addInt(tr("Iterations"), p->iterations, 1, 200, [](ChainNode& n, int v) { std::get<KleinianParams>(n.params).iterations = v; });
+        addDouble(tr("Morph"), p->morph, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).morph = static_cast<float>(v); });
+        addDouble(tr("Zoom"), p->zoom, 0.1, 8.0, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).zoom = static_cast<float>(v); });
+        addDouble(tr("Rotation"), p->rotation, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).rotation = static_cast<float>(v); });
+        addDouble(tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).colorCycle = static_cast<float>(v); });
+        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<KleinianParams>(n.params).gradientPreset = std::move(v); });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<KleinianParams>(n.params).blend = v; });
+        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<KleinianParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<KleinianParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<KleinianParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<FractalZoomerParams>(&params))
+    {
+        addEnum(tr("Type"), p->type, {"Mandelbrot", "Julia", "Burning Ship"}, [](ChainNode& n, int v) { std::get<FractalZoomerParams>(n.params).type = v; });
+        addDouble(tr("Center X"), p->centerX, -2.0, 2.0, 0.0001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).centerX = static_cast<float>(v); });
+        addDouble(tr("Center Y"), p->centerY, -2.0, 2.0, 0.0001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).centerY = static_cast<float>(v); });
+        addDouble(tr("Julia X"), p->juliaX, -2.0, 2.0, 0.001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).juliaX = static_cast<float>(v); });
+        addDouble(tr("Julia Y"), p->juliaY, -2.0, 2.0, 0.001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).juliaY = static_cast<float>(v); });
+        addInt(tr("Max iterations"), p->maxIter, 1, 2048, [](ChainNode& n, int v) { std::get<FractalZoomerParams>(n.params).maxIter = v; });
+        addDouble(tr("Zoom speed"), p->zoomSpeed, 0.9, 1.2, 0.001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).zoomSpeed = static_cast<float>(v); });
+        addDouble(tr("Rotation speed"), p->rotationSpeed, -0.2, 0.2, 0.001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).rotationSpeed = static_cast<float>(v); });
+        addDouble(tr("Feedback"), p->feedback, 0.0, 1.0, 0.02, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).feedback = static_cast<float>(v); });
+        addDouble(tr("Colour scale"), p->colorScale, 0.001, 4.0, 0.005, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).colorCycle = static_cast<float>(v); });
+        addColor(tr("Inside colour"), p->insideColor, [](ChainNode& n, uint32_t v) { std::get<FractalZoomerParams>(n.params).insideColor = v; });
+        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<FractalZoomerParams>(n.params).gradientPreset = std::move(v); });
+        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<FractalZoomerParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FractalZoomerParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FractalZoomerParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<StrangeAttractorParams>(&params))
+    {
+        addEnum(tr("Type"), p->type, {"Lorenz", "Clifford", "De Jong", "Aizawa"}, [](ChainNode& n, int v) { std::get<StrangeAttractorParams>(n.params).type = v; });
+        addDouble(tr("a"), p->a, -3.0, 3.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).a = static_cast<float>(v); });
+        addDouble(tr("b"), p->b, -3.0, 3.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).b = static_cast<float>(v); });
+        addDouble(tr("c"), p->c, -3.0, 3.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).c = static_cast<float>(v); });
+        addDouble(tr("d"), p->d, -3.0, 3.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).d = static_cast<float>(v); });
+        addInt(tr("Points"), p->points, 1, 100000, [](ChainNode& n, int v) { std::get<StrangeAttractorParams>(n.params).points = v; });
+        addDouble(tr("Scale"), p->scale, 0.01, 4.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).scale = static_cast<float>(v); });
+        addDouble(tr("Rotation"), p->rotation, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).rotation = static_cast<float>(v); });
+        addDouble(tr("Rotation speed"), p->rotationSpeed, -2.0, 2.0, 0.02, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).rotationSpeed = static_cast<float>(v); });
+        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<StrangeAttractorParams>(n.params).color = v; });
+        addBool(tr("Use gradient"), p->useGradient, [](ChainNode& n, bool v) { std::get<StrangeAttractorParams>(n.params).useGradient = v; });
+        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<StrangeAttractorParams>(n.params).gradientPreset = std::move(v); });
+        addDouble(tr("Dot size"), p->dotSize, 1.0, 32.0, 0.5, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).dotSize = static_cast<float>(v); });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<StrangeAttractorParams>(n.params).blend = v; });
+        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<StrangeAttractorParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<StrangeAttractorParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<StrangeAttractorParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<FlameParams>(&params))
+    {
+        addEnum(tr("Variation"), p->variation, {"Linear", "Sinusoidal", "Spherical", "Swirl", "Horseshoe"}, [](ChainNode& n, int v) { std::get<FlameParams>(n.params).variation = v; });
+        addInt(tr("Functions"), p->functions, 2, 4, [](ChainNode& n, int v) { std::get<FlameParams>(n.params).functions = v; });
+        addInt(tr("Points"), p->points, 1, 200000, [](ChainNode& n, int v) { std::get<FlameParams>(n.params).points = v; });
+        addDouble(tr("Scale"), p->scale, 0.05, 4.0, 0.02, [](ChainNode& n, double v) { std::get<FlameParams>(n.params).scale = static_cast<float>(v); });
+        addDouble(tr("Rotation"), p->rotation, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<FlameParams>(n.params).rotation = static_cast<float>(v); });
+        addDouble(tr("Rotation speed"), p->rotationSpeed, -2.0, 2.0, 0.02, [](ChainNode& n, double v) { std::get<FlameParams>(n.params).rotationSpeed = static_cast<float>(v); });
+        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<FlameParams>(n.params).gradientPreset = std::move(v); });
+        addDouble(tr("Dot size"), p->dotSize, 1.0, 16.0, 0.5, [](ChainNode& n, double v) { std::get<FlameParams>(n.params).dotSize = static_cast<float>(v); });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<FlameParams>(n.params).blend = v; });
+        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<FlameParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FlameParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FlameParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<ReactionDiffusionParams>(&params))
+    {
+        addDouble(tr("Feed"), p->feed, 0.0, 0.1, 0.001, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).feed = static_cast<float>(v); });
+        addDouble(tr("Kill"), p->kill, 0.0, 0.1, 0.001, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).kill = static_cast<float>(v); });
+        addDouble(tr("Diffuse A"), p->diffA, 0.0, 2.0, 0.02, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).diffA = static_cast<float>(v); });
+        addDouble(tr("Diffuse B"), p->diffB, 0.0, 2.0, 0.02, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).diffB = static_cast<float>(v); });
+        addInt(tr("Steps/frame"), p->stepsPerFrame, 1, 64, [](ChainNode& n, int v) { std::get<ReactionDiffusionParams>(n.params).stepsPerFrame = v; });
+        addBool(tr("Seed on beat"), p->seedOnBeat, [](ChainNode& n, bool v) { std::get<ReactionDiffusionParams>(n.params).seedOnBeat = v; });
+        addDouble(tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).colorCycle = static_cast<float>(v); });
+        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).gradientPreset = std::move(v); });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<ReactionDiffusionParams>(n.params).blend = v; });
+        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<DebugBarsParams>(&params))
     {

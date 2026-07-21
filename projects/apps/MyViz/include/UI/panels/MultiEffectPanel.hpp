@@ -66,9 +66,11 @@ public:
 
     std::function<void(QTreeWidgetItem* src, QTreeWidgetItem* target, ChainDrop where)>
         onDrop;
+    std::function<void()> onDeleteKey;  ///< Delete/Backspace pressed
 
 protected:
     void dropEvent(QDropEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
 };
 
 /**
@@ -94,8 +96,14 @@ private:
                      const lumi::multieffect::ChainNode& node, QList<int> path);
     [[nodiscard]] lumi::multieffect::ChainNode* nodeAtPath(const QList<int>& path);
     [[nodiscard]] QList<int> currentPath() const;
+    /// All selected item paths (same parent, sorted by index). Falls back to the
+    /// current item when the selection is empty.
+    [[nodiscard]] QList<QList<int>> selectedPaths() const;
     [[nodiscard]] QTreeWidgetItem* itemAtPath(const QList<int>& path) const;
     void selectByPath(const QList<int>& path);
+    void selectPaths(const QList<QList<int>>& paths);
+    /// Keep only selected items on the current item's level (same effect list).
+    void enforceSameLevelSelection();
 
     // Mutations (all lock the render mutex + recompile)
     void mutate(const QList<int>& path,
@@ -114,6 +122,9 @@ private:
     /// from within mutateStructure). Returns true + the new path on success.
     bool moveNodeLocked(const QList<int>& srcPath, const QList<int>& targetPath,
                         ChainDrop where, QList<int>& finalPath);
+    /// Move several same-parent nodes as a block to the drop destination.
+    bool moveNodesLocked(const QList<QList<int>>& srcPaths, const QList<int>& targetPath,
+                         ChainDrop where, QList<QList<int>>& finalPaths);
     void onItemChanged(QTreeWidgetItem* item, int column);
     void onSelectionChanged();
 
@@ -137,7 +148,8 @@ private:
     QWidget* m_propPage = nullptr;  ///< current editor page (deleted as a whole)
     QLabel* m_hint = nullptr;
 
-    bool m_updating = false;  ///< guards item-changed while rebuilding
+    bool m_updating = false;   ///< guards item-changed while rebuilding
+    bool m_selecting = false;  ///< guards recursive selection enforcement
 
     /// Non-null backing for the gradient combo's preview delegate (the delegate
     /// renders each preset into its own temp module; it only needs a live ptr).

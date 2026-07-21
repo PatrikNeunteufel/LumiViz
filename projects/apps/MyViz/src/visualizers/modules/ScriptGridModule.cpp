@@ -232,6 +232,15 @@ void ScriptGridModule::setVariable(const std::string& name, double value)
     }
 }
 
+void ScriptGridModule::setVisData(const unsigned char* data, double scriptTime)
+{
+    if (m_script != nullptr)
+    {
+        m_script->engine().setVisData(data);
+        m_script->engine().setScriptTime(scriptTime);
+    }
+}
+
 void ScriptGridModule::resetState()
 {
     m_script.reset();

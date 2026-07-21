@@ -41,7 +41,7 @@ ImportBrowserPanel::ImportBrowserPanel(ServiceContainer& services, QWidget* pare
     settings.beginGroup(settingsPrefix());
     const QString lastDir = settings.value(QStringLiteral("lastDir")).toString();
     m_filter = static_cast<Filter>(
-        settings.value(QStringLiteral("filter"), static_cast<int>(Filter::Both)).toInt());
+        settings.value(QStringLiteral("filter"), static_cast<int>(Filter::All)).toInt());
     settings.endGroup();
 
     QString start = lastDir;
@@ -135,9 +135,17 @@ QStringList ImportBrowserPanel::currentNameFilters() const
     {
         case Filter::Avs:  return {QStringLiteral("*.avs")};
         case Filter::Milk: return {QStringLiteral("*.milk")};
-        case Filter::Both: break;
+        case Filter::Lvfx: return {QStringLiteral("*.lvfx")};
+        case Filter::All:  break;
     }
-    return {QStringLiteral("*.avs"), QStringLiteral("*.milk")};
+    return {QStringLiteral("*.avs"), QStringLiteral("*.milk"), QStringLiteral("*.lvfx")};
+}
+
+int ImportBrowserPanel::entryTypeForSuffix(const QString& suffix)
+{
+    if (suffix.compare(QStringLiteral("milk"), Qt::CaseInsensitive) == 0) return Type_Milk;
+    if (suffix.compare(QStringLiteral("lvfx"), Qt::CaseInsensitive) == 0) return Type_Lvfx;
+    return Type_Avs;
 }
 
 void ImportBrowserPanel::refresh()
@@ -176,11 +184,9 @@ void ImportBrowserPanel::refresh()
     int presetCount = 0;
     for (const QFileInfo& fi : files)
     {
-        const bool isMilk = fi.suffix().compare(QStringLiteral("milk"),
-                                                Qt::CaseInsensitive) == 0;
         auto* item = new QListWidgetItem(fileIcon, fi.fileName(), m_pListWidget);
         item->setData(Qt::UserRole, fi.absoluteFilePath());
-        item->setData(Qt::UserRole + 1, isMilk ? Type_Milk : Type_Avs);
+        item->setData(Qt::UserRole + 1, entryTypeForSuffix(fi.suffix()));
         item->setToolTip(fi.absoluteFilePath());
         ++presetCount;
     }
@@ -223,6 +229,14 @@ void ImportBrowserPanel::onItemDoubleClicked(QListWidgetItem* item)
             if (auto* bus = eventBus())
             {
                 bus->publish(ImportMilkPresetEvent{path.toStdString()});
+            }
+            return;
+
+        case Type_Lvfx:
+            if (auto* bus = eventBus())
+            {
+                bus->publish(LoadEffectChainEvent{path.toStdString()});
+                setStatus(tr("↺ loading chain %1").arg(QFileInfo(path).fileName()));
             }
             return;
 
@@ -338,9 +352,10 @@ void ImportBrowserPanel::setupUI()
     auto* filterLayout = new QHBoxLayout();
 
     m_pFilterCombo = new QComboBox(this);
-    m_pFilterCombo->addItem(tr("AVS (*.avs)"));       // Filter::Avs
-    m_pFilterCombo->addItem(tr("MilkDrop (*.milk)")); // Filter::Milk
-    m_pFilterCombo->addItem(tr("Both"));              // Filter::Both
+    m_pFilterCombo->addItem(tr("AVS (*.avs)"));         // Filter::Avs
+    m_pFilterCombo->addItem(tr("MilkDrop (*.milk)"));   // Filter::Milk
+    m_pFilterCombo->addItem(tr("LumiViz (*.lvfx)"));    // Filter::Lvfx
+    m_pFilterCombo->addItem(tr("All"));                 // Filter::All
     m_pFilterCombo->setCurrentIndex(static_cast<int>(m_filter));
     m_pFilterCombo->setToolTip(tr("Which preset types to list"));
     filterLayout->addWidget(m_pFilterCombo);

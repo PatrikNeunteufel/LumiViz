@@ -13,6 +13,7 @@
 
 #include <lua.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <cmath>
 
@@ -215,6 +216,69 @@ int LuaScriptEngine::lGmbWrite(lua_State* L)
     return 1;
 }
 
+namespace {
+// Faithful port of AVS getvis (avs_eelif.cpp): average the |data| over a band
+// window (centred on `bc`, width `bw`), per channel (0 = both, 1 = left, 2 =
+// right). `xorv` = 0 for spectrum, 128 for the signed waveform.
+double getvis(const unsigned char* visdata, int bc, int bw, int ch, int xorv)
+{
+    if (ch && ch != 1 && ch != 2) return 0.0;
+    if (bw < 1) bw = 1;
+    bc -= bw / 2;
+    if (bc < 0) { bw += bc; bc = 0; }
+    if (bc > 575) bc = 575;
+    if (bc + bw > 576) bw = 576 - bc;
+    if (bw < 1) return 0.0;
+    long accum = 0;
+    if (!ch)
+    {
+        for (int x = 0; x < bw; ++x)
+        {
+            accum += (visdata[bc] ^ xorv) - xorv;
+            accum += (visdata[bc + 576] ^ xorv) - xorv;
+            ++bc;
+        }
+        return static_cast<double>(accum) / (static_cast<double>(bw) * 255.0);
+    }
+    const unsigned char* vd = (ch == 2) ? visdata + 576 : visdata;
+    for (int x = 0; x < bw; ++x) accum += (vd[bc++] ^ xorv) - xorv;
+    return static_cast<double>(accum) / (static_cast<double>(bw) * 127.5);
+}
+}  // namespace
+
+int LuaScriptEngine::lGetSpec(lua_State* L)
+{
+    auto* self = static_cast<LuaScriptEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
+    const int bc = static_cast<int>(luaL_checknumber(L, 1) * 576.0);
+    const int bw = static_cast<int>(luaL_optnumber(L, 2, 0.0) * 576.0);
+    const int ch = static_cast<int>(luaL_optnumber(L, 3, 0.0) + 0.5);
+    lua_pushnumber(L, getvis(self->m_visdata.data(), bc, bw, ch, 0) * 0.5);
+    return 1;
+}
+
+int LuaScriptEngine::lGetOsc(lua_State* L)
+{
+    auto* self = static_cast<LuaScriptEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
+    const int bc = static_cast<int>(luaL_checknumber(L, 1) * 576.0);
+    const int bw = static_cast<int>(luaL_optnumber(L, 2, 0.0) * 576.0);
+    const int ch = static_cast<int>(luaL_optnumber(L, 3, 0.0) + 0.5);
+    lua_pushnumber(L, getvis(self->m_visdata.data() + 576 * 2, bc, bw, ch, 128));
+    return 1;
+}
+
+int LuaScriptEngine::lGetTime(lua_State* L)
+{
+    auto* self = static_cast<LuaScriptEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
+    const double sc = luaL_optnumber(L, 1, 0.0);
+    lua_pushnumber(L, self->m_scriptTime - sc);
+    return 1;
+}
+
+void LuaScriptEngine::setVisData(const unsigned char* data)
+{
+    if (data != nullptr) std::copy(data, data + m_visdata.size(), m_visdata.begin());
+}
+
 int LuaScriptEngine::lAppGet(lua_State* L)
 {
     const auto slot = static_cast<std::int64_t>(luaL_checknumber(L, 1));
@@ -306,6 +370,19 @@ void LuaScriptEngine::buildSandbox()
     lua_pushlightuserdata(L, this);
     lua_pushcclosure(L, &LuaScriptEngine::lRand, 1);
     lua_setfield(L, -2, "rand");
+
+    // --- audio analysis (bare globals, AVS getspec/getosc/gettime) ---
+    const struct { const char* name; lua_CFunction fn; } audioFns[] = {
+        {"getspec", &LuaScriptEngine::lGetSpec},
+        {"getosc", &LuaScriptEngine::lGetOsc},
+        {"gettime", &LuaScriptEngine::lGetTime},
+    };
+    for (const auto& [name, fn] : audioFns)
+    {
+        lua_pushlightuserdata(L, this);
+        lua_pushcclosure(L, fn, 1);
+        lua_setfield(L, -2, name);
+    }
 
     // --- eel prelude (EEL-faithful semantics for transpiled code) ---
     lua_newtable(L);

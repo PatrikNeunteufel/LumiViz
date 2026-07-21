@@ -103,10 +103,10 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(t.report.size() >= 1);
     }
 
-    TEST_CASE("Set Render Mode wird ausgerollt: Linienbreite in Folge-Scope")
+    TEST_CASE("Set Render Mode wird ein Live-Node (kein Passthrough)")
     {
         EffectNode srm = builtin(40);
-        srm.fields = {{"newmode", 5 << 16}};  // line width 5 (bits 16-23)
+        srm.fields = {{"newmode", 5 << 16}};  // line width 5 (bits 16-23), not enabled
 
         EffectNode scope = builtin(36);
         scope.code = {{"point", "x=i;y=v"}};
@@ -114,30 +114,35 @@ TEST_SUITE("AvsChainTranslator")
 
         const TranslationResult t = translateAvsTree(makeParsed({srm, scope}));
         REQUIRE(t.root.children.size() == 2);
-        // SRM-Knoten -> Passthrough mit Unroll-Notiz
-        CHECK(std::holds_alternative<PassthroughParams>(t.root.children[0].params));
-        // Scope -> Linienbreite aus dem SRM übernommen
+        // SRM ist jetzt ein echter Knoten, kein Passthrough, keine Notiz.
+        REQUIRE(std::holds_alternative<SetRenderModeParams>(t.root.children[0].params));
+        const auto& p = std::get<SetRenderModeParams>(t.root.children[0].params);
+        CHECK(p.lineWidth == 5);
+        CHECK(p.enabled == false);
+        // Der folgende Scope bekommt NICHTS eingebacken (Host-Render-Mode zur Laufzeit).
         REQUIRE(std::holds_alternative<SuperScopeParams>(t.root.children[1].params));
         CHECK(std::get<SuperScopeParams>(t.root.children[1].params).lineWidth
-              == doctest::Approx(5.0f));
+              == doctest::Approx(2.0f));  // Struct-Default
+        // Kein Passthrough-Zähler mehr für Set Render Mode.
+        for (const std::string& note : t.report)
+            CHECK(note.find("Set Render Mode") == std::string::npos);
     }
 
-    TEST_CASE("Set Render Mode: Blend-Modus wird in Folge-Scope uebernommen")
+    TEST_CASE("Set Render Mode: Blend-Bits werden korrekt auf den Knoten gemappt")
     {
         EffectNode srm = builtin(40);
-        // enabled (bit 31) | line width 6 (bits 16-23) | blend 3 = 50/50 (bits 0-7)
-        srm.fields = {{"newmode", static_cast<int32_t>(0x80000000u) | (6 << 16) | 3}};
+        // enabled (bit 31) | line width 6 (bits 16-23) | alpha 128 (bits 8-15) | blend 3 = 50/50
+        srm.fields = {{"newmode",
+                       static_cast<int32_t>(0x80000000u) | (6 << 16) | (128 << 8) | 3}};
 
-        EffectNode scope = builtin(36);
-        scope.code = {{"point", "x=i;y=v"}};
-        scope.fields = {{"which_ch", 0}, {"num_colors", 0}, {"drawmode", 1}};
-
-        const TranslationResult t = translateAvsTree(makeParsed({srm, scope}));
-        REQUIRE(t.root.children.size() == 2);
-        REQUIRE(std::holds_alternative<SuperScopeParams>(t.root.children[1].params));
-        const auto& p = std::get<SuperScopeParams>(t.root.children[1].params);
-        CHECK(p.lineWidth == doctest::Approx(6.0f));
-        CHECK(p.lineBlend == 2);  // 50/50
+        const TranslationResult t = translateAvsTree(makeParsed({srm}));
+        REQUIRE(t.root.children.size() == 1);
+        REQUIRE(std::holds_alternative<SetRenderModeParams>(t.root.children[0].params));
+        const auto& p = std::get<SetRenderModeParams>(t.root.children[0].params);
+        CHECK(p.enabled == true);
+        CHECK(p.lineWidth == 6);
+        CHECK(p.lineBlend == 2);   // blend bits 3 -> 50/50
+        CHECK(p.adjustAlpha == 128);
     }
 
     TEST_CASE("Movement-Builtin-Formel -> MovementParams mit AVS-Point-Code")

@@ -507,6 +507,28 @@ bool BassEngine::getWaveformData(AudioStreamHandle stream, float* data, int size
     return true;
 }
 
+bool BassEngine::getFFTDataStereo(AudioStreamHandle stream, float* data, int size)
+{
+    if (stream == INVALID_STREAM || data == nullptr) return false;
+    // FFT_INDIVIDUAL: one FFT per channel, results interleaved (bin*chans + chan).
+    const DWORD flag = fftSizeToFlag(size) | BASS_DATA_FFT_INDIVIDUAL;
+    const int result = BASS_ChannelGetData(static_cast<HSTREAM>(stream), data, flag);
+    if (result == -1)
+    {
+        m_impl->lastError = BASS_ErrorGetCode();
+        return false;
+    }
+    return true;
+}
+
+int BassEngine::getStreamChannels(AudioStreamHandle stream)
+{
+    if (stream == INVALID_STREAM) return 1;
+    BASS_CHANNELINFO info;
+    if (!BASS_ChannelGetInfo(static_cast<HSTREAM>(stream), &info)) return 1;
+    return info.chans > 0 ? static_cast<int>(info.chans) : 1;
+}
+
 bool BassEngine::getChannelLevels(AudioStreamHandle stream, float& left, float& right)
 {
     if (stream == INVALID_STREAM) return false;

@@ -1,0 +1,148 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "children": [
+            {
+                "enabled": true,
+                "name": "Passthrough",
+                "note": "\"Comment\" not decoded",
+                "sourceId": 21,
+                "type": "passthrough"
+            },
+            {
+                "blendIn": 0,
+                "blendOut": 1,
+                "children": [
+                    {
+                        "blendIn": 0,
+                        "blendOut": 1,
+                        "children": [
+                            {
+                                "audioChannel": 2,
+                                "beatCode": "tx=rand(20)/100;t=(-1)*t",
+                                "dotSize": 4,
+                                "enabled": true,
+                                "frameCode": "t=t-tx; ux=sin(tan(t+4.188))/2; mx=sin(t+4.188)/2",
+                                "initCode": "n=800",
+                                "lineWidth": 2,
+                                "name": "SuperScope",
+                                "pointCode": "x=-ux+cos(t+v*(sin(t*cos(v))));y=mx+sin(t+v*(sin(v))); u=sin(t+4.188)/4; m=cos(t+4.188)/8",
+                                "pointCount": 256,
+                                "renderMode": 0,
+                                "type": "superScope"
+                            },
+                            {
+                                "audioChannel": 2,
+                                "beatCode": "tx=rand(25)/100;t=(-1)*t",
+                                "dotSize": 4,
+                                "enabled": true,
+                                "frameCode": "t=t-tx; ux=sin(tan(t+4.188))/2; mx=sin(t+4.188)/2",
+                                "initCode": "n=800",
+                                "lineWidth": 2,
+                                "name": "SuperScope",
+                                "pointCode": "x=ux+cos(t+v*(sin(t*cos(v))));y=mx+sin(t+v*(sin(v))); u=sin(t+4.188)/4; m=cos(t+4.188)/8",
+                                "pointCount": 256,
+                                "renderMode": 0,
+                                "type": "superScope"
+                            },
+                            {
+                                "enabled": true,
+                                "name": "Passthrough",
+                                "note": "Set Render Mode (line width 5) unrolled",
+                                "sourceId": 40,
+                                "type": "passthrough"
+                            },
+                            {
+                                "enabled": true,
+                                "name": "Passthrough",
+                                "note": "\"Bump\" not decoded",
+                                "sourceId": 55633024,
+                                "type": "passthrough"
+                            },
+                            {
+                                "enabled": true,
+                                "name": "Blur",
+                                "roundUp": false,
+                                "strength": 1,
+                                "type": "blur"
+                            },
+                            {
+                                "audioChannel": 2,
+                                "beatCode": "",
+                                "dotSize": 4,
+                                "enabled": true,
+                                "frameCode": "t=t-0.05;u=sin(v+t)/2;m=cos(v+t)/2;tm=t-0.1",
+                                "initCode": "n=800",
+                                "lineWidth": 5,
+                                "name": "SuperScope",
+                                "pointCode": "x=u+(sqr(v)*sin(t*2))/2;y=m+(sqr(v)*cos(t*2))/2",
+                                "pointCount": 256,
+                                "renderMode": 0,
+                                "type": "superScope"
+                            },
+                            {
+                                "enabled": true,
+                                "name": "Passthrough",
+                                "note": "\"Water\" not decoded",
+                                "sourceId": 20,
+                                "type": "passthrough"
+                            },
+                            {
+                                "audioChannel": 3,
+                                "beatCode": "",
+                                "dotSize": 4,
+                                "enabled": true,
+                                "frameCode": "t=t-0.05;u=sin(v+t)/2;m=cos(v+t)/2;tm=t-0.1",
+                                "initCode": "n=800",
+                                "lineWidth": 5,
+                                "name": "SuperScope",
+                                "pointCode": "x=-u+(sqr(v)*sin(t*2))/2;y=m+(sqr(v)*cos(t*2))/2",
+                                "pointCount": 256,
+                                "renderMode": 0,
+                                "type": "superScope"
+                            }
+                        ],
+                        "clearEveryFrame": false,
+                        "enabled": true,
+                        "frameCode": "",
+                        "inAdjustAlpha": 128,
+                        "initCode": "",
+                        "name": "Effect List",
+                        "onBeatFrames": 100,
+                        "onBeatRender": true,
+                        "outAdjustAlpha": 128,
+                        "type": "list",
+                        "useCode": false
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 10,
+                "onBeatRender": true,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 0,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 0,
+        "type": "list",
+        "useCode": false
+    }
+}

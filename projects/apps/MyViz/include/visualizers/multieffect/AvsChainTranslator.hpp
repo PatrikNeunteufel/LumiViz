@@ -16,8 +16,9 @@
  * Mapping rules:
  *  - Effect lists -> ChainNode(ListParams) with blend/OnBeat/EEL slots.
  *  - Decoded builtins of the import core set -> their EffectParams.
- *  - Set Render Mode (40) is *unrolled* (decision E4): its line width is baked
- *    into the following SuperScope effects; the node becomes a Passthrough note.
+ *  - Set Render Mode (40) -> SetRenderModeParams, a live state-setter node: the
+ *    host applies its line width/blend to the render effects that follow it at
+ *    render time (no import-time unroll, no Passthrough).
  *  - Everything else (unknown, non-decoded, exotic) -> PassthroughParams + a
  *    path-prefixed report entry. Never throws (AVS philosophy).
  *

@@ -1,0 +1,131 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "enabled": false,
+                "name": "Passthrough",
+                "note": "\"Bump\" not supported yet",
+                "sourceId": 75031680,
+                "type": "passthrough"
+            },
+            {
+                "blend": true,
+                "color": 0,
+                "enabled": true,
+                "everyNBeats": 1,
+                "name": "OnBeat Clear",
+                "type": "onBeatClear"
+            },
+            {
+                "blendIn": 1,
+                "blendOut": 10,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "blend": false,
+                        "enabled": true,
+                        "name": "Roto Blitter",
+                        "rotationSpeed": 2.187999963760376,
+                        "type": "rotoBlitter",
+                        "zoom": 1.0140000581741333
+                    },
+                    {
+                        "enabled": false,
+                        "name": "Passthrough",
+                        "note": "\"FunkyFX FyrewurX v1\" not decoded",
+                        "sourceId": 57311304,
+                        "type": "passthrough"
+                    },
+                    {
+                        "enabled": false,
+                        "name": "Passthrough",
+                        "note": "\"FunkyFX FyrewurX v1\" not decoded",
+                        "sourceId": 57311304,
+                        "type": "passthrough"
+                    },
+                    {
+                        "enabled": false,
+                        "name": "Passthrough",
+                        "note": "\"FunkyFX FyrewurX v1\" not decoded",
+                        "sourceId": 57311304,
+                        "type": "passthrough"
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 13,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "audioChannel": 2,
+                "beatCode": "rdx=rand(3);rdy=rand(3);rdz=rand(3)",
+                "colorBlend": 1,
+                "colorCycleFrames": 60,
+                "colors": [
+                    65535,
+                    33023,
+                    16722648,
+                    65535,
+                    65535,
+                    33023,
+                    16716775,
+                    65535
+                ],
+                "dotSize": 4,
+                "enabled": true,
+                "frameCode": "rdx;ry=ry+rdy;rz=rz+rdz;xs=sin(rx/p3);ys=tan(ry/p3);zs=sin(rz/p3);xc=cos(rx/p3);yc=tan(ry/p3);zc=cos(rz/p3)",
+                "gradientPreset": "Neon",
+                "initCode": "t=1;n=1000;r=1;mx=0;my=0;mz=2;dst=2;rx=0;ry=0;rz=0;rdx=1;rdy=1;rdz=1;p=3.14159265;p2=2.0*p;p3=180/p",
+                "lineWidth": 2,
+                "name": "SuperScope",
+                "pointCode": "t=bnot(t);v=if(t,if(below(v,0),v,0),0);x1=(r+v)*sin(i*p2);y1=0;z1=(r+v)*cos(i*p2);y2=y1*xc-z1*xs;z2=y1*xs+z1*xc;x2=z2*ys+x1*yc;z3=z2*yc-x1*ys;x3=x2*zc-y2*zs;y3=y2*zc+x2*zs;x4=mx+x3;y4=my+y3;z4=mz+z3;x=x4/(1+z4/dst);y=y4/(1+z4/dst)",
+                "pointCount": 256,
+                "renderMode": 1,
+                "type": "superScope"
+            },
+            {
+                "enabled": true,
+                "name": "Water",
+                "type": "water"
+            },
+            {
+                "enabled": true,
+                "name": "Blur",
+                "roundUp": false,
+                "strength": 1,
+                "type": "blur"
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 0,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 0,
+        "type": "list",
+        "useCode": false
+    }
+}

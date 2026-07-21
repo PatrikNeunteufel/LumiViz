@@ -260,11 +260,19 @@ struct AvsImportResultEvent : public Event
 
 /**
  * @brief Request to load a host effect-chain preset (.lvfx) into the active
- *        Multi Effect visualizer.
+ *        Multi Effect visualizer. `path` empty = ask via file dialog;
+ *        `path` set = load that file directly (Import Browser double-click).
  */
 struct LoadEffectChainEvent : public Event
 {
     EVENT_TYPE_NAME("LoadEffectChainEvent")
+
+    std::string path;  ///< empty = ask via file dialog
+
+    LoadEffectChainEvent() = default;
+    explicit LoadEffectChainEvent(std::string p)
+        : path(std::move(p))
+    {}
 };
 
 /**

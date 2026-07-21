@@ -122,6 +122,16 @@ public:
     [[nodiscard]] double number(const char* name) const;  ///< 0.0 if unset/non-number
 
     // =========================================================================
+    // Audio analysis (AVS-faithful getspec/getosc/gettime backing data)
+    // =========================================================================
+
+    /// @brief Feed the current frame's visualisation data (AVS layout, 576*4 bytes:
+    ///        spectrum L/R then waveform L/R). getspec/getosc read from this.
+    void setVisData(const unsigned char* data576x4);
+    /// @brief Set the clock gettime() subtracts from (seconds since start).
+    void setScriptTime(double seconds) { m_scriptTime = seconds; }
+
+    // =========================================================================
     // Diagnostics / tests
     // =========================================================================
 
@@ -146,12 +156,20 @@ private:
     static int lGmbWrite(lua_State* L);
     static int lAppGet(lua_State* L);
     static int lAppSet(lua_State* L);
+    static int lGetSpec(lua_State* L);
+    static int lGetOsc(lua_State* L);
+    static int lGetTime(lua_State* L);
 
     lua_State* m_state = nullptr;
     int m_envRef = -2;  // LUA_NOREF
     std::array<int, kSlotCount> m_slotRefs;
     std::string m_lastError;
     std::mt19937_64 m_rng{0x4141f00dULL};  // MilkDrop's fixed seed as default
+
+    // AVS-layout visualisation data for getspec/getosc (spectrum L/R + waveform
+    // L/R, 576 bytes each) and the gettime() clock. Zero until the host feeds it.
+    std::array<unsigned char, 576 * 4> m_visdata{};
+    double m_scriptTime = 0.0;
 
     // Engine-local script buffer (AVS: megabuf is per effect)
     std::unordered_map<std::int64_t, double> m_megabuf;

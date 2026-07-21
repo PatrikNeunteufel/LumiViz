@@ -130,6 +130,10 @@ public:
     void updateAudio(const float* spectrum, int spectrumCount,
                      const float* waveform, int waveformCount);
 
+    /// Hand over per-channel (stereo) audio (interleaved) to the render thread.
+    void updateAudioStereo(const float* specInterleaved, int binsPerCh,
+                           const float* waveInterleaved, int frames, int channels);
+
     /**
      * @brief Swap the rendered visualizer.
      *
@@ -206,6 +210,10 @@ private:
     std::vector<float> m_spectrum;
     std::vector<float> m_waveform;
     bool m_audioDirty = false;
+    // Per-channel (stereo) interleaved audio + dims (getspec/getosc channels).
+    std::vector<float> m_specI, m_waveI;
+    int m_stereoBins = 0, m_stereoFrames = 0, m_stereoChannels = 1;
+    bool m_stereoDirty = false;
 
     // Render-thread-only state
     IVisualizer* m_current = nullptr;  ///< non-owning (facade owns)

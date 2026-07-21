@@ -1,0 +1,151 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "color": 0,
+                "enabled": true,
+                "fadeLen": 12,
+                "name": "Fadeout",
+                "type": "fadeout"
+            },
+            {
+                "beatFaderB": 8,
+                "beatFaderG": -8,
+                "beatFaderR": 8,
+                "enabled": true,
+                "faderB": -8,
+                "faderG": 8,
+                "faderR": 8,
+                "name": "Colorfade",
+                "onBeatFrames": 1,
+                "type": "colorfade"
+            },
+            {
+                "blendIn": 0,
+                "blendOut": 4,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": true,
+                "children": [
+                    {
+                        "color": 0,
+                        "enabled": true,
+                        "fadeLen": 2,
+                        "name": "Fadeout",
+                        "type": "fadeout"
+                    },
+                    {
+                        "beatCode": "",
+                        "blend": 0,
+                        "depth": 30,
+                        "depth2": 100,
+                        "durationFrames": 15,
+                        "enabled": true,
+                        "frameCode": "x=0.5+cos(t)*0.3;\ny=0.5+sin(t)*0.3;\nt=t+0.1;",
+                        "initCode": "t=0;",
+                        "invert": true,
+                        "name": "Bump",
+                        "oldStyle": false,
+                        "onBeat": false,
+                        "type": "bump"
+                    },
+                    {
+                        "audioChannel": 2,
+                        "beatCode": "",
+                        "colorBlend": 2,
+                        "colorCycleFrames": 60,
+                        "colors": [
+                            16773149
+                        ],
+                        "dotSize": 4,
+                        "enabled": true,
+                        "frameCode": "t=t+0.02",
+                        "gradientPreset": "Lava",
+                        "initCode": "n=100; t=0; pi=acos(-1)",
+                        "lineWidth": 2,
+                        "name": "SuperScope",
+                        "pointCode": "th=i*pi*2+t; pts=5; ang=mod(i*pts,1); inner=abs(ang-0.5)*2; r1=0.7+v*0.2; r2=0.3; r=r2+(r1-r2)*(1-inner); x=r*sin(th); y=r*cos(th)",
+                        "pointCount": 100,
+                        "renderMode": 1,
+                        "type": "superScope"
+                    },
+                    {
+                        "alpha": 128,
+                        "alpha2": 185,
+                        "blend": 1,
+                        "distance": 10,
+                        "distance2": 32,
+                        "enabled": true,
+                        "name": "Interferences",
+                        "onBeat": true,
+                        "points": 4,
+                        "rgb": true,
+                        "rotation": 0,
+                        "rotationInc": 0,
+                        "rotationInc2": 10,
+                        "speed": 0.009999999776482582,
+                        "type": "interferences"
+                    },
+                    {
+                        "color": 4243711,
+                        "enabled": false,
+                        "name": "Debug Bars",
+                        "orbitSpeed": -2.5,
+                        "type": "debugBars"
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": true,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "delay": 3,
+                "enabled": true,
+                "name": "Video Delay",
+                "type": "videoDelay",
+                "useBeats": false
+            },
+            {
+                "beatSpeed": 4,
+                "color": 16777215,
+                "durationFrames": 21,
+                "enabled": true,
+                "maxStars": 463,
+                "name": "Starfield",
+                "onBeat": true,
+                "type": "starfield",
+                "warpSpeed": 2
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

@@ -85,8 +85,6 @@ std::string slotStr(const EffectNode& n, const char* name)
 /** Mutable state carried across the walk (Set Render Mode unroll, decision E4). */
 struct Context
 {
-    int lineWidth = 0;  ///< current Set-Render-Mode line width (0 = unset)
-    int lineBlend = 1;  ///< current Set-Render-Mode line blend (0 replace,1 add,2 50/50)
     std::vector<std::string>& report;
     int effectCount = 0;
     int passthroughCount = 0;
@@ -867,12 +865,8 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             for (std::uint32_t c : src.colors)
                 p.colors.push_back(avsColor(static_cast<std::int32_t>(c)));
             p.colorBlend = p.colors.empty() ? 0 : 1;  // table mode iff AVS had colors
-            p.lineBlend = ctx.lineBlend;  // from a preceding Set Render Mode
-            if (ctx.lineWidth > 0)
-            {
-                p.lineWidth = static_cast<float>(ctx.lineWidth);  // Set-Render-Mode unroll
-                p.renderMode = p.renderMode == 0 ? 0 : 1;
-            }
+            // Line width/blend now come from a live Set Render Mode node at render
+            // time (host render mode), not baked here.
             out.params = std::move(p);
             return true;
         }
@@ -897,26 +891,24 @@ ChainNode translateNode(const EffectNode& src, const std::string& path, Context&
         return node;
     }
 
-    // Set Render Mode: unroll into the following scopes (decision E4). Carries
-    // both the line width (bits 16-23) and the line blend mode (bits 0-7); bit 31
-    // enables it. The blend maps onto the SuperScope framebuffer blend.
+    // Set Render Mode: a live state-setter node (like Custom BPM). It carries the
+    // line width (bits 16-23), line blend (bits 0-7), Adjustable alpha (bits 8-15)
+    // and the enable flag (bit 31); the host applies them to the render effects
+    // that follow it at render time (no import-time unroll, no passthrough).
     if (src.id == kSetRenderMode)
     {
         const uint32_t packed = static_cast<uint32_t>(src.field("newmode"));
-        const int width = static_cast<int>((packed >> 16) & 0xFF);
         const int blendBits = static_cast<int>(packed & 0xFF);
-        const bool enabled = (packed & 0x80000000u) != 0;
-        if (width > 0) ctx.lineWidth = width;
-        // AVS line blend -> host (0 replace, 1 additive, 2 50/50); default additive.
-        if (enabled)
-            ctx.lineBlend = blendBits == 0 ? 0 : (blendBits == 3 ? 2 : 1);
-        else
-            ctx.lineBlend = 1;
-        return passthrough(src, path,
-                           "Set Render Mode (line width " + std::to_string(width) +
-                               ", blend " + std::to_string(ctx.lineBlend) +
-                               ") unrolled",
-                           ctx);
+        ChainNode node;
+        SetRenderModeParams p;
+        p.enabled = (packed & 0x80000000u) != 0;
+        p.lineWidth = static_cast<int>((packed >> 16) & 0xFF);
+        p.adjustAlpha = static_cast<int>((packed >> 8) & 0xFF);
+        // AVS line blend -> host (0 replace, 1 additive/default, 2 50/50).
+        p.lineBlend = blendBits == 0 ? 0 : (blendBits == 3 ? 2 : 1);
+        node.params = p;
+        node.displayName = "Set Render Mode";
+        return node;
     }
 
     // Framerate Limiter: the host owns frame pacing — import as a no-op with a
@@ -999,7 +991,7 @@ TranslationResult translateAvsTree(const lumi::avs::ParseResult& parsed)
         result.report.push_back("parser: " + warning);
     }
 
-    Context ctx{0, 1, result.report, 0, 0};
+    Context ctx{result.report, 0, 0};
     result.root = translateNode(parsed.root, "root", ctx);
     // The root of a preset is always a list; guarantee it even if the parser
     // handed us something odd.

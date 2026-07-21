@@ -1,0 +1,117 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "blendIn": 1,
+                "blendOut": 3,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "audioChannel": 2,
+                        "beatCode": "",
+                        "colorBlend": 1,
+                        "colorCycleFrames": 60,
+                        "colors": [
+                            16777215
+                        ],
+                        "dotSize": 4,
+                        "enabled": true,
+                        "frameCode": "t=t-0.05",
+                        "gradientPreset": "Neon",
+                        "initCode": "n=800",
+                        "lineWidth": 2,
+                        "name": "SuperScope",
+                        "pointCode": "x=2*i-1;\r\ny=0;\r\n\r\ngreen=sin(i)-sin(t);\r\nred=cos(t);\r\nblue=tan(i+v)",
+                        "pointCount": 256,
+                        "renderMode": 0,
+                        "type": "superScope"
+                    },
+                    {
+                        "code": "y=0",
+                        "enabled": true,
+                        "name": "Movement",
+                        "rectCoords": true,
+                        "type": "movement",
+                        "wrap": false
+                    },
+                    {
+                        "enabled": true,
+                        "name": "Blur",
+                        "roundUp": false,
+                        "strength": 1,
+                        "type": "blur"
+                    },
+                    {
+                        "code": "x=-if(above(y*y,x*x),y*y,x*x)*1.75+0.75 ;",
+                        "enabled": true,
+                        "name": "Movement",
+                        "rectCoords": true,
+                        "type": "movement",
+                        "wrap": false
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "beatCode": "",
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Dynamic Movement",
+                "pointCode": "x=x*5;y=y*5",
+                "rectCoords": true,
+                "type": "dynamicMovement",
+                "wrap": true,
+                "xres": 16,
+                "yres": 16
+            },
+            {
+                "beatCode": "bfr=rand(20)/100-0.1;\r\nbfr1=rand(20)/100-0.1;\r\nzb=rand(40)/10;zd=(zb-z)/20;\r\nzb2=0.2+rand(80)/100;zd2=(zb2-z2)/20;",
+                "enabled": true,
+                "frameCode": "fr=fr+bfr;fr1=fr1+bfr1;\r\nzs=sin(fr);zc=cos(fr);zs1=sin(fr1);zc1=cos(fr1);\r\nz=if(equal(z,zb),zb,z+zd);\r\nz2=if(equal(z2,zb2),zb2,z2+zd2);",
+                "initCode": "z=1;z2=1;pi=acos(-1);",
+                "name": "Dynamic Movement",
+                "pointCode": "x1=x*zc1-y*zs1;y1=y*zc1+x*zs1;\r\nx2=x1/(z*y1+z*z2+0.1);\r\ny2=y1/(z*y1+z*z2+0.1);\r\nx=x2*zc-y2*zs;y=y2*zc+x2*zs;\r\nalpha=if(above(1-y*y*x*x,0.5),1,0);\r\n\r\n\r\n\r\n\r\n\r\n",
+                "rectCoords": true,
+                "type": "dynamicMovement",
+                "wrap": true,
+                "xres": 30,
+                "yres": 30
+            }
+        ],
+        "clearEveryFrame": true,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 0,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 0,
+        "type": "list",
+        "useCode": false
+    }
+}

@@ -1,0 +1,109 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "color": 0,
+                "enabled": true,
+                "fadeLen": 12,
+                "name": "Fadeout",
+                "type": "fadeout"
+            },
+            {
+                "audioChannel": 2,
+                "beatCode": "",
+                "dotSize": 4,
+                "enabled": true,
+                "frameCode": "t=t+0.015",
+                "initCode": "n=300; t=0; pi=acos(-1); s=0.5;",
+                "lineWidth": 2,
+                "name": "SuperScope",
+                "pointCode": "r=0.1+i*0.7+v*0.15; a=i*pi*8+t; \nx=sin(a)*r*s;\n y=cos(a)*r*s",
+                "pointCount": 300,
+                "renderMode": 1,
+                "type": "superScope"
+            },
+            {
+                "beatFaderB": 8,
+                "beatFaderG": -8,
+                "beatFaderR": 8,
+                "enabled": true,
+                "faderB": -8,
+                "faderG": 8,
+                "faderR": 8,
+                "name": "Colorfade",
+                "onBeatFrames": 1,
+                "type": "colorfade"
+            },
+            {
+                "blendIn": 0,
+                "blendOut": 4,
+                "bufferIn": 0,
+                "bufferInInvert": true,
+                "bufferOut": 0,
+                "bufferOutInvert": true,
+                "children": [
+                    {
+                        "audioChannel": 2,
+                        "beatCode": "",
+                        "dotSize": 4,
+                        "enabled": true,
+                        "frameCode": "t=t+0.02",
+                        "initCode": "s=1.5;",
+                        "lineWidth": 2,
+                        "name": "SuperScope",
+                        "pointCode": "d=0.35+v*0.35; \nx=cos(i*6.28318+t)*d*s; \ny=sin(i*6.28318+t)*d*s; \nred=0.5+0.5*sin(i*6.28318); green=0.6; blue=1-red",
+                        "pointCount": 360,
+                        "renderMode": 1,
+                        "type": "superScope"
+                    },
+                    {
+                        "color": 0,
+                        "enabled": true,
+                        "fadeLen": 4,
+                        "name": "Fadeout",
+                        "type": "fadeout"
+                    },
+                    {
+                        "color": 4243711,
+                        "enabled": false,
+                        "name": "Debug Bars",
+                        "orbitSpeed": -2.5,
+                        "type": "debugBars"
+                    }
+                ],
+                "clearEveryFrame": true,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": true,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

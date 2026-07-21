@@ -1,0 +1,89 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "enabled": true,
+                "name": "Blur",
+                "roundUp": true,
+                "strength": 2,
+                "type": "blur"
+            },
+            {
+                "color": 0,
+                "enabled": true,
+                "fadeLen": 2,
+                "name": "Fadeout",
+                "type": "fadeout"
+            },
+            {
+                "audioChannel": 2,
+                "beatCode": "",
+                "colorBlend": 0,
+                "colorCycleFrames": 60,
+                "colors": [
+                ],
+                "dotSize": 4,
+                "enabled": true,
+                "frameCode": "t=t+0.015",
+                "gradientPreset": "Lava",
+                "initCode": "n=300; t=0; pi=acos(-1)",
+                "lineWidth": 2,
+                "name": "SuperScope",
+                "pointCode": "r=0.1+i*0.8+v*0.15; a=i*pi*3-t; \nx=sin(a)*r; y=cos(a)*r",
+                "pointCount": 300,
+                "renderMode": 1,
+                "type": "superScope"
+            },
+            {
+                "enabled": true,
+                "leftToRight": true,
+                "name": "Mirror",
+                "onBeatRandom": false,
+                "topToBottom": true,
+                "type": "mirror"
+            },
+            {
+                "beatCode": "",
+                "enabled": false,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Dynamic Movement",
+                "pointCode": "",
+                "rectCoords": false,
+                "type": "dynamicMovement",
+                "wrap": false,
+                "xres": 16,
+                "yres": 12
+            },
+            {
+                "code": "x=x*(1+0.03-sin(t)*i+x*i)",
+                "enabled": true,
+                "name": "Movement",
+                "rectCoords": true,
+                "type": "movement",
+                "wrap": true
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

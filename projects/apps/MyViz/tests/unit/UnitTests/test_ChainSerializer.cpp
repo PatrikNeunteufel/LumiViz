@@ -686,6 +686,208 @@ TEST_SUITE("ChainSerializer")
         CHECK(p.blend == 2);
     }
 
+    TEST_CASE("Fractal-2D-Parameter + Code ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        Fractal2DParams fp;
+        fp.type = 4;  // Multibrot
+        fp.centerX = 0.25f;
+        fp.centerY = -0.5f;
+        fp.zoom = 3.5f;
+        fp.rotation = 0.75f;
+        fp.maxIter = 512;
+        fp.juliaX = -0.70176f;
+        fp.juliaY = -0.3842f;
+        fp.power = 3.0f;
+        fp.escapeR = 16.0f;
+        fp.smooth = false;
+        fp.colorScale = 0.02f;
+        fp.colorCycle = 0.5f;
+        fp.insideColor = 0x102030;
+        fp.gradientPreset = "Fire";
+        fp.blend = 1;
+        fp.frameCode = "zoom=zoom*1.01; cx=cx+bass*0.01";
+        fp.beatCode = "power=power+1";
+        leaf.params = fp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<Fractal2DParams>(restored.children[0].params);
+        CHECK(p.type == 4);
+        CHECK(p.centerX == doctest::Approx(0.25f));
+        CHECK(p.centerY == doctest::Approx(-0.5f));
+        CHECK(p.zoom == doctest::Approx(3.5f));
+        CHECK(p.rotation == doctest::Approx(0.75f));
+        CHECK(p.maxIter == 512);
+        CHECK(p.juliaX == doctest::Approx(-0.70176f));
+        CHECK(p.juliaY == doctest::Approx(-0.3842f));
+        CHECK(p.power == doctest::Approx(3.0f));
+        CHECK(p.escapeR == doctest::Approx(16.0f));
+        CHECK(p.smooth == false);
+        CHECK(p.colorScale == doctest::Approx(0.02f));
+        CHECK(p.colorCycle == doctest::Approx(0.5f));
+        CHECK(p.insideColor == 0x102030u);
+        CHECK(p.gradientPreset == "Fire");
+        CHECK(p.blend == 1);
+        CHECK(p.frameCode == "zoom=zoom*1.01; cx=cx+bass*0.01");
+        CHECK(p.beatCode == "power=power+1");
+        CHECK(effectTypeKey(EffectParams{Fractal2DParams{}}) == "fractal2D");
+    }
+
+    TEST_CASE("Domain-Warp-Parameter + Code ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        DomainWarpParams dp;
+        dp.octaves = 7;
+        dp.lacunarity = 2.5f;
+        dp.gain = 0.45f;
+        dp.scale = 4.2f;
+        dp.warp = 1.5f;
+        dp.warpScale = 0.75f;
+        dp.speed = -0.3f;
+        dp.offsetX = 2.0f;
+        dp.offsetY = -1.0f;
+        dp.colorScale = 1.5f;
+        dp.colorCycle = 0.25f;
+        dp.gradientPreset = "Ocean";
+        dp.blend = 2;
+        dp.frameCode = "warp=0.5+bass*2; speed=0.2+treble";
+        leaf.params = dp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<DomainWarpParams>(restored.children[0].params);
+        CHECK(p.octaves == 7);
+        CHECK(p.lacunarity == doctest::Approx(2.5f));
+        CHECK(p.gain == doctest::Approx(0.45f));
+        CHECK(p.scale == doctest::Approx(4.2f));
+        CHECK(p.warp == doctest::Approx(1.5f));
+        CHECK(p.warpScale == doctest::Approx(0.75f));
+        CHECK(p.speed == doctest::Approx(-0.3f));
+        CHECK(p.offsetX == doctest::Approx(2.0f));
+        CHECK(p.offsetY == doctest::Approx(-1.0f));
+        CHECK(p.colorScale == doctest::Approx(1.5f));
+        CHECK(p.colorCycle == doctest::Approx(0.25f));
+        CHECK(p.gradientPreset == "Ocean");
+        CHECK(p.blend == 2);
+        CHECK(p.frameCode == "warp=0.5+bass*2; speed=0.2+treble");
+        CHECK(effectTypeKey(EffectParams{DomainWarpParams{}}) == "domainWarp");
+    }
+
+    TEST_CASE("Set-Render-Mode-Parameter ueberleben den Round-Trip")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode leaf;
+        SetRenderModeParams sp;
+        sp.enabled = false;
+        sp.lineWidth = 7;
+        sp.lineBlend = 2;
+        sp.adjustAlpha = 200;
+        leaf.params = sp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 1);
+        const auto& p = std::get<SetRenderModeParams>(r.children[0].params);
+        CHECK(p.enabled == false);
+        CHECK(p.lineWidth == 7);
+        CHECK(p.lineBlend == 2);
+        CHECK(p.adjustAlpha == 200);
+        CHECK(effectTypeKey(EffectParams{SetRenderModeParams{}}) == "setRenderMode");
+    }
+
+    TEST_CASE("Batch-H Modul-Typkeys sind stabil und eindeutig")
+    {
+        CHECK(effectTypeKey(EffectParams{Fractal3DParams{}}) == "fractal3D");
+        CHECK(effectTypeKey(EffectParams{LyapunovParams{}}) == "lyapunov");
+        CHECK(effectTypeKey(EffectParams{KleinianParams{}}) == "kleinian");
+        CHECK(effectTypeKey(EffectParams{FractalZoomerParams{}}) == "fractalZoomer");
+        CHECK(effectTypeKey(EffectParams{StrangeAttractorParams{}}) == "strangeAttractor");
+        CHECK(effectTypeKey(EffectParams{FlameParams{}}) == "flame");
+        CHECK(effectTypeKey(EffectParams{ReactionDiffusionParams{}}) == "reactionDiffusion");
+    }
+
+    TEST_CASE("Fractal-3D-Parameter ueberleben den Round-Trip")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode leaf; Fractal3DParams fp;
+        fp.type = 3; fp.yaw = 1.2f; fp.pitch = -0.4f; fp.dist = 5.0f;
+        fp.power = 6.0f; fp.scale = 2.4f; fp.fold = 1.3f; fp.maxSteps = 128;
+        fp.maxIter = 12; fp.juliaX = 0.4f; fp.ao = false; fp.background = 0x101820;
+        fp.gradientPreset = "Ocean"; fp.blend = 2; fp.frameCode = "yaw=yaw+treble";
+        leaf.params = fp; root.children.push_back(std::move(leaf));
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        const auto& p = std::get<Fractal3DParams>(r.children[0].params);
+        CHECK(p.type == 3);
+        CHECK(p.dist == doctest::Approx(5.0f));
+        CHECK(p.maxSteps == 128);
+        CHECK(p.ao == false);
+        CHECK(p.background == 0x101820u);
+        CHECK(p.gradientPreset == "Ocean");
+        CHECK(p.frameCode == "yaw=yaw+treble");
+    }
+
+    TEST_CASE("Lyapunov/Kleinian-Parameter ueberleben den Round-Trip")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode a; LyapunovParams lp;
+        lp.sequence = "AABAB"; lp.aMin = 3.0f; lp.bMax = 3.9f; lp.iterations = 500;
+        lp.negColor = 0x080810; lp.gradientPreset = "Fire"; lp.blend = 1;
+        a.params = lp; root.children.push_back(std::move(a));
+        ChainNode b; KleinianParams kp;
+        kp.p = 7; kp.q = 3; kp.iterations = 40; kp.morph = 1.1f; kp.zoom = 1.5f;
+        kp.frameCode = "morph=morph+0.01"; b.params = kp;
+        root.children.push_back(std::move(b));
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        const auto& lo = std::get<LyapunovParams>(r.children[0].params);
+        CHECK(lo.sequence == "AABAB");
+        CHECK(lo.iterations == 500);
+        CHECK(lo.negColor == 0x080810u);
+        const auto& ko = std::get<KleinianParams>(r.children[1].params);
+        CHECK(ko.p == 7);
+        CHECK(ko.q == 3);
+        CHECK(ko.morph == doctest::Approx(1.1f));
+        CHECK(ko.frameCode == "morph=morph+0.01");
+    }
+
+    TEST_CASE("Zoomer/Attractor/Flame/ReactionDiffusion ueberleben den Round-Trip")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode z; FractalZoomerParams zp;
+        zp.type = 2; zp.zoomSpeed = 1.05f; zp.feedback = 0.7f; zp.maxIter = 300;
+        z.params = zp; root.children.push_back(std::move(z));
+        ChainNode s; StrangeAttractorParams sp;
+        sp.type = 3; sp.a = 0.95f; sp.points = 8000; sp.useGradient = false;
+        sp.color = 0x223344; sp.blend = 2; s.params = sp;
+        root.children.push_back(std::move(s));
+        ChainNode fl; FlameParams flp;
+        flp.variation = 3; flp.functions = 4; flp.points = 50000; flp.blend = 1;
+        fl.params = flp; root.children.push_back(std::move(fl));
+        ChainNode rd; ReactionDiffusionParams rp;
+        rp.feed = 0.037f; rp.kill = 0.06f; rp.stepsPerFrame = 12; rp.seedOnBeat = false;
+        rp.frameCode = "feed=0.03+bass*0.02"; rd.params = rp;
+        root.children.push_back(std::move(rd));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 4);
+        CHECK(std::get<FractalZoomerParams>(r.children[0].params).type == 2);
+        CHECK(std::get<FractalZoomerParams>(r.children[0].params).feedback == doctest::Approx(0.7f));
+        CHECK(std::get<StrangeAttractorParams>(r.children[1].params).type == 3);
+        CHECK(std::get<StrangeAttractorParams>(r.children[1].params).useGradient == false);
+        CHECK(std::get<StrangeAttractorParams>(r.children[1].params).color == 0x223344u);
+        CHECK(std::get<FlameParams>(r.children[2].params).variation == 3);
+        CHECK(std::get<FlameParams>(r.children[2].params).functions == 4);
+        CHECK(std::get<ReactionDiffusionParams>(r.children[3].params).stepsPerFrame == 12);
+        CHECK(std::get<ReactionDiffusionParams>(r.children[3].params).seedOnBeat == false);
+        CHECK(std::get<ReactionDiffusionParams>(r.children[3].params).frameCode == "feed=0.03+bass*0.02");
+    }
+
     TEST_CASE("Round-Trip erhaelt Struktur und Parameter")
     {
         const ChainNode original = buildRichChain();

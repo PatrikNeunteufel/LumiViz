@@ -138,6 +138,51 @@ std::vector<float> VisualizerBase::getWaveform() const
     return m_waveform;
 }
 
+void VisualizerBase::updateAudioStereo(const float* specInterleaved, int binsPerCh,
+                                       const float* waveInterleaved, int frames,
+                                       int channels)
+{
+    QMutexLocker locker(&m_audioMutex);
+    const int ch = channels < 1 ? 1 : channels;
+    auto split = [ch](const float* src, int n, std::vector<float>& L,
+                      std::vector<float>& R) {
+        if (src == nullptr || n <= 0) { L.clear(); R.clear(); return; }
+        L.resize(static_cast<size_t>(n));
+        R.resize(static_cast<size_t>(n));
+        for (int i = 0; i < n; ++i)
+        {
+            L[static_cast<size_t>(i)] = src[i * ch];
+            R[static_cast<size_t>(i)] = src[i * ch + (ch > 1 ? 1 : 0)];
+        }
+    };
+    if (specInterleaved != nullptr && binsPerCh > 0)
+    {
+        split(specInterleaved, binsPerCh, m_spectrumL, m_spectrumR);
+        m_hasNewAudioData = true;
+    }
+    if (waveInterleaved != nullptr && frames > 0)
+    {
+        split(waveInterleaved, frames, m_waveformL, m_waveformR);
+        m_hasNewAudioData = true;
+    }
+}
+
+std::vector<float> VisualizerBase::getSpectrumChannel(int channel) const
+{
+    QMutexLocker locker(&m_audioMutex);
+    const std::vector<float>& src =
+        channel == 1 ? m_spectrumR : m_spectrumL;
+    return src.empty() ? m_spectrum : src;  // fall back to mono
+}
+
+std::vector<float> VisualizerBase::getWaveformChannel(int channel) const
+{
+    QMutexLocker locker(&m_audioMutex);
+    const std::vector<float>& src =
+        channel == 1 ? m_waveformR : m_waveformL;
+    return src.empty() ? m_waveform : src;  // fall back to mono
+}
+
 bool VisualizerBase::hasNewAudioData()
 {
     QMutexLocker locker(&m_audioMutex);

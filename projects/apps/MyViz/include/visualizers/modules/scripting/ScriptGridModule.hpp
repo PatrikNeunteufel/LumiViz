@@ -113,6 +113,10 @@ public:
     [[nodiscard]] double getVariable(const std::string& name) const;
     void setVariable(const std::string& name, double value);
 
+    /// Feed AVS-layout visualisation data (576*4 bytes) + gettime clock so the
+    /// grid's EEL can call getspec/getosc.
+    void setVisData(const unsigned char* data576x4, double scriptTime);
+
     /// @brief Reset scripts/time/field (fresh sandbox at next execute())
     void resetState();
 

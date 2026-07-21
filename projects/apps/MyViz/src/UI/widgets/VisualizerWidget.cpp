@@ -313,3 +313,14 @@ void VisualizerWidget::updateWaveform(const float* waveform, int count)
         m_thread->updateAudio(nullptr, 0, waveform, count);
     }
 }
+
+void VisualizerWidget::updateAudioStereo(const float* specInterleaved, int binsPerCh,
+                                         const float* waveInterleaved, int frames,
+                                         int channels)
+{
+    if (m_thread != nullptr)
+    {
+        m_thread->updateAudioStereo(specInterleaved, binsPerCh, waveInterleaved,
+                                    frames, channels);
+    }
+}

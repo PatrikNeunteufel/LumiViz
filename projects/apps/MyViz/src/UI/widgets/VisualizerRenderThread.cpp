@@ -160,6 +160,22 @@ void VisualizerRenderThread::updateAudio(const float* spectrum, int spectrumCoun
     }
 }
 
+void VisualizerRenderThread::updateAudioStereo(const float* specI, int binsPerCh,
+                                               const float* waveI, int frames,
+                                               int channels)
+{
+    QMutexLocker lock(&m_audioMutex);
+    const int ch = channels < 1 ? 1 : channels;
+    if (specI != nullptr && binsPerCh > 0)
+        m_specI.assign(specI, specI + static_cast<size_t>(binsPerCh) * ch);
+    if (waveI != nullptr && frames > 0)
+        m_waveI.assign(waveI, waveI + static_cast<size_t>(frames) * ch);
+    m_stereoBins = binsPerCh;
+    m_stereoFrames = frames;
+    m_stereoChannels = ch;
+    m_stereoDirty = true;
+}
+
 void VisualizerRenderThread::setVisualizer(IVisualizer* next,
                                            std::unique_ptr<IVisualizer> retire)
 {
@@ -421,6 +437,14 @@ void VisualizerRenderThread::run()
                             static_cast<int>(m_waveform.size()));
                     }
                     m_audioDirty = false;
+                }
+                if (m_stereoDirty)
+                {
+                    m_current->updateAudioStereo(
+                        m_specI.empty() ? nullptr : m_specI.data(), m_stereoBins,
+                        m_waveI.empty() ? nullptr : m_waveI.data(), m_stereoFrames,
+                        m_stereoChannels);
+                    m_stereoDirty = false;
                 }
             }
             m_current->render(deltaTime);

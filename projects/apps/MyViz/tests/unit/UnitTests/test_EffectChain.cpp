@@ -209,6 +209,80 @@ TEST_SUITE("EffectChain")
         CHECK(out.onBeatFrames == 1);
     }
 
+    TEST_CASE("Fractal-2D-Parameter werden auf gueltige Bereiche geklammert")
+    {
+        ChainNode root = makeList();
+        ChainNode leaf;
+        Fractal2DParams fp;
+        fp.type = 42;      // out of range -> 0..8
+        fp.maxIter = 99999;  // -> 1..2048
+        fp.zoom = -3.0f;   // -> >= 1e-6
+        fp.power = 100.0f; // -> 1..16
+        fp.escapeR = 0.1f; // -> >= 1
+        fp.blend = 9;      // -> 0..2
+        leaf.params = fp;
+        root.children.push_back(std::move(leaf));
+
+        REQUIRE(compileChain(root).ok);
+        const auto& out = std::get<Fractal2DParams>(root.children[0].params);
+        CHECK(out.type == 8);
+        CHECK(out.maxIter == 2048);
+        CHECK(out.zoom >= 1e-6f);
+        CHECK(out.power == doctest::Approx(16.0f));
+        CHECK(out.escapeR == doctest::Approx(1.0f));
+        CHECK(out.blend == 2);
+        CHECK(std::string(effectTypeName(EffectParams{Fractal2DParams{}})) == "Fractal 2D");
+    }
+
+    TEST_CASE("Domain-Warp-Parameter werden auf gueltige Bereiche geklammert")
+    {
+        ChainNode root = makeList();
+        ChainNode leaf;
+        DomainWarpParams dp;
+        dp.octaves = 99;  // -> 1..10
+        dp.blend = -3;    // -> 0..2
+        leaf.params = dp;
+        root.children.push_back(std::move(leaf));
+
+        REQUIRE(compileChain(root).ok);
+        const auto& out = std::get<DomainWarpParams>(root.children[0].params);
+        CHECK(out.octaves == 10);
+        CHECK(out.blend == 0);
+        CHECK(std::string(effectTypeName(EffectParams{DomainWarpParams{}})) == "Domain Warp");
+    }
+
+    TEST_CASE("Batch-H Restmodule liefern Anzeigenamen + Bereichsklemmen")
+    {
+        CHECK(std::string(effectTypeName(EffectParams{Fractal3DParams{}})) == "Fractal 3D");
+        CHECK(std::string(effectTypeName(EffectParams{LyapunovParams{}})) == "Lyapunov");
+        CHECK(std::string(effectTypeName(EffectParams{KleinianParams{}})) == "Kleinian");
+        CHECK(std::string(effectTypeName(EffectParams{FractalZoomerParams{}})) == "Fractal Zoomer");
+        CHECK(std::string(effectTypeName(EffectParams{StrangeAttractorParams{}})) == "Strange Attractor");
+        CHECK(std::string(effectTypeName(EffectParams{FlameParams{}})) == "Flame");
+        CHECK(std::string(effectTypeName(EffectParams{ReactionDiffusionParams{}})) == "Reaction Diffusion");
+        CHECK(std::string(effectTypeName(EffectParams{SetRenderModeParams{}})) == "Set Render Mode");
+
+        ChainNode root = makeList();
+        ChainNode f3; Fractal3DParams f3p; f3p.type = 9; f3p.maxSteps = 9999; f3p.maxIter = 999;
+        f3.params = f3p; root.children.push_back(std::move(f3));
+        ChainNode kl; KleinianParams klp; klp.p = 99; klp.q = 1; kl.params = klp;
+        root.children.push_back(std::move(kl));
+        ChainNode fl; FlameParams flp; flp.functions = 9; flp.variation = 9; fl.params = flp;
+        root.children.push_back(std::move(fl));
+
+        REQUIRE(compileChain(root).ok);
+        const auto& o3 = std::get<Fractal3DParams>(root.children[0].params);
+        CHECK(o3.type == 4);
+        CHECK(o3.maxSteps == 512);
+        CHECK(o3.maxIter == 64);
+        const auto& okl = std::get<KleinianParams>(root.children[1].params);
+        CHECK(okl.p == 20);
+        CHECK(okl.q == 3);
+        const auto& ofl = std::get<FlameParams>(root.children[2].params);
+        CHECK(ofl.functions == 4);
+        CHECK(ofl.variation == 4);
+    }
+
     // --- 5.3: neue Transform-Effekte -----------------------------------------
 
     TEST_CASE("neue Effekt-Typen liefern korrekte Anzeigenamen")

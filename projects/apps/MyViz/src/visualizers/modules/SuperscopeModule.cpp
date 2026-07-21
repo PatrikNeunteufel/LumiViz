@@ -966,6 +966,15 @@ void SuperscopeModule::setVariable(const std::string& name, double value)
     m_variables[name] = value;
 }
 
+void SuperscopeModule::setVisData(const unsigned char* data, double scriptTime)
+{
+    if (m_luaMode && m_script != nullptr)
+    {
+        m_script->engine().setVisData(data);
+        m_script->engine().setScriptTime(scriptTime);
+    }
+}
+
 void SuperscopeModule::resetState()
 {
     m_variables.clear();

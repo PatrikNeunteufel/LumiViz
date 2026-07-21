@@ -81,7 +81,8 @@ private:
     {
         Avs = 0,
         Milk = 1,
-        Both = 2
+        Lvfx = 2,   ///< native LumiViz effect chains
+        All = 3
     };
 
     /// Per-item role Qt::UserRole+1 — what a double-click should do.
@@ -90,7 +91,8 @@ private:
         Type_Up = 0,
         Type_Dir = 1,
         Type_Avs = 2,
-        Type_Milk = 3
+        Type_Milk = 3,
+        Type_Lvfx = 4
     };
 
     void setupUI();
@@ -100,6 +102,7 @@ private:
     void navigateTo(const QString& dirPath);
     void refresh();
     [[nodiscard]] QStringList currentNameFilters() const;
+    [[nodiscard]] static int entryTypeForSuffix(const QString& suffix);
     void setStatus(const QString& text);
     void onImportResult(const std::string& path, bool ok, int noteCount);
 
@@ -114,5 +117,5 @@ private:
 
     // State
     QDir m_dir;
-    Filter m_filter = Filter::Both;
+    Filter m_filter = Filter::All;
 };

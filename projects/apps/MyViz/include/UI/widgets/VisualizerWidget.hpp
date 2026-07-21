@@ -196,6 +196,10 @@ public:
      */
     void updateWaveform(const float* waveform, int count);
 
+    /// Feed per-channel (stereo) audio (interleaved) through to the render thread.
+    void updateAudioStereo(const float* specInterleaved, int binsPerCh,
+                           const float* waveInterleaved, int frames, int channels);
+
 Q_SIGNALS:
     /**
      * @brief Emitted when the active visualizer changes

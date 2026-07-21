@@ -17,6 +17,7 @@
 #include "visualizers/modules/SuperscopeModule.hpp"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <vector>
@@ -38,6 +39,43 @@ double evalOrFail(LuaScriptEngine& lua, const char* expr)
 }
 
 } // namespace
+
+// =============================================================================
+// Audio analysis (getspec/getosc/gettime, AVS-faithful)
+// =============================================================================
+
+TEST_CASE("LuaEngine: Audio — getspec/getosc/gettime lesen die VisData (AVS-treu)")
+{
+    LuaScriptEngine lua;
+
+    // Ohne VisData: alles 0.
+    CHECK(evalOrFail(lua, "getspec(0.5, 0.05, 0)") == doctest::Approx(0.0));
+    CHECK(evalOrFail(lua, "getosc(0.5, 0.05, 0)") == doctest::Approx(0.0));
+
+    std::array<unsigned char, 576 * 4> vis{};
+    for (int i = 0; i < 576; ++i)
+    {
+        vis[static_cast<size_t>(i)] = 255;          // spectrum L = voll
+        vis[static_cast<size_t>(i) + 576] = 255;    // spectrum R = voll
+        vis[static_cast<size_t>(i) + 1152] = 127;   // waveform L = max (+127)
+        vis[static_cast<size_t>(i) + 1728] = 127;   // waveform R = max
+    }
+    lua.setVisData(vis.data());
+
+    // getspec center: (255+255)/255 * 0.5 = 1.0
+    CHECK(evalOrFail(lua, "getspec(0.5, 0.05, 0)") == doctest::Approx(1.0));
+    // getspec L: 255/127.5 * 0.5 = 1.0
+    CHECK(evalOrFail(lua, "getspec(0.5, 0.05, 1)") == doctest::Approx(1.0));
+    // getosc center: (127+127)/255 = 254/255 ; getosc hat kein *0.5
+    CHECK(evalOrFail(lua, "getosc(0.5, 0.05, 0)") == doctest::Approx(254.0 / 255.0));
+    // getosc L: 127/127.5
+    CHECK(evalOrFail(lua, "getosc(0.5, 0.05, 1)") == doctest::Approx(127.0 / 127.5));
+
+    // gettime(sc) = scriptTime - sc.
+    lua.setScriptTime(12.5);
+    CHECK(evalOrFail(lua, "gettime(0)") == doctest::Approx(12.5));
+    CHECK(evalOrFail(lua, "gettime(2.5)") == doctest::Approx(10.0));
+}
 
 // =============================================================================
 // Sandbox

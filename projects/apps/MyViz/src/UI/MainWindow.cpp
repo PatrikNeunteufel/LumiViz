@@ -568,12 +568,27 @@ void MainWindow::setupEventHandlers()
         });
 
     pEventBus->subscribe<LoadEffectChainEvent>(
-        [this, requireMultiEffect, pEventBus](const LoadEffectChainEvent&) {
-            auto [widget, host] = requireMultiEffect("Load Effect Chain");
-            if (host == nullptr) return;
-            const QString path = QFileDialog::getOpenFileName(
-                this, tr("Load Effect Chain"), QString(),
-                tr("LumiViz Effect Chain (*.lvfx);;All Files (*)"));
+        [this, findMultiEffect, pEventBus](const LoadEffectChainEvent& ev) {
+            // Auto-activate the Multi Effect host (Import Browser loads .lvfx too).
+            auto [widget, host] = findMultiEffect();
+            if (host == nullptr && widget != nullptr)
+            {
+                widget->setVisualizer(QStringLiteral("multieffect"));
+                host = dynamic_cast<MultiEffectVisualizer*>(widget->visualizer());
+            }
+            if (host == nullptr)
+            {
+                QMessageBox::information(this, tr("Load Effect Chain"),
+                                         tr("No visualizer available to load into."));
+                return;
+            }
+            QString path = QString::fromStdString(ev.path);
+            if (path.isEmpty())
+            {
+                path = QFileDialog::getOpenFileName(
+                    this, tr("Load Effect Chain"), QString(),
+                    tr("LumiViz Effect Chain (*.lvfx);;All Files (*)"));
+            }
             if (path.isEmpty()) return;
 
             QStringList report;
@@ -687,6 +702,29 @@ void MainWindow::onAudioUpdate()
                                 if (hasWaveform)
                                 {
                                     pViz->updateWaveform(waveform.data(), WAVEFORM_SIZE);
+                                }
+                            }
+                        }
+
+                        // Per-channel (stereo) audio for getspec/getosc L/R
+                        // (additive; the mono forward above stays as the fallback).
+                        const int channels = pEngine->getStreamChannels(stream);
+                        if (channels >= 2 && hasWaveform)
+                        {
+                            std::vector<float> specI(
+                                static_cast<size_t>(FFT_SIZE) * channels);
+                            const bool hasStereoFFT = pEngine->getFFTDataStereo(
+                                stream, specI.data(), FFT_SIZE);
+                            if (hasStereoFFT)
+                            {
+                                for (auto* pViz : visualizers())
+                                {
+                                    if (pViz != nullptr)
+                                    {
+                                        pViz->updateAudioStereo(
+                                            specI.data(), FFT_SIZE / 2, waveform.data(),
+                                            WAVEFORM_SIZE / channels, channels);
+                                    }
                                 }
                             }
                         }

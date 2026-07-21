@@ -13,12 +13,14 @@
 
 #include "visualizers/multieffect/AvsChainTranslator.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
+#include "visualizers/modules/ColorGradientModule.hpp"
 
 #include <QOpenGLContext>
 #include <QOpenGLExtraFunctions>
 #include <QOpenGLFramebufferObjectFormat>
 #include <QOpenGLFunctions>
 #include <QByteArray>
+#include <QVector4D>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -34,6 +36,11 @@ using lumi::scripting::ScriptSlotHost;
 using Slot = lumi::scripting::LuaScriptEngine::Slot;
 
 namespace {
+
+// Defined further down; forward-declared for the earlier render handlers.
+void computeAudioBands(const std::vector<float>& spec, float& bass, float& mid,
+                       float& treble);
+
 
 // -----------------------------------------------------------------------------
 // Shaders (GLSL 330 core, matching FeedbackBuffer)
@@ -945,6 +952,484 @@ void main()
 }
 )";
 
+// Fractal 2D (Batch H, host-native): escape-time / root-finding fractals in a
+// single fullscreen pass. uType selects the formula; escaping (or converging)
+// iterations map through the gradient LUT, the interior gets uInside. uBlend
+// composites over the current framebuffer.
+const char* kFractal2DFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;    // current framebuffer (blend source)
+uniform sampler2D uLut;    // 256x1 palette
+uniform vec2  uCenter;
+uniform float uZoom;
+uniform float uRot;
+uniform float uAspect;     // width / height
+uniform int   uType;
+uniform int   uMaxIter;
+uniform vec2  uJulia;
+uniform float uPower;
+uniform float uEscapeR;    // |z|^2 escape threshold
+uniform bool  uSmooth;
+uniform float uColorScale;
+uniform float uColorPhase;
+uniform vec3  uInside;
+uniform int   uBlend;
+out vec4 fragColor;
+
+vec2 cmul(vec2 a, vec2 b){ return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x); }
+vec2 cdiv(vec2 a, vec2 b){ float d = dot(b,b) + 1e-12; return vec2(a.x*b.x + a.y*b.y, a.y*b.x - a.x*b.y) / d; }
+vec2 cpow(vec2 z, float p){
+    float r = length(z);
+    if (r < 1e-12) return vec2(0.0);
+    float th = atan(z.y, z.x);
+    float rp = pow(r, p);
+    return rp * vec2(cos(p*th), sin(p*th));
+}
+
+void main()
+{
+    vec2 uv = (vTex - 0.5) * 2.0;
+    uv.x *= uAspect;
+    float s = sin(uRot), c = cos(uRot);
+    uv = mat2(c, -s, s, c) * uv;
+    vec2 coord = uCenter + uv / uZoom;
+
+    int i = 0;
+    bool hit = false;         // escaped or converged
+    float it = 0.0;
+    vec2 z, cc;
+
+    if (uType == 5) {          // Newton p(z) = z^3 - 1
+        z = coord;
+        for (i = 0; i < uMaxIter; ++i){
+            vec2 z2 = cmul(z, z);
+            vec2 f  = cmul(z2, z) - vec2(1.0, 0.0);
+            vec2 df = 3.0 * z2;
+            z = z - cdiv(f, df);
+            if (dot(f, f) < 1e-6){ hit = true; break; }
+        }
+        it = float(i);
+    }
+    else if (uType == 6) {     // Phoenix: z' = z^2 + Re(c) + Im(c)*zprev
+        z = coord; vec2 zprev = vec2(0.0);
+        for (i = 0; i < uMaxIter; ++i){
+            vec2 zn = cmul(z, z) + vec2(uJulia.x, 0.0) + uJulia.y * zprev;
+            zprev = z; z = zn;
+            if (dot(z, z) > uEscapeR){ hit = true; break; }
+        }
+        it = float(i);
+    }
+    else if (uType == 7) {     // Magnet type 1: z' = ((z^2+c-1)/(2z+c-2))^2
+        z = coord; cc = coord;
+        for (i = 0; i < uMaxIter; ++i){
+            vec2 num = cmul(z, z) + cc - vec2(1.0, 0.0);
+            vec2 den = 2.0 * z + cc - vec2(2.0, 0.0);
+            vec2 q = cdiv(num, den);
+            z = cmul(q, q);
+            vec2 d = z - vec2(1.0, 0.0);
+            if (dot(d, d) < 1e-6 || dot(z, z) > 1e6){ hit = true; break; }
+        }
+        it = float(i);
+    }
+    else if (uType == 8) {     // Nova: relaxed Newton z - (z^p-1)/(p z^(p-1)) + c
+        z = coord; cc = coord;
+        for (i = 0; i < uMaxIter; ++i){
+            vec2 f  = cpow(z, uPower) - vec2(1.0, 0.0);
+            vec2 df = uPower * cpow(z, uPower - 1.0);
+            vec2 zn = z - cdiv(f, df) + cc;
+            vec2 d = zn - z;
+            z = zn;
+            if (dot(d, d) < 1e-6){ hit = true; break; }
+        }
+        it = float(i);
+    }
+    else {                     // escape-time family
+        if (uType == 1){ z = coord; cc = uJulia; }   // Julia
+        else           { z = vec2(0.0); cc = coord; } // Mandelbrot etc.
+        for (i = 0; i < uMaxIter; ++i){
+            if (uType == 2){ z = abs(z); z = cmul(z, z) + cc; }               // Burning Ship
+            else if (uType == 3){ z = vec2(z.x, -z.y); z = cmul(z, z) + cc; } // Tricorn (conj^2 + c)
+            else if (uType == 4){ z = cpow(z, uPower) + cc; }                 // Multibrot
+            else { z = cmul(z, z) + cc; }                                     // Mandelbrot / Julia
+            float m2 = dot(z, z);
+            if (m2 > uEscapeR){
+                hit = true;
+                if (uSmooth){
+                    float lz = log(m2) * 0.5;
+                    it = float(i) + 1.0 - log(lz / log(2.0)) / log(2.0);
+                } else it = float(i);
+                break;
+            }
+        }
+    }
+
+    vec3 col;
+    if (!hit) col = uInside;
+    else {
+        float t = fract(it * uColorScale + uColorPhase);
+        col = texture(uLut, vec2(t, 0.5)).rgb;
+    }
+
+    if (uBlend == 0) fragColor = vec4(col, 1.0);
+    else {
+        vec3 d = texture(uTex, vTex).rgb;
+        if (uBlend == 1) fragColor = vec4(min(d + col, vec3(1.0)), 1.0);
+        else             fragColor = vec4((d + col) * 0.5, 1.0);
+    }
+}
+)";
+
+// Domain-warp fBm (Batch H, host-native): a fullscreen "plasma / nebula" field.
+// Value-noise fBm warped by two further fBm fields, animated by uTime, coloured
+// through the gradient LUT. uBlend composites over the current framebuffer.
+const char* kDomainWarpFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform sampler2D uLut;
+uniform float uAspect;
+uniform int   uOctaves;
+uniform float uLac;
+uniform float uGain;
+uniform float uScale;
+uniform float uWarp;
+uniform float uWarpScale;
+uniform vec2  uOffset;
+uniform float uTime;
+uniform float uColorScale;
+uniform float uColorPhase;
+uniform int   uBlend;
+out vec4 fragColor;
+
+float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float vnoise(vec2 p){
+    vec2 i = floor(p), f = fract(p);
+    float a = hash(i), b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0)), d = hash(i + vec2(1.0, 1.0));
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+float fbm(vec2 p){
+    float sum = 0.0, amp = 0.5, freq = 1.0;
+    for (int i = 0; i < uOctaves; ++i){ sum += amp * vnoise(p * freq); freq *= uLac; amp *= uGain; }
+    return sum;
+}
+
+void main()
+{
+    vec2 uv = (vTex - 0.5) * 2.0;
+    uv.x *= uAspect;
+    vec2 p = uv * uScale + uOffset;
+    vec2 q = vec2(fbm(p + vec2(0.0, uTime)), fbm(p + vec2(5.2, 1.3 - uTime)));
+    vec2 r = vec2(fbm(p + uWarp * q * uWarpScale + vec2(1.7, 9.2)),
+                  fbm(p + uWarp * q * uWarpScale + vec2(8.3, 2.8)));
+    float v = fbm(p + uWarp * r);
+    float t = fract(v * uColorScale + uColorPhase);
+    vec3 col = texture(uLut, vec2(t, 0.5)).rgb;
+    if (uBlend == 0) fragColor = vec4(col, 1.0);
+    else {
+        vec3 d = texture(uTex, vTex).rgb;
+        if (uBlend == 1) fragColor = vec4(min(d + col, vec3(1.0)), 1.0);
+        else             fragColor = vec4((d + col) * 0.5, 1.0);
+    }
+}
+)";
+
+// Fractal 3D (Batch H): raymarched distance-estimator fractals. uType selects the
+// signed-distance field; the hit is normal-lit and coloured through the LUT.
+const char* kFractal3DFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform sampler2D uLut;
+uniform float uAspect;
+uniform int   uType;
+uniform vec3  uCam;
+uniform float uFov;
+uniform float uPower;
+uniform float uScale;
+uniform float uFold;
+uniform int   uMaxSteps;
+uniform int   uMaxIter;
+uniform vec4  uJulia;
+uniform vec3  uLight;
+uniform float uAmbient;
+uniform bool  uAO;
+uniform float uColorScale;
+uniform float uColorPhase;
+uniform vec3  uBg;
+uniform int   uBlend;
+out vec4 fragColor;
+
+float sdBox(vec3 p, vec3 b){ vec3 q = abs(p) - b; return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0); }
+float deMandelbulb(vec3 p){
+    vec3 z = p; float dr = 1.0; float r = 0.0;
+    for (int i = 0; i < uMaxIter; ++i){
+        r = length(z); if (r > 2.0) break;
+        float th = acos(clamp(z.z / r, -1.0, 1.0)); float ph = atan(z.y, z.x);
+        dr = pow(r, uPower - 1.0) * uPower * dr + 1.0;
+        float zr = pow(r, uPower); th *= uPower; ph *= uPower;
+        z = zr * vec3(sin(th) * cos(ph), sin(th) * sin(ph), cos(th)) + p;
+    }
+    return 0.5 * log(max(r, 1e-6)) * r / dr;
+}
+float deMandelbox(vec3 p){
+    vec3 z = p; float dr = 1.0;
+    for (int i = 0; i < uMaxIter; ++i){
+        z = clamp(z, -uFold, uFold) * 2.0 - z;
+        float m = dot(z, z);
+        if (m < 0.25){ z *= 4.0; dr *= 4.0; }
+        else if (m < 1.0){ z /= m; dr /= m; }
+        z = uScale * z + p; dr = dr * abs(uScale) + 1.0;
+    }
+    return length(z) / abs(dr);
+}
+float deMenger(vec3 p){
+    float d = sdBox(p, vec3(1.0)); float s = 1.0;
+    for (int i = 0; i < uMaxIter; ++i){
+        vec3 a = mod(p * s, 2.0) - 1.0;
+        s *= 3.0;
+        vec3 r = abs(1.0 - 3.0 * abs(a));
+        float da = max(r.x, r.y), db = max(r.y, r.z), dc = max(r.z, r.x);
+        float c = (min(da, min(db, dc)) - 1.0) / s;
+        d = max(d, c);
+    }
+    return d;
+}
+vec4 qmul(vec4 a, vec4 b){ return vec4(a.x * b.x - dot(a.yzw, b.yzw), a.x * b.yzw + b.x * a.yzw + cross(a.yzw, b.yzw)); }
+float deQJulia(vec3 p){
+    vec4 z = vec4(p, 0.0); float dz2 = 1.0;
+    for (int i = 0; i < uMaxIter; ++i){
+        dz2 *= 4.0 * dot(z, z);
+        z = qmul(z, z) + uJulia;
+        if (dot(z, z) > 4.0) break;
+    }
+    float r = length(z);
+    return 0.5 * r * log(max(r, 1e-6)) / sqrt(max(dz2, 1e-6));
+}
+float deKIFS(vec3 p){
+    float s = 1.0;
+    for (int i = 0; i < uMaxIter; ++i){
+        p = abs(p);
+        if (p.x < p.y) p.xy = p.yx;
+        if (p.x < p.z) p.xz = p.zx;
+        if (p.y < p.z) p.yz = p.zy;
+        p = p * uScale - vec3(uScale - 1.0);
+        s *= uScale;
+    }
+    return (length(p) - 0.5) / s;
+}
+float mapDE(vec3 p){
+    if (uType == 0) return deMandelbulb(p);
+    if (uType == 1) return deMandelbox(p);
+    if (uType == 2) return deMenger(p);
+    if (uType == 3) return deQJulia(p);
+    return deKIFS(p);
+}
+vec3 calcNormal(vec3 p){
+    vec2 e = vec2(0.0015, 0.0);
+    return normalize(vec3(mapDE(p + e.xyy) - mapDE(p - e.xyy),
+                          mapDE(p + e.yxy) - mapDE(p - e.yxy),
+                          mapDE(p + e.yyx) - mapDE(p - e.yyx)));
+}
+void main()
+{
+    vec2 uv = (vTex - 0.5) * 2.0;
+    uv.x *= uAspect;
+    vec3 ro = uCam;
+    vec3 fwd = normalize(-ro);
+    vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), fwd));
+    vec3 up = cross(fwd, right);
+    vec3 rd = normalize(fwd + uFov * (uv.x * right + uv.y * up));
+    float t = 0.0; bool hit = false; int steps = 0;
+    for (int i = 0; i < uMaxSteps; ++i){
+        vec3 p = ro + rd * t;
+        float d = mapDE(p);
+        steps = i;
+        if (d < 0.001 * t + 0.0004){ hit = true; break; }
+        t += d;
+        if (t > 20.0) break;
+    }
+    vec3 col;
+    if (hit){
+        vec3 p = ro + rd * t;
+        vec3 n = calcNormal(p);
+        float diff = max(dot(n, uLight), 0.0);
+        float ao = uAO ? 1.0 - float(steps) / float(uMaxSteps) : 1.0;
+        float lit = uAmbient + diff * (1.0 - uAmbient);
+        float ci = fract((t * 0.12 + float(steps) * 0.015) * uColorScale + uColorPhase);
+        col = texture(uLut, vec2(ci, 0.5)).rgb * lit * ao;
+    } else col = uBg;
+    if (uBlend == 0) fragColor = vec4(col, 1.0);
+    else {
+        vec3 d = texture(uTex, vTex).rgb;
+        if (uBlend == 1) fragColor = vec4(min(d + col, vec3(1.0)), 1.0);
+        else             fragColor = vec4((d + col) * 0.5, 1.0);
+    }
+}
+)";
+
+// Lyapunov (Batch H, "Zircon Zity"): per (a,b) pixel iterate the logistic map with
+// r alternating along uSeq, accumulate the Lyapunov exponent; ordered zones tint,
+// chaotic zones map through the LUT.
+const char* kLyapunovFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform sampler2D uLut;
+uniform vec4  uView;      // aMin, aMax, bMin, bMax
+uniform int   uSeq[64];
+uniform int   uSeqLen;
+uniform int   uWarmup;
+uniform int   uIter;
+uniform vec3  uNeg;
+uniform float uColorScale;
+uniform float uColorPhase;
+uniform int   uBlend;
+out vec4 fragColor;
+void main()
+{
+    float a = mix(uView.x, uView.y, vTex.x);
+    float b = mix(uView.z, uView.w, vTex.y);
+    float x = 0.5;
+    for (int i = 0; i < uWarmup; ++i){ float r = (uSeq[i % uSeqLen] == 0) ? a : b; x = r * x * (1.0 - x); }
+    float lyap = 0.0;
+    for (int i = 0; i < uIter; ++i){
+        float r = (uSeq[i % uSeqLen] == 0) ? a : b;
+        x = r * x * (1.0 - x);
+        lyap += log(abs(r * (1.0 - 2.0 * x)) + 1e-9);
+    }
+    lyap /= float(uIter);
+    vec3 col;
+    if (lyap < 0.0) col = uNeg * clamp(-lyap, 0.0, 1.0);
+    else { float t = fract(lyap * uColorScale + uColorPhase); col = texture(uLut, vec2(t, 0.5)).rgb; }
+    if (uBlend == 0) fragColor = vec4(col, 1.0);
+    else {
+        vec3 d = texture(uTex, vTex).rgb;
+        if (uBlend == 1) fragColor = vec4(min(d + col, vec3(1.0)), 1.0);
+        else             fragColor = vec4((d + col) * 0.5, 1.0);
+    }
+}
+)";
+
+// Kleinian (Batch H): a stylized hyperbolic {p,q} tiling on the Poincaré disk via
+// wedge folding + inversion in an orthogonal circle; reflection count → LUT.
+// Geometry is sight-test-calibrated (recognizable tiling, not a rigorous group).
+const char* kKleinianFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform sampler2D uLut;
+uniform float uAspect;
+uniform float uZoom;
+uniform float uRot;
+uniform int   uP;
+uniform int   uQ;
+uniform int   uIters;
+uniform float uMorph;
+uniform float uColorScale;
+uniform float uColorPhase;
+uniform int   uBlend;
+out vec4 fragColor;
+const float PI = 3.14159265;
+void main()
+{
+    vec2 uvp = (vTex - 0.5) * 2.0;
+    uvp.x *= uAspect;
+    float s = sin(uRot), co = cos(uRot);
+    uvp = mat2(co, -s, s, co) * uvp;
+    vec2 z = uvp / uZoom;
+    vec3 col = vec3(0.0);
+    if (dot(z, z) < 1.0){
+        float wedge = 2.0 * PI / float(uP);
+        float rc = (1.0 / max(tan(PI / float(uQ)), 1e-3)) * (1.0 + 0.3 * sin(uMorph));
+        float cx = sqrt(rc * rc + 1.0);
+        int count = 0;
+        for (int i = 0; i < uIters; ++i){
+            float ang = atan(z.y, z.x);
+            float r = length(z);
+            ang = mod(ang, wedge);
+            if (ang > wedge * 0.5) ang = wedge - ang;
+            z = r * vec2(cos(ang), sin(ang));
+            vec2 dvec = z - vec2(cx, 0.0);
+            float dd = dot(dvec, dvec);
+            if (dd < rc * rc){ z = vec2(cx, 0.0) + dvec * (rc * rc / dd); count++; }
+            else break;
+        }
+        float t = fract(float(count) * uColorScale + uColorPhase);
+        col = texture(uLut, vec2(t, 0.5)).rgb;
+        col *= smoothstep(1.0, 0.88, length(uvp / uZoom));
+    }
+    if (uBlend == 0) fragColor = vec4(col, 1.0);
+    else {
+        vec3 d = texture(uTex, vTex).rgb;
+        if (uBlend == 1) fragColor = vec4(min(d + col, vec3(1.0)), 1.0);
+        else             fragColor = vec4((d + col) * 0.5, 1.0);
+    }
+}
+)";
+
+// Reaction-Diffusion (Batch H, Gray-Scott). uMode: 0 seed (A=1, centre blob of B),
+// 1 sim step (9-point Laplacian), 2 show (B → LUT, blended over the frame).
+const char* kReactionDiffusionFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uState;
+uniform sampler2D uTex;
+uniform sampler2D uLut;
+uniform vec2  uTexel;
+uniform int   uMode;
+uniform float uFeed;
+uniform float uKill;
+uniform float uDA;
+uniform float uDB;
+uniform float uColorScale;
+uniform float uColorPhase;
+uniform int   uBlend;
+uniform bool  uDoSeed;
+uniform vec2  uSeed;
+uniform float uSeedR;
+out vec4 fragColor;
+void main()
+{
+    if (uMode == 0){
+        float d = distance(vTex, vec2(0.5));
+        fragColor = vec4(1.0, d < 0.06 ? 1.0 : 0.0, 0.0, 1.0);
+        return;
+    }
+    if (uMode == 1){
+        vec2 c = texture(uState, vTex).rg;
+        vec2 lap = vec2(0.0);
+        lap += texture(uState, vTex + vec2(-1.0, 0.0) * uTexel).rg * 0.2;
+        lap += texture(uState, vTex + vec2( 1.0, 0.0) * uTexel).rg * 0.2;
+        lap += texture(uState, vTex + vec2( 0.0,-1.0) * uTexel).rg * 0.2;
+        lap += texture(uState, vTex + vec2( 0.0, 1.0) * uTexel).rg * 0.2;
+        lap += texture(uState, vTex + vec2(-1.0,-1.0) * uTexel).rg * 0.05;
+        lap += texture(uState, vTex + vec2( 1.0,-1.0) * uTexel).rg * 0.05;
+        lap += texture(uState, vTex + vec2(-1.0, 1.0) * uTexel).rg * 0.05;
+        lap += texture(uState, vTex + vec2( 1.0, 1.0) * uTexel).rg * 0.05;
+        lap -= c;
+        float A = c.r, B = c.g;
+        float reaction = A * B * B;
+        float na = A + (uDA * lap.r - reaction + uFeed * (1.0 - A));
+        float nb = B + (uDB * lap.g + reaction - (uKill + uFeed) * B);
+        if (uDoSeed && distance(vTex, uSeed) < uSeedR) nb = 1.0;
+        fragColor = vec4(clamp(na, 0.0, 1.0), clamp(nb, 0.0, 1.0), 0.0, 1.0);
+        return;
+    }
+    float B = texture(uState, vTex).g;
+    float t = fract(B * uColorScale + uColorPhase);
+    vec3 col = texture(uLut, vec2(t, 0.5)).rgb;
+    if (uBlend == 0) fragColor = vec4(col, 1.0);
+    else {
+        vec3 d = texture(uTex, vTex).rgb;
+        if (uBlend == 1) fragColor = vec4(min(d + col, vec3(1.0)), 1.0);
+        else             fragColor = vec4((d + col) * 0.5, 1.0);
+    }
+}
+)";
+
 QVector3D colorToVec(uint32_t color)
 {
     return {static_cast<float>((color >> 16) & 0xFF) / 255.0f,
@@ -1153,6 +1638,12 @@ void MultiEffectVisualizer::onCleanup()
     m_wbDispShader.reset();
     m_timescopeShader.reset();
     m_apeShader.reset();
+    m_fractal2DShader.reset();
+    m_domainWarpShader.reset();
+    m_fractal3DShader.reset();
+    m_lyapunovShader.reset();
+    m_kleinianShader.reset();
+    m_rdShader.reset();
     if (m_specTex != 0)
     {
         if (auto* ctx = QOpenGLContext::currentContext())
@@ -1214,6 +1705,12 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_wbDispShader = makeProgram(kQuadVertexShader, kWaterBumpDispShader);
     m_timescopeShader = makeProgram(kQuadVertexShader, kTimescopeFragmentShader);
     m_apeShader = makeProgram(kQuadVertexShader, kApeFragmentShader);
+    m_fractal2DShader = makeProgram(kQuadVertexShader, kFractal2DFragmentShader);
+    m_domainWarpShader = makeProgram(kQuadVertexShader, kDomainWarpFragmentShader);
+    m_fractal3DShader = makeProgram(kQuadVertexShader, kFractal3DFragmentShader);
+    m_lyapunovShader = makeProgram(kQuadVertexShader, kLyapunovFragmentShader);
+    m_kleinianShader = makeProgram(kQuadVertexShader, kKleinianFragmentShader);
+    m_rdShader = makeProgram(kQuadVertexShader, kReactionDiffusionFragmentShader);
     if (m_fadeShader == nullptr || m_invertShader == nullptr ||
         m_barsShader == nullptr || m_blendShader == nullptr ||
         m_brightShader == nullptr || m_blurShader == nullptr ||
@@ -1231,7 +1728,10 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_multiFilterShader == nullptr || m_addBordersShader == nullptr ||
         m_wbPropShader == nullptr ||
         m_wbDispShader == nullptr || m_timescopeShader == nullptr ||
-        m_apeShader == nullptr)
+        m_apeShader == nullptr || m_fractal2DShader == nullptr ||
+        m_domainWarpShader == nullptr || m_fractal3DShader == nullptr ||
+        m_lyapunovShader == nullptr || m_kleinianShader == nullptr ||
+        m_rdShader == nullptr)
     {
         m_fadeShader.reset();
         m_invertShader.reset();
@@ -1254,6 +1754,12 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_wbDispShader.reset();
         m_timescopeShader.reset();
         m_apeShader.reset();
+        m_fractal2DShader.reset();
+        m_domainWarpShader.reset();
+        m_fractal3DShader.reset();
+        m_lyapunovShader.reset();
+        m_kleinianShader.reset();
+        m_rdShader.reset();
         return false;
     }
 
@@ -1331,6 +1837,7 @@ void MultiEffectVisualizer::resetRuntimes()
             if (rt.lutTexture != 0) f->glDeleteTextures(1, &rt.lutTexture);
             if (rt.cmTexture != 0) f->glDeleteTextures(1, &rt.cmTexture);
             if (rt.picTexture != 0) f->glDeleteTextures(1, &rt.picTexture);
+            if (rt.fracLut != 0) f->glDeleteTextures(1, &rt.fracLut);
         }
     }
     m_listRuntimes.clear();  // slot hosts / FBOs die with their GL-frame owner
@@ -1417,6 +1924,8 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     m_surfaceStack.clear();
     m_surfaceStack.push_back(&m_rootSurface);
     for (auto& [id, runtime] : m_listRuntimes) runtime.seenThisFrame = false;
+    m_renderMode = RenderMode{};  // Set Render Mode is per-frame, reset before the walk
+    buildVisData();               // audio for getspec/getosc, shared by all scripts
     bindActive();
 
     const auto& rootList = std::get<ListParams>(m_root.params);
@@ -1485,6 +1994,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const RotoBlitterParams& params) const { self.runRotoBlitter(node, params); }
         void operator()(const BufferSaveParams& params) const { self.runBufferSave(params); }
         void operator()(const CustomBpmParams& params) const { self.runCustomBpm(node, params); }
+        void operator()(const SetRenderModeParams& params) const { self.runSetRenderMode(params); }
         void operator()(const SuperScopeParams& params) const { self.runSuperScope(node, params); }
         void operator()(const MosaicParams& params) const { self.runMosaic(node, params); }
         void operator()(const GrainParams& params) const { self.runGrain(params); }
@@ -1523,6 +2033,15 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const MultiplierParams& params) const { self.runMultiplier(params); }
         void operator()(const VideoDelayParams& params) const { self.runVideoDelay(node, params); }
         void operator()(const MultiDelayParams& params) const { self.runMultiDelay(params); }
+        void operator()(const Fractal2DParams& params) const { self.runFractal2D(node, params); }
+        void operator()(const DomainWarpParams& params) const { self.runDomainWarp(node, params); }
+        void operator()(const Fractal3DParams& params) const { self.runFractal3D(node, params); }
+        void operator()(const LyapunovParams& params) const { self.runLyapunov(node, params); }
+        void operator()(const KleinianParams& params) const { self.runKleinian(node, params); }
+        void operator()(const FractalZoomerParams& params) const { self.runFractalZoomer(node, params); }
+        void operator()(const StrangeAttractorParams& params) const { self.runStrangeAttractor(node, params); }
+        void operator()(const FlameParams& params) const { self.runFlame(node, params); }
+        void operator()(const ReactionDiffusionParams& params) const { self.runReactionDiffusion(node, params); }
         void operator()(const DebugBarsParams& params) const { self.runDebugBars(params); }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
@@ -1569,6 +2088,7 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
         if (runtime.slotHost->has(Slot::Frame))
         {
             auto& engine = runtime.slotHost->engine();
+            feedAudio(engine);
             engine.setNumber("beat", m_frameBeat ? 1.0 : 0.0);
             engine.setNumber("w", static_cast<double>(m_surfaceWidth));
             engine.setNumber("h", static_cast<double>(m_surfaceHeight));
@@ -1819,6 +2339,17 @@ void MultiEffectVisualizer::runColorModifier(const ChainNode& node,
         rt.lutCompiled = combined;
     }
     rt.lut->setRecompute(params.recompute);
+    rt.lut->setVisData(m_visdata.data(), m_time);  // getspec/getosc for the level code
+    {
+        float bass, mid, treble;
+        computeAudioBands(getSpectrum(), bass, mid, treble);
+        rt.lut->setVariable("bass", bass);
+        rt.lut->setVariable("mid", mid);
+        rt.lut->setVariable("treb", treble);
+        rt.lut->setVariable("treble", treble);
+        rt.lut->setVariable("vol", m_audioLevel);
+        rt.lut->setVariable("beat", m_frameBeat ? 1.0 : 0.0);
+    }
     rt.lut->execute(m_frameBeat, m_deltaTime);
 
     // Upload the three 256-entry tables into a 256x1 RGB texture.
@@ -1907,6 +2438,17 @@ void MultiEffectVisualizer::applyGridWarp(LeafRuntime& rt, int xres, int yres,
 {
     if (rt.grid == nullptr || xres < 2 || yres < 2) return;
 
+    rt.grid->setVisData(m_visdata.data(), m_time);  // getspec/getosc for the point code
+    {
+        float bass, mid, treble;
+        computeAudioBands(getSpectrum(), bass, mid, treble);
+        rt.grid->setVariable("bass", bass);
+        rt.grid->setVariable("mid", mid);
+        rt.grid->setVariable("treb", treble);
+        rt.grid->setVariable("treble", treble);
+        rt.grid->setVariable("vol", m_audioLevel);
+        rt.grid->setVariable("beat", m_frameBeat ? 1.0 : 0.0);
+    }
     rt.grid->execute(static_cast<float>(m_surfaceWidth),
                      static_cast<float>(m_surfaceHeight), m_frameBeat, m_deltaTime);
     const auto& field = rt.grid->field();
@@ -2054,10 +2596,27 @@ void MultiEffectVisualizer::runCustomBpm(const ChainNode& node,
     m_frameBeat = beat;  // mutates the beat for the following effects (§5.1)
 }
 
+void MultiEffectVisualizer::runSetRenderMode(const SetRenderModeParams& params)
+{
+    // No visual output — sets the host render mode for the following render
+    // effects (AVS r_linemode). enabled toggles the blend override; a width of 0
+    // leaves each effect's own line width.
+    m_renderMode.set = true;
+    if (params.lineWidth > 0) m_renderMode.lineWidth = params.lineWidth;
+    m_renderMode.lineBlend = params.enabled ? std::clamp(params.lineBlend, 0, 2) : 1;
+    m_renderMode.alpha = std::clamp(params.adjustAlpha, 0, 255);
+}
+
 void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
                                           const SuperScopeParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // A preceding Set Render Mode node overrides line width + blend (AVS state).
+    const int effLineBlend = m_renderMode.set ? m_renderMode.lineBlend : params.lineBlend;
+    const float effLineWidth = (m_renderMode.set && m_renderMode.lineWidth > 0)
+                                   ? static_cast<float>(m_renderMode.lineWidth)
+                                   : params.lineWidth;
 
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + '\n' + params.pointCode;
@@ -2075,7 +2634,7 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     rt.scope->setPointCount(params.pointCount);
     rt.scope->setRenderMode(
         static_cast<lumi::modules::SuperscopeRenderMode>(params.renderMode));
-    rt.scope->setLineWidth(params.lineWidth);
+    rt.scope->setLineWidth(effLineWidth);
     rt.scope->setDotSize(params.dotSize);
     rt.scope->setAudioChannel(
         static_cast<lumi::modules::SuperscopeAudioChannel>(params.audioChannel));
@@ -2102,6 +2661,19 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     const int sampleCount = wave.empty() ? static_cast<int>(kSilence.size())
                                          : static_cast<int>(wave.size());
 
+    // Audio contract for the point/frame code: getspec/getosc backing data (+
+    // gettime clock) plus the bass/mid/treb short vars (E1, shared with all modules).
+    rt.scope->setVisData(m_visdata.data(), m_time);
+    {
+        float bass, mid, treble;
+        computeAudioBands(getSpectrum(), bass, mid, treble);
+        rt.scope->setVariable("bass", bass);
+        rt.scope->setVariable("mid", mid);
+        rt.scope->setVariable("treb", treble);
+        rt.scope->setVariable("treble", treble);
+        rt.scope->setVariable("vol", m_audioLevel);
+    }
+
     const std::vector<lumi::modules::SuperscopePoint> points = rt.scope->execute(
         w, w, s, s, sampleCount, m_surfaceWidth, m_surfaceHeight, m_frameBeat,
         m_deltaTime);
@@ -2111,7 +2683,7 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     if (!m_scopeRenderer.ready()) return;
     auto* f = QOpenGLContext::currentContext()->functions();
     f->glEnable(GL_BLEND);
-    switch (params.lineBlend)
+    switch (effLineBlend)
     {
         case 0:  f->glBlendFunc(GL_ONE, GL_ZERO); break;                       // replace
         case 2:  f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;  // 50/50
@@ -2119,7 +2691,7 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     }
     lumi::render::ScopeRenderer::Params rp;
     rp.mode = static_cast<lumi::modules::SuperscopeRenderMode>(params.renderMode);
-    rp.lineWidth = params.lineWidth;
+    rp.lineWidth = effLineWidth;
     rp.dotSize = params.dotSize;
     rp.glowEnabled = false;
     m_scopeRenderer.draw(points, rp);
@@ -2350,6 +2922,7 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
         auto& engine = rt.bumpHost->engine();
         engine.setNumber("isbeat", m_frameBeat ? 1.0 : 0.0);
         engine.setNumber("islbeat", m_frameBeat ? 1.0 : 0.0);
+        feedAudio(rt.bumpHost->engine());
         if (rt.bumpHost->has(Slot::Frame)) rt.bumpHost->run(Slot::Frame);
         if (m_frameBeat && rt.bumpHost->has(Slot::Beat)) rt.bumpHost->run(Slot::Beat);
         double lx = engine.number("x");
@@ -2431,6 +3004,7 @@ void MultiEffectVisualizer::runDynamicShift(const ChainNode& node,
         engine.setNumber("w", static_cast<double>(m_surfaceWidth));
         engine.setNumber("h", static_cast<double>(m_surfaceHeight));
         engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+        feedAudio(rt.shiftHost->engine());
         if (rt.shiftHost->has(Slot::Frame)) rt.shiftHost->run(Slot::Frame);
         if (m_frameBeat && rt.shiftHost->has(Slot::Beat)) rt.shiftHost->run(Slot::Beat);
         ox = engine.number("x");
@@ -2826,6 +3400,7 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
     }
     auto& engine = rt.texerHost->engine();
     engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+    feedAudio(rt.texerHost->engine());
     if (rt.texerHost->has(Slot::Frame)) rt.texerHost->run(Slot::Frame);
     if (m_frameBeat && rt.texerHost->has(Slot::Beat)) rt.texerHost->run(Slot::Beat);
     const int n = std::clamp(static_cast<int>(engine.number("n")), 1, 4096);
@@ -2889,6 +3464,7 @@ void MultiEffectVisualizer::runTriangle(const ChainNode& node, const TrianglePar
     }
     auto& engine = rt.triHost->engine();
     engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+    feedAudio(rt.triHost->engine());
     if (rt.triHost->has(Slot::Frame)) rt.triHost->run(Slot::Frame);
     if (m_frameBeat && rt.triHost->has(Slot::Beat)) rt.triHost->run(Slot::Beat);
     const int n = std::clamp(static_cast<int>(engine.number("n")), 0, 4096);
@@ -3199,6 +3775,7 @@ void MultiEffectVisualizer::runJherikoGlobal(const ChainNode& node,
         rt.jherikoHost->run(Slot::Init);
     }
     rt.jherikoInited = true;
+    feedAudio(rt.jherikoHost->engine());
     if (rt.jherikoHost->has(Slot::Frame)) rt.jherikoHost->run(Slot::Frame);
     if (m_frameBeat && rt.jherikoHost->has(Slot::Beat)) rt.jherikoHost->run(Slot::Beat);
     // No visual output — globals are shared through the ScriptContext.
@@ -3228,6 +3805,7 @@ void MultiEffectVisualizer::runDynamicDistanceModifier(
 
     auto& engine = rt.ddmHost->engine();
     engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+    feedAudio(rt.ddmHost->engine());
     if (rt.ddmHost->has(Slot::Frame)) rt.ddmHost->run(Slot::Frame);
     if (m_frameBeat && rt.ddmHost->has(Slot::Beat)) rt.ddmHost->run(Slot::Beat);
 
@@ -3875,6 +4453,1047 @@ void MultiEffectVisualizer::runMultiDelay(const MultiDelayParams& params)
         const int srcIdx = (head - d - 1 + size) % size;  // head points past newest
         blit(ring[static_cast<size_t>(srcIdx)]->handle(), cur->handle());
     }
+    bindActive();
+}
+
+void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
+                                         const Fractal2DParams& params)
+{
+    if (m_fractal2DShader == nullptr) return;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    // --- Gradient palette LUT (256x1), rebuilt only when the preset changes.
+    if (rt.fracLut == 0 || rt.fracLutSnapshot != params.gradientPreset)
+    {
+        lumi::modules::ColorGradientModule grad;
+        grad.loadPreset(params.gradientPreset);
+        std::array<unsigned char, 768> px{};
+        for (int i = 0; i < 256; ++i)
+        {
+            const lumi::modules::Color4f col =
+                grad.sample(static_cast<float>(i) / 255.0f);
+            px[static_cast<size_t>(i) * 3 + 0] =
+                static_cast<unsigned char>(std::clamp(col[0], 0.0f, 1.0f) * 255.0f);
+            px[static_cast<size_t>(i) * 3 + 1] =
+                static_cast<unsigned char>(std::clamp(col[1], 0.0f, 1.0f) * 255.0f);
+            px[static_cast<size_t>(i) * 3 + 2] =
+                static_cast<unsigned char>(std::clamp(col[2], 0.0f, 1.0f) * 255.0f);
+        }
+        if (rt.fracLut == 0)
+        {
+            f->glGenTextures(1, &rt.fracLut);
+            f->glBindTexture(GL_TEXTURE_2D, rt.fracLut);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        else
+        {
+            f->glBindTexture(GL_TEXTURE_2D, rt.fracLut);
+        }
+        f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, 1, 0, GL_RGB, GL_UNSIGNED_BYTE,
+                        px.data());
+        rt.fracLutSnapshot = params.gradientPreset;
+    }
+
+    // --- View parameters: EEL-driven when any slot has code, else the raw params
+    //     (so the editor can tweak a static fractal directly). The EEL reads audio
+    //     (bass/mid/treble/vol/beat/time) and writes cx,cy,zoom,rot,jx,jy,power.
+    float cx = params.centerX, cy = params.centerY, zoom = params.zoom;
+    float rot = params.rotation, jx = params.juliaX, jy = params.juliaY;
+    float power = params.power;
+
+    const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
+                          !params.beatCode.empty();
+    if (scripted)
+    {
+        // Snapshot includes the seed values: editing a seed re-seeds the engine.
+        const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + "\n#" + std::to_string(cx) + ',' +
+                                 std::to_string(cy) + ',' + std::to_string(zoom) + ',' +
+                                 std::to_string(rot) + ',' + std::to_string(jx) + ',' +
+                                 std::to_string(jy) + ',' + std::to_string(power);
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        {
+            rt.fracHost = std::make_unique<ScriptSlotHost>("fractal2d", m_scriptContext,
+                                                           ScriptSlotHost::Dialect::Avs);
+            rt.fracHost->setSource(Slot::Init, params.initCode);
+            rt.fracHost->setSource(Slot::Frame, params.frameCode);
+            rt.fracHost->setSource(Slot::Beat, params.beatCode);
+            rt.fracHost->compileAll();
+            auto& e = rt.fracHost->engine();
+            e.setNumber("cx", cx);      e.setNumber("cy", cy);
+            e.setNumber("zoom", zoom);  e.setNumber("rot", rot);
+            e.setNumber("jx", jx);      e.setNumber("jy", jy);
+            e.setNumber("power", power);
+            rt.fracHost->run(Slot::Init);
+            rt.fracCompiled = snap;
+        }
+
+        feedAudio(rt.fracHost->engine());
+        auto& e = rt.fracHost->engine();
+        if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
+        if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+
+        cx = static_cast<float>(e.number("cx"));
+        cy = static_cast<float>(e.number("cy"));
+        zoom = static_cast<float>(e.number("zoom"));
+        rot = static_cast<float>(e.number("rot"));
+        jx = static_cast<float>(e.number("jx"));
+        jy = static_cast<float>(e.number("jy"));
+        power = static_cast<float>(e.number("power"));
+    }
+    else
+    {
+        rt.fracHost.reset();  // reclaim the engine once the slots are cleared
+        rt.fracCompiled.clear();
+    }
+
+    if (zoom < 1e-6f) zoom = 1e-6f;
+    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+
+    const float aspect = m_surfaceHeight > 0
+                             ? static_cast<float>(m_surfaceWidth) /
+                                   static_cast<float>(m_surfaceHeight)
+                             : 1.0f;
+
+    m_fractal2DShader->bind();
+    m_fractal2DShader->setUniformValue("uCenter", QVector2D(cx, cy));
+    m_fractal2DShader->setUniformValue("uZoom", zoom);
+    m_fractal2DShader->setUniformValue("uRot", rot);
+    m_fractal2DShader->setUniformValue("uAspect", aspect);
+    m_fractal2DShader->setUniformValue("uType", std::clamp(params.type, 0, 8));
+    m_fractal2DShader->setUniformValue("uMaxIter", std::clamp(params.maxIter, 1, 2048));
+    m_fractal2DShader->setUniformValue("uJulia", QVector2D(jx, jy));
+    m_fractal2DShader->setUniformValue("uPower", std::clamp(power, 1.0f, 16.0f));
+    m_fractal2DShader->setUniformValue("uEscapeR", std::max(params.escapeR, 1.0f));
+    m_fractal2DShader->setUniformValue("uSmooth", params.smooth);
+    m_fractal2DShader->setUniformValue("uColorScale", params.colorScale);
+    m_fractal2DShader->setUniformValue("uColorPhase", rt.fracColorPhase);
+    m_fractal2DShader->setUniformValue("uInside", colorToVec(params.insideColor));
+    m_fractal2DShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_fractal2DShader->setUniformValue("uLut", 1);
+    m_fractal2DShader->release();
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.fracLut);
+    f->glActiveTexture(GL_TEXTURE0);
+    transformPass(*m_fractal2DShader);
+}
+
+void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
+                                          const DomainWarpParams& params)
+{
+    if (m_domainWarpShader == nullptr) return;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    // --- Gradient palette LUT (256x1), rebuilt only when the preset changes.
+    if (rt.fracLut == 0 || rt.fracLutSnapshot != params.gradientPreset)
+    {
+        lumi::modules::ColorGradientModule grad;
+        grad.loadPreset(params.gradientPreset);
+        std::array<unsigned char, 768> px{};
+        for (int i = 0; i < 256; ++i)
+        {
+            const lumi::modules::Color4f col =
+                grad.sample(static_cast<float>(i) / 255.0f);
+            px[static_cast<size_t>(i) * 3 + 0] =
+                static_cast<unsigned char>(std::clamp(col[0], 0.0f, 1.0f) * 255.0f);
+            px[static_cast<size_t>(i) * 3 + 1] =
+                static_cast<unsigned char>(std::clamp(col[1], 0.0f, 1.0f) * 255.0f);
+            px[static_cast<size_t>(i) * 3 + 2] =
+                static_cast<unsigned char>(std::clamp(col[2], 0.0f, 1.0f) * 255.0f);
+        }
+        if (rt.fracLut == 0)
+        {
+            f->glGenTextures(1, &rt.fracLut);
+            f->glBindTexture(GL_TEXTURE_2D, rt.fracLut);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        else
+        {
+            f->glBindTexture(GL_TEXTURE_2D, rt.fracLut);
+        }
+        f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, 1, 0, GL_RGB, GL_UNSIGNED_BYTE,
+                        px.data());
+        rt.fracLutSnapshot = params.gradientPreset;
+    }
+
+    // --- Field parameters: EEL-driven when any slot has code, else raw params.
+    //     EEL reads audio (bass/mid/treble/vol/beat/time), writes scale,warp,speed,ox,oy.
+    float scale = params.scale, warp = params.warp, speed = params.speed;
+    float ox = params.offsetX, oy = params.offsetY;
+
+    const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
+                          !params.beatCode.empty();
+    if (scripted)
+    {
+        const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + "\n#" + std::to_string(scale) + ',' +
+                                 std::to_string(warp) + ',' + std::to_string(speed) + ',' +
+                                 std::to_string(ox) + ',' + std::to_string(oy);
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        {
+            rt.fracHost = std::make_unique<ScriptSlotHost>("domainwarp", m_scriptContext,
+                                                           ScriptSlotHost::Dialect::Avs);
+            rt.fracHost->setSource(Slot::Init, params.initCode);
+            rt.fracHost->setSource(Slot::Frame, params.frameCode);
+            rt.fracHost->setSource(Slot::Beat, params.beatCode);
+            rt.fracHost->compileAll();
+            auto& e = rt.fracHost->engine();
+            e.setNumber("scale", scale);  e.setNumber("warp", warp);
+            e.setNumber("speed", speed);  e.setNumber("ox", ox);
+            e.setNumber("oy", oy);
+            rt.fracHost->run(Slot::Init);
+            rt.fracCompiled = snap;
+        }
+
+        feedAudio(rt.fracHost->engine());
+        auto& e = rt.fracHost->engine();
+        if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
+        if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+
+        scale = static_cast<float>(e.number("scale"));
+        warp = static_cast<float>(e.number("warp"));
+        speed = static_cast<float>(e.number("speed"));
+        ox = static_cast<float>(e.number("ox"));
+        oy = static_cast<float>(e.number("oy"));
+    }
+    else
+    {
+        rt.fracHost.reset();
+        rt.fracCompiled.clear();
+    }
+
+    rt.fracTime += speed * m_deltaTime;
+    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+
+    const float aspect = m_surfaceHeight > 0
+                             ? static_cast<float>(m_surfaceWidth) /
+                                   static_cast<float>(m_surfaceHeight)
+                             : 1.0f;
+
+    m_domainWarpShader->bind();
+    m_domainWarpShader->setUniformValue("uAspect", aspect);
+    m_domainWarpShader->setUniformValue("uOctaves", std::clamp(params.octaves, 1, 10));
+    m_domainWarpShader->setUniformValue("uLac", params.lacunarity);
+    m_domainWarpShader->setUniformValue("uGain", params.gain);
+    m_domainWarpShader->setUniformValue("uScale", scale);
+    m_domainWarpShader->setUniformValue("uWarp", warp);
+    m_domainWarpShader->setUniformValue("uWarpScale", params.warpScale);
+    m_domainWarpShader->setUniformValue("uOffset", QVector2D(ox, oy));
+    m_domainWarpShader->setUniformValue("uTime", rt.fracTime);
+    m_domainWarpShader->setUniformValue("uColorScale", params.colorScale);
+    m_domainWarpShader->setUniformValue("uColorPhase", rt.fracColorPhase);
+    m_domainWarpShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_domainWarpShader->setUniformValue("uLut", 1);
+    m_domainWarpShader->release();
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.fracLut);
+    f->glActiveTexture(GL_TEXTURE0);
+    transformPass(*m_domainWarpShader);
+}
+
+namespace {
+/// Average the spectrum into bass/mid/treble thirds (Batch H audio binding).
+void computeAudioBands(const std::vector<float>& spec, float& bass, float& mid,
+                       float& treble)
+{
+    bass = mid = treble = 0.0f;
+    if (spec.empty()) return;
+    const size_t n = spec.size(), t1 = n / 3, t2 = 2 * n / 3;
+    auto avg = [&](size_t lo, size_t hi) {
+        float s = 0.0f;
+        for (size_t i = lo; i < hi; ++i) s += spec[i];
+        return hi > lo ? s / static_cast<float>(hi - lo) : 0.0f;
+    };
+    bass = avg(0, t1);
+    mid = avg(t1, t2);
+    treble = avg(t2, n);
+}
+
+/// Bake a gradient preset into a 256-entry CPU colour table (point-cloud colouring).
+void buildCpuGradientLut(const std::string& preset, std::array<QVector3D, 256>& out)
+{
+    lumi::modules::ColorGradientModule grad;
+    grad.loadPreset(preset);
+    for (int i = 0; i < 256; ++i)
+    {
+        const lumi::modules::Color4f c = grad.sample(static_cast<float>(i) / 255.0f);
+        out[static_cast<size_t>(i)] = QVector3D(c[0], c[1], c[2]);
+    }
+}
+}  // namespace
+
+void MultiEffectVisualizer::ensureFractalLut(LeafRuntime& rt, const std::string& preset)
+{
+    if (rt.fracLut != 0 && rt.fracLutSnapshot == preset) return;
+    auto* f = QOpenGLContext::currentContext()->functions();
+    lumi::modules::ColorGradientModule grad;
+    grad.loadPreset(preset);
+    std::array<unsigned char, 768> px{};
+    for (int i = 0; i < 256; ++i)
+    {
+        const lumi::modules::Color4f col = grad.sample(static_cast<float>(i) / 255.0f);
+        px[static_cast<size_t>(i) * 3 + 0] =
+            static_cast<unsigned char>(std::clamp(col[0], 0.0f, 1.0f) * 255.0f);
+        px[static_cast<size_t>(i) * 3 + 1] =
+            static_cast<unsigned char>(std::clamp(col[1], 0.0f, 1.0f) * 255.0f);
+        px[static_cast<size_t>(i) * 3 + 2] =
+            static_cast<unsigned char>(std::clamp(col[2], 0.0f, 1.0f) * 255.0f);
+    }
+    if (rt.fracLut == 0)
+    {
+        f->glGenTextures(1, &rt.fracLut);
+        f->glBindTexture(GL_TEXTURE_2D, rt.fracLut);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+    else
+    {
+        f->glBindTexture(GL_TEXTURE_2D, rt.fracLut);
+    }
+    f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, 1, 0, GL_RGB, GL_UNSIGNED_BYTE,
+                    px.data());
+    rt.fracLutSnapshot = preset;
+}
+
+void MultiEffectVisualizer::buildVisData()
+{
+    // Per-channel data (getSpectrumChannel/getWaveformChannel fall back to the
+    // mono copy when no stereo has been fed — so mono streams still fill L=R).
+    const std::vector<float> specL = getSpectrumChannel(0);
+    const std::vector<float> specR = getSpectrumChannel(1);
+    const std::vector<float> waveL = getWaveformChannel(0);
+    const std::vector<float> waveR = getWaveformChannel(1);
+    auto specByte = [](const std::vector<float>& v, int i) -> unsigned char {
+        if (v.empty()) return 0;
+        const float s = v[static_cast<size_t>(i) * v.size() / 576];
+        return static_cast<unsigned char>(std::clamp(s, 0.0f, 1.0f) * 255.0f);
+    };
+    // Waveform -> signed byte (two's complement); getvis decodes (b^128)-128.
+    auto waveByte = [](const std::vector<float>& v, int i) -> unsigned char {
+        if (v.empty()) return 0;  // byte 0 -> getvis (0^128)-128 = 0 (silence)
+        const float w = v[static_cast<size_t>(i) * v.size() / 576];
+        const int sw = std::clamp(static_cast<int>(w * 127.0f), -128, 127);
+        return static_cast<unsigned char>(sw & 0xFF);
+    };
+    for (int i = 0; i < 576; ++i)
+    {
+        m_visdata[static_cast<size_t>(i)] = specByte(specL, i);          // spectrum L
+        m_visdata[static_cast<size_t>(i) + 576] = specByte(specR, i);    // spectrum R
+        m_visdata[static_cast<size_t>(i) + 1152] = waveByte(waveL, i);   // waveform L
+        m_visdata[static_cast<size_t>(i) + 1728] = waveByte(waveR, i);   // waveform R
+    }
+}
+
+void MultiEffectVisualizer::feedAudio(lumi::scripting::LuaScriptEngine& engine)
+{
+    engine.setVisData(m_visdata.data());
+    engine.setScriptTime(m_time);
+    float bass, mid, treble;
+    computeAudioBands(getSpectrum(), bass, mid, treble);
+    engine.setNumber("bass", bass);
+    engine.setNumber("mid", mid);
+    engine.setNumber("treb", treble);
+    engine.setNumber("treble", treble);  // alias (MilkDrop uses treb)
+    engine.setNumber("vol", m_audioLevel);
+    engine.setNumber("beat", m_frameBeat ? 1.0 : 0.0);
+    engine.setNumber("time", m_time);
+}
+
+void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
+                                         const Fractal3DParams& params)
+{
+    if (m_fractal3DShader == nullptr) return;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+    ensureFractalLut(rt, params.gradientPreset);
+
+    float yaw = params.yaw, pitch = params.pitch, dist = params.dist;
+    float power = params.power, scale = params.scale, fold = params.fold;
+    const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
+                          !params.beatCode.empty();
+    if (scripted)
+    {
+        const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + "\n#" + std::to_string(yaw) + ',' +
+                                 std::to_string(pitch) + ',' + std::to_string(dist) + ',' +
+                                 std::to_string(power) + ',' + std::to_string(scale) + ',' +
+                                 std::to_string(fold);
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        {
+            rt.fracHost = std::make_unique<ScriptSlotHost>("fractal3d", m_scriptContext,
+                                                           ScriptSlotHost::Dialect::Avs);
+            rt.fracHost->setSource(Slot::Init, params.initCode);
+            rt.fracHost->setSource(Slot::Frame, params.frameCode);
+            rt.fracHost->setSource(Slot::Beat, params.beatCode);
+            rt.fracHost->compileAll();
+            auto& e = rt.fracHost->engine();
+            e.setNumber("yaw", yaw);      e.setNumber("pitch", pitch);
+            e.setNumber("dist", dist);    e.setNumber("power", power);
+            e.setNumber("scale", scale);  e.setNumber("fold", fold);
+            rt.fracHost->run(Slot::Init);
+            rt.fracCompiled = snap;
+        }
+        feedAudio(rt.fracHost->engine());
+        auto& e = rt.fracHost->engine();
+        if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
+        if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        yaw = static_cast<float>(e.number("yaw"));
+        pitch = static_cast<float>(e.number("pitch"));
+        dist = static_cast<float>(e.number("dist"));
+        power = static_cast<float>(e.number("power"));
+        scale = static_cast<float>(e.number("scale"));
+        fold = static_cast<float>(e.number("fold"));
+    }
+    else
+    {
+        rt.fracHost.reset();
+        rt.fracCompiled.clear();
+    }
+    dist = std::max(dist, 0.1f);
+    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+
+    const float cp = std::cos(pitch);
+    const QVector3D cam(dist * cp * std::cos(yaw), dist * std::sin(pitch),
+                        dist * cp * std::sin(yaw));
+    const float lp = std::cos(params.lightPitch);
+    QVector3D light(lp * std::cos(params.lightYaw), std::sin(params.lightPitch),
+                    lp * std::sin(params.lightYaw));
+    light.normalize();
+    const float aspect = m_surfaceHeight > 0
+                             ? static_cast<float>(m_surfaceWidth) /
+                                   static_cast<float>(m_surfaceHeight)
+                             : 1.0f;
+
+    m_fractal3DShader->bind();
+    m_fractal3DShader->setUniformValue("uAspect", aspect);
+    m_fractal3DShader->setUniformValue("uType", std::clamp(params.type, 0, 4));
+    m_fractal3DShader->setUniformValue("uCam", cam);
+    m_fractal3DShader->setUniformValue("uFov", params.fov);
+    m_fractal3DShader->setUniformValue("uPower", std::clamp(power, 1.0f, 16.0f));
+    m_fractal3DShader->setUniformValue("uScale", scale);
+    m_fractal3DShader->setUniformValue("uFold", fold);
+    m_fractal3DShader->setUniformValue("uMaxSteps", std::clamp(params.maxSteps, 8, 512));
+    m_fractal3DShader->setUniformValue("uMaxIter", std::clamp(params.maxIter, 1, 64));
+    m_fractal3DShader->setUniformValue(
+        "uJulia", QVector4D(params.juliaX, params.juliaY, params.juliaZ, params.juliaW));
+    m_fractal3DShader->setUniformValue("uLight", light);
+    m_fractal3DShader->setUniformValue("uAmbient", params.ambient);
+    m_fractal3DShader->setUniformValue("uAO", params.ao);
+    m_fractal3DShader->setUniformValue("uColorScale", params.colorScale);
+    m_fractal3DShader->setUniformValue("uColorPhase", rt.fracColorPhase);
+    m_fractal3DShader->setUniformValue("uBg", colorToVec(params.background));
+    m_fractal3DShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_fractal3DShader->setUniformValue("uLut", 1);
+    m_fractal3DShader->release();
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.fracLut);
+    f->glActiveTexture(GL_TEXTURE0);
+    transformPass(*m_fractal3DShader);
+}
+
+void MultiEffectVisualizer::runLyapunov(const ChainNode& node,
+                                        const LyapunovParams& params)
+{
+    if (m_lyapunovShader == nullptr) return;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+    ensureFractalLut(rt, params.gradientPreset);
+
+    float aMin = params.aMin, aMax = params.aMax, bMin = params.bMin, bMax = params.bMax;
+    const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
+                          !params.beatCode.empty();
+    if (scripted)
+    {
+        const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + "\n#" + std::to_string(aMin) + ',' +
+                                 std::to_string(aMax) + ',' + std::to_string(bMin) + ',' +
+                                 std::to_string(bMax);
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        {
+            rt.fracHost = std::make_unique<ScriptSlotHost>("lyapunov", m_scriptContext,
+                                                           ScriptSlotHost::Dialect::Avs);
+            rt.fracHost->setSource(Slot::Init, params.initCode);
+            rt.fracHost->setSource(Slot::Frame, params.frameCode);
+            rt.fracHost->setSource(Slot::Beat, params.beatCode);
+            rt.fracHost->compileAll();
+            auto& e = rt.fracHost->engine();
+            e.setNumber("amin", aMin); e.setNumber("amax", aMax);
+            e.setNumber("bmin", bMin); e.setNumber("bmax", bMax);
+            rt.fracHost->run(Slot::Init);
+            rt.fracCompiled = snap;
+        }
+        feedAudio(rt.fracHost->engine());
+        auto& e = rt.fracHost->engine();
+        if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
+        if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        aMin = static_cast<float>(e.number("amin"));
+        aMax = static_cast<float>(e.number("amax"));
+        bMin = static_cast<float>(e.number("bmin"));
+        bMax = static_cast<float>(e.number("bmax"));
+    }
+    else
+    {
+        rt.fracHost.reset();
+        rt.fracCompiled.clear();
+    }
+    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+
+    // Sequence string -> int array (A/a -> 0, B/b -> 1), max 64.
+    std::array<int, 64> seq{};
+    int len = 0;
+    for (char ch : params.sequence)
+    {
+        if (len >= 64) break;
+        if (ch == 'A' || ch == 'a') seq[static_cast<size_t>(len++)] = 0;
+        else if (ch == 'B' || ch == 'b') seq[static_cast<size_t>(len++)] = 1;
+    }
+    if (len == 0) { seq[0] = 0; seq[1] = 1; len = 2; }
+
+    m_lyapunovShader->bind();
+    m_lyapunovShader->setUniformValue("uView", QVector4D(aMin, aMax, bMin, bMax));
+    m_lyapunovShader->setUniformValueArray("uSeq", seq.data(), len);
+    m_lyapunovShader->setUniformValue("uSeqLen", len);
+    m_lyapunovShader->setUniformValue("uWarmup", std::clamp(params.warmup, 0, 2000));
+    m_lyapunovShader->setUniformValue("uIter", std::clamp(params.iterations, 1, 4000));
+    m_lyapunovShader->setUniformValue("uNeg", colorToVec(params.negColor));
+    m_lyapunovShader->setUniformValue("uColorScale", params.colorScale);
+    m_lyapunovShader->setUniformValue("uColorPhase", rt.fracColorPhase);
+    m_lyapunovShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_lyapunovShader->setUniformValue("uLut", 1);
+    m_lyapunovShader->release();
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.fracLut);
+    f->glActiveTexture(GL_TEXTURE0);
+    transformPass(*m_lyapunovShader);
+}
+
+void MultiEffectVisualizer::runKleinian(const ChainNode& node,
+                                        const KleinianParams& params)
+{
+    if (m_kleinianShader == nullptr) return;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+    ensureFractalLut(rt, params.gradientPreset);
+
+    float morph = params.morph, zoom = params.zoom, rot = params.rotation;
+    const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
+                          !params.beatCode.empty();
+    if (scripted)
+    {
+        const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + "\n#" + std::to_string(morph) + ',' +
+                                 std::to_string(zoom) + ',' + std::to_string(rot);
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        {
+            rt.fracHost = std::make_unique<ScriptSlotHost>("kleinian", m_scriptContext,
+                                                           ScriptSlotHost::Dialect::Avs);
+            rt.fracHost->setSource(Slot::Init, params.initCode);
+            rt.fracHost->setSource(Slot::Frame, params.frameCode);
+            rt.fracHost->setSource(Slot::Beat, params.beatCode);
+            rt.fracHost->compileAll();
+            auto& e = rt.fracHost->engine();
+            e.setNumber("morph", morph); e.setNumber("zoom", zoom); e.setNumber("rot", rot);
+            rt.fracHost->run(Slot::Init);
+            rt.fracCompiled = snap;
+        }
+        feedAudio(rt.fracHost->engine());
+        auto& e = rt.fracHost->engine();
+        if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
+        if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        morph = static_cast<float>(e.number("morph"));
+        zoom = static_cast<float>(e.number("zoom"));
+        rot = static_cast<float>(e.number("rot"));
+    }
+    else
+    {
+        rt.fracHost.reset();
+        rt.fracCompiled.clear();
+    }
+    if (zoom < 1e-3f) zoom = 1e-3f;
+    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+    const float aspect = m_surfaceHeight > 0
+                             ? static_cast<float>(m_surfaceWidth) /
+                                   static_cast<float>(m_surfaceHeight)
+                             : 1.0f;
+
+    m_kleinianShader->bind();
+    m_kleinianShader->setUniformValue("uAspect", aspect);
+    m_kleinianShader->setUniformValue("uZoom", zoom);
+    m_kleinianShader->setUniformValue("uRot", rot);
+    m_kleinianShader->setUniformValue("uP", std::clamp(params.p, 3, 20));
+    m_kleinianShader->setUniformValue("uQ", std::clamp(params.q, 3, 20));
+    m_kleinianShader->setUniformValue("uIters", std::clamp(params.iterations, 1, 200));
+    m_kleinianShader->setUniformValue("uMorph", morph);
+    m_kleinianShader->setUniformValue("uColorScale", params.colorScale);
+    m_kleinianShader->setUniformValue("uColorPhase", rt.fracColorPhase);
+    m_kleinianShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_kleinianShader->setUniformValue("uLut", 1);
+    m_kleinianShader->release();
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.fracLut);
+    f->glActiveTexture(GL_TEXTURE0);
+    transformPass(*m_kleinianShader);
+}
+
+void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
+                                             const FractalZoomerParams& params)
+{
+    if (m_fractal2DShader == nullptr) return;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+    ensureFractalLut(rt, params.gradientPreset);
+
+    float cx = params.centerX, cy = params.centerY;
+    float zoomSpeed = params.zoomSpeed, rotSpeed = params.rotationSpeed;
+    const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
+                          !params.beatCode.empty();
+    if (scripted)
+    {
+        const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + "\n#" + std::to_string(cx) + ',' +
+                                 std::to_string(cy) + ',' + std::to_string(zoomSpeed) + ',' +
+                                 std::to_string(rotSpeed);
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        {
+            rt.fracHost = std::make_unique<ScriptSlotHost>("fractalzoom", m_scriptContext,
+                                                           ScriptSlotHost::Dialect::Avs);
+            rt.fracHost->setSource(Slot::Init, params.initCode);
+            rt.fracHost->setSource(Slot::Frame, params.frameCode);
+            rt.fracHost->setSource(Slot::Beat, params.beatCode);
+            rt.fracHost->compileAll();
+            auto& e = rt.fracHost->engine();
+            e.setNumber("cx", cx); e.setNumber("cy", cy);
+            e.setNumber("zoomspeed", zoomSpeed); e.setNumber("rotspeed", rotSpeed);
+            rt.fracHost->run(Slot::Init);
+            rt.fracCompiled = snap;
+        }
+        feedAudio(rt.fracHost->engine());
+        auto& e = rt.fracHost->engine();
+        if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
+        if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        cx = static_cast<float>(e.number("cx"));
+        cy = static_cast<float>(e.number("cy"));
+        zoomSpeed = static_cast<float>(e.number("zoomspeed"));
+        rotSpeed = static_cast<float>(e.number("rotspeed"));
+    }
+    else
+    {
+        rt.fracHost.reset();
+        rt.fracCompiled.clear();
+    }
+
+    // Persistent zoom (fracTime) + rotation (rotoAngle) advance every frame.
+    if (rt.fracTime <= 0.0f) rt.fracTime = 1.0f;
+    rt.fracTime *= (zoomSpeed > 1e-4f ? zoomSpeed : 1.0f);
+    if (rt.fracTime > 1e12f) rt.fracTime = 1.0f;  // loop the trip
+    rt.rotoAngle += rotSpeed;
+    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+    const float aspect = m_surfaceHeight > 0
+                             ? static_cast<float>(m_surfaceWidth) /
+                                   static_cast<float>(m_surfaceHeight)
+                             : 1.0f;
+    // type maps to the escape-time subset of the Fractal2D shader (0,1,2).
+    const int t2type = std::clamp(params.type, 0, 2);
+
+    m_fractal2DShader->bind();
+    m_fractal2DShader->setUniformValue("uCenter", QVector2D(cx, cy));
+    m_fractal2DShader->setUniformValue("uZoom", rt.fracTime);
+    m_fractal2DShader->setUniformValue("uRot", rt.rotoAngle);
+    m_fractal2DShader->setUniformValue("uAspect", aspect);
+    m_fractal2DShader->setUniformValue("uType", t2type);
+    m_fractal2DShader->setUniformValue("uMaxIter", std::clamp(params.maxIter, 1, 2048));
+    m_fractal2DShader->setUniformValue("uJulia", QVector2D(params.juliaX, params.juliaY));
+    m_fractal2DShader->setUniformValue("uPower", 2.0f);
+    m_fractal2DShader->setUniformValue("uEscapeR", 4.0f);
+    m_fractal2DShader->setUniformValue("uSmooth", true);
+    m_fractal2DShader->setUniformValue("uColorScale", params.colorScale);
+    m_fractal2DShader->setUniformValue("uColorPhase", rt.fracColorPhase);
+    m_fractal2DShader->setUniformValue("uInside", colorToVec(params.insideColor));
+    m_fractal2DShader->setUniformValue("uBlend", params.feedback > 0.01f ? 2 : 0);
+    m_fractal2DShader->setUniformValue("uLut", 1);
+    m_fractal2DShader->release();
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.fracLut);
+    f->glActiveTexture(GL_TEXTURE0);
+    transformPass(*m_fractal2DShader);
+}
+
+void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
+                                                const StrangeAttractorParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    if (!m_scopeRenderer.ready()) return;
+
+    float a = params.a, b = params.b, c = params.c, d = params.d, rotation = params.rotation;
+    const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
+                          !params.beatCode.empty();
+    if (scripted)
+    {
+        const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + "\n#" + std::to_string(a) + ',' +
+                                 std::to_string(b) + ',' + std::to_string(c) + ',' +
+                                 std::to_string(d);
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        {
+            rt.fracHost = std::make_unique<ScriptSlotHost>("attractor", m_scriptContext,
+                                                           ScriptSlotHost::Dialect::Avs);
+            rt.fracHost->setSource(Slot::Init, params.initCode);
+            rt.fracHost->setSource(Slot::Frame, params.frameCode);
+            rt.fracHost->setSource(Slot::Beat, params.beatCode);
+            rt.fracHost->compileAll();
+            auto& e = rt.fracHost->engine();
+            e.setNumber("a", a); e.setNumber("b", b); e.setNumber("c", c);
+            e.setNumber("d", d); e.setNumber("rotation", rotation);
+            rt.fracHost->run(Slot::Init);
+            rt.fracCompiled = snap;
+        }
+        feedAudio(rt.fracHost->engine());
+        auto& e = rt.fracHost->engine();
+        if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
+        if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        a = static_cast<float>(e.number("a")); b = static_cast<float>(e.number("b"));
+        c = static_cast<float>(e.number("c")); d = static_cast<float>(e.number("d"));
+        rotation = static_cast<float>(e.number("rotation"));
+    }
+    else
+    {
+        rt.fracHost.reset();
+        rt.fracCompiled.clear();
+    }
+
+    if (!rt.saSeeded || !std::isfinite(rt.saX) || !std::isfinite(rt.saY) ||
+        !std::isfinite(rt.saZ))
+    {
+        rt.saX = 0.1; rt.saY = 0.0; rt.saZ = 0.0;
+        rt.saSeeded = true;
+    }
+    rt.saRot += params.rotationSpeed * m_deltaTime;
+    const float rc = std::cos(rt.saRot + rotation), rs = std::sin(rt.saRot + rotation);
+
+    std::array<QVector3D, 256> cpuLut{};
+    if (params.useGradient) buildCpuGradientLut(params.gradientPreset, cpuLut);
+    const QVector3D fixedCol = colorToVec(params.color);
+
+    const int n = std::clamp(params.points, 1, 100000);
+    std::vector<lumi::modules::SuperscopePoint> pts;
+    pts.reserve(static_cast<size_t>(n));
+    double x = rt.saX, y = rt.saY, z = rt.saZ;
+    for (int i = 0; i < n; ++i)
+    {
+        double px, py;
+        if (params.type == 0)  // Lorenz (integrated)
+        {
+            const double sig = a * 7.142857, rho = b * 17.5, bet = c * 2.6667, dt = 0.005;
+            const double dx = sig * (y - x), dy = x * (rho - z) - y, dz = x * y - bet * z;
+            x += dx * dt; y += dy * dt; z += dz * dt;
+            px = x * 0.033; py = (z - 25.0) * 0.033;
+        }
+        else if (params.type == 1)  // Clifford
+        {
+            const double nx = std::sin(a * y) + c * std::cos(a * x);
+            const double ny = std::sin(b * x) + d * std::cos(b * y);
+            x = nx; y = ny; px = x * 0.4; py = y * 0.4;
+        }
+        else if (params.type == 2)  // De Jong
+        {
+            const double nx = std::sin(a * y) - std::cos(b * x);
+            const double ny = std::sin(c * x) - std::cos(d * y);
+            x = nx; y = ny; px = x * 0.4; py = y * 0.4;
+        }
+        else  // Aizawa (integrated)
+        {
+            const double e = 0.25, ff = 0.1, dt = 0.01;
+            const double dx = (z - b) * x - d * y;
+            const double dy = d * x + (z - b) * y;
+            const double dz = c + a * z - (z * z * z) / 3.0 -
+                              (x * x + y * y) * (1.0 + e * z) + ff * z * (x * x * x);
+            x += dx * dt; y += dy * dt; z += dz * dt;
+            px = x * 0.6; py = y * 0.6;
+        }
+        // scale + view rotation
+        const float sx = static_cast<float>(px) * params.scale;
+        const float sy = static_cast<float>(py) * params.scale;
+        lumi::modules::SuperscopePoint pt;
+        pt.x = std::clamp(sx * rc - sy * rs, -1.0f, 1.0f);
+        pt.y = std::clamp(sx * rs + sy * rc, -1.0f, 1.0f);
+        const QVector3D col =
+            params.useGradient
+                ? cpuLut[static_cast<size_t>(i) * 255 / static_cast<size_t>(n)]
+                : fixedCol;
+        pt.r = col.x(); pt.g = col.y(); pt.b = col.z(); pt.a = 1.0f;
+        pts.push_back(pt);
+    }
+    rt.saX = x; rt.saY = y; rt.saZ = z;
+
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glEnable(GL_BLEND);
+    switch (params.blend)
+    {
+        case 0:  f->glBlendFunc(GL_ONE, GL_ZERO); break;
+        case 2:  f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;
+        default: f->glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;
+    }
+    lumi::render::ScopeRenderer::Params rp;
+    rp.mode = lumi::modules::SuperscopeRenderMode::Dots;
+    rp.dotSize = std::clamp(params.dotSize, 1.0f, 32.0f);
+    rp.glowEnabled = false;
+    m_scopeRenderer.draw(pts, rp);
+    f->glDisable(GL_BLEND);
+}
+
+void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    if (!m_scopeRenderer.ready()) return;
+
+    float rotation = params.rotation;
+    const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
+                          !params.beatCode.empty();
+    if (scripted)
+    {
+        const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + "\n#" + std::to_string(rotation);
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        {
+            rt.fracHost = std::make_unique<ScriptSlotHost>("flame", m_scriptContext,
+                                                           ScriptSlotHost::Dialect::Avs);
+            rt.fracHost->setSource(Slot::Init, params.initCode);
+            rt.fracHost->setSource(Slot::Frame, params.frameCode);
+            rt.fracHost->setSource(Slot::Beat, params.beatCode);
+            rt.fracHost->compileAll();
+            rt.fracHost->engine().setNumber("rotation", rotation);
+            rt.fracHost->run(Slot::Init);
+            rt.fracCompiled = snap;
+        }
+        feedAudio(rt.fracHost->engine());
+        auto& e = rt.fracHost->engine();
+        if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
+        if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        rotation = static_cast<float>(e.number("rotation"));
+    }
+    else
+    {
+        rt.fracHost.reset();
+        rt.fracCompiled.clear();
+    }
+
+    if (!rt.saSeeded || !std::isfinite(rt.saX) || !std::isfinite(rt.saY))
+    {
+        rt.saX = 0.05; rt.saY = 0.05; rt.saSeeded = true;
+    }
+    rt.saRot += params.rotationSpeed * m_deltaTime;
+    const float rc = std::cos(rt.saRot + rotation), rs = std::sin(rt.saRot + rotation);
+
+    const int nfun = std::clamp(params.functions, 2, 4);
+    // Affine attractors on a circle (contraction 0.5 towards each anchor).
+    QVector2D anchor[4];
+    for (int k = 0; k < nfun; ++k)
+    {
+        const float ang = 6.2831853f * static_cast<float>(k) / static_cast<float>(nfun);
+        anchor[k] = QVector2D(std::cos(ang) * 0.8f, std::sin(ang) * 0.8f);
+    }
+    auto variation = [&](float vx, float vy) -> QVector2D {
+        const float r2 = vx * vx + vy * vy + 1e-6f;
+        switch (params.variation)
+        {
+            case 1: return {std::sin(vx), std::sin(vy)};                    // sinusoidal
+            case 2: return {vx / r2, vy / r2};                             // spherical
+            case 3: return {vx * std::sin(r2) - vy * std::cos(r2),
+                            vx * std::cos(r2) + vy * std::sin(r2)};        // swirl
+            case 4: { const float r = std::sqrt(r2);
+                      return {(vx - vy) * (vx + vy) / r, 2.0f * vx * vy / r}; }  // horseshoe
+            default: return {vx, vy};                                       // linear
+        }
+    };
+
+    std::array<QVector3D, 256> cpuLut{};
+    buildCpuGradientLut(params.gradientPreset, cpuLut);
+
+    const int n = std::clamp(params.points, 1, 200000);
+    std::vector<lumi::modules::SuperscopePoint> pts;
+    pts.reserve(static_cast<size_t>(n));
+    float x = static_cast<float>(rt.saX), y = static_cast<float>(rt.saY);
+    for (int i = 0; i < n; ++i)
+    {
+        const int k = static_cast<int>(nextRandom() % static_cast<uint32_t>(nfun));
+        x = 0.5f * (x + anchor[k].x());
+        y = 0.5f * (y + anchor[k].y());
+        const QVector2D v = variation(x, y);
+        const float fx = 0.5f * (x + v.x());
+        const float fy = 0.5f * (y + v.y());
+        if (!std::isfinite(fx) || !std::isfinite(fy)) { x = 0.05f; y = 0.05f; continue; }
+        x = fx; y = fy;
+        const float sx = x * params.scale, sy = y * params.scale;
+        lumi::modules::SuperscopePoint pt;
+        pt.x = std::clamp(sx * rc - sy * rs, -1.0f, 1.0f);
+        pt.y = std::clamp(sx * rs + sy * rc, -1.0f, 1.0f);
+        const QVector3D col = cpuLut[static_cast<size_t>(k) * 255 / static_cast<size_t>(nfun)];
+        pt.r = col.x(); pt.g = col.y(); pt.b = col.z(); pt.a = 1.0f;
+        pts.push_back(pt);
+    }
+    rt.saX = x; rt.saY = y;
+
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glEnable(GL_BLEND);
+    switch (params.blend)
+    {
+        case 0:  f->glBlendFunc(GL_ONE, GL_ZERO); break;
+        case 2:  f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;
+        default: f->glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;
+    }
+    lumi::render::ScopeRenderer::Params rp;
+    rp.mode = lumi::modules::SuperscopeRenderMode::Dots;
+    rp.dotSize = std::clamp(params.dotSize, 1.0f, 32.0f);
+    rp.glowEnabled = false;
+    m_scopeRenderer.draw(pts, rp);
+    f->glDisable(GL_BLEND);
+}
+
+void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
+                                                 const ReactionDiffusionParams& params)
+{
+    if (m_rdShader == nullptr) return;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+    ensureFractalLut(rt, params.gradientPreset);
+
+    float feed = params.feed, kill = params.kill;
+    const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
+                          !params.beatCode.empty();
+    if (scripted)
+    {
+        const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + "\n#" + std::to_string(feed) + ',' +
+                                 std::to_string(kill);
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        {
+            rt.fracHost = std::make_unique<ScriptSlotHost>("reactdiff", m_scriptContext,
+                                                           ScriptSlotHost::Dialect::Avs);
+            rt.fracHost->setSource(Slot::Init, params.initCode);
+            rt.fracHost->setSource(Slot::Frame, params.frameCode);
+            rt.fracHost->setSource(Slot::Beat, params.beatCode);
+            rt.fracHost->compileAll();
+            rt.fracHost->engine().setNumber("feed", feed);
+            rt.fracHost->engine().setNumber("kill", kill);
+            rt.fracHost->run(Slot::Init);
+            rt.fracCompiled = snap;
+        }
+        feedAudio(rt.fracHost->engine());
+        auto& e = rt.fracHost->engine();
+        if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
+        if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        feed = static_cast<float>(e.number("feed"));
+        kill = static_cast<float>(e.number("kill"));
+    }
+    else
+    {
+        rt.fracHost.reset();
+        rt.fracCompiled.clear();
+    }
+    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+
+    // Simulate at a reduced resolution for speed (half the surface, min 64).
+    const int simW = std::max(64, m_surfaceWidth / 2);
+    const int simH = std::max(64, m_surfaceHeight / 2);
+    if (!rt.rdBuf[0] || rt.rdW != simW || rt.rdH != simH)
+    {
+        QOpenGLFramebufferObjectFormat fmt;
+        fmt.setInternalTextureFormat(GL_RGBA16F);
+        for (auto& buf : rt.rdBuf)
+            buf = std::make_unique<QOpenGLFramebufferObject>(simW, simH, fmt);
+        rt.rdW = simW; rt.rdH = simH; rt.rdCur = 0; rt.rdSeeded = false;
+    }
+    if (!rt.rdBuf[0] || !rt.rdBuf[0]->isValid()) return;
+
+    m_quadVao->bind();
+    // Seed both buffers on first use.
+    if (!rt.rdSeeded)
+    {
+        m_rdShader->bind();
+        m_rdShader->setUniformValue("uMode", 0);
+        for (auto& buf : rt.rdBuf)
+        {
+            buf->bind();
+            f->glViewport(0, 0, simW, simH);
+            f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            buf->release();
+        }
+        m_rdShader->release();
+        rt.rdSeeded = true;
+    }
+
+    // Simulation steps (ping-pong).
+    m_rdShader->bind();
+    m_rdShader->setUniformValue("uMode", 1);
+    m_rdShader->setUniformValue("uFeed", feed);
+    m_rdShader->setUniformValue("uKill", kill);
+    m_rdShader->setUniformValue("uDA", params.diffA);
+    m_rdShader->setUniformValue("uDB", params.diffB);
+    m_rdShader->setUniformValue(
+        "uTexel", QVector2D(1.0f / static_cast<float>(simW), 1.0f / static_cast<float>(simH)));
+    m_rdShader->setUniformValue("uState", 0);
+    const int steps = std::clamp(params.stepsPerFrame, 1, 64);
+    for (int s = 0; s < steps; ++s)
+    {
+        const bool seedNow = params.seedOnBeat && m_frameBeat && s == 0;
+        m_rdShader->setUniformValue("uDoSeed", seedNow);
+        if (seedNow)
+        {
+            const float sx = static_cast<float>(nextRandom() % 1000) / 1000.0f;
+            const float sy = static_cast<float>(nextRandom() % 1000) / 1000.0f;
+            m_rdShader->setUniformValue("uSeed", QVector2D(sx, sy));
+            m_rdShader->setUniformValue("uSeedR", 0.04f);
+        }
+        QOpenGLFramebufferObject* src = rt.rdBuf[static_cast<size_t>(rt.rdCur)].get();
+        QOpenGLFramebufferObject* dst = rt.rdBuf[static_cast<size_t>(1 - rt.rdCur)].get();
+        dst->bind();
+        f->glViewport(0, 0, simW, simH);
+        f->glActiveTexture(GL_TEXTURE0);
+        f->glBindTexture(GL_TEXTURE_2D, src->texture());
+        f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        dst->release();
+        rt.rdCur = 1 - rt.rdCur;
+    }
+    m_rdShader->release();
+
+    // Show pass: B -> LUT, blended over the current frame (transformPass-style).
+    SurfacePair& pair = active();
+    pair.current()->release();
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    m_rdShader->bind();
+    m_rdShader->setUniformValue("uMode", 2);
+    m_rdShader->setUniformValue("uColorScale", params.colorScale);
+    m_rdShader->setUniformValue("uColorPhase", rt.fracColorPhase);
+    m_rdShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_rdShader->setUniformValue("uState", 0);
+    m_rdShader->setUniformValue("uTex", 1);
+    m_rdShader->setUniformValue("uLut", 2);
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, rt.rdBuf[static_cast<size_t>(rt.rdCur)]->texture());
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    f->glActiveTexture(GL_TEXTURE2);
+    f->glBindTexture(GL_TEXTURE_2D, rt.fracLut);
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_rdShader->release();
+    pair.partner()->release();
+    pair.swap();
+    m_quadVao->release();
     bindActive();
 }
 

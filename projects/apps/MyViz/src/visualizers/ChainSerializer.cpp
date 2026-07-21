@@ -234,6 +234,187 @@ struct WriteVisitor
         o["stopPos"] = pos;
         o["stopColor"] = col;
     }
+    void operator()(const Fractal2DParams& p) const
+    {
+        o["ftype"] = p.type;
+        o["centerX"] = static_cast<double>(p.centerX);
+        o["centerY"] = static_cast<double>(p.centerY);
+        o["zoom"] = static_cast<double>(p.zoom);
+        o["rotation"] = static_cast<double>(p.rotation);
+        o["maxIter"] = p.maxIter;
+        o["juliaX"] = static_cast<double>(p.juliaX);
+        o["juliaY"] = static_cast<double>(p.juliaY);
+        o["power"] = static_cast<double>(p.power);
+        o["escapeR"] = static_cast<double>(p.escapeR);
+        o["smooth"] = p.smooth;
+        o["colorScale"] = static_cast<double>(p.colorScale);
+        o["colorCycle"] = static_cast<double>(p.colorCycle);
+        o["insideColor"] = static_cast<double>(p.insideColor);
+        o["gradientPreset"] = QString::fromStdString(p.gradientPreset);
+        o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
+    void operator()(const DomainWarpParams& p) const
+    {
+        o["octaves"] = p.octaves;
+        o["lacunarity"] = static_cast<double>(p.lacunarity);
+        o["gain"] = static_cast<double>(p.gain);
+        o["scale"] = static_cast<double>(p.scale);
+        o["warp"] = static_cast<double>(p.warp);
+        o["warpScale"] = static_cast<double>(p.warpScale);
+        o["speed"] = static_cast<double>(p.speed);
+        o["offsetX"] = static_cast<double>(p.offsetX);
+        o["offsetY"] = static_cast<double>(p.offsetY);
+        o["colorScale"] = static_cast<double>(p.colorScale);
+        o["colorCycle"] = static_cast<double>(p.colorCycle);
+        o["gradientPreset"] = QString::fromStdString(p.gradientPreset);
+        o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
+    void operator()(const SetRenderModeParams& p) const
+    {
+        o["enabled"] = p.enabled;
+        o["lineWidth"] = p.lineWidth;
+        o["lineBlend"] = p.lineBlend;
+        o["adjustAlpha"] = p.adjustAlpha;
+    }
+    void operator()(const Fractal3DParams& p) const
+    {
+        o["ftype"] = p.type;
+        o["yaw"] = static_cast<double>(p.yaw);
+        o["pitch"] = static_cast<double>(p.pitch);
+        o["dist"] = static_cast<double>(p.dist);
+        o["fov"] = static_cast<double>(p.fov);
+        o["power"] = static_cast<double>(p.power);
+        o["scale"] = static_cast<double>(p.scale);
+        o["fold"] = static_cast<double>(p.fold);
+        o["maxSteps"] = p.maxSteps;
+        o["maxIter"] = p.maxIter;
+        o["juliaX"] = static_cast<double>(p.juliaX);
+        o["juliaY"] = static_cast<double>(p.juliaY);
+        o["juliaZ"] = static_cast<double>(p.juliaZ);
+        o["juliaW"] = static_cast<double>(p.juliaW);
+        o["lightYaw"] = static_cast<double>(p.lightYaw);
+        o["lightPitch"] = static_cast<double>(p.lightPitch);
+        o["ambient"] = static_cast<double>(p.ambient);
+        o["ao"] = p.ao;
+        o["colorScale"] = static_cast<double>(p.colorScale);
+        o["colorCycle"] = static_cast<double>(p.colorCycle);
+        o["gradientPreset"] = QString::fromStdString(p.gradientPreset);
+        o["background"] = static_cast<double>(p.background);
+        o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
+    void operator()(const LyapunovParams& p) const
+    {
+        o["sequence"] = QString::fromStdString(p.sequence);
+        o["aMin"] = static_cast<double>(p.aMin);
+        o["aMax"] = static_cast<double>(p.aMax);
+        o["bMin"] = static_cast<double>(p.bMin);
+        o["bMax"] = static_cast<double>(p.bMax);
+        o["warmup"] = p.warmup;
+        o["iterations"] = p.iterations;
+        o["negColor"] = static_cast<double>(p.negColor);
+        o["colorScale"] = static_cast<double>(p.colorScale);
+        o["colorCycle"] = static_cast<double>(p.colorCycle);
+        o["gradientPreset"] = QString::fromStdString(p.gradientPreset);
+        o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
+    void operator()(const KleinianParams& p) const
+    {
+        o["p"] = p.p;
+        o["q"] = p.q;
+        o["iterations"] = p.iterations;
+        o["morph"] = static_cast<double>(p.morph);
+        o["zoom"] = static_cast<double>(p.zoom);
+        o["rotation"] = static_cast<double>(p.rotation);
+        o["colorScale"] = static_cast<double>(p.colorScale);
+        o["colorCycle"] = static_cast<double>(p.colorCycle);
+        o["gradientPreset"] = QString::fromStdString(p.gradientPreset);
+        o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
+    void operator()(const FractalZoomerParams& p) const
+    {
+        o["ftype"] = p.type;
+        o["centerX"] = static_cast<double>(p.centerX);
+        o["centerY"] = static_cast<double>(p.centerY);
+        o["juliaX"] = static_cast<double>(p.juliaX);
+        o["juliaY"] = static_cast<double>(p.juliaY);
+        o["maxIter"] = p.maxIter;
+        o["zoomSpeed"] = static_cast<double>(p.zoomSpeed);
+        o["rotationSpeed"] = static_cast<double>(p.rotationSpeed);
+        o["feedback"] = static_cast<double>(p.feedback);
+        o["colorScale"] = static_cast<double>(p.colorScale);
+        o["colorCycle"] = static_cast<double>(p.colorCycle);
+        o["gradientPreset"] = QString::fromStdString(p.gradientPreset);
+        o["insideColor"] = static_cast<double>(p.insideColor);
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
+    void operator()(const StrangeAttractorParams& p) const
+    {
+        o["ftype"] = p.type;
+        o["a"] = static_cast<double>(p.a);
+        o["b"] = static_cast<double>(p.b);
+        o["c"] = static_cast<double>(p.c);
+        o["d"] = static_cast<double>(p.d);
+        o["points"] = p.points;
+        o["scale"] = static_cast<double>(p.scale);
+        o["rotation"] = static_cast<double>(p.rotation);
+        o["rotationSpeed"] = static_cast<double>(p.rotationSpeed);
+        o["color"] = static_cast<double>(p.color);
+        o["useGradient"] = p.useGradient;
+        o["gradientPreset"] = QString::fromStdString(p.gradientPreset);
+        o["dotSize"] = static_cast<double>(p.dotSize);
+        o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
+    void operator()(const FlameParams& p) const
+    {
+        o["variation"] = p.variation;
+        o["functions"] = p.functions;
+        o["points"] = p.points;
+        o["scale"] = static_cast<double>(p.scale);
+        o["rotation"] = static_cast<double>(p.rotation);
+        o["rotationSpeed"] = static_cast<double>(p.rotationSpeed);
+        o["gradientPreset"] = QString::fromStdString(p.gradientPreset);
+        o["dotSize"] = static_cast<double>(p.dotSize);
+        o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
+    void operator()(const ReactionDiffusionParams& p) const
+    {
+        o["feed"] = static_cast<double>(p.feed);
+        o["kill"] = static_cast<double>(p.kill);
+        o["diffA"] = static_cast<double>(p.diffA);
+        o["diffB"] = static_cast<double>(p.diffB);
+        o["stepsPerFrame"] = p.stepsPerFrame;
+        o["seedOnBeat"] = p.seedOnBeat;
+        o["colorScale"] = static_cast<double>(p.colorScale);
+        o["colorCycle"] = static_cast<double>(p.colorCycle);
+        o["gradientPreset"] = QString::fromStdString(p.gradientPreset);
+        o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
     void operator()(const BufferBlendParams& p) const
     {
         o["bufferA"] = p.bufferA;
@@ -713,6 +894,217 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         for (const auto& v : col) p.stopColor.push_back(static_cast<uint32_t>(v.toDouble()));
         return p;
     }
+    if (type == "fractal2D")
+    {
+        Fractal2DParams p;
+        p.type = getInt(o, "ftype", 0);
+        p.centerX = static_cast<float>(getDouble(o, "centerX", -0.5));
+        p.centerY = static_cast<float>(getDouble(o, "centerY", 0.0));
+        p.zoom = static_cast<float>(getDouble(o, "zoom", 1.0));
+        p.rotation = static_cast<float>(getDouble(o, "rotation", 0.0));
+        p.maxIter = getInt(o, "maxIter", 128);
+        p.juliaX = static_cast<float>(getDouble(o, "juliaX", -0.8));
+        p.juliaY = static_cast<float>(getDouble(o, "juliaY", 0.156));
+        p.power = static_cast<float>(getDouble(o, "power", 2.0));
+        p.escapeR = static_cast<float>(getDouble(o, "escapeR", 4.0));
+        p.smooth = getBool(o, "smooth", true);
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 0.05));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
+        p.insideColor = getColor(o, "insideColor", 0x000000);
+        p.gradientPreset = getStr(o, "gradientPreset");
+        if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
+        p.blend = getInt(o, "blend", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
+    if (type == "domainWarp")
+    {
+        DomainWarpParams p;
+        p.octaves = getInt(o, "octaves", 5);
+        p.lacunarity = static_cast<float>(getDouble(o, "lacunarity", 2.0));
+        p.gain = static_cast<float>(getDouble(o, "gain", 0.5));
+        p.scale = static_cast<float>(getDouble(o, "scale", 3.0));
+        p.warp = static_cast<float>(getDouble(o, "warp", 0.5));
+        p.warpScale = static_cast<float>(getDouble(o, "warpScale", 1.0));
+        p.speed = static_cast<float>(getDouble(o, "speed", 0.2));
+        p.offsetX = static_cast<float>(getDouble(o, "offsetX", 0.0));
+        p.offsetY = static_cast<float>(getDouble(o, "offsetY", 0.0));
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 1.0));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
+        p.gradientPreset = getStr(o, "gradientPreset");
+        if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
+        p.blend = getInt(o, "blend", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
+    if (type == "setRenderMode")
+    {
+        SetRenderModeParams p;
+        p.enabled = getBool(o, "enabled", true);
+        p.lineWidth = getInt(o, "lineWidth", 1);
+        p.lineBlend = getInt(o, "lineBlend", 1);
+        p.adjustAlpha = getInt(o, "adjustAlpha", 128);
+        return p;
+    }
+    if (type == "fractal3D")
+    {
+        Fractal3DParams p;
+        p.type = getInt(o, "ftype", 0);
+        p.yaw = static_cast<float>(getDouble(o, "yaw", 0.6));
+        p.pitch = static_cast<float>(getDouble(o, "pitch", 0.3));
+        p.dist = static_cast<float>(getDouble(o, "dist", 3.2));
+        p.fov = static_cast<float>(getDouble(o, "fov", 1.0));
+        p.power = static_cast<float>(getDouble(o, "power", 8.0));
+        p.scale = static_cast<float>(getDouble(o, "scale", 2.0));
+        p.fold = static_cast<float>(getDouble(o, "fold", 1.0));
+        p.maxSteps = getInt(o, "maxSteps", 96);
+        p.maxIter = getInt(o, "maxIter", 8);
+        p.juliaX = static_cast<float>(getDouble(o, "juliaX", 0.2));
+        p.juliaY = static_cast<float>(getDouble(o, "juliaY", 0.3));
+        p.juliaZ = static_cast<float>(getDouble(o, "juliaZ", 0.1));
+        p.juliaW = static_cast<float>(getDouble(o, "juliaW", 0.0));
+        p.lightYaw = static_cast<float>(getDouble(o, "lightYaw", 0.7));
+        p.lightPitch = static_cast<float>(getDouble(o, "lightPitch", 0.8));
+        p.ambient = static_cast<float>(getDouble(o, "ambient", 0.2));
+        p.ao = getBool(o, "ao", true);
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 1.0));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
+        p.gradientPreset = getStr(o, "gradientPreset");
+        if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
+        p.background = getColor(o, "background", 0x000000);
+        p.blend = getInt(o, "blend", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
+    if (type == "lyapunov")
+    {
+        LyapunovParams p;
+        p.sequence = getStr(o, "sequence");
+        if (p.sequence.empty()) p.sequence = "AB";
+        p.aMin = static_cast<float>(getDouble(o, "aMin", 2.5));
+        p.aMax = static_cast<float>(getDouble(o, "aMax", 4.0));
+        p.bMin = static_cast<float>(getDouble(o, "bMin", 2.5));
+        p.bMax = static_cast<float>(getDouble(o, "bMax", 4.0));
+        p.warmup = getInt(o, "warmup", 100);
+        p.iterations = getInt(o, "iterations", 400);
+        p.negColor = getColor(o, "negColor", 0x000030);
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 1.0));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
+        p.gradientPreset = getStr(o, "gradientPreset");
+        if (p.gradientPreset.empty()) p.gradientPreset = "Fire";
+        p.blend = getInt(o, "blend", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
+    if (type == "kleinian")
+    {
+        KleinianParams p;
+        p.p = getInt(o, "p", 5);
+        p.q = getInt(o, "q", 4);
+        p.iterations = getInt(o, "iterations", 30);
+        p.morph = static_cast<float>(getDouble(o, "morph", 0.0));
+        p.zoom = static_cast<float>(getDouble(o, "zoom", 1.0));
+        p.rotation = static_cast<float>(getDouble(o, "rotation", 0.0));
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 1.0));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
+        p.gradientPreset = getStr(o, "gradientPreset");
+        if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
+        p.blend = getInt(o, "blend", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
+    if (type == "fractalZoomer")
+    {
+        FractalZoomerParams p;
+        p.type = getInt(o, "ftype", 0);
+        p.centerX = static_cast<float>(getDouble(o, "centerX", -0.743643887));
+        p.centerY = static_cast<float>(getDouble(o, "centerY", 0.131825904));
+        p.juliaX = static_cast<float>(getDouble(o, "juliaX", -0.8));
+        p.juliaY = static_cast<float>(getDouble(o, "juliaY", 0.156));
+        p.maxIter = getInt(o, "maxIter", 200);
+        p.zoomSpeed = static_cast<float>(getDouble(o, "zoomSpeed", 1.02));
+        p.rotationSpeed = static_cast<float>(getDouble(o, "rotationSpeed", 0.0));
+        p.feedback = static_cast<float>(getDouble(o, "feedback", 0.5));
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 0.05));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
+        p.gradientPreset = getStr(o, "gradientPreset");
+        if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
+        p.insideColor = getColor(o, "insideColor", 0x000000);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
+    if (type == "strangeAttractor")
+    {
+        StrangeAttractorParams p;
+        p.type = getInt(o, "ftype", 0);
+        p.a = static_cast<float>(getDouble(o, "a", 1.4));
+        p.b = static_cast<float>(getDouble(o, "b", 1.6));
+        p.c = static_cast<float>(getDouble(o, "c", 1.0));
+        p.d = static_cast<float>(getDouble(o, "d", 0.7));
+        p.points = getInt(o, "points", 6000);
+        p.scale = static_cast<float>(getDouble(o, "scale", 0.28));
+        p.rotation = static_cast<float>(getDouble(o, "rotation", 0.0));
+        p.rotationSpeed = static_cast<float>(getDouble(o, "rotationSpeed", 0.08));
+        p.color = getColor(o, "color", 0x66CCFF);
+        p.useGradient = getBool(o, "useGradient", true);
+        p.gradientPreset = getStr(o, "gradientPreset");
+        if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
+        p.dotSize = static_cast<float>(getDouble(o, "dotSize", 2.0));
+        p.blend = getInt(o, "blend", 1);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
+    if (type == "flame")
+    {
+        FlameParams p;
+        p.variation = getInt(o, "variation", 0);
+        p.functions = getInt(o, "functions", 3);
+        p.points = getInt(o, "points", 20000);
+        p.scale = static_cast<float>(getDouble(o, "scale", 0.5));
+        p.rotation = static_cast<float>(getDouble(o, "rotation", 0.0));
+        p.rotationSpeed = static_cast<float>(getDouble(o, "rotationSpeed", 0.04));
+        p.gradientPreset = getStr(o, "gradientPreset");
+        if (p.gradientPreset.empty()) p.gradientPreset = "Fire";
+        p.dotSize = static_cast<float>(getDouble(o, "dotSize", 1.5));
+        p.blend = getInt(o, "blend", 1);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
+    if (type == "reactionDiffusion")
+    {
+        ReactionDiffusionParams p;
+        p.feed = static_cast<float>(getDouble(o, "feed", 0.055));
+        p.kill = static_cast<float>(getDouble(o, "kill", 0.062));
+        p.diffA = static_cast<float>(getDouble(o, "diffA", 1.0));
+        p.diffB = static_cast<float>(getDouble(o, "diffB", 0.5));
+        p.stepsPerFrame = getInt(o, "stepsPerFrame", 8);
+        p.seedOnBeat = getBool(o, "seedOnBeat", true);
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 1.0));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
+        p.gradientPreset = getStr(o, "gradientPreset");
+        if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
+        p.blend = getInt(o, "blend", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
     if (type == "bufferBlend")
     {
         BufferBlendParams p;
@@ -1067,6 +1459,16 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const MultiplierParams&) const { return "multiplier"; }
         QString operator()(const VideoDelayParams&) const { return "videoDelay"; }
         QString operator()(const MultiDelayParams&) const { return "multiDelay"; }
+        QString operator()(const Fractal2DParams&) const { return "fractal2D"; }
+        QString operator()(const DomainWarpParams&) const { return "domainWarp"; }
+        QString operator()(const Fractal3DParams&) const { return "fractal3D"; }
+        QString operator()(const LyapunovParams&) const { return "lyapunov"; }
+        QString operator()(const KleinianParams&) const { return "kleinian"; }
+        QString operator()(const FractalZoomerParams&) const { return "fractalZoomer"; }
+        QString operator()(const StrangeAttractorParams&) const { return "strangeAttractor"; }
+        QString operator()(const FlameParams&) const { return "flame"; }
+        QString operator()(const ReactionDiffusionParams&) const { return "reactionDiffusion"; }
+        QString operator()(const SetRenderModeParams&) const { return "setRenderMode"; }
         QString operator()(const DebugBarsParams&) const { return "debugBars"; }
         QString operator()(const PassthroughParams&) const { return "passthrough"; }
     };

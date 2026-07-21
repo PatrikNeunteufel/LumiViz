@@ -102,6 +102,16 @@ public:
     void updateSpectrum(const float* spectrum, int count) override;
     void updateWaveform(const float* waveform, int count) override;
 
+    /**
+     * @brief Feed per-channel (stereo) audio. `specInterleaved` holds
+     *        binsPerCh × channels FFT bins (bin*channels + ch); `waveInterleaved`
+     *        holds frames × channels samples. De-interleaved into L/R buffers.
+     *        Channels < 2 → L and R receive the same (mono) data.
+     */
+    void updateAudioStereo(const float* specInterleaved, int binsPerCh,
+                           const float* waveInterleaved, int frames,
+                           int channels) override;
+
 protected:
     // =========================================================================
     // Override Points
@@ -171,6 +181,11 @@ protected:
      */
     [[nodiscard]] std::vector<float> getWaveform() const;
 
+    /** @brief Per-channel spectrum/waveform (fall back to the mono copy if no
+     *  stereo data has been fed). Channel 0 = left, 1 = right. */
+    [[nodiscard]] std::vector<float> getSpectrumChannel(int channel) const;
+    [[nodiscard]] std::vector<float> getWaveformChannel(int channel) const;
+
     /**
      * @brief Check if new audio data is available
      * @return true if audio data was updated since last check
@@ -189,5 +204,7 @@ private:
     mutable QMutex m_audioMutex;
     std::vector<float> m_spectrum;
     std::vector<float> m_waveform;
+    std::vector<float> m_spectrumL, m_spectrumR;  // per-channel (empty = no stereo)
+    std::vector<float> m_waveformL, m_waveformR;
     bool m_hasNewAudioData = false;
 };
