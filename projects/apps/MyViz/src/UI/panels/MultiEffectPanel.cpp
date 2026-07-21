@@ -104,6 +104,7 @@ const std::vector<EffectType>& effectPalette()
         {"Oscilliscope Star", [] { return EffectParams{OscStarParams{}}; }},
         {"Ring", [] { return EffectParams{OscRingParams{}}; }},
         {"Rotating Stars", [] { return EffectParams{RotatingStarsParams{}}; }},
+        {"Picture", [] { return EffectParams{PictureParams{}}; }},
         {"Channel Shift", [] { return EffectParams{ChannelShiftParams{}}; }},
         {"Color Reduction", [] { return EffectParams{ColorReductionParams{}}; }},
         {"Multiplier", [] { return EffectParams{MultiplierParams{}}; }},
@@ -1108,6 +1109,17 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
     else if (std::holds_alternative<RotatingStarsParams>(params))
     {
         auto* info = new QLabel(tr("Rotating stars — audio-reactive, cycled colors"), m_propContainer);
+        info->setWordWrap(true);
+        form->addRow(info);
+    }
+    else if (auto* p = std::get_if<PictureParams>(&params))
+    {
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<PictureParams>(n.params).blend = v; });
+        addBool(tr("Keep aspect"), p->keepAspect, [](ChainNode& n, bool v) { std::get<PictureParams>(n.params).keepAspect = v; });
+        const QString status = p->imageData.empty()
+            ? tr("⚠ image not embedded: %1").arg(QString::fromStdString(p->filename))
+            : tr("✓ image embedded (%1 KB)").arg(static_cast<int>(p->imageData.size() * 3 / 4 / 1024));
+        auto* info = new QLabel(status, m_propContainer);
         info->setWordWrap(true);
         form->addRow(info);
     }

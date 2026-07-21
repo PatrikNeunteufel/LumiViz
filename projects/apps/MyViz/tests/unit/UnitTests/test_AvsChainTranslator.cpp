@@ -432,6 +432,20 @@ TEST_SUITE("AvsChainTranslator")
         REQUIRE(c.colors.size() == 2);
     }
 
+    TEST_CASE("Picture (id 34): Dateiname + Blend/Aspect, kein Embed im Translator")
+    {
+        EffectNode pic = builtin(34);
+        pic.code = {{"filename", "bg.bmp"}};
+        pic.fields = {{"enabled", 1}, {"blend", 0}, {"blendavg", 1}, {"ratio", 1}};
+        const TranslationResult t = translateAvsTree(makeParsed({pic}));
+        REQUIRE(std::holds_alternative<PictureParams>(t.root.children[0].params));
+        const auto& p = std::get<PictureParams>(t.root.children[0].params);
+        CHECK(p.filename == "bg.bmp");
+        CHECK(p.blend == 2);          // blendavg -> 50/50
+        CHECK(p.keepAspect);          // ratio != 0
+        CHECK(p.imageData.empty());   // embed happens app-side, not here
+    }
+
     TEST_CASE("verschachtelte Liste mit Blend wird uebernommen")
     {
         EffectNode inner;

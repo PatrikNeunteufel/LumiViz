@@ -166,9 +166,11 @@ Die meisten Module brauchen **keine** neue Infra (Schicht 4 = Shader über den
 bestehenden Ping-Pong-Surfaces). Ausnahmen, jeweils **einmal** zu bauen und dann
 von mehreren Modulen genutzt:
 
-1. **Bild-Lader** (für Texer II, Picture, Picture II, Texer) — Pfadauflösung
-   relativ zum Preset, `QImage`→GL-Textur, Caching per `nodeId`/Pfad, Lizenz/Asset-
-   Handhabung. Blockiert Batch F/G. **Entscheid nötig** (§6.1).
+1. **Bild-Lader** (für Texer II, Picture, Picture II, Texer) — ✅ **Kern gebaut**
+   (Session 36): Einback-Post-Pass in `loadAvsFile` (Auflösung relativ zur `.avs`,
+   Datei→base64→`imageData`), Render-Seite base64→`QImage`→GL-Textur (per `nodeId`).
+   **Offen:** konfigurierbarer Assets-Ordner als Fallback + Nutzung durch Texer II/
+   Picture II/Texer.
 2. **Frame-Min/Max-Reduktion** (für Normalise) — GL-Reduktion oder CPU-Readback
    des verkleinerten Frames. Klein, nur Normalise.
 3. **GDI/QPainter-Text-Renderer** (nur Text) — separat, spät.

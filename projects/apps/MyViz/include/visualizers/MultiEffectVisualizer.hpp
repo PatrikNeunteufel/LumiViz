@@ -163,6 +163,11 @@ private:
         unsigned int cmTexture = 0;   ///< GL 256x1 RGB texture (deleted in onCleanup)
         std::string cmSnapshot;       ///< stop snapshot the texture was built from
 
+        // Picture: decoded image texture (r_picture)
+        unsigned int picTexture = 0;  ///< GL RGBA texture (deleted in onCleanup)
+        int picW = 0;
+        int picH = 0;
+
         // Movement / Dynamic Movement: scripted displacement grid
         std::unique_ptr<lumi::modules::ScriptGridModule> grid;
         std::string gridCompiled;
@@ -340,6 +345,8 @@ private:
                     const lumi::multieffect::OscRingParams& params);
     void runRotatingStars(const lumi::multieffect::ChainNode& node,
                           const lumi::multieffect::RotatingStarsParams& params);
+    void runPicture(const lumi::multieffect::ChainNode& node,
+                    const lumi::multieffect::PictureParams& params);
     /// Draw a scope point-list (additive) via the shared ScopeRenderer.
     void drawScopeShape(const std::vector<lumi::modules::SuperscopePoint>& pts, bool dots);
     void runDynamicMovement(const lumi::multieffect::ChainNode& node,
@@ -440,6 +447,7 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_ddmShader;    ///< Dynamic Distance Modifier (r_ddm)
     std::unique_ptr<QOpenGLShaderProgram> m_colorMapShader;  ///< Color Map APE
     std::unique_ptr<QOpenGLShaderProgram> m_bufferBlendShader;  ///< Buffer blend APE
+    std::unique_ptr<QOpenGLShaderProgram> m_pictureShader;      ///< Picture (r_picture)
     std::unique_ptr<QOpenGLShaderProgram> m_colorClipShader;    ///< Color Clip (r_contrast)
     std::unique_ptr<QOpenGLShaderProgram> m_uniqueToneShader;   ///< Unique Tone (r_onetone)
     std::unique_ptr<QOpenGLShaderProgram> m_interleaveShader;   ///< Interleave (r_interleave)

@@ -552,6 +552,15 @@ inline void decodeBassSpin(Reader& r, EffectNode& n)   // r_bspin.cpp
         readField(r, n, "color1") && readField(r, n, "mode");
 }
 
+inline void decodePicture(Reader& r, EffectNode& n)   // r_picture.cpp
+{
+    readField(r, n, "enabled") && readField(r, n, "blend") &&
+        readField(r, n, "blendavg") && readField(r, n, "adapt") &&
+        readField(r, n, "persist");
+    n.code.push_back(CodeSlot{"filename", r.loadCString()});  // NUL-terminated name
+    readField(r, n, "ratio") && readField(r, n, "axis_ratio");
+}
+
 inline void decodeColorClip(Reader& r, EffectNode& n)   // r_contrast.cpp
 {
     if (!readField(r, n, "enabled")) return;
@@ -746,6 +755,7 @@ inline bool decodeBuiltin(std::int32_t builtinIndex, Reader& r, EffectNode& node
         case 8:  decodeMovingParticle(r, node); break;
         case 12: decodeColorClip(r, node); break;
         case 23: decodeInterleave(r, node); break;
+        case 34: decodePicture(r, node); break;
         case 38: decodeUniqueTone(r, node); break;
         case 35: decodeDynamicDistanceModifier(r, node); break;
         case 42: decodeDynamicShift(r, node); break;

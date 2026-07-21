@@ -569,6 +569,29 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{RotatingStarsParams{}}) == "rotatingStars");
     }
 
+    TEST_CASE("Picture-Parameter + eingebettetes Bild ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        PictureParams pp;
+        pp.filename = "bg.png";
+        pp.imageData = "QUJDREVG";  // base64 stand-in
+        pp.blend = 1;
+        pp.keepAspect = false;
+        leaf.params = pp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<PictureParams>(restored.children[0].params);
+        CHECK(p.filename == "bg.png");
+        CHECK(p.imageData == "QUJDREVG");
+        CHECK(p.blend == 1);
+        CHECK_FALSE(p.keepAspect);
+        CHECK(effectTypeKey(EffectParams{PictureParams{}}) == "picture");
+    }
+
     TEST_CASE("Interferences-Parameter ueberleben den Round-Trip")
     {
         ChainNode root;

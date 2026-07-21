@@ -291,6 +291,13 @@ struct WriteVisitor
         for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
         o["colors"] = cols;
     }
+    void operator()(const PictureParams& p) const
+    {
+        o["filename"] = QString::fromStdString(p.filename);
+        o["imageData"] = QString::fromStdString(p.imageData);
+        o["blend"] = p.blend;
+        o["keepAspect"] = p.keepAspect;
+    }
     void operator()(const ConvolutionParams& p) const
     {
         o["edgeMode"] = p.edgeMode;
@@ -747,6 +754,15 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
         return p;
     }
+    if (type == "picture")
+    {
+        PictureParams p;
+        p.filename = getStr(o, "filename");
+        p.imageData = getStr(o, "imageData");
+        p.blend = getInt(o, "blend", 2);
+        p.keepAspect = getBool(o, "keepAspect", true);
+        return p;
+    }
     if (type == "convolution")
     {
         ConvolutionParams p;
@@ -954,6 +970,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const OscStarParams&) const { return "oscStar"; }
         QString operator()(const OscRingParams&) const { return "oscRing"; }
         QString operator()(const RotatingStarsParams&) const { return "rotatingStars"; }
+        QString operator()(const PictureParams&) const { return "picture"; }
         QString operator()(const ConvolutionParams&) const { return "convolution"; }
         QString operator()(const NormaliseParams&) const { return "normalise"; }
         QString operator()(const MultiFilterParams&) const { return "multiFilter"; }

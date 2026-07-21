@@ -217,6 +217,26 @@ TEST_CASE("AvsParser: mehrere Effekte in Reihenfolge")
     CHECK(r.root.children[1].field("roundmode") == 2);
 }
 
+TEST_CASE("AvsParser: Picture (id 34) — NUL-Dateiname zwischen Feldern")
+{
+    Bytes pic;
+    pic.i32(1).i32(0).i32(1).i32(0).i32(6);  // enabled, blend, blendavg, adapt, persist
+    pic.text("bg.bmp").u8(0);                // NUL-terminated filename
+    pic.i32(1).i32(0);                       // ratio, axis_ratio
+    Bytes b;
+    b.signature().u8(0x00).effect(34, pic);
+
+    const ParseResult r = parse(b.vec());
+    REQUIRE(r.ok);
+    REQUIRE(r.effectCount() == 1);
+    const EffectNode& fx = r.root.children[0];
+    CHECK(fx.decoded);
+    CHECK(fx.name == "Picture");
+    CHECK(fx.field("blendavg") == 1);
+    CHECK(fx.slot("filename") == "bg.bmp");
+    CHECK(fx.field("ratio") == 1);
+}
+
 TEST_CASE("AvsParser: Jheriko Global APE — reserved-Skip + NUL-Codes")
 {
     Bytes jg;

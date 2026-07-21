@@ -18,6 +18,11 @@
 #include <QOpenGLExtraFunctions>
 #include <QOpenGLFramebufferObjectFormat>
 #include <QOpenGLFunctions>
+#include <QByteArray>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QImage>
 #include <QString>
 
 #include <algorithm>
@@ -633,6 +638,44 @@ void main()
 }
 )";
 
+// AVS "Render / Picture" (ID 34): draw an embedded image (uImg) over the frame,
+// letterboxed when uKeepAspect, blended per uBlend (0 replace, 1 add, 2 50/50).
+const char* kPictureFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform sampler2D uImg;
+uniform int uBlend;
+uniform int uKeepAspect;
+uniform vec2 uImgSize;
+uniform vec2 uRes;
+out vec4 fragColor;
+void main()
+{
+    vec3 fb = texture(uTex, vTex).rgb;
+    vec2 uv = vTex;
+    if (uKeepAspect == 1)
+    {
+        float sa = uRes.x / uRes.y;
+        float ia = uImgSize.x / max(uImgSize.y, 1.0);
+        vec2 scale = vec2(1.0);
+        if (ia > sa) scale.y = sa / ia; else scale.x = ia / sa;
+        uv = (vTex - vec2(0.5)) / scale + vec2(0.5);
+    }
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0)
+    {
+        fragColor = vec4(fb, 1.0);
+        return;
+    }
+    vec3 img = texture(uImg, vec2(uv.x, 1.0 - uv.y)).rgb;  // image is top-down
+    vec3 r;
+    if (uBlend == 1)      r = min(fb + img, vec3(1.0));
+    else if (uBlend == 2) r = (fb + img) * 0.5;
+    else                  r = img;
+    fragColor = vec4(r, 1.0);
+}
+)";
+
 // AVS "Trans / Color Clip" (ID 12): replace pixels matching a colour threshold.
 const char* kColorClipFragmentShader = R"(
 #version 330 core
@@ -946,6 +989,34 @@ CompileResult MultiEffectVisualizer::recompileChain()
     return compileChain(m_root);
 }
 
+namespace {
+/// Resolve Picture filenames against the .avs directory and base64-embed the
+/// image bytes into the params (decision: self-contained .lvfx). Missing files
+/// leave imageData empty (Picture then renders as a no-op) + a report note.
+void embedPictureImages(ChainNode& node, const QString& baseDir, QStringList* report)
+{
+    if (auto* p = std::get_if<PictureParams>(&node.params))
+    {
+        if (p->imageData.empty() && !p->filename.empty())
+        {
+            const QString fname = QString::fromStdString(p->filename);
+            QString resolved = QDir(baseDir).filePath(fname);
+            if (!QFileInfo::exists(resolved))
+                resolved = QDir(baseDir).filePath(QFileInfo(fname).fileName());
+            if (QFileInfo::exists(resolved))
+            {
+                QFile file(resolved);
+                if (file.open(QIODevice::ReadOnly))
+                    p->imageData = file.readAll().toBase64().toStdString();
+            }
+            if (p->imageData.empty() && report != nullptr)
+                report->append(QStringLiteral("Picture: image not found: %1").arg(fname));
+        }
+    }
+    for (ChainNode& child : node.children) embedPictureImages(child, baseDir, report);
+}
+}  // namespace
+
 bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outReport)
 {
     const lumi::avs::ParseResult parsed =
@@ -960,6 +1031,10 @@ bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outRep
             outReport->append(QString::fromStdString(line));
         }
     }
+
+    // Resolve + embed Picture images relative to the .avs directory (appends any
+    // "image not found" notes after the translation report).
+    embedPictureImages(translated.root, QFileInfo(path).absolutePath(), outReport);
     // The new tree reuses node ids 1..N, colliding with the old runtimes; flag
     // a reset so the render thread frees their GL objects and starts fresh.
     m_pendingRuntimeReset = true;
@@ -1027,6 +1102,7 @@ void MultiEffectVisualizer::onCleanup()
     m_ddmShader.reset();
     m_colorMapShader.reset();
     m_bufferBlendShader.reset();
+    m_pictureShader.reset();
     m_colorClipShader.reset();
     m_uniqueToneShader.reset();
     m_interleaveShader.reset();
@@ -1087,6 +1163,7 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_ddmShader = makeProgram(kQuadVertexShader, kDdmFragmentShader);
     m_colorMapShader = makeProgram(kQuadVertexShader, kColorMapFragmentShader);
     m_bufferBlendShader = makeProgram(kQuadVertexShader, kBufferBlendFragmentShader);
+    m_pictureShader = makeProgram(kQuadVertexShader, kPictureFragmentShader);
     m_colorClipShader = makeProgram(kQuadVertexShader, kColorClipFragmentShader);
     m_uniqueToneShader = makeProgram(kQuadVertexShader, kUniqueToneFragmentShader);
     m_interleaveShader = makeProgram(kQuadVertexShader, kInterleaveFragmentShader);
@@ -1108,7 +1185,8 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_interfShader == nullptr || m_waterShader == nullptr ||
         m_bumpShader == nullptr || m_shiftShader == nullptr ||
         m_ddmShader == nullptr || m_colorMapShader == nullptr ||
-        m_bufferBlendShader == nullptr || m_colorClipShader == nullptr ||
+        m_bufferBlendShader == nullptr || m_pictureShader == nullptr ||
+        m_colorClipShader == nullptr ||
         m_uniqueToneShader == nullptr || m_interleaveShader == nullptr ||
         m_convolutionShader == nullptr || m_normaliseShader == nullptr ||
         m_multiFilterShader == nullptr || m_addBordersShader == nullptr ||
@@ -1213,6 +1291,7 @@ void MultiEffectVisualizer::resetRuntimes()
         {
             if (rt.lutTexture != 0) f->glDeleteTextures(1, &rt.lutTexture);
             if (rt.cmTexture != 0) f->glDeleteTextures(1, &rt.cmTexture);
+            if (rt.picTexture != 0) f->glDeleteTextures(1, &rt.picTexture);
         }
     }
     m_listRuntimes.clear();  // slot hosts / FBOs die with their GL-frame owner
@@ -1395,6 +1474,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const OscStarParams& params) const { self.runOscStar(node, params); }
         void operator()(const OscRingParams& params) const { self.runOscRing(node, params); }
         void operator()(const RotatingStarsParams& params) const { self.runRotatingStars(node, params); }
+        void operator()(const PictureParams& params) const { self.runPicture(node, params); }
         void operator()(const ChannelShiftParams& params) const { self.runChannelShift(node, params); }
         void operator()(const ColorReductionParams& params) const { self.runColorReduction(params); }
         void operator()(const MultiplierParams& params) const { self.runMultiplier(params); }
@@ -2571,6 +2651,62 @@ void MultiEffectVisualizer::runBassSpin(const ChainNode& node,
                                                         mk(-xp, -yp)};
         drawScopeShape(pts, false);
     }
+}
+
+void MultiEffectVisualizer::runPicture(const ChainNode& node, const PictureParams& params)
+{
+    if (params.imageData.empty()) return;  // unresolved image -> no-op
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    // Decode the embedded image once (base64 -> QImage -> GL texture).
+    if (rt.picTexture == 0)
+    {
+        const QByteArray raw = QByteArray::fromBase64(
+            QByteArray::fromStdString(params.imageData));
+        QImage img;
+        if (!img.loadFromData(raw)) return;
+        img = img.convertToFormat(QImage::Format_RGBA8888);
+        f->glGenTextures(1, &rt.picTexture);
+        f->glBindTexture(GL_TEXTURE_2D, rt.picTexture);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0,
+                        GL_RGBA, GL_UNSIGNED_BYTE, img.constBits());
+        rt.picW = img.width();
+        rt.picH = img.height();
+    }
+    if (rt.picTexture == 0) return;
+
+    SurfacePair& pair = active();
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    m_pictureShader->bind();
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    m_pictureShader->setUniformValue("uTex", 0);
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.picTexture);
+    m_pictureShader->setUniformValue("uImg", 1);
+    f->glActiveTexture(GL_TEXTURE0);
+    m_pictureShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_pictureShader->setUniformValue("uKeepAspect", params.keepAspect ? 1 : 0);
+    m_pictureShader->setUniformValue(
+        "uImgSize", QVector2D(static_cast<float>(std::max(1, rt.picW)),
+                              static_cast<float>(std::max(1, rt.picH))));
+    m_pictureShader->setUniformValue("uRes",
+                                     QVector2D(static_cast<float>(m_surfaceWidth),
+                                               static_cast<float>(m_surfaceHeight)));
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    m_pictureShader->release();
+    pair.partner()->release();
+    pair.swap();
+    bindActive();
 }
 
 void MultiEffectVisualizer::runOscStar(const ChainNode& node, const OscStarParams& params)

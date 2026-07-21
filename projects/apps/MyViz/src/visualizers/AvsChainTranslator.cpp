@@ -28,6 +28,7 @@ enum AvsId
     kBassSpin = 7,
     kRotatingStars = 13,
     kOscRing = 14,
+    kPicture = 34,
     kMovingParticle = 8,
     kColorClip = 12,
     kInterleave = 23,
@@ -472,6 +473,18 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             for (std::uint32_t c : src.colors)
                 p.colors.push_back(avsColor(static_cast<std::int32_t>(c)));
             if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
+            out.params = std::move(p);
+            return true;
+        }
+
+        case kPicture:
+        {
+            PictureParams p;
+            p.filename = slotStr(src, "filename");
+            p.blend = src.field("blend") != 0 ? 1 : (src.field("blendavg") != 0 ? 2 : 0);
+            p.keepAspect = src.field("ratio") != 0;
+            // imageData is filled by the app-side embed pass (needs the .avs dir).
+            out.enabled = src.field("enabled") != 0;
             out.params = std::move(p);
             return true;
         }

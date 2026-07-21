@@ -286,6 +286,21 @@ struct InterleaveParams
     int beatDuration = 4;       ///< ease length
 };
 
+/**
+ * AVS "Render / Picture" (ID 34, r_picture.cpp): display a bitmap over the frame.
+ * The original referenced an external file (`filename`); on import the resolved
+ * image bytes are base64-embedded into `imageData` (decision: self-contained
+ * .lvfx). `blend` 0 replace, 1 additive, 2 50/50; `keepAspect` letterboxes.
+ * Empty `imageData` (file not found) renders as a no-op.
+ */
+struct PictureParams
+{
+    std::string filename;    ///< original AVS filename (reference only)
+    std::string imageData;   ///< base64 of the raw image file ("" = unresolved)
+    int blend = 2;           ///< 0 replace, 1 additive, 2 50/50
+    bool keepAspect = true;  ///< preserve the image aspect (letterbox)
+};
+
 /** AVS "Trans / Fast Brightness" (ID 44): dir 0 = x2, 1 = x0.5, 2 = off. */
 struct FastBrightnessParams
 {
@@ -841,7 +856,7 @@ using EffectParams =
                  InterleaveParams, ConvolutionParams, NormaliseParams,
                  MultiFilterParams, AddBordersParams, SimpleScopeParams,
                  BassSpinParams, OscStarParams, OscRingParams, RotatingStarsParams,
-                 ChannelShiftParams, ColorReductionParams,
+                 PictureParams, ChannelShiftParams, ColorReductionParams,
                  MultiplierParams, VideoDelayParams, MultiDelayParams,
                  DebugBarsParams, PassthroughParams>;
 
@@ -944,6 +959,7 @@ struct CompileResult
         const char* operator()(const OscStarParams&) const { return "Oscilliscope Star"; }
         const char* operator()(const OscRingParams&) const { return "Ring"; }
         const char* operator()(const RotatingStarsParams&) const { return "Rotating Stars"; }
+        const char* operator()(const PictureParams&) const { return "Picture"; }
         const char* operator()(const ChannelShiftParams&) const { return "Channel Shift"; }
         const char* operator()(const ColorReductionParams&) const { return "Color Reduction"; }
         const char* operator()(const MultiplierParams&) const { return "Multiplier"; }

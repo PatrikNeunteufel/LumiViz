@@ -37,10 +37,10 @@ Panel + Tests). Das Bau-Rezept dazu: [Import_Modul_Umsetzungsplan.md](Import_Mod
 - `A` = schwer testbar (Bild-/Video-/GDI-/externe-DLL-Bindung).
 - `—` = kein Render (no-op/Meta), nichts sichtzutesten.
 
-**Ist-Stand:** 41 Builtins ✅ + Set Render Mode ◐ · 12 APEs ✅ + Framerate Limiter ◐.
-Nur noch offen: Text + Picture (Builtins), Texer II/Picture II/Texer/Triangle (APEs) —
-alle Asset-/GDI-gebunden (Batch F/G). Unit-Suite grün (280 Cases); GL-Sichttest
-von Batch A–E + §5.2-Block steht aus.
+**Ist-Stand:** 42 Builtins ✅ + Set Render Mode ◐ · 12 APEs ✅ + Framerate Limiter ◐.
+Bild-Lader (base64-Einbettung) steht → Picture ✅. Nur noch offen: Text (Builtin, GDI),
+Texer II/Picture II/Texer/Triangle (APEs). Unit-Suite grün (283 Cases); GL-Sichttest
+von Batch A–F + §5.2-Block steht aus.
 
 ---
 
@@ -85,7 +85,7 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 31 | Water Bump | Trans | ✅ | `WaterBumpParams` | U·S offen |
 | 32 | AVI | Render | ✖ | Video-Wiedergabe | — |
 | 33 | Custom BPM | Misc | ✅ | `CustomBpmParams` | U·S offen |
-| 34 | Picture | Render | ⬜ | `r_picture.cpp` (Bild) — Batch G | A·S |
+| 34 | Picture | Render | ✅ | `PictureParams` (Bild base64-eingebettet + Blend/Aspect) | U·A·S offen |
 | 35 | **Dynamic Distance Modifier** | Trans | ✅ | `DynamicDistanceModifierParams` (radiale d-LUT) | U·S offen |
 | 36 | SuperScope | Render | ✅ | `SuperScopeParams` (+Figuren/Farbe) | U·S offen |
 | 37 | Invert | Trans | ✅ | `InvertParams` | U·S offen |
@@ -98,7 +98,7 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 44 | Fast Brightness | Trans | ✅ | `FastBrightnessParams` | U·S offen |
 | 45 | Color Modifier | Trans | ✅ | `ColorModifierParams` | U·S offen |
 
-**Builtin-Bilanz:** ✅ 41 · ◐ 1 (Set Render Mode) · ⬜ 2 (Text, Picture) · ✖ 2.
+**Builtin-Bilanz:** ✅ 42 · ◐ 1 (Set Render Mode) · ⬜ 1 (Text) · ✖ 2.
 
 ---
 
