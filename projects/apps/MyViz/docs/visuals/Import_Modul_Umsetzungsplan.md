@@ -133,19 +133,30 @@ Gradient-LUT (wie Color Map).
    variabel), Mandelbox (Scale/Fold), Menger-Schwamm, Quaternion-Julia**. Params:
    Kamera (Pos/Orbit/FOV), `power`/`scale`/`fold`, `maxSteps`, `maxIter`, Licht
    (Richtung/Ambient/AO), Farbe, Fog. EEL/Audio moduliert power/rotation/orbit/fold.
-3. **Drittes Modul** — Auswahl (§6.5):
-   - **(a) Domain-Warp fBm** (organischer Noise-Fraktal, fBm + Domain-Warping):
-     billig, sehr audio-reaktiv, „Plasma/Nebel"-Look. **Empfehlung** (bester
-     Aufwand/Nutzen, ergänzt 2D/3D).
-   - **(b) Flame / IFS** (Iterated Function System, Apophysis-Stil): Punkt-
-     Akkumulation über Feedback/Compute, spektakulär, sehr reaktiv. Aufwand hoch.
-   - **(c) Fractal-Zoomer** (Fractal2D + `FeedbackBuffer` = Endlos-Zoom-Trip),
-     nutzt vorhandene Infra.
+3. **Domain-Warp fBm** (organischer Noise-Fraktal, fBm + Domain-Warping): billig,
+   sehr audio-reaktiv, „Plasma/Nebel"-Look. Fullscreen-Shader.
+4. **Flame / IFS** (Iterated Function System, Apophysis-Stil): Punkt-Akkumulation
+   über `FeedbackBuffer`/Akkumulationspuffer + Ton-Mapping; spektakulär, sehr
+   reaktiv (Variationen/Gewichte per Audio). Aufwand hoch.
+5. **Fractal-Zoomer** (Fractal2D + `FeedbackBuffer` = Endlos-Zoom-Trip), nutzt
+   vorhandene Feedback-Infra — schlank, wenn Fractal2D steht.
+
+6. **Strange Attractors** (Lorenz · Clifford · De Jong · Aizawa): Punktwolken-
+   Render (2D/3D), Parameter per Audio moduliert — sehr reaktiv, „lebendig".
+7. **Reaction-Diffusion** (Gray-Scott): organisch-wucherndes Feedback-Muster
+   (Ping-Pong-Puffer wie Water Bump), hypnotisch.
+8. **Kleinian / hyperbolische Kachelung** (Poincaré-Scheibe, morphende {p,q}-Tilings).
+9. **Lyapunov-Fraktal** (Markus-Lyapunov, „Zircon Zity"): biomorphe Zonen,
+   Sequenz-gesteuert.
+
+**Als Typ-Erweiterungen** (kein eigenes Modul): Fractal2D bekommt zusätzlich
+**Phoenix · Magnet · Nova**; Fractal3D zusätzlich **KIFS** (Kaleidoscopic IFS).
+
+**Weiterer Backlog:** Buddhabrot/Nebulabrot, Apollonian-Gasket, Sierpinski/Menger-2D,
+DLA (Diffusion-Limited Aggregation), Newton-Basins mit Pol-Animation.
 
 **Querschnitt:** gemeinsame Fraktal-Farbpalette (ColorGradient-LUT) + optionale
-**Audio-Parameter-Bindung** (Modul-übergreifend). **Backlog-Ideen:** Kleinian/
-hyperbolische Kachelung, Lyapunov-Fraktal, Buddhabrot, Apollonian-Gasket,
-Quaternion-Mandelbrot-Slices.
+**Audio-Parameter-Bindung** (Modul-übergreifend: bass/mid/treble/beat → beliebiger Param).
 
 ---
 
@@ -202,16 +213,20 @@ Alle vier festgelegt — verbindlich für den Bau:
 
 **Offen:**
 
-5. **Fraktal-Modul #3 (Batch H):** Domain-Warp fBm (Empfehlung) · Flame/IFS ·
-   Fractal-Zoomer — oder mehrere. Umsetzung erst **nach E–G**.
+5. **Fraktal-Module (Batch H):** ✅ entschieden (Patrik) — **alle 9 Module**
+   (Fractal2D, Fractal3D, Domain-Warp fBm, Flame/IFS, Fractal-Zoomer, Strange
+   Attractors, Reaction-Diffusion, Kleinian-Kachelung, Lyapunov). Typ-Erweiterungen
+   (Phoenix/Magnet/Nova, KIFS) inklusive. Umsetzung erst **nach E–G**; ggf. in
+   Teilblöcke H1/H2 geschnitten.
 
 ---
 
 ## 7. Changelog
 
 - **0.4.0** (2026-07-21): **Batch H — Fraktal-Module** (original, host-native, 5-Schichten-
-  Rezept): Fractal2D (Mandelbrot/Julia/…), Fractal3D (Mandelbulb/Mandelbox/…), drittes
-  Modul zur Auswahl (Domain-Warp fBm empfohlen); Audio/EEL-Modulation; §6.5 offen.
+  Rezept): 9 Module beschlossen (Fractal2D, Fractal3D, Domain-Warp fBm, Flame/IFS,
+  Fractal-Zoomer, Strange Attractors, Reaction-Diffusion, Kleinian, Lyapunov) +
+  Typ-Erweiterungen; Audio/EEL-Modulation; §6.5 entschieden.
 - **0.3.0** (2026-07-21): §6 von „offen" auf **Entscheide** (Patrik) — Assets einbacken,
   Dynamic Shift Uniform-Offset, FPS-Limiter no-op+Notiz, Reihenfolge Phase 1 A–E → F–G.
 - **0.2.0** (2026-07-21): Moving Particle + Set-Render-Mode-Blend-Vervollständigung

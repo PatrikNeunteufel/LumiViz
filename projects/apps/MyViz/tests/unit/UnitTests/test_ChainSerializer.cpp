@@ -505,6 +505,70 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{AddBordersParams{}}) == "addBorders");
     }
 
+    TEST_CASE("Simple-Scope / Bass-Spin ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode a;
+        SimpleScopeParams s;
+        s.source = 0; s.channel = 1; s.position = 0; s.drawMode = 1;
+        s.colors = {0xFF0000, 0x00FF00};
+        a.params = s;
+        root.children.push_back(std::move(a));
+        ChainNode b;
+        b.params = BassSpinParams{false, true, 0x111111, 0x222222, 0};
+        root.children.push_back(std::move(b));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 2);
+        const auto& ps = std::get<SimpleScopeParams>(restored.children[0].params);
+        CHECK(ps.source == 0);
+        CHECK(ps.drawMode == 1);
+        REQUIRE(ps.colors.size() == 2);
+        CHECK(ps.colors[1] == 0x00FF00u);
+        const auto& pb = std::get<BassSpinParams>(restored.children[1].params);
+        CHECK_FALSE(pb.left);
+        CHECK(pb.right);
+        CHECK(pb.colorRight == 0x222222u);
+        CHECK(effectTypeKey(EffectParams{SimpleScopeParams{}}) == "simpleScope");
+        CHECK(effectTypeKey(EffectParams{BassSpinParams{}}) == "bassSpin");
+    }
+
+    TEST_CASE("OscStar / Ring / Rotating Stars ueberleben den Round-Trip")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode a;
+        OscStarParams os; os.channel = 1; os.position = 0; os.size = 10; os.rot = 5;
+        os.colors = {0xFF0000, 0x00FF00};
+        a.params = os;
+        root.children.push_back(std::move(a));
+        ChainNode b;
+        OscRingParams rg; rg.source = 1; rg.size = 12; rg.colors = {0x0000FF};
+        b.params = rg;
+        root.children.push_back(std::move(b));
+        ChainNode c;
+        RotatingStarsParams rs; rs.colors = {0x111111, 0x222222, 0x333333};
+        c.params = rs;
+        root.children.push_back(std::move(c));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 3);
+        const auto& pa = std::get<OscStarParams>(restored.children[0].params);
+        CHECK(pa.channel == 1);
+        CHECK(pa.rot == 5);
+        REQUIRE(pa.colors.size() == 2);
+        const auto& pb = std::get<OscRingParams>(restored.children[1].params);
+        CHECK(pb.source == 1);
+        CHECK(pb.size == 12);
+        const auto& pc = std::get<RotatingStarsParams>(restored.children[2].params);
+        REQUIRE(pc.colors.size() == 3);
+        CHECK(pc.colors[2] == 0x333333u);
+        CHECK(effectTypeKey(EffectParams{OscStarParams{}}) == "oscStar");
+        CHECK(effectTypeKey(EffectParams{OscRingParams{}}) == "oscRing");
+        CHECK(effectTypeKey(EffectParams{RotatingStarsParams{}}) == "rotatingStars");
+    }
+
     TEST_CASE("Interferences-Parameter ueberleben den Round-Trip")
     {
         ChainNode root;

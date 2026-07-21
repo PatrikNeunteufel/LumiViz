@@ -508,6 +508,50 @@ inline void decodeDynamicShift(Reader& r, EffectNode& n)   // r_shift.cpp
     readField(r, n, "blend") && readField(r, n, "subpixel");
 }
 
+/// Shared "effect + num_colors + colors[]" head (r_simple/oscstar/oscring).
+inline void decodeScopeColors(Reader& r, EffectNode& n, bool hasEffect)
+{
+    if (hasEffect) readField(r, n, "effect");
+    std::int32_t nc = 0;
+    if (!r.tryI32(nc)) return;
+    if (nc <= 16)
+    {
+        std::int32_t c = 0;
+        while (static_cast<std::int32_t>(n.colors.size()) < nc && r.tryI32(c))
+            n.colors.push_back(static_cast<std::uint32_t>(c));
+    }
+    else nc = 0;
+    addField(n, "num_colors", nc);
+}
+
+inline void decodeSimple(Reader& r, EffectNode& n)   // r_simple.cpp
+{
+    decodeScopeColors(r, n, true);
+}
+
+inline void decodeOscStar(Reader& r, EffectNode& n)   // r_oscstar.cpp
+{
+    decodeScopeColors(r, n, true);
+    readField(r, n, "size") && readField(r, n, "rot");
+}
+
+inline void decodeOscRing(Reader& r, EffectNode& n)   // r_oscring.cpp
+{
+    decodeScopeColors(r, n, true);
+    readField(r, n, "size") && readField(r, n, "source");
+}
+
+inline void decodeRotatingStars(Reader& r, EffectNode& n)   // r_rotstar.cpp
+{
+    decodeScopeColors(r, n, false);  // num_colors + colors[] only (no effect field)
+}
+
+inline void decodeBassSpin(Reader& r, EffectNode& n)   // r_bspin.cpp
+{
+    readField(r, n, "enabled") && readField(r, n, "color0") &&
+        readField(r, n, "color1") && readField(r, n, "mode");
+}
+
 inline void decodeColorClip(Reader& r, EffectNode& n)   // r_contrast.cpp
 {
     if (!readField(r, n, "enabled")) return;
@@ -694,6 +738,11 @@ inline bool decodeBuiltin(std::int32_t builtinIndex, Reader& r, EffectNode& node
         case 36: decodeSuperScope(r, node); break;
         case 37: decodeInvert(r, node); break;
         case 40: decodeSetRenderMode(r, node); break;
+        case 0:  decodeSimple(r, node); break;
+        case 2:  decodeOscStar(r, node); break;
+        case 7:  decodeBassSpin(r, node); break;
+        case 13: decodeRotatingStars(r, node); break;
+        case 14: decodeOscRing(r, node); break;
         case 8:  decodeMovingParticle(r, node); break;
         case 12: decodeColorClip(r, node); break;
         case 23: decodeInterleave(r, node); break;

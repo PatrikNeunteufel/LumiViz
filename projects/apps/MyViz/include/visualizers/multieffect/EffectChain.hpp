@@ -181,6 +181,70 @@ struct BrightnessParams
 };
 
 /**
+ * AVS "Render / Simple" (ID 0, r_simple.cpp): the classic scope — an oscilloscope
+ * (waveform) or analyzer (spectrum), drawn as lines or dots, at a screen position,
+ * colour-cycled through `colors`. `source` 0 spectrum, 1 waveform.
+ */
+struct SimpleScopeParams
+{
+    int source = 1;    ///< 0 analyzer (spectrum), 1 oscilloscope (waveform)
+    int channel = 2;   ///< 0 L, 1 R, 2 center
+    int position = 2;  ///< 0 top, 1 bottom, 2 center
+    int drawMode = 0;  ///< 0 lines, 1 dots
+    std::vector<uint32_t> colors{0xFFFFFF};  ///< cycled colour table
+};
+
+/**
+ * AVS "Render / Oscilliscope Star" (ID 2, r_oscstar.cpp): the waveform drawn along
+ * 5 rotating radial spokes. `size`/`rot` 0..16; colour-cycled through `colors`.
+ */
+struct OscStarParams
+{
+    int channel = 2;   ///< 0 L, 1 R, 2 center
+    int position = 2;  ///< 0 left, 1 right, 2 center
+    int size = 8;      ///< spoke length 0..16
+    int rot = 3;       ///< rotation speed 0..16 (8 = still)
+    std::vector<uint32_t> colors{0xFFFFFF};
+};
+
+/**
+ * AVS "Render / Ring" (ID 14, r_oscring.cpp): the waveform/spectrum drawn as a
+ * closed 80-segment ring whose radius is modulated by the audio. `source`
+ * 0 waveform, 1 spectrum. `size` 0..16.
+ */
+struct OscRingParams
+{
+    int source = 0;    ///< 0 waveform, 1 spectrum
+    int channel = 2;   ///< 0 L, 1 R, 2 center
+    int position = 2;  ///< 0 left, 1 right, 2 center
+    int size = 8;      ///< base radius 0..16
+    std::vector<uint32_t> colors{0xFFFFFF};
+};
+
+/**
+ * AVS "Render / Rotating Stars" (ID 13, r_rotstar.cpp): two 5-pointed stars
+ * orbiting the centre, sized by the peak spectrum energy; colour-cycled.
+ */
+struct RotatingStarsParams
+{
+    std::vector<uint32_t> colors{0xFFFFFF};
+};
+
+/**
+ * AVS "Render / Bass Spin" (ID 7, r_bspin.cpp): two bass-reactive spinning shapes
+ * (left/right channel), drawn in the left/right screen half. `mode` 0 lines,
+ * 1 filled (line-approximated here). Spin speed follows the bass energy.
+ */
+struct BassSpinParams
+{
+    bool left = true;
+    bool right = true;
+    uint32_t colorLeft = 0xFFFFFF;
+    uint32_t colorRight = 0xFFFFFF;
+    int mode = 1;  ///< 0 lines, 1 filled (approximated as lines)
+};
+
+/**
  * AVS "Trans / Color Clip" (ID 12, r_contrast.cpp): replace pixels matching a
  * colour threshold with `outColor`. `mode` 1 below (all channels <= clip),
  * 2 above (all >= clip), 3 near (within `distance` of clip). COLORREF-swapped.
@@ -775,7 +839,8 @@ using EffectParams =
                  DotFountainParams, ColorMapParams, BufferBlendParams,
                  JherikoGlobalParams, ColorClipParams, UniqueToneParams,
                  InterleaveParams, ConvolutionParams, NormaliseParams,
-                 MultiFilterParams, AddBordersParams,
+                 MultiFilterParams, AddBordersParams, SimpleScopeParams,
+                 BassSpinParams, OscStarParams, OscRingParams, RotatingStarsParams,
                  ChannelShiftParams, ColorReductionParams,
                  MultiplierParams, VideoDelayParams, MultiDelayParams,
                  DebugBarsParams, PassthroughParams>;
@@ -874,6 +939,11 @@ struct CompileResult
         const char* operator()(const NormaliseParams&) const { return "Normalise"; }
         const char* operator()(const MultiFilterParams&) const { return "MultiFilter"; }
         const char* operator()(const AddBordersParams&) const { return "Add Borders"; }
+        const char* operator()(const SimpleScopeParams&) const { return "Simple"; }
+        const char* operator()(const BassSpinParams&) const { return "Bass Spin"; }
+        const char* operator()(const OscStarParams&) const { return "Oscilliscope Star"; }
+        const char* operator()(const OscRingParams&) const { return "Ring"; }
+        const char* operator()(const RotatingStarsParams&) const { return "Rotating Stars"; }
         const char* operator()(const ChannelShiftParams&) const { return "Channel Shift"; }
         const char* operator()(const ColorReductionParams&) const { return "Color Reduction"; }
         const char* operator()(const MultiplierParams&) const { return "Multiplier"; }

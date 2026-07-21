@@ -37,8 +37,10 @@ Panel + Tests). Das Bau-Rezept dazu: [Import_Modul_Umsetzungsplan.md](Import_Mod
 - `A` = schwer testbar (Bild-/Video-/GDI-/externe-DLL-Bindung).
 - `—` = kein Render (no-op/Meta), nichts sichtzutesten.
 
-**Ist-Stand:** 36 Builtins ✅ + Set Render Mode ◐ · 12 APEs ✅ + Framerate Limiter ◐.
-Unit-Suite grün (275 Cases); GL-Sichttest von Batch A–D + §5.2-Block steht aus.
+**Ist-Stand:** 41 Builtins ✅ + Set Render Mode ◐ · 12 APEs ✅ + Framerate Limiter ◐.
+Nur noch offen: Text + Picture (Builtins), Texer II/Picture II/Texer/Triangle (APEs) —
+alle Asset-/GDI-gebunden (Batch F/G). Unit-Suite grün (280 Cases); GL-Sichttest
+von Batch A–E + §5.2-Block steht aus.
 
 ---
 
@@ -49,21 +51,21 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 
 | id | Effekt | Kat. | Status | Modul / ref-Quelle | Test |
 |---|---|---|---|---|---|
-| 0 | Simple | Render | ⬜ | `r_simple.cpp` | U*·S |
+| 0 | Simple | Render | ✅ | `SimpleScopeParams` (Oszilloskop/Analyzer) | U·S offen |
 | 1 | Dot Plane | Render | ✅ | `DotPlaneParams` | U·S offen |
-| 2 | Oscilliscope Star | Render | ⬜ | `r_oscstar.cpp` | U*·S |
+| 2 | Oscilliscope Star | Render | ✅ | `OscStarParams` (5 rotierende Speichen) | U·S offen |
 | 3 | Fadeout | Trans | ✅ | `FadeoutParams` | U·S offen |
 | 4 | Blitter Feedback | Trans | ✅ | `BlitterFeedbackParams` | U·S offen |
 | 5 | OnBeat Clear | Render | ✅ | `OnBeatClearParams` | U·S offen |
 | 6 | Blur | Trans | ✅ | `BlurParams` | U·S offen |
-| 7 | Bass Spin | Render | ⬜ | `r_bspin.cpp` | U*·S |
+| 7 | Bass Spin | Render | ✅ | `BassSpinParams` (2 bass-reaktive Dreh-Formen) | U·S offen |
 | 8 | **Moving Particle** | Render | ✅ | `MovingParticleParams` (Feder-Partikel als Dot) | U·S offen |
 | 9 | Roto Blitter | Trans | ✅ | `RotoBlitterParams` | U·S offen |
 | 10 | SVP Loader | Render | ✖ | externe UVS/SVP-DLL | — |
 | 11 | Colorfade | Trans | ✅ | `ColorfadeParams` | U·S offen |
 | 12 | Color Clip | Trans | ✅ | `ColorClipParams` (below/above/near) | U·S offen |
-| 13 | Rotating Stars | Render | ⬜ | `r_rotstar.cpp` — Batch E | U*·S |
-| 14 | Ring | Render | ⬜ | `r_oscring.cpp` — Batch E | U*·S |
+| 13 | Rotating Stars | Render | ✅ | `RotatingStarsParams` (2 rotierende Sterne) | U·S offen |
+| 14 | Ring | Render | ✅ | `OscRingParams` (80-Segment-Ring) | U·S offen |
 | 15 | Movement | Trans | ✅ | `MovementParams` (+23 Builtin-Formeln) | U·S offen |
 | 16 | Scatter | Trans | ✅ | `ScatterParams` | U·S offen |
 | 17 | Dot Grid | Render | ✅ | `DotGridParams` | U·S offen |
@@ -96,7 +98,7 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 44 | Fast Brightness | Trans | ✅ | `FastBrightnessParams` | U·S offen |
 | 45 | Color Modifier | Trans | ✅ | `ColorModifierParams` | U·S offen |
 
-**Builtin-Bilanz:** ✅ 36 · ◐ 1 (Set Render Mode) · ⬜ 7 · ✖ 2.
+**Builtin-Bilanz:** ✅ 41 · ◐ 1 (Set Render Mode) · ⬜ 2 (Text, Picture) · ✖ 2.
 
 ---
 

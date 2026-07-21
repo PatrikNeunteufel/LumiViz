@@ -378,6 +378,60 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(t.report[0].find("Framerate Limiter") != std::string::npos);
     }
 
+    TEST_CASE("Simple (id 0): effect-Bitfeld -> Source/Channel/Position/Dots")
+    {
+        EffectNode s = builtin(0);
+        s.fields = {{"effect", 2 | (1 << 2) | (2 << 4) | (1 << 6)}};
+        s.colors = {0x0000FF};  // COLORREF blau -> host rot
+        const TranslationResult t = translateAvsTree(makeParsed({s}));
+        REQUIRE(std::holds_alternative<SimpleScopeParams>(t.root.children[0].params));
+        const auto& p = std::get<SimpleScopeParams>(t.root.children[0].params);
+        CHECK(p.source == 1);    // waveform (bit 1)
+        CHECK(p.channel == 1);   // right
+        CHECK(p.position == 2);  // center
+        CHECK(p.drawMode == 1);  // dots
+        REQUIRE(p.colors.size() == 1);
+        CHECK(p.colors[0] == 0xFF0000u);
+    }
+
+    TEST_CASE("Bass Spin (id 7): enabled-Bits + Farben")
+    {
+        EffectNode b = builtin(7);
+        b.fields = {{"enabled", 2}, {"color0", 0x00FF00}, {"color1", 0x123456},
+                    {"mode", 0}};
+        const TranslationResult t = translateAvsTree(makeParsed({b}));
+        REQUIRE(std::holds_alternative<BassSpinParams>(t.root.children[0].params));
+        const auto& p = std::get<BassSpinParams>(t.root.children[0].params);
+        CHECK_FALSE(p.left);
+        CHECK(p.right);
+        CHECK(p.mode == 0);
+        CHECK(p.colorRight == 0x563412u);  // 0x123456 COLORREF -> RRGGBB
+    }
+
+    TEST_CASE("Oscilliscope Star / Ring / Rotating Stars gemappt")
+    {
+        EffectNode os = builtin(2);
+        os.fields = {{"effect", (1 << 2) | (0 << 4)}, {"size", 10}, {"rot", 5}};
+        os.colors = {0x0000FF};
+        EffectNode rg = builtin(14);
+        rg.fields = {{"effect", (2 << 2)}, {"size", 12}, {"source", 1}};
+        rg.colors = {0x00FF00};
+        EffectNode rs = builtin(13);
+        rs.colors = {0xFFFFFF, 0x808080};
+        const TranslationResult t = translateAvsTree(makeParsed({os, rg, rs}));
+        const auto& a = std::get<OscStarParams>(t.root.children[0].params);
+        CHECK(a.channel == 1);
+        CHECK(a.size == 10);
+        CHECK(a.rot == 5);
+        CHECK(a.colors[0] == 0xFF0000u);
+        const auto& b = std::get<OscRingParams>(t.root.children[1].params);
+        CHECK(b.source == 1);   // spectrum
+        CHECK(b.channel == 2);
+        CHECK(b.size == 12);
+        const auto& c = std::get<RotatingStarsParams>(t.root.children[2].params);
+        REQUIRE(c.colors.size() == 2);
+    }
+
     TEST_CASE("verschachtelte Liste mit Blend wird uebernommen")
     {
         EffectNode inner;

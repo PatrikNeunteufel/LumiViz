@@ -99,6 +99,11 @@ const std::vector<EffectType>& effectPalette()
         {"Normalise", [] { return EffectParams{NormaliseParams{}}; }},
         {"MultiFilter", [] { return EffectParams{MultiFilterParams{}}; }},
         {"Add Borders", [] { return EffectParams{AddBordersParams{}}; }},
+        {"Simple (Scope)", [] { return EffectParams{SimpleScopeParams{}}; }},
+        {"Bass Spin", [] { return EffectParams{BassSpinParams{}}; }},
+        {"Oscilliscope Star", [] { return EffectParams{OscStarParams{}}; }},
+        {"Ring", [] { return EffectParams{OscRingParams{}}; }},
+        {"Rotating Stars", [] { return EffectParams{RotatingStarsParams{}}; }},
         {"Channel Shift", [] { return EffectParams{ChannelShiftParams{}}; }},
         {"Color Reduction", [] { return EffectParams{ColorReductionParams{}}; }},
         {"Multiplier", [] { return EffectParams{MultiplierParams{}}; }},
@@ -1068,6 +1073,43 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
     {
         addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<AddBordersParams>(n.params).color = v; });
         addInt(tr("Size"), p->size, 0, 200, [](ChainNode& n, int v) { std::get<AddBordersParams>(n.params).size = v; });
+    }
+    else if (auto* p = std::get_if<SimpleScopeParams>(&params))
+    {
+        addEnum(tr("Source"), p->source, {"Spectrum", "Waveform"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).source = v; });
+        addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).channel = v; });
+        addEnum(tr("Position"), p->position, {"Top", "Bottom", "Center"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).position = v; });
+        addEnum(tr("Draw"), p->drawMode, {"Lines", "Dots"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).drawMode = v; });
+        auto* info = new QLabel(tr("%1 cycled colors (imported)").arg(p->colors.size()), m_propContainer);
+        form->addRow(info);
+    }
+    else if (auto* p = std::get_if<BassSpinParams>(&params))
+    {
+        addBool(tr("Left"), p->left, [](ChainNode& n, bool v) { std::get<BassSpinParams>(n.params).left = v; });
+        addBool(tr("Right"), p->right, [](ChainNode& n, bool v) { std::get<BassSpinParams>(n.params).right = v; });
+        addColor(tr("Left color"), p->colorLeft, [](ChainNode& n, uint32_t v) { std::get<BassSpinParams>(n.params).colorLeft = v; });
+        addColor(tr("Right color"), p->colorRight, [](ChainNode& n, uint32_t v) { std::get<BassSpinParams>(n.params).colorRight = v; });
+        addEnum(tr("Mode"), p->mode, {"Lines", "Filled"}, [](ChainNode& n, int v) { std::get<BassSpinParams>(n.params).mode = v; });
+    }
+    else if (auto* p = std::get_if<OscStarParams>(&params))
+    {
+        addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).channel = v; });
+        addEnum(tr("Position"), p->position, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).position = v; });
+        addInt(tr("Size"), p->size, 0, 16, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).size = v; });
+        addInt(tr("Rotation"), p->rot, 0, 16, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).rot = v; });
+    }
+    else if (auto* p = std::get_if<OscRingParams>(&params))
+    {
+        addEnum(tr("Source"), p->source, {"Waveform", "Spectrum"}, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).source = v; });
+        addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).channel = v; });
+        addEnum(tr("Position"), p->position, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).position = v; });
+        addInt(tr("Size"), p->size, 0, 16, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).size = v; });
+    }
+    else if (std::holds_alternative<RotatingStarsParams>(params))
+    {
+        auto* info = new QLabel(tr("Rotating stars — audio-reactive, cycled colors"), m_propContainer);
+        info->setWordWrap(true);
+        form->addRow(info);
     }
     else if (auto* p = std::get_if<BlitterFeedbackParams>(&params))
     {

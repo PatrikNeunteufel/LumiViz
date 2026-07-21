@@ -1390,6 +1390,11 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const NormaliseParams&) const { self.runNormalise(); }
         void operator()(const MultiFilterParams& params) const { self.runMultiFilter(params); }
         void operator()(const AddBordersParams& params) const { self.runAddBorders(params); }
+        void operator()(const SimpleScopeParams& params) const { self.runSimpleScope(node, params); }
+        void operator()(const BassSpinParams& params) const { self.runBassSpin(node, params); }
+        void operator()(const OscStarParams& params) const { self.runOscStar(node, params); }
+        void operator()(const OscRingParams& params) const { self.runOscRing(node, params); }
+        void operator()(const RotatingStarsParams& params) const { self.runRotatingStars(node, params); }
         void operator()(const ChannelShiftParams& params) const { self.runChannelShift(node, params); }
         void operator()(const ColorReductionParams& params) const { self.runColorReduction(params); }
         void operator()(const MultiplierParams& params) const { self.runMultiplier(params); }
@@ -2327,6 +2332,24 @@ void MultiEffectVisualizer::runDynamicShift(const ChainNode& node,
 }
 
 namespace {
+/// AVS scope colour-table cycling (r_simple/oscstar/oscring/rotstar): advances
+/// colorPos and returns the interpolated 0x00RRGGBB colour.
+uint32_t cycleScopeColor(const std::vector<uint32_t>& colors, int& colorPos)
+{
+    if (colors.empty()) return 0xFFFFFFu;
+    const int n = static_cast<int>(colors.size());
+    if (++colorPos >= n * 64) colorPos = 0;
+    const int p = colorPos / 64;
+    const int r = colorPos & 63;
+    const uint32_t c1 = colors[static_cast<std::size_t>(p)];
+    const uint32_t c2 = (p + 1 < n) ? colors[static_cast<std::size_t>(p + 1)] : colors[0];
+    auto ch = [&](int sh) {
+        return (static_cast<int>((c1 >> sh) & 0xFF) * (63 - r) +
+                static_cast<int>((c2 >> sh) & 0xFF) * r) / 64;
+    };
+    return static_cast<uint32_t>((ch(16) << 16) | (ch(8) << 8) | ch(0));
+}
+
 /// Build a 256-entry RGB LUT (row-major RGB bytes) from Color Map gradient stops.
 void buildColorMapLut(const ColorMapParams& params, std::array<unsigned char, 768>& px)
 {
@@ -2458,6 +2481,208 @@ void MultiEffectVisualizer::runBufferBlend(const BufferBlendParams& params)
     pair.partner()->release();
     pair.swap();
     bindActive();
+}
+
+void MultiEffectVisualizer::drawScopeShape(
+    const std::vector<lumi::modules::SuperscopePoint>& pts, bool dots)
+{
+    if (!m_scopeRenderer.ready()) return;
+    if (pts.size() < (dots ? 1u : 2u)) return;
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glEnable(GL_BLEND);
+    f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);  // additive (AVS scope default)
+    lumi::render::ScopeRenderer::Params rp;
+    rp.mode = dots ? lumi::modules::SuperscopeRenderMode::Dots
+                   : lumi::modules::SuperscopeRenderMode::Lines;
+    rp.lineWidth = 1.0f;
+    rp.dotSize = 2.0f;
+    rp.glowEnabled = false;
+    m_scopeRenderer.draw(pts, rp);
+    f->glDisable(GL_BLEND);
+}
+
+void MultiEffectVisualizer::runSimpleScope(const ChainNode& node,
+                                           const SimpleScopeParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    const QVector3D c = colorToVec(cycleScopeColor(params.colors, rt.scopeColorPos));
+    const float yoff = params.position == 0 ? 0.5f : (params.position == 1 ? -0.5f : 0.0f);
+
+    const std::vector<float> data =
+        params.source == 1 ? getWaveform() : getSpectrum();
+    const int n = static_cast<int>(data.size());
+    if (n < 2) return;
+
+    std::vector<lumi::modules::SuperscopePoint> pts;
+    pts.reserve(static_cast<std::size_t>(n));
+    for (int i = 0; i < n; ++i)
+    {
+        lumi::modules::SuperscopePoint p;
+        p.x = -1.0f + 2.0f * static_cast<float>(i) / static_cast<float>(n - 1);
+        // waveform ~[-1,1] centred at yoff; spectrum [0,1] grows up from yoff-0.5
+        p.y = params.source == 1 ? yoff + data[static_cast<std::size_t>(i)] * 0.4f
+                                 : yoff - 0.5f + data[static_cast<std::size_t>(i)];
+        p.r = c.x();
+        p.g = c.y();
+        p.b = c.z();
+        p.a = 1.0f;
+        pts.push_back(p);
+    }
+    drawScopeShape(pts, params.drawMode == 1);
+}
+
+void MultiEffectVisualizer::runBassSpin(const ChainNode& node,
+                                        const BassSpinParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    const std::vector<float> spec = getSpectrum();
+    const int n = static_cast<int>(spec.size());
+
+    for (int chn = 0; chn < 2; ++chn)
+    {
+        if (chn == 0 ? !params.left : !params.right) continue;
+
+        float d = 0.0f;
+        for (int x = 0; x < 44 && x < n; ++x) d += spec[static_cast<std::size_t>(x)] * 255.0f;
+        float a = (d * 512.0f) / (rt.bsLastA[chn] + 30.0f * 256.0f);
+        rt.bsLastA[chn] = d;
+        if (a > 255.0f) a = 255.0f;
+        rt.bsV[chn] = 0.7f * (std::max(a - 104.0f, 12.0f) / 96.0f) + 0.3f * rt.bsV[chn];
+        rt.bsRv[chn] += 3.14159f / 6.0f * rt.bsV[chn] * (chn == 0 ? -1.0f : 1.0f);
+
+        const float radius = a / 256.0f * 0.5f;  // fraction of half-panel (NDC)
+        const float cx = chn == 0 ? -0.5f : 0.5f;
+        const float xp = std::cos(rt.bsRv[chn]) * radius;
+        const float yp = std::sin(rt.bsRv[chn]) * radius;
+        const QVector3D col = colorToVec(chn == 0 ? params.colorLeft : params.colorRight);
+
+        auto mk = [&](float x, float y) {
+            lumi::modules::SuperscopePoint p;
+            p.x = cx + x;
+            p.y = y;
+            p.r = col.x();
+            p.g = col.y();
+            p.b = col.z();
+            p.a = 1.0f;
+            return p;
+        };
+        // Two spokes from the panel centre (mode 1 = line-approximated fill).
+        std::vector<lumi::modules::SuperscopePoint> pts{mk(xp, yp), mk(0.0f, 0.0f),
+                                                        mk(-xp, -yp)};
+        drawScopeShape(pts, false);
+    }
+}
+
+void MultiEffectVisualizer::runOscStar(const ChainNode& node, const OscStarParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    const QVector3D c = colorToVec(cycleScopeColor(params.colors, rt.scopeColorPos));
+    const std::vector<float> wave = getWaveform();
+    const int n = static_cast<int>(wave.size());
+    if (n < 2) return;
+
+    rt.scopeRot += static_cast<float>(params.rot - 8) * 0.02f;  // 8 = still (sight-test)
+    const float len = std::clamp(params.size, 0, 16) / 16.0f;   // spoke length (NDC)
+    const float cx = params.position == 0 ? -0.5f : (params.position == 1 ? 0.5f : 0.0f);
+    const float aspect = m_surfaceHeight > 0
+                             ? static_cast<float>(m_surfaceWidth) / static_cast<float>(m_surfaceHeight)
+                             : 1.0f;
+
+    for (int q = 0; q < 5; ++q)
+    {
+        const float ang = rt.scopeRot + static_cast<float>(q) * (2.0f * 3.14159f / 5.0f);
+        const float dx = std::cos(ang);
+        const float dy = std::sin(ang);
+        std::vector<lumi::modules::SuperscopePoint> pts;
+        pts.reserve(static_cast<std::size_t>(n));
+        for (int i = 0; i < n; ++i)
+        {
+            const float t = static_cast<float>(i) / static_cast<float>(n - 1);
+            const float rad = t * len;
+            const float off = wave[static_cast<std::size_t>(i)] * len * 0.5f;
+            lumi::modules::SuperscopePoint p;
+            p.x = cx + (dx * rad - dy * off) / aspect;  // reduce x/y ellipse distortion
+            p.y = dy * rad + dx * off;
+            p.r = c.x();
+            p.g = c.y();
+            p.b = c.z();
+            p.a = 1.0f;
+            pts.push_back(p);
+        }
+        drawScopeShape(pts, false);
+    }
+}
+
+void MultiEffectVisualizer::runOscRing(const ChainNode& node, const OscRingParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    const QVector3D c = colorToVec(cycleScopeColor(params.colors, rt.scopeColorPos));
+    const std::vector<float> data = params.source == 0 ? getWaveform() : getSpectrum();
+    const int n = static_cast<int>(data.size());
+    if (n < 2) return;
+
+    const float rad0 = std::clamp(params.size, 0, 16) / 16.0f;
+    const float cx = params.position == 0 ? -0.5f : (params.position == 1 ? 0.5f : 0.0f);
+    const float aspect = m_surfaceHeight > 0
+                             ? static_cast<float>(m_surfaceWidth) / static_cast<float>(m_surfaceHeight)
+                             : 1.0f;
+
+    std::vector<lumi::modules::SuperscopePoint> pts;
+    pts.reserve(81);
+    for (int q = 0; q <= 80; ++q)
+    {
+        const float a = -static_cast<float>(q) * (2.0f * 3.14159f / 80.0f);
+        const int idx = std::clamp((q % 80) * (n - 1) / 80, 0, n - 1);
+        const float sca = 0.1f + std::abs(data[static_cast<std::size_t>(idx)]) * 0.9f;
+        const float rr = rad0 * sca;
+        lumi::modules::SuperscopePoint p;
+        p.x = cx + std::cos(a) * rr / aspect;
+        p.y = std::sin(a) * rr;
+        p.r = c.x();
+        p.g = c.y();
+        p.b = c.z();
+        p.a = 1.0f;
+        pts.push_back(p);
+    }
+    drawScopeShape(pts, false);
+}
+
+void MultiEffectVisualizer::runRotatingStars(const ChainNode& node,
+                                             const RotatingStarsParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    const QVector3D c = colorToVec(cycleScopeColor(params.colors, rt.scopeColorPos));
+    const std::vector<float> spec = getSpectrum();
+    rt.scopeRot += 0.05f;
+
+    float peak = 0.0f;
+    for (int l = 3; l < 14 && l < static_cast<int>(spec.size()); ++l)
+        peak = std::max(peak, spec[static_cast<std::size_t>(l)]);
+    const float vw = (peak * 0.5f + 0.12f) * 0.5f;  // star radius (NDC)
+    const float ox = std::cos(rt.scopeRot) * 0.5f;
+    const float oy = std::sin(rt.scopeRot) * 0.5f;
+
+    for (int ch = 0; ch < 2; ++ch)
+    {
+        const float bx = ch == 0 ? ox : -ox;
+        const float by = ch == 0 ? oy : -oy;
+        float r2 = -rt.scopeRot;
+        std::vector<lumi::modules::SuperscopePoint> pts;
+        pts.reserve(6);
+        for (int t = 0; t <= 5; ++t)
+        {
+            lumi::modules::SuperscopePoint p;
+            p.x = bx + std::cos(r2) * vw;
+            p.y = by + std::sin(r2) * vw;
+            p.r = c.x();
+            p.g = c.y();
+            p.b = c.z();
+            p.a = 1.0f;
+            pts.push_back(p);
+            r2 += 3.14159f * 4.0f / 5.0f;  // pentagram step
+        }
+        drawScopeShape(pts, false);
+    }
 }
 
 void MultiEffectVisualizer::runColorClip(const ColorClipParams& params)

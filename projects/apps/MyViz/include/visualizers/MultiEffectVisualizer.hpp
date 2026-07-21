@@ -220,6 +220,13 @@ private:
         float interCurX = 1.0f;
         float interCurY = 1.0f;
 
+        // Scope-render effects (r_simple/oscstar/oscring/rotstar)
+        int scopeColorPos = 0;      ///< colour-table cycle position
+        float scopeRot = 0.0f;      ///< accumulating rotation (oscstar/oscring/rotstar)
+        float bsRv[2] = {3.14159f, 0.0f};  ///< Bass Spin per-channel angle
+        float bsV[2] = {0.0f, 0.0f};       ///< Bass Spin per-channel angular velocity
+        float bsLastA[2] = {0.0f, 0.0f};   ///< Bass Spin per-channel bass-energy history
+
         // Moving Particle: spring-particle state (r_parts)
         bool mpSeeded = false;
         float mpCx = 0.0f, mpCy = 0.0f;   ///< spring target (randomized on beat)
@@ -323,6 +330,18 @@ private:
     void runNormalise();
     void runMultiFilter(const lumi::multieffect::MultiFilterParams& params);
     void runAddBorders(const lumi::multieffect::AddBordersParams& params);
+    void runSimpleScope(const lumi::multieffect::ChainNode& node,
+                        const lumi::multieffect::SimpleScopeParams& params);
+    void runBassSpin(const lumi::multieffect::ChainNode& node,
+                     const lumi::multieffect::BassSpinParams& params);
+    void runOscStar(const lumi::multieffect::ChainNode& node,
+                    const lumi::multieffect::OscStarParams& params);
+    void runOscRing(const lumi::multieffect::ChainNode& node,
+                    const lumi::multieffect::OscRingParams& params);
+    void runRotatingStars(const lumi::multieffect::ChainNode& node,
+                          const lumi::multieffect::RotatingStarsParams& params);
+    /// Draw a scope point-list (additive) via the shared ScopeRenderer.
+    void drawScopeShape(const std::vector<lumi::modules::SuperscopePoint>& pts, bool dots);
     void runDynamicMovement(const lumi::multieffect::ChainNode& node,
                             const lumi::multieffect::DynamicMovementParams& params);
     /** Shared grid-warp: run the module, build the mesh, sample current→partner. */

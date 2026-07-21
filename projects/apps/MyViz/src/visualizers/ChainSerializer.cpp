@@ -247,6 +247,50 @@ struct WriteVisitor
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
     }
+    void operator()(const SimpleScopeParams& p) const
+    {
+        o["source"] = p.source;
+        o["channel"] = p.channel;
+        o["position"] = p.position;
+        o["drawMode"] = p.drawMode;
+        QJsonArray cols;
+        for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
+        o["colors"] = cols;
+    }
+    void operator()(const BassSpinParams& p) const
+    {
+        o["left"] = p.left;
+        o["right"] = p.right;
+        o["colorLeft"] = static_cast<double>(p.colorLeft);
+        o["colorRight"] = static_cast<double>(p.colorRight);
+        o["mode"] = p.mode;
+    }
+    void operator()(const OscStarParams& p) const
+    {
+        o["channel"] = p.channel;
+        o["position"] = p.position;
+        o["size"] = p.size;
+        o["rot"] = p.rot;
+        QJsonArray cols;
+        for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
+        o["colors"] = cols;
+    }
+    void operator()(const OscRingParams& p) const
+    {
+        o["source"] = p.source;
+        o["channel"] = p.channel;
+        o["position"] = p.position;
+        o["size"] = p.size;
+        QJsonArray cols;
+        for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
+        o["colors"] = cols;
+    }
+    void operator()(const RotatingStarsParams& p) const
+    {
+        QJsonArray cols;
+        for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
+        o["colors"] = cols;
+    }
     void operator()(const ConvolutionParams& p) const
     {
         o["edgeMode"] = p.edgeMode;
@@ -647,6 +691,62 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.beatCode = getStr(o, "beatCode");
         return p;
     }
+    if (type == "simpleScope")
+    {
+        SimpleScopeParams p;
+        p.source = getInt(o, "source", 1);
+        p.channel = getInt(o, "channel", 2);
+        p.position = getInt(o, "position", 2);
+        p.drawMode = getInt(o, "drawMode", 0);
+        p.colors.clear();
+        const QJsonArray cols = o.value("colors").toArray();
+        for (const auto& v : cols) p.colors.push_back(static_cast<uint32_t>(v.toDouble()));
+        if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
+        return p;
+    }
+    if (type == "bassSpin")
+    {
+        BassSpinParams p;
+        p.left = getBool(o, "left", true);
+        p.right = getBool(o, "right", true);
+        p.colorLeft = getColor(o, "colorLeft", 0xFFFFFF);
+        p.colorRight = getColor(o, "colorRight", 0xFFFFFF);
+        p.mode = getInt(o, "mode", 1);
+        return p;
+    }
+    if (type == "oscStar" || type == "oscRing")
+    {
+        const QJsonArray cols = o.value("colors").toArray();
+        std::vector<uint32_t> colors;
+        for (const auto& v : cols) colors.push_back(static_cast<uint32_t>(v.toDouble()));
+        if (colors.empty()) colors.push_back(0xFFFFFF);
+        if (type == "oscStar")
+        {
+            OscStarParams p;
+            p.channel = getInt(o, "channel", 2);
+            p.position = getInt(o, "position", 2);
+            p.size = getInt(o, "size", 8);
+            p.rot = getInt(o, "rot", 3);
+            p.colors = std::move(colors);
+            return p;
+        }
+        OscRingParams p;
+        p.source = getInt(o, "source", 0);
+        p.channel = getInt(o, "channel", 2);
+        p.position = getInt(o, "position", 2);
+        p.size = getInt(o, "size", 8);
+        p.colors = std::move(colors);
+        return p;
+    }
+    if (type == "rotatingStars")
+    {
+        RotatingStarsParams p;
+        p.colors.clear();
+        const QJsonArray cols = o.value("colors").toArray();
+        for (const auto& v : cols) p.colors.push_back(static_cast<uint32_t>(v.toDouble()));
+        if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
+        return p;
+    }
     if (type == "convolution")
     {
         ConvolutionParams p;
@@ -849,6 +949,11 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const ColorMapParams&) const { return "colorMap"; }
         QString operator()(const BufferBlendParams&) const { return "bufferBlend"; }
         QString operator()(const JherikoGlobalParams&) const { return "jherikoGlobal"; }
+        QString operator()(const SimpleScopeParams&) const { return "simpleScope"; }
+        QString operator()(const BassSpinParams&) const { return "bassSpin"; }
+        QString operator()(const OscStarParams&) const { return "oscStar"; }
+        QString operator()(const OscRingParams&) const { return "oscRing"; }
+        QString operator()(const RotatingStarsParams&) const { return "rotatingStars"; }
         QString operator()(const ConvolutionParams&) const { return "convolution"; }
         QString operator()(const NormaliseParams&) const { return "normalise"; }
         QString operator()(const MultiFilterParams&) const { return "multiFilter"; }

@@ -23,6 +23,11 @@ using lumi::avs::EffectNode;
 // AVS builtin effect ids (registration order == preset id, analysis §5.2).
 enum AvsId
 {
+    kSimple = 0,
+    kOscStar = 2,
+    kBassSpin = 7,
+    kRotatingStars = 13,
+    kOscRing = 14,
     kMovingParticle = 8,
     kColorClip = 12,
     kInterleave = 23,
@@ -436,6 +441,79 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.blend = src.field("blend") != 0;
             p.bilinear = src.field("subpixel") != 0;
             out.params = std::move(p);
+            return true;
+        }
+
+        case kSimple:
+        {
+            SimpleScopeParams p;
+            const int effect = src.field("effect");
+            p.source = (effect & 2) != 0 ? 1 : 0;  // 2 = oscilloscope (waveform)
+            p.channel = (effect >> 2) & 3;
+            p.position = (effect >> 4) & 3;
+            p.drawMode = (effect & (1 << 6)) != 0 ? 1 : 0;  // dots
+            p.colors.clear();
+            for (std::uint32_t c : src.colors)
+                p.colors.push_back(avsColor(static_cast<std::int32_t>(c)));
+            if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
+            out.params = std::move(p);
+            return true;
+        }
+
+        case kOscStar:
+        {
+            OscStarParams p;
+            const int effect = src.field("effect");
+            p.channel = (effect >> 2) & 3;
+            p.position = (effect >> 4) & 3;
+            p.size = src.field("size");
+            p.rot = src.field("rot");
+            p.colors.clear();
+            for (std::uint32_t c : src.colors)
+                p.colors.push_back(avsColor(static_cast<std::int32_t>(c)));
+            if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
+            out.params = std::move(p);
+            return true;
+        }
+
+        case kOscRing:
+        {
+            OscRingParams p;
+            const int effect = src.field("effect");
+            p.channel = (effect >> 2) & 3;
+            p.position = (effect >> 4) & 3;
+            p.size = src.field("size");
+            p.source = src.field("source") != 0 ? 1 : 0;
+            p.colors.clear();
+            for (std::uint32_t c : src.colors)
+                p.colors.push_back(avsColor(static_cast<std::int32_t>(c)));
+            if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
+            out.params = std::move(p);
+            return true;
+        }
+
+        case kRotatingStars:
+        {
+            RotatingStarsParams p;
+            p.colors.clear();
+            for (std::uint32_t c : src.colors)
+                p.colors.push_back(avsColor(static_cast<std::int32_t>(c)));
+            if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
+            out.params = std::move(p);
+            return true;
+        }
+
+        case kBassSpin:
+        {
+            BassSpinParams p;
+            const int en = src.field("enabled");
+            p.left = (en & 1) != 0;
+            p.right = (en & 2) != 0;
+            p.colorLeft = avsColor(src.field("color0"));
+            p.colorRight = avsColor(src.field("color1"));
+            p.mode = src.field("mode") != 0 ? 1 : 0;
+            out.enabled = en != 0;
+            out.params = p;
             return true;
         }
 
