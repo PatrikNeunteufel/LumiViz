@@ -237,8 +237,10 @@ Vorlage E1–E8 entschieden:
 2. **E2:** Standalone-`MilkdropVisualizer` wird **entfernt**, sobald der Node
    gleichwertig ist (Parameter meshX/Y + debugGrid ziehen an den Node um;
    Import-Browser routet auf MultiEffect+Node).
-3. **E3:** Reihenfolge **C1 → Node-Integration (B1 Rendering, B2 Panel-Baum)
-   → C2 → C3**.
+3. **E3:** Reihenfolge **C1 → Node-Integration (N1 Rendering, N2 Panel-Baum)
+   → C2 → C3**. *(N1/N2 hieß in der Entscheidungs-Vorlage kurz „B1/B2" —
+   umbenannt wegen Kollision mit Shader-Stufe B; Legende:
+   [MilkDrop_Import_Status.md](MilkDrop_Import_Status.md).)*
 4. **E4:** Stufe C als **eigene header-only Lib `HlslTranspiler`**
    (`projects/libs/`, Muster EelTranspiler: Lexer/Parser/CodeGen +
    Korpus-Gates); MilkParser bleibt bei Text → Struktur.
@@ -254,12 +256,12 @@ Vorlage E1–E8 entschieden:
    Set Render Mode→alle Scopes, Skript-SSOT, Kleinkram S31) **ganz am Ende,
    gebündelt mit einer Kalibrier-Preset-Runde** gelöst.
 
-**Fortgeschriebene Reihenfolge:**
-C1 (HlslTranspiler-Kern: Ausdrücke/tex2D/Swizzles/Intrinsics + Shader-Pässe
-im Host, fShader-Wash) → **B1/B2 Node-Integration + Standalone-Entfernung** →
-C2 (Noise prozedural + Custom-Textur-Lader aus `asset/Milkdrop3/textures/`)
-→ Sprites → Crossfade (E5) → Visual-Playlist → C3 (Loops/tex3D) →
-Decay-Dither + .milk-Export → E8-Altpunkte + Kalibrier-Runde.
+**Fortgeschriebene Reihenfolge** (Fortschritts-SSOT:
+[MilkDrop_Import_Status.md](MilkDrop_Import_Status.md)):
+C1 ✅ → C2 ✅ *(in Session 40 vorgezogen, da rein Shader-seitig)* →
+**N1/N2 Node-Integration + Standalone-Entfernung** → Sprites → Crossfade (E5)
+→ Visual-Playlist → C3 (Loops/Arrays/tex3D) → fShader-Wash → Decay-Dither +
+.milk-Export → E8-Altpunkte + Kalibrier-Runde.
 
 ## 7. Siehe auch
 

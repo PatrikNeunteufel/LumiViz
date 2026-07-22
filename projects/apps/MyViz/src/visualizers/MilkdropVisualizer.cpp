@@ -27,6 +27,7 @@
 #include <HlslTranspiler.hpp>
 
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QOpenGLContext>
 #include <QOpenGLExtraFunctions>
@@ -411,6 +412,20 @@ MilkdropVisualizer::MilkdropVisualizer()
 {
 }
 
+std::string MilkdropVisualizer::debugAssembleFragment(const std::string& hlslText,
+                                                      bool isWarp)
+{
+    const lumi::hlsl::HlslResult r = lumi::hlsl::transpile(
+        hlslText, isWarp ? lumi::hlsl::ShaderKind::Warp : lumi::hlsl::ShaderKind::Comp);
+    if (!r.ok) return "// TRANSPILE-FEHLER: " + r.error;
+    return assembleCustomFragment(r);
+}
+
+const char* MilkdropVisualizer::debugCustomVertexShader()
+{
+    return kCustomVertexShader;
+}
+
 bool MilkdropVisualizer::loadMilkFile(const QString& path, QStringList* report)
 {
     const lumi::milk::ParseResult parsed =
@@ -486,20 +501,22 @@ void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringLi
             {
             case ShaderClass::None:
                 break;
+            // "ℹ "-Praefix = reine Bestaetigung (MainWindow zeigt dafuer KEINEN
+            // Hinweis-Dialog — nur echte Warnungen poppen auf)
             case ShaderClass::Md1Default:
-                report->append(QStringLiteral("%1-Shader = generierter MD1-Default → exakt "
+                report->append(QStringLiteral("ℹ %1-Shader = generierter MD1-Default → exakt "
                                               "(eingebackene Konstanten)")
                                    .arg(QLatin1String(which)));
                 break;
             case ShaderClass::Md1Plus:
-                report->append(QStringLiteral("%1-Shader = MD1-Default + Blur-/Gain-Mix → "
+                report->append(QStringLiteral("ℹ %1-Shader = MD1-Default + Blur-/Gain-Mix → "
                                               "exakt übersetzt (Stufe B)")
                                    .arg(QLatin1String(which)));
                 break;
             case ShaderClass::Custom:
                 // Ergebnis (C1-uebersetzt oder MD1-Fallback) meldet
                 // prepareCustomShaders direkt im Anschluss
-                report->append(QStringLiteral("Custom-%1-Shader (PS%2, %3 Zeilen, %4)")
+                report->append(QStringLiteral("ℹ Custom-%1-Shader (PS%2, %3 Zeilen, %4)")
                                    .arg(QLatin1String(which))
                                    .arg(m_state.psVersion)
                                    .arg(info.codeLines)
@@ -1220,6 +1237,13 @@ void MilkdropVisualizer::runBlurPasses(const FrameVars& fv)
 
 void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
 {
+    // GL-Fehler des vorigen Laufs sichtbar machen: beim NAECHSTEN Laden (auch
+    // Doppelklick auf dasselbe Preset) erscheint er als echte Warnung im Dialog
+    if (report != nullptr && !m_customGlError.empty())
+    {
+        report->append(QStringLiteral("GL-Kompilierfehler beim vorigen Preset: %1")
+                           .arg(QString::fromStdString(m_customGlError).left(500)));
+    }
     m_warpCustomSrc.clear();
     m_compCustomSrc.clear();
     m_customGlError.clear();
@@ -1241,7 +1265,7 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
             if (report != nullptr)
             {
                 QString note = QStringLiteral(
-                                   "%1-Shader → GLSL übersetzt (Stufe C1, GL-Kompilierung "
+                                   "ℹ %1-Shader → GLSL übersetzt (Stufe C1, GL-Kompilierung "
                                    "zur Laufzeit)")
                                    .arg(QLatin1String(which));
                 if (!r.customSamplers.empty())
@@ -1356,12 +1380,14 @@ void MilkdropVisualizer::loadCustomTextures(const std::vector<std::string>& samp
             }
             continue;
         }
-        img = img.convertToFormat(QImage::Format_RGBA8888);
+        // mirrored(): D3D-v (0=oben) vs. unsere Screen-v (0=unten) — so stehen
+        // geladene Bilder aufrecht (Kalibrier-Preset c1/07 prueft das)
+        img = img.convertToFormat(QImage::Format_RGBA8888).mirrored();
         m_texSizes[base] = {img.width(), img.height()};
         m_customImages[samplerName] = std::move(img);
         if (report != nullptr)
         {
-            report->append(QStringLiteral("Textur '%1' geladen (%2, %3x%4)")
+            report->append(QStringLiteral("ℹ Textur '%1' geladen (%2, %3x%4)")
                                .arg(baseQ)
                                .arg(QFileInfo(path).fileName())
                                .arg(m_texSizes[base][0])
@@ -1433,8 +1459,19 @@ bool MilkdropVisualizer::ensureCustomPrograms()
             !program->link())
         {
             // Fallback auf MD1; Fehler fuer Diagnose merken (nie aus dem
-            // Render-Thread loggen — BasicLogger ist nicht thread-safe)
+            // Render-Thread loggen — BasicLogger ist nicht thread-safe).
+            // Zusaetzlich Quelle+Log als Datei dumpen (Kalibrier-Diagnose).
             if (m_customGlError.empty()) m_customGlError = program->log().toStdString();
+            QFile dump(QDir::tempPath() + QStringLiteral("/lumiviz_glsl_error.txt"));
+            if (dump.open(QIODevice::WriteOnly | QIODevice::Append))
+            {
+                dump.write("==== GL-Fehler ====\n");
+                dump.write(program->log().toUtf8());
+                dump.write("\n==== Fragment-Quelle ====\n");
+                dump.write(src.c_str());
+                dump.write("\n");
+                dump.close();
+            }
             return std::unique_ptr<QOpenGLShaderProgram>();
         }
         return program;

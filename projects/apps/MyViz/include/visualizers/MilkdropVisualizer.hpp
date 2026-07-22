@@ -98,6 +98,12 @@ public:
     /// @brief Currently loaded preset state (for tests/panel)
     [[nodiscard]] const lumi::milkdrop::PresetState& presetState() const { return m_state; }
 
+    /// @brief Test/Debug (C1): assembled GLSL fragment for a preset shader text
+    [[nodiscard]] static std::string debugAssembleFragment(const std::string& hlslText,
+                                                           bool isWarp);
+    /// @brief Test/Debug (C1): the custom passes' vertex shader source
+    [[nodiscard]] static const char* debugCustomVertexShader();
+
     // =========================================================================
     // Parameters (generic ConfigPanel + VisualizerPresetManager support)
     // =========================================================================

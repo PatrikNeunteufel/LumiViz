@@ -1,0 +1,11 @@
+MILKDROP_PRESET_VERSION=201
+PSVERSION=2
+[preset00]
+fWaveAlpha=0.001
+zoom=1.000
+warp=0.000
+mv_a=0.000
+comp_1=`shader_body
+comp_2=`{
+comp_3=`ret = tex2D(sampler_noise_mq, uv).xyz;
+comp_4=`}

@@ -603,7 +603,13 @@ void MainWindow::setupEventHandlers()
                                      tr("Not a valid MilkDrop preset:\n%1").arg(path));
                 return;
             }
-            if (!report.isEmpty())
+            // "ℹ"-Zeilen sind reine Bestaetigungen — Dialog nur bei echten Warnungen
+            bool hasWarnings = false;
+            for (const QString& line : report)
+            {
+                if (!line.startsWith(QStringLiteral("ℹ"))) hasWarnings = true;
+            }
+            if (hasWarnings)
             {
                 QMessageBox::information(
                     this, tr("Import MilkDrop Preset"),
@@ -653,8 +659,14 @@ void MainWindow::setupEventHandlers()
                 {
                     QMessageBox::warning(this, tr("Load Effect Chain"),
                                          tr("Could not load:\n%1").arg(path));
+                    return;
                 }
-                else if (!report.isEmpty())
+                bool hasWarnings = false;
+                for (const QString& line : report)
+                {
+                    if (!line.startsWith(QStringLiteral("ℹ"))) hasWarnings = true;
+                }
+                if (hasWarnings)
                 {
                     QMessageBox::information(
                         this, tr("Load Milkdrop Preset"),

@@ -226,6 +226,38 @@ TEST_CASE("HlslTranspiler: unbekannter Bezeichner -> Fehler mit Zeile")
 }
 
 // =============================================================================
+// Kalibrier-Satz c1: MUSS parser-warnungsfrei sein und vollstaendig transpiliern
+// (Patrik testet Sicht nur mit dialogfreien Presets — Session-40-Vereinbarung)
+// =============================================================================
+
+TEST_CASE("HlslTranspiler: Kalibrier-Satz c1 — warnungsfrei + 100% uebersetzt")
+{
+    const std::filesystem::path dir =
+        repoRoot() / "asset" / "calibration" / "milkdrop" / "c1";
+    REQUIRE(std::filesystem::exists(dir));  // committeter Pflicht-Korpus
+    int files = 0;
+    for (const auto& entry : std::filesystem::directory_iterator(dir))
+    {
+        if (!entry.is_regular_file() || entry.path().extension() != ".milk") continue;
+        ++files;
+        const lumi::milk::ParseResult parsed = lumi::milk::parseFile(entry.path());
+        REQUIRE(parsed.ok);
+        CHECK_MESSAGE(parsed.warnings.empty(), entry.path().filename().string());
+        if (!parsed.warpShader.empty())
+        {
+            const HlslResult r = transpile(parsed.warpShader, ShaderKind::Warp);
+            CHECK_MESSAGE(r.ok, entry.path().filename().string(), ": ", r.error);
+        }
+        if (!parsed.compShader.empty())
+        {
+            const HlslResult r = transpile(parsed.compShader, ShaderKind::Comp);
+            CHECK_MESSAGE(r.ok, entry.path().filename().string(), ": ", r.error);
+        }
+    }
+    CHECK(files == 8);
+}
+
+// =============================================================================
 // Korpus-Messung (falls lokal vorhanden) — C1-Abdeckung ueber beide Packs
 // =============================================================================
 

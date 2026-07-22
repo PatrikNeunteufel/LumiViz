@@ -1,0 +1,16 @@
+MILKDROP_PRESET_VERSION=201
+PSVERSION=2
+[preset00]
+fWaveAlpha=1.000
+fWaveScale=1.000
+nWaveMode=6
+wave_r=1.000
+wave_g=1.000
+wave_b=1.000
+zoom=1.000
+warp=0.000
+mv_a=0.000
+warp_1=`shader_body
+warp_2=`{
+warp_3=`ret = tex2D(sampler_main, uv + float2(0.004, 0)).xyz * 0.97;
+warp_4=`}

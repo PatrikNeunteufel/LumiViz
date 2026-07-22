@@ -1,0 +1,23 @@
+MILKDROP_PRESET_VERSION=201
+PSVERSION=2
+[preset00]
+fDecay=0.960
+fWaveAlpha=1.000
+fWaveScale=1.000
+nWaveMode=6
+wave_r=1.000
+wave_g=1.000
+wave_b=1.000
+zoom=1.000
+warp=0.000
+mv_a=0.000
+comp_1=`#define ANG 0.5
+comp_2=`float2 rot2(float2 p, float a) {
+comp_3=`  float2x2 m = float2x2(cos(a), -sin(a), sin(a), cos(a));
+comp_4=`  return mul(p, m);
+comp_5=`}
+comp_6=`shader_body
+comp_7=`{
+comp_8=`  float2 p = rot2(uv - (float2)0.5, ANG) + 0.5;
+comp_9=`  ret = tex2D(sampler_fc_main, p).xyz;
+comp_10=`}
