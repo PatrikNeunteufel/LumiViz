@@ -95,6 +95,71 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{PassthroughParams{}}) == "passthrough");
     }
 
+    TEST_CASE("Host-Gruppe ueberlebt den Round-Trip (HG1, .lvfx2-Kennzeichen)")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode group;
+        HostGroupParams hg;
+        hg.blendOut = BlendMode::Additive;
+        hg.outAdjustAlpha = 99;
+        hg.crossfadeSeconds = 3.5;
+        hg.curveIn = 0;
+        hg.curveOut = 0;
+        hg.sourceFile = "presets/alt.lvfx";
+        group.params = hg;
+        ChainNode leaf;
+        leaf.params = SuperScopeParams{};
+        group.children.push_back(std::move(leaf));
+        root.children.push_back(std::move(group));
+
+        CHECK(effectTypeKey(EffectParams{HostGroupParams{}}) == "hostgroup");
+        CHECK(chainHasHostGroup(root));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const ChainNode& g = restored.children[0];
+        REQUIRE(g.isHostGroup());
+        const auto& p = std::get<HostGroupParams>(g.params);
+        CHECK(p.blendOut == BlendMode::Additive);
+        CHECK(p.outAdjustAlpha == 99);
+        CHECK(p.crossfadeSeconds == doctest::Approx(3.5));
+        CHECK(p.sourceFile == "presets/alt.lvfx");
+        // children der Gruppe ueberleben (Container wie eine Liste)
+        REQUIRE(g.children.size() == 1);
+        CHECK(std::holds_alternative<SuperScopeParams>(g.children[0].params));
+    }
+
+    TEST_CASE("Tiefenregel: verschachtelte Host-Gruppe wird zur Liste degradiert")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode outer;
+        outer.params = HostGroupParams{};
+        ChainNode inner;
+        HostGroupParams innerHg;
+        innerHg.blendOut = BlendMode::Maximum;
+        inner.params = innerHg;
+        ChainNode leaf;
+        leaf.params = GrainParams{};
+        inner.children.push_back(std::move(leaf));
+        outer.children.push_back(std::move(inner));
+        root.children.push_back(std::move(outer));
+
+        const CompileResult r = compileChain(root);
+        bool warned = false;
+        for (const auto& w : r.warnings)
+        {
+            if (w.text.find("nested host group") != std::string::npos) warned = true;
+        }
+        CHECK(warned);
+        const ChainNode& restoredInner = root.children[0].children[0];
+        REQUIRE(restoredInner.isList());  // degradiert, nicht geloescht
+        const auto& asList = std::get<ListParams>(restoredInner.params);
+        CHECK(asList.blendOut == BlendMode::Maximum);  // blendOut zog um
+        REQUIRE(restoredInner.children.size() == 1);   // Kinder bleiben
+    }
+
     TEST_CASE("SuperScope-Farbfelder ueberleben den Round-Trip")
     {
         ChainNode root;

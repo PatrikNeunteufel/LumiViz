@@ -67,6 +67,16 @@ struct WriteVisitor
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
     }
+    void operator()(const HostGroupParams& p) const
+    {
+        o["blendOut"] = static_cast<int>(p.blendOut);
+        o["outAdjustAlpha"] = p.outAdjustAlpha;
+        o["crossfadeSeconds"] = p.crossfadeSeconds;
+        o["curveIn"] = p.curveIn;
+        o["curveOut"] = p.curveOut;
+        if (!p.sourceFile.empty())
+            o["sourceFile"] = QString::fromStdString(p.sourceFile);
+    }
     void operator()(const ClearParams& p) const
     {
         o["color"] = static_cast<double>(p.color);
@@ -719,6 +729,17 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.useCode = getBool(o, "useCode", false);
         p.initCode = getStr(o, "initCode");
         p.frameCode = getStr(o, "frameCode");
+        return p;
+    }
+    if (type == "hostgroup")  // HG1 — .lvfx2-Kennzeichen
+    {
+        HostGroupParams p;
+        p.blendOut = static_cast<BlendMode>(getInt(o, "blendOut", 1));
+        p.outAdjustAlpha = getInt(o, "outAdjustAlpha", 128);
+        p.crossfadeSeconds = o.value("crossfadeSeconds").toDouble(2.0);
+        p.curveIn = getInt(o, "curveIn", 0);
+        p.curveOut = getInt(o, "curveOut", 0);
+        p.sourceFile = getStr(o, "sourceFile");
         return p;
     }
     if (type == "clear")
@@ -1471,6 +1492,7 @@ QString effectTypeKey(const EffectParams& params)
     struct Visitor
     {
         QString operator()(const ListParams&) const { return "list"; }
+        QString operator()(const HostGroupParams&) const { return "hostgroup"; }
         QString operator()(const ClearParams&) const { return "clear"; }
         QString operator()(const FadeoutParams&) const { return "fadeout"; }
         QString operator()(const InvertParams&) const { return "invert"; }
@@ -1556,7 +1578,7 @@ QJsonObject nodeToJson(const ChainNode& node)
         o["description"] = QString::fromStdString(node.description);
     std::visit(WriteVisitor{o}, node.params);
 
-    if (node.isList())
+    if (node.isContainer())  // Listen + Host-Gruppen (HG1) tragen children
     {
         QJsonArray children;
         for (const ChainNode& child : node.children)
@@ -1582,7 +1604,7 @@ ChainNode nodeFromJson(const QJsonObject& obj, QStringList* report)
         report->append("node without a type - loaded as passthrough");
     }
 
-    if (node.isList() && obj.value("children").isArray())
+    if (node.isContainer() && obj.value("children").isArray())
     {
         const QJsonArray children = obj.value("children").toArray();
         for (const QJsonValue& child : children)

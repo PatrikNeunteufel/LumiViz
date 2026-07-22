@@ -1975,6 +1975,7 @@ void MultiEffectVisualizer::resetRuntimes()
     }
     m_listRuntimes.clear();  // slot hosts / FBOs die with their GL-frame owner
     m_leafRuntimes.clear();
+    m_groupRuntimes.clear();  // HG1: Gruppen-Surfaces/-Pools sterben mit
     m_bufferPool.clear();
     for (auto& ring : m_mdRing) ring.clear();  // Multi Delay shared rings
     for (int& head : m_mdHead) head = 0;
@@ -1989,6 +1990,11 @@ void MultiEffectVisualizer::destroySurfaces()
     for (auto& [id, runtime] : m_listRuntimes)
     {
         runtime.surface.destroy();
+    }
+    for (auto& [id, runtime] : m_groupRuntimes)
+    {
+        runtime.surface.destroy();
+        if (runtime.pool != nullptr) runtime.pool->clear();
     }
     m_surfaceStack.clear();
     m_surfaceWidth = 0;
@@ -2069,6 +2075,7 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     m_surfaceStack.clear();
     m_surfaceStack.push_back(&m_rootSurface);
     for (auto& [id, runtime] : m_listRuntimes) runtime.seenThisFrame = false;
+    for (auto& [id, runtime] : m_groupRuntimes) runtime.seenThisFrame = false;
     m_renderMode = RenderMode{};  // Set Render Mode is per-frame, reset before the walk
     buildVisData();               // audio for getspec/getosc, shared by all scripts
     bindActive();
@@ -2105,6 +2112,10 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     {
         it = it->second.seenThisFrame ? std::next(it) : m_listRuntimes.erase(it);
     }
+    for (auto it = m_groupRuntimes.begin(); it != m_groupRuntimes.end();)
+    {
+        it = it->second.seenThisFrame ? std::next(it) : m_groupRuntimes.erase(it);
+    }
 
     if (blendWasEnabled == GL_TRUE) f->glEnable(GL_BLEND);
     m_firstFrame = false;
@@ -2127,6 +2138,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         const ChainNode& node;
 
         void operator()(const ListParams& params) const { self.renderList(node, params); }
+        void operator()(const HostGroupParams& params) const { self.renderHostGroup(node, params); }
         void operator()(const ClearParams& params) const { self.runClear(params); }
         void operator()(const FadeoutParams& params) const { self.runFadeout(params); }
         void operator()(const InvertParams&) const { self.runInvert(); }
@@ -2226,7 +2238,7 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
             runtime.compiledFrame != params.frameCode)
         {
             runtime.slotHost = std::make_unique<ScriptSlotHost>(
-                "effectlist", m_scriptContext, ScriptSlotHost::Dialect::Avs);
+                "effectlist", activeContext(), ScriptSlotHost::Dialect::Avs);
             runtime.slotHost->setSource(Slot::Init, params.initCode);
             runtime.slotHost->setSource(Slot::Frame, params.frameCode);
             runtime.slotHost->compileAll();
@@ -2317,6 +2329,76 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
                   alphaOut, bufTex, params.bufferOutInvert);
     }
     bindActive();  // chain continues on the parent's (possibly swapped) buffer
+}
+
+// =============================================================================
+// Host groups (HG1 — HostGruppen_Crossfade_Entwurf.md)
+// =============================================================================
+
+void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
+                                            const HostGroupParams& params)
+{
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    GroupRuntime& runtime = m_groupRuntimes[node.nodeId];
+    runtime.seenThisFrame = true;
+    if (runtime.pool == nullptr)
+    {
+        runtime.pool = std::make_unique<lumi::render::OffscreenBufferPool>();
+    }
+    if (runtime.context == nullptr)
+    {
+        runtime.context = std::make_shared<lumi::scripting::ScriptContext>();
+    }
+
+    // Persistenter Gruppen-Buffer — bewusst KEIN per-Frame-Clear: das Visual
+    // regelt sein Feedback selbst (AVS-Clear-Effekte bzw. Milkdrop-decay)
+    bool resized = false;
+    if (!ensureSurfacePair(runtime.surface, m_surfaceWidth, m_surfaceHeight,
+                           &resized))
+    {
+        return;
+    }
+    if (resized) runtime.needsClear = true;
+    if (runtime.needsClear)
+    {
+        runtime.surface.current()->bind();
+        f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+        f->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        f->glClear(GL_COLOR_BUFFER_BIT);
+        runtime.surface.current()->release();
+        runtime.needsClear = false;
+    }
+
+    // Scope-Wechsel (Stack-Disziplin): gruppen-eigener Buffer-Pool und
+    // ScriptContext — Buffer-Save-Slots und reg/q/gmegabuf leaken nicht
+    // zwischen Gruppen (Runtime-Trennung fuer den HG2-Crossfade)
+    lumi::render::OffscreenBufferPool* prevPool = m_activePool;
+    std::shared_ptr<lumi::scripting::ScriptContext> prevCtx = m_activeContext;
+    m_activePool = runtime.pool.get();
+    m_activeContext = runtime.context;
+
+    m_surfaceStack.push_back(&runtime.surface);
+    bindActive();
+    for (const ChainNode& child : node.children)
+    {
+        renderNode(child);
+    }
+    active().current()->release();
+    m_surfaceStack.pop_back();
+
+    m_activePool = prevPool;
+    m_activeContext = prevCtx;
+
+    // Out-Blend: Gruppen-Bild -> Parent. Mehrere gleichzeitig aktive Gruppen
+    // stapeln sich hierueber (Entwurf §2.6); der Crossfade (HG2) moduliert
+    // spaeter die Gewichte per Ein-/Ausgangskurve.
+    if (params.blendOut != BlendMode::Ignore)
+    {
+        blendPass(active(), runtime.surface.current()->texture(), params.blendOut,
+                  params.outAdjustAlpha, 0, false);
+    }
+    bindActive();
 }
 
 // =============================================================================
@@ -2540,7 +2622,7 @@ void MultiEffectVisualizer::runColorModifier(const ChainNode& node,
                                  params.beatCode + '\n' + params.levelCode;
     if (rt.lut == nullptr || rt.lutCompiled != combined)
     {
-        rt.lut = std::make_unique<lumi::modules::ScriptLutModule>(m_scriptContext);
+        rt.lut = std::make_unique<lumi::modules::ScriptLutModule>(activeContext());
         rt.lut->setInitCode(params.initCode);
         rt.lut->setFrameCode(params.frameCode);
         rt.lut->setBeatCode(params.beatCode);
@@ -2613,7 +2695,7 @@ void MultiEffectVisualizer::runMovement(const ChainNode& node,
     const std::string combined = "M:" + params.code;
     if (rt.grid == nullptr || rt.gridCompiled != combined)
     {
-        rt.grid = std::make_unique<lumi::modules::ScriptGridModule>(m_scriptContext);
+        rt.grid = std::make_unique<lumi::modules::ScriptGridModule>(activeContext());
         rt.grid->setPointCode(params.code);
         rt.grid->setGridSize(kXres, kYres);
         rt.gridCompiled = combined;
@@ -2753,7 +2835,7 @@ void MultiEffectVisualizer::runDynamicMovement(const ChainNode& node,
                                  '\n' + params.pointCode;
     if (rt.grid == nullptr || rt.gridCompiled != combined)
     {
-        rt.grid = std::make_unique<lumi::modules::ScriptGridModule>(m_scriptContext);
+        rt.grid = std::make_unique<lumi::modules::ScriptGridModule>(activeContext());
         rt.grid->setInitCode(params.initCode);
         rt.grid->setFrameCode(params.frameCode);
         rt.grid->setBeatCode(params.beatCode);
@@ -2772,7 +2854,7 @@ void MultiEffectVisualizer::runDynamicMovement(const ChainNode& node,
     {
         // r_dmove.cpp:289-290: source is a global buffer; when it does not
         // exist (nothing saved yet) the effect is a plain passthrough.
-        QOpenGLFramebufferObject* pool = m_bufferPool.get(
+        QOpenGLFramebufferObject* pool = activePool().get(
             params.buffern - 1, m_surfaceWidth, m_surfaceHeight, false);
         if (pool == nullptr) return;
         opt.srcTexture = pool->texture();
@@ -2935,7 +3017,7 @@ void MultiEffectVisualizer::runBufferSave(const ChainNode& node,
         // Write the current working buffer into global buffer `slot`. The blend
         // applies in BOTH directions in AVS (fbin/fbout swap, r_stack.cpp:127).
         QOpenGLFramebufferObject* pool =
-            m_bufferPool.get(params.slot, m_surfaceWidth, m_surfaceHeight, true);
+            activePool().get(params.slot, m_surfaceWidth, m_surfaceHeight, true);
         if (pool == nullptr) return;
         const bool hasBlit = QOpenGLFramebufferObject::hasOpenGLFramebufferBlit();
         if (params.blend == BlendMode::Replace || !hasBlit ||
@@ -2978,7 +3060,7 @@ void MultiEffectVisualizer::runBufferSave(const ChainNode& node,
     {
         // Blend a previously saved buffer back onto the working surface.
         QOpenGLFramebufferObject* pool =
-            m_bufferPool.get(params.slot, m_surfaceWidth, m_surfaceHeight, false);
+            activePool().get(params.slot, m_surfaceWidth, m_surfaceHeight, false);
         if (pool == nullptr) return;  // nothing saved yet
         blendPass(active(), pool->texture(), params.blend, params.adjustAlpha);
         bindActive();
@@ -3441,7 +3523,7 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
                                  params.beatCode;
     if (rt.bumpHost == nullptr || rt.bumpCompiled != combined)
     {
-        rt.bumpHost = std::make_unique<ScriptSlotHost>("bump", m_scriptContext,
+        rt.bumpHost = std::make_unique<ScriptSlotHost>("bump", activeContext(),
                                                        ScriptSlotHost::Dialect::Avs);
         rt.bumpHost->setSource(Slot::Init, params.initCode);
         rt.bumpHost->setSource(Slot::Frame, params.frameCode);
@@ -3516,7 +3598,7 @@ void MultiEffectVisualizer::runDynamicShift(const ChainNode& node,
                                  params.beatCode;
     if (rt.shiftHost == nullptr || rt.shiftCompiled != combined)
     {
-        rt.shiftHost = std::make_unique<ScriptSlotHost>("dshift", m_scriptContext,
+        rt.shiftHost = std::make_unique<ScriptSlotHost>("dshift", activeContext(),
                                                         ScriptSlotHost::Dialect::Avs);
         rt.shiftHost->setSource(Slot::Init, params.initCode);
         rt.shiftHost->setSource(Slot::Frame, params.frameCode);
@@ -3949,7 +4031,7 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
                                  params.beatCode + '\n' + params.pointCode;
     if (rt.texerHost == nullptr || rt.texerCompiled != combined)
     {
-        rt.texerHost = std::make_unique<ScriptSlotHost>("texer2", m_scriptContext,
+        rt.texerHost = std::make_unique<ScriptSlotHost>("texer2", activeContext(),
                                                         ScriptSlotHost::Dialect::Avs);
         rt.texerHost->setSource(Slot::Init, params.initCode);
         rt.texerHost->setSource(Slot::Frame, params.frameCode);
@@ -4013,7 +4095,7 @@ void MultiEffectVisualizer::runTriangle(const ChainNode& node, const TrianglePar
                                  params.beatCode + '\n' + params.pointCode;
     if (rt.triHost == nullptr || rt.triCompiled != combined)
     {
-        rt.triHost = std::make_unique<ScriptSlotHost>("triangle", m_scriptContext,
+        rt.triHost = std::make_unique<ScriptSlotHost>("triangle", activeContext(),
                                                       ScriptSlotHost::Dialect::Avs);
         rt.triHost->setSource(Slot::Init, params.initCode);
         rt.triHost->setSource(Slot::Frame, params.frameCode);
@@ -4321,7 +4403,7 @@ void MultiEffectVisualizer::runJherikoGlobal(const ChainNode& node,
                                  params.beatCode;
     if (rt.jherikoHost == nullptr || rt.jherikoCompiled != combined)
     {
-        rt.jherikoHost = std::make_unique<ScriptSlotHost>("jheriko", m_scriptContext,
+        rt.jherikoHost = std::make_unique<ScriptSlotHost>("jheriko", activeContext(),
                                                           ScriptSlotHost::Dialect::Avs);
         rt.jherikoHost->setSource(Slot::Init, params.initCode);
         rt.jherikoHost->setSource(Slot::Frame, params.frameCode);
@@ -4352,7 +4434,7 @@ void MultiEffectVisualizer::runDynamicDistanceModifier(
                                  params.beatCode + '\n' + params.pixelCode;
     if (rt.ddmHost == nullptr || rt.ddmCompiled != combined)
     {
-        rt.ddmHost = std::make_unique<ScriptSlotHost>("ddm", m_scriptContext,
+        rt.ddmHost = std::make_unique<ScriptSlotHost>("ddm", activeContext(),
                                                       ScriptSlotHost::Dialect::Avs);
         rt.ddmHost->setSource(Slot::Init, params.initCode);
         rt.ddmHost->setSource(Slot::Frame, params.frameCode);
@@ -5171,7 +5253,7 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
                                  std::to_string(jy) + ',' + std::to_string(power);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
-            rt.fracHost = std::make_unique<ScriptSlotHost>("fractal2d", m_scriptContext,
+            rt.fracHost = std::make_unique<ScriptSlotHost>("fractal2d", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
@@ -5294,7 +5376,7 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
                                  std::to_string(ox) + ',' + std::to_string(oy);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
-            rt.fracHost = std::make_unique<ScriptSlotHost>("domainwarp", m_scriptContext,
+            rt.fracHost = std::make_unique<ScriptSlotHost>("domainwarp", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
@@ -5495,7 +5577,7 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
                                  std::to_string(fold);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
-            rt.fracHost = std::make_unique<ScriptSlotHost>("fractal3d", m_scriptContext,
+            rt.fracHost = std::make_unique<ScriptSlotHost>("fractal3d", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
@@ -5585,7 +5667,7 @@ void MultiEffectVisualizer::runLyapunov(const ChainNode& node,
                                  std::to_string(bMax);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
-            rt.fracHost = std::make_unique<ScriptSlotHost>("lyapunov", m_scriptContext,
+            rt.fracHost = std::make_unique<ScriptSlotHost>("lyapunov", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
@@ -5660,7 +5742,7 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
                                  std::to_string(zoom) + ',' + std::to_string(rot);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
-            rt.fracHost = std::make_unique<ScriptSlotHost>("kleinian", m_scriptContext,
+            rt.fracHost = std::make_unique<ScriptSlotHost>("kleinian", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
@@ -5730,7 +5812,7 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
                                  std::to_string(rotSpeed);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
-            rt.fracHost = std::make_unique<ScriptSlotHost>("fractalzoom", m_scriptContext,
+            rt.fracHost = std::make_unique<ScriptSlotHost>("fractalzoom", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
@@ -5810,7 +5892,7 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
                                  std::to_string(d);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
-            rt.fracHost = std::make_unique<ScriptSlotHost>("attractor", m_scriptContext,
+            rt.fracHost = std::make_unique<ScriptSlotHost>("attractor", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
@@ -5930,7 +6012,7 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
                                  params.beatCode + "\n#" + std::to_string(rotation);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
-            rt.fracHost = std::make_unique<ScriptSlotHost>("flame", m_scriptContext,
+            rt.fracHost = std::make_unique<ScriptSlotHost>("flame", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
@@ -6042,7 +6124,7 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
                                  std::to_string(kill);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
-            rt.fracHost = std::make_unique<ScriptSlotHost>("reactdiff", m_scriptContext,
+            rt.fracHost = std::make_unique<ScriptSlotHost>("reactdiff", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
@@ -6189,7 +6271,7 @@ void MultiEffectVisualizer::transformPass(QOpenGLShaderProgram& shader)
 unsigned int MultiEffectVisualizer::poolTexture(int n)
 {
     QOpenGLFramebufferObject* pool =
-        m_bufferPool.get(n, m_surfaceWidth, m_surfaceHeight, false);
+        activePool().get(n, m_surfaceWidth, m_surfaceHeight, false);
     return pool != nullptr ? pool->texture() : 0u;
 }
 

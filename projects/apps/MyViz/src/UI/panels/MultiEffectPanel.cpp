@@ -24,6 +24,8 @@
 #include <QAbstractItemView>
 #include <QCheckBox>
 #include <QColorDialog>
+#include <QFileDialog>
+#include <QMessageBox>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
@@ -139,6 +141,20 @@ MilkPathInfo splitMilkPath(QList<int> p)
     return r;
 }
 
+/// Tiefenregel-Helfer (HG1): fuehrt der Pfad DURCH oder AUF eine Host-Gruppe?
+bool pathTouchesHostGroup(ChainNode& root, const QList<int>& path)
+{
+    ChainNode* walk = &root;
+    if (walk->isHostGroup()) return true;
+    for (int idx : path)
+    {
+        if (idx < 0 || idx >= static_cast<int>(walk->children.size())) return false;
+        walk = &walk->children[static_cast<size_t>(idx)];
+        if (walk->isHostGroup()) return true;
+    }
+    return false;
+}
+
 /// Kleinster wavecode_N/shapecode_N-Index, der noch nicht belegt ist.
 template <typename Vec>
 int nextFreeMilkIndex(const Vec& vec)
@@ -227,6 +243,7 @@ const std::vector<EffectType>& effectPalette()
     static const std::vector<EffectType> kPalette = {
         {"— Structure & Control —", nullptr},
         {"Effect List", [] { return EffectParams{ListParams{}}; }},
+        {"Host Group", [] { return EffectParams{HostGroupParams{}}; }, Origin::Native},
         {"Clear", [] { return EffectParams{ClearParams{}}; }},
         {"Fadeout", [] { return EffectParams{FadeoutParams{}}; }},
         {"OnBeat Clear", [] { return EffectParams{OnBeatClearParams{}}; }},
@@ -800,7 +817,7 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
     });
     m_tree->setItemWidget(item, 1, eye);
 
-    if (node.isList())
+    if (node.isContainer())  // Listen + Host-Gruppen (HG1)
     {
         for (int i = 0; i < static_cast<int>(node.children.size()); ++i)
         {
@@ -1018,8 +1035,24 @@ void MultiEffectPanel::onAddEffect()
     const QList<int> sel = currentPath();
     mutateStructure([&] {
         ChainNode* target = nodeAtPath(sel);
-        // Add into the selected list; otherwise append to the root list.
-        if (target != nullptr && target->isList())
+        // Tiefenregel (HG1, Entwurf §5.1): keine Host-Gruppe in eine
+        // Host-Gruppe einfuegen — weder direkt noch in eine Liste darunter.
+        // Greift nur, wenn der Einfuege-Ort wirklich der selektierte Container
+        // ist (sonst landet der Add ohnehin auf der Root-Liste).
+        if (fresh.isHostGroup() && target != nullptr && target->isContainer())
+        {
+            ChainNode* walk = &m_host->chain();
+            bool insideGroup = walk->isHostGroup();
+            for (int idx : sel)
+            {
+                if (idx < 0 || idx >= static_cast<int>(walk->children.size())) break;
+                walk = &walk->children[static_cast<size_t>(idx)];
+                insideGroup = insideGroup || walk->isHostGroup();
+            }
+            if (insideGroup) return;
+        }
+        // Add into the selected container (list/host group); else root list.
+        if (target != nullptr && target->isContainer())
         {
             target->children.push_back(std::move(fresh));
         }
@@ -1320,7 +1353,7 @@ bool MultiEffectPanel::moveNodesLocked(const QList<QList<int>>& srcPaths,
         if (where == ChainDrop::OnItem)
         {
             ChainNode* tnode = nodeAtPath(targetPath);
-            if (tnode != nullptr && tnode->isList())
+            if (tnode != nullptr && tnode->isContainer())
             {
                 dstParentPath = targetPath;
                 dstIndex = static_cast<int>(tnode->children.size());
@@ -1337,6 +1370,16 @@ bool MultiEffectPanel::moveNodesLocked(const QList<QList<int>>& srcPaths,
         const bool intoSub = dstParentPath.size() >= sp.size() &&
                              dstParentPath.mid(0, sp.size()) == sp;
         if (dstParentPath == sp || intoSub) return false;
+    }
+
+    // Tiefenregel (HG1): Teilbaeume MIT Host-Gruppe nicht in eine Gruppe ziehen.
+    if (pathTouchesHostGroup(m_host->chain(), dstParentPath))
+    {
+        for (const QList<int>& sp : srcPaths)
+        {
+            ChainNode* srcNode = nodeAtPath(sp);
+            if (srcNode != nullptr && chainHasHostGroup(*srcNode)) return false;
+        }
     }
 
     ChainNode* srcParent = nodeAtPath(srcParentPath);
@@ -1411,7 +1454,7 @@ bool MultiEffectPanel::moveNodeLocked(const QList<int>& srcPath,
         if (where == ChainDrop::OnItem)
         {
             ChainNode* tnode = nodeAtPath(targetPath);
-            if (tnode != nullptr && tnode->isList())
+            if (tnode != nullptr && tnode->isContainer())
             {
                 dstParentPath = targetPath;  // drop INTO the group (append)
                 dstIndex = static_cast<int>(tnode->children.size());
@@ -1442,6 +1485,13 @@ bool MultiEffectPanel::moveNodeLocked(const QList<int>& srcPath,
     if (dstParentPath == srcParentPath && (dstIndex == srcIdx || dstIndex == srcIdx + 1))
     {
         return false;  // dropped back onto its own slot
+    }
+
+    // Tiefenregel (HG1): Teilbaum MIT Host-Gruppe nicht in eine Gruppe ziehen.
+    if (pathTouchesHostGroup(m_host->chain(), dstParentPath))
+    {
+        ChainNode* srcNode = nodeAtPath(srcPath);
+        if (srcNode != nullptr && chainHasHostGroup(*srcNode)) return false;
     }
 
     // --- Extract from source, then insert (adjust dst for the removal) -------
@@ -2670,6 +2720,108 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     {
         addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<DebugBarsParams>(n.params).color = v; });
         addDouble(tr("Orbit speed"), p->orbitSpeed, -10.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<DebugBarsParams>(n.params).orbitSpeed = static_cast<float>(v); });
+    }
+    else if (auto* p = std::get_if<HostGroupParams>(&params))
+    {
+        // HG1 (HostGruppen_Crossfade_Entwurf.md): Level-1-Host — eigener
+        // persistenter Buffer (Feedback), eigener Buffer-Pool + ScriptContext.
+        auto* info = new QLabel(
+            tr("Host-Gruppe: kapselt ein komplettes Visual (eigener "
+               "Feedback-Buffer, eigene Buffer-Save-Slots und Skript-Globals). "
+               "Mehrere aktive Gruppen stapeln sich ueber Blend Out; der "
+               "Crossfade (HG2) blendet beim Wechsel."),
+            m_propContainer);
+        info->setWordWrap(true);
+        form->addRow(info);
+
+        addEnum(tr("Blend Out"), static_cast<int>(p->blendOut), kBlendNames,
+                [](ChainNode& n, int v) {
+                    std::get<HostGroupParams>(n.params).blendOut =
+                        static_cast<BlendMode>(v);
+                });
+        addInt(tr("Out Alpha"), p->outAdjustAlpha, 0, 255,
+               [](ChainNode& n, int v) {
+                   std::get<HostGroupParams>(n.params).outAdjustAlpha = v;
+               });
+
+        auto* syncNote = new QLabel(
+            tr("Hinweis: Die Crossfade-Dauer gilt synchron fuer ALLE "
+               "Host-Gruppen — eine Aenderung hier wird auf alle uebertragen "
+               "(Entwurf-Regel). Die Kurven sind je Gruppe individuell."),
+            m_propContainer);
+        syncNote->setWordWrap(true);
+        form->addRow(syncNote);
+        addDouble(tr("Crossfade-Dauer (s)"), p->crossfadeSeconds, 0.0, 60.0, 0.1,
+                  [this](ChainNode& n, double v) {
+                      std::get<HostGroupParams>(n.params).crossfadeSeconds = v;
+                      // Sync-Regel (Entwurf §2.4) — laeuft unter dem
+                      // renderMutex von mutate(): alle Gruppen angleichen
+                      if (m_host == nullptr) return;
+                      std::function<void(ChainNode&)> sync = [&](ChainNode& c) {
+                          if (auto* g = std::get_if<HostGroupParams>(&c.params))
+                              g->crossfadeSeconds = v;
+                          for (ChainNode& ch : c.children) sync(ch);
+                      };
+                      sync(m_host->chain());
+                  });
+        const QStringList curveNames = {tr("Linear")};
+        addEnum(tr("Eingangskurve"), std::clamp(p->curveIn, 0, 0), curveNames,
+                [](ChainNode& n, int v) {
+                    std::get<HostGroupParams>(n.params).curveIn = v;
+                });
+        addEnum(tr("Ausgangskurve"), std::clamp(p->curveOut, 0, 0), curveNames,
+                [](ChainNode& n, int v) {
+                    std::get<HostGroupParams>(n.params).curveOut = v;
+                });
+
+        if (!p->sourceFile.empty())
+        {
+            auto* src = new QLabel(tr("Quelle: %1").arg(QString::fromStdString(
+                                       p->sourceFile)),
+                                   m_propContainer);
+            src->setWordWrap(true);
+            form->addRow(src);
+        }
+        auto* importBtn = new QPushButton(
+            tr(".lvfx in diese Gruppe importieren..."), m_propContainer);
+        connect(importBtn, &QPushButton::clicked, this, [this, path]() {
+            const QString file = QFileDialog::getOpenFileName(
+                this, tr("Import .lvfx in Host-Gruppe"), QString(),
+                tr("LumiViz Effect Chain (*.lvfx)"));
+            if (file.isEmpty()) return;
+            ChainNode loaded;
+            QStringList report;
+            if (!lumi::multieffect::loadChainFromFile(file, loaded, &report))
+            {
+                QMessageBox::warning(this, tr("Import .lvfx"),
+                                     tr("Konnte nicht laden:\n%1").arg(file));
+                return;
+            }
+            if (chainHasHostGroup(loaded))
+            {
+                QMessageBox::information(
+                    this, tr("Import .lvfx"),
+                    tr("Die Quelle enthaelt selbst Host-Gruppen — sie werden "
+                       "beim Uebernehmen zur Effect List degradiert "
+                       "(Tiefenregel)."));
+            }
+            mutateStructure([&] {
+                ChainNode* node = nodeAtPath(path);
+                auto* hg = node != nullptr
+                               ? std::get_if<HostGroupParams>(&node->params)
+                               : nullptr;
+                if (hg == nullptr) return;
+                // Frische IDs — compileChain vergibt nur an nodeId==0
+                std::function<void(ChainNode&)> clearIds = [&](ChainNode& n) {
+                    n.nodeId = 0;
+                    for (ChainNode& c : n.children) clearIds(c);
+                };
+                clearIds(loaded);
+                node->children = std::move(loaded.children);
+                hg->sourceFile = file.toStdString();
+            });
+        });
+        form->addRow(importBtn);
     }
     else if (auto* p = std::get_if<MilkdropNodeParams>(&params))
     {

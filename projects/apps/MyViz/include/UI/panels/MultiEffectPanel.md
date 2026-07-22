@@ -62,6 +62,17 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
   `analyzeWarp/CompShader` (SSOT = Text). Palette-Eintrag „Milkdrop
   (Preset-Pipeline)" mit MilkDrop-Origin-Icon.
 
+- **Host-Gruppe (HG1, Session 42):** Container-Node wie eine Effect List, aber
+  mit **eigenem Laufzeit-Bestand** (persistenter Feedback-Buffer, eigene
+  Buffer-Save-Slots, eigener Skript-Kontext). Palette „Host Group";
+  **Tiefenregel** — keine Gruppe in einer Gruppe: das Add-Dropdown und
+  Drag&Drop verweigern es, der Compile-Pass degradiert verschachtelte Gruppen
+  aus Dateien zur Effect List. Editor: Blend Out/Alpha, **Crossfade-Dauer**
+  (Änderung synchronisiert ALLE Gruppen, Entwurf §2.4), individuelle Ein-/
+  Ausgangskurven (linear; weitere mit HG2), `.lvfx`-Import in die Gruppe
+  (children ersetzt, frische nodeIds, Quelle wird angezeigt). Speichern einer
+  Kette mit Gruppe(n) erzeugt `.lvfx2`.
+
 ## Verträge
 
 - **Alle Mutationen** (Struktur wie Parameter) laufen unter dem `renderMutex()`

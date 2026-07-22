@@ -147,6 +147,30 @@ struct ListParams
     std::string frameCode;  ///< EEL, per frame (enabled/clear/beat/alphain/alphaout)
 };
 
+/**
+ * Host-Gruppe (HG1, HostGruppen_Crossfade_Entwurf.md): kapselt ein komplettes
+ * Visual als Level-1-Host. children wie bei ListParams, aber mit EIGENEM
+ * Laufzeit-Bestand je Gruppe (persistenter Gruppen-Buffer OHNE clearEveryFrame
+ * = Feedback, eigener OffscreenBufferPool, eigener ScriptContext). Tiefenregel:
+ * keine Host-Gruppe in einer Host-Gruppe — der Compile-Pass degradiert
+ * verschachtelte Gruppen zur Effect List (Warnung, kein Hard-Fail).
+ * Mehrere Gruppen duerfen gleichzeitig aktiv sein (§2.6) und stapeln sich
+ * ueber blendOut; der Crossfade (HG2) blendet paarweise A→B.
+ */
+struct HostGroupParams
+{
+    BlendMode blendOut = BlendMode::Replace;  ///< Gruppen-Buffer -> Parent
+    int outAdjustAlpha = 128;                 ///< Adjustable out-alpha 0..255
+
+    // Wechsel-Settings (synchron ueber alle Gruppen, Entwurf §2.4) — die
+    // Ein-/Ausgangskurven sind dagegen individuell je Gruppe; HG2 wertet aus.
+    double crossfadeSeconds = 2.0;  ///< Blend-Dauer beim Gruppen-Wechsel
+    int curveIn = 0;                ///< 0 = linear (weitere Kurven mit HG2)
+    int curveOut = 0;               ///< 0 = linear
+
+    std::string sourceFile;  ///< importierte .lvfx-Quelle ("" = leer angelegt)
+};
+
 /** AVS "Render / Clear screen" (ID 25), reduced to the 5.1 core. */
 struct ClearParams
 {
@@ -1271,7 +1295,7 @@ using EffectParams =
                  LyapunovParams, KleinianParams, FractalZoomerParams,
                  StrangeAttractorParams, FlameParams, ReactionDiffusionParams,
                  SetRenderModeParams, DebugBarsParams, MilkdropNodeParams,
-                 PassthroughParams>;
+                 HostGroupParams, PassthroughParams>;
 
 // =============================================================================
 // Chain node
@@ -1300,6 +1324,16 @@ struct ChainNode
     {
         return std::holds_alternative<ListParams>(params);
     }
+
+    /// Host-Gruppe (HG1): Container wie eine Liste, aber mit eigenem
+    /// Laufzeit-Bestand — children sind auch hier gueltig.
+    [[nodiscard]] bool isHostGroup() const
+    {
+        return std::holds_alternative<HostGroupParams>(params);
+    }
+
+    /// Container = darf children tragen (Liste oder Host-Gruppe).
+    [[nodiscard]] bool isContainer() const { return isList() || isHostGroup(); }
 };
 
 // =============================================================================
@@ -1325,6 +1359,7 @@ struct CompileResult
     struct Visitor
     {
         const char* operator()(const ListParams&) const { return "Effect List"; }
+        const char* operator()(const HostGroupParams&) const { return "Host Group"; }
         const char* operator()(const ClearParams&) const { return "Clear"; }
         const char* operator()(const FadeoutParams&) const { return "Fadeout"; }
         const char* operator()(const InvertParams&) const { return "Invert"; }
@@ -1424,12 +1459,29 @@ inline void warnFallbackBlend(BlendMode mode, const char* which,
 }
 
 inline void compileNode(ChainNode& node, const std::string& path,
-                        CompileResult& result, uint64_t& nextId)
+                        CompileResult& result, uint64_t& nextId,
+                        bool inHostGroup = false)
 {
     if (node.nodeId == 0) node.nodeId = nextId++;
+
+    // Tiefenregel (HG1, Entwurf §5.3): Host-Gruppe in Host-Gruppe wird zur
+    // Effect List degradiert (children bleiben, blendOut zieht um) — Warnung
+    // statt Hard-Fail, defekte/fremde Dateien laden weiter.
+    if (inHostGroup && node.isHostGroup())
+    {
+        const auto& hg = std::get<HostGroupParams>(node.params);
+        ListParams asList;
+        asList.blendOut = hg.blendOut;
+        asList.outAdjustAlpha = hg.outAdjustAlpha;
+        node.params = asList;
+        result.warnings.push_back(
+            {path, "nested host group is not allowed - degraded to an effect "
+                   "list (depth rule)"});
+    }
+
     if (node.displayName.empty()) node.displayName = effectTypeName(node.params);
 
-    if (!node.isList() && !node.children.empty())
+    if (!node.isContainer() && !node.children.empty())
     {
         result.warnings.push_back(
             {path, std::string(effectTypeName(node.params)) +
@@ -1591,12 +1643,22 @@ inline void compileNode(ChainNode& node, const std::string& path,
         warnFallbackBlend(list->blendOut, "out", path, result);
     }
 
-    if (node.isList())
+    if (auto* group = std::get_if<HostGroupParams>(&node.params))
     {
+        group->outAdjustAlpha = std::clamp(group->outAdjustAlpha, 0, 255);
+        group->crossfadeSeconds = std::clamp(group->crossfadeSeconds, 0.0, 60.0);
+        group->curveIn = std::max(0, group->curveIn);
+        group->curveOut = std::max(0, group->curveOut);
+        warnFallbackBlend(group->blendOut, "out", path, result);
+    }
+
+    if (node.isContainer())
+    {
+        const bool childInGroup = inHostGroup || node.isHostGroup();
         for (size_t i = 0; i < node.children.size(); ++i)
         {
             compileNode(node.children[i], path + "/" + std::to_string(i), result,
-                        nextId);
+                        nextId, childInGroup);
         }
     }
 }
@@ -1625,6 +1687,17 @@ inline CompileResult compileChain(ChainNode& root)
     uint64_t nextId = detail::maxNodeId(root) + 1;
     detail::compileNode(root, "root", result, nextId);
     return result;
+}
+
+/** true, wenn irgendwo im Baum eine Host-Gruppe sitzt (Persistenz: .lvfx2). */
+[[nodiscard]] inline bool chainHasHostGroup(const ChainNode& node)
+{
+    if (node.isHostGroup()) return true;
+    for (const ChainNode& child : node.children)
+    {
+        if (chainHasHostGroup(child)) return true;
+    }
+    return false;
 }
 
 /** Number of nodes in the tree, root excluded (AvsParser::effectCount rule). */

@@ -623,7 +623,7 @@ void MainWindow::setupEventHandlers()
             {
                 path = QFileDialog::getOpenFileName(
                     this, tr("Load Effect Chain"), QString(),
-                    tr("LumiViz Effect Chain (*.lvfx);;All Files (*)"));
+                    tr("LumiViz Effect Chain (*.lvfx *.lvfx2);;All Files (*)"));
             }
             if (path.isEmpty()) return;
 
@@ -710,9 +710,19 @@ void MainWindow::setupEventHandlers()
             if (host == nullptr) return;
             QString path = QFileDialog::getSaveFileName(
                 this, tr("Save Effect Chain"), QString(),
-                tr("LumiViz Effect Chain (*.lvfx)"));
+                tr("LumiViz Effect Chain (*.lvfx *.lvfx2)"));
             if (path.isEmpty()) return;
-            if (!path.endsWith(".lvfx", Qt::CaseInsensitive)) path += ".lvfx";
+
+            // HG1 (Entwurf §6): Ketten mit mindestens einer Host-Gruppe
+            // speichern als .lvfx2 — flache Ketten bleiben .lvfx.
+            bool hasGroup = false;
+            {
+                QMutexLocker lock(&widget->renderMutex());
+                hasGroup = lumi::multieffect::chainHasHostGroup(host->chain());
+            }
+            if (path.endsWith(".lvfx2", Qt::CaseInsensitive)) path.chop(6);
+            else if (path.endsWith(".lvfx", Qt::CaseInsensitive)) path.chop(5);
+            path += hasGroup ? QStringLiteral(".lvfx2") : QStringLiteral(".lvfx");
 
             bool ok = false;
             {

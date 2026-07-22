@@ -143,16 +143,19 @@ QStringList ImportBrowserPanel::currentNameFilters() const
     {
         case Filter::Avs:  return {QStringLiteral("*.avs")};
         case Filter::Milk: return {QStringLiteral("*.milk")};
-        case Filter::Lvfx: return {QStringLiteral("*.lvfx")};
+        case Filter::Lvfx:
+            return {QStringLiteral("*.lvfx"), QStringLiteral("*.lvfx2")};
         case Filter::All:  break;
     }
-    return {QStringLiteral("*.avs"), QStringLiteral("*.milk"), QStringLiteral("*.lvfx")};
+    return {QStringLiteral("*.avs"), QStringLiteral("*.milk"),
+            QStringLiteral("*.lvfx"), QStringLiteral("*.lvfx2")};
 }
 
 int ImportBrowserPanel::entryTypeForSuffix(const QString& suffix)
 {
     if (suffix.compare(QStringLiteral("milk"), Qt::CaseInsensitive) == 0) return Type_Milk;
     if (suffix.compare(QStringLiteral("lvfx"), Qt::CaseInsensitive) == 0) return Type_Lvfx;
+    if (suffix.compare(QStringLiteral("lvfx2"), Qt::CaseInsensitive) == 0) return Type_Lvfx;
     return Type_Avs;
 }
 

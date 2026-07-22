@@ -353,6 +353,21 @@ private:
         std::string compiledFrame;
     };
 
+    /**
+     * Render-thread state of one host group (HG1), keyed by nodeId: an own
+     * persistent surface (the group's feedback image — never cleared per
+     * frame), an OWN buffer pool (Buffer-Save slots do not leak between
+     * groups) and an OWN ScriptContext (reg/q/gmegabuf group-local).
+     */
+    struct GroupRuntime
+    {
+        SurfacePair surface;
+        bool needsClear = true;
+        bool seenThisFrame = false;
+        std::unique_ptr<lumi::render::OffscreenBufferPool> pool;
+        std::shared_ptr<lumi::scripting::ScriptContext> context;
+    };
+
     bool ensureSurfacePair(SurfacePair& pair, int width, int height,
                            bool* outResized = nullptr);
     void destroySurfaces();
@@ -369,6 +384,11 @@ private:
     void renderNode(const lumi::multieffect::ChainNode& node);
     void renderList(const lumi::multieffect::ChainNode& node,
                     const lumi::multieffect::ListParams& params);
+    /// Host-Gruppe (HG1): Kinder rendern auf den persistenten Gruppen-Buffer
+    /// (Feedback, kein per-Frame-Clear) mit gruppen-eigenem Buffer-Pool +
+    /// ScriptContext; blendOut mischt das Gruppen-Bild auf den Parent.
+    void renderHostGroup(const lumi::multieffect::ChainNode& node,
+                         const lumi::multieffect::HostGroupParams& params);
     void runClear(const lumi::multieffect::ClearParams& params);
     /// Milkdrop-Meganode (N1): rendert die feste MilkDrop-Pipeline in den
     /// aktiven Chain-Buffer (Composite-Ziel = beim Kern-Frame-Start gebundenes FBO)
@@ -553,6 +573,7 @@ private:
     SurfacePair m_bufferScratch;
     std::vector<SurfacePair*> m_surfaceStack;
     std::unordered_map<uint64_t, ListRuntime> m_listRuntimes;
+    std::unordered_map<uint64_t, GroupRuntime> m_groupRuntimes;  ///< HG1
     int m_surfaceWidth = 0;
     int m_surfaceHeight = 0;
     bool m_firstFrame = true;
@@ -620,6 +641,14 @@ private:
     std::vector<float> m_milkWaveScratch;  ///< interleavte Audio-Kopien (Meganode)
     std::vector<float> m_milkSpecScratch;
     lumi::render::OffscreenBufferPool m_bufferPool;  ///< 8 global buffers (Buffer Save)
+    /// HG1: Buffer-Save-Slots des AKTIVEN Scopes — Root zeigt auf m_bufferPool,
+    /// innerhalb einer Host-Gruppe auf deren GroupRuntime::pool (kein Leak
+    /// zwischen Gruppen). renderHostGroup schaltet um (Stack-Disziplin).
+    lumi::render::OffscreenBufferPool* m_activePool = nullptr;
+    [[nodiscard]] lumi::render::OffscreenBufferPool& activePool()
+    {
+        return m_activePool != nullptr ? *m_activePool : m_bufferPool;
+    }
     lumi::render::ScopeRenderer m_scopeRenderer;     ///< shared scope draw (E6)
     uint32_t m_rng = 0x9E3779B9u;  ///< host-local LCG state
 
@@ -647,6 +676,13 @@ private:
 
     // Preset-local shared script state (decision §10.3)
     std::shared_ptr<lumi::scripting::ScriptContext> m_scriptContext;
+    /// HG1: Kontext des AKTIVEN Scopes — Skript-Hosts werden gegen diesen
+    /// erzeugt (reg/q/gmegabuf bleiben gruppen-lokal). Root = m_scriptContext.
+    std::shared_ptr<lumi::scripting::ScriptContext> m_activeContext;
+    [[nodiscard]] const std::shared_ptr<lumi::scripting::ScriptContext>& activeContext()
+    {
+        return m_activeContext ? m_activeContext : m_scriptContext;
+    }
 
     // Frame-scoped inputs
     float m_time = 0.0f;       ///< seconds since init (DebugBars orbit)
