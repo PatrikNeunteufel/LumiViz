@@ -2423,12 +2423,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         if (milkSection < 0)  // Node selbst = Preset-Uebersicht
         {
             auto* info = new QLabel(
-                tr("MilkDrop-Preset '%1' — PS%2 · Warp: %3 · Comp: %4\n"
+                tr("MilkDrop-Preset '%1' — PS%2 · Warp: %3 · Comp: %4 · %5 Sprite(s)\n"
                    "Sektionen (Code / Waves / Shapes / Shader) als Kinder im Baum")
                     .arg(QString::fromStdString(p->preset.name))
                     .arg(p->preset.psVersion)
                     .arg(className(p->preset.warpInfo.shaderClass))
-                    .arg(className(p->preset.compInfo.shaderClass)),
+                    .arg(className(p->preset.compInfo.shaderClass))
+                    .arg(p->preset.sprites.size()),
                 m_propContainer);
             info->setWordWrap(true);
             form->addRow(info);

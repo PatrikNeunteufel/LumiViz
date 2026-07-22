@@ -371,6 +371,62 @@ TEST_CASE("MilkdropBlur: Texturgroessen-Kette (Referenz 1024er-Beispiel)")
     CHECK(tiny[5][1] % 4 == 0);
 }
 
+TEST_CASE("MilkdropTranslator: Sprite-Sektionen (MilkDrop2077) → SpriteState")
+{
+    const auto r = parse("[preset00]\n"
+                         "fDecay=0.96\n"
+                         "[SPRITE2_BEGIN]\n"
+                         "SpriteName=sprites\\Jello1.png\n"
+                         "SpriteColorKey=0x102030\n"
+                         "SpriteLayer=1\n"
+                         "SpriteBlend=7\n"
+                         "SpriteAlpha=0.5\n"
+                         "SpriteBurn=1\n"
+                         "SpriteX=0.25\n"
+                         "SpriteY=0.75\n"
+                         "SpriteSX=-0.8\n"
+                         "SpriteSY=0.8\n"
+                         "SpriteRot=1.5\n"
+                         "SpriteSpeed=2.0\n"
+                         "SpriteRepeatX=3.0\n"
+                         "SpriteRepeatY=4.0\n"
+                         "code_1=x=0.5+0.1*sin(time);\n"
+                         "code_2=a=1.0;\n"
+                         "[SPRITE2_END]\n"
+                         "[SPRITE1_BEGIN]\n"
+                         "SpriteName=b.png\n"
+                         "SpriteLayer=0\n"
+                         "[SPRITE1_END]\n");
+    REQUIRE(r.ok);
+    REQUIRE(r.sprites.size() == 2);
+    const PresetState s = translate(r);
+    REQUIRE(s.sprites.size() == 2);
+
+    // Layer-Sortierung: Layer 0 (Sprite 1, spaeter in der Datei) zeichnet zuerst
+    CHECK(s.sprites[0].index == 1);
+    CHECK(s.sprites[0].layer == 0);
+    CHECK(s.sprites[0].imageName == "b.png");
+
+    const auto& sp = s.sprites[1];
+    CHECK(sp.index == 2);
+    CHECK(sp.imageName == "sprites\\Jello1.png");
+    CHECK(sp.colorKey == 0x102030u);
+    CHECK(sp.layer == 1);
+    CHECK(sp.blendMode == 4);  // Referenz klemmt 0..4 (milkdropfs.cpp:3552)
+    CHECK(sp.alpha == doctest::Approx(0.5));
+    CHECK(sp.burn == doctest::Approx(1.0));
+    CHECK(sp.x == doctest::Approx(0.25));
+    CHECK(sp.y == doctest::Approx(0.75));
+    CHECK(sp.sx == doctest::Approx(-0.8));
+    CHECK(sp.sy == doctest::Approx(0.8));
+    CHECK(sp.rot == doctest::Approx(1.5));
+    CHECK(sp.speed == doctest::Approx(2.0));
+    CHECK(sp.repeatX == doctest::Approx(3.0));
+    CHECK(sp.repeatY == doctest::Approx(4.0));
+    CHECK(sp.code.find("sin(time)") != std::string::npos);
+    CHECK(sp.code.find("a=1.0") != std::string::npos);
+}
+
 // Session-41-Regression: beim C2-Umbau gingen die tryTranspile-AUFRUFE in
 // prepareCustomShaders verloren — die Custom-GLSL-Quellen blieben leer und
 // jedes Preset lief still im MD1-Fallback. Dieses Gate prueft den LADEPFAD

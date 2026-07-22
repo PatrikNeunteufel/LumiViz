@@ -30,7 +30,9 @@
 #include <MilkParser.hpp>
 #include <MilkShaderClassifier.hpp>
 
+#include <algorithm>
 #include <string>
+#include <vector>
 
 namespace lumi::milkdrop {
 
@@ -76,6 +78,34 @@ struct ShapeState
     double borderR = 1.0, borderG = 1.0, borderB = 1.0, borderA = 0.1;
     std::string initCode;
     std::string frameCode;
+};
+
+/**
+ * @brief One preset sprite ([SPRITEn_BEGIN] — MilkDrop2077-Erweiterung)
+ *
+ * Das eingebettete Format traegt die klassischen milk_img.ini-Sprites
+ * (texmgr-Variablenmodell, milkdropfs.cpp:3432 DrawUserSprites) direkt im
+ * Preset: die Sprite*-Keys sind STARTWERTE der Laufzeitvariablen, `code`
+ * laeuft je Frame (EEL; x/y/sx/sy/rot/flipx/flipy/repeatx/repeaty/blendmode/
+ * r/g/b/a/done/burn persistieren zwischen den Frames).
+ * PORT: SpriteSpeed skaliert die sprite-lokale `time` (2077 ohne Quelle —
+ * Annahme); SpriteLayer ist reiner Zeichenreihenfolge-Schluessel.
+ */
+struct SpriteState
+{
+    int index = 0;
+    std::string imageName;          ///< SpriteName (relativ zum Preset-Ordner)
+    unsigned int colorKey = 0;      ///< SpriteColorKey (0xRRGGBB → Alpha 0)
+    int layer = 0;                  ///< SpriteLayer (Sortierung, klein zuerst)
+    int blendMode = 0;              ///< SpriteBlend, geklemmt 0..4 (Referenz)
+    double alpha = 1.0;             ///< SpriteAlpha  (Startwert von `a`)
+    double burn = 0.0;              ///< SpriteBurn   (Startwert von `burn`)
+    double x = 0.5, y = 0.5;        ///< SpriteX/Y
+    double sx = 1.0, sy = 1.0;      ///< SpriteSX/SY (negativ = gespiegelt)
+    double rot = 0.0;               ///< SpriteRot (rad)
+    double speed = 1.0;             ///< SpriteSpeed (PORT: time-Skalierung)
+    double repeatX = 1.0, repeatY = 1.0;
+    std::string code;               ///< per-Frame-EEL (code_N)
 };
 
 /**
@@ -166,6 +196,9 @@ struct PresetState
     // --- custom waves/shapes (M4; only entries present in the file) ------------------------
     std::vector<WaveState> waves;
     std::vector<ShapeState> shapes;
+
+    // --- preset sprites (MilkDrop2077 [SPRITEn]-Sektionen) ---------------------------------
+    std::vector<SpriteState> sprites;
 
     // --- meta ------------------------------------------------------------------------------
     int generation = 1;             ///< 1/2/3 (MilkParser)
@@ -323,6 +356,37 @@ struct PresetState
         ss.frameCode = sh.frameCode;
         s.shapes.push_back(std::move(ss));
     }
+
+    for (const lumi::milk::Sprite& sp : parsed.sprites)
+    {
+        SpriteState st;
+        st.index = sp.index;
+        const std::string* name = lumi::milk::findParam(sp.params, "SpriteName");
+        if (name != nullptr) st.imageName = *name;
+        st.colorKey = static_cast<unsigned int>(
+            lumi::milk::paramInt(sp.params, "SpriteColorKey", 0));
+        st.layer = lumi::milk::paramInt(sp.params, "SpriteLayer", st.layer);
+        // Referenz klemmt blendmode hart auf 0..4 (milkdropfs.cpp:3552)
+        st.blendMode = std::clamp(
+            lumi::milk::paramInt(sp.params, "SpriteBlend", st.blendMode), 0, 4);
+        st.alpha = lumi::milk::paramDouble(sp.params, "SpriteAlpha", st.alpha);
+        st.burn = lumi::milk::paramDouble(sp.params, "SpriteBurn", st.burn);
+        st.x = lumi::milk::paramDouble(sp.params, "SpriteX", st.x);
+        st.y = lumi::milk::paramDouble(sp.params, "SpriteY", st.y);
+        st.sx = lumi::milk::paramDouble(sp.params, "SpriteSX", st.sx);
+        st.sy = lumi::milk::paramDouble(sp.params, "SpriteSY", st.sy);
+        st.rot = lumi::milk::paramDouble(sp.params, "SpriteRot", st.rot);
+        st.speed = lumi::milk::paramDouble(sp.params, "SpriteSpeed", st.speed);
+        st.repeatX = lumi::milk::paramDouble(sp.params, "SpriteRepeatX", st.repeatX);
+        st.repeatY = lumi::milk::paramDouble(sp.params, "SpriteRepeatY", st.repeatY);
+        st.code = sp.code;
+        s.sprites.push_back(std::move(st));
+    }
+    // Zeichenreihenfolge: Layer aufsteigend, dann Dateireihenfolge (stable)
+    std::stable_sort(s.sprites.begin(), s.sprites.end(),
+                     [](const SpriteState& a, const SpriteState& b) {
+                         return a.layer < b.layer;
+                     });
 
     s.generation = parsed.generation();
     s.psVersion = parsed.psVersion;

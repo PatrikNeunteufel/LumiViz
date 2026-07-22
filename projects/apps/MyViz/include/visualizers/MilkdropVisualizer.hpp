@@ -177,6 +177,17 @@ private:
         std::array<double, 8> tInit{};
     };
 
+    /// One preset sprite at runtime (MilkDrop2077 [SPRITEn]): PRIVATE script
+    /// context like the original texmgr slots (no reg/q sharing) + life state
+    struct SpriteRuntime
+    {
+        lumi::milkdrop::SpriteState def;
+        std::shared_ptr<lumi::scripting::ScriptContext> context;
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> script;
+        bool varsSeeded = false;  ///< Startwerte (Sprite*-Keys) einmal gesetzt
+        bool dead = false;        ///< done!=0 → beendet (bis zum Preset-Reload)
+    };
+
     // --- script plumbing ---------------------------------------------------------------
     /// Adopt a translated state: scripts + report + runtime reset (shared tail
     /// of loadMilkFile / loadPresetDocument)
@@ -228,6 +239,14 @@ private:
     /// Bind every sampler the program actually uses + feed the per-frame uniforms
     void feedCustomUniforms(QOpenGLShaderProgram& program, const FrameVars& fv,
                             unsigned int mainTexture);
+
+    // --- Preset-Sprites (MilkDrop2077; Port von DrawUserSprites) --------------------------
+    void rebuildSprites(QStringList* report);   ///< applyState-Schwanz (GUI, kein GL)
+    void loadSpriteImages(QStringList* report); ///< GUI thread: QImage + Colorkey→Alpha
+    void ensureSpriteUploads();                 ///< render thread (rev-gekoppelt)
+    /// Nach dem Composite ueber das Bild zeichnen; burn!=0 zusaetzlich in den
+    /// Feedback-Buffer (naechster Frame warpt es), done!=0 beendet das Sprite
+    void drawUserSprites();
 
     // --- preset -------------------------------------------------------------------------
     lumi::milkdrop::PresetState m_state;
@@ -282,6 +301,13 @@ private:
     unsigned int m_placeholderTex = 0;          ///< 1x1 grey (fehlende Texturen)
     std::array<unsigned int, 4> m_samplerObj{}; ///< wrapLin, clampLin, wrapPoint, clampPoint
     unsigned int m_randSeed = 0x9e3779b9u;      ///< rand_frame/rand_preset PRNG
+
+    // --- Preset-Sprites (MilkDrop2077) -----------------------------------------------------
+    std::vector<SpriteRuntime> m_spriteRt;
+    std::map<std::string, QImage> m_spriteImages;       ///< imageName -> RGBA (Colorkey angewandt)
+    std::map<std::string, unsigned int> m_spriteTexIds; ///< Uploads (render thread)
+    int m_spriteUploadRev = -1;                         ///< Upload-Stand (= m_customRev)
+    std::unique_ptr<QOpenGLShaderProgram> m_spriteProgram;  ///< tex × Farbe, uUseTexAlpha
 
     // --- Stufe C2: custom textures (asset-Pack / neben dem Preset) -------------------------
     QString m_presetDir;                                    ///< Suchbasis fuer Texturen

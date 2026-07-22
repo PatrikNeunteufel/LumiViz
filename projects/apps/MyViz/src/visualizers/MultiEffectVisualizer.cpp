@@ -1648,8 +1648,8 @@ bool MultiEffectVisualizer::loadMilkFile(const QString& path, QStringList* outRe
         }
         if (!parsed.sprites.empty())
         {
-            outReport->append(QStringLiteral("%1 Sprite-Sektion(en) geparst — "
-                                             "Rendering folgt später")
+            outReport->append(QStringLiteral("ℹ %1 Sprite(s) — werden gerendert "
+                                             "(Bild-Status folgt unten)")
                                   .arg(parsed.sprites.size()));
         }
     }

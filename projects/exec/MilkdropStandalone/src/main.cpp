@@ -283,17 +283,27 @@ private:
     void finishAutoPreset()
     {
         const FrameStats stats = saveShot(QStringLiteral("auto"));
+        // Custom-Pfad nur erwarten, wenn das Preset auch Custom-Shader HAT
+        // (MD1-/Sprite-Presets laufen zu Recht ohne — kein Gate-Fehler)
+        const auto& ps = m_viz->presetState();
+        const bool expectCustom =
+            ps.warpInfo.shaderClass == lumi::milk::ShaderClass::Custom ||
+            ps.compInfo.shaderClass == lumi::milk::ShaderClass::Custom;
         const bool customActive =
             !m_viz->warpCustomSource().empty() || !m_viz->compCustomSource().empty();
         const bool looksBlack = stats.maxLuma < 0.02;
-        std::printf("[Standalone] Ergebnis %s: custom=%s, GL-Fehler=%s, schwarz=%s\n",
+        std::printf("[Standalone] Ergebnis %s: custom=%s%s, GL-Fehler=%s, schwarz=%s\n",
                     qPrintable(QFileInfo(m_presets[m_index]).fileName()),
-                    customActive ? "ja" : "NEIN",
+                    customActive ? "ja" : (expectCustom ? "NEIN(!)" : "nein"),
+                    expectCustom ? "" : " (nicht erwartet)",
                     m_viz->customGlError().empty() ? "keiner"
                                                    : qPrintable(QString::fromStdString(
                                                          m_viz->customGlError()).left(120)),
                     looksBlack ? "JA(!)" : "nein");
-        if (!customActive || !m_viz->customGlError().empty()) m_allCustom = false;
+        if ((expectCustom && !customActive) || !m_viz->customGlError().empty())
+        {
+            m_allCustom = false;
+        }
 
         if (m_index + 1 < m_presets.size())
         {

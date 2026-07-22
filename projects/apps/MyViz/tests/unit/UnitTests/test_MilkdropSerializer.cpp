@@ -236,3 +236,72 @@ TEST_CASE("MilkdropSerializer: Korpus-Roundtrip (falls lokal vorhanden)")
     CHECK(files >= 26);       // m3 (10) + m4 (8) + m5 (8)
     CHECK(mismatches == 0);
 }
+
+TEST_CASE("MilkdropSerializer: Sprite-Roundtrip (MilkDrop2077-Sektionen)")
+{
+    PresetState s;
+    lumi::milkdrop::SpriteState sp;
+    sp.index = 3;
+    sp.imageName = "sprites\\Jello1.png";
+    sp.colorKey = 0x102030u;
+    sp.layer = 2;
+    sp.blendMode = 4;
+    sp.alpha = 0.5;
+    sp.burn = 1.0;
+    sp.x = 0.25;
+    sp.y = 0.75;
+    sp.sx = -0.8;
+    sp.sy = 0.8;
+    sp.rot = 1.5;
+    sp.speed = 2.0;
+    sp.repeatX = 3.0;
+    sp.repeatY = 4.0;
+    sp.code = "x=0.5+0.1*sin(time);";
+    s.sprites.push_back(sp);
+
+    const PresetState back = presetFromJson(presetToJson(s), nullptr);
+    REQUIRE(back.sprites.size() == 1);
+    const auto& b = back.sprites[0];
+    CHECK(b.index == 3);
+    CHECK(b.imageName == "sprites\\Jello1.png");
+    CHECK(b.colorKey == 0x102030u);
+    CHECK(b.layer == 2);
+    CHECK(b.blendMode == 4);
+    CHECK(b.alpha == doctest::Approx(0.5));
+    CHECK(b.burn == doctest::Approx(1.0));
+    CHECK(b.x == doctest::Approx(0.25));
+    CHECK(b.y == doctest::Approx(0.75));
+    CHECK(b.sx == doctest::Approx(-0.8));
+    CHECK(b.sy == doctest::Approx(0.8));
+    CHECK(b.rot == doctest::Approx(1.5));
+    CHECK(b.speed == doctest::Approx(2.0));
+    CHECK(b.repeatX == doctest::Approx(3.0));
+    CHECK(b.repeatY == doctest::Approx(4.0));
+    CHECK(b.code == "x=0.5+0.1*sin(time);");
+}
+
+TEST_CASE("MilkdropTranslator: s1-Kalibrier-Presets tragen ihre Sprites")
+{
+    const std::filesystem::path dir =
+        repoRoot() / "asset" / "calibration" / "milkdrop" / "s1";
+    REQUIRE(std::filesystem::exists(dir));
+    int presets = 0;
+    int sprites = 0;
+    for (const auto& entry : std::filesystem::directory_iterator(dir))
+    {
+        if (!entry.is_regular_file() || entry.path().extension() != ".milk") continue;
+        const auto parsed = lumi::milk::parseFile(entry.path());
+        REQUIRE(parsed.ok);
+        const PresetState s = translate(parsed);
+        ++presets;
+        sprites += static_cast<int>(s.sprites.size());
+        for (const auto& spr : s.sprites)
+        {
+            CHECK(!spr.imageName.empty());
+            CHECK(spr.blendMode >= 0);
+            CHECK(spr.blendMode <= 4);
+        }
+    }
+    CHECK(presets == 3);
+    CHECK(sprites == 4);  // 01: 1 · 02: 2 · 03: 1
+}

@@ -90,6 +90,51 @@ WaveState waveFromJson(const QJsonObject& o)
     return w;
 }
 
+QJsonObject spriteToJson(const SpriteState& s)
+{
+    QJsonObject o;
+    o["index"] = s.index;
+    o["imageName"] = qstr(s.imageName);
+    o["colorKey"] = static_cast<double>(s.colorKey);
+    o["layer"] = s.layer;
+    o["blendMode"] = s.blendMode;
+    o["alpha"] = s.alpha;
+    o["burn"] = s.burn;
+    o["x"] = s.x;
+    o["y"] = s.y;
+    o["sx"] = s.sx;
+    o["sy"] = s.sy;
+    o["rot"] = s.rot;
+    o["speed"] = s.speed;
+    o["repeatX"] = s.repeatX;
+    o["repeatY"] = s.repeatY;
+    o["code"] = qstr(s.code);
+    return o;
+}
+
+SpriteState spriteFromJson(const QJsonObject& o)
+{
+    SpriteState s;
+    s.index = getInt(o, "index", s.index);
+    s.imageName = getStr(o, "imageName");
+    s.colorKey = static_cast<unsigned int>(
+        getDouble(o, "colorKey", static_cast<double>(s.colorKey)));
+    s.layer = getInt(o, "layer", s.layer);
+    s.blendMode = getInt(o, "blendMode", s.blendMode);
+    s.alpha = getDouble(o, "alpha", s.alpha);
+    s.burn = getDouble(o, "burn", s.burn);
+    s.x = getDouble(o, "x", s.x);
+    s.y = getDouble(o, "y", s.y);
+    s.sx = getDouble(o, "sx", s.sx);
+    s.sy = getDouble(o, "sy", s.sy);
+    s.rot = getDouble(o, "rot", s.rot);
+    s.speed = getDouble(o, "speed", s.speed);
+    s.repeatX = getDouble(o, "repeatX", s.repeatX);
+    s.repeatY = getDouble(o, "repeatY", s.repeatY);
+    s.code = getStr(o, "code");
+    return s;
+}
+
 QJsonObject shapeToJson(const ShapeState& s)
 {
     QJsonObject o;
@@ -254,6 +299,9 @@ QJsonObject presetToJson(const PresetState& state)
     QJsonArray shapes;
     for (const ShapeState& s : state.shapes) shapes.append(shapeToJson(s));
     p["shapes"] = shapes;
+    QJsonArray sprites;
+    for (const SpriteState& s : state.sprites) sprites.append(spriteToJson(s));
+    p["sprites"] = sprites;
 
     // meta
     p["generation"] = state.generation;
@@ -373,6 +421,10 @@ PresetState presetFromJson(const QJsonObject& doc, QStringList* report)
     for (const QJsonValue& v : p.value("shapes").toArray())
     {
         if (v.isObject()) s.shapes.push_back(shapeFromJson(v.toObject()));
+    }
+    for (const QJsonValue& v : p.value("sprites").toArray())
+    {
+        if (v.isObject()) s.sprites.push_back(spriteFromJson(v.toObject()));
     }
 
     s.generation = getInt(p, "generation", s.generation);

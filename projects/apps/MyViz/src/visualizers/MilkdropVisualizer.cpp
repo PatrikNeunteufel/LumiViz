@@ -402,6 +402,35 @@ void clipEdgeToRect(float& x0, float& y0, float& x1, float& y1)
     y0 = ny0;
 }
 
+// -----------------------------------------------------------------------------------------
+// Preset-Sprites (Port DrawUserSprites, milkdropfs.cpp:3432-3777): Textur × Farbe;
+// uUseTexAlpha nur im Colorkey-Modus 4 (Referenz: ALPHAOP MODULATE statt DIFFUSE)
+// -----------------------------------------------------------------------------------------
+constexpr char kSpriteVertexShader[] = R"(#version 330 core
+layout(location = 0) in vec2 aPos;
+layout(location = 1) in vec2 aUv;
+out vec2 vUv;
+void main()
+{
+    vUv = aUv;
+    gl_Position = vec4(aPos, 0.0, 1.0);
+}
+)";
+
+constexpr char kSpriteFragmentShader[] = R"(#version 330 core
+in vec2 vUv;
+out vec4 fragColor;
+uniform sampler2D uTex;
+uniform vec4 uColor;
+uniform bool uUseTexAlpha;
+void main()
+{
+    vec4 t = texture(uTex, vUv);
+    float a = uUseTexAlpha ? t.a * uColor.a : uColor.a;
+    fragColor = vec4(t.rgb * uColor.rgb, a);
+}
+)";
+
 /// Trace-Hilfe (Session 41): ShaderClass lesbar machen
 const char* traceShaderClassName(lumi::milk::ShaderClass c)
 {
@@ -470,8 +499,8 @@ bool MilkdropVisualizer::loadMilkFile(const QString& path, QStringList* report)
         }
         if (!parsed.sprites.empty())
         {
-            report->append(QStringLiteral("%1 Sprite-Sektion(en) geparst — "
-                                          "Rendering folgt später")
+            report->append(QStringLiteral("ℹ %1 Sprite(s) — werden gerendert "
+                                          "(Bild-Status folgt unten)")
                                .arg(parsed.sprites.size()));
         }
     }
@@ -581,6 +610,7 @@ void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringLi
 
     prepareCustomShaders(report);
     rebuildScripts(report);
+    rebuildSprites(report);
     m_time = 0.0;
     m_frame = 0;
     m_monitor = 0.0;
@@ -1016,6 +1046,7 @@ void MilkdropVisualizer::releaseGlResources()
     m_blurHProgram.reset();
     m_blurVProgram.reset();
     m_blurLayerProgram.reset();
+    m_spriteProgram.reset();
     m_meshVao.reset();
     m_meshVbo.reset();
     m_quadVao.reset();
@@ -1046,10 +1077,11 @@ bool MilkdropVisualizer::ensureGlResources()
     m_blurHProgram = makeProgram(kTexVertexShader, kBlurHFragmentShader);
     m_blurVProgram = makeProgram(kTexVertexShader, kBlurVFragmentShader);
     m_blurLayerProgram = makeProgram(kTexVertexShader, kBlurLayerFragmentShader);
+    m_spriteProgram = makeProgram(kSpriteVertexShader, kSpriteFragmentShader);
     if (m_warpProgram == nullptr || m_textureProgram == nullptr ||
         m_colorProgram == nullptr || m_shapeProgram == nullptr ||
         m_blurHProgram == nullptr || m_blurVProgram == nullptr ||
-        m_blurLayerProgram == nullptr)
+        m_blurLayerProgram == nullptr || m_spriteProgram == nullptr)
     {
         releaseGlResources();
         return false;
@@ -1486,6 +1518,143 @@ void MilkdropVisualizer::loadCustomTextures(const std::vector<std::string>& samp
     }
 }
 
+void MilkdropVisualizer::rebuildSprites(QStringList* report)
+{
+    m_spriteRt.clear();
+    loadSpriteImages(report);
+    for (const lumi::milkdrop::SpriteState& def : m_state.sprites)
+    {
+        SpriteRuntime rt;
+        rt.def = def;
+        // privater Context je Sprite — texmgr-Modell (eigene EEL-VM je Slot,
+        // kein reg/q-Sharing mit dem Preset)
+        rt.context = std::make_shared<ScriptContext>();
+        rt.script = std::make_unique<ScriptSlotHost>(
+            "milksprite" + std::to_string(def.index), rt.context,
+            ScriptSlotHost::Dialect::Milkdrop);
+        rt.script->setSource(Slot::Frame, def.code);
+        if (!rt.script->compileAll() && report != nullptr)
+        {
+            report->append(QStringLiteral("Sprite %1: %2")
+                               .arg(def.index)
+                               .arg(QString::fromStdString(rt.script->lastError())));
+        }
+        m_spriteRt.push_back(std::move(rt));
+    }
+    trace::log(QStringLiteral("rebuildSprites: %1 Sprite(s), %2 Bild(er) geladen")
+                   .arg(m_spriteRt.size())
+                   .arg(m_spriteImages.size()));
+}
+
+void MilkdropVisualizer::loadSpriteImages(QStringList* report)
+{
+    m_spriteImages.clear();
+    if (m_state.sprites.empty()) return;
+
+    const auto resolve = [&](const std::string& rawName) -> QString {
+        QString rel = QString::fromStdString(rawName);
+        rel.replace(QLatin1Char('\\'), QLatin1Char('/'));
+        const QString fileName = QFileInfo(rel).fileName();
+        QStringList candidates;
+        if (!m_presetDir.isEmpty())
+        {
+            candidates << m_presetDir + QLatin1Char('/') + rel
+                       << m_presetDir + QStringLiteral("/../") + rel
+                       << m_presetDir + QStringLiteral("/sprites/") + fileName
+                       << m_presetDir + QStringLiteral("/../sprites/") + fileName
+                       << m_presetDir + QStringLiteral("/textures/") + fileName
+                       << m_presetDir + QStringLiteral("/../textures/") + fileName;
+        }
+        for (const QString& c : candidates)
+        {
+            if (QFileInfo::exists(c)) return c;
+        }
+        return {};
+    };
+
+    for (const lumi::milkdrop::SpriteState& def : m_state.sprites)
+    {
+        if (def.imageName.empty() || m_spriteImages.count(def.imageName) != 0) continue;
+        const QString path = resolve(def.imageName);
+        if (path.isEmpty())
+        {
+            trace::log(QStringLiteral("loadSpriteImages: '%1' NICHT gefunden "
+                                      "(Basis '%2') → Sprite inaktiv")
+                           .arg(QString::fromStdString(def.imageName))
+                           .arg(m_presetDir));
+            if (report != nullptr)
+            {
+                report->append(QStringLiteral("Sprite %1: Bild '%2' nicht gefunden")
+                                   .arg(def.index)
+                                   .arg(QString::fromStdString(def.imageName)));
+            }
+            continue;
+        }
+        QImage img(path);
+        if (img.isNull())
+        {
+            if (report != nullptr)
+            {
+                report->append(QStringLiteral("Sprite %1: Bild '%2' nicht lesbar")
+                                   .arg(def.index)
+                                   .arg(QFileInfo(path).fileName()));
+            }
+            continue;
+        }
+        // Colorkey → Alpha 0 (Referenz backt den Key beim LoadTex in den
+        // Alphakanal; nur Blend-Modus 4 sampelt ihn). KEIN mirrored(): die
+        // Sprite-Quad-Mathe rechnet im Referenzraum (y abwaerts) und negiert
+        // erst am Ende — Zeile 0 = v0 = Bild oben passt dann direkt.
+        img = img.convertToFormat(QImage::Format_RGBA8888);
+        const QRgb key = qRgb(static_cast<int>((def.colorKey >> 16) & 0xFF),
+                              static_cast<int>((def.colorKey >> 8) & 0xFF),
+                              static_cast<int>(def.colorKey & 0xFF));
+        for (int yy = 0; yy < img.height(); ++yy)
+        {
+            QRgb* line = reinterpret_cast<QRgb*>(img.scanLine(yy));
+            for (int xx = 0; xx < img.width(); ++xx)
+            {
+                if ((line[xx] & 0x00FFFFFF) == (key & 0x00FFFFFF))
+                {
+                    line[xx] &= 0x00FFFFFF;  // Alpha 0, Farbe erhalten
+                }
+            }
+        }
+        m_spriteImages[def.imageName] = std::move(img);
+        if (report != nullptr)
+        {
+            report->append(QStringLiteral("ℹ Sprite %1: '%2' geladen (%3x%4)")
+                               .arg(def.index)
+                               .arg(QFileInfo(path).fileName())
+                               .arg(m_spriteImages[def.imageName].width())
+                               .arg(m_spriteImages[def.imageName].height()));
+        }
+    }
+}
+
+void MilkdropVisualizer::ensureSpriteUploads()
+{
+    if (m_spriteUploadRev == m_customRev) return;
+    m_spriteUploadRev = m_customRev;
+    QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
+    for (const auto& [name, tex] : m_spriteTexIds) f->glDeleteTextures(1, &tex);
+    m_spriteTexIds.clear();
+    for (const auto& [name, img] : m_spriteImages)
+    {
+        unsigned int tex = 0;
+        f->glGenTextures(1, &tex);
+        f->glBindTexture(GL_TEXTURE_2D, tex);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img.width(), img.height(), 0,
+                        GL_RGBA, GL_UNSIGNED_BYTE, img.constBits());
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // REPEAT: repeatx/repeaty > 1 kachelt das Bild (Referenz-UVs)
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        m_spriteTexIds[name] = tex;
+    }
+}
+
 void MilkdropVisualizer::ensureCustomTextureUploads()
 {
     if (m_texUploadRev == m_customRev) return;
@@ -1521,6 +1690,7 @@ void MilkdropVisualizer::releaseCustomGl()
             f->glDeleteTextures(static_cast<GLsizei>(m_noiseTex.size()), m_noiseTex.data());
         if (m_placeholderTex != 0) f->glDeleteTextures(1, &m_placeholderTex);
         for (const auto& [name, tex] : m_customTexIds) f->glDeleteTextures(1, &tex);
+        for (const auto& [name, tex] : m_spriteTexIds) f->glDeleteTextures(1, &tex);
         QOpenGLExtraFunctions* ef = ctx->extraFunctions();
         if (m_samplerObj[0] != 0)
             ef->glDeleteSamplers(static_cast<GLsizei>(m_samplerObj.size()),
@@ -1531,6 +1701,8 @@ void MilkdropVisualizer::releaseCustomGl()
     m_samplerObj.fill(0);
     m_customTexIds.clear();
     m_texUploadRev = -1;
+    m_spriteTexIds.clear();
+    m_spriteUploadRev = -1;
 }
 
 bool MilkdropVisualizer::ensureCustomPrograms()
@@ -2014,6 +2186,9 @@ void MilkdropVisualizer::onRender(float deltaTime)
 
     // --- present (single vertical flip lives here) -----------------------------------------
     compositeToScreen(fv);
+    // Sprites NACH dem Composite (Referenz: DrawUserSprites auf den Backbuffer,
+    // plugin.cpp:1131); burn-in zeichnet zusaetzlich in den Feedback-Buffer
+    drawUserSprites();
     if (m_debugGrid) drawDebugGrid();
     m_feedback.swapOnly();
 
@@ -3293,6 +3468,199 @@ void MilkdropVisualizer::compositeToScreen(const FrameVars& fv)
         if (invert) pass(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     }
     f->glDisable(GL_BLEND);
+}
+
+// =============================================================================================
+// Preset-Sprites (DrawUserSprites-Port, milkdropfs.cpp:3432-3777; MilkDrop2077-
+// [SPRITEn]-Sektionen als Definitionsquelle statt milk_img.ini)
+// =============================================================================================
+
+void MilkdropVisualizer::drawUserSprites()
+{
+    if (m_spriteRt.empty() || m_spriteProgram == nullptr) return;
+    ensureSpriteUploads();
+
+    QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
+    const int w = std::max(1, width());
+    const int h = std::max(1, height());
+
+    for (SpriteRuntime& rt : m_spriteRt)
+    {
+        if (rt.dead) continue;
+        const auto texIt = m_spriteTexIds.find(rt.def.imageName);
+        if (texIt == m_spriteTexIds.end()) continue;  // Bild fehlt → inaktiv
+        const QImage& img = m_spriteImages[rt.def.imageName];
+
+        auto& e = rt.script->engine();
+        if (!rt.varsSeeded)
+        {
+            // Startwerte = Sprite*-Keys (2077-Format hat kein init_N — die
+            // Keys ERSETZEN den Init-Code; Variablen persistieren danach)
+            rt.varsSeeded = true;
+            e.setNumber("x", rt.def.x);
+            e.setNumber("y", rt.def.y);
+            e.setNumber("sx", rt.def.sx);
+            e.setNumber("sy", rt.def.sy);
+            e.setNumber("rot", rt.def.rot);
+            e.setNumber("flipx", 0.0);
+            e.setNumber("flipy", 0.0);
+            e.setNumber("repeatx", rt.def.repeatX);
+            e.setNumber("repeaty", rt.def.repeatY);
+            e.setNumber("blendmode", rt.def.blendMode);
+            e.setNumber("r", 1.0);
+            e.setNumber("g", 1.0);
+            e.setNumber("b", 1.0);
+            e.setNumber("a", rt.def.alpha);
+            e.setNumber("done", 0.0);
+            e.setNumber("burn", rt.def.burn);
+        }
+        pushCommonInputs(e);
+        // sprite-lokale Zeit: Preset-Ladung = Start; PORT: SpriteSpeed skaliert
+        // (2077 ohne Quell-Referenz — Annahme, Sichttest-Stellschraube)
+        e.setNumber("time", m_time * rt.def.speed);
+        e.setNumber("frame", static_cast<double>(m_frame));
+        if (rt.script->has(Slot::Frame))
+        {
+            rt.script->run(Slot::Frame);
+        }
+
+        // Ausgaben mit den Referenz-Klemmen (milkdropfs.cpp:3542-3556)
+        const double px = clampd(e.number("x") * 2.0 - 1.0, -1000.0, 1000.0);
+        const double py = clampd(e.number("y") * 2.0 - 1.0, -1000.0, 1000.0);
+        const double sx = clampd(e.number("sx"), -1000.0, 1000.0);
+        const double sy = clampd(e.number("sy"), -1000.0, 1000.0);
+        const double rot = e.number("rot");
+        const int flipx = (e.number("flipx") == 0.0) ? 0 : 1;
+        const int flipy = (e.number("flipy") == 0.0) ? 0 : 1;
+        const double repeatx = clampd(e.number("repeatx"), 0.01, 100.0);
+        const double repeaty = clampd(e.number("repeaty"), 0.01, 100.0);
+        const int blendmode =
+            std::clamp(static_cast<int>(e.number("blendmode")), 0, 4);
+        const float r = static_cast<float>(clampd(e.number("r"), 0.0, 1.0));
+        const float g = static_cast<float>(clampd(e.number("g"), 0.0, 1.0));
+        const float b = static_cast<float>(clampd(e.number("b"), 0.0, 1.0));
+        const float a = static_cast<float>(clampd(e.number("a"), 0.0, 1.0));
+        const bool killSprite = e.number("done") != 0.0;
+        const bool burnIn = e.number("burn") != 0.0;
+
+        // --- Vertex-Mathe 1:1 im Referenzraum (y abwaerts), Negation am Ende ---
+        double vx[4];
+        double vy[4];
+        vx[0 + flipx] = -sx;
+        vx[1 - flipx] = sx;
+        vx[2 + flipx] = -sx;
+        vx[3 - flipx] = sx;
+        vy[0 + flipy * 2] = -sy;
+        vy[1 + flipy * 2] = -sy;
+        vy[2 - flipy * 2] = sy;
+        vy[3 - flipy * 2] = sy;
+
+        // 1. Bild-Seitenverhaeltnis (nicht-quadratische Bilder)
+        const double imgAspect =
+            static_cast<double>(img.height()) / std::max(1, img.width());
+        for (int k = 0; k < 4; ++k)
+        {
+            if (imgAspect < 1.0) vy[k] *= imgAspect;
+            else vx[k] /= imgAspect;
+        }
+        // 2. Rotation
+        {
+            const double cr = std::cos(rot);
+            const double sr = std::sin(rot);
+            for (int k = 0; k < 4; ++k)
+            {
+                const double x2 = vx[k] * cr - vy[k] * sr;
+                const double y2 = vx[k] * sr + vy[k] * cr;
+                vx[k] = x2;
+                vy[k] = y2;
+            }
+        }
+        // 3. Translation + Bildschirm-Normierung (auf die Breite)
+        const double scrAspect = static_cast<double>(w) / h;
+        for (int k = 0; k < 4; ++k)
+        {
+            vx[k] += px;
+            vy[k] += py;
+            if (scrAspect > 1.0) vy[k] *= scrAspect;
+            else vx[k] /= scrAspect;
+        }
+        // PORT: der 4:3-Burn-Aspekt der Referenz (Zeile 3609) entfaellt — unser
+        // Feedback-Buffer ist fenstergross, nicht VS1-4:3.
+
+        // UVs: ±0.5 um die Mitte, dann repeat (Referenz 3621-3640); v0 = oben
+        float quad[4][4];
+        const double baseU[4] = {-0.5, 0.5, -0.5, 0.5};
+        const double baseV[4] = {-0.5, -0.5, 0.5, 0.5};
+        for (int k = 0; k < 4; ++k)
+        {
+            quad[k][0] = static_cast<float>(vx[k]);
+            quad[k][1] = static_cast<float>(-vy[k]);  // Referenzraum → GL-NDC
+            quad[k][2] = static_cast<float>(baseU[k] * repeatx + 0.5);
+            quad[k][3] = static_cast<float>(baseV[k] * repeaty + 0.5);
+        }
+
+        // --- Blend-Modus (Referenz-Tabelle 3642-3729) --------------------------------
+        m_spriteProgram->bind();
+        f->glActiveTexture(GL_TEXTURE0);
+        f->glBindTexture(GL_TEXTURE_2D, texIt->second);
+        m_spriteProgram->setUniformValue("uTex", 0);
+        bool useTexAlpha = false;
+        switch (blendmode)
+        {
+        case 1:  // decal
+            f->glDisable(GL_BLEND);
+            m_spriteProgram->setUniformValue("uColor", QVector4D(r * a, g * a, b * a, 1.0f));
+            break;
+        case 2:  // additiv
+            f->glEnable(GL_BLEND);
+            f->glBlendFunc(GL_ONE, GL_ONE);
+            m_spriteProgram->setUniformValue("uColor", QVector4D(r * a, g * a, b * a, 1.0f));
+            break;
+        case 3:  // srccolor
+            f->glEnable(GL_BLEND);
+            f->glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR);
+            m_spriteProgram->setUniformValue("uColor", QVector4D(1.0f, 1.0f, 1.0f, 1.0f));
+            break;
+        case 4:  // colorkey (Textur-Alpha moduliert)
+            useTexAlpha = true;
+            [[fallthrough]];
+        case 0:  // alpha-blend
+        default:
+            f->glEnable(GL_BLEND);
+            f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            m_spriteProgram->setUniformValue("uColor", QVector4D(r, g, b, a));
+            break;
+        }
+        m_spriteProgram->setUniformValue("uUseTexAlpha", useTexAlpha);
+
+        m_meshVao->bind();
+        m_meshVbo->bind();
+        m_meshVbo->allocate(quad, sizeof(quad));
+
+        if (burnIn)
+        {
+            // burn-in: zusaetzlich in den AKTUELLEN Feedback-Buffer — der
+            // naechste Frame warpt das Sprite mit (Referenz: Render nach VS1)
+            m_feedback.beginFrame();
+            f->glViewport(0, 0, w, h);
+            f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            f->glBindFramebuffer(GL_FRAMEBUFFER, m_targetFbo);
+            f->glViewport(0, 0, w, h);
+        }
+        f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+        m_meshVbo->release();
+        m_meshVao->release();
+        m_spriteProgram->release();
+        f->glDisable(GL_BLEND);
+
+        if (killSprite)
+        {
+            rt.dead = true;
+            trace::log(QStringLiteral("drawUserSprites: Sprite %1 beendet (done)")
+                           .arg(rt.def.index));
+        }
+    }
 }
 
 void MilkdropVisualizer::drawDebugGrid()
