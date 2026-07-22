@@ -128,6 +128,13 @@
         "version": "1.2.0",
         "type": "INTERFACE",
         "public_headers": "projects/libs/MilkParser/include"
+      },
+      {
+        "name": "HlslTranspiler",
+        "skip": false,
+        "version": "1.0.0",
+        "type": "INTERFACE",
+        "public_headers": "projects/libs/HlslTranspiler/include"
       }
     ],
     "executables": [
@@ -141,7 +148,7 @@
         "version": "0.1.0",
 
         "core": {
-          "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser" ],
+          "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],
           "externals": [ "Qt6", "qt-ads", "bass", "lua54" ],
           "external_options": {
             "bass": { "BASS_FLAC": true },
@@ -176,7 +183,7 @@
               "path": "tests/unit/UnitTests",
               "timeout": 30,
               "labels": [ "unit", "core", "fast" ],
-              "dependencies": [ "MyViz.Core", "EelTranspiler", "AvsParser", "MilkParser" ],
+              "dependencies": [ "MyViz.Core", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],
               "externals": [ "Qt6", "bass", "lua54" ],
               "external_options": {
                 "lua54": { "LUA_EMBEDDED": false }

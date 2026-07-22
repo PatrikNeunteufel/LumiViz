@@ -77,12 +77,15 @@ Preset OHNE comp-Block MUSS pumpen — z. B. Zeile in m3/08 einfügen.)
 **Abweichung:** pumpt → compositeToScreen nutzt fälschlich die Live-Werte
 statt der gebackenen (`baked`-Auswahl).
 
-## 08_custom_fallback.milk — Custom-Shader → MD1-Fallback + Report
+## 08_custom_fallback.milk — Custom-Shader (seit C1: ECHT übersetzt!)
 
-**Bild:** rote Wave, Comp-Shader ist ECHT custom (uv.yx-Spiegelung + Blur).
-**Erwartung:** Preset lädt ohne Fehler, Bild = plausibler MD1-Look (Fallback,
-KEINE Spiegelung — der Custom-Effekt wird bewusst nicht emuliert). Import-
-Report: „Custom-Comp-Shader (PS2, 2 Zeilen, Blur) → MD1-Fallback (Stufe C
-offen)". Kein Blur-Pass läuft (kein exakter Konsument).
-**Abweichung:** Crash/schwarz → Fallback-Pfad; Report fehlt → loadMilkFile-
-Klassifikations-Meldungen.
+**Bild (seit Stufe C1, Session 40):** rote Wave an der **Diagonale gespiegelt**
+(uv.yx) plus additiver Blur — der Custom-Comp-Shader wird jetzt per
+HlslTranspiler nach GLSL übersetzt und läuft wirklich.
+**Erwartung:** Import-Report: „Custom-Comp-Shader (PS2, 2 Zeilen, Blur)" +
+„Comp-Shader → GLSL übersetzt (Stufe C1, GL-Kompilierung zur Laufzeit)";
+Blur-Pass läuft (usesBlur-Flag). Diagonalen-Spiegelung + Glow sichtbar.
+**Abweichung:** Bild wie MD1 ohne Spiegelung → GL-Kompilierung gescheitert
+(`m_customGlError` im Debugger prüfen) — stiller Fallback ist das
+Sollverhalten, aber hier soll der Shader kompilieren; Crash/schwarz →
+feedCustomUniforms/Sampler-Bindung.

@@ -68,17 +68,25 @@ Analog AvsParser (Vertragsgrenze: Text → Struktur, kein Transpile, kein Qt):
 - Eigene Test-Suite + Korpus-Lauf (Referenz-Presets aus `../ref`-Beständen +
   `asset/milkdrop/`-Ordner, sobald vorhanden).
 
-### 2.3 UI/Editing — Entscheid Patrik (2026-07-22)
+### 2.3 UI/Editing — Entscheid Patrik (2026-07-22, **revidiert Session 40**)
 
 **Bearbeitet wird im gedockten Config-Panel wie beim MultiEffect — NICHT als
 Overlay im Anzeigefenster** (das Original-MilkDrop-Overlay-Menü war der
-erklärte Schwachpunkt). Konkret:
+erklärte Schwachpunkt).
 
-- Eigenes `MilkdropPanel` nach dem Muster des MultiEffect-Panels: links
-  Struktur (Preset → per_frame/per_pixel · Waves 1..N · Shapes 1..N ·
-  Warp/Comp), rechts Property-Editoren + die vorhandenen Skript-Editoren
-  (EEL-Highlighting, ⓘ-Referenz, ⤢-Expand, Kategorie-Highlighting) —
-  dieselben Widgets, MilkDrop-Variablenset als eigene `symbolCategory`-Tabelle.
+> **Revision (Patrik, Session 40): KEIN eigenes MilkdropPanel.** Das Editing
+> wird ins **MultiEffect-Panel integriert** — AVS und MilkDrop sollen nicht
+> getrennt bleiben (dafür stehen die Origin-Icons). Zielbild: Milkdrop als
+> **Chain-Node** im MultiEffect-Host (Meganode mit fester interner Pipeline),
+> der Panel-Baum zeigt Preset → per_frame/per_pixel · Waves · Shapes ·
+> Warp/Comp als Kinder des Nodes. Der gemeinsame Skript-Editor-Baukasten ist
+> dafür extrahiert (`UI/panels/EelScriptEditing.hpp`: EelHighlighter,
+> symbolCategory-SSOT, ⓘ-Referenz-/⤢-Expand-Dialoge).
+
+- ~~Eigenes `MilkdropPanel`~~ (revidiert, s. o.) — die vorhandenen
+  Skript-Editoren (EEL-Highlighting, ⓘ-Referenz, ⤢-Expand,
+  Kategorie-Highlighting) werden im MultiEffect-Panel wiederverwendet;
+  MilkDrop-Variablenset ist bereits in der `symbolCategory`-Tabelle (M2).
 - Import-Browser-Doppelklick auf `.milk` → Host-Auto-Switch auf
   `MilkdropVisualizer` + Panel zeigt das Preset (wie AVS→MultiEffect heute).
 - Persistenz als `.lvfx`-Schwester (JSON via ChainSerializer-Muster), Export
@@ -191,9 +199,11 @@ die Mesh-Auflösung ist im Original ein App-Setting, kein Preset-Feld.
    (Community-Rechte; .gitignore-Eintrag mit Herkunfts-Notiz). Der Ordner
    bringt zusätzlich `textures/`, `sprites/`, `shapes/`, `waves/` mit —
    Texturen ab M5 relevant.
-4. **Stufe C** (HLSL-Transpiler) — bleibt vertagt: Entscheidung erst nach
-   M5-Messung. Vorgeschmack aus dem Scan: PS2 dominiert (318/600 Shader-Presets)
-   → spricht für Muster-Module (Stufe B).
+4. **Stufe C** (HLSL-Transpiler) — ~~bleibt vertagt~~ **ENTSCHIEDEN (Patrik,
+   Session 40): Stufe C wird KOMPLETT umgesetzt** (C1 Ausdrücke/tex2D/Swizzles
+   → C2 Noise-Texturen + Custom-Textur-Lader → C3 Loops/tex3D). Messbasis war
+   §6.5; Umsetzungsreihenfolge und Architektur siehe offene Entscheide (E3/E4
+   in der Session-40-Vorlage).
 5. **Korpus-Statistik M5 (Session 40, Messbasis 910) + Stufe-C-Vorlage:**
    - **600 Presets mit Shader-Code**, 310 ohne (MD1 → bei uns exakt).
      PSVERSION-Verteilung: PS2 318 · PS3 254 · PS4 28.
@@ -217,6 +227,40 @@ die Mesh-Auflösung ist im Original ein App-Setting, kein Preset-Feld.
      Entscheid + Priorisierung bitte freigeben (eigene Session, Muster
      EelTranspiler: Lexer/Parser/CodeGen header-only + Korpus-Gate).
 
+## 6b. Entscheide Session 40 (Patrik, 2026-07-22) + Roadmap-Fortschreibung
+
+Vorlage E1–E8 entschieden:
+
+1. **E1 = B:** Milkdrop wird **Chain-Node** im MultiEffect-Host (Meganode
+   rendert die feste Pipeline in den Chain-Buffer); Panel-Baum zeigt
+   Preset → per_frame/per_pixel · Waves · Shapes · Warp/Comp als Node-Kinder.
+2. **E2:** Standalone-`MilkdropVisualizer` wird **entfernt**, sobald der Node
+   gleichwertig ist (Parameter meshX/Y + debugGrid ziehen an den Node um;
+   Import-Browser routet auf MultiEffect+Node).
+3. **E3:** Reihenfolge **C1 → Node-Integration (B1 Rendering, B2 Panel-Baum)
+   → C2 → C3**.
+4. **E4:** Stufe C als **eigene header-only Lib `HlslTranspiler`**
+   (`projects/libs/`, Muster EelTranspiler: Lexer/Parser/CodeGen +
+   Korpus-Gates); MilkParser bleibt bei Text → Struktur.
+5. **E5:** Crossfade = **echtes Doppel-Rendering** (beide Presets leben,
+   Bild-Mix linear als erste Stufe; per-Vertex-Warp-UV-Blending à la
+   m_fBlendProgress als Ausbaustufe). **Freeze-Frame nur als automatischer
+   Performance-Fallback.** Patrik: näher am Original ist gewünscht.
+6. **E6:** Visual-Playlist **nach** der Node-Integration (schaltet dann
+   Chains + Milkdrop-Nodes einheitlich über .lvfx, inkl. E5-Crossfade).
+7. **E7:** Kür-Paket ist **PFLICHT** (keine optionale Kür): Sprites nach C2,
+   fShader-Farbwash mit C1, Decay-Dither + .milk-Export am Ende.
+8. **E8:** geparkte Altpunkte (Wormhole-Bisektion, Sichttests §7/§8,
+   Set Render Mode→alle Scopes, Skript-SSOT, Kleinkram S31) **ganz am Ende,
+   gebündelt mit einer Kalibrier-Preset-Runde** gelöst.
+
+**Fortgeschriebene Reihenfolge:**
+C1 (HlslTranspiler-Kern: Ausdrücke/tex2D/Swizzles/Intrinsics + Shader-Pässe
+im Host, fShader-Wash) → **B1/B2 Node-Integration + Standalone-Entfernung** →
+C2 (Noise prozedural + Custom-Textur-Lader aus `asset/Milkdrop3/textures/`)
+→ Sprites → Crossfade (E5) → Visual-Playlist → C3 (Loops/tex3D) →
+Decay-Dither + .milk-Export → E8-Altpunkte + Kalibrier-Runde.
+
 ## 7. Siehe auch
 
 - [Import_Analyse_AVS_MilkDrop.md](Import_Analyse_AVS_MilkDrop.md) — §6, §7, §9, §10
@@ -236,3 +280,6 @@ die Mesh-Auflösung ist im Original ein App-Setting, kein Preset-Feld.
 | 1.5.0 | 2026-07-22 | M5 umgesetzt (Session 40, GL-Sichttest offen): Blur-Pyramide (MilkdropBlur.hpp + GL-Pässe), MilkShaderClassifier (Stufe B: Default-Familie + Blur-Mix exakt, baked Konstanten, Custom→Fallback+Report), Korpus-Statistik §6.5 + Stufe-C-Entscheidungsvorlage; Kalibrier-Satz m5 (8 Presets) |
 | 1.5.1 | 2026-07-22 | M5-Sichttest BESTANDEN (Patrik, alle 8 m5-Presets, Runde 1 ohne Stellschrauben); Kalibrier-Raster-Overlay `render.debugGrid` als Host-Parameter (Screen-Overlay nach Composite); Notiz: Milkdrop→Effect-Chain als Post-M6-Backlog bestätigt (Standalones→Module) |
 | 1.6.0 | 2026-07-22 | M6.1 umgesetzt (Session 40): .lvfx-Schwester-Persistenz — MilkdropSerializer (JSON, ChainSerializer-Muster, GL-frei), PresetState trägt rohe Shader-Texte (SSOT, Re-Klassifikation beim Laden), MainWindow-Dispatch Laden/Speichern; Roundtrip-Gates (Fixture + Kalibrier-Korpus 26/26) |
+| 1.7.0 | 2026-07-22 | Entscheide Patrik (Session 40): §2.3 revidiert — kein eigenes MilkdropPanel, Integration ins MultiEffect-Panel (Zielbild Chain-Node); Stufe C KOMPLETT freigegeben (C1–C3). Skript-Editor-Baukasten extrahiert (EelScriptEditing.hpp), MultiEffectPanel umgestellt |
+| 1.8.0 | 2026-07-22 | §6b: Entscheide E1–E8 (Chain-Node, Standalone-Entfernung, C1→Node→C2→C3, Lib HlslTranspiler, Crossfade = Doppel-Rendering mit Freeze-Frame-Fallback, Playlist nach Node, Kür = PFLICHT, Altpunkte am Ende mit Kalibrier-Runde) + fortgeschriebene Roadmap |
+| 1.9.0 | 2026-07-22 | **Stufe C1 umgesetzt** (Session 40, GL-Sichttest offen): Lib HlslTranspiler (HLSL→GLSL, Typ-Inferenz/Promotions, #define, Funktionen, Casts; Korpus warp 462/574 · comp 409/598, Rest = C3), Host-Integration — include.fx-Gegenstück als GLSL-Präambel, per-Preset-Programme (Warp ersetzt Decay-Blit, Comp ersetzt MD1-Composite), Sampler-Objekte fc/pc/fw/pw, Noise-Platzhalter (exakter Port = C2), q1–q32/rand/roam/Blur-Uniforms, stiller MD1-Fallback bei GL-Fehler; Blur-Pyramide läuft jetzt auch für Custom-Shader-Konsumenten |

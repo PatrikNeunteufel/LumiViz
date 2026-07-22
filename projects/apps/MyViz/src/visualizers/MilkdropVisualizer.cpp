@@ -24,9 +24,14 @@
 #include "visualizers/milkdrop/MilkdropBlur.hpp"
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 
+#include <HlslTranspiler.hpp>
+
 #include <QFileInfo>
 #include <QOpenGLContext>
+#include <QOpenGLExtraFunctions>
 #include <QOpenGLFunctions>
+#include <QVector2D>
+#include <QVector3D>
 #include <QVector4D>
 
 #include <algorithm>
@@ -130,6 +135,140 @@ in vec2 vTex;
 out vec4 frag;
 void main() { frag = vec4(texture(uTex, vTex).rgb * uScale + vec3(uBias), 1.0); }
 )";
+
+// vertex shader of the transpiled custom shaders (C1): uv from the mesh/quad,
+// uv_orig from the (undistorted) position for the warp pass
+const char* kCustomVertexShader = R"(#version 330 core
+layout(location = 0) in vec2 aPos;
+layout(location = 1) in vec2 aTex;
+out vec2 vTex;
+out vec2 vUvOrig;
+uniform bool uOrigFromPos;
+void main()
+{
+    vTex = aTex;
+    vUvOrig = uOrigFromPos ? (aPos * 0.5 + 0.5) : aTex;
+    gl_Position = vec4(aPos, 0.0, 1.0);
+}
+)";
+
+// include.fx-Gegenstueck (C1): every uniform/macro the transpiled preset code
+// may reference. Inactive sampler uniforms are optimised away by the linker,
+// so declaring the full set costs nothing.
+[[nodiscard]] std::string milkCustomPreamble()
+{
+    std::string s = R"(#version 330 core
+in vec2 vTex;
+in vec2 vUvOrig;
+out vec4 fragOut;
+uniform sampler2D sampler_main;
+uniform sampler2D sampler_fc_main;
+uniform sampler2D sampler_pc_main;
+uniform sampler2D sampler_fw_main;
+uniform sampler2D sampler_pw_main;
+uniform sampler2D sampler_blur1;
+uniform sampler2D sampler_blur2;
+uniform sampler2D sampler_blur3;
+uniform vec4 texsize;
+uniform vec4 aspect;
+uniform float time;
+uniform float fps;
+uniform float frame;
+uniform float progress;
+uniform float bass;
+uniform float mid;
+uniform float treb;
+uniform float vol;
+uniform float bass_att;
+uniform float mid_att;
+uniform float treb_att;
+uniform float vol_att;
+uniform vec4 rand_preset;
+uniform vec4 rand_frame;
+uniform vec4 roam_cos;
+uniform vec4 roam_sin;
+uniform vec4 slow_roam_cos;
+uniform vec4 slow_roam_sin;
+uniform float blur1_min;
+uniform float blur1_max;
+uniform float blur2_min;
+uniform float blur2_max;
+uniform float blur3_min;
+uniform float blur3_max;
+uniform vec4 _blur_scale;
+uniform vec2 _blur_sb3;
+uniform vec3 hue_shader;
+vec3 GetMain(vec2 p) { return texture(sampler_main, p).rgb; }
+vec3 GetPixel(vec2 p) { return texture(sampler_main, p).rgb; }
+vec3 GetBlur1(vec2 p) { return texture(sampler_blur1, p).rgb * _blur_scale.x + _blur_scale.y; }
+vec3 GetBlur2(vec2 p) { return texture(sampler_blur2, p).rgb * _blur_scale.z + _blur_scale.w; }
+vec3 GetBlur3(vec2 p) { return texture(sampler_blur3, p).rgb * _blur_sb3.x + _blur_sb3.y; }
+float lum(vec3 v) { return dot(v, vec3(0.32, 0.49, 0.29)); }
+)";
+    // q1..q32 + noise samplers (base + fc/pc/fw/pw prefixes) + texsize_noise_*
+    for (int i = 1; i <= 32; ++i) s += "uniform float q" + std::to_string(i) + ";\n";
+    for (const char* base : {"noise_lq", "noise_lq_lite", "noise_mq", "noise_hq"})
+    {
+        s += std::string("uniform sampler2D sampler_") + base + ";\n";
+        for (const char* prefix : {"fc_", "pc_", "fw_", "pw_"})
+            s += std::string("uniform sampler2D sampler_") + prefix + base + ";\n";
+        s += std::string("uniform vec4 texsize_") + base + ";\n";
+    }
+    return s;
+}
+
+/// Sampler names the preamble already declares (user re-declarations skip these)
+[[nodiscard]] bool preambleDeclares(const std::string& name)
+{
+    if (name.rfind("sampler_", 0) == 0)
+    {
+        std::string base = name.substr(8);
+        for (const char* prefix : {"fc_", "pc_", "fw_", "pw_"})
+        {
+            if (base.rfind(prefix, 0) == 0)
+            {
+                base = base.substr(3);
+                break;
+            }
+        }
+        return base == "main" || base == "blur1" || base == "blur2" || base == "blur3" ||
+               base == "noise_lq" || base == "noise_lq_lite" || base == "noise_mq" ||
+               base == "noise_hq";
+    }
+    if (name.rfind("texsize_", 0) == 0)
+    {
+        const std::string base = name.substr(8);
+        return base == "noise_lq" || base == "noise_lq_lite" || base == "noise_mq" ||
+               base == "noise_hq";
+    }
+    return false;
+}
+
+/// Full fragment source from a transpile result (preamble + globals + main)
+[[nodiscard]] std::string assembleCustomFragment(const lumi::hlsl::HlslResult& r)
+{
+    std::string s = milkCustomPreamble();
+    for (const std::string& name : r.customSamplers)
+    {
+        if (!preambleDeclares(name)) s += "uniform sampler2D " + name + ";\n";
+    }
+    for (const std::string& name : r.customTexsizes)
+    {
+        if (!preambleDeclares(name)) s += "uniform vec4 " + name + ";\n";
+    }
+    s += r.glslGlobals;
+    s += R"(void main()
+{
+    vec2 uv = vTex;
+    vec2 uv_orig = vUvOrig;
+    float rad = length((uv_orig - 0.5) * aspect.xy);
+    float ang = atan((uv_orig.y - 0.5) * aspect.y, (uv_orig.x - 0.5) * aspect.x);
+    vec3 ret = vec3(0.0);
+)";
+    s += r.glslBody;
+    s += "    fragOut = vec4(ret, 1.0);\n}\n";
+    return s;
+}
 
 // composite pass: texture x uniform colour (gamma/echo passes drive uColor)
 const char* kTexFragmentShader = R"(#version 330 core
@@ -354,8 +493,9 @@ void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringLi
                                    .arg(QLatin1String(which)));
                 break;
             case ShaderClass::Custom:
-                report->append(QStringLiteral("Custom-%1-Shader (PS%2, %3 Zeilen, %4) → "
-                                              "MD1-Fallback (Stufe C offen)")
+                // Ergebnis (C1-uebersetzt oder MD1-Fallback) meldet
+                // prepareCustomShaders direkt im Anschluss
+                report->append(QStringLiteral("Custom-%1-Shader (PS%2, %3 Zeilen, %4)")
                                    .arg(QLatin1String(which))
                                    .arg(m_state.psVersion)
                                    .arg(info.codeLines)
@@ -372,6 +512,7 @@ void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringLi
         }
     }
 
+    prepareCustomShaders(report);
     rebuildScripts(report);
     m_time = 0.0;
     m_frame = 0;
@@ -729,6 +870,14 @@ void MilkdropVisualizer::pullFrameOutputs(FrameVars& fv)
     fv.blurMin = {e.number("blur1_min"), e.number("blur2_min"), e.number("blur3_min")};
     fv.blurMax = {e.number("blur1_max"), e.number("blur2_max"), e.number("blur3_max")};
     fv.blurEdgeDarken = e.number("blur1_edge_darken");
+    if (!m_warpCustomSrc.empty() || !m_compCustomSrc.empty())
+    {
+        for (int i = 0; i < 32; ++i)
+        {
+            fv.qVals[static_cast<std::size_t>(i)] =
+                e.number(("q" + std::to_string(i + 1)).c_str());
+        }
+    }
     m_monitor = e.number("monitor");
 }
 
@@ -792,6 +941,7 @@ void MilkdropVisualizer::releaseGlResources()
     m_feedback.destroy();
     m_scope.destroy();
     releaseBlurTargets();
+    releaseCustomGl();
     m_warpProgram.reset();
     m_textureProgram.reset();
     m_colorProgram.reset();
@@ -907,11 +1057,22 @@ bool MilkdropVisualizer::ensureGlResources()
 
 int MilkdropVisualizer::activeBlurLevels() const
 {
-    // only the baked stage-B composite samples blur; custom shaders fall back
-    // to the MD1 path and MD1 presets have no blur consumers at all
+    // stage B: baked composite blur mixes; stage C1: transpiled custom shaders
+    // that sample blurN (usesBlur flags from the classifier feature scan)
+    int levels = 0;
     const lumi::milk::ShaderInfo& ci = m_state.compInfo;
-    if (ci.shaderClass != lumi::milk::ShaderClass::Md1Plus) return 0;
-    return ci.highestBlurLevel();
+    if (ci.shaderClass == lumi::milk::ShaderClass::Md1Plus) levels = ci.highestBlurLevel();
+    const auto usageLevel = [](const lumi::milk::ShaderInfo& info) {
+        for (int n = 3; n >= 1; --n)
+        {
+            if (info.usesBlur[static_cast<std::size_t>(n - 1)]) return n;
+        }
+        return 0;
+    };
+    if (m_compCustomProgram != nullptr) levels = std::max(levels, usageLevel(ci));
+    if (m_warpCustomProgram != nullptr)
+        levels = std::max(levels, usageLevel(m_state.warpInfo));
+    return levels;
 }
 
 bool MilkdropVisualizer::ensureBlurTargets(int sourceW, int sourceH)
@@ -1050,6 +1211,314 @@ void MilkdropVisualizer::runBlurPasses(const FrameVars& fv)
 }
 
 // =============================================================================================
+// Stufe C1: transpiled custom shaders (HLSL -> GLSL, MilkDrop_Import_Konzept §6b)
+// =============================================================================================
+
+void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
+{
+    m_warpCustomSrc.clear();
+    m_compCustomSrc.clear();
+    m_customGlError.clear();
+    ++m_customRev;
+
+    const auto tryTranspile = [&](const std::string& text, lumi::hlsl::ShaderKind kind,
+                                  const lumi::milk::ShaderInfo& info, std::string& outSrc,
+                                  const char* which) {
+        if (info.shaderClass != lumi::milk::ShaderClass::Custom || text.empty()) return;
+        const lumi::hlsl::HlslResult r = lumi::hlsl::transpile(text, kind);
+        if (r.ok)
+        {
+            outSrc = assembleCustomFragment(r);
+            if (report != nullptr)
+            {
+                QString note = QStringLiteral(
+                                   "%1-Shader → GLSL übersetzt (Stufe C1, GL-Kompilierung "
+                                   "zur Laufzeit)")
+                                   .arg(QLatin1String(which));
+                if (!r.customSamplers.empty())
+                {
+                    note += QStringLiteral(" — %1 Custom-Textur(en), Platzhalter bis C2")
+                                .arg(r.customSamplers.size());
+                }
+                report->append(note);
+            }
+        }
+        else if (report != nullptr)
+        {
+            report->append(QStringLiteral("%1-Shader nicht uebersetzbar (%2) → MD1-Fallback")
+                               .arg(QLatin1String(which))
+                               .arg(QString::fromStdString(r.error)));
+        }
+    };
+    tryTranspile(m_state.warpShaderText, lumi::hlsl::ShaderKind::Warp, m_state.warpInfo,
+                 m_warpCustomSrc, "Warp");
+    tryTranspile(m_state.compShaderText, lumi::hlsl::ShaderKind::Comp, m_state.compInfo,
+                 m_compCustomSrc, "Comp");
+
+    // rand_preset: einmal je Preset-Ladung (engine-lokaler PRNG, Entscheid §10)
+    m_randSeed = m_randSeed * 1664525u + 1013904223u;
+}
+
+void MilkdropVisualizer::releaseCustomGl()
+{
+    m_warpCustomProgram.reset();
+    m_compCustomProgram.reset();
+    m_customBuiltRev = -1;
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    if (ctx != nullptr)
+    {
+        QOpenGLFunctions* f = ctx->functions();
+        if (m_noiseTex[0] != 0)
+            f->glDeleteTextures(static_cast<GLsizei>(m_noiseTex.size()), m_noiseTex.data());
+        if (m_placeholderTex != 0) f->glDeleteTextures(1, &m_placeholderTex);
+        QOpenGLExtraFunctions* ef = ctx->extraFunctions();
+        if (m_samplerObj[0] != 0)
+            ef->glDeleteSamplers(static_cast<GLsizei>(m_samplerObj.size()),
+                                 m_samplerObj.data());
+    }
+    m_noiseTex.fill(0);
+    m_placeholderTex = 0;
+    m_samplerObj.fill(0);
+}
+
+bool MilkdropVisualizer::ensureCustomPrograms()
+{
+    if (m_customBuiltRev == m_customRev)
+        return m_warpCustomProgram != nullptr || m_compCustomProgram != nullptr;
+    m_customBuiltRev = m_customRev;
+    m_warpCustomProgram.reset();
+    m_compCustomProgram.reset();
+
+    const auto build = [&](const std::string& src) {
+        if (src.empty()) return std::unique_ptr<QOpenGLShaderProgram>();
+        auto program = std::make_unique<QOpenGLShaderProgram>();
+        if (!program->addShaderFromSourceCode(QOpenGLShader::Vertex, kCustomVertexShader) ||
+            !program->addShaderFromSourceCode(QOpenGLShader::Fragment, src.c_str()) ||
+            !program->link())
+        {
+            // Fallback auf MD1; Fehler fuer Diagnose merken (nie aus dem
+            // Render-Thread loggen — BasicLogger ist nicht thread-safe)
+            if (m_customGlError.empty()) m_customGlError = program->log().toStdString();
+            return std::unique_ptr<QOpenGLShaderProgram>();
+        }
+        return program;
+    };
+    m_warpCustomProgram = build(m_warpCustomSrc);
+    m_compCustomProgram = build(m_compCustomSrc);
+    return m_warpCustomProgram != nullptr || m_compCustomProgram != nullptr;
+}
+
+bool MilkdropVisualizer::ensureNoiseTextures()
+{
+    if (m_noiseTex[0] != 0) return true;
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    QOpenGLFunctions* f = ctx->functions();
+    QOpenGLExtraFunctions* ef = ctx->extraFunctions();
+
+    // C1-Platzhalter: gleichverteiltes RGBA-Rauschen (exakter AddNoiseTex-Port
+    // mit Zoom/Interpolation folgt in C2); deterministisch fuer Sichttests
+    f->glGenTextures(static_cast<GLsizei>(m_noiseTex.size()), m_noiseTex.data());
+    unsigned int seed = 0x1234567u;
+    const auto nextByte = [&seed]() {
+        seed = seed * 1664525u + 1013904223u;
+        return static_cast<unsigned char>(seed >> 24);
+    };
+    const std::array<int, 4> sizes = {256, 32, 256, 256};  // lq, lq_lite, mq, hq
+    std::vector<unsigned char> pixels;
+    for (std::size_t i = 0; i < m_noiseTex.size(); ++i)
+    {
+        const int n = sizes[i];
+        pixels.resize(static_cast<std::size_t>(n) * n * 4);
+        for (unsigned char& p : pixels) p = nextByte();
+        f->glBindTexture(GL_TEXTURE_2D, m_noiseTex[i]);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, n, n, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                        pixels.data());
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    }
+
+    f->glGenTextures(1, &m_placeholderTex);
+    const unsigned char grey[4] = {128, 128, 128, 255};
+    f->glBindTexture(GL_TEXTURE_2D, m_placeholderTex);
+    f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, grey);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // 4 Sampler-Objekte: wrap/clamp x linear/point (fc/pc/fw/pw-Semantik)
+    ef->glGenSamplers(static_cast<GLsizei>(m_samplerObj.size()), m_samplerObj.data());
+    const auto setup = [&](unsigned int obj, GLint wrap, GLint filter) {
+        ef->glSamplerParameteri(obj, GL_TEXTURE_WRAP_S, wrap);
+        ef->glSamplerParameteri(obj, GL_TEXTURE_WRAP_T, wrap);
+        ef->glSamplerParameteri(obj, GL_TEXTURE_MIN_FILTER, filter);
+        ef->glSamplerParameteri(obj, GL_TEXTURE_MAG_FILTER, filter);
+    };
+    setup(m_samplerObj[0], GL_REPEAT, GL_LINEAR);
+    setup(m_samplerObj[1], GL_CLAMP_TO_EDGE, GL_LINEAR);
+    setup(m_samplerObj[2], GL_REPEAT, GL_NEAREST);
+    setup(m_samplerObj[3], GL_CLAMP_TO_EDGE, GL_NEAREST);
+    return true;
+}
+
+void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
+                                            const FrameVars& fv, unsigned int mainTexture)
+{
+    QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
+    QOpenGLExtraFunctions* ef = QOpenGLContext::currentContext()->extraFunctions();
+    const int w = std::max(16, width());
+    const int h = std::max(16, height());
+
+    // --- Sampler dynamisch auf Units verteilen (nur aktive Uniforms) ------------------
+    int unit = 0;
+    const auto bindSampler = [&](const char* name, unsigned int tex, unsigned int samplerObj) {
+        const int loc = program.uniformLocation(name);
+        if (loc < 0 || tex == 0) return;
+        f->glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(unit));
+        f->glBindTexture(GL_TEXTURE_2D, tex);
+        ef->glBindSampler(static_cast<GLuint>(unit), samplerObj);
+        program.setUniformValue(name, unit);
+        ++unit;
+    };
+    const unsigned int wrapLin = m_samplerObj[0];
+    const unsigned int clampLin = m_samplerObj[1];
+    const unsigned int wrapPoint = m_samplerObj[2];
+    const unsigned int clampPoint = m_samplerObj[3];
+
+    bindSampler("sampler_main", mainTexture, fv.wrap ? wrapLin : clampLin);
+    bindSampler("sampler_fc_main", mainTexture, clampLin);
+    bindSampler("sampler_pc_main", mainTexture, clampPoint);
+    bindSampler("sampler_fw_main", mainTexture, wrapLin);
+    bindSampler("sampler_pw_main", mainTexture, wrapPoint);
+    bindSampler("sampler_blur1", m_blurTex[1], clampLin);
+    bindSampler("sampler_blur2", m_blurTex[3], clampLin);
+    bindSampler("sampler_blur3", m_blurTex[5], clampLin);
+    const std::array<const char*, 4> noiseNames = {"noise_lq", "noise_lq_lite", "noise_mq",
+                                                   "noise_hq"};
+    for (std::size_t i = 0; i < noiseNames.size(); ++i)
+    {
+        const std::string base = noiseNames[i];
+        bindSampler(("sampler_" + base).c_str(), m_noiseTex[i], wrapLin);
+        bindSampler(("sampler_fc_" + base).c_str(), m_noiseTex[i], clampLin);
+        bindSampler(("sampler_pc_" + base).c_str(), m_noiseTex[i], clampPoint);
+        bindSampler(("sampler_fw_" + base).c_str(), m_noiseTex[i], wrapLin);
+        bindSampler(("sampler_pw_" + base).c_str(), m_noiseTex[i], wrapPoint);
+    }
+    // Custom-Texturen (C2): alle uebrigen aktiven sampler-Uniforms auf den
+    // Platzhalter legen, damit das Programm definiert laeuft
+    {
+        GLint count = 0;
+        GLuint prog = program.programId();
+        ef->glGetProgramiv(prog, GL_ACTIVE_UNIFORMS, &count);
+        for (GLint u = 0; u < count; ++u)
+        {
+            char nameBuf[128];
+            GLsizei len = 0;
+            GLint size = 0;
+            GLenum type = 0;
+            ef->glGetActiveUniform(prog, static_cast<GLuint>(u), sizeof(nameBuf), &len,
+                                   &size, &type, nameBuf);
+            if (type != GL_SAMPLER_2D) continue;
+            const std::string name(nameBuf, static_cast<std::size_t>(len));
+            if (preambleDeclares(name) || name.rfind("sampler_", 0) != 0) continue;
+            bindSampler(name.c_str(), m_placeholderTex, wrapLin);
+        }
+    }
+
+    // --- Skalar-/Vektor-Uniforms --------------------------------------------------------
+    program.setUniformValue("uOrigFromPos", false);  // Aufrufer ueberschreibt fuer Warp
+    program.setUniformValue("texsize", QVector4D(static_cast<float>(w),
+                                                 static_cast<float>(h), 1.0f / w, 1.0f / h));
+    program.setUniformValue(
+        "aspect", QVector4D(static_cast<float>(m_aspectX), static_cast<float>(m_aspectY),
+                            1.0f / static_cast<float>(m_aspectX),
+                            1.0f / static_cast<float>(m_aspectY)));
+    const float t = static_cast<float>(m_time);
+    program.setUniformValue("time", t);
+    program.setUniformValue("fps", static_cast<float>(m_fps));
+    program.setUniformValue("frame", static_cast<float>(m_frame));
+    program.setUniformValue("progress", static_cast<float>(std::fmod(m_time, 60.0) / 60.0));
+
+    auto& engine = m_script->engine();
+    program.setUniformValue("bass", static_cast<float>(engine.number("bass")));
+    program.setUniformValue("mid", static_cast<float>(engine.number("mid")));
+    program.setUniformValue("treb", static_cast<float>(engine.number("treb")));
+    program.setUniformValue("vol", static_cast<float>(engine.number("vol")));
+    program.setUniformValue("bass_att", static_cast<float>(engine.number("bass_att")));
+    program.setUniformValue("mid_att", static_cast<float>(engine.number("mid_att")));
+    program.setUniformValue("treb_att", static_cast<float>(engine.number("treb_att")));
+    program.setUniformValue("vol_att", static_cast<float>(engine.number("vol")));
+
+    // rand_frame je Frame, rand_preset je Ladung (LCG, deterministisch genug)
+    unsigned int rs = m_randSeed;
+    const auto rand01 = [](unsigned int& s) {
+        s = s * 1664525u + 1013904223u;
+        return static_cast<float>(s >> 8) / 16777216.0f;
+    };
+    program.setUniformValue("rand_preset",
+                            QVector4D(rand01(rs), rand01(rs), rand01(rs), rand01(rs)));
+    unsigned int fs = m_randSeed ^ (static_cast<unsigned int>(m_frame) * 2654435761u);
+    program.setUniformValue("rand_frame",
+                            QVector4D(rand01(fs), rand01(fs), rand01(fs), rand01(fs)));
+
+    // roam-Vektoren (plugin.cpp:3892-3911)
+    const auto roam = [t](float mul, float phase, bool sine) {
+        return 0.5f + 0.5f * (sine ? std::sin(t * mul + phase) : std::cos(t * mul + phase));
+    };
+    program.setUniformValue("roam_cos", QVector4D(roam(0.329f, 1.2f, false),
+                                                  roam(1.293f, 3.9f, false),
+                                                  roam(5.070f, 2.5f, false),
+                                                  roam(20.051f, 5.4f, false)));
+    program.setUniformValue("roam_sin", QVector4D(roam(0.329f, 1.2f, true),
+                                                  roam(1.293f, 3.9f, true),
+                                                  roam(5.070f, 2.5f, true),
+                                                  roam(20.051f, 5.4f, true)));
+    program.setUniformValue("slow_roam_cos", QVector4D(roam(0.0050f, 2.7f, false),
+                                                       roam(0.0085f, 5.3f, false),
+                                                       roam(0.0133f, 4.5f, false),
+                                                       roam(0.0217f, 3.8f, false)));
+    program.setUniformValue("slow_roam_sin", QVector4D(roam(0.0050f, 2.7f, true),
+                                                       roam(0.0085f, 5.3f, true),
+                                                       roam(0.0133f, 4.5f, true),
+                                                       roam(0.0217f, 3.8f, true)));
+
+    for (int i = 0; i < 32; ++i)
+    {
+        program.setUniformValue(("q" + std::to_string(i + 1)).c_str(),
+                                static_cast<float>(fv.qVals[static_cast<std::size_t>(i)]));
+    }
+
+    // Blur-Ranges + Un-Bias-Konstanten (GetBlurN)
+    const lumi::milkdrop::BlurRanges ranges = lumi::milkdrop::computeSafeBlurRanges(
+        {static_cast<float>(fv.blurMin[0]), static_cast<float>(fv.blurMin[1]),
+         static_cast<float>(fv.blurMin[2])},
+        {static_cast<float>(fv.blurMax[0]), static_cast<float>(fv.blurMax[1]),
+         static_cast<float>(fv.blurMax[2])});
+    program.setUniformValue("blur1_min", ranges.min[0]);
+    program.setUniformValue("blur1_max", ranges.max[0]);
+    program.setUniformValue("blur2_min", ranges.min[1]);
+    program.setUniformValue("blur2_max", ranges.max[1]);
+    program.setUniformValue("blur3_min", ranges.min[2]);
+    program.setUniformValue("blur3_max", ranges.max[2]);
+    program.setUniformValue("_blur_scale",
+                            QVector4D(ranges.max[0] - ranges.min[0], ranges.min[0],
+                                      ranges.max[1] - ranges.min[1], ranges.min[1]));
+    program.setUniformValue(
+        "_blur_sb3", QVector2D(ranges.max[2] - ranges.min[2], ranges.min[2]));
+
+    // texsize_noise_* + hue_shader (C1: neutral, fShader-Wash folgt)
+    const auto texsizeVec = [](int n) {
+        return QVector4D(static_cast<float>(n), static_cast<float>(n), 1.0f / n, 1.0f / n);
+    };
+    program.setUniformValue("texsize_noise_lq", texsizeVec(256));
+    program.setUniformValue("texsize_noise_lq_lite", texsizeVec(32));
+    program.setUniformValue("texsize_noise_mq", texsizeVec(256));
+    program.setUniformValue("texsize_noise_hq", texsizeVec(256));
+    program.setUniformValue("hue_shader", QVector3D(1.0f, 1.0f, 1.0f));
+    f->glActiveTexture(GL_TEXTURE0);
+}
+
+// =============================================================================================
 // Frame
 // =============================================================================================
 
@@ -1104,6 +1573,13 @@ void MilkdropVisualizer::onRender(float deltaTime)
     // for feedback if the waves draw over them"), then custom waves, then the
     // basic wave. PORT: motion vectors are drawn after the warp instead of
     // into the previous image (one frame later into the feedback loop).
+    // Stufe C1: transpilierte Programme + Noise-Texturen bereitstellen (lazy)
+    if (!m_warpCustomSrc.empty() || !m_compCustomSrc.empty())
+    {
+        ensureNoiseTextures();
+        ensureCustomPrograms();
+    }
+
     computeWarpMesh(fv);
     runBlurPasses(fv);  // sources the previous frame; own FBOs (before beginFrame)
     m_feedback.beginFrame();
@@ -1272,6 +1748,24 @@ void MilkdropVisualizer::drawWarpPass(const FrameVars& fv)
 {
     QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
     f->glDisable(GL_BLEND);
+
+    // Stufe C1: transpilierter Warp-Shader ersetzt den MD1-Decay-Blit komplett
+    // (Decay/Effekte stecken im Shader-Text; uv kommt weiter aus dem per_pixel-Mesh)
+    if (m_warpCustomProgram != nullptr)
+    {
+        m_warpCustomProgram->bind();
+        feedCustomUniforms(*m_warpCustomProgram, fv, m_feedback.previousTexture());
+        m_warpCustomProgram->setUniformValue("uOrigFromPos", true);
+        m_meshVao->bind();
+        m_meshVbo->bind();
+        m_meshVbo->allocate(m_meshData.data(),
+                            static_cast<int>(m_meshData.size() * sizeof(float)));
+        f->glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(m_meshData.size() / 4));
+        m_meshVbo->release();
+        m_meshVao->release();
+        m_warpCustomProgram->release();
+        return;
+    }
 
     // MD2 semantics: with a recognized warp shader the decay constants are BAKED
     // into the shader text (per_frame `decay` has no effect); MD1/custom use the
@@ -2176,6 +2670,26 @@ void MilkdropVisualizer::compositeToScreen(const FrameVars& fv)
 
     f->glBindFramebuffer(GL_FRAMEBUFFER, ctx->defaultFramebufferObject());
     f->glViewport(0, 0, std::max(1, width()), std::max(1, height()));
+
+    // Stufe C1: transpilierter Comp-Shader ersetzt den gesamten MD1-Composite
+    if (m_compCustomProgram != nullptr)
+    {
+        f->glDisable(GL_BLEND);
+        m_compCustomProgram->bind();
+        feedCustomUniforms(*m_compCustomProgram, fv, m_feedback.currentTexture());
+        // Praesentations-Quad wie der MD1-Basis-Layer (Identitaets-Mapping)
+        const float quad[6][4] = {{-1.0f, -1.0f, 0.0f, 0.0f}, {1.0f, -1.0f, 1.0f, 0.0f},
+                                  {-1.0f, 1.0f, 0.0f, 1.0f},  {1.0f, -1.0f, 1.0f, 0.0f},
+                                  {1.0f, 1.0f, 1.0f, 1.0f},   {-1.0f, 1.0f, 0.0f, 1.0f}};
+        m_meshVao->bind();
+        m_meshVbo->bind();
+        m_meshVbo->allocate(quad, sizeof(quad));
+        f->glDrawArrays(GL_TRIANGLES, 0, 6);
+        m_meshVbo->release();
+        m_meshVao->release();
+        m_compCustomProgram->release();
+        return;
+    }
 
     m_textureProgram->bind();
     f->glActiveTexture(GL_TEXTURE0);

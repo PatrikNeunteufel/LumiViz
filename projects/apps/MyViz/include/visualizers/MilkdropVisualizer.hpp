@@ -135,6 +135,7 @@ private:
         std::array<double, 3> blurMin{0.0, 0.0, 0.0};   ///< blurN_min (per-frame vars)
         std::array<double, 3> blurMax{1.0, 1.0, 1.0};
         double blurEdgeDarken = 0.25;
+        std::array<double, 32> qVals{};                 ///< q1-q32 (custom shaders, C1)
     };
 
     /// One custom wave/shape at runtime: definition + its own script host
@@ -190,6 +191,16 @@ private:
     [[nodiscard]] bool reversePropagate(double fx, double fy, double& outX,
                                         double& outY) const;
 
+    // --- Stufe C1: transpiled custom shaders (GLSL) ---------------------------------------
+    /// Transpile Custom warp/comp HLSL at load time (fills m_warp/compCustomSrc)
+    void prepareCustomShaders(QStringList* report);
+    bool ensureCustomPrograms();      ///< (re)build GL programs when sources changed
+    void releaseCustomGl();
+    bool ensureNoiseTextures();
+    /// Bind every sampler the program actually uses + feed the per-frame uniforms
+    void feedCustomUniforms(QOpenGLShaderProgram& program, const FrameVars& fv,
+                            unsigned int mainTexture);
+
     // --- preset -------------------------------------------------------------------------
     lumi::milkdrop::PresetState m_state;
     std::shared_ptr<lumi::scripting::ScriptContext> m_context;
@@ -227,6 +238,19 @@ private:
     std::array<std::array<int, 2>, 6> m_blurSizes{};
     int m_blurSrcW = 0;                                     ///< chain layout source size
     int m_blurSrcH = 0;
+
+    // --- Stufe C1: custom shader runtime --------------------------------------------------
+    std::string m_warpCustomSrc;    ///< assembled GLSL fragment source ("" = MD1 path)
+    std::string m_compCustomSrc;
+    int m_customRev = 0;            ///< bumped on load; render thread rebuilds lazily
+    int m_customBuiltRev = -1;
+    std::unique_ptr<QOpenGLShaderProgram> m_warpCustomProgram;
+    std::unique_ptr<QOpenGLShaderProgram> m_compCustomProgram;
+    std::string m_customGlError;    ///< first GL compile/link error (panel/debug)
+    std::array<unsigned int, 4> m_noiseTex{};   ///< lq, lq_lite, mq, hq (placeholder C1)
+    unsigned int m_placeholderTex = 0;          ///< 1x1 grey for custom textures (C2)
+    std::array<unsigned int, 4> m_samplerObj{}; ///< wrapLin, clampLin, wrapPoint, clampPoint
+    unsigned int m_randSeed = 0x9e3779b9u;      ///< rand_frame/rand_preset PRNG
     std::unique_ptr<QOpenGLVertexArrayObject> m_shapeVao;
     std::unique_ptr<QOpenGLBuffer> m_shapeVbo;
     std::unique_ptr<QOpenGLVertexArrayObject> m_meshVao;
