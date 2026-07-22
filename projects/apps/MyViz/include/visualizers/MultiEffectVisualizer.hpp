@@ -366,6 +366,10 @@ private:
         bool seenThisFrame = false;
         std::unique_ptr<lumi::render::OffscreenBufferPool> pool;
         std::shared_ptr<lumi::scripting::ScriptContext> context;
+        /// HG2: Blend-Gewicht 0..1 — folgt `enabled` ueber crossfadeSeconds
+        /// (0 startend = frisch aktivierte Gruppen blenden EIN); eine
+        /// deaktivierte Gruppe rendert weiter, bis das Gewicht 0 erreicht.
+        double blendWeight = 0.0;
     };
 
     bool ensureSurfacePair(SurfacePair& pair, int width, int height,

@@ -2128,8 +2128,18 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         // r_list fake_enabled (r_list.h:162): a statically DISABLED list with
         // "on beat render" still activates for N frames after each beat — the
         // window gate lives in renderList; everything else stays skipped.
+        // HG2: eine deaktivierte Host-Gruppe rendert weiter, solange ihr
+        // Blend-Gewicht > 0 ist (Ausblend-Phase des Crossfades).
         const auto* list = std::get_if<ListParams>(&node.params);
-        if (list == nullptr || !list->onBeatRender) return;
+        if (list == nullptr || !list->onBeatRender)
+        {
+            if (!node.isHostGroup()) return;
+            const auto it = m_groupRuntimes.find(node.nodeId);
+            if (it == m_groupRuntimes.end() || it->second.blendWeight <= 0.0)
+            {
+                return;
+            }
+        }
     }
 
     struct Visitor
@@ -2332,8 +2342,19 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
 }
 
 // =============================================================================
-// Host groups (HG1 — HostGruppen_Crossfade_Entwurf.md)
+// Host groups (HG1/HG2 — HostGruppen_Crossfade_Entwurf.md)
 // =============================================================================
+
+namespace
+{
+/// HG2-Kurven-Hook: 0 = linear; weitere Kurven (ease/exponentiell/S) folgen —
+/// der Entwurf haelt Ein-/Ausgangskurve bewusst je Gruppe individuell.
+double applyBlendCurve(int curve, double t)
+{
+    (void)curve;  // 0 = linear; weitere Kurven bekommen hier ihren Dispatch
+    return t;
+}
+}  // namespace
 
 void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
                                             const HostGroupParams& params)
@@ -2342,6 +2363,34 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
 
     GroupRuntime& runtime = m_groupRuntimes[node.nodeId];
     runtime.seenThisFrame = true;
+
+    // --- HG2: Blend-Gewicht Richtung Soll bewegen (enabled=1, disabled=0).
+    // Ein Wechsel A→B ist "A deaktivieren + B aktivieren": beide leben
+    // waehrend des Blends (echtes Doppel-Rendering, Entscheid E5); ein
+    // erneuter Toggle mitten im Blend kehrt einfach die Richtung um.
+    {
+        const double target = node.enabled ? 1.0 : 0.0;
+        const double dur = params.crossfadeSeconds;
+        if (dur <= 1e-6)
+        {
+            runtime.blendWeight = target;
+        }
+        else
+        {
+            const double step = static_cast<double>(m_deltaTime) / dur;
+            if (runtime.blendWeight < target)
+                runtime.blendWeight = std::min(target, runtime.blendWeight + step);
+            else
+                runtime.blendWeight = std::max(target, runtime.blendWeight - step);
+        }
+        if (!node.enabled && runtime.blendWeight <= 0.0)
+        {
+            // Fertig ausgeblendet: Buffer fuers naechste Einblenden frisch
+            // starten (Milkdrop-Verhalten: der alte Zustand stirbt mit A)
+            runtime.needsClear = true;
+            return;
+        }
+    }
     if (runtime.pool == nullptr)
     {
         runtime.pool = std::make_unique<lumi::render::OffscreenBufferPool>();
@@ -2391,12 +2440,27 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
     m_activeContext = prevCtx;
 
     // Out-Blend: Gruppen-Bild -> Parent. Mehrere gleichzeitig aktive Gruppen
-    // stapeln sich hierueber (Entwurf §2.6); der Crossfade (HG2) moduliert
-    // spaeter die Gewichte per Ein-/Ausgangskurve.
+    // stapeln sich hierueber (Entwurf §2.6). HG2: bei Blend-Gewicht < 1 wird
+    // linear per Adjustable gemischt — Einblenden folgt der Eingangs-, Aus-
+    // blenden der Ausgangskurve der Gruppe (§2.4; sequentieller Mix in
+    // Ketten-Reihenfolge, exakter paarweiser 2er-Mix = Feinschliff HG3).
     if (params.blendOut != BlendMode::Ignore)
     {
-        blendPass(active(), runtime.surface.current()->texture(), params.blendOut,
-                  params.outAdjustAlpha, 0, false);
+        const double curved = applyBlendCurve(
+            node.enabled ? params.curveIn : params.curveOut, runtime.blendWeight);
+        if (curved >= 0.999)
+        {
+            blendPass(active(), runtime.surface.current()->texture(),
+                      params.blendOut, params.outAdjustAlpha, 0, false);
+        }
+        else
+        {
+            blendPass(active(), runtime.surface.current()->texture(),
+                      BlendMode::Adjustable,
+                      static_cast<int>(std::lround(std::clamp(curved, 0.0, 1.0) *
+                                                   255.0)),
+                      0, false);
+        }
     }
     bindActive();
 }
