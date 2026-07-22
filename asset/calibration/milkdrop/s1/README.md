@@ -11,6 +11,10 @@ oder direkt im `MilkdropStandalone`. Testbild: `textures/calib.png`
 | `02_sprite_puls` | Sprite 1: additiv, kreist um die Mitte, pulsiert mit `bass_att` (Größe) und `sin(time*2)` (Alpha); `SpriteSpeed=1.5` beschleunigt die Bahn. Sprite 2 (Layer 1, ÜBER Sprite 1): Colorkey-Modus — SCHWARZE Pixel des Testbilds sind durchsichtig; dreht langsam um die eigene Mitte. |
 | `03_sprite_burn` | `burn=1`: das wandernde Sprite brennt sich in den Feedback-Loop ein — der Warp (zoom+rot) zieht SPUREN hinter dem Sprite her; das Sprite selbst bleibt zusätzlich scharf obenauf. |
 
+Hinweis: alle drei Presets setzen `mv_a=0` — ohne den Key zeichnet der
+Original-Default (mv_a=1.0) das Motion-Vector-Raster über das Bild (weiße
+Kometen; kein Fehler, aber Ablenkung vom Sprite-Sichttest).
+
 **Bekannte PORT-Abweichungen** (dokumentiert in MilkdropPresetState.hpp):
 `SpriteSpeed` skaliert die sprite-lokale Zeit (2077 ohne Quell-Referenz —
 Annahme); `SpriteLayer` ist reiner Sortier-Schlüssel; der 4:3-Burn-Aspekt der

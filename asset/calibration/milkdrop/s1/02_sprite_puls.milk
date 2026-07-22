@@ -7,6 +7,7 @@ nWaveMode=6
 fWaveAlpha=0.500000
 zoom=1.000000
 warp=0.000000
+mv_a=0.000000
 per_frame_1=wave_r=0.1; wave_g=0.3; wave_b=0.5;
 [SPRITE1_BEGIN]
 SpriteName=textures\calib.png

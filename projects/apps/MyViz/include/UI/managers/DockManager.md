@@ -1,13 +1,13 @@
 # DockManager — Qt-ADS Docking Integration
 
-> **Version:** 2.0.0  
-> **Datum:** 2025-12-31  
+> **Version:** 2.1.0  
+> **Datum:** 2026-07-22  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert  
 > **Modul:** MyViz::UI::DockManager  
 > **Dateien:** DockManager.hpp, DockManager.cpp, PanelManager.hpp, PanelManager.cpp  
 > **Namespace:** (global)  
-> **Abhängigkeiten:** Qt-ADS 4.4.x, Qt6::Widgets, ServiceContainer, EventBus, PanelRegistry, WidgetRegistry  
+> **Abhängigkeiten:** Qt-ADS 5.0.0 (Pin in Solution.json; 4.4.1→5.0.0 wegen Float/Redock-Bugs, Session 42), Qt6::Widgets, ServiceContainer, EventBus, PanelRegistry, WidgetRegistry  
 > **Zielgruppe:** Entwickler  
 > **Sprache:** Deutsch  
 
@@ -278,6 +278,25 @@ bool DockManager::restoreLayoutFromSettings()
 }
 ```
 
+### 5.5 Native-Resync nach Float/Redock
+
+Reparenting von Docks (Panel abreißen/wieder andocken) kann eingebettete
+**native GL-Fenster** an veralteten Absolutpositionen zurücklassen — der
+„doppelte-Balken"-Geist aus Session 31, dort nur für den Fullscreen-Exit
+gefixt. Seit Session 42 hängt der Aufräum-Schritt an den Dock-Übergängen:
+
+```cpp
+// Undock → floatingWidgetCreated · Redock → destroyed() des Floating-
+// Containers · Drop in neue Area → dockAreaCreated. Alle drei schedulen
+// EINEN debounced Resync (singleShot(0), Flag nativeResyncPending):
+scheduleNativeResync();  // ruft recreateNativeWindow() je Visualizer
+```
+
+Übersprungen werden Top-Level-Visualizer (Fullscreen — macht
+`MainWindow::exitFullscreen()` selbst), unsichtbare Widgets (das `show()` im
+Recreate würde sie sonst sichtbar machen) und die Startphase
+(`pMainWindow->isVisible() == false`).
+
 ---
 
 ## 6. PanelManager
@@ -355,5 +374,6 @@ ads::CDockManager::setAutoHideConfigFlags(
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **2.0.0** | **2025-12-31** | **+PanelManager, +dezentrale Events, +Layout-Persistence Fix (aboutToQuit, objectName), +allowMultiple Check, +restoreLayout() public** |
+| **2.1.0** | **2026-07-22** | **+scheduleNativeResync(): debounced recreateNativeWindow() aller eingebetteten Visualizer nach Float/Redock (S31-Geist verallgemeinert, §5.5) · Qt-ADS-Pin 4.4.1→5.0.0 (Fix: verschwindende Titelleiste + doppelter Auto-Hide-Player nach Undock/Redock — ADS-Framework-Bug)** |
+| 2.0.0 | 2025-12-31 | +PanelManager, +dezentrale Events, +Layout-Persistence Fix (aboutToQuit, objectName), +allowMultiple Check, +restoreLayout() public |
 | 1.0.0 | 2025-12-28 | Initial: Qt-ADS Integration, Multi-Visualizer, Perspectives |

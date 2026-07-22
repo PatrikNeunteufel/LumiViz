@@ -8,6 +8,7 @@ fWaveAlpha=0.000000
 zoom=1.020000
 rot=0.010000
 warp=0.000000
+mv_a=0.000000
 [SPRITE1_BEGIN]
 SpriteName=textures\calib.png
 SpriteColorKey=0x000000

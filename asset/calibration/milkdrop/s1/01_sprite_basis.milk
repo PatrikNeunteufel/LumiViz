@@ -9,6 +9,7 @@ fWaveScale=0.800000
 zoom=1.000000
 rot=0.000000
 warp=0.000000
+mv_a=0.000000
 per_frame_1=wave_r=0.2; wave_g=0.6; wave_b=1.0;
 [SPRITE1_BEGIN]
 SpriteName=textures\calib.png

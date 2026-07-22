@@ -26,6 +26,7 @@
 #include <DockWidget.h>
 #include <DockAreaWidget.h>
 #include <DockAreaTitleBar.h>
+#include <FloatingDockContainer.h>
 
 // Qt
 #include <QMainWindow>
@@ -33,6 +34,7 @@
 #include <QAction>
 #include <QSettings>
 #include <QCoreApplication>
+#include <QTimer>
 
 // STL
 #include <algorithm>
@@ -63,9 +65,12 @@ struct DockManager::Impl
     
     // Default layout state (for reset)
     QByteArray defaultState;
-    
+
     // Event subscription IDs
     std::vector<int> subscriptionIds;
+
+    // Debounce flag for the native-handle resync after dock layout changes
+    bool nativeResyncPending{false};
 };
 
 // =============================================================================
@@ -153,6 +158,21 @@ DockManager::DockManager(ServiceContainer& services, QMainWindow* pMainWindow)
     // Use perspectiveListChanged or dockAreasAdded/Removed instead
     connect(m_impl->pAdsDockManager, &ads::CDockManager::perspectiveListChanged,
             this, &DockManager::layoutChanged);
+
+    // Native handle resync on float/redock (Session 42): reparenting docks
+    // leaves embedded native GL windows at stale absolute positions — the
+    // Session-31 "doubled bar" ghost, previously only fixed for the
+    // fullscreen-exit path. Undocking fires floatingWidgetCreated; redocking
+    // destroys the floating container; a drop into a new area fires
+    // dockAreaCreated. All three schedule one debounced resync.
+    connect(m_impl->pAdsDockManager, &ads::CDockManager::floatingWidgetCreated,
+            this, [this](ads::CFloatingDockContainer* pFloating) {
+                scheduleNativeResync();
+                connect(pFloating, &QObject::destroyed,
+                        this, [this]() { scheduleNativeResync(); });
+            });
+    connect(m_impl->pAdsDockManager, &ads::CDockManager::dockAreaCreated,
+            this, [this](ads::CDockAreaWidget*) { scheduleNativeResync(); });
     
     BasicLogger::logDebug("  Qt-ADS DockManager created");
     
@@ -822,6 +842,41 @@ void DockManager::saveDefaultLayout()
 {
     m_impl->defaultState = m_impl->pAdsDockManager->saveState();
     BasicLogger::logDebug("DockManager: Default layout captured");
+}
+
+void DockManager::scheduleNativeResync()
+{
+    if (m_impl->nativeResyncPending)
+    {
+        return;
+    }
+    m_impl->nativeResyncPending = true;
+
+    QTimer::singleShot(0, this, [this]() {
+        m_impl->nativeResyncPending = false;
+
+        // Skip during startup layout construction — nothing is on screen yet
+        if (m_impl->pMainWindow == nullptr || !m_impl->pMainWindow->isVisible())
+        {
+            return;
+        }
+
+        for (auto* pVisualizer : m_impl->visualizers)
+        {
+            // Fullscreen visualizers are top-level and get their resync in
+            // MainWindow::exitFullscreen(); hidden ones (closed dock or
+            // inactive tab) must not be forced visible by the show() step
+            if (pVisualizer == nullptr || pVisualizer->isWindow() ||
+                !pVisualizer->isVisible())
+            {
+                continue;
+            }
+            pVisualizer->recreateNativeWindow();
+        }
+
+        BasicLogger::logDebug(
+            "DockManager: native window resync after dock layout change");
+    });
 }
 
 void DockManager::redockVisualizer(VisualizerWidget* pVisualizer)

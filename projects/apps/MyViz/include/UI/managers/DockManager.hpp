@@ -375,6 +375,16 @@ private:
      * @return true if layout was restored, false if no saved layout exists
      */
     bool restoreLayoutFromSettings();
+
+    /**
+     * @brief Schedules a debounced native-handle rebuild for all embedded
+     *        visualizers after a dock layout change (float/redock).
+     *
+     * Reparenting docks can leave embedded native GL windows at stale
+     * absolute positions (the Session-31 "doubled bar" ghost, previously
+     * only fixed for the fullscreen-exit path).
+     */
+    void scheduleNativeResync();
     
     /**
      * @brief Save current layout to QSettings.
