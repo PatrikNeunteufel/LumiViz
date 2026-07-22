@@ -1,6 +1,6 @@
 # Host-Gruppen + Crossfade (E5) — Entwurf
 
-> **Stand:** 2026-07-22 (Session 42) · **Status:** Entwurf **zur Freigabe** ·
+> **Stand:** 2026-07-23 (Session 42) · **Status:** **freigegeben** (Patrik, 2026-07-23, v1.2.0) ·
 > **Basis:** [MilkDrop_Import_Konzept.md](MilkDrop_Import_Konzept.md) §6b
 > (Entscheide E5/E6) + Entscheide Patrik Session 42 (§2) ·
 > **Fortschritts-SSOT:** [MilkDrop_Import_Status.md](MilkDrop_Import_Status.md)
@@ -38,12 +38,23 @@ Visuals (Host-Gruppen-Wechsel mit Crossfade).
    Presets bleiben `.lvfx`. Keine Migration des Bestands nötig — die
    Antwort auf „ist eine flache Kette implizit eine Host-Gruppe?" ist damit:
    nein, sie bleibt flach und ist bei Bedarf importierbar.
-4. **Crossfade-Settings je Host-Modul, aber synchron:** Die Einstellungen
-   (Dauer, Kurve, …) liegen am Host-Modul; eine Änderung an einem Modul wird
-   auf **alle** Host-Module übertragen, die UI zeigt dabei einen **Hinweis**.
+4. **Crossfade-Settings je Host-Modul, aber synchron** — mit einer Ausnahme
+   (Präzisierung 2026-07-23): Die **Wechsel-Settings** (z. B. Dauer, Trigger)
+   liegen am Host-Modul und werden bei Änderung auf **alle** Host-Module
+   übertragen (UI zeigt einen **Hinweis**). Die **Eingangs- und
+   Ausgangskurve** sind dagegen **je Host-Gruppe individuell** definierbar
+   (in/out getrennt) — jede Gruppe bringt ihren eigenen Blend-Charakter mit.
+   Beim Wechsel A→B wirken Ausgangskurve von A und Eingangskurve von B.
    Die **Playlist-Anbindung ist global**.
 5. **Tiefenregel:** genau eine Ebene — Haupt-Host → Host-Gruppen. Keine
    Host-Gruppe in einer Host-Gruppe.
+6. **Anzahl unbegrenzt (2026-07-23):** Die Kette darf beliebig viele
+   Host-Gruppen enthalten, und **mehrere dürfen gleichzeitig aktiv sein** —
+   sie rendern dann wie normale Chain-Nodes in Ketten-Reihenfolge mit ihren
+   Blend-Modi übereinander. „Zwei" gilt nur für den Crossfade-Moment:
+   geblendet wird paarweise A→B (§4). Performance-Hinweis: jede aktive
+   Gruppe kostet ein volles Rendering (eigenes Feedback/Blur) — der
+   Freeze-Frame-Fallback (§4) greift je Gruppe.
 
 ## 3. Datenmodell
 
@@ -65,11 +76,14 @@ Visuals (Host-Gruppen-Wechsel mit Crossfade).
 ## 4. Crossfade-Zustandsmodell (E5)
 
 - Zustände des Haupt-Hosts: `Active(A)` → `Blending(A→B, progress 0..1)` →
-  `Active(B)`.
+  `Active(B)`. Der Crossfade wechselt die **designierte aktive Gruppe**
+  (Playlist-Slot); davon unabhängig dürfen weitere Host-Gruppen dauerhaft
+  parallel laufen (§2.6) — sie sind vom Blend nicht betroffen.
 - Während `Blending` rendern **beide** Gruppen vollständig (je eigenes
   Feedback/Blur — Entscheid E5 „echtes Doppel-Rendering", beide audio-live);
-  die **Mix-Stufe** ist ein linearer Bild-Mix im Haupt-Host (erste
-  Ausbaustufe).
+  die **Mix-Stufe** mischt im Haupt-Host: Gewicht von A folgt dessen
+  **Ausgangskurve**, Gewicht von B dessen **Eingangskurve** (§2.4) —
+  linear/linear ist der Default der ersten Ausbaustufe.
 - **Ausbaustufe:** per-Vertex-Warp-UV-Blend (à la `m_fBlendProgress`) für
   den Fall Milkdrop↔Milkdrop.
 - **Freeze-Frame** bleibt ausschließlich automatischer
@@ -122,10 +136,14 @@ Details bleiben im Playlist-Konzept (ui/Visual_Playlist_Konzept.md).
 Offene Kleinpunkte (bei Freigabe mitentscheiden oder in HG2 klären):
 - Wechsel während laufendem Blend: laufenden Blend hart abschließen (Snap)
   oder Ziel ersetzen?
-- Kurven-Satz: Start nur linear, weitere Kurven später?
+- Kurven-Satz: Start nur linear; welche weiteren Kurven-Typen für die
+  individuellen Ein-/Ausgangskurven (§2.4) — z. B. ease-in/out, exponentiell,
+  S-Kurve?
 
 ## 9. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
 | 1.0.0 | 2026-07-22 | Erstfassung (Session 42): Zielbild Host-Gruppen als neuer Node-Typ, Entscheide Patrik (§2: .lvfx2, Settings-Sync, Tiefenregel), Zustandsmodell E5, Durchsetzung Tiefenregel, Umsetzungsschnitte HG1–HG3 |
+| 1.1.0 | 2026-07-23 | Entscheid Patrik §2.6: Anzahl der Host-Gruppen unbegrenzt, mehrere gleichzeitig aktiv erlaubt (rendern als normale Nodes mit Blends); Crossfade bleibt paarweise A→B auf der designierten aktiven Gruppe (§4 präzisiert) |
+| 1.2.0 | 2026-07-23 | Entscheid Patrik §2.4 präzisiert: Ein-/Ausgangskurven **je Host-Gruppe individuell** (vom Settings-Sync ausgenommen); Mix-Stufe = out-Kurve(A) × in-Kurve(B), linear/linear als Default (§4) |

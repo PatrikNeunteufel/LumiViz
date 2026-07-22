@@ -64,7 +64,13 @@ const char* kTexVertexShader = R"(#version 330 core
 layout(location = 0) in vec2 aPos;
 layout(location = 1) in vec2 aTex;
 out vec2 vTex;
-void main() { vTex = aTex; gl_Position = vec4(aPos, 0.0, 1.0); }
+out vec2 vScr;
+void main()
+{
+    vTex = aTex;
+    vScr = aPos * 0.5 + 0.5;  // screen 0..1 (independent of echo-zoomed UVs)
+    gl_Position = vec4(aPos, 0.0, 1.0);
+}
 )";
 
 // warp pass: previous frame sampled at the mesh UVs, dimmed by decay; uDecaySub
@@ -202,7 +208,10 @@ uniform float blur3_min;
 uniform float blur3_max;
 uniform vec4 _blur_scale;
 uniform vec2 _blur_sb3;
-uniform vec3 hue_shader;
+uniform vec3 _hue0 = vec3(1.0);
+uniform vec3 _hue1 = vec3(1.0);
+uniform vec3 _hue2 = vec3(1.0);
+uniform vec3 _hue3 = vec3(1.0);
 vec3 GetMain(vec2 p) { return texture(sampler_main, p).rgb; }
 vec3 GetPixel(vec2 p) { return texture(sampler_main, p).rgb; }
 vec3 GetBlur1(vec2 p) { return texture(sampler_blur1, p).rgb * _blur_scale.x + _blur_scale.y; }
@@ -268,6 +277,12 @@ float lum(vec3 v) { return dot(v, vec3(0.32, 0.49, 0.29)); }
     vec2 uv_orig = vUvOrig;
     float rad = length((uv_orig - 0.5) * aspect.xy);
     float ang = atan((uv_orig.y - 0.5) * aspect.y, (uv_orig.x - 0.5) * aspect.x);
+    // fShader colour-wash: raw corner hues, bilinear like the comp-grid Diffuse
+    // (milkdropfs.cpp:4341-4357; the shader text mixes in its own fShader share)
+    vec3 hue_shader = _hue0 * (uv_orig.x * uv_orig.y) +
+                      _hue1 * ((1.0 - uv_orig.x) * uv_orig.y) +
+                      _hue2 * (uv_orig.x * (1.0 - uv_orig.y)) +
+                      _hue3 * ((1.0 - uv_orig.x) * (1.0 - uv_orig.y));
     vec3 ret = vec3(0.0);
 )";
     s += r.glslBody;
@@ -275,14 +290,50 @@ float lum(vec3 v) { return dot(v, vec3(0.32, 0.49, 0.29)); }
     return s;
 }
 
-// composite pass: texture x uniform colour (gamma/echo passes drive uColor)
+// composite pass: texture x uniform colour (gamma/echo passes drive uColor).
+// uHue0..3 = fShader colour-wash corners (milkdropfs.cpp:4033-4062), defaults
+// stay neutral for every other user of this program; interpolation matches the
+// shader-path bilinear weights (:4350-4357), y=1 = top.
 const char* kTexFragmentShader = R"(#version 330 core
 uniform sampler2D uTex;
 uniform vec4 uColor;
+uniform vec3 uHue0 = vec3(1.0);
+uniform vec3 uHue1 = vec3(1.0);
+uniform vec3 uHue2 = vec3(1.0);
+uniform vec3 uHue3 = vec3(1.0);
 in vec2 vTex;
+in vec2 vScr;
 out vec4 frag;
-void main() { frag = vec4(texture(uTex, vTex).rgb * uColor.rgb, uColor.a); }
+void main()
+{
+    vec3 hue = uHue0 * (vScr.x * vScr.y) + uHue1 * ((1.0 - vScr.x) * vScr.y) +
+               uHue2 * (vScr.x * (1.0 - vScr.y)) +
+               uHue3 * ((1.0 - vScr.x) * (1.0 - vScr.y));
+    frag = vec4(texture(uTex, vTex).rgb * uColor.rgb * hue, uColor.a);
+}
 )";
+
+/// fShader-Farbwash: 4 Ecken-Farben (milkdropfs.cpp:4044-4059). amount = 1.0
+/// liefert die Roh-Farben (Shader-Pfad reicht sie unvermischt durch), sonst
+/// den MD1-Mix gegen Weiss: shade*amount + (1-amount).
+void computeHueCorners(double timeSec, const std::array<float, 4>& randStart,
+                       float amount, float out[4][3])
+{
+    const float t = static_cast<float>(timeSec) * 30.0f;
+    for (int i = 0; i < 4; ++i)
+    {
+        const float fi = static_cast<float>(i);
+        float s[3];
+        s[0] = 0.6f + 0.3f * std::sin(t * 0.0143f + 3.0f + fi * 21.0f + randStart[3]);
+        s[1] = 0.6f + 0.3f * std::sin(t * 0.0107f + 1.0f + fi * 13.0f + randStart[1]);
+        s[2] = 0.6f + 0.3f * std::sin(t * 0.0129f + 6.0f + fi * 9.0f + randStart[2]);
+        const float mx = std::max(s[0], std::max(s[1], s[2]));
+        for (int k = 0; k < 3; ++k)
+        {
+            out[i][k] = (0.5f + 0.5f * (s[k] / mx)) * amount + (1.0f - amount);
+        }
+    }
+}
 
 // textured custom shapes: pos + uv + per-vertex colour (centre/edge gradient)
 const char* kShapeVertexShader = R"(#version 330 core
@@ -604,13 +655,25 @@ void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringLi
         if (m_state.compInfo.hueMix > 0.001)
         {
             report->append(QStringLiteral(
-                "Comp-Shader nutzt hue_shader (fShader-Farbwash) — noch nicht gerendert"));
+                "ℹ Comp-Shader nutzt hue_shader (fShader-Farbwash, Anteil %1)")
+                               .arg(m_state.compInfo.hueMix));
         }
     }
 
     prepareCustomShaders(report);
     rebuildScripts(report);
     rebuildSprites(report);
+    // fShader-Farbwash: Zufalls-Phasen je Preset-Ladung — Port von
+    // m_fRandStart (plugin.cpp:6623-6626, dieselben Modulo-Spannen)
+    {
+        unsigned int hs = m_randSeed ^ 0x5bd1e995u;
+        const auto r01 = [](unsigned int& s) {
+            s = s * 1664525u + 1013904223u;
+            return static_cast<float>(s >> 8) / 16777216.0f;
+        };
+        m_hueRandStart = {r01(hs) * 648.41f, r01(hs) * 537.51f,
+                          r01(hs) * 426.61f, r01(hs) * 315.71f};
+    }
     m_time = 0.0;
     m_frame = 0;
     m_monitor = 0.0;
@@ -1366,7 +1429,8 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
                                    .arg(QLatin1String(which));
                 if (!r.customSamplers.empty())
                 {
-                    note += QStringLiteral(" — %1 Custom-Textur(en), Platzhalter bis C2")
+                    note += QStringLiteral(" — %1 Custom-Textur(en); fehlende "
+                                           "Dateien fallen auf den Platzhalter")
                                 .arg(r.customSamplers.size());
                 }
                 report->append(note);
@@ -2030,7 +2094,9 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
     program.setUniformValue(
         "_blur_sb3", QVector2D(ranges.max[2] - ranges.min[2], ranges.min[2]));
 
-    // texsize_noise_* + hue_shader (C1: neutral, fShader-Wash folgt)
+    // texsize_noise_* (die _hue0..3-Ecken setzt NUR der Comp-Pfad im
+    // Composite — Warp-Programme bleiben auf den weissen Uniform-Defaults,
+    // wie die weisse Warp-Vertex-Diffuse der Referenz)
     const auto texsizeVec = [](int n) {
         return QVector4D(static_cast<float>(n), static_cast<float>(n), 1.0f / n, 1.0f / n);
     };
@@ -2038,7 +2104,6 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
     program.setUniformValue("texsize_noise_lq_lite", texsizeVec(32));
     program.setUniformValue("texsize_noise_mq", texsizeVec(256));
     program.setUniformValue("texsize_noise_hq", texsizeVec(256));
-    program.setUniformValue("hue_shader", QVector3D(1.0f, 1.0f, 1.0f));
     f->glActiveTexture(GL_TEXTURE0);
 }
 
@@ -3285,6 +3350,19 @@ void MilkdropVisualizer::compositeToScreen(const FrameVars& fv)
         f->glDisable(GL_BLEND);
         m_compCustomProgram->bind();
         feedCustomUniforms(*m_compCustomProgram, fv, m_feedback.currentTexture());
+        // fShader-Farbwash: Roh-Eckfarben wie die comp-Grid-Diffuse der
+        // Referenz (der Shader-Text mischt seinen fShader-Anteil selbst)
+        {
+            float hue[4][3];
+            computeHueCorners(m_time, m_hueRandStart, 1.0f, hue);
+            const auto hv = [&](int i) {
+                return QVector3D(hue[i][0], hue[i][1], hue[i][2]);
+            };
+            m_compCustomProgram->setUniformValue("_hue0", hv(0));
+            m_compCustomProgram->setUniformValue("_hue1", hv(1));
+            m_compCustomProgram->setUniformValue("_hue2", hv(2));
+            m_compCustomProgram->setUniformValue("_hue3", hv(3));
+        }
         // Praesentations-Quad wie der MD1-Basis-Layer (Identitaets-Mapping)
         const float quad[6][4] = {{-1.0f, -1.0f, 0.0f, 0.0f}, {1.0f, -1.0f, 1.0f, 0.0f},
                                   {-1.0f, 1.0f, 0.0f, 1.0f},  {1.0f, -1.0f, 1.0f, 0.0f},
@@ -3360,6 +3438,24 @@ void MilkdropVisualizer::compositeToScreen(const FrameVars& fv)
     const bool solarize = baked ? ci.solarize : fv.solarize;
     const bool invert = baked ? ci.invert : fv.invert;
 
+    // fShader-Farbwash (hue_shader): live = Preset-Wert, baked = der im
+    // Shader-Text eingebackene Anteil (GenCompPShaderText: ret *= (1-h)+h*hue).
+    // amount 0 -> computeHueCorners liefert Weiss = neutral.
+    {
+        const double hueAmount = baked ? ci.hueMix : m_state.shader;
+        float hue[4][3];
+        computeHueCorners(m_time, m_hueRandStart,
+                          static_cast<float>(std::clamp(hueAmount, 0.0, 1.0)),
+                          hue);
+        const auto hv = [&](int i) {
+            return QVector3D(hue[i][0], hue[i][1], hue[i][2]);
+        };
+        m_textureProgram->setUniformValue("uHue0", hv(0));
+        m_textureProgram->setUniformValue("uHue1", hv(1));
+        m_textureProgram->setUniformValue("uHue2", hv(2));
+        m_textureProgram->setUniformValue("uHue3", hv(3));
+    }
+
     const bool echo = echoAlpha > 0.001;
     if (echo)
     {
@@ -3397,6 +3493,15 @@ void MilkdropVisualizer::compositeToScreen(const FrameVars& fv)
                 f->glBlendFunc(GL_ONE, GL_ONE);
             }
         }
+    }
+    // uHue neutralisieren — m_textureProgram wird auch ausserhalb des
+    // Composite genutzt und Uniform-Werte persistieren im Programm
+    {
+        const QVector3D white(1.0f, 1.0f, 1.0f);
+        m_textureProgram->setUniformValue("uHue0", white);
+        m_textureProgram->setUniformValue("uHue1", white);
+        m_textureProgram->setUniformValue("uHue2", white);
+        m_textureProgram->setUniformValue("uHue3", white);
     }
     m_textureProgram->release();
 

@@ -84,19 +84,73 @@ enum class Origin
     Native
 };
 
+/// Inhalts-Elemente eines Milkdrop-Nodes, die das Add-Dropdown anlegen kann
+/// (N3.1/N3.3): kein Chain-Effekt — sie landen im PresetState des selektierten
+/// Milkdrop-Nodes (Waves/Shapes capped auf 16, MD3-Superset).
+enum class MilkElement
+{
+    None,
+    Wave,
+    Shape,
+    Sprite
+};
+
 struct EffectType
 {
     const char* name;
     EffectParams (*make)();
     Origin origin = Origin::Avs;
+    MilkElement milkElement = MilkElement::None;
 
-    [[nodiscard]] bool isHeader() const { return make == nullptr; }
+    [[nodiscard]] bool isHeader() const
+    {
+        return make == nullptr && milkElement == MilkElement::None;
+    }
 };
 
-/// Milkdrop-Anzeige-Kinder (E1: Preset → Code · Waves · Shapes · Shader):
-/// Pfad-Segmente >= dieser Basis sind SEKTIONEN des Eltern-Nodes, keine
-/// Chain-Indizes — nodeAtPath liefert fuer sie bewusst nullptr (Mutations-Schutz)
+/// Milkdrop-Anzeige-Kinder (E1: Preset → Code · Waves · Shapes · Shader ·
+/// Sprites): Pfad-Segmente >= dieser Basis sind SEKTIONEN des Eltern-Nodes,
+/// keine Chain-Indizes — nodeAtPath liefert fuer sie bewusst nullptr
+/// (Mutations-Schutz). Auf ein Sektions-Segment darf ein ELEMENT-Index folgen
+/// (N3.1/N3.3): [.., kMilkSectionBase+s, i] = Element i der Sektion s.
 constexpr int kMilkSectionBase = 1000000;
+
+/// Baum-Pfad in Chain-Pfad + Milk-Sektion/-Element zerlegen (Sentinels).
+struct MilkPathInfo
+{
+    QList<int> nodePath;  ///< Pfad zum Chain-Node (ohne Sentinels)
+    int section = -1;     ///< 0=Code 1=Waves 2=Shapes 3=Shader 4=Sprites
+    int element = -1;     ///< Element-Index innerhalb der Sektion (oder -1)
+};
+
+MilkPathInfo splitMilkPath(QList<int> p)
+{
+    MilkPathInfo r;
+    if (p.size() >= 2 && p[p.size() - 2] >= kMilkSectionBase)
+    {
+        r.element = p.takeLast();
+        r.section = p.takeLast() - kMilkSectionBase;
+    }
+    else if (!p.isEmpty() && p.last() >= kMilkSectionBase)
+    {
+        r.section = p.takeLast() - kMilkSectionBase;
+    }
+    r.nodePath = p;
+    return r;
+}
+
+/// Kleinster wavecode_N/shapecode_N-Index, der noch nicht belegt ist.
+template <typename Vec>
+int nextFreeMilkIndex(const Vec& vec)
+{
+    for (int idx = 0;; ++idx)
+    {
+        bool used = false;
+        for (const auto& e : vec)
+            if (e.index == idx) { used = true; break; }
+        if (!used) return idx;
+    }
+}
 
 // Resolve asset/img/logo/icons at runtime: the exe runs from out/build/…, so
 // walk upwards from the application dir until the icons appear (dev layout).
@@ -160,7 +214,7 @@ Origin originForParams(const EffectParams& params)
         std::vector<Origin> byIndex(std::variant_size_v<EffectParams>, Origin::Avs);
         for (const EffectType& t : effectPalette())
         {
-            if (t.isHeader()) continue;
+            if (t.make == nullptr) continue;  // headers + Milkdrop-Elemente
             byIndex[t.make().index()] = t.origin;
         }
         return byIndex;
@@ -256,6 +310,12 @@ const std::vector<EffectType>& effectPalette()
         {"Multiplier", [] { return EffectParams{MultiplierParams{}}; }},
         {"Grain", [] { return EffectParams{GrainParams{}}; }},
         {"Add Borders", [] { return EffectParams{AddBordersParams{}}; }},
+        // Milkdrop-Node-Inhalte (N3.1/N3.3): keine Chain-Effekte — "+" legt sie
+        // im PresetState des selektierten Milkdrop-Nodes an.
+        {"— Milkdrop-Node-Inhalte —", nullptr},
+        {"Custom Wave", nullptr, Origin::MilkDrop, MilkElement::Wave},
+        {"Custom Shape", nullptr, Origin::MilkDrop, MilkElement::Shape},
+        {"Sprite", nullptr, Origin::MilkDrop, MilkElement::Sprite},
     };
     return kPalette;
 }
@@ -750,9 +810,11 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
         }
     }
 
-    // Milkdrop-Meganode (N2, Entscheid E1): Anzeige-Kinder Preset → Code ·
-    // Waves · Shapes · Shader. Reine Navigations-Items (Sentinel-Pfad, nicht
-    // editier-/drag-/dropbar) — der Editor zeigt die gewaehlte Sektion.
+    // Milkdrop-Meganode (N2, Entscheid E1; N3 Session 42): Anzeige-Kinder
+    // Preset → Code · Waves · Shapes · Shader · Sprites. Sektions- und
+    // Element-Items sind reine Navigations-Items (Sentinel-Pfade, nicht
+    // editier-/drag-/dropbar) — der Editor zeigt die gewaehlte Sektion bzw.
+    // das gewaehlte Element; +/-/⧉ der Toolbar wirken auf Elemente (N3.1).
     if (const auto* milk = std::get_if<MilkdropNodeParams>(&node.params))
     {
         int wavesOn = 0;
@@ -765,7 +827,8 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
             tr("Code (per_frame / per_pixel)"),
             tr("Waves (%1 aktiv)").arg(wavesOn),
             tr("Shapes (%1 aktiv)").arg(shapesOn),
-            tr("Shader (Warp/Comp)")};
+            tr("Shader (Warp/Comp)"),
+            tr("Sprites (%1)").arg(milk->preset.sprites.size())};
         for (int s = 0; s < sections.size(); ++s)
         {
             auto* sec = new QTreeWidgetItem(item);
@@ -774,6 +837,43 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
             QList<int> secPath = path;
             secPath.append(kMilkSectionBase + s);
             sec->setData(0, Qt::UserRole, pathToVariant(secPath));
+
+            // Element-Kinder (N3.1/N3.3): je Wave/Shape/Sprite ein waehlbares
+            // Item — Pfad = [.., Sektions-Sentinel, Element-Index]
+            auto addElement = [&](int elementIdx, const QString& label) {
+                auto* el = new QTreeWidgetItem(sec);
+                el->setText(0, label);
+                el->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+                QList<int> elPath = secPath;
+                elPath.append(elementIdx);
+                el->setData(0, Qt::UserRole, pathToVariant(elPath));
+            };
+            if (s == 1)
+            {
+                for (int i = 0; i < static_cast<int>(milk->preset.waves.size()); ++i)
+                    addElement(i, tr("Wave %1%2")
+                                      .arg(milk->preset.waves[i].index)
+                                      .arg(milk->preset.waves[i].enabled
+                                               ? QString()
+                                               : tr(" (aus)")));
+            }
+            else if (s == 2)
+            {
+                for (int i = 0; i < static_cast<int>(milk->preset.shapes.size()); ++i)
+                    addElement(i, tr("Shape %1%2")
+                                      .arg(milk->preset.shapes[i].index)
+                                      .arg(milk->preset.shapes[i].enabled
+                                               ? QString()
+                                               : tr(" (aus)")));
+            }
+            else if (s == 4)
+            {
+                for (int i = 0; i < static_cast<int>(milk->preset.sprites.size()); ++i)
+                    addElement(i, tr("Sprite %1 — %2")
+                                      .arg(milk->preset.sprites[i].index)
+                                      .arg(QString::fromStdString(
+                                          milk->preset.sprites[i].imageName)));
+            }
         }
     }
 }
@@ -813,8 +913,13 @@ void MultiEffectPanel::mutate(const QList<int>& path,
         m_host->recompileChain();
     }
     // Refresh the affected item's label (name/clamps may have changed).
+    // Milk-Sektions-/Element-Items (Sentinel-Pfade) NICHT umbenennen — sie
+    // tragen ihre eigenen Labels, nicht den Node-Namen.
     if (auto* item = m_tree->currentItem())
     {
+        const QList<int> itemPath = pathFromVariant(item->data(0, Qt::UserRole));
+        for (int seg : itemPath)
+            if (seg >= kMilkSectionBase) return;
         QMutexLocker lock(m_mutex);
         if (ChainNode* node = nodeAtPath(path))
         {
@@ -847,6 +952,65 @@ void MultiEffectPanel::onAddEffect()
     if (typeIdx < 0) return;
     const EffectType& chosen = effectPalette()[static_cast<size_t>(typeIdx)];
     if (chosen.isHeader()) return;  // category title, not an insertable effect
+
+    // Milkdrop-Node-Inhalt (N3.1/N3.3): landet im PresetState des selektierten
+    // Milkdrop-Nodes (bzw. seiner Sektion/seines Elements), nicht in der Chain.
+    if (chosen.milkElement != MilkElement::None)
+    {
+        const MilkPathInfo mp = splitMilkPath(currentPath());
+        QList<int> newSel;
+        mutateStructure([&] {
+            ChainNode* node = nodeAtPath(mp.nodePath);
+            auto* milk =
+                node ? std::get_if<MilkdropNodeParams>(&node->params) : nullptr;
+            if (milk == nullptr) return;  // Auswahl ist kein Milkdrop-Node
+            auto& preset = milk->preset;
+            switch (chosen.milkElement)
+            {
+                case MilkElement::Wave:
+                {
+                    if (preset.waves.size() >= 16) return;  // MD3-Superset-Cap
+                    lumi::milkdrop::WaveState w;
+                    w.index = nextFreeMilkIndex(preset.waves);
+                    w.enabled = true;  // frisch angelegt = sichtbar gewollt
+                    preset.waves.push_back(std::move(w));
+                    ++milk->revision;
+                    newSel = mp.nodePath;
+                    newSel << (kMilkSectionBase + 1)
+                           << static_cast<int>(preset.waves.size()) - 1;
+                    break;
+                }
+                case MilkElement::Shape:
+                {
+                    if (preset.shapes.size() >= 16) return;
+                    lumi::milkdrop::ShapeState s;
+                    s.index = nextFreeMilkIndex(preset.shapes);
+                    s.enabled = true;
+                    preset.shapes.push_back(std::move(s));
+                    ++milk->revision;
+                    newSel = mp.nodePath;
+                    newSel << (kMilkSectionBase + 2)
+                           << static_cast<int>(preset.shapes.size()) - 1;
+                    break;
+                }
+                case MilkElement::Sprite:
+                {
+                    lumi::milkdrop::SpriteState sp;
+                    sp.index = nextFreeMilkIndex(preset.sprites);
+                    preset.sprites.push_back(std::move(sp));
+                    ++milk->revision;
+                    newSel = mp.nodePath;
+                    newSel << (kMilkSectionBase + 4)
+                           << static_cast<int>(preset.sprites.size()) - 1;
+                    break;
+                }
+                default: break;
+            }
+        });
+        if (!newSel.isEmpty()) selectByPath(newSel);
+        return;
+    }
+
     ChainNode fresh;
     fresh.params = chosen.make();
 
@@ -869,6 +1033,54 @@ void MultiEffectPanel::onRemove()
 {
     const QList<QList<int>> paths = selectedPaths();
     if (paths.isEmpty()) return;  // never remove the root
+
+    // Milk-Elemente (N3.1/N3.3): selektierte Waves/Shapes/Sprites entfernen.
+    // Sektions-Items selbst sind nicht loeschbar.
+    {
+        const MilkPathInfo first = splitMilkPath(paths.first());
+        if (first.section >= 0 && first.element >= 0)
+        {
+            QList<int> idxs;
+            for (const QList<int>& pth : paths)
+            {
+                const MilkPathInfo mp = splitMilkPath(pth);
+                if (mp.section == first.section && mp.element >= 0 &&
+                    mp.nodePath == first.nodePath)
+                {
+                    idxs.append(mp.element);
+                }
+            }
+            std::sort(idxs.begin(), idxs.end(), std::greater<int>());
+            mutateStructure([&] {
+                ChainNode* node = nodeAtPath(first.nodePath);
+                auto* milk =
+                    node ? std::get_if<MilkdropNodeParams>(&node->params) : nullptr;
+                if (milk == nullptr) return;
+                auto eraseAt = [](auto& vec, int idx) {
+                    if (idx >= 0 && idx < static_cast<int>(vec.size()))
+                    {
+                        vec.erase(vec.begin() + idx);
+                        return true;
+                    }
+                    return false;
+                };
+                bool removed = false;
+                for (int idx : idxs)
+                {
+                    if (first.section == 1)
+                        removed |= eraseAt(milk->preset.waves, idx);
+                    else if (first.section == 2)
+                        removed |= eraseAt(milk->preset.shapes, idx);
+                    else if (first.section == 4)
+                        removed |= eraseAt(milk->preset.sprites, idx);
+                }
+                if (removed) ++milk->revision;
+            });
+            return;
+        }
+        if (first.section >= 0) return;  // Sektions-Item: nichts entfernen
+    }
+
     QList<int> parentPath = paths.first();
     parentPath.removeLast();
     QList<int> idxs;
@@ -887,6 +1099,45 @@ void MultiEffectPanel::onClone()
 {
     const QList<int> path = currentPath();
     if (path.isEmpty()) return;  // root is not clonable
+
+    // Milk-Elemente (N3.1/N3.3): Wave/Shape/Sprite duplizieren (Einfuegung
+    // direkt dahinter, frischer index). Sektions-Items sind nicht klonbar.
+    {
+        const MilkPathInfo mp = splitMilkPath(path);
+        if (mp.section >= 0)
+        {
+            if (mp.element < 0) return;
+            QList<int> newSel;
+            mutateStructure([&] {
+                ChainNode* node = nodeAtPath(mp.nodePath);
+                auto* milk =
+                    node ? std::get_if<MilkdropNodeParams>(&node->params) : nullptr;
+                if (milk == nullptr) return;
+                auto cloneAt = [&](auto& vec, std::size_t cap) {
+                    const int e = mp.element;
+                    if (e < 0 || e >= static_cast<int>(vec.size())) return false;
+                    if (cap > 0 && vec.size() >= cap) return false;
+                    auto copy = vec[static_cast<std::size_t>(e)];
+                    copy.index = nextFreeMilkIndex(vec);
+                    vec.insert(vec.begin() + e + 1, std::move(copy));
+                    return true;
+                };
+                bool ok = false;
+                if (mp.section == 1) ok = cloneAt(milk->preset.waves, 16);
+                else if (mp.section == 2) ok = cloneAt(milk->preset.shapes, 16);
+                else if (mp.section == 4) ok = cloneAt(milk->preset.sprites, 0);
+                if (ok)
+                {
+                    ++milk->revision;
+                    newSel = mp.nodePath;
+                    newSel << (kMilkSectionBase + mp.section) << (mp.element + 1);
+                }
+            });
+            if (!newSel.isEmpty()) selectByPath(newSel);
+            return;
+        }
+    }
+
     QList<int> finalPath;
     mutateStructure([&] {
         QList<int> parentPath = path;
@@ -1235,7 +1486,29 @@ QTreeWidgetItem* MultiEffectPanel::itemAtPath(const QList<int>& path) const
     QTreeWidgetItem* item = m_tree->topLevelItem(path[0]);
     for (int i = 1; i < path.size() && item != nullptr; ++i)
     {
-        item = item->child(path[i]);
+        const int seg = path[i];
+        const bool inMilk = seg >= kMilkSectionBase || path[i - 1] >= kMilkSectionBase;
+        if (inMilk)
+        {
+            // Milk-Sektionen/-Elemente liegen an beliebiger Kindposition (nach
+            // evtl. Chain-Kindern) — ueber den gespeicherten UserRole-Pfad suchen
+            QTreeWidgetItem* found = nullptr;
+            for (int c = 0; c < item->childCount(); ++c)
+            {
+                const QList<int> childPath =
+                    pathFromVariant(item->child(c)->data(0, Qt::UserRole));
+                if (childPath.size() == i + 1 && childPath.last() == seg)
+                {
+                    found = item->child(c);
+                    break;
+                }
+            }
+            item = found;
+        }
+        else
+        {
+            item = item->child(seg);
+        }
     }
     return item;
 }
@@ -1358,17 +1631,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     clearPropertyEditor();
     if (m_host == nullptr || rawPath.isEmpty()) return;
 
-    // Milkdrop-Sektion (Anzeige-Kind) vom echten Chain-Pfad abtrennen: alle
-    // Mutations-Lambdas fangen unten das bereinigte `path` — Sentinels
-    // erreichen nodeAtPath nie
-    QList<int> nodePath = rawPath;
-    int milkSection = -1;
-    if (nodePath.last() >= kMilkSectionBase)
-    {
-        milkSection = nodePath.takeLast() - kMilkSectionBase;
-        if (nodePath.isEmpty()) return;
-    }
-    const QList<int> path = nodePath;
+    // Milkdrop-Sektion/-Element (Anzeige-Kinder) vom echten Chain-Pfad
+    // abtrennen: alle Mutations-Lambdas fangen unten das bereinigte `path` —
+    // Sentinels erreichen nodeAtPath nie. milkElem >= 0 = Einzel-Element-Sicht.
+    const MilkPathInfo milkPath = splitMilkPath(rawPath);
+    const int milkSection = milkPath.section;
+    const int milkElem = milkPath.element;
+    if (milkPath.nodePath.isEmpty()) return;
+    const QList<int> path = milkPath.nodePath;
 
     EffectParams params;
     std::string nodeName;
@@ -2459,12 +2729,23 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                           milkOf(n).preset.perPixel = std::move(v);
                       });
         }
-        else if (milkSection == 1)  // Custom Waves
+        else if (milkSection == 1)  // Custom Waves (Sektion oder Einzel-Element)
         {
             if (p->preset.waves.empty())
                 form->addRow(new QLabel(tr("Keine Custom-Waves im Preset"),
                                         m_propContainer));
-            for (std::size_t i = 0; i < p->preset.waves.size(); ++i)
+            if (milkElem < 0)
+                form->addRow(new QLabel(
+                    tr("Neu anlegen: 'Custom Wave' im Dropdown + '+'. "
+                       "Entfernen/Klonen: Wave im Baum markieren."),
+                    m_propContainer));
+            const std::size_t nWaves = p->preset.waves.size();
+            const std::size_t wBegin =
+                milkElem >= 0 ? std::min<std::size_t>(milkElem, nWaves) : 0;
+            const std::size_t wEnd =
+                milkElem >= 0 ? std::min<std::size_t>(milkElem + 1, nWaves)
+                              : nWaves;
+            for (std::size_t i = wBegin; i < wEnd; ++i)
             {
                 const auto& w = p->preset.waves[i];
                 addBool(tr("Wave %1 aktiv").arg(w.index), w.enabled,
@@ -2488,12 +2769,23 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                           setWave(&lumi::milkdrop::WaveState::pointCode));
             }
         }
-        else if (milkSection == 2)  // Custom Shapes
+        else if (milkSection == 2)  // Custom Shapes (Sektion oder Einzel-Element)
         {
             if (p->preset.shapes.empty())
                 form->addRow(new QLabel(tr("Keine Custom-Shapes im Preset"),
                                         m_propContainer));
-            for (std::size_t i = 0; i < p->preset.shapes.size(); ++i)
+            if (milkElem < 0)
+                form->addRow(new QLabel(
+                    tr("Neu anlegen: 'Custom Shape' im Dropdown + '+'. "
+                       "Entfernen/Klonen: Shape im Baum markieren."),
+                    m_propContainer));
+            const std::size_t nShapes = p->preset.shapes.size();
+            const std::size_t sBegin =
+                milkElem >= 0 ? std::min<std::size_t>(milkElem, nShapes) : 0;
+            const std::size_t sEnd =
+                milkElem >= 0 ? std::min<std::size_t>(milkElem + 1, nShapes)
+                              : nShapes;
+            for (std::size_t i = sBegin; i < sEnd; ++i)
             {
                 const auto& s = p->preset.shapes[i];
                 addBool(tr("Shape %1 aktiv").arg(s.index), s.enabled,
@@ -2515,7 +2807,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                           setShape(&lumi::milkdrop::ShapeState::frameCode));
             }
         }
-        else  // 3 = Warp/Comp-Shader (HLSL, SSOT — Klassifikation wird neu abgeleitet)
+        else if (milkSection == 3)  // Warp/Comp-Shader (HLSL, SSOT — Klassifikation wird neu abgeleitet)
         {
             auto addHlsl = [&](const QString& label, const std::string& value,
                                bool isWarp) {
@@ -2553,6 +2845,80 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             };
             addHlsl(tr("Warp-Shader (HLSL)"), p->preset.warpShaderText, true);
             addHlsl(tr("Comp-Shader (HLSL)"), p->preset.compShaderText, false);
+        }
+        else if (milkSection == 4)  // Sprites (N3.3 — Sektion oder Einzel-Element)
+        {
+            if (p->preset.sprites.empty())
+                form->addRow(new QLabel(tr("Keine Sprites im Preset"),
+                                        m_propContainer));
+            if (milkElem < 0)
+                form->addRow(new QLabel(
+                    tr("Neu anlegen: 'Sprite' im Dropdown + '+'. "
+                       "Entfernen/Klonen: Sprite im Baum markieren."),
+                    m_propContainer));
+            const std::size_t nSprites = p->preset.sprites.size();
+            const std::size_t bBegin =
+                milkElem >= 0 ? std::min<std::size_t>(milkElem, nSprites) : 0;
+            const std::size_t bEnd =
+                milkElem >= 0 ? std::min<std::size_t>(milkElem + 1, nSprites)
+                              : nSprites;
+            for (std::size_t i = bBegin; i < bEnd; ++i)
+            {
+                const auto& sp = p->preset.sprites[i];
+                using lumi::milkdrop::SpriteState;
+                // Bounds-gesicherte Mutation eines Sprite-Felds (+Revision)
+                auto spriteSet = [milkOf, i](auto setter) {
+                    return [milkOf, i, setter](ChainNode& n, auto v) {
+                        auto& mp = milkOf(n);
+                        if (i < mp.preset.sprites.size())
+                            setter(mp.preset.sprites[i], v);
+                    };
+                };
+                const QString t = tr("Sprite %1").arg(sp.index);
+                addText(t + tr(" · Bild (relativ zum Textur-Ordner)"),
+                        sp.imageName, spriteSet([](SpriteState& s, std::string v) {
+                            s.imageName = std::move(v);
+                        }));
+                addColor(t + tr(" · Colorkey"), sp.colorKey,
+                         spriteSet([](SpriteState& s, uint32_t v) {
+                             s.colorKey = v;
+                         }));
+                addInt(t + tr(" · Layer"), sp.layer, -100, 100,
+                       spriteSet([](SpriteState& s, int v) { s.layer = v; }));
+                addInt(t + tr(" · Blend (0=Alpha 1=Decal 2=Add 3=SrcColor 4=Colorkey)"),
+                       sp.blendMode, 0, 4,
+                       spriteSet([](SpriteState& s, int v) { s.blendMode = v; }));
+                addDouble(t + tr(" · Alpha"), sp.alpha, 0.0, 1.0, 0.01,
+                          spriteSet([](SpriteState& s, double v) { s.alpha = v; }));
+                addDouble(t + tr(" · Burn"), sp.burn, 0.0, 1.0, 0.01,
+                          spriteSet([](SpriteState& s, double v) { s.burn = v; }));
+                addDouble(t + tr(" · X"), sp.x, -5.0, 5.0, 0.01,
+                          spriteSet([](SpriteState& s, double v) { s.x = v; }));
+                addDouble(t + tr(" · Y"), sp.y, -5.0, 5.0, 0.01,
+                          spriteSet([](SpriteState& s, double v) { s.y = v; }));
+                addDouble(t + tr(" · Skalierung X (negativ = gespiegelt)"),
+                          sp.sx, -10.0, 10.0, 0.01,
+                          spriteSet([](SpriteState& s, double v) { s.sx = v; }));
+                addDouble(t + tr(" · Skalierung Y"), sp.sy, -10.0, 10.0, 0.01,
+                          spriteSet([](SpriteState& s, double v) { s.sy = v; }));
+                addDouble(t + tr(" · Rotation (rad)"), sp.rot, -10.0, 10.0, 0.01,
+                          spriteSet([](SpriteState& s, double v) { s.rot = v; }));
+                addDouble(t + tr(" · Speed (time-Skalierung)"), sp.speed,
+                          0.0, 10.0, 0.1,
+                          spriteSet([](SpriteState& s, double v) { s.speed = v; }));
+                addDouble(t + tr(" · Repeat X"), sp.repeatX, 0.01, 100.0, 0.1,
+                          spriteSet([](SpriteState& s, double v) {
+                              s.repeatX = v;
+                          }));
+                addDouble(t + tr(" · Repeat Y"), sp.repeatY, 0.01, 100.0, 0.1,
+                          spriteSet([](SpriteState& s, double v) {
+                              s.repeatY = v;
+                          }));
+                addScript(t + tr(" · Code (per Frame)"), sp.code,
+                          spriteSet([](SpriteState& s, std::string v) {
+                              s.code = std::move(v);
+                          }));
+            }
         }
     }
     else if (auto* p = std::get_if<PassthroughParams>(&params))

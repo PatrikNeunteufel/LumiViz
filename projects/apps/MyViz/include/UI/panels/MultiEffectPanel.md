@@ -38,14 +38,24 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
   kann sie behalten, modulieren (`red=red*v`) oder überschreiben. Default =
   Gradient/„Neon" (unverändertes Alt-Verhalten).
 
-- **Milkdrop-Node (N2, Session 41 — Entscheid E1):** Der Node zeigt vier
-  **Anzeige-Kinder** im Baum (Code · Waves · Shapes · Shader). Das sind reine
-  Navigations-Items mit Sentinel-Pfaden (`kMilkSectionBase`, nicht drag-/
-  editierbar) — `nodeAtPath` liefert für sie bewusst `nullptr`, der Property-
-  Editor trennt die Sektion ab und editiert den echten Node. Jede Mutation
-  bumpt `MilkdropNodeParams.revision` (Render-Host-Übernahme-Vertrag);
-  Shader-Edits reklassifizieren via `analyzeWarp/CompShader` (SSOT = Text).
-  Palette-Eintrag „Milkdrop (Preset-Pipeline)" mit MilkDrop-Origin-Icon.
+- **Milkdrop-Node (N2 Session 41, N3.1/N3.3 Session 42 — Entscheid E1):** Der
+  Node zeigt fünf **Anzeige-Kinder** im Baum (Code · Waves · Shapes · Shader ·
+  Sprites); Waves/Shapes/Sprites haben darunter **Element-Items** (je
+  Wave/Shape/Sprite eines). Sektions- und Element-Items sind Navigations-Items
+  mit Sentinel-Pfaden (`kMilkSectionBase`; Elemente = `[…, Sentinel, Index]`,
+  Zerlegung über `splitMilkPath`), nicht drag-/editierbar — `nodeAtPath`
+  liefert für sie bewusst `nullptr`, der Property-Editor trennt Sektion/
+  Element ab und editiert den echten Node. **Add/Remove/Clone (N3.1):** Die
+  Palette führt „Custom Wave / Custom Shape / Sprite" (Kategorie
+  „Milkdrop-Node-Inhalte") — „+" legt das Element im PresetState des
+  selektierten Milkdrop-Nodes an (Waves/Shapes Cap 16, kleinster freier
+  `index`, `enabled=true`); „−"/⧉ wirken auf selektierte Element-Items.
+  **Sprite-Editor (N3.3):** je Sprite alle Startwerte (Bild, Colorkey, Layer,
+  Blend 0–4, Alpha, Burn, x/y, sx/sy, rot, Speed, Repeat) + per-Frame-EEL.
+  Jede Mutation bumpt `MilkdropNodeParams.revision`
+  (Render-Host-Übernahme-Vertrag); Shader-Edits reklassifizieren via
+  `analyzeWarp/CompShader` (SSOT = Text). Palette-Eintrag „Milkdrop
+  (Preset-Pipeline)" mit MilkDrop-Origin-Icon.
 
 ## Verträge
 

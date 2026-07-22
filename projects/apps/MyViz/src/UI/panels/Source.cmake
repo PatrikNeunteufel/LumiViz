@@ -64,6 +64,13 @@ dbg(DBG_NORMAL "Aggregated impl     : ${${TARGET_NAME}_IMPL}" ID DEB_AGG)
 dbg(DBG_NORMAL "Aggregated modules  : ${${TARGET_NAME}_MODULES}" ID DEB_AGG)
 dbg(DBG_NORMAL "Aggregated includes : ${${TARGET_NAME}_INCLUDES}" ID DEB_AGG)
 
+# MSVC: MultiEffectPanel.cpp sprengt mit seinen vielen Lambda-Instanzen das
+# COFF-Abschnittslimit (fatal error C1128 im Debug-Build) — /bigobj nur fuer
+# diese Datei. (CMakeCraft-Merkpunkt: compile_options gibt es bisher nur fuer
+# executables/tests, nicht fuer Apps — bis dahin Datei-Property hier.)
+set_source_files_properties("${CMAKE_CURRENT_LIST_DIR}/MultiEffectPanel.cpp"
+    PROPERTIES COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/bigobj>")
+
 # Optional cleanup (cosmetic)
 unset(_local_sources)
 unset(_local_headers)

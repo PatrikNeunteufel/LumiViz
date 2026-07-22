@@ -301,6 +301,7 @@ private:
     unsigned int m_placeholderTex = 0;          ///< 1x1 grey (fehlende Texturen)
     std::array<unsigned int, 4> m_samplerObj{}; ///< wrapLin, clampLin, wrapPoint, clampPoint
     unsigned int m_randSeed = 0x9e3779b9u;      ///< rand_frame/rand_preset PRNG
+    std::array<float, 4> m_hueRandStart{};      ///< fShader-Wash Phasen (m_fRandStart-Port)
 
     // --- Preset-Sprites (MilkDrop2077) -----------------------------------------------------
     std::vector<SpriteRuntime> m_spriteRt;
