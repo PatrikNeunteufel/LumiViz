@@ -47,6 +47,7 @@
 #include "visualizers/render/FeedbackBuffer.hpp"
 #include "visualizers/render/ScopeRenderer.hpp"
 
+#include <QImage>
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
@@ -54,6 +55,7 @@
 #include <QStringList>
 
 #include <array>
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -197,6 +199,10 @@ private:
     bool ensureCustomPrograms();      ///< (re)build GL programs when sources changed
     void releaseCustomGl();
     bool ensureNoiseTextures();
+    /// C2: resolve + load the preset's custom textures (GUI thread, QImage)
+    void loadCustomTextures(const std::vector<std::string>& samplerNames,
+                            QStringList* report);
+    void ensureCustomTextureUploads();  ///< render thread: QImage -> GL textures
     /// Bind every sampler the program actually uses + feed the per-frame uniforms
     void feedCustomUniforms(QOpenGLShaderProgram& program, const FrameVars& fv,
                             unsigned int mainTexture);
@@ -247,10 +253,17 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_warpCustomProgram;
     std::unique_ptr<QOpenGLShaderProgram> m_compCustomProgram;
     std::string m_customGlError;    ///< first GL compile/link error (panel/debug)
-    std::array<unsigned int, 4> m_noiseTex{};   ///< lq, lq_lite, mq, hq (placeholder C1)
-    unsigned int m_placeholderTex = 0;          ///< 1x1 grey for custom textures (C2)
+    std::array<unsigned int, 4> m_noiseTex{};   ///< lq, lq_lite, mq, hq (AddNoiseTex-Port)
+    unsigned int m_placeholderTex = 0;          ///< 1x1 grey (fehlende Texturen)
     std::array<unsigned int, 4> m_samplerObj{}; ///< wrapLin, clampLin, wrapPoint, clampPoint
     unsigned int m_randSeed = 0x9e3779b9u;      ///< rand_frame/rand_preset PRNG
+
+    // --- Stufe C2: custom textures (asset-Pack / neben dem Preset) -------------------------
+    QString m_presetDir;                                    ///< Suchbasis fuer Texturen
+    std::map<std::string, QImage> m_customImages;           ///< sampler-Uniform-Name -> Bild
+    std::map<std::string, std::array<int, 2>> m_texSizes;   ///< Basisname -> (w,h)
+    std::map<std::string, unsigned int> m_customTexIds;     ///< Uploads (render thread)
+    int m_texUploadRev = -1;                                ///< Upload-Stand (= m_customRev)
     std::unique_ptr<QOpenGLVertexArrayObject> m_shapeVao;
     std::unique_ptr<QOpenGLBuffer> m_shapeVbo;
     std::unique_ptr<QOpenGLVertexArrayObject> m_meshVao;

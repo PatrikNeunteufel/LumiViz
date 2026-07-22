@@ -26,10 +26,12 @@
 
 #include <HlslTranspiler.hpp>
 
+#include <QDir>
 #include <QFileInfo>
 #include <QOpenGLContext>
 #include <QOpenGLExtraFunctions>
 #include <QOpenGLFunctions>
+#include <QRegularExpression>
 #include <QVector2D>
 #include <QVector3D>
 #include <QVector4D>
@@ -438,6 +440,7 @@ bool MilkdropVisualizer::loadMilkFile(const QString& path, QStringList* report)
 
     lumi::milkdrop::PresetState state = lumi::milkdrop::translate(parsed);
     state.name = QFileInfo(path).completeBaseName().toStdString();
+    m_presetDir = QFileInfo(path).absolutePath();
     applyState(std::move(state), report);
     return true;
 }
@@ -450,6 +453,7 @@ bool MilkdropVisualizer::loadPresetDocument(const QString& path, QStringList* re
     {
         state.name = QFileInfo(path).completeBaseName().toStdString();
     }
+    m_presetDir = QFileInfo(path).absolutePath();
     applyState(std::move(state), report);
     return true;
 }
@@ -1221,6 +1225,7 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
     m_customGlError.clear();
     ++m_customRev;
 
+    std::vector<std::string> samplerNames;
     const auto tryTranspile = [&](const std::string& text, lumi::hlsl::ShaderKind kind,
                                   const lumi::milk::ShaderInfo& info, std::string& outSrc,
                                   const char* which) {
@@ -1229,6 +1234,10 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
         if (r.ok)
         {
             outSrc = assembleCustomFragment(r);
+            for (const std::string& n : r.customSamplers)
+            {
+                if (!preambleDeclares(n)) samplerNames.push_back(n);
+            }
             if (report != nullptr)
             {
                 QString note = QStringLiteral(
@@ -1250,13 +1259,137 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
                                .arg(QString::fromStdString(r.error)));
         }
     };
-    tryTranspile(m_state.warpShaderText, lumi::hlsl::ShaderKind::Warp, m_state.warpInfo,
-                 m_warpCustomSrc, "Warp");
-    tryTranspile(m_state.compShaderText, lumi::hlsl::ShaderKind::Comp, m_state.compInfo,
-                 m_compCustomSrc, "Comp");
-
     // rand_preset: einmal je Preset-Ladung (engine-lokaler PRNG, Entscheid §10)
     m_randSeed = m_randSeed * 1664525u + 1013904223u;
+
+    loadCustomTextures(samplerNames, report);  // C2 (GUI thread, kein GL)
+}
+
+void MilkdropVisualizer::loadCustomTextures(const std::vector<std::string>& samplerNames,
+                                            QStringList* report)
+{
+    m_customImages.clear();
+    m_texSizes.clear();
+    if (samplerNames.empty()) return;
+
+    // MilkDrop-Konvention: textures-Ordner neben bzw. ueber dem Preset-Ordner
+    QStringList searchDirs;
+    if (!m_presetDir.isEmpty())
+    {
+        searchDirs << m_presetDir + QStringLiteral("/textures")
+                   << m_presetDir + QStringLiteral("/../textures") << m_presetDir;
+    }
+    const QStringList kExtensions = {QStringLiteral("jpg"), QStringLiteral("jpeg"),
+                                     QStringLiteral("jfif"), QStringLiteral("png"),
+                                     QStringLiteral("bmp")};
+
+    const auto findFile = [&](const QString& base) -> QString {
+        for (const QString& dir : searchDirs)
+        {
+            for (const QString& ext : kExtensions)
+            {
+                const QString candidate = dir + "/" + base + "." + ext;
+                if (QFileInfo::exists(candidate)) return candidate;
+            }
+        }
+        return {};
+    };
+    // randNN[_mask]: zufaellige Bilddatei aus dem ersten Textur-Ordner
+    unsigned int pick = m_randSeed;
+    const auto findRandom = [&](const QString& mask) -> QString {
+        for (const QString& dirPath : searchDirs)
+        {
+            QDir dir(dirPath);
+            if (!dir.exists()) continue;
+            QStringList filters;
+            for (const QString& ext : kExtensions) filters << ("*." + ext);
+            QStringList files = dir.entryList(filters, QDir::Files, QDir::Name);
+            if (!mask.isEmpty())
+            {
+                QStringList masked;
+                for (const QString& f : files)
+                {
+                    if (f.contains(mask, Qt::CaseInsensitive)) masked << f;
+                }
+                files = masked;
+            }
+            if (files.isEmpty()) continue;
+            pick = pick * 1664525u + 1013904223u;
+            return dir.absoluteFilePath(
+                files[static_cast<int>(pick % static_cast<unsigned int>(files.size()))]);
+        }
+        return {};
+    };
+
+    static const QRegularExpression kRand(QStringLiteral("^rand\\d\\d(_(.+))?$"));
+    for (const std::string& samplerName : samplerNames)
+    {
+        // Basisname = sampler_[fc_|pc_|fw_|pw_]<name>
+        std::string base = samplerName.substr(8);
+        for (const char* prefix : {"fc_", "pc_", "fw_", "pw_"})
+        {
+            if (base.rfind(prefix, 0) == 0)
+            {
+                base = base.substr(3);
+                break;
+            }
+        }
+        const QString baseQ = QString::fromStdString(base);
+        const QRegularExpressionMatch rand = kRand.match(baseQ);
+        const QString path = rand.hasMatch() ? findRandom(rand.captured(2)) : findFile(baseQ);
+        if (path.isEmpty())
+        {
+            if (report != nullptr)
+            {
+                report->append(QStringLiteral("Textur '%1' nicht gefunden → Platzhalter")
+                                   .arg(baseQ));
+            }
+            continue;
+        }
+        QImage img(path);
+        if (img.isNull())
+        {
+            if (report != nullptr)
+            {
+                report->append(QStringLiteral("Textur '%1' nicht lesbar → Platzhalter")
+                                   .arg(QFileInfo(path).fileName()));
+            }
+            continue;
+        }
+        img = img.convertToFormat(QImage::Format_RGBA8888);
+        m_texSizes[base] = {img.width(), img.height()};
+        m_customImages[samplerName] = std::move(img);
+        if (report != nullptr)
+        {
+            report->append(QStringLiteral("Textur '%1' geladen (%2, %3x%4)")
+                               .arg(baseQ)
+                               .arg(QFileInfo(path).fileName())
+                               .arg(m_texSizes[base][0])
+                               .arg(m_texSizes[base][1]));
+        }
+    }
+}
+
+void MilkdropVisualizer::ensureCustomTextureUploads()
+{
+    if (m_texUploadRev == m_customRev) return;
+    m_texUploadRev = m_customRev;
+    QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
+    for (const auto& [name, tex] : m_customTexIds) f->glDeleteTextures(1, &tex);
+    m_customTexIds.clear();
+    for (const auto& [name, img] : m_customImages)
+    {
+        unsigned int tex = 0;
+        f->glGenTextures(1, &tex);
+        f->glBindTexture(GL_TEXTURE_2D, tex);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img.width(), img.height(), 0, GL_RGBA,
+                        GL_UNSIGNED_BYTE, img.constBits());
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        m_customTexIds[name] = tex;
+    }
 }
 
 void MilkdropVisualizer::releaseCustomGl()
@@ -1271,6 +1404,7 @@ void MilkdropVisualizer::releaseCustomGl()
         if (m_noiseTex[0] != 0)
             f->glDeleteTextures(static_cast<GLsizei>(m_noiseTex.size()), m_noiseTex.data());
         if (m_placeholderTex != 0) f->glDeleteTextures(1, &m_placeholderTex);
+        for (const auto& [name, tex] : m_customTexIds) f->glDeleteTextures(1, &tex);
         QOpenGLExtraFunctions* ef = ctx->extraFunctions();
         if (m_samplerObj[0] != 0)
             ef->glDeleteSamplers(static_cast<GLsizei>(m_samplerObj.size()),
@@ -1279,6 +1413,8 @@ void MilkdropVisualizer::releaseCustomGl()
     m_noiseTex.fill(0);
     m_placeholderTex = 0;
     m_samplerObj.fill(0);
+    m_customTexIds.clear();
+    m_texUploadRev = -1;
 }
 
 bool MilkdropVisualizer::ensureCustomPrograms()
@@ -1315,21 +1451,81 @@ bool MilkdropVisualizer::ensureNoiseTextures()
     QOpenGLFunctions* f = ctx->functions();
     QOpenGLExtraFunctions* ef = ctx->extraFunctions();
 
-    // C1-Platzhalter: gleichverteiltes RGBA-Rauschen (exakter AddNoiseTex-Port
-    // mit Zoom/Interpolation folgt in C2); deterministisch fuer Sichttests
+    // AddNoiseTex-Port (C2, plugin.cpp:2427-2540): Zufallsbytes im Bereich
+    // [RANGE/2, RANGE*1.5) mod 256 (RANGE 216 bei zoom>1, sonst 256), dann fuer
+    // zoom>1 kubische Interpolation — erst X auf den Hauptzeilen, dann Y auf
+    // allen Spalten (Catmull-Rom mit Klemme; PORT: dwCubicInterpolate-Naeherung).
     f->glGenTextures(static_cast<GLsizei>(m_noiseTex.size()), m_noiseTex.data());
     unsigned int seed = 0x1234567u;
-    const auto nextByte = [&seed]() {
+    const auto nextRand = [&seed]() {
         seed = seed * 1664525u + 1013904223u;
-        return static_cast<unsigned char>(seed >> 24);
+        return seed >> 8;
     };
-    const std::array<int, 4> sizes = {256, 32, 256, 256};  // lq, lq_lite, mq, hq
+    const auto catmull = [](int p0, int p1, int p2, int p3, float t) {
+        const float y = p1 + 0.5f * t *
+                                 (p2 - p0 +
+                                  t * (2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3 +
+                                       t * (3.0f * (p1 - p2) + p3 - p0)));
+        return static_cast<unsigned char>(std::clamp(static_cast<int>(y + 0.5f), 0, 255));
+    };
+    struct Spec
+    {
+        int size;
+        int zoom;
+    };
+    const std::array<Spec, 4> specs = {{{256, 1}, {32, 1}, {256, 4}, {256, 8}}};
     std::vector<unsigned char> pixels;
     for (std::size_t i = 0; i < m_noiseTex.size(); ++i)
     {
-        const int n = sizes[i];
+        const int n = specs[i].size;
+        const int zoom = specs[i].zoom;
+        const unsigned int range = (zoom > 1) ? 216u : 256u;
         pixels.resize(static_cast<std::size_t>(n) * n * 4);
-        for (unsigned char& p : pixels) p = nextByte();
+        for (unsigned char& p : pixels)
+        {
+            p = static_cast<unsigned char>((nextRand() % range + range / 2) & 0xFFu);
+        }
+        if (zoom > 1)
+        {
+            const auto px = [&](int x, int y, int c) -> unsigned char& {
+                return pixels[(static_cast<std::size_t>(y) * n + x) * 4 +
+                              static_cast<std::size_t>(c)];
+            };
+            // X-Pass nur auf den Hauptzeilen (y % zoom == 0)
+            for (int y = 0; y < n; y += zoom)
+            {
+                for (int x = 0; x < n; ++x)
+                {
+                    if (x % zoom == 0) continue;
+                    const int baseX = (x / zoom) * zoom + n;
+                    const float t = static_cast<float>(x % zoom) / zoom;
+                    for (int c = 0; c < 4; ++c)
+                    {
+                        px(x, y, c) = catmull(px((baseX - zoom) % n, y, c),
+                                              px(baseX % n, y, c),
+                                              px((baseX + zoom) % n, y, c),
+                                              px((baseX + zoom * 2) % n, y, c), t);
+                    }
+                }
+            }
+            // Y-Pass auf allen Spalten
+            for (int x = 0; x < n; ++x)
+            {
+                for (int y = 0; y < n; ++y)
+                {
+                    if (y % zoom == 0) continue;
+                    const int baseY = (y / zoom) * zoom + n;
+                    const float t = static_cast<float>(y % zoom) / zoom;
+                    for (int c = 0; c < 4; ++c)
+                    {
+                        px(x, y, c) = catmull(px(x, (baseY - zoom) % n, c),
+                                              px(x, baseY % n, c),
+                                              px(x, (baseY + zoom) % n, c),
+                                              px(x, (baseY + zoom * 2) % n, c), t);
+                    }
+                }
+            }
+        }
         f->glBindTexture(GL_TEXTURE_2D, m_noiseTex[i]);
         f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, n, n, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                         pixels.data());
@@ -1404,9 +1600,15 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
         bindSampler(("sampler_fw_" + base).c_str(), m_noiseTex[i], wrapLin);
         bindSampler(("sampler_pw_" + base).c_str(), m_noiseTex[i], wrapPoint);
     }
-    // Custom-Texturen (C2): alle uebrigen aktiven sampler-Uniforms auf den
-    // Platzhalter legen, damit das Programm definiert laeuft
+    // Custom-Texturen (C2): geladene Bilder binden (Sampler-Objekt je Praefix),
+    // fehlende auf den Platzhalter legen, damit das Programm definiert laeuft
     {
+        const auto samplerForName = [&](const std::string& name) {
+            if (name.rfind("sampler_fc_", 0) == 0) return clampLin;
+            if (name.rfind("sampler_pc_", 0) == 0) return clampPoint;
+            if (name.rfind("sampler_pw_", 0) == 0) return wrapPoint;
+            return wrapLin;  // Default + fw_ = bilinear wrap (MilkDrop-Default)
+        };
         GLint count = 0;
         GLuint prog = program.programId();
         ef->glGetProgramiv(prog, GL_ACTIVE_UNIFORMS, &count);
@@ -1421,7 +1623,18 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
             if (type != GL_SAMPLER_2D) continue;
             const std::string name(nameBuf, static_cast<std::size_t>(len));
             if (preambleDeclares(name) || name.rfind("sampler_", 0) != 0) continue;
-            bindSampler(name.c_str(), m_placeholderTex, wrapLin);
+            const auto it = m_customTexIds.find(name);
+            const unsigned int tex =
+                (it != m_customTexIds.end()) ? it->second : m_placeholderTex;
+            bindSampler(name.c_str(), tex, samplerForName(name));
+        }
+        // texsize_<name>-Uniforms der geladenen Texturen (inaktive = No-op)
+        for (const auto& [base, wh] : m_texSizes)
+        {
+            program.setUniformValue(
+                ("texsize_" + base).c_str(),
+                QVector4D(static_cast<float>(wh[0]), static_cast<float>(wh[1]),
+                          1.0f / wh[0], 1.0f / wh[1]));
         }
     }
 
@@ -1573,10 +1786,11 @@ void MilkdropVisualizer::onRender(float deltaTime)
     // for feedback if the waves draw over them"), then custom waves, then the
     // basic wave. PORT: motion vectors are drawn after the warp instead of
     // into the previous image (one frame later into the feedback loop).
-    // Stufe C1: transpilierte Programme + Noise-Texturen bereitstellen (lazy)
+    // Stufe C1/C2: transpilierte Programme + Noise-/Custom-Texturen (lazy)
     if (!m_warpCustomSrc.empty() || !m_compCustomSrc.empty())
     {
         ensureNoiseTextures();
+        ensureCustomTextureUploads();
         ensureCustomPrograms();
     }
 
