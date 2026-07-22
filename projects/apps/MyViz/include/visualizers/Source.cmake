@@ -18,6 +18,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/MilkdropVisualizer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/milkdrop/MilkdropBlur.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/milkdrop/MilkdropPresetState.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/milkdrop/MilkdropSerializer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/MultiEffectVisualizer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/multieffect/EffectChain.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/OscilloscopeVisualizer.hpp"

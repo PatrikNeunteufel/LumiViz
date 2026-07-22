@@ -84,6 +84,15 @@ public:
      */
     bool loadMilkFile(const QString& path, QStringList* report = nullptr);
 
+    /**
+     * @brief Load a translated preset from a .lvfx sister document (M6; no GL,
+     *        call under renderMutex()) — MilkdropSerializer format
+     */
+    bool loadPresetDocument(const QString& path, QStringList* report = nullptr);
+
+    /// @brief Save the current preset as a .lvfx sister document (M6)
+    [[nodiscard]] bool savePresetDocument(const QString& path) const;
+
     /// @brief Currently loaded preset state (for tests/panel)
     [[nodiscard]] const lumi::milkdrop::PresetState& presetState() const { return m_state; }
 
@@ -144,6 +153,9 @@ private:
     };
 
     // --- script plumbing ---------------------------------------------------------------
+    /// Adopt a translated state: scripts + report + runtime reset (shared tail
+    /// of loadMilkFile / loadPresetDocument)
+    void applyState(lumi::milkdrop::PresetState state, QStringList* report);
     void rebuildScripts(QStringList* report);
     void runPerFrameInit();
     void pushFrameInputs();                 ///< preset values + audio/time into the engine

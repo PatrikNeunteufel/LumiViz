@@ -20,6 +20,7 @@
 #include "UI/managers/DialogManager.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "visualizers/MilkdropVisualizer.hpp"
+#include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
@@ -614,6 +615,56 @@ void MainWindow::setupEventHandlers()
 
     pEventBus->subscribe<LoadEffectChainEvent>(
         [this, findMultiEffect, pEventBus](const LoadEffectChainEvent& ev) {
+            QString path = QString::fromStdString(ev.path);
+            if (path.isEmpty())
+            {
+                path = QFileDialog::getOpenFileName(
+                    this, tr("Load Effect Chain"), QString(),
+                    tr("LumiViz Effect Chain (*.lvfx);;All Files (*)"));
+            }
+            if (path.isEmpty()) return;
+
+            // .lvfx dispatch (M6): a milkdrop sister document routes to the
+            // Milkdrop host, everything else stays a MultiEffect chain.
+            if (lumi::milkdrop::isMilkdropFile(path))
+            {
+                VisualizerWidget* widget = primaryVisualizer();
+                auto* milk = (widget != nullptr)
+                                 ? dynamic_cast<MilkdropVisualizer*>(widget->visualizer())
+                                 : nullptr;
+                if (milk == nullptr && widget != nullptr)
+                {
+                    widget->setVisualizer(QStringLiteral("milkdrop"));
+                    milk = dynamic_cast<MilkdropVisualizer*>(widget->visualizer());
+                }
+                if (milk == nullptr)
+                {
+                    QMessageBox::information(this, tr("Load Effect Chain"),
+                                             tr("No visualizer available to load into."));
+                    return;
+                }
+                QStringList report;
+                bool ok = false;
+                {
+                    QMutexLocker lock(&widget->renderMutex());
+                    ok = milk->loadPresetDocument(path, &report);
+                }
+                if (!ok)
+                {
+                    QMessageBox::warning(this, tr("Load Effect Chain"),
+                                         tr("Could not load:\n%1").arg(path));
+                }
+                else if (!report.isEmpty())
+                {
+                    QMessageBox::information(
+                        this, tr("Load Milkdrop Preset"),
+                        tr("Loaded with %1 note(s):\n\n%2")
+                            .arg(report.size())
+                            .arg(report.mid(0, 20).join("\n")));
+                }
+                return;
+            }
+
             // Auto-activate the Multi Effect host (Import Browser loads .lvfx too).
             auto [widget, host] = findMultiEffect();
             if (host == nullptr && widget != nullptr)
@@ -627,14 +678,6 @@ void MainWindow::setupEventHandlers()
                                          tr("No visualizer available to load into."));
                 return;
             }
-            QString path = QString::fromStdString(ev.path);
-            if (path.isEmpty())
-            {
-                path = QFileDialog::getOpenFileName(
-                    this, tr("Load Effect Chain"), QString(),
-                    tr("LumiViz Effect Chain (*.lvfx);;All Files (*)"));
-            }
-            if (path.isEmpty()) return;
 
             QStringList report;
             bool ok = false;
@@ -653,6 +696,31 @@ void MainWindow::setupEventHandlers()
 
     pEventBus->subscribe<SaveEffectChainEvent>(
         [this, requireMultiEffect](const SaveEffectChainEvent&) {
+            // Milkdrop host active? Save the sister document instead (M6).
+            VisualizerWidget* primary = primaryVisualizer();
+            auto* milk = (primary != nullptr)
+                             ? dynamic_cast<MilkdropVisualizer*>(primary->visualizer())
+                             : nullptr;
+            if (milk != nullptr)
+            {
+                QString path = QFileDialog::getSaveFileName(
+                    this, tr("Save Milkdrop Preset"), QString(),
+                    tr("LumiViz Effect Chain (*.lvfx)"));
+                if (path.isEmpty()) return;
+                if (!path.endsWith(".lvfx", Qt::CaseInsensitive)) path += ".lvfx";
+                bool ok = false;
+                {
+                    QMutexLocker lock(&primary->renderMutex());
+                    ok = milk->savePresetDocument(path);
+                }
+                if (!ok)
+                {
+                    QMessageBox::warning(this, tr("Save Milkdrop Preset"),
+                                         tr("Could not save:\n%1").arg(path));
+                }
+                return;
+            }
+
             auto [widget, host] = requireMultiEffect("Save Effect Chain");
             if (host == nullptr) return;
             QString path = QFileDialog::getSaveFileName(

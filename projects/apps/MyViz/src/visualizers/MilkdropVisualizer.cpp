@@ -22,6 +22,7 @@
 #include "visualizers/MilkdropVisualizer.hpp"
 
 #include "visualizers/milkdrop/MilkdropBlur.hpp"
+#include "visualizers/milkdrop/MilkdropSerializer.hpp"
 
 #include <QFileInfo>
 #include <QOpenGLContext>
@@ -296,8 +297,32 @@ bool MilkdropVisualizer::loadMilkFile(const QString& path, QStringList* report)
         }
     }
 
-    m_state = lumi::milkdrop::translate(parsed);
-    m_state.name = QFileInfo(path).completeBaseName().toStdString();
+    lumi::milkdrop::PresetState state = lumi::milkdrop::translate(parsed);
+    state.name = QFileInfo(path).completeBaseName().toStdString();
+    applyState(std::move(state), report);
+    return true;
+}
+
+bool MilkdropVisualizer::loadPresetDocument(const QString& path, QStringList* report)
+{
+    lumi::milkdrop::PresetState state;
+    if (!lumi::milkdrop::loadPresetFromFile(path, state, report)) return false;
+    if (state.name.empty())
+    {
+        state.name = QFileInfo(path).completeBaseName().toStdString();
+    }
+    applyState(std::move(state), report);
+    return true;
+}
+
+bool MilkdropVisualizer::savePresetDocument(const QString& path) const
+{
+    return lumi::milkdrop::savePresetToFile(m_state, path);
+}
+
+void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringList* report)
+{
+    m_state = std::move(state);
 
     if (report != nullptr)
     {
@@ -332,7 +357,7 @@ bool MilkdropVisualizer::loadMilkFile(const QString& path, QStringList* report)
                 report->append(QStringLiteral("Custom-%1-Shader (PS%2, %3 Zeilen, %4) → "
                                               "MD1-Fallback (Stufe C offen)")
                                    .arg(QLatin1String(which))
-                                   .arg(parsed.psVersion)
+                                   .arg(m_state.psVersion)
                                    .arg(info.codeLines)
                                    .arg(featureSummary(info)));
                 break;
@@ -352,7 +377,6 @@ bool MilkdropVisualizer::loadMilkFile(const QString& path, QStringList* report)
     m_frame = 0;
     m_monitor = 0.0;
     m_initRan = false;
-    return true;
 }
 
 void MilkdropVisualizer::rebuildScripts(QStringList* report)

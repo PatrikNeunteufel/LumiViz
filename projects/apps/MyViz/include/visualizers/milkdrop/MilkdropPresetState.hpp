@@ -155,6 +155,8 @@ struct PresetState
     // --- shader classification (M5, stage B) ----------------------------------------------
     lumi::milk::ShaderInfo warpInfo;    ///< None = MD1 preset (live path is exact)
     lumi::milk::ShaderInfo compInfo;
+    std::string warpShaderText;         ///< raw HLSL (persistence/panel; infos derive from it)
+    std::string compShaderText;
 
     // --- code (EEL source, Dialect::Milkdrop) ---------------------------------------------
     std::string perFrameInit;
@@ -258,8 +260,10 @@ struct PresetState
     s.blur3Max = num("b3x", s.blur3Max);
     s.blur1EdgeDarken = num("b1ed", s.blur1EdgeDarken);
 
-    s.warpInfo = lumi::milk::analyzeWarpShader(parsed.warpShader);
-    s.compInfo = lumi::milk::analyzeCompShader(parsed.compShader);
+    s.warpShaderText = parsed.warpShader;
+    s.compShaderText = parsed.compShader;
+    s.warpInfo = lumi::milk::analyzeWarpShader(s.warpShaderText);
+    s.compInfo = lumi::milk::analyzeCompShader(s.compShaderText);
 
     s.perFrameInit = parsed.perFrameInitCode;
     s.perFrame = parsed.perFrameCode;

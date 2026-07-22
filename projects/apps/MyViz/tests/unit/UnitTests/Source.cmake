@@ -32,6 +32,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_MilkScriptContract.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_MilkdropPreset.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_MilkShaderClassifier.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_MilkdropSerializer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_AvsChainTranslator.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ChainSerializer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ScriptContext.cpp"
