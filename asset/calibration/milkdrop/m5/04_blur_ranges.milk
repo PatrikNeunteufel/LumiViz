@@ -1,0 +1,22 @@
+MILKDROP_PRESET_VERSION=201
+PSVERSION=2
+[preset00]
+fDecay=0.960
+fWaveAlpha=1.000
+fWaveScale=1.000
+nWaveMode=6
+wave_r=1.000
+wave_g=1.000
+wave_b=1.000
+zoom=1.000
+warp=0.000
+mv_a=0.000
+b1n=0.000
+b1x=1.000
+per_frame_1=blur1_min = 0.25 + 0.25*sin(time*0.5);
+comp_1=`shader_body
+comp_2=`{
+comp_3=`ret = tex2D(sampler_main, uv).xyz;
+comp_4=`ret *= 1.00; //gamma
+comp_5=`ret += GetBlur1(uv);
+comp_6=`}

@@ -18,12 +18,17 @@
  * M4: custom waves/shapes are translated too (defaults from CState::Default,
  * state.cpp:593-635). Sprites stay parse-only for now. No Qt, no GL: fully
  * unit-testable.
+ *
+ * M5: blur controls (b1n/b1x/../b1ed, state.cpp:1344-1350) and the warp/comp
+ * shader classification (MilkShaderClassifier) — Md1Default/Md1Plus shaders
+ * render exactly via baked constants, Custom falls back to the live MD1 path.
  ****************************************************************************************
  */
 
 #pragma once
 
 #include <MilkParser.hpp>
+#include <MilkShaderClassifier.hpp>
 
 #include <string>
 
@@ -138,6 +143,19 @@ struct PresetState
     double mvL = 0.9;
     double mvR = 1.0, mvG = 1.0, mvB = 1.0, mvA = 1.0;
 
+    // --- blur pyramid controls (M5; defaults = CState::Default, state.cpp:552-558) --------
+    double blur1Min = 0.0;
+    double blur2Min = 0.0;
+    double blur3Min = 0.0;
+    double blur1Max = 1.0;
+    double blur2Max = 1.0;
+    double blur3Max = 1.0;
+    double blur1EdgeDarken = 0.25;
+
+    // --- shader classification (M5, stage B) ----------------------------------------------
+    lumi::milk::ShaderInfo warpInfo;    ///< None = MD1 preset (live path is exact)
+    lumi::milk::ShaderInfo compInfo;
+
     // --- code (EEL source, Dialect::Milkdrop) ---------------------------------------------
     std::string perFrameInit;
     std::string perFrame;
@@ -231,6 +249,17 @@ struct PresetState
     s.mvG = num("mv_g", s.mvG);
     s.mvB = num("mv_b", s.mvB);
     s.mvA = num("mv_a", s.mvA);
+
+    s.blur1Min = num("b1n", s.blur1Min);
+    s.blur2Min = num("b2n", s.blur2Min);
+    s.blur3Min = num("b3n", s.blur3Min);
+    s.blur1Max = num("b1x", s.blur1Max);
+    s.blur2Max = num("b2x", s.blur2Max);
+    s.blur3Max = num("b3x", s.blur3Max);
+    s.blur1EdgeDarken = num("b1ed", s.blur1EdgeDarken);
+
+    s.warpInfo = lumi::milk::analyzeWarpShader(parsed.warpShader);
+    s.compInfo = lumi::milk::analyzeCompShader(parsed.compShader);
 
     s.perFrameInit = parsed.perFrameInitCode;
     s.perFrame = parsed.perFrameCode;

@@ -105,6 +105,9 @@ private:
     [[nodiscard]] static int entryTypeForSuffix(const QString& suffix);
     void setStatus(const QString& text);
     void onImportResult(const std::string& path, bool ok, int noteCount);
+    /// Forget the persisted start folder and return to the home directory
+    /// (ResetImportBrowserDirEvent from the Settings panel)
+    void resetStoredDir();
 
     // UI Elements
     QLineEdit* m_pPathEdit = nullptr;
@@ -118,4 +121,8 @@ private:
     // State
     QDir m_dir;
     Filter m_filter = Filter::All;
+
+    /// Lives for the whole panel lifetime (NOT cleared in onDeactivate) — the
+    /// Settings-panel reset must reach this panel even while it is hidden.
+    IEventBus::SubscriberHandle m_resetSubscription;
 };

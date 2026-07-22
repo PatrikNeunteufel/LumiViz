@@ -18,6 +18,7 @@
  *
  * 1. **Audio** - Device, buffer size, sample rate
  * 2. **Performance** - Frame mode, target FPS, VSync
+ * 3. **Panels** - panel housekeeping (reset Import Browser start folder)
  ****************************************************************************************
  */
 
@@ -31,6 +32,7 @@ class QTabWidget;
 class QComboBox;
 class QSpinBox;
 class QCheckBox;
+class QPushButton;
 
 /**
  * @class SettingsPanel
@@ -55,6 +57,7 @@ private Q_SLOTS:
     void onFrameModeChanged(int index);
     void onTargetFpsChanged(int value);
     void onVSyncChanged(bool checked);
+    void onResetImportBrowserDir();
 
 private:
     void setupUI();
@@ -65,6 +68,7 @@ private:
 
     QWidget* createAudioTab();
     QWidget* createPerformanceTab();
+    QWidget* createPanelsTab();
 
     // UI Elements
     QTabWidget* m_pTabWidget = nullptr;
@@ -78,6 +82,9 @@ private:
     QComboBox* m_pFrameModeCombo = nullptr;
     QSpinBox* m_pTargetFpsSpinBox = nullptr;
     QCheckBox* m_pVSyncCheckBox = nullptr;
+
+    // Panels Tab
+    QPushButton* m_pResetImportDirButton = nullptr;
     
     // State
     bool m_isUpdating = false;

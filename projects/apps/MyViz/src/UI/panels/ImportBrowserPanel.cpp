@@ -53,6 +53,14 @@ ImportBrowserPanel::ImportBrowserPanel(ServiceContainer& services, QWidget* pare
 
     setupUI();
     setupConnections();
+
+    // Permanent subscription (survives onDeactivate): the Settings panel can
+    // reset the remembered folder while this panel is hidden.
+    if (auto* bus = eventBus())
+    {
+        m_resetSubscription = bus->subscribeScoped<ResetImportBrowserDirEvent>(
+            [this](const ResetImportBrowserDirEvent&) { resetStoredDir(); });
+    }
 }
 
 // =============================================================================
@@ -307,6 +315,18 @@ void ImportBrowserPanel::onImportResult(const std::string& path, bool ok, int no
     {
         setStatus(tr("✓ %1 — imported").arg(fi.fileName()));
     }
+}
+
+void ImportBrowserPanel::resetStoredDir()
+{
+    QSettings settings;
+    settings.beginGroup(settingsPrefix());
+    settings.remove(QStringLiteral("lastDir"));
+    settings.endGroup();
+
+    navigateTo(QDir::homePath());
+    setStatus(tr("Start folder reset to %1").arg(QDir::homePath()));
+    BasicLogger::logInfo("ImportBrowserPanel: stored start folder reset");
 }
 
 void ImportBrowserPanel::setStatus(const QString& text)

@@ -15,6 +15,7 @@
 #include <EelTranspiler.hpp>
 #include <MilkParser.hpp>
 
+#include "visualizers/milkdrop/MilkdropBlur.hpp"
 #include "visualizers/milkdrop/MilkdropPresetState.hpp"
 
 #include <cmath>
@@ -247,4 +248,121 @@ TEST_CASE("MilkdropTranslator: Korpus uebersetzt + Milk-Code transpiliert")
             if (withPixelCode > 0) CHECK(pixelOk >= withPixelCode * 90 / 100);
         }
     }
+}
+
+// =============================================================================
+// M5: Blur-Regler-Keys + Blur-Pyramiden-Mathematik (MilkdropBlur.hpp)
+// =============================================================================
+
+TEST_CASE("MilkdropTranslator: Blur-Keys b1n/b1x/../b1ed mit Original-Defaults")
+{
+    const auto defaults = parse("[preset00]\nfRating=3.0\n");
+    REQUIRE(defaults.ok);
+    const PresetState d = translate(defaults);
+    CHECK(d.blur1Min == doctest::Approx(0.0));
+    CHECK(d.blur1Max == doctest::Approx(1.0));
+    CHECK(d.blur3Max == doctest::Approx(1.0));
+    CHECK(d.blur1EdgeDarken == doctest::Approx(0.25));
+
+    const auto r = parse("[preset00]\n"
+                         "b1n=0.100\nb2n=0.200\nb3n=0.300\n"
+                         "b1x=0.900\nb2x=0.800\nb3x=0.700\n"
+                         "b1ed=0.500\n");
+    REQUIRE(r.ok);
+    const PresetState s = translate(r);
+    CHECK(s.blur1Min == doctest::Approx(0.1));
+    CHECK(s.blur2Min == doctest::Approx(0.2));
+    CHECK(s.blur3Min == doctest::Approx(0.3));
+    CHECK(s.blur1Max == doctest::Approx(0.9));
+    CHECK(s.blur2Max == doctest::Approx(0.8));
+    CHECK(s.blur3Max == doctest::Approx(0.7));
+    CHECK(s.blur1EdgeDarken == doctest::Approx(0.5));
+}
+
+TEST_CASE("MilkdropTranslator: Shader-Klassifikation haengt am PresetState")
+{
+    const auto r = parse("[preset00]\n"
+                         "warp_1=`shader_body\n"
+                         "warp_2=`{\n"
+                         "warp_3=`ret = tex2D( sampler_main, uv ).xyz;\n"
+                         "warp_4=`ret *= 0.97; //or try: ret -= 0.004;\n"
+                         "warp_5=`}\n"
+                         "comp_1=`shader_body\n"
+                         "comp_2=`{\n"
+                         "comp_3=`ret = tex2D(sampler_main, uv).xyz;\n"
+                         "comp_4=`ret *= 1.50; //gamma\n"
+                         "comp_5=`ret += GetBlur1(uv);\n"
+                         "comp_6=`}\n");
+    REQUIRE(r.ok);
+    const PresetState s = translate(r);
+    CHECK(s.warpInfo.shaderClass == lumi::milk::ShaderClass::Md1Default);
+    CHECK(s.warpInfo.decayMul == doctest::Approx(0.97));
+    CHECK(s.compInfo.shaderClass == lumi::milk::ShaderClass::Md1Plus);
+    CHECK(s.compInfo.gain == doctest::Approx(1.5));
+    CHECK(s.compInfo.blurAdd[0] == doctest::Approx(1.0));
+    CHECK(s.compInfo.highestBlurLevel() == 1);
+}
+
+TEST_CASE("MilkdropBlur: Kernel-Konstanten aus den festen Gewichten w[8]")
+{
+    const auto kh = lumi::milkdrop::blurKernelH();
+    CHECK(kh.w1 == doctest::Approx(7.8f));
+    CHECK(kh.w2 == doctest::Approx(6.4f));
+    CHECK(kh.w3 == doctest::Approx(3.1f));
+    CHECK(kh.w4 == doctest::Approx(1.0f));
+    CHECK(kh.d1 == doctest::Approx(2.0f * 3.8f / 7.8f));
+    CHECK(kh.d4 == doctest::Approx(6.0f + 2.0f * 0.3f / 1.0f));
+    CHECK(kh.wDiv == doctest::Approx(0.5f / (7.8f + 6.4f + 3.1f + 1.0f)));
+
+    const auto kv = lumi::milkdrop::blurKernelV();
+    CHECK(kv.w1 == doctest::Approx(14.2f));
+    CHECK(kv.w2 == doctest::Approx(4.1f));
+    CHECK(kv.d1 == doctest::Approx(2.0f * 6.4f / 14.2f));
+    CHECK(kv.d2 == doctest::Approx(2.0f + 2.0f * 1.0f / 4.1f));
+    CHECK(kv.wDiv == doctest::Approx(1.0f / ((14.2f + 4.1f) * 2.0f)));
+}
+
+TEST_CASE("MilkdropBlur: sichere Ranges — Monotonie und Kollaps enger Luecken")
+{
+    using lumi::milkdrop::computeSafeBlurRanges;
+
+    // Default 0..1 bleibt unangetastet, Folge-Level klemmen in den Vorgaenger
+    const auto r = computeSafeBlurRanges({0.0f, -0.5f, 0.2f}, {1.0f, 2.0f, 0.9f});
+    CHECK(r.min[0] == doctest::Approx(0.0f));
+    CHECK(r.max[0] == doctest::Approx(1.0f));
+    CHECK(r.min[1] == doctest::Approx(0.0f));   // -0.5 -> max(min0, ...)
+    CHECK(r.max[1] == doctest::Approx(1.0f));   // 2.0 -> min(max0, ...)
+    CHECK(r.min[2] == doctest::Approx(0.2f));
+    CHECK(r.max[2] == doctest::Approx(0.9f));
+
+    // enge Luecke kollabiert auf einen Punkt (Referenz-Verhalten, PORT-Notiz)
+    const auto c = computeSafeBlurRanges({0.5f, 0.0f, 0.0f}, {0.55f, 1.0f, 1.0f});
+    CHECK(c.min[0] == doctest::Approx(0.475f));
+    CHECK(c.max[0] == doctest::Approx(0.475f));
+
+    // der Guard macht daraus einen endlichen Extremkontrast statt inf/NaN
+    const auto s = lumi::milkdrop::computeBlurPassScales(c);
+    CHECK(s.scale[0] == doctest::Approx(1024.0f));
+    CHECK(std::isfinite(s.bias[0]));
+}
+
+TEST_CASE("MilkdropBlur: Texturgroessen-Kette (Referenz 1024er-Beispiel)")
+{
+    const auto sizes = lumi::milkdrop::blurTextureSizes(1024, 768);
+    // main 1024 -> 512, 256 (blur1), 128, 128 (blur2), 64, 64 (blur3)
+    CHECK(sizes[0][0] == 512);
+    CHECK(sizes[0][1] == 384);
+    CHECK(sizes[1][0] == 256);
+    CHECK(sizes[1][1] == 192);
+    CHECK(sizes[2][0] == 128);
+    CHECK(sizes[3][0] == 128);
+    CHECK(sizes[4][0] == 64);
+    CHECK(sizes[5][0] == 64);
+    CHECK(sizes[5][1] == 48);
+
+    // Minimalgroesse 16 + Rundung (Breite /16, Hoehe /4)
+    const auto tiny = lumi::milkdrop::blurTextureSizes(40, 40);
+    CHECK(tiny[5][0] >= 16);
+    CHECK(tiny[5][0] % 16 == 0);
+    CHECK(tiny[5][1] % 4 == 0);
 }

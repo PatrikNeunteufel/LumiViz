@@ -22,6 +22,7 @@
 #include <QSpinBox>
 #include <QCheckBox>
 #include <QLabel>
+#include <QPushButton>
 
 #include <BasicLogger.h>
 
@@ -173,6 +174,17 @@ void SettingsPanel::onVSyncChanged(bool checked)
                           std::string(checked ? "enabled" : "disabled"));
 }
 
+void SettingsPanel::onResetImportBrowserDir()
+{
+    // The Import Browser owns its setting — it clears the stored path and
+    // navigates home (permanent subscription, works while hidden).
+    if (auto* eventBus = services().tryResolve<IEventBus>())
+    {
+        eventBus->publish(ResetImportBrowserDirEvent{});
+        BasicLogger::logInfo("SettingsPanel: Import Browser start folder reset requested");
+    }
+}
+
 // =============================================================================
 // UI Setup
 // =============================================================================
@@ -185,6 +197,7 @@ void SettingsPanel::setupUI()
     m_pTabWidget = new QTabWidget(this);
     m_pTabWidget->addTab(createAudioTab(), tr("Audio"));
     m_pTabWidget->addTab(createPerformanceTab(), tr("Performance"));
+    m_pTabWidget->addTab(createPanelsTab(), tr("Panels"));
 
     mainLayout->addWidget(m_pTabWidget);
 }
@@ -257,6 +270,24 @@ QWidget* SettingsPanel::createPerformanceTab()
     return widget;
 }
 
+QWidget* SettingsPanel::createPanelsTab()
+{
+    auto* widget = new QWidget(this);
+    auto* layout = new QFormLayout(widget);
+    layout->setSpacing(8);
+
+    // Import Browser: forget the persisted start folder (back to home)
+    m_pResetImportDirButton = new QPushButton(tr("Reset Start Folder"), widget);
+    m_pResetImportDirButton->setToolTip(
+        tr("Forget the Import Browser's saved folder and start at the home "
+           "directory again"));
+    layout->addRow(tr("Import Browser:"), m_pResetImportDirButton);
+
+    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+
+    return widget;
+}
+
 void SettingsPanel::setupConnections()
 {
     connect(m_pAudioDeviceCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -267,6 +298,8 @@ void SettingsPanel::setupConnections()
             this, &SettingsPanel::onTargetFpsChanged);
     connect(m_pVSyncCheckBox, &QCheckBox::toggled,
             this, &SettingsPanel::onVSyncChanged);
+    connect(m_pResetImportDirButton, &QPushButton::clicked,
+            this, &SettingsPanel::onResetImportBrowserDir);
 }
 
 void SettingsPanel::populateAudioDevices()

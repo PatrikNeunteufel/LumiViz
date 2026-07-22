@@ -1,0 +1,18 @@
+MILKDROP_PRESET_VERSION=201
+PSVERSION=2
+[preset00]
+fDecay=0.965
+fWaveAlpha=1.000
+fWaveScale=1.000
+nWaveMode=2
+wave_r=0.300
+wave_g=0.700
+wave_b=1.000
+zoom=1.000
+warp=0.000
+mv_a=0.000
+comp_1=`shader_body
+comp_2=`{
+comp_3=`ret = tex2D(sampler_main, uv).xyz;
+comp_4=`ret = lerp(GetBlur2(uv),GetPixel(uv),0.30);
+comp_5=`}

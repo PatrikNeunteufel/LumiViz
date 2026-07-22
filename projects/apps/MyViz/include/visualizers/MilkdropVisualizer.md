@@ -1,12 +1,12 @@
 # MilkdropVisualizer — MilkDrop-Preset-Host (MD1-Kern)
 
-> **Version:** 1.0.0  
+> **Version:** 1.2.0  
 > **Datum:** 2026-07-22  
 > **Typ:** CppModuleDoc  
-> **Status:** Implementiert (Import-Phase Roadmap 6, M3) — **GL-Sichttest offen**  
+> **Status:** Implementiert (Import-Phase Roadmap 6, M3–M5) — **GL-Sichttest M5 offen**  
 > **Modul:** `MilkdropVisualizer` (global, wie alle `*Visualizer`)  
-> **Dateien:** MilkdropVisualizer.hpp, src/visualizers/MilkdropVisualizer.cpp, milkdrop/MilkdropPresetState.hpp  
-> **Abhängigkeiten:** VisualizerBase · MilkParser (Lib) · EelTranspiler via ScriptSlotHost (Dialect::Milkdrop) · ScriptContext (q1–q64) · MilkLoudness · FeedbackBuffer · ScopeRenderer  
+> **Dateien:** MilkdropVisualizer.hpp, src/visualizers/MilkdropVisualizer.cpp, milkdrop/MilkdropPresetState.hpp, milkdrop/MilkdropBlur.hpp  
+> **Abhängigkeiten:** VisualizerBase · MilkParser (Lib, inkl. MilkShaderClassifier) · EelTranspiler via ScriptSlotHost (Dialect::Milkdrop) · ScriptContext (q1–q64) · MilkLoudness · FeedbackBuffer · ScopeRenderer  
 > **Zielgruppe:** Entwickler  
 > **Sprache:** Deutsch  
 
@@ -52,10 +52,28 @@ Stelle die Stellschraube.
 8. **Motion Vectors:** Gitter nach Referenzformel, Herkunft je Punkt per
    bilinearem `reversePropagate` über die Warp-Mesh-UVs, Mindestlängen.
 
-**Noch nicht (M5+/Kür):** Sprites, Blur-Pyramide, HLSL-Muster-Module,
-fShader-Farbwash, Preset-Blending/Crossfade.
-**Port-Skalen als Sichttest-Kalibrierpunkte:** `kWavePortScale=128` (Waveform
-±1 statt ±128), `kSpecPortScale=32` (Spektrum-Magnituden) in drawCustomWaves.
+**M5 (Session 40):**
+
+9. **Blur-Pyramide** (BlurPasses-Port): 6 Texturen halbierender Auflösung
+   (2 je Nutzer-Stufe blur1–3), je Stufe langer H- + kurzer V-Pass
+   (Gewichte w[8] fix), progressive Range-Kompression aus den per-frame-Vars
+   `blurN_min/max` (+ `blur1_edge_darken` nur im 1. V-Pass); Mathe pur/testbar
+   in `milkdrop/MilkdropBlur.hpp` (inkl. PORT-Notiz: Referenz-Kollaps
+   min==max → Epsilon-Guard statt inf). Quelle = Vorframe (VS0-Semantik),
+   läuft nur, wenn der Composite Blur wirklich konsumiert.
+10. **Shader-Stufe B** (`MilkShaderClassifier`, MilkParser-Lib): warp/comp
+    werden klassifiziert (None/Md1Default/Md1Plus/Custom). Default-Familie +
+    lineare Extras (Blur-Mix, Gain, subtraktiver Decay) rendern **exakt** mit
+    EINGEBACKENEN Konstanten (baked: per_frame-Animation von gamma/echo/decay
+    ist bei Shader-Presets wirkungslos — Original-Verhalten); Blur-Terme als
+    additive Layer mit Un-Bias `tex·(max−min)+min`. Custom → MD1-Fallback,
+    Import-Report nennt Klasse, PS-Version, Zeilen und Features.
+
+**Noch nicht (M6/Kür):** Sprites, HLSL-Transpiler (Stufe C — Entscheidungs-
+vorlage Konzept §6.5), fShader-Farbwash, Noise-/Custom-Texturen,
+Preset-Blending/Crossfade.
+**Port-Skalen (sichtkalibriert S39):** `kWavePortScale=192`,
+`kSpecPortScale=8` in drawCustomWaves.
 
 ## 2. Datenfluss
 
@@ -86,7 +104,9 @@ Frame:  restoreInitSnapshot → pushFrameInputs → run(Frame) → pullFrameOutp
   **unter `renderMutex()`** (AVS-Muster); Report-Notizen als Dialog.
 - Parameter (ConfigPanel generisch + Preset-Support gratis):
   `render.meshX` (8–96, Default 32) · `render.meshY` (6–72, Default 24) —
-  Entscheid §6.1.
+  Entscheid §6.1 · `render.debugGrid` (Bool, Default aus) — Kalibrier-Raster
+  8×6 + Mittelkreuz als Screen-Overlay NACH dem Composite (nie im
+  Feedback-Loop; Sichttest-Hilfe, S40).
 
 ## 4. Threading / GL
 
@@ -97,12 +117,16 @@ GUI-Thread unter renderMutex und fasst kein GL an. FeedbackBuffer neu:
 
 ## 5. Tests
 
-- `test_MilkdropPreset.cpp`: Original-Defaults, Key-Mapping, Korpus-Smoke
+- `test_MilkdropPreset.cpp`: Original-Defaults, Key-Mapping (inkl. Blur-Keys
+  b1n..b1ed), Blur-Mathe (Kernel/Ranges/Größenkette), Korpus-Smoke
   (910 Presets übersetzen; **Transpile-Abdeckung 100 %**: 892/892 per_frame,
-  590/590 per_pixel — nach Session-39-Fixes int(), Argument-Sequenzen,
-  Kommentar-Stripping).
-- GL-Pfad: **Sichttest ausstehend** (erster Pixel-Test der Import-Phase M3) —
-  Kandidaten: MD1-Presets aus dem winamp-Pack (303 ohne Shader).
+  590/590 per_pixel).
+- `test_MilkShaderClassifier.cpp`: Klassifizierer-Fixtures (Default-Familie,
+  Md1Plus-Extras, Custom-Grenzen, Feature-Flags) + **Korpus-Gate** (910:
+  warp 20/554 Default/Custom, comp 20/13/565, 13 exakte Blur-Konsumenten).
+- GL-Pfad: M3/M4-Sichttest **bestanden** (Session 39, 3 Kalibrier-Runden);
+  **M5-Sichttest ausstehend** — Kalibrier-Satz `asset/calibration/milkdrop/m5/`
+  (8 Presets + README).
 
 ## 6. Changelog
 
@@ -110,3 +134,4 @@ GUI-Thread unter renderMutex und fasst kein GL an. FeedbackBuffer neu:
 |---|---|---|
 | 1.0.0 | 2026-07-22 | Erstfassung (Session 39, M3): MD1-Kern — Warp-Mesh + per_pixel, decay, Waveform 0–7, Borders/DarkenCenter, MD1-Composite, Registry + Import-Anbindung, Mesh-Parameter |
 | 1.1.0 | 2026-07-22 | M4 (Session 39): Custom Waves/Shapes (bis 16, eigene SlotHosts, t1–t8-Snapshots, textured-Fan, Border, num_inst), Motion Vectors (reversePropagate), Roh-Waveform-Puffer getrennt von der §0-Glättung |
+| 1.2.0 | 2026-07-22 | M5 (Session 40): Blur-Pyramide (MilkdropBlur.hpp + runBlurPasses), Shader-Stufe B (Klassifikation, baked Composite-Konstanten, additive Blur-Layer, subtraktiver Warp-Decay, klassenbasierter Import-Report) |

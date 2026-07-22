@@ -1,0 +1,17 @@
+MILKDROP_PRESET_VERSION=201
+PSVERSION=2
+[preset00]
+fDecay=0.970
+fWaveAlpha=1.000
+fWaveScale=1.000
+nWaveMode=0
+wave_r=1.000
+wave_g=0.600
+wave_b=0.200
+zoom=1.000
+warp=0.000
+mv_a=0.000
+comp_1=`shader_body
+comp_2=`{
+comp_3=`ret = GetPixel(uv)*0.30 + GetBlur3(uv)*1.00;
+comp_4=`}

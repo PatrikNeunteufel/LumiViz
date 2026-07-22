@@ -354,6 +354,15 @@ struct SaveDefaultLayoutEvent : public Event
     EVENT_TYPE_NAME("SaveDefaultLayoutEvent")
 };
 
+/**
+ * @brief Reset the Import Browser's remembered start folder (Settings panel
+ *        action) — the panel forgets the stored path and returns to home
+ */
+struct ResetImportBrowserDirEvent : public Event
+{
+    EVENT_TYPE_NAME("ResetImportBrowserDirEvent")
+};
+
 // =============================================================================
 // Fullscreen Events
 // =============================================================================

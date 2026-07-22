@@ -141,9 +141,17 @@ Goldens in `test_MilkScriptContract.cpp`:
 - **Stufe A (M3/M4):** `PSVERSION == 0` bzw. fehlende Shader → MD1-Pfad
   (fixe Warp-Formel aus zoom/rot/warp/dx/dy/sx/sy + VideoEcho/Filter-Comp).
   Deckt MD1-Presets und viele MD2-Presets mit Default-Shadern ab.
-- **Stufe B (M5):** Muster-Erkennung → Standard-Post-Module (§3.4); Rest:
-  Preset lädt mit Report-Hinweis „Shader ersetzt durch Fallback" (Bild bleibt
-  plausibel: Warp + Decay + Waves tragen die meiste Optik).
+- **Stufe B (M5 ✅, Session 40):** Klassifikation statt freier Muster-Suche —
+  MilkDrop GENERIERT Shader-Text aus den MD1-Keys (GenWarp/GenCompPShaderText,
+  plugin.cpp:8782-8847); `MilkShaderClassifier.hpp` (MilkParser-Lib) erkennt
+  diese Familie plus lineare Extras (Blur-Mix `ret += GetBlurN [*k]`,
+  `lerp(GetBlurN, GetPixel, k)`, `GetPixel*a + GetBlurN*b`, bare `ret *= k`,
+  subtraktiver Warp-Decay `ret -= k`) als affines Modell
+  `ret = gain·Basis + Σ Bn·blurN` mit EINGEBACKENEN Echo/Gamma/Hue/Filter-
+  Konstanten → **exakt** über den MD1-Composite + additive Blur-Layer gerendert
+  (baked = per_frame-Animation der Composite-Werte wirkungslos, wie im
+  Original mit Shadern). Rest: Custom → MD1-Fallback + Report mit
+  Feature-Summary (Blur/Noise/Texturen/Zufall, Zeilenzahl).
 - **Stufe C (Kür, eigene Entscheidung später):** eingeschränkter
   HLSL→GLSL-Transpiler für die verbleibende Teilmenge (ps_2_0-artige
   Ausdrücke, `tex2D`, Swizzles). Erst angehen, wenn Korpus-Statistik zeigt,
@@ -157,7 +165,7 @@ Goldens in `test_MilkScriptContract.cpp`:
 | **M2** ✅ | **Skript-Vertrag** (S39) | §2.4: Variablen-Sets, q1–q64-Snapshots (ScriptContext vorhanden), t1–t8-Muster, Clamps, `MilkLoudness` (*_att), Funktions-Delta `int()`→floor, `symbolCategory`-Namen | `test_MilkScriptContract.cpp` (11 Cases, end-to-end EEL→Lua→Engine) |
 | **M3** ◐ | **Render-Kern (MD1)** (S39, umgesetzt — **GL-Sichttest offen**) | `MilkdropVisualizer` + `MilkdropPresetState` (Original-Defaults): Double-Buffer (FeedbackBuffer + swapOnly), Warp-Mesh + per_pixel je Vertex, decay, Waveform 0–7, Borders/Darken-Center, MD1-Comp (Echo/Gamma/Filter); Registry + Import-Browser-Anbindung; Mesh-Parameter 32×24/Cap 96×72. Dabei Dialekt-Löcher geschlossen (Argument-`;`-Sequenzen, Kommentar-Stripping) → **Transpile 100 %** (892/892 pf, 590/590 pp) | Translator-Tests ✅ (Korpus 910); **GL-Sichttest MD1-Presets AUSSTEHEND** (Y-Flip-Stellschraube: Composite) |
 | **M4** ◐ | **Waves/Shapes/MV** (S39, umgesetzt — **GL-Sichttest offen**) | Custom Waves + Shapes bis 16 (eigene SlotHosts am geteilten Context; t1–t8-Snapshot je Wave/Shape, q vom Frame-Stand; Wave-Glättung/Skalierung + per_point, Shape-Fan mit Center/Edge-Farbverlauf, textured = Vorframe-Sampling, Border + thick, num_inst-Instanzen), Motion Vectors (ReversePropagate über das Warp-Mesh); VideoEcho/Filter waren schon in M3. Offen: Sprites, fShader-Wash (Kür) | Translator-Tests ✅; Sichttest zusammen mit M3; Port-Skalen kWave=128/kSpec=32 = Kalibrierpunkte |
-| **M5** | **Blur + Shader-Stufe B** | Blur-Pyramide (3 Stufen, `blurN`-Sampling), Muster→Standard-Post-Module, Korpus-Statistik zur Shader-Abdeckung | Sichttest + Report-Auswertung |
+| **M5** ◐ | **Blur + Shader-Stufe B** (S40, umgesetzt — **GL-Sichttest offen**) | Blur-Pyramide 1:1 (6 Texturen/3 Stufen, H+V-Pässe, Range-Kompression + Un-Bias, `b1n..b1ed`-Keys + per_frame-blurN-Vars, `MilkdropBlur.hpp` pur/testbar), `MilkShaderClassifier` (None/Md1Default/Md1Plus/Custom + Feature-Flags), baked Composite (Warp-Decay/Echo/Gamma/Filter aus dem Shader-Text) + additive Blur-Layer, Import-Report je Klasse; Korpus-Statistik + Gate (§6.5) | Suite 367 Cases (Klassifizierer-Fixtures, Blur-Mathe, Korpus-Gate); Kalibrier-Presets `m5/` (8+README); **Sichttest ausstehend** |
 | **M6** | **UX-Abschluss** | `MilkdropPanel` (Config-Panel-Editing, §2.3), Crossfade-Übergang, Playlist-Anbindung, `.lvfx`-Persistenz (+ .milk-Export als Kür) | UI-Sichttest; Roundtrip-Tests |
 
 Empfohlene Session-Schnitte: M1+M2 zusammen (reine Lib-/Engine-Arbeit, wie
@@ -186,6 +194,28 @@ die Mesh-Auflösung ist im Original ein App-Setting, kein Preset-Feld.
 4. **Stufe C** (HLSL-Transpiler) — bleibt vertagt: Entscheidung erst nach
    M5-Messung. Vorgeschmack aus dem Scan: PS2 dominiert (318/600 Shader-Presets)
    → spricht für Muster-Module (Stufe B).
+5. **Korpus-Statistik M5 (Session 40, Messbasis 910) + Stufe-C-Vorlage:**
+   - **600 Presets mit Shader-Code**, 310 ohne (MD1 → bei uns exakt).
+     PSVERSION-Verteilung: PS2 318 · PS3 254 · PS4 28.
+   - **Klassifikation** (C++-Gate in `test_MilkShaderClassifier.cpp`):
+     warp Default/Custom = **20/554** · comp Default/Plus/Custom =
+     **20/13/565** · exakte Blur-Konsumenten (Md1Plus) = **13**.
+   - **Feature-Nutzung in Shader-Presets:** Blur **88 %** (528!) · Noise 49 %
+     (292, prozedural — implementierbar ohne Assets) · echte Custom-Texturen
+     28 % (170; Top: worms 47, MilkDrop3_00x, clouds; Assets liegen in
+     `asset/Milkdrop3/textures/`) · rand 36 % · Loops nur 8 %, tex3D 9 %.
+   - **Befund:** die Default-Familie (Stufe B) deckt exakt ~53 Presets ab;
+     die 554/565 echten Custom-Shader sind mit Mustern nicht erreichbar
+     (LOC-Median 9–20+). **Blur-Pyramide + Noise-Sampler + Textur-Lader sind
+     mit M5 bzw. als kleine Folgebausteine vorhanden/nah — die verbleibende
+     Lücke ist die HLSL→GLSL-Ausdrucksübersetzung selbst.** PS2/PS3 sind
+     strukturell einfache Ausdrucks-Shader (wenig Kontrollfluss: 8 % Loops).
+   - **➜ Empfehlung an Patrik:** Stufe C als eingeschränkter
+     HLSL→GLSL-Transpiler lohnt sich (Hebel: bis zu ~550 Presets); sinnvolle
+     Schnitte: C1 Ausdrucks-Teilmenge + tex2D/Swizzles/Intrinsics (deckt die
+     Masse), C2 Noise-Texturen + Custom-Textur-Lader, C3 Loops/tex3D (Kür).
+     Entscheid + Priorisierung bitte freigeben (eigene Session, Muster
+     EelTranspiler: Lexer/Parser/CodeGen header-only + Korpus-Gate).
 
 ## 7. Siehe auch
 
@@ -203,3 +233,4 @@ die Mesh-Auflösung ist im Original ein App-Setting, kein Preset-Feld.
 | 1.2.0 | 2026-07-22 | M1+M2 umgesetzt (Session 39): MilkParser-Lib (Korpus 910/910) + §2.4 Milk-Skript-Vertrag (int()→floor, MilkLoudness, q/t-Snapshot-Kontrakt, symbolCategory-Namen); Roadmap-Status nachgezogen |
 | 1.3.0 | 2026-07-22 | M3 umgesetzt (Session 39, GL-Sichttest offen): MilkdropVisualizer (MD1-Kern komplett), PresetState-Translator, Registry-/Import-Anbindung; Dialekt-Löcher geschlossen (Argument-Sequenzen, Kommentar-Stripping) → Transpile-Abdeckung 100 % auf 910 Presets |
 | 1.4.0 | 2026-07-22 | M4 umgesetzt (Session 39, GL-Sichttest offen): Custom Waves/Shapes (bis 16, t1–t8-Snapshots, textured, Instanzen), Motion Vectors (ReversePropagate); WaveState/ShapeState im Translator; Sprites + fShader-Wash bewusst offen |
+| 1.5.0 | 2026-07-22 | M5 umgesetzt (Session 40, GL-Sichttest offen): Blur-Pyramide (MilkdropBlur.hpp + GL-Pässe), MilkShaderClassifier (Stufe B: Default-Familie + Blur-Mix exakt, baked Konstanten, Custom→Fallback+Report), Korpus-Statistik §6.5 + Stufe-C-Entscheidungsvorlage; Kalibrier-Satz m5 (8 Presets) |

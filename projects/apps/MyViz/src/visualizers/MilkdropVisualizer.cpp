@@ -21,6 +21,8 @@
 
 #include "visualizers/MilkdropVisualizer.hpp"
 
+#include "visualizers/milkdrop/MilkdropBlur.hpp"
+
 #include <QFileInfo>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
@@ -54,13 +56,78 @@ out vec2 vTex;
 void main() { vTex = aTex; gl_Position = vec4(aPos, 0.0, 1.0); }
 )";
 
-// warp pass: previous frame sampled at the mesh UVs, dimmed by decay
+// warp pass: previous frame sampled at the mesh UVs, dimmed by decay; uDecaySub
+// is the file-default warp shader's `ret -= k` (baked, usually 0)
 const char* kWarpFragmentShader = R"(#version 330 core
 uniform sampler2D uTex;
 uniform float uDecay;
+uniform float uDecaySub;
 in vec2 vTex;
 out vec4 frag;
-void main() { frag = vec4(texture(uTex, vTex).rgb * uDecay, 1.0); }
+void main() { frag = vec4(texture(uTex, vTex).rgb * uDecay - vec3(uDecaySub), 1.0); }
+)";
+
+// blur pass 1: long horizontal kernel + progressive range compression
+// (GLSL port of blur1_ps.fx; constants come from MilkdropBlur.hpp)
+const char* kBlurHFragmentShader = R"(#version 330 core
+uniform sampler2D uTex;
+uniform vec4 uTexSize;    // w, h, 1/w, 1/h of the SOURCE
+uniform vec4 uW;          // w1..w4
+uniform vec4 uD;          // d1..d4
+uniform vec4 uScaleBias;  // fscale, fbias, wDiv, 0
+in vec2 vTex;
+out vec4 frag;
+void main()
+{
+    vec2 uv2 = vTex + uTexSize.zw;      // + moves blur up/left by 1 px (reference)
+    vec3 blur =
+        (texture(uTex, uv2 + vec2( uD.x * uTexSize.z, 0.0)).rgb
+       + texture(uTex, uv2 + vec2(-uD.x * uTexSize.z, 0.0)).rgb) * uW.x +
+        (texture(uTex, uv2 + vec2( uD.y * uTexSize.z, 0.0)).rgb
+       + texture(uTex, uv2 + vec2(-uD.y * uTexSize.z, 0.0)).rgb) * uW.y +
+        (texture(uTex, uv2 + vec2( uD.z * uTexSize.z, 0.0)).rgb
+       + texture(uTex, uv2 + vec2(-uD.z * uTexSize.z, 0.0)).rgb) * uW.z +
+        (texture(uTex, uv2 + vec2( uD.w * uTexSize.z, 0.0)).rgb
+       + texture(uTex, uv2 + vec2(-uD.w * uTexSize.z, 0.0)).rgb) * uW.w;
+    blur *= uScaleBias.z;
+    blur = blur * uScaleBias.x + vec3(uScaleBias.y);
+    frag = vec4(blur, 1.0);
+}
+)";
+
+// blur pass 2: short vertical kernel + edge darkening (blur2_ps.fx port)
+const char* kBlurVFragmentShader = R"(#version 330 core
+uniform sampler2D uTex;
+uniform vec4 uTexSize;    // w, h, 1/w, 1/h of the SOURCE
+uniform vec4 uWD;         // w1, w2, d1, d2
+uniform vec4 uEdge;       // wDiv, edge_c1, edge_c2, edge_c3
+in vec2 vTex;
+out vec4 frag;
+void main()
+{
+    vec2 uv2 = vTex + vec2(uTexSize.z, 0.0);
+    vec3 blur =
+        (texture(uTex, uv2 + vec2(0.0,  uWD.z * uTexSize.w)).rgb
+       + texture(uTex, uv2 + vec2(0.0, -uWD.z * uTexSize.w)).rgb) * uWD.x +
+        (texture(uTex, uv2 + vec2(0.0,  uWD.w * uTexSize.w)).rgb
+       + texture(uTex, uv2 + vec2(0.0, -uWD.w * uTexSize.w)).rgb) * uWD.y;
+    blur *= uEdge.x;
+    float t = min(min(vTex.x, vTex.y), 1.0 - max(vTex.x, vTex.y));
+    t = sqrt(t);
+    t = uEdge.y + uEdge.z * clamp(t * uEdge.w, 0.0, 1.0);
+    frag = vec4(blur * t, 1.0);
+}
+)";
+
+// composite blur term: coeff*GetBlurN(uv) = tex*(coeff*(max-min)) + coeff*min,
+// drawn additively over the base layers (stage B blur mixes)
+const char* kBlurLayerFragmentShader = R"(#version 330 core
+uniform sampler2D uTex;
+uniform float uScale;
+uniform float uBias;
+in vec2 vTex;
+out vec4 frag;
+void main() { frag = vec4(texture(uTex, vTex).rgb * uScale + vec3(uBias), 1.0); }
 )";
 
 // composite pass: texture x uniform colour (gamma/echo passes drive uColor)
@@ -227,16 +294,58 @@ bool MilkdropVisualizer::loadMilkFile(const QString& path, QStringList* report)
                                           "Rendering folgt später")
                                .arg(parsed.sprites.size()));
         }
-        if (!parsed.warpShader.empty() || !parsed.compShader.empty())
-        {
-            report->append(QStringLiteral(
-                "Preset nutzt HLSL-Shader (PS%1) — MD1-Fallback aktiv (Stufe B folgt in M5)")
-                               .arg(parsed.psVersion));
-        }
     }
 
     m_state = lumi::milkdrop::translate(parsed);
     m_state.name = QFileInfo(path).completeBaseName().toStdString();
+
+    if (report != nullptr)
+    {
+        // stage-B classification (M5): default-family shaders are exact, custom
+        // shaders fall back to the MD1 path with a feature summary
+        using lumi::milk::ShaderClass;
+        const auto featureSummary = [](const lumi::milk::ShaderInfo& info) {
+            QStringList features;
+            if (info.usesBlur[0] || info.usesBlur[1] || info.usesBlur[2])
+                features << QStringLiteral("Blur");
+            if (info.usesNoise) features << QStringLiteral("Noise");
+            if (info.usesTexture) features << QStringLiteral("Texturen");
+            if (info.usesRand) features << QStringLiteral("Zufall");
+            return features.isEmpty() ? QStringLiteral("einfach") : features.join(QStringLiteral("/"));
+        };
+        const auto describe = [&](const char* which, const lumi::milk::ShaderInfo& info) {
+            switch (info.shaderClass)
+            {
+            case ShaderClass::None:
+                break;
+            case ShaderClass::Md1Default:
+                report->append(QStringLiteral("%1-Shader = generierter MD1-Default → exakt "
+                                              "(eingebackene Konstanten)")
+                                   .arg(QLatin1String(which)));
+                break;
+            case ShaderClass::Md1Plus:
+                report->append(QStringLiteral("%1-Shader = MD1-Default + Blur-/Gain-Mix → "
+                                              "exakt übersetzt (Stufe B)")
+                                   .arg(QLatin1String(which)));
+                break;
+            case ShaderClass::Custom:
+                report->append(QStringLiteral("Custom-%1-Shader (PS%2, %3 Zeilen, %4) → "
+                                              "MD1-Fallback (Stufe C offen)")
+                                   .arg(QLatin1String(which))
+                                   .arg(parsed.psVersion)
+                                   .arg(info.codeLines)
+                                   .arg(featureSummary(info)));
+                break;
+            }
+        };
+        describe("Warp", m_state.warpInfo);
+        describe("Comp", m_state.compInfo);
+        if (m_state.compInfo.hueMix > 0.001)
+        {
+            report->append(QStringLiteral(
+                "Comp-Shader nutzt hue_shader (fShader-Farbwash) — noch nicht gerendert"));
+        }
+    }
 
     rebuildScripts(report);
     m_time = 0.0;
@@ -467,14 +576,14 @@ void MilkdropVisualizer::pushFrameInputs()
     e.setNumber("mv_g", s.mvG);
     e.setNumber("mv_b", s.mvB);
     e.setNumber("mv_a", s.mvA);
-    // blur ranges: defaults so reads are sane; rendering follows in M5
-    e.setNumber("blur1_min", 0.0);
-    e.setNumber("blur2_min", 0.0);
-    e.setNumber("blur3_min", 0.0);
-    e.setNumber("blur1_max", 1.0);
-    e.setNumber("blur2_max", 1.0);
-    e.setNumber("blur3_max", 1.0);
-    e.setNumber("blur1_edge_darken", 0.25);
+    // blur pyramid controls (M5): preset values in, per_frame may re-write them
+    e.setNumber("blur1_min", s.blur1Min);
+    e.setNumber("blur2_min", s.blur2Min);
+    e.setNumber("blur3_min", s.blur3Min);
+    e.setNumber("blur1_max", s.blur1Max);
+    e.setNumber("blur2_max", s.blur2Max);
+    e.setNumber("blur3_max", s.blur3Max);
+    e.setNumber("blur1_edge_darken", s.blur1EdgeDarken);
 }
 
 void MilkdropVisualizer::pullFrameOutputs(FrameVars& fv)
@@ -533,6 +642,9 @@ void MilkdropVisualizer::pullFrameOutputs(FrameVars& fv)
     fv.mvG = s.mvG;
     fv.mvB = s.mvB;
     fv.mvA = s.mvA;
+    fv.blurMin = {s.blur1Min, s.blur2Min, s.blur3Min};
+    fv.blurMax = {s.blur1Max, s.blur2Max, s.blur3Max};
+    fv.blurEdgeDarken = s.blur1EdgeDarken;
 
     if (m_script == nullptr || !m_script->has(Slot::Frame)) return;
 
@@ -590,6 +702,9 @@ void MilkdropVisualizer::pullFrameOutputs(FrameVars& fv)
     fv.mvG = e.number("mv_g");
     fv.mvB = e.number("mv_b");
     fv.mvA = e.number("mv_a");
+    fv.blurMin = {e.number("blur1_min"), e.number("blur2_min"), e.number("blur3_min")};
+    fv.blurMax = {e.number("blur1_max"), e.number("blur2_max"), e.number("blur3_max")};
+    fv.blurEdgeDarken = e.number("blur1_edge_darken");
     m_monitor = e.number("monitor");
 }
 
@@ -652,10 +767,14 @@ void MilkdropVisualizer::releaseGlResources()
 {
     m_feedback.destroy();
     m_scope.destroy();
+    releaseBlurTargets();
     m_warpProgram.reset();
     m_textureProgram.reset();
     m_colorProgram.reset();
     m_shapeProgram.reset();
+    m_blurHProgram.reset();
+    m_blurVProgram.reset();
+    m_blurLayerProgram.reset();
     m_meshVao.reset();
     m_meshVbo.reset();
     m_quadVao.reset();
@@ -683,8 +802,13 @@ bool MilkdropVisualizer::ensureGlResources()
     m_textureProgram = makeProgram(kTexVertexShader, kTexFragmentShader);
     m_colorProgram = makeProgram(kColorVertexShader, kColorFragmentShader);
     m_shapeProgram = makeProgram(kShapeVertexShader, kShapeFragmentShader);
+    m_blurHProgram = makeProgram(kTexVertexShader, kBlurHFragmentShader);
+    m_blurVProgram = makeProgram(kTexVertexShader, kBlurVFragmentShader);
+    m_blurLayerProgram = makeProgram(kTexVertexShader, kBlurLayerFragmentShader);
     if (m_warpProgram == nullptr || m_textureProgram == nullptr ||
-        m_colorProgram == nullptr || m_shapeProgram == nullptr)
+        m_colorProgram == nullptr || m_shapeProgram == nullptr ||
+        m_blurHProgram == nullptr || m_blurVProgram == nullptr ||
+        m_blurLayerProgram == nullptr)
     {
         releaseGlResources();
         return false;
@@ -754,6 +878,154 @@ bool MilkdropVisualizer::ensureGlResources()
 }
 
 // =============================================================================================
+// Blur pyramid (BlurPasses port, milkdropfs.cpp:1501-1679 — M5)
+// =============================================================================================
+
+int MilkdropVisualizer::activeBlurLevels() const
+{
+    // only the baked stage-B composite samples blur; custom shaders fall back
+    // to the MD1 path and MD1 presets have no blur consumers at all
+    const lumi::milk::ShaderInfo& ci = m_state.compInfo;
+    if (ci.shaderClass != lumi::milk::ShaderClass::Md1Plus) return 0;
+    return ci.highestBlurLevel();
+}
+
+bool MilkdropVisualizer::ensureBlurTargets(int sourceW, int sourceH)
+{
+    if (m_blurTex[0] != 0 && sourceW == m_blurSrcW && sourceH == m_blurSrcH) return true;
+    releaseBlurTargets();
+
+    QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
+    m_blurSizes = lumi::milkdrop::blurTextureSizes(sourceW, sourceH);
+    f->glGenTextures(lumi::milkdrop::kBlurTexCount, m_blurTex.data());
+    f->glGenFramebuffers(lumi::milkdrop::kBlurTexCount, m_blurFbo.data());
+    for (int i = 0; i < lumi::milkdrop::kBlurTexCount; ++i)
+    {
+        const auto idx = static_cast<std::size_t>(i);
+        f->glBindTexture(GL_TEXTURE_2D, m_blurTex[idx]);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_blurSizes[idx][0], m_blurSizes[idx][1],
+                        0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        f->glBindFramebuffer(GL_FRAMEBUFFER, m_blurFbo[idx]);
+        f->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                                  m_blurTex[idx], 0);
+        if (f->glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            f->glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            releaseBlurTargets();
+            return false;
+        }
+    }
+    f->glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    f->glBindTexture(GL_TEXTURE_2D, 0);
+    m_blurSrcW = sourceW;
+    m_blurSrcH = sourceH;
+    return true;
+}
+
+void MilkdropVisualizer::releaseBlurTargets()
+{
+    if (m_blurTex[0] == 0 && m_blurFbo[0] == 0) return;
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    if (ctx != nullptr)
+    {
+        QOpenGLFunctions* f = ctx->functions();
+        f->glDeleteFramebuffers(lumi::milkdrop::kBlurTexCount, m_blurFbo.data());
+        f->glDeleteTextures(lumi::milkdrop::kBlurTexCount, m_blurTex.data());
+    }
+    m_blurTex.fill(0);
+    m_blurFbo.fill(0);
+    m_blurSrcW = 0;
+    m_blurSrcH = 0;
+}
+
+void MilkdropVisualizer::runBlurPasses(const FrameVars& fv)
+{
+    const int levels = activeBlurLevels();
+    if (levels <= 0) return;
+
+    const int w = std::max(16, width());
+    const int h = std::max(16, height());
+    if (!ensureBlurTargets(w, h)) return;
+
+    using namespace lumi::milkdrop;
+    const BlurRanges ranges = computeSafeBlurRanges(
+        {static_cast<float>(fv.blurMin[0]), static_cast<float>(fv.blurMin[1]),
+         static_cast<float>(fv.blurMin[2])},
+        {static_cast<float>(fv.blurMax[0]), static_cast<float>(fv.blurMax[1]),
+         static_cast<float>(fv.blurMax[2])});
+    const BlurPassScales scales = computeBlurPassScales(ranges);
+    const BlurKernelH kh = blurKernelH();
+    const BlurKernelV kv = blurKernelV();
+
+    QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
+    f->glDisable(GL_BLEND);
+    f->glDisable(GL_DEPTH_TEST);
+
+    // fullscreen quad, identity UVs (source and target share the orientation)
+    const float quad[6][4] = {{-1.0f, -1.0f, 0.0f, 0.0f}, {1.0f, -1.0f, 1.0f, 0.0f},
+                              {-1.0f, 1.0f, 0.0f, 1.0f},  {1.0f, -1.0f, 1.0f, 0.0f},
+                              {1.0f, 1.0f, 1.0f, 1.0f},   {-1.0f, 1.0f, 0.0f, 1.0f}};
+
+    const int passes = 2 * levels;
+    for (int i = 0; i < passes; ++i)
+    {
+        const auto idx = static_cast<std::size_t>(i);
+        f->glBindFramebuffer(GL_FRAMEBUFFER, m_blurFbo[idx]);
+        f->glViewport(0, 0, m_blurSizes[idx][0], m_blurSizes[idx][1]);
+
+        const int srcW = (i == 0) ? w : m_blurSizes[idx - 1][0];
+        const int srcH = (i == 0) ? h : m_blurSizes[idx - 1][1];
+        const unsigned int srcTex =
+            (i == 0) ? m_feedback.previousTexture() : m_blurTex[idx - 1];
+        f->glActiveTexture(GL_TEXTURE0);
+        f->glBindTexture(GL_TEXTURE_2D, srcTex);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        QOpenGLShaderProgram& program = ((i % 2) == 0) ? *m_blurHProgram : *m_blurVProgram;
+        program.bind();
+        program.setUniformValue("uTex", 0);
+        program.setUniformValue("uTexSize",
+                                QVector4D(static_cast<float>(srcW), static_cast<float>(srcH),
+                                          1.0f / static_cast<float>(srcW),
+                                          1.0f / static_cast<float>(srcH)));
+        if ((i % 2) == 0)
+        {
+            program.setUniformValue("uW", QVector4D(kh.w1, kh.w2, kh.w3, kh.w4));
+            program.setUniformValue("uD", QVector4D(kh.d1, kh.d2, kh.d3, kh.d4));
+            const auto level = static_cast<std::size_t>(i / 2);
+            program.setUniformValue(
+                "uScaleBias", QVector4D(scales.scale[level], scales.bias[level], kh.wDiv, 0.0f));
+        }
+        else
+        {
+            program.setUniformValue("uWD", QVector4D(kv.w1, kv.w2, kv.d1, kv.d2));
+            // edge darkening only on the FIRST vertical pass (reference :1656)
+            const float edge = static_cast<float>(fv.blurEdgeDarken);
+            const QVector4D edgeVec = (i == 1)
+                                          ? QVector4D(kv.wDiv, 1.0f - edge, edge, 5.0f)
+                                          : QVector4D(kv.wDiv, 1.0f, 0.0f, 5.0f);
+            program.setUniformValue("uEdge", edgeVec);
+        }
+
+        m_meshVao->bind();
+        m_meshVbo->bind();
+        m_meshVbo->allocate(quad, sizeof(quad));
+        f->glDrawArrays(GL_TRIANGLES, 0, 6);
+        m_meshVbo->release();
+        m_meshVao->release();
+        program.release();
+    }
+    f->glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+// =============================================================================================
 // Frame
 // =============================================================================================
 
@@ -809,6 +1081,7 @@ void MilkdropVisualizer::onRender(float deltaTime)
     // basic wave. PORT: motion vectors are drawn after the warp instead of
     // into the previous image (one frame later into the feedback loop).
     computeWarpMesh(fv);
+    runBlurPasses(fv);  // sources the previous frame; own FBOs (before beginFrame)
     m_feedback.beginFrame();
     f->glViewport(0, 0, w, h);
     f->glDisable(GL_DEPTH_TEST);
@@ -822,6 +1095,7 @@ void MilkdropVisualizer::onRender(float deltaTime)
 
     // --- present (single vertical flip lives here) -----------------------------------------
     compositeToScreen(fv);
+    if (m_debugGrid) drawDebugGrid();
     m_feedback.swapOnly();
 
     ++m_frame;
@@ -975,16 +1249,30 @@ void MilkdropVisualizer::drawWarpPass(const FrameVars& fv)
     QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
     f->glDisable(GL_BLEND);
 
+    // MD2 semantics: with a recognized warp shader the decay constants are BAKED
+    // into the shader text (per_frame `decay` has no effect); MD1/custom use the
+    // live value (custom = fallback, report said so)
+    double decayMul = clampd(fv.decay, 0.0, 1.0);
+    double decaySub = 0.0;
+    bool wrap = fv.wrap;
+    if (m_state.warpInfo.shaderClass == lumi::milk::ShaderClass::Md1Default)
+    {
+        decayMul = (m_state.warpInfo.decayMul >= 0.0) ? m_state.warpInfo.decayMul : 1.0;
+        decaySub = m_state.warpInfo.decaySub;
+        wrap = m_state.warpInfo.wrapSampler;
+    }
+
     m_warpProgram->bind();
     f->glActiveTexture(GL_TEXTURE0);
     f->glBindTexture(GL_TEXTURE_2D, m_feedback.previousTexture());
-    const GLint wrapMode = fv.wrap ? GL_REPEAT : GL_CLAMP_TO_EDGE;
+    const GLint wrapMode = wrap ? GL_REPEAT : GL_CLAMP_TO_EDGE;
     f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
     f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
     f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     m_warpProgram->setUniformValue("uTex", 0);
-    m_warpProgram->setUniformValue("uDecay", static_cast<float>(clampd(fv.decay, 0.0, 1.0)));
+    m_warpProgram->setUniformValue("uDecay", static_cast<float>(decayMul));
+    m_warpProgram->setUniformValue("uDecaySub", static_cast<float>(decaySub));
 
     m_meshVao->bind();
     m_meshVbo->bind();
@@ -1911,36 +2199,51 @@ void MilkdropVisualizer::compositeToScreen(const FrameVars& fv)
 
     f->glDisable(GL_BLEND);
 
-    const bool echo = fv.echoAlpha > 0.001;
+    // stage B (M5): recognized comp shaders render with their BAKED constants —
+    // in MD2 the composite constants live in the shader text, so per_frame
+    // animation of gamma/echo has no effect there; MD1 presets stay live
+    const lumi::milk::ShaderInfo& ci = m_state.compInfo;
+    const bool baked = ci.shaderClass == lumi::milk::ShaderClass::Md1Default ||
+                       ci.shaderClass == lumi::milk::ShaderClass::Md1Plus;
+    const double echoAlpha = baked ? ci.echoAlpha : fv.echoAlpha;
+    const double echoZoom = baked ? ci.echoZoom : fv.echoZoom;
+    const int echoOrient = baked ? ci.echoOrient : fv.echoOrient;
+    const double gamma = baked ? ci.gain : fv.gamma;
+    const bool brighten = baked ? ci.brighten : fv.brighten;
+    const bool darken = baked ? ci.darken : fv.darken;
+    const bool solarize = baked ? ci.solarize : fv.solarize;
+    const bool invert = baked ? ci.invert : fv.invert;
+
+    const bool echo = echoAlpha > 0.001;
     if (echo)
     {
         // two layers: base (1-alpha) + zoomed/flipped echo (alpha); gamma via redraws
         for (int layer = 0; layer < 2; ++layer)
         {
-            const double zoomAmount = (layer == 0) ? 1.0 : fv.echoZoom;
-            const double mix = (layer == 1) ? fv.echoAlpha : 1.0 - fv.echoAlpha;
-            drawLayer(zoomAmount, layer == 1, fv.echoOrient % 4, mix);
+            const double zoomAmount = (layer == 0) ? 1.0 : echoZoom;
+            const double mix = (layer == 1) ? echoAlpha : 1.0 - echoAlpha;
+            drawLayer(zoomAmount, layer == 1, echoOrient % 4, mix);
             if (layer == 0)
             {
                 f->glEnable(GL_BLEND);
                 f->glBlendFunc(GL_ONE, GL_ONE);
             }
-            const int nRedraws = static_cast<int>(fv.gamma - 0.0001);
+            const int nRedraws = static_cast<int>(gamma - 0.0001);
             for (int r = 0; r < nRedraws; ++r)
             {
                 const double g = (r == nRedraws - 1)
-                                     ? fv.gamma - static_cast<int>(fv.gamma - 0.0001)
+                                     ? gamma - static_cast<int>(gamma - 0.0001)
                                      : 1.0;
-                drawLayer(zoomAmount, layer == 1, fv.echoOrient % 4, g * mix);
+                drawLayer(zoomAmount, layer == 1, echoOrient % 4, g * mix);
             }
         }
     }
     else
     {
-        const int nPasses = static_cast<int>(fv.gamma - 0.001) + 1;
+        const int nPasses = static_cast<int>(gamma - 0.001) + 1;
         for (int pass = 0; pass < nPasses; ++pass)
         {
-            const double g = (pass == nPasses - 1) ? fv.gamma - pass : 1.0;
+            const double g = (pass == nPasses - 1) ? gamma - pass : 1.0;
             drawLayer(1.0, false, 0, g);
             if (pass == 0)
             {
@@ -1951,8 +2254,47 @@ void MilkdropVisualizer::compositeToScreen(const FrameVars& fv)
     }
     m_textureProgram->release();
 
+    // stage B blur terms: coeff*GetBlurN added over the base (before the filters,
+    // matching the generated statement order); GetBlurN un-biases the range
+    // compression with (max-min)/min of THIS frame's safe ranges
+    const int blurLevels = activeBlurLevels();
+    if (blurLevels > 0 && m_blurTex[0] != 0)
+    {
+        const lumi::milkdrop::BlurRanges ranges = lumi::milkdrop::computeSafeBlurRanges(
+            {static_cast<float>(fv.blurMin[0]), static_cast<float>(fv.blurMin[1]),
+             static_cast<float>(fv.blurMin[2])},
+            {static_cast<float>(fv.blurMax[0]), static_cast<float>(fv.blurMax[1]),
+             static_cast<float>(fv.blurMax[2])});
+        f->glEnable(GL_BLEND);
+        f->glBlendFunc(GL_ONE, GL_ONE);
+        m_blurLayerProgram->bind();
+        m_blurLayerProgram->setUniformValue("uTex", 0);
+        const float quad[6][4] = {{-1.0f, -1.0f, 0.0f, 0.0f}, {1.0f, -1.0f, 1.0f, 0.0f},
+                                  {-1.0f, 1.0f, 0.0f, 1.0f},  {1.0f, -1.0f, 1.0f, 0.0f},
+                                  {1.0f, 1.0f, 1.0f, 1.0f},   {-1.0f, 1.0f, 0.0f, 1.0f}};
+        for (int n = 0; n < 3; ++n)
+        {
+            const auto idx = static_cast<std::size_t>(n);
+            const double coeff = ci.blurAdd[idx];
+            if (coeff <= 1e-9) continue;
+            f->glActiveTexture(GL_TEXTURE0);
+            f->glBindTexture(GL_TEXTURE_2D, m_blurTex[static_cast<std::size_t>(n * 2 + 1)]);
+            m_blurLayerProgram->setUniformValue(
+                "uScale", static_cast<float>(coeff * (ranges.max[idx] - ranges.min[idx])));
+            m_blurLayerProgram->setUniformValue(
+                "uBias", static_cast<float>(coeff * ranges.min[idx]));
+            m_meshVao->bind();
+            m_meshVbo->bind();
+            m_meshVbo->allocate(quad, sizeof(quad));
+            f->glDrawArrays(GL_TRIANGLES, 0, 6);
+            m_meshVbo->release();
+            m_meshVao->release();
+        }
+        m_blurLayerProgram->release();
+    }
+
     // post filters: fullscreen white quads with destination-blend tricks (:4185-4283)
-    const bool anyFilter = fv.brighten || fv.darken || fv.solarize || fv.invert;
+    const bool anyFilter = brighten || darken || solarize || invert;
     if (anyFilter)
     {
         std::vector<float> quad;
@@ -1965,20 +2307,56 @@ void MilkdropVisualizer::compositeToScreen(const FrameVars& fv)
             f->glBlendFunc(src, dst);
             drawColorQuads(quad.data(), 6, GL_TRIANGLES);
         };
-        if (fv.brighten)  // ~sqrt(colour): invert, square, invert
+        if (brighten)  // ~sqrt(colour): invert, square, invert
         {
             pass(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
             pass(GL_ZERO, GL_DST_COLOR);
             pass(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
         }
-        if (fv.darken) pass(GL_ZERO, GL_DST_COLOR);  // colour^2
-        if (fv.solarize)
+        if (darken) pass(GL_ZERO, GL_DST_COLOR);  // colour^2
+        if (solarize)
         {
             pass(GL_ZERO, GL_ONE_MINUS_DST_COLOR);
             pass(GL_DST_COLOR, GL_ONE);
         }
-        if (fv.invert) pass(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+        if (invert) pass(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
     }
+    f->glDisable(GL_BLEND);
+}
+
+void MilkdropVisualizer::drawDebugGrid()
+{
+    // Reference grid for calibration (Session 40, Patrik's request): drawn on
+    // the screen AFTER the composite, so it never enters the feedback loop and
+    // never distorts — content moves, the grid stands still. 8x6 divisions in
+    // the 0..1 preset space + a brighter centre cross.
+    QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
+    f->glEnable(GL_BLEND);
+    f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    std::vector<float> lines;
+    const auto addLine = [&lines](float x0, float y0, float x1, float y1, float a) {
+        const float rgba[4] = {1.0f, 1.0f, 1.0f, a};
+        lines.insert(lines.end(), {x0, y0, rgba[0], rgba[1], rgba[2], rgba[3]});
+        lines.insert(lines.end(), {x1, y1, rgba[0], rgba[1], rgba[2], rgba[3]});
+    };
+
+    constexpr int kCols = 8;
+    constexpr int kRows = 6;
+    constexpr float kMinorAlpha = 0.18f;
+    constexpr float kCenterAlpha = 0.45f;
+    for (int i = 0; i <= kCols; ++i)
+    {
+        const float x = -1.0f + 2.0f * static_cast<float>(i) / kCols;
+        addLine(x, -1.0f, x, 1.0f, (i * 2 == kCols) ? kCenterAlpha : kMinorAlpha);
+    }
+    for (int j = 0; j <= kRows; ++j)
+    {
+        const float y = -1.0f + 2.0f * static_cast<float>(j) / kRows;
+        addLine(-1.0f, y, 1.0f, y, (j * 2 == kRows) ? kCenterAlpha : kMinorAlpha);
+    }
+
+    drawColorQuads(lines.data(), static_cast<int>(lines.size() / 6), GL_LINES);
     f->glDisable(GL_BLEND);
 }
 
@@ -2018,6 +2396,18 @@ std::vector<ModuleParamDesc> MilkdropVisualizer::paramDescs() const
     meshY.order = 1;
     descs.push_back(meshY);
 
+    ModuleParamDesc grid;
+    grid.id = "render.debugGrid";
+    grid.displayName = "Kalibrier-Raster";
+    grid.group = "Debug";
+    grid.tooltip = "Referenz-Raster (8x6 + Mittelkreuz) als Overlay ueber dem Bild — "
+                   "fuer Sichttests/Kalibrierung; geht NICHT in den Feedback-Loop ein";
+    grid.stage = PipelineStage::Render;
+    grid.type = ParamType::Bool;
+    grid.defaultValue = false;
+    grid.order = 2;
+    descs.push_back(grid);
+
     return descs;
 }
 
@@ -2033,11 +2423,23 @@ bool MilkdropVisualizer::getParam(const std::string& id, ParamValue& out) const
         out = m_meshY;
         return true;
     }
+    if (id == "render.debugGrid")
+    {
+        out = m_debugGrid;
+        return true;
+    }
     return false;
 }
 
 bool MilkdropVisualizer::setParam(const std::string& id, const ParamValue& value)
 {
+    if (id == "render.debugGrid")
+    {
+        const bool* asBool = std::get_if<bool>(&value);
+        if (asBool == nullptr) return false;
+        m_debugGrid = *asBool;
+        return true;
+    }
     const int* asInt = std::get_if<int>(&value);
     if (asInt == nullptr) return false;
     if (id == "render.meshX")
@@ -2057,4 +2459,5 @@ void MilkdropVisualizer::resetToDefaults()
 {
     m_meshX = kDefaultMeshX;
     m_meshY = kDefaultMeshY;
+    m_debugGrid = false;
 }

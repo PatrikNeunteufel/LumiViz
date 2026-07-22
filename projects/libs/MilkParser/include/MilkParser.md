@@ -1,11 +1,11 @@
 # MilkParser — .milk-Preset-Parser (Import-Zeit)
 
-> **Version:** 1.0.0  
+> **Version:** 1.2.0  
 > **Datum:** 2026-07-22  
 > **Typ:** CppModuleDoc  
-> **Status:** Implementiert (Import-Phase Roadmap 6, M1 — Text → Struktur)  
+> **Status:** Implementiert (Import-Phase Roadmap 6, M1 — Text → Struktur; M5 — Shader-Klassifikation)  
 > **Modul:** lumi::milk (Lib **MilkParser**, header-only INTERFACE)  
-> **Dateien:** MilkParser.hpp (API), MilkParserTypes.hpp  
+> **Dateien:** MilkParser.hpp (API), MilkParserTypes.hpp, MilkShaderClassifier.hpp (M5)  
 > **Namespace:** lumi::milk (detail: lumi::milk::detail)  
 > **Abhängigkeiten:** keine (kein Qt, keine App-Teile) — Code-Blöcke bleiben Quelltext (Milk-EEL/HLSL), Transpilation macht [EelTranspiler](../../EelTranspiler/include/EelTranspiler.md)  
 > **Zielgruppe:** Entwickler  
@@ -154,3 +154,4 @@ einer handgeschriebenen Datei.
 |---|---|---|
 | 1.0.0 | 2026-07-22 | Erstfassung (Session 39, M1): key=value-Parser, Code-Familien mit Lücken-Abbruch, Backtick-Shader, MD3-Superset (16 Waves/Shapes, Sprites, PSVERSION-Header), Import-Report; Korpus 910/910 |
 | 1.1.0 | 2026-07-22 | Inline-Kommentar-Stripping (`//`+`\\` bis Original-Zeilenende, state.cpp:1525-treu) vor der Konkatenation — behebt 18 Milkdrop3-Presets, deren Rest-Code vom Kommentar geschluckt wurde (Session 39, M3-Diagnose) |
+| 1.2.0 | 2026-07-22 | **MilkShaderClassifier.hpp** (Session 40, M5 Stufe B): klassifiziert warp/comp-HLSL als None/Md1Default/Md1Plus/Custom — generierte Default-Familie (GenWarp/GenCompPShaderText, plugin.cpp:8782-8847) + lineare Extras als affines Modell `gain·Basis + Σ Bn·blurN` mit eingebackenen Echo/Gamma/Hue/Filter-Konstanten; whitespace-insensitives Matching, Feature-Flags (Blur/Noise/Texturen/rand, präfix-bewusst); Korpus-Gate 910 in `test_MilkShaderClassifier.cpp` |

@@ -14,7 +14,11 @@
  * center, MD1 composite (video echo + gamma + brighten/darken/solarize/invert).
  * M4: custom waves + shapes (init/per_frame/per_point with t1-t8 snapshots,
  * up to 16 each — MD3 superset) and motion vectors (reverse propagation
- * through the warp mesh). Blur/shader patterns follow in M5.
+ * through the warp mesh).
+ * M5: blur pyramid (3 levels x H+V passes over 6 downsampled textures, ref
+ * BlurPasses) + shader stage B — Md1Default/Md1Plus classified shaders render
+ * exactly via baked constants (decay/echo/gamma/filters + linear blur mixes);
+ * Custom shaders keep the live MD1 fallback (import report says so).
  *
  * Y convention (§2.1): ONE internal math space, no per-draw flips — the single
  * vertical flip happens at the composite (presentation) pass.
@@ -119,6 +123,9 @@ private:
         double ibSize = 0.01, ibR = 0.25, ibG = 0.25, ibB = 0.25, ibA = 0;
         double mvX = 12.0, mvY = 9.0, mvDX = 0.0, mvDY = 0.0, mvL = 0.9;
         double mvR = 1.0, mvG = 1.0, mvB = 1.0, mvA = 1.0;
+        std::array<double, 3> blurMin{0.0, 0.0, 0.0};   ///< blurN_min (per-frame vars)
+        std::array<double, 3> blurMax{1.0, 1.0, 1.0};
+        double blurEdgeDarken = 0.25;
     };
 
     /// One custom wave/shape at runtime: definition + its own script host
@@ -147,6 +154,12 @@ private:
     // --- render passes (render thread, context current) ---------------------------------
     bool ensureGlResources();
     void releaseGlResources();
+    /// @brief Blur levels the baked composite actually samples (0 = skip passes)
+    [[nodiscard]] int activeBlurLevels() const;
+    bool ensureBlurTargets(int sourceW, int sourceH);
+    void releaseBlurTargets();
+    /// @brief H+V blur chain over the previous frame (call BEFORE beginFrame)
+    void runBlurPasses(const FrameVars& fv);
     void computeWarpMesh(const FrameVars& fv);
     void drawWarpPass(const FrameVars& fv);
     void drawMotionVectors(const FrameVars& fv);
@@ -156,6 +169,9 @@ private:
     void drawBorders(const FrameVars& fv);
     void drawDarkenCenter();
     void compositeToScreen(const FrameVars& fv);
+    /// Calibration grid overlay on the SCREEN (after composite — never enters
+    /// the feedback loop); toggled via the `render.debugGrid` parameter
+    void drawDebugGrid();
     void drawColorQuads(const float* vertexData, int vertexCount, unsigned int glMode);
 
     /// bilinear lookup in the warp-mesh UVs: where did (fx,fy) come from?
@@ -191,6 +207,14 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_textureProgram; ///< pos+uv quad × uniform color
     std::unique_ptr<QOpenGLShaderProgram> m_colorProgram;   ///< pos+rgba (borders/filters)
     std::unique_ptr<QOpenGLShaderProgram> m_shapeProgram;   ///< pos+uv+rgba (textured shapes)
+    std::unique_ptr<QOpenGLShaderProgram> m_blurHProgram;   ///< long horizontal blur pass
+    std::unique_ptr<QOpenGLShaderProgram> m_blurVProgram;   ///< short vertical + edge darken
+    std::unique_ptr<QOpenGLShaderProgram> m_blurLayerProgram; ///< composite blur term (scale+bias)
+    std::array<unsigned int, 6> m_blurTex{};                ///< 6 chain textures (raw GL ids)
+    std::array<unsigned int, 6> m_blurFbo{};
+    std::array<std::array<int, 2>, 6> m_blurSizes{};
+    int m_blurSrcW = 0;                                     ///< chain layout source size
+    int m_blurSrcH = 0;
     std::unique_ptr<QOpenGLVertexArrayObject> m_shapeVao;
     std::unique_ptr<QOpenGLBuffer> m_shapeVbo;
     std::unique_ptr<QOpenGLVertexArrayObject> m_meshVao;
@@ -203,6 +227,7 @@ private:
     // --- parameters ----------------------------------------------------------------------
     int m_meshX = kDefaultMeshX;
     int m_meshY = kDefaultMeshY;
+    bool m_debugGrid = false;   ///< calibration grid overlay (Config panel toggle)
 
     // aspect factors of the internal surface (plugin.cpp:2035)
     double m_aspectX = 1.0, m_aspectY = 1.0;

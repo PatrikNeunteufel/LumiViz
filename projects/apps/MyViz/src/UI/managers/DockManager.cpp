@@ -183,7 +183,13 @@ DockManager::DockManager(ServiceContainer& services, QMainWindow* pMainWindow)
     // destructor is called, making it impossible to save state there.
     
     connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
-        BasicLogger::logDebug("aboutToQuit - saving layout");
+        BasicLogger::logDebug("aboutToQuit - saving layout + panel states");
+        // Panel states (e.g. Import Browser folder, playlist) — the panels are
+        // still alive here; nothing else calls PanelManager::saveState().
+        if (m_impl->pPanelManager != nullptr)
+        {
+            m_impl->pPanelManager->saveState();
+        }
         saveLayoutToSettings();
     });
 }
