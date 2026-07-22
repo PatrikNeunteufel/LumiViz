@@ -118,6 +118,10 @@ struct SuperscopePoint
     float b = 1.0f;         ///< Blue (0 to 1)
     float a = 1.0f;         ///< Alpha (0 to 1)
     bool skip = false;      ///< Skip this point (break line)
+    /// Per-point drawmode (r_sscope EEL var, only meaningful when the point
+    /// code mentions `drawmode`): true = line segment to this point, false =
+    /// dot. Hosts without per-point support ignore it.
+    bool drawLines = true;
 };
 
 // =============================================================================
@@ -212,7 +216,9 @@ public:
     void setRenderMode(SuperscopeRenderMode mode) { m_renderMode = mode; }
     [[nodiscard]] SuperscopeRenderMode renderMode() const { return m_renderMode; }
 
-    void setLineWidth(float width) { m_lineWidth = std::clamp(width, 1.0f, 20.0f); }
+    // AVS line() clamps linesize to 1..255 (linedraw.cpp:46-47); presets set it
+    // via Set Render Mode width (e.g. wormhole = 255 for wall-thick "bar" scopes).
+    void setLineWidth(float width) { m_lineWidth = std::clamp(width, 1.0f, 255.0f); }
     [[nodiscard]] float lineWidth() const { return m_lineWidth; }
 
     void setDotSize(float size) { m_dotSize = std::clamp(size, 1.0f, 50.0f); }
@@ -226,10 +232,13 @@ public:
     /// then applies the script value instead of the UI parameter.
     [[nodiscard]] bool scriptDrawModeActive() const { return m_scriptSetsDrawMode; }
     [[nodiscard]] bool scriptWantsLines() const { return m_scriptDrawMode >= 0.00001; }
+    /// True when the POINT code itself switches drawmode — the host must then
+    /// split the point list into per-mode runs (SuperscopePoint::drawLines).
+    [[nodiscard]] bool pointDrawModeActive() const { return m_scriptSetsDrawModePoint; }
     [[nodiscard]] bool scriptLineSizeActive() const { return m_scriptSetsLineSize; }
     [[nodiscard]] float scriptLineSize() const
     {
-        return std::clamp(static_cast<float>(m_scriptLineSize), 1.0f, 20.0f);
+        return std::clamp(static_cast<float>(m_scriptLineSize), 1.0f, 255.0f);
     }
 
     // =========================================================================
@@ -416,6 +425,7 @@ private:
 
     // Scripted drawmode/linesize (r_sscope EEL vars, frame-level readback)
     bool m_scriptSetsDrawMode = false;
+    bool m_scriptSetsDrawModePoint = false;  ///< point code switches drawmode
     bool m_scriptSetsLineSize = false;
     double m_scriptDrawMode = 0.0;
     double m_scriptLineSize = 1.0;

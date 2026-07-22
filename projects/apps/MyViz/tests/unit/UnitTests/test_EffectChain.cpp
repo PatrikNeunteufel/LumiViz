@@ -421,7 +421,7 @@ TEST_SUITE("EffectChain")
         CHECK(s.pointCount == 4096);
         CHECK(s.renderMode == 2);
         CHECK(s.audioChannel == 4);
-        CHECK(s.lineWidth == doctest::Approx(20.0f));
+        CHECK(s.lineWidth == doctest::Approx(100.0f));  // clamp jetzt 1..255 (AVS linesize)
         CHECK(s.dotSize == doctest::Approx(1.0f));
     }
 

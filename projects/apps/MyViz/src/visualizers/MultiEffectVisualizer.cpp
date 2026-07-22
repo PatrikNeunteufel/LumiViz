@@ -265,29 +265,38 @@ void main()
 
 // r_dmove.cpp LOOPS: with `blend` the moved pixel is mixed onto the ORIGINAL
 // image by the script's per-cell alpha (BLEND_ADJ(moved, orig, a)); `nomove`
-// skips the displacement and fades the original by alpha (no buffern source
-// wired yet -> BLEND_ADJ(0, orig, a) = orig*(1-a)). Without blend the alpha
-// output is ignored, exactly like the original.
+// skips the displacement and alpha-blends the SOURCE at the same position
+// (framebuffer source -> BLEND_ADJ(0, orig, a) = fade to black). The source
+// image is uSrcTex: the current frame, or a global buffer when `buffern` is
+// set. Without blend the alpha output is ignored, exactly like the original.
 const char* kWarpFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
 in vec2 vOrigTex;
 in float vAlpha;
-uniform sampler2D uTex;
+uniform sampler2D uTex;     // current frame (blend target / "orig")
+uniform sampler2D uSrcTex;  // warp source (frame or global buffer)
 uniform bool uWrap;
 uniform bool uBlend;
 uniform bool uNomove;
+uniform bool uBufSrc;       // uSrcTex is a global buffer (nomove semantics)
 out vec4 fragColor;
 void main()
 {
     vec2 uv = uWrap ? fract(vTex) : clamp(vTex, 0.0, 1.0);
     float a = clamp(vAlpha, 0.0, 1.0);
     vec3 orig = texture(uTex, vOrigTex).rgb;
-    vec3 moved = texture(uTex, uv).rgb;
     vec3 c;
-    if (uNomove)      c = orig * (1.0 - a);
-    else if (uBlend)  c = mix(orig, moved, a);
-    else              c = moved;
+    if (uNomove)
+    {
+        c = uBufSrc ? mix(orig, texture(uSrcTex, vOrigTex).rgb, a)
+                    : orig * (1.0 - a);
+    }
+    else
+    {
+        vec3 moved = texture(uSrcTex, uv).rgb;
+        c = uBlend ? mix(orig, moved, a) : moved;
+    }
     fragColor = vec4(c, 1.0);
 }
 )";
@@ -2520,10 +2529,127 @@ void MultiEffectVisualizer::runMovement(const ChainNode& node,
         rt.gridCompiled = combined;
     }
     rt.grid->setRectCoords(params.rectCoords);
+
+    // sourcemapped runtime state (r_trans: bit1 toggles bit0 on every beat).
+    if (rt.moveSourceMapped < 0) rt.moveSourceMapped = params.sourceMapped & 3;
+    if ((rt.moveSourceMapped & 2) != 0 && m_frameBeat) rt.moveSourceMapped ^= 1;
+
+    GridWarpOptions opt;
+    opt.wrap = params.wrap;
     // r_trans `blend` = 50/50 of moved and original; the warp path realizes it
     // via the alpha default 0.5 (no script sets alpha in Movement code).
-    applyGridWarp(rt, kXres, kYres, params.wrap, params.blend, false,
-                  /*staticField=*/true);
+    opt.blend = params.blend;
+    opt.staticField = true;
+    opt.subpixel = params.subpixel;
+
+    if ((rt.moveSourceMapped & 1) != 0)
+    {
+        applyGridScatter(rt, kXres, kYres, opt);
+        return;
+    }
+    applyGridWarp(rt, kXres, kYres, opt);
+}
+
+void MultiEffectVisualizer::applyGridScatter(LeafRuntime& rt, int xres, int yres,
+                                             const GridWarpOptions& opt)
+{
+    // r_trans "source mapped" (r_trans.cpp:543-600): every SOURCE pixel is
+    // pushed to its warp target and MAX-blended (BLEND_MAX) onto black — or
+    // onto a copy of the frame when `blend` is set. GPU approximation: the
+    // warp mesh is drawn with swapped roles (vertex position = warp target,
+    // texcoord = source position) under GL_MAX blending; stretched triangles
+    // fill where the original scatter would leave gaps (sight-calibrate).
+    if (rt.grid == nullptr || xres < 2 || yres < 2) return;
+    const bool needExecute = rt.grid->field().empty() ||
+                             rt.gridFieldW != m_surfaceWidth ||
+                             rt.gridFieldH != m_surfaceHeight;
+    if (needExecute)
+    {
+        rt.grid->execute(static_cast<float>(m_surfaceWidth),
+                         static_cast<float>(m_surfaceHeight), m_frameBeat,
+                         m_deltaTime);
+        rt.gridFieldW = m_surfaceWidth;
+        rt.gridFieldH = m_surfaceHeight;
+    }
+    const auto& field = rt.grid->field();
+    if (static_cast<int>(field.size()) < xres * yres) return;
+
+    // Inverse mesh: position = clamped warp target, texcoord = source cell.
+    m_warpVertices.clear();
+    m_warpVertices.reserve(static_cast<size_t>(xres - 1) * (yres - 1) * 6 * 5);
+    auto pushVertex = [&](int gx, int gy) {
+        const float sx = static_cast<float>(gx) / (xres - 1);
+        const float sy = static_cast<float>(gy) / (yres - 1);
+        const auto& n = field[static_cast<size_t>(gy) * xres + gx];
+        m_warpVertices.push_back(std::clamp(n.u, -1.0f, 1.0f));
+        m_warpVertices.push_back(std::clamp(n.v, -1.0f, 1.0f));
+        m_warpVertices.push_back(sx);
+        m_warpVertices.push_back(sy);
+        m_warpVertices.push_back(1.0f);
+    };
+    for (int gy = 0; gy < yres - 1; ++gy)
+    {
+        for (int gx = 0; gx < xres - 1; ++gx)
+        {
+            pushVertex(gx, gy);     pushVertex(gx + 1, gy);   pushVertex(gx, gy + 1);
+            pushVertex(gx, gy + 1); pushVertex(gx + 1, gy);   pushVertex(gx + 1, gy + 1);
+        }
+    }
+
+    auto* f = QOpenGLContext::currentContext()->functions();
+    SurfacePair& pair = active();
+    pair.current()->release();
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+
+    if (opt.blend)
+    {
+        // Base = copy of the frame (r_trans memcpy), scatter maxes on top.
+        auto* extra = QOpenGLContext::currentContext()->extraFunctions();
+        extra->glBindFramebuffer(GL_READ_FRAMEBUFFER, pair.current()->handle());
+        extra->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, pair.partner()->handle());
+        extra->glBlitFramebuffer(0, 0, m_surfaceWidth, m_surfaceHeight, 0, 0,
+                                 m_surfaceWidth, m_surfaceHeight,
+                                 GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        extra->glBindFramebuffer(GL_FRAMEBUFFER, pair.partner()->handle());
+    }
+    else
+    {
+        f->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        f->glClear(GL_COLOR_BUFFER_BIT);
+    }
+
+    f->glEnable(GL_BLEND);
+    f->glBlendEquation(GL_MAX);
+    f->glBlendFunc(GL_ONE, GL_ONE);
+
+    m_warpShader->bind();
+    m_warpShader->setUniformValue("uWrap", false);
+    m_warpShader->setUniformValue("uBlend", false);
+    m_warpShader->setUniformValue("uNomove", false);
+    m_warpShader->setUniformValue("uBufSrc", false);
+    m_warpVao->bind();
+    m_warpVbo->bind();
+    m_warpVbo->allocate(m_warpVertices.data(),
+                        static_cast<int>(m_warpVertices.size() * sizeof(float)));
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    m_warpShader->setUniformValue("uTex", 0);
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    m_warpShader->setUniformValue("uSrcTex", 1);
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(m_warpVertices.size() / 5));
+    m_warpVbo->release();
+    m_warpVao->release();
+    m_warpShader->release();
+
+    f->glBlendEquation(GL_FUNC_ADD);
+    f->glDisable(GL_BLEND);
+
+    pair.partner()->release();
+    pair.swap();
+    bindActive();
 }
 
 void MultiEffectVisualizer::runDynamicMovement(const ChainNode& node,
@@ -2546,19 +2672,32 @@ void MultiEffectVisualizer::runDynamicMovement(const ChainNode& node,
         rt.gridCompiled = combined;
     }
     rt.grid->setRectCoords(params.rectCoords);
-    applyGridWarp(rt, params.xres, params.yres, params.wrap, params.blend,
-                  params.nomove);
+
+    GridWarpOptions opt;
+    opt.wrap = params.wrap;
+    opt.blend = params.blend;
+    opt.nomove = params.nomove;
+    opt.subpixel = params.subpixel;
+    if (params.buffern > 0)
+    {
+        // r_dmove.cpp:289-290: source is a global buffer; when it does not
+        // exist (nothing saved yet) the effect is a plain passthrough.
+        QOpenGLFramebufferObject* pool = m_bufferPool.get(
+            params.buffern - 1, m_surfaceWidth, m_surfaceHeight, false);
+        if (pool == nullptr) return;
+        opt.srcTexture = pool->texture();
+    }
+    applyGridWarp(rt, params.xres, params.yres, opt);
 }
 
 void MultiEffectVisualizer::applyGridWarp(LeafRuntime& rt, int xres, int yres,
-                                          bool wrap, bool blend, bool nomove,
-                                          bool staticField)
+                                          const GridWarpOptions& opt)
 {
     if (rt.grid == nullptr || xres < 2 || yres < 2) return;
 
     // Static fields (Movement) are evaluated once per compile/resize; dynamic
     // ones (Dynamic Movement) run their frame/beat/point scripts every frame.
-    const bool needExecute = !staticField || rt.grid->field().empty() ||
+    const bool needExecute = !opt.staticField || rt.grid->field().empty() ||
                              rt.gridFieldW != m_surfaceWidth ||
                              rt.gridFieldH != m_surfaceHeight;
     if (needExecute)
@@ -2615,10 +2754,15 @@ void MultiEffectVisualizer::applyGridWarp(LeafRuntime& rt, int xres, int yres,
     f->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     f->glClear(GL_COLOR_BUFFER_BIT);
 
+    // Warp source: the current frame or a global buffer (r_dmove buffern).
+    const unsigned int srcTex =
+        opt.srcTexture != 0 ? opt.srcTexture : pair.current()->texture();
+
     m_warpShader->bind();
-    m_warpShader->setUniformValue("uWrap", wrap);
-    m_warpShader->setUniformValue("uBlend", blend);
-    m_warpShader->setUniformValue("uNomove", nomove);
+    m_warpShader->setUniformValue("uWrap", opt.wrap);
+    m_warpShader->setUniformValue("uBlend", opt.blend);
+    m_warpShader->setUniformValue("uNomove", opt.nomove);
+    m_warpShader->setUniformValue("uBufSrc", opt.srcTexture != 0);
     m_warpVao->bind();
     m_warpVbo->bind();
     m_warpVbo->allocate(m_warpVertices.data(),
@@ -2626,7 +2770,24 @@ void MultiEffectVisualizer::applyGridWarp(LeafRuntime& rt, int xres, int yres,
     f->glActiveTexture(GL_TEXTURE0);
     f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
     m_warpShader->setUniformValue("uTex", 0);
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, srcTex);
+    // subpixel off = nearest sampling of the warp source (r_dmove/r_trans
+    // toggle); restored to linear right after the draw.
+    const GLint filter = opt.subpixel ? GL_LINEAR : GL_NEAREST;
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+    m_warpShader->setUniformValue("uSrcTex", 1);
+    f->glActiveTexture(GL_TEXTURE0);
     f->glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(m_warpVertices.size() / 5));
+    if (!opt.subpixel)
+    {
+        f->glActiveTexture(GL_TEXTURE1);
+        f->glBindTexture(GL_TEXTURE_2D, srcTex);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        f->glActiveTexture(GL_TEXTURE0);
+    }
     m_warpVbo->release();
     m_warpVao->release();
     m_warpShader->release();
@@ -2874,7 +3035,39 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     if (rt.scope->scriptLineSizeActive()) rp.lineWidth = rt.scope->scriptLineSize();
     rp.dotSize = params.dotSize;
     rp.glowEnabled = false;
-    m_scopeRenderer.draw(points, rp);
+
+    if (rt.scope->pointDrawModeActive())
+    {
+        // Point code switches drawmode mid-scope (r_sscope): split into runs
+        // of equal mode. A lines-run includes the previous point so the
+        // connecting segment is kept.
+        size_t start = 0;
+        while (start < points.size())
+        {
+            size_t end = start + 1;
+            while (end < points.size() &&
+                   points[end].drawLines == points[start].drawLines)
+            {
+                ++end;
+            }
+            std::vector<lumi::modules::SuperscopePoint> run;
+            if (points[start].drawLines && start > 0)
+            {
+                run.push_back(points[start - 1]);
+            }
+            run.insert(run.end(), points.begin() + static_cast<long long>(start),
+                       points.begin() + static_cast<long long>(end));
+            rp.mode = points[start].drawLines
+                          ? lumi::modules::SuperscopeRenderMode::Lines
+                          : lumi::modules::SuperscopeRenderMode::Dots;
+            m_scopeRenderer.draw(run, rp);
+            start = end;
+        }
+    }
+    else
+    {
+        m_scopeRenderer.draw(points, rp);
+    }
     f->glDisable(GL_BLEND);
 }
 
@@ -3451,14 +3644,40 @@ void MultiEffectVisualizer::runBassSpin(const ChainNode& node,
 }
 
 bool MultiEffectVisualizer::ensureEmbeddedTexture(LeafRuntime& rt,
-                                                  const std::string& imageData)
+                                                  const std::string& imageData,
+                                                  bool fallbackDot)
 {
     if (rt.picTexture != 0) return true;
-    if (imageData.empty()) return false;
     auto* f = QOpenGLContext::currentContext()->functions();
-    const QByteArray raw = QByteArray::fromBase64(QByteArray::fromStdString(imageData));
     QImage img;
-    if (!img.loadFromData(raw)) return false;
+    bool loaded = false;
+    if (!imageData.empty())
+    {
+        const QByteArray raw =
+            QByteArray::fromBase64(QByteArray::fromStdString(imageData));
+        loaded = img.loadFromData(raw);
+    }
+    if (!loaded)
+    {
+        // Texer/Texer II render their built-in default when the image is
+        // missing (Acko default texture): a small soft white dot. Picture
+        // effects keep the hard fail.
+        if (!fallbackDot) return false;
+        constexpr int kDot = 16;
+        img = QImage(kDot, kDot, QImage::Format_RGBA8888);
+        for (int y = 0; y < kDot; ++y)
+        {
+            for (int x = 0; x < kDot; ++x)
+            {
+                const float dx = (x + 0.5f) / kDot * 2.0f - 1.0f;
+                const float dy = (y + 0.5f) / kDot * 2.0f - 1.0f;
+                const float d = std::sqrt(dx * dx + dy * dy);
+                const int v = static_cast<int>(
+                    std::clamp(1.0f - d, 0.0f, 1.0f) * 255.0f);
+                img.setPixel(x, y, qRgba(v, v, v, v));
+            }
+        }
+    }
     img = img.convertToFormat(QImage::Format_RGBA8888);
     f->glGenTextures(1, &rt.picTexture);
     f->glBindTexture(GL_TEXTURE_2D, rt.picTexture);
@@ -3525,7 +3744,7 @@ void MultiEffectVisualizer::runPictureII(const ChainNode& node,
 void MultiEffectVisualizer::runTexer(const ChainNode& node, const TexerParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
-    if (!ensureEmbeddedTexture(rt, params.imageData)) return;
+    if (!ensureEmbeddedTexture(rt, params.imageData, /*fallbackDot=*/true)) return;
     const std::vector<float> wave = getWaveform();
     const int wn = static_cast<int>(wave.size());
     const int n = std::clamp(params.particles, 1, 4096);
@@ -3561,7 +3780,7 @@ void MultiEffectVisualizer::runTexer(const ChainNode& node, const TexerParams& p
 void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
-    if (!ensureEmbeddedTexture(rt, params.imageData)) return;
+    if (!ensureEmbeddedTexture(rt, params.imageData, /*fallbackDot=*/true)) return;
 
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + '\n' + params.pointCode;
@@ -5051,8 +5270,9 @@ void MultiEffectVisualizer::buildVisData()
     // a = log(x*60/255+1)/log(60). Linear FFT magnitudes are far too small in the
     // upper bands presets sample via getspec(0.5..0.8) — without this curve their
     // beat-driven motion (ti=getspec(...)) stalls near zero. kSpecGain approximates
-    // the Winamp byte scale before the curve (visual calibration point).
-    constexpr float kSpecGain = 12.0f;
+    // the Winamp byte scale before the curve (visual calibration point;
+    // 12 was "etwas zu schnell" in the Session-38 sight test -> 8).
+    constexpr float kSpecGain = 8.0f;
     auto specByte = [](const std::vector<float>& v, int i) -> unsigned char {
         if (v.empty()) return 0;
         const float s = v[static_cast<size_t>(i) * v.size() / 576];

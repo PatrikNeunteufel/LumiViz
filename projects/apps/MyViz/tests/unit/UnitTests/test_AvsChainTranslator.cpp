@@ -872,6 +872,43 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(r.adjustAlpha == 255);                   // geklammert
     }
 
+    TEST_CASE("Dynamic Movement: xres+1-Semantik + subpixel/buffern (Session 38 R2)")
+    {
+        EffectNode dm = builtin(43);
+        // r_dmove wertet xres+1 Gitterpunkte aus; gespeicherte 0 = 2er-Gitter.
+        dm.fields = {{"subpixel", 0}, {"rectcoords", 1}, {"xres", 0}, {"yres", 31},
+                     {"blend", 1},    {"wrap", 1},       {"buffern", 3}, {"nomove", 0}};
+
+        const TranslationResult t = translateAvsTree(makeParsed({dm}));
+        const auto& p = std::get<DynamicMovementParams>(t.root.children[0].params);
+        CHECK(p.xres == 2);    // 0 -> 2 (nicht 16!)
+        CHECK(p.yres == 32);   // 31 -> 32
+        CHECK_FALSE(p.subpixel);
+        CHECK(p.buffern == 3);
+        CHECK(p.blend);
+        CHECK(p.wrap);
+    }
+
+    TEST_CASE("Movement: subpixel + sourcemapped-Bits gemappt")
+    {
+        EffectNode mv = builtin(15);
+        mv.code = {{"point", "d=d*1.1"}};
+        mv.fields = {{"effect", 32767}, {"blend", 0}, {"sourcemapped", 3},
+                     {"rectangular", 0}, {"subpixel", 0}, {"wrap", 0}};
+
+        const TranslationResult t = translateAvsTree(makeParsed({mv}));
+        const auto& p = std::get<MovementParams>(t.root.children[0].params);
+        CHECK(p.sourceMapped == 3);
+        CHECK_FALSE(p.subpixel);
+    }
+
+    TEST_CASE("SuperScope-Import: Line-Blend-Default ist Replace (AVS g_line_blend_mode)")
+    {
+        const TranslationResult t = translateAvsTree(makeParsed({builtin(36)}));
+        const auto& p = std::get<SuperScopeParams>(t.root.children[0].params);
+        CHECK(p.lineBlend == 0);
+    }
+
     TEST_CASE("Clear Screen (id 25): blend/blendavg -> Modus (r_clear-Vorrang)")
     {
         EffectNode line = builtin(25);

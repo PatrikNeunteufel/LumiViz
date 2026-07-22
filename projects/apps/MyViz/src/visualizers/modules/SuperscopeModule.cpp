@@ -171,6 +171,7 @@ void SuperscopeModule::initializeLuaScripts()
                m_script->sourceMentions(Slot::Point, word);
     };
     m_scriptSetsDrawMode = mentionsAny("drawmode");
+    m_scriptSetsDrawModePoint = m_script->sourceMentions(Slot::Point, "drawmode");
     m_scriptSetsLineSize = mentionsAny("linesize");
 
     if (m_script->has(Slot::Init) && !m_script->run(Slot::Init) &&
@@ -697,6 +698,13 @@ SuperscopePoint SuperscopeModule::executePointLua(float i, float v)
     pt.b = std::clamp(static_cast<float>(engine.number("blue")), 0.0f, 1.0f);
     pt.a = 1.0f;
 
+    // Per-point drawmode (r_sscope: the point code may switch line/dot mode
+    // mid-scope); persistent EEL var, read after every point execution.
+    if (m_scriptSetsDrawModePoint)
+    {
+        pt.drawLines = engine.number("drawmode") >= 0.00001;
+    }
+
     return pt;
 }
 
@@ -1086,7 +1094,7 @@ std::vector<ModuleParamDesc> SuperscopeModule::paramDescs(const std::string& pre
         p.displayName = "Line Width";
         p.type = ParamType::Float;
         p.minValue = 1.0f;
-        p.maxValue = 20.0f;
+        p.maxValue = 255.0f;  // AVS linesize range (Set Render Mode width)
         p.defaultValue = m_lineWidth;
         p.subGroup = "Render";
         p.order = order++;

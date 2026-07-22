@@ -190,6 +190,9 @@ private:
         std::string gridCompiled;
         int gridFieldW = 0;  ///< surface size the static field was computed for
         int gridFieldH = 0;
+        /// Movement sourcemapped runtime bits (r_trans member state; bit1
+        /// toggles bit0 on every beat); -1 = seed from params on first frame
+        int moveSourceMapped = -1;
 
         // SuperScope: scripted point generator (drawn via the shared renderer)
         std::unique_ptr<lumi::modules::SuperscopeModule> scope;
@@ -402,7 +405,8 @@ private:
     void runTriangle(const lumi::multieffect::ChainNode& node,
                      const lumi::multieffect::TriangleParams& params);
     /// Decode the base64 image into rt.picTexture once; true when ready.
-    bool ensureEmbeddedTexture(LeafRuntime& rt, const std::string& imageData);
+    bool ensureEmbeddedTexture(LeafRuntime& rt, const std::string& imageData,
+                               bool fallbackDot = false);
     /// Draw an embedded (base64) image over the frame, blended.
     void drawEmbeddedImage(LeafRuntime& rt, const std::string& imageData, int blend,
                            bool keepAspect);
@@ -411,9 +415,20 @@ private:
     void runDynamicMovement(const lumi::multieffect::ChainNode& node,
                             const lumi::multieffect::DynamicMovementParams& params);
     /** Shared grid-warp: run the module, build the mesh, sample current→partner. */
-    void applyGridWarp(LeafRuntime& rt, int xres, int yres, bool wrap,
-                       bool blend = false, bool nomove = false,
-                       bool staticField = false);
+    /// Options for applyGridWarp beyond the mandatory grid geometry.
+    struct GridWarpOptions
+    {
+        bool wrap = false;
+        bool blend = false;        ///< alpha-mix moved pixel onto the original
+        bool nomove = false;       ///< no displacement, alpha-blend source only
+        bool staticField = false;  ///< evaluate the field only on compile/resize
+        bool subpixel = true;      ///< bilinear (on) vs nearest (off) sampling
+        unsigned int srcTexture = 0;  ///< warp source; 0 = current frame
+    };
+    void applyGridWarp(LeafRuntime& rt, int xres, int yres,
+                       const GridWarpOptions& opt);
+    void applyGridScatter(LeafRuntime& rt, int xres, int yres,
+                          const GridWarpOptions& opt);
     void runBlitterFeedback(const lumi::multieffect::BlitterFeedbackParams& params);
     void runRotoBlitter(const lumi::multieffect::ChainNode& node,
                         const lumi::multieffect::RotoBlitterParams& params);
@@ -590,7 +605,9 @@ private:
     {
         bool set = false;    ///< a Set Render Mode node applied this frame
         int lineWidth = 1;   ///< line width for following scopes (px)
-        int lineBlend = 1;   ///< 0 replace, 1 additive, 2 50/50
+        /// 0 replace, 1 additive, 2 50/50 — AVS' g_line_blend_mode starts as
+        /// REPLACE; additive only when a Set Render Mode node switches it.
+        int lineBlend = 0;
         int alpha = 128;     ///< Adjustable-blend alpha 0..255
     };
     RenderMode m_renderMode;

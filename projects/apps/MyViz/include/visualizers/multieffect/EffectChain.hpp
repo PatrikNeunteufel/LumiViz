@@ -389,6 +389,10 @@ struct MovementParams
     bool rectCoords = false;  ///< true = x/y, false (AVS default) = polar d/r
     bool wrap = false;        ///< wrap sampling coordinates instead of clamp
     bool blend = false;       ///< 50/50 blend of moved pixel with original (r_trans)
+    bool subpixel = true;     ///< bilinear (on) vs nearest (off) source sampling
+    /// r_trans sourcemapped bits: 1 = scatter-write (source pixel is PUSHED to
+    /// its target, MAX-blended), 2 = toggle bit 1 on every beat
+    int sourceMapped = 0;
 };
 
 /**
@@ -409,6 +413,10 @@ struct DynamicMovementParams
     /// script's per-cell alpha; `nomove` skips displacement and only alpha-fades.
     bool blend = false;
     bool nomove = false;
+    bool subpixel = true;  ///< bilinear (on) vs nearest (off) source sampling
+    /// Source image: 0 = current frame, 1..8 = global buffer (r_dmove fbin;
+    /// missing buffer -> effect is a passthrough, r_dmove.cpp:290)
+    int buffern = 0;
 };
 
 /**
@@ -1442,6 +1450,11 @@ inline void compileNode(ChainNode& node, const std::string& path,
     {
         dmove->xres = std::clamp(dmove->xres, 2, 96);
         dmove->yres = std::clamp(dmove->yres, 2, 72);
+        dmove->buffern = std::clamp(dmove->buffern, 0, 8);
+    }
+    if (auto* move = std::get_if<MovementParams>(&node.params))
+    {
+        move->sourceMapped = std::clamp(move->sourceMapped, 0, 3);
     }
     if (auto* fw = std::get_if<FyrewurXParams>(&node.params))
     {
@@ -1462,7 +1475,7 @@ inline void compileNode(ChainNode& node, const std::string& path,
         scope->pointCount = std::clamp(scope->pointCount, 1, 4096);
         scope->renderMode = std::clamp(scope->renderMode, 0, 2);
         scope->audioChannel = std::clamp(scope->audioChannel, 0, 4);
-        scope->lineWidth = std::clamp(scope->lineWidth, 1.0f, 20.0f);
+        scope->lineWidth = std::clamp(scope->lineWidth, 1.0f, 255.0f);
         scope->dotSize = std::clamp(scope->dotSize, 1.0f, 50.0f);
         scope->lineBlend = std::clamp(scope->lineBlend, 0, 2);
     }

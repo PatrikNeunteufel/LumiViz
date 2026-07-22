@@ -486,6 +486,8 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             }
             p.wrap = src.field("wrap") != 0;
             p.blend = src.field("blend") != 0;
+            p.subpixel = src.field("subpixel") != 0;
+            p.sourceMapped = src.field("sourcemapped") & 3;
             out.params = std::move(p);
             return true;
         }
@@ -661,12 +663,16 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.frameCode = slotStr(src, "frame");
             p.beatCode = slotStr(src, "beat");
             p.pointCode = slotStr(src, "point");
-            p.xres = src.field("xres") > 0 ? src.field("xres") : 16;
-            p.yres = src.field("yres") > 0 ? src.field("yres") : 12;
+            // r_dmove evaluates xres+1 grid points, min 2 (r_dmove.cpp:232-238):
+            // a stored 0 legitimately means a 2-point (near-linear) grid.
+            p.xres = std::clamp(src.field("xres") + 1, 2, 96);
+            p.yres = std::clamp(src.field("yres") + 1, 2, 72);
             p.rectCoords = src.field("rectcoords") != 0;
             p.wrap = src.field("wrap") != 0;
             p.blend = src.field("blend") != 0;
             p.nomove = src.field("nomove") != 0;
+            p.subpixel = src.field("subpixel") != 0;
+            p.buffern = std::clamp(src.field("buffern"), 0, 8);
             out.params = std::move(p);
             return true;
         }
@@ -904,6 +910,9 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
                 p.colors.push_back(avsColor(static_cast<std::int32_t>(c)));
             if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
             p.colorBlend = 1;  // table mode (frame-constant base, AVS-faithful)
+            // AVS default line blend is REPLACE (g_line_blend_mode starts 0) —
+            // additive only when a Set Render Mode node says so.
+            p.lineBlend = 0;
             // Line width/blend now come from a live Set Render Mode node at render
             // time (host render mode), not baked here.
             out.params = std::move(p);

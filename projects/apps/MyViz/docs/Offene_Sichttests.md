@@ -116,3 +116,28 @@ Fixplan §2 — jedes der 10 Presets sollte jetzt deutlich naeher am Original se
       Kalibrierpunkte: sparks=80, speed=0.7, gravity=0.8, life=1.6 s, dotSize=2;
       Gravitations-RICHTUNG pruefen (AVS +y = unten; ggf. Vorzeichen kippen).
 - [ ] **Listen-fake_enabled:** Presets mit "on beat render"-Listen blitzen auf Beat auf?
+
+## 8. Import-Treue Runde 2 (Session 38) — Sichttests
+
+- [ ] **05_wormhole — WEITER OFFEN (P1 naechste Session):** Tunnelform +
+      Drehen/Gegenlauf stimmen trotz buffern-Support und Line-Width-255-Fix
+      NICHT (Patrik: Original-Winamp hat die Balken sicher nicht; Stand
+      **c8d2bd2** — vor Session 38 — sah dort besser aus). Verifiziert sauber:
+      DM-Flag-Bytes (blend=1/buffern=1, byteperfekt), Buffer-Index-Match,
+      g_blendtable linear, load_string-Laengen. ➜ **Faktoren-Bisektion** der
+      Session-38-Aenderungen gegen c8d2bd2 (Kandidaten: DM-alpha/blend-
+      Aktivierung, buffern-Pfad, Beat/kSpecGain-Tempo, xres+1-Gitter,
+      Line-Width 255, Mirror-Smooth, Buffer-Save-Blend/Save-Pfad).
+- [ ] **kSpecGain = 8** (war 12, "etwas zu schnell"): Tempo erneut bewerten.
+- [ ] **Community Picks:** alien intercourse 4 + el-vis golden + Alienated
+      zeigen Inhalt (buffern-Pfad)? Helium zeigt Punkt-Sprites (Texer-II-
+      Fallback)? Data flow / Ex Deux Geometrie besser (xres+1)?
+- [ ] **Vollflaechen weg?** Geometric Sustinance (orange) / Alienated (gelb) —
+      Line-Blend-Default ist jetzt Replace; wenn noch zu hell: naechster
+      Verdacht Unique-Tone-invert-Pfad.
+- [ ] **sourcemapped:** 037b/037c/113/Tuggummi "Let me out!" — Scatter-Look
+      (Luecken werden von der GPU-Naeherung gefuellt; bewerten ob ok).
+- [ ] **subpixel aus:** harte Pixel-Kanten sichtbar wo gewollt (z.B. alien
+      intercourse DM subpixel=0)?
+- [ ] **Pro-Punkt-drawmode:** kein Regress bei normalen Scopes (Split-Pfad
+      greift nur, wenn der Point-Code drawmode setzt).

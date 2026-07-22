@@ -136,10 +136,49 @@ VS-Debug bauen:
 - **D** ✅ FyrewurX-Nachbau (`FyrewurXParams`, Beat-Bursts + Gravitation,
   additiv; Parser-Decode `enabled`+`config`; Palette „Scopes & Sources").
 
-**Bewusst offen (zur Absegnung):** DM `subpixel`-Toggle (GL immer bilinear) ·
-DM `buffern` (Quelle aus Global-Buffer) · Movement `sourcemapped`
-(Scatter-Write) · SuperScope pro-Punkt-`drawmode`. Aufwand jeweils
-mittel, Nutzung in den Korpus-Presets gering.
+**Bewusst offen (zur Absegnung):** ~~DM `subpixel` · DM `buffern` · Movement
+`sourcemapped` · SuperScope pro-Punkt-`drawmode`~~ — **alle vier am 2026-07-22
+freigegeben und in Runde 2 umgesetzt (§3c).**
+
+## 3c. Runde 2 (Session 38, nach Patriks Sichttest)
+
+**Sichttest-Feedback:** Mehrheit besser; Regression 05_wormhole (Tunnelform/
+Drehbewegung schlechter); Community Picks teils zu hell (Vollflächen orange/
+blassgelb), teils schwarz, teils „fehlt was".
+
+**Diagnose (Dump-Analyse):**
+- Wormhole-Tunnel-DM (Jheriko) hat `blend=1` + **`buffern=1`**: seit
+  DM-alpha aktiv ist, wurde mit dem FALSCHEN Quellbild geblendet (buffern
+  fehlte). Gleiches Muster in „alien intercourse 4" (Scopes rendern mit out=0
+  NUR in einen Buffer — ohne buffern bleibt das Bild schwarz), „Alienated",
+  „el-vis golden".
+- **AVS wertet `xres+1` DM-Gitterpunkte aus** (min 2): Presets mit xres=0
+  bekamen 16 statt 2 → falsche Warp-Geometrie (Alienated, Ex Deux, Data flow).
+- „Helium" schwarz: Inhalt = Texer II mit fehlendem BMP → Original zeichnet
+  seinen Default-Punkt-Sprite, LumiViz zeichnete nichts.
+- Vollflächen-Sättigung: LumiViz-Line-Blend-Default war ADDITIV; AVS'
+  `g_line_blend_mode` startet als REPLACE.
+- `&`-Operator und `$pi` (Geometric Sustinance / Data flow) sind im
+  Transpiler vorhanden — kein Befund.
+- **sourcemapped-Messung: 4 von 336 Movement-Instanzen (4 Presets, 0,65 %).**
+
+**Umgesetzt (alle, Suite 308/308 grün):**
+1. **DM `buffern`** — Warp-Quelle aus Global-Buffer (Pool-Textur an
+   `uSrcTex`); fehlender Buffer = Passthrough (r_dmove.cpp:290); `nomove`
+   blendet Buffer alpha-gesteuert ein.
+2. **DM/Movement `subpixel`** — GL_NEAREST-Sampling bei aus (nach Draw auf
+   LINEAR zurückgestellt).
+3. **DM `xres+1`-Semantik** im Translator (0 → 2, 31 → 32).
+4. **Movement `sourcemapped`** — Scatter-Approximation: inverses Warp-Mesh
+   (Position=Ziel, Texcoord=Quelle) unter GL_MAX-Blending auf Schwarz bzw.
+   Bildkopie (blend); Beat-Toggle-Bit als Runtime-Zustand. GPU-Näherung:
+   gestreckte Dreiecke füllen, wo das Original Lücken ließe (Sichttest).
+5. **SuperScope pro-Punkt-`drawmode`** — Point-Code-Readback je Punkt,
+   Host splittet in Lines-/Dots-Runs (Lines-Run behält den Anschlusspunkt).
+6. **Line-Blend-Default → REPLACE** (Host-RenderMode + Import-Scopes);
+   Set Render Mode schaltet weiterhin um.
+7. **Texer/Texer II Default-Sprite** (weicher weißer Punkt) bei fehlendem/
+   kaputtem Bild — Helium & Co. zeigen wieder Inhalt.
 
 ## 4. Verifikations-Notizen
 

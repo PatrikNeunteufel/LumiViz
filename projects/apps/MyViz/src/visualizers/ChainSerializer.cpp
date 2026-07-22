@@ -127,6 +127,8 @@ struct WriteVisitor
         o["rectCoords"] = p.rectCoords;
         o["wrap"] = p.wrap;
         o["blend"] = p.blend;
+        o["subpixel"] = p.subpixel;
+        o["sourceMapped"] = p.sourceMapped;
     }
     void operator()(const DynamicMovementParams& p) const
     {
@@ -139,6 +141,8 @@ struct WriteVisitor
         o["wrap"] = p.wrap;
         o["blend"] = p.blend;
         o["nomove"] = p.nomove;
+        o["subpixel"] = p.subpixel;
+        o["buffern"] = p.buffern;
     }
     void operator()(const BlitterFeedbackParams& p) const
     {
@@ -767,6 +771,8 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.rectCoords = getBool(o, "rectCoords", false);
         p.wrap = getBool(o, "wrap", false);
         p.blend = getBool(o, "blend", false);
+        p.subpixel = getBool(o, "subpixel", true);
+        p.sourceMapped = getInt(o, "sourceMapped", 0);
         return p;
     }
     if (type == "dynamicMovement")
@@ -782,6 +788,8 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.wrap = getBool(o, "wrap", false);
         p.blend = getBool(o, "blend", false);
         p.nomove = getBool(o, "nomove", false);
+        p.subpixel = getBool(o, "subpixel", true);
+        p.buffern = getInt(o, "buffern", 0);
         return p;
     }
     if (type == "blitterFeedback")

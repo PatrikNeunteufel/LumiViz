@@ -23,6 +23,10 @@
 #include <QAbstractItemView>
 #include <QCheckBox>
 #include <QColorDialog>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
+#include <QIcon>
 #include <QDropEvent>
 #include <QComboBox>
 #include <QDialog>
@@ -66,13 +70,16 @@ namespace {
 // The palette of effects that "Add" can insert (name -> default params). Entries
 // with make == nullptr are non-selectable category headers (grouped in the combo).
 //
-// Origin marks where a module comes from: Avs = ported from a Nullsoft AVS effect
-// (import target), Native = original LumiViz module (no AVS counterpart, e.g. the
-// Batch-H fractals + Debug Bars). Drives a combo marker now; a per-origin icon
-// slot later. Default is Avs, so only the native entries carry an explicit tag.
+// Origin marks where a module comes from: Avs = ported from a Nullsoft AVS
+// effect (import target), MilkDrop = ported from MilkDrop (Roadmap 6, none
+// yet), Native = original LumiViz module (no AVS counterpart, e.g. the Batch-H
+// fractals + Debug Bars). Shown as per-origin icon (asset/img/logo/icons);
+// falls back to a text marker when the asset folder is not found at runtime.
+// Default is Avs, so only the non-AVS entries carry an explicit tag.
 enum class Origin
 {
     Avs,
+    MilkDrop,
     Native
 };
 
@@ -84,6 +91,76 @@ struct EffectType
 
     [[nodiscard]] bool isHeader() const { return make == nullptr; }
 };
+
+// Resolve asset/img/logo/icons at runtime: the exe runs from out/build/…, so
+// walk upwards from the application dir until the icons appear (dev layout).
+// Empty result = no icons deployed -> callers fall back to text markers.
+QString originIconDir()
+{
+    static const QString kDir = [] {
+        QDir dir(QCoreApplication::applicationDirPath());
+        for (int i = 0; i < 12; ++i)
+        {
+            const QString candidate =
+                dir.filePath(QStringLiteral("asset/img/logo/icons"));
+            if (QFileInfo::exists(candidate + QStringLiteral("/lumiviz.ico")))
+                return candidate;
+            if (!dir.cdUp()) break;
+        }
+        return QString();
+    }();
+    return kDir;
+}
+
+const QIcon& originIcon(Origin origin)
+{
+    static const QIcon kAvs(originIconDir() + QStringLiteral("/avs.ico"));
+    static const QIcon kMilkDrop(originIconDir() + QStringLiteral("/milkdrop.ico"));
+    static const QIcon kNative(originIconDir() + QStringLiteral("/lumiviz.ico"));
+    switch (origin)
+    {
+        case Origin::Avs: return kAvs;
+        case Origin::MilkDrop: return kMilkDrop;
+        default: return kNative;
+    }
+}
+
+QString originText(Origin origin)
+{
+    switch (origin)
+    {
+        case Origin::Avs: return QStringLiteral("AVS");
+        case Origin::MilkDrop: return QStringLiteral("MilkDrop");
+        default: return QStringLiteral("LumiViz");
+    }
+}
+
+QString originToolTip(Origin origin)
+{
+    switch (origin)
+    {
+        case Origin::Avs: return QObject::tr("AVS-ported module");
+        case Origin::MilkDrop: return QObject::tr("MilkDrop-ported module");
+        default: return QObject::tr("Native LumiViz module");
+    }
+}
+
+const std::vector<EffectType>& effectPalette();
+
+/// Origin of an existing chain node, resolved over the palette (variant index).
+Origin originForParams(const EffectParams& params)
+{
+    static const std::vector<Origin> kByIndex = [] {
+        std::vector<Origin> byIndex(std::variant_size_v<EffectParams>, Origin::Avs);
+        for (const EffectType& t : effectPalette())
+        {
+            if (t.isHeader()) continue;
+            byIndex[t.make().index()] = t.origin;
+        }
+        return byIndex;
+    }();
+    return params.index() < kByIndex.size() ? kByIndex[params.index()] : Origin::Avs;
+}
 
 const std::vector<EffectType>& effectPalette()
 {
@@ -710,15 +787,19 @@ void MultiEffectPanel::setupUI()
     m_addTypeCombo = new QComboBox(this);
     auto* comboModel = qobject_cast<QStandardItemModel*>(m_addTypeCombo->model());
     const std::vector<EffectType>& palette = effectPalette();
+    const bool haveOriginIcons = !originIconDir().isEmpty();
     for (size_t i = 0; i < palette.size(); ++i)
     {
         const EffectType& t = palette[i];
-        // Origin marker (placeholder for a per-origin icon): AVS-ported vs native.
+        // Origin marker: per-origin icon (asset/img/logo/icons); text fallback
+        // when the icons are not found next to the repo/exe.
         QString label = QString::fromUtf8(t.name);
-        if (!t.isHeader())
-            label += t.origin == Origin::Avs ? QStringLiteral("   · AVS")
-                                             : QStringLiteral("   · LumiViz");
-        m_addTypeCombo->addItem(label);
+        if (!t.isHeader() && !haveOriginIcons)
+            label += QStringLiteral("   · ") + originText(t.origin);
+        if (!t.isHeader() && haveOriginIcons)
+            m_addTypeCombo->addItem(originIcon(t.origin), label);
+        else
+            m_addTypeCombo->addItem(label);
         if (comboModel == nullptr) continue;
         QStandardItem* item = comboModel->item(static_cast<int>(i));
         if (item == nullptr) continue;
@@ -731,8 +812,7 @@ void MultiEffectPanel::setupUI()
         }
         else
         {
-            item->setToolTip(t.origin == Origin::Avs ? tr("AVS-ported module")
-                                                     : tr("Native LumiViz module"));
+            item->setToolTip(originToolTip(t.origin));
         }
     }
     // Start on the first selectable (non-header) entry, not a category title.
@@ -877,6 +957,13 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
                          node.displayName.empty() ? effectTypeName(node.params)
                                                   : node.displayName));
     item->setText(2, QString::fromStdString(effectTypeName(node.params)));
+    // Origin icon on the type column (AVS / MilkDrop / LumiViz).
+    if (!originIconDir().isEmpty())
+    {
+        const Origin origin = originForParams(node.params);
+        item->setIcon(2, originIcon(origin));
+        item->setToolTip(2, originToolTip(origin));
+    }
     item->setText(3, QString::fromStdString(node.description));
     item->setFlags((item->flags() | Qt::ItemIsEditable | Qt::ItemIsDragEnabled |
                     Qt::ItemIsDropEnabled));
@@ -1797,6 +1884,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         addBool(tr("Rect coords"), p->rectCoords, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).rectCoords = v; });
         addBool(tr("Wrap"), p->wrap, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).wrap = v; });
         addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).blend = v; });
+        addBool(tr("Subpixel (bilinear)"), p->subpixel, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).subpixel = v; });
+        const QStringList kSourceMappedNames = {tr("Off"), tr("On (scatter)"),
+                                                tr("Off, toggle on beat"),
+                                                tr("On, toggle on beat")};
+        addEnum(tr("Source mapped"), p->sourceMapped, kSourceMappedNames, [](ChainNode& n, int v) { std::get<MovementParams>(n.params).sourceMapped = v; });
         addScript(tr("Point code"), p->code, [](ChainNode& n, std::string v) { std::get<MovementParams>(n.params).code = std::move(v); });
     }
     else if (auto* p = std::get_if<DynamicMovementParams>(&params))
@@ -1807,6 +1899,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
         addBool(tr("Wrap"), p->wrap, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).wrap = v; });
         addBool(tr("Blend (alpha)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).blend = v; });
         addBool(tr("No move"), p->nomove, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).nomove = v; });
+        addBool(tr("Subpixel (bilinear)"), p->subpixel, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).subpixel = v; });
+        addInt(tr("Source buffer (0 = frame)"), p->buffern, 0, 8, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).buffern = v; });
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).frameCode = std::move(v); });
         addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).beatCode = std::move(v); });

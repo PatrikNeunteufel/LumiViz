@@ -380,7 +380,8 @@ FodyWeavers.xsd
 
 # no old folder
 old/
-/Archive
+/Archive/
+*.archive/
 
 # no presets
 /avs/
