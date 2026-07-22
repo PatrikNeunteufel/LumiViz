@@ -1,0 +1,419 @@
+/**
+ ****************************************************************************************
+ * @file   main.cpp
+ * @brief  MilkdropStandalone — isoliertes Testprogramm fuer den C1/C2-Renderpfad
+ *         (Session 41): treibt den ECHTEN MilkdropVisualizer in einem eigenen
+ *         GL-3.3-Core-Fenster, ohne App-Infrastruktur (kein Docking, kein
+ *         Panel, kein Render-Thread) — mit vollem Diagnose-Trace auf Konsole
+ *         und in `<TEMP>/lumiviz_milkdrop_trace.log`
+ *
+ * @author Patrik Neunteufel
+ * @date   Juli 2026
+ * @version 1.0.0
+ *
+ * @details
+ * Aufruf:
+ *   MilkdropStandalone [presetDateiOderOrdner] [--auto] [--frames N]
+ *                      [--out DIR] [--size WxH]
+ *
+ * - Ohne Argument wird der c1-Kalibrier-Satz gesucht
+ *   (`asset/calibration/milkdrop/c1`, vom Exe-Pfad aufwaerts).
+ * - Interaktiv: ←/→ Preset wechseln · R neu laden · S Screenshot ·
+ *   G Kalibrier-Raster · Esc beenden.
+ * - `--auto`: jedes Preset N Frames rendern (Default 120), Screenshot +
+ *   Pixel-Statistik (belegt "schwarz oder nicht"), dann beenden —
+ *   Exit-Code 0 nur, wenn alle Presets den Custom-Branch erreicht haben.
+ *
+ * Der Visualizer laeuft hier im GUI-Thread (paintGL) — dieselben Methoden,
+ * die in der App der Render-Thread aufruft. Audio kommt synthetisch (Sinus +
+ * Beat-Puls), damit Waves/Loudness leben.
+ ****************************************************************************************
+ */
+
+#include "visualizers/MilkdropVisualizer.hpp"
+#include "visualizers/milkdrop/MilkdropTrace.hpp"
+
+#include <QCommandLineParser>
+#include <QDir>
+#include <QFileInfo>
+#include <QGuiApplication>
+#include <QImage>
+#include <QKeyEvent>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
+#include <QOpenGLWindow>
+#include <QStringList>
+#include <QSurfaceFormat>
+#include <QTimer>
+
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <memory>
+#include <vector>
+
+namespace
+{
+
+constexpr double kPi = 3.14159265358979323846;
+
+/// c1-Kalibrier-Satz vom Exe-Verzeichnis aufwaerts suchen (Repo-Layout)
+QString locateCalibrationDir()
+{
+    QDir dir(QCoreApplication::applicationDirPath());
+    for (int i = 0; i < 10; ++i)
+    {
+        const QString candidate =
+            dir.absoluteFilePath(QStringLiteral("asset/calibration/milkdrop/c1"));
+        if (QFileInfo::exists(candidate)) return candidate;
+        if (!dir.cdUp()) break;
+    }
+    return {};
+}
+
+/// Pixel-Statistik eines RGBA-Readbacks — belegt den Sichtbefund in Zahlen
+struct FrameStats
+{
+    double meanR = 0.0, meanG = 0.0, meanB = 0.0;
+    double minLuma = 1.0, maxLuma = 0.0;
+    QString describe() const
+    {
+        return QStringLiteral("mean RGB=(%1, %2, %3), Luma min=%4 max=%5")
+            .arg(meanR, 0, 'f', 3)
+            .arg(meanG, 0, 'f', 3)
+            .arg(meanB, 0, 'f', 3)
+            .arg(minLuma, 0, 'f', 3)
+            .arg(maxLuma, 0, 'f', 3);
+    }
+};
+
+FrameStats computeStats(const std::vector<unsigned char>& rgba, int w, int h)
+{
+    FrameStats st;
+    if (w <= 0 || h <= 0) return st;
+    double sumR = 0.0, sumG = 0.0, sumB = 0.0;
+    const std::size_t pixels = static_cast<std::size_t>(w) * h;
+    for (std::size_t p = 0; p < pixels; ++p)
+    {
+        const double r = rgba[p * 4 + 0] / 255.0;
+        const double g = rgba[p * 4 + 1] / 255.0;
+        const double b = rgba[p * 4 + 2] / 255.0;
+        sumR += r;
+        sumG += g;
+        sumB += b;
+        const double luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        st.minLuma = std::min(st.minLuma, luma);
+        st.maxLuma = std::max(st.maxLuma, luma);
+    }
+    st.meanR = sumR / pixels;
+    st.meanG = sumG / pixels;
+    st.meanB = sumB / pixels;
+    return st;
+}
+
+class StandaloneWindow : public QOpenGLWindow
+{
+public:
+    StandaloneWindow(QStringList presets, bool autoMode, int autoFrames, QString shotDir)
+        : m_presets(std::move(presets))
+        , m_auto(autoMode)
+        , m_autoFrames(autoFrames)
+        , m_shotDir(std::move(shotDir))
+    {
+        setTitle(QStringLiteral("LumiViz MilkdropStandalone"));
+    }
+
+    /// Exit-Code des --auto-Laufs: 0 nur wenn alle Presets Custom rendern
+    [[nodiscard]] bool allCustom() const { return m_allCustom; }
+
+protected:
+    void initializeGL() override
+    {
+        std::printf("[Standalone] GL initialisiert: %s | %s\n",
+                    reinterpret_cast<const char*>(
+                        context()->functions()->glGetString(GL_VERSION)),
+                    reinterpret_cast<const char*>(
+                        context()->functions()->glGetString(GL_RENDERER)));
+        m_viz = std::make_unique<MilkdropVisualizer>();
+        m_viz->initialize();
+        m_viz->resize(size());
+        loadPreset(0);
+    }
+
+    void resizeGL(int w, int h) override
+    {
+        if (m_viz != nullptr) m_viz->resize(QSize(w, h));
+    }
+
+    void paintGL() override
+    {
+        if (m_viz == nullptr) return;
+        feedSyntheticAudio();
+        m_viz->render(1.0f / 60.0f);
+        ++m_frameInPreset;
+        m_time += 1.0 / 60.0;
+
+        if (m_auto && m_frameInPreset >= m_autoFrames)
+        {
+            finishAutoPreset();
+        }
+        if (!m_closing) update();  // Dauerschleife (vsync-getaktet)
+    }
+
+    bool event(QEvent* ev) override
+    {
+        // GL-Aufraeumen SOLANGE das Plattform-Fenster noch lebt — danach gibt
+        // es keinen current-faehigen Kontext mehr und die GL-Wrapper-Dtoren
+        // des Visualizers wuerden ins Leere greifen (Access Violation)
+        if (ev->type() == QEvent::Close && m_viz != nullptr)
+        {
+            makeCurrent();
+            m_viz->cleanup();
+            m_viz.reset();
+            doneCurrent();
+        }
+        return QOpenGLWindow::event(ev);
+    }
+
+    void keyPressEvent(QKeyEvent* event) override
+    {
+        switch (event->key())
+        {
+        case Qt::Key_Escape: close(); break;
+        case Qt::Key_Right: loadPreset(m_index + 1); break;
+        case Qt::Key_Left: loadPreset(m_index - 1); break;
+        case Qt::Key_R: loadPreset(m_index); break;
+        case Qt::Key_S: m_shotRequested = true; update(); break;
+        case Qt::Key_G:
+            m_grid = !m_grid;
+            if (m_viz != nullptr)
+            {
+                m_viz->setParam("render.debugGrid", lumi::modules::ParamValue{m_grid});
+            }
+            break;
+        default: QOpenGLWindow::keyPressEvent(event); break;
+        }
+    }
+
+    void paintOverGL() override
+    {
+        // Screenshot NACH dem Frame (paintGL ist durch, Default-FBO gefuellt)
+        if (m_shotRequested)
+        {
+            m_shotRequested = false;
+            saveShot(QStringLiteral("manuell"));
+        }
+    }
+
+private:
+    void loadPreset(int index)
+    {
+        if (m_presets.isEmpty() || m_viz == nullptr) return;
+        m_index = ((index % m_presets.size()) + m_presets.size()) % m_presets.size();
+        const QString& path = m_presets[m_index];
+        std::printf("\n[Standalone] === Preset %d/%d: %s ===\n", m_index + 1,
+                    static_cast<int>(m_presets.size()),
+                    qPrintable(QFileInfo(path).fileName()));
+
+        QStringList report;
+        const bool ok = m_viz->loadMilkFile(path, &report);
+        for (const QString& line : report)
+        {
+            std::printf("[Import] %s\n", qPrintable(line));
+        }
+        if (!ok) std::printf("[Standalone] LADEN FEHLGESCHLAGEN\n");
+        std::printf("[Standalone] warpCustomSrc=%zu Zeichen, compCustomSrc=%zu Zeichen\n",
+                    m_viz->warpCustomSource().size(), m_viz->compCustomSource().size());
+        setTitle(QStringLiteral("MilkdropStandalone — %1")
+                     .arg(QFileInfo(path).completeBaseName()));
+        m_frameInPreset = 0;
+        update();
+    }
+
+    void feedSyntheticAudio()
+    {
+        constexpr int kFrames = 576;
+        constexpr int kBins = 512;
+        // Beat-Puls ~120 BPM fuer die Loudness-Baender + lebendige Wave
+        const double beat = 0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * 2.0));
+        static std::vector<float> wave;
+        static std::vector<float> spec;
+        wave.assign(kFrames * 2, 0.0f);
+        spec.assign(kBins * 2, 0.0f);
+        for (int i = 0; i < kFrames; ++i)
+        {
+            const double ph = m_time * 220.0 * 2.0 * kPi + i * (2.0 * kPi / 64.0);
+            const float l = static_cast<float>(beat * 0.5 * std::sin(ph));
+            const float r = static_cast<float>(beat * 0.5 * std::sin(ph + 0.7));
+            wave[static_cast<std::size_t>(i) * 2 + 0] = l;
+            wave[static_cast<std::size_t>(i) * 2 + 1] = r;
+        }
+        for (int b = 0; b < kBins; ++b)
+        {
+            const float v = static_cast<float>(beat * 0.8 / (1.0 + b * 0.03));
+            spec[static_cast<std::size_t>(b) * 2 + 0] = v;
+            spec[static_cast<std::size_t>(b) * 2 + 1] = v;
+        }
+        m_viz->updateAudioStereo(spec.data(), kBins, wave.data(), kFrames, 2);
+    }
+
+    FrameStats saveShot(const QString& tag)
+    {
+        const int w = std::max(1, width());
+        const int h = std::max(1, height());
+        std::vector<unsigned char> rgba(static_cast<std::size_t>(w) * h * 4);
+        QOpenGLFunctions* f = context()->functions();
+        f->glBindFramebuffer(GL_FRAMEBUFFER, context()->defaultFramebufferObject());
+        f->glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, rgba.data());
+
+        const FrameStats stats = computeStats(rgba, w, h);
+        QImage img(rgba.data(), w, h, w * 4, QImage::Format_RGBA8888);
+        const QString base = m_presets.isEmpty()
+                                 ? QStringLiteral("frame")
+                                 : QFileInfo(m_presets[m_index]).completeBaseName();
+        QDir().mkpath(m_shotDir);
+        const QString file = QStringLiteral("%1/%2_%3.png").arg(m_shotDir, base, tag);
+        // glReadPixels liefert Zeile 0 = unten → fuer die PNG-Ansicht spiegeln
+        img.mirrored().save(file);
+        std::printf("[Standalone] Screenshot: %s — %s\n", qPrintable(file),
+                    qPrintable(stats.describe()));
+        return stats;
+    }
+
+    void finishAutoPreset()
+    {
+        const FrameStats stats = saveShot(QStringLiteral("auto"));
+        const bool customActive =
+            !m_viz->warpCustomSource().empty() || !m_viz->compCustomSource().empty();
+        const bool looksBlack = stats.maxLuma < 0.02;
+        std::printf("[Standalone] Ergebnis %s: custom=%s, GL-Fehler=%s, schwarz=%s\n",
+                    qPrintable(QFileInfo(m_presets[m_index]).fileName()),
+                    customActive ? "ja" : "NEIN",
+                    m_viz->customGlError().empty() ? "keiner"
+                                                   : qPrintable(QString::fromStdString(
+                                                         m_viz->customGlError()).left(120)),
+                    looksBlack ? "JA(!)" : "nein");
+        if (!customActive || !m_viz->customGlError().empty()) m_allCustom = false;
+
+        if (m_index + 1 < m_presets.size())
+        {
+            loadPreset(m_index + 1);
+        }
+        else
+        {
+            std::printf("\n[Standalone] --auto abgeschlossen (%d Presets), Ende.\n",
+                        static_cast<int>(m_presets.size()));
+            std::fflush(stdout);
+            // NICHT direkt aus paintGL schliessen — Fenster-Teardown mitten im
+            // Paint-Event crasht in Qt6Gui; erst den Event ausrollen lassen
+            m_closing = true;
+            QTimer::singleShot(0, this, &QWindow::close);
+        }
+    }
+
+    std::unique_ptr<MilkdropVisualizer> m_viz;
+    QStringList m_presets;
+    int m_index = 0;
+    bool m_auto = false;
+    int m_autoFrames = 120;
+    QString m_shotDir;
+    int m_frameInPreset = 0;
+    double m_time = 0.0;
+    bool m_grid = false;
+    bool m_shotRequested = false;
+    bool m_allCustom = true;
+    bool m_closing = false;
+};
+
+} // namespace
+
+int main(int argc, char* argv[])
+{
+    QGuiApplication app(argc, argv);
+    QCoreApplication::setApplicationName(QStringLiteral("MilkdropStandalone"));
+    lumi::milkdrop::trace::setEcho(true);  // Trace zusaetzlich auf die Konsole
+
+    QCommandLineParser parser;
+    parser.setApplicationDescription(
+        QStringLiteral("Isolierter C1/C2-Renderpfad-Test (Session 41)"));
+    parser.addHelpOption();
+    parser.addPositionalArgument(QStringLiteral("preset"),
+                                 QStringLiteral(".milk-Datei oder Preset-Ordner "
+                                                "(Default: c1-Kalibrier-Satz)"));
+    const QCommandLineOption optAuto(QStringLiteral("auto"),
+                                     QStringLiteral("Batch: alle Presets rendern, "
+                                                    "Screenshots + Statistik, beenden"));
+    const QCommandLineOption optFrames(QStringLiteral("frames"),
+                                       QStringLiteral("Frames je Preset im --auto-Modus"),
+                                       QStringLiteral("N"), QStringLiteral("120"));
+    const QCommandLineOption optOut(QStringLiteral("out"),
+                                    QStringLiteral("Screenshot-Verzeichnis"),
+                                    QStringLiteral("DIR"),
+                                    QDir::tempPath() + QStringLiteral("/lumiviz_standalone"));
+    const QCommandLineOption optSize(QStringLiteral("size"),
+                                     QStringLiteral("Fenstergroesse WxH"),
+                                     QStringLiteral("WxH"), QStringLiteral("800x600"));
+    parser.addOption(optAuto);
+    parser.addOption(optFrames);
+    parser.addOption(optOut);
+    parser.addOption(optSize);
+    parser.process(app);
+
+    // --- Preset-Liste aufbauen -------------------------------------------------------------
+    QString target = parser.positionalArguments().isEmpty()
+                         ? locateCalibrationDir()
+                         : parser.positionalArguments().first();
+    if (target.isEmpty())
+    {
+        std::fprintf(stderr,
+                     "FEHLER: kein Preset angegeben und c1-Kalibrier-Satz nicht gefunden\n");
+        return 2;
+    }
+    QStringList presets;
+    const QFileInfo info(target);
+    if (info.isDir())
+    {
+        const QDir dir(target);
+        for (const QString& f :
+             dir.entryList({QStringLiteral("*.milk")}, QDir::Files, QDir::Name))
+        {
+            presets << dir.absoluteFilePath(f);
+        }
+    }
+    else if (info.isFile())
+    {
+        presets << info.absoluteFilePath();
+    }
+    if (presets.isEmpty())
+    {
+        std::fprintf(stderr, "FEHLER: keine .milk-Presets unter '%s'\n", qPrintable(target));
+        return 2;
+    }
+    std::printf("[Standalone] %d Preset(s) | Trace: %s\n",
+                static_cast<int>(presets.size()),
+                qPrintable(lumi::milkdrop::trace::filePath()));
+
+    // --- Fenster: GL 3.3 Core wie die App --------------------------------------------------
+    QSurfaceFormat fmt;
+    fmt.setVersion(3, 3);
+    fmt.setProfile(QSurfaceFormat::CoreProfile);
+    fmt.setSwapInterval(1);
+    QSurfaceFormat::setDefaultFormat(fmt);
+
+    const QStringList wh = parser.value(optSize).split(QLatin1Char('x'));
+    const int w = (wh.size() == 2) ? std::max(64, wh[0].toInt()) : 800;
+    const int h = (wh.size() == 2) ? std::max(64, wh[1].toInt()) : 600;
+
+    StandaloneWindow window(presets, parser.isSet(optAuto), parser.value(optFrames).toInt(),
+                            parser.value(optOut));
+    window.resize(w, h);
+    window.show();
+
+    const int rc = app.exec();
+    if (parser.isSet(optAuto) && !window.allCustom())
+    {
+        std::fprintf(stderr, "[Standalone] MINDESTENS EIN PRESET OHNE CUSTOM-PFAD\n");
+        return 1;
+    }
+    return rc;
+}

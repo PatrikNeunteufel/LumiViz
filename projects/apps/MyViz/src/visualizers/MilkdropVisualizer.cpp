@@ -23,6 +23,7 @@
 
 #include "visualizers/milkdrop/MilkdropBlur.hpp"
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
+#include "visualizers/milkdrop/MilkdropTrace.hpp"
 
 #include <HlslTranspiler.hpp>
 
@@ -50,6 +51,7 @@ using lumi::modules::SuperscopeRenderMode;
 using lumi::scripting::ScriptContext;
 using lumi::scripting::ScriptSlotHost;
 using Slot = lumi::scripting::LuaScriptEngine::Slot;
+namespace trace = lumi::milkdrop::trace;
 
 namespace
 {
@@ -400,6 +402,19 @@ void clipEdgeToRect(float& x0, float& y0, float& x1, float& y1)
     y0 = ny0;
 }
 
+/// Trace-Hilfe (Session 41): ShaderClass lesbar machen
+const char* traceShaderClassName(lumi::milk::ShaderClass c)
+{
+    switch (c)
+    {
+    case lumi::milk::ShaderClass::None: return "None(MD1)";
+    case lumi::milk::ShaderClass::Md1Default: return "Md1Default(baked)";
+    case lumi::milk::ShaderClass::Md1Plus: return "Md1Plus(baked)";
+    case lumi::milk::ShaderClass::Custom: return "Custom(C1)";
+    }
+    return "?";
+}
+
 } // namespace
 
 // =============================================================================================
@@ -410,6 +425,11 @@ MilkdropVisualizer::MilkdropVisualizer()
     : VisualizerBase(QStringLiteral("milkdrop"), QStringLiteral("Milkdrop"),
                      QStringLiteral("MilkDrop preset host (MD1 core, import target)"))
 {
+    // Build-Stempel dieser Uebersetzungseinheit → beweist, WELCHER Code-Stand
+    // im laufenden Binary steckt (Session-40-Verdacht "veraltetes Binary")
+    trace::log(QStringLiteral("MilkdropVisualizer erstellt (Uebersetzt: %1 %2)")
+                   .arg(QLatin1String(__DATE__))
+                   .arg(QLatin1String(__TIME__)));
 }
 
 std::string MilkdropVisualizer::debugAssembleFragment(const std::string& hlslText,
@@ -428,10 +448,13 @@ const char* MilkdropVisualizer::debugCustomVertexShader()
 
 bool MilkdropVisualizer::loadMilkFile(const QString& path, QStringList* report)
 {
+    trace::log(QStringLiteral("loadMilkFile: %1").arg(path));
     const lumi::milk::ParseResult parsed =
         lumi::milk::parseFile(std::filesystem::path(path.toStdWString()));
     if (!parsed.ok)
     {
+        trace::log(QStringLiteral("loadMilkFile: PARSER-FEHLER: %1")
+                       .arg(QString::fromStdString(parsed.error)));
         if (report != nullptr)
         {
             report->append(QStringLiteral("Parser: %1")
@@ -462,8 +485,13 @@ bool MilkdropVisualizer::loadMilkFile(const QString& path, QStringList* report)
 
 bool MilkdropVisualizer::loadPresetDocument(const QString& path, QStringList* report)
 {
+    trace::log(QStringLiteral("loadPresetDocument: %1").arg(path));
     lumi::milkdrop::PresetState state;
-    if (!lumi::milkdrop::loadPresetFromFile(path, state, report)) return false;
+    if (!lumi::milkdrop::loadPresetFromFile(path, state, report))
+    {
+        trace::log(QStringLiteral("loadPresetDocument: Laden fehlgeschlagen"));
+        return false;
+    }
     if (state.name.empty())
     {
         state.name = QFileInfo(path).completeBaseName().toStdString();
@@ -481,6 +509,14 @@ bool MilkdropVisualizer::savePresetDocument(const QString& path) const
 void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringList* report)
 {
     m_state = std::move(state);
+    trace::log(QStringLiteral("applyState: '%1' | PS%2 | warp=%3 (%4 Zeichen) | "
+                              "comp=%5 (%6 Zeichen)")
+                   .arg(QString::fromStdString(m_state.name))
+                   .arg(m_state.psVersion)
+                   .arg(QLatin1String(traceShaderClassName(m_state.warpInfo.shaderClass)))
+                   .arg(m_state.warpShaderText.size())
+                   .arg(QLatin1String(traceShaderClassName(m_state.compInfo.shaderClass)))
+                   .arg(m_state.compShaderText.size()));
 
     if (report != nullptr)
     {
@@ -1239,10 +1275,15 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
 {
     // GL-Fehler des vorigen Laufs sichtbar machen: beim NAECHSTEN Laden (auch
     // Doppelklick auf dasselbe Preset) erscheint er als echte Warnung im Dialog
-    if (report != nullptr && !m_customGlError.empty())
+    if (!m_customGlError.empty())
     {
-        report->append(QStringLiteral("GL-Kompilierfehler beim vorigen Preset: %1")
-                           .arg(QString::fromStdString(m_customGlError).left(500)));
+        trace::log(QStringLiteral("prepareCustomShaders: GL-Fehler des VORIGEN Laufs: %1")
+                       .arg(QString::fromStdString(m_customGlError).left(300)));
+        if (report != nullptr)
+        {
+            report->append(QStringLiteral("GL-Kompilierfehler beim vorigen Preset: %1")
+                               .arg(QString::fromStdString(m_customGlError).left(500)));
+        }
     }
     m_warpCustomSrc.clear();
     m_compCustomSrc.clear();
@@ -1253,11 +1294,24 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
     const auto tryTranspile = [&](const std::string& text, lumi::hlsl::ShaderKind kind,
                                   const lumi::milk::ShaderInfo& info, std::string& outSrc,
                                   const char* which) {
-        if (info.shaderClass != lumi::milk::ShaderClass::Custom || text.empty()) return;
+        if (info.shaderClass != lumi::milk::ShaderClass::Custom || text.empty())
+        {
+            trace::log(QStringLiteral("prepareCustomShaders: %1 uebersprungen "
+                                      "(Klasse=%2, %3 Zeichen) → kein Custom-Pfad")
+                           .arg(QLatin1String(which))
+                           .arg(QLatin1String(traceShaderClassName(info.shaderClass)))
+                           .arg(text.size()));
+            return;
+        }
         const lumi::hlsl::HlslResult r = lumi::hlsl::transpile(text, kind);
         if (r.ok)
         {
             outSrc = assembleCustomFragment(r);
+            trace::log(QStringLiteral("prepareCustomShaders: %1 → GLSL ok "
+                                      "(%2 Zeichen, %3 Custom-Sampler)")
+                           .arg(QLatin1String(which))
+                           .arg(outSrc.size())
+                           .arg(r.customSamplers.size()));
             for (const std::string& n : r.customSamplers)
             {
                 if (!preambleDeclares(n)) samplerNames.push_back(n);
@@ -1276,13 +1330,34 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
                 report->append(note);
             }
         }
-        else if (report != nullptr)
+        else
         {
-            report->append(QStringLiteral("%1-Shader nicht uebersetzbar (%2) → MD1-Fallback")
-                               .arg(QLatin1String(which))
-                               .arg(QString::fromStdString(r.error)));
+            trace::log(QStringLiteral("prepareCustomShaders: %1 nicht uebersetzbar "
+                                      "(%2) → MD1-Fallback")
+                           .arg(QLatin1String(which))
+                           .arg(QString::fromStdString(r.error)));
+            if (report != nullptr)
+            {
+                report->append(
+                    QStringLiteral("%1-Shader nicht uebersetzbar (%2) → MD1-Fallback")
+                        .arg(QLatin1String(which))
+                        .arg(QString::fromStdString(r.error)));
+            }
         }
     };
+    // Session-41-Fix: diese beiden Aufrufe gingen beim C2-Umbau (Commit 2ba48a3)
+    // verloren — ohne sie blieben m_warp/compCustomSrc IMMER leer und jedes
+    // Preset lief still im MD1-Fallback (der c1-Sichttest-Befund).
+    tryTranspile(m_state.warpShaderText, lumi::hlsl::ShaderKind::Warp, m_state.warpInfo,
+                 m_warpCustomSrc, "Warp");
+    tryTranspile(m_state.compShaderText, lumi::hlsl::ShaderKind::Comp, m_state.compInfo,
+                 m_compCustomSrc, "Comp");
+    trace::log(QStringLiteral("prepareCustomShaders: fertig — rev=%1, warpSrc=%2, "
+                              "compSrc=%3 Zeichen")
+                   .arg(m_customRev)
+                   .arg(m_warpCustomSrc.size())
+                   .arg(m_compCustomSrc.size()));
+
     // rand_preset: einmal je Preset-Ladung (engine-lokaler PRNG, Entscheid §10)
     m_randSeed = m_randSeed * 1664525u + 1013904223u;
 
@@ -1363,6 +1438,10 @@ void MilkdropVisualizer::loadCustomTextures(const std::vector<std::string>& samp
         const QString path = rand.hasMatch() ? findRandom(rand.captured(2)) : findFile(baseQ);
         if (path.isEmpty())
         {
+            trace::log(QStringLiteral("loadCustomTextures: '%1' NICHT gefunden "
+                                      "(Suchbasis '%2') → Platzhalter")
+                           .arg(baseQ)
+                           .arg(m_presetDir));
             if (report != nullptr)
             {
                 report->append(QStringLiteral("Textur '%1' nicht gefunden → Platzhalter")
@@ -1370,6 +1449,7 @@ void MilkdropVisualizer::loadCustomTextures(const std::vector<std::string>& samp
             }
             continue;
         }
+        trace::log(QStringLiteral("loadCustomTextures: '%1' → %2").arg(baseQ).arg(path));
         QImage img(path);
         if (img.isNull())
         {
@@ -1450,8 +1530,13 @@ bool MilkdropVisualizer::ensureCustomPrograms()
     m_customBuiltRev = m_customRev;
     m_warpCustomProgram.reset();
     m_compCustomProgram.reset();
+    trace::log(QStringLiteral("ensureCustomPrograms: Build rev=%1 (warpSrc=%2, "
+                              "compSrc=%3 Zeichen)")
+                   .arg(m_customRev)
+                   .arg(m_warpCustomSrc.size())
+                   .arg(m_compCustomSrc.size()));
 
-    const auto build = [&](const std::string& src) {
+    const auto build = [&](const std::string& src, const char* which) {
         if (src.empty()) return std::unique_ptr<QOpenGLShaderProgram>();
         auto program = std::make_unique<QOpenGLShaderProgram>();
         if (!program->addShaderFromSourceCode(QOpenGLShader::Vertex, kCustomVertexShader) ||
@@ -1462,6 +1547,9 @@ bool MilkdropVisualizer::ensureCustomPrograms()
             // Render-Thread loggen — BasicLogger ist nicht thread-safe).
             // Zusaetzlich Quelle+Log als Datei dumpen (Kalibrier-Diagnose).
             if (m_customGlError.empty()) m_customGlError = program->log().toStdString();
+            trace::log(QStringLiteral("ensureCustomPrograms: %1-Programm FEHLER: %2")
+                           .arg(QLatin1String(which))
+                           .arg(program->log().left(300)));
             QFile dump(QDir::tempPath() + QStringLiteral("/lumiviz_glsl_error.txt"));
             if (dump.open(QIODevice::WriteOnly | QIODevice::Append))
             {
@@ -1474,10 +1562,14 @@ bool MilkdropVisualizer::ensureCustomPrograms()
             }
             return std::unique_ptr<QOpenGLShaderProgram>();
         }
+        trace::log(QStringLiteral("ensureCustomPrograms: %1-Programm gebaut+gelinkt "
+                                  "(GL-Id %2)")
+                       .arg(QLatin1String(which))
+                       .arg(program->programId()));
         return program;
     };
-    m_warpCustomProgram = build(m_warpCustomSrc);
-    m_compCustomProgram = build(m_compCustomSrc);
+    m_warpCustomProgram = build(m_warpCustomSrc, "Warp");
+    m_compCustomProgram = build(m_compCustomSrc, "Comp");
     return m_warpCustomProgram != nullptr || m_compCustomProgram != nullptr;
 }
 
@@ -1780,11 +1872,37 @@ void MilkdropVisualizer::onRender(float deltaTime)
     {
         // context changed (undock) — old GL objects died with it; release the
         // wrappers in the new context (PulsingVisualizer pattern)
+        trace::log(QStringLiteral("onRender: GL-Kontextwechsel — Ressourcen neu aufbauen"));
         releaseGlResources();
     }
     m_lastContext = ctx;
+    if (!m_traceGlInfoLogged)
+    {
+        m_traceGlInfoLogged = true;
+        QOpenGLFunctions* glf = ctx->functions();
+        trace::log(QStringLiteral("onRender: erster Frame — GL '%1' | Renderer '%2' | "
+                                  "Kontext %3.%4")
+                       .arg(QLatin1String(reinterpret_cast<const char*>(
+                           glf->glGetString(GL_VERSION))))
+                       .arg(QLatin1String(reinterpret_cast<const char*>(
+                           glf->glGetString(GL_RENDERER))))
+                       .arg(ctx->format().majorVersion())
+                       .arg(ctx->format().minorVersion()));
+    }
 
-    if (!ensureGlResources()) return;
+    if (!ensureGlResources())
+    {
+        TraceState st;
+        st.rev = m_customRev;
+        st.glResFail = true;
+        if (!(st == m_traceState))
+        {
+            m_traceState = st;
+            trace::log(QStringLiteral("onRender: ensureGlResources FEHLGESCHLAGEN — "
+                                      "Frames werden verworfen"));
+        }
+        return;
+    }
 
     const int w = std::max(16, width());
     const int h = std::max(16, height());
@@ -1829,6 +1947,39 @@ void MilkdropVisualizer::onRender(float deltaTime)
         ensureNoiseTextures();
         ensureCustomTextureUploads();
         ensureCustomPrograms();
+    }
+
+    // Diagnose (Session 41): Render-Zustand loggen, sobald er sich aendert —
+    // beantwortet die Pruefreihenfolge des Befunds (Quellen gefuellt? Programme
+    // gebaut? welcher Branch greift?) ohne Per-Frame-Spam
+    {
+        TraceState st;
+        st.rev = m_customRev;
+        st.warpSrc = !m_warpCustomSrc.empty();
+        st.compSrc = !m_compCustomSrc.empty();
+        st.warpProg = m_warpCustomProgram != nullptr;
+        st.compProg = m_compCustomProgram != nullptr;
+        st.glError = !m_customGlError.empty();
+        if (!(st == m_traceState))
+        {
+            m_traceState = st;
+            const auto branch = [](bool prog, bool src) {
+                return prog ? "CUSTOM" : (src ? "MD1-FALLBACK(!)" : "MD1");
+            };
+            trace::log(
+                QStringLiteral("onRender: Frame %1 (%2x%3) rev=%4 | warpSrc=%5 "
+                               "compSrc=%6 | Branch warp=%7 comp=%8%9")
+                    .arg(m_frame)
+                    .arg(w)
+                    .arg(h)
+                    .arg(m_customRev)
+                    .arg(st.warpSrc ? QStringLiteral("ja") : QStringLiteral("nein"))
+                    .arg(st.compSrc ? QStringLiteral("ja") : QStringLiteral("nein"))
+                    .arg(QLatin1String(branch(st.warpProg, st.warpSrc)))
+                    .arg(QLatin1String(branch(st.compProg, st.compSrc)))
+                    .arg(st.glError ? QStringLiteral(" | GL-FEHLER gemerkt")
+                                    : QString()));
+        }
     }
 
     computeWarpMesh(fv);
@@ -2004,6 +2155,12 @@ void MilkdropVisualizer::drawWarpPass(const FrameVars& fv)
     // (Decay/Effekte stecken im Shader-Text; uv kommt weiter aus dem per_pixel-Mesh)
     if (m_warpCustomProgram != nullptr)
     {
+        if (m_traceWarpDrawRev != m_customRev)
+        {
+            m_traceWarpDrawRev = m_customRev;
+            trace::log(QStringLiteral("drawWarpPass: CUSTOM-Branch aktiv (rev=%1)")
+                           .arg(m_customRev));
+        }
         m_warpCustomProgram->bind();
         feedCustomUniforms(*m_warpCustomProgram, fv, m_feedback.previousTexture());
         m_warpCustomProgram->setUniformValue("uOrigFromPos", true);
@@ -2925,6 +3082,12 @@ void MilkdropVisualizer::compositeToScreen(const FrameVars& fv)
     // Stufe C1: transpilierter Comp-Shader ersetzt den gesamten MD1-Composite
     if (m_compCustomProgram != nullptr)
     {
+        if (m_traceCompDrawRev != m_customRev)
+        {
+            m_traceCompDrawRev = m_customRev;
+            trace::log(QStringLiteral("compositeToScreen: CUSTOM-Branch aktiv (rev=%1)")
+                           .arg(m_customRev));
+        }
         f->glDisable(GL_BLEND);
         m_compCustomProgram->bind();
         feedCustomUniforms(*m_compCustomProgram, fv, m_feedback.currentTexture());

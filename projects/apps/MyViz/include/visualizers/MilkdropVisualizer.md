@@ -1,11 +1,11 @@
 # MilkdropVisualizer — MilkDrop-Preset-Host (MD1-Kern)
 
-> **Version:** 1.2.0  
+> **Version:** 1.5.0  
 > **Datum:** 2026-07-22  
 > **Typ:** CppModuleDoc  
-> **Status:** Implementiert (Import-Phase Roadmap 6, M3–M5) — **GL-Sichttest M5 offen**  
+> **Status:** Implementiert (Import-Phase Roadmap 6, M3–C2) — Standalone-Nachweis C1/C2 grün, In-App-Sichttest c1 offen  
 > **Modul:** `MilkdropVisualizer` (global, wie alle `*Visualizer`)  
-> **Dateien:** MilkdropVisualizer.hpp, src/visualizers/MilkdropVisualizer.cpp, milkdrop/MilkdropPresetState.hpp, milkdrop/MilkdropBlur.hpp  
+> **Dateien:** MilkdropVisualizer.hpp, src/visualizers/MilkdropVisualizer.cpp, milkdrop/MilkdropPresetState.hpp, milkdrop/MilkdropBlur.hpp, milkdrop/MilkdropTrace.hpp  
 > **Abhängigkeiten:** VisualizerBase · MilkParser (Lib, inkl. MilkShaderClassifier) · EelTranspiler via ScriptSlotHost (Dialect::Milkdrop) · ScriptContext (q1–q64) · MilkLoudness · FeedbackBuffer · ScopeRenderer  
 > **Zielgruppe:** Entwickler  
 > **Sprache:** Deutsch  
@@ -125,8 +125,19 @@ GUI-Thread unter renderMutex und fasst kein GL an. FeedbackBuffer neu:
   Md1Plus-Extras, Custom-Grenzen, Feature-Flags) + **Korpus-Gate** (910:
   warp 20/554 Default/Custom, comp 20/13/565, 13 exakte Blur-Konsumenten).
 - GL-Pfad: M3/M4-Sichttest **bestanden** (Session 39, 3 Kalibrier-Runden);
-  **M5-Sichttest ausstehend** — Kalibrier-Satz `asset/calibration/milkdrop/m5/`
-  (8 Presets + README).
+  M5-Sichttest **bestanden** (Session 40) — Kalibrier-Satz
+  `asset/calibration/milkdrop/m5/` (8 Presets + README).
+- **Regressions-Gate Ladepfad (Session 41):** c1-Presets über `loadMilkFile`
+  laden und prüfen, dass `warp/compCustomSource()` gefüllt sind — fängt genau
+  den S41-Befund (verlorene tryTranspile-Aufrufe → stiller MD1-Fallback).
+- **GL-Smoke** (`test_MilkdropGlSmoke.cpp`): 8 c1-Shader kompilieren + linken
+  im Offscreen-3.3-Core-Kontext.
+- **MilkdropStandalone** (`projects/exec/MilkdropStandalone/`): isolierter
+  End-to-End-Nachweis — echtes GL-Fenster, `--auto` rendert jedes c1-Preset,
+  Screenshot + Pixel-Statistik, Exit ≠ 0 wenn ein Preset ohne Custom-Pfad
+  bleibt. Diagnose-Trace: `milkdrop/MilkdropTrace.hpp` schreibt Lade-/Render-
+  Entscheide nach `<TEMP>/lumiviz_milkdrop_trace.log` (immer aktiv, nur
+  Zustandswechsel; `LUMIVIZ_MILKDROP_TRACE=0` schaltet ab).
 
 ## 6. Changelog
 
@@ -137,3 +148,4 @@ GUI-Thread unter renderMutex und fasst kein GL an. FeedbackBuffer neu:
 | 1.2.0 | 2026-07-22 | M5 (Session 40): Blur-Pyramide (MilkdropBlur.hpp + runBlurPasses), Shader-Stufe B (Klassifikation, baked Composite-Konstanten, additive Blur-Layer, subtraktiver Warp-Decay, klassenbasierter Import-Report) |
 | 1.3.0 | 2026-07-22 | M6.1 (Session 40): .lvfx-Schwester-Persistenz — MilkdropSerializer.hpp/.cpp (header.type="milkdrop"), loadPresetDocument/savePresetDocument, applyState-Refactor (gemeinsamer Lade-Schwanz), PresetState.warp/compShaderText (SSOT); Kalibrier-Raster render.debugGrid + Sichttest M5 bestanden |
 | 1.4.0 | 2026-07-22 | Stufe C1+C2 (Session 40): transpilierte Warp-/Comp-Shader (HlslTranspiler-Lib, GLSL-Präambel als include.fx-Gegenstück, per-Preset-Programme, Sampler-Objekte, q/rand/roam/Blur-Uniforms, stiller MD1-Fallback) + exakter Noise-Port und Custom-Textur-Lader (randNN, texsize_, Platzhalter+Report) |
+| 1.5.0 | 2026-07-22 | Session 41: **C1/C2-Befund gelöst** — beim C2-Umbau (2ba48a3) verlorene tryTranspile-Aufrufe in prepareCustomShaders wiederhergestellt (Custom-Quellen blieben leer → stiller MD1-Fallback); Diagnose-Trace MilkdropTrace.hpp (Lade-/Renderpfad, Build-Stempel, Branch-Entscheide), Accessoren warp/compCustomSource()/customGlError(), Regressions-Gate im Ladepfad, Standalone MilkdropStandalone (--auto-Nachweis 8/8 grün) |

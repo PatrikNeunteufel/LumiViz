@@ -104,6 +104,13 @@ public:
     /// @brief Test/Debug (C1): the custom passes' vertex shader source
     [[nodiscard]] static const char* debugCustomVertexShader();
 
+    /// @brief Transpiled GLSL of the LOADED preset ("" = MD1 path) — regression
+    ///        gate for prepareCustomShaders (Session-41 Befund) + standalone
+    [[nodiscard]] const std::string& warpCustomSource() const { return m_warpCustomSrc; }
+    [[nodiscard]] const std::string& compCustomSource() const { return m_compCustomSrc; }
+    /// @brief First GL compile/link error of the custom programs ("" = none)
+    [[nodiscard]] const std::string& customGlError() const { return m_customGlError; }
+
     // =========================================================================
     // Parameters (generic ConfigPanel + VisualizerPresetManager support)
     // =========================================================================
@@ -278,6 +285,21 @@ private:
     std::unique_ptr<QOpenGLBuffer> m_quadVbo;
     std::vector<float> m_meshData;          ///< triangulated pos.xy + uv per vertex
     std::vector<double> m_vertexUv;         ///< (gx+1)*(gy+1)*2 warp UVs (math space)
+
+    // --- Diagnose-Trace (Session 41): nur Zustandswechsel loggen, kein Frame-Spam ---------
+    struct TraceState
+    {
+        int rev = -2;                              ///< -2 = noch nie geloggt
+        bool warpSrc = false, compSrc = false;     ///< Custom-GLSL vorhanden?
+        bool warpProg = false, compProg = false;   ///< GL-Programme gebaut?
+        bool glError = false;                      ///< m_customGlError gesetzt?
+        bool glResFail = false;                    ///< ensureGlResources schlug fehl
+        bool operator==(const TraceState&) const = default;
+    };
+    TraceState m_traceState;         ///< zuletzt geloggter Render-Zustand
+    int m_traceWarpDrawRev = -1;     ///< Custom-Branch in drawWarpPass gemeldet (je Rev)
+    int m_traceCompDrawRev = -1;     ///< Custom-Branch in compositeToScreen gemeldet
+    bool m_traceGlInfoLogged = false;
 
     // --- parameters ----------------------------------------------------------------------
     int m_meshX = kDefaultMeshX;

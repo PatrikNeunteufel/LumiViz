@@ -15,8 +15,12 @@
 #include <EelTranspiler.hpp>
 #include <MilkParser.hpp>
 
+#include "visualizers/MilkdropVisualizer.hpp"
 #include "visualizers/milkdrop/MilkdropBlur.hpp"
 #include "visualizers/milkdrop/MilkdropPresetState.hpp"
+
+#include <QString>
+#include <QStringList>
 
 #include <cmath>
 #include <filesystem>
@@ -365,4 +369,43 @@ TEST_CASE("MilkdropBlur: Texturgroessen-Kette (Referenz 1024er-Beispiel)")
     CHECK(tiny[5][0] >= 16);
     CHECK(tiny[5][0] % 16 == 0);
     CHECK(tiny[5][1] % 4 == 0);
+}
+
+// Session-41-Regression: beim C2-Umbau gingen die tryTranspile-AUFRUFE in
+// prepareCustomShaders verloren — die Custom-GLSL-Quellen blieben leer und
+// jedes Preset lief still im MD1-Fallback. Dieses Gate prueft den LADEPFAD
+// (loadMilkFile → applyState → prepareCustomShaders), nicht den Transpiler.
+TEST_CASE("MilkdropVisualizer: c1-Kalibrier-Presets fuellen die Custom-GLSL-Quellen")
+{
+    const std::filesystem::path dir =
+        repoRoot() / "asset" / "calibration" / "milkdrop" / "c1";
+    REQUIRE(std::filesystem::exists(dir));
+
+    int customShaders = 0;
+    for (const auto& entry : std::filesystem::directory_iterator(dir))
+    {
+        if (!entry.is_regular_file() || entry.path().extension() != ".milk") continue;
+        MilkdropVisualizer viz;
+        QStringList report;
+        REQUIRE_MESSAGE(
+            viz.loadMilkFile(QString::fromStdWString(entry.path().wstring()), &report),
+            entry.path().filename().string());
+
+        const std::string name = entry.path().filename().string();
+        const auto& s = viz.presetState();
+        if (s.warpInfo.shaderClass == lumi::milk::ShaderClass::Custom)
+        {
+            ++customShaders;
+            CHECK_MESSAGE(!viz.warpCustomSource().empty(),
+                          name, ": Warp klassifiziert als Custom, aber GLSL-Quelle leer");
+        }
+        if (s.compInfo.shaderClass == lumi::milk::ShaderClass::Custom)
+        {
+            ++customShaders;
+            CHECK_MESSAGE(!viz.compCustomSource().empty(),
+                          name, ": Comp klassifiziert als Custom, aber GLSL-Quelle leer");
+        }
+    }
+    // c1-Satz: 8 Custom-Shader (Gate identisch zum GL-Smoke-Test)
+    CHECK(customShaders == 8);
 }
