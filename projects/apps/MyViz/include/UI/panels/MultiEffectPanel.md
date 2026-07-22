@@ -38,10 +38,15 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
   kann sie behalten, modulieren (`red=red*v`) oder überschreiben. Default =
   Gradient/„Neon" (unverändertes Alt-Verhalten).
 
-- **Milkdrop-Node (N2 Session 41, N3.1/N3.3 Session 42 — Entscheid E1):** Der
-  Node zeigt fünf **Anzeige-Kinder** im Baum (Code · Waves · Shapes · Shader ·
-  Sprites); Waves/Shapes/Sprites haben darunter **Element-Items** (je
-  Wave/Shape/Sprite eines). Sektions- und Element-Items sind Navigations-Items
+- **Milkdrop-Node (N2 Session 41, N3.1–N3.3 Session 42 — Entscheid E1):** Der
+  Node zeigt sechs **Anzeige-Kinder** im Baum (Code · Waves · Shapes · Shader ·
+  Sprites · **Parameter**); Waves/Shapes/Sprites haben darunter
+  **Element-Items** (je Wave/Shape/Sprite eines). **Parameter-Sektion (N3.2):**
+  die komplette numerische Preset-Fläche in sechs Gruppen (General/Composite
+  inkl. fShader, Basis-Waveform, Motion/Warp, Borders, Motion Vectors,
+  Blur-Pyramide) mit Startwerte-Hinweis (per_frame kann überschreiben) und
+  Baked-Hinweis bei vorhandenem Comp-Shader; die Wave-/Shape-Einzel-Ansichten
+  tragen zusätzlich ihre numerischen Init-Parameter. Sektions- und Element-Items sind Navigations-Items
   mit Sentinel-Pfaden (`kMilkSectionBase`; Elemente = `[…, Sentinel, Index]`,
   Zerlegung über `splitMilkPath`), nicht drag-/editierbar — `nodeAtPath`
   liefert für sie bewusst `nullptr`, der Property-Editor trennt Sektion/

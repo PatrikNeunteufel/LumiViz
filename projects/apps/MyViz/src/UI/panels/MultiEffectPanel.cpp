@@ -828,7 +828,8 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
             tr("Waves (%1 aktiv)").arg(wavesOn),
             tr("Shapes (%1 aktiv)").arg(shapesOn),
             tr("Shader (Warp/Comp)"),
-            tr("Sprites (%1)").arg(milk->preset.sprites.size())};
+            tr("Sprites (%1)").arg(milk->preset.sprites.size()),
+            tr("Parameter (Basiswerte)")};
         for (int s = 0; s < sections.size(); ++s)
         {
             auto* sec = new QTreeWidgetItem(item);
@@ -2761,6 +2762,42 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             mp.preset.waves[i].*member = std::move(v);
                     };
                 };
+                // N3.2: numerische Init-Parameter — nur in der Einzel-Ansicht
+                // (die Sektions-Liste bleibt kompakt: enabled + Codes)
+                if (milkElem >= 0)
+                {
+                    using WS = lumi::milkdrop::WaveState;
+                    const auto wD = [milkOf, i](double WS::* m) {
+                        return [milkOf, i, m](ChainNode& n, double v) {
+                            auto& mp = milkOf(n);
+                            if (i < mp.preset.waves.size()) mp.preset.waves[i].*m = v;
+                        };
+                    };
+                    const auto wI = [milkOf, i](int WS::* m) {
+                        return [milkOf, i, m](ChainNode& n, int v) {
+                            auto& mp = milkOf(n);
+                            if (i < mp.preset.waves.size()) mp.preset.waves[i].*m = v;
+                        };
+                    };
+                    const auto wB = [milkOf, i](bool WS::* m) {
+                        return [milkOf, i, m](ChainNode& n, bool v) {
+                            auto& mp = milkOf(n);
+                            if (i < mp.preset.waves.size()) mp.preset.waves[i].*m = v;
+                        };
+                    };
+                    addInt(tr("Samples"), w.samples, 2, 512, wI(&WS::samples));
+                    addInt(tr("L/R-Versatz (sep)"), w.sep, 0, 256, wI(&WS::sep));
+                    addBool(tr("Spektrum statt Waveform"), w.spectrum, wB(&WS::spectrum));
+                    addBool(tr("Punkte"), w.useDots, wB(&WS::useDots));
+                    addBool(tr("Dick"), w.drawThick, wB(&WS::drawThick));
+                    addBool(tr("Additiv"), w.additive, wB(&WS::additive));
+                    addDouble(tr("Skalierung"), w.scaling, 0.0, 100.0, 0.01, wD(&WS::scaling));
+                    addDouble(tr("Glaettung"), w.smoothing, 0.0, 1.0, 0.01, wD(&WS::smoothing));
+                    addDouble(tr("Rot"), w.r, 0.0, 1.0, 0.01, wD(&WS::r));
+                    addDouble(tr("Gruen"), w.g, 0.0, 1.0, 0.01, wD(&WS::g));
+                    addDouble(tr("Blau"), w.b, 0.0, 1.0, 0.01, wD(&WS::b));
+                    addDouble(tr("Alpha"), w.a, 0.0, 1.0, 0.01, wD(&WS::a));
+                }
                 addScript(tr("Wave %1 · Init").arg(w.index), w.initCode,
                           setWave(&lumi::milkdrop::WaveState::initCode));
                 addScript(tr("Wave %1 · Frame").arg(w.index), w.frameCode,
@@ -2801,6 +2838,52 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             mp.preset.shapes[i].*member = std::move(v);
                     };
                 };
+                // N3.2: numerische Init-Parameter — nur in der Einzel-Ansicht
+                if (milkElem >= 0)
+                {
+                    using SS = lumi::milkdrop::ShapeState;
+                    const auto sD = [milkOf, i](double SS::* m) {
+                        return [milkOf, i, m](ChainNode& n, double v) {
+                            auto& mp = milkOf(n);
+                            if (i < mp.preset.shapes.size()) mp.preset.shapes[i].*m = v;
+                        };
+                    };
+                    const auto sI = [milkOf, i](int SS::* m) {
+                        return [milkOf, i, m](ChainNode& n, int v) {
+                            auto& mp = milkOf(n);
+                            if (i < mp.preset.shapes.size()) mp.preset.shapes[i].*m = v;
+                        };
+                    };
+                    const auto sB = [milkOf, i](bool SS::* m) {
+                        return [milkOf, i, m](ChainNode& n, bool v) {
+                            auto& mp = milkOf(n);
+                            if (i < mp.preset.shapes.size()) mp.preset.shapes[i].*m = v;
+                        };
+                    };
+                    addInt(tr("Seiten"), s.sides, 3, 100, sI(&SS::sides));
+                    addInt(tr("Instanzen (num_inst)"), s.instances, 1, 1024, sI(&SS::instances));
+                    addBool(tr("Additiv"), s.additive, sB(&SS::additive));
+                    addBool(tr("Dicker Rand"), s.thickOutline, sB(&SS::thickOutline));
+                    addBool(tr("Texturiert (Vorframe)"), s.textured, sB(&SS::textured));
+                    addDouble(tr("Textur-Zoom"), s.texZoom, 0.01, 10.0, 0.01, sD(&SS::texZoom));
+                    addDouble(tr("Textur-Winkel"), s.texAng, -6.3, 6.3, 0.01, sD(&SS::texAng));
+                    addDouble(tr("Position X"), s.x, 0.0, 1.0, 0.001, sD(&SS::x));
+                    addDouble(tr("Position Y"), s.y, 0.0, 1.0, 0.001, sD(&SS::y));
+                    addDouble(tr("Radius"), s.rad, 0.0, 2.0, 0.001, sD(&SS::rad));
+                    addDouble(tr("Winkel"), s.ang, -6.3, 6.3, 0.01, sD(&SS::ang));
+                    addDouble(tr("Zentrum R"), s.r, 0.0, 1.0, 0.01, sD(&SS::r));
+                    addDouble(tr("Zentrum G"), s.g, 0.0, 1.0, 0.01, sD(&SS::g));
+                    addDouble(tr("Zentrum B"), s.b, 0.0, 1.0, 0.01, sD(&SS::b));
+                    addDouble(tr("Zentrum A"), s.a, 0.0, 1.0, 0.01, sD(&SS::a));
+                    addDouble(tr("Rand R (r2)"), s.r2, 0.0, 1.0, 0.01, sD(&SS::r2));
+                    addDouble(tr("Rand G (g2)"), s.g2, 0.0, 1.0, 0.01, sD(&SS::g2));
+                    addDouble(tr("Rand B (b2)"), s.b2, 0.0, 1.0, 0.01, sD(&SS::b2));
+                    addDouble(tr("Rand A (a2)"), s.a2, 0.0, 1.0, 0.01, sD(&SS::a2));
+                    addDouble(tr("Border R"), s.borderR, 0.0, 1.0, 0.01, sD(&SS::borderR));
+                    addDouble(tr("Border G"), s.borderG, 0.0, 1.0, 0.01, sD(&SS::borderG));
+                    addDouble(tr("Border B"), s.borderB, 0.0, 1.0, 0.01, sD(&SS::borderB));
+                    addDouble(tr("Border A"), s.borderA, 0.0, 1.0, 0.01, sD(&SS::borderA));
+                }
                 addScript(tr("Shape %1 · Init").arg(s.index), s.initCode,
                           setShape(&lumi::milkdrop::ShapeState::initCode));
                 addScript(tr("Shape %1 · Frame").arg(s.index), s.frameCode,
@@ -2919,6 +3002,136 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                               s.code = std::move(v);
                           }));
             }
+        }
+        else if (milkSection == 5)  // Parameter (N3.2 — numerische Basiswerte)
+        {
+            using PS = lumi::milkdrop::PresetState;
+            // Setter ueber Member-Pointer: jede Aenderung laeuft durch milkOf
+            // (Revision-Bump), der Render-Thread uebernimmt den PresetState
+            const auto setD = [milkOf](double PS::* m) {
+                return [milkOf, m](ChainNode& n, double v) {
+                    milkOf(n).preset.*m = v;
+                };
+            };
+            const auto setB = [milkOf](bool PS::* m) {
+                return [milkOf, m](ChainNode& n, bool v) {
+                    milkOf(n).preset.*m = v;
+                };
+            };
+            const auto setI = [milkOf](int PS::* m) {
+                return [milkOf, m](ChainNode& n, int v) {
+                    milkOf(n).preset.*m = v;
+                };
+            };
+            const auto group = [&](const QString& t2) {
+                auto* l = new QLabel(t2, m_propContainer);
+                QFont f2 = l->font();
+                f2.setBold(true);
+                l->setFont(f2);
+                form->addRow(l);
+            };
+
+            auto* hint = new QLabel(
+                tr("Startwerte des Presets — per_frame-Code kann viele davon "
+                   "je Frame ueberschreiben (zoom/rot/wave_*/…)."),
+                m_propContainer);
+            hint->setWordWrap(true);
+            form->addRow(hint);
+            const bool bakedComp =
+                p->preset.compInfo.shaderClass == lumi::milk::ShaderClass::Md1Default ||
+                p->preset.compInfo.shaderClass == lumi::milk::ShaderClass::Md1Plus;
+            if (bakedComp || p->preset.compInfo.shaderClass == lumi::milk::ShaderClass::Custom)
+            {
+                auto* baked = new QLabel(
+                    tr("Hinweis: Dieses Preset hat einen Comp-Shader — Gamma/"
+                       "Echo/Filter/fShader sind dort EINGEBACKEN und wirken "
+                       "hier nicht (Baked-Vertrag; Shader leeren, um sie zu "
+                       "aktivieren)."),
+                    m_propContainer);
+                baked->setWordWrap(true);
+                form->addRow(baked);
+            }
+
+            group(tr("General / Composite"));
+            addDouble(tr("Decay"), p->preset.decay, 0.0, 1.0, 0.001, setD(&PS::decay));
+            addDouble(tr("Gamma"), p->preset.gammaAdj, 0.0, 8.0, 0.01, setD(&PS::gammaAdj));
+            addDouble(tr("Echo-Zoom"), p->preset.videoEchoZoom, 0.001, 1000.0, 0.01, setD(&PS::videoEchoZoom));
+            addDouble(tr("Echo-Alpha"), p->preset.videoEchoAlpha, 0.0, 1.0, 0.01, setD(&PS::videoEchoAlpha));
+            addEnum(tr("Echo-Orientierung"), p->preset.videoEchoOrientation,
+                    {tr("Keine"), tr("H-Spiegel"), tr("V-Spiegel"), tr("Beide")},
+                    setI(&PS::videoEchoOrientation));
+            addDouble(tr("fShader-Farbwash"), p->preset.shader, 0.0, 1.0, 0.01, setD(&PS::shader));
+            addBool(tr("Textur-Wrap"), p->preset.texWrap, setB(&PS::texWrap));
+            addBool(tr("Darken Center"), p->preset.darkenCenter, setB(&PS::darkenCenter));
+            addBool(tr("Brighten"), p->preset.brighten, setB(&PS::brighten));
+            addBool(tr("Darken"), p->preset.darken, setB(&PS::darken));
+            addBool(tr("Solarize"), p->preset.solarize, setB(&PS::solarize));
+            addBool(tr("Invert"), p->preset.invert, setB(&PS::invert));
+
+            group(tr("Basis-Waveform"));
+            addInt(tr("Wave-Modus (0-7)"), p->preset.waveMode, 0, 7, setI(&PS::waveMode));
+            addBool(tr("Additiv"), p->preset.additiveWaves, setB(&PS::additiveWaves));
+            addBool(tr("Punkte statt Linien"), p->preset.waveDots, setB(&PS::waveDots));
+            addBool(tr("Dick"), p->preset.waveThick, setB(&PS::waveThick));
+            addBool(tr("Alpha nach Lautstaerke"), p->preset.modWaveAlphaByVolume, setB(&PS::modWaveAlphaByVolume));
+            addBool(tr("Farbe maximieren"), p->preset.maximizeWaveColor, setB(&PS::maximizeWaveColor));
+            addDouble(tr("Alpha"), p->preset.waveAlpha, 0.0, 10.0, 0.01, setD(&PS::waveAlpha));
+            addDouble(tr("Skalierung"), p->preset.waveScale, 0.0, 100.0, 0.01, setD(&PS::waveScale));
+            addDouble(tr("Glaettung"), p->preset.waveSmoothing, 0.0, 0.95, 0.01, setD(&PS::waveSmoothing));
+            addDouble(tr("Mystery (wave_mystery)"), p->preset.waveMystery, -2.0, 2.0, 0.01, setD(&PS::waveMystery));
+            addDouble(tr("Mod-Alpha Start"), p->preset.modWaveAlphaStart, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaStart));
+            addDouble(tr("Mod-Alpha Ende"), p->preset.modWaveAlphaEnd, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaEnd));
+            addDouble(tr("Rot"), p->preset.waveR, 0.0, 1.0, 0.01, setD(&PS::waveR));
+            addDouble(tr("Gruen"), p->preset.waveG, 0.0, 1.0, 0.01, setD(&PS::waveG));
+            addDouble(tr("Blau"), p->preset.waveB, 0.0, 1.0, 0.01, setD(&PS::waveB));
+            addDouble(tr("Position X"), p->preset.waveX, 0.0, 1.0, 0.01, setD(&PS::waveX));
+            addDouble(tr("Position Y"), p->preset.waveY, 0.0, 1.0, 0.01, setD(&PS::waveY));
+
+            group(tr("Motion (Warp-Mesh)"));
+            addDouble(tr("Zoom"), p->preset.zoom, 0.01, 10.0, 0.001, setD(&PS::zoom));
+            addDouble(tr("Zoom-Exponent"), p->preset.zoomExponent, 0.01, 10.0, 0.01, setD(&PS::zoomExponent));
+            addDouble(tr("Rotation"), p->preset.rot, -2.0, 2.0, 0.001, setD(&PS::rot));
+            addDouble(tr("Warp"), p->preset.warp, 0.0, 10.0, 0.01, setD(&PS::warp));
+            addDouble(tr("Warp-Anim-Speed"), p->preset.warpAnimSpeed, 0.01, 10.0, 0.01, setD(&PS::warpAnimSpeed));
+            addDouble(tr("Warp-Scale"), p->preset.warpScale, 0.01, 10.0, 0.01, setD(&PS::warpScale));
+            addDouble(tr("Zentrum X (cx)"), p->preset.cx, 0.0, 1.0, 0.001, setD(&PS::cx));
+            addDouble(tr("Zentrum Y (cy)"), p->preset.cy, 0.0, 1.0, 0.001, setD(&PS::cy));
+            addDouble(tr("Drift X (dx)"), p->preset.dx, -1.0, 1.0, 0.001, setD(&PS::dx));
+            addDouble(tr("Drift Y (dy)"), p->preset.dy, -1.0, 1.0, 0.001, setD(&PS::dy));
+            addDouble(tr("Stretch X (sx)"), p->preset.sx, 0.01, 10.0, 0.001, setD(&PS::sx));
+            addDouble(tr("Stretch Y (sy)"), p->preset.sy, 0.01, 10.0, 0.001, setD(&PS::sy));
+
+            group(tr("Borders"));
+            addDouble(tr("Aussen-Groesse"), p->preset.obSize, 0.0, 0.5, 0.001, setD(&PS::obSize));
+            addDouble(tr("Aussen R"), p->preset.obR, 0.0, 1.0, 0.01, setD(&PS::obR));
+            addDouble(tr("Aussen G"), p->preset.obG, 0.0, 1.0, 0.01, setD(&PS::obG));
+            addDouble(tr("Aussen B"), p->preset.obB, 0.0, 1.0, 0.01, setD(&PS::obB));
+            addDouble(tr("Aussen A"), p->preset.obA, 0.0, 1.0, 0.01, setD(&PS::obA));
+            addDouble(tr("Innen-Groesse"), p->preset.ibSize, 0.0, 0.5, 0.001, setD(&PS::ibSize));
+            addDouble(tr("Innen R"), p->preset.ibR, 0.0, 1.0, 0.01, setD(&PS::ibR));
+            addDouble(tr("Innen G"), p->preset.ibG, 0.0, 1.0, 0.01, setD(&PS::ibG));
+            addDouble(tr("Innen B"), p->preset.ibB, 0.0, 1.0, 0.01, setD(&PS::ibB));
+            addDouble(tr("Innen A"), p->preset.ibA, 0.0, 1.0, 0.01, setD(&PS::ibA));
+
+            group(tr("Motion Vectors"));
+            addDouble(tr("Raster X (mv_x)"), p->preset.mvX, 0.0, 64.0, 0.1, setD(&PS::mvX));
+            addDouble(tr("Raster Y (mv_y)"), p->preset.mvY, 0.0, 48.0, 0.1, setD(&PS::mvY));
+            addDouble(tr("Versatz X (mv_dx)"), p->preset.mvDX, -1.0, 1.0, 0.001, setD(&PS::mvDX));
+            addDouble(tr("Versatz Y (mv_dy)"), p->preset.mvDY, -1.0, 1.0, 0.001, setD(&PS::mvDY));
+            addDouble(tr("Laenge (mv_l)"), p->preset.mvL, 0.0, 10.0, 0.01, setD(&PS::mvL));
+            addDouble(tr("Rot (mv_r)"), p->preset.mvR, 0.0, 1.0, 0.01, setD(&PS::mvR));
+            addDouble(tr("Gruen (mv_g)"), p->preset.mvG, 0.0, 1.0, 0.01, setD(&PS::mvG));
+            addDouble(tr("Blau (mv_b)"), p->preset.mvB, 0.0, 1.0, 0.01, setD(&PS::mvB));
+            addDouble(tr("Alpha (mv_a)"), p->preset.mvA, 0.0, 1.0, 0.01, setD(&PS::mvA));
+
+            group(tr("Blur-Pyramide"));
+            addDouble(tr("Blur1 Min"), p->preset.blur1Min, 0.0, 1.0, 0.01, setD(&PS::blur1Min));
+            addDouble(tr("Blur1 Max"), p->preset.blur1Max, 0.0, 1.0, 0.01, setD(&PS::blur1Max));
+            addDouble(tr("Blur2 Min"), p->preset.blur2Min, 0.0, 1.0, 0.01, setD(&PS::blur2Min));
+            addDouble(tr("Blur2 Max"), p->preset.blur2Max, 0.0, 1.0, 0.01, setD(&PS::blur2Max));
+            addDouble(tr("Blur3 Min"), p->preset.blur3Min, 0.0, 1.0, 0.01, setD(&PS::blur3Min));
+            addDouble(tr("Blur3 Max"), p->preset.blur3Max, 0.0, 1.0, 0.01, setD(&PS::blur3Max));
+            addDouble(tr("Blur1 Edge-Darken"), p->preset.blur1EdgeDarken, 0.0, 1.0, 0.01, setD(&PS::blur1EdgeDarken));
         }
     }
     else if (auto* p = std::get_if<PassthroughParams>(&params))
