@@ -82,8 +82,29 @@ nach dem AVS-Render-Modell (Analyse §5.1). Import-Ziel für .avs-Presets
 - Default-Kette (Konstruktor): Fadeout(12) + DebugBars — sichtbarer Beweis,
   dass der Ketten-Walk läuft (Sichttest 5.1).
 
+## Milkdrop-Meganode (N1/N2, Session 41 — Entscheide E1/E2)
+
+- **`runMilkdropNode`**: rendert die komplette MilkDrop-Pipeline
+  ([MilkdropVisualizer](MilkdropVisualizer.md) als Engine, per `nodeId` im
+  LeafRuntime) in den aktiven Chain-Buffer. Vertrag: der Kern erfasst das beim
+  Frame-Start gebundene Draw-FBO als Composite-Ziel — der Host bindet vor
+  `render()` `bindActive()` und stellt danach FBO/Viewport wieder her.
+- **Revision-Vertrag:** `MilkdropNodeParams.revision` bumpt bei jedem Edit
+  (Panel/Import); nur dann übernimmt der Render-Thread den Preset-State
+  (`applyPresetState` — Skript-Compile + Shader-Transpile, GL-frei).
+- **Audio:** Host-Kanal-Kopien werden interleaved an den Kern durchgereicht
+  (`feedMilkAudio` → `updateAudioStereo`).
+- **Laden:** `loadMilkFile` (.milk) / `loadMilkDocument` (milkdrop-.lvfx,
+  M6.1-Format) installieren eine Wurzel-Liste mit einem Milkdrop-Node;
+  Report-Parität über eine GL-freie Probe-Instanz. Speichern läuft immer über
+  den Chain-Serializer (Key `"milkdrop"`, Preset eingebettet).
+- GL-Freigabe des Kerns via `cleanup()` in `resetRuntimes` (Kontext current).
+
 ## Absicherung
 
 Datenmodell: `test_EffectChain.cpp` (GL-frei). GL-Pfad: Sichttest
 (Kette rendert, Trails, Resize/Undock/Fullscreen) — GL-Klassen sind nicht
 unit-testbar (kein Kontext im Test, R4-Erfahrung).
+Milkdrop-Node: `test_ChainSerializer.cpp` (Suite „MilkdropNode" — Roundtrip,
+Clamps, `loadMilkFile`→Node).
+

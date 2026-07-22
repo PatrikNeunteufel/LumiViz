@@ -506,6 +506,16 @@ bool MilkdropVisualizer::savePresetDocument(const QString& path) const
     return lumi::milkdrop::savePresetToFile(m_state, path);
 }
 
+void MilkdropVisualizer::applyPresetState(lumi::milkdrop::PresetState state,
+                                          const QString& presetDir, QStringList* report)
+{
+    trace::log(QStringLiteral("applyPresetState: '%1' (Meganode, dir='%2')")
+                   .arg(QString::fromStdString(state.name))
+                   .arg(presetDir));
+    m_presetDir = presetDir;
+    applyState(std::move(state), report);
+}
+
 void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringList* report)
 {
     m_state = std::move(state);
@@ -1868,6 +1878,13 @@ void MilkdropVisualizer::onRender(float deltaTime)
 {
     QOpenGLContext* ctx = QOpenGLContext::currentContext();
     if (ctx == nullptr) return;
+    {
+        // Composite-Ziel VOR allen eigenen FBO-Wechseln erfassen (N1): das hier
+        // gebundene Draw-FBO gehoert dem Aufrufer (Qt-Fenster ODER Chain-Buffer)
+        GLint boundFbo = 0;
+        ctx->functions()->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &boundFbo);
+        m_targetFbo = static_cast<unsigned int>(boundFbo);
+    }
     if (m_lastContext != nullptr && ctx != m_lastContext)
     {
         // context changed (undock) — old GL objects died with it; release the
@@ -3076,7 +3093,9 @@ void MilkdropVisualizer::compositeToScreen(const FrameVars& fv)
     QOpenGLContext* ctx = QOpenGLContext::currentContext();
     QOpenGLFunctions* f = ctx->functions();
 
-    f->glBindFramebuffer(GL_FRAMEBUFFER, ctx->defaultFramebufferObject());
+    // Ziel = das beim Frame-Start gebundene FBO (Standalone: Qt-Default-FBO,
+    // Meganode: Chain-Buffer des MultiEffect-Hosts) — N1, Entscheid E1
+    f->glBindFramebuffer(GL_FRAMEBUFFER, m_targetFbo);
     f->glViewport(0, 0, std::max(1, width()), std::max(1, height()));
 
     // Stufe C1: transpilierter Comp-Shader ersetzt den gesamten MD1-Composite

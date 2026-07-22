@@ -1,6 +1,6 @@
 # MilkDrop-Import — Status-Übersicht (SSOT für Fortschritt + Bezeichnungen)
 
-> **Stand:** 2026-07-22 (Session 40) · **Zweck:** EIN Ort für „was ist fertig,
+> **Stand:** 2026-07-22 (Session 41) · **Zweck:** EIN Ort für „was ist fertig,
 > was ist offen, wie heißt es" — die Detail-Konzepte bleiben in
 > [MilkDrop_Import_Konzept.md](MilkDrop_Import_Konzept.md).
 > Dieses Dokument wird am Ende jeder Session nachgezogen.
@@ -31,14 +31,15 @@ Es gibt **kein** „A#"- oder „D#"-Schema. Stufe A ist seit M3/M4 fertig.
 | **Stufe C2** exakter Noise-Port + Custom-Textur-Lader (randNN, texsize_, Platzhalter+Report) | 40 | Build/Suite grün; **GL-Sichttest offen** |
 | **E1–E8** Entscheide (Konzept §6b) | 40 | dokumentiert |
 | Nebenlieferungen S40: Import-Browser-Persistenz + Settings-Reset · EelScriptEditing.hpp-Extraktion (Basis für N2) · Origin-Icons nutzbar | 40 | Suite 388/388 |
+| **C1/C2-Befund GELÖST:** Regression aus dem C2-Umbau (Commit 2ba48a3) — die tryTranspile-AUFRUFE in prepareCustomShaders fehlten → Custom-GLSL blieb leer, stiller MD1-Fallback. Fix + Regressions-Gate im Ladepfad + Diagnose-Trace (`MilkdropTrace.hpp` → `%TEMP%/lumiviz_milkdrop_trace.log`) + Standalone-Testprogramm `MilkdropStandalone` (`--auto`: 8/8 c1 custom, Screenshots + Pixel-Statistik, 02 invertiert / 07 Textur aufrecht verifiziert) | 41 | Suite 391/391; Standalone-Beweislauf Exit 0; **In-App-Sichttest offen** |
+| **N1 Chain-Node ✅ (Code):** `MilkdropNodeParams` (PresetState eingebettet + presetDir + meshX/Y + debugGrid + Revision) im EffectParams-Variant, `runMilkdropNode` (per-nodeId-Runtime, MilkdropVisualizer als Engine, Composite-Ziel = beim Kern-Frame-Start gebundenes FBO → Chain-Buffer), ChainSerializer-Key `"milkdrop"` (Preset-JSON via MilkdropSerializer, Klassifikation beim Laden neu abgeleitet) | 41 | Suite 394/394 (Roundtrip, Clamps, loadMilkFile→Node); **GL-Sichttest offen** |
+| **N2 Panel + Routing ✅ (Code):** MultiEffect-Panel-Baum mit Anzeige-Kindern (Preset → Code · Waves · Shapes · Shader, Sentinel-Pfade), Property-Editor je Sektion (EelScriptEditing; Shader-Edit reklassifiziert), Palette-Eintrag „Milkdrop"; MainWindow routet .milk + milkdrop-.lvfx auf MultiEffect+Node (`loadMilkFile`/`loadMilkDocument`, Report-Parität über GL-freie Probe-Instanz), Save immer über Chain-Serializer; **Standalone-Registry-Eintrag entfernt (E2)** — Klasse bleibt Node-Engine + Testprogramm-Basis | 41 | Builds VS-Debug/Testing + Ninja-Clang-Release grün; **UI-Sichttest offen** |
 
 ## 3. Offen ⬜ (verbindliche Reihenfolge aus §6b)
 
 | # | Was | Gehört zu | Notizen |
 |---|---|---|---|
-| 0 | **C1/C2-Befund lösen + Sichttest** — c1-Presets zeigen in der App MD1-Fallback-Look, OBWOHL Transpile-Gate, glslangValidator und GL-Smoke-Test (Qt-Pfad, 3.3-Core offscreen) alle 8 Shader fehlerfrei bauen; Verdacht veraltetes Lauf-Binary (Ninja-Clang-Release). **Entscheid Patrik: per Standalone-Testprogramm isolieren.** Diagnose-Hilfen: `%TEMP%\lumiviz_glsl_error.txt`-Dump + Fehler-Warnung beim erneuten Laden | C1/C2 | einziger offener Schritt VOR N1; Kalibrier-Satz `c1/` (8 Presets, dialogfrei) liegt bereit |
-| 1 | **N1** Milkdrop als **Chain-Node** im MultiEffect-Host (Meganode rendert Pipeline in den Chain-Buffer) | E1 | Render-to-Buffer statt to-Screen; Params meshX/Y + debugGrid ziehen an den Node |
-| 2 | **N2** Panel-Baum im MultiEffect-Panel (Preset → Code-Slots · Waves · Shapes · Warp/Comp) + **Standalone-Host entfernen** | E1/E2 | nutzt EelScriptEditing.hpp; Import-Browser routet auf MultiEffect+Node |
+| 0 | **Sichttest-Runde N1/N2 + c1 (In-App):** c1-/m5-Presets über den neuen Node-Pfad (Import-Browser → MultiEffect+Node) sichten; Panel-Baum + Editor-Sektionen prüfen; Standalone-Werkzeug: `MilkdropStandalone --auto` (Kern-Pfad, ohne Chain) | N1/N2, C1/C2 | Kalibrier-READMEs in `asset/calibration/milkdrop/{c1,m5}/`; Trace-Log `%TEMP%/lumiviz_milkdrop_trace.log` läuft mit |
 | 3 | **Sprites** (85 Presets) | M-Kür = Pflicht (E7) | Textur-Lader aus C2 vorhanden |
 | 4 | **Crossfade** = echtes Doppel-Rendering, Freeze-Frame nur als Performance-Fallback; Ausbaustufe per-Vertex-Warp-UV-Blend | M6 / E5 | zwei Laufzeitzustände (2 Contexts/Feedback/Blur) |
 | 5 | **Visual-Playlist** + Hotkeys (schaltet Chains + Milkdrop einheitlich, nutzt Crossfade) | M6 / E6 / P2 | Konzept: ui/Visual_Playlist_Konzept.md |
@@ -57,3 +58,4 @@ Video-Capture, en-Übersetzungen, App-Umbenennung MyViz→LumiViz.
 |---|---|---|
 | 1.0.0 | 2026-07-22 | Erstfassung (Session 40): Legende (inkl. Umbenennung B1/B2→N1/N2), Erledigt-/Offen-Tabellen |
 | 1.1.0 | 2026-07-22 | Session-Abschluss 40: C1+C2 als Code-✅ eingetragen, Punkt 0 = C1/C2-Befund (Standalone-Entscheid); c1-Kalibrier-Satz + GL-Smoke-Test ergänzt |
+| 1.2.0 | 2026-07-22 | Session 41: **C1/C2-Befund gelöst** (tryTranspile-Regression aus 2ba48a3; Trace + Regressions-Gate + MilkdropStandalone-Beweislauf 8/8) · **N1+N2 Code ✅** (Milkdrop = Chain-Node im MultiEffect-Host, Panel-Baum mit Sektions-Kindern, Import-/Save-Routing, Standalone-Registry-Eintrag entfernt) · Offen-Punkt 0 = Sichttest-Runde N1/N2 + c1 |

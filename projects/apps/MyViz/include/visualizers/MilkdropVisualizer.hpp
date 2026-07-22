@@ -95,6 +95,15 @@ public:
     /// @brief Save the current preset as a .lvfx sister document (M6)
     [[nodiscard]] bool savePresetDocument(const QString& path) const;
 
+    /**
+     * @brief Adopt an already-translated preset (N1 Meganode: the chain node's
+     *        params are the SSOT). No GL — scripts compile and shaders
+     *        transpile here; GL programs rebuild lazily on the next frame.
+     * @param presetDir Texture search base (C2 lookup paths)
+     */
+    void applyPresetState(lumi::milkdrop::PresetState state, const QString& presetDir,
+                          QStringList* report = nullptr);
+
     /// @brief Currently loaded preset state (for tests/panel)
     [[nodiscard]] const lumi::milkdrop::PresetState& presetState() const { return m_state; }
 
@@ -243,6 +252,9 @@ private:
 
     // --- GL ------------------------------------------------------------------------------
     QOpenGLContext* m_lastContext = nullptr;
+    /// Composite-Ziel: das beim onRender-EINTRITT gebundene Draw-FBO (Standalone:
+    /// Qt-Default-FBO; Meganode: aktiver Chain-Buffer des MultiEffect-Hosts)
+    unsigned int m_targetFbo = 0;
     lumi::render::FeedbackBuffer m_feedback;
     lumi::render::ScopeRenderer m_scope;
     std::unique_ptr<QOpenGLShaderProgram> m_warpProgram;    ///< pos+uv, prev texture × decay

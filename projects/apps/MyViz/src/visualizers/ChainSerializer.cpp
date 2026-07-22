@@ -11,6 +11,8 @@
 
 #include "visualizers/multieffect/ChainSerializer.hpp"
 
+#include "visualizers/milkdrop/MilkdropSerializer.hpp"
+
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -677,6 +679,18 @@ struct WriteVisitor
     {
         o["color"] = static_cast<double>(p.color);
         o["orbitSpeed"] = p.orbitSpeed;
+    }
+    void operator()(const MilkdropNodeParams& p) const
+    {
+        // eingebettetes Milkdrop-Schwester-Dokument (MilkdropSerializer, M6.1):
+        // Shader-/Skript-Texte bleiben SSOT, die Klassifikation wird beim
+        // Laden neu abgeleitet. presetDir = Textur-Suchbasis (Asset-Pack,
+        // bewusst NICHT eingebettet — anders als Picture-Bilder).
+        o["preset"] = lumi::milkdrop::presetToJson(p.preset);
+        o["presetDir"] = QString::fromStdString(p.presetDir);
+        o["meshX"] = p.meshX;
+        o["meshY"] = p.meshY;
+        o["debugGrid"] = p.debugGrid;
     }
     void operator()(const PassthroughParams& p) const
     {
@@ -1435,6 +1449,17 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     if (type == "debugBars")
         return DebugBarsParams{getColor(o, "color", 0xFF80FF),
                                static_cast<float>(getDouble(o, "orbitSpeed", 1.0))};
+    if (type == "milkdrop")
+    {
+        MilkdropNodeParams p;
+        p.preset = lumi::milkdrop::presetFromJson(o.value("preset").toObject(), nullptr);
+        p.presetDir = getStr(o, "presetDir");
+        p.meshX = getInt(o, "meshX", 32);
+        p.meshY = getInt(o, "meshY", 24);
+        p.debugGrid = getBool(o, "debugGrid", false);
+        p.revision = 1;  // frisch geladen = erste Revision fuer den Render-Host
+        return p;
+    }
     // "passthrough" and any unknown key
     return PassthroughParams{getInt(o, "sourceId", 0), getStr(o, "note")};
 }
@@ -1515,6 +1540,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const ReactionDiffusionParams&) const { return "reactionDiffusion"; }
         QString operator()(const SetRenderModeParams&) const { return "setRenderMode"; }
         QString operator()(const DebugBarsParams&) const { return "debugBars"; }
+        QString operator()(const MilkdropNodeParams&) const { return "milkdrop"; }
         QString operator()(const PassthroughParams&) const { return "passthrough"; }
     };
     return std::visit(Visitor{}, params);

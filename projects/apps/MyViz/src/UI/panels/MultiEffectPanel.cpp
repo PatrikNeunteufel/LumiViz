@@ -93,6 +93,11 @@ struct EffectType
     [[nodiscard]] bool isHeader() const { return make == nullptr; }
 };
 
+/// Milkdrop-Anzeige-Kinder (E1: Preset → Code · Waves · Shapes · Shader):
+/// Pfad-Segmente >= dieser Basis sind SEKTIONEN des Eltern-Nodes, keine
+/// Chain-Indizes — nodeAtPath liefert fuer sie bewusst nullptr (Mutations-Schutz)
+constexpr int kMilkSectionBase = 1000000;
+
 // Resolve asset/img/logo/icons at runtime: the exe runs from out/build/…, so
 // walk upwards from the application dir until the icons appear (dev layout).
 // Empty result = no icons deployed -> callers fall back to text markers.
@@ -179,6 +184,10 @@ const std::vector<EffectType>& effectPalette()
         {"Video Delay", [] { return EffectParams{VideoDelayParams{}}; }},
         {"Multi Delay", [] { return EffectParams{MultiDelayParams{}}; }},
         {"Debug Bars", [] { return EffectParams{DebugBarsParams{}}; }, Origin::Native},
+
+        {"— MilkDrop —", nullptr},
+        {"Milkdrop (Preset-Pipeline)",
+         [] { return EffectParams{MilkdropNodeParams{}}; }, Origin::MilkDrop},
 
         {"— Scopes & Sources —", nullptr},
         {"SuperScope", [] { return EffectParams{SuperScopeParams{}}; }},
@@ -405,6 +414,16 @@ QString scriptReferenceHtml(const EffectParams& params)
     else if (std::holds_alternative<ReactionDiffusionParams>(params))
         vars = table(audioIn + refRow("feed", "in/out", "0..0.1", "Gray-Scott feed rate") +
                      refRow("kill", "in/out", "0..0.1", "Gray-Scott kill rate"));
+    else if (std::holds_alternative<MilkdropNodeParams>(params))
+        vars = table(
+            audioIn +
+            refRow("bass_att / mid_att / treb_att", "in", "~1", "attenuated band loudness") +
+            refRow("zoom / rot / warp", "in/out", "any", "warp controls (per_frame)") +
+            refRow("cx / cy / dx / dy / sx / sy", "in/out", "any", "warp centre / shift / stretch") +
+            refRow("decay / gamma", "in/out", "0..1 / 0..8", "feedback decay, composite gamma") +
+            refRow("wave_a/r/g/b, wave_x/y", "in/out", "0..1", "basic wave colour / position") +
+            refRow("q1..q32", "in/out", "any", "frame→pixel channel (M2 contract)") +
+            refRow("x / y / rad / ang", "in", "0..1 / rad", "per_pixel position (rect + polar)"));
     else if (std::holds_alternative<MovementParams>(params))
         vars = table(refRow("d", "in/out", "0..1", "distance from centre (polar; remap it)") +
                      refRow("r", "in/out", "rad", "angle (polar)") +
@@ -728,6 +747,33 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
             QList<int> childPath = path;
             childPath.append(i);
             addTreeItem(item, node.children[i], childPath);
+        }
+    }
+
+    // Milkdrop-Meganode (N2, Entscheid E1): Anzeige-Kinder Preset → Code ·
+    // Waves · Shapes · Shader. Reine Navigations-Items (Sentinel-Pfad, nicht
+    // editier-/drag-/dropbar) — der Editor zeigt die gewaehlte Sektion.
+    if (const auto* milk = std::get_if<MilkdropNodeParams>(&node.params))
+    {
+        int wavesOn = 0;
+        int shapesOn = 0;
+        for (const auto& w : milk->preset.waves)
+            if (w.enabled) ++wavesOn;
+        for (const auto& s : milk->preset.shapes)
+            if (s.enabled) ++shapesOn;
+        const QStringList sections = {
+            tr("Code (per_frame / per_pixel)"),
+            tr("Waves (%1 aktiv)").arg(wavesOn),
+            tr("Shapes (%1 aktiv)").arg(shapesOn),
+            tr("Shader (Warp/Comp)")};
+        for (int s = 0; s < sections.size(); ++s)
+        {
+            auto* sec = new QTreeWidgetItem(item);
+            sec->setText(0, sections[s]);
+            sec->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+            QList<int> secPath = path;
+            secPath.append(kMilkSectionBase + s);
+            sec->setData(0, Qt::UserRole, pathToVariant(secPath));
         }
     }
 }
@@ -1307,10 +1353,22 @@ void MultiEffectPanel::clearPropertyEditor()
 // reuses `p` in mutually-exclusive branches — harmless shadowing.
 #pragma warning(disable : 4456)
 #endif
-void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
+void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
 {
     clearPropertyEditor();
-    if (m_host == nullptr || path.isEmpty()) return;
+    if (m_host == nullptr || rawPath.isEmpty()) return;
+
+    // Milkdrop-Sektion (Anzeige-Kind) vom echten Chain-Pfad abtrennen: alle
+    // Mutations-Lambdas fangen unten das bereinigte `path` — Sentinels
+    // erreichen nodeAtPath nie
+    QList<int> nodePath = rawPath;
+    int milkSection = -1;
+    if (nodePath.last() >= kMilkSectionBase)
+    {
+        milkSection = nodePath.takeLast() - kMilkSectionBase;
+        if (nodePath.isEmpty()) return;
+    }
+    const QList<int> path = nodePath;
 
     EffectParams params;
     std::string nodeName;
@@ -2341,6 +2399,160 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& path)
     {
         addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<DebugBarsParams>(n.params).color = v; });
         addDouble(tr("Orbit speed"), p->orbitSpeed, -10.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<DebugBarsParams>(n.params).orbitSpeed = static_cast<float>(v); });
+    }
+    else if (auto* p = std::get_if<MilkdropNodeParams>(&params))
+    {
+        // Jede Mutation bumpt die Revision — der Render-Host uebernimmt den
+        // Node-Zustand (Skripte/Shader/Texturen) nur bei neuer Revision
+        auto milkOf = [](ChainNode& n) -> MilkdropNodeParams& {
+            auto& mp = std::get<MilkdropNodeParams>(n.params);
+            ++mp.revision;
+            return mp;
+        };
+        const auto className = [](lumi::milk::ShaderClass c) -> QString {
+            switch (c)
+            {
+            case lumi::milk::ShaderClass::None: return QStringLiteral("MD1");
+            case lumi::milk::ShaderClass::Md1Default: return QStringLiteral("MD1-Default (baked)");
+            case lumi::milk::ShaderClass::Md1Plus: return QStringLiteral("MD1+Blur (baked)");
+            case lumi::milk::ShaderClass::Custom: return QStringLiteral("Custom (C1)");
+            }
+            return QStringLiteral("?");
+        };
+
+        if (milkSection < 0)  // Node selbst = Preset-Uebersicht
+        {
+            auto* info = new QLabel(
+                tr("MilkDrop-Preset '%1' — PS%2 · Warp: %3 · Comp: %4\n"
+                   "Sektionen (Code / Waves / Shapes / Shader) als Kinder im Baum")
+                    .arg(QString::fromStdString(p->preset.name))
+                    .arg(p->preset.psVersion)
+                    .arg(className(p->preset.warpInfo.shaderClass))
+                    .arg(className(p->preset.compInfo.shaderClass)),
+                m_propContainer);
+            info->setWordWrap(true);
+            form->addRow(info);
+            addInt(tr("Mesh X"), p->meshX, 8, 96,
+                   [milkOf](ChainNode& n, int v) { milkOf(n).meshX = v; });
+            addInt(tr("Mesh Y"), p->meshY, 6, 72,
+                   [milkOf](ChainNode& n, int v) { milkOf(n).meshY = v; });
+            addBool(tr("Kalibrier-Raster"), p->debugGrid,
+                    [milkOf](ChainNode& n, bool v) { milkOf(n).debugGrid = v; });
+            addText(tr("Textur-Basisordner"), p->presetDir,
+                    [milkOf](ChainNode& n, std::string v) {
+                        milkOf(n).presetDir = std::move(v);
+                    });
+        }
+        else if (milkSection == 0)  // Code-Slots (EEL, Dialekt Milkdrop)
+        {
+            addScript(tr("Init (per_frame_init)"), p->preset.perFrameInit,
+                      [milkOf](ChainNode& n, std::string v) {
+                          milkOf(n).preset.perFrameInit = std::move(v);
+                      });
+            addScript(tr("Frame (per_frame)"), p->preset.perFrame,
+                      [milkOf](ChainNode& n, std::string v) {
+                          milkOf(n).preset.perFrame = std::move(v);
+                      });
+            addScript(tr("Point (per_pixel)"), p->preset.perPixel,
+                      [milkOf](ChainNode& n, std::string v) {
+                          milkOf(n).preset.perPixel = std::move(v);
+                      });
+        }
+        else if (milkSection == 1)  // Custom Waves
+        {
+            if (p->preset.waves.empty())
+                form->addRow(new QLabel(tr("Keine Custom-Waves im Preset"),
+                                        m_propContainer));
+            for (std::size_t i = 0; i < p->preset.waves.size(); ++i)
+            {
+                const auto& w = p->preset.waves[i];
+                addBool(tr("Wave %1 aktiv").arg(w.index), w.enabled,
+                        [milkOf, i](ChainNode& n, bool v) {
+                            auto& mp = milkOf(n);
+                            if (i < mp.preset.waves.size())
+                                mp.preset.waves[i].enabled = v;
+                        });
+                const auto setWave = [milkOf, i](std::string lumi::milkdrop::WaveState::* member) {
+                    return [milkOf, i, member](ChainNode& n, std::string v) {
+                        auto& mp = milkOf(n);
+                        if (i < mp.preset.waves.size())
+                            mp.preset.waves[i].*member = std::move(v);
+                    };
+                };
+                addScript(tr("Wave %1 · Init").arg(w.index), w.initCode,
+                          setWave(&lumi::milkdrop::WaveState::initCode));
+                addScript(tr("Wave %1 · Frame").arg(w.index), w.frameCode,
+                          setWave(&lumi::milkdrop::WaveState::frameCode));
+                addScript(tr("Wave %1 · Point").arg(w.index), w.pointCode,
+                          setWave(&lumi::milkdrop::WaveState::pointCode));
+            }
+        }
+        else if (milkSection == 2)  // Custom Shapes
+        {
+            if (p->preset.shapes.empty())
+                form->addRow(new QLabel(tr("Keine Custom-Shapes im Preset"),
+                                        m_propContainer));
+            for (std::size_t i = 0; i < p->preset.shapes.size(); ++i)
+            {
+                const auto& s = p->preset.shapes[i];
+                addBool(tr("Shape %1 aktiv").arg(s.index), s.enabled,
+                        [milkOf, i](ChainNode& n, bool v) {
+                            auto& mp = milkOf(n);
+                            if (i < mp.preset.shapes.size())
+                                mp.preset.shapes[i].enabled = v;
+                        });
+                const auto setShape = [milkOf, i](std::string lumi::milkdrop::ShapeState::* member) {
+                    return [milkOf, i, member](ChainNode& n, std::string v) {
+                        auto& mp = milkOf(n);
+                        if (i < mp.preset.shapes.size())
+                            mp.preset.shapes[i].*member = std::move(v);
+                    };
+                };
+                addScript(tr("Shape %1 · Init").arg(s.index), s.initCode,
+                          setShape(&lumi::milkdrop::ShapeState::initCode));
+                addScript(tr("Shape %1 · Frame").arg(s.index), s.frameCode,
+                          setShape(&lumi::milkdrop::ShapeState::frameCode));
+            }
+        }
+        else  // 3 = Warp/Comp-Shader (HLSL, SSOT — Klassifikation wird neu abgeleitet)
+        {
+            auto addHlsl = [&](const QString& label, const std::string& value,
+                               bool isWarp) {
+                auto* edit = new QPlainTextEdit(m_propContainer);
+                edit->setPlainText(QString::fromStdString(value));
+                edit->setPlaceholderText(tr("HLSL shader_body (leer = MD1-Pfad)"));
+                edit->setLineWrapMode(QPlainTextEdit::NoWrap);
+                edit->setMinimumHeight(80);
+                edit->setMaximumHeight(260);
+                QFont mono(QStringLiteral("Consolas"));
+                mono.setStyleHint(QFont::Monospace);
+                edit->setFont(mono);
+                connect(edit, &QPlainTextEdit::textChanged, this,
+                        [this, path, isWarp, edit]() {
+                            const std::string text = edit->toPlainText().toStdString();
+                            mutate(path, [&](ChainNode& n) {
+                                auto& mp = std::get<MilkdropNodeParams>(n.params);
+                                ++mp.revision;
+                                if (isWarp)
+                                {
+                                    mp.preset.warpShaderText = text;
+                                    mp.preset.warpInfo =
+                                        lumi::milk::analyzeWarpShader(text);
+                                }
+                                else
+                                {
+                                    mp.preset.compShaderText = text;
+                                    mp.preset.compInfo =
+                                        lumi::milk::analyzeCompShader(text);
+                                }
+                            });
+                        });
+                form->addRow(new QLabel(label, m_propContainer));
+                form->addRow(edit);
+            };
+            addHlsl(tr("Warp-Shader (HLSL)"), p->preset.warpShaderText, true);
+            addHlsl(tr("Comp-Shader (HLSL)"), p->preset.compShaderText, false);
+        }
     }
     else if (auto* p = std::get_if<PassthroughParams>(&params))
     {

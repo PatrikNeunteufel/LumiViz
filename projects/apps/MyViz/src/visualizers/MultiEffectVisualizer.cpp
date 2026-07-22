@@ -13,6 +13,7 @@
 
 #include "visualizers/multieffect/AvsChainTranslator.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
+#include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 
 #include <QOpenGLContext>
@@ -1604,6 +1605,91 @@ bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outRep
     return parsed.ok;
 }
 
+namespace {
+
+/// N1: eine Wurzel-Liste mit genau einem Milkdrop-Meganode (Entscheid E1)
+ChainNode makeMilkdropRoot(lumi::milkdrop::PresetState state, const QString& presetDir)
+{
+    MilkdropNodeParams p;
+    p.presetDir = presetDir.toStdString();
+    p.revision = 1;
+    ChainNode node;
+    node.displayName = state.name.empty() ? std::string("Milkdrop") : state.name;
+    p.preset = std::move(state);
+    node.params = std::move(p);
+
+    ChainNode root;
+    root.params = ListParams{};
+    root.children.push_back(std::move(node));
+    return root;
+}
+
+} // namespace
+
+bool MultiEffectVisualizer::loadMilkFile(const QString& path, QStringList* outReport)
+{
+    if (outReport != nullptr) outReport->clear();
+    const lumi::milk::ParseResult parsed =
+        lumi::milk::parseFile(std::filesystem::path(path.toStdWString()));
+    if (!parsed.ok)
+    {
+        if (outReport != nullptr)
+        {
+            outReport->append(QStringLiteral("Parser: %1")
+                                  .arg(QString::fromStdString(parsed.error)));
+        }
+        return false;
+    }
+    if (outReport != nullptr)
+    {
+        for (const std::string& w : parsed.warnings)
+        {
+            outReport->append(QStringLiteral("Parser: %1").arg(QString::fromStdString(w)));
+        }
+        if (!parsed.sprites.empty())
+        {
+            outReport->append(QStringLiteral("%1 Sprite-Sektion(en) geparst — "
+                                             "Rendering folgt später")
+                                  .arg(parsed.sprites.size()));
+        }
+    }
+
+    lumi::milkdrop::PresetState state = lumi::milkdrop::translate(parsed);
+    state.name = QFileInfo(path).completeBaseName().toStdString();
+    const QString dir = QFileInfo(path).absolutePath();
+
+    // Report-Paritaet zum frueheren Standalone-Import: eine GL-freie Wegwerf-
+    // Instanz erzeugt dieselben Klassifikations-/Transpile-/Textur-Meldungen
+    // (der Render-Thread uebernimmt den Node-State spaeter still per Revision)
+    {
+        MilkdropVisualizer probe;
+        probe.applyPresetState(state, dir, outReport);
+    }
+
+    m_pendingRuntimeReset = true;  // neue Node-Ids — alte GL-Runtimes freigeben
+    setChain(makeMilkdropRoot(std::move(state), dir));
+    return true;
+}
+
+bool MultiEffectVisualizer::loadMilkDocument(const QString& path, QStringList* outReport)
+{
+    if (outReport != nullptr) outReport->clear();
+    lumi::milkdrop::PresetState state;
+    if (!lumi::milkdrop::loadPresetFromFile(path, state, outReport)) return false;
+    if (state.name.empty())
+    {
+        state.name = QFileInfo(path).completeBaseName().toStdString();
+    }
+    const QString dir = QFileInfo(path).absolutePath();
+    {
+        MilkdropVisualizer probe;
+        probe.applyPresetState(state, dir, outReport);
+    }
+    m_pendingRuntimeReset = true;
+    setChain(makeMilkdropRoot(std::move(state), dir));
+    return true;
+}
+
 bool MultiEffectVisualizer::saveChainFile(const QString& path) const
 {
     return saveChainToFile(m_root, path);
@@ -1882,6 +1968,9 @@ void MultiEffectVisualizer::resetRuntimes()
             if (rt.cmTexture != 0) f->glDeleteTextures(1, &rt.cmTexture);
             if (rt.picTexture != 0) f->glDeleteTextures(1, &rt.picTexture);
             if (rt.fracLut != 0) f->glDeleteTextures(1, &rt.fracLut);
+            // Meganode: der Milkdrop-Kern gibt seine GL-Objekte selbst frei
+            // (braucht den current Context — deshalb hier, nicht im Dtor)
+            if (rt.milk != nullptr) rt.milk->cleanup();
         }
     }
     m_listRuntimes.clear();  // slot hosts / FBOs die with their GL-frame owner
@@ -2107,6 +2196,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const FlameParams& params) const { self.runFlame(node, params); }
         void operator()(const ReactionDiffusionParams& params) const { self.runReactionDiffusion(node, params); }
         void operator()(const DebugBarsParams& params) const { self.runDebugBars(params); }
+        void operator()(const MilkdropNodeParams& params) const { self.runMilkdropNode(node, params); }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
     std::visit(Visitor{*this, node}, node.params);
@@ -3076,6 +3166,79 @@ uint32_t MultiEffectVisualizer::nextRandom()
     // Numerical Recipes LCG — host-local, deterministic (no global rand()).
     m_rng = m_rng * 1664525u + 1013904223u;
     return m_rng;
+}
+
+// =============================================================================
+// Milkdrop-Meganode (Import Roadmap 6, N1 — Entscheid E1)
+// =============================================================================
+
+void MultiEffectVisualizer::feedMilkAudio(MilkdropVisualizer& milk)
+{
+    // Kanal-Kopien des Hosts zu interleaved Stereo zusammensetzen (Vertrag von
+    // VisualizerBase::updateAudioStereo); Mono-Fallback liefern die Getter selbst
+    const std::vector<float> wl = getWaveformChannel(0);
+    const std::vector<float> wr = getWaveformChannel(1);
+    const std::vector<float> sl = getSpectrumChannel(0);
+    const std::vector<float> sr = getSpectrumChannel(1);
+    const int frames = static_cast<int>(std::min(wl.size(), wr.size()));
+    const int bins = static_cast<int>(std::min(sl.size(), sr.size()));
+    if (frames == 0 && bins == 0) return;
+
+    m_milkWaveScratch.assign(static_cast<std::size_t>(frames) * 2, 0.0f);
+    for (int i = 0; i < frames; ++i)
+    {
+        m_milkWaveScratch[static_cast<std::size_t>(i) * 2 + 0] =
+            wl[static_cast<std::size_t>(i)];
+        m_milkWaveScratch[static_cast<std::size_t>(i) * 2 + 1] =
+            wr[static_cast<std::size_t>(i)];
+    }
+    m_milkSpecScratch.assign(static_cast<std::size_t>(bins) * 2, 0.0f);
+    for (int b = 0; b < bins; ++b)
+    {
+        m_milkSpecScratch[static_cast<std::size_t>(b) * 2 + 0] =
+            sl[static_cast<std::size_t>(b)];
+        m_milkSpecScratch[static_cast<std::size_t>(b) * 2 + 1] =
+            sr[static_cast<std::size_t>(b)];
+    }
+    milk.updateAudioStereo(m_milkSpecScratch.data(), bins, m_milkWaveScratch.data(),
+                           frames, 2);
+}
+
+void MultiEffectVisualizer::runMilkdropNode(const ChainNode& node,
+                                            const MilkdropNodeParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    if (rt.milk == nullptr)
+    {
+        rt.milk = std::make_unique<MilkdropVisualizer>();
+        rt.milk->initialize();
+        rt.milkRevision = 0;
+    }
+    if (rt.milkRevision != params.revision)
+    {
+        rt.milkRevision = params.revision;
+        // Node-Params sind SSOT: Kopie uebernehmen — kompiliert Skripte und
+        // transpiliert Shader (GL-frei; GL-Programme baut der naechste Kern-
+        // Frame lazy ueber die Custom-Rev)
+        rt.milk->applyPresetState(params.preset,
+                                  QString::fromStdString(params.presetDir), nullptr);
+        rt.milk->setParam("render.meshX", lumi::modules::ParamValue{params.meshX});
+        rt.milk->setParam("render.meshY", lumi::modules::ParamValue{params.meshY});
+        rt.milk->setParam("render.debugGrid",
+                          lumi::modules::ParamValue{params.debugGrid});
+    }
+
+    feedMilkAudio(*rt.milk);
+    // Chain-Buffer-Groesse (physische Pixel) — width()/height() des Kerns
+    // steuern dessen Composite-Viewport und die Feedback-Buffer-Groesse
+    rt.milk->resize(QSize(m_surfaceWidth, m_surfaceHeight));
+
+    // Der Kern erfasst beim Frame-Start das gebundene Draw-FBO als Composite-
+    // Ziel — das muss der aktive Chain-Buffer sein. Danach Host-Zustand
+    // wiederherstellen (der Kern verbog FBO/Viewport fuer seine Paesse).
+    bindActive();
+    rt.milk->render(m_deltaTime);
+    bindActive();
 }
 
 void MultiEffectVisualizer::runDebugBars(const DebugBarsParams& params)

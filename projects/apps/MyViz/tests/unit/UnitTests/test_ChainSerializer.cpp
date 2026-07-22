@@ -10,15 +10,27 @@
 
 #include <doctest.h>
 
+#include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QString>
+#include <QStringList>
+
+#include <filesystem>
 
 using namespace lumi::multieffect;
 
 namespace
 {
+
+std::filesystem::path repoRoot()
+{
+    std::filesystem::path p(__FILE__);
+    for (int i = 0; i < 7; ++i) p = p.parent_path();
+    return p;
+}
 
 ChainNode buildRichChain()
 {
@@ -1011,5 +1023,117 @@ TEST_SUITE("ChainSerializer")
         CHECK(restored.isList());
         REQUIRE(restored.children.size() == 1);
         CHECK(std::holds_alternative<InvertParams>(restored.children[0].params));
+    }
+}
+
+// =============================================================================
+// Milkdrop-Meganode (N1/N2, Session 41)
+// =============================================================================
+
+TEST_SUITE("MilkdropNode")
+{
+    TEST_CASE("Roundtrip: eingebettetes Preset + Node-Parameter")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+
+        MilkdropNodeParams mp;
+        mp.preset.name = "roundtrip";
+        mp.preset.decay = 0.955;
+        mp.preset.perFrameInit = "q1=1;";
+        mp.preset.perFrame = "zoom=zoom+0.01*sin(time);";
+        mp.preset.perPixel = "rot=rot+q1*0.02;";
+        mp.preset.warpShaderText =
+            "shader_body { ret = 1 - tex2D(sampler_main, uv).xyz; }";
+        mp.preset.warpInfo = lumi::milk::analyzeWarpShader(mp.preset.warpShaderText);
+        lumi::milkdrop::WaveState w;
+        w.index = 2;
+        w.enabled = true;
+        w.pointCode = "x=i;y=v;";
+        mp.preset.waves.push_back(w);
+        mp.presetDir = "C:/tmp/presets";
+        mp.meshX = 48;
+        mp.meshY = 36;
+        mp.debugGrid = true;
+        ChainNode milk;
+        milk.params = std::move(mp);
+        root.children.push_back(std::move(milk));
+        compileChain(root);
+
+        CHECK(effectTypeKey(root.children[0].params) == "milkdrop");
+
+        QStringList report;
+        const ChainNode back = chainFromJson(chainToJson(root), &report);
+        REQUIRE(back.children.size() == 1);
+        const auto* rp = std::get_if<MilkdropNodeParams>(&back.children[0].params);
+        REQUIRE(rp != nullptr);
+        CHECK(rp->preset.name == "roundtrip");
+        CHECK(rp->preset.decay == doctest::Approx(0.955));
+        CHECK(rp->preset.perFrameInit == "q1=1;");
+        CHECK(rp->preset.perFrame == "zoom=zoom+0.01*sin(time);");
+        CHECK(rp->preset.perPixel == "rot=rot+q1*0.02;");
+        CHECK(rp->preset.warpShaderText ==
+              "shader_body { ret = 1 - tex2D(sampler_main, uv).xyz; }");
+        // Klassifikation wird beim Laden NEU abgeleitet (SSOT = Shader-Text)
+        CHECK(rp->preset.warpInfo.shaderClass == lumi::milk::ShaderClass::Custom);
+        REQUIRE(rp->preset.waves.size() == 1);
+        CHECK(rp->preset.waves[0].enabled);
+        CHECK(rp->preset.waves[0].pointCode == "x=i;y=v;");
+        CHECK(rp->presetDir == "C:/tmp/presets");
+        CHECK(rp->meshX == 48);
+        CHECK(rp->meshY == 36);
+        CHECK(rp->debugGrid);
+        CHECK(rp->revision >= 1);
+    }
+
+    TEST_CASE("compileChain clampt Mesh und stellt eine Revision sicher")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        MilkdropNodeParams mp;
+        mp.meshX = 500;
+        mp.meshY = 1;
+        mp.revision = 0;
+        ChainNode n;
+        n.params = std::move(mp);
+        root.children.push_back(std::move(n));
+        compileChain(root);
+
+        const auto* p = std::get_if<MilkdropNodeParams>(&root.children[0].params);
+        REQUIRE(p != nullptr);
+        CHECK(p->meshX == 96);
+        CHECK(p->meshY == 6);
+        CHECK(p->revision == 1);
+        CHECK(root.children[0].displayName == "Milkdrop");
+    }
+
+    TEST_CASE("MultiEffectVisualizer::loadMilkFile installiert einen Milkdrop-Node")
+    {
+        const std::filesystem::path preset = repoRoot() / "asset" / "calibration" /
+                                             "milkdrop" / "c1" / "01_warp_drift.milk";
+        REQUIRE(std::filesystem::exists(preset));
+
+        MultiEffectVisualizer host;
+        QStringList report;
+        REQUIRE(host.loadMilkFile(QString::fromStdWString(preset.wstring()), &report));
+
+        const ChainNode& root = host.chain();
+        REQUIRE(root.isList());
+        REQUIRE(root.children.size() == 1);
+        const auto* mp = std::get_if<MilkdropNodeParams>(&root.children[0].params);
+        REQUIRE(mp != nullptr);
+        CHECK(mp->preset.warpInfo.shaderClass == lumi::milk::ShaderClass::Custom);
+        CHECK(!mp->preset.warpShaderText.empty());
+        CHECK(mp->revision == 1);
+        CHECK(!mp->presetDir.empty());
+        CHECK(root.children[0].nodeId != 0);  // setChain hat kompiliert
+
+        // Import-Report hat Paritaet zum alten Standalone-Pfad (Transpile-Note)
+        bool hasTranspileNote = false;
+        for (const QString& line : report)
+        {
+            if (line.contains(QStringLiteral("GLSL"))) hasTranspileNote = true;
+        }
+        CHECK(hasTranspileNote);
     }
 }

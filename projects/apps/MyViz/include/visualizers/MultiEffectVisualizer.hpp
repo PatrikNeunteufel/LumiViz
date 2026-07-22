@@ -31,6 +31,7 @@
 #pragma once
 
 #include "visualizers/VisualizerBase.hpp"
+#include "visualizers/MilkdropVisualizer.hpp"
 #include "visualizers/multieffect/EffectChain.hpp"
 #include "visualizers/modules/processing/BeatEstimator.hpp"
 #include "visualizers/modules/processing/BeatModule.hpp"
@@ -86,6 +87,21 @@ public:
      * render thread walks the chain). The full File-menu/editor hookup is 5.7.
      */
     bool loadAvsFile(const QString& path, QStringList* outReport = nullptr);
+
+    /**
+     * @brief Parse a .milk preset and install it as a single-Milkdrop-node
+     *        chain (N2 routing — Entscheid E1/E2). GUI thread, under
+     *        renderMutex(); no GL (the render thread applies revisions lazily).
+     * @return false only when the file does not parse as a MilkDrop preset.
+     */
+    bool loadMilkFile(const QString& path, QStringList* outReport = nullptr);
+
+    /**
+     * @brief Load a translated milkdrop .lvfx sister document (M6.1 format)
+     *        and install it as a single-Milkdrop-node chain. GUI thread,
+     *        under renderMutex().
+     */
+    bool loadMilkDocument(const QString& path, QStringList* outReport = nullptr);
 
     /** Save the current chain as a host preset (.lvfx JSON). */
     bool saveChainFile(const QString& path) const;
@@ -316,6 +332,11 @@ private:
         int delayFilled = 0;
         int delayW = 0;
         int delayH = 0;
+
+        // Milkdrop-Meganode (N1, Entscheid E1): der komplette MilkDrop-Kern als
+        // Engine je Node; GL-Freigabe via cleanup() in resetRuntimes
+        std::unique_ptr<MilkdropVisualizer> milk;
+        uint64_t milkRevision = 0;  ///< zuletzt uebernommene Params-Revision
     };
 
     /** Render-thread state of one list node, keyed by ChainNode::nodeId. */
@@ -349,6 +370,12 @@ private:
     void renderList(const lumi::multieffect::ChainNode& node,
                     const lumi::multieffect::ListParams& params);
     void runClear(const lumi::multieffect::ClearParams& params);
+    /// Milkdrop-Meganode (N1): rendert die feste MilkDrop-Pipeline in den
+    /// aktiven Chain-Buffer (Composite-Ziel = beim Kern-Frame-Start gebundenes FBO)
+    void runMilkdropNode(const lumi::multieffect::ChainNode& node,
+                         const lumi::multieffect::MilkdropNodeParams& params);
+    /// Host-Audio (Kanal-Kopien) interleaved an den Milkdrop-Kern durchreichen
+    void feedMilkAudio(MilkdropVisualizer& milk);
     void runFadeout(const lumi::multieffect::FadeoutParams& params);
     void runInvert();
     void runBrightness(const lumi::multieffect::BrightnessParams& params);
@@ -590,6 +617,8 @@ private:
     std::vector<float> m_warpVertices;  ///< reused CPU scratch for the warp mesh
 
     std::unordered_map<uint64_t, LeafRuntime> m_leafRuntimes;
+    std::vector<float> m_milkWaveScratch;  ///< interleavte Audio-Kopien (Meganode)
+    std::vector<float> m_milkSpecScratch;
     lumi::render::OffscreenBufferPool m_bufferPool;  ///< 8 global buffers (Buffer Save)
     lumi::render::ScopeRenderer m_scopeRenderer;     ///< shared scope draw (E6)
     uint32_t m_rng = 0x9E3779B9u;  ///< host-local LCG state

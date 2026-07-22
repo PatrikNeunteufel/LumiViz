@@ -44,6 +44,12 @@ CompileResult r = compileChain(root);   // nach JEDER Mutation (Entscheid E4)
 - `nodeCount()` zählt ohne Root (AvsParser-`effectCount`-Regel).
 - Unbekannte Effekte = `PassthroughParams{sourceId, note}` — konserviert,
   rendert nichts (AVS-Philosophie: nie hart abbrechen).
+- **`MilkdropNodeParams` (N1, Session 41 — Entscheid E1):** die MilkDrop-Meganode.
+  Trägt den kompletten übersetzten `lumi::milkdrop::PresetState` (Header bleibt
+  Qt-/GL-frei), `presetDir` (Textur-Suchbasis, NICHT eingebettet), `meshX/Y`
+  (Clamp 8..96 / 6..72), `debugGrid` und eine **`revision`** — jeder Edit bumpt
+  sie, nur dann übernimmt der Render-Host den State (Skripte/Shader/Texturen);
+  Compile-Pass stellt `revision >= 1` sicher.
 
 ## Tests
 

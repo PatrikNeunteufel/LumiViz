@@ -41,7 +41,6 @@
 
 #include "services/VisualizerRegistry.hpp"
 #include "visualizers/EqualizerVisualizer.hpp"
-#include "visualizers/MilkdropVisualizer.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/OscilloscopeVisualizer.hpp"
 #include "visualizers/PulsingVisualizer.hpp"
@@ -164,19 +163,9 @@ void initVisualizerDefaults(VisualizerRegistry& registry)
         },
         false);
 
-    // Milkdrop Host - MD1 render core (import target, Roadmap 6 / M3)
-    registry.registerVisualizer(
-        VisualizerDescriptor{
-            "milkdrop",                                          // id
-            "Milkdrop",                                          // name
-            "MilkDrop preset host (MD1 core, import target)",    // description
-            "effects",                                           // category
-            110                                                  // order
-        },
-        []() -> std::unique_ptr<IVisualizer> {
-            return std::make_unique<MilkdropVisualizer>();
-        },
-        false);
+    // Milkdrop: KEIN eigener Registry-Eintrag mehr (N2, Entscheid E2) — die
+    // Klasse lebt als Chain-Node-Engine im MultiEffect-Host weiter
+    // (runMilkdropNode) und im Standalone-Testprogramm MilkdropStandalone.
 
     // =========================================================================
     // PARTICLE CATEGORY (TODO)

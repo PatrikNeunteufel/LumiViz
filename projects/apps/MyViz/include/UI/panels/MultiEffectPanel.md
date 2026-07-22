@@ -38,6 +38,15 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
   kann sie behalten, modulieren (`red=red*v`) oder überschreiben. Default =
   Gradient/„Neon" (unverändertes Alt-Verhalten).
 
+- **Milkdrop-Node (N2, Session 41 — Entscheid E1):** Der Node zeigt vier
+  **Anzeige-Kinder** im Baum (Code · Waves · Shapes · Shader). Das sind reine
+  Navigations-Items mit Sentinel-Pfaden (`kMilkSectionBase`, nicht drag-/
+  editierbar) — `nodeAtPath` liefert für sie bewusst `nullptr`, der Property-
+  Editor trennt die Sektion ab und editiert den echten Node. Jede Mutation
+  bumpt `MilkdropNodeParams.revision` (Render-Host-Übernahme-Vertrag);
+  Shader-Edits reklassifizieren via `analyzeWarp/CompShader` (SSOT = Text).
+  Palette-Eintrag „Milkdrop (Preset-Pipeline)" mit MilkDrop-Origin-Icon.
+
 ## Verträge
 
 - **Alle Mutationen** (Struktur wie Parameter) laufen unter dem `renderMutex()`

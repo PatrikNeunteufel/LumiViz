@@ -19,7 +19,6 @@
 #include "UI/managers/MenuManager.hpp"
 #include "UI/managers/DialogManager.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
-#include "visualizers/MilkdropVisualizer.hpp"
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "services/ServiceContainer.hpp"
@@ -562,17 +561,14 @@ void MainWindow::setupEventHandlers()
         });
 
     pEventBus->subscribe<ImportMilkPresetEvent>(
-        [this](const ImportMilkPresetEvent& ev) {
-            // Import Roadmap 6 / M3: auto-activate the Milkdrop host (mirrors
-            // the AVS path above — load runs under the widget's renderMutex()).
-            VisualizerWidget* widget = primaryVisualizer();
-            auto* host = (widget != nullptr)
-                             ? dynamic_cast<MilkdropVisualizer*>(widget->visualizer())
-                             : nullptr;
+        [this, findMultiEffect, pEventBus](const ImportMilkPresetEvent& ev) {
+            // N2 (Entscheide E1/E2): .milk landet als Milkdrop-Chain-Node im
+            // MultiEffect-Host — der Standalone-Milkdrop ist Geschichte.
+            auto [widget, host] = findMultiEffect();
             if (host == nullptr && widget != nullptr)
             {
-                widget->setVisualizer(QStringLiteral("milkdrop"));
-                host = dynamic_cast<MilkdropVisualizer*>(widget->visualizer());
+                widget->setVisualizer(QStringLiteral("multieffect"));
+                host = dynamic_cast<MultiEffectVisualizer*>(widget->visualizer());
             }
             if (host == nullptr)
             {
@@ -603,6 +599,7 @@ void MainWindow::setupEventHandlers()
                                      tr("Not a valid MilkDrop preset:\n%1").arg(path));
                 return;
             }
+            pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
             // "ℹ"-Zeilen sind reine Bestaetigungen — Dialog nur bei echten Warnungen
             bool hasWarnings = false;
             for (const QString& line : report)
@@ -630,20 +627,17 @@ void MainWindow::setupEventHandlers()
             }
             if (path.isEmpty()) return;
 
-            // .lvfx dispatch (M6): a milkdrop sister document routes to the
-            // Milkdrop host, everything else stays a MultiEffect chain.
+            // .lvfx dispatch (M6/N2): a milkdrop sister document becomes a
+            // Milkdrop chain node in the MultiEffect host (Entscheid E1/E2).
             if (lumi::milkdrop::isMilkdropFile(path))
             {
-                VisualizerWidget* widget = primaryVisualizer();
-                auto* milk = (widget != nullptr)
-                                 ? dynamic_cast<MilkdropVisualizer*>(widget->visualizer())
-                                 : nullptr;
-                if (milk == nullptr && widget != nullptr)
+                auto [widget, host] = findMultiEffect();
+                if (host == nullptr && widget != nullptr)
                 {
-                    widget->setVisualizer(QStringLiteral("milkdrop"));
-                    milk = dynamic_cast<MilkdropVisualizer*>(widget->visualizer());
+                    widget->setVisualizer(QStringLiteral("multieffect"));
+                    host = dynamic_cast<MultiEffectVisualizer*>(widget->visualizer());
                 }
-                if (milk == nullptr)
+                if (host == nullptr)
                 {
                     QMessageBox::information(this, tr("Load Effect Chain"),
                                              tr("No visualizer available to load into."));
@@ -653,7 +647,7 @@ void MainWindow::setupEventHandlers()
                 bool ok = false;
                 {
                     QMutexLocker lock(&widget->renderMutex());
-                    ok = milk->loadPresetDocument(path, &report);
+                    ok = host->loadMilkDocument(path, &report);
                 }
                 if (!ok)
                 {
@@ -661,6 +655,7 @@ void MainWindow::setupEventHandlers()
                                          tr("Could not load:\n%1").arg(path));
                     return;
                 }
+                pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
                 bool hasWarnings = false;
                 for (const QString& line : report)
                 {
@@ -708,31 +703,9 @@ void MainWindow::setupEventHandlers()
 
     pEventBus->subscribe<SaveEffectChainEvent>(
         [this, requireMultiEffect](const SaveEffectChainEvent&) {
-            // Milkdrop host active? Save the sister document instead (M6).
-            VisualizerWidget* primary = primaryVisualizer();
-            auto* milk = (primary != nullptr)
-                             ? dynamic_cast<MilkdropVisualizer*>(primary->visualizer())
-                             : nullptr;
-            if (milk != nullptr)
-            {
-                QString path = QFileDialog::getSaveFileName(
-                    this, tr("Save Milkdrop Preset"), QString(),
-                    tr("LumiViz Effect Chain (*.lvfx)"));
-                if (path.isEmpty()) return;
-                if (!path.endsWith(".lvfx", Qt::CaseInsensitive)) path += ".lvfx";
-                bool ok = false;
-                {
-                    QMutexLocker lock(&primary->renderMutex());
-                    ok = milk->savePresetDocument(path);
-                }
-                if (!ok)
-                {
-                    QMessageBox::warning(this, tr("Save Milkdrop Preset"),
-                                         tr("Could not save:\n%1").arg(path));
-                }
-                return;
-            }
-
+            // N2: Milkdrop lebt als Chain-Node — Speichern laeuft IMMER ueber
+            // den Chain-Serializer (Milkdrop-Nodes betten ihr Preset ein).
+            // Alte milkdrop-Schwester-Dokumente bleiben LADbar (Dispatch oben).
             auto [widget, host] = requireMultiEffect("Save Effect Chain");
             if (host == nullptr) return;
             QString path = QFileDialog::getSaveFileName(

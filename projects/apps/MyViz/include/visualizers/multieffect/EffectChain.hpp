@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include "visualizers/milkdrop/MilkdropPresetState.hpp"
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -1212,6 +1214,32 @@ struct ReactionDiffusionParams
     std::string beatCode;
 };
 
+/**
+ * MilkDrop-Meganode (Import Roadmap 6, N1 — Entscheid E1): renders the whole
+ * fixed MilkDrop frame pipeline (warp mesh, waves/shapes, blur pyramid,
+ * stage-B/C shaders, composite) into the chain buffer. The TRANSLATED preset
+ * travels inside the node (self-contained .lvfx rule); shader classification
+ * is re-derived from the raw shader texts (SSOT) whenever the host applies a
+ * new revision.
+ */
+struct MilkdropNodeParams
+{
+    lumi::milkdrop::PresetState preset;  ///< translated .milk incl. HLSL texts
+    /// Texture search base (C2: `<dir>/textures`, `<dir>/../textures`, `<dir>`).
+    /// Custom textures stay asset-pack files — NOT embedded (unlike Picture
+    /// images): the packs are deliberately untracked and can be huge.
+    std::string presetDir;
+    int meshX = 32;   ///< warp mesh (app setting in the original, no preset key)
+    int meshY = 24;
+    bool debugGrid = false;  ///< calibration overlay AFTER the composite
+    /**
+     * Bumped on every preset/script/shader edit (import sets 1). The render
+     * host re-applies the state (script compile, shader transpile, texture
+     * reload) only when it sees a new revision — frames never re-parse.
+     */
+    uint64_t revision = 1;
+};
+
 /** Conserved effect the host cannot render yet — passes the buffer through. */
 struct PassthroughParams
 {
@@ -1242,7 +1270,8 @@ using EffectParams =
                  Fractal2DParams, DomainWarpParams, Fractal3DParams,
                  LyapunovParams, KleinianParams, FractalZoomerParams,
                  StrangeAttractorParams, FlameParams, ReactionDiffusionParams,
-                 SetRenderModeParams, DebugBarsParams, PassthroughParams>;
+                 SetRenderModeParams, DebugBarsParams, MilkdropNodeParams,
+                 PassthroughParams>;
 
 // =============================================================================
 // Chain node
@@ -1365,6 +1394,7 @@ struct CompileResult
         const char* operator()(const ReactionDiffusionParams&) const { return "Reaction Diffusion"; }
         const char* operator()(const SetRenderModeParams&) const { return "Set Render Mode"; }
         const char* operator()(const DebugBarsParams&) const { return "Debug Bars"; }
+        const char* operator()(const MilkdropNodeParams&) const { return "Milkdrop"; }
         const char* operator()(const PassthroughParams&) const { return "Passthrough"; }
     };
     return std::visit(Visitor{}, params);
@@ -1520,6 +1550,13 @@ inline void compileNode(ChainNode& node, const std::string& path,
         fz->type = std::clamp(fz->type, 0, 2);
         fz->maxIter = std::clamp(fz->maxIter, 1, 2048);
         fz->feedback = std::clamp(fz->feedback, 0.0f, 1.0f);
+    }
+    if (auto* milk = std::get_if<MilkdropNodeParams>(&node.params))
+    {
+        // ranges = MilkdropVisualizer::paramDescs (Default 32x24, Cap 96x72)
+        milk->meshX = std::clamp(milk->meshX, 8, 96);
+        milk->meshY = std::clamp(milk->meshY, 6, 72);
+        if (milk->revision == 0) milk->revision = 1;
     }
     if (auto* sa = std::get_if<StrangeAttractorParams>(&node.params))
     {
