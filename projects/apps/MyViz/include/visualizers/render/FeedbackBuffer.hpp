@@ -37,6 +37,7 @@
 #include <QOpenGLVertexArrayObject>
 
 #include <memory>
+#include <utility>
 
 namespace lumi::render {
 
@@ -80,6 +81,17 @@ public:
     {
         return m_previous != nullptr ? m_previous->texture() : 0;
     }
+
+    /// @brief GL texture id of the current frame (0 if not ready) — for callers
+    ///        that present via their own composite pass instead of endFrame()
+    [[nodiscard]] unsigned int currentTexture() const
+    {
+        return m_current != nullptr ? m_current->texture() : 0;
+    }
+
+    /// @brief Swap previous/current WITHOUT blitting to a target (the caller
+    ///        presents the image itself, e.g. MilkDrop-style composite pass)
+    void swapOnly() { std::swap(m_current, m_previous); }
 
 private:
     bool ensureQuadPipeline();

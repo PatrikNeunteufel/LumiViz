@@ -420,6 +420,9 @@ private:
             return "(" + temp + " * " + temp + ")";
         }
         if (fn == "log10")   return "log(" + arg(0) + ", 10.0)";
+        // MilkDrop ns-eel2: "int" ist ein reiner Alias fuer floor (nseel-eval.c:284) —
+        // KEINE Rundung, KEIN Abschneiden Richtung 0
+        if (fn == "int")     return "floor(" + arg(0) + ")";
 
         // --- direct pass-through (sandbox env: math subset + host functions) ---
         static const std::set<std::string> kDirect = {

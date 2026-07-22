@@ -1,0 +1,15 @@
+MILKDROP_PRESET_VERSION=201
+[preset00]
+fDecay=0.960
+fGammaAdj=2.000
+fWaveAlpha=0.800
+fWaveScale=0.400
+nWaveMode=0
+zoom=1.000
+warp=0.000
+wave_r=0.700
+wave_g=0.700
+wave_b=0.700
+per_frame_1=gamma = 1 + 2*(0.5+0.5*sin(time*0.5));
+per_frame_2=invert = above(sin(time*0.2),0.95);
+mv_a=0.000

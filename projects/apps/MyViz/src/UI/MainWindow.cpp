@@ -19,6 +19,7 @@
 #include "UI/managers/MenuManager.hpp"
 #include "UI/managers/DialogManager.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "visualizers/MilkdropVisualizer.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
@@ -560,11 +561,55 @@ void MainWindow::setupEventHandlers()
         });
 
     pEventBus->subscribe<ImportMilkPresetEvent>(
-        [this](const ImportMilkPresetEvent&) {
-            // Reserved for Import Roadmap 6 (MilkDrop). No importer yet.
-            QMessageBox::information(
-                this, tr("Import MilkDrop Preset"),
-                tr("MilkDrop import is not available yet (Import Roadmap 6)."));
+        [this](const ImportMilkPresetEvent& ev) {
+            // Import Roadmap 6 / M3: auto-activate the Milkdrop host (mirrors
+            // the AVS path above — load runs under the widget's renderMutex()).
+            VisualizerWidget* widget = primaryVisualizer();
+            auto* host = (widget != nullptr)
+                             ? dynamic_cast<MilkdropVisualizer*>(widget->visualizer())
+                             : nullptr;
+            if (host == nullptr && widget != nullptr)
+            {
+                widget->setVisualizer(QStringLiteral("milkdrop"));
+                host = dynamic_cast<MilkdropVisualizer*>(widget->visualizer());
+            }
+            if (host == nullptr)
+            {
+                QMessageBox::information(
+                    this, tr("Import MilkDrop Preset"),
+                    tr("No visualizer available to import into."));
+                return;
+            }
+
+            QString path = QString::fromStdString(ev.path);
+            if (path.isEmpty())
+            {
+                path = QFileDialog::getOpenFileName(
+                    this, tr("Import MilkDrop Preset"), QString(),
+                    tr("MilkDrop Presets (*.milk);;All Files (*)"));
+            }
+            if (path.isEmpty()) return;
+
+            QStringList report;
+            bool ok = false;
+            {
+                QMutexLocker lock(&widget->renderMutex());
+                ok = host->loadMilkFile(path, &report);
+            }
+            if (!ok)
+            {
+                QMessageBox::warning(this, tr("Import MilkDrop Preset"),
+                                     tr("Not a valid MilkDrop preset:\n%1").arg(path));
+                return;
+            }
+            if (!report.isEmpty())
+            {
+                QMessageBox::information(
+                    this, tr("Import MilkDrop Preset"),
+                    tr("Imported with %1 note(s):\n\n%2")
+                        .arg(report.size())
+                        .arg(report.mid(0, 20).join("\n")));
+            }
         });
 
     pEventBus->subscribe<LoadEffectChainEvent>(

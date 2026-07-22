@@ -387,6 +387,11 @@ old/
 /avs/
 /effectchain/
 
+# MilkDrop-Preset-Korpus: Community-Werke mit ungeklaerten Rechten — bewusst
+# NICHT getrackt (Entscheid 2026-07-22, Session 39). Herkunft/Beschaffung:
+# https://github.com/milkdrop2077/MilkDrop3 (Ordner presets/, textures/, ...)
+/asset/Milkdrop3/
+
 
 # HINWEIS: BASS-Binaries unter externals/ (win/c/x64/*.lib, win/x64/*.dll, linux/libs/, bin/)
 # sind aus LIZENZGRUENDEN bewusst NICHT getrackt (proprietaer, un4seen.com).

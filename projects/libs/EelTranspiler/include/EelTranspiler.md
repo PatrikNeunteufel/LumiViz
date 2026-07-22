@@ -68,11 +68,16 @@ Leere/Whitespace-Quelle → `ok=true` mit leerem `lua`. `transpile` wirft nie.
   Ergebnis 1.0/0.0. `band()`/`bor()` bleiben **eager**.
 - **Zahlwerk:** Literale in Float-Form (`5` → `5.0`); `%` → `eel.mod`,
   `&`/`|` → `eel.bitand/bitor`, `sqrt` → `eel.sqrt`, Vergleiche → 1.0/0.0
-  (`==` → `eel.equal` mit ε=1e-5).
+  (`==` → `eel.equal` mit ε=1e-5); `int(x)` → `floor(x)` (MilkDrop ns-eel2:
+  reiner floor-Alias, nseel-eval.c:284 — kein trunc/round).
 - **Buffers:** `megabuf(i)` → `eel.mbread/mbwrite`; `buf[i]` → `mbread((buf)+(i))`;
   `gmem[i]`/`gmegabuf(i)` → `eel.gmbread/gmbwrite` (alles preset-lokal, §10.3).
 - **Kontrollfluss:** `loop(n, body)` → `for` mit Cap; `while(body)` → `for`-Schleife
   mit Abbruch bei untruthy; `exec2/exec3` → Statement-Sequenz.
+- **Funktionsargumente als Statement-Sequenz:** `if(bt, t0=time; pk=vol, 0)` —
+  jedes Argument darf eine `;`-Sequenz sein (inkl. Leer-Statements `;,`),
+  Wert = letztes Statement; Laziness bleibt gewahrt (Sequenz ist unpure →
+  Statement-Form-if).
 - **Identifier:** lowercased (EEL case-insensitiv); Lua-Reserviertwörter → Suffix
   `_` (`end` → `end_`); Temps `__eel_tN` sind Env-Variablen (kein 200-Locals-Limit).
 - **Host-Funktionen:** `getosc/getspec/gettime` werden durchgereicht (Sandbox-Env
@@ -109,3 +114,5 @@ megabuf-Adressierung, Dialekt-Formate).
 | Version | Datum | Änderung |
 |---|---|---|
 | 1.0.0 | 2026-07-20 | Erstfassung — Lexer/Parser/Codegen, AVS-Dialekt komplett + MilkDrop-Kern (Infix, ?:, Kompound, buf[]/gmem[]), Golden-Suite (Session 32) |
+| 1.1.0 | 2026-07-22 | M2 Milk-Skript-Vertrag (Session 39): `int()` → floor-Mapping (Korpus: 1153 Aufrufstellen; einziges gemessenes Funktions-Delta — $pi/$e/$phi waren bereits im Lexer); Goldens in test_MilkScriptContract.cpp |
+| 1.2.0 | 2026-07-22 | Funktionsargumente dürfen ';'-Statement-Sequenzen sein (`if(bt, t0=time; pk=vol, 0)` inkl. Leer-Statements `;,` — ns-eel2-Verhalten, Wert = letztes Statement). Damit + MilkParser-Kommentarfix: **Transpile-Abdeckung 100 %** auf beiden Korpora (892/892 per_frame, 590/590 per_pixel) |

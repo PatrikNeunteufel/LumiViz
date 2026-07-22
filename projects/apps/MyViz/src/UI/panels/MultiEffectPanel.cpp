@@ -312,8 +312,13 @@ SymCat symbolCategory(const QString& n)
 {
     static const QSet<QString> kReadOnly = {"w", "h", "dt"};
     static const QSet<QString> kConstant = {"pi", "pi2", "phi", "e"};
-    static const QSet<QString> kInput = {"i", "v", "b", "bass", "mid", "treb",
-                                         "treble", "vol", "beat", "time"};
+    // MilkDrop-Namen (M2-Skript-Vertrag): read-only Frame-Infos + Point-Inputs
+    static const QSet<QString> kInput = {
+        "i",    "v",        "b",        "bass",     "mid",      "treb",
+        "treble", "vol",    "beat",     "time",
+        "bass_att", "mid_att", "treb_att", "fps",   "frame",    "progress",
+        "meshx", "meshy",   "pixelsx",  "pixelsy",  "aspectx",  "aspecty",
+        "sample", "value1", "value2",   "instance", "num_inst"};
     static const QSet<QString> kOutput = {"x",  "y",     "skip",  "x1",   "y1",
                                           "x2", "y2",    "x3",    "y3",   "sizex",
                                           "sizey"};
@@ -323,7 +328,24 @@ SymCat symbolCategory(const QString& n)
         "speed", "ox",      "oy",     "morph", "feed",  "kill",  "a",    "c",
         "d",     "r",       "amin",   "amax",  "bmin",  "bmax",  "alpha","dist",
         "yaw",   "pitch",   "fold",   "zoomspeed", "rotspeed", "rotation",
-        "enabled", "clear", "alphain", "alphaout"};
+        "enabled", "clear", "alphain", "alphaout",
+        // MilkDrop per_frame/per_pixel (M2): Warp-Parameter + Post/Deko-Regler
+        "zoomexp", "dx", "dy", "sx", "sy", "decay", "gamma", "monitor",
+        "wave_a", "wave_r", "wave_g", "wave_b", "wave_x", "wave_y",
+        "wave_mystery", "wave_mode", "wave_usedots", "wave_thick",
+        "wave_additive", "wave_brighten", "darken_center", "wrap", "invert",
+        "brighten", "darken", "solarize", "echo_zoom", "echo_alpha",
+        "echo_orient", "ob_size", "ob_r", "ob_g", "ob_b", "ob_a",
+        "ib_size", "ib_r", "ib_g", "ib_b", "ib_a",
+        "mv_x", "mv_y", "mv_dx", "mv_dy", "mv_l", "mv_r", "mv_g", "mv_b", "mv_a",
+        "blur1_min", "blur2_min", "blur3_min", "blur1_max", "blur2_max",
+        "blur3_max", "blur1_edge_darken",
+        // MilkDrop Wave-/Shape-Code (M2): g steht dort fuer Gruen (i/o);
+        // t1-t8 sind wave-/shape-LOKALE Snapshot-Akkus (nicht preset-global)
+        "g", "samples", "rad", "ang", "r2", "g2", "b2", "a2",
+        "border_r", "border_g", "border_b", "border_a",
+        "sides", "textured", "tex_ang", "tex_zoom", "additive", "thick",
+        "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"};
     if (kReadOnly.contains(n)) return SymCat::ReadOnly;
     if (kConstant.contains(n)) return SymCat::Constant;
     if (kInput.contains(n)) return SymCat::Input;

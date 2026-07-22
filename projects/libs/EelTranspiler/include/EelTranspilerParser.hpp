@@ -272,9 +272,30 @@ private:
                 {
                     while (true)
                     {
-                        auto arg = parseExpr(0);
-                        if (arg == nullptr) return nullptr;
-                        node->kids.push_back(std::move(arg));
+                        // MilkDrop-Dialekt: ein Argument darf eine ';'-Statement-
+                        // Sequenz sein — `if(bt, t0=time; pk=vol, 0)` — inklusive
+                        // Leer-Statements wie `o9=0;,0)` (ns-eel2-Verhalten;
+                        // Wert der Sequenz = letztes Statement)
+                        auto argList = Node::make(NodeKind::StmtList);
+                        argList->line = peek().line;
+                        while (true)
+                        {
+                            if (peek().kind == Tok::Semi) { advance(); continue; }
+                            if (peek().kind == Tok::Comma || peek().kind == Tok::RParen) break;
+                            auto expr = parseExpr(0);
+                            if (expr == nullptr) return nullptr;
+                            argList->kids.push_back(std::move(expr));
+                            if (peek().kind == Tok::Semi) { advance(); continue; }
+                            break;
+                        }
+                        if (argList->kids.empty())
+                        {
+                            fail("leeres Argument im Funktionsaufruf");
+                            return nullptr;
+                        }
+                        node->kids.push_back(argList->kids.size() == 1
+                                                 ? std::move(argList->kids[0])
+                                                 : std::move(argList));
                         if (peek().kind == Tok::Comma) { advance(); continue; }
                         break;
                     }

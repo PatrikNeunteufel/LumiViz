@@ -1,0 +1,15 @@
+MILKDROP_PRESET_VERSION=201
+[preset00]
+fDecay=0.900
+fWaveAlpha=1.200
+fWaveScale=0.200
+nWaveMode=0
+zoom=1.000
+warp=0.000
+rot=0.000
+wave_r=1.000
+wave_g=0.200
+wave_b=0.200
+wave_x=0.750
+wave_y=0.750
+mv_a=0.000

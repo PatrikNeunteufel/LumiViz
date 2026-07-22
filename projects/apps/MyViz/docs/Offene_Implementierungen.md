@@ -40,8 +40,10 @@ existieren NOCH NICHT — nur Buttons + Esc), „zur Playlist"-Aktion im Import-
   deckt den Bedarf.)
 - 🟡 **Text-Effekt (Builtin 28)** — volles GDI/QPainter-Textrendering (Font/Layout).
   Letzte AVS-Import-Lücke, hoher Aufwand; aktuell no-op + Notiz.
-- 🟡 **Erweiterte Audio-Vars** — `bass_att/mid_att/treb_att`, `peak`, `rms`, `fps`,
-  `frame` (MilkDrop-lastig); erst wenn ein konkretes Preset sie braucht.
+- 🟡 **Erweiterte Audio-Vars** — ~~`bass_att/mid_att/treb_att`~~ ✅ **M2 (S39):**
+  `MilkLoudness`-Modul + symbolCategory-Namen (Einspeisung macht der
+  MilkdropVisualizer in M3). Noch offen: `peak`, `rms`; `fps/frame/progress`
+  als Namen registriert, Werte liefert erst der Milk-Host.
 - 🟡 **MilkDrop-Import (Roadmap 6)** — eigener Plan; **nach** verifiziertem AVS-Import.
 - 🟡 **Assets-Ordner-Fallback** für Bild-Lader (konfigurierbarer Ordner; Nutzung
   durch Texer II / Picture II / Texer).
@@ -59,6 +61,12 @@ existieren NOCH NICHT — nur Buttons + Esc), „zur Playlist"-Aktion im Import-
 - ⚪ **Custom-Functions-Modul** — Modul zur Definition eigener Funktionen (Schwester
   zum Variable-Set-Modul). (Memory: `zukunft-custom-functions-modul`)
 - ⚪ **Stereo bass/mid/treb** — Kurzvars per-Kanal (aktuell mono; L/R via getspec/getosc).
+- ⚪ **Video-Capture-Modul** (Idee Patrik, 2026-07-22) — Visual + Audio zusammen
+  als Video aufnehmen; Qualität (und damit Dateigröße) **je Aufnahme** einstellbar
+  (Auflösung/fps/Bitrate/Codec). Kandidaten: FFmpeg-Pipe oder Qt6 QMediaRecorder/
+  QScreenCapture; Frames aus dem FBO des Render-Threads abgreifen (Threading-
+  Vertrag §12 beachten), Audio aus der BASS-Pipeline. Passt zu Visual-Playlist
+  (P2: ganze Sets aufzeichnen). (Memory: `zukunft-video-capture-modul`)
 
 ---
 

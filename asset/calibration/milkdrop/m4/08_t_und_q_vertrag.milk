@@ -1,0 +1,20 @@
+MILKDROP_PRESET_VERSION=201
+[preset00]
+fDecay=0.900
+fWaveAlpha=0.001
+zoom=1.000
+warp=0.000
+per_frame_init_1=q1=0.25;
+per_frame_1=q2=0.5+0.2*sin(time);
+wavecode_0_enabled=1
+wavecode_0_samples=64
+wavecode_0_r=1.000
+wavecode_0_g=0.300
+wavecode_0_b=1.000
+wavecode_0_a=1.000
+wave_0_init1=t1=0.30;
+wave_0_per_frame1=hoehe=t1;
+wave_0_per_frame2=t1=t1+10;
+wave_0_per_point1=x=q1+sample*0.5;
+wave_0_per_point2=y=hoehe+0.1*sin(sample*12.57)+ (q2-0.5)*0.2;
+mv_a=0.000
