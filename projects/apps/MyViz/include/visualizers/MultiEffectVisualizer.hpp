@@ -370,6 +370,10 @@ private:
         /// (0 startend = frisch aktivierte Gruppen blenden EIN); eine
         /// deaktivierte Gruppe rendert weiter, bis das Gewicht 0 erreicht.
         double blendWeight = 0.0;
+        /// HG3: Laufzeit seit (Re-)Aktivierung der Gruppe — progress-Quelle
+        /// fuer Milkdrop-Nodes in der Gruppe (Playlist liefert spaeter die
+        /// echte Slot-Dauer); Reset beim Frischstart nach vollem Ausblenden.
+        double activeSeconds = 0.0;
     };
 
     bool ensureSurfacePair(SurfacePair& pair, int width, int height,
@@ -578,6 +582,12 @@ private:
     std::vector<SurfacePair*> m_surfaceStack;
     std::unordered_map<uint64_t, ListRuntime> m_listRuntimes;
     std::unordered_map<uint64_t, GroupRuntime> m_groupRuntimes;  ///< HG1
+    /// HG2: laufende Gewichtssumme des normalisierten Gruppen-Mixes — startet
+    /// je Frame beim Hintergrund-Anteil max(0, 1 - Summe blendender Gruppen)
+    double m_blendRunningSum = 1.0;
+    /// HG3: Laufzeit der AKTIVEN Gruppe waehrend des Kinder-Walks (Scope wie
+    /// activePool/activeContext); -1 = ausserhalb jeder Host-Gruppe
+    double m_groupActiveSeconds = -1.0;
     int m_surfaceWidth = 0;
     int m_surfaceHeight = 0;
     bool m_firstFrame = true;

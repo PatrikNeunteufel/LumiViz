@@ -1983,6 +1983,13 @@ void MultiEffectVisualizer::resetRuntimes()
     m_mdH = 0;
 }
 
+namespace
+{
+// HG2-Kurven-Hook (Definition bei renderHostGroup): render() braucht ihn
+// schon fuer die Vorab-Summe der blendenden Gruppen-Gewichte.
+double applyBlendCurve(int curve, double t);
+}  // namespace
+
 void MultiEffectVisualizer::destroySurfaces()
 {
     m_rootSurface.destroy();
@@ -2076,6 +2083,31 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     m_surfaceStack.push_back(&m_rootSurface);
     for (auto& [id, runtime] : m_listRuntimes) runtime.seenThisFrame = false;
     for (auto& [id, runtime] : m_groupRuntimes) runtime.seenThisFrame = false;
+
+    // HG2: Vorab-Summe der BLENDENDEN Gruppen-Gewichte dieses Frames. Der
+    // Gruppen-Mix normalisiert damit das sequentielle Adjustable-Compositing
+    // auf den exakten paarweisen Mix (B*t + A*(1-t)) — unabhaengig von der
+    // Ketten-Reihenfolge; Solo-Einblenden mischt gegen den Hintergrund.
+    {
+        double total = 0.0;
+        std::function<void(const ChainNode&)> scanGroups =
+            [&](const ChainNode& n) {
+                if (const auto* hg = std::get_if<HostGroupParams>(&n.params))
+                {
+                    const auto it = m_groupRuntimes.find(n.nodeId);
+                    if (it != m_groupRuntimes.end())
+                    {
+                        const double c = applyBlendCurve(
+                            n.enabled ? hg->curveIn : hg->curveOut,
+                            it->second.blendWeight);
+                        if (c > 0.0 && c < 0.999) total += c;
+                    }
+                }
+                for (const ChainNode& child : n.children) scanGroups(child);
+            };
+        scanGroups(m_root);
+        m_blendRunningSum = std::max(0.0, 1.0 - total);
+    }
     m_renderMode = RenderMode{};  // Set Render Mode is per-frame, reset before the walk
     buildVisData();               // audio for getspec/getosc, shared by all scripts
     bindActive();
@@ -2347,12 +2379,19 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
 
 namespace
 {
-/// HG2-Kurven-Hook: 0 = linear; weitere Kurven (ease/exponentiell/S) folgen —
-/// der Entwurf haelt Ein-/Ausgangskurve bewusst je Gruppe individuell.
+/// HG2-Kurven-Hook — Ein-/Ausgangskurve bewusst je Gruppe individuell
+/// (Entwurf §2.4). Indizes muessen zur curveNames-Liste im Panel passen.
 double applyBlendCurve(int curve, double t)
 {
-    (void)curve;  // 0 = linear; weitere Kurven bekommen hier ihren Dispatch
-    return t;
+    t = std::clamp(t, 0.0, 1.0);
+    switch (curve)
+    {
+        case 1: return t * t * (3.0 - 2.0 * t);      // S-Kurve (smoothstep)
+        case 2: return t * t;                        // Ease-In (sanfter Start)
+        case 3: return 1.0 - (1.0 - t) * (1.0 - t);  // Ease-Out (sanftes Ende)
+        case 4: return t * t * t;                    // Exponentiell (spaet)
+        default: return t;                           // 0 = linear
+    }
 }
 }  // namespace
 
@@ -2388,7 +2427,12 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
             // Fertig ausgeblendet: Buffer fuers naechste Einblenden frisch
             // starten (Milkdrop-Verhalten: der alte Zustand stirbt mit A)
             runtime.needsClear = true;
+            runtime.activeSeconds = 0.0;  // HG3: progress startet neu
             return;
+        }
+        if (node.enabled)
+        {
+            runtime.activeSeconds += static_cast<double>(m_deltaTime);
         }
     }
     if (runtime.pool == nullptr)
@@ -2424,20 +2468,34 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
     // zwischen Gruppen (Runtime-Trennung fuer den HG2-Crossfade)
     lumi::render::OffscreenBufferPool* prevPool = m_activePool;
     std::shared_ptr<lumi::scripting::ScriptContext> prevCtx = m_activeContext;
+    const double prevGroupSeconds = m_groupActiveSeconds;
     m_activePool = runtime.pool.get();
     m_activeContext = runtime.context;
+    m_groupActiveSeconds = runtime.activeSeconds;
 
-    m_surfaceStack.push_back(&runtime.surface);
-    bindActive();
-    for (const ChainNode& child : node.children)
+    // HG3: Freeze-Frame — NUR automatischer Performance-Fallback (Entscheid
+    // E5): bricht die Framerate waehrend eines Blends ein, friert die
+    // AUSBLENDENDE Gruppe auf ihrem letzten Bild ein (kein Kinder-Rendering)
+    // statt beide Visuals voll zu rechnen. Schwelle ~30 fps.
+    constexpr double kFreezeDeltaSeconds = 1.0 / 30.0;
+    const bool freezeFrame =
+        !node.enabled && static_cast<double>(m_deltaTime) > kFreezeDeltaSeconds;
+
+    if (!freezeFrame)
     {
-        renderNode(child);
+        m_surfaceStack.push_back(&runtime.surface);
+        bindActive();
+        for (const ChainNode& child : node.children)
+        {
+            renderNode(child);
+        }
+        active().current()->release();
+        m_surfaceStack.pop_back();
     }
-    active().current()->release();
-    m_surfaceStack.pop_back();
 
     m_activePool = prevPool;
     m_activeContext = prevCtx;
+    m_groupActiveSeconds = prevGroupSeconds;
 
     // Out-Blend: Gruppen-Bild -> Parent. Mehrere gleichzeitig aktive Gruppen
     // stapeln sich hierueber (Entwurf §2.6). HG2: bei Blend-Gewicht < 1 wird
@@ -2455,10 +2513,17 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
         }
         else
         {
+            // Normalisiertes Over-Compositing: alpha_i = w_i/(sum_so_far+w_i)
+            // macht den sequentiellen Mix EXAKT zum gewichteten 2er-Mix —
+            // die Ketten-Reihenfolge der blendenden Gruppen ist damit egal
+            // (Befund Sichttest S42: Eingangs-Gruppe ging sonst quadratisch ein)
+            const double denom = m_blendRunningSum + curved;
+            const double alphaNorm = denom > 1e-9 ? curved / denom : 1.0;
+            m_blendRunningSum += curved;
             blendPass(active(), runtime.surface.current()->texture(),
                       BlendMode::Adjustable,
-                      static_cast<int>(std::lround(std::clamp(curved, 0.0, 1.0) *
-                                                   255.0)),
+                      static_cast<int>(std::lround(
+                          std::clamp(alphaNorm, 0.0, 1.0) * 255.0)),
                       0, false);
         }
     }
@@ -3378,6 +3443,14 @@ void MultiEffectVisualizer::runMilkdropNode(const ChainNode& node,
     // Chain-Buffer-Groesse (physische Pixel) — width()/height() des Kerns
     // steuern dessen Composite-Viewport und die Feedback-Buffer-Groesse
     rt.milk->resize(QSize(m_surfaceWidth, m_surfaceHeight));
+
+    // HG3: In einer Host-Gruppe speist deren Laufzeit die progress-Variable
+    // (60-s-Zyklus ab Gruppen-Aktivierung; die Playlist liefert spaeter die
+    // echte Slot-Dauer). Ausserhalb bleibt der interne Zyklus des Kerns.
+    rt.milk->setProgressOverride(
+        m_groupActiveSeconds >= 0.0
+            ? std::fmod(m_groupActiveSeconds, 60.0) / 60.0
+            : -1.0);
 
     // Der Kern erfasst beim Frame-Start das gebundene Draw-FBO als Composite-
     // Ziel — das muss der aktive Chain-Buffer sein. Danach Host-Zustand

@@ -1647,8 +1647,9 @@ inline void compileNode(ChainNode& node, const std::string& path,
     {
         group->outAdjustAlpha = std::clamp(group->outAdjustAlpha, 0, 255);
         group->crossfadeSeconds = std::clamp(group->crossfadeSeconds, 0.0, 60.0);
-        group->curveIn = std::max(0, group->curveIn);
-        group->curveOut = std::max(0, group->curveOut);
+        // 0=Linear 1=S-Kurve 2=Ease-In 3=Ease-Out 4=Exponentiell (HG2)
+        group->curveIn = std::clamp(group->curveIn, 0, 4);
+        group->curveOut = std::clamp(group->curveOut, 0, 4);
         warnFallbackBlend(group->blendOut, "out", path, result);
     }
 

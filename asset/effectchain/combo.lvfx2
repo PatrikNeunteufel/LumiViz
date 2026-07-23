@@ -12,7 +12,7 @@
         "bufferOutInvert": false,
         "children": [
             {
-                "blendOut": 5,
+                "blendOut": 1,
                 "children": [
                     {
                         "debugGrid": false,
@@ -105,6 +105,25 @@
                                 "waveX": 0.5,
                                 "waveY": 0.5,
                                 "waves": [
+                                    {
+                                        "a": 1,
+                                        "additive": true,
+                                        "b": 1,
+                                        "drawThick": true,
+                                        "enabled": true,
+                                        "frameCode": "",
+                                        "g": 1,
+                                        "index": 0,
+                                        "initCode": "",
+                                        "pointCode": "",
+                                        "r": 1,
+                                        "samples": 512,
+                                        "scaling": 1.05,
+                                        "sep": 0,
+                                        "smoothing": 0.5,
+                                        "spectrum": true,
+                                        "useDots": true
+                                    }
                                 ],
                                 "zoom": 1,
                                 "zoomExponent": 1
@@ -123,7 +142,7 @@
                 "type": "hostgroup"
             },
             {
-                "blendOut": 6,
+                "blendOut": 1,
                 "children": [
                     {
                         "blendIn": 0,
@@ -170,7 +189,7 @@
                 "crossfadeSeconds": 2,
                 "curveIn": 0,
                 "curveOut": 0,
-                "enabled": true,
+                "enabled": false,
                 "name": "Host Group",
                 "outAdjustAlpha": 13,
                 "type": "hostgroup"

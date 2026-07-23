@@ -555,6 +555,157 @@ QString scriptReferenceHtml(const EffectParams& params)
         .arg(QString::fromUtf8(title), vars, builtinsHtml(), legend);
 }
 
+/// Sektions-genaue Milkdrop-EEL-Referenz (N3-Nachzug, Befund S42): die Sets
+/// folgen dem M2-Skript-Vertrag (state.cpp:267-512 / milkdropfs.cpp) — nur
+/// Original-Variablen, damit Presets kompatibel zum echten MilkDrop bleiben.
+QString milkSectionReferenceHtml(int section)
+{
+    auto table = [](const QString& rows) {
+        return QStringLiteral(
+                   "<table cellspacing='0' cellpadding='4' "
+                   "style='border-collapse:collapse'>"
+                   "<tr><th align='left'>Name</th><th align='left'>Type</th>"
+                   "<th align='left'>Range</th><th align='left'>Meaning</th></tr>%1</table>")
+            .arg(rows);
+    };
+    // Read-only inputs every milk slot sees (Original-Set — NO vol/beat vars!)
+    const QString milkIn =
+        refRow("time / fps / frame", "in", "s / Hz / n", "run time, frame rate, frame counter") +
+        refRow("progress", "in", "0..1", "preset progress (host group / playlist driven)") +
+        refRow("bass / mid / treb", "in", "~1", "band loudness relative to its long-term mean") +
+        refRow("bass_att / mid_att / treb_att", "in", "~1", "attenuated (smoothed) variants") +
+        refRow("meshx / meshy", "in", "grid", "warp mesh resolution") +
+        refRow("aspectx / aspecty", "in", "ratio", "inverse aspect factors") +
+        refRow("q1..q64", "in/out", "any", "frame→pixel/wave/shape channel (init snapshot contract)");
+    const QString milkNote = QStringLiteral(
+        "<p><i>MilkDrop dialect: <code>int()</code> = floor, <code>rand(n)</code> "
+        "is integer 0..n-1; <code>getosc/getspec</code> are AVS-only — do not "
+        "use them if the preset should stay compatible with original "
+        "MilkDrop.</i></p>");
+
+    QString title;
+    QString vars;
+    switch (section)
+    {
+        default:
+        case 0:  // Code: per_frame_init / per_frame / per_pixel
+            title = QStringLiteral("Milkdrop — per_frame / per_pixel");
+            vars = table(
+                milkIn +
+                refRow("zoom / rot / warp", "in/out", "any", "warp controls (write in per_frame; per-vertex in per_pixel)") +
+                refRow("cx / cy / dx / dy / sx / sy", "in/out", "any", "warp centre / push / stretch") +
+                refRow("zoomexp", "in/out", ">0", "zoom exponent") +
+                refRow("decay", "in/out", "0..1", "feedback decay") +
+                refRow("gamma", "in/out", "0..8", "composite gamma (clamped like the original)") +
+                refRow("echo_zoom / echo_alpha / echo_orient", "in/out", "0.001..1000 / 0..1 / 0..3", "video echo layer") +
+                refRow("wave_mode", "in/out", "0..7", "basic waveform style") +
+                refRow("wave_a / wave_r / wave_g / wave_b", "in/out", "0..1+", "waveform alpha / colour") +
+                refRow("wave_x / wave_y / wave_mystery", "in/out", "0..1 / -1..1", "waveform placement / parameter") +
+                refRow("wave_usedots / wave_thick / wave_additive / wave_brighten", "in/out", "0/1", "waveform flags") +
+                refRow("ob_size, ob_r/g/b/a · ib_size, ib_r/g/b/a", "in/out", "0..1", "outer / inner border") +
+                refRow("mv_x / mv_y / mv_dx / mv_dy / mv_l / mv_r / mv_g / mv_b / mv_a", "in/out", "any", "motion vector grid") +
+                refRow("darken_center / wrap / invert / brighten / darken / solarize", "in/out", "0/1", "composite flags") +
+                refRow("blur1_min..blur3_max", "in/out", "0..1", "blur pyramid ranges") +
+                refRow("monitor", "in/out", "any", "persists across frames (debug scratch)") +
+                refRow("x / y / rad / ang", "in", "0..1 / rad", "per_pixel only: vertex position (rect + polar)"));
+            break;
+        case 1:  // Custom waves
+            title = QStringLiteral("Milkdrop — custom wave (init / per_frame / per_point)");
+            vars = table(
+                milkIn +
+                refRow("t1..t8", "in/out", "any", "wave-local memory (frozen after init, reset each frame)") +
+                refRow("r / g / b / a", "in/out", "0..1", "wave colour (per_point may vary it)") +
+                refRow("samples", "in/out", "2..512", "sample count (frame code may change it)") +
+                refRow("sample", "in", "0..1", "per_point: position along the wave") +
+                refRow("value1 / value2", "in", "-1..1", "per_point: left / right channel sample") +
+                refRow("x / y", "out", "0..1", "per_point: point position"));
+            break;
+        case 2:  // Custom shapes
+            title = QStringLiteral("Milkdrop — custom shape (init / per_frame)");
+            vars = table(
+                milkIn +
+                refRow("t1..t8", "in/out", "any", "shape-local memory (frozen after init, reset each frame)") +
+                refRow("x / y / rad / ang", "in/out", "0..1 / rad", "shape placement") +
+                refRow("sides", "in/out", "3..100", "polygon sides") +
+                refRow("instance / num_inst", "in", "0..n-1 / 1..1024", "instance index / count") +
+                refRow("r / g / b / a", "in/out", "0..1", "centre colour") +
+                refRow("r2 / g2 / b2 / a2", "in/out", "0..1", "edge colour") +
+                refRow("border_r / g / b / a", "in/out", "0..1", "border colour") +
+                refRow("thickoutline / textured / additive", "in/out", "0/1", "shape flags") +
+                refRow("tex_zoom / tex_ang", "in/out", ">0 / rad", "texture mapping (textured=1 samples the previous frame)"));
+            break;
+        case 4:  // Sprites (per-frame code)
+            title = QStringLiteral("Milkdrop — sprite code (per frame)");
+            vars = table(
+                refRow("time", "in", "s", "sprite-local time (scaled by SpriteSpeed)") +
+                refRow("x / y", "in/out", "0..1", "sprite centre (y grows downward like the original)") +
+                refRow("sx / sy", "in/out", "any", "scale (negative mirrors)") +
+                refRow("rot", "in/out", "rad", "rotation") +
+                refRow("flipx / flipy", "in/out", "0/1", "mirror flags") +
+                refRow("repeatx / repeaty", "in/out", ">0", "texture repeat") +
+                refRow("blendmode", "in/out", "0..4", "alpha / decal / additive / srccolor / colorkey") +
+                refRow("r / g / b / a", "in/out", "0..1", "tint / opacity") +
+                refRow("burn", "in/out", "0..1", "burn-in into the feedback buffer") +
+                refRow("done", "out", "0/1", "1 removes the sprite"));
+            break;
+    }
+    return QStringLiteral("<h2>%1</h2>%2%3%4%5")
+        .arg(title, vars, milkNote, builtinsHtml(), highlightLegendHtml());
+}
+
+/// HLSL-Referenz fuer die Warp-/Comp-Editoren (Befund S42: fehlte komplett).
+/// Spiegelt die GLSL-Praeambel des Hosts = include.fx-Gegenstueck — nur was
+/// dort existiert, bleibt zum Original kompatibel.
+QString milkShaderReferenceHtml()
+{
+    auto table = [](const QString& rows) {
+        return QStringLiteral(
+                   "<table cellspacing='0' cellpadding='4' "
+                   "style='border-collapse:collapse'>"
+                   "<tr><th align='left'>Name</th><th align='left'>Type</th>"
+                   "<th align='left'>Meaning</th></tr>%1</table>")
+            .arg(rows);
+    };
+    auto row = [](const char* n, const char* t, const char* m) {
+        return QStringLiteral("<tr><td><code>%1</code></td><td>%2</td><td>%3</td></tr>")
+            .arg(QLatin1String(n), QLatin1String(t), QLatin1String(m));
+    };
+    const QString io = table(
+        row("ret", "float3 (out)", "the pixel colour you write (shader_body result)") +
+        row("uv / uv_orig", "float2", "0..1 screen position (comp) / mesh UV (warp)") +
+        row("rad / ang", "float", "polar position (aspect-corrected)") +
+        row("hue_shader", "float3", "fShader colour-wash corners, bilinear (comp; white in warp)"));
+    const QString consts = table(
+        row("time, fps, frame, progress", "float", "clock inputs") +
+        row("bass, mid, treb, vol (+_att)", "float", "band loudness (~1 baseline)") +
+        row("q1..q32", "float", "per_frame q values (script contract)") +
+        row("rand_preset / rand_frame", "float4", "random per load / per frame") +
+        row("roam_cos/sin, slow_roam_cos/sin", "float4", "slow drifting values") +
+        row("aspect", "float4", "aspect factors (x, y, 1/x, 1/y)") +
+        row("texsize", "float4", "w, h, 1/w, 1/h") +
+        row("texsize_noise_lq/_lq_lite/_mq/_hq", "float4", "noise texture sizes") +
+        row("blur1_min..blur3_max", "float", "blur range values"));
+    const QString samplers = table(
+        row("sampler_main (+_fc/_pc/_fw/_pw)", "sampler2D", "current image (filter/wrap variants)") +
+        row("sampler_blur1..3", "sampler2D", "blur pyramid (use GetBlur1..3 to un-bias)") +
+        row("sampler_noise_lq / _lq_lite / _mq / _hq", "sampler2D", "procedural noise (exact AddNoiseTex port)") +
+        row("sampler_XY", "sampler2D", "custom texture XY.jpg/png next to the preset or in textures/"));
+    const QString fns = table(
+        row("tex2D(s, uv)", "float3/4", "texture fetch") +
+        row("GetMain(uv) / GetPixel(uv)", "float3", "current image") +
+        row("GetBlur1..3(uv)", "float3", "blur pyramid, range-decompressed") +
+        row("lum(c)", "float", "luminance (0.32/0.49/0.29 weights)"));
+    return QStringLiteral(
+               "<h2>Milkdrop — HLSL shader_body</h2>"
+               "<p>Write the <code>shader_body</code> content only (HLSL "
+               "ps_2/3 style); it is transpiled to GLSL. Loops, arrays, "
+               "tex3D/noise volumes and <code>#if</code> are stage C3 — "
+               "presets using them fall back to the MD1 path.</p>"
+               "<h3>In / Out</h3>%1<h3>Constants</h3>%2<h3>Samplers</h3>%3"
+               "<h3>Functions</h3>%4")
+        .arg(io, consts, samplers, fns);
+}
+
 } // namespace
 
 void ChainTreeWidget::dropEvent(QDropEvent* event)
@@ -1784,7 +1935,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 });
         form->addRow(label, combo);
     };
-    const QString scriptRef = scriptReferenceHtml(params);
+    // Milkdrop-Sektionen tauschen die Referenz unten gegen ihr Original-Set
+    // aus (Befund S42: eine generische Tabelle passte zu keinem Slot richtig)
+    QString scriptRef = scriptReferenceHtml(params);
 
     // Global conflict set: globals this node's init declares that another node's
     // init also declares (Skript_Variablen_Konzept §6.3) — flagged red in init.
@@ -2764,15 +2917,35 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                       };
                       sync(m_host->chain());
                   });
-        const QStringList curveNames = {tr("Linear")};
-        addEnum(tr("Eingangskurve"), std::clamp(p->curveIn, 0, 0), curveNames,
+        const QStringList curveNames = {tr("Linear"), tr("S-Kurve (smooth)"),
+                                        tr("Ease-In"), tr("Ease-Out"),
+                                        tr("Exponentiell")};
+        addEnum(tr("Eingangskurve"), std::clamp(p->curveIn, 0, 4), curveNames,
                 [](ChainNode& n, int v) {
                     std::get<HostGroupParams>(n.params).curveIn = v;
                 });
-        addEnum(tr("Ausgangskurve"), std::clamp(p->curveOut, 0, 0), curveNames,
+        addEnum(tr("Ausgangskurve"), std::clamp(p->curveOut, 0, 4), curveNames,
                 [](ChainNode& n, int v) {
                     std::get<HostGroupParams>(n.params).curveOut = v;
                 });
+
+        // Manueller Wechsel-Trigger (Vorstufe der Visual-Playlist E6): diese
+        // Gruppe einblenden, alle anderen Host-Gruppen ausblenden lassen.
+        auto* switchBtn = new QPushButton(
+            tr("Zu dieser Gruppe wechseln (Crossfade)"), m_propContainer);
+        connect(switchBtn, &QPushButton::clicked, this, [this, path]() {
+            if (m_host == nullptr) return;
+            mutateStructure([&] {
+                ChainNode* me = nodeAtPath(path);
+                if (me == nullptr || !me->isHostGroup()) return;
+                std::function<void(ChainNode&)> toggle = [&](ChainNode& n) {
+                    if (n.isHostGroup()) n.enabled = (&n == me);
+                    for (ChainNode& c : n.children) toggle(c);
+                };
+                toggle(m_host->chain());
+            });
+        });
+        form->addRow(switchBtn);
 
         if (!p->sourceFile.empty())
         {
@@ -2842,6 +3015,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             }
             return QStringLiteral("?");
         };
+
+        // Sektions-genaue ⓘ-Referenz (per_frame/pixel · Wave · Shape · Sprite)
+        if (milkSection >= 0) scriptRef = milkSectionReferenceHtml(milkSection);
 
         if (milkSection < 0)  // Node selbst = Preset-Uebersicht
         {
@@ -3075,7 +3251,22 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                 }
                             });
                         });
-                form->addRow(new QLabel(label, m_propContainer));
+                // ⓘ-Referenz (Befund S42: die HLSL-Editoren hatten keine) —
+                // Inputs/Konstanten/Sampler/Funktionen der Praeambel
+                auto* header = new QWidget(m_propContainer);
+                auto* hl = new QHBoxLayout(header);
+                hl->setContentsMargins(0, 0, 0, 0);
+                hl->addWidget(new QLabel(label, header));
+                hl->addStretch(1);
+                auto* refBtn = new QToolButton(header);
+                refBtn->setText(QString::fromUtf8("ⓘ"));
+                refBtn->setToolTip(
+                    tr("Shader-Referenz (Inputs, Konstanten, Sampler, Funktionen)"));
+                hl->addWidget(refBtn);
+                connect(refBtn, &QToolButton::clicked, this, [this]() {
+                    showScriptReference(this, milkShaderReferenceHtml());
+                });
+                form->addRow(header);
                 form->addRow(edit);
             };
             addHlsl(tr("Warp-Shader (HLSL)"), p->preset.warpShaderText, true);

@@ -819,7 +819,9 @@ void MilkdropVisualizer::pushCommonInputs(lumi::scripting::LuaScriptEngine& e)
     e.setNumber("time", m_time);
     e.setNumber("fps", m_fps);
     e.setNumber("frame", static_cast<double>(m_frame));
-    e.setNumber("progress", std::fmod(m_time, 60.0) / 60.0);
+    e.setNumber("progress", m_progressOverride >= 0.0
+                                ? m_progressOverride
+                                : std::fmod(m_time, 60.0) / 60.0);
     e.setNumber("bass", m_loudness.bass());
     e.setNumber("mid", m_loudness.mid());
     e.setNumber("treb", m_loudness.treb());
@@ -2025,7 +2027,10 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
     program.setUniformValue("time", t);
     program.setUniformValue("fps", static_cast<float>(m_fps));
     program.setUniformValue("frame", static_cast<float>(m_frame));
-    program.setUniformValue("progress", static_cast<float>(std::fmod(m_time, 60.0) / 60.0));
+    program.setUniformValue(
+        "progress", static_cast<float>(m_progressOverride >= 0.0
+                                           ? m_progressOverride
+                                           : std::fmod(m_time, 60.0) / 60.0));
 
     auto& engine = m_script->engine();
     program.setUniformValue("bass", static_cast<float>(engine.number("bass")));

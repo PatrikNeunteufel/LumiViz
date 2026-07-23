@@ -104,6 +104,10 @@ public:
     void applyPresetState(lumi::milkdrop::PresetState state, const QString& presetDir,
                           QStringList* report = nullptr);
 
+    /// HG3: progress-Quelle vom Host (Host-Gruppen-Laufzeit; die Playlist
+    /// liefert spaeter die echte Slot-Dauer). < 0 = eigener 60-s-Zyklus.
+    void setProgressOverride(double p) { m_progressOverride = p; }
+
     /// @brief Currently loaded preset state (for tests/panel)
     [[nodiscard]] const lumi::milkdrop::PresetState& presetState() const { return m_state; }
 
@@ -302,6 +306,7 @@ private:
     std::array<unsigned int, 4> m_samplerObj{}; ///< wrapLin, clampLin, wrapPoint, clampPoint
     unsigned int m_randSeed = 0x9e3779b9u;      ///< rand_frame/rand_preset PRNG
     std::array<float, 4> m_hueRandStart{};      ///< fShader-Wash Phasen (m_fRandStart-Port)
+    double m_progressOverride = -1.0;           ///< HG3: progress vom Host (<0 = 60-s-Zyklus)
 
     // --- Preset-Sprites (MilkDrop2077) -----------------------------------------------------
     std::vector<SpriteRuntime> m_spriteRt;

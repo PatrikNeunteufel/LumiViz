@@ -1,7 +1,7 @@
 # MyViz — Benutzerhandbuch
 
-> **Version:** 1.0.0
-> **Datum:** 2026-07-20
+> **Version:** 1.1.0
+> **Datum:** 2026-07-23
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -27,6 +27,7 @@ Konfigurations-Panels steht im
 8. [Einstellungen & Frame-Modus](#8-einstellungen--frame-modus)
 9. [Tastenkürzel](#9-tastenkürzel)
 10. [Automatisch gemerkt / Bekanntes](#10-automatisch-gemerkt--bekanntes)
+11. [Effektketten, Milkdrop & Host-Gruppen](#11-effektketten-milkdrop--host-gruppen)
 
 ---
 
@@ -187,8 +188,68 @@ Bedienung entkoppelt.
 
 ---
 
+## 11. Effektketten, Milkdrop & Host-Gruppen
+
+Der Visualizer **„Multi Effect"** rendert eine frei editierbare Effektkette.
+Bearbeitet wird sie im Panel **View → Panels → Effect Chain**; Presets lädt
+der **Import Browser** (Panel rechts) per Doppelklick — `.avs`, `.milk`,
+`.lvfx` und `.lvfx2`.
+
+### Ketten-Editor
+
+- **Baum** = die Kette; das **Auge** (Spalte 2) blendet einen Effekt aus/ein.
+- **Toolbar:** Typ im Dropdown wählen, **+** fügt in die selektierte
+  Liste/Gruppe ein (sonst ans Ende), **−** entfernt, **⧉** klont,
+  **↑/↓** sortiert; Drag & Drop verschiebt (auf eine Gruppe fallen lassen =
+  hinein).
+- Unter dem Baum: der **Eigenschafts-Editor** des selektierten Eintrags.
+
+### Milkdrop-Presets bearbeiten
+
+Ein geladenes `.milk` erscheint als **Milkdrop-Node** mit sechs Sektionen im
+Baum: **Code** (Init/Frame/Point-EEL) · **Waves** · **Shapes** · **Shader**
+(Warp/Comp-HLSL) · **Sprites** · **Parameter** (alle numerischen Basiswerte:
+Decay, Gamma, Echo, fShader-Farbwash, Waveform, Motion, Borders, Motion
+Vectors, Blur).
+
+- **Wave/Shape/Sprite anlegen:** im Toolbar-Dropdown „Custom Wave", „Custom
+  Shape" oder „Sprite" wählen und **+** drücken (Milkdrop-Node oder eine
+  seiner Sektionen muss selektiert sein). **Entfernen/Klonen:** das Element
+  im Baum markieren, dann **−**/**⧉**. Ein Element anklicken zeigt seinen
+  Voll-Editor (numerische Startwerte + Code).
+- **ⓘ neben jedem Skript-Feld** öffnet die zur Sektion passende
+  Variablen-Referenz (per_frame/per_pixel, Wave, Shape, Sprite) — nur
+  Original-MilkDrop-Variablen, damit Presets kompatibel bleiben. Auch die
+  **Shader-Editoren** haben ein ⓘ (Inputs, Konstanten, Sampler, Funktionen).
+- Hinweis: Presets mit eigenem Comp-Shader „backen" Gamma/Echo/Filter/
+  fShader in den Shader ein — die Parameter-Regler wirken dort erst, wenn
+  der Shader geleert wird (Original-Verhalten).
+
+### Host-Gruppen & Crossfade
+
+Eine **Host-Gruppe** (Dropdown „Host Group") kapselt ein komplettes Visual —
+eine ganze AVS-Kette, ein Milkdrop-Preset oder eigene Effekte — mit eigenem
+Feedback-Bild, eigenen Buffer-Slots und eigenen Skript-Variablen. Mehrere
+Gruppen dürfen gleichzeitig aktiv sein und mischen sich über ihren
+**Blend Out**; eine Gruppe in einer Gruppe ist nicht erlaubt.
+
+- **Crossfade:** Das Auge einer Gruppe blendet sie **weich** ein/aus
+  (Dauer: „Crossfade-Dauer (s)" — gilt synchron für alle Gruppen;
+  **Ein-/Ausgangskurve** je Gruppe: Linear, S-Kurve, Ease-In, Ease-Out,
+  Exponentiell). Beide Visuals laufen während des Übergangs live weiter.
+- **„Zu dieser Gruppe wechseln (Crossfade)"** im Gruppen-Editor blendet die
+  gewählte Gruppe ein und alle anderen aus — der schnelle Preset-Wechsel.
+- **„.lvfx in diese Gruppe importieren…"** übernimmt eine gespeicherte
+  Kette als Gruppeninhalt.
+- **Speichern:** Ketten mit Host-Gruppe(n) werden automatisch als
+  **`.lvfx2`** gespeichert, flache Ketten bleiben `.lvfx`; laden kann die
+  App beides.
+
+---
+
 ## Changelog
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.1.0 | 2026-07-23 | +§11 (Session 42): Effektketten-Editor, Milkdrop-Node mit sechs Sektionen (inkl. Wave/Shape/Sprite anlegen, Parameter-Sektion, sektions-genaue ⓘ-Referenzen, Shader-ⓘ), Host-Gruppen mit Crossfade (Kurven, Wechsel-Button, .lvfx2) |
 | 1.0.0 | 2026-07-20 | Initial (Session 31): Player, Playlist inkl. Session-Playlist, Visualizer-Auswahl, Config-Verweis, echtes Vollbild, Docking/Perspektiven, Frame-Modus, Tastenkürzel |
