@@ -6,7 +6,7 @@
  *
  * @author LumiPulse Team
  * @date   July 2026
- * @version 1.0.0
+ * @version 1.3.0
  *
  * @details
  * Übersetzt NUR den Preset-Anteil eines warp_/comp_-Shaders (Deklarationen +
@@ -23,16 +23,29 @@
  * Bedingungen werden zu `!= 0.0`). Globale `sampler`-/`float4 texsize_*`-
  * Deklarationen werden zu Uniforms und als Feature gemeldet.
  *
- * BEWUSST NICHT in C1 (→ Stufe C3, sauberer Fehler statt Falschübersetzung):
- * for/while-Schleifen, tex3D/Volumen-Noise, Arrays, Funktionsdefinitionen,
- * Vektor-Vergleiche, Initialisierer-Listen, Präprozessor im Preset-Text.
+ * C3 (Session 43, komplett): for/while/do-while + break/continue + ++/--,
+ * Arrays (lokal/global, Index mit int()-Cast), tex3D auf die eingebauten
+ * noisevol_lq/hq-Sampler (3D-Texturen + Uniforms liefert der Host),
+ * include.fx-Konstanten (M_PI, M_PI_2 = 2π, M_INV_PI_2) + q-Bänke _qa–_qh,
+ * #if/#ifdef/#else/#endif (konstante Bedingungen), Alias- und
+ * Statement-#defines, Nicht-Quadrat-Matrizen (float2x3/float3x2 mit
+ * transponierter Konstruktor-Emission), mul()-Formen inkl. Vektor·Vektor
+ * (dot), out/inout-Parameter, Vektor-Vergleiche (lessThan-Familie),
+ * HLSL-Implicit-Truncation in Zuweisungen UND Intrinsics, bool↔float,
+ * q-Schattenkopien bei Schreibzugriff.
+ *
+ * NICHT unterstützt (sauberer Fehler): rot_*-Rotationsmatrizen der
+ * include.fx, #elif, Nicht-Literal-#if.
  ****************************************************************************************
  */
 
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <charconv>
 #include <string>
 #include <string_view>
@@ -80,6 +93,8 @@ enum class Base
     Mat2,
     Mat3,
     Mat4,
+    Mat2x3,  ///< HLSL float2x3 (2 Zeilen x 3 Spalten) = GLSL mat3x2
+    Mat3x2,  ///< HLSL float3x2 (3 Zeilen x 2 Spalten) = GLSL mat2x3
     Sampler2D,
     Sampler3D
 };
@@ -87,6 +102,7 @@ enum class Base
 struct Type
 {
     Base base = Base::Unknown;
+    int arraySize = 0;  ///< >0 = Array dieses Elementtyps (C3-Rest)
 
     [[nodiscard]] bool isVec() const
     {
@@ -94,7 +110,32 @@ struct Type
     }
     [[nodiscard]] bool isMat() const
     {
-        return base == Base::Mat2 || base == Base::Mat3 || base == Base::Mat4;
+        return base == Base::Mat2 || base == Base::Mat3 || base == Base::Mat4 ||
+               base == Base::Mat2x3 || base == Base::Mat3x2;
+    }
+    [[nodiscard]] int matRows() const
+    {
+        switch (base)
+        {
+        case Base::Mat2: return 2;
+        case Base::Mat3: return 3;
+        case Base::Mat4: return 4;
+        case Base::Mat2x3: return 2;
+        case Base::Mat3x2: return 3;
+        default: return 0;
+        }
+    }
+    [[nodiscard]] int matCols() const
+    {
+        switch (base)
+        {
+        case Base::Mat2: return 2;
+        case Base::Mat3: return 3;
+        case Base::Mat4: return 4;
+        case Base::Mat2x3: return 3;
+        case Base::Mat3x2: return 2;
+        default: return 0;
+        }
     }
     [[nodiscard]] bool isNumeric() const { return base == Base::Float || isVec() || isMat(); }
     [[nodiscard]] int size() const
@@ -131,6 +172,9 @@ struct Type
         case Base::Mat2: return "mat2";
         case Base::Mat3: return "mat3";
         case Base::Mat4: return "mat4";
+        // GLSL benennt matSPALTENxZEILEN — HLSL floatZEILENxSPALTEN
+        case Base::Mat2x3: return "mat3x2";
+        case Base::Mat3x2: return "mat2x3";
         default: return "float";
         }
     }
@@ -148,11 +192,29 @@ struct Type
     else if (s == "float2x2") out = {Base::Mat2};
     else if (s == "float3x3") out = {Base::Mat3};
     else if (s == "float4x4") out = {Base::Mat4};
+    else if (s == "float2x3") out = {Base::Mat2x3};
+    else if (s == "float3x2") out = {Base::Mat3x2};
     else if (s == "sampler" || s == "sampler2D") out = {Base::Sampler2D};
     else if (s == "sampler3D") out = {Base::Sampler3D};
     else if (s == "void") out = {Base::Void};
     else return false;
     return true;
+}
+
+/// Eingebauter Volumen-Noise-Sampler? (sampler_[fc_|pc_|fw_|pw_]noisevol_lq/hq)
+[[nodiscard]] inline bool isNoiseVolSampler(std::string_view name)
+{
+    if (name.rfind("sampler_", 0) != 0) return false;
+    std::string_view base = name.substr(8);
+    for (std::string_view prefix : {"fc_", "pc_", "fw_", "pw_"})
+    {
+        if (base.rfind(prefix, 0) == 0)
+        {
+            base = base.substr(3);
+            break;
+        }
+    }
+    return base == "noisevol_lq" || base == "noisevol_hq";
 }
 
 [[nodiscard]] inline std::string toLower(std::string_view s)
@@ -235,7 +297,19 @@ inline bool expandMacrosOnce(std::string& text,
         const Macro& m = it->second;
         if (!m.functionLike)
         {
-            out += "(" + m.body + ")";
+            // Klammern schuetzen nur AUSDRUCKS-Makros (Praezedenz). Nackte
+            // Bezeichner (#define sat saturate → Aufruf folgt) und
+            // STATEMENT-Makros (#define go ret1=...;) muessen unverpackt
+            // bleiben, sonst entsteht unparsebarer Text (S43-Befunde)
+            bool loneIdent = !m.body.empty();
+            for (const char bc : m.body)
+                if (!isIdentChar(bc)) { loneIdent = false; break; }
+            const bool statementLike =
+                m.body.find(';') != std::string::npos ||
+                m.body.find('{') != std::string::npos ||
+                m.body.find('}') != std::string::npos;
+            if (loneIdent || statementLike) out += m.body;
+            else out += "(" + m.body + ")";
             changed = true;
             continue;
         }
@@ -314,6 +388,15 @@ inline bool expandMacrosOnce(std::string& text,
     out.reserve(src.size());
     std::size_t pos = 0;
     int line = 1;
+    // #if-Zustand (C3-Rest): nur KONSTANTE Bedingungen (#if 0/1, #ifdef) —
+    // condStack = aktiver Zweig je Ebene, takenStack = Zweig schon genommen?
+    std::vector<bool> condStack;
+    std::vector<bool> takenStack;
+    const auto active = [&] {
+        for (const bool b : condStack)
+            if (!b) return false;
+        return true;
+    };
     while (pos <= src.size())
     {
         const std::size_t nl = src.find('\n', pos);
@@ -327,8 +410,58 @@ inline bool expandMacrosOnce(std::string& text,
             trimmed.remove_prefix(1);
             while (!trimmed.empty() && (trimmed.front() == ' ' || trimmed.front() == '\t'))
                 trimmed.remove_prefix(1);
-            if (trimmed.rfind("define", 0) != 0)
+            const auto directiveArg = [&](std::size_t prefixLen) {
+                std::string a(stripLineComment(trimmed.substr(prefixLen)));
+                while (!a.empty() && (a.front() == ' ' || a.front() == '\t'))
+                    a.erase(a.begin());
+                return a;
+            };
+            if (trimmed.rfind("ifdef", 0) == 0 || trimmed.rfind("ifndef", 0) == 0)
+            {
+                const bool neg = trimmed[2] == 'n';
+                const std::string name = directiveArg(neg ? 6 : 5);
+                const bool cond = (macros.count(name) != 0) != neg;
+                condStack.push_back(cond);
+                takenStack.push_back(cond);
+                out += "\n";
+            }
+            else if (trimmed.rfind("if", 0) == 0)
+            {
+                std::string a = directiveArg(2);
+                double v = 0.0;
+                const char* b = a.c_str();
+                char* endp = nullptr;
+                v = std::strtod(b, &endp);
+                if (endp == b) fail(line, "#if: nur konstante Bedingungen (0/1)");
+                const bool cond = v != 0.0;
+                condStack.push_back(cond);
+                takenStack.push_back(cond);
+                out += "\n";
+            }
+            else if (trimmed.rfind("else", 0) == 0)
+            {
+                if (condStack.empty()) fail(line, "#else ohne #if");
+                condStack.back() = !takenStack.back();
+                takenStack.back() = true;
+                out += "\n";
+            }
+            else if (trimmed.rfind("endif", 0) == 0)
+            {
+                if (condStack.empty()) fail(line, "#endif ohne #if");
+                condStack.pop_back();
+                takenStack.pop_back();
+                out += "\n";
+            }
+            else if (trimmed.rfind("define", 0) != 0)
+            {
                 fail(line, "Praeprozessor-Direktive wird nicht unterstuetzt");
+            }
+            else if (!active())
+            {
+                out += "\n";  // #define im inaktiven Zweig ignorieren
+            }
+            else
+            {
             trimmed.remove_prefix(6);
             while (!trimmed.empty() && (trimmed.front() == ' ' || trimmed.front() == '\t'))
                 trimmed.remove_prefix(1);
@@ -362,20 +495,24 @@ inline bool expandMacrosOnce(std::string& text,
                 if (!param.empty()) m.params.push_back(param);
             }
             m.body = stripLineComment(trimmed);
+            while (!m.body.empty() && (m.body.front() == ' ' || m.body.front() == '\t'))
+                m.body.erase(m.body.begin());
             if (!m.body.empty() && m.body.back() == '\\')
                 fail(line, "mehrzeilige #define werden nicht unterstuetzt");
             macros[name] = std::move(m);
             out += "\n";  // Zeilennummern stabil halten
+            }
         }
         else
         {
-            out.append(raw);
+            if (active()) out.append(raw);  // inaktive #if-Zweige fallen weg
             out += "\n";
         }
         if (nl == std::string_view::npos) break;
         pos = nl + 1;
         ++line;
     }
+    if (!condStack.empty()) fail(line, "#endif fehlt");
     if (!macros.empty())
     {
         for (int pass = 0; pass < 8; ++pass)
@@ -409,7 +546,9 @@ public:
 
     [[nodiscard]] const Token& peek() const { return m_current; }
     [[nodiscard]] const Token& peek2() const { return m_ahead; }
-    [[nodiscard]] Token next()
+    // BEWUSST ohne [[nodiscard]]: next() dient auch als reines Weiterschalten
+    // (viele Aufrufer verwerfen das Token — MSVC C4834-Rauschen sonst)
+    Token next()
     {
         Token t = m_current;
         m_current = m_ahead;
@@ -460,8 +599,8 @@ private:
             return out;
         }
         // Mehrzeichen-Operatoren zuerst
-        static constexpr std::array<std::string_view, 10> kMulti = {
-            "+=", "-=", "*=", "/=", "==", "!=", "<=", ">=", "&&", "||"};
+        static constexpr std::array<std::string_view, 12> kMulti = {
+            "+=", "-=", "*=", "/=", "==", "!=", "<=", ">=", "&&", "||", "++", "--"};
         for (std::string_view op : kMulti)
         {
             if (m_src.substr(m_pos, op.size()) == op)
@@ -555,19 +694,24 @@ struct Expr
 
 struct Stmt
 {
-    enum class Kind { Decl, ExprStmt, If, Block, Return };
+    enum class Kind { Decl, ExprStmt, If, Block, Return, While, DoWhile, For, Break, Continue };
     Kind kind = Kind::ExprStmt;
     // Decl
     Type declType;
     std::vector<std::pair<std::string, Expr>> decls;  // name, init (init.kind==Number&&text empty → keiner)
     std::vector<bool> hasInit;
-    // ExprStmt / If-Bedingung / Return-Wert
+    std::vector<int> declArray;  ///< je Deklarator: Array-Groesse (0 = keins)
+    // ExprStmt / If-/While-/For-Bedingung / Return-Wert
     Expr expr;
-    bool hasExpr = false;  // Return: mit Wert?
-    // If
+    bool hasExpr = false;  // Return: mit Wert? / For: Bedingung vorhanden?
+    // If/While/For: thenBody = Rumpf; If: elseBody = else-Zweig,
+    // For: elseBody = Init-Statement(s) (C3)
     std::vector<Stmt> thenBody;  // auch Block-Inhalt
     std::vector<Stmt> elseBody;
     bool hasElse = false;
+    // For: Schritt-Ausdruck (i++, i+=2, …)
+    Expr stepExpr;
+    bool hasStep = false;
     int line = 0;
 };
 
@@ -577,6 +721,7 @@ struct FunctionDef
     Type returnType;
     std::string name;
     std::vector<std::pair<std::string, Type>> params;
+    std::vector<std::uint8_t> paramQual;  ///< 0=in, 1=out, 2=inout (C3-Rest)
     std::vector<Stmt> body;
     int line = 0;
 };
@@ -673,8 +818,32 @@ private:
         if (t.kind == Token::Kind::Ident)
         {
             if (t.text == "if") return parseIf();
-            if (t.text == "for" || t.text == "while" || t.text == "do")
-                fail(t.line, "Schleifen (" + t.text + ") sind Stufe C3");
+            if (t.text == "for" || t.text == "while")
+                return parseLoop(t.text == "for");
+            if (t.text == "do")
+            {
+                // C3-Rest: do { ... } while (cond);
+                s.kind = Stmt::Kind::DoWhile;
+                m_lex.next();
+                parseBranch(s.thenBody);
+                if (!(m_lex.peek().kind == Token::Kind::Ident &&
+                      m_lex.peek().text == "while"))
+                    fail(s.line, "do: 'while' erwartet");
+                m_lex.next();
+                expectPunct("(");
+                s.expr = parseExpr();
+                s.hasExpr = true;
+                expectPunct(")");
+                expectPunct(";");
+                return s;
+            }
+            if (t.text == "break" || t.text == "continue")
+            {
+                s.kind = t.text == "break" ? Stmt::Kind::Break : Stmt::Kind::Continue;
+                m_lex.next();
+                expectPunct(";");
+                return s;
+            }
             if (t.text == "return")
             {
                 m_lex.next();
@@ -711,13 +880,15 @@ private:
         {
             for (;;)
             {
-                // optionale in/out-Qualifier (out waere Referenz-Semantik → C3)
+                // optionale in/out/inout-Qualifier — GLSL kennt sie nativ
+                std::uint8_t qual = 0;
                 if (m_lex.peek().kind == Token::Kind::Ident && m_lex.peek().text == "in")
                     m_lex.next();
                 if (m_lex.peek().kind == Token::Kind::Ident &&
                     (m_lex.peek().text == "out" || m_lex.peek().text == "inout"))
                 {
-                    fail(m_lex.peek().line, "out-Parameter sind Stufe C3");
+                    qual = m_lex.peek().text == "out" ? 1 : 2;
+                    m_lex.next();
                 }
                 const Token pType = m_lex.next();
                 Type paramType;
@@ -731,6 +902,7 @@ private:
                     fail(pName.line, "Parametername erwartet");
                 skipSemantic();  // ": TEXCOORD0" etc.
                 fn.params.emplace_back(pName.text, paramType);
+                fn.paramQual.push_back(qual);
                 if (m_lex.peek().kind == Token::Kind::Punct && m_lex.peek().text == ",")
                 {
                     m_lex.next();
@@ -780,8 +952,17 @@ private:
         {
             if (nameTok.kind != Token::Kind::Ident)
                 fail(nameTok.line, "Bezeichner erwartet");
+            int arraySize = 0;  // C3-Rest: `float w[4]`
             if (m_lex.peek().kind == Token::Kind::Punct && m_lex.peek().text == "[")
-                fail(nameTok.line, "Arrays sind Stufe C3");
+            {
+                m_lex.next();
+                const Token n = m_lex.next();
+                if (n.kind != Token::Kind::Number)
+                    fail(nameTok.line, "Array-Groesse: Zahl erwartet");
+                arraySize = std::atoi(n.text.c_str());
+                if (arraySize <= 0) fail(nameTok.line, "Array-Groesse > 0 erwartet");
+                expectPunct("]");
+            }
             skipSemantic();  // ": register(cN)" an globalen Deklarationen
             Expr init;
             bool has = false;
@@ -816,6 +997,7 @@ private:
             }
             s.decls.emplace_back(nameTok.text, std::move(init));
             s.hasInit.push_back(has);
+            s.declArray.push_back(arraySize);
             if (m_lex.peek().kind == Token::Kind::Punct && m_lex.peek().text == ",")
             {
                 m_lex.next();
@@ -844,6 +1026,45 @@ private:
             s.hasElse = true;
             parseBranch(s.elseBody);
         }
+        return s;
+    }
+
+    /// C3: for(init; cond; step) / while(cond) — Rumpf via parseBranch
+    Stmt parseLoop(bool isFor)
+    {
+        Stmt s;
+        s.line = m_lex.peek().line;
+        m_lex.next();  // for / while
+        expectPunct("(");
+        if (isFor)
+        {
+            s.kind = Stmt::Kind::For;
+            // Init (Decl/Ausdruck/leer) — parseStmt konsumiert das ';' selbst;
+            // landet im Init-Slot (elseBody, s. Stmt-Doku)
+            if (m_lex.peek().kind == Token::Kind::Punct && m_lex.peek().text == ";")
+                m_lex.next();
+            else
+                s.elseBody.push_back(parseStmt());
+            if (!(m_lex.peek().kind == Token::Kind::Punct && m_lex.peek().text == ";"))
+            {
+                s.expr = parseExpr();
+                s.hasExpr = true;
+            }
+            expectPunct(";");
+            if (!(m_lex.peek().kind == Token::Kind::Punct && m_lex.peek().text == ")"))
+            {
+                s.stepExpr = parseExpr();
+                s.hasStep = true;
+            }
+        }
+        else
+        {
+            s.kind = Stmt::Kind::While;
+            s.expr = parseExpr();
+            s.hasExpr = true;
+        }
+        expectPunct(")");
+        parseBranch(s.thenBody);
         return s;
     }
 
@@ -963,6 +1184,16 @@ private:
     Expr parseUnary()
     {
         const Token& t = m_lex.peek();
+        // C3: Praefix-Inkrement/-Dekrement (GLSL kann beides auf float)
+        if (t.kind == Token::Kind::Punct && (t.text == "++" || t.text == "--"))
+        {
+            Expr e;
+            e.kind = Expr::Kind::Unary;
+            e.text = t.text;
+            e.line = m_lex.next().line;
+            e.args.push_back(parseUnary());
+            return e;
+        }
         if (t.kind == Token::Kind::Punct && (t.text == "-" || t.text == "+" || t.text == "!"))
         {
             Expr e;
@@ -996,7 +1227,28 @@ private:
             }
             else if (t.kind == Token::Kind::Punct && t.text == "[")
             {
-                fail(t.line, "Array-Indizes sind Stufe C3");
+                // C3-Rest: Array-/Vektor-Index
+                const int ln = t.line;
+                m_lex.next();
+                Expr idx = parseExpr();
+                expectPunct("]");
+                Expr ix;
+                ix.kind = Expr::Kind::Index;
+                ix.line = ln;
+                ix.args.push_back(std::move(e));
+                ix.args.push_back(std::move(idx));
+                e = std::move(ix);
+            }
+            else if (t.kind == Token::Kind::Punct &&
+                     (t.text == "++" || t.text == "--"))
+            {
+                // C3: Postfix-Inkrement/-Dekrement (n++ in Schleifen)
+                Expr u;
+                u.kind = Expr::Kind::Unary;
+                u.text = "post" + t.text;
+                u.line = m_lex.next().line;
+                u.args.push_back(std::move(e));
+                e = std::move(u);
             }
             else
             {
@@ -1116,11 +1368,20 @@ public:
             {
                 for (const auto& [name, init] : s.decls)
                 {
+                    // Redeklaration der eingebauten Volumen-Noise-Sampler
+                    // (haeufig als `sampler sampler_noisevol_hq;`): Builtin-Typ
+                    // sampler3D behalten, KEIN Custom-Sampler (C3, S43)
+                    if (isNoiseVolSampler(name))
+                    {
+                        m_out.usesTex3d = true;
+                        continue;
+                    }
                     declare(name, s.declType);
                     if (s.declType.base == Base::Sampler3D)
                     {
                         m_out.usesTex3d = true;
-                        fail(s.line, "sampler3D/Volumen-Noise ist Stufe C3");
+                        fail(s.line,
+                             "sampler3D: nur die eingebauten noisevol-Sampler");
                     }
                     m_out.customSamplers.push_back(name);
                 }
@@ -1132,20 +1393,50 @@ public:
             for (std::size_t i = 0; i < s.decls.size(); ++i)
             {
                 const auto& [name, init] = s.decls[i];
+                registerRename(name);
+                m_userDeclared[name] = true;
+                const int arr = i < s.declArray.size() ? s.declArray[i] : 0;
+                if (arr > 0)  // C3-Rest: globales Array
+                {
+                    Type at = s.declType;
+                    at.arraySize = arr;
+                    declare(name, at);
+                    std::string g = std::string(s.declType.glsl()) + " " + outName(name) +
+                                    "[" + std::to_string(arr) + "]";
+                    if (s.hasInit[i])
+                    {
+                        // {…}-Liste → GLSL-Array-Konstruktor (Literal-Init)
+                        if (init.kind != Expr::Kind::Ctor)
+                            fail(s.line, "Array-Init: {…}-Liste erwartet");
+                        g += " = " + std::string(s.declType.glsl()) + "[" +
+                             std::to_string(arr) + "](";
+                        Expr initCopy = init;
+                        for (std::size_t k = 0; k < initCopy.args.size(); ++k)
+                        {
+                            EmitResult r = emitExpr(initCopy.args[k]);
+                            r = convertTo(r, s.declType, s.line);
+                            if (k > 0) g += ", ";
+                            g += r.code;
+                        }
+                        g += ")";
+                    }
+                    m_out.glslGlobals += g + ";\n";
+                    continue;
+                }
                 declare(name, s.declType);
                 if (name.rfind("texsize_", 0) == 0)
                 {
                     m_out.customTexsizes.push_back(name);
                     continue;  // Uniform kommt vom Host
                 }
-                m_out.glslGlobals += std::string(s.declType.glsl()) + " " + name + " = " +
-                                     s.declType.glsl() + "(0.0);\n";
+                m_out.glslGlobals += std::string(s.declType.glsl()) + " " + outName(name) +
+                                     " = " + s.declType.glsl() + "(0.0);\n";
                 if (s.hasInit[i])
                 {
                     Expr initCopy = init;
                     EmitResult r = emitExpr(initCopy);
                     r = convertTo(r, s.declType, s.line);
-                    m_globalInit += "    " + name + " = " + r.code + ";\n";
+                    m_globalInit += "    " + outName(name) + " = " + r.code + ";\n";
                 }
             }
         }
@@ -1160,13 +1451,22 @@ public:
             FunctionSig sig;
             sig.returnType = fn.returnType;
             for (const auto& [pname, ptype] : fn.params) sig.params.push_back(ptype);
+            sig.paramQual = fn.paramQual;
             m_functions[fn.name] = sig;
+            // GLSL-Builtin-Kollisionen (float2 noise3(...), …) → Alias
+            registerRename(fn.name);
+            m_userDeclared[fn.name] = true;
 
-            std::string head = std::string(fn.returnType.glsl()) + " " + fn.name + "(";
+            std::string head =
+                std::string(fn.returnType.glsl()) + " " + outName(fn.name) + "(";
             for (std::size_t i = 0; i < fn.params.size(); ++i)
             {
                 if (i > 0) head += ", ";
-                head += std::string(fn.params[i].second.glsl()) + " " + fn.params[i].first;
+                if (fn.paramQual[i] == 1) head += "out ";
+                else if (fn.paramQual[i] == 2) head += "inout ";
+                registerRename(fn.params[i].first);
+                head += std::string(fn.params[i].second.glsl()) + " " +
+                        outName(fn.params[i].first);
             }
             head += ")";
 
@@ -1194,11 +1494,55 @@ public:
         for (const Stmt& s : body) emitStmt(s, 1);
     }
 
+    /// Schattenkopien fuer beschriebene Uniforms — VOR den Body stellen
+    [[nodiscard]] std::string shadowProlog() const
+    {
+        std::vector<std::string> names;
+        names.reserve(m_shadow.size());
+        for (const auto& [name, used] : m_shadow)
+            if (used) names.push_back(name);
+        std::sort(names.begin(), names.end());  // deterministische Emission
+        std::string s;
+        for (const std::string& name : names)
+        {
+            Type t;
+            if (!lookup(name, t)) continue;
+            s += "    " + std::string(t.glsl()) + " " + name + " = " + name +
+                 ";  // Preset schreibt Uniform\n";
+        }
+        return s;
+    }
+
 private:
     // --- Symboltabelle ------------------------------------------------------------------
     void pushScope() { m_scopes.emplace_back(); }
     void popScope() { m_scopes.pop_back(); }
     void declare(const std::string& name, Type t) { m_scopes.back()[name] = t; }
+
+    /// GLSL-Builtin-/Schluesselwoerter, die HLSL-Presets als Bezeichner nutzen
+    /// (float3 mod; float2 noise3(...); …) — werden bei Deklaration umbenannt
+    [[nodiscard]] static bool isGlslReservedName(const std::string& n)
+    {
+        static const std::array<const char*, 12> kReserved = {
+            "mod", "mix", "step", "texture", "noise1", "noise2", "noise3",
+            "noise4", "input", "output", "sample", "main"};
+        for (const char* r : kReserved)
+            if (n == r) return true;
+        return false;
+    }
+
+    /// Deklarations-Hook: reservierte Namen bekommen einen GLSL-Aliasnamen
+    void registerRename(const std::string& name)
+    {
+        if (isGlslReservedName(name)) m_rename[name] = name + "_hl";
+    }
+
+    /// Emissions-Name eines Bezeichners (Alias, falls umbenannt)
+    [[nodiscard]] std::string outName(const std::string& name) const
+    {
+        const auto it = m_rename.find(name);
+        return it == m_rename.end() ? name : it->second;
+    }
     [[nodiscard]] bool lookup(const std::string& name, Type& out) const
     {
         for (auto it = m_scopes.rbegin(); it != m_scopes.rend(); ++it)
@@ -1271,10 +1615,38 @@ private:
                 smp((std::string("sampler_") + prefix + base).c_str());
             v4((std::string("texsize_") + base).c_str());
         }
-        smp3("sampler_noisevol_lq");
-        smp3("sampler_noisevol_hq");
+        for (const char* base : {"noisevol_lq", "noisevol_hq"})
+        {
+            smp3((std::string("sampler_") + base).c_str());
+            for (const char* prefix : {"fc_", "pc_", "fw_", "pw_"})
+                smp3((std::string("sampler_") + prefix + base).c_str());
+        }
         v4("texsize_noisevol_lq");
         v4("texsize_noisevol_hq");
+        // include.fx-Konstanten (Werte liefert die GLSL-Praeambel des Hosts;
+        // Referenz: M_PI_2 ist dort 2*pi, NICHT pi/2!)
+        f("M_PI");
+        f("M_PI_2");
+        f("M_INV_PI_2");
+        // rohe q-Baenke (_qa.._qh = q1-4 .. q29-32)
+        for (char bank = 'a'; bank <= 'h'; ++bank)
+            v4((std::string("_q") + bank).c_str());
+
+        // Schreibbare HLSL-Globals = GLSL-Uniforms → Schattenkopie-Kandidaten
+        // (HLSL erlaubt Zuweisungen an globale Konstanten, GLSL nicht)
+        for (const char* n :
+             {"time", "fps", "frame", "progress", "bass", "mid", "treb", "vol",
+              "bass_att", "mid_att", "treb_att", "vol_att", "aspect", "texsize",
+              "rand_preset", "rand_frame", "roam_cos", "roam_sin",
+              "slow_roam_cos", "slow_roam_sin", "blur1_min", "blur1_max",
+              "blur2_min", "blur2_max", "blur3_min", "blur3_max"})
+            m_uniformNames[n] = true;
+        for (int i = 1; i <= 32; ++i) m_uniformNames["q" + std::to_string(i)] = true;
+        for (char bank = 'a'; bank <= 'h'; ++bank)
+            m_uniformNames[std::string("_q") + bank] = true;
+        for (const char* base : {"noise_lq", "noise_lq_lite", "noise_mq",
+                                 "noise_hq", "noisevol_lq", "noisevol_hq"})
+            m_uniformNames[std::string("texsize_") + base] = true;
     }
 
     // --- Statements ---------------------------------------------------------------------
@@ -1298,8 +1670,38 @@ private:
             for (std::size_t i = 0; i < s.decls.size(); ++i)
             {
                 const auto& [name, init] = s.decls[i];
+                registerRename(name);
+                m_userDeclared[name] = true;
+                const int arr = i < s.declArray.size() ? s.declArray[i] : 0;
+                if (arr > 0)  // C3-Rest: lokales Array
+                {
+                    Type at = s.declType;
+                    at.arraySize = arr;
+                    declare(name, at);
+                    std::string lineOut = pad + std::string(s.declType.glsl()) + " " +
+                                          outName(name) + "[" + std::to_string(arr) + "]";
+                    if (s.hasInit[i])
+                    {
+                        if (init.kind != Expr::Kind::Ctor)
+                            fail(s.line, "Array-Init: {…}-Liste erwartet");
+                        std::string ctor = std::string(s.declType.glsl()) + "[" +
+                                           std::to_string(arr) + "](";
+                        Expr initCopy = init;
+                        for (std::size_t k = 0; k < initCopy.args.size(); ++k)
+                        {
+                            EmitResult r = emitExpr(initCopy.args[k]);
+                            r = convertTo(r, s.declType, s.line);
+                            if (k > 0) ctor += ", ";
+                            ctor += r.code;
+                        }
+                        lineOut += " = " + ctor + ")";
+                    }
+                    m_out.glslBody += lineOut + ";\n";
+                    continue;
+                }
                 declare(name, s.declType);
-                std::string lineOut = pad + std::string(s.declType.glsl()) + " " + name;
+                std::string lineOut =
+                    pad + std::string(s.declType.glsl()) + " " + outName(name);
                 if (s.hasInit[i])
                 {
                     Expr initCopy = init;
@@ -1341,6 +1743,64 @@ private:
             }
             break;
         }
+        case Stmt::Kind::While:
+        {
+            Expr cond = s.expr;
+            EmitResult c = emitExpr(cond);
+            m_out.glslBody += pad + "while (" + boolify(c, s.line) + ")\n" + pad + "{\n";
+            pushScope();
+            for (const Stmt& t : s.thenBody) emitStmt(t, indent + 1);
+            popScope();
+            m_out.glslBody += pad + "}\n";
+            break;
+        }
+        case Stmt::Kind::DoWhile:
+        {
+            m_out.glslBody += pad + "do\n" + pad + "{\n";
+            pushScope();
+            for (const Stmt& t : s.thenBody) emitStmt(t, indent + 1);
+            popScope();
+            Expr cond = s.expr;
+            EmitResult c = emitExpr(cond);
+            m_out.glslBody += pad + "} while (" + boolify(c, s.line) + ");\n";
+            break;
+        }
+        case Stmt::Kind::For:
+        {
+            // Init-Statement(s) in einen umschliessenden Block, dann
+            // for(; cond; step) — so bleibt die Decl-Emission wiederverwendet
+            m_out.glslBody += pad + "{\n";
+            pushScope();
+            for (const Stmt& t : s.elseBody) emitStmt(t, indent + 1);
+            std::string head = "for (; ";
+            if (s.hasExpr)
+            {
+                Expr cond = s.expr;
+                EmitResult c = emitExpr(cond);
+                head += boolify(c, s.line);
+            }
+            head += "; ";
+            if (s.hasStep)
+            {
+                Expr st = s.stepExpr;
+                head += emitExpr(st).code;
+            }
+            head += ")";
+            m_out.glslBody += pad + "    " + head + "\n" + pad + "    {\n";
+            pushScope();
+            for (const Stmt& t : s.thenBody) emitStmt(t, indent + 2);
+            popScope();
+            m_out.glslBody += pad + "    }\n";
+            popScope();
+            m_out.glslBody += pad + "}\n";
+            break;
+        }
+        case Stmt::Kind::Break:
+            m_out.glslBody += pad + "break;\n";
+            break;
+        case Stmt::Kind::Continue:
+            m_out.glslBody += pad + "continue;\n";
+            break;
         case Stmt::Kind::Return:
         {
             if (!m_inFunction)
@@ -1386,6 +1846,18 @@ private:
             r.type = {Base::Float};
             return r;
         }
+        if (target.base == Base::Bool && r.type.base == Base::Float)
+        {
+            // HLSL: numerisch -> bool implizit (`bool b = f;`)
+            r.code = "((" + r.code + ") != 0.0)";
+            r.type = {Base::Bool};
+            return r;
+        }
+        if (target.isVec() && r.type.base == Base::Bool)
+        {
+            // bool -> vecN ueber den Float-Umweg (`ret = above(a,b);`-Muster)
+            r = convertTo(std::move(r), {Base::Float}, line);
+        }
         if (target.isVec() && r.type.base == Base::Float)
         {
             r.code = std::string(target.glsl()) + "(" + r.code + ")";
@@ -1402,6 +1874,22 @@ private:
         if (target.base == Base::Float && r.type.isVec())
         {
             r.code = "(" + r.code + ").x";  // HLSL-Implicit-Truncation
+            r.type = target;
+            return r;
+        }
+        if (target.isMat() && r.type.base == Base::Float)
+        {
+            // HLSL: Skalar→Matrix REPLIZIERT in alle Elemente — GLSL matN(s)
+            // waere nur die Diagonale → Spaltenvektoren explizit splatten
+            const Type colVec = Type::vec(target.matRows());
+            std::string code = std::string(target.glsl()) + "(";
+            for (int c = 0; c < target.matCols(); ++c)
+            {
+                if (c > 0) code += ", ";
+                code += std::string(colVec.glsl()) + "(" + r.code + ")";
+            }
+            code += ")";
+            r.code = code;
             r.type = target;
             return r;
         }
@@ -1427,7 +1915,7 @@ private:
         {
             Type t;
             if (!lookup(e.text, t)) fail(e.line, "unbekannter Bezeichner '" + e.text + "'");
-            return {e.text, t};
+            return {outName(e.text), t};
         }
 
         case Expr::Kind::Member:
@@ -1439,6 +1927,30 @@ private:
         case Expr::Kind::Call:
             return emitCall(e);
 
+        case Expr::Kind::Index:
+        {
+            // C3-Rest: Array-Element (auch vec[i] — HLSL erlaubt beides);
+            // GLSL-Index ist int, unsere Zahlen sind float → int()-Cast
+            EmitResult base = emitExpr(e.args[0]);
+            EmitResult idx = emitExpr(e.args[1]);
+            idx = convertTo(idx, {Base::Float}, e.line);
+            Type elem;
+            if (base.type.arraySize > 0)
+            {
+                elem = base.type;
+                elem.arraySize = 0;
+            }
+            else if (base.type.isVec())
+            {
+                elem = {Base::Float};
+            }
+            else
+            {
+                fail(e.line, "Index auf Nicht-Array");
+            }
+            return {base.code + "[int(" + idx.code + ")]", elem};
+        }
+
         case Expr::Kind::Unary:
         {
             EmitResult a = emitExpr(e.args[0]);
@@ -1447,6 +1959,12 @@ private:
                 std::string cond = boolify(a, e.line);
                 return {"(!" + cond + ")", {Base::Bool}};
             }
+            // C3: Postfix ++/-- (Praefix laeuft ueber den generischen Zweig)
+            if (e.text == "post++" || e.text == "post--")
+                return {"(" + a.code + e.text.substr(4) + ")", a.type};
+            // HLSL: -(a>b) numerisch — GLSL kennt kein Minus auf bool
+            if (a.type.base == Base::Bool && (e.text == "-" || e.text == "+"))
+                a = convertTo(a, {Base::Float}, e.line);
             return {"(" + e.text + a.code + ")", a.type};
         }
 
@@ -1499,17 +2017,60 @@ private:
         Type target;
         (void)typeFromKeyword("float", target);  // placeholder init
         for (const auto base : {Base::Float, Base::Vec2, Base::Vec3, Base::Vec4, Base::Mat2,
-                                Base::Mat3, Base::Mat4})
+                                Base::Mat3, Base::Mat4, Base::Mat2x3, Base::Mat3x2})
         {
             if (e.text == Type{base}.glsl()) target = {base};
         }
-        std::string code = e.text + "(";
-        for (std::size_t i = 0; i < e.args.size(); ++i)
+        std::vector<EmitResult> args;
+        args.reserve(e.args.size());
+        for (Expr& arg : e.args)
         {
-            EmitResult a = emitExpr(e.args[i]);
+            EmitResult a = emitExpr(arg);
             if (a.type.base == Base::Bool) a = convertTo(a, {Base::Float}, e.line);
+            args.push_back(std::move(a));
+        }
+        // Nicht-Quadrat-Matrizen (C3-Rest): HLSL konstruiert ZEILENweise,
+        // GLSL SPALTENweise — transponierte Emission (Zeilen-Vektoren oder
+        // Skalare in Zeilen-Major-Reihenfolge)
+        if (target.base == Base::Mat2x3 || target.base == Base::Mat3x2)
+        {
+            const int rows = target.matRows();
+            const int cols = target.matCols();
+            std::string code = std::string(target.glsl()) + "(";
+            bool first = true;
+            const auto emitPart = [&](const std::string& part) {
+                if (!first) code += ", ";
+                code += part;
+                first = false;
+            };
+            static const char kComp[5] = "xyzw";
+            if (static_cast<int>(args.size()) == rows)
+            {
+                for (EmitResult& r : args) r = convertTo(r, Type::vec(cols), e.line);
+                for (int c = 0; c < cols; ++c)
+                    for (int r = 0; r < rows; ++r)
+                        emitPart("(" + args[static_cast<std::size_t>(r)].code + ")." +
+                                 kComp[c]);
+            }
+            else if (static_cast<int>(args.size()) == rows * cols)
+            {
+                for (EmitResult& r : args) r = convertTo(r, {Base::Float}, e.line);
+                for (int c = 0; c < cols; ++c)
+                    for (int r = 0; r < rows; ++r)
+                        emitPart(args[static_cast<std::size_t>(r * cols + c)].code);
+            }
+            else
+            {
+                fail(e.line, e.text + ": Zeilen-Vektoren oder Skalare erwartet");
+            }
+            code += ")";
+            return {code, target};
+        }
+        std::string code = e.text + "(";
+        for (std::size_t i = 0; i < args.size(); ++i)
+        {
             if (i > 0) code += ", ";
-            code += a.code;
+            code += args[i].code;
         }
         code += ")";
         return {code, target};
@@ -1530,16 +2091,40 @@ private:
         }
         if (op == "==" || op == "!=" || op == "<" || op == ">" || op == "<=" || op == ">=")
         {
-            if (a.type.size() != 1 || b.type.size() != 1)
-                fail(e.line, "Vektor-Vergleiche sind Stufe C3");
+            // C3: Vektor-Vergleiche — HLSL liefert komponentenweise 0/1;
+            // GLSL-Aequivalent: lessThan()-Familie + Vektor-Konstruktor
+            if (a.type.isVec() || b.type.isVec())
+            {
+                const Type common = commonType(a.type, b.type, e.line);
+                a = convertTo(a, common, e.line);
+                b = convertTo(b, common, e.line);
+                const char* fn = op == "<"    ? "lessThan"
+                                 : op == ">"  ? "greaterThan"
+                                 : op == "<=" ? "lessThanEqual"
+                                 : op == ">=" ? "greaterThanEqual"
+                                 : op == "==" ? "equal"
+                                              : "notEqual";
+                return {std::string(common.glsl()) + "(" + fn + "(" + a.code + ", " +
+                            b.code + "))",
+                        common};
+            }
             return {"(" + a.code + " " + op + " " + b.code + ")", {Base::Bool}};
         }
         if (op == "%")
         {
-            // HLSL % auf floats → GLSL mod()
-            Type common = commonType(a.type, b.type, e.line);
+            // HLSL % auf floats → GLSL mod(); Operanden harmonisieren
+            if (a.type.base == Base::Bool) a = convertTo(a, {Base::Float}, e.line);
+            if (b.type.base == Base::Bool) b = convertTo(b, {Base::Float}, e.line);
+            const Type common = commonType(a.type, b.type, e.line);
+            a = convertTo(a, common, e.line);
+            b = convertTo(b, common, e.line);
             return {"mod(" + a.code + ", " + b.code + ")", common};
         }
+
+        // HLSL: bool-Operanden in Arithmetik implizit numerisch (`x * (a>b)`,
+        // beliebtes Gate-Muster) — GLSL lehnt bool-Arithmetik ab (C3-Rest)
+        if (a.type.base == Base::Bool) a = convertTo(a, {Base::Float}, e.line);
+        if (b.type.base == Base::Bool) b = convertTo(b, {Base::Float}, e.line);
 
         // Arithmetik: mat*vec / vec*mat / mat*mat gehen in GLSL direkt
         if (a.type.isMat() || b.type.isMat())
@@ -1573,6 +2158,21 @@ private:
 
     EmitResult emitAssign(Expr& e)
     {
+        // Zuweisung an eine Uniform (q25=…, texsize.xy=…): im main-Prolog eine
+        // lokale Schattenkopie anlegen (GLSL-Scope-Regel: `vec4 texsize =
+        // texsize;` liest im Initializer noch die Uniform) — fxc erlaubte
+        // Schreibzugriffe auf globale Konstanten. Vom Preset selbst
+        // deklarierte gleichnamige Locals brauchen keinen Schatten.
+        const Expr* root = &e.args[0];
+        while ((root->kind == Expr::Kind::Member || root->kind == Expr::Kind::Index) &&
+               !root->args.empty())
+            root = &root->args[0];
+        if (root->kind == Expr::Kind::Ident &&
+            m_uniformNames.count(root->text) != 0 &&
+            m_userDeclared.count(root->text) == 0)
+        {
+            m_shadow[root->text] = true;
+        }
         EmitResult lhs = emitExpr(e.args[0]);
         EmitResult rhs = emitExpr(e.args[1]);
         if (e.text == "=")
@@ -1584,6 +2184,14 @@ private:
         if (lhs.type.base == Base::Float && rhs.type.isVec())
             rhs = convertTo(rhs, {Base::Float}, e.line);
         if (rhs.type.base == Base::Bool) rhs = convertTo(rhs, {Base::Float}, e.line);
+        // HLSL-Implicit-Truncation auch bei Compound-Zuweisungen: breiterer
+        // RHS-Vektor wird auf die LHS-Breite gekuerzt (`ret -= tex2D(...)`,
+        // `ret.xy *= 1-GetBlur1(...)` — fxc warnte nur, GLSL lehnt ab)
+        if (lhs.type.isVec() && rhs.type.isVec() &&
+            rhs.type.size() > lhs.type.size())
+        {
+            rhs = convertTo(rhs, lhs.type, e.line);
+        }
         return {lhs.code + " " + e.text + " " + rhs.code, lhs.type};
     }
 
@@ -1599,11 +2207,15 @@ private:
             if (e.args.size() != fn->second.params.size())
                 fail(e.line, name + ": " + std::to_string(fn->second.params.size()) +
                                  " Argument(e) erwartet");
-            std::string code = name + "(";
+            std::string code = outName(name) + "(";
             for (std::size_t i = 0; i < e.args.size(); ++i)
             {
                 EmitResult a = emitExpr(e.args[i]);
-                a = convertTo(a, fn->second.params[i], e.line);
+                // out/inout-Argumente muessen L-Values bleiben — keine
+                // Konvertierungs-Wrapper (C3-Rest)
+                const bool isOut = i < fn->second.paramQual.size() &&
+                                   fn->second.paramQual[i] != 0;
+                if (!isOut) a = convertTo(a, fn->second.params[i], e.line);
                 if (i > 0) code += ", ";
                 code += a.code;
             }
@@ -1631,10 +2243,18 @@ private:
             return {"textureLod(" + s.code + ", (" + a.code + ").xy, (" + a.code + ").w)",
                     {Base::Vec4}};
         }
-        if (lower == "tex3d")
+        if (lower == "tex3d" || lower == "tex3dbias")
         {
+            // C3: Volumen-Noise — Koordinate ist vec3; akzeptiert auch als
+            // `sampler` (2D) redeklarierte noisevol-Namen (Uniform ist 3D)
             m_out.usesTex3d = true;
-            fail(e.line, "tex3D/Volumen-Noise ist Stufe C3");
+            requireArgs(e, 2);
+            EmitResult s = emitExpr(e.args[0]);
+            if (s.type.base != Base::Sampler3D && s.type.base != Base::Sampler2D)
+                fail(e.line, "tex3D: Sampler erwartet");
+            EmitResult c = emitExpr(e.args[1]);
+            c = convertTo(c, {Base::Vec3}, e.line);
+            return {"texture(" + s.code + ", " + c.code + ")", {Base::Vec4}};
         }
         if (name == "mul")
         {
@@ -1642,10 +2262,34 @@ private:
             EmitResult a = emitExpr(e.args[0]);
             EmitResult b = emitExpr(e.args[1]);
             Type result;
-            if (a.type.isMat() && b.type.isMat()) result = a.type;
-            else if (a.type.isMat()) result = b.type;
-            else if (b.type.isMat()) result = a.type;
-            else result = commonType(a.type, b.type, e.line);
+            if (a.type.isMat() && b.type.isMat())
+            {
+                result = a.type;
+            }
+            else if (a.type.isMat() && b.type.isVec())
+            {
+                // HLSL mul(M[RxC], vC) -> vR; GLSL matCxR * vecC -> vecR
+                b = convertTo(b, Type::vec(a.type.matCols()), e.line);
+                result = Type::vec(a.type.matRows());
+            }
+            else if (a.type.isVec() && b.type.isMat())
+            {
+                // HLSL mul(vR, M[RxC]) -> vC; GLSL vecR * matCxR -> vecC
+                a = convertTo(a, Type::vec(b.type.matRows()), e.line);
+                result = Type::vec(b.type.matCols());
+            }
+            else if (a.type.isVec() && b.type.isVec())
+            {
+                // HLSL mul(vektor, vektor) = Skalarprodukt (C3-Rest)
+                const Type common = commonType(a.type, b.type, e.line);
+                a = convertTo(a, common, e.line);
+                b = convertTo(b, common, e.line);
+                return {"dot(" + a.code + ", " + b.code + ")", {Base::Float}};
+            }
+            else
+            {
+                result = commonType(a.type, b.type, e.line);
+            }
             return {"(" + a.code + " * " + b.code + ")", result};
         }
 
@@ -1674,7 +2318,7 @@ private:
             int resultRule;  // 0=Arg0, 1=Float, 2=MaxArgs
             bool promoteAll; // Argumente auf gemeinsamen Vektortyp heben
         };
-        static constexpr std::array<Intrinsic, 34> kIntrinsics = {{
+        static constexpr std::array<Intrinsic, 38> kIntrinsics = {{
             {"sin", "sin", 1, 0, false},       {"cos", "cos", 1, 0, false},
             {"tan", "tan", 1, 0, false},       {"asin", "asin", 1, 0, false},
             {"acos", "acos", 1, 0, false},     {"atan", "atan", 1, 0, false},
@@ -1682,7 +2326,9 @@ private:
             {"floor", "floor", 1, 0, false},   {"ceil", "ceil", 1, 0, false},
             {"exp", "exp", 1, 0, false},       {"exp2", "exp2", 1, 0, false},
             {"log", "log", 1, 0, false},       {"log2", "log2", 1, 0, false},
+            {"log10", "", 1, 0, false},
             {"sign", "sign", 1, 0, false},     {"frac", "fract", 1, 0, false},
+            {"round", "round", 1, 0, false},
             {"normalize", "normalize", 1, 0, false},
             {"rsqrt", "inversesqrt", 1, 0, false},
             {"ddx", "dFdx", 1, 0, false},      {"ddy", "dFdy", 1, 0, false},
@@ -1693,6 +2339,8 @@ private:
             {"dot", "dot", 2, 1, true},        {"distance", "distance", 2, 1, true},
             {"cross", "cross", 2, 0, true},    {"reflect", "reflect", 2, 0, true},
             {"lerp", "mix", 3, 2, false},      {"clamp", "clamp", 3, 0, false},
+            {"smoothstep", "smoothstep", 3, 3, false},
+            {"modf", "modf", 2, 0, false},  // out-Param 2 wird durchgereicht
         }};
 
         for (const Intrinsic& in : kIntrinsics)
@@ -1703,16 +2351,27 @@ private:
 
             std::vector<EmitResult> args;
             args.reserve(e.args.size());
-            int maxSize = 1;
+            int minVec = 0;  // kleinste Vektor-Breite unter den Argumenten
             for (Expr& a : e.args)
             {
                 EmitResult r = emitExpr(a);
                 if (r.type.base == Base::Bool) r = convertTo(r, {Base::Float}, e.line);
                 if (!r.type.isNumeric()) fail(e.line, name + ": numerisches Argument erwartet");
-                maxSize = std::max(maxSize, r.type.size());
+                if (r.type.isVec())
+                    minVec = (minVec == 0) ? r.type.size()
+                                           : std::min(minVec, r.type.size());
                 args.push_back(std::move(r));
             }
-            const Type common = Type::vec(maxSize);
+            // HLSL-Implicit-Truncation (S43): gemischte Vektor-Breiten werden
+            // auf die KLEINSTE Breite gekuerzt (lerp(vec3, tex2D(...)), …) —
+            // fxc warnte nur, GLSL braucht exakte Breiten
+            if (minVec > 0)
+            {
+                for (EmitResult& r : args)
+                    if (r.type.isVec() && r.type.size() > minVec)
+                        r = convertTo(r, Type::vec(minVec), e.line);
+            }
+            const Type common = Type::vec(minVec > 0 ? minVec : 1);
             if (in.promoteAll)
             {
                 for (EmitResult& r : args) r = convertTo(r, common, e.line);
@@ -1737,6 +2396,10 @@ private:
             // saturate → clamp(x, 0.0, 1.0)
             if (lower == "saturate")
                 return {"clamp(" + args[0].code + ", 0.0, 1.0)", args[0].type};
+            // log10 → log(x)/ln(10) — GLSL 330 hat kein log10 (komponentenweise)
+            if (lower == "log10")
+                return {"(log(" + args[0].code + ") * 0.43429448190325176)",
+                        args[0].type};
 
             std::string code = std::string(in.glsl) + "(";
             for (std::size_t i = 0; i < args.size(); ++i)
@@ -1751,6 +2414,7 @@ private:
             {
             case 0: result = args[0].type; break;
             case 1: result = {Base::Float}; break;
+            case 3: result = args.back().type; break;  // smoothstep: Typ von x
             default:
                 result = (lower == "lerp") ? Type::vec(std::max(args[0].type.size(),
                                                                 args[1].type.size()))
@@ -1773,6 +2437,7 @@ private:
     {
         Type returnType;
         std::vector<Type> params;
+        std::vector<std::uint8_t> paramQual;  ///< 0=in, 1=out, 2=inout
     };
 
     HlslResult& m_out;
@@ -1781,6 +2446,10 @@ private:
     std::string m_globalInit;       ///< Initialisierer mutabler Globals (main-Anfang)
     Type m_returnType{Base::Float}; ///< aktuelle Funktions-Signatur
     bool m_inFunction = false;
+    std::unordered_map<std::string, bool> m_shadow;        ///< beschriebene Uniforms
+    std::unordered_map<std::string, bool> m_uniformNames;  ///< Uniform-Builtins
+    std::unordered_map<std::string, bool> m_userDeclared;  ///< Preset-eigene Namen
+    std::unordered_map<std::string, std::string> m_rename; ///< reservierte Namen
 };
 
 } // namespace detail
@@ -1803,6 +2472,7 @@ private:
         gen.emitGlobals(globals);
         gen.emitFunctions(functions);
         gen.emitBody(body);
+        result.glslBody = gen.shadowProlog() + result.glslBody;
         result.ok = true;
     }
     catch (const detail::TranspileError& err)

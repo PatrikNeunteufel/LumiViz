@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <map>
 #include <string>
 #include <variant>
 #include <vector>
@@ -1249,10 +1250,18 @@ struct ReactionDiffusionParams
 struct MilkdropNodeParams
 {
     lumi::milkdrop::PresetState preset;  ///< translated .milk incl. HLSL texts
-    /// Texture search base (C2: `<dir>/textures`, `<dir>/../textures`, `<dir>`).
-    /// Custom textures stay asset-pack files — NOT embedded (unlike Picture
-    /// images): the packs are deliberately untracked and can be huge.
+    /// Texture search base (S43: upward search over textures/ + sprites/).
     std::string presetDir;
+    /**
+     * Eingebettete Bilder (Entscheid Patrik S43): Key = Textur-Basisname bzw.
+     * Sprite-imageName, Value = Base64 der ORIGINAL-Dateibytes. Quelle bleiben
+     * die Asset-Ordner; der ChainSerializer bettet beim SPEICHERN genau die
+     * aktuell referenzierten Bilder ein (nicht mehr referenzierte Alt-Eintraege
+     * entfallen dabei automatisch). Der Loader bevorzugt Dateien, faellt ohne
+     * Fundstelle auf diese Eintraege zurueck — .lvfx bleibt damit portabel.
+     * randNN-Sampler bleiben Ordner-Zufall (bewusst nicht eingebettet).
+     */
+    std::map<std::string, std::string> embeddedImages;
     int meshX = 32;   ///< warp mesh (app setting in the original, no preset key)
     int meshY = 24;
     bool debugGrid = false;  ///< calibration overlay AFTER the composite

@@ -23,6 +23,7 @@
 
 #include "visualizers/milkdrop/MilkdropBlur.hpp"
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
+#include "visualizers/milkdrop/MilkdropTextureResolve.hpp"
 #include "visualizers/milkdrop/MilkdropTrace.hpp"
 
 #include <HlslTranspiler.hpp>
@@ -212,6 +213,9 @@ uniform vec3 _hue0 = vec3(1.0);
 uniform vec3 _hue1 = vec3(1.0);
 uniform vec3 _hue2 = vec3(1.0);
 uniform vec3 _hue3 = vec3(1.0);
+const float M_PI = 3.14159265359;
+const float M_PI_2 = 6.28318530718;         // include.fx: 2*pi (NICHT pi/2)
+const float M_INV_PI_2 = 0.159154943091895; // 1/(2*pi)
 vec3 GetMain(vec2 p) { return texture(sampler_main, p).rgb; }
 vec3 GetPixel(vec2 p) { return texture(sampler_main, p).rgb; }
 vec3 GetBlur1(vec2 p) { return texture(sampler_blur1, p).rgb * _blur_scale.x + _blur_scale.y; }
@@ -221,11 +225,23 @@ float lum(vec3 v) { return dot(v, vec3(0.32, 0.49, 0.29)); }
 )";
     // q1..q32 + noise samplers (base + fc/pc/fw/pw prefixes) + texsize_noise_*
     for (int i = 1; i <= 32; ++i) s += "uniform float q" + std::to_string(i) + ";\n";
+    // Rohe q-Baenke (include.fx: _qa.._qh = je 4 q-Werte; manche Presets
+    // lesen sie direkt, C3/S43)
+    for (char bank = 'a'; bank <= 'h'; ++bank)
+        s += std::string("uniform vec4 _q") + bank + ";\n";
     for (const char* base : {"noise_lq", "noise_lq_lite", "noise_mq", "noise_hq"})
     {
         s += std::string("uniform sampler2D sampler_") + base + ";\n";
         for (const char* prefix : {"fc_", "pc_", "fw_", "pw_"})
             s += std::string("uniform sampler2D sampler_") + prefix + base + ";\n";
+        s += std::string("uniform vec4 texsize_") + base + ";\n";
+    }
+    // Volumen-Noise (C3, S43): 3D-Sampler + texsize wie die 2D-Varianten
+    for (const char* base : {"noisevol_lq", "noisevol_hq"})
+    {
+        s += std::string("uniform sampler3D sampler_") + base + ";\n";
+        for (const char* prefix : {"fc_", "pc_", "fw_", "pw_"})
+            s += std::string("uniform sampler3D sampler_") + prefix + base + ";\n";
         s += std::string("uniform vec4 texsize_") + base + ";\n";
     }
     return s;
@@ -247,13 +263,13 @@ float lum(vec3 v) { return dot(v, vec3(0.32, 0.49, 0.29)); }
         }
         return base == "main" || base == "blur1" || base == "blur2" || base == "blur3" ||
                base == "noise_lq" || base == "noise_lq_lite" || base == "noise_mq" ||
-               base == "noise_hq";
+               base == "noise_hq" || base == "noisevol_lq" || base == "noisevol_hq";
     }
     if (name.rfind("texsize_", 0) == 0)
     {
         const std::string base = name.substr(8);
         return base == "noise_lq" || base == "noise_lq_lite" || base == "noise_mq" ||
-               base == "noise_hq";
+               base == "noise_hq" || base == "noisevol_lq" || base == "noisevol_hq";
     }
     return false;
 }
@@ -750,7 +766,19 @@ void MilkdropVisualizer::updateAudio(float deltaTime)
     }
 
     // --- band loudness (MilkLoudness, M2): equal-octave thirds 200..11025 Hz --------------
-    const std::vector<float> spec = getSpectrum();
+    // S43-Fix („Rock The House schwarz"): ueber die KANAL-Getter lesen, nicht
+    // getSpectrum() — der Chain-Node-Pfad fuettert nur updateAudioStereo()
+    // (m_spectrumL/R), der Mono-Puffer bleibt dort leer (bass war konstant 1.0,
+    // Guard). Die Getter fallen bei Mono-Zufuhr selbst auf m_spectrum zurueck;
+    // L/R werden gemischt wie in der Referenz-Sound-Analyse.
+    const std::vector<float> specL = getSpectrumChannel(0);
+    const std::vector<float> specR = getSpectrumChannel(1);
+    std::vector<float> spec = specL;
+    if (spec.size() == specR.size())
+    {
+        for (std::size_t i = 0; i < spec.size(); ++i)
+            spec[i] = 0.5f * (spec[i] + specR[i]);
+    }
     double imm[3] = {0.0, 0.0, 0.0};
     if (!spec.empty())
     {
@@ -770,6 +798,30 @@ void MilkdropVisualizer::updateAudio(float deltaTime)
         }
     }
     m_loudness.update(imm[0], imm[1], imm[2], m_fps);
+
+    // Loudness-Diagnose (S43, Befund „Rock The House schwarz"): eine
+    // Trace-Zeile ~alle 5 s mit der bass-DYNAMIK seit der letzten Zeile —
+    // beantwortet in-app, ob bass/mid/treb ankommen und wie stark sie
+    // schwanken (Original: ~1.0 leise, Beats 1.3+). Kein Per-Frame-Spam.
+    m_traceBassMin = std::min(m_traceBassMin, m_loudness.bass());
+    m_traceBassMax = std::max(m_traceBassMax, m_loudness.bass());
+    if (++m_traceFrames >= (m_traceFirst ? 60 : 300))
+    {
+        m_traceFirst = false;
+        trace::log(QStringLiteral("loudness: bass=%1 (min %2 / max %3 der letzten %4 Frames) "
+                                  "mid=%5 treb=%6 | spec=%7 Bins, immBass=%8")
+                       .arg(m_loudness.bass(), 0, 'f', 3)
+                       .arg(m_traceBassMin, 0, 'f', 3)
+                       .arg(m_traceBassMax, 0, 'f', 3)
+                       .arg(m_traceFrames)
+                       .arg(m_loudness.mid(), 0, 'f', 3)
+                       .arg(m_loudness.treb(), 0, 'f', 3)
+                       .arg(spec.size())
+                       .arg(imm[0], 0, 'g', 4));
+        m_traceFrames = 0;
+        m_traceBassMin = m_loudness.bass();
+        m_traceBassMax = m_loudness.bass();
+    }
 
     // --- waveform: resample both channels to 576 (raw) + smoothed copy (spec §0) -----------
     for (int ch = 0; ch < 2; ++ch)
@@ -1479,27 +1531,14 @@ void MilkdropVisualizer::loadCustomTextures(const std::vector<std::string>& samp
     m_texSizes.clear();
     if (samplerNames.empty()) return;
 
-    // MilkDrop-Konvention: textures-Ordner neben bzw. ueber dem Preset-Ordner
-    QStringList searchDirs;
-    if (!m_presetDir.isEmpty())
-    {
-        searchDirs << m_presetDir + QStringLiteral("/textures")
-                   << m_presetDir + QStringLiteral("/../textures") << m_presetDir;
-    }
-    const QStringList kExtensions = {QStringLiteral("jpg"), QStringLiteral("jpeg"),
-                                     QStringLiteral("jfif"), QStringLiteral("png"),
-                                     QStringLiteral("bmp")};
+    // Suchregel S43 (SSOT: MilkdropTextureResolve.hpp — auch der Serializer
+    // nutzt sie fuer die .lvfx-Einbettung): Preset-Ordner aufwaerts ueber
+    // textures/, sprites/ und den Ordner selbst
+    const QStringList searchDirs = lumi::milkdrop::textureSearchDirs(m_presetDir);
+    const QStringList kExtensions = lumi::milkdrop::textureExtensions();
 
     const auto findFile = [&](const QString& base) -> QString {
-        for (const QString& dir : searchDirs)
-        {
-            for (const QString& ext : kExtensions)
-            {
-                const QString candidate = dir + "/" + base + "." + ext;
-                if (QFileInfo::exists(candidate)) return candidate;
-            }
-        }
-        return {};
+        return lumi::milkdrop::resolveTextureFile(m_presetDir, base);
     };
     // randNN[_mask]: zufaellige Bilddatei aus dem ersten Textur-Ordner
     unsigned int pick = m_randSeed;
@@ -1544,7 +1583,27 @@ void MilkdropVisualizer::loadCustomTextures(const std::vector<std::string>& samp
         const QString baseQ = QString::fromStdString(base);
         const QRegularExpressionMatch rand = kRand.match(baseQ);
         const QString path = rand.hasMatch() ? findRandom(rand.captured(2)) : findFile(baseQ);
-        if (path.isEmpty())
+        QImage img;
+        QString sourceLabel;
+        if (!path.isEmpty())
+        {
+            img = QImage(path);
+            sourceLabel = QFileInfo(path).fileName();
+            trace::log(QStringLiteral("loadCustomTextures: '%1' → %2").arg(baseQ).arg(path));
+        }
+        else if (const auto emb = m_embeddedImages.find(base);
+                 emb != m_embeddedImages.end() && !rand.hasMatch())
+        {
+            // .lvfx-Einbettung als Fallback (S43): Original-Dateibytes —
+            // Dateien in den Asset-Ordnern haben Vorrang (Entscheid Patrik)
+            img = QImage::fromData(
+                QByteArray::fromBase64(QByteArray::fromStdString(emb->second)));
+            sourceLabel = QStringLiteral("eingebettet");
+            trace::log(QStringLiteral("loadCustomTextures: '%1' → eingebettet (%2 Bytes)")
+                           .arg(baseQ)
+                           .arg(emb->second.size()));
+        }
+        if (path.isEmpty() && sourceLabel.isEmpty())
         {
             trace::log(QStringLiteral("loadCustomTextures: '%1' NICHT gefunden "
                                       "(Suchbasis '%2') → Platzhalter")
@@ -1557,14 +1616,12 @@ void MilkdropVisualizer::loadCustomTextures(const std::vector<std::string>& samp
             }
             continue;
         }
-        trace::log(QStringLiteral("loadCustomTextures: '%1' → %2").arg(baseQ).arg(path));
-        QImage img(path);
         if (img.isNull())
         {
             if (report != nullptr)
             {
                 report->append(QStringLiteral("Textur '%1' nicht lesbar → Platzhalter")
-                                   .arg(QFileInfo(path).fileName()));
+                                   .arg(sourceLabel));
             }
             continue;
         }
@@ -1577,7 +1634,7 @@ void MilkdropVisualizer::loadCustomTextures(const std::vector<std::string>& samp
         {
             report->append(QStringLiteral("ℹ Textur '%1' geladen (%2, %3x%4)")
                                .arg(baseQ)
-                               .arg(QFileInfo(path).fileName())
+                               .arg(sourceLabel)
                                .arg(m_texSizes[base][0])
                                .arg(m_texSizes[base][1]));
         }
@@ -1618,31 +1675,31 @@ void MilkdropVisualizer::loadSpriteImages(QStringList* report)
     if (m_state.sprites.empty()) return;
 
     const auto resolve = [&](const std::string& rawName) -> QString {
-        QString rel = QString::fromStdString(rawName);
-        rel.replace(QLatin1Char('\\'), QLatin1Char('/'));
-        const QString fileName = QFileInfo(rel).fileName();
-        QStringList candidates;
-        if (!m_presetDir.isEmpty())
-        {
-            candidates << m_presetDir + QLatin1Char('/') + rel
-                       << m_presetDir + QStringLiteral("/../") + rel
-                       << m_presetDir + QStringLiteral("/sprites/") + fileName
-                       << m_presetDir + QStringLiteral("/../sprites/") + fileName
-                       << m_presetDir + QStringLiteral("/textures/") + fileName
-                       << m_presetDir + QStringLiteral("/../textures/") + fileName;
-        }
-        for (const QString& c : candidates)
-        {
-            if (QFileInfo::exists(c)) return c;
-        }
-        return {};
+        // Suchregel S43 (SSOT: MilkdropTextureResolve.hpp)
+        return lumi::milkdrop::resolveSpriteFile(m_presetDir,
+                                                 QString::fromStdString(rawName));
     };
 
     for (const lumi::milkdrop::SpriteState& def : m_state.sprites)
     {
         if (def.imageName.empty() || m_spriteImages.count(def.imageName) != 0) continue;
         const QString path = resolve(def.imageName);
-        if (path.isEmpty())
+        QImage img;
+        QString sourceLabel;
+        if (!path.isEmpty())
+        {
+            img = QImage(path);
+            sourceLabel = QFileInfo(path).fileName();
+        }
+        else if (const auto emb = m_embeddedImages.find(def.imageName);
+                 emb != m_embeddedImages.end())
+        {
+            // .lvfx-Einbettung als Fallback (S43) — Dateien haben Vorrang
+            img = QImage::fromData(
+                QByteArray::fromBase64(QByteArray::fromStdString(emb->second)));
+            sourceLabel = QStringLiteral("eingebettet");
+        }
+        if (path.isEmpty() && sourceLabel.isEmpty())
         {
             trace::log(QStringLiteral("loadSpriteImages: '%1' NICHT gefunden "
                                       "(Basis '%2') → Sprite inaktiv")
@@ -1656,14 +1713,13 @@ void MilkdropVisualizer::loadSpriteImages(QStringList* report)
             }
             continue;
         }
-        QImage img(path);
         if (img.isNull())
         {
             if (report != nullptr)
             {
                 report->append(QStringLiteral("Sprite %1: Bild '%2' nicht lesbar")
                                    .arg(def.index)
-                                   .arg(QFileInfo(path).fileName()));
+                                   .arg(sourceLabel));
             }
             continue;
         }
@@ -1691,7 +1747,7 @@ void MilkdropVisualizer::loadSpriteImages(QStringList* report)
         {
             report->append(QStringLiteral("ℹ Sprite %1: '%2' geladen (%3x%4)")
                                .arg(def.index)
-                               .arg(QFileInfo(path).fileName())
+                               .arg(sourceLabel)
                                .arg(m_spriteImages[def.imageName].width())
                                .arg(m_spriteImages[def.imageName].height()));
         }
@@ -1754,6 +1810,9 @@ void MilkdropVisualizer::releaseCustomGl()
         QOpenGLFunctions* f = ctx->functions();
         if (m_noiseTex[0] != 0)
             f->glDeleteTextures(static_cast<GLsizei>(m_noiseTex.size()), m_noiseTex.data());
+        if (m_noiseVolTex[0] != 0)
+            f->glDeleteTextures(static_cast<GLsizei>(m_noiseVolTex.size()),
+                                m_noiseVolTex.data());
         if (m_placeholderTex != 0) f->glDeleteTextures(1, &m_placeholderTex);
         for (const auto& [name, tex] : m_customTexIds) f->glDeleteTextures(1, &tex);
         for (const auto& [name, tex] : m_spriteTexIds) f->glDeleteTextures(1, &tex);
@@ -1912,6 +1971,92 @@ bool MilkdropVisualizer::ensureNoiseTextures()
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
 
+    // AddNoiseVol-Port (C3, plugin.cpp:2561-2717): 32^3-Volumen, zoom 1 (LQ)
+    // und 4 (HQ). Bytes wie 2D; kubische Glaettung fuer zoom>1: X auf den
+    // Hauptzeilen der Haupt-Slices, Y auf den Haupt-Slices, Z ueberall.
+    f->glGenTextures(static_cast<GLsizei>(m_noiseVolTex.size()), m_noiseVolTex.data());
+    {
+        const std::array<Spec, 2> volSpecs = {{{32, 1}, {32, 4}}};
+        std::vector<unsigned char> voxels;
+        for (std::size_t i = 0; i < m_noiseVolTex.size(); ++i)
+        {
+            const int n = volSpecs[i].size;
+            const int zoom = volSpecs[i].zoom;
+            const unsigned int range = (zoom > 1) ? 216u : 256u;
+            voxels.resize(static_cast<std::size_t>(n) * n * n * 4);
+            for (unsigned char& p : voxels)
+            {
+                p = static_cast<unsigned char>((nextRand() % range + range / 2) & 0xFFu);
+            }
+            if (zoom > 1)
+            {
+                const auto vx = [&](int x, int y, int z, int c) -> unsigned char& {
+                    return voxels[((static_cast<std::size_t>(z) * n + y) * n + x) * 4 +
+                                  static_cast<std::size_t>(c)];
+                };
+                // X-Pass: Hauptzeilen (y % zoom == 0) der Haupt-Slices (z % zoom == 0)
+                for (int z = 0; z < n; z += zoom)
+                    for (int y = 0; y < n; y += zoom)
+                        for (int x = 0; x < n; ++x)
+                        {
+                            if (x % zoom == 0) continue;
+                            const int baseX = (x / zoom) * zoom + n;
+                            const float t = static_cast<float>(x % zoom) / zoom;
+                            for (int c = 0; c < 4; ++c)
+                            {
+                                vx(x, y, z, c) =
+                                    catmull(vx((baseX - zoom) % n, y, z, c),
+                                            vx(baseX % n, y, z, c),
+                                            vx((baseX + zoom) % n, y, z, c),
+                                            vx((baseX + zoom * 2) % n, y, z, c), t);
+                            }
+                        }
+                // Y-Pass: Haupt-Slices (z % zoom == 0), alle Spalten
+                for (int z = 0; z < n; z += zoom)
+                    for (int x = 0; x < n; ++x)
+                        for (int y = 0; y < n; ++y)
+                        {
+                            if (y % zoom == 0) continue;
+                            const int baseY = (y / zoom) * zoom + n;
+                            const float t = static_cast<float>(y % zoom) / zoom;
+                            for (int c = 0; c < 4; ++c)
+                            {
+                                vx(x, y, z, c) =
+                                    catmull(vx(x, (baseY - zoom) % n, z, c),
+                                            vx(x, baseY % n, z, c),
+                                            vx(x, (baseY + zoom) % n, z, c),
+                                            vx(x, (baseY + zoom * 2) % n, z, c), t);
+                            }
+                        }
+                // Z-Pass: ueberall
+                for (int x = 0; x < n; ++x)
+                    for (int y = 0; y < n; ++y)
+                        for (int z = 0; z < n; ++z)
+                        {
+                            if (z % zoom == 0) continue;
+                            const int baseZ = (z / zoom) * zoom + n;
+                            const float t = static_cast<float>(z % zoom) / zoom;
+                            for (int c = 0; c < 4; ++c)
+                            {
+                                vx(x, y, z, c) =
+                                    catmull(vx(x, y, (baseZ - zoom) % n, c),
+                                            vx(x, y, baseZ % n, c),
+                                            vx(x, y, (baseZ + zoom) % n, c),
+                                            vx(x, y, (baseZ + zoom * 2) % n, c), t);
+                            }
+                        }
+            }
+            f->glBindTexture(GL_TEXTURE_3D, m_noiseVolTex[i]);
+            ef->glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, n, n, n, 0, GL_RGBA,
+                             GL_UNSIGNED_BYTE, voxels.data());
+            f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+        }
+    }
+
     f->glGenTextures(1, &m_placeholderTex);
     const unsigned char grey[4] = {128, 128, 128, 255};
     f->glBindTexture(GL_TEXTURE_2D, m_placeholderTex);
@@ -1924,6 +2069,7 @@ bool MilkdropVisualizer::ensureNoiseTextures()
     const auto setup = [&](unsigned int obj, GLint wrap, GLint filter) {
         ef->glSamplerParameteri(obj, GL_TEXTURE_WRAP_S, wrap);
         ef->glSamplerParameteri(obj, GL_TEXTURE_WRAP_T, wrap);
+        ef->glSamplerParameteri(obj, GL_TEXTURE_WRAP_R, wrap);  // 3D (noisevol)
         ef->glSamplerParameteri(obj, GL_TEXTURE_MIN_FILTER, filter);
         ef->glSamplerParameteri(obj, GL_TEXTURE_MAG_FILTER, filter);
     };
@@ -1944,11 +2090,12 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
 
     // --- Sampler dynamisch auf Units verteilen (nur aktive Uniforms) ------------------
     int unit = 0;
-    const auto bindSampler = [&](const char* name, unsigned int tex, unsigned int samplerObj) {
+    const auto bindSampler = [&](const char* name, unsigned int tex, unsigned int samplerObj,
+                                 GLenum target = GL_TEXTURE_2D) {
         const int loc = program.uniformLocation(name);
         if (loc < 0 || tex == 0) return;
         f->glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(unit));
-        f->glBindTexture(GL_TEXTURE_2D, tex);
+        f->glBindTexture(target, tex);
         ef->glBindSampler(static_cast<GLuint>(unit), samplerObj);
         program.setUniformValue(name, unit);
         ++unit;
@@ -1976,6 +2123,17 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
         bindSampler(("sampler_pc_" + base).c_str(), m_noiseTex[i], clampPoint);
         bindSampler(("sampler_fw_" + base).c_str(), m_noiseTex[i], wrapLin);
         bindSampler(("sampler_pw_" + base).c_str(), m_noiseTex[i], wrapPoint);
+    }
+    // Volumen-Noise (C3): 3D-Ziel, sonst identische Praefix-Semantik
+    const std::array<const char*, 2> noiseVolNames = {"noisevol_lq", "noisevol_hq"};
+    for (std::size_t i = 0; i < noiseVolNames.size(); ++i)
+    {
+        const std::string base = noiseVolNames[i];
+        bindSampler(("sampler_" + base).c_str(), m_noiseVolTex[i], wrapLin, GL_TEXTURE_3D);
+        bindSampler(("sampler_fc_" + base).c_str(), m_noiseVolTex[i], clampLin, GL_TEXTURE_3D);
+        bindSampler(("sampler_pc_" + base).c_str(), m_noiseVolTex[i], clampPoint, GL_TEXTURE_3D);
+        bindSampler(("sampler_fw_" + base).c_str(), m_noiseVolTex[i], wrapLin, GL_TEXTURE_3D);
+        bindSampler(("sampler_pw_" + base).c_str(), m_noiseVolTex[i], wrapPoint, GL_TEXTURE_3D);
     }
     // Custom-Texturen (C2): geladene Bilder binden (Sampler-Objekt je Praefix),
     // fehlende auf den Platzhalter legen, damit das Programm definiert laeuft
@@ -2080,6 +2238,15 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
         program.setUniformValue(("q" + std::to_string(i + 1)).c_str(),
                                 static_cast<float>(fv.qVals[static_cast<std::size_t>(i)]));
     }
+    for (int bank = 0; bank < 8; ++bank)  // _qa.._qh (rohe q-Baenke, C3)
+    {
+        const auto q = [&](int k) {
+            return static_cast<float>(fv.qVals[static_cast<std::size_t>(bank * 4 + k)]);
+        };
+        program.setUniformValue(
+            (std::string("_q") + static_cast<char>('a' + bank)).c_str(),
+            QVector4D(q(0), q(1), q(2), q(3)));
+    }
 
     // Blur-Ranges + Un-Bias-Konstanten (GetBlurN)
     const lumi::milkdrop::BlurRanges ranges = lumi::milkdrop::computeSafeBlurRanges(
@@ -2109,6 +2276,8 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
     program.setUniformValue("texsize_noise_lq_lite", texsizeVec(32));
     program.setUniformValue("texsize_noise_mq", texsizeVec(256));
     program.setUniformValue("texsize_noise_hq", texsizeVec(256));
+    program.setUniformValue("texsize_noisevol_lq", texsizeVec(32));
+    program.setUniformValue("texsize_noisevol_hq", texsizeVec(32));
     f->glActiveTexture(GL_TEXTURE0);
 }
 

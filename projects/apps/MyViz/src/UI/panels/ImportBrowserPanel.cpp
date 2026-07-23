@@ -10,6 +10,7 @@
  */
 
 #include "UI/panels/ImportBrowserPanel.hpp"
+#include "UI/widgets/PresetTypeIcons.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/events/UIEvents.hpp"
@@ -189,13 +190,18 @@ void ImportBrowserPanel::refresh()
         item->setToolTip(fi.absoluteFilePath());
     }
 
-    // Matching preset files.
+    // Matching preset files — Format-Icon je Endung (avs/milkdrop/lumiviz,
+    // geteilt mit dem Effect-Chain-Panel); Fallback = generisches Datei-Icon.
+    const bool haveTypeIcons = !lumi::ui::presetIconDir().isEmpty();
     const QFileInfoList files = m_dir.entryInfoList(
         currentNameFilters(), QDir::Files, QDir::Name | QDir::IgnoreCase);
     int presetCount = 0;
     for (const QFileInfo& fi : files)
     {
-        auto* item = new QListWidgetItem(fileIcon, fi.fileName(), m_pListWidget);
+        const QIcon& icon = haveTypeIcons
+                                ? lumi::ui::presetTypeIconForSuffix(fi.suffix())
+                                : fileIcon;
+        auto* item = new QListWidgetItem(icon, fi.fileName(), m_pListWidget);
         item->setData(Qt::UserRole, fi.absoluteFilePath());
         item->setData(Qt::UserRole + 1, entryTypeForSuffix(fi.suffix()));
         item->setToolTip(fi.absoluteFilePath());

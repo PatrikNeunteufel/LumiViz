@@ -41,11 +41,19 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
 - **Milkdrop-Node (N2 Session 41, N3.1–N3.3 Session 42 — Entscheid E1):** Der
   Node zeigt sechs **Anzeige-Kinder** im Baum (Code · Waves · Shapes · Shader ·
   Sprites · **Parameter**); Waves/Shapes/Sprites haben darunter
-  **Element-Items** (je Wave/Shape/Sprite eines). **Parameter-Sektion (N3.2):**
-  die komplette numerische Preset-Fläche in sechs Gruppen (General/Composite
-  inkl. fShader, Basis-Waveform, Motion/Warp, Borders, Motion Vectors,
+  **Element-Items** (je Wave/Shape/Sprite eines). **Basis-Waveform (S43):**
+  erstes, festes Element-Item unter „Waves" (Sentinel
+  `kMilkBasisWaveElement = kMilkSectionBase − 1`) — die immer gerenderte
+  Standard-Welle (nWaveMode/Alpha/Farbe/Position …) hat damit einen sichtbaren
+  Editor-Einstieg (Sichttest-Befund: gerenderte Welle war bei „Waves (0
+  aktiv)" nicht auffindbar); nicht lösch-/klonbar, Sektions-Label = „Waves
+  (Basis + N Custom aktiv)". **Parameter-Sektion (N3.2):**
+  die komplette numerische Preset-Fläche in Gruppen (General/Composite
+  inkl. fShader, Motion/Warp, Borders, Motion Vectors,
   Blur-Pyramide) mit Startwerte-Hinweis (per_frame kann überschreiben) und
-  Baked-Hinweis bei vorhandenem Comp-Shader; die Wave-/Shape-Einzel-Ansichten
+  Baked-Hinweis bei vorhandenem Comp-Shader; die Basis-Waveform-Gruppe ist
+  seit S43 nur noch ein Wegweiser auf die Waves-Ansicht; die
+  Wave-/Shape-Einzel-Ansichten
   tragen zusätzlich ihre numerischen Init-Parameter. Sektions- und Element-Items sind Navigations-Items
   mit Sentinel-Pfaden (`kMilkSectionBase`; Elemente = `[…, Sentinel, Index]`,
   Zerlegung über `splitMilkPath`), nicht drag-/editierbar — `nodeAtPath`
@@ -60,7 +68,14 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
   Jede Mutation bumpt `MilkdropNodeParams.revision`
   (Render-Host-Übernahme-Vertrag); Shader-Edits reklassifizieren via
   `analyzeWarp/CompShader` (SSOT = Text). Palette-Eintrag „Milkdrop
-  (Preset-Pipeline)" mit MilkDrop-Origin-Icon.
+  (Preset-Pipeline)" mit MilkDrop-Origin-Icon. **Sektions-/Element-Optik
+  (S43):** alle Milk-Unterknoten tragen das MilkDrop-Icon in der Typ-Spalte;
+  Wave-/Shape-Elemente haben zusätzlich den **Auge-Toggle** (Spalte 1) wie
+  Chain-Zeilen — er setzt `enabled` (mutate + Revision-Bump) und zieht
+  Element-Label („(aus)") + Sektions-Zähler in-place nach; die
+  Editor-Checkbox wird beim selektierten Element mit-aktualisiert
+  (umgekehrt — Checkbox → Auge — erst beim nächsten Baum-Rebuild:
+  bekannte Rauheit).
 
 - **Host-Gruppe (HG1, Session 42):** Container-Node wie eine Effect List, aber
   mit **eigenem Laufzeit-Bestand** (persistenter Feedback-Buffer, eigene

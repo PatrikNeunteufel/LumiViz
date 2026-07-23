@@ -99,6 +99,89 @@ TEST_CASE("HlslTranspiler: pow promotet Skalar-Exponent auf Vektor")
     CHECK(contains(r.glslBody, "pow(ret, vec3(2.0))"));
 }
 
+TEST_CASE("HlslTranspiler: implizite HLSL-Verengung bei Compound-Zuweisung (S43)")
+{
+    // GreatWho-Sichttest-Befund: fxc kuerzt breitere RHS-Vektoren bei += -= *=
+    // stillschweigend auf die LHS-Breite — GLSL lehnt das ab (Kompilierfehler
+    // -> stiller MD1-Fallback). Muster aus 'In The Spotlight V1/V2'.
+    const HlslResult r = transpile(
+        body("ret.xy *= 1 - GetBlur1(uv * sin(bass));\n"
+             "ret -= tex2D(sampler_main, uv);"),
+        ShaderKind::Comp);
+    REQUIRE(r.ok);
+    CHECK(contains(r.glslBody, ").xy;"));   // vec3-RHS auf vec2 gekuerzt
+    CHECK(contains(r.glslBody, ").xyz;"));  // vec4-RHS (tex2D) auf vec3 gekuerzt
+}
+
+TEST_CASE("HlslTranspiler: log10 -> log(x) * 1/ln(10)")
+{
+    // GreatWho - Addicted log10: GLSL 330 hat kein log10 (komponentenweise)
+    const HlslResult r = transpile(body("ret = log10(ret + 1);"), ShaderKind::Comp);
+    REQUIRE(r.ok);
+    CHECK(contains(r.glslBody, "log("));
+    CHECK(contains(r.glslBody, "0.43429448190325176"));
+}
+
+TEST_CASE("HlslTranspiler C3: while-Schleife mit int-Zaehler und n++ (S43)")
+{
+    // Muster aus 'martin + Stahlregen - martin in da mash 12b'
+    const HlslResult r = transpile(
+        std::string("float3 ret1, neu;\n") +
+            body("int anz = 7;\n"
+                 "int n = 0;\n"
+                 "while (n <= anz) {\n"
+                 "  neu = tex2D(sampler_main, uv);\n"
+                 "  ret1 = max(ret1, neu - .0);\n"
+                 "  n++;\n"
+                 "}\n"
+                 "ret = ret1;"),
+        ShaderKind::Comp);
+    REQUIRE(r.ok);
+    CHECK(contains(r.glslBody, "while ("));
+    CHECK(contains(r.glslBody, "(n++)"));
+}
+
+TEST_CASE("HlslTranspiler C3: for-Schleife mit Init-Deklaration + break")
+{
+    const HlslResult r = transpile(
+        body("float sum = 0;\n"
+             "for (int i = 0; i < 8; i++) {\n"
+             "  sum += tex2D(sampler_main, uv + i * 0.01).x;\n"
+             "  if (sum > 3) break;\n"
+             "}\n"
+             "ret = sum;"),
+        ShaderKind::Warp);
+    REQUIRE(r.ok);
+    CHECK(contains(r.glslBody, "for (; "));
+    CHECK(contains(r.glslBody, "break;"));
+}
+
+TEST_CASE("HlslTranspiler C3: tex3D auf noisevol (auch als 'sampler' redeklariert)")
+{
+    const HlslResult r = transpile(
+        std::string("sampler sampler_noisevol_hq;\n") +
+            body("ret = tex3D(sampler_noisevol_hq, float3(uv, time * 0.1)).xyz;"),
+        ShaderKind::Warp);
+    REQUIRE(r.ok);
+    CHECK(r.usesTex3d);
+    CHECK(contains(r.glslBody, "texture(sampler_noisevol_hq, "));
+    CHECK(r.customSamplers.empty());  // Builtin — kein Custom-Sampler
+}
+
+TEST_CASE("HlslTranspiler C3: include.fx-Konstanten + Alias-#define auf Funktion")
+{
+    // 'chaos layered tokamak' (M_INV_PI_2) + 'glassworks 3' (#define sat saturate)
+    const HlslResult r = transpile(
+        std::string("#define sat saturate\n") +
+            body("float a = ang * M_INV_PI_2;\n"
+                 "ret = sat(a + M_PI - M_PI_2);"),
+        ShaderKind::Comp);
+    INFO(r.error);
+    REQUIRE(r.ok);
+    CHECK(contains(r.glslBody, "M_INV_PI_2"));
+    CHECK(contains(r.glslBody, "clamp("));
+}
+
 TEST_CASE("HlslTranspiler: lerp mit gemischten a/b-Typen promotet auf Vektor")
 {
     const HlslResult r = transpile(body("ret = lerp(0, GetPixel(uv), 0.3);"),
@@ -200,21 +283,72 @@ TEST_CASE("HlslTranspiler: Komma-Operator und Initialisierer-Liste")
 // C3-Grenzen: sauberer Fehler statt Falschuebersetzung
 // =============================================================================
 
-TEST_CASE("HlslTranspiler: Schleifen, Arrays, tex3D -> klare C3-Fehler")
+TEST_CASE("HlslTranspiler C3-Rest: Arrays, do/while, #if, q-Schattenkopie")
 {
-    const HlslResult loop = transpile(
-        body("for (int i=0; i<4; i+=1) { ret += GetBlur1(uv); }"), ShaderKind::Comp);
-    CHECK_FALSE(loop.ok);
-    CHECK(contains(loop.error, "C3"));
+    const HlslResult arr = transpile(
+        body("float w[4];\n"
+             "for (int i = 0; i < 4; i++) w[i] = i * 0.25;\n"
+             "ret = w[1] + w[3];"),
+        ShaderKind::Comp);
+    INFO(arr.error);
+    REQUIRE(arr.ok);
+    CHECK(contains(arr.glslBody, "float w[4];"));
+    CHECK(contains(arr.glslBody, "w[int("));
 
-    const HlslResult arr = transpile(body("float w[4];"), ShaderKind::Comp);
-    CHECK_FALSE(arr.ok);
-    CHECK(contains(arr.error, "C3"));
+    const HlslResult dw = transpile(
+        body("int n = 0;\ndo { n++; } while (n < 4);\nret = n;"), ShaderKind::Comp);
+    INFO(dw.error);
+    REQUIRE(dw.ok);
+    CHECK(contains(dw.glslBody, "} while ("));
 
-    const HlslResult vol = transpile(
-        body("ret = tex3D(sampler_noisevol_lq, float3(uv, time)).xyz;"), ShaderKind::Comp);
-    CHECK_FALSE(vol.ok);
-    CHECK(vol.usesTex3d);
+    const HlslResult pp = transpile(
+        body("#if 1\nret = 1;\n#else\nret = 0;\n#endif"), ShaderKind::Comp);
+    INFO(pp.error);
+    REQUIRE(pp.ok);
+    CHECK(contains(pp.glslBody, "ret = vec3(1.0)"));
+    CHECK_FALSE(contains(pp.glslBody, "ret = vec3(0.0)"));
+
+    // Preset schreibt eine q-Uniform -> lokale Schattenkopie im Prolog
+    const HlslResult qs = transpile(body("q5 = q5 * 2;\nret = q5;"), ShaderKind::Comp);
+    INFO(qs.error);
+    REQUIRE(qs.ok);
+    CHECK(contains(qs.glslBody, "float q5 = q5;"));
+}
+
+TEST_CASE("HlslTranspiler C3-Rest: float2x3 + mul-Formen (glassworks-Muster)")
+{
+    const HlslResult r = transpile(
+        std::string("static const float3 t = float3(1,0,0), s = float3(0,1,0);\n") +
+            body("float3 screen = float3(uv, 1);\n"
+                 "float z = 0.08 / mul(cross(t, s), screen);\n"
+                 "ret = float3(mul(float2x3(t, s), screen) * z, -z);"),
+        ShaderKind::Comp);
+    INFO(r.error);
+    REQUIRE(r.ok);
+    CHECK(contains(r.glslBody, "mat3x2("));  // HLSL float2x3 = GLSL mat3x2
+    CHECK(contains(r.glslBody, "dot("));     // mul(vec, vec) = Skalarprodukt
+}
+
+TEST_CASE("HlslTranspiler C3-Rest: Bool-Arithmetik + out-Parameter")
+{
+    // `x * (a > b)` — beliebtes Gate-Muster (fxc: bool implizit numerisch)
+    const HlslResult ba = transpile(
+        body("float2 dz = uv;\n"
+             "dz *= GetBlur1(uv).x > 0.06;\n"
+             "ret = float3(dz * (rad > 0.5), 0);"),
+        ShaderKind::Comp);
+    INFO(ba.error);
+    REQUIRE(ba.ok);
+    CHECK(contains(ba.glslBody, "? 1.0 : 0.0"));
+
+    const HlslResult op = transpile(
+        std::string("void split(float x, out float ip, out float fp) {\n"
+                    "  ip = floor(x); fp = x - ip; }\n") +
+            body("float a; float b;\nsplit(rad * 4, a, b);\nret = a + b;"),
+        ShaderKind::Comp);
+    INFO(op.error);
+    REQUIRE(op.ok);
+    CHECK(contains(op.glslGlobals, "out float ip"));
 }
 
 TEST_CASE("HlslTranspiler: unbekannter Bezeichner -> Fehler mit Zeile")

@@ -12,10 +12,12 @@
 #include "visualizers/multieffect/ChainSerializer.hpp"
 
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
+#include "visualizers/milkdrop/MilkdropTextureResolve.hpp"
 
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QRegularExpression>
 
 namespace lumi::multieffect {
 
@@ -694,13 +696,74 @@ struct WriteVisitor
     {
         // eingebettetes Milkdrop-Schwester-Dokument (MilkdropSerializer, M6.1):
         // Shader-/Skript-Texte bleiben SSOT, die Klassifikation wird beim
-        // Laden neu abgeleitet. presetDir = Textur-Suchbasis (Asset-Pack,
-        // bewusst NICHT eingebettet — anders als Picture-Bilder).
+        // Laden neu abgeleitet. presetDir = Textur-Suchbasis.
         o["preset"] = lumi::milkdrop::presetToJson(p.preset);
         o["presetDir"] = QString::fromStdString(p.presetDir);
         o["meshX"] = p.meshX;
         o["meshY"] = p.meshY;
         o["debugGrid"] = p.debugGrid;
+
+        // Bild-Einbettung (Entscheid Patrik S43): beim SPEICHERN genau die
+        // aktuell referenzierten Bilder einbetten — Datei-Bytes bevorzugt
+        // (Quelle bleiben die Asset-Ordner), sonst die vorhandene Einbettung
+        // uebernehmen. Nicht mehr referenzierte Alt-Eintraege entfallen
+        // automatisch. randNN-Sampler bleiben Ordner-Zufall.
+        QJsonObject images;
+        const QString dir = QString::fromStdString(p.presetDir);
+        const auto embed = [&](const std::string& key, const QString& filePath) {
+            const QString keyQ = QString::fromStdString(key);
+            if (key.empty() || images.contains(keyQ)) return;
+            if (!filePath.isEmpty())
+            {
+                QFile f(filePath);
+                if (f.open(QIODevice::ReadOnly))
+                {
+                    images[keyQ] = QString::fromLatin1(f.readAll().toBase64());
+                    return;
+                }
+            }
+            const auto it = p.embeddedImages.find(key);
+            if (it != p.embeddedImages.end())
+                images[keyQ] = QString::fromStdString(it->second);
+        };
+        for (const auto& s : p.preset.sprites)
+        {
+            if (s.imageName.empty()) continue;
+            embed(s.imageName, lumi::milkdrop::resolveSpriteFile(
+                                   dir, QString::fromStdString(s.imageName)));
+        }
+        // Custom-Sampler aus den Shader-Texten (Deklarationszeilen)
+        static const QRegularExpression kSamplerDecl(
+            QStringLiteral("\\bsampler(?:2D|3D)?\\s+sampler_([A-Za-z0-9_]+)"));
+        static const QRegularExpression kRand(QStringLiteral("^rand\\d\\d(_.+)?$"));
+        const auto scanShader = [&](const std::string& text) {
+            QRegularExpressionMatchIterator it =
+                kSamplerDecl.globalMatch(QString::fromStdString(text));
+            while (it.hasNext())
+            {
+                QString base = it.next().captured(1);
+                for (const char* prefix : {"fc_", "pc_", "fw_", "pw_"})
+                {
+                    if (base.startsWith(QLatin1String(prefix)))
+                    {
+                        base = base.mid(3);
+                        break;
+                    }
+                }
+                if (base == QLatin1String("main") ||
+                    base.startsWith(QLatin1String("blur")) ||
+                    base.startsWith(QLatin1String("noise")) ||
+                    kRand.match(base).hasMatch())
+                {
+                    continue;  // Builtins/Zufall — nicht einbetten
+                }
+                embed(base.toStdString(),
+                      lumi::milkdrop::resolveTextureFile(dir, base));
+            }
+        };
+        scanShader(p.preset.warpShaderText);
+        scanShader(p.preset.compShaderText);
+        if (!images.isEmpty()) o["images"] = images;
     }
     void operator()(const PassthroughParams& p) const
     {
@@ -1478,6 +1541,13 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.meshX = getInt(o, "meshX", 32);
         p.meshY = getInt(o, "meshY", 24);
         p.debugGrid = getBool(o, "debugGrid", false);
+        // Bild-Einbettung (S43) — fehlt der Block, bleibt die Map leer
+        const QJsonObject images = o.value("images").toObject();
+        for (auto it = images.begin(); it != images.end(); ++it)
+        {
+            p.embeddedImages[it.key().toStdString()] =
+                it.value().toString().toStdString();
+        }
         p.revision = 1;  // frisch geladen = erste Revision fuer den Render-Host
         return p;
     }

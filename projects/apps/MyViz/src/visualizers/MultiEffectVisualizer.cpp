@@ -3430,7 +3430,9 @@ void MultiEffectVisualizer::runMilkdropNode(const ChainNode& node,
         rt.milkRevision = params.revision;
         // Node-Params sind SSOT: Kopie uebernehmen — kompiliert Skripte und
         // transpiliert Shader (GL-frei; GL-Programme baut der naechste Kern-
-        // Frame lazy ueber die Custom-Rev)
+        // Frame lazy ueber die Custom-Rev). Eingebettete .lvfx-Bilder VOR dem
+        // Apply setzen (Fallback, wenn die Asset-Dateien fehlen — S43).
+        rt.milk->setEmbeddedImages(params.embeddedImages);
         rt.milk->applyPresetState(params.preset,
                                   QString::fromStdString(params.presetDir), nullptr);
         rt.milk->setParam("render.meshX", lumi::modules::ParamValue{params.meshX});

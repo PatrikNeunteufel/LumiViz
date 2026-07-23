@@ -1151,6 +1151,45 @@ TEST_SUITE("MilkdropNode")
         CHECK(rp->revision >= 1);
     }
 
+    TEST_CASE("Bild-Einbettung (S43): referenzierte bleiben, verwaiste entfallen")
+    {
+        // Entscheid Patrik S43: beim Speichern werden genau die aktuell
+        // referenzierten Bilder eingebettet (Datei bevorzugt, sonst die
+        // vorhandene Einbettung); nicht mehr referenzierte Alt-Eintraege
+        // verschwinden dabei automatisch.
+        ChainNode root;
+        root.params = ListParams{};
+        MilkdropNodeParams mp;
+        mp.preset.name = "embed";
+        lumi::milkdrop::SpriteState sp;
+        sp.index = 1;
+        sp.imageName = "triangle.png";
+        mp.preset.sprites.push_back(sp);
+        mp.preset.compShaderText =
+            "sampler sampler_lines2;\n"
+            "shader_body { ret = tex2D(sampler_lines2, uv).xyz; }";
+        // presetDir zeigt ins Leere -> Datei nicht auffindbar, die VORHANDENE
+        // Einbettung muss uebernommen werden; 'verwaist' ist nicht referenziert
+        mp.presetDir = "C:/gibt/es/nicht";
+        mp.embeddedImages["triangle.png"] = "U3ByaXRl";  // "Sprite" (Base64)
+        mp.embeddedImages["lines2"] = "VGV4dHVy";        // "Textur"
+        mp.embeddedImages["verwaist"] = "QWx0";          // nicht referenziert
+        ChainNode milk;
+        milk.params = std::move(mp);
+        root.children.push_back(std::move(milk));
+        compileChain(root);
+
+        const ChainNode back = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(back.children.size() == 1);
+        const auto* rp = std::get_if<MilkdropNodeParams>(&back.children[0].params);
+        REQUIRE(rp != nullptr);
+        CHECK(rp->embeddedImages.size() == 2);
+        CHECK(rp->embeddedImages.count("triangle.png") == 1);
+        CHECK(rp->embeddedImages.count("lines2") == 1);
+        CHECK(rp->embeddedImages.count("verwaist") == 0);
+        CHECK(rp->embeddedImages.at("lines2") == "VGV4dHVy");
+    }
+
     TEST_CASE("compileChain clampt Mesh und stellt eine Revision sicher")
     {
         ChainNode root;

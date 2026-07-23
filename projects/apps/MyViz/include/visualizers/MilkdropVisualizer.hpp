@@ -104,6 +104,17 @@ public:
     void applyPresetState(lumi::milkdrop::PresetState state, const QString& presetDir,
                           QStringList* report = nullptr);
 
+    /**
+     * @brief Eingebettete Bilder aus dem .lvfx (S43): Key = Textur-Basisname
+     *        bzw. Sprite-imageName, Value = Base64 der Original-Dateibytes.
+     *        VOR applyPresetState setzen — Loader nutzt sie als Fallback,
+     *        wenn die Datei in den Asset-Ordnern nicht gefunden wird.
+     */
+    void setEmbeddedImages(std::map<std::string, std::string> images)
+    {
+        m_embeddedImages = std::move(images);
+    }
+
     /// HG3: progress-Quelle vom Host (Host-Gruppen-Laufzeit; die Playlist
     /// liefert spaeter die echte Slot-Dauer). < 0 = eigener 60-s-Zyklus.
     void setProgressOverride(double p) { m_progressOverride = p; }
@@ -266,6 +277,12 @@ private:
     double m_time = 0.0;
     double m_fps = 60.0;
     long m_frame = 0;
+    // Loudness-Diagnose (S43): min/max seit der letzten Trace-Zeile
+    // (erste Zeile nach ~1 s, danach ~alle 5 s)
+    int m_traceFrames = 0;
+    bool m_traceFirst = true;
+    double m_traceBassMin = 1.0;
+    double m_traceBassMax = 1.0;
     std::array<float, kWaveBuffer> m_waveL{};     ///< smoothed waveform (basic wave, spec §0)
     std::array<float, kWaveBuffer> m_waveR{};
     std::array<float, kWaveBuffer> m_waveRawL{};  ///< unsmoothed (custom waves filter selbst)
@@ -302,6 +319,7 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_compCustomProgram;
     std::string m_customGlError;    ///< first GL compile/link error (panel/debug)
     std::array<unsigned int, 4> m_noiseTex{};   ///< lq, lq_lite, mq, hq (AddNoiseTex-Port)
+    std::array<unsigned int, 2> m_noiseVolTex{};///< noisevol lq, hq (AddNoiseVol-Port, C3)
     unsigned int m_placeholderTex = 0;          ///< 1x1 grey (fehlende Texturen)
     std::array<unsigned int, 4> m_samplerObj{}; ///< wrapLin, clampLin, wrapPoint, clampPoint
     unsigned int m_randSeed = 0x9e3779b9u;      ///< rand_frame/rand_preset PRNG
@@ -317,6 +335,7 @@ private:
 
     // --- Stufe C2: custom textures (asset-Pack / neben dem Preset) -------------------------
     QString m_presetDir;                                    ///< Suchbasis fuer Texturen
+    std::map<std::string, std::string> m_embeddedImages;    ///< .lvfx-Einbettung (S43)
     std::map<std::string, QImage> m_customImages;           ///< sampler-Uniform-Name -> Bild
     std::map<std::string, std::array<int, 2>> m_texSizes;   ///< Basisname -> (w,h)
     std::map<std::string, unsigned int> m_customTexIds;     ///< Uploads (render thread)

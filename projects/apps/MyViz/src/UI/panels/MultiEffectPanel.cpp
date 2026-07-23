@@ -20,6 +20,7 @@
 #include "visualizers/multieffect/ChainSerializer.hpp"  // effectTypeKey
 #include "services/IEventBus.hpp"
 #include "services/events/UIEvents.hpp"
+#include "UI/widgets/PresetTypeIcons.hpp"
 
 #include <QAbstractItemView>
 #include <QCheckBox>
@@ -117,6 +118,12 @@ struct EffectType
 /// (N3.1/N3.3): [.., kMilkSectionBase+s, i] = Element i der Sektion s.
 constexpr int kMilkSectionBase = 1000000;
 
+/// Element-Sentinel unter der Waves-Sektion: die BASIS-Waveform des Presets
+/// (nWaveMode/fWaveAlpha/…). Sie existiert immer genau einmal und ist KEIN
+/// Index in preset.waves — nicht loesch-/klonbar (Sichttest-Befund S43:
+/// sichtbar gerenderte Welle muss im Editor auffindbar sein).
+constexpr int kMilkBasisWaveElement = kMilkSectionBase - 1;
+
 /// Baum-Pfad in Chain-Pfad + Milk-Sektion/-Element zerlegen (Sentinels).
 struct MilkPathInfo
 {
@@ -168,36 +175,18 @@ int nextFreeMilkIndex(const Vec& vec)
     }
 }
 
-// Resolve asset/img/logo/icons at runtime: the exe runs from out/build/…, so
-// walk upwards from the application dir until the icons appear (dev layout).
-// Empty result = no icons deployed -> callers fall back to text markers.
-QString originIconDir()
-{
-    static const QString kDir = [] {
-        QDir dir(QCoreApplication::applicationDirPath());
-        for (int i = 0; i < 12; ++i)
-        {
-            const QString candidate =
-                dir.filePath(QStringLiteral("asset/img/logo/icons"));
-            if (QFileInfo::exists(candidate + QStringLiteral("/lumiviz.ico")))
-                return candidate;
-            if (!dir.cdUp()) break;
-        }
-        return QString();
-    }();
-    return kDir;
-}
-
+// Icon-Aufloesung + Format-Icons: geteilt mit dem Import-Browser
+// (UI/widgets/PresetTypeIcons.hpp) — hier nur das Origin-Mapping.
 const QIcon& originIcon(Origin origin)
 {
-    static const QIcon kAvs(originIconDir() + QStringLiteral("/avs.ico"));
-    static const QIcon kMilkDrop(originIconDir() + QStringLiteral("/milkdrop.ico"));
-    static const QIcon kNative(originIconDir() + QStringLiteral("/lumiviz.ico"));
     switch (origin)
     {
-        case Origin::Avs: return kAvs;
-        case Origin::MilkDrop: return kMilkDrop;
-        default: return kNative;
+        case Origin::Avs:
+            return lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::Avs);
+        case Origin::MilkDrop:
+            return lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::MilkDrop);
+        default:
+            return lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::Native);
     }
 }
 
@@ -766,7 +755,7 @@ void MultiEffectPanel::setupUI()
     m_addTypeCombo = new QComboBox(this);
     auto* comboModel = qobject_cast<QStandardItemModel*>(m_addTypeCombo->model());
     const std::vector<EffectType>& palette = effectPalette();
-    const bool haveOriginIcons = !originIconDir().isEmpty();
+    const bool haveOriginIcons = !lumi::ui::presetIconDir().isEmpty();
     for (size_t i = 0; i < palette.size(); ++i)
     {
         const EffectType& t = palette[i];
@@ -937,7 +926,7 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
                                                   : node.displayName));
     item->setText(2, QString::fromStdString(effectTypeName(node.params)));
     // Origin icon on the type column (AVS / MilkDrop / LumiViz).
-    if (!originIconDir().isEmpty())
+    if (!lumi::ui::presetIconDir().isEmpty())
     {
         const Origin origin = originForParams(node.params);
         item->setIcon(2, originIcon(origin));
@@ -993,47 +982,118 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
             if (s.enabled) ++shapesOn;
         const QStringList sections = {
             tr("Code (per_frame / per_pixel)"),
-            tr("Waves (%1 aktiv)").arg(wavesOn),
+            tr("Waves (Basis + %1 Custom aktiv)").arg(wavesOn),
             tr("Shapes (%1 aktiv)").arg(shapesOn),
             tr("Shader (Warp/Comp)"),
             tr("Sprites (%1)").arg(milk->preset.sprites.size()),
             tr("Parameter (Basiswerte)")};
+        const bool haveMilkIcons = !lumi::ui::presetIconDir().isEmpty();
+        const QIcon& milkIcon =
+            lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::MilkDrop);
+
+        // Auge-Toggle fuer Wave-/Shape-Elemente (S43, Sichttest-Befund):
+        // spiegelt `enabled` wie das Node-Auge — Mutation via mutate()
+        // (renderMutex + recompile) + Revision-Bump; Labels werden in-place
+        // nachgezogen (enabled-Toggle ist nicht strukturell, kein Rebuild).
+        auto addMilkEye = [this, path](QTreeWidgetItem* el, QTreeWidgetItem* sec,
+                                       int sectionIdx, int elementIdx,
+                                       int displayIndex, bool on) {
+            auto* eye = new QToolButton(m_tree);
+            eye->setCheckable(true);
+            eye->setAutoRaise(true);
+            eye->setChecked(on);
+            eye->setText(on ? QString::fromUtf8("\xF0\x9F\x91\x81")   // 👁
+                            : QString::fromUtf8("\xE2\x80\x94"));      // —
+            eye->setToolTip(tr("Show / hide this element"));
+            connect(eye, &QToolButton::toggled, this,
+                    [this, eye, el, sec, path, sectionIdx, elementIdx,
+                     displayIndex](bool v) {
+                        eye->setText(v ? QString::fromUtf8("\xF0\x9F\x91\x81")
+                                       : QString::fromUtf8("\xE2\x80\x94"));
+                        int onCount = 0;
+                        mutate(path, [&](ChainNode& n) {
+                            auto* m = std::get_if<MilkdropNodeParams>(&n.params);
+                            if (m == nullptr) return;
+                            auto apply = [&](auto& vec) {
+                                if (elementIdx >= 0 &&
+                                    elementIdx < static_cast<int>(vec.size()))
+                                {
+                                    vec[static_cast<std::size_t>(elementIdx)]
+                                        .enabled = v;
+                                    ++m->revision;
+                                }
+                                for (const auto& e2 : vec)
+                                    if (e2.enabled) ++onCount;
+                            };
+                            if (sectionIdx == 1) apply(m->preset.waves);
+                            else if (sectionIdx == 2) apply(m->preset.shapes);
+                        });
+                        m_updating = true;
+                        el->setText(0, (sectionIdx == 1 ? tr("Wave %1%2")
+                                                        : tr("Shape %1%2"))
+                                           .arg(displayIndex)
+                                           .arg(v ? QString() : tr(" (aus)")));
+                        sec->setText(
+                            0, sectionIdx == 1
+                                   ? tr("Waves (Basis + %1 Custom aktiv)").arg(onCount)
+                                   : tr("Shapes (%1 aktiv)").arg(onCount));
+                        m_updating = false;
+                        // Editor-Checkbox „... aktiv" nachziehen, falls sichtbar
+                        if (m_tree->currentItem() == el)
+                            buildPropertyEditor(currentPath());
+                    });
+            m_tree->setItemWidget(el, 1, eye);
+        };
+
         for (int s = 0; s < sections.size(); ++s)
         {
             auto* sec = new QTreeWidgetItem(item);
             sec->setText(0, sections[s]);
             sec->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+            if (haveMilkIcons) sec->setIcon(2, milkIcon);  // Typ-Spalte (S43)
             QList<int> secPath = path;
             secPath.append(kMilkSectionBase + s);
             sec->setData(0, Qt::UserRole, pathToVariant(secPath));
 
             // Element-Kinder (N3.1/N3.3): je Wave/Shape/Sprite ein waehlbares
             // Item — Pfad = [.., Sektions-Sentinel, Element-Index]
-            auto addElement = [&](int elementIdx, const QString& label) {
+            auto addElement = [&](int elementIdx,
+                                  const QString& label) -> QTreeWidgetItem* {
                 auto* el = new QTreeWidgetItem(sec);
                 el->setText(0, label);
                 el->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+                if (haveMilkIcons) el->setIcon(2, milkIcon);
                 QList<int> elPath = secPath;
                 elPath.append(elementIdx);
                 el->setData(0, Qt::UserRole, pathToVariant(elPath));
+                return el;
             };
             if (s == 1)
             {
+                // Basis-Waveform zuerst: sie rendert immer (auch bei 0 Custom
+                // Waves) und braucht darum einen sichtbaren Editor-Einstieg.
+                addElement(kMilkBasisWaveElement, tr("Basis-Waveform"));
                 for (int i = 0; i < static_cast<int>(milk->preset.waves.size()); ++i)
-                    addElement(i, tr("Wave %1%2")
-                                      .arg(milk->preset.waves[i].index)
-                                      .arg(milk->preset.waves[i].enabled
-                                               ? QString()
-                                               : tr(" (aus)")));
+                {
+                    const auto& w = milk->preset.waves[i];
+                    auto* el = addElement(
+                        i, tr("Wave %1%2")
+                               .arg(w.index)
+                               .arg(w.enabled ? QString() : tr(" (aus)")));
+                    addMilkEye(el, sec, 1, i, w.index, w.enabled);
+                }
             }
             else if (s == 2)
             {
                 for (int i = 0; i < static_cast<int>(milk->preset.shapes.size()); ++i)
-                    addElement(i, tr("Shape %1%2")
-                                      .arg(milk->preset.shapes[i].index)
-                                      .arg(milk->preset.shapes[i].enabled
-                                               ? QString()
-                                               : tr(" (aus)")));
+                {
+                    const auto& sh = milk->preset.shapes[i];
+                    auto* el = addElement(
+                        i, tr("Shape %1%2")
+                               .arg(sh.index)
+                               .arg(sh.enabled ? QString() : tr(" (aus)")));
+                    addMilkEye(el, sec, 2, i, sh.index, sh.enabled);
+                }
             }
             else if (s == 4)
             {
@@ -1230,11 +1290,13 @@ void MultiEffectPanel::onRemove()
             {
                 const MilkPathInfo mp = splitMilkPath(pth);
                 if (mp.section == first.section && mp.element >= 0 &&
+                    mp.element != kMilkBasisWaveElement &&  // Basis bleibt
                     mp.nodePath == first.nodePath)
                 {
                     idxs.append(mp.element);
                 }
             }
+            if (idxs.isEmpty()) return;  // z. B. nur Basis-Waveform selektiert
             std::sort(idxs.begin(), idxs.end(), std::greater<int>());
             mutateStructure([&] {
                 ChainNode* node = nodeAtPath(first.nodePath);
@@ -1292,6 +1354,7 @@ void MultiEffectPanel::onClone()
         if (mp.section >= 0)
         {
             if (mp.element < 0) return;
+            if (mp.element == kMilkBasisWaveElement) return;  // Basis: 1x fix
             QList<int> newSel;
             mutateStructure([&] {
                 ChainNode* node = nodeAtPath(mp.nodePath);
@@ -3058,6 +3121,51 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                           milkOf(n).preset.perPixel = std::move(v);
                       });
         }
+        else if (milkSection == 1 && milkElem == kMilkBasisWaveElement)
+        {
+            // Basis-Waveform (S43): die immer gerenderte Standard-Welle des
+            // Presets — vorher nur unter Parameter (Basiswerte) versteckt.
+            using PS = lumi::milkdrop::PresetState;
+            const auto setD = [milkOf](double PS::* m) {
+                return [milkOf, m](ChainNode& n, double v) {
+                    milkOf(n).preset.*m = v;
+                };
+            };
+            const auto setB = [milkOf](bool PS::* m) {
+                return [milkOf, m](ChainNode& n, bool v) {
+                    milkOf(n).preset.*m = v;
+                };
+            };
+            const auto setI = [milkOf](int PS::* m) {
+                return [milkOf, m](ChainNode& n, int v) {
+                    milkOf(n).preset.*m = v;
+                };
+            };
+            auto* hint = new QLabel(
+                tr("Die Basis-Waveform wird immer gerendert (Alpha 0 = "
+                   "unsichtbar). Startwerte — per_frame-Code kann wave_* je "
+                   "Frame ueberschreiben."),
+                m_propContainer);
+            hint->setWordWrap(true);
+            form->addRow(hint);
+            addInt(tr("Wave-Modus (0-7)"), p->preset.waveMode, 0, 7, setI(&PS::waveMode));
+            addBool(tr("Additiv"), p->preset.additiveWaves, setB(&PS::additiveWaves));
+            addBool(tr("Punkte statt Linien"), p->preset.waveDots, setB(&PS::waveDots));
+            addBool(tr("Dick"), p->preset.waveThick, setB(&PS::waveThick));
+            addBool(tr("Alpha nach Lautstaerke"), p->preset.modWaveAlphaByVolume, setB(&PS::modWaveAlphaByVolume));
+            addBool(tr("Farbe maximieren"), p->preset.maximizeWaveColor, setB(&PS::maximizeWaveColor));
+            addDouble(tr("Alpha"), p->preset.waveAlpha, 0.0, 10.0, 0.01, setD(&PS::waveAlpha));
+            addDouble(tr("Skalierung"), p->preset.waveScale, 0.0, 100.0, 0.01, setD(&PS::waveScale));
+            addDouble(tr("Glaettung"), p->preset.waveSmoothing, 0.0, 0.95, 0.01, setD(&PS::waveSmoothing));
+            addDouble(tr("Mystery (wave_mystery)"), p->preset.waveMystery, -2.0, 2.0, 0.01, setD(&PS::waveMystery));
+            addDouble(tr("Mod-Alpha Start"), p->preset.modWaveAlphaStart, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaStart));
+            addDouble(tr("Mod-Alpha Ende"), p->preset.modWaveAlphaEnd, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaEnd));
+            addDouble(tr("Rot"), p->preset.waveR, 0.0, 1.0, 0.01, setD(&PS::waveR));
+            addDouble(tr("Gruen"), p->preset.waveG, 0.0, 1.0, 0.01, setD(&PS::waveG));
+            addDouble(tr("Blau"), p->preset.waveB, 0.0, 1.0, 0.01, setD(&PS::waveB));
+            addDouble(tr("Position X"), p->preset.waveX, 0.0, 1.0, 0.01, setD(&PS::waveX));
+            addDouble(tr("Position Y"), p->preset.waveY, 0.0, 1.0, 0.01, setD(&PS::waveY));
+        }
         else if (milkSection == 1)  // Custom Waves (Sektion oder Einzel-Element)
         {
             if (p->preset.waves.empty())
@@ -3412,23 +3520,16 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             addBool(tr("Invert"), p->preset.invert, setB(&PS::invert));
 
             group(tr("Basis-Waveform"));
-            addInt(tr("Wave-Modus (0-7)"), p->preset.waveMode, 0, 7, setI(&PS::waveMode));
-            addBool(tr("Additiv"), p->preset.additiveWaves, setB(&PS::additiveWaves));
-            addBool(tr("Punkte statt Linien"), p->preset.waveDots, setB(&PS::waveDots));
-            addBool(tr("Dick"), p->preset.waveThick, setB(&PS::waveThick));
-            addBool(tr("Alpha nach Lautstaerke"), p->preset.modWaveAlphaByVolume, setB(&PS::modWaveAlphaByVolume));
-            addBool(tr("Farbe maximieren"), p->preset.maximizeWaveColor, setB(&PS::maximizeWaveColor));
-            addDouble(tr("Alpha"), p->preset.waveAlpha, 0.0, 10.0, 0.01, setD(&PS::waveAlpha));
-            addDouble(tr("Skalierung"), p->preset.waveScale, 0.0, 100.0, 0.01, setD(&PS::waveScale));
-            addDouble(tr("Glaettung"), p->preset.waveSmoothing, 0.0, 0.95, 0.01, setD(&PS::waveSmoothing));
-            addDouble(tr("Mystery (wave_mystery)"), p->preset.waveMystery, -2.0, 2.0, 0.01, setD(&PS::waveMystery));
-            addDouble(tr("Mod-Alpha Start"), p->preset.modWaveAlphaStart, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaStart));
-            addDouble(tr("Mod-Alpha Ende"), p->preset.modWaveAlphaEnd, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaEnd));
-            addDouble(tr("Rot"), p->preset.waveR, 0.0, 1.0, 0.01, setD(&PS::waveR));
-            addDouble(tr("Gruen"), p->preset.waveG, 0.0, 1.0, 0.01, setD(&PS::waveG));
-            addDouble(tr("Blau"), p->preset.waveB, 0.0, 1.0, 0.01, setD(&PS::waveB));
-            addDouble(tr("Position X"), p->preset.waveX, 0.0, 1.0, 0.01, setD(&PS::waveX));
-            addDouble(tr("Position Y"), p->preset.waveY, 0.0, 1.0, 0.01, setD(&PS::waveY));
+            {
+                // S43: eigene Ansicht im Baum (Waves -> Basis-Waveform) —
+                // hier nur der Wegweiser, keine doppelte Regler-Flaeche.
+                auto* basisRef = new QLabel(
+                    tr("Eigene Ansicht: Sektion \"Waves\" → "
+                       "\"Basis-Waveform\" im Baum."),
+                    m_propContainer);
+                basisRef->setWordWrap(true);
+                form->addRow(basisRef);
+            }
 
             group(tr("Motion (Warp-Mesh)"));
             addDouble(tr("Zoom"), p->preset.zoom, 0.01, 10.0, 0.001, setD(&PS::zoom));
