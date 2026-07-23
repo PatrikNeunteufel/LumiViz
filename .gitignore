@@ -391,6 +391,7 @@ old/
 # NICHT getrackt (Entscheid 2026-07-22, Session 39). Herkunft/Beschaffung:
 # https://github.com/milkdrop2077/MilkDrop3 (Ordner presets/, textures/, ...)
 /asset/Milkdrop3/
+/asset/VisualsPresets/
 
 
 # HINWEIS: BASS-Binaries unter externals/ (win/c/x64/*.lib, win/x64/*.dll, linux/libs/, bin/)

@@ -139,6 +139,19 @@
     ],
     "executables": [
       {
+        "name": "AvsStandalone",
+        "description": "Isolierter AVS-Renderpfad-Test: MultiEffectVisualizer (loadAvsFile -> Chain) in eigenem GL-Fenster (Session 43, Vorbild MilkdropStandalone). Kompiliert die Host-Schliessung der App direkt (Executables laufen VOR dem App-Container)",
+        "skip": false,
+        "type": "CONSOLE",
+        "path": "projects/exec/AvsStandalone/src",
+        "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],
+        "externals": [ "Qt6", "lua54" ],
+        "external_options": {
+          "lua54": { "LUA_EMBEDDED": false }
+        },
+        "platforms": [ "windows", "linux", "macos" ]
+      },
+      {
         "name": "MilkdropStandalone",
         "description": "Isolierter C1/C2-Renderpfad-Test: MilkdropVisualizer in eigenem GL-Fenster (Session 41). Kompiliert die Milkdrop-Quellen der App direkt (Executables laufen VOR dem App-Container — MyViz.Core existiert hier noch nicht)",
         "skip": false,
