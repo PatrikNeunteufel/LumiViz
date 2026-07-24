@@ -1,7 +1,7 @@
 # LuaScriptEngine — Sandboxed Lua 5.4 für Visualizer-Skripte
 
-> **Version:** 1.1.0  
-> **Datum:** 2026-07-20  
+> **Version:** 1.2.0  
+> **Datum:** 2026-07-24  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert (Import-Phase Roadmap 1 — Keimzelle Superscope)  
 > **Modul:** lumi::scripting::LuaScriptEngine  
@@ -51,7 +51,11 @@ Lua-Skripte aus (Superscope).
   keine Metatable-Funktionen, keine Koroutinen — nicht vorhandene Namen lesen als `0.0`.
 - **Unbekannte Variablen lesen 0.0** (EEL-Semantik, via `__index`).
 - `rand` ist ein eigener, **deterministisch seedbarer** PRNG (`seedRandom`) —
-  `math.random` wird nicht durchgereicht.
+  `math.random` wird nicht durchgereicht. Der Default-Seed mischt je Instanz
+  einen Nonce in den Basis-Seed `0x4141f00d` (S14, Session 45): AVS' rand() ist
+  ein globaler Strom — Engines dürfen nicht dieselbe Folge ziehen (sonst
+  löschen sich z. B. Doppel-Scopes mit Subtract exakt aus). Explizites
+  `seedRandom()` bleibt exakt reproduzierbar.
 - `reg00..reg99`/`q1..q64` sind einfache Env-Variablen; der
   [ScriptSlotHost](ScriptSlotHost.md) synchronisiert sie an Slot-Grenzen mit dem
   geteilten [ScriptContext](ScriptContext.md) (preset-lokal, Entscheid §10.3).
@@ -71,7 +75,7 @@ Lua-Skripte aus (Superscope).
 | `has(slot)` / `clear(slot)` | Slot-Status / Slot räumen |
 | `setNumber(name, v)` / `number(name)` | Env-Variablen (Zahlen — das Skript-Datenmodell) |
 | `evalNumber(expr, out)` | Ausdruck in der Sandbox auswerten (Tests/Diagnose) |
-| `seedRandom(seed)` | PRNG deterministisch seeden (Default: MilkDrop-Seed `0x4141f00d`) |
+| `seedRandom(seed)` | PRNG deterministisch seeden (Default: Basis-Seed `0x4141f00d` ⊕ Instanz-Nonce, S14) |
 | `lastError()` / `clearError()` | letzter Compile-/Laufzeitfehler |
 
 ## 4. Skript-Umgebung
@@ -150,5 +154,6 @@ sind DIESELBE Variable (Lissajous-`b`- und Hypocycloid-`R/r`-Bug, Session 32).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.2.0 | 2026-07-24 | **S14:** Default-Seed mischt je Instanz einen Nonce (0x4141f00d ⊕ Zähler) — Engines ziehen verschiedene rand()-Folgen wie AVS' globaler Strom; explizites seedRandom() unverändert (Session 45) |
 | 1.1.0 | 2026-07-20 | Roadmap 4.1: Konstruktor nimmt shared ScriptContext; gmegabuf wandert in den Kontext; Superscope läuft über ScriptSlotHost (Session 33) |
 | 1.0.0 | 2026-07-20 | Erstfassung — Sandbox, eel-Prelude, 4-Slot-Modell, app-globales Atomic-Register-Set, Superscope-Anbindung (Session 32) |

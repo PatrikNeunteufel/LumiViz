@@ -1,6 +1,6 @@
 # AVS-Sichttest-Protokoll — Kalibrier-Runde (SSOT Punkt 9)
 
-> **Version:** 0.13.0 (wird laufend nachgeführt)
+> **Version:** 0.14.0 (wird laufend nachgeführt)
 > **Datum:** 2026-07-24 (Session 45)
 > **Typ:** Arbeitsprotokoll
 > **Status:** In Arbeit
@@ -31,6 +31,7 @@
 | S11 | **BASS vs. Winamp-Audioanalyse** (Frage Patrik: „Eigenheiten von bass.dll berücksichtigen?" — Symptom: Spektrum wirkt einseitig, links flach) | Original-Pipeline liegt im Ref (`winamp_orig/Src/Winamp/VIS.cpp:719-745` + `FFT.cpp`): **512er-Real-FFT ohne Fensterung über 8-bit-Sample-Tops, Byte = sqrt(re²+im²)/16 LINEAR** (der Log kommt erst in AVS via g_logtab), 256 Bins → je 2 Positionen (0..511, leicht geglättet), **Positionen 512..575 = reine Abkling-Füllung (~0)**. Abgleich: (a) unser `kSpecGain=8` sättigt bei Magnitude 0,125 ≈ Winamps Sättigungspunkt 0,126 — Amplitude war schon original-nah (S38-Kalibrierung jetzt hergeleitet); das „flache Links" bei lauter Musik ist auch im Original gesättigt. (b) **Frequenzachse war falsch:** wir streckten 512 echte Bins über 576 Positionen (~12 % gestaucht + Phantomwerte in den Fade-Bändern) | ✅ **gefixt (S44):** Position p = unser Bin p (BASS-FFT1024 = exakt doppelte Winamp-Auflösung), Positionen ≥ 512 → 0 wie im Original. Offen/notiert: Winamp nutzt 8-bit-Tops + keine Fensterung (BASS float — feinere Dynamik, gleiches Leakage-Verhalten) — nur relevant, falls Feindifferenzen sichtbar bleiben | ✅ |
 | S12 | **SuperScope-`v` blieb trotz S10/S11 „unverändert"** (Nachtest Patrik) | `v` wurde im Chain-Pfad aus den ROHEN Float-Arrays gerechnet (BASS-Magnituden 0..1, `sampleCount` = Waveform-Länge → 512er-Spektrum übers Ende indiziert) statt aus den visdata-Bytes. Original (r_sscope.cpp:284-289): **v = interpoliertes visdata-Byte/128 − 1 für BEIDE Quellen** — Spektrum-Stille ⇒ v = −1 (nicht 0!), Center-Kanal per char-Arithmetik | ✅ **gefixt (S44):** `SuperscopeModule::visdataValue()` — v im Lua-/Chain-Pfad exakt nach r_sscope (Quelle/Kanal auf den 576er-Blöcken, lineare Interpolation, XOR, /128−1, inkl. Center-char-Eigenheit); Float-Arrays bleiben Standalone-Preset-Pfad. Sichtnachweis first3d_spectrum: Zickzack-Teppich (sin(1)-Zähne bei Stille) + Musik-Modulation — Formel-treu; finale Bestätigung Seite-an-Seite | ✅ |
 | S13 | **SuperScope zeichnet aspektquadratisch** (Befund Session 45 bei der S2-Kalibrierung): unser Scope-Pfad bildet x/y auf ein QUADRAT ab (Kreis-Skript ⇒ Kreis auf 800×600) — echtes AVS skaliert x mit w/2 und y mit h/2 (r_sscope), ein „Kreis"-Skript ist dort eine 4:3-**Ellipse** | Seite-an-Seite-relevant: alle Scope-Formen weichen auf nicht-quadratischen Fenstern ab | ⬜ Urteil/Fix offen (erst Seite-an-Seite bestätigen, dann ggf. Scope-Mapping auf per-Achse NDC umstellen) |
+| S14 | **Ego (HpR16) komplett schwarz** (Befund Patrik, Seite-an-Seite-Runde S45) | Bisektion e1–e12: [SRM Subtract + Doppel-Scope] = exakt schwarz, jede Teilmenge zeichnet. Ursache: `LuaScriptEngine` startete JEDE Instanz mit demselben festen PRNG-Seed — beide Fraktal-Scopes randomisieren af/bf (via `resold`-Trigger, DPI-Surface ≠ Init-Default 800×600) mit IDENTISCHER rand()-Folge → identische Bilder → `c − fb` löscht exakt aus. AVS-Referenz: rand() ist ein GLOBALER Strom, Effekte ziehen verschiedene Werte | ✅ **gefixt (S45):** Ctor mischt je Instanz einen Nonce in den Basis-Seed (deterministisch je Erzeugungsreihenfolge; explizites `seedRandom()` unverändert — Test-Gate besteht). Sichtbeleg: Ego rendert rot/blaue Fraktal-Flügel (max 0,813) | ✅ |
 
 **Wichtige Folge von S5:** Die S43-Liste „10 schwarze ref-Korpus-Presets"
 (SSOT Punkt 9) ist womöglich teilweise ein **Standalone-Artefakt** — mit
@@ -172,7 +173,30 @@ Erwartungsbilder: `asset/calibration/avs/README.md` (+ README je Ordner).
   Standalone den Framebuffer des Vorgängers (AVS-Verhalten) — für saubere
   Screenshots einzeln laden.
 
-## 7. Changelog
+## 7. Seite-an-Seite-Prüfplan (Patrik · echtes AVS/Winamp ↔ LumiViz)
+
+**Setup:** MyViz-App (Ninja-Clang-Release) und Winamp/AVS nebeneinander,
+ähnliche Fenstergröße; **beide spielen DIESELBE Audio-Datei** aus
+`…\cmake\TestAudio\` (MP3 für Winamp-Komfort, WAV = Master). AvsStandalone nur
+für Screenshots — sein Audio ist synthetisch, für Urteile die App nehmen.
+Preset-Pfade: Sammlungen = `…\cmake\VisualsPresets\avs\`, Kalibrier-Presets =
+`asset/calibration/avs/` (laufen in beiden Playern). Für S13 das Fenster
+bewusst nicht-quadratisch ziehen (16:9 und 4:3 testen).
+
+| # | Befund | Preset(e) beidseitig | Audio | Worauf achten | Entscheid |
+|---|---|---|---|---|---|
+| P1 | **S7** XOR/50-50-Listen-Konvergenz | `JC-big stuff\don't make a mess.avs` + Minimal-Replikat `s7_listen/01_xor_5050_liste.avs` | 15_pseudo_musik | Konvergiert das Original in Bewegung AUCH zu Uniform-Grau/Weiß? Tempo/Struktur des Zulaufens | gleich → S7 schließen (kein Bug) · anders → Detail-Diff (50/50-Rundung, Bilinear vs. MMX) | ⬜ |
+| P2 | **S13** Scope-Aspekt | `s2_movement/01_dmove_zoom_kreis.avs` | egal | Ringform im NICHT-quadratischen Fenster: AVS = Ellipse erwartet, LumiViz = Kreis | AVS elliptisch → Scope-Mapping auf per-Achse-NDC umstellen | ⬜ |
+| P3 | **S9-Rest** ZeroG/Novae-Weiß | `EL-VIS HISTORY pRELOADED\EL-vis_HpR14(ZeroG).avs` · `HpR02(Novae)` · `HpR20(Rotor)` · CYBERPUNX `el-vis_novae.avs` | 15_pseudo_musik | Sättigt das Original auch zu Weiß/Gelb? (ColorMap-auf-Weiß, FastBright-Ketten) | gleich → schließen · anders → ColorMap/FastBright bisektieren | ⬜ |
+| P4 | **S12** Spektrum-`v` | `EL-VIS6_SUPERSCOPES_3D\elvis_first3d_spectrum.avs` | erst 01_stille (v=−1-Zähne auch im Original?), dann 08_kick_120bpm, dann 05_sweep | Teppich bei Stille, Amplitudenhöhe (kSpecGain-Sichtkalibrierung), Frequenzachse beim Sweep | Amplitude ggf. nachkalibrieren (Kleinpunkt-Liste) | ⬜ |
+| P5 | **S1-Optik** fuzzify/blocky | `JC-big stuff\crunchi munchi.avs` (+ `5ver.avs`) | 15_pseudo_musik | Körnungs-Charakter (beide statisch je Fenstergröße?) und Block-Raster-Look | gleichwertig → S1-Rest schließen | ⬜ |
+| P6 | **Ego**-Subtract-Balance | `EL-VIS HISTORY pRELOADED\EL-vis_HpR16(EgoTheLivingPlanet).avs` | 15_pseudo_musik | Helligkeits-Balance der Subtract-Kette (Modus 5) | gleich → schließen | ⬜ |
+| P7 | Kür: Blend-/Kanal-Grundvertrag | `s9_blend/03_max` + `05_sub…` · `s10_superscope/04_links_spektrum` | 10_stereo_wechsel_LR | Diagonale-Optik je Modus; L/R-Phasen-Wechsel der Scopes | Abweichung = neuer S-Befund | ⬜ |
+
+Urteile bitte direkt in die Entscheid-Spalte (✅ gleich / ❌ abweichend + Notiz)
+— daraus entsteht die nächste Fix-Liste.
+
+## 8. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
@@ -189,3 +213,5 @@ Erwartungsbilder: `asset/calibration/avs/README.md` (+ README je Ordner).
 | 0.11.0 | 2026-07-24 | **S11 gefunden + gefixt** (Frage Patrik BASS↔Winamp): Winamp-Spektrum-Vertrag aus `winamp_orig`-Ref hergeleitet (linear /16, 256 Bins verdoppelt, 64 Fade-Bytes) — Frequenzachse korrigiert (Position=Bin 1:1, ≥512→0); kSpecGain=8 als Winamp-Sättigungsäquivalent bestätigt |
 | 0.12.0 | 2026-07-24 | **S12 gefunden + gefixt** (Nachtest Patrik „noch nicht wirklich geändert"): SuperScope-`v` im Chain-Pfad jetzt AVS-treu aus den visdata-Bytes (r_sscope-Formel, v=Byte/128−1, Stille⇒−1) statt aus rohen Float-Arrays; Sichtnachweis Zickzack-Teppich first3d_spectrum |
 | 0.13.0 | 2026-07-24 | **S2 + S3 gefixt** (Session 45, Details in der Tabelle) · **Kalibrier-Infrastruktur** (§6): 22 Minimal-`.avs` in `asset/calibration/avs/` (Writer `make_calibration_presets.py`) + `.lvfx`-Zwillinge als Parser-/Translator-Prüfstand (`freeze_lvfx_twins.py --verify`, GRÜN 22/22) · **S13 notiert** (SuperScope-Aspekt) · Werkzeug-Fixes AvsStandalone: Screenshot-Namen kollidierten zwischen `.avs`/`.lvfx`-Zwilling (Endung jetzt im Namen), Screenshots als RGB ohne Alpha (Alpha-0-Pixel wirkten im Viewer als „weiße" Phantom-Linien) · Tests 413/413, alle 3 Builds grün |
+| 0.14.0 | 2026-07-24 | §7 Seite-an-Seite-Prüfplan P1–P7 angelegt (Presets/Audio/Kriterien je offenem Urteil; Urteils-Spalte zum Ausfüllen) |
+| 0.15.0 | 2026-07-24 | **S14 gefunden + gefixt** (P6-Ego schwarz, In-App-Befund Patrik): PRNG-Seed war je Engine identisch → korrelierte rand()-Folgen zwischen Effekten (Ego-Doppel-Scope löschte sich per Subtract exakt aus); jetzt Instanz-Nonce im Seed. Tests 413/413, Zwillinge GRÜN 22/22; Methodik-Notiz: AVS ist frame-getaktet — Tempo-Vergleiche brauchen gleiche Fenstergröße UND ähnliche fps (zeilenweise Presets skalieren mit h) |

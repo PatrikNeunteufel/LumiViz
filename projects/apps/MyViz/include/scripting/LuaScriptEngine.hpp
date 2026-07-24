@@ -164,7 +164,9 @@ private:
     int m_envRef = -2;  // LUA_NOREF
     std::array<int, kSlotCount> m_slotRefs;
     std::string m_lastError;
-    std::mt19937_64 m_rng{0x4141f00dULL};  // MilkDrop's fixed seed as default
+    // Basis-Seed 0x4141f00d (MilkDrop); der Ctor mischt je Instanz einen
+    // Nonce dazu (S14: Engines duerfen nicht dieselbe rand()-Folge ziehen).
+    std::mt19937_64 m_rng{0x4141f00dULL};
 
     // AVS-layout visualisation data for getspec/getosc (spectrum L/R + waveform
     // L/R, 576 bytes each) and the gettime() clock. Zero until the host feeds it.

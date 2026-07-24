@@ -307,6 +307,16 @@ LuaScriptEngine::LuaScriptEngine(std::shared_ptr<ScriptContext> context)
     : m_context(context != nullptr ? std::move(context)
                                    : std::make_shared<ScriptContext>())
 {
+    // S14: AVS' rand() ist ein GLOBALER Strom — verschiedene Effekte ziehen
+    // daraus VERSCHIEDENE Werte. Ein identischer Default-Seed je Engine liess
+    // alle Instanzen dieselbe "Zufalls"-Folge ziehen (Beleg Session 45: Egos
+    // Doppel-Scope randomisiert af/bf identisch -> Subtract loescht exakt
+    // schwarz). Darum je Instanz ein eigener, aber weiterhin deterministischer
+    // Seed (Erzeugungsreihenfolge); explizites seedRandom() gilt unveraendert.
+    static std::atomic<std::uint64_t> s_instanceNonce{0};
+    m_rng.seed(0x4141f00dULL ^
+               (s_instanceNonce.fetch_add(1, std::memory_order_relaxed) *
+                0x9E3779B97F4A7C15ULL));
     m_slotRefs.fill(LUA_NOREF);
     m_state = luaL_newstate();
     if (m_state == nullptr)
