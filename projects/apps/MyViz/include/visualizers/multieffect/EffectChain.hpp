@@ -426,6 +426,61 @@ struct MovementParams
 };
 
 /**
+ * AVS "Misc / Comment" (ID 21): pure annotation, renders nothing. Own type
+ * (not a Passthrough) so the editor gets a dedicated multi-line field and
+ * the tree's description column stays free (Entscheid Patrik, S44).
+ */
+struct CommentParams
+{
+    std::string text;
+};
+
+/**
+ * AVS "Render / Text" (ID 28, r_text.cpp): word cycler drawn with the app
+ * font engine (GDI original -> QPainter port). `text` holds the words
+ * separated by ';'; blend applies to the glyph pixels only.
+ */
+struct TextParams
+{
+    std::string text;              ///< words separated by ';'
+    std::string fontFace;          ///< LOGFONT lfFaceName ("" = default font)
+    int fontHeight = -20;          ///< LOGFONT lfHeight (negative = px char height)
+    int fontWeight = 400;          ///< 400 normal, 700 bold
+    bool italic = false;
+    bool underline = false;
+    std::uint32_t color = 0xFFFFFF;
+    int blend = 0;                 ///< 0 replace, 1 additive, 2 50/50 (glyphs only)
+    bool onBeat = false;           ///< word switches on beat instead of timer
+    int onBeatSpeed = 15;          ///< frames a beat-word stays visible
+    int normSpeed = 15;            ///< frames per word in timer mode
+    bool insertBlank = false;      ///< blank frame between words
+    bool randomPos = false;        ///< random position per word
+    bool randomWord = false;       ///< random instead of sequential word pick
+    int hAlign = 1;                ///< 0 left, 1 center, 2 right
+    int vAlign = 1;                ///< 0 top, 1 center, 2 bottom
+    int xShift = 0;                ///< percent of width
+    int yShift = 0;                ///< percent of height
+    bool outline = false;
+    std::uint32_t outlineColor = 0;
+    int outlineSize = 1;
+    bool shadow = false;           ///< shadow variant (outline wins if both)
+};
+
+/**
+ * AVS "Render / AVI" (ID 32, r_avi.cpp): video frames stretched to the frame,
+ * decoded via Video for Windows (legacy codec support like the original).
+ */
+struct AviParams
+{
+    std::string filename;          ///< as stored in the preset (bare name)
+    std::string resolvedPath;      ///< absolute path (import-time upward search)
+    int blend = 0;                 ///< 0 replace, 1 additive, 2 50/50
+    bool adapt = false;            ///< beat-adaptive: additive on beat window, else 50/50
+    int persist = 6;               ///< beat window length in frames
+    int speedMs = 0;               ///< min milliseconds between frame advances
+};
+
+/**
  * AVS "Trans / Dynamic Movement" (ID 43): grid-based scripted remap with the
  * full EEL quartet and a configurable grid resolution.
  */
@@ -558,14 +613,16 @@ struct CustomBpmParams
  * host's current render mode, which the following scope effects read (the AVS
  * behaviour; previously import-time-unrolled into the next SuperScope). `enabled`
  * = AVS bit 31 (override the blend; when false the blend falls back to additive);
- * `lineWidth` px (0 = leave each effect's own); `lineBlend` 0 replace, 1 additive,
- * 2 50/50; `adjustAlpha` the Adjustable-blend alpha 0..255 (bits 8-15).
+ * `lineWidth` px (0 = leave each effect's own); `lineBlend` = the RAW AVS
+ * BLEND_LINE mode (r_defs.h:267-283, S9): 0 replace, 1 additive, 2 maximum,
+ * 3 50/50, 4 sub(fb-c), 5 sub(c-fb), 6 multiply, 7 adjustable, 8 xor,
+ * 9 minimum; `adjustAlpha` the Adjustable-blend alpha 0..255 (bits 8-15).
  */
 struct SetRenderModeParams
 {
     bool enabled = true;    ///< override the blend (AVS bit 31)
     int lineWidth = 1;      ///< line width for following scopes (px, 0 = leave)
-    int lineBlend = 1;      ///< 0 replace, 1 additive, 2 50/50
+    int lineBlend = 1;      ///< AVS BLEND_LINE mode 0..9 (S9)
     int adjustAlpha = 128;  ///< Adjustable-blend alpha 0..255
 };
 
@@ -586,7 +643,9 @@ struct SuperScopeParams
     float lineWidth = 2.0f;
     float dotSize = 4.0f;
     int audioChannel = 2;  ///< 0=L 1=R 2=mono 3=mid 4=side
-    int lineBlend = 1;     ///< onto framebuffer: 0 replace, 1 additive, 2 50/50
+    /// AVS which_ch bit 4 (r_sscope.cpp:232): v liest SPEKTRUM statt Waveform.
+    bool spectrumSource = false;
+    int lineBlend = 1;     ///< AVS BLEND_LINE mode 0..9 (S9; s. SetRenderModeParams)
                            ///< (set by a preceding Set Render Mode; default additive)
 
     // Base color (point code that sets red/green/blue always overrides this).
@@ -1307,7 +1366,8 @@ using EffectParams =
                  LyapunovParams, KleinianParams, FractalZoomerParams,
                  StrangeAttractorParams, FlameParams, ReactionDiffusionParams,
                  SetRenderModeParams, DebugBarsParams, MilkdropNodeParams,
-                 HostGroupParams, PassthroughParams>;
+                 HostGroupParams, TextParams, AviParams, CommentParams,
+                 PassthroughParams>;
 
 // =============================================================================
 // Chain node
@@ -1442,6 +1502,9 @@ struct CompileResult
         const char* operator()(const SetRenderModeParams&) const { return "Set Render Mode"; }
         const char* operator()(const DebugBarsParams&) const { return "Debug Bars"; }
         const char* operator()(const MilkdropNodeParams&) const { return "Milkdrop"; }
+        const char* operator()(const TextParams&) const { return "Text"; }
+        const char* operator()(const AviParams&) const { return "AVI"; }
+        const char* operator()(const CommentParams&) const { return "Comment"; }
         const char* operator()(const PassthroughParams&) const { return "Passthrough"; }
     };
     return std::visit(Visitor{}, params);
@@ -1571,7 +1634,7 @@ inline void compileNode(ChainNode& node, const std::string& path,
         scope->audioChannel = std::clamp(scope->audioChannel, 0, 4);
         scope->lineWidth = std::clamp(scope->lineWidth, 1.0f, 255.0f);
         scope->dotSize = std::clamp(scope->dotSize, 1.0f, 50.0f);
-        scope->lineBlend = std::clamp(scope->lineBlend, 0, 2);
+        scope->lineBlend = std::clamp(scope->lineBlend, 0, 9);
     }
     if (auto* frac = std::get_if<Fractal2DParams>(&node.params))
     {
@@ -1643,7 +1706,7 @@ inline void compileNode(ChainNode& node, const std::string& path,
     if (auto* srm = std::get_if<SetRenderModeParams>(&node.params))
     {
         srm->lineWidth = std::clamp(srm->lineWidth, 0, 255);
-        srm->lineBlend = std::clamp(srm->lineBlend, 0, 2);
+        srm->lineBlend = std::clamp(srm->lineBlend, 0, 9);
         srm->adjustAlpha = std::clamp(srm->adjustAlpha, 0, 255);
     }
     if (auto* list = std::get_if<ListParams>(&node.params))

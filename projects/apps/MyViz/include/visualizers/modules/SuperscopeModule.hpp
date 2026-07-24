@@ -382,6 +382,14 @@ private:
                         const float* spectrumL, const float* spectrumR, int sampleCount) const;
 
     /**
+     * @brief AVS-treues v aus den visdata-Bytes (r_sscope.cpp:284-289):
+     *        Quelle/Kanal-Auswahl auf den 576er-Blöcken, linear interpoliert,
+     *        Byte^xorv, /128-1 — Spektrum ist damit -1 bei Stille (Original).
+     *        Nur im Lua-/Chain-Pfad aktiv (m_visBytes gesetzt).
+     */
+    [[nodiscard]] float visdataValue(int point, int count) const;
+
+    /**
      * @brief Execute point code for a single point (hardcoded for Phase 1)
      */
     SuperscopePoint executePoint(float i, float v, bool isBeat);
@@ -446,6 +454,9 @@ private:
 
     SuperscopeAudioSource m_audioSource = SuperscopeAudioSource::Waveform;
     SuperscopeAudioChannel m_audioChannel = SuperscopeAudioChannel::Mono;
+    /// AVS-visdata-Bytes des Hosts (nur Lua-/Chain-Pfad; Frame-Lebensdauer —
+    /// der Host hält den Puffer über den Render-Aufruf am Leben)
+    const unsigned char* m_visBytes = nullptr;
 
     // =========================================================================
     // Color Gradient

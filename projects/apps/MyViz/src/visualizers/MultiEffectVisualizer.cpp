@@ -22,15 +22,31 @@
 #include <QOpenGLFunctions>
 #include <QByteArray>
 #include <QVector4D>
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QFont>
+#include <QFontMetrics>
 #include <QImage>
+#include <QPainter>
+#include <QPainterPath>
 #include <QString>
 
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
+
+// AVI effect (r_avi.cpp port): decoded via Video for Windows — the same API the
+// original uses, so the legacy codecs (Cinepak/Indeo/MSVideo1) keep working.
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#include <vfw.h>
+#pragma comment(lib, "vfw32")
+#endif
 
 using namespace lumi::multieffect;
 using lumi::scripting::ScriptSlotHost;
@@ -120,6 +136,28 @@ void main()
     vec3 moved = texelFetch(uTex, src, 0).rgb;
     if (uBlend) moved = (moved + texelFetch(uTex, p, 0).rgb) * 0.5;
     fragColor = vec4(moved, 1.0);
+}
+)";
+
+// Text/AVI overlay (r_text / r_avi): composes a top-down RGBA layer over the
+// base — blend applies ONLY where the layer has alpha (AVS colour-key
+// equivalent). AVI frames are converted to opaque top-down RGBA on upload.
+const char* kTextFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform sampler2D uImg;
+uniform int uBlend;   // 0 replace, 1 additive, 2 50/50
+out vec4 fragColor;
+void main()
+{
+    vec3 fb = texture(uTex, vTex).rgb;
+    vec4 t = texture(uImg, vec2(vTex.x, 1.0 - vTex.y));
+    vec3 mixed;
+    if (uBlend == 1)      mixed = min(fb + t.rgb, vec3(1.0));
+    else if (uBlend == 2) mixed = (fb + t.rgb) * 0.5;
+    else                  mixed = t.rgb;
+    fragColor = vec4(mix(fb, mixed, t.a), 1.0);
 }
 )";
 
@@ -1615,6 +1653,36 @@ void embedPictureImages(ChainNode& node, const QString& baseDir, QStringList* re
         embedOneImage(p->filename, p->imageData, "Texer II", baseDir, report);
     for (ChainNode& child : node.children) embedPictureImages(child, baseDir, report);
 }
+
+/// AVI: videos are NOT embedded (size); resolve the bare preset name to an
+/// absolute path — preset folder first, then up to 4 parent levels (asset
+/// packs keep the .avi next to or above the preset folders, S43 pattern).
+void resolveAviPaths(ChainNode& node, const QString& baseDir, QStringList* report)
+{
+    if (auto* p = std::get_if<AviParams>(&node.params))
+    {
+        if (p->resolvedPath.empty() && !p->filename.empty())
+        {
+            const QString fname =
+                QFileInfo(QString::fromStdString(p->filename)).fileName();
+            QDir dir(baseDir);
+            for (int level = 0; level <= 4; ++level)
+            {
+                const QString candidate = dir.filePath(fname);
+                if (QFileInfo::exists(candidate))
+                {
+                    p->resolvedPath = candidate.toStdString();
+                    break;
+                }
+                if (!dir.cdUp()) break;
+            }
+            if (p->resolvedPath.empty() && report != nullptr)
+                report->append(QStringLiteral("AVI: video not found: %1")
+                                   .arg(QString::fromStdString(p->filename)));
+        }
+    }
+    for (ChainNode& child : node.children) resolveAviPaths(child, baseDir, report);
+}
 }  // namespace
 
 bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outReport)
@@ -1635,6 +1703,7 @@ bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outRep
     // Resolve + embed Picture images relative to the .avs directory (appends any
     // "image not found" notes after the translation report).
     embedPictureImages(translated.root, QFileInfo(path).absolutePath(), outReport);
+    resolveAviPaths(translated.root, QFileInfo(path).absolutePath(), outReport);
     // The new tree reuses node ids 1..N, colliding with the old runtimes; flag
     // a reset so the render thread frees their GL objects and starts fresh.
     m_pendingRuntimeReset = true;
@@ -1845,6 +1914,7 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_lutShader = makeProgram(kQuadVertexShader, kLutFragmentShader);
     m_warpShader = makeProgram(kWarpVertexShader, kWarpFragmentShader);
     m_moveRemapShader = makeProgram(kQuadVertexShader, kMoveRemapFragmentShader);
+    m_textShader = makeProgram(kQuadVertexShader, kTextFragmentShader);
     m_feedbackShader = makeProgram(kQuadVertexShader, kFeedbackFragmentShader);
     m_mosaicShader = makeProgram(kQuadVertexShader, kMosaicFragmentShader);
     m_grainShader = makeProgram(kQuadVertexShader, kGrainFragmentShader);
@@ -2006,6 +2076,9 @@ void MultiEffectVisualizer::resetRuntimes()
             if (rt.cmTexture != 0) f->glDeleteTextures(1, &rt.cmTexture);
             if (rt.picTexture != 0) f->glDeleteTextures(1, &rt.picTexture);
             if (rt.fracLut != 0) f->glDeleteTextures(1, &rt.fracLut);
+            if (rt.textTexture != 0) f->glDeleteTextures(1, &rt.textTexture);
+            if (rt.aviTexture != 0) f->glDeleteTextures(1, &rt.aviTexture);
+            closeAviRuntime(rt);  // VfW handles (no GL, but lifecycle-coupled)
             // Meganode: der Milkdrop-Kern gibt seine GL-Objekte selbst frei
             // (braucht den current Context — deshalb hier, nicht im Dtor)
             if (rt.milk != nullptr) rt.milk->cleanup();
@@ -2289,6 +2362,9 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const ReactionDiffusionParams& params) const { self.runReactionDiffusion(node, params); }
         void operator()(const DebugBarsParams& params) const { self.runDebugBars(params); }
         void operator()(const MilkdropNodeParams& params) const { self.runMilkdropNode(node, params); }
+        void operator()(const TextParams& params) const { self.runText(node, params); }
+        void operator()(const AviParams& params) const { self.runAvi(node, params); }
+        void operator()(const CommentParams&) const { /* annotation, no-op */ }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
     std::visit(Visitor{*this, node}, node.params);
@@ -2589,18 +2665,9 @@ void MultiEffectVisualizer::runClear(const ClearParams& params)
         return;
     }
 
-    // Additive / 50-50 clear: full-screen color quad with GL blending
-    // (same pattern as runOnBeatClear).
-    f->glEnable(GL_BLEND);
-    if (mode == 1)
-    {
-        f->glBlendFunc(GL_ONE, GL_ONE);
-    }
-    else
-    {
-        f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-        f->glBlendColor(0.0f, 0.0f, 0.0f, 0.5f);
-    }
+    // Blended clear: full-screen color quad, full BLEND_LINE table (S9).
+    applyLineBlend(mode == 1 ? 1 : mode, m_renderMode.alpha);
+    if (mode == 1) f->glBlendFunc(GL_ONE, GL_ONE);  // Clear-Quad hat alpha=1
     m_barsShader->bind();
     m_quadVao->bind();
     m_barsShader->setUniformValue("uCenter", QVector2D(0.0f, 0.0f));
@@ -2609,7 +2676,7 @@ void MultiEffectVisualizer::runClear(const ClearParams& params)
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_barsShader->release();
-    f->glDisable(GL_BLEND);
+    resetLineBlend();
 }
 
 void MultiEffectVisualizer::runFadeout(const FadeoutParams& params)
@@ -3286,8 +3353,57 @@ void MultiEffectVisualizer::runSetRenderMode(const SetRenderModeParams& params)
     // of 0 leaves each effect's own line width.
     m_renderMode.set = true;
     if (params.lineWidth > 0) m_renderMode.lineWidth = params.lineWidth;
-    if (params.enabled) m_renderMode.lineBlend = std::clamp(params.lineBlend, 0, 2);
+    if (params.enabled) m_renderMode.lineBlend = std::clamp(params.lineBlend, 0, 9);
     m_renderMode.alpha = std::clamp(params.adjustAlpha, 0, 255);
+}
+
+void MultiEffectVisualizer::applyLineBlend(int mode, int adjustAlpha)
+{
+    // GL-Pendants der AVS BLEND_LINE-Modi (r_defs.h:267-283, S9).
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glEnable(GL_BLEND);
+    f->glBlendEquation(GL_FUNC_ADD);
+    switch (mode)
+    {
+        case 0:  f->glBlendFunc(GL_ONE, GL_ZERO); break;               // replace
+        case 2:                                                         // maximum
+            f->glBlendEquation(GL_MAX);
+            f->glBlendFunc(GL_ONE, GL_ONE);
+            break;
+        case 3:                                                         // 50/50
+            f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+            f->glBlendColor(0.0f, 0.0f, 0.0f, 0.5f);
+            break;
+        case 4:                                                         // fb - c
+            f->glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+            f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            break;
+        case 5:                                                         // c - fb
+            f->glBlendEquation(GL_FUNC_SUBTRACT);
+            f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            break;
+        case 6:  f->glBlendFunc(GL_DST_COLOR, GL_ZERO); break;         // multiply
+        case 7:                                                         // adjustable
+            f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+            f->glBlendColor(0.0f, 0.0f, 0.0f,
+                            static_cast<float>(std::clamp(adjustAlpha, 0, 255)) /
+                                255.0f);
+            break;
+        case 9:                                                         // minimum
+            f->glBlendEquation(GL_MIN);
+            f->glBlendFunc(GL_ONE, GL_ONE);
+            break;
+        // 8 (xor) ist mit Fixed-Function-Blending nicht darstellbar — bewusster
+        // Additiv-Fallback (Notiz S9); 1 = additiv = Default.
+        default: f->glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;
+    }
+}
+
+void MultiEffectVisualizer::resetLineBlend()
+{
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glBlendEquation(GL_FUNC_ADD);
+    f->glDisable(GL_BLEND);
 }
 
 void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
@@ -3321,6 +3437,9 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     rt.scope->setDotSize(params.dotSize);
     rt.scope->setAudioChannel(
         static_cast<lumi::modules::SuperscopeAudioChannel>(params.audioChannel));
+    rt.scope->setAudioSource(params.spectrumSource
+                                 ? lumi::modules::SuperscopeAudioSource::Spectrum
+                                 : lumi::modules::SuperscopeAudioSource::Waveform);
     // Keep the module's gradient in sync (it bakes it into points when the point
     // code sets no color); reload only on change.
     if (rt.scopeGradientLoaded != params.gradientPreset)
@@ -3361,17 +3480,10 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
         w, w, s, s, sampleCount, m_surfaceWidth, m_surfaceHeight, m_frameBeat,
         m_deltaTime);
 
-    // Blend onto the working buffer. AVS default is additive; a preceding Set
-    // Render Mode can switch it to replace or 50/50 (params.lineBlend).
+    // Blend onto the working buffer: full AVS BLEND_LINE table (S9); a
+    // preceding Set Render Mode overrides the mode (params.lineBlend).
     if (!m_scopeRenderer.ready()) return;
-    auto* f = QOpenGLContext::currentContext()->functions();
-    f->glEnable(GL_BLEND);
-    switch (effLineBlend)
-    {
-        case 0:  f->glBlendFunc(GL_ONE, GL_ZERO); break;                       // replace
-        case 2:  f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;  // 50/50
-        default: f->glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;                  // additive
-    }
+    applyLineBlend(effLineBlend, m_renderMode.alpha);
     lumi::render::ScopeRenderer::Params rp;
     rp.mode = static_cast<lumi::modules::SuperscopeRenderMode>(params.renderMode);
     rp.lineWidth = effLineWidth;
@@ -3418,7 +3530,7 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     {
         m_scopeRenderer.draw(points, rp);
     }
-    f->glDisable(GL_BLEND);
+    resetLineBlend();
 }
 
 uint32_t MultiEffectVisualizer::nextRandom()
@@ -4172,6 +4284,346 @@ void MultiEffectVisualizer::runPictureII(const ChainNode& node,
 {
     // Picture II stretches to fill (no aspect lock); bilinear is already on.
     drawEmbeddedImage(m_leafRuntimes[node.nodeId], params.imageData, params.blend, false);
+}
+
+namespace
+{
+/// r_text getWord: the n-th ';'-separated entry ("" when past the end).
+std::string textWord(const std::string& text, int n)
+{
+    std::size_t start = 0;
+    for (int w = 0; w < n; ++w)
+    {
+        const std::size_t sep = text.find(';', start);
+        if (sep == std::string::npos) return {};
+        start = sep + 1;
+    }
+    const std::size_t end = text.find(';', start);
+    return text.substr(start, end == std::string::npos ? std::string::npos
+                                                       : end - start);
+}
+/// r_text getNWords: number of ';' — word count is this + 1.
+int textSeparators(const std::string& text)
+{
+    return static_cast<int>(std::count(text.begin(), text.end(), ';'));
+}
+}  // namespace
+
+void MultiEffectVisualizer::runText(const ChainNode& node, const TextParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    const int words = textSeparators(params.text) + 1;
+
+    // --- word cycling (r_text render:544-600)
+    const bool switchNow =
+        (!params.onBeat && rt.textNf >= params.normSpeed) ||
+        (params.onBeat && m_frameBeat && rt.textNb <= 0);
+    if (switchNow)
+    {
+        rt.textNf = 0;
+        if (!(params.insertBlank && (rt.textOddEven % 2) == 0))
+        {
+            if (params.randomWord)
+                rt.textCurWord = static_cast<int>(nextRandom() %
+                                                  static_cast<unsigned>(words));
+            else
+                rt.textCurWord = (rt.textCurWord + 1) % words;
+        }
+        rt.textOddEven = (rt.textOddEven + 1) % 2;
+        if (params.onBeat) rt.textNb = params.onBeatSpeed;
+        if (params.randomPos)
+        {
+            rt.textRandX = static_cast<float>(nextRandom() & 0xffff) / 65535.0f;
+            rt.textRandY = static_cast<float>(nextRandom() & 0xffff) / 65535.0f;
+        }
+    }
+    else if (params.onBeat && rt.textNb > 0)
+    {
+        --rt.textNb;  // beat lockout window (r_text nb)
+    }
+    ++rt.textNf;
+
+    std::string word = textWord(params.text, rt.textCurWord);
+    if (params.insertBlank && rt.textOddEven == 0) word.clear();
+    if (word.empty()) return;  // nothing to draw this phase
+
+    // --- glyph layer: redraw only when the draw state changed
+    auto* f = QOpenGLContext::currentContext()->functions();
+    const std::string snapshot =
+        word + '\x1f' + params.fontFace + '\x1f' + std::to_string(params.fontHeight) +
+        ':' + std::to_string(params.fontWeight) + ':' +
+        std::to_string(params.italic) + std::to_string(params.underline) +
+        std::to_string(params.color) + ':' + std::to_string(params.hAlign) +
+        std::to_string(params.vAlign) + ':' + std::to_string(params.xShift) + ',' +
+        std::to_string(params.yShift) + ':' + std::to_string(params.outline) +
+        std::to_string(params.outlineColor) + std::to_string(params.outlineSize) +
+        std::to_string(params.shadow) + ':' +
+        std::to_string(params.randomPos ? rt.textRandX : -1.0f) + ',' +
+        std::to_string(params.randomPos ? rt.textRandY : -1.0f) + ':' +
+        std::to_string(m_surfaceWidth) + 'x' + std::to_string(m_surfaceHeight);
+    if (rt.textTexture == 0 || rt.textSnapshot != snapshot)
+    {
+        rt.textSnapshot = snapshot;
+        QImage img(m_surfaceWidth, m_surfaceHeight, QImage::Format_RGBA8888);
+        img.fill(Qt::transparent);
+        {
+            QPainter painter(&img);
+            painter.setRenderHint(QPainter::Antialiasing, true);
+            painter.setRenderHint(QPainter::TextAntialiasing, true);
+            QFont font;
+            if (!params.fontFace.empty())
+                font.setFamily(QString::fromStdString(params.fontFace));
+            // LOGFONT: negative height = character pixel height
+            font.setPixelSize(std::max(4, std::abs(params.fontHeight)));
+            font.setWeight(params.fontWeight >= 600 ? QFont::Bold : QFont::Normal);
+            font.setItalic(params.italic);
+            font.setUnderline(params.underline);
+            const QFontMetrics fm(font);
+            const QString qword = QString::fromStdString(word);
+            const int tw = fm.horizontalAdvance(qword);
+            const int th = fm.height();
+            int x = 0;
+            int y = 0;
+            if (params.randomPos)
+            {
+                // r_text: random offset, left/top-aligned (render:581-592)
+                x = static_cast<int>(rt.textRandX *
+                                     static_cast<float>(std::max(0, m_surfaceWidth - tw)));
+                y = static_cast<int>(rt.textRandY *
+                                     static_cast<float>(std::max(0, m_surfaceHeight - th)));
+            }
+            else
+            {
+                if (params.hAlign == 1) x = (m_surfaceWidth - tw) / 2;
+                else if (params.hAlign == 2) x = m_surfaceWidth - tw;
+                if (params.vAlign == 1) y = (m_surfaceHeight - th) / 2;
+                else if (params.vAlign == 2) y = m_surfaceHeight - th;
+                x += params.xShift * m_surfaceWidth / 100;   // shifts are percent
+                y += params.yShift * m_surfaceHeight / 100;
+            }
+            const QPointF baseline(x, y + fm.ascent());
+            auto toColor = [](std::uint32_t c) {
+                return QColor(static_cast<int>((c >> 16) & 0xFF),
+                              static_cast<int>((c >> 8) & 0xFF),
+                              static_cast<int>(c & 0xFF));
+            };
+            QPainterPath glyphs;
+            glyphs.addText(baseline, font, qword);
+            if (params.shadow && !params.outline)
+            {
+                QPainterPath sh;
+                sh.addText(baseline + QPointF(params.outlineSize, params.outlineSize),
+                           font, qword);
+                painter.fillPath(sh, toColor(params.outlineColor));
+            }
+            if (params.outline)
+            {
+                painter.setPen(QPen(toColor(params.outlineColor),
+                                    params.outlineSize * 2.0));
+                painter.setBrush(Qt::NoBrush);
+                painter.drawPath(glyphs);
+            }
+            painter.fillPath(glyphs, toColor(params.color));
+            if (params.underline)  // fillPath misses QFont underline: draw text too
+            {
+                painter.setPen(toColor(params.color));
+                painter.setFont(font);
+                painter.drawText(baseline, qword);
+            }
+        }
+        if (rt.textTexture == 0)
+        {
+            f->glGenTextures(1, &rt.textTexture);
+            f->glBindTexture(GL_TEXTURE_2D, rt.textTexture);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        f->glBindTexture(GL_TEXTURE_2D, rt.textTexture);
+        f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0,
+                        GL_RGBA, GL_UNSIGNED_BYTE, img.constBits());
+    }
+
+    // --- compose over the base (blend on glyph pixels only)
+    if (m_textShader == nullptr) return;
+    SurfacePair& pair = active();
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    m_textShader->bind();
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    m_textShader->setUniformValue("uTex", 0);
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.textTexture);
+    m_textShader->setUniformValue("uImg", 1);
+    f->glActiveTexture(GL_TEXTURE0);
+    m_textShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    m_textShader->release();
+    pair.partner()->release();
+    pair.swap();
+    bindActive();
+}
+
+void MultiEffectVisualizer::closeAviRuntime(LeafRuntime& rt)
+{
+#ifdef _WIN32
+    if (rt.aviGetFrame != nullptr)
+        AVIStreamGetFrameClose(static_cast<PGETFRAME>(rt.aviGetFrame));
+    if (rt.aviStream != nullptr)
+        AVIStreamRelease(static_cast<PAVISTREAM>(rt.aviStream));
+    if (rt.aviFile != nullptr) AVIFileRelease(static_cast<PAVIFILE>(rt.aviFile));
+#endif
+    rt.aviGetFrame = nullptr;
+    rt.aviStream = nullptr;
+    rt.aviFile = nullptr;
+    rt.aviLength = 0;
+}
+
+#ifdef _WIN32
+namespace
+{
+/// Open the video stream via VfW with a 32bpp decompression target.
+bool openAvi(void*& outFile, void*& outStream, void*& outGetFrame, int& outLength,
+             const std::string& path)
+{
+    static bool vfwInit = false;
+    if (!vfwInit)
+    {
+        AVIFileInit();
+        vfwInit = true;
+    }
+    PAVIFILE file = nullptr;
+    if (AVIFileOpenA(&file, path.c_str(), OF_READ, nullptr) != AVIERR_OK)
+        return false;
+    PAVISTREAM stream = nullptr;
+    if (AVIFileGetStream(file, &stream, streamtypeVIDEO, 0) != AVIERR_OK)
+    {
+        AVIFileRelease(file);
+        return false;
+    }
+    BITMAPINFOHEADER want{};
+    want.biSize = sizeof(want);
+    want.biPlanes = 1;
+    want.biBitCount = 32;
+    want.biCompression = BI_RGB;
+    PGETFRAME gf = AVIStreamGetFrameOpen(stream, &want);
+    if (gf == nullptr) gf = AVIStreamGetFrameOpen(stream, nullptr);
+    const int length = static_cast<int>(AVIStreamLength(stream));
+    if (gf == nullptr || length <= 0)
+    {
+        if (gf != nullptr) AVIStreamGetFrameClose(gf);
+        AVIStreamRelease(stream);
+        AVIFileRelease(file);
+        return false;
+    }
+    outFile = file;
+    outStream = stream;
+    outGetFrame = gf;
+    outLength = length;
+    return true;
+}
+}  // namespace
+#endif
+
+void MultiEffectVisualizer::runAvi(const ChainNode& node, const AviParams& params)
+{
+#ifndef _WIN32
+    Q_UNUSED(node);
+    Q_UNUSED(params);
+#else
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    if (rt.aviGetFrame == nullptr)
+    {
+        if (rt.aviTried) return;
+        rt.aviTried = true;
+        const std::string& path =
+            params.resolvedPath.empty() ? params.filename : params.resolvedPath;
+        if (path.empty() ||
+            !openAvi(rt.aviFile, rt.aviStream, rt.aviGetFrame, rt.aviLength, path))
+            return;
+    }
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    // speed = min. milliseconds between frame advances (r_avi render:236-239)
+    const std::int64_t now = QDateTime::currentMSecsSinceEpoch();
+    if (rt.aviTexture == 0 ||
+        now - rt.aviLastMs >= static_cast<std::int64_t>(params.speedMs))
+    {
+        rt.aviLastMs = now;
+        rt.aviFrameIndex %= std::max(1, rt.aviLength);
+        const void* frame = AVIStreamGetFrame(
+            static_cast<PGETFRAME>(rt.aviGetFrame), rt.aviFrameIndex++);
+        if (frame != nullptr)
+        {
+            const auto* bih = static_cast<const BITMAPINFOHEADER*>(frame);
+            const auto* bits = reinterpret_cast<const unsigned char*>(bih) +
+                               bih->biSize + bih->biClrUsed * 4u;
+            const int fw = static_cast<int>(bih->biWidth);
+            const int fh = std::abs(static_cast<int>(bih->biHeight));
+            if (bih->biBitCount == 32 && fw > 0 && fh > 0)
+            {
+                // 32bpp DIB = BGRX little-endian = QImage Format_RGB32; DIBs
+                // with positive height are bottom-up -> flip to top-down for
+                // the shared overlay shader.
+                QImage wrap(bits, fw, fh, fw * 4, QImage::Format_RGB32);
+                QImage img = (bih->biHeight > 0 ? wrap.flipped(Qt::Vertical)
+                                                : wrap.copy())
+                                 .convertToFormat(QImage::Format_RGBX8888);
+                if (rt.aviTexture == 0)
+                {
+                    f->glGenTextures(1, &rt.aviTexture);
+                    f->glBindTexture(GL_TEXTURE_2D, rt.aviTexture);
+                    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                                       GL_LINEAR);
+                    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                                       GL_LINEAR);
+                    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                                       GL_CLAMP_TO_EDGE);
+                    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                                       GL_CLAMP_TO_EDGE);
+                }
+                f->glBindTexture(GL_TEXTURE_2D, rt.aviTexture);
+                f->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+                f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(),
+                                img.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                                img.constBits());
+            }
+        }
+    }
+    if (rt.aviTexture == 0 || m_textShader == nullptr) return;
+
+    // beat persist window (r_avi render:262-265) + adapt blend selection
+    if (m_frameBeat) rt.aviPersistLeft = params.persist;
+    else if (rt.aviPersistLeft > 0) --rt.aviPersistLeft;
+    int blend = params.blend;
+    if (params.adapt) blend = (m_frameBeat || rt.aviPersistLeft > 0) ? 1 : 2;
+
+    // full-frame stretch through the shared overlay shader (alpha = 1)
+    SurfacePair& pair = active();
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    m_textShader->bind();
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    m_textShader->setUniformValue("uTex", 0);
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.aviTexture);
+    m_textShader->setUniformValue("uImg", 1);
+    f->glActiveTexture(GL_TEXTURE0);
+    m_textShader->setUniformValue("uBlend", std::clamp(blend, 0, 2));
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    m_textShader->release();
+    pair.partner()->release();
+    pair.swap();
+    bindActive();
+#endif
 }
 
 void MultiEffectVisualizer::runTexer(const ChainNode& node, const TexerParams& params)
@@ -5701,16 +6153,20 @@ void MultiEffectVisualizer::buildVisData()
     const std::vector<float> specR = getSpectrumChannel(1);
     const std::vector<float> waveL = getWaveformChannel(0);
     const std::vector<float> waveR = getWaveformChannel(1);
-    // AVS pipes every Winamp spectrum byte through g_logtab (ref main.cpp:242-249):
-    // a = log(x*60/255+1)/log(60). Linear FFT magnitudes are far too small in the
-    // upper bands presets sample via getspec(0.5..0.8) — without this curve their
-    // beat-driven motion (ti=getspec(...)) stalls near zero. kSpecGain approximates
-    // the Winamp byte scale before the curve (visual calibration point;
-    // 12 was "etwas zu schnell" in the Session-38 sight test -> 8).
+    // Winamp-Vertrag (ref VIS.cpp:719-745, S44/S11): 512er-FFT -> 256 Bins,
+    // linear sqrt(re^2+im^2)/16, je Bin ZWEI Ausgabe-Bytes (Positionen 0..511),
+    // die LETZTEN 64 der 576 sind nur Abkling-Fuellung (~0). Unsere BASS-FFT1024
+    // liefert exakt die doppelte Bin-Aufloesung -> Position p == unser Bin p,
+    // Positionen >= 512 sind 0 (vorher: 512 Bins ueber 576 gestreckt = ~12 %
+    // gestauchte Frequenzachse + Phantomwerte in den Winamp-Fade-Baendern).
+    // Danach die AVS-Log-Kurve (g_logtab, vis_avs main.cpp:242-249). kSpecGain=8
+    // trifft Winamps Saettigungspunkt (Magnitude ~0.126 -> Byte 255) fast exakt
+    // (S38-Sichtkalibrierung, jetzt gegen VIS.cpp/FFT.cpp hergeleitet).
     constexpr float kSpecGain = 8.0f;
+    constexpr int kWinampRealBands = 512;  // danach nur Fade-Fuellung
     auto specByte = [](const std::vector<float>& v, int i) -> unsigned char {
-        if (v.empty()) return 0;
-        const float s = v[static_cast<size_t>(i) * v.size() / 576];
+        if (v.empty() || i >= kWinampRealBands) return 0;
+        const float s = v[static_cast<size_t>(i) * v.size() / kWinampRealBands];
         const float lin = std::clamp(s * kSpecGain, 0.0f, 1.0f);
         const float logv = std::log(lin * 60.0f + 1.0f) / std::log(60.0f);
         return static_cast<unsigned char>(std::clamp(logv, 0.0f, 1.0f) * 255.0f);

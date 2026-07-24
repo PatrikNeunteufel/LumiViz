@@ -2475,7 +2475,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addDouble(tr("Line width"), p->lineWidth, 1.0, 20.0, 0.5, [](ChainNode& n, double v) { std::get<SuperScopeParams>(n.params).lineWidth = static_cast<float>(v); });
         addDouble(tr("Dot size"), p->dotSize, 1.0, 50.0, 1.0, [](ChainNode& n, double v) { std::get<SuperScopeParams>(n.params).dotSize = static_cast<float>(v); });
         addEnum(tr("Channel"), p->audioChannel, {"Left", "Right", "Mono", "Mid", "Side"}, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).audioChannel = v; });
-        addEnum(tr("Line blend"), p->lineBlend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).lineBlend = v; });
+        addBool(tr("Spectrum source (v)"), p->spectrumSource,
+                [](ChainNode& n, bool v) { std::get<SuperScopeParams>(n.params).spectrumSource = v; });
+        addEnum(tr("Line blend"), p->lineBlend,
+                {"Replace", "Additive", "Maximum", "50/50", "Sub (fb-c)",
+                 "Sub (c-fb)", "Multiply", "Adjustable", "XOR (~Add)", "Minimum"},
+                [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).lineBlend = v; });
 
         // --- Color: gradient (per point) x table (cycled) combined by mode ----
         // The base color pre-seeds red/green/blue before the point code, which
@@ -2796,7 +2801,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         form->addRow(new QLabel(tr("Sets line width + blend for the render effects that follow."), m_propContainer));
         addBool(tr("Override blend"), p->enabled, [](ChainNode& n, bool v) { std::get<SetRenderModeParams>(n.params).enabled = v; });
         addInt(tr("Line width"), p->lineWidth, 0, 255, [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).lineWidth = v; });
-        addEnum(tr("Line blend"), p->lineBlend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).lineBlend = v; });
+        addEnum(tr("Line blend"), p->lineBlend,
+                {"Replace", "Additive", "Maximum", "50/50", "Sub (fb-c)",
+                 "Sub (c-fb)", "Multiply", "Adjustable", "XOR (~Add)", "Minimum"},
+                [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).lineBlend = v; });
         addInt(tr("Adjustable alpha"), p->adjustAlpha, 0, 255, [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).adjustAlpha = v; });
     }
     else if (auto* p = std::get_if<Fractal3DParams>(&params))
@@ -3577,6 +3585,100 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             addDouble(tr("Blur3 Max"), p->preset.blur3Max, 0.0, 1.0, 0.01, setD(&PS::blur3Max));
             addDouble(tr("Blur1 Edge-Darken"), p->preset.blur1EdgeDarken, 0.0, 1.0, 0.01, setD(&PS::blur1EdgeDarken));
         }
+    }
+    else if (auto* p = std::get_if<TextParams>(&params))
+    {
+        auto* edit = new QPlainTextEdit(m_propContainer);
+        edit->setPlainText(QString::fromStdString(p->text));
+        edit->setPlaceholderText(tr("Words separated by ;"));
+        edit->setLineWrapMode(QPlainTextEdit::WidgetWidth);
+        edit->setMinimumHeight(60);
+        edit->setMaximumHeight(120);
+        connect(edit, &QPlainTextEdit::textChanged, this, [this, path, edit]() {
+            const std::string text = edit->toPlainText().toStdString();
+            mutate(path, [&](ChainNode& n) {
+                std::get<TextParams>(n.params).text = text;
+            });
+        });
+        form->addRow(tr("Text (';' trennt)"), edit);
+        addText(tr("Font"), p->fontFace,
+                [](ChainNode& n, std::string v) { std::get<TextParams>(n.params).fontFace = std::move(v); });
+        addInt(tr("Height (px)"), std::abs(p->fontHeight), 4, 400,
+               [](ChainNode& n, int v) { std::get<TextParams>(n.params).fontHeight = -v; });
+        addInt(tr("Weight"), p->fontWeight, 100, 900,
+               [](ChainNode& n, int v) { std::get<TextParams>(n.params).fontWeight = v; });
+        addBool(tr("Italic"), p->italic,
+                [](ChainNode& n, bool v) { std::get<TextParams>(n.params).italic = v; });
+        addBool(tr("Underline"), p->underline,
+                [](ChainNode& n, bool v) { std::get<TextParams>(n.params).underline = v; });
+        addColor(tr("Color"), p->color,
+                 [](ChainNode& n, uint32_t v) { std::get<TextParams>(n.params).color = v; });
+        addEnum(tr("Blend"), std::clamp(p->blend, 0, 2),
+                {tr("Replace"), tr("Additive"), tr("50/50")},
+                [](ChainNode& n, int v) { std::get<TextParams>(n.params).blend = v; });
+        addBool(tr("On beat"), p->onBeat,
+                [](ChainNode& n, bool v) { std::get<TextParams>(n.params).onBeat = v; });
+        addInt(tr("Beat hold (frames)"), p->onBeatSpeed, 1, 600,
+               [](ChainNode& n, int v) { std::get<TextParams>(n.params).onBeatSpeed = v; });
+        addInt(tr("Word time (frames)"), p->normSpeed, 1, 600,
+               [](ChainNode& n, int v) { std::get<TextParams>(n.params).normSpeed = v; });
+        addBool(tr("Insert blank"), p->insertBlank,
+                [](ChainNode& n, bool v) { std::get<TextParams>(n.params).insertBlank = v; });
+        addBool(tr("Random position"), p->randomPos,
+                [](ChainNode& n, bool v) { std::get<TextParams>(n.params).randomPos = v; });
+        addBool(tr("Random word"), p->randomWord,
+                [](ChainNode& n, bool v) { std::get<TextParams>(n.params).randomWord = v; });
+        addEnum(tr("H-Align"), std::clamp(p->hAlign, 0, 2),
+                {tr("Left"), tr("Center"), tr("Right")},
+                [](ChainNode& n, int v) { std::get<TextParams>(n.params).hAlign = v; });
+        addEnum(tr("V-Align"), std::clamp(p->vAlign, 0, 2),
+                {tr("Top"), tr("Center"), tr("Bottom")},
+                [](ChainNode& n, int v) { std::get<TextParams>(n.params).vAlign = v; });
+        addInt(tr("X-Shift (%)"), p->xShift, -100, 100,
+               [](ChainNode& n, int v) { std::get<TextParams>(n.params).xShift = v; });
+        addInt(tr("Y-Shift (%)"), p->yShift, -100, 100,
+               [](ChainNode& n, int v) { std::get<TextParams>(n.params).yShift = v; });
+        addBool(tr("Outline"), p->outline,
+                [](ChainNode& n, bool v) { std::get<TextParams>(n.params).outline = v; });
+        addColor(tr("Outline color"), p->outlineColor,
+                 [](ChainNode& n, uint32_t v) { std::get<TextParams>(n.params).outlineColor = v; });
+        addInt(tr("Outline size"), p->outlineSize, 1, 32,
+               [](ChainNode& n, int v) { std::get<TextParams>(n.params).outlineSize = v; });
+        addBool(tr("Shadow"), p->shadow,
+                [](ChainNode& n, bool v) { std::get<TextParams>(n.params).shadow = v; });
+    }
+    else if (auto* p = std::get_if<AviParams>(&params))
+    {
+        addText(tr("File"), p->filename,
+                [](ChainNode& n, std::string v) { std::get<AviParams>(n.params).filename = std::move(v); });
+        addText(tr("Resolved path"), p->resolvedPath,
+                [](ChainNode& n, std::string v) { std::get<AviParams>(n.params).resolvedPath = std::move(v); });
+        addEnum(tr("Blend"), std::clamp(p->blend, 0, 2),
+                {tr("Replace"), tr("Additive"), tr("50/50")},
+                [](ChainNode& n, int v) { std::get<AviParams>(n.params).blend = v; });
+        addBool(tr("Beat adaptive"), p->adapt,
+                [](ChainNode& n, bool v) { std::get<AviParams>(n.params).adapt = v; });
+        addInt(tr("Persist (frames)"), p->persist, 0, 32,
+               [](ChainNode& n, int v) { std::get<AviParams>(n.params).persist = v; });
+        addInt(tr("Frame time (ms)"), p->speedMs, 0, 1000,
+               [](ChainNode& n, int v) { std::get<AviParams>(n.params).speedMs = v; });
+    }
+    else if (auto* p = std::get_if<CommentParams>(&params))
+    {
+        // Eigenes Mehrzeilen-Feld (Entscheid Patrik S44) — bewusst NICHT die
+        // description, damit die Tabellen-Ansicht kompakt bleibt.
+        auto* edit = new QPlainTextEdit(m_propContainer);
+        edit->setPlainText(QString::fromStdString(p->text));
+        edit->setPlaceholderText(tr("Comment"));
+        edit->setLineWrapMode(QPlainTextEdit::WidgetWidth);
+        edit->setMinimumHeight(80);
+        connect(edit, &QPlainTextEdit::textChanged, this, [this, path, edit]() {
+            const std::string text = edit->toPlainText().toStdString();
+            mutate(path, [&](ChainNode& n) {
+                std::get<CommentParams>(n.params).text = text;
+            });
+        });
+        form->addRow(tr("Comment"), edit);
     }
     else if (auto* p = std::get_if<PassthroughParams>(&params))
     {

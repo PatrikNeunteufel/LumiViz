@@ -320,6 +320,75 @@ TEST_SUITE("ChainSerializer")
         CHECK(p.code.empty());
     }
 
+    TEST_CASE("Text- und AVI-Parameter ueberleben den Round-Trip (S44)")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode textNode;
+        TextParams tp;
+        tp.text = "HALLO;WELT;;dritte";
+        tp.fontFace = "Impact";
+        tp.fontHeight = -32;
+        tp.fontWeight = 700;
+        tp.italic = true;
+        tp.color = 0x11FF77u;
+        tp.blend = 2;
+        tp.onBeat = true;
+        tp.onBeatSpeed = 9;
+        tp.insertBlank = true;
+        tp.randomWord = true;
+        tp.hAlign = 2;
+        tp.vAlign = 0;
+        tp.xShift = -10;
+        tp.yShift = 5;
+        tp.outline = true;
+        tp.outlineColor = 0x102030u;
+        tp.outlineSize = 3;
+        textNode.params = tp;
+        root.children.push_back(std::move(textNode));
+        ChainNode aviNode;
+        AviParams ap;
+        ap.filename = "elvis_war.avi";
+        ap.resolvedPath = "C:/x/elvis_war.avi";
+        ap.blend = 1;
+        ap.adapt = true;
+        ap.persist = 12;
+        ap.speedMs = 40;
+        aviNode.params = ap;
+        root.children.push_back(std::move(aviNode));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 2);
+        const auto& t = std::get<TextParams>(restored.children[0].params);
+        CHECK(t.text == "HALLO;WELT;;dritte");
+        CHECK(t.fontFace == "Impact");
+        CHECK(t.fontHeight == -32);
+        CHECK(t.fontWeight == 700);
+        CHECK(t.italic == true);
+        CHECK(t.color == 0x11FF77u);
+        CHECK(t.blend == 2);
+        CHECK(t.onBeat == true);
+        CHECK(t.onBeatSpeed == 9);
+        CHECK(t.insertBlank == true);
+        CHECK(t.randomWord == true);
+        CHECK(t.hAlign == 2);
+        CHECK(t.vAlign == 0);
+        CHECK(t.xShift == -10);
+        CHECK(t.yShift == 5);
+        CHECK(t.outline == true);
+        CHECK(t.outlineColor == 0x102030u);
+        CHECK(t.outlineSize == 3);
+        const auto& a = std::get<AviParams>(restored.children[1].params);
+        CHECK(a.filename == "elvis_war.avi");
+        CHECK(a.resolvedPath == "C:/x/elvis_war.avi");
+        CHECK(a.blend == 1);
+        CHECK(a.adapt == true);
+        CHECK(a.persist == 12);
+        CHECK(a.speedMs == 40);
+        CHECK(effectTypeKey(EffectParams{TextParams{}}) == "text");
+        CHECK(effectTypeKey(EffectParams{AviParams{}}) == "avi");
+    }
+
     TEST_CASE("Starfield-Parameter ueberleben den Round-Trip")
     {
         ChainNode root;

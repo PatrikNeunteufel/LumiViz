@@ -415,6 +415,66 @@ inline void decodeStarfield(Reader& r, EffectNode& n)   // r_stars.cpp
         readField(r, n, "durFrames");
 }
 
+inline void decodeText(Reader& r, EffectNode& n)   // r_text.cpp
+{
+    readField(r, n, "enabled") && readField(r, n, "color") &&
+        readField(r, n, "blend") && readField(r, n, "blendavg") &&
+        readField(r, n, "onbeat") && readField(r, n, "insertblank") &&
+        readField(r, n, "randompos") && readField(r, n, "valign") &&
+        readField(r, n, "halign") && readField(r, n, "onbeatspeed") &&
+        readField(r, n, "normspeed");
+    // CHOOSEFONTA (60 B, 32-bit-Layout) + LOGFONTA (60 B). Preset-relevant ist
+    // nur die LOGFONT (Hoehe/Gewicht/Kursiv/Unterstrichen/Schriftname); aus der
+    // CHOOSEFONT wandert der Punktgroessen-Fallback (iPointSize = pt*10) mit.
+    auto leI32 = [](const std::uint8_t* p) {
+        return static_cast<std::int32_t>(static_cast<std::uint32_t>(p[0]) |
+                                         (static_cast<std::uint32_t>(p[1]) << 8) |
+                                         (static_cast<std::uint32_t>(p[2]) << 16) |
+                                         (static_cast<std::uint32_t>(p[3]) << 24));
+    };
+    const std::uint8_t* cf = nullptr;
+    if (r.tryBytes(60, cf)) addField(n, "pointSize10", leI32(cf + 16));
+    const std::uint8_t* lf = nullptr;
+    if (r.tryBytes(60, lf))
+    {
+        addField(n, "fontHeight", leI32(lf + 0));    // LONG lfHeight (<0 = px)
+        addField(n, "fontWeight", leI32(lf + 16));
+        addField(n, "fontItalic", lf[20]);
+        addField(n, "fontUnderline", lf[21]);
+        n.code.push_back(CodeSlot{"face", r.fixedString(lf + 28, 32)});
+    }
+    std::int32_t txtSize = 0;
+    if (r.tryI32(txtSize) && txtSize > 0)
+    {
+        const std::uint8_t* txt = nullptr;
+        if (r.tryBytes(static_cast<std::size_t>(txtSize), txt))
+            n.code.push_back(CodeSlot{
+                "text", r.fixedString(txt, static_cast<std::size_t>(txtSize))});
+    }
+    readFieldOr(r, n, "outline", 0);
+    readFieldOr(r, n, "outlinecolor", 0);
+    readFieldOr(r, n, "xshift", 0);
+    readFieldOr(r, n, "yshift", 0);
+    readFieldOr(r, n, "outlinesize", 1);
+    readFieldOr(r, n, "randomword", 0);
+    readFieldOr(r, n, "shadow", 0);
+}
+
+inline void decodeComment(Reader& r, EffectNode& n)   // r_comment.cpp
+{
+    n.code.push_back(CodeSlot{"text", r.loadString()});
+}
+
+inline void decodeAvi(Reader& r, EffectNode& n)   // r_avi.cpp
+{
+    readField(r, n, "enabled") && readField(r, n, "blend") &&
+        readField(r, n, "blendavg");
+    n.code.push_back(CodeSlot{"filename", r.loadCString()});
+    readFieldOr(r, n, "adapt", 0);
+    readFieldOr(r, n, "persist", 6);
+    readFieldOr(r, n, "speed", 0);
+}
+
 inline void decodeWaterBump(Reader& r, EffectNode& n)   // r_waterbump.cpp
 {
     readField(r, n, "enabled") && readField(r, n, "density") &&
@@ -778,6 +838,9 @@ inline bool decodeBuiltin(std::int32_t builtinIndex, Reader& r, EffectNode& node
         case 24: decodeGrain(r, node); break;
         case 26: decodeMirror(r, node); break;
         case 27: decodeStarfield(r, node); break;
+        case 21: decodeComment(r, node); break;
+        case 28: decodeText(r, node); break;
+        case 32: decodeAvi(r, node); break;
         case 29: decodeBump(r, node); break;
         case 30: decodeMosaic(r, node); break;
         case 31: decodeWaterBump(r, node); break;

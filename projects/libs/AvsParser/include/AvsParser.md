@@ -1,6 +1,6 @@
 # AvsParser — .avs-Preset-Parser (Import-Zeit-Container)
 
-> **Version:** 1.2.0  
+> **Version:** 1.3.0  
 > **Datum:** 2026-07-20  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert (Import-Phase Roadmap 3 — Container + Kernmengen-Decoder)  
@@ -136,6 +136,7 @@ fehlt der Korpus, läuft nur der synthetische Teil). Korpus-Stand: 35/35 ok,
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.3.0 | 2026-07-24 | Neue Decoder (Session 44): **Text** (id 28 — 11 Ints + CHOOSEFONTA/LOGFONTA-Rohblöcke + Textblock + 7 Ints; Font-Daten als Felder/`face`-Slot), **AVI** (id 32 — Blend-Flags + NUL-terminierter Dateiname + adapt/persist/speed), **Comment** (id 21 — Text als `text`-Slot, war bisher undecodiert) |
 | 1.2.0 | 2026-07-24 | Alias-APEs: `child.id` wird beim Aliasing auf den Builtin-Index umgeschrieben (vorher blieb die Roh-ID — 0.1-Presets: Pointer-Wert — stehen und der Chain-Translator konnte trotz decodierter Felder nicht dispatchen; Beleg „Winamp Starfield v1"/„Winamp Mosaic v1" in Spacefolding, Session 44) |
 | 1.1.0 | 2026-07-22 | `decodeApe`: FunkyFX FyrewurX v1 (enabled + opakes Config-Wort) — kein „unbekannter APE"-Report mehr (Session 38) |
 | 1.0.0 | 2026-07-20 | Erstfassung — Container-TLV, Kernmengen-Decoder, Import-Report-Gerüst (Session 33) |

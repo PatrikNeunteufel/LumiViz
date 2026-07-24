@@ -56,6 +56,7 @@ enum AvsId
     kStarfield = 27,
     kBump = 29,
     kMosaic = 30,
+    kAvi = 32,
     kWaterBump = 31,
     kCustomBpm = 33,
     kSuperScope = 36,
@@ -805,6 +806,56 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             return true;
         }
 
+        case kText:
+        {
+            TextParams p;
+            p.text = slotStr(src, "text");
+            p.fontFace = slotStr(src, "face");
+            p.fontHeight = src.field("fontHeight");
+            if (p.fontHeight == 0)  // fall back to the CHOOSEFONT point size
+                p.fontHeight = -std::max(8, src.field("pointSize10") * 4 / 30);
+            p.fontWeight = src.field("fontWeight") > 0 ? src.field("fontWeight") : 400;
+            p.italic = src.field("fontItalic") != 0;
+            p.underline = src.field("fontUnderline") != 0;
+            p.color = avsColor(src.field("color"));
+            p.blend = src.field("blend") != 0 ? 1
+                                              : (src.field("blendavg") != 0 ? 2 : 0);
+            p.onBeat = src.field("onbeat") != 0;
+            p.onBeatSpeed = std::max(1, src.field("onbeatspeed"));
+            p.normSpeed = std::max(1, src.field("normspeed"));
+            p.insertBlank = src.field("insertblank") != 0;
+            p.randomPos = src.field("randompos") != 0;
+            p.randomWord = src.field("randomword") != 0;
+            // halign is the raw DT_* value (LEFT 0 / CENTER 1 / RIGHT 2);
+            // valign uses DT_TOP 0 / DT_VCENTER 4 / DT_BOTTOM 8.
+            p.hAlign = std::clamp(src.field("halign"), 0, 2);
+            const int va = src.field("valign");
+            p.vAlign = va == 4 ? 1 : (va == 8 ? 2 : 0);
+            p.xShift = src.field("xshift");
+            p.yShift = src.field("yshift");
+            p.outline = src.field("outline") != 0;
+            p.outlineColor = avsColor(src.field("outlinecolor"));
+            p.outlineSize = std::max(1, src.field("outlinesize"));
+            p.shadow = src.field("shadow") != 0;
+            out.enabled = src.field("enabled") != 0;
+            out.params = std::move(p);
+            return true;
+        }
+
+        case kAvi:
+        {
+            AviParams p;
+            p.filename = slotStr(src, "filename");
+            p.blend = src.field("blend") != 0 ? 1
+                                              : (src.field("blendavg") != 0 ? 2 : 0);
+            p.adapt = src.field("adapt") != 0;
+            p.persist = std::clamp(src.field("persist"), 0, 32);
+            p.speedMs = std::max(0, src.field("speed"));
+            out.enabled = src.field("enabled") != 0;
+            out.params = std::move(p);
+            return true;
+        }
+
         case kWaterBump:
         {
             WaterBumpParams p;
@@ -917,7 +968,13 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.pointCode = slotStr(src, "point");
             p.pointCount = 100;  // AVS default *var_n=100 (init code overrides)
             p.renderMode = (src.field("drawmode") & 1) ? 1 : 0;  // lines / dots
-            p.audioChannel = std::clamp(src.field("which_ch"), 0, 4);
+            // r_sscope.cpp:232-240: Bit 4 = Spektrum-Quelle, Bits 0-1 = Kanal
+            // (0 L, 1 R, >=2 Center) — vorher wurde which_ch=4 faelschlich als
+            // LumiViz-Kanal "Side" gelesen (S44, Befund "Spektrum fehlt").
+            const int whichCh = src.field("which_ch");
+            const int ch = whichCh & 3;
+            p.audioChannel = ch >= 2 ? 2 : ch;
+            p.spectrumSource = (whichCh & 4) != 0;
             // AVS color table (COLORREF -> host RRGGBB). Point code that sets
             // red/green/blue still overrides it at render time. A preset with
             // NO colors gets AVS' default white (r_sscope ctor: 1x 0xFFFFFF) —
@@ -968,8 +1025,11 @@ ChainNode translateNode(const EffectNode& src, const std::string& path, Context&
         p.enabled = (packed & 0x80000000u) != 0;
         p.lineWidth = static_cast<int>((packed >> 16) & 0xFF);
         p.adjustAlpha = static_cast<int>((packed >> 8) & 0xFF);
-        // AVS line blend -> host (0 replace, 1 additive/default, 2 50/50).
-        p.lineBlend = blendBits == 0 ? 0 : (blendBits == 3 ? 2 : 1);
+        // RAW BLEND_LINE-Modus (r_defs.h:267-283): 0 replace, 1 add, 2 max,
+        // 3 avg, 4 sub(fb-c), 5 sub(c-fb), 6 mul, 7 adjustable, 8 xor, 9 min.
+        // S9 (Session 44): nicht mehr auf 3 Host-Modi kollabieren — MAX & Co.
+        // sind der Anti-Weiss-Deckel vieler Presets (Beleg ZeroG).
+        p.lineBlend = std::clamp(blendBits, 0, 9);
         node.params = p;
         node.displayName = "Set Render Mode";
         return node;
@@ -989,29 +1049,14 @@ ChainNode translateNode(const EffectNode& src, const std::string& path, Context&
         return node;
     }
 
-    // Text (id 28): GDI font rendering is not ported yet — conserve as a no-op
-    // with a note (a dedicated text renderer is a separate task).
-    if (src.id == kText)
-    {
-        ChainNode node;
-        PassthroughParams p;
-        p.sourceId = src.id;
-        p.note = "Text";
-        node.params = std::move(p);
-        node.displayName = "Text";
-        ctx.report.push_back(path + ": Text not rendered yet (GDI font) - passthrough");
-        return node;
-    }
-
     // Comment: informational only (holds preset text). Conserve as a silent no-op
     // — no report warning, not counted as an unrendered passthrough.
     if (src.id == kComment)
     {
+        // Eigener Typ mit eigenem Textfeld (Befund + Entscheid Patrik S44) —
+        // NICHT in description, das zerstoert die Tabellen-Ansicht.
         ChainNode node;
-        PassthroughParams p;
-        p.sourceId = src.id;
-        p.note = "Comment";
-        node.params = std::move(p);
+        node.params = CommentParams{slotStr(src, "text")};
         node.displayName = "Comment";
         return node;
     }

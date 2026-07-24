@@ -271,8 +271,12 @@ private:
 
     FrameStats saveShot(const QString& tag)
     {
-        const int w = std::max(1, width());
-        const int h = std::max(1, height());
+        // glReadPixels braucht PHYSISCHE Pixel (Merkregel) — mit logischer
+        // Groesse las der Shot bei DPI-Skalierung nur den linken unteren
+        // Ausschnitt (Befund Session 44, Text-Position wirkte verschoben).
+        const qreal dpr = devicePixelRatio();
+        const int w = std::max(1, static_cast<int>(width() * dpr));
+        const int h = std::max(1, static_cast<int>(height() * dpr));
         std::vector<unsigned char> rgba(static_cast<std::size_t>(w) * h * 4);
         QOpenGLFunctions* f = context()->functions();
         f->glBindFramebuffer(GL_FRAMEBUFFER, context()->defaultFramebufferObject());
@@ -286,7 +290,7 @@ private:
         QDir().mkpath(m_shotDir);
         const QString file = QStringLiteral("%1/%2_%3.png").arg(m_shotDir, base, tag);
         // glReadPixels liefert Zeile 0 = unten → fuer die PNG-Ansicht spiegeln
-        img.mirrored().save(file);
+        img.flipped(Qt::Vertical).save(file);
         std::printf("[Standalone] Screenshot: %s — %s\n", qPrintable(file),
                     qPrintable(stats.describe()));
         return stats;

@@ -195,6 +195,27 @@ private:
         int picW = 0;
         int picH = 0;
 
+        // Text (r_text): word-cycler state + rendered glyph texture
+        int textCurWord = 0;
+        int textNf = 0;                ///< frames since last word switch
+        int textOddEven = 0;           ///< insertBlank alternator
+        int textNb = 0;                ///< onbeat: frames the beat word stays
+        float textRandX = 0.0f;        ///< randomPos offset (fraction of width)
+        float textRandY = 0.0f;
+        std::string textSnapshot;      ///< draw-state snapshot behind textTexture
+        unsigned int textTexture = 0;  ///< GL RGBA glyph layer (deleted in onCleanup)
+
+        // AVI (r_avi): VfW stream handles (opaque void* — vfw.h stays in the .cpp)
+        void* aviFile = nullptr;       ///< PAVIFILE
+        void* aviStream = nullptr;     ///< PAVISTREAM
+        void* aviGetFrame = nullptr;   ///< PGETFRAME
+        int aviLength = 0;
+        int aviFrameIndex = 0;
+        int aviPersistLeft = 0;        ///< beat persist window countdown
+        std::int64_t aviLastMs = 0;    ///< last frame advance (speed throttle)
+        bool aviTried = false;         ///< open attempted once (no retry spam)
+        unsigned int aviTexture = 0;   ///< GL RGBA frame texture (deleted in onCleanup)
+
         // Texer II / Triangle: EEL point-loop scripts
         std::unique_ptr<lumi::scripting::ScriptSlotHost> texerHost;
         std::string texerCompiled;
@@ -451,6 +472,16 @@ private:
                           const lumi::multieffect::RotatingStarsParams& params);
     void runPicture(const lumi::multieffect::ChainNode& node,
                     const lumi::multieffect::PictureParams& params);
+    void runText(const lumi::multieffect::ChainNode& node,
+                 const lumi::multieffect::TextParams& params);
+    void runAvi(const lumi::multieffect::ChainNode& node,
+                const lumi::multieffect::AviParams& params);
+    /// Release the VfW handles of an AVI node (safe on empty runtimes).
+    static void closeAviRuntime(LeafRuntime& rt);
+    /// GL blend state for an AVS BLEND_LINE mode 0..9 (S9; 8 falls back to add).
+    static void applyLineBlend(int mode, int adjustAlpha);
+    /// Restore GL_FUNC_ADD + disable blending after a line-blend draw.
+    static void resetLineBlend();
     void runPictureII(const lumi::multieffect::ChainNode& node,
                       const lumi::multieffect::PictureIIParams& params);
     void runTexer(const lumi::multieffect::ChainNode& node,
@@ -607,6 +638,7 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_lutShader;
     std::unique_ptr<QOpenGLShaderProgram> m_warpShader;
     std::unique_ptr<QOpenGLShaderProgram> m_moveRemapShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_textShader;
     std::unique_ptr<QOpenGLShaderProgram> m_feedbackShader;
     std::unique_ptr<QOpenGLShaderProgram> m_mosaicShader;
     std::unique_ptr<QOpenGLShaderProgram> m_grainShader;

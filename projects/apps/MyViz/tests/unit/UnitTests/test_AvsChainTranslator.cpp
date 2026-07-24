@@ -141,7 +141,7 @@ TEST_SUITE("AvsChainTranslator")
         const auto& p = std::get<SetRenderModeParams>(t.root.children[0].params);
         CHECK(p.enabled == true);
         CHECK(p.lineWidth == 6);
-        CHECK(p.lineBlend == 2);   // blend bits 3 -> 50/50
+        CHECK(p.lineBlend == 3);   // S9: rohe BLEND_LINE-Bits (3 = avg/50:50)
         CHECK(p.adjustAlpha == 128);
     }
 
@@ -248,7 +248,7 @@ TEST_SUITE("AvsChainTranslator")
         comment.name = "Comment";
         const TranslationResult t = translateAvsTree(makeParsed({comment}));
         REQUIRE(t.root.children.size() == 1);
-        CHECK(std::holds_alternative<PassthroughParams>(t.root.children[0].params));
+        CHECK(std::holds_alternative<CommentParams>(t.root.children[0].params));
         CHECK(t.passthroughCount == 0);  // not counted as an unrendered passthrough
         CHECK(t.report.empty());         // no warning line
     }
@@ -498,6 +498,47 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(std::get<TexerIIParams>(t.root.children[1].params).colorFiltering);
         CHECK(std::get<TriangleParams>(t.root.children[2].params).frameCode == "n=1");
         CHECK(std::holds_alternative<PassthroughParams>(t.root.children[3].params));  // Text
+    }
+
+    TEST_CASE("Text (id 28) + AVI (id 32) -> Params (S44); Comment traegt Text")
+    {
+        EffectNode txt = builtin(28);
+        txt.fields = {{"enabled", 1}, {"color", 0x0000FF /* COLORREF rot */},
+                      {"blend", 0},   {"blendavg", 1},  {"onbeat", 1},
+                      {"valign", 8},  {"halign", 2},    {"onbeatspeed", 9},
+                      {"normspeed", 30}, {"fontHeight", -24}, {"fontWeight", 700},
+                      {"outline", 1}, {"outlinesize", 2}};
+        txt.code = {{"text", "EINS;ZWEI"}, {"face", "Impact"}};
+
+        EffectNode avi = builtin(32);
+        avi.fields = {{"enabled", 1}, {"blend", 0}, {"blendavg", 0},
+                      {"adapt", 1},   {"persist", 10}, {"speed", 50}};
+        avi.code = {{"filename", "elvis_war.avi"}};
+
+        EffectNode com = builtin(21);
+        com.code = {{"text", "hallo notiz"}};
+
+        const TranslationResult t = translateAvsTree(makeParsed({txt, avi, com}));
+        REQUIRE(t.root.children.size() == 3);
+        const auto& tp = std::get<TextParams>(t.root.children[0].params);
+        CHECK(tp.text == "EINS;ZWEI");
+        CHECK(tp.fontFace == "Impact");
+        CHECK(tp.color == 0xFF0000u);  // COLORREF -> RGB
+        CHECK(tp.blend == 2);          // blendavg -> 50/50
+        CHECK(tp.onBeat);
+        CHECK(tp.vAlign == 2);         // DT_BOTTOM(8) -> 2
+        CHECK(tp.hAlign == 2);
+        CHECK(tp.fontHeight == -24);
+        CHECK(tp.outline);
+        const auto& ap = std::get<AviParams>(t.root.children[1].params);
+        CHECK(ap.filename == "elvis_war.avi");
+        CHECK(ap.blend == 0);
+        CHECK(ap.adapt);
+        CHECK(ap.persist == 10);
+        CHECK(ap.speedMs == 50);
+        const auto& cp = std::get<CommentParams>(t.root.children[2].params);
+        CHECK(cp.text == "hallo notiz");
+        CHECK(t.root.children[2].description.empty());  // Tabelle bleibt sauber
     }
 
     TEST_CASE("Picture II (APE): Dateiname + Blend")
@@ -920,6 +961,34 @@ TEST_SUITE("AvsChainTranslator")
         const TranslationResult t = translateAvsTree(makeParsed({builtin(36)}));
         const auto& p = std::get<SuperScopeParams>(t.root.children[0].params);
         CHECK(p.lineBlend == 0);
+    }
+
+    TEST_CASE("SuperScope which_ch: Bit 4 = Spektrum-Quelle, Bits 0-1 = Kanal (S44)")
+    {
+        {
+            EffectNode sc = builtin(36);
+            sc.fields = {{"which_ch", 4}};  // Spektrum + links
+            const TranslationResult t = translateAvsTree(makeParsed({sc}));
+            const auto& p = std::get<SuperScopeParams>(t.root.children[0].params);
+            CHECK(p.audioChannel == 0);
+            CHECK(p.spectrumSource);
+        }
+        {
+            EffectNode sc = builtin(36);
+            sc.fields = {{"which_ch", 2}};  // Waveform + Center
+            const TranslationResult t = translateAvsTree(makeParsed({sc}));
+            const auto& p = std::get<SuperScopeParams>(t.root.children[0].params);
+            CHECK(p.audioChannel == 2);
+            CHECK_FALSE(p.spectrumSource);
+        }
+        {
+            EffectNode sc = builtin(36);
+            sc.fields = {{"which_ch", 6}};  // Spektrum + Center
+            const TranslationResult t = translateAvsTree(makeParsed({sc}));
+            const auto& p = std::get<SuperScopeParams>(t.root.children[0].params);
+            CHECK(p.audioChannel == 2);
+            CHECK(p.spectrumSource);
+        }
     }
 
     TEST_CASE("Clear Screen (id 25): blend/blendavg -> Modus (r_clear-Vorrang)")

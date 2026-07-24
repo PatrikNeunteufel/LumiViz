@@ -559,7 +559,12 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
     for (int p = 0; p < effectiveCount; ++p)
     {
         float i = static_cast<float>(p) / static_cast<float>(effectiveCount - 1);
-        float v = getAudioValue(i, waveformL, waveformR, spectrumL, spectrumR, sampleCount);
+        // Chain-/Lua-Pfad: v AVS-treu aus den visdata-Bytes (S44) — die
+        // Float-Arrays bleiben der Pfad der Standalone-Presets.
+        float v = (luaPoint && m_visBytes != nullptr)
+                      ? visdataValue(p, effectiveCount)
+                      : getAudioValue(i, waveformL, waveformR, spectrumL,
+                                      spectrumR, sampleCount);
 
         SuperscopePoint pt = luaPoint ? executePointLua(i, v) : executePoint(i, v, isBeat);
 
@@ -1007,11 +1012,50 @@ void SuperscopeModule::setVariable(const std::string& name, double value)
 
 void SuperscopeModule::setVisData(const unsigned char* data, double scriptTime)
 {
+    m_visBytes = data;  // fuer das AVS-treue v (visdataValue)
     if (m_luaMode && m_script != nullptr)
     {
         m_script->engine().setVisData(data);
         m_script->engine().setScriptTime(scriptTime);
     }
+}
+
+float SuperscopeModule::visdataValue(int point, int count) const
+{
+    // r_sscope.cpp:232-240 (Quelle/Kanal) + :284-289 (Interpolation, /128-1).
+    // visdata-Layout des Hosts: [0]=Spektrum L, [576]=Spektrum R,
+    // [1152]=Wave L, [1728]=Wave R.
+    const bool spectrum = m_audioSource == SuperscopeAudioSource::Spectrum;
+    const int xorv = spectrum ? 0 : 128;
+    const int base = spectrum ? 0 : 1152;
+    auto channelByte = [&](int idx) -> int {
+        idx = std::clamp(idx, 0, 575);
+        const unsigned char l = m_visBytes[static_cast<size_t>(base + idx)];
+        const unsigned char r = m_visBytes[static_cast<size_t>(base + 576 + idx)];
+        switch (m_audioChannel)
+        {
+            case SuperscopeAudioChannel::Left:  return l;
+            case SuperscopeAudioChannel::Right: return r;
+            default:
+            {
+                // AVS center_channel: CHAR-Arithmetik (r_sscope.cpp:237) —
+                // fuer Waveform korrekt signiert, fuer Spektrum die
+                // Original-Eigenheit (Bytes > 127 kippen) bewusst nachgebildet.
+                const char cl = static_cast<char>(l);
+                const char cr = static_cast<char>(r);
+                return static_cast<unsigned char>(
+                    static_cast<char>(cl / 2 + cr / 2));
+            }
+        }
+    };
+    if (count < 1) return spectrum ? -1.0f : 0.0f;
+    const double r = (static_cast<double>(point) * 576.0) / count;
+    const int i0 = static_cast<int>(r);
+    const double s1 = r - i0;
+    const int b0 = channelByte(i0) ^ xorv;
+    const int b1 = channelByte(i0 + 1) ^ xorv;
+    const double yr = b0 * (1.0 - s1) + b1 * s1;
+    return static_cast<float>(yr / 128.0 - 1.0);
 }
 
 void SuperscopeModule::resetState()

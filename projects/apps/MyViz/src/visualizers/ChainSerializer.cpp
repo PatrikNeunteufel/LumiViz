@@ -196,6 +196,7 @@ struct WriteVisitor
         o["lineWidth"] = p.lineWidth;
         o["dotSize"] = p.dotSize;
         o["audioChannel"] = p.audioChannel;
+        o["spectrumSource"] = p.spectrumSource;
         o["lineBlend"] = p.lineBlend;
         o["colorBlend"] = p.colorBlend;
         o["colorCycleFrames"] = p.colorCycleFrames;
@@ -626,6 +627,44 @@ struct WriteVisitor
         o["gravity"] = p.gravity;
         o["lifeSeconds"] = p.lifeSeconds;
     }
+    void operator()(const TextParams& p) const
+    {
+        o["text"] = QString::fromStdString(p.text);
+        o["fontFace"] = QString::fromStdString(p.fontFace);
+        o["fontHeight"] = p.fontHeight;
+        o["fontWeight"] = p.fontWeight;
+        o["italic"] = p.italic;
+        o["underline"] = p.underline;
+        o["color"] = static_cast<double>(p.color);
+        o["blend"] = p.blend;
+        o["onBeat"] = p.onBeat;
+        o["onBeatSpeed"] = p.onBeatSpeed;
+        o["normSpeed"] = p.normSpeed;
+        o["insertBlank"] = p.insertBlank;
+        o["randomPos"] = p.randomPos;
+        o["randomWord"] = p.randomWord;
+        o["hAlign"] = p.hAlign;
+        o["vAlign"] = p.vAlign;
+        o["xShift"] = p.xShift;
+        o["yShift"] = p.yShift;
+        o["outline"] = p.outline;
+        o["outlineColor"] = static_cast<double>(p.outlineColor);
+        o["outlineSize"] = p.outlineSize;
+        o["shadow"] = p.shadow;
+    }
+    void operator()(const AviParams& p) const
+    {
+        o["filename"] = QString::fromStdString(p.filename);
+        o["resolvedPath"] = QString::fromStdString(p.resolvedPath);
+        o["blend"] = p.blend;
+        o["adapt"] = p.adapt;
+        o["persist"] = p.persist;
+        o["speedMs"] = p.speedMs;
+    }
+    void operator()(const CommentParams& p) const
+    {
+        o["text"] = QString::fromStdString(p.text);
+    }
     void operator()(const StarfieldParams& p) const
     {
         o["color"] = static_cast<double>(p.color);
@@ -941,6 +980,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.lineWidth = static_cast<float>(getDouble(o, "lineWidth", 2.0));
         p.dotSize = static_cast<float>(getDouble(o, "dotSize", 4.0));
         p.audioChannel = getInt(o, "audioChannel", 2);
+        p.spectrumSource = getBool(o, "spectrumSource", false);
         p.lineBlend = getInt(o, "lineBlend", 1);
         p.colorBlend = getInt(o, "colorBlend", 0);
         p.colorCycleFrames = getInt(o, "colorCycleFrames", 60);
@@ -1460,6 +1500,48 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.lifeSeconds = static_cast<float>(getDouble(o, "lifeSeconds", 1.6));
         return p;
     }
+    if (type == "text")
+    {
+        TextParams p;
+        p.text = getStr(o, "text");
+        p.fontFace = getStr(o, "fontFace");
+        p.fontHeight = getInt(o, "fontHeight", -20);
+        p.fontWeight = getInt(o, "fontWeight", 400);
+        p.italic = getBool(o, "italic", false);
+        p.underline = getBool(o, "underline", false);
+        p.color = getColor(o, "color", 0xFFFFFF);
+        p.blend = getInt(o, "blend", 0);
+        p.onBeat = getBool(o, "onBeat", false);
+        p.onBeatSpeed = getInt(o, "onBeatSpeed", 15);
+        p.normSpeed = getInt(o, "normSpeed", 15);
+        p.insertBlank = getBool(o, "insertBlank", false);
+        p.randomPos = getBool(o, "randomPos", false);
+        p.randomWord = getBool(o, "randomWord", false);
+        p.hAlign = getInt(o, "hAlign", 1);
+        p.vAlign = getInt(o, "vAlign", 1);
+        p.xShift = getInt(o, "xShift", 0);
+        p.yShift = getInt(o, "yShift", 0);
+        p.outline = getBool(o, "outline", false);
+        p.outlineColor = getColor(o, "outlineColor", 0);
+        p.outlineSize = getInt(o, "outlineSize", 1);
+        p.shadow = getBool(o, "shadow", false);
+        return p;
+    }
+    if (type == "avi")
+    {
+        AviParams p;
+        p.filename = getStr(o, "filename");
+        p.resolvedPath = getStr(o, "resolvedPath");
+        p.blend = getInt(o, "blend", 0);
+        p.adapt = getBool(o, "adapt", false);
+        p.persist = getInt(o, "persist", 6);
+        p.speedMs = getInt(o, "speedMs", 0);
+        return p;
+    }
+    if (type == "comment")
+    {
+        return CommentParams{getStr(o, "text")};
+    }
     if (type == "starfield")
     {
         StarfieldParams p;
@@ -1613,6 +1695,9 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const WaterBumpParams&) const { return "waterBump"; }
         QString operator()(const InterferencesParams&) const { return "interferences"; }
         QString operator()(const FyrewurXParams&) const { return "fyrewurx"; }
+        QString operator()(const TextParams&) const { return "text"; }
+        QString operator()(const AviParams&) const { return "avi"; }
+        QString operator()(const CommentParams&) const { return "comment"; }
         QString operator()(const StarfieldParams&) const { return "starfield"; }
         QString operator()(const TimescopeParams&) const { return "timescope"; }
         QString operator()(const DotGridParams&) const { return "dotGrid"; }
