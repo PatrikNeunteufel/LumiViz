@@ -297,6 +297,29 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{TimescopeParams{}}) == "timescope");
     }
 
+    TEST_CASE("Movement-builtinRemap ueberlebt den Round-Trip (S44: fuzzify/blocky)")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        MovementParams mp;
+        mp.builtinRemap = 7;   // blocky partial out
+        mp.blend = true;
+        mp.subpixel = false;   // r_trans schliesst 1/2/7 vom Subpixel aus
+        mp.sourceMapped = 2;
+        leaf.params = mp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& p = std::get<MovementParams>(restored.children[0].params);
+        CHECK(p.builtinRemap == 7);
+        CHECK(p.blend == true);
+        CHECK(p.subpixel == false);
+        CHECK(p.sourceMapped == 2);
+        CHECK(p.code.empty());
+    }
+
     TEST_CASE("Starfield-Parameter ueberleben den Round-Trip")
     {
         ChainNode root;

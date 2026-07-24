@@ -14,6 +14,8 @@
 #include <QMutexLocker>
 #include <QDebug>
 
+#include <algorithm>
+
 // =============================================================================
 // Construction
 // =============================================================================
@@ -126,15 +128,33 @@ float VisualizerBase::aspectRatio() const
            static_cast<float>(m_viewportSize.height());
 }
 
+namespace
+{
+/// Mono fallback for stereo-only feeds (chain path/standalones feed only
+/// updateAudioStereo): average L/R — mirrors the channel getters' mono
+/// fallback in the other direction.
+std::vector<float> mixToMono(const std::vector<float>& l, const std::vector<float>& r)
+{
+    const size_t n = std::min(l.size(), r.size());
+    std::vector<float> mix(n);
+    for (size_t i = 0; i < n; ++i) mix[i] = (l[i] + r[i]) * 0.5f;
+    return mix;
+}
+}  // namespace
+
 std::vector<float> VisualizerBase::getSpectrum() const
 {
     QMutexLocker locker(&m_audioMutex);
+    if (m_spectrum.empty() && !m_spectrumL.empty())
+        return mixToMono(m_spectrumL, m_spectrumR);
     return m_spectrum;
 }
 
 std::vector<float> VisualizerBase::getWaveform() const
 {
     QMutexLocker locker(&m_audioMutex);
+    if (m_waveform.empty() && !m_waveformL.empty())
+        return mixToMono(m_waveformL, m_waveformR);
     return m_waveform;
 }
 

@@ -420,6 +420,9 @@ struct MovementParams
     /// r_trans sourcemapped bits: 1 = scatter-write (source pixel is PUSHED to
     /// its target, MAX-blended), 2 = toggle bit 1 on every beat
     int sourceMapped = 0;
+    /// r_trans builtins WITHOUT eval_desc (pixel-index remaps, no d/r formula):
+    /// 1 = "slight fuzzify", 7 = "blocky partial out"; 0 = code/formula path.
+    int builtinRemap = 0;
 };
 
 /**

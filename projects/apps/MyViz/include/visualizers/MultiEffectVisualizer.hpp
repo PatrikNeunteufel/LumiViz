@@ -606,6 +606,7 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_colorfadeShader;
     std::unique_ptr<QOpenGLShaderProgram> m_lutShader;
     std::unique_ptr<QOpenGLShaderProgram> m_warpShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_moveRemapShader;
     std::unique_ptr<QOpenGLShaderProgram> m_feedbackShader;
     std::unique_ptr<QOpenGLShaderProgram> m_mosaicShader;
     std::unique_ptr<QOpenGLShaderProgram> m_grainShader;

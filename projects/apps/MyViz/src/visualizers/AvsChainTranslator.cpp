@@ -128,7 +128,8 @@ ListParams listParamsFrom(const lumi::avs::ListInfo& info)
  * These are the exact AVS point-code strings; our ScriptGridModule now shares
  * AVS' polar convention (d normalised to corner=1, r + pi/2), so they render
  * faithfully. Index 0 (none) plus 1 (slight fuzzify) and 7 (blocky partial out)
- * are not coordinate remaps -> nullptr -> passthrough. `rect` mirrors the AVS
+ * are not coordinate remaps -> nullptr; 1 and 7 map to `builtinRemap`
+ * (per-pixel index remaps, dedicated shader — S44). `rect` mirrors the AVS
  * uses_rect flag; formulas that need it read/write x,y instead of d,r.
  */
 struct MovementFormula
@@ -478,15 +479,30 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             }
             else
             {
-                // Built-in formula: look it up by index; nullptr -> passthrough.
-                const MovementFormula f = movementBuiltinFormula(src.field("effect"));
-                if (f.code == nullptr) return false;
-                p.code = f.code;
-                p.rectCoords = f.rect;
+                // Built-in formula: look it up by index; 1/7 are per-pixel
+                // remaps (builtinRemap), only 0 "none" stays a passthrough.
+                const int effect = src.field("effect");
+                const MovementFormula f = movementBuiltinFormula(effect);
+                if (f.code != nullptr)
+                {
+                    p.code = f.code;
+                    p.rectCoords = f.rect;
+                }
+                else if (effect == 1 || effect == 7)
+                {
+                    p.builtinRemap = effect;
+                }
+                else
+                {
+                    return false;
+                }
             }
             p.wrap = src.field("wrap") != 0;
             p.blend = src.field("blend") != 0;
-            p.subpixel = src.field("subpixel") != 0;
+            // r_trans.cpp:306-309 excludes effects 1/2/7 from subpixel tables.
+            const int fxIdx = p.code.empty() ? p.builtinRemap : src.field("effect");
+            p.subpixel = src.field("subpixel") != 0 && fxIdx != 1 && fxIdx != 2 &&
+                         fxIdx != 7;
             p.sourceMapped = src.field("sourcemapped") & 3;
             out.params = std::move(p);
             return true;

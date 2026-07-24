@@ -143,6 +143,7 @@ struct WriteVisitor
         o["blend"] = p.blend;
         o["subpixel"] = p.subpixel;
         o["sourceMapped"] = p.sourceMapped;
+        o["builtinRemap"] = p.builtinRemap;
     }
     void operator()(const DynamicMovementParams& p) const
     {
@@ -871,6 +872,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.blend = getBool(o, "blend", false);
         p.subpixel = getBool(o, "subpixel", true);
         p.sourceMapped = getInt(o, "sourceMapped", 0);
+        p.builtinRemap = getInt(o, "builtinRemap", 0);
         return p;
     }
     if (type == "dynamicMovement")

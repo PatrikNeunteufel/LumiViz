@@ -170,15 +170,28 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(p.code.find("cos(y * 18)") != std::string::npos);
     }
 
-    TEST_CASE("Movement Nicht-Remap-Builtins (none/fuzzify/blocky) -> Passthrough")
+    TEST_CASE("Movement none -> Passthrough; fuzzify/blocky -> builtinRemap (S44)")
     {
-        for (int effect : {0, 1, 7})
         {
             EffectNode move = builtin(15);
-            move.fields = {{"effect", effect}};
+            move.fields = {{"effect", 0}};
             const TranslationResult t = translateAvsTree(makeParsed({move}));
             REQUIRE(t.root.children.size() == 1);
             CHECK(std::holds_alternative<PassthroughParams>(t.root.children[0].params));
+        }
+        for (int effect : {1, 7})
+        {
+            EffectNode move = builtin(15);
+            move.fields = {{"effect", effect}, {"subpixel", 1}, {"blend", 1}};
+            const TranslationResult t = translateAvsTree(makeParsed({move}));
+            REQUIRE(t.root.children.size() == 1);
+            REQUIRE(std::holds_alternative<MovementParams>(t.root.children[0].params));
+            const auto& p = std::get<MovementParams>(t.root.children[0].params);
+            CHECK(p.builtinRemap == effect);
+            CHECK(p.code.empty());
+            CHECK(p.blend);
+            // r_trans.cpp:306-309: Effekte 1/2/7 sind vom Subpixel ausgeschlossen
+            CHECK_FALSE(p.subpixel);
         }
     }
 

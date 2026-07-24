@@ -1,0 +1,324 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "enabled": true,
+                "name": "Comment",
+                "note": "Comment",
+                "sourceId": 21,
+                "type": "passthrough"
+            },
+            {
+                "blendIn": 0,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "blendIn": 0,
+                        "blendOut": 1,
+                        "bufferIn": 0,
+                        "bufferInInvert": false,
+                        "bufferOut": 0,
+                        "bufferOutInvert": false,
+                        "children": [
+                            {
+                                "blendIn": 0,
+                                "blendOut": 1,
+                                "bufferIn": 0,
+                                "bufferInInvert": false,
+                                "bufferOut": 0,
+                                "bufferOutInvert": false,
+                                "children": [
+                                    {
+                                        "blendIn": 0,
+                                        "blendOut": 1,
+                                        "bufferIn": 0,
+                                        "bufferInInvert": true,
+                                        "bufferOut": 0,
+                                        "bufferOutInvert": true,
+                                        "children": [
+                                            {
+                                                "blend": false,
+                                                "enabled": true,
+                                                "name": "Roto Blitter",
+                                                "rotationSpeed": 1.09375,
+                                                "type": "rotoBlitter",
+                                                "zoom": 1.0302734375
+                                            },
+                                            {
+                                                "audioChannel": 2,
+                                                "beatCode": "beat=beat+1",
+                                                "colorBlend": 1,
+                                                "colorCycleFrames": 60,
+                                                "colors": [
+                                                    16777215
+                                                ],
+                                                "dotSize": 4,
+                                                "enabled": true,
+                                                "frameCode": "t=t-0.05",
+                                                "gradientPreset": "Neon",
+                                                "initCode": "n=800;beat=1",
+                                                "lineBlend": 0,
+                                                "lineWidth": 2,
+                                                "name": "SuperScope",
+                                                "pointCode": "cm=bnot(cm);x=sin(t)*x2;y=cos(t)*y2;\r\nx2=sin(beat+cm)*sin(1+cm)*sin(i*$PI*2);\r\ny2=sin(beat-1+cm)*cos(i*$PI*2);\r\nblue=getspec(0.5,0.8,0);\r\ngreen=sin(t*i)",
+                                                "pointCount": 100,
+                                                "renderMode": 1,
+                                                "type": "superScope"
+                                            },
+                                            {
+                                                "audioChannel": 2,
+                                                "beatCode": "beat=beat+1",
+                                                "colorBlend": 1,
+                                                "colorCycleFrames": 60,
+                                                "colors": [
+                                                    16777215
+                                                ],
+                                                "dotSize": 4,
+                                                "enabled": true,
+                                                "frameCode": "t=t-0.05",
+                                                "gradientPreset": "Neon",
+                                                "initCode": "n=800;beat=0",
+                                                "lineBlend": 0,
+                                                "lineWidth": 2,
+                                                "name": "SuperScope",
+                                                "pointCode": "cm=bnot(cm);x=sin(t)*x2;y=cos(t)*y2;\r\nx2=sin(beat+cm)*sin(1+cm)*sin(i*$PI*2);\r\ny2=sin(beat-1+cm)*cos(i*$PI*2);\r\nblue=getspec(0.5,0.8,0);\r\nred=sin(t*i)",
+                                                "pointCount": 100,
+                                                "renderMode": 1,
+                                                "type": "superScope"
+                                            },
+                                            {
+                                                "enabled": true,
+                                                "name": "Blur",
+                                                "roundUp": false,
+                                                "strength": 3,
+                                                "type": "blur"
+                                            }
+                                        ],
+                                        "clearEveryFrame": true,
+                                        "enabled": true,
+                                        "frameCode": "",
+                                        "inAdjustAlpha": 128,
+                                        "initCode": "",
+                                        "name": "Effect List",
+                                        "onBeatFrames": 27,
+                                        "onBeatRender": true,
+                                        "outAdjustAlpha": 128,
+                                        "type": "list",
+                                        "useCode": true
+                                    },
+                                    {
+                                        "adjustAlpha": 128,
+                                        "blend": 2,
+                                        "dir": 2,
+                                        "enabled": true,
+                                        "name": "Buffer Save",
+                                        "slot": 0,
+                                        "type": "bufferSave"
+                                    },
+                                    {
+                                        "blend": true,
+                                        "enabled": true,
+                                        "name": "Roto Blitter",
+                                        "rotationSpeed": 1.40625,
+                                        "type": "rotoBlitter",
+                                        "zoom": 1.177734375
+                                    },
+                                    {
+                                        "beatCode": "",
+                                        "blend": false,
+                                        "buffern": 0,
+                                        "enabled": true,
+                                        "frameCode": "",
+                                        "initCode": "",
+                                        "name": "Dynamic Movement",
+                                        "nomove": false,
+                                        "pointCode": "r = cos(r * 3)*getspec(0.4,0.8,0)",
+                                        "rectCoords": false,
+                                        "subpixel": true,
+                                        "type": "dynamicMovement",
+                                        "wrap": false,
+                                        "xres": 17,
+                                        "yres": 17
+                                    }
+                                ],
+                                "clearEveryFrame": true,
+                                "enabled": true,
+                                "frameCode": "",
+                                "inAdjustAlpha": 128,
+                                "initCode": "",
+                                "name": "Effect List",
+                                "onBeatFrames": 1,
+                                "onBeatRender": false,
+                                "outAdjustAlpha": 128,
+                                "type": "list",
+                                "useCode": false
+                            },
+                            {
+                                "beatCode": "",
+                                "blend": true,
+                                "buffern": 1,
+                                "enabled": true,
+                                "frameCode": "",
+                                "initCode": "",
+                                "name": "Dynamic Movement",
+                                "nomove": false,
+                                "pointCode": "d=d*2;\r\nr=r;\r\nX=x*x*x*x*y*y*y*y*y*y",
+                                "rectCoords": false,
+                                "subpixel": true,
+                                "type": "dynamicMovement",
+                                "wrap": true,
+                                "xres": 17,
+                                "yres": 17
+                            }
+                        ],
+                        "clearEveryFrame": false,
+                        "enabled": true,
+                        "frameCode": "",
+                        "inAdjustAlpha": 128,
+                        "initCode": "",
+                        "name": "Effect List",
+                        "onBeatFrames": 1,
+                        "onBeatRender": false,
+                        "outAdjustAlpha": 128,
+                        "type": "list",
+                        "useCode": false
+                    },
+                    {
+                        "beatCode": "",
+                        "blend": false,
+                        "buffern": 0,
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Dynamic Movement",
+                        "nomove": false,
+                        "pointCode": "r = cos(r * 3)*getspec(0.4,0.8,0)",
+                        "rectCoords": false,
+                        "subpixel": true,
+                        "type": "dynamicMovement",
+                        "wrap": false,
+                        "xres": 17,
+                        "yres": 17
+                    },
+                    {
+                        "blend": true,
+                        "enabled": true,
+                        "name": "Roto Blitter",
+                        "rotationSpeed": 1.40625,
+                        "type": "rotoBlitter",
+                        "zoom": 1.177734375
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "dir": 2,
+                "enabled": true,
+                "name": "Fast Brightness",
+                "type": "fastBrightness"
+            },
+            {
+                "adjustAlpha": 0,
+                "enabled": true,
+                "lineBlend": 0,
+                "lineWidth": 255,
+                "name": "Set Render Mode",
+                "type": "setRenderMode"
+            },
+            {
+                "audioChannel": 2,
+                "beatCode": "",
+                "colorBlend": 1,
+                "colorCycleFrames": 60,
+                "colors": [
+                    12288
+                ],
+                "dotSize": 4,
+                "enabled": true,
+                "frameCode": "",
+                "gradientPreset": "Neon",
+                "initCode": "n=2",
+                "lineBlend": 0,
+                "lineWidth": 2,
+                "name": "SuperScope",
+                "pointCode": "y=0.5;\r\nx=2*i-1;",
+                "pointCount": 100,
+                "renderMode": 1,
+                "type": "superScope"
+            },
+            {
+                "audioChannel": 2,
+                "beatCode": "",
+                "colorBlend": 1,
+                "colorCycleFrames": 60,
+                "colors": [
+                    12288
+                ],
+                "dotSize": 4,
+                "enabled": true,
+                "frameCode": "",
+                "gradientPreset": "Neon",
+                "initCode": "n=2",
+                "lineBlend": 0,
+                "lineWidth": 2,
+                "name": "SuperScope",
+                "pointCode": "y=-0.5;\nx=2*i-1;",
+                "pointCount": 100,
+                "renderMode": 1,
+                "type": "superScope"
+            },
+            {
+                "beatCode": "drz=(rand(50)-25)/300;\ndt=0.1;\nbc=(bc+1)%8;\nq=if(equal(bc,7),-q,q);\nspeedy=0.5*(q+1)*pi;\ndv=(rand(50)+25)/400;\nq2=if(ds,q2,-q2);ds=q2*0.05;",
+                "blend": false,
+                "buffern": 1,
+                "enabled": true,
+                "frameCode": "ry=ry*0.95+0.05*speedy;\nrz=rz+drz;\nrx=0.4*sin(t);\ncrx=cos(rx);\nsrx=sin(rx);\ncry=cos(ry);\nsry=sin(ry);\ncrz=cos(rz);\nsrz=sin(rz);\nt=t+dt;\ndt=dt*0.97;\nv=v+dv;\n\nfac=fac+ds;ds=if(above(abs(fac-0.5),0.5),0,ds);",
+                "initCode": "q=1;pi=acos(-1);q2=1;",
+                "name": "Dynamic Movement",
+                "nomove": false,
+                "pointCode": "x1=x*d;\ny1=y*d;\nz1=d;\n\nx2=x1*crz-y1*srz;\ny2=x1*srz+y1*crz;\n\nx1=x2*cry+z1*sry;\nz2=-x2*sry+z1*cry;\n\ny1=y2*crx-z2*srx;\nz1=y2*srx+z2*crx;\n\nk=((x1*x1+y1*y1*y1*y1*y1*y1)*fac)+(1-fac)*(x1*x1+y1*y1);\nk=sqrt(k)/k;\nz1=z1*k;\n\nx=abs(atan2(y1, x1))*1.02+0.4;\ny=z1+v;\n\nalpha=1.6-abs((1-fac)*sqrt(z1)+fac*sqrt(sqrt(z1)));",
+                "rectCoords": true,
+                "subpixel": true,
+                "type": "dynamicMovement",
+                "wrap": true,
+                "xres": 32,
+                "yres": 33
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 0,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 0,
+        "type": "list",
+        "useCode": false
+    }
+}

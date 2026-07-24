@@ -176,6 +176,12 @@ inline void parseListBody(Reader& r, EffectNode& node, ParseResult& result,
             const std::int32_t aliasIndex = apeAliasToBuiltin(apeId);
             if (aliasIndex >= 0)
             {
+                // Auch die ID umschreiben: Konsumenten (Chain-Translator)
+                // dispatchen auf `id` — die Roh-ID ist bei Alt-Presets (0.1)
+                // ein Pointer-Wert, bei 2.x eine DLL-Basis-ID; beides ohne
+                // Bedeutung, sobald der Alias aufgeloest ist. `apeId` bleibt
+                // als Herkunft erhalten. (Beleg: Spacefolding, Session 44.)
+                child.id = aliasIndex;
                 child.name = kBuiltinNames[static_cast<std::size_t>(aliasIndex)];
                 decodeBuiltin(aliasIndex, config, child);
             }

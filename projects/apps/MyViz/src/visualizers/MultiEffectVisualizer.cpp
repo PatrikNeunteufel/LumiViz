@@ -86,6 +86,43 @@ void main()
 }
 )";
 
+// AVS Movement builtins WITHOUT eval_desc (r_trans.cpp): per-pixel index
+// remaps. Mode 1 "slight fuzzify" = static +-1 random neighbour (the AVS
+// table is built ONCE per size, :316-323 — hence a position hash, not
+// per-frame noise). Mode 7 "blocky partial out" = 2x2 blocks in a 4x4 raster
+// sample a 7/8 centre zoom on even-aligned coords (:339-358). uBlend is the
+// r_trans 50/50 blend of moved and original.
+const char* kMoveRemapFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform int uMode;
+uniform bool uBlend;
+out vec4 fragColor;
+void main()
+{
+    ivec2 size = textureSize(uTex, 0);
+    ivec2 p = ivec2(gl_FragCoord.xy);
+    ivec2 src = p;
+    if (uMode == 1)
+    {
+        uint h = uint(p.x) * 374761393u + uint(p.y) * 668265263u;
+        h = (h ^ (h >> 13u)) * 1274126177u;
+        src = p + ivec2(int(h % 3u) - 1, int((h / 3u) % 3u) - 1);
+    }
+    else if (uMode == 7)
+    {
+        if ((p.x & 2) == 0 && (p.y & 2) == 0)
+            src = ivec2(size.x / 2 + (((p.x & ~1) - size.x / 2) * 7) / 8,
+                        size.y / 2 + (((p.y & ~1) - size.y / 2) * 7) / 8);
+    }
+    src = clamp(src, ivec2(0), size - 1);
+    vec3 moved = texelFetch(uTex, src, 0).rgb;
+    if (uBlend) moved = (moved + texelFetch(uTex, p, 0).rgb) * 0.5;
+    fragColor = vec4(moved, 1.0);
+}
+)";
+
 // List blend engine (decision E3). Mode values == BlendMode enum; the full AVS
 // set is covered (batch 2, Session 35 added Subtractive/Every-other/XOR/Buffer).
 // Reference math: r_list.cpp render_list in/out switch (o == dst, tfb == src).
@@ -1807,6 +1844,7 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_colorfadeShader = makeProgram(kQuadVertexShader, kColorfadeFragmentShader);
     m_lutShader = makeProgram(kQuadVertexShader, kLutFragmentShader);
     m_warpShader = makeProgram(kWarpVertexShader, kWarpFragmentShader);
+    m_moveRemapShader = makeProgram(kQuadVertexShader, kMoveRemapFragmentShader);
     m_feedbackShader = makeProgram(kQuadVertexShader, kFeedbackFragmentShader);
     m_mosaicShader = makeProgram(kQuadVertexShader, kMosaicFragmentShader);
     m_grainShader = makeProgram(kQuadVertexShader, kGrainFragmentShader);
@@ -2814,7 +2852,18 @@ void MultiEffectVisualizer::runColorModifier(const ChainNode& node,
 void MultiEffectVisualizer::runMovement(const ChainNode& node,
                                         const MovementParams& params)
 {
-    if (params.code.empty()) return;  // built-in formulas -> passthrough (5.4)
+    if (params.builtinRemap != 0)
+    {
+        // per-pixel remap builtins (1 fuzzify / 7 blocky partial out, S44)
+        if (m_moveRemapShader == nullptr) return;
+        m_moveRemapShader->bind();
+        m_moveRemapShader->setUniformValue("uMode", params.builtinRemap);
+        m_moveRemapShader->setUniformValue("uBlend", params.blend);
+        m_moveRemapShader->release();
+        transformPass(*m_moveRemapShader);
+        return;
+    }
+    if (params.code.empty()) return;  // formula "none" -> no-op
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
     // Movement formulas are STATIC (r_trans builds a per-pixel table once per
@@ -5118,7 +5167,9 @@ void MultiEffectVisualizer::runDotPlane(const ChainNode& node, const DotPlanePar
         for (int fx = 0; fx < kN; ++fx)
         {
             const float x = static_cast<float>(fx) / (kN - 1) * 2.0f - 1.0f;
-            const float hgt = spec[static_cast<size_t>(fx * sl / kN)] * 0.8f;
+            // silence (empty spectrum) -> flat plane, never index the vector
+            const float hgt =
+                spec.empty() ? 0.0f : spec[static_cast<size_t>(fx * sl / kN)] * 0.8f;
             const float rx = x * ca - z * sa;   // rotate around the vertical axis
             const float rz = x * sa + z * ca;
             const float wz = rz + 2.5f;          // push away from the camera
