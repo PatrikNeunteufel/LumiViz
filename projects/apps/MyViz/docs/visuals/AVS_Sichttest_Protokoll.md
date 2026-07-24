@@ -1,7 +1,7 @@
 # AVS-Sichttest-Protokoll — Kalibrier-Runde (SSOT Punkt 9)
 
-> **Version:** 0.12.0 (wird laufend nachgeführt)
-> **Datum:** 2026-07-24 (Session 44)
+> **Version:** 0.13.0 (wird laufend nachgeführt)
+> **Datum:** 2026-07-24 (Session 45)
 > **Typ:** Arbeitsprotokoll
 > **Status:** In Arbeit
 > **Sprache:** Deutsch
@@ -19,8 +19,8 @@
 | # | Befund | Ursache (belegt) | Korrektur | Status |
 |---|---|---|---|---|
 | S1 | Presets melden beim Import `"Movement" not supported yet — passthrough` | Movement-Builtin-Tabelle (`AvsChainTranslator.cpp:141`) hat `nullptr` für Index **1 „slight fuzzify"** und **7 „blocky partial out"** — im Original kein `eval_desc`, sondern Spezial-C-Code: 1 = statische 3×3-Zufallsverschiebung (einmal je Fenstergröße, r_trans.cpp:316-323), 7 = 2×2-Blöcke im 4×4-Raster samplen aus 7/8-Zoom (r_trans.cpp:339-358) | ✅ **gefixt (S44):** `MovementParams.builtinRemap` + dedizierter Per-Pixel-Shader (`kMoveRemapFragmentShader`; fuzzify als statischer Positions-Hash statt rand-Tabelle — gleiches Bild, deterministisch); Subpixel für 1/2/7 im Translator abgeschaltet (wie r_trans.cpp:308); Gates: Serializer-Roundtrip + Translator-Test; alle 5 JC-Presets warnungsfrei. **Offen: Sichtvergleich fuzzify/blocky gegen echtes AVS (Patrik)** | ✅ |
-| S2 | `d`/`r` der Movement-Skripte im NDC- statt PIXEL-Raum (aspektabhängig verzerrt) | r_dmove.cpp:307-329 (Befund Session 43, Wormhole) | Koordinaten im Pixel-Raum rechnen | ⬜ offen |
-| S3 | Set-Render-Mode-Zustand persistiert bei uns über Frames/Listen | Original setzt `g_line_blend_mode` je Frame zurück + rettet ihn um Listen (r_list.cpp:433/440/693-694) | Reset je Frame + Save/Restore um Listen | ⬜ offen |
+| S2 | `d`/`r` der Movement-Skripte im NDC- statt PIXEL-Raum (aspektabhängig verzerrt) | r_dmove.cpp:307-329 (Befund Session 43, Wormhole) | ✅ **gefixt (S45):** `ScriptGridModule` rechnet d (= Pixel-Abstand / halbe Diagonale) und r (atan2 über Pixel-Offsets) im PIXEL-Raum wie r_dmove.cpp:324-332 / r_trans.cpp:459-464; x/y bleiben NDC; Rückweg per-Achse. Reine d-Skalierung ist konventionsinvariant — diskriminierend sind Rotation/absolute d (Unit-Gate 200×100 in test_ScriptModules; Sichtbeleg Kalibrier-Preset s2/03: statt dicker verschmierter Ellipse jetzt formstabiler Kreisring) | ✅ |
+| S3 | Set-Render-Mode-Zustand persistiert bei uns über Frames/Listen | Original setzt `g_line_blend_mode` je Frame zurück + rettet ihn um Listen (r_list.cpp:433/440/693-694) | ✅ **gefixt (S45):** Frame-Reset gab es schon (S44/S9); NEU: Save + Reset-auf-Replace beim Listen-Eintritt + Restore am Listen-Ende (`renderList`, analog Host-Gruppen). Dazu die restlichen Draw-Sites auf BLEND_LINE gehoben: `drawScopeShape` (Simple/OscStar/OscRing/RotStars/BassSpin) und `drawDots` (DotGrid wählbar 0-3, DotPlane/Fountain immer) zeichnen jetzt referenztreu über den SRM-Zustand (Default REPLACE statt hart Additiv); MovingParticle blend=3 und Timescope blend=2 (AVS-„Default Blend") = BLEND_LINE (Translator + Panel-Enums erweitert). Nebenbefund gefixt: Subtract-Modi hinterließen Alpha-0-Löcher im FBO (`applyLineBlend` hält Alpha jetzt per Separate-Blend auf dst; Screenshots waren dadurch scheinbar „weiß" — Viewer zeigt Alpha 0 als Hintergrund). Sichtbeleg s3/02: außen gesetzter Subtract überlebt die Liste (schwarze Diagonale im weißen Band) | ✅ |
 | S4 | **CRASH (0xC000041D) bei 6 JC-Presets im Standalone**, erster Frame | `runDotPlane`: bei leerem Spektrum schützte der `sl=1`-Guard nur die Division, `spec[0]` las trotzdem den **leeren** Vektor (`MultiEffectVisualizer.cpp:5121`); leer war das Spektrum wegen S5. Bisektion: Minimal-`.lvfx` nur mit Dot Plane crasht | ✅ **gefixt (S44):** Empty-Guard (Stille → flache Ebene); Verifikation: alle 6 + Minimal-Kette laufen, exit 0 | ✅ |
 | S5 | **Mono-Audio-Puffer leer im Chain-/Standalone-Pfad** — alle Effekte, die `getSpectrum()`/`getWaveform()` (mono) lesen, sahen Stille: `computeAudioBands` → bass/mid/treb=0, Dot Plane flach, RMS=0 (`m_audioLevel`) | AVS-Zwilling des S43-Milk-Loudness-Bugs: `feedSyntheticAudio` (AvsStandalone) und der Chain-Pfad füttern nur `updateAudioStereo`; die Kanal-Getter fielen auf Mono zurück, die Mono-Getter aber **nicht** auf den Stereo-Mix | ✅ **gefixt (S44):** `getSpectrum()`/`getWaveform()` liefern bei leerem Mono-Puffer den L/R-Mix (`VisualizerBase.cpp`) — symmetrisch zu den Kanal-Gettern | ✅ |
 | S6 | `"SVP Loader" not decoded — passthrough` (when i come around.avs) | SVP/UVS-Render-Plugin = externe Binär-DLL — nicht decodierbar, Passthrough ist korrekt | keine (bekannte Grenze; ggf. Doku) | — |
@@ -30,6 +30,7 @@
 | S10 | **SuperScope: „Spektrum fehlt" / 3D-Formen wirken falsch** (EL-VIS6_SUPERSCOPES_3D, Befund Patrik) | AVS `which_ch` ist ein Bitfeld (r_sscope.cpp:232-240): Bits 0-1 = Kanal (0 L, 1 R, ≥2 Center), **Bit 4 = SPEKTRUM statt Waveform als `v`-Quelle**. Unser Translator las den Rohwert als LumiViz-Kanal-Enum: which_ch=4 wurde „Side" (L−R ≈ 0) mit Waveform — `v` blieb praktisch null (Beleg: first3d_spectrum flach trotz synthetischem Audio) | ✅ **gefixt (S44):** `SuperScopeParams.spectrumSource` (Bit 4) + Kanal aus Bits 0-1; Host schaltet `SuperscopeAudioSource` um; Serializer-Feld + Panel-Checkbox; Translator-Gate (which_ch 4/2/6). Sichtnachweis: Spektrum-Berge sichtbar. **Amplituden-Skala Spektrum ggf. sichtkalibrieren** (AVS-Bytes 0..255 vs. Modul 0..1) | ✅ |
 | S11 | **BASS vs. Winamp-Audioanalyse** (Frage Patrik: „Eigenheiten von bass.dll berücksichtigen?" — Symptom: Spektrum wirkt einseitig, links flach) | Original-Pipeline liegt im Ref (`winamp_orig/Src/Winamp/VIS.cpp:719-745` + `FFT.cpp`): **512er-Real-FFT ohne Fensterung über 8-bit-Sample-Tops, Byte = sqrt(re²+im²)/16 LINEAR** (der Log kommt erst in AVS via g_logtab), 256 Bins → je 2 Positionen (0..511, leicht geglättet), **Positionen 512..575 = reine Abkling-Füllung (~0)**. Abgleich: (a) unser `kSpecGain=8` sättigt bei Magnitude 0,125 ≈ Winamps Sättigungspunkt 0,126 — Amplitude war schon original-nah (S38-Kalibrierung jetzt hergeleitet); das „flache Links" bei lauter Musik ist auch im Original gesättigt. (b) **Frequenzachse war falsch:** wir streckten 512 echte Bins über 576 Positionen (~12 % gestaucht + Phantomwerte in den Fade-Bändern) | ✅ **gefixt (S44):** Position p = unser Bin p (BASS-FFT1024 = exakt doppelte Winamp-Auflösung), Positionen ≥ 512 → 0 wie im Original. Offen/notiert: Winamp nutzt 8-bit-Tops + keine Fensterung (BASS float — feinere Dynamik, gleiches Leakage-Verhalten) — nur relevant, falls Feindifferenzen sichtbar bleiben | ✅ |
 | S12 | **SuperScope-`v` blieb trotz S10/S11 „unverändert"** (Nachtest Patrik) | `v` wurde im Chain-Pfad aus den ROHEN Float-Arrays gerechnet (BASS-Magnituden 0..1, `sampleCount` = Waveform-Länge → 512er-Spektrum übers Ende indiziert) statt aus den visdata-Bytes. Original (r_sscope.cpp:284-289): **v = interpoliertes visdata-Byte/128 − 1 für BEIDE Quellen** — Spektrum-Stille ⇒ v = −1 (nicht 0!), Center-Kanal per char-Arithmetik | ✅ **gefixt (S44):** `SuperscopeModule::visdataValue()` — v im Lua-/Chain-Pfad exakt nach r_sscope (Quelle/Kanal auf den 576er-Blöcken, lineare Interpolation, XOR, /128−1, inkl. Center-char-Eigenheit); Float-Arrays bleiben Standalone-Preset-Pfad. Sichtnachweis first3d_spectrum: Zickzack-Teppich (sin(1)-Zähne bei Stille) + Musik-Modulation — Formel-treu; finale Bestätigung Seite-an-Seite | ✅ |
+| S13 | **SuperScope zeichnet aspektquadratisch** (Befund Session 45 bei der S2-Kalibrierung): unser Scope-Pfad bildet x/y auf ein QUADRAT ab (Kreis-Skript ⇒ Kreis auf 800×600) — echtes AVS skaliert x mit w/2 und y mit h/2 (r_sscope), ein „Kreis"-Skript ist dort eine 4:3-**Ellipse** | Seite-an-Seite-relevant: alle Scope-Formen weichen auf nicht-quadratischen Fenstern ab | ⬜ Urteil/Fix offen (erst Seite-an-Seite bestätigen, dann ggf. Scope-Mapping auf per-Achse NDC umstellen) |
 
 **Wichtige Folge von S5:** Die S43-Liste „10 schwarze ref-Korpus-Presets"
 (SSOT Punkt 9) ist womöglich teilweise ein **Standalone-Artefakt** — mit
@@ -153,7 +154,25 @@ Bisektion der Schwarz-/Sättigungs-Fälle. Die Häufung „schwarz/zu hell" in
 dieser Sammlung deutet auf 1–2 gemeinsame Ursachen in der S7-Familie
 [Blend-Konvergenz] plus mögliche fehlende Effekte.)*
 
-## 6. Changelog
+## 6. Kalibrier-Presets (`asset/calibration/avs/`)
+
+Seit Session 45: Minimal-Presets je Befund-Cluster (Pendant zu
+`asset/calibration/milkdrop/`), doppelt als **binäres `.avs`** (läuft auch in
+echtem AVS/Winamp — Seite-an-Seite) und **`.lvfx`-Zwilling** (eingefrorene
+übersetzte Chain = Parser-/Translator-Prüfstand). Werkzeuge und
+Erwartungsbilder: `asset/calibration/avs/README.md` (+ README je Ordner).
+
+- Erzeugen: `python make_calibration_presets.py` · Zwillinge:
+  `python freeze_lvfx_twins.py [--verify|--refreeze]`
+- Ordner: `s2_movement/` (3) · `s3_srm/` (2) · `s9_blend/` (10, je
+  BLEND_LINE-Modus) · `s10_superscope/` (6, which_ch-Matrix) · `s7_listen/` (1,
+  XOR/50-50-Replikat für das S7-Urteil)
+- Passendes Test-Audio (deterministisch, WAV=Master): `…\cmake\TestAudio\`
+- Methodik-Falle: Presets mit Root-Clear=aus erben beim Preset-Wechsel im
+  Standalone den Framebuffer des Vorgängers (AVS-Verhalten) — für saubere
+  Screenshots einzeln laden.
+
+## 7. Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
@@ -169,3 +188,4 @@ dieser Sammlung deutet auf 1–2 gemeinsame Ursachen in der S7-Familie
 | 0.10.0 | 2026-07-24 | **S10 gefunden + gefixt** (EL-VIS6_SUPERSCOPES_3D, Befund Patrik „Spektrum fehlt/3D passt nicht"): SuperScope-`which_ch` ist Bitfeld — Bit 4 = Spektrum-Quelle, Bits 0-1 = Kanal; vorher als Kanal-Enum „Side" fehlgelesen → v≈0. Sichtnachweis first3d_spectrum |
 | 0.11.0 | 2026-07-24 | **S11 gefunden + gefixt** (Frage Patrik BASS↔Winamp): Winamp-Spektrum-Vertrag aus `winamp_orig`-Ref hergeleitet (linear /16, 256 Bins verdoppelt, 64 Fade-Bytes) — Frequenzachse korrigiert (Position=Bin 1:1, ≥512→0); kSpecGain=8 als Winamp-Sättigungsäquivalent bestätigt |
 | 0.12.0 | 2026-07-24 | **S12 gefunden + gefixt** (Nachtest Patrik „noch nicht wirklich geändert"): SuperScope-`v` im Chain-Pfad jetzt AVS-treu aus den visdata-Bytes (r_sscope-Formel, v=Byte/128−1, Stille⇒−1) statt aus rohen Float-Arrays; Sichtnachweis Zickzack-Teppich first3d_spectrum |
+| 0.13.0 | 2026-07-24 | **S2 + S3 gefixt** (Session 45, Details in der Tabelle) · **Kalibrier-Infrastruktur** (§6): 22 Minimal-`.avs` in `asset/calibration/avs/` (Writer `make_calibration_presets.py`) + `.lvfx`-Zwillinge als Parser-/Translator-Prüfstand (`freeze_lvfx_twins.py --verify`, GRÜN 22/22) · **S13 notiert** (SuperScope-Aspekt) · Werkzeug-Fixes AvsStandalone: Screenshot-Namen kollidierten zwischen `.avs`/`.lvfx`-Zwilling (Endung jetzt im Namen), Screenshots als RGB ohne Alpha (Alpha-0-Pixel wirkten im Viewer als „weiße" Phantom-Linien) · Tests 413/413, alle 3 Builds grün |

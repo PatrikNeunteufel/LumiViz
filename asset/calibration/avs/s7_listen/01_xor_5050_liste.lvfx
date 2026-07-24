@@ -1,0 +1,72 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz MultiEffect"
+  },
+  "root": {
+    "blendIn": 0,
+    "blendOut": 1,
+    "bufferIn": 0,
+    "bufferInInvert": false,
+    "bufferOut": 0,
+    "bufferOutInvert": false,
+    "children": [
+      {
+        "blendIn": 9,
+        "blendOut": 2,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+          {
+            "blend": false,
+            "builtinRemap": 0,
+            "code": "d=d*0.9",
+            "enabled": true,
+            "name": "Movement",
+            "rectCoords": false,
+            "sourceMapped": 0,
+            "subpixel": true,
+            "type": "movement",
+            "wrap": false
+          },
+          {
+            "channel": 0,
+            "colors": [
+              16777215
+            ],
+            "enabled": true,
+            "name": "Oscilliscope Star",
+            "position": 0,
+            "rot": 5,
+            "size": 10,
+            "type": "oscStar"
+          }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+      }
+    ],
+    "clearEveryFrame": false,
+    "enabled": true,
+    "frameCode": "",
+    "inAdjustAlpha": 0,
+    "initCode": "",
+    "name": "Effect List",
+    "onBeatFrames": 1,
+    "onBeatRender": false,
+    "outAdjustAlpha": 0,
+    "type": "list",
+    "useCode": false
+  }
+}

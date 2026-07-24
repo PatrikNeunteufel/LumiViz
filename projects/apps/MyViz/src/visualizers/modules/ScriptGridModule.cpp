@@ -22,8 +22,6 @@ using scripting::ScriptSlotHost;
 using Slot = ScriptSlotHost::Slot;
 
 namespace {
-constexpr double kSqrt2 = 1.41421356237309504880;
-constexpr double kInvSqrt2 = 0.70710678118654752440;
 constexpr double kHalfPi = 1.57079632679489661923;
 }  // namespace
 
@@ -150,6 +148,16 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
         return;
     }
 
+    // AVS polar convention (r_trans.cpp:459-464 / r_dmove.cpp:324-332): d and r
+    // live in PIXEL space — d = pixel distance from center over the half
+    // diagonal (corner = 1), r = atan2 over pixel offsets (+pi/2). Only x/y are
+    // NDC. On square surfaces this equals the former NDC math; on non-square
+    // ones it removes the aspect distortion (S2: circles stay circles).
+    const double halfW = width > 0.0f ? width * 0.5 : 1.0;
+    const double halfH = height > 0.0f ? height * 0.5 : 1.0;
+    const double maxD = std::sqrt(halfW * halfW + halfH * halfH);
+    const double invMaxD = 1.0 / maxD;
+
     m_field.resize(static_cast<std::size_t>(m_xres) * static_cast<std::size_t>(m_yres));
     std::size_t idx = 0;
     for (int gy = 0; gy < m_yres; ++gy)
@@ -158,13 +166,10 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
         for (int gx = 0; gx < m_xres; ++gx, ++idx)
         {
             const double x = static_cast<double>(gx) / (m_xres - 1) * 2.0 - 1.0;
-            // AVS polar convention (r_trans.cpp render loop): d is normalised so
-            // the corner maps to 1 (grid corner dist = sqrt(2)), and r carries a
-            // +pi/2 offset. Both are undone on the way back below. This makes the
-            // built-in movement formulas and user polar code AVS-faithful; pure
-            // scale/rotate stay identical (the factors cancel).
-            const double d = std::sqrt(x * x + y * y) * kInvSqrt2;
-            const double r = std::atan2(y, x) + kHalfPi;
+            const double xd = x * halfW;
+            const double yd = y * halfH;
+            const double d = std::sqrt(xd * xd + yd * yd) * invMaxD;
+            const double r = std::atan2(yd, xd) + kHalfPi;
 
             engine.setNumber("x", x);
             engine.setNumber("y", y);
@@ -187,10 +192,11 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
             }
             else
             {
-                const double dOut = engine.number("d") * kSqrt2;  // denormalise
+                // back-transform in pixel space, then per-axis to NDC
+                const double dPix = engine.number("d") * maxD;
                 const double rOut = engine.number("r") - kHalfPi;
-                out.u = static_cast<float>(std::cos(rOut) * dOut);
-                out.v = static_cast<float>(std::sin(rOut) * dOut);
+                out.u = static_cast<float>(std::cos(rOut) * dPix / halfW);
+                out.v = static_cast<float>(std::sin(rOut) * dPix / halfH);
             }
             out.alpha = m_scriptSetsAlpha
                             ? std::clamp(static_cast<float>(engine.number("alpha")),

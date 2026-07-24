@@ -801,7 +801,9 @@ struct StarfieldParams
 struct TimescopeParams
 {
     uint32_t color = 0xFFFFFF;  ///< tint 0x00RRGGBB
-    int blend = 0;              ///< 0 replace, 1 additive, 2 50/50
+    /// 0 replace, 1 additive, 2 50/50, 3 BLEND_LINE (folgt dem Set-Render-Mode-
+    /// Zustand — AVS-Default "Default Blend", r_timescope.cpp:147-148, S3)
+    int blend = 3;
     int channel = 2;           ///< 0 L, 1 R, 2 center
     int bands = 576;           ///< vertical spectrum resolution
 };
@@ -814,7 +816,9 @@ struct DotGridParams
     int spacing = 8;   ///< grid spacing (px)
     int xMove = 128;   ///< horizontal scroll (fixed-point /256 per frame)
     int yMove = 128;   ///< vertical scroll
-    int blend = 0;     ///< 0 replace, 1 additive, 2 50/50
+    /// 0 replace, 1 additive, 2 50/50, 3 BLEND_LINE (SRM-Zustand,
+    /// r_dotgrid.cpp:151-159, S3)
+    int blend = 0;
 };
 
 /** AVS "Render / Dot Plane" (ID 1): a rotating audio-reactive point plane, height

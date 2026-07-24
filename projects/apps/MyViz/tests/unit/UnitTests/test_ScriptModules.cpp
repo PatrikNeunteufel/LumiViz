@@ -118,6 +118,45 @@ TEST_CASE("ScriptGridModule: Rotation um 90 Grad im Polar-Modus")
     CHECK(right.v == doctest::Approx(1.0f).epsilon(0.001));
 }
 
+TEST_CASE("ScriptGridModule: d/r im PIXEL-Raum auf nicht-quadratischer Flaeche (S2)")
+{
+    // r_dmove.cpp:324-332 / r_trans.cpp:459-464: d = Pixel-Abstand / halbe
+    // Diagonale, r = atan2 ueber Pixel-Offsets. Flaeche 200x100: halfW=100,
+    // halfH=50, maxD=sqrt(100^2+50^2)=111.8034. Reine d-Skalierung ist in
+    // beiden Konventionen identisch — diskriminierend sind Rotation und
+    // absolute d-Werte.
+    ScriptGridModule grid;
+    grid.setGridSize(3, 3);
+
+    SUBCASE("Identitaet bleibt Identitaet")
+    {
+        grid.setPointCode("d=d");
+        grid.execute(200.0f, 100.0f, false, 0.016f);
+        CHECK(grid.node(0, 0).u == doctest::Approx(-1.0f).epsilon(0.001));
+        CHECK(grid.node(0, 0).v == doctest::Approx(-1.0f).epsilon(0.001));
+    }
+
+    SUBCASE("Rotation ist starr in Pixeln: rechts (100 px) -> oben (100 px = 2*halfH)")
+    {
+        grid.setPointCode("r=r+$PI/2");
+        grid.execute(200.0f, 100.0f, false, 0.016f);
+        const GridNode& right = grid.node(2, 1);
+        CHECK(right.u == doctest::Approx(0.0f).epsilon(0.001));
+        // NDC-Bug lieferte hier 1.0 (Rotation im normierten Quadrat)
+        CHECK(right.v == doctest::Approx(2.0f).epsilon(0.001));
+    }
+
+    SUBCASE("absolutes d: 0.5 = halbe Diagonale in Pixeln")
+    {
+        grid.setPointCode("d=0.5");
+        grid.execute(200.0f, 100.0f, false, 0.016f);
+        const GridNode& right = grid.node(2, 1);
+        // 0.5 * 111.8034 px / halfW = 0.559 (NDC-Bug: 0.707)
+        CHECK(right.u == doctest::Approx(0.559017f).epsilon(0.001));
+        CHECK(right.v == doctest::Approx(0.0f).epsilon(0.001));
+    }
+}
+
 TEST_CASE("ScriptGridModule: alpha nur wenn im Skript erwaehnt")
 {
     ScriptGridModule grid;

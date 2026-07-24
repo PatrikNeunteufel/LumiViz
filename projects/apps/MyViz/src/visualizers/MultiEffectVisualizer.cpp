@@ -2467,6 +2467,11 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
     }
 
     // --- Children render on the list surface
+    // S3 (r_list.cpp:693-694/744): jede Liste rettet den Linien-Blend-Modus,
+    // setzt ihn beim Eintritt auf REPLACE zurueck und stellt ihn am Ende
+    // wieder her — ein Set Render Mode wirkt nur bis zum Ende SEINER Liste.
+    const RenderMode savedRenderMode = m_renderMode;
+    m_renderMode = RenderMode{};
     m_surfaceStack.push_back(&runtime.surface);
     bindActive();
     for (const ChainNode& child : node.children)
@@ -2475,6 +2480,7 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
     }
     active().current()->release();
     m_surfaceStack.pop_back();
+    m_renderMode = savedRenderMode;
 
     // --- Out-blend: list buffer -> parent
     if (params.blendOut != BlendMode::Ignore)
@@ -2597,6 +2603,11 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
 
     if (!freezeFrame)
     {
+        // S3-Konsistenz: Gruppen sind eigenstaendige Sub-Visuals — der
+        // Linien-Blend-Modus startet innen auf REPLACE und leckt nicht heraus
+        // (gleiches Save/Reset/Restore wie renderList).
+        const RenderMode savedRenderMode = m_renderMode;
+        m_renderMode = RenderMode{};
         m_surfaceStack.push_back(&runtime.surface);
         bindActive();
         for (const ChainNode& child : node.children)
@@ -2605,6 +2616,7 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
         }
         active().current()->release();
         m_surfaceStack.pop_back();
+        m_renderMode = savedRenderMode;
     }
 
     m_activePool = prevPool;
@@ -3359,43 +3371,50 @@ void MultiEffectVisualizer::runSetRenderMode(const SetRenderModeParams& params)
 
 void MultiEffectVisualizer::applyLineBlend(int mode, int adjustAlpha)
 {
-    // GL-Pendants der AVS BLEND_LINE-Modi (r_defs.h:267-283, S9).
+    // GL-Pendants der AVS BLEND_LINE-Modi (r_defs.h:267-283, S9). Der
+    // Alpha-Kanal wird IMMER auf dst gehalten (Separate-Blend: ADD, 0*src +
+    // 1*dst): AVS kennt kein Alpha, unsere Surfaces fuehren kanonisch 1.0 —
+    // die Subtract-Modi hatten sonst Alpha-0-Loecher hinterlassen (Befund
+    // Session 45: "transparente Diagonale" im Screenshot).
     auto* f = QOpenGLContext::currentContext()->functions();
     f->glEnable(GL_BLEND);
-    f->glBlendEquation(GL_FUNC_ADD);
+    f->glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+    const auto funcRgb = [f](GLenum src, GLenum dst) {
+        f->glBlendFuncSeparate(src, dst, GL_ZERO, GL_ONE);
+    };
     switch (mode)
     {
-        case 0:  f->glBlendFunc(GL_ONE, GL_ZERO); break;               // replace
+        case 0:  funcRgb(GL_ONE, GL_ZERO); break;                      // replace
         case 2:                                                         // maximum
-            f->glBlendEquation(GL_MAX);
-            f->glBlendFunc(GL_ONE, GL_ONE);
+            f->glBlendEquationSeparate(GL_MAX, GL_FUNC_ADD);
+            funcRgb(GL_ONE, GL_ONE);
             break;
         case 3:                                                         // 50/50
-            f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+            funcRgb(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
             f->glBlendColor(0.0f, 0.0f, 0.0f, 0.5f);
             break;
         case 4:                                                         // fb - c
-            f->glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
-            f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            f->glBlendEquationSeparate(GL_FUNC_REVERSE_SUBTRACT, GL_FUNC_ADD);
+            funcRgb(GL_SRC_ALPHA, GL_ONE);
             break;
         case 5:                                                         // c - fb
-            f->glBlendEquation(GL_FUNC_SUBTRACT);
-            f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            f->glBlendEquationSeparate(GL_FUNC_SUBTRACT, GL_FUNC_ADD);
+            funcRgb(GL_SRC_ALPHA, GL_ONE);
             break;
-        case 6:  f->glBlendFunc(GL_DST_COLOR, GL_ZERO); break;         // multiply
+        case 6:  funcRgb(GL_DST_COLOR, GL_ZERO); break;                // multiply
         case 7:                                                         // adjustable
-            f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+            funcRgb(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
             f->glBlendColor(0.0f, 0.0f, 0.0f,
                             static_cast<float>(std::clamp(adjustAlpha, 0, 255)) /
                                 255.0f);
             break;
         case 9:                                                         // minimum
-            f->glBlendEquation(GL_MIN);
-            f->glBlendFunc(GL_ONE, GL_ONE);
+            f->glBlendEquationSeparate(GL_MIN, GL_FUNC_ADD);
+            funcRgb(GL_ONE, GL_ONE);
             break;
         // 8 (xor) ist mit Fixed-Function-Blending nicht darstellbar — bewusster
         // Additiv-Fallback (Notiz S9); 1 = additiv = Default.
-        default: f->glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;
+        default: funcRgb(GL_SRC_ALPHA, GL_ONE); break;
     }
 }
 
@@ -4105,15 +4124,20 @@ void MultiEffectVisualizer::drawScopeShape(
     if (pts.size() < (dots ? 1u : 2u)) return;
     auto* f = QOpenGLContext::currentContext()->functions();
     f->glEnable(GL_BLEND);
-    f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);  // additive (AVS scope default)
+    // S3/S9: die Referenz-Scopes zeichnen IMMER ueber BLEND_LINE
+    // (r_simple/r_oscstar/r_oscring/r_rotstar/r_bspin via linedraw.cpp) —
+    // Default ist REPLACE, additiv nur wenn ein Set Render Mode es sagt.
+    applyLineBlend(m_renderMode.lineBlend, m_renderMode.alpha);
     lumi::render::ScopeRenderer::Params rp;
     rp.mode = dots ? lumi::modules::SuperscopeRenderMode::Dots
                    : lumi::modules::SuperscopeRenderMode::Lines;
-    rp.lineWidth = 1.0f;
+    rp.lineWidth = (m_renderMode.set && m_renderMode.lineWidth > 0)
+                       ? static_cast<float>(m_renderMode.lineWidth)
+                       : 1.0f;
     rp.dotSize = 2.0f;
     rp.glowEnabled = false;
     m_scopeRenderer.draw(pts, rp);
-    f->glDisable(GL_BLEND);
+    resetLineBlend();
 }
 
 void MultiEffectVisualizer::runSimpleScope(const ChainNode& node,
@@ -5176,7 +5200,10 @@ void MultiEffectVisualizer::runMovingParticle(const ChainNode& node,
     {
         case 0:  f->glBlendFunc(GL_ONE, GL_ZERO); break;              // replace
         case 2:  f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); alpha = 0.5f; break;  // 50/50
-        default: f->glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;        // additive / line
+        case 3:                                                       // BLEND_LINE (r_parts.cpp:153/186 — folgt dem SRM-Zustand, S3)
+            applyLineBlend(m_renderMode.lineBlend, m_renderMode.alpha);
+            break;
+        default: f->glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;        // additive
     }
 
     lumi::modules::SuperscopePoint pt;
@@ -5194,7 +5221,7 @@ void MultiEffectVisualizer::runMovingParticle(const ChainNode& node,
     rp.dotSize = std::clamp(sz, 1.0f, 128.0f);
     rp.glowEnabled = false;
     m_scopeRenderer.draw(points, rp);
-    f->glDisable(GL_BLEND);
+    resetLineBlend();
 }
 
 void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
@@ -5501,6 +5528,12 @@ void MultiEffectVisualizer::runTimescope(const ChainNode& node,
         f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
         f->glBlendColor(0.0f, 0.0f, 0.0f, 0.5f);  // 50/50
     }
+    else if (params.blend == 3)
+    {
+        // BLEND_LINE (r_timescope.cpp:147-148, AVS-Default) — folgt SRM (S3)
+        f->glEnable(GL_BLEND);
+        applyLineBlend(m_renderMode.lineBlend, m_renderMode.alpha);
+    }
     else
     {
         f->glDisable(GL_BLEND);
@@ -5519,28 +5552,40 @@ void MultiEffectVisualizer::runTimescope(const ChainNode& node,
     m_timescopeShader->release();
 
     f->glDisable(GL_SCISSOR_TEST);
-    f->glDisable(GL_BLEND);
+    resetLineBlend();
     pair.current()->release();
     bindActive();
 }
 
-namespace {
-// Draw a batch of points additively via the scope renderer (Dot renderers).
-void drawDots(lumi::render::ScopeRenderer& renderer,
-              const std::vector<lumi::modules::SuperscopePoint>& points, float dotSize)
+// Draw a batch of points via the scope renderer (Dot renderers). `blend`:
+// 0 replace, 1 additive, 2 50/50, 3 BLEND_LINE = dem SRM-Zustand folgen
+// (S3/S9; r_dotpln/r_dotfnt zeichnen immer BLEND_LINE, r_dotgrid waehlbar).
+void MultiEffectVisualizer::drawDots(
+    const std::vector<lumi::modules::SuperscopePoint>& points, float dotSize,
+    int blend)
 {
-    if (points.empty() || !renderer.ready()) return;
+    if (points.empty() || !m_scopeRenderer.ready()) return;
     auto* f = QOpenGLContext::currentContext()->functions();
     f->glEnable(GL_BLEND);
-    f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    switch (blend)
+    {
+        case 0:  f->glBlendFunc(GL_ONE, GL_ZERO); break;
+        case 1:  f->glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;
+        case 2:
+            f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+            f->glBlendColor(0.0f, 0.0f, 0.0f, 0.5f);
+            break;
+        default: applyLineBlend(m_renderMode.lineBlend, m_renderMode.alpha); break;
+    }
     lumi::render::ScopeRenderer::Params rp;
     rp.mode = lumi::modules::SuperscopeRenderMode::Dots;
     rp.dotSize = dotSize;
     rp.glowEnabled = false;
-    renderer.draw(points, rp);
-    f->glDisable(GL_BLEND);
+    m_scopeRenderer.draw(points, rp);
+    resetLineBlend();
 }
 
+namespace {
 // 5-stop colour gradient (Dot Plane/Fountain), t in [0,1] -> rgb.
 QVector3D grad5(const uint32_t (&colors)[5], float t)
 {
@@ -5596,7 +5641,7 @@ void MultiEffectVisualizer::runDotGrid(const ChainNode& node, const DotGridParam
             pts.push_back(p);
         }
     }
-    drawDots(m_scopeRenderer, pts, 2.0f);
+    drawDots(pts, 2.0f, params.blend);
 }
 
 void MultiEffectVisualizer::runDotPlane(const ChainNode& node, const DotPlaneParams& params)
@@ -5635,7 +5680,7 @@ void MultiEffectVisualizer::runDotPlane(const ChainNode& node, const DotPlanePar
             pts.push_back(p);
         }
     }
-    drawDots(m_scopeRenderer, pts, 2.0f);
+    drawDots(pts, 2.0f);
 }
 
 void MultiEffectVisualizer::runDotFountain(const ChainNode& node,
@@ -5678,7 +5723,7 @@ void MultiEffectVisualizer::runDotFountain(const ChainNode& node,
         p.x = sx; p.y = sy; p.r = c.x(); p.g = c.y(); p.b = c.z(); p.a = 1.0f;
         pts.push_back(p);
     }
-    drawDots(m_scopeRenderer, pts, 2.0f);
+    drawDots(pts, 2.0f);
 }
 
 void MultiEffectVisualizer::runChannelShift(const ChainNode& node,

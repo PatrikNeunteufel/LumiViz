@@ -2674,14 +2674,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<TimescopeParams>(n.params).color = v; });
         addInt(tr("Bands"), p->bands, 1, 576, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).bands = v; });
         addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).channel = v; });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).blend = v; });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line (SRM)"}, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).blend = v; });
     }
     else if (auto* p = std::get_if<DotGridParams>(&params))
     {
         addInt(tr("Spacing"), p->spacing, 2, 128, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).spacing = v; });
         addInt(tr("X move"), p->xMove, -1024, 1024, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).xMove = v; });
         addInt(tr("Y move"), p->yMove, -1024, 1024, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).yMove = v; });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).blend = v; });
+        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line (SRM)"}, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).blend = v; });
         if (!p->colors.empty())
             addColor(tr("Color 1"), p->colors[0], [](ChainNode& n, uint32_t v) { std::get<DotGridParams>(n.params).colors[0] = v; });
     }

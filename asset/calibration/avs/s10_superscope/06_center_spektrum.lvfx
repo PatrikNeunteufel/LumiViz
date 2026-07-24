@@ -1,0 +1,49 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz MultiEffect"
+  },
+  "root": {
+    "blendIn": 0,
+    "blendOut": 1,
+    "bufferIn": 0,
+    "bufferInInvert": false,
+    "bufferOut": 0,
+    "bufferOutInvert": false,
+    "children": [
+      {
+        "audioChannel": 2,
+        "beatCode": "",
+        "colorBlend": 1,
+        "colorCycleFrames": 60,
+        "colors": [
+          16777215
+        ],
+        "dotSize": 4,
+        "enabled": true,
+        "frameCode": "",
+        "gradientPreset": "Neon",
+        "initCode": "n=200",
+        "lineBlend": 0,
+        "lineWidth": 2,
+        "name": "SuperScope",
+        "pointCode": "x=2*i-1; y=-v*0.8",
+        "pointCount": 100,
+        "renderMode": 1,
+        "spectrumSource": true,
+        "type": "superScope"
+      }
+    ],
+    "clearEveryFrame": true,
+    "enabled": true,
+    "frameCode": "",
+    "inAdjustAlpha": 0,
+    "initCode": "",
+    "name": "Effect List",
+    "onBeatFrames": 1,
+    "onBeatRender": false,
+    "outAdjustAlpha": 0,
+    "type": "list",
+    "useCode": false
+  }
+}

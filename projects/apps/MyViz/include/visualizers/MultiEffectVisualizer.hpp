@@ -496,8 +496,13 @@ private:
     /// Draw an embedded (base64) image over the frame, blended.
     void drawEmbeddedImage(LeafRuntime& rt, const std::string& imageData, int blend,
                            bool keepAspect);
-    /// Draw a scope point-list (additive) via the shared ScopeRenderer.
+    /// Draw a scope point-list via the shared ScopeRenderer. Honors an active
+    /// Set Render Mode (S3/S9: BLEND_LINE + line width); additive otherwise.
     void drawScopeShape(const std::vector<lumi::modules::SuperscopePoint>& pts, bool dots);
+    /// Dot-batch variant (Dot Grid/Plane/Fountain). blend: 0 replace,
+    /// 1 additive, 2 50/50, 3 BLEND_LINE (folgt SRM — Referenz-Default).
+    void drawDots(const std::vector<lumi::modules::SuperscopePoint>& pts, float dotSize,
+                  int blend = 3);
     void runDynamicMovement(const lumi::multieffect::ChainNode& node,
                             const lumi::multieffect::DynamicMovementParams& params);
     /** Shared grid-warp: run the module, build the mesh, sample current→partner. */
@@ -710,8 +715,9 @@ private:
     {
         bool set = false;    ///< a Set Render Mode node applied this frame
         int lineWidth = 1;   ///< line width for following scopes (px)
-        /// 0 replace, 1 additive, 2 50/50 — AVS' g_line_blend_mode starts as
-        /// REPLACE; additive only when a Set Render Mode node switches it.
+        /// AVS BLEND_LINE 0..9 (r_defs.h:267-283, S9). g_line_blend_mode
+        /// starts as REPLACE (0), is reset per frame and saved/reset/restored
+        /// around every list (r_list.cpp:693-694/744, S3).
         int lineBlend = 0;
         int alpha = 128;     ///< Adjustable-blend alpha 0..255
     };

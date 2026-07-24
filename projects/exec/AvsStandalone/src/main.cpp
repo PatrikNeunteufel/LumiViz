@@ -284,13 +284,22 @@ private:
 
         const FrameStats stats = computeStats(rgba, w, h);
         QImage img(rgba.data(), w, h, w * 4, QImage::Format_RGBA8888);
+        // fileName inkl. Endung (Punkt -> Unterstrich): .avs und .lvfx-Zwilling
+        // teilen den Basisnamen — completeBaseName liess den Zwilling den
+        // Screenshot des .avs ueberschreiben (Befund Session 45).
         const QString base = m_presets.isEmpty()
                                  ? QStringLiteral("frame")
-                                 : QFileInfo(m_presets[m_index]).completeBaseName();
+                                 : QFileInfo(m_presets[m_index])
+                                       .fileName()
+                                       .replace(QLatin1Char('.'), QLatin1Char('_'));
         QDir().mkpath(m_shotDir);
         const QString file = QStringLiteral("%1/%2_%3.png").arg(m_shotDir, base, tag);
-        // glReadPixels liefert Zeile 0 = unten → fuer die PNG-Ansicht spiegeln
-        img.flipped(Qt::Vertical).save(file);
+        // glReadPixels liefert Zeile 0 = unten → fuer die PNG-Ansicht spiegeln.
+        // RGB ohne Alpha speichern: FBO-Alpha ist kein Bildinhalt — Alpha-0-
+        // Pixel wurden im Viewer als "weisse" Phantom-Linien angezeigt (S45).
+        img.flipped(Qt::Vertical)
+            .convertToFormat(QImage::Format_RGB888)
+            .save(file);
         std::printf("[Standalone] Screenshot: %s — %s\n", qPrintable(file),
                     qPrintable(stats.describe()));
         return stats;

@@ -755,6 +755,14 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(p.spacing == 12);
         CHECK(p.xMove == 64);
         CHECK(p.blend == 1);
+
+        // blend=3 = BLEND_LINE (SRM, S3) wird 1:1 durchgereicht
+        EffectNode dg2 = builtin(17);
+        dg2.colors = {0x000000FF};
+        dg2.fields = {{"num_colors", 1}, {"spacing", 8}, {"x_move", 0},
+                      {"y_move", 0}, {"blend", 3}};
+        const TranslationResult t2 = translateAvsTree(makeParsed({dg2}));
+        CHECK(std::get<DotGridParams>(t2.root.children[0].params).blend == 3);
     }
 
     TEST_CASE("Dot Plane / Fountain: 5 Farben (Swap) + rotVel/angle")
@@ -788,6 +796,14 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(p.blend == 2);   // blendavg -> 50/50
         CHECK(p.channel == 2);
         CHECK(p.bands == 128);
+
+        // AVS-Default blend=2 ist "Default Blend" = BLEND_LINE (SRM, S3)
+        EffectNode ts2 = builtin(39);
+        ts2.fields = {{"color", 0}, {"blend", 2}, {"blendavg", 0},
+                      {"which_ch", 0}, {"nbands", 576}};
+        const TranslationResult t2 = translateAvsTree(makeParsed({ts2}));
+        const auto& p2 = std::get<TimescopeParams>(t2.root.children[0].params);
+        CHECK(p2.blend == 3);
     }
 
     TEST_CASE("Starfield: Felder, Color-Swap + float-Bits gemappt")

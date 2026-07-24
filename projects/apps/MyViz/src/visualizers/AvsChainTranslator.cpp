@@ -744,7 +744,9 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.spacing = std::max(2, src.field("spacing"));
             p.xMove = src.field("x_move");
             p.yMove = src.field("y_move");
-            p.blend = src.field("blend") != 0 ? 1 : (src.field("blendavg") != 0 ? 2 : 0);
+            // r_dotgrid hat EIN blend-Feld 0..3 (3 = BLEND_LINE/SRM, S3) und
+            // kein blendavg — Wert 1:1 durchreichen.
+            p.blend = std::clamp(src.field("blend"), 0, 3);
             out.params = std::move(p);
             return true;
         }
@@ -775,7 +777,12 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
         {
             TimescopeParams p;
             p.color = avsColor(src.field("color"));
-            p.blend = src.field("blend") != 0 ? 1 : (src.field("blendavg") != 0 ? 2 : 0);
+            // r_timescope.cpp:147-151: blend==2 ist "Default Blend" = BLEND_LINE
+            // (folgt SRM, S3), blend==1 additiv, sonst blendavg -> 50/50, sonst
+            // replace.
+            p.blend = src.field("blend") == 2   ? 3
+                      : src.field("blend") != 0 ? 1
+                      : src.field("blendavg") != 0 ? 2 : 0;
             p.channel = std::clamp(src.field("which_ch"), 0, 2);
             p.bands = src.field("nbands") > 0 ? std::clamp(src.field("nbands"), 1, 576) : 576;
             out.params = p;
