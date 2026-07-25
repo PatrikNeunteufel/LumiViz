@@ -8,114 +8,14 @@ AVS/Winamp (Seite-an-Seite-Urteile).
 
 Aufruf: python make_calibration_presets.py   (schreibt in die Unterordner)
 """
-import struct
 from pathlib import Path
 
+# Gemeinsame Bausteine (Container + Effekt-Blobs) — seit S47 in der Lib,
+# geteilt mit make_matrix_presets.py. Ausgabe byte-identisch zum alten Stand.
+from avs_preset_lib import (dynamic_movement, effect_list, movement_user,
+                            osc_star, preset, set_render_mode, superscope)
+
 ROOT = Path(__file__).parent
-
-# ---------------------------------------------------------------- Grundbausteine
-
-def i32(v: int) -> bytes:
-    return struct.pack("<i", v)
-
-
-def u32(v: int) -> bytes:
-    return struct.pack("<I", v & 0xFFFFFFFF)
-
-
-def lstr(s: str) -> bytes:
-    """SizeString wie C_RBASE::load_string: int32-Laenge (inkl. NUL) + Bytes."""
-    raw = s.encode("latin-1") + b"\x00"
-    return i32(len(raw)) + raw
-
-
-def quartet(point: str = "", frame: str = "", beat: str = "", init: str = "") -> bytes:
-    """Code-Quartett neues Format: Versionsbyte 1 + 4 SizeStrings in Datei-Reihenfolge
-    [0]=point, [1]=frame, [2]=beat, [3]=init (r_sscope/r_dmove save_config)."""
-    return b"\x01" + lstr(point) + lstr(frame) + lstr(beat) + lstr(init)
-
-
-def entry(effect_id: int, blob: bytes) -> bytes:
-    return i32(effect_id) + i32(len(blob)) + blob
-
-
-# ---------------------------------------------------------------- Effekt-Blobs
-
-def superscope(point: str, init: str = "", frame: str = "", beat: str = "",
-               which_ch: int = 0, colors=(0xFFFFFF,), drawmode: int = 1) -> bytes:
-    """id 36 — quartet, which_ch (BITFELD: Bits 0-1 Kanal 0=L/1=R/>=2=Center,
-    Flag-Wert 4 = Spektrum statt Waveform — r_sscope.cpp:232-240),
-    num_colors, colors[] (Framebuffer-Format 0x00RRGGBB — GR_SelectColor
-    konvertiert den Dialog-COLORREF beidseitig, Beweis S46 via AvsRef),
-    drawmode (Bit 0: 1=Linien)."""
-    blob = quartet(point, frame, beat, init) + i32(which_ch) + i32(len(colors))
-    for c in colors:
-        blob += i32(c)
-    return entry(36, blob + i32(drawmode))
-
-
-def set_render_mode(mode: int, width: int = 2, adjustable: int = 128,
-                    enabled: bool = True) -> bytes:
-    """id 40 — ein gepacktes int32: Bits 0-7 BLEND_LINE-Modus, 8-15 Adjustable-
-    Wert, 16-23 Linienbreite, Bit 31 enabled (r_linemode.cpp)."""
-    packed = (mode & 0xFF) | ((adjustable & 0xFF) << 8) | ((width & 0xFF) << 16)
-    if enabled:
-        packed |= 0x80000000
-    return entry(40, u32(packed))
-
-
-def movement_user(script: str, blend: int = 0, sourcemapped: int = 0,
-                  rectangular: int = 0, subpixel: int = 1, wrap: int = 0) -> bytes:
-    """id 15, User-Skript (effect=32767): Versionsbyte 1 + SizeString,
-    dann blend/sourcemapped/rectangular/subpixel/wrap (r_trans.cpp)."""
-    blob = i32(32767) + b"\x01" + lstr(script)
-    blob += i32(blend) + i32(sourcemapped) + i32(rectangular)
-    blob += i32(subpixel) + i32(wrap)
-    return entry(15, blob)
-
-
-def dynamic_movement(point: str, init: str = "", frame: str = "", beat: str = "",
-                     subpixel: int = 1, rectcoords: int = 0, xres: int = 16,
-                     yres: int = 12, blend: int = 0, wrap: int = 0,
-                     buffern: int = 0, nomove: int = 0) -> bytes:
-    """id 43 — quartet + subpixel/rectcoords/xres/yres/blend/wrap/buffern/nomove
-    (r_dmove.cpp)."""
-    blob = quartet(point, frame, beat, init)
-    blob += i32(subpixel) + i32(rectcoords) + i32(xres) + i32(yres)
-    blob += i32(blend) + i32(wrap) + i32(buffern) + i32(nomove)
-    return entry(43, blob)
-
-
-def osc_star(effect: int = 0, colors=(0xFFFFFF,), size: int = 10,
-             rot: int = 5) -> bytes:
-    """id 2 — effect, num_colors, colors[], size, rot (r_oscstar.cpp)."""
-    blob = i32(effect) + i32(len(colors))
-    for c in colors:
-        blob += i32(c)
-    return entry(2, blob + i32(size) + i32(rot))
-
-
-def effect_list(children: bytes, clear: bool = False, blend_in: int = 1,
-                blend_out: int = 1, in_adjust: int = 128,
-                out_adjust: int = 128) -> bytes:
-    """id -2 — Mode-Byte (0x80 -> volle 32 Bit), 24 Byte Extended-Data
-    (inBlendVal/outBlendVal/bufferIn/bufferOut/inInvert/outInvert), Kinder.
-    Mode-Bits (r_list.h): 0 clear, 1 disabled, 8-12 blendIn,
-    16-20 blendOut XOR 1, 24-31 Extended-Groesse."""
-    mode = (1 if clear else 0) | ((blend_in & 31) << 8)
-    mode |= ((blend_out ^ 1) & 31) << 16
-    mode |= 24 << 24                      # 6 x int32 Extended-Data
-    blob = bytes([0x80 | (mode & 0x7F)]) + i32(mode & ~0x7F)
-    blob += i32(in_adjust) + i32(out_adjust)          # Adjustable-Alphas
-    blob += i32(0) + i32(0) + i32(0) + i32(0)         # bufferIn/Out, Invert
-    return entry(-2, blob + children)
-
-
-def preset(*entries: bytes, clear_every_frame: bool = False) -> bytes:
-    """Signatur 0.2 + Root-Mode-Byte (Bit 0 = Clear je Frame) + Eintraege."""
-    body = b"".join(entries)
-    return (b"Nullsoft AVS Preset 0.2\x1a"
-            + bytes([1 if clear_every_frame else 0]) + body)
 
 
 def write(rel: str, data: bytes) -> None:

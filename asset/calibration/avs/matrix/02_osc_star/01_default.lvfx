@@ -1,0 +1,46 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz MultiEffect"
+  },
+  "root": {
+    "blendIn": 0,
+    "blendOut": 1,
+    "bufferIn": 0,
+    "bufferInInvert": false,
+    "bufferOut": 0,
+    "bufferOutInvert": false,
+    "children": [
+      {
+        "divisor": 1,
+        "enabled": true,
+        "filter": 0,
+        "name": "Render Scale",
+        "type": "renderScale"
+      },
+      {
+        "channel": 0,
+        "colors": [
+          16777215
+        ],
+        "enabled": true,
+        "name": "Oscilliscope Star",
+        "position": 0,
+        "rot": 5,
+        "size": 10,
+        "type": "oscStar"
+      }
+    ],
+    "clearEveryFrame": true,
+    "enabled": true,
+    "frameCode": "",
+    "inAdjustAlpha": 0,
+    "initCode": "",
+    "name": "Effect List",
+    "onBeatFrames": 1,
+    "onBeatRender": false,
+    "outAdjustAlpha": 0,
+    "type": "list",
+    "useCode": false
+  }
+}

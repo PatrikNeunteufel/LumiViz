@@ -1,0 +1,45 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz MultiEffect"
+  },
+  "root": {
+    "blendIn": 0,
+    "blendOut": 1,
+    "bufferIn": 0,
+    "bufferInInvert": false,
+    "bufferOut": 0,
+    "bufferOutInvert": false,
+    "children": [
+      {
+        "divisor": 1,
+        "enabled": true,
+        "filter": 0,
+        "name": "Render Scale",
+        "type": "renderScale"
+      },
+      {
+        "blend": 1,
+        "color": 16777215,
+        "enabled": true,
+        "maxDistance": 16,
+        "name": "Moving Particle",
+        "onBeatSize": false,
+        "size": 8,
+        "size2": 8,
+        "type": "movingParticle"
+      }
+    ],
+    "clearEveryFrame": true,
+    "enabled": true,
+    "frameCode": "",
+    "inAdjustAlpha": 0,
+    "initCode": "",
+    "name": "Effect List",
+    "onBeatFrames": 1,
+    "onBeatRender": false,
+    "outAdjustAlpha": 0,
+    "type": "list",
+    "useCode": false
+  }
+}

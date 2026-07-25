@@ -58,7 +58,7 @@ def main() -> int:
         print(f"FEHLER: AvsStandalone.exe fehlt: {EXE}")
         return 2
 
-    presets = sorted(ROOT.glob("s*/**/*.avs"))
+    presets = sorted(ROOT.glob("s*/**/*.avs")) + sorted(ROOT.glob("matrix/**/*.avs"))
     if not presets:
         print("FEHLER: keine .avs gefunden — erst make_calibration_presets.py")
         return 2

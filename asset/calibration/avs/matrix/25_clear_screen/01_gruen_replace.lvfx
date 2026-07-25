@@ -1,0 +1,86 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz MultiEffect"
+  },
+  "root": {
+    "blendIn": 0,
+    "blendOut": 1,
+    "bufferIn": 0,
+    "bufferInInvert": false,
+    "bufferOut": 0,
+    "bufferOutInvert": false,
+    "children": [
+      {
+        "divisor": 1,
+        "enabled": true,
+        "filter": 0,
+        "name": "Render Scale",
+        "type": "renderScale"
+      },
+      {
+        "audioChannel": 0,
+        "beatCode": "",
+        "colorBlend": 1,
+        "colorCycleFrames": 60,
+        "colors": [
+          16777215
+        ],
+        "dotSize": 1,
+        "enabled": true,
+        "frameCode": "t=t+1;",
+        "gradientPreset": "Neon",
+        "initCode": "n=500; t=0;",
+        "lineBlend": 0,
+        "lineWidth": 1,
+        "name": "SuperScope",
+        "pointCode": "d=i*0.85; r=i*18.85+t*0.2; x=cos(r)*d*0.9; y=sin(r)*d*0.7+0.1;\nred=i; green=1-i; blue=0.4+0.3*sin(i*12);",
+        "pointCount": 100,
+        "renderMode": 1,
+        "spectrumSource": false,
+        "type": "superScope"
+      },
+      {
+        "audioChannel": 0,
+        "beatCode": "",
+        "colorBlend": 1,
+        "colorCycleFrames": 60,
+        "colors": [
+          12632256
+        ],
+        "dotSize": 1,
+        "enabled": true,
+        "frameCode": "",
+        "gradientPreset": "Neon",
+        "initCode": "n=288",
+        "lineBlend": 0,
+        "lineWidth": 1,
+        "name": "SuperScope",
+        "pointCode": "x=2*i-1; y=v*0.5-0.2;",
+        "pointCount": 100,
+        "renderMode": 1,
+        "spectrumSource": false,
+        "type": "superScope"
+      },
+      {
+        "blend": 0,
+        "color": 16416,
+        "enabled": true,
+        "name": "Clear",
+        "onlyFirst": false,
+        "type": "clear"
+      }
+    ],
+    "clearEveryFrame": false,
+    "enabled": true,
+    "frameCode": "",
+    "inAdjustAlpha": 0,
+    "initCode": "",
+    "name": "Effect List",
+    "onBeatFrames": 1,
+    "onBeatRender": false,
+    "outAdjustAlpha": 0,
+    "type": "list",
+    "useCode": false
+  }
+}
