@@ -694,7 +694,11 @@ SuperscopePoint SuperscopeModule::executePointLua(float i, float v)
 
     SuperscopePoint pt;
     pt.x = static_cast<float>(engine.number("x"));
-    pt.y = static_cast<float>(engine.number("y"));
+    // Konvention Skript-Rand (S46, Befund A): EEL-Skripte leben im AVS-Raum
+    // (y+ = unten, r_sscope: y=(fy*h/2)+h/2) — Punkte im GL-Raum (y+ = oben).
+    // Uebersetzt wird NUR hier am Rand; die Skript-Variable selbst bleibt
+    // AVS-treu (Zustand ueber Punkte/Frames hinweg).
+    pt.y = -static_cast<float>(engine.number("y"));
     pt.skip = engine.number("skip") > 0.5;
 
     // Always read back: the script may have kept, modulated or overridden it.

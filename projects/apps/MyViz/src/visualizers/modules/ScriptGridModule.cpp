@@ -166,13 +166,18 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
         for (int gx = 0; gx < m_xres; ++gx, ++idx)
         {
             const double x = static_cast<double>(gx) / (m_xres - 1) * 2.0 - 1.0;
+            // Konvention Skript-Rand (S46, Befund A): das Skript sieht den
+            // AVS-Raum (y+ = unten) — unser Gitter/GL hat y+ = oben. Nur die
+            // SICHT wird gespiegelt (yS), inkl. r: die Spiegelung kehrt sonst
+            // die Drehrichtung aller Rotations-Skripte um. Rueckweg unten.
+            const double yS = -y;
             const double xd = x * halfW;
-            const double yd = y * halfH;
+            const double yd = yS * halfH;
             const double d = std::sqrt(xd * xd + yd * yd) * invMaxD;
             const double r = std::atan2(yd, xd) + kHalfPi;
 
             engine.setNumber("x", x);
-            engine.setNumber("y", y);
+            engine.setNumber("y", yS);
             engine.setNumber("d", d);
             engine.setNumber("r", r);
 
@@ -188,15 +193,16 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
             if (m_rectCoords)
             {
                 out.u = static_cast<float>(engine.number("x"));
-                out.v = static_cast<float>(engine.number("y"));
+                out.v = -static_cast<float>(engine.number("y"));  // AVS -> GL
             }
             else
             {
                 // back-transform in pixel space, then per-axis to NDC
+                // (sin-Anteil traegt die AVS-y-Richtung -> zurueck nach GL)
                 const double dPix = engine.number("d") * maxD;
                 const double rOut = engine.number("r") - kHalfPi;
                 out.u = static_cast<float>(std::cos(rOut) * dPix / halfW);
-                out.v = static_cast<float>(std::sin(rOut) * dPix / halfH);
+                out.v = -static_cast<float>(std::sin(rOut) * dPix / halfH);
             }
             out.alpha = m_scriptSetsAlpha
                             ? std::clamp(static_cast<float>(engine.number("alpha")),

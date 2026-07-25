@@ -197,6 +197,17 @@ for name, ch in [("01_links_wave", 0), ("02_rechts_wave", 1),
     write(f"s10_superscope/{name}.avs", preset(
         v_scope(ch), clear_every_frame=True))
 
+# --- s15_y_richtung: AVS-y-Konvention am Skript-Rand (Befund A, S46) ------------
+# AVS: Skript-y+ = Bildschirm-UNTEN (r_sscope y=(fy*h/2)+h/2). Gate gegen die
+# GL-Spiegelung: 01 statische Linie bei y=-0.8 -> liegt bei 10 % Hoehe (OBEN);
+# 02 DM y=y-0.3 (rect) -> Schweif der oben gezeichneten Linie waechst nach
+# UNTEN. Vor dem S46-Fix renderte LumiViz beide exakt vertikal gespiegelt.
+write("s15_y_richtung/01_linie_oben.avs", preset(
+    superscope("x=2*i-1; y=-0.8", init="n=100")))
+write("s15_y_richtung/02_dm_schweif_unten.avs", preset(
+    superscope("x=2*i-1; y=-0.8", init="n=100"),
+    dynamic_movement("y=y-0.3", rectcoords=1)))
+
 # --- s7_listen: XOR/50-50-Listen-Familie (Urteil offen, Befund S7) --------------
 # Struktur-Replikat des "don't make a mess"-Verursachers: Effect List mit
 # blendIn=Xor, blendOut=50/50, innen Movement-Zoom + OscStar.

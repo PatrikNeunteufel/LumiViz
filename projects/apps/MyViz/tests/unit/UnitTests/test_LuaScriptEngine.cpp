@@ -268,7 +268,9 @@ TEST_CASE("Superscope-Lua: Point-Skript liefert Geometrie, Frame-Skript setzt n"
     CHECK(points.back().x == doctest::Approx(1.0f).epsilon(0.01));
     for (const auto& pt : points)
     {
-        CHECK(pt.y == doctest::Approx(0.5f).epsilon(0.01));
+        // S46 Befund A: Skript-y lebt im AVS-Raum (y+ = unten) — der Modul-
+        // rand uebersetzt nach GL (y+ = oben): Skript 0.5 -> Punkt -0.5
+        CHECK(pt.y == doctest::Approx(-0.5f).epsilon(0.01));
     }
     CHECK(scope.lastScriptError().empty());
 }
@@ -301,7 +303,8 @@ TEST_CASE("Superscope-Lua: v transportiert Audio, Variablen persistieren über F
     const auto points = runScope(scope, 0.75f);
     CAPTURE(scope.lastScriptError());
     REQUIRE_FALSE(points.empty());
-    CHECK(points.front().y == doctest::Approx(0.75f).epsilon(0.01));
+    // S46 Befund A: y=v landet via AVS->GL-Rand bei -v (Skript-y+ = unten)
+    CHECK(points.front().y == doctest::Approx(-0.75f).epsilon(0.01));
     CHECK(scope.getVariable("frames") == doctest::Approx(2.0));
 }
 

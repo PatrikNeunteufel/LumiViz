@@ -356,7 +356,33 @@ uniform bool uWrap;
 uniform bool uBlend;
 uniform bool uNomove;
 uniform bool uBufSrc;       // uSrcTex is a global buffer (nomove semantics)
+uniform bool uTrunc;        // subpixel: sample via the exact BLEND4 replica
 out vec4 fragColor;
+
+// Befund B (S46): AVS' bilinearer Resampler BLEND4 (r_defs.h MMX-Pfad) ist
+// KEIN GL-bilinear: zwei Stufen (a*(255-p)+b*p)>>8 mit Integer-Trunkierung
+// und Gewichtssumme 255/256 je Stufe — jedes Resample verliert ~0.8 % plus
+// Rundung, Feedback-Trails (Zoom!) dunkeln ab und sterben aus. Dazu zaehlt
+// AVS Pixel-RASTERPUNKTE (c=0 == Texel 0, kein Zentren-Offset). GL-float-
+// bilinear ist verlustfrei -> Trails saettigten die Flaeche.
+vec3 avsBlend4(vec2 uv)
+{
+    vec2 size = vec2(textureSize(uSrcTex, 0));
+    vec2 c = uv * size;                 // AVS: (x_ndc+1)*half = Rasterpunkt
+    vec2 f = floor(min(c, size - 1.0));
+    ivec2 i0 = ivec2(f);
+    ivec2 i1 = min(i0 + 1, ivec2(size) - 1);
+    vec2 fpart = clamp(floor((c - f) * 256.0), 0.0, 255.0);  // 16.16 >> 8
+    vec3 p0 = floor(texelFetch(uSrcTex, ivec2(i0.x, i0.y), 0).rgb * 255.0 + 0.5);
+    vec3 p1 = floor(texelFetch(uSrcTex, ivec2(i1.x, i0.y), 0).rgb * 255.0 + 0.5);
+    vec3 p2 = floor(texelFetch(uSrcTex, ivec2(i0.x, i1.y), 0).rgb * 255.0 + 0.5);
+    vec3 p3 = floor(texelFetch(uSrcTex, ivec2(i1.x, i1.y), 0).rgb * 255.0 + 0.5);
+    vec3 top = floor((p0 * (255.0 - fpart.x) + p1 * fpart.x) / 256.0);
+    vec3 bot = floor((p2 * (255.0 - fpart.x) + p3 * fpart.x) / 256.0);
+    vec3 res = floor((top * (255.0 - fpart.y) + bot * fpart.y) / 256.0);
+    return res / 255.0;
+}
+
 void main()
 {
     vec2 uv = uWrap ? fract(vTex) : clamp(vTex, 0.0, 1.0);
@@ -370,7 +396,7 @@ void main()
     }
     else
     {
-        vec3 moved = texture(uSrcTex, uv).rgb;
+        vec3 moved = uTrunc ? avsBlend4(uv) : texture(uSrcTex, uv).rgb;
         c = uBlend ? mix(orig, moved, a) : moved;
     }
     fragColor = vec4(c, 1.0);
@@ -3057,6 +3083,7 @@ void MultiEffectVisualizer::applyGridScatter(LeafRuntime& rt, int xres, int yres
     m_warpShader->setUniformValue("uBlend", false);
     m_warpShader->setUniformValue("uNomove", false);
     m_warpShader->setUniformValue("uBufSrc", false);
+    m_warpShader->setUniformValue("uTrunc", false);  // Scatter: kein Resample
     m_warpVao->bind();
     m_warpVbo->bind();
     m_warpVbo->allocate(m_warpVertices.data(),
@@ -3192,6 +3219,7 @@ void MultiEffectVisualizer::applyGridWarp(LeafRuntime& rt, int xres, int yres,
     m_warpShader->setUniformValue("uBlend", opt.blend);
     m_warpShader->setUniformValue("uNomove", opt.nomove);
     m_warpShader->setUniformValue("uBufSrc", opt.srcTexture != 0);
+    m_warpShader->setUniformValue("uTrunc", opt.subpixel);  // Befund B (S46)
     m_warpVao->bind();
     m_warpVbo->bind();
     m_warpVbo->allocate(m_warpVertices.data(),
@@ -3442,6 +3470,11 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     {
         rt.scope = std::make_unique<lumi::modules::SuperscopeModule>();
         rt.scope->setLuaMode(true);  // EEL quartet -> Lua (import path)
+        // S13 (Urteil per AvsRef, S46): AVS skaliert je ACHSE (r_sscope:
+        // x*(w/2)+w/2, y*(h/2)+h/2) — x=+-1 fuellt die Breite, ein Kreis-
+        // Skript wird auf 4:3 zur Ellipse. Keine Aspekt-Korrektur im
+        // Import-Pfad (eigene LumiViz-Scopes behalten ihren Default).
+        rt.scope->setAspectCorrection(false);
         rt.scope->setInitCode(params.initCode);
         rt.scope->setBeatCode(params.beatCode);
         rt.scope->setFrameCode(params.frameCode);

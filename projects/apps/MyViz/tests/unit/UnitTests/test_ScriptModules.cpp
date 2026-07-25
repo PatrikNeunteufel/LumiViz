@@ -112,10 +112,12 @@ TEST_CASE("ScriptGridModule: Rotation um 90 Grad im Polar-Modus")
     grid.setPointCode("r=r+$PI/2");
     grid.execute(100.0f, 100.0f, false, 0.016f);
 
-    // Punkt rechts (1, 0) wandert nach oben (0, 1)
+    // Punkt rechts (1, 0) wandert im AVS-SCREEN-Raum nach unten (S46,
+    // Befund A: Skript-Rand spiegelt y — GL v=-1; vorher drehten
+    // Rotations-Skripte spiegelverkehrt und das Gate erwartete +1)
     const GridNode& right = grid.node(2, 1);
     CHECK(right.u == doctest::Approx(0.0f).epsilon(0.001));
-    CHECK(right.v == doctest::Approx(1.0f).epsilon(0.001));
+    CHECK(right.v == doctest::Approx(-1.0f).epsilon(0.001));
 }
 
 TEST_CASE("ScriptGridModule: d/r im PIXEL-Raum auf nicht-quadratischer Flaeche (S2)")
@@ -136,14 +138,15 @@ TEST_CASE("ScriptGridModule: d/r im PIXEL-Raum auf nicht-quadratischer Flaeche (
         CHECK(grid.node(0, 0).v == doctest::Approx(-1.0f).epsilon(0.001));
     }
 
-    SUBCASE("Rotation ist starr in Pixeln: rechts (100 px) -> oben (100 px = 2*halfH)")
+    SUBCASE("Rotation ist starr in Pixeln: rechts (100 px) -> unten (100 px = 2*halfH)")
     {
         grid.setPointCode("r=r+$PI/2");
         grid.execute(200.0f, 100.0f, false, 0.016f);
         const GridNode& right = grid.node(2, 1);
         CHECK(right.u == doctest::Approx(0.0f).epsilon(0.001));
-        // NDC-Bug lieferte hier 1.0 (Rotation im normierten Quadrat)
-        CHECK(right.v == doctest::Approx(2.0f).epsilon(0.001));
+        // NDC-Bug lieferte hier 1.0 (Rotation im normierten Quadrat);
+        // S46 Befund A: AVS dreht im Screen-Raum (y+ unten) -> GL v=-2
+        CHECK(right.v == doctest::Approx(-2.0f).epsilon(0.001));
     }
 
     SUBCASE("absolutes d: 0.5 = halbe Diagonale in Pixeln")
