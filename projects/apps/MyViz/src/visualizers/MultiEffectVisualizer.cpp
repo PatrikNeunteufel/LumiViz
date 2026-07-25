@@ -4167,7 +4167,7 @@ void MultiEffectVisualizer::drawScopeShape(
     rp.lineWidth = (m_renderMode.set && m_renderMode.lineWidth > 0)
                        ? static_cast<float>(m_renderMode.lineWidth)
                        : 1.0f;
-    rp.dotSize = 2.0f;
+    rp.dotSize = 1.0f;  // AVS-Dots sind 1 px (linedraw.cpp), Befund B (S46)
     rp.glowEnabled = false;
     m_scopeRenderer.draw(pts, rp);
     resetLineBlend();

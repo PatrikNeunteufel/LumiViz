@@ -19,13 +19,13 @@
         "colors": [
           8421504
         ],
-        "dotSize": 4,
+        "dotSize": 1,
         "enabled": true,
         "frameCode": "t=t+0.04",
         "gradientPreset": "Neon",
         "initCode": "n=128; t=0",
         "lineBlend": 0,
-        "lineWidth": 2,
+        "lineWidth": 1,
         "name": "SuperScope",
         "pointCode": "x=2*i-1; y=0.5*sin(i*18.85+t)",
         "pointCount": 100,
@@ -49,13 +49,13 @@
         "colors": [
           16777215
         ],
-        "dotSize": 4,
+        "dotSize": 1,
         "enabled": true,
         "frameCode": "",
         "gradientPreset": "Neon",
         "initCode": "n=2",
         "lineBlend": 0,
-        "lineWidth": 2,
+        "lineWidth": 1,
         "name": "SuperScope",
         "pointCode": "x=2*i-1; y=2*i-1",
         "pointCount": 100,

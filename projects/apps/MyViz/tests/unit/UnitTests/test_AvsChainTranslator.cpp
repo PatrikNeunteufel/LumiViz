@@ -70,7 +70,7 @@ TEST_SUITE("AvsChainTranslator")
     TEST_CASE("dekodierte Kern-Effekte werden auf ihre Params gemappt")
     {
         EffectNode fade = builtin(3);
-        fade.fields = {{"fadelen", 20}, {"color", 0x0000FF /* COLORREF: rot */}};
+        fade.fields = {{"fadelen", 20}, {"color", 0x0000FF /* FB-RGB: blau */}};
 
         EffectNode invert = builtin(37);
         invert.fields = {{"enabled", 1}};
@@ -83,7 +83,9 @@ TEST_SUITE("AvsChainTranslator")
         REQUIRE(std::holds_alternative<FadeoutParams>(t.root.children[0].params));
         const auto& f = std::get<FadeoutParams>(t.root.children[0].params);
         CHECK(f.fadeLen == 20);
-        CHECK(f.color == 0xFF0000);  // COLORREF 0x0000FF -> host 0xFF0000
+        // S46 Befund C: AVS speichert Framebuffer-RGB (GR_SelectColor tauscht
+        // den Dialog-COLORREF beidseitig) — Uebersetzung ist Identitaet.
+        CHECK(f.color == 0x0000FF);
 
         CHECK(std::holds_alternative<InvertParams>(t.root.children[1].params));
     }
@@ -122,7 +124,7 @@ TEST_SUITE("AvsChainTranslator")
         // Der folgende Scope bekommt NICHTS eingebacken (Host-Render-Mode zur Laufzeit).
         REQUIRE(std::holds_alternative<SuperScopeParams>(t.root.children[1].params));
         CHECK(std::get<SuperScopeParams>(t.root.children[1].params).lineWidth
-              == doctest::Approx(2.0f));  // Struct-Default
+              == doctest::Approx(1.0f));  // S46 Befund B: r_sscope = 1-px-Bresenham
         // Kein Passthrough-Zähler mehr für Set Render Mode.
         for (const std::string& note : t.report)
             CHECK(note.find("Set Render Mode") == std::string::npos);
@@ -228,12 +230,12 @@ TEST_SUITE("AvsChainTranslator")
     TEST_CASE("Moving Particle (id 8) -> Params; enabled-Bits gemappt")
     {
         EffectNode mp = builtin(8);
-        mp.fields = {{"enabled", 1 | 2}, {"colors", 0x0000FF /* COLORREF: rot */},
+        mp.fields = {{"enabled", 1 | 2}, {"colors", 0x0000FF /* FB-RGB: blau */},
                      {"maxdist", 24}, {"size", 10}, {"size2", 30}, {"blend", 2}};
         const TranslationResult t = translateAvsTree(makeParsed({mp}));
         REQUIRE(std::holds_alternative<MovingParticleParams>(t.root.children[0].params));
         const auto& p = std::get<MovingParticleParams>(t.root.children[0].params);
-        CHECK(p.color == 0xFF0000u);  // COLORREF -> host RRGGBB
+        CHECK(p.color == 0x0000FFu);  // FB-RGB 1:1 (S46 Befund C)
         CHECK(p.maxDistance == 24);
         CHECK(p.size2 == 30);
         CHECK(p.onBeatSize);          // enabled bit 1
@@ -328,13 +330,13 @@ TEST_SUITE("AvsChainTranslator")
     TEST_CASE("Color Clip (id 12): Modus + Farben; enabled=0 -> disabled")
     {
         EffectNode cc = builtin(12);
-        cc.fields = {{"enabled", 2}, {"color_clip", 0x0000FF /* COLORREF rot */},
+        cc.fields = {{"enabled", 2}, {"color_clip", 0x0000FF /* FB-RGB blau */},
                      {"color_clip_out", 0x00FF00 /* gruen */}, {"color_dist", 20}};
         const TranslationResult t = translateAvsTree(makeParsed({cc}));
         REQUIRE(std::holds_alternative<ColorClipParams>(t.root.children[0].params));
         const auto& p = std::get<ColorClipParams>(t.root.children[0].params);
         CHECK(p.mode == 2);
-        CHECK(p.clipColor == 0xFF0000u);  // COLORREF -> RRGGBB
+        CHECK(p.clipColor == 0x0000FFu);  // FB-RGB 1:1 (S46 Befund C)
         CHECK(p.outColor == 0x00FF00u);
         CHECK(p.distance == 20);
         CHECK(t.root.children[0].enabled);
@@ -397,7 +399,7 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(m.effect == 2);
         CHECK(m.onBeat);
         const auto& b = std::get<AddBordersParams>(t.root.children[1].params);
-        CHECK(b.color == 0xFF0000u);  // COLORREF -> RRGGBB
+        CHECK(b.color == 0x0000FFu);  // FB-RGB 1:1 (S46 Befund C)
         CHECK(b.size == 7);
     }
 
@@ -419,7 +421,7 @@ TEST_SUITE("AvsChainTranslator")
     {
         EffectNode s = builtin(0);
         s.fields = {{"effect", 2 | (1 << 2) | (2 << 4) | (1 << 6)}};
-        s.colors = {0x0000FF};  // COLORREF blau -> host rot
+        s.colors = {0x0000FF};  // FB-RGB blau (1:1, S46 Befund C)
         const TranslationResult t = translateAvsTree(makeParsed({s}));
         REQUIRE(std::holds_alternative<SimpleScopeParams>(t.root.children[0].params));
         const auto& p = std::get<SimpleScopeParams>(t.root.children[0].params);
@@ -428,7 +430,7 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(p.position == 2);  // center
         CHECK(p.drawMode == 1);  // dots
         REQUIRE(p.colors.size() == 1);
-        CHECK(p.colors[0] == 0xFF0000u);
+        CHECK(p.colors[0] == 0x0000FFu);
     }
 
     TEST_CASE("Bass Spin (id 7): enabled-Bits + Farben")
@@ -442,7 +444,7 @@ TEST_SUITE("AvsChainTranslator")
         CHECK_FALSE(p.left);
         CHECK(p.right);
         CHECK(p.mode == 0);
-        CHECK(p.colorRight == 0x563412u);  // 0x123456 COLORREF -> RRGGBB
+        CHECK(p.colorRight == 0x123456u);  // FB-RGB 1:1 (S46 Befund C)
     }
 
     TEST_CASE("Oscilliscope Star / Ring / Rotating Stars gemappt")
@@ -460,7 +462,7 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(a.channel == 1);
         CHECK(a.size == 10);
         CHECK(a.rot == 5);
-        CHECK(a.colors[0] == 0xFF0000u);
+        CHECK(a.colors[0] == 0x0000FFu);  // FB-RGB 1:1 (S46 Befund C)
         const auto& b = std::get<OscRingParams>(t.root.children[1].params);
         CHECK(b.source == 1);   // spectrum
         CHECK(b.channel == 2);
@@ -503,7 +505,7 @@ TEST_SUITE("AvsChainTranslator")
     TEST_CASE("Text (id 28) + AVI (id 32) -> Params (S44); Comment traegt Text")
     {
         EffectNode txt = builtin(28);
-        txt.fields = {{"enabled", 1}, {"color", 0x0000FF /* COLORREF rot */},
+        txt.fields = {{"enabled", 1}, {"color", 0x0000FF /* FB-RGB blau */},
                       {"blend", 0},   {"blendavg", 1},  {"onbeat", 1},
                       {"valign", 8},  {"halign", 2},    {"onbeatspeed", 9},
                       {"normspeed", 30}, {"fontHeight", -24}, {"fontWeight", 700},
@@ -523,7 +525,7 @@ TEST_SUITE("AvsChainTranslator")
         const auto& tp = std::get<TextParams>(t.root.children[0].params);
         CHECK(tp.text == "EINS;ZWEI");
         CHECK(tp.fontFace == "Impact");
-        CHECK(tp.color == 0xFF0000u);  // COLORREF -> RGB
+        CHECK(tp.color == 0x0000FFu);  // FB-RGB 1:1 (S46 Befund C)
         CHECK(tp.blend == 2);          // blendavg -> 50/50
         CHECK(tp.onBeat);
         CHECK(tp.vAlign == 2);         // DT_BOTTOM(8) -> 2
@@ -644,18 +646,18 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(p.blend == 1);  // additive wins
     }
 
-    TEST_CASE("SuperScope: AVS-Farbtabelle -> colors (COLORREF-Swap) + Table-Modus")
+    TEST_CASE("SuperScope: AVS-Farbtabelle -> colors (FB-RGB 1:1) + Table-Modus")
     {
         EffectNode ss = builtin(36);
-        ss.colors = {0x000000FFu, 0x00FF0000u};  // AVS COLORREF 0x00BBGGRR
+        ss.colors = {0x000000FFu, 0x00FF0000u};  // FB-RGB blau, rot (S46 Befund C)
 
         const TranslationResult t = translateAvsTree(makeParsed({ss}));
         REQUIRE(t.root.children.size() == 1);
         const auto& p = std::get<SuperScopeParams>(t.root.children[0].params);
         CHECK(p.colorBlend == 1);  // colors present -> table mode
         REQUIRE(p.colors.size() == 2);
-        CHECK(p.colors[0] == 0xFF0000u);  // -> RRGGBB red
-        CHECK(p.colors[1] == 0x0000FFu);  // -> RRGGBB blue
+        CHECK(p.colors[0] == 0x0000FFu);  // blau bleibt blau
+        CHECK(p.colors[1] == 0xFF0000u);  // rot bleibt rot
     }
 
     TEST_CASE("SuperScope ohne AVS-Farben bekommt das AVS-Default-Weiss")
@@ -742,16 +744,16 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(pmd.delay == 45);
     }
 
-    TEST_CASE("Dot Grid: Farbtabelle (Swap) + Felder gemappt")
+    TEST_CASE("Dot Grid: Farbtabelle (FB-RGB 1:1) + Felder gemappt")
     {
         EffectNode dg = builtin(17);
-        dg.colors = {0x000000FF, 0x00FF0000};  // COLORREF
+        dg.colors = {0x000000FF, 0x00FF0000};  // FB-RGB blau, rot
         dg.fields = {{"num_colors", 2}, {"spacing", 12}, {"x_move", 64},
                      {"y_move", -64}, {"blend", 1}};
         const TranslationResult t = translateAvsTree(makeParsed({dg}));
         const auto& p = std::get<DotGridParams>(t.root.children[0].params);
         REQUIRE(p.colors.size() == 2);
-        CHECK(p.colors[0] == 0xFF0000u);
+        CHECK(p.colors[0] == 0x0000FFu);  // FB-RGB 1:1 (S46 Befund C)
         CHECK(p.spacing == 12);
         CHECK(p.xMove == 64);
         CHECK(p.blend == 1);
@@ -765,14 +767,14 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(std::get<DotGridParams>(t2.root.children[0].params).blend == 3);
     }
 
-    TEST_CASE("Dot Plane / Fountain: 5 Farben (Swap) + rotVel/angle")
+    TEST_CASE("Dot Plane / Fountain: 5 Farben (FB-RGB 1:1) + rotVel/angle")
     {
         EffectNode dp = builtin(1);
         dp.colors = {0x000000FF, 0x0000FF00, 0x00FF0000, 0x00FFFFFF, 0x00000000};
         dp.fields = {{"rotvel", 24}, {"angle", -30}};
         const TranslationResult t = translateAvsTree(makeParsed({dp}));
         const auto& p = std::get<DotPlaneParams>(t.root.children[0].params);
-        CHECK(p.colors[0] == 0xFF0000u);
+        CHECK(p.colors[0] == 0x0000FFu);  // FB-RGB 1:1 (S46 Befund C)
         CHECK(p.colors[1] == 0x00FF00u);
         CHECK(p.rotVel == 24);
         CHECK(p.angle == -30);
@@ -814,7 +816,7 @@ TEST_SUITE("AvsChainTranslator")
         std::memcpy(&beatBits, &beat, sizeof(float));
 
         EffectNode st = builtin(27);
-        st.fields = {{"color", 0x000000FF},           // COLORREF -> RRGGBB rot
+        st.fields = {{"color", 0x000000FF},           // FB-RGB blau (1:1)
                      {"blend", 0}, {"blendavg", 0},
                      {"warpSpeed_bits", warpBits},     {"maxStars", 500},
                      {"onbeat", 1}, {"beatSpeed_bits", beatBits}, {"durFrames", 12}};
@@ -822,7 +824,7 @@ TEST_SUITE("AvsChainTranslator")
         const TranslationResult t = translateAvsTree(makeParsed({st}));
         REQUIRE(t.root.children.size() == 1);
         const auto& p = std::get<StarfieldParams>(t.root.children[0].params);
-        CHECK(p.color == 0xFF0000u);
+        CHECK(p.color == 0x0000FFu);  // FB-RGB 1:1 (S46 Befund C)
         CHECK(p.warpSpeed == doctest::Approx(8.0f));
         CHECK(p.maxStars == 500);
         CHECK(p.onBeat);

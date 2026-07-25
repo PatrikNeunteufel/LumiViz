@@ -70,11 +70,14 @@ enum AvsId
     kColorModifier = 45,
 };
 
-/** AVS on-disk COLORREF (0x00BBGGRR) -> host 0x00RRGGBB. */
+/** AVS-Preset-Farben sind bereits Framebuffer-Format 0x00RRGGBB — KEIN
+ *  COLORREF: GR_SelectColor (ref util.cpp:61-75) tauscht den Dialog-COLORREF
+ *  bei Ein- UND Ausgang, gespeichert wird der FB-Wert. Beweis S46 (AvsRef):
+ *  0x00FF80 rendert als RGB (0,255,128). Der fruehere R/B-Swap hier faerbte
+ *  alle Importe um (Wormhole gelb -> gruen, Befund C). */
 uint32_t avsColor(int32_t c)
 {
-    const uint32_t u = static_cast<uint32_t>(c);
-    return ((u & 0xFFu) << 16) | (u & 0xFF00u) | ((u >> 16) & 0xFFu);
+    return static_cast<uint32_t>(c) & 0xFFFFFFu;
 }
 
 std::string slotStr(const EffectNode& n, const char* name)
@@ -995,6 +998,11 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.lineBlend = 0;
             // Line width/blend now come from a live Set Render Mode node at render
             // time (host render mode), not baked here.
+            // Befund B (S46): r_sscope zeichnet IMMER 1-px-Bresenham (linedraw)
+            // — der Chain-Default 2.0 lief ins Dreiecks-Band (~2.5x Pixel-
+            // deckung, Feedback-Trails 3x zu hell). width=1 -> GL_LINE_STRIP.
+            p.lineWidth = 1.0f;
+            p.dotSize = 1.0f;  // AVS-Dots sind 1 px (linedraw), Chain-Default 4.0
             out.params = std::move(p);
             return true;
         }

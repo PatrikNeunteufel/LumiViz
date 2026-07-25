@@ -45,7 +45,9 @@ def superscope(point: str, init: str = "", frame: str = "", beat: str = "",
                which_ch: int = 0, colors=(0xFFFFFF,), drawmode: int = 1) -> bytes:
     """id 36 — quartet, which_ch (BITFELD: Bits 0-1 Kanal 0=L/1=R/>=2=Center,
     Flag-Wert 4 = Spektrum statt Waveform — r_sscope.cpp:232-240),
-    num_colors, colors[] (COLORREF 0x00BBGGRR!), drawmode (Bit 0: 1=Linien)."""
+    num_colors, colors[] (Framebuffer-Format 0x00RRGGBB — GR_SelectColor
+    konvertiert den Dialog-COLORREF beidseitig, Beweis S46 via AvsRef),
+    drawmode (Bit 0: 1=Linien)."""
     blob = quartet(point, frame, beat, init) + i32(which_ch) + i32(len(colors))
     for c in colors:
         blob += i32(c)

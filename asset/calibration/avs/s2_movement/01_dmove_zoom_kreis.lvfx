@@ -17,15 +17,15 @@
         "colorBlend": 1,
         "colorCycleFrames": 60,
         "colors": [
-          8453888
+          65408
         ],
-        "dotSize": 4,
+        "dotSize": 1,
         "enabled": true,
         "frameCode": "",
         "gradientPreset": "Neon",
         "initCode": "n=64",
         "lineBlend": 0,
-        "lineWidth": 2,
+        "lineWidth": 1,
         "name": "SuperScope",
         "pointCode": "x=0.5*cos(i*$PI*2); y=0.5*sin(i*$PI*2)",
         "pointCount": 100,

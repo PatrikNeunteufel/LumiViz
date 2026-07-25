@@ -19,13 +19,13 @@
         "colors": [
           16777215
         ],
-        "dotSize": 4,
+        "dotSize": 1,
         "enabled": true,
         "frameCode": "",
         "gradientPreset": "Neon",
         "initCode": "n=100",
         "lineBlend": 0,
-        "lineWidth": 2,
+        "lineWidth": 1,
         "name": "SuperScope",
         "pointCode": "x=2*i-1; y=-0.8",
         "pointCount": 100,
