@@ -129,6 +129,11 @@ public:
     /// --dump: uebersetzte Chain nach dem Laden als JSON ausgeben
     void setDumpChain(bool on) { m_dumpChain = on; }
 
+    /// --save-every M: im --auto-Lauf jeden M-ten Frame speichern (Frame-
+    /// Zaehlung wie AvsRef: 0-basiert, Dateiname f%04d 1-basiert) — fuer
+    /// Sequenz-/GIF-Vergleiche gegen den Referenz-Renderer (S46)
+    void setSaveEvery(int every) { m_saveEvery = every; }
+
 protected:
     void initializeGL() override
     {
@@ -153,6 +158,11 @@ protected:
         if (m_viz == nullptr) return;
         feedSyntheticAudio();
         m_viz->render(1.0f / 60.0f);
+        if (m_auto && m_saveEvery > 0 && m_frameInPreset % m_saveEvery == 0)
+        {
+            saveShot(QStringLiteral("f%1").arg(m_frameInPreset + 1, 4, 10,
+                                               QLatin1Char('0')));
+        }
         ++m_frameInPreset;
         m_time += 1.0 / 60.0;
 
@@ -341,6 +351,7 @@ private:
     bool m_allLoaded = true;
     bool m_closing = false;
     bool m_dumpChain = false;
+    int m_saveEvery = 0;
     int m_lastWarnings = 0;
 };
 
@@ -374,6 +385,11 @@ int main(int argc, char* argv[])
     const QCommandLineOption optDump(QStringLiteral("dump"),
                                      QStringLiteral("uebersetzte Chain nach dem Laden "
                                                     "als JSON ausgeben"));
+    const QCommandLineOption optSaveEvery(
+        QStringLiteral("save-every"),
+        QStringLiteral("im --auto-Lauf jeden M-ten Frame speichern"),
+        QStringLiteral("M"), QStringLiteral("0"));
+    parser.addOption(optSaveEvery);
     parser.addOption(optAuto);
     parser.addOption(optFrames);
     parser.addOption(optOut);
@@ -429,6 +445,7 @@ int main(int argc, char* argv[])
     StandaloneWindow window(presets, parser.isSet(optAuto), parser.value(optFrames).toInt(),
                             parser.value(optOut));
     window.setDumpChain(parser.isSet(optDump));
+    window.setSaveEvery(parser.value(optSaveEvery).toInt());
     window.resize(w, h);
     window.show();
 

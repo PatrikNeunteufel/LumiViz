@@ -3894,10 +3894,12 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
         engine.setNumber("bi", 1.0);
         rt.bumpHost->run(Slot::Init);
     }
+    double scriptBi = 1.0;
     {
         auto& engine = rt.bumpHost->engine();
-        engine.setNumber("isbeat", m_frameBeat ? 1.0 : 0.0);
-        engine.setNumber("islbeat", m_frameBeat ? 1.0 : 0.0);
+        // r_bump.cpp:263-270: isbeat/islbeat sind -1 BEI Beat, +1 sonst
+        engine.setNumber("isbeat", m_frameBeat ? -1.0 : 1.0);
+        engine.setNumber("islbeat", rt.bumpFramesLeft > 0 ? -1.0 : 1.0);
         feedAudio(rt.bumpHost->engine());
         if (rt.bumpHost->has(Slot::Frame)) rt.bumpHost->run(Slot::Frame);
         if (m_frameBeat && rt.bumpHost->has(Slot::Beat)) rt.bumpHost->run(Slot::Beat);
@@ -3906,10 +3908,13 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
         if (params.oldStyle) { lx /= 100.0; ly /= 100.0; }
         rt.bumpX = static_cast<float>(lx);
         rt.bumpY = static_cast<float>(ly);
+        scriptBi = std::clamp(engine.number("bi"), 0.0, 1.0);
     }
 
-    // Depth ease on beat (r_bump thisDepth/nF, same shape as Mosaic).
-    if (rt.bumpDepth <= 0.0f) rt.bumpDepth = static_cast<float>(params.depth);
+    // r_bump.cpp:272-277: beim Beat springt die Tiefe HART auf depth2 und
+    // haelt durFrames Frames, dann hart zurueck auf depth — KEIN Ease (das
+    // fruehere lineare Abklingen halbierte die Energie je Beat-Burst; im
+    // Feedback-Kreislauf des Wormhole blieb das Bild dadurch dunkel, S46).
     if (params.onBeat && m_frameBeat)
     {
         rt.bumpDepth = static_cast<float>(params.depth2);
@@ -3919,20 +3924,12 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
     {
         rt.bumpDepth = static_cast<float>(params.depth);
     }
-    const float thisDepth = rt.bumpDepth;
-    if (rt.bumpFramesLeft > 0)
+    if (rt.bumpFramesLeft > 0 && --rt.bumpFramesLeft == 0)
     {
-        if (--rt.bumpFramesLeft > 0)
-        {
-            const float step = std::abs(static_cast<float>(params.depth - params.depth2)) /
-                               static_cast<float>(std::max(1, params.durationFrames));
-            rt.bumpDepth += params.depth2 > params.depth ? -step : step;
-        }
-        else
-        {
-            rt.bumpDepth = static_cast<float>(params.depth);
-        }
+        rt.bumpDepth = static_cast<float>(params.depth);
     }
+    // r_bump.cpp:295-299: die Skript-Variable bi (0..1) skaliert die Tiefe
+    const float thisDepth = rt.bumpDepth * static_cast<float>(scriptBi);
 
     m_bumpShader->bind();
     m_bumpShader->setUniformValue("uRes",

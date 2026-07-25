@@ -74,8 +74,14 @@ struct SyntheticFrame
     float spec[512 * 2];  // interleaved L/R
 };
 
-void makeSyntheticAudio(double time, SyntheticFrame& out)
+void makeSyntheticAudio(double time, SyntheticFrame& out, bool silence)
 {
+    if (silence)
+    {
+        memset(out.wave, 0, sizeof(out.wave));
+        memset(out.spec, 0, sizeof(out.spec));
+        return;
+    }
     const double beat = 0.55 + 0.45 * std::max(0.0, sin(time * 2.0 * kPi * 2.0));
     for (int i = 0; i < 576; ++i)
     {
@@ -269,6 +275,7 @@ int main(int argc, char** argv)
     int width = 800, height = 600;
     int saveEvery = 0;    // 0 = nur letzter Frame
     int beatPeriod = 0;   // 0 = Original-Detektor
+    bool silence = false; // --silence: Stille statt Kalibrier-Signal
     for (int i = 1; i < argc; ++i)
     {
         const std::string a = argv[i];
@@ -276,6 +283,7 @@ int main(int argc, char** argv)
         if (a == "--frames") next(frames);
         else if (a == "--save-every") next(saveEvery);
         else if (a == "--beat-period") next(beatPeriod);
+        else if (a == "--silence") silence = true;
         else if (a == "--out" && i + 1 < argc) outDir = argv[++i];
         else if (a == "--size" && i + 1 < argc)
         {
@@ -409,7 +417,7 @@ int main(int argc, char** argv)
         for (int frame = 0; frame < frames; ++frame)
         {
             SyntheticFrame synth;
-            makeSyntheticAudio(frame / 60.0, synth);
+            makeSyntheticAudio(frame / 60.0, synth, silence);
             buildVisData(synth, visdata);
 
             int isBeat;
