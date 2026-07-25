@@ -317,6 +317,17 @@ const std::vector<EffectType>& effectPalette()
         {"Multiplier", [] { return EffectParams{MultiplierParams{}}; }},
         {"Grain", [] { return EffectParams{GrainParams{}}; }},
         {"Add Borders", [] { return EffectParams{AddBordersParams{}}; }},
+
+        // Lights-Etappe 1 (S48): native Post-Process-Module (kein AVS-Pendant)
+        {"— Post —", nullptr},
+        {"Bloom", [] { return EffectParams{BloomParams{}}; }, Origin::Native},
+
+        // Lights-Etappe 1+2 (S48): 3D-Module (Kamera-Zustand + Szene)
+        {"— 3D —", nullptr},
+        {"3D Camera", [] { return EffectParams{Camera3DParams{}}; }, Origin::Native},
+        {"SuperScope 3D", [] { return EffectParams{SuperScope3DParams{}}; }, Origin::Native},
+        {"Terrain 3D", [] { return EffectParams{Terrain3DParams{}}; }, Origin::Native},
+        {"Glow Orbs", [] { return EffectParams{GlowOrbsParams{}}; }, Origin::Native},
         // Milkdrop-Node-Inhalte (N3.1/N3.3): keine Chain-Effekte — "+" legt sie
         // im PresetState des selektierten Milkdrop-Nodes an.
         {"— Milkdrop-Node-Inhalte —", nullptr},
@@ -349,6 +360,89 @@ const std::vector<lumi::modules::SuperscopePreset>& superscopeFigures()
         P::Lissajous,       P::Flower,          P::Star,       P::Starburst,
         P::Heart,           P::SpectrumBars,    P::CircularSpectrum,
         P::Butterfly,       P::Hypocycloid};
+    return kList;
+}
+
+// Vorlagen fuer SuperScope 3D + 3D Camera (S48, Lights-Etappe 1) — kleine
+// EEL-Startpunkte im Stil der SuperScope-Figuren. SSOT hier im Panel: anders
+// als beim SuperScope steht kein Standalone-Modul mit Preset-Bibliothek
+// dahinter. Welt-Konvention: x+ rechts, y+ oben, z+ zum Betrachter;
+// Fallback-Kamera bei z=+3,732 sieht y in [-1,1] bei z=0.
+struct Scope3DPresetDef
+{
+    const char* name;
+    const char* init;
+    const char* frame;
+    const char* beat;
+    const char* point;
+    int pointCount;
+};
+
+const std::vector<Scope3DPresetDef>& scope3dPresets()
+{
+    static const std::vector<Scope3DPresetDef> kList = {
+        {"Spiral Galaxy", "n=700", "t=t+0.008", "",
+         "d=i*2.5;a=i*25+t;x=sin(a)*d;z=cos(a)*d;y=v*0.3;"
+         "size=0.03+0.05*(1-i);red=1;green=0.6+0.4*sin(t+i*6);blue=1-i*0.5",
+         700},
+        {"Sphere Cloud", "n=500", "t=t+0.005", "",
+         "y=(i*2-1)*1.2;rad=sqrt(abs(1.44-y*y));th=i*97+t;"
+         "x=rad*cos(th);z=rad*sin(th);size=0.05;"
+         "red=0.5+0.5*sin(th);green=0.7;blue=1",
+         500},
+        {"Wave Ribbon", "n=256", "t=t+0.01", "",
+         "x=(i*2-1)*1.6;y=v*0.6;z=sin(i*6.28319+t)*0.5;size=0.04;"
+         "red=0.4+0.6*i;green=1-i;blue=1",
+         256},
+        {"Star Flight", "n=400", "t=t+0.015+bass*0.05", "",
+         "sx=sin(i*127.1)*43758.55;sx=sx-floor(sx);"
+         "sy=sin(i*269.5)*24634.63;sy=sy-floor(sy);"
+         "x=(sx*2-1)*3;y=(sy*2-1)*2;zz=i*8+t;zz=zz-floor(zz/8)*8;z=zz-5;"
+         "size=0.05;red=0.8+0.2*sy;green=0.9;blue=1",
+         400},
+        {"Beat Pulse Orb", "n=350;r=1", "t=t+0.01;r=r+(1-r)*0.1", "r=1.6",
+         "y=i*2-1;rad=sqrt(abs(1-y*y));a=i*88+t*2;"
+         "x=rad*cos(a)*r;z=rad*sin(a)*r;y=y*r;size=0.04+treb*0.05;"
+         "red=1;green=0.4+0.6*(r-1);blue=0.3",
+         350},
+        {"Lissajous 3D", "n=512", "t=t+0.006", "",
+         "a=i*6.28319;x=sin(a*3+t)*1.2;y=sin(a*4+t*1.3)*0.9;"
+         "z=sin(a*5+t*0.7)*1.2;size=0.04+v*0.03;"
+         "red=0.5+0.5*sin(a+t);green=0.5+0.5*sin(a*2);blue=1",
+         512},
+        {"Spectrum Ring", "n=180", "t=t+0.004", "",
+         "a=i*6.28319;s=getspec(i*0.7,0.05,0);x=cos(a+t)*(1+s);"
+         "z=sin(a+t)*(1+s);y=s*1.5-0.4;size=0.05+s*0.1;"
+         "red=0.2+s*2;green=0.4+0.6*s;blue=1-s",
+         180},
+    };
+    return kList;
+}
+
+struct Camera3DPresetDef
+{
+    const char* name;
+    const char* init;
+    const char* frame;
+    const char* beat;
+};
+
+const std::vector<Camera3DPresetDef>& camera3dPresets()
+{
+    static const std::vector<Camera3DPresetDef> kList = {
+        {"Orbit", "",
+         "a=time*0.4;px=sin(a)*4;pz=cos(a)*4;py=1.2;tx=0;ty=0;tz=0", ""},
+        {"Beat Zoom", "d=3.732", "d=d+(3.732-d)*0.08;pz=d", "d=2.6"},
+        {"Handheld Sway", "",
+         "px=sin(time*0.5)*0.4;py=0.3+sin(time*0.33)*0.25;"
+         "pz=3.732+sin(time*0.21)*0.3;tx=sin(time*0.27)*0.2", ""},
+        {"Fly Forward (Fog)", "fogstart=2;fogend=9",
+         "pz=3.732-sin(time*0.2)*3;py=0.5;tz=pz-4;roll=sin(time*0.3)*8", ""},
+        {"Bass Shake", "",
+         "px=sin(time*13)*bass*0.3;py=cos(time*17)*bass*0.2;pz=3.732", ""},
+        {"Top-Down Spin", "",
+         "px=0;py=4.5;pz=0;tx=0;ty=0;tz=0;roll=time*40", ""},
+    };
     return kList;
 }
 
@@ -1497,6 +1591,46 @@ void MultiEffectPanel::applySuperScopePreset(const QList<int>& path, int presetI
         p->beatCode = beat;
         p->pointCode = point;
         p->pointCount = count;
+        m_host->recompileChain();
+    }
+}
+
+void MultiEffectPanel::applyScope3DPreset(const QList<int>& path, int presetIndex)
+{
+    const auto& defs = scope3dPresets();
+    if (presetIndex < 0 || presetIndex >= static_cast<int>(defs.size())) return;
+    if (m_host == nullptr || m_mutex == nullptr) return;
+    const Scope3DPresetDef& def = defs[static_cast<std::size_t>(presetIndex)];
+
+    QMutexLocker lock(m_mutex);
+    ChainNode* node = nodeAtPath(path);
+    if (node == nullptr) return;
+    if (auto* p = std::get_if<SuperScope3DParams>(&node->params))
+    {
+        p->initCode = def.init;
+        p->frameCode = def.frame;
+        p->beatCode = def.beat;
+        p->pointCode = def.point;
+        p->pointCount = def.pointCount;
+        m_host->recompileChain();
+    }
+}
+
+void MultiEffectPanel::applyCamera3DPreset(const QList<int>& path, int presetIndex)
+{
+    const auto& defs = camera3dPresets();
+    if (presetIndex < 0 || presetIndex >= static_cast<int>(defs.size())) return;
+    if (m_host == nullptr || m_mutex == nullptr) return;
+    const Camera3DPresetDef& def = defs[static_cast<std::size_t>(presetIndex)];
+
+    QMutexLocker lock(m_mutex);
+    ChainNode* node = nodeAtPath(path);
+    if (node == nullptr) return;
+    if (auto* p = std::get_if<Camera3DParams>(&node->params))
+    {
+        p->initCode = def.init;
+        p->frameCode = def.frame;
+        p->beatCode = def.beat;
         m_host->recompileChain();
     }
 }
@@ -2818,6 +2952,151 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addInt(tr("Divisor (window / N)"), p->divisor, 1, 8, [](ChainNode& n, int v) { std::get<RenderScaleParams>(n.params).divisor = v; });
         addEnum(tr("Upscale filter"), p->filter, {"Nearest (chunky)", "Linear (smooth)"},
                 [](ChainNode& n, int v) { std::get<RenderScaleParams>(n.params).filter = v; });
+    }
+    else if (auto* p = std::get_if<BloomParams>(&params))
+    {
+        form->addRow(new QLabel(tr("Additive glow: downsample, separable 25-tap "
+                                   "gaussian, add back (the \"Lights\" bloom — "
+                                   "threshold 0 = reference). Display-only by "
+                                   "default: the glow is mixed in at present "
+                                   "time and never feeds back into the chain "
+                                   "(uncheck for glow trails — accumulates in "
+                                   "feedback chains!)."),
+                                m_propContainer));
+        addBool(tr("Display only (post)"), p->post, [](ChainNode& n, bool v) { std::get<BloomParams>(n.params).post = v; });
+        addInt(tr("Downsample (1/2^n)"), p->downsample, 0, 4, [](ChainNode& n, int v) { std::get<BloomParams>(n.params).downsample = v; });
+        addInt(tr("Radius (sigma px)"), p->radius, 1, 32, [](ChainNode& n, int v) { std::get<BloomParams>(n.params).radius = v; });
+        addDouble(tr("Intensity"), p->intensity, 0.0, 8.0, 0.1, [](ChainNode& n, double v) { std::get<BloomParams>(n.params).intensity = static_cast<float>(v); });
+        addDouble(tr("Threshold"), p->threshold, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<BloomParams>(n.params).threshold = static_cast<float>(v); });
+        addBool(tr("Vignette"), p->vignette, [](ChainNode& n, bool v) { std::get<BloomParams>(n.params).vignette = v; });
+        addDouble(tr("Vignette strength"), p->vignetteStrength, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<BloomParams>(n.params).vignetteStrength = static_cast<float>(v); });
+    }
+    else if (auto* p = std::get_if<Camera3DParams>(&params))
+    {
+        form->addRow(new QLabel(tr("Sets the 3D camera for the following 3D "
+                                   "modules (per-frame state, like Set Render "
+                                   "Mode). Scripts may override px..pz, tx..tz, "
+                                   "fov, roll, fogstart, fogend."),
+                                m_propContainer));
+        // Vorlagen-Dropdown (S48): laedt die EEL-Slots der Vorlage in die
+        // Code-Felder unten (Quelle: camera3dPresets). Index 0 ist das Label.
+        auto* presetCombo = new QComboBox(m_propContainer);
+        presetCombo->addItem(tr("— Load template —"));
+        for (const Camera3DPresetDef& def : camera3dPresets())
+            presetCombo->addItem(def.name);
+        connect(presetCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+                [this, path](int idx) {
+                    if (idx <= 0) return;  // the label row
+                    // Defer: applying rebuilds this editor (deletes the combo).
+                    QMetaObject::invokeMethod(
+                        this,
+                        [this, path, idx] {
+                            applyCamera3DPreset(path, idx - 1);
+                            buildPropertyEditor(path);
+                        },
+                        Qt::QueuedConnection);
+                });
+        form->addRow(tr("Template"), presetCombo);
+
+        addDouble(tr("Position X"), p->px, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).px = static_cast<float>(v); });
+        addDouble(tr("Position Y"), p->py, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).py = static_cast<float>(v); });
+        addDouble(tr("Position Z"), p->pz, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).pz = static_cast<float>(v); });
+        addDouble(tr("Target X"), p->tx, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).tx = static_cast<float>(v); });
+        addDouble(tr("Target Y"), p->ty, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).ty = static_cast<float>(v); });
+        addDouble(tr("Target Z"), p->tz, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).tz = static_cast<float>(v); });
+        addDouble(tr("FOV (deg)"), p->fov, 1.0, 179.0, 1.0, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).fov = static_cast<float>(v); });
+        addDouble(tr("Roll (deg)"), p->roll, -360.0, 360.0, 1.0, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).roll = static_cast<float>(v); });
+        addDouble(tr("Fog start"), p->fogStart, 0.0, 1000.0, 0.5, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).fogStart = static_cast<float>(v); });
+        addDouble(tr("Fog end"), p->fogEnd, 0.0, 1000.0, 0.5, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).fogEnd = static_cast<float>(v); });
+        addColor(tr("Fog color"), p->fogColor, [](ChainNode& n, uint32_t v) { std::get<Camera3DParams>(n.params).fogColor = v; });
+        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<Camera3DParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Camera3DParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Camera3DParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<SuperScope3DParams>(&params))
+    {
+        form->addRow(new QLabel(tr("Scripted 3D point cloud: the point code "
+                                   "writes x, y, z in WORLD units (y+ = up), "
+                                   "plus size, red/green/blue, skip. Uses the "
+                                   "active 3D camera (or the built-in default), "
+                                   "drawn as additive soft sprites."),
+                                m_propContainer));
+        // Vorlagen-Dropdown (S48): laedt das EEL-Quartett der Vorlage in die
+        // Code-Felder unten (Quelle: scope3dPresets). Index 0 ist das Label.
+        auto* presetCombo = new QComboBox(m_propContainer);
+        presetCombo->addItem(tr("— Load template —"));
+        for (const Scope3DPresetDef& def : scope3dPresets())
+            presetCombo->addItem(def.name);
+        connect(presetCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+                [this, path](int idx) {
+                    if (idx <= 0) return;  // the label row
+                    // Defer: applying rebuilds this editor (deletes the combo).
+                    QMetaObject::invokeMethod(
+                        this,
+                        [this, path, idx] {
+                            applyScope3DPreset(path, idx - 1);
+                            buildPropertyEditor(path);
+                        },
+                        Qt::QueuedConnection);
+                });
+        form->addRow(tr("Template"), presetCombo);
+
+        addInt(tr("Points (n)"), p->pointCount, 1, 4096, [](ChainNode& n, int v) { std::get<SuperScope3DParams>(n.params).pointCount = v; });
+        addEnum(tr("Draw mode"), p->renderMode, {"Soft sprites", "Lines"},
+                [](ChainNode& n, int v) { std::get<SuperScope3DParams>(n.params).renderMode = v; });
+        addDouble(tr("Default size (world)"), p->size, 0.0001, 100.0, 0.01, [](ChainNode& n, double v) { std::get<SuperScope3DParams>(n.params).size = static_cast<float>(v); });
+        addDouble(tr("Sprite falloff (k)"), p->falloff, 0.5, 32.0, 0.5, [](ChainNode& n, double v) { std::get<SuperScope3DParams>(n.params).falloff = static_cast<float>(v); });
+        addEnum(tr("Audio channel (v)"), p->audioChannel, {"Left", "Right", "Mono"},
+                [](ChainNode& n, int v) { std::get<SuperScope3DParams>(n.params).audioChannel = v; });
+        addBool(tr("v from spectrum"), p->spectrumSource, [](ChainNode& n, bool v) { std::get<SuperScope3DParams>(n.params).spectrumSource = v; });
+        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<SuperScope3DParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<SuperScope3DParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<SuperScope3DParams>(n.params).beatCode = std::move(v); });
+        addScript(tr("Point code"), p->pointCode, [](ChainNode& n, std::string v) { std::get<SuperScope3DParams>(n.params).pointCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<Terrain3DParams>(&params))
+    {
+        form->addRow(new QLabel(tr("Heightfield after the \"Lights\" recipe: "
+                                   "procedural base, spectrum as radial rings, "
+                                   "spring relaxation. Scripts see the height "
+                                   "grid as megabuf(gy*res+gx); the point code "
+                                   "colors grid dots (i, gx, gy, h given)."),
+                                m_propContainer));
+        addInt(tr("Resolution"), p->resolution, 8, 128, [](ChainNode& n, int v) { std::get<Terrain3DParams>(n.params).resolution = v; });
+        addDouble(tr("Extent (world)"), p->extent, 0.1, 100.0, 0.5, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).extent = static_cast<float>(v); });
+        addDouble(tr("Base amplitude"), p->baseAmp, 0.0, 10.0, 0.05, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).baseAmp = static_cast<float>(v); });
+        addDouble(tr("Y offset"), p->yOffset, -100.0, 100.0, 0.1, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).yOffset = static_cast<float>(v); });
+        addDouble(tr("Spectrum rings"), p->ringAmp, 0.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).ringAmp = static_cast<float>(v); });
+        addDouble(tr("Relax (spring)"), p->relax, 0.0, 1.0, 0.02, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).relax = static_cast<float>(v); });
+        addDouble(tr("Flatten"), p->flatten, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).flatten = static_cast<float>(v); });
+        addBool(tr("Draw mesh"), p->drawMesh, [](ChainNode& n, bool v) { std::get<Terrain3DParams>(n.params).drawMesh = v; });
+        addColor(tr("Mesh color"), p->meshColor, [](ChainNode& n, uint32_t v) { std::get<Terrain3DParams>(n.params).meshColor = v; });
+        addBool(tr("Draw dots"), p->drawDots, [](ChainNode& n, bool v) { std::get<Terrain3DParams>(n.params).drawDots = v; });
+        addDouble(tr("Dot size (world)"), p->dotSize, 0.0001, 10.0, 0.005, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).dotSize = static_cast<float>(v); });
+        addDouble(tr("Sprite falloff (k)"), p->falloff, 0.5, 32.0, 0.5, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).falloff = static_cast<float>(v); });
+        addColor(tr("Color (valley)"), p->colorLow, [](ChainNode& n, uint32_t v) { std::get<Terrain3DParams>(n.params).colorLow = v; });
+        addColor(tr("Color (peak)"), p->colorHigh, [](ChainNode& n, uint32_t v) { std::get<Terrain3DParams>(n.params).colorHigh = v; });
+        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<Terrain3DParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Terrain3DParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Terrain3DParams>(n.params).beatCode = std::move(v); });
+        addScript(tr("Point code"), p->pointCode, [](ChainNode& n, std::string v) { std::get<Terrain3DParams>(n.params).pointCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<GlowOrbsParams>(&params))
+    {
+        form->addRow(new QLabel(tr("Low-poly glow orbs with two-color gradient, "
+                                   "beat flash and halo (the \"Lights\" orbs). "
+                                   "Point code runs PER ORB (i = orb index) and "
+                                   "may set x,y,z, radius, sx,sy,sz, red/green/"
+                                   "blue, red2/green2/blue2, flash."),
+                                m_propContainer));
+        addInt(tr("Orbs (n)"), p->orbCount, 1, 64, [](ChainNode& n, int v) { std::get<GlowOrbsParams>(n.params).orbCount = v; });
+        addDouble(tr("Halo scale"), p->haloScale, 1.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<GlowOrbsParams>(n.params).haloScale = static_cast<float>(v); });
+        addDouble(tr("Halo intensity"), p->haloIntensity, 0.0, 4.0, 0.1, [](ChainNode& n, double v) { std::get<GlowOrbsParams>(n.params).haloIntensity = static_cast<float>(v); });
+        addDouble(tr("Halo falloff (k)"), p->falloff, 0.5, 32.0, 0.5, [](ChainNode& n, double v) { std::get<GlowOrbsParams>(n.params).falloff = static_cast<float>(v); });
+        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<GlowOrbsParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<GlowOrbsParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<GlowOrbsParams>(n.params).beatCode = std::move(v); });
+        addScript(tr("Point code"), p->pointCode, [](ChainNode& n, std::string v) { std::get<GlowOrbsParams>(n.params).pointCode = std::move(v); });
     }
     else if (auto* p = std::get_if<Fractal3DParams>(&params))
     {

@@ -671,6 +671,78 @@ struct WriteVisitor
         o["divisor"] = p.divisor;
         o["filter"] = p.filter;
     }
+    void operator()(const BloomParams& p) const
+    {
+        o["downsample"] = p.downsample;
+        o["radius"] = p.radius;
+        o["intensity"] = p.intensity;
+        o["threshold"] = p.threshold;
+        o["vignette"] = p.vignette;
+        o["vignetteStrength"] = p.vignetteStrength;
+        o["post"] = p.post;
+    }
+    void operator()(const Camera3DParams& p) const
+    {
+        o["px"] = p.px;
+        o["py"] = p.py;
+        o["pz"] = p.pz;
+        o["tx"] = p.tx;
+        o["ty"] = p.ty;
+        o["tz"] = p.tz;
+        o["fov"] = p.fov;
+        o["roll"] = p.roll;
+        o["fogStart"] = p.fogStart;
+        o["fogEnd"] = p.fogEnd;
+        o["fogColor"] = static_cast<double>(p.fogColor);
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
+    void operator()(const SuperScope3DParams& p) const
+    {
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+        o["pointCode"] = QString::fromStdString(p.pointCode);
+        o["pointCount"] = p.pointCount;
+        o["renderMode"] = p.renderMode;
+        o["size"] = p.size;
+        o["falloff"] = p.falloff;
+        o["audioChannel"] = p.audioChannel;
+        o["spectrumSource"] = p.spectrumSource;
+    }
+    void operator()(const Terrain3DParams& p) const
+    {
+        o["resolution"] = p.resolution;
+        o["extent"] = p.extent;
+        o["baseAmp"] = p.baseAmp;
+        o["yOffset"] = p.yOffset;
+        o["ringAmp"] = p.ringAmp;
+        o["relax"] = p.relax;
+        o["flatten"] = p.flatten;
+        o["drawMesh"] = p.drawMesh;
+        o["meshColor"] = static_cast<double>(p.meshColor);
+        o["drawDots"] = p.drawDots;
+        o["dotSize"] = p.dotSize;
+        o["falloff"] = p.falloff;
+        o["colorLow"] = static_cast<double>(p.colorLow);
+        o["colorHigh"] = static_cast<double>(p.colorHigh);
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+        o["pointCode"] = QString::fromStdString(p.pointCode);
+    }
+    void operator()(const GlowOrbsParams& p) const
+    {
+        o["orbCount"] = p.orbCount;
+        o["haloScale"] = p.haloScale;
+        o["haloIntensity"] = p.haloIntensity;
+        o["falloff"] = p.falloff;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+        o["pointCode"] = QString::fromStdString(p.pointCode);
+    }
     void operator()(const StarfieldParams& p) const
     {
         o["color"] = static_cast<double>(p.color);
@@ -1556,6 +1628,104 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.filter = std::clamp(getInt(o, "filter", 0), 0, 1);
         return p;
     }
+    if (type == "bloom")
+    {
+        BloomParams p;
+        p.downsample = std::clamp(getInt(o, "downsample", 2), 0, 4);
+        p.radius = std::clamp(getInt(o, "radius", 8), 1, 32);
+        p.intensity = static_cast<float>(
+            std::clamp(getDouble(o, "intensity", 1.0), 0.0, 8.0));
+        p.threshold = static_cast<float>(
+            std::clamp(getDouble(o, "threshold", 0.0), 0.0, 1.0));
+        p.vignette = getBool(o, "vignette", false);
+        p.vignetteStrength = static_cast<float>(
+            std::clamp(getDouble(o, "vignetteStrength", 0.3), 0.0, 1.0));
+        p.post = getBool(o, "post", true);
+        return p;
+    }
+    if (type == "camera3d")
+    {
+        Camera3DParams p;
+        p.px = static_cast<float>(getDouble(o, "px", 0.0));
+        p.py = static_cast<float>(getDouble(o, "py", 0.0));
+        p.pz = static_cast<float>(getDouble(o, "pz", 3.7320508));
+        p.tx = static_cast<float>(getDouble(o, "tx", 0.0));
+        p.ty = static_cast<float>(getDouble(o, "ty", 0.0));
+        p.tz = static_cast<float>(getDouble(o, "tz", 0.0));
+        p.fov = static_cast<float>(std::clamp(getDouble(o, "fov", 30.0), 1.0, 179.0));
+        p.roll = static_cast<float>(getDouble(o, "roll", 0.0));
+        p.fogStart = static_cast<float>(getDouble(o, "fogStart", 0.0));
+        p.fogEnd = static_cast<float>(getDouble(o, "fogEnd", 0.0));
+        p.fogColor = getColor(o, "fogColor", 0x000000);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
+    if (type == "superScope3d")
+    {
+        SuperScope3DParams p;
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        p.pointCode = getStr(o, "pointCode");
+        p.pointCount = std::clamp(getInt(o, "pointCount", 256), 1, 4096);
+        p.renderMode = std::clamp(getInt(o, "renderMode", 0), 0, 1);
+        p.size = static_cast<float>(
+            std::clamp(getDouble(o, "size", 0.05), 0.0001, 100.0));
+        p.falloff = static_cast<float>(
+            std::clamp(getDouble(o, "falloff", 4.0), 0.5, 32.0));
+        p.audioChannel = std::clamp(getInt(o, "audioChannel", 2), 0, 2);
+        p.spectrumSource = getBool(o, "spectrumSource", false);
+        return p;
+    }
+    if (type == "terrain3d")
+    {
+        Terrain3DParams p;
+        p.resolution = std::clamp(getInt(o, "resolution", 64), 8, 128);
+        p.extent = static_cast<float>(
+            std::clamp(getDouble(o, "extent", 4.0), 0.1, 100.0));
+        p.baseAmp = static_cast<float>(
+            std::clamp(getDouble(o, "baseAmp", 0.15), 0.0, 10.0));
+        p.yOffset = static_cast<float>(
+            std::clamp(getDouble(o, "yOffset", -0.8), -100.0, 100.0));
+        p.ringAmp = static_cast<float>(
+            std::clamp(getDouble(o, "ringAmp", 1.0), 0.0, 10.0));
+        p.relax = static_cast<float>(
+            std::clamp(getDouble(o, "relax", 0.12), 0.0, 1.0));
+        p.flatten = static_cast<float>(
+            std::clamp(getDouble(o, "flatten", 0.0), 0.0, 1.0));
+        p.drawMesh = getBool(o, "drawMesh", true);
+        p.meshColor = getColor(o, "meshColor", 0x101418);
+        p.drawDots = getBool(o, "drawDots", true);
+        p.dotSize = static_cast<float>(
+            std::clamp(getDouble(o, "dotSize", 0.045), 0.0001, 10.0));
+        p.falloff = static_cast<float>(
+            std::clamp(getDouble(o, "falloff", 4.0), 0.5, 32.0));
+        p.colorLow = getColor(o, "colorLow", 0x0A2040);
+        p.colorHigh = getColor(o, "colorHigh", 0x40C0FF);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        p.pointCode = getStr(o, "pointCode");
+        return p;
+    }
+    if (type == "glowOrbs")
+    {
+        GlowOrbsParams p;
+        p.orbCount = std::clamp(getInt(o, "orbCount", 5), 1, 64);
+        p.haloScale = static_cast<float>(
+            std::clamp(getDouble(o, "haloScale", 2.2), 1.0, 10.0));
+        p.haloIntensity = static_cast<float>(
+            std::clamp(getDouble(o, "haloIntensity", 0.6), 0.0, 4.0));
+        p.falloff = static_cast<float>(
+            std::clamp(getDouble(o, "falloff", 3.0), 0.5, 32.0));
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        p.pointCode = getStr(o, "pointCode");
+        return p;
+    }
     if (type == "starfield")
     {
         StarfieldParams p;
@@ -1713,6 +1883,11 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const AviParams&) const { return "avi"; }
         QString operator()(const CommentParams&) const { return "comment"; }
         QString operator()(const RenderScaleParams&) const { return "renderScale"; }
+        QString operator()(const BloomParams&) const { return "bloom"; }
+        QString operator()(const Camera3DParams&) const { return "camera3d"; }
+        QString operator()(const SuperScope3DParams&) const { return "superScope3d"; }
+        QString operator()(const Terrain3DParams&) const { return "terrain3d"; }
+        QString operator()(const GlowOrbsParams&) const { return "glowOrbs"; }
         QString operator()(const StarfieldParams&) const { return "starfield"; }
         QString operator()(const TimescopeParams&) const { return "timescope"; }
         QString operator()(const DotGridParams&) const { return "dotGrid"; }

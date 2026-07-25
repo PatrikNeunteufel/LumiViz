@@ -122,6 +122,23 @@ public:
     [[nodiscard]] double number(const char* name) const;  ///< 0.0 if unset/non-number
 
     // =========================================================================
+    // Host-Zugriff auf den engine-lokalen megabuf (S48, Terrain-Grid): der
+    // Host spiegelt Datenfelder (z. B. Hoehen-Grid) vor dem Slot-Lauf hinein
+    // und liest sie danach zurueck — dieselbe Ablage, die megabuf(idx) im
+    // Skript sieht. Unbesetzte Indizes lesen 0.0 (EEL-Semantik).
+    // =========================================================================
+
+    [[nodiscard]] double megabufValue(std::int64_t index) const
+    {
+        const auto it = m_megabuf.find(index);
+        return it != m_megabuf.end() ? it->second : 0.0;
+    }
+    void setMegabufValue(std::int64_t index, double value)
+    {
+        if (index >= 0 && index < kBufCapacity) m_megabuf[index] = value;
+    }
+
+    // =========================================================================
     // Audio analysis (AVS-faithful getspec/getosc/gettime backing data)
     // =========================================================================
 

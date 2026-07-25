@@ -1,0 +1,156 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "divisor": 1,
+                "enabled": true,
+                "filter": 0,
+                "name": "Render Scale",
+                "type": "renderScale"
+            },
+            {
+                "color": 0,
+                "enabled": true,
+                "fadeLen": 12,
+                "name": "Fadeout",
+                "type": "fadeout"
+            },
+            {
+                "enabled": true,
+                "name": "Blur",
+                "roundUp": false,
+                "strength": 1,
+                "type": "blur"
+            },
+            {
+                "adjustAlpha": 128,
+                "enabled": true,
+                "lineBlend": 1,
+                "lineWidth": 1,
+                "name": "Set Render Mode",
+                "type": "setRenderMode"
+            },
+            {
+                "beatSpeed": 2,
+                "blend": 1,
+                "color": 3158088,
+                "durationFrames": 15,
+                "enabled": true,
+                "maxStars": 250,
+                "name": "Starfield",
+                "onBeat": false,
+                "type": "starfield",
+                "warpSpeed": 2
+            },
+            {
+                "audioChannel": 0,
+                "beatCode": "",
+                "colorBlend": 1,
+                "colorCycleFrames": 60,
+                "colors": [
+                    16777215
+                ],
+                "dotSize": 1,
+                "enabled": true,
+                "frameCode": "t=t+0.05;",
+                "gradientPreset": "Neon",
+                "initCode": "n=768; t=0;",
+                "lineBlend": 0,
+                "lineWidth": 1,
+                "name": "SuperScope",
+                "pointCode": "seg=floor(i*12); a=(i*12-seg)*6.283;z=seg*1.1-mod(t,1.1)+0.6;rad=1.2+0.3*sin(seg*0.9+t*0.11)+2*getspec(0.05,0.1,0);wob=0.4*sin(z*0.4+t*0.05);pers=1.6/(z+0.4);x=cos(a)*rad*pers; y=(sin(a)*rad+wob)*pers;fade=1/(1+z*0.16);red=(0.15+0.85*abs(sin(seg*0.7)))*fade;green=(0.4+0.6*abs(sin(seg*0.7+2)))*fade;blue=fade;",
+                "pointCount": 100,
+                "renderMode": 0,
+                "spectrumSource": false,
+                "type": "superScope"
+            },
+            {
+                "audioChannel": 0,
+                "beatCode": "",
+                "colorBlend": 1,
+                "colorCycleFrames": 60,
+                "colors": [
+                    16777215
+                ],
+                "dotSize": 1,
+                "enabled": true,
+                "frameCode": "t=t+0.06;",
+                "gradientPreset": "Neon",
+                "initCode": "n=200; t=0;",
+                "lineBlend": 0,
+                "lineWidth": 1,
+                "name": "SuperScope",
+                "pointCode": "z=i*10+0.5-mod(t*2,1.25);pers=1.6/(z+0.4);x=sin(z*0.8+t*0.1)*0.9*pers;y=cos(z*0.5+t*0.07)*0.6*pers;fade=1/(1+z*0.3);red=fade; green=(0.3+0.7*i)*fade; blue=0.25*fade;",
+                "pointCount": 100,
+                "renderMode": 1,
+                "spectrumSource": false,
+                "type": "superScope"
+            },
+            {
+                "audioChannel": 0,
+                "beatCode": "",
+                "colorBlend": 1,
+                "colorCycleFrames": 60,
+                "colors": [
+                    16777215
+                ],
+                "dotSize": 1,
+                "enabled": true,
+                "frameCode": "t=t+0.06;",
+                "gradientPreset": "Neon",
+                "initCode": "n=200; t=0;",
+                "lineBlend": 0,
+                "lineWidth": 1,
+                "name": "SuperScope",
+                "pointCode": "z=i*10+0.5-mod(t*2+0.6,1.25);pers=1.6/(z+0.4);x=cos(z*0.7+t*0.09)*0.8*pers;y=sin(z*0.6+t*0.08)*0.7*pers;fade=1/(1+z*0.3);red=0.2*fade; green=(0.5+0.5*i)*fade; blue=fade;",
+                "pointCount": 100,
+                "renderMode": 1,
+                "spectrumSource": false,
+                "type": "superScope"
+            },
+            {
+                "audioChannel": 0,
+                "beatCode": "e=1;",
+                "colorBlend": 1,
+                "colorCycleFrames": 60,
+                "colors": [
+                    16777215
+                ],
+                "dotSize": 1,
+                "enabled": true,
+                "frameCode": "t=t+1; e=e*0.88;",
+                "gradientPreset": "Neon",
+                "initCode": "n=192; t=0; e=0;",
+                "lineBlend": 0,
+                "lineWidth": 1,
+                "name": "SuperScope",
+                "pointCode": "orb=floor(i*12); a=(i*12-orb)*6.283;cx=cos(orb*2.4+t*0.01)*0.7; cy=sin(orb*1.9+t*0.013)*0.5;orr=0.02+0.05*e;x=cx+cos(a)*orr; y=cy+sin(a)*orr*1.4;red=e; green=e*0.9; blue=e*0.7;",
+                "pointCount": 100,
+                "renderMode": 1,
+                "spectrumSource": false,
+                "type": "superScope"
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 0,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 0,
+        "type": "list",
+        "useCode": false
+    }
+}

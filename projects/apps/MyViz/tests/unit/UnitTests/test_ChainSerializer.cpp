@@ -1015,6 +1015,187 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{RenderScaleParams{}}) == "renderScale");
     }
 
+    TEST_CASE("Bloom-Parameter ueberleben den Round-Trip (S48, Lights-Etappe 1)")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode leaf;
+        BloomParams bp;
+        bp.downsample = 3;
+        bp.radius = 12;
+        bp.intensity = 1.5f;
+        bp.threshold = 0.25f;
+        bp.vignette = true;
+        bp.vignetteStrength = 0.4f;
+        bp.post = false;  // Nicht-Default — muss den Roundtrip ueberleben
+        leaf.params = bp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 1);
+        const auto& p = std::get<BloomParams>(r.children[0].params);
+        CHECK(p.downsample == 3);
+        CHECK(p.radius == 12);
+        CHECK(p.intensity == doctest::Approx(1.5f));
+        CHECK(p.threshold == doctest::Approx(0.25f));
+        CHECK(p.vignette == true);
+        CHECK(p.vignetteStrength == doctest::Approx(0.4f));
+        CHECK(p.post == false);
+        CHECK(BloomParams{}.post == true);  // Default: Anzeige-only (S48)
+        CHECK(effectTypeKey(EffectParams{BloomParams{}}) == "bloom");
+    }
+
+    TEST_CASE("Camera3D-Parameter ueberleben den Round-Trip (S48, Lights-Etappe 1)")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode leaf;
+        Camera3DParams cp;
+        cp.px = 1.0f; cp.py = 2.0f; cp.pz = -8.0f;
+        cp.tx = 0.5f; cp.ty = -0.5f; cp.tz = 3.0f;
+        cp.fov = 45.0f;
+        cp.roll = 90.0f;
+        cp.fogStart = 2.0f;
+        cp.fogEnd = 12.0f;
+        cp.fogColor = 0x102030;
+        cp.initCode = "px=1";
+        cp.frameCode = "roll=roll+1";
+        cp.beatCode = "fov=60";
+        leaf.params = cp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 1);
+        const auto& p = std::get<Camera3DParams>(r.children[0].params);
+        CHECK(p.px == doctest::Approx(1.0f));
+        CHECK(p.py == doctest::Approx(2.0f));
+        CHECK(p.pz == doctest::Approx(-8.0f));
+        CHECK(p.tx == doctest::Approx(0.5f));
+        CHECK(p.ty == doctest::Approx(-0.5f));
+        CHECK(p.tz == doctest::Approx(3.0f));
+        CHECK(p.fov == doctest::Approx(45.0f));
+        CHECK(p.roll == doctest::Approx(90.0f));
+        CHECK(p.fogStart == doctest::Approx(2.0f));
+        CHECK(p.fogEnd == doctest::Approx(12.0f));
+        CHECK(p.fogColor == 0x102030u);
+        CHECK(p.initCode == "px=1");
+        CHECK(p.frameCode == "roll=roll+1");
+        CHECK(p.beatCode == "fov=60");
+        CHECK(effectTypeKey(EffectParams{Camera3DParams{}}) == "camera3d");
+    }
+
+    TEST_CASE("SuperScope3D-Parameter ueberleben den Round-Trip (S48, Lights-Etappe 1)")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode leaf;
+        SuperScope3DParams sp;
+        sp.initCode = "n=800";
+        sp.frameCode = "t=t+0.02";
+        sp.beatCode = "t=0";
+        sp.pointCode = "x=i;y=v;z=t;size=0.2";
+        sp.pointCount = 512;
+        sp.renderMode = 1;
+        sp.size = 0.25f;
+        sp.falloff = 6.0f;
+        sp.audioChannel = 1;
+        sp.spectrumSource = true;
+        leaf.params = sp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 1);
+        const auto& p = std::get<SuperScope3DParams>(r.children[0].params);
+        CHECK(p.initCode == "n=800");
+        CHECK(p.frameCode == "t=t+0.02");
+        CHECK(p.beatCode == "t=0");
+        CHECK(p.pointCode == "x=i;y=v;z=t;size=0.2");
+        CHECK(p.pointCount == 512);
+        CHECK(p.renderMode == 1);
+        CHECK(p.size == doctest::Approx(0.25f));
+        CHECK(p.falloff == doctest::Approx(6.0f));
+        CHECK(p.audioChannel == 1);
+        CHECK(p.spectrumSource == true);
+        CHECK(effectTypeKey(EffectParams{SuperScope3DParams{}}) == "superScope3d");
+    }
+
+    TEST_CASE("Terrain3D-Parameter ueberleben den Round-Trip (S48, Lights-Etappe 2)")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode leaf;
+        Terrain3DParams tp;
+        tp.resolution = 48;
+        tp.extent = 6.0f;
+        tp.baseAmp = 0.3f;
+        tp.yOffset = -1.2f;
+        tp.ringAmp = 2.0f;
+        tp.relax = 0.25f;
+        tp.flatten = 0.1f;
+        tp.drawMesh = false;
+        tp.meshColor = 0x202428;
+        tp.drawDots = true;
+        tp.dotSize = 0.08f;
+        tp.falloff = 6.0f;
+        tp.colorLow = 0x001020;
+        tp.colorHigh = 0x80FFEE;
+        tp.initCode = "x=1";
+        tp.frameCode = "megabuf(0)=1";
+        tp.beatCode = "b=1";
+        tp.pointCode = "red=h";
+        leaf.params = tp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 1);
+        const auto& p = std::get<Terrain3DParams>(r.children[0].params);
+        CHECK(p.resolution == 48);
+        CHECK(p.extent == doctest::Approx(6.0f));
+        CHECK(p.baseAmp == doctest::Approx(0.3f));
+        CHECK(p.yOffset == doctest::Approx(-1.2f));
+        CHECK(p.ringAmp == doctest::Approx(2.0f));
+        CHECK(p.relax == doctest::Approx(0.25f));
+        CHECK(p.flatten == doctest::Approx(0.1f));
+        CHECK(p.drawMesh == false);
+        CHECK(p.meshColor == 0x202428u);
+        CHECK(p.drawDots == true);
+        CHECK(p.dotSize == doctest::Approx(0.08f));
+        CHECK(p.falloff == doctest::Approx(6.0f));
+        CHECK(p.colorLow == 0x001020u);
+        CHECK(p.colorHigh == 0x80FFEEu);
+        CHECK(p.initCode == "x=1");
+        CHECK(p.frameCode == "megabuf(0)=1");
+        CHECK(p.beatCode == "b=1");
+        CHECK(p.pointCode == "red=h");
+        CHECK(effectTypeKey(EffectParams{Terrain3DParams{}}) == "terrain3d");
+    }
+
+    TEST_CASE("GlowOrbs-Parameter ueberleben den Round-Trip (S48, Lights-Etappe 2)")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode leaf;
+        GlowOrbsParams gp;
+        gp.orbCount = 7;
+        gp.haloScale = 3.0f;
+        gp.haloIntensity = 1.2f;
+        gp.falloff = 5.0f;
+        gp.initCode = "n=3";
+        gp.frameCode = "t=t+0.01";
+        gp.beatCode = "flashall=1";
+        gp.pointCode = "x=i;radius=0.5;flash=flashall";
+        leaf.params = gp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 1);
+        const auto& p = std::get<GlowOrbsParams>(r.children[0].params);
+        CHECK(p.orbCount == 7);
+        CHECK(p.haloScale == doctest::Approx(3.0f));
+        CHECK(p.haloIntensity == doctest::Approx(1.2f));
+        CHECK(p.falloff == doctest::Approx(5.0f));
+        CHECK(p.initCode == "n=3");
+        CHECK(p.frameCode == "t=t+0.01");
+        CHECK(p.beatCode == "flashall=1");
+        CHECK(p.pointCode == "x=i;radius=0.5;flash=flashall");
+        CHECK(effectTypeKey(EffectParams{GlowOrbsParams{}}) == "glowOrbs");
+    }
+
     TEST_CASE("Batch-H Modul-Typkeys sind stabil und eindeutig")
     {
         CHECK(effectTypeKey(EffectParams{Fractal3DParams{}}) == "fractal3D");

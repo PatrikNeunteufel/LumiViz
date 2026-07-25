@@ -21,6 +21,8 @@
 #include <QOpenGLFramebufferObjectFormat>
 #include <QOpenGLFunctions>
 #include <QByteArray>
+#include <QMatrix4x4>
+#include <QQuaternion>
 #include <QVector4D>
 #include <QDateTime>
 #include <QDir>
@@ -268,6 +270,183 @@ void main()
     vec3 u = texture(uTex, clamp(vTex + vec2(0.0,  uTexel.y), 0.0, 1.0)).rgb;
     vec3 d = texture(uTex, clamp(vTex + vec2(0.0, -uTexel.y), 0.0, 1.0)).rgb;
     fragColor = vec4(c * uCenter + (l + r + u + d) * uNeighbor, 1.0);
+}
+)";
+
+// LumiViz Bloom (Lights-Etappe 1), Pass 1: Downsample auf das Glow-RT mit
+// optionalem Helligkeits-Threshold (Referenz "Lights" nutzt KEINEN — 0 ist
+// der Referenz-Pfad). Die Quelle wird fuer den Draw linear gefiltert.
+const char* kBloomDownFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform float uThreshold;
+out vec4 fragColor;
+void main()
+{
+    vec3 c = texture(uTex, vTex).rgb;
+    fragColor = vec4(max(c - vec3(uThreshold), 0.0), 1.0);
+}
+)";
+
+// LumiViz Bloom, Pass 2+3: separierbarer Gauss mit fix 25 Taps (Referenz
+// buildKernel(sigma), Lights/EffectComposer). uDir = ein Texel in
+// Blur-Richtung; die Gewichte werden im Shader normiert (Summe = 1, damit
+// der Blur die Energie erhaelt — Gate-Bedingung).
+const char* kBloomGaussFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform vec2 uDir;
+uniform float uSigma;
+out vec4 fragColor;
+void main()
+{
+    vec3 sum = vec3(0.0);
+    float wsum = 0.0;
+    for (int i = -12; i <= 12; ++i)
+    {
+        float w = exp(-float(i * i) / (2.0 * uSigma * uSigma));
+        sum += w * texture(uTex, clamp(vTex + float(i) * uDir, 0.0, 1.0)).rgb;
+        wsum += w;
+    }
+    fragColor = vec4(sum / wsum, 1.0);
+}
+)";
+
+// LumiViz Bloom, Pass 4: additives Composite (min(a+b,1)) + optionale
+// Vignette 1 - r^2 * strength (Referenz-Abschluss, r = 0 in der Mitte).
+const char* kBloomCompFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uBase;
+uniform sampler2D uGlow;
+uniform float uIntensity;
+uniform bool uVignette;
+uniform float uVigStrength;
+out vec4 fragColor;
+void main()
+{
+    vec3 c = min(texture(uBase, vTex).rgb +
+                 texture(uGlow, vTex).rgb * uIntensity, vec3(1.0));
+    if (uVignette)
+    {
+        vec2 p = vTex * 2.0 - 1.0;
+        c *= clamp(1.0 - dot(p, p) * uVigStrength, 0.0, 1.0);
+    }
+    fragColor = vec4(c, 1.0);
+}
+)";
+
+// LumiViz SuperScope 3D (Lights-Etappe 1): additive Soft-Sprite-Punktwolke.
+// Vertex: pro Punkt 6 Vertices (zwei Dreiecke) — Center in NDC, Corner -1..1,
+// halbe Sprite-Ausdehnung in NDC (bereits 1/w-attenuiert), Farbe (gefoggt).
+const char* kSprite3DVertexShader = R"(
+#version 330 core
+layout(location = 0) in vec2 aCenter;
+layout(location = 1) in vec2 aCorner;
+layout(location = 2) in vec2 aHalf;
+layout(location = 3) in vec3 aColor;
+out vec2 vCorner;
+out vec3 vColor;
+void main()
+{
+    vCorner = aCorner;
+    vColor = aColor;
+    gl_Position = vec4(aCenter + aCorner * aHalf, 0.0, 1.0);
+}
+)";
+
+// Fragment: eingebauter radialer Falloff exp(-r^2*k) (≈ dot.png der Lights-
+// Referenz, KEIN Bild-Asset); minus exp(-k), damit der Quad-Rand exakt auf 0
+// auslaeuft (keine sichtbare Kante). Additiv geblendet (GL_ONE, GL_ONE).
+const char* kSprite3DFragmentShader = R"(
+#version 330 core
+in vec2 vCorner;
+in vec3 vColor;
+uniform float uFalloff;
+out vec4 fragColor;
+void main()
+{
+    float w = exp(-dot(vCorner, vCorner) * uFalloff) - exp(-uFalloff);
+    fragColor = vec4(vColor * max(w, 0.0), 1.0);
+}
+)";
+
+// LumiViz Terrain 3D (Lights-Etappe 2): dunkles opakes Heightfield-Mesh mit
+// Distanz-Fog (das Mesh DARF zur Fog-Farbe mischen — anders als die
+// additiven Sprites, die nur daempfen).
+const char* kTerrain3DVertexShader = R"(
+#version 330 core
+layout(location = 0) in vec3 aPos;
+uniform mat4 uVp;
+uniform vec3 uCamPos;
+out float vDist;
+void main()
+{
+    vDist = length(aPos - uCamPos);
+    gl_Position = uVp * vec4(aPos, 1.0);
+}
+)";
+
+const char* kTerrain3DFragmentShader = R"(
+#version 330 core
+in float vDist;
+uniform vec3 uColor;
+uniform float uFogStart;
+uniform float uFogEnd;
+uniform vec3 uFogColor;
+out vec4 fragColor;
+void main()
+{
+    vec3 c = uColor;
+    if (uFogEnd > uFogStart)
+        c = mix(c, uFogColor,
+                clamp((vDist - uFogStart) / (uFogEnd - uFogStart), 0.0, 1.0));
+    fragColor = vec4(c, 1.0);
+}
+)";
+
+// LumiViz Glow Orbs (Lights-Etappe 2): Einheitskugel (Position = Richtung),
+// per Uniform zum Ellipsoid skaliert; Zwei-Farb-Vertex-Verlauf ueber die
+// Kugel-Hoehe (Original: mix(color2, color, ny)) + flash als additiver
+// Offset (addRGB-Beat-Blitz), Distanz-Fog wie das Terrain.
+const char* kOrb3DVertexShader = R"(
+#version 330 core
+layout(location = 0) in vec3 aPos;
+uniform mat4 uVp;
+uniform vec3 uCenter;
+uniform vec3 uScale;
+out float vNy;
+out float vDist;
+uniform vec3 uCamPos;
+void main()
+{
+    vec3 world = uCenter + aPos * uScale;
+    vNy = aPos.y * 0.5 + 0.5;
+    vDist = length(world - uCamPos);
+    gl_Position = uVp * vec4(world, 1.0);
+}
+)";
+
+const char* kOrb3DFragmentShader = R"(
+#version 330 core
+in float vNy;
+in float vDist;
+uniform vec3 uColor;
+uniform vec3 uColor2;
+uniform float uFlash;
+uniform float uFogStart;
+uniform float uFogEnd;
+uniform vec3 uFogColor;
+out vec4 fragColor;
+void main()
+{
+    vec3 c = mix(uColor2, uColor, vNy) + vec3(uFlash);
+    if (uFogEnd > uFogStart)
+        c = mix(c, uFogColor,
+                clamp((vDist - uFogStart) / (uFogEnd - uFogStart), 0.0, 1.0));
+    fragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
 }
 )";
 
@@ -1883,6 +2062,11 @@ bool MultiEffectVisualizer::saveChainFile(const QString& path) const
     return saveChainToFile(m_root, path);
 }
 
+QImage MultiEffectVisualizer::debugGrabRootSurface() const
+{
+    return m_rootSurface.ready() ? m_rootSurface.current()->toImage() : QImage();
+}
+
 bool MultiEffectVisualizer::loadChainFile(const QString& path, QStringList* outReport)
 {
     ChainNode loaded;
@@ -1936,6 +2120,10 @@ void MultiEffectVisualizer::onCleanup()
     m_waterShader.reset();
     m_bumpShader.reset();
     m_presentShader.reset();
+    m_bloomDownShader.reset();
+    m_bloomGaussShader.reset();
+    m_bloomCompShader.reset();
+    m_sprite3dShader.reset();
     m_shiftShader.reset();
     m_ddmShader.reset();
     m_colorMapShader.reset();
@@ -1970,6 +2158,21 @@ void MultiEffectVisualizer::onCleanup()
     m_quadVbo.reset();
     m_warpVao.reset();
     m_warpVbo.reset();
+    m_sprite3dVao.reset();
+    m_sprite3dVbo.reset();
+    m_terrain3dShader.reset();
+    m_orb3dShader.reset();
+    m_orbVao.reset();
+    m_orbVbo.reset();
+    m_orbIbo.reset();
+    if (m_depth3dTex != 0)
+    {
+        if (auto* ctx = QOpenGLContext::currentContext())
+            ctx->functions()->glDeleteTextures(1, &m_depth3dTex);
+        m_depth3dTex = 0;
+        m_depth3dW = 0;
+        m_depth3dH = 0;
+    }
 }
 
 bool MultiEffectVisualizer::ensurePipelines()
@@ -2007,6 +2210,12 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_waterShader = makeProgram(kQuadVertexShader, kWaterFragmentShader);
     m_bumpShader = makeProgram(kQuadVertexShader, kBumpFragmentShader);
     m_presentShader = makeProgram(kQuadVertexShader, kPresentFragmentShader);
+    m_bloomDownShader = makeProgram(kQuadVertexShader, kBloomDownFragmentShader);
+    m_bloomGaussShader = makeProgram(kQuadVertexShader, kBloomGaussFragmentShader);
+    m_bloomCompShader = makeProgram(kQuadVertexShader, kBloomCompFragmentShader);
+    m_sprite3dShader = makeProgram(kSprite3DVertexShader, kSprite3DFragmentShader);
+    m_terrain3dShader = makeProgram(kTerrain3DVertexShader, kTerrain3DFragmentShader);
+    m_orb3dShader = makeProgram(kOrb3DVertexShader, kOrb3DFragmentShader);
     m_shiftShader = makeProgram(kQuadVertexShader, kDynamicShiftFragmentShader);
     m_ddmShader = makeProgram(kQuadVertexShader, kDdmFragmentShader);
     m_colorMapShader = makeProgram(kQuadVertexShader, kColorMapFragmentShader);
@@ -2039,6 +2248,9 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_grainShader == nullptr || m_scatterShader == nullptr ||
         m_interfShader == nullptr || m_waterShader == nullptr ||
         m_bumpShader == nullptr || m_presentShader == nullptr ||
+        m_bloomDownShader == nullptr || m_bloomGaussShader == nullptr ||
+        m_bloomCompShader == nullptr || m_sprite3dShader == nullptr ||
+        m_terrain3dShader == nullptr || m_orb3dShader == nullptr ||
         m_shiftShader == nullptr ||
         m_ddmShader == nullptr || m_colorMapShader == nullptr ||
         m_bufferBlendShader == nullptr || m_pictureShader == nullptr ||
@@ -2071,6 +2283,12 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_waterShader.reset();
         m_bumpShader.reset();
         m_presentShader.reset();
+        m_bloomDownShader.reset();
+        m_bloomGaussShader.reset();
+        m_bloomCompShader.reset();
+        m_sprite3dShader.reset();
+        m_terrain3dShader.reset();
+        m_orb3dShader.reset();
         m_wbPropShader.reset();
         m_wbDispShader.reset();
         m_timescopeShader.reset();
@@ -2119,6 +2337,88 @@ bool MultiEffectVisualizer::ensurePipelines()
                              reinterpret_cast<void*>(4 * sizeof(float)));
     m_warpVao->release();
     m_warpVbo->release();
+
+    // SuperScope 3D: dynamisches Sprite-Mesh (center.xy + corner.xy + half.xy
+    // + rgb = 9 Floats je Vertex, 6 Vertices je Punkt; je Frame neu befuellt).
+    m_sprite3dVao = std::make_unique<QOpenGLVertexArrayObject>();
+    m_sprite3dVao->create();
+    m_sprite3dVao->bind();
+    m_sprite3dVbo = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
+    m_sprite3dVbo->create();
+    m_sprite3dVbo->setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    m_sprite3dVbo->bind();
+    m_sprite3dVbo->allocate(nullptr, 0);
+    f->glEnableVertexAttribArray(0);
+    f->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), nullptr);
+    f->glEnableVertexAttribArray(1);
+    f->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float),
+                             reinterpret_cast<void*>(2 * sizeof(float)));
+    f->glEnableVertexAttribArray(2);
+    f->glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float),
+                             reinterpret_cast<void*>(4 * sizeof(float)));
+    f->glEnableVertexAttribArray(3);
+    f->glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float),
+                             reinterpret_cast<void*>(6 * sizeof(float)));
+    m_sprite3dVao->release();
+    m_sprite3dVbo->release();
+
+    // Glow Orbs: geteilte Einheitskugel (16x12 lat-long, Position = Normale;
+    // der Shader skaliert sie per Uniform zum Ellipsoid).
+    {
+        constexpr int kSeg = 16;   // Laengengrade
+        constexpr int kRings = 12; // Breitengrade
+        constexpr float kPi = 3.14159265358979f;
+        std::vector<float> verts;
+        verts.reserve((kRings + 1) * (kSeg + 1) * 3);
+        for (int r = 0; r <= kRings; ++r)
+        {
+            const float phi = kPi * static_cast<float>(r) /
+                              static_cast<float>(kRings);
+            for (int s = 0; s <= kSeg; ++s)
+            {
+                const float theta = 2.0f * kPi *
+                                    static_cast<float>(s) / static_cast<float>(kSeg);
+                verts.push_back(std::sin(phi) * std::cos(theta));
+                verts.push_back(std::cos(phi));
+                verts.push_back(std::sin(phi) * std::sin(theta));
+            }
+        }
+        std::vector<unsigned short> idx;
+        idx.reserve(kRings * kSeg * 6);
+        for (int r = 0; r < kRings; ++r)
+        {
+            for (int s = 0; s < kSeg; ++s)
+            {
+                const unsigned short a =
+                    static_cast<unsigned short>(r * (kSeg + 1) + s);
+                const unsigned short b = static_cast<unsigned short>(a + kSeg + 1);
+                idx.insert(idx.end(), {a, b, static_cast<unsigned short>(a + 1),
+                                       static_cast<unsigned short>(a + 1), b,
+                                       static_cast<unsigned short>(b + 1)});
+            }
+        }
+        m_orbIndexCount = static_cast<int>(idx.size());
+
+        m_orbVao = std::make_unique<QOpenGLVertexArrayObject>();
+        m_orbVao->create();
+        m_orbVao->bind();
+        m_orbVbo = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
+        m_orbVbo->create();
+        m_orbVbo->bind();
+        m_orbVbo->allocate(verts.data(),
+                           static_cast<int>(verts.size() * sizeof(float)));
+        f->glEnableVertexAttribArray(0);
+        f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
+                                 nullptr);
+        m_orbIbo = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::IndexBuffer);
+        m_orbIbo->create();
+        m_orbIbo->bind();
+        m_orbIbo->allocate(idx.data(),
+                           static_cast<int>(idx.size() * sizeof(unsigned short)));
+        m_orbVao->release();
+        m_orbVbo->release();
+        m_orbIbo->release();
+    }
 
     m_scopeRenderer.ensure();  // shared scope draw (SuperScope effect, E6)
     return true;
@@ -2340,6 +2640,8 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         m_blendRunningSum = std::max(0.0, 1.0 - total);
     }
     m_renderMode = RenderMode{};  // Set Render Mode is per-frame, reset before the walk
+    m_camera3d = Camera3D{};      // 3D-Kamera je Frame auf die Fallback-Kamera
+    m_depth3dCleared = false;     // gemeinsames Depth-RT je Frame frisch loeschen
     buildVisData();               // audio for getspec/getosc, shared by all scripts
     bindActive();
 
@@ -2355,11 +2657,40 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         renderNode(child);
     }
 
+    // Post-Bloom (S48, Lights-Etappe 1): der erste aktivierte Bloom-Knoten
+    // mit post=true wirkt beim Present — der Glow wird JETZT aus der fertigen
+    // Root-Surface erzeugt und nur in die Anzeige gemischt, die Surface (und
+    // damit das Feedback des naechsten Frames) bleibt unberuehrt. Referenz
+    // Lights: Bloom ist Post-Processing NACH dem Szenen-Render; in-chain
+    // akkumulierte der additive Glow in Fadeout-Ketten bis Weiss.
+    const BloomParams* postBloom = nullptr;
+    unsigned int postGlowTex = 0;
+    {
+        std::function<const ChainNode*(const ChainNode&)> findBloom =
+            [&](const ChainNode& n) -> const ChainNode* {
+                if (!n.enabled) return nullptr;
+                if (const auto* b = std::get_if<BloomParams>(&n.params))
+                    return b->post ? &n : nullptr;
+                for (const ChainNode& child : n.children)
+                    if (const ChainNode* hit = findBloom(child)) return hit;
+                return nullptr;
+            };
+        if (const ChainNode* hit = findBloom(m_root))
+        {
+            postBloom = std::get_if<BloomParams>(&hit->params);
+            postGlowTex =
+                ensureBloomGlow(m_leafRuntimes[hit->nodeId], *postBloom,
+                                m_rootSurface.current()->texture());
+        }
+    }
+
     // Present: die Root-Surface als texturierter Quad aufs Fenster. KEIN
     // glBlitFramebuffer: das App-Fenster ist multisampled (samples=4) und ein
     // skalierender Blit in ein MS-Ziel wirft GL_INVALID_OPERATION — mit
     // Render-Scale fror das Bild ein (Befund S47). presentFilter setzt den
     // Upscale-Look (nearest = grob, linear = weich); danach Parameter zurueck.
+    // Mit Post-Bloom uebernimmt der Composite-Shader den Present-Draw
+    // (Base + Glow additiv + optionale Vignette in Fenster-Aufloesung).
     m_rootSurface.current()->release();
     f->glBindFramebuffer(GL_FRAMEBUFFER, 0);
     f->glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
@@ -2375,12 +2706,34 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filt);
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filt);
 
-        m_presentShader->bind();
-        m_presentShader->setUniformValue("uTex", 0);
-        m_quadVao->bind();
-        f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        m_quadVao->release();
-        m_presentShader->release();
+        if (postBloom != nullptr && postGlowTex != 0)
+        {
+            m_bloomCompShader->bind();
+            m_bloomCompShader->setUniformValue("uBase", 0);
+            f->glActiveTexture(GL_TEXTURE1);
+            f->glBindTexture(GL_TEXTURE_2D, postGlowTex);
+            m_bloomCompShader->setUniformValue("uGlow", 1);
+            f->glActiveTexture(GL_TEXTURE0);
+            m_bloomCompShader->setUniformValue(
+                "uIntensity", std::max(0.0f, postBloom->intensity));
+            m_bloomCompShader->setUniformValue("uVignette", postBloom->vignette);
+            m_bloomCompShader->setUniformValue(
+                "uVigStrength",
+                std::clamp(postBloom->vignetteStrength, 0.0f, 1.0f));
+            m_quadVao->bind();
+            f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            m_quadVao->release();
+            m_bloomCompShader->release();
+        }
+        else
+        {
+            m_presentShader->bind();
+            m_presentShader->setUniformValue("uTex", 0);
+            m_quadVao->bind();
+            f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            m_quadVao->release();
+            m_presentShader->release();
+        }
 
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, prevMin);
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, prevMag);
@@ -2503,6 +2856,11 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const AviParams& params) const { self.runAvi(node, params); }
         void operator()(const CommentParams&) const { /* annotation, no-op */ }
         void operator()(const RenderScaleParams&) const { /* pre-frame state, no-op */ }
+        void operator()(const BloomParams& params) const { self.runBloom(node, params); }
+        void operator()(const Camera3DParams& params) const { self.runCamera3D(node, params); }
+        void operator()(const SuperScope3DParams& params) const { self.runSuperScope3D(node, params); }
+        void operator()(const Terrain3DParams& params) const { self.runTerrain3D(node, params); }
+        void operator()(const GlowOrbsParams& params) const { self.runGlowOrbs(node, params); }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
     std::visit(Visitor{*this, node}, node.params);
@@ -5485,6 +5843,930 @@ void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
     pair.partner()->release();
     pair.swap();
     bindActive();
+}
+
+unsigned int MultiEffectVisualizer::ensureBloomGlow(LeafRuntime& rt,
+                                                    const BloomParams& params,
+                                                    unsigned int srcTexture)
+{
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    // Glow-RTs: Surface / 2^downsample (Referenz: fix 512^2), neu bei Resize
+    // oder geaendertem Divisor. Linear gefiltert — das Composite skaliert das
+    // kleine RT weich auf die volle Surface hoch (Soft-Glow, kein Pixelraster).
+    const int shift = std::clamp(params.downsample, 0, 4);
+    const int glowW = std::max(8, m_surfaceWidth >> shift);
+    const int glowH = std::max(8, m_surfaceHeight >> shift);
+    if (rt.bloomRt[0] == nullptr || rt.bloomW != glowW || rt.bloomH != glowH)
+    {
+        for (auto& fbo : rt.bloomRt)
+        {
+            fbo = std::make_unique<QOpenGLFramebufferObject>(glowW, glowH);
+            f->glBindTexture(GL_TEXTURE_2D, fbo->texture());
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        }
+        f->glBindTexture(GL_TEXTURE_2D, 0);
+        rt.bloomW = glowW;
+        rt.bloomH = glowH;
+    }
+    if (!rt.bloomRt[0]->isValid() || !rt.bloomRt[1]->isValid()) return 0;
+
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+
+    // --- Pass 1: Downsample (+ Threshold) Quelle -> RT0 ----------------------
+    rt.bloomRt[0]->bind();
+    f->glViewport(0, 0, glowW, glowH);
+    m_bloomDownShader->bind();
+    f->glBindTexture(GL_TEXTURE_2D, srcTexture);
+    // Quelle fuer den Downsample linear mitteln; danach zurueck auf nearest
+    // (der Vertrag der Surface-Texturen ueberall sonst, inkl. Present).
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    m_bloomDownShader->setUniformValue("uTex", 0);
+    m_bloomDownShader->setUniformValue("uThreshold",
+                                       std::clamp(params.threshold, 0.0f, 1.0f));
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    m_bloomDownShader->release();
+    rt.bloomRt[0]->release();
+
+    // --- Pass 2+3: separierbarer Gauss H (RT0 -> RT1), V (RT1 -> RT0) --------
+    const float sigma = static_cast<float>(std::clamp(params.radius, 1, 32));
+    const auto gaussPass = [&](QOpenGLFramebufferObject& src,
+                               QOpenGLFramebufferObject& dst,
+                               const QVector2D& dir) {
+        dst.bind();
+        f->glViewport(0, 0, glowW, glowH);
+        m_bloomGaussShader->bind();
+        f->glBindTexture(GL_TEXTURE_2D, src.texture());
+        m_bloomGaussShader->setUniformValue("uTex", 0);
+        m_bloomGaussShader->setUniformValue("uDir", dir);
+        m_bloomGaussShader->setUniformValue("uSigma", sigma);
+        f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        m_bloomGaussShader->release();
+        dst.release();
+    };
+    gaussPass(*rt.bloomRt[0], *rt.bloomRt[1],
+              QVector2D(1.0f / static_cast<float>(glowW), 0.0f));
+    gaussPass(*rt.bloomRt[1], *rt.bloomRt[0],
+              QVector2D(0.0f, 1.0f / static_cast<float>(glowH)));
+    m_quadVao->release();
+    return rt.bloomRt[0]->texture();
+}
+
+void MultiEffectVisualizer::runBloom(const ChainNode& node,
+                                     const BloomParams& params)
+{
+    // post=true: Anzeige-only — der Glow entsteht beim Present (kein
+    // Feedback in die Chain; S48-Befund: additiver Glow akkumulierte in
+    // Fadeout-Ketten ueber die Rueckkopplung bis Weiss).
+    if (params.post) return;
+
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    SurfacePair& pair = active();
+    const unsigned int glowTex =
+        ensureBloomGlow(rt, params, pair.current()->texture());
+    if (glowTex == 0) return;
+
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+
+    // --- Composite: Surface + Glow additiv (+ Vignette) -> Partner, swap -----
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    m_bloomCompShader->bind();
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    m_bloomCompShader->setUniformValue("uBase", 0);
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, glowTex);
+    m_bloomCompShader->setUniformValue("uGlow", 1);
+    f->glActiveTexture(GL_TEXTURE0);
+    m_bloomCompShader->setUniformValue("uIntensity",
+                                       std::max(0.0f, params.intensity));
+    m_bloomCompShader->setUniformValue("uVignette", params.vignette);
+    m_bloomCompShader->setUniformValue(
+        "uVigStrength", std::clamp(params.vignetteStrength, 0.0f, 1.0f));
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_bloomCompShader->release();
+    pair.partner()->release();
+    m_quadVao->release();
+    pair.swap();
+    bindActive();
+}
+
+void MultiEffectVisualizer::computeCamera3D(QMatrix4x4& view, QMatrix4x4& proj) const
+{
+    const Camera3D& cam = m_camera3d;
+    QVector3D dir = cam.target - cam.pos;
+    if (dir.lengthSquared() < 1e-12f) dir = QVector3D(0.0f, 0.0f, -1.0f);
+    dir.normalize();
+    QVector3D up(0.0f, 1.0f, 0.0f);  // y+ = oben (LumiViz-Weltkonvention)
+    if (std::abs(QVector3D::dotProduct(dir, up)) > 0.999f)
+        up = QVector3D(0.0f, 0.0f, 1.0f);  // Blick senkrecht: Ersatz-Up
+    if (cam.rollDeg != 0.0f)
+        up = QQuaternion::fromAxisAndAngle(dir, cam.rollDeg).rotatedVector(up);
+    view.setToIdentity();
+    view.lookAt(cam.pos, cam.pos + dir, up);
+    proj.setToIdentity();
+    const float aspect = static_cast<float>(m_surfaceWidth) /
+                         static_cast<float>(std::max(1, m_surfaceHeight));
+    proj.perspective(cam.fovDeg, aspect, 0.05f, 1000.0f);
+}
+
+void MultiEffectVisualizer::begin3DDepth()
+{
+    auto* f = QOpenGLContext::currentContext()->functions();
+    if (m_depth3dTex == 0 || m_depth3dW != m_surfaceWidth ||
+        m_depth3dH != m_surfaceHeight)
+    {
+        if (m_depth3dTex != 0) f->glDeleteTextures(1, &m_depth3dTex);
+        f->glGenTextures(1, &m_depth3dTex);
+        f->glBindTexture(GL_TEXTURE_2D, m_depth3dTex);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, m_surfaceWidth,
+                        m_surfaceHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT,
+                        nullptr);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        f->glBindTexture(GL_TEXTURE_2D, 0);
+        m_depth3dW = m_surfaceWidth;
+        m_depth3dH = m_surfaceHeight;
+        m_depth3dCleared = false;  // frische Textur -> Inhalt undefiniert
+    }
+    // An das AKTUELL gebundene Draw-FBO haengen — die eigene Textur ueberlebt
+    // so das Farb-Ping-Pong der Surfaces (Etappe-2-Entscheid 1).
+    f->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
+                              m_depth3dTex, 0);
+    f->glEnable(GL_DEPTH_TEST);
+    f->glDepthFunc(GL_LESS);
+    if (!m_depth3dCleared)
+    {
+        f->glDepthMask(GL_TRUE);
+        f->glClear(GL_DEPTH_BUFFER_BIT);
+        m_depth3dCleared = true;
+    }
+}
+
+void MultiEffectVisualizer::end3DDepth()
+{
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glDepthMask(GL_TRUE);
+    f->glDisable(GL_DEPTH_TEST);
+    f->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
+                              0, 0);
+}
+
+void MultiEffectVisualizer::runCamera3D(const ChainNode& node,
+                                        const Camera3DParams& params)
+{
+    // Startwerte aus den Params; die EEL-Slots duerfen sie ueberschreiben
+    // (erster Fall der dynamischen Modulparameter, Entwurf Modul 2). Die
+    // Parameterwerte stecken im Compile-Snapshot: eine Panel-Aenderung
+    // kompiliert neu und seedet die Skript-Variablen frisch (wie Fractal 3D).
+    double px = params.px, py = params.py, pz = params.pz;
+    double tx = params.tx, ty = params.ty, tz = params.tz;
+    double fov = params.fov, roll = params.roll;
+    double fogStart = params.fogStart, fogEnd = params.fogEnd;
+
+    const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
+                          !params.beatCode.empty();
+    if (scripted)
+    {
+        LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+        const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + "\n#" + std::to_string(px) + ',' +
+                                 std::to_string(py) + ',' + std::to_string(pz) + ',' +
+                                 std::to_string(tx) + ',' + std::to_string(ty) + ',' +
+                                 std::to_string(tz) + ',' + std::to_string(fov) + ',' +
+                                 std::to_string(roll) + ',' + std::to_string(fogStart) +
+                                 ',' + std::to_string(fogEnd);
+        if (rt.cam3dHost == nullptr || rt.cam3dCompiled != snap)
+        {
+            rt.cam3dHost = std::make_unique<ScriptSlotHost>("camera3d", activeContext(),
+                                                            ScriptSlotHost::Dialect::Avs);
+            rt.cam3dHost->setSource(Slot::Init, params.initCode);
+            rt.cam3dHost->setSource(Slot::Frame, params.frameCode);
+            rt.cam3dHost->setSource(Slot::Beat, params.beatCode);
+            rt.cam3dHost->compileAll();
+            rt.cam3dCompiled = snap;
+            auto& engine = rt.cam3dHost->engine();
+            feedAudio(engine);  // S47-Regel: visdata muss den Erst-Lauf erreichen
+            engine.setNumber("px", px);
+            engine.setNumber("py", py);
+            engine.setNumber("pz", pz);
+            engine.setNumber("tx", tx);
+            engine.setNumber("ty", ty);
+            engine.setNumber("tz", tz);
+            engine.setNumber("fov", fov);
+            engine.setNumber("roll", roll);
+            engine.setNumber("fogstart", fogStart);
+            engine.setNumber("fogend", fogEnd);
+            rt.cam3dHost->run(Slot::Init);
+        }
+        auto& engine = rt.cam3dHost->engine();
+        engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+        feedAudio(engine);
+        // Slot-Ordnung Frame VOR Beat (S47-Konvention, r_sscope:272)
+        if (rt.cam3dHost->has(Slot::Frame)) rt.cam3dHost->run(Slot::Frame);
+        if (m_frameBeat && rt.cam3dHost->has(Slot::Beat)) rt.cam3dHost->run(Slot::Beat);
+        px = engine.number("px");
+        py = engine.number("py");
+        pz = engine.number("pz");
+        tx = engine.number("tx");
+        ty = engine.number("ty");
+        tz = engine.number("tz");
+        fov = engine.number("fov");
+        roll = engine.number("roll");
+        fogStart = engine.number("fogstart");
+        fogEnd = engine.number("fogend");
+    }
+
+    m_camera3d.pos = QVector3D(static_cast<float>(px), static_cast<float>(py),
+                               static_cast<float>(pz));
+    m_camera3d.target = QVector3D(static_cast<float>(tx), static_cast<float>(ty),
+                                  static_cast<float>(tz));
+    m_camera3d.fovDeg = std::clamp(static_cast<float>(fov), 1.0f, 179.0f);
+    m_camera3d.rollDeg = static_cast<float>(roll);
+    m_camera3d.fogStart = static_cast<float>(fogStart);
+    m_camera3d.fogEnd = static_cast<float>(fogEnd);
+    m_camera3d.fogColor = colorToVec(params.fogColor);
+}
+
+void MultiEffectVisualizer::runSuperScope3D(const ChainNode& node,
+                                            const SuperScope3DParams& params)
+{
+    if (m_sprite3dShader == nullptr) return;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // EEL-Quartett; Parameterwerte im Snapshot (Panel-Aenderung -> Re-Seed).
+    const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                             params.beatCode + '\n' + params.pointCode + "\n#" +
+                             std::to_string(params.pointCount);
+    if (rt.scope3dHost == nullptr || rt.scope3dCompiled != snap)
+    {
+        rt.scope3dHost = std::make_unique<ScriptSlotHost>(
+            "superscope3d", activeContext(), ScriptSlotHost::Dialect::Avs);
+        rt.scope3dHost->setSource(Slot::Init, params.initCode);
+        rt.scope3dHost->setSource(Slot::Frame, params.frameCode);
+        rt.scope3dHost->setSource(Slot::Beat, params.beatCode);
+        rt.scope3dHost->setSource(Slot::Point, params.pointCode);
+        rt.scope3dHost->compileAll();
+        rt.scope3dCompiled = snap;
+        auto& engine = rt.scope3dHost->engine();
+        feedAudio(engine);  // S47-Regel: visdata muss den Erst-Lauf erreichen
+        engine.setNumber("n", params.pointCount);
+        rt.scope3dHost->run(Slot::Init);
+    }
+    auto& engine = rt.scope3dHost->engine();
+    engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+    engine.setNumber("w", m_surfaceWidth);
+    engine.setNumber("h", m_surfaceHeight);
+    feedAudio(engine);
+    // Slot-Ordnung Frame VOR Beat (S47-Konvention)
+    if (rt.scope3dHost->has(Slot::Frame)) rt.scope3dHost->run(Slot::Frame);
+    if (m_frameBeat && rt.scope3dHost->has(Slot::Beat)) rt.scope3dHost->run(Slot::Beat);
+    const int n = std::clamp(static_cast<int>(engine.number("n")), 1, 4096);
+
+    // Kamera (camera3d-Knoten oder Fallback) -> View/Proj einmal je Knoten.
+    const Camera3D& cam = m_camera3d;
+    constexpr float kNear = 0.05f;
+    QMatrix4x4 view;
+    QMatrix4x4 proj;
+    computeCamera3D(view, proj);
+    const QMatrix4x4 vp = proj * view;
+    const float projX = proj(0, 0);  // NDC-Halbgroesse = size * proj / w
+    const float projY = proj(1, 1);
+
+    // v aus den visdata-Bytes (Byte/128-1, linear interpoliert; S45-Vertrag).
+    const auto visValue = [&](double t01) -> double {
+        const int base = params.spectrumSource ? 0 : 2;  // Bloecke: S-L,S-R,W-L,W-R
+        const double fpos = std::clamp(t01, 0.0, 1.0) * 575.0;
+        const int i0 = static_cast<int>(fpos);
+        const int i1 = std::min(i0 + 1, 575);
+        const double frac = fpos - i0;
+        const auto sample = [&](int ch) {
+            const unsigned char* d = m_visdata.data() + (base + ch) * 576;
+            return d[i0] * (1.0 - frac) + d[i1] * frac;
+        };
+        double byteVal = 0.0;
+        if (params.audioChannel == 0)      byteVal = sample(0);
+        else if (params.audioChannel == 1) byteVal = sample(1);
+        else                               byteVal = 0.5 * (sample(0) + sample(1));
+        return byteVal / 128.0 - 1.0;
+    };
+
+    const bool lines = params.renderMode == 1;
+    const bool fogActive = cam.fogEnd > cam.fogStart;
+    m_sprite3dVertices.clear();
+    std::vector<lumi::modules::SuperscopePoint> linePts;
+    if (lines) linePts.reserve(static_cast<std::size_t>(n));
+
+    for (int pt = 0; pt < n; ++pt)
+    {
+        const double idx01 = n > 1 ? static_cast<double>(pt) / (n - 1) : 0.0;
+        engine.setNumber("i", idx01);
+        engine.setNumber("v", visValue(idx01));
+        engine.setNumber("x", 0.0);
+        engine.setNumber("y", 0.0);
+        engine.setNumber("z", 0.0);
+        engine.setNumber("size", params.size);
+        engine.setNumber("red", 1.0);
+        engine.setNumber("green", 1.0);
+        engine.setNumber("blue", 1.0);
+        engine.setNumber("skip", 0.0);
+        if (rt.scope3dHost->has(Slot::Point)) rt.scope3dHost->run(Slot::Point);
+
+        const bool skipped = engine.number("skip") != 0.0;
+        const QVector3D world(static_cast<float>(engine.number("x")),
+                              static_cast<float>(engine.number("y")),
+                              static_cast<float>(engine.number("z")));
+        const QVector4D clip = vp * QVector4D(world, 1.0f);
+        const float w = clip.w();  // Tiefe entlang der Blickachse
+        const bool clipped = w < kNear;
+
+        if (lines)
+        {
+            // Geclippte/uebersprungene Punkte brechen den Linienzug (skip).
+            lumi::modules::SuperscopePoint p;
+            if (!clipped)
+            {
+                p.x = clip.x() / w;
+                p.y = clip.y() / w;
+            }
+            p.skip = skipped || clipped;
+            float cr = static_cast<float>(engine.number("red"));
+            float cg = static_cast<float>(engine.number("green"));
+            float cb = static_cast<float>(engine.number("blue"));
+            if (fogActive && !clipped)
+            {
+                const float fogF = std::clamp(
+                    (w - cam.fogStart) / (cam.fogEnd - cam.fogStart), 0.0f, 1.0f);
+                cr *= 1.0f - fogF;
+                cg *= 1.0f - fogF;
+                cb *= 1.0f - fogF;
+            }
+            p.r = cr;
+            p.g = cg;
+            p.b = cb;
+            linePts.push_back(p);
+            continue;
+        }
+
+        if (skipped || clipped) continue;
+        const float ndcX = clip.x() / w;
+        const float ndcY = clip.y() / w;
+        const float size = std::max(0.0f, static_cast<float>(engine.number("size")));
+        const float halfX = size * projX / w;  // Groessen-Attenuation ~1/Tiefe
+        const float halfY = size * projY / w;
+        if (ndcX + halfX < -1.0f || ndcX - halfX > 1.0f ||
+            ndcY + halfY < -1.0f || ndcY - halfY > 1.0f)
+        {
+            continue;  // Sprite komplett ausserhalb
+        }
+        float cr = static_cast<float>(engine.number("red"));
+        float cg = static_cast<float>(engine.number("green"));
+        float cb = static_cast<float>(engine.number("blue"));
+        if (fogActive)
+        {
+            const float fogF = std::clamp(
+                (w - cam.fogStart) / (cam.fogEnd - cam.fogStart), 0.0f, 1.0f);
+            // Additive Sprites: Fog daempft nur (fogColor beizumischen wuerde
+            // je Sprite Nebel ADDIEREN — falsch bei additivem Blend).
+            cr *= 1.0f - fogF;
+            cg *= 1.0f - fogF;
+            cb *= 1.0f - fogF;
+        }
+        const float corners[6][2] = {{-1.0f, -1.0f}, {1.0f, -1.0f}, {-1.0f, 1.0f},
+                                     {1.0f, -1.0f},  {1.0f, 1.0f}, {-1.0f, 1.0f}};
+        for (const auto& c : corners)
+        {
+            m_sprite3dVertices.insert(m_sprite3dVertices.end(),
+                                      {ndcX, ndcY, c[0], c[1], halfX, halfY,
+                                       cr, cg, cb});
+        }
+    }
+
+    if (lines)
+    {
+        drawScopeShape(linePts, false);
+        return;
+    }
+    if (m_sprite3dVertices.empty()) return;
+
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glEnable(GL_BLEND);
+    f->glBlendFunc(GL_ONE, GL_ONE);  // additiv (Lights-Punkt-Sprites)
+    m_sprite3dShader->bind();
+    m_sprite3dShader->setUniformValue("uFalloff",
+                                      std::clamp(params.falloff, 0.5f, 32.0f));
+    m_sprite3dVao->bind();
+    m_sprite3dVbo->bind();
+    m_sprite3dVbo->allocate(m_sprite3dVertices.data(),
+                            static_cast<int>(m_sprite3dVertices.size() *
+                                             sizeof(float)));
+    f->glDrawArrays(GL_TRIANGLES, 0,
+                    static_cast<GLsizei>(m_sprite3dVertices.size() / 9));
+    m_sprite3dVbo->release();
+    m_sprite3dVao->release();
+    m_sprite3dShader->release();
+    f->glDisable(GL_BLEND);
+}
+
+void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
+                                         const Terrain3DParams& params)
+{
+    if (m_terrain3dShader == nullptr || m_sprite3dShader == nullptr) return;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    // --- Grid-Puffer (Reset bei resolution-Wechsel) ---------------------------
+    const int res = std::clamp(params.resolution, 8, 128);
+    const int cells = res * res;
+    if (rt.terrainRes != res)
+    {
+        rt.terrainRes = res;
+        rt.terrainBase.resize(static_cast<std::size_t>(cells));
+        rt.terrainH.assign(static_cast<std::size_t>(cells), 0.0f);
+        rt.terrainV.assign(static_cast<std::size_t>(cells), 0.0f);
+        // Prozedurale Basis: zwei Sinus-Oktaven mit festen Phasen —
+        // deterministisch (kein Bild-Asset, kein rand()).
+        for (int gy = 0; gy < res; ++gy)
+        {
+            for (int gx = 0; gx < res; ++gx)
+            {
+                const float x = static_cast<float>(gx);
+                const float y = static_cast<float>(gy);
+                rt.terrainBase[static_cast<std::size_t>(gy * res + gx)] =
+                    std::sin(x * 0.37f) * std::cos(y * 0.29f) * 0.6f +
+                    std::sin(x * 0.83f + 1.7f) * std::cos(y * 0.71f + 0.3f) * 0.4f;
+            }
+        }
+        for (int i = 0; i < cells; ++i)
+            rt.terrainH[static_cast<std::size_t>(i)] =
+                rt.terrainBase[static_cast<std::size_t>(i)] * params.baseAmp;
+        rt.terrainVao.reset();  // Mesh-Objekte passen nicht mehr (IBO je res)
+        rt.terrainVbo.reset();
+        rt.terrainIbo.reset();
+    }
+
+    // --- EEL-Slots VOR der Sim (Director-Muster des Originals): die Slots
+    // duerfen die MODI des Frames setzen (rings/relax/flatten — dynamische
+    // Modulparameter) und via megabuf(gy*res+gx) die Hoehen frei formen.
+    float ringsF = params.ringAmp;
+    float relaxF = params.relax;
+    float flattenF = params.flatten;
+    const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
+                          !params.beatCode.empty() || !params.pointCode.empty();
+    bool pointColors = false;
+    if (scripted)
+    {
+        const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + '\n' + params.pointCode + "\n#" +
+                                 std::to_string(res) + ',' +
+                                 std::to_string(params.ringAmp) + ',' +
+                                 std::to_string(params.relax) + ',' +
+                                 std::to_string(params.flatten);
+        if (rt.terrainHost == nullptr || rt.terrainCompiled != snap)
+        {
+            rt.terrainHost = std::make_unique<ScriptSlotHost>(
+                "terrain3d", activeContext(), ScriptSlotHost::Dialect::Avs);
+            rt.terrainHost->setSource(Slot::Init, params.initCode);
+            rt.terrainHost->setSource(Slot::Frame, params.frameCode);
+            rt.terrainHost->setSource(Slot::Beat, params.beatCode);
+            rt.terrainHost->setSource(Slot::Point, params.pointCode);
+            rt.terrainHost->compileAll();
+            rt.terrainCompiled = snap;
+            auto& engine = rt.terrainHost->engine();
+            feedAudio(engine);  // S47-Regel: visdata vor dem Erst-Lauf
+            engine.setNumber("res", res);
+            engine.setNumber("n", cells);
+            engine.setNumber("rings", params.ringAmp);
+            engine.setNumber("relax", params.relax);
+            engine.setNumber("flatten", params.flatten);
+            rt.terrainHost->run(Slot::Init);
+        }
+        auto& engine = rt.terrainHost->engine();
+        engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+        feedAudio(engine);
+        // Hoehen nur spiegeln, wenn die Slots megabuf ueberhaupt anfassen.
+        const bool wantsBuf =
+            rt.terrainHost->sourceMentions(Slot::Init, "megabuf") ||
+            rt.terrainHost->sourceMentions(Slot::Frame, "megabuf") ||
+            rt.terrainHost->sourceMentions(Slot::Beat, "megabuf");
+        if (wantsBuf)
+        {
+            for (int i = 0; i < cells; ++i)
+                engine.setMegabufValue(i, rt.terrainH[static_cast<std::size_t>(i)]);
+        }
+        // Slot-Ordnung Frame VOR Beat (S47-Konvention)
+        if (rt.terrainHost->has(Slot::Frame)) rt.terrainHost->run(Slot::Frame);
+        if (m_frameBeat && rt.terrainHost->has(Slot::Beat))
+            rt.terrainHost->run(Slot::Beat);
+        if (wantsBuf)
+        {
+            for (int i = 0; i < cells; ++i)
+                rt.terrainH[static_cast<std::size_t>(i)] = static_cast<float>(
+                    engine.megabufValue(i));
+        }
+        ringsF = std::clamp(static_cast<float>(engine.number("rings")), 0.0f, 10.0f);
+        relaxF = std::clamp(static_cast<float>(engine.number("relax")), 0.0f, 1.0f);
+        flattenF =
+            std::clamp(static_cast<float>(engine.number("flatten")), 0.0f, 1.0f);
+        pointColors = rt.terrainHost->has(Slot::Point);
+    }
+
+    // --- Simulation (Lights-Terrain-Rezept, TerrainDisplacement.js) ----------
+    // updateSpectrum SETZT: h = h0 + spectrum[floor(dist)] (radiale Ringe);
+    // rings < 1 blendet weich dahin. updateTerrain federt (drag = 1-dt*5,
+    // v += (h0-h)*|h|*dt), updateFlat zieht zur Basis — im Original laufen
+    // die Modi PHASEN-exklusiv (Director), hier als skriptbarer Mix.
+    const float dtc = std::clamp(m_deltaTime, 0.0f, 1.0f / 30.0f);
+    const float half = static_cast<float>(res - 1) * 0.5f;
+    const float ringMix = std::min(1.0f, ringsF);
+    for (int gy = 0; gy < res; ++gy)
+    {
+        for (int gx = 0; gx < res; ++gx)
+        {
+            const std::size_t i = static_cast<std::size_t>(gy * res + gx);
+            const float h0 = rt.terrainBase[i] * params.baseAmp;
+            float h = rt.terrainH[i];
+            if (ringsF > 0.0f)
+            {
+                const float dx = static_cast<float>(gx) - half;
+                const float dy = static_cast<float>(gy) - half;
+                const float dist01 =
+                    std::min(1.0f, std::sqrt(dx * dx + dy * dy) / half);
+                // Spektrum mono (Bloecke 0/1 der visdata), 0..1
+                const int k = static_cast<int>(dist01 * 0.7f * 575.0f);
+                const float s =
+                    (static_cast<float>(m_visdata[static_cast<std::size_t>(k)]) +
+                     static_cast<float>(m_visdata[static_cast<std::size_t>(576 + k)])) /
+                    510.0f;
+                const float target = h0 + s * ringsF * 0.5f;
+                h += (target - h) * ringMix;  // rings=1: hart gesetzt (Original)
+            }
+            // Feder-Relaxation zur Basis (updateTerrain: v = v*drag + (h0-h)*|h|*dt)
+            float& v = rt.terrainV[i];
+            v = v * 0.92f + (h0 - h) * (std::abs(h) + 0.1f) * dtc * 30.0f * relaxF;
+            h += v * dtc * 30.0f * 0.1f;
+            if (flattenF > 0.0f) h += (h0 - h) * flattenF;
+            rt.terrainH[i] = h;
+        }
+    }
+
+    // --- Welt-Positionen + Kamera ---------------------------------------------
+    QMatrix4x4 view;
+    QMatrix4x4 proj;
+    computeCamera3D(view, proj);
+    const QMatrix4x4 vp = proj * view;
+    const Camera3D& cam = m_camera3d;
+    const bool fogActive = cam.fogEnd > cam.fogStart;
+    const auto worldAt = [&](int gx, int gy) {
+        return QVector3D(
+            (static_cast<float>(gx) / static_cast<float>(res - 1) - 0.5f) *
+                params.extent,
+            params.yOffset + rt.terrainH[static_cast<std::size_t>(gy * res + gx)],
+            (static_cast<float>(gy) / static_cast<float>(res - 1) - 0.5f) *
+                params.extent);
+    };
+
+    // --- (a) dunkles Mesh: opak, schreibt ins gemeinsame Depth-RT -------------
+    if (params.drawMesh)
+    {
+        if (rt.terrainVao == nullptr)
+        {
+            rt.terrainVao = std::make_unique<QOpenGLVertexArrayObject>();
+            rt.terrainVao->create();
+            rt.terrainVao->bind();
+            rt.terrainVbo = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
+            rt.terrainVbo->create();
+            rt.terrainVbo->setUsagePattern(QOpenGLBuffer::DynamicDraw);
+            rt.terrainVbo->bind();
+            rt.terrainVbo->allocate(nullptr, 0);
+            f->glEnableVertexAttribArray(0);
+            f->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
+                                     nullptr);
+            rt.terrainIbo = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::IndexBuffer);
+            rt.terrainIbo->create();
+            rt.terrainIbo->bind();
+            std::vector<unsigned int> idx;
+            idx.reserve(static_cast<std::size_t>((res - 1) * (res - 1) * 6));
+            for (int gy = 0; gy < res - 1; ++gy)
+            {
+                for (int gx = 0; gx < res - 1; ++gx)
+                {
+                    const unsigned int a = static_cast<unsigned int>(gy * res + gx);
+                    const unsigned int b = a + static_cast<unsigned int>(res);
+                    idx.insert(idx.end(), {a, b, a + 1, a + 1, b, b + 1});
+                }
+            }
+            rt.terrainIndexCount = static_cast<int>(idx.size());
+            rt.terrainIbo->allocate(idx.data(),
+                                    static_cast<int>(idx.size() * sizeof(unsigned int)));
+            rt.terrainVao->release();
+        }
+        m_warpVertices.clear();  // CPU-Scratch mitbenutzen (pos.xyz)
+        m_warpVertices.reserve(static_cast<std::size_t>(cells) * 3);
+        for (int gy = 0; gy < res; ++gy)
+        {
+            for (int gx = 0; gx < res; ++gx)
+            {
+                const QVector3D w = worldAt(gx, gy);
+                m_warpVertices.insert(m_warpVertices.end(), {w.x(), w.y(), w.z()});
+            }
+        }
+        begin3DDepth();
+        f->glDepthMask(GL_TRUE);
+        m_terrain3dShader->bind();
+        m_terrain3dShader->setUniformValue("uVp", vp);
+        m_terrain3dShader->setUniformValue("uCamPos", cam.pos);
+        m_terrain3dShader->setUniformValue("uColor", colorToVec(params.meshColor));
+        m_terrain3dShader->setUniformValue("uFogStart", cam.fogStart);
+        m_terrain3dShader->setUniformValue("uFogEnd", cam.fogEnd);
+        m_terrain3dShader->setUniformValue("uFogColor", cam.fogColor);
+        rt.terrainVao->bind();
+        rt.terrainVbo->bind();
+        rt.terrainVbo->allocate(m_warpVertices.data(),
+                                static_cast<int>(m_warpVertices.size() * sizeof(float)));
+        f->glDrawElements(GL_TRIANGLES, rt.terrainIndexCount, GL_UNSIGNED_INT,
+                          nullptr);
+        rt.terrainVbo->release();
+        rt.terrainVao->release();
+        m_terrain3dShader->release();
+        f->glDepthMask(GL_FALSE);  // Sprites testen nur noch
+    }
+
+    // --- (b) additive Soft-Sprites an den Gitterpunkten -----------------------
+    if (params.drawDots)
+    {
+        if (!params.drawMesh) begin3DDepth();  // testen gegen fremde 3D-Opaque
+        f->glDepthMask(GL_FALSE);
+        const float projX = proj(0, 0);
+        const float projY = proj(1, 1);
+        const QVector3D cLow = colorToVec(params.colorLow);
+        const QVector3D cHigh = colorToVec(params.colorHigh);
+        const float hRange = std::max(0.05f, params.baseAmp * 2.0f);
+        lumi::scripting::LuaScriptEngine* pointEngine =
+            pointColors ? &rt.terrainHost->engine() : nullptr;
+        m_sprite3dVertices.clear();
+        for (int gy = 0; gy < res; ++gy)
+        {
+            for (int gx = 0; gx < res; ++gx)
+            {
+                const int i = gy * res + gx;
+                const QVector3D w3 = worldAt(gx, gy);
+                const QVector4D clip = vp * QVector4D(w3, 1.0f);
+                const float w = clip.w();
+                if (w < 0.05f) continue;
+                const float ndcX = clip.x() / w;
+                const float ndcY = clip.y() / w;
+                const float halfX = params.dotSize * projX / w;
+                const float halfY = params.dotSize * projY / w;
+                if (ndcX + halfX < -1.0f || ndcX - halfX > 1.0f ||
+                    ndcY + halfY < -1.0f || ndcY - halfY > 1.0f)
+                {
+                    continue;
+                }
+                const float h = rt.terrainH[static_cast<std::size_t>(i)];
+                float t = std::clamp(0.5f + h / hRange, 0.0f, 1.0f);
+                float cr = cLow.x() + (cHigh.x() - cLow.x()) * t;
+                float cg = cLow.y() + (cHigh.y() - cLow.y()) * t;
+                float cb = cLow.z() + (cHigh.z() - cLow.z()) * t;
+                if (pointEngine != nullptr)
+                {
+                    pointEngine->setNumber("i", i);
+                    pointEngine->setNumber("gx", gx);
+                    pointEngine->setNumber("gy", gy);
+                    pointEngine->setNumber("h", h);
+                    pointEngine->setNumber("red", cr);
+                    pointEngine->setNumber("green", cg);
+                    pointEngine->setNumber("blue", cb);
+                    rt.terrainHost->run(Slot::Point);
+                    cr = static_cast<float>(pointEngine->number("red"));
+                    cg = static_cast<float>(pointEngine->number("green"));
+                    cb = static_cast<float>(pointEngine->number("blue"));
+                }
+                if (fogActive)
+                {
+                    const float fogF = std::clamp(
+                        (w - cam.fogStart) / (cam.fogEnd - cam.fogStart), 0.0f,
+                        1.0f);
+                    cr *= 1.0f - fogF;
+                    cg *= 1.0f - fogF;
+                    cb *= 1.0f - fogF;
+                }
+                const float corners[6][2] = {{-1.0f, -1.0f}, {1.0f, -1.0f},
+                                             {-1.0f, 1.0f},  {1.0f, -1.0f},
+                                             {1.0f, 1.0f},   {-1.0f, 1.0f}};
+                for (const auto& c : corners)
+                {
+                    m_sprite3dVertices.insert(m_sprite3dVertices.end(),
+                                              {ndcX, ndcY, c[0], c[1], halfX,
+                                               halfY, cr, cg, cb});
+                }
+            }
+        }
+        if (!m_sprite3dVertices.empty())
+        {
+            f->glEnable(GL_BLEND);
+            f->glBlendFunc(GL_ONE, GL_ONE);
+            m_sprite3dShader->bind();
+            m_sprite3dShader->setUniformValue(
+                "uFalloff", std::clamp(params.falloff, 0.5f, 32.0f));
+            m_sprite3dVao->bind();
+            m_sprite3dVbo->bind();
+            m_sprite3dVbo->allocate(
+                m_sprite3dVertices.data(),
+                static_cast<int>(m_sprite3dVertices.size() * sizeof(float)));
+            f->glDrawArrays(GL_TRIANGLES, 0,
+                            static_cast<GLsizei>(m_sprite3dVertices.size() / 9));
+            m_sprite3dVbo->release();
+            m_sprite3dVao->release();
+            m_sprite3dShader->release();
+            f->glDisable(GL_BLEND);
+        }
+    }
+    if (params.drawMesh || params.drawDots) end3DDepth();
+}
+
+void MultiEffectVisualizer::runGlowOrbs(const ChainNode& node,
+                                        const GlowOrbsParams& params)
+{
+    if (m_orb3dShader == nullptr || m_sprite3dShader == nullptr) return;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                             params.beatCode + '\n' + params.pointCode + "\n#" +
+                             std::to_string(params.orbCount);
+    if (rt.orbsHost == nullptr || rt.orbsCompiled != snap)
+    {
+        rt.orbsHost = std::make_unique<ScriptSlotHost>("glowOrbs", activeContext(),
+                                                       ScriptSlotHost::Dialect::Avs);
+        rt.orbsHost->setSource(Slot::Init, params.initCode);
+        rt.orbsHost->setSource(Slot::Frame, params.frameCode);
+        rt.orbsHost->setSource(Slot::Beat, params.beatCode);
+        rt.orbsHost->setSource(Slot::Point, params.pointCode);
+        rt.orbsHost->compileAll();
+        rt.orbsCompiled = snap;
+        auto& engine = rt.orbsHost->engine();
+        feedAudio(engine);  // S47-Regel: visdata vor dem Erst-Lauf
+        engine.setNumber("n", params.orbCount);
+        rt.orbsHost->run(Slot::Init);
+    }
+    auto& engine = rt.orbsHost->engine();
+    engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+    feedAudio(engine);
+    // Slot-Ordnung Frame VOR Beat (S47-Konvention)
+    if (rt.orbsHost->has(Slot::Frame)) rt.orbsHost->run(Slot::Frame);
+    if (m_frameBeat && rt.orbsHost->has(Slot::Beat)) rt.orbsHost->run(Slot::Beat);
+    const int n = std::clamp(static_cast<int>(engine.number("n")), 1, 64);
+
+    QMatrix4x4 view;
+    QMatrix4x4 proj;
+    computeCamera3D(view, proj);
+    const QMatrix4x4 vp = proj * view;
+    const Camera3D& cam = m_camera3d;
+    const bool fogActive = cam.fogEnd > cam.fogStart;
+
+    struct OrbState
+    {
+        QVector3D center;
+        QVector3D scale;
+        QVector3D color;
+        QVector3D color2;
+        float flash = 0.0f;
+    };
+    std::vector<OrbState> orbs;
+    orbs.reserve(static_cast<std::size_t>(n));
+    for (int i = 0; i < n; ++i)
+    {
+        // Defaults: Reihe entlang x, warmer Verlauf; der Point-Slot (je Orb,
+        // i = Orb-INDEX) darf alles ueberschreiben.
+        engine.setNumber("i", i);
+        engine.setNumber("x", (static_cast<double>(i) - (n - 1) * 0.5) * 1.2);
+        engine.setNumber("y", 0.0);
+        engine.setNumber("z", 0.0);
+        engine.setNumber("radius", 0.4);
+        engine.setNumber("sx", 1.0);
+        engine.setNumber("sy", 1.0);
+        engine.setNumber("sz", 1.0);
+        engine.setNumber("red", 1.0);
+        engine.setNumber("green", 0.55);
+        engine.setNumber("blue", 0.2);
+        engine.setNumber("red2", 0.25);
+        engine.setNumber("green2", 0.05);
+        engine.setNumber("blue2", 0.35);
+        engine.setNumber("flash", 0.0);
+        if (rt.orbsHost->has(Slot::Point)) rt.orbsHost->run(Slot::Point);
+        OrbState o;
+        o.center = QVector3D(static_cast<float>(engine.number("x")),
+                             static_cast<float>(engine.number("y")),
+                             static_cast<float>(engine.number("z")));
+        const float radius =
+            std::max(0.0001f, static_cast<float>(engine.number("radius")));
+        o.scale = QVector3D(
+            radius * std::max(0.01f, static_cast<float>(engine.number("sx"))),
+            radius * std::max(0.01f, static_cast<float>(engine.number("sy"))),
+            radius * std::max(0.01f, static_cast<float>(engine.number("sz"))));
+        o.color = QVector3D(static_cast<float>(engine.number("red")),
+                            static_cast<float>(engine.number("green")),
+                            static_cast<float>(engine.number("blue")));
+        o.color2 = QVector3D(static_cast<float>(engine.number("red2")),
+                             static_cast<float>(engine.number("green2")),
+                             static_cast<float>(engine.number("blue2")));
+        o.flash = std::clamp(static_cast<float>(engine.number("flash")), 0.0f, 1.0f);
+        orbs.push_back(o);
+    }
+
+    // --- (a) Ellipsoide: opak ins gemeinsame Depth-RT -------------------------
+    begin3DDepth();
+    f->glDepthMask(GL_TRUE);
+    m_orb3dShader->bind();
+    m_orb3dShader->setUniformValue("uVp", vp);
+    m_orb3dShader->setUniformValue("uCamPos", cam.pos);
+    m_orb3dShader->setUniformValue("uFogStart", cam.fogStart);
+    m_orb3dShader->setUniformValue("uFogEnd", cam.fogEnd);
+    m_orb3dShader->setUniformValue("uFogColor", cam.fogColor);
+    m_orbVao->bind();
+    for (const OrbState& o : orbs)
+    {
+        m_orb3dShader->setUniformValue("uCenter", o.center);
+        m_orb3dShader->setUniformValue("uScale", o.scale);
+        m_orb3dShader->setUniformValue("uColor", o.color);
+        m_orb3dShader->setUniformValue("uColor2", o.color2);
+        m_orb3dShader->setUniformValue("uFlash", o.flash);
+        f->glDrawElements(GL_TRIANGLES, m_orbIndexCount, GL_UNSIGNED_SHORT,
+                          nullptr);
+    }
+    m_orbVao->release();
+    m_orb3dShader->release();
+
+    // --- (b) Halo-Billboards: additiv, Depth-Test OHNE Write => Rim-Glow ------
+    if (params.haloIntensity > 0.0f)
+    {
+        f->glDepthMask(GL_FALSE);
+        const float projX = proj(0, 0);
+        const float projY = proj(1, 1);
+        m_sprite3dVertices.clear();
+        for (const OrbState& o : orbs)
+        {
+            const QVector4D clip = vp * QVector4D(o.center, 1.0f);
+            const float w = clip.w();
+            if (w < 0.05f) continue;
+            const float ndcX = clip.x() / w;
+            const float ndcY = clip.y() / w;
+            const float r = std::max(o.scale.x(), o.scale.y()) * params.haloScale;
+            const float halfX = r * projX / w;
+            const float halfY = r * projY / w;
+            if (ndcX + halfX < -1.0f || ndcX - halfX > 1.0f ||
+                ndcY + halfY < -1.0f || ndcY - halfY > 1.0f)
+            {
+                continue;
+            }
+            QVector3D c = (o.color * 0.7f + o.color2 * 0.3f) *
+                              (params.haloIntensity + o.flash) ;
+            if (fogActive)
+            {
+                const float fogF = std::clamp(
+                    (w - cam.fogStart) / (cam.fogEnd - cam.fogStart), 0.0f, 1.0f);
+                c *= 1.0f - fogF;
+            }
+            const float corners[6][2] = {{-1.0f, -1.0f}, {1.0f, -1.0f},
+                                         {-1.0f, 1.0f},  {1.0f, -1.0f},
+                                         {1.0f, 1.0f},   {-1.0f, 1.0f}};
+            for (const auto& cn : corners)
+            {
+                m_sprite3dVertices.insert(m_sprite3dVertices.end(),
+                                          {ndcX, ndcY, cn[0], cn[1], halfX, halfY,
+                                           c.x(), c.y(), c.z()});
+            }
+        }
+        if (!m_sprite3dVertices.empty())
+        {
+            f->glEnable(GL_BLEND);
+            f->glBlendFunc(GL_ONE, GL_ONE);
+            m_sprite3dShader->bind();
+            m_sprite3dShader->setUniformValue(
+                "uFalloff", std::clamp(params.falloff, 0.5f, 32.0f));
+            m_sprite3dVao->bind();
+            m_sprite3dVbo->bind();
+            m_sprite3dVbo->allocate(
+                m_sprite3dVertices.data(),
+                static_cast<int>(m_sprite3dVertices.size() * sizeof(float)));
+            f->glDrawArrays(GL_TRIANGLES, 0,
+                            static_cast<GLsizei>(m_sprite3dVertices.size() / 9));
+            m_sprite3dVbo->release();
+            m_sprite3dVao->release();
+            m_sprite3dShader->release();
+            f->glDisable(GL_BLEND);
+        }
+    }
+    end3DDepth();
 }
 
 void MultiEffectVisualizer::runStarfield(const ChainNode& node,

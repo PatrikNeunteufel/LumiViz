@@ -451,6 +451,147 @@ struct RenderScaleParams
 };
 
 /**
+ * LumiViz "Post / Bloom" (kein AVS-Effekt; Lights-Etappe 1): additiver Glow
+ * nach dem HelloEnjoy-"Lights"-Rezept — Surface auf ein kleines RT
+ * downsamplen (Referenz fix 512^2), separierbarer 25-Tap-Gauss (H+V),
+ * Ergebnis additiv dazu (min(a+b,1)). Referenz OHNE Threshold
+ * (threshold = 0); Vignette (1 - r^2 * strength) als optionaler Abschluss.
+ *
+ * post=true (Default, Referenzverhalten): der Glow entsteht erst beim
+ * PRESENT — Anzeige-only, die Chain-Surface bleibt unberuehrt. Wie in Lights
+ * (Bloom ist Post-Processing NACH dem Szenen-Render); der erste aktivierte
+ * post-Knoten gewinnt, gerendert wird er selbst als No-op (wie Render
+ * Scale). post=false schreibt den Glow zurueck auf die Surface — in
+ * Feedback-Ketten (Fadeout statt Clear) akkumuliert der additive Anteil
+ * dann ueber die Frames bis Weiss (S48-Befund): bewusst nur fuer
+ * Glow-Schweif-Effekte einsetzen.
+ */
+struct BloomParams
+{
+    int downsample = 2;        ///< Glow-RT = interne Aufloesung / 2^n (0..4)
+    int radius = 8;            ///< Gauss-Sigma in Glow-RT-Pixeln (25 Taps fix)
+    float intensity = 1.0f;    ///< Faktor des additiven Glow-Anteils
+    float threshold = 0.0f;    ///< Helligkeits-Schwelle vor dem Blur (0 = Referenz)
+    bool vignette = false;     ///< Abschluss-Multiplikation 1 - r^2 * strength
+    float vignetteStrength = 0.3f;
+    bool post = true;          ///< true: Glow nur beim Present (kein Feedback)
+};
+
+/**
+ * LumiViz "3D / Camera" (kein AVS-Effekt; Lights-Etappe 1): Frame-Zustand
+ * wie Set Render Mode — der Knoten setzt beim Ketten-Walk die 3D-Kamera
+ * fuer alle FOLGENDEN 3D-Module (SuperScope 3D, spaeter Terrain/Orbs);
+ * Reset je Frame auf die Fallback-Kamera (Position 0/0/+1/tan(fov/2),
+ * Blick auf den Ursprung, three.js-Konvention wie die Lights-Referenz:
+ * x+ rechts, y+ oben, z+ zum Betrachter — x/y in [-1,1] bei z=0 fuellen
+ * das Bild vertikal). Die EEL-Slots init/frame/beat duerfen px..pz,
+ * tx..tz, fov, roll, fogstart, fogend ueberschreiben — erster Fall der
+ * "dynamischen Modulparameter" (Slot-Ordnung Frame VOR Beat,
+ * S47-Konvention). Die Parameterwerte seeden die Skript-Variablen beim
+ * (Re-)Compile.
+ */
+struct Camera3DParams
+{
+    float px = 0.0f;               ///< Kamera-Position (Weltkoordinaten)
+    float py = 0.0f;
+    float pz = 3.7320508f;         ///< +1/tan(15 deg): Default fuellt [-1,1]
+    float tx = 0.0f;               ///< Blickziel
+    float ty = 0.0f;
+    float tz = 0.0f;
+    float fov = 30.0f;             ///< vertikaler Oeffnungswinkel (Grad)
+    float roll = 0.0f;             ///< Drehung um die Blickachse (Grad)
+    float fogStart = 0.0f;         ///< Fog-Distanz (Welt); start >= end = aus
+    float fogEnd = 0.0f;
+    uint32_t fogColor = 0x000000;  ///< 0x00RRGGBB (Sprites daempfen nur)
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+};
+
+/**
+ * LumiViz "3D / SuperScope 3D" (kein AVS-Effekt; Lights-Etappe 1):
+ * EEL-Quartett wie SuperScope, aber der Point-Code schreibt x,y,z (WELT-
+ * Koordinaten, y+ = oben — die AVS-Raum-Regel gilt am Modulrand NICHT) plus
+ * optional size (Welt-Einheiten), red/green/blue, skip. Das Modul
+ * transformiert mit der aktiven 3D-Kamera (camera3d-Knoten oder Fallback),
+ * clippt am Near-Plane, attenuiert die Groesse ~1/Tiefe und daempft per
+ * Kamera-Fog. Rendering: additive Soft-Sprites mit eingebautem radialem
+ * exp(-r^2*falloff)-Profil (kein Bild-Asset) oder Linien (3D-projiziert,
+ * Zeichnung wie SuperScope ueber den ScopeRenderer).
+ */
+struct SuperScope3DParams
+{
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+    std::string pointCode;
+    int pointCount = 256;   ///< Default-n (Skript-n ueberschreibt)
+    int renderMode = 0;     ///< 0 = Soft-Sprites (Punkte), 1 = Linien
+    float size = 0.05f;     ///< Default-Punktgroesse (Welt-Einheiten)
+    float falloff = 4.0f;   ///< Sprite-Profil k in exp(-r^2*k)
+    int audioChannel = 2;   ///< v-Quelle: 0 = links, 1 = rechts, 2 = mono
+    bool spectrumSource = false;  ///< v liest Spektrum statt Waveform
+};
+
+/**
+ * LumiViz "3D / Terrain" (kein AVS-Effekt; Lights-Etappe 2, Modul 4):
+ * res x res-Heightfield nach dem Lights-Terrain-Rezept — prozedurale Basis
+ * (fester Seed, KEIN Bild-Asset), Spektrum als radiale Ringe
+ * (Hoehe += spectrum[dist(x,y,Zentrum)] * ringAmp), Feder-Relaxation zurueck
+ * zur Basis (v = v*drag + (h0-h)*|h|*dt), flatten. Darstellung: dunkles
+ * opakes Mesh (gemeinsames Depth-RT, Fog) + additive Soft-Sprites an den
+ * Gitterpunkten (Sprite-Shader von SuperScope 3D), Punktfarbe als Palette
+ * ueber die Hoehe ODER red/green/blue im Point-Slot (je Gitterpunkt,
+ * i = INDEX 0..res*res-1). Die EEL-Slots sehen das Hoehen-Grid als
+ * megabuf(gy*res+gx) — frei formbar; Grid liegt zentriert um den Ursprung
+ * in der xz-Ebene (x+ rechts, z+ zum Betrachter), Hoehe = y.
+ */
+struct Terrain3DParams
+{
+    int resolution = 64;      ///< Gitterpunkte je Achse (8..128)
+    float extent = 4.0f;      ///< Weltbreite/-tiefe des Grids
+    float baseAmp = 0.15f;    ///< Amplitude der prozeduralen Basis
+    float yOffset = -0.8f;    ///< Grundhoehe (Welt-y)
+    float ringAmp = 1.0f;     ///< Spektrum-Ring-Injektion je Frame (0 = aus)
+    float relax = 0.12f;      ///< Feder-Relaxation zur Basis (0..1)
+    float flatten = 0.0f;     ///< direkter Zug Richtung Basis je Frame (0..1)
+    bool drawMesh = true;     ///< dunkles Mesh (opak, schreibt Depth)
+    uint32_t meshColor = 0x101418;
+    bool drawDots = true;     ///< additive Soft-Sprites an den Gitterpunkten
+    float dotSize = 0.045f;   ///< Welt-Einheiten
+    float falloff = 4.0f;     ///< Sprite-Profil k
+    uint32_t colorLow = 0x0A2040;   ///< Palette: Tal
+    uint32_t colorHigh = 0x40C0FF;  ///< Palette: Gipfel
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+    std::string pointCode;    ///< je Gitterpunkt: Farbe (red/green/blue)
+};
+
+/**
+ * LumiViz "3D / Glow Orbs" (kein AVS-Effekt; Lights-Etappe 2, Modul 5):
+ * n Low-Poly-Ellipsoide (16x12) mit Zwei-Farb-Vertex-Verlauf
+ * (mix(color2, color, ny)) + flash (Beat-Blitz, additiver Offset wie das
+ * Original-addRGB), Fog, gemeinsames Depth-RT (opak); dahinter je Orb ein
+ * additives Halo-Billboard (Radial-Falloff, Depth-Test ohne Write —
+ * ergibt den Rim-Glow). Slots init/frame/beat/point; der Point-Slot laeuft
+ * JE ORB (i = Orb-INDEX 0..n-1) und schreibt x,y,z, radius, sx,sy,sz
+ * (Achsen-Squash -> oval), red/green/blue (+ red2/green2/blue2 unten),
+ * flash (0..1). Ohne Point-Code stehen die Orbs in einer Reihe.
+ */
+struct GlowOrbsParams
+{
+    int orbCount = 5;            ///< Default-n (Skript-n ueberschreibt)
+    float haloScale = 2.2f;      ///< Halo-Radius = radius * haloScale
+    float haloIntensity = 0.6f;  ///< Halo-Helligkeit (0 = aus)
+    float falloff = 3.0f;        ///< Halo-Profil k in exp(-r^2*k)
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+    std::string pointCode;       ///< je Orb (i = Orb-Index)
+};
+
+/**
  * AVS "Render / Text" (ID 28, r_text.cpp): word cycler drawn with the app
  * font engine (GDI original -> QPainter port). `text` holds the words
  * separated by ';'; blend applies to the glyph pixels only.
@@ -1387,7 +1528,9 @@ using EffectParams =
                  StrangeAttractorParams, FlameParams, ReactionDiffusionParams,
                  SetRenderModeParams, DebugBarsParams, MilkdropNodeParams,
                  HostGroupParams, TextParams, AviParams, CommentParams,
-                 RenderScaleParams, PassthroughParams>;
+                 RenderScaleParams, BloomParams, Camera3DParams,
+                 SuperScope3DParams, Terrain3DParams, GlowOrbsParams,
+                 PassthroughParams>;
 
 // =============================================================================
 // Chain node
@@ -1526,6 +1669,11 @@ struct CompileResult
         const char* operator()(const AviParams&) const { return "AVI"; }
         const char* operator()(const CommentParams&) const { return "Comment"; }
         const char* operator()(const RenderScaleParams&) const { return "Render Scale"; }
+        const char* operator()(const BloomParams&) const { return "Bloom"; }
+        const char* operator()(const Camera3DParams&) const { return "3D Camera"; }
+        const char* operator()(const SuperScope3DParams&) const { return "SuperScope 3D"; }
+        const char* operator()(const Terrain3DParams&) const { return "Terrain 3D"; }
+        const char* operator()(const GlowOrbsParams&) const { return "Glow Orbs"; }
         const char* operator()(const PassthroughParams&) const { return "Passthrough"; }
     };
     return std::visit(Visitor{}, params);

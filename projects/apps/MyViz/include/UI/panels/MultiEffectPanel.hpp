@@ -116,6 +116,10 @@ private:
     void onMove(int delta);
     /// Load a SuperScope figure preset's EEL code into the node at `path`.
     void applySuperScopePreset(const QList<int>& path, int presetIndex);
+    /// Load a SuperScope-3D template's EEL quartet into the node at `path`.
+    void applyScope3DPreset(const QList<int>& path, int presetIndex);
+    /// Load a 3D-Camera template's EEL slots into the node at `path`.
+    void applyCamera3DPreset(const QList<int>& path, int presetIndex);
     void onDropRequested(QTreeWidgetItem* src, QTreeWidgetItem* target,
                          ChainDrop where);
     /// Move src to the drop destination while the render mutex is held (called

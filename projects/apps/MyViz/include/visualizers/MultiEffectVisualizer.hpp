@@ -43,6 +43,8 @@
 #include "scripting/ScriptContext.hpp"
 #include "scripting/ScriptSlotHost.hpp"
 
+#include <QImage>
+#include <QMatrix4x4>
 #include <QOpenGLBuffer>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLShaderProgram>
@@ -132,6 +134,14 @@ public:
         m_beatPeriodOverride = frames > 0 ? frames : 0;
         m_beatPeriodFrame = 0;
     }
+
+    /**
+     * @brief Test-Hook (GL-Gates, S48): Kopie der aktuellen Root-Surface als
+     *        Bild — nur mit current GL-Context aufrufen (nach render());
+     *        leer, solange noch kein Frame gerendert wurde. Liest die interne
+     *        Surface VOR dem Present (unabhaengig vom Fenster-Framebuffer).
+     */
+    [[nodiscard]] QImage debugGrabRootSurface() const;
 
 protected:
     void onInitialize() override;
@@ -327,6 +337,37 @@ private:
         float mpVx = 0.0f, mpVy = 0.0f;   ///< velocity
         float mpPx = 0.0f, mpPy = 0.0f;   ///< position (-1..1)
         float mpSize = 8.0f;              ///< eased radius
+
+        // Bloom (Lights-Etappe 1): kleine Glow-RTs — [0] Downsample/Gauss-Ziel,
+        // [1] Gauss-Zwischenpuffer; Groesse = Surface / 2^downsample
+        std::unique_ptr<QOpenGLFramebufferObject> bloomRt[2];
+        int bloomW = 0;
+        int bloomH = 0;
+
+        // 3D Camera (Lights-Etappe 1): EEL-Slots init/frame/beat — duerfen
+        // die Kamera-Parameter ueberschreiben (dynamische Modulparameter)
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> cam3dHost;
+        std::string cam3dCompiled;
+
+        // SuperScope 3D (Lights-Etappe 1): EEL-Quartett (x/y/z/size/rgb)
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> scope3dHost;
+        std::string scope3dCompiled;
+
+        // Terrain 3D (Lights-Etappe 2): Hoehen-Simulation + Mesh-Grid
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> terrainHost;
+        std::string terrainCompiled;
+        std::vector<float> terrainBase;  ///< h0 (prozedural, fester Seed)
+        std::vector<float> terrainH;     ///< aktuelle Hoehen
+        std::vector<float> terrainV;     ///< Feder-Geschwindigkeiten
+        int terrainRes = 0;              ///< Aufloesung der Puffer (Reset bei Wechsel)
+        std::unique_ptr<QOpenGLVertexArrayObject> terrainVao;
+        std::unique_ptr<QOpenGLBuffer> terrainVbo;  ///< pos.xyz (je Frame)
+        std::unique_ptr<QOpenGLBuffer> terrainIbo;  ///< Quad-Dreiecke (je res)
+        int terrainIndexCount = 0;
+
+        // Glow Orbs (Lights-Etappe 2): EEL-Quartett (Point je Orb)
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> orbsHost;
+        std::string orbsCompiled;
 
         // Water Bump: RGBA16F height ping-pong (.r current, .g previous height)
         std::unique_ptr<QOpenGLFramebufferObject> wbHeight[2];
@@ -571,6 +612,38 @@ private:
                  const lumi::multieffect::BumpParams& params);
     void runWaterBump(const lumi::multieffect::ChainNode& node,
                       const lumi::multieffect::WaterBumpParams& params);
+    /// Bloom (Lights-Etappe 1), In-Chain-Modus (post=false): Glow erzeugen
+    /// und additiv auf die Surface compositen; post=true rendert als No-op
+    /// (der Glow entsteht dann erst beim Present — kein Feedback).
+    void runBloom(const lumi::multieffect::ChainNode& node,
+                  const lumi::multieffect::BloomParams& params);
+    /// Bloom-Glow erzeugen: Downsample (+Threshold) → separierbarer
+    /// 25-Tap-Gauss in rt.bloomRt; liefert die Glow-Textur (0 bei Fehler).
+    unsigned int ensureBloomGlow(LeafRuntime& rt,
+                                 const lumi::multieffect::BloomParams& params,
+                                 unsigned int srcTexture);
+    /// 3D Camera (Lights-Etappe 1): setzt m_camera3d fuer folgende 3D-Module
+    /// (Frame-Zustand wie Set Render Mode); EEL-Slots als dynamische Params.
+    void runCamera3D(const lumi::multieffect::ChainNode& node,
+                     const lumi::multieffect::Camera3DParams& params);
+    /// SuperScope 3D (Lights-Etappe 1): EEL-Punktschleife in Weltkoordinaten,
+    /// Projektion via m_camera3d, additive Soft-Sprites oder Linien.
+    void runSuperScope3D(const lumi::multieffect::ChainNode& node,
+                         const lumi::multieffect::SuperScope3DParams& params);
+    /// Terrain 3D (Lights-Etappe 2): Heightfield-Sim (Ringe/Relax/Skript-
+    /// megabuf) + dunkles Mesh (Depth) + additive Gitterpunkt-Sprites.
+    void runTerrain3D(const lumi::multieffect::ChainNode& node,
+                      const lumi::multieffect::Terrain3DParams& params);
+    /// Glow Orbs (Lights-Etappe 2): Ellipsoide (Verlauf+flash, Depth) + Halos.
+    void runGlowOrbs(const lumi::multieffect::ChainNode& node,
+                     const lumi::multieffect::GlowOrbsParams& params);
+    /// View/Proj aus m_camera3d (Aspekt = interne Surface, near 0.05).
+    void computeCamera3D(QMatrix4x4& view, QMatrix4x4& proj) const;
+    /// Gemeinsames Depth-RT (Etappe-2-Entscheid 1): Depth-Textur an das
+    /// AKTUELL gebundene Draw-FBO haengen, einmal je Frame loeschen,
+    /// Depth-Test an. end3DDepth() loest das Attachment wieder.
+    void begin3DDepth();
+    void end3DDepth();
     void runStarfield(const lumi::multieffect::ChainNode& node,
                       const lumi::multieffect::StarfieldParams& params);
     void runTimescope(const lumi::multieffect::ChainNode& node,
@@ -676,6 +749,12 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_waterShader;
     std::unique_ptr<QOpenGLShaderProgram> m_bumpShader;
     std::unique_ptr<QOpenGLShaderProgram> m_presentShader;  ///< Quad-Present (Render Scale, S47)
+    std::unique_ptr<QOpenGLShaderProgram> m_bloomDownShader;   ///< Bloom: Downsample + Threshold
+    std::unique_ptr<QOpenGLShaderProgram> m_bloomGaussShader;  ///< Bloom: separierbarer 25-Tap-Gauss
+    std::unique_ptr<QOpenGLShaderProgram> m_bloomCompShader;   ///< Bloom: additives Composite + Vignette
+    std::unique_ptr<QOpenGLShaderProgram> m_sprite3dShader;    ///< SuperScope 3D: Soft-Sprites
+    std::unique_ptr<QOpenGLShaderProgram> m_terrain3dShader;   ///< Terrain 3D: opakes Mesh + Fog
+    std::unique_ptr<QOpenGLShaderProgram> m_orb3dShader;       ///< Glow Orbs: Ellipsoid + Verlauf
     std::unique_ptr<QOpenGLShaderProgram> m_shiftShader;  ///< Dynamic Shift (r_shift)
     std::unique_ptr<QOpenGLShaderProgram> m_ddmShader;    ///< Dynamic Distance Modifier (r_ddm)
     std::unique_ptr<QOpenGLShaderProgram> m_colorMapShader;  ///< Color Map APE
@@ -713,6 +792,22 @@ private:
     std::unique_ptr<QOpenGLVertexArrayObject> m_warpVao;
     std::unique_ptr<QOpenGLBuffer> m_warpVbo;
     std::vector<float> m_warpVertices;  ///< reused CPU scratch for the warp mesh
+    // SuperScope 3D: dynamisches Sprite-Mesh (6 Vertices je Punkt:
+    // center.xy + corner.xy + half.xy + rgb; je Frame neu hochgeladen)
+    std::unique_ptr<QOpenGLVertexArrayObject> m_sprite3dVao;
+    std::unique_ptr<QOpenGLBuffer> m_sprite3dVbo;
+    std::vector<float> m_sprite3dVertices;  ///< CPU-Scratch (wie m_warpVertices)
+    // Glow Orbs: geteilte Einheitskugel (16x12, Position = Normale)
+    std::unique_ptr<QOpenGLVertexArrayObject> m_orbVao;
+    std::unique_ptr<QOpenGLBuffer> m_orbVbo;
+    std::unique_ptr<QOpenGLBuffer> m_orbIbo;
+    int m_orbIndexCount = 0;
+    // Gemeinsames Depth-RT der opaken 3D-Module (Etappe-2-Entscheid 1):
+    // eigene Textur statt FBO-Attachment-Paar — ueberlebt das Farb-Ping-Pong.
+    unsigned int m_depth3dTex = 0;  ///< GL_DEPTH_COMPONENT24 (onCleanup)
+    int m_depth3dW = 0;
+    int m_depth3dH = 0;
+    bool m_depth3dCleared = false;  ///< je Frame einmal loeschen (onRender-Reset)
 
     std::unordered_map<uint64_t, LeafRuntime> m_leafRuntimes;
     std::vector<float> m_milkWaveScratch;  ///< interleavte Audio-Kopien (Meganode)
@@ -750,6 +845,23 @@ private:
         int alpha = 128;     ///< Adjustable-blend alpha 0..255
     };
     RenderMode m_renderMode;
+
+    // 3D-Kamera-Zustand, gesetzt von einem camera3d-Knoten fuer die folgenden
+    // 3D-Module (Lights-Etappe 1). Reset je Frame auf die Fallback-Kamera:
+    // Position 0/0/+1/tan(fov/2), Blick auf den Ursprung (three.js-Konvention
+    // wie Lights: x+ rechts, y+ oben, z+ zum Betrachter) — x/y in [-1,1] bei
+    // z=0 fuellen das Bild (vertikal). Fog aus (start >= end).
+    struct Camera3D
+    {
+        QVector3D pos{0.0f, 0.0f, 3.7320508f};
+        QVector3D target{0.0f, 0.0f, 0.0f};
+        float fovDeg = 30.0f;
+        float rollDeg = 0.0f;
+        float fogStart = 0.0f;   ///< Fog aktiv nur wenn fogEnd > fogStart
+        float fogEnd = 0.0f;
+        QVector3D fogColor{0.0f, 0.0f, 0.0f};
+    };
+    Camera3D m_camera3d;
 
     // AVS-layout visualisation data (spectrum L/R + waveform L/R, 576 each),
     // rebuilt once per frame and fed to every scripted engine (getspec/getosc).

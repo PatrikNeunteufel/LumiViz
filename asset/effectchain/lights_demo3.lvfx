@@ -1,0 +1,105 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "Lights Demo v3",
+        "description": "V3 (S48): Kameraflug UEBER das Terrain hinter einer Wunderkerze her (Vox-Ersatz); die Kamera schreibt die Kerzen-Position in q1..q3, die Funken lesen sie (geteilter ScriptContext). Orbs sitzen halb im Terrain (gemeinsames Depth-RT clippt sie wie die Original-Halbkugeln).",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "clear",
+                "enabled": true,
+                "name": "Schwarz",
+                "color": 0,
+                "onlyFirst": false,
+                "blend": 0
+            },
+            {
+                "type": "camera3d",
+                "enabled": true,
+                "name": "Flug ueber das Terrain",
+                "description": "Kreisflug in ~0.8 Hoehe; die Wunderkerze fliegt auf der Bahn voraus (q1..q3), die Kamera schaut ihr nach. Beat drueckt die Kamera kurz tiefer.",
+                "fov": 30,
+                "fogColor": 0,
+                "initCode": "dip=0",
+                "frameCode": "a=time*0.16;px=sin(a)*2.6;pz=cos(a)*2.6;dip=dip*0.88;py=0.8+0.12*sin(time*0.4)-dip;b2=a+0.55;q1=sin(b2)*2.3;q3=cos(b2)*2.3;q2=0.45+0.12*sin(time*0.9);tx=q1;ty=q2;tz=q3;fogstart=2.5;fogend=8",
+                "beatCode": "dip=0.12"
+            },
+            {
+                "type": "terrain3d",
+                "enabled": true,
+                "name": "Terrain",
+                "description": "Wie v2, aber Extent 10 als Flugflaeche; Phasenwellen rings/relax (Director-Ersatz).",
+                "resolution": 64,
+                "extent": 10.0,
+                "baseAmp": 0.22,
+                "yOffset": -0.75,
+                "ringAmp": 1.0,
+                "relax": 0.12,
+                "flatten": 0.0,
+                "drawMesh": true,
+                "meshColor": 658448,
+                "drawDots": true,
+                "dotSize": 0.055,
+                "falloff": 4.0,
+                "colorLow": 1056864,
+                "colorHigh": 6349055,
+                "frameCode": "p=time*0.26;rings=0.5+0.5*sin(p);relax=0.3-0.25*sin(p);flatten=0.02"
+            },
+            {
+                "type": "glowOrbs",
+                "enabled": true,
+                "name": "Versunkene Orbs",
+                "description": "Halb im Terrain (y ~ Terrainhoehe, Depth-RT schneidet die Unterseite ab -> Halbkugel wie im Original); wippen leicht, Beat-Flash.",
+                "orbCount": 6,
+                "haloScale": 2.4,
+                "haloIntensity": 0.6,
+                "falloff": 3.0,
+                "initCode": "fl=0",
+                "frameCode": "fl=fl*0.82",
+                "beatCode": "fl=1",
+                "pointCode": "a=i/n*6.283;x=sin(a)*2.2;z=cos(a)*2.2;y=-0.68+0.07*sin(time*0.7+i);radius=0.3+0.05*sin(time+i*2);sy=0.95;red=0.5+0.5*sin(a);green=0.5+0.5*sin(a+2.094);blue=0.5+0.5*sin(a+4.188);red2=0.35*(0.5+0.5*sin(a+1));green2=0.35*(0.5+0.5*sin(a+3.094));blue2=0.35*(0.5+0.5*sin(a+5.188));flash=fl*0.5"
+            },
+            {
+                "type": "superScope3d",
+                "enabled": true,
+                "name": "Wunderkerze",
+                "description": "Vox-Ersatz: Funken spruehen radial aus der Kerzen-Position (q1..q3 von der Kamera), Lebenszyklus je Funke (aussen schneller + blasser), Treble treibt die Spruehweite, goldgelbe Farbe.",
+                "pointCount": 220,
+                "renderMode": 0,
+                "size": 0.03,
+                "falloff": 5.0,
+                "frameCode": "t=t+0.02",
+                "pointCode": "hx=sin(i*127.1)*43758.55;hx=hx-floor(hx);hy=sin(i*269.5)*24634.63;hy=hy-floor(hy);hz=sin(i*419.2)*36973.4;hz=hz-floor(hz);u=hx*2-1;ph=hy*6.283;rr=sqrt(abs(1-u*u));dx=rr*cos(ph);dy=u;dz=rr*sin(ph);lf=t*(0.8+hy)+hz;lf=lf-floor(lf);len=lf*(0.35+treb*0.4);x=q1+dx*len;y=q2+dy*len;z=q3+dz*len;size=0.028*(1-lf)+0.004;br=(1-lf)*(0.7+0.6*hx);red=br;green=br*(0.75+0.2*hy);blue=br*0.45"
+            },
+            {
+                "type": "superScope3d",
+                "enabled": true,
+                "name": "Star-Dust",
+                "description": "Ruhige Punktwolke ueber der Szene (Original: Stars.js).",
+                "pointCount": 350,
+                "renderMode": 0,
+                "size": 0.03,
+                "falloff": 4.0,
+                "pointCode": "sx=sin(i*127.1)*43758.55;sx=sx-floor(sx);sy=sin(i*269.5)*24634.63;sy=sy-floor(sy);sz2=sin(i*419.2)*36973.4;sz2=sz2-floor(sz2);x=(sx*2-1)*6;y=sy*2.2-0.1;z=(sz2*2-1)*6;size=0.02+0.03*sy;red=0.6+0.4*sy;green=0.7;blue=1"
+            },
+            {
+                "type": "bloom",
+                "enabled": true,
+                "name": "Bloom + Vignette",
+                "description": "Referenzwerte wie v2: sigma 8 / 25 Taps, Intensity 1.3, kein Threshold, Vignette 0.3.",
+                "downsample": 2,
+                "radius": 8,
+                "intensity": 1.3,
+                "threshold": 0.0,
+                "vignette": true,
+                "vignetteStrength": 0.3,
+                "post": true
+            }
+        ]
+    }
+}
