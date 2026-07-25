@@ -457,6 +457,8 @@ private:
     /// AVS-visdata-Bytes des Hosts (nur Lua-/Chain-Pfad; Frame-Lebensdauer —
     /// der Host hält den Puffer über den Render-Aufruf am Leben)
     const unsigned char* m_visBytes = nullptr;
+    /// gettime()-Uhr zum gepufferten visdata (Nachfüttern beim Erst-Compile)
+    double m_visTime = 0.0;
 
     // =========================================================================
     // Color Gradient

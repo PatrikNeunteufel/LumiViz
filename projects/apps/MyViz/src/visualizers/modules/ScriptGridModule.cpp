@@ -96,6 +96,13 @@ void ScriptGridModule::initializeScripts()
     m_scriptSetsAlpha = m_script->sourceMentions(Slot::Point, "alpha");
 
     auto& engine = m_script->engine();
+    // setVisData()-Aufrufe VOR dem Erst-Compile landeten ins Leere — ohne
+    // Nachfuettern sahen Init/Beat des allerersten Frames nur Null-Audio (S47).
+    if (m_visBytes != nullptr)
+    {
+        engine.setVisData(m_visBytes);
+        engine.setScriptTime(m_visTime);
+    }
     engine.setNumber("w", 0.0);
     engine.setNumber("h", 0.0);
     engine.setNumber("sw", 0.0);
@@ -133,11 +140,13 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
     engine.setNumber("dt", static_cast<double>(deltaTime));
     engine.setNumber("b", isBeat ? 1.0 : 0.0);
 
-    if (isBeat && m_script->has(Slot::Beat) && !m_script->run(Slot::Beat))
+    // r_dmove.cpp:297-298 / r_trans.cpp: FRAME zuerst, dann Beat — der
+    // Frame-Code rechnet mit den Beat-Werten des VORHERIGEN Frames (S47).
+    if (m_script->has(Slot::Frame) && !m_script->run(Slot::Frame))
     {
         m_lastScriptError = m_script->lastError();
     }
-    if (m_script->has(Slot::Frame) && !m_script->run(Slot::Frame))
+    if (isBeat && m_script->has(Slot::Beat) && !m_script->run(Slot::Beat))
     {
         m_lastScriptError = m_script->lastError();
     }
@@ -248,6 +257,8 @@ void ScriptGridModule::setVariable(const std::string& name, double value)
 
 void ScriptGridModule::setVisData(const unsigned char* data, double scriptTime)
 {
+    m_visBytes = data;  // gepuffert: initializeScripts() fuettert nach
+    m_visTime = scriptTime;
     if (m_script != nullptr)
     {
         m_script->engine().setVisData(data);

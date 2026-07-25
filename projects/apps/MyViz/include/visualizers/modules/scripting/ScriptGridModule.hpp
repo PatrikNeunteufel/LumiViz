@@ -137,6 +137,10 @@ private:
     bool m_compiled = false;
     float m_totalTime = 0.0f;
 
+    /// visdata-Puffer + gettime()-Uhr (Nachfüttern beim Erst-Compile, S47)
+    const unsigned char* m_visBytes = nullptr;
+    double m_visTime = 0.0;
+
     std::shared_ptr<scripting::ScriptContext> m_context;
     std::unique_ptr<scripting::ScriptSlotHost> m_script;
     std::string m_lastScriptError;

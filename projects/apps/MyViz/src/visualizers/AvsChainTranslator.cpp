@@ -889,6 +889,7 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.invert = src.field("invert") != 0;
             p.oldStyle = src.field("oldstyle") != 0;
             p.blend = src.field("blend") != 0 ? 1 : (src.field("blendavg") != 0 ? 2 : 0);
+            p.buffern = std::clamp(src.field("buffern"), 0, 8);
             p.initCode = slotStr(src, "init");
             p.frameCode = slotStr(src, "frame");
             p.beatCode = slotStr(src, "beat");

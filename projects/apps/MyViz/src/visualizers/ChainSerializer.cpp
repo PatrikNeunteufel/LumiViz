@@ -591,6 +591,7 @@ struct WriteVisitor
         o["invert"] = p.invert;
         o["oldStyle"] = p.oldStyle;
         o["blend"] = p.blend;
+        o["buffern"] = p.buffern;
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
@@ -1469,6 +1470,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.invert = getBool(o, "invert", false);
         p.oldStyle = getBool(o, "oldStyle", false);
         p.blend = getInt(o, "blend", 0);
+        p.buffern = getInt(o, "buffern", 0);
         p.initCode = getStr(o, "initCode");
         p.frameCode = getStr(o, "frameCode");
         p.beatCode = getStr(o, "beatCode");

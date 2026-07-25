@@ -109,6 +109,19 @@ public:
     /** Load a host preset (.lvfx). GUI-thread call — hold renderMutex() (5.7 UI). */
     bool loadChainFile(const QString& path, QStringList* outReport = nullptr);
 
+    /**
+     * @brief Erzwingt deterministisch alle N Frames einen Beat statt des
+     *        Detektors (0 = Detektor) — Gegenstueck zu AvsRef --beat-period
+     *        fuer frame-exakte Diffs von History-Presets (S46-Merkregel:
+     *        Beat-Divergenz laesst sie nach ~100 Frames auseinanderlaufen).
+     *        Frame-Zaehlung startet je geladenem Preset bei 0 (Beat auf 0, N, …).
+     */
+    void setBeatPeriodOverride(int frames)
+    {
+        m_beatPeriodOverride = frames > 0 ? frames : 0;
+        m_beatPeriodFrame = 0;
+    }
+
 protected:
     void onInitialize() override;
     void onRender(float deltaTime) override;
@@ -708,6 +721,8 @@ private:
     lumi::modules::BeatModule m_beat;
     lumi::modules::BeatEstimator m_beatEstimator{0};
     bool m_frameBeat = false;  ///< beat flag effects/list scripts may mutate
+    int m_beatPeriodOverride = 0;  ///< >0: Beat alle N Frames (AvsRef --beat-period)
+    int m_beatPeriodFrame = 0;     ///< Frame-Zaehler des Overrides (Reset beim Laden)
 
     // Live render mode set by a Set Render Mode node for the following render
     // effects (AVS semantics). Reset at frame start; `set` means "override".

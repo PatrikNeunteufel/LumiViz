@@ -732,6 +732,7 @@ struct BumpParams
     bool invert = false;       ///< invert the depth (luminance)
     bool oldStyle = false;     ///< legacy x,y in 0..100 instead of 0..1
     int blend = 0;             ///< 0 replace, 1 additive, 2 50/50
+    int buffern = 0;           ///< depth source: 0 = frame, N = global buffer N-1
     std::string initCode = "t=0;";
     std::string frameCode = "x=0.5+cos(t)*0.3;\ny=0.5+sin(t)*0.3;\nt=t+0.1;";
     std::string beatCode;

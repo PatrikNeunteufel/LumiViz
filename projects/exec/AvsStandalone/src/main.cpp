@@ -134,6 +134,10 @@ public:
     /// Sequenz-/GIF-Vergleiche gegen den Referenz-Renderer (S46)
     void setSaveEvery(int every) { m_saveEvery = every; }
 
+    /// --beat-period N: deterministischer Beat alle N Frames statt des
+    /// Detektors — Gegenstueck zu AvsRef --beat-period (frame-exakte Diffs)
+    void setBeatPeriod(int frames) { m_beatPeriod = frames; }
+
 protected:
     void initializeGL() override
     {
@@ -145,6 +149,7 @@ protected:
         m_viz = std::make_unique<MultiEffectVisualizer>();
         m_viz->initialize();
         m_viz->resize(size());
+        m_viz->setBeatPeriodOverride(m_beatPeriod);
         loadPreset(0);
     }
 
@@ -352,6 +357,7 @@ private:
     bool m_closing = false;
     bool m_dumpChain = false;
     int m_saveEvery = 0;
+    int m_beatPeriod = 0;
     int m_lastWarnings = 0;
 };
 
@@ -389,7 +395,12 @@ int main(int argc, char* argv[])
         QStringLiteral("save-every"),
         QStringLiteral("im --auto-Lauf jeden M-ten Frame speichern"),
         QStringLiteral("M"), QStringLiteral("0"));
+    const QCommandLineOption optBeatPeriod(
+        QStringLiteral("beat-period"),
+        QStringLiteral("deterministischer Beat alle N Frames (wie AvsRef)"),
+        QStringLiteral("N"), QStringLiteral("0"));
     parser.addOption(optSaveEvery);
+    parser.addOption(optBeatPeriod);
     parser.addOption(optAuto);
     parser.addOption(optFrames);
     parser.addOption(optOut);
@@ -446,6 +457,7 @@ int main(int argc, char* argv[])
                             parser.value(optOut));
     window.setDumpChain(parser.isSet(optDump));
     window.setSaveEvery(parser.value(optSaveEvery).toInt());
+    window.setBeatPeriod(parser.value(optBeatPeriod).toInt());
     window.resize(w, h);
     window.show();
 

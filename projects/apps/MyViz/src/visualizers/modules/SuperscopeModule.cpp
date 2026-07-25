@@ -153,6 +153,14 @@ void SuperscopeModule::initializeLuaScripts()
     // scripts own it (AVS style: frame code accumulates `t=t+0.02` itself);
     // host time is provided as `time` (absolute) and `dt` (per frame).
     auto& engine = m_script->engine();
+    // setVisData()-Aufrufe VOR dem Erst-Compile landeten ins Leere — ohne
+    // Nachfuettern sahen Init/Beat des allerersten Frames nur Null-Audio
+    // (getspec=0; der Wormhole verpasste so seinen Frame-0-Beat, S47).
+    if (m_visBytes != nullptr)
+    {
+        engine.setVisData(m_visBytes);
+        engine.setScriptTime(m_visTime);
+    }
     engine.setNumber("n", static_cast<double>(m_pointCount));
     engine.setNumber("w", m_w);
     engine.setNumber("h", m_h);
@@ -517,11 +525,13 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
         engine.setNumber("dt", static_cast<double>(deltaTime));
         engine.setNumber("b", m_b);
 
-        if (isBeat && m_script->has(Slot::Beat) && !m_script->run(Slot::Beat))
+        // r_sscope.cpp:272-273: FRAME zuerst, dann Beat — der Frame-Code
+        // rechnet mit den Beat-Werten des VORHERIGEN Frames (S47).
+        if (m_script->has(Slot::Frame) && !m_script->run(Slot::Frame))
         {
             m_lastScriptError = m_script->lastError();
         }
-        if (m_script->has(Slot::Frame) && !m_script->run(Slot::Frame))
+        if (isBeat && m_script->has(Slot::Beat) && !m_script->run(Slot::Beat))
         {
             m_lastScriptError = m_script->lastError();
         }
@@ -1017,6 +1027,7 @@ void SuperscopeModule::setVariable(const std::string& name, double value)
 void SuperscopeModule::setVisData(const unsigned char* data, double scriptTime)
 {
     m_visBytes = data;  // fuer das AVS-treue v (visdataValue)
+    m_visTime = scriptTime;  // gepuffert: initializeLuaScripts() fuettert nach
     if (m_luaMode && m_script != nullptr)
     {
         m_script->engine().setVisData(data);

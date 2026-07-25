@@ -38,11 +38,12 @@ STATS_RE = re.compile(
     r"mean RGB=\(([\d.]+), ([\d.]+), ([\d.]+)\), Luma min=([\d.]+) max=([\d.]+)")
 
 
-def run_ref(avs: Path, frames: int, size: str, out: Path) -> Path:
+def run_ref(avs: Path, frames: int, size: str, out: Path, beat_period: int = 0) -> Path:
     """AvsRef rendern; liefert den BMP-Pfad des letzten Frames."""
+    extra = ["--beat-period", str(beat_period)] if beat_period > 0 else []
     proc = subprocess.run(
         [str(REF_EXE), str(avs), "--frames", str(frames), "--size", size,
-         "--out", str(out)],
+         "--out", str(out)] + extra,
         capture_output=True, text=True, encoding="utf-8", errors="replace",
         timeout=300)
     if proc.returncode != 0:
@@ -54,14 +55,15 @@ def run_ref(avs: Path, frames: int, size: str, out: Path) -> Path:
     return bmp
 
 
-def run_lumi(avs: Path, frames: int, size: str, out: Path) -> Path:
+def run_lumi(avs: Path, frames: int, size: str, out: Path, beat_period: int = 0) -> Path:
     """AvsStandalone --auto rendern; liefert den PNG-Pfad des Screenshots."""
     import os
     env = dict(os.environ)
     env["QT_ENABLE_HIGHDPI_SCALING"] = "0"  # logische == physische Pixel
+    extra = ["--beat-period", str(beat_period)] if beat_period > 0 else []
     proc = subprocess.run(
         [str(LUMI_EXE), str(avs), "--auto", "--frames", str(frames),
-         "--size", size, "--out", str(out)],
+         "--size", size, "--out", str(out)] + extra,
         capture_output=True, text=True, encoding="utf-8", errors="replace",
         timeout=300, env=env)
     if proc.returncode != 0:
@@ -107,6 +109,8 @@ def main() -> int:
                     help="auch ../tests/*.avs (P-Presets) vergleichen")
     ap.add_argument("--frames", type=int, default=120)
     ap.add_argument("--size", default="320x240")
+    ap.add_argument("--beat-period", type=int, default=0,
+                    help="deterministischer Beat alle N Frames (beide Renderer)")
     ap.add_argument("--out", type=Path,
                     default=ROOT / "../../../out/avsref_compare")
     args = ap.parse_args()
@@ -136,8 +140,10 @@ def main() -> int:
     for avs in presets:
         rel = avs.name
         try:
-            ref_img = load_rgb(run_ref(avs, args.frames, args.size, out / "ref"))
-            lumi_img = load_rgb(run_lumi(avs, args.frames, args.size, out / "lumi"))
+            ref_img = load_rgb(run_ref(avs, args.frames, args.size, out / "ref",
+                                       args.beat_period))
+            lumi_img = load_rgb(run_lumi(avs, args.frames, args.size, out / "lumi",
+                                         args.beat_period))
             if ref_img.shape != lumi_img.shape:
                 raise RuntimeError(
                     f"Groessen ungleich: ref{ref_img.shape} vs lumi{lumi_img.shape}"

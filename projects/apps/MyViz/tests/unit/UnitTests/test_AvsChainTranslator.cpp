@@ -852,7 +852,8 @@ TEST_SUITE("AvsChainTranslator")
     {
         EffectNode b = builtin(29);
         b.fields = {{"depth", 40},  {"depth2", 90}, {"onbeat", 1}, {"durFrames", 10},
-                    {"blend", 1},   {"blendavg", 0}, {"invert", 1}, {"oldstyle", 1}};
+                    {"blend", 1},   {"blendavg", 0}, {"invert", 1}, {"oldstyle", 1},
+                    {"buffern", 3}};
         b.code = {{"frame", "x=0.5"}, {"beat", ""}, {"init", "t=0"}};
 
         const TranslationResult t = translateAvsTree(makeParsed({b}));
@@ -864,6 +865,7 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(p.invert);
         CHECK(p.oldStyle);
         CHECK(p.blend == 1);
+        CHECK(p.buffern == 3);   // r_bump.cpp:249 — Tiefen-Quelle Global-Buffer
         CHECK(p.frameCode == "x=0.5");
         CHECK(p.initCode == "t=0");
     }

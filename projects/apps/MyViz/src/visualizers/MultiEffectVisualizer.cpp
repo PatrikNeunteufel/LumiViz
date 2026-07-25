@@ -577,33 +577,57 @@ void main()
 
 // AVS "Trans / Bump" (ID 29): per-pixel bump lighting from the luminance
 // gradient, lit by a movable source at uLight (r_bump.cpp). Bright near the
-// light where the surface is flat; falls off with distance.
+// light where the surface is flat; falls off with distance. The depth source
+// is uDepthTex: the current frame, or a global buffer when `buffern` is set
+// (r_bump.cpp:249). uCurbuf mirrors the original's curbuf flag: only when the
+// depth source IS the framebuffer, pixels whose four depth neighbours are all
+// zero are skipped and stay black (fbout is memset-0, r_bump.cpp:279/321);
+// a global-buffer depth source always writes. The 1px border also stays black
+// (the original only iterates the interior, r_bump.cpp:302-310).
 const char* kBumpFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
 uniform sampler2D uTex;
+uniform sampler2D uDepthTex;
 uniform vec2 uRes;
 uniform vec2 uLight;
 uniform float uDepth;
 uniform int uInvert;
 uniform int uBlend;
+uniform int uCurbuf;
 out vec4 fragColor;
-float dpth(vec2 uv)
+float dpth(vec3 c)
 {
-    vec3 c = texture(uTex, uv).rgb;
-    float m = max(max(c.r, c.g), c.b);
-    return uInvert == 1 ? 1.0 - m : m;
+    float m = max(max(c.r, c.g), c.b) * 255.0;
+    return uInvert == 1 ? 255.0 - m : m;
 }
 void main()
 {
-    vec3 orig = texture(uTex, vTex).rgb;
-    vec2 t = 1.0 / uRes;
-    float gx = (dpth(vTex + vec2(t.x, 0.0)) - dpth(vTex - vec2(t.x, 0.0))) * 255.0;
-    float gy = (dpth(vTex + vec2(0.0, t.y)) - dpth(vTex - vec2(0.0, t.y))) * 255.0;
-    float lx = (vTex.x - uLight.x) * uRes.x;
-    float ly = (vTex.y - uLight.y) * uRes.y;
-    float c1 = 127.0 - abs(gx - lx);
-    float c2 = 127.0 - abs(gy - ly);
+    ivec2 p = ivec2(vTex * uRes);
+    ivec2 sz = ivec2(uRes);
+    if (p.x < 1 || p.y < 1 || p.x >= sz.x - 1 || p.y >= sz.y - 1)
+    {
+        fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+    }
+    vec3 orig = texelFetch(uTex, p, 0).rgb;
+    vec3 m1 = texelFetch(uDepthTex, p + ivec2(-1, 0), 0).rgb;
+    vec3 p1 = texelFetch(uDepthTex, p + ivec2(1, 0), 0).rgb;
+    vec3 mw = texelFetch(uDepthTex, p + ivec2(0, -1), 0).rgb;
+    vec3 pw = texelFetch(uDepthTex, p + ivec2(0, 1), 0).rgb;
+    if (uCurbuf == 1 && m1 == vec3(0.0) && p1 == vec3(0.0) &&
+        mw == vec3(0.0) && pw == vec3(0.0))
+    {
+        fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+    }
+    // Skript-Licht (x,y) und Gradient leben im AVS-Raum (y+ nach unten); die
+    // Textur ist GL-y-up — Uebersetzung NUR hier am Modulrand (Konvention S46).
+    float ay = uRes.y - 1.0 - float(p.y);
+    float lx = float(p.x) - uLight.x * uRes.x;
+    float ly = ay - uLight.y * uRes.y;
+    float c1 = 127.0 - abs((dpth(p1) - dpth(m1)) - lx);
+    float c2 = 127.0 - abs((dpth(mw) - dpth(pw)) - ly);
     float bright = (c1 <= 0.0 || c2 <= 0.0) ? 0.0 : c1 * c2 * uDepth / 16384.0;
     // r_bump setdepth(): per-channel orig + brightness, capped at 254 (ADDITIVE
     // light on top of the image; bright=0 keeps the pixel).
@@ -1739,6 +1763,7 @@ bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outRep
     // The new tree reuses node ids 1..N, colliding with the old runtimes; flag
     // a reset so the render thread frees their GL objects and starts fresh.
     m_pendingRuntimeReset = true;
+    m_beatPeriodFrame = 0;  // --beat-period zaehlt je Preset ab 0 (wie AvsRef)
     setChain(std::move(translated.root));
     return parsed.ok;
 }
@@ -1838,6 +1863,7 @@ bool MultiEffectVisualizer::loadChainFile(const QString& path, QStringList* outR
     ChainNode loaded;
     if (!loadChainFromFile(path, loaded, outReport)) return false;
     m_pendingRuntimeReset = true;  // new node ids — free old GL runtimes (render thread)
+    m_beatPeriodFrame = 0;  // --beat-period zaehlt je Preset ab 0 (wie AvsRef)
     m_root = std::move(loaded);
     return true;
 }
@@ -2200,11 +2226,20 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         for (float sample : v) sum += std::abs(sample);
         return sum / static_cast<float>(v.size());
     };
-    const float level =
-        std::max(meanAbs(getWaveformChannel(0)), meanAbs(getWaveformChannel(1)));
-    const bool onset = m_beat.updateAvsOnset(level);
-    m_frameBeat =
-        m_beatEstimator.refine(onset, lumi::modules::BeatEstimator::steadyNowMs());
+    if (m_beatPeriodOverride > 0)
+    {
+        // Deterministischer Beat wie AvsRef --beat-period: Frame 0, N, 2N …
+        m_frameBeat = (m_beatPeriodFrame % m_beatPeriodOverride) == 0;
+        ++m_beatPeriodFrame;
+    }
+    else
+    {
+        const float level =
+            std::max(meanAbs(getWaveformChannel(0)), meanAbs(getWaveformChannel(1)));
+        const bool onset = m_beat.updateAvsOnset(level);
+        m_frameBeat =
+            m_beatEstimator.refine(onset, lumi::modules::BeatEstimator::steadyNowMs());
+    }
 
     // Working surface in physical pixels (the GL viewport is authoritative).
     GLint viewport[4];
@@ -3911,10 +3946,11 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
         scriptBi = std::clamp(engine.number("bi"), 0.0, 1.0);
     }
 
-    // r_bump.cpp:272-277: beim Beat springt die Tiefe HART auf depth2 und
-    // haelt durFrames Frames, dann hart zurueck auf depth — KEIN Ease (das
-    // fruehere lineare Abklingen halbierte die Energie je Beat-Burst; im
-    // Feedback-Kreislauf des Wormhole blieb das Bild dadurch dunkel, S46).
+    // r_bump.cpp:272-277: beim Beat springt die Tiefe auf depth2 (nF=durFrames);
+    // ohne laufenden Burst gilt depth. Nach dem Rendern (402-410) faellt die
+    // Tiefe LINEAR um a=|depth-depth2|/durFrames je Frame zurueck — a ist eine
+    // INTEGER-Division; bei |depth-depth2| < durFrames ist a=0 und die Tiefe
+    // haelt hart bis nF abgelaufen ist (der S46-Sonderfall).
     if (params.onBeat && m_frameBeat)
     {
         rt.bumpDepth = static_cast<float>(params.depth2);
@@ -3924,12 +3960,28 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
     {
         rt.bumpDepth = static_cast<float>(params.depth);
     }
-    if (rt.bumpFramesLeft > 0 && --rt.bumpFramesLeft == 0)
-    {
-        rt.bumpDepth = static_cast<float>(params.depth);
-    }
     // r_bump.cpp:295-299: die Skript-Variable bi (0..1) skaliert die Tiefe
     const float thisDepth = rt.bumpDepth * static_cast<float>(scriptBi);
+    if (rt.bumpFramesLeft > 0 && --rt.bumpFramesLeft > 0)
+    {
+        const int a = std::abs(params.depth - params.depth2) /
+                      std::max(1, params.durationFrames);
+        rt.bumpDepth += static_cast<float>(a) * (params.depth2 > params.depth
+                                                     ? -1.0f : 1.0f);
+    }
+
+    // r_bump.cpp:249: depth source is the framebuffer, or global buffer N-1
+    // when buffern is set; a missing buffer makes the effect a no-op.
+    unsigned int depthTex = active().current()->texture();
+    bool curbuf = true;
+    if (params.buffern > 0)
+    {
+        QOpenGLFramebufferObject* pool = activePool().get(
+            params.buffern - 1, m_surfaceWidth, m_surfaceHeight, false);
+        if (pool == nullptr) return;
+        depthTex = pool->texture();
+        curbuf = false;
+    }
 
     m_bumpShader->bind();
     m_bumpShader->setUniformValue("uRes",
@@ -3939,7 +3991,13 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
     m_bumpShader->setUniformValue("uDepth", thisDepth * 256.0f / 100.0f);
     m_bumpShader->setUniformValue("uInvert", params.invert ? 1 : 0);
     m_bumpShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_bumpShader->setUniformValue("uDepthTex", 1);
+    m_bumpShader->setUniformValue("uCurbuf", curbuf ? 1 : 0);
     m_bumpShader->release();
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, depthTex);
+    f->glActiveTexture(GL_TEXTURE0);
     transformPass(*m_bumpShader);
 }
 

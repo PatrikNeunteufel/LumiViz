@@ -15,6 +15,7 @@
 #include "visualizers/modules/scripting/ScriptLutModule.hpp"
 #include "visualizers/modules/SuperscopeModule.hpp"
 
+#include <array>
 #include <cmath>
 #include <memory>
 #include <vector>
@@ -207,6 +208,41 @@ TEST_CASE("ScriptGridModule: Syntaxfehler -> Identitaet + Fehlermeldung")
     CHECK(grid.node(0, 0).u == doctest::Approx(-1.0f));   // Identitaet
 }
 
+TEST_CASE("ScriptGridModule: Frame laeuft VOR Beat (r_dmove.cpp:297-298, S47)")
+{
+    // AVS-Reihenfolge: Frame-Code rechnet mit den Beat-Werten des VORHERIGEN
+    // Frames — Beat-vor-Frame liess jede Beat-Wirkung einen Frame zu frueh los.
+    ScriptGridModule grid;
+    grid.setGridSize(3, 3);
+    grid.setRectCoords(true);
+    grid.setBeatCode("ti=0.5");
+    grid.setFrameCode("t=t-ti");
+    grid.setPointCode("x=x+t; y=y");
+    grid.execute(100.0f, 100.0f, true, 0.016f);   // Beat-Frame 0
+    CHECK(grid.lastScriptError().empty());
+    CHECK(grid.node(1, 1).u == doctest::Approx(0.0f));    // t noch 0 (ti nachher)
+    grid.execute(100.0f, 100.0f, false, 0.016f);
+    CHECK(grid.node(1, 1).u == doctest::Approx(-0.5f));   // jetzt t = -ti
+}
+
+TEST_CASE("ScriptGridModule: visdata VOR dem Erst-Compile erreicht den Frame-0-Beat (S47)")
+{
+    // Regressionsgate: setVisData() vor dem ersten execute() verpuffte (kein
+    // Skript-Host) — Beat/Init des allerersten Frames sahen Null-Audio und
+    // getspec lieferte 0 (der Wormhole verpasste so seinen Frame-0-Beat).
+    std::array<unsigned char, 576 * 4> vis{};
+    for (int i = 0; i < 576 * 2; ++i) vis[i] = 200;   // Spektrum L/R
+    ScriptGridModule grid;
+    grid.setGridSize(3, 3);
+    grid.setRectCoords(true);
+    grid.setBeatCode("amp=getspec(0.5,1,0)");
+    grid.setPointCode("x=x; y=y; alpha=amp");
+    grid.setVisData(vis.data(), 0.0);                 // VOR dem ersten execute()
+    grid.execute(100.0f, 100.0f, true, 0.016f);
+    CHECK(grid.lastScriptError().empty());
+    CHECK(grid.node(1, 1).alpha == doctest::Approx(200.0f / 255.0f).epsilon(0.01));
+}
+
 // =============================================================================
 // ScriptLutModule
 // =============================================================================
@@ -295,6 +331,33 @@ TEST_CASE("ScriptLutModule: geteilter Kontext speist das Level-Skript")
 // =============================================================================
 // SuperscopeModule — Basisfarbe wird vor dem Point-Code vorbelegt (AVS r_sscope)
 // =============================================================================
+
+TEST_CASE("SuperscopeModule: Frame VOR Beat + visdata beim Erst-Compile (S47)")
+{
+    // r_sscope.cpp:271-273: Init einmal, dann FRAME, dann Beat. Und: visdata,
+    // das VOR dem ersten execute() gesetzt wurde, muss den Frame-0-Beat
+    // erreichen (getspec > 0) — beides zusammen ist das Wormhole-Gate.
+    std::array<unsigned char, 576 * 4> vis{};
+    for (int i = 0; i < 576 * 2; ++i) vis[i] = 200;   // Spektrum L/R
+    const std::vector<float> silence(576, 0.0f);
+    SuperscopeModule ss;
+    ss.setLuaMode(true);
+    ss.setPointCount(2);
+    ss.setInitCode("n=2");
+    ss.setBeatCode("ti=getspec(0.5,1,0)");
+    ss.setFrameCode("t=t-ti");
+    ss.setPointCode("x=i*2-1; y=t");
+    ss.setVisData(vis.data(), 0.0);                   // VOR dem ersten execute()
+    auto pts = ss.execute(silence.data(), silence.data(), silence.data(),
+                          silence.data(), 576, 100, 100, true, 0.016f);
+    REQUIRE(!pts.empty());
+    CHECK(pts[0].y == doctest::Approx(0.0f));         // Frame vor Beat: t noch 0
+    pts = ss.execute(silence.data(), silence.data(), silence.data(),
+                     silence.data(), 576, 100, 100, false, 0.016f);
+    REQUIRE(!pts.empty());
+    // t = -ti mit ti = getspec = 200/255 (Vorzeichen je nach y-Konvention)
+    CHECK(std::abs(pts[0].y) == doctest::Approx(200.0f / 255.0f).epsilon(0.01));
+}
 
 TEST_CASE("SuperscopeModule: Table-Basisfarbe wird vorbelegt; Code kann modulieren")
 {
