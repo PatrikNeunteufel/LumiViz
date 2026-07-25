@@ -1079,7 +1079,7 @@ void main()
         float L = max(uLevels - 1.0, 1.0);
         r = floor(c * L + 0.5) / L;
     }
-    else                     // multiplier
+    else                     // multiplier (r_multiplier.cpp: MD_XI..MD_XS)
     {
         if (uMode == 1)      r = c * 8.0;
         else if (uMode == 2) r = c * 4.0;
@@ -1087,8 +1087,14 @@ void main()
         else if (uMode == 4) r = c * 0.5;
         else if (uMode == 5) r = c * 0.25;
         else if (uMode == 6) r = c * 0.125;
-        else if (uMode == 0) r = c * 8.0;   // saturate-ish
-        else                 r = c;         // 7: keep
+        // S46 (Anemone): MD_XI (0) = jeder Pixel != 0 wird VOLL WEISS —
+        // das AVS-Idiom "fast-schwarz zeichnen, XI macht sichtbar";
+        // MD_XS (7) = nur exakt 0xFFFFFF ueberlebt, Rest -> schwarz.
+        else if (uMode == 0)
+            r = any(greaterThan(c, vec3(0.0))) ? vec3(1.0) : vec3(0.0);
+        else
+            r = all(greaterThanEqual(c, vec3(254.5 / 255.0))) ? vec3(1.0)
+                                                              : vec3(0.0);
     }
     fragColor = vec4(clamp(r, 0.0, 1.0), 1.0);
 }

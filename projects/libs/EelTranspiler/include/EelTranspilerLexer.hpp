@@ -80,6 +80,15 @@ public:
                 if (!lexDollar(out)) return false;
                 continue;
             }
+            // Nicht-ASCII-Bytes still ueberspringen wie das Original-EEL:
+            // AVS-Autoren signieren Skripte mit Sonderzeichen (UnConeD: ';\xA9;'
+            // = ';(c);' — Befund S46/Anemone: Lexer-Abbruch toetete den Slot
+            // und liess alle Farben auf 0 -> Preset schwarz).
+            if (static_cast<unsigned char>(c) >= 0x80)
+            {
+                advance();
+                continue;
+            }
             if (!lexOperator(out)) return false;
         }
     }

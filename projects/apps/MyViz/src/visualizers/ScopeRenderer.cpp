@@ -249,9 +249,10 @@ void ScopeRenderer::renderThickLines(const std::vector<SuperscopePoint>& points,
 
     GLint viewport[4];
     f->glGetIntegerv(GL_VIEWPORT, viewport);
+    const float pixelWidth = viewport[2] > 0 ? 2.0f / static_cast<float>(viewport[2])
+                                             : 0.002f;
     const float pixelHeight = viewport[3] > 0 ? 2.0f / static_cast<float>(viewport[3])
                                               : 0.002f;
-    const float halfWidth = lineWidth * pixelHeight * 0.5f;
 
     std::vector<float> vertices;
     vertices.reserve(points.size() * 2 * 6);
@@ -270,27 +271,37 @@ void ScopeRenderer::renderThickLines(const std::vector<SuperscopePoint>& points,
             continue;
         }
 
-        // Segment normal (from the next non-skip point, else the previous one).
-        float nx = 0.0f;
-        float ny = 1.0f;
+        // Segment direction (from the next non-skip point, else the previous one).
+        float dx = 0.0f;
+        float dy = 0.0f;
         if (i < points.size() - 1 && !points[i + 1].skip)
         {
-            const float dx = points[i + 1].x - pt.x;
-            const float dy = points[i + 1].y - pt.y;
-            const float len = std::sqrt(dx * dx + dy * dy);
-            if (len > 0.0001f) { nx = -dy / len; ny = dx / len; }
+            dx = points[i + 1].x - pt.x;
+            dy = points[i + 1].y - pt.y;
         }
         else if (i > 0 && !points[i - 1].skip)
         {
-            const float dx = pt.x - points[i - 1].x;
-            const float dy = pt.y - points[i - 1].y;
-            const float len = std::sqrt(dx * dx + dy * dy);
-            if (len > 0.0001f) { nx = -dy / len; ny = dx / len; }
+            dx = pt.x - points[i - 1].x;
+            dy = pt.y - points[i - 1].y;
         }
 
-        vertices.insert(vertices.end(), {pt.x + nx * halfWidth, pt.y + ny * halfWidth,
+        // AVS-Semantik (linedraw.cpp, Befund S46/Wormhole): dicke Linien werden
+        // ACHSENPARALLEL verbreitert — x-major zeichnet je Spalte eine
+        // vertikale Saeule von lw Pixeln, y-major je Zeile eine horizontale
+        // Reihe (Diagonalen effektiv um cos(theta) schmaler; SRM width=255 =
+        // "wall-thick bars"). KEIN senkrechtes Band.
+        const float dxPix = dx / pixelWidth;
+        const float dyPix = dy / pixelHeight;
+        float ox = 0.0f;
+        float oy = 0.0f;
+        if (std::fabs(dxPix) >= std::fabs(dyPix))
+            oy = lineWidth * pixelHeight * 0.5f;  // x-major: vertikale Saeule
+        else
+            ox = lineWidth * pixelWidth * 0.5f;   // y-major: horizontale Reihe
+
+        vertices.insert(vertices.end(), {pt.x + ox, pt.y + oy,
                                          pt.r, pt.g, pt.b, pt.a});
-        vertices.insert(vertices.end(), {pt.x - nx * halfWidth, pt.y - ny * halfWidth,
+        vertices.insert(vertices.end(), {pt.x - ox, pt.y - oy,
                                          pt.r, pt.g, pt.b, pt.a});
         currentCount += 2;
     }

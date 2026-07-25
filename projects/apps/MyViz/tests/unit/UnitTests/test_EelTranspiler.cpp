@@ -93,6 +93,14 @@ TEST_CASE("EelTranspiler: leere Quelle -> ok, leeres Lua")
     CHECK(result.lua.empty());
 }
 
+TEST_CASE("EelTranspiler: Nicht-ASCII-Bytes werden wie im Original ignoriert")
+{
+    // S46/Anemone: UnConeD signiert Skripte mit ';\xA9;' (Copyright-Zeichen) —
+    // das AVS-EEL schluckt solche Bytes; der Lexer-Abbruch toetete vorher den
+    // ganzen Slot (Preset renderte schwarz).
+    CHECK(evalEel("x = 1;\xA9;r = x + 1") == doctest::Approx(2.0));
+}
+
 TEST_CASE("EelTranspiler: Syntaxfehler -> ok=false mit Positionsangabe")
 {
     const auto result = transpile("x = = 2", Dialect::Avs);
