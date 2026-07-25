@@ -666,6 +666,11 @@ struct WriteVisitor
     {
         o["text"] = QString::fromStdString(p.text);
     }
+    void operator()(const RenderScaleParams& p) const
+    {
+        o["divisor"] = p.divisor;
+        o["filter"] = p.filter;
+    }
     void operator()(const StarfieldParams& p) const
     {
         o["color"] = static_cast<double>(p.color);
@@ -1544,6 +1549,13 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     {
         return CommentParams{getStr(o, "text")};
     }
+    if (type == "renderScale")
+    {
+        RenderScaleParams p;
+        p.divisor = std::clamp(getInt(o, "divisor", 2), 1, 8);
+        p.filter = std::clamp(getInt(o, "filter", 0), 0, 1);
+        return p;
+    }
     if (type == "starfield")
     {
         StarfieldParams p;
@@ -1700,6 +1712,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const TextParams&) const { return "text"; }
         QString operator()(const AviParams&) const { return "avi"; }
         QString operator()(const CommentParams&) const { return "comment"; }
+        QString operator()(const RenderScaleParams&) const { return "renderScale"; }
         QString operator()(const StarfieldParams&) const { return "starfield"; }
         QString operator()(const TimescopeParams&) const { return "timescope"; }
         QString operator()(const DotGridParams&) const { return "dotGrid"; }

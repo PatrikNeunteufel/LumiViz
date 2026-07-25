@@ -436,6 +436,21 @@ struct CommentParams
 };
 
 /**
+ * LumiViz "Misc / Render Scale" (kein AVS-Effekt): laesst die GESAMTE Chain in
+ * einer reduzierten internen Aufloesung rendern (Fenster / divisor) und beim
+ * finalen Present hochskalieren. Das ist der Winamp-Look: AVS steckt voller
+ * pixel-fester Groessen (SRM-width 255, Bump-Radius 127 px, Blur-Kernel) —
+ * Presets wie der Wormhole verhungern bei grossen Flaechen, original wie
+ * importiert (Befund S47). Der ERSTE aktivierte Knoten in der Kette gewinnt;
+ * gerendert wird er selbst als No-op.
+ */
+struct RenderScaleParams
+{
+    int divisor = 2;   ///< interne Aufloesung = Fenster / divisor (1..8)
+    int filter = 0;    ///< Upscale: 0 = nearest (authentisch grob), 1 = linear
+};
+
+/**
  * AVS "Render / Text" (ID 28, r_text.cpp): word cycler drawn with the app
  * font engine (GDI original -> QPainter port). `text` holds the words
  * separated by ';'; blend applies to the glyph pixels only.
@@ -1372,7 +1387,7 @@ using EffectParams =
                  StrangeAttractorParams, FlameParams, ReactionDiffusionParams,
                  SetRenderModeParams, DebugBarsParams, MilkdropNodeParams,
                  HostGroupParams, TextParams, AviParams, CommentParams,
-                 PassthroughParams>;
+                 RenderScaleParams, PassthroughParams>;
 
 // =============================================================================
 // Chain node
@@ -1510,6 +1525,7 @@ struct CompileResult
         const char* operator()(const TextParams&) const { return "Text"; }
         const char* operator()(const AviParams&) const { return "AVI"; }
         const char* operator()(const CommentParams&) const { return "Comment"; }
+        const char* operator()(const RenderScaleParams&) const { return "Render Scale"; }
         const char* operator()(const PassthroughParams&) const { return "Passthrough"; }
     };
     return std::visit(Visitor{}, params);

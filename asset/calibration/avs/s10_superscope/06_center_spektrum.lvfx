@@ -12,6 +12,13 @@
     "bufferOutInvert": false,
     "children": [
       {
+        "divisor": 1,
+        "enabled": true,
+        "filter": 0,
+        "name": "Render Scale",
+        "type": "renderScale"
+      },
+      {
         "audioChannel": 2,
         "beatCode": "",
         "colorBlend": 1,

@@ -12,6 +12,13 @@
     "bufferOutInvert": false,
     "children": [
       {
+        "divisor": 1,
+        "enabled": true,
+        "filter": 0,
+        "name": "Render Scale",
+        "type": "renderScale"
+      },
+      {
         "adjustAlpha": 128,
         "enabled": true,
         "lineBlend": 4,

@@ -536,6 +536,12 @@ void MainWindow::setupEventHandlers()
             bool ok = false;
             {
                 QMutexLocker lock(&widget->renderMutex());
+                // Entscheid S47: Import-Render-Scale aus der App-Einstellung
+                // (Settings-Panel, Panels-Tab) — wirkt nur beim Import.
+                host->setImportRenderScaleDivisor(
+                    QSettings()
+                        .value(QStringLiteral("import/avsRenderScaleDivisor"), 1)
+                        .toInt());
                 ok = host->loadAvsFile(path, &report);
             }
             if (!ok)

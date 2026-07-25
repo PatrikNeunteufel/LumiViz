@@ -19,6 +19,7 @@
 #include <QFormLayout>
 #include <QTabWidget>
 #include <QComboBox>
+#include <QSettings>
 #include <QSpinBox>
 #include <QCheckBox>
 #include <QLabel>
@@ -283,6 +284,23 @@ QWidget* SettingsPanel::createPanelsTab()
            "directory again"));
     layout->addRow(tr("Import Browser:"), m_pResetImportDirButton);
 
+    // AVS-Import: Divisor des automatisch eingefuegten Render-Scale-Knotens.
+    // Wirkt NUR im Moment des Imports — danach ist der Knoten im Preset die
+    // einzige Wahrheit (SSOT der Kette, Entscheid S47).
+    m_pAvsRenderScaleSpinBox = new QSpinBox(widget);
+    m_pAvsRenderScaleSpinBox->setRange(1, 8);
+    m_pAvsRenderScaleSpinBox->setPrefix(tr("window / "));
+    m_pAvsRenderScaleSpinBox->setToolTip(
+        tr("AVS imports get a Render Scale node with this divisor (1 = "
+           "neutral). Classic Winamp presets use fixed pixel sizes — 2 or 4 "
+           "restores the original fullscreen look."));
+    {
+        QSettings settings;
+        m_pAvsRenderScaleSpinBox->setValue(
+            settings.value(QStringLiteral("import/avsRenderScaleDivisor"), 1).toInt());
+    }
+    layout->addRow(tr("AVS Import Render Scale:"), m_pAvsRenderScaleSpinBox);
+
     layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
     return widget;
@@ -300,6 +318,12 @@ void SettingsPanel::setupConnections()
             this, &SettingsPanel::onVSyncChanged);
     connect(m_pResetImportDirButton, &QPushButton::clicked,
             this, &SettingsPanel::onResetImportBrowserDir);
+    connect(m_pAvsRenderScaleSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
+            this, [](int value) {
+                QSettings settings;
+                settings.setValue(QStringLiteral("import/avsRenderScaleDivisor"),
+                                  value);
+            });
 }
 
 void SettingsPanel::populateAudioDevices()

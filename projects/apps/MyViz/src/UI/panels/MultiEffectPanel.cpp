@@ -240,6 +240,7 @@ const std::vector<EffectType>& effectPalette()
         {"Buffer Blend", [] { return EffectParams{BufferBlendParams{}}; }},
         {"Custom BPM", [] { return EffectParams{CustomBpmParams{}}; }},
         {"Set Render Mode", [] { return EffectParams{SetRenderModeParams{}}; }},
+        {"Render Scale", [] { return EffectParams{RenderScaleParams{}}; }, Origin::Native},
         {"Global Variables", [] { return EffectParams{JherikoGlobalParams{}}; }},
         {"Video Delay", [] { return EffectParams{VideoDelayParams{}}; }},
         {"Multi Delay", [] { return EffectParams{MultiDelayParams{}}; }},
@@ -2807,6 +2808,16 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                  "Sub (c-fb)", "Multiply", "Adjustable", "XOR (~Add)", "Minimum"},
                 [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).lineBlend = v; });
         addInt(tr("Adjustable alpha"), p->adjustAlpha, 0, 255, [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).adjustAlpha = v; });
+    }
+    else if (auto* p = std::get_if<RenderScaleParams>(&params))
+    {
+        form->addRow(new QLabel(tr("Renders the whole chain at window/divisor and "
+                                   "upscales — the classic Winamp pixel-doubling "
+                                   "look (AVS effects use fixed pixel sizes)."),
+                                m_propContainer));
+        addInt(tr("Divisor (window / N)"), p->divisor, 1, 8, [](ChainNode& n, int v) { std::get<RenderScaleParams>(n.params).divisor = v; });
+        addEnum(tr("Upscale filter"), p->filter, {"Nearest (chunky)", "Linear (smooth)"},
+                [](ChainNode& n, int v) { std::get<RenderScaleParams>(n.params).filter = v; });
     }
     else if (auto* p = std::get_if<Fractal3DParams>(&params))
     {

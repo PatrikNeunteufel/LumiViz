@@ -110,6 +110,17 @@ public:
     bool loadChainFile(const QString& path, QStringList* outReport = nullptr);
 
     /**
+     * @brief Divisor des Render-Scale-Knotens, den loadAvsFile automatisch als
+     *        erstes Kind einfuegt (Entscheid S47, Variante 2): Der Wert kommt
+     *        aus der App-Einstellung und wirkt NUR im Moment des Imports —
+     *        danach ist der Knoten im Preset die einzige Wahrheit. 1 = neutral.
+     */
+    void setImportRenderScaleDivisor(int divisor)
+    {
+        m_importRenderScaleDivisor = divisor < 1 ? 1 : (divisor > 8 ? 8 : divisor);
+    }
+
+    /**
      * @brief Erzwingt deterministisch alle N Frames einen Beat statt des
      *        Detektors (0 = Detektor) — Gegenstueck zu AvsRef --beat-period
      *        fuer frame-exakte Diffs von History-Presets (S46-Merkregel:
@@ -664,6 +675,7 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_interfShader;
     std::unique_ptr<QOpenGLShaderProgram> m_waterShader;
     std::unique_ptr<QOpenGLShaderProgram> m_bumpShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_presentShader;  ///< Quad-Present (Render Scale, S47)
     std::unique_ptr<QOpenGLShaderProgram> m_shiftShader;  ///< Dynamic Shift (r_shift)
     std::unique_ptr<QOpenGLShaderProgram> m_ddmShader;    ///< Dynamic Distance Modifier (r_ddm)
     std::unique_ptr<QOpenGLShaderProgram> m_colorMapShader;  ///< Color Map APE
@@ -723,6 +735,7 @@ private:
     bool m_frameBeat = false;  ///< beat flag effects/list scripts may mutate
     int m_beatPeriodOverride = 0;  ///< >0: Beat alle N Frames (AvsRef --beat-period)
     int m_beatPeriodFrame = 0;     ///< Frame-Zaehler des Overrides (Reset beim Laden)
+    int m_importRenderScaleDivisor = 1;  ///< Auto-Render-Scale beim AVS-Import (S47)
 
     // Live render mode set by a Set Render Mode node for the following render
     // effects (AVS semantics). Reset at frame start; `set` means "override".

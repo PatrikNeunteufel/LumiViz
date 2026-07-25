@@ -74,6 +74,22 @@ void main()
 }
 )";
 
+// Present: 1:1-Kopie der Root-Surface aufs Fenster. Als Quad-Draw statt
+// glBlitFramebuffer, weil das App-Fenster multisampled ist (samples=4) und
+// ein SKALIERENDER Blit in ein MS-Ziel GL_INVALID_OPERATION wirft — mit
+// Render-Scale fror das Bild ein (Befund S47). Der Upscale-Filter kommt
+// von den Textur-Parametern (nearest/linear).
+const char* kPresentFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+out vec4 fragColor;
+void main()
+{
+    fragColor = vec4(texture(uTex, vTex).rgb, 1.0);
+}
+)";
+
 // AVS Fadeout: per-channel clamped step towards a target color.
 const char* kFadeoutFragmentShader = R"(
 #version 330 core
@@ -1760,6 +1776,15 @@ bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outRep
     // "image not found" notes after the translation report).
     embedPictureImages(translated.root, QFileInfo(path).absolutePath(), outReport);
     resolveAviPaths(translated.root, QFileInfo(path).absolutePath(), outReport);
+    // Entscheid S47 (Variante 2): jeder AVS-Import bekommt einen Render-Scale-
+    // Knoten als erstes Kind — Wert aus der App-Einstellung (1 = neutral, wie
+    // ohne). Danach ist der Knoten im Preset die einzige Wahrheit.
+    {
+        ChainNode scale;
+        scale.params = RenderScaleParams{m_importRenderScaleDivisor, 0};
+        translated.root.children.insert(translated.root.children.begin(),
+                                        std::move(scale));
+    }
     // The new tree reuses node ids 1..N, colliding with the old runtimes; flag
     // a reset so the render thread frees their GL objects and starts fresh.
     m_pendingRuntimeReset = true;
@@ -1910,6 +1935,7 @@ void MultiEffectVisualizer::onCleanup()
     m_interfShader.reset();
     m_waterShader.reset();
     m_bumpShader.reset();
+    m_presentShader.reset();
     m_shiftShader.reset();
     m_ddmShader.reset();
     m_colorMapShader.reset();
@@ -1980,6 +2006,7 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_interfShader = makeProgram(kQuadVertexShader, kInterfFragmentShader);
     m_waterShader = makeProgram(kQuadVertexShader, kWaterFragmentShader);
     m_bumpShader = makeProgram(kQuadVertexShader, kBumpFragmentShader);
+    m_presentShader = makeProgram(kQuadVertexShader, kPresentFragmentShader);
     m_shiftShader = makeProgram(kQuadVertexShader, kDynamicShiftFragmentShader);
     m_ddmShader = makeProgram(kQuadVertexShader, kDdmFragmentShader);
     m_colorMapShader = makeProgram(kQuadVertexShader, kColorMapFragmentShader);
@@ -2011,7 +2038,8 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_feedbackShader == nullptr || m_mosaicShader == nullptr ||
         m_grainShader == nullptr || m_scatterShader == nullptr ||
         m_interfShader == nullptr || m_waterShader == nullptr ||
-        m_bumpShader == nullptr || m_shiftShader == nullptr ||
+        m_bumpShader == nullptr || m_presentShader == nullptr ||
+        m_shiftShader == nullptr ||
         m_ddmShader == nullptr || m_colorMapShader == nullptr ||
         m_bufferBlendShader == nullptr || m_pictureShader == nullptr ||
         m_spriteShader == nullptr || m_colorClipShader == nullptr ||
@@ -2042,6 +2070,7 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_interfShader.reset();
         m_waterShader.reset();
         m_bumpShader.reset();
+        m_presentShader.reset();
         m_wbPropShader.reset();
         m_wbDispShader.reset();
         m_timescopeShader.reset();
@@ -2244,14 +2273,38 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     // Working surface in physical pixels (the GL viewport is authoritative).
     GLint viewport[4];
     f->glGetIntegerv(GL_VIEWPORT, viewport);
+
+    // Render Scale (LumiViz-Modul): erster aktivierter Knoten bestimmt die
+    // interne Aufloesung (Fenster / divisor) + den Upscale-Filter des Presents.
+    int scaleDivisor = 1;
+    GLenum presentFilter = GL_NEAREST;
+    {
+        std::function<const RenderScaleParams*(const ChainNode&)> findScale =
+            [&](const ChainNode& n) -> const RenderScaleParams* {
+                if (!n.enabled) return nullptr;
+                if (const auto* rs = std::get_if<RenderScaleParams>(&n.params))
+                    return rs;
+                for (const ChainNode& child : n.children)
+                    if (const auto* rs = findScale(child)) return rs;
+                return nullptr;
+            };
+        if (const RenderScaleParams* rs = findScale(m_root))
+        {
+            scaleDivisor = std::clamp(rs->divisor, 1, 8);
+            presentFilter = rs->filter == 1 ? GL_LINEAR : GL_NEAREST;
+        }
+    }
+    const int internalW = std::max(64, viewport[2] / scaleDivisor);
+    const int internalH = std::max(64, viewport[3] / scaleDivisor);
+
     bool resized = false;
     if (!ensurePipelines() ||
-        !ensureSurfacePair(m_rootSurface, viewport[2], viewport[3], &resized))
+        !ensureSurfacePair(m_rootSurface, internalW, internalH, &resized))
     {
         return;
     }
-    m_surfaceWidth = viewport[2];
-    m_surfaceHeight = viewport[3];
+    m_surfaceWidth = internalW;
+    m_surfaceHeight = internalH;
     if (resized) m_firstFrame = true;
 
     const GLboolean blendWasEnabled = f->glIsEnabled(GL_BLEND);
@@ -2302,20 +2355,37 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         renderNode(child);
     }
 
-    // Present: blit the root surface to the window framebuffer.
+    // Present: die Root-Surface als texturierter Quad aufs Fenster. KEIN
+    // glBlitFramebuffer: das App-Fenster ist multisampled (samples=4) und ein
+    // skalierender Blit in ein MS-Ziel wirft GL_INVALID_OPERATION — mit
+    // Render-Scale fror das Bild ein (Befund S47). presentFilter setzt den
+    // Upscale-Look (nearest = grob, linear = weich); danach Parameter zurueck.
     m_rootSurface.current()->release();
-    if (QOpenGLFramebufferObject::hasOpenGLFramebufferBlit())
-    {
-        auto* extra = QOpenGLContext::currentContext()->extraFunctions();
-        extra->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_rootSurface.current()->handle());
-        extra->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        extra->glBlitFramebuffer(0, 0, m_surfaceWidth, m_surfaceHeight, viewport[0],
-                                 viewport[1], viewport[0] + viewport[2],
-                                 viewport[1] + viewport[3], GL_COLOR_BUFFER_BIT,
-                                 GL_NEAREST);
-        extra->glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
+    f->glBindFramebuffer(GL_FRAMEBUFFER, 0);
     f->glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+    if (m_presentShader != nullptr)
+    {
+        f->glActiveTexture(GL_TEXTURE0);
+        f->glBindTexture(GL_TEXTURE_2D, m_rootSurface.current()->texture());
+        GLint prevMin = GL_NEAREST;
+        GLint prevMag = GL_NEAREST;
+        f->glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, &prevMin);
+        f->glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, &prevMag);
+        const GLint filt = static_cast<GLint>(presentFilter);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filt);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filt);
+
+        m_presentShader->bind();
+        m_presentShader->setUniformValue("uTex", 0);
+        m_quadVao->bind();
+        f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        m_quadVao->release();
+        m_presentShader->release();
+
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, prevMin);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, prevMag);
+        f->glBindTexture(GL_TEXTURE_2D, 0);
+    }
 
     // Drop runtimes of nodes no longer in the chain (edited away).
     for (auto it = m_listRuntimes.begin(); it != m_listRuntimes.end();)
@@ -2432,6 +2502,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const TextParams& params) const { self.runText(node, params); }
         void operator()(const AviParams& params) const { self.runAvi(node, params); }
         void operator()(const CommentParams&) const { /* annotation, no-op */ }
+        void operator()(const RenderScaleParams&) const { /* pre-frame state, no-op */ }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
     std::visit(Visitor{*this, node}, node.params);

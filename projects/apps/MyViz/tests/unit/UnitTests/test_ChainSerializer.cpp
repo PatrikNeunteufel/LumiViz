@@ -997,6 +997,24 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{SetRenderModeParams{}}) == "setRenderMode");
     }
 
+    TEST_CASE("Render-Scale-Parameter ueberleben den Round-Trip (S47)")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode leaf;
+        RenderScaleParams sp;
+        sp.divisor = 4;
+        sp.filter = 1;
+        leaf.params = sp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 1);
+        const auto& p = std::get<RenderScaleParams>(r.children[0].params);
+        CHECK(p.divisor == 4);
+        CHECK(p.filter == 1);
+        CHECK(effectTypeKey(EffectParams{RenderScaleParams{}}) == "renderScale");
+    }
+
     TEST_CASE("Batch-H Modul-Typkeys sind stabil und eindeutig")
     {
         CHECK(effectTypeKey(EffectParams{Fractal3DParams{}}) == "fractal3D");

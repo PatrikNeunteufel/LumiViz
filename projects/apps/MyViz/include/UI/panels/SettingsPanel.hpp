@@ -85,7 +85,10 @@ private:
 
     // Panels Tab
     QPushButton* m_pResetImportDirButton = nullptr;
-    
+    /// AVS-Import: Render-Scale-Divisor des automatisch eingefuegten Knotens
+    /// (QSettings "import/avsRenderScaleDivisor", 1 = neutral — S47)
+    QSpinBox* m_pAvsRenderScaleSpinBox = nullptr;
+
     // State
     bool m_isUpdating = false;
 };
