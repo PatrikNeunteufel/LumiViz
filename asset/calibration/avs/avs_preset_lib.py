@@ -361,3 +361,66 @@ def effect_list(children: bytes, clear: bool = False, blend_in: int = 1,
     blob += i32(in_adjust) + i32(out_adjust)          # Adjustable-Alphas
     blob += i32(0) + i32(0) + i32(0) + i32(0)         # bufferIn/Out, Invert
     return entry(-2, blob + children)
+
+
+# ---------------------------------------------------------------- APE-Effekte
+# APE-Eintrag: [id>=DLLRENDERBASE][32-Byte-ID][len][blob] (r_list load_config).
+
+DLLRENDERBASE = 16384
+
+
+def ape(ape_id: str, blob: bytes) -> bytes:
+    """Roher APE-Eintrag mit 32-Byte-ID-Block."""
+    head = ape_id.encode("latin-1")[:32].ljust(32, b"\x00")
+    return i32(DLLRENDERBASE) + head + i32(len(blob)) + blob
+
+
+def texer2(point: str, init: str = "", frame: str = "", beat: str = "",
+           image: str = "", resize: int = 1, wrap: int = 0,
+           colorfilter: int = 1) -> bytes:
+    """"Acko.net: Texer II" — Layout an 579 Blobs der Sammlung gepinnt (S50):
+    int32 null + FESTER 260-Byte-Bildname (NUL-terminiert, KEINE laengen-
+    praefixierte Zeichenkette!) + resize/wrap/colorFiltering + int32 null +
+    vier laengenpraefixierte Skripte. 280 Byte Vorlauf bis zum Code."""
+    name = image.encode("latin-1")[:259].ljust(260, b"\x00")
+    blob = (i32(0) + name + i32(resize) + i32(wrap) + i32(colorfilter) + i32(0)
+            + lstr(init) + lstr(frame) + lstr(beat) + lstr(point))
+    return ape("Acko.net: Texer II", blob)
+
+
+def convolution(kernel=None, edge_mode: int = 0, absolute: int = 0,
+                two_pass: int = 0, bias: int = 0, scale: int = 0) -> bytes:
+    """"Holden03: Convolution Filter" — enabled/edgeMode/absolute/twoPass,
+    7x7-Kern (49 int32, Zeilenordnung), bias, scale. kernel=None -> Identitaet
+    (nur die Mitte 1)."""
+    if kernel is None:
+        kernel = [0] * 49
+        kernel[24] = 1
+    assert len(kernel) == 49, "Convolution-Kern ist 7x7"
+    blob = i32(1) + i32(edge_mode) + i32(absolute) + i32(two_pass)
+    for k in kernel:
+        blob += i32(k)
+    return ape("Holden03: Convolution Filter", blob + i32(bias) + i32(scale))
+
+
+def list_config(init: str = "", frame: str = "", use_code: int = 1) -> bytes:
+    """Pseudo-Eintrag "AVS 2.8+ Effect List Config" (r_list.load_config_code):
+    int32 useCode + init + frame. Muss das ERSTE Kind der Liste sein."""
+    return ape("AVS 2.8+ Effect List Config",
+               i32(use_code) + lstr(init) + lstr(frame))
+
+
+def effect_list_ex(children: bytes, clear: bool = False, blend_in: int = 1,
+                   blend_out: int = 1, in_adjust: int = 128,
+                   out_adjust: int = 128, enabled: bool = True) -> bytes:
+    """Wie effect_list, aber mit abschaltbarer Liste (Mode-Bit 1 = disabled).
+    Gebraucht fuer das Einmal-Idiom: ausgeschaltet gespeichert, per EEL im
+    ersten Frame selbst eingeschaltet (S50)."""
+    mode = (1 if clear else 0) | (0 if enabled else 2)
+    mode |= (blend_in & 31) << 8
+    mode |= ((blend_out ^ 1) & 31) << 16
+    mode |= 24 << 24
+    blob = bytes([0x80 | (mode & 0x7F)]) + i32(mode & ~0x7F)
+    blob += i32(in_adjust) + i32(out_adjust)
+    blob += i32(0) + i32(0) + i32(0) + i32(0)
+    return entry(-2, blob + children)

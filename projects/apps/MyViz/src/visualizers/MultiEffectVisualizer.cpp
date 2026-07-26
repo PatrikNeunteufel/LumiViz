@@ -1283,7 +1283,13 @@ void main()
         for (int i = 0; i < 7; i++)
         {
             float k = uKernel[j * 7 + i];
-            vec2 off = vec2(float(i - 3), float(j - 3)) * texel;
+            // Kernzeile j zaehlt wie im Dialog von OBEN nach unten, unsere
+            // Texturkoordinate v aber nach OBEN — der v-Anteil muss also
+            // gespiegelt werden. Ohne das war die Faltung vertikal
+            // seitenverkehrt: gemessen an Ein-Punkt-Sonden mit je einem
+            // Kern-Eintrag wanderte der Punkt nach unten, wo AvsRef ihn nach
+            // oben schob (Befund S50; horizontal stimmte es).
+            vec2 off = vec2(float(i - 3), float(3 - j)) * texel;
             sum += texture(uTex, sampleUV(vTex + off)).rgb * k;
         }
     vec3 r = sum / uScale + vec3(uBias / 255.0);
@@ -2248,14 +2254,28 @@ void embedOneImage(std::string& filename, std::string& imageData, const char* la
 {
     if (!imageData.empty() || filename.empty()) return;
     const QString fname = QString::fromStdString(filename);
-    QString resolved = QDir(baseDir).filePath(fname);
-    if (!QFileInfo::exists(resolved))
-        resolved = QDir(baseDir).filePath(QFileInfo(fname).fileName());
-    if (QFileInfo::exists(resolved))
+    const QString bare = QFileInfo(fname).fileName();
+
+    // Nicht nur neben dem Preset suchen, sondern auch in den Elternordnern:
+    // AVS legt seine Bilder im AVS-WURZELVERZEICHNIS ab, die Presets aber in
+    // Unterordnern. In der Sammlung liegen z. B. "j10_2.bmp" (Texer II) und
+    // "whackorev-soleillevant.jpg" (Picture II) in `avs/`, waehrend das Preset
+    // in `avs/Whacko Revisited/` steht — mit nur einer Ebene fand der Import
+    // sie nie und meldete "image not found" (Befund S50).
+    QDir dir(baseDir);
+    for (int level = 0; level <= 3; ++level)
     {
-        QFile file(resolved);
-        if (file.open(QIODevice::ReadOnly))
-            imageData = file.readAll().toBase64().toStdString();
+        for (const QString& cand : {dir.filePath(fname), dir.filePath(bare)})
+        {
+            if (!QFileInfo::exists(cand)) continue;
+            QFile file(cand);
+            if (file.open(QIODevice::ReadOnly))
+            {
+                imageData = file.readAll().toBase64().toStdString();
+                break;
+            }
+        }
+        if (!imageData.empty() || !dir.cdUp()) break;
     }
     if (imageData.empty() && report != nullptr)
         report->append(QStringLiteral("%1: image not found: %2")
@@ -4777,21 +4797,28 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     if (rt.scope->scriptLineSizeActive()) rp.lineWidth = rt.scope->scriptLineSize();
     rp.dotSize = params.dotSize;
     rp.glowEnabled = false;
+    // dotSize 1 = AVS-Semantik (der Translator setzt sie fuer jeden Import,
+    // r_sscope zeichnet immer genau ein Pixel). Groessere Werte kommen aus dem
+    // Panel und meinen bewusst runde Punkte — die bleiben, wie sie waren.
+    rp.avsPixelDots = params.dotSize <= 1.0f;
 
-    if (rt.scope->pointDrawModeActive())
+    const bool perPointMode = rt.scope->pointDrawModeActive();
+    const bool perPointSize = rt.scope->pointLineSizeActive();
+    if (perPointMode || perPointSize)
     {
-        // Point code switches drawmode mid-scope (r_sscope): split into runs
-        // of equal mode. A lines-run includes the previous point so the
-        // connecting segment is kept.
+        // Point code switches drawmode und/oder linesize mid-scope (r_sscope
+        // wertet beide JE PUNKT aus): in Laeufe zerlegen, in denen beides
+        // konstant ist. Ein Linien-Lauf nimmt den Vorgaengerpunkt mit, damit
+        // das verbindende Segment erhalten bleibt.
+        const auto sameRun = [&](const lumi::modules::SuperscopePoint& a,
+                                 const lumi::modules::SuperscopePoint& b) {
+            return a.drawLines == b.drawLines && a.lineSize == b.lineSize;
+        };
         size_t start = 0;
         while (start < points.size())
         {
             size_t end = start + 1;
-            while (end < points.size() &&
-                   points[end].drawLines == points[start].drawLines)
-            {
-                ++end;
-            }
+            while (end < points.size() && sameRun(points[end], points[start])) ++end;
             std::vector<lumi::modules::SuperscopePoint> run;
             if (points[start].drawLines && start > 0)
             {
@@ -4799,9 +4826,16 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
             }
             run.insert(run.end(), points.begin() + static_cast<long long>(start),
                        points.begin() + static_cast<long long>(end));
-            rp.mode = points[start].drawLines
-                          ? lumi::modules::SuperscopeRenderMode::Lines
-                          : lumi::modules::SuperscopeRenderMode::Dots;
+            if (perPointMode)
+            {
+                rp.mode = points[start].drawLines
+                              ? lumi::modules::SuperscopeRenderMode::Lines
+                              : lumi::modules::SuperscopeRenderMode::Dots;
+            }
+            if (perPointSize && points[start].lineSize > 0.0f)
+            {
+                rp.lineWidth = points[start].lineSize;
+            }
             m_scopeRenderer.draw(run, rp);
             start = end;
         }
@@ -6272,7 +6306,12 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
         rt.texerHost->setSource(Slot::Point, params.pointCode);
         rt.texerHost->compileAll();
         rt.texerCompiled = combined;
-        rt.texerHost->engine().setNumber("n", 100.0);
+        // Vorbelegung 0, NICHT 100: setzt das Skript kein `n`, zeichnet Texer II
+        // gar nichts. Gemessen (S50): ein Knoten mit leerem Init liefert in
+        // AvsRef 0 Pixel, unsere 100er-Vorbelegung 4124 — mit explizitem n=100
+        // stimmen beide ueberein. In "Alien Alloy" haben alle vier Texer einen
+        // leeren Init; wir haben dort 400 Sprites zu viel gezeichnet.
+        rt.texerHost->engine().setNumber("n", 0.0);
         rt.texerHost->run(Slot::Init);
     }
     auto& engine = rt.texerHost->engine();
@@ -6280,7 +6319,12 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
     feedAudio(rt.texerHost->engine());
     if (rt.texerHost->has(Slot::Frame)) rt.texerHost->run(Slot::Frame);
     if (m_frameBeat && rt.texerHost->has(Slot::Beat)) rt.texerHost->run(Slot::Beat);
-    const int n = std::clamp(static_cast<int>(engine.number("n")), 1, 4096);
+    // n=0 heisst NULL Sprites, nicht eines: die Sprite-Schleife laeuft
+    // "for (i=0; i<n; i++)" und faellt dann sofort durch. Unsere alte
+    // Untergrenze 1 zeichnete ein zusaetzliches Sprite in der Bildmitte —
+    // gemessen 3356 Pixel, wo AvsRef 0 liefert (Befund S50; in "Mister Santa"
+    // ist der Beard-Texer genau so abgeschaltet).
+    const int n = std::clamp(static_cast<int>(engine.number("n")), 0, 4096);
 
     auto* f = QOpenGLContext::currentContext()->functions();
     // Texer II folgt dem aktuellen BLEND_LINE-Modus wie die uebrigen Renderer,

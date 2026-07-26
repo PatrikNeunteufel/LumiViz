@@ -52,6 +52,12 @@ public:
         float dotSize = 4.0f;
         bool glowEnabled = false;
         float glowIntensity = 0.5f;
+        /// AVS-treuer Punkt-Modus (Import-Pfad): r_sscope.cpp:298-305 setzt je
+        /// Punkt GENAU EIN Pixel an der getrunkierten Ganzzahlposition
+        /// (`framebuffer + x + y*w`, ausserhalb des Bildes verworfen) — kein
+        /// GL-Punkt mit Groesse und weichem Rand. Die eigenstaendigen
+        /// LumiViz-Scopes behalten ihre runden Punkte (Default false).
+        bool avsPixelDots = false;
     };
 
     ScopeRenderer() = default;
@@ -73,6 +79,8 @@ private:
     void uploadVertexData(const std::vector<float>& vertices);
     void renderDots(const std::vector<lumi::modules::SuperscopePoint>& points,
                     const Params& params);
+    /// AVS-treue Punkte: ein deckungsgleiches Quad je Zielpixel (s. Params).
+    void renderPixelDots(const std::vector<lumi::modules::SuperscopePoint>& points);
     void renderThinLines(const std::vector<lumi::modules::SuperscopePoint>& points);
     void renderThickLines(const std::vector<lumi::modules::SuperscopePoint>& points,
                           float lineWidth);

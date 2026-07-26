@@ -181,6 +181,12 @@ void ScopeRenderer::renderDots(const std::vector<SuperscopePoint>& points,
 {
     auto* f = QOpenGLContext::currentContext()->functions();
 
+    if (params.avsPixelDots)
+    {
+        renderPixelDots(points);
+        return;
+    }
+
     std::vector<float> vertices;
     vertices.reserve(points.size() * 6);
     for (const auto& pt : points)
@@ -201,6 +207,58 @@ void ScopeRenderer::renderDots(const std::vector<SuperscopePoint>& points,
     f->glDrawArrays(GL_POINTS, 0, static_cast<int>(vertices.size() / 6));
     m_vao->release();
     m_pointShader->release();
+}
+
+void ScopeRenderer::renderPixelDots(const std::vector<SuperscopePoint>& points)
+{
+    // r_sscope.cpp:294-305 — je Punkt GENAU EIN Pixel:
+    //   x=(int)((var_x+1.0)*w*0.5); y=(int)((var_y+1.0)*h*0.5);
+    //   if (in Bild) BLEND_LINE(framebuffer+x+y*w, farbe);
+    // Also getrunkierte Ganzzahl, harte Kante, ausserhalb verworfen. Der
+    // GL_POINTS-Pfad traf das nicht: Punktgroesse rastert nach eigener
+    // Konvention und der Fragment-Shader legt einen weichen Rand darum
+    // (Befund S50: Schwerpunkt 14 px daneben, bei wenigen Punkten gar nichts).
+    // Deshalb hier ein deckungsgleiches Quad je Zielpixel.
+    auto* f = QOpenGLContext::currentContext()->functions();
+    GLint viewport[4];
+    f->glGetIntegerv(GL_VIEWPORT, viewport);
+    const int w = viewport[2];
+    const int h = viewport[3];
+    if (w <= 0 || h <= 0) return;
+
+    std::vector<float> vertices;
+    vertices.reserve(points.size() * 6 * 6);
+    for (const auto& pt : points)
+    {
+        if (pt.skip) continue;
+        // Punkte liegen im GL-Raum (y+ oben), AVS rechnet mit y+ unten.
+        const int px = static_cast<int>((static_cast<double>(pt.x) + 1.0) * w * 0.5);
+        const int pyTop =
+            static_cast<int>((-static_cast<double>(pt.y) + 1.0) * h * 0.5);
+        if (px < 0 || px >= w || pyTop < 0 || pyTop >= h) continue;  // AVS verwirft
+        const int row = h - 1 - pyTop;  // GL zaehlt von unten
+        const float x0 = static_cast<float>(px) * 2.0f / w - 1.0f;
+        const float x1 = static_cast<float>(px + 1) * 2.0f / w - 1.0f;
+        const float y0 = static_cast<float>(row) * 2.0f / h - 1.0f;
+        const float y1 = static_cast<float>(row + 1) * 2.0f / h - 1.0f;
+        const float c[4] = {pt.r, pt.g, pt.b, pt.a};
+        const float quad[6][2] = {{x0, y0}, {x1, y0}, {x1, y1},
+                                  {x0, y0}, {x1, y1}, {x0, y1}};
+        for (const auto& v : quad)
+        {
+            vertices.insert(vertices.end(), {v[0], v[1], c[0], c[1], c[2], c[3]});
+        }
+    }
+    if (vertices.empty()) return;
+
+    uploadVertexData(vertices);
+    // Linien-Shader: flache Farbe ohne Punkt-Falloff.
+    m_lineShader->bind();
+    m_vao->bind();
+    m_lineShader->setUniformValue(m_lineUniAlpha, 1.0f);
+    f->glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(vertices.size() / 6));
+    m_vao->release();
+    m_lineShader->release();
 }
 
 void ScopeRenderer::renderThinLines(const std::vector<SuperscopePoint>& points)

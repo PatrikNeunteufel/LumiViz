@@ -122,6 +122,13 @@ struct SuperscopePoint
     /// code mentions `drawmode`): true = line segment to this point, false =
     /// dot. Hosts without per-point support ignore it.
     bool drawLines = true;
+    /// Per-point Strichbreite (r_sscope EEL `linesize`, nur gesetzt wenn der
+    /// PUNKT-Code sie erwaehnt; 0 = nicht geskriptet, Host-Breite gilt). AVS
+    /// wertet sie je Punkt aus: "linesize=dt*ls" mit dt=1/z ergibt die
+    /// perspektivische Strichstaerke, aus der etwa Santas Bart besteht
+    /// (Befund S50 — wir lasen sie einmal je Frame und zeichneten deshalb
+    /// alles in der Breite des LETZTEN Punktes).
+    float lineSize = 0.0f;
 };
 
 // =============================================================================
@@ -246,6 +253,10 @@ public:
     /// True when the POINT code itself switches drawmode — the host must then
     /// split the point list into per-mode runs (SuperscopePoint::drawLines).
     [[nodiscard]] bool pointDrawModeActive() const { return m_scriptSetsDrawModePoint; }
+    /// True when the POINT code sets `linesize` — dann traegt jeder Punkt seine
+    /// eigene Breite (SuperscopePoint::lineSize) und der Host muss in Laeufe
+    /// gleicher Breite zerlegen, genau wie beim Punkt-drawmode.
+    [[nodiscard]] bool pointLineSizeActive() const { return m_scriptSetsLineSizePoint; }
     [[nodiscard]] bool scriptLineSizeActive() const { return m_scriptSetsLineSize; }
     [[nodiscard]] float scriptLineSize() const
     {
@@ -445,6 +456,7 @@ private:
     // Scripted drawmode/linesize (r_sscope EEL vars, frame-level readback)
     bool m_scriptSetsDrawMode = false;
     bool m_scriptSetsDrawModePoint = false;  ///< point code switches drawmode
+    bool m_scriptSetsLineSizePoint = false;  ///< point code sets linesize
     bool m_scriptSetsLineSize = false;
     double m_scriptDrawMode = 0.0;
     double m_scriptLineSize = 1.0;

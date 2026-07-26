@@ -182,6 +182,7 @@ void SuperscopeModule::initializeLuaScripts()
     m_scriptSetsDrawMode = mentionsAny("drawmode");
     m_scriptSetsDrawModePoint = m_script->sourceMentions(Slot::Point, "drawmode");
     m_scriptSetsLineSize = mentionsAny("linesize");
+    m_scriptSetsLineSizePoint = m_script->sourceMentions(Slot::Point, "linesize");
 
     if (m_script->has(Slot::Init) && !m_script->run(Slot::Init) &&
         m_lastScriptError.empty())
@@ -723,6 +724,14 @@ SuperscopePoint SuperscopeModule::executePointLua(float i, float v)
     if (m_scriptSetsDrawModePoint)
     {
         pt.drawLines = engine.number("drawmode") >= 0.00001;
+    }
+
+    // Per-Punkt-Strichbreite (r_sscope wertet `linesize` je Punkt aus; AVS
+    // line() klemmt auf 1..255, linedraw.cpp:46-47).
+    if (m_scriptSetsLineSizePoint)
+    {
+        pt.lineSize = std::clamp(static_cast<float>(engine.number("linesize")),
+                                 1.0f, 255.0f);
     }
 
     return pt;
