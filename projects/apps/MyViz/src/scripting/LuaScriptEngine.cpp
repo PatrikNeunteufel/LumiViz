@@ -100,12 +100,19 @@ int lBitOr(lua_State* L)
     return 1;
 }
 
-// EEL %: operands rounded to int, divisor 0 -> result 0, result is |remainder|
+// EEL % (nseel_asm_mod, S48 zeilengenau): Divisor = FPU-round(max(b, 1))
+// (der |b-1|+b+1-Trick klemmt auf >= 1 — div0-sicher), Zaehler FPU-gerundet,
+// Rest per UNSIGNED 32-bit-Division — negative Zaehler wickeln ueber 2^32
+// (Neon-Coaster-Befund: mf = getosc(..)*200%4 mit negativem getosc).
 int lMod(lua_State* L)
 {
-    const auto a = static_cast<std::int64_t>(std::llround(luaL_checknumber(L, 1)));
-    const auto b = static_cast<std::int64_t>(std::llround(luaL_checknumber(L, 2)));
-    lua_pushnumber(L, b == 0 ? 0.0 : static_cast<double>(std::llabs(a % b)));
+    const double a = luaL_checknumber(L, 1);
+    const double b = luaL_checknumber(L, 2);
+    const auto ia = static_cast<std::uint32_t>(
+        static_cast<std::int32_t>(std::llrint(a)));
+    const auto id = static_cast<std::uint32_t>(
+        static_cast<std::int32_t>(std::llrint(std::max(b, 1.0))));
+    lua_pushnumber(L, id == 0 ? 0.0 : static_cast<double>(ia % id));
     return 1;
 }
 

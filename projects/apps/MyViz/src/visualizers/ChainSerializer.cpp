@@ -19,6 +19,8 @@
 #include <QJsonDocument>
 #include <QRegularExpression>
 
+#include <cmath>
+
 namespace lumi::multieffect {
 
 namespace {
@@ -161,14 +163,22 @@ struct WriteVisitor
     }
     void operator()(const BlitterFeedbackParams& p) const
     {
-        o["zoom"] = p.zoom;   o["beatZoom"] = p.beatZoom;
-        o["onBeat"] = p.onBeat;   o["blend"] = p.blend;
+        o["scale"] = p.scale;
+        o["scale2"] = p.scale2;
+        o["onBeat"] = p.onBeat;
+        o["blend"] = p.blend;
+        o["subpixel"] = p.subpixel;
     }
     void operator()(const RotoBlitterParams& p) const
     {
-        o["zoom"] = p.zoom;
-        o["rotationSpeed"] = p.rotationSpeed;
+        o["zoomScale"] = p.zoomScale;
+        o["zoomScale2"] = p.zoomScale2;
+        o["rotDir"] = p.rotDir;
         o["blend"] = p.blend;
+        o["beatReverse"] = p.beatReverse;
+        o["beatReverseSpeed"] = p.beatReverseSpeed;
+        o["beatZoomJump"] = p.beatZoomJump;
+        o["subpixel"] = p.subpixel;
     }
     void operator()(const BufferSaveParams& p) const
     {
@@ -455,10 +465,9 @@ struct WriteVisitor
     }
     void operator()(const SimpleScopeParams& p) const
     {
-        o["source"] = p.source;
+        o["mode"] = p.mode;
         o["channel"] = p.channel;
         o["position"] = p.position;
-        o["drawMode"] = p.drawMode;
         QJsonArray cols;
         for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
         o["colors"] = cols;
@@ -1012,18 +1021,48 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     if (type == "blitterFeedback")
     {
         BlitterFeedbackParams p;
-        p.zoom = static_cast<float>(getDouble(o, "zoom", 1.03));
-        p.beatZoom = static_cast<float>(getDouble(o, "beatZoom", 0.9));
+        if (o.contains("scale"))
+        {
+            p.scale = getInt(o, "scale", 30);
+            p.scale2 = getInt(o, "scale2", 30);
+        }
+        else
+        {
+            // Alt-Dokumente (vor S48): zoom-Float war 1 + scale/1024.
+            p.scale = static_cast<int>(
+                std::lround((getDouble(o, "zoom", 1.03) - 1.0) * 1024.0));
+            p.scale2 = static_cast<int>(
+                std::lround((getDouble(o, "beatZoom", 0.9) - 1.0) * 1024.0));
+        }
         p.onBeat = getBool(o, "onBeat", false);
-        p.blend = getBool(o, "blend", true);
+        p.blend = getBool(o, "blend", false);
+        p.subpixel = getBool(o, "subpixel", true);
         return p;
     }
     if (type == "rotoBlitter")
     {
         RotoBlitterParams p;
-        p.zoom = static_cast<float>(getDouble(o, "zoom", 1.0));
-        p.rotationSpeed = static_cast<float>(getDouble(o, "rotationSpeed", 1.0));
-        p.blend = getBool(o, "blend", true);
+        if (o.contains("zoomScale"))
+        {
+            p.zoomScale = getInt(o, "zoomScale", 31);
+            p.zoomScale2 = getInt(o, "zoomScale2", 31);
+            p.rotDir = getInt(o, "rotDir", 31);
+        }
+        else
+        {
+            // Alt-Dokumente (vor S48): zoom = 1 + zoom_scale/1024,
+            // rotationSpeed = rot_dir/32 (Grad/Frame ~ rotDir-32).
+            p.zoomScale = static_cast<int>(
+                std::lround((getDouble(o, "zoom", 1.0) - 1.0) * 1024.0));
+            p.rotDir = 32 + static_cast<int>(
+                                std::lround(getDouble(o, "rotationSpeed", 1.0)));
+            p.zoomScale2 = p.zoomScale;
+        }
+        p.blend = getBool(o, "blend", false);
+        p.beatReverse = getBool(o, "beatReverse", false);
+        p.beatReverseSpeed = getInt(o, "beatReverseSpeed", 0);
+        p.beatZoomJump = getBool(o, "beatZoomJump", false);
+        p.subpixel = getBool(o, "subpixel", true);
         return p;
     }
     if (type == "bufferSave")
@@ -1377,10 +1416,21 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     if (type == "simpleScope")
     {
         SimpleScopeParams p;
-        p.source = getInt(o, "source", 1);
+        if (o.contains("mode"))
+        {
+            p.mode = std::clamp(getInt(o, "mode", 3), 0, 5);
+        }
+        else
+        {
+            // Alt-Dokumente (vor S48): source (0 Spektrum / 1 Waveform) +
+            // drawMode (0 Linien / 1 Punkte) — solid gab es noch nicht.
+            const int source = getInt(o, "source", 1);
+            const int drawMode = getInt(o, "drawMode", 0);
+            if (drawMode == 1) p.mode = source == 1 ? 5 : 4;
+            else p.mode = source == 1 ? 2 : 1;
+        }
         p.channel = getInt(o, "channel", 2);
         p.position = getInt(o, "position", 2);
-        p.drawMode = getInt(o, "drawMode", 0);
         p.colors.clear();
         const QJsonArray cols = o.value("colors").toArray();
         for (const auto& v : cols) p.colors.push_back(static_cast<uint32_t>(v.toDouble()));

@@ -450,6 +450,22 @@ void main()
 }
 )";
 
+// Flat-Color-Fill (S48): my_triangle-Ersatz — gefuellte Dreiecke in einer
+// Uniform-Farbe, Replace ohne Blend (linedraw.cpp my_triangle kennt keinen
+// Blendmode). Genutzt von Bass Spin Modus 1.
+const char* kFlatVertexShader = R"(
+#version 330 core
+layout(location = 0) in vec2 aPos;
+void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+)";
+
+const char* kFlatFragmentShader = R"(
+#version 330 core
+uniform vec3 uColor;
+out vec4 fragColor;
+void main() { fragColor = vec4(uColor, 1.0); }
+)";
+
 // AVS Mirror (ID 26): reflect one half onto the other (r_mirror.cpp:166-247).
 // r_mirror: four directed half-copies with per-direction smooth factors
 // (BLEND_ADAPT divisor 0..16 -> uF 0..1). Sequential-buffer semantics are
@@ -600,26 +616,112 @@ void main()
 
 // AVS Roto / Blitter Feedback (ID 9 / 4): sample the current image rotated and
 // zoomed about the center, blend with the original — a scale/rotate feedback.
+// Feedback-Abbildung (Blitter/Roto Blitter, S48 nach r_blit/r_rotblit
+// umgebaut): affines Sampling in PIXELN — sp = uMap*px + uOff. Roto WRAPPT
+// wie das Original (s %= ds -> Kacheln), Blitter clampt. uSubpixel = das
+// Original-BLEND4 (bilinear von Hand, die Surface-Textur filtert NEAREST);
+// ohne subpixel kaskadiert Nearest-Zoom zum Mosaik (Matrix-Befund 04/09).
+// uBlend = BLEND_AVG mit dem unbewegten Original.
 const char* kFeedbackFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
 uniform sampler2D uTex;
-uniform float uZoomInv;  // 1/zoom
-uniform float uCos;
-uniform float uSin;
-uniform float uAspect;   // w/h (keeps rotation square)
+uniform vec2 uRes;
+uniform mat2 uMap;      // affiner Modus (Blitter): sp = uMap*px + uOff
+uniform vec2 uOff;
+uniform bool uAvsLinear;  // r_rotblit-Modus (s. unten)
+uniform int uDsDx;      // 16.16-Fixpunkt wie das Original (int-Arithmetik!)
+uniform int uDsDy;
+uniform int uDtDx;
+uniform int uDtDy;
+uniform int uSStart;    // sstart/tstart fuer dest (0,0), inkl. Positiv-Offset
+uniform int uTStart;
 uniform bool uBlend;
+uniform bool uSubpixel;
 out vec4 fragColor;
+vec3 fetchClamped(ivec2 p)
+{
+    p = clamp(p, ivec2(0), ivec2(uRes) - 1);
+    return texelFetch(uTex, p, 0).rgb;
+}
+// r_rotblit adressiert den Framebuffer LINEAR: addr = (t>>16)*w + (s>>16);
+// die Bilinear-Nachbarn sind addr+1 und addr+w — auch ueber Zeilengrenzen
+// hinweg (AVS-Zeilen sind top-down, die Textur bottom-up -> Flip hier).
+vec3 fetchLinear(int addr)
+{
+    int w = int(uRes.x);
+    addr = clamp(addr, 0, w * int(uRes.y) - 1);
+    int iy = addr / w;
+    int ix = addr - iy * w;
+    return texelFetch(uTex, ivec2(ix, int(uRes.y) - 1 - iy), 0).rgb;
+}
 void main()
 {
-    vec2 d = vTex - 0.5;
-    d.x *= uAspect;
-    vec2 s = uZoomInv * vec2(uCos * d.x - uSin * d.y, uSin * d.x + uCos * d.y);
-    s.x /= uAspect;
-    vec2 src = s + 0.5;
-    vec3 t = texture(uTex, clamp(src, 0.0, 1.0)).rgb;
+    vec2 px = vTex * uRes - 0.5;
+    vec3 moved;
+    if (uAvsLinear)
+    {
+        // dest in AVS-Koordinaten (Zeile 0 = oben). r_rotblit wrappt s/t am
+        // Zeilenanfang UND inkrementell je Pixel (DO_LOOPS: eine Korrektur
+        // je Ueberlauf) — das ist mathematisch ein volles mod ueber
+        // (w-1)<<16. Alles in 16.16-INT-Arithmetik wie das Original (float
+        // kippte Gewichtsstufen und driftete ueber die Feedback-Kaskade).
+        int w = int(uRes.x);
+        int h = int(uRes.y);
+        int dx = int(px.x + 0.5);
+        int dy = (h - 1) - int(px.y + 0.5);
+        int rw = (w - 1) << 16;
+        int rh = (h - 1) << 16;
+        int s = uSStart + dy * uDsDy;
+        int t = uTStart + dy * uDtDy;
+        if (rw != 0) { s %= rw; if (s < 0) s += rw; }
+        if (rh != 0) { t %= rh; if (t < 0) t += rh; }
+        s += dx * uDsDx;
+        t += dx * uDtDx;
+        if (rw != 0) { s %= rw; if (s < 0) s += rw; }
+        if (rh != 0) { t %= rh; if (t < 0) t += rh; }
+        int addr = (t >> 16) * w + (s >> 16);
+        if (uSubpixel)
+        {
+            // BLEND4 (r_defs.h): Gewichte (s>>8)&0xff, jede Mischstufe
+            // trunkiert (>>8) — exakt in Ganzzahlen nachgerechnet.
+            int xw = (s >> 8) & 0xff;
+            int yw = (t >> 8) & 0xff;
+            ivec3 c00 = ivec3(fetchLinear(addr) * 255.0 + 0.5);
+            ivec3 c10 = ivec3(fetchLinear(addr + 1) * 255.0 + 0.5);
+            ivec3 c01 = ivec3(fetchLinear(addr + w) * 255.0 + 0.5);
+            ivec3 c11 = ivec3(fetchLinear(addr + w + 1) * 255.0 + 0.5);
+            ivec3 a = (c00 * (256 - xw) + c10 * xw) >> 8;
+            ivec3 b = (c01 * (256 - xw) + c11 * xw) >> 8;
+            moved = vec3((a * (256 - yw) + b * yw) >> 8) / 255.0;
+        }
+        else
+        {
+            moved = fetchLinear(addr);
+        }
+    }
+    else
+    {
+        vec2 sp = uMap * px + uOff;
+        sp = clamp(sp, vec2(0.0), uRes - 1.0);
+        if (uSubpixel)
+        {
+            vec2 fl = floor(sp);
+            vec2 fr = sp - fl;
+            ivec2 i0 = ivec2(fl);
+            vec3 c00 = fetchClamped(i0);
+            vec3 c10 = fetchClamped(i0 + ivec2(1, 0));
+            vec3 c01 = fetchClamped(i0 + ivec2(0, 1));
+            vec3 c11 = fetchClamped(i0 + ivec2(1, 1));
+            moved = mix(mix(c00, c10, fr.x), mix(c01, c11, fr.x), fr.y);
+        }
+        else
+        {
+            moved = fetchClamped(ivec2(sp));
+        }
+    }
     vec3 o = texture(uTex, vTex).rgb;
-    fragColor = vec4(uBlend ? mix(o, t, 0.5) : t, 1.0);
+    fragColor = vec4(uBlend ? mix(o, moved, 0.5) : moved, 1.0);
 }
 )";
 
@@ -1123,7 +1225,10 @@ const char* kInterleaveFragmentShader = R"(
 in vec2 vTex;
 uniform sampler2D uTex;
 uniform vec2 uRes;
-uniform ivec2 uSpacing;
+// vec2 statt ivec2: Qt uebertraegt QPoint-Uniforms als FLOATS (glUniform2fv)
+// — auf ein ivec2 gesetzt blieb das Uniform (0,0) und der Effekt war ein
+// Passthrough (S48-Matrix-Befund 23).
+uniform vec2 uSpacing;
 uniform vec3 uColor;
 uniform int uBlend;
 out vec4 fragColor;
@@ -1132,12 +1237,17 @@ void main()
     vec3 c = texture(uTex, vTex).rgb;
     int px = int(vTex.x * uRes.x);
     int py = int(vTex.y * uRes.y);
-    int tx = uSpacing.x;
-    int ty = uSpacing.y;
+    int tx = int(uSpacing.x + 0.5);
+    int ty = int(uSpacing.y + 0.5);
     bool colored = false;
     if (ty > 0)
     {
-        int yy = py + (int(uRes.y) % ty) / 2;
+        // r_interleave: yp startet bei (h%ty)/2 und wird VOR dem Vergleich
+        // inkrementiert — der erste Farbblock ist eine Zeile KUERZER (+1).
+        // py zaehlt hier in AVS-Richtung (Zeile 0 = oben): Texturzeilen sind
+        // bottom-up, daher h-1-py_gl.
+        int row = int(uRes.y) - 1 - py;
+        int yy = row + (int(uRes.y) % ty) / 2 + 1;
         bool ystat = ((yy / ty) & 1) == 1;
         if (!ystat) colored = true;
         else if (tx > 0)
@@ -1256,18 +1366,25 @@ void main()
 
 // AVS "Render / Timescope" (ID 39): one spectrum column, tinted by uColor.
 // Drawn scissored to a single x each frame (r_timescope.cpp).
+// AVS Timescope (r_timescope.cpp:143): c = visdata[0][0][(i*nbands)/h] —
+// das ROHE Spektrum-Byte (0..255) des LINKEN Kanals, Farbe = color*c/256.
+// uSpec ist die 576-Byte-R8-Textur der visdata (S48-Matrix-Befund 39: das
+// normalisierte App-Spektrum war viel zu dunkel + falsch gemappt). i ist
+// die AVS-Zeile (0 = oben) — vTex.y laeuft bottom-up, daher 1-vTex.y.
 const char* kTimescopeFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
 uniform sampler2D uSpec;
 uniform vec3 uColor;
 uniform float uBands;
+uniform float uH;
 out vec4 fragColor;
 void main()
 {
-    float band = floor(vTex.y * uBands) / uBands;
-    float c = texture(uSpec, vec2(band, 0.5)).r;
-    fragColor = vec4(uColor * c, 1.0);
+    float i = floor((1.0 - vTex.y) * uH);
+    float idx = floor(i * uBands / uH);
+    float c = texelFetch(uSpec, ivec2(int(idx), 0), 0).r;  // Byte/255
+    fragColor = vec4(uColor * c * (255.0 / 256.0), 1.0);
 }
 )";
 
@@ -2162,9 +2279,12 @@ void MultiEffectVisualizer::onCleanup()
     m_sprite3dVbo.reset();
     m_terrain3dShader.reset();
     m_orb3dShader.reset();
+    m_flatShader.reset();
     m_orbVao.reset();
     m_orbVbo.reset();
     m_orbIbo.reset();
+    m_triVao.reset();
+    m_triVbo.reset();
     if (m_depth3dTex != 0)
     {
         if (auto* ctx = QOpenGLContext::currentContext())
@@ -2216,6 +2336,7 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_sprite3dShader = makeProgram(kSprite3DVertexShader, kSprite3DFragmentShader);
     m_terrain3dShader = makeProgram(kTerrain3DVertexShader, kTerrain3DFragmentShader);
     m_orb3dShader = makeProgram(kOrb3DVertexShader, kOrb3DFragmentShader);
+    m_flatShader = makeProgram(kFlatVertexShader, kFlatFragmentShader);
     m_shiftShader = makeProgram(kQuadVertexShader, kDynamicShiftFragmentShader);
     m_ddmShader = makeProgram(kQuadVertexShader, kDdmFragmentShader);
     m_colorMapShader = makeProgram(kQuadVertexShader, kColorMapFragmentShader);
@@ -2251,6 +2372,7 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_bloomDownShader == nullptr || m_bloomGaussShader == nullptr ||
         m_bloomCompShader == nullptr || m_sprite3dShader == nullptr ||
         m_terrain3dShader == nullptr || m_orb3dShader == nullptr ||
+        m_flatShader == nullptr ||
         m_shiftShader == nullptr ||
         m_ddmShader == nullptr || m_colorMapShader == nullptr ||
         m_bufferBlendShader == nullptr || m_pictureShader == nullptr ||
@@ -2289,6 +2411,7 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_sprite3dShader.reset();
         m_terrain3dShader.reset();
         m_orb3dShader.reset();
+        m_flatShader.reset();
         m_wbPropShader.reset();
         m_wbDispShader.reset();
         m_timescopeShader.reset();
@@ -2420,8 +2543,40 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_orbIbo->release();
     }
 
+    // Flat-Fill-Dreiecke (my_triangle-Ersatz): dynamisches pos.xy-Mesh.
+    m_triVao = std::make_unique<QOpenGLVertexArrayObject>();
+    m_triVao->create();
+    m_triVao->bind();
+    m_triVbo = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
+    m_triVbo->create();
+    m_triVbo->setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    m_triVbo->bind();
+    m_triVbo->allocate(nullptr, 0);
+    f->glEnableVertexAttribArray(0);
+    f->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
+    m_triVao->release();
+    m_triVbo->release();
+
     m_scopeRenderer.ensure();  // shared scope draw (SuperScope effect, E6)
     return true;
+}
+
+void MultiEffectVisualizer::drawFlatTriangles(const std::vector<float>& xyNdc,
+                                              const QVector3D& color)
+{
+    if (m_flatShader == nullptr || xyNdc.size() < 6) return;
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glDisable(GL_BLEND);  // my_triangle zeichnet REPLACE
+    m_flatShader->bind();
+    m_flatShader->setUniformValue("uColor", color);
+    m_triVao->bind();
+    m_triVbo->bind();
+    m_triVbo->allocate(xyNdc.data(),
+                       static_cast<int>(xyNdc.size() * sizeof(float)));
+    f->glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(xyNdc.size() / 2));
+    m_triVbo->release();
+    m_triVao->release();
+    m_flatShader->release();
 }
 
 bool MultiEffectVisualizer::ensureSurfacePair(SurfacePair& pair, int width,
@@ -2797,7 +2952,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const DynamicShiftParams& params) const { self.runDynamicShift(node, params); }
         void operator()(const DynamicDistanceModifierParams& params) const { self.runDynamicDistanceModifier(node, params); }
         void operator()(const MovingParticleParams& params) const { self.runMovingParticle(node, params); }
-        void operator()(const BlitterFeedbackParams& params) const { self.runBlitterFeedback(params); }
+        void operator()(const BlitterFeedbackParams& params) const { self.runBlitterFeedback(node, params); }
         void operator()(const RotoBlitterParams& params) const { self.runRotoBlitter(node, params); }
         void operator()(const BufferSaveParams& params) const { self.runBufferSave(node, params); }
         void operator()(const CustomBpmParams& params) const { self.runCustomBpm(node, params); }
@@ -3724,32 +3879,186 @@ void MultiEffectVisualizer::applyGridWarp(LeafRuntime& rt, int xres, int yres,
     bindActive();
 }
 
-void MultiEffectVisualizer::runBlitterFeedback(const BlitterFeedbackParams& params)
+void MultiEffectVisualizer::runBlitterFeedback(const ChainNode& node,
+                                               const BlitterFeedbackParams& params)
 {
-    const float zoom = (params.onBeat && m_frameBeat) ? params.beatZoom : params.zoom;
-    feedbackPass(zoom, 0.0f, params.blend);
+    // r_blit.cpp zeilengenau (S48-Matrix-Befund 04): fpos eased +-3/Frame
+    // Richtung scale (Beat -> scale2); f_val < 32 zoomt zentrisch REIN
+    // (Faktor 64/(f_val+32)), f_val > 32 schrumpft das GANZE Bild in ein
+    // zentriertes Fenster (blitter_out), 32 ist neutral.
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    if (!rt.bfSeeded)
+    {
+        rt.bfFpos = params.scale;
+        rt.bfSeeded = true;
+    }
+    if (m_frameBeat && params.onBeat) rt.bfFpos = params.scale2;
+    int fVal;
+    if (params.scale < params.scale2)
+    {
+        fVal = std::max(rt.bfFpos, params.scale);
+        rt.bfFpos -= 3;
+    }
+    else
+    {
+        fVal = std::min(rt.bfFpos, params.scale);
+        rt.bfFpos += 3;
+    }
+    if (fVal < 0) fVal = 0;
+    if (fVal == 32) return;  // neutral
+
+    const int w = m_surfaceWidth;
+    const int h = m_surfaceHeight;
+    if (fVal < 32)  // blitter_normal: zentrischer Zoom-IN
+    {
+        // src_avs = ds*dest_avs + h(1-ds)/2; die GL-Textur ist bottom-up:
+        // y-Offset nach dem Flip = (1-ds)*(h/2 - 1) (x bleibt ungespiegelt).
+        const float ds = static_cast<float>(fVal + 32) / 64.0f;
+        const float m[4] = {ds, 0.0f, 0.0f, ds};
+        const QVector2D off(static_cast<float>(w) * (1.0f - ds) * 0.5f,
+                            (1.0f - ds) * (static_cast<float>(h) * 0.5f - 1.0f));
+        feedbackPass(QMatrix2x2(m), off, false, params.blend, params.subpixel);
+        return;
+    }
+
+    // blitter_out (f_val > 32): das ganze Bild in ein zentriertes Fenster
+    // x_len*y_len skaliert (x_len 4er-aligned wie das SIMD-Original), der
+    // Rand bleibt unveraendert stehen.
+    const float dsX = static_cast<float>(fVal + 96) / 128.0f;
+    const int xLen = static_cast<int>(static_cast<float>(w) / dsX) & ~3;
+    const int yLen = static_cast<int>(static_cast<float>(h) / dsX);
+    if (xLen >= w || yLen >= h || xLen < 4 || yLen < 1) return;
+    const int startX = (w - xLen) / 2;
+    const int startY = (h - yLen) / 2;  // AVS-Zeile (top-down)
+
+    auto* f = QOpenGLContext::currentContext()->functions();
+    SurfacePair& pair = active();
+    pair.partner()->bind();
+    f->glViewport(0, 0, w, h);
+
+    // 1:1-Basis (der Rand bleibt stehen), dann das Fenster skaliert fuellen.
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    m_presentShader->bind();
+    m_presentShader->setUniformValue("uTex", 0);
+    m_quadVao->bind();
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_presentShader->release();
+
+    f->glEnable(GL_SCISSOR_TEST);
+    f->glScissor(startX, h - startY - yLen, xLen, yLen);  // GL zaehlt von unten
+    m_feedbackShader->bind();
+    m_feedbackShader->setUniformValue("uRes", QVector2D(static_cast<float>(w),
+                                                        static_cast<float>(h)));
+    // src laeuft ab 0.5 px ueber das GANZE Bild: sp = dsX*dest + off; die
+    // y-Achse ist im GL-Raum gespiegelt (AVS top-down).
+    const float m[4] = {dsX, 0.0f, 0.0f, dsX};
+    m_feedbackShader->setUniformValue("uMap", QMatrix2x2(m));
+    m_feedbackShader->setUniformValue(
+        "uOff",
+        QVector2D(0.5f - dsX * static_cast<float>(startX),
+                  (static_cast<float>(h) - 1.5f) -
+                      dsX * static_cast<float>(h - 1 - startY)));
+    m_feedbackShader->setUniformValue("uWrap", false);
+    m_feedbackShader->setUniformValue("uBlend", params.blend);
+    m_feedbackShader->setUniformValue("uSubpixel", params.subpixel);
+    m_feedbackShader->setUniformValue("uTex", 0);
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_feedbackShader->release();
+    f->glDisable(GL_SCISSOR_TEST);
+    m_quadVao->release();
+    pair.partner()->release();
+    pair.swap();
+    bindActive();
 }
 
 void MultiEffectVisualizer::runRotoBlitter(const ChainNode& node,
                                            const RotoBlitterParams& params)
 {
+    // r_rotblit.cpp zeilengenau (S48-Matrix-Befund 09): das Bild wird JEDE
+    // Frame um das konstante theta gedreht/gezoomt — die sichtbare Rotation
+    // akkumuliert uebers Feedback (die alte Winkel-Akkumulation hier war das
+    // Pixel-Rauschen). Sampling kachelt (s %= ds) und ist bilinear (BLEND4).
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
-    rt.rotoAngle += params.rotationSpeed * 0.01745329f;  // deg -> rad per frame
-    feedbackPass(params.zoom, rt.rotoAngle, params.blend);
+    if (!rt.rotoSeeded)
+    {
+        rt.rotoFpos = params.zoomScale;
+        rt.rotoSeeded = true;
+    }
+    if (m_frameBeat && params.beatReverse) rt.rotoRev = -rt.rotoRev;
+    if (!params.beatReverse) rt.rotoRev = 1.0f;
+    rt.rotoRevPos += (1.0f / (1.0f + static_cast<float>(params.beatReverseSpeed) *
+                                         4.0f)) *
+                     (rt.rotoRev - rt.rotoRevPos);
+    if (rt.rotoRevPos > rt.rotoRev && rt.rotoRev > 0.0f) rt.rotoRevPos = rt.rotoRev;
+    if (rt.rotoRevPos < rt.rotoRev && rt.rotoRev < 0.0f) rt.rotoRevPos = rt.rotoRev;
+    if (m_frameBeat && params.beatZoomJump) rt.rotoFpos = params.zoomScale2;
+
+    int fVal;
+    if (params.zoomScale < params.zoomScale2)
+    {
+        fVal = std::max(rt.rotoFpos, params.zoomScale);
+        if (rt.rotoFpos > params.zoomScale) rt.rotoFpos -= 3;
+    }
+    else
+    {
+        fVal = std::min(rt.rotoFpos, params.zoomScale);
+        if (rt.rotoFpos < params.zoomScale) rt.rotoFpos += 3;
+    }
+    const double zoom = 1.0 + static_cast<double>(fVal - 31) / 31.0;
+    const double thetaDeg =
+        static_cast<double>(params.rotDir - 32) * static_cast<double>(rt.rotoRevPos);
+
+    // Abbildung exakt wie r_rotblit (:159-171): 16.16-Fixpunkt-Ints (Cast =
+    // trunc), Zentrum bei INTEGER (w-1)/2, sstart/tstart inkl. des (1<<20)-
+    // Positiv-Offsets (macht das C-% zum mathematischen mod) — der top-down/
+    // bottom-up-Flip passiert im Shader (uAvsLinear).
+    const double th = thetaDeg * 3.14159265358979 / 180.0;
+    const int dsdx = static_cast<int>(std::cos(th) * zoom * 65536.0);
+    const int sinFx = static_cast<int>(std::sin(th) * zoom * 65536.0);
+    const int dsdy = -sinFx;
+    const int dtdx = sinFx;
+    const int dtdy = dsdx;
+    const int w1 = m_surfaceWidth - 1;
+    const int h1 = m_surfaceHeight - 1;
+    const int ds = w1 << 16;
+    const int dt = h1 << 16;
+    // Guard wie das Original: Schrittweite >= Bildgroesse -> no-op.
+    if (dsdx <= -ds || dsdx >= ds || dtdx <= -dt || dtdx >= dt) return;
+    const int cxi = w1 / 2;  // Integer-Division wie das Original
+    const int cyi = h1 / 2;
+    const int sstart = -(cxi * dsdx + cyi * dsdy) + w1 * (32768 + (1 << 20));
+    const int tstart = -(cxi * dtdx + cyi * dtdy) + h1 * (32768 + (1 << 20));
+
+    m_feedbackShader->bind();
+    m_feedbackShader->setUniformValue(
+        "uRes", QVector2D(static_cast<float>(m_surfaceWidth),
+                          static_cast<float>(m_surfaceHeight)));
+    m_feedbackShader->setUniformValue("uAvsLinear", true);
+    m_feedbackShader->setUniformValue("uDsDx", dsdx);
+    m_feedbackShader->setUniformValue("uDsDy", dsdy);
+    m_feedbackShader->setUniformValue("uDtDx", dtdx);
+    m_feedbackShader->setUniformValue("uDtDy", dtdy);
+    m_feedbackShader->setUniformValue("uSStart", sstart);
+    m_feedbackShader->setUniformValue("uTStart", tstart);
+    m_feedbackShader->setUniformValue("uBlend", params.blend);
+    m_feedbackShader->setUniformValue("uSubpixel", params.subpixel);
+    m_feedbackShader->release();
+    transformPass(*m_feedbackShader);
 }
 
-void MultiEffectVisualizer::feedbackPass(float zoom, float angleRad, bool blend)
+void MultiEffectVisualizer::feedbackPass(const QMatrix2x2& map, const QVector2D& off,
+                                         bool /*wrap*/, bool blend, bool subpixel)
 {
-    if (zoom <= 0.0001f) zoom = 1.0f;
-    const float aspect = m_surfaceHeight > 0
-                             ? static_cast<float>(m_surfaceWidth) / m_surfaceHeight
-                             : 1.0f;
     m_feedbackShader->bind();
-    m_feedbackShader->setUniformValue("uZoomInv", 1.0f / zoom);
-    m_feedbackShader->setUniformValue("uCos", std::cos(angleRad));
-    m_feedbackShader->setUniformValue("uSin", std::sin(angleRad));
-    m_feedbackShader->setUniformValue("uAspect", aspect);
+    m_feedbackShader->setUniformValue(
+        "uRes", QVector2D(static_cast<float>(m_surfaceWidth),
+                          static_cast<float>(m_surfaceHeight)));
+    m_feedbackShader->setUniformValue("uAvsLinear", false);
+    m_feedbackShader->setUniformValue("uMap", map);
+    m_feedbackShader->setUniformValue("uOff", off);
     m_feedbackShader->setUniformValue("uBlend", blend);
+    m_feedbackShader->setUniformValue("uSubpixel", subpixel);
     m_feedbackShader->release();
     transformPass(*m_feedbackShader);
 }
@@ -4666,72 +4975,271 @@ void MultiEffectVisualizer::drawScopeShape(
 void MultiEffectVisualizer::runSimpleScope(const ChainNode& node,
                                            const SimpleScopeParams& params)
 {
+    // r_simple.cpp zeilengenau (S48-Matrix-Befund 00): Analyzer lesen das
+    // SPEKTRUM (200 Baender, xs=200/w), Scopes die Waveform (Byte^128);
+    // solid = eine vertikale Linie je Bildspalte. Pixel-Mathematik auf der
+    // Surface, dann Pixelzentren -> NDC fuer den ScopeRenderer (AVS y+ unten).
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     const QVector3D c = colorToVec(cycleScopeColor(params.colors, rt.scopeColorPos));
-    const float yoff = params.position == 0 ? 0.5f : (params.position == 1 ? -0.5f : 0.0f);
+    const int w = m_surfaceWidth;
+    const int h = m_surfaceHeight;
+    if (w < 2 || h < 2) return;
 
-    const std::vector<float> data =
-        params.source == 1 ? getWaveform() : getSpectrum();
-    const int n = static_cast<int>(data.size());
-    if (n < 2) return;
-
-    std::vector<lumi::modules::SuperscopePoint> pts;
-    pts.reserve(static_cast<std::size_t>(n));
-    for (int i = 0; i < n; ++i)
+    const bool analyzer =
+        params.mode == 0 || params.mode == 1 || params.mode == 4;
+    unsigned char center[577];
+    const unsigned char* fa;
+    if (params.channel >= 2)
     {
+        // Original: char-Arithmetik (visdata ist char[]) — signed halbieren,
+        // Ueberlauf wrappt wie der char-Store (Spektrum-Bytes > 127!).
+        const unsigned char* l = analyzer ? visSpectrum(0) : visWaveform(0);
+        const unsigned char* r = analyzer ? visSpectrum(1) : visWaveform(1);
+        for (int i = 0; i < 576; ++i)
+        {
+            const int v = static_cast<signed char>(l[i]) / 2 +
+                          static_cast<signed char>(r[i]) / 2;
+            center[i] = static_cast<unsigned char>(v);
+        }
+        center[576] = center[575];
+        fa = center;
+    }
+    else
+    {
+        fa = analyzer ? visSpectrum(params.channel) : visWaveform(params.channel);
+    }
+
+    const float yscale = static_cast<float>(h) / 2.0f / 256.0f;
+    const float xscale = 288.0f / static_cast<float>(w);
+    std::vector<lumi::modules::SuperscopePoint> pts;
+    const auto push = [&](float px, float py) {
         lumi::modules::SuperscopePoint p;
-        p.x = -1.0f + 2.0f * static_cast<float>(i) / static_cast<float>(n - 1);
-        // waveform ~[-1,1] centred at yoff; spectrum [0,1] grows up from yoff-0.5
-        p.y = params.source == 1 ? yoff + data[static_cast<std::size_t>(i)] * 0.4f
-                                 : yoff - 0.5f + data[static_cast<std::size_t>(i)];
+        p.x = (px + 0.5f) / static_cast<float>(w) * 2.0f - 1.0f;
+        p.y = -((py + 0.5f) / static_cast<float>(h) * 2.0f - 1.0f);  // AVS y+ unten
         p.r = c.x();
         p.g = c.y();
         p.b = c.z();
         p.a = 1.0f;
         pts.push_back(p);
+    };
+    // ScopeRenderer: skip-Punkte werden VERWORFEN und trennen Segmente —
+    // je Spalte also A, B und dann ein Trennpunkt (Koordinaten egal).
+    const auto pushBreak = [&] {
+        lumi::modules::SuperscopePoint p;
+        p.skip = true;
+        pts.push_back(p);
+    };
+    // Interpoliertes Analyzer-/Scope-Sample an Position r (Original s1-Mix).
+    const auto sampleAt = [&](float r, bool xorWave) {
+        const int i0 = std::clamp(static_cast<int>(r), 0, 575);
+        const int i1 = std::min(i0 + 1, 576 - (fa == center ? 0 : 1));
+        const float s1 = r - static_cast<float>(i0);
+        const float a = static_cast<float>(xorWave ? (fa[i0] ^ 128) : fa[i0]);
+        const float b = static_cast<float>(xorWave ? (fa[i1] ^ 128) : fa[i1]);
+        return a * (1.0f - s1) + b * s1;
+    };
+
+    switch (params.mode)
+    {
+        case 0:  // solid analyzer (r_simple case 0)
+        case 4:  // dot analyzer (Bit 6, case 0)
+        {
+            int h2 = h / 2;
+            float ys = yscale;
+            const float xs = 200.0f / static_cast<float>(w);
+            int adj = 1;
+            if (params.position != 1)
+            {
+                ys = -ys;
+                adj = 0;
+            }
+            if (params.position == 2) h2 -= static_cast<int>(ys * 256.0f / 2.0f);
+            for (int x = 0; x < w; ++x)
+            {
+                const float yr = sampleAt(static_cast<float>(x) * xs, false);
+                const int yTip =
+                    h2 + adj + static_cast<int>(yr * ys - 1.0f);
+                if (params.mode == 4)
+                {
+                    if (yTip >= 0 && yTip < h)
+                        push(static_cast<float>(x), static_cast<float>(yTip));
+                }
+                else
+                {
+                    push(static_cast<float>(x), static_cast<float>(h2 - adj));
+                    push(static_cast<float>(x), static_cast<float>(yTip));
+                    pushBreak();
+                }
+            }
+            break;
+        }
+        case 3:  // solid scope (r_simple case 3)
+        case 5:  // dot scope (Bit 6, case 2)
+        {
+            int yh = params.position * h / 2;
+            if (params.position == 2) yh = h / 4;
+            const int ysBase = yh + static_cast<int>(yscale * 128.0f);
+            for (int x = 0; x < w; ++x)
+            {
+                const float yr = sampleAt(static_cast<float>(x) * xscale, true);
+                const int yTip = yh + static_cast<int>(yr * yscale);
+                if (params.mode == 5)
+                {
+                    if (yTip >= 0 && yTip < h)
+                        push(static_cast<float>(x), static_cast<float>(yTip));
+                }
+                else
+                {
+                    push(static_cast<float>(x), static_cast<float>(ysBase - 1));
+                    push(static_cast<float>(x), static_cast<float>(yTip));
+                    pushBreak();
+                }
+            }
+            break;
+        }
+        case 1:  // line analyzer (200 Punkte, xs = w/200)
+        {
+            int h2 = h / 2;
+            float ys = yscale;
+            if (params.position != 1) ys = -ys;
+            if (params.position == 2) h2 -= static_cast<int>(ys * 256.0f / 2.0f);
+            const float xs = 1.0f / xscale * (288.0f / 200.0f);
+            push(0.0f, static_cast<float>(h2 + static_cast<int>(fa[0] * ys)));
+            for (int x = 1; x < 200; ++x)
+            {
+                push(static_cast<float>(static_cast<int>(x * xs)),
+                     static_cast<float>(h2 + static_cast<int>(fa[x] * ys)));
+            }
+            break;
+        }
+        case 2:  // line scope (288 Punkte, xs = w/288)
+        default:
+        {
+            int yh = params.position * h / 2;
+            if (params.position == 2) yh = h / 4;
+            const float xs = 1.0f / xscale;
+            push(0.0f,
+                 static_cast<float>(yh + static_cast<int>(
+                                        static_cast<int>(fa[0] ^ 128) * yscale)));
+            for (int x = 1; x < 288; ++x)
+            {
+                push(static_cast<float>(static_cast<int>(x * xs)),
+                     static_cast<float>(yh + static_cast<int>(
+                                            static_cast<int>(fa[x] ^ 128) * yscale)));
+            }
+            break;
+        }
     }
-    drawScopeShape(pts, params.drawMode == 1);
+
+    drawScopeShape(pts, params.mode >= 4);
 }
 
 void MultiEffectVisualizer::runBassSpin(const ChainNode& node,
                                         const BassSpinParams& params)
 {
+    // r_bspin.cpp zeilengenau (S48-Matrix-Befund 07): rohe SPEKTRUM-Bytes je
+    // Kanal (visdata[0][y]), last_a ist EIN Member ueber beide Kanaele,
+    // Geometrie in Pixeln (ss = min(h/2, 3w/8)), Modus 1 zeichnet GEFUELLTE
+    // Dreiecke zwischen Zentrum, letzter und neuer Speichenspitze.
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
-    const std::vector<float> spec = getSpectrum();
-    const int n = static_cast<int>(spec.size());
+    const int w = m_surfaceWidth;
+    const int h = m_surfaceHeight;
+    if (w < 2 || h < 2) return;
+
+    const auto ndcX = [&](int px) {
+        return (static_cast<float>(px) + 0.5f) / static_cast<float>(w) * 2.0f - 1.0f;
+    };
+    const auto ndcY = [&](int py) {
+        return -((static_cast<float>(py) + 0.5f) / static_cast<float>(h) * 2.0f -
+                 1.0f);  // AVS y+ unten
+    };
 
     for (int chn = 0; chn < 2; ++chn)
     {
         if (chn == 0 ? !params.left : !params.right) continue;
 
-        float d = 0.0f;
-        for (int x = 0; x < 44 && x < n; ++x) d += spec[static_cast<std::size_t>(x)] * 255.0f;
-        float a = (d * 512.0f) / (rt.bsLastA[chn] + 30.0f * 256.0f);
-        rt.bsLastA[chn] = d;
-        if (a > 255.0f) a = 255.0f;
-        rt.bsV[chn] = 0.7f * (std::max(a - 104.0f, 12.0f) / 96.0f) + 0.3f * rt.bsV[chn];
+        const unsigned char* fa = visSpectrum(chn);
+        const int ss = std::min(h / 2, (w * 3) / 8);
+        const int cx = chn == 0 ? w / 2 - ss / 2 : w / 2 + ss / 2;
+        int d = 0;
+        for (int x = 0; x < 44; ++x) d += fa[x];
+        int a = (d * 512) / (rt.bsLastA + 30 * 256);
+        rt.bsLastA = d;
+        if (a > 255) a = 255;
+        rt.bsV[chn] = 0.7f * (std::max(a - 104, 12) / 96.0f) + 0.3f * rt.bsV[chn];
         rt.bsRv[chn] += 3.14159f / 6.0f * rt.bsV[chn] * (chn == 0 ? -1.0f : 1.0f);
 
-        const float radius = a / 256.0f * 0.5f;  // fraction of half-panel (NDC)
-        const float cx = chn == 0 ? -0.5f : 0.5f;
-        const float xp = std::cos(rt.bsRv[chn]) * radius;
-        const float yp = std::sin(rt.bsRv[chn]) * radius;
-        const QVector3D col = colorToVec(chn == 0 ? params.colorLeft : params.colorRight);
+        const double s = static_cast<double>(ss) * a / 256.0;
+        const int xp = static_cast<int>(std::cos(rt.bsRv[chn]) * s);
+        const int yp = static_cast<int>(std::sin(rt.bsRv[chn]) * s);
+        const QVector3D col =
+            colorToVec(chn == 0 ? params.colorLeft : params.colorRight);
 
-        auto mk = [&](float x, float y) {
-            lumi::modules::SuperscopePoint p;
-            p.x = cx + x;
-            p.y = y;
-            p.r = col.x();
-            p.g = col.y();
-            p.b = col.z();
-            p.a = 1.0f;
-            return p;
-        };
-        // Two spokes from the panel centre (mode 1 = line-approximated fill).
-        std::vector<lumi::modules::SuperscopePoint> pts{mk(xp, yp), mk(0.0f, 0.0f),
-                                                        mk(-xp, -yp)};
-        drawScopeShape(pts, false);
+        if (params.mode == 0)  // Linien: Speichen + Trail zur letzten Spitze
+        {
+            std::vector<lumi::modules::SuperscopePoint> pts;
+            const auto push = [&](int x, int y) {
+                lumi::modules::SuperscopePoint p;
+                p.x = ndcX(x);
+                p.y = ndcY(y);
+                p.r = col.x();
+                p.g = col.y();
+                p.b = col.z();
+                p.a = 1.0f;
+                pts.push_back(p);
+            };
+            const auto pushBreak = [&] {
+                lumi::modules::SuperscopePoint p;
+                p.skip = true;
+                pts.push_back(p);
+            };
+            if (rt.bsLx[0][chn] != 0 || rt.bsLy[0][chn] != 0)
+            {
+                push(rt.bsLx[0][chn], rt.bsLy[0][chn]);
+                push(cx + xp, h / 2 + yp);
+                pushBreak();
+            }
+            rt.bsLx[0][chn] = cx + xp;
+            rt.bsLy[0][chn] = h / 2 + yp;
+            push(cx, h / 2);
+            push(cx + xp, h / 2 + yp);
+            pushBreak();
+            if (rt.bsLx[1][chn] != 0 || rt.bsLy[1][chn] != 0)
+            {
+                push(rt.bsLx[1][chn], rt.bsLy[1][chn]);
+                push(cx - xp, h / 2 - yp);
+                pushBreak();
+            }
+            rt.bsLx[1][chn] = cx - xp;
+            rt.bsLy[1][chn] = h / 2 - yp;
+            push(cx, h / 2);
+            push(cx - xp, h / 2 - yp);
+            drawScopeShape(pts, false);
+        }
+        else  // Modus 1: gefuellte Dreiecke (my_triangle, Replace)
+        {
+            std::vector<float> tris;
+            const auto pushTri = [&](int x1, int y1, int x2, int y2, int x3,
+                                     int y3) {
+                tris.insert(tris.end(), {ndcX(x1), ndcY(y1), ndcX(x2), ndcY(y2),
+                                         ndcX(x3), ndcY(y3)});
+            };
+            if (rt.bsLx[0][chn] != 0 || rt.bsLy[0][chn] != 0)
+            {
+                pushTri(cx, h / 2, rt.bsLx[0][chn], rt.bsLy[0][chn], cx + xp,
+                        h / 2 + yp);
+            }
+            rt.bsLx[0][chn] = cx + xp;
+            rt.bsLy[0][chn] = h / 2 + yp;
+            if (rt.bsLx[1][chn] != 0 || rt.bsLy[1][chn] != 0)
+            {
+                pushTri(cx, h / 2, rt.bsLx[1][chn], rt.bsLy[1][chn], cx - xp,
+                        h / 2 - yp);
+            }
+            rt.bsLx[1][chn] = cx - xp;
+            rt.bsLy[1][chn] = h / 2 - yp;
+            drawFlatTriangles(tris, col);
+        }
     }
 }
 
@@ -6143,13 +6651,13 @@ void MultiEffectVisualizer::runSuperScope3D(const ChainNode& node,
 
     // v aus den visdata-Bytes (Byte/128-1, linear interpoliert; S45-Vertrag).
     const auto visValue = [&](double t01) -> double {
-        const int base = params.spectrumSource ? 0 : 2;  // Bloecke: S-L,S-R,W-L,W-R
         const double fpos = std::clamp(t01, 0.0, 1.0) * 575.0;
         const int i0 = static_cast<int>(fpos);
         const int i1 = std::min(i0 + 1, 575);
         const double frac = fpos - i0;
         const auto sample = [&](int ch) {
-            const unsigned char* d = m_visdata.data() + (base + ch) * 576;
+            const unsigned char* d =
+                params.spectrumSource ? visSpectrum(ch) : visWaveform(ch);
             return d[i0] * (1.0 - frac) + d[i1] * frac;
         };
         double byteVal = 0.0;
@@ -6945,18 +7453,19 @@ void MultiEffectVisualizer::runTimescope(const ChainNode& node,
     if (m_surfaceWidth <= 0) return;
     rt.timescopeX = (rt.timescopeX + 1) % m_surfaceWidth;
 
-    // Upload this frame's spectrum to a 1D texture (R32F).
-    const std::vector<float> spec = getSpectrum();
-    static const float kZero = 0.0f;
-    const int n = spec.empty() ? 1 : static_cast<int>(spec.size());
+    // Die ROHEN visdata-Spektrum-Bytes des linken Kanals als R8-Textur
+    // (r_timescope liest visdata[0][0] direkt — which_ch wird im Original
+    // berechnet, aber nie benutzt; S48-Matrix-Befund 39).
     if (m_specTex == 0) f->glGenTextures(1, &m_specTex);
     f->glBindTexture(GL_TEXTURE_2D, m_specTex);
-    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    f->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, n, 1, 0, GL_RED, GL_FLOAT,
-                    spec.empty() ? &kZero : spec.data());
+    f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    f->glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 576, 1, 0, GL_RED,
+                    GL_UNSIGNED_BYTE, visSpectrum(0));
+    f->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
     // Draw one column in place (no swap) into the working buffer.
     SurfacePair& pair = active();
@@ -6994,6 +7503,7 @@ void MultiEffectVisualizer::runTimescope(const ChainNode& node,
     m_timescopeShader->setUniformValue("uColor", colorToVec(params.color));
     m_timescopeShader->setUniformValue("uBands",
                                        static_cast<float>(std::clamp(params.bands, 1, 576)));
+    m_timescopeShader->setUniformValue("uH", static_cast<float>(m_surfaceHeight));
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_timescopeShader->release();
@@ -7093,41 +7603,201 @@ void MultiEffectVisualizer::runDotGrid(const ChainNode& node, const DotGridParam
 
 void MultiEffectVisualizer::runDotPlane(const ChainNode& node, const DotPlaneParams& params)
 {
+    // r_dotpln.cpp zeilengenau (S48, Tie-Tunnel-DM-Befund): 64x64-Grid
+    // scrollt je Frame eine Zeile; die frische Zeile bekommt Hoehe UND Farbe
+    // aus dem Spektrum (color_tab[Byte>>2]) und die Farbe WANDERT mit der
+    // Zeile mit — die alte Hoehen-Palette faerbte das ganze Feld um. Physik
+    // (Velocity - 0.15*h/255), 3D-Matrix (Rotation um y + angle um x,
+    // Translation 0/-20/400) und Zeichenreihenfolge wie das Original.
+    constexpr int kN = 64;  // NUM_WIDTH
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
-    rt.dotRot += static_cast<float>(params.rotVel) * 0.002f;
-
-    constexpr int kN = 28;
-    const std::vector<float> spec = getSpectrum();
-    const int sl = spec.empty() ? 1 : static_cast<int>(spec.size());
-    const float ca = std::cos(rt.dotRot);
-    const float sa = std::sin(rt.dotRot);
-    const float tilt = static_cast<float>(params.angle) / 90.0f;  // viewing tilt
-
-    std::vector<lumi::modules::SuperscopePoint> pts;
-    pts.reserve(kN * kN);
-    for (int fz = 0; fz < kN; ++fz)
+    if (!rt.dpSeeded || rt.dpHeights.size() != static_cast<std::size_t>(kN * kN))
     {
-        const float z = static_cast<float>(fz) / (kN - 1) * 2.0f - 1.0f;
-        for (int fx = 0; fx < kN; ++fx)
+        rt.dpHeights.assign(static_cast<std::size_t>(kN * kN), 0.0f);
+        rt.dpVel.assign(static_cast<std::size_t>(kN * kN), 0.0f);
+        rt.dpColors.assign(static_cast<std::size_t>(kN * kN), 0u);
+        rt.dpR = 0.0f;
+        rt.dpSeeded = true;
+    }
+
+    // initcolortab: 4 Segmente je 16 Schritte, exakte int-Arithmetik.
+    uint32_t colorTab[64];
+    for (int t = 0; t < 4; ++t)
+    {
+        const int c0 = static_cast<int>(params.colors[static_cast<std::size_t>(t)]);
+        const int c1 =
+            static_cast<int>(params.colors[static_cast<std::size_t>(t + 1)]);
+        int r = (c0 & 255) << 16;
+        int g = ((c0 >> 8) & 255) << 16;
+        int b = ((c0 >> 16) & 255) << 16;
+        const int dr = (((c1 & 255) - (c0 & 255)) << 16) / 16;
+        const int dg = ((((c1 >> 8) & 255) - ((c0 >> 8) & 255)) << 16) / 16;
+        const int db = ((((c1 >> 16) & 255) - ((c0 >> 16) & 255)) << 16) / 16;
+        for (int x = 0; x < 16; ++x)
         {
-            const float x = static_cast<float>(fx) / (kN - 1) * 2.0f - 1.0f;
-            // silence (empty spectrum) -> flat plane, never index the vector
-            const float hgt =
-                spec.empty() ? 0.0f : spec[static_cast<size_t>(fx * sl / kN)] * 0.8f;
-            const float rx = x * ca - z * sa;   // rotate around the vertical axis
-            const float rz = x * sa + z * ca;
-            const float wz = rz + 2.5f;          // push away from the camera
-            if (wz <= 0.1f) continue;
-            const float sx = rx / wz * 1.6f;
-            const float sy = (hgt - 0.4f - rz * tilt) / wz * 1.6f;
-            if (sx <= -1.0f || sx >= 1.0f || sy <= -1.0f || sy >= 1.0f) continue;
-            const QVector3D c = grad5(params.colors, hgt / 0.8f);
-            lumi::modules::SuperscopePoint p;
-            p.x = sx; p.y = sy; p.r = c.x(); p.g = c.y(); p.b = c.z(); p.a = 1.0f;
-            pts.push_back(p);
+            colorTab[t * 16 + x] = static_cast<uint32_t>(
+                (r >> 16) | ((g >> 16) << 8) | ((b >> 16) << 16));
+            r += dr;
+            g += dg;
+            b += db;
         }
     }
-    drawDots(pts, 2.0f);
+
+    // matrix.cpp-Helfer 1:1 (matrixRotate/Translate/Multiply/Apply).
+    const auto mRotate = [](float* m, int axis, float deg) {
+        const float rad = deg * 3.141592653589f / 180.0f;
+        std::memset(m, 0, sizeof(float) * 16);
+        m[((axis - 1) << 2) + axis - 1] = m[15] = 1.0f;
+        const int m1 = axis % 3;
+        const int m2 = (m1 + 1) % 3;
+        const float c = std::cos(rad);
+        const float s = std::sin(rad);
+        m[(m1 << 2) + m1] = c;
+        m[(m1 << 2) + m2] = s;
+        m[(m2 << 2) + m2] = c;
+        m[(m2 << 2) + m1] = -s;
+    };
+    const auto mTranslate = [](float* m, float x, float y, float z) {
+        std::memset(m, 0, sizeof(float) * 16);
+        m[0] = m[4 + 1] = m[8 + 2] = m[12 + 3] = 1.0f;
+        m[3] = x;
+        m[4 + 3] = y;
+        m[8 + 3] = z;
+    };
+    const auto mMultiply = [](float* dest, const float* src) {
+        float temp[16];
+        std::memcpy(temp, dest, sizeof(temp));
+        for (int i = 0; i < 16; i += 4)
+        {
+            for (int col = 0; col < 4; ++col)
+            {
+                dest[i + col] = src[i + 0] * temp[0 + col] + src[i + 1] * temp[4 + col] +
+                                src[i + 2] * temp[8 + col] + src[i + 3] * temp[12 + col];
+            }
+        }
+    };
+    const auto mApply = [](const float* m, float x, float y, float z, float& ox,
+                           float& oy, float& oz) {
+        ox = x * m[0] + y * m[1] + z * m[2] + m[3];
+        oy = x * m[4] + y * m[5] + z * m[6] + m[7];
+        oz = x * m[8] + y * m[9] + z * m[10] + m[11];
+    };
+
+    float matrix[16];
+    float matrix2[16];
+    mRotate(matrix, 2, rt.dpR);
+    mRotate(matrix2, 1, static_cast<float>(params.angle));
+    mMultiply(matrix, matrix2);
+    mTranslate(matrix2, 0.0f, -20.0f, 400.0f);
+    mMultiply(matrix, matrix2);
+
+    // Scroll + Physik + Injektion (Spektrum links, 3er-Gruppen-Maximum).
+    float btable[kN];
+    std::memcpy(btable, rt.dpHeights.data(), sizeof(btable));
+    for (int fo = 0; fo < kN; ++fo)
+    {
+        if (fo == kN - 1)  // Injektionszeile 0: frische Hoehe + Farbe
+        {
+            const unsigned char* sd = visSpectrum(0);
+            const float* i = btable;
+            float* o = rt.dpHeights.data();
+            float* ov = rt.dpVel.data();
+            uint32_t* oc = rt.dpColors.data();
+            for (int p = 0; p < kN; ++p)
+            {
+                int tv = std::max(sd[0], std::max(sd[1], sd[2]));
+                *o = static_cast<float>(tv);
+                tv >>= 2;
+                if (tv > 63) tv = 63;
+                *oc++ = colorTab[tv];
+                *ov++ = (*o - *i) / 90.0f;
+                ++o;
+                ++i;
+                sd += 3;
+            }
+        }
+        else  // Zeile t -> t+1 kopieren (mit Feder-Physik)
+        {
+            const int t = (kN - (fo + 2)) * kN;
+            const float* i = &rt.dpHeights[static_cast<std::size_t>(t)];
+            float* o = &rt.dpHeights[static_cast<std::size_t>(t + kN)];
+            const float* v = &rt.dpVel[static_cast<std::size_t>(t)];
+            float* ov = &rt.dpVel[static_cast<std::size_t>(t + kN)];
+            const uint32_t* c = &rt.dpColors[static_cast<std::size_t>(t)];
+            uint32_t* oc = &rt.dpColors[static_cast<std::size_t>(t + kN)];
+            for (int p = 0; p < kN; ++p)
+            {
+                *o = *i++ + *v;
+                if (*o < 0.0f) *o = 0.0f;
+                *ov++ = *v++ - 0.15f * (*o++ / 255.0f);
+                *oc++ = *c++;
+            }
+        }
+    }
+
+    // Projektion + Zeichenreihenfolge (r-abhaengiges Back-to-Front-Flippen).
+    const int w = m_surfaceWidth;
+    const int h = m_surfaceHeight;
+    float adj = static_cast<float>(w) * 440.0f / 640.0f;
+    const float adj2 = static_cast<float>(h) * 440.0f / 480.0f;
+    if (adj2 < adj) adj = adj2;
+
+    std::vector<lumi::modules::SuperscopePoint> pts;
+    pts.reserve(static_cast<std::size_t>(kN * kN));
+    for (int fo = 0; fo < kN; ++fo)
+    {
+        const int f =
+            (rt.dpR < 90.0f || rt.dpR > 270.0f) ? kN - fo - 1 : fo;
+        float dw = 350.0f / static_cast<float>(kN);
+        float wpos = -(kN * 0.5f) * dw;
+        const float q = (static_cast<float>(f) - kN * 0.5f) * dw;
+        const uint32_t* ct = &rt.dpColors[static_cast<std::size_t>(f * kN)];
+        const float* at = &rt.dpHeights[static_cast<std::size_t>(f * kN)];
+        int da = 1;
+        if (rt.dpR < 180.0f)
+        {
+            da = -1;
+            dw = -dw;
+            wpos = -wpos + dw;
+            ct += kN - 1;
+            at += kN - 1;
+        }
+        for (int p = 0; p < kN; ++p)
+        {
+            float x;
+            float y;
+            float z;
+            mApply(matrix, wpos, 64.0f - *at, q, x, y, z);
+            if (z > 0.0f)
+            {
+                z = adj / z;
+                const int ix = static_cast<int>(x * z) + w / 2;
+                const int iy = static_cast<int>(y * z) + h / 2;
+                if (iy >= 0 && iy < h && ix >= 0 && ix < w)
+                {
+                    const QVector3D col = colorToVec(*ct);
+                    lumi::modules::SuperscopePoint pt;
+                    pt.x = (static_cast<float>(ix) + 0.5f) /
+                               static_cast<float>(w) * 2.0f - 1.0f;
+                    pt.y = -((static_cast<float>(iy) + 0.5f) /
+                                 static_cast<float>(h) * 2.0f - 1.0f);  // AVS y+ unten
+                    pt.r = col.x();
+                    pt.g = col.y();
+                    pt.b = col.z();
+                    pt.a = 1.0f;
+                    pts.push_back(pt);
+                }
+            }
+            wpos += dw;
+            ct += da;
+            at += da;
+        }
+    }
+    drawDots(pts, 1.0f, 3);  // 1px-Dots via BLEND_LINE (folgt SRM, Original)
+
+    rt.dpR += static_cast<float>(params.rotVel) / 5.0f;
+    if (rt.dpR >= 360.0f) rt.dpR -= 360.0f;
+    if (rt.dpR < 0.0f) rt.dpR += 360.0f;
 }
 
 void MultiEffectVisualizer::runDotFountain(const ChainNode& node,
@@ -7977,11 +8647,11 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
         rt.fracCompiled.clear();
     }
 
-    // Persistent zoom (fracTime) + rotation (rotoAngle) advance every frame.
+    // Persistent zoom (fracTime) + rotation (fracRot) advance every frame.
     if (rt.fracTime <= 0.0f) rt.fracTime = 1.0f;
     rt.fracTime *= (zoomSpeed > 1e-4f ? zoomSpeed : 1.0f);
     if (rt.fracTime > 1e12f) rt.fracTime = 1.0f;  // loop the trip
-    rt.rotoAngle += rotSpeed;
+    rt.fracRot += rotSpeed;
     rt.fracColorPhase += params.colorCycle * m_deltaTime;
     const float aspect = m_surfaceHeight > 0
                              ? static_cast<float>(m_surfaceWidth) /
@@ -7993,7 +8663,7 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
     m_fractal2DShader->bind();
     m_fractal2DShader->setUniformValue("uCenter", QVector2D(cx, cy));
     m_fractal2DShader->setUniformValue("uZoom", rt.fracTime);
-    m_fractal2DShader->setUniformValue("uRot", rt.rotoAngle);
+    m_fractal2DShader->setUniformValue("uRot", rt.fracRot);
     m_fractal2DShader->setUniformValue("uAspect", aspect);
     m_fractal2DShader->setUniformValue("uType", t2type);
     m_fractal2DShader->setUniformValue("uMaxIter", std::clamp(params.maxIter, 1, 2048));

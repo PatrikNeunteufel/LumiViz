@@ -2474,10 +2474,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     }
     else if (auto* p = std::get_if<SimpleScopeParams>(&params))
     {
-        addEnum(tr("Source"), p->source, {"Spectrum", "Waveform"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).source = v; });
+        addEnum(tr("Mode"), p->mode,
+                {"Solid analyzer", "Line analyzer", "Line scope", "Solid scope",
+                 "Dot analyzer", "Dot scope"},
+                [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).mode = v; });
         addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).channel = v; });
         addEnum(tr("Position"), p->position, {"Top", "Bottom", "Center"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).position = v; });
-        addEnum(tr("Draw"), p->drawMode, {"Lines", "Dots"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).drawMode = v; });
         auto* info = new QLabel(tr("%1 cycled colors (imported)").arg(p->colors.size()), m_propContainer);
         form->addRow(info);
     }
@@ -2554,16 +2556,22 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     }
     else if (auto* p = std::get_if<BlitterFeedbackParams>(&params))
     {
-        addDouble(tr("Zoom"), p->zoom, 0.5, 2.0, 0.01, [](ChainNode& n, double v) { std::get<BlitterFeedbackParams>(n.params).zoom = static_cast<float>(v); });
-        addDouble(tr("Beat zoom"), p->beatZoom, 0.5, 2.0, 0.01, [](ChainNode& n, double v) { std::get<BlitterFeedbackParams>(n.params).beatZoom = static_cast<float>(v); });
+        addInt(tr("Scale (32 = off, <32 in, >32 out)"), p->scale, 0, 256, [](ChainNode& n, int v) { std::get<BlitterFeedbackParams>(n.params).scale = v; });
+        addInt(tr("Beat scale"), p->scale2, 0, 256, [](ChainNode& n, int v) { std::get<BlitterFeedbackParams>(n.params).scale2 = v; });
         addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).onBeat = v; });
-        addBool(tr("Blend"), p->blend, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).blend = v; });
+        addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).blend = v; });
+        addBool(tr("Subpixel (bilinear)"), p->subpixel, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).subpixel = v; });
     }
     else if (auto* p = std::get_if<RotoBlitterParams>(&params))
     {
-        addDouble(tr("Zoom"), p->zoom, 0.5, 2.0, 0.01, [](ChainNode& n, double v) { std::get<RotoBlitterParams>(n.params).zoom = static_cast<float>(v); });
-        addDouble(tr("Rotation/frame"), p->rotationSpeed, -10.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<RotoBlitterParams>(n.params).rotationSpeed = static_cast<float>(v); });
-        addBool(tr("Blend"), p->blend, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).blend = v; });
+        addInt(tr("Zoom scale (31 = off)"), p->zoomScale, 0, 256, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).zoomScale = v; });
+        addInt(tr("Beat zoom scale"), p->zoomScale2, 0, 256, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).zoomScale2 = v; });
+        addInt(tr("Rotation (32 = off, deg/frame +32)"), p->rotDir, 0, 64, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).rotDir = v; });
+        addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).blend = v; });
+        addBool(tr("Beat reverse"), p->beatReverse, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).beatReverse = v; });
+        addInt(tr("Reverse speed"), p->beatReverseSpeed, 0, 8, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).beatReverseSpeed = v; });
+        addBool(tr("Beat zoom jump"), p->beatZoomJump, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).beatZoomJump = v; });
+        addBool(tr("Subpixel (bilinear)"), p->subpixel, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).subpixel = v; });
     }
     else if (auto* p = std::get_if<BufferSaveParams>(&params))
     {

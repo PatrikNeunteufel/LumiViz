@@ -529,10 +529,14 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
         {
             SimpleScopeParams p;
             const int effect = src.field("effect");
-            p.source = (effect & 2) != 0 ? 1 : 0;  // 2 = oscilloscope (waveform)
+            // r_simple: Bit 6 = Dot-Modus (Bit 1 waehlt Scope/Analyzer),
+            // sonst effect&3 = solid ana / line ana / line scope / solid scope.
+            if ((effect & (1 << 6)) != 0)
+                p.mode = (effect & 2) != 0 ? 5 : 4;
+            else
+                p.mode = effect & 3;
             p.channel = (effect >> 2) & 3;
             p.position = (effect >> 4) & 3;
-            p.drawMode = (effect & (1 << 6)) != 0 ? 1 : 0;  // dots
             p.colors.clear();
             for (std::uint32_t c : src.colors)
                 p.colors.push_back(avsColor(static_cast<std::int32_t>(c)));
@@ -700,11 +704,12 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
         case kBlitterFeedback:
         {
             BlitterFeedbackParams p;
-            // scale mapping approximate (tune in sight test); ~1.0 = no zoom.
-            p.zoom = 1.0f + static_cast<float>(src.field("scale")) / 1024.0f;
-            p.beatZoom = 1.0f + static_cast<float>(src.field("scale2")) / 1024.0f;
+            // r_blit-Felder 1:1 (S48): fpos-Ease/Formeln macht der Renderer.
+            p.scale = src.field("scale");
+            p.scale2 = src.field("scale2");
             p.onBeat = src.field("beatch") != 0;
             p.blend = src.field("blend") != 0;
+            p.subpixel = src.field("subpixel") != 0;
             out.params = p;
             return true;
         }
@@ -712,9 +717,15 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
         case kRotoBlitter:
         {
             RotoBlitterParams p;
-            p.zoom = 1.0f + static_cast<float>(src.field("zoom_scale")) / 1024.0f;
-            p.rotationSpeed = static_cast<float>(src.field("rot_dir")) / 32.0f;
+            // r_rotblit-Felder 1:1 (S48): theta/zoom rechnet der Renderer.
+            p.zoomScale = src.field("zoom_scale");
+            p.zoomScale2 = src.field("zoom_scale2");
+            p.rotDir = src.field("rot_dir");
             p.blend = src.field("blend") != 0;
+            p.beatReverse = src.field("beatch") != 0;
+            p.beatReverseSpeed = src.field("beatch_speed");
+            p.beatZoomJump = src.field("beatch_scale") != 0;
+            p.subpixel = src.field("subpixel") != 0;
             out.params = p;
             return true;
         }

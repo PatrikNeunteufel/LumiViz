@@ -211,16 +211,20 @@ struct BrightnessParams
 };
 
 /**
- * AVS "Render / Simple" (ID 0, r_simple.cpp): the classic scope — an oscilloscope
- * (waveform) or analyzer (spectrum), drawn as lines or dots, at a screen position,
- * colour-cycled through `colors`. `source` 0 spectrum, 1 waveform.
+ * AVS "Render / Simple" (ID 0, r_simple.cpp): the classic scope. `mode`
+ * deckt das effect-Bitfeld ab (Bit 6 = Dot-Modus, sonst effect&3):
+ * 0 solid analyzer · 1 line analyzer · 2 line scope · 3 solid scope ·
+ * 4 dot analyzer · 5 dot scope. Analyzer lesen das SPEKTRUM (200 Baender,
+ * xs=200/w), Scopes die Waveform (288 Samples, Byte^128); solid = eine
+ * vertikale Linie je Bildspalte (S48-Matrix-Befund: der Default effect=0
+ * ist solid analyzer — vorher zeichneten wir nur eine Linie).
  */
 struct SimpleScopeParams
 {
-    int source = 1;    ///< 0 analyzer (spectrum), 1 oscilloscope (waveform)
-    int channel = 2;   ///< 0 L, 1 R, 2 center
+    int mode = 3;      ///< 0 solid ana, 1 line ana, 2 line scope, 3 solid scope,
+                       ///< 4 dot analyzer, 5 dot scope
+    int channel = 2;   ///< 0 L, 1 R, 2 center (Byte-Halbierung wie Original)
     int position = 2;  ///< 0 top, 1 bottom, 2 center
-    int drawMode = 0;  ///< 0 lines, 1 dots
     std::vector<uint32_t> colors{0xFFFFFF};  ///< cycled colour table
 };
 
@@ -712,27 +716,44 @@ struct DynamicShiftParams
 };
 
 /**
- * AVS "Trans / Blitter Feedback" (ID 4): zoom the current image and blend it
- * with itself — a scale-feedback trail. Zoom is a direct factor (1 = none);
- * the exact AVS scale-slider mapping is applied by the 5.5 translator.
+ * AVS "Trans / Blitter Feedback" (ID 4, r_blit.cpp — S48 auf die
+ * Original-Felder umgestellt): fpos eased mit +-3/Frame auf `scale`
+ * (Beat setzt fpos=scale2 wenn onBeat). f_val < 32 = blitter_normal
+ * (zentrischer Zoom-IN, Faktor 64/(f_val+32)); f_val > 32 = blitter_out
+ * (das GANZE Bild in ein zentriertes Fenster w/((f_val+96)/128) skaliert,
+ * der Rand bleibt stehen); 32 = no-op. `blend` = BLEND_AVG mit dem
+ * Original; `subpixel` = bilinear (BLEND4) — ohne kaskadiert der
+ * Nearest-Zoom zum Mosaik (Matrix-Befund 04).
  */
 struct BlitterFeedbackParams
 {
-    float zoom = 1.03f;      ///< per-frame zoom factor (>1 magnifies)
-    float beatZoom = 0.9f;   ///< zoom used on beat when `onBeat`
-    bool onBeat = false;     ///< switch to beatZoom on a beat
-    bool blend = true;       ///< 50/50 with the original instead of replace
+    int scale = 30;         ///< Zielwert des fpos-Ease (0..256; 32 = neutral)
+    int scale2 = 30;        ///< Beat-Sprungwert (onBeat)
+    bool onBeat = false;    ///< Beat setzt fpos = scale2
+    bool blend = false;     ///< BLEND_AVG mit dem Original statt Replace
+    bool subpixel = true;   ///< bilineares Sampling (BLEND4)
 };
 
 /**
- * AVS "Trans / Roto Blitter" (ID 9): rotate + zoom the current image and blend
- * it with itself. Rotation accumulates over time at `rotationSpeed` deg/frame.
+ * AVS "Trans / Roto Blitter" (ID 9, r_rotblit.cpp — S48 auf die
+ * Original-Semantik umgestellt): das Bild wird JEDE Frame um das konstante
+ * theta = (rotDir-32)*rot_rev Grad gedreht und um 1+(f_val-31)/31 gezoomt —
+ * die sichtbare Rotation akkumuliert uebers FEEDBACK (nicht ueber einen
+ * wachsenden Winkel; die alte Doppel-Akkumulation war das Pixel-Rauschen
+ * des Matrix-Befunds 09). Sampling WRAPPT (kachelt) wie das Original.
+ * beatReverse kehrt die Drehrichtung am Beat um (Ease ueber
+ * beatReverseSpeed), beatZoomJump setzt das Zoom-fpos auf zoomScale2.
  */
 struct RotoBlitterParams
 {
-    float zoom = 1.0f;            ///< zoom factor
-    float rotationSpeed = 1.0f;  ///< degrees per frame (sign = direction)
-    bool blend = true;           ///< 50/50 with the original instead of replace
+    int zoomScale = 31;          ///< Zoom-Zielwert (31 = neutral)
+    int zoomScale2 = 31;         ///< Beat-Zoomwert (beatZoomJump)
+    int rotDir = 31;             ///< theta = (rotDir-32) Grad je Frame
+    bool blend = false;          ///< BLEND_AVG mit dem Original
+    bool beatReverse = false;    ///< Beat kehrt die Drehrichtung um
+    int beatReverseSpeed = 0;    ///< Ease des Richtungswechsels (0 = hart)
+    bool beatZoomJump = false;   ///< Beat setzt fpos = zoomScale2
+    bool subpixel = true;        ///< bilineares Sampling (BLEND4)
 };
 
 /**

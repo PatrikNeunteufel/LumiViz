@@ -23,11 +23,10 @@
         "colors": [
           16777215
         ],
-        "drawMode": 0,
         "enabled": true,
+        "mode": 0,
         "name": "Simple",
         "position": 0,
-        "source": 0,
         "type": "simpleScope"
       }
     ],

@@ -63,13 +63,14 @@
         "type": "superScope"
       },
       {
-        "beatZoom": 1.029296875,
         "blend": false,
         "enabled": true,
         "name": "Blitter Feedback",
         "onBeat": false,
-        "type": "blitterFeedback",
-        "zoom": 1.09765625
+        "scale": 100,
+        "scale2": 30,
+        "subpixel": true,
+        "type": "blitterFeedback"
       }
     ],
     "clearEveryFrame": false,

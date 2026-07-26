@@ -269,7 +269,15 @@ private:
         std::unique_ptr<lumi::modules::SuperscopeModule> scope;
         std::string scopeCompiled;
 
-        float rotoAngle = 0.0f;  ///< Roto Blitter: accumulated rotation (rad)
+        // Roto Blitter (r_rotblit, S48): Richtungs- und Zoom-Ease-Zustand —
+        // die Rotation selbst akkumuliert uebers FEEDBACK, nicht hier.
+        bool rotoSeeded = false;
+        float rotoRev = 1.0f;     ///< Zielrichtung (+1/-1; Beat toggelt)
+        float rotoRevPos = 1.0f;  ///< geeaster Richtungsfaktor
+        int rotoFpos = 31;        ///< scale_fpos (Zoom-Ease)
+        // Blitter Feedback (r_blit, S48): fpos-Ease (+-3/Frame Richtung scale)
+        bool bfSeeded = false;
+        int bfFpos = 30;
 
         // Custom BPM
         std::int64_t customLastMs = 0;  ///< arbitrary-mode last emit time
@@ -329,7 +337,11 @@ private:
         float scopeRot = 0.0f;      ///< accumulating rotation (oscstar/oscring/rotstar)
         float bsRv[2] = {3.14159f, 0.0f};  ///< Bass Spin per-channel angle
         float bsV[2] = {0.0f, 0.0f};       ///< Bass Spin per-channel angular velocity
-        float bsLastA[2] = {0.0f, 0.0f};   ///< Bass Spin per-channel bass-energy history
+        /// Bass Spin: last_a ist im Original EIN Member ueber beide Kanaele
+        /// (r_bspin.cpp — der linke Kanal beeinflusst das a des rechten; S48)
+        int bsLastA = 0;
+        int bsLx[2][2] = {{0, 0}, {0, 0}};  ///< letzte Spitze [spoke][kanal] (px)
+        int bsLy[2][2] = {{0, 0}, {0, 0}};
 
         // Moving Particle: spring-particle state (r_parts)
         bool mpSeeded = false;
@@ -386,8 +398,17 @@ private:
         float dotColorPos = 0.0f;  ///< Dot Grid: colour-table cycle position
         float dotOffX = 0.0f;      ///< Dot Grid: scroll offset
         float dotOffY = 0.0f;
-        float dotRot = 0.0f;       ///< Dot Plane/Fountain: accumulating rotation
+        float dotRot = 0.0f;       ///< Dot Fountain: accumulating rotation
         std::vector<FountainP> fountain;  ///< Dot Fountain particles
+
+        // Dot Plane (r_dotpln, S48-Neuschrieb): scrollendes 64x64-Grid mit
+        // Physik; die Injektionszeile traegt Hoehe UND Farbe aus dem Spektrum
+        // (color_tab[Byte>>2]) — die Farbe wandert mit der Zeile mit.
+        std::vector<float> dpHeights;    ///< atable (64*64)
+        std::vector<float> dpVel;        ///< vtable
+        std::vector<uint32_t> dpColors;  ///< ctable (FB-Ints)
+        float dpR = 0.0f;                ///< akkumulierte Rotation (Grad)
+        bool dpSeeded = false;
 
         int apeChanMode = -1;      ///< Channel Shift on-beat held permutation
 
@@ -399,6 +420,7 @@ private:
         std::string fracLutSnapshot;   ///< gradient preset the LUT was baked from
         float fracColorPhase = 0.0f;   ///< accumulated palette drift (colorCycle)
         float fracTime = 0.0f;         ///< accumulated animation phase (Domain Warp / Zoomer log-zoom)
+        float fracRot = 0.0f;          ///< Fractal Zoomer: akkumulierte Rotation (S48: eigenes Feld, war rotoAngle)
 
         // Strange Attractor / Flame (Batch H): persistent orbit + view rotation
         double saX = 0.1, saY = 0.0, saZ = 0.0;  ///< current orbit position
@@ -585,11 +607,17 @@ private:
                        const GridWarpOptions& opt);
     void applyGridScatter(LeafRuntime& rt, int xres, int yres,
                           const GridWarpOptions& opt);
-    void runBlitterFeedback(const lumi::multieffect::BlitterFeedbackParams& params);
+    void runBlitterFeedback(const lumi::multieffect::ChainNode& node,
+                            const lumi::multieffect::BlitterFeedbackParams& params);
     void runRotoBlitter(const lumi::multieffect::ChainNode& node,
                         const lumi::multieffect::RotoBlitterParams& params);
-    /** Shared roto/zoom feedback pass: sample current transformed, blend, swap. */
-    void feedbackPass(float zoom, float angleRad, bool blend);
+    /**
+     * Gemeinsamer Feedback-Pass (r_blit/r_rotblit, S48): affines Sampling in
+     * Pixeln (src = map*dest + off), wrap = Kachel-Modulo wie r_rotblit,
+     * blend = BLEND_AVG mit dem Original, subpixel = BLEND4-Bilinear.
+     */
+    void feedbackPass(const QMatrix2x2& map, const QVector2D& off, bool wrap,
+                      bool blend, bool subpixel);
     void runBufferSave(const lumi::multieffect::ChainNode& node,
                        const lumi::multieffect::BufferSaveParams& params);
     void runFyrewurX(const lumi::multieffect::ChainNode& node,
@@ -684,6 +712,18 @@ private:
 
     /// Rebuild m_visdata (AVS layout) from this frame's waveform + spectrum.
     void buildVisData();
+    /// Rohe visdata-Bytes (AVS-Vertrag, S48): getSpectrum()/getWaveform()
+    /// sind NORMALISIERT (App-Skala) — AVS-treue Effekte lesen stattdessen
+    /// diese Bloecke (Spektrum linear /16, Waveform-Bytes ^128-Konvention);
+    /// dieselbe Quelle wie getspec/getosc der Skripte (eine Wahrheit).
+    [[nodiscard]] const unsigned char* visSpectrum(int channel) const
+    {
+        return m_visdata.data() + (channel & 1) * 576;
+    }
+    [[nodiscard]] const unsigned char* visWaveform(int channel) const
+    {
+        return m_visdata.data() + (2 + (channel & 1)) * 576;
+    }
     /// Feed the shared audio contract (visdata + gettime + bass/mid/treb/vol/beat/
     /// time) into a script engine — every scripted module gets the same set (E1).
     void feedAudio(lumi::scripting::LuaScriptEngine& engine);
@@ -755,6 +795,7 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_sprite3dShader;    ///< SuperScope 3D: Soft-Sprites
     std::unique_ptr<QOpenGLShaderProgram> m_terrain3dShader;   ///< Terrain 3D: opakes Mesh + Fog
     std::unique_ptr<QOpenGLShaderProgram> m_orb3dShader;       ///< Glow Orbs: Ellipsoid + Verlauf
+    std::unique_ptr<QOpenGLShaderProgram> m_flatShader;        ///< Flat-Color-Fill (my_triangle, S48)
     std::unique_ptr<QOpenGLShaderProgram> m_shiftShader;  ///< Dynamic Shift (r_shift)
     std::unique_ptr<QOpenGLShaderProgram> m_ddmShader;    ///< Dynamic Distance Modifier (r_ddm)
     std::unique_ptr<QOpenGLShaderProgram> m_colorMapShader;  ///< Color Map APE
@@ -802,6 +843,12 @@ private:
     std::unique_ptr<QOpenGLBuffer> m_orbVbo;
     std::unique_ptr<QOpenGLBuffer> m_orbIbo;
     int m_orbIndexCount = 0;
+    // Flat-Fill-Dreiecke (my_triangle-Ersatz: Bass Spin Modus 1, S48):
+    // dynamisches pos.xy-Mesh, Uniform-Farbe, Replace ohne Blend
+    std::unique_ptr<QOpenGLVertexArrayObject> m_triVao;
+    std::unique_ptr<QOpenGLBuffer> m_triVbo;
+    /// GL_TRIANGLES aus NDC-Paaren (x,y je Vertex) in Uniform-Farbe zeichnen
+    void drawFlatTriangles(const std::vector<float>& xyNdc, const QVector3D& color);
     // Gemeinsames Depth-RT der opaken 3D-Module (Etappe-2-Entscheid 1):
     // eigene Textur statt FBO-Attachment-Paar — ueberlebt das Farb-Ping-Pong.
     unsigned int m_depth3dTex = 0;  ///< GL_DEPTH_COMPONENT24 (onCleanup)

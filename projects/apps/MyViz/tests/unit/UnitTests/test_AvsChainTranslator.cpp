@@ -417,7 +417,7 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(t.report[0].find("Framerate Limiter") != std::string::npos);
     }
 
-    TEST_CASE("Simple (id 0): effect-Bitfeld -> Source/Channel/Position/Dots")
+    TEST_CASE("Simple (id 0): effect-Bitfeld -> Mode/Channel/Position")
     {
         EffectNode s = builtin(0);
         s.fields = {{"effect", 2 | (1 << 2) | (2 << 4) | (1 << 6)}};
@@ -425,12 +425,21 @@ TEST_SUITE("AvsChainTranslator")
         const TranslationResult t = translateAvsTree(makeParsed({s}));
         REQUIRE(std::holds_alternative<SimpleScopeParams>(t.root.children[0].params));
         const auto& p = std::get<SimpleScopeParams>(t.root.children[0].params);
-        CHECK(p.source == 1);    // waveform (bit 1)
+        CHECK(p.mode == 5);      // Bit 6 + Bit 1 = dot scope
         CHECK(p.channel == 1);   // right
         CHECK(p.position == 2);  // center
-        CHECK(p.drawMode == 1);  // dots
         REQUIRE(p.colors.size() == 1);
         CHECK(p.colors[0] == 0x0000FFu);
+
+        // Ohne Bit 6 ist effect&3 der Modus — 0 = SOLID analyzer
+        // (S48-Matrix-Befund: Datei-Default zeichnete vorher nur eine Linie).
+        EffectNode s2 = builtin(0);
+        s2.fields = {{"effect", 0}};
+        const TranslationResult t2 = translateAvsTree(makeParsed({s2}));
+        const auto& p2 = std::get<SimpleScopeParams>(t2.root.children[0].params);
+        CHECK(p2.mode == 0);     // solid analyzer
+        CHECK(p2.channel == 0);  // left
+        CHECK(p2.position == 0); // top
     }
 
     TEST_CASE("Bass Spin (id 7): enabled-Bits + Farben")

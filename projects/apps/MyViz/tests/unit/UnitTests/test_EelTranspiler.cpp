@@ -149,8 +149,11 @@ TEST_CASE("EelTranspiler: %-Operator ist Integer-Modulo mit EEL-Regeln")
 {
     CHECK(evalEel("r = 7 % 3") == doctest::Approx(1.0));
     CHECK(evalEel("r = 7.4 % 3.2") == doctest::Approx(1.0));  // round -> 7 % 3
-    CHECK(evalEel("r = -7 % 3") == doctest::Approx(1.0));     // |Rest|
-    CHECK(evalEel("r = 5 % 0") == doctest::Approx(0.0));      // Divisor 0 -> 0
+    // nseel_asm_mod rechnet den Rest UNSIGNED: int32(-7) wickelt ueber 2^32,
+    // 4294967289 % 3 = 0 — per AvsRef-Probe belegt (S48; die fruehere
+    // |Rest|-Annahme aus S44 war falsch).
+    CHECK(evalEel("r = -7 % 3") == doctest::Approx(0.0));
+    CHECK(evalEel("r = 5 % 0") == doctest::Approx(0.0));      // Divisor -> max(,1)
 }
 
 TEST_CASE("EelTranspiler: & | sind Bit-Operationen auf gerundeten Ints")

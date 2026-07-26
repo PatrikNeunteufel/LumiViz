@@ -63,12 +63,17 @@
         "type": "superScope"
       },
       {
+        "beatReverse": false,
+        "beatReverseSpeed": 0,
+        "beatZoomJump": false,
         "blend": false,
         "enabled": true,
         "name": "Roto Blitter",
-        "rotationSpeed": 1.25,
+        "rotDir": 40,
+        "subpixel": true,
         "type": "rotoBlitter",
-        "zoom": 1.02734375
+        "zoomScale": 28,
+        "zoomScale2": 28
       }
     ],
     "clearEveryFrame": false,

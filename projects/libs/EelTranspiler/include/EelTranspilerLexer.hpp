@@ -80,13 +80,18 @@ public:
                 if (!lexDollar(out)) return false;
                 continue;
             }
-            // Nicht-ASCII-Bytes still ueberspringen wie das Original-EEL:
-            // AVS-Autoren signieren Skripte mit Sonderzeichen (UnConeD: ';\xA9;'
-            // = ';(c);' — Befund S46/Anemone: Lexer-Abbruch toetete den Slot
-            // und liess alle Farben auf 0 -> Preset schwarz).
+            // Nicht-ASCII-Bytes: das Original-EEL frisst ab dem Byte den REST
+            // DES STATEMENTS als toten Identifier — das Statement wird zum
+            // stillen No-op, der Slot LEBT weiter (AvsRef-Proben S48; so
+            // funktionieren UnConeDs Pseudo-Kommentare "\xA4 1st - Line;" im
+            // Neon Coaster). Nur die Bytes zu strippen (S46) liess die
+            // Titelwoerter stehen und der Parse-Fehler toetete den ganzen
+            // Slot. Der S46-Fall ';\xA9;' (Signatur) ist hier enthalten.
+            // NACKTE Titel ohne Nicht-ASCII bleiben ein Fehler (Slot leer) —
+            // auch das ist Original-Verhalten (Probe B, S48).
             if (static_cast<unsigned char>(c) >= 0x80)
             {
-                advance();
+                while (!atEnd() && peek() != ';') advance();
                 continue;
             }
             if (!lexOperator(out)) return false;

@@ -109,12 +109,15 @@ TEST_CASE("LuaEngine: Sandbox — Whitelist, keine Stdlib, unbekannte Variablen 
 // EEL-Prelude — Golden-Tests (Semantik-Vertrag Import-Analyse §7.2)
 // =============================================================================
 
-TEST_CASE("LuaEngine: eel-Prelude — Integer-Modulo (D-Semantik)")
+TEST_CASE("LuaEngine: eel-Prelude — Integer-Modulo (nseel_asm_mod, S48)")
 {
     LuaScriptEngine lua;
     CHECK(evalOrFail(lua, "eel.mod(7, 3)") == doctest::Approx(1.0));
-    CHECK(evalOrFail(lua, "eel.mod(-7, 3)") == doctest::Approx(1.0));   // |Rest|
-    CHECK(evalOrFail(lua, "eel.mod(5, 0)") == doctest::Approx(0.0));    // Divisor 0 -> 0
+    // UNSIGNED Rest: int32(-7) wickelt ueber 2^32 -> 4294967289 % 3 = 0
+    // (AvsRef-Probe S48; die S44-|Rest|-Annahme war falsch — der Neon
+    // Coaster haengt mit mf=getosc(..)*200%4 an genau dieser Semantik).
+    CHECK(evalOrFail(lua, "eel.mod(-7, 3)") == doctest::Approx(0.0));
+    CHECK(evalOrFail(lua, "eel.mod(5, 0)") == doctest::Approx(0.0));    // Divisor -> max(,1)
     CHECK(evalOrFail(lua, "eel.mod(7.4, 3.2)") == doctest::Approx(1.0)); // round: 7 % 3
 }
 

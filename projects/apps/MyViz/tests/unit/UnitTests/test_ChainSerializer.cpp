@@ -706,7 +706,7 @@ TEST_SUITE("ChainSerializer")
         root.params = ListParams{};
         ChainNode a;
         SimpleScopeParams s;
-        s.source = 0; s.channel = 1; s.position = 0; s.drawMode = 1;
+        s.mode = 0; s.channel = 1; s.position = 0;  // solid analyzer (S48)
         s.colors = {0xFF0000, 0x00FF00};
         a.params = s;
         root.children.push_back(std::move(a));
@@ -717,10 +717,29 @@ TEST_SUITE("ChainSerializer")
         const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
         REQUIRE(restored.children.size() == 2);
         const auto& ps = std::get<SimpleScopeParams>(restored.children[0].params);
-        CHECK(ps.source == 0);
-        CHECK(ps.drawMode == 1);
+        CHECK(ps.mode == 0);
+        CHECK(ps.channel == 1);
         REQUIRE(ps.colors.size() == 2);
         CHECK(ps.colors[1] == 0x00FF00u);
+
+        // Alt-Dokument (vor S48): source/drawMode werden auf mode gemappt.
+        QJsonObject legacy;
+        legacy["type"] = "simpleScope";
+        legacy["source"] = 1;    // waveform
+        legacy["drawMode"] = 0;  // lines
+        ChainNode legacyRoot;
+        legacyRoot.params = ListParams{};
+        QJsonObject doc;
+        QJsonObject rootObj;
+        rootObj["type"] = "list";
+        QJsonArray kids;
+        kids.append(legacy);
+        rootObj["children"] = kids;
+        doc["root"] = rootObj;
+        const ChainNode fromLegacy = chainFromJson(doc, nullptr);
+        REQUIRE(fromLegacy.children.size() == 1);
+        CHECK(std::get<SimpleScopeParams>(fromLegacy.children[0].params).mode ==
+              2);  // line scope
         const auto& pb = std::get<BassSpinParams>(restored.children[1].params);
         CHECK_FALSE(pb.left);
         CHECK(pb.right);
