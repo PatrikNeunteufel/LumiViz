@@ -71,7 +71,8 @@ std::array<float, 3> blendBase(int mode, const std::array<float, 3>& table, floa
 // Construction
 // =============================================================================
 
-SuperscopeModule::SuperscopeModule()
+SuperscopeModule::SuperscopeModule(std::shared_ptr<scripting::ScriptContext> context)
+    : m_context(std::move(context))
 {
     // Initialize color gradient with Linear mode and a nice default preset
     m_colorGradient.setMode(GradientMode::Linear);
@@ -133,7 +134,7 @@ void SuperscopeModule::initializeLuaScripts()
 
     if (m_script == nullptr)
     {
-        m_script = std::make_unique<ScriptSlotHost>("superscope");
+        m_script = std::make_unique<ScriptSlotHost>("superscope", m_context);
     }
     m_lastScriptError.clear();
     m_script->clearError();

@@ -198,6 +198,43 @@ TEST_CASE("ScriptGridModule: geteilter Kontext verbindet Grid und andere Traeger
     CHECK(grid.node(2, 2).u == doctest::Approx(0.5f));
 }
 
+TEST_CASE("SuperscopeModule: geteilter Kontext — Scope liest und schreibt reg")
+{
+    // AVS haelt reg00..reg99 GLOBAL. Der Scope-Host bekam frueher KEINEN
+    // Kontext und damit einen eigenen, isolierten Satz: jedes reg las 0
+    // (Befund S50). In "Mister Santa" holen sich saemtliche Scopes die
+    // Kamera-Matrix aus reg00..reg11 einer Dynamic Movement — der komplette
+    // Vordergrund blieb deshalb unsichtbar, waehrend der Hintergrund stimmte.
+    static const std::vector<float> kSilence(576, 0.0f);
+    auto ctx = std::make_shared<ScriptContext>();
+    ctx->setReg(7, 0.5);
+
+    SuperscopeModule scope(ctx);
+    scope.setLuaMode(true);
+    scope.setAspectCorrection(false);
+    scope.setPointCount(2);
+    scope.setPointCode("x=reg07; y=0; reg08=0.25");
+    const auto pts = scope.execute(kSilence.data(), kSilence.data(), kSilence.data(),
+                                   kSilence.data(), static_cast<int>(kSilence.size()),
+                                   100, 100, false, 0.016f);
+    REQUIRE(pts.size() >= 1);
+    CHECK(pts[0].x == doctest::Approx(0.5f));      // gelesen
+    CHECK(ctx->reg(8) == doctest::Approx(0.25));   // und zurueckgeschrieben
+
+    // Ohne Kontext bleibt der Scope unter sich — die eigenstaendigen
+    // LumiViz-Visualizer teilen bewusst nichts.
+    SuperscopeModule solo;
+    solo.setLuaMode(true);
+    solo.setAspectCorrection(false);
+    solo.setPointCount(2);
+    solo.setPointCode("x=reg07; y=0");
+    const auto sp = solo.execute(kSilence.data(), kSilence.data(), kSilence.data(),
+                                 kSilence.data(), static_cast<int>(kSilence.size()),
+                                 100, 100, false, 0.016f);
+    REQUIRE(sp.size() >= 1);
+    CHECK(sp[0].x == doctest::Approx(0.0f));
+}
+
 TEST_CASE("ScriptGridModule: Syntaxfehler -> Identitaet + Fehlermeldung")
 {
     ScriptGridModule grid;

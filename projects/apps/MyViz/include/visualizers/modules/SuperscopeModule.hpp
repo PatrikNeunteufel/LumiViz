@@ -31,7 +31,7 @@
 #include <unordered_map>
 #include <cmath>
 
-namespace lumi::scripting { class ScriptSlotHost; }
+namespace lumi::scripting { class ScriptSlotHost; class ScriptContext; }
 
 namespace lumi::modules {
 
@@ -146,7 +146,18 @@ struct SuperscopePoint
 class SuperscopeModule
 {
 public:
-    SuperscopeModule();
+    /**
+     * @param context Geteilter Skript-Kontext (reg00..reg99, gmegabuf) — im
+     *        Import-Pfad der ScriptContext der Kette, damit ein Scope die
+     *        Register liest und schreibt, die andere Effekte setzen. AVS haelt
+     *        diese Register GLOBAL; ohne den Kontext bekommt der Scope einen
+     *        eigenen, isolierten Satz und liest ueberall 0 (Befund S50: in
+     *        "Mister Santa" holen sich alle Scopes die Kamera-Matrix aus
+     *        reg00..reg11 einer Dynamic Movement — ohne Kontext blieb der
+     *        komplette Vordergrund unsichtbar). Leer = eigener Kontext, so
+     *        bleiben die eigenstaendigen LumiViz-Scopes unter sich.
+     */
+    explicit SuperscopeModule(std::shared_ptr<scripting::ScriptContext> context = {});
     ~SuperscopeModule();  // out-of-line: unique_ptr<ScriptSlotHost> member
 
     // =========================================================================
@@ -526,6 +537,8 @@ private:
     // =========================================================================
 
     bool m_luaMode = false;
+    /// Geteilter reg/gmegabuf-Raum der Kette (leer = eigener) — s. Konstruktor.
+    std::shared_ptr<scripting::ScriptContext> m_context;
     std::unique_ptr<scripting::ScriptSlotHost> m_script;  ///< EEL quartet + Engine
     std::string m_lastScriptError;
 };

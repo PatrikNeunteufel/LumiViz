@@ -4693,7 +4693,10 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
                                  params.beatCode + '\n' + params.pointCode;
     if (rt.scope == nullptr || rt.scopeCompiled != combined)
     {
-        rt.scope = std::make_unique<lumi::modules::SuperscopeModule>();
+        // Geteilter Kontext wie bei Grid/Texer/Liste: AVS haelt reg00..reg99
+        // GLOBAL, und dieses Pack koppelt Kamera und Scopes ausschliesslich
+        // darueber (Befund S50).
+        rt.scope = std::make_unique<lumi::modules::SuperscopeModule>(activeContext());
         rt.scope->setLuaMode(true);  // EEL quartet -> Lua (import path)
         // S13 (Urteil per AvsRef, S46): AVS skaliert je ACHSE (r_sscope:
         // x*(w/2)+w/2, y*(h/2)+h/2) — x=+-1 fuellt die Breite, ein Kreis-
