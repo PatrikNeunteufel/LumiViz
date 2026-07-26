@@ -440,6 +440,24 @@ struct CommentParams
 };
 
 /**
+ * LumiViz "Misc / Import Notes" (kein AVS-Effekt): das Protokoll des Imports,
+ * als Knoten IN der Kette statt als Dialog (Entscheid Patrik, S51).
+ *
+ * Vorher landete jede Notiz im Meldungsfenster — auch die harmlosen, etwa die
+ * `_p`-Umbenennungen der Kollisionsregel (D2). Bei einem Preset mit einem
+ * Dutzend Umbenennungen gehen darin die WIRKLICHEN Probleme unter. Jetzt gilt:
+ * der Knoten traegt das vollstaendige Protokoll (Zusammenfassung, Hinweise,
+ * Probleme), der Dialog erscheint nur noch bei Problemen.
+ *
+ * Wie Comment ein reiner Anmerkungsknoten — rendert nichts, das Feld ist
+ * schreibgeschuetzt, weil es einen Vorgang protokolliert und keine Eingabe ist.
+ */
+struct ImportNotesParams
+{
+    std::string text;
+};
+
+/**
  * LumiViz "Misc / Render Scale" (kein AVS-Effekt): laesst die GESAMTE Chain in
  * einer reduzierten internen Aufloesung rendern (Fenster / divisor) und beim
  * finalen Present hochskalieren. Das ist der Winamp-Look: AVS steckt voller
@@ -1549,7 +1567,7 @@ using EffectParams =
                  StrangeAttractorParams, FlameParams, ReactionDiffusionParams,
                  SetRenderModeParams, DebugBarsParams, MilkdropNodeParams,
                  HostGroupParams, TextParams, AviParams, CommentParams,
-                 RenderScaleParams, BloomParams, Camera3DParams,
+                 ImportNotesParams, RenderScaleParams, BloomParams, Camera3DParams,
                  SuperScope3DParams, Terrain3DParams, GlowOrbsParams,
                  PassthroughParams>;
 
@@ -1699,6 +1717,7 @@ struct CompileResult
         const char* operator()(const TextParams&) const { return "Text"; }
         const char* operator()(const AviParams&) const { return "AVI"; }
         const char* operator()(const CommentParams&) const { return "Comment"; }
+        const char* operator()(const ImportNotesParams&) const { return "Import Notes"; }
         const char* operator()(const RenderScaleParams&) const { return "Render Scale"; }
         const char* operator()(const BloomParams&) const { return "Bloom"; }
         const char* operator()(const Camera3DParams&) const { return "3D Camera"; }

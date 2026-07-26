@@ -3979,6 +3979,18 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         });
         form->addRow(tr("Comment"), edit);
     }
+    else if (auto* p = std::get_if<ImportNotesParams>(&params))
+    {
+        // Protokoll des Imports (Entscheid Patrik S51): schreibgeschuetzt, weil
+        // es einen Vorgang festhaelt und keine Eingabe ist. Wer es nicht
+        // braucht, loescht den Knoten.
+        auto* edit = new QPlainTextEdit(m_propContainer);
+        edit->setPlainText(QString::fromStdString(p->text));
+        edit->setReadOnly(true);
+        edit->setLineWrapMode(QPlainTextEdit::WidgetWidth);
+        edit->setMinimumHeight(160);
+        form->addRow(tr("Import notes"), edit);
+    }
     else if (auto* p = std::get_if<PassthroughParams>(&params))
     {
         form->addRow(new QLabel(

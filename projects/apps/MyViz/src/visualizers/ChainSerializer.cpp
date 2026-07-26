@@ -312,7 +312,12 @@ struct WriteVisitor
     }
     void operator()(const SetRenderModeParams& p) const
     {
-        o["enabled"] = p.enabled;
+        // NICHT "enabled": diesen Schluessel belegt schon der Knoten selbst
+        // (nodeToJson schreibt ihn VOR dem Visitor, der ihn dann ueberschrieb).
+        // Damit ging der Auge-Zustand eines Set-Render-Mode-Knotens beim
+        // Speichern verloren und beide Flags lasen beim Laden denselben Wert
+        // (Befund S51, aufgefallen im .lvfx-Roundtrip).
+        o["overrideBlend"] = p.enabled;
         o["lineWidth"] = p.lineWidth;
         o["lineBlend"] = p.lineBlend;
         o["adjustAlpha"] = p.adjustAlpha;
@@ -672,6 +677,10 @@ struct WriteVisitor
         o["speedMs"] = p.speedMs;
     }
     void operator()(const CommentParams& p) const
+    {
+        o["text"] = QString::fromStdString(p.text);
+    }
+    void operator()(const ImportNotesParams& p) const
     {
         o["text"] = QString::fromStdString(p.text);
     }
@@ -1235,7 +1244,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     if (type == "setRenderMode")
     {
         SetRenderModeParams p;
-        p.enabled = getBool(o, "enabled", true);
+        // Altbestand: bis S51 stand das Override-Flag unter "enabled" und hat
+        // dabei den Knoten-Schalter ueberschrieben — als Rueckfall weiter lesen.
+        p.enabled = getBool(o, "overrideBlend", getBool(o, "enabled", true));
         p.lineWidth = getInt(o, "lineWidth", 1);
         p.lineBlend = getInt(o, "lineBlend", 1);
         p.adjustAlpha = getInt(o, "adjustAlpha", 128);
@@ -1671,6 +1682,10 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     {
         return CommentParams{getStr(o, "text")};
     }
+    if (type == "importNotes")
+    {
+        return ImportNotesParams{getStr(o, "text")};
+    }
     if (type == "renderScale")
     {
         RenderScaleParams p;
@@ -1932,6 +1947,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const TextParams&) const { return "text"; }
         QString operator()(const AviParams&) const { return "avi"; }
         QString operator()(const CommentParams&) const { return "comment"; }
+        QString operator()(const ImportNotesParams&) const { return "importNotes"; }
         QString operator()(const RenderScaleParams&) const { return "renderScale"; }
         QString operator()(const BloomParams&) const { return "bloom"; }
         QString operator()(const Camera3DParams&) const { return "camera3d"; }

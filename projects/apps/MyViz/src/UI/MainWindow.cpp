@@ -552,13 +552,17 @@ void MainWindow::setupEventHandlers()
                 return;
             }
             pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
-            // Notes are import problems (passthrough/parser) — surface them; a
-            // clean import stays silent (dialog only on problems).
+            // NUR Probleme (Parser, Passthrough, fehlende Dateien) kommen hier
+            // an — die planmaessigen Hinweise wie die `_p`-Umbenennungen stehen
+            // im "Import Notes"-Knoten der Kette (Entscheid Patrik S51). Vorher
+            // liefen beide durch diesen Dialog, und ein Dutzend Umbenennungen
+            // machte die echten Probleme unsichtbar.
             if (!report.isEmpty())
             {
-                QMessageBox::information(
+                QMessageBox::warning(
                     this, tr("Import AVS Preset"),
-                    tr("Imported with %1 note(s):\n\n%2")
+                    tr("%1 problem(s) during import:\n\n%2\n\n"
+                       "The full log is in the \"Import Notes\" node of the chain.")
                         .arg(report.size())
                         .arg(report.mid(0, 20).join("\n")));
             }

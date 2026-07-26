@@ -11,7 +11,10 @@
 
 #include "visualizers/multieffect/AvsChainTranslator.hpp"
 
+#include "scripting/ScriptBaseKeys.hpp"
+
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 
 namespace lumi::multieffect {
@@ -80,19 +83,124 @@ uint32_t avsColor(int32_t c)
     return static_cast<uint32_t>(c) & 0xFFFFFFu;
 }
 
-std::string slotStr(const EffectNode& n, const char* name)
-{
-    const std::string_view s = n.slot(name);
-    return std::string(s);
-}
-
 /** Mutable state carried across the walk (Set Render Mode unroll, decision E4). */
 struct Context
 {
-    std::vector<std::string>& report;
+    std::vector<std::string>& report;  ///< Probleme — rechtfertigen einen Dialog
+    std::vector<std::string>& notes;   ///< planmaessige Hinweise (S51)
     int effectCount = 0;
     int passthroughCount = 0;
 };
+
+bool isIdentChar(char c)
+{
+    return std::isalnum(static_cast<unsigned char>(c)) != 0 || c == '_';
+}
+
+/// Traegt der Knoten diesen Namen irgendwo in einem seiner Code-Slots?
+bool nodeMentions(const EffectNode& n, std::string_view word)
+{
+    for (const char* slot : {"init", "frame", "beat", "point", "level"})
+    {
+        const std::string_view src = n.slot(slot);
+        for (std::size_t i = 0; i + word.size() <= src.size(); ++i)
+        {
+            if (i > 0 && isIdentChar(src[i - 1])) continue;
+            if (lumi::scripting::equalsIgnoreCase(src.substr(i, word.size()), word) &&
+                (i + word.size() >= src.size() || !isIdentChar(src[i + word.size()])))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/// Zielname nach Schema D2: `_p`, bei Kollision mit einem im Preset schon
+/// vorhandenen Namen `_p2`, `_p3` — sonst wuerden zwei Variablen verschmelzen.
+std::string collisionTarget(const EffectNode& n, std::string_view word)
+{
+    for (int attempt = 0;; ++attempt)
+    {
+        std::string target = lumi::scripting::privateName(word, attempt);
+        if (!nodeMentions(n, target)) return target;
+    }
+}
+
+/**
+ * @brief Import-Kollisionsregel D2 auf EINEN Code-Slot anwenden.
+ *
+ * Namen des Lumi-Sets ohne AVS-Builtin-Bedeutung (`vol`, `bass`, `time`, …) sind
+ * in einem AVS-Preset gewoehnliche Preset-Variablen. Weil die Injektions-Schicht
+ * sie je Frame setzt, wuerde ein Preset-eigener Zustand darin jeden Frame
+ * verloren gehen — "Alien Alloy" fuehrt in `vol` einen Tiefpass, der die
+ * Swirl-Staerke treibt (Befund S51). Sie werden deshalb beim Import auf `_p`
+ * umbenannt, einheitlich ueber ALLE Slots der Komponente.
+ *
+ * Das Ziel haengt nur am vollstaendigen Slot-Satz des Knotens, nicht an der
+ * Aufrufreihenfolge — jeder Slot bekommt damit dieselbe Zuordnung.
+ */
+std::string applyKeyCollisionRule(const EffectNode& n, std::string_view code)
+{
+    std::string out;
+    out.reserve(code.size());
+    for (std::size_t i = 0; i < code.size();)
+    {
+        if (!isIdentChar(code[i]) || (i > 0 && isIdentChar(code[i - 1])) ||
+            std::isdigit(static_cast<unsigned char>(code[i])) != 0)
+        {
+            out += code[i++];
+            continue;
+        }
+        std::size_t end = i;
+        while (end < code.size() && isIdentChar(code[end])) ++end;
+        const std::string_view word = code.substr(i, end - i);
+        if (!lumi::scripting::collidesOnAvsImport(word))
+        {
+            out += word;
+            i = end;
+            continue;
+        }
+        // Freies Ziel suchen: `_p`, dann `_p2`, `_p3` — der Name darf im Preset
+        // nicht schon vorkommen, sonst wuerden zwei Variablen verschmelzen.
+        out += collisionTarget(n, word);
+        i = end;
+    }
+    return out;
+}
+
+/// Eine ℹ-Zeile je umbenanntem Namen (Konzept §4: "Sichtbar"). Getrennt vom
+/// Umbenennen, damit alle 42 slotStr-Aufrufstellen ohne Kontext auskommen.
+void reportKeyCollisions(const EffectNode& n, const std::string& path, Context& ctx)
+{
+    for (const lumi::scripting::BaseKey& key : lumi::scripting::kInjectedKeys)
+    {
+        if (key.origin == lumi::scripting::KeyOrigin::Avs) continue;
+        if (!nodeMentions(n, key.name)) continue;
+        ctx.notes.push_back(path + ": Skript-Variable '" + std::string(key.name) +
+                             "' -> '" + collisionTarget(n, key.name) +
+                             "' (in AVS kein Builtin, Kollision mit dem Lumi-Set;"
+                             " Entscheid D2)");
+    }
+}
+
+/// EEL-Slots laufen durch die Kollisionsregel, Nicht-Code-Felder (`filename`)
+/// nicht — dort wuerde eine Umbenennung den Pfad zerstoeren.
+bool isCodeSlot(const char* name)
+{
+    for (const char* code : {"init", "frame", "beat", "point", "level"})
+    {
+        if (std::strcmp(name, code) == 0) return true;
+    }
+    return false;
+}
+
+std::string slotStr(const EffectNode& n, const char* name)
+{
+    const std::string_view s = n.slot(name);
+    if (!isCodeSlot(name)) return std::string(s);
+    return applyKeyCollisionRule(n, s);
+}
 
 ChainNode passthrough(const EffectNode& src, const std::string& path,
                       const std::string& reason, Context& ctx)
@@ -1029,6 +1137,8 @@ ChainNode translateNode(const EffectNode& src, const std::string& path, Context&
     if (src.isList)
     {
         ChainNode node;
+        // Listen-Codes laufen ueber ListInfo, nicht ueber slotStr — dort bleibt
+        // `beat` unangetastet, weil r_list es als Builtin registriert (D2).
         node.params = listParamsFrom(src.list);
         node.enabled = src.list.enabled();
         for (size_t i = 0; i < src.children.size(); ++i)
@@ -1038,6 +1148,8 @@ ChainNode translateNode(const EffectNode& src, const std::string& path, Context&
         }
         return node;
     }
+
+    reportKeyCollisions(src, path, ctx);
 
     // Set Render Mode: a live state-setter node (like Custom BPM). It carries the
     // line width (bits 16-23), line blend (bits 0-7), Adjustable alpha (bits 8-15)
@@ -1072,7 +1184,7 @@ ChainNode translateNode(const EffectNode& src, const std::string& path, Context&
         p.note = "Framerate Limiter";
         node.params = std::move(p);
         node.displayName = "Framerate Limiter";
-        ctx.report.push_back(path + ": Framerate Limiter ignored (host controls pacing)");
+        ctx.notes.push_back(path + ": Framerate Limiter ignored (host controls pacing)");
         return node;
     }
 
@@ -1128,7 +1240,7 @@ TranslationResult translateAvsTree(const lumi::avs::ParseResult& parsed)
         result.report.push_back("parser: " + warning);
     }
 
-    Context ctx{result.report, 0, 0};
+    Context ctx{result.report, result.notes, 0, 0};
     result.root = translateNode(parsed.root, "root", ctx);
     // The root of a preset is always a list; guarantee it even if the parser
     // handed us something odd.

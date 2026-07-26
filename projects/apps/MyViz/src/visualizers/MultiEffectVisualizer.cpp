@@ -60,6 +60,22 @@ namespace {
 void computeAudioBands(const std::vector<float>& spec, float& bass, float& mid,
                        float& treble);
 
+/// Das einheitliche Audio-Input-Set (Entscheid E1) in ein Skript-Modul. Die
+/// Namen gelten in JEDEM Dialekt; kollidierende Preset-eigene Bezeichner werden
+/// beim Import auf `_p` umbenannt (Entscheid D2), nicht hier zur Laufzeit
+/// ausgespart.
+template <class Module>
+void feedAudioInputSet(Module& mod, float bass, float mid, float treble,
+                       double vol, bool beat)
+{
+    mod.setVariable("bass", bass);
+    mod.setVariable("mid", mid);
+    mod.setVariable("treb", treble);
+    mod.setVariable("treble", treble);
+    mod.setVariable("vol", vol);
+    mod.setVariable("beat", beat ? 1.0 : 0.0);
+}
+
 
 // -----------------------------------------------------------------------------
 // Shaders (GLSL 330 core, matching FeedbackBuffer)
@@ -2332,19 +2348,56 @@ bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outRep
         lumi::avs::parseFile(std::filesystem::path(path.toStdWString()));
     TranslationResult translated = translateAvsTree(parsed);
 
-    if (outReport != nullptr)
+    // PROBLEME sammeln (Parser, Passthrough, fehlende Dateien). Die planmaessigen
+    // HINWEISE (translated.notes) bleiben bewusst draussen: sie gehen in den
+    // Import-Notes-Knoten, nicht in den Dialog (Entscheid Patrik S51).
+    QStringList problems;
+    for (const std::string& line : translated.report)
     {
-        outReport->clear();
-        for (const std::string& line : translated.report)
-        {
-            outReport->append(QString::fromStdString(line));
-        }
+        problems.append(QString::fromStdString(line));
     }
-
     // Resolve + embed Picture images relative to the .avs directory (appends any
     // "image not found" notes after the translation report).
-    embedPictureImages(translated.root, QFileInfo(path).absolutePath(), outReport);
-    resolveAviPaths(translated.root, QFileInfo(path).absolutePath(), outReport);
+    embedPictureImages(translated.root, QFileInfo(path).absolutePath(), &problems);
+    resolveAviPaths(translated.root, QFileInfo(path).absolutePath(), &problems);
+    if (outReport != nullptr) *outReport = problems;
+
+    // Das vollstaendige Protokoll als Knoten IN der Kette — Zusammenfassung,
+    // dann Probleme, dann Hinweise. Bewusst OHNE Zeitstempel: das JSON eines
+    // Imports muss reproduzierbar bleiben (die eingefrorenen .lvfx-Zwillinge
+    // wuerden sich sonst bei jedem Lauf unterscheiden).
+    //
+    // Nur wenn es etwas zu protokollieren gibt: ein sauberer Import soll keine
+    // leere Notiz in jede Kette haengen. Die ANWESENHEIT des Knotens ist damit
+    // selbst das Signal.
+    if (!problems.isEmpty() || !translated.notes.empty())
+    {
+        QStringList lines;
+        lines << QStringLiteral("Import: %1").arg(QFileInfo(path).fileName());
+        lines << QStringLiteral("%1 Effekte, %2 Passthrough, %3 Problem(e), "
+                                "%4 Hinweis(e)")
+                     .arg(translated.effectCount)
+                     .arg(translated.passthroughCount)
+                     .arg(problems.size())
+                     .arg(static_cast<int>(translated.notes.size()));
+        if (!problems.isEmpty())
+        {
+            lines << QString() << QStringLiteral("--- Probleme ---");
+            lines << problems;
+        }
+        if (!translated.notes.empty())
+        {
+            lines << QString() << QStringLiteral("--- Hinweise ---");
+            for (const std::string& note : translated.notes)
+            {
+                lines << QString::fromStdString(note);
+            }
+        }
+        ChainNode notes;
+        notes.params = ImportNotesParams{lines.join('\n').toStdString()};
+        translated.root.children.insert(translated.root.children.begin(),
+                                        std::move(notes));
+    }
     // Entscheid S47 (Variante 2): jeder AVS-Import bekommt einen Render-Scale-
     // Knoten als erstes Kind — Wert aus der App-Einstellung (1 = neutral, wie
     // ohne). Danach ist der Knoten im Preset die einzige Wahrheit.
@@ -3308,6 +3361,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const TextParams& params) const { self.runText(node, params); }
         void operator()(const AviParams& params) const { self.runAvi(node, params); }
         void operator()(const CommentParams&) const { /* annotation, no-op */ }
+        void operator()(const ImportNotesParams&) const { /* Import-Protokoll, no-op */ }
         void operator()(const RenderScaleParams&) const { /* pre-frame state, no-op */ }
         void operator()(const BloomParams& params) const { self.runBloom(node, params); }
         void operator()(const Camera3DParams& params) const { self.runCamera3D(node, params); }
@@ -3835,12 +3889,7 @@ void MultiEffectVisualizer::runColorModifier(const ChainNode& node,
     {
         float bass, mid, treble;
         computeAudioBands(getSpectrum(), bass, mid, treble);
-        rt.lut->setVariable("bass", bass);
-        rt.lut->setVariable("mid", mid);
-        rt.lut->setVariable("treb", treble);
-        rt.lut->setVariable("treble", treble);
-        rt.lut->setVariable("vol", m_audioLevel);
-        rt.lut->setVariable("beat", m_frameBeat ? 1.0 : 0.0);
+        feedAudioInputSet(*rt.lut, bass, mid, treble, m_audioLevel, m_frameBeat);
     }
     rt.lut->execute(m_frameBeat, m_deltaTime);
 
@@ -4154,12 +4203,8 @@ bool MultiEffectVisualizer::applyGridWarpFx(LeafRuntime& rt, int xres, int yres,
         {
             float bass, mid, treble;
             computeAudioBands(getSpectrum(), bass, mid, treble);
-            rt.grid->setVariable("bass", bass);
-            rt.grid->setVariable("mid", mid);
-            rt.grid->setVariable("treb", treble);
-            rt.grid->setVariable("treble", treble);
-            rt.grid->setVariable("vol", m_audioLevel);
-            rt.grid->setVariable("beat", m_frameBeat ? 1.0 : 0.0);
+            feedAudioInputSet(*rt.grid, bass, mid, treble, m_audioLevel,
+                              m_frameBeat);
         }
         rt.grid->execute(static_cast<float>(w), static_cast<float>(h), m_frameBeat,
                          m_deltaTime);
@@ -4253,12 +4298,8 @@ void MultiEffectVisualizer::applyGridWarp(LeafRuntime& rt, int xres, int yres,
         {
             float bass, mid, treble;
             computeAudioBands(getSpectrum(), bass, mid, treble);
-            rt.grid->setVariable("bass", bass);
-            rt.grid->setVariable("mid", mid);
-            rt.grid->setVariable("treb", treble);
-            rt.grid->setVariable("treble", treble);
-            rt.grid->setVariable("vol", m_audioLevel);
-            rt.grid->setVariable("beat", m_frameBeat ? 1.0 : 0.0);
+            feedAudioInputSet(*rt.grid, bass, mid, treble, m_audioLevel,
+                              m_frameBeat);
         }
         rt.grid->execute(static_cast<float>(m_surfaceWidth),
                          static_cast<float>(m_surfaceHeight), m_frameBeat,
@@ -6309,13 +6350,33 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
         // Vorbelegung 0, NICHT 100: setzt das Skript kein `n`, zeichnet Texer II
         // gar nichts. Gemessen (S50): ein Knoten mit leerem Init liefert in
         // AvsRef 0 Pixel, unsere 100er-Vorbelegung 4124 — mit explizitem n=100
-        // stimmen beide ueberein. In "Alien Alloy" haben alle vier Texer einen
-        // leeren Init; wir haben dort 400 Sprites zu viel gezeichnet.
+        // stimmen beide ueberein.
         rt.texerHost->engine().setNumber("n", 0.0);
+        // w/h muessen schon den INIT erreichen: die Paar-Sonde
+        // 5_vars/texer2_n_aus_w_init (n=w*0.1 im Init) zeichnet in AvsRef
+        // dieselben 6526 Pixel wie das Literal n=32 (S51).
+        rt.texerHost->engine().setNumber("w", static_cast<double>(m_surfaceWidth));
+        rt.texerHost->engine().setNumber("h", static_cast<double>(m_surfaceHeight));
         rt.texerHost->run(Slot::Init);
     }
     auto& engine = rt.texerHost->engine();
     engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+    // Bildschirmmasse: Texer-II-Skripte rechnen Sprite-Zahl UND -Groesse daraus.
+    // "Alien Alloy" setzt im Frame-Slot n=w*0.1 und reg00=h/280 — ohne w/h war
+    // n=0, alle vier Texer zeichneten NICHTS und das Preset blieb schwarz
+    // (Befund S51; die S50-Notiz "leerer Init" war die falsche Spur, `n` steht
+    // im FRAME-Slot). Werte per Paar-Sonde gepinnt: n=w*0.1 und n=32 ergeben
+    // bei 320x240 dasselbe Referenzbild, ebenso sizex=h/120 und sizex=2.
+    engine.setNumber("w", static_cast<double>(m_surfaceWidth));
+    engine.setNumber("h", static_cast<double>(m_surfaceHeight));
+    // Neutrale Groesse VOR dem Frame-Slot, nicht danach: die Sonde
+    // texer2_size_aus_init (sizex=2 nur im Init) zeichnet in der Referenz KLEIN
+    // (2247 px), texer2_size_literal mit demselben sizex=2 im Frame-Slot GROSS
+    // (8945) — AVS belegt sizex/sizey je Frame neu vor, der Init-Wert ueberlebt
+    // nicht. Vorher stand diese Vorbelegung nach dem Frame-Slot und loeschte
+    // genau das, was das Skript gerade gesetzt hatte.
+    engine.setNumber("sizex", 1.0);
+    engine.setNumber("sizey", 1.0);
     feedAudio(rt.texerHost->engine());
     if (rt.texerHost->has(Slot::Frame)) rt.texerHost->run(Slot::Frame);
     if (m_frameBeat && rt.texerHost->has(Slot::Beat)) rt.texerHost->run(Slot::Beat);
@@ -6348,10 +6409,9 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
     // werden NUR i, v, skip und die Farb-Vorbelegung gesetzt. x/y/sizex/sizey
     // sind persistente EEL-Variablen und dürfen NICHT zurückgesetzt werden —
     // die Skripte dieses Packs lesen den Vorgängerwert ("x=if(dt,x3*dt*psf,x)"
-    // hält den letzten Punkt, wenn er hinter der Kamera liegt). Nur einmal je
-    // Frame neutral vorbelegen.
-    engine.setNumber("sizex", 1.0);
-    engine.setNumber("sizey", 1.0);
+    // hält den letzten Punkt, wenn er hinter der Kamera liegt). Die neutrale
+    // Vorbelegung von sizex/sizey passiert deshalb genau einmal je Frame — oben,
+    // VOR dem Frame-Slot.
 
     // v AVS-treu aus den rohen visdata-Bytes (Vertrag S44/S48: v = Byte/128-1,
     // Mittenkanal per CHAR-Arithmetik, Interpolation r_sscope.cpp:284-289) —
@@ -6419,16 +6479,26 @@ void MultiEffectVisualizer::runTriangle(const ChainNode& node, const TrianglePar
         rt.triHost->compileAll();
         rt.triCompiled = combined;
         rt.triHost->engine().setNumber("n", 1.0);
+        rt.triHost->engine().setNumber("w", static_cast<double>(m_surfaceWidth));
+        rt.triHost->engine().setNumber("h", static_cast<double>(m_surfaceHeight));
         rt.triHost->run(Slot::Init);
     }
     auto& engine = rt.triHost->engine();
     engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+    // Wie Texer II: die Bildschirmmasse fehlten, "n=w*0.05" ergab 0 Dreiecke.
+    // Sonde 5_vars/triangle_n_aus_w — Referenz 23424 px, wir 0 (S51).
+    engine.setNumber("w", static_cast<double>(m_surfaceWidth));
+    engine.setNumber("h", static_cast<double>(m_surfaceHeight));
     feedAudio(rt.triHost->engine());
     if (rt.triHost->has(Slot::Frame)) rt.triHost->run(Slot::Frame);
     if (m_frameBeat && rt.triHost->has(Slot::Beat)) rt.triHost->run(Slot::Beat);
     const int n = std::clamp(static_cast<int>(engine.number("n")), 0, 4096);
 
-    // Filled triangles are approximated as wireframe outlines via the ScopeRenderer.
+    // Triangle zeichnet GEFUELLTE Dreiecke, nicht Umrisse: die Sonde
+    // triangle_n_literal (16 Dreiecke) liefert in AvsRef 23424 Pixel, unser
+    // Drahtgitter nur 4009 und den Schwerpunkt 12 Zeilen daneben (S51). Die
+    // Flat-Fill-Stufe stammt aus dem Bass-Spin-Umbau (S48).
+    std::vector<float> tri(6);
     for (int pt = 0; pt < n; ++pt)
     {
         engine.setNumber("i", n > 1 ? static_cast<double>(pt) / (n - 1) : 0.0);
@@ -6439,19 +6509,15 @@ void MultiEffectVisualizer::runTriangle(const ChainNode& node, const TrianglePar
         const QVector3D col(static_cast<float>(engine.number("red")),
                             static_cast<float>(engine.number("green")),
                             static_cast<float>(engine.number("blue")));
-        auto mk = [&](const char* xn, const char* yn) {
-            lumi::modules::SuperscopePoint p;
-            p.x = static_cast<float>(engine.number(xn));
-            p.y = -static_cast<float>(engine.number(yn));  // AVS y is down
-            p.r = col.x();
-            p.g = col.y();
-            p.b = col.z();
-            p.a = 1.0f;
-            return p;
+        const auto ndc = [&engine](const char* xn, const char* yn) {
+            return std::pair{static_cast<float>(engine.number(xn)),
+                             -static_cast<float>(engine.number(yn))};  // AVS y is down
         };
-        const std::vector<lumi::modules::SuperscopePoint> pts{
-            mk("x1", "y1"), mk("x2", "y2"), mk("x3", "y3"), mk("x1", "y1")};
-        drawScopeShape(pts, false);
+        const auto [x1, y1] = ndc("x1", "y1");
+        const auto [x2, y2] = ndc("x2", "y2");
+        const auto [x3, y3] = ndc("x3", "y3");
+        tri = {x1, y1, x2, y2, x3, y3};
+        drawFlatTriangles(tri, col);
     }
 }
 

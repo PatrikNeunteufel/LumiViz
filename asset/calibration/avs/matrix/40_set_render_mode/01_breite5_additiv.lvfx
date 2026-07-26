@@ -32,6 +32,7 @@
         "lineBlend": 1,
         "lineWidth": 5,
         "name": "Set Render Mode",
+        "overrideBlend": true,
         "type": "setRenderMode"
       },
       {

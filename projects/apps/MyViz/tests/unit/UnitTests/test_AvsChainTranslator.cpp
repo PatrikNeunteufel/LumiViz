@@ -413,8 +413,11 @@ TEST_SUITE("AvsChainTranslator")
         const TranslationResult t = translateAvsTree(makeParsed({fl}));
         CHECK(std::holds_alternative<PassthroughParams>(t.root.children[0].params));
         CHECK(t.passthroughCount == 0);  // not counted as unsupported
-        REQUIRE(t.report.size() == 1);
-        CHECK(t.report[0].find("Framerate Limiter") != std::string::npos);
+        // Planmaessig ignoriert = HINWEIS, kein Problem: der Dialog darf davon
+        // nicht aufgehen (Entscheid Patrik S51).
+        CHECK(t.report.empty());
+        REQUIRE(t.notes.size() == 1);
+        CHECK(t.notes[0].find("Framerate Limiter") != std::string::npos);
     }
 
     TEST_CASE("Simple (id 0): effect-Bitfeld -> Mode/Channel/Position")
@@ -1037,5 +1040,66 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(std::get<ClearParams>(t.root.children[1].params).blend == 1);
         CHECK(std::get<ClearParams>(t.root.children[2].params).blend == 2);
         CHECK(std::get<ClearParams>(t.root.children[3].params).blend == 0);
+    }
+
+    TEST_CASE("Import-Kollisionsregel D2: Lumi-Keys ohne AVS-Builtin -> _p")
+    {
+        // "Alien Alloy" fuehrt in `vol` einen Tiefpass, der die Swirl-Staerke der
+        // Dynamic Movement treibt. `vol` ist in KEINEM AVS-Effekt registriert
+        // (ref/vis_avs, registerVar) — die Injektions-Schicht setzt es aber je
+        // Frame und hat den Akkumulator damit plattgemacht (Befund S51).
+        EffectNode dm = builtin(43);
+        dm.code = {{"init", "t=rand(100)/50"},
+                   {"frame", "vol=vol*0.9+getspec(0.5,1,0);swrl=0.02+min(1.5,vol)*0.08"},
+                   {"beat", ""},
+                   {"point", "d=d*(1-swrl*vol)"}};
+        dm.fields = {{"rectcoords", 1}, {"xres", 25}, {"yres", 25}};
+        const TranslationResult t = translateAvsTree(makeParsed({dm}));
+        REQUIRE(std::holds_alternative<DynamicMovementParams>(t.root.children[0].params));
+        const auto& p = std::get<DynamicMovementParams>(t.root.children[0].params);
+        // Einheitlich ueber ALLE Slots der Komponente, Wortgrenzen beachtet:
+        // `swrl` bleibt, obwohl es "vol" nicht enthaelt — aber `getspec` und
+        // `min` duerfen ebenso unangetastet bleiben.
+        CHECK(p.frameCode ==
+              "vol_p=vol_p*0.9+getspec(0.5,1,0);swrl=0.02+min(1.5,vol_p)*0.08");
+        CHECK(p.pointCode == "d=d*(1-swrl*vol_p)");
+        CHECK(p.initCode == "t=rand(100)/50");
+        // Sichtbar (Konzept §4) — aber als HINWEIS, nicht als Problem: der
+        // Dialog bleibt den echten Import-Problemen vorbehalten, die Hinweise
+        // landen im Import-Notes-Knoten (Entscheid Patrik S51).
+        const auto mentions = [](const std::vector<std::string>& lines) {
+            return std::any_of(lines.begin(), lines.end(), [](const std::string& r) {
+                return r.find("'vol' -> 'vol_p'") != std::string::npos;
+            });
+        };
+        CHECK(mentions(t.notes));
+        CHECK_FALSE(mentions(t.report));
+        CHECK(t.report.empty());  // eine saubere Uebersetzung meldet KEIN Problem
+    }
+
+    TEST_CASE("D2: _p2 bei belegtem Ziel, EEL case-insensitiv, Nicht-Code intakt")
+    {
+        // Ist `vol_p` im Preset schon vergeben, darf nicht dorthin umbenannt
+        // werden — sonst verschmelzen zwei Variablen.
+        EffectNode dm = builtin(43);
+        dm.code = {{"init", "vol_p=7"}, {"frame", "VOL=VOL+1"}, {"beat", ""},
+                   {"point", "d=d*vol+vol_p"}};
+        const TranslationResult t = translateAvsTree(makeParsed({dm}));
+        const auto& p = std::get<DynamicMovementParams>(t.root.children[0].params);
+        CHECK(p.frameCode == "vol_p2=vol_p2+1");   // EEL ist case-insensitiv
+        CHECK(p.pointCode == "d=d*vol_p2+vol_p");  // bestehendes vol_p bleibt
+        CHECK(p.initCode == "vol_p=7");
+
+        // `beat` ist in r_list ein Builtin — Listen-Codes laufen ueber ListInfo
+        // und werden nicht angefasst. Und ein Dateiname ist kein Code-Slot:
+        // Texer II traegt sein Bild in `filename`.
+        EffectNode texer;
+        texer.decoded = true;
+        texer.apeId = "Acko.net: Texer II";
+        texer.code = {{"filename", "vol_time_dt.bmp"}, {"init", "n=8"},
+                      {"frame", ""}, {"beat", ""}, {"point", "x=0;y=0"}};
+        const TranslationResult t2 = translateAvsTree(makeParsed({texer}));
+        const auto& tp = std::get<TexerIIParams>(t2.root.children[0].params);
+        CHECK(tp.filename == "vol_time_dt.bmp");
     }
 }

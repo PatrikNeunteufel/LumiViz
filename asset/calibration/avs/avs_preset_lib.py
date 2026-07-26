@@ -32,6 +32,11 @@ def lstr(s: str) -> bytes:
     return i32(len(raw)) + raw
 
 
+def cstr(s: str) -> bytes:
+    """NtString der APE-Helfer: nur NUL-terminiert, OHNE Laengenpraefix."""
+    return s.encode("latin-1") + b"\x00"
+
+
 def ints(*vals: int) -> bytes:
     return b"".join(i32(v) for v in vals)
 
@@ -386,6 +391,13 @@ def texer2(point: str, init: str = "", frame: str = "", beat: str = "",
     blob = (i32(0) + name + i32(resize) + i32(wrap) + i32(colorfilter) + i32(0)
             + lstr(init) + lstr(frame) + lstr(beat) + lstr(point))
     return ape("Acko.net: Texer II", blob)
+
+
+def triangle(point: str, init: str = "", frame: str = "", beat: str = "") -> bytes:
+    """"Render: Triangle" — NtCodeIFBP: vier NUL-terminierte Skripte in der
+    Reihenfolge init, frame, beat, point (decodeTriangle)."""
+    return ape("Render: Triangle",
+               cstr(init) + cstr(frame) + cstr(beat) + cstr(point))
 
 
 def convolution(kernel=None, edge_mode: int = 0, absolute: int = 0,

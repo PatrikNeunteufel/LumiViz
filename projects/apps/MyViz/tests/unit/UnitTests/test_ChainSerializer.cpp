@@ -1016,6 +1016,86 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{SetRenderModeParams{}}) == "setRenderMode");
     }
 
+    TEST_CASE("Import-Notes-Knoten ueberlebt den Round-Trip (S51)")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode notes;
+        notes.params = ImportNotesParams{
+            "Import: test.avs\n3 Effekte, 0 Passthrough\n\n--- Hinweise ---\n"
+            "root/2: Skript-Variable 'vol' -> 'vol_p'"};
+        root.children.push_back(std::move(notes));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 1);
+        REQUIRE(std::holds_alternative<ImportNotesParams>(r.children[0].params));
+        const auto& p = std::get<ImportNotesParams>(r.children[0].params);
+        CHECK(p.text.find("'vol' -> 'vol_p'") != std::string::npos);
+        CHECK(p.text.find("Import: test.avs") == 0);
+        CHECK(effectTypeKey(EffectParams{ImportNotesParams{}}) == "importNotes");
+        // Eigener Typ, nicht als Comment gespeichert — sonst waere das Protokoll
+        // beim Laden ein editierbarer Kommentar.
+        CHECK(effectTypeKey(EffectParams{CommentParams{}}) != "importNotes");
+    }
+
+    TEST_CASE("Set Render Mode: Knoten-Schalter und Override sind unabhaengig")
+    {
+        // Bis S51 schrieb der Params-Visitor sein Override-Flag unter denselben
+        // Schluessel "enabled" wie der Knoten und ueberschrieb ihn dabei — der
+        // Auge-Zustand ging beim Speichern verloren. Der alte Test sah das nicht,
+        // weil er nur das Params-Flag prueft (dieselbe Luecke wie beim
+        // Texer-II-Decoder). Alle vier Kombinationen einzeln.
+        for (const bool nodeOn : {false, true})
+        {
+            for (const bool overrideOn : {false, true})
+            {
+                ChainNode root;
+                root.params = ListParams{};
+                ChainNode leaf;
+                SetRenderModeParams sp;
+                sp.enabled = overrideOn;
+                sp.lineBlend = 2;
+                leaf.params = sp;
+                leaf.enabled = nodeOn;
+                root.children.push_back(std::move(leaf));
+
+                const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+                REQUIRE(r.children.size() == 1);
+                CHECK(r.children[0].enabled == nodeOn);
+                CHECK(std::get<SetRenderModeParams>(r.children[0].params).enabled ==
+                      overrideOn);
+            }
+        }
+
+        // Altbestand: dort trug "enabled" das Override-Flag (und ueberschrieb den
+        // Knoten-Schalter). Es muss weiter gelesen werden, sonst kippen
+        // bestehende .lvfx auf den Default. Das Alt-Layout wird aus echtem JSON
+        // rekonstruiert, damit der Fall nicht an einem unvollstaendigen
+        // Handaufbau vorbeiprueft.
+        ChainNode legacyRoot;
+        legacyRoot.params = ListParams{};
+        ChainNode legacyLeaf;
+        SetRenderModeParams lp;
+        lp.enabled = false;
+        lp.lineBlend = 2;
+        legacyLeaf.params = lp;
+        legacyRoot.children.push_back(std::move(legacyLeaf));
+        QJsonObject legacy = chainToJson(legacyRoot);  // {header, root}
+        QJsonObject legacyRootObj = legacy["root"].toObject();
+        QJsonArray kids = legacyRootObj["children"].toArray();
+        REQUIRE(kids.size() == 1);
+        QJsonObject kid = kids[0].toObject();
+        kid.remove("overrideBlend");
+        kid["enabled"] = false;  // so schrieb es der alte Serializer
+        kids[0] = kid;
+        legacyRootObj["children"] = kids;
+        legacy["root"] = legacyRootObj;
+
+        const ChainNode old = chainFromJson(legacy, nullptr);
+        REQUIRE(old.children.size() == 1);
+        CHECK(std::get<SetRenderModeParams>(old.children[0].params).enabled == false);
+    }
+
     TEST_CASE("Render-Scale-Parameter ueberleben den Round-Trip (S47)")
     {
         ChainNode root; root.params = ListParams{};

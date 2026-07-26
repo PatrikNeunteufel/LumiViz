@@ -1,10 +1,10 @@
 # AVS-Kalibrier- und Fehlersuch-Methodik
 
-> Stand: Session 50 · Gilt für die AVS-Treue-Arbeit (AvsRef als Referenz).
+> Stand: Session 51 · Gilt für die AVS-Treue-Arbeit (AvsRef als Referenz).
 > Ergänzt `AVS_Sichttest_Protokoll.md` (was geprüft wurde) um das **Wie**.
 
 Diese Methodik ist nicht ausgedacht, sondern aus dem destilliert, was in den
-Sessions 44–50 tatsächlich Befunde geliefert hat — und aus den Umwegen, die
+Sessions 44–51 tatsächlich Befunde geliefert hat — und aus den Umwegen, die
 sich im Nachhinein als vermeidbar erwiesen.
 
 ---
@@ -138,18 +138,80 @@ die nur Builtins mit **Default-Parametern** prüft. Die Sonden-Suite
    (`linesize`, `drawmode`, `skip`, `n`) — genau hier saßen die Befunde
 4. **`4_kopplung/`** — zwei Module, die nur über `reg`/Puffer/Listen-EEL
    zusammenhängen; erst danach ganze Presets
+5. **`5_vars/`** (S51) — **Paar-Sonden**: welche Variablen stellt der Host dem
+   Skript überhaupt bereit? Je zwei Sonden rechnen dasselbe Ergebnis, die eine
+   über die Host-Variable (`n=w*0.1`), die andere über das Literal, das bei
+   320×240 herauskommt (`n=32`). Stimmen die **Referenz**bilder des Paares
+   überein, ist nicht nur die *Existenz* der Variablen belegt, sondern ihr
+   **Wert**. Diese Sonden sind deshalb an 320×240 gebunden — die
+   „immer zwei Größen"-Regel gilt hier ausdrücklich nicht.
+
+   Dieselbe Paar-Bauweise pinnt auch **Slot-Reihenfolgen**: dieselbe Zuweisung
+   einmal im Init-, einmal im Frame-Slot. In S51 wich die Referenz auseinander
+   (2247 gegen 8945 Pixel) und bewies damit, dass AVS `sizex/sizey` je Frame
+   neu vorbelegt — wir taten es *nach* dem Frame-Slot und löschten dessen
+   Ergebnis.
 
 Erster Lauf: 19/22 grün, drei Modulfehler gefunden, die die Matrix nicht sah.
 
 ---
 
-## 6. Wenn ein Preset kaputt aussieht
+## 6. Import-Roundtrip: importieren, als `.lvfx` speichern, lesen
+
+**Der billigste Parser-Test, der existiert** — und in S51 der Weg zum
+Texer-Befund. Preset importieren, im Panel als `.lvfx` speichern, das JSON
+lesen. `.lvfx` ist `chainToJson` pur: was dort steht, ist genau das, was der
+Renderer sieht.
+
+Was sofort auffällt, ohne einen einzigen Frame zu rendern:
+
+- **leere Felder**, die nicht leer sein dürfen (Dateiname, EEL-Slots — so war
+  der Texer-II-Decoder in S50 als Täter erkennbar),
+- **Defaults, wo Werte stehen müssten** (ein Feld, das der Decoder nie füllt,
+  behält seinen Struct-Default),
+- **Skripte, die Variablen benutzen, die wir nicht setzen.** Genau das war der
+  S51-Befund: alle vier Texer in „Alien Alloy" rechnen `n=w*0.1` im
+  **Frame**-Slot, und der Texer-Host bekam nie ein `w` → `n=0` → kein einziges
+  Sprite. Vorher war die Vermutung „leerer Init", weil niemand in den
+  Frame-Slot gesehen hatte.
+
+Daraus die Anschlussprüfung, die sich als eigene Fehlerklasse erwiesen hat:
+**welche Variablen liest das Skript, und setzt der zuständige Host sie alle?**
+`grep '"w"' src include` listet die Setzer; jeder Skript-Träger, der fehlt, ist
+ein Verdacht. Gegenprobe für Module *mit* Quelltext direkt in `ref/vis_avs`
+(`registerVar`) — bei DDM und Bump war das fehlende `w`/`h` dort korrekt, es
+gibt sie in AVS nicht. Für APEs ohne Quelltext entscheidet die Paar-Sonde.
+
+Der Roundtrip prüft in der Rückrichtung zusätzlich den Serializer:
+`.lvfx` neu laden und mit `freeze_lvfx_twins.py` gegen den eingefrorenen
+Zwilling stellen. So fiel in S51 auf, dass der Set-Render-Mode-Knoten sein
+Override-Flag unter demselben JSON-Schlüssel `enabled` ablegte wie der Knoten
+selbst — der Auge-Zustand ging beim Speichern verloren.
+
+**Wo das Import-Protokoll steht:** seit S51 hängt der Importer einen
+**„Import Notes"-Knoten** in die Kette (erstes Kind nach Render Scale), sobald
+es etwas zu protokollieren gibt — Zusammenfassung, Probleme, Hinweise. Das
+Meldungsfenster erscheint nur noch bei **Problemen**: vorher liefen die
+planmäßigen `_p`-Umbenennungen mit durch den Dialog, und ein Preset wie
+„Milky Way Xtreme" produzierte 22 Zeilen Rauschen, in dem echte Probleme
+untergingen (Entscheid Patrik, S51). Für die Fehlersuche heißt das: **den Knoten
+lesen**, nicht auf den Dialog warten.
+
+**Achtung beim Prüfen der Kollisionsregel:** Modul-Matrix und Sonden enthalten
+*keine* Presets mit kollidierenden Namen — sie können eine Regression der Regel
+strukturell nicht sehen. Wächter ist allein ein Sweep über echte Presets
+(`VisualsPresets/avs/…`), wo `vol`/`time`/`dt` tatsächlich vorkommen.
+
+---
+
+## 7. Wenn ein Preset kaputt aussieht
 
 Reihenfolge, die sich bewährt hat:
 
-1. **Chain-Dump** (`AvsStandalone --dump`) — kommen Parameter und Skripte
-   überhaupt an? (Texer II lieferte leere Slots — der Decoder war schuld,
-   nicht der Renderer.)
+1. **Import-Roundtrip** (§6) oder **Chain-Dump** (`AvsStandalone --dump`) —
+   kommen Parameter und Skripte überhaupt an, und *benutzen* die Skripte
+   Variablen, die wir nie setzen? (Texer II lieferte leere Slots — der Decoder
+   war schuld, nicht der Renderer; in S51 fehlte `w`.)
 2. **Top-Level-Bisektion** — welcher Knoten bricht?
 3. **Knoten isoliert nachbauen** — Skripte aus dem Dump verbatim in eine
    Sonde. Läuft er dort exakt, liegt es an der Umgebung (so kam der
@@ -161,11 +223,12 @@ Reihenfolge, die sich bewährt hat:
 
 ---
 
-## 7. Verifikationsgürtel vor jedem Commit
+## 8. Verifikationsgürtel vor jedem Commit
 
 - `MyViz.UnitTests` — **grün heißt SUCCESS und 0 Skips**
 - **Modul-Matrix** `run_matrix.py` — zwei Größen, Referenzstand 37/41
-- **Modul-Sonden** `run_module_probes.py`
+- **Modul-Sonden** `run_module_probes.py` — Referenzstand 29/30 (S51); `5_vars`
+  läuft nur bei 320×240, seine Literale sind auf diese Größe gepinnt
 - Bei breit wirkenden Änderungen (geteilter Kontext, Blend, Scope-Renderer)
   ist die Matrix der wichtigste Wächter — sie betrifft jeden Scope.
 - Für jeden Befund ein **Gate**. Der Texer-II-Decoder war ein Jahr lang kaputt,
@@ -189,7 +252,7 @@ bestehender Test ist hier ein Fund, kein Hindernis.
 
 ---
 
-## 8. Merkregeln zur Messung selbst
+## 9. Merkregeln zur Messung selbst
 
 - **Zwei Größen messen** (320×240 + 740×460) — kleine Flächen maskieren
   größenabhängige Fehler.
@@ -201,3 +264,8 @@ bestehender Test ist hier ein Fund, kein Hindernis.
   verschlechtern — das legt eine bestehende Fehlausrichtung frei.
 - **Nicht-ASCII-Preset-Namen**: AvsRef ist ein ANSI-Programm; die Werkzeuge
   staged solche Presets automatisch (`compare_avsref.ascii_safe`).
+- **Ein Preset kann mehrere Schichten kaputt haben.** In S51 zeichneten nach
+  dem Texer-Fix die Sprites wieder, das Preset blieb aber falsch, weil der
+  *Transport* (Movement-Kette) den Inhalt nicht verteilt. Ein Fix, der die Zahl
+  nur wenig bewegt, ist nicht deshalb falsch — die Montage sagt, ob die
+  behandelte Schicht jetzt stimmt, und die Zahl gehört der nächsten.

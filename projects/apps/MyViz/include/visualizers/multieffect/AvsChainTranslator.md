@@ -12,8 +12,14 @@
 ```cpp
 lumi::avs::ParseResult parsed = lumi::avs::parseFile(path);
 TranslationResult t = translateAvsTree(parsed);   // t.root ist compiled
-// t.report: Parser-Warnungen + "nicht unterstützt"-Einträge (pfad-präfixiert)
+// t.report: PROBLEME — Parser-Warnungen, nicht unterstützte Effekte (pfad-präfixiert)
+// t.notes : HINWEISE — planmäßige `_p`-Umbenennungen, bewusst ignorierte Effekte
 ```
+
+Die Trennung ist der Grund, warum das Meldungsfenster wieder aussagekräftig ist:
+`report` rechtfertigt einen Dialog, `notes` nicht. `loadAvsFile` schreibt beides
+zusammen in einen **„Import Notes"-Knoten** der Kette (Entscheid Patrik, S51) —
+vorher gingen echte Probleme in einem Dutzend Umbenennungs-Zeilen unter.
 
 Der Host bietet `MultiEffectVisualizer::loadAvsFile(path, &report)` als
 GUI-Einstieg (unter `renderMutex()`; setzt ein Reset-Flag, damit der

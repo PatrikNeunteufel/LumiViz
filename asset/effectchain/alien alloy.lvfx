@@ -1,0 +1,324 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "divisor": 4,
+                "enabled": true,
+                "filter": 0,
+                "name": "Render Scale",
+                "type": "renderScale"
+            },
+            {
+                "enabled": true,
+                "name": "Comment",
+                "text": "______________________________________________________\r\n\r\n  Whacko Revisited\r\n  Alien Alloy\r\n  Remix by: Tuggummi\r\n\r\n  Original: Comatose Enlightment\r\n______________________________________________________\r\n������������������������������������������������������\r\nWell i recently learned a nifty way to color presets just by using the different key channels of the colormap. So for the remix for UnConeD's whacky remix pack i decided to use this newly learned technique again, then i just picked his imo best \"flow\" preset: \"Comatose Enlightment\" and mixed that :)\r\nI did change the code a bit too, like adding some vars that control the strength of the swirls & shift according to the 'volume'. And i did change his superscope to 4 separate texers for more random mish-mash of color :)\r\n\r\nHope it's good enough for the whack-pack.\r\n\r\n- Tuggummi\r\n______________________________________________________\r\n",
+                "type": "comment"
+            },
+            {
+                "blendIn": 0,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "beatFaderB": -8,
+                        "beatFaderG": -8,
+                        "beatFaderR": 8,
+                        "enabled": true,
+                        "faderB": -25,
+                        "faderG": 11,
+                        "faderR": 16,
+                        "name": "Colorfade",
+                        "onBeatFrames": 1,
+                        "type": "colorfade"
+                    },
+                    {
+                        "adjustAlpha": 0,
+                        "enabled": true,
+                        "lineBlend": 2,
+                        "lineWidth": 1,
+                        "name": "Set Render Mode",
+                        "type": "setRenderMode"
+                    },
+                    {
+                        "arbitrary": false,
+                        "arbitraryMs": 500,
+                        "enabled": true,
+                        "invert": false,
+                        "name": "Custom BPM",
+                        "skip": true,
+                        "skipCount": 3,
+                        "type": "customBpm"
+                    },
+                    {
+                        "beatCode": "",
+                        "blend": false,
+                        "buffern": 0,
+                        "enabled": true,
+                        "frameCode": "vol=vol*0.9+getspec(0.5,1,0) ;\r\nswrlstr=0.02+min(1.5,vol)*0.08 ;\r\nsftstr=0.02+min(1.5,vol)*0.08 ;\r\nt=t-(0.005+vol*0.015) ;\r\ncx=cos(t*.97)*.5;\r\ncy=sin(t*.77)*cos(t*1.03)*.5;\r\nro=ro+sin(t*0.71)*cos(t*0.453)*sin(cos(t*.391))*.1;\r\nxo=cos(ro)*.3;yo=sin(ro)*.3;\r\nasp1=h/w ;\r\nasp2=1/asp1",
+                        "initCode": "t=rand(100)/50;",
+                        "name": "Dynamic Movement",
+                        "nomove": false,
+                        "pointCode": "xx=x;yy=y;\r\nx1=x-cx-xo;y1=(y-cy-yo)*asp1;\r\nr1=atan2(y1,x1);d1=sqrt(sqr(x1)+sqr(y1));\r\nr1=r1+swrlstr/d1;x1=cos(r1)*d1+cx+cos(ro)*sftstr;y1=sin(r1)*d1*asp2+cy+sin(ro)*sftstr;\r\n\r\nx2=x-cx+xo;y2=(y-cy+yo)*asp1;\r\nr2=atan2(y2,x2);d2=sqrt(sqr(x2)+sqr(y2));\r\nr2=r2-swrlstr/d2;x2=cos(r2)*d2+cx-cos(ro)*sftstr;y2=sin(r2)*d2*asp2+cy-sin(ro)*sftstr;\r\n\r\nx=(x1+x2)*.506;y=(y1+y2)*.506;\r\n",
+                        "rectCoords": true,
+                        "subpixel": true,
+                        "type": "dynamicMovement",
+                        "wrap": true,
+                        "xres": 25,
+                        "yres": 25
+                    },
+                    {
+                        "beatCode": "cts=(rand(51)-25)*0.01",
+                        "colorFiltering": true,
+                        "enabled": true,
+                        "filename": "",
+                        "frameCode": "n=w*0.1 ;\nct=ct+cts ;\nred=sin(ct+2.07)*0.5+0.5 ;\ngreen=sin(ct+4.18)*0.5+0.5 ;\nblue=sin(ct)*0.5+0.5 ;\nreg00=h/280 ;\nsizex=reg00*0.75 ;\nsizey=sizex",
+                        "imageData": "",
+                        "initCode": "",
+                        "name": "Texer II",
+                        "pointCode": "x=sin(i*$pi*2+ct*0.713)*2-1 ;\ny=0.98-sqr(getosc(v,0,2))*0.2",
+                        "resizing": true,
+                        "type": "texerII",
+                        "wrapAround": false
+                    },
+                    {
+                        "audioChannel": 2,
+                        "beatCode": "",
+                        "colorBlend": 0,
+                        "colorCycleFrames": 60,
+                        "colors": [
+                        ],
+                        "dotSize": 4,
+                        "enabled": true,
+                        "frameCode": "",
+                        "gradientPreset": "Neon",
+                        "initCode": "",
+                        "lineBlend": 1,
+                        "lineWidth": 2,
+                        "name": "SuperScope",
+                        "pointCode": "",
+                        "pointCount": 256,
+                        "renderMode": 1,
+                        "spectrumSource": false,
+                        "type": "superScope"
+                    },
+                    {
+                        "beatCode": "cts=(rand(51)-25)*0.01",
+                        "colorFiltering": true,
+                        "enabled": true,
+                        "filename": "",
+                        "frameCode": "n=w*0.1 ;\r\nct=ct+cts ;\r\nred=sin(ct+2.07)*0.5+0.5 ;\r\ngreen=sin(ct+4.18)*0.5+0.5 ;\r\nblue=sin(ct)*0.5+0.5 ;\r\nsizex=reg00*0.75 ;\r\nsizey=sizex",
+                        "imageData": "",
+                        "initCode": "",
+                        "name": "Texer II",
+                        "pointCode": "x=sin(i*$pi*2+ct*0.713)*2-1 ;\r\ny=-0.98+sqr(getosc(v,0,1))*0.2",
+                        "resizing": true,
+                        "type": "texerII",
+                        "wrapAround": false
+                    },
+                    {
+                        "beatCode": "cts=(rand(51)-25)*0.01",
+                        "colorFiltering": true,
+                        "enabled": true,
+                        "filename": "",
+                        "frameCode": "n=w*0.1 ;\r\nct=ct+cts ;\r\nred=sin(ct+2.07)*0.5+0.5 ;\r\ngreen=sin(ct+4.18)*0.5+0.5 ;\r\nblue=sin(ct)*0.5+0.5 ;\r\nsizex=reg00*0.75 ;\r\nsizey=sizex",
+                        "imageData": "",
+                        "initCode": "",
+                        "name": "Texer II",
+                        "pointCode": "y=sin(i*$pi*2+ct*0.713)*2-1 ;\r\nx=-0.98+sqr(getosc(v,0,1))*0.2",
+                        "resizing": true,
+                        "type": "texerII",
+                        "wrapAround": false
+                    },
+                    {
+                        "beatCode": "cts=(rand(51)-25)*0.01",
+                        "colorFiltering": true,
+                        "enabled": true,
+                        "filename": "",
+                        "frameCode": "n=w*0.1 ;\r\nct=ct+cts ;\r\nred=sin(ct+2.07)*0.5+0.5 ;\r\ngreen=sin(ct+4.18)*0.5+0.5 ;\r\nblue=sin(ct)*0.5+0.5 ;\r\nsizex=reg00*0.75 ;\r\nsizey=sizex",
+                        "imageData": "",
+                        "initCode": "",
+                        "name": "Texer II",
+                        "pointCode": "y=sin(i*$pi*2+ct*0.713)*2-1 ;\r\nx=0.98-sqr(getosc(v,0,1))*0.2",
+                        "resizing": true,
+                        "type": "texerII",
+                        "wrapAround": false
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "blendIn": 2,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 67,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "effect": 0,
+                "enabled": true,
+                "name": "MultiFilter",
+                "onBeat": false,
+                "type": "multiFilter"
+            },
+            {
+                "adjustAlpha": 128,
+                "blend": 1,
+                "dir": 0,
+                "enabled": true,
+                "name": "Buffer Save",
+                "slot": 0,
+                "type": "bufferSave"
+            },
+            {
+                "blend": true,
+                "builtinRemap": 0,
+                "code": "x=x*0.975+0.025 ;\r\ny=y*0.975+0.025",
+                "enabled": true,
+                "name": "Movement",
+                "rectCoords": true,
+                "sourceMapped": 0,
+                "subpixel": true,
+                "type": "movement",
+                "wrap": false
+            },
+            {
+                "adjustBlend": 0,
+                "blendMode": 0,
+                "enabled": true,
+                "key": 0,
+                "name": "Color Map",
+                "stopColor": [
+                    0,
+                    8413312,
+                    16777215
+                ],
+                "stopPos": [
+                    0,
+                    150,
+                    255
+                ],
+                "type": "colorMap"
+            },
+            {
+                "blendIn": 0,
+                "blendOut": 4,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "adjustAlpha": 128,
+                        "blend": 1,
+                        "dir": 1,
+                        "enabled": true,
+                        "name": "Buffer Save",
+                        "slot": 0,
+                        "type": "bufferSave"
+                    },
+                    {
+                        "blend": true,
+                        "builtinRemap": 0,
+                        "code": "x=x*0.975-0.025 ;\r\ny=y*0.975-0.025",
+                        "enabled": true,
+                        "name": "Movement",
+                        "rectCoords": true,
+                        "sourceMapped": 0,
+                        "subpixel": true,
+                        "type": "movement",
+                        "wrap": false
+                    },
+                    {
+                        "adjustBlend": 0,
+                        "blendMode": 0,
+                        "enabled": true,
+                        "key": 2,
+                        "name": "Color Map",
+                        "stopColor": [
+                            0,
+                            6316160,
+                            16777215
+                        ],
+                        "stopPos": [
+                            0,
+                            145,
+                            255
+                        ],
+                        "type": "colorMap"
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "blend": false,
+                "builtinRemap": 0,
+                "code": "d=d*(-d*0.3+1.1)",
+                "enabled": true,
+                "name": "Movement",
+                "rectCoords": false,
+                "sourceMapped": 0,
+                "subpixel": true,
+                "type": "movement",
+                "wrap": false
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 0,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 0,
+        "type": "list",
+        "useCode": false
+    }
+}

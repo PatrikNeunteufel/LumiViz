@@ -40,7 +40,19 @@ namespace lumi::multieffect {
 struct TranslationResult
 {
     ChainNode root;                    ///< compiled + ready for setChain()
-    std::vector<std::string> report;   ///< parser warnings + unsupported effects
+    /// PROBLEME: Parser-Warnungen, nicht unterstuetzte Effekte, fehlende
+    /// Dateien. Nur diese Liste rechtfertigt ein Meldungsfenster.
+    std::vector<std::string> report;
+    /**
+     * HINWEISE: was der Import planmaessig getan hat — `_p`-Umbenennungen der
+     * Kollisionsregel (D2), bewusst ignorierte Effekte.
+     *
+     * Getrennt vom Report, weil beides zusammen im Dialog die wirklichen
+     * Probleme unsichtbar machte: ein Preset mit einem Dutzend Umbenennungen
+     * ergab ein Dutzend Zeilen Rauschen (Entscheid Patrik, S51). Die Hinweise
+     * landen stattdessen im "Import Notes"-Knoten der Kette.
+     */
+    std::vector<std::string> notes;
     int effectCount = 0;               ///< mapped nodes (root excluded)
     int passthroughCount = 0;          ///< nodes conserved as Passthrough
 };
