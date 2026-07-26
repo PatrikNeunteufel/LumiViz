@@ -15,6 +15,12 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+# Konsole auf UTF-8: Preset-Namen enthalten Nicht-ASCII, cp1252 wuerfe beim
+# Ausgeben eine Ausnahme und risse den Lauf mit (Befund S50).
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).parent
 PROBES = ROOT / "colormap_probe"
 OUT = (ROOT / "../../../out/colormap_probe").resolve()

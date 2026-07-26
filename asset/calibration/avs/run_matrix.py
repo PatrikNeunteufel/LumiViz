@@ -51,9 +51,12 @@ def main() -> int:
             (sdir / "lumi").mkdir(exist_ok=True)
             (sdir / "montage").mkdir(exist_ok=True)
             try:
-                ref = ca.load_rgb(ca.run_ref(avs, args.frames, size,
+                # Rendern ueber den ASCII-sicheren Pfad (AvsRef ist ANSI, s.
+                # compare_avsref.ascii_safe); Originalname bleibt im Bericht.
+                src = ca.ascii_safe(avs, out / "_ascii")
+                ref = ca.load_rgb(ca.run_ref(src, args.frames, size,
                                              sdir / "ref", args.beat_period))
-                lumi = ca.load_rgb(ca.run_lumi(avs, args.frames, size,
+                lumi = ca.load_rgb(ca.run_lumi(src, args.frames, size,
                                                sdir / "lumi", args.beat_period))
                 d = ca.compare(ref, lumi)
                 ca.montage(ref, lumi, sdir / "montage" / f"{avs.stem}_{avs.parent.name}.png")

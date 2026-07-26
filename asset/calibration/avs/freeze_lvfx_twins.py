@@ -21,6 +21,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Konsole auf UTF-8: Preset-Namen enthalten Nicht-ASCII, cp1252 wuerfe beim
+# Ausgeben eine Ausnahme und risse den Lauf mit (Befund S50).
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).parent
 EXE = (ROOT / "../../../out/build/windows-ninja-release-clang/exec/AvsStandalone/"
        "bin/Release/AvsStandalone.exe").resolve()

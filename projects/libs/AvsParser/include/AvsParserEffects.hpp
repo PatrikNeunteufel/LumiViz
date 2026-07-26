@@ -676,9 +676,18 @@ inline void decodeTexer(Reader& r, EffectNode& n)   // "Texer" APE
 
 inline void decodeTexerII(Reader& r, EffectNode& n)   // "Acko.net: Texer II" APE
 {
+    // Layout empirisch gepinnt an 579 Texer-II-Blobs der Preset-Sammlung (S50):
+    // der Bildname ist ein FESTER MAX_PATH-Puffer mit NUL-Terminierung, keine
+    // laengenpraefixierte Zeichenkette. 4 (null) + 260 (name) + 4*4 (Felder) =
+    // 280 Byte Vorlauf — in allen 579 Blobs beginnt der Code genau dort.
+    // Der Puffer wird beim Speichern NICHT geleert: hinter dem NUL koennen Reste
+    // eines laengeren Vornamens stehen ("...19x19.bmp\0bmp\0"), darum bis zum
+    // ersten NUL lesen und den Rest verwerfen.
     std::int32_t v = 0;
     r.tryI32(v);  // null0
-    n.code.push_back(CodeSlot{"filename", r.loadString()});  // imageSrc SizeString
+    const std::uint8_t* nameBuf = nullptr;
+    if (r.tryBytes(260, nameBuf))
+        n.code.push_back(CodeSlot{"filename", r.fixedString(nameBuf, 260)});
     readField(r, n, "resizing") && readField(r, n, "wrapAround") &&
         readField(r, n, "colorFiltering");
     r.tryI32(v);  // null1

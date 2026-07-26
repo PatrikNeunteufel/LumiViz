@@ -21,13 +21,23 @@ Hinweise:
 - Presets mit rand() sind zwischen Laeufen nicht bit-stabil.
 """
 import argparse
+import hashlib
 import re
+import shutil
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
+
+# Konsole auf UTF-8 zwingen: die Standardkodierung ist hier cp1252, und ein
+# Preset-Name mit "š" liess frueher schon die FEHLER-Ausgabe abstuerzen — was
+# den GANZEN Sweep mitriss (Befund S50). errors="replace" statt Absturz.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).parent
 LUMI_EXE = (ROOT / "../../../out/build/windows-ninja-release-clang/exec/"
@@ -40,6 +50,35 @@ APE_DIR = (ROOT / "../../../../VisualsPresets/avs").resolve()
 
 STATS_RE = re.compile(
     r"mean RGB=\(([\d.]+), ([\d.]+), ([\d.]+)\), Luma min=([\d.]+) max=([\d.]+)")
+
+
+def ascii_safe(avs: Path, stage: Path) -> Path:
+    """Pfad, den beide Renderer sicher oeffnen koennen.
+
+    AvsRef ist ein ANSI-Programm (`main(int, char**)`): Windows setzt die
+    UTF-16-Kommandozeile in die ANSI-Codepage um, und alles ausserhalb von
+    cp1252 wird dabei zu "?" — die Datei ist dann schlicht nicht auffindbar
+    (Befund S50: "06 - fšk - Wtf I'm Lost.avs"). Statt uns auf 8.3-Kurznamen zu
+    verlassen (auf Volumes mit NtfsDisable8dot3NameCreation gibt es keine),
+    legen wir eine Kopie mit reinem ASCII-Namen an. Der Hash haelt Namen
+    auseinander, die sich erst durch die entfernten Zeichen gleichen wuerden.
+
+    Reine ASCII-Pfade werden unveraendert durchgereicht — kein Kopieren im
+    Normalfall. Der Aufrufer behaelt den ORIGINALPFAD fuer Bericht und
+    Montage-Namen; nur die Renderer sehen die Kopie.
+    """
+    if str(avs).isascii():
+        return avs
+    flat = unicodedata.normalize("NFKD", avs.name).encode("ascii", "ignore").decode()
+    flat = re.sub(r"[^A-Za-z0-9._ -]", "", flat) or "preset.avs"
+    if not flat.lower().endswith(".avs"):
+        flat += ".avs"
+    tag = hashlib.sha1(str(avs).encode("utf-8")).hexdigest()[:8]
+    stage.mkdir(parents=True, exist_ok=True)
+    dst = stage / f"{Path(flat).stem}_{tag}.avs"
+    if not dst.exists():
+        shutil.copy2(avs, dst)
+    return dst
 
 
 def run_ref(avs: Path, frames: int, size: str, out: Path, beat_period: int = 0,
@@ -146,12 +185,16 @@ def main() -> int:
 
     rows = []
     failures = 0
+    stage = out / "_ascii"
     for avs in presets:
         rel = avs.name
         try:
-            ref_img = load_rgb(run_ref(avs, args.frames, args.size, out / "ref",
+            # Rendern IMMER ueber den ASCII-sicheren Pfad (s. ascii_safe); der
+            # Originalname bleibt fuer Bericht und Montage.
+            src = ascii_safe(avs, stage)
+            ref_img = load_rgb(run_ref(src, args.frames, args.size, out / "ref",
                                        args.beat_period, args.ape_dir))
-            lumi_img = load_rgb(run_lumi(avs, args.frames, args.size, out / "lumi",
+            lumi_img = load_rgb(run_lumi(src, args.frames, args.size, out / "lumi",
                                          args.beat_period))
             if ref_img.shape != lumi_img.shape:
                 raise RuntimeError(

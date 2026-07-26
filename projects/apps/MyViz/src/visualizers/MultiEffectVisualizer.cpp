@@ -3184,10 +3184,20 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         // r_list fake_enabled (r_list.h:162): a statically DISABLED list with
         // "on beat render" still activates for N frames after each beat — the
         // window gate lives in renderList; everything else stays skipped.
+        //
+        // Ebenso darf eine deaktivierte Liste MIT EEL-Code nicht hier schon
+        // wegfallen: r_list.cpp:399 belegt `enabled` nur mit dem gespeicherten
+        // Schalter VOR, danach gewinnt das Skript (r_list.cpp:419). Das ist ein
+        // gaengiges Idiom — die Liste liegt ausgeschaltet im Preset und schaltet
+        // sich per "enabled=bnot(equal(lw,w)*equal(lh,h))" im ersten Frame und
+        // nach jedem Resize selbst ein, um einen Puffer einmalig zu fuellen
+        // (Whacko Revisited, Befund S50). Wer hier abbricht, fuehrt den Code nie
+        // aus und die Liste bleibt fuer immer aus.
+        //
         // HG2: eine deaktivierte Host-Gruppe rendert weiter, solange ihr
         // Blend-Gewicht > 0 ist (Ausblend-Phase des Crossfades).
         const auto* list = std::get_if<ListParams>(&node.params);
-        if (list == nullptr || !list->onBeatRender)
+        if (list == nullptr || (!list->onBeatRender && !list->useCode))
         {
             if (!node.isHostGroup()) return;
             const auto it = m_groupRuntimes.find(node.nodeId);
@@ -3334,6 +3344,11 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
             engine.setNumber("beat", m_frameBeat ? 1.0 : 0.0);
             engine.setNumber("w", static_cast<double>(m_surfaceWidth));
             engine.setNumber("h", static_cast<double>(m_surfaceHeight));
+            // r_list.cpp:399-402: `enabled` und `clear` werden JE FRAME aus dem
+            // gespeicherten Schalter vorbelegt — nicht einmalig beim Compile.
+            // Erst danach darf das Skript sie umschreiben (:419-420).
+            engine.setNumber("enabled", node.enabled ? 1.0 : 0.0);
+            engine.setNumber("clear", params.clearEveryFrame ? 1.0 : 0.0);
             runtime.slotHost->run(Slot::Frame);
             scriptEnabled = engine.number("enabled") != 0.0;
             scriptClear = engine.number("clear") != 0.0;
@@ -5755,21 +5770,46 @@ bool MultiEffectVisualizer::ensureEmbeddedTexture(LeafRuntime& rt,
     if (!loaded)
     {
         // Texer/Texer II render their built-in default when the image is
-        // missing (Acko default texture): a small soft white dot. Picture
-        // effects keep the hard fail.
+        // missing (Acko default texture). Picture effects keep the hard fail.
+        //
+        // Das Default-Sprite ist GEMESSEN, nicht geraten (S50): ein einzelnes
+        // Sprite mit sizex=sizey=1 additiv auf Schwarz gerendert liefert die
+        // Textur direkt zurueck (AvsRef mit echter texer2.ape). Ergebnis: 20x20
+        // Pixel, Peak 252, radialsymmetrisch. Die Stuetzstellen unten sind das
+        // radial gemittelte Profil in 0,5-Pixel-Schritten — gemittelt, weil das
+        // gerenderte Sprite einen Halbpixel-Versatz hat und die rohe Matrix
+        // dadurch bis zu 39 Stufen asymmetrisch ist. Ruecktransformiert bleibt
+        // der mittlere Fehler bei 2,1 Stufen (max 13,4) und die sichtbare
+        // Ausdehnung bei exakt 20 px — der Massstab, an dem sizex/sizey haengen
+        // (Referenz: Ausdehnung = 20 px * sizex, linear ueber 0,5..8 geprueft).
+        //
+        // Alpha ist bewusst 255: der Sprite-Pass blendet GL_SRC_ALPHA/GL_ONE,
+        // ein Alpha=v haette das Profil QUADRIERT (der alte 16er-Kegel tat das
+        // und kam deshalb auf nur 14 px sichtbare Breite).
         if (!fallbackDot) return false;
-        constexpr int kDot = 16;
+        static constexpr std::array<float, 22> kDefaultRadial = {
+            252.0f, 251.5f, 251.0f, 249.5f, 248.9f, 247.1f,
+            244.6f, 240.1f, 230.4f, 223.4f, 204.8f, 190.2f,
+            173.5f, 156.7f, 133.7f, 117.2f,  97.0f,  78.1f,
+             58.1f,  45.5f,  27.9f,   0.0f};
+        constexpr int kDot = 20;
         img = QImage(kDot, kDot, QImage::Format_RGBA8888);
         for (int y = 0; y < kDot; ++y)
         {
             for (int x = 0; x < kDot; ++x)
             {
-                const float dx = (x + 0.5f) / kDot * 2.0f - 1.0f;
-                const float dy = (y + 0.5f) / kDot * 2.0f - 1.0f;
-                const float d = std::sqrt(dx * dx + dy * dy);
-                const int v = static_cast<int>(
-                    std::clamp(1.0f - d, 0.0f, 1.0f) * 255.0f);
-                img.setPixel(x, y, qRgba(v, v, v, v));
+                const float dx = x - (kDot - 1) * 0.5f;
+                const float dy = y - (kDot - 1) * 0.5f;
+                const float r = std::sqrt(dx * dx + dy * dy) * 2.0f;  // 0,5-px-Raster
+                const auto lo = static_cast<std::size_t>(r);
+                float v = 0.0f;
+                if (lo + 1 < kDefaultRadial.size())
+                {
+                    const float f = r - static_cast<float>(lo);
+                    v = kDefaultRadial[lo] * (1.0f - f) + kDefaultRadial[lo + 1] * f;
+                }
+                const int b = static_cast<int>(std::lround(std::clamp(v, 0.0f, 255.0f)));
+                img.setPixel(x, y, qRgba(b, b, b, 255));
             }
         }
     }
@@ -6240,8 +6280,14 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
     const int n = std::clamp(static_cast<int>(engine.number("n")), 1, 4096);
 
     auto* f = QOpenGLContext::currentContext()->functions();
-    f->glEnable(GL_BLEND);
-    f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    // Texer II folgt dem aktuellen BLEND_LINE-Modus wie die uebrigen Renderer,
+    // Default ist REPLACE — NICHT fest additiv (Befund S50). Gemessen: derselbe
+    // Sprite ueber 6 Frames auf dieselbe Stelle laesst die Bildenergie in AvsRef
+    // unveraendert (176901), unsere fest additive Fassung wuchs auf das 1,86-
+    // fache. Bei EINEM Frame auf Schwarz sind Replace und Additiv ununterscheid-
+    // bar — deshalb faellt das nur in Ketten mit ueberlappenden Sprites auf,
+    // also genau in den Presets, die davon leben.
+    applyLineBlend(m_renderMode.set ? m_renderMode.lineBlend : 0, m_renderMode.alpha);
     m_spriteShader->bind();
     m_quadVao->bind();
     f->glActiveTexture(GL_TEXTURE0);
@@ -6250,21 +6296,53 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
     m_spriteShader->setUniformValue("uColorFilter", params.colorFiltering ? 1 : 0);
     const float baseHx = static_cast<float>(rt.picW) / static_cast<float>(m_surfaceWidth);
     const float baseHy = static_cast<float>(rt.picH) / static_cast<float>(m_surfaceHeight);
+
+    // Punkt-Vertrag wie r_sscope (SuperscopeModule::executePointLua): je Punkt
+    // werden NUR i, v, skip und die Farb-Vorbelegung gesetzt. x/y/sizex/sizey
+    // sind persistente EEL-Variablen und dürfen NICHT zurückgesetzt werden —
+    // die Skripte dieses Packs lesen den Vorgängerwert ("x=if(dt,x3*dt*psf,x)"
+    // hält den letzten Punkt, wenn er hinter der Kamera liegt). Nur einmal je
+    // Frame neutral vorbelegen.
+    engine.setNumber("sizex", 1.0);
+    engine.setNumber("sizey", 1.0);
+
+    // v AVS-treu aus den rohen visdata-Bytes (Vertrag S44/S48: v = Byte/128-1,
+    // Mittenkanal per CHAR-Arithmetik, Interpolation r_sscope.cpp:284-289) —
+    // Bytes über die SSOT-Accessoren, kein zweites Layout-Wissen.
+    const unsigned char* waveL = visWaveform(0);
+    const unsigned char* waveR = visWaveform(1);
+    const auto waveValue = [waveL, waveR](int point, int count) -> double {
+        if (count < 1 || waveL == nullptr || waveR == nullptr) return 0.0;
+        const auto centerByte = [waveL, waveR](int idx) -> int {
+            idx = std::clamp(idx, 0, 575);
+            const char cl = static_cast<char>(waveL[idx]);
+            const char cr = static_cast<char>(waveR[idx]);
+            return static_cast<unsigned char>(static_cast<char>(cl / 2 + cr / 2));
+        };
+        const double r = (static_cast<double>(point) * 576.0) / count;
+        const int i0 = static_cast<int>(r);
+        const double s1 = r - i0;
+        const double b0 = centerByte(i0) ^ 128;
+        const double b1 = centerByte(i0 + 1) ^ 128;
+        return (b0 * (1.0 - s1) + b1 * s1) / 128.0 - 1.0;
+    };
+
     for (int pt = 0; pt < n; ++pt)
     {
-        engine.setNumber("i", n > 1 ? static_cast<double>(pt) / (n - 1) : 0.0);
-        engine.setNumber("x", 0.0);
-        engine.setNumber("y", 0.0);
-        engine.setNumber("sizex", 1.0);
-        engine.setNumber("sizey", 1.0);
+        const double iNorm = n > 1 ? static_cast<double>(pt) / (n - 1) : 0.0;
+        engine.setNumber("i", iNorm);
+        engine.setNumber("v", waveValue(pt, n));
+        engine.setNumber("skip", 0.0);
         engine.setNumber("red", 1.0);
         engine.setNumber("green", 1.0);
         engine.setNumber("blue", 1.0);
         if (rt.texerHost->has(Slot::Point)) rt.texerHost->run(Slot::Point);
+        if (engine.number("skip") > 0.5) continue;
         const float x = static_cast<float>(engine.number("x"));
         const float y = static_cast<float>(engine.number("y"));
-        const float sx = static_cast<float>(engine.number("sizex"));
-        const float sy = static_cast<float>(engine.number("sizey"));
+        // "Resize" aus = Sprite in Originalgröße, sizex/sizey wirken nicht.
+        const float sx = params.resizing ? static_cast<float>(engine.number("sizex")) : 1.0f;
+        const float sy = params.resizing ? static_cast<float>(engine.number("sizey")) : 1.0f;
         m_spriteShader->setUniformValue("uCenter", QVector2D(x, -y));  // AVS y is down
         m_spriteShader->setUniformValue("uHalf", QVector2D(baseHx * sx, baseHy * sy));
         m_spriteShader->setUniformValue(
@@ -6275,7 +6353,7 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
     }
     m_quadVao->release();
     m_spriteShader->release();
-    f->glDisable(GL_BLEND);
+    resetLineBlend();
 }
 
 void MultiEffectVisualizer::runTriangle(const ChainNode& node, const TriangleParams& params)

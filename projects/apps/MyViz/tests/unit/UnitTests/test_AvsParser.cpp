@@ -511,6 +511,45 @@ TEST_CASE("AvsParser: APE-Alias wird auf Builtin gemappt (Nullsoft MIRROR v1)")
     CHECK(fx.apeId == "Nullsoft MIRROR v1");
 }
 
+TEST_CASE("AvsParser: Texer II APE — fester Namenspuffer, dann Flags + Skripte")
+{
+    // Layout an 579 Blobs der Preset-Sammlung gepinnt (S50): der Bildname ist
+    // ein FESTER MAX_PATH-Puffer mit NUL-Terminierung, KEIN laengenpraefixierter
+    // String. Vor dem Fix las der Decoder die ersten vier Namensbytes als
+    // Laenge — Name, Flags und alle vier Skript-Slots kamen leer heraus, der
+    // Renderer zeichnete dann einen einzigen Default-Punkt.
+    char nameBuf[260] = {};
+    std::strncpy(nameBuf, "avsres_texer_circle_sharp_19x19.bmp", sizeof(nameBuf) - 1);
+    // Der Puffer wird beim Speichern nicht geleert: Rest eines laengeren
+    // Vornamens hinter dem NUL, der beim Lesen verschwinden muss.
+    std::strncpy(nameBuf + 40, "bmp", 4);
+
+    Bytes t2;
+    t2.i32(0)                                   // null0
+        .raw(nameBuf, sizeof(nameBuf))          // Bildname (fest, NUL-terminiert)
+        .i32(1).i32(0).i32(1)                   // resizing, wrapAround, colorFiltering
+        .i32(0)                                 // null1
+        .lpString("n=500").lpString("t=t+1")
+        .lpString("").lpString("x=i*2-1;y=0;");
+
+    Bytes b;
+    b.signature().u8(0x00).apeEffect("Acko.net: Texer II", t2);
+
+    const ParseResult r = parse(b.vec());
+    REQUIRE(r.ok);
+    REQUIRE(r.effectCount() == 1);
+    const EffectNode& fx = r.root.children[0];
+    CHECK(fx.decoded);
+    CHECK(fx.slot("filename") == "avsres_texer_circle_sharp_19x19.bmp");
+    CHECK(fx.field("resizing") == 1);
+    CHECK(fx.field("wrapAround") == 0);
+    CHECK(fx.field("colorFiltering") == 1);
+    CHECK(fx.slot("init") == "n=500");
+    CHECK(fx.slot("frame") == "t=t+1");
+    CHECK(fx.slot("beat") == "");
+    CHECK(fx.slot("point") == "x=i*2-1;y=0;");
+}
+
 TEST_CASE("AvsParser: unbekannter APE -> Roh-Blob + Warnung")
 {
     Bytes blob;
