@@ -189,10 +189,12 @@ private:
     };
 
     /** One Starfield particle (normalized coords, z in (0,1]). */
+    /// Ein Stern wie r_stars.cpp: X/Y sind GANZZAHLIGE Pixel-Abstaende zur
+    /// Bildmitte, Z die Tiefe, Speed der Einzeltempo-Faktor.
     struct Star
     {
-        float x = 0.0f;
-        float y = 0.0f;
+        int x = 0;
+        int y = 0;
         float z = 1.0f;
         float speed = 0.5f;
     };
@@ -264,6 +266,18 @@ private:
         /// Movement sourcemapped runtime bits (r_trans member state; bit1
         /// toggles bit0 on every beat); -1 = seed from params on first frame
         int moveSourceMapped = -1;
+        /// Movement (r_trans): per-Pixel-Tabelle als R32I-Textur — wie im
+        /// Original nur bei Groessen-/Skriptwechsel neu gebaut (teuer!)
+        unsigned int moveTabTex = 0;  ///< GL R32I w*h (deleted in onCleanup)
+        /// Grain (r_grain): depthBuffer als RG8-Textur; die Zufallszuege des
+        /// Originals laufen ueber den geteilten Preset-Strom (S49)
+        unsigned int grainTex = 0;
+        int grainW = 0;
+        int grainH = 0;
+        bool grainSeeded = false;
+        int moveTabW = 0;
+        int moveTabH = 0;
+        std::string moveTabKey;  ///< Skript + Flags, hinter denen die Tabelle steht
 
         // SuperScope: scripted point generator (drawn via the shared renderer)
         std::unique_ptr<lumi::modules::SuperscopeModule> scope;
@@ -389,8 +403,11 @@ private:
 
         // Starfield: CPU star particles + warp-speed ease (r_stars)
         std::vector<Star> stars;
-        float starSpeed = 0.0f;    ///< eased current warp speed (0 = uninitialised)
-        int starBeatFrames = 0;    ///< frames left easing back to warpSpeed
+        float starSpeed = 0.0f;    ///< CurrentSpeed (r_stars); 0 = uninitialisiert
+        int starBeatFrames = 0;    ///< nc — Frames bis WarpSpeed wieder gilt
+        float starIncBeat = 0.0f;  ///< incBeat — Schrittweite der Rueckkehr
+        int starW = 0;             ///< Groesse, fuer die die Sterne gesetzt wurden
+        int starH = 0;
 
         int timescopeX = 0;        ///< Timescope: current spectrogram column
 
@@ -605,8 +622,23 @@ private:
     };
     void applyGridWarp(LeafRuntime& rt, int xres, int yres,
                        const GridWarpOptions& opt);
+    /**
+     * Bit-treuer Warp-Pass fuer Dynamic Movement (r_dmove): die Fixpunkt-Tabelle
+     * des Gitters geht als Integer-Textur an den Shader, der die separable
+     * Ganzzahl-Interpolation des Originals geschlossen nachrechnet. Liefert
+     * false, wenn das Original an dieser Geometrie abbricht (Band der Breite 0).
+     */
+    bool applyGridWarpFx(LeafRuntime& rt, int xres, int yres,
+                         const GridWarpOptions& opt);
     void applyGridScatter(LeafRuntime& rt, int xres, int yres,
                           const GridWarpOptions& opt);
+    /**
+     * Bit-treuer Movement-Pass (r_trans): das Punkt-Skript laeuft je PIXEL in
+     * eine Tabelle (nur bei Groessen-/Skriptwechsel), der Shader dekodiert sie
+     * samt 5-Bit-Subpixel. false = kein lebender Punkt-Slot (Gitter-Fallback).
+     */
+    bool applyMovementTable(LeafRuntime& rt,
+                            const lumi::multieffect::MovementParams& params);
     void runBlitterFeedback(const lumi::multieffect::ChainNode& node,
                             const lumi::multieffect::BlitterFeedbackParams& params);
     void runRotoBlitter(const lumi::multieffect::ChainNode& node,
@@ -630,7 +662,8 @@ private:
     void runDebugBars(const lumi::multieffect::DebugBarsParams& params);
     void runMosaic(const lumi::multieffect::ChainNode& node,
                    const lumi::multieffect::MosaicParams& params);
-    void runGrain(const lumi::multieffect::GrainParams& params);
+    void runGrain(const lumi::multieffect::ChainNode& node,
+                  const lumi::multieffect::GrainParams& params);
     void runScatter(const lumi::multieffect::ScatterParams& params);
     void runInterferences(const lumi::multieffect::ChainNode& node,
                           const lumi::multieffect::InterferencesParams& params);
@@ -779,6 +812,8 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_colorfadeShader;
     std::unique_ptr<QOpenGLShaderProgram> m_lutShader;
     std::unique_ptr<QOpenGLShaderProgram> m_warpShader;
+    std::unique_ptr<QOpenGLShaderProgram> m_warpFxShader;  ///< r_dmove-Fixpunkt
+    std::unique_ptr<QOpenGLShaderProgram> m_moveTabShader;  ///< r_trans-Tabelle
     std::unique_ptr<QOpenGLShaderProgram> m_moveRemapShader;
     std::unique_ptr<QOpenGLShaderProgram> m_textShader;
     std::unique_ptr<QOpenGLShaderProgram> m_feedbackShader;
@@ -833,6 +868,9 @@ private:
     std::unique_ptr<QOpenGLVertexArrayObject> m_warpVao;
     std::unique_ptr<QOpenGLBuffer> m_warpVbo;
     std::vector<float> m_warpVertices;  ///< reused CPU scratch for the warp mesh
+    /// r_dmove-Gittertabelle als RGBA32I-Textur (x16, y16, a16, 0) + CPU-Scratch
+    unsigned int m_warpTabTex = 0;
+    std::vector<int> m_warpTab;
     // SuperScope 3D: dynamisches Sprite-Mesh (6 Vertices je Punkt:
     // center.xy + corner.xy + half.xy + rgb; je Frame neu hochgeladen)
     std::unique_ptr<QOpenGLVertexArrayObject> m_sprite3dVao;

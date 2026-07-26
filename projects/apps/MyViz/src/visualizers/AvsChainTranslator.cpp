@@ -689,8 +689,8 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.pointCode = slotStr(src, "point");
             // r_dmove evaluates xres+1 grid points, min 2 (r_dmove.cpp:232-238):
             // a stored 0 legitimately means a 2-point (near-linear) grid.
-            p.xres = std::clamp(src.field("xres") + 1, 2, 96);
-            p.yres = std::clamp(src.field("yres") + 1, 2, 72);
+            p.xres = std::clamp(src.field("xres") + 1, 2, 256);
+            p.yres = std::clamp(src.field("yres") + 1, 2, 256);
             p.rectCoords = src.field("rectcoords") != 0;
             p.wrap = src.field("wrap") != 0;
             p.blend = src.field("blend") != 0;
@@ -1099,6 +1099,7 @@ ChainNode translateNode(const EffectNode& src, const std::string& path, Context&
     if (mapBuiltin(src, path, ctx, node))
     {
         ++ctx.effectCount;
+        node.fromApe = !src.apeId.empty();
         return node;
     }
 

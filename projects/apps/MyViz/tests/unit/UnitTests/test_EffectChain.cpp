@@ -351,7 +351,7 @@ TEST_SUITE("EffectChain")
 
         REQUIRE(compileChain(root).ok);
         const auto& d = std::get<DynamicMovementParams>(root.children[0].params);
-        CHECK(d.xres == 96);
+        CHECK(d.xres == 256);  // AVS-Grenze (r_dmove.cpp:235-238), S49
         CHECK(d.yres == 2);
     }
 

@@ -37,6 +37,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_MilkdropGlSmoke.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_BloomGlSmoke.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_Scope3DGlSmoke.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_DmoveFixpunkt.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_AvsChainTranslator.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ChainSerializer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ScriptContext.cpp"

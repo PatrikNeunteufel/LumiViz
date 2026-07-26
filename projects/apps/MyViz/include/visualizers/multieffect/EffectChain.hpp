@@ -1576,6 +1576,16 @@ struct ChainNode
      */
     uint64_t nodeId = 0;
 
+    /**
+     * Der Knoten stammt aus einem AVS-APE (Plugin-DLL), nicht aus einem
+     * Builtin. Nur Import-Information: der Vergleichs-Referenzkern AvsRef
+     * laedt bewusst KEINE APE-DLLs (avsref_main.cpp:349-357), solche Knoten
+     * sind dort also wirkungslos — `AvsStandalone --no-ape` schaltet sie
+     * deshalb ab, damit der Rest des Presets vergleichbar bleibt (S49).
+     * Laufzeit-Information, wird nicht serialisiert.
+     */
+    bool fromApe = false;
+
     [[nodiscard]] bool isList() const
     {
         return std::holds_alternative<ListParams>(params);
@@ -1795,8 +1805,8 @@ inline void compileNode(ChainNode& node, const std::string& path,
     }
     if (auto* dmove = std::get_if<DynamicMovementParams>(&node.params))
     {
-        dmove->xres = std::clamp(dmove->xres, 2, 96);
-        dmove->yres = std::clamp(dmove->yres, 2, 72);
+        dmove->xres = std::clamp(dmove->xres, 2, 256);  // AVS: r_dmove.cpp:235-238
+        dmove->yres = std::clamp(dmove->yres, 2, 256);
         dmove->buffern = std::clamp(dmove->buffern, 0, 8);
     }
     if (auto* move = std::get_if<MovementParams>(&node.params))

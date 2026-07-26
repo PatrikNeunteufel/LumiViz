@@ -614,6 +614,201 @@ void main()
 }
 )";
 
+// Movement bit-treu (r_trans.cpp:553-720, S49). r_trans hat KEIN Gitter: die
+// Tabelle haelt je PIXEL einen int — Ziel-Offset (22 Bit) plus die auf 5 Bit
+// quantisierten Subpixel-Anteile. Der Shader dekodiert genauso und mischt mit
+// BLEND4 (Gewichte 255-w, drei trunkierende Stufen).
+const char* kMoveTabFragmentShader = R"(
+#version 330 core
+uniform sampler2D uTex;    // aktuelles Bild (Quelle UND Blend-Ziel)
+uniform isampler2D uTab;   // r_trans-Tabelle, AVS-Zeilenordnung (0 = oben)
+uniform int uResX;
+uniform int uResY;
+uniform bool uBlend;       // BLEND_AVG mit dem unbewegten Pixel
+uniform bool uSubpixel;
+out vec4 fragColor;
+
+ivec3 texelAvsLinear(int addr)
+{
+    // r_trans adressiert linear (framebuffer+offs, +1, +w, +w+1) — bei der
+    // Tabellen-Klemmung auf w-2/h-2 bleibt das innerhalb des Bildes.
+    addr = clamp(addr, 0, uResX * uResY - 1);
+    int ay = addr / uResX;
+    int ax = addr - ay * uResX;
+    return ivec3(texelFetch(uTex, ivec2(ax, uResY - 1 - ay), 0).rgb * 255.0 + 0.5);
+}
+
+void main()
+{
+    int dx = int(gl_FragCoord.x);
+    int dy = uResY - 1 - int(gl_FragCoord.y);
+    int v = texelFetch(uTab, ivec2(dx, dy), 0).r;
+    int offs = v & ((1 << 22) - 1);
+
+    ivec3 moved;
+    if (uSubpixel)
+    {
+        int xw = (v >> 24) & (31 << 3);  // 5 Bit, auf 0..248 gespreizt
+        int yw = (v >> 19) & (31 << 3);
+        ivec3 c00 = texelAvsLinear(offs);
+        ivec3 c10 = texelAvsLinear(offs + 1);
+        ivec3 c01 = texelAvsLinear(offs + uResX);
+        ivec3 c11 = texelAvsLinear(offs + uResX + 1);
+        ivec3 top = (c00 * (255 - xw) + c10 * xw) >> 8;
+        ivec3 bot = (c01 * (255 - xw) + c11 * xw) >> 8;
+        moved = (top * (255 - yw) + bot * yw) >> 8;
+    }
+    else
+    {
+        moved = texelAvsLinear(offs);
+    }
+
+    if (uBlend)
+    {
+        // BLEND_AVG: (a>>1)+(b>>1) je Kanal, ohne Uebertrag — die Bit-0-Verluste
+        // sind der Grund, warum float-mix hier nicht deckungsgleich ist.
+        ivec3 orig = ivec3(texelFetch(uTex, ivec2(dx, uResY - 1 - dy), 0).rgb * 255.0 + 0.5);
+        moved = (orig >> 1) + (moved >> 1);
+    }
+    fragColor = vec4(vec3(moved) / 255.0, 1.0);
+}
+)";
+
+// Dynamic Movement bit-treu (r_dmove.cpp:372-578, S49). Das Original legt die
+// Skript-Ergebnisse als 16.16-Fixpunkt-Tabelle (XRES x YRES) ab und interpoliert
+// sie SEPARABEL mit Ganzzahl-Arithmetik auf die volle Bildgroesse: je Gitterband
+// eine trunkierende Division (`/yseek`, `/seek`) und danach reine Additionen.
+// Das ist pro Pixel geschlossen berechenbar — Bandindex, Restweg und Bandbreite
+// stehen fest, der Rest ist `start + rest * ((ende-start)/breite)`. Unser altes
+// Dreiecksnetz interpolierte dagegen baryzentrisch in float: andere Kurve (Netz
+// statt bilinear) UND kein Trunkierungsverlust, der sich ueber Feedback-Ketten
+// aufsummiert (gleiche Familie wie der Roto-Befund S48).
+const char* kWarpFxFragmentShader = R"(
+#version 330 core
+uniform sampler2D uTex;      // aktuelles Bild (Blend-Ziel = "framebuffer")
+uniform sampler2D uSrcTex;   // Warp-Quelle (Bild oder Global-Buffer)
+uniform isampler2D uTab;     // Gittertabelle (x16, y16, a16), AVS-Zeilen (0=oben)
+// Merkregel S48: Qt sendet QPoint-Uniforms als FLOAT — Integer-Uniforms deshalb
+// immer einzeln (setUniformValue(int) trifft glUniform1i).
+uniform int uResX;
+uniform int uResY;
+uniform int uGridX;          // XRES
+uniform int uGridY;          // YRES
+uniform int uXcDpos;         // (w<<16)/(XRES-1) — trunkiert wie das Original
+uniform int uYcDpos;
+uniform int uWAdj;           // (w-2)<<16 mit subpixel, sonst (w-1)<<16
+uniform int uHAdj;
+uniform bool uWrap;
+uniform bool uBlend;
+uniform bool uNomove;
+uniform bool uBufSrc;
+uniform bool uSubpixel;
+out vec4 fragColor;
+
+// C-Semantik von %: GLSL laesst % mit negativen Operanden offen.
+int cmod(int v, int m) { return v - (v / m) * m; }
+
+// Band eines Ausgabepixels: (Index, Rest im Band, Bandbreite). Die Baender sind
+// [ (b*dpos)>>16 , ((b+1)*dpos)>>16 ) — durch die Trunkierung von dpos NICHT
+// gleich breit, deshalb der Korrekturschritt.
+ivec3 bandOf(int p, int dpos, int n)
+{
+    int b = clamp((p << 16) / dpos, 0, n - 2);
+    if (((b + 1) * dpos) >> 16 <= p) b = min(b + 1, n - 2);
+    if ((b * dpos) >> 16 > p) b = max(b - 1, 0);
+    int lo = (b * dpos) >> 16;
+    int hi = ((b + 1) * dpos) >> 16;
+    return ivec3(b, p - lo, max(hi - lo, 1));
+}
+
+ivec3 texelAvs(sampler2D tex, int x, int y)
+{
+    x = clamp(x, 0, uResX - 1);
+    y = clamp(y, 0, uResY - 1);
+    // AVS-Zeile 0 = oben, unsere Textur ist bottom-up.
+    return ivec3(texelFetch(tex, ivec2(x, uResY - 1 - y), 0).rgb * 255.0 + 0.5);
+}
+
+// BLEND_ADJ (r_defs.h, MMX-Zweig): Gewichte v und 255-v, EINE Trunkierung.
+ivec3 blendAdj(ivec3 a, ivec3 b, int v)
+{
+    return (a * v + b * (255 - v)) >> 8;
+}
+
+void main()
+{
+    int dx = int(gl_FragCoord.x);
+    int dy = uResY - 1 - int(gl_FragCoord.y);  // AVS-Zeile
+    ivec3 bx = bandOf(dx, uXcDpos, uGridX);
+    ivec3 by = bandOf(dy, uYcDpos, uGridY);
+
+    // Zeilen-Interpolation (r_dmove.cpp:418-432 + 469-471): stab[] startet auf
+    // dem oberen Gitterwert und addiert je Ausgabezeile (unten-oben)/yseek.
+    ivec3 t00 = texelFetch(uTab, ivec2(bx.x, by.x), 0).rgb;
+    ivec3 t01 = texelFetch(uTab, ivec2(bx.x, by.x + 1), 0).rgb;
+    ivec3 t10 = texelFetch(uTab, ivec2(bx.x + 1, by.x), 0).rgb;
+    ivec3 t11 = texelFetch(uTab, ivec2(bx.x + 1, by.x + 1), 0).rgb;
+    ivec3 left  = t00 + by.y * ((t01 - t00) / by.z);
+    ivec3 right = t10 + by.y * ((t11 - t10) / by.z);
+    // Spalten-Interpolation (r_dmove.cpp:463-468 + NORMAL_LOOP): dito je Pixel.
+    ivec3 v = left + bx.y * ((right - left) / bx.z);
+
+    int xp = v.x;
+    int yp = v.y;
+    if (uWrap)
+    {
+        // WRAPPING_LOOPS korrigiert einmal je Schritt; da |d| < w_adj bleibt,
+        // ist das mathematisch das volle Modulo (DO_LOOPS-Argument wie Roto).
+        xp = cmod(xp, uWAdj); if (xp < 0) xp += uWAdj;
+        yp = cmod(yp, uHAdj); if (yp < 0) yp += uHAdj;
+    }
+    else
+    {
+        // CLAMPED_LOOPS klemmt den AKKUMULATOR; da beide Stuetzstellen bereits
+        // in [0, w_adj] liegen, deckt sich das mit dem Klemmen des Endwerts.
+        xp = clamp(xp, 0, uWAdj - 1);
+        yp = clamp(yp, 0, uHAdj - 1);
+    }
+    int ap = clamp(v.z >> 16, 0, 255);
+
+    ivec3 moved;
+    if (uSubpixel)
+    {
+        // BLEND4_16 (r_defs.h): Gewichte (p>>8)&0xff gegen 255-w (mmx_blend4_revn
+        // = 0x00ff!), jede der drei Stufen trunkiert mit >>8.
+        int xw = (xp >> 8) & 0xff;
+        int yw = (yp >> 8) & 0xff;
+        int ix = xp >> 16;
+        int iy = yp >> 16;
+        ivec3 c00 = texelAvs(uSrcTex, ix, iy);
+        ivec3 c10 = texelAvs(uSrcTex, ix + 1, iy);
+        ivec3 c01 = texelAvs(uSrcTex, ix, iy + 1);
+        ivec3 c11 = texelAvs(uSrcTex, ix + 1, iy + 1);
+        ivec3 top = (c00 * (255 - xw) + c10 * xw) >> 8;
+        ivec3 bot = (c01 * (255 - xw) + c11 * xw) >> 8;
+        moved = (top * (255 - yw) + bot * yw) >> 8;
+    }
+    else
+    {
+        moved = texelAvs(uSrcTex, xp >> 16, yp >> 16);
+    }
+
+    ivec3 orig = texelAvs(uTex, dx, dy);
+    ivec3 res;
+    if (uNomove)
+    {
+        // r_dmove.cpp:531-543: ohne Verschiebung wird die QUELLE am selben Ort
+        // eingeblendet — ohne Global-Buffer ist die Quelle 0 (Ausblenden).
+        res = blendAdj(uBufSrc ? texelAvs(uSrcTex, dx, dy) : ivec3(0), orig, ap);
+    }
+    else
+    {
+        res = uBlend ? blendAdj(moved, orig, ap) : moved;
+    }
+    fragColor = vec4(vec3(res) / 255.0, 1.0);
+}
+)";
+
 // AVS Roto / Blitter Feedback (ID 9 / 4): sample the current image rotated and
 // zoomed about the center, blend with the original — a scale/rotate feedback.
 // Feedback-Abbildung (Blitter/Roto Blitter, S48 nach r_blit/r_rotblit
@@ -683,17 +878,21 @@ void main()
         int addr = (t >> 16) * w + (s >> 16);
         if (uSubpixel)
         {
-            // BLEND4 (r_defs.h): Gewichte (s>>8)&0xff, jede Mischstufe
-            // trunkiert (>>8) — exakt in Ganzzahlen nachgerechnet.
+            // BLEND4_16 (r_defs.h): Gewichte (s>>8)&0xff GEGEN 255-w, jede
+            // Mischstufe trunkiert (>>8). Die 255 ist kein Tippfehler des
+            // Originals — mmx_blend4_revn = 0x00ff00ff (render.cpp:64, „more
+            // correct" waere 0x0100, aber sie wollten Gleichstand mit dem
+            // Nicht-MMX-Zweig). Jede Stufe verliert dadurch ~0,4 %, was sich
+            // ueber die Feedback-Kaskade zu sichtbarem Abdunkeln summiert (S49).
             int xw = (s >> 8) & 0xff;
             int yw = (t >> 8) & 0xff;
             ivec3 c00 = ivec3(fetchLinear(addr) * 255.0 + 0.5);
             ivec3 c10 = ivec3(fetchLinear(addr + 1) * 255.0 + 0.5);
             ivec3 c01 = ivec3(fetchLinear(addr + w) * 255.0 + 0.5);
             ivec3 c11 = ivec3(fetchLinear(addr + w + 1) * 255.0 + 0.5);
-            ivec3 a = (c00 * (256 - xw) + c10 * xw) >> 8;
-            ivec3 b = (c01 * (256 - xw) + c11 * xw) >> 8;
-            moved = vec3((a * (256 - yw) + b * yw) >> 8) / 255.0;
+            ivec3 a = (c00 * (255 - xw) + c10 * xw) >> 8;
+            ivec3 b = (c01 * (255 - xw) + c11 * xw) >> 8;
+            moved = vec3((a * (255 - yw) + b * yw) >> 8) / 255.0;
         }
         else
         {
@@ -776,24 +975,29 @@ const char* kGrainFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
 uniform sampler2D uTex;
-uniform vec2 uRes;
-uniform float uAmount;
-uniform float uSeed;
-uniform int uBlend;
+uniform sampler2D uDepth;  // r_grain-depthBuffer: .r = Faktor, .g = Schwelle
+uniform int uResX;
+uniform int uResY;
+uniform int uSmax;         // (smax*255)/100 wie im Original
+uniform int uBlend;        // 0 replace, 1 additiv, 2 50/50
 out vec4 fragColor;
-float h(vec2 p, float s) { return fract(sin(dot(p, vec2(127.1, 311.7)) + s) * 43758.5453); }
 void main()
 {
-    vec3 o = texture(uTex, vTex).rgb;
-    vec2 px = floor(vTex * uRes);
-    float g = h(px, uSeed);          // gate
-    float s = h(px, uSeed + 7.3);    // darkening factor
-    vec3 c = (g < uAmount) ? o * s : vec3(0.0);
-    vec3 r;
-    if (uBlend == 1)      r = min(o + c, vec3(1.0));  // additive
-    else if (uBlend == 2) r = (o + c) * 0.5;          // 50/50
-    else                  r = c;                      // replace
-    fragColor = vec4(r, 1.0);
+    int dx = int(gl_FragCoord.x);
+    int dy = uResY - 1 - int(gl_FragCoord.y);  // depthBuffer laeuft AVS-Zeilen
+    ivec3 o = ivec3(texelFetch(uTex, ivec2(dx, uResY - 1 - dy), 0).rgb * 255.0 + 0.5);
+    ivec2 q = ivec2(texelFetch(uDepth, ivec2(dx, dy), 0).rg * 255.0 + 0.5);
+
+    // r_grain.cpp:227-249: schwarze Pixel bleiben unberuehrt; sonst wird der
+    // Pixel mit q[0] skaliert ((c*s)>>8, je Kanal geklemmt) — und zwar NUR
+    // wenn q[1] unter der Schwelle liegt, sonst wird er schwarz.
+    ivec3 c = ivec3(0);
+    if (q.y < uSmax) c = min((o * q.x) >> 8, ivec3(255));
+    ivec3 r = c;
+    if (uBlend == 1)      r = min(o + c, ivec3(255));      // BLEND
+    else if (uBlend == 2) r = (o >> 1) + (c >> 1);         // BLEND_AVG
+    if (o == ivec3(0)) r = o;                              // if (*p)
+    fragColor = vec4(vec3(r) / 255.0, 1.0);
 }
 )";
 
@@ -801,20 +1005,56 @@ void main()
 // (r_scat.cpp), refreshed each frame via uSeed.
 const char* kScatterFragmentShader = R"(
 #version 330 core
-in vec2 vTex;
 uniform sampler2D uTex;
-uniform vec2 uRes;
-uniform float uSeed;
-uniform float uRange;
+uniform int uResX;
+uniform int uResY;
+// Merkregel S48/S49: Qt setzt Uniforms ueber glUniform1i — ein `uint`-
+// Uniform bliebe dabei 0. Der Zustand kommt deshalb als int und wird
+// hier bitgleich nach uint zurueckgedeutet.
+uniform int uSeed;
 out vec4 fragColor;
-float h(vec2 p, float s) { return fract(sin(dot(p, vec2(127.1, 311.7)) + s) * 43758.5453); }
+
+// r_scat zieht je Pixel EINEN Wert aus dem globalen rand()-Strom. Auf der GPU
+// gibt es keine Reihenfolge — also wird der Strom gesprungen: die Abbildung
+// x -> a*x+c ist affin, ihre n-te Iteration laesst sich per
+// Binaerexponentiation in O(log n) zusammensetzen (S49).
+uint randAt(uint n)
+{
+    uint a = 214013u, c = 2531011u, ra = 1u, rc = 0u;
+    while (n != 0u)
+    {
+        if ((n & 1u) != 0u) { rc = a * rc + c; ra = a * ra; }
+        c = a * c + c;
+        a = a * a;
+        n >>= 1u;
+    }
+    return ((ra * uint(uSeed) + rc) >> 16) & 0x7fffu;
+}
+
+vec3 fetchLinear(int addr)
+{
+    addr = clamp(addr, 0, uResX * uResY - 1);
+    int ay = addr / uResX;
+    return texelFetch(uTex, ivec2(addr - ay * uResX, uResY - 1 - ay), 0).rgb;
+}
+
 void main()
 {
-    vec2 px = floor(vTex * uRes);
-    float rx = h(px, uSeed) * 2.0 - 1.0;
-    float ry = h(px, uSeed + 31.7) * 2.0 - 1.0;
-    vec2 off = vec2(rx, ry) * uRange / uRes;
-    fragColor = vec4(texture(uTex, vTex + off).rgb, 1.0);
+    int dx = int(gl_FragCoord.x);
+    int dy = uResY - 1 - int(gl_FragCoord.y);  // AVS-Zeile
+    int p = dy * uResX + dx;
+    // r_scat.cpp:107-116: die obersten und untersten vier Zeilen bleiben stehen
+    // (sie sind der Rand, den die Verschiebung braucht).
+    if (dy < 4 || dy >= uResY - 4)
+    {
+        fragColor = vec4(fetchLinear(p), 1.0);
+        return;
+    }
+    uint r = randAt(uint(p - 4 * uResX) + 1u) & 511u;
+    // fudgetable (r_scat.cpp:92-101): +-3 Pixel in x und y, 0 eingeschlossen
+    int xp = int(r % 8u) - 4;      if (xp < 0) xp++;
+    int yp = int((r / 8u) % 8u) - 4; if (yp < 0) yp++;
+    fragColor = vec4(fetchLinear(p + yp * uResX + xp), 1.0);
 }
 )";
 
@@ -1287,26 +1527,39 @@ out vec4 fragColor;
 void main()
 {
     vec3 c = texture(uTex, vTex).rgb;
-    float idx;
-    if (uKey == 0)      idx = c.r;
-    else if (uKey == 1) idx = c.g;
-    else if (uKey == 2) idx = c.b;
-    else if (uKey == 3) idx = (c.r + c.g + c.b) * 0.5;
-    else if (uKey == 4) idx = max(max(c.r, c.g), c.b);
-    else                idx = (c.r + c.g + c.b) / 3.0;
-    vec3 m = texture(uLut, vec2(clamp(idx, 0.0, 1.0), 0.5)).rgb;
-    vec3 r;
-    if (uBlend == 0)      r = m;
-    else if (uBlend == 1) r = min(c + m, vec3(1.0));
-    else if (uBlend == 2) r = max(c, m);
-    else if (uBlend == 3) r = min(c, m);
-    else if (uBlend == 4) r = (c + m) * 0.5;
-    else if (uBlend == 5) r = clamp(c - m, 0.0, 1.0);
-    else if (uBlend == 6) r = clamp(m - c, 0.0, 1.0);
-    else if (uBlend == 7) r = c * m;
-    else if (uBlend == 8) r = vec3(ivec3(c * 255.0) ^ ivec3(m * 255.0)) / 255.0;
-    else                  r = mix(c, m, clamp(uAdjust, 0.0, 1.0));
-    fragColor = vec4(r, 1.0);
+    // Key + Tabellen-Abgriff in GANZZAHLEN (S49, gegen colormap.ape gemessen):
+    // die APE indiziert tab[key] mit key aus den 8-Bit-Kanaelen. Float-Rechnung
+    // plus GL_LINEAR-Abgriff verschob den Index um ein halbes Texel und
+    // verschliff die Tabelle — beides sichtbar in Rueckkopplungsketten.
+    ivec3 ci = ivec3(c * 255.0 + 0.5);
+    int idx;
+    if (uKey == 0)      idx = ci.r;
+    else if (uKey == 1) idx = ci.g;
+    else if (uKey == 2) idx = ci.b;
+    else if (uKey == 3) idx = (ci.r + ci.g + ci.b) / 2;
+    else if (uKey == 4) idx = max(max(ci.r, ci.g), ci.b);
+    else                idx = (ci.r + ci.g + ci.b) / 3;
+    ivec3 mi = ivec3(texelFetch(uLut, ivec2(clamp(idx, 0, 255), 0), 0).rgb * 255.0 + 0.5);
+    // Mischung ebenfalls in Ganzzahlen, nach den AVS-Makros (r_defs.h):
+    // BLEND_AVG = (a>>1)+(b>>1) (verliert Bit 0), BLEND_ADJ = (a*v+b*(255-v))>>8.
+    ivec3 ri;
+    if (uBlend == 0)      ri = mi;
+    else if (uBlend == 1) ri = min(ci + mi, ivec3(255));
+    else if (uBlend == 2) ri = max(ci, mi);
+    else if (uBlend == 3) ri = min(ci, mi);
+    else if (uBlend == 4) ri = (ci + mi) >> 1;  // echter Mittelwert, NICHT BLEND_AVG
+    else if (uBlend == 5) ri = max(ci - mi, ivec3(0));
+    else if (uBlend == 6) ri = max(mi - ci, ivec3(0));
+    else if (uBlend == 7) ri = (ci * mi) >> 8;
+    else if (uBlend == 8) ri = ci ^ mi;
+    else
+    {
+        // gemessen: Gewichte a und 255-a, aber GERUNDET (+128) — anders als
+        // BLEND_ADJ im Kern, das abschneidet.
+        int a = clamp(int(uAdjust * 255.0 + 0.5), 0, 255);
+        ri = (mi * a + ci * (255 - a) + 128) >> 8;
+    }
+    fragColor = vec4(vec3(clamp(ri, ivec3(0), ivec3(255))) / 255.0, 1.0);
 }
 )";
 
@@ -2229,6 +2482,13 @@ void MultiEffectVisualizer::onCleanup()
     m_colorfadeShader.reset();
     m_lutShader.reset();
     m_warpShader.reset();
+    m_warpFxShader.reset();
+    m_moveTabShader.reset();
+    if (m_warpTabTex != 0)
+    {
+        QOpenGLContext::currentContext()->functions()->glDeleteTextures(1, &m_warpTabTex);
+        m_warpTabTex = 0;
+    }
     m_feedbackShader.reset();
     m_mosaicShader.reset();
     m_grainShader.reset();
@@ -2320,6 +2580,8 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_colorfadeShader = makeProgram(kQuadVertexShader, kColorfadeFragmentShader);
     m_lutShader = makeProgram(kQuadVertexShader, kLutFragmentShader);
     m_warpShader = makeProgram(kWarpVertexShader, kWarpFragmentShader);
+    m_warpFxShader = makeProgram(kQuadVertexShader, kWarpFxFragmentShader);
+    m_moveTabShader = makeProgram(kQuadVertexShader, kMoveTabFragmentShader);
     m_moveRemapShader = makeProgram(kQuadVertexShader, kMoveRemapFragmentShader);
     m_textShader = makeProgram(kQuadVertexShader, kTextFragmentShader);
     m_feedbackShader = makeProgram(kQuadVertexShader, kFeedbackFragmentShader);
@@ -2365,6 +2627,7 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_brightShader == nullptr || m_blurShader == nullptr ||
         m_mirrorShader == nullptr || m_colorfadeShader == nullptr ||
         m_lutShader == nullptr || m_warpShader == nullptr ||
+        m_warpFxShader == nullptr || m_moveTabShader == nullptr ||
         m_feedbackShader == nullptr || m_mosaicShader == nullptr ||
         m_grainShader == nullptr || m_scatterShader == nullptr ||
         m_interfShader == nullptr || m_waterShader == nullptr ||
@@ -2620,12 +2883,17 @@ void MultiEffectVisualizer::resetRuntimes()
             if (rt.fracLut != 0) f->glDeleteTextures(1, &rt.fracLut);
             if (rt.textTexture != 0) f->glDeleteTextures(1, &rt.textTexture);
             if (rt.aviTexture != 0) f->glDeleteTextures(1, &rt.aviTexture);
+            if (rt.moveTabTex != 0) f->glDeleteTextures(1, &rt.moveTabTex);
+            if (rt.grainTex != 0) f->glDeleteTextures(1, &rt.grainTex);
             closeAviRuntime(rt);  // VfW handles (no GL, but lifecycle-coupled)
             // Meganode: der Milkdrop-Kern gibt seine GL-Objekte selbst frei
             // (braucht den current Context — deshalb hier, nicht im Dtor)
             if (rt.milk != nullptr) rt.milk->cleanup();
         }
     }
+    // Preset-Wechsel: der rand()-Strom faengt wieder bei Seed 1 an — AvsRef
+    // startet je Preset einen frischen Prozess und ruft nie srand() (S49).
+    if (m_scriptContext != nullptr) m_scriptContext->resetRandom();
     m_listRuntimes.clear();  // slot hosts / FBOs die with their GL-frame owner
     m_leafRuntimes.clear();
     m_groupRuntimes.clear();  // HG1: Gruppen-Surfaces/-Pools sterben mit
@@ -2959,7 +3227,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const SetRenderModeParams& params) const { self.runSetRenderMode(params); }
         void operator()(const SuperScopeParams& params) const { self.runSuperScope(node, params); }
         void operator()(const MosaicParams& params) const { self.runMosaic(node, params); }
-        void operator()(const GrainParams& params) const { self.runGrain(params); }
+        void operator()(const GrainParams& params) const { self.runGrain(node, params); }
         void operator()(const ScatterParams& params) const { self.runScatter(params); }
         void operator()(const InterferencesParams& params) const { self.runInterferences(node, params); }
         void operator()(const WaterParams& params) const { self.runWater(node, params); }
@@ -3417,7 +3685,8 @@ void MultiEffectVisualizer::runMirror(const ChainNode& node,
     {
         if (m_frameBeat)
         {
-            rt.mirrorRBeat = static_cast<int>(nextRandom() % 16u) & params.mode;
+            // EIN Zug aus dem Preset-Strom, wie r_mirror.cpp:148 (S49)
+            rt.mirrorRBeat = (m_scriptContext->nextRand() % 16) & params.mode;
         }
         target = rt.mirrorRBeat;
     }
@@ -3596,9 +3865,9 @@ void MultiEffectVisualizer::runMovement(const ChainNode& node,
     if (params.code.empty()) return;  // formula "none" -> no-op
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
-    // Movement formulas are STATIC (r_trans builds a per-pixel table once per
-    // size/effect change) — so the grid can be fine: it is evaluated only on
-    // compile/resize, not per frame (staticField below).
+    // r_trans wertet das Skript je PIXEL aus und legt eine Tabelle an, die nur
+    // bei Groessen-/Skriptwechsel neu entsteht — kein Gitter, keine
+    // Interpolation. Das Gitter unten dient nur noch dem sourcemapped-Streuer.
     constexpr int kXres = 96, kYres = 72;
     const std::string combined = "M:" + params.code;
     if (rt.grid == nullptr || rt.gridCompiled != combined)
@@ -3627,7 +3896,65 @@ void MultiEffectVisualizer::runMovement(const ChainNode& node,
         applyGridScatter(rt, kXres, kYres, opt);
         return;
     }
+    if (applyMovementTable(rt, params)) return;
     applyGridWarp(rt, kXres, kYres, opt);
+}
+
+bool MultiEffectVisualizer::applyMovementTable(LeafRuntime& rt,
+                                               const MovementParams& params)
+{
+    const int w = m_surfaceWidth;
+    const int h = m_surfaceHeight;
+    if (rt.grid == nullptr || w < 2 || h < 2) return false;
+
+    // r_trans.cpp:306-309: Subpixel faellt bei sehr grossen Flaechen weg — der
+    // Ziel-Offset belegt nur 22 Bit der Tabelle.
+    const bool subpixel = params.subpixel && w * h < (1 << 22);
+    const std::string key = (params.rectCoords ? "R" : "P") +
+                            std::string(params.wrap ? "W" : "-") +
+                            (subpixel ? "S" : "-") + params.code;
+    if (rt.moveTabTex == 0 || rt.moveTabW != w || rt.moveTabH != h ||
+        rt.moveTabKey != key)
+    {
+        std::vector<int> tab;
+        if (!rt.grid->buildTransTable(w, h, params.wrap, subpixel, tab)) return false;
+
+        auto* f = QOpenGLContext::currentContext()->functions();
+        f->glActiveTexture(GL_TEXTURE1);
+        if (rt.moveTabTex == 0)
+        {
+            f->glGenTextures(1, &rt.moveTabTex);
+            f->glBindTexture(GL_TEXTURE_2D, rt.moveTabTex);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        else
+        {
+            f->glBindTexture(GL_TEXTURE_2D, rt.moveTabTex);
+        }
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, w, h, 0, GL_RED_INTEGER, GL_INT,
+                        tab.data());
+        f->glActiveTexture(GL_TEXTURE0);
+        rt.moveTabW = w;
+        rt.moveTabH = h;
+        rt.moveTabKey = key;
+    }
+
+    auto* f = QOpenGLContext::currentContext()->functions();
+    m_moveTabShader->bind();
+    m_moveTabShader->setUniformValue("uResX", w);
+    m_moveTabShader->setUniformValue("uResY", h);
+    m_moveTabShader->setUniformValue("uBlend", params.blend);
+    m_moveTabShader->setUniformValue("uSubpixel", subpixel);
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.moveTabTex);
+    m_moveTabShader->setUniformValue("uTab", 1);
+    f->glActiveTexture(GL_TEXTURE0);
+    m_moveTabShader->release();
+    transformPass(*m_moveTabShader);
+    return true;
 }
 
 void MultiEffectVisualizer::applyGridScatter(LeafRuntime& rt, int xres, int yres,
@@ -3750,6 +4077,7 @@ void MultiEffectVisualizer::runDynamicMovement(const ChainNode& node,
         rt.grid->setBeatCode(params.beatCode);
         rt.grid->setPointCode(params.pointCode);
         rt.grid->setGridSize(params.xres, params.yres);
+        rt.grid->setAvsGridPositions(true);  // r_dmove-Stuetzstellen (trunkiert)
         rt.gridCompiled = combined;
     }
     rt.grid->setRectCoords(params.rectCoords);
@@ -3768,7 +4096,110 @@ void MultiEffectVisualizer::runDynamicMovement(const ChainNode& node,
         if (pool == nullptr) return;
         opt.srcTexture = pool->texture();
     }
+    if (applyGridWarpFx(rt, params.xres, params.yres, opt)) return;
     applyGridWarp(rt, params.xres, params.yres, opt);
+}
+
+bool MultiEffectVisualizer::applyGridWarpFx(LeafRuntime& rt, int xres, int yres,
+                                            const GridWarpOptions& opt)
+{
+    if (rt.grid == nullptr || xres < 2 || yres < 2) return false;
+    const int w = m_surfaceWidth;
+    const int h = m_surfaceHeight;
+    // r_dmove.cpp:407-413 / 455-461: ein Gitterband der Breite 0 laesst das
+    // Original MITTEN im Bild abbrechen (der Rest bleibt stehen). Statt diesen
+    // Zufall nachzubauen, faellt der Fall auf den Netz-Pfad zurueck.
+    if (xres - 1 > w || yres - 1 > h) return false;
+
+    const bool needExecute = !opt.staticField || rt.grid->fieldFx().empty() ||
+                             rt.gridFieldW != w || rt.gridFieldH != h;
+    if (needExecute)
+    {
+        rt.grid->setVisData(m_visdata.data(), m_time);  // getspec/getosc backing
+        {
+            float bass, mid, treble;
+            computeAudioBands(getSpectrum(), bass, mid, treble);
+            rt.grid->setVariable("bass", bass);
+            rt.grid->setVariable("mid", mid);
+            rt.grid->setVariable("treb", treble);
+            rt.grid->setVariable("treble", treble);
+            rt.grid->setVariable("vol", m_audioLevel);
+            rt.grid->setVariable("beat", m_frameBeat ? 1.0 : 0.0);
+        }
+        rt.grid->execute(static_cast<float>(w), static_cast<float>(h), m_frameBeat,
+                         m_deltaTime);
+        rt.gridFieldW = w;
+        rt.gridFieldH = h;
+    }
+    const auto& fx = rt.grid->fieldFx();
+    if (static_cast<int>(fx.size()) < xres * yres) return false;
+
+    // r_dmove.cpp:230-231/256-260: der Wrap-/Klemm-Rand haengt an subpixel — mit
+    // Subpixel bleibt eine Reserve-Spalte/-Zeile fuer den vierten BLEND4-Nachbarn.
+    const int wAdj = opt.subpixel ? (w - 2) << 16 : (w - 1) << 16;
+    const int hAdj = opt.subpixel ? (h - 2) << 16 : (h - 1) << 16;
+    if (wAdj <= 0 || hAdj <= 0) return false;
+
+    m_warpTab.resize(static_cast<std::size_t>(xres) * yres * 4);
+    for (std::size_t i = 0, n = static_cast<std::size_t>(xres) * yres; i < n; ++i)
+    {
+        int tx = fx[i].x;
+        int ty = fx[i].y;
+        if (!opt.wrap)  // r_dmove.cpp:349-355: geklemmt wird schon in der Tabelle
+        {
+            tx = std::clamp(tx, 0, wAdj);
+            ty = std::clamp(ty, 0, hAdj);
+        }
+        m_warpTab[i * 4 + 0] = tx;
+        m_warpTab[i * 4 + 1] = ty;
+        m_warpTab[i * 4 + 2] = fx[i].a;
+        m_warpTab[i * 4 + 3] = 0;
+    }
+
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glActiveTexture(GL_TEXTURE2);  // Tabelle lebt auf Einheit 2 (0/1 = Bilder)
+    if (m_warpTabTex == 0)
+    {
+        f->glGenTextures(1, &m_warpTabTex);
+        f->glBindTexture(GL_TEXTURE_2D, m_warpTabTex);
+        // Integer-Texturen koennen nur NEAREST — gewollt, wir fetchen texelweise.
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+    else
+    {
+        f->glBindTexture(GL_TEXTURE_2D, m_warpTabTex);
+    }
+    f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32I, xres, yres, 0, GL_RGBA_INTEGER,
+                    GL_INT, m_warpTab.data());
+
+    const unsigned int srcTex =
+        opt.srcTexture != 0 ? opt.srcTexture : active().current()->texture();
+
+    m_warpFxShader->bind();
+    m_warpFxShader->setUniformValue("uResX", w);
+    m_warpFxShader->setUniformValue("uResY", h);
+    m_warpFxShader->setUniformValue("uGridX", xres);
+    m_warpFxShader->setUniformValue("uGridY", yres);
+    m_warpFxShader->setUniformValue("uXcDpos", (w << 16) / (xres - 1));
+    m_warpFxShader->setUniformValue("uYcDpos", (h << 16) / (yres - 1));
+    m_warpFxShader->setUniformValue("uWAdj", wAdj);
+    m_warpFxShader->setUniformValue("uHAdj", hAdj);
+    m_warpFxShader->setUniformValue("uWrap", opt.wrap);
+    m_warpFxShader->setUniformValue("uBlend", opt.blend);
+    m_warpFxShader->setUniformValue("uNomove", opt.nomove);
+    m_warpFxShader->setUniformValue("uBufSrc", opt.srcTexture != 0);
+    m_warpFxShader->setUniformValue("uSubpixel", opt.subpixel);
+    m_warpFxShader->setUniformValue("uTab", 2);  // schon gebunden (s. oben)
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, srcTex);
+    m_warpFxShader->setUniformValue("uSrcTex", 1);
+    f->glActiveTexture(GL_TEXTURE0);
+    m_warpFxShader->release();
+    transformPass(*m_warpFxShader);  // bindet uTex = aktuelle Surface
+    return true;
 }
 
 void MultiEffectVisualizer::applyGridWarp(LeafRuntime& rt, int xres, int yres,
@@ -4512,30 +4943,86 @@ void MultiEffectVisualizer::runMosaic(const ChainNode& node, const MosaicParams&
     transformPass(*m_mosaicShader);
 }
 
-void MultiEffectVisualizer::runGrain(const GrainParams& params)
+void MultiEffectVisualizer::runGrain(const ChainNode& node, const GrainParams& params)
 {
-    const QVector2D res(static_cast<float>(m_surfaceWidth),
-                        static_cast<float>(m_surfaceHeight));
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+    auto& rnd = *m_scriptContext;  // EIN rand()-Strom je Preset (S49)
+
+    // r_grain.cpp:87-89: der Konstruktor zieht 491 Tabellenbytes + 1 Position.
+    // Auch wenn wir die Tabelle (nur der NICHT-statische Pfad braucht sie) nicht
+    // nachbilden: die Zuege muessen passieren, sonst laeuft der geteilte Strom
+    // fuer alle anderen Effekte des Presets aus dem Takt.
+    if (!rt.grainSeeded)
+    {
+        for (int i = 0; i < 491; ++i) rnd.nextRand();
+        rnd.nextRand();
+        rt.grainSeeded = true;
+    }
+    if (rt.grainTex == 0 || rt.grainW != m_surfaceWidth || rt.grainH != m_surfaceHeight)
+    {
+        // r_grain.cpp:133-141 (reinit): je Pixel zwei Zuege, Zeilen von oben.
+        std::vector<unsigned char> depth(
+            static_cast<std::size_t>(m_surfaceWidth) * m_surfaceHeight * 2);
+        for (std::size_t i = 0; i < depth.size(); i += 2)
+        {
+            depth[i] = static_cast<unsigned char>(rnd.nextRand() % 255);
+            depth[i + 1] = static_cast<unsigned char>(rnd.nextRand() % 100);
+        }
+        f->glActiveTexture(GL_TEXTURE1);
+        if (rt.grainTex == 0)
+        {
+            f->glGenTextures(1, &rt.grainTex);
+            f->glBindTexture(GL_TEXTURE_2D, rt.grainTex);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        else
+        {
+            f->glBindTexture(GL_TEXTURE_2D, rt.grainTex);
+        }
+        f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RG8, m_surfaceWidth, m_surfaceHeight, 0,
+                        GL_RG, GL_UNSIGNED_BYTE, depth.data());
+        f->glActiveTexture(GL_TEXTURE0);
+        rt.grainW = m_surfaceWidth;
+        rt.grainH = m_surfaceHeight;
+    }
+    rnd.nextRand();  // r_grain.cpp:168: ein Zug je Frame (randtab_pos-Vorschub)
+
     m_grainShader->bind();
-    m_grainShader->setUniformValue("uRes", res);
-    m_grainShader->setUniformValue("uAmount",
-                                   std::clamp(params.amount, 0, 100) / 100.0f);
-    // Static = frozen pattern; else advance the seed so the grain shimmers.
-    m_grainShader->setUniformValue("uSeed", params.staticGrain ? 0.0f : m_time * 60.0f);
+    m_grainShader->setUniformValue("uResX", m_surfaceWidth);
+    m_grainShader->setUniformValue("uResY", m_surfaceHeight);
+    m_grainShader->setUniformValue("uSmax",
+                                   (std::clamp(params.amount, 0, 100) * 255) / 100);
     m_grainShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_grainShader->setUniformValue("uDepth", 1);
     m_grainShader->release();
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.grainTex);
+    f->glActiveTexture(GL_TEXTURE0);
     transformPass(*m_grainShader);
 }
 
 void MultiEffectVisualizer::runScatter(const ScatterParams&)
 {
-    const QVector2D res(static_cast<float>(m_surfaceWidth),
-                        static_cast<float>(m_surfaceHeight));
+    // Der Shader liest den Strom selbst (ein Zug je Pixel der Mittelzone);
+    // hier wird er anschliessend um genau diese Anzahl weitergestellt, damit
+    // die naechsten Effekte des Presets an derselben Stelle weitermachen.
     m_scatterShader->bind();
-    m_scatterShader->setUniformValue("uRes", res);
-    m_scatterShader->setUniformValue("uSeed", m_time * 60.0f);
-    m_scatterShader->setUniformValue("uRange", 4.0f);  // r_scat ~4px window
+    m_scatterShader->setUniformValue("uResX", m_surfaceWidth);
+    m_scatterShader->setUniformValue("uResY", m_surfaceHeight);
+    m_scatterShader->setUniformValue(
+        "uSeed", static_cast<int>(m_scriptContext->randState()));
     m_scatterShader->release();
+    if (m_surfaceHeight > 8)
+    {
+        m_scriptContext->skipRandom(
+            static_cast<std::uint32_t>(m_surfaceWidth) *
+            static_cast<std::uint32_t>(m_surfaceHeight - 8));
+    }
     transformPass(*m_scatterShader);
 }
 
@@ -4859,11 +5346,18 @@ void buildColorMapLut(const ColorMapParams& params, std::array<unsigned char, 76
         const int p1 = stops[s + 1].first;
         const uint32_t c0 = stops[s].second;
         const uint32_t c1 = stops[s + 1].second;
-        const float t = p1 > p0 ? static_cast<float>(i - p0) / static_cast<float>(p1 - p0)
-                                : 0.0f;
-        put(i, rgb(c0, 16) + (rgb(c1, 16) - rgb(c0, 16)) * t,
-            rgb(c0, 8) + (rgb(c1, 8) - rgb(c0, 8)) * t,
-            rgb(c0, 0) + (rgb(c1, 0) - rgb(c0, 0)) * t);
+        // Gemessene APE-Kennlinie (S49, colormap_probe): zwischen zwei
+        // Stuetzstellen GANZZAHLIG linear mit Abschneiden —
+        // c0 + (c1-c0)*(i-p0)/(p1-p0). Fuer Spannweiten, die eine Zweierpotenz
+        // sind, deckt sich das exakt mit dem Original (44/44 je Sonde); bei
+        // anderen liegt die APE stellenweise 1 tiefer (Rest-Befund, s. Doku).
+        const int span = p1 - p0;
+        auto lerp8 = [&](int shift) {
+            const int a = static_cast<int>(rgb(c0, shift));
+            const int b = static_cast<int>(rgb(c1, shift));
+            return static_cast<float>(a + (b - a) * (i - p0) / span);
+        };
+        put(i, lerp8(16), lerp8(8), lerp8(0));
     }
 }
 }  // namespace
@@ -4891,8 +5385,9 @@ void MultiEffectVisualizer::runColorMap(const ChainNode& node,
         {
             f->glGenTextures(1, &rt.cmTexture);
             f->glBindTexture(GL_TEXTURE_2D, rt.cmTexture);
-            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            // NEAREST: der Shader greift die Tabelle mit texelFetch ab (s. o.)
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
@@ -6197,8 +6692,9 @@ void MultiEffectVisualizer::runMovingParticle(const ChainNode& node,
         rt.mpSeeded = true;
     }
 
+    // r_parts.cpp:124-125 — zwei Zuege aus dem Preset-Strom je Beat
     auto rnd = [this] {
-        return (static_cast<int>(nextRandom() % 33) - 16) / 48.0f;
+        return (m_scriptContext->nextRand() % 33 - 16) / 48.0f;
     };
     if (m_frameBeat)
     {
@@ -6293,8 +6789,17 @@ void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
         drop = 1;
         if (params.randomDrop)
         {
-            dropC = QVector2D(static_cast<float>(nextRandom() & 0xffff) / 65535.0f,
-                              static_cast<float>(nextRandom() & 0xffff) / 65535.0f);
+            // r_waterbump.cpp:137-138: 1+radius+rand()%(dim-2*radius-1) — der
+            // Tropfen haelt seinen Radius Abstand vom Rand.
+            const int radius = 40;  // CalcWater-Standardradius des Originals
+            const int spanX = std::max(1, m_surfaceWidth - 2 * radius - 1);
+            const int spanY = std::max(1, m_surfaceHeight - 2 * radius - 1);
+            const float dx = static_cast<float>(1 + radius +
+                                                m_scriptContext->nextRand() % spanX);
+            const float dy = static_cast<float>(1 + radius +
+                                                m_scriptContext->nextRand() % spanY);
+            dropC = QVector2D(dx / static_cast<float>(m_surfaceWidth),
+                              dy / static_cast<float>(m_surfaceHeight));
         }
         else
         {
@@ -7280,86 +7785,125 @@ void MultiEffectVisualizer::runGlowOrbs(const ChainNode& node,
 void MultiEffectVisualizer::runStarfield(const ChainNode& node,
                                          const StarfieldParams& params)
 {
+    // Zeilengetreu nach r_stars.cpp:198-265 (S49) — inklusive der Zuege aus dem
+    // geteilten rand()-Strom des Presets: 4 je Stern beim Anlegen, 2 je
+    // Neugeburt. Sterne leben in PIXELN um die Bildmitte, nicht in NDC.
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
-    const int count = std::clamp(params.maxStars, 1, 8192);
-    auto frand = [this] { return static_cast<float>(nextRandom() & 0xffff) / 65535.0f; };
-    auto respawn = [&](Star& s) {
-        s.x = frand() * 2.0f - 1.0f;
-        s.y = frand() * 2.0f - 1.0f;
-        s.z = 0.02f + frand() * 0.98f;
-        s.speed = 0.1f + frand() * 0.8f;
-    };
+    auto& rnd = *m_scriptContext;
+    const int w = m_surfaceWidth;
+    const int h = m_surfaceHeight;
+    const int xOff = w / 2;
+    const int yOff = h / 2;
 
-    if (static_cast<int>(rt.stars.size()) != count)
-    {
-        rt.stars.resize(static_cast<std::size_t>(count));
-        for (Star& s : rt.stars) respawn(s);
-    }
-
-    // Warp-speed ease on beat (r_stars incBeat, same shape as Mosaic depth).
-    if (rt.starSpeed <= 0.0f) rt.starSpeed = params.warpSpeed;
     if (params.onBeat && m_frameBeat)
     {
         rt.starSpeed = params.beatSpeed;
         rt.starBeatFrames = std::max(1, params.durationFrames);
+        rt.starIncBeat = (params.warpSpeed - rt.starSpeed) /
+                         static_cast<float>(rt.starBeatFrames);
     }
-    else if (rt.starBeatFrames == 0)
+    if (rt.starSpeed <= 0.0f && rt.starBeatFrames == 0) rt.starSpeed = params.warpSpeed;
+
+    // MaxStars = MulDiv(gesetzt, w*h, 512*384), gedeckelt auf 4095
+    const long long scaled = (static_cast<long long>(params.maxStars) * w * h +
+                              (512LL * 384) / 2) / (512LL * 384);
+    const int maxStars = std::min(4095, std::max(1, static_cast<int>(scaled)));
+    if (rt.starW != w || rt.starH != h ||
+        static_cast<int>(rt.stars.size()) != maxStars)
+    {
+        rt.stars.assign(static_cast<std::size_t>(maxStars), Star{});
+        for (Star& st : rt.stars)
+        {
+            st.x = rnd.nextRand() % std::max(1, w) - xOff;
+            st.y = rnd.nextRand() % std::max(1, h) - yOff;
+            st.z = static_cast<float>(rnd.nextRand() % 255);
+            st.speed = static_cast<float>(rnd.nextRand() % 9 + 1) / 10.0f;
+        }
+        rt.starW = w;
+        rt.starH = h;
+    }
+
+    // CreateStar (r_stars.cpp:180-185): nur X und Y werden gezogen, Z = Zoff
+    auto createStar = [&](Star& st) {
+        st.x = rnd.nextRand() % std::max(1, w) - xOff;
+        st.y = rnd.nextRand() % std::max(1, h) - yOff;
+        st.z = 255.0f;  // Zoff
+    };
+    const int colR = static_cast<int>((params.color >> 16) & 0xFF);
+    const int colG = static_cast<int>((params.color >> 8) & 0xFF);
+    const int colB = static_cast<int>(params.color & 0xFF);
+    const bool tinted = (params.color & 0xFFFFFF) != 0xFFFFFF;
+
+    std::vector<lumi::modules::SuperscopePoint> points;
+    points.reserve(rt.stars.size());
+    for (Star& st : rt.stars)
+    {
+        if (static_cast<int>(st.z) <= 0)
+        {
+            createStar(st);
+            continue;
+        }
+        const int nx = ((st.x << 7) / static_cast<int>(st.z)) + xOff;
+        const int ny = ((st.y << 7) / static_cast<int>(st.z)) + yOff;
+        if (nx <= 0 || nx >= w || ny <= 0 || ny >= h)
+        {
+            createStar(st);
+            continue;
+        }
+        const int c = static_cast<int>((255 - static_cast<int>(st.z)) * st.speed);
+        int r = c, g = c, b = c;
+        if (tinted)
+        {
+            // BLEND_ADAPT (r_stars.cpp:186-189): je Kanal ((a>>4)*(16-d) +
+            // (b>>4)*d) mit d = c>>4 — die Nibble-Rechnung haelt das Ergebnis
+            // ohne Endschieben im 8-Bit-Feld.
+            const int d = c >> 4;
+            r = (c >> 4) * (16 - d) + (colR >> 4) * d;
+            g = (c >> 4) * (16 - d) + (colG >> 4) * d;
+            b = (c >> 4) * (16 - d) + (colB >> 4) * d;
+        }
+        lumi::modules::SuperscopePoint p;
+        // Pixelmitte -> NDC, damit der Punkt genau auf (nx, ny) landet
+        p.x = (static_cast<float>(nx) + 0.5f) / static_cast<float>(w) * 2.0f - 1.0f;
+        p.y = 1.0f - (static_cast<float>(ny) + 0.5f) / static_cast<float>(h) * 2.0f;
+        p.r = static_cast<float>(std::clamp(r, 0, 255)) / 255.0f;
+        p.g = static_cast<float>(std::clamp(g, 0, 255)) / 255.0f;
+        p.b = static_cast<float>(std::clamp(b, 0, 255)) / 255.0f;
+        p.a = 1.0f;
+        points.push_back(p);
+        st.z -= st.speed * rt.starSpeed;
+    }
+
+    // r_stars.cpp:258-264: Rueckkehr zur Grundgeschwindigkeit
+    if (rt.starBeatFrames == 0)
     {
         rt.starSpeed = params.warpSpeed;
     }
-    if (rt.starBeatFrames > 0)
+    else
     {
-        if (--rt.starBeatFrames > 0)
-        {
-            const float step = (params.warpSpeed - params.beatSpeed) /
-                               static_cast<float>(std::max(1, params.durationFrames));
-            rt.starSpeed += step;
-        }
-        else
-        {
-            rt.starSpeed = params.warpSpeed;
-        }
-    }
-
-    const QVector3D tint = colorToVec(params.color);
-    std::vector<lumi::modules::SuperscopePoint> points;
-    points.reserve(rt.stars.size());
-    for (Star& s : rt.stars)
-    {
-        s.z -= s.speed * rt.starSpeed / 255.0f;
-        if (s.z <= 0.02f) { respawn(s); continue; }
-        const float px = s.x / s.z;
-        const float py = s.y / s.z;
-        if (px <= -1.0f || px >= 1.0f || py <= -1.0f || py >= 1.0f) continue;
-        const float bright = std::clamp((1.0f - s.z) * s.speed * 1.6f, 0.0f, 1.0f);
-        lumi::modules::SuperscopePoint p;
-        p.x = px;
-        p.y = py;
-        p.r = tint.x();
-        p.g = tint.y();
-        p.b = tint.z();
-        p.a = bright;
-        points.push_back(p);
+        rt.starSpeed = std::max(0.0f, rt.starSpeed + rt.starIncBeat);
+        --rt.starBeatFrames;
     }
 
     if (points.empty() || !m_scopeRenderer.ready()) return;
     auto* f = QOpenGLContext::currentContext()->functions();
-    f->glEnable(GL_BLEND);
-    // r_stars.cpp:245 BLEND/BLEND_AVG/replace; brightness stays premodulated
-    // via the point alpha, so "replace" keeps SRC_ALPHA weighting into black.
-    switch (params.blend)
+    if (params.blend == 1)  // BLEND: saettigende Addition
     {
-        case 1:  f->glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;                  // additive
-        case 2:  f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-                 f->glBlendColor(0.0f, 0.0f, 0.0f, 0.5f); break;               // 50/50
-        default: f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); break;  // replace
+        f->glEnable(GL_BLEND);
+        f->glBlendFunc(GL_ONE, GL_ONE);
+    }
+    else if (params.blend == 2)  // BLEND_AVG (GL rundet, das Original schneidet ab)
+    {
+        f->glEnable(GL_BLEND);
+        f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+        f->glBlendColor(0.0f, 0.0f, 0.0f, 0.5f);
     }
     lumi::render::ScopeRenderer::Params rp;
     rp.mode = lumi::modules::SuperscopeRenderMode::Dots;
-    rp.dotSize = 2.0f;
+    rp.dotSize = 1.0f;
     rp.glowEnabled = false;
     m_scopeRenderer.draw(points, rp);
-    f->glDisable(GL_BLEND);
+    if (params.blend != 0) f->glDisable(GL_BLEND);
 }
 
 void MultiEffectVisualizer::runFyrewurX(const ChainNode& node,
@@ -7851,7 +8395,7 @@ void MultiEffectVisualizer::runChannelShift(const ChainNode& node,
     if (params.onBeat)
     {
         if (m_frameBeat || rt.apeChanMode < 0)
-            rt.apeChanMode = static_cast<int>(nextRandom() % 6u);
+            rt.apeChanMode = m_scriptContext->nextRand() % 6;  // r_chanshift:125
         mode = rt.apeChanMode;
     }
     m_apeShader->bind();

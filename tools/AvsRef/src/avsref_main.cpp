@@ -276,6 +276,7 @@ int main(int argc, char** argv)
     int saveEvery = 0;    // 0 = nur letzter Frame
     int beatPeriod = 0;   // 0 = Original-Detektor
     bool silence = false; // --silence: Stille statt Kalibrier-Signal
+    std::string apeDir;   // --ape-dir: echte APE-Sammlung (leer = keine APEs)
     for (int i = 1; i < argc; ++i)
     {
         const std::string a = argv[i];
@@ -285,6 +286,7 @@ int main(int argc, char** argv)
         else if (a == "--beat-period") next(beatPeriod);
         else if (a == "--silence") silence = true;
         else if (a == "--out" && i + 1 < argc) outDir = argv[++i];
+        else if (a == "--ape-dir" && i + 1 < argc) apeDir = argv[++i];
         else if (a == "--size" && i + 1 < argc)
         {
             if (sscanf(argv[++i], "%dx%d", &width, &height) != 2 || width < 64 || height < 64)
@@ -346,10 +348,19 @@ int main(int argc, char** argv)
     CreateDirectoryA(outDir.c_str(), NULL);
 
     // --- Kern-Init (Pendant zu Render_Init, ohne Winamp) -----------------------------------
-    // g_path: APE-Verzeichnis fuer den Registry-Scan — bewusst ein (i. d. R.
-    // nicht existentes) Unterverzeichnis, damit keine Fremd-DLLs geladen werden
-    GetModuleFileNameA(NULL, g_path, 1024);  // g_path[1024], r_defs.h deklariert unbounded
+    // g_path: APE-Verzeichnis fuer den Registry-Scan. Default ist ein (i. d. R.
+    // nicht existentes) Unterverzeichnis, damit keine Fremd-DLLs geladen werden;
+    // --ape-dir zeigt bewusst auf eine echte Sammlung, damit Presets MIT APEs
+    // vergleichbar werden (sonst misst man unsere APE-Nachbauten gegen nichts).
+    if (!apeDir.empty())
     {
+        strncpy(g_path, apeDir.c_str(), 1023);
+        g_path[1023] = 0;
+        printf("[AvsRef] APE-Verzeichnis: %s\n", g_path);
+    }
+    else
+    {
+        GetModuleFileNameA(NULL, g_path, 1024);  // g_path[1024], r_defs.h unbounded
         char* p = g_path + strlen(g_path);
         while (p > g_path && *p != '\\') --p;
         *p = 0;

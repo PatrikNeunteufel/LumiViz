@@ -159,7 +159,13 @@ public:
     void clearError() { m_lastError.clear(); }
 
     /// @brief Seed the deterministic PRNG behind rand()/eel.rand()
-    void seedRandom(std::uint64_t seed) { m_rng.seed(seed); }
+    /// @brief Eigenen Zufallsgenerator setzen — schaltet den Strom des
+    ///        geteilten ScriptContext ab (Tests/Nicht-AVS-Nutzer, S49)
+    void seedRandom(std::uint64_t seed)
+    {
+        m_rng.seed(seed);
+        m_ownRandom = true;
+    }
 
 private:
     void buildSandbox();
@@ -184,6 +190,7 @@ private:
     // Basis-Seed 0x4141f00d (MilkDrop); der Ctor mischt je Instanz einen
     // Nonce dazu (S14: Engines duerfen nicht dieselbe rand()-Folge ziehen).
     std::mt19937_64 m_rng{0x4141f00dULL};
+    bool m_ownRandom = false;  ///< true: lokaler Generator statt Preset-Strom
 
     // AVS-layout visualisation data for getspec/getosc (spectrum L/R + waveform
     // L/R, 576 bytes each) and the gettime() clock. Zero until the host feeds it.

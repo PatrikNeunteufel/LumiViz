@@ -151,72 +151,108 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
         m_lastScriptError = m_script->lastError();
     }
 
+    const int w = std::max(1, static_cast<int>(width));
+    const int h = std::max(1, static_cast<int>(height));
     if (!m_script->has(Slot::Point))
     {
         fillIdentity();  // no/errored point script: identity mapping
+        fillIdentityFx(w, h);
         return;
     }
 
+    // Gitterpositionen exakt wie r_dmove.cpp:304-332: der Schritt zwischen zwei
+    // Gitterspalten ist ein TRUNKIERTER 16.16-Wert ((w<<16)/(XRES-1)) und wird
+    // aufaddiert — die Stuetzstellen liegen also nicht exakt auf x*w/(XRES-1),
+    // und der letzte Punkt erreicht den Rand knapp nicht.
     // AVS polar convention (r_trans.cpp:459-464 / r_dmove.cpp:324-332): d and r
     // live in PIXEL space — d = pixel distance from center over the half
     // diagonal (corner = 1), r = atan2 over pixel offsets (+pi/2). Only x/y are
-    // NDC. On square surfaces this equals the former NDC math; on non-square
-    // ones it removes the aspect distortion (S2: circles stay circles).
-    const double halfW = width > 0.0f ? width * 0.5 : 1.0;
-    const double halfH = height > 0.0f ? height * 0.5 : 1.0;
-    const double maxD = std::sqrt(halfW * halfW + halfH * halfH);
+    // NDC.
+    const double dw2 = static_cast<double>(w) * 32768.0;  // (w/2) << 16
+    const double dh2 = static_cast<double>(h) * 32768.0;
+    const double xsc = 2.0 / w;
+    const double ysc = 2.0 / h;
+    const double maxD = std::sqrt(static_cast<double>(w) * w +
+                                  static_cast<double>(h) * h) * 0.5;
     const double invMaxD = 1.0 / maxD;
+    // r_dmove.cpp:311 skaliert max_screen_d NACH divmax_d auf 16.16 hoch; die
+    // Klammerung unten (cos * (d*m)) ist die des Originals.
+    const double maxScreenDFx = maxD * 65536.0;
+    const double halfW = w * 0.5;
+    const double halfH = h * 0.5;
+    const int xcDpos = (w << 16) / (m_xres - 1);
+    const int ycDpos = (h << 16) / (m_yres - 1);
+    // Ohne AVS-Modus liegen die Stuetzstellen exakt (s. setAvsGridPositions):
+    // dieselbe Schleife, nur ohne den Trunkierungsrest je Schritt.
+    const double xStepExact = (w * 65536.0) / (m_xres - 1);
+    const double yStepExact = (h * 65536.0) / (m_yres - 1);
 
     m_field.resize(static_cast<std::size_t>(m_xres) * static_cast<std::size_t>(m_yres));
-    std::size_t idx = 0;
+    m_fieldFx.resize(m_field.size());
+    // Zeilen laufen in AVS-Ordnung (0 = OBEN) — Punkt-Skripte mit Seiteneffekten
+    // (Zaehler, megabuf) sehen sonst die umgekehrte Reihenfolge. Das float-Feld
+    // bleibt GL-Ordnung (y+ = oben) und wird beim Schreiben gespiegelt.
     for (int gy = 0; gy < m_yres; ++gy)
     {
-        const double y = static_cast<double>(gy) / (m_yres - 1) * 2.0 - 1.0;
-        for (int gx = 0; gx < m_xres; ++gx, ++idx)
+        const double ycPos = m_avsGridPositions ? static_cast<double>(gy) * ycDpos
+                                                : static_cast<double>(gy) * yStepExact;
+        const std::size_t rowGl =
+            static_cast<std::size_t>(m_yres - 1 - gy) * static_cast<std::size_t>(m_xres);
+        const std::size_t rowFx =
+            static_cast<std::size_t>(gy) * static_cast<std::size_t>(m_xres);
+        for (int gx = 0; gx < m_xres; ++gx)
         {
-            const double x = static_cast<double>(gx) / (m_xres - 1) * 2.0 - 1.0;
+            const double xcPos = m_avsGridPositions
+                                     ? static_cast<double>(gx) * xcDpos
+                                     : static_cast<double>(gx) * xStepExact;
+            const double xd = (xcPos - dw2) * (1.0 / 65536.0);
+            const double yd = (ycPos - dh2) * (1.0 / 65536.0);
+
             // Konvention Skript-Rand (S46, Befund A): das Skript sieht den
-            // AVS-Raum (y+ = unten) — unser Gitter/GL hat y+ = oben. Nur die
-            // SICHT wird gespiegelt (yS), inkl. r: die Spiegelung kehrt sonst
-            // die Drehrichtung aller Rotations-Skripte um. Rueckweg unten.
-            const double yS = -y;
-            const double xd = x * halfW;
-            const double yd = yS * halfH;
-            const double d = std::sqrt(xd * xd + yd * yd) * invMaxD;
-            const double r = std::atan2(yd, xd) + kHalfPi;
+            // AVS-Raum (y+ = unten). Rueckweg beim Schreiben von out.v.
+            engine.setNumber("x", xd * xsc);
+            engine.setNumber("y", yd * ysc);
+            engine.setNumber("d", std::sqrt(xd * xd + yd * yd) * invMaxD);
+            engine.setNumber("r", std::atan2(yd, xd) + kHalfPi);
 
-            engine.setNumber("x", x);
-            engine.setNumber("y", yS);
-            engine.setNumber("d", d);
-            engine.setNumber("r", r);
-
-            GridNode& out = m_field[idx];
             if (!m_script->run(Slot::Point))
             {
                 // Runtime error disabled the slot: identity from here on
                 m_lastScriptError = m_script->lastError();
                 fillIdentity();
+                fillIdentityFx(w, h);
                 return;
             }
 
+            GridNode& out = m_field[rowGl + static_cast<std::size_t>(gx)];
+            GridNodeFx& fx = m_fieldFx[rowFx + static_cast<std::size_t>(gx)];
             if (m_rectCoords)
             {
-                out.u = static_cast<float>(engine.number("x"));
-                out.v = -static_cast<float>(engine.number("y"));  // AVS -> GL
+                const double ox = engine.number("x");
+                const double oy = engine.number("y");
+                out.u = static_cast<float>(ox);
+                out.v = -static_cast<float>(oy);  // AVS -> GL
+                fx.x = static_cast<int>((ox + 1.0) * dw2);
+                fx.y = static_cast<int>((oy + 1.0) * dh2);
             }
             else
             {
                 // back-transform in pixel space, then per-axis to NDC
                 // (sin-Anteil traegt die AVS-y-Richtung -> zurueck nach GL)
-                const double dPix = engine.number("d") * maxD;
+                const double dOut = engine.number("d");
                 const double rOut = engine.number("r") - kHalfPi;
+                const double dPix = dOut * maxD;
                 out.u = static_cast<float>(std::cos(rOut) * dPix / halfW);
                 out.v = -static_cast<float>(std::sin(rOut) * dPix / halfH);
+                const double dFx = dOut * maxScreenDFx;
+                fx.x = static_cast<int>(dw2 + std::cos(rOut) * dFx);
+                fx.y = static_cast<int>(dh2 + std::sin(rOut) * dFx);
             }
-            out.alpha = m_scriptSetsAlpha
-                            ? std::clamp(static_cast<float>(engine.number("alpha")),
-                                         0.0f, 1.0f)
-                            : 0.5f;  // AVS default (*var_alpha = 0.5)
+            const double va = m_scriptSetsAlpha
+                                  ? std::clamp(engine.number("alpha"), 0.0, 1.0)
+                                  : 0.5;  // AVS default (*var_alpha = 0.5)
+            out.alpha = static_cast<float>(va);
+            fx.a = static_cast<int>(va * 255.0 * 65536.0);
         }
     }
 }
@@ -227,6 +263,7 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
 
 void ScriptGridModule::fillIdentity()
 {
+    m_fieldFx.clear();  // ohne w/h nicht bestimmbar — fillIdentityFx() folgt
     m_field.assign(static_cast<std::size_t>(m_xres) * static_cast<std::size_t>(m_yres),
                    GridNode{});
     std::size_t idx = 0;
@@ -239,6 +276,142 @@ void ScriptGridModule::fillIdentity()
             m_field[idx].v = y;
             m_field[idx].alpha = 1.0f;
         }
+    }
+}
+
+bool ScriptGridModule::buildTransTable(int width, int height, bool wrap,
+                                       bool subpixel, std::vector<int>& out)
+{
+    if (!m_compiled) initializeScripts();
+    if (!m_script->has(Slot::Point)) return false;
+
+    const int w = std::max(2, width);
+    const int h = std::max(2, height);
+    out.assign(static_cast<std::size_t>(w) * static_cast<std::size_t>(h), 0);
+
+    auto& engine = m_script->engine();
+    engine.setNumber("w", static_cast<double>(w));
+    engine.setNumber("h", static_cast<double>(h));
+    engine.setNumber("sw", static_cast<double>(w));
+    engine.setNumber("sh", static_cast<double>(h));
+
+    // r_trans.cpp:428-451 — w2/h2 kommen aus INTEGER-Division (w/2), maxD aus
+    // sqrt(w*w+h*h)/2. Zeile 0 ist oben (AVS-Raum, den das Skript sieht).
+    const double maxD =
+        std::sqrt(static_cast<double>(w) * w + static_cast<double>(h) * h) / 2.0;
+    const double divMaxD = 1.0 / maxD;
+    const double w2 = w / 2;
+    const double h2 = h / 2;
+    const double xsc = 1.0 / w2;
+    const double ysc = 1.0 / h2;
+
+    std::size_t idx = 0;
+    for (int y = 0; y < h; ++y)
+    {
+        for (int x = 0; x < w; ++x, ++idx)
+        {
+            const double xd = x - w2;
+            const double yd = y - h2;
+            engine.setNumber("x", xd * xsc);
+            engine.setNumber("y", yd * ysc);
+            engine.setNumber("d", std::sqrt(xd * xd + yd * yd) * divMaxD);
+            engine.setNumber("r", std::atan2(yd, xd) + kHalfPi);
+            if (!m_script->run(Slot::Point))
+            {
+                m_lastScriptError = m_script->lastError();
+                return false;  // Slot tot: Aufrufer laesst das Bild unberuehrt
+            }
+
+            double tmp1;  // Zielzeile
+            double tmp2;  // Zielspalte
+            if (m_rectCoords)
+            {
+                tmp1 = (engine.number("y") + 1.0) * h2;
+                tmp2 = (engine.number("x") + 1.0) * w2;
+            }
+            else
+            {
+                const double dOut = engine.number("d") * maxD;
+                const double rOut = engine.number("r") - kHalfPi;
+                tmp1 = (h / 2) + std::sin(rOut) * dOut;
+                tmp2 = (w / 2) + std::cos(rOut) * dOut;
+            }
+
+            int ow, oh;
+            unsigned packed;
+            if (subpixel)
+            {
+                oh = static_cast<int>(tmp1);
+                ow = static_cast<int>(tmp2);
+                int xPartial = static_cast<int>(32.0 * (tmp2 - ow));
+                int yPartial = static_cast<int>(32.0 * (tmp1 - oh));
+                if (wrap)
+                {
+                    // r_trans.cpp:387-393: Modulo auf w-1/h-1 — die letzte
+                    // Spalte/Zeile bleibt als BLEND4-Nachbar frei.
+                    ow %= (w - 1);
+                    oh %= (h - 1);
+                    if (ow < 0) ow += w - 1;
+                    if (oh < 0) oh += h - 1;
+                }
+                else
+                {
+                    if (ow < 0) { xPartial = 0; ow = 0; }
+                    if (ow >= w - 1) { xPartial = 31; ow = w - 2; }
+                    if (oh < 0) { yPartial = 0; oh = 0; }
+                    if (oh >= h - 1) { yPartial = 31; oh = h - 2; }
+                }
+                packed = static_cast<unsigned>(ow + oh * w) |
+                         (static_cast<unsigned>(yPartial) << 22) |
+                         (static_cast<unsigned>(xPartial) << 27);
+            }
+            else
+            {
+                // Ohne Subpixel rundet das Original (+0.5) statt zu trunkieren.
+                tmp1 += 0.5;
+                tmp2 += 0.5;
+                oh = static_cast<int>(tmp1);
+                ow = static_cast<int>(tmp2);
+                if (wrap)
+                {
+                    ow %= w;
+                    oh %= h;
+                    if (ow < 0) ow += w;
+                    if (oh < 0) oh += h;
+                }
+                else
+                {
+                    ow = std::clamp(ow, 0, w - 1);
+                    oh = std::clamp(oh, 0, h - 1);
+                }
+                packed = static_cast<unsigned>(ow + oh * w);
+            }
+            out[idx] = static_cast<int>(packed);
+        }
+    }
+    return true;
+}
+
+void ScriptGridModule::fillIdentityFx(int width, int height)
+{
+    // Identitaet in AVS-Rohform = die Gitterposition selbst (r_dmove rect-Zweig
+    // mit unveraendertem x/y liefert genau xc_pos/yc_pos zurueck).
+    m_fieldFx.assign(static_cast<std::size_t>(m_xres) * static_cast<std::size_t>(m_yres),
+                     GridNodeFx{});
+    const int xcDpos = (width << 16) / (m_xres - 1);
+    const int ycDpos = (height << 16) / (m_yres - 1);
+    const int alpha = static_cast<int>(0.5 * 255.0 * 65536.0);
+    std::size_t idx = 0;
+    int ycPos = 0;
+    for (int gy = 0; gy < m_yres; ++gy)
+    {
+        int xcPos = 0;
+        for (int gx = 0; gx < m_xres; ++gx, ++idx)
+        {
+            m_fieldFx[idx] = GridNodeFx{xcPos, ycPos, alpha};
+            xcPos += xcDpos;
+        }
+        ycPos += ycDpos;
     }
 }
 

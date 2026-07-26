@@ -2355,8 +2355,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     }
     else if (auto* p = std::get_if<DynamicMovementParams>(&params))
     {
-        addInt(tr("Grid X"), p->xres, 2, 96, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).xres = v; });
-        addInt(tr("Grid Y"), p->yres, 2, 72, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).yres = v; });
+        addInt(tr("Grid X"), p->xres, 2, 256, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).xres = v; });
+        addInt(tr("Grid Y"), p->yres, 2, 256, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).yres = v; });
         addBool(tr("Rect coords"), p->rectCoords, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).rectCoords = v; });
         addBool(tr("Wrap"), p->wrap, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).wrap = v; });
         addBool(tr("Blend (alpha)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).blend = v; });

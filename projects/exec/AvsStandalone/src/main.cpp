@@ -57,6 +57,20 @@ namespace
 
 constexpr double kPi = 3.14159265358979323846;
 
+/// Alle aus APEs uebersetzten Knoten abschalten; liefert deren Anzahl.
+int disableApeNodes(lumi::multieffect::ChainNode& node)
+{
+    int count = 0;
+    if (node.fromApe && node.enabled)
+    {
+        node.enabled = false;
+        ++count;
+    }
+    for (lumi::multieffect::ChainNode& child : node.children)
+        count += disableApeNodes(child);
+    return count;
+}
+
 /// Referenz-Korpus vom Exe-Verzeichnis aufwaerts suchen (../ref neben dem Repo)
 QString locateCorpusDir()
 {
@@ -137,6 +151,9 @@ public:
     /// --beat-period N: deterministischer Beat alle N Frames statt des
     /// Detektors — Gegenstueck zu AvsRef --beat-period (frame-exakte Diffs)
     void setBeatPeriod(int frames) { m_beatPeriod = frames; }
+
+    /// --no-ape: aus APEs uebersetzte Knoten abschalten (AvsRef kennt sie nicht)
+    void setNoApe(bool on) { m_noApe = on; }
 
 protected:
     void initializeGL() override
@@ -245,6 +262,18 @@ private:
         {
             std::printf("[Standalone] LADEN FEHLGESCHLAGEN\n");
             m_allLoaded = false;
+        }
+        if (m_noApe && !isChain)
+        {
+            // AvsRef laedt bewusst keine APE-DLLs (avsref_main.cpp:349-357) —
+            // fuer den Vergleich muessen wir sie ebenfalls stilllegen, sonst
+            // misst man den APE statt der Treue des restlichen Presets (S49).
+            const int off = disableApeNodes(m_viz->chain());
+            if (off > 0)
+            {
+                m_viz->recompileChain();
+                std::printf("[Standalone] --no-ape: %d APE-Knoten abgeschaltet\n", off);
+            }
         }
         if (m_dumpChain)
         {
@@ -358,6 +387,7 @@ private:
     bool m_dumpChain = false;
     int m_saveEvery = 0;
     int m_beatPeriod = 0;
+    bool m_noApe = false;
     int m_lastWarnings = 0;
 };
 

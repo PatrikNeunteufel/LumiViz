@@ -19,7 +19,22 @@ python make_calibration_presets.py     # .avs (neu) erzeugen
 python freeze_lvfx_twins.py            # fehlende .lvfx-Zwillinge einfrieren
 python freeze_lvfx_twins.py --verify   # Prüfstand: Dump vs. Zwilling (GRUEN/ROT)
 python freeze_lvfx_twins.py --refreeze # nach beabsichtigten Fixes neu einfrieren
+python make_colormap_probes.py         # Color-Map-Sonden (+ Sweep nach out/)
+python analyse_colormap.py             # APE-Kennlinie messen und vergleichen
 ```
+
+**APEs (S49):** `compare_avsref.py` gibt AvsRef per `--ape-dir` eine echte
+APE-Sammlung mit (Default: `…\cmake\VisualsPresets\avs`). Ohne das lädt der
+Referenzkern **keine** Plugin-DLLs (er zeigt bewusst ins Leere,
+`avsref_main.cpp:349-357`) — Presets mit Color Map, Texer & Co. wären dann
+unvergleichbar, weil nur *wir* den Effekt rendern. Fehlt die Sammlung, schaltet
+`AvsStandalone --no-ape` unsere APE-Knoten ab, damit der Rest vergleichbar
+bleibt.
+
+**Kennlinien messen statt raten:** Für APEs ohne Quelltext liefern die
+Color-Map-Sonden das Muster — einfarbige Bilder je Eingangswert (der Eingang
+ist damit exakt bekannt, eine gezeichnete Rampe streut über die Rasterung),
+Auswertung **je Renderer** aus den Bildpaaren.
 
 Sicht-Sweep (Screenshots + Schwarz-Statistik, Fenster muss sichtbar sein):
 

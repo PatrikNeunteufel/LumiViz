@@ -174,10 +174,17 @@ std::int64_t bufIndex(double i)
 int LuaScriptEngine::lRand(lua_State* L)
 {
     auto* self = static_cast<LuaScriptEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
-    // EEL rand(x): integer 0..max(int(x),1)-1 (decision Import-Analyse §10.1)
+    // EEL rand(x) = rand()%max(x,1) (nseel-cfunc.c:54) — der Strom liegt im
+    // geteilten ScriptContext, damit alle Skripte eines Presets DENSELBEN
+    // MSVC-Strom teilen wie im Original (S49). seedRandom() schaltet auf den
+    // lokalen Generator um (Tests/Nicht-AVS-Nutzer).
     auto range = static_cast<std::int64_t>(luaL_optnumber(L, 1, 0.0));  // truncation
     if (range < 1) range = 1;
-    lua_pushnumber(L, static_cast<double>(self->m_rng() % static_cast<std::uint64_t>(range)));
+    const std::int64_t value =
+        self->m_ownRandom || self->m_context == nullptr
+            ? static_cast<std::int64_t>(self->m_rng() % static_cast<std::uint64_t>(range))
+            : self->m_context->nextRand() % range;
+    lua_pushnumber(L, static_cast<double>(value));
     return 1;
 }
 

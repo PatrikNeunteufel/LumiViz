@@ -48,6 +48,17 @@ struct GridNode
     float alpha = 1.0f;
 };
 
+/// Derselbe Gitterknoten in AVS-Rohform (r_dmove.cpp:336-362): Quellposition als
+/// 16.16-Fixpunkt in PIXELN, Alpha als (alpha*255)<<16. UNGECLAMPT — der
+/// Aufrufer kennt w_adj/h_adj (haengen an subpixel) und wrap. Zeilenordnung wie
+/// AVS: Index 0 = OBERSTE Zeile (das float-Feld oben ist GL-Ordnung, y+ = oben).
+struct GridNodeFx
+{
+    int x = 0;
+    int y = 0;
+    int a = 0;
+};
+
 /**
  * @class ScriptGridModule
  * @brief EEL script runs per grid node and yields a displacement field
@@ -56,8 +67,8 @@ class ScriptGridModule
 {
 public:
     static constexpr int kMinRes = 2;
-    static constexpr int kMaxResX = 96;
-    static constexpr int kMaxResY = 72;
+    static constexpr int kMaxResX = 256;  ///< AVS-Grenze (r_dmove.cpp:235-238)
+    static constexpr int kMaxResY = 256;
     static constexpr int kDefaultResX = 32;  ///< MilkDrop default mesh
     static constexpr int kDefaultResY = 24;
 
@@ -86,6 +97,18 @@ public:
     void setRectCoords(bool rect) { m_rectCoords = rect; }
     [[nodiscard]] bool rectCoords() const { return m_rectCoords; }
 
+    /**
+     * @brief Stuetzstellen exakt wie r_dmove legen (trunkierter 16.16-Schritt)
+     *
+     * r_dmove laeuft das Gitter mit `xc_pos += (w<<16)/(XRES-1)` ab — die
+     * Stuetzstellen liegen dadurch leicht neben x*w/(XRES-1) und der letzte
+     * Punkt erreicht den Rand knapp nicht. Das ist eine Eigenheit von Dynamic
+     * Movement. Movement (r_trans) hat gar kein Gitter (es wertet je PIXEL
+     * aus); dort ist unser Gitter eine Naeherung, fuer die die exakten
+     * Positionen die besseren Stuetzstellen sind. Default: exakt.
+     */
+    void setAvsGridPositions(bool avs) { m_avsGridPositions = avs; }
+
     // =========================================================================
     // Execution
     // =========================================================================
@@ -98,8 +121,26 @@ public:
      */
     void execute(float width, float height, bool isBeat, float deltaTime);
 
-    /// @brief Field in row-major order (yres rows x xres columns)
+    /// @brief Field in row-major order (yres rows x xres columns), GL row order
     [[nodiscard]] const std::vector<GridNode>& field() const { return m_field; }
+
+    /// @brief Dasselbe Feld als AVS-Fixpunkt-Tabelle (AVS-Zeilenordnung, 0 = oben)
+    [[nodiscard]] const std::vector<GridNodeFx>& fieldFx() const { return m_fieldFx; }
+
+    /**
+     * @brief r_trans-Tabelle bauen: das Punkt-Skript laeuft je PIXEL
+     *
+     * Movement hat — anders als Dynamic Movement — KEIN Gitter: r_trans.cpp:453-526
+     * wertet das Skript fuer jedes Pixel aus und legt EINEN int je Pixel ab:
+     * `ow + oh*w | (ypartial<<22) | (xpartial<<27)` (AVS-Zeilenordnung, 0 = oben),
+     * die Subpixel-Anteile also auf **5 Bit** quantisiert. Wird wie im Original
+     * nur bei Groessen-/Skriptwechsel gebaut (teuer: w*h Skript-Laeufe).
+     *
+     * @param out  w*h Eintraege, gepackt wie oben
+     * @return false, wenn kein Punkt-Slot lebt (Aufrufer: Passthrough)
+     */
+    bool buildTransTable(int width, int height, bool wrap, bool subpixel,
+                         std::vector<int>& out);
 
     [[nodiscard]] const GridNode& node(int gx, int gy) const
     {
@@ -123,6 +164,8 @@ public:
 private:
     void initializeScripts();
     void fillIdentity();
+    /// @brief Fixpunkt-Tabelle = Identitaet (Gitterpositionen selbst), AVS-Ordnung
+    void fillIdentityFx(int width, int height);
 
     std::string m_initCode;
     std::string m_beatCode;
@@ -132,6 +175,7 @@ private:
     int m_xres = kDefaultResX;
     int m_yres = kDefaultResY;
     bool m_rectCoords = false;  ///< AVS default: polar (d, r)
+    bool m_avsGridPositions = false;  ///< s. setAvsGridPositions()
     bool m_scriptSetsAlpha = false;
 
     bool m_compiled = false;
@@ -145,6 +189,7 @@ private:
     std::unique_ptr<scripting::ScriptSlotHost> m_script;
     std::string m_lastScriptError;
     std::vector<GridNode> m_field;
+    std::vector<GridNodeFx> m_fieldFx;
 };
 
 } // namespace lumi::modules

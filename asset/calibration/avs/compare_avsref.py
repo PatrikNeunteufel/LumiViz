@@ -33,14 +33,21 @@ ROOT = Path(__file__).parent
 LUMI_EXE = (ROOT / "../../../out/build/windows-ninja-release-clang/exec/"
             "AvsStandalone/bin/Release/AvsStandalone.exe").resolve()
 REF_EXE = (ROOT / "../../../tools/AvsRef/build/Release/AvsRef.exe").resolve()
+# APE-Sammlung: AvsRef laedt ohne --ape-dir KEINE Plugin-DLLs — Presets mit APEs
+# (Color Map, Texer, ...) waeren dann unvergleichbar, weil nur WIR den Effekt
+# rendern. Default: die externe Preset-Sammlung, falls vorhanden (S49).
+APE_DIR = (ROOT / "../../../../VisualsPresets/avs").resolve()
 
 STATS_RE = re.compile(
     r"mean RGB=\(([\d.]+), ([\d.]+), ([\d.]+)\), Luma min=([\d.]+) max=([\d.]+)")
 
 
-def run_ref(avs: Path, frames: int, size: str, out: Path, beat_period: int = 0) -> Path:
+def run_ref(avs: Path, frames: int, size: str, out: Path, beat_period: int = 0,
+            ape_dir: Path = None) -> Path:
     """AvsRef rendern; liefert den BMP-Pfad des letzten Frames."""
     extra = ["--beat-period", str(beat_period)] if beat_period > 0 else []
+    if ape_dir and Path(ape_dir).is_dir():
+        extra += ["--ape-dir", str(ape_dir)]
     proc = subprocess.run(
         [str(REF_EXE), str(avs), "--frames", str(frames), "--size", size,
          "--out", str(out)] + extra,
@@ -109,6 +116,8 @@ def main() -> int:
                     help="auch ../tests/*.avs (P-Presets) vergleichen")
     ap.add_argument("--frames", type=int, default=120)
     ap.add_argument("--size", default="320x240")
+    ap.add_argument("--ape-dir", default=str(APE_DIR),
+                    help="APE-Verzeichnis fuer AvsRef (leer = keine APEs)")
     ap.add_argument("--beat-period", type=int, default=0,
                     help="deterministischer Beat alle N Frames (beide Renderer)")
     ap.add_argument("--out", type=Path,
@@ -141,7 +150,7 @@ def main() -> int:
         rel = avs.name
         try:
             ref_img = load_rgb(run_ref(avs, args.frames, args.size, out / "ref",
-                                       args.beat_period))
+                                       args.beat_period, args.ape_dir))
             lumi_img = load_rgb(run_lumi(avs, args.frames, args.size, out / "lumi",
                                          args.beat_period))
             if ref_img.shape != lumi_img.shape:

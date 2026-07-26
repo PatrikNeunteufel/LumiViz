@@ -107,6 +107,59 @@ public:
 
     void gmbWrite(std::int64_t index, double value) { m_gmegabuf[index] = value; }
 
+    // =========================================================================
+    // rand() — EIN Strom je Preset (S49)
+    // =========================================================================
+
+    /**
+     * @brief Naechster Wert des AVS-Zufallsstroms (0..32767)
+     *
+     * NSEEL `rand(x)` ist `rand()%max(x,1)` (nseel-cfunc.c:54), also die
+     * `rand()` der MSVC-Laufzeit — und AVS ruft in unserem Vergleichspfad nie
+     * `srand()`, der Strom startet also reproduzierbar bei Seed 1. Nachgebaut
+     * ist hier genau deren LCG. Entscheidend ist ausserdem, dass es EIN Strom
+     * je Preset ist: zwei Skripte, die nacheinander ziehen, bekommen
+     * verschiedene Werte (S45-Befund Ego-Doppelscope) — genau wie im Original.
+     */
+    [[nodiscard]] int nextRand()
+    {
+        m_randState = m_randState * 214013u + 2531011u;
+        return static_cast<int>((m_randState >> 16) & 0x7fffu);
+    }
+
+    /// @brief Strom auf den Prozessstart-Zustand zuruecksetzen (Preset-Wechsel)
+    void resetRandom() { m_randState = 1u; }
+
+    /// @brief Roher LCG-Zustand — fuer Effekte, die den Strom im Shader
+    ///        fortschreiben (Scatter zieht je Pixel einen Wert)
+    [[nodiscard]] std::uint32_t randState() const { return m_randState; }
+
+    /**
+     * @brief n Zuege ueberspringen (affine Potenzierung, O(log n))
+     *
+     * Die Abbildung x -> a*x + c ist affin; ihre n-te Iteration ist wieder
+     * affin und laesst sich per Binaerexponentiation zusammensetzen.
+     */
+    void skipRandom(std::uint32_t n)
+    {
+        std::uint32_t a = 214013u;
+        std::uint32_t c = 2531011u;
+        std::uint32_t ra = 1u;
+        std::uint32_t rc = 0u;
+        while (n != 0u)
+        {
+            if ((n & 1u) != 0u)
+            {
+                rc = a * rc + c;
+                ra = a * ra;
+            }
+            c = a * c + c;
+            a = a * a;
+            n >>= 1;
+        }
+        m_randState = ra * m_randState + rc;
+    }
+
     void reset()
     {
         m_regs.fill(0.0);
@@ -114,9 +167,11 @@ public:
         m_qInit.fill(0.0);
         m_qFrame.fill(0.0);
         m_gmegabuf.clear();
+        resetRandom();
     }
 
 private:
+    std::uint32_t m_randState = 1u;
     std::array<double, kRegCount> m_regs{};
     std::array<double, kQCount> m_q{};
     std::array<double, kQCount> m_qInit{};
