@@ -157,8 +157,16 @@ def main() -> int:
     ap.add_argument("--size", default="320x240")
     ap.add_argument("--ape-dir", default=str(APE_DIR),
                     help="APE-Verzeichnis fuer AvsRef (leer = keine APEs)")
-    ap.add_argument("--beat-period", type=int, default=0,
-                    help="deterministischer Beat alle N Frames (beide Renderer)")
+    # Vorgabe 30 statt 0 (S52): mit dem EIGENEN Beat-Detektor ist keiner der
+    # beiden Renderer reproduzierbar — beide Detektoren haengen an der Wanduhr
+    # (bpm.cpp ruft GetTickCount, unser BeatEstimator ebenso). Gemessen ueber
+    # vier Laeufe, jeder Renderer mit sich selbst verglichen: mit `0` streuten
+    # wir bis 0,21 MAE, mit erzwungenem Beat sind wir **0,0000** ueber alle
+    # Paarungen. Wer den echten Detektor messen will, setzt ausdruecklich `0` —
+    # muss die Werte dann aber mehrfach erheben.
+    ap.add_argument("--beat-period", type=int, default=30,
+                    help="deterministischer Beat alle N Frames (beide Renderer); "
+                         "0 = jeder Renderer erkennt selbst (NICHT reproduzierbar)")
     ap.add_argument("--out", type=Path,
                     default=ROOT / "../../../out/avsref_compare")
     args = ap.parse_args()

@@ -487,23 +487,107 @@ void main() { fragColor = vec4(uColor, 1.0); }
 // (BLEND_ADAPT divisor 0..16 -> uF 0..1). Sequential-buffer semantics are
 // approximated in one pass: each stage mixes with the ORIGINAL texture, which
 // differs from AVS only when opposing directions are active simultaneously.
+// AVS Mirror (ID 26) — EINE Richtung je Durchgang (r_mirror.cpp:167-250).
+// Das Original laeuft vier Schleifen NACHEINANDER ueber den Framebuffer
+// (VERTICAL1, VERTICAL2, HORIZONTAL1, HORIZONTAL2); jede sieht das Ergebnis
+// der vorigen. Frueher stand das hier in EINEM Durchgang, der alle vier Regeln
+// aus der UNVERAENDERTEN Textur las und sich dabei selbst ueberschrieb — bei
+// zwei aktiven Achsen kam damit weder eine Spiegelung noch ein symmetrisches
+// Bild heraus (Befund S52: die Referenz spiegelte exakt, Fehler 0,0000, wir
+// 0,042). uDir: 0 = top->bottom, 1 = bottom->top, 2 = left->right,
+// 3 = right->left. uFac ist die Smooth-Rampe (1 = harte Kopie).
 const char* kMirrorFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
 uniform sampler2D uTex;
-uniform vec4 uF;  // factors: x=top->bottom, y=bottom->top, z=left->right, w=right->left
+uniform int uDir;
+uniform float uFac;
 out vec4 fragColor;
 void main()
 {
     vec2 uv = vTex;
     vec3 c = texture(uTex, uv).rgb;
-    vec3 mx = texture(uTex, vec2(1.0 - uv.x, uv.y)).rgb;
-    vec3 my = texture(uTex, vec2(uv.x, 1.0 - uv.y)).rgb;
-    if (uv.x > 0.5) c = mix(c, mx, uF.z);   // left -> right
-    if (uv.x < 0.5) c = mix(c, mx, uF.w);   // right -> left
-    if (uv.y < 0.5) c = mix(c, my, uF.x);   // top -> bottom
-    if (uv.y > 0.5) c = mix(c, my, uF.y);   // bottom -> top
+    bool vertical = uDir >= 2;
+    vec2 src = vertical ? vec2(1.0 - uv.x, uv.y) : vec2(uv.x, 1.0 - uv.y);
+    bool hit = uDir == 0 ? uv.y < 0.5
+             : uDir == 1 ? uv.y > 0.5
+             : uDir == 2 ? uv.x > 0.5
+                         : uv.x < 0.5;
+    if (hit) c = mix(c, texture(uTex, src).rgb, uFac);
     fragColor = vec4(c, 1.0);
+}
+)";
+
+// APE "Metaballs 3D" (UnConeD) — Verhaltens-Nachbau (S52). Summiertes
+// 1/r²-Feld mehrerer Kugeln, an `uThreshold` geschwellt; die Oberflaeche traegt
+// die Palette-Farbe der Kugel mit dem groessten Beitrag, der Rand faellt weich
+// ab. `uSphere` = xyz + Radius (bereits perspektivisch skaliert), `uTint` die
+// Farbe je Kugel.
+const char* kMetaballFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform int uCount;
+uniform float uThreshold;
+uniform float uAspect;
+uniform vec4 uSphere[16];
+uniform vec3 uTint[16];
+out vec4 fragColor;
+
+float fieldAt(vec2 p)
+{
+    float f = 0.0;
+    for (int i = 0; i < 16; ++i)
+    {
+        if (i >= uCount) break;
+        vec2 d = p - uSphere[i].xy;
+        f += (uSphere[i].w * uSphere[i].w) / max(dot(d, d), 1e-5);
+    }
+    return f;
+}
+
+/// Hoehe der Kuppel ueber der Isoflaeche — am Rand 0, nach innen beschraenkt.
+float domeAt(vec2 p)
+{
+    return sqrt(max(fieldAt(p) / max(uThreshold, 1e-5) - 1.0, 0.0));
+}
+
+void main()
+{
+    vec2 p = (vTex * 2.0 - 1.0);
+    p.x *= uAspect;
+
+    // Farbe GEWICHTET mischen, nicht "naechste Kugel gewinnt": die Referenz
+    // zeigt EINEN verschmolzenen Koerper mit weichem Farbverlauf, die
+    // Naechster-Nachbar-Wahl ergab harte Facetten (Sichtvergleich S52).
+    float field = 0.0;
+    vec3 tint = vec3(0.0);
+    for (int i = 0; i < 16; ++i)
+    {
+        if (i >= uCount) break;
+        vec2 d = p - uSphere[i].xy;
+        float c = (uSphere[i].w * uSphere[i].w) / max(dot(d, d), 1e-5);
+        field += c;
+        tint += uTint[i] * c;
+    }
+    tint /= max(field, 1e-5);
+    // Ausserhalb der Isoflaeche wird NICHTS gezeichnet — die Blobs der Referenz
+    // sind deckende Koerper, kein Leuchten (Sichtvergleich S52).
+    if (field < uThreshold) discard;
+
+    // Normale aus einer KUPPELHOEHE statt direkt aus dem Feld: `sqrt(f/t - 1)`
+    // ist am Rand 0 und waechst nach innen beschraenkt. Der rohe
+    // 1/r²-Gradient explodiert dagegen dicht an den Zentren — die Normale kippt
+    // dort in die Waagerechte und hinterliess einen dunklen Fleck je Kugel
+    // (Sichtvergleich S52).
+    float e = 0.006;
+    float gx = domeAt(p + vec2(e, 0.0)) - domeAt(p - vec2(e, 0.0));
+    float gy = domeAt(p + vec2(0.0, e)) - domeAt(p - vec2(0.0, e));
+    vec3 n = normalize(vec3(-gx, -gy, 2.0 * e));
+    vec3 lightDir = normalize(vec3(-0.45, 0.55, 0.85));
+    float diff = max(dot(n, lightDir), 0.0);
+    float spec = pow(max(dot(reflect(-lightDir, n), vec3(0.0, 0.0, 1.0)), 0.0), 24.0);
+    vec3 col = tint * (0.30 + 0.70 * diff) + vec3(spec * 0.6);
+    fragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }
 )";
 
@@ -2650,6 +2734,7 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_brightShader = makeProgram(kQuadVertexShader, kBrightnessFragmentShader);
     m_blurShader = makeProgram(kQuadVertexShader, kBlurFragmentShader);
     m_mirrorShader = makeProgram(kQuadVertexShader, kMirrorFragmentShader);
+    m_metaballShader = makeProgram(kQuadVertexShader, kMetaballFragmentShader);
     m_colorfadeShader = makeProgram(kQuadVertexShader, kColorfadeFragmentShader);
     m_lutShader = makeProgram(kQuadVertexShader, kLutFragmentShader);
     m_warpShader = makeProgram(kWarpVertexShader, kWarpFragmentShader);
@@ -3317,6 +3402,8 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const BumpParams& params) const { self.runBump(node, params); }
         void operator()(const WaterBumpParams& params) const { self.runWaterBump(node, params); }
         void operator()(const FyrewurXParams& params) const { self.runFyrewurX(node, params); }
+        void operator()(const Metaballs3DParams& params) const { self.runMetaballs3D(params); }
+        void operator()(const Tentacles3DParams& params) const { self.runTentacles3D(params); }
         void operator()(const StarfieldParams& params) const { self.runStarfield(node, params); }
         void operator()(const TimescopeParams& params) const { self.runTimescope(node, params); }
         void operator()(const DotGridParams& params) const { self.runDotGrid(node, params); }
@@ -3674,9 +3761,16 @@ void MultiEffectVisualizer::runClear(const ClearParams& params)
     auto* f = QOpenGLContext::currentContext()->functions();
     const QVector3D color = colorToVec(params.color);
 
-    // Blend mode 3 follows the current Set-Render-Mode line blend (BLEND_LINE).
-    int mode = params.blend;
-    if (mode == 3) mode = m_renderMode.lineBlend;
+    // ACHTUNG: `ClearParams::blend` ist eine EIGENE Aufzaehlung (0 replace,
+    // 1 additiv, 2 50/50, 3 Line-Blend) und NICHT die BLEND_LINE-Tabelle.
+    // `applyLineBlend` erwartet letztere — dort ist 2 = MAX und 50/50 = 3.
+    // Vorher lief unser Modus roh hinein: aus "50/50 gegen Schwarz" wurde
+    // "MAX gegen Schwarz", also ein No-op (max(x,0)=x). Das Bild klang damit
+    // NIE ab; "Deep Red Sea" (50 Scopes auf einem Puffer, der sich je Frame
+    // halbieren sollte) sammelte alles an und saettigte (Befund S52).
+    int mode = params.blend == 3 ? m_renderMode.lineBlend
+             : params.blend == 2 ? 3   // 50/50 = BLEND_AVG
+                                 : params.blend;
 
     if (mode == 0)
     {
@@ -3686,7 +3780,7 @@ void MultiEffectVisualizer::runClear(const ClearParams& params)
     }
 
     // Blended clear: full-screen color quad, full BLEND_LINE table (S9).
-    applyLineBlend(mode == 1 ? 1 : mode, m_renderMode.alpha);
+    applyLineBlend(mode, m_renderMode.alpha);
     if (mode == 1) f->glBlendFunc(GL_ONE, GL_ONE);  // Clear-Quad hat alpha=1
     m_barsShader->bind();
     m_quadVao->bind();
@@ -3803,11 +3897,23 @@ void MultiEffectVisualizer::runMirror(const ChainNode& node,
     }
     if (!any) return;  // nothing to mirror this frame
 
-    m_mirrorShader->bind();
-    m_mirrorShader->setUniformValue(
-        "uF", QVector4D(rt.mirrorF[0], rt.mirrorF[1], rt.mirrorF[2], rt.mirrorF[3]));
-    m_mirrorShader->release();
-    transformPass(*m_mirrorShader);
+    // Je Richtung ein eigener Durchgang, in der Reihenfolge der Referenz:
+    // VERTICAL1, VERTICAL2, HORIZONTAL1, HORIZONTAL2 (r_mirror.cpp:167/188/
+    // 210/230). Jeder sieht das Ergebnis des vorigen — genau darauf beruht,
+    // dass zwei aktive Achsen ein SYMMETRISCHES Bild ergeben: der zweite
+    // Durchgang spiegelt die bereits gespiegelte Haelfte zurueck. Ein einziger
+    // Durchgang aus der Originaltextur kann das nicht leisten.
+    static constexpr int kOrder[4] = {2, 3, 0, 1};
+    for (const int dir : kOrder)
+    {
+        const float fac = rt.mirrorF[dir];
+        if (fac <= 0.0f) continue;
+        m_mirrorShader->bind();
+        m_mirrorShader->setUniformValue("uDir", dir);
+        m_mirrorShader->setUniformValue("uFac", fac);
+        m_mirrorShader->release();
+        transformPass(*m_mirrorShader);
+    }
 }
 
 void MultiEffectVisualizer::runOnBeatClear(const ChainNode& node,
@@ -4642,33 +4748,49 @@ void MultiEffectVisualizer::runCustomBpm(const ChainNode& node,
                                          const CustomBpmParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
-    bool beat = m_frameBeat;
+    const bool inBeat = m_frameBeat;
+
+    // Aufbau 1:1 nach r_bpm.cpp:137-185. Die drei Betriebsarten kehren dort
+    // JEWEILS SOFORT zurueck, sind also exklusiv — vorher liefen sie hier
+    // hintereinander und konnten sich kombinieren (Befund S52).
+    if (inBeat) ++rt.customBeatCount;
+
+    // skipfirst: die ersten N Beats verschlucken. Wichtig — der Zaehler des
+    // Skip-Zweigs laeuft dabei NICHT mit (die Referenz kehrt vor ihm zurueck).
+    if (params.skipFirst != 0 && rt.customBeatCount <= params.skipFirst)
+    {
+        if (inBeat) m_frameBeat = false;
+        return;
+    }
 
     if (params.arbitrary)
     {
         const std::int64_t now = lumi::modules::BeatEstimator::steadyNowMs();
-        if (rt.customLastMs == 0) rt.customLastMs = now;
-        if (now - rt.customLastMs >= params.arbitraryMs)
-        {
-            beat = true;
-            rt.customLastMs = now;
-        }
-        else
-        {
-            beat = false;
-        }
+        // `arbLastTC` startet in der Referenz bei 0, der erste Vergleich
+        // schlaegt also sofort an; das Seeding auf "jetzt" verzoegerte den
+        // ersten Beat um ein volles Intervall.
+        m_frameBeat = now > rt.customLastMs + params.arbitraryMs;
+        if (m_frameBeat) rt.customLastMs = now;
+        return;
     }
 
-    if (params.skip && beat)
+    if (params.skip)
     {
-        // Pass only every skipCount-th beat.
-        if (++rt.customSkipCount < params.skipCount) beat = false;
-        else rt.customSkipCount = 0;
+        // `++skipCount >= skipVal + 1` — durchgelassen wird jeder
+        // (skipVal+1)-te Beat. Unsere alte Bedingung verglich gegen skipVal
+        // selbst und liess damit jeden DRITTEN statt jeden VIERTEN durch
+        // (Sonde 7_rand/bpm_zaehler_skip3: Zeile 9 Positionen daneben).
+        m_frameBeat = inBeat && ++rt.customSkipCount >= params.skipCount + 1;
+        if (m_frameBeat) rt.customSkipCount = 0;
+        return;
     }
 
-    if (params.invert) beat = !beat;
-
-    m_frameBeat = beat;  // mutates the beat for the following effects (§5.1)
+    if (params.invert)
+    {
+        m_frameBeat = !inBeat;
+        return;
+    }
+    // Keine Betriebsart aktiv: der Beat laeuft unveraendert weiter (return 0).
 }
 
 void MultiEffectVisualizer::runSetRenderMode(const SetRenderModeParams& params)
@@ -4717,7 +4839,13 @@ void MultiEffectVisualizer::applyLineBlend(int mode, int adjustAlpha)
             break;
         case 6:  funcRgb(GL_DST_COLOR, GL_ZERO); break;                // multiply
         case 7:                                                         // adjustable
-            funcRgb(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+            // `BLEND_ADJ(*fb, color, v)` = `blendtable[fb][v] +
+            // blendtable[color][255-v]` (r_defs.h:250-257, Tabelle i*j/255):
+            // **v gewichtet den FRAMEBUFFER, 255-v die neue Farbe.** Unsere
+            // Faktoren standen vertauscht — bei "Deep Red Sea" (v=181) nahmen
+            // wir 71 % neue Farbe statt 71 % Bild, jeder der 50 Scopes legte
+            // nach und das Bild sättigte zu blassem Gelb (dMean 0,943).
+            funcRgb(GL_ONE_MINUS_CONSTANT_ALPHA, GL_CONSTANT_ALPHA);
             f->glBlendColor(0.0f, 0.0f, 0.0f,
                             static_cast<float>(std::clamp(adjustAlpha, 0, 255)) /
                                 255.0f);
@@ -8103,6 +8231,121 @@ void MultiEffectVisualizer::runStarfield(const ChainNode& node,
     rp.glowEnabled = false;
     m_scopeRenderer.draw(points, rp);
     if (params.blend != 0) f->glDisable(GL_BLEND);
+}
+
+namespace {
+
+/// Palette-Farbe i als RGB 0..1 (0x00RRGGBB), mit Umlauf.
+void paletteRgb(const std::vector<uint32_t>& colors, int i,
+                float& r, float& g, float& b)
+{
+    const uint32_t c = colors.empty()
+                           ? 0xFFFFFFu
+                           : colors[static_cast<std::size_t>(i) % colors.size()];
+    r = static_cast<float>((c >> 16) & 0xFF) / 255.0f;
+    g = static_cast<float>((c >> 8) & 0xFF) / 255.0f;
+    b = static_cast<float>(c & 0xFF) / 255.0f;
+}
+
+}  // namespace
+
+void MultiEffectVisualizer::runMetaballs3D(const Metaballs3DParams& params)
+{
+    // Verhaltens-Nachbau der closed-source-APE "Metaballs 3D" (UnConeD, S52) —
+    // wie FyrewurX (S38): aus dem Preset kommt NUR die Farbtafel, die Geometrie
+    // ist host-eigen. Nachgebaut wird, was der Effekt tut: mehrere Kugeln
+    // wandern auf Lissajous-Bahnen durch einen Raum; ihr summiertes 1/r²-Feld
+    // wird geschwellt, die Oberflaeche traegt die Palette-Farbe der jeweils
+    // naechsten Kugel. Kein Anspruch auf Pixelgleichheit — die Referenz kann
+    // das gar nicht liefern (die APE-DLL ist nicht deterministisch, S22).
+    if (!m_metaballShader) return;
+    const int n = std::clamp(params.count, 1, 16);
+    const float t = m_time * params.speed;
+
+    std::array<QVector4D, 16> spheres{};  // xyz + Radius
+    std::array<QVector3D, 16> tints{};
+    for (int i = 0; i < n; ++i)
+    {
+        const float p = static_cast<float>(i) * 1.7f;
+        // Teilerfremde Frequenzen: die Kugeln treffen sich nie periodisch.
+        const float x = std::sin(t * 0.71f + p) * 0.62f;
+        const float y = std::sin(t * 0.53f + p * 1.3f) * 0.55f;
+        const float z = std::sin(t * 0.37f + p * 0.7f) * 0.5f + 1.2f;
+        // Perspektive: entferntere Kugeln werden kleiner und wandern zur Mitte.
+        const float w = 1.0f / z;
+        spheres[static_cast<std::size_t>(i)] =
+            QVector4D(x * w, y * w, z, params.radius * w);
+        float r = 1.0f, g = 1.0f, b = 1.0f;
+        paletteRgb(params.colors, i, r, g, b);
+        tints[static_cast<std::size_t>(i)] = QVector3D(r, g, b);
+    }
+
+    applyLineBlend(params.blend == 0 ? 0 : (params.blend == 1 ? 1 : 3),
+                   m_renderMode.alpha);
+    m_metaballShader->bind();
+    m_metaballShader->setUniformValue("uCount", n);
+    m_metaballShader->setUniformValue("uThreshold", params.threshold);
+    m_metaballShader->setUniformValue(
+        "uAspect", static_cast<float>(m_surfaceWidth) /
+                       std::max(1.0f, static_cast<float>(m_surfaceHeight)));
+    m_metaballShader->setUniformValueArray("uSphere", spheres.data(), 16);
+    m_metaballShader->setUniformValueArray("uTint", tints.data(), 16);
+    m_quadVao->bind();
+    QOpenGLContext::currentContext()->functions()->glDrawArrays(GL_TRIANGLE_STRIP,
+                                                                0, 4);
+    m_quadVao->release();
+    m_metaballShader->release();
+    resetLineBlend();
+}
+
+void MultiEffectVisualizer::runTentacles3D(const Tentacles3DParams& params)
+{
+    // Verhaltens-Nachbau der closed-source-APE "Tentacles 3D" (UnConeD, S52),
+    // gleiche Lage wie Metaballs. Mehrere Tentakel wachsen aus der Bildmitte
+    // nach aussen und schwingen; je Tentakel eine Palette-Farbe, die Dicke
+    // nimmt zur Spitze hin ab (deshalb ein Zug je Segment statt eines Laufs).
+    if (!m_scopeRenderer.ready()) return;
+    const int n = std::clamp(params.count, 1, 16);
+    const int seg = std::clamp(params.segments, 2, 256);
+    const float t = m_time * params.speed;
+    const float aspect = static_cast<float>(m_surfaceWidth) /
+                         std::max(1.0f, static_cast<float>(m_surfaceHeight));
+
+    applyLineBlend(params.blend == 0 ? 0 : (params.blend == 1 ? 1 : 3),
+                   m_renderMode.alpha);
+    for (int i = 0; i < n; ++i)
+    {
+        float r = 1.0f, g = 1.0f, b = 1.0f;
+        paletteRgb(params.colors, i, r, g, b);
+        const float base = static_cast<float>(i) * 6.2831853f / static_cast<float>(n);
+        // Segmentweise zeichnen: nur so nimmt die Linienbreite zur Spitze ab.
+        for (int s = 0; s + 1 < seg; ++s)
+        {
+            std::vector<lumi::modules::SuperscopePoint> run;
+            run.reserve(2);
+            for (int k = 0; k < 2; ++k)
+            {
+                const float u = static_cast<float>(s + k) / static_cast<float>(seg - 1);
+                // Schwingung waechst zur Spitze — Wurzel steht ruhig.
+                const float ang = base + std::sin(t + u * 3.1f + base) * 0.9f * u;
+                const float rad = u * params.length;
+                lumi::modules::SuperscopePoint pt;
+                pt.x = std::cos(ang) * rad / aspect;
+                pt.y = std::sin(ang) * rad;
+                pt.r = r;
+                pt.g = g;
+                pt.b = b;
+                pt.a = 1.0f;
+                run.push_back(pt);
+            }
+            lumi::render::ScopeRenderer::Params rp;
+            rp.mode = lumi::modules::SuperscopeRenderMode::Lines;
+            const float u = static_cast<float>(s) / static_cast<float>(seg - 1);
+            rp.lineWidth = std::max(1.0f, params.thickness * (1.0f - u));
+            m_scopeRenderer.draw(run, rp);
+        }
+    }
+    resetLineBlend();
 }
 
 void MultiEffectVisualizer::runFyrewurX(const ChainNode& node,

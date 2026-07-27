@@ -30,7 +30,7 @@ Zahl gezeichneter Pixel und deren Schwerpunkt.
 """
 from pathlib import Path
 
-from avs_preset_lib import (blur, clear_screen, colorfade, convolution,
+from avs_preset_lib import (blur, clear_screen, colorfade, convolution, custom_bpm,
                             dynamic_movement, effect_list, effect_list_ex,
                             invert, list_config, movement_user, preset,
                             set_render_mode, superscope, texer2, triangle)
@@ -483,6 +483,168 @@ def main() -> None:
                tx_frame=("n=w*0.1 ;\nred=1 ;\ngreen=1 ;\nblue=1 ;\n"
                          "reg00=h/280 ;\nsizex=reg00*0.75 ;\nsizey=sizex"),
                tx_beat="")
+
+    # --------------------------------- 8: Adjustable-Blend, ASYMMETRISCH
+    # Befund S52 ("Deep Red Sea"): in BLEND_LINE-Modus 7 gewichtet `v` den
+    # FRAMEBUFFER und `255-v` die neue Farbe (r_defs.h:250-257,
+    # `blendtable[fb][v] + blendtable[color][255-v]`, Tabelle i*j/255). Unsere
+    # GL-Faktoren standen vertauscht. Der bestehende Wächter `s9_blend/08` konnte
+    # das NICHT sehen: er benutzt die Vorbelegung v=128, und dort ist die
+    # Vertauschung symmetrisch (128 vs. 127). Diese Sonden nehmen deshalb
+    # ausdrücklich unsymmetrische Werte — ein Blend-Wächter mit 50:50 bewacht
+    # nur die Haelfte.
+    for adj in (32, 181, 224):
+        write(f"8_blend/adjustable_{adj:03d}.avs", preset(
+            clear_screen(color=0x203040),
+            set_render_mode(0, width=1),
+            superscope(point="x=-0.9+i*1.8; y=-0.4; red=1;green=1;blue=1;linesize=40;",
+                       init="n=2", which_ch=2, colors=(0xFFFFFF,), drawmode=1),
+            set_render_mode(7, width=1, adjustable=adj),
+            superscope(point="x=-0.9+i*1.8; y=0.0; red=1;green=0.2;blue=0;linesize=40;",
+                       init="n=2", which_ch=2, colors=(0xFFFFFF,), drawmode=1),
+            clear_every_frame=True))
+
+    # ------------------------------------------- 7: rand-Strom (Zeilenlage)
+    # Anlass (S52): Inhaler, Deep Red Sea und Alternate Reality ziehen alle im
+    # INIT einen Zufallswert als Startphase (`dt=rand(100)/40`). Ob unser Strom
+    # mit dem der Referenz uebereinstimmt, ist bisher nur INDIREKT beurteilt
+    # worden — ueber das Preset-Bild, das noch ein Dutzend anderer Einflüsse
+    # hat. Diese Sonden machen den gezogenen Wert SELBST sichtbar: die Zeile, in
+    # der das Segment liegt, IST der Wert. Stimmt die Lage, ist der Strom
+    # ausgerichtet; stimmt sie nicht, sagt der Abstand, um wie viel.
+    def rand_zeile(expr: str, x0: float, x1: float) -> bytes:
+        return superscope(
+            point=f"x={x0}+i*{x1 - x0}; y={expr}*1.6-0.8;"
+                  "red=1;green=1;blue=1;linesize=3;",
+            init=f"n=2; {expr.split('=')[0]}=0" if "=" in expr else "n=2",
+            which_ch=2, colors=(0xFFFFFF,), drawmode=1)
+
+    # Erster Zug: EIN rand(100) im Init, als Zeile gezeigt.
+    write("7_rand/erster_zug.avs", preset(
+        GRUND, set_render_mode(0, width=1),
+        superscope(point="x=-0.9+i*1.8; y=r1/100*1.6-0.8;"
+                         "red=1;green=1;blue=1;linesize=3;",
+                   init="n=2; r1=rand(100)", which_ch=2, colors=(0xFFFFFF,),
+                   drawmode=1)))
+    # Die ersten DREI Zuege desselben Stroms als drei Zeilen: zeigt nicht nur
+    # den Startwert, sondern die Reihenfolge — ein Versatz um einen Zug faellt
+    # damit auf (Zeile 2 von uns liegt dann auf Zeile 1 der Referenz).
+    write("7_rand/drei_zuege.avs", preset(
+        GRUND, set_render_mode(0, width=1),
+        superscope(point="x=-0.9+i*0.5; y=r1/100*1.6-0.8;"
+                         "red=1;green=0;blue=0;linesize=3;",
+                   init="n=2; r1=rand(100); r2=rand(100); r3=rand(100)",
+                   which_ch=2, colors=(0xFFFFFF,), drawmode=1),
+        superscope(point="x=-0.3+i*0.5; y=r2/100*1.6-0.8;"
+                         "red=0;green=1;blue=0;linesize=3;",
+                   init="n=2", which_ch=2, colors=(0xFFFFFF,), drawmode=1),
+        superscope(point="x=0.3+i*0.5; y=r3/100*1.6-0.8;"
+                         "red=0;green=0;blue=1;linesize=3;",
+                   init="n=2", which_ch=2, colors=(0xFFFFFF,), drawmode=1)))
+    # Zwei GETRENNTE Skript-Traeger, die je einen Wert ziehen: teilen sie sich
+    # den Strom (AVS: ja, EIN Strom je Preset — Befund S49)?
+    write("7_rand/zwei_traeger.avs", preset(
+        GRUND, set_render_mode(0, width=1),
+        superscope(point="x=-0.9+i*0.8; y=ra/100*1.6-0.8;"
+                         "red=1;green=1;blue=0;linesize=3;",
+                   init="n=2; ra=rand(100)", which_ch=2, colors=(0xFFFFFF,),
+                   drawmode=1),
+        superscope(point="x=0.1+i*0.8; y=rb/100*1.6-0.8;"
+                         "red=0;green=1;blue=1;linesize=3;",
+                   init="n=2; rb=rand(100)", which_ch=2, colors=(0xFFFFFF,),
+                   drawmode=1)))
+    # rand im FRAME-Slot statt im Init: zieht je Frame neu — die Zeile muss
+    # in beiden Renderern gleich ZAPPELN, nicht nur gleich starten.
+    write("7_rand/je_frame.avs", preset(
+        GRUND, set_render_mode(0, width=1),
+        superscope(point="x=-0.9+i*1.8; y=rf/100*1.6-0.8;"
+                         "red=1;green=1;blue=1;linesize=3;",
+                   init="n=2", frame="rf=rand(100)", which_ch=2,
+                   colors=(0xFFFFFF,), drawmode=1)))
+
+    # Der Scope aus "Inhaler", der in der Bisektion kippt (Stufe p05), als
+    # EINZELKNOTEN. Befund S52: der Ring ist bei uns cyan, in der Referenz
+    # weiss-grau — uns fehlt Rot. `red` haengt ueber `hu` an `hx`, und `hx`
+    # waechst je Frame um 0.015 UND je Beat um rand(100)/50. Damit steht die
+    # Farbe auf zwei Beinen: Frame-Zahl und BEAT-Zahl.
+    INH_INIT = "n=800;bo=0;fpi=acos(-1)*4;hu=rand(100)/10;"
+    INH_FRAME = ("t=t-0.05;hx=hx+0.015;hu=sin(hx)*.5-2;\n"
+                 "cvd=cvd*.95+(getspec(0,.1,2)+getspec(.4,.1,1))*.125;\n"
+                 "cv=min(1,cvd);")
+    INH_BEAT = "bo=bo+rand(100)/100;hx=hx+rand(100)/50"
+    INH_POINT = ("d=v*0.2+.9+sin(t+bo)*.3; r=t+i*fpi;"
+                 "x=sin(cos(r)*d*2); y=sin(sin(r)*d*2);\n"
+                 "red=sin(hu)*.5+.5;green=sin(hu+2.09+i)*.5+.6;"
+                 "blue=sin(hu+4.09+i)*.5+.5;\n"
+                 "red=red*cv;green=green*cv;blue=blue*cv;")
+
+    def inhaler_scope(name: str, init=INH_INIT, frame=INH_FRAME,
+                      beat=INH_BEAT) -> None:
+        write(f"7_rand/{name}.avs", preset(
+            GRUND, superscope(point=INH_POINT, init=init, frame=frame, beat=beat,
+                              which_ch=2, colors=(0xFFFFFF,), drawmode=1)))
+
+    # Das PAAR aus der Kette: davor der Punkte-Scope, der JE FRAME 40 Zuege aus
+    # dem Strom nimmt (n=20, zwei rand je Punkt). Teilen sich beide Traeger den
+    # Strom — wie in AVS, ein globaler Zieher (S49) —, dann verschiebt das den
+    # Beat-Zug des zweiten Scopes um 40 Positionen je Frame. Hat bei uns jeder
+    # Traeger seinen eigenen Strom, faellt genau das weg.
+    PUNKTE_SCOPE = superscope(
+        point="x=rand(200)*.01-1;\ny=rand(200)*.01-1;\n"
+              "red=.5;green=red*.7;blue=red*.4;",
+        init="n=20", which_ch=2, colors=(0xFFFFFF,), drawmode=1)
+    write("7_rand/inhaler_paar.avs", preset(
+        GRUND, PUNKTE_SCOPE,
+        superscope(point=INH_POINT, init=INH_INIT, frame=INH_FRAME,
+                   beat=INH_BEAT, which_ch=2, colors=(0xFFFFFF,), drawmode=1)))
+    # Gegenprobe: derselbe Vorgaenger, aber OHNE rand — zieht er nichts, darf
+    # sich am zweiten Scope nichts aendern.
+    write("7_rand/inhaler_paar_ohne_rand.avs", preset(
+        GRUND,
+        superscope(point="x=i*2-1;\ny=0;\nred=.5;green=red*.7;blue=red*.4;",
+                   init="n=20", which_ch=2, colors=(0xFFFFFF,), drawmode=1),
+        superscope(point=INH_POINT, init=INH_INIT, frame=INH_FRAME,
+                   beat=INH_BEAT, which_ch=2, colors=(0xFFFFFF,), drawmode=1)))
+
+    # Der letzte fehlende Knoten der Kette: Custom BPM mit skip=3 — ein
+    # BEAT-FILTER. Nur jeder vierte Beat kommt durch, und genau daran haengt der
+    # Beat-Slot des zweiten Scopes (`hx=hx+rand(100)/50` faerbt den Ring).
+    # Derselbe Knotentyp steht auch in "Alien Alloy" zwischen SRM und Texern.
+    write("7_rand/inhaler_bpm_paar.avs", preset(
+        GRUND, set_render_mode(1, width=1), custom_bpm(skip=1, skipval=3),
+        PUNKTE_SCOPE,
+        superscope(point=INH_POINT, init=INH_INIT, frame=INH_FRAME,
+                   beat=INH_BEAT, which_ch=2, colors=(0xFFFFFF,), drawmode=1)))
+    # Gegenprobe ohne den Filter: bleibt nur der Unterschied, den der Filter macht.
+    write("7_rand/inhaler_bpm_aus.avs", preset(
+        GRUND, set_render_mode(1, width=1),
+        PUNKTE_SCOPE,
+        superscope(point=INH_POINT, init=INH_INIT, frame=INH_FRAME,
+                   beat=INH_BEAT, which_ch=2, colors=(0xFFFFFF,), drawmode=1)))
+    # Und der Filter allein an einem Scope, dessen Beat-Slot NUR zaehlt: die
+    # Zeilenlage IST dann die Zahl der durchgelassenen Beats.
+    write("7_rand/bpm_zaehler_skip3.avs", preset(
+        GRUND, set_render_mode(0, width=1), custom_bpm(skip=1, skipval=3),
+        superscope(point="x=-0.9+i*1.8; y=bc*0.05*1.6-0.8;"
+                         "red=1;green=1;blue=1;linesize=3;",
+                   init="n=2; bc=0", beat="bc=bc+1", which_ch=2,
+                   colors=(0xFFFFFF,), drawmode=1)))
+    write("7_rand/bpm_zaehler_aus.avs", preset(
+        GRUND, set_render_mode(0, width=1),
+        superscope(point="x=-0.9+i*1.8; y=bc*0.05*1.6-0.8;"
+                         "red=1;green=1;blue=1;linesize=3;",
+                   init="n=2; bc=0", beat="bc=bc+1", which_ch=2,
+                   colors=(0xFFFFFF,), drawmode=1)))
+
+    inhaler_scope("inhaler_scope")
+    # Ohne Beat-Slot: bleibt `hx` rein frame-getrieben. Konvergiert es damit,
+    # ist die BEAT-Zahl der Taeter (und nicht der rand-Strom, der ohnehin per
+    # 7_rand-Sonden als ausgerichtet belegt ist).
+    inhaler_scope("inhaler_scope_ohne_beat", beat="")
+    # Ohne Audio in `cv`: trennt Helligkeit (cv skaliert alle drei Kanaele)
+    # von Farbton (hu).
+    inhaler_scope("inhaler_scope_cv1",
+                  frame="t=t-0.05;hx=hx+0.015;hu=sin(hx)*.5-2;\ncv=1;")
 
     # Audio-Werte als Zeilenlage: die Zeile, in der das Segment liegt, IST der
     # Wert. Anlass (S51): "Alien Alloy" leitet Swirl-Staerke UND Zeitschritt aus

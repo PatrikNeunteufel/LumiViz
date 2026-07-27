@@ -296,6 +296,7 @@ private:
         // Custom BPM
         std::int64_t customLastMs = 0;  ///< arbitrary-mode last emit time
         int customSkipCount = 0;        ///< skip-mode beat counter
+        int customBeatCount = 0;        ///< alle Beats seit Preset-Start (skipfirst)
 
         // Mosaic: on-beat quality ease-back (r_mosaic thisQuality/nF)
         float mosaicQuality = 0.0f;  ///< current interpolated block count (0 = init)
@@ -654,6 +655,8 @@ private:
                        const lumi::multieffect::BufferSaveParams& params);
     void runFyrewurX(const lumi::multieffect::ChainNode& node,
                      const lumi::multieffect::FyrewurXParams& params);
+    void runMetaballs3D(const lumi::multieffect::Metaballs3DParams& params);
+    void runTentacles3D(const lumi::multieffect::Tentacles3DParams& params);
     void runCustomBpm(const lumi::multieffect::ChainNode& node,
                       const lumi::multieffect::CustomBpmParams& params);
     void runSetRenderMode(const lumi::multieffect::SetRenderModeParams& params);
@@ -809,6 +812,8 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_brightShader;
     std::unique_ptr<QOpenGLShaderProgram> m_blurShader;
     std::unique_ptr<QOpenGLShaderProgram> m_mirrorShader;
+    /// Feld-Shader des Metaballs-3D-Nachbaus (S52)
+    std::unique_ptr<QOpenGLShaderProgram> m_metaballShader;
     std::unique_ptr<QOpenGLShaderProgram> m_colorfadeShader;
     std::unique_ptr<QOpenGLShaderProgram> m_lutShader;
     std::unique_ptr<QOpenGLShaderProgram> m_warpShader;

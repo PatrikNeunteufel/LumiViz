@@ -19,6 +19,15 @@ Handover; dann dieses Dokument nachziehen.
 Legende: 🔴 blockiert anderes · 🟠 Befund mit Messwert · 🟡 Entscheid nötig ·
 ⬜ Sichttest/Urteil offen · ⚪ Backlog (bewusst nichts tun) · 🔧 Kleinkram
 
+> ## ➜ ZUERST in der nächsten Session (Vorgabe Patrik, S52)
+>
+> **Panel-Editoren für die beiden neuen Knoten** `Metaballs 3D` und
+> `Tentacles 3D`. Sie erscheinen in der Kette und werden gespeichert, aber ihre
+> Parameter lassen sich nicht verstellen: Metaballs (Kugelzahl, Radius, Tempo,
+> Isowert, Blend) und Tentacles (Zahl, Segmente, Länge, Dicke, Tempo, Blend) —
+> dazu jeweils die Farbtafel aus dem Preset. Vorbild: die Editoren der übrigen
+> Render-Knoten im `MultiEffectPanel`.
+
 ---
 
 ## 1. AVS-Kalibrierung — offene Befunde mit Messwert
@@ -34,9 +43,13 @@ dünnen Inhalten).
 | ~~**19 High Voltage**~~ | **0,126 → 0,040** | ✅ derselbe Texer-Farbfix (S52), Vorstand gemessen | ✅ |
 | ~~**15 Alien Alloy**~~ | **0,647 → 0,008** | ✅ **gelöst (S52):** Texer II setzte die Sprite-Farbe **je Punkt** auf Weiß zurück — also *nach* dem Frame-Slot, in dem dieses Preset sie berechnet (`red=sin(ct+2.07)*0.5+0.5` …). Wir zeichneten durchgehend weiße Sprites; da sie die einzige Energiequelle des Wirbels sind, lief das Bild über die Frames nach Schwarz. Gegenstück zum `sizex`/`sizey`-Befund aus S51, dieselbe Ursache an anderer Variable. Rest-MAE 0,298 = Phasenversatz, gehört zum rand-Faden | ✅ |
 | **01 Picture II** | 0,516 | verarbeitet die drei Bilder falsch — unanalysiert | 🟠 |
-| **Inhaler** | 0,416 | war 0,246. Der `dt`-Fix (S51) hat die Zufalls-Startphase dort erst wirksam gemacht (`dt=rand(100)/40` im Init). **Kein Regress** — gehört zum rand-Ausrichtungs-Faden | 🟠 |
-| **Deep Red Sea** | 0,858 | derselbe rand-Faden | 🟠 |
-| **Alternate Reality** | 0,272 | derselbe rand-Faden | 🟠 |
+| ~~**Custom BPM (id 33)**~~ | Zeile 9 → **0** | ✅ **gelöst (S52):** vier Abweichungen von `r_bpm.cpp` — (1) **Off-by-one**: das Original lässt jeden `skipVal+1`-ten Beat durch, wir jeden `skipVal`-ten · (2) die drei Betriebsarten sind dort **exklusiv** (jeder Zweig kehrt sofort zurück), bei uns liefen sie hintereinander und konnten sich kombinieren · (3) `skipfirst` wurde geparst, aber nie übernommen · (4) `skipval=0` heißt „jeden Beat", unsere Untergrenze 1 machte „jeden zweiten" daraus. Sonde `bpm_zaehler_skip3` jetzt MAE 0,000 | ✅ |
+| ~~**Inhaler**~~ | **0,345 → 0,168** | ✅ Custom-BPM-Fix. Bisektion (S52): der Scope allein war referenzgleich (MAE 0,003), es hing am Filter davor. Der rand-**Strom** ist als Ursache ausgeschlossen (vier Sonden, MAE 0,000) | ✅ |
+| ~~**Reflectosphere**~~ | **0,174 → 0,085** | ✅ derselbe Fix | ✅ |
+| ~~**The Lion King**~~ | **0,021 → 0,013 (grün)** | ✅ derselbe Fix | ✅ |
+| ~~**Deep Red Sea**~~ | **0,943 → 0,011** | ✅ **gelöst (S52)** — zwei Fehler: (a) der **Adjustable-Blend** war vertauscht (`v` gewichtet in `r_defs.h:250-257` den *Framebuffer*, wir gaben es der neuen Farbe) · (b) `runClear` reichte die **eigene** Clear-Aufzählung roh in `applyLineBlend`, das die BLEND_LINE-Tabelle erwartet — aus „50/50 gegen Schwarz" wurde „MAX gegen Schwarz", also ein **No-op**, das Bild klang nie ab. Zieht mit: Wtf I'm Lost 0,094 → 0,003 · High Voltage 0,114 → 0,005 | ✅ |
+| **Alternate Reality** | ~0,28 → ~0,68 | 🔴 **Neu (S52): wird durch den korrekten Clear SCHLECHTER** (Vorstand dreimal gemessen). Das Preset klart 50/50 gegen ein helles Orange; solange unser Clear ein No-op war, lag der Hintergrund zufällig näher an der Referenz. Jetzt sättigt er pink, die Referenz bleibt **weiß** — bei identischer Labyrinth-Struktur. Der kaputte Clear hat hier einen **zweiten** Fehler verdeckt; Augenmerk auf die Listen-Blends um den Clear | 🔴 |
+| ~~**greatwho2006 15/16**~~ | Symmetrie **0,042 → 0,0000** | ✅ **gelöst (S52), Befund Patrik „sollten sauber spiegeln":** Mirror wertete alle vier Richtungen in EINEM Shader-Durchgang aus der unveränderten Textur aus, die Regeln überschrieben sich. Das Original läuft vier Schleifen nacheinander (`r_mirror.cpp` 167/188/210/230), jede sieht das Ergebnis der vorigen — daher ergeben zwei aktive Achsen dort ein symmetrisches Bild. Jetzt ein Durchgang je Richtung in Referenz-Reihenfolge | ✅ |
 | **30 Bright Light District** | 0,252 | Bruch bei Stufe 2 lokalisiert (Dynamic Shift schiebt ein 4-Pixel-Saatkorn im persistenten Puffer) — **nicht bewiesen** | 🟠 |
 | **P3_HpR20 Rotor** | 0,461 | Rotor-Rest seit S48 (0,37 → 0,12 ◐, dann Rest) | 🟠 |
 | **Tie Tunnel DM** | 0,154 | Altbestand seit S49 | 🟠 |
@@ -54,6 +67,30 @@ acht Zeilen lang „es fehlt Menge, die Sprites sind zu wenige". Tatsächlich wa
 Bild *schwarz bis auf die Sprites* — die gemessenen 4685 Pixel WAREN die Sprites, und
 gefehlt hat alles andere. Aus der falschen Leseart folgten drei Sonden, die alle grün
 waren und nichts fanden (`reg00`-Transport, `sizex`-Vertrag, Randgeometrie).
+
+**Die Streuung liegt bei AvsRef, nicht bei uns** (S52, gemessen auf Nachfrage Patrik).
+Vier Läufe desselben Presets, jeder Renderer mit **sich selbst** verglichen:
+
+| | MAE über vier Läufe |
+|---|---|
+| **AvsStandalone (wir)** | **0,0000** — bit-identisch |
+| **AvsRef (Referenz)** | 0,055 – 0,064 |
+
+Jeder Vergleich hat damit eine Rauschgrenze, unter die gar nicht gemessen werden kann.
+`--beat-period` hilft nicht (0,071) — der Beat ist nicht die Quelle. Zwei belegte
+Mechanismen: `r_chanshift.cpp:340` ruft `srand(time(0))` in **`load_config`**, jedes
+Preset mit Channel Shift sät den CRT-Strom beim Laden mit der aktuellen Sekunde neu;
+und AvsRef lädt mit `--ape-dir` echte APE-DLLs, deren Fremdcode eigene Zeitbezüge haben
+kann. **Vor jeder Deutung einer Einzelzahl: mehrfach messen.**
+
+**Beat-getriebene Presets sind mit `--beat-period 0` gar nicht vergleichbar** (S52).
+Beide Renderer erkennen Beats selbst aus dem synthetischen Audio und kommen dabei auf
+verschiedene Zeitpunkte; wo ein Effekt je Beat Zustand aufbaut, divergiert er
+zwangsläufig, ohne dass ein Render-Fehler vorliegt. Beleg Moving Particle: die Physik
+ist zeilengleich mit `r_parts.cpp`, und mit festem Beat konvergiert es —
+beat-period 0 → MAE 0,042 · 24 → 0,005 · **60 → 0,001**. Solche Presets deshalb
+**immer mit `--beat-period`** vergleichen, sonst misst man die Beat-Erkennung statt
+des Effekts.
 
 **Eine Sonde, die den Hintergrund jeden Frame neu zeichnet, kann keinen
 Rückkopplungs-Verlust sehen.** Vier weitere Sonden blieben deshalb grün (DM+Texer,
@@ -151,8 +188,31 @@ Reaktivierungs-Kriterium: ein MilkDrop-Treue-Bug, der nach mehr als einer Sessio
 Diagnose keine klare Ursache hat. Für *Semantik*-Fragen reicht der Quelltext:
 `cmake/ref/winamp_orig/Src/Plugins/Visualization/vis_milk2/`).
 
+### ✅ Zwei unbekannte APEs nachgebaut (S52, Befund Patrik)
+
+`Metaballs 3D` und `Tentacles 3D` (beide UnConeD, Pack „Whacko AVS IV") waren
+Passthrough — „Yummy Plastics" und „Rubber Starfish" blieben deshalb **leer**. Beide
+sind seit S52 als **Verhaltens-Nachbau** umgesetzt (Parser → Params → Translator →
+Renderer → Serializer), Muster wie FyrewurX (S38): ihr 72-Byte-Blob trägt **nur eine
+Farbtafel** (16 Slots + Anzahl), die Geometrie ist host-eigen. Beide Presets laden
+jetzt warnungsfrei und zeichnen.
+
+**Was daran offen bleibt** — ein Nachbau ist kein Port: die Metrik wird nie
+konvergieren (Yummy Plastics dMean 0,205), weil Bahnen, Anzahl und Farbfolge unsere
+sind. Beurteilbar ist nur der *Charakter*, und der stimmt im Seite-an-Seite:
+verschmelzende, plastisch schattierte Körper mit Glanzlicht bzw. schwingende Tentakel.
+Drei Punkte wurden dabei am Bild der echten APE kalibriert (Deck- statt Additiv-Blend,
+gewichtete statt nächster-Nachbar-Farbe, Schattierung über die Kuppelhöhe statt über
+den rohen 1/r²-Gradienten). Feinschliff ist Kür. 🔧
+
 ## 8. Werkzeug- und Doku-Schulden
 
+- 🔴 **AvsRef deterministisch machen** (S22): nach dem Laden eines Presets ein festes
+  `srand(<konstant>)` setzen. Das neutralisiert den `srand(time(0))` aus
+  `r_chanshift.cpp:load_config` und alles, was sich beim Laden aus demselben CRT sät.
+  Solange das offen ist, hat jeder Vergleich eine Rauschgrenze von ~0,06 MAE, und
+  Einzelwerte sind nur mit Mehrfachmessung deutbar. AvsRef ist unser eigener Build und
+  hat bereits ein `patched/`-Verzeichnis — der Eingriff ist klein.
 - 🔧 **`bisect_avs.py` Pfad-Modus** rekonstruiert nicht verlustfrei (dieselbe
   Konstruktion: Referenz einmal 240, einmal 4 Pixel) — bis dahin nur die
   Top-Level-Leiter nutzen.

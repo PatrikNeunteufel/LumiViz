@@ -792,13 +792,27 @@ struct BufferSaveParams
  * AVS "Misc / Custom BPM" (ID 33): mutates the beat signal for the effects
  * that follow it in the chain (arbitrary interval / skip / invert).
  */
+/**
+ * AVS "Misc / Custom BPM" (ID 33) — ein Beat-FILTER (r_bpm.cpp:137-185).
+ *
+ * Die drei Betriebsarten schliessen einander aus: das Original prueft
+ * `arbitrary`, dann `skip`, dann `invert` und kehrt aus jedem Zweig SOFORT
+ * zurueck. Sie hintereinander anzuwenden ergibt Kombinationen, die es dort
+ * nicht gibt (Befund S52).
+ */
 struct CustomBpmParams
 {
     bool arbitrary = false;  ///< emit a beat every `arbitraryMs`
     int arbitraryMs = 500;   ///< interval for arbitrary mode
     bool skip = false;       ///< only pass every (skipCount+1)-th beat
+    /// Rohwert `skipVal` der Referenz: durchgelassen wird jeder
+    /// (skipCount+1)-te Beat, 0 heisst also "jeden".
     int skipCount = 1;
     bool invert = false;     ///< invert the (possibly modified) beat
+    /// `skipfirst`: die ersten N Beats des Presets werden verschluckt, und der
+    /// Skip-Zaehler laeuft waehrenddessen NICHT mit (r_bpm.cpp:148 kehrt vor
+    /// dem Skip-Block zurueck).
+    int skipFirst = 0;
 };
 
 /**
@@ -969,6 +983,44 @@ struct InterferencesParams
  * 146 corpus instances carry identical bytes), so the parameters here are our
  * own, sight-calibrated ones.
  */
+/**
+ * APE "Metaballs 3D" (UnConeD) — **Verhaltens-Nachbau** wie FyrewurX (S38).
+ *
+ * Die APE ist closed-source und ihr Blob traegt nur eine Farbtafel (S52); die
+ * Geometrie ist deshalb host-eigen. Nachgebaut wird das, was der Effekt tut:
+ * mehrere Kugeln wandern durch einen Raum, ihr summiertes 1/r²-Feld wird
+ * geschwellt und aus der Preset-Palette eingefaerbt.
+ */
+struct Metaballs3DParams
+{
+    std::vector<uint32_t> colors;  ///< Palette aus dem Preset (0x00RRGGBB)
+    int count = 7;                 ///< Zahl der Kugeln (1..16)
+    /// Radius-Skala je Kugel (NDC) — sichtkalibriert gegen die echte APE
+    /// (S52): 0,30 deckte deutlich mehr Flaeche als die Referenz.
+    float radius = 0.20f;
+    float speed = 0.45f;           ///< Bahngeschwindigkeit
+    float threshold = 1.0f;        ///< Isowert der Oberflaeche
+    /// 0 replace, 1 additiv, 2 50/50 — die Referenz zeichnet DECKENDE
+    /// Koerper (Sichtvergleich S52), deshalb Replace als Vorgabe.
+    int blend = 0;
+};
+
+/**
+ * APE "Tentacles 3D" (UnConeD) — **Verhaltens-Nachbau**, gleiche Lage wie oben.
+ * Mehrere Tentakel schwingen aus der Bildmitte nach aussen; je Tentakel eine
+ * Farbe aus der Palette, die Dicke nimmt zur Spitze hin ab.
+ */
+struct Tentacles3DParams
+{
+    std::vector<uint32_t> colors;  ///< Palette aus dem Preset (0x00RRGGBB)
+    int count = 7;                 ///< Zahl der Tentakel (1..16)
+    int segments = 28;             ///< Stuetzpunkte je Tentakel
+    float length = 0.85f;          ///< Laenge in NDC
+    float thickness = 9.0f;        ///< Linienbreite an der Wurzel (Pixel)
+    float speed = 0.7f;            ///< Schwinggeschwindigkeit
+    int blend = 1;                 ///< 0 replace, 1 additiv, 2 50/50
+};
+
 struct FyrewurXParams
 {
     int sparks = 80;           ///< sparks per burst
@@ -1552,7 +1604,7 @@ using EffectParams =
                  RotoBlitterParams, BufferSaveParams, CustomBpmParams,
                  SuperScopeParams, MosaicParams, GrainParams, ScatterParams,
                  InterferencesParams, WaterParams, BumpParams, WaterBumpParams,
-                 FyrewurXParams,
+                 FyrewurXParams, Metaballs3DParams, Tentacles3DParams,
                  StarfieldParams, TimescopeParams, DotGridParams, DotPlaneParams,
                  DotFountainParams, ColorMapParams, BufferBlendParams,
                  JherikoGlobalParams, ColorClipParams, UniqueToneParams,
@@ -1672,6 +1724,8 @@ struct CompileResult
         const char* operator()(const BumpParams&) const { return "Bump"; }
         const char* operator()(const WaterBumpParams&) const { return "Water Bump"; }
         const char* operator()(const FyrewurXParams&) const { return "FyrewurX"; }
+        const char* operator()(const Metaballs3DParams&) const { return "Metaballs 3D"; }
+        const char* operator()(const Tentacles3DParams&) const { return "Tentacles 3D"; }
         const char* operator()(const StarfieldParams&) const { return "Starfield"; }
         const char* operator()(const TimescopeParams&) const { return "Timescope"; }
         const char* operator()(const DotGridParams&) const { return "Dot Grid"; }

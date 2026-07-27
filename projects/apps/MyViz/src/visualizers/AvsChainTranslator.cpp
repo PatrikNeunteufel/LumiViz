@@ -345,6 +345,36 @@ bool mapApe(const EffectNode& src, ChainNode& out)
         out.params = FyrewurXParams{};
         return true;
     }
+    if (src.apeId == "Metaballs 3D" || src.apeId == "Tentacles 3D")
+    {
+        // Verhaltens-Nachbau (closed source, S52): aus dem Preset kommt NUR die
+        // Farbtafel, die Geometrie ist host-eigen — wie bei FyrewurX. Die
+        // Farbzahl beschneidet die 16 gelesenen Slots; ist sie unbrauchbar,
+        // gilt die volle Tafel.
+        out.enabled = true;
+        std::vector<uint32_t> colors(src.colors.begin(), src.colors.end());
+        const int used = src.field("numcolors");
+        if (used > 0 && used < static_cast<int>(colors.size()))
+        {
+            colors.resize(static_cast<std::size_t>(used));
+        }
+        if (colors.empty()) colors.push_back(0xFFFFFFu);
+        if (src.apeId == "Metaballs 3D")
+        {
+            Metaballs3DParams p;
+            p.colors = colors;
+            p.count = std::clamp(static_cast<int>(colors.size()), 1, 16);
+            out.params = std::move(p);
+        }
+        else
+        {
+            Tentacles3DParams p;
+            p.colors = colors;
+            p.count = std::clamp(static_cast<int>(colors.size()), 1, 16);
+            out.params = std::move(p);
+        }
+        return true;
+    }
     if (src.apeId == "Trans: Normalise")
     {
         out.enabled = src.field("enabled") != 0;
@@ -1083,8 +1113,12 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.arbitrary = src.field("arbitrary") != 0;
             p.arbitraryMs = std::max(1, src.field("arbval"));
             p.skip = src.field("skip") != 0;
-            p.skipCount = std::max(1, src.field("skipval"));
+            // Rohwert durchreichen: `skipval` 0 heisst in der Referenz "jeden
+            // Beat" (`++skipCount >= 0+1`). Die alte Untergrenze 1 machte
+            // daraus "jeden zweiten".
+            p.skipCount = std::max(0, src.field("skipval"));
             p.invert = src.field("invert") != 0;
+            p.skipFirst = std::max(0, src.field("skipfirst"));
             out.params = p;
             return true;
         }

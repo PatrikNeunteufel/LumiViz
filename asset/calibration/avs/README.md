@@ -31,6 +31,23 @@ unvergleichbar, weil nur *wir* den Effekt rendern. Fehlt die Sammlung, schaltet
 `AvsStandalone --no-ape` unsere APE-Knoten ab, damit der Rest vergleichbar
 bleibt.
 
+**Reproduzierbarkeit (S52) — die wichtigste Messregel:** `compare_avsref.py` fährt
+seit Session 52 mit **`--beat-period 30`** als Vorgabe. Grund: mit dem jeweils
+eigenen Beat-Detektor ist **keiner** der beiden Renderer reproduzierbar — beide
+hängen an der Wanduhr (`bpm.cpp` ruft `GetTickCount`, unser BeatEstimator ebenso).
+Gemessen über vier Läufe, jeder Renderer mit **sich selbst** verglichen:
+
+| | mit eigenem Detektor | mit `--beat-period` |
+|---|---|---|
+| AvsStandalone (wir) | bis 0,21 MAE | **0,0000** |
+| AvsRef, Preset ohne APEs | — | **0,0000** |
+| AvsRef, Preset **mit** APE-DLL | 0,055–0,064 | 0,018–0,070 |
+
+Der Rest bei AvsRef sind die **APE-DLLs**: Fremdcode mit eigenem CRT, den wir nicht
+seeden können. AvsRef selbst setzt seit S52 nach jedem `__LoadPreset` ein festes
+`srand()` — das neutralisiert den `srand(time(0))` aus `r_chanshift.cpp:load_config`,
+aber nicht die DLLs. **Presets mit APEs deshalb mehrfach messen**, Rauschgrenze ~0,06.
+
 **Kennlinien messen statt raten:** Für APEs ohne Quelltext liefern die
 Color-Map-Sonden das Muster — einfarbige Bilder je Eingangswert (der Eingang
 ist damit exakt bekannt, eine gezeichnete Rampe streut über die Rasterung),

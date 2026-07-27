@@ -341,6 +341,15 @@ def dynamic_movement(point: str, init: str = "", frame: str = "", beat: str = ""
     return entry(43, blob)
 
 
+def custom_bpm(enabled: int = 1, arbitrary: int = 0, skip: int = 0,
+               invert: int = 0, arbval: int = 500, skipval: int = 3,
+               skipfirst: int = 0) -> bytes:
+    """id 33 — Beat-Filter (r_bpm.cpp): `skip` laesst nur jeden (skipval+1)-ten
+    Beat durch, `arbitrary` erzeugt stattdessen alle `arbval` ms einen."""
+    return entry(33, ints(enabled, arbitrary, skip, invert, arbval, skipval,
+                          skipfirst))
+
+
 def fast_brightness(direction: int = 0) -> bytes:
     """id 44 — dir: 0 = x2, 1 = /2, 2 = aus (r_fastbright.cpp)."""
     return entry(44, ints(direction))

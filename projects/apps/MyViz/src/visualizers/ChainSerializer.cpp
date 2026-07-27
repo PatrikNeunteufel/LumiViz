@@ -194,6 +194,7 @@ struct WriteVisitor
         o["skip"] = p.skip;
         o["skipCount"] = p.skipCount;
         o["invert"] = p.invert;
+        o["skipFirst"] = p.skipFirst;
     }
     void operator()(const SuperScopeParams& p) const
     {
@@ -632,6 +633,29 @@ struct WriteVisitor
         o["rotationInc2"] = p.rotationInc2;
         o["rgb"] = p.rgb;
         o["onBeat"] = p.onBeat;
+        o["speed"] = p.speed;
+        o["blend"] = p.blend;
+    }
+    void operator()(const Metaballs3DParams& p) const
+    {
+        QJsonArray cols;
+        for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
+        o["colors"] = cols;
+        o["count"] = p.count;
+        o["radius"] = p.radius;
+        o["speed"] = p.speed;
+        o["threshold"] = p.threshold;
+        o["blend"] = p.blend;
+    }
+    void operator()(const Tentacles3DParams& p) const
+    {
+        QJsonArray cols;
+        for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
+        o["colors"] = cols;
+        o["count"] = p.count;
+        o["segments"] = p.segments;
+        o["length"] = p.length;
+        o["thickness"] = p.thickness;
         o["speed"] = p.speed;
         o["blend"] = p.blend;
     }
@@ -1092,6 +1116,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.skip = getBool(o, "skip", false);
         p.skipCount = getInt(o, "skipCount", 1);
         p.invert = getBool(o, "invert", false);
+        p.skipFirst = getInt(o, "skipFirst", 0);
         return p;
     }
     if (type == "superScope")
@@ -1631,6 +1656,33 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.blend = getInt(o, "blend", 0);
         return p;
     }
+    if (type == "metaballs3d" || type == "tentacles3d")
+    {
+        std::vector<uint32_t> colors;
+        for (const auto& v : o.value("colors").toArray())
+            colors.push_back(static_cast<uint32_t>(v.toDouble()));
+        if (colors.empty()) colors.push_back(0xFFFFFF);
+        if (type == "metaballs3d")
+        {
+            Metaballs3DParams p;
+            p.colors = colors;
+            p.count = std::clamp(getInt(o, "count", 7), 1, 16);
+            p.radius = static_cast<float>(getDouble(o, "radius", 0.20));
+            p.speed = static_cast<float>(getDouble(o, "speed", 0.45));
+            p.threshold = static_cast<float>(getDouble(o, "threshold", 1.0));
+            p.blend = std::clamp(getInt(o, "blend", 0), 0, 2);
+            return p;
+        }
+        Tentacles3DParams p;
+        p.colors = colors;
+        p.count = std::clamp(getInt(o, "count", 7), 1, 16);
+        p.segments = std::clamp(getInt(o, "segments", 28), 2, 256);
+        p.length = static_cast<float>(getDouble(o, "length", 0.85));
+        p.thickness = static_cast<float>(getDouble(o, "thickness", 9.0));
+        p.speed = static_cast<float>(getDouble(o, "speed", 0.7));
+        p.blend = std::clamp(getInt(o, "blend", 1), 0, 2);
+        return p;
+    }
     if (type == "fyrewurx")
     {
         FyrewurXParams p;
@@ -1944,6 +1996,8 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const WaterBumpParams&) const { return "waterBump"; }
         QString operator()(const InterferencesParams&) const { return "interferences"; }
         QString operator()(const FyrewurXParams&) const { return "fyrewurx"; }
+        QString operator()(const Metaballs3DParams&) const { return "metaballs3d"; }
+        QString operator()(const Tentacles3DParams&) const { return "tentacles3d"; }
         QString operator()(const TextParams&) const { return "text"; }
         QString operator()(const AviParams&) const { return "avi"; }
         QString operator()(const CommentParams&) const { return "comment"; }

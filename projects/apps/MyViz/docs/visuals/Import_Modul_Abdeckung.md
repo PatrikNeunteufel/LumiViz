@@ -139,6 +139,8 @@ Referenz für Strings + Feld-Layouts: `grandchild/AVS-File-Decoder`
 | `Render: Triangle` | Triangle | Render | ✅ | `TriangleParams` (EEL-Dreiecke). **S51:** zeichnet GEFÜLLT, nicht als Drahtgitter (Sonde 4009 → 24448 px, Referenz 23424) und bekommt `w`/`h` im Skript | ✅ Sonde | mittel |
 | `Picture II` | Picture II | Misc | ✅ | `PictureIIParams` (Bild eingebettet + Blend) | U·A·S offen | mittel |
 | `Texer` | Texer (I) | Render | ✅ | `TexerParams` (Sprite an Wellenform-Punkten) | U·A·S offen | niedrig |
+| `Metaballs 3D` | Metaballs 3D | Render | ✅ | **Verhaltens-Nachbau** (S52, closed-source wie FyrewurX): der 72-Byte-Blob traegt NUR eine Farbtafel (16 Slots + Anzahl), die Geometrie ist host-eigen. Summiertes 1/r²-Feld mehrerer Kugeln auf Lissajous-Bahnen, an der Isoflaeche geschwellt, ueber die Kuppelhoehe schattiert (Glanzlicht); Farbe gewichtet aus der Palette gemischt | S (sichtkalibriert) | mittel |
+| `Tentacles 3D` | Tentacles 3D | Render | ✅ | **Verhaltens-Nachbau** (S52, dieselbe Lage): Tentakel aus der Bildmitte nach aussen, Schwingung waechst zur Spitze, Dicke nimmt ab; je Tentakel eine Palette-Farbe | S | mittel |
 | `Misc: AVSTrans Automation` | Trans Automation | Misc | ✖ | Meta/eigenwillig | — | niedrig |
 | `FunkyFX FyrewurX v1` | FyrewurX | Misc | ✅ | `FyrewurXParams` — **Verhaltens-Nachbau** (S38, Entscheid Patrik; closed-source, kein Code): Beat-Feuerwerks-Bursts, Gravitations-Funken, additiv. In 68/612 Korpus-Presets (11 %), Config-Bytes überall identisch → Parameter host-eigen | U·A·S offen | mittel |
 | `GeissFluid` | Fluid | Misc | ✖ | closed-source (Fluid-Sim) | — | niedrig |
@@ -146,8 +148,9 @@ Referenz für Strings + Feld-Layouts: `grandchild/AVS-File-Decoder`
 | `Nullsoft Pixelcorps: MIDItrace ` | MIDI Trace | Misc | ✖ | MIDI-Input ⚠ Trailing-Space | — | sehr niedrig |
 | `VFX AVI PLAYER` | AVI Player | Misc | ✖ | Video-Decode | — | sehr niedrig |
 
-**APE-Bilanz:** ✅ 17 · ◐ 1 (Framerate Limiter) · ⬜ 0 · ✖ 5 (Stand Session 38:
-FyrewurX nachgebaut).
+**APE-Bilanz:** ✅ **19** · ◐ 1 (Framerate Limiter) · ⬜ 0 · ✖ 5 — drei davon sind
+**Verhaltens-Nachbauten** closed-source-APEs: FyrewurX (S38), Metaballs 3D und
+Tentacles 3D (S52). Ihre Presets tragen keine Geometrie, nur Farben.
 
 **Parser-Fallstricke (Exakt-Match!):** `Jheriko : MULTIFILTER` hat ein **Leerzeichen
 vor dem Doppelpunkt**; `Nullsoft Pixelcorps: MIDItrace ` endet mit **Leerzeichen**.

@@ -890,6 +890,21 @@ inline bool decodeApe(std::string_view apeId, Reader& r, EffectNode& node)
         // Closed-source APE: enabled + one opaque config word (identical in
         // every known preset — the host rebuild uses its own parameters).
         readField(r, node, "enabled") && readField(r, node, "config");
+    else if (apeId == "Metaballs 3D" || apeId == "Tentacles 3D")
+    {
+        // Zwei geschlossene UnConeD-APEs (Befund S52, Pack "Whacko AVS IV").
+        // Ihr Blob ist 72 Byte und traegt NUR eine Farbtafel: 16 Slots
+        // 0x00RRGGBB, dann die Zahl der genutzten Farben und ein Flag. Die
+        // Geometrie steht nicht im Preset — der Host baut sie nach, wie bei
+        // FyrewurX (S38). Belegt an beiden bekannten Presets: "Yummy Plastics"
+        // 7 Farben, "Rubber Starfish" 7 (die letzte schwarz).
+        std::int32_t c = 0;
+        for (int i = 0; i < 16 && r.tryI32(c); ++i)
+        {
+            node.colors.push_back(static_cast<std::uint32_t>(c) & 0xFFFFFFu);
+        }
+        readField(r, node, "numcolors") && readField(r, node, "mode");
+    }
     else if (apeId == "Color Reduction")
         readField(r, node, "levels");
     else if (apeId == "Multiplier")

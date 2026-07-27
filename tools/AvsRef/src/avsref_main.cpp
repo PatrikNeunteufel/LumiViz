@@ -56,6 +56,10 @@ namespace
 // std::clamp braeuchte C++17 — der Alt-Code bleibt auf dem MSVC-Default
 inline float clampF(float v, float lo, float hi) { return v < lo ? lo : (v > hi ? hi : v); }
 inline int clampI(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : v); }
+
+/// Fester Startwert des CRT-Zufallsstroms je Preset — macht die Referenz
+/// reproduzierbar (siehe Kommentar an der Aufrufstelle nach __LoadPreset).
+constexpr unsigned int kRandSeed = 1u;
 } // namespace
 
 // Render-Kern-Globals (Pendant zu render.cpp, das wir nicht mitkompilieren)
@@ -409,6 +413,18 @@ int main(int argc, char** argv)
     {
         printf("\n[AvsRef] === %s ===\n", preset.c_str());
         g_render_effects->__LoadPreset(const_cast<char*>(preset.c_str()), 1);
+        // Zufallsstrom NACH dem Laden auf einen festen Wert setzen (S52).
+        // Grund: `r_chanshift.cpp:340` ruft `srand((unsigned int)time(0))` in
+        // seinem load_config — jedes Preset mit einem Channel Shift saet den
+        // globalen CRT-Strom also mit der aktuellen SEKUNDE neu, und die
+        // Referenz wird damit von Lauf zu Lauf ein anderes Bild liefern.
+        // Gemessen (vier Laeufe, jeder Renderer mit sich selbst verglichen):
+        // AvsStandalone MAE 0,0000, AvsRef 0,055-0,064 — die Streuung kam
+        // vollstaendig von hier. Ein Vergleich gegen eine nicht reproduzierbare
+        // Referenz hat eine Rauschgrenze, unter die niemand messen kann.
+        // Der Wert selbst ist beliebig, nur konstant muss er sein; er steht
+        // NACH dem Laden, damit er jedes load_config ueberschreibt.
+        srand(kRandSeed);
         if (getenv("AVSREF_DEBUG")) fprintf(stderr, "[dbg] __LoadPreset zurueck\n");
         if (g_render_effects->getNumRenders() == 0)
         {
