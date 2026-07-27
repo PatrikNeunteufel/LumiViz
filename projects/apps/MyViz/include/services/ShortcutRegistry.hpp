@@ -61,27 +61,33 @@ struct ShortcutAction
 [[nodiscard]] inline const std::vector<ShortcutAction>& shortcutActions()
 {
     static const std::vector<ShortcutAction> kActions = {
-        // --- Transport: reserviert (§2), Verdrahtung folgt in Stufe 2 ---------
+        // --- Transport: reserviert (§2), seit Stufe 2 verdrahtet --------------
         {"transport.playPause", "Wiedergabe / Pause", ShortcutCategory::Transport,
-         "Space", true, false},
+         "Space", true},
         {"transport.next", "Nächster Song", ShortcutCategory::Transport,
-         "Ctrl+Right", true, false},
+         "Ctrl+Right", true},
         {"transport.previous", "Voriger Song", ShortcutCategory::Transport,
-         "Ctrl+Left", true, false},
+         "Ctrl+Left", true},
         {"transport.volumeUp", "Lauter", ShortcutCategory::Transport,
-         "Ctrl+Up", true, false},
+         "Ctrl+Up", true},
         {"transport.volumeDown", "Leiser", ShortcutCategory::Transport,
-         "Ctrl+Down", true, false},
+         "Ctrl+Down", true},
 
         // --- Preset: Stufe 1, wirkt auf das aktive Verzeichnis ----------------
-        // PageDown/PageUp statt Pfeiltasten (die braucht jede Liste und jeder
+        // Bild ab/Bild auf statt Pfeiltasten (die braucht jede Liste und jeder
         // Editor) und statt Space/Backspace der MilkDrop-Konvention (Space ist
-        // nach §2 Transport).
-        {"preset.next", "Nächstes Preset", ShortcutCategory::Preset, "PageDown"},
-        {"preset.previous", "Voriges Preset", ShortcutCategory::Preset, "PageUp"},
+        // nach §2 Transport). ACHTUNG: die Sequenzen sind QKeySequence-Text —
+        // Qt kennt diese Tasten als "PgDown"/"PgUp", "PageDown" ergibt
+        // Key_unknown und damit eine tote Vorbelegung (Session 52).
+        {"preset.next", "Nächstes Preset", ShortcutCategory::Preset, "PgDown"},
+        {"preset.previous", "Voriges Preset", ShortcutCategory::Preset, "PgUp"},
 
         // --- Ansicht ----------------------------------------------------------
         {"view.fullscreen", "Vollbild", ShortcutCategory::View, "F11", false, false},
+        // Druck: nimmt das Visual auf statt des Bildschirms. Windows oeffnet auf
+        // dieselbe Taste eventuell das Snipping Tool — das ist eine
+        // Windows-Einstellung und liegt ausserhalb der App.
+        {"view.screenshot", "Screenshot des Visuals", ShortcutCategory::View, "Print"},
     };
     return kActions;
 }

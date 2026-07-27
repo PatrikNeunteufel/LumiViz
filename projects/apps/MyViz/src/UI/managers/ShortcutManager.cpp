@@ -11,6 +11,7 @@
 
 #include "UI/managers/ShortcutManager.hpp"
 
+#include "audio/AudioEvents.hpp"
 #include "services/IEventBus.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/events/UIEvents.hpp"
@@ -264,6 +265,17 @@ void ShortcutManager::dispatch(const QString& actionId)
     auto* bus = m_services.tryResolve<IEventBus>();
     if (bus == nullptr) return;
 
+    using Transport = TransportCommandEvent::Action;
+    // Tabelle statt Kette: eine neue Transport-Aktion ist damit eine Zeile hier
+    // und eine Zeile in der Registry.
+    static const QHash<QString, Transport> kTransport = {
+        {QStringLiteral("transport.playPause"), Transport::PlayPause},
+        {QStringLiteral("transport.next"), Transport::Next},
+        {QStringLiteral("transport.previous"), Transport::Previous},
+        {QStringLiteral("transport.volumeUp"), Transport::VolumeUp},
+        {QStringLiteral("transport.volumeDown"), Transport::VolumeDown},
+    };
+
     if (actionId == QStringLiteral("preset.next"))
     {
         BasicLogger::logDebug("ShortcutManager: preset.next");
@@ -273,6 +285,16 @@ void ShortcutManager::dispatch(const QString& actionId)
     {
         BasicLogger::logDebug("ShortcutManager: preset.previous");
         bus->publish(PresetStepEvent{-1});
+    }
+    else if (actionId == QStringLiteral("view.screenshot"))
+    {
+        BasicLogger::logDebug("ShortcutManager: view.screenshot");
+        bus->publish(ScreenshotRequestEvent{});
+    }
+    else if (const auto it = kTransport.constFind(actionId); it != kTransport.constEnd())
+    {
+        BasicLogger::logDebug("ShortcutManager: " + actionId.toStdString());
+        bus->publish(TransportCommandEvent{it.value()});
     }
     else
     {

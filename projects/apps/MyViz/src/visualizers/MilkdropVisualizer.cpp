@@ -23,6 +23,7 @@
 
 #include "visualizers/milkdrop/MilkdropBlur.hpp"
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
+#include "visualizers/milkdrop/MilkdropSamplerName.hpp"
 #include "visualizers/milkdrop/MilkdropTextureResolve.hpp"
 #include "visualizers/milkdrop/MilkdropTrace.hpp"
 
@@ -236,6 +237,11 @@ float lum(vec3 v) { return dot(v, vec3(0.32, 0.49, 0.29)); }
             s += std::string("uniform sampler2D sampler_") + prefix + base + ";\n";
         s += std::string("uniform vec4 texsize_") + base + ";\n";
     }
+    // 24 Rotationsmatrizen (S52). HLSL float4x3 = GLSL mat3x4; die Presets
+    // benutzen sie als mul(float4(...), rot_xx) -> float3.
+    for (const char* group : {"s", "d", "f", "vf", "uf", "rand"})
+        for (int i = 1; i <= 4; ++i)
+            s += std::string("uniform mat3x4 rot_") + group + std::to_string(i) + ";\n";
     // Volumen-Noise (C3, S43): 3D-Sampler + texsize wie die 2D-Varianten
     for (const char* base : {"noisevol_lq", "noisevol_hq"})
     {
@@ -247,31 +253,22 @@ float lum(vec3 v) { return dot(v, vec3(0.32, 0.49, 0.29)); }
     return s;
 }
 
+using lumi::milkdrop::parseSamplerName;
+using lumi::milkdrop::SamplerName;
+
 /// Sampler names the preamble already declares (user re-declarations skip these)
 [[nodiscard]] bool preambleDeclares(const std::string& name)
 {
-    if (name.rfind("sampler_", 0) == 0)
-    {
-        std::string base = name.substr(8);
-        for (const char* prefix : {"fc_", "pc_", "fw_", "pw_"})
-        {
-            if (base.rfind(prefix, 0) == 0)
-            {
-                base = base.substr(3);
-                break;
-            }
-        }
-        return base == "main" || base == "blur1" || base == "blur2" || base == "blur3" ||
-               base == "noise_lq" || base == "noise_lq_lite" || base == "noise_mq" ||
-               base == "noise_hq" || base == "noisevol_lq" || base == "noisevol_hq";
-    }
     if (name.rfind("texsize_", 0) == 0)
     {
         const std::string base = name.substr(8);
         return base == "noise_lq" || base == "noise_lq_lite" || base == "noise_mq" ||
                base == "noise_hq" || base == "noisevol_lq" || base == "noisevol_hq";
     }
-    return false;
+    const std::string base = parseSamplerName(name).root;
+    return base == "main" || base == "blur1" || base == "blur2" || base == "blur3" ||
+           base == "noise_lq" || base == "noise_lq_lite" || base == "noise_mq" ||
+           base == "noise_hq" || base == "noisevol_lq" || base == "noisevol_hq";
 }
 
 /// Full fragment source from a transpile result (preamble + globals + main)
@@ -1521,6 +1518,29 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
     // rand_preset: einmal je Preset-Ladung (engine-lokaler PRNG, Entscheid §10)
     m_randSeed = m_randSeed * 1664525u + 1013904223u;
 
+    // Rotationsmatrizen: Basiswinkel/Geschwindigkeit/Verschiebung je Preset
+    // (state.cpp:RandomizePresetVars). Die Drehgeschwindigkeit waechst mit dem
+    // Index — 0.9*(k/8)^3.2 macht rot_s1 praktisch statisch und rot_uf4 schnell.
+    {
+        unsigned int seed = m_randSeed;
+        const auto frand = [&seed]() {
+            seed = seed * 1664525u + 1013904223u;
+            return static_cast<float>(seed >> 8) / 16777216.0f;
+        };
+        for (std::size_t k = 0; k < m_rotParams.size(); ++k)
+        {
+            const float rotMult =
+                0.9f * std::pow(static_cast<float>(k) / 8.0f, 3.2f);
+            RotParams& p = m_rotParams[k];
+            for (int a = 0; a < 3; ++a)
+            {
+                p.xlate[a] = frand() * 2.0f - 1.0f;
+                p.base[a] = frand() * 6.28f;
+                p.speed[a] = (frand() * 2.0f - 1.0f) * rotMult;
+            }
+        }
+    }
+
     loadCustomTextures(samplerNames, report);  // C2 (GUI thread, kein GL)
 }
 
@@ -1529,6 +1549,8 @@ void MilkdropVisualizer::loadCustomTextures(const std::vector<std::string>& samp
 {
     m_customImages.clear();
     m_texSizes.clear();
+    m_customSamplerNames.clear();
+    m_customSamplerNames.insert(samplerNames.begin(), samplerNames.end());
     if (samplerNames.empty()) return;
 
     // Suchregel S43 (SSOT: MilkdropTextureResolve.hpp — auch der Serializer
@@ -1570,16 +1592,8 @@ void MilkdropVisualizer::loadCustomTextures(const std::vector<std::string>& samp
     static const QRegularExpression kRand(QStringLiteral("^rand\\d\\d(_(.+))?$"));
     for (const std::string& samplerName : samplerNames)
     {
-        // Basisname = sampler_[fc_|pc_|fw_|pw_]<name>
-        std::string base = samplerName.substr(8);
-        for (const char* prefix : {"fc_", "pc_", "fw_", "pw_"})
-        {
-            if (base.rfind(prefix, 0) == 0)
-            {
-                base = base.substr(3);
-                break;
-            }
-        }
+        // Basisname nach der Regel der Referenz (parseSamplerName)
+        const std::string base = parseSamplerName(samplerName).root;
         const QString baseQ = QString::fromStdString(base);
         const QRegularExpressionMatch rand = kRand.match(baseQ);
         const QString path = rand.hasMatch() ? findRandom(rand.captured(2)) : findFile(baseQ);
@@ -2138,11 +2152,12 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
     // Custom-Texturen (C2): geladene Bilder binden (Sampler-Objekt je Praefix),
     // fehlende auf den Platzhalter legen, damit das Programm definiert laeuft
     {
+        // Filter/Wrap aus dem Namen — dieselbe Zerlegung wie beim Laden, damit
+        // `FC_`, `CF_` und `sampler_fc_` denselben Zustand ergeben.
         const auto samplerForName = [&](const std::string& name) {
-            if (name.rfind("sampler_fc_", 0) == 0) return clampLin;
-            if (name.rfind("sampler_pc_", 0) == 0) return clampPoint;
-            if (name.rfind("sampler_pw_", 0) == 0) return wrapPoint;
-            return wrapLin;  // Default + fw_ = bilinear wrap (MilkDrop-Default)
+            const SamplerName parsed = parseSamplerName(name);
+            if (parsed.bilinear) return parsed.wrap ? wrapLin : clampLin;
+            return parsed.wrap ? wrapPoint : clampPoint;
         };
         GLint count = 0;
         GLuint prog = program.programId();
@@ -2157,7 +2172,11 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
                                    &size, &type, nameBuf);
             if (type != GL_SAMPLER_2D) continue;
             const std::string name(nameBuf, static_cast<std::size_t>(len));
-            if (preambleDeclares(name) || name.rfind("sampler_", 0) != 0) continue;
+            // Genau die vom Preset deklarierten Sampler — frueher filterte hier
+            // ein `beginnt mit "sampler_"`, was praefixlose Namen (`sampler tex`,
+            // 25 Presets im Pack) ungebunden liess. Ueber die Namensmenge statt
+            // ueber ein Praefix, damit der Platzhalter keine fremde Uniform trifft.
+            if (m_customSamplerNames.count(name) == 0) continue;
             const auto it = m_customTexIds.find(name);
             const unsigned int tex =
                 (it != m_customTexIds.end()) ? it->second : m_placeholderTex;
@@ -2211,6 +2230,88 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
     unsigned int fs = m_randSeed ^ (static_cast<unsigned int>(m_frame) * 2654435761u);
     program.setUniformValue("rand_frame",
                             QVector4D(rand01(fs), rand01(fs), rand01(fs), rand01(fs)));
+
+    // --- Rotationsmatrizen rot_s/d/f/vf/uf/rand 1..4 (milkdropfs.cpp:4016-4050) ---
+    // Basiswinkel, Drehgeschwindigkeit und Verschiebung sind JE PRESET zufaellig
+    // (state.cpp:RandomizePresetVars) — nur die vier rot_rand* wuerfeln jeden
+    // Frame neu. Aufbau: M = ((Rx * T) * Rz) * Ry in D3D-Zeilenvektor-Konvention;
+    // die Presets rechnen mul(float4(...), rot_xx).
+    {
+        // Zeilenvektor-Matrizen als 4x3 (die vierte Spalte von D3D ist konstant
+        // 0,0,0,1 und faellt bei float4x3 weg).
+        const auto mul43 = [](const std::array<float, 12>& a,
+                              const std::array<float, 12>& b) {
+            // a,b: 4 Zeilen x 3 Spalten, implizite vierte Spalte (0,0,0,1)
+            std::array<float, 12> r{};
+            for (int row = 0; row < 4; ++row)
+            {
+                for (int col = 0; col < 3; ++col)
+                {
+                    float sum = 0.0f;
+                    for (int k = 0; k < 3; ++k)
+                    {
+                        sum += a[static_cast<std::size_t>(row) * 3 + k] *
+                               b[static_cast<std::size_t>(k) * 3 + col];
+                    }
+                    if (row == 3) sum += b[9 + col];  // implizites a[3][3] == 1
+                    r[static_cast<std::size_t>(row) * 3 + col] = sum;
+                }
+            }
+            return r;
+        };
+        const auto rx = [](float a) {
+            const float c = std::cos(a), s2 = std::sin(a);
+            return std::array<float, 12>{1, 0, 0, 0, c, s2, 0, -s2, c, 0, 0, 0};
+        };
+        const auto ry = [](float a) {
+            const float c = std::cos(a), s2 = std::sin(a);
+            return std::array<float, 12>{c, 0, -s2, 0, 1, 0, s2, 0, c, 0, 0, 0};
+        };
+        const auto rz = [](float a) {
+            const float c = std::cos(a), s2 = std::sin(a);
+            return std::array<float, 12>{c, s2, 0, -s2, c, 0, 0, 0, 1, 0, 0, 0};
+        };
+        const auto xlate = [](float x, float y, float z) {
+            return std::array<float, 12>{1, 0, 0, 0, 1, 0, 0, 0, 1, x, y, z};
+        };
+
+        static const char* const kGroups[6] = {"s", "d", "f", "vf", "uf", "rand"};
+        unsigned int frameSeed =
+            m_randSeed ^ (static_cast<unsigned int>(m_frame) * 0x9e3779b9u);
+        for (int idx = 0; idx < 24; ++idx)
+        {
+            std::array<float, 12> m{};
+            if (idx < 20)
+            {
+                const RotParams& p = m_rotParams[static_cast<std::size_t>(idx)];
+                m = mul43(rx(p.base[0] + p.speed[0] * t), xlate(p.xlate[0], p.xlate[1],
+                                                                p.xlate[2]));
+                m = mul43(m, rz(p.base[2] + p.speed[2] * t));
+                m = mul43(m, ry(p.base[1] + p.speed[1] * t));
+            }
+            else
+            {
+                // Die letzten vier sind jeden Frame vollstaendig zufaellig.
+                const float ax = rand01(frameSeed) * 6.28f;
+                const float ay = rand01(frameSeed) * 6.28f;
+                const float az = rand01(frameSeed) * 6.28f;
+                m = mul43(rx(ax), xlate(rand01(frameSeed), rand01(frameSeed),
+                                        rand01(frameSeed)));
+                m = mul43(m, rz(az));
+                m = mul43(m, ry(ay));
+            }
+            // HLSL M[Zeile][Spalte] -> GLSL mat3x4 (3 Spalten, 4 Zeilen) mit
+            // denselben Elementen, damit `vec4 * mat3x4` genau
+            // `mul(v, float4x3)` rechnet. QMatrix3x4::operator()(Zeile, Spalte).
+            QMatrix3x4 glsl;
+            for (int row = 0; row < 4; ++row)
+                for (int col = 0; col < 3; ++col)
+                    glsl(row, col) = m[static_cast<std::size_t>(row) * 3 + col];
+            const std::string name = std::string("rot_") + kGroups[idx / 4] +
+                                     std::to_string(idx % 4 + 1);
+            program.setUniformValue(name.c_str(), glsl);
+        }
+    }
 
     // roam-Vektoren (plugin.cpp:3892-3911)
     const auto roam = [t](float mul, float phase, bool sine) {

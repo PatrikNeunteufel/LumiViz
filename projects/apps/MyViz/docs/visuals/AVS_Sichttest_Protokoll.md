@@ -1,9 +1,10 @@
 # AVS-Sichttest-Protokoll — Kalibrier-Runde (SSOT Punkt 9)
 
-> **Version:** 0.14.0 (wird laufend nachgeführt)
-> **Datum:** 2026-07-24 (Session 45)
-> **Typ:** Arbeitsprotokoll
-> **Status:** In Arbeit
+> **Version:** 0.16.0 (wird laufend nachgeführt)
+> **Datum:** 2026-07-27 (Session 52)
+> **Typ:** Arbeitsprotokoll / **Befund-Archiv**
+> **Status:** In Arbeit — **die offenen Punkte daraus stehen gebündelt in
+> [Offene_Punkte.md](../Offene_Punkte.md)**
 > **Sprache:** Deutsch
 > **Zweck:** EIN Ort für „welches Preset wurde gesichtet, was war der Befund,
 > welche Korrektur folgt daraus" — je Preset-Sammlung eine Tabelle.
@@ -32,6 +33,32 @@
 | S12 | **SuperScope-`v` blieb trotz S10/S11 „unverändert"** (Nachtest Patrik) | `v` wurde im Chain-Pfad aus den ROHEN Float-Arrays gerechnet (BASS-Magnituden 0..1, `sampleCount` = Waveform-Länge → 512er-Spektrum übers Ende indiziert) statt aus den visdata-Bytes. Original (r_sscope.cpp:284-289): **v = interpoliertes visdata-Byte/128 − 1 für BEIDE Quellen** — Spektrum-Stille ⇒ v = −1 (nicht 0!), Center-Kanal per char-Arithmetik | ✅ **gefixt (S44):** `SuperscopeModule::visdataValue()` — v im Lua-/Chain-Pfad exakt nach r_sscope (Quelle/Kanal auf den 576er-Blöcken, lineare Interpolation, XOR, /128−1, inkl. Center-char-Eigenheit); Float-Arrays bleiben Standalone-Preset-Pfad. Sichtnachweis first3d_spectrum: Zickzack-Teppich (sin(1)-Zähne bei Stille) + Musik-Modulation — Formel-treu; finale Bestätigung Seite-an-Seite | ✅ |
 | S13 | **SuperScope zeichnet aspektquadratisch** (Befund Session 45 bei der S2-Kalibrierung): unser Scope-Pfad bildet x/y auf ein QUADRAT ab (Kreis-Skript ⇒ Kreis auf 800×600) — echtes AVS skaliert x mit w/2 und y mit h/2 (r_sscope), ein „Kreis"-Skript ist dort eine 4:3-**Ellipse** | Seite-an-Seite-relevant: alle Scope-Formen weichen auf nicht-quadratischen Fenstern ab | ⬜ Urteil/Fix offen (erst Seite-an-Seite bestätigen, dann ggf. Scope-Mapping auf per-Achse NDC umstellen) |
 | S14 | **Ego (HpR16) komplett schwarz** (Befund Patrik, Seite-an-Seite-Runde S45) | Bisektion e1–e12: [SRM Subtract + Doppel-Scope] = exakt schwarz, jede Teilmenge zeichnet. Ursache: `LuaScriptEngine` startete JEDE Instanz mit demselben festen PRNG-Seed — beide Fraktal-Scopes randomisieren af/bf (via `resold`-Trigger, DPI-Surface ≠ Init-Default 800×600) mit IDENTISCHER rand()-Folge → identische Bilder → `c − fb` löscht exakt aus. AVS-Referenz: rand() ist ein GLOBALER Strom, Effekte ziehen verschiedene Werte | ✅ **gefixt (S45):** Ctor mischt je Instanz einen Nonce in den Basis-Seed (deterministisch je Erzeugungsreihenfolge; explizites `seedRandom()` unverändert — Test-Gate besteht). Sichtbeleg: Ego rendert rot/blaue Fraktal-Flügel (max 0,813) | ✅ |
+
+### 1b. Befunde Session 46–52 (nachgetragen 2026-07-27)
+
+Die S-Nummerierung oben endet bei S14 (Session 45). Ab Session 46 lief die
+Kalibrierung **messend statt sichtend** — mit dem Referenz-Renderer `AvsRef`, der
+Modul-Matrix und den Modul-Sonden statt Einzel-Sichtungen; die Befunde wurden
+deshalb nicht mehr als „S*" geführt. Sie stehen im Detail in den Session-Reports
+(`.claude/sessions/`, lokal) und den Produkt-Changelogs
+([sessions/](../sessions/)). Die Kurzfassung, damit dieses Protokoll nicht den
+Eindruck erweckt, seit S14 sei nichts passiert:
+
+| Session | Kern-Befunde |
+|---|---|
+| **46** | `AvsRef` als Vergleichswerkzeug (Original-Kern als Ground Truth) — fand sofort y-Spiegelung + Zoom-Helligkeit |
+| **47** | Bump/Buffern/Wormhole; Lazy-Skript-Hosts müssen `visdata` nachfüttern |
+| **48** | Simple 0,46→0,000 · Interleave 0,66→0,000 (**Qt sendet `QPoint`-Uniforms als FLOAT** — `ivec2` blieb (0,0)) · Timescope 0,24→0,000 · Bass Spin 0,14→0,006 · Blitter 0,72→0,003 · Roto 0,37→0,12 · Dot Plane neu nach r_dotpln · **EEL-Kern**: Nicht-ASCII kommentiert das RESTLICHE Statement aus, `%` ist UNSIGNED 32-bit |
+| **49** | `r_dmove`-Fixpunkt-Warp (Ganzzahl-Interpolation im Shader) · **Movement (r_trans) hat KEIN Gitter** — wertet je Pixel aus · `AvsRef --ape-dir` (die Referenz lud keine APE-DLLs → Presets mit APE waren unvergleichbar) · **`rand()` = EIN MSVC-Strom je Preset** (Grain/Scatter/Starfield zeilengetreu) · Color Map bit-genau in allen 10 Blend-Modi · Roto Blitter grün |
+| **50** | **Texer-II-Blob-Decoder** (fester 260-Byte-Namenspuffer statt längenpräfixiert) · Effect-List `enabled`/`clear` sind nur Vorbelegung, das Listen-EEL entscheidet · **SuperScope-ScriptContext** war isoliert (`reg00..99` ist GLOBAL) · `linesize` je Punkt · Punkt-Modus = EIN getrunkiertes Ganzzahl-Pixel · **Convolution-Kern war vertikal gespiegelt** |
+| **51** | Texer II + Triangle bekamen nie `w`/`h` (`n=w*0.1` im Frame-Slot ⇒ 0 Sprites) · `sizex/sizey`-Vorbelegung gehört VOR den Frame-Slot · Triangle zeichnet gefüllt · **Import-Kollisionsregel D2** (`_p`) · ChainSerializer: Set Render Mode überschrieb den Knoten-Schalter |
+| **52** | Hotkey-Vorbelegung war tot (`"PageDown"` ist kein QKeySequence-Name, Qt kennt `PgDown`) · Transport-Hotkeys verdrahtet · Screenshot-Ablage · **MilkDrop-Sampler-Namensregel** (bedingtes Abschneiden, case-insensitive Präfixe, umgedrehte Formen) · **24 `rot_*`-Matrizen** + Matrix-Indizierung im HLSL-Transpiler |
+
+**Merkregeln aus dieser Phase** stehen gesammelt in
+[AVS_Kalibrier_Methodik.md](AVS_Kalibrier_Methodik.md). Die wichtigste: **die Metrik
+lügt bei dünnen Inhalten** — dMean/MAE mitteln über die Fläche, viermal meldete die
+Bisektionsleiter „OK", während sichtbar nichts gezeichnet wurde. Urteil über
+gezeichnete Pixelmenge + Schwerpunkt fällen.
 
 **Wichtige Folge von S5:** Die S43-Liste „10 schwarze ref-Korpus-Presets"
 (SSOT Punkt 9) ist womöglich teilweise ein **Standalone-Artefakt** — mit
@@ -150,10 +177,15 @@ Musik (Beats nur via Custom BPM). Nummerierung = Patriks Befundliste.
 | 13 | HpRX6(Subspace) | nur schwarz | offen |
 | 14 | HpRX7(Matrixed) | Matrix-Text sollte ganzen Hintergrund + Kugel füllen | offen — nutzt vermutlich Text-Effekt mit randomPos/randomWord; prüfen, ob unser Wort-Zyklus/Random-Verhalten die Dichte des Originals erreicht |
 
-*(Standalone-Sweep der Sammlung läuft — Ergebnisse werden ergänzt; danach
-Bisektion der Schwarz-/Sättigungs-Fälle. Die Häufung „schwarz/zu hell" in
-dieser Sammlung deutet auf 1–2 gemeinsame Ursachen in der S7-Familie
-[Blend-Konvergenz] plus mögliche fehlende Effekte.)*
+> ⚠ **Diese Liste ist seit Session 45 nicht nachgemessen worden.** Zwischen S46 und
+> S52 sind zahlreiche Ursachen behoben worden, die genau solche Symptome erzeugen
+> (Blend-Tabelle, SuperScope-ScriptContext, Texer-Decoder, `linesize`, Punkt-Modus,
+> Convolution-Kern, EEL-`%` und Nicht-ASCII — siehe §1b). Ein Teil der 12 Befunde
+> dürfte erledigt sein. **Erst neu erheben, dann bisektieren** — sonst wird an
+> bereits gelösten Fällen gearbeitet.
+
+*(Die Häufung „schwarz/zu hell" deutete auf 1–2 gemeinsame Ursachen in der
+S7-Familie [Blend-Konvergenz] plus fehlende Effekte.)*
 
 ## 6. Kalibrier-Presets (`asset/calibration/avs/`)
 
@@ -215,3 +247,4 @@ Urteile bitte direkt in die Entscheid-Spalte (✅ gleich / ❌ abweichend + Noti
 | 0.13.0 | 2026-07-24 | **S2 + S3 gefixt** (Session 45, Details in der Tabelle) · **Kalibrier-Infrastruktur** (§6): 22 Minimal-`.avs` in `asset/calibration/avs/` (Writer `make_calibration_presets.py`) + `.lvfx`-Zwillinge als Parser-/Translator-Prüfstand (`freeze_lvfx_twins.py --verify`, GRÜN 22/22) · **S13 notiert** (SuperScope-Aspekt) · Werkzeug-Fixes AvsStandalone: Screenshot-Namen kollidierten zwischen `.avs`/`.lvfx`-Zwilling (Endung jetzt im Namen), Screenshots als RGB ohne Alpha (Alpha-0-Pixel wirkten im Viewer als „weiße" Phantom-Linien) · Tests 413/413, alle 3 Builds grün |
 | 0.14.0 | 2026-07-24 | §7 Seite-an-Seite-Prüfplan P1–P7 angelegt (Presets/Audio/Kriterien je offenem Urteil; Urteils-Spalte zum Ausfüllen) |
 | 0.15.0 | 2026-07-24 | **S14 gefunden + gefixt** (P6-Ego schwarz, In-App-Befund Patrik): PRNG-Seed war je Engine identisch → korrelierte rand()-Folgen zwischen Effekten (Ego-Doppel-Scope löschte sich per Subtract exakt aus); jetzt Instanz-Nonce im Seed. Tests 413/413, Zwillinge GRÜN 22/22; Methodik-Notiz: AVS ist frame-getaktet — Tempo-Vergleiche brauchen gleiche Fenstergröße UND ähnliche fps (zeilenweise Presets skalieren mit h) |
+| 0.16.0 | 2026-07-27 | **Doku-Korrektur (Session 52):** §1b „Befunde Session 46–52" nachgetragen — das Protokoll endete bei S14/Session 45 und erweckte den Eindruck, seither sei nichts geschehen (tatsächlich lief die Kalibrierung ab S46 messend über AvsRef/Matrix/Sonden und wurde nicht mehr als „S*" geführt). §5 HISTORY-Liste mit Warnung versehen: seit S45 nicht nachgemessen, ein Teil dürfte durch S48–S52 erledigt sein — erst neu erheben, dann bisektieren. Status auf „Befund-Archiv" präzisiert, offene Punkte verweisen auf `Offene_Punkte.md`

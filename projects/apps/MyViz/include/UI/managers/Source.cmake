@@ -16,6 +16,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/DialogManager.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/DockManager.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/MenuManager.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ScreenshotManager.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/ShortcutManager.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PanelManager.hpp"
 )

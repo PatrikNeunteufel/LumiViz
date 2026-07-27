@@ -438,6 +438,13 @@ einblendbar (Pflichtenheft-Idee, fest beauftragt 2026-07-19).
 
 ## 5. Akzeptanzkriterien
 
+> ⚠ **Nachtrag Session 52:** Die Haken unten stehen sämtlich auf `⬜`, obwohl die
+> Schritte 0–7 seit Session 30 als ✅ gelten und die Sichttests 5.1–5.5 von Patrik
+> abgenommen sind (§0.2.7 im Changelog). Die Tabelle wurde beim Abschluss schlicht
+> nicht nachgezogen — sie ist **kein** Hinweis auf offene Arbeit. Aufräumen
+> (nachträglich abhaken oder streichen) steht in
+> [Offene_Punkte.md](../Offene_Punkte.md) §5.
+
 ### 5.1 Funktionale Anforderungen
 
 | # | Kriterium | Testmethode | Status |

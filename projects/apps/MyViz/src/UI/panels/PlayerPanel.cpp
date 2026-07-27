@@ -24,6 +24,8 @@
 
 #include <BasicLogger.h>
 
+#include <algorithm>
+
 // =============================================================================
 // Construction
 // =============================================================================
@@ -33,10 +35,20 @@ PlayerPanel::PlayerPanel(ServiceContainer& services, QWidget* parent)
 {
     setupUI();
     setupConnections();
-    
+
     // Initial state
     updatePlayButton(false);
     updateMuteButton(false);
+
+    // PERMANENTES Abo (ueberlebt onDeactivate): die Transport-Hotkeys sollen
+    // wirken, ohne dass dieses Panel sichtbar ist oder den Fokus hat —
+    // dieselbe Bauweise wie das Preset-Blaettern im Import-Browser
+    // (docs/ui/Hotkey_Konzept.md §3/§8).
+    if (auto* bus = eventBus())
+    {
+        m_transportSubscription = bus->subscribeScoped<TransportCommandEvent>(
+            [this](const TransportCommandEvent& e) { onTransportCommand(e.action); });
+    }
 }
 
 // =============================================================================
@@ -139,43 +151,75 @@ void PlayerPanel::unsubscribeFromEvents()
 // Button Handlers
 // =============================================================================
 
+// Die Knoepfe fuehren nichts selbst aus, sie melden dieselbe Absicht wie ein
+// Hotkey an — sonst gaebe es zwei Wahrheiten fuer "naechster Song".
 void PlayerPanel::onPlayClicked()
 {
-    if (auto* player = services().tryResolve<IAudioPlayer>())
-    {
-        player->togglePlayPause();
-    }
+    publishTransport(TransportCommandEvent::Action::PlayPause);
 }
 
 void PlayerPanel::onStopClicked()
 {
-    if (auto* player = services().tryResolve<IAudioPlayer>())
-    {
-        player->stop();
-    }
+    publishTransport(TransportCommandEvent::Action::Stop);
 }
 
 void PlayerPanel::onPrevClicked()
 {
-    if (auto* player = services().tryResolve<IAudioPlayer>())
-    {
-        player->previous();
-    }
+    publishTransport(TransportCommandEvent::Action::Previous);
 }
 
 void PlayerPanel::onNextClicked()
 {
-    if (auto* player = services().tryResolve<IAudioPlayer>())
-    {
-        player->next();
-    }
+    publishTransport(TransportCommandEvent::Action::Next);
 }
 
 void PlayerPanel::onMuteClicked()
 {
-    if (auto* player = services().tryResolve<IAudioPlayer>())
+    publishTransport(TransportCommandEvent::Action::ToggleMute);
+}
+
+// =============================================================================
+// Transport
+// =============================================================================
+
+void PlayerPanel::publishTransport(TransportCommandEvent::Action action)
+{
+    if (auto* bus = eventBus())
     {
-        player->toggleMute();
+        bus->publish(TransportCommandEvent{action});
+        return;
+    }
+    // Ohne Bus bliebe der Knopf sonst wirkungslos.
+    onTransportCommand(action);
+}
+
+void PlayerPanel::onTransportCommand(TransportCommandEvent::Action action)
+{
+    auto* player = services().tryResolve<IAudioPlayer>();
+    if (player == nullptr)
+    {
+        BasicLogger::logWarning("PlayerPanel: transport command without player");
+        return;
+    }
+
+    /// Schrittweite der Lautstaerke-Hotkeys — 5 % entspricht einem Rasterschritt
+    /// des Reglers und braucht fuer die volle Spanne 20 Anschlaege.
+    constexpr float kVolumeStep = 0.05f;
+
+    using Action = TransportCommandEvent::Action;
+    switch (action)
+    {
+        case Action::PlayPause: player->togglePlayPause(); break;
+        case Action::Stop: player->stop(); break;
+        case Action::Next: player->next(); break;
+        case Action::Previous: player->previous(); break;
+        case Action::ToggleMute: player->toggleMute(); break;
+        case Action::VolumeUp:
+            player->setVolume(std::min(1.0f, player->volume() + kVolumeStep));
+            break;
+        case Action::VolumeDown:
+            player->setVolume(std::max(0.0f, player->volume() - kVolumeStep));
+            break;
     }
 }
 

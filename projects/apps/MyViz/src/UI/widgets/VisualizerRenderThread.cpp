@@ -208,6 +208,13 @@ void VisualizerRenderThread::setPacing(RenderPacing pacing, int targetFps)
     m_cond.wakeAll();
 }
 
+void VisualizerRenderThread::requestCapture()
+{
+    m_captureRequested.storeRelease(1);
+    QMutexLocker lock(&m_mutex);
+    m_cond.wakeAll();  // im VSync-Leerlauf sonst erst beim naechsten Frame
+}
+
 // -----------------------------------------------------------------------------
 // Surface synchronization (GUI thread)
 // -----------------------------------------------------------------------------
@@ -456,6 +463,32 @@ void VisualizerRenderThread::run()
             {
                 gl->glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
                 gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            }
+        }
+
+        // Screenshot VOR dem Swap: der Standard-Framebuffer traegt hier genau
+        // das eben gerenderte Bild. Rezeptur wie im AvsStandalone (S44/S45):
+        // PHYSISCHE Pixel (sonst liest man bei DPI-Skalierung nur den linken
+        // unteren Ausschnitt), Zeile 0 kommt von UNTEN, und Alpha ist kein
+        // Bildinhalt — Alpha-0-Pixel erscheinen im Betrachter sonst weiss.
+        if (m_captureRequested.fetchAndStoreOrdered(0) != 0)
+        {
+            const qreal dpr = m_window.devicePixelRatio();
+            const int w = std::max(1, static_cast<int>(m_window.width() * dpr));
+            const int h = std::max(1, static_cast<int>(m_window.height() * dpr));
+            std::vector<unsigned char> rgba(static_cast<std::size_t>(w) * h * 4);
+            if (auto* gl = m_context.functions())
+            {
+                gl->glBindFramebuffer(GL_FRAMEBUFFER,
+                                      m_context.defaultFramebufferObject());
+                gl->glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, rgba.data());
+                const QImage shot =
+                    QImage(rgba.data(), w, h, w * 4, QImage::Format_RGBA8888)
+                        .flipped(Qt::Vertical)
+                        .convertToFormat(QImage::Format_RGB888);
+                // copy() loest das Bild vom lokalen Puffer — es reist per
+                // queued signal in den GUI-Thread.
+                Q_EMIT frameCaptured(shot.copy());
             }
         }
 

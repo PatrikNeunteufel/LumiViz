@@ -1,9 +1,15 @@
 # MilkDrop-Import — Status-Übersicht (SSOT für Fortschritt + Bezeichnungen)
 
-> **Stand:** 2026-07-24 (Session 44) · **Zweck:** EIN Ort für „was ist fertig,
-> was ist offen, wie heißt es" — die Detail-Konzepte bleiben in
+> **Stand:** 2026-07-27 (Session 52) · **Zweck:** EIN Ort für „was ist fertig,
+> wie heißt es" — die Detail-Konzepte bleiben in
 > [MilkDrop_Import_Konzept.md](MilkDrop_Import_Konzept.md).
-> Dieses Dokument wird am Ende jeder Session nachgezogen.
+>
+> **Rollenwechsel (S52):** Dieses Dokument ist das **Fortschritts-Archiv** der
+> MilkDrop-Roadmap. Was noch offen ist, steht seit Session 52 gebündelt in
+> [Offene_Punkte.md](../Offene_Punkte.md) — dort für AVS und MilkDrop gemeinsam,
+> weil beide Stränge dieselbe Kalibrier-Runde teilen. Der Grund für den Wechsel:
+> die Tabelle „Offen" unten stand acht Sessions lang auf dem Stand von S44,
+> obwohl die Arbeit weiterlief.
 
 ## 1. Bezeichnungs-Legende (verbindlich)
 
@@ -42,7 +48,18 @@ Es gibt **kein** „A#"- oder „D#"-Schema. Stufe A ist seit M3/M4 fertig.
 | **Session A ✅ (Code): N3.1 + N3.3 + fShader-Wash** — Panel: Waves/Shapes/Sprites als Element-Items im Baum, Add über Palette-Einträge „Custom Wave/Custom Shape/Sprite" (+ „+", Cap 16, kleinster freier index), Remove/Clone über Element-Selektion, Sprite-Editor mit allen Startwerten + per-Frame-EEL (Revision-Vertrag durchgängig); Renderer: fShader-Farbwash-Port (milkdropfs.cpp:4033-4062/4311-4389 — 4-Ecken-Regenbogen mit Zufalls-Phasen, MD1 = Amount-Mix gegen Weiß in allen Composite-Passes, baked = ci.hueMix, Custom-Comp = Roh-Ecken bilinear als `hue_shader`, Warp bleibt weiß); Kleinfixes: mutate()-Labelguard für Sentinel-Items, Report-Texte („Platzhalter bis C2" korrigiert, hue-Hinweis jetzt ℹ), /bigobj für MultiEffectPanel.cpp (C1128) | 42 | Builds grün; **In-App-Sichttest offen** (Punkt 0) |
 | **Sprites ✅ (Code + Standalone-Sichtnachweis):** MilkDrop2077-`[SPRITEn]`-Sektionen → `SpriteState` (Translator, Layer-Sortierung, Blend-Klemme 0..4), Port von `DrawUserSprites` (milkdropfs.cpp:3432-3777): private EEL-VM je Sprite (texmgr-Modell), Referenz-Vertex-Mathe (y-abwärts, finale GL-Negation), 5 Blend-Modi, Colorkey→Alpha beim Laden, **burn-in in den Feedback-Buffer**, done-Kill; Persistenz im MilkdropSerializer; Kalibrier-Satz `s1/` (3 Presets + README). PORT-Annahmen: SpriteSpeed = time-Skalierung, SpriteLayer = Sortier-Schlüssel (2077 ohne Quelle) | 41 | Suite 397/397; Standalone-Screenshots: 01 aufrecht/zentriert, 02 Rotation+Colorkey+Layer, 03 Burn-Spuren; **In-App-Sichttest BESTANDEN** (S41, Node-Pfad; s1-Presets dabei um `mv_a=0` ergänzt) |
 
-## 3. Offen ⬜ (verbindliche Reihenfolge — Entscheid Patrik 2026-07-23, Session 42)
+## 3. Offen ⬜ (Stand Session 44 — **fortgeschrieben in [Offene_Punkte.md](../Offene_Punkte.md)**)
+
+> ⚠ Diese Tabelle ist der Stand von Session 44. Seither erledigt:
+> **Punkt 7** ist vollständig geschlossen — der dort als „bewusst offen" notierte
+> `rot_*`-Rest ist in **S52** umgesetzt (24 Matrizen als `float4x3`-Builtins +
+> HLSL-Matrix-Indizierung `M[i]` → `transpose(M)[i]`; alle neun Presets des Packs
+> benutzen sie über den Index, keines über `mul()`). Ebenfalls S52: die
+> **Sampler-Namensregel** nach `plugin.cpp:2955` (bedingtes Abschneiden von
+> `sampler_`, case-insensitive Filter-Präfixe, umgedrehte Formen `WF_/CF_/WP_/CP_`)
+> — vorher wurde aus `sampler MilkDrop3_001` der Name `3_001`, und `sampler tex`
+> (25 Presets im Pack) hätte `std::out_of_range` geworfen.
+
 
 | # | Was | Gehört zu | Notizen |
 |---|---|---|---|
@@ -94,3 +111,4 @@ Video-Capture, en-Übersetzungen, App-Umbenennung MyViz→LumiViz.
 | 1.26.0 | 2026-07-24 | Session 44, Fortsetzung 4 (EL-VIS6_SUPERSCOPES_3D, Befund Patrik „Spektrum fehlt/3D passt nicht"): **S10 gefunden + gefixt** — SuperScope-`which_ch` ist Bitfeld (Bit 4 = Spektrum-Quelle, Bits 0-1 = Kanal, r_sscope.cpp:232-240); vorher als Kanal-Enum „Side" fehlgelesen → v≈0 bei allen Spektrum-Scopes. Neu: `SuperScopeParams.spectrumSource` + Panel-Checkbox + Serializer + Translator-Gates; Sichtnachweis first3d_spectrum. Merkposten: Spektrum-Amplituden-Skala sichtkalibrieren. Tests + alle 3 Builds grün |
 | 1.27.0 | 2026-07-24 | Session 44, Fortsetzung 5 (Frage Patrik BASS↔Winamp): **S11 gefunden + gefixt** — Winamp-Spektrum-Vertrag aus dem `winamp_orig`-Ref hergeleitet (VIS.cpp:719-745: linear /16, 256 Bins auf 512 Positionen verdoppelt, Positionen 512-575 = Abkling-Füllung); unsere Frequenzachse war ~12 % gestaucht + Phantomwerte in den Fade-Bändern → jetzt Position=Bin 1:1, ≥512→0. `kSpecGain=8` als Winamp-Sättigungsäquivalent (0,125 vs. 0,126) bestätigt — Amplitude war original-nah, „flaches Links" bei lauter Musik ist Original-Verhalten. Tests + alle 3 Builds grün |
 | 1.28.0 | 2026-07-24 | Session 44, Fortsetzung 6 (Nachtest Patrik „noch nicht wirklich geändert"): **S12 gefunden + gefixt** — SuperScope-`v` im Chain-Pfad las rohe Float-Arrays (falsche Skala, Waveform-Länge ins 512er-Spektrum indiziert) statt der visdata-Bytes; jetzt exakt r_sscope.cpp:284-289 (`visdataValue()`: Quelle/Kanal auf den 576er-Blöcken, Interpolation, XOR, /128−1 — Spektrum-Stille ⇒ v=−1, Center per char-Arithmetik). Sichtnachweis: first3d_spectrum = Zickzack-Teppich mit Musik-Modulation. Tests + alle 3 Builds grün |
+| 1.29.0 | 2026-07-27 | **Doku-Korrektur (Session 52).** Das Dokument stand acht Sessions auf S44, obwohl die Arbeit weiterlief — Rolle jetzt „Fortschritts-Archiv", die offenen Punkte stehen gebündelt in `Offene_Punkte.md` (AVS + MilkDrop gemeinsam, weil beide dieselbe Kalibrier-Runde teilen). Sachlich nachgetragen: **Punkt 7 vollständig geschlossen** — der `rot_*`-Rest ist umgesetzt (24 Matrizen als `float4x3`-Builtins, HLSL-Matrix-Indizierung `M[i]` → `transpose(M)[i]`; Korpus warp 894→895/902) · **Sampler-Namensregel** nach `plugin.cpp:2955` als SSOT-Header `milkdrop/MilkdropSamplerName.hpp` (bedingtes Abschneiden, case-insensitive Präfixe, umgedrehte Formen) — behob 7 falsch aufgelöste Texturen und einen `std::out_of_range`-Pfad in 25 Presets · `onefish.jpg` aus dem Original-Winamp-Pack ergänzt (Textur-Pack damit vollständig)

@@ -56,6 +56,7 @@
 
 #include <array>
 #include <map>
+#include <set>
 #include <memory>
 #include <vector>
 
@@ -336,6 +337,24 @@ private:
     // --- Stufe C2: custom textures (asset-Pack / neben dem Preset) -------------------------
     QString m_presetDir;                                    ///< Suchbasis fuer Texturen
     std::map<std::string, std::string> m_embeddedImages;    ///< .lvfx-Einbettung (S43)
+    /**
+     * @brief Zufallsparameter einer Rotationsmatrix (`rot_s/d/f/vf/uf` 1..4)
+     *
+     * Je Preset einmal gewuerfelt (`state.cpp:RandomizePresetVars`): Basiswinkel,
+     * Drehgeschwindigkeit je Achse und eine Verschiebung. Die vier `rot_rand*`
+     * stehen NICHT hier — die wuerfeln jeden Frame neu.
+     */
+    struct RotParams
+    {
+        float base[3]{};   ///< Startwinkel x/y/z
+        float speed[3]{};  ///< Winkel je Sekunde x/y/z
+        float xlate[3]{};  ///< Verschiebung x/y/z
+    };
+    std::array<RotParams, 20> m_rotParams{};
+
+    /// Vom Preset deklarierte Sampler-Uniforms (auch die ohne gefundene Datei) —
+    /// nur diese werden gebunden, damit der Platzhalter keine fremde Uniform trifft
+    std::set<std::string> m_customSamplerNames;
     std::map<std::string, QImage> m_customImages;           ///< sampler-Uniform-Name -> Bild
     std::map<std::string, std::array<int, 2>> m_texSizes;   ///< Basisname -> (w,h)
     std::map<std::string, unsigned int> m_customTexIds;     ///< Uploads (render thread)

@@ -39,6 +39,8 @@
 
 #include "PanelBase.hpp"
 
+#include "audio/AudioEvents.hpp"
+
 // Forward declarations
 class QLabel;
 class QPushButton;
@@ -89,7 +91,19 @@ private:
     void onPlaybackStateChanged(bool isPlaying, bool isPaused);
     void onPlaybackPositionChanged(int positionMs, int durationMs);
     void onVolumeChangedEvent(float volume, bool muted);
-    
+
+    /**
+     * @brief Fuehrt einen Transport-Befehl aus (Hotkey, Menue oder eigener Knopf).
+     *
+     * Einziger Ort, an dem eine Transport-Absicht auf `IAudioPlayer` trifft —
+     * die Knoepfe veroeffentlichen denselben Befehl, statt den Player direkt zu
+     * rufen (`docs/ui/Hotkey_Konzept.md` §3).
+     */
+    void onTransportCommand(TransportCommandEvent::Action action);
+
+    /// @brief Befehl auf den Bus geben (gemeinsamer Weg fuer alle Knoepfe).
+    void publishTransport(TransportCommandEvent::Action action);
+
     // Helper
     static QString formatTime(int ms);
     void updatePlayButton(bool isPlaying);
@@ -109,6 +123,10 @@ private:
     QSlider* m_pVolumeSlider = nullptr;
     QSlider* m_pProgressSlider = nullptr;
     
+    /// Permanentes Abo (ueberlebt onDeactivate): die Transport-Hotkeys muessen
+    /// auch wirken, wenn dieses Panel unsichtbar ist — genau dafuer sind sie da.
+    IEventBus::SubscriberHandle m_transportSubscription;
+
     // State
     bool m_isSeeking = false;           ///< True while user is dragging progress
     bool m_loopEnabled = false;         ///< True when single-track loop is active

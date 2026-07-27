@@ -31,11 +31,17 @@ Render-Thread die alten Knoten-Runtimes freigibt — Knoten-IDs werden neu verge
   aus `in/outBlendVal`, OnBeat, `clearEveryFrame`, EEL Init/Frame-Slots).
 - **17 dekodierte Kern-Effekte** → ihre `EffectParams` (Feldnamen 1:1 aus dem
   AvsParser-Decoder verifiziert).
-- **Set Render Mode (40)** wird **ausgerollt** (E4): Linienbreite (Bits 16–23)
-  wandert in die *folgenden* SuperScope-Effekte; der Knoten wird Passthrough+Notiz.
+- **Set Render Mode (40)** ist ein **eigener Ketten-Knoten** mit Laufzeit-Zustand
+  (`SetRenderModeParams`): Linienbreite und der volle 10er-`BLEND_LINE`-Modus
+  (S44/S9) gelten für die *folgenden* Zeichner. Der Zustand wird je Frame
+  zurückgesetzt und um Listen-Renders gerettet (S45/S3, wie `r_list.cpp:433/440`).
+  Das frühere „Ausrollen in die folgenden SuperScopes" (E4) gibt es nicht mehr.
 - **Movement-Builtin-Formeln** → `MovementParams` mit dem AVS-Point-Code aus
-  `movementBuiltinFormula()` (23 Formeln 1:1 als `eval_desc`; #0/#1/#7 sind keine
-  Remaps → Passthrough). `ScriptGridModule` teilt dafür die AVS-Polar-Konvention.
+  `movementBuiltinFormula()` (23 Formeln 1:1 als `eval_desc`). #1 „slight fuzzify"
+  und #7 „blocky partial out" sind keine Formeln, sondern Spezial-C-Code — sie
+  laufen seit S44 über `MovementParams.builtinRemap` (eigener Per-Pixel-Shader),
+  nicht mehr über Passthrough. `ScriptGridModule` teilt die AVS-Polar-Konvention;
+  `d`/`r` rechnen seit S45 im PIXEL-Raum wie `r_dmove.cpp:324-332`.
 - **Alles andere** (unbekannt, `decoded=false`, exotisch) → `PassthroughParams`
   (Quell-ID + Notiz) + Report-Eintrag. **Nie werfen** (AVS-Philosophie).
 - **Farben:** AVS-COLORREF `0x00BBGGRR` → Host `0x00RRGGBB` (R/B getauscht).
@@ -45,7 +51,21 @@ Render-Thread die alten Knoten-Runtimes freigibt — Knoten-IDs werden neu verge
 - **Blitter/Roto Feedback** Zoom-/Rotations-Mapping (`scale`/`zoom_scale`/`rot_dir`
   → Faktor) ist approximativ — exakte AVS-Slider-Kurve später kalibrieren.
 - **SuperScope-Farbtabelle** (`colors[]`) wird nicht übernommen — Farben kommen
-  aus dem Punkt-Skript; geteilter ScriptContext für den Scope steht noch aus.
+  aus dem Punkt-Skript.
+
+> **Erledigt (S50):** der **geteilte ScriptContext** für Scopes. Der Scope-Host
+> wurde ohne `activeContext()` gebaut und hatte damit einen isolierten
+> `reg00..reg99`-Raum; AVS hält diese Register GLOBAL. Presets, die sich in allen
+> Scopes eine Kamera-Matrix aus den Registern einer Dynamic Movement holen
+> („Mister Santa"), zeigten deshalb nur den Hintergrund.
+>
+> **Erledigt (S51):** die **Import-Kollisionsregel D2** — Namen des Lumi-Sets ohne
+> AVS-Builtin-Bedeutung werden beim Import auf `_p` umbenannt, einheitlich über
+> alle Slots einer Komponente, case-insensitiv geprüft, mit ℹ-Zeile im Report.
+> Listen-Codes laufen über `ListInfo` und bleiben unangetastet (dort ist `beat`
+> ein Builtin). SSOT der reservierten Namen: `include/scripting/ScriptBaseKeys.hpp`.
+> Umbenennungs-Ziele sind kanonisch kleingeschrieben — EEL ist case-insensitiv,
+> das transpilierte Lua nicht.
 
 ## Absicherung
 

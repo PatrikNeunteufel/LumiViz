@@ -178,11 +178,47 @@ Bedienung entkoppelt.
 | Bild ab | Nächstes Preset im **aktiven Ordner des Import-Browsers** |
 | Bild auf | Voriges Preset |
 
+`Bild ab` geht in der Liste nach unten, also **vorwärts**.
+
 Geblättert wird über die Presets des Ordners, der im Import-Browser offen ist —
 Unterordner werden übersprungen, am Ende des Ordners hält es an. Das Panel muss
 dafür **nicht** sichtbar oder fokussiert sein. Während in einem Textfeld oder
 Skript-Editor getippt wird, blättern die Tasten nicht, sondern verhalten sich
 normal.
+
+### Musikwiedergabe
+
+| Kürzel | Aktion |
+|---|---|
+| Leertaste | Wiedergabe / Pause |
+| Ctrl+→ / Ctrl+← | Nächster / voriger Song |
+| Ctrl+↑ / Ctrl+↓ | Lauter / leiser (5 % je Anschlag) |
+
+Diese Tasten wirken wie die Knöpfe des Player-Panels und funktionieren auch, wenn
+das Panel nicht sichtbar ist.
+
+### Screenshot des Visuals
+
+`Druck` legt ein Bild **des Visuals** (ohne Panels) ab — in einem Ordner je
+Programmlauf, benannt nach dem Startzeitpunkt:
+
+```
+…\asset\calibration\screenshot\2026-07-27_11-47-57\
+    Alien Alloy_avs.png     das Bild
+    Alien Alloy_avs.txt     der vollständige Pfad des Presets
+```
+
+Dieselbe Aufnahme mehrfach ergibt `_2`, `_3` — es wird nie überschrieben. Der
+Zielordner lässt sich über den Einstellungsschlüssel `screenshot/baseDir`
+verlegen; ohne Eintrag sucht die App den Projekt-Ordner `asset/calibration`.
+
+> Öffnet `Druck` bei Dir das Windows-Snipping-Tool, ist das eine
+> Windows-Einstellung. Dann in *Einstellungen → Hotkeys* eine andere Taste
+> vergeben.
+
+**Im Vollbild** erscheint bei einem Fehler **kein** Meldungsfenster mehr:
+stattdessen wird automatisch ein Screenshot aufgenommen und die Meldung an
+`fehler.log` im selben Ordner angehängt. Im Fenster kommt weiterhin der Dialog.
 
 ### Eigene Belegung
 
@@ -191,7 +227,7 @@ normal.
 Taste, die schon vergeben ist, wird **abgelehnt** statt still umgehängt — erst
 die andere Zuweisung freimachen. Die Transporttasten (Leertaste, Ctrl+Pfeile)
 sind für die Musikwiedergabe reserviert und lassen sich nicht an Preset-Aktionen
-vergeben; sie sind aufgeführt, haben aber noch keine Funktion.
+vergeben.
 
 ## 10. Automatisch gemerkt / Bekanntes
 

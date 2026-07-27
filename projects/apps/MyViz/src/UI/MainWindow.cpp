@@ -17,6 +17,7 @@
 #include "UI/MainWindow.hpp"
 #include "UI/managers/DockManager.hpp"
 #include "UI/managers/MenuManager.hpp"
+#include "UI/managers/ScreenshotManager.hpp"
 #include "UI/managers/ShortcutManager.hpp"
 #include "UI/managers/DialogManager.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
@@ -52,8 +53,10 @@
 #include <QPointer>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QMutexLocker>
@@ -100,7 +103,18 @@ MainWindow::MainWindow(QWidget* parent)
         [](ServiceContainer& c) { return std::make_unique<ShortcutManager>(c); });
     m_pServices->resolve<ShortcutManager>();  // jetzt erzeugen: Filter haengen
 
+    // Screenshot-Ablage: ein Ordner je Programmlauf. Die Startzeit wird HIER
+    // genommen und nicht erst beim ersten Bild — sonst hiesse der Ordner nach
+    // dem Zeitpunkt des ersten Tastendrucks (docs/ui/Screenshot_Ablage.md).
+    // Ohne Qt-Elternteil: der unique_ptr besitzt ihn allein (sonst loeschte Qt
+    // ihn ein zweites Mal).
+    m_pScreenshotManager =
+        std::make_unique<ScreenshotManager>(QDateTime::currentDateTime());
+
     setupUi();
+
+    // Erst jetzt gibt es Visualizer-Widgets, an die sich der Manager haengen kann.
+    m_pScreenshotManager->attach(primaryVisualizer());
 
     // -------------------------------------------------------------------------
     // Session Playlist
@@ -405,6 +419,21 @@ void MainWindow::setupStatusBar()
     // Initial message
     pStatusBar->showMessage(tr("Ready"));
 
+    // Rueckmeldung zum Screenshot: im Vollbild sieht man die Zeile nicht, aber
+    // dort ist ohnehin die Ablage der Beleg (fehler.log + Bild).
+    if (m_pScreenshotManager != nullptr)
+    {
+        connect(m_pScreenshotManager.get(), &ScreenshotManager::shotWritten, this,
+                [this](const QString& file) {
+                    statusBar()->showMessage(tr("Screenshot: %1").arg(file), 6000);
+                });
+        connect(m_pScreenshotManager.get(), &ScreenshotManager::shotFailed, this,
+                [this](const QString& reason) {
+                    statusBar()->showMessage(tr("Screenshot failed: %1").arg(reason),
+                                             8000);
+                });
+    }
+
     BasicLogger::logDebug("  Status bar created");
 }
 
@@ -486,6 +515,16 @@ void MainWindow::setupEventHandlers()
         }
     });
 
+    // Screenshot des Visuals (Hotkey Druck)
+    pEventBus->subscribe<ScreenshotRequestEvent>(
+        [this](const ScreenshotRequestEvent&) {
+            if (m_pScreenshotManager == nullptr) return;
+            // Im Vollbild ist ein anderes Widget im Bild als im Fenster.
+            m_pScreenshotManager->attach(m_isFullscreen ? m_pFullscreenVisualizer
+                                                        : primaryVisualizer());
+            m_pScreenshotManager->requestShot();
+        });
+
     // Fullscreen Exit event (Esc key)
     pEventBus->subscribe<ExitFullscreenEvent>([this](const ExitFullscreenEvent&) {
         if (isFullScreen())
@@ -559,10 +598,16 @@ void MainWindow::setupEventHandlers()
             }
             if (!ok)
             {
-                QMessageBox::warning(this, tr("Import AVS Preset"),
-                                     tr("Not a valid AVS preset:\n%1").arg(path));
+                reportProblem(tr("Import AVS Preset"),
+                              tr("Not a valid AVS preset:\n%1").arg(path));
                 pEventBus->publish(AvsImportResultEvent{path.toStdString(), false, 0});
                 return;
+            }
+            // Ab hier haengt das Bild an diesem Preset — der Screenshot soll es
+            // beim Namen nennen und seinen Pfad daneben legen.
+            if (m_pScreenshotManager != nullptr)
+            {
+                m_pScreenshotManager->setCurrentPreset(QFileInfo(path).absoluteFilePath());
             }
             pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
             // NUR Probleme (Parser, Passthrough, fehlende Dateien) kommen hier
@@ -570,15 +615,7 @@ void MainWindow::setupEventHandlers()
             // im "Import Notes"-Knoten der Kette (Entscheid Patrik S51). Vorher
             // liefen beide durch diesen Dialog, und ein Dutzend Umbenennungen
             // machte die echten Probleme unsichtbar.
-            if (!report.isEmpty())
-            {
-                QMessageBox::warning(
-                    this, tr("Import AVS Preset"),
-                    tr("%1 problem(s) during import:\n\n%2\n\n"
-                       "The full log is in the \"Import Notes\" node of the chain.")
-                        .arg(report.size())
-                        .arg(report.mid(0, 20).join("\n")));
-            }
+            reportProblem(tr("Import AVS Preset"), report);
             pEventBus->publish(AvsImportResultEvent{
                 path.toStdString(), true, static_cast<int>(report.size())});
         });
@@ -618,25 +655,22 @@ void MainWindow::setupEventHandlers()
             }
             if (!ok)
             {
-                QMessageBox::warning(this, tr("Import MilkDrop Preset"),
-                                     tr("Not a valid MilkDrop preset:\n%1").arg(path));
+                reportProblem(tr("Import MilkDrop Preset"),
+                              tr("Not a valid MilkDrop preset:\n%1").arg(path));
                 return;
             }
+            if (m_pScreenshotManager != nullptr)
+            {
+                m_pScreenshotManager->setCurrentPreset(QFileInfo(path).absoluteFilePath());
+            }
             pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
-            // "ℹ"-Zeilen sind reine Bestaetigungen — Dialog nur bei echten Warnungen
-            bool hasWarnings = false;
+            // "ℹ"-Zeilen sind reine Bestaetigungen — nur echte Warnungen melden
+            QStringList warnings;
             for (const QString& line : report)
             {
-                if (!line.startsWith(QStringLiteral("ℹ"))) hasWarnings = true;
+                if (!line.startsWith(QStringLiteral("ℹ"))) warnings.append(line);
             }
-            if (hasWarnings)
-            {
-                QMessageBox::information(
-                    this, tr("Import MilkDrop Preset"),
-                    tr("Imported with %1 note(s):\n\n%2")
-                        .arg(report.size())
-                        .arg(report.mid(0, 20).join("\n")));
-            }
+            reportProblem(tr("Import MilkDrop Preset"), warnings);
         });
 
     pEventBus->subscribe<LoadEffectChainEvent>(
@@ -674,24 +708,22 @@ void MainWindow::setupEventHandlers()
                 }
                 if (!ok)
                 {
-                    QMessageBox::warning(this, tr("Load Effect Chain"),
-                                         tr("Could not load:\n%1").arg(path));
+                    reportProblem(tr("Load Effect Chain"),
+                                  tr("Could not load:\n%1").arg(path));
                     return;
                 }
+                if (m_pScreenshotManager != nullptr)
+                {
+                    m_pScreenshotManager->setCurrentPreset(
+                        QFileInfo(path).absoluteFilePath());
+                }
                 pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
-                bool hasWarnings = false;
+                QStringList warnings;
                 for (const QString& line : report)
                 {
-                    if (!line.startsWith(QStringLiteral("ℹ"))) hasWarnings = true;
+                    if (!line.startsWith(QStringLiteral("ℹ"))) warnings.append(line);
                 }
-                if (hasWarnings)
-                {
-                    QMessageBox::information(
-                        this, tr("Load Milkdrop Preset"),
-                        tr("Loaded with %1 note(s):\n\n%2")
-                            .arg(report.size())
-                            .arg(report.mid(0, 20).join("\n")));
-                }
+                reportProblem(tr("Load Milkdrop Preset"), warnings);
                 return;
             }
 
@@ -717,10 +749,15 @@ void MainWindow::setupEventHandlers()
             }
             if (!ok)
             {
-                QMessageBox::warning(this, tr("Load Effect Chain"),
-                                     tr("Could not load:\n%1").arg(path));
+                reportProblem(tr("Load Effect Chain"),
+                              tr("Could not load:\n%1").arg(path));
                 return;
             }
+            if (m_pScreenshotManager != nullptr)
+            {
+                m_pScreenshotManager->setCurrentPreset(QFileInfo(path).absoluteFilePath());
+            }
+            reportProblem(tr("Load Effect Chain"), report);
             pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
         });
 
@@ -1103,6 +1140,33 @@ void MainWindow::enterFullscreen(VisualizerWidget* requested)
     visualizer->activateGLWindow();
 
     BasicLogger::logInfo("Entered fullscreen mode (top-level visualizer)");
+}
+
+void MainWindow::reportProblem(const QString& title, const QString& problem)
+{
+    reportProblem(title, QStringList{problem});
+}
+
+void MainWindow::reportProblem(const QString& title, const QStringList& problems)
+{
+    if (problems.isEmpty()) return;
+
+    // Vollbild: KEIN Dialog. Er landete hinter dem randlosen Fenster, blockierte
+    // die Vorfuehrung und war beim Durchblaettern nach jedem zweiten Preset im
+    // Weg (Vorgabe Patrik, Session 52). Stattdessen Protokoll + Bild.
+    if (m_isFullscreen && m_pScreenshotManager != nullptr)
+    {
+        m_pScreenshotManager->attach(m_pFullscreenVisualizer);
+        m_pScreenshotManager->reportProblem(title, problems);
+        return;
+    }
+
+    QMessageBox::warning(this, title,
+                         problems.size() == 1
+                             ? problems.front()
+                             : tr("%1 problem(s):\n\n%2")
+                                   .arg(problems.size())
+                                   .arg(problems.mid(0, 20).join(QLatin1Char('\n'))));
 }
 
 void MainWindow::exitFullscreen()

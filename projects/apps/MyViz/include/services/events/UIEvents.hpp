@@ -262,6 +262,17 @@ struct PresetStepEvent : public Event
 };
 
 /**
+ * @brief Screenshot des Visuals anfordern (Hotkey `view.screenshot`).
+ *
+ * Traegt bewusst nichts: WO abgelegt wird und WIE die Datei heisst, weiss der
+ * `ScreenshotManager`. Der Filter kennt nur die Absicht.
+ */
+struct ScreenshotRequestEvent : public Event
+{
+    EVENT_TYPE_NAME("ScreenshotRequestEvent")
+};
+
+/**
  * @brief Emitted after an AVS import attempt so a browsing panel can show a
  *        non-modal status. noteCount is the number of import report lines
  *        (passthrough/parser notes); 0 on a clean import.

@@ -1,11 +1,11 @@
 # MilkdropVisualizer — MilkDrop-Preset-Host (MD1-Kern)
 
-> **Version:** 1.5.0  
-> **Datum:** 2026-07-22  
+> **Version:** 1.13.0  
+> **Datum:** 2026-07-27  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert (Import-Phase Roadmap 6, M3–C2) — Standalone-Nachweis C1/C2 grün, In-App-Sichttest c1 offen  
 > **Modul:** `MilkdropVisualizer` (global, wie alle `*Visualizer`)  
-> **Dateien:** MilkdropVisualizer.hpp, src/visualizers/MilkdropVisualizer.cpp, milkdrop/MilkdropPresetState.hpp, milkdrop/MilkdropBlur.hpp, milkdrop/MilkdropTrace.hpp  
+> **Dateien:** MilkdropVisualizer.hpp, src/visualizers/MilkdropVisualizer.cpp, milkdrop/MilkdropPresetState.hpp, milkdrop/MilkdropBlur.hpp, milkdrop/MilkdropTrace.hpp, milkdrop/MilkdropSamplerName.hpp, milkdrop/MilkdropTextureResolve.hpp  
 > **Abhängigkeiten:** VisualizerBase · MilkParser (Lib, inkl. MilkShaderClassifier) · EelTranspiler via ScriptSlotHost (Dialect::Milkdrop) · ScriptContext (q1–q64) · MilkLoudness · FeedbackBuffer · ScopeRenderer  
 > **Zielgruppe:** Entwickler  
 > **Sprache:** Deutsch  
@@ -156,3 +156,4 @@ GUI-Thread unter renderMutex und fasst kein GL an. FeedbackBuffer neu:
 | 1.10.0 | 2026-07-23 | **C3-Kern engine-seitig** (Session 43): Volumen-Noise-Texturen `noisevol_lq/hq` (AddNoiseVol-Port plugin.cpp:2561-2717 — 32³, RANGE 216/256, kubische X/Y/Z-Glättung; GL_TEXTURE_3D + WRAP_R an den Sampler-Objekten, Präfix-Bindings wie 2D, texsize-Uniforms) · GLSL-Präambel: `M_PI`/`M_PI_2`(=2π)/`M_INV_PI_2` + rohe q-Bänke `_qa`–`_qh` (aus fv.qVals gespeist) · sampler3D-Uniform-Deklarationen; preambleDeclares um noisevol erweitert |
 | 1.11.0 | 2026-07-23 | **Textur-/Sprite-Suche erweitert** (Befund Patrik S43: Asset-Pack hat `textures/` UND `sprites/`; Presets liegen auch in Unterordnern): Suche läuft jetzt vom Preset-Ordner AUFWÄRTS (bis 4 Ebenen) über `textures/`, `sprites/` und den Ordner selbst — vorher nur `presetDir[/..]/textures` (Custom-Texturen) bzw. eine Ebene (Sprites). Beleg: `lines2.jpg` (liegt in `sprites/`) wird jetzt gefunden, auch aus `presets/<unterordner>/` |
 | 1.12.0 | 2026-07-23 | **.lvfx-Bild-Einbettung** (Entscheid Patrik S43): `setEmbeddedImages()` — Loader (Texturen + Sprites) fallen auf eingebettete Original-Dateibytes (Base64) zurück, wenn die Asset-Datei fehlt; Dateien haben Vorrang. Suchlogik nach `milkdrop/MilkdropTextureResolve.hpp` extrahiert (SSOT mit dem ChainSerializer, der beim Speichern genau die referenzierten Bilder einbettet — verwaiste Alt-Einbettungen entfallen; randNN bleibt Ordner-Zufall) |
+| 1.13.0 | 2026-07-27 | **Sampler-Namensregel + Rotationsmatrizen** (Session 52, am Quelltext der Referenz gepinnt: `ref/winamp_orig/…/vis_milk2/plugin.cpp:2955`). Neu `milkdrop/MilkdropSamplerName.hpp` als SSOT der Zerlegung (Laden, `preambleDeclares`, Sampler-Objekt beim Binden hatten je eine eigene Regel). Drei Befunde aus einem Blätter-Lauf: `sampler_` wurde UNBEDINGT abgeschnitten — aus `sampler MilkDrop3_001` wurde `3_001` (Textur nicht gefunden, 7 Meldungen im Log), und `sampler tex` (3 Zeichen, 25 Presets des Packs) hätte `std::out_of_range` geworfen · Filter/Wrap-Präfixe nur klein statt case-insensitiv · die umgedrehten Formen `WF_ CF_ WP_ CP_` fehlten ganz. Das Binden filterte zusätzlich auf „beginnt mit sampler_" und ließ präfixlose Texturen ungebunden — jetzt über die Menge der deklarierten Sampler (`m_customSamplerNames`), damit der Platzhalter keine fremde Uniform trifft. Dazu die 24 Matrizen `rot_{s,d,f,vf,uf,rand}1..4` (Präambel-Uniforms `mat3x4`; Basiswinkel/Geschwindigkeit/Verschiebung je Preset nach `state.cpp:RandomizePresetVars` mit `0.9*(k/8)^3.2`, die vier `rot_rand*` jeden Frame neu; Aufbau `((Rx·T)·Rz)·Ry` nach `milkdropfs.cpp:4016-4050`) |

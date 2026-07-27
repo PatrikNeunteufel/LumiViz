@@ -19,6 +19,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/milkdrop/MilkdropBlur.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/milkdrop/MilkdropPresetState.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/milkdrop/MilkdropSerializer.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/milkdrop/MilkdropSamplerName.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/milkdrop/MilkdropTextureResolve.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/milkdrop/MilkdropTrace.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/MultiEffectVisualizer.hpp"

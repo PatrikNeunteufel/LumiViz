@@ -20,7 +20,9 @@
 #include "UI/panels/ImportBrowserPanel.hpp"
 #include "services/ShortcutRegistry.hpp"
 
+#include <QKeySequence>
 #include <QList>
+#include <QString>
 
 #include <set>
 #include <string>
@@ -49,6 +51,28 @@ TEST_SUITE("Shortcuts")
         }
     }
 
+    TEST_CASE("Registry: jede Vorbelegung ist fuer Qt lesbar")
+    {
+        // Der Fund aus Session 52: "PageDown" SIEHT richtig aus, ist aber kein
+        // QKeySequence-Name (Qt kennt "PgDown"). Ein solcher Text ergibt
+        // Key_unknown — die Vorbelegung ist tot, und zwei tote Vorbelegungen
+        // sind sogar gleich. Ein Vergleich des Strings mit sich selbst kann das
+        // nie sehen; nur der Weg durch Qt und zurueck.
+        for (const ShortcutAction& a : shortcutActions())
+        {
+            if (a.defaultSequence.empty()) continue;
+            const QString text = QString::fromUtf8(
+                a.defaultSequence.data(), static_cast<int>(a.defaultSequence.size()));
+            const QKeySequence seq(text, QKeySequence::PortableText);
+            CAPTURE(a.id.data());
+            REQUIRE(seq.count() == 1);
+            CHECK((seq[0].key() != Qt::Key_unknown));
+            // Rueckweg: nur so ist die Tabelle auch die Schreibweise, die der
+            // Editor spaeter in QSettings ablegt und wieder einliest.
+            CHECK(seq.toString(QKeySequence::PortableText) == text);
+        }
+    }
+
     TEST_CASE("Registry: Transport ist reserviert, Presets meiden Space")
     {
         bool sawTransport = false;
@@ -58,6 +82,7 @@ TEST_SUITE("Shortcuts")
             {
                 sawTransport = true;
                 CHECK(a.reserved);  // §2: dauerhaft dem Player
+                CHECK(a.wired);     // Stufe 2: verdrahtet an IAudioPlayer
             }
             if (a.category == ShortcutCategory::Preset)
             {
@@ -71,11 +96,11 @@ TEST_SUITE("Shortcuts")
         const ShortcutAction* next = shortcutAction("preset.next");
         REQUIRE(next != nullptr);
         CHECK(next->wired);
-        CHECK(next->defaultSequence == "PageDown");
+        CHECK(next->defaultSequence == "PgDown");
         const ShortcutAction* prev = shortcutAction("preset.previous");
         REQUIRE(prev != nullptr);
         CHECK(prev->wired);
-        CHECK(prev->defaultSequence == "PageUp");
+        CHECK(prev->defaultSequence == "PgUp");
         CHECK(shortcutAction("gibtsnicht") == nullptr);
     }
 
@@ -88,7 +113,7 @@ TEST_SUITE("Shortcuts")
         // Die haltende Aktion selbst darf ihre eigene Taste behalten.
         CHECK_FALSE(shortcutSequenceReservedFor("Space", "transport.playPause"));
         // Nicht reservierte und leere Sequenzen sind frei.
-        CHECK_FALSE(shortcutSequenceReservedFor("PageDown", "view.fullscreen"));
+        CHECK_FALSE(shortcutSequenceReservedFor("PgDown", "view.fullscreen"));
         CHECK_FALSE(shortcutSequenceReservedFor("", "preset.next"));
     }
 

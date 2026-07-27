@@ -81,6 +81,8 @@ VisualizerWidget::VisualizerWidget(ServiceContainer& services, QWidget* parent)
 
     connect(m_thread.get(), &VisualizerRenderThread::fpsMeasured,
             this, &VisualizerWidget::fpsMeasured);
+    connect(m_thread.get(), &VisualizerRenderThread::frameCaptured,
+            this, &VisualizerWidget::frameCaptured);
 
     // Double-click inside the GL area toggles fullscreen for THIS widget
     connect(m_glWindow, &VisualizerGLWindow::doubleClicked, this, [this]() {
@@ -323,4 +325,9 @@ void VisualizerWidget::updateAudioStereo(const float* specInterleaved, int binsP
         m_thread->updateAudioStereo(specInterleaved, binsPerCh, waveInterleaved,
                                     frames, channels);
     }
+}
+
+void VisualizerWidget::requestScreenshot()
+{
+    if (m_thread != nullptr) m_thread->requestCapture();
 }

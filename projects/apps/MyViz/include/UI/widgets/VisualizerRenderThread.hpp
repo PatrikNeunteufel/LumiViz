@@ -40,6 +40,8 @@
 
 #include <QWindow>
 #include <QThread>
+#include <QAtomicInt>
+#include <QImage>
 #include <QMutex>
 #include <QWaitCondition>
 #include <QSize>
@@ -170,9 +172,23 @@ public:
      */
     void stopAndWait();
 
+    /**
+     * @brief Naechstes fertig gerendertes Bild aufnehmen (Screenshot).
+     *
+     * Die Aufnahme MUSS auf dem Render-Thread passieren: `glReadPixels` braucht
+     * den aktuellen Kontext, den nur dieser Thread haelt. Der Aufruf setzt
+     * lediglich eine Marke; das Bild kommt als `frameCaptured` zurueck (queued
+     * in den GUI-Thread). Mehrfaches Anfordern vor dem naechsten Frame ergibt
+     * EIN Bild — der Anwender drueckt schneller als 60 Hz nicht.
+     */
+    void requestCapture();
+
 Q_SIGNALS:
     /// FPS measured on the render thread (~1 s interval, queued to GUI)
     void fpsMeasured(double fps);
+
+    /// Aufgenommenes Bild, bereits aufrecht und ohne Alpha (siehe run()).
+    void frameCaptured(const QImage& image);
 
 protected:
     void run() override;
@@ -214,6 +230,9 @@ private:
     std::vector<float> m_specI, m_waveI;
     int m_stereoBins = 0, m_stereoFrames = 0, m_stereoChannels = 1;
     bool m_stereoDirty = false;
+
+    /// Aufnahme-Anforderung (GUI-Thread setzt, Render-Thread loescht)
+    QAtomicInt m_captureRequested{0};
 
     // Render-thread-only state
     IVisualizer* m_current = nullptr;  ///< non-owning (facade owns)

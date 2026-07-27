@@ -1,7 +1,7 @@
 # MyViz — AVS-Modul-Abdeckung (Steuerdokument)
 
-> **Version:** 0.3.0
-> **Datum:** 2026-07-21
+> **Version:** 0.4.0
+> **Datum:** 2026-07-27
 > **Typ:** Abdeckungsmatrix + Priorisierung
 > **Status:** Aktiv (Arbeitsgrundlage Import-Phase, Roadmap 5 Nachzug)
 > **Zielgruppe:** App-Entwickler
@@ -37,11 +37,22 @@ Panel + Tests). Das Bau-Rezept dazu: [Import_Modul_Umsetzungsplan.md](Import_Mod
 - `A` = schwer testbar (Bild-/Video-/GDI-/externe-DLL-Bindung).
 - `—` = kein Render (no-op/Meta), nichts sichtzutesten.
 
-**Ist-Stand:** **Import-Abdeckung vollständig** — alle darstellbaren Effekte umgesetzt
-(42 Builtins ✅ + 16 APEs ✅). ◐ = bewusste Sonderfälle (Set Render Mode unroll, Text/
-Framerate no-op); ✖ = verworfen (SVP/AVI/closed APEs). Unit-Suite grün (287 Cases);
-**GL-Sichttest von Batch A–G + §5.2-Block steht aus** (v. a. die sprite-/EEL-/approximierten
-Effekte: Texer II, Triangle, MultiFilter, Scope-Geometrie).
+**Ist-Stand (S44):** **Import-Abdeckung vollständig** — alle darstellbaren Effekte
+umgesetzt (**44** Builtins ✅ + 16 APEs ✅). ◐ = bewusster Sonderfall (Set Render Mode
+unroll, Framerate-Limiter no-op); ✖ = verworfen (SVP + closed-source-APEs).
+
+> **Nachtrag Session 44:** **Text (28)** und **AVI (32)** sind seit S44 voll
+> implementiert — Text als QPainter-Port von r_text.cpp (Wort-Zyklus, LOGFONT→QFont,
+> Outline/Schatten, Glyph-Alpha-Blend), AVI über VfW wie das Original
+> (`AVIStreamGetFrame`, speed/persist/adapt, Aufwärtssuche für die Datei). Die
+> Tabellen unten führten beide noch als „no-op" bzw. „verworfen".
+> Ebenfalls seit S44: **Comment (21)** wird decodiert und als eigener Node-Typ
+> `CommentParams` übernommen.
+
+Der GL-Sichttest der approximierten Effekte ist seit S48–S52 weitgehend durch die
+**Modul-Matrix** und die **Modul-Sonden** ersetzt (messend statt sichtend, siehe
+[AVS_Kalibrier_Methodik.md](AVS_Kalibrier_Methodik.md)). Was daran offen ist, steht in
+[Offene_Punkte.md](../Offene_Punkte.md) §1.
 
 ---
 
@@ -80,11 +91,11 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 25 | Clear Screen | Render | ✅ | `ClearParams` | U·S offen |
 | 26 | Mirror | Trans | ✅ | `MirrorParams` | U·S offen |
 | 27 | Starfield | Render | ✅ | `StarfieldParams` | U·S offen |
-| 28 | Text | Render | ◐ | no-op + Import-Notiz (GDI-Textrendering ist separate Aufgabe) | — |
+| 28 | Text | Render | ✅ | QPainter-Port von r_text.cpp (S44): Wort-Zyklus (normSpeed/onBeat + Lockout, insertBlank, randomWord/randomPos), LOGFONT→QFont, H/V-Align + %-Shifts, Outline/Schatten, Blend nur auf Glyph-Pixeln | S |
 | 29 | Bump | Trans | ✅ | `BumpParams` | U·S offen |
 | 30 | Mosaic | Trans | ✅ | `MosaicParams` | U·S offen |
 | 31 | Water Bump | Trans | ✅ | `WaterBumpParams` | U·S offen |
-| 32 | AVI | Render | ✖ | Video-Wiedergabe | — |
+| 32 | AVI | Render | ✅ | VfW-Pfad wie das Original (S44): `AVIStreamGetFrame` auf 32bpp (Legacy-Codecs laufen), GPU-Stretch statt DrawDib, `speed`-ms-Drossel, Beat-`persist`, `adapt`-Blend; Datei per Aufwärtssuche ab Preset-Ordner, Pfad beim Import in `resolvedPath` fixiert | S |
 | 33 | Custom BPM | Misc | ✅ | `CustomBpmParams` | U·S offen |
 | 34 | Picture | Render | ✅ | `PictureParams` (Bild base64-eingebettet + Blend/Aspect) | U·A·S offen |
 | 35 | **Dynamic Distance Modifier** | Trans | ✅ | `DynamicDistanceModifierParams` (radiale d-LUT) | U·S offen |
@@ -99,7 +110,7 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 44 | Fast Brightness | Trans | ✅ | `FastBrightnessParams` | U·S offen |
 | 45 | Color Modifier | Trans | ✅ | `ColorModifierParams` | U·S offen |
 
-**Builtin-Bilanz:** ✅ 42 · ◐ 2 (Set Render Mode, Text) · ⬜ 0 · ✖ 2.
+**Builtin-Bilanz (S44):** ✅ 44 · ◐ 1 (Set Render Mode) · ⬜ 0 · ✖ 1 (SVP Loader).
 
 ---
 
@@ -125,7 +136,7 @@ Referenz für Strings + Feld-Layouts: `grandchild/AVS-File-Decoder`
 | `Jheriko : MULTIFILTER` | MultiFilter | Misc | ✅ | `MultiFilterParams` (Chrome/Root, **approximiert**) ⚠ Space vor `:` | U·S offen | mittel |
 | `Virtual Effect: Addborders` | Add Borders | Misc | ✅ | `AddBordersParams` (Rahmen-Shader) | U·S offen | niedrig–mittel |
 | `VFX FRAMERATE LIMITER` | Framerate Limiter | Misc | ◐ | no-op + Import-Notiz (Host taktet) | — | niedrig–mittel |
-| `Render: Triangle` | Triangle | Render | ✅ | `TriangleParams` (EEL-Dreiecke, Wireframe-Näherung) | U·S offen | mittel |
+| `Render: Triangle` | Triangle | Render | ✅ | `TriangleParams` (EEL-Dreiecke). **S51:** zeichnet GEFÜLLT, nicht als Drahtgitter (Sonde 4009 → 24448 px, Referenz 23424) und bekommt `w`/`h` im Skript | ✅ Sonde | mittel |
 | `Picture II` | Picture II | Misc | ✅ | `PictureIIParams` (Bild eingebettet + Blend) | U·A·S offen | mittel |
 | `Texer` | Texer (I) | Render | ✅ | `TexerParams` (Sprite an Wellenform-Punkten) | U·A·S offen | niedrig |
 | `Misc: AVSTrans Automation` | Trans Automation | Misc | ✖ | Meta/eigenwillig | — | niedrig |
@@ -172,6 +183,11 @@ Details + Rezept: [Import_Modul_Umsetzungsplan.md](Import_Modul_Umsetzungsplan.m
 
 ## 7. Changelog
 
+- **0.4.0** (2026-07-27, Session 52 — Doku-Korrektur): **Text (28) und AVI (32) von
+  „◐ no-op" bzw. „✖ verworfen" auf ✅ korrigiert** — beide seit S44 implementiert, die
+  Matrix hatte den Stand von S38 behalten. Builtin-Bilanz 42→44 ✅, ✖ 2→1.
+  Triangle-Eintrag auf „gefüllt" berichtigt (S51). Sichttest-Absatz auf die
+  Matrix-/Sonden-Methodik umgestellt und auf `Offene_Punkte.md` verwiesen.
 - **0.3.0** (2026-07-21): Umbau zu **vollständiger Statusmatrix** (alle 46 Builtins +
   23 APEs mit Status-Haken + Test-Spalte + Legende); Moving Particle nach Batch A;
   Set Render Mode als ◐ mit offenem Blend-Teil vermerkt.

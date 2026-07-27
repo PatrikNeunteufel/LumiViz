@@ -360,6 +360,75 @@ TEST_CASE("HlslTranspiler: unbekannter Bezeichner -> Fehler mit Zeile")
 }
 
 // =============================================================================
+// Rotationsmatrizen (S52): 24 Builtins vom Typ float4x3
+// =============================================================================
+
+TEST_CASE("HlslTranspiler: rot_*-Matrizen sind bekannt")
+{
+    // Der Befund aus dem Fehler-Log: "unbekannter Bezeichner 'rot_f3'" — die
+    // 24 Matrizen (plugin.cpp:3241-3264) waren gar nicht deklariert, das ganze
+    // Preset fiel deshalb auf MD1 zurueck.
+    for (const char* group : {"s", "d", "f", "vf", "uf", "rand"})
+    {
+        for (int i = 1; i <= 4; ++i)
+        {
+            const std::string name =
+                std::string("rot_") + group + std::to_string(i);
+            CAPTURE(name);
+            const HlslResult r =
+                transpile(body("ret = mul(float4(uv,0,1), " + name + ");"),
+                          ShaderKind::Comp);
+            CHECK_MESSAGE(r.ok, r.error);
+            // HLSL float4x3 -> GLSL mat3x4; mul(Zeilenvektor, M) wird `v * M`
+            CHECK(contains(r.glslBody, name));
+        }
+    }
+}
+
+TEST_CASE("HlslTranspiler: M[i] ist die HLSL-ZEILE, nicht die GLSL-Spalte")
+{
+    // So benutzen alle neun rot_*-Presets des Packs die Matrizen — keines
+    // ueber mul(). Ohne diesen Zweig blieb es bei "Index auf Nicht-Array".
+    const HlslResult r =
+        transpile(body("float3 v = rot_f3[0] * .1;\nret = v;"), ShaderKind::Warp);
+    REQUIRE_MESSAGE(r.ok, r.error);
+    // Unsere GLSL-Matrix ist die transponierte HLSL-Matrix — ohne transpose()
+    // laege hier eine Spalte (vec4) statt der Zeile (vec3).
+    CHECK(contains(r.glslBody, "transpose(rot_f3)"));
+
+    // Zeilenbreite = Spaltenzahl der HLSL-Matrix: float4x3 -> float3
+    const HlslResult bad =
+        transpile(body("float4 v = rot_f3[0];\nret = v.xyz;"), ShaderKind::Warp);
+    CHECK_FALSE(bad.ok);
+
+    // Quadratisch ebenso (float3x3 -> float3), und mit laufendem Index
+    const HlslResult sq = transpile(
+        body("float3x3 m;\nfloat3 v = m[1];\nret = v;"), ShaderKind::Warp);
+    CHECK_MESSAGE(sq.ok, sq.error);
+    const HlslResult dyn = transpile(
+        body("float s = 0;\nfor (int i=0;i<3;i++) s += rot_s1[i].x;\nret = s;"),
+        ShaderKind::Warp);
+    CHECK_MESSAGE(dyn.ok, dyn.error);
+}
+
+TEST_CASE("HlslTranspiler: float4x3 ist mat3x4 und ergibt float3")
+{
+    // GLSL benennt matSPALTENxZEILEN, HLSL floatZEILENxSPALTEN — die
+    // Verwechslung waere ein lautloser Kompilierfehler erst zur Laufzeit.
+    const HlslResult r = transpile(
+        body("float3 p = mul(float4(uv,0,1), rot_s1);\nret = p;"), ShaderKind::Comp);
+    REQUIRE_MESSAGE(r.ok, r.error);
+    CHECK(contains(r.glslBody, "vec3 p"));
+
+    // Ergebnisbreite: mul(float4, float4x3) ist float3, nicht float4 —
+    // eine Zuweisung an float4 muss auffallen.
+    const HlslResult bad =
+        transpile(body("float4 p = mul(float4(uv,0,1), rot_s1);\nret = p.xyz;"),
+                  ShaderKind::Comp);
+    CHECK_FALSE(bad.ok);
+}
+
+// =============================================================================
 // Kalibrier-Satz c1: MUSS parser-warnungsfrei sein und vollstaendig transpiliern
 // (Patrik testet Sicht nur mit dialogfreien Presets — Session-40-Vereinbarung)
 // =============================================================================

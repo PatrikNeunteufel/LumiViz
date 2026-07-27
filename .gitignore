@@ -398,6 +398,15 @@ old/
 # sind aus LIZENZGRUENDEN bewusst NICHT getrackt (proprietaer, un4seen.com).
 # Beschaffung bei Bedarf: siehe externals/bass/SETUP.md
 
+# --- Wegwerf-Artefakte ------------------------------------------------------
+# Screenshot-Ablage: Ausgabe der Druck-Taste, ein Ordner je Programmlauf
+# (Doku: docs/ui/Screenshot_Ablage.md)
+asset/calibration/screenshot/
+
+# AvsRef (Referenz-Renderer): CMake-Generat + Kompilat. `out/` faengt schon die
+# Regel [Oo]ut/ oben; `build/` braucht einen eigenen Eintrag.
+tools/AvsRef/build/
+
 # Build-System-Quellcode und Doku sind NIE Build-Output (VS-Regeln wie **/packages/* greifen sonst!)
 !cmake/**
 !docs/**

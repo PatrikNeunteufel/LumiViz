@@ -34,8 +34,14 @@
  * HLSL-Implicit-Truncation in Zuweisungen UND Intrinsics, bool↔float,
  * q-Schattenkopien bei Schreibzugriff.
  *
- * NICHT unterstützt (sauberer Fehler): rot_*-Rotationsmatrizen der
- * include.fx, #elif, Nicht-Literal-#if.
+ * Session 52: die 24 **Rotationsmatrizen** `rot_{s,d,f,vf,uf,rand}1..4` als
+ * Builtins vom Typ `float4x3` (= GLSL `mat3x4`), Host liefert die Uniforms.
+ * Dazu **Matrix-Indizierung** `M[i]`: das ist in HLSL die ZEILE, in GLSL die
+ * SPALTE — emittiert wird `transpose(M)[i]`. Beides zusammen, weil alle neun
+ * Presets des Packs, die `rot_*` benutzen, es über den Index tun und keines
+ * über `mul()`.
+ *
+ * NICHT unterstützt (sauberer Fehler): #elif, Nicht-Literal-#if.
  ****************************************************************************************
  */
 
@@ -95,6 +101,7 @@ enum class Base
     Mat4,
     Mat2x3,  ///< HLSL float2x3 (2 Zeilen x 3 Spalten) = GLSL mat3x2
     Mat3x2,  ///< HLSL float3x2 (3 Zeilen x 2 Spalten) = GLSL mat2x3
+    Mat4x3,  ///< HLSL float4x3 (4 Zeilen x 3 Spalten) = GLSL mat3x4 — die rot_*-Matrizen
     Sampler2D,
     Sampler3D
 };
@@ -111,7 +118,7 @@ struct Type
     [[nodiscard]] bool isMat() const
     {
         return base == Base::Mat2 || base == Base::Mat3 || base == Base::Mat4 ||
-               base == Base::Mat2x3 || base == Base::Mat3x2;
+               base == Base::Mat2x3 || base == Base::Mat3x2 || base == Base::Mat4x3;
     }
     [[nodiscard]] int matRows() const
     {
@@ -122,6 +129,7 @@ struct Type
         case Base::Mat4: return 4;
         case Base::Mat2x3: return 2;
         case Base::Mat3x2: return 3;
+        case Base::Mat4x3: return 4;
         default: return 0;
         }
     }
@@ -134,6 +142,7 @@ struct Type
         case Base::Mat4: return 4;
         case Base::Mat2x3: return 3;
         case Base::Mat3x2: return 2;
+        case Base::Mat4x3: return 3;
         default: return 0;
         }
     }
@@ -175,6 +184,7 @@ struct Type
         // GLSL benennt matSPALTENxZEILEN — HLSL floatZEILENxSPALTEN
         case Base::Mat2x3: return "mat3x2";
         case Base::Mat3x2: return "mat2x3";
+        case Base::Mat4x3: return "mat3x4";
         default: return "float";
         }
     }
@@ -194,6 +204,7 @@ struct Type
     else if (s == "float4x4") out = {Base::Mat4};
     else if (s == "float2x3") out = {Base::Mat2x3};
     else if (s == "float3x2") out = {Base::Mat3x2};
+    else if (s == "float4x3") out = {Base::Mat4x3};
     else if (s == "sampler" || s == "sampler2D") out = {Base::Sampler2D};
     else if (s == "sampler3D") out = {Base::Sampler3D};
     else if (s == "void") out = {Base::Void};
@@ -1591,6 +1602,17 @@ private:
         v4("roam_sin");
         v4("slow_roam_cos");
         v4("slow_roam_sin");
+        // 24 Rotationsmatrizen (plugin.cpp:3241-3264). HLSL float4x3, benutzt
+        // als mul(float4, rot_xx) -> float3. Reihenfolge = Drehgeschwindigkeit:
+        // s(tatic) < d(rift) < f(ast) < vf < uf, dazu rand (jeden Frame neu).
+        for (const char* group : {"s", "d", "f", "vf", "uf", "rand"})
+        {
+            for (int i = 1; i <= 4; ++i)
+            {
+                declare((std::string("rot_") + group + std::to_string(i)).c_str(),
+                        {Base::Mat4x3});
+            }
+        }
         for (int i = 1; i <= 32; ++i) f(("q" + std::to_string(i)).c_str());
         f("blur1_min");
         f("blur1_max");
@@ -1647,6 +1669,9 @@ private:
         for (const char* base : {"noise_lq", "noise_lq_lite", "noise_mq",
                                  "noise_hq", "noisevol_lq", "noisevol_hq"})
             m_uniformNames[std::string("texsize_") + base] = true;
+        for (const char* group : {"s", "d", "f", "vf", "uf", "rand"})
+            for (int i = 1; i <= 4; ++i)
+                m_uniformNames[std::string("rot_") + group + std::to_string(i)] = true;
     }
 
     // --- Statements ---------------------------------------------------------------------
@@ -1943,6 +1968,17 @@ private:
             else if (base.type.isVec())
             {
                 elem = {Base::Float};
+            }
+            else if (base.type.isMat())
+            {
+                // HLSL `M[i]` ist die ZEILE i (Laenge = Spaltenzahl), GLSL `m[i]`
+                // die SPALTE. Unsere GLSL-Matrix ist die transponierte HLSL-Matrix
+                // (matSpaltenxZeilen), also liefert `transpose(m)[i]` genau die
+                // HLSL-Zeile — und wertet den Ausdruck nur einmal aus.
+                // Alle neun Presets des Packs, die rot_* benutzen, tun es so
+                // (`rot_f3[0] * .1`), keines ueber mul() (Session 52).
+                elem = Type::vec(base.type.matCols());
+                return {"transpose(" + base.code + ")[int(" + idx.code + ")]", elem};
             }
             else
             {

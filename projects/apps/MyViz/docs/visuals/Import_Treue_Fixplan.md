@@ -1,5 +1,12 @@
 # Import-Treue — Befund & Fixplan (Session 38)
 
+> **Status (Nachtrag S52):** **Archiv.** Alle Fixplan-Schritte 1–6 sind umgesetzt
+> (§3b). Die Treue-Arbeit läuft seit Session 44 über die Kalibrier-Runde gegen
+> `AvsRef` — Protokoll: [AVS_Sichttest_Protokoll.md](AVS_Sichttest_Protokoll.md),
+> Methodik: [AVS_Kalibrier_Methodik.md](AVS_Kalibrier_Methodik.md), offene Punkte:
+> [Offene_Punkte.md](../Offene_Punkte.md). Der `kSpecGain`-Wert unten (12) ist
+> überholt — seit S38/S44 gilt **8**, hergeleitet aus dem Winamp-Spektrum-Vertrag.
+>
 > **Stand:** 2026-07-22 · **Quelle:** Preset-Diagnose EyeCandy2 (`asset/avs/greatwho2006/
 > 4resample/EyeCandy2`) + Statistik über alle 612 Presets in `asset/avs/**` +
 > Code-Vergleich gegen die Referenz `../ref/vis_avs` (BSD-3, Nullsoft 2005).
@@ -101,7 +108,8 @@ VisFrac 1×, Movin' Lyrics — bleiben ✖).
 6. **D** FyrewurX-Nachbau (host-natives Modul, 5-Schichten-Rezept).
 
 Jeder Schritt: Suite grün (`ctest -R UnitTests`), /WX-Build; Sichttest-Punkte
-sammeln in `docs/Offene_Sichttests.md`.
+sammeln in [`docs/Offene_Punkte.md`](../Offene_Punkte.md) *(bis S52:
+`Offene_Sichttests.md`)*.
 
 ## 3b. Umsetzungsstand (Session 38, 2026-07-22)
 

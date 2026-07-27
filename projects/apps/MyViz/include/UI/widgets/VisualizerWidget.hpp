@@ -200,6 +200,14 @@ public:
     void updateAudioStereo(const float* specInterleaved, int binsPerCh,
                            const float* waveInterleaved, int frames, int channels);
 
+    /**
+     * @brief Naechstes gerendertes Bild aufnehmen; kommt als `frameCaptured`.
+     *
+     * Asynchron mit Absicht: aufnehmen kann nur der Render-Thread (er haelt den
+     * GL-Kontext). Ohne laufenden Thread passiert nichts.
+     */
+    void requestScreenshot();
+
 Q_SIGNALS:
     /**
      * @brief Emitted when the active visualizer changes
@@ -218,6 +226,9 @@ Q_SIGNALS:
      * @brief FPS measured on the render thread (~1 s interval)
      */
     void fpsMeasured(double fps);
+
+    /// Aufgenommenes Bild (Antwort auf requestScreenshot(), im GUI-Thread).
+    void frameCaptured(const QImage& image);
 
 protected:
     // =========================================================================

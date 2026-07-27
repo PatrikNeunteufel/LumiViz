@@ -125,6 +125,46 @@ struct VolumeChangedEvent : public Event
 };
 
 // =============================================================================
+// Transport Commands
+// =============================================================================
+
+/**
+ * @struct TransportCommandEvent
+ * @brief Eine Transport-ABSICHT (Hotkey, Menue, Panel-Knopf) — keine Meldung
+ *
+ * Gegenstueck zu den Ereignissen darueber: die melden, was geschehen IST, dieses
+ * bittet darum, dass etwas geschieht. Absichtlich ein Ereignis und kein direkter
+ * `IAudioPlayer`-Aufruf (`docs/ui/Hotkey_Konzept.md` §3): Hotkey, Menue und die
+ * Knoepfe des `PlayerPanel` feuern denselben Befehl, damit es fuer "naechster
+ * Song" genau EINE Wahrheit gibt.
+ *
+ * Empfaenger ist das `PlayerPanel` mit einem PERMANENTEN Abo — der Hotkey muss
+ * auch wirken, wenn das Panel unsichtbar ist (wie `PresetStepEvent`).
+ */
+struct TransportCommandEvent : public Event
+{
+    EVENT_TYPE_NAME("TransportCommandEvent")
+
+    enum class Action
+    {
+        PlayPause,
+        Stop,
+        Next,        ///< naechster Song der Wiedergabeliste
+        Previous,    ///< voriger Song
+        VolumeUp,
+        VolumeDown,
+        ToggleMute
+    };
+
+    Action action = Action::PlayPause;
+
+    TransportCommandEvent() = default;
+    explicit TransportCommandEvent(Action a)
+        : action(a)
+    {}
+};
+
+// =============================================================================
 // Playlist Events
 // =============================================================================
 

@@ -45,6 +45,7 @@
 
 #include <QMainWindow>
 #include <QRect>
+#include <QStringList>
 #include <memory>
 #include <vector>
 
@@ -66,6 +67,7 @@ namespace ads { class CDockWidget; }
 class DockManager;
 class MenuManager;
 class DialogManager;
+class ScreenshotManager;
 class VisualizerWidget;
 class ServiceContainer;
 
@@ -270,6 +272,21 @@ private:
      */
     void exitFullscreen();
 
+    /**
+     * @brief Ein Problem melden — im Fenster als Dialog, im Vollbild als Datei.
+     * @param title    Herkunft, z. B. "Import AVS Preset"
+     * @param problems Die Meldungszeilen (leer = nichts zu melden)
+     *
+     * Vorgabe Patrik (Session 52): im Vollbild darf nichts aufpoppen. Dort
+     * landen die Zeilen in `fehler.log` des Screenshot-Ordners, und es wird
+     * zusaetzlich das Bild aufgenommen, bei dem es passierte. Im Fenster
+     * bleibt der bekannte Dialog — dort stoert er nicht und wird gesehen.
+     */
+    void reportProblem(const QString& title, const QStringList& problems);
+
+    /// @brief Kurzform fuer eine einzelne Meldung.
+    void reportProblem(const QString& title, const QString& problem);
+
     // =========================================================================
     // Private Members
     // =========================================================================
@@ -278,6 +295,7 @@ private:
     std::unique_ptr<DockManager> m_pDockManager;
     std::unique_ptr<MenuManager> m_pMenuManager;
     std::unique_ptr<DialogManager> m_pDialogManager;
+    std::unique_ptr<ScreenshotManager> m_pScreenshotManager;
     QLabel* m_pFpsLabel{nullptr};  // Owned by status bar (Qt parent-child)
     QTimer* m_pAudioUpdateTimer{nullptr};  // Owned by this (Qt parent-child)
     
