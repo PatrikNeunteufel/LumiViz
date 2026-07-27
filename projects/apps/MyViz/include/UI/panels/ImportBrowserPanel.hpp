@@ -61,6 +61,33 @@ public:
 
     [[nodiscard]] int preferredArea() const override;
 
+    /// Per-item role Qt::UserRole+1 — what a double-click should do. Oeffentlich,
+    /// weil es der Eingabe-Vertrag von nextPresetRow() ist.
+    enum EntryType
+    {
+        Type_Up = 0,
+        Type_Dir = 1,
+        Type_Avs = 2,
+        Type_Milk = 3,
+        Type_Lvfx = 4
+    };
+
+    /**
+     * @brief Nachbar-Zeile, die ein Preset traegt — der Kern der
+     *        Hotkey-Navigation (docs/ui/Hotkey_Konzept.md, Stufe 1).
+     *
+     * @param types  EntryType je Zeile in Anzeigereihenfolge
+     * @param from   aktuelle Zeile, oder -1 fuer "keine Auswahl"
+     * @param delta  Vorzeichen entscheidet die Richtung
+     * @return Zeilenindex, oder -1 wenn in dieser Richtung keines mehr kommt
+     *
+     * Ordner und ".." werden uebersprungen (keine Rekursion), am Ende wird
+     * angehalten statt umzulaufen. Frei von Qt-Widgets, damit die Regel
+     * pruefbar ist.
+     */
+    [[nodiscard]] static int nextPresetRow(const QList<int>& types, int from,
+                                          int delta);
+
 protected:
     void onActivate() override;
     void onDeactivate() override;
@@ -85,16 +112,6 @@ private:
         All = 3
     };
 
-    /// Per-item role Qt::UserRole+1 — what a double-click should do.
-    enum EntryType
-    {
-        Type_Up = 0,
-        Type_Dir = 1,
-        Type_Avs = 2,
-        Type_Milk = 3,
-        Type_Lvfx = 4
-    };
-
     void setupUI();
     void setupConnections();
     void subscribeToEvents();
@@ -105,6 +122,7 @@ private:
     [[nodiscard]] static int entryTypeForSuffix(const QString& suffix);
     void setStatus(const QString& text);
     void onImportResult(const std::string& path, bool ok, int noteCount);
+    void onPresetStep(int delta);
     /// Forget the persisted start folder and return to the home directory
     /// (ResetImportBrowserDirEvent from the Settings panel)
     void resetStoredDir();
@@ -125,4 +143,7 @@ private:
     /// Lives for the whole panel lifetime (NOT cleared in onDeactivate) — the
     /// Settings-panel reset must reach this panel even while it is hidden.
     IEventBus::SubscriberHandle m_resetSubscription;
+    /// Permanent wie m_resetSubscription: der Hotkey wirkt auch, wenn dieses
+    /// Panel nicht sichtbar ist.
+    IEventBus::SubscriberHandle m_stepSubscription;
 };

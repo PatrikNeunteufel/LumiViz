@@ -33,6 +33,7 @@ class QComboBox;
 class QSpinBox;
 class QCheckBox;
 class QPushButton;
+class QLabel;
 
 /**
  * @class SettingsPanel
@@ -69,6 +70,9 @@ private:
     QWidget* createAudioTab();
     QWidget* createPerformanceTab();
     QWidget* createPanelsTab();
+    /// Hotkey-Editor (docs/ui/Hotkey_Konzept.md §6): Tabelle je Kategorie mit
+    /// Aufnahmefeld, Kollisions-/Reservierungspruefung und Zuruecksetzen.
+    QWidget* createHotkeyTab();
 
     // UI Elements
     QTabWidget* m_pTabWidget = nullptr;
@@ -88,6 +92,9 @@ private:
     /// AVS-Import: Render-Scale-Divisor des automatisch eingefuegten Knotens
     /// (QSettings "import/avsRenderScaleDivisor", 1 = neutral — S47)
     QSpinBox* m_pAvsRenderScaleSpinBox = nullptr;
+
+    // Hotkeys Tab
+    QLabel* m_pHotkeyStatusLabel = nullptr;
 
     // State
     bool m_isUpdating = false;

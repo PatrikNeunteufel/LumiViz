@@ -10,20 +10,27 @@
  */
 
 #include "UI/panels/SettingsPanel.hpp"
+#include "UI/managers/ShortcutManager.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
+#include "services/ShortcutRegistry.hpp"
 #include "services/events/UIEvents.hpp"
 #include "audio/IAudioEngine.hpp"
 
 #include <QVBoxLayout>
 #include <QFormLayout>
+#include <QGridLayout>
 #include <QTabWidget>
 #include <QComboBox>
+#include <QKeySequenceEdit>
 #include <QSettings>
+#include <QSpacerItem>
 #include <QSpinBox>
 #include <QCheckBox>
 #include <QLabel>
 #include <QPushButton>
+
+#include <optional>
 
 #include <BasicLogger.h>
 
@@ -199,6 +206,7 @@ void SettingsPanel::setupUI()
     m_pTabWidget->addTab(createAudioTab(), tr("Audio"));
     m_pTabWidget->addTab(createPerformanceTab(), tr("Performance"));
     m_pTabWidget->addTab(createPanelsTab(), tr("Panels"));
+    m_pTabWidget->addTab(createHotkeyTab(), tr("Hotkeys"));
 
     mainLayout->addWidget(m_pTabWidget);
 }
@@ -302,6 +310,104 @@ QWidget* SettingsPanel::createPanelsTab()
     layout->addRow(tr("AVS Import Render Scale:"), m_pAvsRenderScaleSpinBox);
 
     layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+
+    return widget;
+}
+
+QWidget* SettingsPanel::createHotkeyTab()
+{
+    auto* widget = new QWidget(this);
+    auto* outer = new QVBoxLayout(widget);
+    outer->setSpacing(8);
+
+    auto* manager = services().tryResolve<ShortcutManager>();
+    if (manager == nullptr)
+    {
+        outer->addWidget(new QLabel(tr("Hotkey layer not available."), widget));
+        return widget;
+    }
+
+    m_pHotkeyStatusLabel = new QLabel(widget);
+    m_pHotkeyStatusLabel->setWordWrap(true);
+
+    // Je Kategorie eine Gruppe — die Reihenfolge folgt der Registry, damit
+    // Doku und UI dieselbe Ordnung zeigen (docs/ui/Hotkey_Konzept.md §4).
+    auto* grid = new QGridLayout();
+    grid->setColumnStretch(0, 1);
+    int row = 0;
+    auto lastCategory = std::optional<lumi::services::ShortcutCategory>{};
+
+    for (const lumi::services::ShortcutAction& action : lumi::services::shortcutActions())
+    {
+        if (!lastCategory.has_value() || *lastCategory != action.category)
+        {
+            lastCategory = action.category;
+            const QString title = QString::fromUtf8(
+                lumi::services::shortcutCategoryLabel(action.category).data(),
+                static_cast<int>(
+                    lumi::services::shortcutCategoryLabel(action.category).size()));
+            auto* header = new QLabel(QStringLiteral("— %1 —").arg(title), widget);
+            grid->addWidget(header, row++, 0, 1, 3);
+        }
+
+        const QString id = QString::fromUtf8(action.id.data(),
+                                             static_cast<int>(action.id.size()));
+        QString label = QString::fromUtf8(action.label.data(),
+                                          static_cast<int>(action.label.size()));
+        if (!action.wired) label += tr("  (reserved, no function yet)");
+        grid->addWidget(new QLabel(label, widget), row, 0);
+
+        auto* edit = new QKeySequenceEdit(manager->sequenceFor(id), widget);
+        edit->setMaximumSequenceLength(1);
+        grid->addWidget(edit, row, 1);
+
+        auto* reset = new QPushButton(tr("Default"), widget);
+        reset->setToolTip(tr("Back to %1")
+                              .arg(ShortcutManager::defaultSequenceFor(id).toString(
+                                  QKeySequence::NativeText)));
+        grid->addWidget(reset, row, 2);
+
+        // Uebernehmen erst, wenn die Aufnahme fertig ist — sonst wuerde jede
+        // Zwischenstufe geprueft und abgelehnt.
+        connect(edit, &QKeySequenceEdit::editingFinished, this,
+                [this, manager, id, edit]() {
+                    const QString error = manager->setSequence(id, edit->keySequence());
+                    if (error.isEmpty())
+                    {
+                        m_pHotkeyStatusLabel->setText(tr("Saved."));
+                        return;
+                    }
+                    // Abgelehnt: die alte Belegung zurueckschreiben, damit das
+                    // Feld nie etwas zeigt, was nicht gilt.
+                    edit->setKeySequence(manager->sequenceFor(id));
+                    m_pHotkeyStatusLabel->setText(tr("Not assigned: %1").arg(error));
+                });
+        connect(reset, &QPushButton::clicked, this, [manager, id, edit]() {
+            manager->resetToDefault(id);
+            edit->setKeySequence(manager->sequenceFor(id));
+        });
+        ++row;
+    }
+
+    outer->addLayout(grid);
+
+    auto* resetAll = new QPushButton(tr("All to defaults"), widget);
+    connect(resetAll, &QPushButton::clicked, this, [this, manager, widget]() {
+        manager->resetAllToDefaults();
+        // Alle Aufnahmefelder nachziehen (Reihenfolge = Registry-Reihenfolge).
+        const auto edits = widget->findChildren<QKeySequenceEdit*>();
+        int i = 0;
+        for (const lumi::services::ShortcutAction& a : lumi::services::shortcutActions())
+        {
+            if (i >= edits.size()) break;
+            edits.at(i++)->setKeySequence(manager->sequenceFor(
+                QString::fromUtf8(a.id.data(), static_cast<int>(a.id.size()))));
+        }
+        m_pHotkeyStatusLabel->setText(tr("All hotkeys reset to defaults."));
+    });
+    outer->addWidget(resetAll);
+    outer->addWidget(m_pHotkeyStatusLabel);
+    outer->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
     return widget;
 }

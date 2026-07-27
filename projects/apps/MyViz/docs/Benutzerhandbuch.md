@@ -171,6 +171,28 @@ Bedienung entkoppelt.
 | F1 | Über MyViz |
 | Alt+F4 | Beenden |
 
+### Presets durchblättern
+
+| Kürzel | Aktion |
+|---|---|
+| Bild ab | Nächstes Preset im **aktiven Ordner des Import-Browsers** |
+| Bild auf | Voriges Preset |
+
+Geblättert wird über die Presets des Ordners, der im Import-Browser offen ist —
+Unterordner werden übersprungen, am Ende des Ordners hält es an. Das Panel muss
+dafür **nicht** sichtbar oder fokussiert sein. Während in einem Textfeld oder
+Skript-Editor getippt wird, blättern die Tasten nicht, sondern verhalten sich
+normal.
+
+### Eigene Belegung
+
+*Einstellungen → Hotkeys*: jede Aktion hat ein Aufnahmefeld, ein
+*Standard*-Knopf je Zeile und *Alle auf Standard* für die ganze Liste. Eine
+Taste, die schon vergeben ist, wird **abgelehnt** statt still umgehängt — erst
+die andere Zuweisung freimachen. Die Transporttasten (Leertaste, Ctrl+Pfeile)
+sind für die Musikwiedergabe reserviert und lassen sich nicht an Preset-Aktionen
+vergeben; sie sind aufgeführt, haben aber noch keine Funktion.
+
 ## 10. Automatisch gemerkt / Bekanntes
 
 **Automatisch gespeichert** (keine Aktion nötig):

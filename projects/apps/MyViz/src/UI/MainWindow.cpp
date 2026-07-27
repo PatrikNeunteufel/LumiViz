@@ -17,6 +17,7 @@
 #include "UI/MainWindow.hpp"
 #include "UI/managers/DockManager.hpp"
 #include "UI/managers/MenuManager.hpp"
+#include "UI/managers/ShortcutManager.hpp"
 #include "UI/managers/DialogManager.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
@@ -86,6 +87,18 @@ MainWindow::MainWindow(QWidget* parent)
 
     // Setup Audio Services
     setupAudioServices();
+
+    // Hotkey-Schicht (docs/ui/Hotkey_Konzept.md): Taste -> Aktion -> Ereignis.
+    // MUSS vor setupUi() stehen: der DockManager baut in seinem Konstruktor
+    // bereits die Panels, und das Settings-Panel loest den Manager beim Aufbau
+    // seines Hotkey-Tabs auf. Stand die Registrierung spaeter (setupMenuBar),
+    // fand das Panel nichts und zeigte "Hotkey layer not available".
+    //
+    // Der Container besitzt ihn, damit alle dieselbe Instanz sehen (eine
+    // Wahrheit fuer die aktive Belegung).
+    m_pServices->registerSingleton<ShortcutManager>(
+        [](ServiceContainer& c) { return std::make_unique<ShortcutManager>(c); });
+    m_pServices->resolve<ShortcutManager>();  // jetzt erzeugen: Filter haengen
 
     setupUi();
 

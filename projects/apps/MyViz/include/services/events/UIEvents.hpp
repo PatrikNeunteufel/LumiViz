@@ -239,6 +239,29 @@ struct ImportMilkPresetEvent : public Event
 };
 
 /**
+ * @brief Ein Preset weiter / zurueck (Hotkey `preset.next` / `preset.previous`).
+ *
+ * Absichtlich ein EREIGNIS und keine Panel-Methode: die Quelle, aus der das
+ * naechste Preset kommt, wechselt ueber die Ausbaustufen (aktives Verzeichnis des
+ * Import-Browsers -> Visual-Playlist -> Composer-Spur), die Aktion und ihre Taste
+ * bleiben dieselben (`docs/ui/Hotkey_Konzept.md` §1/§3). Ein neuer Empfaenger
+ * ersetzt spaeter den alten, ohne dass eine Belegung angefasst wird.
+ *
+ * `delta` ist die Schrittweite mit Vorzeichen (+1 = weiter, -1 = zurueck).
+ */
+struct PresetStepEvent : public Event
+{
+    EVENT_TYPE_NAME("PresetStepEvent")
+
+    int delta = 1;
+
+    PresetStepEvent() = default;
+    explicit PresetStepEvent(int d)
+        : delta(d)
+    {}
+};
+
+/**
  * @brief Emitted after an AVS import attempt so a browsing panel can show a
  *        non-modal status. noteCount is the number of import report lines
  *        (passthrough/parser notes); 0 on a clean import.

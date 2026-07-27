@@ -20,6 +20,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/ICommandBus.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/IEventBus.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/MenuRegistry.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ShortcutRegistry.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PanelRegistry.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/ServiceContainer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerRegistry.hpp"

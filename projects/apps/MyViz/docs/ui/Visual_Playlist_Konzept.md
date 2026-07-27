@@ -94,37 +94,18 @@ Orthogonal zum Modus — ein oder mehrere aktiv:
 
 ---
 
-## 4. Hotkeys
+## 4. Hotkeys → eigenes Konzept
 
-### 4.1 Ist-Zustand
-- **Nur `Esc`** (Vollbild verlassen) in `MainWindow::keyPressEvent`.
-- Audio-Player: Buttons ja, **Hotkeys nein**. `MenuAutoReg` hat leere Shortcut-Slots.
+Hotkeys sind seit Session 51 in **[Hotkey_Konzept.md](Hotkey_Konzept.md)** geregelt
+(SSOT) — dieser Abschnitt ist nur noch der Verweis. Grund für die Auslagerung: die
+Belegung muss über drei Ausbaustufen stabil bleiben (aktives Verzeichnis →
+Visual-Playlist → Composer), die Transporttasten sind dauerhaft für den Audio-Player
+reserviert, und die Konfigurierbarkeit ist keine Kür mehr, sondern Teil der Stufe 1.
 
-### 4.2 Vorschlag — zentrale Hotkey-Registrierung
-Ein kleiner **Shortcut-Layer** (App-global via `QShortcut` auf dem `MainWindow`,
-oder die vorhandenen Menü-Shortcut-Slots endlich füllen). Aktionen feuern die
-bestehenden Events/Dienste — keine Logik-Doppelung.
-
-**Audio (neu):**
-| Taste | Aktion |
-|---|---|
-| `Space` | Play/Pause |
-| `Ctrl+→` / `Ctrl+←` | Nächster / voriger **Song** (`IAudioPlayer::next/previous`) |
-| `Ctrl+↑/↓` | Lautstärke |
-
-**Visual-Playlist (neu):**
-| Taste | Aktion |
-|---|---|
-| `→` / `←` (oder `PgUp/PgDn`) | Nächstes / voriges **Preset** |
-| `A` | Auto-Wechsel An/Aus |
-| `R` | Modus Sequenziell/Zufällig |
-| `F11` | Vollbild (heute nur Menü/Doppelklick) |
-
-**Kollisionsregel:** Pfeiltasten sind knapp — Audio auf `Ctrl+Pfeil`, Visuals auf
-`Pfeil` (bzw. beides konfigurierbar). Endgültige Belegung = Entscheid §6.
-
-### 4.3 Konfigurierbarkeit (Kür)
-Später Hotkeys über die Settings editierbar (Key-Map in `QSettings`).
+Für dieses Konzept relevant: `preset.next`/`preset.previous` sind **Ereignisse**
+(`PresetStepEvent`), nicht Methoden. Wenn die Visual-Playlist kommt, wechselt nur der
+**Empfänger** dieses Ereignisses vom Import-Browser zur Queue — an der
+Tastenbelegung ändert sich nichts.
 
 ---
 
@@ -137,6 +118,27 @@ Import-Browser ──"zur Playlist"──►  Visual-Playlist ──lädt──�
                  Songwechsel ───────────┘   └─────── Timer / Beat / Hotkey
               (PlaylistIndexChangedEvent)            (Auslöser)
 ```
+
+---
+
+## 5a. Ausblick: Composer (Fernziel, Patrik S51)
+
+Die Visual-Playlist ist die **eindimensionale** Vorstufe. Das Fernziel ist ein
+**Composer**: mp3 und Presets in mehreren **Spuren** über der Zeit arrangiert, um ein
+ganzes **Programm** zu bauen (Analogie: eine DAW-Anordnung, nur mit Visuals als
+Spurinhalt). Was daraus schon jetzt folgt:
+
+- Eine Preset-Referenz braucht später einen **Zeitbezug** (Start, Dauer) — das
+  Datenmodell §3.1 sollte erweiterbar bleiben, nicht auf „nur Reihenfolge" festgelegt.
+- Der Übergang (§3.4) wird dort zum **Spur-Blend**; ein Crossfade ist damit keine Kür
+  mehr, sondern Vorarbeit.
+- Die Auslöser (§3.3) werden zu einer **Zeitachse**; „bei Songwechsel" ist deren
+  einfachster Spezialfall.
+- Hotkeys bleiben unverändert — sie sprechen Aktionen an, nicht Quellen
+  ([Hotkey_Konzept.md](Hotkey_Konzept.md) §1).
+
+Kein Umsetzungsauftrag, nur die Richtung, damit die Playlist-Struktur nicht dagegen
+gebaut wird.
 
 ---
 
@@ -166,5 +168,10 @@ Import-Browser ──"zur Playlist"──►  Visual-Playlist ──lädt──�
 
 ## 8. Changelog
 
+- **0.2.0** (2026-07-27, Session 51): §4 Hotkeys nach
+  [Hotkey_Konzept.md](Hotkey_Konzept.md) ausgelagert (dort auch die
+  Reservierungs-Regel für die Transporttasten und der Settings-Editor) · §5a
+  Ausblick Composer ergänzt (Spuren über der Zeit — Folgen für Datenmodell,
+  Übergang und Auslöser).
 - **0.1.0** (2026-07-21): Erstfassung — Begriffsklärung, Import-Browser-Erweiterung,
   Visual-Playlist (Modi/Auslöser/UI/Verdrahtung), Hotkey-Vorschlag, Entscheide.

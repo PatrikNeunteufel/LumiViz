@@ -37,6 +37,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_MilkdropGlSmoke.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_BloomGlSmoke.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_Scope3DGlSmoke.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_Shortcuts.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_TexerIIGlSmoke.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ListEnabledGlSmoke.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_DmoveFixpunkt.cpp"

@@ -61,6 +61,11 @@ ImportBrowserPanel::ImportBrowserPanel(ServiceContainer& services, QWidget* pare
     {
         m_resetSubscription = bus->subscribeScoped<ResetImportBrowserDirEvent>(
             [this](const ResetImportBrowserDirEvent&) { resetStoredDir(); });
+        // Ebenfalls PERMANENT: der Hotkey soll blaettern, ohne dass dieses Panel
+        // den Fokus oder ueberhaupt die Sichtbarkeit haben muss — genau dafuer
+        // ist er da (docs/ui/Hotkey_Konzept.md §1, Stufe 1).
+        m_stepSubscription = bus->subscribeScoped<PresetStepEvent>(
+            [this](const PresetStepEvent& e) { onPresetStep(e.delta); });
     }
 }
 
@@ -260,6 +265,55 @@ void ImportBrowserPanel::onItemDoubleClicked(QListWidgetItem* item)
         default:
             return;
     }
+}
+
+// =============================================================================
+// Preset-Navigation (Hotkey `preset.next` / `preset.previous`)
+// =============================================================================
+
+int ImportBrowserPanel::nextPresetRow(const QList<int>& types, int from, int delta)
+{
+    if (types.isEmpty() || delta == 0) return -1;
+    const int step = delta > 0 ? 1 : -1;
+    // Von "keine Auswahl" aus am jeweiligen Ende beginnen, damit der erste
+    // Tastendruck etwas laedt statt ins Leere zu laufen.
+    int row = from;
+    if (row < 0 || row >= types.size()) row = step > 0 ? -1 : types.size();
+    for (row += step; row >= 0 && row < types.size(); row += step)
+    {
+        const int type = types.at(row);
+        // Ordner und ".." werden uebersprungen — Stufe 1 blaettert nur ueber die
+        // Presets des AKTIVEN Verzeichnisses, ohne Rekursion (Entscheid 2).
+        if (type == Type_Avs || type == Type_Milk || type == Type_Lvfx) return row;
+    }
+    return -1;  // am Ende anhalten, nicht umlaufen (Entscheid 3)
+}
+
+void ImportBrowserPanel::onPresetStep(int delta)
+{
+    if (m_pListWidget == nullptr) return;
+
+    QList<int> types;
+    types.reserve(m_pListWidget->count());
+    for (int i = 0; i < m_pListWidget->count(); ++i)
+    {
+        types.append(m_pListWidget->item(i)->data(Qt::UserRole + 1).toInt());
+    }
+
+    const int row = nextPresetRow(types, m_pListWidget->currentRow(), delta);
+    BasicLogger::logDebug("ImportBrowserPanel: step " + std::to_string(delta) +
+                          " from " + std::to_string(m_pListWidget->currentRow()) +
+                          " -> " + std::to_string(row) + " (" +
+                          std::to_string(types.size()) + " entries)");
+    if (row < 0)
+    {
+        setStatus(delta > 0 ? tr("End of folder") : tr("Start of folder"));
+        return;
+    }
+    m_pListWidget->setCurrentRow(row);
+    m_pListWidget->scrollToItem(m_pListWidget->item(row));
+    // Derselbe Weg wie ein Doppelklick — eine Wahrheit fuer "Eintrag laden".
+    onItemDoubleClicked(m_pListWidget->item(row));
 }
 
 void ImportBrowserPanel::onUpClicked()

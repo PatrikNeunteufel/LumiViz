@@ -14,6 +14,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/DockManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/MenuAutoReg.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/MenuManager.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ShortcutManager.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PanelManager.cpp"
 )
 set(_local_headers
