@@ -6377,6 +6377,17 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
     // genau das, was das Skript gerade gesetzt hatte.
     engine.setNumber("sizex", 1.0);
     engine.setNumber("sizey", 1.0);
+    // Farbe genauso: EINMAL je Frame vorbelegen, NICHT je Punkt. "Alien Alloy"
+    // faerbt seine Sprites im FRAME-Slot (red=sin(ct+2.07)*0.5+0.5 …) — unsere
+    // Vorbelegung stand in der Punktschleife und loeschte das bei jedem Sprite,
+    // wir zeichneten durchgehend WEISS. Paar-Sonde 6_alloy/texer_farbe_*:
+    // dieselbe Farbe im Point-Slot ist referenzgleich (MAE 0.001), im
+    // Frame-Slot wich sie ab (0.042) — die Referenz laesst den Frame-Wert die
+    // Punktschleife also ueberleben. Ein Point-Slot, der die Farbe setzt,
+    // ueberschreibt sie weiterhin je Punkt.
+    engine.setNumber("red", 1.0);
+    engine.setNumber("green", 1.0);
+    engine.setNumber("blue", 1.0);
     feedAudio(rt.texerHost->engine());
     if (rt.texerHost->has(Slot::Frame)) rt.texerHost->run(Slot::Frame);
     if (m_frameBeat && rt.texerHost->has(Slot::Beat)) rt.texerHost->run(Slot::Beat);
@@ -6440,9 +6451,6 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
         engine.setNumber("i", iNorm);
         engine.setNumber("v", waveValue(pt, n));
         engine.setNumber("skip", 0.0);
-        engine.setNumber("red", 1.0);
-        engine.setNumber("green", 1.0);
-        engine.setNumber("blue", 1.0);
         if (rt.texerHost->has(Slot::Point)) rt.texerHost->run(Slot::Point);
         if (engine.number("skip") > 0.5) continue;
         const float x = static_cast<float>(engine.number("x"));

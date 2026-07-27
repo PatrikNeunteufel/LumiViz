@@ -316,6 +316,174 @@ def main() -> None:
     # darf sie NICHT je Frame zurueckgesetzt werden.
     write("5_vars/texer2_size_aus_init.avs", preset(
         GRUND, texer2(point=TX_SZ, init="n=6; sizex=2; sizey=2")))
+    # --- Alien-Alloy-Restluecke (S52): fehlt MENGE, nicht Transport ----------
+    # Der Preset-Text sagt, woran es haengen kann. Alle vier Texer rechnen
+    #     n = w*0.1  und  sizex = reg00*0.75 ,
+    # aber NUR der erste setzt  reg00 = h/280  — die anderen drei LESEN es.
+    # `reg00..reg99` ist in AVS global (S50), also braucht es hier zweierlei:
+    # dass reg00 von einem Texer zum naechsten traegt, und dass unser
+    # sizex->Pixel-Vertrag bei genau diesem Wert stimmt (bei 240 Zeilen ist
+    # reg00 = 0.857142 und damit sizex = 0.642857 — also KLEINER als 1, ein
+    # Bereich, den die Paare oben mit sizex=2 nicht abdecken).
+    ALLOY_PT = "x=(i-0.5)*1.6; y=0;"
+    ALLOY_N = "n=8"
+    # (a) Geber + Nehmer wie im Original: Texer 1 setzt reg00, Texer 2 liest es.
+    #     Zeichnen beide gleich viel, traegt reg00 ueber die Knotengrenze.
+    write("6_alloy/reg00_geber_nehmer.avs", preset(
+        GRUND,
+        texer2(point=ALLOY_PT, frame=f"{ALLOY_N}; reg00=h/280; "
+                                     "sizex=reg00*0.75; sizey=sizex"),
+        texer2(point="x=(i-0.5)*1.6; y=0.5;",
+               frame=f"{ALLOY_N}; sizex=reg00*0.75; sizey=sizex")))
+    # (b) Dasselbe Bild, aber der zweite Texer rechnet OHNE reg00 — das Literal,
+    #     das bei 240 Zeilen herauskommt. Stimmen die REFERENZbilder von (a) und
+    #     (b) ueberein, ist reg00 nachweislich uebergetragen worden.
+    write("6_alloy/reg00_literal.avs", preset(
+        GRUND,
+        texer2(point=ALLOY_PT, frame=f"{ALLOY_N}; reg00=h/280; "
+                                     "sizex=reg00*0.75; sizey=sizex"),
+        texer2(point="x=(i-0.5)*1.6; y=0.5;",
+               frame=f"{ALLOY_N}; sizex=0.642857; sizey=sizex")))
+    # (c) Der sizex-Vertrag allein, ohne reg00: EIN Texer, Groesse als Literal.
+    #     Trennt "reg00 kommt nicht an" von "sizex rechnet falsch in Pixel um".
+    write("6_alloy/size_klein_literal.avs", preset(
+        GRUND, texer2(point=ALLOY_PT, frame=f"{ALLOY_N}; "
+                                            "sizex=0.642857; sizey=sizex")))
+    # (d) Gegenprobe mit sizex=1 (neutral) — die Bezugsgroesse fuer (c).
+    #     Aus (c)/(d) faellt der Flaechenfaktor ab, den sizex bewirkt.
+    write("6_alloy/size_eins.avs", preset(
+        GRUND, texer2(point=ALLOY_PT, frame=f"{ALLOY_N}; sizex=1; sizey=1")))
+    # (e) Sprite-Geometrie am RAND: das Original setzt y=0.98 (und -0.98), also
+    #     knapp ausserhalb der halben Sprite-Hoehe. Wird dort geklemmt,
+    #     abgeschnitten oder gar nicht gezeichnet? Drei Reihen zum Vergleich.
+    write("6_alloy/rand_y098.avs", preset(
+        GRUND,
+        texer2(point="x=(i-0.5)*1.6; y=0.98;", frame=f"{ALLOY_N}; sizex=2; sizey=2"),
+        texer2(point="x=(i-0.5)*1.6; y=-0.98;", frame=f"{ALLOY_N}; sizex=2; sizey=2"),
+        texer2(point="x=(i-0.5)*1.6; y=0;", frame=f"{ALLOY_N}; sizex=2; sizey=2")))
+
+    # (f) Der eigentliche Befund (S52): in "Alien Alloy" ist NICHT zu wenig
+    #     gezeichnet — unser Bild ist SCHWARZ bis auf die Sprites, waehrend die
+    #     Referenz das volle Wirbelfeld zeigt. Die Bisektion sagt es genau:
+    #     Stufe l05 (bis einschliesslich Dynamic Movement) ist 0.000, l06
+    #     (+ EIN Texer) kippt, und laesst man aus l06 die DM weg, ist es wieder
+    #     gut. Also loescht ein Zeichner NACH einer Dynamic Movement den
+    #     Hintergrund. Diese drei Sonden trennen "liegt am Texer" von "liegt an
+    #     jedem Zeichner nach einer DM".
+    DM_ZOOM = "d=d*0.98"
+    write("6_alloy/dm_dann_texer.avs", preset(
+        REFBILD, dynamic_movement(point=DM_ZOOM),
+        texer2(point=ALLOY_PT, frame=f"{ALLOY_N}; sizex=1; sizey=1")))
+    write("6_alloy/dm_dann_scope.avs", preset(
+        REFBILD, dynamic_movement(point=DM_ZOOM),
+        superscope(point="x=(i-0.5)*1.6; y=0; red=1;green=1;blue=1;linesize=4;",
+                   init="n=8", which_ch=2, colors=(0xFFFFFF,), drawmode=1)))
+    write("6_alloy/dm_allein.avs", preset(REFBILD, dynamic_movement(point=DM_ZOOM)))
+    write("6_alloy/texer_ohne_dm.avs", preset(
+        REFBILD, texer2(point=ALLOY_PT, frame=f"{ALLOY_N}; sizex=1; sizey=1")))
+    # (g) Mit den FLAGS der echten DM aus "Alien Alloy": rectCoords=1, wrap=1,
+    #     Gitter 25x25 (Vorgabe 16x12). Eine davon macht den Unterschied — die
+    #     Sonde (f) mit den Vorgabewerten ist sauber, die Kette nicht.
+    ALLOY_DM = dict(rectcoords=1, wrap=1, xres=25, yres=25, subpixel=1)
+    write("6_alloy/dmflags_dann_texer.avs", preset(
+        REFBILD, dynamic_movement(point=DM_ZOOM, **ALLOY_DM),
+        texer2(point=ALLOY_PT, frame=f"{ALLOY_N}; sizex=1; sizey=1")))
+    write("6_alloy/dmflags_allein.avs", preset(
+        REFBILD, dynamic_movement(point=DM_ZOOM, **ALLOY_DM)))
+    # Je Flag einzeln, damit der Taeter benannt ist statt nur eingekreist.
+    write("6_alloy/dmrect_dann_texer.avs", preset(
+        REFBILD, dynamic_movement(point=DM_ZOOM, rectcoords=1),
+        texer2(point=ALLOY_PT, frame=f"{ALLOY_N}; sizex=1; sizey=1")))
+    write("6_alloy/dmwrap_dann_texer.avs", preset(
+        REFBILD, dynamic_movement(point=DM_ZOOM, wrap=1),
+        texer2(point=ALLOY_PT, frame=f"{ALLOY_N}; sizex=1; sizey=1")))
+    write("6_alloy/dmgitter_dann_texer.avs", preset(
+        REFBILD, dynamic_movement(point=DM_ZOOM, xres=25, yres=25),
+        texer2(point=ALLOY_PT, frame=f"{ALLOY_N}; sizex=1; sizey=1")))
+    # (h) Der verbleibende Unterschied zur Kette: dort steht VOR den Texern ein
+    #     Set Render Mode mit BLEND_LINE-Modus 2 (MAX). Die Sonden oben liefen
+    #     alle im Vorgabe-Modus REPLACE. Da die Divergenz ueber die Frames
+    #     WAECHST (Frame 1: 0.010, Frame 120: 0.568), muss der Zeichner etwas
+    #     im Puffer hinterlassen, das die Ruecklese der DM im naechsten Frame
+    #     mitnimmt — genau dort ist der Blend-Modus die Stellschraube. Ein Paar,
+    #     das sich nur darin unterscheidet.
+    for mode, tag in ((2, "max"), (0, "replace"), (1, "additiv")):
+        write(f"6_alloy/srm{mode}_{tag}_dm_texer.avs", preset(
+            REFBILD, set_render_mode(mode, width=1),
+            dynamic_movement(point=DM_ZOOM, **ALLOY_DM),
+            texer2(point=ALLOY_PT, frame=f"{ALLOY_N}; sizex=1; sizey=1")))
+
+    # (i) Der Minimalfall aus der Bisektion: NUR die echte Dynamic Movement und
+    #     der echte Texer aus "Alien Alloy" weichen schon ab (0.120 ueber 240
+    #     Frames). Wichtig — und der Grund, warum die Sonden (f)-(h) sauber
+    #     sind: die saeen mit REFBILD JEDEN Frame die ganze Flaeche neu und sind
+    #     damit blind fuer Verluste in der Rueckkopplung (Merkregel S51). Hier
+    #     sind die Sprites am Rand die EINZIGE Energiequelle, alles andere baut
+    #     der Wirbel ueber die Frames auf. Vier Fassungen, die sich in genau
+    #     einer Zutat unterscheiden.
+    DM_INIT = "t=rand(100)/50;"
+    DM_FRAME = (
+        "vol=vol*0.9+getspec(0.5,1,0) ;\n"
+        "swrlstr=0.02+min(1.5,vol)*0.08 ;\n"
+        "sftstr=0.02+min(1.5,vol)*0.08 ;\n"
+        "t=t-(0.005+vol*0.015) ;\n"
+        "cx=cos(t*.97)*.5;\n"
+        "cy=sin(t*.77)*cos(t*1.03)*.5;\n"
+        "ro=ro+sin(t*0.71)*cos(t*0.453)*sin(cos(t*.391))*.1;\n"
+        "xo=cos(ro)*.3;yo=sin(ro)*.3;\n"
+        "asp1=h/w ;\nasp2=1/asp1")
+    DM_POINT = (
+        "xx=x;yy=y;\n"
+        "x1=x-cx-xo;y1=(y-cy-yo)*asp1;\n"
+        "r1=atan2(y1,x1);d1=sqrt(sqr(x1)+sqr(y1));\n"
+        "r1=r1+swrlstr/d1;x1=cos(r1)*d1+cx+cos(ro)*sftstr;"
+        "y1=sin(r1)*d1*asp2+cy+sin(ro)*sftstr;\n"
+        "x2=x-cx+xo;y2=(y-cy+yo)*asp1;\n"
+        "r2=atan2(y2,x2);d2=sqrt(sqr(x2)+sqr(y2));\n"
+        "r2=r2-swrlstr/d2;x2=cos(r2)*d2+cx-cos(ro)*sftstr;"
+        "y2=sin(r2)*d2*asp2+cy-sin(ro)*sftstr;\n"
+        "x=(x1+x2)*.506;y=(y1+y2)*.506;")
+    TX_FRAME = ("n=w*0.1 ;\nct=ct+cts ;\n"
+                "red=sin(ct+2.07)*0.5+0.5 ;\ngreen=sin(ct+4.18)*0.5+0.5 ;\n"
+                "blue=sin(ct)*0.5+0.5 ;\nreg00=h/280 ;\n"
+                "sizex=reg00*0.75 ;\nsizey=sizex")
+    TX_BEAT = "cts=(rand(51)-25)*0.01"
+    TX_POINT = ("x=sin(i*$pi*2+ct*0.713)*2-1 ;\n"
+                "y=0.98-sqr(getosc(v,0,2))*0.2")
+
+    def alloy_paar(name: str, dm_init: str = DM_INIT, dm_frame: str = DM_FRAME,
+                   tx_frame: str = TX_FRAME, tx_beat: str = TX_BEAT) -> None:
+        write(f"6_alloy/{name}.avs", preset(
+            dynamic_movement(point=DM_POINT, init=dm_init, frame=dm_frame,
+                             **ALLOY_DM),
+            texer2(point=TX_POINT, frame=tx_frame, beat=tx_beat)))
+
+    # (j) Der Beweis, isoliert: dieselbe Farbe einmal im FRAME-, einmal im
+    #     POINT-Slot gesetzt. Stimmen die REFERENZbilder ueberein, ueberlebt die
+    #     Frame-Farbe die Punktschleife — dann darf unsere neutrale Vorbelegung
+    #     nicht je Punkt laufen (Gegenstueck zu sizex/sizey aus S51).
+    FARB_PT = "x=(i-0.5)*1.6; y=0;"
+    write("6_alloy/texer_farbe_frame.avs", preset(
+        GRUND, texer2(point=FARB_PT,
+                      frame="n=8; sizex=2; sizey=2; red=1; green=0.25; blue=0")))
+    write("6_alloy/texer_farbe_point.avs", preset(
+        GRUND, texer2(point=FARB_PT + " red=1; green=0.25; blue=0;",
+                      frame="n=8; sizex=2; sizey=2")))
+
+    alloy_paar("paar_original")
+    # Ohne den rand-Zieher im Init: startet der Wirbel bei beiden in derselben
+    # Phase, faellt eine Zufalls-Ausrichtung als Ursache weg.
+    alloy_paar("paar_fest_t", dm_init="t=1;")
+    # Ohne Audio-Abhaengigkeit: `vol` treibt Wirbelstaerke UND Zeitschritt.
+    alloy_paar("paar_fest_vol",
+               dm_frame=DM_FRAME.replace("vol=vol*0.9+getspec(0.5,1,0) ;",
+                                         "vol=0.5 ;"))
+    # Ohne die Farb-/Zeitakkumulation des Texers (ct, cts und deren rand).
+    alloy_paar("paar_fixfarbe",
+               tx_frame=("n=w*0.1 ;\nred=1 ;\ngreen=1 ;\nblue=1 ;\n"
+                         "reg00=h/280 ;\nsizex=reg00*0.75 ;\nsizey=sizex"),
+               tx_beat="")
+
     # Audio-Werte als Zeilenlage: die Zeile, in der das Segment liegt, IST der
     # Wert. Anlass (S51): "Alien Alloy" leitet Swirl-Staerke UND Zeitschritt aus
     # vol=getspec(0.5,1,0) ab — weicht der Wert zwischen den Renderern ab,

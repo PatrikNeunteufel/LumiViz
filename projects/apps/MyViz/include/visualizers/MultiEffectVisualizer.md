@@ -81,6 +81,17 @@ nach dem AVS-Render-Modell (Analyse §5.1). Import-Ziel für .avs-Presets
   `renderMutex()` des Widgets, danach `recompileChain()` (E4/E5).
 - Default-Kette (Konstruktor): Fadeout(12) + DebugBars — sichtbarer Beweis,
   dass der Ketten-Walk läuft (Sichttest 5.1).
+- **Neutrale Vorbelegungen der Skript-Träger gehören VOR den Frame-Slot, nicht
+  in die Punktschleife.** Zweimal gemessen an der Referenz: `sizex`/`sizey`
+  (S51) und `red`/`green`/`blue` (S52) standen je nach Punkt bzw. nach dem
+  Frame-Slot und löschten damit genau das, was das Skript gerade gesetzt hatte.
+  AVS belegt diese Variablen **einmal je Frame** vor; ein Point-Slot, der sie
+  setzt, überschreibt sie weiterhin je Punkt. Beleg jeweils als Paar-Sonde
+  (`asset/calibration/avs/probes/5_vars/`, `6_alloy/`): dieselbe Größe/Farbe
+  einmal im Point-, einmal im Frame-Slot — stimmen die *Referenz*bilder, muss
+  der Frame-Wert die Punktschleife überleben. Wirkung des Farb-Falls: „Alien
+  Alloy" zeichnete durchgehend weiße Sprites und lief nach Schwarz
+  (0,647 → **0,008**).
 
 ## Milkdrop-Meganode (N1/N2, Session 41 — Entscheide E1/E2)
 

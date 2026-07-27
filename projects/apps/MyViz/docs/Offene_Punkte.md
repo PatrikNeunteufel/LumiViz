@@ -30,7 +30,9 @@ dünnen Inhalten).
 
 | Preset / Sonde | Wert | Diagnosestand | |
 |---|---|---|---|
-| **15 Alien Alloy** | 0,683 | Zeichner + Transport pixelgleich verifiziert, es fehlt **Menge**: Stufe `l06` Referenz 75126 px (Energie 40434), wir 4685 (1893) bei praktisch gleicher Spitzenhelligkeit. Per Messung ausgeschlossen: Audio-Werte, rand-Init, Warp/Gitter/Abtastung, Colorfade (auch asymmetrisch). Nächster Verdacht: erreicht der Set-Render-Mode-Zustand (`lineBlend 2` = `BLEND_MAX`) den Texer über den dazwischenliegenden Custom-BPM-Knoten? Plus Sprite-Geometrie am Rand (`y=0.98`) | 🟠 |
+| ~~**07 Milky Way Xtreme**~~ | **0,346 → 0,033** | ✅ derselbe Texer-Farbfix (S52), Vorstand gemessen | ✅ |
+| ~~**19 High Voltage**~~ | **0,126 → 0,040** | ✅ derselbe Texer-Farbfix (S52), Vorstand gemessen | ✅ |
+| ~~**15 Alien Alloy**~~ | **0,647 → 0,008** | ✅ **gelöst (S52):** Texer II setzte die Sprite-Farbe **je Punkt** auf Weiß zurück — also *nach* dem Frame-Slot, in dem dieses Preset sie berechnet (`red=sin(ct+2.07)*0.5+0.5` …). Wir zeichneten durchgehend weiße Sprites; da sie die einzige Energiequelle des Wirbels sind, lief das Bild über die Frames nach Schwarz. Gegenstück zum `sizex`/`sizey`-Befund aus S51, dieselbe Ursache an anderer Variable. Rest-MAE 0,298 = Phasenversatz, gehört zum rand-Faden | ✅ |
 | **01 Picture II** | 0,516 | verarbeitet die drei Bilder falsch — unanalysiert | 🟠 |
 | **Inhaler** | 0,416 | war 0,246. Der `dt`-Fix (S51) hat die Zufalls-Startphase dort erst wirksam gemacht (`dt=rand(100)/40` im Init). **Kein Regress** — gehört zum rand-Ausrichtungs-Faden | 🟠 |
 | **Deep Red Sea** | 0,858 | derselbe rand-Faden | 🟠 |
@@ -46,6 +48,19 @@ dünnen Inhalten).
 
 **Vor „Regression!" den Vorstand MESSEN** (stash + Rebuild), nie gegen notierte Zahlen
 einer anderen Messreihe — zwei von drei Auffälligkeiten in S51 waren auf HEAD identisch.
+
+**Und: die Montage ansehen, bevor man eine Zahl deutet.** Bei Alien Alloy stand hier
+acht Zeilen lang „es fehlt Menge, die Sprites sind zu wenige". Tatsächlich war unser
+Bild *schwarz bis auf die Sprites* — die gemessenen 4685 Pixel WAREN die Sprites, und
+gefehlt hat alles andere. Aus der falschen Leseart folgten drei Sonden, die alle grün
+waren und nichts fanden (`reg00`-Transport, `sizex`-Vertrag, Randgeometrie).
+
+**Eine Sonde, die den Hintergrund jeden Frame neu zeichnet, kann keinen
+Rückkopplungs-Verlust sehen.** Vier weitere Sonden blieben deshalb grün (DM+Texer,
+DM-Flags, alle drei Blend-Modi): sie säten mit einem Vollbild-Muster je Frame neu.
+Erst der Nachbau des echten Paares — Sprites am Rand als **einzige** Energiequelle —
+zeigte die Divergenz. Wächst der Abstand über die Frames (hier 0,010 → 0,568), ist
+die Ursache im Kreislauf, und die Sonde muss ihn schließen.
 
 ## 2. Urteile, die nur Seite-an-Seite fallen können
 
