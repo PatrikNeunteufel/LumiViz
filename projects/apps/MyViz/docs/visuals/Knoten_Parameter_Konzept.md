@@ -1,10 +1,11 @@
 # MyViz — Knoten-Parameter, Voreinstellungen und dynamische Felder (Konzept)
 
-> **Version:** 1.15.0
-> **Datum:** 2026-07-27
-> **Typ:** Konzept — Etappen 1–6 umgesetzt (Session 53), **7–9 offen**
-> **Status:** Aktiv — Entscheide §8.1–§8.4 gefallen; Etappen 7 (Test-Presets),
-> 8 (Tooltips) und 9 (Basis-Voreinstellungen) sind Vorgaben Patrik für Session 54
+> **Version:** 1.16.0
+> **Datum:** 2026-07-28
+> **Typ:** Konzept — Etappen 1–6 umgesetzt (S53), **Etappe 7 = Strang E umgesetzt
+> (S54)**, 8 (Tooltips) und 9 (Basis-Voreinstellungen) offen
+> **Status:** Aktiv — Entscheide §8.1–§8.4 gefallen; Strang E hat beim ersten
+> Einsatz zwei Befunde an Strang D geliefert (§9.1)
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Import_Modul_Abdeckung.md](Import_Modul_Abdeckung.md) (Knoten-Bestand) ·
 > [AVS_Kalibrier_Methodik.md](AVS_Kalibrier_Methodik.md) (der Treue-Vertrag, §2) ·
@@ -24,7 +25,7 @@ Bahnradius stehen als Literale im Renderer. Dazu sollen **alle** Knoten
 Voreinstellungen bekommen, auch die längst vollständigen (`Movement`,
 `Dynamic Movement`, `Effect List`).
 
-Die Bestandsaufnahme (S53, skriptgestützt über alle 81 Knotentypen) trennt das in
+Die Bestandsaufnahme (S53, skriptgestützt über alle Knotentypen) trennt das in
 **drei Lücken**, die verschieden teuer und verschieden riskant sind:
 
 | Lücke | Was fehlt | Aufwand | Risiko |
@@ -37,7 +38,8 @@ Die Bestandsaufnahme (S53, skriptgestützt über alle 81 Knotentypen) trennt das
 ## 2. Der Default-Vertrag — die Regel über allem
 
 Seit Session 44 läuft die **Kalibrier-Runde**: Der Wert eines Knotens misst sich am
-Referenz-Renderer `AvsRef` (Modul-Matrix 37/41, Sonden 79/80, Zwillinge 65/65). Jeder
+Referenz-Renderer `AvsRef` (Modul-Matrix 36/41, Sonden 78/80 — gemessen S53/S54;
+die früher notierten 37/41 und 79/80 waren zu optimistisch). Jeder
 neue Parameter ist eine Gelegenheit, diese Zahlen unbemerkt zu verderben.
 
 > **Vertrag:** Ein neuer Parameter **muss** bei seinem Default-Wert exakt das heutige
@@ -354,11 +356,69 @@ bestehenden Modul-Sonden. Je Preset:
 
 **Urteil.** Zwei Läufe je Preset: einmal auf Default, einmal mit gesetztem Feld.
 Unterscheiden sich die Bilder **nicht**, ist das Feld wirkungslos — Befund, kein
-Messrauschen. Die Messwerkzeuge stehen (`compare_avsref.py`, `run_module_probes.py`),
-nur die Preset-Sammlung fehlt.
+Messrauschen.
 
 **Nebenprodukt.** Die Sammlung ist zugleich die Grundlage für Strang G: ein Preset,
 das ein Feld gut zeigt, ist oft schon eine brauchbare Voreinstellung.
+
+### 9.1 Umsetzung (Session 54)
+
+Die Sammlung wird **erzeugt**, nicht geschrieben — bei 717 Feldern ist eine
+handgepflegte Ablage nicht zu halten. Vier Stufen unter `asset/calibration/fields/`:
+
+| Stufe | Werkzeug | liefert |
+|---|---|---|
+| Inventar | `test_FieldInventory.cpp` → `inventory.json` | alle Typen und Felder mit Vorgabe, als Golden bewacht |
+| Ernte | `harvest_field_docs.py` → `inventory_docs.json` | Wertebereiche (Panel-Setter), Enum-Breite, Beschreibungen, echte Skriptvariablen (`runParamScript`) |
+| Erzeugung | `make_field_probes.py` | je Typ `_default.lvfx`, je Feld `<feld>.lvfx` |
+| Urteil | `run_field_probes.py` | WIRKT / SCHWACH / STUMM + Montage |
+
+**Der Untergrund** (`lvfx_lib.py`) ist der Nachbau des S50-Referenzbilds aus
+`make_module_probes.py` — vier Farbfelder plus Diagonale auf `0x101010`. Kein
+zweites Testbild: so lässt sich ein Befund zwischen beiden Sonden-Familien
+vergleichen. Zwei Läufe desselben Presets sind **bit-identisch** (nachgemessen),
+deshalb braucht das Urteil keine Toleranz — jede Abweichung ≠ 0 kommt vom Feld.
+Das deterministische Testsignal liefert der Standalone selbst (Sinus + Beat-Puls),
+ein WAV aus `…\cmake\TestAudio` wird dafür nicht gebraucht.
+
+**Drei Tabellen tragen das Wissen, das sich nicht ableiten lässt** — jede mit
+Begründung im Skript, weil jede aus einem Fehlversuch entstanden ist:
+
+- `HANDWERK` — Gegenwerte, die keine Regel liefert (ein Movement-Ausdruck, ein
+  Bildpfad). Auch Bitfelder: `mirror.mode` 4 → 12 addiert nur Bits und sieht aus
+  wie die Vorgabe; der Gegenwert muss die **Achse** wechseln.
+- `GRUNDKONFIG` — Felder, die nur in Gesellschaft wirken (`mirror.slower` braucht
+  `smooth`, `mosaic.onBeat` braucht ein abweichendes `quality2`). Solche Felder
+  bekommen einen **eigenen Vergleichsgrund**, sonst unterscheiden sich die zwei
+  Läufe in zwei Dingen statt einem.
+- `NICHT_PRUEFBAR` — was das Testsignal grundsätzlich nicht zeigen kann. Bisher
+  nur die Timescope-Kanalfelder: der Standalone erzeugt das Spektrum für beide
+  Kanäle gleich, links/rechts/Mitte sind dort zwangsläufig identisch. Ein
+  „STUMM" wäre hier eine Falschaussage über die App.
+
+**Lauflänge (Vorgabe Patrik, S54).** 181 Frames ≈ drei Sekunden bei 60 fps, mit
+`--beat-period 30` also sechs Beats — und der letzte Frame ist selbst einer
+(`(181-1) % 30 == 0`). Ein Effekt braucht Zeit zu wirken, ein beat-gebundener
+braucht Beats, und seine Wirkung muss im **Schlussbild** stehen. Mit den
+anfänglichen 40 Frames war `onBeatClear` sechsmal stumm: der Knoten löschte
+korrekt, nur zeichnete der Untergrund im Folgeframe wieder darüber.
+
+**Zwei Beschleunigungen wurden gemessen und verworfen** — beide bleiben als
+Schalter erhalten, damit niemand den Weg ohne die Zahlen wiederholt:
+
+| Idee | gemessen (97 Sonden) |
+|---|---|
+| 4 Prozesse gleichzeitig (`--jobs`) | **61 s** gegen 31 s — die GPU ist der Engpass, nicht die Reihenfolge; dazu wich eine Zeile in der 4. Nachkommastelle ab |
+| alle Sonden eines Typs in einem Prozess (`--verzeichnis`) | **31,1 s** gegen 31,3 s — kein Unterschied |
+
+Der zweite Fall beruhte auf einem Messfehler: ein *einzelner, kalter* Aufruf
+braucht 960 ms und sieht nach hohen Fixkosten aus; im laufenden Sweep liegen
+die Qt- und GL-DLLs im Cache und ein Start kostet real ~0,3 s.
+
+**Was der erste Einsatz gefunden hat** (S54, Details im Session-Report): 43 von
+129 Skript-Frame-Kopien wurden nie gelesen — das Skript rechnete, sein Ergebnis
+verfiel. Dazu der Init-Slot, den die Vorbelegung jedes Frames überschrieb.
+Beides behoben; die Sonden belegen den Unterschied Feld für Feld.
 
 ## 10. Strang F — Tooltip an jedem Feld (Vorgabe Patrik, S53)
 
@@ -411,6 +471,7 @@ Farbtafel des Knotens stehen lässt, ist brauchbarer als eine, die alles übersc
 | 1.14.0 | 2026-07-27 | Session 53 — `Movement` verliert seine Strang-D-Felder wieder (Befund Patrik, `movement3b.lvfx`): zwei Skript-Träger nebeneinander teilen keine Variablen, und die Tabelle cacht ohnehin über den Skripttext. Daraus die Regel „ein Knoten, ein Skript-Träger" — über alle Renderer geprüft, Movement war der einzige Verstoß |
 | 1.13.0 | 2026-07-27 | Session 53 — **Strang D vollständig**: auch die 35 Trans-/Bild-Effekte, insgesamt 48 Renderer mit `runParamScript`. Damit sind alle sechs Etappen umgesetzt. Beim maschinellen Einfügen ein Fehler und seine Reparatur: das Muster suchte über Funktionsgrenzen hinweg und legte Blöcke in fremde Funktionen — Gegenmittel ist, erst den Funktionskörper zu isolieren und **danach** darin zu suchen, plus die Zählprobe „genau ein `runParamScript` je Funktion" |
 | 1.12.0 | 2026-07-27 | Session 53 — Strang D auf **alle 13 Render-Knoten** vollständig (dazu Starfield · Timescope · Dot Grid · Dot Fountain). Matrix unverändert: starfield und timescope weiter 0,000 |
+| 1.16.0 | 2026-07-28 | Session 54 — **Strang E umgesetzt** (§9.1): Inventar-Golden (85 Typen, 717 Felder) mit C++-Gate, Ernte von Bereichen/Doku/Skriptvariablen, Generator und Urteil. Beim ersten Einsatz zwei Befunde an Strang D: **43 von 129 Frame-Kopien wurden nie gelesen**, und der **Init-Slot** war wirkungslos, weil die Vorbelegung jedes Frames ihn überschrieb — beides behoben (Entscheid Patrik: Init setzt eine einmalige Startbelegung, die Frames schreiben sie fort; ein Reglerdreh gewinnt). Dazu: Skriptfehler werden gemeldet (`lastError` wurde nie abgefragt), `timescope.useChannel` macht den im Original toten Kanalregler wahlweise wirksam, Colorfades Beat-Fader sind skriptbar. Matrix 36/41, Sonden 78/80, Tests 481 — keine Regression |
 | 1.11.0 | 2026-07-27 | Session 53 — Strang D auch für **Klasse A** (Dot Plane · Bass Spin · Moving Particle). Dabei die Lücke geschlossen, die das offen gehalten hatte: die ⚠ an den Reglern kann ein Frame-Skript nicht sehen, deshalb tragen diese Knoten eine eigene Hinweiszeile über den Skriptfeldern. Matrix unverändert, dot_plane/moving_particle weiter 0,000 |
 | 1.10.0 | 2026-07-27 | Session 53 — Strang D auf **alle sechs Klasse-B-Knoten** erweitert (dazu Metaballs 3D, Tentacles 3D, FyrewurX). `runMetaballs3D`/`runTentacles3D` bekamen dafür den `node`-Parameter, den sie als einzige Renderer nicht hatten |
 | 1.9.0 | 2026-07-27 | Session 53 — **Etappe 6 begonnen**: Fundament `runParamScript` (opt-in, Frame-Kopie) + die drei Scope-Knoten angeschlossen. Matrix 36/41 und Sonden 78/80 unverändert, die drei Zeilen bitgleich |

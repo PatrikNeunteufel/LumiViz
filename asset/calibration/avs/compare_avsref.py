@@ -101,6 +101,30 @@ def run_ref(avs: Path, frames: int, size: str, out: Path, beat_period: int = 0,
     return bmp
 
 
+def run_lumi_dir(ordner: Path, frames: int, size: str, out: Path,
+                 beat_period: int = 0) -> None:
+    """Ein GANZES Verzeichnis in EINEM Prozess rendern (`--auto` kann das).
+
+    Der Prozessstart kostet rund 800 ms, 40 Frames rendern nur rund 160 ms
+    (gemessen S54) — wer je Preset einen Prozess startet, verschenkt den
+    Grossteil der Laufzeit an Qt- und GL-Initialisierung. Die Bilder heissen
+    wie beim Einzelaufruf: `<datei_mit_unterstrich>_auto.png`.
+    """
+    import os
+    env = dict(os.environ)
+    env["QT_ENABLE_HIGHDPI_SCALING"] = "0"
+    extra = ["--beat-period", str(beat_period)] if beat_period > 0 else []
+    out.mkdir(parents=True, exist_ok=True)
+    proc = subprocess.run(
+        [str(LUMI_EXE), str(ordner), "--auto", "--frames", str(frames),
+         "--size", size, "--out", str(out)] + extra,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        timeout=1800, env=env)
+    if proc.returncode != 0:
+        raise RuntimeError(f"AvsStandalone rc={proc.returncode}\n"
+                           f"{proc.stdout}{proc.stderr}")
+
+
 def run_lumi(avs: Path, frames: int, size: str, out: Path, beat_period: int = 0) -> Path:
     """AvsStandalone --auto rendern; liefert den PNG-Pfad des Screenshots."""
     import os

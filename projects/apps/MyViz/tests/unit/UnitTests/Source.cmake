@@ -46,6 +46,8 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_AvsChainTranslator.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ChainSerializer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_NodePresetStore.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_FieldInventory.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_ParamScript.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ScriptContext.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ScriptModules.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_BeatEstimator.cpp"

@@ -947,6 +947,7 @@ struct WriteVisitor
         o["color"] = static_cast<double>(p.color);
         o["blend"] = p.blend;
         o["channel"] = p.channel;
+        o["useChannel"] = p.useChannel;
         o["bands"] = p.bands;
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
@@ -2218,6 +2219,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.color = getColor(o, "color", 0xFFFFFF);
         p.blend = getInt(o, "blend", 0);
         p.channel = getInt(o, "channel", 2);
+        // Vorgabe false: ein importiertes Preset traegt `which_ch`, das im
+        // Original nichts bewirkt — es soll auch bei uns nichts bewirken.
+        p.useChannel = getBool(o, "useChannel", false);
         p.bands = getInt(o, "bands", 576);
         p.initCode = getStr(o, "initCode");
         p.frameCode = getStr(o, "frameCode");

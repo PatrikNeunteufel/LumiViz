@@ -1,0 +1,4283 @@
+{
+    "schema": 1,
+    "summe": {
+        "felder": 717,
+        "typen": 85
+    },
+    "typen": [
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16777215,
+                    "name": "color"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "size"
+                }
+            ],
+            "name": "Add Borders",
+            "typkey": "addBorders"
+        },
+        {
+            "felder": [
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "adapt"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "filename"
+                },
+                {
+                    "art": "zahl",
+                    "default": 6,
+                    "name": "persist"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "resolvedPath"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "speedMs"
+                }
+            ],
+            "name": "AVI",
+            "typkey": "avi"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16777215,
+                    "name": "colorLeft"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16777215,
+                    "name": "colorRight"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "left"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "mode"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "right"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.699999988079071,
+                    "name": "smoothing"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.5235983729362488,
+                    "name": "spinStep"
+                }
+            ],
+            "name": "Bass Spin",
+            "typkey": "bassSpin"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "blend"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onBeat"
+                },
+                {
+                    "art": "zahl",
+                    "default": 30,
+                    "name": "scale"
+                },
+                {
+                    "art": "zahl",
+                    "default": 30,
+                    "name": "scale2"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "subpixel"
+                }
+            ],
+            "name": "Blitter Feedback",
+            "typkey": "blitterFeedback"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "downsample"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "intensity"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "post"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "radius"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "threshold"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "vignette"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.30000001192092896,
+                    "name": "vignetteStrength"
+                }
+            ],
+            "name": "Bloom",
+            "typkey": "bloom"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "roundUp"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "strength"
+                }
+            ],
+            "name": "Blur",
+            "typkey": "blur"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blue"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "color"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16,
+                    "name": "distance"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "exclude"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "green"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "red"
+                }
+            ],
+            "name": "Brightness",
+            "typkey": "brightness"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "bufferA"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "bufferB"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "mode"
+                }
+            ],
+            "name": "Buffer Blend",
+            "typkey": "bufferBlend"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 128,
+                    "name": "adjustAlpha"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "dir"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "slot"
+                }
+            ],
+            "name": "Buffer Save",
+            "typkey": "bufferSave"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "buffern"
+                },
+                {
+                    "art": "zahl",
+                    "default": 30,
+                    "name": "depth"
+                },
+                {
+                    "art": "zahl",
+                    "default": 100,
+                    "name": "depth2"
+                },
+                {
+                    "art": "zahl",
+                    "default": 15,
+                    "name": "durationFrames"
+                },
+                {
+                    "art": "text",
+                    "default": "x=0.5+cos(t)*0.3;\ny=0.5+sin(t)*0.3;\nt=t+0.1;",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "t=0;",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "invert"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "oldStyle"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onBeat"
+                }
+            ],
+            "name": "Bump",
+            "typkey": "bump"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "fogColor"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "fogEnd"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "fogStart"
+                },
+                {
+                    "art": "zahl",
+                    "default": 30,
+                    "name": "fov"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "px"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "py"
+                },
+                {
+                    "art": "zahl",
+                    "default": 3.732050895690918,
+                    "name": "pz"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "roll"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "tx"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "ty"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "tz"
+                }
+            ],
+            "name": "3D Camera",
+            "typkey": "camera3d"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "mode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onBeat"
+                }
+            ],
+            "name": "Channel Shift",
+            "typkey": "channelShift"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "color"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onlyFirst"
+                }
+            ],
+            "name": "Clear",
+            "typkey": "clear"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2105376,
+                    "name": "clipColor"
+                },
+                {
+                    "art": "zahl",
+                    "default": 10,
+                    "name": "distance"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "mode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2105376,
+                    "name": "outColor"
+                }
+            ],
+            "name": "Color Clip",
+            "typkey": "colorClip"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 128,
+                    "name": "adjustBlend"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blendMode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "key"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                    ],
+                    "laenge": 0,
+                    "name": "stopColor"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                    ],
+                    "laenge": 0,
+                    "name": "stopPos"
+                }
+            ],
+            "name": "Color Map",
+            "typkey": "colorMap"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "levelCode"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "recompute"
+                }
+            ],
+            "name": "Color Modifier",
+            "typkey": "colorModifier"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "levels"
+                }
+            ],
+            "name": "Color Reduction",
+            "typkey": "colorReduction"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "beatFaderB"
+                },
+                {
+                    "art": "zahl",
+                    "default": -8,
+                    "name": "beatFaderG"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "beatFaderR"
+                },
+                {
+                    "art": "zahl",
+                    "default": -8,
+                    "name": "faderB"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "faderG"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "faderR"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "onBeatFrames"
+                }
+            ],
+            "name": "Colorfade",
+            "typkey": "colorfade"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "text"
+                }
+            ],
+            "name": "Comment",
+            "typkey": "comment"
+        },
+        {
+            "felder": [
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "absolute"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "bias"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "edgeMode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0
+                    ],
+                    "laenge": 49,
+                    "name": "kernel"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "scale"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "twoPass"
+                }
+            ],
+            "name": "Convolution",
+            "typkey": "convolution"
+        },
+        {
+            "felder": [
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "arbitrary"
+                },
+                {
+                    "art": "zahl",
+                    "default": 500,
+                    "name": "arbitraryMs"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "invert"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "skip"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "skipCount"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "skipFirst"
+                }
+            ],
+            "name": "Custom BPM",
+            "typkey": "customBpm"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 16744703,
+                    "name": "color"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "orbitSpeed"
+                }
+            ],
+            "name": "Debug Bars",
+            "typkey": "debugBars"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "colorCycle"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "colorScale"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.5,
+                    "name": "gain"
+                },
+                {
+                    "art": "text",
+                    "default": "Neon",
+                    "name": "gradientPreset"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "lacunarity"
+                },
+                {
+                    "art": "zahl",
+                    "default": 5,
+                    "name": "octaves"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "offsetX"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "offsetY"
+                },
+                {
+                    "art": "zahl",
+                    "default": 3,
+                    "name": "scale"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.20000000298023224,
+                    "name": "speed"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.5,
+                    "name": "warp"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "warpScale"
+                }
+            ],
+            "name": "Domain Warp",
+            "typkey": "domainWarp"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": -20,
+                    "name": "angle"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                        255,
+                        65535,
+                        65280,
+                        16776960,
+                        16711680
+                    ],
+                    "laenge": 5,
+                    "name": "colors"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16,
+                    "name": "rotVel"
+                }
+            ],
+            "name": "Dot Fountain",
+            "typkey": "dotFountain"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                        16777215
+                    ],
+                    "laenge": 1,
+                    "name": "colors"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "spacing"
+                },
+                {
+                    "art": "zahl",
+                    "default": 128,
+                    "name": "xMove"
+                },
+                {
+                    "art": "zahl",
+                    "default": 128,
+                    "name": "yMove"
+                }
+            ],
+            "name": "Dot Grid",
+            "typkey": "dotGrid"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": -20,
+                    "name": "angle"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 400,
+                    "name": "camDistance"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                        255,
+                        65535,
+                        65280,
+                        16776960,
+                        16711680
+                    ],
+                    "laenge": 5,
+                    "name": "colors"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16,
+                    "name": "rotVel"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.15000000596046448,
+                    "name": "settle"
+                }
+            ],
+            "name": "Dot Plane",
+            "typkey": "dotPlane"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "bilinear"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "blend"
+                },
+                {
+                    "art": "text",
+                    "default": "t=t+u;t=min(100,t);t=max(0,t);u=if(equal(t,100),-1,u);u=if(equal(t,0),1,u)",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "u=1;t=0",
+                    "name": "initCode"
+                },
+                {
+                    "art": "text",
+                    "default": "d=d-sigmoid((t-50)/100,2)",
+                    "name": "pixelCode"
+                }
+            ],
+            "name": "Dynamic Distance Modifier",
+            "typkey": "dynamicDistanceModifier"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "buffern"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "nomove"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "pointCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "rectCoords"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "subpixel"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "wrap"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16,
+                    "name": "xres"
+                },
+                {
+                    "art": "zahl",
+                    "default": 12,
+                    "name": "yres"
+                }
+            ],
+            "name": "Dynamic Movement",
+            "typkey": "dynamicMovement"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "d=d+2.0",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "bilinear"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "blend"
+                },
+                {
+                    "art": "text",
+                    "default": "x=sin(d)*1.4; y=1.4*cos(d); d=d+0.01;",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "d=0;",
+                    "name": "initCode"
+                }
+            ],
+            "name": "Dynamic Shift",
+            "typkey": "dynamicShift"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "color"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16,
+                    "name": "fadeLen"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                }
+            ],
+            "name": "Fadeout",
+            "typkey": "fadeout"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "dir"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                }
+            ],
+            "name": "Fast Brightness",
+            "typkey": "fastBrightness"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1.5,
+                    "name": "dotSize"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 3,
+                    "name": "functions"
+                },
+                {
+                    "art": "text",
+                    "default": "Fire",
+                    "name": "gradientPreset"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 20000,
+                    "name": "points"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "rotation"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.03999999910593033,
+                    "name": "rotationSpeed"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.5,
+                    "name": "scale"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "variation"
+                }
+            ],
+            "name": "Flame",
+            "typkey": "flame"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": -0.5,
+                    "name": "centerX"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "centerY"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "colorCycle"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.05000000074505806,
+                    "name": "colorScale"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4,
+                    "name": "escapeR"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "ftype"
+                },
+                {
+                    "art": "text",
+                    "default": "Neon",
+                    "name": "gradientPreset"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "insideColor"
+                },
+                {
+                    "art": "zahl",
+                    "default": -0.800000011920929,
+                    "name": "juliaX"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.15600000321865082,
+                    "name": "juliaY"
+                },
+                {
+                    "art": "zahl",
+                    "default": 128,
+                    "name": "maxIter"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "power"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "rotation"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "smooth"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "zoom"
+                }
+            ],
+            "name": "Fractal 2D",
+            "typkey": "fractal2D"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 0.20000000298023224,
+                    "name": "ambient"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "ao"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "background"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "colorCycle"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "colorScale"
+                },
+                {
+                    "art": "zahl",
+                    "default": 3.200000047683716,
+                    "name": "dist"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "fold"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "fov"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "ftype"
+                },
+                {
+                    "art": "text",
+                    "default": "Neon",
+                    "name": "gradientPreset"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "juliaW"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.20000000298023224,
+                    "name": "juliaX"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.30000001192092896,
+                    "name": "juliaY"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.10000000149011612,
+                    "name": "juliaZ"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.800000011920929,
+                    "name": "lightPitch"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.699999988079071,
+                    "name": "lightYaw"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "maxIter"
+                },
+                {
+                    "art": "zahl",
+                    "default": 96,
+                    "name": "maxSteps"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.30000001192092896,
+                    "name": "pitch"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "power"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "scale"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.6000000238418579,
+                    "name": "yaw"
+                }
+            ],
+            "name": "Fractal 3D",
+            "typkey": "fractal3D"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": -0.7436438798904419,
+                    "name": "centerX"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.13182590901851654,
+                    "name": "centerY"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "colorCycle"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.05000000074505806,
+                    "name": "colorScale"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.5,
+                    "name": "feedback"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "ftype"
+                },
+                {
+                    "art": "text",
+                    "default": "Neon",
+                    "name": "gradientPreset"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "insideColor"
+                },
+                {
+                    "art": "zahl",
+                    "default": -0.800000011920929,
+                    "name": "juliaX"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.15600000321865082,
+                    "name": "juliaY"
+                },
+                {
+                    "art": "zahl",
+                    "default": 200,
+                    "name": "maxIter"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "rotationSpeed"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1.0199999809265137,
+                    "name": "zoomSpeed"
+                }
+            ],
+            "name": "Fractal Zoomer",
+            "typkey": "fractalZoomer"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "burstSpread"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "dotSize"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.800000011920929,
+                    "name": "gravity"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.6000000238418579,
+                    "name": "hueDrift"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1.600000023841858,
+                    "name": "lifeSeconds"
+                },
+                {
+                    "art": "zahl",
+                    "default": 80,
+                    "name": "sparks"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.699999988079071,
+                    "name": "speed"
+                }
+            ],
+            "name": "FyrewurX",
+            "typkey": "fyrewurx"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 3,
+                    "name": "falloff"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.6000000238418579,
+                    "name": "haloIntensity"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2.200000047683716,
+                    "name": "haloScale"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 5,
+                    "name": "orbCount"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "pointCode"
+                }
+            ],
+            "name": "Glow Orbs",
+            "typkey": "glowOrbs"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 100,
+                    "name": "amount"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "staticGrain"
+                }
+            ],
+            "name": "Grain",
+            "typkey": "grain"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "blendOut"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "crossfadeSeconds"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "curveIn"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "curveOut"
+                },
+                {
+                    "art": "zahl",
+                    "default": 128,
+                    "name": "outAdjustAlpha"
+                }
+            ],
+            "name": "Host Group",
+            "typkey": "hostgroup"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "text"
+                }
+            ],
+            "name": "Import Notes",
+            "typkey": "importNotes"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 128,
+                    "name": "alpha"
+                },
+                {
+                    "art": "zahl",
+                    "default": 192,
+                    "name": "alpha2"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 10,
+                    "name": "distance"
+                },
+                {
+                    "art": "zahl",
+                    "default": 32,
+                    "name": "distance2"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onBeat"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "points"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "rgb"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "rotation"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "rotationInc"
+                },
+                {
+                    "art": "zahl",
+                    "default": 25,
+                    "name": "rotationInc2"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.20000000298023224,
+                    "name": "speed"
+                }
+            ],
+            "name": "Interferences",
+            "typkey": "interferences"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4,
+                    "name": "beatDuration"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "color"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onBeat"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "x"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "x2"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "y"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "y2"
+                }
+            ],
+            "name": "Interleave",
+            "typkey": "interleave"
+        },
+        {
+            "felder": [
+            ],
+            "name": "Invert",
+            "typkey": "invert"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "loadMode"
+                }
+            ],
+            "name": "Global Variables",
+            "typkey": "jherikoGlobal"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "colorCycle"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "colorScale"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "Neon",
+                    "name": "gradientPreset"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 30,
+                    "name": "iterations"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "morph"
+                },
+                {
+                    "art": "zahl",
+                    "default": 5,
+                    "name": "p"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4,
+                    "name": "q"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "rotation"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "zoom"
+                }
+            ],
+            "name": "Kleinian",
+            "typkey": "kleinian"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blendIn"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "blendOut"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "bufferIn"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "bufferInInvert"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "bufferOut"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "bufferOutInvert"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "clearEveryFrame"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 128,
+                    "name": "inAdjustAlpha"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "onBeatFrames"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onBeatRender"
+                },
+                {
+                    "art": "zahl",
+                    "default": 128,
+                    "name": "outAdjustAlpha"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "useCode"
+                }
+            ],
+            "name": "Effect List",
+            "typkey": "list"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 4,
+                    "name": "aMax"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2.5,
+                    "name": "aMin"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4,
+                    "name": "bMax"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2.5,
+                    "name": "bMin"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "colorCycle"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "colorScale"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "Fire",
+                    "name": "gradientPreset"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 400,
+                    "name": "iterations"
+                },
+                {
+                    "art": "zahl",
+                    "default": 48,
+                    "name": "negColor"
+                },
+                {
+                    "art": "text",
+                    "default": "AB",
+                    "name": "sequence"
+                },
+                {
+                    "art": "zahl",
+                    "default": 100,
+                    "name": "warmup"
+                }
+            ],
+            "name": "Lyapunov",
+            "typkey": "lyapunov"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                    ],
+                    "laenge": 0,
+                    "name": "colors"
+                },
+                {
+                    "art": "zahl",
+                    "default": 7,
+                    "name": "count"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1.2000000476837158,
+                    "name": "depth"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1.7000000476837158,
+                    "name": "phase"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.20000000298023224,
+                    "name": "radius"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.44999998807907104,
+                    "name": "speed"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "spread"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "threshold"
+                }
+            ],
+            "name": "Metaballs 3D",
+            "typkey": "metaballs3d"
+        },
+        {
+            "felder": [
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "debugGrid"
+                },
+                {
+                    "art": "zahl",
+                    "default": 32,
+                    "name": "meshX"
+                },
+                {
+                    "art": "zahl",
+                    "default": 24,
+                    "name": "meshY"
+                },
+                {
+                    "art": "objekt",
+                    "default": {
+                        "header": {
+                            "formatVersion": 1,
+                            "generator": "LumiViz Milkdrop",
+                            "type": "milkdrop"
+                        },
+                        "preset": {
+                            "additiveWaves": false,
+                            "blur1EdgeDarken": 0.25,
+                            "blur1Max": 1,
+                            "blur1Min": 0,
+                            "blur2Max": 1,
+                            "blur2Min": 0,
+                            "blur3Max": 1,
+                            "blur3Min": 0,
+                            "brighten": false,
+                            "compShader": "",
+                            "cx": 0.5,
+                            "cy": 0.5,
+                            "darken": false,
+                            "darkenCenter": false,
+                            "decay": 0.98,
+                            "dx": 0,
+                            "dy": 0,
+                            "gammaAdj": 2,
+                            "generation": 1,
+                            "ibA": 0,
+                            "ibB": 0.25,
+                            "ibG": 0.25,
+                            "ibR": 0.25,
+                            "ibSize": 0.01,
+                            "invert": false,
+                            "maximizeWaveColor": true,
+                            "modWaveAlphaByVolume": false,
+                            "modWaveAlphaEnd": 0.95,
+                            "modWaveAlphaStart": 0.75,
+                            "mvA": 1,
+                            "mvB": 1,
+                            "mvDX": 0,
+                            "mvDY": 0,
+                            "mvG": 1,
+                            "mvL": 0.9,
+                            "mvR": 1,
+                            "mvX": 12,
+                            "mvY": 9,
+                            "name": "",
+                            "obA": 0,
+                            "obB": 0,
+                            "obG": 0,
+                            "obR": 0,
+                            "obSize": 0.01,
+                            "perFrame": "",
+                            "perFrameInit": "",
+                            "perPixel": "",
+                            "psVersion": -1,
+                            "rot": 0,
+                            "shader": 0,
+                            "shapes": [
+                            ],
+                            "solarize": false,
+                            "sprites": [
+                            ],
+                            "sx": 1,
+                            "sy": 1,
+                            "texWrap": true,
+                            "videoEchoAlpha": 0,
+                            "videoEchoOrientation": 0,
+                            "videoEchoZoom": 2,
+                            "warp": 1,
+                            "warpAnimSpeed": 1,
+                            "warpScale": 1,
+                            "warpShader": "",
+                            "waveAlpha": 0.8,
+                            "waveB": 1,
+                            "waveDots": false,
+                            "waveG": 1,
+                            "waveMode": 0,
+                            "waveMystery": 0,
+                            "waveR": 1,
+                            "waveScale": 1,
+                            "waveSmoothing": 0.75,
+                            "waveThick": false,
+                            "waveX": 0.5,
+                            "waveY": 0.5,
+                            "waves": [
+                            ],
+                            "zoom": 1,
+                            "zoomExponent": 1
+                        }
+                    },
+                    "name": "preset"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "presetDir"
+                }
+            ],
+            "name": "Milkdrop",
+            "typkey": "milkdrop"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4,
+                    "name": "mode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onBeatRandom"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4,
+                    "name": "slower"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "smooth"
+                }
+            ],
+            "name": "Mirror",
+            "typkey": "mirror"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16,
+                    "name": "durationFrames"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onBeat"
+                },
+                {
+                    "art": "zahl",
+                    "default": 50,
+                    "name": "quality"
+                },
+                {
+                    "art": "zahl",
+                    "default": 50,
+                    "name": "quality2"
+                }
+            ],
+            "name": "Mosaic",
+            "typkey": "mosaic"
+        },
+        {
+            "felder": [
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "builtinRemap"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "code"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "rectCoords"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "sourceMapped"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "subpixel"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "wrap"
+                }
+            ],
+            "name": "Movement",
+            "typkey": "movement"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16777215,
+                    "name": "color"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.9909999966621399,
+                    "name": "damping"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16,
+                    "name": "maxDistance"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onBeatSize"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "size"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "size2"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.004000000189989805,
+                    "name": "spring"
+                }
+            ],
+            "name": "Moving Particle",
+            "typkey": "movingParticle"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "buffer"
+                },
+                {
+                    "art": "zahl",
+                    "default": 10,
+                    "name": "delay"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "mode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "useBeats"
+                }
+            ],
+            "name": "Multi Delay",
+            "typkey": "multiDelay"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "effect"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onBeat"
+                }
+            ],
+            "name": "MultiFilter",
+            "typkey": "multiFilter"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 3,
+                    "name": "mode"
+                }
+            ],
+            "name": "Multiplier",
+            "typkey": "multiplier"
+        },
+        {
+            "felder": [
+            ],
+            "name": "Normalise",
+            "typkey": "normalise"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "color"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "everyNBeats"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                }
+            ],
+            "name": "OnBeat Clear",
+            "typkey": "onBeatClear"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 0.8999999761581421,
+                    "name": "audioScale"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.10000000149011612,
+                    "name": "baseScale"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "channel"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                        16777215
+                    ],
+                    "laenge": 1,
+                    "name": "colors"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "position"
+                },
+                {
+                    "art": "zahl",
+                    "default": 80,
+                    "name": "segments"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "size"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "source"
+                }
+            ],
+            "name": "Ring",
+            "typkey": "oscRing"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 0.5,
+                    "name": "amplitude"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "channel"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                        16777215
+                    ],
+                    "laenge": 1,
+                    "name": "colors"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "position"
+                },
+                {
+                    "art": "zahl",
+                    "default": 3,
+                    "name": "rot"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.019999999552965164,
+                    "name": "rotScale"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "size"
+                },
+                {
+                    "art": "zahl",
+                    "default": 5,
+                    "name": "spokes"
+                }
+            ],
+            "name": "Oscilliscope Star",
+            "typkey": "oscStar"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "note"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "sourceId"
+                }
+            ],
+            "name": "Passthrough",
+            "typkey": "passthrough"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "blend"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "filename"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "imageData"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "keepAspect"
+                }
+            ],
+            "name": "Picture",
+            "typkey": "picture"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "blend"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "filename"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "imageData"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                }
+            ],
+            "name": "Picture II",
+            "typkey": "pictureII"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "colorCycle"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "colorScale"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "diffA"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.5,
+                    "name": "diffB"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.054999999701976776,
+                    "name": "feed"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "Neon",
+                    "name": "gradientPreset"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.06199999898672104,
+                    "name": "kill"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "seedOnBeat"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8,
+                    "name": "stepsPerFrame"
+                }
+            ],
+            "name": "Reaction Diffusion",
+            "typkey": "reactionDiffusion"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "divisor"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "filter"
+                }
+            ],
+            "name": "Render Scale",
+            "typkey": "renderScale"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 0.5,
+                    "name": "audioGain"
+                },
+                {
+                    "art": "zahl",
+                    "default": 14,
+                    "name": "bandHi"
+                },
+                {
+                    "art": "zahl",
+                    "default": 3,
+                    "name": "bandLo"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.11999999731779099,
+                    "name": "baseRadius"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                        16777215
+                    ],
+                    "laenge": 1,
+                    "name": "colors"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.5,
+                    "name": "orbit"
+                },
+                {
+                    "art": "zahl",
+                    "default": 5,
+                    "name": "points"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.05000000074505806,
+                    "name": "rotSpeed"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "skip"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "stars"
+                }
+            ],
+            "name": "Rotating Stars",
+            "typkey": "rotatingStars"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "beatReverse"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "beatReverseSpeed"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "beatZoomJump"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "blend"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 31,
+                    "name": "rotDir"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "subpixel"
+                },
+                {
+                    "art": "zahl",
+                    "default": 31,
+                    "name": "zoomScale"
+                },
+                {
+                    "art": "zahl",
+                    "default": 31,
+                    "name": "zoomScale2"
+                }
+            ],
+            "name": "Roto Blitter",
+            "typkey": "rotoBlitter"
+        },
+        {
+            "felder": [
+            ],
+            "name": "Scatter",
+            "typkey": "scatter"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 128,
+                    "name": "adjustAlpha"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "lineBlend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "lineWidth"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "overrideBlend"
+                }
+            ],
+            "name": "Set Render Mode",
+            "typkey": "setRenderMode"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "channel"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                        16777215
+                    ],
+                    "laenge": 1,
+                    "name": "colors"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 3,
+                    "name": "mode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "position"
+                }
+            ],
+            "name": "Simple",
+            "typkey": "simpleScope"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4,
+                    "name": "beatSpeed"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16777215,
+                    "name": "color"
+                },
+                {
+                    "art": "zahl",
+                    "default": 15,
+                    "name": "durationFrames"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 350,
+                    "name": "maxStars"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onBeat"
+                },
+                {
+                    "art": "zahl",
+                    "default": 6,
+                    "name": "warpSpeed"
+                }
+            ],
+            "name": "Starfield",
+            "typkey": "starfield"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 1.399999976158142,
+                    "name": "a"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1.600000023841858,
+                    "name": "b"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "c"
+                },
+                {
+                    "art": "zahl",
+                    "default": 6737151,
+                    "name": "color"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.699999988079071,
+                    "name": "d"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "dotSize"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "ftype"
+                },
+                {
+                    "art": "text",
+                    "default": "Neon",
+                    "name": "gradientPreset"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 6000,
+                    "name": "points"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "rotation"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.07999999821186066,
+                    "name": "rotationSpeed"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.2800000011920929,
+                    "name": "scale"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "useGradient"
+                }
+            ],
+            "name": "Strange Attractor",
+            "typkey": "strangeAttractor"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "audioChannel"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "colorBlend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 60,
+                    "name": "colorCycleFrames"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                    ],
+                    "laenge": 0,
+                    "name": "colors"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4,
+                    "name": "dotSize"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "Neon",
+                    "name": "gradientPreset"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "lineBlend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "lineWidth"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "pointCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 256,
+                    "name": "pointCount"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "renderMode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "spectrumSource"
+                }
+            ],
+            "name": "SuperScope",
+            "typkey": "superScope"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "audioChannel"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4,
+                    "name": "falloff"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "pointCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 256,
+                    "name": "pointCount"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "renderMode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.05000000074505806,
+                    "name": "size"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "spectrumSource"
+                }
+            ],
+            "name": "SuperScope 3D",
+            "typkey": "superScope3d"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "blend"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                    ],
+                    "laenge": 0,
+                    "name": "colors"
+                },
+                {
+                    "art": "zahl",
+                    "default": 7,
+                    "name": "count"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.8500000238418579,
+                    "name": "length"
+                },
+                {
+                    "art": "zahl",
+                    "default": 28,
+                    "name": "segments"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.699999988079071,
+                    "name": "speed"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.8999999761581421,
+                    "name": "sway"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "taper"
+                },
+                {
+                    "art": "zahl",
+                    "default": 9,
+                    "name": "thickness"
+                },
+                {
+                    "art": "zahl",
+                    "default": 3.0999999046325684,
+                    "name": "waves"
+                }
+            ],
+            "name": "Tentacles 3D",
+            "typkey": "tentacles3d"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 0.15000000596046448,
+                    "name": "baseAmp"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4243711,
+                    "name": "colorHigh"
+                },
+                {
+                    "art": "zahl",
+                    "default": 663616,
+                    "name": "colorLow"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.04500000178813934,
+                    "name": "dotSize"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "drawDots"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "drawMesh"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4,
+                    "name": "extent"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4,
+                    "name": "falloff"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "flatten"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1053720,
+                    "name": "meshColor"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "pointCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.11999999731779099,
+                    "name": "relax"
+                },
+                {
+                    "art": "zahl",
+                    "default": 64,
+                    "name": "resolution"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "ringAmp"
+                },
+                {
+                    "art": "zahl",
+                    "default": -0.800000011920929,
+                    "name": "yOffset"
+                }
+            ],
+            "name": "Terrain 3D",
+            "typkey": "terrain3d"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "blend"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "filename"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "imageData"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 100,
+                    "name": "particles"
+                }
+            ],
+            "name": "Texer",
+            "typkey": "texer"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "colorFiltering"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "filename"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "imageData"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "text",
+                    "default": "x=(i*2)-1; y=0;",
+                    "name": "pointCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "resizing"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "wrapAround"
+                }
+            ],
+            "name": "Texer II",
+            "typkey": "texerII"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16777215,
+                    "name": "color"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "fontFace"
+                },
+                {
+                    "art": "zahl",
+                    "default": -20,
+                    "name": "fontHeight"
+                },
+                {
+                    "art": "zahl",
+                    "default": 400,
+                    "name": "fontWeight"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "hAlign"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "insertBlank"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "italic"
+                },
+                {
+                    "art": "zahl",
+                    "default": 15,
+                    "name": "normSpeed"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onBeat"
+                },
+                {
+                    "art": "zahl",
+                    "default": 15,
+                    "name": "onBeatSpeed"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "outline"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "outlineColor"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "outlineSize"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "randomPos"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "randomWord"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "shadow"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "text"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "underline"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "vAlign"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "xShift"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "yShift"
+                }
+            ],
+            "name": "Text",
+            "typkey": "text"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 576,
+                    "name": "bands"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 3,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "channel"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16777215,
+                    "name": "color"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "useChannel"
+                }
+            ],
+            "name": "Timescope",
+            "typkey": "timescope"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "filled"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "lineWidth"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "pointCode"
+                }
+            ],
+            "name": "Triangle",
+            "typkey": "triangle"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16777215,
+                    "name": "color"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "invert"
+                }
+            ],
+            "name": "Unique Tone",
+            "typkey": "uniqueTone"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 10,
+                    "name": "delay"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "useBeats"
+                }
+            ],
+            "name": "Video Delay",
+            "typkey": "videoDelay"
+        },
+        {
+            "felder": [
+            ],
+            "name": "Water",
+            "typkey": "water"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 5,
+                    "name": "density"
+                },
+                {
+                    "art": "zahl",
+                    "default": 600,
+                    "name": "depth"
+                },
+                {
+                    "art": "zahl",
+                    "default": 6,
+                    "name": "displaceScale"
+                },
+                {
+                    "art": "zahl",
+                    "default": 40,
+                    "name": "dropRadius"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "dropX"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "dropY"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "randomDrop"
+                }
+            ],
+            "name": "Water Bump",
+            "typkey": "waterBump"
+        }
+    ]
+}

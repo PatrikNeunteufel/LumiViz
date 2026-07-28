@@ -1,0 +1,471 @@
+# -*- coding: utf-8 -*-
+"""Reichert das Feld-Inventar (inventory.json) um Bedien- und Dokuwissen an.
+
+Das Inventar selbst kommt aus dem C++-Gate (`test_FieldInventory.cpp`) und weiss,
+WELCHE Felder es gibt und was ihre Vorgabe ist. Fuer Strang E fehlen zwei Dinge,
+die nur im Quelltext stehen:
+
+  1. **Wertebereich** — der Generator braucht einen Gegenwert, der wirkt UND
+     zulaessig ist. Der Header nennt Bereiche nur 13-mal; die Panel-Zeilen
+     (`addInt`/`addDouble`/`addRefDouble`) nennen lo/hi bei JEDER Zahl.
+  2. **Beschreibung + schreibbare Skriptvariablen** — stehen als Doxygen an den
+     Struct-Feldern in `EffectChain.hpp`. Fuer Strang F (§10) ist das die
+     Tooltip-Quelle, fuer Strang E die Formel-Quelle: steht im Kommentar
+     "Parameter-Skript (Strang D): `strength` + `b`/`w`/`h`", dann ist
+     `strength = <gegenwert>` eine Formel, deren Wirkung man SIEHT.
+
+Zuordnung Feld -> Panel-Zeile bewusst ueber den **Setter**, nicht ueber das
+Label: `[](ChainNode& n, int v) { std::get<BlurParams>(n.params).strength = v; }`
+nennt Struct und Feld eindeutig, waehrend das Label ("Level") frei uebersetzt ist.
+
+Beide Ernten isolieren erst den Klammerbereich und suchen DANN darin — ein `.*?`
+ueber Funktionsgrenzen hinweg hat in Session 53 Bloecke in fremde Funktionen
+geschrieben.
+
+Ausgabe:
+  inventory_docs.json  je Feld: doc, lo/hi, panel-Art, Skriptvariablen
+  Konsole              die zwei Luecken: Feld ohne Panel-Zeile (nicht bedienbar)
+                       und Feld ohne Beschreibung (§10 kann es nicht erklaeren)
+
+Aufruf:  python harvest_field_docs.py [--quiet]
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+HEADER = ROOT / "projects/apps/MyViz/include/visualizers/multieffect/EffectChain.hpp"
+PANEL = ROOT / "projects/apps/MyViz/src/UI/panels/MultiEffectPanel.cpp"
+SERIALIZER = ROOT / "projects/apps/MyViz/src/visualizers/ChainSerializer.cpp"
+VISUALIZER = ROOT / "projects/apps/MyViz/src/visualizers/MultiEffectVisualizer.cpp"
+INVENTORY = Path(__file__).parent / "inventory.json"
+OUT = Path(__file__).parent / "inventory_docs.json"
+
+# Panel-Helfer, die einen Wertebereich tragen (Argument 3 und 4 sind lo/hi).
+RANGED = {"addInt": "int", "addDouble": "double", "addRefDouble": "double"}
+# Panel-Helfer ohne Bereich — belegen nur, DASS das Feld bedienbar ist.
+PLAIN = {"addBool": "bool", "addColor": "farbe", "addEnum": "enum",
+         "addColorTable": "farbtafel", "addScript": "skript", "addText": "text",
+         "addGradient": "gradient", "addLine": "text", "addKernelGrid": "kernel",
+         "addImageRow": "bild", "addGradientStops": "stuetzstellen"}
+
+# Sammelwidgets (S53, Weg 3 in harvest_panel): Member-Funktionen, die ihre
+# Felder als Referenz bekommen — im Aufruf steht `p->filename`, nicht
+# `std::get<PictureParams>(…)`. Belegt an den Aufrufstellen in
+# MultiEffectPanel.cpp (addGradientStops 2949, addKernelGrid 3016,
+# addImageRow 3138/3151/3165/3184).
+# Felder, die bewusst KEINE generische Panel-Zeile haben — geprueft S54, damit
+# der Lueckenbericht sie nicht jedes Mal erneut als Befund vorlegt:
+#   milkdrop.*     der Knoten hat die eigene Sektionsansicht (MultiEffectPanel
+#                  zweigt vor der Feldliste ab: `milkSection`/`milkElem`)
+#   passthrough.*  Platzhalter fuer nicht implementierte Effekte, read-only
+#                  (MultiEffectPanel.cpp:4695)
+#   importNotes.*  Import-Bericht, read-only (MultiEffectPanel.cpp:4683)
+OHNE_PANEL_ERKLAERT = {
+    "milkdrop.debugGrid", "milkdrop.meshX", "milkdrop.meshY", "milkdrop.preset",
+    "milkdrop.presetDir", "passthrough.note", "passthrough.sourceId",
+    "importNotes.text",
+}
+
+SAMMELWIDGETS = [
+    ("ColorMapParams", ["stopPos", "stopColor"], "stuetzstellen"),
+    ("ConvolutionParams", ["kernel"], "kernel"),
+    ("PictureParams", ["filename", "imageData"], "bild"),
+    ("PictureIIParams", ["filename", "imageData"], "bild"),
+    ("TexerParams", ["filename", "imageData"], "bild"),
+    ("TexerIIParams", ["filename", "imageData"], "bild"),
+]
+
+
+def balanced(src: str, open_pos: int) -> str:
+    """Inhalt der Klammer, die bei `open_pos` ('(') beginnt — mit Zaehlung.
+
+    Zeichen- und Zeichenketten-Literale werden uebersprungen, sonst kippt ein
+    `'('` im Text die Bilanz.
+    """
+    depth, i, n = 0, open_pos, len(src)
+    while i < n:
+        c = src[i]
+        if c in "\"'":
+            quote, i = c, i + 1
+            while i < n and src[i] != quote:
+                i += 2 if src[i] == "\\" else 1
+        elif c == "(":
+            depth += 1
+        elif c == ")":
+            depth -= 1
+            if depth == 0:
+                return src[open_pos + 1:i]
+        i += 1
+    return ""
+
+
+def split_args(body: str) -> list[str]:
+    """Argumente auf oberster Ebene trennen (Klammern/Klammern/Literale achten)."""
+    out, depth, cur, i, n = [], 0, [], 0, len(body)
+    while i < n:
+        c = body[i]
+        if c in "\"'":
+            quote, cur = c, cur + [c]
+            i += 1
+            while i < n and body[i] != quote:
+                if body[i] == "\\":
+                    cur.append(body[i]); i += 1
+                cur.append(body[i]); i += 1
+            cur.append(quote)
+        elif c in "([{":
+            depth += 1; cur.append(c)
+        elif c in ")]}":
+            depth -= 1; cur.append(c)
+        elif c == "," and depth == 0:
+            out.append("".join(cur).strip()); cur = []
+        else:
+            cur.append(c)
+        i += 1
+    if cur:
+        out.append("".join(cur).strip())
+    return out
+
+
+def harvest_panel() -> dict[tuple[str, str], dict]:
+    """(StructName, feld) -> {art, lo, hi} aus den Panel-Zeilen.
+
+    Drei Wege, absichtlich in dieser Reihenfolge:
+      1. `addXxx(...)`-Lambda mit `std::get<X>(n.params).feld` im Setter — nur
+         hier gibt es auch lo/hi.
+      2. irgendein anderes `std::get<X>(n.params).feld` im Panel — so werden
+         Bitfelder bedient (`mirror.mode` verteilt sich auf vier Kaestchen,
+         also gibt es keinen Ein-Feld-Setter).
+      3. die Sammelwidgets (`addImageRow`, `addKernelGrid`, `addGradientStops`)
+         sind Member-Funktionen und bekommen ihre Felder als REFERENZ
+         (`addImageRow(form, path, p->filename, p->imageData, …)`) — dort steht
+         kein `std::get`, das Feld ist trotzdem bedienbar. Diese Zuordnung ist
+         die einzige von Hand gepflegte Stelle; sie ist unten begruendet.
+    """
+    src = PANEL.read_text(encoding="utf-8")
+    found: dict[tuple[str, str], dict] = {}
+    helpers = {**RANGED, **PLAIN}
+    for m in re.finditer(r"\b(add[A-Za-z]+)\s*\(", src):
+        name = m.group(1)
+        if name not in helpers:
+            continue
+        body = balanced(src, m.end() - 1)
+        if not body:
+            continue
+        # Das Ziel steht im Setter: std::get<XParams>(n.params).feld
+        tgt = re.search(r"std::get<\s*(\w+Params)\s*>\s*\(\s*\w+\.params\s*\)\s*\.\s*(\w+)", body)
+        if not tgt:
+            continue
+        key = (tgt.group(1), tgt.group(2))
+        entry = {"panel": helpers[name], "helfer": name}
+        if name == "addEnum":
+            # Die Auswahl-Liste IST der Wertebereich: ohne sie waehlt der
+            # Generator "Vorgabe mal drei" und landet ausserhalb, wo der
+            # Renderer auf die Vorgabe zurueckklemmt — die Sonde misst dann
+            # zwei gleiche Bilder (Befund timescope.channel, S54).
+            liste = re.search(r"\{([^{}]*)\}", body)
+            if liste:
+                entry["enumWerte"] = len(re.findall(r'"[^"]*"', liste.group(1)))
+            # Manche Zeilen zeigen einen VERSATZ: `addEnum(…, p->strength - 1,
+            # {"Light","Normal","Heavy"}, … strength = v + 1)`. Der Auswahl-Index
+            # ist dann nicht der Feldwert. Ohne diesen Versatz erzeugt der
+            # Generator `strength = 2`, wo er „Heavy" (3) meint (Befund S54).
+            versatz = re.search(r"->\s*" + re.escape(tgt.group(2)) + r"\s*-\s*(\d+)", body)
+            if versatz:
+                entry["enumVersatz"] = int(versatz.group(1))
+        if name in RANGED:
+            args = split_args(body)
+            if len(args) >= 4:
+                lo, hi = args[2], args[3]
+                if re.fullmatch(r"-?[\d.]+f?", lo) and re.fullmatch(r"-?[\d.]+f?", hi):
+                    entry["lo"] = float(lo.rstrip("f"))
+                    entry["hi"] = float(hi.rstrip("f"))
+        # Erste Zeile gewinnt: ein Feld kann in mehreren Zweigen auftauchen,
+        # der erste Treffer ist der des eigenen Knotentyps.
+        found.setdefault(key, entry)
+
+    # (2) alles Uebrige, das irgendwo im Panel geschrieben wird
+    for sm in re.finditer(r"std::get<\s*(\w+Params)\s*>\s*\(\s*\w+\.params\s*\)\s*\.\s*(\w+)", src):
+        found.setdefault((sm.group(1), sm.group(2)), {"panel": "sonderzeile"})
+
+    # (3) Sammelwidgets, die ihr Feld als Referenz bekommen
+    for struct, fields, widget in SAMMELWIDGETS:
+        for f in fields:
+            found.setdefault((struct, f), {"panel": widget})
+    return found
+
+
+def harvest_header() -> dict[tuple[str, str], dict]:
+    """(StructName, feld) -> {doc, skriptvars} aus den Doxygen-Kommentaren."""
+    src = HEADER.read_text(encoding="utf-8")
+    out: dict[tuple[str, str], dict] = {}
+
+    for sm in re.finditer(r"\bstruct\s+(\w+Params)\s*\{", src):
+        struct = sm.group(1)
+        i, depth = sm.end(), 1
+        while depth and i < len(src):
+            if src[i] == "{":
+                depth += 1
+            elif src[i] == "}":
+                depth -= 1
+            i += 1
+        body = src[sm.end():i - 1]           # <- erst isolieren, dann suchen
+
+        pending: list[str] = []              # `///`-Zeilen VOR dem Feld
+        for line in body.splitlines():
+            s = line.strip()
+            if s.startswith("///<"):
+                continue                     # gehoert zur Feldzeile, unten geholt
+            if s.startswith("///"):
+                pending.append(s.lstrip("/").strip())
+                continue
+            if s.startswith("//") or s.startswith("/*") or s.startswith("*"):
+                continue
+            fm = re.match(r"^[\w:<>,\s\*&]+?\b(\w+)\s*(?:=[^;]*)?;\s*(?://<?\s*(.*))?$", s)
+            if not fm:
+                if s:
+                    pending = []
+                continue
+            field = fm.group(1)
+            trail = re.search(r"///<\s*(.*)$", line)
+            doc = trail.group(1).strip() if trail else " ".join(pending).strip()
+            entry: dict = {}
+            if doc:
+                entry["doc"] = doc
+            # Schreibbare Variablen des Strang-D-Kommentars: "…: `a`, `b` + `w`/`h`"
+            vars_ = re.findall(r"`(\w+)`", doc)
+            if vars_ and ("Parameter-Skript" in doc or "Skript" in doc):
+                entry["skriptvars"] = [v for v in vars_ if v not in ("b", "w", "h")]
+            if entry:
+                out[(struct, field)] = entry
+            # Ein `///`-Block ueber MEHREREN Feldern gilt fuer alle: der
+            # Strang-D-Kommentar steht einmal ueber `initCode` und meint
+            # `frameCode`/`beatCode` mit. Wuerde `pending` hier geleert, faenden
+            # zwei Drittel der 141 Skriptfelder keine Beschreibung.
+            if not (doc and field.endswith("Code") and pending):
+                pending = []
+    return out
+
+
+def harvest_script_vars() -> dict[str, dict]:
+    """Struct -> {"vars": [...], "tot": [...]} aus den `runParamScript`-Aufrufen.
+
+    Die schreibbaren Variablen heissen NICHT wie die Felder: `fadeLen` ist im
+    Skript `fadelen`, `faderR` ist `faderr` — AVS-Kleinschreibung. Der
+    Doxygen-Kommentar nennt mal die eine, mal die andere Schreibweise; die
+    einzige verbindliche Quelle ist die ParamVar-Liste im Aufruf selbst.
+
+    "tot" sind die Variablen, deren Frame-Kopie nach dem Aufruf NIE gelesen
+    wird — das Skript darf sie beschreiben, es aendert nur nichts mehr.
+    """
+    src = VISUALIZER.read_text(encoding="utf-8")
+    out: dict[str, dict] = {}
+    for m in re.finditer(r"\bvoid\s+MultiEffectVisualizer::\w+\s*\(([^)]*)\)\s*\{", src, re.S):
+        sig = m.group(1)
+        sm = re.search(r"const\s+(\w+Params)\s*&", sig)
+        if not sm:
+            continue
+        i, depth = m.end(), 1
+        while depth and i < len(src):
+            if src[i] == "{":
+                depth += 1
+            elif src[i] == "}":
+                depth -= 1
+            i += 1
+        body = src[m.end():i - 1]  # <- erst isolieren, dann suchen
+
+        call = re.search(r"runParamScript\s*\(", body)
+        if not call:
+            continue
+        j, depth = call.end() - 1, 0
+        while j < len(body):
+            if body[j] == "(":
+                depth += 1
+            elif body[j] == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            j += 1
+        args, rest = body[call.end():j], body[j:]
+        paare = re.findall(r'\{\s*"(\w+)"\s*,\s*&(\w+)\s*\}', args)
+        if not paare:
+            continue
+        out[sm.group(1)] = {
+            "vars": [n for n, _ in paare],
+            "tot": [n for n, v in paare if not re.search(r"\b" + re.escape(v) + r"\b", rest)],
+        }
+
+    # Zweiter Mechanismus: Knoten mit eigenem ScriptSlotHost (Fractal 2D/3D,
+    # Flame, Domain Warp …) rufen kein `runParamScript`, sondern setzen ihre
+    # Groessen direkt — `e.setNumber("cx", cx)` … `e.number("cx")`. Dieselbe
+    # Semantik, andere Schreibweise; ohne sie blieben 104 Skriptfelder ohne
+    # erzeugbare Sonde (S54).
+    for m in re.finditer(r"\bvoid\s+MultiEffectVisualizer::\w+\s*\(([^)]*)\)\s*\{", src, re.S):
+        sm = re.search(r"const\s+(\w+Params)\s*&", m.group(1))
+        if not sm or sm.group(1) in out:
+            continue
+        i, depth = m.end(), 1
+        while depth and i < len(src):
+            if src[i] == "{":
+                depth += 1
+            elif src[i] == "}":
+                depth -= 1
+            i += 1
+        body = src[m.end():i - 1]
+        gesetzt = re.findall(r'\.setNumber\s*\(\s*"(\w+)"', body)
+        # `b`/`w`/`h` und der Audio-Satz sind EINGABEN des Hosts, keine Ziele.
+        eingaben = {"b", "w", "h", "bass", "mid", "treb", "vol", "beat", "time"}
+        vars_ = [v for v in dict.fromkeys(gesetzt) if v not in eingaben]
+        if not vars_:
+            continue
+        out[sm.group(1)] = {
+            "vars": vars_,
+            "tot": [v for v in vars_
+                    if not re.search(r'\.number\s*\(\s*"' + re.escape(v) + r'"', body)],
+        }
+    return out
+
+
+def harvest_aliases() -> dict[tuple[str, str], str]:
+    """(Struct, JSON-Name) -> Struct-Feldname, aus dem WriteVisitor.
+
+    Der JSON-Name ist NICHT immer der Feldname: `o["ftype"] = p.type` (der
+    Knotentyp belegt `type` bereits), `o["overrideBlend"] = p.enabled`. Ohne
+    diese Tabelle meldet die Ernte solche Felder als unbedienbar, obwohl sie
+    eine Panel-Zeile haben — fuenf Phantom-Befunde in der ersten Fassung.
+    """
+    src = SERIALIZER.read_text(encoding="utf-8")
+    out: dict[tuple[str, str], str] = {}
+    for m in re.finditer(r"\boperator\(\)\s*\(\s*const\s+(\w+Params)\s*&\s*(\w+)\s*\)", src):
+        struct, var = m.group(1), m.group(2)
+        brace = src.find("{", m.end())
+        if brace < 0:
+            continue
+        i, depth = brace + 1, 1
+        while depth and i < len(src):
+            if src[i] == "{":
+                depth += 1
+            elif src[i] == "}":
+                depth -= 1
+            i += 1
+        body = src[brace + 1:i - 1]  # <- erst isolieren, dann suchen
+        for am in re.finditer(r'o\s*\[\s*"(\w+)"\s*\]\s*=\s*' + re.escape(var) + r"\.(\w+)", body):
+            if am.group(1) != am.group(2):
+                out[(struct, am.group(1))] = am.group(2)
+    return out
+
+
+def struct_by_typekey() -> dict[str, str]:
+    """typkey -> Struct-Name, geerntet aus der `effectTypeKey`-Tabelle.
+
+    Nicht aus dem Anzeigenamen geraten: "AVI" heisst `AviParams`, "Camera 3D"
+    heisst `Camera3DParams`, "Global Variables" heisst `JherikoGlobalParams` —
+    15 der 85 Typen brechen jede Namensregel. Die Visitor-Tabelle im
+    ChainSerializer ist die einzige Stelle, die beides sicher verbindet.
+    """
+    src = SERIALIZER.read_text(encoding="utf-8")
+    m = re.search(r"QString\s+effectTypeKey\s*\([^)]*\)\s*\{", src)
+    if not m:
+        return {}
+    i, depth = m.end(), 1
+    while depth and i < len(src):
+        if src[i] == "{":
+            depth += 1
+        elif src[i] == "}":
+            depth -= 1
+        i += 1
+    body = src[m.end():i - 1]  # <- erst isolieren, dann suchen
+    return {key: struct for struct, key in
+            re.findall(r"operator\(\)\s*\(\s*const\s+(\w+Params)\s*&[^)]*\)\s*const\s*"
+                       r"\{\s*return\s+\"([^\"]+)\"", body)}
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--quiet", action="store_true", help="nur die Bilanz ausgeben")
+    args = ap.parse_args()
+
+    if not INVENTORY.exists():
+        print("FEHLER: inventory.json fehlt — erst MyViz.UnitTests mit "
+              "LUMIVIZ_UPDATE_FIELD_INVENTORY=1 laufen lassen")
+        return 2
+
+    inv = json.loads(INVENTORY.read_text(encoding="utf-8"))
+    panel = harvest_panel()
+    header = harvest_header()
+    structs = struct_by_typekey()
+    aliases = harvest_aliases()
+    skript = harvest_script_vars()
+
+    ohne_panel: list[str] = []
+    ohne_doc: list[str] = []
+    ohne_struct: list[str] = []
+    typen_out = []
+
+    for t in inv["typen"]:
+        struct = structs.get(t["typkey"], "")
+        if not struct:
+            ohne_struct.append(t["typkey"])
+        felder = []
+        for f in t["felder"]:
+            # JSON-Name zuerst, dann der Struct-Feldname hinter dem Alias.
+            key = (struct, f["name"])
+            alias = aliases.get(key)
+            keys = [key] + ([(struct, alias)] if alias else [])
+            e = dict(f)
+            if alias:
+                e["feld"] = alias
+            for k in keys:
+                e.update(panel.get(k, {}))
+                e.update(header.get(k, {}))
+            # Skript-Slots bekommen die ECHTEN Variablennamen (Kleinschreibung
+            # im AVS-Stil) — der Doxygen-Name traegt sie nur ungefaehr.
+            if f["name"] in ("initCode", "frameCode", "beatCode") and struct in skript:
+                e["skriptvars"] = skript[struct]["vars"]
+                if skript[struct]["tot"]:
+                    e["skriptvars_wirkungslos"] = skript[struct]["tot"]
+            voll = f"{t['typkey']}.{f['name']}"
+            if "panel" not in e and voll not in OHNE_PANEL_ERKLAERT:
+                ohne_panel.append(voll)
+            if "doc" not in e:
+                ohne_doc.append(f"{t['typkey']}.{f['name']}")
+            felder.append(e)
+        typen_out.append({"typkey": t["typkey"], "name": t["name"],
+                          "struct": struct, "felder": felder})
+
+    doc = {"schema": 1,
+           "quelle": {"inventar": "inventory.json (C++-Gate)",
+                      "bereiche": "MultiEffectPanel.cpp (Setter-Zuordnung)",
+                      "beschreibung": "EffectChain.hpp (Doxygen)"},
+           "summe": {"typen": len(typen_out),
+                     "felder": sum(len(t["felder"]) for t in typen_out),
+                     "ohne_panel": len(ohne_panel),
+                     "ohne_doc": len(ohne_doc)},
+           "typen": typen_out}
+    OUT.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    print(f"Inventar angereichert: {doc['summe']['typen']} Typen, "
+          f"{doc['summe']['felder']} Felder -> {OUT.name}")
+    print(f"  ohne Panel-Zeile (nicht bedienbar): {len(ohne_panel)}")
+    print(f"  ohne Beschreibung (§10-Luecke):     {len(ohne_doc)}")
+    if ohne_struct:
+        print(f"  Typ ohne Struct-Zuordnung ({len(ohne_struct)}): "
+              f"{', '.join(ohne_struct[:8])}")
+    if not args.quiet:
+        if ohne_panel:
+            print("\n-- ohne Panel-Zeile --")
+            for x in ohne_panel:
+                print("   ", x)
+        if ohne_doc:
+            print("\n-- ohne Beschreibung --")
+            for x in ohne_doc:
+                print("   ", x)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

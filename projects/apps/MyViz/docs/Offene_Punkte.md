@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.6.0
-> **Datum:** 2026-07-27 (Session 53)
+> **Version:** 1.7.0
+> **Datum:** 2026-07-28 (Session 54)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -291,10 +291,12 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
   geschrieben. Nachziehen oder die Lücke bewusst vermerken.
 - ✅ **Knoten-Parameter-Ausbau** (Vorgabe Patrik, S53) — Steuerdokument
   [Knoten_Parameter_Konzept.md](visuals/Knoten_Parameter_Konzept.md), **alle sechs
-  Etappen umgesetzt**; offen ist nur der Sichttest im Betrieb.
+  Etappen umgesetzt**; der Sichttest im Betrieb läuft seit S54 maschinell
+  (s. Strang E unten).
   Vier Stränge: (A) ✅
   Voreinstellungen je Knoten, generisch über `nodeToJson`/`nodeFromJson` — greift
-  für alle 81 Knotentypen (`NodePresetStore` + Zeile im Panel +
+  für **alle 85 Knotentypen** (gemessen S54 über `std::variant_size_v`; die
+  früher notierten 81 waren zu niedrig) (`NodePresetStore` + Zeile im Panel +
   `asset/nodepresets/`), mit **Merge-Semantik** und **Feldauswahl beim Speichern**;
   die 13 SuperScope-Figuren sind Dateien geworden, das „Figure"-Dropdown ist
   entfallen; (B) ✅ **vollständig** — zuletzt `Convolution.kernel` (7×7-Gitter),
@@ -309,6 +311,44 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
   leeres Feld kostet nichts (kein Host, kein Transpiler, kein Lua-Aufruf).
   **Der Default-Vertrag ist der kritische Teil** — jeder neue Parameter muss bei
   Default pixelgleich bleiben, sonst kippt die Kalibrier-Runde.
+- ✅ **Strang E — Feld-Sonden** (Vorgabe Patrik §9, umgesetzt S54):
+  `asset/calibration/fields/` mit Inventar-Golden (**85 Typen, 717 Felder**,
+  C++-Gate `test_FieldInventory`), Ernte der Wertebereiche/Beschreibungen/
+  Skriptvariablen, Generator und Zwei-Läufe-Urteil. **Was er sofort fand:**
+  43 von 129 Skript-Frame-Kopien wurden nie gelesen (das Skript rechnete, sein
+  Ergebnis verfiel), und der **Init-Slot** war bei allen 47 Renderern
+  wirkungslos, weil die Vorbelegung jedes Frames ihn überschrieb. Beides
+  behoben; dazu die nie abgefragte `lastError()`-Meldung, `timescope.useChannel`
+  und skriptbare Beat-Fader in Colorfade.
+- 🔴 **Grafikkarten-Auswahl in den Einstellungen** (Vorgabe Patrik, S54) —
+  **prioritär, aber ERST NACH der Kalibrier-Runde.** Der Rechner hat eine
+  RTX 4090 Laptop GPU; App, Standalone und GL-Tests laufen trotzdem auf der
+  `AMD Radeon(TM) 610M` (der Standalone meldet sie beim Start). Gewünscht ist
+  eine **persistent gespeicherte** Auswahl.
+  - Zur Laufzeit lässt sich die GPU in OpenGL nicht umschalten. Der Weg für
+    eine einstellbare Präferenz ist der Windows-Eintrag pro Anwendung
+    (`HKCU\…\DirectX\UserGpuPreferences`, dasselbe was die Windows-Oberfläche
+    schreibt) — greift beim nächsten Start. Der statische
+    `NvOptimusEnablement`-Export wirkt sofort, ist aber nicht einstellbar.
+  - **Warum erst nach der Kalibrierung:** ein GPU-Wechsel ändert Interpolation
+    und Rundung im Treiber, also möglicherweise die Bilder. Matrix (36/41),
+    Modul-Sonden (78/80), die eingefrorenen Zwillinge und die Bit-Identität der
+    Feld-Sonden müssten danach **alle neu eingemessen** werden. Der Umbau
+    gehört deshalb mit einem Vorher/Nachher-Messlauf zusammen, der die
+    Verschiebung beziffert.
+  - Umfang: Auswahl „Automatisch / Hohe Leistung / Energiesparen", Anzeige der
+    tatsächlich genutzten GPU (`GL_RENDERER`), Hinweis auf den nötigen Neustart.
+- 🔴 **104 Felder ohne erzeugbare Sonde** — durchweg Skriptfelder von Knoten
+  **ohne** `runParamScript` (Fractal 2D/3D, Flame, Fractal Zoomer, Domain Warp …).
+  Sie haben eigene Slots, deren schreibbare Variablen der Ernter nicht kennt.
+  Entweder dort dieselbe Quelle erschließen oder die Namen in einer Tabelle
+  pflegen.
+- 🔧 **Kanalabhängige Felder sind derzeit blind**: der Standalone erzeugt das
+  Spektrum für beide Kanäle gleich (`main.cpp`: `spec[b*2+0] == spec[b*2+1]`),
+  nur die Waveform ist stereo. Timescopes Kanalfelder stehen deshalb als
+  „nicht prüfbar", nicht als Befund. Für ein Urteil bräuchte es echtes
+  Stereo-Material (`…\cmake\TestAudio`) — die Änderung des synthetischen Signals
+  würde alle Matrix- und Sonden-Zahlen verschieben.
 - 🔧 Kür: en-Übersetzungen (de = SSOT) · `CMakeUserPresets.json` → `.example` ·
   App-Umbenennung **MyViz → LumiViz** · Pulsing-Defaults-Mismatch ·
   `File → Open Audio…`-Stub · Undock-Dauertest · Waveform-Glättungs-Default.

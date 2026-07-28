@@ -1,0 +1,104 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz MultiEffect"
+  },
+  "root": {
+    "type": "list",
+    "enabled": true,
+    "name": "Root",
+    "children": [
+      {
+        "type": "clear",
+        "enabled": true,
+        "name": "Grund",
+        "color": 1052688,
+        "onlyFirst": false,
+        "blend": 0
+      },
+      {
+        "type": "superScope",
+        "enabled": true,
+        "name": "Feld 100",
+        "initCode": "n=2",
+        "pointCode": "x=-0.9+i*0.6; y=-0.6; red=1; green=0; blue=0;",
+        "pointCount": 2,
+        "renderMode": 1,
+        "lineWidth": 18,
+        "colors": [
+          16777215
+        ],
+        "spectrumSource": false,
+        "colorCycleFrames": 0
+      },
+      {
+        "type": "superScope",
+        "enabled": true,
+        "name": "Feld 010",
+        "initCode": "n=2",
+        "pointCode": "x=-0.9+i*0.6; y=-0.2; red=0; green=1; blue=0;",
+        "pointCount": 2,
+        "renderMode": 1,
+        "lineWidth": 18,
+        "colors": [
+          16777215
+        ],
+        "spectrumSource": false,
+        "colorCycleFrames": 0
+      },
+      {
+        "type": "superScope",
+        "enabled": true,
+        "name": "Feld 001",
+        "initCode": "n=2",
+        "pointCode": "x=-0.9+i*0.6; y=0.2; red=0; green=0; blue=1;",
+        "pointCount": 2,
+        "renderMode": 1,
+        "lineWidth": 18,
+        "colors": [
+          16777215
+        ],
+        "spectrumSource": false,
+        "colorCycleFrames": 0
+      },
+      {
+        "type": "superScope",
+        "enabled": true,
+        "name": "Feld 111",
+        "initCode": "n=2",
+        "pointCode": "x=-0.9+i*0.6; y=0.6; red=1; green=1; blue=1;",
+        "pointCount": 2,
+        "renderMode": 1,
+        "lineWidth": 18,
+        "colors": [
+          16777215
+        ],
+        "spectrumSource": false,
+        "colorCycleFrames": 0
+      },
+      {
+        "type": "superScope",
+        "enabled": true,
+        "name": "Diagonale",
+        "initCode": "n=40",
+        "pointCode": "x=i*1.8-0.9; y=i*1.6-0.8; red=1; green=1; blue=0;",
+        "pointCount": 40,
+        "renderMode": 1,
+        "lineWidth": 2,
+        "colors": [
+          16777215
+        ],
+        "spectrumSource": false,
+        "colorCycleFrames": 0
+      },
+      {
+        "type": "texerII",
+        "enabled": true,
+        "name": "Texer II",
+        "imageData": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAHklEQVR4nGP4z8CAFWEXxYNGNVCkAZcMLjCqgSYaADtOfpCTQ+5gAAAAAElFTkSuQmCC",
+        "wrapAround": true
+      }
+    ],
+    "clearEveryFrame": false
+  }
+}

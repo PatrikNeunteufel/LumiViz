@@ -3482,6 +3482,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<TimescopeParams>(n.params).color = v; });
         addInt(tr("Bands"), p->bands, 1, 576, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).bands = v; });
         addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).channel = v; });
+        addBool(tr("Apply channel"), p->useChannel, [](ChainNode& n, bool v) { std::get<TimescopeParams>(n.params).useChannel = v; });
         addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line (SRM)"}, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).blend = v; });
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TimescopeParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TimescopeParams>(n.params).frameCode = std::move(v); });

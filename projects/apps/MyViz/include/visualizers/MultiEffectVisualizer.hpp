@@ -262,6 +262,39 @@ private:
         /// die Regler je Frame aus. Nur angelegt, wenn wirklich Code da ist.
         std::unique_ptr<lumi::scripting::ScriptSlotHost> paramHost;
         std::string paramCompiled;
+        /**
+         * Fortgeschriebener Stand der Skript-Groessen (Entscheid Patrik S54).
+         *
+         * Ohne ihn konnte der Init-Slot nichts bewirken: die Vorbelegung aus
+         * den Params lief VOR jedem Frame und ueberschrieb, was Init einmalig
+         * gesetzt hatte. Jetzt belegt nur der erste Frame aus den Params vor —
+         * danach traegt diese Tabelle den Wert weiter, und die Frames schreiben
+         * ihn fort.
+         *
+         * `paramSeen` haelt den zuletzt gesehenen PARAM-Wert: dreht der Benutzer
+         * am Regler, gewinnt der Regler und die Fortschreibung beginnt neu.
+         * Sonst waere jeder Regler tot, sobald ein Skript im Knoten steht.
+         */
+        std::unordered_map<std::string, double> paramState;
+        std::unordered_map<std::string, double> paramSeen;
+        /// Letzte Fehlermeldung des Parameter-Skripts ("" = fehlerfrei).
+        /// Zugleich die Sperre gegen eine Meldung je Frame (S54).
+        std::string paramError;
+
+        /**
+         * Bloom: die vom Parameter-Skript gerechneten Werte, damit sie den
+         * **Present-Pfad** erreichen.
+         *
+         * `post` ist per Vorgabe an, und dann kehrt `runBloom` sofort zurueck —
+         * der Glow entsteht erst beim Present. Bis S54 lief das Skript in
+         * genau diesem Normalfall nie, seine drei Felder standen wirkungslos
+         * im Panel (gefunden von den Feld-Sonden). Jetzt rechnet `runBloom`
+         * das Skript IMMER und legt das Ergebnis hier ab.
+         */
+        float bloomIntensity = 1.0f;
+        float bloomThreshold = 0.0f;
+        int bloomRadius = 8;
+        float bloomVigStrength = 0.3f;
 
         // Movement / Dynamic Movement: scripted displacement grid
         std::unique_ptr<lumi::modules::ScriptGridModule> grid;
@@ -701,9 +734,12 @@ private:
                   const lumi::multieffect::BloomParams& params);
     /// Bloom-Glow erzeugen: Downsample (+Threshold) → separierbarer
     /// 25-Tap-Gauss in rt.bloomRt; liefert die Glow-Textur (0 bei Fehler).
+    /// `threshold`/`radius` kommen getrennt herein, weil sie im Knoten aus der
+    /// Strang-D-Frame-Kopie stammen koennen und nicht aus `params` (S54).
     unsigned int ensureBloomGlow(LeafRuntime& rt,
                                  const lumi::multieffect::BloomParams& params,
-                                 unsigned int srcTexture);
+                                 unsigned int srcTexture, float threshold,
+                                 int radius);
     /// 3D Camera (Lights-Etappe 1): setzt m_camera3d fuer folgende 3D-Module
     /// (Frame-Zustand wie Set Render Mode); EEL-Slots als dynamische Params.
     void runCamera3D(const lumi::multieffect::ChainNode& node,

@@ -58,7 +58,12 @@ enum class SymCat
 [[nodiscard]] inline SymCat symbolCategory(const QString& n)
 {
     static const QSet<QString> kReadOnly = {"w", "h", "dt"};
-    static const QSet<QString> kConstant = {"pi", "pi2", "phi", "e"};
+    // Nur was die Lua-Praeambel wirklich vorbelegt (LuaScriptEngine: pi, pi2).
+    // `phi`/`e` standen hier zu Unrecht: es gibt sie ausschliesslich als
+    // EEL-Konstanten `$PHI`/`$E`, die der Transpiler zur Uebersetzungszeit
+    // durch ihre Zahl ersetzt — als blosser Bezeichner sind beide ganz
+    // gewoehnliche Variablen. Im Korpus ist `e` in 128 Presets genau das (S54).
+    static const QSet<QString> kConstant = {"pi", "pi2"};
     // MilkDrop-Namen (M2-Skript-Vertrag): read-only Frame-Infos + Point-Inputs
     static const QSet<QString> kInput = {
         "i",    "v",        "b",        "bass",     "mid",      "treb",
@@ -182,8 +187,13 @@ protected:
             const QRegularExpressionMatch m = as.next();
             const QString name = m.captured(1);
             const SymCat cat = symbolCategory(name);
-            if (cat == SymCat::ReadOnly || cat == SymCat::Constant ||
-                m_conflicts.contains(name))
+            // Eine Konstante zu ueberschreiben ist KEIN Fehler: `$PI` kam in
+            // AVS erst spaeter, aeltere Presets setzen `pi` selbst — im Korpus
+            // 629 Stueck, mehr als die 469 mit `$PI` (Befund Patrik, S54). Die
+            // Sandbox laesst es zu (test_ParamScript), und sie muss es: die
+            // Autoren meinten `3.14159`, nicht die volle Kreiszahl, und
+            // zwanzig Presets meinen mit `pi` ueberhaupt keine (`pi=2`).
+            if (cat == SymCat::ReadOnly || m_conflicts.contains(name))
                 setFormat(static_cast<int>(m.capturedStart(1)),
                           static_cast<int>(m.capturedLength(1)), m_error);
         }
@@ -293,6 +303,12 @@ private:
                "<code>time</code> (seconds)</p>%5"
                "<h3>Constants</h3>"
                "<p><code>pi</code> ≈ 3.14159 · <code>pi2</code> ≈ 6.28319 (2·pi)</p>"
+               "<p>EEL form (replaced by its number at translation time, as in "
+               "AVS): <code>$PI</code> 3.141592653589793 · <code>$E</code> "
+               "2.71828183 · <code>$PHI</code> 1.61803399 (golden ratio)</p>"
+               "<p style='color:#888'>Older presets predate <code>$PI</code> and "
+               "define <code>pi</code> themselves — that is allowed and wins over "
+               "the preset value above.</p>"
                "<p style='color:#888'>All values are floating-point. Assignment: "
                "<code>x = expr;</code> — statements separated by <code>;</code>. "
                "Comments: <code>// …</code></p>")

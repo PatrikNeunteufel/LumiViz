@@ -226,9 +226,17 @@ Reihenfolge, die sich bewährt hat:
 ## 8. Verifikationsgürtel vor jedem Commit
 
 - `MyViz.UnitTests` — **grün heißt SUCCESS und 0 Skips**
-- **Modul-Matrix** `run_matrix.py` — zwei Größen, Referenzstand 37/41
-- **Modul-Sonden** `run_module_probes.py` — Referenzstand 29/30 (S51); `5_vars`
-  läuft nur bei 320×240, seine Literale sind auf diese Größe gepinnt
+- **Modul-Matrix** `run_matrix.py` — zwei Größen, Referenzstand **36/41** (S54
+  nachgemessen; die früher notierten 37/41 waren zu optimistisch)
+- **Modul-Sonden** `run_module_probes.py` — Referenzstand **78/80** (S53/S54);
+  `5_vars` läuft nur bei 320×240, seine Literale sind auf diese Größe gepinnt
+- **Feld-Sonden** `fields/run_field_probes.py` (neu S54) — beantwortet als
+  einzige Familie **nicht** „rechnen wir wie das Original?", sondern „wirkt
+  dieses Feld überhaupt?". Kein Referenz-Renderer: verglichen werden zwei Läufe
+  unseres eigenen Renderers, Vorgabe gegen ein einzelnes abweichendes Feld.
+  Gehört in den Gürtel, sobald Felder dazukommen oder Renderer-Parameter ihren
+  Weg ändern; ein `STUMM` ist erst nach Blick auf die Montage ein Befund
+  (`asset/calibration/fields/README.md`)
 - Bei breit wirkenden Änderungen (geteilter Kontext, Blend, Scope-Renderer)
   ist die Matrix der wichtigste Wächter — sie betrifft jeden Scope.
 - Für jeden Befund ein **Gate**. Der Texer-II-Decoder war ein Jahr lang kaputt,

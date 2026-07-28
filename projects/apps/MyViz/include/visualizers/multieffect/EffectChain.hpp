@@ -519,7 +519,8 @@ struct ColorfadeParams
     int beatFaderB = 8;
     int onBeatFrames = 1;  ///< frames the beat faders stay active (>= 1)
 
-    /// Parameter-Skript (Strang D): `faderr`, `faderg`, `faderb`, `onbeatframes` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Parameter-Skript (Strang D): `faderr`, `faderg`, `faderb`, `beatfaderr`,
+    /// `beatfaderg`, `beatfaderb`, `onbeatframes` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1282,6 +1283,23 @@ struct TimescopeParams
     int blend = 3;
     int channel = 2;           ///< 0 L, 1 R, 2 center
     int bands = 576;           ///< vertical spectrum resolution
+    /**
+     * `channel` wirklich anwenden (Erweiterung, Vorgabe AUS = referenztreu).
+     *
+     * r_timescope.cpp berechnet aus `which_ch` zwar ein `fa_data`, die
+     * Zeichenschleife liest dann aber fest `visdata[0][0]` — den linken
+     * Spektrumkanal; `fa_data` wird nie benutzt (S48-Matrix-Befund 39). Der
+     * Regler steht also im Original-Dialog, ohne etwas zu tun.
+     *
+     * Bei `false` bleibt es genau dabei, damit importierte Presets (die
+     * ueberwiegend `which_ch=2` tragen) weiter wie die Referenz aussehen. Bei
+     * `true` zaehlt `channel`: 0 links, 1 rechts, 2 Mittelwert beider.
+     *
+     * Steht bewusst HINTER `bands`: die Aggregat-Initialisierung
+     * `TimescopeParams{color, blend, channel, bands}` ist in Tests und
+     * Uebersetzer in Gebrauch und soll gueltig bleiben.
+     */
+    bool useChannel = false;
 
     /// Parameter-Skript (Strang D): `bands`, `channel`, `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
     std::string initCode;

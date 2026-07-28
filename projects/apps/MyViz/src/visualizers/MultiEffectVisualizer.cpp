@@ -16,6 +16,8 @@
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 
+#include <BasicLogger.h>
+
 #include <QOpenGLContext>
 #include <QOpenGLExtraFunctions>
 #include <QOpenGLFramebufferObjectFormat>
@@ -3271,6 +3273,9 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     // Lights: Bloom ist Post-Processing NACH dem Szenen-Render; in-chain
     // akkumulierte der additive Glow in Fadeout-Ketten bis Weiss.
     const BloomParams* postBloom = nullptr;
+    /// Die Runtime des post-Bloom-Knotens — sie traegt die vom Parameter-Skript
+    /// gerechneten Werte (S54); ohne Skript stehen dort die Preset-Werte.
+    const LeafRuntime* postBloomRt = nullptr;
     unsigned int postGlowTex = 0;
     {
         std::function<const ChainNode*(const ChainNode&)> findBloom =
@@ -3285,9 +3290,15 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         if (const ChainNode* hit = findBloom(m_root))
         {
             postBloom = std::get_if<BloomParams>(&hit->params);
+            // Die vom Parameter-Skript gerechneten Werte, die `runBloom` vor
+            // dem post-Ausstieg hinterlegt hat (S54) — ohne Skript sind es
+            // die Preset-Werte.
+            const LeafRuntime& brt = m_leafRuntimes[hit->nodeId];
+            postBloomRt = &brt;
             postGlowTex =
                 ensureBloomGlow(m_leafRuntimes[hit->nodeId], *postBloom,
-                                m_rootSurface.current()->texture());
+                                m_rootSurface.current()->texture(),
+                                brt.bloomThreshold, brt.bloomRadius);
         }
     }
 
@@ -3321,12 +3332,14 @@ void MultiEffectVisualizer::onRender(float deltaTime)
             f->glBindTexture(GL_TEXTURE_2D, postGlowTex);
             m_bloomCompShader->setUniformValue("uGlow", 1);
             f->glActiveTexture(GL_TEXTURE0);
+            // Intensitaet und Vignetten-Staerke aus der Runtime (Skriptwerte,
+            // sonst Preset-Werte); der Vignetten-SCHALTER ist nicht skriptbar.
             m_bloomCompShader->setUniformValue(
-                "uIntensity", std::max(0.0f, postBloom->intensity));
+                "uIntensity", std::max(0.0f, postBloomRt->bloomIntensity));
             m_bloomCompShader->setUniformValue("uVignette", postBloom->vignette);
             m_bloomCompShader->setUniformValue(
                 "uVigStrength",
-                std::clamp(postBloom->vignetteStrength, 0.0f, 1.0f));
+                std::clamp(postBloomRt->bloomVigStrength, 0.0f, 1.0f));
             m_quadVao->bind();
             f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             m_quadVao->release();
@@ -3803,9 +3816,10 @@ void MultiEffectVisualizer::runClear(const ChainNode& node,
     // "MAX gegen Schwarz", also ein No-op (max(x,0)=x). Das Bild klang damit
     // NIE ab; "Deep Red Sea" (50 Scopes auf einem Puffer, der sich je Frame
     // halbieren sollte) sammelte alles an und saettigte (Befund S52).
-    int mode = params.blend == 3 ? m_renderMode.lineBlend
-             : params.blend == 2 ? 3   // 50/50 = BLEND_AVG
-                                 : params.blend;
+    const int blend = static_cast<int>(vBlend);  // Strang D: die Frame-Kopie
+    int mode = blend == 3 ? m_renderMode.lineBlend
+             : blend == 2 ? 3   // 50/50 = BLEND_AVG
+                          : blend;
 
     if (mode == 0)
     {
@@ -3872,8 +3886,9 @@ void MultiEffectVisualizer::runBrightness(const ChainNode& node,
     };
     m_brightShader->bind();
     m_brightShader->setUniformValue(
-        "uFactor", QVector3D(factor(params.red), factor(params.green),
-                             factor(params.blue)));
+        "uFactor", QVector3D(factor(static_cast<int>(vRed)),      // Strang D:
+                             factor(static_cast<int>(vGreen)),    // Frame-Kopien
+                             factor(static_cast<int>(vBlue))));
     m_brightShader->setUniformValue("uExclude", params.exclude);
     m_brightShader->setUniformValue("uExColor", colorToVec(params.color));
     m_brightShader->setUniformValue("uDistance",
@@ -3893,8 +3908,9 @@ void MultiEffectVisualizer::runFastBrightness(const ChainNode& node,
                    params.beatCode,
                    {{"dir", &vDir}});
 
-    if (params.dir == 2) return;  // identity — no work (r_fastbright dir==2)
-    const float scale = params.dir == 0 ? 2.0f : 0.5f;  // x2 (clamped) / x0.5
+    const int dir = static_cast<int>(vDir);  // Strang D: die Frame-Kopie
+    if (dir == 2) return;  // identity — no work (r_fastbright dir==2)
+    const float scale = dir == 0 ? 2.0f : 0.5f;  // x2 (clamped) / x0.5
     m_brightShader->bind();
     m_brightShader->setUniformValue("uFactor", QVector3D(scale, scale, scale));
     m_brightShader->setUniformValue("uExclude", false);
@@ -3914,10 +3930,11 @@ void MultiEffectVisualizer::runBlur(const ChainNode& node,
                    {{"strength", &vStrength}});
 
     // Weights per strength (r_blur.cpp). All kernels sum to 1.
+    const int strength = static_cast<int>(vStrength);  // Strang D: die Frame-Kopie
     float center = 0.5f;
     float neighbor = 0.125f;
-    if (params.strength == 2) { center = 0.75f; neighbor = 0.0625f; }
-    else if (params.strength == 3) { center = 0.0f; neighbor = 0.25f; }
+    if (strength == 2) { center = 0.75f; neighbor = 0.0625f; }
+    else if (strength == 3) { center = 0.0f; neighbor = 0.25f; }
 
     m_blurShader->bind();
     m_blurShader->setUniformValue(
@@ -3943,21 +3960,24 @@ void MultiEffectVisualizer::runMirror(const ChainNode& node,
 
 
     // Active direction bits this frame (r_mirror.cpp:146 rbeat=(rand()%16)&mode).
-    int target = params.mode & 15;
+    const int mode = static_cast<int>(vMode);  // Strang D: die Frame-Kopie
+    int target = mode & 15;
     if (params.onBeatRandom)
     {
         if (m_frameBeat)
         {
             // EIN Zug aus dem Preset-Strom, wie r_mirror.cpp:148 (S49)
-            rt.mirrorRBeat = (m_scriptContext->nextRand() % 16) & params.mode;
+            rt.mirrorRBeat = (m_scriptContext->nextRand() % 16) & mode;
         }
         target = rt.mirrorRBeat;
     }
 
     // Per-direction factors: hard switch, or a 16-step ramp advancing every
     // `slower` frames (BLEND_ADAPT divisors, r_mirror.cpp:249-257).
+    // Strang D: die Frame-Kopie. `slower` ist int — std::max(int, double) findet
+    // keine Ueberladung (Stolperstein S53), deshalb erst casten.
     const bool step = params.smooth &&
-                      (++rt.mirrorFrames % std::max(1, params.slower)) == 0;
+                      (++rt.mirrorFrames % std::max(1, static_cast<int>(vSlower))) == 0;
     bool any = false;
     for (int i = 0; i < 4; ++i)
     {
@@ -4009,7 +4029,7 @@ void MultiEffectVisualizer::runOnBeatClear(const ChainNode& node,
 
     // Beat counter -> clear every Nth beat (r_nfclr.cpp:97).
     if (!m_frameBeat) return;
-    if (++rt.beatCounter < params.everyNBeats) return;
+    if (++rt.beatCounter < static_cast<int>(vEvery)) return;  // Strang D: Frame-Kopie
     rt.beatCounter = 0;
 
     auto* f = QOpenGLContext::currentContext()->functions();
@@ -4045,21 +4065,30 @@ void MultiEffectVisualizer::runColorfade(const ChainNode& node,
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
     double vFadeR = params.faderR, vFadeG = params.faderG, vFadeB = params.faderB, vBeatFrames = params.onBeatFrames;
+    // Auch die BEAT-Fader sind skriptbar (S54). Legacy bleibt unberuehrt: die
+    // Vorbelegung IST der Preset-Wert, ein Preset ohne Skript rechnet also
+    // Schritt fuer Schritt dasselbe wie vorher.
+    double vBeatR = params.beatFaderR, vBeatG = params.beatFaderG,
+           vBeatB = params.beatFaderB;
     runParamScript(rt, "colorfade", params.initCode, params.frameCode,
                    params.beatCode,
                    {{"faderr", &vFadeR},
                     {"faderg", &vFadeG},
                     {"faderb", &vFadeB},
+                    {"beatfaderr", &vBeatR},
+                    {"beatfaderg", &vBeatG},
+                    {"beatfaderb", &vBeatB},
                     {"onbeatframes", &vBeatFrames}});
 
     // Beat faders replace the base faders for onBeatFrames frames after a beat.
-    if (m_frameBeat) rt.beatFramesLeft = params.onBeatFrames;
+    // Strang D: durchgaengig die Frame-Kopien, auch fuer die Beat-Fader.
+    if (m_frameBeat) rt.beatFramesLeft = static_cast<int>(vBeatFrames);
     const bool onBeat = rt.beatFramesLeft > 0;
     if (rt.beatFramesLeft > 0) --rt.beatFramesLeft;
 
-    const int f1 = onBeat ? params.beatFaderR : params.faderR;
-    const int f2 = onBeat ? params.beatFaderG : params.faderG;
-    const int f3 = onBeat ? params.beatFaderB : params.faderB;
+    const int f1 = static_cast<int>(onBeat ? vBeatR : vFadeR);
+    const int f2 = static_cast<int>(onBeat ? vBeatG : vFadeG);
+    const int f3 = static_cast<int>(onBeat ? vBeatB : vFadeB);
 
     m_colorfadeShader->bind();
     m_colorfadeShader->setUniformValue(
@@ -4806,10 +4835,13 @@ void MultiEffectVisualizer::runBufferSave(const ChainNode& node,
 
     // Direction per frame (r_stack.cpp:125-126): dir 0/1 are fixed, dir 2/3
     // alternate save/restore every render via the per-node toggle.
-    int tDir = params.dir;
-    if (params.dir >= 2)
+    const int dir = static_cast<int>(vDir);      // Strang D: die Frame-Kopien
+    const int slot = static_cast<int>(vSlot);
+    const int alpha = static_cast<int>(vAlpha);
+    int tDir = dir;
+    if (dir >= 2)
     {
-        tDir = (params.dir & 1) ^ (rt.bufDirCh ? 1 : 0);
+        tDir = (dir & 1) ^ (rt.bufDirCh ? 1 : 0);
         rt.bufDirCh = !rt.bufDirCh;
     }
 
@@ -4818,7 +4850,7 @@ void MultiEffectVisualizer::runBufferSave(const ChainNode& node,
         // Write the current working buffer into global buffer `slot`. The blend
         // applies in BOTH directions in AVS (fbin/fbout swap, r_stack.cpp:127).
         QOpenGLFramebufferObject* pool =
-            activePool().get(params.slot, m_surfaceWidth, m_surfaceHeight, true);
+            activePool().get(slot, m_surfaceWidth, m_surfaceHeight, true);
         if (pool == nullptr) return;
         const bool hasBlit = QOpenGLFramebufferObject::hasOpenGLFramebufferBlit();
         if (params.blend == BlendMode::Replace || !hasBlit ||
@@ -4846,8 +4878,7 @@ void MultiEffectVisualizer::runBufferSave(const ChainNode& node,
             extra->glBlitFramebuffer(0, 0, m_surfaceWidth, m_surfaceHeight, 0, 0,
                                      m_surfaceWidth, m_surfaceHeight,
                                      GL_COLOR_BUFFER_BIT, GL_NEAREST);
-            blendPass(m_bufferScratch, active().current()->texture(), params.blend,
-                      params.adjustAlpha);
+            blendPass(m_bufferScratch, active().current()->texture(), params.blend, alpha);
             extra->glBindFramebuffer(GL_READ_FRAMEBUFFER,
                                      m_bufferScratch.current()->handle());
             extra->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, pool->handle());
@@ -4861,9 +4892,9 @@ void MultiEffectVisualizer::runBufferSave(const ChainNode& node,
     {
         // Blend a previously saved buffer back onto the working surface.
         QOpenGLFramebufferObject* pool =
-            activePool().get(params.slot, m_surfaceWidth, m_surfaceHeight, false);
+            activePool().get(slot, m_surfaceWidth, m_surfaceHeight, false);
         if (pool == nullptr) return;  // nothing saved yet
-        blendPass(active(), pool->texture(), params.blend, params.adjustAlpha);
+        blendPass(active(), pool->texture(), params.blend, alpha);
         bindActive();
     }
 }
@@ -4901,7 +4932,7 @@ void MultiEffectVisualizer::runCustomBpm(const ChainNode& node,
         // `arbLastTC` startet in der Referenz bei 0, der erste Vergleich
         // schlaegt also sofort an; das Seeding auf "jetzt" verzoegerte den
         // ersten Beat um ein volles Intervall.
-        m_frameBeat = now > rt.customLastMs + params.arbitraryMs;
+        m_frameBeat = now > rt.customLastMs + static_cast<int>(vMs);  // Strang D
         if (m_frameBeat) rt.customLastMs = now;
         return;
     }
@@ -4912,7 +4943,7 @@ void MultiEffectVisualizer::runCustomBpm(const ChainNode& node,
         // (skipVal+1)-te Beat. Unsere alte Bedingung verglich gegen skipVal
         // selbst und liess damit jeden DRITTEN statt jeden VIERTEN durch
         // (Sonde 7_rand/bpm_zaehler_skip3: Zeile 9 Positionen daneben).
-        m_frameBeat = inBeat && ++rt.customSkipCount >= params.skipCount + 1;
+        m_frameBeat = inBeat && ++rt.customSkipCount >= static_cast<int>(vSkip) + 1;
         if (m_frameBeat) rt.customSkipCount = 0;
         return;
     }
@@ -5795,10 +5826,13 @@ void MultiEffectVisualizer::runColorMap(const ChainNode& node,
     }
 
     m_colorMapShader->bind();
-    m_colorMapShader->setUniformValue("uKey", std::clamp(params.key, 0, 5));
-    m_colorMapShader->setUniformValue("uBlend", std::clamp(params.blendMode, 0, 9));
+    // Strang D: die Frame-Kopien
+    m_colorMapShader->setUniformValue("uKey",
+                                      std::clamp(static_cast<int>(vKey), 0, 5));
+    m_colorMapShader->setUniformValue("uBlend",
+                                      std::clamp(static_cast<int>(vBlendMode), 0, 9));
     m_colorMapShader->setUniformValue(
-        "uAdjust", static_cast<float>(params.adjustBlend) / 255.0f);
+        "uAdjust", static_cast<float>(vAdjust) / 255.0f);  // Strang D
     m_colorMapShader->setUniformValue("uLut", 1);
     m_colorMapShader->release();
     f->glActiveTexture(GL_TEXTURE1);
@@ -5823,8 +5857,10 @@ void MultiEffectVisualizer::runBufferBlend(const ChainNode& node,
     auto* f = QOpenGLContext::currentContext()->functions();
     SurfacePair& pair = active();
     const unsigned int cur = pair.current()->texture();
-    unsigned int texA = params.bufferA >= 8 ? cur : poolTexture(params.bufferA);
-    unsigned int texB = params.bufferB >= 8 ? cur : poolTexture(params.bufferB);
+    const int bufA = static_cast<int>(vBufA);  // Strang D: die Frame-Kopien
+    const int bufB = static_cast<int>(vBufB);
+    unsigned int texA = bufA >= 8 ? cur : poolTexture(bufA);
+    unsigned int texB = bufB >= 8 ? cur : poolTexture(bufB);
     if (texA == 0) texA = cur;  // empty pool slot -> current frame
     if (texB == 0) texB = cur;
 
@@ -5839,7 +5875,8 @@ void MultiEffectVisualizer::runBufferBlend(const ChainNode& node,
     f->glBindTexture(GL_TEXTURE_2D, texB);
     m_bufferBlendShader->setUniformValue("uSrcB", 1);
     f->glActiveTexture(GL_TEXTURE0);
-    m_bufferBlendShader->setUniformValue("uMode", std::clamp(params.mode, 0, 10));
+    m_bufferBlendShader->setUniformValue(
+        "uMode", std::clamp(static_cast<int>(vMode), 0, 10));  // Strang D
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_bufferBlendShader->release();
@@ -5884,6 +5921,11 @@ void MultiEffectVisualizer::runSimpleScope(const ChainNode& node,
                     {"channel", &vChannel},
                     {"position", &vPosition}});
 
+    // Strang D: ab hier gilt die Frame-Kopie, nicht mehr der Regler.
+    const int mode = static_cast<int>(vMode);
+    const int channel = static_cast<int>(vChannel);
+    const int position = static_cast<int>(vPosition);
+
     // r_simple.cpp zeilengenau (S48-Matrix-Befund 00): Analyzer lesen das
     // SPEKTRUM (200 Baender, xs=200/w), Scopes die Waveform (Byte^128);
     // solid = eine vertikale Linie je Bildspalte. Pixel-Mathematik auf der
@@ -5894,10 +5936,10 @@ void MultiEffectVisualizer::runSimpleScope(const ChainNode& node,
     if (w < 2 || h < 2) return;
 
     const bool analyzer =
-        params.mode == 0 || params.mode == 1 || params.mode == 4;
+        mode == 0 || mode == 1 || mode == 4;
     unsigned char center[577];
     const unsigned char* fa;
-    if (params.channel >= 2)
+    if (channel >= 2)
     {
         // Original: char-Arithmetik (visdata ist char[]) — signed halbieren,
         // Ueberlauf wrappt wie der char-Store (Spektrum-Bytes > 127!).
@@ -5914,7 +5956,7 @@ void MultiEffectVisualizer::runSimpleScope(const ChainNode& node,
     }
     else
     {
-        fa = analyzer ? visSpectrum(params.channel) : visWaveform(params.channel);
+        fa = analyzer ? visSpectrum(channel) : visWaveform(channel);
     }
 
     const float yscale = static_cast<float>(h) / 2.0f / 256.0f;
@@ -5947,7 +5989,7 @@ void MultiEffectVisualizer::runSimpleScope(const ChainNode& node,
         return a * (1.0f - s1) + b * s1;
     };
 
-    switch (params.mode)
+    switch (mode)
     {
         case 0:  // solid analyzer (r_simple case 0)
         case 4:  // dot analyzer (Bit 6, case 0)
@@ -5956,18 +5998,18 @@ void MultiEffectVisualizer::runSimpleScope(const ChainNode& node,
             float ys = yscale;
             const float xs = 200.0f / static_cast<float>(w);
             int adj = 1;
-            if (params.position != 1)
+            if (position != 1)
             {
                 ys = -ys;
                 adj = 0;
             }
-            if (params.position == 2) h2 -= static_cast<int>(ys * 256.0f / 2.0f);
+            if (position == 2) h2 -= static_cast<int>(ys * 256.0f / 2.0f);
             for (int x = 0; x < w; ++x)
             {
                 const float yr = sampleAt(static_cast<float>(x) * xs, false);
                 const int yTip =
                     h2 + adj + static_cast<int>(yr * ys - 1.0f);
-                if (params.mode == 4)
+                if (mode == 4)
                 {
                     if (yTip >= 0 && yTip < h)
                         push(static_cast<float>(x), static_cast<float>(yTip));
@@ -5984,14 +6026,14 @@ void MultiEffectVisualizer::runSimpleScope(const ChainNode& node,
         case 3:  // solid scope (r_simple case 3)
         case 5:  // dot scope (Bit 6, case 2)
         {
-            int yh = params.position * h / 2;
-            if (params.position == 2) yh = h / 4;
+            int yh = position * h / 2;
+            if (position == 2) yh = h / 4;
             const int ysBase = yh + static_cast<int>(yscale * 128.0f);
             for (int x = 0; x < w; ++x)
             {
                 const float yr = sampleAt(static_cast<float>(x) * xscale, true);
                 const int yTip = yh + static_cast<int>(yr * yscale);
-                if (params.mode == 5)
+                if (mode == 5)
                 {
                     if (yTip >= 0 && yTip < h)
                         push(static_cast<float>(x), static_cast<float>(yTip));
@@ -6009,8 +6051,8 @@ void MultiEffectVisualizer::runSimpleScope(const ChainNode& node,
         {
             int h2 = h / 2;
             float ys = yscale;
-            if (params.position != 1) ys = -ys;
-            if (params.position == 2) h2 -= static_cast<int>(ys * 256.0f / 2.0f);
+            if (position != 1) ys = -ys;
+            if (position == 2) h2 -= static_cast<int>(ys * 256.0f / 2.0f);
             const float xs = 1.0f / xscale * (288.0f / 200.0f);
             push(0.0f, static_cast<float>(h2 + static_cast<int>(fa[0] * ys)));
             for (int x = 1; x < 200; ++x)
@@ -6023,8 +6065,8 @@ void MultiEffectVisualizer::runSimpleScope(const ChainNode& node,
         case 2:  // line scope (288 Punkte, xs = w/288)
         default:
         {
-            int yh = params.position * h / 2;
-            if (params.position == 2) yh = h / 4;
+            int yh = position * h / 2;
+            if (position == 2) yh = h / 4;
             const float xs = 1.0f / xscale;
             push(0.0f,
                  static_cast<float>(yh + static_cast<int>(
@@ -6039,7 +6081,7 @@ void MultiEffectVisualizer::runSimpleScope(const ChainNode& node,
         }
     }
 
-    drawScopeShape(pts, params.mode >= 4);
+    drawScopeShape(pts, mode >= 4);
 }
 
 void MultiEffectVisualizer::runBassSpin(const ChainNode& node,
@@ -6279,8 +6321,8 @@ void MultiEffectVisualizer::runPicture(const ChainNode& node, const PictureParam
                    params.beatCode,
                    {{"blend", &vBlend}});
 
-    drawEmbeddedImage(m_leafRuntimes[node.nodeId], params.imageData, params.blend,
-                      params.keepAspect);
+    drawEmbeddedImage(m_leafRuntimes[node.nodeId], params.imageData,
+                      static_cast<int>(vBlend), params.keepAspect);  // Strang D
 }
 
 void MultiEffectVisualizer::runPictureII(const ChainNode& node,
@@ -6295,7 +6337,8 @@ void MultiEffectVisualizer::runPictureII(const ChainNode& node,
                    {{"blend", &vBlend}});
 
     // Picture II stretches to fill (no aspect lock); bilinear is already on.
-    drawEmbeddedImage(m_leafRuntimes[node.nodeId], params.imageData, params.blend, false);
+    drawEmbeddedImage(m_leafRuntimes[node.nodeId], params.imageData,
+                      static_cast<int>(vBlend), false);  // Strang D
 }
 
 namespace
@@ -6652,11 +6695,12 @@ void MultiEffectVisualizer::runTexer(const ChainNode& node, const TexerParams& p
     if (!ensureEmbeddedTexture(rt, params.imageData, /*fallbackDot=*/true)) return;
     const std::vector<float> wave = getWaveform();
     const int wn = static_cast<int>(wave.size());
-    const int n = std::clamp(params.particles, 1, 4096);
+    const int n = std::clamp(static_cast<int>(vParticles), 1, 4096);  // Strang D
 
     auto* f = QOpenGLContext::currentContext()->functions();
     f->glEnable(GL_BLEND);
-    f->glBlendFunc(params.blend == 0 ? GL_ONE : GL_SRC_ALPHA, GL_ONE);
+    f->glBlendFunc(static_cast<int>(vBlend) == 0 ? GL_ONE : GL_SRC_ALPHA,
+                   GL_ONE);  // Strang D
     m_spriteShader->bind();
     m_quadVao->bind();
     f->glActiveTexture(GL_TEXTURE0);
@@ -7027,14 +7071,43 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
         rt.paramHost->setSource(Slot::Init, init);
         rt.paramHost->setSource(Slot::Frame, frame);
         rt.paramHost->setSource(Slot::Beat, beat);
-        rt.paramHost->compileAll();
+        // Ein Uebersetzungsfehler darf NICHT still bleiben: bis S54 fragte
+        // niemand `lastError()` ab, ein Skript mit Tippfehler verhielt sich
+        // damit exakt wie ein leeres — die Probe mit absichtlichem Unsinn kam
+        // ohne eine einzige Meldung durch. Gemeldet wird nur HIER, also einmal
+        // je Skriptaenderung, nicht je Frame.
+        if (!rt.paramHost->compileAll())
+        {
+            rt.paramError = rt.paramHost->lastError();
+            BasicLogger::logWarning("MultiEffect: Parameter-Skript '" +
+                                    std::string(prefix) + "': " + rt.paramError);
+        }
+        else
+        {
+            rt.paramError.clear();
+        }
         rt.paramCompiled = combined;
     }
 
     auto& engine = rt.paramHost->engine();
     // Merkregel S52: ein Skript-Traeger braucht ALLE Variablen, die seine Slots
     // lesen — und die Vorbelegung gehoert VOR den Frame-Slot, nicht danach.
-    for (const ParamVar& v : vars) engine.setNumber(v.name, *v.value);
+    //
+    // S54: die Vorbelegung kommt NUR beim ersten Frame (und nach einer
+    // Reglerbewegung) aus den Params. Sonst haette der Init-Slot nie eine
+    // Wirkung — sein Ergebnis wurde eine Zeile weiter jeden Frame wieder
+    // ueberschrieben (Entscheid Patrik: Init setzt eine einmalige
+    // Startbelegung, die Frames schreiben sie fort).
+    for (const ParamVar& v : vars)
+    {
+        const auto seen = rt.paramSeen.find(v.name);
+        if (fresh || seen == rt.paramSeen.end() || seen->second != *v.value)
+        {
+            rt.paramState[v.name] = *v.value;
+            rt.paramSeen[v.name] = *v.value;
+        }
+        engine.setNumber(v.name, rt.paramState[v.name]);
+    }
     engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
     engine.setNumber("w", static_cast<double>(m_surfaceWidth));
     engine.setNumber("h", static_cast<double>(m_surfaceHeight));
@@ -7044,7 +7117,23 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
     if (rt.paramHost->has(Slot::Frame)) rt.paramHost->run(Slot::Frame);
     if (m_frameBeat && rt.paramHost->has(Slot::Beat)) rt.paramHost->run(Slot::Beat);
 
-    for (const ParamVar& v : vars) *v.value = engine.number(v.name);
+    // Laufzeitfehler: der Slot schaltet sich selbst ab (LuaScriptEngine), die
+    // Meldung waere sonst verloren. Einmal je NEUEM Fehlertext, nicht je Frame.
+    if (const std::string& err = rt.paramHost->lastError();
+        !err.empty() && err != rt.paramError)
+    {
+        rt.paramError = err;
+        BasicLogger::logWarning("MultiEffect: Parameter-Skript '" +
+                                std::string(prefix) + "': " + err);
+    }
+
+    // Ergebnis zurueck in die Frame-Kopie UND in die Fortschreibung: was der
+    // Frame-Slot gerechnet hat, ist die Vorbelegung des naechsten Frames.
+    for (const ParamVar& v : vars)
+    {
+        *v.value = engine.number(v.name);
+        rt.paramState[v.name] = *v.value;
+    }
 }
 
 void MultiEffectVisualizer::runRotatingStars(const ChainNode& node,
@@ -7151,7 +7240,8 @@ void MultiEffectVisualizer::runUniqueTone(const ChainNode& node,
     m_uniqueToneShader->bind();
     m_uniqueToneShader->setUniformValue("uColor", colorToVec(params.color));
     m_uniqueToneShader->setUniformValue("uInvert", params.invert ? 1 : 0);
-    m_uniqueToneShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_uniqueToneShader->setUniformValue(
+        "uBlend", std::clamp(static_cast<int>(vBlend), 0, 2));  // Strang D
     m_uniqueToneShader->release();
     transformPass(*m_uniqueToneShader);
 }
@@ -7176,8 +7266,10 @@ void MultiEffectVisualizer::runInterleave(const ChainNode& node,
     }
     // Ease towards x/y (r_interleave sc1), jump to x2/y2 on beat.
     const float sc1 = (static_cast<float>(params.beatDuration) + 512.0f - 64.0f) / 512.0f;
-    rt.interCurX = rt.interCurX * sc1 + static_cast<float>(params.x) * (1.0f - sc1);
-    rt.interCurY = rt.interCurY * sc1 + static_cast<float>(params.y) * (1.0f - sc1);
+    // Strang D: die Frame-Kopien. `x2`/`y2` (der Beat-Sprung) haben keine
+    // Skriptvariable und bleiben deshalb am Preset-Wert.
+    rt.interCurX = rt.interCurX * sc1 + static_cast<float>(vX) * (1.0f - sc1);
+    rt.interCurY = rt.interCurY * sc1 + static_cast<float>(vY) * (1.0f - sc1);
     if (m_frameBeat && params.onBeat)
     {
         rt.interCurX = static_cast<float>(params.x2);
@@ -7212,7 +7304,8 @@ void MultiEffectVisualizer::runConvolution(const ChainNode& node,
     std::array<float, 49> kf{};
     for (int i = 0; i < 49; ++i)
         kf[static_cast<std::size_t>(i)] = static_cast<float>(params.kernel[static_cast<std::size_t>(i)]);
-    const float scale = params.scale != 0 ? static_cast<float>(params.scale) : 1.0f;
+    // Strang D: die Frame-Kopien
+    const float scale = vScale != 0 ? static_cast<float>(vScale) : 1.0f;
 
     auto pass = [&] {
         m_convolutionShader->bind();
@@ -7221,7 +7314,7 @@ void MultiEffectVisualizer::runConvolution(const ChainNode& node,
                               static_cast<float>(m_surfaceHeight)));
         m_convolutionShader->setUniformValueArray("uKernel", kf.data(), 49, 1);
         m_convolutionShader->setUniformValue("uScale", scale);
-        m_convolutionShader->setUniformValue("uBias", static_cast<float>(params.bias));
+        m_convolutionShader->setUniformValue("uBias", static_cast<float>(vBias));
         m_convolutionShader->setUniformValue("uAbsolute", params.absolute ? 1 : 0);
         m_convolutionShader->setUniformValue("uEdge", std::clamp(params.edgeMode, 0, 1));
         m_convolutionShader->release();
@@ -7285,7 +7378,8 @@ void MultiEffectVisualizer::runMultiFilter(const ChainNode& node,
 
     if (params.onBeat && !m_frameBeat) return;  // only on beat frames
     m_multiFilterShader->bind();
-    m_multiFilterShader->setUniformValue("uEffect", std::clamp(params.effect, 0, 3));
+    m_multiFilterShader->setUniformValue(
+        "uEffect", std::clamp(static_cast<int>(vEffect), 0, 3));  // Strang D
     m_multiFilterShader->release();
     transformPass(*m_multiFilterShader);
 }
@@ -7616,7 +7710,8 @@ void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
 
 unsigned int MultiEffectVisualizer::ensureBloomGlow(LeafRuntime& rt,
                                                     const BloomParams& params,
-                                                    unsigned int srcTexture)
+                                                    unsigned int srcTexture,
+                                                    float threshold, int radius)
 {
     auto* f = QOpenGLContext::currentContext()->functions();
 
@@ -7655,7 +7750,7 @@ unsigned int MultiEffectVisualizer::ensureBloomGlow(LeafRuntime& rt,
     f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     m_bloomDownShader->setUniformValue("uTex", 0);
     m_bloomDownShader->setUniformValue("uThreshold",
-                                       std::clamp(params.threshold, 0.0f, 1.0f));
+                                       std::clamp(threshold, 0.0f, 1.0f));
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -7663,7 +7758,7 @@ unsigned int MultiEffectVisualizer::ensureBloomGlow(LeafRuntime& rt,
     rt.bloomRt[0]->release();
 
     // --- Pass 2+3: separierbarer Gauss H (RT0 -> RT1), V (RT1 -> RT0) --------
-    const float sigma = static_cast<float>(std::clamp(params.radius, 1, 32));
+    const float sigma = static_cast<float>(std::clamp(radius, 1, 32));
     const auto gaussPass = [&](QOpenGLFramebufferObject& src,
                                QOpenGLFramebufferObject& dst,
                                const QVector2D& dir) {
@@ -7689,14 +7784,11 @@ unsigned int MultiEffectVisualizer::ensureBloomGlow(LeafRuntime& rt,
 void MultiEffectVisualizer::runBloom(const ChainNode& node,
                                      const BloomParams& params)
 {
-    // post=true: Anzeige-only — der Glow entsteht beim Present (kein
-    // Feedback in die Chain; S48-Befund: additiver Glow akkumulierte in
-    // Fadeout-Ketten ueber die Rueckkopplung bis Weiss).
-    if (params.post) return;
-
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
-    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    // Strang D auf einer Frame-Kopie (s. runParamScript). Das Skript laeuft
+    // VOR dem post-Ausstieg: `post` ist die Vorgabe, ein Ausstieg davor haette
+    // die drei Skriptfelder im Normalfall wirkungslos gemacht (S54).
     double vIntensity = params.intensity, vThreshold = params.threshold;
     double vRadius = params.radius, vVigStrength = params.vignetteStrength;
     runParamScript(rt, "bloom", params.initCode, params.frameCode, params.beatCode,
@@ -7705,11 +7797,25 @@ void MultiEffectVisualizer::runBloom(const ChainNode& node,
                     {"radius", &vRadius},
                     {"vignettestrength", &vVigStrength}});
 
+    // Ergebnis fuer den Present-Pfad hinterlegen — er sieht die Frame-Kopien
+    // sonst nicht, weil er ausserhalb dieser Funktion laeuft.
+    rt.bloomIntensity = static_cast<float>(vIntensity);
+    rt.bloomThreshold = static_cast<float>(vThreshold);
+    rt.bloomRadius = static_cast<int>(vRadius);
+    rt.bloomVigStrength = static_cast<float>(vVigStrength);
+
+    // post=true: Anzeige-only — der Glow entsteht beim Present (kein
+    // Feedback in die Chain; S48-Befund: additiver Glow akkumulierte in
+    // Fadeout-Ketten ueber die Rueckkopplung bis Weiss).
+    if (params.post) return;
+
     auto* f = QOpenGLContext::currentContext()->functions();
 
     SurfacePair& pair = active();
     const unsigned int glowTex =
-        ensureBloomGlow(rt, params, pair.current()->texture());
+        ensureBloomGlow(rt, params, pair.current()->texture(),
+                        static_cast<float>(vThreshold),      // Strang D
+                        static_cast<int>(vRadius));
     if (glowTex == 0) return;
 
     m_quadVao->bind();
@@ -8955,9 +9061,31 @@ void MultiEffectVisualizer::runTimescope(const ChainNode& node,
 
     rt.timescopeX = (rt.timescopeX + 1) % m_surfaceWidth;
 
-    // Die ROHEN visdata-Spektrum-Bytes des linken Kanals als R8-Textur
-    // (r_timescope liest visdata[0][0] direkt — which_ch wird im Original
-    // berechnet, aber nie benutzt; S48-Matrix-Befund 39).
+    // Die ROHEN visdata-Spektrum-Bytes als R8-Textur. Vorgabe ist der LINKE
+    // Kanal, weil r_timescope `visdata[0][0]` fest liest — das dort aus
+    // `which_ch` gebaute `fa_data` wird nie benutzt (S48-Matrix-Befund 39).
+    // Erst `useChannel` macht den Regler wirksam (S54): dann zaehlt `channel`,
+    // bei 2 der Mittelwert beider Kanaele wie in r_timescope.cpp:131.
+    const unsigned char* spec = visSpectrum(0);
+    std::array<unsigned char, 576> mixed{};
+    if (params.useChannel)
+    {
+        const int ch = std::clamp(static_cast<int>(vChannel), 0, 2);
+        if (ch >= 2)
+        {
+            const unsigned char* l = visSpectrum(0);
+            const unsigned char* r = visSpectrum(1);
+            for (std::size_t i = 0; i < mixed.size(); ++i)
+                mixed[i] = static_cast<unsigned char>((static_cast<int>(l[i]) +
+                                                       static_cast<int>(r[i])) / 2);
+            spec = mixed.data();
+        }
+        else
+        {
+            spec = visSpectrum(ch);
+        }
+    }
+
     if (m_specTex == 0) f->glGenTextures(1, &m_specTex);
     f->glBindTexture(GL_TEXTURE_2D, m_specTex);
     f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -8966,7 +9094,7 @@ void MultiEffectVisualizer::runTimescope(const ChainNode& node,
     f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     f->glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 576, 1, 0, GL_RED,
-                    GL_UNSIGNED_BYTE, visSpectrum(0));
+                    GL_UNSIGNED_BYTE, spec);
     f->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
     // Draw one column in place (no swap) into the working buffer.
@@ -9376,7 +9504,7 @@ void MultiEffectVisualizer::runChannelShift(const ChainNode& node,
                    params.beatCode,
                    {{"mode", &vMode}});
 
-    int mode = std::clamp(params.mode, 0, 5);
+    int mode = std::clamp(static_cast<int>(vMode), 0, 5);  // Strang D
     if (params.onBeat)
     {
         if (m_frameBeat || rt.apeChanMode < 0)
@@ -9401,7 +9529,7 @@ void MultiEffectVisualizer::runColorReduction(const ChainNode& node,
                    params.beatCode,
                    {{"levels", &vLevels}});
 
-    const int levels = std::clamp(params.levels, 1, 8);
+    const int levels = std::clamp(static_cast<int>(vLevels), 1, 8);  // Strang D
     m_apeShader->bind();
     m_apeShader->setUniformValue("uType", 1);
     m_apeShader->setUniformValue("uLevels", static_cast<float>(1 << levels));
@@ -9422,7 +9550,8 @@ void MultiEffectVisualizer::runMultiplier(const ChainNode& node,
 
     m_apeShader->bind();
     m_apeShader->setUniformValue("uType", 2);
-    m_apeShader->setUniformValue("uMode", std::clamp(params.mode, 0, 7));
+    m_apeShader->setUniformValue("uMode",
+                                 std::clamp(static_cast<int>(vMode), 0, 7));  // Strang D
     m_apeShader->release();
     transformPass(*m_apeShader);
 }

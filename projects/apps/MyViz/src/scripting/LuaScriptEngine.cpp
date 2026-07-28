@@ -385,6 +385,13 @@ void LuaScriptEngine::buildSandbox()
     lua_pop(L, 1);  // math
 
     // --- constants ---
+    // Abweichung vom Original, bewusst: AVS registriert `pi` NIRGENDS als
+    // Variable (ns-eel kennt nur die `$PI`/`$E`/`$PHI`-Ersetzung), dort ist
+    // nacktes `pi` also 0. Im Korpus (3586 .avs) lesen ZWEI Presets `pi` ohne
+    // es zu setzen; an einem davon gemessen (S54, Bright Light District)
+    // aendert die Vorbelegung an der Abweichung nichts — MAE 0,230 mit wie
+    // ohne. Sie bleibt, weil eigene Presets sie erwarten —
+    // ein Preset, das `pi` selbst setzt, ueberschreibt sie ohnehin.
     lua_pushnumber(L, 3.14159265358979323846);
     lua_setfield(L, -2, "pi");
     lua_pushnumber(L, 6.28318530717958647692);
