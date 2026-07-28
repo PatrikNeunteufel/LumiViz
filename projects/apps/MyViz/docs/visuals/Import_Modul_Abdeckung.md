@@ -74,7 +74,7 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 8 | **Moving Particle** | Render | ✅ | `MovingParticleParams` (Feder-Partikel als Dot) | U·S offen |
 | 9 | Roto Blitter | Trans | ✅ | `RotoBlitterParams` | U·S offen |
 | 10 | SVP Loader | Render | ✖ | externe UVS/SVP-DLL | — |
-| 11 | Colorfade | Trans | ✅ | `ColorfadeParams` | U·S offen |
+| 11 | Colorfade | Trans | ⚠️ | `ColorfadeParams` — **das `enabled`-Bitfeld fehlt** (S55): das Original hat drei Schalter (Bit 0 an · Bit 1 „on beat random" · Bit 2 „slow fade"), wir haben nur die sechs Fader. Folge: bei uns wirken die Beat-Fader **immer**, im Original nur bei gesetztem Bit 2, und die Zufallsfader (Bit 1) gibt es gar nicht. Ohne Bit 2 setzt das Original `faderpos` sofort auf `faders`, mit Bit 2 nähert es sich um 1 je Frame an — auch diese Rampe fehlt (`r_colorfade.cpp:142-168`) | U·S offen |
 | 12 | Color Clip | Trans | ✅ | `ColorClipParams` (below/above/near) | U·S offen |
 | 13 | Rotating Stars | Render | ✅ | `RotatingStarsParams` (2 rotierende Sterne) | U·S offen |
 | 14 | Ring | Render | ✅ | `OscRingParams` (80-Segment-Ring) | U·S offen |

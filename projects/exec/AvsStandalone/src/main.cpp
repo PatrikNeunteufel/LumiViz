@@ -142,6 +142,18 @@ public:
 
     /// --dump: uebersetzte Chain nach dem Laden als JSON ausgeben
     void setDumpChain(bool on) { m_dumpChain = on; }
+    /// Linken und rechten Spektrumkanal unterschiedlich fuellen (s.
+    /// feedSyntheticAudio). Aus = Vorgabe, damit bestehende Messungen gelten.
+    void setStereoSpektrum(bool on) { m_stereoSpektrum = on; }
+
+    /// --edit-nach DATEI: nach der HAELFTE der Frames die Parameter aus DATEI
+    /// uebernehmen — ohne Runtime-Reset, also genau so, wie das Panel ein Feld
+    /// aendert (`recompileChain()` == `compileChain(m_root)`; nur `loadChainFile`
+    /// setzt `m_pendingRuntimeReset`). Damit laesst sich messen, ob ein Feld
+    /// beim EDITIEREN dasselbe tut wie nach Speichern+Laden (Verdacht Patrik,
+    /// S55). Die Struktur beider Presets muss gleich sein — sonst waere es
+    /// kein Feld-Edit, sondern ein Preset-Wechsel.
+    void setEditNach(QString datei) { m_editNach = std::move(datei); }
 
     /// --save-every M: im --auto-Lauf jeden M-ten Frame speichern (Frame-
     /// Zaehlung wie AvsRef: 0-basiert, Dateiname f%04d 1-basiert) — fuer
@@ -187,6 +199,11 @@ protected:
         }
         ++m_frameInPreset;
         m_time += 1.0 / 60.0;
+        if (!m_editNach.isEmpty() && !m_editGetan
+            && m_frameInPreset >= m_autoFrames / 2)
+        {
+            wendeEditAn();
+        }
 
         if (m_auto && m_frameInPreset >= m_autoFrames)
         {
@@ -286,6 +303,43 @@ private:
         update();
     }
 
+    /// Params rekursiv uebernehmen; false, wenn die Struktur abweicht.
+    static bool uebernehmeParams(lumi::multieffect::ChainNode& ziel,
+                                 const lumi::multieffect::ChainNode& quelle)
+    {
+        if (ziel.children.size() != quelle.children.size()) return false;
+        if (ziel.params.index() != quelle.params.index()) return false;
+        ziel.params = quelle.params;
+        for (std::size_t i = 0; i < ziel.children.size(); ++i)
+            if (!uebernehmeParams(ziel.children[i], quelle.children[i])) return false;
+        return true;
+    }
+
+    /// Den Panel-Edit nachbilden: Params tauschen, neu uebersetzen, KEIN
+    /// Runtime-Reset.
+    void wendeEditAn()
+    {
+        m_editGetan = true;
+        lumi::multieffect::ChainNode neu;
+        QStringList report;
+        if (!lumi::multieffect::loadChainFromFile(m_editNach, neu, &report))
+        {
+            std::fprintf(stderr, "FEHLER: --edit-nach nicht lesbar: %s\n",
+                         qPrintable(m_editNach));
+            m_allLoaded = false;
+            return;
+        }
+        if (!uebernehmeParams(m_viz->chain(), neu))
+        {
+            std::fprintf(stderr, "FEHLER: --edit-nach hat eine andere Struktur "
+                                 "(das waere ein Preset-Wechsel, kein Feld-Edit)\n");
+            m_allLoaded = false;
+            return;
+        }
+        m_viz->recompileChain();
+        std::printf("[Standalone] Edit angewandt nach Frame %d\n", m_frameInPreset);
+    }
+
     void feedSyntheticAudio()
     {
         constexpr int kFrames = 576;
@@ -308,7 +362,21 @@ private:
         {
             const float v = static_cast<float>(beat * 0.8 / (1.0 + b * 0.03));
             spec[static_cast<std::size_t>(b) * 2 + 0] = v;
-            spec[static_cast<std::size_t>(b) * 2 + 1] = v;
+            // Vorgabe: BEIDE Kanaele gleich. Das ist Absicht — an diesem Signal
+            // haengen Matrix, Modul-Sonden und alle Feld-Sonden; wer es aendert,
+            // muss alles neu einmessen.
+            //
+            // `--stereo-spektrum` (S55) macht daraus ein Signal, das sich
+            // links/rechts unterscheidet: rechts faellt steiler ab und wird zu
+            // hohen Baendern hin leiser. Nur damit koennen Kanalfelder
+            // (`timescope.channel`/`useChannel`) ueberhaupt etwas zeigen —
+            // vorher waren links, rechts und Mitte zwangslaeufig identisch und
+            // die Sonden mussten „nicht pruefbar" heissen. Weiterhin
+            // DETERMINISTISCH: nur eine andere Formel, kein echtes Material.
+            spec[static_cast<std::size_t>(b) * 2 + 1] =
+                m_stereoSpektrum
+                    ? static_cast<float>(beat * 0.8 / (1.0 + b * 0.12))
+                    : v;
         }
         m_viz->updateAudioStereo(spec.data(), kBins, wave.data(), kFrames, 2);
     }
@@ -385,6 +453,9 @@ private:
     bool m_allLoaded = true;
     bool m_closing = false;
     bool m_dumpChain = false;
+    bool m_stereoSpektrum = false;
+    QString m_editNach;   // --edit-nach: Params zur Laufzeit uebernehmen
+    bool m_editGetan = false;
     int m_saveEvery = 0;
     int m_beatPeriod = 0;
     bool m_noApe = false;
@@ -435,7 +506,18 @@ int main(int argc, char* argv[])
     parser.addOption(optFrames);
     parser.addOption(optOut);
     parser.addOption(optSize);
+    const QCommandLineOption optStereoSpektrum(
+        QStringLiteral("stereo-spektrum"),
+        QStringLiteral("linken/rechten Spektrumkanal unterschiedlich fuellen "
+                       "(fuer Kanalfelder; Vorgabe: beide gleich)"));
     parser.addOption(optDump);
+    parser.addOption(optStereoSpektrum);
+    const QCommandLineOption optEditNach(
+        QStringLiteral("edit-nach"),
+        QStringLiteral("nach der halben Lauflaenge die Parameter aus DATEI "
+                       "uebernehmen (bildet einen Panel-Edit nach)"),
+        QStringLiteral("DATEI"));
+    parser.addOption(optEditNach);
     parser.process(app);
 
     // --- Preset-Liste aufbauen -------------------------------------------------------------
@@ -486,6 +568,8 @@ int main(int argc, char* argv[])
     StandaloneWindow window(presets, parser.isSet(optAuto), parser.value(optFrames).toInt(),
                             parser.value(optOut));
     window.setDumpChain(parser.isSet(optDump));
+    window.setStereoSpektrum(parser.isSet(optStereoSpektrum));
+    window.setEditNach(parser.value(optEditNach));
     window.setSaveEvery(parser.value(optSaveEvery).toInt());
     window.setBeatPeriod(parser.value(optBeatPeriod).toInt());
     window.resize(w, h);

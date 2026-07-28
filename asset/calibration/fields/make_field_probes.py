@@ -53,11 +53,13 @@ import lvfx_lib as L
 TESTBILD_B64 = base64.b64encode((Path(__file__).parent / "testbild.png")
                                 .read_bytes()).decode("ascii")
 
-# Das Test-Video (make_testvideo.py). Der AVI-Knoten laedt ueber Video for
+# Die Test-Videos (make_testvideo.py). Der AVI-Knoten laedt ueber Video for
 # Windows von der Platte, nicht eingebettet — also ein absoluter Pfad.
-# 32 Bit ist Pflicht: `runAvi` prueft `biBitCount == 32` und ueberspringt
-# alles andere ohne Meldung (Befund S54).
 TESTVIDEO = (Path(__file__).parent / "testvideo.avi").resolve().as_posix()
+# 24 Bit, der Normalfall bei unkomprimierten AVIs — bis S55 verwarf `runAvi`
+# genau diese stillschweigend. Die beiden Pfad-Sonden laufen deshalb darauf:
+# faellt der Fix, meldet `avi.filename` sofort STUMM.
+TESTVIDEO24 = (Path(__file__).parent / "testvideo24.avi").resolve().as_posix()
 
 HIER = Path(__file__).parent
 DOCS = HIER / "inventory_docs.json"
@@ -96,10 +98,9 @@ HANDWERK: dict[str, object] = {
     "pictureII.imageData": TESTBILD_B64,
     "texer.imageData": TESTBILD_B64,
     "texerII.imageData": TESTBILD_B64,
-    "picture.filename": "",
-    "pictureII.filename": "",
-    "texer.filename": "",
-    "texerII.filename": "",
+    # (`*.filename` steht jetzt in NICHT_PRUEFBAR — es ist eine Herkunftsnotiz,
+    # geladen wird aus `imageData`. Als leerer HANDWERK-Eintrag sah es wie
+    # offene Arbeit aus, obwohl es fertig ist.)
     # BITFELDER: der Regelwert (groesster Abstand im Bereich) addiert nur Bits.
     # `mirror.mode` 4 -> 12 heisst "links→rechts UND rechts→links" und sieht
     # auf dem Untergrund aus wie die Vorgabe. Ein Gegenwert muss hier die
@@ -112,12 +113,64 @@ HANDWERK: dict[str, object] = {
     "camera3d.px": 1.5, "camera3d.py": 1.5,
     "camera3d.tx": 0.6, "camera3d.ty": 0.6, "camera3d.tz": 0.6,
     "camera3d.fogStart": 2.0, "camera3d.fogEnd": 5.0,
-    "avi.filename": TESTVIDEO,
-    "avi.resolvedPath": TESTVIDEO,
-    # Reine Notizfelder — sie sollen nichts bewirken.
-    "comment.text": "",
-    "importNotes.text": "",
-    "passthrough.note": "",
+    # Colorfade sortiert die drei Fader je Pixel nach der Kanalfolge um: der
+    # ZWEITE landet immer auf dem groessten Kanal (r_colorfade.cpp:176-186).
+    # Der ist auf unseren Testbalken 255 — ein POSITIVER Gegenwert wird dort
+    # weggeschnitten und die Sonde meldet „schwach". Vorgabe ist -8, die
+    # Abstandsregel waehlt deshalb +32; hier zaehlt aber die Richtung, nicht
+    # der Abstand (Befund S55). `faderG` braucht den Eintrag nicht: seine
+    # Vorgabe ist +8, der Regelwert also ohnehin -32.
+    "colorfade.beatFaderG": -32,
+    "avi.filename": TESTVIDEO24,
+    "avi.resolvedPath": TESTVIDEO24,
+    # ------------------------------------------------------------------------
+    # EFFEKT-Skripte (S55). Nicht zu verwechseln mit den PARAMETER-Skripten des
+    # Strangs D: die rechnen einmal je Frame die Felder des Knotens aus, und
+    # ihre Variablen liest der Ernter selbst aus `runParamScript`. Die hier
+    # laufen je Punkt / Gitterpunkt / Tabelleneintrag, haben einen ganz anderen
+    # Variablensatz und einen eigenen Traeger (ScriptSlotHost, ScriptGrid,
+    # ScriptLut) — es gibt also nichts abzuleiten, nur einzusetzen. Ein
+    # Gegenwert ist hier schlicht ein ANDERER Ausdruck.
+    # Die Punkt-/Kurven-Slots selbst braucht HANDWERK NICHT mehr: seit S55
+    # erntet `harvest_field_docs.py` die Variablen dieser Traeger (dritter
+    # Mechanismus, `number("…")` im Renderer bzw. im Modul), und der Generator
+    # baut daraus dieselben Sonden wie fuer die Parameter-Skripte.
+    #
+    # Init/Frame/Beat DIESER Knoten bleiben Handarbeit, und zwar aus einem
+    # Grund, den keine Ernte kennen kann: der Punkt-/Kurven-Code laeuft
+    # DANACH und je Element — er ueberschreibt alles, was ein Frame-Slot in
+    # dieselbe Variable geschrieben hat. Gemessen: mit dem automatischen
+    # Gegenwert meldeten alle drei Slots von Color Modifier und Dynamic
+    # Movement „stumm". Also schreibt der geprueste Slot `reg00`, und der
+    # Punkt-Code aus der GRUNDKONFIG liest es — dieselbe Bauart wie bei
+    # Triangle und DDM seit S54.
+    **{f"superScope.{f}": "reg00=0.75"
+       for f in ("initCode", "frameCode", "beatCode")},
+    **{f"dynamicMovement.{f}": "reg00=1.6"
+       for f in ("initCode", "frameCode", "beatCode")},
+    **{f"colorModifier.{f}": "reg00=0.15"
+       for f in ("initCode", "frameCode", "beatCode")},
+    # ------------------------------------------------------------------------
+    # Farbverlaeufe: der Gegenwert ist ein anderer gueltiger Name aus der
+    # Registry (ColorGradientModule: Fire · Ocean · Neon · Rainbow · Sunset ·
+    # Forest · Ice · Lava · Galaxy · Monochrome). `Monochrome` ist der
+    # deutlichste Gegensatz zu jeder bunten Vorgabe — nur fuer den Knoten, der
+    # selbst monochrom vorbelegt waere, braeuchte es einen anderen.
+    **{f"{t}.gradientPreset": "Monochrome"
+       for t in ("domainWarp", "flame", "fractal2D", "fractal3D",
+                 "fractalZoomer", "kleinian", "lyapunov", "reactionDiffusion",
+                 "strangeAttractor", "superScope")},
+    # Text-Knoten: die Vorgabe ist leer, also ist JEDER Text der Gegenwert.
+    # Die Schriftart braucht einen Text, sonst steht nichts da (s. GRUNDKONFIG).
+    "text.text": "LumiViz;Sonde",
+    "text.fontFace": "Impact",
+    # Lyapunov: die Folge ist das Muster selbst (A/B), Vorgabe `AB`.
+    "lyapunov.sequence": "AABAB",
+    # Vorgabe 0 und kein deklarierter Bereich — die Abstandsregel hat nichts,
+    # woran sie sich halten koennte. 0,05 rad/Frame dreht sichtbar, ohne zu
+    # ueberdrehen.
+    "fractalZoomer.rotationSpeed": 0.05,
+    # (Die reinen Notizfelder stehen jetzt ebenfalls in NICHT_PRUEFBAR.)
 }
 
 
@@ -165,8 +218,19 @@ GRUNDKONFIG: dict[str, dict] = {
                  "beatCode")},
     "colorModifier.recompute": {"levelCode": "red=red*(0.5+0.5*sin(time)); "
                                              "green=green*0.5"},
-    **{f"colorModifier.{f}": {"levelCode": "red=1-red; green=green*0.5"}
+    # Der geprueste Slot schreibt `reg00`, die Kurve liest es — sonst misst die
+    # Sonde die Kurve statt den Slot (S55, dieselbe Bauart wie Triangle/DDM).
+    **{f"colorModifier.{f}": {"levelCode": "red=reg00; green=green*0.5"}
        for f in ("initCode", "frameCode", "beatCode")},
+    # Punkt-Knoten: ohne Punkt-Code zeichnen sie nichts, und ihre Init-/Frame-/
+    # Beat-Slots koennen nur ueber eine geteilte Variable wirken.
+    **{f"superScope.{f}": {"pointCode": "x=i*2-1; y=reg00*sin(i*6.283); "
+                                        "red=1; green=1; blue=0.2"}
+       for f in ("initCode", "frameCode", "beatCode")},
+    **{f"dynamicMovement.{f}": {"pointCode": "d=d*reg00"}
+       for f in ("initCode", "frameCode", "beatCode")},
+    # Ohne Text zeichnet der Knoten nichts, dann kann keine Schriftart wirken.
+    "text.fontFace": {"text": "LumiViz"},
     # Movement ist ohne Abbildung die Identitaet — Randbehandlung, Rechenart
     # und Zwischenwerte koennen dann nichts zeigen.
     # `wrap` zeigt sich nur, wenn etwas ueber den Rand hinauslaeuft — eine
@@ -206,12 +270,21 @@ GRUNDKONFIG: dict[str, dict] = {
     "text.onBeat": {"text": "LumiViz", "onBeatSpeed": 20},
     # Ohne Video zeichnet der AVI-Knoten nichts, dann kann kein Regler wirken.
     **{f"avi.{f}": {"filename": TESTVIDEO, "resolvedPath": TESTVIDEO}
-       for f in ("adapt", "blend", "persist", "speedMs")},
-    # Seit die Sonden im Beat-Frame enden (181 Frames), gelten dort die
-    # BEAT-Fader — die normalen sind dann verdeckt. Fuer sie muss das
-    # Beat-Fenster geschlossen sein.
-    **{f"colorfade.{f}": {"onBeatFrames": 0}
-       for f in ("faderR", "faderG", "faderB")},
+       for f in ("adapt", "blend", "speedMs")},
+    # `persist` ist die LAENGE des Beat-Fensters, und dieses Fenster wird nur
+    # abgefragt, wenn `adapt` an ist (`runAvi`: blend = adapt ? … : params.blend).
+    # Ohne den Schalter ist das Feld zu Recht wirkungslos. Zusaetzlich braucht es
+    # einen Schlussframe ohne Beat — im Beat-Frame ist das Fenster IMMER offen
+    # (`m_frameBeat || aviPersistLeft > 0`), also s. FRAMES_JE_FELD.
+    "avi.persist": {"filename": TESTVIDEO, "resolvedPath": TESTVIDEO,
+                    "adapt": True},
+    # Die normalen Fader brauchen KEINE Grundkonfiguration, sondern einen
+    # Schlussframe ohne Beat — siehe FRAMES_JE_FELD im Runner. Der Versuch,
+    # das Beat-Fenster hier mit `onBeatFrames: 0` zu schliessen, war
+    # wirkungslos: der Validator hebt jede 0 auf 1 (EffectChain.hpp:2255,
+    # Vertrag `>= 1`, Panel-Bereich 1..200). Die Sonde stand damit auf
+    # demselben Fenster wie ihr Vergleichsbild und mass im Beat-Frame nur die
+    # BEAT-Fader — dreimal „STUMM", das keiner war (Befund S55).
     # Interleave springt nur auf Beat auf x2/y2.
     "interleave.x2": {"onBeat": True},
     "interleave.y2": {"onBeat": True},
@@ -264,13 +337,30 @@ NICHT_PRUEFBAR: dict[str, str] = {
        "bewirken. Seine Felder sind Import-Notizen (welcher AVS-Effekt hier "
        "stand), keine Regler."
        for f in ("note", "sourceId")},
-    "timescope.channel":
-        "Standalone erzeugt das Spektrum fuer BEIDE Kanaele gleich "
-        "(main.cpp: spec[b*2+0] == spec[b*2+1]); links/rechts/Mitte sind "
-        "zwangslaeufig identisch. Braucht echtes Stereo-Material (TestAudio).",
-    "timescope.useChannel":
-        "s. timescope.channel — der Schalter kann nichts umschalten, solange "
-        "beide Spektrumkanaele denselben Inhalt haben.",
+    # Dieselbe Sorte: Text, den niemand zeichnet. Sie standen bis S55 in der
+    # Restliste „kein Gegenwert" und sahen dort wie Arbeit aus — sie sind aber
+    # fertig, nur eben unprueefbar, weil sie per Entwurf nichts bewirken.
+    "comment.text": "Reines Notizfeld am Kommentar-Knoten — es wird nirgends "
+                    "gezeichnet und SOLL nichts bewirken.",
+    "importNotes.text": "Reines Notizfeld (was der Import nicht abbilden "
+                        "konnte) — es wird nirgends gezeichnet.",
+    **{f"{t}.filename":
+       "Herkunftsnotiz aus dem Preset. Das Bild selbst traegt `imageData`, "
+       "geladen wird nie von diesem Pfad — das Feld kann also nichts bewirken."
+       for t in ("picture", "pictureII", "texer", "texerII")},
+    "milkdrop.preset":
+        "Der uebersetzte .milk-Inhalt selbst (ganzes Dokument samt HLSL). Ein "
+        "'Gegenwert' waere ein zweites vollstaendiges MilkDrop-Preset — das "
+        "misst dann nicht mehr das Feld, sondern zwei verschiedene Presets.",
+    "milkdrop.presetDir":
+        "Suchbasis fuer Texturen. Unsere Test-Presets laden keine, also kann "
+        "der Pfad nichts bewirken; mit Texturen waere es ein Datei-Test, kein "
+        "Feld-Test.",
+    # (`timescope.channel`/`useChannel` standen bis S55 hier: der Standalone
+    # fuellte beide Spektrumkanaele gleich, links/rechts/Mitte waren also
+    # zwangslaeufig identisch. Seit `--stereo-spektrum` sind sie messbar —
+    # s. ARGS_JE_FELD im Runner. Echtes Material aus TestAudio braucht es
+    # nicht, im Gegenteil: synthetisch bleibt deterministisch.)
 }
 
 
@@ -463,14 +553,19 @@ def main() -> int:
                 L.chain(*L.untergrund(), *vorlauf, pruefling, *nachfolger))
 
         for f in t["felder"]:
+            voll = f"{typkey}.{f['name']}"
+            # ZUERST fragen, ob das Feld ueberhaupt prueefbar ist — sonst
+            # landet ein Feld, das per Entwurf nichts bewirkt, in der
+            # Restliste „HANDWERK ergaenzen" und sieht dort wie offene Arbeit
+            # aus. Neun Felder standen aus genau diesem Grund jahrelang… nun,
+            # seit S54 dort (S55).
+            if voll in NICHT_PRUEFBAR:
+                nicht_pruefbar.append(voll)
+                continue
             wert = gegenwert(f, typkey, alle)
             if wert is None:
                 uebersprungen += 1
                 offen.append(f"{typkey}.{f['name']} ({f['art']})")
-                continue
-            voll = f"{typkey}.{f['name']}"
-            if voll in NICHT_PRUEFBAR:
-                nicht_pruefbar.append(voll)
                 continue
             grund = GRUNDKONFIG.get(voll, {})
             knoten = L.node(typkey, t["name"],

@@ -125,12 +125,20 @@ def run_lumi_dir(ordner: Path, frames: int, size: str, out: Path,
                            f"{proc.stdout}{proc.stderr}")
 
 
-def run_lumi(avs: Path, frames: int, size: str, out: Path, beat_period: int = 0) -> Path:
-    """AvsStandalone --auto rendern; liefert den PNG-Pfad des Screenshots."""
+def run_lumi(avs: Path, frames: int, size: str, out: Path, beat_period: int = 0,
+             extra_args: list[str] | None = None) -> Path:
+    """AvsStandalone --auto rendern; liefert den PNG-Pfad des Screenshots.
+
+    `extra_args` reicht weitere Schalter durch — gedacht fuer Sonden, die ein
+    anderes Testsignal brauchen als der Rest (`--stereo-spektrum`, S55). Wer so
+    etwas benutzt, misst NICHT mehr gegen dieselbe Grundlage wie die uebrigen
+    Laeufe; das gehoert je Sonde begruendet.
+    """
     import os
     env = dict(os.environ)
     env["QT_ENABLE_HIGHDPI_SCALING"] = "0"  # logische == physische Pixel
     extra = ["--beat-period", str(beat_period)] if beat_period > 0 else []
+    extra += list(extra_args or [])
     proc = subprocess.run(
         [str(LUMI_EXE), str(avs), "--auto", "--frames", str(frames),
          "--size", size, "--out", str(out)] + extra,

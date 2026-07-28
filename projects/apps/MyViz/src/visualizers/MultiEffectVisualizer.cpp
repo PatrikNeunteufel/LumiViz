@@ -4248,7 +4248,22 @@ void MultiEffectVisualizer::runMovement(const ChainNode& node,
     rt.grid->setRectCoords(params.rectCoords);
 
     // sourcemapped runtime state (r_trans: bit1 toggles bit0 on every beat).
-    if (rt.moveSourceMapped < 0) rt.moveSourceMapped = params.sourceMapped & 3;
+    //
+    // Der Laufzeitwert kippt bei jedem Beat, darf also NICHT je Frame aus dem
+    // Preset ueberschrieben werden — sonst gaebe es kein Kippen. Bis S55 wurde
+    // er dafuer nur EINMAL uebernommen (`< 0`), und das hiess: nach dem Laden
+    // stimmte er, nach einem Reglerdreh im Panel nie. Das Feld liess sich
+    // verstellen, ohne dass etwas geschah, und wirkte erst nach Speichern +
+    // Laden (Befund Patrik S55, gemessen mit den Edit-Sonden: MAE 0,081).
+    //
+    // Jetzt wie bei den Parameter-Skripten seit S54: der zuletzt uebernommene
+    // PRESET-Wert wird mitgefuehrt; aendert er sich, gewinnt er. Das Kippen
+    // zwischen zwei Aenderungen bleibt erhalten.
+    if (rt.moveSourceMapped < 0 || rt.moveSourceMappedSeen != params.sourceMapped)
+    {
+        rt.moveSourceMapped = params.sourceMapped & 3;
+        rt.moveSourceMappedSeen = params.sourceMapped;
+    }
     if ((rt.moveSourceMapped & 2) != 0 && m_frameBeat) rt.moveSourceMapped ^= 1;
 
     GridWarpOptions opt;
@@ -6622,6 +6637,14 @@ bool openAvi(void*& outFile, void*& outStream, void*& outGetFrame, int& outLengt
     want.biBitCount = 32;
     want.biCompression = BI_RGB;
     PGETFRAME gf = AVIStreamGetFrameOpen(stream, &want);
+    if (gf == nullptr)
+    {
+        // Kann VfW nicht auf 32 Bit bringen, dann wenigstens auf 24 — beides
+        // zeichnet der Renderer. Erst danach das Quellformat, das alles sein
+        // darf (und dann in der Meldung landet).
+        want.biBitCount = 24;
+        gf = AVIStreamGetFrameOpen(stream, &want);
+    }
     if (gf == nullptr) gf = AVIStreamGetFrameOpen(stream, nullptr);
     const int length = static_cast<int>(AVIStreamLength(stream));
     if (gf == nullptr || length <= 0)
@@ -6647,12 +6670,32 @@ void MultiEffectVisualizer::runAvi(const ChainNode& node, const AviParams& param
     Q_UNUSED(params);
 #else
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    const std::string& path =
+        params.resolvedPath.empty() ? params.filename : params.resolvedPath;
+
+    // Ein Pfadwechsel im Panel muss ankommen. Bis S55 merkte sich `aviTried`
+    // nur DASS einmal geoeffnet wurde — danach blieb der Knoten auf der ersten
+    // Datei stehen, und ein neuer Pfad wirkte erst nach Speichern + Laden
+    // (dort baut `resetRuntimes()` die Runtime neu). Gemessen mit den
+    // Edit-Sonden: `avi.filename` WIRKUNGSLOS, MAE 0,234.
+    if (rt.aviPath != path)
+    {
+        closeAviRuntime(rt);
+        if (rt.aviTexture != 0)
+        {
+            QOpenGLContext::currentContext()->functions()->glDeleteTextures(
+                1, &rt.aviTexture);
+            rt.aviTexture = 0;  // sonst zeigt der neue Pfad das alte Bild
+        }
+        rt.aviPath = path;
+        rt.aviTried = false;
+        rt.aviFrameIndex = 0;
+        rt.aviWarnedBpp = 0;
+    }
     if (rt.aviGetFrame == nullptr)
     {
         if (rt.aviTried) return;
         rt.aviTried = true;
-        const std::string& path =
-            params.resolvedPath.empty() ? params.filename : params.resolvedPath;
         if (path.empty() ||
             !openAvi(rt.aviFile, rt.aviStream, rt.aviGetFrame, rt.aviLength, path))
             return;
@@ -6675,12 +6718,19 @@ void MultiEffectVisualizer::runAvi(const ChainNode& node, const AviParams& param
                                bih->biSize + bih->biClrUsed * 4u;
             const int fw = static_cast<int>(bih->biWidth);
             const int fh = std::abs(static_cast<int>(bih->biHeight));
-            if (bih->biBitCount == 32 && fw > 0 && fh > 0)
+            const int bpp = static_cast<int>(bih->biBitCount);
+            if ((bpp == 32 || bpp == 24) && fw > 0 && fh > 0)
             {
-                // 32bpp DIB = BGRX little-endian = QImage Format_RGB32; DIBs
-                // with positive height are bottom-up -> flip to top-down for
-                // the shared overlay shader.
-                QImage wrap(bits, fw, fh, fw * 4, QImage::Format_RGB32);
+                // 32bpp DIB = BGRX little-endian = QImage Format_RGB32, 24bpp
+                // = BGR mit auf 4 Bytes aufgerundeter Zeilenlaenge. 24 Bit ist
+                // bei unkomprimierten AVIs der Normalfall — bis S55 verwarf
+                // dieser Zweig sie stillschweigend, der Knoten oeffnete die
+                // Datei und zeichnete nichts. DIBs mit positiver Hoehe sind
+                // bottom-up -> fuer den Overlay-Shader auf top-down drehen.
+                const int stride = (bpp == 32) ? fw * 4 : ((fw * 3 + 3) & ~3);
+                QImage wrap(bits, fw, fh, stride,
+                            bpp == 32 ? QImage::Format_RGB32
+                                      : QImage::Format_BGR888);
                 QImage img = (bih->biHeight > 0 ? wrap.flipped(Qt::Vertical)
                                                 : wrap.copy())
                                  .convertToFormat(QImage::Format_RGBX8888);
@@ -6702,6 +6752,15 @@ void MultiEffectVisualizer::runAvi(const ChainNode& node, const AviParams& param
                 f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(),
                                 img.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
                                 img.constBits());
+            }
+            else if (rt.aviWarnedBpp != bpp)
+            {
+                // Einmal je Tiefe, nicht je Frame. Ohne diese Meldung sieht ein
+                // nicht darstellbares Video exakt aus wie eine fehlende Datei.
+                rt.aviWarnedBpp = bpp;
+                BasicLogger::logWarning(
+                    "MultiEffect: AVI-Video mit " + std::to_string(bpp) +
+                    " Bit je Punkt wird nicht gezeichnet (unterstuetzt: 24, 32)");
             }
         }
     }
@@ -9735,10 +9794,20 @@ void MultiEffectVisualizer::runMultiDelay(const ChainNode& node,
     }
     else if (params.mode == 2 && !ring.empty())  // output: read the delayed frame
     {
-        const int size = static_cast<int>(ring.size());
-        const int d = std::min(delay, size - 1);
-        const int srcIdx = (head - d - 1 + size) % size;  // head points past newest
-        blit(ring[static_cast<size_t>(srcIdx)]->handle(), cur->handle());
+        // Die Verzoegerung gehoert dem PUFFER, nicht dem Knoten (Entscheid
+        // Patrik S55, nach dem Original): `delay[6]`/`usebeats[6]` sind in
+        // r_multidelay.cpp GLOBALE Felder, ein Knoten speichert nur `mode` und
+        // `activebuffer`, und der Ausgabe-Knoten liest schlicht `outpos[buffer]`
+        // — den AELTESTEN Frame des Rings. `head` zeigt auf den Platz, der als
+        // naechstes ueberschrieben wird, und das ist genau der aelteste.
+        //
+        // Bis S55 rechnete der Leser mit seinem EIGENEN `delay`. Damit aenderte
+        // das `delay` des Schreibers nur die Ringgroesse und blieb im Bild
+        // unsichtbar — die Feld-Sonde meldete es zu Recht als stumm. Ungleiche
+        // Werte kann es im Original ohnehin nicht geben: JEDER Knoten speichert
+        // alle sechs Puffer-Einstellungen und schreibt sie beim Laden in den
+        // globalen Zustand (r_multidelay.cpp:387-401).
+        blit(ring[static_cast<size_t>(head)]->handle(), cur->handle());
     }
     bindActive();
 }

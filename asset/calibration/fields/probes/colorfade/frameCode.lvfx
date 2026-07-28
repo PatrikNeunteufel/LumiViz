@@ -95,7 +95,7 @@
         "type": "colorfade",
         "enabled": true,
         "name": "Colorfade",
-        "frameCode": "faderr = -32; faderg = -32; faderb = 32; beatfaderr = -32; beatfaderg = 32; beatfaderb = -32; onbeatframes = 3"
+        "frameCode": "faderr = -32; faderg = -32; faderb = 32; beatfaderr = -32; beatfaderg = -32; beatfaderb = -32; onbeatframes = 3"
       }
     ],
     "clearEveryFrame": false

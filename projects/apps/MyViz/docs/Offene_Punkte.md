@@ -101,6 +101,52 @@ Erst der Nachbau des echten Paares — Sprites am Rand als **einzige** Energiequ
 zeigte die Divergenz. Wächst der Abstand über die Frames (hier 0,010 → 0,568), ist
 die Ursache im Kreislauf, und die Sonde muss ihn schließen.
 
+## 1b. Wirkt ein Feld beim EDITIEREN wie nach dem Laden? (Strang F, S55)
+
+**Herkunft:** Beobachtung Patrik — „der wirkliche Effekt wird erst sichtbar,
+wenn man das Preset gespeichert hat und es wieder geladen wird", bemerkt an
+Movement. Der Mechanismus ist belegt: **Laden** setzt
+`m_pendingRuntimeReset` → `resetRuntimes()`, jeder Knoten baut seine Runtime
+frisch auf; **Editieren** ruft `recompileChain()`, und das ist nur
+`compileChain(m_root)` — **kein** Runtime-Reset. Was ein Knoten einmalig beim
+Aufbau übernimmt, hängt danach fest.
+
+**Werkzeug:** `asset/calibration/fields/run_edit_probes.py` + `--edit-nach` im
+AvsStandalone (bildet den Panel-Weg nach: Params tauschen, `recompileChain()`,
+kein Reset). Urteil über **drei** Bilder — geladen · editiert · Vorgabe:
+`WIRKUNGSLOS` = editiert ist Pixel für Pixel die Vorgabe (harter Befund) ·
+`TEILWEISE` = wirkt, trägt aber noch die Vorgeschichte (bei Effekten mit
+Verlauf der Normalfall) · `GLEICH`.
+
+**Stand:** 591 GLEICH · 101 TEILWEISE · 15 WIRKUNGSLOS (707 Sonden).
+
+| Feld | MAE | Stand |
+|---|---|---|
+| ~~`movement.sourceMapped`~~ | 0,081 | ✅ **gefixt S55** — wurde nur bei frischer Runtime übernommen (`< 0`). Jetzt wird der zuletzt übernommene Preset-Wert mitgeführt, das Beat-Kippen bleibt. Nachgemessen: Movement 7/7 GLEICH |
+| ~~`avi.filename` · `avi.resolvedPath`~~ | 0,234 | ✅ **gefixt S55** — `aviTried` merkte sich nur, DASS geöffnet wurde; ein Pfadwechsel griff nie. Jetzt Pfad-Schnappschuss + Neuöffnen (Textur wird verworfen). Nachgemessen: keine WIRKUNGSLOS mehr, Feld-Sonden 6/6 ohne Regression |
+| `texer.imageData` | 0,070 | 🟠 vermutlich derselbe Typ (Textur einmal aufgebaut) |
+| `milkdrop.meshX` · `meshY` · `debugGrid` | 0,036–0,053 | 🟠 Mesh/Gitter wird im Milkdrop-Modul aufgebaut — prüfen, ob `setParam` je Frame reicht |
+| `bufferSave.slot` · `dir` · `initCode` · `frameCode` · `beatCode` | 0,109 | 🟡 **wahrscheinlich Messartefakt:** der Untergrund ist statisch, also enthalten alle Puffer-Slots dasselbe Bild; ein Slot-Wechsel ist dann unsichtbar, während er im geladenen Fall von Anfang an gilt. Erst die Montage ansehen |
+| `bassSpin.smoothing` | 0,184 | 🟠 unanalysiert |
+| `customBpm.skip` | 0,109 | 🟡 zählt Beats, greift erst im nächsten Zyklus — vermutlich kein Fehler |
+| `mirror.slower` | 0,014 | 🟡 steuert nur das Tempo einer Rampe, die nach 90 Frames abgelaufen ist — ein neuer Wert kann am Schlussbild nichts mehr ändern; vermutlich kein Fehler |
+
+**Merkregel:** `WIRKUNGSLOS` ist wie `STUMM` **eine Frage, kein Befund** — es
+kann am Runtime-Zustand liegen (Fehler) oder daran, dass das Feld zu diesem
+Zeitpunkt schlicht nichts mehr bewirken kann (kein Fehler).
+
+**Geprüft und in Ordnung:** alle 16 Knoten mit Verlauf (multiDelay, videoDelay,
+bufferSave, blitterFeedback, rotoBlitter, waterBump, water, fyrewurX,
+movingParticle, bassSpin, timescope, avi, customBpm, reactionDiffusion,
+fractalZoomer, milkdrop) übernehmen ihre Felder **unbedingt je Frame** — keine
+einzige bedingte Übernahme (statische Prüfung S55, Vorgabe Patrik).
+
+**Entscheid Patrik S55:** einzeln je Knoten reparieren, nicht generisch. Ein
+generisches Verwerfen des Aufbau-Zustands bei jedem Reglerdreh würde Skripte
+neu übersetzen und Bilder/Videos neu laden — das kann beim Ziehen ruckeln, und
+die Grenze zwischen „Aufbau" und „Verlauf" müsste je Knoten von Hand gezogen
+werden.
+
 ## 2. Urteile, die nur Seite-an-Seite fallen können
 
 Prüfplan, Presets, Audio und Kriterien stehen in
@@ -157,6 +203,8 @@ Winamp-Komfort).
 | [Lights_Module_Entwurf](visuals/Lights_Module_Entwurf.md) | Entscheid 3: BASS-Lookahead als eigener Service (`AudioLookahead`) — Umfang/Session ungeplant. Bis dahin reichen Beat-Prädiktion + `gettime()` | 🟡 |
 | [Parameter_Reference §10](visuals/Parameter_Reference.md) | Deklarierte Preset-Defaults vs. Dropdown-Indizes bereinigen · `solidColor`/`peak.color.fixed` ohne deklarierten Default | 🔧 |
 | MilkDrop-Texturen | siehe §3 | 🟡 |
+| ~~**Multi Delay: wem gehört die Verzögerung?**~~ (Befund S55) | ✅ **entschieden und umgesetzt (Patrik S55): Puffer-Besitz, original-treu.** Der Ausgabe-Knoten liest jetzt den **ältesten** Frame des Rings (`head`), sein eigenes `delay` wirkt nicht mehr — wie `outpos[buffer]` im Original. Bis dahin änderte das `delay` des Schreibers nur die Ringgröße und blieb unsichtbar. Vorstand gemessen: ungleiche Werte kann es im Original **gar nicht geben** (jeder Knoten speichert alle sechs Puffer-Einstellungen und schreibt sie global, `r_multidelay.cpp:387-401`), im Referenz-Korpus nutzen **2** Presets den Effekt, in eigenen `.lvfx` nur die Sonden | ✅ |
+| **Colorfade: `enabled`-Bitfeld fehlt** (Befund S55) | Drei Schalter des Originals fehlen (an · „on beat random" · „slow fade"). Folge: unsere Beat-Fader wirken **immer**, im Original nur bei „slow fade"; die Zufallsfader gibt es gar nicht, und die Annäherungsrampe (1 Schritt je Frame) ebenfalls nicht (`r_colorfade.cpp:142-168`). Nachtragen oder als bewusste Vereinfachung festschreiben — Details in [Import_Modul_Abdeckung §11](visuals/Import_Modul_Abdeckung.md) | 🟡 |
 | [Config_Pipeline_Umsetzungsplan](visuals/Config_Pipeline_Umsetzungsplan.md) | **Formale Abnahme**: A1–A8 und N1–N7 stehen sämtlich auf `⬜`, obwohl die Schritte 0–7 als ✅ gelten und die Sichttests 5.1–5.5 abgenommen sind. Entweder nachträglich abhaken oder die Tabelle als erledigt streichen | 🔧 |
 
 ## 6. Konzept-Phasen, noch nicht begonnen
@@ -180,6 +228,41 @@ Winamp-Komfort).
   (Composer-Spuren) ist Fernziel.
 
 ## 7. Backlog (bewusst nichts tun)
+
+### ⚪ Video-/Kamera-Quellmodul + Stilfilter (Wunsch Patrik S55)
+
+**Zeitpunkt: später** — ausdrücklich nicht in der Kalibrier-Runde. Hier steht nur,
+was bei der Sondierung schon feststeht, damit es nicht noch einmal erhoben wird.
+
+- **Quellmodul** (LumiViz-eigen, **neben** dem AVS-`avi`-Knoten — der bleibt, die
+  Kalibrierung hängt an ihm). Ein Knoten, ein Quellumschalter: **Datei oder
+  Kamera**. Umfang laut Entscheid Patrik: Datei **und** Kamera **und**
+  Frame-Schritt.
+- **Technik steht bereit:** Qt Multimedia liegt in der Installation
+  (`C:/Qt/6.10.1/msvc2022_64`), Backends `ffmpegmediaplugin.dll` **und**
+  `windowsmediaplugin.dll`. Damit MP4/H.264, MKV, WebM, MOV, WMV — **ohne neue
+  Fremdbibliothek**. In `Solution.json` nur `"Multimedia"` zu den Qt6-Komponenten
+  plus Plugin-Deploy. Kamera über `QMediaDevices::videoInputs()` +
+  `QCamera`/`QMediaCaptureSession`; beide Quellen liefern über **denselben**
+  `QVideoSink`, deshalb ein Knoten und nicht zwei.
+- **Frame-Schritt ist Pflicht**, nicht Kür: Qt liefert Frames uhrzeitgetrieben,
+  der `avi`-Knoten holt sie nach Index. Nur deshalb sind zwei Läufe bit-identisch
+  — die Grundlage der ganzen Feld-Sonden-Familie (`STUMM` = MAE exakt null). Ohne
+  eine deterministische Betriebsart für den Standalone wäre der Knoten
+  `NICHT_PRUEFBAR`.
+- **Kamera nie automatisch öffnen** — nicht im Standalone, nicht in Tests, im
+  Panel erst auf ausdrückliche Gerätewahl. Sonst fragt Windows zur Unzeit nach
+  der Kameraberechtigung.
+- **Stilfilter sind NICHT Teil des Quellmoduls.** Die Kette arbeitet auf dem
+  Framebuffer, ein Filterknoten wirkt also auf **jede** Quelle — Video, Kamera,
+  Superscope, MilkDrop. Wunsch Patrik: **Comic-/Rotoskopie-Look wie „Take On Me"
+  (a-ha)**. Technisch drei Bausteine, je ein Fragment-Shader-Schritt:
+  Kantenzug (Sobel oder Difference-of-Gaussians = Bleistiftstrich) ·
+  Farbquantisierung auf wenige flache Töne (optional mit Bilateral-Vorglättung,
+  damit die Flächen ruhig werden) · Schraffur/Rauschen für die Zeichentrick-
+  Textur. Reiht sich neben die anderen Stil-Ideen (s. Lights-Module).
+- Abgrenzung: **nicht** das Video-**Capture**-Modul (Aufnahme von Bild+Ton) —
+  das ist der Punkt unten in derselben Liste, umgekehrte Richtung.
 
 ⚪ Preset-Warmup/Pre-Roll (bei Laden/Resize N Frames vorrechnen — gegen
 Schwarz-Start/Flackern) · Custom-Functions-Modul · Video-Capture-Modul ·

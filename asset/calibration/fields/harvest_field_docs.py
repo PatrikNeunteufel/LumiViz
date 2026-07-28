@@ -42,6 +42,14 @@ HEADER = ROOT / "projects/apps/MyViz/include/visualizers/multieffect/EffectChain
 PANEL = ROOT / "projects/apps/MyViz/src/UI/panels/MultiEffectPanel.cpp"
 SERIALIZER = ROOT / "projects/apps/MyViz/src/visualizers/ChainSerializer.cpp"
 VISUALIZER = ROOT / "projects/apps/MyViz/src/visualizers/MultiEffectVisualizer.cpp"
+# Die Skript-Traeger, an die Renderer ihre Slots abgeben. Ihre `number("…")`
+# sind die Variablen, die der Effekt aus dem Skript herausliest — und nur die
+# koennen wirken (s. harvest_script_vars, dritter Mechanismus).
+MODUL_QUELLEN = {
+    "ScriptGridModule": ROOT / "projects/apps/MyViz/src/visualizers/modules/ScriptGridModule.cpp",
+    "ScriptLutModule": ROOT / "projects/apps/MyViz/src/visualizers/modules/ScriptLutModule.cpp",
+    "SuperscopeModule": ROOT / "projects/apps/MyViz/src/visualizers/modules/SuperscopeModule.cpp",
+}
 INVENTORY = Path(__file__).parent / "inventory.json"
 OUT = Path(__file__).parent / "inventory_docs.json"
 
@@ -327,6 +335,53 @@ def harvest_script_vars() -> dict[str, dict]:
             "tot": [v for v in vars_
                     if not re.search(r'\.number\s*\(\s*"' + re.escape(v) + r'"', body)],
         }
+
+    # Dritter Mechanismus (S55): EFFEKT-Skripte. Superscope, Color Modifier,
+    # Dynamic Movement & Co. rechnen nicht ihre Felder aus, sondern den Effekt
+    # selbst — je Punkt, je Gitterpunkt, je Tabelleneintrag. Sie SETZEN im
+    # Skript die Eingaben (i, v, n …) und LESEN danach das Ergebnis heraus.
+    # Deshalb greifen die beiden Mechanismen oben nicht: sie gehen von
+    # `setNumber` aus, hier steht die Wahrheit aber im Lesen.
+    #
+    # Die Regel ist dieselbe wie beim S54-Befund „43 tote Frame-Kopien":
+    #   Eine Variable wirkt genau dann, wenn der Effekt sie nach dem Slot-Lauf
+    #   AUSLIEST.
+    # Also ist `number("…")` die Quelle — im Renderer selbst (eigener
+    # ScriptSlotHost) und, wo er die Arbeit an ein Modul abgibt, in dessen
+    # Quelle. Ohne das blieben die Slots der groessten Knoten ohne Sonde und
+    # muessten von Hand in HANDWERK gepflegt werden (39 Felder, S55).
+    modul_vars: dict[str, list[str]] = {}
+    for modul, datei in MODUL_QUELLEN.items():
+        if datei.exists():
+            modul_vars[modul] = sorted(set(
+                re.findall(r'number\s*\(\s*"(\w+)"', datei.read_text(encoding="utf-8"))))
+
+    for m in re.finditer(r"\bvoid\s+MultiEffectVisualizer::\w+\s*\(([^)]*)\)\s*\{", src, re.S):
+        sm = re.search(r"const\s+(\w+Params)\s*&", m.group(1))
+        if not sm or sm.group(1) in out:
+            continue
+        i, depth = m.end(), 1
+        while depth and i < len(src):
+            if src[i] == "{":
+                depth += 1
+            elif src[i] == "}":
+                depth -= 1
+            i += 1
+        body = src[m.end():i - 1]  # <- erst isolieren, dann suchen
+
+        gelesen = set(re.findall(r'->number\s*\(\s*"(\w+)"', body))
+        gelesen |= set(re.findall(r'\.number\s*\(\s*"(\w+)"', body))
+        for modul, vars_ in modul_vars.items():
+            if re.search(r"\b" + re.escape(modul) + r"\b", body):
+                gelesen |= set(vars_)
+        # Der Audio-Satz und die Bildmasse kommen VOM Host, ein Skript kann sie
+        # nicht sinnvoll setzen.
+        gelesen -= {"b", "w", "h", "bass", "mid", "treb", "vol", "beat", "time",
+                    "sw", "sh", "i", "v"}
+        if not gelesen:
+            continue
+        # Kein "tot": diese Menge IST die der gelesenen Variablen.
+        out[sm.group(1)] = {"vars": sorted(gelesen), "tot": []}
     return out
 
 
@@ -424,7 +479,12 @@ def main() -> int:
                 e.update(header.get(k, {}))
             # Skript-Slots bekommen die ECHTEN Variablennamen (Kleinschreibung
             # im AVS-Stil) — der Doxygen-Name traegt sie nur ungefaehr.
-            if f["name"] in ("initCode", "frameCode", "beatCode") and struct in skript:
+            # S55: auch die Punkt-/Kurven-Slots. Sie sind derselbe Fall — nur
+            # laufen sie je Punkt statt je Frame, und ihre Variablen stehen im
+            # dritten Erntemechanismus (was der Effekt herausliest).
+            if (f["name"] in ("initCode", "frameCode", "beatCode", "pointCode",
+                              "levelCode", "pixelCode")
+                    and struct in skript):
                 e["skriptvars"] = skript[struct]["vars"]
                 if skript[struct]["tot"]:
                     e["skriptvars_wirkungslos"] = skript[struct]["tot"]

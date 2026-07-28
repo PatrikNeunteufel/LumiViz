@@ -78,6 +78,45 @@ FRAMES_JE_TYP: dict[str, int] = {
     "fastBrightness": 61,
 }
 
+# Lauflaenge je EINZELNER Sonde. Der Schlussframe ist sonst immer ein Beat —
+# gut fuer beat-gebundene Felder, toedlich fuer ihre Gegenstuecke:
+#
+# Colorfade ersetzt im Beat-Fenster die normalen Fader durch die Beat-Fader.
+# Im Beat-Frame sind `faderR/G/B` deshalb GRUNDSAETZLICH unsichtbar, egal was
+# man einstellt — sie brauchen einen Schlussframe ohne Beat (60 Frames: der
+# letzte Beat liegt auf Index 30, der Schlussframe ist 59). Das Fenster laesst
+# sich nicht schliessen: `onBeatFrames = 0` hebt der Validator auf 1
+# (EffectChain.hpp:2255). `onBeatFrames` selbst braucht umgekehrt einen
+# Schlussframe INNERHALB des Fensters der Sonde (3) und ausserhalb dessen des
+# Vergleichs (1) — Index 32, also zwei Frames nach dem Beat auf 30.
+#
+# Das Vergleichsbild wird mit derselben Zahl gerendert; die Bilder liegen je
+# Lauflaenge in einem eigenen Unterordner, sonst uberschreiben sie einander.
+#
+# `avi.persist` ist dieselbe Bauart wie `colorfade.onBeatFrames`, nur mit
+# anderen Zahlen: gemessen wird zehn Frames nach dem Beat auf Index 30 — das
+# Fenster der Vorgabe (6) ist dann zu, das der Sonde (32) noch offen.
+FRAMES_JE_FELD: dict[str, int] = {
+    "colorfade.faderR": 60,
+    "colorfade.faderG": 60,
+    "colorfade.faderB": 60,
+    "colorfade.onBeatFrames": 33,
+    "avi.persist": 41,
+}
+
+# Sonden, die ein anderes TESTSIGNAL brauchen. Das Standard-Signal des
+# Standalone fuellt beide Spektrumkanaele gleich — Absicht, denn an ihm haengen
+# Matrix, Modul-Sonden und alle Feld-Sonden. Kanalfelder koennen daran aber
+# grundsaetzlich nichts zeigen: links, rechts und Mitte sind zwangslaeufig
+# identisch. `--stereo-spektrum` macht die Kanaele unterscheidbar, und zwar
+# weiterhin deterministisch (nur eine andere Formel, kein echtes Material).
+# Sonde UND Vergleichsbild laufen mit denselben Schaltern, die Bilder liegen
+# in einem eigenen Ordner (s. bildordner()).
+ARGS_JE_FELD: dict[str, list[str]] = {
+    "timescope.channel": ["--stereo-spektrum"],
+    "timescope.useChannel": ["--stereo-spektrum"],
+}
+
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -124,27 +163,57 @@ def main() -> int:
     # ein Lauf rechnet dieselben Bilder, egal wie schnell er drankommt. Nur
     # `customBpm.arbitrary` liest die echte Uhr; seine Sonde ist entsprechend
     # gekennzeichnet. Das Urteil selbst bleibt sequenziell, es ist billig.
-    aufgaben: list[Path] = []
-    for tdir in typen:
-        bilder = out / "bilder" / tdir.name
-        for alt in bilder.glob("*.png"):
-            alt.unlink()          # nie auf Bildern einer frueheren Fassung urteilen
-        aufgaben += sorted(tdir.glob("*.lvfx"))
-
-    fertig: dict[Path, Path] = {}
-    fehler: dict[Path, str] = {}
-
-    def frames_fuer(typ: str) -> int:
+    def frames_fuer(typ: str, feld: str | None = None) -> int:
+        if feld is not None and f"{typ}.{feld}" in FRAMES_JE_FELD:
+            return FRAMES_JE_FELD[f"{typ}.{feld}"]
         return FRAMES_JE_TYP.get(typ, args.frames)
 
-    def rendere(lvfx: Path) -> None:
+    def args_fuer(typ: str, feld: str | None = None) -> list[str]:
+        return ARGS_JE_FELD.get(f"{typ}.{feld}", []) if feld is not None else []
+
+    def vergleichsdatei(tdir: Path, feld: str) -> Path:
+        """Womit die Sonde gehalten wird: eigener Grund, sonst `_default`."""
+        eigen = tdir / f"_grund_{feld}.lvfx"
+        return eigen if eigen.exists() else tdir / "_default.lvfx"
+
+    def bildordner(typ: str, n: int, args_: list[str]) -> str:
+        """Ein Ordner je (Lauflaenge, Testsignal) — sonst ueberschreiben sich
+        zwei Laeufe DERSELBEN Datei unter verschiedenen Bedingungen."""
+        marke = "".join(a.lstrip("-")[:6] for a in args_)
+        return f"f{n}{'_' + marke if marke else ''}"
+
+    # Ein Auftrag ist (Preset, Lauflaenge) — dieselbe Datei kann unter ZWEI
+    # Laengen gebraucht werden (`_default` als Vergleich fuer eine Sonde mit
+    # eigener Lauflaenge). Deshalb landet jedes Bild in `bilder/<typ>/f<N>/`.
+    aufgaben: list[tuple[Path, int, tuple]] = []
+    gesehen: set[tuple[Path, int, tuple]] = set()
+    for tdir in typen:
+        bilder = out / "bilder" / tdir.name
+        bilder.mkdir(parents=True, exist_ok=True)
+        for alt in bilder.rglob("*.png"):
+            alt.unlink()          # nie auf Bildern einer frueheren Fassung urteilen
+        for sonde in sorted(tdir.glob("*.lvfx")):
+            if sonde.name.startswith("_"):
+                continue          # _default und die _grund_-Vergleichsbilder
+            n = frames_fuer(tdir.name, sonde.stem)
+            a = tuple(args_fuer(tdir.name, sonde.stem))
+            for datei in (sonde, vergleichsdatei(tdir, sonde.stem)):
+                if (datei, n, a) not in gesehen:
+                    gesehen.add((datei, n, a))
+                    aufgaben.append((datei, n, a))
+
+    fertig: dict[tuple[Path, int, tuple], Path] = {}
+    fehler: dict[tuple[Path, int, tuple], str] = {}
+
+    def rendere(auftrag: tuple[Path, int, tuple]) -> None:
+        lvfx, n, a = auftrag
         try:
-            fertig[lvfx] = ca.run_lumi(lvfx, frames_fuer(lvfx.parent.name),
-                                       args.size,
-                                       out / "bilder" / lvfx.parent.name,
-                                       args.beat_period)
+            fertig[auftrag] = ca.run_lumi(
+                lvfx, n, args.size,
+                out / "bilder" / lvfx.parent.name / bildordner(lvfx.parent.name, n, list(a)),
+                args.beat_period, list(a))
         except Exception as e:  # noqa: BLE001 — je Sonde weitermachen
-            fehler[lvfx] = str(e)
+            fehler[auftrag] = str(e)
 
     def rendere_ordner(tdir: Path) -> None:
         """Alle Sonden EINES Typs in EINEM Prozess (`--auto` nimmt Verzeichnisse).
@@ -153,63 +222,66 @@ def main() -> int:
         (gemessen S54) — je Sonde ein eigener Prozess verschenkt also den
         Grossteil der Laufzeit an Qt- und GL-Initialisierung.
         """
-        ziel = out / "bilder" / tdir.name
+        n = frames_fuer(tdir.name)
+        ziel = out / "bilder" / tdir.name / bildordner(tdir.name, n, [])
         try:
-            ca.run_lumi_dir(tdir, frames_fuer(tdir.name), args.size, ziel,
-                            args.beat_period)
+            ca.run_lumi_dir(tdir, n, args.size, ziel, args.beat_period)
         except Exception as e:  # noqa: BLE001 — je Typ weitermachen
             for f in tdir.glob("*.lvfx"):
-                fehler[f] = str(e)
+                fehler[(f, n, ())] = str(e)
             return
         for f in tdir.glob("*.lvfx"):
             png = ziel / f"{f.name.replace('.', '_')}_auto.png"
             if png.exists():
-                fertig[f] = png
+                fertig[(f, n, ())] = png
             else:
-                fehler[f] = f"kein Bild: {png.name}"
+                fehler[(f, n, ())] = f"kein Bild: {png.name}"
 
     if args.verzeichnis:
+        # Ein Verzeichnis = EINE Lauflaenge. Felder mit eigener Laenge wuerden
+        # still unter der falschen gemessen — lieber abbrechen als falsch
+        # urteilen.
+        betroffen = sorted(k for k in FRAMES_JE_FELD
+                           if k.split(".", 1)[0] in {t.name for t in typen})
+        if betroffen:
+            print("FEHLER: --verzeichnis kann keine feldweisen Lauflaengen "
+                  "(FRAMES_JE_FELD): " + ", ".join(betroffen))
+            return 2
         print(f"Rendern: {len(aufgaben)} Sonden in {len(typen)} Prozessen "
               f"(ein Verzeichnis je Typ) …")
         with ThreadPoolExecutor(max_workers=args.jobs) as pool:
             list(pool.map(rendere_ordner, typen))
     else:
-        print(f"Rendern: {len(aufgaben)} Sonden einzeln, {args.jobs} gleichzeitig …")
+        print(f"Rendern: {len(aufgaben)} Bilder einzeln, {args.jobs} gleichzeitig …")
         with ThreadPoolExecutor(max_workers=args.jobs) as pool:
             list(pool.map(rendere, aufgaben))
     if fehler:
-        print(f"  {len(fehler)} Sonden konnten nicht gerendert werden")
+        print(f"  {len(fehler)} Bilder konnten nicht gerendert werden")
 
-    def bild(p: Path):
-        if p in fehler or p not in fertig:
-            raise RuntimeError(fehler.get(p, f"kein Bild: {p.name}"))
-        return ca.load_rgb(fertig[p])
+    def bild(p: Path, n: int, a: tuple = ()):
+        if (p, n, a) in fehler or (p, n, a) not in fertig:
+            raise RuntimeError(fehler.get((p, n, a), f"kein Bild: {p.name}"))
+        return ca.load_rgb(fertig[(p, n, a)])
 
     # ----------------------------------------------------------------- urteilen
-    rows: list[tuple[str, str, float, str]] = []
+    rows: list[tuple[str, str, int, float, str]] = []
     for tdir in typen:
-        basis_datei = tdir / "_default.lvfx"
-        if not basis_datei.exists():
+        if not (tdir / "_default.lvfx").exists():
             print(f"  FEHLER  {tdir.name}: _default.lvfx fehlt")
-            continue
-        try:
-            basis = bild(basis_datei)
-        except Exception as e:  # noqa: BLE001 — je Typ weitermachen
-            print(f"  FEHLER  {tdir.name}/_default: {e}")
-            rows.append((tdir.name, "_default", 0.0, "FEHLER"))
             continue
 
         for sonde in sorted(tdir.glob("*.lvfx")):
             if sonde.name.startswith("_"):
                 continue           # _default und die _grund_-Vergleichsbilder
             feld = sonde.stem
+            n = frames_fuer(tdir.name, feld)
+            a = tuple(args_fuer(tdir.name, feld))
             try:
-                gemessen = bild(sonde)
+                gemessen = bild(sonde, n, a)
                 # Felder, die nur in Gesellschaft wirken, haben einen eigenen
                 # Vergleichsgrund (make_field_probes: GRUNDKONFIG) — sonst
                 # zaehlte der Nachbar als zweiter Unterschied mit.
-                eigen = tdir / f"_grund_{feld}.lvfx"
-                vergleich = bild(eigen) if eigen.exists() else basis
+                vergleich = bild(vergleichsdatei(tdir, feld), n, a)
                 mae = ca.compare(vergleich, gemessen)["mae"]
                 urteil = ("STUMM" if mae == 0.0 else
                           "SCHWACH" if mae < 0.001 else "WIRKT")
@@ -219,18 +291,21 @@ def main() -> int:
             except Exception as e:  # noqa: BLE001
                 mae, urteil = 0.0, "FEHLER"
                 print(f"  FEHLER  {tdir.name}.{feld}: {e}")
-            rows.append((tdir.name, feld, mae, urteil))
-            print(f"  {urteil:7s} {tdir.name}.{feld:24s} MAE {mae:.4f}")
+            rows.append((tdir.name, feld, n, mae, urteil))
+            zusatz = "" if n == frames_fuer(tdir.name) else f"  [{n} Frames]"
+            print(f"  {urteil:7s} {tdir.name}.{feld:24s} MAE {mae:.4f}{zusatz}")
 
     with (out / "report.md").open("w", encoding="utf-8") as f:
         f.write(f"# Feld-Sonden (Strang E) — {args.frames} Frames, {args.size}\n\n")
         f.write("Urteil gegen `_default` desselben Typs; beide Laeufe teilen "
-                "Untergrund und Audio.\n\n")
-        f.write("| Typ | Feld | MAE | Urteil |\n|---|---|---|---|\n")
-        for typ, feld, mae, urteil in rows:
-            f.write(f"| {typ} | {feld} | {mae:.4f} | {urteil} |\n")
+                "Untergrund und Audio. Die Spalte `Frames` weicht ab, wo Typ "
+                "oder Feld eine eigene Lauflaenge brauchen "
+                "(FRAMES_JE_TYP / FRAMES_JE_FELD).\n\n")
+        f.write("| Typ | Feld | Frames | MAE | Urteil |\n|---|---|---|---|---|\n")
+        for typ, feld, n, mae, urteil in rows:
+            f.write(f"| {typ} | {feld} | {n} | {mae:.4f} | {urteil} |\n")
 
-    zahl = {u: sum(1 for r in rows if r[3] == u) for u in
+    zahl = {u: sum(1 for r in rows if r[4] == u) for u in
             ("WIRKT", "SCHWACH", "STUMM", "FEHLER")}
     print(f"\nReport: {out / 'report.md'}")
     print("  " + " · ".join(f"{k} {v}" for k, v in zahl.items() if v))

@@ -250,6 +250,8 @@ private:
         int aviPersistLeft = 0;        ///< beat persist window countdown
         std::int64_t aviLastMs = 0;    ///< last frame advance (speed throttle)
         bool aviTried = false;         ///< open attempted once (no retry spam)
+        std::string aviPath;           ///< geoeffneter Pfad — Wechsel = neu oeffnen
+        int aviWarnedBpp = 0;          ///< bit depth already reported as unsupported
         unsigned int aviTexture = 0;   ///< GL RGBA frame texture (deleted in onCleanup)
 
         // Texer II / Triangle: EEL point-loop scripts
@@ -304,6 +306,7 @@ private:
         /// Movement sourcemapped runtime bits (r_trans member state; bit1
         /// toggles bit0 on every beat); -1 = seed from params on first frame
         int moveSourceMapped = -1;
+        int moveSourceMappedSeen = -1;  ///< zuletzt uebernommener Preset-Wert
         /// Movement (r_trans): per-Pixel-Tabelle als R32I-Textur — wie im
         /// Original nur bei Groessen-/Skriptwechsel neu gebaut (teuer!)
         unsigned int moveTabTex = 0;  ///< GL R32I w*h (deleted in onCleanup)

@@ -95,7 +95,7 @@
         "type": "avi",
         "enabled": true,
         "name": "AVI",
-        "filename": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/calibration/fields/testvideo.avi"
+        "filename": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/calibration/fields/testvideo24.avi"
       }
     ],
     "clearEveryFrame": false

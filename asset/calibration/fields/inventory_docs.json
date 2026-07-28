@@ -1351,21 +1351,36 @@
           "default": "",
           "name": "beatCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "blue",
+            "green",
+            "red"
+          ]
         },
         {
           "art": "text",
           "default": "",
           "name": "frameCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "blue",
+            "green",
+            "red"
+          ]
         },
         {
           "art": "text",
           "default": "",
           "name": "initCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "blue",
+            "green",
+            "red"
+          ]
         },
         {
           "art": "text",
@@ -1373,7 +1388,12 @@
           "name": "levelCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "runs per LUT entry (red/green/blue in/out)"
+          "doc": "runs per LUT entry (red/green/blue in/out)",
+          "skriptvars": [
+            "blue",
+            "green",
+            "red"
+          ]
         },
         {
           "art": "bool",
@@ -2332,7 +2352,10 @@
           "default": "d=d-sigmoid((t-50)/100,2)",
           "name": "pixelCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "d"
+          ]
         },
         {
           "art": "bool",
@@ -2353,7 +2376,14 @@
           "default": "",
           "name": "beatCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "alpha",
+            "d",
+            "r",
+            "x",
+            "y"
+          ]
         },
         {
           "art": "bool",
@@ -2378,14 +2408,28 @@
           "default": "",
           "name": "frameCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "alpha",
+            "d",
+            "r",
+            "x",
+            "y"
+          ]
         },
         {
           "art": "text",
           "default": "",
           "name": "initCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "alpha",
+            "d",
+            "r",
+            "x",
+            "y"
+          ]
         },
         {
           "art": "bool",
@@ -2399,7 +2443,14 @@
           "default": "",
           "name": "pointCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "alpha",
+            "d",
+            "r",
+            "x",
+            "y"
+          ]
         },
         {
           "art": "bool",
@@ -3629,7 +3680,28 @@
           "name": "pointCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "je Orb (i = Orb-Index)"
+          "doc": "je Orb (i = Orb-Index)",
+          "skriptvars": [
+            "n",
+            "i",
+            "x",
+            "y",
+            "z",
+            "radius",
+            "sx",
+            "sy",
+            "sz",
+            "red",
+            "green",
+            "blue",
+            "red2",
+            "green2",
+            "blue2",
+            "flash"
+          ],
+          "skriptvars_wirkungslos": [
+            "i"
+          ]
         }
       ]
     },
@@ -6685,7 +6757,18 @@
           "default": "",
           "name": "beatCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "blue",
+            "drawmode",
+            "green",
+            "linesize",
+            "n",
+            "red",
+            "skip",
+            "x",
+            "y"
+          ]
         },
         {
           "art": "zahl",
@@ -6727,7 +6810,18 @@
           "default": "",
           "name": "frameCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "blue",
+            "drawmode",
+            "green",
+            "linesize",
+            "n",
+            "red",
+            "skip",
+            "x",
+            "y"
+          ]
         },
         {
           "art": "text",
@@ -6741,7 +6835,18 @@
           "default": "",
           "name": "initCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "blue",
+            "drawmode",
+            "green",
+            "linesize",
+            "n",
+            "red",
+            "skip",
+            "x",
+            "y"
+          ]
         },
         {
           "art": "zahl",
@@ -6766,7 +6871,18 @@
           "default": "",
           "name": "pointCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "blue",
+            "drawmode",
+            "green",
+            "linesize",
+            "n",
+            "red",
+            "skip",
+            "x",
+            "y"
+          ]
         },
         {
           "art": "zahl",
@@ -6897,7 +7013,24 @@
           "default": "",
           "name": "pointCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "n",
+            "i",
+            "v",
+            "x",
+            "y",
+            "z",
+            "size",
+            "red",
+            "green",
+            "blue",
+            "skip"
+          ],
+          "skriptvars_wirkungslos": [
+            "i",
+            "v"
+          ]
         },
         {
           "art": "zahl",
@@ -7251,7 +7384,18 @@
           "name": "pointCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "je Gitterpunkt: Farbe (red/green/blue)"
+          "doc": "je Gitterpunkt: Farbe (red/green/blue)",
+          "skriptvars": [
+            "res",
+            "n",
+            "rings",
+            "relax",
+            "flatten"
+          ],
+          "skriptvars_wirkungslos": [
+            "res",
+            "n"
+          ]
         },
         {
           "art": "zahl",
@@ -7462,7 +7606,22 @@
           "default": "x=(i*2)-1; y=0;",
           "name": "pointCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "n",
+            "sizex",
+            "sizey",
+            "red",
+            "green",
+            "blue",
+            "i",
+            "v",
+            "skip"
+          ],
+          "skriptvars_wirkungslos": [
+            "i",
+            "v"
+          ]
         },
         {
           "art": "bool",
@@ -7838,7 +7997,17 @@
           "default": "",
           "name": "pointCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "skriptvars": [
+            "n",
+            "i",
+            "red",
+            "green",
+            "blue"
+          ],
+          "skriptvars_wirkungslos": [
+            "i"
+          ]
         }
       ]
     },

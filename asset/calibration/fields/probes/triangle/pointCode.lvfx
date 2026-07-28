@@ -92,10 +92,10 @@
         "colorCycleFrames": 0
       },
       {
-        "type": "colorfade",
+        "type": "triangle",
         "enabled": true,
-        "name": "Colorfade",
-        "onBeatFrames": 0
+        "name": "Triangle",
+        "pointCode": "n = 1; i = 1; red = 1; green = 1; blue = 1"
       }
     ],
     "clearEveryFrame": false

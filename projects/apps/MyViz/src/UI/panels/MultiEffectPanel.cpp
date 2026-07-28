@@ -1346,17 +1346,42 @@ void MultiEffectPanel::onAddEffect()
     fresh.params = chosen.make();
 
     const QList<int> sel = currentPath();
+    QList<int> neuerPfad;
     mutateStructure([&] {
         ChainNode* target = nodeAtPath(sel);
+
+        // Wohin der neue Knoten kommt (Vorgabe Patrik S55):
+        //   markierte Liste / Host-Gruppe -> als LETZTES Element hinein
+        //   markierter Effekt             -> direkt DARUNTER, in dessen Liste
+        //   nichts markiert               -> ans Ende der Root-Liste
+        // Vorher landete er in den letzten beiden Faellen immer ganz unten in
+        // der Root — bei einer verschachtelten Kette also weit weg von der
+        // Stelle, an der man gerade arbeitet.
+        QList<int> elternPfad;
+        int pos = -1;  // -1 = anhaengen
+        if (target != nullptr && target->isContainer())
+        {
+            elternPfad = sel;
+        }
+        else if (!sel.isEmpty())
+        {
+            elternPfad = sel;
+            pos = elternPfad.takeLast() + 1;
+        }
+
+        ChainNode* eltern = nodeAtPath(elternPfad);
+        if (eltern == nullptr) return;
+
         // Tiefenregel (HG1, Entwurf §5.1): keine Host-Gruppe in eine
         // Host-Gruppe einfuegen — weder direkt noch in eine Liste darunter.
-        // Greift nur, wenn der Einfuege-Ort wirklich der selektierte Container
-        // ist (sonst landet der Add ohnehin auf der Root-Liste).
-        if (fresh.isHostGroup() && target != nullptr && target->isContainer())
+        // Geprueft wird der EINFUEGE-ORT, nicht die Auswahl: seit der neue
+        // Knoten neben einem markierten Effekt landen kann, sind das zwei
+        // verschiedene Dinge.
+        if (fresh.isHostGroup())
         {
             ChainNode* walk = &m_host->chain();
             bool insideGroup = walk->isHostGroup();
-            for (int idx : sel)
+            for (int idx : elternPfad)
             {
                 if (idx < 0 || idx >= static_cast<int>(walk->children.size())) break;
                 walk = &walk->children[static_cast<size_t>(idx)];
@@ -1364,16 +1389,27 @@ void MultiEffectPanel::onAddEffect()
             }
             if (insideGroup) return;
         }
-        // Add into the selected container (list/host group); else root list.
-        if (target != nullptr && target->isContainer())
-        {
-            target->children.push_back(std::move(fresh));
-        }
-        else
-        {
-            m_host->chain().children.push_back(std::move(fresh));
-        }
+
+        const int anzahl = static_cast<int>(eltern->children.size());
+        if (pos < 0 || pos > anzahl) pos = anzahl;
+        eltern->children.insert(eltern->children.begin() + pos, std::move(fresh));
+        neuerPfad = elternPfad;
+        neuerPfad << pos;
     });
+
+    // Den neuen Knoten markieren UND seinen Editor aufbauen. Ohne das blieb die
+    // Auswahl auf dem alten Knoten stehen, und der neue liess sich erst
+    // bearbeiten, wenn man einmal weg- und wieder hinklickte (Befund Patrik
+    // S55). Die Milk-Elemente oben markieren seit jeher; hier fehlte es ganz.
+    // `buildPropertyEditor` zusaetzlich, weil `mutateStructure` den Baum neu
+    // aufbaut und dabei `clearPropertyEditor()` ruft — ob `setCurrentItem`
+    // danach ein Auswahl-Signal ausloest, haengt daran, ob der Baum die alte
+    // Auswahl schon wiederhergestellt hat. Der Aufruf ist idempotent.
+    if (!neuerPfad.isEmpty())
+    {
+        selectByPath(neuerPfad);
+        buildPropertyEditor(neuerPfad);
+    }
 }
 
 void MultiEffectPanel::onRemove()

@@ -52,6 +52,22 @@ am Ende. Mit 181 Frames wirken alle sechs Felder (`color` mit MAE 0,667).
 Wer `--frames` oder `--beat-period` ändert, bekommt eine Warnung, sobald der
 letzte Frame kein Beat mehr ist.
 
+Genau dieser Vorteil ist für manche Felder ein Nachteil, und zwar unheilbar:
+Colorfade **ersetzt** im Beat-Fenster die normalen Fader durch die Beat-Fader —
+im Beat-Frame sind `faderR/G/B` deshalb grundsätzlich unsichtbar, egal was man
+einstellt. Das Fenster lässt sich auch nicht schließen, `onBeatFrames = 0` hebt
+der Validator auf 1 (`EffectChain.hpp`, Vertrag `>= 1`). Solche Felder brauchen
+eine **eigene Lauflänge**: `FRAMES_JE_FELD` im Runner, je Sonde statt je Typ.
+Das Vergleichsbild wird mit derselben Länge gerendert, und die Bilder liegen je
+Länge in `bilder/<typ>/f<N>/` — sonst überschreiben zwei Läufe derselben Datei
+einander. In der Konsole steht die abweichende Länge hinter dem Messwert, im
+Report als eigene Spalte.
+
+Drei Sekunden sind auch für **akkumulierende** Effekte zu lang — sie stehen dann
+am Anschlag und kein Wert macht mehr einen Unterschied. Dafür gibt es
+`FRAMES_JE_TYP` (Colorfade, Fadeout, Brightness: 61). Beide Zahlen müssen weiter
+auf einem Beat enden, außer die Sonde will ausdrücklich daneben liegen.
+
 ## Das Urteil
 
 | | heißt |
@@ -76,7 +92,10 @@ Fehlversuch entstanden:
 
 - **`HANDWERK`** — Gegenwerte, für die es keine Regel gibt: ein Movement-Ausdruck,
   ein Bildpfad. Auch **Bitfelder**: `mirror.mode` 4 → 12 addiert nur Bits und
-  sieht aus wie die Vorgabe; der Gegenwert muss die *Achse* wechseln.
+  sieht aus wie die Vorgabe; der Gegenwert muss die *Achse* wechseln. Und Fälle,
+  in denen die **Richtung** zählt statt des Abstands: Colorfade legt den zweiten
+  Fader immer auf den größten Kanal, der auf unseren Testbalken 255 ist — ein
+  positiver Wert wird dort weggeschnitten (`beatFaderG` −32 statt +32).
 - **`GRUNDKONFIG`** — Felder, die nur in Gesellschaft wirken. `mirror.slower`
   steuert eine Rampe, die es ohne `smooth` nicht gibt. Solche Felder bekommen
   einen **eigenen Vergleichsgrund** (`_grund_<feld>.lvfx`), sonst unterscheiden

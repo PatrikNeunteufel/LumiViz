@@ -97,6 +97,7 @@
         "name": "AVI",
         "filename": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/calibration/fields/testvideo.avi",
         "resolvedPath": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/calibration/fields/testvideo.avi",
+        "adapt": true,
         "persist": 32
       }
     ],

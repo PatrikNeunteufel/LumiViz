@@ -92,10 +92,10 @@
         "colorCycleFrames": 0
       },
       {
-        "type": "colorfade",
+        "type": "domainWarp",
         "enabled": true,
-        "name": "Colorfade",
-        "onBeatFrames": 0
+        "name": "Domain Warp",
+        "gradientPreset": "Monochrome"
       }
     ],
     "clearEveryFrame": false

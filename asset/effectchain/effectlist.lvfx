@@ -1,0 +1,77 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "blendIn": 0,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "audioScale": 0.8999999761581421,
+                        "baseScale": 0.10000000149011612,
+                        "beatCode": "",
+                        "channel": 2,
+                        "colors": [
+                            127,
+                            16777087
+                        ],
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Ring",
+                        "position": 2,
+                        "segments": 80,
+                        "size": 8,
+                        "source": 0,
+                        "type": "oscRing"
+                    },
+                    {
+                        "beatCode": "d=d+2.0",
+                        "blend": true,
+                        "enabled": true,
+                        "frameCode": "x=sin(d)*1.4; y=1.4*cos(d); d=d+0.01;\n",
+                        "initCode": "d=0;",
+                        "name": "Dynamic Shift",
+                        "subpixel": true,
+                        "type": "dynamicShift"
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "\nclear = if(count==5,1,0);\ncount = if(beat==1,count+1,if(count==5,1,count));\n",
+                "inAdjustAlpha": 128,
+                "initCode": "count=0",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": true
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}
