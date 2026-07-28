@@ -658,7 +658,7 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.beatCode = slotStr(src, "beat");
             p.pixelCode = slotStr(src, "point");
             p.blend = src.field("blend") != 0;
-            p.bilinear = src.field("subpixel") != 0;
+            p.subpixel = src.field("subpixel") != 0;
             out.params = std::move(p);
             return true;
         }
@@ -813,7 +813,7 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.frameCode = slotStr(src, "frame");
             p.beatCode = slotStr(src, "beat");
             p.blend = src.field("blend") != 0;
-            p.bilinear = src.field("subpixel") != 0;
+            p.subpixel = src.field("subpixel") != 0;
             out.params = std::move(p);
             return true;
         }

@@ -22,6 +22,10 @@
 #include <doctest.h>
 
 #include "scripting/ScriptSlotHost.hpp"
+#include "visualizers/multieffect/ChainSerializer.hpp"
+
+#include <QJsonObject>
+#include <QStringList>
 
 using lumi::scripting::ScriptSlotHost;
 using Slot = ScriptSlotHost::Slot;
@@ -117,4 +121,35 @@ TEST_CASE("Strang D: ein kaputtes Skript meldet einen Fehler")
     const bool ok = host.compileAll();
     CHECK_FALSE(ok);
     CHECK_FALSE(host.lastError().empty());
+}
+
+TEST_CASE("Altname: `bilinear` in einer bestehenden .lvfx wird weiter gelesen")
+{
+    // `bilinear` hiess bis S54 so und war deshalb als einziges der sechs
+    // subpixel-Felder nicht verdrahtet. Beim Umbenennen duerfen vorhandene
+    // Dateien nicht brechen — und die Vorgabe folgt jetzt dem Original:
+    // Distance Modifier AUS (r_ddm.cpp:210), Dynamic Shift AN (r_shift.cpp:127).
+    using namespace lumi::multieffect;
+    QStringList report;
+
+    QJsonObject alt;
+    alt["type"] = "dynamicDistanceModifier";
+    alt["bilinear"] = true;          // Altname, Wert abweichend von der Vorgabe
+    const ChainNode a = nodeFromJson(alt, &report);
+    CHECK(std::get<DynamicDistanceModifierParams>(a.params).subpixel);
+
+    QJsonObject ohne;
+    ohne["type"] = "dynamicDistanceModifier";
+    const ChainNode b = nodeFromJson(ohne, &report);
+    CHECK_FALSE(std::get<DynamicDistanceModifierParams>(b.params).subpixel);
+
+    QJsonObject shift;
+    shift["type"] = "dynamicShift";
+    const ChainNode c = nodeFromJson(shift, &report);
+    CHECK(std::get<DynamicShiftParams>(c.params).subpixel);
+
+    // Neu geschrieben wird ausschliesslich der Originalname.
+    const QJsonObject raus = nodeToJson(b);
+    CHECK(raus.contains("subpixel"));
+    CHECK_FALSE(raus.contains("bilinear"));
 }

@@ -95,7 +95,7 @@
         "type": "colorModifier",
         "enabled": true,
         "name": "Color Modifier",
-        "levelCode": "red=1-red; green=green*0.5",
+        "levelCode": "red=red*(0.5+0.5*sin(time)); green=green*0.5",
         "recompute": false
       }
     ],

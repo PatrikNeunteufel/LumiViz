@@ -95,6 +95,8 @@
         "type": "avi",
         "enabled": true,
         "name": "AVI",
+        "filename": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/calibration/fields/testvideo.avi",
+        "resolvedPath": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/calibration/fields/testvideo.avi",
         "speedMs": 1000
       }
     ],

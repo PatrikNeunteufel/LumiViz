@@ -338,6 +338,22 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
     Verschiebung beziffert.
   - Umfang: Auswahl „Automatisch / Hohe Leistung / Energiesparen", Anzeige der
     tatsächlich genutzten GPU (`GL_RENDERER`), Hinweis auf den nötigen Neustart.
+- 🔴 **`bilinear` wirkt nicht — und ist ein ORIGINAL-Feld** (Dynamic Distance
+  Modifier + Dynamic Shift, Befund der Feld-Sonden S54). Im AVS heißt es
+  `subpixel` und ist ein echter Preset-Wert (`r_ddm.cpp:175`,
+  `r_shift.cpp:98`); unser Import liest ihn korrekt aus
+  (`AvsChainTranslator.cpp:661`). Er schaltet zwei Abtastwege:
+  `BLEND4(...)` mit Zwischenwerten gegen ganzzahliges Abtasten
+  (`r_ddm.cpp:313`) — glatte Übergänge gegen harte Pixelkanten. **Es fehlt
+  also etwas**, der zweite Zweig existiert bei uns gar nicht; wir tasten immer
+  mit BLEND4 ab.
+  **Zweiter Teil des Befunds:** die Vorgabe steht bei Distance Modifier
+  verkehrt — das Original startet mit `subpixel = 0` (`r_ddm.cpp:210`),
+  Dynamic Shift mit 1 (`r_shift.cpp:127`), bei uns beide `true`. Jedes
+  importierte DDM-Preset mit dem Original-Default rendert damit interpoliert
+  statt hart.
+  Anbinden und Default berichtigen gehören zusammen — beides verschiebt das
+  Bild und muss über die Matrix gemessen werden.
 - 🔴 **104 Felder ohne erzeugbare Sonde** — durchweg Skriptfelder von Knoten
   **ohne** `runParamScript` (Fractal 2D/3D, Flame, Fractal Zoomer, Domain Warp …).
   Sie haben eigene Slots, deren schreibbare Variablen der Ernter nicht kennt.

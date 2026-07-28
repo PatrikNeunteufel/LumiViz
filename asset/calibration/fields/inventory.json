@@ -1217,11 +1217,6 @@
                 },
                 {
                     "art": "bool",
-                    "default": true,
-                    "name": "bilinear"
-                },
-                {
-                    "art": "bool",
                     "default": false,
                     "name": "blend"
                 },
@@ -1239,6 +1234,11 @@
                     "art": "text",
                     "default": "d=d-sigmoid((t-50)/100,2)",
                     "name": "pixelCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "subpixel"
                 }
             ],
             "name": "Dynamic Distance Modifier",
@@ -1319,11 +1319,6 @@
                 },
                 {
                     "art": "bool",
-                    "default": true,
-                    "name": "bilinear"
-                },
-                {
-                    "art": "bool",
                     "default": false,
                     "name": "blend"
                 },
@@ -1336,6 +1331,11 @@
                     "art": "text",
                     "default": "d=0;",
                     "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "subpixel"
                 }
             ],
             "name": "Dynamic Shift",

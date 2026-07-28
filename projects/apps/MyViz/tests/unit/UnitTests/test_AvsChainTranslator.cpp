@@ -210,7 +210,7 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(p.frameCode == "x=sin(d);y=cos(d)");
         CHECK(p.beatCode == "d=d+2");
         CHECK(p.blend);
-        CHECK_FALSE(p.bilinear);
+        CHECK_FALSE(p.subpixel);
     }
 
     TEST_CASE("Dynamic Distance Modifier (id 35) -> Params mit Pixel-Code")
@@ -224,7 +224,7 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(p.pixelCode == "d=d*0.9");
         CHECK(p.initCode == "t=0");
         CHECK_FALSE(p.blend);
-        CHECK(p.bilinear);
+        CHECK(p.subpixel);
     }
 
     TEST_CASE("Moving Particle (id 8) -> Params; enabled-Bits gemappt")

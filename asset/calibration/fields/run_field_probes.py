@@ -64,6 +64,20 @@ import compare_avsref as ca  # noqa: E402  (Pfad muss vorher stehen)
 HIER = Path(__file__).parent
 PROBES = HIER / "probes"
 
+# Lauflaenge je Typ, wo die Vorgabe nicht passt. Drei Sekunden sind gut fuer
+# beat-gebundene Effekte und schlecht fuer AKKUMULIERENDE: Colorfade addiert je
+# Frame auf die Kanaele, nach 181 Frames stehen sie am Anschlag und kein
+# Fader-Wert macht mehr einen Unterschied (S54).
+#
+# Die Zahl muss weiter auf einem Beat enden — `(frames-1) % beat_period == 0`.
+# Bei Periode 30 sind das 31, 61, 91, 121 …
+FRAMES_JE_TYP: dict[str, int] = {
+    "colorfade": 61,        # eine Sekunde, zwei Beats
+    "fadeout": 61,          # dito: blendet sonst vollstaendig zur Zielfarbe
+    "brightness": 61,
+    "fastBrightness": 61,
+}
+
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -120,9 +134,13 @@ def main() -> int:
     fertig: dict[Path, Path] = {}
     fehler: dict[Path, str] = {}
 
+    def frames_fuer(typ: str) -> int:
+        return FRAMES_JE_TYP.get(typ, args.frames)
+
     def rendere(lvfx: Path) -> None:
         try:
-            fertig[lvfx] = ca.run_lumi(lvfx, args.frames, args.size,
+            fertig[lvfx] = ca.run_lumi(lvfx, frames_fuer(lvfx.parent.name),
+                                       args.size,
                                        out / "bilder" / lvfx.parent.name,
                                        args.beat_period)
         except Exception as e:  # noqa: BLE001 — je Sonde weitermachen
@@ -137,7 +155,8 @@ def main() -> int:
         """
         ziel = out / "bilder" / tdir.name
         try:
-            ca.run_lumi_dir(tdir, args.frames, args.size, ziel, args.beat_period)
+            ca.run_lumi_dir(tdir, frames_fuer(tdir.name), args.size, ziel,
+                            args.beat_period)
         except Exception as e:  # noqa: BLE001 — je Typ weitermachen
             for f in tdir.glob("*.lvfx"):
                 fehler[f] = str(e)

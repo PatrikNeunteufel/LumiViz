@@ -1291,13 +1291,39 @@ uniform sampler2D uTex;
 uniform vec2 uOffset;
 uniform int uBlend;
 uniform float uAlpha;
+uniform int uSubpixel;
+uniform vec2 uRes;
 out vec4 fragColor;
+
+// AVS BLEND4 (r_defs.h): Ganzzahl-Mischung der vier Nachbarn, kein
+// GL-bilinear — s. die ausfuehrliche Begruendung beim Feedback-Shader.
+vec3 avsBlend4(vec2 px)
+{
+    ivec2 res = ivec2(uRes);
+    vec2 base = floor(px);
+    ivec2 i0 = clamp(ivec2(base), ivec2(0), res - ivec2(2));
+    int xw = int((px.x - base.x) * 255.0);
+    int yw = int((px.y - base.y) * 255.0);
+    ivec3 c00 = ivec3(texelFetch(uTex, i0, 0).rgb * 255.0);
+    ivec3 c10 = ivec3(texelFetch(uTex, i0 + ivec2(1, 0), 0).rgb * 255.0);
+    ivec3 c01 = ivec3(texelFetch(uTex, i0 + ivec2(0, 1), 0).rgb * 255.0);
+    ivec3 c11 = ivec3(texelFetch(uTex, i0 + ivec2(1, 1), 0).rgb * 255.0);
+    ivec3 top = (c00 * (255 - xw) + c10 * xw) >> 8;
+    ivec3 bot = (c01 * (255 - xw) + c11 * xw) >> 8;
+    return vec3((top * (255 - yw) + bot * yw) >> 8) / 255.0;
+}
+
 void main()
 {
     vec2 uv = vTex - uOffset;
     vec3 shifted = vec3(0.0);
     if (uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0)
-        shifted = texture(uTex, uv).rgb;
+    {
+        // `subpixel` an = Zwischenwerte wie im Original (r_shift.cpp:206),
+        // aus = naechster Bildpunkt (die Surface filtert NEAREST).
+        shifted = uSubpixel == 1 ? avsBlend4(uv * uRes - vec2(0.5))
+                                 : texture(uTex, uv).rgb;
+    }
     vec3 orig = texture(uTex, vTex).rgb;
     vec3 r = (uBlend == 1) ? mix(shifted, orig, clamp(uAlpha, 0.0, 1.0)) : shifted;
     fragColor = vec4(r, 1.0);
@@ -1316,7 +1342,29 @@ uniform vec2 uRes;
 uniform float uMaxD;
 uniform float uLut[256];
 uniform int uBlend;
+uniform int uSubpixel;
 out vec4 fragColor;
+
+// AVS BLEND4 (r_defs.h): die vier Nachbarn mit 8-Bit-Anteilen mischen, in
+// GANZZAHLEN und mit Abschneiden — nicht GL-bilinear. Der Unterschied ist
+// belegt (s. Kommentar oben bei kFeedbackFragmentShader): GL-bilinear ist
+// verlustfrei und laesst Trails ueber Rueckkopplungsketten saettigen.
+vec3 avsBlend4(vec2 px)
+{
+    ivec2 res = ivec2(uRes);
+    vec2 base = floor(px);
+    ivec2 i0 = clamp(ivec2(base), ivec2(0), res - ivec2(2));
+    int xw = int((px.x - base.x) * 255.0);
+    int yw = int((px.y - base.y) * 255.0);
+    ivec3 c00 = ivec3(texelFetch(uTex, i0, 0).rgb * 255.0);
+    ivec3 c10 = ivec3(texelFetch(uTex, i0 + ivec2(1, 0), 0).rgb * 255.0);
+    ivec3 c01 = ivec3(texelFetch(uTex, i0 + ivec2(0, 1), 0).rgb * 255.0);
+    ivec3 c11 = ivec3(texelFetch(uTex, i0 + ivec2(1, 1), 0).rgb * 255.0);
+    ivec3 top = (c00 * (255 - xw) + c10 * xw) >> 8;
+    ivec3 bot = (c01 * (255 - xw) + c11 * xw) >> 8;
+    return vec3((top * (255 - yw) + bot * yw) >> 8) / 255.0;
+}
+
 void main()
 {
     vec2 p = (vTex - vec2(0.5)) * uRes;   // pixels from center
@@ -1331,7 +1379,10 @@ void main()
         int i1 = min(i0 + 1, 255);
         float dout = mix(uLut[i0], uLut[i1], fidx - float(i0));
         vec2 uv = clamp(vec2(0.5) + (p / dist) * (dout * uMaxD) / uRes, 0.0, 1.0);
-        res = texture(uTex, uv).rgb;
+        // `subpixel` aus = naechster Bildpunkt (die Surface filtert NEAREST),
+        // an = die vier Nachbarn wie im Original (r_ddm.cpp:313).
+        res = uSubpixel == 1 ? avsBlend4(uv * uRes - vec2(0.5))
+                             : texture(uTex, uv).rgb;
     }
     fragColor = vec4(uBlend == 1 ? (res + orig) * 0.5 : res, 1.0);
 }
@@ -5695,6 +5746,10 @@ void MultiEffectVisualizer::runDynamicShift(const ChainNode& node,
     m_shiftShader->setUniformValue("uBlend", params.blend ? 1 : 0);
     m_shiftShader->setUniformValue(
         "uAlpha", static_cast<float>(std::clamp(alpha, 0.0, 1.0)));
+    m_shiftShader->setUniformValue("uSubpixel", params.subpixel ? 1 : 0);
+    m_shiftShader->setUniformValue(
+        "uRes", QVector2D(static_cast<float>(m_surfaceWidth),
+                          static_cast<float>(m_surfaceHeight)));
     m_shiftShader->release();
     transformPass(*m_shiftShader);
 }
@@ -7492,6 +7547,7 @@ void MultiEffectVisualizer::runDynamicDistanceModifier(
     m_ddmShader->setUniformValue("uMaxD", maxD);
     m_ddmShader->setUniformValueArray("uLut", lut.data(), 256, 1);
     m_ddmShader->setUniformValue("uBlend", params.blend ? 1 : 0);
+    m_ddmShader->setUniformValue("uSubpixel", params.subpixel ? 1 : 0);
     m_ddmShader->release();
     transformPass(*m_ddmShader);
 }

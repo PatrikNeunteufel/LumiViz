@@ -881,7 +881,7 @@ TEST_SUITE("ChainSerializer")
         sp.frameCode = "x=10;y=-5;d=d+0.1";
         sp.beatCode = "d=d+2";
         sp.blend = true;
-        sp.bilinear = false;
+        sp.subpixel = false;
         leaf.params = sp;
         root.children.push_back(std::move(leaf));
 
@@ -892,7 +892,7 @@ TEST_SUITE("ChainSerializer")
         CHECK(p.frameCode == "x=10;y=-5;d=d+0.1");
         CHECK(p.beatCode == "d=d+2");
         CHECK(p.blend == true);
-        CHECK(p.bilinear == false);
+        CHECK(p.subpixel == false);
         CHECK(effectTypeKey(EffectParams{DynamicShiftParams{}}) == "dynamicShift");
     }
 
@@ -907,7 +907,7 @@ TEST_SUITE("ChainSerializer")
         dp.beatCode = "t=0";
         dp.pixelCode = "d=d*0.8";
         dp.blend = true;
-        dp.bilinear = false;
+        dp.subpixel = false;
         leaf.params = dp;
         root.children.push_back(std::move(leaf));
 
@@ -917,7 +917,7 @@ TEST_SUITE("ChainSerializer")
         CHECK(p.pixelCode == "d=d*0.8");
         CHECK(p.initCode == "t=0");
         CHECK(p.blend == true);
-        CHECK(p.bilinear == false);
+        CHECK(p.subpixel == false);
         CHECK(effectTypeKey(EffectParams{DynamicDistanceModifierParams{}}) == "dynamicDistanceModifier");
     }
 

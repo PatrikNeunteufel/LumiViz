@@ -95,6 +95,8 @@
         "type": "text",
         "enabled": true,
         "name": "Text",
+        "text": "LumiViz",
+        "outline": true,
         "outlineSize": 32
       }
     ],

@@ -2490,13 +2490,19 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         form->addRow(label, spin);
     };
     auto addBool = [&](const QString& label, bool value,
-                       std::function<void(ChainNode&, bool)> set) {
+                       std::function<void(ChainNode&, bool)> set,
+                       const QString& tip = QString()) {
         auto* box = new QCheckBox(m_propContainer);
         box->setChecked(value);
         connect(box, &QCheckBox::toggled, this, [this, path, set](bool v) {
             mutate(path, [&](ChainNode& n) { set(n, v); });
         });
+        if (!tip.isEmpty()) box->setToolTip(tip);
         form->addRow(label, box);
+        // Der Hinweis gehoert auch an die Beschriftung — wer den Namen nicht
+        // versteht, faehrt zuerst dorthin, nicht auf das Kaestchen.
+        if (!tip.isEmpty())
+            if (QWidget* l = form->labelForField(box)) l->setToolTip(tip);
     };
     auto addColor = [&](const QString& label, uint32_t value,
                         std::function<void(ChainNode&, uint32_t)> set) {
@@ -2864,7 +2870,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool(tr("Rect coords"), p->rectCoords, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).rectCoords = v; });
         addBool(tr("Wrap"), p->wrap, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).wrap = v; });
         addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).blend = v; });
-        addBool(tr("Subpixel (bilinear)"), p->subpixel, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).subpixel = v; });
+        addBool(tr("Bilinear filtering"), p->subpixel,
+                [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).subpixel = v; },
+                tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
+                   "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
+                   "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
+                   "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
+                   "sichtbar vor allem beim Dehnen und Stauchen."));
         const QStringList kSourceMappedNames = {tr("Off"), tr("On (scatter)"),
                                                 tr("Off, toggle on beat"),
                                                 tr("On, toggle on beat")};
@@ -2902,7 +2914,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool(tr("Wrap"), p->wrap, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).wrap = v; });
         addBool(tr("Blend (alpha)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).blend = v; });
         addBool(tr("No move"), p->nomove, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).nomove = v; });
-        addBool(tr("Subpixel (bilinear)"), p->subpixel, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).subpixel = v; });
+        addBool(tr("Bilinear filtering"), p->subpixel,
+                [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).subpixel = v; },
+                tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
+                   "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
+                   "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
+                   "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
+                   "sichtbar vor allem beim Dehnen und Stauchen."));
         addInt(tr("Source buffer (0 = frame)"), p->buffern, 0, 8, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).buffern = v; });
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).frameCode = std::move(v); });
@@ -2912,7 +2930,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     else if (auto* p = std::get_if<DynamicShiftParams>(&params))
     {
         addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicShiftParams>(n.params).blend = v; });
-        addBool(tr("Bilinear"), p->bilinear, [](ChainNode& n, bool v) { std::get<DynamicShiftParams>(n.params).bilinear = v; });
+        addBool(tr("Bilinear filtering"), p->subpixel,
+                [](ChainNode& n, bool v) { std::get<DynamicShiftParams>(n.params).subpixel = v; },
+                tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
+                   "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
+                   "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
+                   "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
+                   "sichtbar vor allem beim Dehnen und Stauchen."));
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame (x,y shift)"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).frameCode = std::move(v); });
         addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).beatCode = std::move(v); });
@@ -2920,7 +2944,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     else if (auto* p = std::get_if<DynamicDistanceModifierParams>(&params))
     {
         addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicDistanceModifierParams>(n.params).blend = v; });
-        addBool(tr("Bilinear"), p->bilinear, [](ChainNode& n, bool v) { std::get<DynamicDistanceModifierParams>(n.params).bilinear = v; });
+        addBool(tr("Bilinear filtering"), p->subpixel,
+                [](ChainNode& n, bool v) { std::get<DynamicDistanceModifierParams>(n.params).subpixel = v; },
+                tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
+                   "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
+                   "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
+                   "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
+                   "sichtbar vor allem beim Dehnen und Stauchen."));
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).frameCode = std::move(v); });
         addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).beatCode = std::move(v); });
@@ -3205,7 +3235,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addInt(tr("Beat scale"), p->scale2, 0, 256, [](ChainNode& n, int v) { std::get<BlitterFeedbackParams>(n.params).scale2 = v; });
         addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).onBeat = v; });
         addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).blend = v; });
-        addBool(tr("Subpixel (bilinear)"), p->subpixel, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).subpixel = v; });
+        addBool(tr("Bilinear filtering"), p->subpixel,
+                [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).subpixel = v; },
+                tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
+                   "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
+                   "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
+                   "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
+                   "sichtbar vor allem beim Dehnen und Stauchen."));
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).frameCode = std::move(v); });
         addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).beatCode = std::move(v); });
@@ -3219,7 +3255,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool(tr("Beat reverse"), p->beatReverse, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).beatReverse = v; });
         addInt(tr("Reverse speed"), p->beatReverseSpeed, 0, 8, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).beatReverseSpeed = v; });
         addBool(tr("Beat zoom jump"), p->beatZoomJump, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).beatZoomJump = v; });
-        addBool(tr("Subpixel (bilinear)"), p->subpixel, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).subpixel = v; });
+        addBool(tr("Bilinear filtering"), p->subpixel,
+                [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).subpixel = v; },
+                tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
+                   "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
+                   "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
+                   "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
+                   "sichtbar vor allem beim Dehnen und Stauchen."));
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).frameCode = std::move(v); });
         addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).beatCode = std::move(v); });

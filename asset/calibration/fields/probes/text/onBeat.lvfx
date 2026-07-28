@@ -95,6 +95,8 @@
         "type": "text",
         "enabled": true,
         "name": "Text",
+        "text": "LumiViz",
+        "onBeatSpeed": 20,
         "onBeat": true
       }
     ],

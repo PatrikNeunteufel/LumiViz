@@ -95,6 +95,7 @@
         "type": "text",
         "enabled": true,
         "name": "Text",
+        "text": "LumiViz",
         "italic": true
       }
     ],

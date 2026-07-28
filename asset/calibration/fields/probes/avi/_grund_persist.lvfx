@@ -92,11 +92,11 @@
         "colorCycleFrames": 0
       },
       {
-        "type": "dynamicDistanceModifier",
+        "type": "avi",
         "enabled": true,
-        "name": "Dynamic Distance Modifier",
-        "pixelCode": "d=d*0.6",
-        "bilinear": false
+        "name": "AVI",
+        "filename": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/calibration/fields/testvideo.avi",
+        "resolvedPath": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/calibration/fields/testvideo.avi"
       }
     ],
     "clearEveryFrame": false

@@ -92,10 +92,31 @@
         "colorCycleFrames": 0
       },
       {
+        "type": "superScope",
+        "enabled": true,
+        "name": "Bewegt",
+        "pointCode": "x=cos(time*3)*i*0.8; y=sin(time*3)*i*0.8; red=1; green=1; blue=0.2",
+        "pointCount": 64,
+        "renderMode": 1,
+        "lineWidth": 6,
+        "colors": [
+          16777215
+        ],
+        "colorCycleFrames": 0
+      },
+      {
         "type": "multiDelay",
         "enabled": true,
         "name": "Multi Delay",
+        "mode": 1,
         "delay": 128
+      },
+      {
+        "type": "multiDelay",
+        "enabled": true,
+        "name": "Zurueck",
+        "mode": 2,
+        "buffer": 0
       }
     ],
     "clearEveryFrame": false

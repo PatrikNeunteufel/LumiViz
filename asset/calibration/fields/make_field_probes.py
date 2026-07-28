@@ -53,6 +53,12 @@ import lvfx_lib as L
 TESTBILD_B64 = base64.b64encode((Path(__file__).parent / "testbild.png")
                                 .read_bytes()).decode("ascii")
 
+# Das Test-Video (make_testvideo.py). Der AVI-Knoten laedt ueber Video for
+# Windows von der Platte, nicht eingebettet — also ein absoluter Pfad.
+# 32 Bit ist Pflicht: `runAvi` prueft `biBitCount == 32` und ueberspringt
+# alles andere ohne Meldung (Befund S54).
+TESTVIDEO = (Path(__file__).parent / "testvideo.avi").resolve().as_posix()
+
 HIER = Path(__file__).parent
 DOCS = HIER / "inventory_docs.json"
 OUT = HIER / "probes"
@@ -65,7 +71,23 @@ HANDWERK: dict[str, object] = {
     "movement.code": "d=d*0.5",
     # Dynamic Movement / Distance Modifier / Shift: dieselbe Logik.
     "dynamicMovement.pointCode": "d=d*0.5",
-    "dynamicDistanceModifier.code": "d=d*0.5",
+    # Dynamic Distance Modifier: das Feld heisst `pixelCode`, nicht `code` —
+    # daran scheiterte die Sonde zuerst, nicht an der Formel. `d` ist eine
+    # normierte Distanz (rein: Ziel, raus: Quelle), also ist `d=d` die
+    # Identitaet und `d=d*0.6` eine Stauchung. Beides am Original belegt
+    # (r_ddm.cpp:287-289) und gemessen: leer und `d=d` liefern dasselbe Bild,
+    # `d=d*0.6` ein anderes.
+    "dynamicDistanceModifier.pixelCode": "d=d*0.6",
+    # Die Slot-Sonden dieser beiden Knoten schreiben in `reg00` — ihr
+    # Punkt-Code liest es (s. GRUNDKONFIG). `reg00` ist preset-global und
+    # ueberlebt den Slot-Wechsel, eine lokale Variable taete das nicht.
+    **{f"dynamicDistanceModifier.{f}": "reg00=1.4"
+       for f in ("initCode", "frameCode", "beatCode")},
+    **{f"triangle.{f}": "reg00=1" for f in ("initCode", "frameCode", "beatCode")},
+    # Global Variables setzt preset-weite Register; sichtbar wird das erst
+    # an einem Knoten dahinter, der sie liest (s. NACHFOLGER).
+    **{f"jherikoGlobal.{f}": "reg00=0.9"
+       for f in ("initCode", "frameCode", "beatCode")},
     "dynamicShift.frameCode": "x=x+0.2; y=y+0.1",
     # Bilder: `imageData` traegt die Datei selbst, also ist das Testbild der
     # Gegenwert. `filename` ist dagegen nur die Herkunftsnotiz — es zeichnet
@@ -90,12 +112,17 @@ HANDWERK: dict[str, object] = {
     "camera3d.px": 1.5, "camera3d.py": 1.5,
     "camera3d.tx": 0.6, "camera3d.ty": 0.6, "camera3d.tz": 0.6,
     "camera3d.fogStart": 2.0, "camera3d.fogEnd": 5.0,
+    "avi.filename": TESTVIDEO,
+    "avi.resolvedPath": TESTVIDEO,
     # Reine Notizfelder — sie sollen nichts bewirken.
     "comment.text": "",
     "importNotes.text": "",
     "passthrough.note": "",
 }
 
+
+TRI_PUNKTE = ("x1=-0.6;y1=-0.5; x2=0.6;y2=-0.5; x3=0;y3=0.6; "
+              "green=0.6;blue=0")
 
 # GRUNDKONFIGURATION: Felder, die nur in Gesellschaft wirken koennen.
 #
@@ -108,14 +135,38 @@ GRUNDKONFIG: dict[str, dict] = {
     "mirror.slower": {"smooth": True},
     # Dieselbe Logik wie bei Movement, andere Knoten: ohne Ausdruck ist der
     # Effekt die Identitaet, seine uebrigen Felder koennen nichts zeigen.
-    **{f"dynamicDistanceModifier.{f}": {"pixelCode": "d=d*0.6"}
-       for f in ("bilinear", "blend", "initCode", "frameCode", "beatCode")},
-    **{f"triangle.{f}": {"pointCode": "x1=-0.6;y1=-0.5; x2=0.6;y2=-0.5; "
-                                      "x3=0;y3=0.6; red=1;green=0.6;blue=0"}
-       for f in ("filled", "lineWidth", "initCode", "frameCode", "beatCode")},
+    # `bilinear` (Zwischenwerte beim Abtasten) zeigt sich nur an einer Abbildung,
+    # die zwischen die Bildpunkte trifft — eine glatte Stauchung tut das.
+    **{f"dynamicDistanceModifier.{f}": {"pixelCode": "d=d*0.63"}
+       for f in ("subpixel", "blend")},
+    # Bei einem Punkt-Knoten koennen Init/Frame/Beat nur ueber eine GETEILTE
+    # Variable wirken: der Punkt-Code laeuft je Pixel und ueberschreibt `d`
+    # ohnehin. Also setzt der gepruefte Slot `reg00`, und der Punkt-Code liest
+    # es. So misst die Sonde wirklich den Slot und nicht den Punkt-Code.
+    **{f"dynamicDistanceModifier.{f}": {"pixelCode": "d=reg00"}
+       for f in ("initCode", "frameCode", "beatCode")},
+    "triangle.filled": {"pointCode": TRI_PUNKTE},
+    # `lineWidth` zeichnet nur den UMRISS — ein gefuelltes Dreieck hat keinen.
+    "triangle.lineWidth": {"pointCode": TRI_PUNKTE, "filled": False},
+    **{f"triangle.{f}": {"pointCode": TRI_PUNKTE + "; red=reg00"}
+       for f in ("initCode", "frameCode", "beatCode")},
     # Color Modifier ist eine Nachschlagetabelle: ohne Kurve keine Aenderung.
+    # `recompute` steuert, OB je Frame neu gerechnet wird — das zeigt sich nur
+    # an einer Kurve, die sich ueber die Zeit aendert. Mit einer statischen
+    # ergibt beides dasselbe Bild, und die Sonde meldet zu Recht "stumm".
+    # `loadMode` bestimmt, wann der Init-Slot erneut laeuft — ohne Init-Code
+    # gibt es nichts zu wiederholen. Der Ausdruck muss ausserdem von der
+    # Zeit abhaengen, sonst liefert jeder Durchlauf denselben Wert.
+    "jherikoGlobal.loadMode": {"initCode": "reg00=0.2+0.7*sin(time)"},
+    # Vorgabe ist `mode = 0` (= aus). Erst als Schreiber (1) hat der Knoten
+    # ueberhaupt eine Aufgabe, an der sich Puffer und Verzoegerung zeigen.
+    **{f"multiDelay.{f}": {"mode": 1}
+       for f in ("buffer", "delay", "useBeats", "initCode", "frameCode",
+                 "beatCode")},
+    "colorModifier.recompute": {"levelCode": "red=red*(0.5+0.5*sin(time)); "
+                                             "green=green*0.5"},
     **{f"colorModifier.{f}": {"levelCode": "red=1-red; green=green*0.5"}
-       for f in ("recompute", "initCode", "frameCode", "beatCode")},
+       for f in ("initCode", "frameCode", "beatCode")},
     # Movement ist ohne Abbildung die Identitaet — Randbehandlung, Rechenart
     # und Zwischenwerte koennen dann nichts zeigen.
     # `wrap` zeigt sich nur, wenn etwas ueber den Rand hinauslaeuft — eine
@@ -133,6 +184,34 @@ GRUNDKONFIG: dict[str, dict] = {
     # Umgekehrt: der Schalter selbst zeigt sich nur, wenn die Beat-Qualitaet
     # von der normalen ABWEICHT — sonst schaltet er auf denselben Wert um.
     "mosaic.onBeat": {"quality2": 4},
+    # Der Text-Knoten zeichnet ohne Inhalt nichts — dann kann keine Schriftart,
+    # keine Ausrichtung und keine Farbe etwas zeigen (20 von 20 stumm, S54).
+    **{f"text.{f}": {"text": "LumiViz"}
+       for f in ("blend", "color", "fontHeight", "fontWeight", "hAlign", "vAlign",
+                 "italic", "insertBlank", "normalizeSize", "onBeat", "outline",
+                 "outlineColor", "randomPos", "shadow", "shiftSpeed", "speed",
+                 "wordWrap", "x", "y", "beatFrames", "fontFamily", "initCode",
+                 "frameCode", "beatCode")},
+    # Textfelder, die eine zweite Zutat brauchen: eine Kontur hat nur, wer sie
+    # einschaltet; eine Verschiebung sieht man nur mit Tempo; ein Beat-Verhalten
+    # nur, wenn es an ist; ein Zufallswort nur bei mehreren Woertern.
+    "text.outlineColor": {"text": "LumiViz", "outline": True},
+    "text.outlineSize": {"text": "LumiViz", "outline": True},
+    "text.underline": {"text": "LumiViz", "fontHeight": 40},
+    "text.xShift": {"text": "LumiViz", "shiftSpeed": 8},
+    "text.yShift": {"text": "LumiViz", "shiftSpeed": 8},
+    "text.onBeatSpeed": {"text": "LumiViz", "onBeat": True},
+    "text.normSpeed": {"text": "LumiViz", "normalizeSize": True},
+    "text.randomWord": {"text": "Lumi Viz Test Wort"},
+    "text.onBeat": {"text": "LumiViz", "onBeatSpeed": 20},
+    # Ohne Video zeichnet der AVI-Knoten nichts, dann kann kein Regler wirken.
+    **{f"avi.{f}": {"filename": TESTVIDEO, "resolvedPath": TESTVIDEO}
+       for f in ("adapt", "blend", "persist", "speedMs")},
+    # Seit die Sonden im Beat-Frame enden (181 Frames), gelten dort die
+    # BEAT-Fader — die normalen sind dann verdeckt. Fuer sie muss das
+    # Beat-Fenster geschlossen sein.
+    **{f"colorfade.{f}": {"onBeatFrames": 0}
+       for f in ("faderR", "faderG", "faderB")},
     # Interleave springt nur auf Beat auf x2/y2.
     "interleave.x2": {"onBeat": True},
     "interleave.y2": {"onBeat": True},
@@ -180,6 +259,11 @@ GRUNDKONFIG: dict[str, dict] = {
 # Der Runner faellt hier KEIN Urteil: ein "STUMM" waere eine Falschmeldung
 # ueber die App, obwohl die Grenze am Messaufbau liegt.
 NICHT_PRUEFBAR: dict[str, str] = {
+    **{f"passthrough.{f}":
+       "Passthrough reicht das Bild unveraendert weiter — er SOLL nichts "
+       "bewirken. Seine Felder sind Import-Notizen (welcher AVS-Effekt hier "
+       "stand), keine Regler."
+       for f in ("note", "sourceId")},
     "timescope.channel":
         "Standalone erzeugt das Spektrum fuer BEIDE Kanaele gleich "
         "(main.cpp: spec[b*2+0] == spec[b*2+1]); links/rechts/Mitte sind "
@@ -220,6 +304,31 @@ NACHFOLGER: dict[str, list[dict]] = {
                    L.node("bufferSave", "Zurueck", dir=1)],
     # Custom BPM faelscht den Beat — ein beat-reaktiver Nachfolger zeigt es.
     "customBpm": [L.node("onBeatClear", "Zeuge", everyNBeats=1)],
+    # Multi Delay braucht ZWEI Knoten: einer schreibt in den geteilten
+    # Puffer (mode 1), einer liest ihn zurueck (mode 2). Der Pruefling ist
+    # der schreibende, dieser hier der lesende — sonst bleibt der Puffer
+    # unbenutzt und jedes Feld ist stumm (S54).
+    "multiDelay": [L.node("multiDelay", "Zurueck", mode=2, buffer=0)],
+}
+
+# VORLAUF: Knoten, die VOR dem Pruefling stehen.
+#
+# Ein Verzoegerungsspeicher zeigt ein Bild von vor N Frames. Auf unserem
+# STATISCHEN Untergrund ist das dasselbe Bild — die Sonde sah nichts, obwohl
+# der Effekt arbeitete (S54, `videoDelay`/`multiDelay` je 5-7 Felder stumm).
+# Dieser Zeiger dreht sich, also unterscheidet sich jeder Frame vom vorigen.
+BEWEGT = L.node("superScope", "Bewegt",
+                pointCode="x=cos(time*3)*i*0.8; y=sin(time*3)*i*0.8; "
+                          "red=1; green=1; blue=0.2",
+                pointCount=64, renderMode=1, lineWidth=6, colors=[0xFFFFFF],
+                colorCycleFrames=0)
+# Geprueft S54 ueber ALLE Puffer- und Rueckkopplungsknoten: gebraucht wird der
+# Vorlauf nur von den beiden echten Verzoegerungsspeichern. Blitter Feedback
+# (1/8 stumm), Buffer Save (2/7) und Buffer Blend (2/6) verrechnen im SELBEN
+# Frame und zeigen ihren Unterschied auch auf statischem Untergrund.
+VORLAUF: dict[str, list[dict]] = {
+    "videoDelay": [BEWEGT],
+    "multiDelay": [BEWEGT],
 }
 
 # KINDER: Container zeichnen selbst nichts. Ihre Blend- und Pufferparameter
@@ -349,8 +458,9 @@ def main() -> int:
         pruefling = L.node(typkey, t["name"], **({"children": kinder} if kinder else {}))
 
         nachfolger = NACHFOLGER.get(typkey, [])
+        vorlauf = VORLAUF.get(typkey, [])
         L.write(args.out / typkey / "_default.lvfx",
-                L.chain(*L.untergrund(), pruefling, *nachfolger))
+                L.chain(*L.untergrund(), *vorlauf, pruefling, *nachfolger))
 
         for f in t["felder"]:
             wert = gegenwert(f, typkey, alle)
@@ -367,12 +477,12 @@ def main() -> int:
                             **({"children": kinder} if kinder else {}),
                             **{**grund, f["name"]: wert})
             L.write(args.out / typkey / f"{f['name']}.lvfx",
-                    L.chain(*L.untergrund(), knoten, *nachfolger))
+                    L.chain(*L.untergrund(), *vorlauf, knoten, *nachfolger))
             if grund:
                 # Eigener Vergleichsgrund: der Nachbar ist auch hier gesetzt,
                 # sonst misst das Paar ZWEI Unterschiede statt einem.
                 L.write(args.out / typkey / f"_grund_{f['name']}.lvfx",
-                        L.chain(*L.untergrund(),
+                        L.chain(*L.untergrund(), *vorlauf,
                                 L.node(typkey, t["name"],
                                        **({"children": kinder} if kinder else {}),
                                        **grund),

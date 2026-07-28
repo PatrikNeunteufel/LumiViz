@@ -95,8 +95,8 @@
         "type": "dynamicDistanceModifier",
         "enabled": true,
         "name": "Dynamic Distance Modifier",
-        "pixelCode": "d=d*0.6",
-        "initCode": "d = 1"
+        "pixelCode": "d=reg00",
+        "initCode": "reg00=1.4"
       }
     ],
     "clearEveryFrame": false

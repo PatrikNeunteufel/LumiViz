@@ -9,7 +9,7 @@
     "typen": 85,
     "felder": 717,
     "ohne_panel": 0,
-    "ohne_doc": 176
+    "ohne_doc": 178
   },
   "typen": [
     {
@@ -2301,14 +2301,6 @@
         },
         {
           "art": "bool",
-          "default": true,
-          "name": "bilinear",
-          "panel": "bool",
-          "helfer": "addBool",
-          "doc": "subpixel (bilinear) sampling"
-        },
-        {
-          "art": "bool",
           "default": false,
           "name": "blend",
           "panel": "bool",
@@ -2341,6 +2333,13 @@
           "name": "pixelCode",
           "panel": "skript",
           "helfer": "addScript"
+        },
+        {
+          "art": "bool",
+          "default": false,
+          "name": "subpixel",
+          "panel": "bool",
+          "helfer": "addBool"
         }
       ]
     },
@@ -2463,14 +2462,6 @@
         },
         {
           "art": "bool",
-          "default": true,
-          "name": "bilinear",
-          "panel": "bool",
-          "helfer": "addBool",
-          "doc": "subpixel (bilinear) sampling"
-        },
-        {
-          "art": "bool",
           "default": false,
           "name": "blend",
           "panel": "bool",
@@ -2500,6 +2491,13 @@
             "y",
             "alpha"
           ]
+        },
+        {
+          "art": "bool",
+          "default": true,
+          "name": "subpixel",
+          "panel": "bool",
+          "helfer": "addBool"
         }
       ]
     },

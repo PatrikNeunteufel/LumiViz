@@ -95,8 +95,8 @@
         "type": "triangle",
         "enabled": true,
         "name": "Triangle",
-        "pointCode": "x1=-0.6;y1=-0.5; x2=0.6;y2=-0.5; x3=0;y3=0.6; red=1;green=0.6;blue=0",
-        "frameCode": "n = 1; i = 1; red = 1; green = 1; blue = 1"
+        "pointCode": "x1=-0.6;y1=-0.5; x2=0.6;y2=-0.5; x3=0;y3=0.6; green=0.6;blue=0; red=reg00",
+        "frameCode": "reg00=1"
       }
     ],
     "clearEveryFrame": false

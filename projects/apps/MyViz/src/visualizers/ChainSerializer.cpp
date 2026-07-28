@@ -280,7 +280,7 @@ struct WriteVisitor
     void operator()(const DynamicShiftParams& p) const
     {
         o["blend"] = p.blend;
-        o["bilinear"] = p.bilinear;
+        o["subpixel"] = p.subpixel;
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
@@ -292,7 +292,7 @@ struct WriteVisitor
         o["beatCode"] = QString::fromStdString(p.beatCode);
         o["pixelCode"] = QString::fromStdString(p.pixelCode);
         o["blend"] = p.blend;
-        o["bilinear"] = p.bilinear;
+        o["subpixel"] = p.subpixel;
     }
     void operator()(const MovingParticleParams& p) const
     {
@@ -1432,7 +1432,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     {
         DynamicShiftParams p;
         p.blend = getBool(o, "blend", false);
-        p.bilinear = getBool(o, "bilinear", true);
+        // `bilinear` ist der Altname (bis S54) — vorhandene .lvfx lesen
+        // sich damit weiter; der Vorgabewert folgt dem Original.
+        p.subpixel = getBool(o, "subpixel", getBool(o, "bilinear", true));
         p.initCode = getStr(o, "initCode");
         p.frameCode = getStr(o, "frameCode");
         p.beatCode = getStr(o, "beatCode");
@@ -1446,7 +1448,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.beatCode = getStr(o, "beatCode");
         p.pixelCode = getStr(o, "pixelCode");
         p.blend = getBool(o, "blend", false);
-        p.bilinear = getBool(o, "bilinear", true);
+        // `bilinear` ist der Altname (bis S54) — vorhandene .lvfx lesen
+        // sich damit weiter; der Vorgabewert folgt dem Original.
+        p.subpixel = getBool(o, "subpixel", getBool(o, "bilinear", false));
         return p;
     }
     if (type == "movingParticle")

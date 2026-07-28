@@ -832,13 +832,44 @@ struct DynamicMovementParams
  */
 struct DynamicDistanceModifierParams
 {
+    /**
+     * Skript-Variablen: **nur `d`** (+ `b` und der Audio-Satz).
+     *
+     * `d` ist eine **normierte Distanz**, kein Faktor: der Pixel-Code bekommt
+     * die Entfernung des Zielpunkts vom Bildmitte als 0..1 herein und schreibt
+     * die Entfernung zurueck, aus der gelesen werden soll. `d=d` ist damit die
+     * Identitaet, `d=d*0.6` holt aus 60 % der Entfernung (Stauchung nach
+     * aussen), `d=1.4` liest fuer JEDEN Punkt aus derselben Entfernung.
+     * Den Skalierungsfaktor bildet erst die Tabelle daraus
+     * (r_ddm.cpp:287-289: `m_tab[x] = d * 256 * max_d / (x+1)`).
+     *
+     * Anders als Movement und Dynamic Movement kennt dieser Effekt **weder
+     * Winkel noch Koordinaten** — seine Tabelle laeuft ueber den Radius und
+     * gilt fuer alle Richtungen gleich. Er kann deshalb nur stauchen und
+     * dehnen, nie drehen oder verschieben.
+     */
     std::string initCode = "u=1;t=0";
     std::string frameCode =
         "t=t+u;t=min(100,t);t=max(0,t);u=if(equal(t,100),-1,u);u=if(equal(t,0),1,u)";
     std::string beatCode;
     std::string pixelCode = "d=d-sigmoid((t-50)/100,2)";
     bool blend = false;    ///< 50/50 with the original image
-    bool bilinear = true;  ///< subpixel (bilinear) sampling
+    /**
+     * Zwischenwerte beim Abtasten (AVS `subpixel`, r_ddm.cpp:313 /
+     * r_shift.cpp:206).
+     *
+     * `false` liest den naechstgelegenen Bildpunkt — harte Kanten. `true`
+     * mischt die vier Nachbarn wie AVS' BLEND4, also mit Ganzzahl-Schritten
+     * und Abschneiden statt GL-Filterung (der Unterschied ist belegt, s.
+     * MultiEffectVisualizer.cpp:676).
+     *
+     * Hiess bis S54 `bilinear` und war deshalb als einziges der SECHS
+     * subpixel-Felder nicht verdrahtet — Movement, Dynamic Movement, Blitter
+     * Feedback und Roto Blitter behielten den Originalnamen und reichen ihn
+     * laengst durch. Alte `.lvfx` mit `"bilinear"` werden weiter gelesen.
+     * Vorgabe wie im Original: AUS (r_ddm.cpp:210).
+     */
+    bool subpixel = false;
 };
 
 /**
@@ -881,7 +912,22 @@ struct DynamicShiftParams
     std::string frameCode = "x=sin(d)*1.4; y=1.4*cos(d); d=d+0.01;";
     std::string beatCode = "d=d+2.0";
     bool blend = false;    ///< 50/50 with the original image
-    bool bilinear = true;  ///< subpixel (bilinear) sampling
+    /**
+     * Zwischenwerte beim Abtasten (AVS `subpixel`, r_ddm.cpp:313 /
+     * r_shift.cpp:206).
+     *
+     * `false` liest den naechstgelegenen Bildpunkt — harte Kanten. `true`
+     * mischt die vier Nachbarn wie AVS' BLEND4, also mit Ganzzahl-Schritten
+     * und Abschneiden statt GL-Filterung (der Unterschied ist belegt, s.
+     * MultiEffectVisualizer.cpp:676).
+     *
+     * Hiess bis S54 `bilinear` und war deshalb als einziges der SECHS
+     * subpixel-Felder nicht verdrahtet — Movement, Dynamic Movement, Blitter
+     * Feedback und Roto Blitter behielten den Originalnamen und reichen ihn
+     * laengst durch. Alte `.lvfx` mit `"bilinear"` werden weiter gelesen.
+     * Vorgabe wie im Original: AN (r_shift.cpp:127).
+     */
+    bool subpixel = true;
 };
 
 /**
