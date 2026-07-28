@@ -124,16 +124,33 @@ Verlauf der Normalfall) · `GLEICH`.
 |---|---|---|
 | ~~`movement.sourceMapped`~~ | 0,081 | ✅ **gefixt S55** — wurde nur bei frischer Runtime übernommen (`< 0`). Jetzt wird der zuletzt übernommene Preset-Wert mitgeführt, das Beat-Kippen bleibt. Nachgemessen: Movement 7/7 GLEICH |
 | ~~`avi.filename` · `avi.resolvedPath`~~ | 0,234 | ✅ **gefixt S55** — `aviTried` merkte sich nur, DASS geöffnet wurde; ein Pfadwechsel griff nie. Jetzt Pfad-Schnappschuss + Neuöffnen (Textur wird verworfen). Nachgemessen: keine WIRKUNGSLOS mehr, Feld-Sonden 6/6 ohne Regression |
-| `texer.imageData` | 0,070 | 🟠 vermutlich derselbe Typ (Textur einmal aufgebaut) |
-| `milkdrop.meshX` · `meshY` · `debugGrid` | 0,036–0,053 | 🟠 Mesh/Gitter wird im Milkdrop-Modul aufgebaut — prüfen, ob `setParam` je Frame reicht |
-| `bufferSave.slot` · `dir` · `initCode` · `frameCode` · `beatCode` | 0,109 | 🟡 **wahrscheinlich Messartefakt:** der Untergrund ist statisch, also enthalten alle Puffer-Slots dasselbe Bild; ein Slot-Wechsel ist dann unsichtbar, während er im geladenen Fall von Anfang an gilt. Erst die Montage ansehen |
-| `bassSpin.smoothing` | 0,184 | 🟠 unanalysiert |
-| `customBpm.skip` | 0,109 | 🟡 zählt Beats, greift erst im nächsten Zyklus — vermutlich kein Fehler |
-| `mirror.slower` | 0,014 | 🟡 steuert nur das Tempo einer Rampe, die nach 90 Frames abgelaufen ist — ein neuer Wert kann am Schlussbild nichts mehr ändern; vermutlich kein Fehler |
+| `texer.imageData` | 0,070 | 🟠 offen |
+| `milkdrop.meshX` · `meshY` · `debugGrid` | 0,036 · 0,053 · 0,006 | 🟠 offen — Mesh/Gitter wird im Milkdrop-Modul aufgebaut |
+| `bufferSave.slot` · `dir` · `initCode` · `frameCode` · `beatCode` | 0,109 | 🟠 offen |
+| `bassSpin.smoothing` | 0,184 | 🟠 offen |
+| `customBpm.skip` | 0,109 | 🟠 offen |
+| `mirror.slower` | 0,014 | 🟠 offen |
 
-**Merkregel:** `WIRKUNGSLOS` ist wie `STUMM` **eine Frage, kein Befund** — es
-kann am Runtime-Zustand liegen (Fehler) oder daran, dass das Feld zu diesem
-Zeitpunkt schlicht nichts mehr bewirken kann (kein Fehler).
+**Alle 13 sind bestätigte Kandidaten, keiner ist wegerklärt.** Der erste Anlauf
+hatte für `mirror.slower`, `customBpm.skip` und `bufferSave.*` Entwarnung
+gegeben („Rampe längst abgelaufen", „Artefakt des statischen Untergrunds") —
+das waren **Rationalisierungen**, dieselbe Falle wie beim `d`-Faktor in S54.
+Widerlegt durch zwei Messungen:
+
+1. **Jedes der 13 Felder WIRKT in den Feld-Sonden** — es kann also im
+   Schlussbild sehr wohl etwas bewirken.
+2. **Der Edit-MAE ist exakt der Feld-MAE** (`mirror.slower` 0,0143 hier wie
+   dort, `bufferSave.slot` 0,1094, `bassSpin.smoothing` 0,1841 …). Das heißt:
+   das editierte Bild ist Pixel für Pixel die Vorgabe, und der Abstand zum
+   geladenen ist genau der volle Feld-Effekt. Der Edit hat **nichts** bewirkt.
+
+Gegenprobe am Werkzeug: der Standalone meldet „Edit angewandt nach Frame 90" —
+es liegt nicht daran, dass der Edit ausbliebe.
+
+**Merkregel:** `WIRKUNGSLOS` ist wie `STUMM` zuerst **eine Frage** — aber
+beantwortet wird sie mit einer Messung, nicht mit einer plausiblen Geschichte.
+Der Quercheck dafür steht fest: *wirkt das Feld in den Feld-Sonden, und ist der
+Edit-MAE gleich dem Feld-MAE?* Dann ist es ein Befund.
 
 **Geprüft und in Ordnung:** alle 16 Knoten mit Verlauf (multiDelay, videoDelay,
 bufferSave, blitterFeedback, rotoBlitter, waterBump, water, fyrewurX,

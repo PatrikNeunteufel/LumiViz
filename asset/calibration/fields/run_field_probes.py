@@ -55,6 +55,7 @@ import argparse
 import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "avs"))
@@ -295,19 +296,40 @@ def main() -> int:
             zusatz = "" if n == frames_fuer(tdir.name) else f"  [{n} Frames]"
             print(f"  {urteil:7s} {tdir.name}.{feld:24s} MAE {mae:.4f}{zusatz}")
 
-    with (out / "report.md").open("w", encoding="utf-8") as f:
-        f.write(f"# Feld-Sonden (Strang E) — {args.frames} Frames, {args.size}\n\n")
-        f.write("Urteil gegen `_default` desselben Typs; beide Laeufe teilen "
-                "Untergrund und Audio. Die Spalte `Frames` weicht ab, wo Typ "
-                "oder Feld eine eigene Lauflaenge brauchen "
-                "(FRAMES_JE_TYP / FRAMES_JE_FELD).\n\n")
-        f.write("| Typ | Feld | Frames | MAE | Urteil |\n|---|---|---|---|---|\n")
-        for typ, feld, n, mae, urteil in rows:
-            f.write(f"| {typ} | {feld} | {n} | {mae:.4f} | {urteil} |\n")
-
+    # Jeder Lauf wird ARCHIVIERT — `logs/<zeitstempel>_…md` bleibt stehen,
+    # `report.md` ist immer der letzte Stand. Zwei Gruende (beide in S55
+    # passiert, Vorgabe Patrik):
+    #   * Ein TEILLAUF ueberschrieb den Vollauf-Report; danach stand nur noch
+    #     `avi` drin und die Gesamtzahlen waren weg.
+    #   * Die Konsolenausgabe war durch `tail` gefiltert, also liessen sich die
+    #     Einzelurteile auch dort nicht mehr nachlesen — alles neu messen.
+    # Zusaetzlich traegt der Teillauf seine Typen im Namen.
     zahl = {u: sum(1 for r in rows if r[4] == u) for u in
             ("WIRKT", "SCHWACH", "STUMM", "FEHLER")}
-    print(f"\nReport: {out / 'report.md'}")
+    teil = "_".join(sorted(args.typkeys))[:60]
+    name = f"report{'_' + teil if teil else ''}.md"
+    stempel = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+
+    kopf = (f"# Feld-Sonden (Strang E) — {args.frames} Frames, {args.size}\n\n"
+            f"**Lauf:** {datetime.now():%Y-%m-%d %H:%M:%S} · "
+            f"`--beat-period {args.beat_period}` · "
+            f"{'alle Typen' if not teil else 'nur ' + ', '.join(sorted(args.typkeys))}\n\n"
+            "**Ergebnis:** "
+            + " · ".join(f"{k} {v}" for k, v in zahl.items() if v) + "\n\n"
+            "Urteil gegen `_default` desselben Typs; beide Laeufe teilen "
+            "Untergrund und Audio. Die Spalte `Frames` weicht ab, wo Typ "
+            "oder Feld eine eigene Lauflaenge brauchen "
+            "(FRAMES_JE_TYP / FRAMES_JE_FELD).\n\n"
+            "| Typ | Feld | Frames | MAE | Urteil |\n|---|---|---|---|---|\n")
+    text = kopf + "".join(f"| {typ} | {feld} | {n} | {mae:.4f} | {urteil} |\n"
+                          for typ, feld, n, mae, urteil in rows)
+
+    (out / "logs").mkdir(exist_ok=True)
+    for ziel in (out / name, out / "logs" / f"{stempel}_{name}"):
+        ziel.write_text(text, encoding="utf-8", newline="")
+
+    print(f"\nReport: {out / name}")
+    print(f"Log:    {out / 'logs' / f'{stempel}_{name}'}")
     print("  " + " · ".join(f"{k} {v}" for k, v in zahl.items() if v))
     return 0 if zahl["STUMM"] == 0 and zahl["FEHLER"] == 0 else 1
 

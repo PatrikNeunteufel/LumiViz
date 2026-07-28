@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "avs"))
@@ -156,22 +157,41 @@ def main() -> int:
             if urteil not in ("GLEICH", "TEILWEISE"):
                 print(f"  {urteil:12s} {tdir.name}.{feld:24s} MAE {mae:.4f}")
 
-    with (out / "report.md").open("w", encoding="utf-8") as f:
-        f.write("# Edit-Sonden (S55) — wirkt ein Feld beim Editieren wie nach "
-                "dem Laden?\n\n")
-        f.write("`GELADEN` = Wert steht im Preset · `EDITIERT` = Wert wird nach "
-                "der halben Lauflaenge gesetzt (`--edit-nach`, bildet den "
-                "Panel-Weg nach: Params tauschen + `recompileChain()`, KEIN "
-                "Runtime-Reset).\n\n")
-        f.write("Knoten mit Verlauf (Trails, Puffer, Partikel) sind "
-                "ausgenommen — bei ihnen ist ein Unterschied zwangslaeufig.\n\n")
-        f.write("| Typ | Feld | MAE | Urteil |\n|---|---|---|---|\n")
-        for typ, feld, mae, urteil in rows:
-            f.write(f"| {typ} | {feld} | {mae:.4f} | {urteil} |\n")
-
+    # Jeder Lauf wird ARCHIVIERT (s. run_field_probes.py, gleicher Grund):
+    # `logs/<zeitstempel>_…md` bleibt stehen, `report.md` ist der letzte Stand,
+    # und ein Teillauf traegt seine Typen im Namen.
     zahl = {u: sum(1 for r in rows if r[3] == u) for u in
             ("GLEICH", "TEILWEISE", "WIRKUNGSLOS", "FEHLER")}
-    print(f"\nReport: {out / 'report.md'}")
+    teil = "_".join(sorted(args.typkeys))[:60]
+    name = f"report{'_' + teil if teil else ''}.md"
+    stempel = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+
+    text = ("# Edit-Sonden (S55) — wirkt ein Feld beim Editieren wie nach "
+            "dem Laden?\n\n"
+            f"**Lauf:** {datetime.now():%Y-%m-%d %H:%M:%S} · "
+            f"{args.frames} Frames, {args.size} · "
+            f"`--beat-period {args.beat_period}` · "
+            f"{'alle Typen' if not teil else 'nur ' + ', '.join(sorted(args.typkeys))}\n\n"
+            "**Ergebnis:** "
+            + " · ".join(f"{k} {v}" for k, v in zahl.items() if v) + "\n\n"
+            "`GELADEN` = Wert steht im Preset · `EDITIERT` = Wert wird nach "
+            "der halben Lauflaenge gesetzt (`--edit-nach`, bildet den "
+            "Panel-Weg nach: Params tauschen + `recompileChain()`, KEIN "
+            "Runtime-Reset).\n\n"
+            "`WIRKUNGSLOS` = editiert ist Pixel fuer Pixel die Vorgabe, der "
+            "Edit hat also nichts bewirkt (Befund). `TEILWEISE` = der Edit "
+            "wirkt, das Bild traegt aber noch die Vorgeschichte — bei "
+            "Effekten mit Verlauf der Normalfall.\n\n"
+            "| Typ | Feld | MAE | Urteil |\n|---|---|---|---|\n"
+            + "".join(f"| {typ} | {feld} | {mae:.4f} | {urteil} |\n"
+                      for typ, feld, mae, urteil in rows))
+
+    (out / "logs").mkdir(exist_ok=True)
+    for ziel in (out / name, out / "logs" / f"{stempel}_{name}"):
+        ziel.write_text(text, encoding="utf-8", newline="")
+
+    print(f"\nReport: {out / name}")
+    print(f"Log:    {out / 'logs' / f'{stempel}_{name}'}")
     print("  " + " · ".join(f"{k} {v}" for k, v in zahl.items() if v))
     return 0 if zahl["WIRKUNGSLOS"] == 0 and zahl["FEHLER"] == 0 else 1
 
