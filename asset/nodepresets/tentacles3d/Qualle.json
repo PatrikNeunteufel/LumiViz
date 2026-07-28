@@ -1,0 +1,18 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "blend": 1,
+        "colors": [
+            11619583,
+            6958304,
+            15769855
+        ],
+        "count": 12,
+        "length": 0.95,
+        "segments": 40,
+        "speed": 0.4,
+        "thickness": 14.0,
+        "type": "tentacles3d"
+    }
+}

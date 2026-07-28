@@ -258,6 +258,11 @@ private:
         std::unique_ptr<lumi::scripting::ScriptSlotHost> triHost;
         std::string triCompiled;
 
+        /// Parameter-Skript eines Knotens (Strang D): init/frame/beat rechnen
+        /// die Regler je Frame aus. Nur angelegt, wenn wirklich Code da ist.
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> paramHost;
+        std::string paramCompiled;
+
         // Movement / Dynamic Movement: scripted displacement grid
         std::unique_ptr<lumi::modules::ScriptGridModule> grid;
         std::string gridCompiled;
@@ -523,18 +528,23 @@ private:
     /// ScriptContext; blendOut mischt das Gruppen-Bild auf den Parent.
     void renderHostGroup(const lumi::multieffect::ChainNode& node,
                          const lumi::multieffect::HostGroupParams& params);
-    void runClear(const lumi::multieffect::ClearParams& params);
+    void runClear(const lumi::multieffect::ChainNode& node,
+                 const lumi::multieffect::ClearParams& params);
     /// Milkdrop-Meganode (N1): rendert die feste MilkDrop-Pipeline in den
     /// aktiven Chain-Buffer (Composite-Ziel = beim Kern-Frame-Start gebundenes FBO)
     void runMilkdropNode(const lumi::multieffect::ChainNode& node,
                          const lumi::multieffect::MilkdropNodeParams& params);
     /// Host-Audio (Kanal-Kopien) interleaved an den Milkdrop-Kern durchreichen
     void feedMilkAudio(MilkdropVisualizer& milk);
-    void runFadeout(const lumi::multieffect::FadeoutParams& params);
+    void runFadeout(const lumi::multieffect::ChainNode& node,
+                    const lumi::multieffect::FadeoutParams& params);
     void runInvert();
-    void runBrightness(const lumi::multieffect::BrightnessParams& params);
-    void runFastBrightness(const lumi::multieffect::FastBrightnessParams& params);
-    void runBlur(const lumi::multieffect::BlurParams& params);
+    void runBrightness(const lumi::multieffect::ChainNode& node,
+                      const lumi::multieffect::BrightnessParams& params);
+    void runFastBrightness(const lumi::multieffect::ChainNode& node,
+                          const lumi::multieffect::FastBrightnessParams& params);
+    void runBlur(const lumi::multieffect::ChainNode& node,
+                const lumi::multieffect::BlurParams& params);
     void runMirror(const lumi::multieffect::ChainNode& node,
                    const lumi::multieffect::MirrorParams& params);
     void runOnBeatClear(const lumi::multieffect::ChainNode& node,
@@ -554,17 +564,23 @@ private:
                            const lumi::multieffect::MovingParticleParams& params);
     void runColorMap(const lumi::multieffect::ChainNode& node,
                      const lumi::multieffect::ColorMapParams& params);
-    void runBufferBlend(const lumi::multieffect::BufferBlendParams& params);
+    void runBufferBlend(const lumi::multieffect::ChainNode& node,
+                       const lumi::multieffect::BufferBlendParams& params);
     void runJherikoGlobal(const lumi::multieffect::ChainNode& node,
                           const lumi::multieffect::JherikoGlobalParams& params);
-    void runColorClip(const lumi::multieffect::ColorClipParams& params);
-    void runUniqueTone(const lumi::multieffect::UniqueToneParams& params);
+    void runColorClip(const lumi::multieffect::ChainNode& node,
+                      const lumi::multieffect::ColorClipParams& params);
+    void runUniqueTone(const lumi::multieffect::ChainNode& node,
+                      const lumi::multieffect::UniqueToneParams& params);
     void runInterleave(const lumi::multieffect::ChainNode& node,
                        const lumi::multieffect::InterleaveParams& params);
-    void runConvolution(const lumi::multieffect::ConvolutionParams& params);
+    void runConvolution(const lumi::multieffect::ChainNode& node,
+                       const lumi::multieffect::ConvolutionParams& params);
     void runNormalise();
-    void runMultiFilter(const lumi::multieffect::MultiFilterParams& params);
-    void runAddBorders(const lumi::multieffect::AddBordersParams& params);
+    void runMultiFilter(const lumi::multieffect::ChainNode& node,
+                       const lumi::multieffect::MultiFilterParams& params);
+    void runAddBorders(const lumi::multieffect::ChainNode& node,
+                       const lumi::multieffect::AddBordersParams& params);
     void runSimpleScope(const lumi::multieffect::ChainNode& node,
                         const lumi::multieffect::SimpleScopeParams& params);
     void runBassSpin(const lumi::multieffect::ChainNode& node,
@@ -655,8 +671,10 @@ private:
                        const lumi::multieffect::BufferSaveParams& params);
     void runFyrewurX(const lumi::multieffect::ChainNode& node,
                      const lumi::multieffect::FyrewurXParams& params);
-    void runMetaballs3D(const lumi::multieffect::Metaballs3DParams& params);
-    void runTentacles3D(const lumi::multieffect::Tentacles3DParams& params);
+    void runMetaballs3D(const lumi::multieffect::ChainNode& node,
+                        const lumi::multieffect::Metaballs3DParams& params);
+    void runTentacles3D(const lumi::multieffect::ChainNode& node,
+                        const lumi::multieffect::Tentacles3DParams& params);
     void runCustomBpm(const lumi::multieffect::ChainNode& node,
                       const lumi::multieffect::CustomBpmParams& params);
     void runSetRenderMode(const lumi::multieffect::SetRenderModeParams& params);
@@ -720,11 +738,14 @@ private:
                         const lumi::multieffect::DotFountainParams& params);
     void runChannelShift(const lumi::multieffect::ChainNode& node,
                          const lumi::multieffect::ChannelShiftParams& params);
-    void runColorReduction(const lumi::multieffect::ColorReductionParams& params);
-    void runMultiplier(const lumi::multieffect::MultiplierParams& params);
+    void runColorReduction(const lumi::multieffect::ChainNode& node,
+                          const lumi::multieffect::ColorReductionParams& params);
+    void runMultiplier(const lumi::multieffect::ChainNode& node,
+                      const lumi::multieffect::MultiplierParams& params);
     void runVideoDelay(const lumi::multieffect::ChainNode& node,
                        const lumi::multieffect::VideoDelayParams& params);
-    void runMultiDelay(const lumi::multieffect::MultiDelayParams& params);
+    void runMultiDelay(const lumi::multieffect::ChainNode& node,
+                       const lumi::multieffect::MultiDelayParams& params);
     void runFractal2D(const lumi::multieffect::ChainNode& node,
                       const lumi::multieffect::Fractal2DParams& params);
     void runDomainWarp(const lumi::multieffect::ChainNode& node,
@@ -763,6 +784,25 @@ private:
     /// Feed the shared audio contract (visdata + gettime + bass/mid/treb/vol/beat/
     /// time) into a script engine — every scripted module gets the same set (E1).
     void feedAudio(lumi::scripting::LuaScriptEngine& engine);
+
+    /// Ein Reglerwert, den das Parameter-Skript lesen und schreiben darf.
+    struct ParamVar
+    {
+        const char* name;  ///< EEL-Bezeichner (klein geschrieben)
+        double* value;     ///< rein VOR dem Lauf, raus DANACH
+    };
+
+    /**
+     * Parameter-Skript eines Knotens fahren (Strang D, Knoten_Parameter_Konzept §6).
+     *
+     * Sind alle drei Quellen leer, passiert NICHTS — kein Host, kein Transpiler,
+     * kein Lua-Aufruf. Erst ein nicht-leeres Feld kostet Rechenzeit (opt-in).
+     * Die aktuellen Reglerwerte gehen als Startwerte hinein, damit ein Skript,
+     * das nur eine Variable setzt, alle anderen unangetastet laesst.
+     */
+    void runParamScript(LeafRuntime& rt, const char* prefix, const std::string& init,
+                        const std::string& frame, const std::string& beat,
+                        const std::vector<ParamVar>& vars);
 
     [[nodiscard]] uint32_t nextRandom();  ///< host LCG (Mirror onbeat-random)
 

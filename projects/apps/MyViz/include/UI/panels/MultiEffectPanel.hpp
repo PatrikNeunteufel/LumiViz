@@ -28,7 +28,11 @@
 #include <QList>
 #include <QTreeWidget>
 
+class QFormLayout;
+
+#include <array>
 #include <functional>
+#include <vector>
 
 class QComboBox;
 class QToolButton;
@@ -114,8 +118,6 @@ private:
     void onRemove();
     void onClone();
     void onMove(int delta);
-    /// Load a SuperScope figure preset's EEL code into the node at `path`.
-    void applySuperScopePreset(const QList<int>& path, int presetIndex);
     /// Load a SuperScope-3D template's EEL quartet into the node at `path`.
     void applyScope3DPreset(const QList<int>& path, int presetIndex);
     /// Load a 3D-Camera template's EEL slots into the node at `path`.
@@ -135,6 +137,27 @@ private:
     // Property editor
     void buildPropertyEditor(const QList<int>& path);
     void clearPropertyEditor();
+    /// Zeile „Voreinstellung" (Laden/Speichern/Loeschen) — gilt fuer jeden
+    /// Knotentyp, s. `NodePresetStore` und Knoten-Parameter-Konzept §3.
+    void addPresetRow(QFormLayout* form, const QList<int>& path,
+                      const lumi::multieffect::EffectParams& params);
+    /// Speichern-Dialog: Name + abwaehlbare Felder. false = abgebrochen.
+    /// Abgewaehlte Felder fehlen in der Datei und bleiben beim Laden stehen.
+    bool askPresetToSave(const lumi::multieffect::EffectParams& params,
+                         QString& outName, QStringList& outFields);
+    /// Bild-Zeile der Bild-Knoten: Status + „Choose…"/„Clear" (S50-Vorgabe).
+    /// `set(node, filename, base64)` schreibt beide Felder in einem Zug.
+    void addImageRow(
+        QFormLayout* form, const QList<int>& path, const std::string& filename,
+        const std::string& imageData,
+        std::function<void(lumi::multieffect::ChainNode&, std::string, std::string)> set);
+    /// 7x7-Gitter fuer den Convolution-Kernel (49 Werte, Mitte hervorgehoben).
+    void addKernelGrid(QFormLayout* form, const QList<int>& path,
+                       const std::array<int, 49>& kernel);
+    /// Stuetzstellen-Liste der Color-Map (Position 0..255 + Farbe, +/−).
+    void addGradientStops(QFormLayout* form, const QList<int>& path,
+                          const std::vector<int>& stopPos,
+                          const std::vector<uint32_t>& stopColor);
 
     MultiEffectVisualizer* m_host = nullptr;
     QMutex* m_mutex = nullptr;

@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "beatCode": "k=rand(6)+3",
+        "frameCode": "t=t+0.01",
+        "initCode": "n=360; t=0; pi=acos(-1); k=5",
+        "pointCode": "th=i*pi*2; r=(0.4+v*0.2)*cos(k*th+t); x=r*cos(th); y=r*sin(th)",
+        "pointCount": 360,
+        "type": "superScope"
+    }
+}

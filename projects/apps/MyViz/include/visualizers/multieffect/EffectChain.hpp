@@ -180,6 +180,11 @@ struct ClearParams
     /// 0 = replace, 1 = additive, 2 = 50/50, 3 = current line-blend
     /// (r_clear.cpp: blend==1 -> BLEND, blendavg -> BLEND_AVG, blend==2 -> BLEND_LINE)
     int blend = 0;
+
+    /// Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS "Trans / Fadeout" (ID 3): per-frame clamped step towards a target color. */
@@ -187,6 +192,11 @@ struct FadeoutParams
 {
     int fadeLen = 16;           ///< per-frame step 0..92 (AVS range)
     uint32_t color = 0x000000;  ///< target color 0x00RRGGBB
+
+    /// Parameter-Skript (Strang D): `fadelen` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS "Trans / Invert" (ID 37): XOR 0xFFFFFF. */
@@ -208,6 +218,11 @@ struct BrightnessParams
     bool exclude = false;       ///< leave pixels near `color` untouched
     uint32_t color = 0x000000;  ///< exclusion color 0x00RRGGBB
     int distance = 16;          ///< exclusion radius 0..255
+
+    /// Parameter-Skript (Strang D): `red`, `green`, `blue`, `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -226,6 +241,11 @@ struct SimpleScopeParams
     int channel = 2;   ///< 0 L, 1 R, 2 center (Byte-Halbierung wie Original)
     int position = 2;  ///< 0 top, 1 bottom, 2 center
     std::vector<uint32_t> colors{0xFFFFFF};  ///< cycled colour table
+
+    /// Parameter-Skript (Strang D): `mode`, `channel`, `position` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -239,6 +259,18 @@ struct OscStarParams
     int size = 8;      ///< spoke length 0..16
     int rot = 3;       ///< rotation speed 0..16 (8 = still)
     std::vector<uint32_t> colors{0xFFFFFF};
+
+    // Freigemachte Host-Konstanten (S53). Die Vorgaben SIND die Werte, mit denen
+    // der Effekt bis dahin fest gerechnet hat — Default = unveraendertes Bild.
+    int spokes = 5;          ///< Zahl der Speichen (war fest 5)
+    float rotScale = 0.02f;  ///< Grad je `rot`-Stufe und Frame (war fest 0,02)
+    float amplitude = 0.5f;  ///< Wellenausschlag, Anteil der Speichenlaenge
+
+    /// Parameter-Skript (Strang D): `size`, `rot`, `spokes`, `rotscale`,
+    /// `amplitude` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -253,15 +285,49 @@ struct OscRingParams
     int position = 2;  ///< 0 left, 1 right, 2 center
     int size = 8;      ///< base radius 0..16
     std::vector<uint32_t> colors{0xFFFFFF};
+
+    // Freigemachte Host-Konstanten (S53), Vorgaben = bisheriges Verhalten.
+    int segments = 80;        ///< Stuetzpunkte des Rings (war fest 80)
+    float baseScale = 0.1f;   ///< Radius-Sockel ohne Audio (war fest 0,1)
+    float audioScale = 0.9f;  ///< Audio-Anteil am Radius (war fest 0,9)
+
+    /// Parameter-Skript (Strang D): `size`, `segments`, `basescale`,
+    /// `audioscale` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
  * AVS "Render / Rotating Stars" (ID 13, r_rotstar.cpp): two 5-pointed stars
  * orbiting the centre, sized by the peak spectrum energy; colour-cycled.
+ *
+ * Bis S53 hatte der Knoten AUSSER der Farbtafel keinen einzigen Parameter —
+ * Zackenzahl, Bahn und Tempo standen als Literale im Renderer. Die Vorgaben
+ * unten sind genau diese Literale, ein Preset aendert also nichts an seinem Bild
+ * (Default-Vertrag, Knoten_Parameter_Konzept §2).
  */
 struct RotatingStarsParams
 {
     std::vector<uint32_t> colors{0xFFFFFF};
+
+    int points = 5;          ///< Zacken je Stern (war fest 5)
+    int skip = 2;            ///< Sprungweite beim Zeichnen; 2 = Pentagramm
+    int stars = 2;           ///< Zahl der Sterne auf gegenueberliegenden Bahnen
+    float rotSpeed = 0.05f;  ///< Bahndrehung je Frame (war fest 0,05)
+    float orbit = 0.5f;      ///< Abstand vom Bildmittelpunkt (NDC)
+    float baseRadius = 0.12f;  ///< Sterngroesse ohne Audio
+    float audioGain = 0.5f;    ///< Zuwachs aus der Spektrumsspitze
+    int bandLo = 3;            ///< erstes ausgewertetes Spektralband
+    int bandHi = 14;           ///< erstes NICHT mehr ausgewertetes Band
+
+    /// Parameter-Skript (Strang D): rechnet die Regler je Frame aus. Lesbare
+    /// und schreibbare Namen sind die Feldnamen in Kleinschreibung
+    /// (`points`, `skip`, `stars`, `rotspeed`, `orbit`, `baseradius`,
+    /// `audiogain`), dazu `b`/`w`/`h` und der Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -276,6 +342,20 @@ struct BassSpinParams
     uint32_t colorLeft = 0xFFFFFF;
     uint32_t colorRight = 0xFFFFFF;
     int mode = 1;  ///< 0 lines, 1 filled (approximated as lines)
+
+    // KLASSE A: Vorgaben aus `r_bspin.cpp`, Abweichung wird gekennzeichnet.
+    float smoothing = 0.7f;   ///< Gewicht des neuen Werts: `v = s*neu + (1-s)*alt`
+    /// Drehschritt je Einheit. Vorgabe ist EXAKT der Ausdruck des Originals
+    /// (`3.14159f/6.0f`), nicht das mathematische pi/6 — die beiden
+    /// unterscheiden sich in der 7. Stelle, und das summiert sich ueber die
+    /// Frames in der Drehlage auf.
+    float spinStep = 3.14159f / 6.0f;
+
+    /// Parameter-Skript (Strang D): `mode`, `smoothing`, `spinstep`.
+    /// Klasse A — s. Hinweis bei `DotPlaneParams`.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -289,6 +369,11 @@ struct ColorClipParams
     uint32_t clipColor = 0x202020;   ///< threshold colour 0x00RRGGBB
     uint32_t outColor = 0x202020;    ///< replacement colour
     int distance = 10;               ///< match radius (near mode)
+
+    /// Parameter-Skript (Strang D): `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -301,6 +386,11 @@ struct UniqueToneParams
     uint32_t color = 0xFFFFFF;  ///< tone colour 0x00RRGGBB
     bool invert = false;        ///< invert the depth ramp
     int blend = 0;              ///< 0 replace, 1 additive, 2 50/50
+
+    /// Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -318,6 +408,11 @@ struct InterleaveParams
     int x2 = 1;
     int y2 = 1;
     int beatDuration = 4;       ///< ease length
+
+    /// Parameter-Skript (Strang D): `x`, `y`, `x2`, `y2` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -333,6 +428,11 @@ struct PictureParams
     std::string imageData;   ///< base64 of the raw image file ("" = unresolved)
     int blend = 2;           ///< 0 replace, 1 additive, 2 50/50
     bool keepAspect = true;  ///< preserve the image aspect (letterbox)
+
+    /// Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -344,12 +444,22 @@ struct PictureIIParams
     std::string filename;
     std::string imageData;   ///< base64 of the raw image ("" = unresolved)
     int blend = 2;           ///< 0 replace, 1 additive, 2 50/50
+
+    /// Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS "Trans / Fast Brightness" (ID 44): dir 0 = x2, 1 = x0.5, 2 = off. */
 struct FastBrightnessParams
 {
     int dir = 0;  ///< 0..2
+
+    /// Parameter-Skript (Strang D): `dir` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS "Trans / Blur" (ID 6): box blur, strength selects the kernel. */
@@ -357,6 +467,11 @@ struct BlurParams
 {
     int strength = 1;    ///< 1 = light, 2 = medium, 3 = heavy
     bool roundUp = true; ///< AVS "round mode" rounding bias
+
+    /// Parameter-Skript (Strang D): `strength` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS "Trans / Mirror" (ID 26): reflect one screen half onto the other. */
@@ -369,6 +484,11 @@ struct MirrorParams
     bool onBeatRandom = false;  ///< randomize active edges on beat
     bool smooth = false;        ///< gradual transition (BLEND_ADAPT ramp)
     int slower = 4;             ///< frames per ramp step (1..16)
+
+    /// Parameter-Skript (Strang D): `mode`, `slower` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS "Render / OnBeat Clear" (ID 5): clear every N beats. */
@@ -377,6 +497,11 @@ struct OnBeatClearParams
     uint32_t color = 0x000000;  ///< clear color 0x00RRGGBB
     int everyNBeats = 1;        ///< N (>= 1)
     bool blend = false;         ///< 50/50 towards color instead of hard clear
+
+    /// Parameter-Skript (Strang D): `everyNBeats` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -393,6 +518,11 @@ struct ColorfadeParams
     int beatFaderG = -8;
     int beatFaderB = 8;
     int onBeatFrames = 1;  ///< frames the beat faders stay active (>= 1)
+
+    /// Parameter-Skript (Strang D): `faderr`, `faderg`, `faderb`, `onbeatframes` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -427,6 +557,11 @@ struct MovementParams
     /// r_trans builtins WITHOUT eval_desc (pixel-index remaps, no d/r formula):
     /// 1 = "slight fuzzify", 7 = "blocky partial out"; 0 = code/formula path.
     int builtinRemap = 0;
+
+    // KEIN Parameter-Skript (Entscheid S53): Movement legt eine STATISCHE
+    // Tabelle an (`applyMovementTable` cacht ueber den Skripttext), ein je
+    // Frame gerechneter Wert koennte das Bild gar nicht bewegen. Fuer
+    // zeitabhaengige Verzerrung ist `DynamicMovementParams` der Knoten.
 };
 
 /**
@@ -497,6 +632,11 @@ struct BloomParams
     bool vignette = false;     ///< Abschluss-Multiplikation 1 - r^2 * strength
     float vignetteStrength = 0.3f;
     bool post = true;          ///< true: Glow nur beim Present (kein Feedback)
+
+    /// Parameter-Skript (Strang D): `radius`, `intensity`, `threshold`, `vignettestrength` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -715,6 +855,16 @@ struct MovingParticleParams
     int size2 = 8;              ///< on-beat radius
     bool onBeatSize = false;    ///< jump to size2 on beat (AVS enabled bit 1)
     int blend = 1;              ///< 0 replace, 1 additive, 2 50/50, 3 line
+
+    // KLASSE A: Vorgaben aus `r_parts.cpp`, Abweichung wird gekennzeichnet.
+    float spring = 0.004f;   ///< Zug zum Ziel je Frame (Original 0,004)
+    float damping = 0.991f;  ///< Geschwindigkeitsdaempfung (Original 0,991)
+
+    /// Parameter-Skript (Strang D): `size`, `size2`, `maxdistance`, `spring`,
+    /// `damping`. Klasse A — s. Hinweis bei `DotPlaneParams`.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -750,6 +900,11 @@ struct BlitterFeedbackParams
     bool onBeat = false;    ///< Beat setzt fpos = scale2
     bool blend = false;     ///< BLEND_AVG mit dem Original statt Replace
     bool subpixel = true;   ///< bilineares Sampling (BLEND4)
+
+    /// Parameter-Skript (Strang D): `scale`, `scale2` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -772,6 +927,11 @@ struct RotoBlitterParams
     int beatReverseSpeed = 0;    ///< Ease des Richtungswechsels (0 = hart)
     bool beatZoomJump = false;   ///< Beat setzt fpos = zoomScale2
     bool subpixel = true;        ///< bilineares Sampling (BLEND4)
+
+    /// Parameter-Skript (Strang D): `zoomscale`, `zoomscale2`, `rotdir` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -786,6 +946,11 @@ struct BufferSaveParams
     int dir = 0;
     BlendMode blend = BlendMode::Replace;  ///< blend mode (applies both directions)
     int adjustAlpha = 128;                 ///< Adjustable blend alpha 0..255
+
+    /// Parameter-Skript (Strang D): `slot`, `dir`, `adjustalpha` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -813,6 +978,11 @@ struct CustomBpmParams
     /// Skip-Zaehler laeuft waehrenddessen NICHT mit (r_bpm.cpp:148 kehrt vor
     /// dem Skip-Block zurueck).
     int skipFirst = 0;
+
+    /// Parameter-Skript (Strang D): `arbitraryms`, `skipcount`, `skipfirst` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -880,6 +1050,11 @@ struct MosaicParams
     bool onBeat = false;      ///< jump to quality2 on beat, then ease back
     int durationFrames = 16;  ///< ease-back length in frames (>= 1)
     int blend = 0;            ///< 0 replace, 1 additive, 2 50/50
+
+    /// Parameter-Skript (Strang D): `quality`, `quality2` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -892,6 +1067,11 @@ struct GrainParams
     int amount = 100;         ///< gated pixel fraction 0..100 (smax)
     bool staticGrain = false; ///< frozen noise vs. per-frame shimmer
     int blend = 0;            ///< 0 replace, 1 additive, 2 50/50
+
+    /// Parameter-Skript (Strang D): `amount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS "Trans / Scatter" (ID 16): per-pixel random displacement within a small
@@ -923,6 +1103,11 @@ struct WaterBumpParams
     int dropY = 1;
     int dropRadius = 40;    ///< drop radius (px)
     float displaceScale = 6.0f;  ///< refraction strength (host tuning)
+
+    /// Parameter-Skript (Strang D): `density`, `depth`, `dropradius`, `displacescale` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -968,6 +1153,11 @@ struct InterferencesParams
     bool onBeat = false;     ///< morph to the *2 set on a beat
     float speed = 0.2f;      ///< beat-morph transition speed
     int blend = 0;           ///< 0 replace, 1 additive, 2 50/50
+
+    /// Parameter-Skript (Strang D): `points`, `distance`, `alpha`, `rotation`, `rotationinc`, `speed` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -1003,6 +1193,17 @@ struct Metaballs3DParams
     /// 0 replace, 1 additiv, 2 50/50 — die Referenz zeichnet DECKENDE
     /// Koerper (Sichtvergleich S52), deshalb Replace als Vorgabe.
     int blend = 0;
+
+    // Freigemachte Bahn-Konstanten (S53), Vorgaben = bisheriges Verhalten.
+    float spread = 1.0f;  ///< Faktor auf die Bahnweite (war fest 1)
+    float depth = 1.2f;   ///< Kamera-Abstand der Bahnmitte (war fest 1,2)
+    float phase = 1.7f;   ///< Phasenversatz je Kugel (war fest 1,7)
+
+    /// Parameter-Skript (Strang D): `count`, `radius`, `speed`, `threshold`,
+    /// `spread`, `depth`, `phase` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -1019,6 +1220,17 @@ struct Tentacles3DParams
     float thickness = 9.0f;        ///< Linienbreite an der Wurzel (Pixel)
     float speed = 0.7f;            ///< Schwinggeschwindigkeit
     int blend = 1;                 ///< 0 replace, 1 additiv, 2 50/50
+
+    // Freigemachte Schwing-Konstanten (S53), Vorgaben = bisheriges Verhalten.
+    float sway = 0.9f;    ///< Schwingweite an der Spitze (war fest 0,9)
+    float waves = 3.1f;   ///< Wellen ueber die Laenge (war fest 3,1)
+    float taper = 1.0f;   ///< Verjuengung zur Spitze; 0 = gleich dick
+
+    /// Parameter-Skript (Strang D): `count`, `segments`, `length`, `thickness`,
+    /// `speed`, `sway`, `waves`, `taper` + `b`/`w`/`h` + Audio-Satz.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 struct FyrewurXParams
@@ -1027,6 +1239,17 @@ struct FyrewurXParams
     float speed = 0.7f;        ///< initial spark speed scale (NDC/s)
     float gravity = 0.8f;      ///< downward pull (NDC/s^2)
     float lifeSeconds = 1.6f;  ///< spark lifetime
+
+    // Freigemachte Konstanten (S53), Vorgaben = bisheriges Verhalten.
+    float dotSize = 2.0f;      ///< Funkengroesse in Pixeln (war fest 2)
+    float hueDrift = 0.6f;     ///< Farbstreuung je Funke (war fest 0,6)
+    float burstSpread = 1.0f;  ///< Faktor auf die Streuung der Burst-Mitte
+
+    /// Parameter-Skript (Strang D): `sparks`, `speed`, `gravity`, `life`,
+    /// `dotsize`, `huedrift`, `burstspread` + `b`/`w`/`h` + Audio-Satz.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 struct StarfieldParams
@@ -1038,6 +1261,11 @@ struct StarfieldParams
     float beatSpeed = 4.0f;      ///< on-beat speed
     int durationFrames = 15;     ///< ease-back length
     int blend = 0;               ///< 0 replace, 1 additive, 2 50/50 (r_stars)
+
+    /// Parameter-Skript (Strang D): `maxstars`, `warpspeed`, `beatspeed`, `durationframes` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -1054,6 +1282,11 @@ struct TimescopeParams
     int blend = 3;
     int channel = 2;           ///< 0 L, 1 R, 2 center
     int bands = 576;           ///< vertical spectrum resolution
+
+    /// Parameter-Skript (Strang D): `bands`, `channel`, `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS "Render / Dot Grid" (ID 17): a scrolling grid of dots whose colour cycles
@@ -1067,6 +1300,11 @@ struct DotGridParams
     /// 0 replace, 1 additive, 2 50/50, 3 BLEND_LINE (SRM-Zustand,
     /// r_dotgrid.cpp:151-159, S3)
     int blend = 0;
+
+    /// Parameter-Skript (Strang D): `spacing`, `xmove`, `ymove`, `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS "Render / Dot Plane" (ID 1): a rotating audio-reactive point plane, height
@@ -1077,6 +1315,21 @@ struct DotPlaneParams
     uint32_t colors[5] = {0x0000FF, 0x00FFFF, 0x00FF00, 0xFFFF00, 0xFF0000};
     int rotVel = 16;   ///< rotation speed (-50..50 in AVS)
     int angle = -20;   ///< viewing tilt angle
+
+    // KLASSE A (Knoten_Parameter_Konzept §2): die Vorgaben sind die Werte aus
+    // `r_dotpln.cpp` — eine Abweichung entfernt das Bild MESSBAR von der
+    // Referenz. Der Editor kennzeichnet sie deshalb (Entscheid Patrik §8.4).
+    // Das 64x64-Gitter bleibt fest: es ist die Struktur der Portierung, kein
+    // Parameter (NUM_WIDTH, steckt in Stack-Arrays).
+    float camDistance = 400.0f;  ///< matrixTranslate z (Original 400)
+    float settle = 0.15f;        ///< Absinken je Frame: `vel -= settle*h/255`
+
+    /// Parameter-Skript (Strang D): `rotvel`, `angle`, `camdistance`, `settle`.
+    /// ACHTUNG Klasse A — ein Skript hier verlaesst die Referenz; der Editor
+    /// sagt das an, weil die ⚠ an den Reglern nur feste Werte pruefen kann.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS "Render / Dot Fountain" (ID 19): a 3D particle fountain coloured by a
@@ -1087,6 +1340,11 @@ struct DotFountainParams
     uint32_t colors[5] = {0x0000FF, 0x00FFFF, 0x00FF00, 0xFFFF00, 0xFF0000};
     int rotVel = 16;
     int angle = -20;
+
+    /// Parameter-Skript (Strang D): `rotvel`, `angle` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -1101,6 +1359,11 @@ struct BufferBlendParams
     int bufferA = 8;  ///< 0..7 pool slot, 8 = current frame
     int bufferB = 8;  ///< 0..7 pool slot, 8 = current frame
     int mode = 0;     ///< BufferBlendMode 0..10
+
+    /// Parameter-Skript (Strang D): `buffera`, `bufferb`, `mode` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -1134,6 +1397,11 @@ struct ConvolutionParams
                                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
                                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0};  ///< identity (center=1)
+
+    /// Parameter-Skript (Strang D): `bias`, `scale`, `edgemode` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -1156,6 +1424,11 @@ struct MultiFilterParams
 {
     int effect = 0;       ///< 0 chrome, 1 double chrome, 2 triple chrome, 3 root
     bool onBeat = false;  ///< apply only on beat frames
+
+    /// Parameter-Skript (Strang D): `effect` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -1166,6 +1439,11 @@ struct AddBordersParams
 {
     uint32_t color = 0xFFFFFF;  ///< border colour 0x00RRGGBB
     int size = 2;               ///< border width (px)
+
+    /// Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -1179,6 +1457,11 @@ struct TexerParams
     std::string imageData;
     int blend = 1;
     int particles = 100;
+
+    /// Parameter-Skript (Strang D): `blend`, `particles` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -1211,6 +1494,12 @@ struct TriangleParams
     std::string frameCode;
     std::string beatCode;
     std::string pointCode;
+
+    /// GEFUELLT ist der Referenz-Zustand (Sonde `triangle_n_literal`, S51: das
+    /// fruehere Drahtgitter lieferte 4009 statt 23424 Pixel). `false` ist damit
+    /// eine bewusste Abweichung von AVS, kein Alternativ-Default.
+    bool filled = true;
+    float lineWidth = 1.0f;  ///< Kantenbreite im Drahtgitter-Modus
 };
 
 /**
@@ -1230,6 +1519,11 @@ struct ColorMapParams
     int adjustBlend = 128;    ///< ADJUSTABLE weight 0..255
     std::vector<int> stopPos;         ///< gradient stop positions 0..255
     std::vector<uint32_t> stopColor;  ///< gradient stop colours 0x00RRGGBB
+
+    /// Parameter-Skript (Strang D): `key`, `blendmode`, `adjustblend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS APE "Channel Shift": permute the R/G/B channels (r_chanshift). `mode`
@@ -1238,6 +1532,11 @@ struct ChannelShiftParams
 {
     int mode = 1;         ///< channel permutation 0..5
     bool onBeat = false;  ///< random permutation on each beat
+
+    /// Parameter-Skript (Strang D): `mode` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS APE "Color Reduction": quantise each channel to 2^`levels` values
@@ -1245,6 +1544,11 @@ struct ChannelShiftParams
 struct ColorReductionParams
 {
     int levels = 8;  ///< bit depth per channel 1..8
+
+    /// Parameter-Skript (Strang D): `levels` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS APE "Multiplier": scale pixel values (r_multiplier). `mode` 0 saturate,
@@ -1252,6 +1556,11 @@ struct ColorReductionParams
 struct MultiplierParams
 {
     int mode = 3;  ///< 0..7 (see above)
+
+    /// Parameter-Skript (Strang D): `mode` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS APE "Video Delay" (Holden04): output the image from `delay` frames ago
@@ -1261,6 +1570,11 @@ struct VideoDelayParams
 {
     bool useBeats = false;  ///< delay in beats vs frames
     int delay = 10;         ///< delay amount (frames, capped for VRAM)
+
+    /// Parameter-Skript (Strang D): `delay` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /** AVS APE "Multi Delay" (Holden05): one of 6 host-shared frame ring buffers
@@ -1273,6 +1587,11 @@ struct MultiDelayParams
     int buffer = 0;         ///< shared buffer index 0..5
     int delay = 10;         ///< delay length
     bool useBeats = false;  ///< delay in beats vs frames
+
+    /// Parameter-Skript (Strang D): `delay`, `buffer` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**

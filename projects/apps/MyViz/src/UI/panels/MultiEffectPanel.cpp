@@ -18,6 +18,7 @@
 #include "visualizers/modules/SuperscopeModule.hpp"      // figure preset library (SSOT)
 #include "visualizers/modules/ColorGradientModule.hpp"   // fractal palette presets
 #include "visualizers/multieffect/ChainSerializer.hpp"  // effectTypeKey
+#include "visualizers/multieffect/NodePresetStore.hpp"  // Voreinstellungen je Knoten
 #include "services/IEventBus.hpp"
 #include "services/events/UIEvents.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
@@ -39,6 +40,7 @@
 #include <QFont>
 #include <QRegularExpression>
 #include <QSet>
+#include <QSettings>
 #include <QSplitter>
 #include <QStandardItemModel>
 #include <QSyntaxHighlighter>
@@ -47,6 +49,7 @@
 #include <QTextDocument>
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QListWidget>
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QLabel>
@@ -260,6 +263,8 @@ const std::vector<EffectType>& effectPalette()
         {"Moving Particle", [] { return EffectParams{MovingParticleParams{}}; }},
         {"Starfield", [] { return EffectParams{StarfieldParams{}}; }},
         {"FyrewurX", [] { return EffectParams{FyrewurXParams{}}; }},
+        {"Metaballs 3D", [] { return EffectParams{Metaballs3DParams{}}; }},
+        {"Tentacles 3D", [] { return EffectParams{Tentacles3DParams{}}; }},
         {"Timescope", [] { return EffectParams{TimescopeParams{}}; }},
         {"Dot Grid", [] { return EffectParams{DotGridParams{}}; }},
         {"Dot Plane", [] { return EffectParams{DotPlaneParams{}}; }},
@@ -349,19 +354,21 @@ uint32_t u32FromColor(const QColor& c)
            (static_cast<uint32_t>(c.green()) << 8) | static_cast<uint32_t>(c.blue());
 }
 
-// The SuperScope figure presets offered in the editor dropdown. The code lives
-// in SuperscopeModule::loadPresetCode (single source of truth); we only pick the
-// shape figures here (Custom = no-op, DNA = native-only/empty code are skipped).
-const std::vector<lumi::modules::SuperscopePreset>& superscopeFigures()
+/// Startordner des Bild-Dialogs: der in den Einstellungen gesetzte Suchordner
+/// (SSOT-Schluessel `import/imageSearchDir`, dort auch vom Import benutzt),
+/// sonst der zuletzt benutzte bzw. das Heimverzeichnis.
+QString imageStartDir()
 {
-    using P = lumi::modules::SuperscopePreset;
-    static const std::vector<P> kList = {
-        P::HorizontalScope, P::VerticalScope,   P::Circle,     P::Spiral,
-        P::Lissajous,       P::Flower,          P::Star,       P::Starburst,
-        P::Heart,           P::SpectrumBars,    P::CircularSpectrum,
-        P::Butterfly,       P::Hypocycloid};
-    return kList;
+    QSettings settings;
+    const QString dir =
+        settings.value(QStringLiteral("import/imageSearchDir")).toString();
+    if (!dir.isEmpty() && QFileInfo::exists(dir)) return dir;
+    return QDir::homePath();
 }
+
+// Die SuperScope-Figuren stehen seit S53 als Dateien in
+// `asset/nodepresets/superScope/` und laufen ueber die allgemeine
+// Voreinstellungs-Zeile — die Liste und ihr Dropdown sind hier entfallen.
 
 // Vorlagen fuer SuperScope 3D + 3D Camera (S48, Lights-Etappe 1) — kleine
 // EEL-Startpunkte im Stil der SuperScope-Figuren. SSOT hier im Panel: anders
@@ -1566,35 +1573,6 @@ void MultiEffectPanel::setNodeEnabled(const QList<int>& path, bool enabled)
     }
 }
 
-void MultiEffectPanel::applySuperScopePreset(const QList<int>& path, int presetIndex)
-{
-    const auto& figures = superscopeFigures();
-    if (presetIndex < 0 || presetIndex >= static_cast<int>(figures.size())) return;
-    if (m_host == nullptr || m_mutex == nullptr) return;
-
-    // Reuse the standalone module's preset library (single source of truth).
-    lumi::modules::SuperscopeModule tmp;
-    tmp.loadPresetCode(figures[static_cast<std::size_t>(presetIndex)]);
-    const std::string init = tmp.initCode();
-    const std::string frame = tmp.frameCode();
-    const std::string beat = tmp.beatCode();
-    const std::string point = tmp.pointCode();
-    const int count = tmp.pointCount();
-
-    QMutexLocker lock(m_mutex);
-    ChainNode* node = nodeAtPath(path);
-    if (node == nullptr) return;
-    if (auto* p = std::get_if<SuperScopeParams>(&node->params))
-    {
-        p->initCode = init;
-        p->frameCode = frame;
-        p->beatCode = beat;
-        p->pointCode = point;
-        p->pointCount = count;
-        m_host->recompileChain();
-    }
-}
-
 void MultiEffectPanel::applyScope3DPreset(const QList<int>& path, int presetIndex)
 {
     const auto& defs = scope3dPresets();
@@ -2026,6 +2004,415 @@ void MultiEffectPanel::clearPropertyEditor()
 // reuses `p` in mutually-exclusive branches — harmless shadowing.
 #pragma warning(disable : 4456)
 #endif
+void MultiEffectPanel::addImageRow(
+    QFormLayout* form, const QList<int>& path, const std::string& filename,
+    const std::string& imageData,
+    std::function<void(ChainNode&, std::string, std::string)> set)
+{
+    // Bild-Knoten (Picture · Picture II · Texer · Texer II) tragen das Bild
+    // base64-eingebettet, damit eine .lvfx-Kette fuer sich steht. Bis S53 zeigte
+    // das Panel nur, OB das geklappt hat — auswaehlen liess sich nichts
+    // (Vorgabe Patrik aus S50, hier vorgezogen).
+    auto* row = new QWidget(m_propContainer);
+    auto* hl = new QHBoxLayout(row);
+    hl->setContentsMargins(0, 0, 0, 0);
+
+    const bool embedded = !imageData.empty();
+    auto* label = new QLabel(row);
+    label->setWordWrap(true);
+    label->setText(embedded
+                       ? tr("✓ %1 (embedded, %2 KB)")
+                             .arg(QString::fromStdString(filename).isEmpty()
+                                      ? tr("(no name)")
+                                      : QFileInfo(QString::fromStdString(filename))
+                                            .fileName(),
+                                  QString::number(imageData.size() * 3 / 4096))
+                       : (filename.empty()
+                              ? tr("⚠ no image")
+                              : tr("⚠ not found: %1")
+                                    .arg(QString::fromStdString(filename))));
+
+    auto* chooseBtn = new QToolButton(row);
+    chooseBtn->setText(tr("Choose…"));
+    chooseBtn->setToolTip(tr("Pick an image file; it is embedded into the chain "
+                             "so the preset stays self-contained."));
+    connect(chooseBtn, &QToolButton::clicked, this, [this, path, set]() {
+        const QString file = QFileDialog::getOpenFileName(
+            this, tr("Choose image"), imageStartDir(),
+            tr("Images (*.bmp *.jpg *.jpeg *.png *.gif);;All files (*)"));
+        if (file.isEmpty()) return;
+        QFile f(file);
+        if (!f.open(QIODevice::ReadOnly))
+        {
+            QMessageBox::warning(this, tr("Image"),
+                                 tr("Could not read:\n%1").arg(file));
+            return;
+        }
+        const std::string data = f.readAll().toBase64().toStdString();
+        f.close();
+        const std::string name = QFileInfo(file).fileName().toStdString();
+        mutate(path, [&](ChainNode& n) { set(n, name, data); });
+        QMetaObject::invokeMethod(
+            this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
+    });
+
+    auto* clearBtn = new QToolButton(row);
+    clearBtn->setText(tr("Clear"));
+    clearBtn->setToolTip(tr("Drop the embedded image (the node then draws nothing)"));
+    clearBtn->setEnabled(embedded || !filename.empty());
+    connect(clearBtn, &QToolButton::clicked, this, [this, path, set]() {
+        mutate(path, [&](ChainNode& n) { set(n, std::string{}, std::string{}); });
+        QMetaObject::invokeMethod(
+            this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
+    });
+
+    hl->addWidget(label, 1);
+    hl->addWidget(chooseBtn);
+    hl->addWidget(clearBtn);
+    form->addRow(tr("Image"), row);
+}
+
+void MultiEffectPanel::addKernelGrid(QFormLayout* form, const QList<int>& path,
+                                     const std::array<int, 49>& kernel)
+{
+    // 7x7-Gitter (r_convolution): eine Spinbox je Zelle, Mitte hervorgehoben.
+    // Der Kernel war bis S53 gar nicht erreichbar — importierte Presets trugen
+    // ihn, verstellen liess er sich nie.
+    auto* grid = new QWidget(m_propContainer);
+    auto* gl = new QGridLayout(grid);
+    gl->setContentsMargins(0, 0, 0, 0);
+    gl->setSpacing(2);
+
+    for (int i = 0; i < 49; ++i)
+    {
+        auto* cell = new QSpinBox(grid);
+        cell->setRange(-9999, 9999);
+        cell->setValue(kernel[static_cast<std::size_t>(i)]);
+        cell->setButtonSymbols(QAbstractSpinBox::NoButtons);
+        cell->setAlignment(Qt::AlignCenter);
+        cell->setMinimumWidth(38);
+        if (i == 24)  // Mitte = der Bildpunkt selbst
+        {
+            QFont f = cell->font();
+            f.setBold(true);
+            cell->setFont(f);
+            cell->setToolTip(tr("Centre tap — the pixel itself"));
+        }
+        connect(cell, QOverload<int>::of(&QSpinBox::valueChanged), this,
+                [this, path, i](int v) {
+                    mutate(path, [&](ChainNode& n) {
+                        std::get<ConvolutionParams>(n.params)
+                            .kernel[static_cast<std::size_t>(i)] = v;
+                    });
+                });
+        gl->addWidget(cell, i / 7, i % 7);
+    }
+
+    auto* resetBtn = new QToolButton(grid);
+    resetBtn->setText(tr("Identity"));
+    resetBtn->setToolTip(tr("Reset to the neutral kernel (centre 1, rest 0)"));
+    connect(resetBtn, &QToolButton::clicked, this, [this, path]() {
+        mutate(path, [](ChainNode& n) {
+            auto& k = std::get<ConvolutionParams>(n.params).kernel;
+            k.fill(0);
+            k[24] = 1;
+        });
+        QMetaObject::invokeMethod(
+            this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
+    });
+    gl->addWidget(resetBtn, 7, 0, 1, 7);
+
+    grid->setToolTip(tr("7×7 convolution kernel (row-major). The weighted sum is "
+                        "divided by 'Scale' and shifted by 'Bias'."));
+    form->addRow(tr("Kernel"), grid);
+}
+
+void MultiEffectPanel::addGradientStops(QFormLayout* form, const QList<int>& path,
+                                        const std::vector<int>& stopPos,
+                                        const std::vector<uint32_t>& stopColor)
+{
+    // Stuetzstellen der Color-Map: Position 0..255 + Farbe. Beide Vektoren
+    // laufen parallel — jede Aenderung haelt sie gleich lang.
+    auto* box = new QWidget(m_propContainer);
+    auto* vl = new QVBoxLayout(box);
+    vl->setContentsMargins(0, 0, 0, 0);
+    vl->setSpacing(2);
+
+    const int count = static_cast<int>(std::min(stopPos.size(), stopColor.size()));
+    for (int si = 0; si < count; ++si)
+    {
+        auto* rowW = new QWidget(box);
+        auto* rl = new QHBoxLayout(rowW);
+        rl->setContentsMargins(0, 0, 0, 0);
+
+        auto* pos = new QSpinBox(rowW);
+        pos->setRange(0, 255);
+        pos->setValue(stopPos[static_cast<std::size_t>(si)]);
+        pos->setToolTip(tr("Input value this stop sits at (0..255)"));
+        connect(pos, QOverload<int>::of(&QSpinBox::valueChanged), this,
+                [this, path, si](int v) {
+                    mutate(path, [&](ChainNode& n) {
+                        auto& ps = std::get<ColorMapParams>(n.params).stopPos;
+                        if (si < static_cast<int>(ps.size()))
+                            ps[static_cast<std::size_t>(si)] = v;
+                    });
+                });
+
+        const uint32_t initC = stopColor[static_cast<std::size_t>(si)];
+        auto* sw = new QPushButton(rowW);
+        sw->setFixedSize(40, 20);
+        sw->setStyleSheet(QString("background:%1").arg(colorFromU32(initC).name()));
+        connect(sw, &QPushButton::clicked, this, [this, path, si, initC, sw]() {
+            const QColor picked = QColorDialog::getColor(colorFromU32(initC), this);
+            if (!picked.isValid()) return;
+            const uint32_t c = u32FromColor(picked);
+            sw->setStyleSheet(QString("background:%1").arg(picked.name()));
+            mutate(path, [&](ChainNode& n) {
+                auto& cs = std::get<ColorMapParams>(n.params).stopColor;
+                if (si < static_cast<int>(cs.size()))
+                    cs[static_cast<std::size_t>(si)] = c;
+            });
+        });
+
+        auto* del = new QToolButton(rowW);
+        del->setText(QString::fromUtf8("−"));
+        del->setToolTip(tr("Remove this stop"));
+        connect(del, &QToolButton::clicked, this, [this, path, si]() {
+            mutate(path, [&](ChainNode& n) {
+                auto& p = std::get<ColorMapParams>(n.params);
+                if (si < static_cast<int>(p.stopPos.size()))
+                    p.stopPos.erase(p.stopPos.begin() + si);
+                if (si < static_cast<int>(p.stopColor.size()))
+                    p.stopColor.erase(p.stopColor.begin() + si);
+            });
+            QMetaObject::invokeMethod(
+                this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
+        });
+
+        rl->addWidget(pos);
+        rl->addWidget(sw);
+        rl->addWidget(del);
+        rl->addStretch(1);
+        vl->addWidget(rowW);
+    }
+
+    auto* addBtn = new QToolButton(box);
+    addBtn->setText(tr("+ stop"));
+    connect(addBtn, &QToolButton::clicked, this, [this, path]() {
+        mutate(path, [](ChainNode& n) {
+            auto& p = std::get<ColorMapParams>(n.params);
+            // Hinter der letzten Stuetzstelle einhaengen — nur der Lesbarkeit
+            // wegen: `buildColorMapLut` sortiert und klemmt ohnehin selbst.
+            const int last = p.stopPos.empty() ? -1 : p.stopPos.back();
+            p.stopPos.push_back(std::min(255, last + 32));
+            p.stopColor.push_back(0xFFFFFF);
+        });
+        QMetaObject::invokeMethod(
+            this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
+    });
+    vl->addWidget(addBtn);
+
+    box->setToolTip(tr("Gradient stops: input position 0..255 and its colour. The "
+                       "host interpolates a 256-entry lookup table between them; "
+                       "the order in this list does not matter (stops are sorted "
+                       "when the table is built)."));
+    form->addRow(tr("Gradient stops"), box);
+}
+
+bool MultiEffectPanel::askPresetToSave(const EffectParams& params, QString& outName,
+                                       QStringList& outFields)
+{
+    namespace np = lumi::multieffect::nodepresets;
+    const QStringList all = np::fieldNames(params);
+
+    QDialog dlg(this);
+    dlg.setWindowTitle(tr("Save preset"));
+    auto* lay = new QVBoxLayout(&dlg);
+
+    lay->addWidget(new QLabel(tr("Name:"), &dlg));
+    auto* nameEdit = new QLineEdit(&dlg);
+    lay->addWidget(nameEdit);
+
+    lay->addWidget(new QLabel(
+        tr("Fields to store — unchecked ones stay untouched when the preset is "
+           "loaded (that is how a figure keeps the node's colour):"),
+        &dlg));
+
+    // Ein Kaestchen je Parameter des Knotens; die Liste kommt generisch aus
+    // `nodeToJson`, gilt also fuer jeden Typ ohne Zutun.
+    auto* listWidget = new QListWidget(&dlg);
+    for (const QString& key : all)
+    {
+        auto* item = new QListWidgetItem(key, listWidget);
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+        item->setCheckState(Qt::Checked);
+    }
+    listWidget->setMinimumHeight(180);
+    lay->addWidget(listWidget, 1);
+
+    auto* toggleRow = new QHBoxLayout();
+    auto* allBtn = new QPushButton(tr("All"), &dlg);
+    auto* noneBtn = new QPushButton(tr("None"), &dlg);
+    toggleRow->addWidget(allBtn);
+    toggleRow->addWidget(noneBtn);
+    toggleRow->addStretch(1);
+    lay->addLayout(toggleRow);
+    const auto setAll = [listWidget](Qt::CheckState state) {
+        for (int i = 0; i < listWidget->count(); ++i)
+            listWidget->item(i)->setCheckState(state);
+    };
+    connect(allBtn, &QPushButton::clicked, &dlg,
+            [setAll] { setAll(Qt::Checked); });
+    connect(noneBtn, &QPushButton::clicked, &dlg,
+            [setAll] { setAll(Qt::Unchecked); });
+
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+                                         &dlg);
+    lay->addWidget(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+
+    if (dlg.exec() != QDialog::Accepted) return false;
+    outName = nameEdit->text().trimmed();
+    if (outName.isEmpty()) return false;
+
+    outFields.clear();
+    for (int i = 0; i < listWidget->count(); ++i)
+        if (listWidget->item(i)->checkState() == Qt::Checked)
+            outFields.append(listWidget->item(i)->text());
+    if (outFields.isEmpty())
+    {
+        QMessageBox::warning(this, tr("Save preset"),
+                             tr("A preset without a single field would do nothing "
+                                "when loaded."));
+        return false;
+    }
+    return true;
+}
+
+void MultiEffectPanel::addPresetRow(QFormLayout* form, const QList<int>& path,
+                                    const EffectParams& params)
+{
+    namespace np = lumi::multieffect::nodepresets;
+    const QString typeKey = effectTypeKey(params);
+    if (typeKey.isEmpty()) return;
+
+    auto* row = new QWidget(m_propContainer);
+    auto* hl = new QHBoxLayout(row);
+    hl->setContentsMargins(0, 0, 0, 0);
+
+    auto* combo = new QComboBox(row);
+    combo->addItem(tr("(unchanged)"));  // Index 0 = kein Preset, nur Beschriftung
+    const std::vector<np::Entry> entries = np::list(typeKey);
+    for (const np::Entry& e : entries)
+        combo->addItem(e.builtin ? e.name : e.name + QStringLiteral(" *"));
+    combo->setToolTip(tr("Named parameter sets for this node type (* = your own). "
+                         "Loading replaces every parameter including the scripts."));
+
+    auto* saveBtn = new QToolButton(row);
+    saveBtn->setText(tr("Save as…"));
+    saveBtn->setToolTip(tr("Store the current parameters under a name"));
+    auto* delBtn = new QToolButton(row);
+    delBtn->setText(QString::fromUtf8("🗑"));
+    delBtn->setToolTip(tr("Delete the selected preset (your own only)"));
+    delBtn->setEnabled(false);
+
+    hl->addWidget(combo, 1);
+    hl->addWidget(saveBtn);
+    hl->addWidget(delBtn);
+
+    connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            [this, path, typeKey, entries, delBtn](int idx) {
+                const int i = idx - 1;  // Index 0 ist die Beschriftung
+                if (i < 0 || i >= static_cast<int>(entries.size()))
+                {
+                    delBtn->setEnabled(false);
+                    return;
+                }
+                const np::Entry& e = entries[static_cast<std::size_t>(i)];
+                delBtn->setEnabled(!e.builtin);
+
+                // Frisch aus dem Modell: die Datei wird DARUEBER gelegt, ein
+                // Teil-Preset (Figur) laesst den Rest der Parameter stehen.
+                EffectParams loaded;
+                {
+                    QMutexLocker lock(m_mutex);
+                    const ChainNode* node = nodeAtPath(path);
+                    if (node == nullptr) return;
+                    loaded = node->params;
+                }
+                QStringList report;
+                if (!np::load(e.path, typeKey, loaded, &report))
+                {
+                    // Dialog direkt (wie ConfigPanel): Panels sind nur im
+                    // Fensterbetrieb bedienbar — die Vollbild-Regel aus S52
+                    // (MainWindow::reportProblem) greift hier nicht.
+                    QMessageBox::warning(
+                        this, tr("Preset"),
+                        tr("Preset '%1' could not be loaded.\n%2")
+                            .arg(e.name, report.join(QLatin1Char('\n'))));
+                    return;
+                }
+                // Eine Mutation: unter renderMutex + recompileChain, undo-faehig.
+                mutate(path, [&](ChainNode& n) { n.params = loaded; });
+                // Die Werte haben sich alle geaendert — Editor neu aufbauen (nicht
+                // aus dem Signal heraus, sonst stirbt das Widget unter uns).
+                QMetaObject::invokeMethod(
+                    this, [this, path] { buildPropertyEditor(path); },
+                    Qt::QueuedConnection);
+            });
+
+    connect(saveBtn, &QToolButton::clicked, this, [this, path]() {
+        // Frisch aus dem Modell lesen: der `params`-Schnappschuss des Editors ist
+        // vom Aufbau, zwischenzeitliche Reglerbewegungen fehlen darin.
+        EffectParams current;
+        {
+            QMutexLocker lock(m_mutex);
+            const ChainNode* node = nodeAtPath(path);
+            if (node == nullptr) return;
+            current = node->params;
+        }
+
+        QString name;
+        QStringList fields;
+        if (!askPresetToSave(current, name, fields)) return;
+
+        QString written;
+        if (!np::save(name, current, fields, &written))
+        {
+            QMessageBox::warning(this, tr("Preset"),
+                                 tr("Preset '%1' could not be saved.").arg(name));
+            return;
+        }
+        QMetaObject::invokeMethod(
+            this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
+    });
+
+    connect(delBtn, &QToolButton::clicked, this,
+            [this, path, entries, combo]() {
+                const int i = combo->currentIndex() - 1;
+                if (i < 0 || i >= static_cast<int>(entries.size())) return;
+                const np::Entry& e = entries[static_cast<std::size_t>(i)];
+                if (QMessageBox::question(
+                        this, tr("Delete preset"),
+                        tr("Delete the preset '%1' for good?").arg(e.name)) !=
+                    QMessageBox::Yes)
+                    return;
+                if (!np::remove(e))
+                {
+                    QMessageBox::warning(
+                        this, tr("Preset"),
+                        tr("Preset '%1' could not be deleted.").arg(e.name));
+                    return;
+                }
+                QMetaObject::invokeMethod(
+                    this, [this, path] { buildPropertyEditor(path); },
+                    Qt::QueuedConnection);
+            });
+
+    form->addRow(tr("Preset"), row);
+}
+
 void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
 {
     clearPropertyEditor();
@@ -2055,6 +2442,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     m_propPage = new QWidget(m_propContainer);
     auto* form = new QFormLayout(m_propPage);
     form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+
+    // Voreinstellungen (Knoten-Parameter-Konzept §3, Etappe 1): eine Zeile fuer
+    // JEDEN Knotentyp — der Store arbeitet ueber effectTypeKey + nodeToJson und
+    // kennt keinen einzigen Typ beim Namen. Nur in der echten Knotenansicht:
+    // Milkdrop-Sektionen/-Elemente sind Navigations-Items ohne eigene params.
+    if (milkSection < 0 && milkElem < 0) addPresetRow(form, path, params);
 
     // Editable name + free-text description (commit on Enter / focus-out).
     auto addLine = [&](const QString& label, const QString& value,
@@ -2122,6 +2515,49 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         });
         form->addRow(label, btn);
     };
+    // Wie addDouble, aber fuer KLASSE-A-Werte: die Vorgabe ist der Wert des
+    // Referenz-Renderers, jede Abweichung entfernt das Bild messbar von AVS.
+    // Die Zeile sagt das (Entscheid Patrik §8.4) — sonst sieht man einem Preset
+    // spaeter nicht an, warum es in der Kalibrierung ausschert.
+    auto addRefDouble = [&](const QString& label, double value, double lo, double hi,
+                            double step, double reference, int decimals,
+                            std::function<void(ChainNode&, double)> set) {
+        auto* spin = new QDoubleSpinBox(m_propContainer);
+        spin->setRange(lo, hi);
+        spin->setSingleStep(step);
+        spin->setDecimals(decimals);
+        spin->setValue(value);
+        auto* lbl = new QLabel(label, m_propContainer);
+        const auto mark = [lbl, label, reference, this](double v) {
+            const bool off = std::abs(v - reference) > 1e-6;
+            lbl->setText(off ? label + QStringLiteral(" ⚠") : label);
+            lbl->setToolTip(off ? tr("Differs from the AVS reference value (%1) — "
+                                     "this node no longer matches the original.")
+                                      .arg(reference)
+                                : tr("AVS reference value"));
+        };
+        mark(value);
+        connect(spin, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+                [this, path, set, mark](double v) {
+                    mark(v);
+                    mutate(path, [&](ChainNode& n) { set(n, v); });
+                });
+        form->addRow(lbl, spin);
+    };
+    // Hinweiszeile fuer KLASSE-A-Knoten mit Parameter-Skript. Die ⚠ an den
+    // Reglern sieht nur FESTE Abweichungen — was ein Frame-Skript rechnet,
+    // kann sie nicht kennen. Deshalb sagt der Knoten es hier von sich aus.
+    auto addReferenceNote = [&](bool scripted) {
+        auto* note = new QLabel(m_propContainer);
+        note->setWordWrap(true);
+        note->setText(scripted
+                          ? tr("⚠ This node mirrors AVS line by line. Its script "
+                               "recomputes the values every frame — the reference "
+                               "match no longer holds.")
+                          : tr("This node mirrors AVS line by line. A script here "
+                               "departs from the reference."));
+        form->addRow(note);
+    };
     auto addEnum = [&](const QString& label, int index, const QStringList& items,
                        std::function<void(ChainNode&, int)> set) {
         auto* combo = new QComboBox(m_propContainer);
@@ -2132,6 +2568,62 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     mutate(path, [&](ChainNode& n) { set(n, v); });
                 });
         form->addRow(label, combo);
+    };
+    // Farbtafel: ein Farbfeld je Eintrag plus Hinzufuegen/Entfernen. Der Zugriff
+    // auf den Vektor kommt als Funktion herein, damit sich JEDER Knoten mit
+    // Palette dieselbe Zeile teilt (SuperScope, Metaballs 3D, Tentacles 3D) —
+    // Laenge aendern heisst Editor neu bauen, deshalb der verzoegerte Aufruf.
+    auto addColorTable = [&](const QString& label, const std::vector<uint32_t>& colors,
+                             std::function<std::vector<uint32_t>&(ChainNode&)> access,
+                             const QString& toolTip) {
+        auto* colorsWidget = new QWidget(m_propContainer);
+        auto* row = new QHBoxLayout(colorsWidget);
+        row->setContentsMargins(0, 0, 0, 0);
+        for (int ci = 0; ci < static_cast<int>(colors.size()); ++ci)
+        {
+            const uint32_t initC = colors[static_cast<size_t>(ci)];
+            auto* sw = new QPushButton(colorsWidget);
+            sw->setFixedSize(24, 20);
+            sw->setStyleSheet(QString("background:%1").arg(colorFromU32(initC).name()));
+            connect(sw, &QPushButton::clicked, this,
+                    [this, path, ci, initC, sw, access]() {
+                        const QColor picked =
+                            QColorDialog::getColor(colorFromU32(initC), this);
+                        if (!picked.isValid()) return;
+                        const uint32_t c = u32FromColor(picked);
+                        sw->setStyleSheet(QString("background:%1").arg(picked.name()));
+                        mutate(path, [&](ChainNode& n) {
+                            std::vector<uint32_t>& cs = access(n);
+                            if (ci < static_cast<int>(cs.size()))
+                                cs[static_cast<size_t>(ci)] = c;
+                        });
+                    });
+            row->addWidget(sw);
+        }
+        auto* addC = new QToolButton(colorsWidget);
+        addC->setText("+");
+        addC->setToolTip(tr("Add color"));
+        connect(addC, &QToolButton::clicked, this, [this, path, access]() {
+            mutate(path, [&](ChainNode& n) { access(n).push_back(0xFFFFFF); });
+            QMetaObject::invokeMethod(
+                this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
+        });
+        auto* delC = new QToolButton(colorsWidget);
+        delC->setText(QString::fromUtf8("−"));
+        delC->setToolTip(tr("Remove last color"));
+        connect(delC, &QToolButton::clicked, this, [this, path, access]() {
+            mutate(path, [&](ChainNode& n) {
+                std::vector<uint32_t>& cs = access(n);
+                if (!cs.empty()) cs.pop_back();
+            });
+            QMetaObject::invokeMethod(
+                this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
+        });
+        row->addWidget(addC);
+        row->addWidget(delC);
+        row->addStretch();
+        colorsWidget->setToolTip(toolTip);
+        form->addRow(label, colorsWidget);
     };
     // Milkdrop-Sektionen tauschen die Referenz unten gegen ihr Original-Set
     // aus (Befund S42: eine generische Tabelle passte zu keinem Slot richtig)
@@ -2274,11 +2766,17 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         const QStringList kClearBlendNames = {tr("Replace"), tr("Additive"),
                                               tr("50/50"), tr("Line blend")};
         addEnum(tr("Blend"), p->blend, kClearBlendNames, [](ChainNode& n, int v) { std::get<ClearParams>(n.params).blend = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ClearParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ClearParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ClearParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<FadeoutParams>(&params))
     {
         addInt(tr("Fade length"), p->fadeLen, 0, 92, [](ChainNode& n, int v) { std::get<FadeoutParams>(n.params).fadeLen = v; });
         addColor(tr("Target color"), p->color, [](ChainNode& n, uint32_t v) { std::get<FadeoutParams>(n.params).color = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<FadeoutParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FadeoutParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FadeoutParams>(n.params).beatCode = std::move(v); });
     }
     else if (std::holds_alternative<InvertParams>(params))
     {
@@ -2292,15 +2790,25 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool(tr("Exclude color"), p->exclude, [](ChainNode& n, bool v) { std::get<BrightnessParams>(n.params).exclude = v; });
         addColor(tr("Exclude"), p->color, [](ChainNode& n, uint32_t v) { std::get<BrightnessParams>(n.params).color = v; });
         addInt(tr("Distance"), p->distance, 0, 255, [](ChainNode& n, int v) { std::get<BrightnessParams>(n.params).distance = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BrightnessParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BrightnessParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BrightnessParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<FastBrightnessParams>(&params))
     {
         addEnum(tr("Mode"), p->dir, {"x2", "x0.5", "off"}, [](ChainNode& n, int v) { std::get<FastBrightnessParams>(n.params).dir = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<FastBrightnessParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FastBrightnessParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FastBrightnessParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<BlurParams>(&params))
     {
         addEnum(tr("Strength"), p->strength - 1, {"Light", "Normal", "Heavy"},
                 [](ChainNode& n, int v) { std::get<BlurParams>(n.params).strength = v + 1; });
+        addBool(tr("Round up"), p->roundUp, [](ChainNode& n, bool v) { std::get<BlurParams>(n.params).roundUp = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BlurParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BlurParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BlurParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<MirrorParams>(&params))
     {
@@ -2317,12 +2825,18 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool(tr("OnBeat random"), p->onBeatRandom, [](ChainNode& n, bool v) { std::get<MirrorParams>(n.params).onBeatRandom = v; });
         addBool(tr("Smooth transition"), p->smooth, [](ChainNode& n, bool v) { std::get<MirrorParams>(n.params).smooth = v; });
         addInt(tr("Slower (frames/step)"), p->slower, 1, 16, [](ChainNode& n, int v) { std::get<MirrorParams>(n.params).slower = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MirrorParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MirrorParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MirrorParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<OnBeatClearParams>(&params))
     {
         addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<OnBeatClearParams>(n.params).color = v; });
         addInt(tr("Every N beats"), p->everyNBeats, 1, 100, [](ChainNode& n, int v) { std::get<OnBeatClearParams>(n.params).everyNBeats = v; });
         addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<OnBeatClearParams>(n.params).blend = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<OnBeatClearParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<OnBeatClearParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<OnBeatClearParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<ColorfadeParams>(&params))
     {
@@ -2332,6 +2846,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addInt(tr("Beat Fader R"), p->beatFaderR, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).beatFaderR = v; });
         addInt(tr("Beat Fader G"), p->beatFaderG, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).beatFaderG = v; });
         addInt(tr("Beat Fader B"), p->beatFaderB, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).beatFaderB = v; });
+        addInt(tr("Beat frames"), p->onBeatFrames, 1, 200, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).onBeatFrames = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorfadeParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorfadeParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorfadeParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<ColorModifierParams>(&params))
     {
@@ -2351,7 +2869,30 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                                 tr("Off, toggle on beat"),
                                                 tr("On, toggle on beat")};
         addEnum(tr("Source mapped"), p->sourceMapped, kSourceMappedNames, [](ChainNode& n, int v) { std::get<MovementParams>(n.params).sourceMapped = v; });
+        // r_trans-Builtins OHNE eval_desc: reine Pixel-Index-Umlegungen, für die
+        // es keine d/r-Formel gibt. Ist einer gewählt, wird der Point-Code nicht
+        // ausgewertet (S35).
+        addEnum(tr("Builtin remap"), p->builtinRemap == 7 ? 2 : p->builtinRemap,
+                {tr("Off (use code)"), tr("Slight fuzzify"), tr("Blocky partial out")},
+                [](ChainNode& n, int v) {
+                    std::get<MovementParams>(n.params).builtinRemap =
+                        v == 2 ? 7 : v;  // 0 · 1 · 7 sind die echten Werte
+                });
         addScript(tr("Point code"), p->code, [](ChainNode& n, std::string v) { std::get<MovementParams>(n.params).code = std::move(v); });
+        // Befund Patrik (S53, movement3b.lvfx): eine Beat-Umkehr im Point-Code
+        // kann hier NICHT wirken — zweimal nicht. Der Editor sagt es an, sonst
+        // laeuft der naechste wieder hinein.
+        {
+            auto* note = new QLabel(
+                tr("Movement builds a STATIC table: the point code runs once per "
+                   "size/text change, not per frame (like AVS r_trans). A value "
+                   "that changes over time — a beat counter, say — cannot move "
+                   "the image here. Use Dynamic Movement for that: it evaluates "
+                   "every frame and has Init/Frame/Beat/Point in one script."),
+                m_propContainer);
+            note->setWordWrap(true);
+            form->addRow(note);
+        }
     }
     else if (auto* p = std::get_if<DynamicMovementParams>(&params))
     {
@@ -2392,6 +2933,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addInt(tr("Size"), p->size, 1, 128, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).size = v; });
         addInt(tr("On-beat size"), p->size2, 1, 128, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).size2 = v; });
         addBool(tr("Resize on beat"), p->onBeatSize, [](ChainNode& n, bool v) { std::get<MovingParticleParams>(n.params).onBeatSize = v; });
+        addRefDouble(tr("Spring"), p->spring, 0.0, 0.1, 0.001, 0.004, 4, [](ChainNode& n, double v) { std::get<MovingParticleParams>(n.params).spring = static_cast<float>(v); });
+        addRefDouble(tr("Damping"), p->damping, 0.8, 1.0, 0.001, 0.991, 4, [](ChainNode& n, double v) { std::get<MovingParticleParams>(n.params).damping = static_cast<float>(v); });
+        addReferenceNote(!p->initCode.empty() || !p->frameCode.empty() || !p->beatCode.empty());
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MovingParticleParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MovingParticleParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MovingParticleParams>(n.params).beatCode = std::move(v); });
         addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line"}, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).blend = v; });
     }
     else if (auto* p = std::get_if<ColorMapParams>(&params))
@@ -2399,9 +2946,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addEnum(tr("Input"), p->key, {"Red", "Green", "Blue", "(R+G+B)/2", "Max", "(R+G+B)/3"}, [](ChainNode& n, int v) { std::get<ColorMapParams>(n.params).key = v; });
         addEnum(tr("Blend"), p->blendMode, {"Replace", "Additive", "Maximum", "Minimum", "50/50", "Sub d-s", "Sub s-d", "Multiply", "XOR", "Adjustable"}, [](ChainNode& n, int v) { std::get<ColorMapParams>(n.params).blendMode = v; });
         addInt(tr("Adjustable"), p->adjustBlend, 0, 255, [](ChainNode& n, int v) { std::get<ColorMapParams>(n.params).adjustBlend = v; });
-        auto* info = new QLabel(tr("%1 gradient stops (imported, read-only)").arg(p->stopPos.size()), m_propContainer);
-        info->setWordWrap(true);
-        form->addRow(info);
+        addGradientStops(form, path, p->stopPos, p->stopColor);
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorMapParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorMapParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorMapParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<BufferBlendParams>(&params))
     {
@@ -2409,6 +2957,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addEnum(tr("Buffer A"), p->bufferA, bufs, [](ChainNode& n, int v) { std::get<BufferBlendParams>(n.params).bufferA = v; });
         addEnum(tr("Buffer B"), p->bufferB, bufs, [](ChainNode& n, int v) { std::get<BufferBlendParams>(n.params).bufferB = v; });
         addEnum(tr("Mode"), p->mode, {"Replace", "Additive", "Maximum", "50/50", "Sub A-B", "Sub B-A", "Multiply", "Adjustable", "XOR", "Minimum", "Abs diff"}, [](ChainNode& n, int v) { std::get<BufferBlendParams>(n.params).mode = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BufferBlendParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BufferBlendParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BufferBlendParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<JherikoGlobalParams>(&params))
     {
@@ -2428,12 +2979,18 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addColor(tr("Threshold"), p->clipColor, [](ChainNode& n, uint32_t v) { std::get<ColorClipParams>(n.params).clipColor = v; });
         addColor(tr("Replace with"), p->outColor, [](ChainNode& n, uint32_t v) { std::get<ColorClipParams>(n.params).outColor = v; });
         addInt(tr("Distance"), p->distance, 0, 255, [](ChainNode& n, int v) { std::get<ColorClipParams>(n.params).distance = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorClipParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorClipParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorClipParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<UniqueToneParams>(&params))
     {
         addColor(tr("Tone"), p->color, [](ChainNode& n, uint32_t v) { std::get<UniqueToneParams>(n.params).color = v; });
         addBool(tr("Invert"), p->invert, [](ChainNode& n, bool v) { std::get<UniqueToneParams>(n.params).invert = v; });
         addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<UniqueToneParams>(n.params).blend = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<UniqueToneParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<UniqueToneParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<UniqueToneParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<InterleaveParams>(&params))
     {
@@ -2445,6 +3002,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addInt(tr("Beat X"), p->x2, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).x2 = v; });
         addInt(tr("Beat Y"), p->y2, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).y2 = v; });
         addInt(tr("Beat duration"), p->beatDuration, 1, 100, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).beatDuration = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<InterleaveParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<InterleaveParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<InterleaveParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<ConvolutionParams>(&params))
     {
@@ -2453,8 +3013,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool(tr("Two pass"), p->twoPass, [](ChainNode& n, bool v) { std::get<ConvolutionParams>(n.params).twoPass = v; });
         addInt(tr("Bias"), p->bias, -255, 255, [](ChainNode& n, int v) { std::get<ConvolutionParams>(n.params).bias = v; });
         addInt(tr("Scale"), p->scale, 1, 1000, [](ChainNode& n, int v) { std::get<ConvolutionParams>(n.params).scale = v; });
-        auto* info = new QLabel(tr("7×7 kernel (imported, read-only)"), m_propContainer);
-        form->addRow(info);
+        addKernelGrid(form, path, p->kernel);
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ConvolutionParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ConvolutionParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ConvolutionParams>(n.params).beatCode = std::move(v); });
     }
     else if (std::holds_alternative<NormaliseParams>(params))
     {
@@ -2466,11 +3028,17 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     {
         addEnum(tr("Effect"), p->effect, {"Chrome", "Double chrome", "Triple chrome", "Infinite root"}, [](ChainNode& n, int v) { std::get<MultiFilterParams>(n.params).effect = v; });
         addBool(tr("On beat only"), p->onBeat, [](ChainNode& n, bool v) { std::get<MultiFilterParams>(n.params).onBeat = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MultiFilterParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MultiFilterParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MultiFilterParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<AddBordersParams>(&params))
     {
         addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<AddBordersParams>(n.params).color = v; });
         addInt(tr("Size"), p->size, 0, 200, [](ChainNode& n, int v) { std::get<AddBordersParams>(n.params).size = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<AddBordersParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<AddBordersParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<AddBordersParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<SimpleScopeParams>(&params))
     {
@@ -2480,8 +3048,15 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).mode = v; });
         addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).channel = v; });
         addEnum(tr("Position"), p->position, {"Top", "Bottom", "Center"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).position = v; });
-        auto* info = new QLabel(tr("%1 cycled colors (imported)").arg(p->colors.size()), m_propContainer);
-        form->addRow(info);
+        addColorTable(
+            tr("Color table"), p->colors,
+            [](ChainNode& n) -> std::vector<uint32_t>& {
+                return std::get<SimpleScopeParams>(n.params).colors;
+            },
+            tr("AVS color table — the scope cycles through these over time."));
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<SimpleScopeParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<SimpleScopeParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<SimpleScopeParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<BassSpinParams>(&params))
     {
@@ -2490,6 +3065,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addColor(tr("Left color"), p->colorLeft, [](ChainNode& n, uint32_t v) { std::get<BassSpinParams>(n.params).colorLeft = v; });
         addColor(tr("Right color"), p->colorRight, [](ChainNode& n, uint32_t v) { std::get<BassSpinParams>(n.params).colorRight = v; });
         addEnum(tr("Mode"), p->mode, {"Lines", "Filled"}, [](ChainNode& n, int v) { std::get<BassSpinParams>(n.params).mode = v; });
+        addRefDouble(tr("Smoothing"), p->smoothing, 0.0, 1.0, 0.05, 0.7, 3, [](ChainNode& n, double v) { std::get<BassSpinParams>(n.params).smoothing = static_cast<float>(v); });
+        addRefDouble(tr("Spin step"), p->spinStep, 0.0, 3.14, 0.01, static_cast<double>(3.14159f / 6.0f), 4, [](ChainNode& n, double v) { std::get<BassSpinParams>(n.params).spinStep = static_cast<float>(v); });
+        addReferenceNote(!p->initCode.empty() || !p->frameCode.empty() || !p->beatCode.empty());
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BassSpinParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BassSpinParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BassSpinParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<OscStarParams>(&params))
     {
@@ -2497,6 +3078,18 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addEnum(tr("Position"), p->position, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).position = v; });
         addInt(tr("Size"), p->size, 0, 16, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).size = v; });
         addInt(tr("Rotation"), p->rot, 0, 16, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).rot = v; });
+        addInt(tr("Spokes"), p->spokes, 1, 64, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).spokes = v; });
+        addDouble(tr("Rotation scale"), p->rotScale, 0.0, 1.0, 0.005, [](ChainNode& n, double v) { std::get<OscStarParams>(n.params).rotScale = static_cast<float>(v); });
+        addDouble(tr("Amplitude"), p->amplitude, 0.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<OscStarParams>(n.params).amplitude = static_cast<float>(v); });
+        addColorTable(
+            tr("Color table"), p->colors,
+            [](ChainNode& n) -> std::vector<uint32_t>& {
+                return std::get<OscStarParams>(n.params).colors;
+            },
+            tr("AVS color table — cycled over time."));
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<OscStarParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<OscStarParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<OscStarParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<OscRingParams>(&params))
     {
@@ -2504,54 +3097,106 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).channel = v; });
         addEnum(tr("Position"), p->position, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).position = v; });
         addInt(tr("Size"), p->size, 0, 16, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).size = v; });
+        addInt(tr("Segments"), p->segments, 3, 1024, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).segments = v; });
+        addDouble(tr("Base radius"), p->baseScale, 0.0, 2.0, 0.05, [](ChainNode& n, double v) { std::get<OscRingParams>(n.params).baseScale = static_cast<float>(v); });
+        addDouble(tr("Audio radius"), p->audioScale, 0.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<OscRingParams>(n.params).audioScale = static_cast<float>(v); });
+        addColorTable(
+            tr("Color table"), p->colors,
+            [](ChainNode& n) -> std::vector<uint32_t>& {
+                return std::get<OscRingParams>(n.params).colors;
+            },
+            tr("AVS color table — cycled over time."));
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<OscRingParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<OscRingParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<OscRingParams>(n.params).beatCode = std::move(v); });
     }
-    else if (std::holds_alternative<RotatingStarsParams>(params))
+    else if (auto* p = std::get_if<RotatingStarsParams>(&params))
     {
-        auto* info = new QLabel(tr("Rotating stars — audio-reactive, cycled colors"), m_propContainer);
-        info->setWordWrap(true);
-        form->addRow(info);
+        addInt(tr("Points"), p->points, 2, 64, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).points = v; });
+        addInt(tr("Skip (2 = pentagram)"), p->skip, 1, 32, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).skip = v; });
+        addInt(tr("Stars"), p->stars, 1, 16, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).stars = v; });
+        addDouble(tr("Rotation speed"), p->rotSpeed, -1.0, 1.0, 0.01, [](ChainNode& n, double v) { std::get<RotatingStarsParams>(n.params).rotSpeed = static_cast<float>(v); });
+        addDouble(tr("Orbit radius"), p->orbit, 0.0, 2.0, 0.05, [](ChainNode& n, double v) { std::get<RotatingStarsParams>(n.params).orbit = static_cast<float>(v); });
+        addDouble(tr("Base size"), p->baseRadius, 0.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<RotatingStarsParams>(n.params).baseRadius = static_cast<float>(v); });
+        addDouble(tr("Audio gain"), p->audioGain, 0.0, 8.0, 0.05, [](ChainNode& n, double v) { std::get<RotatingStarsParams>(n.params).audioGain = static_cast<float>(v); });
+        addInt(tr("Band from"), p->bandLo, 0, 575, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).bandLo = v; });
+        addInt(tr("Band to (exclusive)"), p->bandHi, 1, 576, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).bandHi = v; });
+        addColorTable(
+            tr("Color table"), p->colors,
+            [](ChainNode& n) -> std::vector<uint32_t>& {
+                return std::get<RotatingStarsParams>(n.params).colors;
+            },
+            tr("AVS color table — cycled over time."));
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<RotatingStarsParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<RotatingStarsParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<RotatingStarsParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<PictureParams>(&params))
     {
         addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<PictureParams>(n.params).blend = v; });
         addBool(tr("Keep aspect"), p->keepAspect, [](ChainNode& n, bool v) { std::get<PictureParams>(n.params).keepAspect = v; });
-        const QString status = p->imageData.empty()
-            ? tr("⚠ image not embedded: %1").arg(QString::fromStdString(p->filename))
-            : tr("✓ image embedded (%1 KB)").arg(static_cast<int>(p->imageData.size() * 3 / 4 / 1024));
-        auto* info = new QLabel(status, m_propContainer);
-        info->setWordWrap(true);
-        form->addRow(info);
+        addImageRow(form, path, p->filename, p->imageData,
+                    [](ChainNode& n, std::string f, std::string d) {
+                        auto& q = std::get<PictureParams>(n.params);
+                        q.filename = std::move(f);
+                        q.imageData = std::move(d);
+                    });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<PictureParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<PictureParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<PictureParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<PictureIIParams>(&params))
     {
         addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<PictureIIParams>(n.params).blend = v; });
-        const QString status = p->imageData.empty()
-            ? tr("⚠ image not embedded: %1").arg(QString::fromStdString(p->filename))
-            : tr("✓ image embedded (%1 KB)").arg(static_cast<int>(p->imageData.size() * 3 / 4 / 1024));
-        auto* info = new QLabel(status, m_propContainer);
-        info->setWordWrap(true);
-        form->addRow(info);
+        addImageRow(form, path, p->filename, p->imageData,
+                    [](ChainNode& n, std::string f, std::string d) {
+                        auto& q = std::get<PictureIIParams>(n.params);
+                        q.filename = std::move(f);
+                        q.imageData = std::move(d);
+                    });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<PictureIIParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<PictureIIParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<PictureIIParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<TexerParams>(&params))
     {
         addEnum(tr("Blend"), p->blend, {"Replace", "Additive"}, [](ChainNode& n, int v) { std::get<TexerParams>(n.params).blend = v; });
         addInt(tr("Particles"), p->particles, 1, 4096, [](ChainNode& n, int v) { std::get<TexerParams>(n.params).particles = v; });
-        const QString status = p->imageData.empty() ? tr("⚠ image not embedded: %1").arg(QString::fromStdString(p->filename)) : tr("✓ image embedded");
-        auto* info = new QLabel(status, m_propContainer); info->setWordWrap(true); form->addRow(info);
+        addImageRow(form, path, p->filename, p->imageData,
+                    [](ChainNode& n, std::string f, std::string d) {
+                        auto& q = std::get<TexerParams>(n.params);
+                        q.filename = std::move(f);
+                        q.imageData = std::move(d);
+                    });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TexerParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TexerParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TexerParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<TexerIIParams>(&params))
     {
         addBool(tr("Color filtering"), p->colorFiltering, [](ChainNode& n, bool v) { std::get<TexerIIParams>(n.params).colorFiltering = v; });
+        addBool(tr("Resizing"), p->resizing, [](ChainNode& n, bool v) { std::get<TexerIIParams>(n.params).resizing = v; });
+        addBool(tr("Wrap around"), p->wrapAround, [](ChainNode& n, bool v) { std::get<TexerIIParams>(n.params).wrapAround = v; });
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).beatCode = std::move(v); });
         addScript(tr("Point (x,y,sizex,sizey,rgb)"), p->pointCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).pointCode = std::move(v); });
-        const QString status = p->imageData.empty() ? tr("⚠ image not embedded: %1").arg(QString::fromStdString(p->filename)) : tr("✓ image embedded");
-        auto* info = new QLabel(status, m_propContainer); info->setWordWrap(true); form->addRow(info);
+        addImageRow(form, path, p->filename, p->imageData,
+                    [](ChainNode& n, std::string f, std::string d) {
+                        auto& q = std::get<TexerIIParams>(n.params);
+                        q.filename = std::move(f);
+                        q.imageData = std::move(d);
+                    });
     }
     else if (auto* p = std::get_if<TriangleParams>(&params))
     {
+        // Gefuellt ist der Referenzzustand (S51) — Drahtgitter ist eine bewusste
+        // Abweichung von AVS und deshalb NICHT die Vorgabe.
+        addBool(tr("Filled (AVS)"), p->filled, [](ChainNode& n, bool v) { std::get<TriangleParams>(n.params).filled = v; });
+        addDouble(tr("Edge width (wireframe)"), p->lineWidth, 1.0, 20.0, 0.5, [](ChainNode& n, double v) { std::get<TriangleParams>(n.params).lineWidth = static_cast<float>(v); });
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame (set n)"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).beatCode = std::move(v); });
         addScript(tr("Point (x1..y3,rgb)"), p->pointCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).pointCode = std::move(v); });
     }
     else if (auto* p = std::get_if<BlitterFeedbackParams>(&params))
@@ -2561,6 +3206,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).onBeat = v; });
         addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).blend = v; });
         addBool(tr("Subpixel (bilinear)"), p->subpixel, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).subpixel = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<RotoBlitterParams>(&params))
     {
@@ -2572,6 +3220,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addInt(tr("Reverse speed"), p->beatReverseSpeed, 0, 8, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).beatReverseSpeed = v; });
         addBool(tr("Beat zoom jump"), p->beatZoomJump, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).beatZoomJump = v; });
         addBool(tr("Subpixel (bilinear)"), p->subpixel, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).subpixel = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<BufferSaveParams>(&params))
     {
@@ -2582,6 +3233,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addEnum(tr("Direction"), p->dir, kDirNames, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).dir = v; });
         addEnum(tr("Blend"), static_cast<int>(p->blend), kBlendNames, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).blend = static_cast<BlendMode>(v); });
         addInt(tr("Blend alpha"), p->adjustAlpha, 0, 255, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).adjustAlpha = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BufferSaveParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BufferSaveParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BufferSaveParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<CustomBpmParams>(&params))
     {
@@ -2590,29 +3244,19 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool(tr("Skip"), p->skip, [](ChainNode& n, bool v) { std::get<CustomBpmParams>(n.params).skip = v; });
         addInt(tr("Skip count"), p->skipCount, 1, 16, [](ChainNode& n, int v) { std::get<CustomBpmParams>(n.params).skipCount = v; });
         addBool(tr("Invert"), p->invert, [](ChainNode& n, bool v) { std::get<CustomBpmParams>(n.params).invert = v; });
+        // `skipfirst`: die ersten N Beats werden verschluckt, der Skip-Zaehler
+        // laeuft dabei NICHT mit (r_bpm.cpp:148).
+        addInt(tr("Skip first N beats"), p->skipFirst, 0, 64, [](ChainNode& n, int v) { std::get<CustomBpmParams>(n.params).skipFirst = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<CustomBpmParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<CustomBpmParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<CustomBpmParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<SuperScopeParams>(&params))
     {
-        // Figure preset dropdown: loads the shape's EEL into the code fields
-        // below (source: SuperscopeModule::loadPresetCode). Index 0 is a label.
-        auto* presetCombo = new QComboBox(m_propContainer);
-        presetCombo->addItem(tr("— Load figure preset —"));
-        for (lumi::modules::SuperscopePreset fig : superscopeFigures())
-            presetCombo->addItem(lumi::modules::SuperscopeModule::presetName(fig));
-        connect(presetCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-                [this, path](int idx) {
-                    if (idx <= 0) return;  // the label row
-                    // Defer: applying rebuilds this editor (deletes the combo).
-                    QMetaObject::invokeMethod(
-                        this,
-                        [this, path, idx] {
-                            applySuperScopePreset(path, idx - 1);
-                            buildPropertyEditor(path);
-                        },
-                        Qt::QueuedConnection);
-                });
-        form->addRow(tr("Figure"), presetCombo);
-
+        // Das frueher hier stehende „Figure"-Dropdown ist ENTFALLEN (S53): die
+        // Figuren liegen jetzt als Dateien in `asset/nodepresets/superScope/`
+        // und laufen ueber die allgemeine Zeile „Preset" ganz oben — eine
+        // Voreinstellungs-Liste statt zweier nebeneinander (Vorgabe Patrik).
         addInt(tr("Point count"), p->pointCount, 1, 4096, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).pointCount = v; });
         addEnum(tr("Draw mode"), p->renderMode, {"Dots", "Lines", "Thick"}, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).renderMode = v; });
         addDouble(tr("Line width"), p->lineWidth, 1.0, 20.0, 0.5, [](ChainNode& n, double v) { std::get<SuperScopeParams>(n.params).lineWidth = static_cast<float>(v); });
@@ -2671,59 +3315,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             form->addRow(tr("Gradient"), gradCombo);
         }
         addInt(tr("Cycle frames"), p->colorCycleFrames, 1, 600, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).colorCycleFrames = v; });
-        {
-            // AVS color table: cycled over time in the "Color table"/blend modes.
-            // One swatch per entry + add/remove.
-            auto* colorsWidget = new QWidget(m_propContainer);
-            auto* row = new QHBoxLayout(colorsWidget);
-            row->setContentsMargins(0, 0, 0, 0);
-            for (int ci = 0; ci < static_cast<int>(p->colors.size()); ++ci)
-            {
-                const uint32_t initC = p->colors[static_cast<size_t>(ci)];
-                auto* sw = new QPushButton(colorsWidget);
-                sw->setFixedSize(24, 20);
-                sw->setStyleSheet(QString("background:%1").arg(colorFromU32(initC).name()));
-                connect(sw, &QPushButton::clicked, this, [this, path, ci, initC, sw]() {
-                    const QColor picked = QColorDialog::getColor(colorFromU32(initC), this);
-                    if (!picked.isValid()) return;
-                    const uint32_t c = u32FromColor(picked);
-                    sw->setStyleSheet(QString("background:%1").arg(picked.name()));
-                    mutate(path, [&](ChainNode& n) {
-                        auto& cs = std::get<SuperScopeParams>(n.params).colors;
-                        if (ci < static_cast<int>(cs.size())) cs[static_cast<size_t>(ci)] = c;
-                    });
-                });
-                row->addWidget(sw);
-            }
-            auto* addC = new QToolButton(colorsWidget);
-            addC->setText("+");
-            addC->setToolTip(tr("Add color"));
-            connect(addC, &QToolButton::clicked, this, [this, path]() {
-                mutate(path, [](ChainNode& n) {
-                    std::get<SuperScopeParams>(n.params).colors.push_back(0xFFFFFF);
-                });
-                QMetaObject::invokeMethod(
-                    this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
-            });
-            auto* delC = new QToolButton(colorsWidget);
-            delC->setText(QString::fromUtf8("−"));
-            delC->setToolTip(tr("Remove last color"));
-            connect(delC, &QToolButton::clicked, this, [this, path]() {
-                mutate(path, [](ChainNode& n) {
-                    auto& cs = std::get<SuperScopeParams>(n.params).colors;
-                    if (!cs.empty()) cs.pop_back();
-                });
-                QMetaObject::invokeMethod(
-                    this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
-            });
-            row->addWidget(addC);
-            row->addWidget(delC);
-            row->addStretch();
-            colorsWidget->setToolTip(
-                tr("AVS color table — the scope cycles through these over time in "
-                   "the Color table / blend modes (one step every 'Cycle frames')."));
-            form->addRow(tr("Color table"), colorsWidget);
-        }
+        // AVS color table: cycled over time in the "Color table"/blend modes.
+        addColorTable(
+            tr("Color table"), p->colors,
+            [](ChainNode& n) -> std::vector<uint32_t>& {
+                return std::get<SuperScopeParams>(n.params).colors;
+            },
+            tr("AVS color table — the scope cycles through these over time in "
+               "the Color table / blend modes (one step every 'Cycle frames')."));
 
         addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).initCode = std::move(v); });
         addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).frameCode = std::move(v); });
@@ -2737,12 +3336,18 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<MosaicParams>(n.params).onBeat = v; });
         addInt(tr("Duration (frames)"), p->durationFrames, 1, 200, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).durationFrames = v; });
         addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).blend = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MosaicParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MosaicParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MosaicParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<GrainParams>(&params))
     {
         addInt(tr("Amount"), p->amount, 0, 100, [](ChainNode& n, int v) { std::get<GrainParams>(n.params).amount = v; });
         addBool(tr("Static"), p->staticGrain, [](ChainNode& n, bool v) { std::get<GrainParams>(n.params).staticGrain = v; });
         addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<GrainParams>(n.params).blend = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<GrainParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<GrainParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<GrainParams>(n.params).beatCode = std::move(v); });
     }
     else if (std::get_if<ScatterParams>(&params) != nullptr)
     {
@@ -2779,6 +3384,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addEnum(tr("Drop X"), p->dropX, {"Near", "Mid", "Far"}, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).dropX = v; });
         addEnum(tr("Drop Y"), p->dropY, {"Near", "Mid", "Far"}, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).dropY = v; });
         addInt(tr("Drop radius"), p->dropRadius, 1, 200, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).dropRadius = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<WaterBumpParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<WaterBumpParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<WaterBumpParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<InterferencesParams>(&params))
     {
@@ -2794,6 +3402,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addInt(tr("Beat alpha"), p->alpha2, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).alpha2 = v; });
         addInt(tr("Beat rotation/frame"), p->rotationInc2, -64, 64, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).rotationInc2 = v; });
         addDouble(tr("Beat speed"), p->speed, 0.01, 2.0, 0.01, [](ChainNode& n, double v) { std::get<InterferencesParams>(n.params).speed = static_cast<float>(v); });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<InterferencesParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<InterferencesParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<InterferencesParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<FyrewurXParams>(&params))
     {
@@ -2801,6 +3412,56 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addDouble(tr("Speed"), p->speed, 0.05, 5.0, 0.05, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).speed = static_cast<float>(v); });
         addDouble(tr("Gravity"), p->gravity, 0.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).gravity = static_cast<float>(v); });
         addDouble(tr("Life (s)"), p->lifeSeconds, 0.1, 10.0, 0.1, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).lifeSeconds = static_cast<float>(v); });
+        addDouble(tr("Spark size"), p->dotSize, 1.0, 32.0, 0.5, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).dotSize = static_cast<float>(v); });
+        addDouble(tr("Hue drift"), p->hueDrift, 0.0, 6.0, 0.1, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).hueDrift = static_cast<float>(v); });
+        addDouble(tr("Burst spread"), p->burstSpread, 0.0, 3.0, 0.05, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).burstSpread = static_cast<float>(v); });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<FyrewurXParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FyrewurXParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FyrewurXParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<Metaballs3DParams>(&params))
+    {
+        // Verhaltens-Nachbau (S52): aus dem Preset kommt nur die Farbtafel, die
+        // Geometrie ist host-eigen — also sind ALLE Zahlen hier frei verstellbar.
+        // Grenzen wie im Renderer/Serialisierer (count 1..16).
+        addInt(tr("Balls"), p->count, 1, 16, [](ChainNode& n, int v) { std::get<Metaballs3DParams>(n.params).count = v; });
+        addDouble(tr("Radius"), p->radius, 0.01, 1.0, 0.01, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).radius = static_cast<float>(v); });
+        addDouble(tr("Speed"), p->speed, 0.0, 5.0, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).speed = static_cast<float>(v); });
+        addDouble(tr("Threshold"), p->threshold, 0.05, 8.0, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).threshold = static_cast<float>(v); });
+        addEnum(tr("Blend"), p->blend, {tr("Replace"), tr("Additive"), tr("50/50")}, [](ChainNode& n, int v) { std::get<Metaballs3DParams>(n.params).blend = v; });
+        addDouble(tr("Orbit spread"), p->spread, 0.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).spread = static_cast<float>(v); });
+        addDouble(tr("Depth"), p->depth, 0.2, 6.0, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).depth = static_cast<float>(v); });
+        addDouble(tr("Phase per ball"), p->phase, 0.0, 6.3, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).phase = static_cast<float>(v); });
+        addColorTable(
+            tr("Color table"), p->colors,
+            [](ChainNode& n) -> std::vector<uint32_t>& {
+                return std::get<Metaballs3DParams>(n.params).colors;
+            },
+            tr("Palette from the preset — ball i takes entry i (white if empty)."));
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<Metaballs3DParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Metaballs3DParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Metaballs3DParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<Tentacles3DParams>(&params))
+    {
+        addInt(tr("Tentacles"), p->count, 1, 16, [](ChainNode& n, int v) { std::get<Tentacles3DParams>(n.params).count = v; });
+        addInt(tr("Segments"), p->segments, 2, 256, [](ChainNode& n, int v) { std::get<Tentacles3DParams>(n.params).segments = v; });
+        addDouble(tr("Length"), p->length, 0.05, 2.0, 0.05, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).length = static_cast<float>(v); });
+        addDouble(tr("Thickness (px)"), p->thickness, 1.0, 64.0, 0.5, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).thickness = static_cast<float>(v); });
+        addDouble(tr("Speed"), p->speed, 0.0, 5.0, 0.05, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).speed = static_cast<float>(v); });
+        addEnum(tr("Blend"), p->blend, {tr("Replace"), tr("Additive"), tr("50/50")}, [](ChainNode& n, int v) { std::get<Tentacles3DParams>(n.params).blend = v; });
+        addDouble(tr("Sway"), p->sway, 0.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).sway = static_cast<float>(v); });
+        addDouble(tr("Waves"), p->waves, 0.0, 20.0, 0.1, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).waves = static_cast<float>(v); });
+        addDouble(tr("Taper (0 = even)"), p->taper, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).taper = static_cast<float>(v); });
+        addColorTable(
+            tr("Color table"), p->colors,
+            [](ChainNode& n) -> std::vector<uint32_t>& {
+                return std::get<Tentacles3DParams>(n.params).colors;
+            },
+            tr("Palette from the preset — tentacle i takes entry i (white if empty)."));
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<Tentacles3DParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Tentacles3DParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Tentacles3DParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<StarfieldParams>(&params))
     {
@@ -2812,6 +3473,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addInt(tr("Duration (frames)"), p->durationFrames, 1, 200, [](ChainNode& n, int v) { std::get<StarfieldParams>(n.params).durationFrames = v; });
         const QStringList kStarBlendNames = {tr("Replace"), tr("Additive"), tr("50/50")};
         addEnum(tr("Blend"), p->blend, kStarBlendNames, [](ChainNode& n, int v) { std::get<StarfieldParams>(n.params).blend = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<StarfieldParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<StarfieldParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<StarfieldParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<TimescopeParams>(&params))
     {
@@ -2819,6 +3483,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addInt(tr("Bands"), p->bands, 1, 576, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).bands = v; });
         addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).channel = v; });
         addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line (SRM)"}, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).blend = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TimescopeParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TimescopeParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TimescopeParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<DotGridParams>(&params))
     {
@@ -2826,15 +3493,28 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addInt(tr("X move"), p->xMove, -1024, 1024, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).xMove = v; });
         addInt(tr("Y move"), p->yMove, -1024, 1024, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).yMove = v; });
         addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line (SRM)"}, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).blend = v; });
-        if (!p->colors.empty())
-            addColor(tr("Color 1"), p->colors[0], [](ChainNode& n, uint32_t v) { std::get<DotGridParams>(n.params).colors[0] = v; });
+        addColorTable(
+            tr("Color table"), p->colors,
+            [](ChainNode& n) -> std::vector<uint32_t>& {
+                return std::get<DotGridParams>(n.params).colors;
+            },
+            tr("AVS color table — the dots cycle through these over time."));
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DotGridParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DotGridParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DotGridParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<DotPlaneParams>(&params))
     {
         addInt(tr("Rotation speed"), p->rotVel, -50, 50, [](ChainNode& n, int v) { std::get<DotPlaneParams>(n.params).rotVel = v; });
         addInt(tr("Angle"), p->angle, -90, 90, [](ChainNode& n, int v) { std::get<DotPlaneParams>(n.params).angle = v; });
+        addRefDouble(tr("Camera distance"), p->camDistance, 50.0, 2000.0, 10.0, 400.0, 1, [](ChainNode& n, double v) { std::get<DotPlaneParams>(n.params).camDistance = static_cast<float>(v); });
+        addRefDouble(tr("Settle"), p->settle, 0.0, 2.0, 0.01, 0.15, 3, [](ChainNode& n, double v) { std::get<DotPlaneParams>(n.params).settle = static_cast<float>(v); });
         for (int i = 0; i < 5; ++i)
             addColor(tr("Color %1").arg(i + 1), p->colors[i], [i](ChainNode& n, uint32_t v) { std::get<DotPlaneParams>(n.params).colors[i] = v; });
+        addReferenceNote(!p->initCode.empty() || !p->frameCode.empty() || !p->beatCode.empty());
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DotPlaneParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DotPlaneParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DotPlaneParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<DotFountainParams>(&params))
     {
@@ -2842,24 +3522,39 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addInt(tr("Angle"), p->angle, -90, 90, [](ChainNode& n, int v) { std::get<DotFountainParams>(n.params).angle = v; });
         for (int i = 0; i < 5; ++i)
             addColor(tr("Color %1").arg(i + 1), p->colors[i], [i](ChainNode& n, uint32_t v) { std::get<DotFountainParams>(n.params).colors[i] = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DotFountainParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DotFountainParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DotFountainParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<ChannelShiftParams>(&params))
     {
         addEnum(tr("Mode"), p->mode, {"RGB", "RBG", "GBR", "GRB", "BRG", "BGR"}, [](ChainNode& n, int v) { std::get<ChannelShiftParams>(n.params).mode = v; });
         addBool(tr("On beat (random)"), p->onBeat, [](ChainNode& n, bool v) { std::get<ChannelShiftParams>(n.params).onBeat = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ChannelShiftParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ChannelShiftParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ChannelShiftParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<ColorReductionParams>(&params))
     {
         addInt(tr("Levels (bits)"), p->levels, 1, 8, [](ChainNode& n, int v) { std::get<ColorReductionParams>(n.params).levels = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorReductionParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorReductionParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorReductionParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<MultiplierParams>(&params))
     {
         addEnum(tr("Factor"), p->mode, {"Saturate", "x8", "x4", "x2", "x0.5", "x0.25", "x0.125", "Keep"}, [](ChainNode& n, int v) { std::get<MultiplierParams>(n.params).mode = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MultiplierParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MultiplierParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MultiplierParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<VideoDelayParams>(&params))
     {
         addInt(tr("Delay"), p->delay, 1, 128, [](ChainNode& n, int v) { std::get<VideoDelayParams>(n.params).delay = v; });
         addBool(tr("In beats"), p->useBeats, [](ChainNode& n, bool v) { std::get<VideoDelayParams>(n.params).useBeats = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<VideoDelayParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<VideoDelayParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<VideoDelayParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<MultiDelayParams>(&params))
     {
@@ -2867,6 +3562,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addInt(tr("Buffer"), p->buffer, 0, 5, [](ChainNode& n, int v) { std::get<MultiDelayParams>(n.params).buffer = v; });
         addInt(tr("Delay"), p->delay, 1, 128, [](ChainNode& n, int v) { std::get<MultiDelayParams>(n.params).delay = v; });
         addBool(tr("In beats"), p->useBeats, [](ChainNode& n, bool v) { std::get<MultiDelayParams>(n.params).useBeats = v; });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MultiDelayParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MultiDelayParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MultiDelayParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<Fractal2DParams>(&params))
     {
@@ -2978,6 +3676,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addDouble(tr("Threshold"), p->threshold, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<BloomParams>(n.params).threshold = static_cast<float>(v); });
         addBool(tr("Vignette"), p->vignette, [](ChainNode& n, bool v) { std::get<BloomParams>(n.params).vignette = v; });
         addDouble(tr("Vignette strength"), p->vignetteStrength, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<BloomParams>(n.params).vignetteStrength = static_cast<float>(v); });
+        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BloomParams>(n.params).initCode = std::move(v); });
+        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BloomParams>(n.params).frameCode = std::move(v); });
+        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BloomParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<Camera3DParams>(&params))
     {

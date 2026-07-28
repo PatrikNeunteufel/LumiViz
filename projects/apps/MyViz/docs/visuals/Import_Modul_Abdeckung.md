@@ -82,7 +82,7 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 16 | Scatter | Trans | ✅ | `ScatterParams` | U·S offen |
 | 17 | Dot Grid | Render | ✅ | `DotGridParams` | U·S offen |
 | 18 | Buffer Save | Misc | ✅ | `BufferSaveParams` | U·S offen |
-| 19 | Dot Fountain | Render | ✅ | `DotFountainParams` | U·S offen |
+| 19 | Dot Fountain | Render | ◐ | `DotFountainParams` — **KEINE Portierung** (Befund S53): die Referenz ist ein 30×256-Gitter (rotierende Höhenwand, 3D-Matrix wie `Dot Plane`), wir zeichnen 400 freie Partikel mit eigener Physik. Matrix-Zeile 0,002 ist **falsch grün** (dünner Inhalt). Fix = echte Portierung nach `Dot Plane`-Muster | U·S offen |
 | 20 | Water | Trans | ✅ | `WaterParams` | U·S offen |
 | 21 | Comment | Misc | ✅ | stiller no-op (keine Passthrough-Warnung) | — |
 | 22 | Brightness | Trans | ✅ | `BrightnessParams` | U·S offen |
@@ -110,7 +110,8 @@ BSD-Quelle (`ref/vis_avs/.../r_*.cpp`).
 | 44 | Fast Brightness | Trans | ✅ | `FastBrightnessParams` | U·S offen |
 | 45 | Color Modifier | Trans | ✅ | `ColorModifierParams` | U·S offen |
 
-**Builtin-Bilanz (S44):** ✅ 44 · ◐ 1 (Set Render Mode) · ⬜ 0 · ✖ 1 (SVP Loader).
+**Builtin-Bilanz (S53):** ✅ **43** · ◐ **2** (Set Render Mode · **Dot Fountain**, seit
+S53 — war ✅, ist aber keine Portierung) · ⬜ 0 · ✖ 1 (SVP Loader).
 
 ---
 

@@ -27,9 +27,64 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
 - **Parameter-Editor** je selektiertem Knoten: Spinner/Checkbox/Farbwähler/
   Enum + **EEL-Skript-Textfelder** (Init/Frame/Beat/Point bzw. Level) für alle
   Effekt-Typen (inkl. Mosaic); Passthrough-Knoten zeigen nur ihre Konserven-Notiz.
-- **SuperScope-Figur-Dropdown:** lädt eine Figur (Spiral, Butterfly, Hypocycloid,
-  …) aus der `SuperscopeModule`-Preset-Bibliothek (SSOT) und trägt deren EEL in
-  die Init/Frame/Beat/Point-Felder + Point-Count ein.
+- **Voreinstellungs-Zeile „Preset" (Session 53, Etappen 1 + 1b):** ganz oben im
+  Editor, **für jeden Knotentyp** — Dropdown (mitgeliefert + eigene, letztere mit
+  `*`), „Save as…", Löschen (nur eigene). Sie kennt keinen einzigen Typ beim Namen:
+  sie läuft über `effectTypeKey()` und `nodeToJson`/`nodeFromJson`
+  ([`NodePresetStore`](../../visualizers/multieffect/NodePresetStore.hpp)), gilt also
+  automatisch auch für künftige Knoten. Laden ist **eine** `mutate`-Operation
+  (renderMutex + `recompileChain`, undo-fähig) und baut den Editor danach neu auf.
+  Nicht sichtbar bei Milkdrop-Sektionen/-Elementen — das sind Navigations-Items ohne
+  eigene `params`. Konzept:
+  [Knoten_Parameter_Konzept.md](../../../docs/visuals/Knoten_Parameter_Konzept.md) §3.
+  - **Merge statt Ersatz:** eine Datei überschreibt genau die Felder, die sie
+    enthält; alles andere bleibt stehen. Damit ist ein **Teil-Preset** möglich.
+  - **Feldauswahl beim Speichern** (Vorgabe Patrik): der Dialog listet jedes
+    Parameterfeld des Knotens mit Häkchen (Liste generisch aus `nodeToJson`, also
+    für jeden Typ). Abgewählt = nicht in der Datei = beim Laden unangetastet —
+    so speichert man „nur die Formeln, nicht die Farbe". `type` bleibt immer
+    drin, daran hängt der Typwächter.
+  - **Das frühere „Figure"-Dropdown ist entfallen.** Die SuperScope-Figuren
+    liegen als Teil-Presets in `asset/nodepresets/superScope/` (13 Dateien, nur
+    die vier EEL-Slots + `pointCount`) und laufen über dieselbe Zeile — eine
+    Voreinstellungs-Liste statt zweier nebeneinander. Eine Figur lässt damit
+    Farbe, Linienbreite und Blend des Knotens stehen, genau wie vorher.
+- **Parameter-Skripte (Strang D, Session 53):** jeder Knoten mit numerischen
+  Parametern hat unten drei EEL-Felder (Init/Frame/Beat), die seine Regler je
+  Frame ausrechnen — 48 Renderer insgesamt. Die schreibbaren Namen sind die
+  Feldnamen in Kleinschreibung, dazu `b`/`w`/`h` und der Audio-Satz; sie stehen im
+  Doxygen-Kommentar des jeweiligen `…Params`-Structs. Ein leeres Feld kostet
+  nichts. Die drei **Klasse-A**-Knoten (Dot Plane · Bass Spin · Moving Particle)
+  tragen darüber eine Hinweiszeile: dort sind die Renderer-Konstanten die
+  Referenz, ein Skript verlässt sie — und die ⚠ an den Reglern kann das nicht
+  sehen, weil sie nur feste Werte vergleicht.
+- **Referenz-Regler (`addRefDouble`, Session 53):** für die drei **Klasse-A**-Knoten
+  (`Dot Plane`, `Bass Spin`, `Moving Particle`), deren Konstanten die AVS-Referenz
+  *sind*. Die Vorgabe ist der Originalwert; weicht der Wert ab, hängt ein **⚠** an
+  der Beschriftung und der Tooltip nennt den Referenzwert. So bleibt sichtbar,
+  warum ein Preset in der Kalibrierung ausschert (Entscheid Patrik,
+  Knoten_Parameter_Konzept §8.4).
+- **Bild-Zeile (`addImageRow`, Session 53 — S50-Vorgabe):** Picture · Picture II ·
+  Texer · Texer II zeigten bisher nur, **ob** das Bild eingebettet ist. Jetzt
+  „Choose…" (Datei wird base64 eingebettet, die Kette bleibt damit
+  selbsttragend) und „Clear". Startordner ist der **Bilder-Suchordner** aus den
+  Einstellungen (`import/imageSearchDir`) — denselben Schlüssel liest der Import
+  als letzte Zuflucht, wenn neben dem Preset nichts liegt.
+- **Kernel-Gitter (`addKernelGrid`) und Gradient-Stopps (`addGradientStops`),
+  Session 53:** `Convolution` bekommt sein 7×7-Gitter (Mitte hervorgehoben,
+  Knopf „Identity"), `ColorMap` seine Stützstellen (Position 0–255 + Farbe,
+  `+`/`−`). Beide standen vorher als „imported, read-only" da. Die Reihenfolge
+  der Stopps ist egal — `buildColorMapLut` sortiert selbst.
+- **Farbtafel-Zeile (`addColorTable`, Session 53):** ein Farbfeld je Palette-
+  Eintrag plus „+"/„−"; der Zugriff auf den `colors`-Vektor kommt als Funktion
+  herein, damit sich alle Knoten mit Palette dieselbe Zeile teilen (SuperScope,
+  **Metaballs 3D**, **Tentacles 3D**). Längenänderung baut den Editor neu
+  (verzögert, nicht aus dem Signal heraus).
+- **Metaballs 3D / Tentacles 3D (Session 53):** Editoren für die beiden
+  APE-Verhaltens-Nachbauten aus S52 — Metaballs (Kugelzahl, Radius, Tempo,
+  Isowert, Blend), Tentacles (Zahl, Segmente, Länge, Dicke, Tempo, Blend), je
+  mit Farbtafel; beide auch in der Palette („Scopes & Sources", neben FyrewurX).
+  Grenzen wie im Renderer/`ChainSerializer` (count 1..16, segments 2..256).
 - **SuperScope-Farbe (Hybrid):** `Color mode` (Gradient · Table · Additive ·
   Multiply · Average) kombiniert zwei Quellen — den zeit-gezykelten **AVS-Farb­
   tabellen**-Wert (Swatch-Editor + Cycle-Frames) und den per-Punkt-**Gradient**
@@ -108,5 +163,10 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
 ## Absicherung
 
 Qt-UI → kein Unit-Test; Datenmodell + Compile-Pass sind separat getestet
-(`test_EffectChain`), Persistenz über `test_ChainSerializer`. Panel selbst:
-Sichttest (Import → editieren → speichern → laden).
+(`test_EffectChain`), Persistenz über `test_ChainSerializer`, die Voreinstellungen
+über `test_NodePresetStore` (Roundtrip inkl. Formeln · Rahmen bleibt draußen ·
+Typwächter · Benutzer-vor-Asset · Teil-Preset lässt den Rest stehen · **jede
+mitgelieferte Datei muss ladbar sein** · **jede Figur der Modul-Bibliothek hat
+ihre Datei mit demselben EEL** — das Modul ist Qt-frei und kann die Dateien nicht
+selbst lesen, der Wächter hält beide Seiten zusammen).
+Panel selbst: Sichttest (Import → editieren → speichern → laden).

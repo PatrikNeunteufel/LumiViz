@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "beatCode": "",
+        "frameCode": "",
+        "initCode": "n=256",
+        "pointCode": "y=i*2-1; x=v*0.8",
+        "pointCount": 256,
+        "type": "superScope"
+    }
+}

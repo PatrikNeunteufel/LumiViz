@@ -279,6 +279,393 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{DotFountainParams{}}) == "dotFountain");
     }
 
+    TEST_CASE("S53-Regler der Scope-Renderer ueberleben den Round-Trip")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode rs; RotatingStarsParams rp;
+        rp.points = 7; rp.skip = 3; rp.stars = 4; rp.rotSpeed = -0.02f;
+        rp.orbit = 0.75f; rp.baseRadius = 0.3f; rp.audioGain = 1.5f;
+        rp.bandLo = 10; rp.bandHi = 40; rs.params = rp;
+        ChainNode os; OscStarParams op;
+        op.spokes = 9; op.rotScale = 0.05f; op.amplitude = 1.25f; os.params = op;
+        ChainNode orr; OscRingParams rr;
+        rr.segments = 240; rr.baseScale = 0.4f; rr.audioScale = 2.0f; orr.params = rr;
+        root.children.push_back(std::move(rs));
+        root.children.push_back(std::move(os));
+        root.children.push_back(std::move(orr));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 3);
+        const auto& a = std::get<RotatingStarsParams>(r.children[0].params);
+        CHECK(a.points == 7);
+        CHECK(a.skip == 3);
+        CHECK(a.stars == 4);
+        CHECK(a.rotSpeed == doctest::Approx(-0.02f));
+        CHECK(a.orbit == doctest::Approx(0.75f));
+        CHECK(a.baseRadius == doctest::Approx(0.3f));
+        CHECK(a.audioGain == doctest::Approx(1.5f));
+        CHECK(a.bandLo == 10);
+        CHECK(a.bandHi == 40);
+        const auto& b = std::get<OscStarParams>(r.children[1].params);
+        CHECK(b.spokes == 9);
+        CHECK(b.rotScale == doctest::Approx(0.05f));
+        CHECK(b.amplitude == doctest::Approx(1.25f));
+        const auto& c = std::get<OscRingParams>(r.children[2].params);
+        CHECK(c.segments == 240);
+        CHECK(c.baseScale == doctest::Approx(0.4f));
+        CHECK(c.audioScale == doctest::Approx(2.0f));
+    }
+
+    TEST_CASE("Default-Vertrag: ein Preset OHNE die S53-Schluessel bleibt beim Alten")
+    {
+        // Knoten_Parameter_Konzept §2: ein neuer Parameter darf bei Default das
+        // Bild nicht bewegen — also muessen die Vorgaben exakt die frueheren
+        // Literale des Renderers sein, auch beim Laden alter Dateien.
+        QJsonObject doc;
+        QJsonObject rootObj;
+        rootObj["type"] = "list";
+        QJsonArray kids;
+        for (const char* key : {"rotatingStars", "oscStar", "oscRing"})
+        {
+            QJsonObject k;
+            k["type"] = key;  // NUR der Typ — wie eine Datei von vor S53
+            kids.append(k);
+        }
+        rootObj["children"] = kids;
+        doc["root"] = rootObj;
+
+        const ChainNode r = chainFromJson(doc, nullptr);
+        REQUIRE(r.children.size() == 3);
+        const auto& a = std::get<RotatingStarsParams>(r.children[0].params);
+        CHECK(a.points == 5);                              // Pentagramm
+        CHECK(a.skip == 2);
+        CHECK(a.stars == 2);
+        CHECK(a.rotSpeed == doctest::Approx(0.05f));
+        CHECK(a.orbit == doctest::Approx(0.5f));
+        CHECK(a.baseRadius == doctest::Approx(0.12f));
+        CHECK(a.audioGain == doctest::Approx(0.5f));
+        CHECK(a.bandLo == 3);
+        CHECK(a.bandHi == 14);
+        const auto& b = std::get<OscStarParams>(r.children[1].params);
+        CHECK(b.spokes == 5);
+        CHECK(b.rotScale == doctest::Approx(0.02f));
+        CHECK(b.amplitude == doctest::Approx(0.5f));
+        const auto& c = std::get<OscRingParams>(r.children[2].params);
+        CHECK(c.segments == 80);
+        CHECK(c.baseScale == doctest::Approx(0.1f));
+        CHECK(c.audioScale == doctest::Approx(0.9f));
+    }
+
+    TEST_CASE("Default-Vertrag: auch die Nachbau-Knoten bleiben beim Alten")
+    {
+        QJsonObject doc;
+        QJsonObject rootObj;
+        rootObj["type"] = "list";
+        QJsonArray kids;
+        for (const char* key : {"metaballs3d", "tentacles3d", "fyrewurx", "triangle"})
+        {
+            QJsonObject k;
+            k["type"] = key;  // NUR der Typ — wie eine Datei von vor S53
+            kids.append(k);
+        }
+        rootObj["children"] = kids;
+        doc["root"] = rootObj;
+
+        const ChainNode r = chainFromJson(doc, nullptr);
+        REQUIRE(r.children.size() == 4);
+        const auto& m = std::get<Metaballs3DParams>(r.children[0].params);
+        CHECK(m.spread == doctest::Approx(1.0f));
+        CHECK(m.depth == doctest::Approx(1.2f));
+        CHECK(m.phase == doctest::Approx(1.7f));
+        const auto& t = std::get<Tentacles3DParams>(r.children[1].params);
+        CHECK(t.sway == doctest::Approx(0.9f));
+        CHECK(t.waves == doctest::Approx(3.1f));
+        CHECK(t.taper == doctest::Approx(1.0f));
+        const auto& f = std::get<FyrewurXParams>(r.children[2].params);
+        CHECK(f.dotSize == doctest::Approx(2.0f));
+        CHECK(f.hueDrift == doctest::Approx(0.6f));
+        CHECK(f.burstSpread == doctest::Approx(1.0f));
+        const auto& tri = std::get<TriangleParams>(r.children[3].params);
+        CHECK(tri.filled);  // GEFUELLT ist der Referenzzustand (S51)
+        CHECK(tri.lineWidth == doctest::Approx(1.0f));
+    }
+
+    TEST_CASE("Strang D: die Parameter-Skripte ueberleben den Round-Trip")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode rs; RotatingStarsParams rp;
+        rp.initCode = "t=0";
+        rp.frameCode = "points=5+bass*8; t=t+0.01";
+        rp.beatCode = "stars=stars+1";
+        rs.params = rp;
+        ChainNode os; OscStarParams op;
+        op.frameCode = "spokes=3+treb*5";
+        os.params = op;
+        ChainNode orr; OscRingParams rr;
+        rr.frameCode = "segments=40+vol*100";
+        orr.params = rr;
+        root.children.push_back(std::move(rs));
+        root.children.push_back(std::move(os));
+        root.children.push_back(std::move(orr));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 3);
+        const auto& a = std::get<RotatingStarsParams>(r.children[0].params);
+        CHECK(a.initCode == "t=0");
+        CHECK(a.frameCode == "points=5+bass*8; t=t+0.01");
+        CHECK(a.beatCode == "stars=stars+1");
+        CHECK(std::get<OscStarParams>(r.children[1].params).frameCode ==
+              "spokes=3+treb*5");
+        CHECK(std::get<OscRingParams>(r.children[2].params).frameCode ==
+              "segments=40+vol*100");
+
+        // Opt-in: ohne Schluessel bleiben die Felder leer, es laeuft kein Skript.
+        QJsonObject doc;
+        QJsonObject rootObj;
+        rootObj["type"] = "list";
+        QJsonArray kids;
+        QJsonObject k;
+        k["type"] = "rotatingStars";
+        kids.append(k);
+        rootObj["children"] = kids;
+        doc["root"] = rootObj;
+        const ChainNode bare = chainFromJson(doc, nullptr);
+        REQUIRE(bare.children.size() == 1);
+        const auto& b = std::get<RotatingStarsParams>(bare.children[0].params);
+        CHECK(b.initCode.empty());
+        CHECK(b.frameCode.empty());
+        CHECK(b.beatCode.empty());
+    }
+
+    TEST_CASE("Strang D: auch die Nachbau-Knoten tragen ihr Skript")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode mb; Metaballs3DParams mp;
+        mp.frameCode = "count=3+bass*10; radius=0.2+treb*0.3";
+        mb.params = mp;
+        ChainNode tc; Tentacles3DParams tp;
+        tp.beatCode = "sway=sway*1.5";
+        tc.params = tp;
+        ChainNode fw; FyrewurXParams fp;
+        fp.initCode = "seed=1";
+        fp.frameCode = "dotsize=2+vol*6";
+        fw.params = fp;
+        root.children.push_back(std::move(mb));
+        root.children.push_back(std::move(tc));
+        root.children.push_back(std::move(fw));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 3);
+        CHECK(std::get<Metaballs3DParams>(r.children[0].params).frameCode ==
+              "count=3+bass*10; radius=0.2+treb*0.3");
+        CHECK(std::get<Tentacles3DParams>(r.children[1].params).beatCode ==
+              "sway=sway*1.5");
+        const auto& f = std::get<FyrewurXParams>(r.children[2].params);
+        CHECK(f.initCode == "seed=1");
+        CHECK(f.frameCode == "dotsize=2+vol*6");
+    }
+
+    TEST_CASE("Strang D: die uebrigen Render-Knoten tragen ihr Skript")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode sf; StarfieldParams sp;
+        sp.frameCode = "warpspeed=6+bass*20";
+        sf.params = sp;
+        ChainNode ts; TimescopeParams tp;
+        tp.frameCode = "bands=100+vol*400";
+        ts.params = tp;
+        ChainNode dg; DotGridParams gp;
+        gp.beatCode = "spacing=4";
+        dg.params = gp;
+        ChainNode df; DotFountainParams fp;
+        fp.frameCode = "rotvel=16+treb*30";
+        df.params = fp;
+        root.children.push_back(std::move(sf));
+        root.children.push_back(std::move(ts));
+        root.children.push_back(std::move(dg));
+        root.children.push_back(std::move(df));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 4);
+        CHECK(std::get<StarfieldParams>(r.children[0].params).frameCode ==
+              "warpspeed=6+bass*20");
+        CHECK(std::get<TimescopeParams>(r.children[1].params).frameCode ==
+              "bands=100+vol*400");
+        CHECK(std::get<DotGridParams>(r.children[2].params).beatCode == "spacing=4");
+        CHECK(std::get<DotFountainParams>(r.children[3].params).frameCode ==
+              "rotvel=16+treb*30");
+    }
+
+    TEST_CASE("Strang D: die Trans-Effekte tragen ihr Skript")
+    {
+        ChainNode root; root.params = ListParams{};
+        auto push = [&root](EffectParams p) {
+            ChainNode n; n.params = std::move(p); root.children.push_back(std::move(n));
+        };
+        BlitterFeedbackParams bf; bf.frameCode = "scale=32+bass*20"; push(bf);
+        RotoBlitterParams rb; rb.frameCode = "rotdir=32+treb*10"; push(rb);
+        InterferencesParams itf; itf.beatCode = "points=6"; push(itf);
+        WaterBumpParams wb; wb.frameCode = "depth=600+vol*400"; push(wb);
+        MosaicParams ms; ms.frameCode = "quality=50+bass*40"; push(ms);
+        GrainParams gr; gr.frameCode = "amount=20+vol*60"; push(gr);
+        FadeoutParams fo; fo.frameCode = "fadelen=8+bass*20"; push(fo);
+        AddBordersParams ab; ab.frameCode = "size=2+vol*10"; push(ab);
+        ColorClipParams cc; cc.frameCode = "distance=10+treb*40"; push(cc);
+        BloomParams bl; bl.frameCode = "intensity=0.5+bass"; push(bl);
+        VideoDelayParams vd; vd.frameCode = "delay=4+vol*20"; push(vd);
+        MultiDelayParams md; md.frameCode = "delay=4+vol*20"; push(md);
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 12);
+        CHECK(std::get<BlitterFeedbackParams>(r.children[0].params).frameCode ==
+              "scale=32+bass*20");
+        CHECK(std::get<RotoBlitterParams>(r.children[1].params).frameCode ==
+              "rotdir=32+treb*10");
+        CHECK(std::get<InterferencesParams>(r.children[2].params).beatCode == "points=6");
+        CHECK(std::get<WaterBumpParams>(r.children[3].params).frameCode ==
+              "depth=600+vol*400");
+        CHECK(std::get<MosaicParams>(r.children[4].params).frameCode ==
+              "quality=50+bass*40");
+        CHECK(std::get<GrainParams>(r.children[5].params).frameCode == "amount=20+vol*60");
+        CHECK(std::get<FadeoutParams>(r.children[6].params).frameCode ==
+              "fadelen=8+bass*20");
+        CHECK(std::get<AddBordersParams>(r.children[7].params).frameCode == "size=2+vol*10");
+        CHECK(std::get<ColorClipParams>(r.children[8].params).frameCode ==
+              "distance=10+treb*40");
+        CHECK(std::get<BloomParams>(r.children[9].params).frameCode == "intensity=0.5+bass");
+        CHECK(std::get<VideoDelayParams>(r.children[10].params).frameCode ==
+              "delay=4+vol*20");
+        CHECK(std::get<MultiDelayParams>(r.children[11].params).frameCode ==
+              "delay=4+vol*20");
+
+        // Fadeout und VideoDelay wurden von Aggregat-Init auf Blockform
+        // umgestellt — ihre uebrigen Felder muessen weiter durchkommen.
+        CHECK(std::get<FadeoutParams>(r.children[6].params).fadeLen == 16);
+        CHECK(std::get<VideoDelayParams>(r.children[10].params).delay == 10);
+    }
+
+    TEST_CASE("Strang D: JEDER Knoten mit Skriptfeldern haelt sie im Round-Trip")
+    {
+        // Block 2 (S53) — die restlichen Trans-/Bild-Effekte. `Movement`
+        // fehlt bewusst: es baut eine statische Tabelle, ein Skript koennte
+        // dort nichts bewegen (Befund movement3b.lvfx, S53). Ein Feld, das der
+        // Serializer verliert, waere ein stiller Blindgaenger: der Editor zeigt
+        // es, das Preset merkt es sich nicht.
+        ChainNode root; root.params = ListParams{};
+        auto push = [&root](EffectParams p) {
+            ChainNode n; n.params = std::move(p); root.children.push_back(std::move(n));
+        };
+        const std::string kCode = "x=1";
+        ClearParams a; a.frameCode = kCode; push(a);
+        BrightnessParams b; b.frameCode = kCode; push(b);
+        SimpleScopeParams c; c.frameCode = kCode; push(c);
+        UniqueToneParams d; d.frameCode = kCode; push(d);
+        InterleaveParams e; e.frameCode = kCode; push(e);
+        PictureParams f; f.frameCode = kCode; push(f);
+        PictureIIParams g; g.frameCode = kCode; push(g);
+        FastBrightnessParams h; h.frameCode = kCode; push(h);
+        BlurParams i; i.frameCode = kCode; push(i);
+        MirrorParams j; j.frameCode = kCode; push(j);
+        OnBeatClearParams k; k.frameCode = kCode; push(k);
+        ColorfadeParams l; l.frameCode = kCode; push(l);
+        BufferSaveParams n2; n2.frameCode = kCode; push(n2);
+        CustomBpmParams o; o.frameCode = kCode; push(o);
+        BufferBlendParams q; q.frameCode = kCode; push(q);
+        ConvolutionParams r2; r2.frameCode = kCode; push(r2);
+        MultiFilterParams t; t.frameCode = kCode; push(t);
+        TexerParams u; u.frameCode = kCode; push(u);
+        ColorMapParams v; v.frameCode = kCode; push(v);
+        ChannelShiftParams w; w.frameCode = kCode; push(w);
+        ColorReductionParams x; x.frameCode = kCode; push(x);
+        MultiplierParams y; y.frameCode = kCode; push(y);
+
+        const ChainNode rr = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(rr.children.size() == 22);
+        int seen = 0;
+        for (const ChainNode& child : rr.children)
+        {
+            CAPTURE(effectTypeKey(child.params).toStdString());
+            const std::string* code = std::visit(
+                [](const auto& pp) -> const std::string* {
+                    using T = std::decay_t<decltype(pp)>;
+                    if constexpr (requires { pp.frameCode; })
+                        return &pp.frameCode;
+                    else
+                        return nullptr;
+                },
+                child.params);
+            REQUIRE(code != nullptr);   // Typ hat das Feld gar nicht → Fehler
+            CHECK(*code == kCode);      // …oder der Serializer verliert es
+            ++seen;
+        }
+        CHECK(seen == 22);
+    }
+
+    TEST_CASE("Default-Vertrag KLASSE A: die Vorgaben sind die Referenz-Werte")
+    {
+        // Diese drei Knoten bilden Referenz-Quelltext zeilengenau nach; ihre
+        // Vorgaben MUESSEN die Originalwerte sein (r_dotpln/r_bspin/r_parts),
+        // sonst weicht jedes importierte Preset stillschweigend ab.
+        QJsonObject doc;
+        QJsonObject rootObj;
+        rootObj["type"] = "list";
+        QJsonArray kids;
+        for (const char* key : {"dotPlane", "bassSpin", "movingParticle"})
+        {
+            QJsonObject k;
+            k["type"] = key;
+            kids.append(k);
+        }
+        rootObj["children"] = kids;
+        doc["root"] = rootObj;
+
+        const ChainNode r = chainFromJson(doc, nullptr);
+        REQUIRE(r.children.size() == 3);
+        const auto& dp = std::get<DotPlaneParams>(r.children[0].params);
+        CHECK(dp.camDistance == doctest::Approx(400.0f));  // matrixTranslate z
+        CHECK(dp.settle == doctest::Approx(0.15f));
+        const auto& bs = std::get<BassSpinParams>(r.children[1].params);
+        CHECK(bs.smoothing == doctest::Approx(0.7f));
+        // EXAKT der Original-Ausdruck, nicht das mathematische pi/6 — die
+        // beiden trennen 4,7e-7, was sich ueber die Frames aufsummiert.
+        CHECK(bs.spinStep == 3.14159f / 6.0f);
+        const auto& mp = std::get<MovingParticleParams>(r.children[2].params);
+        CHECK(mp.spring == doctest::Approx(0.004f));
+        CHECK(mp.damping == doctest::Approx(0.991f));
+
+        // Und ohne Skript: kein Skript. Der Editor weist bei diesen drei
+        // Knoten darauf hin, dass ein Skript die Referenz verlaesst.
+        CHECK(dp.frameCode.empty());
+        CHECK(bs.frameCode.empty());
+        CHECK(mp.frameCode.empty());
+    }
+
+    TEST_CASE("Strang D: auch die Klasse-A-Knoten tragen ihr Skript")
+    {
+        ChainNode root; root.params = ListParams{};
+        ChainNode dp; DotPlaneParams dpp;
+        dpp.frameCode = "camdistance=400+bass*200";
+        dp.params = dpp;
+        ChainNode bs; BassSpinParams bsp;
+        bsp.beatCode = "smoothing=0.9";
+        bs.params = bsp;
+        ChainNode mp; MovingParticleParams mpp;
+        mpp.frameCode = "damping=0.99-treb*0.05";
+        mp.params = mpp;
+        root.children.push_back(std::move(dp));
+        root.children.push_back(std::move(bs));
+        root.children.push_back(std::move(mp));
+
+        const ChainNode r = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(r.children.size() == 3);
+        CHECK(std::get<DotPlaneParams>(r.children[0].params).frameCode ==
+              "camdistance=400+bass*200");
+        CHECK(std::get<BassSpinParams>(r.children[1].params).beatCode ==
+              "smoothing=0.9");
+        CHECK(std::get<MovingParticleParams>(r.children[2].params).frameCode ==
+              "damping=0.99-treb*0.05");
+    }
+
     TEST_CASE("Timescope-Parameter ueberleben den Round-Trip")
     {
         ChainNode root;

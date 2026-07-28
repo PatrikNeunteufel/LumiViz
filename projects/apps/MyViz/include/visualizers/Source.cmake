@@ -24,6 +24,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/milkdrop/MilkdropTrace.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/MultiEffectVisualizer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/multieffect/EffectChain.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/multieffect/NodePresetStore.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/OscilloscopeVisualizer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PipelineKeys.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PulsingVisualizer.hpp"

@@ -123,6 +123,18 @@ void initMenuDefaults(MenuRegistry& registry)
 
     registry.registerItem(
         MenuItemDesc{
+            {"menu.file.newchain", "menu.file", 305},
+            "New Effect Chain",
+            [](ServiceContainer& svc) {
+                if (auto* eventBus = svc.tryResolve<IEventBus>())
+                    eventBus->publish(NewEffectChainEvent{});
+            },
+            {}, {}, "Ctrl+Shift+N"
+        },
+        false);
+
+    registry.registerItem(
+        MenuItemDesc{
             {"menu.file.loadchain", "menu.file", 310},
             "Load Effect Chain...",
             [](ServiceContainer& svc) {

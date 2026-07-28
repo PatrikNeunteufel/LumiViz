@@ -28,6 +28,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QSettings>
 #include <QFont>
 #include <QFontMetrics>
 #include <QImage>
@@ -2377,6 +2378,31 @@ void embedOneImage(std::string& filename, std::string& imageData, const char* la
         }
         if (!imageData.empty() || !dir.cdUp()) break;
     }
+
+    // Zuletzt der in den Einstellungen gesetzte Bilder-Suchordner (S50-Vorgabe,
+    // umgesetzt S53). Er greift NUR, wenn neben dem Preset nichts gefunden wurde
+    // — ein Bild beim Preset bleibt also immer das massgebliche.
+    if (imageData.empty())
+    {
+        QSettings settings;
+        const QString extra =
+            settings.value(QStringLiteral("import/imageSearchDir")).toString();
+        if (!extra.isEmpty())
+        {
+            QDir sd(extra);
+            for (const QString& cand : {sd.filePath(fname), sd.filePath(bare)})
+            {
+                if (!QFileInfo::exists(cand)) continue;
+                QFile file(cand);
+                if (file.open(QIODevice::ReadOnly))
+                {
+                    imageData = file.readAll().toBase64().toStdString();
+                    break;
+                }
+            }
+        }
+    }
+
     if (imageData.empty() && report != nullptr)
         report->append(QStringLiteral("%1: image not found: %2")
                            .arg(QString::fromLatin1(label), fname));
@@ -3373,12 +3399,12 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
 
         void operator()(const ListParams& params) const { self.renderList(node, params); }
         void operator()(const HostGroupParams& params) const { self.renderHostGroup(node, params); }
-        void operator()(const ClearParams& params) const { self.runClear(params); }
-        void operator()(const FadeoutParams& params) const { self.runFadeout(params); }
+        void operator()(const ClearParams& params) const { self.runClear(node, params); }
+        void operator()(const FadeoutParams& params) const { self.runFadeout(node, params); }
         void operator()(const InvertParams&) const { self.runInvert(); }
-        void operator()(const BrightnessParams& params) const { self.runBrightness(params); }
-        void operator()(const FastBrightnessParams& params) const { self.runFastBrightness(params); }
-        void operator()(const BlurParams& params) const { self.runBlur(params); }
+        void operator()(const BrightnessParams& params) const { self.runBrightness(node, params); }
+        void operator()(const FastBrightnessParams& params) const { self.runFastBrightness(node, params); }
+        void operator()(const BlurParams& params) const { self.runBlur(node, params); }
         void operator()(const MirrorParams& params) const { self.runMirror(node, params); }
         void operator()(const OnBeatClearParams& params) const { self.runOnBeatClear(node, params); }
         void operator()(const ColorfadeParams& params) const { self.runColorfade(node, params); }
@@ -3402,23 +3428,23 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const BumpParams& params) const { self.runBump(node, params); }
         void operator()(const WaterBumpParams& params) const { self.runWaterBump(node, params); }
         void operator()(const FyrewurXParams& params) const { self.runFyrewurX(node, params); }
-        void operator()(const Metaballs3DParams& params) const { self.runMetaballs3D(params); }
-        void operator()(const Tentacles3DParams& params) const { self.runTentacles3D(params); }
+        void operator()(const Metaballs3DParams& params) const { self.runMetaballs3D(node, params); }
+        void operator()(const Tentacles3DParams& params) const { self.runTentacles3D(node, params); }
         void operator()(const StarfieldParams& params) const { self.runStarfield(node, params); }
         void operator()(const TimescopeParams& params) const { self.runTimescope(node, params); }
         void operator()(const DotGridParams& params) const { self.runDotGrid(node, params); }
         void operator()(const DotPlaneParams& params) const { self.runDotPlane(node, params); }
         void operator()(const DotFountainParams& params) const { self.runDotFountain(node, params); }
         void operator()(const ColorMapParams& params) const { self.runColorMap(node, params); }
-        void operator()(const BufferBlendParams& params) const { self.runBufferBlend(params); }
+        void operator()(const BufferBlendParams& params) const { self.runBufferBlend(node, params); }
         void operator()(const JherikoGlobalParams& params) const { self.runJherikoGlobal(node, params); }
-        void operator()(const ColorClipParams& params) const { self.runColorClip(params); }
-        void operator()(const UniqueToneParams& params) const { self.runUniqueTone(params); }
+        void operator()(const ColorClipParams& params) const { self.runColorClip(node, params); }
+        void operator()(const UniqueToneParams& params) const { self.runUniqueTone(node, params); }
         void operator()(const InterleaveParams& params) const { self.runInterleave(node, params); }
-        void operator()(const ConvolutionParams& params) const { self.runConvolution(params); }
+        void operator()(const ConvolutionParams& params) const { self.runConvolution(node, params); }
         void operator()(const NormaliseParams&) const { self.runNormalise(); }
-        void operator()(const MultiFilterParams& params) const { self.runMultiFilter(params); }
-        void operator()(const AddBordersParams& params) const { self.runAddBorders(params); }
+        void operator()(const MultiFilterParams& params) const { self.runMultiFilter(node, params); }
+        void operator()(const AddBordersParams& params) const { self.runAddBorders(node, params); }
         void operator()(const SimpleScopeParams& params) const { self.runSimpleScope(node, params); }
         void operator()(const BassSpinParams& params) const { self.runBassSpin(node, params); }
         void operator()(const OscStarParams& params) const { self.runOscStar(node, params); }
@@ -3430,10 +3456,10 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const TexerIIParams& params) const { self.runTexerII(node, params); }
         void operator()(const TriangleParams& params) const { self.runTriangle(node, params); }
         void operator()(const ChannelShiftParams& params) const { self.runChannelShift(node, params); }
-        void operator()(const ColorReductionParams& params) const { self.runColorReduction(params); }
-        void operator()(const MultiplierParams& params) const { self.runMultiplier(params); }
+        void operator()(const ColorReductionParams& params) const { self.runColorReduction(node, params); }
+        void operator()(const MultiplierParams& params) const { self.runMultiplier(node, params); }
         void operator()(const VideoDelayParams& params) const { self.runVideoDelay(node, params); }
-        void operator()(const MultiDelayParams& params) const { self.runMultiDelay(params); }
+        void operator()(const MultiDelayParams& params) const { self.runMultiDelay(node, params); }
         void operator()(const Fractal2DParams& params) const { self.runFractal2D(node, params); }
         void operator()(const DomainWarpParams& params) const { self.runDomainWarp(node, params); }
         void operator()(const Fractal3DParams& params) const { self.runFractal3D(node, params); }
@@ -3755,8 +3781,17 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
 // Leaves
 // =============================================================================
 
-void MultiEffectVisualizer::runClear(const ClearParams& params)
+void MultiEffectVisualizer::runClear(const ChainNode& node,
+                                     const ClearParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vBlend = params.blend;
+    runParamScript(rt, "clear", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"blend", &vBlend}});
+
     if (params.onlyFirst && !m_firstFrame) return;
     auto* f = QOpenGLContext::currentContext()->functions();
     const QVector3D color = colorToVec(params.color);
@@ -3793,12 +3828,20 @@ void MultiEffectVisualizer::runClear(const ClearParams& params)
     resetLineBlend();
 }
 
-void MultiEffectVisualizer::runFadeout(const FadeoutParams& params)
+void MultiEffectVisualizer::runFadeout(const ChainNode& node,
+                                       const FadeoutParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vFadeLen = params.fadeLen;
+    runParamScript(rt, "fadeout", params.initCode, params.frameCode,
+                   params.beatCode, {{"fadelen", &vFadeLen}});
+
     m_fadeShader->bind();
     m_fadeShader->setUniformValue("uTarget", colorToVec(params.color));
     m_fadeShader->setUniformValue("uStep",
-                                  static_cast<float>(params.fadeLen) / 255.0f);
+                                  static_cast<float>(vFadeLen) / 255.0f);
     m_fadeShader->release();
     transformPass(*m_fadeShader);
 }
@@ -3808,8 +3851,19 @@ void MultiEffectVisualizer::runInvert()
     transformPass(*m_invertShader);
 }
 
-void MultiEffectVisualizer::runBrightness(const BrightnessParams& params)
+void MultiEffectVisualizer::runBrightness(const ChainNode& node,
+                                          const BrightnessParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vRed = params.red, vGreen = params.green, vBlue = params.blue;
+    runParamScript(rt, "brightness", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"red", &vRed},
+                    {"green", &vGreen},
+                    {"blue", &vBlue}});
+
     // Slider -> multiplier (r_bright.cpp:188): negative darkens to 0, positive
     // brightens up to 17x.
     auto factor = [](int p) {
@@ -3828,8 +3882,17 @@ void MultiEffectVisualizer::runBrightness(const BrightnessParams& params)
     transformPass(*m_brightShader);
 }
 
-void MultiEffectVisualizer::runFastBrightness(const FastBrightnessParams& params)
+void MultiEffectVisualizer::runFastBrightness(const ChainNode& node,
+                                              const FastBrightnessParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vDir = params.dir;
+    runParamScript(rt, "fastbright", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"dir", &vDir}});
+
     if (params.dir == 2) return;  // identity — no work (r_fastbright dir==2)
     const float scale = params.dir == 0 ? 2.0f : 0.5f;  // x2 (clamped) / x0.5
     m_brightShader->bind();
@@ -3839,8 +3902,17 @@ void MultiEffectVisualizer::runFastBrightness(const FastBrightnessParams& params
     transformPass(*m_brightShader);
 }
 
-void MultiEffectVisualizer::runBlur(const BlurParams& params)
+void MultiEffectVisualizer::runBlur(const ChainNode& node,
+                                    const BlurParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vStrength = params.strength;
+    runParamScript(rt, "blur", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"strength", &vStrength}});
+
     // Weights per strength (r_blur.cpp). All kernels sum to 1.
     float center = 0.5f;
     float neighbor = 0.125f;
@@ -3861,6 +3933,14 @@ void MultiEffectVisualizer::runMirror(const ChainNode& node,
                                       const MirrorParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vMode = params.mode, vSlower = params.slower;
+    runParamScript(rt, "mirror", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"mode", &vMode},
+                    {"slower", &vSlower}});
+
 
     // Active direction bits this frame (r_mirror.cpp:146 rbeat=(rand()%16)&mode).
     int target = params.mode & 15;
@@ -3919,8 +3999,15 @@ void MultiEffectVisualizer::runMirror(const ChainNode& node,
 void MultiEffectVisualizer::runOnBeatClear(const ChainNode& node,
                                            const OnBeatClearParams& params)
 {
-    // Beat counter -> clear every Nth beat (r_nfclr.cpp:97).
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vEvery = params.everyNBeats;
+    runParamScript(rt, "onbeatclear", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"everynbeats", &vEvery}});
+
+    // Beat counter -> clear every Nth beat (r_nfclr.cpp:97).
     if (!m_frameBeat) return;
     if (++rt.beatCounter < params.everyNBeats) return;
     rt.beatCounter = 0;
@@ -3954,8 +4041,18 @@ void MultiEffectVisualizer::runOnBeatClear(const ChainNode& node,
 void MultiEffectVisualizer::runColorfade(const ChainNode& node,
                                          const ColorfadeParams& params)
 {
-    // Beat faders replace the base faders for onBeatFrames frames after a beat.
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vFadeR = params.faderR, vFadeG = params.faderG, vFadeB = params.faderB, vBeatFrames = params.onBeatFrames;
+    runParamScript(rt, "colorfade", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"faderr", &vFadeR},
+                    {"faderg", &vFadeG},
+                    {"faderb", &vFadeB},
+                    {"onbeatframes", &vBeatFrames}});
+
+    // Beat faders replace the base faders for onBeatFrames frames after a beat.
     if (m_frameBeat) rt.beatFramesLeft = params.onBeatFrames;
     const bool onBeat = rt.beatFramesLeft > 0;
     if (rt.beatFramesLeft > 0) --rt.beatFramesLeft;
@@ -4041,6 +4138,8 @@ void MultiEffectVisualizer::runColorModifier(const ChainNode& node,
 void MultiEffectVisualizer::runMovement(const ChainNode& node,
                                         const MovementParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
     if (params.builtinRemap != 0)
     {
         // per-pixel remap builtins (1 fuzzify / 7 blocky partial out, S44)
@@ -4053,7 +4152,6 @@ void MultiEffectVisualizer::runMovement(const ChainNode& node,
         return;
     }
     if (params.code.empty()) return;  // formula "none" -> no-op
-    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
     // r_trans wertet das Skript je PIXEL aus und legt eine Tabelle an, die nur
     // bei Groessen-/Skriptwechsel neu entsteht — kein Gitter, keine
@@ -4500,21 +4598,28 @@ void MultiEffectVisualizer::runBlitterFeedback(const ChainNode& node,
     // (Faktor 64/(f_val+32)), f_val > 32 schrumpft das GANZE Bild in ein
     // zentriertes Fenster (blitter_out), 32 ist neutral.
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vScale = params.scale, vScale2 = params.scale2;
+    runParamScript(rt, "blitterfb", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"scale", &vScale}, {"scale2", &vScale2}});
+
     if (!rt.bfSeeded)
     {
-        rt.bfFpos = params.scale;
+        rt.bfFpos = static_cast<int>(vScale);
         rt.bfSeeded = true;
     }
-    if (m_frameBeat && params.onBeat) rt.bfFpos = params.scale2;
+    if (m_frameBeat && params.onBeat) rt.bfFpos = static_cast<int>(vScale2);
     int fVal;
-    if (params.scale < params.scale2)
+    if (vScale < vScale2)
     {
-        fVal = std::max(rt.bfFpos, params.scale);
+        fVal = std::max(rt.bfFpos, static_cast<int>(vScale));
         rt.bfFpos -= 3;
     }
     else
     {
-        fVal = std::min(rt.bfFpos, params.scale);
+        fVal = std::min(rt.bfFpos, static_cast<int>(vScale));
         rt.bfFpos += 3;
     }
     if (fVal < 0) fVal = 0;
@@ -4593,9 +4698,19 @@ void MultiEffectVisualizer::runRotoBlitter(const ChainNode& node,
     // akkumuliert uebers Feedback (die alte Winkel-Akkumulation hier war das
     // Pixel-Rauschen). Sampling kachelt (s %= ds) und ist bilinear (BLEND4).
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vZoom = params.zoomScale, vZoom2 = params.zoomScale2;
+    double vRotDir = params.rotDir;
+    runParamScript(rt, "rotoblitter", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"zoomscale", &vZoom},
+                    {"zoomscale2", &vZoom2},
+                    {"rotdir", &vRotDir}});
+
     if (!rt.rotoSeeded)
     {
-        rt.rotoFpos = params.zoomScale;
+        rt.rotoFpos = static_cast<int>(vZoom);
         rt.rotoSeeded = true;
     }
     if (m_frameBeat && params.beatReverse) rt.rotoRev = -rt.rotoRev;
@@ -4605,22 +4720,22 @@ void MultiEffectVisualizer::runRotoBlitter(const ChainNode& node,
                      (rt.rotoRev - rt.rotoRevPos);
     if (rt.rotoRevPos > rt.rotoRev && rt.rotoRev > 0.0f) rt.rotoRevPos = rt.rotoRev;
     if (rt.rotoRevPos < rt.rotoRev && rt.rotoRev < 0.0f) rt.rotoRevPos = rt.rotoRev;
-    if (m_frameBeat && params.beatZoomJump) rt.rotoFpos = params.zoomScale2;
+    if (m_frameBeat && params.beatZoomJump) rt.rotoFpos = static_cast<int>(vZoom2);
 
     int fVal;
-    if (params.zoomScale < params.zoomScale2)
+    if (vZoom < vZoom2)
     {
-        fVal = std::max(rt.rotoFpos, params.zoomScale);
-        if (rt.rotoFpos > params.zoomScale) rt.rotoFpos -= 3;
+        fVal = std::max(rt.rotoFpos, static_cast<int>(vZoom));
+        if (rt.rotoFpos > vZoom) rt.rotoFpos -= 3;
     }
     else
     {
-        fVal = std::min(rt.rotoFpos, params.zoomScale);
-        if (rt.rotoFpos < params.zoomScale) rt.rotoFpos += 3;
+        fVal = std::min(rt.rotoFpos, static_cast<int>(vZoom));
+        if (rt.rotoFpos < vZoom) rt.rotoFpos += 3;
     }
     const double zoom = 1.0 + static_cast<double>(fVal - 31) / 31.0;
     const double thetaDeg =
-        static_cast<double>(params.rotDir - 32) * static_cast<double>(rt.rotoRevPos);
+        (vRotDir - 32.0) * static_cast<double>(rt.rotoRevPos);
 
     // Abbildung exakt wie r_rotblit (:159-171): 16.16-Fixpunkt-Ints (Cast =
     // trunc), Zentrum bei INTEGER (w-1)/2, sstart/tstart inkl. des (1<<20)-
@@ -4679,9 +4794,18 @@ void MultiEffectVisualizer::feedbackPass(const QMatrix2x2& map, const QVector2D&
 void MultiEffectVisualizer::runBufferSave(const ChainNode& node,
                                           const BufferSaveParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vSlot = params.slot, vDir = params.dir, vAlpha = params.adjustAlpha;
+    runParamScript(rt, "buffersave", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"slot", &vSlot},
+                    {"dir", &vDir},
+                    {"adjustalpha", &vAlpha}});
+
     // Direction per frame (r_stack.cpp:125-126): dir 0/1 are fixed, dir 2/3
     // alternate save/restore every render via the per-node toggle.
-    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     int tDir = params.dir;
     if (params.dir >= 2)
     {
@@ -4748,6 +4872,14 @@ void MultiEffectVisualizer::runCustomBpm(const ChainNode& node,
                                          const CustomBpmParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vMs = params.arbitraryMs, vSkip = params.skipCount;
+    runParamScript(rt, "custombpm", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"arbitraryms", &vMs},
+                    {"skipcount", &vSkip}});
+
     const bool inBeat = m_frameBeat;
 
     // Aufbau 1:1 nach r_bpm.cpp:137-185. Die drei Betriebsarten kehren dort
@@ -5127,30 +5259,37 @@ void MultiEffectVisualizer::runDebugBars(const DebugBarsParams& params)
 void MultiEffectVisualizer::runMosaic(const ChainNode& node, const MosaicParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
-    if (rt.mosaicQuality <= 0.0f) rt.mosaicQuality = static_cast<float>(params.quality);
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vQuality = params.quality, vQuality2 = params.quality2;
+    runParamScript(rt, "mosaic", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"quality", &vQuality}, {"quality2", &vQuality2}});
+
+    if (rt.mosaicQuality <= 0.0f) rt.mosaicQuality = static_cast<float>(vQuality);
 
     // Pick this frame's block count, then step the ease-back (r_mosaic.cpp).
     if (params.onBeat && m_frameBeat)
     {
-        rt.mosaicQuality = static_cast<float>(params.quality2);
+        rt.mosaicQuality = static_cast<float>(vQuality2);
         rt.mosaicFramesLeft = std::max(1, params.durationFrames);
     }
     else if (rt.mosaicFramesLeft == 0)
     {
-        rt.mosaicQuality = static_cast<float>(params.quality);
+        rt.mosaicQuality = static_cast<float>(vQuality);
     }
     const float thisQuality = rt.mosaicQuality;
     if (rt.mosaicFramesLeft > 0)
     {
         if (--rt.mosaicFramesLeft > 0)
         {
-            const float step = std::abs(static_cast<float>(params.quality - params.quality2)) /
+            const float step = std::abs(static_cast<float>(vQuality - vQuality2)) /
                                static_cast<float>(std::max(1, params.durationFrames));
-            rt.mosaicQuality += params.quality2 > params.quality ? -step : step;
+            rt.mosaicQuality += vQuality2 > vQuality ? -step : step;
         }
         else
         {
-            rt.mosaicQuality = static_cast<float>(params.quality);
+            rt.mosaicQuality = static_cast<float>(vQuality);
         }
     }
 
@@ -5167,6 +5306,12 @@ void MultiEffectVisualizer::runMosaic(const ChainNode& node, const MosaicParams&
 void MultiEffectVisualizer::runGrain(const ChainNode& node, const GrainParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vAmount = params.amount;
+    runParamScript(rt, "grain", params.initCode, params.frameCode, params.beatCode,
+                   {{"amount", &vAmount}});
+
     auto* f = QOpenGLContext::currentContext()->functions();
     auto& rnd = *m_scriptContext;  // EIN rand()-Strom je Preset (S49)
 
@@ -5217,7 +5362,8 @@ void MultiEffectVisualizer::runGrain(const ChainNode& node, const GrainParams& p
     m_grainShader->setUniformValue("uResX", m_surfaceWidth);
     m_grainShader->setUniformValue("uResY", m_surfaceHeight);
     m_grainShader->setUniformValue("uSmax",
-                                   (std::clamp(params.amount, 0, 100) * 255) / 100);
+                                   (std::clamp(static_cast<int>(vAmount), 0, 100) *
+                                    255) / 100);
     m_grainShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
     m_grainShader->setUniformValue("uDepth", 1);
     m_grainShader->release();
@@ -5251,11 +5397,25 @@ void MultiEffectVisualizer::runInterferences(const ChainNode& node,
                                              const InterferencesParams& params)
 {
     constexpr float kPi = 3.14159265358979323846f;
-    const int points = std::clamp(params.points, 1, 8);
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vPoints = params.points, vDist = params.distance;
+    double vAlpha = params.alpha, vRotation = params.rotation;
+    double vRotInc = params.rotationInc, vSpeed = params.speed;
+    runParamScript(rt, "interferences", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"points", &vPoints},
+                    {"distance", &vDist},
+                    {"alpha", &vAlpha},
+                    {"rotation", &vRotation},
+                    {"rotationinc", &vRotInc},
+                    {"speed", &vSpeed}});
+
+    const int points = std::clamp(static_cast<int>(vPoints), 1, 8);
     if (!rt.interfSeeded)
     {
-        rt.interfRotation = static_cast<float>(params.rotation);
+        rt.interfRotation = static_cast<float>(vRotation);
         rt.interfStatus = kPi;
         rt.interfSeeded = true;
     }
@@ -5264,9 +5424,12 @@ void MultiEffectVisualizer::runInterferences(const ChainNode& node,
     if (params.onBeat && m_frameBeat && rt.interfStatus >= kPi) rt.interfStatus = 0.0f;
     const float s = std::sin(rt.interfStatus);
     const float rotInc =
-        params.rotationInc + (params.rotationInc2 - params.rotationInc) * s;
-    const float alpha = params.alpha + (params.alpha2 - params.alpha) * s;
-    const float dist = params.distance + (params.distance2 - params.distance) * s;
+        static_cast<float>(vRotInc) +
+        (params.rotationInc2 - static_cast<float>(vRotInc)) * s;
+    const float alpha = static_cast<float>(vAlpha) +
+                        (params.alpha2 - static_cast<float>(vAlpha)) * s;
+    const float dist = static_cast<float>(vDist) +
+                       (params.distance2 - static_cast<float>(vDist)) * s;
 
     // Copy offsets, evenly spaced around the accumulating rotation `a`.
     float a = rt.interfRotation / 255.0f * 2.0f * kPi;
@@ -5292,7 +5455,7 @@ void MultiEffectVisualizer::runInterferences(const ChainNode& node,
     rt.interfRotation += rotInc;
     if (rt.interfRotation > 255.0f) rt.interfRotation -= 255.0f;
     if (rt.interfRotation < -255.0f) rt.interfRotation += 255.0f;
-    rt.interfStatus = std::min(rt.interfStatus + params.speed, kPi);
+    rt.interfStatus = std::min(rt.interfStatus + static_cast<float>(vSpeed), kPi);
 }
 
 void MultiEffectVisualizer::runWater(const ChainNode& node, const WaterParams&)
@@ -5587,6 +5750,15 @@ void MultiEffectVisualizer::runColorMap(const ChainNode& node,
                                         const ColorMapParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vKey = params.key, vBlendMode = params.blendMode, vAdjust = params.adjustBlend;
+    runParamScript(rt, "colormap", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"key", &vKey},
+                    {"blendmode", &vBlendMode},
+                    {"adjustblend", &vAdjust}});
+
     auto* f = QOpenGLContext::currentContext()->functions();
 
     // Rebuild the LUT texture only when the stops change.
@@ -5635,8 +5807,19 @@ void MultiEffectVisualizer::runColorMap(const ChainNode& node,
     transformPass(*m_colorMapShader);
 }
 
-void MultiEffectVisualizer::runBufferBlend(const BufferBlendParams& params)
+void MultiEffectVisualizer::runBufferBlend(const ChainNode& node,
+                                           const BufferBlendParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vBufA = params.bufferA, vBufB = params.bufferB, vMode = params.mode;
+    runParamScript(rt, "bufferblend", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"buffera", &vBufA},
+                    {"bufferb", &vBufB},
+                    {"mode", &vMode}});
+
     auto* f = QOpenGLContext::currentContext()->functions();
     SurfacePair& pair = active();
     const unsigned int cur = pair.current()->texture();
@@ -5691,11 +5874,20 @@ void MultiEffectVisualizer::drawScopeShape(
 void MultiEffectVisualizer::runSimpleScope(const ChainNode& node,
                                            const SimpleScopeParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vMode = params.mode, vChannel = params.channel, vPosition = params.position;
+    runParamScript(rt, "simplescope", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"mode", &vMode},
+                    {"channel", &vChannel},
+                    {"position", &vPosition}});
+
     // r_simple.cpp zeilengenau (S48-Matrix-Befund 00): Analyzer lesen das
     // SPEKTRUM (200 Baender, xs=200/w), Scopes die Waveform (Byte^128);
     // solid = eine vertikale Linie je Bildspalte. Pixel-Mathematik auf der
     // Surface, dann Pixelzentren -> NDC fuer den ScopeRenderer (AVS y+ unten).
-    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     const QVector3D c = colorToVec(cycleScopeColor(params.colors, rt.scopeColorPos));
     const int w = m_surfaceWidth;
     const int h = m_surfaceHeight;
@@ -5862,6 +6054,11 @@ void MultiEffectVisualizer::runBassSpin(const ChainNode& node,
     const int h = m_surfaceHeight;
     if (w < 2 || h < 2) return;
 
+    // Strang D auf einer Frame-Kopie. KLASSE A — s. Hinweis bei Moving Particle.
+    double vMode = params.mode, vSmooth = params.smoothing, vStep = params.spinStep;
+    runParamScript(rt, "bassspin", params.initCode, params.frameCode, params.beatCode,
+                   {{"mode", &vMode}, {"smoothing", &vSmooth}, {"spinstep", &vStep}});
+
     const auto ndcX = [&](int px) {
         return (static_cast<float>(px) + 0.5f) / static_cast<float>(w) * 2.0f - 1.0f;
     };
@@ -5882,8 +6079,11 @@ void MultiEffectVisualizer::runBassSpin(const ChainNode& node,
         int a = (d * 512) / (rt.bsLastA + 30 * 256);
         rt.bsLastA = d;
         if (a > 255) a = 255;
-        rt.bsV[chn] = 0.7f * (std::max(a - 104, 12) / 96.0f) + 0.3f * rt.bsV[chn];
-        rt.bsRv[chn] += 3.14159f / 6.0f * rt.bsV[chn] * (chn == 0 ? -1.0f : 1.0f);
+        // S53 freigemacht (Klasse A) — Vorgaben sind die r_bspin-Werte 0,7/pi 6.
+        const float sm = std::clamp(static_cast<float>(vSmooth), 0.0f, 1.0f);
+        rt.bsV[chn] = sm * (std::max(a - 104, 12) / 96.0f) + (1.0f - sm) * rt.bsV[chn];
+        rt.bsRv[chn] +=
+            static_cast<float>(vStep) * rt.bsV[chn] * (chn == 0 ? -1.0f : 1.0f);
 
         const double s = static_cast<double>(ss) * a / 256.0;
         const int xp = static_cast<int>(std::cos(rt.bsRv[chn]) * s);
@@ -5891,7 +6091,7 @@ void MultiEffectVisualizer::runBassSpin(const ChainNode& node,
         const QVector3D col =
             colorToVec(chn == 0 ? params.colorLeft : params.colorRight);
 
-        if (params.mode == 0)  // Linien: Speichen + Trail zur letzten Spitze
+        if (static_cast<int>(vMode) == 0)  // Linien: Speichen + Trail zur Spitze
         {
             std::vector<lumi::modules::SuperscopePoint> pts;
             const auto push = [&](int x, int y) {
@@ -6071,6 +6271,14 @@ void MultiEffectVisualizer::drawEmbeddedImage(LeafRuntime& rt,
 
 void MultiEffectVisualizer::runPicture(const ChainNode& node, const PictureParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vBlend = params.blend;
+    runParamScript(rt, "picture", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"blend", &vBlend}});
+
     drawEmbeddedImage(m_leafRuntimes[node.nodeId], params.imageData, params.blend,
                       params.keepAspect);
 }
@@ -6078,6 +6286,14 @@ void MultiEffectVisualizer::runPicture(const ChainNode& node, const PictureParam
 void MultiEffectVisualizer::runPictureII(const ChainNode& node,
                                          const PictureIIParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vBlend = params.blend;
+    runParamScript(rt, "pictureii", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"blend", &vBlend}});
+
     // Picture II stretches to fill (no aspect lock); bilinear is already on.
     drawEmbeddedImage(m_leafRuntimes[node.nodeId], params.imageData, params.blend, false);
 }
@@ -6425,6 +6641,14 @@ void MultiEffectVisualizer::runAvi(const ChainNode& node, const AviParams& param
 void MultiEffectVisualizer::runTexer(const ChainNode& node, const TexerParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vParticles = params.particles, vBlend = params.blend;
+    runParamScript(rt, "texer", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"particles", &vParticles},
+                    {"blend", &vBlend}});
+
     if (!ensureEmbeddedTexture(rt, params.imageData, /*fallbackDot=*/true)) return;
     const std::vector<float> wave = getWaveform();
     const int wn = static_cast<int>(wave.size());
@@ -6652,8 +6876,34 @@ void MultiEffectVisualizer::runTriangle(const ChainNode& node, const TrianglePar
         const auto [x1, y1] = ndc("x1", "y1");
         const auto [x2, y2] = ndc("x2", "y2");
         const auto [x3, y3] = ndc("x3", "y3");
-        tri = {x1, y1, x2, y2, x3, y3};
-        drawFlatTriangles(tri, col);
+        if (params.filled)
+        {
+            tri = {x1, y1, x2, y2, x3, y3};
+            drawFlatTriangles(tri, col);
+            continue;
+        }
+        // Drahtgitter (S53, opt-in): geschlossener Kantenzug statt Fuellung.
+        // Das ist eine bewusste ABWEICHUNG von AVS — die Referenz fuellt.
+        if (!m_scopeRenderer.ready()) continue;
+        std::vector<lumi::modules::SuperscopePoint> edge;
+        edge.reserve(4);
+        for (const auto& [ex, ey] :
+             {std::pair{x1, y1}, std::pair{x2, y2}, std::pair{x3, y3},
+              std::pair{x1, y1}})
+        {
+            lumi::modules::SuperscopePoint p;
+            p.x = ex;
+            p.y = ey;
+            p.r = col.x();
+            p.g = col.y();
+            p.b = col.z();
+            p.a = 1.0f;
+            edge.push_back(p);
+        }
+        lumi::render::ScopeRenderer::Params rp;
+        rp.mode = lumi::modules::SuperscopeRenderMode::Lines;
+        rp.lineWidth = std::max(1.0f, params.lineWidth);
+        m_scopeRenderer.draw(edge, rp);
     }
 }
 
@@ -6665,16 +6915,29 @@ void MultiEffectVisualizer::runOscStar(const ChainNode& node, const OscStarParam
     const int n = static_cast<int>(wave.size());
     if (n < 2) return;
 
-    rt.scopeRot += static_cast<float>(params.rot - 8) * 0.02f;  // 8 = still (sight-test)
-    const float len = std::clamp(params.size, 0, 16) / 16.0f;   // spoke length (NDC)
+    // S53: `rotScale`, `spokes` und `amplitude` waren Literale (0,02 · 5 · 0,5).
+    // Strang D rechnet sie optional je Frame — auf einer Frame-Kopie.
+    double vSize = params.size, vRot = params.rot, vSpokes = params.spokes;
+    double vRotScale = params.rotScale, vAmp = params.amplitude;
+    runParamScript(rt, "oscstar", params.initCode, params.frameCode, params.beatCode,
+                   {{"size", &vSize},
+                    {"rot", &vRot},
+                    {"spokes", &vSpokes},
+                    {"rotscale", &vRotScale},
+                    {"amplitude", &vAmp}});
+
+    rt.scopeRot += static_cast<float>((vRot - 8.0) * vRotScale);  // 8 = still
+    const float len = std::clamp(static_cast<int>(vSize), 0, 16) / 16.0f;
     const float cx = params.position == 0 ? -0.5f : (params.position == 1 ? 0.5f : 0.0f);
     const float aspect = m_surfaceHeight > 0
                              ? static_cast<float>(m_surfaceWidth) / static_cast<float>(m_surfaceHeight)
                              : 1.0f;
+    const int spokes = std::clamp(static_cast<int>(vSpokes), 1, 64);
 
-    for (int q = 0; q < 5; ++q)
+    for (int q = 0; q < spokes; ++q)
     {
-        const float ang = rt.scopeRot + static_cast<float>(q) * (2.0f * 3.14159f / 5.0f);
+        const float ang = rt.scopeRot + static_cast<float>(q) *
+                                            (2.0f * 3.14159f / static_cast<float>(spokes));
         const float dx = std::cos(ang);
         const float dy = std::sin(ang);
         std::vector<lumi::modules::SuperscopePoint> pts;
@@ -6683,7 +6946,8 @@ void MultiEffectVisualizer::runOscStar(const ChainNode& node, const OscStarParam
         {
             const float t = static_cast<float>(i) / static_cast<float>(n - 1);
             const float rad = t * len;
-            const float off = wave[static_cast<std::size_t>(i)] * len * 0.5f;
+            const float off =
+                wave[static_cast<std::size_t>(i)] * len * static_cast<float>(vAmp);
             lumi::modules::SuperscopePoint p;
             p.x = cx + (dx * rad - dy * off) / aspect;  // reduce x/y ellipse distortion
             p.y = dy * rad + dx * off;
@@ -6705,19 +6969,33 @@ void MultiEffectVisualizer::runOscRing(const ChainNode& node, const OscRingParam
     const int n = static_cast<int>(data.size());
     if (n < 2) return;
 
-    const float rad0 = std::clamp(params.size, 0, 16) / 16.0f;
+    // Strang D auf einer Frame-Kopie (s. Osc Star).
+    double vSize = params.size, vSeg = params.segments;
+    double vBase = params.baseScale, vAudio = params.audioScale;
+    runParamScript(rt, "oscring", params.initCode, params.frameCode, params.beatCode,
+                   {{"size", &vSize},
+                    {"segments", &vSeg},
+                    {"basescale", &vBase},
+                    {"audioscale", &vAudio}});
+
+    const float rad0 = std::clamp(static_cast<int>(vSize), 0, 16) / 16.0f;
     const float cx = params.position == 0 ? -0.5f : (params.position == 1 ? 0.5f : 0.0f);
     const float aspect = m_surfaceHeight > 0
                              ? static_cast<float>(m_surfaceWidth) / static_cast<float>(m_surfaceHeight)
                              : 1.0f;
 
+    // S53: Segmentzahl und die beiden Radius-Anteile waren fest (80 · 0,1 · 0,9).
+    const int seg = std::clamp(static_cast<int>(vSeg), 3, 1024);
     std::vector<lumi::modules::SuperscopePoint> pts;
-    pts.reserve(81);
-    for (int q = 0; q <= 80; ++q)
+    pts.reserve(static_cast<std::size_t>(seg) + 1);
+    for (int q = 0; q <= seg; ++q)
     {
-        const float a = -static_cast<float>(q) * (2.0f * 3.14159f / 80.0f);
-        const int idx = std::clamp((q % 80) * (n - 1) / 80, 0, n - 1);
-        const float sca = 0.1f + std::abs(data[static_cast<std::size_t>(idx)]) * 0.9f;
+        const float a = -static_cast<float>(q) *
+                        (2.0f * 3.14159f / static_cast<float>(seg));
+        const int idx = std::clamp((q % seg) * (n - 1) / seg, 0, n - 1);
+        const float sca = static_cast<float>(vBase) +
+                          std::abs(data[static_cast<std::size_t>(idx)]) *
+                              static_cast<float>(vAudio);
         const float rr = rad0 * sca;
         lumi::modules::SuperscopePoint p;
         p.x = cx + std::cos(a) * rr / aspect;
@@ -6731,29 +7009,96 @@ void MultiEffectVisualizer::runOscRing(const ChainNode& node, const OscRingParam
     drawScopeShape(pts, false);
 }
 
+void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
+                                           const std::string& init,
+                                           const std::string& frame,
+                                           const std::string& beat,
+                                           const std::vector<ParamVar>& vars)
+{
+    // Opt-in: ein Knoten ohne Skript darf keinen Cent Rechenzeit kosten.
+    if (init.empty() && frame.empty() && beat.empty()) return;
+
+    const std::string combined = init + '\n' + frame + '\n' + beat;
+    const bool fresh = (rt.paramHost == nullptr || rt.paramCompiled != combined);
+    if (fresh)
+    {
+        rt.paramHost = std::make_unique<ScriptSlotHost>(prefix, activeContext(),
+                                                        ScriptSlotHost::Dialect::Avs);
+        rt.paramHost->setSource(Slot::Init, init);
+        rt.paramHost->setSource(Slot::Frame, frame);
+        rt.paramHost->setSource(Slot::Beat, beat);
+        rt.paramHost->compileAll();
+        rt.paramCompiled = combined;
+    }
+
+    auto& engine = rt.paramHost->engine();
+    // Merkregel S52: ein Skript-Traeger braucht ALLE Variablen, die seine Slots
+    // lesen — und die Vorbelegung gehoert VOR den Frame-Slot, nicht danach.
+    for (const ParamVar& v : vars) engine.setNumber(v.name, *v.value);
+    engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+    engine.setNumber("w", static_cast<double>(m_surfaceWidth));
+    engine.setNumber("h", static_cast<double>(m_surfaceHeight));
+    feedAudio(engine);
+
+    if (fresh && rt.paramHost->has(Slot::Init)) rt.paramHost->run(Slot::Init);
+    if (rt.paramHost->has(Slot::Frame)) rt.paramHost->run(Slot::Frame);
+    if (m_frameBeat && rt.paramHost->has(Slot::Beat)) rt.paramHost->run(Slot::Beat);
+
+    for (const ParamVar& v : vars) *v.value = engine.number(v.name);
+}
+
 void MultiEffectVisualizer::runRotatingStars(const ChainNode& node,
                                              const RotatingStarsParams& params)
 {
+    // S53: die frueheren Literale sind Parameter geworden. Ihre Vorgaben SIND
+    // die alten Werte (points=5, skip=2, stars=2, rotSpeed=0,05, orbit=0,5,
+    // baseRadius=0,12, audioGain=0,5, Baender 3..13) — bei Default rechnet die
+    // Funktion Schritt fuer Schritt dasselbe wie vorher.
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     const QVector3D c = colorToVec(cycleScopeColor(params.colors, rt.scopeColorPos));
     const std::vector<float> spec = getSpectrum();
-    rt.scopeRot += 0.05f;
+
+    // Strang D: das Skript rechnet auf einer FRAME-KOPIE — das Preset selbst
+    // bleibt unberuehrt, sonst waeren die Regler nach einem Frame verstellt.
+    double vPoints = params.points, vSkip = params.skip, vStars = params.stars;
+    double vRotSpeed = params.rotSpeed, vOrbit = params.orbit;
+    double vBase = params.baseRadius, vGain = params.audioGain;
+    runParamScript(rt, "rotstar", params.initCode, params.frameCode, params.beatCode,
+                   {{"points", &vPoints},
+                    {"skip", &vSkip},
+                    {"stars", &vStars},
+                    {"rotspeed", &vRotSpeed},
+                    {"orbit", &vOrbit},
+                    {"baseradius", &vBase},
+                    {"audiogain", &vGain}});
+
+    rt.scopeRot += static_cast<float>(vRotSpeed);
+
+    const int points = std::clamp(static_cast<int>(vPoints), 2, 64);
+    const int skip = std::clamp(static_cast<int>(vSkip), 1, std::max(1, points - 1));
+    const int stars = std::clamp(static_cast<int>(vStars), 1, 16);
+    const int lo = std::clamp(params.bandLo, 0, 575);
+    const int hi = std::clamp(params.bandHi, lo + 1, 576);
 
     float peak = 0.0f;
-    for (int l = 3; l < 14 && l < static_cast<int>(spec.size()); ++l)
+    for (int l = lo; l < hi && l < static_cast<int>(spec.size()); ++l)
         peak = std::max(peak, spec[static_cast<std::size_t>(l)]);
-    const float vw = (peak * 0.5f + 0.12f) * 0.5f;  // star radius (NDC)
-    const float ox = std::cos(rt.scopeRot) * 0.5f;
-    const float oy = std::sin(rt.scopeRot) * 0.5f;
+    // Der aeussere Faktor 0,5 des Originals steckt jetzt in den Vorgaben.
+    const float vw = (peak * static_cast<float>(vGain) +
+                      static_cast<float>(vBase)) * 0.5f;
 
-    for (int ch = 0; ch < 2; ++ch)
+    for (int ch = 0; ch < stars; ++ch)
     {
-        const float bx = ch == 0 ? ox : -ox;
-        const float by = ch == 0 ? oy : -oy;
+        // Zwei Sterne standen sich gegenueber; bei mehr verteilen sie sich
+        // gleichmaessig auf derselben Bahn (bei stars=2 identisch zu vorher).
+        const float phase = rt.scopeRot + static_cast<float>(ch) * 6.2831853f /
+                                              static_cast<float>(stars);
+        const float bx = std::cos(phase) * static_cast<float>(vOrbit);
+        const float by = std::sin(phase) * static_cast<float>(vOrbit);
         float r2 = -rt.scopeRot;
         std::vector<lumi::modules::SuperscopePoint> pts;
-        pts.reserve(6);
-        for (int t = 0; t <= 5; ++t)
+        pts.reserve(static_cast<std::size_t>(points) + 1);
+        for (int t = 0; t <= points; ++t)
         {
             lumi::modules::SuperscopePoint p;
             p.x = bx + std::cos(r2) * vw;
@@ -6763,14 +7108,23 @@ void MultiEffectVisualizer::runRotatingStars(const ChainNode& node,
             p.b = c.z();
             p.a = 1.0f;
             pts.push_back(p);
-            r2 += 3.14159f * 4.0f / 5.0f;  // pentagram step
+            r2 += 3.14159f * 2.0f * static_cast<float>(skip) /
+                  static_cast<float>(points);  // skip=2 → Pentagramm
         }
         drawScopeShape(pts, false);
     }
 }
 
-void MultiEffectVisualizer::runColorClip(const ColorClipParams& params)
+void MultiEffectVisualizer::runColorClip(const ChainNode& node,
+                                         const ColorClipParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vDistance = params.distance;
+    runParamScript(rt, "colorclip", params.initCode, params.frameCode,
+                   params.beatCode, {{"distance", &vDistance}});
+
     const QVector3D clip = colorToVec(params.clipColor);
     const QVector3D outc = colorToVec(params.outColor);
     m_colorClipShader->bind();
@@ -6778,13 +7132,22 @@ void MultiEffectVisualizer::runColorClip(const ColorClipParams& params)
     m_colorClipShader->setUniformValue("uClip", clip);
     m_colorClipShader->setUniformValue("uOut", outc);
     m_colorClipShader->setUniformValue(
-        "uDist", static_cast<float>(params.distance) * 2.0f / 255.0f);
+        "uDist", static_cast<float>(vDistance) * 2.0f / 255.0f);
     m_colorClipShader->release();
     transformPass(*m_colorClipShader);
 }
 
-void MultiEffectVisualizer::runUniqueTone(const UniqueToneParams& params)
+void MultiEffectVisualizer::runUniqueTone(const ChainNode& node,
+                                          const UniqueToneParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vBlend = params.blend;
+    runParamScript(rt, "uniquetone", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"blend", &vBlend}});
+
     m_uniqueToneShader->bind();
     m_uniqueToneShader->setUniformValue("uColor", colorToVec(params.color));
     m_uniqueToneShader->setUniformValue("uInvert", params.invert ? 1 : 0);
@@ -6797,6 +7160,14 @@ void MultiEffectVisualizer::runInterleave(const ChainNode& node,
                                           const InterleaveParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vX = params.x, vY = params.y;
+    runParamScript(rt, "interleave", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"x", &vX},
+                    {"y", &vY}});
+
     if (!rt.interSeeded)
     {
         rt.interCurX = static_cast<float>(params.x);
@@ -6826,8 +7197,18 @@ void MultiEffectVisualizer::runInterleave(const ChainNode& node,
     transformPass(*m_interleaveShader);
 }
 
-void MultiEffectVisualizer::runConvolution(const ConvolutionParams& params)
+void MultiEffectVisualizer::runConvolution(const ChainNode& node,
+                                           const ConvolutionParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vBias = params.bias, vScale = params.scale;
+    runParamScript(rt, "convolution", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"bias", &vBias},
+                    {"scale", &vScale}});
+
     std::array<float, 49> kf{};
     for (int i = 0; i < 49; ++i)
         kf[static_cast<std::size_t>(i)] = static_cast<float>(params.kernel[static_cast<std::size_t>(i)]);
@@ -6891,8 +7272,17 @@ void MultiEffectVisualizer::runNormalise()
     transformPass(*m_normaliseShader);
 }
 
-void MultiEffectVisualizer::runMultiFilter(const MultiFilterParams& params)
+void MultiEffectVisualizer::runMultiFilter(const ChainNode& node,
+                                           const MultiFilterParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vEffect = params.effect;
+    runParamScript(rt, "multifilter", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"effect", &vEffect}});
+
     if (params.onBeat && !m_frameBeat) return;  // only on beat frames
     m_multiFilterShader->bind();
     m_multiFilterShader->setUniformValue("uEffect", std::clamp(params.effect, 0, 3));
@@ -6900,14 +7290,23 @@ void MultiEffectVisualizer::runMultiFilter(const MultiFilterParams& params)
     transformPass(*m_multiFilterShader);
 }
 
-void MultiEffectVisualizer::runAddBorders(const AddBordersParams& params)
+void MultiEffectVisualizer::runAddBorders(const ChainNode& node,
+                                          const AddBordersParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vSize = params.size;
+    runParamScript(rt, "addborders", params.initCode, params.frameCode,
+                   params.beatCode, {{"size", &vSize}});
+
     m_addBordersShader->bind();
     m_addBordersShader->setUniformValue("uRes",
                                         QVector2D(static_cast<float>(m_surfaceWidth),
                                                   static_cast<float>(m_surfaceHeight)));
     m_addBordersShader->setUniformValue("uColor", colorToVec(params.color));
-    m_addBordersShader->setUniformValue("uSize", std::max(0, params.size));
+    m_addBordersShader->setUniformValue("uSize",
+                                        std::max(0, static_cast<int>(vSize)));
     m_addBordersShader->release();
     transformPass(*m_addBordersShader);
 }
@@ -7019,6 +7418,20 @@ void MultiEffectVisualizer::runMovingParticle(const ChainNode& node,
         rt.mpSeeded = true;
     }
 
+    // Strang D auf einer Frame-Kopie. KLASSE A: ein Skript hier verlaesst die
+    // Referenz — der Editor weist darauf hin (die ⚠ an den Reglern kann nur
+    // feste Werte pruefen, nicht was das Skript je Frame rechnet).
+    double vSize = params.size, vSize2 = params.size2;
+    double vMaxDist = params.maxDistance;
+    double vSpring = params.spring, vDamping = params.damping;
+    runParamScript(rt, "movingparticle", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"size", &vSize},
+                    {"size2", &vSize2},
+                    {"maxdistance", &vMaxDist},
+                    {"spring", &vSpring},
+                    {"damping", &vDamping}});
+
     // r_parts.cpp:124-125 — zwei Zuege aus dem Preset-Strom je Beat
     auto rnd = [this] {
         return (m_scriptContext->nextRand() % 33 - 16) / 48.0f;
@@ -7028,21 +7441,24 @@ void MultiEffectVisualizer::runMovingParticle(const ChainNode& node,
         rt.mpCx = rnd();
         rt.mpCy = rnd();
     }
-    rt.mpVx -= 0.004f * (rt.mpPx - rt.mpCx);
-    rt.mpVy -= 0.004f * (rt.mpPy - rt.mpCy);
+    // S53 freigemacht (Klasse A) — Vorgaben sind die r_parts-Werte.
+    const float spring = static_cast<float>(vSpring);
+    const float damping = static_cast<float>(vDamping);
+    rt.mpVx -= spring * (rt.mpPx - rt.mpCx);
+    rt.mpVy -= spring * (rt.mpPy - rt.mpCy);
     rt.mpPx += rt.mpVx;
     rt.mpPy += rt.mpVy;
-    rt.mpVx *= 0.991f;
-    rt.mpVy *= 0.991f;
+    rt.mpVx *= damping;
+    rt.mpVy *= damping;
 
     // Size ease (r_parts s_pos): jump to size2 on beat, then relax to size.
-    if (m_frameBeat && params.onBeatSize) rt.mpSize = static_cast<float>(params.size2);
+    if (m_frameBeat && params.onBeatSize) rt.mpSize = static_cast<float>(vSize2);
     const float sz = rt.mpSize;
-    rt.mpSize = (rt.mpSize + static_cast<float>(params.size)) * 0.5f;
+    rt.mpSize = (rt.mpSize + static_cast<float>(vSize)) * 0.5f;
 
     const float ss = std::min(static_cast<float>(m_surfaceHeight) * 0.5f,
                               static_cast<float>(m_surfaceWidth) * 3.0f / 8.0f);
-    const float scale = ss * static_cast<float>(params.maxDistance) / 32.0f;
+    const float scale = ss * static_cast<float>(vMaxDist) / 32.0f;
     const float halfW = static_cast<float>(m_surfaceWidth) * 0.5f;
     const float halfH = static_cast<float>(m_surfaceHeight) * 0.5f;
     if (halfW <= 0.0f || halfH <= 0.0f || !m_scopeRenderer.ready()) return;
@@ -7082,6 +7498,17 @@ void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
                                          const WaterBumpParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vDensity = params.density, vDepth = params.depth;
+    double vDropR = params.dropRadius, vDisp = params.displaceScale;
+    runParamScript(rt, "waterbump", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"density", &vDensity},
+                    {"depth", &vDepth},
+                    {"dropradius", &vDropR},
+                    {"displacescale", &vDisp}});
+
     auto* f = QOpenGLContext::currentContext()->functions();
 
     // RGBA16F height ping-pong (.r current, .g previous), (re)made on resize.
@@ -7147,12 +7574,14 @@ void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
     m_wbPropShader->setUniformValue("uH", 0);
     m_wbPropShader->setUniformValue("uTexel", texel);
     m_wbPropShader->setUniformValue(
-        "uDamp", 1.0f / static_cast<float>(1 << std::clamp(params.density, 1, 12)));
+        "uDamp",
+        1.0f / static_cast<float>(1 << std::clamp(static_cast<int>(vDensity), 1, 12)));
     m_wbPropShader->setUniformValue("uDrop", drop);
     m_wbPropShader->setUniformValue("uDropC", dropC);
     m_wbPropShader->setUniformValue(
-        "uDropR", static_cast<float>(params.dropRadius) / static_cast<float>(m_surfaceWidth));
-    m_wbPropShader->setUniformValue("uDropAmp", -static_cast<float>(params.depth) / 100.0f);
+        "uDropR", static_cast<float>(vDropR) / static_cast<float>(m_surfaceWidth));
+    m_wbPropShader->setUniformValue("uDropAmp",
+                                    -static_cast<float>(vDepth) / 100.0f);
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_wbPropShader->release();
@@ -7176,7 +7605,7 @@ void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
     m_wbDispShader->setUniformValue("uRes",
                                     QVector2D(static_cast<float>(m_surfaceWidth),
                                               static_cast<float>(m_surfaceHeight)));
-    m_wbDispShader->setUniformValue("uScale", params.displaceScale);
+    m_wbDispShader->setUniformValue("uScale", static_cast<float>(vDisp));
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_wbDispShader->release();
@@ -7266,6 +7695,16 @@ void MultiEffectVisualizer::runBloom(const ChainNode& node,
     if (params.post) return;
 
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vIntensity = params.intensity, vThreshold = params.threshold;
+    double vRadius = params.radius, vVigStrength = params.vignetteStrength;
+    runParamScript(rt, "bloom", params.initCode, params.frameCode, params.beatCode,
+                   {{"intensity", &vIntensity},
+                    {"threshold", &vThreshold},
+                    {"radius", &vRadius},
+                    {"vignettestrength", &vVigStrength}});
+
     auto* f = QOpenGLContext::currentContext()->functions();
 
     SurfacePair& pair = active();
@@ -7287,10 +7726,11 @@ void MultiEffectVisualizer::runBloom(const ChainNode& node,
     m_bloomCompShader->setUniformValue("uGlow", 1);
     f->glActiveTexture(GL_TEXTURE0);
     m_bloomCompShader->setUniformValue("uIntensity",
-                                       std::max(0.0f, params.intensity));
+                                       std::max(0.0f, static_cast<float>(vIntensity)));
     m_bloomCompShader->setUniformValue("uVignette", params.vignette);
     m_bloomCompShader->setUniformValue(
-        "uVigStrength", std::clamp(params.vignetteStrength, 0.0f, 1.0f));
+        "uVigStrength",
+        std::clamp(static_cast<float>(vVigStrength), 0.0f, 1.0f));
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_bloomCompShader->release();
     pair.partner()->release();
@@ -8122,17 +8562,28 @@ void MultiEffectVisualizer::runStarfield(const ChainNode& node,
     const int xOff = w / 2;
     const int yOff = h / 2;
 
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vStars = params.maxStars, vWarp = params.warpSpeed;
+    double vBeatSpeed = params.beatSpeed, vDuration = params.durationFrames;
+    runParamScript(rt, "starfield", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"maxstars", &vStars},
+                    {"warpspeed", &vWarp},
+                    {"beatspeed", &vBeatSpeed},
+                    {"durationframes", &vDuration}});
+
     if (params.onBeat && m_frameBeat)
     {
-        rt.starSpeed = params.beatSpeed;
-        rt.starBeatFrames = std::max(1, params.durationFrames);
-        rt.starIncBeat = (params.warpSpeed - rt.starSpeed) /
+        rt.starSpeed = static_cast<float>(vBeatSpeed);
+        rt.starBeatFrames = std::max(1, static_cast<int>(vDuration));
+        rt.starIncBeat = (static_cast<float>(vWarp) - rt.starSpeed) /
                          static_cast<float>(rt.starBeatFrames);
     }
-    if (rt.starSpeed <= 0.0f && rt.starBeatFrames == 0) rt.starSpeed = params.warpSpeed;
+    if (rt.starSpeed <= 0.0f && rt.starBeatFrames == 0)
+        rt.starSpeed = static_cast<float>(vWarp);
 
     // MaxStars = MulDiv(gesetzt, w*h, 512*384), gedeckelt auf 4095
-    const long long scaled = (static_cast<long long>(params.maxStars) * w * h +
+    const long long scaled = (static_cast<long long>(vStars) * w * h +
                               (512LL * 384) / 2) / (512LL * 384);
     const int maxStars = std::min(4095, std::max(1, static_cast<int>(scaled)));
     if (rt.starW != w || rt.starH != h ||
@@ -8204,7 +8655,7 @@ void MultiEffectVisualizer::runStarfield(const ChainNode& node,
     // r_stars.cpp:258-264: Rueckkehr zur Grundgeschwindigkeit
     if (rt.starBeatFrames == 0)
     {
-        rt.starSpeed = params.warpSpeed;
+        rt.starSpeed = static_cast<float>(vWarp);
     }
     else
     {
@@ -8249,7 +8700,8 @@ void paletteRgb(const std::vector<uint32_t>& colors, int i,
 
 }  // namespace
 
-void MultiEffectVisualizer::runMetaballs3D(const Metaballs3DParams& params)
+void MultiEffectVisualizer::runMetaballs3D(const ChainNode& node,
+                                           const Metaballs3DParams& params)
 {
     // Verhaltens-Nachbau der closed-source-APE "Metaballs 3D" (UnConeD, S52) —
     // wie FyrewurX (S38): aus dem Preset kommt NUR die Farbtafel, die Geometrie
@@ -8259,22 +8711,41 @@ void MultiEffectVisualizer::runMetaballs3D(const Metaballs3DParams& params)
     // naechsten Kugel. Kein Anspruch auf Pixelgleichheit — die Referenz kann
     // das gar nicht liefern (die APE-DLL ist nicht deterministisch, S22).
     if (!m_metaballShader) return;
-    const int n = std::clamp(params.count, 1, 16);
-    const float t = m_time * params.speed;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vCount = params.count, vRadius = params.radius, vSpeed = params.speed;
+    double vThresh = params.threshold, vSpread = params.spread;
+    double vDepth = params.depth, vPhase = params.phase;
+    runParamScript(rt, "metaballs", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"count", &vCount},
+                    {"radius", &vRadius},
+                    {"speed", &vSpeed},
+                    {"threshold", &vThresh},
+                    {"spread", &vSpread},
+                    {"depth", &vDepth},
+                    {"phase", &vPhase}});
+
+    const int n = std::clamp(static_cast<int>(vCount), 1, 16);
+    const float t = m_time * static_cast<float>(vSpeed);
 
     std::array<QVector4D, 16> spheres{};  // xyz + Radius
     std::array<QVector3D, 16> tints{};
     for (int i = 0; i < n; ++i)
     {
-        const float p = static_cast<float>(i) * 1.7f;
+        // S53: Phasenversatz, Bahnweite und Tiefe sind Parameter geworden;
+        // ihre Vorgaben (1,7 · 1,0 · 1,2) sind die frueheren Literale.
+        const float p = static_cast<float>(i) * static_cast<float>(vPhase);
+        const float sp = static_cast<float>(vSpread);
         // Teilerfremde Frequenzen: die Kugeln treffen sich nie periodisch.
-        const float x = std::sin(t * 0.71f + p) * 0.62f;
-        const float y = std::sin(t * 0.53f + p * 1.3f) * 0.55f;
-        const float z = std::sin(t * 0.37f + p * 0.7f) * 0.5f + 1.2f;
+        const float x = std::sin(t * 0.71f + p) * 0.62f * sp;
+        const float y = std::sin(t * 0.53f + p * 1.3f) * 0.55f * sp;
+        const float z = std::sin(t * 0.37f + p * 0.7f) * 0.5f + static_cast<float>(vDepth);
         // Perspektive: entferntere Kugeln werden kleiner und wandern zur Mitte.
         const float w = 1.0f / z;
         spheres[static_cast<std::size_t>(i)] =
-            QVector4D(x * w, y * w, z, params.radius * w);
+            QVector4D(x * w, y * w, z, static_cast<float>(vRadius) * w);
         float r = 1.0f, g = 1.0f, b = 1.0f;
         paletteRgb(params.colors, i, r, g, b);
         tints[static_cast<std::size_t>(i)] = QVector3D(r, g, b);
@@ -8284,7 +8755,7 @@ void MultiEffectVisualizer::runMetaballs3D(const Metaballs3DParams& params)
                    m_renderMode.alpha);
     m_metaballShader->bind();
     m_metaballShader->setUniformValue("uCount", n);
-    m_metaballShader->setUniformValue("uThreshold", params.threshold);
+    m_metaballShader->setUniformValue("uThreshold", static_cast<float>(vThresh));
     m_metaballShader->setUniformValue(
         "uAspect", static_cast<float>(m_surfaceWidth) /
                        std::max(1.0f, static_cast<float>(m_surfaceHeight)));
@@ -8298,16 +8769,34 @@ void MultiEffectVisualizer::runMetaballs3D(const Metaballs3DParams& params)
     resetLineBlend();
 }
 
-void MultiEffectVisualizer::runTentacles3D(const Tentacles3DParams& params)
+void MultiEffectVisualizer::runTentacles3D(const ChainNode& node,
+                                           const Tentacles3DParams& params)
 {
     // Verhaltens-Nachbau der closed-source-APE "Tentacles 3D" (UnConeD, S52),
     // gleiche Lage wie Metaballs. Mehrere Tentakel wachsen aus der Bildmitte
     // nach aussen und schwingen; je Tentakel eine Palette-Farbe, die Dicke
     // nimmt zur Spitze hin ab (deshalb ein Zug je Segment statt eines Laufs).
     if (!m_scopeRenderer.ready()) return;
-    const int n = std::clamp(params.count, 1, 16);
-    const int seg = std::clamp(params.segments, 2, 256);
-    const float t = m_time * params.speed;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vCount = params.count, vSeg = params.segments, vLen = params.length;
+    double vThick = params.thickness, vSpeed = params.speed;
+    double vSway = params.sway, vWaves = params.waves, vTaper = params.taper;
+    runParamScript(rt, "tentacles", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"count", &vCount},
+                    {"segments", &vSeg},
+                    {"length", &vLen},
+                    {"thickness", &vThick},
+                    {"speed", &vSpeed},
+                    {"sway", &vSway},
+                    {"waves", &vWaves},
+                    {"taper", &vTaper}});
+
+    const int n = std::clamp(static_cast<int>(vCount), 1, 16);
+    const int seg = std::clamp(static_cast<int>(vSeg), 2, 256);
+    const float t = m_time * static_cast<float>(vSpeed);
     const float aspect = static_cast<float>(m_surfaceWidth) /
                          std::max(1.0f, static_cast<float>(m_surfaceHeight));
 
@@ -8327,8 +8816,11 @@ void MultiEffectVisualizer::runTentacles3D(const Tentacles3DParams& params)
             {
                 const float u = static_cast<float>(s + k) / static_cast<float>(seg - 1);
                 // Schwingung waechst zur Spitze — Wurzel steht ruhig.
-                const float ang = base + std::sin(t + u * 3.1f + base) * 0.9f * u;
-                const float rad = u * params.length;
+                // S53: Wellenzahl und Schwingweite sind Parameter (3,1 · 0,9).
+                const float ang = base + std::sin(t + u * static_cast<float>(vWaves) +
+                                                  base) *
+                                             static_cast<float>(vSway) * u;
+                const float rad = u * static_cast<float>(vLen);
                 lumi::modules::SuperscopePoint pt;
                 pt.x = std::cos(ang) * rad / aspect;
                 pt.y = std::sin(ang) * rad;
@@ -8341,7 +8833,9 @@ void MultiEffectVisualizer::runTentacles3D(const Tentacles3DParams& params)
             lumi::render::ScopeRenderer::Params rp;
             rp.mode = lumi::modules::SuperscopeRenderMode::Lines;
             const float u = static_cast<float>(s) / static_cast<float>(seg - 1);
-            rp.lineWidth = std::max(1.0f, params.thickness * (1.0f - u));
+            // taper=1 → linear auf 0 (bisheriges Verhalten), 0 → gleich dick.
+            rp.lineWidth = std::max(1.0f, static_cast<float>(vThick) *
+                                              (1.0f - u * static_cast<float>(vTaper)));
             m_scopeRenderer.draw(run, rp);
         }
     }
@@ -8357,11 +8851,26 @@ void MultiEffectVisualizer::runFyrewurX(const ChainNode& node,
     // over their lifetime. Constants are sight-calibration points.
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vSparks = params.sparks, vSpeed = params.speed;
+    double vGravity = params.gravity, vLife = params.lifeSeconds;
+    double vDot = params.dotSize, vHue = params.hueDrift, vBurst = params.burstSpread;
+    runParamScript(rt, "fyrewurx", params.initCode, params.frameCode, params.beatCode,
+                   {{"sparks", &vSparks},
+                    {"speed", &vSpeed},
+                    {"gravity", &vGravity},
+                    {"life", &vLife},
+                    {"dotsize", &vDot},
+                    {"huedrift", &vHue},
+                    {"burstspread", &vBurst}});
+
     if (m_frameBeat && rt.fwSparks.size() < 4096)
     {
         auto frand = [this] { return (nextRandom() % 10000u) / 10000.0f; };
-        const float cx = frand() * 1.6f - 0.8f;         // burst center
-        const float cy = frand() * 1.0f - 0.7f;         // upper screen area
+        // S53: `burstSpread` skaliert die Streuung (Vorgabe 1 = wie bisher).
+        const float sp = static_cast<float>(vBurst);
+        const float cx = (frand() * 1.6f - 0.8f) * sp;  // burst center
+        const float cy = (frand() * 1.0f - 0.7f) * sp;  // upper screen area
         // Firework hue per burst: bright saturated color, slight per-spark drift.
         const float hue = frand() * 6.0f;
         auto hueRgb = [](float h, float& r, float& g, float& b) {
@@ -8376,18 +8885,19 @@ void MultiEffectVisualizer::runFyrewurX(const ChainNode& node,
                 default: r = 1; g = 0; b = x; break;
             }
         };
-        for (int i = 0; i < params.sparks; ++i)
+        const int sparkCount = std::clamp(static_cast<int>(vSparks), 0, 4096);
+        for (int i = 0; i < sparkCount; ++i)
         {
             FwSpark s;
             const float ang = frand() * 6.2831853f;
-            const float spd = params.speed * (0.25f + 0.75f * frand());
+            const float spd = static_cast<float>(vSpeed) * (0.25f + 0.75f * frand());
             s.x = cx;
             s.y = cy;
             s.vx = std::cos(ang) * spd;
             s.vy = std::sin(ang) * spd;
-            s.lifeMax = params.lifeSeconds * (0.6f + 0.4f * frand());
+            s.lifeMax = static_cast<float>(vLife) * (0.6f + 0.4f * frand());
             s.life = s.lifeMax;
-            hueRgb(hue + (frand() - 0.5f) * 0.6f, s.r, s.g, s.b);
+            hueRgb(hue + (frand() - 0.5f) * static_cast<float>(vHue), s.r, s.g, s.b);
             rt.fwSparks.push_back(s);
         }
     }
@@ -8396,7 +8906,7 @@ void MultiEffectVisualizer::runFyrewurX(const ChainNode& node,
     const float dt = std::clamp(m_deltaTime, 0.0f, 0.1f);
     for (FwSpark& s : rt.fwSparks)
     {
-        s.vy += params.gravity * dt;
+        s.vy += static_cast<float>(vGravity) * dt;
         s.x += s.vx * dt;
         s.y += s.vy * dt;
         s.life -= dt;
@@ -8425,7 +8935,7 @@ void MultiEffectVisualizer::runFyrewurX(const ChainNode& node,
     f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);  // additive sparks
     lumi::render::ScopeRenderer::Params rp;
     rp.mode = lumi::modules::SuperscopeRenderMode::Dots;
-    rp.dotSize = 2.0f;
+    rp.dotSize = std::max(1.0f, static_cast<float>(vDot));
     rp.glowEnabled = false;
     m_scopeRenderer.draw(points, rp);
     f->glDisable(GL_BLEND);
@@ -8437,6 +8947,12 @@ void MultiEffectVisualizer::runTimescope(const ChainNode& node,
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     auto* f = QOpenGLContext::currentContext()->functions();
     if (m_surfaceWidth <= 0) return;
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vBands = params.bands, vChannel = params.channel;
+    runParamScript(rt, "timescope", params.initCode, params.frameCode,
+                   params.beatCode, {{"bands", &vBands}, {"channel", &vChannel}});
+
     rt.timescopeX = (rt.timescopeX + 1) % m_surfaceWidth;
 
     // Die ROHEN visdata-Spektrum-Bytes des linken Kanals als R8-Textur
@@ -8488,7 +9004,8 @@ void MultiEffectVisualizer::runTimescope(const ChainNode& node,
     m_timescopeShader->setUniformValue("uSpec", 0);
     m_timescopeShader->setUniformValue("uColor", colorToVec(params.color));
     m_timescopeShader->setUniformValue("uBands",
-                                       static_cast<float>(std::clamp(params.bands, 1, 576)));
+                                       static_cast<float>(std::clamp(
+                                           static_cast<int>(vBands), 1, 576)));
     m_timescopeShader->setUniformValue("uH", static_cast<float>(m_surfaceHeight));
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
@@ -8547,7 +9064,12 @@ QVector3D grad5(const uint32_t (&colors)[5], float t)
 void MultiEffectVisualizer::runDotGrid(const ChainNode& node, const DotGridParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
-    const int spacing = std::max(2, params.spacing);
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vSpacing = params.spacing, vXMove = params.xMove, vYMove = params.yMove;
+    runParamScript(rt, "dotgrid", params.initCode, params.frameCode, params.beatCode,
+                   {{"spacing", &vSpacing}, {"xmove", &vXMove}, {"ymove", &vYMove}});
+
+    const int spacing = std::max(2, static_cast<int>(vSpacing));
     const int nc = static_cast<int>(params.colors.size());
     if (nc == 0) return;
 
@@ -8567,8 +9089,8 @@ void MultiEffectVisualizer::runDotGrid(const ChainNode& node, const DotGridParam
         rgb(params.colors[static_cast<size_t>(p0)]) * (1.0f - cf) +
         rgb(params.colors[static_cast<size_t>((p0 + 1) % nc)]) * cf;
 
-    rt.dotOffX += static_cast<float>(params.xMove) / 256.0f;
-    rt.dotOffY += static_cast<float>(params.yMove) / 256.0f;
+    rt.dotOffX += static_cast<float>(vXMove) / 256.0f;
+    rt.dotOffY += static_cast<float>(vYMove) / 256.0f;
     const float ox = std::fmod(rt.dotOffX, static_cast<float>(spacing));
     const float oy = std::fmod(rt.dotOffY, static_cast<float>(spacing));
 
@@ -8595,8 +9117,17 @@ void MultiEffectVisualizer::runDotPlane(const ChainNode& node, const DotPlanePar
     // Zeile mit — die alte Hoehen-Palette faerbte das ganze Feld um. Physik
     // (Velocity - 0.15*h/255), 3D-Matrix (Rotation um y + angle um x,
     // Translation 0/-20/400) und Zeichenreihenfolge wie das Original.
-    constexpr int kN = 64;  // NUM_WIDTH
+    constexpr int kN = 64;  // NUM_WIDTH — fest: Struktur, kein Parameter
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie. KLASSE A — s. Hinweis bei Moving Particle.
+    double vRotVel = params.rotVel, vAngle = params.angle;
+    double vCam = params.camDistance, vSettle = params.settle;
+    runParamScript(rt, "dotplane", params.initCode, params.frameCode, params.beatCode,
+                   {{"rotvel", &vRotVel},
+                    {"angle", &vAngle},
+                    {"camdistance", &vCam},
+                    {"settle", &vSettle}});
     if (!rt.dpSeeded || rt.dpHeights.size() != static_cast<std::size_t>(kN * kN))
     {
         rt.dpHeights.assign(static_cast<std::size_t>(kN * kN), 0.0f);
@@ -8672,9 +9203,9 @@ void MultiEffectVisualizer::runDotPlane(const ChainNode& node, const DotPlanePar
     float matrix[16];
     float matrix2[16];
     mRotate(matrix, 2, rt.dpR);
-    mRotate(matrix2, 1, static_cast<float>(params.angle));
+    mRotate(matrix2, 1, static_cast<float>(vAngle));
     mMultiply(matrix, matrix2);
-    mTranslate(matrix2, 0.0f, -20.0f, 400.0f);
+    mTranslate(matrix2, 0.0f, -20.0f, static_cast<float>(vCam));  // S53: war 400
     mMultiply(matrix, matrix2);
 
     // Scroll + Physik + Injektion (Spektrum links, 3er-Gruppen-Maximum).
@@ -8715,7 +9246,7 @@ void MultiEffectVisualizer::runDotPlane(const ChainNode& node, const DotPlanePar
             {
                 *o = *i++ + *v;
                 if (*o < 0.0f) *o = 0.0f;
-                *ov++ = *v++ - 0.15f * (*o++ / 255.0f);
+                *ov++ = *v++ - static_cast<float>(vSettle) * (*o++ / 255.0f);  // war 0,15
                 *oc++ = *c++;
             }
         }
@@ -8781,7 +9312,7 @@ void MultiEffectVisualizer::runDotPlane(const ChainNode& node, const DotPlanePar
     }
     drawDots(pts, 1.0f, 3);  // 1px-Dots via BLEND_LINE (folgt SRM, Original)
 
-    rt.dpR += static_cast<float>(params.rotVel) / 5.0f;
+    rt.dpR += static_cast<float>(vRotVel) / 5.0f;
     if (rt.dpR >= 360.0f) rt.dpR -= 360.0f;
     if (rt.dpR < 0.0f) rt.dpR += 360.0f;
 }
@@ -8795,9 +9326,14 @@ void MultiEffectVisualizer::runDotFountain(const ChainNode& node,
     if (static_cast<int>(rt.fountain.size()) != kCount)
         rt.fountain.assign(kCount, FountainP{});
 
-    rt.dotRot += static_cast<float>(params.rotVel) * 0.002f;
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vRotVel = params.rotVel, vAngle = params.angle;
+    runParamScript(rt, "dotfountain", params.initCode, params.frameCode,
+                   params.beatCode, {{"rotvel", &vRotVel}, {"angle", &vAngle}});
+
+    rt.dotRot += static_cast<float>(vRotVel) * 0.002f;
     const float level = 0.3f + m_audioLevel * 0.9f;  // emission speed from audio
-    const float tilt = static_cast<float>(params.angle) / 90.0f;
+    const float tilt = static_cast<float>(vAngle) / 90.0f;
 
     std::vector<lumi::modules::SuperscopePoint> pts;
     pts.reserve(kCount);
@@ -8833,6 +9369,13 @@ void MultiEffectVisualizer::runChannelShift(const ChainNode& node,
                                             const ChannelShiftParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vMode = params.mode;
+    runParamScript(rt, "channelshift", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"mode", &vMode}});
+
     int mode = std::clamp(params.mode, 0, 5);
     if (params.onBeat)
     {
@@ -8847,8 +9390,17 @@ void MultiEffectVisualizer::runChannelShift(const ChainNode& node,
     transformPass(*m_apeShader);
 }
 
-void MultiEffectVisualizer::runColorReduction(const ColorReductionParams& params)
+void MultiEffectVisualizer::runColorReduction(const ChainNode& node,
+                                              const ColorReductionParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vLevels = params.levels;
+    runParamScript(rt, "colorreduction", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"levels", &vLevels}});
+
     const int levels = std::clamp(params.levels, 1, 8);
     m_apeShader->bind();
     m_apeShader->setUniformValue("uType", 1);
@@ -8857,8 +9409,17 @@ void MultiEffectVisualizer::runColorReduction(const ColorReductionParams& params
     transformPass(*m_apeShader);
 }
 
-void MultiEffectVisualizer::runMultiplier(const MultiplierParams& params)
+void MultiEffectVisualizer::runMultiplier(const ChainNode& node,
+                                          const MultiplierParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vMode = params.mode;
+    runParamScript(rt, "multiplier", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"mode", &vMode}});
+
     m_apeShader->bind();
     m_apeShader->setUniformValue("uType", 2);
     m_apeShader->setUniformValue("uMode", std::clamp(params.mode, 0, 7));
@@ -8869,13 +9430,20 @@ void MultiEffectVisualizer::runMultiplier(const MultiplierParams& params)
 void MultiEffectVisualizer::runVideoDelay(const ChainNode& node,
                                           const VideoDelayParams& params)
 {
-    if (!QOpenGLFramebufferObject::hasOpenGLFramebufferBlit()) return;
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    if (!QOpenGLFramebufferObject::hasOpenGLFramebufferBlit()) return;
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vDelay = params.delay;
+    runParamScript(rt, "videodelay", params.initCode, params.frameCode,
+                   params.beatCode, {{"delay", &vDelay}});
+
     auto* extra = QOpenGLContext::currentContext()->extraFunctions();
 
     // ~30 frames/beat is a rough conversion (no per-node BPM here); capped for VRAM.
     const int delay =
-        std::clamp(params.useBeats ? params.delay * 30 : params.delay, 1, 128);
+        std::clamp(static_cast<int>(params.useBeats ? vDelay * 30 : vDelay),
+                   1, 128);
     const int size = delay + 1;
 
     if (static_cast<int>(rt.delayRing.size()) != size || rt.delayW != m_surfaceWidth ||
@@ -8920,11 +9488,19 @@ void MultiEffectVisualizer::runVideoDelay(const ChainNode& node,
     bindActive();
 }
 
-void MultiEffectVisualizer::runMultiDelay(const MultiDelayParams& params)
+void MultiEffectVisualizer::runMultiDelay(const ChainNode& node,
+                                          const MultiDelayParams& params)
 {
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vDelay = params.delay, vBuffer = params.buffer;
+    runParamScript(rt, "multidelay", params.initCode, params.frameCode,
+                   params.beatCode, {{"delay", &vDelay}, {"buffer", &vBuffer}});
+
     if (params.mode == 0) return;  // inactive
     if (!QOpenGLFramebufferObject::hasOpenGLFramebufferBlit()) return;
-    const int b = std::clamp(params.buffer, 0, 5);
+    const int b = std::clamp(static_cast<int>(vBuffer), 0, 5);
     auto* extra = QOpenGLContext::currentContext()->extraFunctions();
 
     // Shared rings are dropped on a surface-size change.
@@ -8937,7 +9513,8 @@ void MultiEffectVisualizer::runMultiDelay(const MultiDelayParams& params)
     }
 
     const int delay =
-        std::clamp(params.useBeats ? params.delay * 30 : params.delay, 1, 128);
+        std::clamp(static_cast<int>(params.useBeats ? vDelay * 30 : vDelay),
+                   1, 128);
     auto& ring = m_mdRing[static_cast<size_t>(b)];
     int& head = m_mdHead[static_cast<size_t>(b)];
     QOpenGLFramebufferObject* cur = active().current();

@@ -12,6 +12,7 @@ set(_local_sources
     # (no sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/AvsChainTranslator.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/ChainSerializer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/NodePresetStore.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/MilkdropSerializer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/MilkdropVisualizer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/EqualizerVisualizer.cpp"

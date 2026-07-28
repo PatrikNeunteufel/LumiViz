@@ -59,6 +59,12 @@ private Q_SLOTS:
     void onTargetFpsChanged(int value);
     void onVSyncChanged(bool checked);
     void onResetImportBrowserDir();
+    /// Oeffnet den Benutzerdaten-Ordner (AppDataLocation) im Dateimanager.
+    void onOpenAppDataDir();
+    /// Waehlt den Bilder-Suchordner (`import/imageSearchDir`, S50-Vorgabe).
+    void onChooseImageSearchDir();
+    /// Beschriftet den Suchordner-Knopf mit dem aktuellen Pfad.
+    void updateImageSearchDirButton();
 
 private:
     void setupUI();
@@ -89,6 +95,8 @@ private:
 
     // Panels Tab
     QPushButton* m_pResetImportDirButton = nullptr;
+    QPushButton* m_pOpenAppDataButton = nullptr;
+    QPushButton* m_pImageSearchDirButton = nullptr;
     /// AVS-Import: Render-Scale-Divisor des automatisch eingefuegten Knotens
     /// (QSettings "import/avsRenderScaleDivisor", 1 = neutral — S47)
     QSpinBox* m_pAvsRenderScaleSpinBox = nullptr;

@@ -673,6 +673,44 @@ void MainWindow::setupEventHandlers()
             reportProblem(tr("Import MilkDrop Preset"), warnings);
         });
 
+    pEventBus->subscribe<NewEffectChainEvent>(
+        [this, findMultiEffect, pEventBus](const NewEffectChainEvent&) {
+            // Leere Kette als Ausgangspunkt fuer ein neues Preset. Wie beim
+            // Import wird der Host bei Bedarf aktiviert — sonst muesste man
+            // erst den Visualizer wechseln, um „neu" anwaehlen zu koennen.
+            auto [widget, host] = findMultiEffect();
+            if (host == nullptr && widget != nullptr)
+            {
+                widget->setVisualizer(QStringLiteral("multieffect"));
+                host = dynamic_cast<MultiEffectVisualizer*>(widget->visualizer());
+            }
+            if (host == nullptr)
+            {
+                QMessageBox::information(this, tr("New Effect Chain"),
+                                         tr("No visualizer available."));
+                return;
+            }
+            // Eine Kette kann viel Arbeit sein — nicht kommentarlos wegwerfen.
+            if (QMessageBox::question(
+                    this, tr("New Effect Chain"),
+                    tr("Discard the current effect chain and start empty?")) !=
+                QMessageBox::Yes)
+                return;
+
+            lumi::multieffect::ChainNode root;
+            root.params = lumi::multieffect::ListParams{};
+            root.displayName = "Effect List";
+            {
+                QMutexLocker lock(&widget->renderMutex());
+                (void)host->setChain(std::move(root));
+            }
+            if (m_pScreenshotManager != nullptr)
+            {
+                m_pScreenshotManager->setCurrentPreset(QString());
+            }
+            pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
+        });
+
     pEventBus->subscribe<LoadEffectChainEvent>(
         [this, findMultiEffect, pEventBus](const LoadEffectChainEvent& ev) {
             QString path = QString::fromStdString(ev.path);

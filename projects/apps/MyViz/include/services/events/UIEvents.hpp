@@ -293,6 +293,18 @@ struct AvsImportResultEvent : public Event
 };
 
 /**
+ * @brief Request to start a FRESH, empty effect chain (File → New Effect Chain).
+ *
+ * Setzt den Multi-Effect-Host auf eine leere Wurzel-Liste zurueck — der
+ * Ausgangspunkt fuer ein neues Preset, ohne den Umweg ueber „alles von Hand
+ * loeschen". Aktiviert den Host, falls ein anderer Visualizer laeuft.
+ */
+struct NewEffectChainEvent : public Event
+{
+    EVENT_TYPE_NAME("NewEffectChainEvent")
+};
+
+/**
  * @brief Request to load a host effect-chain preset (.lvfx) into the active
  *        Multi Effect visualizer. `path` empty = ask via file dialog;
  *        `path` set = load that file directly (Import Browser double-click).

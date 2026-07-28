@@ -27,8 +27,14 @@
 #include <QSpacerItem>
 #include <QSpinBox>
 #include <QCheckBox>
+#include <QDesktopServices>
+#include <QDir>
+#include <QFileDialog>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPushButton>
+#include <QStandardPaths>
+#include <QUrl>
 
 #include <optional>
 
@@ -193,6 +199,52 @@ void SettingsPanel::onResetImportBrowserDir()
     }
 }
 
+void SettingsPanel::updateImageSearchDirButton()
+{
+    if (m_pImageSearchDirButton == nullptr) return;
+    QSettings settings;
+    const QString dir =
+        settings.value(QStringLiteral("import/imageSearchDir")).toString();
+    m_pImageSearchDirButton->setText(dir.isEmpty() ? tr("(none) — choose…") : dir);
+}
+
+void SettingsPanel::onChooseImageSearchDir()
+{
+    QSettings settings;
+    const QString current =
+        settings.value(QStringLiteral("import/imageSearchDir")).toString();
+    const QString dir = QFileDialog::getExistingDirectory(
+        this, tr("Image search folder"), current.isEmpty() ? QDir::homePath() : current);
+    if (dir.isEmpty()) return;  // abgebrochen — bestehende Wahl bleibt
+    settings.setValue(QStringLiteral("import/imageSearchDir"), dir);
+    updateImageSearchDirButton();
+    BasicLogger::logInfo("SettingsPanel: image search folder set (" +
+                         dir.toStdString() + ")");
+}
+
+void SettingsPanel::onOpenAppDataDir()
+{
+    const QString path =
+        QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (path.isEmpty())
+    {
+        QMessageBox::warning(this, tr("User Data"),
+                             tr("Qt reports no writable data location."));
+        return;
+    }
+    // Anlegen, bevor geoeffnet wird: beim ersten Start existiert der Ordner
+    // noch nicht, und der Dateimanager oeffnet dann stillschweigend nichts.
+    QDir().mkpath(path);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(path)))
+    {
+        QMessageBox::warning(this, tr("User Data"),
+                             tr("Could not open the folder:\n%1").arg(path));
+        return;
+    }
+    BasicLogger::logInfo("SettingsPanel: user data folder opened (" +
+                         path.toStdString() + ")");
+}
+
 // =============================================================================
 // UI Setup
 // =============================================================================
@@ -309,6 +361,27 @@ QWidget* SettingsPanel::createPanelsTab()
     }
     layout->addRow(tr("AVS Import Render Scale:"), m_pAvsRenderScaleSpinBox);
 
+    // Bilder-Suchordner (Vorgabe S50, umgesetzt S53): AVS legt seine Bilder im
+    // AVS-Wurzelverzeichnis ab, die Presets aber in Unterordnern. Der Import
+    // sucht bereits drei Ebenen aufwaerts — dieser Ordner ist die letzte
+    // Zuflucht, wenn die Bilder ganz woanders liegen.
+    m_pImageSearchDirButton = new QPushButton(widget);
+    m_pImageSearchDirButton->setToolTip(
+        tr("Extra folder searched for Picture/Texer images when the import finds "
+           "none next to the preset. Also the starting folder of the image "
+           "chooser in the Effect Chain editor."));
+    updateImageSearchDirButton();
+    layout->addRow(tr("Image Search Folder:"), m_pImageSearchDirButton);
+
+    // Benutzerdaten-Ordner im Dateimanager oeffnen. Dort landen die eigenen
+    // Knoten-Voreinstellungen (`nodepresets/<typkey>/`, S53) — ohne diesen Knopf
+    // muesste man den Pfad raten.
+    m_pOpenAppDataButton = new QPushButton(tr("Open Folder"), widget);
+    m_pOpenAppDataButton->setToolTip(
+        tr("Open the folder holding your own data (node presets, …) in the file "
+           "manager. It is created if it does not exist yet."));
+    layout->addRow(tr("User Data:"), m_pOpenAppDataButton);
+
     layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
     return widget;
@@ -424,6 +497,10 @@ void SettingsPanel::setupConnections()
             this, &SettingsPanel::onVSyncChanged);
     connect(m_pResetImportDirButton, &QPushButton::clicked,
             this, &SettingsPanel::onResetImportBrowserDir);
+    connect(m_pOpenAppDataButton, &QPushButton::clicked,
+            this, &SettingsPanel::onOpenAppDataDir);
+    connect(m_pImageSearchDirButton, &QPushButton::clicked,
+            this, &SettingsPanel::onChooseImageSearchDir);
     connect(m_pAvsRenderScaleSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
             this, [](int value) {
                 QSettings settings;

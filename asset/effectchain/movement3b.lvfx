@@ -1,0 +1,137 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "blendIn": 0,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "beatCode": "",
+                        "channel": 2,
+                        "colors": [
+                            11141120,
+                            11162880,
+                            16776960,
+                            16755200
+                        ],
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "mode": 3,
+                        "name": "Simple",
+                        "position": 2,
+                        "type": "simpleScope"
+                    },
+                    {
+                        "beatCode": "",
+                        "blend": 3,
+                        "colors": [
+                            255,
+                            16776960
+                        ],
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Dot Grid",
+                        "spacing": 21,
+                        "type": "dotGrid",
+                        "xMove": 128,
+                        "yMove": 128
+                    },
+                    {
+                        "beatCode": "",
+                        "blend": 1,
+                        "color": 16777215,
+                        "damping": 0.9909999966621399,
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "maxDistance": 16,
+                        "name": "Moving Particle",
+                        "onBeatSize": true,
+                        "size": 8,
+                        "size2": 12,
+                        "spring": 0.004000000189989805,
+                        "type": "movingParticle"
+                    },
+                    {
+                        "beatCode": "",
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Blur",
+                        "roundUp": true,
+                        "strength": 3,
+                        "type": "blur"
+                    },
+                    {
+                        "beatCode": "",
+                        "blend": false,
+                        "builtinRemap": 0,
+                        "code": "x=x*.99;y=y*.99;",
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Movement",
+                        "rectCoords": true,
+                        "sourceMapped": 0,
+                        "subpixel": true,
+                        "type": "movement",
+                        "wrap": false
+                    },
+                    {
+                        "beatCode": "bt=(-1)*bt;",
+                        "blend": false,
+                        "builtinRemap": 0,
+                        "code": "r=r+bt*0.02;\nd=d-0.02;",
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "bt=1;",
+                        "name": "Movement",
+                        "rectCoords": false,
+                        "sourceMapped": 0,
+                        "subpixel": true,
+                        "type": "movement",
+                        "wrap": false
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

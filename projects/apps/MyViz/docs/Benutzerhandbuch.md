@@ -1,7 +1,7 @@
 # MyViz — Benutzerhandbuch
 
-> **Version:** 1.1.0
-> **Datum:** 2026-07-23
+> **Version:** 1.2.0
+> **Datum:** 2026-07-27
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -141,11 +141,18 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
 
 ## 8. Einstellungen & Frame-Modus
 
-**Settings-Panel** (Seitentab) mit zwei Reitern:
+**Settings-Panel** (Seitentab) mit vier Reitern:
 
 - **Audio:** Ausgabegerät wählen; Puffergröße (kleiner = weniger Latenz,
   größer = stabiler) und Samplerate.
 - **Performance:** Frame-Modus und Ziel-FPS.
+- **Panels:** Startordner des Import-Browsers zurücksetzen · Render-Scale-Divisor
+  für AVS-Importe · **Bilder-Suchordner** — wird beim Import durchsucht, wenn
+  neben dem Preset kein Bild für Picture/Texer liegt, und ist der Startordner der
+  Bildauswahl in der Effektkette · **Benutzerdaten-Ordner öffnen** — dort liegen
+  deine eigenen Knoten-Voreinstellungen (`nodepresets/<typ>/`); der Ordner wird
+  beim ersten Öffnen angelegt.
+- **Hotkeys:** Tastenbelegung je Aktion (siehe §9).
 
 Der **Frame-Modus** (auch über *Settings → Frame Mode* im Menü) bestimmt die
 Bildrate der Visualizer:
@@ -168,6 +175,7 @@ Bedienung entkoppelt.
 | Esc | Vollbild verlassen |
 | Ctrl+Z / Ctrl+Y | Parameter-Änderung rückgängig / wiederherstellen |
 | Ctrl+O | *Open Audio…* (derzeit ohne Funktion, siehe §10) |
+| Ctrl+Shift+N | *File → New Effect Chain* — leere Kette als Ausgangspunkt für ein neues Preset (fragt vorher nach) |
 | F1 | Über MyViz |
 | Alt+F4 | Beenden |
 
@@ -261,6 +269,65 @@ der **Import Browser** (Panel rechts) per Doppelklick — `.avs`, `.milk`,
   **↑/↓** sortiert; Drag & Drop verschiebt (auf eine Gruppe fallen lassen =
   hinein).
 - Unter dem Baum: der **Eigenschafts-Editor** des selektierten Eintrags.
+- **File → New Effect Chain** (`Ctrl+Shift+N`) beginnt mit einer leeren Kette —
+  der Ausgangspunkt für ein eigenes Preset. Es wird vorher gefragt.
+
+### Voreinstellungen je Knoten
+
+Ganz oben im Eigenschafts-Editor steht die Zeile **Preset**. Sie gilt für
+**jeden** Knotentyp — auch für Effect List, Movement oder eine Host-Gruppe.
+
+- **Auswählen** lädt einen benannten Parametersatz. Mitgeliefertes steht ohne
+  Zusatz in der Liste, Selbstgespeichertes mit `*`.
+- **Save as…** fragt nach einem Namen und zeigt **jedes Feld des Knotens mit
+  einem Häkchen**. Was du abwählst, kommt nicht in die Datei — und bleibt beim
+  Laden unangetastet. So speicherst du „nur die Formeln, nicht die Farbe".
+- **🗑** löscht eine eigene Voreinstellung; mitgelieferte lassen sich nicht
+  löschen.
+- Die **SuperScope-Figuren** (Spiral, Butterfly, Hypocycloid …) sind seit
+  Session 53 solche Voreinstellungen — das frühere Dropdown „Figure" ist
+  entfallen. Da sie nur die Formeln enthalten, behältst du beim Laden deine
+  Farbtafel und Linienbreite.
+
+Eigene Voreinstellungen liegen im Benutzerdaten-Ordner (*Einstellungen →
+Panels → Benutzerdaten: Open Folder*), mitgelieferte unter
+`asset/nodepresets/`. Wer eine eigene weitergeben will, kopiert die Datei
+dorthin.
+
+### Werte per Formel steuern
+
+Fast jeder Knoten hat unten drei EEL-Felder: **Init** (einmal), **Frame** (jedes
+Bild) und **Beat** (bei jedem Beat). Darin lassen sich die Regler desselben
+Knotens berechnen — etwa bei Rotating Stars:
+
+```
+Frame:  points = 5 + bass*8
+```
+
+Die schreibbaren Namen sind die Feldbezeichnungen in Kleinschreibung; dazu gibt
+es `b` (Beat), `w`/`h` (Bildmaße) und den Audio-Satz (`bass`, `mid`, `treb`,
+`vol` …). Eigene Variablen darfst du frei benennen — sie gelten innerhalb
+**eines** Knotens über alle Slots hinweg. Zwischen Knoten wandern nur
+`reg00..reg99`, `q1..q64` und `gmegabuf`.
+
+Ein leeres Feld kostet nichts: ohne Formel läuft kein Skript.
+
+> **Movement ist die Ausnahme.** Es baut eine *statische* Tabelle — sein
+> Point-Code läuft nur, wenn sich Größe oder Text ändern. Ein Wert, der sich
+> über die Zeit ändert (ein Beat-Zähler etwa), kann das Bild dort nicht bewegen.
+> Für Zeitabhängiges ist **Dynamic Movement** der richtige Knoten; der Editor
+> weist darauf hin.
+
+### Bilder in Picture, Picture II und Texer
+
+Die Bild-Knoten zeigen in der Zeile **Image**, ob ein Bild eingebettet ist.
+**Choose…** wählt eine Datei und bettet sie in die Kette ein — ein gespeichertes
+Preset bleibt damit für sich allein lauffähig. **Clear** wirft das Bild wieder
+raus.
+
+Findet der Import das Bild eines AVS-Presets nicht neben der Datei, sucht er bis
+zu drei Ordner aufwärts und zuletzt im **Bilder-Suchordner** aus den
+Einstellungen (§8).
 
 ### Milkdrop-Presets bearbeiten
 
@@ -309,5 +376,6 @@ Gruppen dürfen gleichzeitig aktiv sein und mischen sich über ihren
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.2.0 | 2026-07-27 | §11 erweitert (Session 53): Voreinstellungen je Knoten (mit Feldauswahl beim Speichern, SuperScope-Figuren als Presets), Werte per Formel (Init/Frame/Beat, Variablen-Regeln, Movement-Ausnahme), Bild-Auswahl bei Picture/Texer, *New Effect Chain*. §8 auf vier Reiter berichtigt (waren zwei) + Bilder-Suchordner und Benutzerdaten-Ordner. §9 um `Ctrl+Shift+N` |
 | 1.1.0 | 2026-07-23 | +§11 (Session 42): Effektketten-Editor, Milkdrop-Node mit sechs Sektionen (inkl. Wave/Shape/Sprite anlegen, Parameter-Sektion, sektions-genaue ⓘ-Referenzen, Shader-ⓘ), Host-Gruppen mit Crossfade (Kurven, Wechsel-Button, .lvfx2) |
 | 1.0.0 | 2026-07-20 | Initial (Session 31): Player, Playlist inkl. Session-Playlist, Visualizer-Auswahl, Config-Verweis, echtes Vollbild, Docking/Perspektiven, Frame-Modus, Tastenkürzel |

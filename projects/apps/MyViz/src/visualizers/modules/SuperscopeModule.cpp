@@ -1574,6 +1574,9 @@ const char* SuperscopeModule::presetName(SuperscopePreset preset)
         case SuperscopePreset::Lissajous:        return "Lissajous";
         case SuperscopePreset::Flower:           return "Flower";
         case SuperscopePreset::Star:             return "Star";
+        // Fehlte bis S53: das `default` fing den Wert ab, die Figur hiess in
+        // der Auswahl „Unknown" (kein Compiler-Warnung, weil default da ist).
+        case SuperscopePreset::Starburst:        return "Starburst";
         case SuperscopePreset::Heart:            return "Heart";
         case SuperscopePreset::DNA:              return "DNA";
         case SuperscopePreset::SpectrumBars:     return "Spectrum Bars";

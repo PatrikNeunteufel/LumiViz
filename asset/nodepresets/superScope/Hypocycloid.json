@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "beatCode": "br=rand(5)+3; sr=rand(3)+1",
+        "frameCode": "t=t+0.01",
+        "initCode": "n=400; t=0; pi=acos(-1); br=5; sr=3",
+        "pointCode": "th=i*pi*2*sr+t; sc=0.15+v*0.05; x=sc*((br-sr)*cos(th)+sr*cos((br-sr)/sr*th)); y=sc*((br-sr)*sin(th)-sr*sin((br-sr)/sr*th))",
+        "pointCount": 400,
+        "type": "superScope"
+    }
+}

@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.0.0
-> **Datum:** 2026-07-27 (Session 52)
+> **Version:** 1.6.0
+> **Datum:** 2026-07-27 (Session 53)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -19,14 +19,14 @@ Handover; dann dieses Dokument nachziehen.
 Legende: 🔴 blockiert anderes · 🟠 Befund mit Messwert · 🟡 Entscheid nötig ·
 ⬜ Sichttest/Urteil offen · ⚪ Backlog (bewusst nichts tun) · 🔧 Kleinkram
 
-> ## ➜ ZUERST in der nächsten Session (Vorgabe Patrik, S52)
+> ## ✅ Erledigt in S53 (war die Vorgabe Patrik aus S52)
 >
-> **Panel-Editoren für die beiden neuen Knoten** `Metaballs 3D` und
-> `Tentacles 3D`. Sie erscheinen in der Kette und werden gespeichert, aber ihre
-> Parameter lassen sich nicht verstellen: Metaballs (Kugelzahl, Radius, Tempo,
-> Isowert, Blend) und Tentacles (Zahl, Segmente, Länge, Dicke, Tempo, Blend) —
-> dazu jeweils die Farbtafel aus dem Preset. Vorbild: die Editoren der übrigen
-> Render-Knoten im `MultiEffectPanel`.
+> **Panel-Editoren für `Metaballs 3D` und `Tentacles 3D`** — beide Knoten haben
+> jetzt volle Editoren im `MultiEffectPanel` (Metaballs: Kugelzahl, Radius,
+> Tempo, Isowert, Blend · Tentacles: Zahl, Segmente, Länge, Dicke, Tempo, Blend),
+> je mit editierbarer Farbtafel, und stehen in der Palette („Scopes & Sources").
+> Die Farbtafel-Zeile ist dabei aus dem SuperScope-Block herausgelöst und
+> geteilt worden (`addColorTable`).
 
 ---
 
@@ -53,8 +53,10 @@ dünnen Inhalten).
 | **30 Bright Light District** | 0,252 | Bruch bei Stufe 2 lokalisiert (Dynamic Shift schiebt ein 4-Pixel-Saatkorn im persistenten Puffer) — **nicht bewiesen** | 🟠 |
 | **P3_HpR20 Rotor** | 0,461 | Rotor-Rest seit S48 (0,37 → 0,12 ◐, dann Rest) | 🟠 |
 | **Tie Tunnel DM** | 0,154 | Altbestand seit S49 | 🟠 |
-| **Sonde `convolution_kante`** | ~560 px | ≈ eine Zeile plus eine Spalte. `scale` geprüft (acht Kennlinienpunkte exakt), Kern seit S50 richtig orientiert. **Einzige offene Modul-Sonde** (40/41) | 🟠 |
-| **Modul-Matrix-Reste** | 37/41 | `dot_grid` · `water` · `water_bump` · `interferences` | 🟠 |
+| **Sonde `convolution_kante`** | ~560 px | ≈ eine Zeile plus eine Spalte. `scale` geprüft (acht Kennlinienpunkte exakt), Kern seit S50 richtig orientiert | 🟠 |
+| **Sonde `6_alloy/paar_original`** | 39546 → 37671 px | 🟠 **Neu gesehen (S53).** Menge 0,05 · Lage 2,7 · MAE 0,010 — dreimal identisch gemessen, also kein Rauschen, und **am Vorstand belegt**: derselbe Wert mit gestashtem Renderer, die Sonde war schon vor S53 rot. Der S52-Stand „Modul-Sonden 79/80, offen nur `convolution_kante`" war ungenau — es sind **78/80**. Uns fehlen ~1900 px gegenüber der Referenz | 🟠 |
+| **Modul-Matrix-Reste** | **36/41** | `dot_grid` · `water` · **`grain`** · `water_bump` · `interferences`. **Korrektur S53:** der S52-Stand „37/41, vier Reste" war ungenau — `24_grain/01_static100` ist gelb (dMean **0,000**, MAE **0,046**, dreimal identisch gemessen, also kein Rauschen). Die Montage zeigt beide Seiten deckungsgleich, der 4×-Diff ist ein **gleichmäßiges Flächenrauschen**: die Kornmenge stimmt, der Zufallsstrom ist gegen die Referenz versetzt. Kein Strukturfehler — und es betrifft **statisches** Grain, der 🔧-Punkt unten meint das nicht-statische | 🟠 |
+| **`Dot Fountain` ist nicht portiert** | 0,002 — **falsch grün** | 🔴 **Neu (S53).** Die Referenz `r_dotfnt.cpp` ist ein **30×256-Gitter** (7680 Punkte, rotierende Höhenwand, 3D-Matrix `translate(0,-20,400)` wie `Dot Plane`, Höhe aus dem Spektrum). Unser Renderer sind **400 freie Partikel** mit eigener Physik — der Header sagt es selbst („Simplified particle model here"). Die Montage zeigt links einen hohen geordneten Brunnen über die volle Bildhöhe, mittig einen flachen Fleck von ~⅕ der Fläche; der 4×-Diff **ist** das Referenzbild. Die Matrix-Zeile `19_dot_fountain` misst trotzdem 0,002 und zählt zu den 37 — **die Metrik lügt bei dünnen Inhalten**, beide Bilder sind überwiegend schwarz. Faktisch also **36/41**. Fix = echte Portierung nach dem `Dot Plane`-Muster (Matrix + Farbtabellen-Arithmetik liegen dort zeilengenau vor); zusätzlich braucht die Zeile ein **flächenbasiertes** Urteil, sonst bewacht sie weiter nichts | 🔴 |
 | Color-Map-Kennlinie | ±1 | Altbestand | 🔧 |
 | Colorfade-Zufalls-Beatmodus | — | Altbestand | 🔧 |
 | nicht-statisches Grain | — | zieht inhaltsabhängig → kippt die rand-Ausrichtung des ganzen Presets (S49-Merkregel) | 🔧 |
@@ -205,6 +207,64 @@ Drei Punkte wurden dabei am Bild der echten APE kalibriert (Deck- statt Additiv-
 gewichtete statt nächster-Nachbar-Farbe, Schattierung über die Kuppelhöhe statt über
 den rohen 1/r²-Gradienten). Feinschliff ist Kür. 🔧
 
+### ➜ Vorgaben Patrik für Session 54
+
+Ausgearbeitet als **Etappen 7–9** im
+[Knoten_Parameter_Konzept.md](visuals/Knoten_Parameter_Konzept.md) (§9–§11):
+
+1. 🔴 **Test-Presets für JEDES Modul und JEDES Feld** (Strang E, Konzept §9). Ein
+   Preset je Feld, nur dieses eine vom Default abweichend; für Transformationen
+   mit klar definiertem statischem Untergrundbild wie auf der MilkDrop-Seite.
+   Urteil = zwei Läufe (Default vs. gesetzt); kein Unterschied heißt: das Feld
+   wirkt nicht. Nach S53 dringlich — 47 Renderer haben je drei neue Skriptfelder,
+   und `movement3b.lvfx` hat gezeigt, dass ein Feld dastehen kann, ohne wirken zu
+   können (§9 unten).
+2. 🟡 **Tooltip an JEDEM Feld** (Strang F, Konzept §10). Skriptfelder nennen ihre
+   schreibbaren Variablen — die stehen heute nur im Doxygen-Kommentar. Text als
+   Tabelle `{typkey, feldname} → Text` statt im Code verdoppelt, plus Gate gegen
+   Felder ohne Eintrag.
+3. 🟡 **Basis-Voreinstellungen für alle Module** (Strang G, Konzept §11) — aus
+   `…\cmake\VisualsPresets` abgreifen, wo möglich. Umfang und Namenskonvention in
+   S54 festlegen; **Teil-Presets** (nur Geometrie, Farbtafel bleibt) sind
+   brauchbarer als solche, die alles überschreiben.
+4. 🟡 **Feldreihenfolge im Editor** — Vorschlag Patrik: Init · Beat · Frame ·
+   Point. Heute Init · Frame · Beat · Point, das folgt der Ausführung
+   (`runParamScript` und alle Skript-Träger fahren Frame VOR Beat, wie AVS).
+   Entscheiden, ob die Anzeige der Ausführung folgt oder der Erwartung.
+
+### 🔴 Movement: Beat-Umkehr kann strukturell nicht wirken (Befund Patrik S53)
+
+`asset/effectchain/movement3b.lvfx` setzt `bt=1` (Init), `bt=(-1)*bt` (Beat) und
+liest `bt` im Point-Code (`r=r+bt*0.02`). Die Rotation kehrt nie um — aus **zwei**
+unabhängigen Gründen:
+
+1. **Zwei getrennte Skript-Umgebungen.** Init/Frame/Beat laufen seit S53 im
+   Parameter-Skript (`runParamScript`, eigener `ScriptSlotHost`), der Point-Code
+   dagegen im `ScriptGridModule`. Geteilt sind zwischen Hosts nur `reg00..reg99`,
+   `q1..q64` und `gmegabuf` — ein freier Name wie `bt` ist im Point-Code schlicht
+   0. Damit ist `r=r+bt*0.02` ein No-op; nur `d=d-0.02` wirkt.
+2. **Movement ist eine statische Tabelle.** `applyMovementTable` cacht über
+   `rectCoords + wrap + subpixel + code` — den **Skripttext**, nicht die Werte.
+   Der Point-Code läuft nur bei Größen- oder Textänderung (r_trans.cpp:453-526,
+   w*h Skript-Läufe). Selbst mit geteiltem `bt` bliebe das Bild stehen. AVS
+   macht es genauso — deshalb hat AVS-Movement gar keinen Beat-Code.
+
+Für beat-abhängige Bewegung ist **Dynamic Movement** der richtige Knoten: er
+wertet je Frame aus und hat Init/Frame/Beat/Point in EINEM Host. Der Editor weist
+seit S53 darauf hin.
+
+✅ **Entschieden (Patrik, S53): Movement verliert seine Strang-D-Felder wieder.**
+Sie hätten nur `sourcemapped` und `blend` je Frame umschalten können — alles
+Geometrische landet im Tabellen-Cache. Der Nutzen stand in keinem Verhältnis zur
+Verwirrung, die sie stiften. Damit hat Movement wieder genau einen Skript-Träger
+(den Point-Code im `ScriptGridModule`), und die Regel „alle Slots eines Knotens
+teilen eine Umgebung" gilt wieder **ausnahmslos** — geprüft über alle Renderer.
+
+**Merkregel:** Movement und Dynamic Movement sind keine Stufen desselben Effekts.
+`r_trans` legt eine Tabelle **je Pixel** an (exakt, keine Interpolation, aber
+statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
+**Gitter** je Frame (beweglich, interpoliert, mit Buffer-Zugriff und Alpha).
+
 ## 8. Werkzeug- und Doku-Schulden
 
 - 🔴 **AvsRef deterministisch machen** (S22): nach dem Laden eines Presets ein festes
@@ -229,6 +289,26 @@ den rohen 1/r²-Gradienten). Feinschliff ist Kür. 🔧
   läuft 43, 44, **46**, 47 … Der Session-Report existiert lokal
   (`.claude/sessions/LumiViz_Session45_…`), nur der Changelog wurde nie
   geschrieben. Nachziehen oder die Lücke bewusst vermerken.
+- ✅ **Knoten-Parameter-Ausbau** (Vorgabe Patrik, S53) — Steuerdokument
+  [Knoten_Parameter_Konzept.md](visuals/Knoten_Parameter_Konzept.md), **alle sechs
+  Etappen umgesetzt**; offen ist nur der Sichttest im Betrieb.
+  Vier Stränge: (A) ✅
+  Voreinstellungen je Knoten, generisch über `nodeToJson`/`nodeFromJson` — greift
+  für alle 81 Knotentypen (`NodePresetStore` + Zeile im Panel +
+  `asset/nodepresets/`), mit **Merge-Semantik** und **Feldauswahl beim Speichern**;
+  die 13 SuperScope-Figuren sind Dateien geworden, das „Figure"-Dropdown ist
+  entfallen; (B) ✅ **vollständig** — zuletzt `Convolution.kernel` (7×7-Gitter),
+  `ColorMap.stopPos/stopColor` (Stützstellen) und die **Bild-Felder** (Zeile
+  „Image" mit `Choose…`/`Clear` + Bilder-Suchordner in den Einstellungen, damit
+  ist auch der S50-Punkt erledigt); (C) ✅ **vollständig** — Klasse B (Rotating
+  Stars, das **null** Parameter hatte · Osc Star · Osc Ring · Metaballs ·
+  Tentacles · FyrewurX · Triangle) und Klasse A (Dot Plane · Bass Spin · Moving
+  Particle, mit **⚠-Kennzeichnung** bei Abweichung vom AVS-Wert, Entscheid §8.4);
+  (D) ✅ **vollständig** — dynamische EEL-Felder (init/frame/beat) für **jeden
+  Knoten mit numerischen Parametern**: 48 Renderer rufen `runParamScript`, ein
+  leeres Feld kostet nichts (kein Host, kein Transpiler, kein Lua-Aufruf).
+  **Der Default-Vertrag ist der kritische Teil** — jeder neue Parameter muss bei
+  Default pixelgleich bleiben, sonst kippt die Kalibrier-Runde.
 - 🔧 Kür: en-Übersetzungen (de = SSOT) · `CMakeUserPresets.json` → `.example` ·
   App-Umbenennung **MyViz → LumiViz** · Pulsing-Defaults-Mismatch ·
   `File → Open Audio…`-Stub · Undock-Dauertest · Waveform-Glättungs-Default.
@@ -246,4 +326,10 @@ den rohen 1/r²-Gradienten). Feinschliff ist Kür. 🔧
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.6.0 | 2026-07-27 | Session 53 — Vorgaben Patrik für S54 aufgenommen (Test-Presets je Feld · Tooltips · Basis-Voreinstellungen · Feldreihenfolge) und der Movement-Befund aus `movement3b.lvfx` dokumentiert (Beat-Umkehr kann dort strukturell nicht wirken) |
+| 1.5.0 | 2026-07-27 | Session 53 — Sonden-Bilanz berichtigt: **78/80** (`6_alloy/paar_original` kam dazu, am Vorstand als Altbestand belegt); Etappen 2–4 des Knoten-Parameter-Ausbaus + S50-Punkt ✅ |
+| 1.4.0 | 2026-07-27 | Session 53 — Matrix-Bilanz berichtigt: **36/41** mit fünf Resten (`grain` kam dazu, war in S52 nicht mitgezählt); Etappe 1 des Knoten-Parameter-Ausbaus ✅ |
+| 1.3.0 | 2026-07-27 | Session 53 — **`Dot Fountain` ist keine Portierung** (§1, 🔴), Matrix-Zeile falsch grün → faktisch 35 echte grüne; Abdeckung ✅→◐, Builtin-Bilanz 44→43 |
+| 1.2.0 | 2026-07-27 | Session 53 — Knoten-Parameter-Ausbau als 🟡 aufgenommen (§8), Steuerdokument `Knoten_Parameter_Konzept.md` angelegt |
+| 1.1.0 | 2026-07-27 | Session 53 — Panel-Editoren Metaballs/Tentacles erledigt (Kopfblock), neuer Kleinkram-Punkt: weitere nicht editierbare Farbtafeln |
 | 1.0.0 | 2026-07-27 | Erstfassung (Session 52) — zusammengeführt aus `Offene_Implementierungen.md` (Stand S37) und `Offene_Sichttests.md` (Stand S37/38), beide überholt und entfernt, plus den aktuellen Befunden aus Handover, `MilkDrop_Import_Status.md` und `AVS_Sichttest_Protokoll.md` |

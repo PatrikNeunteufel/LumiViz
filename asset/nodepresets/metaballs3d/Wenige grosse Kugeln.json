@@ -1,0 +1,17 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "blend": 0,
+        "colors": [
+            16742936,
+            16763210,
+            14693420
+        ],
+        "count": 3,
+        "radius": 0.35,
+        "speed": 0.25,
+        "threshold": 1.0,
+        "type": "metaballs3d"
+    }
+}

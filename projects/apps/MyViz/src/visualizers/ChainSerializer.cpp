@@ -86,11 +86,17 @@ struct WriteVisitor
         o["color"] = static_cast<double>(p.color);
         o["onlyFirst"] = p.onlyFirst;
         o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const FadeoutParams& p) const
     {
         o["fadeLen"] = p.fadeLen;
         o["color"] = static_cast<double>(p.color);
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const InvertParams&) const {}
     void operator()(const BrightnessParams& p) const
@@ -101,12 +107,24 @@ struct WriteVisitor
         o["exclude"] = p.exclude;
         o["color"] = static_cast<double>(p.color);
         o["distance"] = p.distance;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
-    void operator()(const FastBrightnessParams& p) const { o["dir"] = p.dir; }
+    void operator()(const FastBrightnessParams& p) const
+    {
+        o["dir"] = p.dir;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
     void operator()(const BlurParams& p) const
     {
         o["strength"] = p.strength;
         o["roundUp"] = p.roundUp;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const MirrorParams& p) const
     {
@@ -114,12 +132,18 @@ struct WriteVisitor
         o["onBeatRandom"] = p.onBeatRandom;
         o["smooth"] = p.smooth;
         o["slower"] = p.slower;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const OnBeatClearParams& p) const
     {
         o["color"] = static_cast<double>(p.color);
         o["everyNBeats"] = p.everyNBeats;
         o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const ColorfadeParams& p) const
     {
@@ -128,6 +152,9 @@ struct WriteVisitor
         o["beatFaderG"] = p.beatFaderG;
         o["beatFaderB"] = p.beatFaderB;
         o["onBeatFrames"] = p.onBeatFrames;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const ColorModifierParams& p) const
     {
@@ -168,6 +195,9 @@ struct WriteVisitor
         o["onBeat"] = p.onBeat;
         o["blend"] = p.blend;
         o["subpixel"] = p.subpixel;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const RotoBlitterParams& p) const
     {
@@ -179,6 +209,9 @@ struct WriteVisitor
         o["beatReverseSpeed"] = p.beatReverseSpeed;
         o["beatZoomJump"] = p.beatZoomJump;
         o["subpixel"] = p.subpixel;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const BufferSaveParams& p) const
     {
@@ -186,6 +219,9 @@ struct WriteVisitor
         o["dir"] = p.dir;
         o["blend"] = static_cast<int>(p.blend);
         o["adjustAlpha"] = p.adjustAlpha;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const CustomBpmParams& p) const
     {
@@ -195,6 +231,9 @@ struct WriteVisitor
         o["skipCount"] = p.skipCount;
         o["invert"] = p.invert;
         o["skipFirst"] = p.skipFirst;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const SuperScopeParams& p) const
     {
@@ -223,22 +262,28 @@ struct WriteVisitor
         o["onBeat"] = p.onBeat;
         o["durationFrames"] = p.durationFrames;
         o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const GrainParams& p) const
     {
         o["amount"] = p.amount;
         o["staticGrain"] = p.staticGrain;
         o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const ScatterParams&) const {}
     void operator()(const WaterParams&) const {}
     void operator()(const DynamicShiftParams& p) const
     {
+        o["blend"] = p.blend;
+        o["bilinear"] = p.bilinear;
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
-        o["blend"] = p.blend;
-        o["bilinear"] = p.bilinear;
     }
     void operator()(const DynamicDistanceModifierParams& p) const
     {
@@ -257,6 +302,11 @@ struct WriteVisitor
         o["size2"] = p.size2;
         o["onBeatSize"] = p.onBeatSize;
         o["blend"] = p.blend;
+        o["spring"] = p.spring;
+        o["damping"] = p.damping;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const ColorMapParams& p) const
     {
@@ -269,6 +319,9 @@ struct WriteVisitor
         for (uint32_t c : p.stopColor) col.append(static_cast<double>(c));
         o["stopPos"] = pos;
         o["stopColor"] = col;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const Fractal2DParams& p) const
     {
@@ -461,6 +514,9 @@ struct WriteVisitor
         o["bufferA"] = p.bufferA;
         o["bufferB"] = p.bufferB;
         o["mode"] = p.mode;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const JherikoGlobalParams& p) const
     {
@@ -477,6 +533,9 @@ struct WriteVisitor
         QJsonArray cols;
         for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
         o["colors"] = cols;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const BassSpinParams& p) const
     {
@@ -485,6 +544,11 @@ struct WriteVisitor
         o["colorLeft"] = static_cast<double>(p.colorLeft);
         o["colorRight"] = static_cast<double>(p.colorRight);
         o["mode"] = p.mode;
+        o["smoothing"] = p.smoothing;
+        o["spinStep"] = p.spinStep;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const OscStarParams& p) const
     {
@@ -492,6 +556,12 @@ struct WriteVisitor
         o["position"] = p.position;
         o["size"] = p.size;
         o["rot"] = p.rot;
+        o["spokes"] = p.spokes;
+        o["rotScale"] = p.rotScale;
+        o["amplitude"] = p.amplitude;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
         QJsonArray cols;
         for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
         o["colors"] = cols;
@@ -502,12 +572,30 @@ struct WriteVisitor
         o["channel"] = p.channel;
         o["position"] = p.position;
         o["size"] = p.size;
+        o["segments"] = p.segments;
+        o["baseScale"] = p.baseScale;
+        o["audioScale"] = p.audioScale;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
         QJsonArray cols;
         for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
         o["colors"] = cols;
     }
     void operator()(const RotatingStarsParams& p) const
     {
+        o["points"] = p.points;
+        o["skip"] = p.skip;
+        o["stars"] = p.stars;
+        o["rotSpeed"] = p.rotSpeed;
+        o["orbit"] = p.orbit;
+        o["baseRadius"] = p.baseRadius;
+        o["audioGain"] = p.audioGain;
+        o["bandLo"] = p.bandLo;
+        o["bandHi"] = p.bandHi;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
         QJsonArray cols;
         for (uint32_t c : p.colors) cols.append(static_cast<double>(c));
         o["colors"] = cols;
@@ -518,12 +606,18 @@ struct WriteVisitor
         o["imageData"] = QString::fromStdString(p.imageData);
         o["blend"] = p.blend;
         o["keepAspect"] = p.keepAspect;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const PictureIIParams& p) const
     {
         o["filename"] = QString::fromStdString(p.filename);
         o["imageData"] = QString::fromStdString(p.imageData);
         o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const TexerParams& p) const
     {
@@ -531,6 +625,9 @@ struct WriteVisitor
         o["imageData"] = QString::fromStdString(p.imageData);
         o["blend"] = p.blend;
         o["particles"] = p.particles;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const TexerIIParams& p) const
     {
@@ -550,6 +647,8 @@ struct WriteVisitor
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
         o["pointCode"] = QString::fromStdString(p.pointCode);
+        o["filled"] = p.filled;
+        o["lineWidth"] = p.lineWidth;
     }
     void operator()(const ConvolutionParams& p) const
     {
@@ -561,17 +660,26 @@ struct WriteVisitor
         QJsonArray k;
         for (int v : p.kernel) k.append(v);
         o["kernel"] = k;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const NormaliseParams&) const {}
     void operator()(const MultiFilterParams& p) const
     {
         o["effect"] = p.effect;
         o["onBeat"] = p.onBeat;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const AddBordersParams& p) const
     {
         o["color"] = static_cast<double>(p.color);
         o["size"] = p.size;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const ColorClipParams& p) const
     {
@@ -579,12 +687,18 @@ struct WriteVisitor
         o["clipColor"] = static_cast<double>(p.clipColor);
         o["outColor"] = static_cast<double>(p.outColor);
         o["distance"] = p.distance;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const UniqueToneParams& p) const
     {
         o["color"] = static_cast<double>(p.color);
         o["invert"] = p.invert;
         o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const InterleaveParams& p) const
     {
@@ -596,6 +710,9 @@ struct WriteVisitor
         o["x2"] = p.x2;
         o["y2"] = p.y2;
         o["beatDuration"] = p.beatDuration;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const BumpParams& p) const
     {
@@ -620,6 +737,9 @@ struct WriteVisitor
         o["dropY"] = p.dropY;
         o["dropRadius"] = p.dropRadius;
         o["displaceScale"] = p.displaceScale;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const InterferencesParams& p) const
     {
@@ -635,6 +755,9 @@ struct WriteVisitor
         o["onBeat"] = p.onBeat;
         o["speed"] = p.speed;
         o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const Metaballs3DParams& p) const
     {
@@ -646,6 +769,12 @@ struct WriteVisitor
         o["speed"] = p.speed;
         o["threshold"] = p.threshold;
         o["blend"] = p.blend;
+        o["spread"] = p.spread;
+        o["depth"] = p.depth;
+        o["phase"] = p.phase;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const Tentacles3DParams& p) const
     {
@@ -658,6 +787,12 @@ struct WriteVisitor
         o["thickness"] = p.thickness;
         o["speed"] = p.speed;
         o["blend"] = p.blend;
+        o["sway"] = p.sway;
+        o["waves"] = p.waves;
+        o["taper"] = p.taper;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const FyrewurXParams& p) const
     {
@@ -665,6 +800,12 @@ struct WriteVisitor
         o["speed"] = p.speed;
         o["gravity"] = p.gravity;
         o["lifeSeconds"] = p.lifeSeconds;
+        o["dotSize"] = p.dotSize;
+        o["hueDrift"] = p.hueDrift;
+        o["burstSpread"] = p.burstSpread;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const TextParams& p) const
     {
@@ -722,6 +863,9 @@ struct WriteVisitor
         o["vignette"] = p.vignette;
         o["vignetteStrength"] = p.vignetteStrength;
         o["post"] = p.post;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const Camera3DParams& p) const
     {
@@ -794,6 +938,9 @@ struct WriteVisitor
         o["beatSpeed"] = p.beatSpeed;
         o["durationFrames"] = p.durationFrames;
         o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const TimescopeParams& p) const
     {
@@ -801,6 +948,9 @@ struct WriteVisitor
         o["blend"] = p.blend;
         o["channel"] = p.channel;
         o["bands"] = p.bands;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const DotGridParams& p) const
     {
@@ -811,6 +961,9 @@ struct WriteVisitor
         o["xMove"] = p.xMove;
         o["yMove"] = p.yMove;
         o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const DotPlaneParams& p) const
     {
@@ -819,6 +972,11 @@ struct WriteVisitor
         o["colors"] = cols;
         o["rotVel"] = p.rotVel;
         o["angle"] = p.angle;
+        o["camDistance"] = p.camDistance;
+        o["settle"] = p.settle;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const DotFountainParams& p) const
     {
@@ -827,18 +985,39 @@ struct WriteVisitor
         o["colors"] = cols;
         o["rotVel"] = p.rotVel;
         o["angle"] = p.angle;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const ChannelShiftParams& p) const
     {
         o["mode"] = p.mode;
         o["onBeat"] = p.onBeat;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
-    void operator()(const ColorReductionParams& p) const { o["levels"] = p.levels; }
-    void operator()(const MultiplierParams& p) const { o["mode"] = p.mode; }
+    void operator()(const ColorReductionParams& p) const
+    {
+        o["levels"] = p.levels;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
+    void operator()(const MultiplierParams& p) const
+    {
+        o["mode"] = p.mode;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
     void operator()(const VideoDelayParams& p) const
     {
         o["useBeats"] = p.useBeats;
         o["delay"] = p.delay;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const MultiDelayParams& p) const
     {
@@ -846,6 +1025,9 @@ struct WriteVisitor
         o["buffer"] = p.buffer;
         o["delay"] = p.delay;
         o["useBeats"] = p.useBeats;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const DebugBarsParams& p) const
     {
@@ -966,10 +1148,26 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         return p;
     }
     if (type == "clear")
-        return ClearParams{getColor(o, "color", 0), getBool(o, "onlyFirst", false),
-                           getInt(o, "blend", 0)};
+    {
+        ClearParams p;
+        p.color = getColor(o, "color", 0);
+        p.onlyFirst = getBool(o, "onlyFirst", false);
+        p.blend = getInt(o, "blend", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
     if (type == "fadeout")
-        return FadeoutParams{getInt(o, "fadeLen", 16), getColor(o, "color", 0)};
+    {
+        FadeoutParams p;
+        p.fadeLen = getInt(o, "fadeLen", 16);
+        p.color = getColor(o, "color", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
     if (type == "invert") return InvertParams{};
     if (type == "brightness")
     {
@@ -980,11 +1178,30 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.exclude = getBool(o, "exclude", false);
         p.color = getColor(o, "color", 0);
         p.distance = getInt(o, "distance", 16);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
-    if (type == "fastBrightness") return FastBrightnessParams{getInt(o, "dir", 0)};
+    if (type == "fastBrightness")
+    {
+        FastBrightnessParams p;
+        p.dir = getInt(o, "dir", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
     if (type == "blur")
-        return BlurParams{getInt(o, "strength", 1), getBool(o, "roundUp", true)};
+    {
+        BlurParams p;
+        p.strength = getInt(o, "strength", 1);
+        p.roundUp = getBool(o, "roundUp", true);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
     if (type == "mirror")
     {
         MirrorParams p;
@@ -995,11 +1212,22 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.onBeatRandom = getBool(o, "onBeatRandom", false);
         p.smooth = getBool(o, "smooth", false);
         p.slower = getInt(o, "slower", 4);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "onBeatClear")
-        return OnBeatClearParams{getColor(o, "color", 0), getInt(o, "everyNBeats", 1),
-                                 getBool(o, "blend", false)};
+    {
+        OnBeatClearParams p;
+        p.color = getColor(o, "color", 0);
+        p.everyNBeats = getInt(o, "everyNBeats", 1);
+        p.blend = getBool(o, "blend", false);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
     if (type == "colorfade")
     {
         ColorfadeParams p;
@@ -1010,6 +1238,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.beatFaderG = getInt(o, "beatFaderG", -8);
         p.beatFaderB = getInt(o, "beatFaderB", 8);
         p.onBeatFrames = getInt(o, "onBeatFrames", 1);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "colorModifier")
@@ -1070,6 +1301,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.onBeat = getBool(o, "onBeat", false);
         p.blend = getBool(o, "blend", false);
         p.subpixel = getBool(o, "subpixel", true);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "rotoBlitter")
@@ -1096,6 +1330,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.beatReverseSpeed = getInt(o, "beatReverseSpeed", 0);
         p.beatZoomJump = getBool(o, "beatZoomJump", false);
         p.subpixel = getBool(o, "subpixel", true);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "bufferSave")
@@ -1106,6 +1343,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.dir = getInt(o, "dir", getBool(o, "save", true) ? 0 : 1);
         p.blend = static_cast<BlendMode>(getInt(o, "blend", 1));
         p.adjustAlpha = getInt(o, "adjustAlpha", 128);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "customBpm")
@@ -1117,6 +1357,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.skipCount = getInt(o, "skipCount", 1);
         p.invert = getBool(o, "invert", false);
         p.skipFirst = getInt(o, "skipFirst", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "superScope")
@@ -1149,6 +1392,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.onBeat = getBool(o, "onBeat", false);
         p.durationFrames = getInt(o, "durationFrames", 16);
         p.blend = getInt(o, "blend", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "grain")
@@ -1157,6 +1403,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.amount = getInt(o, "amount", 100);
         p.staticGrain = getBool(o, "staticGrain", false);
         p.blend = getInt(o, "blend", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "scatter")
@@ -1173,16 +1422,19 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.dropY = getInt(o, "dropY", 1);
         p.dropRadius = getInt(o, "dropRadius", 40);
         p.displaceScale = static_cast<float>(getDouble(o, "displaceScale", 6.0));
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "dynamicShift")
     {
         DynamicShiftParams p;
+        p.blend = getBool(o, "blend", false);
+        p.bilinear = getBool(o, "bilinear", true);
         p.initCode = getStr(o, "initCode");
         p.frameCode = getStr(o, "frameCode");
         p.beatCode = getStr(o, "beatCode");
-        p.blend = getBool(o, "blend", false);
-        p.bilinear = getBool(o, "bilinear", true);
         return p;
     }
     if (type == "dynamicDistanceModifier")
@@ -1205,6 +1457,11 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.size2 = getInt(o, "size2", 8);
         p.onBeatSize = getBool(o, "onBeatSize", false);
         p.blend = getInt(o, "blend", 1);
+        p.spring = static_cast<float>(getDouble(o, "spring", 0.004));
+        p.damping = static_cast<float>(getDouble(o, "damping", 0.991));
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "colorMap")
@@ -1217,6 +1474,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         const QJsonArray col = o.value("stopColor").toArray();
         for (const auto& v : pos) p.stopPos.push_back(v.toInt());
         for (const auto& v : col) p.stopColor.push_back(static_cast<uint32_t>(v.toDouble()));
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "fractal2D")
@@ -1438,6 +1698,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.bufferA = getInt(o, "bufferA", 8);
         p.bufferB = getInt(o, "bufferB", 8);
         p.mode = getInt(o, "mode", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "jherikoGlobal")
@@ -1471,6 +1734,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         const QJsonArray cols = o.value("colors").toArray();
         for (const auto& v : cols) p.colors.push_back(static_cast<uint32_t>(v.toDouble()));
         if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "bassSpin")
@@ -1481,6 +1747,13 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.colorLeft = getColor(o, "colorLeft", 0xFFFFFF);
         p.colorRight = getColor(o, "colorRight", 0xFFFFFF);
         p.mode = getInt(o, "mode", 1);
+        p.smoothing = static_cast<float>(getDouble(o, "smoothing", 0.7));
+        // Vorgabe = der Original-Ausdruck `3.14159f/6.0f`, nicht pi/6 (s. Struct).
+        p.spinStep = static_cast<float>(
+            getDouble(o, "spinStep", static_cast<double>(3.14159f / 6.0f)));
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "oscStar" || type == "oscRing")
@@ -1496,6 +1769,14 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
             p.position = getInt(o, "position", 2);
             p.size = getInt(o, "size", 8);
             p.rot = getInt(o, "rot", 3);
+            // S53 freigemacht — Vorgabe = das bisherige feste Verhalten, ein
+            // alteres Preset ohne diese Schluessel bleibt also unveraendert.
+            p.spokes = getInt(o, "spokes", 5);
+            p.rotScale = static_cast<float>(getDouble(o, "rotScale", 0.02));
+            p.amplitude = static_cast<float>(getDouble(o, "amplitude", 0.5));
+            p.initCode = getStr(o, "initCode");
+            p.frameCode = getStr(o, "frameCode");
+            p.beatCode = getStr(o, "beatCode");
             p.colors = std::move(colors);
             return p;
         }
@@ -1504,6 +1785,12 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.channel = getInt(o, "channel", 2);
         p.position = getInt(o, "position", 2);
         p.size = getInt(o, "size", 8);
+        p.segments = getInt(o, "segments", 80);
+        p.baseScale = static_cast<float>(getDouble(o, "baseScale", 0.1));
+        p.audioScale = static_cast<float>(getDouble(o, "audioScale", 0.9));
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         p.colors = std::move(colors);
         return p;
     }
@@ -1514,6 +1801,18 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         const QJsonArray cols = o.value("colors").toArray();
         for (const auto& v : cols) p.colors.push_back(static_cast<uint32_t>(v.toDouble()));
         if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
+        p.points = getInt(o, "points", 5);
+        p.skip = getInt(o, "skip", 2);
+        p.stars = getInt(o, "stars", 2);
+        p.rotSpeed = static_cast<float>(getDouble(o, "rotSpeed", 0.05));
+        p.orbit = static_cast<float>(getDouble(o, "orbit", 0.5));
+        p.baseRadius = static_cast<float>(getDouble(o, "baseRadius", 0.12));
+        p.audioGain = static_cast<float>(getDouble(o, "audioGain", 0.5));
+        p.bandLo = getInt(o, "bandLo", 3);
+        p.bandHi = getInt(o, "bandHi", 14);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "picture")
@@ -1523,6 +1822,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.imageData = getStr(o, "imageData");
         p.blend = getInt(o, "blend", 2);
         p.keepAspect = getBool(o, "keepAspect", true);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "pictureII")
@@ -1531,6 +1833,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.filename = getStr(o, "filename");
         p.imageData = getStr(o, "imageData");
         p.blend = getInt(o, "blend", 2);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "texer")
@@ -1540,6 +1845,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.imageData = getStr(o, "imageData");
         p.blend = getInt(o, "blend", 1);
         p.particles = getInt(o, "particles", 100);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "texerII")
@@ -1563,6 +1871,10 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.frameCode = getStr(o, "frameCode");
         p.beatCode = getStr(o, "beatCode");
         p.pointCode = getStr(o, "pointCode");
+        // Vorgabe GEFUELLT = Referenzverhalten (S51); alte Dateien ohne den
+        // Schluessel bleiben damit unveraendert.
+        p.filled = getBool(o, "filled", true);
+        p.lineWidth = static_cast<float>(getDouble(o, "lineWidth", 1.0));
         return p;
     }
     if (type == "convolution")
@@ -1576,6 +1888,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         const QJsonArray k = o.value("kernel").toArray();
         for (int i = 0; i < 49 && i < k.size(); ++i)
             p.kernel[static_cast<std::size_t>(i)] = k[i].toInt();
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "normalise") return NormaliseParams{};
@@ -1584,6 +1899,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         MultiFilterParams p;
         p.effect = getInt(o, "effect", 0);
         p.onBeat = getBool(o, "onBeat", false);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "addBorders")
@@ -1591,6 +1909,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         AddBordersParams p;
         p.color = getColor(o, "color", 0xFFFFFF);
         p.size = getInt(o, "size", 2);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "colorClip")
@@ -1600,6 +1921,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.clipColor = getColor(o, "clipColor", 0x202020);
         p.outColor = getColor(o, "outColor", 0x202020);
         p.distance = getInt(o, "distance", 10);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "uniqueTone")
@@ -1608,6 +1932,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.color = getColor(o, "color", 0xFFFFFF);
         p.invert = getBool(o, "invert", false);
         p.blend = getInt(o, "blend", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "interleave")
@@ -1621,6 +1948,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.x2 = getInt(o, "x2", 1);
         p.y2 = getInt(o, "y2", 1);
         p.beatDuration = getInt(o, "beatDuration", 4);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "bump")
@@ -1654,6 +1984,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.onBeat = getBool(o, "onBeat", false);
         p.speed = static_cast<float>(getDouble(o, "speed", 0.2));
         p.blend = getInt(o, "blend", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "metaballs3d" || type == "tentacles3d")
@@ -1671,6 +2004,12 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
             p.speed = static_cast<float>(getDouble(o, "speed", 0.45));
             p.threshold = static_cast<float>(getDouble(o, "threshold", 1.0));
             p.blend = std::clamp(getInt(o, "blend", 0), 0, 2);
+            p.spread = static_cast<float>(getDouble(o, "spread", 1.0));
+            p.depth = static_cast<float>(getDouble(o, "depth", 1.2));
+            p.phase = static_cast<float>(getDouble(o, "phase", 1.7));
+            p.initCode = getStr(o, "initCode");
+            p.frameCode = getStr(o, "frameCode");
+            p.beatCode = getStr(o, "beatCode");
             return p;
         }
         Tentacles3DParams p;
@@ -1681,6 +2020,12 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.thickness = static_cast<float>(getDouble(o, "thickness", 9.0));
         p.speed = static_cast<float>(getDouble(o, "speed", 0.7));
         p.blend = std::clamp(getInt(o, "blend", 1), 0, 2);
+        p.sway = static_cast<float>(getDouble(o, "sway", 0.9));
+        p.waves = static_cast<float>(getDouble(o, "waves", 3.1));
+        p.taper = static_cast<float>(getDouble(o, "taper", 1.0));
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "fyrewurx")
@@ -1690,6 +2035,12 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.speed = static_cast<float>(getDouble(o, "speed", 0.7));
         p.gravity = static_cast<float>(getDouble(o, "gravity", 0.8));
         p.lifeSeconds = static_cast<float>(getDouble(o, "lifeSeconds", 1.6));
+        p.dotSize = static_cast<float>(getDouble(o, "dotSize", 2.0));
+        p.hueDrift = static_cast<float>(getDouble(o, "hueDrift", 0.6));
+        p.burstSpread = static_cast<float>(getDouble(o, "burstSpread", 1.0));
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "text")
@@ -1758,6 +2109,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.vignetteStrength = static_cast<float>(
             std::clamp(getDouble(o, "vignetteStrength", 0.3), 0.0, 1.0));
         p.post = getBool(o, "post", true);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "camera3d")
@@ -1853,6 +2207,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.beatSpeed = static_cast<float>(getDouble(o, "beatSpeed", 4.0));
         p.durationFrames = getInt(o, "durationFrames", 15);
         p.blend = getInt(o, "blend", 1);  // legacy files rendered additively
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "timescope")
@@ -1862,6 +2219,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.blend = getInt(o, "blend", 0);
         p.channel = getInt(o, "channel", 2);
         p.bands = getInt(o, "bands", 576);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "dotGrid")
@@ -1875,6 +2235,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.xMove = getInt(o, "xMove", 128);
         p.yMove = getInt(o, "yMove", 128);
         p.blend = getInt(o, "blend", 0);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "dotPlane" || type == "dotFountain")
@@ -1890,22 +2253,60 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
             fill(p.colors);
             p.rotVel = getInt(o, "rotVel", 16);
             p.angle = getInt(o, "angle", -20);
+            p.camDistance = static_cast<float>(getDouble(o, "camDistance", 400.0));
+            p.settle = static_cast<float>(getDouble(o, "settle", 0.15));
+            p.initCode = getStr(o, "initCode");
+            p.frameCode = getStr(o, "frameCode");
+            p.beatCode = getStr(o, "beatCode");
             return p;
         }
         DotFountainParams p;
         fill(p.colors);
         p.rotVel = getInt(o, "rotVel", 16);
         p.angle = getInt(o, "angle", -20);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "channelShift")
-        return ChannelShiftParams{getInt(o, "mode", 1), getBool(o, "onBeat", false)};
+    {
+        ChannelShiftParams p;
+        p.mode = getInt(o, "mode", 1);
+        p.onBeat = getBool(o, "onBeat", false);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
     if (type == "colorReduction")
-        return ColorReductionParams{getInt(o, "levels", 8)};
+    {
+        ColorReductionParams p;
+        p.levels = getInt(o, "levels", 8);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
     if (type == "multiplier")
-        return MultiplierParams{getInt(o, "mode", 3)};
+    {
+        MultiplierParams p;
+        p.mode = getInt(o, "mode", 3);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
     if (type == "videoDelay")
-        return VideoDelayParams{getBool(o, "useBeats", false), getInt(o, "delay", 10)};
+    {
+        VideoDelayParams p;
+        p.useBeats = getBool(o, "useBeats", false);
+        p.delay = getInt(o, "delay", 10);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
+        return p;
+    }
     if (type == "multiDelay")
     {
         MultiDelayParams p;
@@ -1913,6 +2314,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.buffer = getInt(o, "buffer", 0);
         p.delay = getInt(o, "delay", 10);
         p.useBeats = getBool(o, "useBeats", false);
+        p.initCode = getStr(o, "initCode");
+        p.frameCode = getStr(o, "frameCode");
+        p.beatCode = getStr(o, "beatCode");
         return p;
     }
     if (type == "debugBars")
