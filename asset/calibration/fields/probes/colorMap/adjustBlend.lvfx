@@ -95,6 +95,7 @@
         "type": "colorMap",
         "enabled": true,
         "name": "Color Map",
+        "blendMode": 10,
         "adjustBlend": 0
       }
     ],

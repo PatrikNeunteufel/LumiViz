@@ -95,7 +95,7 @@
         "type": "bufferSave",
         "enabled": true,
         "name": "Buffer Save",
-        "blend": 3
+        "blend": 2
       },
       {
         "type": "clear",

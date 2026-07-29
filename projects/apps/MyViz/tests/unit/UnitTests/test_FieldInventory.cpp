@@ -45,7 +45,6 @@
 
 #include <algorithm>
 #include <filesystem>
-#include <set>
 #include <string>
 #include <utility>
 #include <variant>
@@ -185,6 +184,43 @@ TEST_CASE("Feld-Inventar: jeder Knotentyp hat einen eigenen, nicht leeren Typsch
         CHECK_MESSAGE(seen.insert(key).second,
                       "Typschluessel doppelt vergeben: " << key.toStdString()
                                                          << " (" << name.toStdString() << ")");
+    }
+}
+
+TEST_CASE("Feld-Inventar: jedes Feld uebersteht den Roundtrip")
+{
+    // Struct -> JSON -> Struct -> JSON. Weil das erste JSON JEDES Feld nennt,
+    // greift kein Alt-Format-Zweig; geprueft wird allein, ob Schreiber und
+    // Leser dasselbe Feld kennen. Ein Feld, das nur der Schreiber kennt,
+    // faellt hier auf — und ein solches waere im Panel einstellbar, ginge beim
+    // Speichern aber verloren.
+    //
+    // Die VORGABEN sind nicht mehr Gegenstand eines Laufzeit-Tests: seit dem
+    // SSOT-Umbau (S56) bezieht der Deserialisierer sie aus dem Struct
+    // (`getInt(o, "x", p.x)`), es gibt also keine zweite Quelle mehr. Bewacht
+    // wird das statisch im Ernter. Ein Test mit einem LEEREN JSON waere hier
+    // sogar irrefuehrend: er loest die Alt-Format-Migrationen aus, und die
+    // rechnen dann aus fehlenden Werten (Befund S56).
+    for (const QJsonObject& typ : allTypes())
+    {
+        const QString key = typ.value(QStringLiteral("typkey")).toString();
+
+        QJsonObject erst;
+        erst[QStringLiteral("type")] = key;
+        for (const QJsonValue& f : typ.value(QStringLiteral("felder")).toArray())
+            erst[f.toObject().value(QStringLiteral("name")).toString()] =
+                f.toObject().value(QStringLiteral("default"));
+
+        QStringList report;
+        const QJsonObject zweit = nodeToJson(nodeFromJson(erst, &report));
+
+        for (const QJsonValue& f : typ.value(QStringLiteral("felder")).toArray())
+        {
+            const QString name = f.toObject().value(QStringLiteral("name")).toString();
+            CHECK_MESSAGE(zweit.value(name) == erst.value(name),
+                          "Feld ueberlebt den Roundtrip nicht: "
+                              << key.toStdString() << "." << name.toStdString());
+        }
     }
 }
 

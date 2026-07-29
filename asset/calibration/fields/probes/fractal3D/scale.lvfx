@@ -95,6 +95,7 @@
         "type": "fractal3D",
         "enabled": true,
         "name": "Fractal 3D",
+        "ftype": 1,
         "scale": -4
       }
     ],

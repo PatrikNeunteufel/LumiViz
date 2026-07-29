@@ -95,6 +95,7 @@
         "type": "setRenderMode",
         "enabled": true,
         "name": "Set Render Mode",
+        "lineBlend": 10,
         "adjustAlpha": 0
       },
       {

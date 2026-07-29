@@ -95,6 +95,7 @@
         "type": "interferences",
         "enabled": true,
         "name": "Interferences",
+        "onBeat": true,
         "rotationInc2": -64
       }
     ],

@@ -103,6 +103,23 @@ FRAMES_JE_FELD: dict[str, int] = {
     "colorfade.faderB": 60,
     "colorfade.onBeatFrames": 33,
     "avi.persist": 41,
+    # Der Schlussframe ist per Konstruktion ein BEAT — fuer ein Feld, das nur
+    # AUSSERHALB des Beats etwas tut, ist er blind. 196 Frames enden 15 Frames
+    # nach dem letzten Beat (S56).
+    "list.onBeatRender": 196,
+    "multiFilter.onBeat": 196,
+    "mirror.onBeatRandom": 196,
+    "mosaic.durationFrames": 196,
+    "interleave.beatDuration": 196,
+    # Custom BPM mit `skip` laesst jeden (skipCount+1)-ten Beat durch und setzt
+    # den Zaehler dabei zurueck. Bei der Vorgabe 1 sind das die Beats 2, 4, 6 —
+    # der SIEBTE (Frame 180) faellt heraus, und der Gegenwert 16 laesst nie
+    # durch: beide loeschen am Schlussframe nicht, das Urteil war „stumm".
+    # 151 Frames enden auf dem SECHSTEN Beat, den die Vorgabe durchlaesst.
+    "customBpm.skipCount": 151,
+    "customBpm.initCode": 151,
+    "customBpm.frameCode": 151,
+    "customBpm.beatCode": 151,
 }
 
 # Sonden, die ein anderes TESTSIGNAL brauchen. Das Standard-Signal des
@@ -116,6 +133,14 @@ FRAMES_JE_FELD: dict[str, int] = {
 ARGS_JE_FELD: dict[str, list[str]] = {
     "timescope.channel": ["--stereo-spektrum"],
     "timescope.useChannel": ["--stereo-spektrum"],
+    # Dieselbe Grenze bei jedem anderen Kanalfeld: das Standardsignal fuellt
+    # beide Kanaele gleich, links/rechts/Mitte sind dann zwangslaeufig
+    # identisch (S56).
+    "superScope3d.audioChannel": ["--stereo-spektrum"],
+    "superScope3d.spectrumSource": ["--stereo-spektrum"],
+    "oscRing.channel": ["--stereo-spektrum"],
+    "oscStar.channel": ["--stereo-spektrum"],
+    "simpleScope.channel": ["--stereo-spektrum"],
 }
 
 

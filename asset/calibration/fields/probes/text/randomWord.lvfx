@@ -95,7 +95,7 @@
         "type": "text",
         "enabled": true,
         "name": "Text",
-        "text": "Lumi Viz Test Wort",
+        "text": "Lumi;Viz;Test;Wort",
         "randomWord": true
       }
     ],

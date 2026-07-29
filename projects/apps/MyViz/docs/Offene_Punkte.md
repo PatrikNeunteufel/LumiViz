@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.7.0
-> **Datum:** 2026-07-28 (Session 54)
+> **Version:** 1.9.0
+> **Datum:** 2026-07-29 (Session 56)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -113,44 +113,64 @@ Aufbau übernimmt, hängt danach fest.
 
 **Werkzeug:** `asset/calibration/fields/run_edit_probes.py` + `--edit-nach` im
 AvsStandalone (bildet den Panel-Weg nach: Params tauschen, `recompileChain()`,
-kein Reset). Urteil über **drei** Bilder — geladen · editiert · Vorgabe:
-`WIRKUNGSLOS` = editiert ist Pixel für Pixel die Vorgabe (harter Befund) ·
-`TEILWEISE` = wirkt, trägt aber noch die Vorgeschichte (bei Effekten mit
-Verlauf der Normalfall) · `GLEICH`.
+kein Reset). Urteil über **vier** Bilder — geladen · editiert · Vorgabe ·
+Gegenrichtung: `TEILWEISE` = wirkt, trägt aber noch die Vorgeschichte (bei
+Effekten mit Verlauf der Normalfall) · `GLEICH`. Ist editiert Pixel für Pixel
+die Vorgabe, entscheidet das **vierte** Bild (S56, s. u.):
+`WIRKUNGSLOS` = auch die Gegenrichtung ändert nichts, der Wert kommt nicht an
+(harter Befund) · `VERDECKT` = die Gegenrichtung ändert das Bild, der Wert
+kommt an und wird hier nur von der Vorgeschichte verdeckt (**kein** Befund).
 
-**Stand:** 591 GLEICH · 101 TEILWEISE · 15 WIRKUNGSLOS (707 Sonden).
+**Stand:** die 15 WIRKUNGSLOS aus S55 sind abgearbeitet — **7 echte Befunde,
+alle gefixt** (3 in S55, 4 in S56), **8 waren Messartefakte** (`VERDECKT`).
+Nebenbei: die Rede von „13 verbliebenen" war eine Fehlzählung — `avi` stand mit
+**zwei** Feldern in der Liste (`filename` · `resolvedPath`), es waren 12.
 
 | Feld | MAE | Stand |
 |---|---|---|
 | ~~`movement.sourceMapped`~~ | 0,081 | ✅ **gefixt S55** — wurde nur bei frischer Runtime übernommen (`< 0`). Jetzt wird der zuletzt übernommene Preset-Wert mitgeführt, das Beat-Kippen bleibt. Nachgemessen: Movement 7/7 GLEICH |
 | ~~`avi.filename` · `avi.resolvedPath`~~ | 0,234 | ✅ **gefixt S55** — `aviTried` merkte sich nur, DASS geöffnet wurde; ein Pfadwechsel griff nie. Jetzt Pfad-Schnappschuss + Neuöffnen (Textur wird verworfen). Nachgemessen: keine WIRKUNGSLOS mehr, Feld-Sonden 6/6 ohne Regression |
-| `texer.imageData` | 0,070 | 🟠 offen |
-| `milkdrop.meshX` · `meshY` · `debugGrid` | 0,036 · 0,053 · 0,006 | 🟠 offen — Mesh/Gitter wird im Milkdrop-Modul aufgebaut |
-| `bufferSave.slot` · `dir` · `initCode` · `frameCode` · `beatCode` | 0,109 | 🟠 offen |
-| `bassSpin.smoothing` | 0,184 | 🟠 offen |
-| `customBpm.skip` | 0,109 | 🟠 offen |
-| `mirror.slower` | 0,014 | 🟠 offen |
+| ~~`texer.imageData`~~ | 0,070 | ✅ **gefixt S56** — `ensureEmbeddedTexture` stieg bei `picTexture != 0` aus, die Textur hing am Aufbau fest. Jetzt Schnappschuss der Bilddaten (`picSnapshot`, Bauart wie `cmSnapshot`), bei Wechsel wird neu hochgeladen. Nachgemessen: texer 6/6 GLEICH; Picture/Picture II/Texer II 19/19 GLEICH ohne Regression |
+| ~~`milkdrop.meshX` · `meshY` · `debugGrid`~~ | 0,036 · 0,053 · 0,006 | ✅ **gefixt S56** — die drei standen IM Revisions-Block von `runMilkdropNode`, und `revision` zählt nur Preset-/Skript-/Shader-Edits. Es sind reine `setParam`-Zuweisungen ohne Neuaufbau, stehen jetzt je Frame außerhalb. Nachgemessen: debugGrid GLEICH, meshX/meshY TEILWEISE (Feedback-Puffer), keine WIRKUNGSLOS |
+| `bufferSave.slot` · `dir` · `initCode` · `frameCode` · `beatCode` | 0,109 | ⬜ **kein Befund (S56)** — `VERDECKT`, s. u. |
+| `bassSpin.smoothing` | 0,184 | ⬜ **kein Befund (S56)** — `VERDECKT` |
+| `customBpm.skip` | 0,109 | ⬜ **kein Befund (S56)** — `VERDECKT` |
+| `mirror.slower` | 0,014 | ⬜ **kein Befund (S56)** — `VERDECKT` |
 
-**Alle 13 sind bestätigte Kandidaten, keiner ist wegerklärt.** Der erste Anlauf
-hatte für `mirror.slower`, `customBpm.skip` und `bufferSave.*` Entwarnung
-gegeben („Rampe längst abgelaufen", „Artefakt des statischen Untergrunds") —
-das waren **Rationalisierungen**, dieselbe Falle wie beim `d`-Faktor in S54.
-Widerlegt durch zwei Messungen:
+### Der Quercheck aus S55 war falsch (Korrektur S56)
 
-1. **Jedes der 13 Felder WIRKT in den Feld-Sonden** — es kann also im
-   Schlussbild sehr wohl etwas bewirken.
-2. **Der Edit-MAE ist exakt der Feld-MAE** (`mirror.slower` 0,0143 hier wie
-   dort, `bufferSave.slot` 0,1094, `bassSpin.smoothing` 0,1841 …). Das heißt:
-   das editierte Bild ist Pixel für Pixel die Vorgabe, und der Abstand zum
-   geladenen ist genau der volle Feld-Effekt. Der Edit hat **nichts** bewirkt.
+S55 erklärte alle 13 für bestätigt, mit dieser Regel: *wirkt das Feld in den
+Feld-Sonden, und ist der Edit-MAE gleich dem Feld-MAE? Dann ist es ein Befund.*
+**Die Regel unterscheidet nicht, was sie unterscheiden soll.** „Editiert ==
+Vorgabe" hat zwei mögliche Ursachen, und beide erfüllen sie:
 
-Gegenprobe am Werkzeug: der Standalone meldet „Edit angewandt nach Frame 90" —
-es liegt nicht daran, dass der Edit ausbliebe.
+(a) der Wert kommt beim Edit nicht an — der Befund;
+(b) der Wert kommt an, kann aber nichts mehr ausrichten, weil der Zustand aus
+    der ersten Hälfte ihn **verdeckt** (der Puffer hält seinen Inhalt, die
+    Rampe ist abgelaufen, der Zähler steht anderswo).
 
-**Merkregel:** `WIRKUNGSLOS` ist wie `STUMM` zuerst **eine Frage** — aber
-beantwortet wird sie mit einer Messung, nicht mit einer plausiblen Geschichte.
-Der Quercheck dafür steht fest: *wirkt das Feld in den Feld-Sonden, und ist der
-Edit-MAE gleich dem Feld-MAE?* Dann ist es ein Befund.
+Getrennt wird das durch die **Gegenrichtung**: Start = Sonde (Feld gesetzt),
+Edit → Grund. Der Zustand der ersten Hälfte ist dann der des *gesetzten* Feldes
+und kann den Rückweg nicht auf dieselbe Weise verdecken. Ergebnis für alle
+acht: **das Bild ändert sich** (`bufferSave.*` 0,1094 · `bassSpin.smoothing`
+0,2295 · `customBpm.skip` 0,1094 · `mirror.slower` 0,0143) — der Wert kommt an.
+
+Dazu zwei **Positivkontrollen**, die dieselbe Vorwärtsrichtung fahren und nur
+die Verdeckung wegnehmen:
+
+- `bufferSave.slot` mit dem Leser auf dem **leeren Slot 7**: WIRKUNGSLOS →
+  **GLEICH** (MAE 0,0000). Der Slot-Wechsel kommt vollständig an.
+- `mirror.slower` mit `onBeatRandom`, damit die 16-Stufen-Rampe nie zur Ruhe
+  kommt: WIRKUNGSLOS → **TEILWEISE**.
+
+Die Sonde kann das jetzt selbst: das vierte Bild ist in `run_edit_probes.py`
+eingebaut und kostet nur im Verdachtsfall einen Renderlauf. Neues Urteil
+`VERDECKT`; der Rückgabewert bleibt nur bei `WIRKUNGSLOS` ungleich 0.
+
+**Merkregel bleibt, aber schärfer:** `WIRKUNGSLOS` ist wie `STUMM` zuerst eine
+**Frage**. Beantwortet wird sie weder mit einer plausiblen Geschichte noch mit
+einem Quercheck, der beide Ursachen gleich behandelt, sondern mit einer
+Messung, die sie **trennt**.
 
 **Geprüft und in Ordnung:** alle 16 Knoten mit Verlauf (multiDelay, videoDelay,
 bufferSave, blitterFeedback, rotoBlitter, waterBump, water, fyrewurX,
@@ -158,11 +178,163 @@ movingParticle, bassSpin, timescope, avi, customBpm, reactionDiffusion,
 fractalZoomer, milkdrop) übernehmen ihre Felder **unbedingt je Frame** — keine
 einzige bedingte Übernahme (statische Prüfung S55, Vorgabe Patrik).
 
+Das passt zum Befund S56: kein einziger der acht `VERDECKT`-Fälle liegt an
+einer festgehaltenen Übernahme — sie lesen ihre Felder je Frame, wie hier
+statisch geprüft, und die Gegenrichtung bestätigt es messend. Auch
+`bufferSave.initCode`/`frameCode`/`beatCode` sind sauber: `runParamScript`
+übersetzt bei jeder Textänderung neu (`paramCompiled != combined`).
+
 **Entscheid Patrik S55:** einzeln je Knoten reparieren, nicht generisch. Ein
 generisches Verwerfen des Aufbau-Zustands bei jedem Reglerdreh würde Skripte
 neu übersetzen und Bilder/Videos neu laden — das kann beim Ziehen ruckeln, und
 die Grenze zwischen „Aufbau" und „Verlauf" müsste je Knoten von Hand gezogen
 werden.
+
+## 1c. Die stummen Feld-Sonden (Strang E, Durchsicht S56)
+
+**Stand: 115 → 27.** `STUMM` ist wie `WIRKUNGSLOS` **zuerst eine Frage** — von
+88 durchgesehenen war **genau einer** ein Befund an der App.
+
+### Der eine App-Befund: die Alt-Format-Weichen griffen zu oft
+
+Drei Stellen im Deserialisierer erkannten ein Alt-Dokument an der **Abwesenheit
+des neuen Felds** statt an der **Anwesenheit des alten**. Ein Preset, das
+`zoomScale` schlicht nicht nennt, bekam deshalb den Migrationspfad — und der
+rechnet aus Werten, die nie im Dokument standen:
+
+```
+Roto Blitter ohne `zoomScale`  ->  zoomScale = (1,0 - 1,0) * 1024 = 0
+                                   statt des neutralen 31
+```
+
+Der Knoten zoomte so weit hinein, dass das Bild **einfarbig gelb** war; alle
+fünf seiner Felder galten als stumm. Dieselbe Bauart bei `blitterFeedback`
+(`scale`) und `simpleScope` (`mode`). Die Weiche hängt jetzt am Altfeld, und ein
+Dokument mit beidem folgt dem neuen. **Roto Blitter 5 → 0, Simple Scope 1 → 0.**
+
+Das ist auch die Auflösung der „Migrations-Artefakte" aus §1d: der Zweig griff
+wirklich zu oft — nur war der Schluss „mein Test ist zu streng" halb falsch.
+
+### Alles andere lag am Testaufbau oder am Werkzeug
+
+| Ursache | Fälle | Beispiel |
+|---|---|---|
+| Betriebsart nicht aktiv | ~20 | `list.inAdjustAlpha` braucht Blend = Adjustable · `colorClip.distance` nur im Modus „near" · `convolution.absolute` braucht einen Kern ≠ Identität · `superScope.colors` wird bei `colorBlend = 0` nie gelesen (der Verlauf gewinnt) |
+| Beat-Ziel gleich dem Normalwert | 9 | `movingParticle.size2`, `blitterFeedback.scale2`, `interleave.x2`, `mosaic.quality2` |
+| Knoten zeichnet nichts | 5 | **Texer II** hat kein `pointCount`; `n` kommt allein aus dem Init-Slot. Ohne ihn läuft der Punkt-Code null mal — gemessen identisch mit „gar kein Knoten" |
+| Zähler-Phase | 4 | **Custom BPM** mit `skipCount = 1` lässt die Beats 2, 4, 6 durch — der siebte (Schlussframe) fällt heraus, und der Gegenwert 16 lässt nie durch. Beide löschten am Schluss nicht. Lauflänge auf 151 (sechster Beat) |
+| `{"type": 1}` statt `{"ftype": 1}` | 8 | `type` ist der KNOTENTYP — der Eintrag machte aus dem Fraktal-Knoten den unbekannten Typ „1", und daraus baut der Leser bewusst einen **Passthrough** |
+| Gegenwert trifft die Vorgabe | 6 | `timescope.blend` · `kleinian.colorScale` (ganzzahlig, s. u.) · `text.normSpeed` · `interferences.rotation` (255 = volle Umdrehung = 0) |
+| Trennzeichen / erfundenes Nachbarfeld | 7 | Der Text-Knoten trennt mit `;`, nicht mit Leerzeichen · `text.xShift` nannte ein `shiftSpeed`, das es nicht gibt |
+| Nicht prüfbar, mit Grund | 3 | `hostgroup.curveIn`/`curveOut` (nur linear implementiert) · `customBpm.arbitraryMs` (hängt an der **Wanduhr**, nicht am Frame) |
+
+**Kleinian war der zweite echte Befund**, aber an der Vorgabe: die Färbung läuft
+über `fract(Spiegelungszahl · colorScale)`, und die Spiegelungszahl ist eine
+**ganze Zahl** — jedes ganzzahlige `colorScale` ergibt exakt 0, also eine
+einfarbige Scheibe. Gemessen: 1,0 und 4,0 liefern dasselbe Bild (MAE 0,0000),
+erst 0,17 zeigt die Kachelung. Fünf weitere Felder (`p`, `q`, `morph`,
+`iterations`, `rotation`) standen deshalb als stumm da. Vorgabe jetzt 0,17.
+
+### Drei Wächter aus drei Fehlern
+
+- **Zusatzfelder einer Grundkonfiguration** werden gegen das Feld-Inventar
+  geprüft (`make_field_probes.py`) — getrennt nach Schadenswirkung: der *innere*
+  Schlüssel landet im Preset und ist ein Fehler, der *äußere* wählt nur aus und
+  wird gezählt (71 aus den Kreuzprodukten).
+- **Verwaiste Sonden werden gelöscht.** Was ein Lauf nicht mehr erzeugt, muss
+  weg — `hostgroup/curveIn.lvfx` lief weiter mit und stand als „stumm" im
+  Report, obwohl längst als nicht prüfbar erklärt.
+- **Panel-Schlüssel** gegen das Inventar (§10).
+
+### Ein Eigentor, das hierher gehört
+
+Meine erste Runde Tabellen-Einträge stand **vor** den alten im selben Dict — im
+Python-Dict gewinnt der spätere, sie waren wirkungslos. Und die `add*`-Helfer
+bekamen in §10 den Feldnamen als erstes Argument, wodurch `lo`/`hi` in der Ernte
+um eine Position rutschten: der Ernter fand **269 → 0 Bereiche**, und alle
+Zahlen-Gegenwerte fielen still auf die Notregel. Aufgefallen nur, weil
+`text.normSpeed` partout stumm blieb.
+
+### Was offen ist (27)
+
+| | |
+|---|---|
+| Vermutlich gemeinsame Ursache | `bufferBlend.bufferA`/`bufferB` · `list.initCode`/`onBeatFrames`/`onBeatRender` |
+| Kanal liest die **Wellenform** | `oscRing.channel` · `oscStar.channel` — `--stereo-spektrum` hilft dort nicht; braucht eine Stereo-Wellenform im Standalone oder ein *nicht prüfbar* |
+| Beat-Übergang | `interferences.alpha2`/`distance2` |
+| Einzelfälle (18) | `bloom.post` · `blur.roundUp` · `camera3d.fogColor`/`tz` · `convolution.edgeMode` · `dotPlane.colors` · `dynamicMovement.rectCoords` · `grain.staticGrain` · `multiDelay.mode` · `rotatingStars.bandHi` · `setRenderMode.adjustAlpha` · `strangeAttractor.color`/`d` · `superScope.renderMode` · `terrain3d.colorLow` · `texer.blend` · `texerII.wrapAround` · `triangle.pointCode` |
+
+Die 18 brauchen jeweils Renderer lesen und Bild ansehen — kein Muster mehr, das
+mehrere auf einmal löst.
+
+**Beobachtung, nicht gefixt:** `fractalZoomer.feedback` heißt „trail persistence
+0..1", der Shader liest es aber nur als **Schalter**
+(`params.feedback > 0.01f ? 2 : 0`, `MultiEffectVisualizer.cpp:10506`). 0,3 und
+1,0 ergeben dasselbe Bild.
+
+## 1d. Vorgaben: die zweite Quelle ist abgeschafft (S56)
+
+Jede Vorgabe stand an **zwei** Stellen: als Initialisierer im `…Params`-Struct
+und als dritter Parameter im Deserialisierer (`getInt(o, "x", 5)`). Liefen sie
+auseinander, hing der Wert davon ab, **woher der Knoten kam** — ein frisch
+eingefügter trug den Struct-Wert, ein **geladener** den des Deserialisierers.
+
+Aufgefallen am Kleinian-Fix (§1c): Struct-Vorgabe geändert, gebaut — die Sonden
+sahen nichts, weil sie aus einem Preset laden.
+
+**Entscheid Patrik: die zweite Quelle abschaffen.** Umgesetzt — der
+Deserialisierer bezieht die Vorgabe jetzt aus dem Ziel selbst:
+
+```cpp
+p.iterations = getInt(o, "iterations", p.iterations);   // vorher: …, 30);
+```
+
+Das Params-Objekt wird ohnehin auf Vorgabe konstruiert, also steht die Zahl nur
+noch im Struct. **415 Stellen** maschinell umgestellt, dazu **243 `getStr`**,
+die gar keinen Vorgabewert kannten (neue Überladung mit Default). Vier
+`BlendMode`-Ziele brauchten einen Cast von Hand.
+
+**Eine bewusste Ausnahme bleibt:** `starfield.blend` liest `1`, obwohl die
+Vorgabe `0` ist — *„legacy files rendered additively"*. Der Wert steht dort für
+**alte Dateien**, nicht für den Knoten. Sie trägt ihre Begründung im Code und
+ist im Wächter benannt.
+
+**Zwei Vorbedingungen**, damit der Umbau bild-neutral bleibt:
+
+- **Demo-Skripte raus aus vier Structs** (`dynamicShift`, `bump`,
+  `dynamicDistanceModifier`, `texerII.pointCode`). Der Deserialisierer ließ
+  diese Slots beim Laden schon immer leer; wären sie im Struct geblieben, hätte
+  ein importiertes Preset sie ab jetzt **geerbt**. Ihr Platz ist eine
+  Voreinstellung (§11) — die Texte stehen in der Git-Historie.
+- **`metaballs3d.colors`/`tentacles3d.colors`** von `{}` auf `{0xFFFFFF}`: der
+  Leser heilte eine leere Tafel ohnehin auf Weiß, eine leere ließ sich also gar
+  nicht speichern. Gefunden vom neuen Roundtrip-Test.
+
+**Eine gewollte Verhaltensänderung:** `timescope.blend` wird beim Laden nicht
+mehr auf `0` gezwungen, sondern erbt die Struct-Vorgabe `3` (= folge dem Set
+Render Mode, der AVS-Default laut `r_timescope.cpp:147-148`). Betroffen sind nur
+Presets, die das Feld gar nicht nennen.
+
+### Zwei Wächter statt eines
+
+| | prüft | wo |
+|---|---|---|
+| **statisch** | steht im Deserialisierer noch ein Vorgabe-**Literal**? | `harvest_field_docs.py` — „Vorgabe-Literale im Leser: 0" |
+| **Roundtrip** | übersteht jedes Feld Struct → JSON → Struct? | `test_FieldInventory.cpp` |
+
+### Korrektur an meiner eigenen Meldung
+
+Der erste Wächter-Entwurf fütterte `nodeFromJson` mit `{"type": …}`, also einem
+JSON **ohne jedes Feld**, und meldete **20 Abweichungen**. Diese Zahl war falsch:
+neun davon waren **Alt-Format-Migrationen**, die genau auf einem leeren Objekt
+anspringen und dann aus fehlenden Werten rechnen (`blitterFeedback.scale2` kam so
+auf **−102** — im Code steht dort `30`, wie im Struct).
+
+Echt waren: **2** abweichende Literale (`starfield.blend` bewusst,
+`timescope.blend` nicht) und **9** Skript-Felder, bei denen `getStr` keinen
+Vorgabewert kannte. Ermittelt wurde das statisch, nicht zur Laufzeit — dieselbe
+Lehre wie bei den Sonden: *eine gemeldete Abweichung ist zuerst eine Frage an das
+Messverfahren.*
 
 ## 2. Urteile, die nur Seite-an-Seite fallen können
 
@@ -319,10 +491,16 @@ Ausgearbeitet als **Etappen 7–9** im
    wirkt nicht. Nach S53 dringlich — 47 Renderer haben je drei neue Skriptfelder,
    und `movement3b.lvfx` hat gezeigt, dass ein Feld dastehen kann, ohne wirken zu
    können (§9 unten).
-2. 🟡 **Tooltip an JEDEM Feld** (Strang F, Konzept §10). Skriptfelder nennen ihre
-   schreibbaren Variablen — die stehen heute nur im Doxygen-Kommentar. Text als
-   Tabelle `{typkey, feldname} → Text` statt im Code verdoppelt, plus Gate gegen
-   Felder ohne Eintrag.
+2. ✅ **Tooltip an JEDEM Feld** (Strang F, Konzept §10) — **erledigt S56,
+   717/717 Felder.** Erzeugte Tabelle `src/UI/panels/FieldDocs.cpp` aus den
+   Doxygen-Kommentaren, Feldname als erstes Argument in allen **826**
+   `add*`-Aufrufen (maschinell über die Setter-Zuordnung, nicht über das Label),
+   Tooltip auf Bedienelement **und** Beschriftung. Von den 178 gemeldeten Lücken
+   waren **163 echt** (geschrieben) und **15 Blindstellen des Ernters**.
+   Zwei Wächter: `test_FieldDocs.cpp` hart ohne Ausnahmeliste, und der Ernter
+   prüft die Panel-Schlüssel gegen das Feld-Inventar.
+   **Nicht erprobt:** dass der Hinweis im Betrieb erscheint — das geht nur durch
+   Überfahren.
 3. 🟡 **Basis-Voreinstellungen für alle Module** (Strang G, Konzept §11) — aus
    `…\cmake\VisualsPresets` abgreifen, wo möglich. Umfang und Namenskonvention in
    S54 festlegen; **Teil-Presets** (nur Geometrie, Farbtafel bleibt) sind
@@ -366,6 +544,24 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 **Gitter** je Frame (beweglich, interpoliert, mit Buffer-Zugriff und Alpha).
 
 ## 8. Werkzeug- und Doku-Schulden
+
+- ✅ **Timescope maß 1/320 seiner Wirkung** (S55 gesehen, S56 behoben). Alle acht
+  Felder lagen unter der SCHWACH-Schwelle (MAE 0,0004–0,0009). Der Knoten zeichnet
+  eine **ein Pixel breite Spalte je Frame** und schiebt sie um eins weiter — der
+  Untergrund malte sie im Folgeframe wieder zu, im Schlussbild stand genau **eine**
+  Spalte. Dieselbe Familie wie die Rückkopplungs-Sonden in §1: *ein Untergrund, der
+  jeden Frame neu zeichnet, kann nichts sehen, was sich über Frames aufbaut.* Fix:
+  neue Tabelle `UNTERGRUND_JE_TYP` in `make_field_probes.py` — für Timescope löscht
+  der Untergrund **nur im ersten Frame**, die Spalten sammeln sich über die Lauf-
+  länge. **7 SCHWACH → 7 WIRKT** (MAE 0,0009 → 0,127).
+  Dazu war `timescope.blend` **STUMM aus einem zweiten Grund**: die Vorgabe `3`
+  heißt „folge dem Set Render Mode", und dessen Vorgabe ist `0` = Ersetzen — der
+  abgeleitete Gegenwert 0 war Pixel für Pixel dieselbe Betriebsart. Gemessen:
+  blend 0 → 0,0000 · 1 → 0,0249 · 2 → 0,1815. HANDWERK-Eintrag auf **2** (50/50),
+  weil das als einziges auch dann nicht mit der Vorgabe zusammenfällt, wenn später
+  ein Set Render Mode mit anderem `lineBlend` in den Untergrund gerät.
+  **Timescope jetzt 8/8 WIRKT**, Edit-Sonden 8/8 TEILWEISE (die gesammelten
+  Spalten sind Vorgeschichte — genau das erwartete Urteil).
 
 - 🔴 **AvsRef deterministisch machen** (S22): nach dem Laden eines Presets ein festes
   `srand(<konstant>)` setzen. Das neutralisiert den `srand(time(0))` aus
@@ -482,6 +678,8 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.9.0 | 2026-07-29 | Session 56 (Fortsetzung) — **stumme Feld-Sonden 115 → 27** (§1c): ein App-Befund — die drei Alt-Format-Weichen im Deserialisierer griffen bei JEDEM Preset, das das neue Feld nicht nennt, und Roto Blitter zoomte dadurch auf 0 statt auf den neutralen 31 (Bild einfarbig, alle fünf Felder stumm). Dazu Kleinians ganzzahliges `colorScale`, Texer II ohne `n`, Custom BPMs Zähler-Phase. **Zweite Quelle der Vorgaben abgeschafft** (§1d, Entscheid Patrik): 415 Literale und 243 `getStr` beziehen ihre Vorgabe jetzt aus dem Struct, eine benannte Ausnahme bleibt. Vier neue Wächter (Zusatzfelder einer Grundkonfiguration, verwaiste Sonden, Panel-Schlüssel, Roundtrip). §10 Tooltips 717/717. Tests 485, beide Builds grün |
+| 1.8.0 | 2026-07-29 | Session 56 — **§1b berichtigt:** der S55-Quercheck unterschied nicht, was er unterscheiden sollte; von den 15 `WIRKUNGSLOS` waren **7 echte Befunde** (alle gefixt) und **8 Messartefakte**. Neues Urteil `VERDECKT` samt Gegenrichtung in der Edit-Sonde. **§8:** Timescope maß 1/320 seiner Wirkung (Untergrund übermalte die Ein-Pixel-Spalten) — behoben, 8/8 WIRKT. **§10 Tooltips erledigt:** 717/717 Felder erklärt, 826 Panel-Zeilen tragen ihren Feldnamen, zwei Wächter |
 | 1.6.0 | 2026-07-27 | Session 53 — Vorgaben Patrik für S54 aufgenommen (Test-Presets je Feld · Tooltips · Basis-Voreinstellungen · Feldreihenfolge) und der Movement-Befund aus `movement3b.lvfx` dokumentiert (Beat-Umkehr kann dort strukturell nicht wirken) |
 | 1.5.0 | 2026-07-27 | Session 53 — Sonden-Bilanz berichtigt: **78/80** (`6_alloy/paar_original` kam dazu, am Vorstand als Altbestand belegt); Etappen 2–4 des Knoten-Parameter-Ausbaus + S50-Punkt ✅ |
 | 1.4.0 | 2026-07-27 | Session 53 — Matrix-Bilanz berichtigt: **36/41** mit fünf Resten (`grain` kam dazu, war in S52 nicht mitgezählt); Etappe 1 des Knoten-Parameter-Ausbaus ✅ |

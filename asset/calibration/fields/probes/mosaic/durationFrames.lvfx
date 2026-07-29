@@ -96,6 +96,7 @@
         "enabled": true,
         "name": "Mosaic",
         "onBeat": true,
+        "quality2": 4,
         "durationFrames": 200
       }
     ],

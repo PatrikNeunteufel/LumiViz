@@ -95,6 +95,7 @@
         "type": "oscRing",
         "enabled": true,
         "name": "Ring",
+        "source": 1,
         "channel": 0
       }
     ],

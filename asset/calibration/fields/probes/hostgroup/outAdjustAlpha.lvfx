@@ -107,6 +107,7 @@
             ]
           }
         ],
+        "blendOut": 10,
         "outAdjustAlpha": 0
       }
     ],

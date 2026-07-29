@@ -9,7 +9,7 @@
     "typen": 85,
     "felder": 717,
     "ohne_panel": 0,
-    "ohne_doc": 178
+    "ohne_doc": 0
   },
   "typen": [
     {
@@ -153,14 +153,16 @@
           "default": 16777215,
           "name": "colorLeft",
           "panel": "farbe",
-          "helfer": "addColor"
+          "helfer": "addColor",
+          "doc": "Farbe der linken Figur 0x00RRGGBB"
         },
         {
           "art": "zahl",
           "default": 16777215,
           "name": "colorRight",
           "panel": "farbe",
-          "helfer": "addColor"
+          "helfer": "addColor",
+          "doc": "Farbe der rechten Figur 0x00RRGGBB"
         },
         {
           "art": "text",
@@ -193,7 +195,8 @@
           "default": true,
           "name": "left",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "linke Bildhaelfte (linker Kanal) zeichnen"
         },
         {
           "art": "zahl",
@@ -209,7 +212,8 @@
           "default": true,
           "name": "right",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "rechte Bildhaelfte (rechter Kanal) zeichnen"
         },
         {
           "art": "zahl",
@@ -430,7 +434,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.0,
-          "hi": 1.0
+          "hi": 1.0,
+          "doc": "Staerke der Randabdunklung (nur mit `vignette`)"
         }
       ]
     },
@@ -762,6 +767,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots. Sie setzen `x`/`y` — die Lichtquelle in 0..1 (mit `oldStyle` in 0..100) — und teilen sich ihre Variablen.",
           "skriptvars": [
             "x",
             "y",
@@ -825,10 +831,11 @@
         },
         {
           "art": "text",
-          "default": "x=0.5+cos(t)*0.3;\ny=0.5+sin(t)*0.3;\nt=t+0.1;",
+          "default": "",
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots. Sie setzen `x`/`y` — die Lichtquelle in 0..1 (mit `oldStyle` in 0..100) — und teilen sich ihre Variablen.",
           "skriptvars": [
             "x",
             "y",
@@ -843,10 +850,11 @@
         },
         {
           "art": "text",
-          "default": "t=0;",
+          "default": "",
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots. Sie setzen `x`/`y` — die Lichtquelle in 0..1 (mit `oldStyle` in 0..100) — und teilen sich ihre Variablen.",
           "skriptvars": [
             "x",
             "y",
@@ -896,6 +904,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots (Reihenfolge Frame VOR Beat): duerfen `px`..`pz`, `tx`..`tz`, `fov`, `roll`, `fogstart`, `fogend` ueberschreiben. Die Feldwerte oben sind die Startbelegung beim Uebersetzen.",
           "skriptvars": [
             "px",
             "py",
@@ -924,7 +933,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.0,
-          "hi": 1000.0
+          "hi": 1000.0,
+          "doc": "Distanz, ab der der Nebel voll deckt"
         },
         {
           "art": "zahl",
@@ -952,6 +962,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots (Reihenfolge Frame VOR Beat): duerfen `px`..`pz`, `tx`..`tz`, `fov`, `roll`, `fogstart`, `fogend` ueberschreiben. Die Feldwerte oben sind die Startbelegung beim Uebersetzen.",
           "skriptvars": [
             "px",
             "py",
@@ -971,6 +982,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots (Reihenfolge Frame VOR Beat): duerfen `px`..`pz`, `tx`..`tz`, `fov`, `roll`, `fogstart`, `fogend` ueberschreiben. Die Feldwerte oben sind die Startbelegung beim Uebersetzen.",
           "skriptvars": [
             "px",
             "py",
@@ -1001,7 +1013,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -1000.0,
-          "hi": 1000.0
+          "hi": 1000.0,
+          "doc": "Kamera-Position, Hochachse (y+ = oben)"
         },
         {
           "art": "zahl",
@@ -1040,7 +1053,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -1000.0,
-          "hi": 1000.0
+          "hi": 1000.0,
+          "doc": "Blickziel, Hochachse"
         },
         {
           "art": "zahl",
@@ -1049,7 +1063,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -1000.0,
-          "hi": 1000.0
+          "hi": 1000.0,
+          "doc": "Blickziel, Tiefe (z+ = zum Betrachter)"
         }
       ]
     },
@@ -1352,6 +1367,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots, die sich ihre Variablen mit dem Stufen-Code teilen: init einmal beim Aufbau, frame je Frame, beat je Beat.",
           "skriptvars": [
             "blue",
             "green",
@@ -1364,6 +1380,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots, die sich ihre Variablen mit dem Stufen-Code teilen: init einmal beim Aufbau, frame je Frame, beat je Beat.",
           "skriptvars": [
             "blue",
             "green",
@@ -1376,6 +1393,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots, die sich ihre Variablen mit dem Stufen-Code teilen: init einmal beim Aufbau, frame je Frame, beat je Beat.",
           "skriptvars": [
             "blue",
             "green",
@@ -1400,7 +1418,8 @@
           "default": true,
           "name": "recompute",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "EEL-Slots, die sich ihre Variablen mit dem Stufen-Code teilen: init einmal beim Aufbau, frame je Frame, beat je Beat. Tabelle je Frame neu rechnen statt einmal nach dem Uebersetzen. Noetig, sobald die Kurve von `time` oder vom Audio abhaengt."
         }
       ]
     },
@@ -1483,7 +1502,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": -32.0,
-          "hi": 32.0
+          "hi": 32.0,
+          "doc": "Blau-Schritt im Beat-Fenster (ersetzt `faderB`)"
         },
         {
           "art": "zahl",
@@ -1492,7 +1512,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": -32.0,
-          "hi": 32.0
+          "hi": 32.0,
+          "doc": "Gruen-Schritt im Beat-Fenster (ersetzt `faderG`)"
         },
         {
           "art": "zahl",
@@ -1501,7 +1522,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": -32.0,
-          "hi": 32.0
+          "hi": 32.0,
+          "doc": "Rot-Schritt im Beat-Fenster (ersetzt `faderR`)"
         },
         {
           "art": "zahl",
@@ -1510,7 +1532,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": -32.0,
-          "hi": 32.0
+          "hi": 32.0,
+          "doc": "Blau-Schritt je Frame, -32..32"
         },
         {
           "art": "zahl",
@@ -1519,7 +1542,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": -32.0,
-          "hi": 32.0
+          "hi": 32.0,
+          "doc": "Gruen-Schritt je Frame, -32..32"
         },
         {
           "art": "zahl",
@@ -1586,7 +1610,8 @@
           "art": "text",
           "default": "",
           "name": "text",
-          "panel": "sonderzeile"
+          "panel": "sonderzeile",
+          "doc": "Freier Text. Der Knoten zeichnet nichts — er haelt eine Notiz in der Kette fest."
         }
       ]
     },
@@ -1600,7 +1625,8 @@
           "default": false,
           "name": "absolute",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "Betrag des Ergebnisses nehmen — negative Summen werden gespiegelt statt auf 0 geklemmt (macht Kanten-Kerne beidseitig sichtbar)."
         },
         {
           "art": "text",
@@ -1621,7 +1647,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": -255.0,
-          "hi": 255.0
+          "hi": 255.0,
+          "doc": "Festwert, der nach der Division auf jeden Kanal addiert wird."
         },
         {
           "art": "zahl",
@@ -1711,7 +1738,8 @@
           ],
           "laenge": 49,
           "name": "kernel",
-          "panel": "sonderzeile"
+          "panel": "sonderzeile",
+          "doc": "identity (center=1)"
         },
         {
           "art": "zahl",
@@ -1720,14 +1748,16 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": 1.0,
-          "hi": 1000.0
+          "hi": 1000.0,
+          "doc": "Teiler der gewichteten Summe (0 wird als 1 gerechnet). Die Summe der Kernwerte hier einzutragen haelt die Helligkeit."
         },
         {
           "art": "bool",
           "default": false,
           "name": "twoPass",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "Den Kern zweimal hintereinander anwenden."
         }
       ]
     },
@@ -2043,7 +2073,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": -90.0,
-          "hi": 90.0
+          "hi": 90.0,
+          "doc": "Neigung der Ansicht in Grad."
         },
         {
           "art": "text",
@@ -2069,7 +2100,8 @@
           "laenge": 5,
           "name": "colors",
           "panel": "farbe",
-          "helfer": "addColor"
+          "helfer": "addColor",
+          "doc": "Fuenf Stuetzstellen des Farbverlaufs (0x00RRGGBB), ueber die Hoehe der Teilchen abgebildet."
         },
         {
           "art": "text",
@@ -2102,7 +2134,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": -50.0,
-          "hi": 50.0
+          "hi": 50.0,
+          "doc": "Drehgeschwindigkeit (Vorzeichen = Richtung)."
         }
       ]
     },
@@ -2141,7 +2174,8 @@
           "laenge": 1,
           "name": "colors",
           "panel": "farbtafel",
-          "helfer": "addColorTable"
+          "helfer": "addColorTable",
+          "doc": "Farbtafel (0x00RRGGBB). Mehrere Eintraege werden ueber die Frames durchgeschaltet, wie die AVS-Farbtabelle."
         },
         {
           "art": "text",
@@ -2252,7 +2286,8 @@
           "laenge": 5,
           "name": "colors",
           "panel": "farbe",
-          "helfer": "addColor"
+          "helfer": "addColor",
+          "doc": "Fuenf Stuetzstellen des Farbverlaufs (0x00RRGGBB), ueber die Hoehe der Gitterpunkte abgebildet."
         },
         {
           "art": "text",
@@ -2315,6 +2350,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Skript-Variablen: **nur `d`** (+ `b` und der Audio-Satz).",
           "skriptvars": [
             "d"
           ]
@@ -2329,30 +2365,33 @@
         },
         {
           "art": "text",
-          "default": "t=t+u;t=min(100,t);t=max(0,t);u=if(equal(t,100),-1,u);u=if(equal(t,0),1,u)",
+          "default": "",
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Skript-Variablen: **nur `d`** (+ `b` und der Audio-Satz).",
           "skriptvars": [
             "d"
           ]
         },
         {
           "art": "text",
-          "default": "u=1;t=0",
+          "default": "",
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Skript-Variablen: **nur `d`** (+ `b` und der Audio-Satz).",
           "skriptvars": [
             "d"
           ]
         },
         {
           "art": "text",
-          "default": "d=d-sigmoid((t-50)/100,2)",
+          "default": "",
           "name": "pixelCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Skript-Variablen: **nur `d`** (+ `b` und der Audio-Satz).",
           "skriptvars": [
             "d"
           ]
@@ -2362,7 +2401,8 @@
           "default": false,
           "name": "subpixel",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "Zwischenwerte beim Abtasten (AVS `subpixel`, r_ddm.cpp:313 / r_shift.cpp:206)."
         }
       ]
     },
@@ -2377,6 +2417,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. Der Punkt-Code laeuft je Gitterknoten und schreibt `x`/`y` (kartesisch) bzw. `d`/`r` (polar) und `alpha`; init/frame/beat laufen einmal je Aufbau/Frame/Beat und teilen sich die Variablen.",
           "skriptvars": [
             "alpha",
             "d",
@@ -2409,6 +2450,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. Der Punkt-Code laeuft je Gitterknoten und schreibt `x`/`y` (kartesisch) bzw. `d`/`r` (polar) und `alpha`; init/frame/beat laufen einmal je Aufbau/Frame/Beat und teilen sich die Variablen.",
           "skriptvars": [
             "alpha",
             "d",
@@ -2423,6 +2465,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. Der Punkt-Code laeuft je Gitterknoten und schreibt `x`/`y` (kartesisch) bzw. `d`/`r` (polar) und `alpha`; init/frame/beat laufen einmal je Aufbau/Frame/Beat und teilen sich die Variablen.",
           "skriptvars": [
             "alpha",
             "d",
@@ -2436,7 +2479,11 @@
           "default": false,
           "name": "nomove",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "Nicht verschieben — nur das `alpha` des Skripts wirkt (Ueberblenden ohne Bewegung, r_dmove-Flag).",
+          "skriptvars": [
+            "alpha"
+          ]
         },
         {
           "art": "text",
@@ -2444,6 +2491,7 @@
           "name": "pointCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. Der Punkt-Code laeuft je Gitterknoten und schreibt `x`/`y` (kartesisch) bzw. `d`/`r` (polar) und `alpha`; init/frame/beat laufen einmal je Aufbau/Frame/Beat und teilen sich die Variablen. Laeuft je Gitterknoten: gelesen werden `x`, `y`, `d`, `r`, `alpha` — wo der Bildpunkt seine Farbe HERholt, nicht wohin er geht.",
           "skriptvars": [
             "alpha",
             "d",
@@ -2457,7 +2505,8 @@
           "default": false,
           "name": "rectCoords",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "Punkt-Code rechnet in Bildpunkten statt in normierten Koordinaten."
         },
         {
           "art": "bool",
@@ -2472,7 +2521,8 @@
           "default": false,
           "name": "wrap",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "Was ueber den Rand hinauszeigt, kommt auf der Gegenseite wieder herein (aus statt dessen: der Rand wird festgehalten)."
         },
         {
           "art": "zahl",
@@ -2481,7 +2531,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": 2.0,
-          "hi": 256.0
+          "hi": 256.0,
+          "doc": "EEL-Quartett. Der Punkt-Code laeuft je Gitterknoten und schreibt `x`/`y` (kartesisch) bzw. `d`/`r` (polar) und `alpha`; init/frame/beat laufen einmal je Aufbau/Frame/Beat und teilen sich die Variablen. Laeuft je Gitterknoten: gelesen werden `x`, `y`, `d`, `r`, `alpha` — wo der Bildpunkt seine Farbe HERholt, nicht wohin er geht. Gitterknoten waagrecht. Grober heisst weicher (dazwischen wird interpoliert) und schneller."
         },
         {
           "art": "zahl",
@@ -2490,7 +2541,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": 2.0,
-          "hi": 256.0
+          "hi": 256.0,
+          "doc": "Gitterknoten senkrecht."
         }
       ]
     },
@@ -2501,10 +2553,11 @@
       "felder": [
         {
           "art": "text",
-          "default": "d=d+2.0",
+          "default": "",
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots. Sie setzen `x`/`y` — die Verschiebung des ganzen Bildes — und teilen sich ihre Variablen.",
           "skriptvars": [
             "x",
             "y",
@@ -2521,10 +2574,11 @@
         },
         {
           "art": "text",
-          "default": "x=sin(d)*1.4; y=1.4*cos(d); d=d+0.01;",
+          "default": "",
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots. Sie setzen `x`/`y` — die Verschiebung des ganzen Bildes — und teilen sich ihre Variablen.",
           "skriptvars": [
             "x",
             "y",
@@ -2533,10 +2587,11 @@
         },
         {
           "art": "text",
-          "default": "d=0;",
+          "default": "",
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots. Sie setzen `x`/`y` — die Verschiebung des ganzen Bildes — und teilen sich ihre Variablen.",
           "skriptvars": [
             "x",
             "y",
@@ -2548,7 +2603,8 @@
           "default": true,
           "name": "subpixel",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "Zwischenwerte beim Abtasten (AVS `subpixel`, r_ddm.cpp:313 / r_shift.cpp:206)."
         }
       ]
     },
@@ -2670,6 +2726,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): die Variationsbeiwerte und `rotation` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "rotation"
           ]
@@ -2680,7 +2737,8 @@
           "name": "blend",
           "panel": "enum",
           "helfer": "addEnum",
-          "enumWerte": 3
+          "enumWerte": 3,
+          "doc": "0 ersetzen, 1 additiv, 2 50/50."
         },
         {
           "art": "zahl",
@@ -2689,7 +2747,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 1.0,
-          "hi": 16.0
+          "hi": 16.0,
+          "doc": "Punktdurchmesser in Pixeln."
         },
         {
           "art": "text",
@@ -2697,6 +2756,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): die Variationsbeiwerte und `rotation` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "rotation"
           ]
@@ -2716,7 +2776,8 @@
           "default": "Fire",
           "name": "gradientPreset",
           "panel": "gradient",
-          "helfer": "addGradient"
+          "helfer": "addGradient",
+          "doc": "Name des Farbverlaufs — die Punkte werden ueber ihre Nummer im Zug eingefaerbt."
         },
         {
           "art": "text",
@@ -2724,6 +2785,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): die Variationsbeiwerte und `rotation` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "rotation"
           ]
@@ -2735,7 +2797,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": 1.0,
-          "hi": 200000.0
+          "hi": 200000.0,
+          "doc": "Zuege des Chaosspiels je Frame — mehr heisst ein dichteres Bild, nicht ein anderes."
         },
         {
           "art": "zahl",
@@ -2744,7 +2807,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -6.2832,
-          "hi": 6.2832
+          "hi": 6.2832,
+          "doc": "Fester Drehwinkel in Radiant, addiert zur laufenden Drehung."
         },
         {
           "art": "zahl",
@@ -2753,7 +2817,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -2.0,
-          "hi": 2.0
+          "hi": 2.0,
+          "doc": "Laufende Drehung in Radiant je Sekunde (0 = steht still)."
         },
         {
           "art": "zahl",
@@ -2762,7 +2827,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.05,
-          "hi": 4.0
+          "hi": 4.0,
+          "doc": "Groesse der Figur im Bild (Faktor auf die Koordinaten, vor der Drehung)."
         },
         {
           "art": "zahl",
@@ -3022,6 +3088,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript.",
           "skriptvars": [
             "yaw",
             "pitch",
@@ -3037,7 +3104,8 @@
           "name": "blend",
           "panel": "enum",
           "helfer": "addEnum",
-          "enumWerte": 3
+          "enumWerte": 3,
+          "doc": "Auf das bestehende Bild: 0 ersetzen, 1 additiv (geklemmt), 2 50/50."
         },
         {
           "art": "zahl",
@@ -3046,7 +3114,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -4.0,
-          "hi": 4.0
+          "hi": 4.0,
+          "doc": "Vorschub der Farbphase je Sekunde (0 = stehende Farben)."
         },
         {
           "art": "zahl",
@@ -3055,7 +3124,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.01,
-          "hi": 8.0
+          "hi": 8.0,
+          "doc": "Faerbung: Farbtafel-Index = `fract(Trefferwert * colorScale + Phase)`."
         },
         {
           "art": "zahl",
@@ -3093,6 +3163,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript.",
           "skriptvars": [
             "yaw",
             "pitch",
@@ -3117,7 +3188,8 @@
           "default": "Neon",
           "name": "gradientPreset",
           "panel": "gradient",
-          "helfer": "addGradient"
+          "helfer": "addGradient",
+          "doc": "Name des Farbverlaufs, ueber den die Oberflaeche eingefaerbt wird."
         },
         {
           "art": "text",
@@ -3125,6 +3197,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript.",
           "skriptvars": [
             "yaw",
             "pitch",
@@ -3141,7 +3214,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -2.0,
-          "hi": 2.0
+          "hi": 2.0,
+          "doc": "Quaternion-Julia-Konstante, vierte Komponente — nur bei `type = 3`."
         },
         {
           "art": "zahl",
@@ -3160,7 +3234,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -2.0,
-          "hi": 2.0
+          "hi": 2.0,
+          "doc": "Quaternion-Julia-Konstante, zweite Komponente — nur bei `type = 3`."
         },
         {
           "art": "zahl",
@@ -3169,7 +3244,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -2.0,
-          "hi": 2.0
+          "hi": 2.0,
+          "doc": "Quaternion-Julia-Konstante, dritte Komponente — nur bei `type = 3`."
         },
         {
           "art": "zahl",
@@ -3264,6 +3340,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "cx",
             "cy",
@@ -3288,7 +3365,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -2.0,
-          "hi": 2.0
+          "hi": 2.0,
+          "doc": "Zoomziel, Imaginaerteil (Gegenstueck zu `centerX`)."
         },
         {
           "art": "zahl",
@@ -3297,7 +3375,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -4.0,
-          "hi": 4.0
+          "hi": 4.0,
+          "doc": "Vorschub der Farbphase je Sekunde (0 = stehende Farben)."
         },
         {
           "art": "zahl",
@@ -3306,7 +3385,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.001,
-          "hi": 4.0
+          "hi": 4.0,
+          "doc": "Faerbung: Farbtafel-Index = `fract(iterationen * colorScale + Phase)`. Groesser heisst engere Farbringe."
         },
         {
           "art": "zahl",
@@ -3324,6 +3404,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "cx",
             "cy",
@@ -3346,7 +3427,8 @@
           "default": "Neon",
           "name": "gradientPreset",
           "panel": "gradient",
-          "helfer": "addGradient"
+          "helfer": "addGradient",
+          "doc": "Name des Farbverlaufs, ueber den die Iterationszahl abgebildet wird."
         },
         {
           "art": "text",
@@ -3354,6 +3436,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "cx",
             "cy",
@@ -3366,7 +3449,8 @@
           "default": 0,
           "name": "insideColor",
           "panel": "farbe",
-          "helfer": "addColor"
+          "helfer": "addColor",
+          "doc": "Farbe der Punkte, die nicht entkommen (das Innere der Menge), 0x00RRGGBB."
         },
         {
           "art": "zahl",
@@ -3375,7 +3459,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -2.0,
-          "hi": 2.0
+          "hi": 2.0,
+          "doc": "Julia-Konstante, Realteil — wirkt nur bei `type = 1`."
         },
         {
           "art": "zahl",
@@ -3384,7 +3469,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -2.0,
-          "hi": 2.0
+          "hi": 2.0,
+          "doc": "Julia-Konstante, Imaginaerteil — wirkt nur bei `type = 1`."
         },
         {
           "art": "zahl",
@@ -3393,7 +3479,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": 1.0,
-          "hi": 2048.0
+          "hi": 2048.0,
+          "doc": "Obergrenze der Iterationen je Pixel. Hoeher heisst mehr Struktur tief im Zoom, aber auch mehr Rechenzeit je Frame."
         },
         {
           "art": "zahl",
@@ -3556,6 +3643,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Zahl der Orbs); der Punkt-Code laeuft je Orb.",
           "skriptvars": [
             "n",
             "i",
@@ -3594,6 +3682,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Zahl der Orbs); der Punkt-Code laeuft je Orb.",
           "skriptvars": [
             "n",
             "i",
@@ -3642,6 +3731,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Zahl der Orbs); der Punkt-Code laeuft je Orb.",
           "skriptvars": [
             "n",
             "i",
@@ -3834,7 +3924,8 @@
         {
           "art": "text",
           "default": "",
-          "name": "text"
+          "name": "text",
+          "doc": "Bericht des Importeurs (nur lesen): was am Preset nicht uebernommen werden konnte."
         }
       ]
     },
@@ -4101,7 +4192,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": 0.0,
-          "hi": 512.0
+          "hi": 512.0,
+          "doc": "Ziel-Abstand waagrecht im Beat-Uebergang"
         },
         {
           "art": "zahl",
@@ -4120,7 +4212,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": 0.0,
-          "hi": 512.0
+          "hi": 512.0,
+          "doc": "Ziel-Abstand senkrecht im Beat-Uebergang"
         }
       ]
     },
@@ -4140,21 +4233,24 @@
           "default": "",
           "name": "beatCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "doc": "EEL-Slots ohne eigenes Bild: der Knoten rechnet nur und legt seine Ergebnisse in den geteilten Variablen (`reg00`..`reg99`, `gmegabuf`) ab, aus denen die folgenden Knoten lesen. `loadMode` steuert, wann der Init-Slot erneut laeuft."
         },
         {
           "art": "text",
           "default": "",
           "name": "frameCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "doc": "EEL-Slots ohne eigenes Bild: der Knoten rechnet nur und legt seine Ergebnisse in den geteilten Variablen (`reg00`..`reg99`, `gmegabuf`) ab, aus denen die folgenden Knoten lesen. `loadMode` steuert, wann der Init-Slot erneut laeuft."
         },
         {
           "art": "text",
           "default": "",
           "name": "initCode",
           "panel": "skript",
-          "helfer": "addScript"
+          "helfer": "addScript",
+          "doc": "EEL-Slots ohne eigenes Bild: der Knoten rechnet nur und legt seine Ergebnisse in den geteilten Variablen (`reg00`..`reg99`, `gmegabuf`) ab, aus denen die folgenden Knoten lesen. `loadMode` steuert, wann der Init-Slot erneut laeuft."
         },
         {
           "art": "zahl",
@@ -4178,6 +4274,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rotation` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "morph",
             "zoom",
@@ -4190,7 +4287,8 @@
           "name": "blend",
           "panel": "enum",
           "helfer": "addEnum",
-          "enumWerte": 3
+          "enumWerte": 3,
+          "doc": "Auf das bestehende Bild: 0 ersetzen, 1 additiv (geklemmt), 2 50/50."
         },
         {
           "art": "zahl",
@@ -4199,16 +4297,18 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -4.0,
-          "hi": 4.0
+          "hi": 4.0,
+          "doc": "Vorschub der Farbphase je Sekunde (0 = stehende Farben)."
         },
         {
           "art": "zahl",
-          "default": 1,
+          "default": 0.17000000178813934,
           "name": "colorScale",
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.01,
-          "hi": 8.0
+          "hi": 8.0,
+          "doc": "Faerbung: Farbtafel-Index = `fract(Spiegelungszahl * colorScale + Phase)`."
         },
         {
           "art": "text",
@@ -4216,6 +4316,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rotation` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "morph",
             "zoom",
@@ -4227,7 +4328,8 @@
           "default": "Neon",
           "name": "gradientPreset",
           "panel": "gradient",
-          "helfer": "addGradient"
+          "helfer": "addGradient",
+          "doc": "Name des Farbverlaufs, ueber den die Spiegelungszahl abgebildet wird."
         },
         {
           "art": "text",
@@ -4235,6 +4337,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rotation` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "morph",
             "zoom",
@@ -4288,7 +4391,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -6.2832,
-          "hi": 6.2832
+          "hi": 6.2832,
+          "doc": "Drehung der Kachelung in Radiant."
         },
         {
           "art": "zahl",
@@ -4297,7 +4401,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.1,
-          "hi": 8.0
+          "hi": 8.0,
+          "doc": "Ausschnitt der Poincaré-Scheibe (groesser = naeher heran)."
         }
       ]
     },
@@ -4456,7 +4561,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.0,
-          "hi": 4.0
+          "hi": 4.0,
+          "doc": "Rechte Kante des Ausschnitts auf der a-Achse."
         },
         {
           "art": "zahl",
@@ -4474,6 +4580,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — der Ausschnitt — + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "amin",
             "amax",
@@ -4487,7 +4594,8 @@
           "name": "blend",
           "panel": "enum",
           "helfer": "addEnum",
-          "enumWerte": 3
+          "enumWerte": 3,
+          "doc": "Auf das bestehende Bild: 0 ersetzen, 1 additiv (geklemmt), 2 50/50."
         },
         {
           "art": "zahl",
@@ -4496,7 +4604,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.0,
-          "hi": 4.0
+          "hi": 4.0,
+          "doc": "Obere Kante des Ausschnitts auf der b-Achse."
         },
         {
           "art": "zahl",
@@ -4515,7 +4624,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -4.0,
-          "hi": 4.0
+          "hi": 4.0,
+          "doc": "Vorschub der Farbphase je Sekunde (0 = stehende Farben)."
         },
         {
           "art": "zahl",
@@ -4524,7 +4634,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.01,
-          "hi": 8.0
+          "hi": 8.0,
+          "doc": "Faerbung: Farbtafel-Index = `fract(Lyapunov-Exponent * colorScale + Phase)`. Gilt nur fuer die chaotischen Zonen; die geordneten bekommen `negColor`."
         },
         {
           "art": "text",
@@ -4532,6 +4643,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — der Ausschnitt — + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "amin",
             "amax",
@@ -4544,7 +4656,8 @@
           "default": "Fire",
           "name": "gradientPreset",
           "panel": "gradient",
-          "helfer": "addGradient"
+          "helfer": "addGradient",
+          "doc": "Name des Farbverlaufs fuer die chaotischen Zonen."
         },
         {
           "art": "text",
@@ -4552,6 +4665,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — der Ausschnitt — + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "amin",
             "amax",
@@ -4630,12 +4744,14 @@
         },
         {
           "art": "liste",
-          "default": [],
-          "laenge": 0,
+          "default": [
+            16777215
+          ],
+          "laenge": 1,
           "name": "colors",
           "panel": "farbtafel",
           "helfer": "addColorTable",
-          "doc": "Palette aus dem Preset (0x00RRGGBB)"
+          "doc": "Palette (0x00RRGGBB). NICHT leer: der Leser heilt eine leere Tafel auf Weiss, eine leere liesse sich also gar nicht speichern (Roundtrip-Befund S56). Die Vorgabe sagt es deshalb selbst."
         },
         {
           "art": "zahl",
@@ -4763,7 +4879,8 @@
         {
           "art": "zahl",
           "default": 24,
-          "name": "meshY"
+          "name": "meshY",
+          "doc": "Warp-Gitter senkrecht (Original-Vorgabe 24; hoeher = feinerer Warp)."
         },
         {
           "art": "objekt",
@@ -5537,7 +5654,8 @@
           "laenge": 1,
           "name": "colors",
           "panel": "farbtafel",
-          "helfer": "addColorTable"
+          "helfer": "addColorTable",
+          "doc": "Farbtafel (0x00RRGGBB), ueber die Frames durchgeschaltet."
         },
         {
           "art": "text",
@@ -5654,7 +5772,8 @@
           "laenge": 1,
           "name": "colors",
           "panel": "farbtafel",
-          "helfer": "addColorTable"
+          "helfer": "addColorTable",
+          "doc": "Farbtafel (0x00RRGGBB), ueber die Frames durchgeschaltet."
         },
         {
           "art": "text",
@@ -5856,7 +5975,8 @@
           "art": "text",
           "default": "",
           "name": "filename",
-          "panel": "bild"
+          "panel": "bild",
+          "doc": "Herkunftsnotiz aus dem Preset. Gezeichnet wird `imageData`; von diesem Pfad wird nie geladen."
         },
         {
           "art": "text",
@@ -5900,6 +6020,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript.",
           "skriptvars": [
             "feed",
             "kill"
@@ -5911,7 +6032,8 @@
           "name": "blend",
           "panel": "enum",
           "helfer": "addEnum",
-          "enumWerte": 3
+          "enumWerte": 3,
+          "doc": "Auf das bestehende Bild: 0 ersetzen, 1 additiv (geklemmt), 2 50/50."
         },
         {
           "art": "zahl",
@@ -5920,7 +6042,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -4.0,
-          "hi": 4.0
+          "hi": 4.0,
+          "doc": "Vorschub der Farbphase je Sekunde (0 = stehende Farben)."
         },
         {
           "art": "zahl",
@@ -5929,7 +6052,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.01,
-          "hi": 8.0
+          "hi": 8.0,
+          "doc": "Faerbung: Farbtafel-Index = `fract(Konzentration von B * colorScale + Phase)`."
         },
         {
           "art": "zahl",
@@ -5967,6 +6091,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript.",
           "skriptvars": [
             "feed",
             "kill"
@@ -5977,7 +6102,8 @@
           "default": "Neon",
           "name": "gradientPreset",
           "panel": "gradient",
-          "helfer": "addGradient"
+          "helfer": "addGradient",
+          "doc": "Name des Farbverlaufs, ueber den die Konzentration abgebildet wird."
         },
         {
           "art": "text",
@@ -5985,6 +6111,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript.",
           "skriptvars": [
             "feed",
             "kill"
@@ -6116,7 +6243,8 @@
           "laenge": 1,
           "name": "colors",
           "panel": "farbtafel",
-          "helfer": "addColorTable"
+          "helfer": "addColorTable",
+          "doc": "Farbtafel (0x00RRGGBB), ueber die Frames durchgeschaltet."
         },
         {
           "art": "text",
@@ -6408,7 +6536,8 @@
           "laenge": 1,
           "name": "colors",
           "panel": "farbtafel",
-          "helfer": "addColorTable"
+          "helfer": "addColorTable",
+          "doc": "Farbtafel (0x00RRGGBB), ueber die Frames durchgeschaltet."
         },
         {
           "art": "text",
@@ -6582,7 +6711,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -3.0,
-          "hi": 3.0
+          "hi": 3.0,
+          "doc": "Erster Formelbeiwert. Was er bedeutet, haengt am `type`: Lorenz sigma (x7,142857), Clifford/De Jong der Faktor im Sinus, Aizawa der z-Term."
         },
         {
           "art": "zahl",
@@ -6591,7 +6721,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -3.0,
-          "hi": 3.0
+          "hi": 3.0,
+          "doc": "Zweiter Beiwert: Lorenz rho (x17,5), Clifford/De Jong der zweite Sinus-/Kosinus-Faktor, Aizawa die z-Verschiebung."
         },
         {
           "art": "text",
@@ -6599,6 +6730,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen.",
           "skriptvars": [
             "a",
             "c",
@@ -6622,14 +6754,16 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -3.0,
-          "hi": 3.0
+          "hi": 3.0,
+          "doc": "Dritter Beiwert: Lorenz beta (x2,6667), Clifford der Kosinus-Anteil in x, De Jong der Sinus-Faktor in y, Aizawa das konstante Glied."
         },
         {
           "art": "zahl",
           "default": 6737151,
           "name": "color",
           "panel": "farbe",
-          "helfer": "addColor"
+          "helfer": "addColor",
+          "doc": "Punktfarbe 0x00RRGGBB, wenn `useGradient` aus ist."
         },
         {
           "art": "zahl",
@@ -6638,7 +6772,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -3.0,
-          "hi": 3.0
+          "hi": 3.0,
+          "doc": "Vierter Beiwert: Clifford/De Jong der Kosinus-Anteil in y, Aizawa die Drehung in der xy-Ebene. Lorenz nutzt ihn nicht."
         },
         {
           "art": "zahl",
@@ -6647,7 +6782,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 1.0,
-          "hi": 32.0
+          "hi": 32.0,
+          "doc": "Punktdurchmesser in Pixeln (1..32)."
         },
         {
           "art": "text",
@@ -6655,6 +6791,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen.",
           "skriptvars": [
             "a",
             "c",
@@ -6677,7 +6814,8 @@
           "default": "Neon",
           "name": "gradientPreset",
           "panel": "gradient",
-          "helfer": "addGradient"
+          "helfer": "addGradient",
+          "doc": "Name des Farbverlaufs fuer `useGradient` — die Bahn wird von Anfang bis Ende darueber eingefaerbt."
         },
         {
           "art": "text",
@@ -6685,6 +6823,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen.",
           "skriptvars": [
             "a",
             "c",
@@ -6699,7 +6838,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": 1.0,
-          "hi": 100000.0
+          "hi": 100000.0,
+          "doc": "Punkte je Frame (1..100000). Die Bahn laeuft ueber Frames weiter — mehr Punkte heisst dichter gezeichnet, nicht laenger."
         },
         {
           "art": "zahl",
@@ -6708,7 +6848,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -6.2832,
-          "hi": 6.2832
+          "hi": 6.2832,
+          "doc": "Fester Drehwinkel der Ansicht in Radiant, addiert zur laufenden Drehung."
         },
         {
           "art": "zahl",
@@ -6717,7 +6858,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": -2.0,
-          "hi": 2.0
+          "hi": 2.0,
+          "doc": "Laufende Drehung in Radiant je Sekunde (0 = steht still)."
         },
         {
           "art": "zahl",
@@ -6726,7 +6868,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.01,
-          "hi": 4.0
+          "hi": 4.0,
+          "doc": "Groesse der Bahn im Bild (Faktor auf die Koordinaten, vor der Drehung)."
         },
         {
           "art": "bool",
@@ -6758,6 +6901,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Punktzahl); der Punkt-Code laeuft je Punkt.",
           "skriptvars": [
             "blue",
             "drawmode",
@@ -6803,7 +6947,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 1.0,
-          "hi": 50.0
+          "hi": 50.0,
+          "doc": "Punktdurchmesser in Pixeln fuer `renderMode` 0."
         },
         {
           "art": "text",
@@ -6811,6 +6956,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Punktzahl); der Punkt-Code laeuft je Punkt.",
           "skriptvars": [
             "blue",
             "drawmode",
@@ -6836,6 +6982,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Punktzahl); der Punkt-Code laeuft je Punkt.",
           "skriptvars": [
             "blue",
             "drawmode",
@@ -6864,7 +7011,8 @@
           "panel": "double",
           "helfer": "addDouble",
           "lo": 1.0,
-          "hi": 20.0
+          "hi": 20.0,
+          "doc": "Strichstaerke in Pixeln fuer `renderMode` 1/2; `linesize` aus dem Punkt-Code gewinnt."
         },
         {
           "art": "text",
@@ -6872,6 +7020,7 @@
           "name": "pointCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Punktzahl); der Punkt-Code laeuft je Punkt. Laeuft je Punkt: `i` 0..1 und `v` (Audio) herein, gelesen werden `x`/`y` (-1..1), `red`/`green`/`blue`, `linesize`, `skip` und `drawmode`.",
           "skriptvars": [
             "blue",
             "drawmode",
@@ -6891,7 +7040,23 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": 1.0,
-          "hi": 4096.0
+          "hi": 4096.0,
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Punktzahl); der Punkt-Code laeuft je Punkt. Laeuft je Punkt: `i` 0..1 und `v` (Audio) herein, gelesen werden `x`/`y` (-1..1), `red`/`green`/`blue`, `linesize`, `skip` und `drawmode`. Startwert fuer `n` — der Punkt-Code laeuft so oft. Ein Skript, das `n` selbst setzt, gewinnt.",
+          "skriptvars": [
+            "n",
+            "i",
+            "v",
+            "x",
+            "y",
+            "red",
+            "green",
+            "blue",
+            "linesize",
+            "skip",
+            "drawmode",
+            "n",
+            "n"
+          ]
         },
         {
           "art": "zahl",
@@ -6932,6 +7097,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n`; der Punkt-Code laeuft je Punkt.",
           "skriptvars": [
             "n",
             "i",
@@ -6966,6 +7132,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n`; der Punkt-Code laeuft je Punkt.",
           "skriptvars": [
             "n",
             "i",
@@ -6990,6 +7157,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n`; der Punkt-Code laeuft je Punkt.",
           "skriptvars": [
             "n",
             "i",
@@ -7014,6 +7182,7 @@
           "name": "pointCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n`; der Punkt-Code laeuft je Punkt. Laeuft je Punkt: `i` 0..1 und `v` (Audio) herein, gelesen werden `x`, `y`, `z` (Weltkoordinaten), `red`/`green`/`blue` und `size`.",
           "skriptvars": [
             "n",
             "i",
@@ -7105,12 +7274,14 @@
         },
         {
           "art": "liste",
-          "default": [],
-          "laenge": 0,
+          "default": [
+            16777215
+          ],
+          "laenge": 1,
           "name": "colors",
           "panel": "farbtafel",
           "helfer": "addColorTable",
-          "doc": "Palette aus dem Preset (0x00RRGGBB)"
+          "doc": "Palette (0x00RRGGBB). NICHT leer: der Leser heilt eine leere Tafel auf Weiss, eine leere liesse sich also gar nicht speichern (Roundtrip-Befund S56). Die Vorgabe sagt es deshalb selbst."
         },
         {
           "art": "zahl",
@@ -7251,6 +7422,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter.",
           "skriptvars": [
             "res",
             "n",
@@ -7341,6 +7513,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter.",
           "skriptvars": [
             "res",
             "n",
@@ -7359,6 +7532,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter.",
           "skriptvars": [
             "res",
             "n",
@@ -7376,7 +7550,8 @@
           "default": 1053720,
           "name": "meshColor",
           "panel": "farbe",
-          "helfer": "addColor"
+          "helfer": "addColor",
+          "doc": "Farbe des Gitters 0x00RRGGBB"
         },
         {
           "art": "text",
@@ -7462,13 +7637,15 @@
           "name": "blend",
           "panel": "enum",
           "helfer": "addEnum",
-          "enumWerte": 2
+          "enumWerte": 2,
+          "doc": "0 ersetzen, 1 additiv, 2 50/50."
         },
         {
           "art": "text",
           "default": "",
           "name": "filename",
-          "panel": "bild"
+          "panel": "bild",
+          "doc": "Herkunftsnotiz aus dem Preset. Gezeichnet wird `imageData`; von diesem Pfad wird nie geladen."
         },
         {
           "art": "text",
@@ -7486,7 +7663,8 @@
           "art": "text",
           "default": "",
           "name": "imageData",
-          "panel": "bild"
+          "panel": "bild",
+          "doc": "Das eingebettete Bild (base64). Leer = eingebautes Standard-Sprite."
         },
         {
           "art": "text",
@@ -7507,7 +7685,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": 1.0,
-          "hi": 4096.0
+          "hi": 4096.0,
+          "doc": "Anzahl der Sprites entlang der Wellenform."
         }
       ]
     },
@@ -7522,6 +7701,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen `n` (Anzahl Sprites); der Punkt-Code laeuft je Sprite.",
           "skriptvars": [
             "n",
             "sizex",
@@ -7543,13 +7723,15 @@
           "default": true,
           "name": "colorFiltering",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "`red`/`green`/`blue` aus dem Punkt-Code als Farbfilter auf das Bild legen (aus: das Bild wird unveraendert gezeichnet)."
         },
         {
           "art": "text",
           "default": "",
           "name": "filename",
-          "panel": "bild"
+          "panel": "bild",
+          "doc": "Herkunftsnotiz aus dem Preset. Gezeichnet wird `imageData`; von diesem Pfad wird nie geladen."
         },
         {
           "art": "text",
@@ -7557,6 +7739,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen `n` (Anzahl Sprites); der Punkt-Code laeuft je Sprite.",
           "skriptvars": [
             "n",
             "sizex",
@@ -7577,7 +7760,8 @@
           "art": "text",
           "default": "",
           "name": "imageData",
-          "panel": "bild"
+          "panel": "bild",
+          "doc": "Das eingebettete Bild (base64). Leer = eingebautes Standard-Sprite (20x20, radialsymmetrisch — gemessen gegen die echte texer2.ape)."
         },
         {
           "art": "text",
@@ -7585,6 +7769,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen `n` (Anzahl Sprites); der Punkt-Code laeuft je Sprite.",
           "skriptvars": [
             "n",
             "sizex",
@@ -7603,10 +7788,11 @@
         },
         {
           "art": "text",
-          "default": "x=(i*2)-1; y=0;",
+          "default": "",
           "name": "pointCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen `n` (Anzahl Sprites); der Punkt-Code laeuft je Sprite. Laeuft je Sprite: `i` 0..1 herein, gelesen werden `x`/`y` (-1..1), `sizex`/`sizey` (nur mit `resizing`) und `red`/`green`/`blue` (nur mit `colorFiltering`).",
           "skriptvars": [
             "n",
             "sizex",
@@ -7628,14 +7814,16 @@
           "default": false,
           "name": "resizing",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "`sizex`/`sizey` aus dem Punkt-Code wirken lassen (aus: feste Groesse)."
         },
         {
           "art": "bool",
           "default": false,
           "name": "wrapAround",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "Sprites am Bildrand auf der Gegenseite fortsetzen statt abzuschneiden."
         }
       ]
     },
@@ -7658,7 +7846,8 @@
           "default": 16777215,
           "name": "color",
           "panel": "farbe",
-          "helfer": "addColor"
+          "helfer": "addColor",
+          "doc": "Schriftfarbe 0x00RRGGBB"
         },
         {
           "art": "text",
@@ -7710,7 +7899,8 @@
           "default": false,
           "name": "italic",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "LOGFONT lfItalic — kursiv"
         },
         {
           "art": "zahl",
@@ -7745,14 +7935,16 @@
           "default": false,
           "name": "outline",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "Kontur um die Zeichen zeichnen"
         },
         {
           "art": "zahl",
           "default": 0,
           "name": "outlineColor",
           "panel": "farbe",
-          "helfer": "addColor"
+          "helfer": "addColor",
+          "doc": "Konturfarbe 0x00RRGGBB"
         },
         {
           "art": "zahl",
@@ -7761,7 +7953,8 @@
           "panel": "int",
           "helfer": "addInt",
           "lo": 1.0,
-          "hi": 32.0
+          "hi": 32.0,
+          "doc": "Konturbreite in Pixeln"
         },
         {
           "art": "bool",
@@ -7799,7 +7992,8 @@
           "default": false,
           "name": "underline",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "LOGFONT lfUnderline — unterstrichen"
         },
         {
           "art": "zahl",
@@ -7914,7 +8108,8 @@
           "default": false,
           "name": "useChannel",
           "panel": "bool",
-          "helfer": "addBool"
+          "helfer": "addBool",
+          "doc": "`channel` wirklich anwenden (Erweiterung, Vorgabe AUS = referenztreu)."
         }
       ]
     },
@@ -7929,6 +8124,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen `n` (Anzahl Dreiecke); der Punkt-Code laeuft je Dreieck.",
           "skriptvars": [
             "n",
             "i",
@@ -7946,7 +8142,7 @@
           "name": "filled",
           "panel": "bool",
           "helfer": "addBool",
-          "doc": "GEFUELLT ist der Referenz-Zustand (Sonde `triangle_n_literal`, S51: das fruehere Drahtgitter lieferte 4009 statt 23424 Pixel). `false` ist damit eine bewusste Abweichung von AVS, kein Alternativ-Default."
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen `n` (Anzahl Dreiecke); der Punkt-Code laeuft je Dreieck. Laeuft je Dreieck: gelesen werden `x1`/`y1`, `x2`/`y2`, `x3`/`y3` (-1..1) und `red`/`green`/`blue`. GEFUELLT ist der Referenz-Zustand (Sonde `triangle_n_literal`, S51: das fruehere Drahtgitter lieferte 4009 statt 23424 Pixel). `false` ist damit eine bewusste Abweichung von AVS, kein Alternativ-Default."
         },
         {
           "art": "text",
@@ -7954,6 +8150,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen `n` (Anzahl Dreiecke); der Punkt-Code laeuft je Dreieck.",
           "skriptvars": [
             "n",
             "i",
@@ -7971,6 +8168,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen `n` (Anzahl Dreiecke); der Punkt-Code laeuft je Dreieck.",
           "skriptvars": [
             "n",
             "i",
@@ -7998,6 +8196,7 @@
           "name": "pointCode",
           "panel": "skript",
           "helfer": "addScript",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen `n` (Anzahl Dreiecke); der Punkt-Code laeuft je Dreieck. Laeuft je Dreieck: gelesen werden `x1`/`y1`, `x2`/`y2`, `x3`/`y3` (-1..1) und `red`/`green`/`blue`.",
           "skriptvars": [
             "n",
             "i",
@@ -8214,7 +8413,8 @@
           "name": "dropY",
           "panel": "enum",
           "helfer": "addEnum",
-          "enumWerte": 3
+          "enumWerte": 3,
+          "doc": "dito senkrecht: 0 oben / 1 Mitte / 2 unten"
         },
         {
           "art": "text",

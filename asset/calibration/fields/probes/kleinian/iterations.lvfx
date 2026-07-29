@@ -95,7 +95,7 @@
         "type": "kleinian",
         "enabled": true,
         "name": "Kleinian",
-        "iterations": 200
+        "iterations": 1
       }
     ],
     "clearEveryFrame": false

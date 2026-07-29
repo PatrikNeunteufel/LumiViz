@@ -95,7 +95,9 @@
         "type": "interleave",
         "enabled": true,
         "name": "Interleave",
-        "onBeat": true
+        "onBeat": true,
+        "x2": 8,
+        "y2": 8
       }
     ],
     "clearEveryFrame": false

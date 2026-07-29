@@ -92,6 +92,23 @@
         "colorCycleFrames": 0
       },
       {
+        "type": "invert",
+        "enabled": true,
+        "name": "kurz invertiert"
+      },
+      {
+        "type": "bufferSave",
+        "enabled": true,
+        "name": "Puffer 0 fuellen",
+        "slot": 0,
+        "dir": 0
+      },
+      {
+        "type": "invert",
+        "enabled": true,
+        "name": "und zurueck"
+      },
+      {
         "type": "list",
         "enabled": true,
         "name": "Effect List",
@@ -107,6 +124,7 @@
             ]
           }
         ],
+        "blendOut": 10,
         "outAdjustAlpha": 0
       }
     ],

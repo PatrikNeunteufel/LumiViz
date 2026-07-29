@@ -95,7 +95,7 @@
         "type": "interferences",
         "enabled": true,
         "name": "Interferences",
-        "initCode": "points = 8; distance = 255; alpha = 0; rotation = 255; rotationinc = 64; speed = 2.0"
+        "initCode": "points = 8; distance = 255; alpha = 0; rotation = 64; rotationinc = 64; speed = 2.0"
       }
     ],
     "clearEveryFrame": false

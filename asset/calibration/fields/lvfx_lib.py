@@ -65,10 +65,17 @@ def _balken(y: float, r: int, g: int, b: int) -> dict:
                 spectrumSource=False, colorCycleFrames=0)
 
 
-def untergrund() -> list[dict]:
-    """Die Knoten des statischen Untergrunds, in Zeichenreihenfolge."""
+def untergrund(clear_nur_erst: bool = False) -> list[dict]:
+    """Die Knoten des statischen Untergrunds, in Zeichenreihenfolge.
+
+    `clear_nur_erst` loescht nur im ERSTEN Frame. Das braucht, wer je Frame nur
+    einen Bruchteil des Bildes zeichnet und darauf angewiesen ist, dass es
+    stehen bleibt — sonst misst die Sonde nur den letzten Frame
+    (s. UNTERGRUND_JE_TYP in make_field_probes.py).
+    """
     return [
-        node("clear", "Grund", color=GRUND_FARBE, onlyFirst=False, blend=0),
+        node("clear", "Grund", color=GRUND_FARBE, onlyFirst=clear_nur_erst,
+             blend=0),
         _balken(-0.6, 1, 0, 0),
         _balken(-0.2, 0, 1, 0),
         _balken(0.2, 0, 0, 1),

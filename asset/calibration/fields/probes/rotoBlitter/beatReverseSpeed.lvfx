@@ -95,6 +95,8 @@
         "type": "rotoBlitter",
         "enabled": true,
         "name": "Roto Blitter",
+        "rotDir": 45,
+        "beatReverse": true,
         "beatReverseSpeed": 8
       }
     ],

@@ -52,6 +52,8 @@ MODUL_QUELLEN = {
 }
 INVENTORY = Path(__file__).parent / "inventory.json"
 OUT = Path(__file__).parent / "inventory_docs.json"
+# Die Tooltip-Tabelle des Panels (§10) — erzeugt, nicht von Hand gepflegt.
+FIELDDOCS_CPP = ROOT / "projects/apps/MyViz/src/UI/panels/FieldDocs.cpp"
 
 # Panel-Helfer, die einen Wertebereich tragen (Argument 3 und 4 sind lo/hi).
 RANGED = {"addInt": "int", "addDouble": "double", "addRefDouble": "double"}
@@ -186,9 +188,14 @@ def harvest_panel() -> dict[tuple[str, str], dict]:
             if versatz:
                 entry["enumVersatz"] = int(versatz.group(1))
         if name in RANGED:
+            # Seit S56 ist Argument 0 der FELDNAME (§10), lo/hi stehen also an
+            # Position 3 und 4 statt 2 und 3. Bis das nachgezogen war, fand der
+            # Ernter GAR KEINEN Bereich mehr — jede Zahl fiel auf die Regel
+            # "0 -> 1, sonst das Dreifache", und die Gegenwerte wurden still
+            # schlechter (aufgefallen an `text.normSpeed`).
             args = split_args(body)
-            if len(args) >= 4:
-                lo, hi = args[2], args[3]
+            if len(args) >= 5:
+                lo, hi = args[3], args[4]
                 if re.fullmatch(r"-?[\d.]+f?", lo) and re.fullmatch(r"-?[\d.]+f?", hi):
                     entry["lo"] = float(lo.rstrip("f"))
                     entry["hi"] = float(hi.rstrip("f"))
@@ -205,6 +212,200 @@ def harvest_panel() -> dict[tuple[str, str], dict]:
         for f in fields:
             found.setdefault((struct, f), {"panel": widget})
     return found
+
+
+def cpp_literal(text: str) -> str:
+    """Ein C++-Zeichenkettenliteral, das auf JEDEM Compiler dasselbe bedeutet.
+
+    Nicht-ASCII wird als OKTAL-Escape der UTF-8-Bytes geschrieben, nicht als
+    `\\x`: ein Hex-Escape in C++ frisst beliebig viele Ziffern weiter, `"\\xE4z"`
+    waere also ein einziges (viel zu grosses) Zeichen. Oktal endet nach drei
+    Ziffern. So braucht die Datei weder /utf-8 noch eine BOM.
+    """
+    out = []
+    for b in text.encode("utf-8"):
+        c = chr(b)
+        if c == '"':
+            out.append('\\"')
+        elif c == "\\":
+            out.append("\\\\")
+        elif b < 0x20 or b >= 0x7F:
+            out.append(f"\\{b:03o}")
+        else:
+            out.append(c)
+    return '"' + "".join(out) + '"'
+
+
+def schreibe_fielddocs(typen_out: list[dict]) -> int:
+    """Die Tooltip-Tabelle als C++ erzeugen (Knoten-Parameter-Konzept §10).
+
+    Erzeugt, nicht von Hand gepflegt: die Quelle ist der Doxygen-Kommentar am
+    Struct-Feld. Waere der Text im Panel abgeschrieben, wuerden Kommentar und
+    Tooltip auseinanderdriften — genau das soll die Tabelle verhindern.
+    """
+    eintraege = sorted((f"{t['typkey']}.{f['name']}", f["doc"])
+                       for t in typen_out for f in t["felder"] if f.get("doc"))
+    zeilen = "".join(f"    {{{cpp_literal(k)},\n     {cpp_literal(v)}}},\n"
+                     for k, v in eintraege)
+    FIELDDOCS_CPP.write_text(
+        "// ERZEUGT von asset/calibration/fields/harvest_field_docs.py — nicht\n"
+        "// von Hand aendern. Quelle sind die Doxygen-Kommentare an den Feldern\n"
+        "// der `…Params`-Structs in EffectChain.hpp; wer einen Text aendern\n"
+        "// will, aendert ihn dort und laesst den Ernter neu laufen.\n"
+        "//\n"
+        "// Knoten-Parameter-Konzept §10 — Tooltip an jedem Feld.\n"
+        "\n"
+        '#include "UI/panels/FieldDocs.hpp"\n'
+        "\n"
+        "#include <algorithm>\n"
+        "#include <array>\n"
+        "#include <string_view>\n"
+        "#include <utility>\n"
+        "\n"
+        "namespace lumi::multieffect::fielddocs\n"
+        "{\n"
+        "namespace\n"
+        "{\n"
+        "// Nach Schluessel sortiert — die Suche unten setzt das voraus.\n"
+        "constexpr std::array<std::pair<std::string_view, std::string_view>,\n"
+        f"                     {len(eintraege)}>\n"
+        "    kDocs{{\n"
+        f"{zeilen}"
+        "}};\n"
+        "}  // namespace\n"
+        "\n"
+        "QString tooltip(const QString& typeKey, const QString& field)\n"
+        "{\n"
+        "    const std::string key = (typeKey + QLatin1Char('.') + field).toStdString();\n"
+        "    const std::string_view needle{key};\n"
+        "    const auto it = std::lower_bound(\n"
+        "        kDocs.begin(), kDocs.end(), needle,\n"
+        "        [](const auto& e, std::string_view n) { return e.first < n; });\n"
+        "    if (it == kDocs.end() || it->first != needle) return {};\n"
+        "    return QString::fromUtf8(it->second.data(),\n"
+        "                             static_cast<int>(it->second.size()));\n"
+        "}\n"
+        "\n"
+        "QStringList documentedKeys()\n"
+        "{\n"
+        "    QStringList out;\n"
+        "    out.reserve(static_cast<int>(kDocs.size()));\n"
+        "    for (const auto& [key, text] : kDocs)\n"
+        "        out << QString::fromUtf8(key.data(), static_cast<int>(key.size()));\n"
+        "    return out;\n"
+        "}\n"
+        "\n"
+        "}  // namespace lumi::multieffect::fielddocs\n",
+        encoding="utf-8", newline="")
+    return len(eintraege)
+
+
+def pruefe_vorgabe_literale() -> list[str]:
+    """Vorgabe-Literale im Deserialisierer — die abgeschaffte zweite Quelle.
+
+    Bis S56 stand jede Vorgabe doppelt: als Initialisierer im `…Params`-Struct
+    und als dritter Parameter im Leser (`getInt(o, "x", 5)`). Liefen sie
+    auseinander, hing der Wert davon ab, WOHER der Knoten kam — ein frisch
+    eingefuegter trug den Struct-Wert, ein geladener den des Lesers. Genau daran
+    hing der Kleinian-Befund: die Struct-Vorgabe war korrigiert und gebaut, die
+    Sonden sahen es trotzdem nicht, weil sie aus einem Preset laden.
+
+    Seit dem Umbau bezieht der Leser die Vorgabe aus dem Ziel selbst
+    (`getInt(o, "x", p.x)`). Diese Pruefung haelt das fest: ein Literal an
+    dieser Stelle ist eine neue zweite Quelle.
+
+    ERLAUBT bleibt, wo der Wert bewusst fuer ALTE DATEIEN steht und nicht die
+    Vorgabe des Knotens ist — dann traegt die Zeile ihre Begruendung im Code.
+    """
+    erlaubt = {("StarfieldParams", "blend")}  # legacy files rendered additively
+    src = SERIALIZER.read_text(encoding="utf-8")
+    grenzen = [(m.group(1), m.start())
+               for m in re.finditer(r"\b(\w+Params)\s+p;", src)]
+    grenzen.append((None, len(src)))
+    # Der Vorgabewert wird NACH dem Treffer geprueft, nicht per Lookahead: ein
+    #  kann null Leerzeichen nehmen, und dann steht das Leerzeichen noch vor
+    # dem  — der Lookahead griff daneben und meldete jede umgestellte Zeile.
+    muster = re.compile(r'p(?:\.\w+)+\s*=\s*(?:static_cast<[^>]+>\s*\(\s*)?'
+                        r'get(?:Int|Double|Bool|Color|Str)\s*\(\s*o\s*,\s*'
+                        r'"(\w+)"\s*,\s*([^),]+)\)')
+    out: list[str] = []
+    for (struct, a), (_, b) in zip(grenzen, grenzen[1:]):
+        for m in muster.finditer(src[a:b]):
+            wert = m.group(2).strip()
+            # Bezieht die Vorgabe aus dem Struct — richtig so. Der Cast davor
+            # ist beliebig (`static_cast<double>(p.spinStep)`).
+            if re.match(r"^(?:static_cast<[^>]+>\s*\(\s*)?p\.", wert):
+                continue
+            if (struct, m.group(1)) in erlaubt:
+                continue
+            zeile = src[:a + m.start()].count("\n") + 1
+            out.append(f"{struct}.{m.group(1)} = {m.group(2).strip()} "
+                       f"(ChainSerializer.cpp:{zeile})")
+    return out
+
+
+def pruefe_panel_schluessel(felder_je_struct: dict[str, set[str]]) -> list[str]:
+    """Panel-Zeilen, deren Feldschluessel auf KEIN Feld zeigt (§10).
+
+    Jede `add*`-Zeile nennt seit S56 ihren Feldnamen als erstes Argument; er ist
+    der Schluessel in die Tooltip-Tabelle. Ein falscher Schluessel faellt sonst
+    NIRGENDS auf — das Panel zeigt einfach keinen Hinweis, und der Wachhund in
+    C++ prueft nur die Tabelle gegen `fieldNames()`, nicht die Zeilen.
+
+    Gesehen ist das an den fuenf Feldern, deren JSON-Name vom Feldnamen
+    abweicht (`o["ftype"] = p.type`, `o["overrideBlend"] = p.enabled`): der
+    maschinell eingesetzte Schluessel war der Struct-Name und traf ins Leere.
+
+    Geprueft wird nur, was sich einem Struct zuordnen laesst — die
+    Milkdrop-Preset- und Sprite-Zeilen schreiben in Unterstrukturen und haben
+    im Feld-Inventar zu Recht keinen Eintrag.
+    """
+    src = PANEL.read_text(encoding="utf-8")
+    helfer = "|".join(("addInt", "addDouble", "addRefDouble", "addBool", "addColor",
+                       "addEnum", "addColorTable", "addScript", "addGradient",
+                       "addText"))
+    schlecht: list[str] = []
+    for m in re.finditer(r"\b(?:" + helfer + r")\s*\(\s*\"(\w+)\"", src):
+        body = balanced(src, src.index("(", m.start()))
+        tgt = re.search(r"std::get<\s*(\w+Params)\s*>\s*\(\s*\w+\.params\s*\)", body)
+        if not tgt:
+            continue
+        struct, key = tgt.group(1), m.group(1)
+        bekannt = felder_je_struct.get(struct)
+        if bekannt and key not in bekannt:
+            zeile = src[:m.start()].count("\n") + 1
+            schlecht.append(f"{struct}.{key} (MultiEffectPanel.cpp:{zeile})")
+    return schlecht
+
+
+def join_declarations(body: str) -> list[str]:
+    """Zeilen eines Struct-Koerpers, mehrzeilige Deklarationen zusammengefasst.
+
+    Die Feldsuche unten arbeitet ZEILENWEISE. Eine Deklaration, die sich ueber
+    mehrere Zeilen zieht — `std::array<int, 49> kernel = {0, 0, …};` steht in
+    vier — wurde damit ueberhaupt nicht als Feld erkannt: kein Bereich, keine
+    Beschreibung, und der Lueckenbericht meldete sie als „ohne Kommentar",
+    obwohl direkt daneben einer stand (Befund S56).
+
+    Zusammengefasst wird bis zum `;` auf oberster Ebene; Kommentarzeilen bleiben
+    fuer sich, damit `pending` weiter funktioniert.
+    """
+    out: list[str] = []
+    puffer, tiefe = "", 0
+    for line in body.splitlines():
+        s = line.strip()
+        if not puffer and (not s or s.startswith("//") or s.startswith("/*")
+                           or s.startswith("*")):
+            out.append(line)
+            continue
+        puffer = f"{puffer} {s}" if puffer else s
+        tiefe += s.count("{") + s.count("(") - s.count("}") - s.count(")")
+        if tiefe <= 0 and ";" in s:
+            out.append(puffer)
+            puffer, tiefe = "", 0
+    if puffer:
+        out.append(puffer)
+    return out
 
 
 def harvest_header() -> dict[tuple[str, str], dict]:
@@ -224,16 +425,53 @@ def harvest_header() -> dict[tuple[str, str], dict]:
         body = src[sm.end():i - 1]           # <- erst isolieren, dann suchen
 
         pending: list[str] = []              # `///`-Zeilen VOR dem Feld
-        for line in body.splitlines():
+        im_block = False                     # in einem /** … */ ueber dem Feld
+        for line in join_declarations(body):
             s = line.strip()
             if s.startswith("///<"):
                 continue                     # gehoert zur Feldzeile, unten geholt
             if s.startswith("///"):
                 pending.append(s.lstrip("/").strip())
                 continue
+            # Ein `/** … */`-Block ueber dem Feld zaehlt genauso — er stand hier
+            # bis S56 im selben Topf wie jeder andere Kommentar und wurde
+            # verworfen, obwohl er oft die AUSFUEHRLICHSTE Beschreibung traegt
+            # (`timescope.useChannel` erklaert dort auf zehn Zeilen, warum der
+            # Regler im Original tot ist). Uebernommen wird der erste Absatz:
+            # der Rest ist Begruendung fuer den Leser des Codes, kein Tooltip.
+            if s.startswith("/**"):
+                im_block, pending = True, []
+                s = s[3:].strip()
+                if s and not s.startswith("*/"):
+                    pending.append(s)
+                continue
+            if im_block:
+                if s.startswith("*/"):
+                    im_block = False
+                    continue
+                rein = s.lstrip("*").strip()
+                if rein.startswith("@"):     # @brief/@param … gehoert nicht ins Panel
+                    continue
+                if not rein:                 # Absatzende — der erste reicht
+                    if pending:
+                        im_block = False
+                    continue
+                pending.append(rein)
+                continue
             if s.startswith("//") or s.startswith("/*") or s.startswith("*"):
                 continue
-            fm = re.match(r"^[\w:<>,\s\*&]+?\b(\w+)\s*(?:=[^;]*)?;\s*(?://<?\s*(.*))?$", s)
+            # Der Vorbelegungsteil darf ALLES enthalten, auch ein `;` — das steht
+            # in `std::string pointCode = "x=(i*2)-1; y=0;";` mitten in der
+            # Zeichenkette und liess die Zeile bis S56 durchfallen. Und ein Feld
+            # darf eine Feldlaenge tragen (`uint32_t colors[5]`), sonst fehlen
+            # die Farbtafeln von Dot Plane, Dot Grid, Osc Ring/Star … Die
+            # Kommentargruppe hinten ist entfallen; `trail` sucht ohnehin selbst.
+            # Auch die Klammer-Vorbelegung ohne `=` gehoert dazu
+            # (`std::vector<uint32_t> colors{0xFFFFFF};` — so stehen die
+            # Farbtafeln von Dot Grid, Osc Ring/Star, Rotating Stars,
+            # Simple Scope da).
+            fm = re.match(r"^[\w:<>,\s\*&]+?\b(\w+)\s*(?:\[[^\]]*\])?"
+                          r"\s*(?:\{[^;]*\})?\s*(?:=.*)?;", s)
             if not fm:
                 if s:
                     pending = []
@@ -507,11 +745,23 @@ def main() -> int:
                      "ohne_doc": len(ohne_doc)},
            "typen": typen_out}
     OUT.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    n_cpp = schreibe_fielddocs(typen_out)
+    felder_je_struct = {t["struct"]: {f["name"] for f in t["felder"]}
+                        for t in typen_out if t["struct"]}
+    falsche_schluessel = pruefe_panel_schluessel(felder_je_struct)
+    literale = pruefe_vorgabe_literale()
 
     print(f"Inventar angereichert: {doc['summe']['typen']} Typen, "
           f"{doc['summe']['felder']} Felder -> {OUT.name}")
+    print(f"  Tooltip-Tabelle: {n_cpp} Eintraege -> {FIELDDOCS_CPP.name}")
     print(f"  ohne Panel-Zeile (nicht bedienbar): {len(ohne_panel)}")
     print(f"  ohne Beschreibung (§10-Luecke):     {len(ohne_doc)}")
+    print(f"  Panel-Schluessel ohne Feld:         {len(falsche_schluessel)}")
+    print(f"  Vorgabe-Literale im Leser:          {len(literale)}")
+    for x in literale:
+        print(f"    ZWEITE QUELLE: {x}")
+    for x in falsche_schluessel:
+        print(f"    FALSCH: {x}")
     if ohne_struct:
         print(f"  Typ ohne Struct-Zuordnung ({len(ohne_struct)}): "
               f"{', '.join(ohne_struct[:8])}")

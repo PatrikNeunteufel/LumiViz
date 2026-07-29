@@ -95,6 +95,7 @@
         "type": "fractal2D",
         "enabled": true,
         "name": "Fractal 2D",
+        "ftype": 4,
         "power": 16
       }
     ],

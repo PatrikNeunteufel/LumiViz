@@ -95,6 +95,7 @@
         "type": "waterBump",
         "enabled": true,
         "name": "Water Bump",
+        "randomDrop": false,
         "dropX": 2
       }
     ],

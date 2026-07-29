@@ -1,9 +1,10 @@
 # MyViz — Knoten-Parameter, Voreinstellungen und dynamische Felder (Konzept)
 
-> **Version:** 1.16.0
-> **Datum:** 2026-07-28
+> **Version:** 1.17.0
+> **Datum:** 2026-07-29
 > **Typ:** Konzept — Etappen 1–6 umgesetzt (S53), **Etappe 7 = Strang E umgesetzt
-> (S54)**, 8 (Tooltips) und 9 (Basis-Voreinstellungen) offen
+> (S54)**, **Etappe 8 = Tooltips komplett (S56, 717/717 Felder)**,
+> 9 (Basis-Voreinstellungen) offen
 > **Status:** Aktiv — Entscheide §8.1–§8.4 gefallen; Strang E hat beim ersten
 > Einsatz zwei Befunde an Strang D geliefert (§9.1)
 > **Zielgruppe:** App-Entwickler
@@ -269,8 +270,8 @@ eine Hand am Regler. Das ist normale Bedienung und braucht keine Warnung.
 | **3b** ✅ | Bild-Auswahlfelder + Suchordner (S50-Vorgabe, in S53 vorgezogen) | Bild wählbar, Suchordner greift beim Import |
 | **5** ✅ | Strang C — Klasse A mit Kennzeichnung (S53) | Sonden unverändert |
 | **6** ✅ | Strang D — dynamische Felder für **jeden Knoten mit numerischen Parametern** (47 Renderer, S53) | Skript verstellt die Regler, leeres Feld kostet nichts |
-| **7** | Strang E — **Test-Presets je Modul und Feld** (§9) | jedes Feld hat ein Preset, das seine Wirkung zeigt |
-| **8** | Strang F — **Tooltip an jedem Feld** (§10) | kein Feld ohne Erklärung; Skriptfelder nennen ihre Variablen |
+| **7** ✅ | Strang E — **Test-Presets je Modul und Feld** (§9, S54/S55) | jedes Feld hat ein Preset, das seine Wirkung zeigt |
+| **8** ✅ | Strang F — **Tooltip an jedem Feld** (§10, S56) | **717/717 Felder** erklärt; zwei Wächter (Text vorhanden · Panel-Schlüssel trifft ein Feld) |
 | **9** | Strang G — **Basis-Voreinstellungen für alle Module** (§11) | jeder Knotentyp hat mindestens einen brauchbaren Startpunkt |
 
 **Absicherung nach *jeder* Etappe** — nicht erst am Ende:
@@ -435,12 +436,58 @@ Referenz-Regler). Bei allen anderen muss man den Namen deuten — und die
 | Enum | was die Einträge unterscheiden, soweit der Name es nicht sagt |
 | Skriptfeld | **die schreibbaren Variablennamen dieses Knotens** + `b`/`w`/`h` + Audio-Satz, plus wann der Slot läuft |
 
-**Woher der Text kommt.** Die Beschreibungen existieren bereits als
-Doxygen-Kommentare an den Struct-Feldern. Der saubere Weg ist eine Tabelle
-`{typkey, feldname} → Text` neben dem Panel statt Text im Code zu verdoppeln —
-sonst driften Kommentar und Tooltip auseinander. Ein Gate kann prüfen, dass jedes
-Feld aus `fieldNames()` einen Eintrag hat; dann kann kein neues Feld ohne Erklärung
-durchrutschen.
+**Woher der Text kommt.** Die Beschreibungen stehen als Doxygen-Kommentare an den
+Struct-Feldern. Der saubere Weg ist eine Tabelle `{typkey, feldname} → Text` neben
+dem Panel statt Text im Code zu verdoppeln — sonst driften Kommentar und Tooltip
+auseinander. Ein Gate kann prüfen, dass jedes Feld aus `fieldNames()` einen Eintrag
+hat; dann kann kein neues Feld ohne Erklärung durchrutschen.
+
+### Umsetzung (S56)
+
+**Der Weg vom Kommentar ins Panel** — drei Stationen, kein Text doppelt:
+
+| | |
+|---|---|
+| Quelle | Doxygen am Feld des `…Params`-Structs in `EffectChain.hpp` |
+| Tabelle | `src/UI/panels/FieldDocs.cpp` — **erzeugt** von `harvest_field_docs.py` |
+| Panel | `fielddocs::tooltip(typkey, feld)` je Zeile, auf Bedienelement **und** Beschriftung |
+
+**Jede Feldzeile nennt jetzt ihren Feldnamen.** Die `add*`-Helfer bekamen den
+Feldnamen als erstes Argument (`addInt("meshX", tr("Mesh X"), …)`) — **826
+Aufrufstellen**, maschinell eingesetzt über die Zuordnung, die auch der Ernter
+fährt: nicht über das Label (übersetzt, frei formuliert), sondern über den
+**Setter**. Vier Wege, in dieser Reihenfolge: `std::get<XParams>(n.params).feld` ·
+`milkOf(n).feld` · Member-Zeiger `&PS::feld` · der letzte Elementzugriff im
+Wert-Argument (Bitfeld-Kästchen wie `(p->mode & 1) != 0`, deren Setter nur ein Bit
+kennt). Alle 826 lösen auf, keine Handarbeit.
+
+Zwei Zeilen weichen bewusst ab: `addRefDouble` behält an der **Beschriftung** den
+Referenz-Hinweis (⚠, ändert sich mit dem Wert) und bekommt den §10-Text nur an den
+Regler; `addScript` baut seine Beschriftung selbst und hat keine Label-Spalte —
+dort hängt der Text am ganzen Kasten.
+
+**Alle 717 Felder haben einen Text.** Am Anfang fehlten 178; **163 davon waren
+echte Lücken** und wurden geschrieben, **15 waren keine** — der Ernter konnte sie
+nur nicht lesen. Er sah bis dahin ausschließlich `///`-Zeilen an *einzeiligen*
+Deklarationen. Ihm entgingen: Doxygen-Blockkommentare, mehrzeilige Deklarationen
+(`std::array<int, 49> kernel = {…}` steht in vier Zeilen), Feldlängen
+(`uint32_t colors[5]`), Klammer-Vorbelegungen (`colors{0xFFFFFF}`) und
+Zeichenketten mit einem `;` darin (`pointCode = "x=(i*2)-1; y=0;"`). Das ist die
+Merkregel dahinter: **eine gemeldete Lücke ist zuerst eine Frage an das Werkzeug,
+dann eine an den Code** — dieselbe Form wie `STUMM` und `WIRKUNGSLOS` bei den
+Sonden.
+
+**Zwei Wächter**, weil ein Tooltip auf zwei Arten verschwinden kann:
+
+- `test_FieldDocs.cpp` (C++, zwei Fälle, **hart ohne Ausnahmeliste**): jedes Feld
+  jedes Typs hat einen Text · die Tabelle nennt kein Feld, das es nicht gibt.
+- `harvest_field_docs.py` prüft zusätzlich die **Panel-Schlüssel**: zeigt eine
+  `add*`-Zeile auf ein Feld, das es im Struct nicht gibt, wird das gemeldet. Der
+  Anlass ist gemessen: fünf Felder heißen im JSON anders als im Struct
+  (`o["ftype"] = p.type`, `o["overrideBlend"] = p.enabled`), und der maschinell
+  eingesetzte Schlüssel war der Struct-Name — er traf ins Leere, **ohne dass
+  irgendetwas rot geworden wäre**. Der C++-Wächter kann das nicht sehen: er prüft
+  die Tabelle, nicht die Zeilen.
 
 ## 11. Strang G — Basis-Voreinstellungen für alle Module (Vorgabe Patrik, S53)
 
@@ -471,6 +518,7 @@ Farbtafel des Knotens stehen lässt, ist brauchbarer als eine, die alles übersc
 | 1.14.0 | 2026-07-27 | Session 53 — `Movement` verliert seine Strang-D-Felder wieder (Befund Patrik, `movement3b.lvfx`): zwei Skript-Träger nebeneinander teilen keine Variablen, und die Tabelle cacht ohnehin über den Skripttext. Daraus die Regel „ein Knoten, ein Skript-Träger" — über alle Renderer geprüft, Movement war der einzige Verstoß |
 | 1.13.0 | 2026-07-27 | Session 53 — **Strang D vollständig**: auch die 35 Trans-/Bild-Effekte, insgesamt 48 Renderer mit `runParamScript`. Damit sind alle sechs Etappen umgesetzt. Beim maschinellen Einfügen ein Fehler und seine Reparatur: das Muster suchte über Funktionsgrenzen hinweg und legte Blöcke in fremde Funktionen — Gegenmittel ist, erst den Funktionskörper zu isolieren und **danach** darin zu suchen, plus die Zählprobe „genau ein `runParamScript` je Funktion" |
 | 1.12.0 | 2026-07-27 | Session 53 — Strang D auf **alle 13 Render-Knoten** vollständig (dazu Starfield · Timescope · Dot Grid · Dot Fountain). Matrix unverändert: starfield und timescope weiter 0,000 |
+| 1.17.0 | 2026-07-29 | Session 56 — **Etappe 8 verdrahtet** (§10): erzeugte Tabelle `FieldDocs.cpp` aus den Doxygen-Kommentaren, Feldname als erstes Argument in allen **826** `add*`-Aufrufen (maschinell über die Setter-Zuordnung), Tooltip auf Bedienelement und Beschriftung. **717/717 Felder erklärt** — 163 Kommentare geschrieben, 15 gemeldete Lücken waren keine, sondern Blindstellen des Ernters (Blockkommentare, mehrzeilige Deklarationen, Feldlängen, Klammer-Vorbelegungen, `;` in Zeichenketten). Zwei Wächter: `test_FieldDocs.cpp` hart ohne Ausnahmeliste, und der Ernter prüft die Panel-Schlüssel — fünf zeigten ins Leere, weil der JSON-Name vom Feldnamen abweicht (`ftype`, `overrideBlend`). Tests 484, beide Builds grün |
 | 1.16.0 | 2026-07-28 | Session 54 — **Strang E umgesetzt** (§9.1): Inventar-Golden (85 Typen, 717 Felder) mit C++-Gate, Ernte von Bereichen/Doku/Skriptvariablen, Generator und Urteil. Beim ersten Einsatz zwei Befunde an Strang D: **43 von 129 Frame-Kopien wurden nie gelesen**, und der **Init-Slot** war wirkungslos, weil die Vorbelegung jedes Frames ihn überschrieb — beides behoben (Entscheid Patrik: Init setzt eine einmalige Startbelegung, die Frames schreiben sie fort; ein Reglerdreh gewinnt). Dazu: Skriptfehler werden gemeldet (`lastError` wurde nie abgefragt), `timescope.useChannel` macht den im Original toten Kanalregler wahlweise wirksam, Colorfades Beat-Fader sind skriptbar. Matrix 36/41, Sonden 78/80, Tests 481 — keine Regression |
 | 1.11.0 | 2026-07-27 | Session 53 — Strang D auch für **Klasse A** (Dot Plane · Bass Spin · Moving Particle). Dabei die Lücke geschlossen, die das offen gehalten hatte: die ⚠ an den Reglern kann ein Frame-Skript nicht sehen, deshalb tragen diese Knoten eine eigene Hinweiszeile über den Skriptfeldern. Matrix unverändert, dot_plane/moving_particle weiter 0,000 |
 | 1.10.0 | 2026-07-27 | Session 53 — Strang D auf **alle sechs Klasse-B-Knoten** erweitert (dazu Metaballs 3D, Tentacles 3D, FyrewurX). `runMetaballs3D`/`runTentacles3D` bekamen dafür den `node`-Parameter, den sie als einzige Renderer nicht hatten |

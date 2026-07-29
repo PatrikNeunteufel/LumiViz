@@ -95,7 +95,8 @@
         "type": "mosaic",
         "enabled": true,
         "name": "Mosaic",
-        "onBeat": true
+        "onBeat": true,
+        "quality2": 4
       }
     ],
     "clearEveryFrame": false

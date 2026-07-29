@@ -95,6 +95,7 @@
         "type": "superScope3d",
         "enabled": true,
         "name": "SuperScope 3D",
+        "pointCode": "x=cos(i*6.28)*0.6; y=v*0.9; z=v*0.5; red=1; green=1; blue=1",
         "spectrumSource": true
       }
     ],

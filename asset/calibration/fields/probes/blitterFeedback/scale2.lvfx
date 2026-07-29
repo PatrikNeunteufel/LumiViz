@@ -95,6 +95,7 @@
         "type": "blitterFeedback",
         "enabled": true,
         "name": "Blitter Feedback",
+        "onBeat": true,
         "scale2": 256
       }
     ],

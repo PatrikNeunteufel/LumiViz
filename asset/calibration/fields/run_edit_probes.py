@@ -32,13 +32,34 @@ Die Frage laesst sich aber messen statt schaetzen, mit einem DRITTEN Bild:
 
 Damit wird aus der Vermutung ein Urteil:
 
-  WIRKUNGSLOS  editiert == Vorgabe, Pixel fuer Pixel. Der Edit hat NICHTS
-               bewirkt — das ist der harte Befund, egal ob der Knoten einen
-               Verlauf hat oder nicht.
   TEILWEISE    editiert liegt zwischen Vorgabe und geladen: der Edit wirkt,
                das Bild traegt aber noch die Vorgeschichte. Bei Effekten mit
                Verlauf ist das der Normalfall und in Ordnung.
   GLEICH       editiert == geladen.
+
+Bleibt „editiert == Vorgabe", reicht das aber NOCH NICHT fuer den Befund — das
+war der Fehlschluss von S55, an dem acht Felder zu Unrecht als Befund standen.
+Denn dafuer gibt es ZWEI Ursachen:
+
+  (a) der Wert kommt beim Edit nicht an   — das ist der Befund
+  (b) der Wert kommt an, kann aber nichts mehr ausrichten, weil der Zustand
+      aus der ersten Haelfte ihn verdeckt: der Puffer haelt seinen Inhalt, die
+      Rampe ist abgelaufen, der Zaehler steht anderswo
+
+Getrennt wird das mit einem VIERTEN Bild, der GEGENRICHTUNG: Start = Sonde
+(Feld gesetzt), Edit -> Grund. Der Zustand der ersten Haelfte ist dann der des
+GESETZTEN Feldes und kann den Rueckweg nicht auf dieselbe Weise verdecken.
+
+  WIRKUNGSLOS  auch die Gegenrichtung aendert nichts — der Wert kommt nicht an.
+               Das ist der harte Befund.
+  VERDECKT     die Gegenrichtung aendert das Bild: der Wert KOMMT an, die
+               Vorgeschichte dieser Sonde laesst ihn nur nicht zur Geltung
+               kommen. Kein Befund — eine Grenze der Sonde.
+
+Belegt (S56) an zwei Positivkontrollen, die die Verdeckung wegnehmen und sonst
+denselben Weg fahren: `bufferSave.slot` mit dem Leser auf dem leeren Slot 7
+faellt von WIRKUNGSLOS auf GLEICH, `mirror.slower` mit `onBeatRandom` (die
+Rampe kommt nie zur Ruhe) auf TEILWEISE.
 
 Aufruf:
   python run_edit_probes.py [typkey ...] [--frames N] [--size WxH]
@@ -144,12 +165,21 @@ def main() -> int:
                     vorgabe = ca.load_rgb(ca.run_lumi(
                         start, n, args.size, ziel / f"{feld}_vorgabe",
                         args.beat_period, extra))
-                    if ca.compare(vorgabe, editiert)["mae"] == 0.0:
-                        urteil = "WIRKUNGSLOS"
-                        ca.montage(geladen, editiert,
-                                   out / "montage" / f"{tdir.name}_{feld}.png")
-                    else:
+                    if ca.compare(vorgabe, editiert)["mae"] != 0.0:
                         urteil = "TEILWEISE"
+                    else:
+                        # Das VIERTE Bild — nur hier, und nur hier noetig: die
+                        # Gegenrichtung trennt „kommt nicht an" von „wird von
+                        # der Vorgeschichte verdeckt" (s. Modulkopf).
+                        rueck = ca.load_rgb(ca.run_lumi(
+                            sonde, n, args.size, ziel / f"{feld}_rueck",
+                            args.beat_period, extra + ["--edit-nach", str(start)]))
+                        if ca.compare(geladen, rueck)["mae"] != 0.0:
+                            urteil = "VERDECKT"
+                        else:
+                            urteil = "WIRKUNGSLOS"
+                            ca.montage(geladen, editiert,
+                                       out / "montage" / f"{tdir.name}_{feld}.png")
             except Exception as e:  # noqa: BLE001 — je Sonde weitermachen
                 mae, urteil = 0.0, "FEHLER"
                 print(f"  FEHLER  {tdir.name}.{feld}: {e}")
@@ -161,7 +191,7 @@ def main() -> int:
     # `logs/<zeitstempel>_…md` bleibt stehen, `report.md` ist der letzte Stand,
     # und ein Teillauf traegt seine Typen im Namen.
     zahl = {u: sum(1 for r in rows if r[3] == u) for u in
-            ("GLEICH", "TEILWEISE", "WIRKUNGSLOS", "FEHLER")}
+            ("GLEICH", "TEILWEISE", "VERDECKT", "WIRKUNGSLOS", "FEHLER")}
     teil = "_".join(sorted(args.typkeys))[:60]
     name = f"report{'_' + teil if teil else ''}.md"
     stempel = datetime.now().strftime("%Y-%m-%d_%H%M%S")
@@ -178,10 +208,13 @@ def main() -> int:
             "der halben Lauflaenge gesetzt (`--edit-nach`, bildet den "
             "Panel-Weg nach: Params tauschen + `recompileChain()`, KEIN "
             "Runtime-Reset).\n\n"
-            "`WIRKUNGSLOS` = editiert ist Pixel fuer Pixel die Vorgabe, der "
-            "Edit hat also nichts bewirkt (Befund). `TEILWEISE` = der Edit "
-            "wirkt, das Bild traegt aber noch die Vorgeschichte — bei "
-            "Effekten mit Verlauf der Normalfall.\n\n"
+            "`TEILWEISE` = der Edit wirkt, das Bild traegt aber noch die "
+            "Vorgeschichte — bei Effekten mit Verlauf der Normalfall.\n\n"
+            "Ist editiert Pixel fuer Pixel die Vorgabe, entscheidet die "
+            "GEGENRICHTUNG (Start = Sonde, Edit -> Grund): aendert sie das "
+            "Bild, kommt der Wert an und wird hier nur von der Vorgeschichte "
+            "verdeckt (`VERDECKT`, kein Befund). Aendert auch sie nichts, "
+            "kommt der Wert nicht an (`WIRKUNGSLOS`, Befund).\n\n"
             "| Typ | Feld | MAE | Urteil |\n|---|---|---|---|\n"
             + "".join(f"| {typ} | {feld} | {mae:.4f} | {urteil} |\n"
                       for typ, feld, mae, urteil in rows))

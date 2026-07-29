@@ -96,7 +96,7 @@
         "enabled": true,
         "name": "Texer",
         "imageData": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAHklEQVR4nGP4z8CAFWEXxYNGNVCkAZcMLjCqgSYaADtOfpCTQ+5gAAAAAElFTkSuQmCC",
-        "initCode": "particles = 4096; blend = 0"
+        "initCode": "particles = 4096; blend = 2"
       }
     ],
     "clearEveryFrame": false

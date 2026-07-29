@@ -95,7 +95,8 @@
         "type": "texerII",
         "enabled": true,
         "name": "Texer II",
-        "imageData": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAHklEQVR4nGP4z8CAFWEXxYNGNVCkAZcMLjCqgSYaADtOfpCTQ+5gAAAAAElFTkSuQmCC"
+        "imageData": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAHklEQVR4nGP4z8CAFWEXxYNGNVCkAZcMLjCqgSYaADtOfpCTQ+5gAAAAAElFTkSuQmCC",
+        "initCode": "n=48"
       }
     ],
     "clearEveryFrame": false

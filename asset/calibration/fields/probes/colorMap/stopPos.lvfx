@@ -95,6 +95,10 @@
         "type": "colorMap",
         "enabled": true,
         "name": "Color Map",
+        "stopColor": [
+          16711680,
+          255
+        ],
         "stopPos": [
           16711680,
           65535

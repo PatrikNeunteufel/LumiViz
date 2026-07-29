@@ -95,9 +95,8 @@
         "type": "text",
         "enabled": true,
         "name": "Text",
-        "text": "LumiViz",
-        "normalizeSize": true,
-        "normSpeed": 600
+        "text": "Lumi;Viz;Test;Wort",
+        "normSpeed": 60
       }
     ],
     "clearEveryFrame": false

@@ -44,6 +44,14 @@ std::string getStr(const QJsonObject& o, const char* key)
 {
     return o.value(key).toString().toStdString();
 }
+// Mit Vorgabe: der Aufrufer reicht sein FELD herein, damit die Vorgabe
+// nur im Struct steht (S56). Ein fehlender Schluessel laesst das Feld
+// unangetastet — anders als die Fassung darueber, die "" liefert.
+std::string getStr(const QJsonObject& o, const char* key,
+                   const std::string& def)
+{
+    return o.contains(key) ? o.value(key).toString().toStdString() : def;
+}
 uint32_t getColor(const QJsonObject& o, const char* key, uint32_t def)
 {
     return o.contains(key) ? static_cast<uint32_t>(o.value(key).toDouble(def)) : def;
@@ -1121,86 +1129,86 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     if (type == "list")
     {
         ListParams p;
-        p.clearEveryFrame = getBool(o, "clearEveryFrame", false);
-        p.blendIn = static_cast<BlendMode>(getInt(o, "blendIn", 0));
-        p.blendOut = static_cast<BlendMode>(getInt(o, "blendOut", 1));
-        p.inAdjustAlpha = getInt(o, "inAdjustAlpha", 128);
-        p.outAdjustAlpha = getInt(o, "outAdjustAlpha", 128);
-        p.bufferIn = getInt(o, "bufferIn", 0);
-        p.bufferOut = getInt(o, "bufferOut", 0);
-        p.bufferInInvert = getBool(o, "bufferInInvert", false);
-        p.bufferOutInvert = getBool(o, "bufferOutInvert", false);
-        p.onBeatRender = getBool(o, "onBeatRender", false);
-        p.onBeatFrames = getInt(o, "onBeatFrames", 1);
-        p.useCode = getBool(o, "useCode", false);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
+        p.clearEveryFrame = getBool(o, "clearEveryFrame", p.clearEveryFrame);
+        p.blendIn = static_cast<BlendMode>(getInt(o, "blendIn", static_cast<int>(p.blendIn)));
+        p.blendOut = static_cast<BlendMode>(getInt(o, "blendOut", static_cast<int>(p.blendOut)));
+        p.inAdjustAlpha = getInt(o, "inAdjustAlpha", p.inAdjustAlpha);
+        p.outAdjustAlpha = getInt(o, "outAdjustAlpha", p.outAdjustAlpha);
+        p.bufferIn = getInt(o, "bufferIn", p.bufferIn);
+        p.bufferOut = getInt(o, "bufferOut", p.bufferOut);
+        p.bufferInInvert = getBool(o, "bufferInInvert", p.bufferInInvert);
+        p.bufferOutInvert = getBool(o, "bufferOutInvert", p.bufferOutInvert);
+        p.onBeatRender = getBool(o, "onBeatRender", p.onBeatRender);
+        p.onBeatFrames = getInt(o, "onBeatFrames", p.onBeatFrames);
+        p.useCode = getBool(o, "useCode", p.useCode);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
         return p;
     }
     if (type == "hostgroup")  // HG1 — .lvfx2-Kennzeichen
     {
         HostGroupParams p;
-        p.blendOut = static_cast<BlendMode>(getInt(o, "blendOut", 1));
-        p.outAdjustAlpha = getInt(o, "outAdjustAlpha", 128);
+        p.blendOut = static_cast<BlendMode>(getInt(o, "blendOut", static_cast<int>(p.blendOut)));
+        p.outAdjustAlpha = getInt(o, "outAdjustAlpha", p.outAdjustAlpha);
         p.crossfadeSeconds = o.value("crossfadeSeconds").toDouble(2.0);
-        p.curveIn = getInt(o, "curveIn", 0);
-        p.curveOut = getInt(o, "curveOut", 0);
-        p.sourceFile = getStr(o, "sourceFile");
+        p.curveIn = getInt(o, "curveIn", p.curveIn);
+        p.curveOut = getInt(o, "curveOut", p.curveOut);
+        p.sourceFile = getStr(o, "sourceFile", p.sourceFile);
         return p;
     }
     if (type == "clear")
     {
         ClearParams p;
-        p.color = getColor(o, "color", 0);
-        p.onlyFirst = getBool(o, "onlyFirst", false);
-        p.blend = getInt(o, "blend", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.color = getColor(o, "color", p.color);
+        p.onlyFirst = getBool(o, "onlyFirst", p.onlyFirst);
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "fadeout")
     {
         FadeoutParams p;
-        p.fadeLen = getInt(o, "fadeLen", 16);
-        p.color = getColor(o, "color", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.fadeLen = getInt(o, "fadeLen", p.fadeLen);
+        p.color = getColor(o, "color", p.color);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "invert") return InvertParams{};
     if (type == "brightness")
     {
         BrightnessParams p;
-        p.red = getInt(o, "red", 0);
-        p.green = getInt(o, "green", 0);
-        p.blue = getInt(o, "blue", 0);
-        p.exclude = getBool(o, "exclude", false);
-        p.color = getColor(o, "color", 0);
-        p.distance = getInt(o, "distance", 16);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.red = getInt(o, "red", p.red);
+        p.green = getInt(o, "green", p.green);
+        p.blue = getInt(o, "blue", p.blue);
+        p.exclude = getBool(o, "exclude", p.exclude);
+        p.color = getColor(o, "color", p.color);
+        p.distance = getInt(o, "distance", p.distance);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "fastBrightness")
     {
         FastBrightnessParams p;
-        p.dir = getInt(o, "dir", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.dir = getInt(o, "dir", p.dir);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "blur")
     {
         BlurParams p;
-        p.strength = getInt(o, "strength", 1);
-        p.roundUp = getBool(o, "roundUp", true);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.strength = getInt(o, "strength", p.strength);
+        p.roundUp = getBool(o, "roundUp", p.roundUp);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "mirror")
@@ -1209,87 +1217,90 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         // Legacy files carry two bools; current files the r_mirror bit mode.
         const int legacy = (getBool(o, "topToBottom", false) ? 1 : 0) |
                            (getBool(o, "leftToRight", true) ? 4 : 0);
-        p.mode = getInt(o, "mode", legacy) & 15;
-        p.onBeatRandom = getBool(o, "onBeatRandom", false);
-        p.smooth = getBool(o, "smooth", false);
-        p.slower = getInt(o, "slower", 4);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.mode = getInt(o, "mode", p.mode) & 15;
+        p.onBeatRandom = getBool(o, "onBeatRandom", p.onBeatRandom);
+        p.smooth = getBool(o, "smooth", p.smooth);
+        p.slower = getInt(o, "slower", p.slower);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "onBeatClear")
     {
         OnBeatClearParams p;
-        p.color = getColor(o, "color", 0);
-        p.everyNBeats = getInt(o, "everyNBeats", 1);
-        p.blend = getBool(o, "blend", false);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.color = getColor(o, "color", p.color);
+        p.everyNBeats = getInt(o, "everyNBeats", p.everyNBeats);
+        p.blend = getBool(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "colorfade")
     {
         ColorfadeParams p;
-        p.faderR = getInt(o, "faderR", 8);
-        p.faderG = getInt(o, "faderG", 8);
-        p.faderB = getInt(o, "faderB", -8);
-        p.beatFaderR = getInt(o, "beatFaderR", 8);
-        p.beatFaderG = getInt(o, "beatFaderG", -8);
-        p.beatFaderB = getInt(o, "beatFaderB", 8);
-        p.onBeatFrames = getInt(o, "onBeatFrames", 1);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.faderR = getInt(o, "faderR", p.faderR);
+        p.faderG = getInt(o, "faderG", p.faderG);
+        p.faderB = getInt(o, "faderB", p.faderB);
+        p.beatFaderR = getInt(o, "beatFaderR", p.beatFaderR);
+        p.beatFaderG = getInt(o, "beatFaderG", p.beatFaderG);
+        p.beatFaderB = getInt(o, "beatFaderB", p.beatFaderB);
+        p.onBeatFrames = getInt(o, "onBeatFrames", p.onBeatFrames);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "colorModifier")
     {
         ColorModifierParams p;
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
-        p.levelCode = getStr(o, "levelCode");
-        p.recompute = getBool(o, "recompute", true);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        p.levelCode = getStr(o, "levelCode", p.levelCode);
+        p.recompute = getBool(o, "recompute", p.recompute);
         return p;
     }
     if (type == "movement")
     {
         MovementParams p;
-        p.code = getStr(o, "code");
-        p.rectCoords = getBool(o, "rectCoords", false);
-        p.wrap = getBool(o, "wrap", false);
-        p.blend = getBool(o, "blend", false);
-        p.subpixel = getBool(o, "subpixel", true);
-        p.sourceMapped = getInt(o, "sourceMapped", 0);
-        p.builtinRemap = getInt(o, "builtinRemap", 0);
+        p.code = getStr(o, "code", p.code);
+        p.rectCoords = getBool(o, "rectCoords", p.rectCoords);
+        p.wrap = getBool(o, "wrap", p.wrap);
+        p.blend = getBool(o, "blend", p.blend);
+        p.subpixel = getBool(o, "subpixel", p.subpixel);
+        p.sourceMapped = getInt(o, "sourceMapped", p.sourceMapped);
+        p.builtinRemap = getInt(o, "builtinRemap", p.builtinRemap);
         return p;
     }
     if (type == "dynamicMovement")
     {
         DynamicMovementParams p;
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
-        p.pointCode = getStr(o, "pointCode");
-        p.xres = getInt(o, "xres", 16);
-        p.yres = getInt(o, "yres", 12);
-        p.rectCoords = getBool(o, "rectCoords", false);
-        p.wrap = getBool(o, "wrap", false);
-        p.blend = getBool(o, "blend", false);
-        p.nomove = getBool(o, "nomove", false);
-        p.subpixel = getBool(o, "subpixel", true);
-        p.buffern = getInt(o, "buffern", 0);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        p.pointCode = getStr(o, "pointCode", p.pointCode);
+        p.xres = getInt(o, "xres", p.xres);
+        p.yres = getInt(o, "yres", p.yres);
+        p.rectCoords = getBool(o, "rectCoords", p.rectCoords);
+        p.wrap = getBool(o, "wrap", p.wrap);
+        p.blend = getBool(o, "blend", p.blend);
+        p.nomove = getBool(o, "nomove", p.nomove);
+        p.subpixel = getBool(o, "subpixel", p.subpixel);
+        p.buffern = getInt(o, "buffern", p.buffern);
         return p;
     }
     if (type == "blitterFeedback")
     {
         BlitterFeedbackParams p;
-        if (o.contains("scale"))
+        // Alt-Dokument? Das erkennt man am ALTEN Feld. Fehlt beides,
+        // gelten die Vorgaben des Structs (S56).
+        if (o.contains("scale") ||
+            (!o.contains("zoom") && !o.contains("beatZoom")))
         {
-            p.scale = getInt(o, "scale", 30);
-            p.scale2 = getInt(o, "scale2", 30);
+            p.scale = getInt(o, "scale", p.scale);
+            p.scale2 = getInt(o, "scale2", p.scale2);
         }
         else
         {
@@ -1299,22 +1310,27 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
             p.scale2 = static_cast<int>(
                 std::lround((getDouble(o, "beatZoom", 0.9) - 1.0) * 1024.0));
         }
-        p.onBeat = getBool(o, "onBeat", false);
-        p.blend = getBool(o, "blend", false);
-        p.subpixel = getBool(o, "subpixel", true);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.onBeat = getBool(o, "onBeat", p.onBeat);
+        p.blend = getBool(o, "blend", p.blend);
+        p.subpixel = getBool(o, "subpixel", p.subpixel);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "rotoBlitter")
     {
         RotoBlitterParams p;
-        if (o.contains("zoomScale"))
+        // s. Blitter Feedback: die Weiche haengt am ALTEN Feld. Ohne das
+        // hier zoomte ein Preset ohne `zoomScale` auf 0 statt auf den
+        // neutralen 31 — das Bild saettigte, und alle fuenf Felder des
+        // Knotens galten als stumm (Befund S56).
+        if (o.contains("zoomScale") ||
+            (!o.contains("zoom") && !o.contains("rotationSpeed")))
         {
-            p.zoomScale = getInt(o, "zoomScale", 31);
-            p.zoomScale2 = getInt(o, "zoomScale2", 31);
-            p.rotDir = getInt(o, "rotDir", 31);
+            p.zoomScale = getInt(o, "zoomScale", p.zoomScale);
+            p.zoomScale2 = getInt(o, "zoomScale2", p.zoomScale2);
+            p.rotDir = getInt(o, "rotDir", p.rotDir);
         }
         else
         {
@@ -1326,59 +1342,59 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
                                 std::lround(getDouble(o, "rotationSpeed", 1.0)));
             p.zoomScale2 = p.zoomScale;
         }
-        p.blend = getBool(o, "blend", false);
-        p.beatReverse = getBool(o, "beatReverse", false);
-        p.beatReverseSpeed = getInt(o, "beatReverseSpeed", 0);
-        p.beatZoomJump = getBool(o, "beatZoomJump", false);
-        p.subpixel = getBool(o, "subpixel", true);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.blend = getBool(o, "blend", p.blend);
+        p.beatReverse = getBool(o, "beatReverse", p.beatReverse);
+        p.beatReverseSpeed = getInt(o, "beatReverseSpeed", p.beatReverseSpeed);
+        p.beatZoomJump = getBool(o, "beatZoomJump", p.beatZoomJump);
+        p.subpixel = getBool(o, "subpixel", p.subpixel);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "bufferSave")
     {
         BufferSaveParams p;
-        p.slot = getInt(o, "slot", 0);
+        p.slot = getInt(o, "slot", p.slot);
         // Legacy files carry bool "save"; current files carry "dir" 0..3.
         p.dir = getInt(o, "dir", getBool(o, "save", true) ? 0 : 1);
-        p.blend = static_cast<BlendMode>(getInt(o, "blend", 1));
-        p.adjustAlpha = getInt(o, "adjustAlpha", 128);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.blend = static_cast<BlendMode>(getInt(o, "blend", static_cast<int>(p.blend)));
+        p.adjustAlpha = getInt(o, "adjustAlpha", p.adjustAlpha);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "customBpm")
     {
         CustomBpmParams p;
-        p.arbitrary = getBool(o, "arbitrary", false);
-        p.arbitraryMs = getInt(o, "arbitraryMs", 500);
-        p.skip = getBool(o, "skip", false);
-        p.skipCount = getInt(o, "skipCount", 1);
-        p.invert = getBool(o, "invert", false);
-        p.skipFirst = getInt(o, "skipFirst", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.arbitrary = getBool(o, "arbitrary", p.arbitrary);
+        p.arbitraryMs = getInt(o, "arbitraryMs", p.arbitraryMs);
+        p.skip = getBool(o, "skip", p.skip);
+        p.skipCount = getInt(o, "skipCount", p.skipCount);
+        p.invert = getBool(o, "invert", p.invert);
+        p.skipFirst = getInt(o, "skipFirst", p.skipFirst);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "superScope")
     {
         SuperScopeParams p;
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
-        p.pointCode = getStr(o, "pointCode");
-        p.pointCount = getInt(o, "pointCount", 256);
-        p.renderMode = getInt(o, "renderMode", 1);
-        p.lineWidth = static_cast<float>(getDouble(o, "lineWidth", 2.0));
-        p.dotSize = static_cast<float>(getDouble(o, "dotSize", 4.0));
-        p.audioChannel = getInt(o, "audioChannel", 2);
-        p.spectrumSource = getBool(o, "spectrumSource", false);
-        p.lineBlend = getInt(o, "lineBlend", 1);
-        p.colorBlend = getInt(o, "colorBlend", 0);
-        p.colorCycleFrames = getInt(o, "colorCycleFrames", 60);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        p.pointCode = getStr(o, "pointCode", p.pointCode);
+        p.pointCount = getInt(o, "pointCount", p.pointCount);
+        p.renderMode = getInt(o, "renderMode", p.renderMode);
+        p.lineWidth = static_cast<float>(getDouble(o, "lineWidth", p.lineWidth));
+        p.dotSize = static_cast<float>(getDouble(o, "dotSize", p.dotSize));
+        p.audioChannel = getInt(o, "audioChannel", p.audioChannel);
+        p.spectrumSource = getBool(o, "spectrumSource", p.spectrumSource);
+        p.lineBlend = getInt(o, "lineBlend", p.lineBlend);
+        p.colorBlend = getInt(o, "colorBlend", p.colorBlend);
+        p.colorCycleFrames = getInt(o, "colorCycleFrames", p.colorCycleFrames);
         p.gradientPreset = o.contains("gradientPreset") ? getStr(o, "gradientPreset")
                                                          : std::string("Neon");
         for (const QJsonValue& v : o.value("colors").toArray())
@@ -1388,25 +1404,25 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     if (type == "mosaic")
     {
         MosaicParams p;
-        p.quality = getInt(o, "quality", 50);
-        p.quality2 = getInt(o, "quality2", 50);
-        p.onBeat = getBool(o, "onBeat", false);
-        p.durationFrames = getInt(o, "durationFrames", 16);
-        p.blend = getInt(o, "blend", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.quality = getInt(o, "quality", p.quality);
+        p.quality2 = getInt(o, "quality2", p.quality2);
+        p.onBeat = getBool(o, "onBeat", p.onBeat);
+        p.durationFrames = getInt(o, "durationFrames", p.durationFrames);
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "grain")
     {
         GrainParams p;
-        p.amount = getInt(o, "amount", 100);
-        p.staticGrain = getBool(o, "staticGrain", false);
-        p.blend = getInt(o, "blend", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.amount = getInt(o, "amount", p.amount);
+        p.staticGrain = getBool(o, "staticGrain", p.staticGrain);
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "scatter")
@@ -1416,38 +1432,38 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     if (type == "waterBump")
     {
         WaterBumpParams p;
-        p.density = getInt(o, "density", 5);
-        p.depth = getInt(o, "depth", 600);
-        p.randomDrop = getBool(o, "randomDrop", true);
-        p.dropX = getInt(o, "dropX", 1);
-        p.dropY = getInt(o, "dropY", 1);
-        p.dropRadius = getInt(o, "dropRadius", 40);
-        p.displaceScale = static_cast<float>(getDouble(o, "displaceScale", 6.0));
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.density = getInt(o, "density", p.density);
+        p.depth = getInt(o, "depth", p.depth);
+        p.randomDrop = getBool(o, "randomDrop", p.randomDrop);
+        p.dropX = getInt(o, "dropX", p.dropX);
+        p.dropY = getInt(o, "dropY", p.dropY);
+        p.dropRadius = getInt(o, "dropRadius", p.dropRadius);
+        p.displaceScale = static_cast<float>(getDouble(o, "displaceScale", p.displaceScale));
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "dynamicShift")
     {
         DynamicShiftParams p;
-        p.blend = getBool(o, "blend", false);
+        p.blend = getBool(o, "blend", p.blend);
         // `bilinear` ist der Altname (bis S54) — vorhandene .lvfx lesen
         // sich damit weiter; der Vorgabewert folgt dem Original.
         p.subpixel = getBool(o, "subpixel", getBool(o, "bilinear", true));
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "dynamicDistanceModifier")
     {
         DynamicDistanceModifierParams p;
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
-        p.pixelCode = getStr(o, "pixelCode");
-        p.blend = getBool(o, "blend", false);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        p.pixelCode = getStr(o, "pixelCode", p.pixelCode);
+        p.blend = getBool(o, "blend", p.blend);
         // `bilinear` ist der Altname (bis S54) — vorhandene .lvfx lesen
         // sich damit weiter; der Vorgabewert folgt dem Original.
         p.subpixel = getBool(o, "subpixel", getBool(o, "bilinear", false));
@@ -1456,79 +1472,79 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     if (type == "movingParticle")
     {
         MovingParticleParams p;
-        p.color = getColor(o, "color", 0xFFFFFF);
-        p.maxDistance = getInt(o, "maxDistance", 16);
-        p.size = getInt(o, "size", 8);
-        p.size2 = getInt(o, "size2", 8);
-        p.onBeatSize = getBool(o, "onBeatSize", false);
-        p.blend = getInt(o, "blend", 1);
-        p.spring = static_cast<float>(getDouble(o, "spring", 0.004));
-        p.damping = static_cast<float>(getDouble(o, "damping", 0.991));
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.color = getColor(o, "color", p.color);
+        p.maxDistance = getInt(o, "maxDistance", p.maxDistance);
+        p.size = getInt(o, "size", p.size);
+        p.size2 = getInt(o, "size2", p.size2);
+        p.onBeatSize = getBool(o, "onBeatSize", p.onBeatSize);
+        p.blend = getInt(o, "blend", p.blend);
+        p.spring = static_cast<float>(getDouble(o, "spring", p.spring));
+        p.damping = static_cast<float>(getDouble(o, "damping", p.damping));
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "colorMap")
     {
         ColorMapParams p;
-        p.key = getInt(o, "key", 0);
-        p.blendMode = getInt(o, "blendMode", 0);
-        p.adjustBlend = getInt(o, "adjustBlend", 128);
+        p.key = getInt(o, "key", p.key);
+        p.blendMode = getInt(o, "blendMode", p.blendMode);
+        p.adjustBlend = getInt(o, "adjustBlend", p.adjustBlend);
         const QJsonArray pos = o.value("stopPos").toArray();
         const QJsonArray col = o.value("stopColor").toArray();
         for (const auto& v : pos) p.stopPos.push_back(v.toInt());
         for (const auto& v : col) p.stopColor.push_back(static_cast<uint32_t>(v.toDouble()));
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "fractal2D")
     {
         Fractal2DParams p;
-        p.type = getInt(o, "ftype", 0);
-        p.centerX = static_cast<float>(getDouble(o, "centerX", -0.5));
-        p.centerY = static_cast<float>(getDouble(o, "centerY", 0.0));
-        p.zoom = static_cast<float>(getDouble(o, "zoom", 1.0));
-        p.rotation = static_cast<float>(getDouble(o, "rotation", 0.0));
-        p.maxIter = getInt(o, "maxIter", 128);
-        p.juliaX = static_cast<float>(getDouble(o, "juliaX", -0.8));
-        p.juliaY = static_cast<float>(getDouble(o, "juliaY", 0.156));
-        p.power = static_cast<float>(getDouble(o, "power", 2.0));
-        p.escapeR = static_cast<float>(getDouble(o, "escapeR", 4.0));
-        p.smooth = getBool(o, "smooth", true);
-        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 0.05));
-        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
-        p.insideColor = getColor(o, "insideColor", 0x000000);
-        p.gradientPreset = getStr(o, "gradientPreset");
+        p.type = getInt(o, "ftype", p.type);
+        p.centerX = static_cast<float>(getDouble(o, "centerX", p.centerX));
+        p.centerY = static_cast<float>(getDouble(o, "centerY", p.centerY));
+        p.zoom = static_cast<float>(getDouble(o, "zoom", p.zoom));
+        p.rotation = static_cast<float>(getDouble(o, "rotation", p.rotation));
+        p.maxIter = getInt(o, "maxIter", p.maxIter);
+        p.juliaX = static_cast<float>(getDouble(o, "juliaX", p.juliaX));
+        p.juliaY = static_cast<float>(getDouble(o, "juliaY", p.juliaY));
+        p.power = static_cast<float>(getDouble(o, "power", p.power));
+        p.escapeR = static_cast<float>(getDouble(o, "escapeR", p.escapeR));
+        p.smooth = getBool(o, "smooth", p.smooth);
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", p.colorScale));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", p.colorCycle));
+        p.insideColor = getColor(o, "insideColor", p.insideColor);
+        p.gradientPreset = getStr(o, "gradientPreset", p.gradientPreset);
         if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
-        p.blend = getInt(o, "blend", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "domainWarp")
     {
         DomainWarpParams p;
-        p.octaves = getInt(o, "octaves", 5);
-        p.lacunarity = static_cast<float>(getDouble(o, "lacunarity", 2.0));
-        p.gain = static_cast<float>(getDouble(o, "gain", 0.5));
-        p.scale = static_cast<float>(getDouble(o, "scale", 3.0));
-        p.warp = static_cast<float>(getDouble(o, "warp", 0.5));
-        p.warpScale = static_cast<float>(getDouble(o, "warpScale", 1.0));
-        p.speed = static_cast<float>(getDouble(o, "speed", 0.2));
-        p.offsetX = static_cast<float>(getDouble(o, "offsetX", 0.0));
-        p.offsetY = static_cast<float>(getDouble(o, "offsetY", 0.0));
-        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 1.0));
-        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
-        p.gradientPreset = getStr(o, "gradientPreset");
+        p.octaves = getInt(o, "octaves", p.octaves);
+        p.lacunarity = static_cast<float>(getDouble(o, "lacunarity", p.lacunarity));
+        p.gain = static_cast<float>(getDouble(o, "gain", p.gain));
+        p.scale = static_cast<float>(getDouble(o, "scale", p.scale));
+        p.warp = static_cast<float>(getDouble(o, "warp", p.warp));
+        p.warpScale = static_cast<float>(getDouble(o, "warpScale", p.warpScale));
+        p.speed = static_cast<float>(getDouble(o, "speed", p.speed));
+        p.offsetX = static_cast<float>(getDouble(o, "offsetX", p.offsetX));
+        p.offsetY = static_cast<float>(getDouble(o, "offsetY", p.offsetY));
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", p.colorScale));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", p.colorCycle));
+        p.gradientPreset = getStr(o, "gradientPreset", p.gradientPreset);
         if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
-        p.blend = getInt(o, "blend", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "setRenderMode")
@@ -1537,192 +1553,194 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         // Altbestand: bis S51 stand das Override-Flag unter "enabled" und hat
         // dabei den Knoten-Schalter ueberschrieben — als Rueckfall weiter lesen.
         p.enabled = getBool(o, "overrideBlend", getBool(o, "enabled", true));
-        p.lineWidth = getInt(o, "lineWidth", 1);
-        p.lineBlend = getInt(o, "lineBlend", 1);
-        p.adjustAlpha = getInt(o, "adjustAlpha", 128);
+        p.lineWidth = getInt(o, "lineWidth", p.lineWidth);
+        p.lineBlend = getInt(o, "lineBlend", p.lineBlend);
+        p.adjustAlpha = getInt(o, "adjustAlpha", p.adjustAlpha);
         return p;
     }
     if (type == "fractal3D")
     {
         Fractal3DParams p;
-        p.type = getInt(o, "ftype", 0);
-        p.yaw = static_cast<float>(getDouble(o, "yaw", 0.6));
-        p.pitch = static_cast<float>(getDouble(o, "pitch", 0.3));
-        p.dist = static_cast<float>(getDouble(o, "dist", 3.2));
-        p.fov = static_cast<float>(getDouble(o, "fov", 1.0));
-        p.power = static_cast<float>(getDouble(o, "power", 8.0));
-        p.scale = static_cast<float>(getDouble(o, "scale", 2.0));
-        p.fold = static_cast<float>(getDouble(o, "fold", 1.0));
-        p.maxSteps = getInt(o, "maxSteps", 96);
-        p.maxIter = getInt(o, "maxIter", 8);
-        p.juliaX = static_cast<float>(getDouble(o, "juliaX", 0.2));
-        p.juliaY = static_cast<float>(getDouble(o, "juliaY", 0.3));
-        p.juliaZ = static_cast<float>(getDouble(o, "juliaZ", 0.1));
-        p.juliaW = static_cast<float>(getDouble(o, "juliaW", 0.0));
-        p.lightYaw = static_cast<float>(getDouble(o, "lightYaw", 0.7));
-        p.lightPitch = static_cast<float>(getDouble(o, "lightPitch", 0.8));
-        p.ambient = static_cast<float>(getDouble(o, "ambient", 0.2));
-        p.ao = getBool(o, "ao", true);
-        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 1.0));
-        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
-        p.gradientPreset = getStr(o, "gradientPreset");
+        p.type = getInt(o, "ftype", p.type);
+        p.yaw = static_cast<float>(getDouble(o, "yaw", p.yaw));
+        p.pitch = static_cast<float>(getDouble(o, "pitch", p.pitch));
+        p.dist = static_cast<float>(getDouble(o, "dist", p.dist));
+        p.fov = static_cast<float>(getDouble(o, "fov", p.fov));
+        p.power = static_cast<float>(getDouble(o, "power", p.power));
+        p.scale = static_cast<float>(getDouble(o, "scale", p.scale));
+        p.fold = static_cast<float>(getDouble(o, "fold", p.fold));
+        p.maxSteps = getInt(o, "maxSteps", p.maxSteps);
+        p.maxIter = getInt(o, "maxIter", p.maxIter);
+        p.juliaX = static_cast<float>(getDouble(o, "juliaX", p.juliaX));
+        p.juliaY = static_cast<float>(getDouble(o, "juliaY", p.juliaY));
+        p.juliaZ = static_cast<float>(getDouble(o, "juliaZ", p.juliaZ));
+        p.juliaW = static_cast<float>(getDouble(o, "juliaW", p.juliaW));
+        p.lightYaw = static_cast<float>(getDouble(o, "lightYaw", p.lightYaw));
+        p.lightPitch = static_cast<float>(getDouble(o, "lightPitch", p.lightPitch));
+        p.ambient = static_cast<float>(getDouble(o, "ambient", p.ambient));
+        p.ao = getBool(o, "ao", p.ao);
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", p.colorScale));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", p.colorCycle));
+        p.gradientPreset = getStr(o, "gradientPreset", p.gradientPreset);
         if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
-        p.background = getColor(o, "background", 0x000000);
-        p.blend = getInt(o, "blend", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.background = getColor(o, "background", p.background);
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "lyapunov")
     {
         LyapunovParams p;
-        p.sequence = getStr(o, "sequence");
+        p.sequence = getStr(o, "sequence", p.sequence);
         if (p.sequence.empty()) p.sequence = "AB";
-        p.aMin = static_cast<float>(getDouble(o, "aMin", 2.5));
-        p.aMax = static_cast<float>(getDouble(o, "aMax", 4.0));
-        p.bMin = static_cast<float>(getDouble(o, "bMin", 2.5));
-        p.bMax = static_cast<float>(getDouble(o, "bMax", 4.0));
-        p.warmup = getInt(o, "warmup", 100);
-        p.iterations = getInt(o, "iterations", 400);
-        p.negColor = getColor(o, "negColor", 0x000030);
-        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 1.0));
-        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
-        p.gradientPreset = getStr(o, "gradientPreset");
+        p.aMin = static_cast<float>(getDouble(o, "aMin", p.aMin));
+        p.aMax = static_cast<float>(getDouble(o, "aMax", p.aMax));
+        p.bMin = static_cast<float>(getDouble(o, "bMin", p.bMin));
+        p.bMax = static_cast<float>(getDouble(o, "bMax", p.bMax));
+        p.warmup = getInt(o, "warmup", p.warmup);
+        p.iterations = getInt(o, "iterations", p.iterations);
+        p.negColor = getColor(o, "negColor", p.negColor);
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", p.colorScale));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", p.colorCycle));
+        p.gradientPreset = getStr(o, "gradientPreset", p.gradientPreset);
         if (p.gradientPreset.empty()) p.gradientPreset = "Fire";
-        p.blend = getInt(o, "blend", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "kleinian")
     {
         KleinianParams p;
-        p.p = getInt(o, "p", 5);
-        p.q = getInt(o, "q", 4);
-        p.iterations = getInt(o, "iterations", 30);
-        p.morph = static_cast<float>(getDouble(o, "morph", 0.0));
-        p.zoom = static_cast<float>(getDouble(o, "zoom", 1.0));
-        p.rotation = static_cast<float>(getDouble(o, "rotation", 0.0));
-        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 1.0));
-        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
-        p.gradientPreset = getStr(o, "gradientPreset");
+        p.p = getInt(o, "p", p.p);
+        p.q = getInt(o, "q", p.q);
+        p.iterations = getInt(o, "iterations", p.iterations);
+        p.morph = static_cast<float>(getDouble(o, "morph", p.morph));
+        p.zoom = static_cast<float>(getDouble(o, "zoom", p.zoom));
+        p.rotation = static_cast<float>(getDouble(o, "rotation", p.rotation));
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", p.colorScale));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", p.colorCycle));
+        p.gradientPreset = getStr(o, "gradientPreset", p.gradientPreset);
         if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
-        p.blend = getInt(o, "blend", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "fractalZoomer")
     {
         FractalZoomerParams p;
-        p.type = getInt(o, "ftype", 0);
-        p.centerX = static_cast<float>(getDouble(o, "centerX", -0.743643887));
-        p.centerY = static_cast<float>(getDouble(o, "centerY", 0.131825904));
-        p.juliaX = static_cast<float>(getDouble(o, "juliaX", -0.8));
-        p.juliaY = static_cast<float>(getDouble(o, "juliaY", 0.156));
-        p.maxIter = getInt(o, "maxIter", 200);
-        p.zoomSpeed = static_cast<float>(getDouble(o, "zoomSpeed", 1.02));
-        p.rotationSpeed = static_cast<float>(getDouble(o, "rotationSpeed", 0.0));
-        p.feedback = static_cast<float>(getDouble(o, "feedback", 0.5));
-        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 0.05));
-        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
-        p.gradientPreset = getStr(o, "gradientPreset");
+        p.type = getInt(o, "ftype", p.type);
+        p.centerX = static_cast<float>(getDouble(o, "centerX", p.centerX));
+        p.centerY = static_cast<float>(getDouble(o, "centerY", p.centerY));
+        p.juliaX = static_cast<float>(getDouble(o, "juliaX", p.juliaX));
+        p.juliaY = static_cast<float>(getDouble(o, "juliaY", p.juliaY));
+        p.maxIter = getInt(o, "maxIter", p.maxIter);
+        p.zoomSpeed = static_cast<float>(getDouble(o, "zoomSpeed", p.zoomSpeed));
+        p.rotationSpeed = static_cast<float>(getDouble(o, "rotationSpeed", p.rotationSpeed));
+        p.feedback = static_cast<float>(getDouble(o, "feedback", p.feedback));
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", p.colorScale));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", p.colorCycle));
+        p.gradientPreset = getStr(o, "gradientPreset", p.gradientPreset);
         if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
-        p.insideColor = getColor(o, "insideColor", 0x000000);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.insideColor = getColor(o, "insideColor", p.insideColor);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "strangeAttractor")
     {
         StrangeAttractorParams p;
-        p.type = getInt(o, "ftype", 0);
-        p.a = static_cast<float>(getDouble(o, "a", 1.4));
-        p.b = static_cast<float>(getDouble(o, "b", 1.6));
-        p.c = static_cast<float>(getDouble(o, "c", 1.0));
-        p.d = static_cast<float>(getDouble(o, "d", 0.7));
-        p.points = getInt(o, "points", 6000);
-        p.scale = static_cast<float>(getDouble(o, "scale", 0.28));
-        p.rotation = static_cast<float>(getDouble(o, "rotation", 0.0));
-        p.rotationSpeed = static_cast<float>(getDouble(o, "rotationSpeed", 0.08));
-        p.color = getColor(o, "color", 0x66CCFF);
-        p.useGradient = getBool(o, "useGradient", true);
-        p.gradientPreset = getStr(o, "gradientPreset");
+        p.type = getInt(o, "ftype", p.type);
+        p.a = static_cast<float>(getDouble(o, "a", p.a));
+        p.b = static_cast<float>(getDouble(o, "b", p.b));
+        p.c = static_cast<float>(getDouble(o, "c", p.c));
+        p.d = static_cast<float>(getDouble(o, "d", p.d));
+        p.points = getInt(o, "points", p.points);
+        p.scale = static_cast<float>(getDouble(o, "scale", p.scale));
+        p.rotation = static_cast<float>(getDouble(o, "rotation", p.rotation));
+        p.rotationSpeed = static_cast<float>(getDouble(o, "rotationSpeed", p.rotationSpeed));
+        p.color = getColor(o, "color", p.color);
+        p.useGradient = getBool(o, "useGradient", p.useGradient);
+        p.gradientPreset = getStr(o, "gradientPreset", p.gradientPreset);
         if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
-        p.dotSize = static_cast<float>(getDouble(o, "dotSize", 2.0));
-        p.blend = getInt(o, "blend", 1);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.dotSize = static_cast<float>(getDouble(o, "dotSize", p.dotSize));
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "flame")
     {
         FlameParams p;
-        p.variation = getInt(o, "variation", 0);
-        p.functions = getInt(o, "functions", 3);
-        p.points = getInt(o, "points", 20000);
-        p.scale = static_cast<float>(getDouble(o, "scale", 0.5));
-        p.rotation = static_cast<float>(getDouble(o, "rotation", 0.0));
-        p.rotationSpeed = static_cast<float>(getDouble(o, "rotationSpeed", 0.04));
-        p.gradientPreset = getStr(o, "gradientPreset");
+        p.variation = getInt(o, "variation", p.variation);
+        p.functions = getInt(o, "functions", p.functions);
+        p.points = getInt(o, "points", p.points);
+        p.scale = static_cast<float>(getDouble(o, "scale", p.scale));
+        p.rotation = static_cast<float>(getDouble(o, "rotation", p.rotation));
+        p.rotationSpeed = static_cast<float>(getDouble(o, "rotationSpeed", p.rotationSpeed));
+        p.gradientPreset = getStr(o, "gradientPreset", p.gradientPreset);
         if (p.gradientPreset.empty()) p.gradientPreset = "Fire";
-        p.dotSize = static_cast<float>(getDouble(o, "dotSize", 1.5));
-        p.blend = getInt(o, "blend", 1);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.dotSize = static_cast<float>(getDouble(o, "dotSize", p.dotSize));
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "reactionDiffusion")
     {
         ReactionDiffusionParams p;
-        p.feed = static_cast<float>(getDouble(o, "feed", 0.055));
-        p.kill = static_cast<float>(getDouble(o, "kill", 0.062));
-        p.diffA = static_cast<float>(getDouble(o, "diffA", 1.0));
-        p.diffB = static_cast<float>(getDouble(o, "diffB", 0.5));
-        p.stepsPerFrame = getInt(o, "stepsPerFrame", 8);
-        p.seedOnBeat = getBool(o, "seedOnBeat", true);
-        p.colorScale = static_cast<float>(getDouble(o, "colorScale", 1.0));
-        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", 0.0));
-        p.gradientPreset = getStr(o, "gradientPreset");
+        p.feed = static_cast<float>(getDouble(o, "feed", p.feed));
+        p.kill = static_cast<float>(getDouble(o, "kill", p.kill));
+        p.diffA = static_cast<float>(getDouble(o, "diffA", p.diffA));
+        p.diffB = static_cast<float>(getDouble(o, "diffB", p.diffB));
+        p.stepsPerFrame = getInt(o, "stepsPerFrame", p.stepsPerFrame);
+        p.seedOnBeat = getBool(o, "seedOnBeat", p.seedOnBeat);
+        p.colorScale = static_cast<float>(getDouble(o, "colorScale", p.colorScale));
+        p.colorCycle = static_cast<float>(getDouble(o, "colorCycle", p.colorCycle));
+        p.gradientPreset = getStr(o, "gradientPreset", p.gradientPreset);
         if (p.gradientPreset.empty()) p.gradientPreset = "Neon";
-        p.blend = getInt(o, "blend", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "bufferBlend")
     {
         BufferBlendParams p;
-        p.bufferA = getInt(o, "bufferA", 8);
-        p.bufferB = getInt(o, "bufferB", 8);
-        p.mode = getInt(o, "mode", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.bufferA = getInt(o, "bufferA", p.bufferA);
+        p.bufferB = getInt(o, "bufferB", p.bufferB);
+        p.mode = getInt(o, "mode", p.mode);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "jherikoGlobal")
     {
         JherikoGlobalParams p;
-        p.loadMode = getInt(o, "loadMode", 1);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.loadMode = getInt(o, "loadMode", p.loadMode);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "simpleScope")
     {
         SimpleScopeParams p;
-        if (o.contains("mode"))
+        // s. Blitter Feedback: die Weiche haengt am ALTEN Feld.
+        if (o.contains("mode") ||
+            (!o.contains("source") && !o.contains("drawMode")))
         {
-            p.mode = std::clamp(getInt(o, "mode", 3), 0, 5);
+            p.mode = std::clamp(getInt(o, "mode", p.mode), 0, 5);
         }
         else
         {
@@ -1733,32 +1751,32 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
             if (drawMode == 1) p.mode = source == 1 ? 5 : 4;
             else p.mode = source == 1 ? 2 : 1;
         }
-        p.channel = getInt(o, "channel", 2);
-        p.position = getInt(o, "position", 2);
+        p.channel = getInt(o, "channel", p.channel);
+        p.position = getInt(o, "position", p.position);
         p.colors.clear();
         const QJsonArray cols = o.value("colors").toArray();
         for (const auto& v : cols) p.colors.push_back(static_cast<uint32_t>(v.toDouble()));
         if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "bassSpin")
     {
         BassSpinParams p;
-        p.left = getBool(o, "left", true);
-        p.right = getBool(o, "right", true);
-        p.colorLeft = getColor(o, "colorLeft", 0xFFFFFF);
-        p.colorRight = getColor(o, "colorRight", 0xFFFFFF);
-        p.mode = getInt(o, "mode", 1);
-        p.smoothing = static_cast<float>(getDouble(o, "smoothing", 0.7));
+        p.left = getBool(o, "left", p.left);
+        p.right = getBool(o, "right", p.right);
+        p.colorLeft = getColor(o, "colorLeft", p.colorLeft);
+        p.colorRight = getColor(o, "colorRight", p.colorRight);
+        p.mode = getInt(o, "mode", p.mode);
+        p.smoothing = static_cast<float>(getDouble(o, "smoothing", p.smoothing));
         // Vorgabe = der Original-Ausdruck `3.14159f/6.0f`, nicht pi/6 (s. Struct).
         p.spinStep = static_cast<float>(
-            getDouble(o, "spinStep", static_cast<double>(3.14159f / 6.0f)));
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+            getDouble(o, "spinStep", static_cast<double>(p.spinStep)));
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "oscStar" || type == "oscRing")
@@ -1770,32 +1788,32 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         if (type == "oscStar")
         {
             OscStarParams p;
-            p.channel = getInt(o, "channel", 2);
-            p.position = getInt(o, "position", 2);
-            p.size = getInt(o, "size", 8);
-            p.rot = getInt(o, "rot", 3);
+            p.channel = getInt(o, "channel", p.channel);
+            p.position = getInt(o, "position", p.position);
+            p.size = getInt(o, "size", p.size);
+            p.rot = getInt(o, "rot", p.rot);
             // S53 freigemacht — Vorgabe = das bisherige feste Verhalten, ein
             // alteres Preset ohne diese Schluessel bleibt also unveraendert.
-            p.spokes = getInt(o, "spokes", 5);
-            p.rotScale = static_cast<float>(getDouble(o, "rotScale", 0.02));
-            p.amplitude = static_cast<float>(getDouble(o, "amplitude", 0.5));
-            p.initCode = getStr(o, "initCode");
-            p.frameCode = getStr(o, "frameCode");
-            p.beatCode = getStr(o, "beatCode");
+            p.spokes = getInt(o, "spokes", p.spokes);
+            p.rotScale = static_cast<float>(getDouble(o, "rotScale", p.rotScale));
+            p.amplitude = static_cast<float>(getDouble(o, "amplitude", p.amplitude));
+            p.initCode = getStr(o, "initCode", p.initCode);
+            p.frameCode = getStr(o, "frameCode", p.frameCode);
+            p.beatCode = getStr(o, "beatCode", p.beatCode);
             p.colors = std::move(colors);
             return p;
         }
         OscRingParams p;
-        p.source = getInt(o, "source", 0);
-        p.channel = getInt(o, "channel", 2);
-        p.position = getInt(o, "position", 2);
-        p.size = getInt(o, "size", 8);
-        p.segments = getInt(o, "segments", 80);
-        p.baseScale = static_cast<float>(getDouble(o, "baseScale", 0.1));
-        p.audioScale = static_cast<float>(getDouble(o, "audioScale", 0.9));
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.source = getInt(o, "source", p.source);
+        p.channel = getInt(o, "channel", p.channel);
+        p.position = getInt(o, "position", p.position);
+        p.size = getInt(o, "size", p.size);
+        p.segments = getInt(o, "segments", p.segments);
+        p.baseScale = static_cast<float>(getDouble(o, "baseScale", p.baseScale));
+        p.audioScale = static_cast<float>(getDouble(o, "audioScale", p.audioScale));
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         p.colors = std::move(colors);
         return p;
     }
@@ -1806,192 +1824,192 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         const QJsonArray cols = o.value("colors").toArray();
         for (const auto& v : cols) p.colors.push_back(static_cast<uint32_t>(v.toDouble()));
         if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
-        p.points = getInt(o, "points", 5);
-        p.skip = getInt(o, "skip", 2);
-        p.stars = getInt(o, "stars", 2);
-        p.rotSpeed = static_cast<float>(getDouble(o, "rotSpeed", 0.05));
-        p.orbit = static_cast<float>(getDouble(o, "orbit", 0.5));
-        p.baseRadius = static_cast<float>(getDouble(o, "baseRadius", 0.12));
-        p.audioGain = static_cast<float>(getDouble(o, "audioGain", 0.5));
-        p.bandLo = getInt(o, "bandLo", 3);
-        p.bandHi = getInt(o, "bandHi", 14);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.points = getInt(o, "points", p.points);
+        p.skip = getInt(o, "skip", p.skip);
+        p.stars = getInt(o, "stars", p.stars);
+        p.rotSpeed = static_cast<float>(getDouble(o, "rotSpeed", p.rotSpeed));
+        p.orbit = static_cast<float>(getDouble(o, "orbit", p.orbit));
+        p.baseRadius = static_cast<float>(getDouble(o, "baseRadius", p.baseRadius));
+        p.audioGain = static_cast<float>(getDouble(o, "audioGain", p.audioGain));
+        p.bandLo = getInt(o, "bandLo", p.bandLo);
+        p.bandHi = getInt(o, "bandHi", p.bandHi);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "picture")
     {
         PictureParams p;
-        p.filename = getStr(o, "filename");
-        p.imageData = getStr(o, "imageData");
-        p.blend = getInt(o, "blend", 2);
-        p.keepAspect = getBool(o, "keepAspect", true);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.filename = getStr(o, "filename", p.filename);
+        p.imageData = getStr(o, "imageData", p.imageData);
+        p.blend = getInt(o, "blend", p.blend);
+        p.keepAspect = getBool(o, "keepAspect", p.keepAspect);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "pictureII")
     {
         PictureIIParams p;
-        p.filename = getStr(o, "filename");
-        p.imageData = getStr(o, "imageData");
-        p.blend = getInt(o, "blend", 2);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.filename = getStr(o, "filename", p.filename);
+        p.imageData = getStr(o, "imageData", p.imageData);
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "texer")
     {
         TexerParams p;
-        p.filename = getStr(o, "filename");
-        p.imageData = getStr(o, "imageData");
-        p.blend = getInt(o, "blend", 1);
-        p.particles = getInt(o, "particles", 100);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.filename = getStr(o, "filename", p.filename);
+        p.imageData = getStr(o, "imageData", p.imageData);
+        p.blend = getInt(o, "blend", p.blend);
+        p.particles = getInt(o, "particles", p.particles);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "texerII")
     {
         TexerIIParams p;
-        p.filename = getStr(o, "filename");
-        p.imageData = getStr(o, "imageData");
-        p.resizing = getBool(o, "resizing", false);
-        p.wrapAround = getBool(o, "wrapAround", false);
-        p.colorFiltering = getBool(o, "colorFiltering", true);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
-        p.pointCode = getStr(o, "pointCode");
+        p.filename = getStr(o, "filename", p.filename);
+        p.imageData = getStr(o, "imageData", p.imageData);
+        p.resizing = getBool(o, "resizing", p.resizing);
+        p.wrapAround = getBool(o, "wrapAround", p.wrapAround);
+        p.colorFiltering = getBool(o, "colorFiltering", p.colorFiltering);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        p.pointCode = getStr(o, "pointCode", p.pointCode);
         return p;
     }
     if (type == "triangle")
     {
         TriangleParams p;
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
-        p.pointCode = getStr(o, "pointCode");
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        p.pointCode = getStr(o, "pointCode", p.pointCode);
         // Vorgabe GEFUELLT = Referenzverhalten (S51); alte Dateien ohne den
         // Schluessel bleiben damit unveraendert.
-        p.filled = getBool(o, "filled", true);
-        p.lineWidth = static_cast<float>(getDouble(o, "lineWidth", 1.0));
+        p.filled = getBool(o, "filled", p.filled);
+        p.lineWidth = static_cast<float>(getDouble(o, "lineWidth", p.lineWidth));
         return p;
     }
     if (type == "convolution")
     {
         ConvolutionParams p;
-        p.edgeMode = getInt(o, "edgeMode", 0);
-        p.absolute = getBool(o, "absolute", false);
-        p.twoPass = getBool(o, "twoPass", false);
-        p.bias = getInt(o, "bias", 0);
-        p.scale = getInt(o, "scale", 1);
+        p.edgeMode = getInt(o, "edgeMode", p.edgeMode);
+        p.absolute = getBool(o, "absolute", p.absolute);
+        p.twoPass = getBool(o, "twoPass", p.twoPass);
+        p.bias = getInt(o, "bias", p.bias);
+        p.scale = getInt(o, "scale", p.scale);
         const QJsonArray k = o.value("kernel").toArray();
         for (int i = 0; i < 49 && i < k.size(); ++i)
             p.kernel[static_cast<std::size_t>(i)] = k[i].toInt();
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "normalise") return NormaliseParams{};
     if (type == "multiFilter")
     {
         MultiFilterParams p;
-        p.effect = getInt(o, "effect", 0);
-        p.onBeat = getBool(o, "onBeat", false);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.effect = getInt(o, "effect", p.effect);
+        p.onBeat = getBool(o, "onBeat", p.onBeat);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "addBorders")
     {
         AddBordersParams p;
-        p.color = getColor(o, "color", 0xFFFFFF);
-        p.size = getInt(o, "size", 2);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.color = getColor(o, "color", p.color);
+        p.size = getInt(o, "size", p.size);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "colorClip")
     {
         ColorClipParams p;
-        p.mode = getInt(o, "mode", 1);
-        p.clipColor = getColor(o, "clipColor", 0x202020);
-        p.outColor = getColor(o, "outColor", 0x202020);
-        p.distance = getInt(o, "distance", 10);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.mode = getInt(o, "mode", p.mode);
+        p.clipColor = getColor(o, "clipColor", p.clipColor);
+        p.outColor = getColor(o, "outColor", p.outColor);
+        p.distance = getInt(o, "distance", p.distance);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "uniqueTone")
     {
         UniqueToneParams p;
-        p.color = getColor(o, "color", 0xFFFFFF);
-        p.invert = getBool(o, "invert", false);
-        p.blend = getInt(o, "blend", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.color = getColor(o, "color", p.color);
+        p.invert = getBool(o, "invert", p.invert);
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "interleave")
     {
         InterleaveParams p;
-        p.x = getInt(o, "x", 1);
-        p.y = getInt(o, "y", 1);
-        p.color = getColor(o, "color", 0);
-        p.blend = getInt(o, "blend", 0);
-        p.onBeat = getBool(o, "onBeat", false);
-        p.x2 = getInt(o, "x2", 1);
-        p.y2 = getInt(o, "y2", 1);
-        p.beatDuration = getInt(o, "beatDuration", 4);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.x = getInt(o, "x", p.x);
+        p.y = getInt(o, "y", p.y);
+        p.color = getColor(o, "color", p.color);
+        p.blend = getInt(o, "blend", p.blend);
+        p.onBeat = getBool(o, "onBeat", p.onBeat);
+        p.x2 = getInt(o, "x2", p.x2);
+        p.y2 = getInt(o, "y2", p.y2);
+        p.beatDuration = getInt(o, "beatDuration", p.beatDuration);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "bump")
     {
         BumpParams p;
-        p.depth = getInt(o, "depth", 30);
-        p.depth2 = getInt(o, "depth2", 100);
-        p.onBeat = getBool(o, "onBeat", false);
-        p.durationFrames = getInt(o, "durationFrames", 15);
-        p.invert = getBool(o, "invert", false);
-        p.oldStyle = getBool(o, "oldStyle", false);
-        p.blend = getInt(o, "blend", 0);
-        p.buffern = getInt(o, "buffern", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.depth = getInt(o, "depth", p.depth);
+        p.depth2 = getInt(o, "depth2", p.depth2);
+        p.onBeat = getBool(o, "onBeat", p.onBeat);
+        p.durationFrames = getInt(o, "durationFrames", p.durationFrames);
+        p.invert = getBool(o, "invert", p.invert);
+        p.oldStyle = getBool(o, "oldStyle", p.oldStyle);
+        p.blend = getInt(o, "blend", p.blend);
+        p.buffern = getInt(o, "buffern", p.buffern);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "interferences")
     {
         InterferencesParams p;
-        p.points = getInt(o, "points", 2);
-        p.distance = getInt(o, "distance", 10);
-        p.alpha = getInt(o, "alpha", 128);
-        p.rotation = getInt(o, "rotation", 0);
-        p.rotationInc = getInt(o, "rotationInc", 0);
-        p.distance2 = getInt(o, "distance2", 32);
-        p.alpha2 = getInt(o, "alpha2", 192);
-        p.rotationInc2 = getInt(o, "rotationInc2", 25);
-        p.rgb = getBool(o, "rgb", false);
-        p.onBeat = getBool(o, "onBeat", false);
-        p.speed = static_cast<float>(getDouble(o, "speed", 0.2));
-        p.blend = getInt(o, "blend", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.points = getInt(o, "points", p.points);
+        p.distance = getInt(o, "distance", p.distance);
+        p.alpha = getInt(o, "alpha", p.alpha);
+        p.rotation = getInt(o, "rotation", p.rotation);
+        p.rotationInc = getInt(o, "rotationInc", p.rotationInc);
+        p.distance2 = getInt(o, "distance2", p.distance2);
+        p.alpha2 = getInt(o, "alpha2", p.alpha2);
+        p.rotationInc2 = getInt(o, "rotationInc2", p.rotationInc2);
+        p.rgb = getBool(o, "rgb", p.rgb);
+        p.onBeat = getBool(o, "onBeat", p.onBeat);
+        p.speed = static_cast<float>(getDouble(o, "speed", p.speed));
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "metaballs3d" || type == "tentacles3d")
@@ -2005,85 +2023,85 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
             Metaballs3DParams p;
             p.colors = colors;
             p.count = std::clamp(getInt(o, "count", 7), 1, 16);
-            p.radius = static_cast<float>(getDouble(o, "radius", 0.20));
-            p.speed = static_cast<float>(getDouble(o, "speed", 0.45));
-            p.threshold = static_cast<float>(getDouble(o, "threshold", 1.0));
+            p.radius = static_cast<float>(getDouble(o, "radius", p.radius));
+            p.speed = static_cast<float>(getDouble(o, "speed", p.speed));
+            p.threshold = static_cast<float>(getDouble(o, "threshold", p.threshold));
             p.blend = std::clamp(getInt(o, "blend", 0), 0, 2);
-            p.spread = static_cast<float>(getDouble(o, "spread", 1.0));
-            p.depth = static_cast<float>(getDouble(o, "depth", 1.2));
-            p.phase = static_cast<float>(getDouble(o, "phase", 1.7));
-            p.initCode = getStr(o, "initCode");
-            p.frameCode = getStr(o, "frameCode");
-            p.beatCode = getStr(o, "beatCode");
+            p.spread = static_cast<float>(getDouble(o, "spread", p.spread));
+            p.depth = static_cast<float>(getDouble(o, "depth", p.depth));
+            p.phase = static_cast<float>(getDouble(o, "phase", p.phase));
+            p.initCode = getStr(o, "initCode", p.initCode);
+            p.frameCode = getStr(o, "frameCode", p.frameCode);
+            p.beatCode = getStr(o, "beatCode", p.beatCode);
             return p;
         }
         Tentacles3DParams p;
         p.colors = colors;
         p.count = std::clamp(getInt(o, "count", 7), 1, 16);
         p.segments = std::clamp(getInt(o, "segments", 28), 2, 256);
-        p.length = static_cast<float>(getDouble(o, "length", 0.85));
-        p.thickness = static_cast<float>(getDouble(o, "thickness", 9.0));
-        p.speed = static_cast<float>(getDouble(o, "speed", 0.7));
+        p.length = static_cast<float>(getDouble(o, "length", p.length));
+        p.thickness = static_cast<float>(getDouble(o, "thickness", p.thickness));
+        p.speed = static_cast<float>(getDouble(o, "speed", p.speed));
         p.blend = std::clamp(getInt(o, "blend", 1), 0, 2);
-        p.sway = static_cast<float>(getDouble(o, "sway", 0.9));
-        p.waves = static_cast<float>(getDouble(o, "waves", 3.1));
-        p.taper = static_cast<float>(getDouble(o, "taper", 1.0));
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.sway = static_cast<float>(getDouble(o, "sway", p.sway));
+        p.waves = static_cast<float>(getDouble(o, "waves", p.waves));
+        p.taper = static_cast<float>(getDouble(o, "taper", p.taper));
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "fyrewurx")
     {
         FyrewurXParams p;
-        p.sparks = getInt(o, "sparks", 80);
-        p.speed = static_cast<float>(getDouble(o, "speed", 0.7));
-        p.gravity = static_cast<float>(getDouble(o, "gravity", 0.8));
-        p.lifeSeconds = static_cast<float>(getDouble(o, "lifeSeconds", 1.6));
-        p.dotSize = static_cast<float>(getDouble(o, "dotSize", 2.0));
-        p.hueDrift = static_cast<float>(getDouble(o, "hueDrift", 0.6));
-        p.burstSpread = static_cast<float>(getDouble(o, "burstSpread", 1.0));
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.sparks = getInt(o, "sparks", p.sparks);
+        p.speed = static_cast<float>(getDouble(o, "speed", p.speed));
+        p.gravity = static_cast<float>(getDouble(o, "gravity", p.gravity));
+        p.lifeSeconds = static_cast<float>(getDouble(o, "lifeSeconds", p.lifeSeconds));
+        p.dotSize = static_cast<float>(getDouble(o, "dotSize", p.dotSize));
+        p.hueDrift = static_cast<float>(getDouble(o, "hueDrift", p.hueDrift));
+        p.burstSpread = static_cast<float>(getDouble(o, "burstSpread", p.burstSpread));
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "text")
     {
         TextParams p;
-        p.text = getStr(o, "text");
-        p.fontFace = getStr(o, "fontFace");
-        p.fontHeight = getInt(o, "fontHeight", -20);
-        p.fontWeight = getInt(o, "fontWeight", 400);
-        p.italic = getBool(o, "italic", false);
-        p.underline = getBool(o, "underline", false);
-        p.color = getColor(o, "color", 0xFFFFFF);
-        p.blend = getInt(o, "blend", 0);
-        p.onBeat = getBool(o, "onBeat", false);
-        p.onBeatSpeed = getInt(o, "onBeatSpeed", 15);
-        p.normSpeed = getInt(o, "normSpeed", 15);
-        p.insertBlank = getBool(o, "insertBlank", false);
-        p.randomPos = getBool(o, "randomPos", false);
-        p.randomWord = getBool(o, "randomWord", false);
-        p.hAlign = getInt(o, "hAlign", 1);
-        p.vAlign = getInt(o, "vAlign", 1);
-        p.xShift = getInt(o, "xShift", 0);
-        p.yShift = getInt(o, "yShift", 0);
-        p.outline = getBool(o, "outline", false);
-        p.outlineColor = getColor(o, "outlineColor", 0);
-        p.outlineSize = getInt(o, "outlineSize", 1);
-        p.shadow = getBool(o, "shadow", false);
+        p.text = getStr(o, "text", p.text);
+        p.fontFace = getStr(o, "fontFace", p.fontFace);
+        p.fontHeight = getInt(o, "fontHeight", p.fontHeight);
+        p.fontWeight = getInt(o, "fontWeight", p.fontWeight);
+        p.italic = getBool(o, "italic", p.italic);
+        p.underline = getBool(o, "underline", p.underline);
+        p.color = getColor(o, "color", p.color);
+        p.blend = getInt(o, "blend", p.blend);
+        p.onBeat = getBool(o, "onBeat", p.onBeat);
+        p.onBeatSpeed = getInt(o, "onBeatSpeed", p.onBeatSpeed);
+        p.normSpeed = getInt(o, "normSpeed", p.normSpeed);
+        p.insertBlank = getBool(o, "insertBlank", p.insertBlank);
+        p.randomPos = getBool(o, "randomPos", p.randomPos);
+        p.randomWord = getBool(o, "randomWord", p.randomWord);
+        p.hAlign = getInt(o, "hAlign", p.hAlign);
+        p.vAlign = getInt(o, "vAlign", p.vAlign);
+        p.xShift = getInt(o, "xShift", p.xShift);
+        p.yShift = getInt(o, "yShift", p.yShift);
+        p.outline = getBool(o, "outline", p.outline);
+        p.outlineColor = getColor(o, "outlineColor", p.outlineColor);
+        p.outlineSize = getInt(o, "outlineSize", p.outlineSize);
+        p.shadow = getBool(o, "shadow", p.shadow);
         return p;
     }
     if (type == "avi")
     {
         AviParams p;
-        p.filename = getStr(o, "filename");
-        p.resolvedPath = getStr(o, "resolvedPath");
-        p.blend = getInt(o, "blend", 0);
-        p.adapt = getBool(o, "adapt", false);
-        p.persist = getInt(o, "persist", 6);
-        p.speedMs = getInt(o, "speedMs", 0);
+        p.filename = getStr(o, "filename", p.filename);
+        p.resolvedPath = getStr(o, "resolvedPath", p.resolvedPath);
+        p.blend = getInt(o, "blend", p.blend);
+        p.adapt = getBool(o, "adapt", p.adapt);
+        p.persist = getInt(o, "persist", p.persist);
+        p.speedMs = getInt(o, "speedMs", p.speedMs);
         return p;
     }
     if (type == "comment")
@@ -2110,41 +2128,41 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
             std::clamp(getDouble(o, "intensity", 1.0), 0.0, 8.0));
         p.threshold = static_cast<float>(
             std::clamp(getDouble(o, "threshold", 0.0), 0.0, 1.0));
-        p.vignette = getBool(o, "vignette", false);
+        p.vignette = getBool(o, "vignette", p.vignette);
         p.vignetteStrength = static_cast<float>(
             std::clamp(getDouble(o, "vignetteStrength", 0.3), 0.0, 1.0));
-        p.post = getBool(o, "post", true);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.post = getBool(o, "post", p.post);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "camera3d")
     {
         Camera3DParams p;
-        p.px = static_cast<float>(getDouble(o, "px", 0.0));
-        p.py = static_cast<float>(getDouble(o, "py", 0.0));
-        p.pz = static_cast<float>(getDouble(o, "pz", 3.7320508));
-        p.tx = static_cast<float>(getDouble(o, "tx", 0.0));
-        p.ty = static_cast<float>(getDouble(o, "ty", 0.0));
-        p.tz = static_cast<float>(getDouble(o, "tz", 0.0));
+        p.px = static_cast<float>(getDouble(o, "px", p.px));
+        p.py = static_cast<float>(getDouble(o, "py", p.py));
+        p.pz = static_cast<float>(getDouble(o, "pz", p.pz));
+        p.tx = static_cast<float>(getDouble(o, "tx", p.tx));
+        p.ty = static_cast<float>(getDouble(o, "ty", p.ty));
+        p.tz = static_cast<float>(getDouble(o, "tz", p.tz));
         p.fov = static_cast<float>(std::clamp(getDouble(o, "fov", 30.0), 1.0, 179.0));
-        p.roll = static_cast<float>(getDouble(o, "roll", 0.0));
-        p.fogStart = static_cast<float>(getDouble(o, "fogStart", 0.0));
-        p.fogEnd = static_cast<float>(getDouble(o, "fogEnd", 0.0));
-        p.fogColor = getColor(o, "fogColor", 0x000000);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.roll = static_cast<float>(getDouble(o, "roll", p.roll));
+        p.fogStart = static_cast<float>(getDouble(o, "fogStart", p.fogStart));
+        p.fogEnd = static_cast<float>(getDouble(o, "fogEnd", p.fogEnd));
+        p.fogColor = getColor(o, "fogColor", p.fogColor);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "superScope3d")
     {
         SuperScope3DParams p;
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
-        p.pointCode = getStr(o, "pointCode");
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        p.pointCode = getStr(o, "pointCode", p.pointCode);
         p.pointCount = std::clamp(getInt(o, "pointCount", 256), 1, 4096);
         p.renderMode = std::clamp(getInt(o, "renderMode", 0), 0, 1);
         p.size = static_cast<float>(
@@ -2152,7 +2170,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.falloff = static_cast<float>(
             std::clamp(getDouble(o, "falloff", 4.0), 0.5, 32.0));
         p.audioChannel = std::clamp(getInt(o, "audioChannel", 2), 0, 2);
-        p.spectrumSource = getBool(o, "spectrumSource", false);
+        p.spectrumSource = getBool(o, "spectrumSource", p.spectrumSource);
         return p;
     }
     if (type == "terrain3d")
@@ -2171,19 +2189,19 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
             std::clamp(getDouble(o, "relax", 0.12), 0.0, 1.0));
         p.flatten = static_cast<float>(
             std::clamp(getDouble(o, "flatten", 0.0), 0.0, 1.0));
-        p.drawMesh = getBool(o, "drawMesh", true);
-        p.meshColor = getColor(o, "meshColor", 0x101418);
-        p.drawDots = getBool(o, "drawDots", true);
+        p.drawMesh = getBool(o, "drawMesh", p.drawMesh);
+        p.meshColor = getColor(o, "meshColor", p.meshColor);
+        p.drawDots = getBool(o, "drawDots", p.drawDots);
         p.dotSize = static_cast<float>(
             std::clamp(getDouble(o, "dotSize", 0.045), 0.0001, 10.0));
         p.falloff = static_cast<float>(
             std::clamp(getDouble(o, "falloff", 4.0), 0.5, 32.0));
-        p.colorLow = getColor(o, "colorLow", 0x0A2040);
-        p.colorHigh = getColor(o, "colorHigh", 0x40C0FF);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
-        p.pointCode = getStr(o, "pointCode");
+        p.colorLow = getColor(o, "colorLow", p.colorLow);
+        p.colorHigh = getColor(o, "colorHigh", p.colorHigh);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        p.pointCode = getStr(o, "pointCode", p.pointCode);
         return p;
     }
     if (type == "glowOrbs")
@@ -2196,40 +2214,40 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
             std::clamp(getDouble(o, "haloIntensity", 0.6), 0.0, 4.0));
         p.falloff = static_cast<float>(
             std::clamp(getDouble(o, "falloff", 3.0), 0.5, 32.0));
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
-        p.pointCode = getStr(o, "pointCode");
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        p.pointCode = getStr(o, "pointCode", p.pointCode);
         return p;
     }
     if (type == "starfield")
     {
         StarfieldParams p;
-        p.color = getColor(o, "color", 0xFFFFFF);
-        p.warpSpeed = static_cast<float>(getDouble(o, "warpSpeed", 6.0));
-        p.maxStars = getInt(o, "maxStars", 350);
-        p.onBeat = getBool(o, "onBeat", false);
-        p.beatSpeed = static_cast<float>(getDouble(o, "beatSpeed", 4.0));
-        p.durationFrames = getInt(o, "durationFrames", 15);
+        p.color = getColor(o, "color", p.color);
+        p.warpSpeed = static_cast<float>(getDouble(o, "warpSpeed", p.warpSpeed));
+        p.maxStars = getInt(o, "maxStars", p.maxStars);
+        p.onBeat = getBool(o, "onBeat", p.onBeat);
+        p.beatSpeed = static_cast<float>(getDouble(o, "beatSpeed", p.beatSpeed));
+        p.durationFrames = getInt(o, "durationFrames", p.durationFrames);
         p.blend = getInt(o, "blend", 1);  // legacy files rendered additively
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "timescope")
     {
         TimescopeParams p;
-        p.color = getColor(o, "color", 0xFFFFFF);
-        p.blend = getInt(o, "blend", 0);
-        p.channel = getInt(o, "channel", 2);
+        p.color = getColor(o, "color", p.color);
+        p.blend = getInt(o, "blend", p.blend);
+        p.channel = getInt(o, "channel", p.channel);
         // Vorgabe false: ein importiertes Preset traegt `which_ch`, das im
         // Original nichts bewirkt — es soll auch bei uns nichts bewirken.
-        p.useChannel = getBool(o, "useChannel", false);
-        p.bands = getInt(o, "bands", 576);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.useChannel = getBool(o, "useChannel", p.useChannel);
+        p.bands = getInt(o, "bands", p.bands);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "dotGrid")
@@ -2239,13 +2257,13 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         for (const QJsonValue& v : o.value("colors").toArray())
             p.colors.push_back(static_cast<uint32_t>(v.toDouble()));
         if (p.colors.empty()) p.colors.push_back(0xFFFFFF);
-        p.spacing = getInt(o, "spacing", 8);
-        p.xMove = getInt(o, "xMove", 128);
-        p.yMove = getInt(o, "yMove", 128);
-        p.blend = getInt(o, "blend", 0);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.spacing = getInt(o, "spacing", p.spacing);
+        p.xMove = getInt(o, "xMove", p.xMove);
+        p.yMove = getInt(o, "yMove", p.yMove);
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "dotPlane" || type == "dotFountain")
@@ -2259,72 +2277,72 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         {
             DotPlaneParams p;
             fill(p.colors);
-            p.rotVel = getInt(o, "rotVel", 16);
-            p.angle = getInt(o, "angle", -20);
-            p.camDistance = static_cast<float>(getDouble(o, "camDistance", 400.0));
-            p.settle = static_cast<float>(getDouble(o, "settle", 0.15));
-            p.initCode = getStr(o, "initCode");
-            p.frameCode = getStr(o, "frameCode");
-            p.beatCode = getStr(o, "beatCode");
+            p.rotVel = getInt(o, "rotVel", p.rotVel);
+            p.angle = getInt(o, "angle", p.angle);
+            p.camDistance = static_cast<float>(getDouble(o, "camDistance", p.camDistance));
+            p.settle = static_cast<float>(getDouble(o, "settle", p.settle));
+            p.initCode = getStr(o, "initCode", p.initCode);
+            p.frameCode = getStr(o, "frameCode", p.frameCode);
+            p.beatCode = getStr(o, "beatCode", p.beatCode);
             return p;
         }
         DotFountainParams p;
         fill(p.colors);
-        p.rotVel = getInt(o, "rotVel", 16);
-        p.angle = getInt(o, "angle", -20);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.rotVel = getInt(o, "rotVel", p.rotVel);
+        p.angle = getInt(o, "angle", p.angle);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "channelShift")
     {
         ChannelShiftParams p;
-        p.mode = getInt(o, "mode", 1);
-        p.onBeat = getBool(o, "onBeat", false);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.mode = getInt(o, "mode", p.mode);
+        p.onBeat = getBool(o, "onBeat", p.onBeat);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "colorReduction")
     {
         ColorReductionParams p;
-        p.levels = getInt(o, "levels", 8);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.levels = getInt(o, "levels", p.levels);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "multiplier")
     {
         MultiplierParams p;
-        p.mode = getInt(o, "mode", 3);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.mode = getInt(o, "mode", p.mode);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "videoDelay")
     {
         VideoDelayParams p;
-        p.useBeats = getBool(o, "useBeats", false);
-        p.delay = getInt(o, "delay", 10);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.useBeats = getBool(o, "useBeats", p.useBeats);
+        p.delay = getInt(o, "delay", p.delay);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "multiDelay")
     {
         MultiDelayParams p;
-        p.mode = getInt(o, "mode", 0);
-        p.buffer = getInt(o, "buffer", 0);
-        p.delay = getInt(o, "delay", 10);
-        p.useBeats = getBool(o, "useBeats", false);
-        p.initCode = getStr(o, "initCode");
-        p.frameCode = getStr(o, "frameCode");
-        p.beatCode = getStr(o, "beatCode");
+        p.mode = getInt(o, "mode", p.mode);
+        p.buffer = getInt(o, "buffer", p.buffer);
+        p.delay = getInt(o, "delay", p.delay);
+        p.useBeats = getBool(o, "useBeats", p.useBeats);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "debugBars")
@@ -2334,10 +2352,10 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
     {
         MilkdropNodeParams p;
         p.preset = lumi::milkdrop::presetFromJson(o.value("preset").toObject(), nullptr);
-        p.presetDir = getStr(o, "presetDir");
-        p.meshX = getInt(o, "meshX", 32);
-        p.meshY = getInt(o, "meshY", 24);
-        p.debugGrid = getBool(o, "debugGrid", false);
+        p.presetDir = getStr(o, "presetDir", p.presetDir);
+        p.meshX = getInt(o, "meshX", p.meshX);
+        p.meshY = getInt(o, "meshY", p.meshY);
+        p.debugGrid = getBool(o, "debugGrid", p.debugGrid);
         // Bild-Einbettung (S43) — fehlt der Block, bleibt die Map leer
         const QJsonObject images = o.value("images").toObject();
         for (auto it = images.begin(); it != images.end(); ++it)

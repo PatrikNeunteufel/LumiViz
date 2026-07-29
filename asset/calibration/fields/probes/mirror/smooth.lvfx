@@ -95,6 +95,8 @@
         "type": "mirror",
         "enabled": true,
         "name": "Mirror",
+        "onBeatRandom": true,
+        "mode": 15,
         "smooth": true
       }
     ],

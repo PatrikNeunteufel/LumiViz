@@ -96,6 +96,7 @@
         "enabled": true,
         "name": "SuperScope",
         "pointCode": "x=cos(i*6.28)*0.7; y=sin(i*6.28)*0.7",
+        "colorBlend": 1,
         "colors": [
           16711680,
           65280

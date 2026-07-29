@@ -92,9 +92,10 @@
         "colorCycleFrames": 0
       },
       {
-        "type": 1,
+        "type": "fractalZoomer",
         "enabled": true,
         "name": "Fractal Zoomer",
+        "ftype": 1,
         "juliaY": -2.0
       }
     ],

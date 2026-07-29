@@ -12,6 +12,7 @@
 #include "UI/panels/MultiEffectPanel.hpp"
 
 #include "UI/panels/EelScriptEditing.hpp"                 // shared EEL editor toolkit
+#include "UI/panels/FieldDocs.hpp"                       // Tooltip je Feld (§10)
 #include "UI/widgets/GradientPresetDelegate.hpp"          // gradient combo previews
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
@@ -2501,8 +2502,29 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             [](ChainNode& n, std::string v) { n.description = std::move(v); });
 
     // --- row helpers (each connects to a typed mutation) ---------------------
-    auto addInt = [&](const QString& label, int value, int lo, int hi,
-                      std::function<void(ChainNode&, int)> set) {
+    //
+    // Jede Feldzeile nennt ihren FELDNAMEN als erstes Argument (§10). Er ist
+    // der Schluessel in die erzeugte Tabelle `FieldDocs.cpp`, deren Texte aus
+    // den Doxygen-Kommentaren an den `…Params`-Feldern stammen — der Text steht
+    // damit an genau einer Stelle, und ein Feld ohne Erklaerung faellt dem
+    // Waechter auf, nicht dem Benutzer. Der Name ist bewusst nicht das Label:
+    // Labels sind uebersetzt und frei formuliert.
+    const QString fieldTypeKey = effectTypeKey(params);
+    auto addRow = [&](const char* field, const QString& label, QWidget* widget,
+                      const QString& explicitTip = QString()) {
+        const QString tip =
+            explicitTip.isEmpty()
+                ? fielddocs::tooltip(fieldTypeKey, QLatin1String(field))
+                : explicitTip;
+        if (!tip.isEmpty()) widget->setToolTip(tip);
+        form->addRow(label, widget);
+        // Der Hinweis gehoert auch an die Beschriftung — wer den Namen nicht
+        // versteht, faehrt zuerst dorthin, nicht auf das Bedienelement.
+        if (!tip.isEmpty())
+            if (QWidget* l = form->labelForField(widget)) l->setToolTip(tip);
+    };
+    auto addInt = [&](const char* field, const QString& label, int value, int lo,
+                      int hi, std::function<void(ChainNode&, int)> set) {
         auto* spin = new QSpinBox(m_propContainer);
         spin->setRange(lo, hi);
         spin->setValue(value);
@@ -2510,10 +2532,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 [this, path, set](int v) {
                     mutate(path, [&](ChainNode& n) { set(n, v); });
                 });
-        form->addRow(label, spin);
+        addRow(field, label, spin);
     };
-    auto addDouble = [&](const QString& label, double value, double lo, double hi,
-                         double step, std::function<void(ChainNode&, double)> set) {
+    auto addDouble = [&](const char* field, const QString& label, double value,
+                         double lo, double hi, double step,
+                         std::function<void(ChainNode&, double)> set) {
         auto* spin = new QDoubleSpinBox(m_propContainer);
         spin->setRange(lo, hi);
         spin->setSingleStep(step);
@@ -2523,9 +2546,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 [this, path, set](double v) {
                     mutate(path, [&](ChainNode& n) { set(n, v); });
                 });
-        form->addRow(label, spin);
+        addRow(field, label, spin);
     };
-    auto addBool = [&](const QString& label, bool value,
+    auto addBool = [&](const char* field, const QString& label, bool value,
                        std::function<void(ChainNode&, bool)> set,
                        const QString& tip = QString()) {
         auto* box = new QCheckBox(m_propContainer);
@@ -2533,14 +2556,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         connect(box, &QCheckBox::toggled, this, [this, path, set](bool v) {
             mutate(path, [&](ChainNode& n) { set(n, v); });
         });
-        if (!tip.isEmpty()) box->setToolTip(tip);
-        form->addRow(label, box);
-        // Der Hinweis gehoert auch an die Beschriftung — wer den Namen nicht
-        // versteht, faehrt zuerst dorthin, nicht auf das Kaestchen.
-        if (!tip.isEmpty())
-            if (QWidget* l = form->labelForField(box)) l->setToolTip(tip);
+        addRow(field, label, box, tip);
     };
-    auto addColor = [&](const QString& label, uint32_t value,
+    auto addColor = [&](const char* field, const QString& label, uint32_t value,
                         std::function<void(ChainNode&, uint32_t)> set) {
         auto* btn = new QPushButton(m_propContainer);
         auto paint = [btn](uint32_t c) {
@@ -2555,14 +2573,15 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             paint(c);
             mutate(path, [&](ChainNode& n) { set(n, c); });
         });
-        form->addRow(label, btn);
+        addRow(field, label, btn);
     };
     // Wie addDouble, aber fuer KLASSE-A-Werte: die Vorgabe ist der Wert des
     // Referenz-Renderers, jede Abweichung entfernt das Bild messbar von AVS.
     // Die Zeile sagt das (Entscheid Patrik §8.4) — sonst sieht man einem Preset
     // spaeter nicht an, warum es in der Kalibrierung ausschert.
-    auto addRefDouble = [&](const QString& label, double value, double lo, double hi,
-                            double step, double reference, int decimals,
+    auto addRefDouble = [&](const char* field, const QString& label, double value,
+                            double lo, double hi, double step, double reference,
+                            int decimals,
                             std::function<void(ChainNode&, double)> set) {
         auto* spin = new QDoubleSpinBox(m_propContainer);
         spin->setRange(lo, hi);
@@ -2584,6 +2603,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     mark(v);
                     mutate(path, [&](ChainNode& n) { set(n, v); });
                 });
+        // Die Beschriftung traegt hier den Referenz-Hinweis, der sich mit dem
+        // Wert aendert (⚠) — der §10-Text kommt deshalb nur an den Regler.
+        const QString tip = fielddocs::tooltip(fieldTypeKey, QLatin1String(field));
+        if (!tip.isEmpty()) spin->setToolTip(tip);
         form->addRow(lbl, spin);
     };
     // Hinweiszeile fuer KLASSE-A-Knoten mit Parameter-Skript. Die ⚠ an den
@@ -2600,7 +2623,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                "departs from the reference."));
         form->addRow(note);
     };
-    auto addEnum = [&](const QString& label, int index, const QStringList& items,
+    auto addEnum = [&](const char* field, const QString& label, int index,
+                       const QStringList& items,
                        std::function<void(ChainNode&, int)> set) {
         auto* combo = new QComboBox(m_propContainer);
         combo->addItems(items);
@@ -2609,13 +2633,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 [this, path, set](int v) {
                     mutate(path, [&](ChainNode& n) { set(n, v); });
                 });
-        form->addRow(label, combo);
+        addRow(field, label, combo);
     };
     // Farbtafel: ein Farbfeld je Eintrag plus Hinzufuegen/Entfernen. Der Zugriff
     // auf den Vektor kommt als Funktion herein, damit sich JEDER Knoten mit
     // Palette dieselbe Zeile teilt (SuperScope, Metaballs 3D, Tentacles 3D) —
     // Laenge aendern heisst Editor neu bauen, deshalb der verzoegerte Aufruf.
-    auto addColorTable = [&](const QString& label, const std::vector<uint32_t>& colors,
+    auto addColorTable = [&](const char* field, const QString& label,
+                             const std::vector<uint32_t>& colors,
                              std::function<std::vector<uint32_t>&(ChainNode&)> access,
                              const QString& toolTip) {
         auto* colorsWidget = new QWidget(m_propContainer);
@@ -2664,8 +2689,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         row->addWidget(addC);
         row->addWidget(delC);
         row->addStretch();
-        colorsWidget->setToolTip(toolTip);
-        form->addRow(label, colorsWidget);
+        addRow(field, label, colorsWidget, toolTip);
     };
     // Milkdrop-Sektionen tauschen die Referenz unten gegen ihr Original-Set
     // aus (Befund S42: eine generische Tabelle passte zu keinem Slot richtig)
@@ -2687,7 +2711,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             if (others.contains(g)) initConflicts.insert(g);
     }
 
-    auto addScript = [&](const QString& label, const std::string& value,
+    auto addScript = [&](const char* field, const QString& label,
+                         const std::string& value,
                          std::function<void(ChainNode&, std::string)> set) {
         const bool isInit = label.startsWith(QLatin1String("Init"));
         const QSet<QString> conflicts = isInit ? initConflicts : QSet<QString>{};
@@ -2737,9 +2762,16 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         v->setContentsMargins(0, 0, 0, 0);
         v->addWidget(header);
         v->addWidget(edit);
+        // Eine Skriptzeile baut ihre Beschriftung selbst (mit ⓘ/⤢) und belegt
+        // die ganze Breite — es gibt hier keine Label-Spalte, an die `addRow`
+        // den Hinweis haengen koennte. Also direkt auf den Kasten: Feld und
+        // Ueberschrift zeigen ihn dann beide.
+        const QString tip = fielddocs::tooltip(fieldTypeKey, QLatin1String(field));
+        if (!tip.isEmpty()) box->setToolTip(tip);
         form->addRow(box);
     };
-    auto addGradient = [&](const QString& label, const std::string& value,
+    auto addGradient = [&](const char* field, const QString& label,
+                           const std::string& value,
                            std::function<void(ChainNode&, std::string)> set) {
         auto* combo = new QComboBox(m_propContainer);
         lumi::modules::ColorGradientModule grad;
@@ -2751,16 +2783,17 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     const std::string name = t.toStdString();
                     mutate(path, [&](ChainNode& n) { set(n, name); });
                 });
-        form->addRow(label, combo);
+        addRow(field, label, combo);
     };
-    auto addText = [&](const QString& label, const std::string& value,
+    auto addText = [&](const char* field, const QString& label,
+                       const std::string& value,
                        std::function<void(ChainNode&, std::string)> set) {
         auto* edit = new QLineEdit(QString::fromStdString(value), m_propContainer);
         connect(edit, &QLineEdit::editingFinished, this, [this, path, set, edit]() {
             const std::string t = edit->text().toStdString();
             mutate(path, [&](ChainNode& n) { set(n, t); });
         });
-        form->addRow(label, edit);
+        addRow(field, label, edit);
     };
 
     const QStringList kBlendNames = {"Ignore", "Replace", "50/50", "Maximum",
@@ -2771,54 +2804,54 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     // --- per-type fields -----------------------------------------------------
     if (auto* p = std::get_if<ListParams>(&params))
     {
-        addBool(tr("Clear each frame"), p->clearEveryFrame,
+        addBool("clearEveryFrame", tr("Clear each frame"), p->clearEveryFrame,
                 [](ChainNode& n, bool v) { std::get<ListParams>(n.params).clearEveryFrame = v; });
-        addEnum(tr("Blend In"), static_cast<int>(p->blendIn), kBlendNames,
+        addEnum("blendIn", tr("Blend In"), static_cast<int>(p->blendIn), kBlendNames,
                 [](ChainNode& n, int v) { std::get<ListParams>(n.params).blendIn = static_cast<BlendMode>(v); });
-        addEnum(tr("Blend Out"), static_cast<int>(p->blendOut), kBlendNames,
+        addEnum("blendOut", tr("Blend Out"), static_cast<int>(p->blendOut), kBlendNames,
                 [](ChainNode& n, int v) { std::get<ListParams>(n.params).blendOut = static_cast<BlendMode>(v); });
-        addInt(tr("In Alpha"), p->inAdjustAlpha, 0, 255,
+        addInt("inAdjustAlpha", tr("In Alpha"), p->inAdjustAlpha, 0, 255,
                [](ChainNode& n, int v) { std::get<ListParams>(n.params).inAdjustAlpha = v; });
-        addInt(tr("Out Alpha"), p->outAdjustAlpha, 0, 255,
+        addInt("outAdjustAlpha", tr("Out Alpha"), p->outAdjustAlpha, 0, 255,
                [](ChainNode& n, int v) { std::get<ListParams>(n.params).outAdjustAlpha = v; });
         // Only relevant when the matching blend is "Buffer": pool slot + invert.
-        addInt(tr("In Buffer"), p->bufferIn, 0, 7,
+        addInt("bufferIn", tr("In Buffer"), p->bufferIn, 0, 7,
                [](ChainNode& n, int v) { std::get<ListParams>(n.params).bufferIn = v; });
-        addInt(tr("Out Buffer"), p->bufferOut, 0, 7,
+        addInt("bufferOut", tr("Out Buffer"), p->bufferOut, 0, 7,
                [](ChainNode& n, int v) { std::get<ListParams>(n.params).bufferOut = v; });
-        addBool(tr("In Buffer invert"), p->bufferInInvert,
+        addBool("bufferInInvert", tr("In Buffer invert"), p->bufferInInvert,
                 [](ChainNode& n, bool v) { std::get<ListParams>(n.params).bufferInInvert = v; });
-        addBool(tr("Out Buffer invert"), p->bufferOutInvert,
+        addBool("bufferOutInvert", tr("Out Buffer invert"), p->bufferOutInvert,
                 [](ChainNode& n, bool v) { std::get<ListParams>(n.params).bufferOutInvert = v; });
-        addBool(tr("OnBeat render"), p->onBeatRender,
+        addBool("onBeatRender", tr("OnBeat render"), p->onBeatRender,
                 [](ChainNode& n, bool v) { std::get<ListParams>(n.params).onBeatRender = v; });
-        addInt(tr("OnBeat frames"), p->onBeatFrames, 1, 200,
+        addInt("onBeatFrames", tr("OnBeat frames"), p->onBeatFrames, 1, 200,
                [](ChainNode& n, int v) { std::get<ListParams>(n.params).onBeatFrames = v; });
-        addBool(tr("Use list code"), p->useCode,
+        addBool("useCode", tr("Use list code"), p->useCode,
                 [](ChainNode& n, bool v) { std::get<ListParams>(n.params).useCode = v; });
-        addScript(tr("Init code"), p->initCode,
+        addScript("initCode", tr("Init code"), p->initCode,
                   [](ChainNode& n, std::string v) { std::get<ListParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode,
+        addScript("frameCode", tr("Frame code"), p->frameCode,
                   [](ChainNode& n, std::string v) { std::get<ListParams>(n.params).frameCode = std::move(v); });
     }
     else if (auto* p = std::get_if<ClearParams>(&params))
     {
-        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<ClearParams>(n.params).color = v; });
-        addBool(tr("Only first frame"), p->onlyFirst, [](ChainNode& n, bool v) { std::get<ClearParams>(n.params).onlyFirst = v; });
+        addColor("color", tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<ClearParams>(n.params).color = v; });
+        addBool("onlyFirst", tr("Only first frame"), p->onlyFirst, [](ChainNode& n, bool v) { std::get<ClearParams>(n.params).onlyFirst = v; });
         const QStringList kClearBlendNames = {tr("Replace"), tr("Additive"),
                                               tr("50/50"), tr("Line blend")};
-        addEnum(tr("Blend"), p->blend, kClearBlendNames, [](ChainNode& n, int v) { std::get<ClearParams>(n.params).blend = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ClearParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ClearParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ClearParams>(n.params).beatCode = std::move(v); });
+        addEnum("blend", tr("Blend"), p->blend, kClearBlendNames, [](ChainNode& n, int v) { std::get<ClearParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ClearParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ClearParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ClearParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<FadeoutParams>(&params))
     {
-        addInt(tr("Fade length"), p->fadeLen, 0, 92, [](ChainNode& n, int v) { std::get<FadeoutParams>(n.params).fadeLen = v; });
-        addColor(tr("Target color"), p->color, [](ChainNode& n, uint32_t v) { std::get<FadeoutParams>(n.params).color = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<FadeoutParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FadeoutParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FadeoutParams>(n.params).beatCode = std::move(v); });
+        addInt("fadeLen", tr("Fade length"), p->fadeLen, 0, 92, [](ChainNode& n, int v) { std::get<FadeoutParams>(n.params).fadeLen = v; });
+        addColor("color", tr("Target color"), p->color, [](ChainNode& n, uint32_t v) { std::get<FadeoutParams>(n.params).color = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<FadeoutParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FadeoutParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FadeoutParams>(n.params).beatCode = std::move(v); });
     }
     else if (std::holds_alternative<InvertParams>(params))
     {
@@ -2826,31 +2859,31 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     }
     else if (auto* p = std::get_if<BrightnessParams>(&params))
     {
-        addInt(tr("Red"), p->red, -4096, 4096, [](ChainNode& n, int v) { std::get<BrightnessParams>(n.params).red = v; });
-        addInt(tr("Green"), p->green, -4096, 4096, [](ChainNode& n, int v) { std::get<BrightnessParams>(n.params).green = v; });
-        addInt(tr("Blue"), p->blue, -4096, 4096, [](ChainNode& n, int v) { std::get<BrightnessParams>(n.params).blue = v; });
-        addBool(tr("Exclude color"), p->exclude, [](ChainNode& n, bool v) { std::get<BrightnessParams>(n.params).exclude = v; });
-        addColor(tr("Exclude"), p->color, [](ChainNode& n, uint32_t v) { std::get<BrightnessParams>(n.params).color = v; });
-        addInt(tr("Distance"), p->distance, 0, 255, [](ChainNode& n, int v) { std::get<BrightnessParams>(n.params).distance = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BrightnessParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BrightnessParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BrightnessParams>(n.params).beatCode = std::move(v); });
+        addInt("red", tr("Red"), p->red, -4096, 4096, [](ChainNode& n, int v) { std::get<BrightnessParams>(n.params).red = v; });
+        addInt("green", tr("Green"), p->green, -4096, 4096, [](ChainNode& n, int v) { std::get<BrightnessParams>(n.params).green = v; });
+        addInt("blue", tr("Blue"), p->blue, -4096, 4096, [](ChainNode& n, int v) { std::get<BrightnessParams>(n.params).blue = v; });
+        addBool("exclude", tr("Exclude color"), p->exclude, [](ChainNode& n, bool v) { std::get<BrightnessParams>(n.params).exclude = v; });
+        addColor("color", tr("Exclude"), p->color, [](ChainNode& n, uint32_t v) { std::get<BrightnessParams>(n.params).color = v; });
+        addInt("distance", tr("Distance"), p->distance, 0, 255, [](ChainNode& n, int v) { std::get<BrightnessParams>(n.params).distance = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BrightnessParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BrightnessParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BrightnessParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<FastBrightnessParams>(&params))
     {
-        addEnum(tr("Mode"), p->dir, {"x2", "x0.5", "off"}, [](ChainNode& n, int v) { std::get<FastBrightnessParams>(n.params).dir = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<FastBrightnessParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FastBrightnessParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FastBrightnessParams>(n.params).beatCode = std::move(v); });
+        addEnum("dir", tr("Mode"), p->dir, {"x2", "x0.5", "off"}, [](ChainNode& n, int v) { std::get<FastBrightnessParams>(n.params).dir = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<FastBrightnessParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FastBrightnessParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FastBrightnessParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<BlurParams>(&params))
     {
-        addEnum(tr("Strength"), p->strength - 1, {"Light", "Normal", "Heavy"},
+        addEnum("strength", tr("Strength"), p->strength - 1, {"Light", "Normal", "Heavy"},
                 [](ChainNode& n, int v) { std::get<BlurParams>(n.params).strength = v + 1; });
-        addBool(tr("Round up"), p->roundUp, [](ChainNode& n, bool v) { std::get<BlurParams>(n.params).roundUp = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BlurParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BlurParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BlurParams>(n.params).beatCode = std::move(v); });
+        addBool("roundUp", tr("Round up"), p->roundUp, [](ChainNode& n, bool v) { std::get<BlurParams>(n.params).roundUp = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BlurParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BlurParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BlurParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<MirrorParams>(&params))
     {
@@ -2860,53 +2893,53 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 m = v ? (m | bit) : (m & ~bit);
             };
         };
-        addBool(tr("Top -> Bottom"), (p->mode & 1) != 0, setModeBit(1));
-        addBool(tr("Bottom -> Top"), (p->mode & 2) != 0, setModeBit(2));
-        addBool(tr("Left -> Right"), (p->mode & 4) != 0, setModeBit(4));
-        addBool(tr("Right -> Left"), (p->mode & 8) != 0, setModeBit(8));
-        addBool(tr("OnBeat random"), p->onBeatRandom, [](ChainNode& n, bool v) { std::get<MirrorParams>(n.params).onBeatRandom = v; });
-        addBool(tr("Smooth transition"), p->smooth, [](ChainNode& n, bool v) { std::get<MirrorParams>(n.params).smooth = v; });
-        addInt(tr("Slower (frames/step)"), p->slower, 1, 16, [](ChainNode& n, int v) { std::get<MirrorParams>(n.params).slower = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MirrorParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MirrorParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MirrorParams>(n.params).beatCode = std::move(v); });
+        addBool("mode", tr("Top -> Bottom"), (p->mode & 1) != 0, setModeBit(1));
+        addBool("mode", tr("Bottom -> Top"), (p->mode & 2) != 0, setModeBit(2));
+        addBool("mode", tr("Left -> Right"), (p->mode & 4) != 0, setModeBit(4));
+        addBool("mode", tr("Right -> Left"), (p->mode & 8) != 0, setModeBit(8));
+        addBool("onBeatRandom", tr("OnBeat random"), p->onBeatRandom, [](ChainNode& n, bool v) { std::get<MirrorParams>(n.params).onBeatRandom = v; });
+        addBool("smooth", tr("Smooth transition"), p->smooth, [](ChainNode& n, bool v) { std::get<MirrorParams>(n.params).smooth = v; });
+        addInt("slower", tr("Slower (frames/step)"), p->slower, 1, 16, [](ChainNode& n, int v) { std::get<MirrorParams>(n.params).slower = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MirrorParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MirrorParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MirrorParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<OnBeatClearParams>(&params))
     {
-        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<OnBeatClearParams>(n.params).color = v; });
-        addInt(tr("Every N beats"), p->everyNBeats, 1, 100, [](ChainNode& n, int v) { std::get<OnBeatClearParams>(n.params).everyNBeats = v; });
-        addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<OnBeatClearParams>(n.params).blend = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<OnBeatClearParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<OnBeatClearParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<OnBeatClearParams>(n.params).beatCode = std::move(v); });
+        addColor("color", tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<OnBeatClearParams>(n.params).color = v; });
+        addInt("everyNBeats", tr("Every N beats"), p->everyNBeats, 1, 100, [](ChainNode& n, int v) { std::get<OnBeatClearParams>(n.params).everyNBeats = v; });
+        addBool("blend", tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<OnBeatClearParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<OnBeatClearParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<OnBeatClearParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<OnBeatClearParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<ColorfadeParams>(&params))
     {
-        addInt(tr("Fader R"), p->faderR, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).faderR = v; });
-        addInt(tr("Fader G"), p->faderG, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).faderG = v; });
-        addInt(tr("Fader B"), p->faderB, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).faderB = v; });
-        addInt(tr("Beat Fader R"), p->beatFaderR, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).beatFaderR = v; });
-        addInt(tr("Beat Fader G"), p->beatFaderG, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).beatFaderG = v; });
-        addInt(tr("Beat Fader B"), p->beatFaderB, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).beatFaderB = v; });
-        addInt(tr("Beat frames"), p->onBeatFrames, 1, 200, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).onBeatFrames = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorfadeParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorfadeParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorfadeParams>(n.params).beatCode = std::move(v); });
+        addInt("faderR", tr("Fader R"), p->faderR, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).faderR = v; });
+        addInt("faderG", tr("Fader G"), p->faderG, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).faderG = v; });
+        addInt("faderB", tr("Fader B"), p->faderB, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).faderB = v; });
+        addInt("beatFaderR", tr("Beat Fader R"), p->beatFaderR, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).beatFaderR = v; });
+        addInt("beatFaderG", tr("Beat Fader G"), p->beatFaderG, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).beatFaderG = v; });
+        addInt("beatFaderB", tr("Beat Fader B"), p->beatFaderB, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).beatFaderB = v; });
+        addInt("onBeatFrames", tr("Beat frames"), p->onBeatFrames, 1, 200, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).onBeatFrames = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorfadeParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorfadeParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorfadeParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<ColorModifierParams>(&params))
     {
-        addBool(tr("Recompute/frame"), p->recompute, [](ChainNode& n, bool v) { std::get<ColorModifierParams>(n.params).recompute = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorModifierParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorModifierParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorModifierParams>(n.params).beatCode = std::move(v); });
-        addScript(tr("Level"), p->levelCode, [](ChainNode& n, std::string v) { std::get<ColorModifierParams>(n.params).levelCode = std::move(v); });
+        addBool("recompute", tr("Recompute/frame"), p->recompute, [](ChainNode& n, bool v) { std::get<ColorModifierParams>(n.params).recompute = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorModifierParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorModifierParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorModifierParams>(n.params).beatCode = std::move(v); });
+        addScript("levelCode", tr("Level"), p->levelCode, [](ChainNode& n, std::string v) { std::get<ColorModifierParams>(n.params).levelCode = std::move(v); });
     }
     else if (auto* p = std::get_if<MovementParams>(&params))
     {
-        addBool(tr("Rect coords"), p->rectCoords, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).rectCoords = v; });
-        addBool(tr("Wrap"), p->wrap, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).wrap = v; });
-        addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).blend = v; });
-        addBool(tr("Bilinear filtering"), p->subpixel,
+        addBool("rectCoords", tr("Rect coords"), p->rectCoords, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).rectCoords = v; });
+        addBool("wrap", tr("Wrap"), p->wrap, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).wrap = v; });
+        addBool("blend", tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).blend = v; });
+        addBool("subpixel", tr("Bilinear filtering"), p->subpixel,
                 [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).subpixel = v; },
                 tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
                    "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
@@ -2916,17 +2949,17 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         const QStringList kSourceMappedNames = {tr("Off"), tr("On (scatter)"),
                                                 tr("Off, toggle on beat"),
                                                 tr("On, toggle on beat")};
-        addEnum(tr("Source mapped"), p->sourceMapped, kSourceMappedNames, [](ChainNode& n, int v) { std::get<MovementParams>(n.params).sourceMapped = v; });
+        addEnum("sourceMapped", tr("Source mapped"), p->sourceMapped, kSourceMappedNames, [](ChainNode& n, int v) { std::get<MovementParams>(n.params).sourceMapped = v; });
         // r_trans-Builtins OHNE eval_desc: reine Pixel-Index-Umlegungen, für die
         // es keine d/r-Formel gibt. Ist einer gewählt, wird der Point-Code nicht
         // ausgewertet (S35).
-        addEnum(tr("Builtin remap"), p->builtinRemap == 7 ? 2 : p->builtinRemap,
+        addEnum("builtinRemap", tr("Builtin remap"), p->builtinRemap == 7 ? 2 : p->builtinRemap,
                 {tr("Off (use code)"), tr("Slight fuzzify"), tr("Blocky partial out")},
                 [](ChainNode& n, int v) {
                     std::get<MovementParams>(n.params).builtinRemap =
                         v == 2 ? 7 : v;  // 0 · 1 · 7 sind die echten Werte
                 });
-        addScript(tr("Point code"), p->code, [](ChainNode& n, std::string v) { std::get<MovementParams>(n.params).code = std::move(v); });
+        addScript("code", tr("Point code"), p->code, [](ChainNode& n, std::string v) { std::get<MovementParams>(n.params).code = std::move(v); });
         // Befund Patrik (S53, movement3b.lvfx): eine Beat-Umkehr im Point-Code
         // kann hier NICHT wirken — zweimal nicht. Der Editor sagt es an, sonst
         // laeuft der naechste wieder hinein.
@@ -2944,88 +2977,88 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     }
     else if (auto* p = std::get_if<DynamicMovementParams>(&params))
     {
-        addInt(tr("Grid X"), p->xres, 2, 256, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).xres = v; });
-        addInt(tr("Grid Y"), p->yres, 2, 256, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).yres = v; });
-        addBool(tr("Rect coords"), p->rectCoords, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).rectCoords = v; });
-        addBool(tr("Wrap"), p->wrap, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).wrap = v; });
-        addBool(tr("Blend (alpha)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).blend = v; });
-        addBool(tr("No move"), p->nomove, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).nomove = v; });
-        addBool(tr("Bilinear filtering"), p->subpixel,
+        addInt("xres", tr("Grid X"), p->xres, 2, 256, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).xres = v; });
+        addInt("yres", tr("Grid Y"), p->yres, 2, 256, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).yres = v; });
+        addBool("rectCoords", tr("Rect coords"), p->rectCoords, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).rectCoords = v; });
+        addBool("wrap", tr("Wrap"), p->wrap, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).wrap = v; });
+        addBool("blend", tr("Blend (alpha)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).blend = v; });
+        addBool("nomove", tr("No move"), p->nomove, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).nomove = v; });
+        addBool("subpixel", tr("Bilinear filtering"), p->subpixel,
                 [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).subpixel = v; },
                 tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
                    "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
                    "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
                    "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
                    "sichtbar vor allem beim Dehnen und Stauchen."));
-        addInt(tr("Source buffer (0 = frame)"), p->buffern, 0, 8, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).buffern = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).beatCode = std::move(v); });
-        addScript(tr("Point"), p->pointCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).pointCode = std::move(v); });
+        addInt("buffern", tr("Source buffer (0 = frame)"), p->buffern, 0, 8, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).buffern = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).beatCode = std::move(v); });
+        addScript("pointCode", tr("Point"), p->pointCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).pointCode = std::move(v); });
     }
     else if (auto* p = std::get_if<DynamicShiftParams>(&params))
     {
-        addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicShiftParams>(n.params).blend = v; });
-        addBool(tr("Bilinear filtering"), p->subpixel,
+        addBool("blend", tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicShiftParams>(n.params).blend = v; });
+        addBool("subpixel", tr("Bilinear filtering"), p->subpixel,
                 [](ChainNode& n, bool v) { std::get<DynamicShiftParams>(n.params).subpixel = v; },
                 tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
                    "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
                    "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
                    "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
                    "sichtbar vor allem beim Dehnen und Stauchen."));
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame (x,y shift)"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame (x,y shift)"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<DynamicDistanceModifierParams>(&params))
     {
-        addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicDistanceModifierParams>(n.params).blend = v; });
-        addBool(tr("Bilinear filtering"), p->subpixel,
+        addBool("blend", tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicDistanceModifierParams>(n.params).blend = v; });
+        addBool("subpixel", tr("Bilinear filtering"), p->subpixel,
                 [](ChainNode& n, bool v) { std::get<DynamicDistanceModifierParams>(n.params).subpixel = v; },
                 tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
                    "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
                    "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
                    "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
                    "sichtbar vor allem beim Dehnen und Stauchen."));
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).beatCode = std::move(v); });
-        addScript(tr("Pixel (d in/out)"), p->pixelCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).pixelCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).beatCode = std::move(v); });
+        addScript("pixelCode", tr("Pixel (d in/out)"), p->pixelCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).pixelCode = std::move(v); });
     }
     else if (auto* p = std::get_if<MovingParticleParams>(&params))
     {
-        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<MovingParticleParams>(n.params).color = v; });
-        addInt(tr("Max distance"), p->maxDistance, 1, 256, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).maxDistance = v; });
-        addInt(tr("Size"), p->size, 1, 128, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).size = v; });
-        addInt(tr("On-beat size"), p->size2, 1, 128, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).size2 = v; });
-        addBool(tr("Resize on beat"), p->onBeatSize, [](ChainNode& n, bool v) { std::get<MovingParticleParams>(n.params).onBeatSize = v; });
-        addRefDouble(tr("Spring"), p->spring, 0.0, 0.1, 0.001, 0.004, 4, [](ChainNode& n, double v) { std::get<MovingParticleParams>(n.params).spring = static_cast<float>(v); });
-        addRefDouble(tr("Damping"), p->damping, 0.8, 1.0, 0.001, 0.991, 4, [](ChainNode& n, double v) { std::get<MovingParticleParams>(n.params).damping = static_cast<float>(v); });
+        addColor("color", tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<MovingParticleParams>(n.params).color = v; });
+        addInt("maxDistance", tr("Max distance"), p->maxDistance, 1, 256, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).maxDistance = v; });
+        addInt("size", tr("Size"), p->size, 1, 128, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).size = v; });
+        addInt("size2", tr("On-beat size"), p->size2, 1, 128, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).size2 = v; });
+        addBool("onBeatSize", tr("Resize on beat"), p->onBeatSize, [](ChainNode& n, bool v) { std::get<MovingParticleParams>(n.params).onBeatSize = v; });
+        addRefDouble("spring", tr("Spring"), p->spring, 0.0, 0.1, 0.001, 0.004, 4, [](ChainNode& n, double v) { std::get<MovingParticleParams>(n.params).spring = static_cast<float>(v); });
+        addRefDouble("damping", tr("Damping"), p->damping, 0.8, 1.0, 0.001, 0.991, 4, [](ChainNode& n, double v) { std::get<MovingParticleParams>(n.params).damping = static_cast<float>(v); });
         addReferenceNote(!p->initCode.empty() || !p->frameCode.empty() || !p->beatCode.empty());
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MovingParticleParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MovingParticleParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MovingParticleParams>(n.params).beatCode = std::move(v); });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line"}, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MovingParticleParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MovingParticleParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MovingParticleParams>(n.params).beatCode = std::move(v); });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line"}, [](ChainNode& n, int v) { std::get<MovingParticleParams>(n.params).blend = v; });
     }
     else if (auto* p = std::get_if<ColorMapParams>(&params))
     {
-        addEnum(tr("Input"), p->key, {"Red", "Green", "Blue", "(R+G+B)/2", "Max", "(R+G+B)/3"}, [](ChainNode& n, int v) { std::get<ColorMapParams>(n.params).key = v; });
-        addEnum(tr("Blend"), p->blendMode, {"Replace", "Additive", "Maximum", "Minimum", "50/50", "Sub d-s", "Sub s-d", "Multiply", "XOR", "Adjustable"}, [](ChainNode& n, int v) { std::get<ColorMapParams>(n.params).blendMode = v; });
-        addInt(tr("Adjustable"), p->adjustBlend, 0, 255, [](ChainNode& n, int v) { std::get<ColorMapParams>(n.params).adjustBlend = v; });
+        addEnum("key", tr("Input"), p->key, {"Red", "Green", "Blue", "(R+G+B)/2", "Max", "(R+G+B)/3"}, [](ChainNode& n, int v) { std::get<ColorMapParams>(n.params).key = v; });
+        addEnum("blendMode", tr("Blend"), p->blendMode, {"Replace", "Additive", "Maximum", "Minimum", "50/50", "Sub d-s", "Sub s-d", "Multiply", "XOR", "Adjustable"}, [](ChainNode& n, int v) { std::get<ColorMapParams>(n.params).blendMode = v; });
+        addInt("adjustBlend", tr("Adjustable"), p->adjustBlend, 0, 255, [](ChainNode& n, int v) { std::get<ColorMapParams>(n.params).adjustBlend = v; });
         addGradientStops(form, path, p->stopPos, p->stopColor);
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorMapParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorMapParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorMapParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorMapParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorMapParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorMapParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<BufferBlendParams>(&params))
     {
         const QStringList bufs{"Buffer 1", "Buffer 2", "Buffer 3", "Buffer 4", "Buffer 5", "Buffer 6", "Buffer 7", "Buffer 8", "Current"};
-        addEnum(tr("Buffer A"), p->bufferA, bufs, [](ChainNode& n, int v) { std::get<BufferBlendParams>(n.params).bufferA = v; });
-        addEnum(tr("Buffer B"), p->bufferB, bufs, [](ChainNode& n, int v) { std::get<BufferBlendParams>(n.params).bufferB = v; });
-        addEnum(tr("Mode"), p->mode, {"Replace", "Additive", "Maximum", "50/50", "Sub A-B", "Sub B-A", "Multiply", "Adjustable", "XOR", "Minimum", "Abs diff"}, [](ChainNode& n, int v) { std::get<BufferBlendParams>(n.params).mode = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BufferBlendParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BufferBlendParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BufferBlendParams>(n.params).beatCode = std::move(v); });
+        addEnum("bufferA", tr("Buffer A"), p->bufferA, bufs, [](ChainNode& n, int v) { std::get<BufferBlendParams>(n.params).bufferA = v; });
+        addEnum("bufferB", tr("Buffer B"), p->bufferB, bufs, [](ChainNode& n, int v) { std::get<BufferBlendParams>(n.params).bufferB = v; });
+        addEnum("mode", tr("Mode"), p->mode, {"Replace", "Additive", "Maximum", "50/50", "Sub A-B", "Sub B-A", "Multiply", "Adjustable", "XOR", "Minimum", "Abs diff"}, [](ChainNode& n, int v) { std::get<BufferBlendParams>(n.params).mode = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BufferBlendParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BufferBlendParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BufferBlendParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<JherikoGlobalParams>(&params))
     {
@@ -3034,55 +3067,55 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                    "effects can read them. Re-declaring a global that "
                                    "another node's Init already sets is flagged red."),
                                 m_propContainer));
-        addEnum(tr("Load"), p->loadMode, {"None", "Once", "Code control", "Every frame"}, [](ChainNode& n, int v) { std::get<JherikoGlobalParams>(n.params).loadMode = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).beatCode = std::move(v); });
+        addEnum("loadMode", tr("Load"), p->loadMode, {"None", "Once", "Code control", "Every frame"}, [](ChainNode& n, int v) { std::get<JherikoGlobalParams>(n.params).loadMode = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<JherikoGlobalParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<ColorClipParams>(&params))
     {
-        addEnum(tr("Mode"), p->mode - 1, {"Below", "Above", "Near"}, [](ChainNode& n, int v) { std::get<ColorClipParams>(n.params).mode = v + 1; });
-        addColor(tr("Threshold"), p->clipColor, [](ChainNode& n, uint32_t v) { std::get<ColorClipParams>(n.params).clipColor = v; });
-        addColor(tr("Replace with"), p->outColor, [](ChainNode& n, uint32_t v) { std::get<ColorClipParams>(n.params).outColor = v; });
-        addInt(tr("Distance"), p->distance, 0, 255, [](ChainNode& n, int v) { std::get<ColorClipParams>(n.params).distance = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorClipParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorClipParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorClipParams>(n.params).beatCode = std::move(v); });
+        addEnum("mode", tr("Mode"), p->mode - 1, {"Below", "Above", "Near"}, [](ChainNode& n, int v) { std::get<ColorClipParams>(n.params).mode = v + 1; });
+        addColor("clipColor", tr("Threshold"), p->clipColor, [](ChainNode& n, uint32_t v) { std::get<ColorClipParams>(n.params).clipColor = v; });
+        addColor("outColor", tr("Replace with"), p->outColor, [](ChainNode& n, uint32_t v) { std::get<ColorClipParams>(n.params).outColor = v; });
+        addInt("distance", tr("Distance"), p->distance, 0, 255, [](ChainNode& n, int v) { std::get<ColorClipParams>(n.params).distance = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorClipParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorClipParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorClipParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<UniqueToneParams>(&params))
     {
-        addColor(tr("Tone"), p->color, [](ChainNode& n, uint32_t v) { std::get<UniqueToneParams>(n.params).color = v; });
-        addBool(tr("Invert"), p->invert, [](ChainNode& n, bool v) { std::get<UniqueToneParams>(n.params).invert = v; });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<UniqueToneParams>(n.params).blend = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<UniqueToneParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<UniqueToneParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<UniqueToneParams>(n.params).beatCode = std::move(v); });
+        addColor("color", tr("Tone"), p->color, [](ChainNode& n, uint32_t v) { std::get<UniqueToneParams>(n.params).color = v; });
+        addBool("invert", tr("Invert"), p->invert, [](ChainNode& n, bool v) { std::get<UniqueToneParams>(n.params).invert = v; });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<UniqueToneParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<UniqueToneParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<UniqueToneParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<UniqueToneParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<InterleaveParams>(&params))
     {
-        addInt(tr("X spacing"), p->x, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).x = v; });
-        addInt(tr("Y spacing"), p->y, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).y = v; });
-        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<InterleaveParams>(n.params).color = v; });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).blend = v; });
-        addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<InterleaveParams>(n.params).onBeat = v; });
-        addInt(tr("Beat X"), p->x2, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).x2 = v; });
-        addInt(tr("Beat Y"), p->y2, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).y2 = v; });
-        addInt(tr("Beat duration"), p->beatDuration, 1, 100, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).beatDuration = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<InterleaveParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<InterleaveParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<InterleaveParams>(n.params).beatCode = std::move(v); });
+        addInt("x", tr("X spacing"), p->x, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).x = v; });
+        addInt("y", tr("Y spacing"), p->y, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).y = v; });
+        addColor("color", tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<InterleaveParams>(n.params).color = v; });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).blend = v; });
+        addBool("onBeat", tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<InterleaveParams>(n.params).onBeat = v; });
+        addInt("x2", tr("Beat X"), p->x2, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).x2 = v; });
+        addInt("y2", tr("Beat Y"), p->y2, 0, 512, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).y2 = v; });
+        addInt("beatDuration", tr("Beat duration"), p->beatDuration, 1, 100, [](ChainNode& n, int v) { std::get<InterleaveParams>(n.params).beatDuration = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<InterleaveParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<InterleaveParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<InterleaveParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<ConvolutionParams>(&params))
     {
-        addEnum(tr("Edge"), p->edgeMode, {"Extend", "Wrap"}, [](ChainNode& n, int v) { std::get<ConvolutionParams>(n.params).edgeMode = v; });
-        addBool(tr("Absolute"), p->absolute, [](ChainNode& n, bool v) { std::get<ConvolutionParams>(n.params).absolute = v; });
-        addBool(tr("Two pass"), p->twoPass, [](ChainNode& n, bool v) { std::get<ConvolutionParams>(n.params).twoPass = v; });
-        addInt(tr("Bias"), p->bias, -255, 255, [](ChainNode& n, int v) { std::get<ConvolutionParams>(n.params).bias = v; });
-        addInt(tr("Scale"), p->scale, 1, 1000, [](ChainNode& n, int v) { std::get<ConvolutionParams>(n.params).scale = v; });
+        addEnum("edgeMode", tr("Edge"), p->edgeMode, {"Extend", "Wrap"}, [](ChainNode& n, int v) { std::get<ConvolutionParams>(n.params).edgeMode = v; });
+        addBool("absolute", tr("Absolute"), p->absolute, [](ChainNode& n, bool v) { std::get<ConvolutionParams>(n.params).absolute = v; });
+        addBool("twoPass", tr("Two pass"), p->twoPass, [](ChainNode& n, bool v) { std::get<ConvolutionParams>(n.params).twoPass = v; });
+        addInt("bias", tr("Bias"), p->bias, -255, 255, [](ChainNode& n, int v) { std::get<ConvolutionParams>(n.params).bias = v; });
+        addInt("scale", tr("Scale"), p->scale, 1, 1000, [](ChainNode& n, int v) { std::get<ConvolutionParams>(n.params).scale = v; });
         addKernelGrid(form, path, p->kernel);
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ConvolutionParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ConvolutionParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ConvolutionParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ConvolutionParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ConvolutionParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ConvolutionParams>(n.params).beatCode = std::move(v); });
     }
     else if (std::holds_alternative<NormaliseParams>(params))
     {
@@ -3092,161 +3125,161 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     }
     else if (auto* p = std::get_if<MultiFilterParams>(&params))
     {
-        addEnum(tr("Effect"), p->effect, {"Chrome", "Double chrome", "Triple chrome", "Infinite root"}, [](ChainNode& n, int v) { std::get<MultiFilterParams>(n.params).effect = v; });
-        addBool(tr("On beat only"), p->onBeat, [](ChainNode& n, bool v) { std::get<MultiFilterParams>(n.params).onBeat = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MultiFilterParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MultiFilterParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MultiFilterParams>(n.params).beatCode = std::move(v); });
+        addEnum("effect", tr("Effect"), p->effect, {"Chrome", "Double chrome", "Triple chrome", "Infinite root"}, [](ChainNode& n, int v) { std::get<MultiFilterParams>(n.params).effect = v; });
+        addBool("onBeat", tr("On beat only"), p->onBeat, [](ChainNode& n, bool v) { std::get<MultiFilterParams>(n.params).onBeat = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MultiFilterParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MultiFilterParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MultiFilterParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<AddBordersParams>(&params))
     {
-        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<AddBordersParams>(n.params).color = v; });
-        addInt(tr("Size"), p->size, 0, 200, [](ChainNode& n, int v) { std::get<AddBordersParams>(n.params).size = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<AddBordersParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<AddBordersParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<AddBordersParams>(n.params).beatCode = std::move(v); });
+        addColor("color", tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<AddBordersParams>(n.params).color = v; });
+        addInt("size", tr("Size"), p->size, 0, 200, [](ChainNode& n, int v) { std::get<AddBordersParams>(n.params).size = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<AddBordersParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<AddBordersParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<AddBordersParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<SimpleScopeParams>(&params))
     {
-        addEnum(tr("Mode"), p->mode,
+        addEnum("mode", tr("Mode"), p->mode,
                 {"Solid analyzer", "Line analyzer", "Line scope", "Solid scope",
                  "Dot analyzer", "Dot scope"},
                 [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).mode = v; });
-        addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).channel = v; });
-        addEnum(tr("Position"), p->position, {"Top", "Bottom", "Center"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).position = v; });
-        addColorTable(
+        addEnum("channel", tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).channel = v; });
+        addEnum("position", tr("Position"), p->position, {"Top", "Bottom", "Center"}, [](ChainNode& n, int v) { std::get<SimpleScopeParams>(n.params).position = v; });
+        addColorTable("colors", 
             tr("Color table"), p->colors,
             [](ChainNode& n) -> std::vector<uint32_t>& {
                 return std::get<SimpleScopeParams>(n.params).colors;
             },
             tr("AVS color table — the scope cycles through these over time."));
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<SimpleScopeParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<SimpleScopeParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<SimpleScopeParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<SimpleScopeParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<SimpleScopeParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<SimpleScopeParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<BassSpinParams>(&params))
     {
-        addBool(tr("Left"), p->left, [](ChainNode& n, bool v) { std::get<BassSpinParams>(n.params).left = v; });
-        addBool(tr("Right"), p->right, [](ChainNode& n, bool v) { std::get<BassSpinParams>(n.params).right = v; });
-        addColor(tr("Left color"), p->colorLeft, [](ChainNode& n, uint32_t v) { std::get<BassSpinParams>(n.params).colorLeft = v; });
-        addColor(tr("Right color"), p->colorRight, [](ChainNode& n, uint32_t v) { std::get<BassSpinParams>(n.params).colorRight = v; });
-        addEnum(tr("Mode"), p->mode, {"Lines", "Filled"}, [](ChainNode& n, int v) { std::get<BassSpinParams>(n.params).mode = v; });
-        addRefDouble(tr("Smoothing"), p->smoothing, 0.0, 1.0, 0.05, 0.7, 3, [](ChainNode& n, double v) { std::get<BassSpinParams>(n.params).smoothing = static_cast<float>(v); });
-        addRefDouble(tr("Spin step"), p->spinStep, 0.0, 3.14, 0.01, static_cast<double>(3.14159f / 6.0f), 4, [](ChainNode& n, double v) { std::get<BassSpinParams>(n.params).spinStep = static_cast<float>(v); });
+        addBool("left", tr("Left"), p->left, [](ChainNode& n, bool v) { std::get<BassSpinParams>(n.params).left = v; });
+        addBool("right", tr("Right"), p->right, [](ChainNode& n, bool v) { std::get<BassSpinParams>(n.params).right = v; });
+        addColor("colorLeft", tr("Left color"), p->colorLeft, [](ChainNode& n, uint32_t v) { std::get<BassSpinParams>(n.params).colorLeft = v; });
+        addColor("colorRight", tr("Right color"), p->colorRight, [](ChainNode& n, uint32_t v) { std::get<BassSpinParams>(n.params).colorRight = v; });
+        addEnum("mode", tr("Mode"), p->mode, {"Lines", "Filled"}, [](ChainNode& n, int v) { std::get<BassSpinParams>(n.params).mode = v; });
+        addRefDouble("smoothing", tr("Smoothing"), p->smoothing, 0.0, 1.0, 0.05, 0.7, 3, [](ChainNode& n, double v) { std::get<BassSpinParams>(n.params).smoothing = static_cast<float>(v); });
+        addRefDouble("spinStep", tr("Spin step"), p->spinStep, 0.0, 3.14, 0.01, static_cast<double>(3.14159f / 6.0f), 4, [](ChainNode& n, double v) { std::get<BassSpinParams>(n.params).spinStep = static_cast<float>(v); });
         addReferenceNote(!p->initCode.empty() || !p->frameCode.empty() || !p->beatCode.empty());
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BassSpinParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BassSpinParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BassSpinParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BassSpinParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BassSpinParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BassSpinParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<OscStarParams>(&params))
     {
-        addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).channel = v; });
-        addEnum(tr("Position"), p->position, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).position = v; });
-        addInt(tr("Size"), p->size, 0, 16, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).size = v; });
-        addInt(tr("Rotation"), p->rot, 0, 16, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).rot = v; });
-        addInt(tr("Spokes"), p->spokes, 1, 64, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).spokes = v; });
-        addDouble(tr("Rotation scale"), p->rotScale, 0.0, 1.0, 0.005, [](ChainNode& n, double v) { std::get<OscStarParams>(n.params).rotScale = static_cast<float>(v); });
-        addDouble(tr("Amplitude"), p->amplitude, 0.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<OscStarParams>(n.params).amplitude = static_cast<float>(v); });
-        addColorTable(
+        addEnum("channel", tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).channel = v; });
+        addEnum("position", tr("Position"), p->position, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).position = v; });
+        addInt("size", tr("Size"), p->size, 0, 16, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).size = v; });
+        addInt("rot", tr("Rotation"), p->rot, 0, 16, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).rot = v; });
+        addInt("spokes", tr("Spokes"), p->spokes, 1, 64, [](ChainNode& n, int v) { std::get<OscStarParams>(n.params).spokes = v; });
+        addDouble("rotScale", tr("Rotation scale"), p->rotScale, 0.0, 1.0, 0.005, [](ChainNode& n, double v) { std::get<OscStarParams>(n.params).rotScale = static_cast<float>(v); });
+        addDouble("amplitude", tr("Amplitude"), p->amplitude, 0.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<OscStarParams>(n.params).amplitude = static_cast<float>(v); });
+        addColorTable("colors", 
             tr("Color table"), p->colors,
             [](ChainNode& n) -> std::vector<uint32_t>& {
                 return std::get<OscStarParams>(n.params).colors;
             },
             tr("AVS color table — cycled over time."));
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<OscStarParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<OscStarParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<OscStarParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<OscStarParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<OscStarParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<OscStarParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<OscRingParams>(&params))
     {
-        addEnum(tr("Source"), p->source, {"Waveform", "Spectrum"}, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).source = v; });
-        addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).channel = v; });
-        addEnum(tr("Position"), p->position, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).position = v; });
-        addInt(tr("Size"), p->size, 0, 16, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).size = v; });
-        addInt(tr("Segments"), p->segments, 3, 1024, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).segments = v; });
-        addDouble(tr("Base radius"), p->baseScale, 0.0, 2.0, 0.05, [](ChainNode& n, double v) { std::get<OscRingParams>(n.params).baseScale = static_cast<float>(v); });
-        addDouble(tr("Audio radius"), p->audioScale, 0.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<OscRingParams>(n.params).audioScale = static_cast<float>(v); });
-        addColorTable(
+        addEnum("source", tr("Source"), p->source, {"Waveform", "Spectrum"}, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).source = v; });
+        addEnum("channel", tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).channel = v; });
+        addEnum("position", tr("Position"), p->position, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).position = v; });
+        addInt("size", tr("Size"), p->size, 0, 16, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).size = v; });
+        addInt("segments", tr("Segments"), p->segments, 3, 1024, [](ChainNode& n, int v) { std::get<OscRingParams>(n.params).segments = v; });
+        addDouble("baseScale", tr("Base radius"), p->baseScale, 0.0, 2.0, 0.05, [](ChainNode& n, double v) { std::get<OscRingParams>(n.params).baseScale = static_cast<float>(v); });
+        addDouble("audioScale", tr("Audio radius"), p->audioScale, 0.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<OscRingParams>(n.params).audioScale = static_cast<float>(v); });
+        addColorTable("colors", 
             tr("Color table"), p->colors,
             [](ChainNode& n) -> std::vector<uint32_t>& {
                 return std::get<OscRingParams>(n.params).colors;
             },
             tr("AVS color table — cycled over time."));
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<OscRingParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<OscRingParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<OscRingParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<OscRingParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<OscRingParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<OscRingParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<RotatingStarsParams>(&params))
     {
-        addInt(tr("Points"), p->points, 2, 64, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).points = v; });
-        addInt(tr("Skip (2 = pentagram)"), p->skip, 1, 32, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).skip = v; });
-        addInt(tr("Stars"), p->stars, 1, 16, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).stars = v; });
-        addDouble(tr("Rotation speed"), p->rotSpeed, -1.0, 1.0, 0.01, [](ChainNode& n, double v) { std::get<RotatingStarsParams>(n.params).rotSpeed = static_cast<float>(v); });
-        addDouble(tr("Orbit radius"), p->orbit, 0.0, 2.0, 0.05, [](ChainNode& n, double v) { std::get<RotatingStarsParams>(n.params).orbit = static_cast<float>(v); });
-        addDouble(tr("Base size"), p->baseRadius, 0.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<RotatingStarsParams>(n.params).baseRadius = static_cast<float>(v); });
-        addDouble(tr("Audio gain"), p->audioGain, 0.0, 8.0, 0.05, [](ChainNode& n, double v) { std::get<RotatingStarsParams>(n.params).audioGain = static_cast<float>(v); });
-        addInt(tr("Band from"), p->bandLo, 0, 575, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).bandLo = v; });
-        addInt(tr("Band to (exclusive)"), p->bandHi, 1, 576, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).bandHi = v; });
-        addColorTable(
+        addInt("points", tr("Points"), p->points, 2, 64, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).points = v; });
+        addInt("skip", tr("Skip (2 = pentagram)"), p->skip, 1, 32, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).skip = v; });
+        addInt("stars", tr("Stars"), p->stars, 1, 16, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).stars = v; });
+        addDouble("rotSpeed", tr("Rotation speed"), p->rotSpeed, -1.0, 1.0, 0.01, [](ChainNode& n, double v) { std::get<RotatingStarsParams>(n.params).rotSpeed = static_cast<float>(v); });
+        addDouble("orbit", tr("Orbit radius"), p->orbit, 0.0, 2.0, 0.05, [](ChainNode& n, double v) { std::get<RotatingStarsParams>(n.params).orbit = static_cast<float>(v); });
+        addDouble("baseRadius", tr("Base size"), p->baseRadius, 0.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<RotatingStarsParams>(n.params).baseRadius = static_cast<float>(v); });
+        addDouble("audioGain", tr("Audio gain"), p->audioGain, 0.0, 8.0, 0.05, [](ChainNode& n, double v) { std::get<RotatingStarsParams>(n.params).audioGain = static_cast<float>(v); });
+        addInt("bandLo", tr("Band from"), p->bandLo, 0, 575, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).bandLo = v; });
+        addInt("bandHi", tr("Band to (exclusive)"), p->bandHi, 1, 576, [](ChainNode& n, int v) { std::get<RotatingStarsParams>(n.params).bandHi = v; });
+        addColorTable("colors", 
             tr("Color table"), p->colors,
             [](ChainNode& n) -> std::vector<uint32_t>& {
                 return std::get<RotatingStarsParams>(n.params).colors;
             },
             tr("AVS color table — cycled over time."));
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<RotatingStarsParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<RotatingStarsParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<RotatingStarsParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<RotatingStarsParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<RotatingStarsParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<RotatingStarsParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<PictureParams>(&params))
     {
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<PictureParams>(n.params).blend = v; });
-        addBool(tr("Keep aspect"), p->keepAspect, [](ChainNode& n, bool v) { std::get<PictureParams>(n.params).keepAspect = v; });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<PictureParams>(n.params).blend = v; });
+        addBool("keepAspect", tr("Keep aspect"), p->keepAspect, [](ChainNode& n, bool v) { std::get<PictureParams>(n.params).keepAspect = v; });
         addImageRow(form, path, p->filename, p->imageData,
                     [](ChainNode& n, std::string f, std::string d) {
                         auto& q = std::get<PictureParams>(n.params);
                         q.filename = std::move(f);
                         q.imageData = std::move(d);
                     });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<PictureParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<PictureParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<PictureParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<PictureParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<PictureParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<PictureParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<PictureIIParams>(&params))
     {
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<PictureIIParams>(n.params).blend = v; });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<PictureIIParams>(n.params).blend = v; });
         addImageRow(form, path, p->filename, p->imageData,
                     [](ChainNode& n, std::string f, std::string d) {
                         auto& q = std::get<PictureIIParams>(n.params);
                         q.filename = std::move(f);
                         q.imageData = std::move(d);
                     });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<PictureIIParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<PictureIIParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<PictureIIParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<PictureIIParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<PictureIIParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<PictureIIParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<TexerParams>(&params))
     {
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive"}, [](ChainNode& n, int v) { std::get<TexerParams>(n.params).blend = v; });
-        addInt(tr("Particles"), p->particles, 1, 4096, [](ChainNode& n, int v) { std::get<TexerParams>(n.params).particles = v; });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive"}, [](ChainNode& n, int v) { std::get<TexerParams>(n.params).blend = v; });
+        addInt("particles", tr("Particles"), p->particles, 1, 4096, [](ChainNode& n, int v) { std::get<TexerParams>(n.params).particles = v; });
         addImageRow(form, path, p->filename, p->imageData,
                     [](ChainNode& n, std::string f, std::string d) {
                         auto& q = std::get<TexerParams>(n.params);
                         q.filename = std::move(f);
                         q.imageData = std::move(d);
                     });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TexerParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TexerParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TexerParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TexerParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TexerParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TexerParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<TexerIIParams>(&params))
     {
-        addBool(tr("Color filtering"), p->colorFiltering, [](ChainNode& n, bool v) { std::get<TexerIIParams>(n.params).colorFiltering = v; });
-        addBool(tr("Resizing"), p->resizing, [](ChainNode& n, bool v) { std::get<TexerIIParams>(n.params).resizing = v; });
-        addBool(tr("Wrap around"), p->wrapAround, [](ChainNode& n, bool v) { std::get<TexerIIParams>(n.params).wrapAround = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).beatCode = std::move(v); });
-        addScript(tr("Point (x,y,sizex,sizey,rgb)"), p->pointCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).pointCode = std::move(v); });
+        addBool("colorFiltering", tr("Color filtering"), p->colorFiltering, [](ChainNode& n, bool v) { std::get<TexerIIParams>(n.params).colorFiltering = v; });
+        addBool("resizing", tr("Resizing"), p->resizing, [](ChainNode& n, bool v) { std::get<TexerIIParams>(n.params).resizing = v; });
+        addBool("wrapAround", tr("Wrap around"), p->wrapAround, [](ChainNode& n, bool v) { std::get<TexerIIParams>(n.params).wrapAround = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).beatCode = std::move(v); });
+        addScript("pointCode", tr("Point (x,y,sizex,sizey,rgb)"), p->pointCode, [](ChainNode& n, std::string v) { std::get<TexerIIParams>(n.params).pointCode = std::move(v); });
         addImageRow(form, path, p->filename, p->imageData,
                     [](ChainNode& n, std::string f, std::string d) {
                         auto& q = std::get<TexerIIParams>(n.params);
@@ -3258,76 +3291,76 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     {
         // Gefuellt ist der Referenzzustand (S51) — Drahtgitter ist eine bewusste
         // Abweichung von AVS und deshalb NICHT die Vorgabe.
-        addBool(tr("Filled (AVS)"), p->filled, [](ChainNode& n, bool v) { std::get<TriangleParams>(n.params).filled = v; });
-        addDouble(tr("Edge width (wireframe)"), p->lineWidth, 1.0, 20.0, 0.5, [](ChainNode& n, double v) { std::get<TriangleParams>(n.params).lineWidth = static_cast<float>(v); });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame (set n)"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).beatCode = std::move(v); });
-        addScript(tr("Point (x1..y3,rgb)"), p->pointCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).pointCode = std::move(v); });
+        addBool("filled", tr("Filled (AVS)"), p->filled, [](ChainNode& n, bool v) { std::get<TriangleParams>(n.params).filled = v; });
+        addDouble("lineWidth", tr("Edge width (wireframe)"), p->lineWidth, 1.0, 20.0, 0.5, [](ChainNode& n, double v) { std::get<TriangleParams>(n.params).lineWidth = static_cast<float>(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame (set n)"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).beatCode = std::move(v); });
+        addScript("pointCode", tr("Point (x1..y3,rgb)"), p->pointCode, [](ChainNode& n, std::string v) { std::get<TriangleParams>(n.params).pointCode = std::move(v); });
     }
     else if (auto* p = std::get_if<BlitterFeedbackParams>(&params))
     {
-        addInt(tr("Scale (32 = off, <32 in, >32 out)"), p->scale, 0, 256, [](ChainNode& n, int v) { std::get<BlitterFeedbackParams>(n.params).scale = v; });
-        addInt(tr("Beat scale"), p->scale2, 0, 256, [](ChainNode& n, int v) { std::get<BlitterFeedbackParams>(n.params).scale2 = v; });
-        addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).onBeat = v; });
-        addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).blend = v; });
-        addBool(tr("Bilinear filtering"), p->subpixel,
+        addInt("scale", tr("Scale (32 = off, <32 in, >32 out)"), p->scale, 0, 256, [](ChainNode& n, int v) { std::get<BlitterFeedbackParams>(n.params).scale = v; });
+        addInt("scale2", tr("Beat scale"), p->scale2, 0, 256, [](ChainNode& n, int v) { std::get<BlitterFeedbackParams>(n.params).scale2 = v; });
+        addBool("onBeat", tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).onBeat = v; });
+        addBool("blend", tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).blend = v; });
+        addBool("subpixel", tr("Bilinear filtering"), p->subpixel,
                 [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).subpixel = v; },
                 tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
                    "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
                    "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
                    "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
                    "sichtbar vor allem beim Dehnen und Stauchen."));
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<RotoBlitterParams>(&params))
     {
-        addInt(tr("Zoom scale (31 = off)"), p->zoomScale, 0, 256, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).zoomScale = v; });
-        addInt(tr("Beat zoom scale"), p->zoomScale2, 0, 256, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).zoomScale2 = v; });
-        addInt(tr("Rotation (32 = off, deg/frame +32)"), p->rotDir, 0, 64, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).rotDir = v; });
-        addBool(tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).blend = v; });
-        addBool(tr("Beat reverse"), p->beatReverse, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).beatReverse = v; });
-        addInt(tr("Reverse speed"), p->beatReverseSpeed, 0, 8, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).beatReverseSpeed = v; });
-        addBool(tr("Beat zoom jump"), p->beatZoomJump, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).beatZoomJump = v; });
-        addBool(tr("Bilinear filtering"), p->subpixel,
+        addInt("zoomScale", tr("Zoom scale (31 = off)"), p->zoomScale, 0, 256, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).zoomScale = v; });
+        addInt("zoomScale2", tr("Beat zoom scale"), p->zoomScale2, 0, 256, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).zoomScale2 = v; });
+        addInt("rotDir", tr("Rotation (32 = off, deg/frame +32)"), p->rotDir, 0, 64, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).rotDir = v; });
+        addBool("blend", tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).blend = v; });
+        addBool("beatReverse", tr("Beat reverse"), p->beatReverse, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).beatReverse = v; });
+        addInt("beatReverseSpeed", tr("Reverse speed"), p->beatReverseSpeed, 0, 8, [](ChainNode& n, int v) { std::get<RotoBlitterParams>(n.params).beatReverseSpeed = v; });
+        addBool("beatZoomJump", tr("Beat zoom jump"), p->beatZoomJump, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).beatZoomJump = v; });
+        addBool("subpixel", tr("Bilinear filtering"), p->subpixel,
                 [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).subpixel = v; },
                 tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
                    "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
                    "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
                    "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
                    "sichtbar vor allem beim Dehnen und Stauchen."));
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<BufferSaveParams>(&params))
     {
-        addInt(tr("Buffer slot"), p->slot, 0, 7, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).slot = v; });
+        addInt("slot", tr("Buffer slot"), p->slot, 0, 7, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).slot = v; });
         const QStringList kDirNames = {tr("Save"), tr("Restore"),
                                        tr("Alternate (save first)"),
                                        tr("Alternate (restore first)")};
-        addEnum(tr("Direction"), p->dir, kDirNames, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).dir = v; });
-        addEnum(tr("Blend"), static_cast<int>(p->blend), kBlendNames, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).blend = static_cast<BlendMode>(v); });
-        addInt(tr("Blend alpha"), p->adjustAlpha, 0, 255, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).adjustAlpha = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BufferSaveParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BufferSaveParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BufferSaveParams>(n.params).beatCode = std::move(v); });
+        addEnum("dir", tr("Direction"), p->dir, kDirNames, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).dir = v; });
+        addEnum("blend", tr("Blend"), static_cast<int>(p->blend), kBlendNames, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).blend = static_cast<BlendMode>(v); });
+        addInt("adjustAlpha", tr("Blend alpha"), p->adjustAlpha, 0, 255, [](ChainNode& n, int v) { std::get<BufferSaveParams>(n.params).adjustAlpha = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BufferSaveParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BufferSaveParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BufferSaveParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<CustomBpmParams>(&params))
     {
-        addBool(tr("Arbitrary"), p->arbitrary, [](ChainNode& n, bool v) { std::get<CustomBpmParams>(n.params).arbitrary = v; });
-        addInt(tr("Interval (ms)"), p->arbitraryMs, 1, 5000, [](ChainNode& n, int v) { std::get<CustomBpmParams>(n.params).arbitraryMs = v; });
-        addBool(tr("Skip"), p->skip, [](ChainNode& n, bool v) { std::get<CustomBpmParams>(n.params).skip = v; });
-        addInt(tr("Skip count"), p->skipCount, 1, 16, [](ChainNode& n, int v) { std::get<CustomBpmParams>(n.params).skipCount = v; });
-        addBool(tr("Invert"), p->invert, [](ChainNode& n, bool v) { std::get<CustomBpmParams>(n.params).invert = v; });
+        addBool("arbitrary", tr("Arbitrary"), p->arbitrary, [](ChainNode& n, bool v) { std::get<CustomBpmParams>(n.params).arbitrary = v; });
+        addInt("arbitraryMs", tr("Interval (ms)"), p->arbitraryMs, 1, 5000, [](ChainNode& n, int v) { std::get<CustomBpmParams>(n.params).arbitraryMs = v; });
+        addBool("skip", tr("Skip"), p->skip, [](ChainNode& n, bool v) { std::get<CustomBpmParams>(n.params).skip = v; });
+        addInt("skipCount", tr("Skip count"), p->skipCount, 1, 16, [](ChainNode& n, int v) { std::get<CustomBpmParams>(n.params).skipCount = v; });
+        addBool("invert", tr("Invert"), p->invert, [](ChainNode& n, bool v) { std::get<CustomBpmParams>(n.params).invert = v; });
         // `skipfirst`: die ersten N Beats werden verschluckt, der Skip-Zaehler
         // laeuft dabei NICHT mit (r_bpm.cpp:148).
-        addInt(tr("Skip first N beats"), p->skipFirst, 0, 64, [](ChainNode& n, int v) { std::get<CustomBpmParams>(n.params).skipFirst = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<CustomBpmParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<CustomBpmParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<CustomBpmParams>(n.params).beatCode = std::move(v); });
+        addInt("skipFirst", tr("Skip first N beats"), p->skipFirst, 0, 64, [](ChainNode& n, int v) { std::get<CustomBpmParams>(n.params).skipFirst = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<CustomBpmParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<CustomBpmParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<CustomBpmParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<SuperScopeParams>(&params))
     {
@@ -3335,14 +3368,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         // Figuren liegen jetzt als Dateien in `asset/nodepresets/superScope/`
         // und laufen ueber die allgemeine Zeile „Preset" ganz oben — eine
         // Voreinstellungs-Liste statt zweier nebeneinander (Vorgabe Patrik).
-        addInt(tr("Point count"), p->pointCount, 1, 4096, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).pointCount = v; });
-        addEnum(tr("Draw mode"), p->renderMode, {"Dots", "Lines", "Thick"}, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).renderMode = v; });
-        addDouble(tr("Line width"), p->lineWidth, 1.0, 20.0, 0.5, [](ChainNode& n, double v) { std::get<SuperScopeParams>(n.params).lineWidth = static_cast<float>(v); });
-        addDouble(tr("Dot size"), p->dotSize, 1.0, 50.0, 1.0, [](ChainNode& n, double v) { std::get<SuperScopeParams>(n.params).dotSize = static_cast<float>(v); });
-        addEnum(tr("Channel"), p->audioChannel, {"Left", "Right", "Mono", "Mid", "Side"}, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).audioChannel = v; });
-        addBool(tr("Spectrum source (v)"), p->spectrumSource,
+        addInt("pointCount", tr("Point count"), p->pointCount, 1, 4096, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).pointCount = v; });
+        addEnum("renderMode", tr("Draw mode"), p->renderMode, {"Dots", "Lines", "Thick"}, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).renderMode = v; });
+        addDouble("lineWidth", tr("Line width"), p->lineWidth, 1.0, 20.0, 0.5, [](ChainNode& n, double v) { std::get<SuperScopeParams>(n.params).lineWidth = static_cast<float>(v); });
+        addDouble("dotSize", tr("Dot size"), p->dotSize, 1.0, 50.0, 1.0, [](ChainNode& n, double v) { std::get<SuperScopeParams>(n.params).dotSize = static_cast<float>(v); });
+        addEnum("audioChannel", tr("Channel"), p->audioChannel, {"Left", "Right", "Mono", "Mid", "Side"}, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).audioChannel = v; });
+        addBool("spectrumSource", tr("Spectrum source (v)"), p->spectrumSource,
                 [](ChainNode& n, bool v) { std::get<SuperScopeParams>(n.params).spectrumSource = v; });
-        addEnum(tr("Line blend"), p->lineBlend,
+        addEnum("lineBlend", tr("Line blend"), p->lineBlend,
                 {"Replace", "Additive", "Maximum", "50/50", "Sub (fb-c)",
                  "Sub (c-fb)", "Multiply", "Adjustable", "XOR (~Add)", "Minimum"},
                 [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).lineBlend = v; });
@@ -3392,9 +3425,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     });
             form->addRow(tr("Gradient"), gradCombo);
         }
-        addInt(tr("Cycle frames"), p->colorCycleFrames, 1, 600, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).colorCycleFrames = v; });
+        addInt("colorCycleFrames", tr("Cycle frames"), p->colorCycleFrames, 1, 600, [](ChainNode& n, int v) { std::get<SuperScopeParams>(n.params).colorCycleFrames = v; });
         // AVS color table: cycled over time in the "Color table"/blend modes.
-        addColorTable(
+        addColorTable("colors", 
             tr("Color table"), p->colors,
             [](ChainNode& n) -> std::vector<uint32_t>& {
                 return std::get<SuperScopeParams>(n.params).colors;
@@ -3402,30 +3435,30 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             tr("AVS color table — the scope cycles through these over time in "
                "the Color table / blend modes (one step every 'Cycle frames')."));
 
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).beatCode = std::move(v); });
-        addScript(tr("Point"), p->pointCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).pointCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).beatCode = std::move(v); });
+        addScript("pointCode", tr("Point"), p->pointCode, [](ChainNode& n, std::string v) { std::get<SuperScopeParams>(n.params).pointCode = std::move(v); });
     }
     else if (auto* p = std::get_if<MosaicParams>(&params))
     {
-        addInt(tr("Quality"), p->quality, 1, 100, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).quality = v; });
-        addInt(tr("OnBeat quality"), p->quality2, 1, 100, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).quality2 = v; });
-        addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<MosaicParams>(n.params).onBeat = v; });
-        addInt(tr("Duration (frames)"), p->durationFrames, 1, 200, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).durationFrames = v; });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).blend = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MosaicParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MosaicParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MosaicParams>(n.params).beatCode = std::move(v); });
+        addInt("quality", tr("Quality"), p->quality, 1, 100, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).quality = v; });
+        addInt("quality2", tr("OnBeat quality"), p->quality2, 1, 100, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).quality2 = v; });
+        addBool("onBeat", tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<MosaicParams>(n.params).onBeat = v; });
+        addInt("durationFrames", tr("Duration (frames)"), p->durationFrames, 1, 200, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).durationFrames = v; });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<MosaicParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MosaicParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MosaicParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MosaicParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<GrainParams>(&params))
     {
-        addInt(tr("Amount"), p->amount, 0, 100, [](ChainNode& n, int v) { std::get<GrainParams>(n.params).amount = v; });
-        addBool(tr("Static"), p->staticGrain, [](ChainNode& n, bool v) { std::get<GrainParams>(n.params).staticGrain = v; });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<GrainParams>(n.params).blend = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<GrainParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<GrainParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<GrainParams>(n.params).beatCode = std::move(v); });
+        addInt("amount", tr("Amount"), p->amount, 0, 100, [](ChainNode& n, int v) { std::get<GrainParams>(n.params).amount = v; });
+        addBool("staticGrain", tr("Static"), p->staticGrain, [](ChainNode& n, bool v) { std::get<GrainParams>(n.params).staticGrain = v; });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<GrainParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<GrainParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<GrainParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<GrainParams>(n.params).beatCode = std::move(v); });
     }
     else if (std::get_if<ScatterParams>(&params) != nullptr)
     {
@@ -3441,229 +3474,229 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     }
     else if (auto* p = std::get_if<BumpParams>(&params))
     {
-        addInt(tr("Depth"), p->depth, 0, 100, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).depth = v; });
-        addBool(tr("Invert"), p->invert, [](ChainNode& n, bool v) { std::get<BumpParams>(n.params).invert = v; });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).blend = v; });
-        addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<BumpParams>(n.params).onBeat = v; });
-        addInt(tr("Beat depth"), p->depth2, 0, 100, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).depth2 = v; });
-        addInt(tr("Duration (frames)"), p->durationFrames, 1, 200, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).durationFrames = v; });
-        addBool(tr("Old-style x,y (0..100)"), p->oldStyle, [](ChainNode& n, bool v) { std::get<BumpParams>(n.params).oldStyle = v; });
-        addInt(tr("Depth buffer (0 = frame)"), p->buffern, 0, 8, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).buffern = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BumpParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame (light x,y)"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BumpParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BumpParams>(n.params).beatCode = std::move(v); });
+        addInt("depth", tr("Depth"), p->depth, 0, 100, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).depth = v; });
+        addBool("invert", tr("Invert"), p->invert, [](ChainNode& n, bool v) { std::get<BumpParams>(n.params).invert = v; });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).blend = v; });
+        addBool("onBeat", tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<BumpParams>(n.params).onBeat = v; });
+        addInt("depth2", tr("Beat depth"), p->depth2, 0, 100, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).depth2 = v; });
+        addInt("durationFrames", tr("Duration (frames)"), p->durationFrames, 1, 200, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).durationFrames = v; });
+        addBool("oldStyle", tr("Old-style x,y (0..100)"), p->oldStyle, [](ChainNode& n, bool v) { std::get<BumpParams>(n.params).oldStyle = v; });
+        addInt("buffern", tr("Depth buffer (0 = frame)"), p->buffern, 0, 8, [](ChainNode& n, int v) { std::get<BumpParams>(n.params).buffern = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BumpParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame (light x,y)"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BumpParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BumpParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<WaterBumpParams>(&params))
     {
-        addInt(tr("Density (damping)"), p->density, 1, 12, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).density = v; });
-        addInt(tr("Drop depth"), p->depth, 0, 2000, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).depth = v; });
-        addDouble(tr("Refraction"), p->displaceScale, 0.0, 40.0, 0.5, [](ChainNode& n, double v) { std::get<WaterBumpParams>(n.params).displaceScale = static_cast<float>(v); });
-        addBool(tr("Random drop"), p->randomDrop, [](ChainNode& n, bool v) { std::get<WaterBumpParams>(n.params).randomDrop = v; });
-        addEnum(tr("Drop X"), p->dropX, {"Near", "Mid", "Far"}, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).dropX = v; });
-        addEnum(tr("Drop Y"), p->dropY, {"Near", "Mid", "Far"}, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).dropY = v; });
-        addInt(tr("Drop radius"), p->dropRadius, 1, 200, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).dropRadius = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<WaterBumpParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<WaterBumpParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<WaterBumpParams>(n.params).beatCode = std::move(v); });
+        addInt("density", tr("Density (damping)"), p->density, 1, 12, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).density = v; });
+        addInt("depth", tr("Drop depth"), p->depth, 0, 2000, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).depth = v; });
+        addDouble("displaceScale", tr("Refraction"), p->displaceScale, 0.0, 40.0, 0.5, [](ChainNode& n, double v) { std::get<WaterBumpParams>(n.params).displaceScale = static_cast<float>(v); });
+        addBool("randomDrop", tr("Random drop"), p->randomDrop, [](ChainNode& n, bool v) { std::get<WaterBumpParams>(n.params).randomDrop = v; });
+        addEnum("dropX", tr("Drop X"), p->dropX, {"Near", "Mid", "Far"}, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).dropX = v; });
+        addEnum("dropY", tr("Drop Y"), p->dropY, {"Near", "Mid", "Far"}, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).dropY = v; });
+        addInt("dropRadius", tr("Drop radius"), p->dropRadius, 1, 200, [](ChainNode& n, int v) { std::get<WaterBumpParams>(n.params).dropRadius = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<WaterBumpParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<WaterBumpParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<WaterBumpParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<InterferencesParams>(&params))
     {
-        addInt(tr("Points"), p->points, 1, 8, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).points = v; });
-        addInt(tr("Distance"), p->distance, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).distance = v; });
-        addInt(tr("Alpha"), p->alpha, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).alpha = v; });
-        addInt(tr("Rotation"), p->rotation, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).rotation = v; });
-        addInt(tr("Rotation/frame"), p->rotationInc, -64, 64, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).rotationInc = v; });
-        addBool(tr("RGB split"), p->rgb, [](ChainNode& n, bool v) { std::get<InterferencesParams>(n.params).rgb = v; });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).blend = v; });
-        addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<InterferencesParams>(n.params).onBeat = v; });
-        addInt(tr("Beat distance"), p->distance2, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).distance2 = v; });
-        addInt(tr("Beat alpha"), p->alpha2, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).alpha2 = v; });
-        addInt(tr("Beat rotation/frame"), p->rotationInc2, -64, 64, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).rotationInc2 = v; });
-        addDouble(tr("Beat speed"), p->speed, 0.01, 2.0, 0.01, [](ChainNode& n, double v) { std::get<InterferencesParams>(n.params).speed = static_cast<float>(v); });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<InterferencesParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<InterferencesParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<InterferencesParams>(n.params).beatCode = std::move(v); });
+        addInt("points", tr("Points"), p->points, 1, 8, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).points = v; });
+        addInt("distance", tr("Distance"), p->distance, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).distance = v; });
+        addInt("alpha", tr("Alpha"), p->alpha, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).alpha = v; });
+        addInt("rotation", tr("Rotation"), p->rotation, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).rotation = v; });
+        addInt("rotationInc", tr("Rotation/frame"), p->rotationInc, -64, 64, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).rotationInc = v; });
+        addBool("rgb", tr("RGB split"), p->rgb, [](ChainNode& n, bool v) { std::get<InterferencesParams>(n.params).rgb = v; });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).blend = v; });
+        addBool("onBeat", tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<InterferencesParams>(n.params).onBeat = v; });
+        addInt("distance2", tr("Beat distance"), p->distance2, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).distance2 = v; });
+        addInt("alpha2", tr("Beat alpha"), p->alpha2, 0, 255, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).alpha2 = v; });
+        addInt("rotationInc2", tr("Beat rotation/frame"), p->rotationInc2, -64, 64, [](ChainNode& n, int v) { std::get<InterferencesParams>(n.params).rotationInc2 = v; });
+        addDouble("speed", tr("Beat speed"), p->speed, 0.01, 2.0, 0.01, [](ChainNode& n, double v) { std::get<InterferencesParams>(n.params).speed = static_cast<float>(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<InterferencesParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<InterferencesParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<InterferencesParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<FyrewurXParams>(&params))
     {
-        addInt(tr("Sparks per burst"), p->sparks, 1, 1024, [](ChainNode& n, int v) { std::get<FyrewurXParams>(n.params).sparks = v; });
-        addDouble(tr("Speed"), p->speed, 0.05, 5.0, 0.05, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).speed = static_cast<float>(v); });
-        addDouble(tr("Gravity"), p->gravity, 0.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).gravity = static_cast<float>(v); });
-        addDouble(tr("Life (s)"), p->lifeSeconds, 0.1, 10.0, 0.1, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).lifeSeconds = static_cast<float>(v); });
-        addDouble(tr("Spark size"), p->dotSize, 1.0, 32.0, 0.5, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).dotSize = static_cast<float>(v); });
-        addDouble(tr("Hue drift"), p->hueDrift, 0.0, 6.0, 0.1, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).hueDrift = static_cast<float>(v); });
-        addDouble(tr("Burst spread"), p->burstSpread, 0.0, 3.0, 0.05, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).burstSpread = static_cast<float>(v); });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<FyrewurXParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FyrewurXParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FyrewurXParams>(n.params).beatCode = std::move(v); });
+        addInt("sparks", tr("Sparks per burst"), p->sparks, 1, 1024, [](ChainNode& n, int v) { std::get<FyrewurXParams>(n.params).sparks = v; });
+        addDouble("speed", tr("Speed"), p->speed, 0.05, 5.0, 0.05, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).speed = static_cast<float>(v); });
+        addDouble("gravity", tr("Gravity"), p->gravity, 0.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).gravity = static_cast<float>(v); });
+        addDouble("lifeSeconds", tr("Life (s)"), p->lifeSeconds, 0.1, 10.0, 0.1, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).lifeSeconds = static_cast<float>(v); });
+        addDouble("dotSize", tr("Spark size"), p->dotSize, 1.0, 32.0, 0.5, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).dotSize = static_cast<float>(v); });
+        addDouble("hueDrift", tr("Hue drift"), p->hueDrift, 0.0, 6.0, 0.1, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).hueDrift = static_cast<float>(v); });
+        addDouble("burstSpread", tr("Burst spread"), p->burstSpread, 0.0, 3.0, 0.05, [](ChainNode& n, double v) { std::get<FyrewurXParams>(n.params).burstSpread = static_cast<float>(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<FyrewurXParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FyrewurXParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FyrewurXParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<Metaballs3DParams>(&params))
     {
         // Verhaltens-Nachbau (S52): aus dem Preset kommt nur die Farbtafel, die
         // Geometrie ist host-eigen — also sind ALLE Zahlen hier frei verstellbar.
         // Grenzen wie im Renderer/Serialisierer (count 1..16).
-        addInt(tr("Balls"), p->count, 1, 16, [](ChainNode& n, int v) { std::get<Metaballs3DParams>(n.params).count = v; });
-        addDouble(tr("Radius"), p->radius, 0.01, 1.0, 0.01, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).radius = static_cast<float>(v); });
-        addDouble(tr("Speed"), p->speed, 0.0, 5.0, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).speed = static_cast<float>(v); });
-        addDouble(tr("Threshold"), p->threshold, 0.05, 8.0, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).threshold = static_cast<float>(v); });
-        addEnum(tr("Blend"), p->blend, {tr("Replace"), tr("Additive"), tr("50/50")}, [](ChainNode& n, int v) { std::get<Metaballs3DParams>(n.params).blend = v; });
-        addDouble(tr("Orbit spread"), p->spread, 0.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).spread = static_cast<float>(v); });
-        addDouble(tr("Depth"), p->depth, 0.2, 6.0, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).depth = static_cast<float>(v); });
-        addDouble(tr("Phase per ball"), p->phase, 0.0, 6.3, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).phase = static_cast<float>(v); });
-        addColorTable(
+        addInt("count", tr("Balls"), p->count, 1, 16, [](ChainNode& n, int v) { std::get<Metaballs3DParams>(n.params).count = v; });
+        addDouble("radius", tr("Radius"), p->radius, 0.01, 1.0, 0.01, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).radius = static_cast<float>(v); });
+        addDouble("speed", tr("Speed"), p->speed, 0.0, 5.0, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).speed = static_cast<float>(v); });
+        addDouble("threshold", tr("Threshold"), p->threshold, 0.05, 8.0, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).threshold = static_cast<float>(v); });
+        addEnum("blend", tr("Blend"), p->blend, {tr("Replace"), tr("Additive"), tr("50/50")}, [](ChainNode& n, int v) { std::get<Metaballs3DParams>(n.params).blend = v; });
+        addDouble("spread", tr("Orbit spread"), p->spread, 0.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).spread = static_cast<float>(v); });
+        addDouble("depth", tr("Depth"), p->depth, 0.2, 6.0, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).depth = static_cast<float>(v); });
+        addDouble("phase", tr("Phase per ball"), p->phase, 0.0, 6.3, 0.05, [](ChainNode& n, double v) { std::get<Metaballs3DParams>(n.params).phase = static_cast<float>(v); });
+        addColorTable("colors", 
             tr("Color table"), p->colors,
             [](ChainNode& n) -> std::vector<uint32_t>& {
                 return std::get<Metaballs3DParams>(n.params).colors;
             },
             tr("Palette from the preset — ball i takes entry i (white if empty)."));
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<Metaballs3DParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Metaballs3DParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Metaballs3DParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<Metaballs3DParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Metaballs3DParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Metaballs3DParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<Tentacles3DParams>(&params))
     {
-        addInt(tr("Tentacles"), p->count, 1, 16, [](ChainNode& n, int v) { std::get<Tentacles3DParams>(n.params).count = v; });
-        addInt(tr("Segments"), p->segments, 2, 256, [](ChainNode& n, int v) { std::get<Tentacles3DParams>(n.params).segments = v; });
-        addDouble(tr("Length"), p->length, 0.05, 2.0, 0.05, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).length = static_cast<float>(v); });
-        addDouble(tr("Thickness (px)"), p->thickness, 1.0, 64.0, 0.5, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).thickness = static_cast<float>(v); });
-        addDouble(tr("Speed"), p->speed, 0.0, 5.0, 0.05, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).speed = static_cast<float>(v); });
-        addEnum(tr("Blend"), p->blend, {tr("Replace"), tr("Additive"), tr("50/50")}, [](ChainNode& n, int v) { std::get<Tentacles3DParams>(n.params).blend = v; });
-        addDouble(tr("Sway"), p->sway, 0.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).sway = static_cast<float>(v); });
-        addDouble(tr("Waves"), p->waves, 0.0, 20.0, 0.1, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).waves = static_cast<float>(v); });
-        addDouble(tr("Taper (0 = even)"), p->taper, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).taper = static_cast<float>(v); });
-        addColorTable(
+        addInt("count", tr("Tentacles"), p->count, 1, 16, [](ChainNode& n, int v) { std::get<Tentacles3DParams>(n.params).count = v; });
+        addInt("segments", tr("Segments"), p->segments, 2, 256, [](ChainNode& n, int v) { std::get<Tentacles3DParams>(n.params).segments = v; });
+        addDouble("length", tr("Length"), p->length, 0.05, 2.0, 0.05, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).length = static_cast<float>(v); });
+        addDouble("thickness", tr("Thickness (px)"), p->thickness, 1.0, 64.0, 0.5, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).thickness = static_cast<float>(v); });
+        addDouble("speed", tr("Speed"), p->speed, 0.0, 5.0, 0.05, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).speed = static_cast<float>(v); });
+        addEnum("blend", tr("Blend"), p->blend, {tr("Replace"), tr("Additive"), tr("50/50")}, [](ChainNode& n, int v) { std::get<Tentacles3DParams>(n.params).blend = v; });
+        addDouble("sway", tr("Sway"), p->sway, 0.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).sway = static_cast<float>(v); });
+        addDouble("waves", tr("Waves"), p->waves, 0.0, 20.0, 0.1, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).waves = static_cast<float>(v); });
+        addDouble("taper", tr("Taper (0 = even)"), p->taper, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<Tentacles3DParams>(n.params).taper = static_cast<float>(v); });
+        addColorTable("colors", 
             tr("Color table"), p->colors,
             [](ChainNode& n) -> std::vector<uint32_t>& {
                 return std::get<Tentacles3DParams>(n.params).colors;
             },
             tr("Palette from the preset — tentacle i takes entry i (white if empty)."));
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<Tentacles3DParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Tentacles3DParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Tentacles3DParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<Tentacles3DParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Tentacles3DParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Tentacles3DParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<StarfieldParams>(&params))
     {
-        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<StarfieldParams>(n.params).color = v; });
-        addInt(tr("Stars"), p->maxStars, 1, 8192, [](ChainNode& n, int v) { std::get<StarfieldParams>(n.params).maxStars = v; });
-        addDouble(tr("Warp speed"), p->warpSpeed, 0.1, 50.0, 0.5, [](ChainNode& n, double v) { std::get<StarfieldParams>(n.params).warpSpeed = static_cast<float>(v); });
-        addBool(tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<StarfieldParams>(n.params).onBeat = v; });
-        addDouble(tr("Beat speed"), p->beatSpeed, 0.1, 50.0, 0.5, [](ChainNode& n, double v) { std::get<StarfieldParams>(n.params).beatSpeed = static_cast<float>(v); });
-        addInt(tr("Duration (frames)"), p->durationFrames, 1, 200, [](ChainNode& n, int v) { std::get<StarfieldParams>(n.params).durationFrames = v; });
+        addColor("color", tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<StarfieldParams>(n.params).color = v; });
+        addInt("maxStars", tr("Stars"), p->maxStars, 1, 8192, [](ChainNode& n, int v) { std::get<StarfieldParams>(n.params).maxStars = v; });
+        addDouble("warpSpeed", tr("Warp speed"), p->warpSpeed, 0.1, 50.0, 0.5, [](ChainNode& n, double v) { std::get<StarfieldParams>(n.params).warpSpeed = static_cast<float>(v); });
+        addBool("onBeat", tr("On beat"), p->onBeat, [](ChainNode& n, bool v) { std::get<StarfieldParams>(n.params).onBeat = v; });
+        addDouble("beatSpeed", tr("Beat speed"), p->beatSpeed, 0.1, 50.0, 0.5, [](ChainNode& n, double v) { std::get<StarfieldParams>(n.params).beatSpeed = static_cast<float>(v); });
+        addInt("durationFrames", tr("Duration (frames)"), p->durationFrames, 1, 200, [](ChainNode& n, int v) { std::get<StarfieldParams>(n.params).durationFrames = v; });
         const QStringList kStarBlendNames = {tr("Replace"), tr("Additive"), tr("50/50")};
-        addEnum(tr("Blend"), p->blend, kStarBlendNames, [](ChainNode& n, int v) { std::get<StarfieldParams>(n.params).blend = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<StarfieldParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<StarfieldParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<StarfieldParams>(n.params).beatCode = std::move(v); });
+        addEnum("blend", tr("Blend"), p->blend, kStarBlendNames, [](ChainNode& n, int v) { std::get<StarfieldParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<StarfieldParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<StarfieldParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<StarfieldParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<TimescopeParams>(&params))
     {
-        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<TimescopeParams>(n.params).color = v; });
-        addInt(tr("Bands"), p->bands, 1, 576, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).bands = v; });
-        addEnum(tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).channel = v; });
-        addBool(tr("Apply channel"), p->useChannel, [](ChainNode& n, bool v) { std::get<TimescopeParams>(n.params).useChannel = v; });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line (SRM)"}, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).blend = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TimescopeParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TimescopeParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TimescopeParams>(n.params).beatCode = std::move(v); });
+        addColor("color", tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<TimescopeParams>(n.params).color = v; });
+        addInt("bands", tr("Bands"), p->bands, 1, 576, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).bands = v; });
+        addEnum("channel", tr("Channel"), p->channel, {"Left", "Right", "Center"}, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).channel = v; });
+        addBool("useChannel", tr("Apply channel"), p->useChannel, [](ChainNode& n, bool v) { std::get<TimescopeParams>(n.params).useChannel = v; });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line (SRM)"}, [](ChainNode& n, int v) { std::get<TimescopeParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TimescopeParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TimescopeParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TimescopeParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<DotGridParams>(&params))
     {
-        addInt(tr("Spacing"), p->spacing, 2, 128, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).spacing = v; });
-        addInt(tr("X move"), p->xMove, -1024, 1024, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).xMove = v; });
-        addInt(tr("Y move"), p->yMove, -1024, 1024, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).yMove = v; });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line (SRM)"}, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).blend = v; });
-        addColorTable(
+        addInt("spacing", tr("Spacing"), p->spacing, 2, 128, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).spacing = v; });
+        addInt("xMove", tr("X move"), p->xMove, -1024, 1024, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).xMove = v; });
+        addInt("yMove", tr("Y move"), p->yMove, -1024, 1024, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).yMove = v; });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50", "Line (SRM)"}, [](ChainNode& n, int v) { std::get<DotGridParams>(n.params).blend = v; });
+        addColorTable("colors", 
             tr("Color table"), p->colors,
             [](ChainNode& n) -> std::vector<uint32_t>& {
                 return std::get<DotGridParams>(n.params).colors;
             },
             tr("AVS color table — the dots cycle through these over time."));
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DotGridParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DotGridParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DotGridParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DotGridParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DotGridParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DotGridParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<DotPlaneParams>(&params))
     {
-        addInt(tr("Rotation speed"), p->rotVel, -50, 50, [](ChainNode& n, int v) { std::get<DotPlaneParams>(n.params).rotVel = v; });
-        addInt(tr("Angle"), p->angle, -90, 90, [](ChainNode& n, int v) { std::get<DotPlaneParams>(n.params).angle = v; });
-        addRefDouble(tr("Camera distance"), p->camDistance, 50.0, 2000.0, 10.0, 400.0, 1, [](ChainNode& n, double v) { std::get<DotPlaneParams>(n.params).camDistance = static_cast<float>(v); });
-        addRefDouble(tr("Settle"), p->settle, 0.0, 2.0, 0.01, 0.15, 3, [](ChainNode& n, double v) { std::get<DotPlaneParams>(n.params).settle = static_cast<float>(v); });
+        addInt("rotVel", tr("Rotation speed"), p->rotVel, -50, 50, [](ChainNode& n, int v) { std::get<DotPlaneParams>(n.params).rotVel = v; });
+        addInt("angle", tr("Angle"), p->angle, -90, 90, [](ChainNode& n, int v) { std::get<DotPlaneParams>(n.params).angle = v; });
+        addRefDouble("camDistance", tr("Camera distance"), p->camDistance, 50.0, 2000.0, 10.0, 400.0, 1, [](ChainNode& n, double v) { std::get<DotPlaneParams>(n.params).camDistance = static_cast<float>(v); });
+        addRefDouble("settle", tr("Settle"), p->settle, 0.0, 2.0, 0.01, 0.15, 3, [](ChainNode& n, double v) { std::get<DotPlaneParams>(n.params).settle = static_cast<float>(v); });
         for (int i = 0; i < 5; ++i)
-            addColor(tr("Color %1").arg(i + 1), p->colors[i], [i](ChainNode& n, uint32_t v) { std::get<DotPlaneParams>(n.params).colors[i] = v; });
+            addColor("colors", tr("Color %1").arg(i + 1), p->colors[i], [i](ChainNode& n, uint32_t v) { std::get<DotPlaneParams>(n.params).colors[i] = v; });
         addReferenceNote(!p->initCode.empty() || !p->frameCode.empty() || !p->beatCode.empty());
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DotPlaneParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DotPlaneParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DotPlaneParams>(n.params).beatCode = std::move(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DotPlaneParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DotPlaneParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DotPlaneParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<DotFountainParams>(&params))
     {
-        addInt(tr("Rotation speed"), p->rotVel, -50, 50, [](ChainNode& n, int v) { std::get<DotFountainParams>(n.params).rotVel = v; });
-        addInt(tr("Angle"), p->angle, -90, 90, [](ChainNode& n, int v) { std::get<DotFountainParams>(n.params).angle = v; });
+        addInt("rotVel", tr("Rotation speed"), p->rotVel, -50, 50, [](ChainNode& n, int v) { std::get<DotFountainParams>(n.params).rotVel = v; });
+        addInt("angle", tr("Angle"), p->angle, -90, 90, [](ChainNode& n, int v) { std::get<DotFountainParams>(n.params).angle = v; });
         for (int i = 0; i < 5; ++i)
-            addColor(tr("Color %1").arg(i + 1), p->colors[i], [i](ChainNode& n, uint32_t v) { std::get<DotFountainParams>(n.params).colors[i] = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DotFountainParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DotFountainParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DotFountainParams>(n.params).beatCode = std::move(v); });
+            addColor("colors", tr("Color %1").arg(i + 1), p->colors[i], [i](ChainNode& n, uint32_t v) { std::get<DotFountainParams>(n.params).colors[i] = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DotFountainParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DotFountainParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DotFountainParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<ChannelShiftParams>(&params))
     {
-        addEnum(tr("Mode"), p->mode, {"RGB", "RBG", "GBR", "GRB", "BRG", "BGR"}, [](ChainNode& n, int v) { std::get<ChannelShiftParams>(n.params).mode = v; });
-        addBool(tr("On beat (random)"), p->onBeat, [](ChainNode& n, bool v) { std::get<ChannelShiftParams>(n.params).onBeat = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ChannelShiftParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ChannelShiftParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ChannelShiftParams>(n.params).beatCode = std::move(v); });
+        addEnum("mode", tr("Mode"), p->mode, {"RGB", "RBG", "GBR", "GRB", "BRG", "BGR"}, [](ChainNode& n, int v) { std::get<ChannelShiftParams>(n.params).mode = v; });
+        addBool("onBeat", tr("On beat (random)"), p->onBeat, [](ChainNode& n, bool v) { std::get<ChannelShiftParams>(n.params).onBeat = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ChannelShiftParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ChannelShiftParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ChannelShiftParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<ColorReductionParams>(&params))
     {
-        addInt(tr("Levels (bits)"), p->levels, 1, 8, [](ChainNode& n, int v) { std::get<ColorReductionParams>(n.params).levels = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorReductionParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorReductionParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorReductionParams>(n.params).beatCode = std::move(v); });
+        addInt("levels", tr("Levels (bits)"), p->levels, 1, 8, [](ChainNode& n, int v) { std::get<ColorReductionParams>(n.params).levels = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorReductionParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorReductionParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorReductionParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<MultiplierParams>(&params))
     {
-        addEnum(tr("Factor"), p->mode, {"Saturate", "x8", "x4", "x2", "x0.5", "x0.25", "x0.125", "Keep"}, [](ChainNode& n, int v) { std::get<MultiplierParams>(n.params).mode = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MultiplierParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MultiplierParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MultiplierParams>(n.params).beatCode = std::move(v); });
+        addEnum("mode", tr("Factor"), p->mode, {"Saturate", "x8", "x4", "x2", "x0.5", "x0.25", "x0.125", "Keep"}, [](ChainNode& n, int v) { std::get<MultiplierParams>(n.params).mode = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MultiplierParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MultiplierParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MultiplierParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<VideoDelayParams>(&params))
     {
-        addInt(tr("Delay"), p->delay, 1, 128, [](ChainNode& n, int v) { std::get<VideoDelayParams>(n.params).delay = v; });
-        addBool(tr("In beats"), p->useBeats, [](ChainNode& n, bool v) { std::get<VideoDelayParams>(n.params).useBeats = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<VideoDelayParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<VideoDelayParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<VideoDelayParams>(n.params).beatCode = std::move(v); });
+        addInt("delay", tr("Delay"), p->delay, 1, 128, [](ChainNode& n, int v) { std::get<VideoDelayParams>(n.params).delay = v; });
+        addBool("useBeats", tr("In beats"), p->useBeats, [](ChainNode& n, bool v) { std::get<VideoDelayParams>(n.params).useBeats = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<VideoDelayParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<VideoDelayParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<VideoDelayParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<MultiDelayParams>(&params))
     {
-        addEnum(tr("Mode"), p->mode, {"None", "Input (write)", "Output (read)"}, [](ChainNode& n, int v) { std::get<MultiDelayParams>(n.params).mode = v; });
-        addInt(tr("Buffer"), p->buffer, 0, 5, [](ChainNode& n, int v) { std::get<MultiDelayParams>(n.params).buffer = v; });
-        addInt(tr("Delay"), p->delay, 1, 128, [](ChainNode& n, int v) { std::get<MultiDelayParams>(n.params).delay = v; });
-        addBool(tr("In beats"), p->useBeats, [](ChainNode& n, bool v) { std::get<MultiDelayParams>(n.params).useBeats = v; });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MultiDelayParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MultiDelayParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MultiDelayParams>(n.params).beatCode = std::move(v); });
+        addEnum("mode", tr("Mode"), p->mode, {"None", "Input (write)", "Output (read)"}, [](ChainNode& n, int v) { std::get<MultiDelayParams>(n.params).mode = v; });
+        addInt("buffer", tr("Buffer"), p->buffer, 0, 5, [](ChainNode& n, int v) { std::get<MultiDelayParams>(n.params).buffer = v; });
+        addInt("delay", tr("Delay"), p->delay, 1, 128, [](ChainNode& n, int v) { std::get<MultiDelayParams>(n.params).delay = v; });
+        addBool("useBeats", tr("In beats"), p->useBeats, [](ChainNode& n, bool v) { std::get<MultiDelayParams>(n.params).useBeats = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<MultiDelayParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<MultiDelayParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<MultiDelayParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<Fractal2DParams>(&params))
     {
-        addEnum(tr("Type"), p->type,
+        addEnum("ftype", tr("Type"), p->type,
                 {"Mandelbrot", "Julia", "Burning Ship", "Tricorn", "Multibrot",
                  "Newton", "Phoenix", "Magnet", "Nova"},
                 [](ChainNode& n, int v) { std::get<Fractal2DParams>(n.params).type = v; });
-        addDouble(tr("Center X"), p->centerX, -4.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).centerX = static_cast<float>(v); });
-        addDouble(tr("Center Y"), p->centerY, -4.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).centerY = static_cast<float>(v); });
-        addDouble(tr("Zoom"), p->zoom, 0.001, 100000.0, 0.1, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).zoom = static_cast<float>(v); });
-        addDouble(tr("Rotation"), p->rotation, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).rotation = static_cast<float>(v); });
-        addInt(tr("Max iterations"), p->maxIter, 1, 2048, [](ChainNode& n, int v) { std::get<Fractal2DParams>(n.params).maxIter = v; });
-        addDouble(tr("Julia X"), p->juliaX, -2.0, 2.0, 0.001, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).juliaX = static_cast<float>(v); });
-        addDouble(tr("Julia Y"), p->juliaY, -2.0, 2.0, 0.001, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).juliaY = static_cast<float>(v); });
-        addDouble(tr("Power"), p->power, 1.0, 16.0, 0.1, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).power = static_cast<float>(v); });
-        addDouble(tr("Escape R^2"), p->escapeR, 1.0, 1024.0, 1.0, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).escapeR = static_cast<float>(v); });
-        addBool(tr("Smooth colour"), p->smooth, [](ChainNode& n, bool v) { std::get<Fractal2DParams>(n.params).smooth = v; });
-        addDouble(tr("Colour scale"), p->colorScale, 0.001, 4.0, 0.005, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).colorScale = static_cast<float>(v); });
-        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).colorCycle = static_cast<float>(v); });
-        addColor(tr("Inside colour"), p->insideColor, [](ChainNode& n, uint32_t v) { std::get<Fractal2DParams>(n.params).insideColor = v; });
+        addDouble("centerX", tr("Center X"), p->centerX, -4.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).centerX = static_cast<float>(v); });
+        addDouble("centerY", tr("Center Y"), p->centerY, -4.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).centerY = static_cast<float>(v); });
+        addDouble("zoom", tr("Zoom"), p->zoom, 0.001, 100000.0, 0.1, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).zoom = static_cast<float>(v); });
+        addDouble("rotation", tr("Rotation"), p->rotation, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).rotation = static_cast<float>(v); });
+        addInt("maxIter", tr("Max iterations"), p->maxIter, 1, 2048, [](ChainNode& n, int v) { std::get<Fractal2DParams>(n.params).maxIter = v; });
+        addDouble("juliaX", tr("Julia X"), p->juliaX, -2.0, 2.0, 0.001, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).juliaX = static_cast<float>(v); });
+        addDouble("juliaY", tr("Julia Y"), p->juliaY, -2.0, 2.0, 0.001, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).juliaY = static_cast<float>(v); });
+        addDouble("power", tr("Power"), p->power, 1.0, 16.0, 0.1, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).power = static_cast<float>(v); });
+        addDouble("escapeR", tr("Escape R^2"), p->escapeR, 1.0, 1024.0, 1.0, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).escapeR = static_cast<float>(v); });
+        addBool("smooth", tr("Smooth colour"), p->smooth, [](ChainNode& n, bool v) { std::get<Fractal2DParams>(n.params).smooth = v; });
+        addDouble("colorScale", tr("Colour scale"), p->colorScale, 0.001, 4.0, 0.005, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble("colorCycle", tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal2DParams>(n.params).colorCycle = static_cast<float>(v); });
+        addColor("insideColor", tr("Inside colour"), p->insideColor, [](ChainNode& n, uint32_t v) { std::get<Fractal2DParams>(n.params).insideColor = v; });
         {
             auto* combo = new QComboBox(m_propContainer);
             lumi::modules::ColorGradientModule grad;
@@ -3679,24 +3712,24 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     });
             form->addRow(tr("Palette"), combo);
         }
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<Fractal2DParams>(n.params).blend = v; });
-        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<Fractal2DParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Fractal2DParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Fractal2DParams>(n.params).beatCode = std::move(v); });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<Fractal2DParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<Fractal2DParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Fractal2DParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Fractal2DParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<DomainWarpParams>(&params))
     {
-        addInt(tr("Octaves"), p->octaves, 1, 10, [](ChainNode& n, int v) { std::get<DomainWarpParams>(n.params).octaves = v; });
-        addDouble(tr("Lacunarity"), p->lacunarity, 1.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).lacunarity = static_cast<float>(v); });
-        addDouble(tr("Gain"), p->gain, 0.0, 1.0, 0.02, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).gain = static_cast<float>(v); });
-        addDouble(tr("Scale"), p->scale, 0.1, 32.0, 0.1, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).scale = static_cast<float>(v); });
-        addDouble(tr("Warp"), p->warp, 0.0, 8.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).warp = static_cast<float>(v); });
-        addDouble(tr("Warp scale"), p->warpScale, 0.1, 8.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).warpScale = static_cast<float>(v); });
-        addDouble(tr("Speed"), p->speed, -4.0, 4.0, 0.02, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).speed = static_cast<float>(v); });
-        addDouble(tr("Offset X"), p->offsetX, -32.0, 32.0, 0.1, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).offsetX = static_cast<float>(v); });
-        addDouble(tr("Offset Y"), p->offsetY, -32.0, 32.0, 0.1, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).offsetY = static_cast<float>(v); });
-        addDouble(tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).colorScale = static_cast<float>(v); });
-        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).colorCycle = static_cast<float>(v); });
+        addInt("octaves", tr("Octaves"), p->octaves, 1, 10, [](ChainNode& n, int v) { std::get<DomainWarpParams>(n.params).octaves = v; });
+        addDouble("lacunarity", tr("Lacunarity"), p->lacunarity, 1.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).lacunarity = static_cast<float>(v); });
+        addDouble("gain", tr("Gain"), p->gain, 0.0, 1.0, 0.02, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).gain = static_cast<float>(v); });
+        addDouble("scale", tr("Scale"), p->scale, 0.1, 32.0, 0.1, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).scale = static_cast<float>(v); });
+        addDouble("warp", tr("Warp"), p->warp, 0.0, 8.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).warp = static_cast<float>(v); });
+        addDouble("warpScale", tr("Warp scale"), p->warpScale, 0.1, 8.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).warpScale = static_cast<float>(v); });
+        addDouble("speed", tr("Speed"), p->speed, -4.0, 4.0, 0.02, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).speed = static_cast<float>(v); });
+        addDouble("offsetX", tr("Offset X"), p->offsetX, -32.0, 32.0, 0.1, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).offsetX = static_cast<float>(v); });
+        addDouble("offsetY", tr("Offset Y"), p->offsetY, -32.0, 32.0, 0.1, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).offsetY = static_cast<float>(v); });
+        addDouble("colorScale", tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble("colorCycle", tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<DomainWarpParams>(n.params).colorCycle = static_cast<float>(v); });
         {
             auto* combo = new QComboBox(m_propContainer);
             lumi::modules::ColorGradientModule grad;
@@ -3712,21 +3745,21 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     });
             form->addRow(tr("Palette"), combo);
         }
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<DomainWarpParams>(n.params).blend = v; });
-        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<DomainWarpParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DomainWarpParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DomainWarpParams>(n.params).beatCode = std::move(v); });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<DomainWarpParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<DomainWarpParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DomainWarpParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DomainWarpParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<SetRenderModeParams>(&params))
     {
         form->addRow(new QLabel(tr("Sets line width + blend for the render effects that follow."), m_propContainer));
-        addBool(tr("Override blend"), p->enabled, [](ChainNode& n, bool v) { std::get<SetRenderModeParams>(n.params).enabled = v; });
-        addInt(tr("Line width"), p->lineWidth, 0, 255, [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).lineWidth = v; });
-        addEnum(tr("Line blend"), p->lineBlend,
+        addBool("overrideBlend", tr("Override blend"), p->enabled, [](ChainNode& n, bool v) { std::get<SetRenderModeParams>(n.params).enabled = v; });
+        addInt("lineWidth", tr("Line width"), p->lineWidth, 0, 255, [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).lineWidth = v; });
+        addEnum("lineBlend", tr("Line blend"), p->lineBlend,
                 {"Replace", "Additive", "Maximum", "50/50", "Sub (fb-c)",
                  "Sub (c-fb)", "Multiply", "Adjustable", "XOR (~Add)", "Minimum"},
                 [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).lineBlend = v; });
-        addInt(tr("Adjustable alpha"), p->adjustAlpha, 0, 255, [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).adjustAlpha = v; });
+        addInt("adjustAlpha", tr("Adjustable alpha"), p->adjustAlpha, 0, 255, [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).adjustAlpha = v; });
     }
     else if (auto* p = std::get_if<RenderScaleParams>(&params))
     {
@@ -3734,8 +3767,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                    "upscales — the classic Winamp pixel-doubling "
                                    "look (AVS effects use fixed pixel sizes)."),
                                 m_propContainer));
-        addInt(tr("Divisor (window / N)"), p->divisor, 1, 8, [](ChainNode& n, int v) { std::get<RenderScaleParams>(n.params).divisor = v; });
-        addEnum(tr("Upscale filter"), p->filter, {"Nearest (chunky)", "Linear (smooth)"},
+        addInt("divisor", tr("Divisor (window / N)"), p->divisor, 1, 8, [](ChainNode& n, int v) { std::get<RenderScaleParams>(n.params).divisor = v; });
+        addEnum("filter", tr("Upscale filter"), p->filter, {"Nearest (chunky)", "Linear (smooth)"},
                 [](ChainNode& n, int v) { std::get<RenderScaleParams>(n.params).filter = v; });
     }
     else if (auto* p = std::get_if<BloomParams>(&params))
@@ -3748,16 +3781,16 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                    "(uncheck for glow trails — accumulates in "
                                    "feedback chains!)."),
                                 m_propContainer));
-        addBool(tr("Display only (post)"), p->post, [](ChainNode& n, bool v) { std::get<BloomParams>(n.params).post = v; });
-        addInt(tr("Downsample (1/2^n)"), p->downsample, 0, 4, [](ChainNode& n, int v) { std::get<BloomParams>(n.params).downsample = v; });
-        addInt(tr("Radius (sigma px)"), p->radius, 1, 32, [](ChainNode& n, int v) { std::get<BloomParams>(n.params).radius = v; });
-        addDouble(tr("Intensity"), p->intensity, 0.0, 8.0, 0.1, [](ChainNode& n, double v) { std::get<BloomParams>(n.params).intensity = static_cast<float>(v); });
-        addDouble(tr("Threshold"), p->threshold, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<BloomParams>(n.params).threshold = static_cast<float>(v); });
-        addBool(tr("Vignette"), p->vignette, [](ChainNode& n, bool v) { std::get<BloomParams>(n.params).vignette = v; });
-        addDouble(tr("Vignette strength"), p->vignetteStrength, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<BloomParams>(n.params).vignetteStrength = static_cast<float>(v); });
-        addScript(tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BloomParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BloomParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BloomParams>(n.params).beatCode = std::move(v); });
+        addBool("post", tr("Display only (post)"), p->post, [](ChainNode& n, bool v) { std::get<BloomParams>(n.params).post = v; });
+        addInt("downsample", tr("Downsample (1/2^n)"), p->downsample, 0, 4, [](ChainNode& n, int v) { std::get<BloomParams>(n.params).downsample = v; });
+        addInt("radius", tr("Radius (sigma px)"), p->radius, 1, 32, [](ChainNode& n, int v) { std::get<BloomParams>(n.params).radius = v; });
+        addDouble("intensity", tr("Intensity"), p->intensity, 0.0, 8.0, 0.1, [](ChainNode& n, double v) { std::get<BloomParams>(n.params).intensity = static_cast<float>(v); });
+        addDouble("threshold", tr("Threshold"), p->threshold, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<BloomParams>(n.params).threshold = static_cast<float>(v); });
+        addBool("vignette", tr("Vignette"), p->vignette, [](ChainNode& n, bool v) { std::get<BloomParams>(n.params).vignette = v; });
+        addDouble("vignetteStrength", tr("Vignette strength"), p->vignetteStrength, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<BloomParams>(n.params).vignetteStrength = static_cast<float>(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BloomParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BloomParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BloomParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<Camera3DParams>(&params))
     {
@@ -3786,20 +3819,20 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 });
         form->addRow(tr("Template"), presetCombo);
 
-        addDouble(tr("Position X"), p->px, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).px = static_cast<float>(v); });
-        addDouble(tr("Position Y"), p->py, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).py = static_cast<float>(v); });
-        addDouble(tr("Position Z"), p->pz, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).pz = static_cast<float>(v); });
-        addDouble(tr("Target X"), p->tx, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).tx = static_cast<float>(v); });
-        addDouble(tr("Target Y"), p->ty, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).ty = static_cast<float>(v); });
-        addDouble(tr("Target Z"), p->tz, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).tz = static_cast<float>(v); });
-        addDouble(tr("FOV (deg)"), p->fov, 1.0, 179.0, 1.0, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).fov = static_cast<float>(v); });
-        addDouble(tr("Roll (deg)"), p->roll, -360.0, 360.0, 1.0, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).roll = static_cast<float>(v); });
-        addDouble(tr("Fog start"), p->fogStart, 0.0, 1000.0, 0.5, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).fogStart = static_cast<float>(v); });
-        addDouble(tr("Fog end"), p->fogEnd, 0.0, 1000.0, 0.5, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).fogEnd = static_cast<float>(v); });
-        addColor(tr("Fog color"), p->fogColor, [](ChainNode& n, uint32_t v) { std::get<Camera3DParams>(n.params).fogColor = v; });
-        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<Camera3DParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Camera3DParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Camera3DParams>(n.params).beatCode = std::move(v); });
+        addDouble("px", tr("Position X"), p->px, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).px = static_cast<float>(v); });
+        addDouble("py", tr("Position Y"), p->py, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).py = static_cast<float>(v); });
+        addDouble("pz", tr("Position Z"), p->pz, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).pz = static_cast<float>(v); });
+        addDouble("tx", tr("Target X"), p->tx, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).tx = static_cast<float>(v); });
+        addDouble("ty", tr("Target Y"), p->ty, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).ty = static_cast<float>(v); });
+        addDouble("tz", tr("Target Z"), p->tz, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).tz = static_cast<float>(v); });
+        addDouble("fov", tr("FOV (deg)"), p->fov, 1.0, 179.0, 1.0, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).fov = static_cast<float>(v); });
+        addDouble("roll", tr("Roll (deg)"), p->roll, -360.0, 360.0, 1.0, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).roll = static_cast<float>(v); });
+        addDouble("fogStart", tr("Fog start"), p->fogStart, 0.0, 1000.0, 0.5, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).fogStart = static_cast<float>(v); });
+        addDouble("fogEnd", tr("Fog end"), p->fogEnd, 0.0, 1000.0, 0.5, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).fogEnd = static_cast<float>(v); });
+        addColor("fogColor", tr("Fog color"), p->fogColor, [](ChainNode& n, uint32_t v) { std::get<Camera3DParams>(n.params).fogColor = v; });
+        addScript("initCode", tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<Camera3DParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Camera3DParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Camera3DParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<SuperScope3DParams>(&params))
     {
@@ -3829,18 +3862,18 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 });
         form->addRow(tr("Template"), presetCombo);
 
-        addInt(tr("Points (n)"), p->pointCount, 1, 4096, [](ChainNode& n, int v) { std::get<SuperScope3DParams>(n.params).pointCount = v; });
-        addEnum(tr("Draw mode"), p->renderMode, {"Soft sprites", "Lines"},
+        addInt("pointCount", tr("Points (n)"), p->pointCount, 1, 4096, [](ChainNode& n, int v) { std::get<SuperScope3DParams>(n.params).pointCount = v; });
+        addEnum("renderMode", tr("Draw mode"), p->renderMode, {"Soft sprites", "Lines"},
                 [](ChainNode& n, int v) { std::get<SuperScope3DParams>(n.params).renderMode = v; });
-        addDouble(tr("Default size (world)"), p->size, 0.0001, 100.0, 0.01, [](ChainNode& n, double v) { std::get<SuperScope3DParams>(n.params).size = static_cast<float>(v); });
-        addDouble(tr("Sprite falloff (k)"), p->falloff, 0.5, 32.0, 0.5, [](ChainNode& n, double v) { std::get<SuperScope3DParams>(n.params).falloff = static_cast<float>(v); });
-        addEnum(tr("Audio channel (v)"), p->audioChannel, {"Left", "Right", "Mono"},
+        addDouble("size", tr("Default size (world)"), p->size, 0.0001, 100.0, 0.01, [](ChainNode& n, double v) { std::get<SuperScope3DParams>(n.params).size = static_cast<float>(v); });
+        addDouble("falloff", tr("Sprite falloff (k)"), p->falloff, 0.5, 32.0, 0.5, [](ChainNode& n, double v) { std::get<SuperScope3DParams>(n.params).falloff = static_cast<float>(v); });
+        addEnum("audioChannel", tr("Audio channel (v)"), p->audioChannel, {"Left", "Right", "Mono"},
                 [](ChainNode& n, int v) { std::get<SuperScope3DParams>(n.params).audioChannel = v; });
-        addBool(tr("v from spectrum"), p->spectrumSource, [](ChainNode& n, bool v) { std::get<SuperScope3DParams>(n.params).spectrumSource = v; });
-        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<SuperScope3DParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<SuperScope3DParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<SuperScope3DParams>(n.params).beatCode = std::move(v); });
-        addScript(tr("Point code"), p->pointCode, [](ChainNode& n, std::string v) { std::get<SuperScope3DParams>(n.params).pointCode = std::move(v); });
+        addBool("spectrumSource", tr("v from spectrum"), p->spectrumSource, [](ChainNode& n, bool v) { std::get<SuperScope3DParams>(n.params).spectrumSource = v; });
+        addScript("initCode", tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<SuperScope3DParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<SuperScope3DParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<SuperScope3DParams>(n.params).beatCode = std::move(v); });
+        addScript("pointCode", tr("Point code"), p->pointCode, [](ChainNode& n, std::string v) { std::get<SuperScope3DParams>(n.params).pointCode = std::move(v); });
     }
     else if (auto* p = std::get_if<Terrain3DParams>(&params))
     {
@@ -3850,24 +3883,24 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                    "grid as megabuf(gy*res+gx); the point code "
                                    "colors grid dots (i, gx, gy, h given)."),
                                 m_propContainer));
-        addInt(tr("Resolution"), p->resolution, 8, 128, [](ChainNode& n, int v) { std::get<Terrain3DParams>(n.params).resolution = v; });
-        addDouble(tr("Extent (world)"), p->extent, 0.1, 100.0, 0.5, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).extent = static_cast<float>(v); });
-        addDouble(tr("Base amplitude"), p->baseAmp, 0.0, 10.0, 0.05, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).baseAmp = static_cast<float>(v); });
-        addDouble(tr("Y offset"), p->yOffset, -100.0, 100.0, 0.1, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).yOffset = static_cast<float>(v); });
-        addDouble(tr("Spectrum rings"), p->ringAmp, 0.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).ringAmp = static_cast<float>(v); });
-        addDouble(tr("Relax (spring)"), p->relax, 0.0, 1.0, 0.02, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).relax = static_cast<float>(v); });
-        addDouble(tr("Flatten"), p->flatten, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).flatten = static_cast<float>(v); });
-        addBool(tr("Draw mesh"), p->drawMesh, [](ChainNode& n, bool v) { std::get<Terrain3DParams>(n.params).drawMesh = v; });
-        addColor(tr("Mesh color"), p->meshColor, [](ChainNode& n, uint32_t v) { std::get<Terrain3DParams>(n.params).meshColor = v; });
-        addBool(tr("Draw dots"), p->drawDots, [](ChainNode& n, bool v) { std::get<Terrain3DParams>(n.params).drawDots = v; });
-        addDouble(tr("Dot size (world)"), p->dotSize, 0.0001, 10.0, 0.005, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).dotSize = static_cast<float>(v); });
-        addDouble(tr("Sprite falloff (k)"), p->falloff, 0.5, 32.0, 0.5, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).falloff = static_cast<float>(v); });
-        addColor(tr("Color (valley)"), p->colorLow, [](ChainNode& n, uint32_t v) { std::get<Terrain3DParams>(n.params).colorLow = v; });
-        addColor(tr("Color (peak)"), p->colorHigh, [](ChainNode& n, uint32_t v) { std::get<Terrain3DParams>(n.params).colorHigh = v; });
-        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<Terrain3DParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Terrain3DParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Terrain3DParams>(n.params).beatCode = std::move(v); });
-        addScript(tr("Point code"), p->pointCode, [](ChainNode& n, std::string v) { std::get<Terrain3DParams>(n.params).pointCode = std::move(v); });
+        addInt("resolution", tr("Resolution"), p->resolution, 8, 128, [](ChainNode& n, int v) { std::get<Terrain3DParams>(n.params).resolution = v; });
+        addDouble("extent", tr("Extent (world)"), p->extent, 0.1, 100.0, 0.5, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).extent = static_cast<float>(v); });
+        addDouble("baseAmp", tr("Base amplitude"), p->baseAmp, 0.0, 10.0, 0.05, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).baseAmp = static_cast<float>(v); });
+        addDouble("yOffset", tr("Y offset"), p->yOffset, -100.0, 100.0, 0.1, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).yOffset = static_cast<float>(v); });
+        addDouble("ringAmp", tr("Spectrum rings"), p->ringAmp, 0.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).ringAmp = static_cast<float>(v); });
+        addDouble("relax", tr("Relax (spring)"), p->relax, 0.0, 1.0, 0.02, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).relax = static_cast<float>(v); });
+        addDouble("flatten", tr("Flatten"), p->flatten, 0.0, 1.0, 0.05, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).flatten = static_cast<float>(v); });
+        addBool("drawMesh", tr("Draw mesh"), p->drawMesh, [](ChainNode& n, bool v) { std::get<Terrain3DParams>(n.params).drawMesh = v; });
+        addColor("meshColor", tr("Mesh color"), p->meshColor, [](ChainNode& n, uint32_t v) { std::get<Terrain3DParams>(n.params).meshColor = v; });
+        addBool("drawDots", tr("Draw dots"), p->drawDots, [](ChainNode& n, bool v) { std::get<Terrain3DParams>(n.params).drawDots = v; });
+        addDouble("dotSize", tr("Dot size (world)"), p->dotSize, 0.0001, 10.0, 0.005, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).dotSize = static_cast<float>(v); });
+        addDouble("falloff", tr("Sprite falloff (k)"), p->falloff, 0.5, 32.0, 0.5, [](ChainNode& n, double v) { std::get<Terrain3DParams>(n.params).falloff = static_cast<float>(v); });
+        addColor("colorLow", tr("Color (valley)"), p->colorLow, [](ChainNode& n, uint32_t v) { std::get<Terrain3DParams>(n.params).colorLow = v; });
+        addColor("colorHigh", tr("Color (peak)"), p->colorHigh, [](ChainNode& n, uint32_t v) { std::get<Terrain3DParams>(n.params).colorHigh = v; });
+        addScript("initCode", tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<Terrain3DParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Terrain3DParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Terrain3DParams>(n.params).beatCode = std::move(v); });
+        addScript("pointCode", tr("Point code"), p->pointCode, [](ChainNode& n, std::string v) { std::get<Terrain3DParams>(n.params).pointCode = std::move(v); });
     }
     else if (auto* p = std::get_if<GlowOrbsParams>(&params))
     {
@@ -3877,152 +3910,152 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                    "may set x,y,z, radius, sx,sy,sz, red/green/"
                                    "blue, red2/green2/blue2, flash."),
                                 m_propContainer));
-        addInt(tr("Orbs (n)"), p->orbCount, 1, 64, [](ChainNode& n, int v) { std::get<GlowOrbsParams>(n.params).orbCount = v; });
-        addDouble(tr("Halo scale"), p->haloScale, 1.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<GlowOrbsParams>(n.params).haloScale = static_cast<float>(v); });
-        addDouble(tr("Halo intensity"), p->haloIntensity, 0.0, 4.0, 0.1, [](ChainNode& n, double v) { std::get<GlowOrbsParams>(n.params).haloIntensity = static_cast<float>(v); });
-        addDouble(tr("Halo falloff (k)"), p->falloff, 0.5, 32.0, 0.5, [](ChainNode& n, double v) { std::get<GlowOrbsParams>(n.params).falloff = static_cast<float>(v); });
-        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<GlowOrbsParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<GlowOrbsParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<GlowOrbsParams>(n.params).beatCode = std::move(v); });
-        addScript(tr("Point code"), p->pointCode, [](ChainNode& n, std::string v) { std::get<GlowOrbsParams>(n.params).pointCode = std::move(v); });
+        addInt("orbCount", tr("Orbs (n)"), p->orbCount, 1, 64, [](ChainNode& n, int v) { std::get<GlowOrbsParams>(n.params).orbCount = v; });
+        addDouble("haloScale", tr("Halo scale"), p->haloScale, 1.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<GlowOrbsParams>(n.params).haloScale = static_cast<float>(v); });
+        addDouble("haloIntensity", tr("Halo intensity"), p->haloIntensity, 0.0, 4.0, 0.1, [](ChainNode& n, double v) { std::get<GlowOrbsParams>(n.params).haloIntensity = static_cast<float>(v); });
+        addDouble("falloff", tr("Halo falloff (k)"), p->falloff, 0.5, 32.0, 0.5, [](ChainNode& n, double v) { std::get<GlowOrbsParams>(n.params).falloff = static_cast<float>(v); });
+        addScript("initCode", tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<GlowOrbsParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<GlowOrbsParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<GlowOrbsParams>(n.params).beatCode = std::move(v); });
+        addScript("pointCode", tr("Point code"), p->pointCode, [](ChainNode& n, std::string v) { std::get<GlowOrbsParams>(n.params).pointCode = std::move(v); });
     }
     else if (auto* p = std::get_if<Fractal3DParams>(&params))
     {
-        addEnum(tr("Type"), p->type, {"Mandelbulb", "Mandelbox", "Menger", "Quaternion-Julia", "KIFS"}, [](ChainNode& n, int v) { std::get<Fractal3DParams>(n.params).type = v; });
-        addDouble(tr("Yaw"), p->yaw, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).yaw = static_cast<float>(v); });
-        addDouble(tr("Pitch"), p->pitch, -1.5, 1.5, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).pitch = static_cast<float>(v); });
-        addDouble(tr("Distance"), p->dist, 0.5, 12.0, 0.1, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).dist = static_cast<float>(v); });
-        addDouble(tr("FOV"), p->fov, 0.3, 3.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).fov = static_cast<float>(v); });
-        addDouble(tr("Power"), p->power, 1.0, 16.0, 0.1, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).power = static_cast<float>(v); });
-        addDouble(tr("Scale"), p->scale, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).scale = static_cast<float>(v); });
-        addDouble(tr("Fold"), p->fold, 0.1, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).fold = static_cast<float>(v); });
-        addInt(tr("Max steps"), p->maxSteps, 8, 512, [](ChainNode& n, int v) { std::get<Fractal3DParams>(n.params).maxSteps = v; });
-        addInt(tr("DE iterations"), p->maxIter, 1, 64, [](ChainNode& n, int v) { std::get<Fractal3DParams>(n.params).maxIter = v; });
-        addDouble(tr("Julia X"), p->juliaX, -2.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).juliaX = static_cast<float>(v); });
-        addDouble(tr("Julia Y"), p->juliaY, -2.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).juliaY = static_cast<float>(v); });
-        addDouble(tr("Julia Z"), p->juliaZ, -2.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).juliaZ = static_cast<float>(v); });
-        addDouble(tr("Julia W"), p->juliaW, -2.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).juliaW = static_cast<float>(v); });
-        addDouble(tr("Light yaw"), p->lightYaw, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).lightYaw = static_cast<float>(v); });
-        addDouble(tr("Light pitch"), p->lightPitch, -1.5, 1.5, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).lightPitch = static_cast<float>(v); });
-        addDouble(tr("Ambient"), p->ambient, 0.0, 1.0, 0.02, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).ambient = static_cast<float>(v); });
-        addBool(tr("AO"), p->ao, [](ChainNode& n, bool v) { std::get<Fractal3DParams>(n.params).ao = v; });
-        addDouble(tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).colorScale = static_cast<float>(v); });
-        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).colorCycle = static_cast<float>(v); });
-        addColor(tr("Background"), p->background, [](ChainNode& n, uint32_t v) { std::get<Fractal3DParams>(n.params).background = v; });
-        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<Fractal3DParams>(n.params).gradientPreset = std::move(v); });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<Fractal3DParams>(n.params).blend = v; });
-        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<Fractal3DParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Fractal3DParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Fractal3DParams>(n.params).beatCode = std::move(v); });
+        addEnum("ftype", tr("Type"), p->type, {"Mandelbulb", "Mandelbox", "Menger", "Quaternion-Julia", "KIFS"}, [](ChainNode& n, int v) { std::get<Fractal3DParams>(n.params).type = v; });
+        addDouble("yaw", tr("Yaw"), p->yaw, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).yaw = static_cast<float>(v); });
+        addDouble("pitch", tr("Pitch"), p->pitch, -1.5, 1.5, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).pitch = static_cast<float>(v); });
+        addDouble("dist", tr("Distance"), p->dist, 0.5, 12.0, 0.1, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).dist = static_cast<float>(v); });
+        addDouble("fov", tr("FOV"), p->fov, 0.3, 3.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).fov = static_cast<float>(v); });
+        addDouble("power", tr("Power"), p->power, 1.0, 16.0, 0.1, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).power = static_cast<float>(v); });
+        addDouble("scale", tr("Scale"), p->scale, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).scale = static_cast<float>(v); });
+        addDouble("fold", tr("Fold"), p->fold, 0.1, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).fold = static_cast<float>(v); });
+        addInt("maxSteps", tr("Max steps"), p->maxSteps, 8, 512, [](ChainNode& n, int v) { std::get<Fractal3DParams>(n.params).maxSteps = v; });
+        addInt("maxIter", tr("DE iterations"), p->maxIter, 1, 64, [](ChainNode& n, int v) { std::get<Fractal3DParams>(n.params).maxIter = v; });
+        addDouble("juliaX", tr("Julia X"), p->juliaX, -2.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).juliaX = static_cast<float>(v); });
+        addDouble("juliaY", tr("Julia Y"), p->juliaY, -2.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).juliaY = static_cast<float>(v); });
+        addDouble("juliaZ", tr("Julia Z"), p->juliaZ, -2.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).juliaZ = static_cast<float>(v); });
+        addDouble("juliaW", tr("Julia W"), p->juliaW, -2.0, 2.0, 0.01, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).juliaW = static_cast<float>(v); });
+        addDouble("lightYaw", tr("Light yaw"), p->lightYaw, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).lightYaw = static_cast<float>(v); });
+        addDouble("lightPitch", tr("Light pitch"), p->lightPitch, -1.5, 1.5, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).lightPitch = static_cast<float>(v); });
+        addDouble("ambient", tr("Ambient"), p->ambient, 0.0, 1.0, 0.02, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).ambient = static_cast<float>(v); });
+        addBool("ao", tr("AO"), p->ao, [](ChainNode& n, bool v) { std::get<Fractal3DParams>(n.params).ao = v; });
+        addDouble("colorScale", tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble("colorCycle", tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<Fractal3DParams>(n.params).colorCycle = static_cast<float>(v); });
+        addColor("background", tr("Background"), p->background, [](ChainNode& n, uint32_t v) { std::get<Fractal3DParams>(n.params).background = v; });
+        addGradient("gradientPreset", tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<Fractal3DParams>(n.params).gradientPreset = std::move(v); });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<Fractal3DParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<Fractal3DParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<Fractal3DParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<Fractal3DParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<LyapunovParams>(&params))
     {
-        addText(tr("Sequence"), p->sequence, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).sequence = std::move(v); });
-        addDouble(tr("a min"), p->aMin, 0.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).aMin = static_cast<float>(v); });
-        addDouble(tr("a max"), p->aMax, 0.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).aMax = static_cast<float>(v); });
-        addDouble(tr("b min"), p->bMin, 0.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).bMin = static_cast<float>(v); });
-        addDouble(tr("b max"), p->bMax, 0.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).bMax = static_cast<float>(v); });
-        addInt(tr("Warmup"), p->warmup, 0, 2000, [](ChainNode& n, int v) { std::get<LyapunovParams>(n.params).warmup = v; });
-        addInt(tr("Iterations"), p->iterations, 1, 4000, [](ChainNode& n, int v) { std::get<LyapunovParams>(n.params).iterations = v; });
-        addColor(tr("Ordered colour"), p->negColor, [](ChainNode& n, uint32_t v) { std::get<LyapunovParams>(n.params).negColor = v; });
-        addDouble(tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).colorScale = static_cast<float>(v); });
-        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).colorCycle = static_cast<float>(v); });
-        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).gradientPreset = std::move(v); });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<LyapunovParams>(n.params).blend = v; });
-        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).beatCode = std::move(v); });
+        addText("sequence", tr("Sequence"), p->sequence, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).sequence = std::move(v); });
+        addDouble("aMin", tr("a min"), p->aMin, 0.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).aMin = static_cast<float>(v); });
+        addDouble("aMax", tr("a max"), p->aMax, 0.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).aMax = static_cast<float>(v); });
+        addDouble("bMin", tr("b min"), p->bMin, 0.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).bMin = static_cast<float>(v); });
+        addDouble("bMax", tr("b max"), p->bMax, 0.0, 4.0, 0.01, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).bMax = static_cast<float>(v); });
+        addInt("warmup", tr("Warmup"), p->warmup, 0, 2000, [](ChainNode& n, int v) { std::get<LyapunovParams>(n.params).warmup = v; });
+        addInt("iterations", tr("Iterations"), p->iterations, 1, 4000, [](ChainNode& n, int v) { std::get<LyapunovParams>(n.params).iterations = v; });
+        addColor("negColor", tr("Ordered colour"), p->negColor, [](ChainNode& n, uint32_t v) { std::get<LyapunovParams>(n.params).negColor = v; });
+        addDouble("colorScale", tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble("colorCycle", tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<LyapunovParams>(n.params).colorCycle = static_cast<float>(v); });
+        addGradient("gradientPreset", tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).gradientPreset = std::move(v); });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<LyapunovParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<LyapunovParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<KleinianParams>(&params))
     {
-        addInt(tr("p"), p->p, 3, 20, [](ChainNode& n, int v) { std::get<KleinianParams>(n.params).p = v; });
-        addInt(tr("q"), p->q, 3, 20, [](ChainNode& n, int v) { std::get<KleinianParams>(n.params).q = v; });
-        addInt(tr("Iterations"), p->iterations, 1, 200, [](ChainNode& n, int v) { std::get<KleinianParams>(n.params).iterations = v; });
-        addDouble(tr("Morph"), p->morph, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).morph = static_cast<float>(v); });
-        addDouble(tr("Zoom"), p->zoom, 0.1, 8.0, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).zoom = static_cast<float>(v); });
-        addDouble(tr("Rotation"), p->rotation, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).rotation = static_cast<float>(v); });
-        addDouble(tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).colorScale = static_cast<float>(v); });
-        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).colorCycle = static_cast<float>(v); });
-        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<KleinianParams>(n.params).gradientPreset = std::move(v); });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<KleinianParams>(n.params).blend = v; });
-        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<KleinianParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<KleinianParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<KleinianParams>(n.params).beatCode = std::move(v); });
+        addInt("p", tr("p"), p->p, 3, 20, [](ChainNode& n, int v) { std::get<KleinianParams>(n.params).p = v; });
+        addInt("q", tr("q"), p->q, 3, 20, [](ChainNode& n, int v) { std::get<KleinianParams>(n.params).q = v; });
+        addInt("iterations", tr("Iterations"), p->iterations, 1, 200, [](ChainNode& n, int v) { std::get<KleinianParams>(n.params).iterations = v; });
+        addDouble("morph", tr("Morph"), p->morph, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).morph = static_cast<float>(v); });
+        addDouble("zoom", tr("Zoom"), p->zoom, 0.1, 8.0, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).zoom = static_cast<float>(v); });
+        addDouble("rotation", tr("Rotation"), p->rotation, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).rotation = static_cast<float>(v); });
+        addDouble("colorScale", tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble("colorCycle", tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<KleinianParams>(n.params).colorCycle = static_cast<float>(v); });
+        addGradient("gradientPreset", tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<KleinianParams>(n.params).gradientPreset = std::move(v); });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<KleinianParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<KleinianParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<KleinianParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<KleinianParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<FractalZoomerParams>(&params))
     {
-        addEnum(tr("Type"), p->type, {"Mandelbrot", "Julia", "Burning Ship"}, [](ChainNode& n, int v) { std::get<FractalZoomerParams>(n.params).type = v; });
-        addDouble(tr("Center X"), p->centerX, -2.0, 2.0, 0.0001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).centerX = static_cast<float>(v); });
-        addDouble(tr("Center Y"), p->centerY, -2.0, 2.0, 0.0001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).centerY = static_cast<float>(v); });
-        addDouble(tr("Julia X"), p->juliaX, -2.0, 2.0, 0.001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).juliaX = static_cast<float>(v); });
-        addDouble(tr("Julia Y"), p->juliaY, -2.0, 2.0, 0.001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).juliaY = static_cast<float>(v); });
-        addInt(tr("Max iterations"), p->maxIter, 1, 2048, [](ChainNode& n, int v) { std::get<FractalZoomerParams>(n.params).maxIter = v; });
-        addDouble(tr("Zoom speed"), p->zoomSpeed, 0.9, 1.2, 0.001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).zoomSpeed = static_cast<float>(v); });
-        addDouble(tr("Rotation speed"), p->rotationSpeed, -0.2, 0.2, 0.001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).rotationSpeed = static_cast<float>(v); });
-        addDouble(tr("Feedback"), p->feedback, 0.0, 1.0, 0.02, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).feedback = static_cast<float>(v); });
-        addDouble(tr("Colour scale"), p->colorScale, 0.001, 4.0, 0.005, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).colorScale = static_cast<float>(v); });
-        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).colorCycle = static_cast<float>(v); });
-        addColor(tr("Inside colour"), p->insideColor, [](ChainNode& n, uint32_t v) { std::get<FractalZoomerParams>(n.params).insideColor = v; });
-        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<FractalZoomerParams>(n.params).gradientPreset = std::move(v); });
-        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<FractalZoomerParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FractalZoomerParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FractalZoomerParams>(n.params).beatCode = std::move(v); });
+        addEnum("ftype", tr("Type"), p->type, {"Mandelbrot", "Julia", "Burning Ship"}, [](ChainNode& n, int v) { std::get<FractalZoomerParams>(n.params).type = v; });
+        addDouble("centerX", tr("Center X"), p->centerX, -2.0, 2.0, 0.0001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).centerX = static_cast<float>(v); });
+        addDouble("centerY", tr("Center Y"), p->centerY, -2.0, 2.0, 0.0001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).centerY = static_cast<float>(v); });
+        addDouble("juliaX", tr("Julia X"), p->juliaX, -2.0, 2.0, 0.001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).juliaX = static_cast<float>(v); });
+        addDouble("juliaY", tr("Julia Y"), p->juliaY, -2.0, 2.0, 0.001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).juliaY = static_cast<float>(v); });
+        addInt("maxIter", tr("Max iterations"), p->maxIter, 1, 2048, [](ChainNode& n, int v) { std::get<FractalZoomerParams>(n.params).maxIter = v; });
+        addDouble("zoomSpeed", tr("Zoom speed"), p->zoomSpeed, 0.9, 1.2, 0.001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).zoomSpeed = static_cast<float>(v); });
+        addDouble("rotationSpeed", tr("Rotation speed"), p->rotationSpeed, -0.2, 0.2, 0.001, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).rotationSpeed = static_cast<float>(v); });
+        addDouble("feedback", tr("Feedback"), p->feedback, 0.0, 1.0, 0.02, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).feedback = static_cast<float>(v); });
+        addDouble("colorScale", tr("Colour scale"), p->colorScale, 0.001, 4.0, 0.005, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble("colorCycle", tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<FractalZoomerParams>(n.params).colorCycle = static_cast<float>(v); });
+        addColor("insideColor", tr("Inside colour"), p->insideColor, [](ChainNode& n, uint32_t v) { std::get<FractalZoomerParams>(n.params).insideColor = v; });
+        addGradient("gradientPreset", tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<FractalZoomerParams>(n.params).gradientPreset = std::move(v); });
+        addScript("initCode", tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<FractalZoomerParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FractalZoomerParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FractalZoomerParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<StrangeAttractorParams>(&params))
     {
-        addEnum(tr("Type"), p->type, {"Lorenz", "Clifford", "De Jong", "Aizawa"}, [](ChainNode& n, int v) { std::get<StrangeAttractorParams>(n.params).type = v; });
-        addDouble(tr("a"), p->a, -3.0, 3.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).a = static_cast<float>(v); });
-        addDouble(tr("b"), p->b, -3.0, 3.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).b = static_cast<float>(v); });
-        addDouble(tr("c"), p->c, -3.0, 3.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).c = static_cast<float>(v); });
-        addDouble(tr("d"), p->d, -3.0, 3.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).d = static_cast<float>(v); });
-        addInt(tr("Points"), p->points, 1, 100000, [](ChainNode& n, int v) { std::get<StrangeAttractorParams>(n.params).points = v; });
-        addDouble(tr("Scale"), p->scale, 0.01, 4.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).scale = static_cast<float>(v); });
-        addDouble(tr("Rotation"), p->rotation, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).rotation = static_cast<float>(v); });
-        addDouble(tr("Rotation speed"), p->rotationSpeed, -2.0, 2.0, 0.02, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).rotationSpeed = static_cast<float>(v); });
-        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<StrangeAttractorParams>(n.params).color = v; });
-        addBool(tr("Use gradient"), p->useGradient, [](ChainNode& n, bool v) { std::get<StrangeAttractorParams>(n.params).useGradient = v; });
-        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<StrangeAttractorParams>(n.params).gradientPreset = std::move(v); });
-        addDouble(tr("Dot size"), p->dotSize, 1.0, 32.0, 0.5, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).dotSize = static_cast<float>(v); });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<StrangeAttractorParams>(n.params).blend = v; });
-        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<StrangeAttractorParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<StrangeAttractorParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<StrangeAttractorParams>(n.params).beatCode = std::move(v); });
+        addEnum("ftype", tr("Type"), p->type, {"Lorenz", "Clifford", "De Jong", "Aizawa"}, [](ChainNode& n, int v) { std::get<StrangeAttractorParams>(n.params).type = v; });
+        addDouble("a", tr("a"), p->a, -3.0, 3.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).a = static_cast<float>(v); });
+        addDouble("b", tr("b"), p->b, -3.0, 3.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).b = static_cast<float>(v); });
+        addDouble("c", tr("c"), p->c, -3.0, 3.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).c = static_cast<float>(v); });
+        addDouble("d", tr("d"), p->d, -3.0, 3.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).d = static_cast<float>(v); });
+        addInt("points", tr("Points"), p->points, 1, 100000, [](ChainNode& n, int v) { std::get<StrangeAttractorParams>(n.params).points = v; });
+        addDouble("scale", tr("Scale"), p->scale, 0.01, 4.0, 0.01, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).scale = static_cast<float>(v); });
+        addDouble("rotation", tr("Rotation"), p->rotation, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).rotation = static_cast<float>(v); });
+        addDouble("rotationSpeed", tr("Rotation speed"), p->rotationSpeed, -2.0, 2.0, 0.02, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).rotationSpeed = static_cast<float>(v); });
+        addColor("color", tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<StrangeAttractorParams>(n.params).color = v; });
+        addBool("useGradient", tr("Use gradient"), p->useGradient, [](ChainNode& n, bool v) { std::get<StrangeAttractorParams>(n.params).useGradient = v; });
+        addGradient("gradientPreset", tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<StrangeAttractorParams>(n.params).gradientPreset = std::move(v); });
+        addDouble("dotSize", tr("Dot size"), p->dotSize, 1.0, 32.0, 0.5, [](ChainNode& n, double v) { std::get<StrangeAttractorParams>(n.params).dotSize = static_cast<float>(v); });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<StrangeAttractorParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<StrangeAttractorParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<StrangeAttractorParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<StrangeAttractorParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<FlameParams>(&params))
     {
-        addEnum(tr("Variation"), p->variation, {"Linear", "Sinusoidal", "Spherical", "Swirl", "Horseshoe"}, [](ChainNode& n, int v) { std::get<FlameParams>(n.params).variation = v; });
-        addInt(tr("Functions"), p->functions, 2, 4, [](ChainNode& n, int v) { std::get<FlameParams>(n.params).functions = v; });
-        addInt(tr("Points"), p->points, 1, 200000, [](ChainNode& n, int v) { std::get<FlameParams>(n.params).points = v; });
-        addDouble(tr("Scale"), p->scale, 0.05, 4.0, 0.02, [](ChainNode& n, double v) { std::get<FlameParams>(n.params).scale = static_cast<float>(v); });
-        addDouble(tr("Rotation"), p->rotation, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<FlameParams>(n.params).rotation = static_cast<float>(v); });
-        addDouble(tr("Rotation speed"), p->rotationSpeed, -2.0, 2.0, 0.02, [](ChainNode& n, double v) { std::get<FlameParams>(n.params).rotationSpeed = static_cast<float>(v); });
-        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<FlameParams>(n.params).gradientPreset = std::move(v); });
-        addDouble(tr("Dot size"), p->dotSize, 1.0, 16.0, 0.5, [](ChainNode& n, double v) { std::get<FlameParams>(n.params).dotSize = static_cast<float>(v); });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<FlameParams>(n.params).blend = v; });
-        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<FlameParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FlameParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FlameParams>(n.params).beatCode = std::move(v); });
+        addEnum("variation", tr("Variation"), p->variation, {"Linear", "Sinusoidal", "Spherical", "Swirl", "Horseshoe"}, [](ChainNode& n, int v) { std::get<FlameParams>(n.params).variation = v; });
+        addInt("functions", tr("Functions"), p->functions, 2, 4, [](ChainNode& n, int v) { std::get<FlameParams>(n.params).functions = v; });
+        addInt("points", tr("Points"), p->points, 1, 200000, [](ChainNode& n, int v) { std::get<FlameParams>(n.params).points = v; });
+        addDouble("scale", tr("Scale"), p->scale, 0.05, 4.0, 0.02, [](ChainNode& n, double v) { std::get<FlameParams>(n.params).scale = static_cast<float>(v); });
+        addDouble("rotation", tr("Rotation"), p->rotation, -6.2832, 6.2832, 0.05, [](ChainNode& n, double v) { std::get<FlameParams>(n.params).rotation = static_cast<float>(v); });
+        addDouble("rotationSpeed", tr("Rotation speed"), p->rotationSpeed, -2.0, 2.0, 0.02, [](ChainNode& n, double v) { std::get<FlameParams>(n.params).rotationSpeed = static_cast<float>(v); });
+        addGradient("gradientPreset", tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<FlameParams>(n.params).gradientPreset = std::move(v); });
+        addDouble("dotSize", tr("Dot size"), p->dotSize, 1.0, 16.0, 0.5, [](ChainNode& n, double v) { std::get<FlameParams>(n.params).dotSize = static_cast<float>(v); });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<FlameParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<FlameParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<FlameParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<FlameParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<ReactionDiffusionParams>(&params))
     {
-        addDouble(tr("Feed"), p->feed, 0.0, 0.1, 0.001, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).feed = static_cast<float>(v); });
-        addDouble(tr("Kill"), p->kill, 0.0, 0.1, 0.001, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).kill = static_cast<float>(v); });
-        addDouble(tr("Diffuse A"), p->diffA, 0.0, 2.0, 0.02, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).diffA = static_cast<float>(v); });
-        addDouble(tr("Diffuse B"), p->diffB, 0.0, 2.0, 0.02, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).diffB = static_cast<float>(v); });
-        addInt(tr("Steps/frame"), p->stepsPerFrame, 1, 64, [](ChainNode& n, int v) { std::get<ReactionDiffusionParams>(n.params).stepsPerFrame = v; });
-        addBool(tr("Seed on beat"), p->seedOnBeat, [](ChainNode& n, bool v) { std::get<ReactionDiffusionParams>(n.params).seedOnBeat = v; });
-        addDouble(tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).colorScale = static_cast<float>(v); });
-        addDouble(tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).colorCycle = static_cast<float>(v); });
-        addGradient(tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).gradientPreset = std::move(v); });
-        addEnum(tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<ReactionDiffusionParams>(n.params).blend = v; });
-        addScript(tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).initCode = std::move(v); });
-        addScript(tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).frameCode = std::move(v); });
-        addScript(tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).beatCode = std::move(v); });
+        addDouble("feed", tr("Feed"), p->feed, 0.0, 0.1, 0.001, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).feed = static_cast<float>(v); });
+        addDouble("kill", tr("Kill"), p->kill, 0.0, 0.1, 0.001, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).kill = static_cast<float>(v); });
+        addDouble("diffA", tr("Diffuse A"), p->diffA, 0.0, 2.0, 0.02, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).diffA = static_cast<float>(v); });
+        addDouble("diffB", tr("Diffuse B"), p->diffB, 0.0, 2.0, 0.02, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).diffB = static_cast<float>(v); });
+        addInt("stepsPerFrame", tr("Steps/frame"), p->stepsPerFrame, 1, 64, [](ChainNode& n, int v) { std::get<ReactionDiffusionParams>(n.params).stepsPerFrame = v; });
+        addBool("seedOnBeat", tr("Seed on beat"), p->seedOnBeat, [](ChainNode& n, bool v) { std::get<ReactionDiffusionParams>(n.params).seedOnBeat = v; });
+        addDouble("colorScale", tr("Colour scale"), p->colorScale, 0.01, 8.0, 0.05, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).colorScale = static_cast<float>(v); });
+        addDouble("colorCycle", tr("Colour cycle"), p->colorCycle, -4.0, 4.0, 0.05, [](ChainNode& n, double v) { std::get<ReactionDiffusionParams>(n.params).colorCycle = static_cast<float>(v); });
+        addGradient("gradientPreset", tr("Palette"), p->gradientPreset, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).gradientPreset = std::move(v); });
+        addEnum("blend", tr("Blend"), p->blend, {"Replace", "Additive", "50/50"}, [](ChainNode& n, int v) { std::get<ReactionDiffusionParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init code"), p->initCode, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<DebugBarsParams>(&params))
     {
-        addColor(tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<DebugBarsParams>(n.params).color = v; });
-        addDouble(tr("Orbit speed"), p->orbitSpeed, -10.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<DebugBarsParams>(n.params).orbitSpeed = static_cast<float>(v); });
+        addColor("color", tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<DebugBarsParams>(n.params).color = v; });
+        addDouble("orbitSpeed", tr("Orbit speed"), p->orbitSpeed, -10.0, 10.0, 0.1, [](ChainNode& n, double v) { std::get<DebugBarsParams>(n.params).orbitSpeed = static_cast<float>(v); });
     }
     else if (auto* p = std::get_if<HostGroupParams>(&params))
     {
@@ -4037,12 +4070,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         info->setWordWrap(true);
         form->addRow(info);
 
-        addEnum(tr("Blend Out"), static_cast<int>(p->blendOut), kBlendNames,
+        addEnum("blendOut", tr("Blend Out"), static_cast<int>(p->blendOut), kBlendNames,
                 [](ChainNode& n, int v) {
                     std::get<HostGroupParams>(n.params).blendOut =
                         static_cast<BlendMode>(v);
                 });
-        addInt(tr("Out Alpha"), p->outAdjustAlpha, 0, 255,
+        addInt("outAdjustAlpha", tr("Out Alpha"), p->outAdjustAlpha, 0, 255,
                [](ChainNode& n, int v) {
                    std::get<HostGroupParams>(n.params).outAdjustAlpha = v;
                });
@@ -4054,7 +4087,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             m_propContainer);
         syncNote->setWordWrap(true);
         form->addRow(syncNote);
-        addDouble(tr("Crossfade-Dauer (s)"), p->crossfadeSeconds, 0.0, 60.0, 0.1,
+        addDouble("crossfadeSeconds", tr("Crossfade-Dauer (s)"), p->crossfadeSeconds, 0.0, 60.0, 0.1,
                   [this](ChainNode& n, double v) {
                       std::get<HostGroupParams>(n.params).crossfadeSeconds = v;
                       // Sync-Regel (Entwurf §2.4) — laeuft unter dem
@@ -4070,11 +4103,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         const QStringList curveNames = {tr("Linear"), tr("S-Kurve (smooth)"),
                                         tr("Ease-In"), tr("Ease-Out"),
                                         tr("Exponentiell")};
-        addEnum(tr("Eingangskurve"), std::clamp(p->curveIn, 0, 4), curveNames,
+        addEnum("curveIn", tr("Eingangskurve"), std::clamp(p->curveIn, 0, 4), curveNames,
                 [](ChainNode& n, int v) {
                     std::get<HostGroupParams>(n.params).curveIn = v;
                 });
-        addEnum(tr("Ausgangskurve"), std::clamp(p->curveOut, 0, 4), curveNames,
+        addEnum("curveOut", tr("Ausgangskurve"), std::clamp(p->curveOut, 0, 4), curveNames,
                 [](ChainNode& n, int v) {
                     std::get<HostGroupParams>(n.params).curveOut = v;
                 });
@@ -4182,28 +4215,28 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 m_propContainer);
             info->setWordWrap(true);
             form->addRow(info);
-            addInt(tr("Mesh X"), p->meshX, 8, 96,
+            addInt("meshX", tr("Mesh X"), p->meshX, 8, 96,
                    [milkOf](ChainNode& n, int v) { milkOf(n).meshX = v; });
-            addInt(tr("Mesh Y"), p->meshY, 6, 72,
+            addInt("meshY", tr("Mesh Y"), p->meshY, 6, 72,
                    [milkOf](ChainNode& n, int v) { milkOf(n).meshY = v; });
-            addBool(tr("Kalibrier-Raster"), p->debugGrid,
+            addBool("debugGrid", tr("Kalibrier-Raster"), p->debugGrid,
                     [milkOf](ChainNode& n, bool v) { milkOf(n).debugGrid = v; });
-            addText(tr("Textur-Basisordner"), p->presetDir,
+            addText("presetDir", tr("Textur-Basisordner"), p->presetDir,
                     [milkOf](ChainNode& n, std::string v) {
                         milkOf(n).presetDir = std::move(v);
                     });
         }
         else if (milkSection == 0)  // Code-Slots (EEL, Dialekt Milkdrop)
         {
-            addScript(tr("Init (per_frame_init)"), p->preset.perFrameInit,
+            addScript("perFrameInit", tr("Init (per_frame_init)"), p->preset.perFrameInit,
                       [milkOf](ChainNode& n, std::string v) {
                           milkOf(n).preset.perFrameInit = std::move(v);
                       });
-            addScript(tr("Frame (per_frame)"), p->preset.perFrame,
+            addScript("perFrame", tr("Frame (per_frame)"), p->preset.perFrame,
                       [milkOf](ChainNode& n, std::string v) {
                           milkOf(n).preset.perFrame = std::move(v);
                       });
-            addScript(tr("Point (per_pixel)"), p->preset.perPixel,
+            addScript("perPixel", tr("Point (per_pixel)"), p->preset.perPixel,
                       [milkOf](ChainNode& n, std::string v) {
                           milkOf(n).preset.perPixel = std::move(v);
                       });
@@ -4235,23 +4268,23 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 m_propContainer);
             hint->setWordWrap(true);
             form->addRow(hint);
-            addInt(tr("Wave-Modus (0-7)"), p->preset.waveMode, 0, 7, setI(&PS::waveMode));
-            addBool(tr("Additiv"), p->preset.additiveWaves, setB(&PS::additiveWaves));
-            addBool(tr("Punkte statt Linien"), p->preset.waveDots, setB(&PS::waveDots));
-            addBool(tr("Dick"), p->preset.waveThick, setB(&PS::waveThick));
-            addBool(tr("Alpha nach Lautstaerke"), p->preset.modWaveAlphaByVolume, setB(&PS::modWaveAlphaByVolume));
-            addBool(tr("Farbe maximieren"), p->preset.maximizeWaveColor, setB(&PS::maximizeWaveColor));
-            addDouble(tr("Alpha"), p->preset.waveAlpha, 0.0, 10.0, 0.01, setD(&PS::waveAlpha));
-            addDouble(tr("Skalierung"), p->preset.waveScale, 0.0, 100.0, 0.01, setD(&PS::waveScale));
-            addDouble(tr("Glaettung"), p->preset.waveSmoothing, 0.0, 0.95, 0.01, setD(&PS::waveSmoothing));
-            addDouble(tr("Mystery (wave_mystery)"), p->preset.waveMystery, -2.0, 2.0, 0.01, setD(&PS::waveMystery));
-            addDouble(tr("Mod-Alpha Start"), p->preset.modWaveAlphaStart, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaStart));
-            addDouble(tr("Mod-Alpha Ende"), p->preset.modWaveAlphaEnd, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaEnd));
-            addDouble(tr("Rot"), p->preset.waveR, 0.0, 1.0, 0.01, setD(&PS::waveR));
-            addDouble(tr("Gruen"), p->preset.waveG, 0.0, 1.0, 0.01, setD(&PS::waveG));
-            addDouble(tr("Blau"), p->preset.waveB, 0.0, 1.0, 0.01, setD(&PS::waveB));
-            addDouble(tr("Position X"), p->preset.waveX, 0.0, 1.0, 0.01, setD(&PS::waveX));
-            addDouble(tr("Position Y"), p->preset.waveY, 0.0, 1.0, 0.01, setD(&PS::waveY));
+            addInt("waveMode", tr("Wave-Modus (0-7)"), p->preset.waveMode, 0, 7, setI(&PS::waveMode));
+            addBool("additiveWaves", tr("Additiv"), p->preset.additiveWaves, setB(&PS::additiveWaves));
+            addBool("waveDots", tr("Punkte statt Linien"), p->preset.waveDots, setB(&PS::waveDots));
+            addBool("waveThick", tr("Dick"), p->preset.waveThick, setB(&PS::waveThick));
+            addBool("modWaveAlphaByVolume", tr("Alpha nach Lautstaerke"), p->preset.modWaveAlphaByVolume, setB(&PS::modWaveAlphaByVolume));
+            addBool("maximizeWaveColor", tr("Farbe maximieren"), p->preset.maximizeWaveColor, setB(&PS::maximizeWaveColor));
+            addDouble("waveAlpha", tr("Alpha"), p->preset.waveAlpha, 0.0, 10.0, 0.01, setD(&PS::waveAlpha));
+            addDouble("waveScale", tr("Skalierung"), p->preset.waveScale, 0.0, 100.0, 0.01, setD(&PS::waveScale));
+            addDouble("waveSmoothing", tr("Glaettung"), p->preset.waveSmoothing, 0.0, 0.95, 0.01, setD(&PS::waveSmoothing));
+            addDouble("waveMystery", tr("Mystery (wave_mystery)"), p->preset.waveMystery, -2.0, 2.0, 0.01, setD(&PS::waveMystery));
+            addDouble("modWaveAlphaStart", tr("Mod-Alpha Start"), p->preset.modWaveAlphaStart, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaStart));
+            addDouble("modWaveAlphaEnd", tr("Mod-Alpha Ende"), p->preset.modWaveAlphaEnd, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaEnd));
+            addDouble("waveR", tr("Rot"), p->preset.waveR, 0.0, 1.0, 0.01, setD(&PS::waveR));
+            addDouble("waveG", tr("Gruen"), p->preset.waveG, 0.0, 1.0, 0.01, setD(&PS::waveG));
+            addDouble("waveB", tr("Blau"), p->preset.waveB, 0.0, 1.0, 0.01, setD(&PS::waveB));
+            addDouble("waveX", tr("Position X"), p->preset.waveX, 0.0, 1.0, 0.01, setD(&PS::waveX));
+            addDouble("waveY", tr("Position Y"), p->preset.waveY, 0.0, 1.0, 0.01, setD(&PS::waveY));
         }
         else if (milkSection == 1)  // Custom Waves (Sektion oder Einzel-Element)
         {
@@ -4272,7 +4305,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             for (std::size_t i = wBegin; i < wEnd; ++i)
             {
                 const auto& w = p->preset.waves[i];
-                addBool(tr("Wave %1 aktiv").arg(w.index), w.enabled,
+                addBool("enabled", tr("Wave %1 aktiv").arg(w.index), w.enabled,
                         [milkOf, i](ChainNode& n, bool v) {
                             auto& mp = milkOf(n);
                             if (i < mp.preset.waves.size())
@@ -4308,24 +4341,24 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             if (i < mp.preset.waves.size()) mp.preset.waves[i].*m = v;
                         };
                     };
-                    addInt(tr("Samples"), w.samples, 2, 512, wI(&WS::samples));
-                    addInt(tr("L/R-Versatz (sep)"), w.sep, 0, 256, wI(&WS::sep));
-                    addBool(tr("Spektrum statt Waveform"), w.spectrum, wB(&WS::spectrum));
-                    addBool(tr("Punkte"), w.useDots, wB(&WS::useDots));
-                    addBool(tr("Dick"), w.drawThick, wB(&WS::drawThick));
-                    addBool(tr("Additiv"), w.additive, wB(&WS::additive));
-                    addDouble(tr("Skalierung"), w.scaling, 0.0, 100.0, 0.01, wD(&WS::scaling));
-                    addDouble(tr("Glaettung"), w.smoothing, 0.0, 1.0, 0.01, wD(&WS::smoothing));
-                    addDouble(tr("Rot"), w.r, 0.0, 1.0, 0.01, wD(&WS::r));
-                    addDouble(tr("Gruen"), w.g, 0.0, 1.0, 0.01, wD(&WS::g));
-                    addDouble(tr("Blau"), w.b, 0.0, 1.0, 0.01, wD(&WS::b));
-                    addDouble(tr("Alpha"), w.a, 0.0, 1.0, 0.01, wD(&WS::a));
+                    addInt("samples", tr("Samples"), w.samples, 2, 512, wI(&WS::samples));
+                    addInt("sep", tr("L/R-Versatz (sep)"), w.sep, 0, 256, wI(&WS::sep));
+                    addBool("spectrum", tr("Spektrum statt Waveform"), w.spectrum, wB(&WS::spectrum));
+                    addBool("useDots", tr("Punkte"), w.useDots, wB(&WS::useDots));
+                    addBool("drawThick", tr("Dick"), w.drawThick, wB(&WS::drawThick));
+                    addBool("additive", tr("Additiv"), w.additive, wB(&WS::additive));
+                    addDouble("scaling", tr("Skalierung"), w.scaling, 0.0, 100.0, 0.01, wD(&WS::scaling));
+                    addDouble("smoothing", tr("Glaettung"), w.smoothing, 0.0, 1.0, 0.01, wD(&WS::smoothing));
+                    addDouble("r", tr("Rot"), w.r, 0.0, 1.0, 0.01, wD(&WS::r));
+                    addDouble("g", tr("Gruen"), w.g, 0.0, 1.0, 0.01, wD(&WS::g));
+                    addDouble("b", tr("Blau"), w.b, 0.0, 1.0, 0.01, wD(&WS::b));
+                    addDouble("a", tr("Alpha"), w.a, 0.0, 1.0, 0.01, wD(&WS::a));
                 }
-                addScript(tr("Wave %1 · Init").arg(w.index), w.initCode,
+                addScript("milkdrop", tr("Wave %1 · Init").arg(w.index), w.initCode,
                           setWave(&lumi::milkdrop::WaveState::initCode));
-                addScript(tr("Wave %1 · Frame").arg(w.index), w.frameCode,
+                addScript("milkdrop", tr("Wave %1 · Frame").arg(w.index), w.frameCode,
                           setWave(&lumi::milkdrop::WaveState::frameCode));
-                addScript(tr("Wave %1 · Point").arg(w.index), w.pointCode,
+                addScript("milkdrop", tr("Wave %1 · Point").arg(w.index), w.pointCode,
                           setWave(&lumi::milkdrop::WaveState::pointCode));
             }
         }
@@ -4348,7 +4381,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             for (std::size_t i = sBegin; i < sEnd; ++i)
             {
                 const auto& s = p->preset.shapes[i];
-                addBool(tr("Shape %1 aktiv").arg(s.index), s.enabled,
+                addBool("enabled", tr("Shape %1 aktiv").arg(s.index), s.enabled,
                         [milkOf, i](ChainNode& n, bool v) {
                             auto& mp = milkOf(n);
                             if (i < mp.preset.shapes.size())
@@ -4383,33 +4416,33 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             if (i < mp.preset.shapes.size()) mp.preset.shapes[i].*m = v;
                         };
                     };
-                    addInt(tr("Seiten"), s.sides, 3, 100, sI(&SS::sides));
-                    addInt(tr("Instanzen (num_inst)"), s.instances, 1, 1024, sI(&SS::instances));
-                    addBool(tr("Additiv"), s.additive, sB(&SS::additive));
-                    addBool(tr("Dicker Rand"), s.thickOutline, sB(&SS::thickOutline));
-                    addBool(tr("Texturiert (Vorframe)"), s.textured, sB(&SS::textured));
-                    addDouble(tr("Textur-Zoom"), s.texZoom, 0.01, 10.0, 0.01, sD(&SS::texZoom));
-                    addDouble(tr("Textur-Winkel"), s.texAng, -6.3, 6.3, 0.01, sD(&SS::texAng));
-                    addDouble(tr("Position X"), s.x, 0.0, 1.0, 0.001, sD(&SS::x));
-                    addDouble(tr("Position Y"), s.y, 0.0, 1.0, 0.001, sD(&SS::y));
-                    addDouble(tr("Radius"), s.rad, 0.0, 2.0, 0.001, sD(&SS::rad));
-                    addDouble(tr("Winkel"), s.ang, -6.3, 6.3, 0.01, sD(&SS::ang));
-                    addDouble(tr("Zentrum R"), s.r, 0.0, 1.0, 0.01, sD(&SS::r));
-                    addDouble(tr("Zentrum G"), s.g, 0.0, 1.0, 0.01, sD(&SS::g));
-                    addDouble(tr("Zentrum B"), s.b, 0.0, 1.0, 0.01, sD(&SS::b));
-                    addDouble(tr("Zentrum A"), s.a, 0.0, 1.0, 0.01, sD(&SS::a));
-                    addDouble(tr("Rand R (r2)"), s.r2, 0.0, 1.0, 0.01, sD(&SS::r2));
-                    addDouble(tr("Rand G (g2)"), s.g2, 0.0, 1.0, 0.01, sD(&SS::g2));
-                    addDouble(tr("Rand B (b2)"), s.b2, 0.0, 1.0, 0.01, sD(&SS::b2));
-                    addDouble(tr("Rand A (a2)"), s.a2, 0.0, 1.0, 0.01, sD(&SS::a2));
-                    addDouble(tr("Border R"), s.borderR, 0.0, 1.0, 0.01, sD(&SS::borderR));
-                    addDouble(tr("Border G"), s.borderG, 0.0, 1.0, 0.01, sD(&SS::borderG));
-                    addDouble(tr("Border B"), s.borderB, 0.0, 1.0, 0.01, sD(&SS::borderB));
-                    addDouble(tr("Border A"), s.borderA, 0.0, 1.0, 0.01, sD(&SS::borderA));
+                    addInt("sides", tr("Seiten"), s.sides, 3, 100, sI(&SS::sides));
+                    addInt("instances", tr("Instanzen (num_inst)"), s.instances, 1, 1024, sI(&SS::instances));
+                    addBool("additive", tr("Additiv"), s.additive, sB(&SS::additive));
+                    addBool("thickOutline", tr("Dicker Rand"), s.thickOutline, sB(&SS::thickOutline));
+                    addBool("textured", tr("Texturiert (Vorframe)"), s.textured, sB(&SS::textured));
+                    addDouble("texZoom", tr("Textur-Zoom"), s.texZoom, 0.01, 10.0, 0.01, sD(&SS::texZoom));
+                    addDouble("texAng", tr("Textur-Winkel"), s.texAng, -6.3, 6.3, 0.01, sD(&SS::texAng));
+                    addDouble("x", tr("Position X"), s.x, 0.0, 1.0, 0.001, sD(&SS::x));
+                    addDouble("y", tr("Position Y"), s.y, 0.0, 1.0, 0.001, sD(&SS::y));
+                    addDouble("rad", tr("Radius"), s.rad, 0.0, 2.0, 0.001, sD(&SS::rad));
+                    addDouble("ang", tr("Winkel"), s.ang, -6.3, 6.3, 0.01, sD(&SS::ang));
+                    addDouble("r", tr("Zentrum R"), s.r, 0.0, 1.0, 0.01, sD(&SS::r));
+                    addDouble("g", tr("Zentrum G"), s.g, 0.0, 1.0, 0.01, sD(&SS::g));
+                    addDouble("b", tr("Zentrum B"), s.b, 0.0, 1.0, 0.01, sD(&SS::b));
+                    addDouble("a", tr("Zentrum A"), s.a, 0.0, 1.0, 0.01, sD(&SS::a));
+                    addDouble("r2", tr("Rand R (r2)"), s.r2, 0.0, 1.0, 0.01, sD(&SS::r2));
+                    addDouble("g2", tr("Rand G (g2)"), s.g2, 0.0, 1.0, 0.01, sD(&SS::g2));
+                    addDouble("b2", tr("Rand B (b2)"), s.b2, 0.0, 1.0, 0.01, sD(&SS::b2));
+                    addDouble("a2", tr("Rand A (a2)"), s.a2, 0.0, 1.0, 0.01, sD(&SS::a2));
+                    addDouble("borderR", tr("Border R"), s.borderR, 0.0, 1.0, 0.01, sD(&SS::borderR));
+                    addDouble("borderG", tr("Border G"), s.borderG, 0.0, 1.0, 0.01, sD(&SS::borderG));
+                    addDouble("borderB", tr("Border B"), s.borderB, 0.0, 1.0, 0.01, sD(&SS::borderB));
+                    addDouble("borderA", tr("Border A"), s.borderA, 0.0, 1.0, 0.01, sD(&SS::borderA));
                 }
-                addScript(tr("Shape %1 · Init").arg(s.index), s.initCode,
+                addScript("milkdrop", tr("Shape %1 · Init").arg(s.index), s.initCode,
                           setShape(&lumi::milkdrop::ShapeState::initCode));
-                addScript(tr("Shape %1 · Frame").arg(s.index), s.frameCode,
+                addScript("milkdrop", tr("Shape %1 · Frame").arg(s.index), s.frameCode,
                           setShape(&lumi::milkdrop::ShapeState::frameCode));
             }
         }
@@ -4496,46 +4529,46 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     };
                 };
                 const QString t = tr("Sprite %1").arg(sp.index);
-                addText(t + tr(" · Bild (relativ zum Textur-Ordner)"),
+                addText("imageName", t + tr(" · Bild (relativ zum Textur-Ordner)"),
                         sp.imageName, spriteSet([](SpriteState& s, std::string v) {
                             s.imageName = std::move(v);
                         }));
-                addColor(t + tr(" · Colorkey"), sp.colorKey,
+                addColor("colorKey", t + tr(" · Colorkey"), sp.colorKey,
                          spriteSet([](SpriteState& s, uint32_t v) {
                              s.colorKey = v;
                          }));
-                addInt(t + tr(" · Layer"), sp.layer, -100, 100,
+                addInt("layer", t + tr(" · Layer"), sp.layer, -100, 100,
                        spriteSet([](SpriteState& s, int v) { s.layer = v; }));
-                addInt(t + tr(" · Blend (0=Alpha 1=Decal 2=Add 3=SrcColor 4=Colorkey)"),
+                addInt("blendMode", t + tr(" · Blend (0=Alpha 1=Decal 2=Add 3=SrcColor 4=Colorkey)"),
                        sp.blendMode, 0, 4,
                        spriteSet([](SpriteState& s, int v) { s.blendMode = v; }));
-                addDouble(t + tr(" · Alpha"), sp.alpha, 0.0, 1.0, 0.01,
+                addDouble("alpha", t + tr(" · Alpha"), sp.alpha, 0.0, 1.0, 0.01,
                           spriteSet([](SpriteState& s, double v) { s.alpha = v; }));
-                addDouble(t + tr(" · Burn"), sp.burn, 0.0, 1.0, 0.01,
+                addDouble("burn", t + tr(" · Burn"), sp.burn, 0.0, 1.0, 0.01,
                           spriteSet([](SpriteState& s, double v) { s.burn = v; }));
-                addDouble(t + tr(" · X"), sp.x, -5.0, 5.0, 0.01,
+                addDouble("x", t + tr(" · X"), sp.x, -5.0, 5.0, 0.01,
                           spriteSet([](SpriteState& s, double v) { s.x = v; }));
-                addDouble(t + tr(" · Y"), sp.y, -5.0, 5.0, 0.01,
+                addDouble("y", t + tr(" · Y"), sp.y, -5.0, 5.0, 0.01,
                           spriteSet([](SpriteState& s, double v) { s.y = v; }));
-                addDouble(t + tr(" · Skalierung X (negativ = gespiegelt)"),
+                addDouble("sx", t + tr(" · Skalierung X (negativ = gespiegelt)"),
                           sp.sx, -10.0, 10.0, 0.01,
                           spriteSet([](SpriteState& s, double v) { s.sx = v; }));
-                addDouble(t + tr(" · Skalierung Y"), sp.sy, -10.0, 10.0, 0.01,
+                addDouble("sy", t + tr(" · Skalierung Y"), sp.sy, -10.0, 10.0, 0.01,
                           spriteSet([](SpriteState& s, double v) { s.sy = v; }));
-                addDouble(t + tr(" · Rotation (rad)"), sp.rot, -10.0, 10.0, 0.01,
+                addDouble("rot", t + tr(" · Rotation (rad)"), sp.rot, -10.0, 10.0, 0.01,
                           spriteSet([](SpriteState& s, double v) { s.rot = v; }));
-                addDouble(t + tr(" · Speed (time-Skalierung)"), sp.speed,
+                addDouble("speed", t + tr(" · Speed (time-Skalierung)"), sp.speed,
                           0.0, 10.0, 0.1,
                           spriteSet([](SpriteState& s, double v) { s.speed = v; }));
-                addDouble(t + tr(" · Repeat X"), sp.repeatX, 0.01, 100.0, 0.1,
+                addDouble("repeatX", t + tr(" · Repeat X"), sp.repeatX, 0.01, 100.0, 0.1,
                           spriteSet([](SpriteState& s, double v) {
                               s.repeatX = v;
                           }));
-                addDouble(t + tr(" · Repeat Y"), sp.repeatY, 0.01, 100.0, 0.1,
+                addDouble("repeatY", t + tr(" · Repeat Y"), sp.repeatY, 0.01, 100.0, 0.1,
                           spriteSet([](SpriteState& s, double v) {
                               s.repeatY = v;
                           }));
-                addScript(t + tr(" · Code (per Frame)"), sp.code,
+                addScript("code", t + tr(" · Code (per Frame)"), sp.code,
                           spriteSet([](SpriteState& s, std::string v) {
                               s.code = std::move(v);
                           }));
@@ -4591,20 +4624,20 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             }
 
             group(tr("General / Composite"));
-            addDouble(tr("Decay"), p->preset.decay, 0.0, 1.0, 0.001, setD(&PS::decay));
-            addDouble(tr("Gamma"), p->preset.gammaAdj, 0.0, 8.0, 0.01, setD(&PS::gammaAdj));
-            addDouble(tr("Echo-Zoom"), p->preset.videoEchoZoom, 0.001, 1000.0, 0.01, setD(&PS::videoEchoZoom));
-            addDouble(tr("Echo-Alpha"), p->preset.videoEchoAlpha, 0.0, 1.0, 0.01, setD(&PS::videoEchoAlpha));
-            addEnum(tr("Echo-Orientierung"), p->preset.videoEchoOrientation,
+            addDouble("decay", tr("Decay"), p->preset.decay, 0.0, 1.0, 0.001, setD(&PS::decay));
+            addDouble("gammaAdj", tr("Gamma"), p->preset.gammaAdj, 0.0, 8.0, 0.01, setD(&PS::gammaAdj));
+            addDouble("videoEchoZoom", tr("Echo-Zoom"), p->preset.videoEchoZoom, 0.001, 1000.0, 0.01, setD(&PS::videoEchoZoom));
+            addDouble("videoEchoAlpha", tr("Echo-Alpha"), p->preset.videoEchoAlpha, 0.0, 1.0, 0.01, setD(&PS::videoEchoAlpha));
+            addEnum("videoEchoOrientation", tr("Echo-Orientierung"), p->preset.videoEchoOrientation,
                     {tr("Keine"), tr("H-Spiegel"), tr("V-Spiegel"), tr("Beide")},
                     setI(&PS::videoEchoOrientation));
-            addDouble(tr("fShader-Farbwash"), p->preset.shader, 0.0, 1.0, 0.01, setD(&PS::shader));
-            addBool(tr("Textur-Wrap"), p->preset.texWrap, setB(&PS::texWrap));
-            addBool(tr("Darken Center"), p->preset.darkenCenter, setB(&PS::darkenCenter));
-            addBool(tr("Brighten"), p->preset.brighten, setB(&PS::brighten));
-            addBool(tr("Darken"), p->preset.darken, setB(&PS::darken));
-            addBool(tr("Solarize"), p->preset.solarize, setB(&PS::solarize));
-            addBool(tr("Invert"), p->preset.invert, setB(&PS::invert));
+            addDouble("shader", tr("fShader-Farbwash"), p->preset.shader, 0.0, 1.0, 0.01, setD(&PS::shader));
+            addBool("texWrap", tr("Textur-Wrap"), p->preset.texWrap, setB(&PS::texWrap));
+            addBool("darkenCenter", tr("Darken Center"), p->preset.darkenCenter, setB(&PS::darkenCenter));
+            addBool("brighten", tr("Brighten"), p->preset.brighten, setB(&PS::brighten));
+            addBool("darken", tr("Darken"), p->preset.darken, setB(&PS::darken));
+            addBool("solarize", tr("Solarize"), p->preset.solarize, setB(&PS::solarize));
+            addBool("invert", tr("Invert"), p->preset.invert, setB(&PS::invert));
 
             group(tr("Basis-Waveform"));
             {
@@ -4619,50 +4652,50 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             }
 
             group(tr("Motion (Warp-Mesh)"));
-            addDouble(tr("Zoom"), p->preset.zoom, 0.01, 10.0, 0.001, setD(&PS::zoom));
-            addDouble(tr("Zoom-Exponent"), p->preset.zoomExponent, 0.01, 10.0, 0.01, setD(&PS::zoomExponent));
-            addDouble(tr("Rotation"), p->preset.rot, -2.0, 2.0, 0.001, setD(&PS::rot));
-            addDouble(tr("Warp"), p->preset.warp, 0.0, 10.0, 0.01, setD(&PS::warp));
-            addDouble(tr("Warp-Anim-Speed"), p->preset.warpAnimSpeed, 0.01, 10.0, 0.01, setD(&PS::warpAnimSpeed));
-            addDouble(tr("Warp-Scale"), p->preset.warpScale, 0.01, 10.0, 0.01, setD(&PS::warpScale));
-            addDouble(tr("Zentrum X (cx)"), p->preset.cx, 0.0, 1.0, 0.001, setD(&PS::cx));
-            addDouble(tr("Zentrum Y (cy)"), p->preset.cy, 0.0, 1.0, 0.001, setD(&PS::cy));
-            addDouble(tr("Drift X (dx)"), p->preset.dx, -1.0, 1.0, 0.001, setD(&PS::dx));
-            addDouble(tr("Drift Y (dy)"), p->preset.dy, -1.0, 1.0, 0.001, setD(&PS::dy));
-            addDouble(tr("Stretch X (sx)"), p->preset.sx, 0.01, 10.0, 0.001, setD(&PS::sx));
-            addDouble(tr("Stretch Y (sy)"), p->preset.sy, 0.01, 10.0, 0.001, setD(&PS::sy));
+            addDouble("zoom", tr("Zoom"), p->preset.zoom, 0.01, 10.0, 0.001, setD(&PS::zoom));
+            addDouble("zoomExponent", tr("Zoom-Exponent"), p->preset.zoomExponent, 0.01, 10.0, 0.01, setD(&PS::zoomExponent));
+            addDouble("rot", tr("Rotation"), p->preset.rot, -2.0, 2.0, 0.001, setD(&PS::rot));
+            addDouble("warp", tr("Warp"), p->preset.warp, 0.0, 10.0, 0.01, setD(&PS::warp));
+            addDouble("warpAnimSpeed", tr("Warp-Anim-Speed"), p->preset.warpAnimSpeed, 0.01, 10.0, 0.01, setD(&PS::warpAnimSpeed));
+            addDouble("warpScale", tr("Warp-Scale"), p->preset.warpScale, 0.01, 10.0, 0.01, setD(&PS::warpScale));
+            addDouble("cx", tr("Zentrum X (cx)"), p->preset.cx, 0.0, 1.0, 0.001, setD(&PS::cx));
+            addDouble("cy", tr("Zentrum Y (cy)"), p->preset.cy, 0.0, 1.0, 0.001, setD(&PS::cy));
+            addDouble("dx", tr("Drift X (dx)"), p->preset.dx, -1.0, 1.0, 0.001, setD(&PS::dx));
+            addDouble("dy", tr("Drift Y (dy)"), p->preset.dy, -1.0, 1.0, 0.001, setD(&PS::dy));
+            addDouble("sx", tr("Stretch X (sx)"), p->preset.sx, 0.01, 10.0, 0.001, setD(&PS::sx));
+            addDouble("sy", tr("Stretch Y (sy)"), p->preset.sy, 0.01, 10.0, 0.001, setD(&PS::sy));
 
             group(tr("Borders"));
-            addDouble(tr("Aussen-Groesse"), p->preset.obSize, 0.0, 0.5, 0.001, setD(&PS::obSize));
-            addDouble(tr("Aussen R"), p->preset.obR, 0.0, 1.0, 0.01, setD(&PS::obR));
-            addDouble(tr("Aussen G"), p->preset.obG, 0.0, 1.0, 0.01, setD(&PS::obG));
-            addDouble(tr("Aussen B"), p->preset.obB, 0.0, 1.0, 0.01, setD(&PS::obB));
-            addDouble(tr("Aussen A"), p->preset.obA, 0.0, 1.0, 0.01, setD(&PS::obA));
-            addDouble(tr("Innen-Groesse"), p->preset.ibSize, 0.0, 0.5, 0.001, setD(&PS::ibSize));
-            addDouble(tr("Innen R"), p->preset.ibR, 0.0, 1.0, 0.01, setD(&PS::ibR));
-            addDouble(tr("Innen G"), p->preset.ibG, 0.0, 1.0, 0.01, setD(&PS::ibG));
-            addDouble(tr("Innen B"), p->preset.ibB, 0.0, 1.0, 0.01, setD(&PS::ibB));
-            addDouble(tr("Innen A"), p->preset.ibA, 0.0, 1.0, 0.01, setD(&PS::ibA));
+            addDouble("obSize", tr("Aussen-Groesse"), p->preset.obSize, 0.0, 0.5, 0.001, setD(&PS::obSize));
+            addDouble("obR", tr("Aussen R"), p->preset.obR, 0.0, 1.0, 0.01, setD(&PS::obR));
+            addDouble("obG", tr("Aussen G"), p->preset.obG, 0.0, 1.0, 0.01, setD(&PS::obG));
+            addDouble("obB", tr("Aussen B"), p->preset.obB, 0.0, 1.0, 0.01, setD(&PS::obB));
+            addDouble("obA", tr("Aussen A"), p->preset.obA, 0.0, 1.0, 0.01, setD(&PS::obA));
+            addDouble("ibSize", tr("Innen-Groesse"), p->preset.ibSize, 0.0, 0.5, 0.001, setD(&PS::ibSize));
+            addDouble("ibR", tr("Innen R"), p->preset.ibR, 0.0, 1.0, 0.01, setD(&PS::ibR));
+            addDouble("ibG", tr("Innen G"), p->preset.ibG, 0.0, 1.0, 0.01, setD(&PS::ibG));
+            addDouble("ibB", tr("Innen B"), p->preset.ibB, 0.0, 1.0, 0.01, setD(&PS::ibB));
+            addDouble("ibA", tr("Innen A"), p->preset.ibA, 0.0, 1.0, 0.01, setD(&PS::ibA));
 
             group(tr("Motion Vectors"));
-            addDouble(tr("Raster X (mv_x)"), p->preset.mvX, 0.0, 64.0, 0.1, setD(&PS::mvX));
-            addDouble(tr("Raster Y (mv_y)"), p->preset.mvY, 0.0, 48.0, 0.1, setD(&PS::mvY));
-            addDouble(tr("Versatz X (mv_dx)"), p->preset.mvDX, -1.0, 1.0, 0.001, setD(&PS::mvDX));
-            addDouble(tr("Versatz Y (mv_dy)"), p->preset.mvDY, -1.0, 1.0, 0.001, setD(&PS::mvDY));
-            addDouble(tr("Laenge (mv_l)"), p->preset.mvL, 0.0, 10.0, 0.01, setD(&PS::mvL));
-            addDouble(tr("Rot (mv_r)"), p->preset.mvR, 0.0, 1.0, 0.01, setD(&PS::mvR));
-            addDouble(tr("Gruen (mv_g)"), p->preset.mvG, 0.0, 1.0, 0.01, setD(&PS::mvG));
-            addDouble(tr("Blau (mv_b)"), p->preset.mvB, 0.0, 1.0, 0.01, setD(&PS::mvB));
-            addDouble(tr("Alpha (mv_a)"), p->preset.mvA, 0.0, 1.0, 0.01, setD(&PS::mvA));
+            addDouble("mvX", tr("Raster X (mv_x)"), p->preset.mvX, 0.0, 64.0, 0.1, setD(&PS::mvX));
+            addDouble("mvY", tr("Raster Y (mv_y)"), p->preset.mvY, 0.0, 48.0, 0.1, setD(&PS::mvY));
+            addDouble("mvDX", tr("Versatz X (mv_dx)"), p->preset.mvDX, -1.0, 1.0, 0.001, setD(&PS::mvDX));
+            addDouble("mvDY", tr("Versatz Y (mv_dy)"), p->preset.mvDY, -1.0, 1.0, 0.001, setD(&PS::mvDY));
+            addDouble("mvL", tr("Laenge (mv_l)"), p->preset.mvL, 0.0, 10.0, 0.01, setD(&PS::mvL));
+            addDouble("mvR", tr("Rot (mv_r)"), p->preset.mvR, 0.0, 1.0, 0.01, setD(&PS::mvR));
+            addDouble("mvG", tr("Gruen (mv_g)"), p->preset.mvG, 0.0, 1.0, 0.01, setD(&PS::mvG));
+            addDouble("mvB", tr("Blau (mv_b)"), p->preset.mvB, 0.0, 1.0, 0.01, setD(&PS::mvB));
+            addDouble("mvA", tr("Alpha (mv_a)"), p->preset.mvA, 0.0, 1.0, 0.01, setD(&PS::mvA));
 
             group(tr("Blur-Pyramide"));
-            addDouble(tr("Blur1 Min"), p->preset.blur1Min, 0.0, 1.0, 0.01, setD(&PS::blur1Min));
-            addDouble(tr("Blur1 Max"), p->preset.blur1Max, 0.0, 1.0, 0.01, setD(&PS::blur1Max));
-            addDouble(tr("Blur2 Min"), p->preset.blur2Min, 0.0, 1.0, 0.01, setD(&PS::blur2Min));
-            addDouble(tr("Blur2 Max"), p->preset.blur2Max, 0.0, 1.0, 0.01, setD(&PS::blur2Max));
-            addDouble(tr("Blur3 Min"), p->preset.blur3Min, 0.0, 1.0, 0.01, setD(&PS::blur3Min));
-            addDouble(tr("Blur3 Max"), p->preset.blur3Max, 0.0, 1.0, 0.01, setD(&PS::blur3Max));
-            addDouble(tr("Blur1 Edge-Darken"), p->preset.blur1EdgeDarken, 0.0, 1.0, 0.01, setD(&PS::blur1EdgeDarken));
+            addDouble("blur1Min", tr("Blur1 Min"), p->preset.blur1Min, 0.0, 1.0, 0.01, setD(&PS::blur1Min));
+            addDouble("blur1Max", tr("Blur1 Max"), p->preset.blur1Max, 0.0, 1.0, 0.01, setD(&PS::blur1Max));
+            addDouble("blur2Min", tr("Blur2 Min"), p->preset.blur2Min, 0.0, 1.0, 0.01, setD(&PS::blur2Min));
+            addDouble("blur2Max", tr("Blur2 Max"), p->preset.blur2Max, 0.0, 1.0, 0.01, setD(&PS::blur2Max));
+            addDouble("blur3Min", tr("Blur3 Min"), p->preset.blur3Min, 0.0, 1.0, 0.01, setD(&PS::blur3Min));
+            addDouble("blur3Max", tr("Blur3 Max"), p->preset.blur3Max, 0.0, 1.0, 0.01, setD(&PS::blur3Max));
+            addDouble("blur1EdgeDarken", tr("Blur1 Edge-Darken"), p->preset.blur1EdgeDarken, 0.0, 1.0, 0.01, setD(&PS::blur1EdgeDarken));
         }
     }
     else if (auto* p = std::get_if<TextParams>(&params))
@@ -4680,66 +4713,66 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             });
         });
         form->addRow(tr("Text (';' trennt)"), edit);
-        addText(tr("Font"), p->fontFace,
+        addText("fontFace", tr("Font"), p->fontFace,
                 [](ChainNode& n, std::string v) { std::get<TextParams>(n.params).fontFace = std::move(v); });
-        addInt(tr("Height (px)"), std::abs(p->fontHeight), 4, 400,
+        addInt("fontHeight", tr("Height (px)"), std::abs(p->fontHeight), 4, 400,
                [](ChainNode& n, int v) { std::get<TextParams>(n.params).fontHeight = -v; });
-        addInt(tr("Weight"), p->fontWeight, 100, 900,
+        addInt("fontWeight", tr("Weight"), p->fontWeight, 100, 900,
                [](ChainNode& n, int v) { std::get<TextParams>(n.params).fontWeight = v; });
-        addBool(tr("Italic"), p->italic,
+        addBool("italic", tr("Italic"), p->italic,
                 [](ChainNode& n, bool v) { std::get<TextParams>(n.params).italic = v; });
-        addBool(tr("Underline"), p->underline,
+        addBool("underline", tr("Underline"), p->underline,
                 [](ChainNode& n, bool v) { std::get<TextParams>(n.params).underline = v; });
-        addColor(tr("Color"), p->color,
+        addColor("color", tr("Color"), p->color,
                  [](ChainNode& n, uint32_t v) { std::get<TextParams>(n.params).color = v; });
-        addEnum(tr("Blend"), std::clamp(p->blend, 0, 2),
+        addEnum("blend", tr("Blend"), std::clamp(p->blend, 0, 2),
                 {tr("Replace"), tr("Additive"), tr("50/50")},
                 [](ChainNode& n, int v) { std::get<TextParams>(n.params).blend = v; });
-        addBool(tr("On beat"), p->onBeat,
+        addBool("onBeat", tr("On beat"), p->onBeat,
                 [](ChainNode& n, bool v) { std::get<TextParams>(n.params).onBeat = v; });
-        addInt(tr("Beat hold (frames)"), p->onBeatSpeed, 1, 600,
+        addInt("onBeatSpeed", tr("Beat hold (frames)"), p->onBeatSpeed, 1, 600,
                [](ChainNode& n, int v) { std::get<TextParams>(n.params).onBeatSpeed = v; });
-        addInt(tr("Word time (frames)"), p->normSpeed, 1, 600,
+        addInt("normSpeed", tr("Word time (frames)"), p->normSpeed, 1, 600,
                [](ChainNode& n, int v) { std::get<TextParams>(n.params).normSpeed = v; });
-        addBool(tr("Insert blank"), p->insertBlank,
+        addBool("insertBlank", tr("Insert blank"), p->insertBlank,
                 [](ChainNode& n, bool v) { std::get<TextParams>(n.params).insertBlank = v; });
-        addBool(tr("Random position"), p->randomPos,
+        addBool("randomPos", tr("Random position"), p->randomPos,
                 [](ChainNode& n, bool v) { std::get<TextParams>(n.params).randomPos = v; });
-        addBool(tr("Random word"), p->randomWord,
+        addBool("randomWord", tr("Random word"), p->randomWord,
                 [](ChainNode& n, bool v) { std::get<TextParams>(n.params).randomWord = v; });
-        addEnum(tr("H-Align"), std::clamp(p->hAlign, 0, 2),
+        addEnum("hAlign", tr("H-Align"), std::clamp(p->hAlign, 0, 2),
                 {tr("Left"), tr("Center"), tr("Right")},
                 [](ChainNode& n, int v) { std::get<TextParams>(n.params).hAlign = v; });
-        addEnum(tr("V-Align"), std::clamp(p->vAlign, 0, 2),
+        addEnum("vAlign", tr("V-Align"), std::clamp(p->vAlign, 0, 2),
                 {tr("Top"), tr("Center"), tr("Bottom")},
                 [](ChainNode& n, int v) { std::get<TextParams>(n.params).vAlign = v; });
-        addInt(tr("X-Shift (%)"), p->xShift, -100, 100,
+        addInt("xShift", tr("X-Shift (%)"), p->xShift, -100, 100,
                [](ChainNode& n, int v) { std::get<TextParams>(n.params).xShift = v; });
-        addInt(tr("Y-Shift (%)"), p->yShift, -100, 100,
+        addInt("yShift", tr("Y-Shift (%)"), p->yShift, -100, 100,
                [](ChainNode& n, int v) { std::get<TextParams>(n.params).yShift = v; });
-        addBool(tr("Outline"), p->outline,
+        addBool("outline", tr("Outline"), p->outline,
                 [](ChainNode& n, bool v) { std::get<TextParams>(n.params).outline = v; });
-        addColor(tr("Outline color"), p->outlineColor,
+        addColor("outlineColor", tr("Outline color"), p->outlineColor,
                  [](ChainNode& n, uint32_t v) { std::get<TextParams>(n.params).outlineColor = v; });
-        addInt(tr("Outline size"), p->outlineSize, 1, 32,
+        addInt("outlineSize", tr("Outline size"), p->outlineSize, 1, 32,
                [](ChainNode& n, int v) { std::get<TextParams>(n.params).outlineSize = v; });
-        addBool(tr("Shadow"), p->shadow,
+        addBool("shadow", tr("Shadow"), p->shadow,
                 [](ChainNode& n, bool v) { std::get<TextParams>(n.params).shadow = v; });
     }
     else if (auto* p = std::get_if<AviParams>(&params))
     {
-        addText(tr("File"), p->filename,
+        addText("filename", tr("File"), p->filename,
                 [](ChainNode& n, std::string v) { std::get<AviParams>(n.params).filename = std::move(v); });
-        addText(tr("Resolved path"), p->resolvedPath,
+        addText("resolvedPath", tr("Resolved path"), p->resolvedPath,
                 [](ChainNode& n, std::string v) { std::get<AviParams>(n.params).resolvedPath = std::move(v); });
-        addEnum(tr("Blend"), std::clamp(p->blend, 0, 2),
+        addEnum("blend", tr("Blend"), std::clamp(p->blend, 0, 2),
                 {tr("Replace"), tr("Additive"), tr("50/50")},
                 [](ChainNode& n, int v) { std::get<AviParams>(n.params).blend = v; });
-        addBool(tr("Beat adaptive"), p->adapt,
+        addBool("adapt", tr("Beat adaptive"), p->adapt,
                 [](ChainNode& n, bool v) { std::get<AviParams>(n.params).adapt = v; });
-        addInt(tr("Persist (frames)"), p->persist, 0, 32,
+        addInt("persist", tr("Persist (frames)"), p->persist, 0, 32,
                [](ChainNode& n, int v) { std::get<AviParams>(n.params).persist = v; });
-        addInt(tr("Frame time (ms)"), p->speedMs, 0, 1000,
+        addInt("speedMs", tr("Frame time (ms)"), p->speedMs, 0, 1000,
                [](ChainNode& n, int v) { std::get<AviParams>(n.params).speedMs = v; });
     }
     else if (auto* p = std::get_if<CommentParams>(&params))

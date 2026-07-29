@@ -95,7 +95,7 @@
         "type": "fractalZoomer",
         "enabled": true,
         "name": "Fractal Zoomer",
-        "feedback": 1.0
+        "feedback": 0.0
       }
     ],
     "clearEveryFrame": false

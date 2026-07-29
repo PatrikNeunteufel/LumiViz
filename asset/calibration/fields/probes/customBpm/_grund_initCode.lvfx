@@ -92,22 +92,16 @@
         "colorCycleFrames": 0
       },
       {
-        "type": "hostgroup",
+        "type": "customBpm",
         "enabled": true,
-        "name": "Host Group",
-        "children": [
-          {
-            "type": "superScope",
-            "enabled": true,
-            "name": "Kind",
-            "pointCode": "x=cos(i*6.28)*0.5; y=sin(i*6.28)*0.5; red=0.2; green=1; blue=0.2",
-            "pointCount": 128,
-            "colors": [
-              16777215
-            ]
-          }
-        ],
-        "curveIn": 1
+        "name": "Custom BPM",
+        "skip": true
+      },
+      {
+        "type": "onBeatClear",
+        "enabled": true,
+        "name": "Zeuge",
+        "everyNBeats": 1
       }
     ],
     "clearEveryFrame": false

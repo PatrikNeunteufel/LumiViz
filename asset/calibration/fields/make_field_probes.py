@@ -68,6 +68,49 @@ OUT = HIER / "probes"
 # Felder, deren Gegenwert sich NICHT ableiten laesst — hier von Hand, mit
 # Begruendung. Leerer Wert = bewusst uebersprungen (nicht sinnvoll pruefbar).
 HANDWERK: dict[str, object] = {
+    # Timescope: der Gegenwert 0 war Pixel fuer Pixel dieselbe Betriebsart wie
+    # die Vorgabe — die Sonde meldete STUMM, obwohl das Feld wirkt. Gemessen
+    # (S56): blend 0 gegen Vorgabe 0,0000 · blend 1 0,0249 · blend 2 0,1815.
+    #
+    # Der Grund ist NICHT, dass die Struct-Vorgabe 3 ("folge dem Set Render
+    # Mode") auf dessen Vorgabe 0 hinauslaeuft — das war meine erste, ungenaue
+    # Erklaerung. Der Deserialisierer traegt fuer dieses Feld eine EIGENE
+    # Vorgabe, naemlich 0; eine geladene Sonde bekommt also direkt 0. Eine von
+    # 20 solchen Doppelpflegen, seit S56 bewacht (`test_FieldInventory.cpp`,
+    # "die Vorgaben sind nur EINMAL gepflegt") und in `Offene_Punkte.md §1d`
+    # als Arbeitsliste gefuehrt.
+    #
+    # Genommen wird 2 (50/50), weil es als einziges auch dann nicht mit der
+    # Vorgabe zusammenfaellt, wenn spaeter ein Set Render Mode mit anderem
+    # `lineBlend` in den Untergrund geraet.
+    "timescope.blend": 2,
+    # Der Text-Knoten schaltet das Wort nach `normSpeed` Frames weiter. Der
+    # Regelwert (Bereich 1..600 -> 600) wechselt in 181 Frames NIE, und die
+    # Vorgabe 15 landet nach 12 Wechseln wieder auf Wort 0 von vieren — beide
+    # zeigen dasselbe Wort. 60 gibt drei Wechsel und damit Wort 3 (S56).
+    "text.normSpeed": 60,
+    # `feedback` heisst "trail persistence 0..1", der Shader liest es aber nur
+    # als SCHALTER (`params.feedback > 0.01f ? 2 : 0`,
+    # MultiEffectVisualizer.cpp:10506). Der Regelwert 1,0 ist damit dieselbe
+    # Betriebsart wie die Vorgabe 0,5. Nur 0 wechselt sie. Dass das Feld eine
+    # Staerke verspricht und einen Schalter liefert, steht als Beobachtung in
+    # `Offene_Punkte.md` — hier geht es nur um einen wirksamen Gegenwert.
+    "fractalZoomer.feedback": 0.0,
+    # Kleinian faerbt ueber `fract(Spiegelungszahl * colorScale)`, und die
+    # Spiegelungszahl ist eine GANZE Zahl: jeder ganzzahlige Wert ergibt exakt
+    # 0, also eine einfarbige Scheibe. Die Regel waehlt im Bereich 0,01..8,0 den
+    # groessten Abstand zur Vorgabe — und landete damit auf 8,0, dem naechsten
+    # ganzzahligen Wert. Zwei gleiche Bilder, Urteil „stumm" (S56).
+    "kleinian.colorScale": 0.45,
+    # ---------------------------------------------------------------- S56
+    # Interferences: `rotation` ist eine GANZE Umdrehung in 0..255 — der
+    # Regelwert 255 ist dieselbe Lage wie die Vorgabe 0.
+    "interferences.rotation": 64,
+    # Die Inversionsschleife bricht ab, sobald der Punkt einmal AUSSERHALB des
+    # Inversionskreises liegt (`else break`) — sie laeuft also nur wenige Runden,
+    # und die Obergrenze 200 (der Regelwert bei Vorgabe 30) aendert nichts mehr.
+    # Ein Gegenwert muss die Kachelung ABSCHNEIDEN, nicht verlaengern.
+    "kleinian.iterations": 1,
     # Movement: der Ausdruck IST das Feld. `d=d*0.5` zieht das Bild zur Mitte —
     # auf dem Untergrund an den Farbfeldern sofort sichtbar.
     "movement.code": "d=d*0.5",
@@ -86,6 +129,18 @@ HANDWERK: dict[str, object] = {
     **{f"dynamicDistanceModifier.{f}": "reg00=1.4"
        for f in ("initCode", "frameCode", "beatCode")},
     **{f"triangle.{f}": "reg00=1" for f in ("initCode", "frameCode", "beatCode")},
+    "texerII.initCode": "reg00=0.1",
+    # Blend-Regler, deren Regelwert (groesster Abstand) auf eine Betriebsart
+    # faellt, die auf unserem Untergrund wie die Vorgabe aussieht. 50/50 ist
+    # der Modus, der sich immer sichtbar unterscheidet.
+    "starfield.blend": 2,
+    "bufferSave.blend": 2,
+    "texer.blend": 2,
+    "dotGrid.blend": 2,
+    # Movement: die beiden eingebauten Umbauten sind 1 ("slight fuzzify",
+    # kaum sichtbar) und 7 ("blocky partial out", deutlich). Der Regelwert
+    # nimmt 1 und verschwindet im Rauschen.
+    "movement.builtinRemap": 7,
     # Global Variables setzt preset-weite Register; sichtbar wird das erst
     # an einem Knoten dahinter, der sie liest (s. NACHFOLGER).
     **{f"jherikoGlobal.{f}": "reg00=0.9"
@@ -177,6 +232,22 @@ HANDWERK: dict[str, object] = {
 TRI_PUNKTE = ("x1=-0.6;y1=-0.5; x2=0.6;y2=-0.5; x3=0;y3=0.6; "
               "green=0.6;blue=0")
 
+# UNTERGRUND JE TYP: wer je Frame nur einen Bruchteil des Bildes zeichnet,
+# braucht einen Untergrund, der nur EINMAL loescht.
+#
+# Timescope zeichnet eine EIN PIXEL breite Spalte je Frame und schiebt sie um
+# eins weiter (`rt.timescopeX`). Der Untergrund malt sie im Folgeframe wieder
+# zu — im Schlussbild steht damit genau EINE Spalte von 320. Alle acht Felder
+# lagen deshalb unter der SCHWACH-Schwelle (MAE 0,0004..0,0009), obwohl sie
+# sichtbar wirken: die Sonde mass 1/320 ihrer Wirkung (Befund S55).
+#
+# Mit `onlyFirst` sammeln sich die Spalten ueber die ganze Lauflaenge. Die
+# Balken und die Diagonale werden weiter je Frame gezeichnet — sie bleiben also
+# als Orientierung stehen und schneiden nur ihre eigenen Zeilen aus.
+UNTERGRUND_JE_TYP: dict[str, bool] = {
+    "timescope": True,
+}
+
 # GRUNDKONFIGURATION: Felder, die nur in Gesellschaft wirken koennen.
 #
 # `mirror.slower` steuert die Schrittweite einer RAMPE — ohne `smooth` gibt es
@@ -262,12 +333,21 @@ GRUNDKONFIG: dict[str, dict] = {
     "text.outlineColor": {"text": "LumiViz", "outline": True},
     "text.outlineSize": {"text": "LumiViz", "outline": True},
     "text.underline": {"text": "LumiViz", "fontHeight": 40},
-    "text.xShift": {"text": "LumiViz", "shiftSpeed": 8},
-    "text.yShift": {"text": "LumiViz", "shiftSpeed": 8},
-    "text.onBeatSpeed": {"text": "LumiViz", "onBeat": True},
-    "text.normSpeed": {"text": "LumiViz", "normalizeSize": True},
-    "text.randomWord": {"text": "Lumi Viz Test Wort"},
-    "text.onBeat": {"text": "LumiViz", "onBeatSpeed": 20},
+    # `shiftSpeed` und `normalizeSize` gibt es bei diesem Knoten NICHT — die
+    # drei Eintraege standen bis S56 mit einem erfundenen Nachbarn da und waren
+    # damit wirkungslos (Befund des Tabellen-Waechters oben). Und wo ein Wort
+    # gegen ein anderes getauscht wird, braucht es MEHRERE: mit nur "LumiViz"
+    # zeigt jeder Wortwechsel wieder dasselbe Wort.
+    #
+    # Der Trenner ist ein SEMIKOLON (`r_text.cpp`, s. `TextParams::text`) —
+    # "Lumi;Viz;Test;Wort" ist EIN Wort mit Leerzeichen, und die vier
+    # Wortwechsel-Felder blieben damit zu Recht stumm (S56, zweiter Anlauf).
+    "text.xShift": {"text": "LumiViz"},
+    "text.yShift": {"text": "LumiViz"},
+    "text.onBeatSpeed": {"text": "Lumi;Viz;Test;Wort", "onBeat": True},
+    "text.normSpeed": {"text": "Lumi;Viz;Test;Wort"},
+    "text.randomWord": {"text": "Lumi;Viz;Test;Wort"},
+    "text.onBeat": {"text": "Lumi;Viz;Test;Wort", "onBeatSpeed": 20},
     # Ohne Video zeichnet der AVI-Knoten nichts, dann kann kein Regler wirken.
     **{f"avi.{f}": {"filename": TESTVIDEO, "resolvedPath": TESTVIDEO}
        for f in ("adapt", "blend", "speedMs")},
@@ -285,6 +365,127 @@ GRUNDKONFIG: dict[str, dict] = {
     # Vertrag `>= 1`, Panel-Bereich 1..200). Die Sonde stand damit auf
     # demselben Fenster wie ihr Vergleichsbild und mass im Beat-Frame nur die
     # BEAT-Fader — dreimal „STUMM", das keiner war (Befund S55).
+    # Bump: `depth2` und `durationFrames` beschreiben die Beat-RAMPE — ohne
+    # `onBeat` gibt es sie nicht. Und ohne bewegte Lichtquelle bleibt das Bild
+    # ueber die Frames gleich, dann zeigt auch die Rampe nichts. Beides stand
+    # bis S56 nur deshalb nicht hier, weil der Struct einen Demo-Frame-Code als
+    # Vorgabe trug; der ist mit der SSOT-Umstellung entfallen (§1d), und die
+    # Sonde muss ihn jetzt selbst mitbringen.
+    **{f"bump.{f}": {"onBeat": True,
+                     "frameCode": "x=0.5+cos(t)*0.3; y=0.5+sin(t)*0.3; t=t+0.1;"}
+       for f in ("depth2", "durationFrames")},
+    # ---------------------------------------------------------------- S56
+    # Effect List: der Container zeichnet nichts selbst, seine Regler bestimmen
+    # nur, WIE das Ergebnis der Kinder ins Bild kommt. Jeder von ihnen setzt
+    # eine Betriebsart voraus.
+    "list.inAdjustAlpha": {"blendIn": 10},    # 10 = Adjustable
+    "list.outAdjustAlpha": {"blendOut": 10},
+    "list.bufferIn": {"blendIn": 12},         # 12 = Buffer
+    "list.bufferInInvert": {"blendIn": 12},
+    "list.bufferOut": {"blendOut": 12},
+    "list.bufferOutInvert": {"blendOut": 12},
+    "list.onBeatFrames": {"onBeatRender": True},
+    # Die EEL-Slots der Liste laufen nur mit `useCode`; der Frame-Slot schaltet
+    # ueber `enabled`, der Init-Slot kann nur ueber eine geteilte Variable
+    # wirken (dieselbe Bauart wie Triangle/DDM).
+    "list.useCode": {"frameCode": "enabled=0"},
+    "list.frameCode": {"useCode": True},
+    "list.initCode": {"useCode": True, "frameCode": "enabled=reg00"},
+    # Interferences: die `*2`-Werte sind die BEAT-Ziele, `speed` die Dauer des
+    # Uebergangs dorthin — ohne `onBeat` gibt es den Uebergang nicht.
+    **{f"interferences.{f}": {"onBeat": True}
+       for f in ("alpha2", "distance2", "rotationInc2", "speed")},
+    # Color Clip: `distance` ist der Trefferradius des Modus 3 ("near"); die
+    # Modi 1/2 vergleichen nur gegen die Schwelle.
+    **{f"colorClip.{f}": {"mode": 3}
+       for f in ("distance", "initCode", "frameCode", "beatCode")},
+    # Brightness: ohne eine Aenderung an den Kanaelen aendert der Knoten nichts,
+    # dann kann auch die Ausnahme nichts ausnehmen.
+    "brightness.exclude": {"red": 2000},
+    "brightness.color": {"exclude": True, "red": 2000},
+    "brightness.distance": {"exclude": True, "red": 2000},
+    # Convolution: mit dem Identitaets-Kern (Vorgabe) bleibt das Bild gleich —
+    # Betrag, Randart und Doppelanwendung koennen dann nichts zeigen.
+    **{f"convolution.{f}": {"kernel": [0]*16 + [0, -1, 0] + [0]*4 + [-1, 4, -1] + [0]*4 + [0, -1, 0] + [0]*16}
+       for f in ("absolute", "twoPass", "edgeMode")},
+    # Water Bump setzt den Tropfen an eine ZUFAELLIGE Stelle, solange
+    # `randomDrop` an ist — die feste Position wird dann gar nicht gelesen.
+    "waterBump.dropX": {"randomDrop": False},
+    "waterBump.dropY": {"randomDrop": False},
+    # Roto Blitter: 31 ist bei Zoom und Drehung der neutrale Wert. Ein
+    # Beat-Sprung auf denselben Wert ist keiner, und eine Richtungsumkehr
+    # braucht eine Richtung.
+    "rotoBlitter.zoomScale2": {"beatZoomJump": True},
+    "rotoBlitter.beatZoomJump": {"zoomScale2": 12},
+    "rotoBlitter.beatReverse": {"rotDir": 45},
+    "rotoBlitter.beatReverseSpeed": {"rotDir": 45, "beatReverse": True},
+    # Starfield / Moving Particle / Mosaic: dieselbe Bauart — ein Beat-Zielwert
+    # ohne eingeschalteten Beat-Sprung, und ein Beat-Sprung auf denselben Wert.
+    "starfield.beatSpeed": {"onBeat": True},
+    "starfield.durationFrames": {"onBeat": True, "beatSpeed": 24.0},
+    "movingParticle.size2": {"onBeatSize": True},
+    "movingParticle.onBeatSize": {"size2": 24},
+    # Set Render Mode / Buffer Save / Color Map: die Adjustable-Alpha wirkt nur
+    # in der Adjustable-Betriebsart.
+    "setRenderMode.adjustAlpha": {"lineBlend": 10},
+    "setRenderMode.overrideBlend": {"lineBlend": 9},   # 9 = XOR, deutlich
+    "bufferSave.adjustAlpha": {"blend": 10},
+    "colorMap.adjustBlend": {"blendMode": 10},
+    # Farbverlauf-Stuetzstellen: Position und Farbe sind ein PAAR. Eine Liste
+    # ohne die andere laesst der Knoten fallen.
+    "colorMap.stopPos": {"stopColor": [0xFF0000, 0x0000FF]},
+    "colorMap.stopColor": {"stopPos": [0, 255]},
+    # Host-Gruppe: dito Adjustable.
+    "hostgroup.outAdjustAlpha": {"blendOut": 10},
+    # SuperScope: die Farbtafel wird nur in der Tabellen-Betriebsart gelesen —
+    # bei `colorBlend = 0` (Vorgabe) gewinnt der Farbverlauf.
+    "superScope.colors": {"pointCode": "x=cos(i*6.28)*0.7; y=sin(i*6.28)*0.7",
+                          "colorBlend": 1},
+    "superScope.colorCycleFrames": {"pointCode": "x=cos(i*6.28)*0.7; y=sin(i*6.28)*0.7",
+                                    "colorBlend": 1,
+                                    "colors": [0xFF0000, 0x00FF00]},
+    # SuperScope 3D zeichnet ohne Punkt-Code nichts.
+    **{f"superScope3d.{f}": {"pointCode": "x=cos(i*6.28)*0.6; y=sin(i*6.28)*0.6; "
+                                          "z=0; red=1; green=1; blue=1"}
+       for f in ("pointCount", "audioChannel", "spectrumSource")},
+    # Texer II: jedes andere Feld braucht ein Bild und Punkte, sonst zeichnet
+    # der Knoten nichts.
+    **{f"texerII.{f}": {"imageData": TESTBILD_B64,
+                        "pointCode": "x=(i*2)-1; y=sin(i*6.28)*0.5; "
+                                     "sizex=2; sizey=2; red=1; green=0.5; blue=0.2"}
+       for f in ("colorFiltering", "resizing", "wrapAround")},
+    "texerII.imageData": {"pointCode": "x=(i*2)-1; y=sin(i*6.28)*0.5"},
+    "texerII.pointCode": {"imageData": TESTBILD_B64},
+    # Texer II zeichnet je Punkt ein Sprite — ohne Punkt-Code keine Punkte.
+    # Der Punkt-Code steht seit S56 nicht mehr als Vorgabe im Struct (§1d),
+    # also bringt die Sonde ihn selbst mit.
+    #
+    # Und er braucht ein `n`: anders als SuperScope hat Texer II KEIN
+    # `pointCount`-Feld — die Zahl der Sprites kommt allein aus dem Init-Slot.
+    # Ohne ihn laeuft der Punkt-Code null mal. Gemessen (S56): der Knoten mit
+    # Bild und Punkt-Code, aber ohne `n`, ist Pixel fuer Pixel dasselbe Bild wie
+    # GAR KEIN Knoten (MAE 0,0000) — deshalb waren alle fuenf Felder stumm.
+    **{f"texerII.{f}": {"imageData": TESTBILD_B64,
+                        "initCode": "n=48",
+                        "pointCode": "x=(i*2)-1; y=sin(i*6.28)*0.5; "
+                                     "sizex=2; sizey=2; "
+                                     "red=1; green=0.5; blue=0.2"}
+       for f in ("blend", "colorFiltering", "resizing", "wrapAround",
+                 "frameCode", "beatCode")},
+    # Der Init-Slot selbst wird geprueft — sein `n` darf dann nicht schon im
+    # Grund stehen; der Frame-Slot bringt die Punkte mit.
+    "texerII.initCode": {"imageData": TESTBILD_B64,
+                         "frameCode": "n=48",
+                         "pointCode": "x=(i*2)-1; y=sin(i*6.28)*0.5; "
+                                      "sizex=2; sizey=2; red=reg00"},
+    "texerII.imageData": {"initCode": "n=48",
+                          "pointCode": "x=(i*2)-1; y=sin(i*6.28)*0.5; "
+                                       "sizex=2; sizey=2"},
+    "texerII.pointCode": {"imageData": TESTBILD_B64, "initCode": "n=48"},
+    # Blitter Feedback: `scale2` ist der BEAT-Zielwert, `onBeat` der Sprung
+    # dorthin — ein Sprung auf denselben Wert ist keiner.
+    "blitterFeedback.scale2": {"onBeat": True},
+    "blitterFeedback.onBeat": {"scale2": 120},
     # Interleave springt nur auf Beat auf x2/y2.
     "interleave.x2": {"onBeat": True},
     "interleave.y2": {"onBeat": True},
@@ -296,27 +497,45 @@ GRUNDKONFIG: dict[str, dict] = {
     "camera3d.fogStart": {"fogEnd": 8.0},
     "camera3d.fogColor": {"fogStart": 2.0, "fogEnd": 5.0},
     # --- aus dem ersten Vollauf (S54) ---
-    # Julia-Saat zaehlt nur in den Julia-artigen Typen; bei Mandelbrot (Vorgabe)
-    # liest der Shader sie nicht.
-    "fractal2D.juliaX": {"type": 1}, "fractal2D.juliaY": {"type": 1},
-    "fractalZoomer.juliaX": {"type": 1}, "fractalZoomer.juliaY": {"type": 1},
-    "fractal3D.juliaX": {"type": 1}, "fractal3D.juliaY": {"type": 1},
-    "fractal3D.juliaZ": {"type": 1}, "fractal3D.juliaW": {"type": 1},
+    # Julia-Saat und Formbeiwerte zaehlen nur in den Typen, die sie lesen; bei
+    # der Vorgabe (Mandelbrot bzw. Mandelbulb) liest der Shader sie nicht.
+    #
+    # Der Schluessel heisst `ftype`, NICHT `type` — `type` ist im Knoten-JSON
+    # der KNOTENTYP. Bis S56 stand hier `{"type": 1}`, und das machte aus dem
+    # Fractal-Knoten den unbekannten Typ "1": der Deserialisierer baut daraus
+    # bewusst einen Passthrough, beide Bilder des Paares blieben leer, und acht
+    # Sonden meldeten STUMM. Genau die Falle, vor der der Kommentar bei
+    # NACHFOLGER warnt — jetzt bewacht (s. pruefe_tabellen unten).
+    "fractal2D.juliaX": {"ftype": 1},     # 1 = Julia
+    "fractal2D.juliaY": {"ftype": 1},
+    "fractal2D.power": {"ftype": 4},      # 4 = Multibrot (Exponent)
+    "fractalZoomer.juliaX": {"ftype": 1},
+    "fractalZoomer.juliaY": {"ftype": 1},
+    "fractal3D.juliaX": {"ftype": 3},     # 3 = Quaternion-Julia, nicht 1
+    "fractal3D.juliaY": {"ftype": 3},
+    "fractal3D.juliaZ": {"ftype": 3},
+    "fractal3D.juliaW": {"ftype": 3},
+    "fractal3D.scale": {"ftype": 1},      # 1 = Mandelbox
+    "fractal3D.fold": {"ftype": 1},
     # Vignetten-Staerke ohne eingeschaltete Vignette.
     "bloom.vignetteStrength": {"vignette": True},
     # SuperScope zeichnet ohne Punkt-Code nichts — Farbe, Punktgroesse und
     # Zeichenart koennen dann nichts zeigen.
-    "superScope.colors": {"pointCode": "x=cos(i*6.28)*0.7; y=sin(i*6.28)*0.7"},
+    # `colorBlend = 0` (Vorgabe) faerbt ueber den VERLAUF — die Farbtafel
+    # wird dann gar nicht gelesen, und Tafel wie Umlauf sind zu Recht
+    # stumm. Erst Betriebsart 1 (Tabelle) macht sie messbar (S56).
+    "superScope.colors": {"pointCode": "x=cos(i*6.28)*0.7; y=sin(i*6.28)*0.7", "colorBlend": 1},
     "superScope.dotSize": {"pointCode": "x=cos(i*6.28)*0.7; y=sin(i*6.28)*0.7",
                            "renderMode": 0},
-    "superScope.renderMode": {"pointCode": "x=cos(i*6.28)*0.7; y=sin(i*6.28)*0.7"},
+    "superScope.renderMode": {"pointCode": "x=cos(i*6.28)*0.7; y=sin(i*6.28)*0.7", "lineWidth": 8},
     "superScope.colorCycleFrames": {"pointCode": "x=cos(i*6.28)*0.7; y=sin(i*6.28)*0.7",
+                                    "colorBlend": 1,
                                     "colors": [0xFF0000, 0x00FF00]},
     "superScope.colorBlend": {"pointCode": "x=cos(i*6.28)*0.7; y=sin(i*6.28)*0.7"},
     # Bild-Knoten: JEDES andere Feld braucht das Bild, sonst zeichnet der
     # Knoten nichts und der Regler kann nichts zeigen.
     **{f"{t}.{f}": {"imageData": TESTBILD_B64}
-       for t in ("picture", "pictureII", "texer", "texerII")
+       for t in ("picture", "pictureII", "texer")
        for f in ("blend", "keepAspect", "x", "y", "ratio", "adjustBlend",
                  "onBeatSizeChange", "onBeatSize", "colors", "particles",
                  "initCode", "frameCode", "beatCode", "pointCode", "sizex",
@@ -325,6 +544,33 @@ GRUNDKONFIG: dict[str, dict] = {
     "colorfade.beatFaderR": {"onBeatFrames": 60},
     "colorfade.beatFaderG": {"onBeatFrames": 60},
     "colorfade.beatFaderB": {"onBeatFrames": 60},
+    # Ein BEAT-Zielwert, der dem Normalwert gleicht, ist kein Ziel — und ein
+    # Uebergang dorthin nicht sichtbar. Dieselbe Bauart bei vier Knoten (S56).
+    "interleave.onBeat": {"x2": 8, "y2": 8},
+    "interleave.beatDuration": {"onBeat": True, "x2": 8, "y2": 8},
+    "mosaic.durationFrames": {"onBeat": True, "quality2": 4},
+    "interferences.alpha2": {"onBeat": True, "distance2": 40},
+    "interferences.distance2": {"onBeat": True, "alpha2": 250},
+    # Mirror: eine RAMPE braucht ein wechselndes Ziel, und die Zufallswahl
+    # braucht mehrere Achsen zur Auswahl (`mode` ist ein Bitfeld).
+    "mirror.smooth": {"onBeatRandom": True, "mode": 15},
+    "mirror.onBeatRandom": {"mode": 15},
+    # Custom BPM: die drei Betriebsarten schliessen einander aus, und jede
+    # liest NUR ihren eigenen Wert (r_bpm.cpp, Befund S52).
+    "customBpm.arbitraryMs": {"arbitrary": True},
+    "customBpm.skipCount": {"skip": True},
+    **{f"customBpm.{f}": {"skip": True}
+       for f in ("initCode", "frameCode", "beatCode")},
+    # Kanal- und Quellenfelder wirken nur, wenn das Skript den Audiowert
+    # ueberhaupt LIEST — mein erster Punkt-Code fuer SuperScope 3D benutzte `v`
+    # gar nicht, damit war die Quelle gleichgueltig (S56).
+    **{f"superScope3d.{f}": {"pointCode": "x=cos(i*6.28)*0.6; y=v*0.9; "
+                                          "z=v*0.5; red=1; green=1; blue=1"}
+       for f in ("audioChannel", "spectrumSource")},
+    # Osc Ring liest bei `source = 0` die WELLENFORM; unser Testsignal ist dort
+    # in beiden Kanaelen gleich. Ueber das Spektrum ist der Kanal messbar
+    # (`--stereo-spektrum`, s. Runner).
+    "oscRing.channel": {"source": 1},
 }
 
 
@@ -344,6 +590,18 @@ NICHT_PRUEFBAR: dict[str, str] = {
                     "gezeichnet und SOLL nichts bewirken.",
     "importNotes.text": "Reines Notizfeld (was der Import nicht abbilden "
                         "konnte) — es wird nirgends gezeichnet.",
+    "customBpm.arbitraryMs":
+        "Der Frei-Takt haengt an der WANDUHR (`steadyNowMs`), nicht am Frame. "
+        "Ein Sondenlauf rendert 181 Frames in Millisekunden — in dieser Zeit "
+        "loest weder die Vorgabe 500 ms noch der Gegenwert 5000 ms einen Takt "
+        "aus, beide Bilder sind zwangslaeufig gleich. Messbar waere das nur "
+        "mit einer Uhr, die der Sondenlauf stellt.",
+    **{f"hostgroup.{f}":
+       "Ein- und Ausgangskurve des Gruppenwechsels. Implementiert ist bisher "
+       "NUR linear (der Header sagt es: '0 = linear, weitere Kurven mit HG2') "
+       "— es gibt also keinen zweiten Wert, der etwas anderes taete. Und "
+       "gemessen wird ein einzelner Knoten, nicht ein Gruppenwechsel."
+       for f in ("curveIn", "curveOut")},
     **{f"{t}.filename":
        "Herkunftsnotiz aus dem Preset. Das Bild selbst traegt `imageData`, "
        "geladen wird nie von diesem Pfad — das Feld kann also nichts bewirken."
@@ -416,9 +674,21 @@ BEWEGT = L.node("superScope", "Bewegt",
 # Vorlauf nur von den beiden echten Verzoegerungsspeichern. Blitter Feedback
 # (1/8 stumm), Buffer Save (2/7) und Buffer Blend (2/6) verrechnen im SELBEN
 # Frame und zeigen ihren Unterschied auch auf statischem Untergrund.
+# Ein gefuellter Puffer: die Slot- und Puffer-Regler von Effect List und Buffer
+# Blend waehlen zwischen Speicherplaetzen. Sind alle leer, mischen sie samt und
+# sonders gegen Schwarz, und die Wahl ist gleichgueltig (S56).
+# Der Puffer muss etwas ANDERES enthalten als das aktuelle Bild — sonst waehlt
+# ein Slot-Regler zwischen zwei gleichen Bildern (S56). Also: invertieren,
+# speichern, zurueck-invertieren.
+_PUFFER_FUELLEN = [L.node("invert", "kurz invertiert"),
+                   L.node("bufferSave", "Puffer 0 fuellen", slot=0, dir=0),
+                   L.node("invert", "und zurueck")]
+
 VORLAUF: dict[str, list[dict]] = {
     "videoDelay": [BEWEGT],
     "multiDelay": [BEWEGT],
+    "list": _PUFFER_FUELLEN,
+    "bufferBlend": _PUFFER_FUELLEN,
 }
 
 # KINDER: Container zeichnen selbst nichts. Ihre Blend- und Pufferparameter
@@ -534,7 +804,49 @@ def main() -> int:
         print("FEHLER: unbekannte Typschluessel in NACHFOLGER: " + ", ".join(falsch))
         return 2
 
+    # DIESELBE Falle eine Ebene tiefer: ein Feldname, den es nicht gibt, landet
+    # als zusaetzlicher JSON-Schluessel im Knoten und wird beim Laden schlicht
+    # ignoriert — die Sonde misst dann zwei gleiche Bilder und meldet STUMM.
+    # Bis S56 stand in GRUNDKONFIG `{"type": 1}` fuer die Julia-Saat; `type` ist
+    # im Knoten-JSON aber der KNOTENTYP (der Fraktal-Typ heisst `ftype`). Der
+    # Eintrag machte aus dem Knoten den unbekannten Typ "1" -> Passthrough ->
+    # acht Sonden stumm, zwei Vollaufe lang.
+    # Getrennt nach SCHADENSWIRKUNG, nicht nach Herkunft:
+    #
+    #   Zusatzfeld  (der innere Schluessel einer GRUNDKONFIG) landet als JSON im
+    #               erzeugten Knoten. Ein falscher Name richtet dort Schaden an
+    #               — `type` traf den KNOTENTYP. FEHLER.
+    #   Feldname    (der aeussere Schluessel) waehlt nur aus, WANN eine Tabelle
+    #               greift. Zeigt er ins Leere, wird der Eintrag nie
+    #               nachgeschlagen; die Kreuzprodukte unten erzeugen solche
+    #               Kombinationen absichtlich ("dieses Feld, falls der Typ es
+    #               hat"). Nur ein HINWEIS mit Zahl.
+    felder_je_typ = {t["typkey"]: {f["name"] for f in t["felder"]}
+                     for t in docs["typen"]}
+    schlecht: list[str] = []
+    for voll, extra in GRUNDKONFIG.items():
+        typkey = voll.split(".")[0]
+        if typkey not in felder_je_typ:
+            schlecht.append(f"GRUNDKONFIG {voll}: unbekannter Typ")
+            continue
+        for schluessel in extra:
+            if schluessel not in felder_je_typ[typkey]:
+                schlecht.append(f"GRUNDKONFIG {voll}: Zusatzfeld "
+                                f"'{schluessel}' gibt es bei {typkey} nicht")
+    if schlecht:
+        print("FEHLER: eine Grundkonfiguration schreibt ein Feld, das es nicht "
+              "gibt — es landet im Preset und wird still ignoriert:")
+        for x in schlecht:
+            print("   ", x)
+        return 2
+
+    tot = sorted(voll for tabelle in (HANDWERK, GRUNDKONFIG, NICHT_PRUEFBAR)
+                 for voll in tabelle
+                 if voll.split(".")[0] in felder_je_typ
+                 and voll.split(".", 1)[1] not in felder_je_typ[voll.split(".")[0]])
+
     gebaut = uebersprungen = mit_grund = 0
+    verwaist: list[str] = []
     offen: list[str] = []
     nicht_pruefbar: list[str] = []
     for t in docs["typen"]:
@@ -549,8 +861,15 @@ def main() -> int:
 
         nachfolger = NACHFOLGER.get(typkey, [])
         vorlauf = VORLAUF.get(typkey, [])
+        grundbild = L.untergrund(UNTERGRUND_JE_TYP.get(typkey, False))
+        # Was dieser Lauf NICHT mehr erzeugt, muss weg. Sonst laeuft eine Sonde
+        # zu einem entfernten Feld weiter mit und wird weiter beurteilt —
+        # `hostgroup.curveIn`/`curveOut` standen so noch als „stumm" im Report,
+        # obwohl sie laengst als nicht pruefbar erklaert waren (Befund S56).
+        erzeugt: set[str] = set()
         L.write(args.out / typkey / "_default.lvfx",
-                L.chain(*L.untergrund(), *vorlauf, pruefling, *nachfolger))
+                L.chain(*grundbild, *vorlauf, pruefling, *nachfolger))
+        erzeugt.add("_default.lvfx")
 
         for f in t["felder"]:
             voll = f"{typkey}.{f['name']}"
@@ -572,19 +891,31 @@ def main() -> int:
                             **({"children": kinder} if kinder else {}),
                             **{**grund, f["name"]: wert})
             L.write(args.out / typkey / f"{f['name']}.lvfx",
-                    L.chain(*L.untergrund(), *vorlauf, knoten, *nachfolger))
+                    L.chain(*grundbild, *vorlauf, knoten, *nachfolger))
+            erzeugt.add(f"{f['name']}.lvfx")
             if grund:
                 # Eigener Vergleichsgrund: der Nachbar ist auch hier gesetzt,
                 # sonst misst das Paar ZWEI Unterschiede statt einem.
+                erzeugt.add(f"_grund_{f['name']}.lvfx")
                 L.write(args.out / typkey / f"_grund_{f['name']}.lvfx",
-                        L.chain(*L.untergrund(), *vorlauf,
+                        L.chain(*grundbild, *vorlauf,
                                 L.node(typkey, t["name"],
                                        **({"children": kinder} if kinder else {}),
                                        **grund),
                                 *nachfolger))
                 mit_grund += 1
             gebaut += 1
+        for alt_lvfx in sorted((args.out / typkey).glob("*.lvfx")):
+            if alt_lvfx.name not in erzeugt:
+                alt_lvfx.unlink()
+                verwaist.append(f"{typkey}/{alt_lvfx.name}")
 
+    if verwaist:
+        print(f"Verwaiste Sonden geloescht: {len(verwaist)} "
+              f"({', '.join(verwaist[:6])}{' …' if len(verwaist) > 6 else ''})")
+    if tot:
+        print(f"Hinweis: {len(tot)} Tabelleneintraege zeigen auf ein Feld, "
+              f"das ihr Typ nicht hat (folgenlos, aber Rauschen)")
     print(f"Feld-Sonden: {gebaut} gebaut ({mit_grund} mit eigener "
           f"Grundkonfiguration), {uebersprungen} ohne ableitbaren Gegenwert, "
           f"{len(nicht_pruefbar)} mit diesem Testsignal nicht pruefbar")

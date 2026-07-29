@@ -96,7 +96,6 @@
         "enabled": true,
         "name": "Text",
         "text": "LumiViz",
-        "shiftSpeed": 8,
         "xShift": 100
       }
     ],

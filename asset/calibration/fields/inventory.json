@@ -423,12 +423,12 @@
                 },
                 {
                     "art": "text",
-                    "default": "x=0.5+cos(t)*0.3;\ny=0.5+sin(t)*0.3;\nt=t+0.1;",
+                    "default": "",
                     "name": "frameCode"
                 },
                 {
                     "art": "text",
-                    "default": "t=0;",
+                    "default": "",
                     "name": "initCode"
                 },
                 {
@@ -1222,17 +1222,17 @@
                 },
                 {
                     "art": "text",
-                    "default": "t=t+u;t=min(100,t);t=max(0,t);u=if(equal(t,100),-1,u);u=if(equal(t,0),1,u)",
+                    "default": "",
                     "name": "frameCode"
                 },
                 {
                     "art": "text",
-                    "default": "u=1;t=0",
+                    "default": "",
                     "name": "initCode"
                 },
                 {
                     "art": "text",
-                    "default": "d=d-sigmoid((t-50)/100,2)",
+                    "default": "",
                     "name": "pixelCode"
                 },
                 {
@@ -1314,7 +1314,7 @@
             "felder": [
                 {
                     "art": "text",
-                    "default": "d=d+2.0",
+                    "default": "",
                     "name": "beatCode"
                 },
                 {
@@ -1324,12 +1324,12 @@
                 },
                 {
                     "art": "text",
-                    "default": "x=sin(d)*1.4; y=1.4*cos(d); d=d+0.01;",
+                    "default": "",
                     "name": "frameCode"
                 },
                 {
                     "art": "text",
-                    "default": "d=0;",
+                    "default": "",
                     "name": "initCode"
                 },
                 {
@@ -2160,7 +2160,7 @@
                 },
                 {
                     "art": "zahl",
-                    "default": 1,
+                    "default": 0.17000000178813934,
                     "name": "colorScale"
                 },
                 {
@@ -2384,8 +2384,9 @@
                 {
                     "art": "liste",
                     "default": [
+                        16777215
                     ],
-                    "laenge": 0,
+                    "laenge": 1,
                     "name": "colors"
                 },
                 {
@@ -3706,8 +3707,9 @@
                 {
                     "art": "liste",
                     "default": [
+                        16777215
                     ],
-                    "laenge": 0,
+                    "laenge": 1,
                     "name": "colors"
                 },
                 {
@@ -3935,7 +3937,7 @@
                 },
                 {
                     "art": "text",
-                    "default": "x=(i*2)-1; y=0;",
+                    "default": "",
                     "name": "pointCode"
                 },
                 {

@@ -92,9 +92,10 @@
         "colorCycleFrames": 0
       },
       {
-        "type": 1,
+        "type": "fractal3D",
         "enabled": true,
         "name": "Fractal 3D",
+        "ftype": 3,
         "juliaX": -2.0
       }
     ],

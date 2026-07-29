@@ -95,6 +95,8 @@
         "type": "brightness",
         "enabled": true,
         "name": "Brightness",
+        "exclude": true,
+        "red": 2000,
         "color": 16711935
       }
     ],

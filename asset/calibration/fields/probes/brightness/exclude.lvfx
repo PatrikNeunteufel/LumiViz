@@ -95,6 +95,7 @@
         "type": "brightness",
         "enabled": true,
         "name": "Brightness",
+        "red": 2000,
         "exclude": true
       }
     ],

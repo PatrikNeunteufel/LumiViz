@@ -95,7 +95,7 @@
         "type": "customBpm",
         "enabled": true,
         "name": "Custom BPM",
-        "arbitraryMs": 5000
+        "skip": true
       },
       {
         "type": "onBeatClear",

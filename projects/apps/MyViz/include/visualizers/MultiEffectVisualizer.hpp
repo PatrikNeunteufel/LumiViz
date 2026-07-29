@@ -230,6 +230,7 @@ private:
         unsigned int picTexture = 0;  ///< GL RGBA texture (deleted in onCleanup)
         int picW = 0;
         int picH = 0;
+        std::string picSnapshot;      ///< Bilddaten hinter der Textur — Wechsel = neu aufbauen
 
         // Text (r_text): word-cycler state + rendered glyph texture
         int textCurWord = 0;

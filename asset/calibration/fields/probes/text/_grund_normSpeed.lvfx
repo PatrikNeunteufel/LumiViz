@@ -95,8 +95,7 @@
         "type": "text",
         "enabled": true,
         "name": "Text",
-        "text": "LumiViz",
-        "normalizeSize": true
+        "text": "Lumi;Viz;Test;Wort"
       }
     ],
     "clearEveryFrame": false

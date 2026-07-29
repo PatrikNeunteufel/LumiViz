@@ -95,7 +95,7 @@
         "type": "interferences",
         "enabled": true,
         "name": "Interferences",
-        "rotation": 255
+        "rotation": 64
       }
     ],
     "clearEveryFrame": false

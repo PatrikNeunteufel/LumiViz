@@ -95,6 +95,7 @@
         "type": "superScope3d",
         "enabled": true,
         "name": "SuperScope 3D",
+        "pointCode": "x=cos(i*6.28)*0.6; y=sin(i*6.28)*0.6; z=0; red=1; green=1; blue=1",
         "pointCount": 4096
       }
     ],

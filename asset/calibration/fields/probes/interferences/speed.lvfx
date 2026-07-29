@@ -95,6 +95,7 @@
         "type": "interferences",
         "enabled": true,
         "name": "Interferences",
+        "onBeat": true,
         "speed": 2.0
       }
     ],

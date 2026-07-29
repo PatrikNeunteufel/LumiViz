@@ -95,7 +95,7 @@
         "type": "starfield",
         "enabled": true,
         "name": "Starfield",
-        "blend": 1
+        "blend": 2
       }
     ],
     "clearEveryFrame": false

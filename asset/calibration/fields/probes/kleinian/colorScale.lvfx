@@ -95,7 +95,7 @@
         "type": "kleinian",
         "enabled": true,
         "name": "Kleinian",
-        "colorScale": 8
+        "colorScale": 0.45
       }
     ],
     "clearEveryFrame": false

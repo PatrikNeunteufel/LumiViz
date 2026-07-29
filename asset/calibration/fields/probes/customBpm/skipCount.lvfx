@@ -95,6 +95,7 @@
         "type": "customBpm",
         "enabled": true,
         "name": "Custom BPM",
+        "skip": true,
         "skipCount": 16
       },
       {

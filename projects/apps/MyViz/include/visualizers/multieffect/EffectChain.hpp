@@ -240,7 +240,8 @@ struct SimpleScopeParams
                        ///< 4 dot analyzer, 5 dot scope
     int channel = 2;   ///< 0 L, 1 R, 2 center (Byte-Halbierung wie Original)
     int position = 2;  ///< 0 top, 1 bottom, 2 center
-    std::vector<uint32_t> colors{0xFFFFFF};  ///< cycled colour table
+    /// Farbtafel (0x00RRGGBB), ueber die Frames durchgeschaltet.
+    std::vector<uint32_t> colors{0xFFFFFF};
 
     /// Parameter-Skript (Strang D): `mode`, `channel`, `position` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
     std::string initCode;
@@ -258,6 +259,7 @@ struct OscStarParams
     int position = 2;  ///< 0 left, 1 right, 2 center
     int size = 8;      ///< spoke length 0..16
     int rot = 3;       ///< rotation speed 0..16 (8 = still)
+    /// Farbtafel (0x00RRGGBB), ueber die Frames durchgeschaltet.
     std::vector<uint32_t> colors{0xFFFFFF};
 
     // Freigemachte Host-Konstanten (S53). Die Vorgaben SIND die Werte, mit denen
@@ -284,6 +286,7 @@ struct OscRingParams
     int channel = 2;   ///< 0 L, 1 R, 2 center
     int position = 2;  ///< 0 left, 1 right, 2 center
     int size = 8;      ///< base radius 0..16
+    /// Farbtafel (0x00RRGGBB), ueber die Frames durchgeschaltet.
     std::vector<uint32_t> colors{0xFFFFFF};
 
     // Freigemachte Host-Konstanten (S53), Vorgaben = bisheriges Verhalten.
@@ -309,6 +312,7 @@ struct OscRingParams
  */
 struct RotatingStarsParams
 {
+    /// Farbtafel (0x00RRGGBB), ueber die Frames durchgeschaltet.
     std::vector<uint32_t> colors{0xFFFFFF};
 
     int points = 5;          ///< Zacken je Stern (war fest 5)
@@ -337,10 +341,10 @@ struct RotatingStarsParams
  */
 struct BassSpinParams
 {
-    bool left = true;
-    bool right = true;
-    uint32_t colorLeft = 0xFFFFFF;
-    uint32_t colorRight = 0xFFFFFF;
+    bool left = true;   ///< linke Bildhaelfte (linker Kanal) zeichnen
+    bool right = true;  ///< rechte Bildhaelfte (rechter Kanal) zeichnen
+    uint32_t colorLeft = 0xFFFFFF;   ///< Farbe der linken Figur 0x00RRGGBB
+    uint32_t colorRight = 0xFFFFFF;  ///< Farbe der rechten Figur 0x00RRGGBB
     int mode = 1;  ///< 0 lines, 1 filled (approximated as lines)
 
     // KLASSE A: Vorgaben aus `r_bspin.cpp`, Abweichung wird gekennzeichnet.
@@ -405,8 +409,8 @@ struct InterleaveParams
     uint32_t color = 0x000000;  ///< stripe colour 0x00RRGGBB
     int blend = 0;              ///< 0 replace, 1 additive, 2 50/50
     bool onBeat = false;        ///< ease to x2/y2 on beat
-    int x2 = 1;
-    int y2 = 1;
+    int x2 = 1;                 ///< Ziel-Abstand waagrecht im Beat-Uebergang
+    int y2 = 1;                 ///< Ziel-Abstand senkrecht im Beat-Uebergang
     int beatDuration = 4;       ///< ease length
 
     /// Parameter-Skript (Strang D): `x`, `y`, `x2`, `y2` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
@@ -441,6 +445,8 @@ struct PictureParams
  */
 struct PictureIIParams
 {
+    /// Herkunftsnotiz aus dem Preset. Gezeichnet wird `imageData`; von diesem
+    /// Pfad wird nie geladen.
     std::string filename;
     std::string imageData;   ///< base64 of the raw image ("" = unresolved)
     int blend = 2;           ///< 0 replace, 1 additive, 2 50/50
@@ -512,11 +518,11 @@ struct OnBeatClearParams
 struct ColorfadeParams
 {
     int faderR = 8;   ///< -32..32
-    int faderG = 8;
-    int faderB = -8;
-    int beatFaderR = 8;
-    int beatFaderG = -8;
-    int beatFaderB = 8;
+    int faderG = 8;   ///< Gruen-Schritt je Frame, -32..32
+    int faderB = -8;  ///< Blau-Schritt je Frame, -32..32
+    int beatFaderR = 8;   ///< Rot-Schritt im Beat-Fenster (ersetzt `faderR`)
+    int beatFaderG = -8;  ///< Gruen-Schritt im Beat-Fenster (ersetzt `faderG`)
+    int beatFaderB = 8;   ///< Blau-Schritt im Beat-Fenster (ersetzt `faderB`)
     int onBeatFrames = 1;  ///< frames the beat faders stay active (>= 1)
 
     /// Parameter-Skript (Strang D): `faderr`, `faderg`, `faderb`, `beatfaderr`,
@@ -533,10 +539,14 @@ struct ColorfadeParams
  */
 struct ColorModifierParams
 {
+    /// EEL-Slots, die sich ihre Variablen mit dem Stufen-Code teilen: init
+    /// einmal beim Aufbau, frame je Frame, beat je Beat.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
     std::string levelCode;   ///< runs per LUT entry (red/green/blue in/out)
+    /// Tabelle je Frame neu rechnen statt einmal nach dem Uebersetzen. Noetig,
+    /// sobald die Kurve von `time` oder vom Audio abhaengt.
     bool recompute = true;
 };
 
@@ -572,6 +582,8 @@ struct MovementParams
  */
 struct CommentParams
 {
+    /// Freier Text. Der Knoten zeichnet nichts — er haelt eine Notiz in der
+    /// Kette fest.
     std::string text;
 };
 
@@ -590,6 +602,8 @@ struct CommentParams
  */
 struct ImportNotesParams
 {
+    /// Bericht des Importeurs (nur lesen): was am Preset nicht uebernommen
+    /// werden konnte.
     std::string text;
 };
 
@@ -631,7 +645,7 @@ struct BloomParams
     float intensity = 1.0f;    ///< Faktor des additiven Glow-Anteils
     float threshold = 0.0f;    ///< Helligkeits-Schwelle vor dem Blur (0 = Referenz)
     bool vignette = false;     ///< Abschluss-Multiplikation 1 - r^2 * strength
-    float vignetteStrength = 0.3f;
+    float vignetteStrength = 0.3f;  ///< Staerke der Randabdunklung (nur mit `vignette`)
     bool post = true;          ///< true: Glow nur beim Present (kein Feedback)
 
     /// Parameter-Skript (Strang D): `radius`, `intensity`, `threshold`, `vignettestrength` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
@@ -656,16 +670,19 @@ struct BloomParams
 struct Camera3DParams
 {
     float px = 0.0f;               ///< Kamera-Position (Weltkoordinaten)
-    float py = 0.0f;
+    float py = 0.0f;               ///< Kamera-Position, Hochachse (y+ = oben)
     float pz = 3.7320508f;         ///< +1/tan(15 deg): Default fuellt [-1,1]
     float tx = 0.0f;               ///< Blickziel
-    float ty = 0.0f;
-    float tz = 0.0f;
+    float ty = 0.0f;               ///< Blickziel, Hochachse
+    float tz = 0.0f;               ///< Blickziel, Tiefe (z+ = zum Betrachter)
     float fov = 30.0f;             ///< vertikaler Oeffnungswinkel (Grad)
     float roll = 0.0f;             ///< Drehung um die Blickachse (Grad)
     float fogStart = 0.0f;         ///< Fog-Distanz (Welt); start >= end = aus
-    float fogEnd = 0.0f;
+    float fogEnd = 0.0f;           ///< Distanz, ab der der Nebel voll deckt
     uint32_t fogColor = 0x000000;  ///< 0x00RRGGBB (Sprites daempfen nur)
+    /// EEL-Slots (Reihenfolge Frame VOR Beat): duerfen `px`..`pz`, `tx`..`tz`,
+    /// `fov`, `roll`, `fogstart`, `fogend` ueberschreiben. Die Feldwerte oben
+    /// sind die Startbelegung beim Uebersetzen.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -684,9 +701,13 @@ struct Camera3DParams
  */
 struct SuperScope3DParams
 {
+    /// EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und
+    /// setzen unter anderem `n`; der Punkt-Code laeuft je Punkt.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
+    /// Laeuft je Punkt: `i` 0..1 und `v` (Audio) herein, gelesen werden `x`,
+    /// `y`, `z` (Weltkoordinaten), `red`/`green`/`blue` und `size`.
     std::string pointCode;
     int pointCount = 256;   ///< Default-n (Skript-n ueberschreibt)
     int renderMode = 0;     ///< 0 = Soft-Sprites (Punkte), 1 = Linien
@@ -719,12 +740,14 @@ struct Terrain3DParams
     float relax = 0.12f;      ///< Feder-Relaxation zur Basis (0..1)
     float flatten = 0.0f;     ///< direkter Zug Richtung Basis je Frame (0..1)
     bool drawMesh = true;     ///< dunkles Mesh (opak, schreibt Depth)
-    uint32_t meshColor = 0x101418;
+    uint32_t meshColor = 0x101418;  ///< Farbe des Gitters 0x00RRGGBB
     bool drawDots = true;     ///< additive Soft-Sprites an den Gitterpunkten
     float dotSize = 0.045f;   ///< Welt-Einheiten
     float falloff = 4.0f;     ///< Sprite-Profil k
     uint32_t colorLow = 0x0A2040;   ///< Palette: Tal
     uint32_t colorHigh = 0x40C0FF;  ///< Palette: Gipfel
+    /// EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem
+    /// Punkt-Code darunter.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -748,6 +771,8 @@ struct GlowOrbsParams
     float haloScale = 2.2f;      ///< Halo-Radius = radius * haloScale
     float haloIntensity = 0.6f;  ///< Halo-Helligkeit (0 = aus)
     float falloff = 3.0f;        ///< Halo-Profil k in exp(-r^2*k)
+    /// EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und
+    /// setzen unter anderem `n` (Zahl der Orbs); der Punkt-Code laeuft je Orb.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -765,9 +790,9 @@ struct TextParams
     std::string fontFace;          ///< LOGFONT lfFaceName ("" = default font)
     int fontHeight = -20;          ///< LOGFONT lfHeight (negative = px char height)
     int fontWeight = 400;          ///< 400 normal, 700 bold
-    bool italic = false;
-    bool underline = false;
-    std::uint32_t color = 0xFFFFFF;
+    bool italic = false;           ///< LOGFONT lfItalic — kursiv
+    bool underline = false;        ///< LOGFONT lfUnderline — unterstrichen
+    std::uint32_t color = 0xFFFFFF;  ///< Schriftfarbe 0x00RRGGBB
     int blend = 0;                 ///< 0 replace, 1 additive, 2 50/50 (glyphs only)
     bool onBeat = false;           ///< word switches on beat instead of timer
     int onBeatSpeed = 15;          ///< frames a beat-word stays visible
@@ -779,9 +804,9 @@ struct TextParams
     int vAlign = 1;                ///< 0 top, 1 center, 2 bottom
     int xShift = 0;                ///< percent of width
     int yShift = 0;                ///< percent of height
-    bool outline = false;
-    std::uint32_t outlineColor = 0;
-    int outlineSize = 1;
+    bool outline = false;          ///< Kontur um die Zeichen zeichnen
+    std::uint32_t outlineColor = 0;  ///< Konturfarbe 0x00RRGGBB
+    int outlineSize = 1;           ///< Konturbreite in Pixeln
     bool shadow = false;           ///< shadow variant (outline wins if both)
 };
 
@@ -805,17 +830,30 @@ struct AviParams
  */
 struct DynamicMovementParams
 {
+    /// EEL-Quartett. Der Punkt-Code laeuft je Gitterknoten und schreibt
+    /// `x`/`y` (kartesisch) bzw. `d`/`r` (polar) und `alpha`; init/frame/beat
+    /// laufen einmal je Aufbau/Frame/Beat und teilen sich die Variablen.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
+    /// Laeuft je Gitterknoten: gelesen werden `x`, `y`, `d`, `r`, `alpha` —
+    /// wo der Bildpunkt seine Farbe HERholt, nicht wohin er geht.
     std::string pointCode;
+    /// Gitterknoten waagrecht. Grober heisst weicher (dazwischen wird
+    /// interpoliert) und schneller.
     int xres = 16;
+    /// Gitterknoten senkrecht.
     int yres = 12;
+    /// Punkt-Code rechnet in Bildpunkten statt in normierten Koordinaten.
     bool rectCoords = false;
+    /// Was ueber den Rand hinauszeigt, kommt auf der Gegenseite wieder herein
+    /// (aus statt dessen: der Rand wird festgehalten).
     bool wrap = false;
     /// r_dmove flags: `blend` mixes the moved pixel onto the original by the
     /// script's per-cell alpha; `nomove` skips displacement and only alpha-fades.
     bool blend = false;
+    /// Nicht verschieben — nur das `alpha` des Skripts wirkt (Ueberblenden ohne
+    /// Bewegung, r_dmove-Flag).
     bool nomove = false;
     bool subpixel = true;  ///< bilinear (on) vs nearest (off) source sampling
     /// Source image: 0 = current frame, 1..8 = global buffer (r_dmove fbin;
@@ -848,11 +886,15 @@ struct DynamicDistanceModifierParams
      * gilt fuer alle Richtungen gleich. Er kann deshalb nur stauchen und
      * dehnen, nie drehen oder verschieben.
      */
-    std::string initCode = "u=1;t=0";
-    std::string frameCode =
-        "t=t+u;t=min(100,t);t=max(0,t);u=if(equal(t,100),-1,u);u=if(equal(t,0),1,u)";
+    // Vorgabe LEER — der Deserialisierer liess diese Slots beim Laden schon
+    // immer leer (`getStr` ohne Vorgabewert), und seit S56 ist der Struct die
+    // einzige Quelle. Die frueheren Demo-Skripte gehoeren als VOREINSTELLUNG
+    // hierher (Konzept §11), nicht als Vorgabe: ein importiertes Preset darf
+    // sie nicht erben. Sie stehen in `Offene_Punkte.md §1d`.
+    std::string initCode;
+    std::string frameCode;
     std::string beatCode;
-    std::string pixelCode = "d=d-sigmoid((t-50)/100,2)";
+    std::string pixelCode;
     bool blend = false;    ///< 50/50 with the original image
     /**
      * Zwischenwerte beim Abtasten (AVS `subpixel`, r_ddm.cpp:313 /
@@ -908,9 +950,16 @@ struct MovingParticleParams
  */
 struct DynamicShiftParams
 {
-    std::string initCode = "d=0;";
-    std::string frameCode = "x=sin(d)*1.4; y=1.4*cos(d); d=d+0.01;";
-    std::string beatCode = "d=d+2.0";
+    /// EEL-Slots. Sie setzen `x`/`y` — die Verschiebung des ganzen Bildes —
+    /// und teilen sich ihre Variablen.
+    // Vorgabe LEER — der Deserialisierer liess diese Slots beim Laden schon
+    // immer leer (`getStr` ohne Vorgabewert), und seit S56 ist der Struct die
+    // einzige Quelle. Die frueheren Demo-Skripte gehoeren als VOREINSTELLUNG
+    // hierher (Konzept §11), nicht als Vorgabe: ein importiertes Preset darf
+    // sie nicht erben. Sie stehen in `Offene_Punkte.md §1d`.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
     bool blend = false;    ///< 50/50 with the original image
     /**
      * Zwischenwerte beim Abtasten (AVS `subpixel`, r_ddm.cpp:313 /
@@ -1060,13 +1109,22 @@ struct SetRenderModeParams
  */
 struct SuperScopeParams
 {
+    /// EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und
+    /// setzen unter anderem `n` (Punktzahl); der Punkt-Code laeuft je Punkt.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
+    /// Laeuft je Punkt: `i` 0..1 und `v` (Audio) herein, gelesen werden `x`/`y`
+    /// (-1..1), `red`/`green`/`blue`, `linesize`, `skip` und `drawmode`.
     std::string pointCode;
+    /// Startwert fuer `n` — der Punkt-Code laeuft so oft. Ein Skript, das `n`
+    /// selbst setzt, gewinnt.
     int pointCount = 256;
     int renderMode = 1;    ///< 0=dots, 1=lines, 2=thick lines
+    /// Strichstaerke in Pixeln fuer `renderMode` 1/2; `linesize` aus dem
+    /// Punkt-Code gewinnt.
     float lineWidth = 2.0f;
+    /// Punktdurchmesser in Pixeln fuer `renderMode` 0.
     float dotSize = 4.0f;
     int audioChannel = 2;  ///< 0=L 1=R 2=mono 3=mid 4=side
     /// AVS which_ch bit 4 (r_sscope.cpp:232): v liest SPEKTRUM statt Waveform.
@@ -1147,7 +1205,7 @@ struct WaterBumpParams
     int depth = 600;        ///< drop amplitude
     bool randomDrop = true; ///< random drop spot vs. fixed dropX/dropY
     int dropX = 1;          ///< 0 near / 1 mid / 2 far (position code)
-    int dropY = 1;
+    int dropY = 1;          ///< dito senkrecht: 0 oben / 1 Mitte / 2 unten
     int dropRadius = 40;    ///< drop radius (px)
     float displaceScale = 6.0f;  ///< refraction strength (host tuning)
 
@@ -1174,8 +1232,15 @@ struct BumpParams
     bool oldStyle = false;     ///< legacy x,y in 0..100 instead of 0..1
     int blend = 0;             ///< 0 replace, 1 additive, 2 50/50
     int buffern = 0;           ///< depth source: 0 = frame, N = global buffer N-1
-    std::string initCode = "t=0;";
-    std::string frameCode = "x=0.5+cos(t)*0.3;\ny=0.5+sin(t)*0.3;\nt=t+0.1;";
+    /// EEL-Slots. Sie setzen `x`/`y` — die Lichtquelle in 0..1 (mit `oldStyle`
+    /// in 0..100) — und teilen sich ihre Variablen.
+    // Vorgabe LEER — der Deserialisierer liess diese Slots beim Laden schon
+    // immer leer (`getStr` ohne Vorgabewert), und seit S56 ist der Struct die
+    // einzige Quelle. Die frueheren Demo-Skripte gehoeren als VOREINSTELLUNG
+    // hierher (Konzept §11), nicht als Vorgabe: ein importiertes Preset darf
+    // sie nicht erben. Sie stehen in `Offene_Punkte.md §1d`.
+    std::string initCode;
+    std::string frameCode;
     std::string beatCode;
 };
 
@@ -1230,7 +1295,10 @@ struct InterferencesParams
  */
 struct Metaballs3DParams
 {
-    std::vector<uint32_t> colors;  ///< Palette aus dem Preset (0x00RRGGBB)
+    /// Palette (0x00RRGGBB). NICHT leer: der Leser heilt eine leere Tafel auf
+    /// Weiss, eine leere liesse sich also gar nicht speichern (Roundtrip-Befund
+    /// S56). Die Vorgabe sagt es deshalb selbst.
+    std::vector<uint32_t> colors{0xFFFFFF};
     int count = 7;                 ///< Zahl der Kugeln (1..16)
     /// Radius-Skala je Kugel (NDC) — sichtkalibriert gegen die echte APE
     /// (S52): 0,30 deckte deutlich mehr Flaeche als die Referenz.
@@ -1260,7 +1328,10 @@ struct Metaballs3DParams
  */
 struct Tentacles3DParams
 {
-    std::vector<uint32_t> colors;  ///< Palette aus dem Preset (0x00RRGGBB)
+    /// Palette (0x00RRGGBB). NICHT leer: der Leser heilt eine leere Tafel auf
+    /// Weiss, eine leere liesse sich also gar nicht speichern (Roundtrip-Befund
+    /// S56). Die Vorgabe sagt es deshalb selbst.
+    std::vector<uint32_t> colors{0xFFFFFF};
     int count = 7;                 ///< Zahl der Tentakel (1..16)
     int segments = 28;             ///< Stuetzpunkte je Tentakel
     float length = 0.85f;          ///< Laenge in NDC
@@ -1357,7 +1428,9 @@ struct TimescopeParams
  *  through `colors` (r_dotgrid.cpp). `spacing` px, `xMove/yMove` scroll speed. */
 struct DotGridParams
 {
-    std::vector<uint32_t> colors{0xFFFFFF};  ///< cycled colour table
+    /// Farbtafel (0x00RRGGBB). Mehrere Eintraege werden ueber die Frames
+    /// durchgeschaltet, wie die AVS-Farbtabelle.
+    std::vector<uint32_t> colors{0xFFFFFF};
     int spacing = 8;   ///< grid spacing (px)
     int xMove = 128;   ///< horizontal scroll (fixed-point /256 per frame)
     int yMove = 128;   ///< vertical scroll
@@ -1376,6 +1449,8 @@ struct DotGridParams
  *  scale is host tuning (sight-test). */
 struct DotPlaneParams
 {
+    /// Fuenf Stuetzstellen des Farbverlaufs (0x00RRGGBB), ueber die Hoehe der
+    /// Gitterpunkte abgebildet.
     uint32_t colors[5] = {0x0000FF, 0x00FFFF, 0x00FF00, 0xFFFF00, 0xFF0000};
     int rotVel = 16;   ///< rotation speed (-50..50 in AVS)
     int angle = -20;   ///< viewing tilt angle
@@ -1401,8 +1476,12 @@ struct DotPlaneParams
  *  projection/physics scale is host tuning (sight-test). */
 struct DotFountainParams
 {
+    /// Fuenf Stuetzstellen des Farbverlaufs (0x00RRGGBB), ueber die Hoehe der
+    /// Teilchen abgebildet.
     uint32_t colors[5] = {0x0000FF, 0x00FFFF, 0x00FF00, 0xFFFF00, 0xFF0000};
+    /// Drehgeschwindigkeit (Vorzeichen = Richtung).
     int rotVel = 16;
+    /// Neigung der Ansicht in Grad.
     int angle = -20;
 
     /// Parameter-Skript (Strang D): `rotvel`, `angle` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
@@ -1439,6 +1518,10 @@ struct BufferBlendParams
 struct JherikoGlobalParams
 {
     int loadMode = 1;  ///< 0 none, 1 once, 2 code-control, 3 every-frame
+    /// EEL-Slots ohne eigenes Bild: der Knoten rechnet nur und legt seine
+    /// Ergebnisse in den geteilten Variablen (`reg00`..`reg99`, `gmegabuf`) ab,
+    /// aus denen die folgenden Knoten lesen. `loadMode` steuert, wann der
+    /// Init-Slot erneut laeuft.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1452,10 +1535,16 @@ struct JherikoGlobalParams
  */
 struct ConvolutionParams
 {
+    /// Betrag des Ergebnisses nehmen — negative Summen werden gespiegelt statt
+    /// auf 0 geklemmt (macht Kanten-Kerne beidseitig sichtbar).
     bool absolute = false;
+    /// Den Kern zweimal hintereinander anwenden.
     bool twoPass = false;
     int edgeMode = 0;   ///< 0 extend, 1 wrap
+    /// Festwert, der nach der Division auf jeden Kanal addiert wird.
     int bias = 0;
+    /// Teiler der gewichteten Summe (0 wird als 1 gerechnet). Die Summe der
+    /// Kernwerte hier einzutragen haelt die Helligkeit.
     int scale = 1;
     std::array<int, 49> kernel = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
@@ -1517,9 +1606,14 @@ struct AddBordersParams
  */
 struct TexerParams
 {
+    /// Herkunftsnotiz aus dem Preset. Gezeichnet wird `imageData`; von diesem
+    /// Pfad wird nie geladen.
     std::string filename;
+    /// Das eingebettete Bild (base64). Leer = eingebautes Standard-Sprite.
     std::string imageData;
+    /// 0 ersetzen, 1 additiv, 2 50/50.
     int blend = 1;
+    /// Anzahl der Sprites entlang der Wellenform.
     int particles = 100;
 
     /// Parameter-Skript (Strang D): `blend`, `particles` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
@@ -1536,15 +1630,33 @@ struct TexerParams
  */
 struct TexerIIParams
 {
+    /// Herkunftsnotiz aus dem Preset. Gezeichnet wird `imageData`; von diesem
+    /// Pfad wird nie geladen.
     std::string filename;
+    /// Das eingebettete Bild (base64). Leer = eingebautes Standard-Sprite
+    /// (20x20, radialsymmetrisch — gemessen gegen die echte texer2.ape).
     std::string imageData;
+    /// `sizex`/`sizey` aus dem Punkt-Code wirken lassen (aus: feste Groesse).
     bool resizing = false;
+    /// Sprites am Bildrand auf der Gegenseite fortsetzen statt abzuschneiden.
     bool wrapAround = false;
+    /// `red`/`green`/`blue` aus dem Punkt-Code als Farbfilter auf das Bild
+    /// legen (aus: das Bild wird unveraendert gezeichnet).
     bool colorFiltering = true;
+    /// EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und
+    /// setzen `n` (Anzahl Sprites); der Punkt-Code laeuft je Sprite.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
-    std::string pointCode = "x=(i*2)-1; y=0;";
+    /// Laeuft je Sprite: `i` 0..1 herein, gelesen werden `x`/`y` (-1..1),
+    /// `sizex`/`sizey` (nur mit `resizing`) und `red`/`green`/`blue` (nur mit
+    /// `colorFiltering`).
+    // Vorgabe LEER — der Deserialisierer liess diese Slots beim Laden schon
+    // immer leer (`getStr` ohne Vorgabewert), und seit S56 ist der Struct die
+    // einzige Quelle. Die frueheren Demo-Skripte gehoeren als VOREINSTELLUNG
+    // hierher (Konzept §11), nicht als Vorgabe: ein importiertes Preset darf
+    // sie nicht erben. Sie stehen in `Offene_Punkte.md §1d`.
+    std::string pointCode;
 };
 
 /**
@@ -1554,9 +1666,13 @@ struct TexerIIParams
  */
 struct TriangleParams
 {
+    /// EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und
+    /// setzen `n` (Anzahl Dreiecke); der Punkt-Code laeuft je Dreieck.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
+    /// Laeuft je Dreieck: gelesen werden `x1`/`y1`, `x2`/`y2`, `x3`/`y3`
+    /// (-1..1) und `red`/`green`/`blue`.
     std::string pointCode;
 
     /// GEFUELLT ist der Referenz-Zustand (Sonde `triangle_n_literal`, S51: das
@@ -1758,20 +1874,29 @@ struct Fractal3DParams
     int maxSteps = 96;    ///< raymarch step cap
     int maxIter = 8;      ///< DE iteration count
     float juliaX = 0.2f;  ///< Quaternion-Julia seed
+    /// Quaternion-Julia-Konstante, zweite Komponente — nur bei `type = 3`.
     float juliaY = 0.3f;
+    /// Quaternion-Julia-Konstante, dritte Komponente — nur bei `type = 3`.
     float juliaZ = 0.1f;
+    /// Quaternion-Julia-Konstante, vierte Komponente — nur bei `type = 3`.
     float juliaW = 0.0f;
     float lightYaw = 0.7f;    ///< key-light direction (azimuth)
     float lightPitch = 0.8f;  ///< key-light direction (elevation)
     float ambient = 0.2f;     ///< ambient floor
     bool ao = true;           ///< cheap ambient occlusion
 
+    /// Faerbung: Farbtafel-Index = `fract(Trefferwert * colorScale + Phase)`.
     float colorScale = 1.0f;
+    /// Vorschub der Farbphase je Sekunde (0 = stehende Farben).
     float colorCycle = 0.0f;
+    /// Name des Farbverlaufs, ueber den die Oberflaeche eingefaerbt wird.
     std::string gradientPreset = "Neon";
     uint32_t background = 0x000000;  ///< miss colour (0x00RRGGBB)
 
+    /// Auf das bestehende Bild: 0 ersetzen, 1 additiv (geklemmt), 2 50/50.
     int blend = 0;
+    /// Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`,
+    /// `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1788,18 +1913,27 @@ struct LyapunovParams
 {
     std::string sequence = "AB";  ///< a/b pattern (A/B chars; others ignored)
     float aMin = 2.5f;            ///< view rectangle (a axis)
+    /// Rechte Kante des Ausschnitts auf der a-Achse.
     float aMax = 4.0f;
     float bMin = 2.5f;            ///< view rectangle (b axis)
+    /// Obere Kante des Ausschnitts auf der b-Achse.
     float bMax = 4.0f;
     int warmup = 100;            ///< settle iterations before measuring
     int iterations = 400;        ///< measured iterations
     uint32_t negColor = 0x000030;  ///< ordered-zone colour (negative exponent)
 
+    /// Faerbung: Farbtafel-Index = `fract(Lyapunov-Exponent * colorScale + Phase)`.
+    /// Gilt nur fuer die chaotischen Zonen; die geordneten bekommen `negColor`.
     float colorScale = 1.0f;
+    /// Vorschub der Farbphase je Sekunde (0 = stehende Farben).
     float colorCycle = 0.0f;
+    /// Name des Farbverlaufs fuer die chaotischen Zonen.
     std::string gradientPreset = "Fire";
 
+    /// Auf das bestehende Bild: 0 ersetzen, 1 additiv (geklemmt), 2 50/50.
     int blend = 0;
+    /// Parameter-Skript (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — der
+    /// Ausschnitt — + Audio-Satz. Leer = kein Skript.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1817,14 +1951,38 @@ struct KleinianParams
     int q = 4;            ///< polygons per vertex (1/p + 1/q < 1/2 → hyperbolic)
     int iterations = 30;  ///< inversion iteration cap
     float morph = 0.0f;   ///< tiling morph phase
+    /// Ausschnitt der Poincaré-Scheibe (groesser = naeher heran).
     float zoom = 1.0f;
+    /// Drehung der Kachelung in Radiant.
     float rotation = 0.0f;
 
-    float colorScale = 1.0f;
+    /**
+     * Faerbung: Farbtafel-Index = `fract(Spiegelungszahl * colorScale + Phase)`.
+     *
+     * Die Spiegelungszahl ist eine GANZE Zahl — ein ganzzahliges `colorScale`
+     * macht den Ausdruck damit fuer JEDE Zelle zu exakt 0, und der Knoten
+     * zeichnet eine einfarbige Scheibe statt einer Kachelung. Genau das war bis
+     * S56 die Vorgabe (1,0), und es hat den ganzen Effekt unsichtbar gemacht:
+     * gemessen liefern 1,0 und 4,0 Pixel fuer Pixel dasselbe Bild (MAE 0,0000),
+     * erst 0,17 zeigt die {p,q}-Kachelung. Fuenf weitere Felder (`p`, `q`,
+     * `morph`, `iterations`, `rotation`) standen deshalb als „stumm" da — sie
+     * aendern eine Struktur, die man nicht sehen konnte.
+     *
+     * Der Wert 0,17 laesst die Farbe ueber rund sechs Spiegelungsstufen einmal
+     * durch die Tafel laufen; das ist die Tiefe, die im Bild vorkommt.
+     * Ganzzahlige Werte bleiben einstellbar — sie sind hier schlicht die
+     * Einstellung „alles in einer Farbe".
+     */
+    float colorScale = 0.17f;
+    /// Vorschub der Farbphase je Sekunde (0 = stehende Farben).
     float colorCycle = 0.0f;
+    /// Name des Farbverlaufs, ueber den die Spiegelungszahl abgebildet wird.
     std::string gradientPreset = "Neon";
 
+    /// Auf das bestehende Bild: 0 ersetzen, 1 additiv (geklemmt), 2 50/50.
     int blend = 0;
+    /// Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`,
+    /// `rotation` + Audio-Satz. Leer = kein Skript.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1840,19 +1998,31 @@ struct FractalZoomerParams
 {
     int type = 0;            ///< 0 Mandelbrot 1 Julia 2 Burning Ship
     float centerX = -0.743643887f;  ///< zoom target (a classic Misiurewicz point)
+    /// Zoomziel, Imaginaerteil (Gegenstueck zu `centerX`).
     float centerY = 0.131825904f;
+    /// Julia-Konstante, Realteil — wirkt nur bei `type = 1`.
     float juliaX = -0.8f;
+    /// Julia-Konstante, Imaginaerteil — wirkt nur bei `type = 1`.
     float juliaY = 0.156f;
+    /// Obergrenze der Iterationen je Pixel. Hoeher heisst mehr Struktur tief im
+    /// Zoom, aber auch mehr Rechenzeit je Frame.
     int maxIter = 200;
     float zoomSpeed = 1.02f;      ///< per-frame zoom factor (>1 zooms in)
     float rotationSpeed = 0.0f;   ///< radians per frame
     float feedback = 0.5f;        ///< trail persistence 0..1 (0 = no trails)
 
+    /// Faerbung: Farbtafel-Index = `fract(iterationen * colorScale + Phase)`.
+    /// Groesser heisst engere Farbringe.
     float colorScale = 0.05f;
+    /// Vorschub der Farbphase je Sekunde (0 = stehende Farben).
     float colorCycle = 0.0f;
+    /// Name des Farbverlaufs, ueber den die Iterationszahl abgebildet wird.
     std::string gradientPreset = "Neon";
+    /// Farbe der Punkte, die nicht entkommen (das Innere der Menge), 0x00RRGGBB.
     uint32_t insideColor = 0x000000;
 
+    /// Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`,
+    /// `rotationSpeed` + Audio-Satz. Leer = kein Skript.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1867,21 +2037,41 @@ struct FractalZoomerParams
 struct StrangeAttractorParams
 {
     int type = 0;      ///< 0 Lorenz 1 Clifford 2 De Jong 3 Aizawa
+    /// Erster Formelbeiwert. Was er bedeutet, haengt am `type`: Lorenz sigma
+    /// (x7,142857), Clifford/De Jong der Faktor im Sinus, Aizawa der z-Term.
     float a = 1.4f;
+    /// Zweiter Beiwert: Lorenz rho (x17,5), Clifford/De Jong der zweite
+    /// Sinus-/Kosinus-Faktor, Aizawa die z-Verschiebung.
     float b = 1.6f;
+    /// Dritter Beiwert: Lorenz beta (x2,6667), Clifford der Kosinus-Anteil in x,
+    /// De Jong der Sinus-Faktor in y, Aizawa das konstante Glied.
     float c = 1.0f;
+    /// Vierter Beiwert: Clifford/De Jong der Kosinus-Anteil in y, Aizawa die
+    /// Drehung in der xy-Ebene. Lorenz nutzt ihn nicht.
     float d = 0.7f;
+    /// Punkte je Frame (1..100000). Die Bahn laeuft ueber Frames weiter — mehr
+    /// Punkte heisst dichter gezeichnet, nicht laenger.
     int points = 6000;
+    /// Groesse der Bahn im Bild (Faktor auf die Koordinaten, vor der Drehung).
     float scale = 0.28f;
+    /// Fester Drehwinkel der Ansicht in Radiant, addiert zur laufenden Drehung.
     float rotation = 0.0f;
+    /// Laufende Drehung in Radiant je Sekunde (0 = steht still).
     float rotationSpeed = 0.08f;
 
+    /// Punktfarbe 0x00RRGGBB, wenn `useGradient` aus ist.
     uint32_t color = 0x66CCFF;
     bool useGradient = true;      ///< colour dots along the orbit via the gradient
+    /// Name des Farbverlaufs fuer `useGradient` — die Bahn wird von Anfang bis
+    /// Ende darueber eingefaerbt.
     std::string gradientPreset = "Neon";
+    /// Punktdurchmesser in Pixeln (1..32).
     float dotSize = 2.0f;
     int blend = 1;                ///< 0 replace, 1 additive, 2 50/50
 
+    /// Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz.
+    /// Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt
+    /// den Traeger neu auf und laesst den Init-Slot erneut laufen.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1897,15 +2087,26 @@ struct FlameParams
 {
     int variation = 0;   ///< 0 linear 1 sinusoidal 2 spherical 3 swirl 4 horseshoe
     int functions = 3;   ///< affine map count (2..4)
+    /// Zuege des Chaosspiels je Frame — mehr heisst ein dichteres Bild, nicht
+    /// ein anderes.
     int points = 20000;
+    /// Groesse der Figur im Bild (Faktor auf die Koordinaten, vor der Drehung).
     float scale = 0.5f;
+    /// Fester Drehwinkel in Radiant, addiert zur laufenden Drehung.
     float rotation = 0.0f;
+    /// Laufende Drehung in Radiant je Sekunde (0 = steht still).
     float rotationSpeed = 0.04f;
 
+    /// Name des Farbverlaufs — die Punkte werden ueber ihre Nummer im Zug
+    /// eingefaerbt.
     std::string gradientPreset = "Fire";
+    /// Punktdurchmesser in Pixeln.
     float dotSize = 1.5f;
+    /// 0 ersetzen, 1 additiv, 2 50/50.
     int blend = 1;
 
+    /// Parameter-Skript (Strang D): die Variationsbeiwerte und `rotation` +
+    /// Audio-Satz. Leer = kein Skript.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1926,11 +2127,17 @@ struct ReactionDiffusionParams
     int stepsPerFrame = 8;    ///< sim iterations per rendered frame
     bool seedOnBeat = true;   ///< stamp a new seed blob on a beat
 
+    /// Faerbung: Farbtafel-Index = `fract(Konzentration von B * colorScale + Phase)`.
     float colorScale = 1.0f;
+    /// Vorschub der Farbphase je Sekunde (0 = stehende Farben).
     float colorCycle = 0.0f;
+    /// Name des Farbverlaufs, ueber den die Konzentration abgebildet wird.
     std::string gradientPreset = "Neon";
 
+    /// Auf das bestehende Bild: 0 ersetzen, 1 additiv (geklemmt), 2 50/50.
     int blend = 0;
+    /// Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit
+    /// wandert das Muster im Betrieb. Leer = kein Skript.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1960,6 +2167,7 @@ struct MilkdropNodeParams
      */
     std::map<std::string, std::string> embeddedImages;
     int meshX = 32;   ///< warp mesh (app setting in the original, no preset key)
+    /// Warp-Gitter senkrecht (Original-Vorgabe 24; hoeher = feinerer Warp).
     int meshY = 24;
     bool debugGrid = false;  ///< calibration overlay AFTER the composite
     /**

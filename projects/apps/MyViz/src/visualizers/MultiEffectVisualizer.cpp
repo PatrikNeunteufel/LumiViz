@@ -5308,11 +5308,17 @@ void MultiEffectVisualizer::runMilkdropNode(const ChainNode& node,
         rt.milk->setEmbeddedImages(params.embeddedImages);
         rt.milk->applyPresetState(params.preset,
                                   QString::fromStdString(params.presetDir), nullptr);
-        rt.milk->setParam("render.meshX", lumi::modules::ParamValue{params.meshX});
-        rt.milk->setParam("render.meshY", lumi::modules::ParamValue{params.meshY});
-        rt.milk->setParam("render.debugGrid",
-                          lumi::modules::ParamValue{params.debugGrid});
     }
+
+    // Die drei Host-Regler standen bis S56 IM Revisions-Block — ein Panel-Edit
+    // bumpt die Revision aber nicht (die zaehlt Preset-/Skript-/Shader-Edits),
+    // also kamen sie nur beim Aufbau an. Gemessen mit den Edit-Sonden:
+    // `milkdrop.meshX`/`meshY`/`debugGrid` WIRKUNGSLOS. Sie sind reine
+    // Zuweisungen im Kern (`setParam`, kein Neuaufbau) und stehen deshalb
+    // jetzt je Frame hier.
+    rt.milk->setParam("render.meshX", lumi::modules::ParamValue{params.meshX});
+    rt.milk->setParam("render.meshY", lumi::modules::ParamValue{params.meshY});
+    rt.milk->setParam("render.debugGrid", lumi::modules::ParamValue{params.debugGrid});
 
     feedMilkAudio(*rt.milk);
     // Chain-Buffer-Groesse (physische Pixel) — width()/height() des Kerns
@@ -6275,7 +6281,12 @@ bool MultiEffectVisualizer::ensureEmbeddedTexture(LeafRuntime& rt,
                                                   const std::string& imageData,
                                                   bool fallbackDot)
 {
-    if (rt.picTexture != 0) return true;
+    // Ein Bildwechsel im Panel muss ankommen. Bis S56 stand hier nur
+    // `picTexture != 0` — die Textur wurde einmal beim Aufbau erzeugt und blieb
+    // danach stehen; neue `imageData` wirkten erst nach Speichern + Laden (dort
+    // baut `resetRuntimes()` die Runtime neu). Gemessen mit den Edit-Sonden:
+    // `texer.imageData` WIRKUNGSLOS. Gleiche Bauart wie `cmSnapshot`.
+    if (rt.picTexture != 0 && rt.picSnapshot == imageData) return true;
     auto* f = QOpenGLContext::currentContext()->functions();
     QImage img;
     bool loaded = false;
@@ -6332,7 +6343,7 @@ bool MultiEffectVisualizer::ensureEmbeddedTexture(LeafRuntime& rt,
         }
     }
     img = img.convertToFormat(QImage::Format_RGBA8888);
-    f->glGenTextures(1, &rt.picTexture);
+    if (rt.picTexture == 0) f->glGenTextures(1, &rt.picTexture);
     f->glBindTexture(GL_TEXTURE_2D, rt.picTexture);
     f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -6343,6 +6354,7 @@ bool MultiEffectVisualizer::ensureEmbeddedTexture(LeafRuntime& rt,
                     GL_UNSIGNED_BYTE, img.constBits());
     rt.picW = img.width();
     rt.picH = img.height();
+    rt.picSnapshot = imageData;
     return true;
 }
 

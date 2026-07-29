@@ -95,6 +95,7 @@
         "type": "movingParticle",
         "enabled": true,
         "name": "Moving Particle",
+        "onBeatSize": true,
         "size2": 128
       }
     ],

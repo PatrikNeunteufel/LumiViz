@@ -95,6 +95,8 @@
         "type": "texerII",
         "enabled": true,
         "name": "Texer II",
+        "initCode": "n=48",
+        "pointCode": "x=(i*2)-1; y=sin(i*6.28)*0.5; sizex=2; sizey=2",
         "imageData": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAHklEQVR4nGP4z8CAFWEXxYNGNVCkAZcMLjCqgSYaADtOfpCTQ+5gAAAAAElFTkSuQmCC"
       }
     ],

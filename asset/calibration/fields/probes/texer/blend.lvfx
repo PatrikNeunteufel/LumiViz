@@ -96,7 +96,7 @@
         "enabled": true,
         "name": "Texer",
         "imageData": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAHklEQVR4nGP4z8CAFWEXxYNGNVCkAZcMLjCqgSYaADtOfpCTQ+5gAAAAAElFTkSuQmCC",
-        "blend": 0
+        "blend": 2
       }
     ],
     "clearEveryFrame": false

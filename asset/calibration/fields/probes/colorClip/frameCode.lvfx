@@ -95,6 +95,7 @@
         "type": "colorClip",
         "enabled": true,
         "name": "Color Clip",
+        "mode": 3,
         "frameCode": "distance = 255"
       }
     ],

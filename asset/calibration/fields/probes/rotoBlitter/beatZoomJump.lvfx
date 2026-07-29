@@ -95,6 +95,7 @@
         "type": "rotoBlitter",
         "enabled": true,
         "name": "Roto Blitter",
+        "zoomScale2": 12,
         "beatZoomJump": true
       }
     ],

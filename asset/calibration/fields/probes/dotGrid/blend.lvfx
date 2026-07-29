@@ -95,7 +95,7 @@
         "type": "dotGrid",
         "enabled": true,
         "name": "Dot Grid",
-        "blend": 3
+        "blend": 2
       }
     ],
     "clearEveryFrame": false

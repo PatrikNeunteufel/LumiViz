@@ -92,9 +92,10 @@
         "colorCycleFrames": 0
       },
       {
-        "type": 1,
+        "type": "fractal2D",
         "enabled": true,
-        "name": "Fractal 2D"
+        "name": "Fractal 2D",
+        "ftype": 1
       }
     ],
     "clearEveryFrame": false

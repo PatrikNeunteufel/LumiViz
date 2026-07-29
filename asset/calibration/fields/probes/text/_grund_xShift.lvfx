@@ -95,8 +95,7 @@
         "type": "text",
         "enabled": true,
         "name": "Text",
-        "text": "LumiViz",
-        "shiftSpeed": 8
+        "text": "LumiViz"
       }
     ],
     "clearEveryFrame": false

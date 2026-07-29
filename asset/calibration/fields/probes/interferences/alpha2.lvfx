@@ -95,6 +95,8 @@
         "type": "interferences",
         "enabled": true,
         "name": "Interferences",
+        "onBeat": true,
+        "distance2": 40,
         "alpha2": 0
       }
     ],

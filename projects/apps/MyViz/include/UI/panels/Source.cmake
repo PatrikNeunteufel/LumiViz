@@ -17,6 +17,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/PanelBase.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/ConfigPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/EelScriptEditing.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/FieldDocs.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/ImportBrowserPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/MultiEffectPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PlayerPanel.hpp"

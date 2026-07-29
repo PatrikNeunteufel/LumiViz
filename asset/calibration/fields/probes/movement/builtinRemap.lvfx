@@ -95,7 +95,7 @@
         "type": "movement",
         "enabled": true,
         "name": "Movement",
-        "builtinRemap": 2
+        "builtinRemap": 7
       }
     ],
     "clearEveryFrame": false

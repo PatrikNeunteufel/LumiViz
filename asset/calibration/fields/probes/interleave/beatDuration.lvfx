@@ -96,6 +96,8 @@
         "enabled": true,
         "name": "Interleave",
         "onBeat": true,
+        "x2": 8,
+        "y2": 8,
         "beatDuration": 100
       }
     ],

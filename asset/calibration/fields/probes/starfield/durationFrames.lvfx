@@ -95,6 +95,8 @@
         "type": "starfield",
         "enabled": true,
         "name": "Starfield",
+        "onBeat": true,
+        "beatSpeed": 24.0,
         "durationFrames": 200
       }
     ],
