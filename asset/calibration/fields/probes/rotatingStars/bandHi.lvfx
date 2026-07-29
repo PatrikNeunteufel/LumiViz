@@ -95,7 +95,7 @@
         "type": "rotatingStars",
         "enabled": true,
         "name": "Rotating Stars",
-        "bandHi": 576
+        "bandHi": 5
       }
     ],
     "clearEveryFrame": false

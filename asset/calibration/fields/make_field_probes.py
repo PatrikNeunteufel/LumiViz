@@ -141,6 +141,37 @@ HANDWERK: dict[str, object] = {
     # kaum sichtbar) und 7 ("blocky partial out", deutlich). Der Regelwert
     # nimmt 1 und verschwindet im Rauschen.
     "movement.builtinRemap": 7,
+    # SuperScope: 1 (Linien) gegen 2 (dicke Linien) sieht bei gleicher
+    # Strichstaerke fast identisch aus — der Sprung auf PUNKTE ist der
+    # sichtbare Wechsel der Zeichenart.
+    "superScope.renderMode": 0,
+    # Rotating Stars: `bandHi` ist die obere Grenze des ausgewerteten
+    # Spektralbereichs (`bandLo` = 3). Der Regelwert liegt am Bereichsende und
+    # aendert die Spitze kaum; ein SCHMALER Bereich aendert sie deutlich.
+    "rotatingStars.bandHi": 5,
+    # 3D-Kamera: das Blickziel in der Tiefe. 0,6 lag noch fast im Ursprung —
+    # die Kamera steht auf der z-Achse, ein kleiner Versatz dreht die Ansicht
+    # kaum. 3,0 kippt sie sichtbar.
+    "camera3d.tz": 3.0,
+    # Buffer Blend: `8` heisst "der aktuelle Frame", `0..7` ein Speicherplatz
+    # (`bufA >= 8 ? cur : poolTexture(bufA)`). Der Ernter findet fuer diese zwei
+    # Felder keinen Bereich, also griff die Notregel "das Dreifache" — und 24
+    # ist genau wie die Vorgabe 8 der aktuelle Frame. Zwei gleiche Bilder.
+    "bufferBlend.bufferA": 0,
+    "bufferBlend.bufferB": 0,
+    # Effect List: die Variablen ihrer Slots sind `enabled`, `clear`, `beat`,
+    # `alphain`, `alphaout` — ein abgeleiteter Gegenwert setzt eines davon im
+    # INIT-Slot, und der Frame-Slot ueberschreibt es eine Zeile spaeter wieder.
+    # Der Init-Slot kann hier also nur ueber eine geteilte Variable wirken
+    # (dieselbe Bauart wie Triangle/DDM): er setzt `reg00`, der Frame-Slot der
+    # Grundkonfiguration liest es als `enabled`.
+    "list.initCode": "reg00=1",
+    # Triangle: der abgeleitete Gegenwert setzt Variablen, aber keine ECKEN —
+    # damit zeichnet der Knoten nichts, und der Vergleich laeuft gegen einen
+    # Grund, der ebenfalls nichts zeichnet. Ein Punkt-Code IST hier die Geometrie
+    # (dieselbe Logik wie bei Movement).
+    "triangle.pointCode": ("x1=-0.8;y1=-0.6; x2=0.8;y2=-0.6; x3=0;y3=0.8; "
+                           "red=1;green=0.3;blue=0"),
     # Global Variables setzt preset-weite Register; sichtbar wird das erst
     # an einem Knoten dahinter, der sie liest (s. NACHFOLGER).
     **{f"jherikoGlobal.{f}": "reg00=0.9"
@@ -391,6 +422,13 @@ GRUNDKONFIG: dict[str, dict] = {
     "list.useCode": {"frameCode": "enabled=0"},
     "list.frameCode": {"useCode": True},
     "list.initCode": {"useCode": True, "frameCode": "enabled=reg00"},
+    # Das Beat-Fenster der Effect List steuert AUSSCHLIESSLICH statisch
+    # deaktivierte Listen — so steht es im Renderer und so ist es referenztreu
+    # (`r_list enabled() = !bit1 || fake_enabled`; eine eingeschaltete Liste
+    # rendert immer, `beat_render` hat auf sie keine Wirkung). Ohne
+    # `enabled: false` sind beide Felder per Entwurf wirkungslos (S56).
+    "list.onBeatRender": {"enabled": False},
+    "list.onBeatFrames": {"enabled": False, "onBeatRender": True},
     # Interferences: die `*2`-Werte sind die BEAT-Ziele, `speed` die Dauer des
     # Uebergangs dorthin — ohne `onBeat` gibt es den Uebergang nicht.
     **{f"interferences.{f}": {"onBeat": True}
@@ -571,6 +609,32 @@ GRUNDKONFIG: dict[str, dict] = {
     # in beiden Kanaelen gleich. Ueber das Spektrum ist der Kanal messbar
     # (`--stereo-spektrum`, s. Runner).
     "oscRing.channel": {"source": 1},
+    # Strange Attractor: die feste Farbe wird nur gelesen, wenn NICHT ueber den
+    # Verlauf eingefaerbt wird (`useGradient`, Vorgabe an).
+    # Und Betriebsart 0 ist "ersetzen" — der Shader liest dort AUSSCHLIESSLICH
+    # `b` (`if (uMode == 0) r = b;`). Puffer A kann damit per Entwurf nichts
+    # bewirken; erst eine Betriebsart, die beide Quellen verrechnet, macht ihn
+    # messbar (3 = 50/50).
+    "bufferBlend.bufferA": {"mode": 3},
+    "strangeAttractor.color": {"useGradient": False},
+    # Und `d` ist der vierte Formelbeiwert — Lorenz (Vorgabe, `ftype` 0) nutzt
+    # ihn gar nicht, erst Clifford/De Jong/Aizawa lesen ihn.
+    "strangeAttractor.d": {"ftype": 1},
+    # Dynamic Movement: der Unterschied zwischen polar und kartesisch zeigt sich
+    # nur an einem Ausdruck, der in BEIDEN Systemen etwas anderes bedeutet.
+    # Ohne `rectCoords` liest der Knoten `d`/`r`, ein `x=x+0.3` bewegt dort
+    # nichts (dieselbe Falle wie bei `movement.rectCoords`, S54).
+    "dynamicMovement.rectCoords": {"pointCode": "x=x+0.3; y=y*0.7"},
+    # Texer II: der Randumlauf zeigt sich nur an Sprites, die ueber den Rand
+    # hinausragen.
+    "texerII.wrapAround": {"imageData": TESTBILD_B64,
+                           "initCode": "n=24",
+                           "pointCode": "x=(i*4)-2; y=sin(i*6.28)*1.4; "
+                                        "sizex=3; sizey=3"},
+    # Blur: der Rundungs-Bias verschiebt je Pixel um hoechstens eine Stufe —
+    # bei der schwaechsten Stufe (Vorgabe) verschwindet das. Mit `strength = 3`
+    # summiert sich die Rundung ueber mehr Taps.
+    "blur.roundUp": {"strength": 3},
 }
 
 
@@ -590,6 +654,12 @@ NICHT_PRUEFBAR: dict[str, str] = {
                     "gezeichnet und SOLL nichts bewirken.",
     "importNotes.text": "Reines Notizfeld (was der Import nicht abbilden "
                         "konnte) — es wird nirgends gezeichnet.",
+    "camera3d.fogColor":
+        "Der Nebel DAEMPFT Sprites nur, er faerbt sie nicht — so steht es am "
+        "Feld (`fogColor`: '0x00RRGGBB (Sprites daempfen nur)'). Unser Zeuge "
+        "ist ein SuperScope 3D, also ausschliesslich Sprites: die Farbe kann "
+        "dort per Entwurf nichts bewirken, nur `fogStart`/`fogEnd` wirken. Ein "
+        "STUMM waere eine Falschaussage ueber die App.",
     "customBpm.arbitraryMs":
         "Der Frei-Takt haengt an der WANDUHR (`steadyNowMs`), nicht am Frame. "
         "Ein Sondenlauf rendert 181 Frames in Millisekunden — in dieser Zeit "
@@ -821,7 +891,12 @@ def main() -> int:
     #               nachgeschlagen; die Kreuzprodukte unten erzeugen solche
     #               Kombinationen absichtlich ("dieses Feld, falls der Typ es
     #               hat"). Nur ein HINWEIS mit Zahl.
-    felder_je_typ = {t["typkey"]: {f["name"] for f in t["felder"]}
+    # `enabled`/`name`/`description` sind RAHMEN-Felder des Knotens: gueltige
+    # JSON-Schluessel, die `fieldNames()` bewusst herausnimmt. Eine
+    # Grundkonfiguration darf sie setzen (S56: das Beat-Fenster der Effect List
+    # greift laut r_list NUR bei einer statisch deaktivierten Liste).
+    RAHMEN = {"enabled", "name", "description"}
+    felder_je_typ = {t["typkey"]: {f["name"] for f in t["felder"]} | RAHMEN
                      for t in docs["typen"]}
     schlecht: list[str] = []
     for voll, extra in GRUNDKONFIG.items():

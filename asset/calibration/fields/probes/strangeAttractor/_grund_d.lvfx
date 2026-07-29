@@ -92,19 +92,10 @@
         "colorCycleFrames": 0
       },
       {
-        "type": "camera3d",
+        "type": "strangeAttractor",
         "enabled": true,
-        "name": "3D Camera",
-        "fogStart": 2.0,
-        "fogEnd": 5.0,
-        "fogColor": 16711935
-      },
-      {
-        "type": "superScope3d",
-        "enabled": true,
-        "name": "Zeuge",
-        "pointCode": "x=cos(i*6.28)*0.6; y=sin(i*6.28)*0.6; z=i*2-1; red=1; green=1; blue=1",
-        "pointCount": 128
+        "name": "Strange Attractor",
+        "ftype": 1
       }
     ],
     "clearEveryFrame": false

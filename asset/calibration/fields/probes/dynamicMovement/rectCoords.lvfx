@@ -95,6 +95,7 @@
         "type": "dynamicMovement",
         "enabled": true,
         "name": "Dynamic Movement",
+        "pointCode": "x=x+0.3; y=y*0.7",
         "rectCoords": true
       }
     ],

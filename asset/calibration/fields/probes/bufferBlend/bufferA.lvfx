@@ -112,7 +112,8 @@
         "type": "bufferBlend",
         "enabled": true,
         "name": "Buffer Blend",
-        "bufferA": 24
+        "mode": 3,
+        "bufferA": 0
       }
     ],
     "clearEveryFrame": false

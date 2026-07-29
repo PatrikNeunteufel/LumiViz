@@ -92,40 +92,10 @@
         "colorCycleFrames": 0
       },
       {
-        "type": "invert",
+        "type": "dynamicMovement",
         "enabled": true,
-        "name": "kurz invertiert"
-      },
-      {
-        "type": "bufferSave",
-        "enabled": true,
-        "name": "Puffer 0 fuellen",
-        "slot": 0,
-        "dir": 0
-      },
-      {
-        "type": "invert",
-        "enabled": true,
-        "name": "und zurueck"
-      },
-      {
-        "type": "list",
-        "enabled": false,
-        "name": "Effect List",
-        "children": [
-          {
-            "type": "superScope",
-            "enabled": true,
-            "name": "Kind",
-            "pointCode": "x=cos(i*6.28)*0.5; y=sin(i*6.28)*0.5; red=1; green=0.2; blue=0.2",
-            "pointCount": 128,
-            "colors": [
-              16777215
-            ]
-          }
-        ],
-        "onBeatRender": true,
-        "onBeatFrames": 3
+        "name": "Dynamic Movement",
+        "pointCode": "x=x+0.3; y=y*0.7"
       }
     ],
     "clearEveryFrame": false

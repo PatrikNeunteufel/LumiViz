@@ -95,6 +95,7 @@
         "type": "blur",
         "enabled": true,
         "name": "Blur",
+        "strength": 3,
         "roundUp": false
       }
     ],

@@ -97,7 +97,7 @@
         "name": "SuperScope",
         "pointCode": "x=cos(i*6.28)*0.7; y=sin(i*6.28)*0.7",
         "lineWidth": 8,
-        "renderMode": 2
+        "renderMode": 0
       }
     ],
     "clearEveryFrame": false

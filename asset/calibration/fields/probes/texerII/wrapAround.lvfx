@@ -96,8 +96,8 @@
         "enabled": true,
         "name": "Texer II",
         "imageData": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAHklEQVR4nGP4z8CAFWEXxYNGNVCkAZcMLjCqgSYaADtOfpCTQ+5gAAAAAElFTkSuQmCC",
-        "initCode": "n=48",
-        "pointCode": "x=(i*2)-1; y=sin(i*6.28)*0.5; sizex=2; sizey=2; red=1; green=0.5; blue=0.2",
+        "initCode": "n=24",
+        "pointCode": "x=(i*4)-2; y=sin(i*6.28)*1.4; sizex=3; sizey=3",
         "wrapAround": true
       }
     ],

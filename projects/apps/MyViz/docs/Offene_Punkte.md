@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.9.0
-> **Datum:** 2026-07-29 (Session 56)
+> **Version:** 1.9.1
+> **Datum:** 2026-07-30 (Session 56)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -192,8 +192,8 @@ werden.
 
 ## 1c. Die stummen Feld-Sonden (Strang E, Durchsicht S56)
 
-**Stand: 115 → 27.** `STUMM` ist wie `WIRKUNGSLOS` **zuerst eine Frage** — von
-88 durchgesehenen war **genau einer** ein Befund an der App.
+**Stand: 115 → 15.** `STUMM` ist wie `WIRKUNGSLOS` **zuerst eine Frage** — von
+100 durchgesehenen waren **zwei** ein Befund an der App (Roto Blitter, Kleinian).
 
 ### Der eine App-Befund: die Alt-Format-Weichen griffen zu oft
 
@@ -255,17 +255,19 @@ um eine Position rutschten: der Ernter fand **269 → 0 Bereiche**, und alle
 Zahlen-Gegenwerte fielen still auf die Notregel. Aufgefallen nur, weil
 `text.normSpeed` partout stumm blieb.
 
-### Was offen ist (27)
+### Was offen ist (15)
 
-| | |
+| Feld | Stand der Untersuchung |
 |---|---|
-| Vermutlich gemeinsame Ursache | `bufferBlend.bufferA`/`bufferB` · `list.initCode`/`onBeatFrames`/`onBeatRender` |
-| Kanal liest die **Wellenform** | `oscRing.channel` · `oscStar.channel` — `--stereo-spektrum` hilft dort nicht; braucht eine Stereo-Wellenform im Standalone oder ein *nicht prüfbar* |
-| Beat-Übergang | `interferences.alpha2`/`distance2` |
-| Einzelfälle (18) | `bloom.post` · `blur.roundUp` · `camera3d.fogColor`/`tz` · `convolution.edgeMode` · `dotPlane.colors` · `dynamicMovement.rectCoords` · `grain.staticGrain` · `multiDelay.mode` · `rotatingStars.bandHi` · `setRenderMode.adjustAlpha` · `strangeAttractor.color`/`d` · `superScope.renderMode` · `terrain3d.colorLow` · `texer.blend` · `texerII.wrapAround` · `triangle.pointCode` |
+| `list.onBeatFrames` | Das Beat-Fenster greift laut `r_list` **nur bei einer statisch deaktivierten** Liste (`enabled() = !bit1 \|\| fake_enabled`) — das ist jetzt in der Grundkonfiguration, und `onBeatRender` wirkt seither. Die *Länge* des Fensters braucht zusätzlich einen Schlussframe kurz nach dem Beat; 186 hat nicht gereicht |
+| `oscRing.channel` · `oscStar.channel` | Beide lesen die **Wellenform**, und `--stereo-spektrum` macht nur das Spektrum ungleich. Osc Ring über `source = 1` umzuleiten half nicht. Entweder eine Stereo-**Wellenform** im Standalone, oder als *nicht prüfbar* festschreiben |
+| `bloom.post` · `blur.roundUp` · `camera3d.tz` · `convolution.edgeMode` · `dotPlane.colors` · `grain.staticGrain` · `multiDelay.mode` · `rotatingStars.bandHi` · `setRenderMode.adjustAlpha` · `terrain3d.colorLow` · `texer.blend` · `texerII.wrapAround` | Einzelfälle: je Renderer lesen und Bild ansehen. Kein Muster mehr, das mehrere auf einmal löst |
 
-Die 18 brauchen jeweils Renderer lesen und Bild ansehen — kein Muster mehr, das
-mehrere auf einmal löst.
+Zwei Felder sind als **nicht prüfbar** festgeschrieben statt gelöst, beide mit
+einer Grenze im Entwurf: `customBpm.arbitraryMs` hängt an der **Wanduhr**
+(181 Frames rendern in Millisekunden — weder 500 ms noch 5000 ms lösen aus), und
+`camera3d.fogColor` **dämpft Sprites nur, statt sie zu färben** (so steht es am
+Feld); unser Zeuge ist ein SuperScope 3D, also ausschließlich Sprites.
 
 **Beobachtung, nicht gefixt:** `fractalZoomer.feedback` heißt „trail persistence
 0..1", der Shader liest es aber nur als **Schalter**
@@ -335,6 +337,24 @@ Echt waren: **2** abweichende Literale (`starfield.blend` bewusst,
 Vorgabewert kannte. Ermittelt wurde das statisch, nicht zur Laufzeit — dieselbe
 Lehre wie bei den Sonden: *eine gemeldete Abweichung ist zuerst eine Frage an das
 Messverfahren.*
+
+## 1e. Bedienung: der Editor muss nach jedem Baumumbau dastehen
+
+**Befund Patrik (S55, S56).** Wer einen Knoten einfügt oder verschiebt, will ihn
+sofort bearbeiten. Beides ging nicht: der Eigenschaften-Editor blieb leer, bis
+man einmal weg- und wieder hinklickte.
+
+Die Ursache ist an beiden Stellen dieselbe. `selectByPath`/`selectPaths` setzen
+die Auswahl unter `m_selecting`, und das Auswahl-Signal ist dabei **stillgelegt**
+(sonst würde jeder Zwischenschritt einen Editor-Neubau auslösen). Das
+anschliessende `setCurrentItem` ändert nur noch das *aktuelle* Element — es
+ändert die Auswahl nicht mehr und löst deshalb kein Signal aus. Also baut
+niemand den Editor.
+
+Der Doppelschritt ist die Lösung: **markieren UND `buildPropertyEditor` rufen.**
+Einfügen hat ihn seit S55, Verschieben seit S56.
+
+⬜ **Beides ist nicht erprobt** — das geht nur durch Anklicken bzw. Ziehen.
 
 ## 2. Urteile, die nur Seite-an-Seite fallen können
 
@@ -678,6 +698,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.9.1 | 2026-07-30 | Session 56, Abschluss — **§1e neu**: der Eigenschaften-Editor muss nach JEDEM Baumumbau dastehen. Nach dem **Verschieben** blieb er leer, aus derselben Ursache wie beim Einfügen in S55: `selectPaths` setzt die Auswahl unter `m_selecting`, das Auswahl-Signal ist dabei stillgelegt, und das folgende `setCurrentItem` löst keines mehr aus — also baute niemand den Editor. Befund Patrik, behoben (Doppelschritt markieren + `buildPropertyEditor`, wie beim Einfügen). Dazu die stummen Feld-Sonden von 115 auf **15**: Buffer Blend (Gegenwert 24 wählte wie die Vorgabe den aktuellen Frame, und Modus 0 liest gar kein A), Interferences (Schlussframe mitten in den Beat-Übergang gelegt), Effect List (Init-Slot über eine geteilte Variable; das Beat-Fenster greift laut `r_list` nur bei einer AUSgeschalteten Liste) |
 | 1.9.0 | 2026-07-29 | Session 56 (Fortsetzung) — **stumme Feld-Sonden 115 → 27** (§1c): ein App-Befund — die drei Alt-Format-Weichen im Deserialisierer griffen bei JEDEM Preset, das das neue Feld nicht nennt, und Roto Blitter zoomte dadurch auf 0 statt auf den neutralen 31 (Bild einfarbig, alle fünf Felder stumm). Dazu Kleinians ganzzahliges `colorScale`, Texer II ohne `n`, Custom BPMs Zähler-Phase. **Zweite Quelle der Vorgaben abgeschafft** (§1d, Entscheid Patrik): 415 Literale und 243 `getStr` beziehen ihre Vorgabe jetzt aus dem Struct, eine benannte Ausnahme bleibt. Vier neue Wächter (Zusatzfelder einer Grundkonfiguration, verwaiste Sonden, Panel-Schlüssel, Roundtrip). §10 Tooltips 717/717. Tests 485, beide Builds grün |
 | 1.8.0 | 2026-07-29 | Session 56 — **§1b berichtigt:** der S55-Quercheck unterschied nicht, was er unterscheiden sollte; von den 15 `WIRKUNGSLOS` waren **7 echte Befunde** (alle gefixt) und **8 Messartefakte**. Neues Urteil `VERDECKT` samt Gegenrichtung in der Edit-Sonde. **§8:** Timescope maß 1/320 seiner Wirkung (Untergrund übermalte die Ein-Pixel-Spalten) — behoben, 8/8 WIRKT. **§10 Tooltips erledigt:** 717/717 Felder erklärt, 826 Panel-Zeilen tragen ihren Feldnamen, zwei Wächter |
 | 1.6.0 | 2026-07-27 | Session 53 — Vorgaben Patrik für S54 aufgenommen (Test-Presets je Feld · Tooltips · Basis-Voreinstellungen · Feldreihenfolge) und der Movement-Befund aus `movement3b.lvfx` dokumentiert (Beat-Umkehr kann dort strukturell nicht wirken) |

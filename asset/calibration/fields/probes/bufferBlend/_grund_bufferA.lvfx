@@ -109,23 +109,10 @@
         "name": "und zurueck"
       },
       {
-        "type": "list",
-        "enabled": false,
-        "name": "Effect List",
-        "children": [
-          {
-            "type": "superScope",
-            "enabled": true,
-            "name": "Kind",
-            "pointCode": "x=cos(i*6.28)*0.5; y=sin(i*6.28)*0.5; red=1; green=0.2; blue=0.2",
-            "pointCount": 128,
-            "colors": [
-              16777215
-            ]
-          }
-        ],
-        "onBeatRender": true,
-        "onBeatFrames": 3
+        "type": "bufferBlend",
+        "enabled": true,
+        "name": "Buffer Blend",
+        "mode": 3
       }
     ],
     "clearEveryFrame": false

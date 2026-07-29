@@ -1678,7 +1678,19 @@ void MultiEffectPanel::onDropRequested(QTreeWidgetItem* src, QTreeWidgetItem* ta
             bool moved = false;
             mutateStructure(
                 [&] { moved = moveNodesLocked(srcPaths, targetPath, where, finalPaths); });
-            if (moved) selectPaths(finalPaths);
+            // Nach dem Verschieben denselben Doppelschritt wie beim Einfuegen
+            // (s. onAdd, Befund Patrik S55): markieren UND den Editor aufbauen.
+            // `selectPaths` setzt die Auswahl unter `m_selecting`, das
+            // Auswahl-Signal ist dabei stillgelegt — das folgende
+            // `setCurrentItem` aendert dann nur noch das aktuelle Element und
+            // loest keines mehr aus. Der verschobene Knoten liess sich deshalb
+            // erst bearbeiten, nachdem man einmal weg- und wieder hinklickte
+            // (Befund Patrik S56, dieselbe Ursache wie damals beim Hinzufuegen).
+            if (moved)
+            {
+                selectPaths(finalPaths);
+                buildPropertyEditor(currentPath());
+            }
         },
         Qt::QueuedConnection);
 }

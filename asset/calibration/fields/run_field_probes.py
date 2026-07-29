@@ -106,7 +106,12 @@ FRAMES_JE_FELD: dict[str, int] = {
     # Der Schlussframe ist per Konstruktion ein BEAT — fuer ein Feld, das nur
     # AUSSERHALB des Beats etwas tut, ist er blind. 196 Frames enden 15 Frames
     # nach dem letzten Beat (S56).
-    "list.onBeatRender": 196,
+    # Seit die Sonde die Liste AUSSCHALTET (nur so greift das Fenster,
+    # s. make_field_probes) zeigt der Schalter sich IM Beat: dann rendert
+    # die Sonde und der Grund nicht. 181 endet auf einem Beat.
+    # `onBeatFrames` dagegen braucht einen Schlussframe KURZ DANACH: die
+    # Vorgabe 1 ist dort abgelaufen, ein groesserer Wert noch nicht.
+    "list.onBeatFrames": 186,
     "multiFilter.onBeat": 196,
     "mirror.onBeatRandom": 196,
     "mosaic.durationFrames": 196,
@@ -120,6 +125,14 @@ FRAMES_JE_FELD: dict[str, int] = {
     "customBpm.initCode": 151,
     "customBpm.frameCode": 151,
     "customBpm.beatCode": 151,
+    # Interferences wandert auf einen Beat mit `speed` (0,2 je Frame) zu den
+    # `*2`-Werten und danach zurueck. Auf dem Beat-Frame selbst hat der
+    # Uebergang gerade erst angefangen, und 15 Frames spaeter ist er zurueck —
+    # beides zeigt den Zielwert kaum. 186 endet FUENF Frames nach einem Beat,
+    # also bei rund zwei Dritteln des Wegs (S56).
+    "interferences.alpha2": 186,
+    "interferences.distance2": 186,
+    "interferences.speed": 186,
 }
 
 # Sonden, die ein anderes TESTSIGNAL brauchen. Das Standard-Signal des

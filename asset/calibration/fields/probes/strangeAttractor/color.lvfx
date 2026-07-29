@@ -95,6 +95,7 @@
         "type": "strangeAttractor",
         "enabled": true,
         "name": "Strange Attractor",
+        "useGradient": false,
         "color": 16711935
       }
     ],

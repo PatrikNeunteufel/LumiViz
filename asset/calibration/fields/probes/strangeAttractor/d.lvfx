@@ -95,6 +95,7 @@
         "type": "strangeAttractor",
         "enabled": true,
         "name": "Strange Attractor",
+        "ftype": 1,
         "d": -3.0
       }
     ],

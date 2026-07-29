@@ -112,7 +112,7 @@
         "type": "bufferBlend",
         "enabled": true,
         "name": "Buffer Blend",
-        "frameCode": "buffera = 24; bufferb = 24; mode = 10"
+        "frameCode": "buffera = 0; bufferb = 0; mode = 10"
       }
     ],
     "clearEveryFrame": false

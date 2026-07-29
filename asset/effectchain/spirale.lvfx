@@ -1,0 +1,138 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "",
+                "blend": 0,
+                "color": 0,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Clear",
+                "onlyFirst": false,
+                "type": "clear"
+            },
+            {
+                "divisor": 2,
+                "enabled": true,
+                "filter": 0,
+                "name": "Render Scale",
+                "type": "renderScale"
+            },
+            {
+                "blendIn": 0,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "audioChannel": 2,
+                        "beatCode": "",
+                        "colorBlend": 0,
+                        "colorCycleFrames": 60,
+                        "colors": [
+                        ],
+                        "dotSize": 8,
+                        "enabled": true,
+                        "frameCode": "t=t+0.015",
+                        "gradientPreset": "Lava",
+                        "initCode": "n=300; t=0; pi=acos(-1)",
+                        "lineBlend": 1,
+                        "lineWidth": 2,
+                        "name": "SuperScope",
+                        "pointCode": "r=0.1+i*0.7+v*0.15; a=i*pi*8+t; x=sin(a)*r; y=cos(a)*r",
+                        "pointCount": 300,
+                        "renderMode": 0,
+                        "spectrumSource": false,
+                        "type": "superScope"
+                    },
+                    {
+                        "beatCode": "",
+                        "color": 0,
+                        "enabled": true,
+                        "fadeLen": 4,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Fadeout",
+                        "type": "fadeout"
+                    },
+                    {
+                        "beatCode": "",
+                        "blend": 2,
+                        "buffern": 0,
+                        "depth": 30,
+                        "depth2": 100,
+                        "durationFrames": 14,
+                        "enabled": true,
+                        "frameCode": "x=0.5+0.5*sin(4*t*getosc(x,1,0));\ny=0.5+0.2*cos(8*t*getosc(y,1,0));\nt=t+0.01;",
+                        "initCode": "",
+                        "invert": false,
+                        "name": "Bump",
+                        "oldStyle": false,
+                        "onBeat": true,
+                        "type": "bump"
+                    },
+                    {
+                        "beatCode": "",
+                        "downsample": 2,
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "intensity": 1,
+                        "name": "Bloom",
+                        "post": true,
+                        "radius": 16,
+                        "threshold": 0.4000000059604645,
+                        "type": "bloom",
+                        "vignette": true,
+                        "vignetteStrength": 0.8500000238418579
+                    },
+                    {
+                        "beatCode": "",
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Blur",
+                        "roundUp": true,
+                        "strength": 1,
+                        "type": "blur"
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

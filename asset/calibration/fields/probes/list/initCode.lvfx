@@ -126,7 +126,7 @@
         ],
         "useCode": true,
         "frameCode": "enabled=reg00",
-        "initCode": "enabled = 1; clear = 1; alphain = 1; alphaout = 1"
+        "initCode": "reg00=1"
       }
     ],
     "clearEveryFrame": false

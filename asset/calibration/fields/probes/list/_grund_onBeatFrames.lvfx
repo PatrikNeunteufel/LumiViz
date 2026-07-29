@@ -110,7 +110,7 @@
       },
       {
         "type": "list",
-        "enabled": true,
+        "enabled": false,
         "name": "Effect List",
         "children": [
           {
