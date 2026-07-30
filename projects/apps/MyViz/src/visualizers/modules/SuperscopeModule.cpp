@@ -183,6 +183,16 @@ void SuperscopeModule::initializeLuaScripts()
     m_scriptSetsDrawModePoint = m_script->sourceMentions(Slot::Point, "drawmode");
     m_scriptSetsLineSize = mentionsAny("linesize");
     m_scriptSetsLineSizePoint = m_script->sourceMentions(Slot::Point, "linesize");
+    // Setzt ein Slot AUSSERHALB des Punkt-Codes die Farbe? Dann gehoert sie dem
+    // Skript und darf im Punkt-Lauf nicht ueberschrieben werden (s. execute()).
+    auto mentionsOutsidePoint = [this](std::string_view word) {
+        return m_script->sourceMentions(Slot::Init, word) ||
+               m_script->sourceMentions(Slot::Frame, word) ||
+               m_script->sourceMentions(Slot::Beat, word);
+    };
+    m_scriptSetsColorOutsidePoint = mentionsOutsidePoint("red") ||
+                                    mentionsOutsidePoint("green") ||
+                                    mentionsOutsidePoint("blue");
 
     if (m_script->has(Slot::Init) && !m_script->run(Slot::Init) &&
         m_lastScriptError.empty())
@@ -514,6 +524,24 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
     const bool luaActive = m_luaMode && m_script != nullptr;
     int effectiveCount = m_pointCount;
 
+    // Die Farbe dieses Frames — VOR den Slots, wie in r_sscope:250-266: dort
+    // stehen `*var_red/green/blue` aus der Farbtafel unmittelbar vor
+    // `executeCode(frame)`. Wir hatten sie erst danach geholt und im Punkt-Lauf
+    // vor JEDEM Punkt neu gesetzt; ein `red=b` im FRAME-Code war damit
+    // wirkungslos, und der Scope zeichnete die Tafelfarbe statt Schwarz
+    // ("Lost Cause": vier Scopes, die nur auf dem Beat sichtbar sein sollen,
+    // leuchteten bei uns in JEDEM Frame — Befund S58).
+    const auto tab = sampleTable(m_colorTable, m_colorPos);
+    m_frameTableR = tab[0];
+    m_frameTableG = tab[1];
+    m_frameTableB = tab[2];
+    if (!m_colorTable.empty())
+    {
+        m_colorPos += 1.0f / static_cast<float>(m_colorCycleFrames);
+        const float n = static_cast<float>(m_colorTable.size());
+        if (m_colorPos >= n) m_colorPos -= n;
+    }
+
     if (luaActive)
     {
         // Frame contract: inputs w, h, time, dt, b — beat/frame code may adjust
@@ -526,6 +554,19 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
         engine.setNumber("time", static_cast<double>(m_totalTime));
         engine.setNumber("dt", static_cast<double>(deltaTime));
         engine.setNumber("b", m_b);
+
+        // Farbe aus der Tafel saeen, bevor die Slots laufen (s. oben). Der
+        // Verlauf wird mit i=0 ausgewertet — im Punkt-Lauf kommt er je Punkt
+        // nach, solange kein Slot die Farbe selbst setzt.
+        {
+            const Color4f grad0 = m_colorGradient.sample(0.0f);
+            const auto base0 = blendBase(m_colorBlend,
+                                         {m_frameTableR, m_frameTableG, m_frameTableB},
+                                         grad0[0], grad0[1], grad0[2]);
+            engine.setNumber("red", static_cast<double>(base0[0]));
+            engine.setNumber("green", static_cast<double>(base0[1]));
+            engine.setNumber("blue", static_cast<double>(base0[2]));
+        }
 
         // r_sscope.cpp:272-273: FRAME zuerst, dann Beat — der Frame-Code
         // rechnet mit den Beat-Werten des VORHERIGEN Frames (S47).
@@ -551,18 +592,6 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
     }
 
     const bool luaPoint = luaActive && m_script->has(Slot::Point);
-
-    // This frame's cycled table color (temporal), then advance for next frame.
-    const auto tab = sampleTable(m_colorTable, m_colorPos);
-    m_frameTableR = tab[0];
-    m_frameTableG = tab[1];
-    m_frameTableB = tab[2];
-    if (!m_colorTable.empty())
-    {
-        m_colorPos += 1.0f / static_cast<float>(m_colorCycleFrames);
-        const float n = static_cast<float>(m_colorTable.size());
-        if (m_colorPos >= n) m_colorPos -= n;
-    }
 
     // Generate points
     std::vector<SuperscopePoint> points;
@@ -688,14 +717,21 @@ SuperscopePoint SuperscopeModule::executePointLua(float i, float v)
     engine.setNumber("v", static_cast<double>(v));
     engine.setNumber("skip", 0.0);
 
-    // Pre-seed red/green/blue with the base color (AVS r_sscope): the point code
-    // may leave it (-> base color), modulate it (red=red*v) or override it.
-    const Color4f grad = m_colorGradient.sample(i);
-    const auto base = blendBase(m_colorBlend, {m_frameTableR, m_frameTableG, m_frameTableB},
-                                grad[0], grad[1], grad[2]);
-    engine.setNumber("red", static_cast<double>(base[0]));
-    engine.setNumber("green", static_cast<double>(base[1]));
-    engine.setNumber("blue", static_cast<double>(base[2]));
+    // AVS saet die Farbe NUR einmal je Frame (r_sscope:264-266) — der Punkt-Code
+    // darf sie behalten, modulieren (`red=red*v`) oder ueberschreiben. Sobald
+    // ein Slot ausserhalb des Punkt-Codes sie setzt, gehoert sie dem Skript und
+    // wir fassen sie hier nicht an. Nur wenn KEIN Slot sie setzt, kommt unser
+    // Verlauf je Punkt nach — die Hauserweiterung widerspricht so keinem Skript.
+    if (!m_scriptSetsColorOutsidePoint)
+    {
+        const Color4f grad = m_colorGradient.sample(i);
+        const auto base = blendBase(m_colorBlend,
+                                    {m_frameTableR, m_frameTableG, m_frameTableB},
+                                    grad[0], grad[1], grad[2]);
+        engine.setNumber("red", static_cast<double>(base[0]));
+        engine.setNumber("green", static_cast<double>(base[1]));
+        engine.setNumber("blue", static_cast<double>(base[2]));
+    }
 
     if (!m_script->run(Slot::Point))
     {

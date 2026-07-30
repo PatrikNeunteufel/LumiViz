@@ -1248,6 +1248,23 @@ ChainNode translateNode(const EffectNode& src, const std::string& path, Context&
         return node;
     }
 
+    // Movement mit Effekt 0 ("none"): im Original ein NICHTS-TUN, kein fehlendes
+    // Feature — `r_trans.cpp` kehrt bei `!effect` sofort zurueck. Wie beim
+    // Kommentar ein stiller Durchreicher: kein Bericht, nicht als ungerenderter
+    // Passthrough gezaehlt. `splendora.avs` meldete beim Import sonst einen
+    // Fehler fuer einen Knoten, der gar nichts tun soll (Befund Patrik S58).
+    if (src.id == kMovement && slotStr(src, "point").empty() &&
+        src.field("effect") == 0)
+    {
+        ChainNode node;
+        PassthroughParams p;
+        p.sourceId = src.id;
+        p.note = "Movement \"none\" — im Original ein Nichts-Tun";
+        node.params = std::move(p);
+        node.displayName = "Movement (none)";
+        return node;
+    }
+
     if (!src.decoded)
     {
         const std::string name = src.name.empty() ? "effect " + std::to_string(src.id)

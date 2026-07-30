@@ -105,8 +105,8 @@
                         "frameCode": "",
                         "initCode": "",
                         "name": "Blur",
-                        "roundUp": true,
-                        "strength": 1,
+                        "roundUp": false,
+                        "strength": 3,
                         "type": "blur"
                     }
                 ],

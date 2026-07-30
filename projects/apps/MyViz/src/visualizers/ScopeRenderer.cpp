@@ -282,12 +282,28 @@ namespace
 /// Referenzbild: unsere Diagonale lag durchgehend eine Spalte links von der
 /// Referenz (Zeile 120: 159..161 statt 160..162). Wir setzen die Stuetzstelle
 /// deshalb auf die Mitte des Pixels, den AVS berechnet (Befund S58).
-float aufPixelmitte(double v, int groesse)
+float aufPixelmitteX(double v, int breite)
 {
-    if (groesse <= 0) return static_cast<float>(v);
-    const double fenster = (v + 1.0) * static_cast<double>(groesse) * 0.5;
-    const double pixel = std::floor(fenster);
-    return static_cast<float>((pixel + 0.5) * 2.0 / static_cast<double>(groesse) - 1.0);
+    if (breite <= 0) return static_cast<float>(v);
+    // `(int)` schneidet Richtung NULL ab, nicht nach unten — bei knapp
+    // negativen Werten (getosc liefert sie) ist das eine ganze Zeile
+    // Unterschied: die Referenz zeichnet noch, wir hatten weggeschnitten.
+    const double pixel = std::trunc((v + 1.0) * static_cast<double>(breite) * 0.5);
+    return static_cast<float>((pixel + 0.5) * 2.0 / static_cast<double>(breite) - 1.0);
+}
+
+/// y ebenso, aber ueber die AVS-ZEILE gerechnet. Der Punkt liegt im GL-Raum
+/// (y+ oben), AVS zaehlt von oben: `r = (int)((var_y+1)*h*0.5)`. Direkt auf dem
+/// gespiegelten Wert zu runden ist NICHT dasselbe — liegt der Wert exakt auf
+/// einer Pixelgrenze (var_y = -1, 0, +1 …), landet `floor(h - R)` eine Zeile
+/// daneben. Aufgefallen an einer Sonde mit `y = getspec(...)*2-1`, wo der Wert
+/// null ist: die Referenz zeichnet in Zeile 0, wir in Zeile 239 (Befund S58).
+float aufPixelmitteY(double v, int hoehe)
+{
+    if (hoehe <= 0) return static_cast<float>(v);
+    const double zeile = std::trunc((-v + 1.0) * static_cast<double>(hoehe) * 0.5);
+    const double glZeile = static_cast<double>(hoehe) - 1.0 - zeile;
+    return static_cast<float>((glZeile + 0.5) * 2.0 / static_cast<double>(hoehe) - 1.0);
 }
 }  // namespace
 
@@ -321,8 +337,8 @@ void ScopeRenderer::renderThinLines(const std::vector<SuperscopePoint>& points)
         }
         // x/y sind DOUBLE (AVS-Genauigkeit, s. SuperscopePoint); der
         // Vertex-Puffer ist float — hier wird bewusst verengt.
-        vertices.insert(vertices.end(), {aufPixelmitte(pt.x, viewport[2]),
-                                        aufPixelmitte(pt.y, viewport[3]),
+        vertices.insert(vertices.end(), {aufPixelmitteX(pt.x, viewport[2]),
+                                        aufPixelmitteY(pt.y, viewport[3]),
                                         pt.r, pt.g, pt.b, pt.a});
         ++currentCount;
     }
@@ -408,8 +424,8 @@ void ScopeRenderer::renderThickLines(const std::vector<SuperscopePoint>& points,
         else
             ox = lineWidth * pixelWidth * 0.5f;   // y-major: horizontale Reihe
 
-        const float px = aufPixelmitte(pt.x, viewport[2]);
-        const float py = aufPixelmitte(pt.y, viewport[3]);
+        const float px = aufPixelmitteX(pt.x, viewport[2]);
+        const float py = aufPixelmitteY(pt.y, viewport[3]);
         vertices.insert(vertices.end(), {px + ox, py + oy,
                                          pt.r, pt.g, pt.b, pt.a});
         vertices.insert(vertices.end(), {px - ox, py - oy,

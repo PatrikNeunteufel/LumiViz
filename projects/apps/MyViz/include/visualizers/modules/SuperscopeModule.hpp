@@ -465,6 +465,9 @@ private:
     bool m_scriptSetsDrawModePoint = false;  ///< point code switches drawmode
     bool m_scriptSetsLineSizePoint = false;  ///< point code sets linesize
     bool m_scriptSetsLineSize = false;
+    /// Init/Frame/Beat erwaehnt red/green/blue — dann gehoert die Farbe dem
+    /// Skript und der Punkt-Lauf setzt sie nicht neu (r_sscope:264-266).
+    bool m_scriptSetsColorOutsidePoint = false;
     double m_scriptDrawMode = 0.0;
     double m_scriptLineSize = 1.0;
 
