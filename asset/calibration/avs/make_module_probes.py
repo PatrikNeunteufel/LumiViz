@@ -81,6 +81,7 @@ def main() -> None:
         superscope(point="x=cos(i*6.28)*0.7; y=sin(i*6.28)*0.7; red=1;green=1;blue=1;",
                    init="n=32", which_ch=2, colors=(0xFFFFFF,), drawmode=0)))
 
+
     # -------------------------------------- 2: Transformatoren auf Referenzbild
     write("2_trans/refbild.avs", preset(REFBILD))            # Nullprobe
     write("2_trans/movement_zoom.avs", preset(REFBILD, movement_user("d=d*0.8")))
@@ -232,6 +233,25 @@ def main() -> None:
     write("2_trans/convolution_kante.avs", preset(
         REFBILD, convolution(kernel=[0] * 24 + [8] + [0] * 24, scale=1,
                              edge_mode=1)))
+
+    # Die Rechenart der APE (S58, an Alternate Reality aufgefallen). Alle vier
+    # Sonden haben mit der alten Umsetzung ein ANDERES Bild ergeben:
+    #   bias zaehlt in 256ern (wir addierten bias/255), scale teilt GANZZAHLIG,
+    #   `absolute` liefert bei negativem Ergebnis 255 (nicht den Betrag), und
+    #   `twoPass` verdoppelt, statt zweimal zu falten.
+    KERN_MITTE = [0] * 24 + [1] + [0] * 24
+    write("2_trans/convolution_bias_plus.avs", preset(
+        REFBILD, convolution(kernel=KERN_MITTE, scale=2, bias=1)))   # (v+256)/2
+    # 2v-256: das Helle bleibt, das Dunkle faellt weg. Ein reines bias=-1 waere
+    # ein SCHWARZES Referenzbild — daran kann die Sonde nichts messen (LEER).
+    write("2_trans/convolution_bias_minus.avs", preset(
+        REFBILD, convolution(kernel=[0] * 24 + [2] + [0] * 24, scale=1, bias=-1)))
+    write("2_trans/convolution_scale3.avs", preset(
+        REFBILD, convolution(kernel=KERN_MITTE, scale=3)))           # abgeschnitten
+    write("2_trans/convolution_absolut.avs", preset(                 # -> 255, nicht |v|
+        REFBILD, convolution(kernel=[0] * 24 + [-1] + [0] * 24, scale=1, absolute=1)))
+    write("2_trans/convolution_zweipass.avs", preset(                # v/2, nicht v/16
+        REFBILD, convolution(kernel=KERN_MITTE, scale=4, two_pass=1)))
 
     # ------------------------------------------ 3: skriptbare Groessen variiert
     write("3_script/linesize_keil.avs", preset(
