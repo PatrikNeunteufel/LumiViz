@@ -471,6 +471,13 @@ def main() -> None:
                       frame="n=8; sizex=2; sizey=2")))
 
     alloy_paar("paar_original")
+    # Der Beweis, dass es die ZUFALLS-STARTPHASE ist und nicht die Physik:
+    # dieselbe Kette mit FESTEM `t` stimmt (Menge 0,02 / Lage 0,5 bzw. 1,5),
+    # nur `paar_original` mit `t=rand(100)/50` weicht ab. Bei gleichem
+    # Startwert rechnen beide Seiten also gleich — unser rand() steht an
+    # dieser Stelle nur anders als das der Referenz (S57).
+    alloy_paar("paar_t_fest_082", dm_init="t=0.82;")
+    alloy_paar("paar_t_fest_2", dm_init="t=2;")
     # Ohne den rand-Zieher im Init: startet der Wirbel bei beiden in derselben
     # Phase, faellt eine Zufalls-Ausrichtung als Ursache weg.
     alloy_paar("paar_fest_t", dm_init="t=1;")
