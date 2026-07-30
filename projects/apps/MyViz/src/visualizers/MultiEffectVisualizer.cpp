@@ -1730,9 +1730,18 @@ void main()
         return;
     }
     vec3 img = texture(uImg, vec2(uv.x, 1.0 - uv.y)).rgb;  // image is top-down
+    // Betriebsarten 0..2 wie bisher (Picture, ID 34), 3..5 fuer Picture II —
+    // dessen APE hat SECHS, an der Referenz gemessen (S58, Sonden `p2_bm*`):
+    // 0 ersetzen · 1 additiv · 2 Maximum · 3 Minimum · 4 50/50 · 5 Subtraktion
+    // (Framebuffer minus Bild). Der Import bildet darauf ab; wir hatten alles
+    // ab 2 pauschal als 50/50 genommen.
     vec3 r;
     if (uBlend == 1)      r = min(fb + img, vec3(1.0));
-    else if (uBlend == 2) r = (fb + img) * 0.5;
+    else if (uBlend == 2)                                  // 50/50 = BLEND_AVG
+        r = (floor(round(fb * 255.0) * 0.5) + floor(round(img * 255.0) * 0.5)) / 255.0;
+    else if (uBlend == 3) r = max(fb, img);
+    else if (uBlend == 4) r = min(fb, img);
+    else if (uBlend == 5) r = max(fb - img, vec3(0.0));
     else                  r = img;
     fragColor = vec4(r, 1.0);
 }
@@ -3754,6 +3763,24 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
 
     ListRuntime& runtime = m_listRuntimes[node.nodeId];
     runtime.seenThisFrame = true;
+
+    // Der Beat gehoert der LISTE, nicht dem Frame. In r_list.cpp:747-751 wirken
+    // die Rueckgaben SET_BEAT/CLR_BEAT eines Kindes auf die lokale Variable
+    // `isBeat` des Listen-render() — also nur auf die NACHFOLGENDEN Kinder
+    // DIESER Liste; der Elternteil sieht davon nichts. Dasselbe gilt fuer das
+    // `beat` des Listen-Skripts. Wir haben bisher `m_frameBeat` global
+    // umgestellt: bei "Alternate Reality" filtert ein Custom BPM in einer
+    // Unterliste jeden vierten Beat heraus, und dieser gefilterte Beat lief
+    // anschliessend durch die GANZE Kette weiter. Die Dynamic Movements
+    // dahinter zogen dadurch nur bei jedem vierten Beat ihre acht `rand(4)`,
+    // die Referenz bei jedem — der geteilte Zufallsstrom lief auseinander
+    // (Befund S58).
+    struct BeatBereich
+    {
+        bool* ziel;
+        bool alt;
+        ~BeatBereich() { *ziel = alt; }
+    } beatBereich{&m_frameBeat, m_frameBeat};
 
     // --- EEL list slots (lazy compile; errors disable silently — no render-
     //     thread logging, the host's lastError surfaces via the editor later)
@@ -6849,7 +6876,7 @@ void MultiEffectVisualizer::drawEmbeddedImage(LeafRuntime& rt,
     f->glBindTexture(GL_TEXTURE_2D, rt.picTexture);
     m_pictureShader->setUniformValue("uImg", 1);
     f->glActiveTexture(GL_TEXTURE0);
-    m_pictureShader->setUniformValue("uBlend", std::clamp(blend, 0, 2));
+    m_pictureShader->setUniformValue("uBlend", std::clamp(blend, 0, 5));
     m_pictureShader->setUniformValue("uKeepAspect", keepAspect ? 1 : 0);
     m_pictureShader->setUniformValue(
         "uImgSize", QVector2D(static_cast<float>(std::max(1, rt.picW)),

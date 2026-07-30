@@ -457,8 +457,15 @@ bool mapApe(const EffectNode& src, ChainNode& out)
     {
         PictureIIParams p;
         p.filename = slotStr(src, "filename");
+        // Die APE hat SECHS Betriebsarten, an der Referenz gemessen (S58):
+        // 0 ersetzen · 1 additiv · 2 Maximum · 3 Minimum · 4 50/50 ·
+        // 5 Subtraktion (Framebuffer minus Bild). Der Bildshader nummeriert
+        // anders, weil 0..2 dort seit jeher `Picture` (ID 34) gehoeren.
+        // Vorher fiel alles ab 2 pauschal auf 50/50 — bei „The Real
+        // Impressionist" wurde aus einem Maximum ein Mittelwert.
+        static constexpr int kBlendToShader[6] = {0, 1, 3, 4, 2, 5};
         const int bm = src.field("blendMode");
-        p.blend = bm == 0 ? 0 : (bm == 1 ? 1 : 2);  // approx -> replace/additive/50-50
+        p.blend = (bm >= 0 && bm < 6) ? kBlendToShader[bm] : 0;
         out.params = std::move(p);
         return true;
     }

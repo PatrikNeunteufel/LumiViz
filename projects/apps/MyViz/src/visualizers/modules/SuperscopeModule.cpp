@@ -711,7 +711,9 @@ SuperscopePoint SuperscopeModule::executePointLua(float i, float v)
     // Uebersetzt wird NUR hier am Rand; die Skript-Variable selbst bleibt
     // AVS-treu (Zustand ueber Punkte/Frames hinweg).
     pt.y = -engine.number("y");
-    pt.skip = engine.number("skip") > 0.5;
+    // r_sscope:295 prueft `*var_skip < 0.00001` — alles ab diesem Wert wird
+    // uebersprungen, nicht erst ab 0,5.
+    pt.skip = engine.number("skip") >= 0.00001;
 
     // Always read back: the script may have kept, modulated or overridden it.
     pt.r = std::clamp(static_cast<float>(engine.number("red")), 0.0f, 1.0f);

@@ -277,12 +277,19 @@ void ScopeRenderer::renderThinLines(const std::vector<SuperscopePoint>& points)
 
     for (const auto& pt : points)
     {
+        // `skip` unterdrueckt in AVS NUR das Zeichnen des Segments, das in
+        // diesem Punkt endet — `lx/ly` werden trotzdem gesetzt (r_sscope:295-334:
+        // die Zuweisung steht HINTER dem if-Block). Der Punkt bleibt also
+        // Ankerpunkt fuer das naechste Segment. Wir haben ihn frueher ganz
+        // verworfen; bei einem Skript, das `skip` je Punkt umschaltet (Bright
+        // Light District: `ip=bnot(ip); skip=ip`), blieb damit zwischen zwei
+        // gezeichneten Punkten immer ein Bruch — es wurde GAR NICHTS gezeichnet,
+        // wo die Referenz jedes zweite Segment zieht (Befund S58).
         if (pt.skip)
         {
             if (currentCount > 0) segments.emplace_back(currentStart, currentCount);
             currentStart = static_cast<int>(vertices.size() / 6);
             currentCount = 0;
-            continue;
         }
         // x/y sind DOUBLE (AVS-Genauigkeit, s. SuperscopePoint); der
         // Vertex-Puffer ist float — hier wird bewusst verengt.
@@ -329,23 +336,31 @@ void ScopeRenderer::renderThickLines(const std::vector<SuperscopePoint>& points,
     for (size_t i = 0; i < points.size(); ++i)
     {
         const auto& pt = points[i];
+        // s. renderThinLines: `skip` bricht die Linie, verwirft den Punkt aber
+        // NICHT — er bleibt Ankerpunkt des naechsten Segments (r_sscope:334).
         if (pt.skip)
         {
             if (currentCount >= 4) segments.push_back({currentStart, currentCount});
             currentStart = static_cast<int>(vertices.size() / 6);
             currentCount = 0;
-            continue;
         }
 
-        // Segment direction (from the next non-skip point, else the previous one).
+        // Richtung des Segments, das an diesem Punkt haengt. Gezeichnet wird ein
+        // Segment genau dann, wenn sein ZIELpunkt nicht uebersprungen ist —
+        // deshalb fragt der Ausgang nach `points[i+1].skip` und der Eingang nach
+        // `pt.skip`, NICHT nach dem Vorgaenger. Mit der alten Abfrage bekam der
+        // Endpunkt eines Strichs, dessen Vorgaenger uebersprungen war, die
+        // Richtung (0,0) und damit die Verbreiterung der falschen Achse: das
+        // Viereck war verdreht und deckte statt sechs nur drei Spalten ab
+        // (Befund S58, direkt nach der skip-Korrektur).
         float dx = 0.0f;
         float dy = 0.0f;
-        if (i < points.size() - 1 && !points[i + 1].skip)
+        if (i + 1 < points.size() && !points[i + 1].skip)
         {
             dx = static_cast<float>(points[i + 1].x - pt.x);
             dy = static_cast<float>(points[i + 1].y - pt.y);
         }
-        else if (i > 0 && !points[i - 1].skip)
+        else if (i > 0 && !pt.skip)
         {
             dx = static_cast<float>(pt.x - points[i - 1].x);
             dy = static_cast<float>(pt.y - points[i - 1].y);
