@@ -265,9 +265,29 @@ void ScopeRenderer::renderPixelDots(const std::vector<SuperscopePoint>& points)
     m_lineShader->release();
 }
 
+namespace
+{
+/// AVS zieht Linien zwischen GANZZAHLIGEN Pixeln: `x=(int)((var_x+1.0)*w*0.5)`
+/// (r_sscope:292-293), dann Bresenham von Pixel zu Pixel. GL rastert dagegen
+/// gegen Pixel-MITTEN — eine Stuetzstelle bei Fensterkoordinate 160,0 liegt
+/// genau auf der Grenze und faellt eine Spalte nach links. Gemessen am
+/// Referenzbild: unsere Diagonale lag durchgehend eine Spalte links von der
+/// Referenz (Zeile 120: 159..161 statt 160..162). Wir setzen die Stuetzstelle
+/// deshalb auf die Mitte des Pixels, den AVS berechnet (Befund S58).
+float aufPixelmitte(double v, int groesse)
+{
+    if (groesse <= 0) return static_cast<float>(v);
+    const double fenster = (v + 1.0) * static_cast<double>(groesse) * 0.5;
+    const double pixel = std::floor(fenster);
+    return static_cast<float>((pixel + 0.5) * 2.0 / static_cast<double>(groesse) - 1.0);
+}
+}  // namespace
+
 void ScopeRenderer::renderThinLines(const std::vector<SuperscopePoint>& points)
 {
     auto* f = QOpenGLContext::currentContext()->functions();
+    GLint viewport[4];
+    f->glGetIntegerv(GL_VIEWPORT, viewport);
 
     std::vector<float> vertices;
     vertices.reserve(points.size() * 6);
@@ -293,8 +313,8 @@ void ScopeRenderer::renderThinLines(const std::vector<SuperscopePoint>& points)
         }
         // x/y sind DOUBLE (AVS-Genauigkeit, s. SuperscopePoint); der
         // Vertex-Puffer ist float — hier wird bewusst verengt.
-        vertices.insert(vertices.end(), {static_cast<float>(pt.x),
-                                        static_cast<float>(pt.y),
+        vertices.insert(vertices.end(), {aufPixelmitte(pt.x, viewport[2]),
+                                        aufPixelmitte(pt.y, viewport[3]),
                                         pt.r, pt.g, pt.b, pt.a});
         ++currentCount;
     }
@@ -380,11 +400,11 @@ void ScopeRenderer::renderThickLines(const std::vector<SuperscopePoint>& points,
         else
             ox = lineWidth * pixelWidth * 0.5f;   // y-major: horizontale Reihe
 
-        vertices.insert(vertices.end(), {static_cast<float>(pt.x) + ox,
-                                         static_cast<float>(pt.y) + oy,
+        const float px = aufPixelmitte(pt.x, viewport[2]);
+        const float py = aufPixelmitte(pt.y, viewport[3]);
+        vertices.insert(vertices.end(), {px + ox, py + oy,
                                          pt.r, pt.g, pt.b, pt.a});
-        vertices.insert(vertices.end(), {static_cast<float>(pt.x) - ox,
-                                         static_cast<float>(pt.y) - oy,
+        vertices.insert(vertices.end(), {px - ox, py - oy,
                                          pt.r, pt.g, pt.b, pt.a});
         currentCount += 2;
     }
