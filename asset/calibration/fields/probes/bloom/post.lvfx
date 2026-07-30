@@ -13,7 +13,7 @@
         "enabled": true,
         "name": "Grund",
         "color": 1052688,
-        "onlyFirst": false,
+        "onlyFirst": true,
         "blend": 0
       },
       {

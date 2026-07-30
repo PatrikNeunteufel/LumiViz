@@ -273,14 +273,37 @@ void main()
 
 // AVS Blur (ID 6): 4-connected box kernel; weights select the strength
 // (r_blur.cpp normal 651 / light 214 / heavy 443). Clamp-to-edge sampling.
+// AVS "Trans / Blur" rechnet in 8-BIT-GANZZAHLEN: `DIV_2`/`DIV_4`/`DIV_8`/
+// `DIV_16` (r_blur.cpp) sind Byte-Shifts, die JEDEN Teilterm einzeln
+// ABSCHNEIDEN. Deshalb verliert jede Anwendung Helligkeit, und der Schalter
+// „round mode" legt je Kernel einen festen Ausgleich obendrauf: +4 (leicht),
+// +5 (mittel), +3 (stark). Unsere Chain-Surfaces sind GL_RGBA8, die Werte
+// liegen also auf demselben 1/255-Raster — die Arithmetik ist nachbildbar.
+//
+// Der Mittelterm braucht ZWEI Gewichte, weil die Referenz bei der mittleren
+// Staerke `DIV_2(f[0]) + DIV_4(f[0])` rechnet: zwei getrennt abgeschnittene
+// Terme sind nicht dasselbe wie einer mit 0,75 (bei Byte-Wert 103 ergibt die
+// Referenz 76, ein einzelner Term 77).
+//
+// Bis S57 rechnete diese Stelle in float mit exakter Gewichtssumme 1 — kein
+// Verlust, kein Ausgleich, und `roundUp` wurde nirgends gelesen (Feld-Sonde
+// stumm). NICHT nachgebildet ist der Byte-UEBERLAUF der Referenz (dort addiert
+// eine 32-Bit-Addition den Ausgleich wortweise, ein Kanal kann in den naechsten
+// laufen) und die eigenen Ausgleichswerte der RANDzeilen; hier wird geklemmt.
 const char* kBlurFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
 uniform sampler2D uTex;
 uniform vec2 uTexel;
-uniform float uCenter;
+uniform float uCenterA;
+uniform float uCenterB;
 uniform float uNeighbor;
+uniform float uRoundAdj;
 out vec4 fragColor;
+vec3 anteil(vec3 v, float w)
+{
+    return floor(v * 255.0 * w);
+}
 void main()
 {
     vec3 c = texture(uTex, vTex).rgb;
@@ -288,7 +311,11 @@ void main()
     vec3 r = texture(uTex, clamp(vTex + vec2( uTexel.x, 0.0), 0.0, 1.0)).rgb;
     vec3 u = texture(uTex, clamp(vTex + vec2(0.0,  uTexel.y), 0.0, 1.0)).rgb;
     vec3 d = texture(uTex, clamp(vTex + vec2(0.0, -uTexel.y), 0.0, 1.0)).rgb;
-    fragColor = vec4(c * uCenter + (l + r + u + d) * uNeighbor, 1.0);
+    vec3 summe = anteil(c, uCenterA) + anteil(c, uCenterB) +
+                 anteil(l, uNeighbor) + anteil(r, uNeighbor) +
+                 anteil(u, uNeighbor) + anteil(d, uNeighbor) +
+                 vec3(uRoundAdj);
+    fragColor = vec4(min(summe, 255.0) / 255.0, 1.0);
 }
 )";
 
@@ -1072,8 +1099,32 @@ void main()
 }
 )";
 
+// Der n-te Wert der AVS-rand()-Folge, aus `uSeed` als Startzustand. Auf der GPU
+// gibt es keine Zug-Reihenfolge — also wird der Strom gesprungen: die Abbildung
+// x -> a*x+c ist affin, ihre n-te Iteration laesst sich per
+// Binaerexponentiation in O(log n) zusammensetzen (S49).
+//
+// Als MAKRO, damit die Shader es zur Compile-Zeit einsetzen (angrenzende
+// String-Literale werden verkettet): Scatter und Grain brauchen beide dieselbe
+// Arithmetik, und zwei Kopien derselben Konstanten waeren zwei Wahrheiten.
+// Jeder einsetzende Shader deklariert `uniform int uSeed`.
+#define LUMI_GLSL_AVS_RAND R"(
+uint randAt(uint n)
+{
+    uint a = 214013u, c = 2531011u, ra = 1u, rc = 0u;
+    while (n != 0u)
+    {
+        if ((n & 1u) != 0u) { rc = a * rc + c; ra = a * ra; }
+        c = a * c + c;
+        a = a * a;
+        n >>= 1u;
+    }
+    return ((ra * uint(uSeed) + rc) >> 16) & 0x7fffu;
+}
+)"
+
 // AVS "Trans / Grain" (ID 24): darken a random subset of pixels by a random
-// factor (r_grain.cpp). uAmount = gated fraction; uSeed 0 = static noise.
+// factor (r_grain.cpp). uStatic 1 = stehendes Muster, 0 = je Frame neu.
 const char* kGrainFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
@@ -1083,13 +1134,43 @@ uniform int uResX;
 uniform int uResY;
 uniform int uSmax;         // (smax*255)/100 wie im Original
 uniform int uBlend;        // 0 replace, 1 additiv, 2 50/50
+uniform int uStatic;       // 1 = stehendes Muster, 0 = je Frame neu
+uniform int uSeed;         // Zustand des geteilten rand()-Stroms (nur uStatic=0)
 out vec4 fragColor;
+)" LUMI_GLSL_AVS_RAND R"(
 void main()
 {
     int dx = int(gl_FragCoord.x);
     int dy = uResY - 1 - int(gl_FragCoord.y);  // depthBuffer laeuft AVS-Zeilen
     ivec3 o = ivec3(texelFetch(uTex, ivec2(dx, uResY - 1 - dy), 0).rgb * 255.0 + 0.5);
-    ivec2 q = ivec2(texelFetch(uDepth, ivec2(dx, dy), 0).rg * 255.0 + 0.5);
+
+    // Die zwei Zufallswerte je Pixel. `staticgrain` an: aus dem einmal
+    // gefuellten depthBuffer, also jeden Frame dieselben (Faktor 0..254,
+    // Schwelle 0..99 — r_grain.cpp:136-141). Aus: die Referenz zieht sie je
+    // Pixel frisch mit `fastrandbyte()`, beide als BYTE 0..255 — die Schwelle
+    // hat dort also einen anderen Wertebereich als im statischen Fall, und die
+    // Kornmenge unterscheidet sich zwischen den Betriebsarten systematisch.
+    //
+    // Bis S57 gab es diesen Zweig nicht: der Shader las immer den stehenden
+    // Puffer, `staticGrain` wurde nirgends gelesen (Feld-Sonde stumm) und die
+    // Vorgabe `false` versprach das Gegenteil von dem, was zu sehen war.
+    // NICHT bitgleich zur Referenz ist die Zug-REIHENFOLGE: dort laeuft eine
+    // Position sequentiell durch eine 491-Byte-Tabelle und springt alle 16
+    // Zuege um `rand()%73`, und der Faktor wird nur gezogen, wenn die Schwelle
+    // trifft — also datenabhaengig, was sich pro Pixel parallel nicht
+    // berechnen laesst. Gleich sind Verteilung, Wertebereich und die
+    // Eigenschaft, je Frame neu zu sein.
+    ivec2 q;
+    if (uStatic != 0)
+    {
+        q = ivec2(texelFetch(uDepth, ivec2(dx, dy), 0).rg * 255.0 + 0.5);
+    }
+    else
+    {
+        uint p = uint(dy * uResX + dx);
+        q = ivec2(int(randAt(p * 2u + 2u) & 255u),   // Faktor
+                  int(randAt(p * 2u + 1u) & 255u));  // Schwelle
+    }
 
     // r_grain.cpp:227-249: schwarze Pixel bleiben unberuehrt; sonst wird der
     // Pixel mit q[0] skaliert ((c*s)>>8, je Kanal geklemmt) — und zwar NUR
@@ -1116,24 +1197,8 @@ uniform int uResY;
 // hier bitgleich nach uint zurueckgedeutet.
 uniform int uSeed;
 out vec4 fragColor;
-
-// r_scat zieht je Pixel EINEN Wert aus dem globalen rand()-Strom. Auf der GPU
-// gibt es keine Reihenfolge — also wird der Strom gesprungen: die Abbildung
-// x -> a*x+c ist affin, ihre n-te Iteration laesst sich per
-// Binaerexponentiation in O(log n) zusammensetzen (S49).
-uint randAt(uint n)
-{
-    uint a = 214013u, c = 2531011u, ra = 1u, rc = 0u;
-    while (n != 0u)
-    {
-        if ((n & 1u) != 0u) { rc = a * rc + c; ra = a * ra; }
-        c = a * c + c;
-        a = a * a;
-        n >>= 1u;
-    }
-    return ((ra * uint(uSeed) + rc) >> 16) & 0x7fffu;
-}
-
+)" LUMI_GLSL_AVS_RAND R"(
+// r_scat zieht je Pixel EINEN Wert aus dem globalen rand()-Strom.
 vec3 fetchLinear(int addr)
 {
     addr = clamp(addr, 0, uResX * uResY - 1);
@@ -3980,19 +4045,41 @@ void MultiEffectVisualizer::runBlur(const ChainNode& node,
                    params.beatCode,
                    {{"strength", &vStrength}});
 
-    // Weights per strength (r_blur.cpp). All kernels sum to 1.
+    // Gewichte je Staerke, zeilengenau nach r_blur.cpp — als einzelne
+    // Shift-Terme, weil die Referenz jeden getrennt abschneidet (s. Shader).
+    // Der Ausgleich `roundAdj` ist der Wert, den „round mode" dort je Kernel
+    // addiert; ohne den Schalter ist er 0 und das Bild klingt ab wie im
+    // Original. AVS-Vorgabe ist AUS (`roundmode = 0`, r_blur.cpp:75/90).
+    //
+    //   Staerke 1 (enabled 1): DIV_2 + 4x DIV_8              -> +4
+    //   Staerke 2 (enabled 2): DIV_2 + DIV_4 + 4x DIV_16     -> +5
+    //   Staerke 3 (enabled 3):           4x DIV_4            -> +3
     const int strength = static_cast<int>(vStrength);  // Strang D: die Frame-Kopie
-    float center = 0.5f;
+    float centerA = 0.5f;
+    float centerB = 0.0f;
     float neighbor = 0.125f;
-    if (strength == 2) { center = 0.75f; neighbor = 0.0625f; }
-    else if (strength == 3) { center = 0.0f; neighbor = 0.25f; }
+    float roundAdj = 4.0f;
+    if (strength == 2)
+    {
+        centerB = 0.25f;
+        neighbor = 0.0625f;
+        roundAdj = 5.0f;
+    }
+    else if (strength == 3)
+    {
+        centerA = 0.0f;
+        neighbor = 0.25f;
+        roundAdj = 3.0f;
+    }
 
     m_blurShader->bind();
     m_blurShader->setUniformValue(
         "uTexel", QVector2D(1.0f / static_cast<float>(m_surfaceWidth),
                             1.0f / static_cast<float>(m_surfaceHeight)));
-    m_blurShader->setUniformValue("uCenter", center);
+    m_blurShader->setUniformValue("uCenterA", centerA);
+    m_blurShader->setUniformValue("uCenterB", centerB);
     m_blurShader->setUniformValue("uNeighbor", neighbor);
+    m_blurShader->setUniformValue("uRoundAdj", params.roundUp ? roundAdj : 0.0f);
     m_blurShader->release();
     transformPass(*m_blurShader);
 }
@@ -5461,6 +5548,10 @@ void MultiEffectVisualizer::runGrain(const ChainNode& node, const GrainParams& p
     }
     rnd.nextRand();  // r_grain.cpp:168: ein Zug je Frame (randtab_pos-Vorschub)
 
+    // Der Zustand VOR den Zuegen dieses Frames ist der Startwert des Shaders
+    // (nur im nicht-statischen Zweig gelesen).
+    const int seed = static_cast<int>(rnd.randState());
+
     m_grainShader->bind();
     m_grainShader->setUniformValue("uResX", m_surfaceWidth);
     m_grainShader->setUniformValue("uResY", m_surfaceHeight);
@@ -5469,7 +5560,22 @@ void MultiEffectVisualizer::runGrain(const ChainNode& node, const GrainParams& p
                                     255) / 100);
     m_grainShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
     m_grainShader->setUniformValue("uDepth", 1);
+    m_grainShader->setUniformValue("uStatic", params.staticGrain ? 1 : 0);
+    m_grainShader->setUniformValue("uSeed", seed);
     m_grainShader->release();
+    // Der nicht-statische Pfad zieht in der Referenz je 16 `fastrandbyte()` ein
+    // `rand()%73` — bei w*h*2 Bytes also (w*h*2)/16 Zuege aus dem GETEILTEN
+    // Strom, damit die folgenden Effekte des Presets an derselben Stelle
+    // weitermachen. Das ist die OBERGRENZE: die Referenz zieht den Faktor nur,
+    // wenn die Schwelle trifft, und schwarze Pixel ueberspringt sie ganz — die
+    // wirkliche Zahl haengt am Bildinhalt und ist parallel nicht bestimmbar.
+    // Eine deterministische Obergrenze ist hier die bessere Wahl als gar kein
+    // Zug (der waere sicher falsch, sobald ein Pixel nicht schwarz ist).
+    if (!params.staticGrain)
+    {
+        rnd.skipRandom(static_cast<std::uint32_t>(m_surfaceWidth) *
+                       static_cast<std::uint32_t>(m_surfaceHeight) * 2u / 16u);
+    }
     f->glActiveTexture(GL_TEXTURE1);
     f->glBindTexture(GL_TEXTURE_2D, rt.grainTex);
     f->glActiveTexture(GL_TEXTURE0);
@@ -6825,8 +6931,22 @@ void MultiEffectVisualizer::runTexer(const ChainNode& node, const TexerParams& p
 
     auto* f = QOpenGLContext::currentContext()->functions();
     f->glEnable(GL_BLEND);
-    f->glBlendFunc(static_cast<int>(vBlend) == 0 ? GL_ONE : GL_SRC_ALPHA,
-                   GL_ONE);  // Strang D
+    // Die drei Betriebsarten des Feldes (0 ersetzen, 1 additiv, 2 50/50). Bis
+    // S57 kannte diese Stelle nur "0" und "alles andere": 1 und 2 waren
+    // derselbe GL-Zustand, 50/50 gab es also gar nicht, und "ersetzen" war
+    // additiv ohne Alpha-Gewichtung. Die Feld-Sonde konnte das nicht zeigen —
+    // ihr Gegenwert 2 traf denselben Zustand wie die Vorgabe 1 (MAE 0,0000).
+    // Dieselben Faktoren wie `applyLineBlend` (Referenz r_defs.h BLEND_LINE),
+    // damit ein Sprite genauso mischt wie eine Linie.
+    switch (std::clamp(static_cast<int>(vBlend), 0, 2))  // Strang D
+    {
+        case 0:  f->glBlendFunc(GL_ONE, GL_ZERO); break;             // ersetzen
+        case 2:                                                       // 50/50
+            f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+            f->glBlendColor(0.0f, 0.0f, 0.0f, 0.5f);
+            break;
+        default: f->glBlendFunc(GL_SRC_ALPHA, GL_ONE); break;         // additiv
+    }
     m_spriteShader->bind();
     m_quadVao->bind();
     f->glActiveTexture(GL_TEXTURE0);
@@ -6980,13 +7100,46 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
         // "Resize" aus = Sprite in Originalgröße, sizex/sizey wirken nicht.
         const float sx = params.resizing ? static_cast<float>(engine.number("sizex")) : 1.0f;
         const float sy = params.resizing ? static_cast<float>(engine.number("sizey")) : 1.0f;
-        m_spriteShader->setUniformValue("uCenter", QVector2D(x, -y));  // AVS y is down
-        m_spriteShader->setUniformValue("uHalf", QVector2D(baseHx * sx, baseHy * sy));
         m_spriteShader->setUniformValue(
             "uTint", QVector3D(static_cast<float>(engine.number("red")),
                                static_cast<float>(engine.number("green")),
                                static_cast<float>(engine.number("blue"))));
-        f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+        const float cx = x;
+        const float cy = -y;  // AVS y is down
+        const float hx = baseHx * sx;
+        const float hy = baseHy * sy;
+        const auto zeichne = [&](float mx, float my) {
+            m_spriteShader->setUniformValue("uCenter", QVector2D(mx, my));
+            m_spriteShader->setUniformValue("uHalf", QVector2D(hx, hy));
+            f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        };
+        zeichne(cx, cy);
+        // `wrapAround`: das Bild ist ein Torus — was rechts hinausragt, kommt
+        // links wieder herein. NDC ist 2 breit, die Gegenseite liegt also genau
+        // 2,0 entfernt. Bis S57 war dieses Feld im Panel verstellbar und wurde
+        // von KEINEM Renderer gelesen (Feld-Sonde stumm, MAE 0,0000). Die
+        // Referenz ist eine Binaer-APE (`texer2.ape`, kein Quellcode im
+        // ref-Baum), umgesetzt ist deshalb die Semantik, die am Feld steht.
+        //
+        // Gezeichnet werden nur die Kopien, die den Sichtbereich wirklich
+        // schneiden: ein Sprite in der Bildmitte bleibt bei EINER Zeichnung,
+        // eines in der Ecke kostet vier.
+        if (params.wrapAround)
+        {
+            for (int ox = -1; ox <= 1; ++ox)
+            {
+                for (int oy = -1; oy <= 1; ++oy)
+                {
+                    if (ox == 0 && oy == 0) continue;
+                    const float mx = cx + static_cast<float>(ox) * 2.0f;
+                    const float my = cy + static_cast<float>(oy) * 2.0f;
+                    if (std::abs(mx) - hx > 1.0f || std::abs(my) - hy > 1.0f)
+                        continue;
+                    zeichne(mx, my);
+                }
+            }
+        }
     }
     m_quadVao->release();
     m_spriteShader->release();
@@ -7081,7 +7234,9 @@ void MultiEffectVisualizer::runOscStar(const ChainNode& node, const OscStarParam
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     const QVector3D c = colorToVec(cycleScopeColor(params.colors, rt.scopeColorPos));
-    const std::vector<float> wave = getWaveform();
+    // `channel` wurde bis S57 nicht gelesen — der Knoten nahm immer die Mitte
+    // (`getWaveform()`), und die Feld-Sonde stand mit MAE 0,0000 als stumm da.
+    const std::vector<float> wave = waveOfChannel(params.channel);
     const int n = static_cast<int>(wave.size());
     if (n < 2) return;
 
@@ -7135,7 +7290,10 @@ void MultiEffectVisualizer::runOscRing(const ChainNode& node, const OscRingParam
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     const QVector3D c = colorToVec(cycleScopeColor(params.colors, rt.scopeColorPos));
-    const std::vector<float> data = params.source == 0 ? getWaveform() : getSpectrum();
+    // Wie Osc Star: `channel` blieb bis S57 ungelesen (Sonde stumm, 0,0000).
+    const std::vector<float> data = params.source == 0
+                                        ? waveOfChannel(params.channel)
+                                        : specOfChannel(params.channel);
     const int n = static_cast<int>(data.size());
     if (n < 2) return;
 

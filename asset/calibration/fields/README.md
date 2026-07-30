@@ -33,6 +33,20 @@ sicher kennt. Neu schreiben nach einer Feldänderung:
 LUMIVIZ_UPDATE_FIELD_INVENTORY=1 MyViz.UnitTests.exe -tc="Feld-Inventar*"
 ```
 
+**Die Reihenfolge ist eine Kette, und sie hat nur eine Richtung:**
+
+```
+Struct (C++)  ->  inventory.json  ->  inventory_docs.json  ->  probes/*.lvfx
+                  (Golden, Gate)      (harvest)               (make)
+```
+
+Wer eine **Vorgabe** im Struct ändert, muss sie in dieser Reihenfolge
+durchziehen. Der Ernter vor dem Golden gelaufen heisst: der Generator rechnet mit
+der ALTEN Vorgabe. In S57 wurde `blur.roundUp` von `true` auf `false` gestellt,
+der Ernter lief eine Minute zu früh — der abgeleitete Gegenwert `not true` war
+`false`, also genau die neue Vorgabe, und die Sonde meldete weiter „stumm" für
+ein Feld, das gerade erst implementiert worden war.
+
 ## Lauflänge und Beat
 
 Vorgabe sind **181 Frames** (rund drei Sekunden bei 60 fps) mit
@@ -84,6 +98,32 @@ Testaufbau liegen — an einem Gegenwert, der nichts bewegt, oder an einem Feld,
 das nur in Gesellschaft wirkt. Deshalb schreibt der Runner für jede stumme Sonde
 eine **Montage**: erst ansehen, dann urteilen. Diese Reihenfolge hat sich in S54
 dreimal ausgezahlt.
+
+## Der Aufbau je FELD (S57)
+
+Drei Tabellen wirken je Typ (`UNTERGRUND_JE_TYP`, `VORLAUF`, `KINDER`), zwei je
+**Feld**. Der Unterschied ist wichtig: ein Feld, das einen anderen Bildinhalt
+braucht als seine Geschwister, darf nicht den ganzen Typ umbauen — sonst
+verschieben sich die Messwerte aller anderen Sonden mit.
+
+- **`VORLAUF_JE_FELD`** — Knoten vor dem Prüfling, nur für dieses Feld.
+  `convolution.edgeMode` wählt, was der Kern *jenseits* des Bildrandes liest. Der
+  Untergrund ist am Rand überall 0x101010; bei einfarbigem Rand liefern
+  Festklemmen und Umlaufen dasselbe, und zwar **exakt** — MAE 0,0000, zwei
+  Vollaufe lang „stumm". Zwei breite Diagonalen von Ecke zu Ecke machen den Rand
+  ungleich, dann trennt das Feld (0,0014).
+- **`UNTERGRUND_JE_FELD`** — ein Untergrund, der nur einmal löscht, nur für
+  dieses Feld. `bloom.post` entscheidet, WO der Glow entsteht: beim Present oder
+  in der Kette. Beide Wege erzeugen denselben Glow aus derselben Quelle, der
+  Unterschied lebt allein davon, dass der **nächste Frame** ihn sieht. Ohne
+  Rückkopplung gibt es kein nächstes Mal (0,0000 → 0,7997). Bewusst nur für
+  dieses Feld: mit Rückkopplung sättigt der additive Glow über 181 Frames
+  (S48-Befund), und auf einem gesättigten Bild könnten `intensity` und `radius`
+  ihrerseits nichts mehr zeigen.
+
+Beide erzwingen einen **eigenen Vergleichsgrund**, der denselben Vorlauf und
+denselben Untergrund trägt — sonst hielte der Runner die Sonde gegen `_default`,
+und der Vergleich trüge zwei Unterschiede statt einem.
 
 ## Die drei Tabellen in `make_field_probes.py`
 

@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.9.1
-> **Datum:** 2026-07-30 (Session 56)
+> **Version:** 1.10.0
+> **Datum:** 2026-07-30 (Session 57)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -55,11 +55,11 @@ dünnen Inhalten).
 | **Tie Tunnel DM** | 0,154 | Altbestand seit S49 | 🟠 |
 | **Sonde `convolution_kante`** | ~560 px | ≈ eine Zeile plus eine Spalte. `scale` geprüft (acht Kennlinienpunkte exakt), Kern seit S50 richtig orientiert | 🟠 |
 | **Sonde `6_alloy/paar_original`** | 39546 → 37671 px | 🟠 **Neu gesehen (S53).** Menge 0,05 · Lage 2,7 · MAE 0,010 — dreimal identisch gemessen, also kein Rauschen, und **am Vorstand belegt**: derselbe Wert mit gestashtem Renderer, die Sonde war schon vor S53 rot. Der S52-Stand „Modul-Sonden 79/80, offen nur `convolution_kante`" war ungenau — es sind **78/80**. Uns fehlen ~1900 px gegenüber der Referenz | 🟠 |
-| **Modul-Matrix-Reste** | **36/41** | `dot_grid` · `water` · **`grain`** · `water_bump` · `interferences`. **Korrektur S53:** der S52-Stand „37/41, vier Reste" war ungenau — `24_grain/01_static100` ist gelb (dMean **0,000**, MAE **0,046**, dreimal identisch gemessen, also kein Rauschen). Die Montage zeigt beide Seiten deckungsgleich, der 4×-Diff ist ein **gleichmäßiges Flächenrauschen**: die Kornmenge stimmt, der Zufallsstrom ist gegen die Referenz versetzt. Kein Strukturfehler — und es betrifft **statisches** Grain, der 🔧-Punkt unten meint das nicht-statische | 🟠 |
+| **Modul-Matrix-Reste** | **36/41** · seit S57 **38/43** | `dot_grid` · `water` · **`grain`** · `water_bump` · `interferences` — unverändert, S57 nachgemessen (Vollauf nach sechs Renderer-Fixes: **keine Regression**). Zwei neue Zeilen kamen hinzu und sind beide grün: `06_blur/02_trail_rounddown` und `03_trail_roundup` (§1c). **Korrektur S53:** der S52-Stand „37/41, vier Reste" war ungenau — `24_grain/01_static100` ist gelb (dMean **0,000**, MAE **0,046**, dreimal identisch gemessen, also kein Rauschen). Die Montage zeigt beide Seiten deckungsgleich, der 4×-Diff ist ein **gleichmäßiges Flächenrauschen**: die Kornmenge stimmt, der Zufallsstrom ist gegen die Referenz versetzt. Kein Strukturfehler — und es betrifft **statisches** Grain, der 🔧-Punkt unten meint das nicht-statische | 🟠 |
 | **`Dot Fountain` ist nicht portiert** | 0,002 — **falsch grün** | 🔴 **Neu (S53).** Die Referenz `r_dotfnt.cpp` ist ein **30×256-Gitter** (7680 Punkte, rotierende Höhenwand, 3D-Matrix `translate(0,-20,400)` wie `Dot Plane`, Höhe aus dem Spektrum). Unser Renderer sind **400 freie Partikel** mit eigener Physik — der Header sagt es selbst („Simplified particle model here"). Die Montage zeigt links einen hohen geordneten Brunnen über die volle Bildhöhe, mittig einen flachen Fleck von ~⅕ der Fläche; der 4×-Diff **ist** das Referenzbild. Die Matrix-Zeile `19_dot_fountain` misst trotzdem 0,002 und zählt zu den 37 — **die Metrik lügt bei dünnen Inhalten**, beide Bilder sind überwiegend schwarz. Faktisch also **36/41**. Fix = echte Portierung nach dem `Dot Plane`-Muster (Matrix + Farbtabellen-Arithmetik liegen dort zeilengenau vor); zusätzlich braucht die Zeile ein **flächenbasiertes** Urteil, sonst bewacht sie weiter nichts | 🔴 |
 | Color-Map-Kennlinie | ±1 | Altbestand | 🔧 |
 | Colorfade-Zufalls-Beatmodus | — | Altbestand | 🔧 |
-| nicht-statisches Grain | — | zieht inhaltsabhängig → kippt die rand-Ausrichtung des ganzen Presets (S49-Merkregel) | 🔧 |
+| ~~nicht-statisches Grain~~ | Sonde **0,0363** | ✅ **umgesetzt (S57)**, mit benannter Grenze: der Pfad existiert und flimmert je Frame (§1c), aber die **Zug-Reihenfolge** der Referenz ist nicht nachgebildet — sie läuft sequentiell durch eine 491-Byte-Tabelle und zieht den Faktor nur, wenn die Schwelle trifft, also inhaltsabhängig. Parallel je Pixel nicht berechenbar. Der geteilte `rand()`-Strom wird um die **Obergrenze** `(w·h·2)/16` weitergestellt (die Referenz zieht datenabhängig weniger) — das ist die S49-Merkregel, so weit sie hier einlösbar ist | ✅ |
 
 **Vor „Regression!" den Vorstand MESSEN** (stash + Rebuild), nie gegen notierte Zahlen
 einer anderen Messreihe — zwei von drei Auffälligkeiten in S51 waren auf HEAD identisch.
@@ -190,10 +190,13 @@ neu übersetzen und Bilder/Videos neu laden — das kann beim Ziehen ruckeln, un
 die Grenze zwischen „Aufbau" und „Verlauf" müsste je Knoten von Hand gezogen
 werden.
 
-## 1c. Die stummen Feld-Sonden (Strang E, Durchsicht S56)
+## 1c. Die stummen Feld-Sonden (Strang E, Durchsicht S56–S57)
 
-**Stand: 115 → 15.** `STUMM` ist wie `WIRKUNGSLOS` **zuerst eine Frage** — von
-100 durchgesehenen waren **zwei** ein Befund an der App (Roto Blitter, Kleinian).
+**Stand: 115 → 15 → 0** (S57 abgeschlossen). `STUMM` ist wie `WIRKUNGSLOS`
+**zuerst eine Frage** — aber nicht immer dieselbe Antwort: von den ersten 100
+durchgesehenen waren **zwei** ein Befund an der App (Roto Blitter, Kleinian), von
+den **letzten 15 sechs**. Die leichten Fälle standen vorn, und wer nach 100
+Messartefakten aufhört, lässt die Befunde liegen.
 
 ### Der eine App-Befund: die Alt-Format-Weichen griffen zu oft
 
@@ -255,24 +258,113 @@ um eine Position rutschten: der Ernter fand **269 → 0 Bereiche**, und alle
 Zahlen-Gegenwerte fielen still auf die Notregel. Aufgefallen nur, weil
 `text.normSpeed` partout stumm blieb.
 
-### Was offen ist (15)
+### Die letzten 15 (es waren 16): aufgelöst (S57)
 
-| Feld | Stand der Untersuchung |
-|---|---|
-| `list.onBeatFrames` | Das Beat-Fenster greift laut `r_list` **nur bei einer statisch deaktivierten** Liste (`enabled() = !bit1 \|\| fake_enabled`) — das ist jetzt in der Grundkonfiguration, und `onBeatRender` wirkt seither. Die *Länge* des Fensters braucht zusätzlich einen Schlussframe kurz nach dem Beat; 186 hat nicht gereicht |
-| `oscRing.channel` · `oscStar.channel` | Beide lesen die **Wellenform**, und `--stereo-spektrum` macht nur das Spektrum ungleich. Osc Ring über `source = 1` umzuleiten half nicht. Entweder eine Stereo-**Wellenform** im Standalone, oder als *nicht prüfbar* festschreiben |
-| `bloom.post` · `blur.roundUp` · `camera3d.tz` · `convolution.edgeMode` · `dotPlane.colors` · `grain.staticGrain` · `multiDelay.mode` · `rotatingStars.bandHi` · `setRenderMode.adjustAlpha` · `terrain3d.colorLow` · `texer.blend` · `texerII.wrapAround` | Einzelfälle: je Renderer lesen und Bild ansehen. Kein Muster mehr, das mehrere auf einmal löst |
+**0 stumme Sonden**, mit Vollauf belegt. Neun lagen am Messaufbau, eine ist mit
+diesem Testsignal grundsätzlich nicht prüfbar, und **sechs waren Befunde an der
+App** — jeder derselben Bauart wie die fünf aus S53: ein Feld steht im Panel,
+lässt sich verstellen, und **kein Renderer liest es**.
 
-Zwei Felder sind als **nicht prüfbar** festgeschrieben statt gelöst, beide mit
-einer Grenze im Entwurf: `customBpm.arbitraryMs` hängt an der **Wanduhr**
-(181 Frames rendern in Millisekunden — weder 500 ms noch 5000 ms lösen aus), und
-`camera3d.fogColor` **dämpft Sprites nur, statt sie zu färben** (so steht es am
-Feld); unser Zeuge ist ein SuperScope 3D, also ausschließlich Sprites.
+Damit kippt die Bilanz der Durchsicht: von 100 durchgesehenen waren zwei ein
+App-Befund, von den letzten 16 waren es sechs. Die leichten Fälle standen vorn.
+
+**Es waren 16, nicht 15.** Der Vollauf hat `bump.durationFrames` zutage gebracht —
+in S56 viermal als stumm gemessen, zuletzt in einem gezielten `bump`-Teillauf, und
+in der kumulierten Bilanz „15" trotzdem nicht enthalten. Genau davor warnte der
+Satz „ein Gesamtstand ist **nicht gemessen**": eine Zahl, die aus Teilläufen
+addiert wird, kann einen Fall verlieren.
+
+**Vollauf-Bilanz (S57 gegen S56, 702 bzw. 707 Sonden):**
+
+| | S56 | S57 |
+|---|---|---|
+| WIRKT | 568 | **674** |
+| SCHWACH | 24 | 28 |
+| STUMM | 115 | **0** |
+
+**Keine einzige Sonde ist schlechter geworden**, 109 sind besser — die vier
+zusätzlichen SCHWACH sind aus STUMM aufgestiegen, nicht aus WIRKT gefallen. Die
+fünf Sonden Differenz sind die als *nicht prüfbar* festgeschriebenen Felder, die
+in S56 noch mitliefen (`camera3d.fogColor`, `customBpm.arbitraryMs`,
+`hostgroup.curveIn`/`curveOut`, `rotatingStars.bandHi`). Der Vollauf selbst zählte
+673/28/1; die letzte stumme Zeile wurde danach gezielt gelöst und nachgemessen
+(`bump.durationFrames` → 0,1156), sie steht hier als WIRKT.
+
+**Am Messaufbau (9)** — alle nachgemessen:
+
+| Feld | Ursache | jetzt |
+|---|---|---|
+| `list.onBeatFrames` | Der Gegenwert war **3**, nicht 200: die Dämpfung für weite Bereiche (1..200 gegen Vorgabe 1) nimmt das Dreifache. Drei Frames sind bei einem Schlussframe fünf Frames nach dem Beat genauso abgelaufen wie einer. Dazu stand das **Kind** der Liste still — ohne bewegten Inhalt zeigt keine Fensterlänge etwas | 0,2459 |
+| `bloom.post` | Wählt, WO der Glow entsteht (Present oder Kette). Beide Wege erzeugen denselben Glow aus derselben Quelle; der Unterschied lebt davon, dass der **nächste Frame** ihn sieht. Auf einem Untergrund, der jeden Frame löscht, gibt es kein nächstes Mal | 0,7997 |
+| `camera3d.tz` | Zwei Dinge: der Wert stand **zweimal** in `HANDWERK` (0,6 gewann über die Korrektur 3,0 — im Python-Dict gewinnt der spätere, die S56-Merkregel), und die Kamera steht auf der z-Achse: die Blickrichtung wird normalisiert, für jedes `tz < pz` ist sie exakt (0,0,−1). Erst ein Blickziel **neben** der Achse macht die Tiefe zu einem Winkel | 0,0345 |
+| `convolution.edgeMode` | Wählt, was der Kern jenseits des Bildrandes liest. Der Untergrund ist am Rand überall 0x101010 — bei einfarbigem Rand liefern Festklemmen und Umlaufen dasselbe, und zwar exakt | 0,0014 |
+| `dotPlane.colors` | Die Tafel hat **fünf** Stützstellen, der Gegenwert setzte zwei — und die zweite traf die Vorgabe. Es änderte sich genau eine von fünf | 0,0368 |
+| `multiDelay.mode` | Der Gegenwert 2 machte Prüfling **und** Nachfolger zu Lesern des geteilten Rings. Niemand schrieb, und auf einem leeren Ring sind „aus" und „auslesen" derselbe No-op | 0,0094 |
+| `setRenderMode.adjustAlpha` | „Adjustable" ist beim Set Render Mode **7**; die Grundkonfiguration setzte 10, und `runSetRenderMode` klemmt auf 0..9 — aus dem Raten wurde still 9 = Minimum. Die Nummer ist je Knoten eine andere (`bufferSave.blend` 10, `colorMap.blendMode` 9), das steht jetzt am Tabelleneintrag | 0,0031 |
+| `terrain3d.colorLow` | Die Palette läuft über die Höhe. Mit der Vorgabe `ringAmp = 1` schiebt das Spektrum das ganze Gelände nach oben — im Bild ist nur die Gipfelfarbe | 0,0580 |
+| `bump.durationFrames` | Auf einem Beat setzt Bump die Tiefe auf `depth2` — **unabhängig** von der Rampenlänge. Am Schlussframe, der selbst ein Beat ist, steht deshalb in beiden Presets dieselbe Tiefe. Eigene Lauflänge 201 (20 Frames nach dem letzten Beat): dort ist die Vorgabe 15 abgelaufen, der Gegenwert 100 hält noch — bei ihm ist der Rampenschritt `\|30−100\|/100` als Integer-Division sogar 0, die Tiefe fällt gar nicht (der S46-Sonderfall) | 0,1156 |
+
+**Nicht prüfbar, festgeschrieben (1):** `rotatingStars.bandHi` — der Knoten nimmt
+aus dem Fenster nur die **Spitze**, und das Spektrum des Standalone-Signals fällt
+ab jeder Stelle monoton: das Maximum liegt immer im ersten Band, unabhängig
+davon, wo das Fenster endet. Mit sechs Fenstern gemessen ([0,·), [3,·), [4,·),
+[12,·), [40,·), [120,·)), jedes schmalste gab Pixel für Pixel dasselbe Bild wie
+das weite. Gegenprobe: `bandLo` kommt an — fünf einzelne Bänder, fünf
+verschiedene Bilder. Damit sind es **drei** nicht prüfbare Felder, zusammen mit
+`customBpm.arbitraryMs` (hängt an der **Wanduhr**: 181 Frames rendern in
+Millisekunden, weder 500 ms noch 5000 ms lösen aus) und `camera3d.fogColor`
+(**dämpft** Sprites nur, statt sie zu färben — unser Zeuge ist ein SuperScope 3D,
+also ausschließlich Sprites).
+
+**Sechs App-Befunde, alle behoben (S57)** — Messwerte der Sonde nach dem Fix:
+
+| Feld | Befund | Fix | jetzt |
+|---|---|---|---|
+| `blur.roundUp` | AVS rechnet den Blur in **8-Bit-Ganzzahlen** und schneidet jeden Teilterm ab (`DIV_2`/`DIV_4`/`DIV_8`/`DIV_16` sind Byte-Shifts); „round mode" legt je Kernel einen festen Ausgleich obendrauf. Unser Shader rechnete in float mit exakter Gewichtssumme — kein Verlust, kein Ausgleich, das Feld nirgends gelesen. Dazu stand unsere **Vorgabe auf `true`**, AVS' Default ist 0 | Byte-Arithmetik im Shader, Ausgleich **+4/+5/+3** je Stärke (r_blur.cpp), Vorgabe auf `false`. Der Mittelterm braucht zwei Gewichte: `DIV_2 + DIV_4` sind zwei getrennt abgeschnittene Terme, nicht einer mit 0,75 | 0,0118 = 3/255, die Arithmetik trifft exakt |
+| `grain.staticGrain` | Wir zeichneten **immer** statisch (feste Rauschtextur), die Vorgabe `false` versprach das Gegenteil. Der Code sagte es selbst: „nur der NICHT-statische Pfad braucht die Tabelle" | Zweiter Shader-Zweig, je Frame frische Werte über das `randAt`-Muster von Scatter. **Nicht** bitgleich zur Referenz: dort läuft eine Position sequentiell durch eine 491-Byte-Tabelle und der Faktor wird nur gezogen, wenn die Schwelle trifft — datenabhängig, parallel nicht berechenbar. Gleich sind Verteilung, Wertebereich, Frame-Frische | 0,0363 |
+| `oscRing.channel` · `oscStar.channel` | Beide riefen `getWaveform()`/`getSpectrum()` **ohne Kanal**. Die S56-Vermutung „das Signal ist nicht stereo" war falsch — die Wellenform des Standalone hat längst L≠R (Phasenversatz 0,7), und `simpleScope.channel` wirkt, weil dieser Knoten `visWaveform(channel)` liest | `waveOfChannel`/`specOfChannel` neben den bestehenden Accessoren, eine Stelle für beide Knoten. **Bildneutral** für vorhandene Presets: `getWaveform()` mischt bei Stereo selbst zur Mitte, und die Vorgabe ist `channel = 2` = Mitte | 0,0013 · 0,0118 |
+| `texer.blend` | Der Renderer kannte nur „0" und „alles andere": **1 und 2 waren derselbe GL-Zustand**, 50/50 gab es nicht, und 0 („ersetzen") war additiv ohne Alpha-Gewichtung | Alle drei Betriebsarten mit den Faktoren aus `applyLineBlend`, damit ein Sprite wie eine Linie mischt | 0,0655 |
+| `texerII.wrapAround` | Nirgends gelesen | Torus-Wiederholung: die Kopien 2,0 entfernt, gezeichnet nur wo sie den Sichtbereich schneiden. Referenz ist eine Binär-APE (`texer2.ape`, kein Quellcode im ref-Baum) — umgesetzt ist die Semantik, die am Feld steht | 0,0278 |
 
 **Beobachtung, nicht gefixt:** `fractalZoomer.feedback` heißt „trail persistence
 0..1", der Shader liest es aber nur als **Schalter**
 (`params.feedback > 0.01f ? 2 : 0`, `MultiEffectVisualizer.cpp:10506`). 0,3 und
 1,0 ergeben dasselbe Bild.
+
+### Die Matrix hatte keinen Blur mit Trail (S57)
+
+Der Grund, warum `blur.roundUp` zwei Kalibrier-Runden überlebt hat: die einzige
+Blur-Zeile lief auf **statischem** Material, das jeden Frame neu gezeichnet wird.
+Eine Rundung um 4/255 ist dort eine Stelle hinter der Anzeige — nachgemessen
+liefern `roundUp` an und aus in `01_normal` beide **MAE 0,003**. Erst ohne Basis
+(`MAT_TRAIL`) akkumuliert sie sichtbar.
+
+Zwei neue Zeilen bewachen jetzt beide Richtungen, und sie belegen den Fix:
+
+| Zeile | 320×240 dMean/dMaxLuma/MAE | Urteil |
+|---|---|---|
+| `06_blur/02_trail_rounddown` | 0,007 / 0,016 / 0,009 | OK |
+| `06_blur/03_trail_roundup` | 0,005 / **0,001** / 0,012 | OK |
+
+Der harte Beleg, dass der Fix nötig war: die beiden **Referenzbilder**
+unterscheiden sich in **230 400 von 307 200 Bytes** bei maximaler Abweichung 255
+— zwei völlig verschiedene Bilder. Vor dem Fix hätte unser Renderer für beide
+Presets dasselbe geliefert (das Feld wurde nirgends gelesen), also wäre
+mindestens eine der Zeilen krachend falsch gewesen. Jetzt sind beide grün.
+
+### Zwei Werkzeug-Löcher, die dabei aufgefallen sind
+
+- **Ein Faltungskern ist keine Farbtafel.** Die Listen-Regel füllte alle 49
+  Stellen von `convolution.kernel` mit Palettenfarben — Gewichte um 16 Millionen,
+  das Bild übersteuert vollständig, und die Sonde meldete mit MAE **0,8906**
+  „wirkt", ohne etwas gemessen zu haben. Jetzt Laplace aus `HANDWERK`: **0,0993**.
+- **Weiß gehört nicht in die Gegen-Palette.** `0xFFFFFF` ist der Ersatzwert, den
+  mehrere Renderer für eine LEERE Tafel einsetzen (`cycleScopeColor`,
+  `paletteRgb`) — eine Tafel mit Weiß darin kann dort genau das Vorgabebild
+  treffen. In der ersten Fassung meiner neuen Tafel-Regel fiel
+  `superScope.colors` deshalb von WIRKT auf **STUMM**, drei weitere wurden
+  schwächer. Ohne Weiß und Graustufen wirken alle dreizehn Tafeln, mehrere
+  deutlich stärker als vorher (`oscStar.colors` 0,0009 → 0,0099).
 
 ## 1d. Vorgaben: die zweite Quelle ist abgeschafft (S56)
 
@@ -698,6 +790,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.10.0 | 2026-07-30 | Session 57 — **die stummen Feld-Sonden sind bei 0** (§1c). Von den letzten 15 waren **sechs ein Befund an der App**, alle behoben: `blur.roundUp` (AVS rechnet den Blur in 8-Bit und schneidet jeden Teilterm ab, „round mode" legt +4/+5/+3 je Stärke obendrauf — wir rechneten float ohne Verlust und lasen das Feld nirgends; Vorgabe stand zudem falsch auf `true`), `grain.staticGrain` (wir zeichneten immer statisch, die Vorgabe versprach das Gegenteil), `oscRing.channel`/`oscStar.channel` (riefen `getWaveform()` ohne Kanal — die S56-Vermutung „Signal ist nicht stereo" war falsch), `texer.blend` (1 und 2 waren derselbe GL-Zustand, 50/50 fehlte), `texerII.wrapAround` (nirgends gelesen). Acht lagen am Messaufbau — darunter `camera3d.tz` mit einem **Doppeleintrag im selben Dict** (die S56-Merkregel, nochmal) und `setRenderMode.adjustAlpha`, wo „Adjustable" 7 heißt und geraten 10 dastand. Eine als **nicht prüfbar** festgeschrieben (`rotatingStars.bandHi`, mit sechs Fenstern belegt). Zwei neue Werkzeug-Tabellen (`VORLAUF_JE_FELD`, `UNTERGRUND_JE_FELD`), Tafel-Regel füllt jetzt alle Stützstellen, `convolution.kernel` misst statt zu übersteuern. **Matrix 36/41 unverändert** (keine Regression) **+ zwei neue Blur-Trail-Zeilen, beide grün** — die Matrix hatte vorher keinen Blur mit Rückkopplung, deshalb überlebte der Befund zwei Kalibrier-Runden. Tests 485/485, beide Builds grün |
 | 1.9.1 | 2026-07-30 | Session 56, Abschluss — **§1e neu**: der Eigenschaften-Editor muss nach JEDEM Baumumbau dastehen. Nach dem **Verschieben** blieb er leer, aus derselben Ursache wie beim Einfügen in S55: `selectPaths` setzt die Auswahl unter `m_selecting`, das Auswahl-Signal ist dabei stillgelegt, und das folgende `setCurrentItem` löst keines mehr aus — also baute niemand den Editor. Befund Patrik, behoben (Doppelschritt markieren + `buildPropertyEditor`, wie beim Einfügen). Dazu die stummen Feld-Sonden von 115 auf **15**: Buffer Blend (Gegenwert 24 wählte wie die Vorgabe den aktuellen Frame, und Modus 0 liest gar kein A), Interferences (Schlussframe mitten in den Beat-Übergang gelegt), Effect List (Init-Slot über eine geteilte Variable; das Beat-Fenster greift laut `r_list` nur bei einer AUSgeschalteten Liste) |
 | 1.9.0 | 2026-07-29 | Session 56 (Fortsetzung) — **stumme Feld-Sonden 115 → 27** (§1c): ein App-Befund — die drei Alt-Format-Weichen im Deserialisierer griffen bei JEDEM Preset, das das neue Feld nicht nennt, und Roto Blitter zoomte dadurch auf 0 statt auf den neutralen 31 (Bild einfarbig, alle fünf Felder stumm). Dazu Kleinians ganzzahliges `colorScale`, Texer II ohne `n`, Custom BPMs Zähler-Phase. **Zweite Quelle der Vorgaben abgeschafft** (§1d, Entscheid Patrik): 415 Literale und 243 `getStr` beziehen ihre Vorgabe jetzt aus dem Struct, eine benannte Ausnahme bleibt. Vier neue Wächter (Zusatzfelder einer Grundkonfiguration, verwaiste Sonden, Panel-Schlüssel, Roundtrip). §10 Tooltips 717/717. Tests 485, beide Builds grün |
 | 1.8.0 | 2026-07-29 | Session 56 — **§1b berichtigt:** der S55-Quercheck unterschied nicht, was er unterscheiden sollte; von den 15 `WIRKUNGSLOS` waren **7 echte Befunde** (alle gefixt) und **8 Messartefakte**. Neues Urteil `VERDECKT` samt Gegenrichtung in der Edit-Sonde. **§8:** Timescope maß 1/320 seiner Wirkung (Untergrund übermalte die Ein-Pixel-Spalten) — behoben, 8/8 WIRKT. **§10 Tooltips erledigt:** 717/717 Felder erklärt, 826 Panel-Zeilen tragen ihren Feldnamen, zwei Wächter |

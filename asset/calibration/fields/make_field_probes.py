@@ -21,7 +21,8 @@ Ein Preset ist nur so gut wie sein Gegenwert. Die Regeln, in dieser Reihenfolge:
                      (lo oder hi) — kleine Schritte verschwinden im Rauschen
   Zahl ohne Bereich  0 -> 1, sonst das Dreifache
   Farbe         0xFF00FF (gegen jede uebliche Vorgabe deutlich)
-  Farbtafel     zwei kraeftige Farben
+  Farbtafel     kraeftige Farben, an JEDER Stelle abweichend — bei einer Tafel
+                mit fester Laenge so viele, wie sie Stellen hat (s. u.)
   Skriptfeld    `<variable> = <deren Gegenwert>` — die Variablen stehen im
                 Doxygen des Structs, ihr Bereich im Panel. Damit ist die Formel
                 nicht geraten, sondern aus demselben Wissen abgeleitet wie der
@@ -145,14 +146,32 @@ HANDWERK: dict[str, object] = {
     # Strichstaerke fast identisch aus — der Sprung auf PUNKTE ist der
     # sichtbare Wechsel der Zeichenart.
     "superScope.renderMode": 0,
-    # Rotating Stars: `bandHi` ist die obere Grenze des ausgewerteten
-    # Spektralbereichs (`bandLo` = 3). Der Regelwert liegt am Bereichsende und
-    # aendert die Spitze kaum; ein SCHMALER Bereich aendert sie deutlich.
-    "rotatingStars.bandHi": 5,
-    # 3D-Kamera: das Blickziel in der Tiefe. 0,6 lag noch fast im Ursprung —
-    # die Kamera steht auf der z-Achse, ein kleiner Versatz dreht die Ansicht
-    # kaum. 3,0 kippt sie sichtbar.
+    # (`rotatingStars.bandHi` stand hier mit dem Gegenwert 5 — es ist mit
+    # diesem Testsignal grundsaetzlich nicht prueefbar und deshalb nach
+    # NICHT_PRUEFBAR umgezogen, samt Nachweis.)
+    # 3D-Kamera: das Blickziel in der Tiefe. Sie braucht ZUSAETZLICH ein
+    # Blickziel neben der Achse (s. GRUNDKONFIG) — sonst ist jeder Wert
+    # dieselbe Blickrichtung.
     "camera3d.tz": 3.0,
+    # Convolution: ein FALTUNGSKERN ist keine Farbtafel. Die Listen-Regel
+    # fuellte alle 49 Stellen mit Palettenfarben (Gewichte um 16 Millionen) —
+    # das Bild uebersteuert vollstaendig und die Sonde meldet „wirkt", ohne
+    # etwas gemessen zu haben. Der Laplace-Kern ist derselbe, den die
+    # Grundkonfiguration der Nachbarfelder benutzt (S57).
+    "convolution.kernel": ([0] * 16 + [0, -1, 0] + [0] * 4 + [-1, 4, -1] +
+                           [0] * 4 + [0, -1, 0] + [0] * 16),
+    # Effect List: die LAENGE des Beat-Fensters in Frames. Die Daempfung fuer
+    # weite Bereiche (1..200 gegen Vorgabe 1) machte daraus das Dreifache, also
+    # 3 — und drei Frames sind bei einem Schlussframe fuenf Frames nach dem
+    # Beat (186, s. Runner) genauso abgelaufen wie einer. Beide Fenster zu,
+    # beide Bilder gleich, Urteil „stumm" (S57). Bei einer Frame-ANZAHL ist der
+    # weite Wert der richtige: 200 haelt das Fenster ueber den ganzen Lauf offen.
+    "list.onBeatFrames": 200,
+    # Multi Delay: der NACHFOLGER liest den geteilten Puffer zurueck (mode 2),
+    # also muss der Pruefling ihn SCHREIBEN. Der Regelwert 2 machte beide zu
+    # Lesern — der Ring blieb leer, und "aus" (0) wie "lesen" (2) sind auf
+    # einem leeren Ring derselbe No-op (S57).
+    "multiDelay.mode": 1,
     # Buffer Blend: `8` heisst "der aktuelle Frame", `0..7` ein Speicherplatz
     # (`bufA >= 8 ? cur : poolTexture(bufA)`). Der Ernter findet fuer diese zwei
     # Felder keinen Bereich, also griff die Notregel "das Dreifache" — und 24
@@ -197,7 +216,11 @@ HANDWERK: dict[str, object] = {
     # Sonde meldet "stumm". Diese Werte verschieben sichtbar, ohne die Szene zu
     # verlieren (Blickziel steht im Ursprung, Objekt fuellt [-1,1]).
     "camera3d.px": 1.5, "camera3d.py": 1.5,
-    "camera3d.tx": 0.6, "camera3d.ty": 0.6, "camera3d.tz": 0.6,
+    # `tz` steht bewusst NICHT hier: es hatte einen zweiten Eintrag weiter oben
+    # (3,0), und im Python-Dict gewinnt der SPAETERE — die 0,6 machte die
+    # Korrektur still wirkungslos. Genau das Eigentor aus S56, nur andersherum
+    # (die neue Zeile stand vor der alten).
+    "camera3d.tx": 0.6, "camera3d.ty": 0.6,
     "camera3d.fogStart": 2.0, "camera3d.fogEnd": 5.0,
     # Colorfade sortiert die drei Fader je Pixel nach der Kanalfolge um: der
     # ZWEITE landet immer auf dem groessten Kanal (r_colorfade.cpp:176-186).
@@ -446,6 +469,18 @@ GRUNDKONFIG: dict[str, dict] = {
     # Betrag, Randart und Doppelanwendung koennen dann nichts zeigen.
     **{f"convolution.{f}": {"kernel": [0]*16 + [0, -1, 0] + [0]*4 + [-1, 4, -1] + [0]*4 + [0, -1, 0] + [0]*16}
        for f in ("absolute", "twoPass", "edgeMode")},
+    # 3D-Kamera: die Kamera steht auf der z-Achse (`pz` = 3,73) und blickt auf
+    # (0, 0, `tz`). Die Blickrichtung wird NORMALISIERT — fuer jedes tz < pz
+    # ist sie deshalb exakt (0, 0, -1), der Betrag kuerzt sich heraus. Die
+    # Tiefe des Blickziels wird erst zu einem WINKEL, wenn das Ziel neben der
+    # Achse liegt (S57: mit tx = 0,6 dann MAE 0,0345).
+    "camera3d.tz": {"tx": 0.6},
+    # Terrain 3D: die Palette laeuft ueber die Hoehe (`colorLow` im Tal,
+    # `colorHigh` am Gipfel). Mit der Vorgabe `ringAmp` = 1 schiebt das
+    # Spektrum das ganze Gelaende nach oben — dann ist NUR die Gipfelfarbe im
+    # Bild und die Talfarbe kann nichts zeigen. Ohne Ring-Injektion und mit
+    # weiter Hoehenspanne sind beide zu sehen (S57: MAE 0,0580).
+    "terrain3d.colorLow": {"ringAmp": 0.0, "baseAmp": 0.5},
     # Water Bump setzt den Tropfen an eine ZUFAELLIGE Stelle, solange
     # `randomDrop` an ist — die feste Position wird dann gar nicht gelesen.
     "waterBump.dropX": {"randomDrop": False},
@@ -464,11 +499,18 @@ GRUNDKONFIG: dict[str, dict] = {
     "movingParticle.size2": {"onBeatSize": True},
     "movingParticle.onBeatSize": {"size2": 24},
     # Set Render Mode / Buffer Save / Color Map: die Adjustable-Alpha wirkt nur
-    # in der Adjustable-Betriebsart.
-    "setRenderMode.adjustAlpha": {"lineBlend": 10},
-    "setRenderMode.overrideBlend": {"lineBlend": 9},   # 9 = XOR, deutlich
+    # in der Adjustable-Betriebsart — und deren NUMMER ist je Knoten eine
+    # andere, weil es drei verschiedene Aufzaehlungen sind. Wer eine davon
+    # raet, klemmt still daneben: `lineBlend` wird auf 0..9 geklemmt
+    # (`runSetRenderMode`), aus der geratenen 10 wurde also 9 = Minimum, und
+    # `adjustAlpha` galt zwei Vollaeufe lang als stumm (S57).
+    #   setRenderMode.lineBlend  Panel-Liste 0..9, Adjustable = 7
+    #   bufferSave.blend         enum BlendMode,   Adjustable = 10
+    #   colorMap.blendMode       eigene Liste,     Adjustable = 9
+    "setRenderMode.adjustAlpha": {"lineBlend": 7},
+    "setRenderMode.overrideBlend": {"lineBlend": 9},   # 9 = Minimum, deutlich
     "bufferSave.adjustAlpha": {"blend": 10},
-    "colorMap.adjustBlend": {"blendMode": 10},
+    "colorMap.adjustBlend": {"blendMode": 9},
     # Farbverlauf-Stuetzstellen: Position und Farbe sind ein PAAR. Eine Liste
     # ohne die andere laesst der Knoten fallen.
     "colorMap.stopPos": {"stopColor": [0xFF0000, 0x0000FF]},
@@ -660,6 +702,17 @@ NICHT_PRUEFBAR: dict[str, str] = {
         "ist ein SuperScope 3D, also ausschliesslich Sprites: die Farbe kann "
         "dort per Entwurf nichts bewirken, nur `fogStart`/`fogEnd` wirken. Ein "
         "STUMM waere eine Falschaussage ueber die App.",
+    "rotatingStars.bandHi":
+        "Die OBERE Grenze des ausgewerteten Spektralbereichs. Der Knoten nimmt "
+        "aus dem Fenster nur die SPITZE (`peak = max(spec[lo..hi))`), und das "
+        "Spektrum des Standalone-Testsignals faellt ab jeder Stelle monoton — "
+        "das Maximum liegt also immer im ERSTEN Band des Fensters, unabhaengig "
+        "davon, wo es endet. Gemessen mit sechs Fenstern ([0,·), [3,·), [4,·), "
+        "[12,·), [40,·), [120,·)): jedes schmalste Fenster gab Pixel fuer Pixel "
+        "dasselbe Bild wie das weite (S57). Dass die Grenzen ankommen, zeigt "
+        "`bandLo` — fuenf einzelne Baender liefern fuenf verschiedene Bilder. "
+        "Messbar waere `bandHi` nur mit einem Signal, dessen Spektrum irgendwo "
+        "STEIGT.",
     "customBpm.arbitraryMs":
         "Der Frei-Takt haengt an der WANDUHR (`steadyNowMs`), nicht am Frame. "
         "Ein Sondenlauf rendert 181 Frames in Millisekunden — in dieser Zeit "
@@ -765,14 +818,65 @@ VORLAUF: dict[str, list[dict]] = {
 # regeln, WIE das Ergebnis der Kinder ins Bild kommt — ohne Kind gibt es kein
 # Ergebnis und jeder ihrer Regler ist wirkungslos (S54: `list` 12 von 14 stumm).
 KINDER: dict[str, list[dict]] = {
+    # Das Kind der Effect List PULSIERT, es steht nicht still. Grund ist
+    # derselbe wie beim Vorlauf der Verzoegerungsspeicher: ein Kind, das jeden
+    # Frame dasselbe zeichnet, kann keine ZEITABHAENGIGE Eigenschaft der Liste
+    # zeigen. `onBeatFrames` ist die LAENGE des Beat-Fensters — bei Vorgabe 1
+    # blendet die Liste nach dem Beat einmal, bei 200 noch zweihundertmal. Mit
+    # einem stehenden Kind sind das dieselben Pixel, und die Sonde meldete
+    # STUMM, obwohl die Lauflaenge (186, s. Runner) laengst hinter dem Beat
+    # endete (S56/S57).
     "list": [L.node("superScope", "Kind",
-                    pointCode="x=cos(i*6.28)*0.5; y=sin(i*6.28)*0.5; "
+                    pointCode="x=cos(i*6.28)*(0.25+0.25*sin(time*4)); "
+                              "y=sin(i*6.28)*(0.25+0.25*sin(time*4)); "
                               "red=1; green=0.2; blue=0.2",
                     pointCount=128, colors=[0xFFFFFF])],
     "hostgroup": [L.node("superScope", "Kind",
                          pointCode="x=cos(i*6.28)*0.5; y=sin(i*6.28)*0.5; "
                                    "red=0.2; green=1; blue=0.2",
                          pointCount=128, colors=[0xFFFFFF])],
+}
+
+# VORLAUF JE FELD: dieselbe Sache wie VORLAUF, aber fuer EIN Feld statt einen
+# ganzen Typ. Es gibt Felder, die einen anderen Bildinhalt brauchen als ihre
+# Geschwister — dann darf nicht der ganze Typ umgebaut werden, sonst aendern
+# sich die Messwerte aller anderen Sonden mit.
+#
+# `convolution.edgeMode` waehlt, was der Kern JENSEITS des Bildrandes liest
+# (festklemmen oder umlaufen). Der Untergrund ist am Rand ueberall 0x101010 —
+# Balken und Diagonale ruehren ihn nicht an. Bei einfarbigem Rand liefern beide
+# Arten dasselbe, und zwar exakt: die Sonde stand mit MAE 0,0000 als „stumm" da
+# (S55/S56). Zwei breite Diagonalen von Ecke zu Ecke machen den Rand ungleich,
+# dann trennt das Feld (S57: MAE 0,0014).
+_RANDVOLL = [
+    L.node("superScope", "Rand A", initCode="n=2",
+           pointCode="x=i*2-1; y=i*2-1; red=1; green=0.2; blue=0",
+           pointCount=2, renderMode=1, lineWidth=60, colors=[0xFFFFFF],
+           spectrumSource=False, colorCycleFrames=0),
+    L.node("superScope", "Rand B", initCode="n=2",
+           pointCode="x=i*2-1; y=1-i*2; red=0; green=0.6; blue=1",
+           pointCount=2, renderMode=1, lineWidth=60, colors=[0xFFFFFF],
+           spectrumSource=False, colorCycleFrames=0),
+]
+
+VORLAUF_JE_FELD: dict[str, list[dict]] = {
+    "convolution.edgeMode": _RANDVOLL,
+}
+
+# UNTERGRUND JE FELD: wie UNTERGRUND_JE_TYP, aber fuer EIN Feld.
+#
+# `bloom.post` entscheidet, WO der Glow entsteht: beim Present (Vorgabe, die
+# Kette bleibt unberuehrt) oder in der Kette selbst. Beide Wege erzeugen
+# denselben Glow aus derselben Quelle — der Unterschied lebt allein davon, dass
+# der naechste Frame ihn sieht. Auf einem Untergrund, der jeden Frame loescht,
+# gibt es kein „naechster Frame sieht ihn", und die Sonde meldete STUMM
+# (S55/S56). Mit `onlyFirst` klingt der Unterschied auf (S57: MAE 0,7997).
+#
+# Nur fuer dieses eine Feld: mit Rueckkopplung saettigt der additive Glow ueber
+# 181 Frames (S48-Befund), und auf einem gesaettigten Bild koennten `intensity`
+# und `radius` ihrerseits nichts mehr zeigen.
+UNTERGRUND_JE_FELD: dict[str, bool] = {
+    "bloom.post": True,
 }
 
 
@@ -824,7 +928,35 @@ def gegenwert(feld: dict, typkey: str, alle: dict[str, dict]):
         return wert if wert != vorgabe else None
 
     if art == "liste":
-        return [0xFF0000, 0x00FFFF]
+        # Eine Tafel mit FESTER Laenge wird an allen Stellen gelesen. Zwei
+        # Farben fuellten nur die ersten zwei — und Dot Plane las trotzdem alle
+        # fuenf (`params.colors[t]`, t bis 4). Schlimmer: die zweite Farbe traf
+        # die Vorgabe (`0x00FFFF` steht dort an Stelle 1), also aenderte sich
+        # genau EINE Stuetzstelle von fuenf, und die lag im Segment, das das
+        # Testsignal nicht trifft. Die Sonde meldete STUMM fuer ein Feld, das
+        # sehr wohl ankommt (S57: mit fuenf Farben MAE 0,0160).
+        #
+        # Deshalb: so viele Stellen wie die Tafel hat, und an jeder Stelle ein
+        # anderer Wert als die Vorgabe dort. Die Palette ist bewusst
+        # hochgesaettigt — sie muss sich gegen JEDE uebliche Vorgabe abheben.
+        #
+        # WEISS und Graustufen gehoeren NICHT hinein, auch nicht als
+        # Ausweichfarbe: `0xFFFFFF` ist der Ersatzwert, den mehrere Renderer
+        # fuer eine LEERE Tafel einsetzen (`cycleScopeColor`, `paletteRgb`).
+        # Eine Tafel, die irgendwo Weiss enthaelt, kann dort also genau das
+        # Bild der Vorgabe treffen — in der ersten Fassung dieser Regel fiel
+        # `superScope.colors` (Vorgabe: leer) deshalb von WIRKT auf STUMM, und
+        # drei weitere Tafeln wurden schwaecher.
+        PALETTE = [0xFF00FF, 0x00FF00, 0x0000FF, 0xFFFF00,
+                   0xFF0000, 0x00FFFF, 0xFF8000, 0x8000FF]
+        laenge = int(feld.get("laenge") or 0)
+        stellen = laenge if laenge >= 2 and len(vorgabe or []) == laenge else 2
+        tafel: list[int] = []
+        for i in range(stellen):
+            alt = vorgabe[i] if isinstance(vorgabe, list) and i < len(vorgabe) else None
+            # Die erste Palettenfarbe, die an DIESER Stelle etwas aendert.
+            tafel.append(next(c for c in PALETTE[i:] + PALETTE if c != alt))
+        return tafel
 
     if art == "text":
         vars_ = feld.get("skriptvars") or []
@@ -962,18 +1094,29 @@ def main() -> int:
                 offen.append(f"{typkey}.{f['name']} ({f['art']})")
                 continue
             grund = GRUNDKONFIG.get(voll, {})
+            # Aufbau JE FELD: ein anderer Vorlauf oder ein anderer Untergrund
+            # als beim Rest des Typs. Beides erzwingt einen eigenen
+            # Vergleichsgrund — sonst haelte der Runner die Sonde gegen
+            # `_default`, und der Vergleich traege ZWEI Unterschiede.
+            f_vorlauf = vorlauf + VORLAUF_JE_FELD.get(voll, [])
+            f_grundbild = (L.untergrund(True) if UNTERGRUND_JE_FELD.get(voll, False)
+                           else grundbild)
+            eigener_grund = (bool(grund) or voll in VORLAUF_JE_FELD
+                             or voll in UNTERGRUND_JE_FELD)
             knoten = L.node(typkey, t["name"],
                             **({"children": kinder} if kinder else {}),
                             **{**grund, f["name"]: wert})
             L.write(args.out / typkey / f"{f['name']}.lvfx",
-                    L.chain(*grundbild, *vorlauf, knoten, *nachfolger))
+                    L.chain(*f_grundbild, *f_vorlauf, knoten, *nachfolger))
             erzeugt.add(f"{f['name']}.lvfx")
-            if grund:
+            if eigener_grund:
                 # Eigener Vergleichsgrund: der Nachbar ist auch hier gesetzt,
-                # sonst misst das Paar ZWEI Unterschiede statt einem.
+                # sonst misst das Paar ZWEI Unterschiede statt einem. Aus
+                # demselben Grund traegt er denselben Vorlauf und denselben
+                # Untergrund wie die Sonde.
                 erzeugt.add(f"_grund_{f['name']}.lvfx")
                 L.write(args.out / typkey / f"_grund_{f['name']}.lvfx",
-                        L.chain(*grundbild, *vorlauf,
+                        L.chain(*f_grundbild, *f_vorlauf,
                                 L.node(typkey, t["name"],
                                        **({"children": kinder} if kinder else {}),
                                        **grund),

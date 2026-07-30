@@ -472,7 +472,11 @@ struct FastBrightnessParams
 struct BlurParams
 {
     int strength = 1;    ///< 1 = light, 2 = medium, 3 = heavy
-    bool roundUp = true; ///< AVS "round mode" rounding bias
+    /// AVS "round mode": aus = jeder Teilterm wird abgeschnitten und das Bild
+    /// klingt bei jeder Anwendung ab; an = fester Ausgleich je Kernel (+4/+5/+3).
+    /// Vorgabe AUS wie im Original (`roundmode = 0`, r_blur.cpp:75/90) — bis S57
+    /// stand hier `true`, und gelesen wurde das Feld ohnehin nirgends.
+    bool roundUp = false;
 
     /// Parameter-Skript (Strang D): `strength` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
     std::string initCode;

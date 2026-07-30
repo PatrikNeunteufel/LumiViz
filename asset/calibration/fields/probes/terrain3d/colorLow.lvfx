@@ -95,6 +95,8 @@
         "type": "terrain3d",
         "enabled": true,
         "name": "Terrain 3D",
+        "ringAmp": 0.0,
+        "baseAmp": 0.5,
         "colorLow": 16711935
       }
     ],

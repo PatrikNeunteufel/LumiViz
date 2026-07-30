@@ -96,8 +96,8 @@
         "enabled": true,
         "name": "Dot Grid",
         "colors": [
-          16711680,
-          65535
+          16711935,
+          65280
         ]
       }
     ],

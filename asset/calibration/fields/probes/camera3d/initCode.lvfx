@@ -95,7 +95,7 @@
         "type": "camera3d",
         "enabled": true,
         "name": "3D Camera",
-        "initCode": "px = 1.5; py = 1.5; pz = 11.196152687072754; tx = 0.6; ty = 0.6; tz = 0.6; fov = 179; roll = 360; fogstart = 2.0; fogend = 5.0"
+        "initCode": "px = 1.5; py = 1.5; pz = 11.196152687072754; tx = 0.6; ty = 0.6; tz = 3.0; fov = 179; roll = 360; fogstart = 2.0; fogend = 5.0"
       },
       {
         "type": "superScope3d",

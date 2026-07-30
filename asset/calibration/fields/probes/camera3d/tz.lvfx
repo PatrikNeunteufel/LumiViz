@@ -95,7 +95,8 @@
         "type": "camera3d",
         "enabled": true,
         "name": "3D Camera",
-        "tz": 0.6
+        "tx": 0.6,
+        "tz": 3.0
       },
       {
         "type": "superScope3d",

@@ -13,7 +13,7 @@
         "enabled": true,
         "name": "Grund",
         "color": 1052688,
-        "onlyFirst": false,
+        "onlyFirst": true,
         "blend": 0
       },
       {
@@ -92,10 +92,9 @@
         "colorCycleFrames": 0
       },
       {
-        "type": "rotatingStars",
+        "type": "bloom",
         "enabled": true,
-        "name": "Rotating Stars",
-        "bandHi": 5
+        "name": "Bloom"
       }
     ],
     "clearEveryFrame": false

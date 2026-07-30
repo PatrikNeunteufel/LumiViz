@@ -82,6 +82,19 @@ write("39_timescope/01_center.avs", preset(timescope()))
 
 # --- Farb-/Pixel-Effekte (statisches Material, Urteil intra-frame) --------------
 write("06_blur/01_normal.avs", preset(MAT_STATIC + blur()))
+# Der Blur RUNDET, und die Richtung sieht man erst ueber die Frames: AVS rechnet
+# in 8-Bit und schneidet jeden Teilterm ab, das Bild klingt also bei jeder
+# Anwendung ab; `roundmode` legt einen festen Ausgleich obendrauf (+4/+5/+3 je
+# Staerke). Auf statischem Material, das jeden Frame neu gezeichnet wird, ist der
+# Unterschied eine Stelle hinter der Anzeige — die Zeile 01 misst mit und ohne
+# Ausgleich dasselbe (MAE 0,003, S57 nachgemessen). Erst OHNE Basis
+# (`MAT_TRAIL`) akkumuliert die Rundung sichtbar.
+#
+# Diese zwei Zeilen sind der Grund, warum `roundUp` bis S57 unentdeckt blieb: die
+# Matrix hatte keinen Blur mit Trail, und das Feld wurde von KEINEM Renderer
+# gelesen. Jetzt bewachen sie beide Richtungen.
+write("06_blur/02_trail_rounddown.avs", preset(MAT_TRAIL + blur(roundmode=0)))
+write("06_blur/03_trail_roundup.avs", preset(MAT_TRAIL + blur(roundmode=1)))
 write("11_colorfade/01_default.avs", preset(MAT_STATIC + colorfade()))
 write("12_color_clip/01_below.avs", preset(MAT_STATIC + color_clip()))
 write("22_brightness/01_plus800.avs", preset(MAT_STATIC + brightness()))

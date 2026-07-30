@@ -96,6 +96,9 @@
         "enabled": true,
         "name": "Dot Plane",
         "colors": [
+          16711935,
+          65280,
+          255,
           16711680,
           65535
         ]

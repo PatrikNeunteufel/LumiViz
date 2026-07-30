@@ -92,40 +92,11 @@
         "colorCycleFrames": 0
       },
       {
-        "type": "invert",
+        "type": "terrain3d",
         "enabled": true,
-        "name": "kurz invertiert"
-      },
-      {
-        "type": "bufferSave",
-        "enabled": true,
-        "name": "Puffer 0 fuellen",
-        "slot": 0,
-        "dir": 0
-      },
-      {
-        "type": "invert",
-        "enabled": true,
-        "name": "und zurueck"
-      },
-      {
-        "type": "list",
-        "enabled": true,
-        "name": "Effect List",
-        "children": [
-          {
-            "type": "superScope",
-            "enabled": true,
-            "name": "Kind",
-            "pointCode": "x=cos(i*6.28)*(0.25+0.25*sin(time*4)); y=sin(i*6.28)*(0.25+0.25*sin(time*4)); red=1; green=0.2; blue=0.2",
-            "pointCount": 128,
-            "colors": [
-              16777215
-            ]
-          }
-        ],
-        "blendOut": 12,
-        "bufferOutInvert": true
+        "name": "Terrain 3D",
+        "ringAmp": 0.0,
+        "baseAmp": 0.5
       }
     ],
     "clearEveryFrame": false

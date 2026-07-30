@@ -821,6 +821,23 @@ private:
     {
         return m_visdata.data() + (2 + (channel & 1)) * 576;
     }
+    /// Normalisierte Welle/Spektrum nach dem AVS-Kanalfeld: 0 = links,
+    /// 1 = rechts, alles andere = Mitte. `getWaveform()`/`getSpectrum()`
+    /// mischen bei Stereo-Material selbst zur Mitte (`mixToMono`), deshalb ist
+    /// der Mittenfall genau der bisherige Aufruf ohne Kanal — ein Knoten mit
+    /// der ueblichen Vorgabe `channel = 2` zeichnet unveraendert weiter.
+    /// EINE Stelle, weil Osc Star und Osc Ring dieselbe Wahl treffen (S57: dort
+    /// wurde der Kanal gar nicht gelesen, beide Sonden waren stumm).
+    [[nodiscard]] std::vector<float> waveOfChannel(int channel) const
+    {
+        return (channel == 0 || channel == 1) ? getWaveformChannel(channel)
+                                             : getWaveform();
+    }
+    [[nodiscard]] std::vector<float> specOfChannel(int channel) const
+    {
+        return (channel == 0 || channel == 1) ? getSpectrumChannel(channel)
+                                             : getSpectrum();
+    }
     /// Feed the shared audio contract (visdata + gettime + bass/mid/treb/vol/beat/
     /// time) into a script engine — every scripted module gets the same set (E1).
     void feedAudio(lumi::scripting::LuaScriptEngine& engine);

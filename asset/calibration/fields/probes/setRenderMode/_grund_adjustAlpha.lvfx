@@ -95,7 +95,7 @@
         "type": "setRenderMode",
         "enabled": true,
         "name": "Set Render Mode",
-        "lineBlend": 10
+        "lineBlend": 7
       },
       {
         "type": "superScope",

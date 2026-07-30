@@ -479,11 +479,11 @@
         },
         {
           "art": "bool",
-          "default": true,
+          "default": false,
           "name": "roundUp",
           "panel": "bool",
           "helfer": "addBool",
-          "doc": "AVS \"round mode\" rounding bias"
+          "doc": "AVS \"round mode\": aus = jeder Teilterm wird abgeschnitten und das Bild klingt bei jeder Anwendung ab; an = fester Ausgleich je Kernel (+4/+5/+3). Vorgabe AUS wie im Original (`roundmode = 0`, r_blur.cpp:75/90) — bis S57 stand hier `true`, und gelesen wurde das Feld ohnehin nirgends."
         },
         {
           "art": "zahl",

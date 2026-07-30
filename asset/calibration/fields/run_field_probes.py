@@ -116,6 +116,15 @@ FRAMES_JE_FELD: dict[str, int] = {
     "mirror.onBeatRandom": 196,
     "mosaic.durationFrames": 196,
     "interleave.beatDuration": 196,
+    # Bump setzt die Tiefe auf einem Beat auf `depth2` — UNABHAENGIG von der
+    # Rampenlaenge. Am Schlussframe, der selbst ein Beat ist, steht deshalb in
+    # beiden Presets dieselbe Tiefe, und die Laenge ist blind (Urteil „stumm" in
+    # S56 und im S57-Vollauf; die kumulierte Teillauf-Bilanz hatte den Fall
+    # verloren). 201 endet 20 Frames NACH dem letzten Beat: die Vorgabe 15 ist
+    # dort abgelaufen und bei `depth` angekommen, der Gegenwert 100 haelt noch —
+    # bei ihm ist der Rampenschritt `|30-100|/100` als INTEGER-Division sogar 0,
+    # die Tiefe faellt also gar nicht (der S46-Sonderfall).
+    "bump.durationFrames": 201,
     # Custom BPM mit `skip` laesst jeden (skipCount+1)-ten Beat durch und setzt
     # den Zaehler dabei zurueck. Bei der Vorgabe 1 sind das die Beats 2, 4, 6 —
     # der SIEBTE (Frame 180) faellt heraus, und der Gegenwert 16 laesst nie

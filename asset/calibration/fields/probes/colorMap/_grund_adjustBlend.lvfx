@@ -95,7 +95,7 @@
         "type": "colorMap",
         "enabled": true,
         "name": "Color Map",
-        "blendMode": 10
+        "blendMode": 9
       }
     ],
     "clearEveryFrame": false
