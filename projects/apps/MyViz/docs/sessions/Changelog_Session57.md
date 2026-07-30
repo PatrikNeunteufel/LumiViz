@@ -85,12 +85,22 @@ Das Feld *Beat frames* bleibt als LumiViz-Zusatz erhalten und hält den
 Beat-Zustand länger, als das Original es täte. Die Voreinstellung 1 entspricht
 dem Original — ein importiertes Preset ändert sich dadurch nicht.
 
-**Interferences: zwei Abweichungen gefunden, der Rest bleibt offen.** Das
-Original rechnet die Versätze der Kopien in ganzen Pixeln und gewichtet sie über
-eine Ganzzahl-Tabelle; wir taten beides in Fließkomma. Beides ist korrigiert, der
-Abstand zur Referenz ist aber nur von 0,053 auf 0,051 gefallen. Die Struktur
-stimmt — im Vergleichsbild bleiben nur Kanten-Umrisse übrig. Der nächste Verdacht
-ist notiert.
+**Interferences stimmt jetzt mit dem Original überein.** Der Effekt legt mehrere
+verschobene Kopien des Bildes übereinander. Ragte eine Kopie über den Bildrand
+hinaus, haben wir dort den Randpixel wiederholt und nach innen verschmiert — das
+Original lässt sie schlicht weg. Dazu rechnet es die Versätze in ganzen Pixeln
+und gewichtet die Kopien über eine Ganzzahl-Tabelle, wir taten beides in
+Fließkomma. Alles drei korrigiert: **die Prüfzeile ist grün**.
+
+**Water: derselbe Fehler, deutlich näher am Original.** Auch die Wasser-Wellen
+lesen ihre Nachbarpixel — und bei einem Effekt, der sich selbst zurückspeist,
+bleibt ein Randfehler nicht am Rand, sondern wandert über die Frames ins Bild.
+Die mittlere Abweichung fiel von 0,029 auf **0,002**. Was übrig bleibt, ist kein
+Strukturfehler: beide Bilder sind deckungsgleich, der Rest ist feines Rauschen —
+ein Wellensystem verstärkt kleinste Rundungsunterschiede, genau wie beim Korn.
+
+**Water Bump bleibt offen.** Wellenkern und Pufferwechsel stimmen; eine
+Randkorrektur brachte nichts. Der nächste Verdacht ist notiert.
 
 ## Was das Prüfwerkzeug gelernt hat
 

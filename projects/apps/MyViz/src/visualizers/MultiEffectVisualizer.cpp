@@ -1256,7 +1256,16 @@ void main()
     vec3 acc = vec3(0.0);          // in 8-Bit-Einheiten (0..255)
     for (int i = 0; i < uPoints && i < 8; ++i)
     {
-        vec3 s = blendtab(texture(uTex, vTex - uOffsets[i]).rgb);
+        // Ausserhalb des Bildes traegt eine Kopie NICHTS bei — die Referenz
+        // prueft den Pixel-Index (`if (xp >= 0 && xp < w && yoffs[i] != -1)`,
+        // r_interf.cpp:236) und laesst den Beitrag sonst auf 0. Unser Sampler
+        // klemmte stattdessen auf den Randpixel und schmierte ihn nach innen.
+        // Die Texturkoordinaten treffen Texelmitten, `>= 0 && < 1` ist also
+        // genau dieselbe Bedingung.
+        vec2 uv = vTex - uOffsets[i];
+        vec3 s = vec3(0.0);
+        if (uv.x >= 0.0 && uv.x < 1.0 && uv.y >= 0.0 && uv.y < 1.0)
+            s = blendtab(texture(uTex, uv).rgb);
         if (uRgb == 1) { int ch = i - (i / 3) * 3; acc[ch] += s[ch]; }
         else acc += s;
     }
@@ -1272,22 +1281,45 @@ void main()
 // AVS "Trans / Water" (ID 20): neighbour average of the current frame minus the
 // previous frame -> a color-space ripple (r_water.cpp). uCur = this frame,
 // uLast = the previous frame's image.
+// r_water.cpp zeilengenau. Drei Dinge, die eine float-Mittelung NICHT trifft:
+//
+//  1. Nachbarn ausserhalb des Bildes werden WEGGELASSEN, nicht geklemmt — die
+//     Referenz hat je Rand einen eigenen Zweig (Ecke 2, Kante 3, Mitte 4
+//     Nachbarn). Bei einem RUECKGEKOPPELTEN Effekt bleibt so ein Randfehler
+//     nicht am Rand: er wandert ueber die Frames nach innen.
+//  2. Die Summe wird GANZZAHLIG halbiert (`r/=2`, :274).
+//  3. Die oberste und unterste Zeile werden GAR NICHT halbiert (:168-188) —
+//     eine Eigenart des Originals, die dort einen hellen Saum erzeugt.
+//
+// Das war der Matrix-Rest `20_water` (S57).
 const char* kWaterFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
 uniform sampler2D uCur;
 uniform sampler2D uLast;
 uniform vec2 uTexel;
+uniform int uResX;
+uniform int uResY;
 out vec4 fragColor;
+ivec3 hole(int ax, int ay)      // ay = AVS-Zeile (0 = oben)
+{
+    return ivec3(texelFetch(uCur, ivec2(ax, uResY - 1 - ay), 0).rgb * 255.0 + 0.5);
+}
 void main()
 {
-    vec3 l = texture(uCur, vTex + vec2(-uTexel.x, 0.0)).rgb;
-    vec3 r = texture(uCur, vTex + vec2( uTexel.x, 0.0)).rgb;
-    vec3 u = texture(uCur, vTex + vec2(0.0, -uTexel.y)).rgb;
-    vec3 d = texture(uCur, vTex + vec2(0.0,  uTexel.y)).rgb;
-    vec3 avg = (l + r + u + d) * 0.5;               // wave equation term
-    vec3 last = texture(uLast, vTex).rgb;
-    fragColor = vec4(clamp(avg - last, 0.0, 1.0), 1.0);
+    ivec2 pix = ivec2(gl_FragCoord.xy);
+    int ax = pix.x;
+    int ay = uResY - 1 - pix.y;
+
+    ivec3 sum = ivec3(0);
+    if (ax + 1 < uResX) sum += hole(ax + 1, ay);
+    if (ax - 1 >= 0)    sum += hole(ax - 1, ay);
+    if (ay + 1 < uResY) sum += hole(ax, ay + 1);   // f[w]  — eine Zeile tiefer
+    if (ay - 1 >= 0)    sum += hole(ax, ay - 1);   // f[-w]
+    sum /= 2;
+
+    ivec3 last = ivec3(texelFetch(uLast, pix, 0).rgb * 255.0 + 0.5);
+    fragColor = vec4(vec3(clamp(sum - last, ivec3(0), ivec3(255))) / 255.0, 1.0);
 }
 )";
 
@@ -1829,6 +1861,15 @@ void main()
         float d = distance(vTex, uDropC) / max(uDropR, 1e-4);
         if (d < 1.0) nh += cos(d * 1.5707963) * uDropAmp;
     }
+    // Die Referenz BESCHREIBT die aeusserste Zeile und Spalte nie: `CalcWater`
+    // laeuft von `buffer_w + 1` bis `(buffer_h-1)*buffer_w` (r_waterbump.cpp:205,
+    // 212), und die Puffer sind nullinitialisiert. Dort steht also dauerhaft 0 —
+    // eine feste Wand, an der die Welle reflektiert. Wir haben stattdessen den
+    // Randwert geklemmt, wodurch die Welle am Rand weiterlief (S57).
+    vec2 px = vTex / uTexel;
+    if (px.x < 1.0 || px.y < 1.0 ||
+        px.x > 1.0 / uTexel.x - 1.0 || px.y > 1.0 / uTexel.y - 1.0)
+        nh = 0.0;
     fragColor = vec4(nh, cur, 0.0, 1.0);   // new height, old current -> previous
 }
 )";
@@ -5816,6 +5857,8 @@ void MultiEffectVisualizer::runWater(const ChainNode& node, const WaterParams&)
     m_waterShader->setUniformValue(
         "uTexel", QVector2D(1.0f / static_cast<float>(m_surfaceWidth),
                             1.0f / static_cast<float>(m_surfaceHeight)));
+    m_waterShader->setUniformValue("uResX", m_surfaceWidth);
+    m_waterShader->setUniformValue("uResY", m_surfaceHeight);
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_waterShader->release();

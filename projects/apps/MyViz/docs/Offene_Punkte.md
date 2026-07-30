@@ -55,20 +55,21 @@ dünnen Inhalten).
 | **Tie Tunnel DM** | 0,154 | Altbestand seit S49 | 🟠 |
 | **Sonde `convolution_kante`** | ~560 px | ≈ eine Zeile plus eine Spalte. `scale` geprüft (acht Kennlinienpunkte exakt), Kern seit S50 richtig orientiert | 🟠 |
 | **Sonde `6_alloy/paar_original`** | 39546 → 37671 px | 🟠 **Neu gesehen (S53).** Menge 0,05 · Lage 2,7 · MAE 0,010 — dreimal identisch gemessen, also kein Rauschen, und **am Vorstand belegt**: derselbe Wert mit gestashtem Renderer, die Sonde war schon vor S53 rot. Der S52-Stand „Modul-Sonden 79/80, offen nur `convolution_kante`" war ungenau — es sind **78/80**. Uns fehlen ~1900 px gegenüber der Referenz | 🟠 |
-| **Modul-Matrix-Reste** | **36/41** · seit S57 **38/43** | `dot_grid` · `water` · **`grain`** · `water_bump` · **`interferences` (0,053 → 0,051, Diagnose s. u.)** — S57 nachgemessen (Vollauf nach den Renderer-Fixes: **keine Regression**). Zwei neue Zeilen kamen hinzu und sind beide grün: `06_blur/02_trail_rounddown` und `03_trail_roundup` (§1c). **Korrektur S53:** der S52-Stand „37/41, vier Reste" war ungenau — `24_grain/01_static100` ist gelb (dMean **0,000**, MAE **0,046**, dreimal identisch gemessen, also kein Rauschen). Die Montage zeigt beide Seiten deckungsgleich, der 4×-Diff ist ein **gleichmäßiges Flächenrauschen**: die Kornmenge stimmt, der Zufallsstrom ist gegen die Referenz versetzt. Kein Strukturfehler — und es betrifft **statisches** Grain, der 🔧-Punkt unten meint das nicht-statische | 🟠 |
+| **Modul-Matrix-Reste** | **39/43** (S57: 38→39) | `dot_grid` · `water` · **`grain`** · `water_bump`. **`interferences` ist GRÜN** (0,053 → **0,027**, dMean 0,025 → **0,001**): die Referenz laesst eine Kopie ausserhalb des Bildes **nichts** beitragen, unser Shader klemmte auf den Randpixel und schmierte ihn nach innen. **`water` erheblich verbessert** (dMean 0,029 → **0,002**, MAE 0,069 → 0,055): Nachbarn ausserhalb werden weggelassen statt geklemmt, und die Halbierung ist ganzzahlig — bei einem rueckgekoppelten Effekt bleibt ein Randfehler nicht am Rand. Der Rest ist **kein Strukturfehler**: die Montage zeigt beide Seiten deckungsgleich, der Diff ist feines Rauschen ueber den Wellenzonen — Chaos-Verstaerkung wie bei `24_grain`. Zwei neue Zeilen kamen hinzu und sind beide grün: `06_blur/02_trail_rounddown` und `03_trail_roundup` (§1c). **Korrektur S53:** der S52-Stand „37/41, vier Reste" war ungenau — `24_grain/01_static100` ist gelb (dMean **0,000**, MAE **0,046**, dreimal identisch gemessen, also kein Rauschen). Die Montage zeigt beide Seiten deckungsgleich, der 4×-Diff ist ein **gleichmäßiges Flächenrauschen**: die Kornmenge stimmt, der Zufallsstrom ist gegen die Referenz versetzt. Kein Strukturfehler — und es betrifft **statisches** Grain, der 🔧-Punkt unten meint das nicht-statische | 🟠 |
 | **`Dot Fountain` ist nicht portiert** | 0,002 — **falsch grün** | 🔴 **Neu (S53).** Die Referenz `r_dotfnt.cpp` ist ein **30×256-Gitter** (7680 Punkte, rotierende Höhenwand, 3D-Matrix `translate(0,-20,400)` wie `Dot Plane`, Höhe aus dem Spektrum). Unser Renderer sind **400 freie Partikel** mit eigener Physik — der Header sagt es selbst („Simplified particle model here"). Die Montage zeigt links einen hohen geordneten Brunnen über die volle Bildhöhe, mittig einen flachen Fleck von ~⅕ der Fläche; der 4×-Diff **ist** das Referenzbild. Die Matrix-Zeile `19_dot_fountain` misst trotzdem 0,002 und zählt zu den 37 — **die Metrik lügt bei dünnen Inhalten**, beide Bilder sind überwiegend schwarz. Faktisch also **36/41**. Fix = echte Portierung nach dem `Dot Plane`-Muster (Matrix + Farbtabellen-Arithmetik liegen dort zeilengenau vor); zusätzlich braucht die Zeile ein **flächenbasiertes** Urteil, sonst bewacht sie weiter nichts | 🔴 |
 | ~~Color-Map-Kennlinie~~ | ±1 → **0** | ✅ **gelöst (S57).** Die APE rechnet in DREI ganzzahligen Schritten, und der Verlust steckt in der Schrittweite selbst: `step = 65536/span`, dann `t = (d·step) >> 8`, dann `(a·(256−t) + b·t) >> 8`. Das erklärt, warum Zweierpotenzen exakt waren (65536/16 geht auf) und 200 nicht (327,68 → 327). Unsere alte Formel `a + (b−a)·d/span` traf auf dem Graukeil **1 von 255** Punkten. Jetzt **922/922** über sechs Spannweiten, beide Kennlinien-Blöcke 0 Abweichungen. Die `04_span*`-Sonden existierten seit S49, wurden aber nie ausgewertet — der Bericht prüfte 15 Stichproben, und daran sind fünf Formeln nicht unterscheidbar; die Auswertung ist jetzt in `analyse_colormap.py` | ✅ |
 | ~~Colorfade-Zufalls-Beatmodus~~ | — | ✅ **gelöst (S57)**, zusammen mit dem `enabled`-Bitfeld — es war dieselbe Sache. Colorfade folgt jetzt `r_colorfade` zeilengenau: Bitfeld beim Import (1 an · 2 on-beat-random · 4 slow fade), persistenter Fader-Zustand, Nachziehen um EINEN Schritt je Frame samt der Grün/Blau-**Vertauschung** (`faderpos[1]` folgt `faders[2]`, beim direkten Setzen gilt sie nicht), drei exklusive Beat-Zweige. Folge: **ohne `slowFade` wirken die Beat-Fader nicht** — im Original ist ihr Zweig gar nicht erreichbar. Alle 12 Felder wirken | ✅ |
 | ~~nicht-statisches Grain~~ | Sonde **0,0363** | ✅ **umgesetzt (S57)**, mit benannter Grenze: der Pfad existiert und flimmert je Frame (§1c), aber die **Zug-Reihenfolge** der Referenz ist nicht nachgebildet — sie läuft sequentiell durch eine 491-Byte-Tabelle und zieht den Faktor nur, wenn die Schwelle trifft, also inhaltsabhängig. Parallel je Pixel nicht berechenbar. Der geteilte `rand()`-Strom wird um die **Obergrenze** `(w·h·2)/16` weitergestellt (die Referenz zieht datenabhängig weniger) — das ist die S49-Merkregel, so weit sie hier einlösbar ist | ✅ |
 
-### `41_interferences`: was geprüft ist und was bleibt (S57)
+### ✅ `41_interferences` gelöst — und was `water`/`water_bump` daraus lernen (S57)
 
-Die Montage sagt klar, wo der Rest **nicht** liegt: beide Seiten zeigen dieselben
-Spiralen an derselben Stelle, im 4×-Diff stehen nur **Kantenkonturen**. Also kein
-Struktur-, sondern ein Helligkeitsfehler an den Rändern der Kopien.
+**Die Randbehandlung war die Ursache.** Die Referenz liest eine verschobene Kopie
+nur innerhalb des Bildes (`if (xp >= 0 && xp < w && yoffs[i] != -1)`, :236) und
+laesst den Beitrag sonst auf **0**; unser Shader klemmte auf den Randpixel und
+schmierte ihn nach innen. **dMean 0,025 → 0,001, MAE 0,053 → 0,027, Zeile grün.**
 
-Zwei Abweichungen von `r_interf.cpp` sind dabei gefunden und behoben — beide
-belegt referenztreu, aber sie erklären den Rest nicht (0,053 → 0,051):
+Dazu zwei weitere Abweichungen von `r_interf.cpp`, beide vorher behoben (sie
+allein brachten 0,053 → 0,051):
 
 1. **Die Übergangswerte sind ganzzahlig.** Der `(int)` steht in der Referenz um
    die Interpolation, nicht um das Ergebnis
@@ -81,10 +82,21 @@ belegt referenztreu, aber sie erklären den Rest nicht (0,053 → 0,051):
    255stel, und bei vier Kopien summiert sich das. Der Shader rechnet das jetzt
    in 8-Bit-Einheiten nach, wie der Blur seit S57.
 
-**Was als Nächstes zu prüfen wäre:** die **Randbehandlung**. Die Referenz liest
-`framebuffer[y*w + xp]` nur für `0 <= xp < w` und nimmt sonst **Schwarz**; unser
-Shader samplet mit dem Textur-Wrap-Modus und wiederholt dort den Randpixel. Das
-erklärt Konturen am Bildrand — ob es auch die im Bildinneren erklärt, ist offen.
+**Dieselbe Klasse bei `water`** (dMean 0,029 → 0,002): dort behandelt die Referenz
+jeden Rand als eigenen Zweig (Ecke 2, Kante 3, Mitte 4 Nachbarn) und halbiert
+**ganzzahlig**. Eine Kuriosität hat sich dabei NICHT bestaetigt: die oberste und
+unterste Zeile werden im Original gar nicht halbiert (:168-188) — nachgebildet
+wurde das Bild deutlich schlechter (0,131), AvsRef zeigt diesen Saum also nicht.
+Der Sonderfall ist bewusst weggelassen.
+
+**`water_bump` bleibt offen** (0,137). Struktur, Puffer-Wechsel und die
+Acht-Nachbarn-Welle stimmen bereits. Eine referenztreue Teilkorrektur ist drin:
+die Referenz **beschreibt die aeusserste Zeile und Spalte nie** (`CalcWater`
+laeuft von `buffer_w+1`, die Puffer sind nullinitialisiert), dort steht also eine
+feste Wand — ohne Messgewinn (0,136 → 0,137, im Rauschen). Nächster Verdacht ist
+der **Wertebereich**: die Referenz rechnet die Hoehen als 32-Bit-Ganzzahlen mit
+grossen Betraegen (`depth = 600`, `SineBlob` mit `>> 19`), unser Hoehenpuffer ist
+eine Textur — wenn sie nicht Float ist, wird der Bereich beschnitten.
 
 **Vor „Regression!" den Vorstand MESSEN** (stash + Rebuild), nie gegen notierte Zahlen
 einer anderen Messreihe — zwei von drei Auffälligkeiten in S51 waren auf HEAD identisch.
