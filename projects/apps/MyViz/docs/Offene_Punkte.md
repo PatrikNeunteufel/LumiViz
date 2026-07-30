@@ -1,6 +1,6 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.10.0
+> **Version:** 1.11.0
 > **Datum:** 2026-07-30 (Session 57)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -55,11 +55,36 @@ dünnen Inhalten).
 | **Tie Tunnel DM** | 0,154 | Altbestand seit S49 | 🟠 |
 | **Sonde `convolution_kante`** | ~560 px | ≈ eine Zeile plus eine Spalte. `scale` geprüft (acht Kennlinienpunkte exakt), Kern seit S50 richtig orientiert | 🟠 |
 | **Sonde `6_alloy/paar_original`** | 39546 → 37671 px | 🟠 **Neu gesehen (S53).** Menge 0,05 · Lage 2,7 · MAE 0,010 — dreimal identisch gemessen, also kein Rauschen, und **am Vorstand belegt**: derselbe Wert mit gestashtem Renderer, die Sonde war schon vor S53 rot. Der S52-Stand „Modul-Sonden 79/80, offen nur `convolution_kante`" war ungenau — es sind **78/80**. Uns fehlen ~1900 px gegenüber der Referenz | 🟠 |
-| **Modul-Matrix-Reste** | **36/41** · seit S57 **38/43** | `dot_grid` · `water` · **`grain`** · `water_bump` · `interferences` — unverändert, S57 nachgemessen (Vollauf nach sechs Renderer-Fixes: **keine Regression**). Zwei neue Zeilen kamen hinzu und sind beide grün: `06_blur/02_trail_rounddown` und `03_trail_roundup` (§1c). **Korrektur S53:** der S52-Stand „37/41, vier Reste" war ungenau — `24_grain/01_static100` ist gelb (dMean **0,000**, MAE **0,046**, dreimal identisch gemessen, also kein Rauschen). Die Montage zeigt beide Seiten deckungsgleich, der 4×-Diff ist ein **gleichmäßiges Flächenrauschen**: die Kornmenge stimmt, der Zufallsstrom ist gegen die Referenz versetzt. Kein Strukturfehler — und es betrifft **statisches** Grain, der 🔧-Punkt unten meint das nicht-statische | 🟠 |
+| **Modul-Matrix-Reste** | **36/41** · seit S57 **38/43** | `dot_grid` · `water` · **`grain`** · `water_bump` · **`interferences` (0,053 → 0,051, Diagnose s. u.)** — S57 nachgemessen (Vollauf nach den Renderer-Fixes: **keine Regression**). Zwei neue Zeilen kamen hinzu und sind beide grün: `06_blur/02_trail_rounddown` und `03_trail_roundup` (§1c). **Korrektur S53:** der S52-Stand „37/41, vier Reste" war ungenau — `24_grain/01_static100` ist gelb (dMean **0,000**, MAE **0,046**, dreimal identisch gemessen, also kein Rauschen). Die Montage zeigt beide Seiten deckungsgleich, der 4×-Diff ist ein **gleichmäßiges Flächenrauschen**: die Kornmenge stimmt, der Zufallsstrom ist gegen die Referenz versetzt. Kein Strukturfehler — und es betrifft **statisches** Grain, der 🔧-Punkt unten meint das nicht-statische | 🟠 |
 | **`Dot Fountain` ist nicht portiert** | 0,002 — **falsch grün** | 🔴 **Neu (S53).** Die Referenz `r_dotfnt.cpp` ist ein **30×256-Gitter** (7680 Punkte, rotierende Höhenwand, 3D-Matrix `translate(0,-20,400)` wie `Dot Plane`, Höhe aus dem Spektrum). Unser Renderer sind **400 freie Partikel** mit eigener Physik — der Header sagt es selbst („Simplified particle model here"). Die Montage zeigt links einen hohen geordneten Brunnen über die volle Bildhöhe, mittig einen flachen Fleck von ~⅕ der Fläche; der 4×-Diff **ist** das Referenzbild. Die Matrix-Zeile `19_dot_fountain` misst trotzdem 0,002 und zählt zu den 37 — **die Metrik lügt bei dünnen Inhalten**, beide Bilder sind überwiegend schwarz. Faktisch also **36/41**. Fix = echte Portierung nach dem `Dot Plane`-Muster (Matrix + Farbtabellen-Arithmetik liegen dort zeilengenau vor); zusätzlich braucht die Zeile ein **flächenbasiertes** Urteil, sonst bewacht sie weiter nichts | 🔴 |
-| Color-Map-Kennlinie | ±1 | Altbestand | 🔧 |
-| Colorfade-Zufalls-Beatmodus | — | Altbestand | 🔧 |
+| ~~Color-Map-Kennlinie~~ | ±1 → **0** | ✅ **gelöst (S57).** Die APE rechnet in DREI ganzzahligen Schritten, und der Verlust steckt in der Schrittweite selbst: `step = 65536/span`, dann `t = (d·step) >> 8`, dann `(a·(256−t) + b·t) >> 8`. Das erklärt, warum Zweierpotenzen exakt waren (65536/16 geht auf) und 200 nicht (327,68 → 327). Unsere alte Formel `a + (b−a)·d/span` traf auf dem Graukeil **1 von 255** Punkten. Jetzt **922/922** über sechs Spannweiten, beide Kennlinien-Blöcke 0 Abweichungen. Die `04_span*`-Sonden existierten seit S49, wurden aber nie ausgewertet — der Bericht prüfte 15 Stichproben, und daran sind fünf Formeln nicht unterscheidbar; die Auswertung ist jetzt in `analyse_colormap.py` | ✅ |
+| ~~Colorfade-Zufalls-Beatmodus~~ | — | ✅ **gelöst (S57)**, zusammen mit dem `enabled`-Bitfeld — es war dieselbe Sache. Colorfade folgt jetzt `r_colorfade` zeilengenau: Bitfeld beim Import (1 an · 2 on-beat-random · 4 slow fade), persistenter Fader-Zustand, Nachziehen um EINEN Schritt je Frame samt der Grün/Blau-**Vertauschung** (`faderpos[1]` folgt `faders[2]`, beim direkten Setzen gilt sie nicht), drei exklusive Beat-Zweige. Folge: **ohne `slowFade` wirken die Beat-Fader nicht** — im Original ist ihr Zweig gar nicht erreichbar. Alle 12 Felder wirken | ✅ |
 | ~~nicht-statisches Grain~~ | Sonde **0,0363** | ✅ **umgesetzt (S57)**, mit benannter Grenze: der Pfad existiert und flimmert je Frame (§1c), aber die **Zug-Reihenfolge** der Referenz ist nicht nachgebildet — sie läuft sequentiell durch eine 491-Byte-Tabelle und zieht den Faktor nur, wenn die Schwelle trifft, also inhaltsabhängig. Parallel je Pixel nicht berechenbar. Der geteilte `rand()`-Strom wird um die **Obergrenze** `(w·h·2)/16` weitergestellt (die Referenz zieht datenabhängig weniger) — das ist die S49-Merkregel, so weit sie hier einlösbar ist | ✅ |
+
+### `41_interferences`: was geprüft ist und was bleibt (S57)
+
+Die Montage sagt klar, wo der Rest **nicht** liegt: beide Seiten zeigen dieselben
+Spiralen an derselben Stelle, im 4×-Diff stehen nur **Kantenkonturen**. Also kein
+Struktur-, sondern ein Helligkeitsfehler an den Rändern der Kopien.
+
+Zwei Abweichungen von `r_interf.cpp` sind dabei gefunden und behoben — beide
+belegt referenztreu, aber sie erklären den Rest nicht (0,053 → 0,051):
+
+1. **Die Übergangswerte sind ganzzahlig.** Der `(int)` steht in der Referenz um
+   die Interpolation, nicht um das Ergebnis
+   (`_distance = distance + (int)((float)(distance2-distance) * s)`, :194-196),
+   und die Versätze sind **ganze Pixel** (`xpoints[i] = (int)(cos(a)*_distance)`,
+   :205). Wir gaben den Bruchteil an den Shader, der dazwischen interpoliert.
+   Ebenso ist `rotation` dort ein **int** und wird ganzzahlig akkumuliert (:384).
+2. **Die Gewichtung läuft über die Byte-Tabelle** `g_blendtable[_alpha][wert]`
+   (:216), also `(alpha·wert)/255` als Ganzzahl — jede Kopie verliert bis zu ein
+   255stel, und bei vier Kopien summiert sich das. Der Shader rechnet das jetzt
+   in 8-Bit-Einheiten nach, wie der Blur seit S57.
+
+**Was als Nächstes zu prüfen wäre:** die **Randbehandlung**. Die Referenz liest
+`framebuffer[y*w + xp]` nur für `0 <= xp < w` und nimmt sonst **Schwarz**; unser
+Shader samplet mit dem Textur-Wrap-Modus und wiederholt dort den Randpixel. Das
+erklärt Konturen am Bildrand — ob es auch die im Bildinneren erklärt, ist offen.
 
 **Vor „Regression!" den Vorstand MESSEN** (stash + Rebuild), nie gegen notierte Zahlen
 einer anderen Messreihe — zwei von drei Auffälligkeiten in S51 waren auf HEAD identisch.
@@ -326,10 +351,13 @@ also ausschließlich Sprites).
 | `texer.blend` | Der Renderer kannte nur „0" und „alles andere": **1 und 2 waren derselbe GL-Zustand**, 50/50 gab es nicht, und 0 („ersetzen") war additiv ohne Alpha-Gewichtung | Alle drei Betriebsarten mit den Faktoren aus `applyLineBlend`, damit ein Sprite wie eine Linie mischt | 0,0655 |
 | `texerII.wrapAround` | Nirgends gelesen | Torus-Wiederholung: die Kopien 2,0 entfernt, gezeichnet nur wo sie den Sichtbereich schneiden. Referenz ist eine Binär-APE (`texer2.ape`, kein Quellcode im ref-Baum) — umgesetzt ist die Semantik, die am Feld steht | 0,0278 |
 
-**Beobachtung, nicht gefixt:** `fractalZoomer.feedback` heißt „trail persistence
-0..1", der Shader liest es aber nur als **Schalter**
-(`params.feedback > 0.01f ? 2 : 0`, `MultiEffectVisualizer.cpp:10506`). 0,3 und
-1,0 ergeben dasselbe Bild.
+**~~Beobachtung~~ ✅ gelöst (S57):** `fractalZoomer.feedback` heißt „trail
+persistence 0..1", der Shader las es aber nur als **Schalter**
+(`> 0.01f ? 50/50 : ersetzen`) — 0,3 und 1,0 ergaben dasselbe Bild. Jetzt ein
+echtes Gewicht (`mix(col, alt, feedback)`) über ein eigenes Uniform, damit der
+Nachbar-Knoten `fractal2D` seine **benannte** Betriebsart „50/50" behält. Der
+Test, der vorher 0,0000 gab (0,3 gegen 1,0), liefert **0,2391**; die Vorgabe 0,5
+ist exakt das alte 50/50, bestehende Presets bleiben also unverändert.
 
 ### Die Matrix hatte keinen Blur mit Trail (S57)
 
@@ -823,6 +851,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.11.0 | 2026-07-30 | Session 57 (Fortsetzung) — **vier Kalibrier-Befunde aus §1 gelöst.** `fractalZoomer.feedback` ist eine echte Stärke statt eines Schalters (0,3 gegen 1,0: 0,0000 → **0,2391**). **Color-Map-Kennlinie exakt**: die APE rechnet in DREI ganzzahligen Schritten mit `step = 65536/span` als eigentlichem Verlust — **922/922** Punkte über sechs Spannweiten, vorher traf unsere Formel auf dem Graukeil 1 von 255. Die `04_span*`-Sonden lagen seit S49 unausgewertet herum; ihre Auswertung ist jetzt im Analyseskript. **Colorfade nach `r_colorfade` portiert** (löst „Zufalls-Beatmodus" UND „fehlendes `enabled`-Bitfeld" — dieselbe Sache): Bitfeld beim Import, persistenter Fader-Zustand, Nachziehen um einen Schritt je Frame samt Grün/Blau-Vertauschung, drei exklusive Beat-Zweige; ohne `slowFade` wirken die Beat-Fader nicht, wie im Original. Alle 12 Colorfade-Felder wirken. **`interferences` teilweise**: zwei belegte Abweichungen behoben (ganzzahlige Übergangswerte und Pixel-Versätze; Byte-Blendtable), 0,053 → 0,051 — der Rest ist als Kanten-Helligkeit eingegrenzt, nächster Verdacht ist die Randbehandlung. Matrix 38/43 und Tests 485/485 unverändert |
 | 1.10.0 | 2026-07-30 | Session 57 — **die stummen Feld-Sonden sind bei 0** (§1c). Von den letzten 15 waren **sechs ein Befund an der App**, alle behoben: `blur.roundUp` (AVS rechnet den Blur in 8-Bit und schneidet jeden Teilterm ab, „round mode" legt +4/+5/+3 je Stärke obendrauf — wir rechneten float ohne Verlust und lasen das Feld nirgends; Vorgabe stand zudem falsch auf `true`), `grain.staticGrain` (wir zeichneten immer statisch, die Vorgabe versprach das Gegenteil), `oscRing.channel`/`oscStar.channel` (riefen `getWaveform()` ohne Kanal — die S56-Vermutung „Signal ist nicht stereo" war falsch), `texer.blend` (1 und 2 waren derselbe GL-Zustand, 50/50 fehlte), `texerII.wrapAround` (nirgends gelesen). Acht lagen am Messaufbau — darunter `camera3d.tz` mit einem **Doppeleintrag im selben Dict** (die S56-Merkregel, nochmal) und `setRenderMode.adjustAlpha`, wo „Adjustable" 7 heißt und geraten 10 dastand. Eine als **nicht prüfbar** festgeschrieben (`rotatingStars.bandHi`, mit sechs Fenstern belegt). Zwei neue Werkzeug-Tabellen (`VORLAUF_JE_FELD`, `UNTERGRUND_JE_FELD`), Tafel-Regel füllt jetzt alle Stützstellen, `convolution.kernel` misst statt zu übersteuern. **Matrix 36/41 unverändert** (keine Regression) **+ zwei neue Blur-Trail-Zeilen, beide grün** — die Matrix hatte vorher keinen Blur mit Rückkopplung, deshalb überlebte der Befund zwei Kalibrier-Runden. Tests 485/485, beide Builds grün. **Strang F nachgemessen** (§1f, Freigabe Patrik): Vollauf **558 GLEICH / 133 TEILWEISE / 11 VERDECKT / 0 WIRKUNGSLOS**, ein Befund gefunden und behoben — `interferences.rotation` ist ein **Startwert** für einen selbstlaufenden Zähler und wurde nur unter `!interfSeeded` übernommen, kam beim Editieren also nie an. Neue Fehlerklasse: **ein Startwert ist kein Parameter.** Die sechs Renderer-Fixes sind von Patrik im Betrieb abgenommen |
 | 1.9.1 | 2026-07-30 | Session 56, Abschluss — **§1e neu**: der Eigenschaften-Editor muss nach JEDEM Baumumbau dastehen. Nach dem **Verschieben** blieb er leer, aus derselben Ursache wie beim Einfügen in S55: `selectPaths` setzt die Auswahl unter `m_selecting`, das Auswahl-Signal ist dabei stillgelegt, und das folgende `setCurrentItem` löst keines mehr aus — also baute niemand den Editor. Befund Patrik, behoben (Doppelschritt markieren + `buildPropertyEditor`, wie beim Einfügen). Dazu die stummen Feld-Sonden von 115 auf **15**: Buffer Blend (Gegenwert 24 wählte wie die Vorgabe den aktuellen Frame, und Modus 0 liest gar kein A), Interferences (Schlussframe mitten in den Beat-Übergang gelegt), Effect List (Init-Slot über eine geteilte Variable; das Beat-Fenster greift laut `r_list` nur bei einer AUSgeschalteten Liste) |
 | 1.9.0 | 2026-07-29 | Session 56 (Fortsetzung) — **stumme Feld-Sonden 115 → 27** (§1c): ein App-Befund — die drei Alt-Format-Weichen im Deserialisierer griffen bei JEDEM Preset, das das neue Feld nicht nennt, und Roto Blitter zoomte dadurch auf 0 statt auf den neutralen 31 (Bild einfarbig, alle fünf Felder stumm). Dazu Kleinians ganzzahliges `colorScale`, Texer II ohne `n`, Custom BPMs Zähler-Phase. **Zweite Quelle der Vorgaben abgeschafft** (§1d, Entscheid Patrik): 415 Literale und 243 `getStr` beziehen ihre Vorgabe jetzt aus dem Struct, eine benannte Ausnahme bleibt. Vier neue Wächter (Zusatzfelder einer Grundkonfiguration, verwaiste Sonden, Panel-Schlüssel, Roundtrip). §10 Tooltips 717/717. Tests 485, beide Builds grün |

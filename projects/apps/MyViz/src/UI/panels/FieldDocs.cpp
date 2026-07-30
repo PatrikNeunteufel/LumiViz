@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     717>
+                     719>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
@@ -291,7 +291,11 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
     {"colorfade.initCode",
      "Parameter-Skript (Strang D): `faderr`, `faderg`, `faderb`, `beatfaderr`, `beatfaderg`, `beatfaderb`, `onbeatframes` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
     {"colorfade.onBeatFrames",
-     "frames the beat faders stay active (>= 1)"},
+     "LumiViz-ERWEITERUNG (Vorschlag Patrik): wie viele Frames der Beat-Zustand gehalten wird, bevor `slowFade` ihn zurueckzieht. Das Original kennt kein Fenster \342\200\224 es setzt die Fader im Beat-Frame und zieht ab dem naechsten zurueck. **Die Vorgabe 1 ist deshalb genau dieses Verhalten**, ein importiertes AVS-Preset aendert sich also nicht; groessere Werte sind die neue Moeglichkeit. Ohne `slowFade` wirkt das Feld nicht \342\200\224 dann gibt es keinen Beat-Zustand, den man halten koennte."},
+    {"colorfade.onBeatRandom",
+     "`enabled`-Bit 1 von `r_colorfade`: im Beat-Frame werden die Fader ZUFAELLIG gewaehlt statt aus `beatFader*` genommen \342\200\224 Rot und Blau aus `rand()%32 - 6`, Gruen aus `rand()%64 - 32`, wobei Werte mit Betrag unter 16 auf +-32 aufgerissen werden (r_colorfade.cpp:157-161)."},
+    {"colorfade.slowFade",
+     "`enabled`-Bit 2 von `r_colorfade`: die Fader wandern um EINEN Schritt je Frame auf ihren Zielwert zu, statt sofort dort zu stehen. Nur mit diesem Bit wirken die Beat-Fader ueberhaupt \342\200\224 im Original ist der Beat-Zweig sonst gar nicht erreichbar (`if (!(enabled&4)) \342\200\246 else if (isBeat) \342\200\246`)."},
     {"comment.text",
      "Freier Text. Der Knoten zeichnet nichts \342\200\224 er haelt eine Notiz in der Kette fest."},
     {"convolution.absolute",
@@ -599,7 +603,7 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
     {"fractalZoomer.colorScale",
      "Faerbung: Farbtafel-Index = `fract(iterationen * colorScale + Phase)`. Groesser heisst engere Farbringe."},
     {"fractalZoomer.feedback",
-     "trail persistence 0..1 (0 = no trails)"},
+     "Anteil des vorigen Bildes, der stehen bleibt: 0 = keine Schleife, 0,5 = 50/50, 1 = Standbild. Seit S57 eine echte STAERKE \342\200\224 vorher las der Shader das Feld nur als Schalter (`> 0,01 ? 50/50 : ersetzen`), und 0,3 wie 1,0 ergaben dasselbe Bild."},
     {"fractalZoomer.frameCode",
      "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript."},
     {"fractalZoomer.ftype",

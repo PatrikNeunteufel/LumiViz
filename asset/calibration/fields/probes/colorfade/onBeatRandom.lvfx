@@ -96,8 +96,7 @@
         "enabled": true,
         "name": "Colorfade",
         "slowFade": true,
-        "beatFaderG": -32,
-        "onBeatFrames": 30
+        "onBeatRandom": true
       }
     ],
     "clearEveryFrame": false

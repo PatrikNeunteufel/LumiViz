@@ -230,6 +230,10 @@ HANDWERK: dict[str, object] = {
     # der Abstand (Befund S55). `faderG` braucht den Eintrag nicht: seine
     # Vorgabe ist +8, der Regelwert also ohnehin -32.
     "colorfade.beatFaderG": -32,
+    # Beat-FENSTER: der Regelwert waere das Dreifache der Vorgabe, also 3 — bei
+    # einer Lauflaenge von 55 (24 Frames hinter dem Beat) ist ein Fenster von 3
+    # genauso abgelaufen wie eines von 1. 30 haelt bis zum Schluss.
+    "colorfade.onBeatFrames": 30,
     "avi.filename": TESTVIDEO24,
     "avi.resolvedPath": TESTVIDEO24,
     # ------------------------------------------------------------------------
@@ -620,10 +624,28 @@ GRUNDKONFIG: dict[str, dict] = {
                  "onBeatSizeChange", "onBeatSize", "colors", "particles",
                  "initCode", "frameCode", "beatCode", "pointCode", "sizex",
                  "sizey", "resizing", "wrapAround", "maskEnabled", "numParticles")},
-    # Colorfade: die Beat-Fader zaehlen nur waehrend des Beat-Fensters.
-    "colorfade.beatFaderR": {"onBeatFrames": 60},
-    "colorfade.beatFaderG": {"onBeatFrames": 60},
-    "colorfade.beatFaderB": {"onBeatFrames": 60},
+    # Colorfade: die Beat-Fader zaehlen nur waehrend des Beat-Fensters — UND nur
+    # mit `slowFade`. Ohne dieses Bit ist der Beat-Zweig im Original gar nicht
+    # erreichbar (`if (!(enabled&4)) … else if (isBeat) …`, r_colorfade.cpp:149),
+    # die Fader stehen dann sofort auf ihrem Normalwert. Seit der Portierung
+    # (S57) gilt das auch bei uns, und damit brauchen alle vier beat-bezogenen
+    # Felder das Bit in ihrer Grundkonfiguration.
+    **{f"colorfade.{f}": {"slowFade": True}
+       for f in ("beatFaderR", "beatFaderG", "beatFaderB")},
+    "colorfade.onBeatRandom": {"slowFade": True},
+    # Das Beat-FENSTER (LumiViz-Erweiterung) braucht zwei Dinge: `slowFade`,
+    # sonst gibt es keinen Beat-Zustand zum Halten — und Beat-Fader, die vom
+    # Nachziehziel ABWEICHEN. Mit den Vorgaben tun sie das nicht: das Nachziehen
+    # vertauscht Gruen und Blau (`faderpos[1]` folgt `faders[2]`), und damit ist
+    # sein Ziel (8, -8, 8) zufaellig genau die Beat-Fader-Belegung. Der Zustand
+    # steht nach einem Beat also schon am Ziel, und die Fensterlaenge aendert
+    # kein Pixel (S57).
+    # `beatFaderG`, nicht `beatFaderR`: Colorfade sortiert die drei Fader je Pixel
+    # nach der Kanalfolge, und der ZWEITE landet auf dem groessten Kanal
+    # (r_colorfade.cpp:176-186, Merkregel S55). Auf unseren Testbalken ist der
+    # kleinste Kanal 0 — ein negativer Fader wird dort weggeklemmt, und der
+    # Unterschied zwischen gehaltenem und nachgezogenem Wert war unsichtbar.
+    "colorfade.onBeatFrames": {"slowFade": True, "beatFaderG": -32},
     # Ein BEAT-Zielwert, der dem Normalwert gleicht, ist kein Ziel — und ein
     # Uebergang dorthin nicht sichtbar. Dieselbe Bauart bei vier Knoten (S56).
     "interleave.onBeat": {"x2": 8, "y2": 8},

@@ -160,6 +160,8 @@ struct WriteVisitor
         o["beatFaderG"] = p.beatFaderG;
         o["beatFaderB"] = p.beatFaderB;
         o["onBeatFrames"] = p.onBeatFrames;
+        o["onBeatRandom"] = p.onBeatRandom;
+        o["slowFade"] = p.slowFade;
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
@@ -1247,6 +1249,8 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.beatFaderG = getInt(o, "beatFaderG", p.beatFaderG);
         p.beatFaderB = getInt(o, "beatFaderB", p.beatFaderB);
         p.onBeatFrames = getInt(o, "onBeatFrames", p.onBeatFrames);
+        p.onBeatRandom = getBool(o, "onBeatRandom", p.onBeatRandom);
+        p.slowFade = getBool(o, "slowFade", p.slowFade);
         p.initCode = getStr(o, "initCode", p.initCode);
         p.frameCode = getStr(o, "frameCode", p.frameCode);
         p.beatCode = getStr(o, "beatCode", p.beatCode);

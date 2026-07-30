@@ -213,6 +213,13 @@ private:
     {
         int beatCounter = 0;     ///< OnBeat Clear: beats since last clear
         int beatFramesLeft = 0;  ///< Colorfade: frames the beat faders stay on
+        /// Colorfade: der laufende Fader-Zustand (`faderpos` in r_colorfade).
+        /// Er wandert je Frame um EINEN Schritt auf sein Ziel zu, wenn
+        /// `slowFade` gesetzt ist — deshalb muss er ueber Frames leben.
+        /// `fadeSeeded` traegt zusaetzlich, ob er schon einmal aus den
+        /// Preset-Werten gesetzt wurde (Startwert, s. `interfRotationSeed`).
+        int fadePos[3] = {0, 0, 0};
+        bool fadeSeeded = false;
         int mirrorRBeat = 0;     ///< Mirror onbeat-random: current direction bits
         float mirrorF[4] = {0.0f, 0.0f, 0.0f, 0.0f};  ///< smooth factors per direction
         int mirrorFrames = 0;    ///< Mirror: frame counter for the `slower` ramp
@@ -355,7 +362,10 @@ private:
 
         // Interferences: accumulating rotation + on-beat morph state (r_interf)
         bool interfSeeded = false;
-        float interfRotation = 0.0f;  ///< persistent rotation accumulator (0..255 units)
+        /// Laufender Drehwinkel in 1/255 Umdrehungen. GANZZAHLIG wie in der
+        /// Referenz (`rotation` ist dort ein int, r_interf.cpp:384) — eine
+        /// float-Summe laeuft anders auf.
+        int interfRotation = 0;
         float interfStatus = 0.0f;    ///< beat-morph phase (0..pi)
         /// Der Preset-Wert, mit dem der Zaehler oben gesetzt wurde. `rotation`
         /// ist ein STARTWERT: nach dem Seeden laeuft `interfRotation`

@@ -54,6 +54,44 @@ zweiten Prüffamilie, die genau diese Frage stellt: wirkt ein Feld auch beim
 Editieren, nicht nur beim Laden? Sie hat alle 702 Felder geprüft und genau diesen
 einen Fall gefunden.)
 
+## Vier Befunde aus dem Bildvergleich mit dem Original
+
+**Der Fractal Zoomer hatte einen Regler, der nur zwei Stellungen kannte.** „Trail
+persistence" verspricht eine Stärke von 0 bis 1; tatsächlich schaltete jeder Wert
+über 0,01 dasselbe halbe Nachleuchten ein — 0,3 und 1,0 ergaben Pixel für Pixel
+dasselbe Bild. Jetzt ist es eine echte Stärke: 0 keine Schleife, 1 Standbild. Die
+Voreinstellung 0,5 entspricht genau dem bisherigen Verhalten, bestehende Presets
+sehen also unverändert aus.
+
+**Die Farbkennlinie der Color Map stimmt jetzt exakt.** Sie lag seit Monaten
+„etwa eins daneben" — auf einem Schwarz-Weiß-Verlauf war *jeder* Wert um eins zu
+hoch. Der Grund liegt tiefer, als es aussah: das Original rechnet die Kennlinie
+in drei ganzzahligen Schritten, und schon die Schrittweite selbst verliert dabei
+etwas. Deshalb waren glatte Spannweiten (16, 64, 128) immer richtig und krumme
+(200) nicht. Über sechs Spannweiten geprüft: **922 von 922 Messpunkten stimmen**.
+
+**Colorfade kann jetzt, was das Original kann.** Zwei Betriebsarten fehlten
+komplett, weil beim Import nur ein einziges Bit von dreien gelesen wurde:
+*langsames Nachziehen* (die Farbregler wandern über mehrere Frames auf ihren Wert
+zu, statt sofort dort zu stehen) und *Zufallsfarben auf den Beat*. Beide sind da
+und im Panel bedienbar.
+
+Eine Folge davon ist wichtig für bestehende Presets: **die Beat-Regler wirken nur
+mit eingeschaltetem „Slow fade"**. Das ist im Original genauso — ohne diese
+Betriebsart kommt der Beat-Zweig dort gar nicht erst zum Zug. Wer die Beat-Regler
+nutzen will, schaltet also zusätzlich „Slow fade" ein.
+
+Das Feld *Beat frames* bleibt als LumiViz-Zusatz erhalten und hält den
+Beat-Zustand länger, als das Original es täte. Die Voreinstellung 1 entspricht
+dem Original — ein importiertes Preset ändert sich dadurch nicht.
+
+**Interferences: zwei Abweichungen gefunden, der Rest bleibt offen.** Das
+Original rechnet die Versätze der Kopien in ganzen Pixeln und gewichtet sie über
+eine Ganzzahl-Tabelle; wir taten beides in Fließkomma. Beides ist korrigiert, der
+Abstand zur Referenz ist aber nur von 0,053 auf 0,051 gefallen. Die Struktur
+stimmt — im Vergleichsbild bleiben nur Kanten-Umrisse übrig. Der nächste Verdacht
+ist notiert.
+
 ## Was das Prüfwerkzeug gelernt hat
 
 Neun der fünfzehn Felder lagen nicht am Programm, sondern daran, wie gemessen

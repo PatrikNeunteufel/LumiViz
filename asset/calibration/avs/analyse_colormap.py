@@ -124,7 +124,47 @@ def main() -> None:
         for v in (0, 1, 32, 64, 65, 66, 78, 91, 92, 93, 116, 139, 140, 141, 200, 255):
             print(f"    idx {v:3d} -> {lut2[v]}")
         print()
+    spannweiten_vergleich()
     return 0
+
+
+def spannweiten_vergleich() -> None:
+    """Die Interpolation JE SPANNWEITE, alle Punkte — nicht 15 Stichproben.
+
+    Die `04_span*`-Sonden wurden in S49 erzeugt, aber nie ausgewertet: der
+    Bericht oben prueft 15 Indizes, und an so wenigen Punkten sind mehrere
+    Formeln nicht unterscheidbar. Ueber die vollen Segmente sind sie es (S57):
+
+      Spannweite 16/64/128 (Zweierpotenzen)  alle Kandidaten gleich, exakt
+      Spannweite 255                          NUR `(b*t)>>8` mit t = d*256/span
+      Spannweite 254                          dieselbe Formel, 1 Halbwert daneben
+      Spannweite 200                          144/201 — Rest-Befund, s. §1
+
+    Der Rest bei ungeraden Spannweiten sieht dort nach `floor(255*d/span) - 1`
+    aus, und genau das widerspricht den Zweierpotenzen. Zwei Codepfade in der
+    APE waeren die Erklaerung; ohne Quelltext ist das nicht entscheidbar.
+    """
+    print("--- Interpolation je Spannweite (ref gegen lumi, ganzes Segment) ---")
+    for span in (16, 64, 128, 200, 254, 255):
+        name = f"04_span{span:03d}"
+        if not (PROBES / f"{name}.avs").exists():
+            print(f"  {name}: Sonde fehlt (make_colormap_probes.py laufen lassen)")
+            continue
+        werte = {}
+        for seite, render in (("ref", render_ref), ("lumi", render_lumi)):
+            src = render("00_rampe")
+            lut = lut_from_pair(src, render(name), src[..., 0])
+            werte[seite] = {v: int(e[0]) for v, e in enumerate(lut)
+                            if e is not None and not isinstance(e[0], str)}
+        gemeinsam = sorted(set(werte["ref"]) & set(werte["lumi"]) &
+                           set(range(span + 1)))
+        abw = [v for v in gemeinsam if werte["ref"][v] != werte["lumi"][v]]
+        zeichen = "OK     " if not abw else "PRUEFEN"
+        print(f"  {zeichen} span {span:3d}: {len(gemeinsam) - len(abw)}/"
+              f"{len(gemeinsam)} Punkte gleich"
+              + (f", erste Abweichung idx {abw[0]} "
+                 f"(ref {werte['ref'][abw[0]]}, lumi {werte['lumi'][abw[0]]})"
+                 if abw else ""))
 
 
 if __name__ == "__main__":

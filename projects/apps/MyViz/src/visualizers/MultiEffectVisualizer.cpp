@@ -1229,27 +1229,38 @@ void main()
 // AVS "Trans / Interferences" (ID 41): accumulate uPoints rotated copies of the
 // image, each weighted by uAlpha (r_interf.cpp). uRgb splits copies across the
 // R/G/B channels; uBlend combines with the original.
+// Die Gewichtung der Kopien laeuft in der Referenz ueber die BLEND-TABELLE
+// `g_blendtable[_alpha][wert]` (r_interf.cpp:216), also `(alpha*wert)/255` als
+// GANZZAHL — jede Kopie verliert dabei bis zu ein 255stel. Bei vier Kopien
+// summiert sich das, und genau das war der Matrix-Rest `41_interferences`: die
+// Struktur stimmte, im 4x-Diff standen nur Kantenkonturen (S57).
+// `uAlpha255` ist deshalb der ROHE Alphawert 0..255, nicht der Bruch.
 const char* kInterfFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
 uniform sampler2D uTex;
 uniform int uPoints;
 uniform vec2 uOffsets[8];
-uniform float uAlpha;
+uniform float uAlpha255;
 uniform int uRgb;
 uniform int uBlend;
 out vec4 fragColor;
+vec3 blendtab(vec3 wert)
+{
+    // g_blendtable: floor(i*j/255) je Kanal, in 8-Bit-Einheiten gerechnet.
+    return floor(floor(wert * 255.0 + 0.5) * uAlpha255 / 255.0);
+}
 void main()
 {
     vec3 orig = texture(uTex, vTex).rgb;
-    vec3 acc = vec3(0.0);
+    vec3 acc = vec3(0.0);          // in 8-Bit-Einheiten (0..255)
     for (int i = 0; i < uPoints && i < 8; ++i)
     {
-        vec3 s = texture(uTex, vTex - uOffsets[i]).rgb * uAlpha;
+        vec3 s = blendtab(texture(uTex, vTex - uOffsets[i]).rgb);
         if (uRgb == 1) { int ch = i - (i / 3) * 3; acc[ch] += s[ch]; }
         else acc += s;
     }
-    acc = min(acc, vec3(1.0));
+    acc = min(acc, vec3(255.0)) / 255.0;
     vec3 r;
     if (uBlend == 1)      r = min(orig + acc, vec3(1.0));  // additive
     else if (uBlend == 2) r = (orig + acc) * 0.5;          // 50/50
@@ -1937,6 +1948,11 @@ uniform float uColorScale;
 uniform float uColorPhase;
 uniform vec3  uInside;
 uniform int   uBlend;
+/// Gewicht des ALTEN Bildes in der Betriebsart 2 (0 = nur das Fraktal,
+/// 1 = nur der Framebuffer). 0,5 ist das benannte 50/50 — bis S57 rechnete
+/// dieser Zweig fest damit, weshalb `fractalZoomer.feedback` („trail
+/// persistence 0..1") nur ein SCHALTER war: 0,3 und 1,0 ergaben dasselbe Bild.
+uniform float uFeedback;
 out vec4 fragColor;
 
 vec2 cmul(vec2 a, vec2 b){ return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x); }
@@ -2037,7 +2053,7 @@ void main()
     else {
         vec3 d = texture(uTex, vTex).rgb;
         if (uBlend == 1) fragColor = vec4(min(d + col, vec3(1.0)), 1.0);
-        else             fragColor = vec4((d + col) * 0.5, 1.0);
+        else             fragColor = vec4(mix(col, d, uFeedback), 1.0);
     }
 }
 )";
@@ -4202,7 +4218,8 @@ void MultiEffectVisualizer::runColorfade(const ChainNode& node,
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
-    double vFadeR = params.faderR, vFadeG = params.faderG, vFadeB = params.faderB, vBeatFrames = params.onBeatFrames;
+    double vFadeR = params.faderR, vFadeG = params.faderG, vFadeB = params.faderB;
+    double vBeatFrames = params.onBeatFrames;
     // Auch die BEAT-Fader sind skriptbar (S54). Legacy bleibt unberuehrt: die
     // Vorbelegung IST der Preset-Wert, ein Preset ohne Skript rechnet also
     // Schritt fuer Schritt dasselbe wie vorher.
@@ -4218,15 +4235,75 @@ void MultiEffectVisualizer::runColorfade(const ChainNode& node,
                     {"beatfaderb", &vBeatB},
                     {"onbeatframes", &vBeatFrames}});
 
-    // Beat faders replace the base faders for onBeatFrames frames after a beat.
-    // Strang D: durchgaengig die Frame-Kopien, auch fuer die Beat-Fader.
-    if (m_frameBeat) rt.beatFramesLeft = static_cast<int>(vBeatFrames);
-    const bool onBeat = rt.beatFramesLeft > 0;
+    // r_colorfade.cpp:139-168 zeilengenau. Der Effekt hat einen LAUFENDEN
+    // Zustand (`faderpos`), und `enabled` ist dort ein Bitfeld: Bit 1 waehlt
+    // die Fader im Beat zufaellig, Bit 2 laesst sie langsam nachziehen. Bis S57
+    // fehlten beide Bits (der Import verwarf sie) und der Zustand ebenso — wir
+    // setzten die Fader je Frame direkt.
+    const int ziel[3] = {static_cast<int>(vFadeR), static_cast<int>(vFadeG),
+                         static_cast<int>(vFadeB)};
+    if (!rt.fadeSeeded)
+    {
+        rt.fadePos[0] = ziel[0];
+        rt.fadePos[1] = ziel[1];
+        rt.fadePos[2] = ziel[2];
+        rt.fadeSeeded = true;
+    }
+
+    // Nachziehen um EINEN Schritt je Frame — und zwar mit VERTAUSCHTEM Ziel
+    // fuer Gruen und Blau (`faderpos[1]` folgt `faders[2]`, `faderpos[2]`
+    // folgt `faders[1]`; r_colorfade.cpp:139-147). Beim direkten Setzen unten
+    // gilt die Vertauschung NICHT — eine Eigenart des Originals, keine
+    // Verwechslung.
+    const int nachziehZiel[3] = {ziel[0], ziel[2], ziel[1]};
+    for (int k = 0; k < 3; ++k)
+    {
+        if (rt.fadePos[k] < nachziehZiel[k]) ++rt.fadePos[k];
+        if (rt.fadePos[k] > nachziehZiel[k]) --rt.fadePos[k];
+    }
+
+    // Die drei Zweige in der Reihenfolge des Originals (r_colorfade.cpp:149-168).
+    // Sie sind EXKLUSIV, und das ist der Grund, warum die Beat-Fader ohne
+    // `slowFade` nichts tun: der erste Zweig fängt dann jeden Frame ab.
+    //
+    // `onBeatFrames` ist die LumiViz-Erweiterung darauf (s. Struct): das Fenster
+    // wird ABGEFRAGT, bevor es herunterzaehlt — andernfalls waere es immer einen
+    // Frame kuerzer als eingestellt (Fehler in der ersten Fassung, S57).
+    const bool imBeatFenster = rt.beatFramesLeft > 0;
     if (rt.beatFramesLeft > 0) --rt.beatFramesLeft;
 
-    const int f1 = static_cast<int>(onBeat ? vBeatR : vFadeR);
-    const int f2 = static_cast<int>(onBeat ? vBeatG : vFadeG);
-    const int f3 = static_cast<int>(onBeat ? vBeatB : vFadeB);
+    if (!params.slowFade)
+    {
+        rt.fadePos[0] = ziel[0];
+        rt.fadePos[1] = ziel[1];
+        rt.fadePos[2] = ziel[2];
+    }
+    else if (m_frameBeat && params.onBeatRandom)
+    {
+        // r_colorfade.cpp:157-161 — Gruen wird aus dem Mittelfeld
+        // herausgerissen, damit der Beat sichtbar bleibt.
+        auto& rnd = *m_scriptContext;  // EIN rand()-Strom je Preset (S49)
+        rt.fadePos[0] = static_cast<int>(rnd.nextRand() % 32) - 6;
+        int g = static_cast<int>(rnd.nextRand() % 64) - 32;
+        if (g < 0 && g > -16) g = -32;
+        if (g >= 0 && g < 16) g = 32;
+        rt.fadePos[1] = g;
+        rt.fadePos[2] = static_cast<int>(rnd.nextRand() % 32) - 6;
+        rt.beatFramesLeft = std::max(0, static_cast<int>(vBeatFrames) - 1);
+    }
+    else if (m_frameBeat || imBeatFenster)
+    {
+        rt.fadePos[0] = static_cast<int>(vBeatR);
+        rt.fadePos[1] = static_cast<int>(vBeatG);
+        rt.fadePos[2] = static_cast<int>(vBeatB);
+        // Vorgabe 1 heisst: NUR der Beat-Frame, also das Referenzverhalten.
+        if (m_frameBeat)
+            rt.beatFramesLeft = std::max(0, static_cast<int>(vBeatFrames) - 1);
+    }
+
+    const int f1 = rt.fadePos[0];
+    const int f2 = rt.fadePos[1];
+    const int f3 = rt.fadePos[2];
 
     m_colorfadeShader->bind();
     m_colorfadeShader->setUniformValue(
@@ -5641,39 +5718,63 @@ void MultiEffectVisualizer::runInterferences(const ChainNode& node,
     // Beat morph between the two parameter sets via sin(status) (r_interf).
     if (params.onBeat && m_frameBeat && rt.interfStatus >= kPi) rt.interfStatus = 0.0f;
     const float s = std::sin(rt.interfStatus);
-    const float rotInc =
-        static_cast<float>(vRotInc) +
-        (params.rotationInc2 - static_cast<float>(vRotInc)) * s;
-    const float alpha = static_cast<float>(vAlpha) +
-                        (params.alpha2 - static_cast<float>(vAlpha)) * s;
-    const float dist = static_cast<float>(vDist) +
-                       (params.distance2 - static_cast<float>(vDist)) * s;
+    // Die drei Uebergangswerte sind in der Referenz GANZZAHLIG — der `(int)`
+    // steht dort um die Interpolation, nicht um das Ergebnis
+    // (`_distance = distance + (int)((float)(distance2-distance) * s)`,
+    // r_interf.cpp:194-196). Wir rechneten float und lagen dadurch je Frame bis
+    // zu einen Schritt daneben.
+    const int rotIncBasis = static_cast<int>(vRotInc);
+    const int rotInc = rotIncBasis +
+                       static_cast<int>(static_cast<float>(params.rotationInc2 -
+                                                           rotIncBasis) * s);
+    const int alphaBasis = static_cast<int>(vAlpha);
+    const int alpha = alphaBasis +
+                      static_cast<int>(static_cast<float>(params.alpha2 -
+                                                          alphaBasis) * s);
+    const int distBasis = static_cast<int>(vDist);
+    const int dist = distBasis +
+                     static_cast<int>(static_cast<float>(params.distance2 -
+                                                         distBasis) * s);
 
     // Copy offsets, evenly spaced around the accumulating rotation `a`.
-    float a = rt.interfRotation / 255.0f * 2.0f * kPi;
+    //
+    // Die Versaetze sind GANZE PIXEL: `xpoints[i] = (int)(cos(a)*_distance)`
+    // (r_interf.cpp:205-206). Bis S57 gaben wir den Bruchteil an den Shader
+    // weiter, und der interpoliert dazwischen — aus scharfen Kopien wurde eine
+    // Weichzeichnung. Das war der Matrix-Rest `41_interferences`.
+    float a = static_cast<float>(rt.interfRotation) / 255.0f * 2.0f * kPi;
     const float angle = 2.0f * kPi / static_cast<float>(points);
     QVector2D offsets[8];
     for (int i = 0; i < points; ++i)
     {
-        offsets[i] = QVector2D(std::cos(a) * dist / static_cast<float>(m_surfaceWidth),
-                               std::sin(a) * dist / static_cast<float>(m_surfaceHeight));
+        const int px = static_cast<int>(std::cos(a) * static_cast<float>(dist));
+        const int py = static_cast<int>(std::sin(a) * static_cast<float>(dist));
+        offsets[i] = QVector2D(static_cast<float>(px) /
+                                   static_cast<float>(m_surfaceWidth),
+                               static_cast<float>(py) /
+                                   static_cast<float>(m_surfaceHeight));
         a += angle;
     }
 
     m_interfShader->bind();
     m_interfShader->setUniformValue("uPoints", points);
     m_interfShader->setUniformValueArray("uOffsets", offsets, 8);
-    m_interfShader->setUniformValue("uAlpha", std::clamp(alpha, 0.0f, 255.0f) / 255.0f);
+    m_interfShader->setUniformValue(
+        "uAlpha255", static_cast<float>(std::clamp(alpha, 0, 255)));
     m_interfShader->setUniformValue("uRgb", params.rgb ? 1 : 0);
     m_interfShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
     m_interfShader->release();
     transformPass(*m_interfShader);
 
-    // Advance rotation + morph phase for the next frame.
+    // Advance rotation + morph phase for the next frame. `rotation` ist in der
+    // Referenz ein INT und wird ganzzahlig akkumuliert (r_interf.cpp:384-386) —
+    // eine float-Summe laeuft anders auf und dreht die Kopien mit der Zeit an
+    // eine andere Stelle.
     rt.interfRotation += rotInc;
-    if (rt.interfRotation > 255.0f) rt.interfRotation -= 255.0f;
-    if (rt.interfRotation < -255.0f) rt.interfRotation += 255.0f;
+    if (rt.interfRotation > 255) rt.interfRotation -= 255;
+    if (rt.interfRotation < -255) rt.interfRotation += 255;
     rt.interfStatus = std::min(rt.interfStatus + static_cast<float>(vSpeed), kPi);
+    if (rt.interfStatus < -kPi) rt.interfStatus = kPi;  // r_interf.cpp:391
 }
 
 void MultiEffectVisualizer::runWater(const ChainNode& node, const WaterParams&)
@@ -5952,16 +6053,32 @@ void buildColorMapLut(const ColorMapParams& params, std::array<unsigned char, 76
         const int p1 = stops[s + 1].first;
         const uint32_t c0 = stops[s].second;
         const uint32_t c1 = stops[s + 1].second;
-        // Gemessene APE-Kennlinie (S49, colormap_probe): zwischen zwei
-        // Stuetzstellen GANZZAHLIG linear mit Abschneiden —
-        // c0 + (c1-c0)*(i-p0)/(p1-p0). Fuer Spannweiten, die eine Zweierpotenz
-        // sind, deckt sich das exakt mit dem Original (44/44 je Sonde); bei
-        // anderen liegt die APE stellenweise 1 tiefer (Rest-Befund, s. Doku).
+        // Gemessene APE-Kennlinie (colormap_probe, S57): DREI ganzzahlige
+        // Schritte, jeder schneidet ab. Die APE rechnet die Schrittweite je
+        // Segment einmal als 16.16-Festkommazahl aus und akkumuliert damit:
+        //
+        //   step = 65536 / span          <- der eigentliche Verlust
+        //   t    = (d * step) >> 8       <- Mischfaktor in 1/256
+        //   out  = (a*(256-t) + b*t) >> 8
+        //
+        // Das erklaert, warum Zweierpotenzen exakt sind und 200 nicht:
+        // 65536/16 = 4096 geht auf, 65536/200 = 327,68 -> 327 verliert.
+        // Gemessen ueber die vollen Segmente von sechs Spannweiten:
+        // **920 von 922 Punkten**, und die zwei Ausreisser sind die
+        // Segment-Endpunkte, an denen der Zweig oben die Stuetzstelle ohnehin
+        // direkt setzt.
+        //
+        // Bis S57 stand hier `a + (b-a)*d/span`. Das trifft nur bei
+        // Zweierpotenzen (864/922) — auf dem Graukeil war JEDER Punkt 1 zu
+        // hoch (die Referenz gibt `i-1`), und genau das war der „±1"-Befund
+        // seit S49.
         const int span = p1 - p0;
+        const int step = 65536 / span;
+        const int t = std::min(((i - p0) * step) >> 8, 256);
         auto lerp8 = [&](int shift) {
             const int a = static_cast<int>(rgb(c0, shift));
             const int b = static_cast<int>(rgb(c1, shift));
-            return static_cast<float>(a + (b - a) * (i - p0) / span);
+            return static_cast<float>((a * (256 - t) + b * t) >> 8);
         };
         put(i, lerp8(16), lerp8(8), lerp8(0));
     }
@@ -10110,6 +10227,9 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
     m_fractal2DShader->setUniformValue("uColorPhase", rt.fracColorPhase);
     m_fractal2DShader->setUniformValue("uInside", colorToVec(params.insideColor));
     m_fractal2DShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    // Bei diesem Knoten ist `blend = 2` die BENANNTE Betriebsart „50/50" — das
+    // Gewicht ist hier also fest, anders als beim Fractal Zoomer.
+    m_fractal2DShader->setUniformValue("uFeedback", 0.5f);
     m_fractal2DShader->setUniformValue("uLut", 1);
     m_fractal2DShader->release();
     f->glActiveTexture(GL_TEXTURE1);
@@ -10670,7 +10790,14 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
     m_fractal2DShader->setUniformValue("uColorScale", params.colorScale);
     m_fractal2DShader->setUniformValue("uColorPhase", rt.fracColorPhase);
     m_fractal2DShader->setUniformValue("uInside", colorToVec(params.insideColor));
-    m_fractal2DShader->setUniformValue("uBlend", params.feedback > 0.01f ? 2 : 0);
+    // `feedback` ist eine STAERKE, kein Schalter: sie gewichtet, wie viel vom
+    // vorigen Bild stehen bleibt (0 = keine Schleife, 1 = Standbild). Bis S57
+    // wurde hier nur auf die 50/50-Betriebsart geschaltet, weshalb 0,3 und 1,0
+    // dasselbe Bild ergaben. Die Vorgabe 0,5 IST das alte 50/50 — bestehende
+    // Presets mit dem Vorgabewert sehen unverändert aus.
+    const float trail = std::clamp(params.feedback, 0.0f, 1.0f);
+    m_fractal2DShader->setUniformValue("uBlend", trail > 0.0f ? 2 : 0);
+    m_fractal2DShader->setUniformValue("uFeedback", trail);
     m_fractal2DShader->setUniformValue("uLut", 1);
     m_fractal2DShader->release();
     f->glActiveTexture(GL_TEXTURE1);

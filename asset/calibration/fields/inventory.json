@@ -1,7 +1,7 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 717,
+        "felder": 719,
         "typen": 85
     },
     "typen": [
@@ -792,6 +792,16 @@
                     "art": "zahl",
                     "default": 1,
                     "name": "onBeatFrames"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "onBeatRandom"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "slowFade"
                 }
             ],
             "name": "Colorfade",

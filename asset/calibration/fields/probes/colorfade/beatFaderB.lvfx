@@ -95,7 +95,7 @@
         "type": "colorfade",
         "enabled": true,
         "name": "Colorfade",
-        "onBeatFrames": 60,
+        "slowFade": true,
         "beatFaderB": -32
       }
     ],

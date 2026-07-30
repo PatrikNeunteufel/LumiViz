@@ -2934,6 +2934,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addInt("beatFaderG", tr("Beat Fader G"), p->beatFaderG, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).beatFaderG = v; });
         addInt("beatFaderB", tr("Beat Fader B"), p->beatFaderB, -32, 32, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).beatFaderB = v; });
         addInt("onBeatFrames", tr("Beat frames"), p->onBeatFrames, 1, 200, [](ChainNode& n, int v) { std::get<ColorfadeParams>(n.params).onBeatFrames = v; });
+        addBool("slowFade", tr("Slow fade"), p->slowFade, [](ChainNode& n, bool v) { std::get<ColorfadeParams>(n.params).slowFade = v; });
+        addBool("onBeatRandom", tr("Random on beat"), p->onBeatRandom, [](ChainNode& n, bool v) { std::get<ColorfadeParams>(n.params).onBeatRandom = v; });
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ColorfadeParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ColorfadeParams>(n.params).frameCode = std::move(v); });
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ColorfadeParams>(n.params).beatCode = std::move(v); });

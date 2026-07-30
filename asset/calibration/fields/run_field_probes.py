@@ -101,7 +101,13 @@ FRAMES_JE_FELD: dict[str, int] = {
     "colorfade.faderR": 60,
     "colorfade.faderG": 60,
     "colorfade.faderB": 60,
-    "colorfade.onBeatFrames": 33,
+    # Colorfade-Beat-Fenster (LumiViz-Erweiterung): der Schlussframe muss NACH
+    # dem Beat liegen, sonst setzen beide Presets die Beat-Fader ohnehin — und
+    # zwar WEIT dahinter, denn das Nachziehen laeuft nur EINEN Schritt je Frame.
+    # 55 endet 24 Frames nach dem Beat bei 30: die Vorgabe 1 hat den Fader dann
+    # 24 Schritte zurueckgezogen, der Gegenwert 30 haelt ihn noch. Mit 33 Frames
+    # (drei Schritte) lag die Sonde bei 0,0002 und damit unter SCHWACH.
+    "colorfade.onBeatFrames": 55,
     "avi.persist": 41,
     # Der Schlussframe ist per Konstruktion ein BEAT — fuer ein Feld, das nur
     # AUSSERHALB des Beats etwas tut, ist er blind. 196 Frames enden 15 Frames

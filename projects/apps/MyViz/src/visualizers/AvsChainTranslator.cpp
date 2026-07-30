@@ -592,7 +592,14 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
             p.beatFaderR = src.field("beatfader_r");
             p.beatFaderG = src.field("beatfader_g");
             p.beatFaderB = src.field("beatfader_b");
-            out.enabled = src.field("enabled") != 0;
+            // `enabled` ist ein BITFELD (r_colorfade): 1 = an, 2 = die Fader im
+            // Beat zufaellig waehlen, 4 = langsam nachziehen. Bis S57 wurde
+            // alles ausser Bit 0 verworfen — zwei Betriebsarten fielen beim
+            // Import lautlos weg.
+            const int bits = src.field("enabled");
+            out.enabled = (bits & 1) != 0;
+            p.onBeatRandom = (bits & 2) != 0;
+            p.slowFade = (bits & 4) != 0;
             out.params = p;
             return true;
         }

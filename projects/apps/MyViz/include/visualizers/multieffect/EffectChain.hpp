@@ -527,7 +527,24 @@ struct ColorfadeParams
     int beatFaderR = 8;   ///< Rot-Schritt im Beat-Fenster (ersetzt `faderR`)
     int beatFaderG = -8;  ///< Gruen-Schritt im Beat-Fenster (ersetzt `faderG`)
     int beatFaderB = 8;   ///< Blau-Schritt im Beat-Fenster (ersetzt `faderB`)
-    int onBeatFrames = 1;  ///< frames the beat faders stay active (>= 1)
+    /// LumiViz-ERWEITERUNG (Vorschlag Patrik): wie viele Frames der Beat-Zustand
+    /// gehalten wird, bevor `slowFade` ihn zurueckzieht. Das Original kennt kein
+    /// Fenster — es setzt die Fader im Beat-Frame und zieht ab dem naechsten
+    /// zurueck. **Die Vorgabe 1 ist deshalb genau dieses Verhalten**, ein
+    /// importiertes AVS-Preset aendert sich also nicht; groessere Werte sind die
+    /// neue Moeglichkeit. Ohne `slowFade` wirkt das Feld nicht — dann gibt es
+    /// keinen Beat-Zustand, den man halten koennte.
+    int onBeatFrames = 1;
+    /// `enabled`-Bit 1 von `r_colorfade`: im Beat-Frame werden die Fader
+    /// ZUFAELLIG gewaehlt statt aus `beatFader*` genommen — Rot und Blau aus
+    /// `rand()%32 - 6`, Gruen aus `rand()%64 - 32`, wobei Werte mit Betrag
+    /// unter 16 auf +-32 aufgerissen werden (r_colorfade.cpp:157-161).
+    bool onBeatRandom = false;
+    /// `enabled`-Bit 2 von `r_colorfade`: die Fader wandern um EINEN Schritt je
+    /// Frame auf ihren Zielwert zu, statt sofort dort zu stehen. Nur mit diesem
+    /// Bit wirken die Beat-Fader ueberhaupt — im Original ist der Beat-Zweig
+    /// sonst gar nicht erreichbar (`if (!(enabled&4)) … else if (isBeat) …`).
+    bool slowFade = false;
 
     /// Parameter-Skript (Strang D): `faderr`, `faderg`, `faderb`, `beatfaderr`,
     /// `beatfaderg`, `beatfaderb`, `onbeatframes` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
@@ -2013,7 +2030,11 @@ struct FractalZoomerParams
     int maxIter = 200;
     float zoomSpeed = 1.02f;      ///< per-frame zoom factor (>1 zooms in)
     float rotationSpeed = 0.0f;   ///< radians per frame
-    float feedback = 0.5f;        ///< trail persistence 0..1 (0 = no trails)
+    /// Anteil des vorigen Bildes, der stehen bleibt: 0 = keine Schleife,
+    /// 0,5 = 50/50, 1 = Standbild. Seit S57 eine echte STAERKE — vorher las der
+    /// Shader das Feld nur als Schalter (`> 0,01 ? 50/50 : ersetzen`), und 0,3
+    /// wie 1,0 ergaben dasselbe Bild.
+    float feedback = 0.5f;
 
     /// Faerbung: Farbtafel-Index = `fract(iterationen * colorScale + Phase)`.
     /// Groesser heisst engere Farbringe.
