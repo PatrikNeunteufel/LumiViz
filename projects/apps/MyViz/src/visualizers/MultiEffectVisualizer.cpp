@@ -1540,6 +1540,14 @@ vec2 sampleUV(vec2 uv) { return uEdge == 1 ? fract(uv) : clamp(uv, 0.0, 1.0); }
 void main()
 {
     vec2 texel = 1.0 / uRes;
+    // Die APE berechnet die LETZTE Zeile und die LETZTE Spalte nicht — ein
+    // Off-by-one ihrer Schleife. Der Zielpuffer behaelt dort seinen alten
+    // Inhalt, und weil er im Wechsel wiederverwendet wird, laeuft der Wert
+    // ueber die Frames auf: bei der Sonde `convolution_kante` (Kern nur Mitte,
+    // Gewicht 8) steht in der Referenz 255, waehrend wir jeden Frame frisch
+    // 8 * 16 = 128 hineinschrieben. Gemessen betrifft es exakt Zeile h-1 und
+    // Spalte w-1 (320 + 240 = 560 Pixel bei 320x240, S57).
+    if (gl_FragCoord.x >= uRes.x - 1.0 || gl_FragCoord.y < 1.0) discard;
     vec3 sum = vec3(0.0);
     for (int j = 0; j < 7; j++)
         for (int i = 0; i < 7; i++)
