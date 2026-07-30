@@ -402,6 +402,18 @@ def texer2(point: str, init: str = "", frame: str = "", beat: str = "",
     return ape("Acko.net: Texer II", blob)
 
 
+def picture2(image: str, blend_mode: int = 0, bilinear: int = 1,
+             adjust: int = 128) -> bytes:
+    """"Picture II" — FESTES 260-Byte-Namensfeld (MAX_PATH), dann sechs int32:
+    blendMode, onBeatOutput, bilinear, onBeatBilinear, adjustBlend,
+    onBeatAdjustBlend (Blob = 284 = 260 + 6*4). Die Betriebsarten sind an der
+    Referenz gemessen (S58): 0 ersetzen · 1 additiv · 2 Maximum · 3 Minimum ·
+    4 50/50 · 5 Subtraktion (Framebuffer minus Bild)."""
+    name = image.encode("latin-1")[:259].ljust(260, b"\x00")
+    return ape("Picture II", name + i32(blend_mode) + i32(0) + i32(bilinear)
+               + i32(0) + i32(adjust) + i32(adjust))
+
+
 def triangle(point: str, init: str = "", frame: str = "", beat: str = "") -> bytes:
     """"Render: Triangle" — NtCodeIFBP: vier NUL-terminierte Skripte in der
     Reihenfolge init, frame, beat, point (decodeTriangle)."""

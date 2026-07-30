@@ -81,6 +81,17 @@ def main() -> None:
         superscope(point="x=cos(i*6.28)*0.7; y=sin(i*6.28)*0.7; red=1;green=1;blue=1;",
                    init="n=32", which_ch=2, colors=(0xFFFFFF,), drawmode=0)))
 
+    # `skip` je Punkt umgeschaltet (S58). In AVS unterdrueckt es NUR das
+    # Zeichnen — `lx/ly` werden trotzdem gesetzt, der Punkt bleibt Ankerpunkt
+    # (r_sscope:295-334). Erwartung: jedes zweite Segment steht als eigener
+    # Strich. Wir verwarfen den Punkt ganz und zeichneten dadurch GAR NICHTS.
+    write("1_render/scope_skip_wechsel.avs", preset(
+        GRUND, set_render_mode(0, width=1),
+        superscope(point="ip=bnot(ip);x=i*2-1;y=if(ip,-.5,.5);skip=ip;"
+                         "red=1;green=1;blue=1;",
+                   frame="ip=0;", init="n=16", which_ch=2, colors=(0xFFFFFF,),
+                   drawmode=1)))
+
 
     # -------------------------------------- 2: Transformatoren auf Referenzbild
     write("2_trans/refbild.avs", preset(REFBILD))            # Nullprobe
