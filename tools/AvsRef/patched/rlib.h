@@ -62,6 +62,8 @@ class C_RLibrary {
     void initdll(void);
     void initbuiltinape(void);
     void _add_dll(HINSTANCE,class C_RBASE *(__cdecl *)(char *),char *, int);
+    // AvsRef-Patch (S58): steht dieser APE-Name schon bereit? s. rlib.cpp
+    int _dll_name_taken(char *inf);
   public:
     C_RLibrary();
     ~C_RLibrary();

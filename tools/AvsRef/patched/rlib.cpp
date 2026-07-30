@@ -241,6 +241,26 @@ static APEinfo ext_info=
   getGlobalBuffer,
 };
 
+// AvsRef-Patch (S58): steht schon ein Renderer unter diesem Namen bereit?
+// Der Nachschlag in GetRenderer() nimmt den ERSTEN Treffer in DLLFuncs — wer
+// zuerst eingetragen ist, gewinnt. Der Konstruktor traegt darum jetzt erst die
+// eingebauten APE-Namen ein (initbuiltinape) und dann die .ape-Dateien; eine
+// DLL, die einen dieser Namen doppelt, wird hier uebersprungen.
+//
+// Grund: `channelshift.ape` ruft in seinem load_config `srand(time(0))` — im
+// EIGENEN CRT der DLL, das `srand()` von avsref_main erreicht es nicht. Die
+// Referenz waehlte damit je Wanduhr-SEKUNDE eine andere Kanal-Permutation
+// (acht Laeufe, sechs verschiedene Ergebnisse). Der eingebaute r_chanshift ist
+// derselbe Effekt, teilt sich aber unser CRT und ist damit reproduzierbar.
+int C_RLibrary::_dll_name_taken(char *inf)
+{
+  if (!inf) return 0;
+  for (int x = 0; x < NumDLLFuncs; x ++)
+    if (DLLFuncs[x].idstring && !strncmp(inf,DLLFuncs[x].idstring,32))
+      return 1;
+  return 0;
+}
+
 void C_RLibrary::initdll()
 {
   ext_info.global_registers=NSEEL_getglobalregs();
@@ -284,14 +304,16 @@ void C_RLibrary::initdll()
         retr = (int (*)(HINSTANCE, char ** ,int *)) GetProcAddress(hlib,"_AVS_APE_RetrFuncEXT2");
         if (retr && retr(hlib,&inf,&cre))
         {
-          _add_dll(hlib,(class C_RBASE *(__cdecl *)(char *))cre,inf,1);
+          if (_dll_name_taken(inf)) FreeLibrary(hlib);
+          else _add_dll(hlib,(class C_RBASE *(__cdecl *)(char *))cre,inf,1);
         }
         else
         {
           retr = (int (*)(HINSTANCE, char ** ,int *)) GetProcAddress(hlib,"_AVS_APE_RetrFunc");
           if (retr && retr(hlib,&inf,&cre))
           {
-            _add_dll(hlib,(class C_RBASE *(__cdecl *)(char *))cre,inf,0);
+            if (_dll_name_taken(inf)) FreeLibrary(hlib);
+            else _add_dll(hlib,(class C_RBASE *(__cdecl *)(char *))cre,inf,0);
           }
           else FreeLibrary(hlib);
         }
@@ -377,8 +399,10 @@ C_RLibrary::C_RLibrary()
   NumRetrFuncs=0;
 
   initfx();
-  initdll();
+  // AvsRef-Patch (S58): eingebaute APE-Namen VOR den .ape-Dateien eintragen —
+  // der Nachschlag nimmt den ersten Treffer. s. _dll_name_taken().
   initbuiltinape();
+  initdll();
 
 }
 
