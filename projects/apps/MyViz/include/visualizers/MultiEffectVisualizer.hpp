@@ -357,6 +357,11 @@ private:
         bool interfSeeded = false;
         float interfRotation = 0.0f;  ///< persistent rotation accumulator (0..255 units)
         float interfStatus = 0.0f;    ///< beat-morph phase (0..pi)
+        /// Der Preset-Wert, mit dem der Zaehler oben gesetzt wurde. `rotation`
+        /// ist ein STARTWERT: nach dem Seeden laeuft `interfRotation`
+        /// selbstaendig weiter, und ein Panel-Edit ruft nur `recompileChain()`
+        /// — ohne diesen Vergleich kam ein neuer Wert nie an (Strang F, S57).
+        int interfRotationSeed = -1;
 
         // Water: previous frame buffer (r_water lastframe); render-thread owned
         std::unique_ptr<QOpenGLFramebufferObject> waterLast;

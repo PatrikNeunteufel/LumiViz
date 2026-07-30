@@ -46,6 +46,14 @@ selben Modus.
 abgeschnitten, egal wie der Schalter stand. Jetzt setzen sie sich auf der
 Gegenseite fort.
 
+**Interferences: der Startwinkel ließ sich nur beim Laden setzen.** Der Effekt
+dreht seine Kopien fortlaufend weiter; der eingestellte Startwinkel wurde einmal
+beim Aufbau übernommen und danach nie wieder. Am Regler drehen brachte deshalb
+nichts — erst Speichern und neu Laden. Jetzt wirkt er sofort. (Gefunden von der
+zweiten Prüffamilie, die genau diese Frage stellt: wirkt ein Feld auch beim
+Editieren, nicht nur beim Laden? Sie hat alle 702 Felder geprüft und genau diesen
+einen Fall gefunden.)
+
 ## Was das Prüfwerkzeug gelernt hat
 
 Neun der fünfzehn Felder lagen nicht am Programm, sondern daran, wie gemessen
@@ -86,6 +94,8 @@ dasselbe Bild.
 - **Feld-Prüfung: kein stummes Feld mehr** (zuletzt 16, davor 115) — mit einem
   Gesamtdurchlauf über alle 702 Prüfbilder belegt. Gegen den Stand der Vorsession
   ist **kein einziges Feld schlechter** geworden und 109 sind besser
+- **Editier-Prüfung: kein wirkungsloses Feld mehr** — ebenfalls ein
+  Gesamtdurchlauf; der eine Befund daraus ist behoben (Interferences, s. o.)
 - **Kalibrierung unverändert**: Modul-Matrix 36/41, Modul-Sonden 78/80 — nach
   sechs Eingriffen in die Effekte also **keine Verschlechterung**; dazu zwei
   neue Blur-Prüfbilder, beide grün

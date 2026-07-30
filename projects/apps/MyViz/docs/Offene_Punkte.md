@@ -448,6 +448,39 @@ Einfügen hat ihn seit S55, Verschieben seit S56.
 
 ⬜ **Beides ist nicht erprobt** — das geht nur durch Anklicken bzw. Ziehen.
 
+## 1f. Strang F abgearbeitet: wirkt jedes Feld auch beim EDITIEREN? (S57)
+
+Der Rückstand aus S56 ist gemessen — ein Vollauf über alle 702 Sonden, nachdem
+S57 sechs Renderer und mehrere Sonden-Aufbauten verändert hatte.
+
+**558 GLEICH · 133 TEILWEISE · 11 VERDECKT · 0 WIRKUNGSLOS.**
+
+Der Lauf fand **einen** Befund, und der ist behoben:
+`interferences.rotation` ist ein **Startwert** für einen selbstlaufenden Zähler
+(`rt.interfRotation += rotInc` je Frame). Übernommen wurde er nur unter
+`!interfSeeded` — also **einmal beim Aufbau**. Da ein Panel-Edit nur
+`recompileChain()` ruft und nicht `resetRuntimes()`, blieb der Zähler für immer
+auf dem Wert des ersten Aufbaus: ein neu eingestellter Startwinkel kam nie an.
+
+```cpp
+if (!rt.interfSeeded || rt.interfRotationSeed != params.rotation)   // vorher: nur !interfSeeded
+```
+
+Verglichen wird der **Preset-Wert**, nicht die Frame-Kopie — sonst würde ein
+Skript, das `rotation` je Frame schreibt, den Zähler in jedem Frame zurücksetzen.
+Danach `GLEICH 0,0000`, und die Feld-Sonde liegt unverändert bei 0,0548 (keine
+Regression beim Laden).
+
+Das ist eine eigene Fehlerklasse, die vorher keinen Namen hatte: **ein Startwert
+ist kein Parameter.** Wo ein Feld nur einen fortlaufenden Zustand initialisiert,
+macht ein `…Seeded`-Flag den Wert nach dem ersten Aufbau unerreichbar. Strang F
+hat alle 702 Felder daraufhin geprüft und genau diesen einen Fall gefunden.
+
+Die Verschiebung gegenüber S56 (587/112/8 → 558/133/11) kommt von den Sonden, die
+S57 verändert hat: mehr Bewegung im Bild heißt mehr Vorgeschichte, also wandern
+Felder von GLEICH nach TEILWEISE. `TEILWEISE` ist bei Effekten mit Verlauf der
+Normalfall und kein Befund.
+
 ## 2. Urteile, die nur Seite-an-Seite fallen können
 
 Prüfplan, Presets, Audio und Kriterien stehen in
@@ -790,7 +823,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 1.10.0 | 2026-07-30 | Session 57 — **die stummen Feld-Sonden sind bei 0** (§1c). Von den letzten 15 waren **sechs ein Befund an der App**, alle behoben: `blur.roundUp` (AVS rechnet den Blur in 8-Bit und schneidet jeden Teilterm ab, „round mode" legt +4/+5/+3 je Stärke obendrauf — wir rechneten float ohne Verlust und lasen das Feld nirgends; Vorgabe stand zudem falsch auf `true`), `grain.staticGrain` (wir zeichneten immer statisch, die Vorgabe versprach das Gegenteil), `oscRing.channel`/`oscStar.channel` (riefen `getWaveform()` ohne Kanal — die S56-Vermutung „Signal ist nicht stereo" war falsch), `texer.blend` (1 und 2 waren derselbe GL-Zustand, 50/50 fehlte), `texerII.wrapAround` (nirgends gelesen). Acht lagen am Messaufbau — darunter `camera3d.tz` mit einem **Doppeleintrag im selben Dict** (die S56-Merkregel, nochmal) und `setRenderMode.adjustAlpha`, wo „Adjustable" 7 heißt und geraten 10 dastand. Eine als **nicht prüfbar** festgeschrieben (`rotatingStars.bandHi`, mit sechs Fenstern belegt). Zwei neue Werkzeug-Tabellen (`VORLAUF_JE_FELD`, `UNTERGRUND_JE_FELD`), Tafel-Regel füllt jetzt alle Stützstellen, `convolution.kernel` misst statt zu übersteuern. **Matrix 36/41 unverändert** (keine Regression) **+ zwei neue Blur-Trail-Zeilen, beide grün** — die Matrix hatte vorher keinen Blur mit Rückkopplung, deshalb überlebte der Befund zwei Kalibrier-Runden. Tests 485/485, beide Builds grün |
+| 1.10.0 | 2026-07-30 | Session 57 — **die stummen Feld-Sonden sind bei 0** (§1c). Von den letzten 15 waren **sechs ein Befund an der App**, alle behoben: `blur.roundUp` (AVS rechnet den Blur in 8-Bit und schneidet jeden Teilterm ab, „round mode" legt +4/+5/+3 je Stärke obendrauf — wir rechneten float ohne Verlust und lasen das Feld nirgends; Vorgabe stand zudem falsch auf `true`), `grain.staticGrain` (wir zeichneten immer statisch, die Vorgabe versprach das Gegenteil), `oscRing.channel`/`oscStar.channel` (riefen `getWaveform()` ohne Kanal — die S56-Vermutung „Signal ist nicht stereo" war falsch), `texer.blend` (1 und 2 waren derselbe GL-Zustand, 50/50 fehlte), `texerII.wrapAround` (nirgends gelesen). Acht lagen am Messaufbau — darunter `camera3d.tz` mit einem **Doppeleintrag im selben Dict** (die S56-Merkregel, nochmal) und `setRenderMode.adjustAlpha`, wo „Adjustable" 7 heißt und geraten 10 dastand. Eine als **nicht prüfbar** festgeschrieben (`rotatingStars.bandHi`, mit sechs Fenstern belegt). Zwei neue Werkzeug-Tabellen (`VORLAUF_JE_FELD`, `UNTERGRUND_JE_FELD`), Tafel-Regel füllt jetzt alle Stützstellen, `convolution.kernel` misst statt zu übersteuern. **Matrix 36/41 unverändert** (keine Regression) **+ zwei neue Blur-Trail-Zeilen, beide grün** — die Matrix hatte vorher keinen Blur mit Rückkopplung, deshalb überlebte der Befund zwei Kalibrier-Runden. Tests 485/485, beide Builds grün. **Strang F nachgemessen** (§1f, Freigabe Patrik): Vollauf **558 GLEICH / 133 TEILWEISE / 11 VERDECKT / 0 WIRKUNGSLOS**, ein Befund gefunden und behoben — `interferences.rotation` ist ein **Startwert** für einen selbstlaufenden Zähler und wurde nur unter `!interfSeeded` übernommen, kam beim Editieren also nie an. Neue Fehlerklasse: **ein Startwert ist kein Parameter.** Die sechs Renderer-Fixes sind von Patrik im Betrieb abgenommen |
 | 1.9.1 | 2026-07-30 | Session 56, Abschluss — **§1e neu**: der Eigenschaften-Editor muss nach JEDEM Baumumbau dastehen. Nach dem **Verschieben** blieb er leer, aus derselben Ursache wie beim Einfügen in S55: `selectPaths` setzt die Auswahl unter `m_selecting`, das Auswahl-Signal ist dabei stillgelegt, und das folgende `setCurrentItem` löst keines mehr aus — also baute niemand den Editor. Befund Patrik, behoben (Doppelschritt markieren + `buildPropertyEditor`, wie beim Einfügen). Dazu die stummen Feld-Sonden von 115 auf **15**: Buffer Blend (Gegenwert 24 wählte wie die Vorgabe den aktuellen Frame, und Modus 0 liest gar kein A), Interferences (Schlussframe mitten in den Beat-Übergang gelegt), Effect List (Init-Slot über eine geteilte Variable; das Beat-Fenster greift laut `r_list` nur bei einer AUSgeschalteten Liste) |
 | 1.9.0 | 2026-07-29 | Session 56 (Fortsetzung) — **stumme Feld-Sonden 115 → 27** (§1c): ein App-Befund — die drei Alt-Format-Weichen im Deserialisierer griffen bei JEDEM Preset, das das neue Feld nicht nennt, und Roto Blitter zoomte dadurch auf 0 statt auf den neutralen 31 (Bild einfarbig, alle fünf Felder stumm). Dazu Kleinians ganzzahliges `colorScale`, Texer II ohne `n`, Custom BPMs Zähler-Phase. **Zweite Quelle der Vorgaben abgeschafft** (§1d, Entscheid Patrik): 415 Literale und 243 `getStr` beziehen ihre Vorgabe jetzt aus dem Struct, eine benannte Ausnahme bleibt. Vier neue Wächter (Zusatzfelder einer Grundkonfiguration, verwaiste Sonden, Panel-Schlüssel, Roundtrip). §10 Tooltips 717/717. Tests 485, beide Builds grün |
 | 1.8.0 | 2026-07-29 | Session 56 — **§1b berichtigt:** der S55-Quercheck unterschied nicht, was er unterscheiden sollte; von den 15 `WIRKUNGSLOS` waren **7 echte Befunde** (alle gefixt) und **8 Messartefakte**. Neues Urteil `VERDECKT` samt Gegenrichtung in der Edit-Sonde. **§8:** Timescope maß 1/320 seiner Wirkung (Untergrund übermalte die Ein-Pixel-Spalten) — behoben, 8/8 WIRKT. **§10 Tooltips erledigt:** 717/717 Felder erklärt, 826 Panel-Zeilen tragen ihren Feldnamen, zwei Wächter |

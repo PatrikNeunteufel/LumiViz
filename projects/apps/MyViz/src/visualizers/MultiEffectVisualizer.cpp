@@ -5622,10 +5622,19 @@ void MultiEffectVisualizer::runInterferences(const ChainNode& node,
                     {"speed", &vSpeed}});
 
     const int points = std::clamp(static_cast<int>(vPoints), 1, 8);
-    if (!rt.interfSeeded)
+    // `rotation` ist ein STARTWERT: danach laeuft `interfRotation` selbstaendig
+    // weiter (unten `+= rotInc`). Ein Panel-Edit ruft nur `recompileChain()`,
+    // nicht `resetRuntimes()` — mit `interfSeeded` allein blieb der Zaehler
+    // deshalb ewig auf dem Wert des ERSTEN Aufbaus, und ein neu eingestellter
+    // Startwinkel kam nie an (Strang F, S57: das einzige WIRKUNGSLOS des
+    // Vollaufs). Der Vergleich laeuft gegen den PRESET-Wert, nicht gegen die
+    // Frame-Kopie: sonst setzt ein Skript, das `rotation` je Frame schreibt,
+    // den Zaehler in jedem Frame zurueck.
+    if (!rt.interfSeeded || rt.interfRotationSeed != params.rotation)
     {
         rt.interfRotation = static_cast<float>(vRotation);
         rt.interfStatus = kPi;
+        rt.interfRotationSeed = params.rotation;
         rt.interfSeeded = true;
     }
 
