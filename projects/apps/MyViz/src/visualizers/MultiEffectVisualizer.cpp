@@ -1889,6 +1889,21 @@ void main()
     float hc = texture(uH, vTex).r;
     float hr = texture(uH, vTex + vec2(uTexel.x, 0.0)).r;
     float hd = texture(uH, vTex + vec2(0.0, uTexel.y)).r;
+
+    // BEFUND S57, noch nicht umsetzbar: der Versatz ist in der Referenz eine
+    // GANZZAHLIGE Pixelverschiebung (`ofs = offset + buffer_w*(dy>>3) +
+    // (dx>>3)`, r_waterbump.cpp:330). Der Shift rundet gegen -unendlich, und
+    // bei Hoehendifferenzen unter 8 ist der Versatz NULL — daher die grob
+    // gestuften Flaechen des Originals, wo wir glatte Ringe zeichnen (die
+    // Montage zeigt genau diesen Unterschied).
+    //
+    // Ein blosses `floor()` hier macht es SCHLECHTER (0,137 -> 0,233,
+    // nachgemessen): unsere Hoehen stehen nicht in den Einheiten der Referenz,
+    // also quantisiert es an der falschen Stelle. Dafuer muesste der ganze
+    // Hoehenpuffer auf die Referenz-Skala umgestellt werden — Tropfen
+    // (`SineBlob` mit `>> 19`), Daempfung (`newh - (newh >> density)`, ein
+    // arithmetischer Shift mit eigener Asymmetrie bei negativen Werten) und
+    // Displacement zusammen. Siehe `Offene_Punkte.md §1`.
     vec2 off = vec2(hc - hr, hc - hd) * uScale / uRes;
     fragColor = vec4(texture(uImg, vTex + off).rgb, 1.0);
 }

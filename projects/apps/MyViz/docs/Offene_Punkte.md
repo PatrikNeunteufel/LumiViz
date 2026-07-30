@@ -89,14 +89,33 @@ unterste Zeile werden im Original gar nicht halbiert (:168-188) — nachgebildet
 wurde das Bild deutlich schlechter (0,131), AvsRef zeigt diesen Saum also nicht.
 Der Sonderfall ist bewusst weggelassen.
 
-**`water_bump` bleibt offen** (0,137). Struktur, Puffer-Wechsel und die
-Acht-Nachbarn-Welle stimmen bereits. Eine referenztreue Teilkorrektur ist drin:
-die Referenz **beschreibt die aeusserste Zeile und Spalte nie** (`CalcWater`
-laeuft von `buffer_w+1`, die Puffer sind nullinitialisiert), dort steht also eine
-feste Wand — ohne Messgewinn (0,136 → 0,137, im Rauschen). Nächster Verdacht ist
-der **Wertebereich**: die Referenz rechnet die Hoehen als 32-Bit-Ganzzahlen mit
-grossen Betraegen (`depth = 600`, `SineBlob` mit `>> 19`), unser Hoehenpuffer ist
-eine Textur — wenn sie nicht Float ist, wird der Bereich beschnitten.
+### `31_water_bump`: Ursache gefunden, Umsetzung offen (S57)
+
+Die Montage zeigt einen **strukturellen** Unterschied, keinen Rundungsrest: die
+Referenz ist grob **gestuft** (zerklüftete Farbflächen), unsere Welle glatt und
+regelmäßig. Der Grund steht in einer Zeile:
+
+```c
+ofs = offset + buffer_w*(dy>>3) + (dx>>3);   // r_waterbump.cpp:330
+```
+
+Der Versatz ist eine **ganzzahlige Pixelverschiebung**. Der Shift rundet gegen
+−unendlich, und bei einer Höhendifferenz unter 8 ist der Versatz schlicht
+**null** — daher die Stufen. Wir verschieben stufenlos und interpolieren linear,
+zeichnen also glatte Ringe.
+
+**Ein blosses `floor()` reicht nicht** — nachgemessen wird es damit schlechter
+(0,137 → **0,233**): unsere Höhen stehen nicht in den Einheiten der Referenz,
+also quantisiert es an der falschen Stelle. Der Höhenpuffer ist RGBA16F, der
+Wertebereich also nicht das Problem; die **Skala** ist es. Umzustellen wären
+zusammen: die Tropfen-Erzeugung (`SineBlob` mit `>> 19`), die Dämpfung
+(`newh - (newh >> density)` — ein arithmetischer Shift mit eigener Asymmetrie bei
+negativen Werten) und das Displacement.
+
+Eine referenztreue Teilkorrektur ist bereits drin (ohne Messgewinn, 0,136 →
+0,137): die Referenz **beschreibt die äusserste Zeile und Spalte nie**
+(`CalcWater` läuft von `buffer_w + 1`, die Puffer sind nullinitialisiert), dort
+steht also eine feste Wand, an der die Welle reflektiert.
 
 **Vor „Regression!" den Vorstand MESSEN** (stash + Rebuild), nie gegen notierte Zahlen
 einer anderen Messreihe — zwei von drei Auffälligkeiten in S51 waren auf HEAD identisch.

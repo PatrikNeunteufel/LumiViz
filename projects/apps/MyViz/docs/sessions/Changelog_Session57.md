@@ -99,8 +99,13 @@ Die mittlere Abweichung fiel von 0,029 auf **0,002**. Was übrig bleibt, ist kei
 Strukturfehler: beide Bilder sind deckungsgleich, der Rest ist feines Rauschen —
 ein Wellensystem verstärkt kleinste Rundungsunterschiede, genau wie beim Korn.
 
-**Water Bump bleibt offen.** Wellenkern und Pufferwechsel stimmen; eine
-Randkorrektur brachte nichts. Der nächste Verdacht ist notiert.
+**Water Bump: die Ursache ist gefunden, der Umbau steht aus.** Hier weichen die
+Bilder sichtbar ab — das Original zeichnet grob gestufte Flächen, wir glatte
+Ringe. Der Grund: das Original verschiebt die Bildpunkte nur um **ganze Pixel**,
+und bei kleinen Wellenhöhen gar nicht. Es einfach aufs Ganze zu runden macht es
+schlechter, weil unsere Wellenhöhen in einer anderen Größenordnung rechnen als
+das Original; dafür müssen Tropfen, Dämpfung und Verschiebung gemeinsam
+umgestellt werden. Notiert für die nächste Runde.
 
 ## Was das Prüfwerkzeug gelernt hat
 
