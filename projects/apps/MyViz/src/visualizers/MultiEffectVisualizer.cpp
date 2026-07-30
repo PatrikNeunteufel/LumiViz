@@ -6052,6 +6052,82 @@ void MultiEffectVisualizer::runDynamicShift(const ChainNode& node,
 namespace {
 /// AVS scope colour-table cycling (r_simple/oscstar/oscring/rotstar): advances
 /// colorPos and returns the interpolated 0x00RRGGBB colour.
+// ---------------------------------------------------------- matrix.cpp 1:1
+// Die 3D-Helfer des Originals (`matrixRotate`/`Translate`/`Multiply`/`Apply`).
+// Dot Plane und Dot Fountain bauen exakt dieselbe Matrix — deshalb stehen sie
+// hier einmal und nicht als Lambda-Paar in jedem Renderer.
+void avsMatRotate(float* m, int axis, float deg)
+{
+    const float rad = deg * 3.141592653589f / 180.0f;
+    std::memset(m, 0, sizeof(float) * 16);
+    m[((axis - 1) << 2) + axis - 1] = m[15] = 1.0f;
+    const int m1 = axis % 3;
+    const int m2 = (m1 + 1) % 3;
+    const float c = std::cos(rad);
+    const float s = std::sin(rad);
+    m[(m1 << 2) + m1] = c;
+    m[(m1 << 2) + m2] = s;
+    m[(m2 << 2) + m2] = c;
+    m[(m2 << 2) + m1] = -s;
+}
+
+void avsMatTranslate(float* m, float x, float y, float z)
+{
+    std::memset(m, 0, sizeof(float) * 16);
+    m[0] = m[4 + 1] = m[8 + 2] = m[12 + 3] = 1.0f;
+    m[3] = x;
+    m[4 + 3] = y;
+    m[8 + 3] = z;
+}
+
+void avsMatMultiply(float* dest, const float* src)
+{
+    float temp[16];
+    std::memcpy(temp, dest, sizeof(temp));
+    for (int i = 0; i < 16; i += 4)
+    {
+        for (int col = 0; col < 4; ++col)
+        {
+            dest[i + col] = src[i + 0] * temp[0 + col] + src[i + 1] * temp[4 + col] +
+                            src[i + 2] * temp[8 + col] + src[i + 3] * temp[12 + col];
+        }
+    }
+}
+
+void avsMatApply(const float* m, float x, float y, float z, float& ox, float& oy,
+                 float& oz)
+{
+    ox = x * m[0] + y * m[1] + z * m[2] + m[3];
+    oy = x * m[4] + y * m[5] + z * m[6] + m[7];
+    oz = x * m[8] + y * m[9] + z * m[10] + m[11];
+}
+
+/// Die 64-Eintrag-Farbtabelle aus fuenf Stuetzstellen — `initcolortab` steht in
+/// r_dotpln.cpp und r_dotfnt.cpp WORTGLEICH: vier Segmente zu je 16 Schritten,
+/// exakte 16.16-Ganzzahlarithmetik.
+void avsInitColorTab(const uint32_t (&colors)[5], uint32_t (&tab)[64])
+{
+    for (int t = 0; t < 4; ++t)
+    {
+        const int c0 = static_cast<int>(colors[t]);
+        const int c1 = static_cast<int>(colors[t + 1]);
+        int r = (c0 & 255) << 16;
+        int g = ((c0 >> 8) & 255) << 16;
+        int b = ((c0 >> 16) & 255) << 16;
+        const int dr = (((c1 & 255) - (c0 & 255)) << 16) / 16;
+        const int dg = ((((c1 >> 8) & 255) - ((c0 >> 8) & 255)) << 16) / 16;
+        const int db = ((((c1 >> 16) & 255) - ((c0 >> 16) & 255)) << 16) / 16;
+        for (int x = 0; x < 16; ++x)
+        {
+            tab[t * 16 + x] = static_cast<uint32_t>((r >> 16) | ((g >> 16) << 8) |
+                                                    ((b >> 16) << 16));
+            r += dr;
+            g += dg;
+            b += db;
+        }
+    }
+}
+
 uint32_t cycleScopeColor(const std::vector<uint32_t>& colors, int& colorPos)
 {
     if (colors.empty()) return 0xFFFFFFu;
@@ -9670,40 +9746,57 @@ void MultiEffectVisualizer::runDotGrid(const ChainNode& node, const DotGridParam
     const int nc = static_cast<int>(params.colors.size());
     if (nc == 0) return;
 
-    // Cycle the colour table over time (r_dotgrid color_pos).
+    // Farbzyklus zeilengenau nach r_dotgrid.cpp:71-86 — GANZZAHLIG und mit
+    // `(63-r)` gegen `r`, geteilt durch 64. Die beiden Gewichte summieren sich
+    // also zu 63/64, nicht zu 1: die Referenzfarbe ist durchgehend rund 1,6 %
+    // dunkler als eine saubere Interpolation. Genau das rechneten wir vorher.
     rt.dotColorPos += 1.0f;
     const float span = static_cast<float>(nc) * 64.0f;
     if (rt.dotColorPos >= span) rt.dotColorPos -= span;
     const int cp = static_cast<int>(rt.dotColorPos);
     const int p0 = cp / 64;
-    const float cf = static_cast<float>(cp % 64) / 64.0f;
-    auto rgb = [](uint32_t c) {
-        return QVector3D(static_cast<float>((c >> 16) & 0xFF) / 255.0f,
-                         static_cast<float>((c >> 8) & 0xFF) / 255.0f,
-                         static_cast<float>(c & 0xFF) / 255.0f);
+    const int cr = cp & 63;
+    const uint32_t c1 = params.colors[static_cast<size_t>(p0)];
+    const uint32_t c2 = params.colors[
+        static_cast<size_t>(p0 + 1 < nc ? p0 + 1 : 0)];
+    auto misch = [&](int shift) {
+        const int a = static_cast<int>((c1 >> shift) & 0xFF);
+        const int b = static_cast<int>((c2 >> shift) & 0xFF);
+        return static_cast<float>((a * (63 - cr) + b * cr) / 64) / 255.0f;
     };
-    const QVector3D col =
-        rgb(params.colors[static_cast<size_t>(p0)]) * (1.0f - cf) +
-        rgb(params.colors[static_cast<size_t>((p0 + 1) % nc)]) * cf;
+    const QVector3D col(misch(16), misch(8), misch(0));
 
-    rt.dotOffX += static_cast<float>(vXMove) / 256.0f;
-    rt.dotOffY += static_cast<float>(vYMove) / 256.0f;
-    const float ox = std::fmod(rt.dotOffX, static_cast<float>(spacing));
-    const float oy = std::fmod(rt.dotOffY, static_cast<float>(spacing));
+    // Position: `xp`/`yp` sind 8.8-FESTKOMMA-Ganzzahlen, und der Rasterversatz
+    // ist `(xp>>8) % spacing` — also ein GANZER Pixel (r_dotgrid.cpp:88-94).
+    // Wir fuehrten sie als float und setzten die Punkte auf Zwischenpositionen.
+    int xp = static_cast<int>(rt.dotOffX);
+    int yp = static_cast<int>(rt.dotOffY);
+    while (yp < 0) yp += spacing * 256;
+    while (xp < 0) xp += spacing * 256;
+    const int sx = (xp >> 8) % spacing;
+    const int sy = (yp >> 8) % spacing;
 
     std::vector<lumi::modules::SuperscopePoint> pts;
-    for (float py = oy; py < m_surfaceHeight; py += spacing)
+    for (int py = sy; py < m_surfaceHeight; py += spacing)
     {
-        for (float px = ox; px < m_surfaceWidth; px += spacing)
+        for (int px = sx; px < m_surfaceWidth; px += spacing)
         {
             lumi::modules::SuperscopePoint p;
-            p.x = px / static_cast<float>(m_surfaceWidth) * 2.0f - 1.0f;
-            p.y = py / static_cast<float>(m_surfaceHeight) * 2.0f - 1.0f;
+            // Pixel-MITTE, damit der Punkt genau dieses eine Pixel trifft.
+            p.x = (static_cast<float>(px) + 0.5f) /
+                      static_cast<float>(m_surfaceWidth) * 2.0f - 1.0f;
+            p.y = (static_cast<float>(py) + 0.5f) /
+                      static_cast<float>(m_surfaceHeight) * 2.0f - 1.0f;
             p.r = col.x(); p.g = col.y(); p.b = col.z(); p.a = 1.0f;
             pts.push_back(p);
         }
     }
-    drawDots(pts, 2.0f, params.blend);
+    // EIN Pixel je Gitterpunkt (`framebuffer[x] = current_color`), nicht zwei —
+    // mit Groesse 2 zeichneten wir die vierfache Flaeche.
+    drawDots(pts, 1.0f, params.blend);
+
+    rt.dotOffX = static_cast<float>(xp + static_cast<int>(vXMove));
+    rt.dotOffY = static_cast<float>(yp + static_cast<int>(vYMove));
 }
 
 void MultiEffectVisualizer::runDotPlane(const ChainNode& node, const DotPlaneParams& params)
@@ -9757,45 +9850,13 @@ void MultiEffectVisualizer::runDotPlane(const ChainNode& node, const DotPlanePar
         }
     }
 
-    // matrix.cpp-Helfer 1:1 (matrixRotate/Translate/Multiply/Apply).
-    const auto mRotate = [](float* m, int axis, float deg) {
-        const float rad = deg * 3.141592653589f / 180.0f;
-        std::memset(m, 0, sizeof(float) * 16);
-        m[((axis - 1) << 2) + axis - 1] = m[15] = 1.0f;
-        const int m1 = axis % 3;
-        const int m2 = (m1 + 1) % 3;
-        const float c = std::cos(rad);
-        const float s = std::sin(rad);
-        m[(m1 << 2) + m1] = c;
-        m[(m1 << 2) + m2] = s;
-        m[(m2 << 2) + m2] = c;
-        m[(m2 << 2) + m1] = -s;
-    };
-    const auto mTranslate = [](float* m, float x, float y, float z) {
-        std::memset(m, 0, sizeof(float) * 16);
-        m[0] = m[4 + 1] = m[8 + 2] = m[12 + 3] = 1.0f;
-        m[3] = x;
-        m[4 + 3] = y;
-        m[8 + 3] = z;
-    };
-    const auto mMultiply = [](float* dest, const float* src) {
-        float temp[16];
-        std::memcpy(temp, dest, sizeof(temp));
-        for (int i = 0; i < 16; i += 4)
-        {
-            for (int col = 0; col < 4; ++col)
-            {
-                dest[i + col] = src[i + 0] * temp[0 + col] + src[i + 1] * temp[4 + col] +
-                                src[i + 2] * temp[8 + col] + src[i + 3] * temp[12 + col];
-            }
-        }
-    };
-    const auto mApply = [](const float* m, float x, float y, float z, float& ox,
-                           float& oy, float& oz) {
-        ox = x * m[0] + y * m[1] + z * m[2] + m[3];
-        oy = x * m[4] + y * m[5] + z * m[6] + m[7];
-        oz = x * m[8] + y * m[9] + z * m[10] + m[11];
-    };
+    // matrix.cpp-Helfer: `avsMat*` im anonymen Namespace (Dot Plane UND Dot
+    // Fountain bauen dieselbe Matrix — eine Kopie je Renderer waeren zwei
+    // Wahrheiten).
+    const auto& mRotate = avsMatRotate;
+    const auto& mTranslate = avsMatTranslate;
+    const auto& mMultiply = avsMatMultiply;
+    const auto& mApply = avsMatApply;
 
     float matrix[16];
     float matrix2[16];
@@ -9917,9 +9978,22 @@ void MultiEffectVisualizer::runDotPlane(const ChainNode& node, const DotPlanePar
 void MultiEffectVisualizer::runDotFountain(const ChainNode& node,
                                            const DotFountainParams& params)
 {
+    // r_dotfnt.cpp zeilengenau (S57). Bis dahin waren das 400 freie Partikel
+    // mit eigener Physik — der Header sagte es selbst („Simplified particle
+    // model here"). Die Referenz ist etwas voellig anderes: ein **30x256-Gitter**
+    // (7680 Punkte), eine rotierende HOEHENWAND. Je Frame rutscht jede der 256
+    // Alterungsstufen eine weiter nach hinten und bekommt dabei ihre Physik;
+    // Stufe 0 wird aus dem Spektrum neu gesetzt. Gezeichnet wird mit derselben
+    // 3D-Matrix wie Dot Plane (Drehung, Neigung, `translate(0,-20,400)`).
+    //
+    // Die Matrix-Zeile `19_dot_fountain` mass trotz voellig anderem Bild 0,002:
+    // beide Seiten sind ueberwiegend schwarz, und die Metrik luegt bei duennen
+    // Inhalten (Befund S53).
+    constexpr int kDiv = 30;     // NUM_ROT_DIV — Speichen
+    constexpr int kHeight = 256; // NUM_ROT_HEIGHT — Alterungsstufen
+    constexpr int kCount = kDiv * kHeight;
+
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
-    constexpr int kCount = 400;
-    auto frand = [this] { return static_cast<float>(nextRandom() & 0xffff) / 65535.0f; };
     if (static_cast<int>(rt.fountain.size()) != kCount)
         rt.fountain.assign(kCount, FountainP{});
 
@@ -9928,38 +10002,114 @@ void MultiEffectVisualizer::runDotFountain(const ChainNode& node,
     runParamScript(rt, "dotfountain", params.initCode, params.frameCode,
                    params.beatCode, {{"rotvel", &vRotVel}, {"angle", &vAngle}});
 
-    rt.dotRot += static_cast<float>(vRotVel) * 0.002f;
-    const float level = 0.3f + m_audioLevel * 0.9f;  // emission speed from audio
-    const float tilt = static_cast<float>(vAngle) / 90.0f;
+    uint32_t colorTab[64];
+    avsInitColorTab(params.colors, colorTab);
+
+    auto at = [&rt](int stufe, int p) -> FountainP& {
+        return rt.fountain[static_cast<std::size_t>(stufe) * kDiv + p];
+    };
+
+    // Die Stufe 0 VOR dem Schieben — die Referenz sichert sie in `pb` und liest
+    // sie beim Erzeugen wieder (`in->dh`).
+    FountainP pb[kDiv];
+    for (int p = 0; p < kDiv; ++p) pb[p] = at(0, p);
+
+    // Altern: Stufe fo wandert nach fo+1 und bekommt dabei ihre Physik
+    // (r_dotfnt.cpp:166-181). Rueckwaerts, damit nichts ueberschrieben wird.
+    for (int fo = kHeight - 2; fo >= 0; --fo)
+    {
+        const float booga = 1.3f / static_cast<float>(fo + 100);
+        for (int p = 0; p < kDiv; ++p)
+        {
+            FountainP q = at(fo, p);
+            q.r += q.dr;
+            q.dh += 0.05f;
+            q.dr += booga;
+            q.h += q.dh;
+            at(fo + 1, p) = q;
+        }
+    }
+
+    // Neue Stufe 0 aus der WELLENFORM (`visdata[1][0]`, also Kanal links) —
+    // Bytes ueber die SSOT-Accessoren, kein zweites Layout-Wissen.
+    const unsigned char* wave = visWaveform(0);
+    for (int p = 0; p < kDiv; ++p)
+    {
+        FountainP& out = at(0, p);
+        int t = static_cast<int>(wave[p]) ^ 128;
+        t = t * 5 / 4 - 64;
+        if (m_frameBeat) t += 128;
+        if (t > 255) t = 255;
+
+        float dr = static_cast<float>(t) / 200.0f;
+        if (dr < 0.0f) dr = -dr;
+        dr += 1.0f;
+        // `(out->dh - in->dh)` ist hier IMMER 0: `in` ist die Kopie von genau
+        // dieser Stufe, und das Schieben oben laesst Stufe 0 unangetastet. Der
+        // Term steht trotzdem so im Original — nachgebildet, nicht weggekuerzt.
+        out.dh = -dr * (100.0f + (out.dh - pb[p].dh)) / 100.0f * 2.8f;
+        out.r = 1.0f;
+        out.h = 250.0f;
+        int ci = t / 4;
+        if (ci > 63) ci = 63;
+        if (ci < 0) ci = 0;
+        out.c = colorTab[ci];
+        const float a = static_cast<float>(p) * 3.14159f * 2.0f /
+                        static_cast<float>(kDiv);
+        out.ax = std::sin(a);
+        out.ay = std::cos(a);
+        out.dr = 0.0f;
+    }
+
+    // 3D-Matrix wie Dot Plane: Drehung um die Hochachse, Neigung, Translation.
+    float matrix[16];
+    float matrix2[16];
+    avsMatRotate(matrix, 2, rt.dotRot);
+    avsMatRotate(matrix2, 1, static_cast<float>(vAngle));
+    avsMatMultiply(matrix, matrix2);
+    avsMatTranslate(matrix2, 0.0f, -20.0f, 400.0f);
+    avsMatMultiply(matrix, matrix2);
+
+    const float w = static_cast<float>(m_surfaceWidth);
+    const float h = static_cast<float>(m_surfaceHeight);
+    float adj = w * 440.0f / 640.0f;
+    const float adj2 = h * 440.0f / 480.0f;
+    if (adj2 < adj) adj = adj2;
 
     std::vector<lumi::modules::SuperscopePoint> pts;
-    pts.reserve(kCount);
-    for (FountainP& fp : rt.fountain)
+    pts.reserve(static_cast<std::size_t>(kCount));
+    for (int fo = 0; fo < kHeight; ++fo)
     {
-        if (fp.vh == 0.0f && fp.h == 0.0f)  // (re)spawn at the nozzle
+        for (int p = 0; p < kDiv; ++p)
         {
-            fp.a = frand() * 6.2831853f;
-            fp.r = 0.0f;
-            fp.h = 0.0f;
-            fp.vh = 0.02f + frand() * 0.03f * level;
+            const FountainP& q = at(fo, p);
+            float x, y, z;
+            avsMatApply(matrix, q.ax * q.r, q.h, q.ay * q.r, x, y, z);
+            if (z <= 0.0000001f) continue;
+            z = adj / z;
+            const int ix = static_cast<int>(x * z) + m_surfaceWidth / 2;
+            const int iy = static_cast<int>(y * z) + m_surfaceHeight / 2;
+            if (ix < 0 || ix >= m_surfaceWidth || iy < 0 || iy >= m_surfaceHeight)
+                continue;
+            lumi::modules::SuperscopePoint sp;
+            // Pixel-MITTE; AVS zaehlt y nach unten, GL nach oben.
+            sp.x = (static_cast<float>(ix) + 0.5f) / w * 2.0f - 1.0f;
+            sp.y = 1.0f - (static_cast<float>(iy) + 0.5f) / h * 2.0f;
+            // Dieselbe Kanalzuordnung wie Dot Plane (`colorToVec`) — die
+            // Farbtabelle liegt in 0x00RRGGBB vor, nicht in AVS-Reihenfolge.
+            const QVector3D col = colorToVec(q.c);
+            sp.r = col.x();
+            sp.g = col.y();
+            sp.b = col.z();
+            sp.a = 1.0f;
+            pts.push_back(sp);
         }
-        fp.h += fp.vh;
-        fp.vh -= 0.0016f;   // gravity
-        fp.r += 0.012f;     // spread outward
-        if (fp.h < 0.0f) { fp.vh = 0.0f; fp.h = 0.0f; continue; }
-
-        const float wx = fp.r * std::cos(fp.a + rt.dotRot);
-        const float wz = fp.r * std::sin(fp.a + rt.dotRot) + 2.0f;
-        if (wz <= 0.1f) continue;
-        const float sx = wx / wz * 1.6f;
-        const float sy = (fp.h - 0.3f - wz * tilt * 0.2f) / wz * 1.6f;
-        if (sx <= -1.0f || sx >= 1.0f || sy <= -1.0f || sy >= 1.0f) continue;
-        const QVector3D c = grad5(params.colors, std::clamp(fp.h * 1.5f, 0.0f, 1.0f));
-        lumi::modules::SuperscopePoint p;
-        p.x = sx; p.y = sy; p.r = c.x(); p.g = c.y(); p.b = c.z(); p.a = 1.0f;
-        pts.push_back(p);
     }
-    drawDots(pts, 2.0f);
+    drawDots(pts, 1.0f);   // EIN Pixel je Punkt (BLEND_LINE auf einem Pixel)
+
+    rt.dotRot += static_cast<float>(vRotVel) / 5.0f;
+    if (rt.dotRot >= 360.0f) rt.dotRot -= 360.0f;
+    if (rt.dotRot < 0.0f) rt.dotRot += 360.0f;
 }
 
 void MultiEffectVisualizer::runChannelShift(const ChainNode& node,

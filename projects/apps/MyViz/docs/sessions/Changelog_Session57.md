@@ -107,6 +107,20 @@ schlechter, weil unsere Wellenhöhen in einer anderen Größenordnung rechnen al
 das Original; dafür müssen Tropfen, Dämpfung und Verschiebung gemeinsam
 umgestellt werden. Notiert für die nächste Runde.
 
+**Dot Fountain ist neu gebaut — und stimmt jetzt Pixel für Pixel.** Der Effekt
+war nie portiert: wir zeichneten 400 frei fliegende Teilchen mit eigener Physik,
+das Original ist etwas ganz anderes — eine rotierende Höhenwand aus 30 Speichen
+mal 256 Stufen, deren Spitze jeden Frame aus der Wellenform neu entsteht und
+dann nach hinten durchrutscht. Aufgefallen war das nur, weil jemand hingesehen
+hat: die Prüfzahl war mit 0,002 grün, weil beide Bilder überwiegend schwarz sind.
+Jetzt ist der Vergleich mit dem Original **komplett schwarz** — kein einziger
+Bildpunkt unterscheidet sich.
+
+**Dot Grid: drei kleine Abweichungen, zusammen deutlich sichtbar.** Wir zeichneten
+doppelt so grosse Punkte wie das Original (ein Bildpunkt, nicht zwei), setzten
+sie auf Zwischenpositionen statt auf ganze Pixel, und die Farbmischung war um
+gut anderthalb Prozent zu hell. Alle drei korrigiert, die Prüfzeile ist grün.
+
 ## Was das Prüfwerkzeug gelernt hat
 
 Neun der fünfzehn Felder lagen nicht am Programm, sondern daran, wie gemessen

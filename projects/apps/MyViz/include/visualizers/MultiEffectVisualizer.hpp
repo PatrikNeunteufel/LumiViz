@@ -200,12 +200,19 @@ private:
     };
 
     /** One Dot-Fountain particle (polar around the fountain axis). */
+    /// Ein Punkt der Dot-Fountain-Hoehenwand (`FountainPoint`, r_dotfnt.cpp:46).
+    /// Das Feld ist ein 30x256-GITTER, kein Partikelschwarm: 30 Speichen mal
+    /// 256 Alterungsstufen. Je Frame rutscht jede Stufe eine weiter nach hinten
+    /// und bekommt dabei ihre Physik; Stufe 0 wird aus dem Spektrum neu gesetzt.
     struct FountainP
     {
-        float a = 0.0f;   ///< azimuth angle
-        float r = 0.0f;   ///< radius from the axis
-        float h = 0.0f;   ///< height
-        float vh = 0.0f;  ///< vertical velocity
+        float r = 0.0f;   ///< Radius von der Achse
+        float dr = 0.0f;  ///< Radius-Zuwachs je Frame
+        float h = 0.0f;   ///< Hoehe
+        float dh = 0.0f;  ///< Hoehen-Zuwachs je Frame
+        float ax = 0.0f;  ///< sin(Speichenwinkel) — einmal beim Erzeugen
+        float ay = 0.0f;  ///< cos(Speichenwinkel)
+        uint32_t c = 0;   ///< Farbe aus der 64er-Tabelle
     };
 
     /** Per-leaf render-thread state (beat counters, scripts), keyed by nodeId. */
