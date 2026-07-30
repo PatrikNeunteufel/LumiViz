@@ -663,8 +663,8 @@ SuperscopePoint SuperscopeModule::executePoint(float i, float v, bool isBeat)
 
     // Build output point
     SuperscopePoint pt;
-    pt.x = static_cast<float>(m_x);
-    pt.y = static_cast<float>(m_y);
+    pt.x = m_x;
+    pt.y = m_y;
     pt.skip = (m_skip > 0.5);
 
     // Get color from ColorGradientModule (handles Solid/Linear/Radial/Outline)
@@ -705,12 +705,12 @@ SuperscopePoint SuperscopeModule::executePointLua(float i, float v)
     }
 
     SuperscopePoint pt;
-    pt.x = static_cast<float>(engine.number("x"));
+    pt.x = engine.number("x");
     // Konvention Skript-Rand (S46, Befund A): EEL-Skripte leben im AVS-Raum
     // (y+ = unten, r_sscope: y=(fy*h/2)+h/2) — Punkte im GL-Raum (y+ = oben).
     // Uebersetzt wird NUR hier am Rand; die Skript-Variable selbst bleibt
     // AVS-treu (Zustand ueber Punkte/Frames hinweg).
-    pt.y = -static_cast<float>(engine.number("y"));
+    pt.y = -engine.number("y");
     pt.skip = engine.number("skip") > 0.5;
 
     // Always read back: the script may have kept, modulated or overridden it.

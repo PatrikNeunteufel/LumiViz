@@ -709,7 +709,16 @@ inline void decodeTriangle(Reader& r, EffectNode& n)   // "Render: Triangle" APE
 
 inline void decodePictureII(Reader& r, EffectNode& n)   // "Picture II" APE
 {
-    n.code.push_back(CodeSlot{"filename", r.loadCString()});  // NtString image path
+    // Der Dateiname steht in einem FESTEN 260-Byte-Feld (MAX_PATH), nicht als
+    // NUL-terminierte Zeichenkette: der Blob misst 284 = 260 + 6*4. Ein
+    // variabler Lauf endet schon nach dem ersten NUL und liest danach den REST
+    // des Puffers als Zahlen — bei "01 - The Real Impressionist" stand dort noch
+    // ".bmp" von einer frueheren Eingabe, und alle sechs Felder waren Muell
+    // (blendMode 1886350382 statt 0). Befund S58.
+    constexpr std::size_t kMaxPath = 260;
+    const std::uint8_t* block = nullptr;
+    if (!r.tryBytes(kMaxPath, block)) return;
+    n.code.push_back(CodeSlot{"filename", r.fixedString(block, kMaxPath)});
     readField(r, n, "blendMode") && readField(r, n, "onBeatOutput") &&
         readField(r, n, "bilinear") && readField(r, n, "onBeatBilinear") &&
         readField(r, n, "adjustBlend") && readField(r, n, "onBeatAdjustBlend");

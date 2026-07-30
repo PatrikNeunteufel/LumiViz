@@ -493,6 +493,7 @@ private:
         bool dpSeeded = false;
 
         int apeChanMode = -1;      ///< Channel Shift on-beat held permutation
+        int apeChanSeed = -1;      ///< Preset-Wert, aus dem apeChanMode geseedet wurde
 
         // Fractal 2D (Batch H): EEL view-driver + gradient palette LUT
         std::unique_ptr<lumi::scripting::ScriptSlotHost> fracHost;

@@ -192,7 +192,11 @@ void ScopeRenderer::renderDots(const std::vector<SuperscopePoint>& points,
     for (const auto& pt : points)
     {
         if (pt.skip) continue;
-        vertices.insert(vertices.end(), {pt.x, pt.y, pt.r, pt.g, pt.b, pt.a});
+        // x/y sind DOUBLE (AVS-Genauigkeit, s. SuperscopePoint); der
+        // Vertex-Puffer ist float — hier wird bewusst verengt.
+        vertices.insert(vertices.end(), {static_cast<float>(pt.x),
+                                        static_cast<float>(pt.y),
+                                        pt.r, pt.g, pt.b, pt.a});
     }
     if (vertices.empty()) return;
 
@@ -280,7 +284,11 @@ void ScopeRenderer::renderThinLines(const std::vector<SuperscopePoint>& points)
             currentCount = 0;
             continue;
         }
-        vertices.insert(vertices.end(), {pt.x, pt.y, pt.r, pt.g, pt.b, pt.a});
+        // x/y sind DOUBLE (AVS-Genauigkeit, s. SuperscopePoint); der
+        // Vertex-Puffer ist float — hier wird bewusst verengt.
+        vertices.insert(vertices.end(), {static_cast<float>(pt.x),
+                                        static_cast<float>(pt.y),
+                                        pt.r, pt.g, pt.b, pt.a});
         ++currentCount;
     }
     if (currentCount > 0) segments.emplace_back(currentStart, currentCount);
@@ -334,13 +342,13 @@ void ScopeRenderer::renderThickLines(const std::vector<SuperscopePoint>& points,
         float dy = 0.0f;
         if (i < points.size() - 1 && !points[i + 1].skip)
         {
-            dx = points[i + 1].x - pt.x;
-            dy = points[i + 1].y - pt.y;
+            dx = static_cast<float>(points[i + 1].x - pt.x);
+            dy = static_cast<float>(points[i + 1].y - pt.y);
         }
         else if (i > 0 && !points[i - 1].skip)
         {
-            dx = pt.x - points[i - 1].x;
-            dy = pt.y - points[i - 1].y;
+            dx = static_cast<float>(pt.x - points[i - 1].x);
+            dy = static_cast<float>(pt.y - points[i - 1].y);
         }
 
         // AVS-Semantik (linedraw.cpp, Befund S46/Wormhole): dicke Linien werden
@@ -357,9 +365,11 @@ void ScopeRenderer::renderThickLines(const std::vector<SuperscopePoint>& points,
         else
             ox = lineWidth * pixelWidth * 0.5f;   // y-major: horizontale Reihe
 
-        vertices.insert(vertices.end(), {pt.x + ox, pt.y + oy,
+        vertices.insert(vertices.end(), {static_cast<float>(pt.x) + ox,
+                                         static_cast<float>(pt.y) + oy,
                                          pt.r, pt.g, pt.b, pt.a});
-        vertices.insert(vertices.end(), {pt.x - ox, pt.y - oy,
+        vertices.insert(vertices.end(), {static_cast<float>(pt.x) - ox,
+                                         static_cast<float>(pt.y) - oy,
                                          pt.r, pt.g, pt.b, pt.a});
         currentCount += 2;
     }

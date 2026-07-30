@@ -54,7 +54,7 @@ zweiten Prüffamilie, die genau diese Frage stellt: wirkt ein Feld auch beim
 Editieren, nicht nur beim Laden? Sie hat alle 702 Felder geprüft und genau diesen
 einen Fall gefunden.)
 
-## Vier Befunde aus dem Bildvergleich mit dem Original
+## Sieben Befunde aus dem Bildvergleich mit dem Original
 
 **Der Fractal Zoomer hatte einen Regler, der nur zwei Stellungen kannte.** „Trail
 persistence" verspricht eine Stärke von 0 bis 1; tatsächlich schaltete jeder Wert
@@ -116,10 +116,16 @@ hat: die Prüfzahl war mit 0,002 grün, weil beide Bilder überwiegend schwarz s
 Jetzt ist der Vergleich mit dem Original **komplett schwarz** — kein einziger
 Bildpunkt unterscheidet sich.
 
+**Convolution: die letzte Zeile und Spalte gehören dem Original.** Der Effekt
+rechnet dort im Original gar nicht — der Bildspeicher behält seinen alten Inhalt,
+und weil er im Wechsel wiederverwendet wird, läuft der Wert über die Frames bis
+zur Sättigung auf. Wir haben ihn jeden Frame frisch berechnet. Die Prüfsonde
+`convolution_kante` ist damit grün; sie stand seit Monaten offen.
+
 **Dot Grid: drei kleine Abweichungen, zusammen deutlich sichtbar.** Wir zeichneten
 doppelt so grosse Punkte wie das Original (ein Bildpunkt, nicht zwei), setzten
-sie auf Zwischenpositionen statt auf ganze Pixel, und die Farbmischung war um
-gut anderthalb Prozent zu hell. Alle drei korrigiert, die Prüfzeile ist grün.
+sie auf Zwischenpositionen statt auf ganze Pixel, und die Farbmischung war um gut
+anderthalb Prozent zu hell. Alle drei korrigiert.
 
 ## Was das Prüfwerkzeug gelernt hat
 
@@ -158,6 +164,9 @@ dasselbe Bild.
 
 ## Stand
 
+- **Bildvergleich mit dem Original: 40 von 43 Prüfbildern stimmen** (zu
+  Sessionbeginn 36 von 41), **81 von 82 Einzelsonden**. Was übrig bleibt, hat in
+  allen drei Fällen eine benannte Ursache
 - **Feld-Prüfung: kein stummes Feld mehr** (zuletzt 16, davor 115) — mit einem
   Gesamtdurchlauf über alle 702 Prüfbilder belegt. Gegen den Stand der Vorsession
   ist **kein einziges Feld schlechter** geworden und 109 sind besser
@@ -170,6 +179,7 @@ dasselbe Bild.
 
 ## Noch offen
 
-Am Bildvergleich mit dem Original stehen weiter die zwölf bekannten Befunde
-(Alternate Reality, Picture II, Bright Light District, Rotor, Tie Tunnel DM und
-die übrigen). Neu dazugekommen ist nichts.
+Von den zwölf bekannten Befunden am Bildvergleich sind **sieben erledigt**. Vier
+sind unangetastet (Alternate Reality, Picture II, Rotor, Bright Light District);
+bei dreien ist die Ursache benannt oder bewiesen, aber die Umsetzung steht aus
+(Water Bump, die Alloy-Sonde, Tie Tunnel). Neu dazugekommen ist nichts.

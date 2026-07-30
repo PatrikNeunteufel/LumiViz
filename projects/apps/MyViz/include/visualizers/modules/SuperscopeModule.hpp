@@ -111,8 +111,15 @@ enum class SuperscopePreset
  */
 struct SuperscopePoint
 {
-    float x = 0.0f;         ///< X coordinate (-1 to 1)
-    float y = 0.0f;         ///< Y coordinate (-1 to 1)
+    /// X/Y in NDC (-1..1) als DOUBLE — wie in AVS. Der Zielpixel entsteht dort
+    /// aus `(int)((x+1)*w*0.5)`, und das ist ein Kantenfall: `x=1-2/w` ergibt in
+    /// double exakt `w-1`, ueber float gerundet aber `w-1-eps` und damit `w-2`.
+    /// Wir schrieben die Skriptwerte frueher als float weg und verloren die
+    /// letzte Spalte (Befund S58: bei "The Real Impressionist" faengt ein
+    /// Movement genau diese Spalte ein und zieht sie ueber das ganze Bild).
+    /// Die Vertex-Puffer bekommen weiterhin float — dort ist es GL-Genauigkeit.
+    double x = 0.0;         ///< X coordinate (-1 to 1)
+    double y = 0.0;         ///< Y coordinate (-1 to 1)
     float r = 1.0f;         ///< Red (0 to 1)
     float g = 1.0f;         ///< Green (0 to 1)
     float b = 1.0f;         ///< Blue (0 to 1)

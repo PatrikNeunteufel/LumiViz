@@ -370,8 +370,8 @@ TEST_CASE("Superscope-Lua: Preset-Variablen kollidieren nicht mit Host-Namen")
         const auto points = runScope(scope, 0.0f);  // v=0 -> reine Kurvenform
         CAPTURE(scope.lastScriptError());
         REQUIRE_FALSE(points.empty());
-        float minY = points.front().y;
-        float maxY = points.front().y;
+        double minY = points.front().y;
+        double maxY = points.front().y;
         for (const auto& pt : points)
         {
             minY = std::min(minY, pt.y);
@@ -389,8 +389,8 @@ TEST_CASE("Superscope-Lua: Preset-Variablen kollidieren nicht mit Host-Namen")
         const auto points = runScope(scope, 0.0f);
         CAPTURE(scope.lastScriptError());
         REQUIRE_FALSE(points.empty());
-        float minX = points.front().x;
-        float maxX = points.front().x;
+        double minX = points.front().x;
+        double maxX = points.front().x;
         for (const auto& pt : points)
         {
             minX = std::min(minX, pt.x);

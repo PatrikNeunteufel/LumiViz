@@ -216,7 +216,15 @@ void main()
     vec3 d = texture(uDst, vTex).rgb;
     vec3 s = texture(uSrc, vTex).rgb;
     vec3 r;
-    if (uMode == 2)       r = (d + s) * 0.5;         // 50/50
+    // 50/50 ist in AVS die ABGESCHNITTENE Byte-Mittelung: jeder Operand wird
+    // fuer sich halbiert (`psrlq 1` + Maske gegen das geborgte Bit), dann
+    // addiert — floor(a/2)+floor(b/2), NICHT (a+b)/2. Der Unterschied ist
+    // hoechstens 1 von 255 und faellt einmalig nicht auf; in einer Rueckkopplung
+    // (Buffer Save 50/50 in den Puffer, den eine Dynamic Movement im naechsten
+    // Frame wieder liest) treibt er das Bild ueber die Frames auseinander
+    // (Befund S58, Alternate Reality). Gleiche Klasse wie der Blur in S57.
+    if (uMode == 2)                                  // 50/50 (r_defs.h:504-544)
+        r = (floor(round(d * 255.0) * 0.5) + floor(round(s * 255.0) * 0.5)) / 255.0;
     else if (uMode == 3)  r = max(d, s);             // Maximum
     else if (uMode == 4)  r = min(d + s, vec3(1.0)); // Additive
     else if (uMode == 5)  r = max(d - s, vec3(0.0)); // Subtractive 1-2 (dst-src)
@@ -1388,53 +1396,76 @@ void main()
 }
 )";
 
-// AVS "Trans / Dynamic Shift" (ID 42): a global image translation by uOffset
-// (normalized; output pixel samples input at vTex-uOffset), black fill outside,
-// optional 50/50 blend with the original (r_shift.cpp). The EEL that drives the
-// offset runs on the CPU (ScriptSlotHost); this shader just applies it.
+// AVS "Trans / Dynamic Shift" (ID 42), bit-treu nach r_shift.cpp:190-310 (S58).
+//
+// Die Referenz verschiebt NICHT stufenlos, sondern in ganzen Pixeln plus einem
+// 8-Bit-Bruchteil, und sie schreibt die freigewordenen Zeilen und Spalten HART
+// auf Schwarz. Der Bruchteil kippt dabei asymmetrisch: bei negativem Anteil
+// bleibt `xa` stehen und `xpart` ist der Betrag, bei positivem wird `xa` um eins
+// erhoeht und `xpart` gespiegelt (`255-xpart`). Genau daraus folgt, dass schon
+// eine Verschiebung von NULL in y die erste und die letzte Zeile schwarz macht
+// (`ya++`, `endy = h-1+ya`) — und eine Verschiebung um -0,2 in x die letzte
+// SPALTE. Wir hatten stattdessen eine normierte uv-Verschiebung mit weichem
+// Rand: der Saum blieb stehen, statt zu verschwinden. Bei "The Real
+// Impressionist" faengt ein Movement genau diese Spalte ein.
+//
+// Die Grenzen (uXa/uYa/uEndX/uEndY) rechnet die Laufzeit, weil sie sich je
+// Betriebsart (subpixel/nicht) unterscheiden; hier steht nur die Auswertung.
 const char* kDynamicShiftFragmentShader = R"(
 #version 330 core
-in vec2 vTex;
 uniform sampler2D uTex;
-uniform vec2 uOffset;
+uniform int uXa;
+uniform int uYa;
+uniform int uXpart;
+uniform int uYpart;
+uniform int uEndX;
+uniform int uEndY;
+uniform int uW;
+uniform int uH;
 uniform int uBlend;
-uniform float uAlpha;
+uniform int uIAlpha;
 uniform int uSubpixel;
-uniform vec2 uRes;
 out vec4 fragColor;
 
-// AVS BLEND4 (r_defs.h): Ganzzahl-Mischung der vier Nachbarn, kein
-// GL-bilinear — s. die ausfuehrliche Begruendung beim Feedback-Shader.
-vec3 avsBlend4(vec2 px)
+// AVS-Zeile 0 ist oben, unsere Textur ist bottom-up.
+ivec3 texAvs(int x, int y)
 {
-    ivec2 res = ivec2(uRes);
-    vec2 base = floor(px);
-    ivec2 i0 = clamp(ivec2(base), ivec2(0), res - ivec2(2));
-    int xw = int((px.x - base.x) * 255.0);
-    int yw = int((px.y - base.y) * 255.0);
-    ivec3 c00 = ivec3(texelFetch(uTex, i0, 0).rgb * 255.0);
-    ivec3 c10 = ivec3(texelFetch(uTex, i0 + ivec2(1, 0), 0).rgb * 255.0);
-    ivec3 c01 = ivec3(texelFetch(uTex, i0 + ivec2(0, 1), 0).rgb * 255.0);
-    ivec3 c11 = ivec3(texelFetch(uTex, i0 + ivec2(1, 1), 0).rgb * 255.0);
-    ivec3 top = (c00 * (255 - xw) + c10 * xw) >> 8;
-    ivec3 bot = (c01 * (255 - xw) + c11 * xw) >> 8;
-    return vec3((top * (255 - yw) + bot * yw) >> 8) / 255.0;
+    x = clamp(x, 0, uW - 1);
+    y = clamp(y, 0, uH - 1);
+    return ivec3(round(texelFetch(uTex, ivec2(x, uH - 1 - y), 0).rgb * 255.0));
 }
 
 void main()
 {
-    vec2 uv = vTex - uOffset;
-    vec3 shifted = vec3(0.0);
-    if (uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0)
+    int x = int(gl_FragCoord.x);
+    int y = uH - 1 - int(gl_FragCoord.y);
+    ivec3 orig = texAvs(x, y);
+    ivec3 res = ivec3(0);
+    if (y >= uYa && y < uEndY && x >= uXa && x < uEndX)
     {
-        // `subpixel` an = Zwischenwerte wie im Original (r_shift.cpp:206),
-        // aus = naechster Bildpunkt (die Surface filtert NEAREST).
-        shifted = uSubpixel == 1 ? avsBlend4(uv * uRes - vec2(0.5))
-                                 : texture(uTex, uv).rgb;
+        int sx = x - uXa;
+        int sy = y - uYa;
+        if (uSubpixel == 1)
+        {
+            // BLEND4 (r_defs.h): zwei Stufen, je `>>8` mit Gewichtssumme 255.
+            ivec3 c00 = texAvs(sx, sy);
+            ivec3 c10 = texAvs(sx + 1, sy);
+            ivec3 c01 = texAvs(sx, sy + 1);
+            ivec3 c11 = texAvs(sx + 1, sy + 1);
+            ivec3 top = (c00 * (255 - uXpart) + c10 * uXpart) >> 8;
+            ivec3 bot = (c01 * (255 - uXpart) + c11 * uXpart) >> 8;
+            res = (top * (255 - uYpart) + bot * uYpart) >> 8;
+        }
+        else
+        {
+            res = texAvs(sx, sy);
+        }
     }
-    vec3 orig = texture(uTex, vTex).rgb;
-    vec3 r = (uBlend == 1) ? mix(shifted, orig, clamp(uAlpha, 0.0, 1.0)) : shifted;
-    fragColor = vec4(r, 1.0);
+    // BLEND_ADJ(verschoben, framebuffer, ialpha) — das VERSCHOBENE Bild traegt
+    // `ialpha`, nicht das Original (r_shift.cpp:228; gleiche Richtung wie der
+    // Adjustable-Blend-Befund aus S52).
+    if (uBlend == 1) res = (res * uIAlpha + orig * (255 - uIAlpha)) >> 8;
+    fragColor = vec4(vec3(res) / 255.0, 1.0);
 }
 )";
 
@@ -1531,9 +1562,10 @@ in vec2 vTex;
 uniform sampler2D uTex;
 uniform vec2 uRes;
 uniform float uKernel[49];
-uniform float uScale;
-uniform float uBias;
+uniform float uScale;     // Teiler; 0 ist in der Laufzeit schon durch 1 ersetzt
+uniform float uBias;      // Vorzeichen-BYTE des Konfigurationswerts (s. unten)
 uniform int uAbsolute;
+uniform int uTwoPass;
 uniform int uEdge;
 out vec4 fragColor;
 vec2 sampleUV(vec2 uv) { return uEdge == 1 ? fract(uv) : clamp(uv, 0.0, 1.0); }
@@ -1562,9 +1594,25 @@ void main()
             vec2 off = vec2(float(i - 3), float(3 - j)) * texel;
             sum += texture(uTex, sampleUV(vTex + off)).rgb * k;
         }
-    vec3 r = sum / uScale + vec3(uBias / 255.0);
-    if (uAbsolute == 1) r = abs(r);
-    fragColor = vec4(clamp(r, 0.0, 1.0), 1.0);
+    // Die APE rechnet in BYTES und ganzzahlig (gemessen S58, Sonden
+    // `2_trans/convolution_*` gegen AvsRef):
+    //     x = (summe + bias * 256) / scale      <- Ganzzahl, Richtung Null
+    // `bias` ist also KEIN Offset von wenigen Stufen, sondern zaehlt in ganzen
+    // 256ern: schon bias=1 hebt jeden Kanal ueber 255 (weiss), bias=-1 drueckt
+    // ihn unter 0. Belegt an (200,100,40): bias=1/scale=2 -> (228,178,148) =
+    // (v+256)/2, bias=1/scale=256 -> (1,1,1). Wir addierten bias/255 — bei
+    // Alternate Reality war das der Unterschied zwischen Weiss und Schwarz.
+    vec3 t = (round(sum * 255.0) + vec3(uBias * 256.0)) / uScale;
+    vec3 q = sign(t) * floor(abs(t) + 0.001);
+    // `twoPass` VERDOPPELT das Ergebnis, es faltet nicht zweimal: mit Kern 1
+    // und scale 2 misst die Referenz v (nicht v/4), mit scale 4 misst sie v/2.
+    if (uTwoPass == 1) q *= 2.0;
+    // Negativ heisst NICHT Betrag: mit `absolute` misst die Referenz 255
+    // (Kern -1, scale 1 -> weiss; Kern -4, scale 2 -> weiss statt |-4v/2|),
+    // ohne `absolute` schwarz.
+    vec3 neg = step(q, vec3(-0.5));
+    vec3 negOut = uAbsolute == 1 ? vec3(255.0) : vec3(0.0);
+    fragColor = vec4(mix(min(q, vec3(255.0)), negOut, neg) / 255.0, 1.0);
 }
 )";
 
@@ -6037,22 +6085,72 @@ void MultiEffectVisualizer::runDynamicShift(const ChainNode& node,
         alpha = engine.number("alpha");
     }
 
-    const float offX = m_surfaceWidth > 0
-                           ? static_cast<float>(ox) / static_cast<float>(m_surfaceWidth)
-                           : 0.0f;
-    const float offY = m_surfaceHeight > 0
-                           ? static_cast<float>(oy) / static_cast<float>(m_surfaceHeight)
-                           : 0.0f;
+    const int w = m_surfaceWidth;
+    const int h = m_surfaceHeight;
+    if (w < 2 || h < 2) return;
+
+    // r_shift.cpp:191-197 — der Blend ist ein Vorzeichen, kein Faktor: bei
+    // ialpha <= 0 kehrt der Effekt SOFORT zurueck (das Bild bleibt stehen), bei
+    // >= 255 ist er abgeschaltet und das verschobene Bild gilt allein.
+    int doBlend = params.blend ? 1 : 0;
+    int iAlpha = 255;
+    if (doBlend != 0)
+    {
+        iAlpha = static_cast<int>(alpha * 255.0);
+        if (iAlpha <= 0) return;
+        if (iAlpha >= 255) doBlend = 0;
+    }
+
+    // Ganzzahliger Anteil + 8-Bit-Bruchteil (r_shift.cpp:229-244). Der Zweig
+    // `else { ++a; part = 255 - part; }` ist der Grund, warum eine Verschiebung
+    // von 0 die erste und letzte Reihe kostet.
+    auto teile = [](double v, int& a, int& part) {
+        a = static_cast<int>(v);
+        part = static_cast<int>((v - static_cast<int>(v)) * 255.0);
+        if (part < 0)
+        {
+            part = -part;
+        }
+        else
+        {
+            ++a;
+            part = 255 - part;
+        }
+        part = std::clamp(part, 0, 255);
+    };
+
+    int xa = 0, ya = 0, xpart = 0, ypart = 0, endX = 0, endY = 0;
+    if (params.subpixel)
+    {
+        teile(ox, xa, xpart);
+        teile(oy, ya, ypart);
+        ya = std::clamp(ya, 1 - h, h - 1);
+        xa = std::clamp(xa, 1 - w, w - 1);
+        endX = std::clamp(w - 1 + xa, 0, w - 1);
+        endY = std::clamp(h - 1 + ya, 0, h - 1);
+    }
+    else
+    {
+        // Ohne Subpixel gibt es keinen Bruchteil und die Grenzen laufen bis w/h
+        // (r_shift.cpp:205-224).
+        xa = std::min(static_cast<int>(ox), w);
+        ya = std::min(static_cast<int>(oy), h);
+        endX = std::min(w + xa, w);
+        endY = std::min(h + ya, h);
+    }
 
     m_shiftShader->bind();
-    m_shiftShader->setUniformValue("uOffset", QVector2D(offX, offY));
-    m_shiftShader->setUniformValue("uBlend", params.blend ? 1 : 0);
-    m_shiftShader->setUniformValue(
-        "uAlpha", static_cast<float>(std::clamp(alpha, 0.0, 1.0)));
+    m_shiftShader->setUniformValue("uXa", xa);
+    m_shiftShader->setUniformValue("uYa", ya);
+    m_shiftShader->setUniformValue("uXpart", xpart);
+    m_shiftShader->setUniformValue("uYpart", ypart);
+    m_shiftShader->setUniformValue("uEndX", endX);
+    m_shiftShader->setUniformValue("uEndY", endY);
+    m_shiftShader->setUniformValue("uW", w);
+    m_shiftShader->setUniformValue("uH", h);
+    m_shiftShader->setUniformValue("uBlend", doBlend);
+    m_shiftShader->setUniformValue("uIAlpha", iAlpha);
     m_shiftShader->setUniformValue("uSubpixel", params.subpixel ? 1 : 0);
-    m_shiftShader->setUniformValue(
-        "uRes", QVector2D(static_cast<float>(m_surfaceWidth),
-                          static_cast<float>(m_surfaceHeight)));
     m_shiftShader->release();
     transformPass(*m_shiftShader);
 }
@@ -7858,6 +7956,14 @@ void MultiEffectVisualizer::runConvolution(const ChainNode& node,
         kf[static_cast<std::size_t>(i)] = static_cast<float>(params.kernel[static_cast<std::size_t>(i)]);
     // Strang D: die Frame-Kopien
     const float scale = vScale != 0 ? static_cast<float>(vScale) : 1.0f;
+    // Der Bias wirkt als vorzeichenbehaftetes BYTE des Konfigurationswerts:
+    // +128 misst wie -128 (schwarz), +256 ist wirkungslos, +257 wirkt wie +1.
+    // Unterhalb von -128 misst die Referenz schwarz, wo das reine Bytemodell
+    // wieder Weiss saehe — dort klemmen wir statt zu schneiden (S58).
+    const int biasCfg = static_cast<int>(vBias);
+    const float bias = biasCfg < -128
+                           ? -128.0f
+                           : static_cast<float>(static_cast<std::int8_t>(biasCfg & 0xFF));
 
     auto pass = [&] {
         m_convolutionShader->bind();
@@ -7866,14 +7972,17 @@ void MultiEffectVisualizer::runConvolution(const ChainNode& node,
                               static_cast<float>(m_surfaceHeight)));
         m_convolutionShader->setUniformValueArray("uKernel", kf.data(), 49, 1);
         m_convolutionShader->setUniformValue("uScale", scale);
-        m_convolutionShader->setUniformValue("uBias", static_cast<float>(vBias));
+        m_convolutionShader->setUniformValue("uBias", bias);
         m_convolutionShader->setUniformValue("uAbsolute", params.absolute ? 1 : 0);
+        m_convolutionShader->setUniformValue("uTwoPass", params.twoPass ? 1 : 0);
         m_convolutionShader->setUniformValue("uEdge", std::clamp(params.edgeMode, 0, 1));
         m_convolutionShader->release();
         transformPass(*m_convolutionShader);
     };
+    // `twoPass` ist eine Verdopplung IM Durchgang (s. Shader) — zweimal falten
+    // ist es nicht: das haetten die Sonden `two1_k1_s2/s4` als v/4 bzw. v/8
+    // gezeigt, gemessen sind v und v/2.
     pass();
-    if (params.twoPass) pass();
 }
 
 void MultiEffectVisualizer::runNormalise()
@@ -10134,7 +10243,22 @@ void MultiEffectVisualizer::runChannelShift(const ChainNode& node,
     int mode = std::clamp(static_cast<int>(vMode), 0, 5);  // Strang D
     if (params.onBeat)
     {
-        if (m_frameBeat || rt.apeChanMode < 0)
+        // r_chanshift:124-126 zieht NUR auf dem Beat; bis zum ersten Beat gilt
+        // die Vorgabe aus dem Preset. Wir zogen zusaetzlich im ersten Frame
+        // (`apeChanMode < 0`) — ein Zug zuviel aus dem geteilten Strom, damit
+        // war jede weitere Permutation um eine Ziehung versetzt (Befund S58,
+        // Alternate Reality: Referenz BGR, wir BRG).
+        // Der Preset-Wert ist der STARTWERT eines selbstlaufenden Zustands:
+        // gegen ihn vergleichen, nicht gegen die Frame-Kopie — sonst setzt ein
+        // Skript den Zustand in jedem Frame zurueck (Merkregel S57,
+        // `interferences.rotation`).
+        const int seed = std::clamp(params.mode, 0, 5);
+        if (rt.apeChanSeed != seed)
+        {
+            rt.apeChanSeed = seed;
+            rt.apeChanMode = seed;
+        }
+        if (m_frameBeat)
             rt.apeChanMode = m_scriptContext->nextRand() % 6;  // r_chanshift:125
         mode = rt.apeChanMode;
     }
