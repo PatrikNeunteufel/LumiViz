@@ -64,11 +64,19 @@ void main()
 }
 )";
 
+// AVS faerbt ein Liniensegment EINFARBIG: `line(framebuffer, lx,ly, x,y, w,h,
+// thiscolor, linesize)` bekommt die Farbe des AKTUELLEN Punktes und malt damit
+// das ganze Segment vom Vorgaenger her (r_sscope:297/325) — es gibt keine
+// Interpolation entlang der Strecke. Wir haben die Vertexfarben interpolieren
+// lassen; bei wenigen Stuetzstellen mit starkem Verlauf ist das ein sichtbarer
+// Unterschied ("Lost Cause" zieht eine Linie ueber FUENF Punkte von Weiss nach
+// Blau). `flat` mit der GL-Vorgabe LAST_VERTEX trifft genau die Referenz: das
+// Segment bekommt die Farbe seines Endpunkts (Befund S58).
 const char* kLineVertexShader = R"(
 #version 330 core
 layout(location = 0) in vec2 aPos;
 layout(location = 1) in vec4 aColor;
-out vec4 vColor;
+flat out vec4 vColor;
 void main()
 {
     gl_Position = vec4(aPos, 0.0, 1.0);
@@ -78,7 +86,7 @@ void main()
 
 const char* kLineFragmentShader = R"(
 #version 330 core
-in vec4 vColor;
+flat in vec4 vColor;
 out vec4 FragColor;
 uniform float uAlpha;
 void main()
