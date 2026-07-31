@@ -19,14 +19,19 @@
         "type": "renderScale"
       },
       {
+        "beatCode": "",
         "blend": 1,
         "color": 16777215,
+        "damping": 0.9909999966621399,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "maxDistance": 16,
         "name": "Moving Particle",
         "onBeatSize": false,
         "size": 8,
         "size2": 8,
+        "spring": 0.004000000189989805,
         "type": "movingParticle"
       }
     ],

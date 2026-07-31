@@ -19,9 +19,12 @@
         "type": "renderScale"
       },
       {
+        "beatCode": "",
         "blend": 0,
         "color": 2105376,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Clear",
         "onlyFirst": false,
         "type": "clear"
@@ -71,10 +74,13 @@
         "type": "superScope"
       },
       {
+        "beatCode": "",
         "beatDuration": 4,
         "blend": 0,
         "color": 4227327,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Interleave",
         "onBeat": false,
         "type": "interleave",

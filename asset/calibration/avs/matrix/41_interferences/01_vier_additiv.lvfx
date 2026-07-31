@@ -19,9 +19,12 @@
         "type": "renderScale"
       },
       {
+        "beatCode": "",
         "blend": 0,
         "color": 2105376,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Clear",
         "onlyFirst": false,
         "type": "clear"
@@ -73,10 +76,13 @@
       {
         "alpha": 128,
         "alpha2": 192,
+        "beatCode": "",
         "blend": 1,
         "distance": 20,
         "distance2": 32,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Interferences",
         "onBeat": false,
         "points": 4,

@@ -19,11 +19,23 @@
         "type": "renderScale"
       },
       {
+        "audioGain": 0.5,
+        "bandHi": 14,
+        "bandLo": 3,
+        "baseRadius": 0.11999999731779099,
+        "beatCode": "",
         "colors": [
           14733408
         ],
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Rotating Stars",
+        "orbit": 0.5,
+        "points": 5,
+        "rotSpeed": 0.05000000074505806,
+        "skip": 2,
+        "stars": 2,
         "type": "rotatingStars"
       }
     ],

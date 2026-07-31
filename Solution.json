@@ -40,7 +40,7 @@
         "skip": false,
         "system": true,
         "package": "Qt6",
-        "components": [ "Core", "Widgets", "Gui", "OpenGL", "OpenGLWidgets", "GuiPrivate" ],
+        "components": [ "Core", "Widgets", "Gui", "OpenGL", "OpenGLWidgets", "GuiPrivate", "Multimedia" ],
         "hints": [ "${QT_ROOT}" ]
       },
       "qt-ads": {

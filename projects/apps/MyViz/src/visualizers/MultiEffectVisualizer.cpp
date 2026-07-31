@@ -7133,6 +7133,7 @@ void MultiEffectVisualizer::closeAviRuntime(LeafRuntime& rt)
     rt.aviStream = nullptr;
     rt.aviFile = nullptr;
     rt.aviLength = 0;
+    rt.aviClip.reset();  // Cache-Clip bleibt im VideoFrameCache erhalten
 }
 
 #ifdef _WIN32
@@ -7217,21 +7218,62 @@ void MultiEffectVisualizer::runAvi(const ChainNode& node, const AviParams& param
         rt.aviTried = false;
         rt.aviFrameIndex = 0;
         rt.aviWarnedBpp = 0;
+        rt.aviClip.reset();
     }
-    if (rt.aviGetFrame == nullptr)
+    if (rt.aviGetFrame == nullptr && !rt.aviTried)
     {
-        if (rt.aviTried) return;
         rt.aviTried = true;
-        if (path.empty() ||
+        if (!path.empty() &&
             !openAvi(rt.aviFile, rt.aviStream, rt.aviGetFrame, rt.aviLength, path))
-            return;
+        {
+            // Qt-Multimedia-Fallback (Entscheid S59, Stufe 1 des Video-Wegs):
+            // das 64-Bit-VfW kennt Alt-Codecs wie Indeo 3.2 (el-visVR09) nicht
+            // mehr — der FFmpeg-Backend-Decoder schon. Der Cache dekodiert die
+            // Datei EINMAL komplett; gezeichnet wird deterministisch nach
+            // Frame-INDEX, nicht uhrzeitgetrieben (Frame-Schritt-Pflicht).
+            rt.aviClip = lumi::services::VideoFrameCache::instance().hole(
+                QString::fromStdString(path));
+        }
     }
+    if (rt.aviGetFrame == nullptr &&
+        (rt.aviClip == nullptr ||
+         rt.aviClip->status.load(std::memory_order_acquire) !=
+             lumi::services::VideoFrameCache::FERTIG))
+        return;
     auto* f = QOpenGLContext::currentContext()->functions();
 
-    // speed = min. milliseconds between frame advances (r_avi render:236-239)
-    const std::int64_t now = QDateTime::currentMSecsSinceEpoch();
-    if (rt.aviTexture == 0 ||
-        now - rt.aviLastMs >= static_cast<std::int64_t>(params.speedMs))
+    // speed = min. milliseconds between frame advances (r_avi render:236-239).
+    // Frame-Uhr statt Wanduhr (S59): die Referenz tickt zwar per GetTickCount,
+    // aber nur mit der Skript-Uhr sind zwei Laeufe bit-identisch — dieselbe
+    // Entscheidung wie bei gettime() (Feld-Sonden-Grundlage).
+    const std::int64_t now = static_cast<std::int64_t>(m_scriptClock * 1000.0);
+    if (rt.aviGetFrame == nullptr)
+    {
+        // Frames aus dem Qt-Decode-Cache (RGBX8888, top-down)
+        const auto& frames = rt.aviClip->frames;
+        if (rt.aviTexture == 0 ||
+            now - rt.aviLastMs >= static_cast<std::int64_t>(params.speedMs))
+        {
+            rt.aviLastMs = now;
+            rt.aviFrameIndex %= static_cast<int>(frames.size());
+            const QImage& img = frames[static_cast<std::size_t>(rt.aviFrameIndex++)];
+            if (rt.aviTexture == 0)
+            {
+                f->glGenTextures(1, &rt.aviTexture);
+                f->glBindTexture(GL_TEXTURE_2D, rt.aviTexture);
+                f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            }
+            f->glBindTexture(GL_TEXTURE_2D, rt.aviTexture);
+            f->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+            f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(),
+                            0, GL_RGBA, GL_UNSIGNED_BYTE, img.constBits());
+        }
+    }
+    else if (rt.aviTexture == 0 ||
+             now - rt.aviLastMs >= static_cast<std::int64_t>(params.speedMs))
     {
         rt.aviLastMs = now;
         rt.aviFrameIndex %= std::max(1, rt.aviLength);

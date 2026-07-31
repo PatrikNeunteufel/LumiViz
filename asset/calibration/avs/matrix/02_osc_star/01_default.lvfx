@@ -19,15 +19,21 @@
         "type": "renderScale"
       },
       {
+        "amplitude": 0.5,
+        "beatCode": "",
         "channel": 0,
         "colors": [
           16777215
         ],
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Oscilliscope Star",
         "position": 0,
         "rot": 5,
+        "rotScale": 0.019999999552965164,
         "size": 10,
+        "spokes": 5,
         "type": "oscStar"
       }
     ],

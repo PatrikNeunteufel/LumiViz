@@ -92,6 +92,15 @@ def main() -> None:
                    frame="ip=0;", init="n=16", which_ch=2, colors=(0xFFFFFF,),
                    drawmode=1)))
 
+    # Waechter fuer die LETZTE Bildspalte (S58/S59): `x=1-2/w` ergibt in DOUBLE
+    # exakt Spalte w-1, ueber float gerundet w-2 — SuperscopePoint::x/y muessen
+    # double bleiben. Pixel-Dots, damit die Spaltenlage hart zaehlt (eine ganze
+    # Spalte daneben laege sonst unter jeder Schwelle der Linien-Metrik).
+    write("1_render/scope_randspalte.avs", preset(
+        GRUND,
+        superscope(point="x=1-2/w; y=i*1.8-0.9; red=1;green=1;blue=1;",
+                   init="n=120", which_ch=2, colors=(0xFFFFFF,), drawmode=0)))
+
 
     # -------------------------------------- 2: Transformatoren auf Referenzbild
     write("2_trans/refbild.avs", preset(REFBILD))            # Nullprobe

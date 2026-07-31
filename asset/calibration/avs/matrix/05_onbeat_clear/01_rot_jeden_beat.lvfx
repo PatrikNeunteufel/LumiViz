@@ -63,10 +63,13 @@
         "type": "superScope"
       },
       {
+        "beatCode": "",
         "blend": false,
         "color": 4194304,
         "enabled": true,
         "everyNBeats": 1,
+        "frameCode": "",
+        "initCode": "",
         "name": "OnBeat Clear",
         "type": "onBeatClear"
       }

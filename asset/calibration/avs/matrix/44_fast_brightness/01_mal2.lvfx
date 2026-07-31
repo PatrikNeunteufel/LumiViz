@@ -19,9 +19,12 @@
         "type": "renderScale"
       },
       {
+        "beatCode": "",
         "blend": 0,
         "color": 2105376,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Clear",
         "onlyFirst": false,
         "type": "clear"
@@ -71,8 +74,11 @@
         "type": "superScope"
       },
       {
+        "beatCode": "",
         "dir": 0,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Fast Brightness",
         "type": "fastBrightness"
       }

@@ -20,6 +20,8 @@
       },
       {
         "angle": -20,
+        "beatCode": "",
+        "camDistance": 400,
         "colors": [
           1862424,
           16714275,
@@ -28,8 +30,11 @@
           1951139
         ],
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Dot Plane",
         "rotVel": 16,
+        "settle": 0.15000000596046448,
         "type": "dotPlane"
       }
     ],

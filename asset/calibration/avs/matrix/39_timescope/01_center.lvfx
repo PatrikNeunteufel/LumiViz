@@ -20,12 +20,16 @@
       },
       {
         "bands": 576,
+        "beatCode": "",
         "blend": 3,
         "channel": 2,
         "color": 16777215,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Timescope",
-        "type": "timescope"
+        "type": "timescope",
+        "useChannel": false
       }
     ],
     "clearEveryFrame": false,

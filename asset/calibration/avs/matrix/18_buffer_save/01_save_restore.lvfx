@@ -19,9 +19,12 @@
         "type": "renderScale"
       },
       {
+        "beatCode": "",
         "blend": 0,
         "color": 2105376,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Clear",
         "onlyFirst": false,
         "type": "clear"
@@ -72,26 +75,35 @@
       },
       {
         "adjustAlpha": 128,
+        "beatCode": "",
         "blend": 1,
         "dir": 0,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Buffer Save",
         "slot": 0,
         "type": "bufferSave"
       },
       {
+        "beatCode": "",
         "blend": 0,
         "color": 0,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Clear",
         "onlyFirst": false,
         "type": "clear"
       },
       {
         "adjustAlpha": 128,
+        "beatCode": "",
         "blend": 1,
         "dir": 1,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Buffer Save",
         "slot": 0,
         "type": "bufferSave"

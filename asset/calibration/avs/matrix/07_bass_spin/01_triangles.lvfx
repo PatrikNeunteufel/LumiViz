@@ -19,13 +19,18 @@
         "type": "renderScale"
       },
       {
+        "beatCode": "",
         "colorLeft": 16744448,
         "colorRight": 33023,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "left": true,
         "mode": 1,
         "name": "Bass Spin",
         "right": true,
+        "smoothing": 0.699999988079071,
+        "spinStep": 0.5235983729362488,
         "type": "bassSpin"
       }
     ],

@@ -63,6 +63,7 @@
         "type": "superScope"
       },
       {
+        "beatCode": "",
         "density": 6,
         "depth": 600,
         "displaceScale": 6,
@@ -70,6 +71,8 @@
         "dropX": 1,
         "dropY": 1,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Water Bump",
         "randomDrop": false,
         "type": "waterBump"

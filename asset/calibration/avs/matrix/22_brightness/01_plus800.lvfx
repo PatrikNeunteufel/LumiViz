@@ -19,9 +19,12 @@
         "type": "renderScale"
       },
       {
+        "beatCode": "",
         "blend": 0,
         "color": 2105376,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Clear",
         "onlyFirst": false,
         "type": "clear"
@@ -71,12 +74,15 @@
         "type": "superScope"
       },
       {
+        "beatCode": "",
         "blue": 800,
         "color": 0,
         "distance": 16,
         "enabled": true,
         "exclude": false,
+        "frameCode": "",
         "green": 800,
+        "initCode": "",
         "name": "Brightness",
         "red": 800,
         "type": "brightness"

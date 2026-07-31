@@ -14,6 +14,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/DialogRegistry.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/EventBus.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/MenuRegistry.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/VideoFrameCache.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PanelRegistry.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualizerRegistry.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/WidgetRegistry.cpp"

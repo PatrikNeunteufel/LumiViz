@@ -19,9 +19,12 @@
         "type": "renderScale"
       },
       {
+        "beatCode": "",
         "blend": 0,
         "color": 2105376,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Clear",
         "onlyFirst": false,
         "type": "clear"
@@ -71,6 +74,7 @@
         "type": "superScope"
       },
       {
+        "beatCode": "",
         "beatFaderB": -8,
         "beatFaderG": -8,
         "beatFaderR": 8,
@@ -78,8 +82,12 @@
         "faderB": -8,
         "faderG": -8,
         "faderR": 8,
+        "frameCode": "",
+        "initCode": "",
         "name": "Colorfade",
         "onBeatFrames": 1,
+        "onBeatRandom": false,
+        "slowFade": false,
         "type": "colorfade"
       }
     ],

@@ -19,11 +19,14 @@
         "type": "renderScale"
       },
       {
+        "beatCode": "",
         "channel": 0,
         "colors": [
           16777215
         ],
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "mode": 0,
         "name": "Simple",
         "position": 0,

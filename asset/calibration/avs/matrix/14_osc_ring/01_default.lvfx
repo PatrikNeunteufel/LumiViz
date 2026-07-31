@@ -19,13 +19,19 @@
         "type": "renderScale"
       },
       {
+        "audioScale": 0.8999999761581421,
+        "baseScale": 0.10000000149011612,
+        "beatCode": "",
         "channel": 0,
         "colors": [
           16777215
         ],
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Ring",
         "position": 0,
+        "segments": 80,
         "size": 10,
         "source": 0,
         "type": "oscRing"

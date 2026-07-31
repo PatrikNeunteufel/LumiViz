@@ -63,8 +63,11 @@
         "type": "superScope"
       },
       {
+        "beatCode": "",
         "blend": false,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Blitter Feedback",
         "onBeat": false,
         "scale": 100,

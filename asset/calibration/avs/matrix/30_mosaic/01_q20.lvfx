@@ -19,9 +19,12 @@
         "type": "renderScale"
       },
       {
+        "beatCode": "",
         "blend": 0,
         "color": 2105376,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Clear",
         "onlyFirst": false,
         "type": "clear"
@@ -71,9 +74,12 @@
         "type": "superScope"
       },
       {
+        "beatCode": "",
         "blend": 0,
         "durationFrames": 15,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Mosaic",
         "onBeat": false,
         "quality": 20,

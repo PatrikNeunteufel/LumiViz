@@ -63,9 +63,12 @@
         "type": "superScope"
       },
       {
+        "beatCode": "",
         "color": 0,
         "enabled": true,
         "fadeLen": 16,
+        "frameCode": "",
+        "initCode": "",
         "name": "Fadeout",
         "type": "fadeout"
       }

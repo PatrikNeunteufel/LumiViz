@@ -19,11 +19,14 @@
         "type": "renderScale"
       },
       {
+        "beatCode": "",
         "beatSpeed": 6,
         "blend": 0,
         "color": 16777215,
         "durationFrames": 15,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "maxStars": 350,
         "name": "Starfield",
         "onBeat": false,

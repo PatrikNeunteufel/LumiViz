@@ -63,11 +63,14 @@
         "type": "superScope"
       },
       {
+        "beatCode": "",
         "beatReverse": false,
         "beatReverseSpeed": 0,
         "beatZoomJump": false,
         "blend": false,
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Roto Blitter",
         "rotDir": 40,
         "subpixel": true,

@@ -42,6 +42,7 @@
 #include "visualizers/render/ScopeRenderer.hpp"
 #include "scripting/ScriptContext.hpp"
 #include "scripting/ScriptSlotHost.hpp"
+#include "services/VideoFrameCache.hpp"
 
 #include <QImage>
 #include <QMatrix4x4>
@@ -268,6 +269,9 @@ private:
         std::string aviPath;           ///< geoeffneter Pfad — Wechsel = neu oeffnen
         int aviWarnedBpp = 0;          ///< bit depth already reported as unsupported
         unsigned int aviTexture = 0;   ///< GL RGBA frame texture (deleted in onCleanup)
+        /// Qt-Multimedia-Fallback (S59): Frame-Cache fuer Codecs, die das
+        /// 64-Bit-VfW nicht dekodiert (Indeo & Co.)
+        std::shared_ptr<lumi::services::VideoFrameCache::Clip> aviClip;
 
         // Texer II / Triangle: EEL point-loop scripts
         std::unique_ptr<lumi::scripting::ScriptSlotHost> texerHost;

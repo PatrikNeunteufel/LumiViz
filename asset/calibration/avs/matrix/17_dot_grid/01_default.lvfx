@@ -19,11 +19,14 @@
         "type": "renderScale"
       },
       {
+        "beatCode": "",
         "blend": 0,
         "colors": [
           4227327
         ],
         "enabled": true,
+        "frameCode": "",
+        "initCode": "",
         "name": "Dot Grid",
         "spacing": 8,
         "type": "dotGrid",
