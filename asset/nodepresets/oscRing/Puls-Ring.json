@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "oscRing",
+        "source": 0,
+        "size": 14,
+        "position": 2
+    }
+}

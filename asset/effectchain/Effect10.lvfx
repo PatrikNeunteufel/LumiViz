@@ -1,0 +1,122 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "blendIn": 0,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "audioChannel": 2,
+                        "beatCode": "k=rand(6)+3",
+                        "colorBlend": 0,
+                        "colorCycleFrames": 60,
+                        "colors": [
+                        ],
+                        "dotSize": 4,
+                        "enabled": true,
+                        "frameCode": "t=t+0.01",
+                        "gradientPreset": "Ocean",
+                        "initCode": "n=360; t=0; pi=acos(-1); k=5",
+                        "lineBlend": 1,
+                        "lineWidth": 2,
+                        "name": "SuperScope",
+                        "pointCode": "th=i*pi*2; r=(0.4+v*0.2)*cos(k*th+t); x=r*cos(th); y=r*sin(th)",
+                        "pointCount": 360,
+                        "renderMode": 1,
+                        "spectrumSource": false,
+                        "type": "superScope"
+                    },
+                    {
+                        "audioGain": 1.0740000009536743,
+                        "bandHi": 14,
+                        "bandLo": 6,
+                        "baseRadius": 0.025568200275301933,
+                        "beatCode": "",
+                        "colors": [
+                            16777215,
+                            11184640,
+                            11162880
+                        ],
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Rotating Stars",
+                        "orbit": 0.8500000238418579,
+                        "points": 5,
+                        "rotSpeed": 0.05000000074505806,
+                        "skip": 2,
+                        "stars": 3,
+                        "type": "rotatingStars"
+                    },
+                    {
+                        "beatCode": "",
+                        "downsample": 2,
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "intensity": 1,
+                        "name": "Bloom",
+                        "post": true,
+                        "radius": 14,
+                        "threshold": 0.05000000074505806,
+                        "type": "bloom",
+                        "vignette": true,
+                        "vignetteStrength": 0.30000001192092896
+                    }
+                ],
+                "clearEveryFrame": true,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "beatCode": "",
+                "blend": 0,
+                "buffern": 2,
+                "depth": 30,
+                "depth2": 100,
+                "durationFrames": 15,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "invert": false,
+                "name": "Bump",
+                "oldStyle": true,
+                "onBeat": true,
+                "type": "bump"
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

@@ -272,6 +272,17 @@ def main() -> None:
         REFBILD, convolution(kernel=[0] * 24 + [-1] + [0] * 24, scale=1, absolute=1)))
     write("2_trans/convolution_zweipass.avs", preset(                # v/2, nicht v/16
         REFBILD, convolution(kernel=KERN_MITTE, scale=4, two_pass=1)))
+    # "wrap" = psubw statt psubusw (S59, JIT-Quelle): die NEGATIV-Verrechnung
+    # laeuft in den 16-bit-Lanes ueber statt zu saettigen. Gemischter Kernel
+    # (+1 Nachbar, -2 Zentrum): wo 2*Zentrum > Nachbar wird pos-neg negativ —
+    # gesaettigt waere das SCHWARZ, gewrappt 65536-x (nach Pack meist weiss).
+    # scale=256 legt die Wrap-KURVE frei: (65536-x)/256 = 256-x/256 faellt mit
+    # der Differenz — saturiert waere es 0, absolute hart 255 (S60).
+    KERN_WRAP = [0] * 23 + [1, -2] + [0] * 24
+    write("2_trans/convolution_wrap_neg.avs", preset(
+        REFBILD, convolution(kernel=KERN_WRAP, scale=1, edge_mode=1)))
+    write("2_trans/convolution_wrap_scale.avs", preset(
+        REFBILD, convolution(kernel=KERN_WRAP, scale=256, edge_mode=1)))
 
     # ------------------------------------------ 3: skriptbare Groessen variiert
     write("3_script/linesize_keil.avs", preset(

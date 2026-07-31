@@ -2965,7 +2965,7 @@
             "felder": [
                 {
                     "art": "zahl",
-                    "default": 0.5,
+                    "default": 1,
                     "name": "amplitude"
                 },
                 {
@@ -3008,7 +3008,7 @@
                 },
                 {
                     "art": "zahl",
-                    "default": 0.019999999552965164,
+                    "default": 0.009999999776482582,
                     "name": "rotScale"
                 },
                 {
@@ -3209,7 +3209,7 @@
             "felder": [
                 {
                     "art": "zahl",
-                    "default": 0.5,
+                    "default": 0.7244318127632141,
                     "name": "audioGain"
                 },
                 {
@@ -3224,7 +3224,7 @@
                 },
                 {
                     "art": "zahl",
-                    "default": 0.11999999731779099,
+                    "default": 0.025568200275301933,
                     "name": "baseRadius"
                 },
                 {
@@ -3262,7 +3262,7 @@
                 },
                 {
                     "art": "zahl",
-                    "default": 0.05000000074505806,
+                    "default": 0.10000000149011612,
                     "name": "rotSpeed"
                 },
                 {

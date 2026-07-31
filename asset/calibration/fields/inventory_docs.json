@@ -5748,13 +5748,13 @@
       "felder": [
         {
           "art": "zahl",
-          "default": 0.5,
+          "default": 1,
           "name": "amplitude",
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.0,
           "hi": 4.0,
-          "doc": "Wellenausschlag, Anteil der Speichenlaenge"
+          "doc": "Faktor auf den Wellenausschlag (Referenz 1)"
         },
         {
           "art": "text",
@@ -5778,7 +5778,7 @@
           "panel": "enum",
           "helfer": "addEnum",
           "enumWerte": 3,
-          "doc": "0 L, 1 R, 2 center"
+          "doc": "0 L, 1 R, 2 center (signed-halbierte Summe wie die Referenz)"
         },
         {
           "art": "liste",
@@ -5828,7 +5828,7 @@
           "panel": "enum",
           "helfer": "addEnum",
           "enumWerte": 3,
-          "doc": "0 left, 1 right, 2 center"
+          "doc": "0 left (w/4), 1 right (3w/4), 2 center"
         },
         {
           "art": "zahl",
@@ -5838,17 +5838,17 @@
           "helfer": "addInt",
           "lo": 0.0,
           "hi": 16.0,
-          "doc": "rotation speed 0..16 (8 = still)"
+          "doc": "rotation speed (r_oscstar: m_r += 0.01*rot; 0 = still)"
         },
         {
           "art": "zahl",
-          "default": 0.019999999552965164,
+          "default": 0.009999999776482582,
           "name": "rotScale",
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.0,
           "hi": 1.0,
-          "doc": "Grad je `rot`-Stufe und Frame (war fest 0,02)"
+          "doc": "Bogenmass je `rot`-Einheit und Frame (Referenz 0,01)"
         },
         {
           "art": "zahl",
@@ -5858,7 +5858,7 @@
           "helfer": "addInt",
           "lo": 0.0,
           "hi": 16.0,
-          "doc": "spoke length 0..16"
+          "doc": "spoke length 0..16 (r_oscstar: s = size/32)"
         },
         {
           "art": "zahl",
@@ -5868,7 +5868,7 @@
           "helfer": "addInt",
           "lo": 1.0,
           "hi": 64.0,
-          "doc": "Zahl der Speichen (war fest 5)"
+          "doc": "Zahl der Speichen (Referenz fest 5)"
         }
       ]
     },
@@ -6196,13 +6196,13 @@
       "felder": [
         {
           "art": "zahl",
-          "default": 0.5,
+          "default": 0.7244318127632141,
           "name": "audioGain",
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.0,
           "hi": 8.0,
-          "doc": "Zuwachs aus der Spektrumsspitze"
+          "doc": "Zuwachs aus der Spektrumsspitze (255/352, s. baseRadius)"
         },
         {
           "art": "zahl",
@@ -6222,17 +6222,17 @@
           "helfer": "addInt",
           "lo": 0.0,
           "hi": 575.0,
-          "doc": "erstes ausgewertetes Spektralband"
+          "doc": "erstes ausgewertetes Spektralband (Lokal-Peak-Suche)"
         },
         {
           "art": "zahl",
-          "default": 0.11999999731779099,
+          "default": 0.025568200275301933,
           "name": "baseRadius",
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.0,
           "hi": 2.0,
-          "doc": "Sterngroesse ohne Audio"
+          "doc": "Sterngroesse ohne Audio, je Achse in NDC. Die Referenz rechnet w/8*(s+9)/88 (r_rotstar:145) = (s+9)/352 in NDC — die Vorgaben 9/352 und 255/352 stellen bei Default exakt diese Formel her (S60)."
         },
         {
           "art": "text",
@@ -6304,7 +6304,7 @@
           "helfer": "addDouble",
           "lo": 0.0,
           "hi": 2.0,
-          "doc": "Abstand vom Bildmittelpunkt (NDC)"
+          "doc": "Abstand vom Bildmittelpunkt (NDC; 0,5 = w/4 wie das Original)"
         },
         {
           "art": "zahl",
@@ -6318,13 +6318,13 @@
         },
         {
           "art": "zahl",
-          "default": 0.05000000074505806,
+          "default": 0.10000000149011612,
           "name": "rotSpeed",
           "panel": "double",
           "helfer": "addDouble",
           "lo": -1.0,
           "hi": 1.0,
-          "doc": "Bahndrehung je Frame (war fest 0,05)"
+          "doc": "Bahndrehung je Frame (r_rotstar: r1 += 0.1)"
         },
         {
           "art": "zahl",

@@ -319,8 +319,10 @@ TEST_SUITE("ChainSerializer")
     TEST_CASE("Default-Vertrag: ein Preset OHNE die S53-Schluessel bleibt beim Alten")
     {
         // Knoten_Parameter_Konzept §2: ein neuer Parameter darf bei Default das
-        // Bild nicht bewegen — also muessen die Vorgaben exakt die frueheren
-        // Literale des Renderers sein, auch beim Laden alter Dateien.
+        // Bild nicht bewegen. S60: die Vorgaben der drei Zeichner sind BEWUSST
+        // auf die AVS-Referenz umgeankert worden (exakte r_rotstar-/r_oscstar-
+        // Ports, Flaechen-Befunde) — der Vertrag pinnt seither die
+        // REFERENZ-Werte, nicht mehr die alten Naeherungs-Literale.
         QJsonObject doc;
         QJsonObject rootObj;
         rootObj["type"] = "list";
@@ -340,16 +342,16 @@ TEST_SUITE("ChainSerializer")
         CHECK(a.points == 5);                              // Pentagramm
         CHECK(a.skip == 2);
         CHECK(a.stars == 2);
-        CHECK(a.rotSpeed == doctest::Approx(0.05f));
+        CHECK(a.rotSpeed == doctest::Approx(0.1f));     // r_rotstar: r1 += 0.1
         CHECK(a.orbit == doctest::Approx(0.5f));
-        CHECK(a.baseRadius == doctest::Approx(0.12f));
-        CHECK(a.audioGain == doctest::Approx(0.5f));
+        CHECK(a.baseRadius == doctest::Approx(9.0f / 352.0f));
+        CHECK(a.audioGain == doctest::Approx(255.0f / 352.0f));
         CHECK(a.bandLo == 3);
         CHECK(a.bandHi == 14);
         const auto& b = std::get<OscStarParams>(r.children[1].params);
         CHECK(b.spokes == 5);
-        CHECK(b.rotScale == doctest::Approx(0.02f));
-        CHECK(b.amplitude == doctest::Approx(0.5f));
+        CHECK(b.rotScale == doctest::Approx(0.01f));    // r_oscstar: 0.01*rot
+        CHECK(b.amplitude == doctest::Approx(1.0f));
         const auto& c = std::get<OscRingParams>(r.children[2].params);
         CHECK(c.segments == 80);
         CHECK(c.baseScale == doctest::Approx(0.1f));

@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "grain",
+        "amount": 40,
+        "staticGrain": false,
+        "blend": 1
+    }
+}

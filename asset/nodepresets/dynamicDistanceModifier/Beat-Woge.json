@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "dynamicDistanceModifier",
+        "initCode": "s=1",
+        "beatCode": "s=1.12",
+        "frameCode": "s=s+(1-s)*0.1",
+        "pixelCode": "d=d*s",
+        "subpixel": true
+    }
+}

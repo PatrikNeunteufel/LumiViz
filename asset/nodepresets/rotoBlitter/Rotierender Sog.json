@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "rotoBlitter",
+        "zoomScale": 28,
+        "zoomScale2": 28,
+        "rotDir": 40,
+        "subpixel": true,
+        "beatReverse": false
+    }
+}

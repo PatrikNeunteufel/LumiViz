@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "movement",
+        "code": "y = (r*6)/($PI); x = d;",
+        "rectCoords": true,
+        "subpixel": true
+    }
+}

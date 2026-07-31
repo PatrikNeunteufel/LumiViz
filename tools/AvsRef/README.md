@@ -38,6 +38,7 @@ tools/AvsRef/build/Release/AvsRef.exe <preset.avs|ordner> [--frames N] [--out DI
 
 | Datei | Änderung |
 |---|---|
+| `r_avi.cpp` | AVI-Vorschub optional auf die virtuelle Frame-Uhr (`--tick-hz`, S60) — `avsref_tick()` statt `GetTickCount()` an 2 Stellen; ohne Schalter Original-Wanduhr |
 | `rlib.h` | Default-Argument an Funktionszeiger entfernt (C2383) |
 | `rlib.cpp` | Aufrufstellen übergeben `NULL` explizit |
 | `bpm.cpp` | `abs((int)…)`-Casts — repliziert VC6-Semantik (nur `abs(int)` existierte) |

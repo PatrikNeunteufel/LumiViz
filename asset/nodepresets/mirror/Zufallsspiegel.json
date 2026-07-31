@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "mirror",
+        "onBeatRandom": true,
+        "smooth": true,
+        "slower": true
+    }
+}

@@ -255,18 +255,18 @@ struct SimpleScopeParams
  */
 struct OscStarParams
 {
-    int channel = 2;   ///< 0 L, 1 R, 2 center
-    int position = 2;  ///< 0 left, 1 right, 2 center
-    int size = 8;      ///< spoke length 0..16
-    int rot = 3;       ///< rotation speed 0..16 (8 = still)
+    int channel = 2;   ///< 0 L, 1 R, 2 center (signed-halbierte Summe wie die Referenz)
+    int position = 2;  ///< 0 left (w/4), 1 right (3w/4), 2 center
+    int size = 8;      ///< spoke length 0..16 (r_oscstar: s = size/32)
+    int rot = 3;       ///< rotation speed (r_oscstar: m_r += 0.01*rot; 0 = still)
     /// Farbtafel (0x00RRGGBB), ueber die Frames durchgeschaltet.
     std::vector<uint32_t> colors{0xFFFFFF};
 
-    // Freigemachte Host-Konstanten (S53). Die Vorgaben SIND die Werte, mit denen
-    // der Effekt bis dahin fest gerechnet hat — Default = unveraendertes Bild.
-    int spokes = 5;          ///< Zahl der Speichen (war fest 5)
-    float rotScale = 0.02f;  ///< Grad je `rot`-Stufe und Frame (war fest 0,02)
-    float amplitude = 0.5f;  ///< Wellenausschlag, Anteil der Speichenlaenge
+    // Freigemachte Host-Konstanten (S53; S60 auf die Referenz geankert —
+    // Default = exakter r_oscstar-Rechenweg).
+    int spokes = 5;          ///< Zahl der Speichen (Referenz fest 5)
+    float rotScale = 0.01f;  ///< Bogenmass je `rot`-Einheit und Frame (Referenz 0,01)
+    float amplitude = 1.0f;  ///< Faktor auf den Wellenausschlag (Referenz 1)
 
     /// Parameter-Skript (Strang D): `size`, `rot`, `spokes`, `rotscale`,
     /// `amplitude` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
@@ -318,11 +318,14 @@ struct RotatingStarsParams
     int points = 5;          ///< Zacken je Stern (war fest 5)
     int skip = 2;            ///< Sprungweite beim Zeichnen; 2 = Pentagramm
     int stars = 2;           ///< Zahl der Sterne auf gegenueberliegenden Bahnen
-    float rotSpeed = 0.05f;  ///< Bahndrehung je Frame (war fest 0,05)
-    float orbit = 0.5f;      ///< Abstand vom Bildmittelpunkt (NDC)
-    float baseRadius = 0.12f;  ///< Sterngroesse ohne Audio
-    float audioGain = 0.5f;    ///< Zuwachs aus der Spektrumsspitze
-    int bandLo = 3;            ///< erstes ausgewertetes Spektralband
+    float rotSpeed = 0.1f;   ///< Bahndrehung je Frame (r_rotstar: r1 += 0.1)
+    float orbit = 0.5f;      ///< Abstand vom Bildmittelpunkt (NDC; 0,5 = w/4 wie das Original)
+    /// Sterngroesse ohne Audio, je Achse in NDC. Die Referenz rechnet
+    /// w/8*(s+9)/88 (r_rotstar:145) = (s+9)/352 in NDC — die Vorgaben 9/352
+    /// und 255/352 stellen bei Default exakt diese Formel her (S60).
+    float baseRadius = 0.0255682f;
+    float audioGain = 0.7244318f;  ///< Zuwachs aus der Spektrumsspitze (255/352, s. baseRadius)
+    int bandLo = 3;            ///< erstes ausgewertetes Spektralband (Lokal-Peak-Suche)
     int bandHi = 14;           ///< erstes NICHT mehr ausgewertetes Band
 
     /// Parameter-Skript (Strang D): rechnet die Regler je Frame aus. Lesbare

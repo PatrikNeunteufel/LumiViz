@@ -1,0 +1,11 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "dynamicShift",
+        "initCode": "x=0;y=0",
+        "beatCode": "x=rand(17)-8;y=rand(17)-8",
+        "frameCode": "x=x*0.8;y=y*0.8",
+        "subpixel": true
+    }
+}

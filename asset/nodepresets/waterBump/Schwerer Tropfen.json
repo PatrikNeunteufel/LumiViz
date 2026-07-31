@@ -1,0 +1,13 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "waterBump",
+        "randomDrop": false,
+        "dropX": 1,
+        "dropY": 1,
+        "dropRadius": 60,
+        "depth": 1200,
+        "density": 4
+    }
+}

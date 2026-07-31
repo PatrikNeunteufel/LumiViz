@@ -438,12 +438,11 @@ einblendbar (Pflichtenheft-Idee, fest beauftragt 2026-07-19).
 
 ## 5. Akzeptanzkriterien
 
-> ⚠ **Nachtrag Session 52:** Die Haken unten stehen sämtlich auf `⬜`, obwohl die
-> Schritte 0–7 seit Session 30 als ✅ gelten und die Sichttests 5.1–5.5 von Patrik
-> abgenommen sind (§0.2.7 im Changelog). Die Tabelle wurde beim Abschluss schlicht
-> nicht nachgezogen — sie ist **kein** Hinweis auf offene Arbeit. Aufräumen
-> (nachträglich abhaken oder streichen) steht in
-> [Offene_Punkte.md](../Offene_Punkte.md) §5.
+> ✅ **Gestrichen als erledigt (Entscheid Patrik, Session 60):** Die Abnahme-Tabellen
+> unten (A1–A8, N1–N7) sind formal geschlossen — die Schritte 0–7 gelten seit
+> Session 30 als ✅, die Sichttests 5.1–5.5 sind von Patrik abgenommen (§0.2.7 im
+> Changelog), die Haken wurden beim Abschluss nur nie nachgezogen. Die `⬜` unten
+> bleiben als Historie stehen und bedeuten KEINE offene Arbeit.
 
 ### 5.1 Funktionale Anforderungen
 

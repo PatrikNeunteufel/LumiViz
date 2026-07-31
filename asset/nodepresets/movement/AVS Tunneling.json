@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "movement",
+        "code": "r = r + 0.04;\nd = d * (0.96 + cos(d * $PI) * 0.05);",
+        "subpixel": true
+    }
+}

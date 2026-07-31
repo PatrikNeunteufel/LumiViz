@@ -95,7 +95,7 @@
         "type": "oscStar",
         "enabled": true,
         "name": "Oscilliscope Star",
-        "initCode": "size = 16; rot = 16; spokes = 64; rotscale = 1.0; amplitude = 4.0"
+        "initCode": "size = 16; rot = 16; spokes = 64; rotscale = 0.029999999329447746; amplitude = 4"
       }
     ],
     "clearEveryFrame": false

@@ -26,7 +26,9 @@ set(NSEEL "${AVS_ROOT}/ns-eel")
 # Render-Kern: Effekte + Liste + Registry + EEL — OHNE main/wnd/draw/cfgwin/
 # render/undo/r_transition (Winamp, DDraw, UI, Transitions)
 set(AVS_SOURCES
-    ${VIS}/r_avi.cpp
+    # r_avi: gepatchte Kopie — AVI-Vorschub optional auf die virtuelle
+    # Frame-Uhr (--tick-hz), sonst Wanduhr und damit unvergleichbar (S60)
+    patched/r_avi.cpp
     ${VIS}/r_blit.cpp
     ${VIS}/r_blur.cpp
     ${VIS}/r_bpm.cpp

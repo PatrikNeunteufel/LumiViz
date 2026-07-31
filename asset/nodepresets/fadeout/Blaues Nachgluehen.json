@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "fadeout",
+        "fadeLen": 6,
+        "color": 40
+    }
+}

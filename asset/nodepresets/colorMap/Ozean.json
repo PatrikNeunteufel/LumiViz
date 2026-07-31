@@ -1,0 +1,19 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "colorMap",
+        "stopPos": [
+            0,
+            90,
+            180,
+            255
+        ],
+        "stopColor": [
+            16,
+            12400,
+            41152,
+            14745599
+        ]
+    }
+}

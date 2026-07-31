@@ -1586,6 +1586,12 @@ void main()
     float curCol = floor(gl_FragCoord.x);
     float curRow = uRes.y - 1.0 - floor(gl_FragCoord.y);
     vec3 sum = vec3(0.0);
+    // Fuer den wrap-Pfad laufen die positiven und negativen Tap-Summen
+    // GETRENNT mit (die MMX-Register mm0/mm1 des Originals); `sum` bleibt in
+    // der alten Reihenfolge akkumuliert, damit der Normal-Pfad byte-identisch
+    // zu den 33 kalibrierten S58-Sonden bleibt.
+    vec3 possum = vec3(0.0);
+    vec3 negsum = vec3(0.0);
     for (int j = 0; j < 7; j++)
         for (int i = 0; i < 7; i++)
         {
@@ -1603,9 +1609,32 @@ void main()
             bool bearbeitet = (cr < curRow) ||
                               (cr == curRow && cc < curCol);
             vec2 uv = vec2((cc + 0.5) / uRes.x, 1.0 - (cr + 0.5) / uRes.y);
-            sum += (bearbeitet ? texture(uProc, uv).rgb
-                               : texture(uTex, uv).rgb) * k;
+            vec3 tap = (bearbeitet ? texture(uProc, uv).rgb
+                                   : texture(uTex, uv).rgb);
+            sum += tap * k;
+            if (k > 0.0) possum += tap * k;
+            else if (k < 0.0) negsum += tap * (-k);
         }
+    // wrap-Arithmetik, an der ORIGINAL-APE vermessen (S60, Sonden
+    // convolution_wrap_neg/_scale + scale-2/4/128-Grenztest):
+    //  - scale == 1: identisch zur Saettigung (Negative -> 0) — der JIT
+    //    emittiert dort keinen Divisionspfad, wrap ist wirkungslos.
+    //  - scale >= 2: lane16 = (pos - neg) mod 65536, dann UNSIGNED-Division
+    //    durch scale (Belege: Untergrund 16: -16 -> 65520/256 = 255;
+    //    Linienpixel -494 -> 65042/256 = 254 — beide exakt getroffen).
+    //  - exklusiv mit `absolute` (Dialog-Regel der APE).
+    //  - bias mit wrap ist UNVERMESSEN; er wird wie im Normal-Pfad vor der
+    //    Division addiert (bias=0 in allen Messfaellen).
+    if (uEdge == 1 && uAbsolute == 0 && uScale > 1.5)
+    {
+        ivec3 p16 = min(ivec3(round(possum * 255.0)), ivec3(65535));
+        ivec3 n16 = min(ivec3(round(negsum * 255.0)), ivec3(65535));
+        ivec3 wr = (p16 - n16) & ivec3(65535);
+        ivec3 qi = (wr + ivec3(int(uBias * 256.0))) / ivec3(int(uScale));
+        if (uTwoPass == 1) qi *= 2;
+        fragColor = vec4(vec3(clamp(qi, ivec3(0), ivec3(255))) / 255.0, 1.0);
+        return;
+    }
     // Die APE rechnet in BYTES und ganzzahlig (gemessen S58, Sonden
     // `2_trans/convolution_*` gegen AvsRef):
     //     x = (summe + bias * 256) / scale      <- Ganzzahl, Richtung Null
@@ -5133,17 +5162,25 @@ void MultiEffectVisualizer::runBlitterFeedback(const ChainNode& node,
     m_feedbackShader->setUniformValue("uRes", QVector2D(static_cast<float>(w),
                                                         static_cast<float>(h)));
     // src laeuft ab 0.5 px ueber das GANZE Bild: sp = dsX*dest + off; die
-    // y-Achse ist im GL-Raum gespiegelt (AVS top-down).
+    // y-Achse ist im GL-Raum gespiegelt (AVS top-down). Der y-Anker ist
+    // h-0.5 (NICHT h-1.5): gesampelt werden soll GL-Zeile
+    // h-1-floor(0.5+dsX*k), und floor((h-0.5)-dsX*k) liefert genau das —
+    // mit h-1.5 lag JEDE Quellzeile eine AVS-Zeile zu tief, und der Fehler
+    // stapelte sich ueber die Feedback-Kaskade (S60, Deckung 0,72).
     const float m[4] = {dsX, 0.0f, 0.0f, dsX};
     m_feedbackShader->setUniformValue("uMap", QMatrix2x2(m));
     m_feedbackShader->setUniformValue(
         "uOff",
         QVector2D(0.5f - dsX * static_cast<float>(startX),
-                  (static_cast<float>(h) - 1.5f) -
+                  (static_cast<float>(h) - 0.5f) -
                       dsX * static_cast<float>(h - 1 - startY)));
     m_feedbackShader->setUniformValue("uWrap", false);
     m_feedbackShader->setUniformValue("uBlend", params.blend);
-    m_feedbackShader->setUniformValue("uSubpixel", params.subpixel);
+    // blitter_out sampelt IMMER nearest (r_blit.cpp:143 — `src[s_x>>16]`,
+    // kein BLEND4-Pfad): der `subpixel`-Schalter wirkt nur im Zoom-IN
+    // (blitter_normal). Unser Bilinear hier war die konstante Kanten-
+    // Differenz der Matrix-Zeile 04 (S60, MAE 0,023 ab Frame 2).
+    m_feedbackShader->setUniformValue("uSubpixel", false);
     m_feedbackShader->setUniformValue("uTex", 0);
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_feedbackShader->release();
@@ -7302,12 +7339,17 @@ void MultiEffectVisualizer::runAvi(const ChainNode& node, const AviParams& param
     // aber nur mit der Skript-Uhr sind zwei Laeufe bit-identisch — dieselbe
     // Entscheidung wie bei gettime() (Feld-Sonden-Grundlage).
     const std::int64_t now = static_cast<std::int64_t>(m_scriptClock * 1000.0);
+    // KEIN Sofort-Start bei fehlender Textur: die Referenz zeigt bis zum
+    // ersten Gate-Ablauf (tick >= lastspeed+speed, lastspeed startet 0) ihr
+    // leeres old_image — wir zuendeten Frame 0 sofort und liefen dauerhaft
+    // EINEN Video-Frame vor (S60, Gate-Sonden: speed=0 exakt, 100/400 je
+    // MAE 0,18 konstant). Vor dem ersten Advance zeichnet der Knoten nichts
+    // (bewusste Naeherung: ref memcpy't dort ein nie beschriebenes Bild).
     if (rt.aviGetFrame == nullptr)
     {
         // Frames aus dem Qt-Decode-Cache (RGBX8888, top-down)
         const auto& frames = rt.aviClip->frames;
-        if (rt.aviTexture == 0 ||
-            now - rt.aviLastMs >= static_cast<std::int64_t>(params.speedMs))
+        if (now - rt.aviLastMs >= static_cast<std::int64_t>(params.speedMs))
         {
             rt.aviLastMs = now;
             rt.aviFrameIndex %= static_cast<int>(frames.size());
@@ -7327,8 +7369,7 @@ void MultiEffectVisualizer::runAvi(const ChainNode& node, const AviParams& param
                             0, GL_RGBA, GL_UNSIGNED_BYTE, img.constBits());
         }
     }
-    else if (rt.aviTexture == 0 ||
-             now - rt.aviLastMs >= static_cast<std::int64_t>(params.speedMs))
+    else if (now - rt.aviLastMs >= static_cast<std::int64_t>(params.speedMs))
     {
         rt.aviLastMs = now;
         rt.aviFrameIndex %= std::max(1, rt.aviLength);
@@ -7847,16 +7888,15 @@ void MultiEffectVisualizer::runTriangle(const ChainNode& node, const TrianglePar
 
 void MultiEffectVisualizer::runOscStar(const ChainNode& node, const OscStarParams& params)
 {
+    // S60: exakter r_oscstar-Port (Flaechen-Befund S59 — Deckung 0,02).
+    // Vorher malte hier eine freie Naeherung 576 Punkte je Arm; die Referenz
+    // laeuft 64 Schritte je Arm mit FORTLAUFENDEM Byte-Index ueber die Arme,
+    // der dfactor-Huellkurve 1/1024 → ~1/128 und getrennten (int)-Casts.
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     const QVector3D c = colorToVec(cycleScopeColor(params.colors, rt.scopeColorPos));
-    // `channel` wurde bis S57 nicht gelesen — der Knoten nahm immer die Mitte
-    // (`getWaveform()`), und die Feld-Sonde stand mit MAE 0,0000 als stumm da.
-    const std::vector<float> wave = waveOfChannel(params.channel);
-    const int n = static_cast<int>(wave.size());
-    if (n < 2) return;
 
-    // S53: `rotScale`, `spokes` und `amplitude` waren Literale (0,02 · 5 · 0,5).
-    // Strang D rechnet sie optional je Frame — auf einer Frame-Kopie.
+    // S53: `rotScale`, `spokes` und `amplitude` waren Literale; Strang D
+    // rechnet sie optional je Frame — auf einer Frame-Kopie.
     double vSize = params.size, vRot = params.rot, vSpokes = params.spokes;
     double vRotScale = params.rotScale, vAmp = params.amplitude;
     runParamScript(rt, "oscstar", params.initCode, params.frameCode, params.beatCode,
@@ -7866,51 +7906,114 @@ void MultiEffectVisualizer::runOscStar(const ChainNode& node, const OscStarParam
                     {"rotscale", &vRotScale},
                     {"amplitude", &vAmp}});
 
-    rt.scopeRot += static_cast<float>((vRot - 8.0) * vRotScale);  // 8 = still
-    const float len = std::clamp(static_cast<int>(vSize), 0, 16) / 16.0f;
-    const float cx = params.position == 0 ? -0.5f : (params.position == 1 ? 0.5f : 0.0f);
-    const float aspect = m_surfaceHeight > 0
-                             ? static_cast<float>(m_surfaceWidth) / static_cast<float>(m_surfaceHeight)
-                             : 1.0f;
-    const int spokes = std::clamp(static_cast<int>(vSpokes), 1, 64);
+    const int w = m_surfaceWidth;
+    const int h = m_surfaceHeight;
+    if (w < 2 || h < 2) return;
 
+    // Waveform-Bytes wie die Referenz (visdata[1][ch]); "Mitte" ist die
+    // SIGNED-halbierte Summe beider Kanaele (char-Arithmetik, wie r_simple).
+    const int which = std::clamp(params.channel, 0, 2);
+    unsigned char center[576];
+    const unsigned char* fa;
+    if (which >= 2)
+    {
+        const unsigned char* lc = visWaveform(0);
+        const unsigned char* rc = visWaveform(1);
+        for (int i = 0; i < 576; ++i)
+            center[i] = static_cast<unsigned char>(static_cast<char>(
+                static_cast<char>(lc[i]) / 2 + static_cast<char>(rc[i]) / 2));
+        fa = center;
+    }
+    else
+    {
+        fa = visWaveform(which);
+    }
+
+    // r_oscstar:148-160: s = size/32, is = min(h*s, w*s) — GANZZAHLIG.
+    const double sz = std::clamp(static_cast<int>(vSize), 0, 16) / 32.0;
+    const int is = std::min(static_cast<int>(h * sz), static_cast<int>(w * sz));
+    int cX = w / 2;
+    if (params.position == 0) cX = w / 4;
+    else if (params.position == 1) cX = w / 2 + w / 4;
+
+    const int spokes = std::clamp(static_cast<int>(vSpokes), 1, 64);
+    int ii = 0;
     for (int q = 0; q < spokes; ++q)
     {
-        const float ang = rt.scopeRot + static_cast<float>(q) *
-                                            (2.0f * 3.14159f / static_cast<float>(spokes));
-        const float dx = std::cos(ang);
-        const float dy = std::sin(ang);
+        const double ang = static_cast<double>(rt.scopeRot) +
+                           static_cast<double>(q) *
+                               (3.14159 * 2.0 / static_cast<double>(spokes));
+        const double sa = std::sin(ang);
+        const double ca = std::cos(ang);
+        double p = 0.0;
+        int lx = cX;
+        int ly = h / 2;
+        const double dp = static_cast<double>(is) / 64.0;
+        const double hw = is;
+        double dfactor = 1.0 / 1024.0;
         std::vector<lumi::modules::SuperscopePoint> pts;
-        pts.reserve(static_cast<std::size_t>(n));
-        for (int i = 0; i < n; ++i)
+        pts.reserve(65);
+        const auto push = [&](int px, int py, bool skip) {
+            lumi::modules::SuperscopePoint pt;
+            pt.x = (static_cast<double>(px) + 0.5) /
+                       static_cast<double>(w) * 2.0 - 1.0;
+            pt.y = -((static_cast<double>(py) + 0.5) /
+                         static_cast<double>(h) * 2.0 - 1.0);
+            pt.r = c.x();
+            pt.g = c.y();
+            pt.b = c.z();
+            pt.a = 1.0f;
+            pt.skip = skip;
+            pts.push_back(pt);
+        };
+        push(lx, ly, false);
+        for (int t = 0; t < 64; ++t)
         {
-            const float t = static_cast<float>(i) / static_cast<float>(n - 1);
-            const float rad = t * len;
-            const float off =
-                wave[static_cast<std::size_t>(i)] * len * static_cast<float>(vAmp);
-            lumi::modules::SuperscopePoint p;
-            p.x = cx + (dx * rad - dy * off) / aspect;  // reduce x/y ellipse distortion
-            p.y = dy * rad + dx * off;
-            p.r = c.x();
-            p.g = c.y();
-            p.b = c.z();
-            p.a = 1.0f;
-            pts.push_back(p);
+            const double ale =
+                ((fa[ii % 576] ^ 128) - 128) * dfactor * hw * vAmp;
+            ++ii;
+            const int x = cX + static_cast<int>(ca * p) -
+                          static_cast<int>(sa * ale);
+            const int y = h / 2 + static_cast<int>(sa * p) +
+                          static_cast<int>(ca * ale);
+            // r_oscstar:209-213 — gezeichnet wird nur, wenn EIN Endpunkt im
+            // Bild liegt; die Kette laeuft trotzdem weiter (skip = Segment aus).
+            const bool draw = (x >= 0 && x < w && y >= 0 && y < h) ||
+                              (lx >= 0 && lx < w && ly >= 0 && ly < h);
+            push(x, y, !draw);
+            lx = x;
+            ly = y;
+            p += dp;
+            dfactor -= ((1.0 / 1024.0) - (1.0 / 128.0)) / 64.0;
         }
-        drawScopeShape(pts, false);
+        // Exakter linedraw-Weg auch bei Breite 1 (wie Rotating Stars, S60).
+        if (m_scopeRenderer.ready() && pts.size() >= 2)
+        {
+            auto* f = QOpenGLContext::currentContext()->functions();
+            f->glEnable(GL_BLEND);
+            applyLineBlend(m_renderMode.lineBlend, m_renderMode.alpha);
+            lumi::render::ScopeRenderer::Params rp;
+            rp.mode = lumi::modules::SuperscopeRenderMode::ThickLines;
+            rp.lineWidth = (m_renderMode.set && m_renderMode.lineWidth > 0)
+                               ? static_cast<float>(m_renderMode.lineWidth)
+                               : 1.0f;
+            rp.dotSize = 1.0f;
+            rp.glowEnabled = false;
+            m_scopeRenderer.draw(pts, rp);
+            resetLineBlend();
+        }
     }
+
+    // r_oscstar:222-224 — NACH dem Zeichnen, mit 2π-Umbruch (Literal 3.14159).
+    rt.scopeRot += static_cast<float>(vRot * vRotScale);
+    if (rt.scopeRot >= static_cast<float>(3.14159 * 2.0))
+        rt.scopeRot -= static_cast<float>(3.14159 * 2.0);
 }
 
 void MultiEffectVisualizer::runOscRing(const ChainNode& node, const OscRingParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     const QVector3D c = colorToVec(cycleScopeColor(params.colors, rt.scopeColorPos));
-    // Wie Osc Star: `channel` blieb bis S57 ungelesen (Sonde stumm, 0,0000).
-    const std::vector<float> data = params.source == 0
-                                        ? waveOfChannel(params.channel)
-                                        : specOfChannel(params.channel);
-    const int n = static_cast<int>(data.size());
-    if (n < 2) return;
 
     // Strang D auf einer Frame-Kopie (s. Osc Star).
     double vSize = params.size, vSeg = params.segments;
@@ -7921,35 +8024,113 @@ void MultiEffectVisualizer::runOscRing(const ChainNode& node, const OscRingParam
                     {"basescale", &vBase},
                     {"audioscale", &vAudio}});
 
-    const float rad0 = std::clamp(static_cast<int>(vSize), 0, 16) / 16.0f;
-    const float cx = params.position == 0 ? -0.5f : (params.position == 1 ? 0.5f : 0.0f);
-    const float aspect = m_surfaceHeight > 0
-                             ? static_cast<float>(m_surfaceWidth) / static_cast<float>(m_surfaceHeight)
-                             : 1.0f;
+    // S60: exakter r_oscring-Port (Flaechen-Befund S59 — Deckung 0).
+    // Quelle: source 0 = Waveform (visdata[1]), 1 = Spektrum (visdata[0]);
+    // "Mitte" ist die SIGNED-halbierte Summe beider Kanaele.
+    const int w = m_surfaceWidth;
+    const int h = m_surfaceHeight;
+    if (w < 2 || h < 2) return;
+    const bool spectrum = params.source != 0;
+    const auto bank = [&](int ch) {
+        return spectrum ? visSpectrum(ch) : visWaveform(ch);
+    };
+    const int which = std::clamp(params.channel, 0, 2);
+    unsigned char center[576];
+    const unsigned char* fa;
+    if (which >= 2)
+    {
+        const unsigned char* lc = bank(0);
+        const unsigned char* rc = bank(1);
+        for (int i = 0; i < 576; ++i)
+            center[i] = static_cast<unsigned char>(static_cast<char>(
+                static_cast<char>(lc[i]) / 2 + static_cast<char>(rc[i]) / 2));
+        fa = center;
+    }
+    else
+    {
+        fa = bank(which);
+    }
 
-    // S53: Segmentzahl und die beiden Radius-Anteile waren fest (80 · 0,1 · 0,9).
-    const int seg = std::clamp(static_cast<int>(vSeg), 3, 1024);
+    // r_oscring:147-163: s = size/32, is = min(h*s, w*s) als DOUBLE (kein
+    // Zwischencast — anders als Osc Star!), Zentrum (c_x, h/2).
+    const double sz = std::clamp(static_cast<int>(vSize), 0, 16) / 32.0;
+    const double is = std::min(static_cast<double>(h) * sz,
+                               static_cast<double>(w) * sz);
+    int cX = w / 2;
+    if (params.position == 0) cX = w / 4;
+    else if (params.position == 1) cX = w / 2 + w / 4;
+    const int cY = h / 2;
+
+    // Radius-Modulation (r_oscring:169/187): Spiegel-Index q>seg/2 → seg-q;
+    // Waveform: 0,1 + ((byte^128)/255)*0,9 · Spektrum: 0,1 + ((b0/2+b1/2)/255)*0,9
+    // (UNSIGNED Halbierung). Die Anteile 0,1/0,9 sind die S53-Parameter.
+    const int seg = std::clamp(static_cast<int>(vSeg), 4, 512);
+    const auto scaAt = [&](int q) {
+        const int idx = q > seg / 2 ? seg - q : q;
+        int v;
+        if (!spectrum)
+        {
+            v = fa[(idx % 576)] ^ 128;
+        }
+        else
+        {
+            const int i2 = (idx * 2) % 575;
+            v = fa[i2] / 2 + fa[i2 + 1] / 2;
+        }
+        return vBase + (static_cast<double>(v) / 255.0) * vAudio;
+    };
+
+    // Vertizes: EIN impliziter (int)-Cast ueber die ganze Summe
+    // (`lx=c_x+(cos(a)*is*sca)` — r_oscring:176/189), Winkel laeuft NEGATIV.
     std::vector<lumi::modules::SuperscopePoint> pts;
     pts.reserve(static_cast<std::size_t>(seg) + 1);
-    for (int q = 0; q <= seg; ++q)
-    {
-        const float a = -static_cast<float>(q) *
-                        (2.0f * 3.14159f / static_cast<float>(seg));
-        const int idx = std::clamp((q % seg) * (n - 1) / seg, 0, n - 1);
-        const float sca = static_cast<float>(vBase) +
-                          std::abs(data[static_cast<std::size_t>(idx)]) *
-                              static_cast<float>(vAudio);
-        const float rr = rad0 * sca;
+    const auto push = [&](int px, int py, bool skip) {
         lumi::modules::SuperscopePoint p;
-        p.x = cx + std::cos(a) * rr / aspect;
-        p.y = std::sin(a) * rr;
+        p.x = (static_cast<double>(px) + 0.5) / static_cast<double>(w) * 2.0 - 1.0;
+        p.y = -((static_cast<double>(py) + 0.5) / static_cast<double>(h) * 2.0 - 1.0);
         p.r = c.x();
         p.g = c.y();
         p.b = c.z();
         p.a = 1.0f;
+        p.skip = skip;
         pts.push_back(p);
+    };
+    double a = 0.0;
+    double sca = scaAt(0);
+    int lx = static_cast<int>(static_cast<double>(cX) + std::cos(a) * is * sca);
+    int ly = static_cast<int>(static_cast<double>(cY) + std::sin(a) * is * sca);
+    push(lx, ly, false);
+    for (int q = 1; q <= seg; ++q)
+    {
+        a -= 3.14159 * 2.0 / static_cast<double>(seg);
+        sca = scaAt(q);
+        const int tx =
+            static_cast<int>(static_cast<double>(cX) + std::cos(a) * is * sca);
+        const int ty =
+            static_cast<int>(static_cast<double>(cY) + std::sin(a) * is * sca);
+        // r_oscring:206-210 — Segment nur, wenn EIN Endpunkt im Bild liegt.
+        const bool draw = (tx >= 0 && tx < w && ty >= 0 && ty < h) ||
+                          (lx >= 0 && lx < w && ly >= 0 && ly < h);
+        push(tx, ty, !draw);
+        lx = tx;
+        ly = ty;
     }
-    drawScopeShape(pts, false);
+    // Exakter linedraw-Weg auch bei Breite 1 (wie Rotating Stars, S60).
+    if (m_scopeRenderer.ready() && pts.size() >= 2)
+    {
+        auto* f = QOpenGLContext::currentContext()->functions();
+        f->glEnable(GL_BLEND);
+        applyLineBlend(m_renderMode.lineBlend, m_renderMode.alpha);
+        lumi::render::ScopeRenderer::Params rp;
+        rp.mode = lumi::modules::SuperscopeRenderMode::ThickLines;
+        rp.lineWidth = (m_renderMode.set && m_renderMode.lineWidth > 0)
+                           ? static_cast<float>(m_renderMode.lineWidth)
+                           : 1.0f;
+        rp.dotSize = 1.0f;
+        rp.glowEnabled = false;
+        m_scopeRenderer.draw(pts, rp);
+        resetLineBlend();
+    }
 }
 
 void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
@@ -8038,13 +8219,13 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
 void MultiEffectVisualizer::runRotatingStars(const ChainNode& node,
                                              const RotatingStarsParams& params)
 {
-    // S53: die frueheren Literale sind Parameter geworden. Ihre Vorgaben SIND
-    // die alten Werte (points=5, skip=2, stars=2, rotSpeed=0,05, orbit=0,5,
-    // baseRadius=0,12, audioGain=0,5, Baender 3..13) — bei Default rechnet die
-    // Funktion Schritt fuer Schritt dasselbe wie vorher.
+    // S53: die frueheren Literale sind Parameter geworden. S60: der Rechenweg
+    // ist der EXAKTE r_rotstar-Port (Flaechen-Befund S59 — die Referenz malt
+    // WINZIGE Sterne): Groesse aus dem groessten LOKALEN Peak der rohen
+    // visdata-Bytes je Kanal, Vertizes ueber die (int)-Kaskade der Referenz,
+    // gezeichnet mit der aktuellen Rotation, Inkrement DANACH (r1 startet 0).
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     const QVector3D c = colorToVec(cycleScopeColor(params.colors, rt.scopeColorPos));
-    const std::vector<float> spec = getSpectrum();
 
     // Strang D: das Skript rechnet auf einer FRAME-KOPIE — das Preset selbst
     // bleibt unberuehrt, sonst waeren die Regler nach einem Frame verstellt.
@@ -8060,47 +8241,120 @@ void MultiEffectVisualizer::runRotatingStars(const ChainNode& node,
                     {"baseradius", &vBase},
                     {"audiogain", &vGain}});
 
-    rt.scopeRot += static_cast<float>(vRotSpeed);
+    const int w = m_surfaceWidth;
+    const int h = m_surfaceHeight;
+    if (w < 2 || h < 2) return;
 
     const int points = std::clamp(static_cast<int>(vPoints), 2, 64);
     const int skip = std::clamp(static_cast<int>(vSkip), 1, std::max(1, points - 1));
     const int stars = std::clamp(static_cast<int>(vStars), 1, 16);
-    const int lo = std::clamp(params.bandLo, 0, 575);
-    const int hi = std::clamp(params.bandHi, lo + 1, 576);
+    // Lokal-Peak-Suche braucht die Nachbarn l-1/l+1 (r_rotstar liest 2..14).
+    const int lo = std::clamp(params.bandLo, 1, 574);
+    const int hi = std::clamp(params.bandHi, lo + 1, 575);
 
-    float peak = 0.0f;
-    for (int l = lo; l < hi && l < static_cast<int>(spec.size()); ++l)
-        peak = std::max(peak, spec[static_cast<std::size_t>(l)]);
-    // Der aeussere Faktor 0,5 des Originals steckt jetzt in den Vorgaben.
-    const float vw = (peak * static_cast<float>(vGain) +
-                      static_cast<float>(vBase)) * 0.5f;
-
+    int aPx0 = 0, bPx0 = 0;
     for (int ch = 0; ch < stars; ++ch)
     {
-        // Zwei Sterne standen sich gegenueber; bei mehr verteilen sie sich
-        // gleichmaessig auf derselben Bahn (bei stars=2 identisch zu vorher).
-        const float phase = rt.scopeRot + static_cast<float>(ch) * 6.2831853f /
-                                              static_cast<float>(stars);
-        const float bx = std::cos(phase) * static_cast<float>(vOrbit);
-        const float by = std::sin(phase) * static_cast<float>(vOrbit);
-        float r2 = -rt.scopeRot;
+        // r_rotstar:136-140 — visdata ist char[]: die Bytes werden SIGNED
+        // verglichen, Werte ueber 127 sind negativ und heben s nie
+        // (Original-Quirk). Ein Peak zaehlt nur, wenn er BEIDE Nachbarn um
+        // mehr als 4 uebersteigt. Stern 0 = linker, Stern 1 = rechter Kanal.
+        const unsigned char* raw = visSpectrum(ch & 1);
+        int s = 0;
+        for (int l = lo; l < hi; ++l)
+        {
+            const int v = static_cast<signed char>(raw[l]);
+            if (v > s && v > static_cast<signed char>(raw[l + 1]) + 4 &&
+                v > static_cast<signed char>(raw[l - 1]) + 4)
+                s = v;
+        }
+        // Groesse je Achse (r_rotstar:145-146): w/8*(s+9)/88 bzw. h/8*…,
+        // in NDC (s+9)/352 — bei den Vorgaben 9/352 + 255/352*(s/255) exakt.
+        const double size = vBase + vGain * (static_cast<double>(s) / 255.0);
+        const double vwPx = size * (static_cast<double>(w) * 0.5);
+        const double vhPx = size * (static_cast<double>(h) * 0.5);
+
+        // Bahnposition: a=(int)(cos(r1)*w/4), b=(int)(sin(r1)*h/4); Stern 2
+        // negiert die fertigen INTS (r_rotstar:142) — nicht den Winkel, sonst
+        // kann die Truncation um 1 px auseinanderlaufen. Ab drei Sternen
+        // (LumiViz-Erweiterung) verteilen sich die Bahnwinkel gleichmaessig.
+        int aPx, bPx;
+        if (stars == 2 && ch == 1)
+        {
+            aPx = -aPx0;
+            bPx = -bPx0;
+        }
+        else
+        {
+            const double phase = static_cast<double>(rt.scopeRot) +
+                                 static_cast<double>(ch) * 6.283185307179586 /
+                                     static_cast<double>(stars);
+            aPx = static_cast<int>(std::cos(phase) * vOrbit *
+                                   (static_cast<double>(w) * 0.5));
+            bPx = static_cast<int>(std::sin(phase) * vOrbit *
+                                   (static_cast<double>(h) * 0.5));
+            if (ch == 0) { aPx0 = aPx; bPx0 = bPx; }
+        }
+
+        // Pentagramm-Lauf (r_rotstar:148-164): Start bei -r1, Schritt
+        // 3.14159*2*skip/points (Original-Literal, skip=2/points=5 → 4π/5).
+        // RUNDUNGS-EIGENHEIT der Referenz: der ERSTE Eckpunkt entsteht als
+        // w/2+a+(int)(cos*vw) — getrennte Casts, trunc Richtung 0 —, die
+        // SCHLEIFEN-Eckpunkte als (int)(cos*vw + w/2 + a) — EIN Cast ueber
+        // die positive Summe, also floor. Bei negativem cos*vw liegen beide
+        // um 1 px auseinander; der Stern ist so klein, dass das die halbe
+        // Silhouette verschiebt (S60, Pixelvergleich).
+        const double step = 3.14159 * 2.0 * static_cast<double>(skip) /
+                            static_cast<double>(points);
+        double r2 = -static_cast<double>(rt.scopeRot);
         std::vector<lumi::modules::SuperscopePoint> pts;
         pts.reserve(static_cast<std::size_t>(points) + 1);
-        for (int t = 0; t <= points; ++t)
-        {
+        const auto push = [&](int px, int py) {
             lumi::modules::SuperscopePoint p;
-            p.x = bx + std::cos(r2) * vw;
-            p.y = by + std::sin(r2) * vw;
+            p.x = (static_cast<double>(px) + 0.5) /
+                      static_cast<double>(w) * 2.0 - 1.0;
+            p.y = -((static_cast<double>(py) + 0.5) /
+                        static_cast<double>(h) * 2.0 - 1.0);
             p.r = c.x();
             p.g = c.y();
             p.b = c.z();
             p.a = 1.0f;
             pts.push_back(p);
-            r2 += 3.14159f * 2.0f * static_cast<float>(skip) /
-                  static_cast<float>(points);  // skip=2 → Pentagramm
+        };
+        push(w / 2 + aPx + static_cast<int>(std::cos(r2) * vwPx),
+             h / 2 + bPx + static_cast<int>(std::sin(r2) * vhPx));
+        r2 += step;
+        for (int t = 0; t < points; ++t)
+        {
+            push(static_cast<int>(std::cos(r2) * vwPx +
+                                  static_cast<double>(w / 2 + aPx)),
+                 static_cast<int>(std::sin(r2) * vhPx +
+                                  static_cast<double>(h / 2 + bPx)));
+            r2 += step;
         }
-        drawScopeShape(pts, false);
+        // NICHT drawScopeShape (duenne GL-Linien): die 2-7-px-Segmente der
+        // Sternchen rastern per GL-Linie anders als linedraw.cpp — nur der
+        // renderThickLines-Bresenham-Port trifft die Referenz auch bei
+        // Breite 1 (S60; Breite kommt wie bei line() aus dem SRM).
+        if (m_scopeRenderer.ready() && pts.size() >= 2)
+        {
+            auto* f = QOpenGLContext::currentContext()->functions();
+            f->glEnable(GL_BLEND);
+            applyLineBlend(m_renderMode.lineBlend, m_renderMode.alpha);
+            lumi::render::ScopeRenderer::Params rp;
+            rp.mode = lumi::modules::SuperscopeRenderMode::ThickLines;
+            rp.lineWidth = (m_renderMode.set && m_renderMode.lineWidth > 0)
+                               ? static_cast<float>(m_renderMode.lineWidth)
+                               : 1.0f;
+            rp.dotSize = 1.0f;
+            rp.glowEnabled = false;
+            m_scopeRenderer.draw(pts, rp);
+            resetLineBlend();
+        }
     }
+
+    // r_rotstar:166 — NACH dem Zeichnen; der erste Frame malt mit r1 = 0.
+    rt.scopeRot += static_cast<float>(vRotSpeed);
 }
 
 void MultiEffectVisualizer::runColorClip(const ChainNode& node,
@@ -8639,13 +8893,17 @@ void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
                           (1024.0f / static_cast<float>(radius));
     const auto setzeBlob = [&](QOpenGLShaderProgram& sh) {
         sh.setUniformValue("uDrop", drop);
-        sh.setUniformValue("uDropPos", QPoint(dropX, dropY));
-        // ivec4 hat in QOpenGLShaderProgram keinen 4-Int-Overload
+        // ivec2/ivec4 IMMER ueber glUniform*i setzen: QPoint laedt Qt als
+        // FLOAT-vec2 (glUniform2fv) hoch — auf einem ivec2 ist das ein stiller
+        // GL-Fehler und die Uniform bleibt (0,0). Genau so war der ganze
+        // Knoten ein bit-exakter Passthrough (Feld-Vollauf S60, 10x STUMM).
+        f->glUniform2i(sh.uniformLocation("uDropPos"), dropX, dropY);
         f->glUniform4i(sh.uniformLocation("uDropClip"), cl, ct, cr, cb);
         sh.setUniformValue("uDropRad2", radius * radius);
         sh.setUniformValue("uDropHeight", -static_cast<int>(vDepth));
         sh.setUniformValue("uDropLen", dropLen);
-        sh.setUniformValue("uResI", QPoint(m_surfaceWidth, m_surfaceHeight));
+        f->glUniform2i(sh.uniformLocation("uResI"), m_surfaceWidth,
+                       m_surfaceHeight);
     };
 
     // --- 1. Displacement mit der AKTUELLEN Seite (Reihenfolge der Referenz:
@@ -10222,10 +10480,14 @@ void MultiEffectVisualizer::runDotGrid(const ChainNode& node, const DotGridParam
         {
             lumi::modules::SuperscopePoint p;
             // Pixel-MITTE, damit der Punkt genau dieses eine Pixel trifft.
+            // y NEGIERT: avsZeile() erwartet GL-Raum (y+ oben), py ist eine
+            // AVS-Zeile von oben — ohne Spiegelung stand das Gitter auf
+            // h-1-py und traf bei spacing 8 NIE die Referenzzeilen (die
+            // dMean-Metrik sah das nicht, erst das Flaechen-Urteil; S60).
             p.x = (static_cast<float>(px) + 0.5f) /
                       static_cast<float>(m_surfaceWidth) * 2.0f - 1.0f;
-            p.y = (static_cast<float>(py) + 0.5f) /
-                      static_cast<float>(m_surfaceHeight) * 2.0f - 1.0f;
+            p.y = -((static_cast<float>(py) + 0.5f) /
+                        static_cast<float>(m_surfaceHeight) * 2.0f - 1.0f);
             p.r = col.x(); p.g = col.y(); p.b = col.z(); p.a = 1.0f;
             pts.push_back(p);
         }

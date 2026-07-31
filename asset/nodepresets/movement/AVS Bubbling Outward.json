@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "movement",
+        "code": "t = sin(d * $PI);\nd = d - (8*t*t*t*t*t)/sqrt((sw*sw+sh*sh)/4);",
+        "subpixel": true
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "dotGrid",
+        "spacing": 4,
+        "xMove": -192,
+        "yMove": 64,
+        "blend": 1
+    }
+}

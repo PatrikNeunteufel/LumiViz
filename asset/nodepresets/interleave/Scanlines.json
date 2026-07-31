@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "interleave",
+        "x": 0,
+        "y": 1,
+        "color": 0,
+        "onBeat": false,
+        "blend": 0
+    }
+}

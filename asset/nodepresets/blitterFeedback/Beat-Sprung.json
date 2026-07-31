@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "blitterFeedback",
+        "scale": 34,
+        "scale2": 16,
+        "onBeat": true,
+        "blend": false,
+        "subpixel": true
+    }
+}

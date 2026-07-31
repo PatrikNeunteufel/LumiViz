@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "rotatingStars",
+        "stars": 6,
+        "rotSpeed": 0.05,
+        "orbit": 0.6
+    }
+}

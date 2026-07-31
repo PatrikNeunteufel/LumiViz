@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "bump",
+        "initCode": "t=0",
+        "frameCode": "t=t+0.05;x=0.5+0.35*cos(t);y=0.5+0.35*sin(t)",
+        "depth": 30,
+        "onBeat": false,
+        "oldStyle": false
+    }
+}

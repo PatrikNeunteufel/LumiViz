@@ -472,7 +472,14 @@ GRUNDKONFIG: dict[str, dict] = {
     # Convolution: mit dem Identitaets-Kern (Vorgabe) bleibt das Bild gleich —
     # Betrag, Randart und Doppelanwendung koennen dann nichts zeigen.
     **{f"convolution.{f}": {"kernel": [0]*16 + [0, -1, 0] + [0]*4 + [-1, 4, -1] + [0]*4 + [0, -1, 0] + [0]*16}
-       for f in ("absolute", "twoPass", "edgeMode")},
+       for f in ("absolute", "twoPass")},
+    # edgeMode ("wrap") = psubw statt psubusw — wirkt NUR bei scale >= 2 (bei
+    # scale 1 emittiert der Original-JIT keinen Divisionspfad und wrap ist
+    # wirkungslos; an der APE vermessen S60). Der Laplace-Kern liefert die
+    # noetigen NEGATIVEN Zwischenwerte, scale 2 den Divisionspfad.
+    "convolution.edgeMode": {"kernel": [0]*16 + [0, -1, 0] + [0]*4 +
+                                       [-1, 4, -1] + [0]*4 + [0, -1, 0] + [0]*16,
+                             "scale": 2},
     # 3D-Kamera: die Kamera steht auf der z-Achse (`pz` = 3,73) und blickt auf
     # (0, 0, `tz`). Die Blickrichtung wird NORMALISIERT — fuer jedes tz < pz
     # ist sie deshalb exakt (0, 0, -1), der Betrag kuerzt sich heraus. Die
@@ -735,6 +742,22 @@ NICHT_PRUEFBAR: dict[str, str] = {
         "`bandLo` — fuenf einzelne Baender liefern fuenf verschiedene Bilder. "
         "Messbar waere `bandHi` nur mit einem Signal, dessen Spektrum irgendwo "
         "STEIGT.",
+    "rotatingStars.bandLo":
+        "Seit dem exakten r_rotstar-Port (S60) zaehlt ein Band nur noch als "
+        "LOKALER Peak — es muss BEIDE Nachbarn um mehr als 4 uebersteigen "
+        "(signed char). Das monoton fallende Standalone-Spektrum hat keinen "
+        "einzigen solchen Peak, s ist in jedem Frame und jedem Fenster 0, und "
+        "jede Fensterlage liefert dasselbe Bild. (Vor S60 nahm der Port das "
+        "blanke Maximum — da zeigte `bandLo` fuenf verschiedene Bilder; diese "
+        "Messung belegte, dass die Grenzen ankommen.) Messbar nur mit einem "
+        "Signal, das einen lokalen Spektral-Peak > 4 traegt.",
+    "rotatingStars.audioGain":
+        "Skaliert den Audio-Anteil der Sterngroesse — also `s/255` aus der "
+        "Lokal-Peak-Suche (s. `bandLo`). Auf dem Standalone-Signal ist s "
+        "IMMER 0, der Faktor multipliziert eine Null und kein Wert kann etwas "
+        "aendern. Dass die Groessenformel selbst wirkt, zeigt `baseRadius` "
+        "(WIRKT); referenz-belegt ist der Audio-Zweig ueber die pixelgenaue "
+        "Matrix-Zeile 13 gegen AvsRef (S60: Menge 0,00 / Deckung 1,00).",
     "customBpm.arbitraryMs":
         "Der Frei-Takt haengt an der WANDUHR (`steadyNowMs`), nicht am Frame. "
         "Ein Sondenlauf rendert 181 Frames in Millisekunden — in dieser Zeit "

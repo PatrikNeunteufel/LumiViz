@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "uniqueTone",
+        "color": 16760928,
+        "invert": false,
+        "blend": 1
+    }
+}

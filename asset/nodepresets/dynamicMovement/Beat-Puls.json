@@ -1,0 +1,13 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "dynamicMovement",
+        "initCode": "amp=0.96",
+        "frameCode": "amp=amp+(0.97-amp)*0.12",
+        "beatCode": "amp=0.8",
+        "pointCode": "d=d*amp",
+        "rectCoords": false,
+        "subpixel": true
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "movement",
+        "code": "r=r+0.1;d=d*0.98",
+        "subpixel": true
+    }
+}

@@ -39,7 +39,7 @@
             "wrap": false
           },
           {
-            "amplitude": 0.5,
+            "amplitude": 1,
             "beatCode": "",
             "channel": 0,
             "colors": [
@@ -51,7 +51,7 @@
             "name": "Oscilliscope Star",
             "position": 0,
             "rot": 5,
-            "rotScale": 0.019999999552965164,
+            "rotScale": 0.009999999776482582,
             "size": 10,
             "spokes": 5,
             "type": "oscStar"

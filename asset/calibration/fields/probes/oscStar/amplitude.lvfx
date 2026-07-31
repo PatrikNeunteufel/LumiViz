@@ -95,7 +95,7 @@
         "type": "oscStar",
         "enabled": true,
         "name": "Oscilliscope Star",
-        "amplitude": 4.0
+        "amplitude": 4
       }
     ],
     "clearEveryFrame": false

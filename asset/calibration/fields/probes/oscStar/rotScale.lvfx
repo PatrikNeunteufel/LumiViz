@@ -95,7 +95,7 @@
         "type": "oscStar",
         "enabled": true,
         "name": "Oscilliscope Star",
-        "rotScale": 1.0
+        "rotScale": 0.029999999329447746
       }
     ],
     "clearEveryFrame": false

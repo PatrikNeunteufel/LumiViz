@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "videoDelay",
+        "useBeats": true,
+        "delay": 1
+    }
+}

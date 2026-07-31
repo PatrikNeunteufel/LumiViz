@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "starfield",
+        "warpSpeed": 5,
+        "maxStars": 400,
+        "onBeat": true,
+        "beatSpeed": 20,
+        "durationFrames": 30
+    }
+}

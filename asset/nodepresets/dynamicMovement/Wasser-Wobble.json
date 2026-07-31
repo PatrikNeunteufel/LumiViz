@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "dynamicMovement",
+        "initCode": "t=0",
+        "frameCode": "t=t+0.13",
+        "pointCode": "d=d*(0.97+0.02*sin(d*9+t))",
+        "rectCoords": false,
+        "subpixel": true
+    }
+}

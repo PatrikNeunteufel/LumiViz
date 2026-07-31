@@ -1,0 +1,13 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "interferences",
+        "points": 6,
+        "distance": 20,
+        "alpha": 84,
+        "rotationInc": 2,
+        "onBeat": false,
+        "blend": 1
+    }
+}

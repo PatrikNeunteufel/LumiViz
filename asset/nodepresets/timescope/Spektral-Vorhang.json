@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "timescope",
+        "color": 4259712,
+        "bands": 288
+    }
+}

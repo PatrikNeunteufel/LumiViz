@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "rotatingStars",
+        "baseRadius": 0.18,
+        "audioGain": 1.2,
+        "rotSpeed": 0.1
+    }
+}

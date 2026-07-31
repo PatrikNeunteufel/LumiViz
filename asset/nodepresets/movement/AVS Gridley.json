@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "movement",
+        "code": "x = x + (cos(y * 18) * .02);\ny = y + (sin(x * 14) * .03);",
+        "rectCoords": true,
+        "subpixel": true
+    }
+}

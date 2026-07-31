@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "dynamicMovement",
+        "pointCode": "r=r+0.12-0.18*d;d=d*0.97",
+        "rectCoords": false,
+        "subpixel": true
+    }
+}

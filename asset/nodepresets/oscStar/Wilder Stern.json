@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "oscStar",
+        "size": 14,
+        "rot": 8,
+        "amplitude": 1.6
+    }
+}

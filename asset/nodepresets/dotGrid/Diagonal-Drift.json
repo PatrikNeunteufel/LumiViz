@@ -1,0 +1,15 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "dotGrid",
+        "spacing": 8,
+        "xMove": 128,
+        "yMove": 128,
+        "blend": 3,
+        "colors": [
+            4243711,
+            4210943
+        ]
+    }
+}
