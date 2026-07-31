@@ -2893,6 +2893,8 @@ void MultiEffectVisualizer::onInitialize()
 {
     m_firstFrame = true;
     m_time = 0.0f;
+    m_scriptClock = 0.0;
+    m_scriptClockAccum = 0.0;
     m_audioLevel = 0.0f;
     m_frameBeat = false;
     ensurePipelines();
@@ -3383,6 +3385,9 @@ void MultiEffectVisualizer::onRender(float deltaTime)
 {
     auto* f = QOpenGLContext::currentContext()->functions();
 
+    // gettime()-Uhr: Stand VOR diesem Frame, double-akkumuliert (S59)
+    m_scriptClock = m_scriptClockAccum;
+    m_scriptClockAccum += static_cast<double>(deltaTime);
     m_time += deltaTime;
     m_deltaTime = deltaTime;
 
@@ -4471,7 +4476,7 @@ void MultiEffectVisualizer::runColorModifier(const ChainNode& node,
         rt.lutCompiled = combined;
     }
     rt.lut->setRecompute(params.recompute);
-    rt.lut->setVisData(m_visdata.data(), m_time);  // getspec/getosc for the level code
+    rt.lut->setVisData(m_visdata.data(), m_scriptClock);  // getspec/getosc for the level code
     {
         float bass, mid, treble;
         computeAudioBands(getSpectrum(), bass, mid, treble);
@@ -4801,7 +4806,7 @@ bool MultiEffectVisualizer::applyGridWarpFx(LeafRuntime& rt, int xres, int yres,
                              rt.gridFieldW != w || rt.gridFieldH != h;
     if (needExecute)
     {
-        rt.grid->setVisData(m_visdata.data(), m_time);  // getspec/getosc backing
+        rt.grid->setVisData(m_visdata.data(), m_scriptClock);  // getspec/getosc backing
         {
             float bass, mid, treble;
             computeAudioBands(getSpectrum(), bass, mid, treble);
@@ -4896,7 +4901,7 @@ void MultiEffectVisualizer::applyGridWarp(LeafRuntime& rt, int xres, int yres,
                              rt.gridFieldH != m_surfaceHeight;
     if (needExecute)
     {
-        rt.grid->setVisData(m_visdata.data(), m_time);  // getspec/getosc backing
+        rt.grid->setVisData(m_visdata.data(), m_scriptClock);  // getspec/getosc backing
         {
             float bass, mid, treble;
             computeAudioBands(getSpectrum(), bass, mid, treble);
@@ -5466,7 +5471,7 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
 
     // Audio contract for the point/frame code: getspec/getosc backing data (+
     // gettime clock) plus the bass/mid/treb short vars (E1, shared with all modules).
-    rt.scope->setVisData(m_visdata.data(), m_time);
+    rt.scope->setVisData(m_visdata.data(), m_scriptClock);
     {
         float bass, mid, treble;
         computeAudioBands(getSpectrum(), bass, mid, treble);
@@ -10835,7 +10840,7 @@ void MultiEffectVisualizer::buildVisData()
 void MultiEffectVisualizer::feedAudio(lumi::scripting::LuaScriptEngine& engine)
 {
     engine.setVisData(m_visdata.data());
-    engine.setScriptTime(m_time);
+    engine.setScriptTime(m_scriptClock);
     float bass, mid, treble;
     computeAudioBands(getSpectrum(), bass, mid, treble);
     engine.setNumber("bass", bass);
@@ -10844,7 +10849,11 @@ void MultiEffectVisualizer::feedAudio(lumi::scripting::LuaScriptEngine& engine)
     engine.setNumber("treble", treble);  // alias (MilkDrop uses treb)
     engine.setNumber("vol", m_audioLevel);
     engine.setNumber("beat", m_frameBeat ? 1.0 : 0.0);
-    engine.setNumber("time", m_time);
+    // `time` nur injizieren, wenn das Skript den Namen nicht selbst besitzt
+    // (AVS-EEL: gewoehnlicher User-Name — ScriptSlotHost::compileAll scannt
+    // die Quellen; Befund S59, el-vis_hypno07). Uhrstand VOR dem Frame wie
+    // gettime().
+    if (engine.timeInjectable()) engine.setNumber("time", m_scriptClock);
 }
 
 void MultiEffectVisualizer::runFractal3D(const ChainNode& node,

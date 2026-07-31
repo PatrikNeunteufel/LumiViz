@@ -13,7 +13,7 @@
  * @details
  * Aufruf:
  *   AvsRef <presetDateiOderOrdner> [--frames N] [--out DIR] [--size WxH]
- *          [--save-every M] [--beat-period N]
+ *          [--save-every M] [--beat-period N] [--tick-hz N]
  *
  * - Audio kommt synthetisch und ist BYTE-IDENTISCH zur LumiViz-Seite:
  *   Signal wie AvsStandalone::feedSyntheticAudio (Sinus 220 Hz + Beat-Puls
@@ -279,6 +279,7 @@ int main(int argc, char** argv)
     int width = 800, height = 600;
     int saveEvery = 0;    // 0 = nur letzter Frame
     int beatPeriod = 0;   // 0 = Original-Detektor
+    int tickHz = 0;       // --tick-hz N: gettime() als Frame-Uhr (0 = Wanduhr)
     bool silence = false; // --silence: Stille statt Kalibrier-Signal
     std::string apeDir;   // --ape-dir: echte APE-Sammlung (leer = keine APEs)
     for (int i = 1; i < argc; ++i)
@@ -288,6 +289,7 @@ int main(int argc, char** argv)
         if (a == "--frames") next(frames);
         else if (a == "--save-every") next(saveEvery);
         else if (a == "--beat-period") next(beatPeriod);
+        else if (a == "--tick-hz") next(tickHz);
         else if (a == "--silence") silence = true;
         else if (a == "--out" && i + 1 < argc) outDir = argv[++i];
         else if (a == "--ape-dir" && i + 1 < argc) apeDir = argv[++i];
@@ -310,7 +312,8 @@ int main(int argc, char** argv)
     {
         fprintf(stderr,
                 "Aufruf: AvsRef <preset.avs|ordner> [--frames N] [--out DIR]\n"
-                "        [--size WxH] [--save-every M] [--beat-period N]\n");
+                "        [--size WxH] [--save-every M] [--beat-period N]\n"
+                "        [--tick-hz N: gettime() als Frame-Uhr statt Wanduhr]\n");
         return 2;
     }
 
@@ -443,6 +446,15 @@ int main(int argc, char** argv)
 
         for (int frame = 0; frame < frames; ++frame)
         {
+            // Virtuelle Frame-Uhr fuer EEL-gettime() (patched/avs_eelif.cpp):
+            // ohne sie misst ein selbstvermessendes Preset (gettime-FPS-
+            // Zaehlfenster) die Batch-Rendergeschwindigkeit statt einer
+            // Bildrate — gegen keinen anderen Renderer vergleichbar (S59).
+            if (tickHz > 0)
+            {
+                extern int g_avsref_tick_ms;
+                g_avsref_tick_ms = (int)((long long)frame * 1000 / tickHz);
+            }
             SyntheticFrame synth;
             makeSyntheticAudio(frame / 60.0, synth, silence);
             buildVisData(synth, visdata);

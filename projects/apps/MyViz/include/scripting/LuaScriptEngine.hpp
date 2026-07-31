@@ -148,6 +148,15 @@ public:
     /// @brief Set the clock gettime() subtracts from (seconds since start).
     void setScriptTime(double seconds) { m_scriptTime = seconds; }
 
+    /// @brief Darf der Host die Bequemlichkeits-Variable `time` je Frame
+    ///        setzen? In AVS-EEL ist `time` ein gewoehnlicher USER-Name —
+    ///        ein Quartett, das `time` selbst zuweist (el-vis_hypno07:
+    ///        `time=2.0` als Konstante fuer die Laufmittel-Laenge), wuerde vom
+    ///        Host-Inject jeden Frame ueberschrieben (Befund S59).
+    ///        ScriptSlotHost::compileAll() setzt das Flag aus den Quellen.
+    void setTimeInjectable(bool on) { m_timeInjectable = on; }
+    [[nodiscard]] bool timeInjectable() const { return m_timeInjectable; }
+
     // =========================================================================
     // Diagnostics / tests
     // =========================================================================
@@ -196,6 +205,7 @@ private:
     // L/R, 576 bytes each) and the gettime() clock. Zero until the host feeds it.
     std::array<unsigned char, 576 * 4> m_visdata{};
     double m_scriptTime = 0.0;
+    bool m_timeInjectable = true;  ///< false: Skript besitzt `time` selbst (S59)
 
     // Engine-local script buffer (AVS: megabuf is per effect)
     std::unordered_map<std::int64_t, double> m_megabuf;

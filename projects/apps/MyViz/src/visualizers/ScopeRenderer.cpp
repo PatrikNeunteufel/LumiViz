@@ -14,7 +14,9 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 
+#include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <utility>
 
 namespace lumi::render {
@@ -359,80 +361,223 @@ void ScopeRenderer::renderThinLines(const std::vector<SuperscopePoint>& points)
     m_lineShader->release();
 }
 
+namespace
+{
+/// AVS-Pixel eines Punkts: `(int)((var+1)*dim*0.5)` — trunc Richtung Null,
+/// auch ausserhalb des Bildes (linedraw clippt selbst). Grob begrenzt, damit
+/// wilde Skriptwerte keinen int-Ueberlauf produzieren.
+int avsSpalte(double v, int breite)
+{
+    const double p = std::trunc((v + 1.0) * static_cast<double>(breite) * 0.5);
+    return static_cast<int>(std::clamp(p, -100000.0, 100000.0));
+}
+int avsZeile(double v, int hoehe)
+{
+    // Punkte liegen im GL-Raum (y+ oben), AVS zaehlt Zeilen von oben.
+    const double p = std::trunc((-v + 1.0) * static_cast<double>(hoehe) * 0.5);
+    return static_cast<int>(std::clamp(p, -100000.0, 100000.0));
+}
+}  // namespace
+
 void ScopeRenderer::renderThickLines(const std::vector<SuperscopePoint>& points,
                                      float lineWidth)
 {
+    // AVS-Semantik (linedraw.cpp), je SEGMENT ein Quad statt eines geteilten
+    // Triangle-Strips — nur so lassen sich zwei Eigenheiten der Referenz
+    // treffen (Befund S59, splendora-Ringe):
+    //  1. Auf der MAJOR-Achse ist das Ende mit der GROESSEREN Koordinate
+    //     EXKLUSIV: die Vertikal-Schleife `while (d++ < ye)` malt die Endzeile
+    //     nie (alle vier Zweige gleich). Innen-Stuetzstellen schliesst das
+    //     Folgesegment (Start inklusiv) — sichtbar wird es am Kettenende, an
+    //     skip-Bruechen und an der Bildkante.
+    //  2. Die Fast-Paths klemmen das Ende VOR der Exklusivitaet auf die letzte
+    //     Bildzeile/-spalte: `ye=min(max(y1,y2),h-1)` — ein Segment, das nach
+    //     y=240 laeuft, malt bis Zeile 238, NICHT 239. Das Movement-Clamp
+    //     eines Ring-Presets sampelt genau diese unterste Zeile.
+    // Verbreiterung bleibt ACHSENPARALLEL (x-major: vertikale Saeule je
+    // Spalte, y-major: horizontale Reihe je Zeile; S46/Wormhole), aber mit dem
+    // asymmetrischen Anker der Referenz: Start bei `koord - lw/2`, lw Pixel.
     auto* f = QOpenGLContext::currentContext()->functions();
 
     GLint viewport[4];
     f->glGetIntegerv(GL_VIEWPORT, viewport);
-    const float pixelWidth = viewport[2] > 0 ? 2.0f / static_cast<float>(viewport[2])
-                                             : 0.002f;
-    const float pixelHeight = viewport[3] > 0 ? 2.0f / static_cast<float>(viewport[3])
-                                              : 0.002f;
+    const int w = viewport[2];
+    const int h = viewport[3];
+    if (w <= 0 || h <= 0) return;
+
+    // r_sscope ruft `line(..., (int)(*var_linesize+0.5))` — RUNDEN, nicht
+    // abschneiden: linesize=1.51 zeichnet 2 Pixel breit (Keil-Sonde, S59).
+    const int lw = std::clamp(static_cast<int>(lineWidth + 0.5f), 1, 255);
+    const int lw2 = lw / 2;
+    // Rand INNERHALB des Pixels (<0.5), damit die Rasterung gegen Pixelmitten
+    // die gewollten Pixel sicher trifft und die Nachbarn sicher nicht.
+    constexpr double kRand = 0.3;
+
+    // Spalten-/Zeilenspannen [a..b] (inklusive, AVS-Pixel) -> GL-Clipraum.
+    const auto glX = [&](double p) { return static_cast<float>(p * 2.0 / w - 1.0); };
+    const auto glY = [&](double p) { return static_cast<float>(1.0 - p * 2.0 / h); };
 
     std::vector<float> vertices;
-    vertices.reserve(points.size() * 2 * 6);
-    std::vector<std::pair<int, int>> segments;
-    int currentStart = 0;
-    int currentCount = 0;
-
-    for (size_t i = 0; i < points.size(); ++i)
+    vertices.reserve(points.size() * 6 * 6);
+    const auto quad = [&](double c0, double c1, double rT0, double rB0,
+                          double rT1, double rB1, const SuperscopePoint& farbe)
     {
-        const auto& pt = points[i];
-        // s. renderThinLines: `skip` bricht die Linie, verwirft den Punkt aber
-        // NICHT — er bleibt Ankerpunkt des naechsten Segments (r_sscope:334).
-        if (pt.skip)
+        // c0/c1: linke/rechte Spaltengrenze (Pixelmitten +- Rand), rT/rB die
+        // Zeilengrenzen an der linken (0) bzw. rechten (1) Kante.
+        const float xL = glX(c0);
+        const float xR = glX(c1);
+        const float v[6][2] = {{xL, glY(rT0)}, {xR, glY(rT1)}, {xR, glY(rB1)},
+                               {xL, glY(rT0)}, {xR, glY(rB1)}, {xL, glY(rB0)}};
+        for (const auto& p : v)
         {
-            if (currentCount >= 4) segments.push_back({currentStart, currentCount});
-            currentStart = static_cast<int>(vertices.size() / 6);
-            currentCount = 0;
+            vertices.insert(vertices.end(),
+                            {p[0], p[1], farbe.r, farbe.g, farbe.b, farbe.a});
         }
+    };
 
-        // Richtung des Segments, das an diesem Punkt haengt. Gezeichnet wird ein
-        // Segment genau dann, wenn sein ZIELpunkt nicht uebersprungen ist —
-        // deshalb fragt der Ausgang nach `points[i+1].skip` und der Eingang nach
-        // `pt.skip`, NICHT nach dem Vorgaenger. Mit der alten Abfrage bekam der
-        // Endpunkt eines Strichs, dessen Vorgaenger uebersprungen war, die
-        // Richtung (0,0) und damit die Verbreiterung der falschen Achse: das
-        // Viereck war verdreht und deckte statt sechs nur drei Spalten ab
-        // (Befund S58, direkt nach der skip-Korrektur).
-        float dx = 0.0f;
-        float dy = 0.0f;
-        if (i + 1 < points.size() && !points[i + 1].skip)
-        {
-            dx = static_cast<float>(points[i + 1].x - pt.x);
-            dy = static_cast<float>(points[i + 1].y - pt.y);
-        }
-        else if (i > 0 && !pt.skip)
-        {
-            dx = static_cast<float>(pt.x - points[i - 1].x);
-            dy = static_cast<float>(pt.y - points[i - 1].y);
-        }
+    for (size_t i = 0; i + 1 < points.size(); ++i)
+    {
+        const auto& p0 = points[i];
+        const auto& p1 = points[i + 1];
+        // `skip` unterdrueckt NUR das Segment, das im uebersprungenen Punkt
+        // ENDET — der Punkt bleibt Ankerpunkt des naechsten (r_sscope:334).
+        if (p1.skip) continue;
 
-        // AVS-Semantik (linedraw.cpp, Befund S46/Wormhole): dicke Linien werden
-        // ACHSENPARALLEL verbreitert — x-major zeichnet je Spalte eine
-        // vertikale Saeule von lw Pixeln, y-major je Zeile eine horizontale
-        // Reihe (Diagonalen effektiv um cos(theta) schmaler; SRM width=255 =
-        // "wall-thick bars"). KEIN senkrechtes Band.
-        const float dxPix = dx / pixelWidth;
-        const float dyPix = dy / pixelHeight;
-        float ox = 0.0f;
-        float oy = 0.0f;
-        if (std::fabs(dxPix) >= std::fabs(dyPix))
-            oy = lineWidth * pixelHeight * 0.5f;  // x-major: vertikale Saeule
+        const int ax0 = avsSpalte(p0.x, w);
+        const int ay0 = avsZeile(p0.y, h);
+        const int ax1 = avsSpalte(p1.x, w);
+        const int ay1 = avsZeile(p1.y, h);
+        const int dx = std::abs(ax1 - ax0);
+        const int dy = std::abs(ay1 - ay0);
+
+        if (dx == 0)
+        {
+            // Vertikaler Fast-Path: Spalten [ax-lw2 .. +lw-1], Zeilen
+            // [min .. min(max,h-1)-1] — Endzeile exklusiv NACH dem Klemmen.
+            const int d = std::max(std::min(ay0, ay1), 0);
+            const int ye = std::min(std::max(ay0, ay1), h - 1);
+            if (d >= ye) continue;
+            const int xs = ax0 - lw2;
+            quad(xs + 0.5 - kRand, xs + lw - 1 + 0.5 + kRand,
+                 d + 0.5 - kRand, ye - 1 + 0.5 + kRand,
+                 d + 0.5 - kRand, ye - 1 + 0.5 + kRand, p1);
+        }
+        else if (dy == 0)
+        {
+            // Horizontaler Fast-Path — spiegelbildlich.
+            const int d = std::max(std::min(ax0, ax1), 0);
+            const int xe = std::min(std::max(ax0, ax1), w - 1);
+            if (d >= xe) continue;
+            const int ys = ay0 - lw2;
+            quad(d + 0.5 - kRand, xe - 1 + 0.5 + kRand,
+                 ys + 0.5 - kRand, ys + lw - 1 + 0.5 + kRand,
+                 ys + 0.5 - kRand, ys + lw - 1 + 0.5 + kRand, p1);
+        }
+        else if (dy <= dx)
+        {
+            // x-major: Bresenham malt je Spalte lw VOLLE Zeilen ab der
+            // gesteppten Zeile minus lw2. Ein kontinuierliches Band trifft
+            // dessen Tie-Spalten nie zuverlaessig (Befund S59: die Keil-Sonde
+            // verlor an jeder Rundungsgrenze eine Zeile) — deshalb laeuft hier
+            // der INTEGER-Bresenham der Referenz mit, und je y-Lauf entsteht
+            // ein Rechteck. Ablauf und Klemm-Reihenfolge exakt wie
+            // linedraw.cpp:145-199 (inkl. der Eigenheit, dass `d` beim
+            // Links-Clip NICHT mitlaeuft); Spaltenende exklusiv, x2 nur auf w
+            // geklemmt — die letzte Spalte w-1 bleibt erreichbar.
+            int x1 = ax0;
+            int y1 = ay0;
+            int x2 = ax1;
+            int y2 = ay1;
+            if (x2 < x1)
+            {
+                std::swap(x1, x2);
+                std::swap(y1, y2);
+            }
+            const int yincr = y2 > y1 ? 1 : -1;
+            y1 -= lw2;
+            int d = dy + dy - dx;
+            const int eIncr = dy + dy;
+            const int neIncr = d - dx;
+            if (x2 < 0 || x1 >= w) continue;
+            if (x1 < 0)
+            {
+                int v = yincr * -x1;
+                if (dx != 0) v = (v * dy) / dx;
+                y1 += v;
+                x1 = 0;
+            }
+            if (x2 > w) x2 = w;
+            int runStart = x1;
+            while (x1 < x2)
+            {
+                const bool step = d >= 0;
+                d += step ? neIncr : eIncr;
+                ++x1;
+                if (step || x1 >= x2)
+                {
+                    // Lauf [runStart..x1-1], Zeilen [y1, y1+lw) geklemmt
+                    const int rT = std::max(y1, 0);
+                    const int rB = std::min(y1 + lw, h) - 1;
+                    if (rB >= rT)
+                    {
+                        quad(runStart + 0.5 - kRand, x1 - 1 + 0.5 + kRand,
+                             rT + 0.5 - kRand, rB + 0.5 + kRand,
+                             rT + 0.5 - kRand, rB + 0.5 + kRand, p1);
+                    }
+                    runStart = x1;
+                    if (step) y1 += yincr;
+                }
+            }
+        }
         else
-            ox = lineWidth * pixelWidth * 0.5f;   // y-major: horizontale Reihe
-
-        const float px = aufPixelmitteX(pt.x, viewport[2]);
-        const float py = aufPixelmitteY(pt.y, viewport[3]);
-        vertices.insert(vertices.end(), {px + ox, py + oy,
-                                         pt.r, pt.g, pt.b, pt.a});
-        vertices.insert(vertices.end(), {px - ox, py - oy,
-                                         pt.r, pt.g, pt.b, pt.a});
-        currentCount += 2;
+        {
+            // y-major — spiegelbildlich zu x-major (Zeilenende exklusiv,
+            // y2 nur auf h geklemmt, je x-Lauf ein Rechteck).
+            int x1 = ax0;
+            int y1 = ay0;
+            int x2 = ax1;
+            int y2 = ay1;
+            if (y2 < y1)
+            {
+                std::swap(x1, x2);
+                std::swap(y1, y2);
+            }
+            const int xincr = x2 > x1 ? 1 : -1;
+            x1 -= lw2;
+            int d = dx + dx - dy;
+            const int eIncr = dx + dx;
+            const int neIncr = d - dy;
+            if (y2 < 0 || y1 >= h) continue;
+            if (y1 < 0)
+            {
+                int v = xincr * -y1;
+                if (dy != 0) v = (v * dx) / dy;
+                x1 += v;
+                y1 = 0;
+            }
+            if (y2 > h) y2 = h;
+            int runStart = y1;
+            while (y1 < y2)
+            {
+                const bool step = d >= 0;
+                d += step ? neIncr : eIncr;
+                ++y1;
+                if (step || y1 >= y2)
+                {
+                    const int cL = std::max(x1, 0);
+                    const int cR = std::min(x1 + lw, w) - 1;
+                    if (cR >= cL)
+                    {
+                        quad(cL + 0.5 - kRand, cR + 0.5 + kRand,
+                             runStart + 0.5 - kRand, y1 - 1 + 0.5 + kRand,
+                             runStart + 0.5 - kRand, y1 - 1 + 0.5 + kRand, p1);
+                    }
+                    runStart = y1;
+                    if (step) x1 += xincr;
+                }
+            }
+        }
     }
-    if (currentCount >= 4) segments.push_back({currentStart, currentCount});
     if (vertices.empty()) return;
 
     uploadVertexData(vertices);
@@ -440,10 +585,7 @@ void ScopeRenderer::renderThickLines(const std::vector<SuperscopePoint>& points,
     m_lineShader->bind();
     m_vao->bind();
     m_lineShader->setUniformValue(m_lineUniAlpha, 1.0f);
-    for (const auto& seg : segments)
-    {
-        if (seg.second >= 4) f->glDrawArrays(GL_TRIANGLE_STRIP, seg.first, seg.second);
-    }
+    f->glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(vertices.size() / 6));
     m_vao->release();
     m_lineShader->release();
 }

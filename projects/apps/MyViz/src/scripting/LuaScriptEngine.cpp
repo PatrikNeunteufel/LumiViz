@@ -284,7 +284,10 @@ int LuaScriptEngine::lGetTime(lua_State* L)
 {
     auto* self = static_cast<LuaScriptEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
     const double sc = luaL_optnumber(L, 1, 0.0);
-    lua_pushnumber(L, self->m_scriptTime - sc);
+    // AVS: `GetTickCount()/1000.0 - sc` — die Uhr tickt in GANZEN
+    // Millisekunden. Dieselbe Koernung hier, sonst rechnet ein Preset auf
+    // gettime-Differenzen mit anderer Aufloesung als die Referenz (S59).
+    lua_pushnumber(L, std::floor(self->m_scriptTime * 1000.0) / 1000.0 - sc);
     return 1;
 }
 

@@ -728,6 +728,20 @@ TEST_SUITE("AvsChainTranslator")
         CHECK(pcs.mode == 1);
         CHECK(pcs.onBeat);
 
+        // RGB (Identitaet) hat ZWEI Ressourcen-IDs: 1023 aus der originalen
+        // channelshift.ape (splendora.avs, S59), 1183 aus dem vis_avs-Builtin.
+        // Unbekannte grosse IDs muessen ebenfalls auf RGB fallen (so macht es
+        // der default-Zweig des Builtins), nicht auf eine Permutation geklemmt.
+        for (const int rawRgb : {1023, 1183, 1077})
+        {
+            EffectNode rgb = ape("Channel Shift");
+            rgb.fields = {{"mode", rawRgb}, {"onbeat", 0}};
+            const auto t = translateAvsTree(makeParsed({rgb}));
+            const auto& p = std::get<ChannelShiftParams>(t.root.children[0].params);
+            CHECK(p.mode == 0);
+            CHECK_FALSE(p.onBeat);
+        }
+
         EffectNode cr = ape("Color Reduction");
         cr.fields = {{"levels", 4}};
         const auto tcr = translateAvsTree(makeParsed({cr}));

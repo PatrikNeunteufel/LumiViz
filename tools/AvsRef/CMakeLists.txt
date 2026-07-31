@@ -88,7 +88,9 @@ set(AVS_SOURCES
     ${VIS}/util.cpp
     patched/bpm.cpp
     ${VIS}/TIMING.C
-    ${VIS}/avs_eelif.cpp
+    # avs_eelif: gepatchte Kopie — gettime() optional auf virtuelle Frame-Uhr
+    # (--tick-hz), sonst Wanduhr und damit unvergleichbar (S59)
+    patched/avs_eelif.cpp
     ${NSEEL}/megabuf.c
     ${NSEEL}/nseel-caltab.c
     patched/nseel-cfunc.c

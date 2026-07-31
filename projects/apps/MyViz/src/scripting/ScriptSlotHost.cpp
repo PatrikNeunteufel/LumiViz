@@ -32,6 +32,39 @@ char toLowerAscii(char c)
     return static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
 }
 
+/// Weist die EEL-Quelle dem Wort irgendwo einen Wert zu (`wort = …`, nicht
+/// `==`)? Case-insensitiv, Wortgrenzen wie sourceMentions. Vergleiche wie
+/// `time<=3` zaehlen nicht: nach dem Wort folgt dort kein `=` als ERSTES
+/// Zeichen; `time==x` faellt durch den Blick auf das Folgezeichen.
+bool sourceAssigns(const std::string& src, std::string_view word)
+{
+    if (word.empty() || src.size() < word.size()) return false;
+    for (std::size_t i = 0; i + word.size() <= src.size(); ++i)
+    {
+        if (i > 0 && isIdentChar(src[i - 1])) continue;
+        std::size_t j = 0;
+        while (j < word.size() &&
+               toLowerAscii(src[i + j]) == toLowerAscii(word[j]))
+        {
+            ++j;
+        }
+        if (j != word.size()) continue;
+        std::size_t k = i + j;
+        if (k < src.size() && isIdentChar(src[k])) continue;  // laengerer Name
+        while (k < src.size() &&
+               std::isspace(static_cast<unsigned char>(src[k])) != 0)
+        {
+            ++k;
+        }
+        if (k < src.size() && src[k] == '=' &&
+            (k + 1 >= src.size() || src[k + 1] != '='))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace
 
 ScriptSlotHost::ScriptSlotHost(std::string chunkPrefix,
@@ -73,6 +106,15 @@ bool ScriptSlotHost::sourceMentions(Slot slot, std::string_view word) const
 
 bool ScriptSlotHost::compileAll()
 {
+    // In AVS-EEL ist `time` ein USER-Name. Weist eines der vier Quartette ihn
+    // zu, gehoert er dem Skript — der Host darf seine Bequemlichkeits-Uhr
+    // `time` (E1) dann nicht mehr jeden Frame darueberschreiben. el-vis_hypno07
+    // setzt `time=2.0` als Laufmittel-Konstante; mit Inject wurde daraus die
+    // Sekundenuhr und die Laufmittel-Laenge wuchs mit der Spielzeit (S59).
+    bool timeOwned = false;
+    for (const std::string& src : m_sources) timeOwned = timeOwned || sourceAssigns(src, "time");
+    m_engine.setTimeInjectable(!timeOwned);
+
     for (int s = 0; s < LuaScriptEngine::kSlotCount; ++s)
     {
         const auto slot = static_cast<Slot>(s);

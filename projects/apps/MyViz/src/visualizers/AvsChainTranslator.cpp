@@ -308,16 +308,26 @@ bool mapApe(const EffectNode& src, ChainNode& out)
     if (src.apeId == "Channel Shift")
     {
         // Stored mode is a Windows IDC id; map it to our 0..5 permutation index.
+        // Two id sets exist for RGB (= identity): presets saved with the
+        // ORIGINAL channelshift.ape store 1023 (its dialog resource), the
+        // vis_avs builtin port stores 1183 (1023 was taken in its resource.h).
+        // 1018-1022 are identical in both. The builtin's switch treats every
+        // unknown id as RGB — so unknowns must fall back to 0, not get clamped.
         ChannelShiftParams p;
         switch (src.field("mode"))
         {
+            case 1023:
             case 1183: p.mode = 0; break;  // RGB
             case 1020: p.mode = 1; break;  // RBG
             case 1018: p.mode = 2; break;  // GBR
             case 1022: p.mode = 3; break;  // GRB
             case 1019: p.mode = 4; break;  // BRG
             case 1021: p.mode = 5; break;  // BGR
-            default: p.mode = std::clamp(src.field("mode"), 0, 5); break;
+            default:
+                p.mode = (src.field("mode") >= 1000)
+                             ? 0
+                             : std::clamp(src.field("mode"), 0, 5);
+                break;
         }
         p.onBeat = src.field("onbeat") != 0;
         out.params = p;

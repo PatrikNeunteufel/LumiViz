@@ -82,9 +82,11 @@ def ascii_safe(avs: Path, stage: Path) -> Path:
 
 
 def run_ref(avs: Path, frames: int, size: str, out: Path, beat_period: int = 0,
-            ape_dir: Path = None) -> Path:
+            ape_dir: Path = None, tick_hz: int = 0) -> Path:
     """AvsRef rendern; liefert den BMP-Pfad des letzten Frames."""
     extra = ["--beat-period", str(beat_period)] if beat_period > 0 else []
+    if tick_hz > 0:
+        extra += ["--tick-hz", str(tick_hz)]
     if ape_dir and Path(ape_dir).is_dir():
         extra += ["--ape-dir", str(ape_dir)]
     proc = subprocess.run(
@@ -199,6 +201,15 @@ def main() -> int:
     ap.add_argument("--beat-period", type=int, default=30,
                     help="deterministischer Beat alle N Frames (beide Renderer); "
                          "0 = jeder Renderer erkennt selbst (NICHT reproduzierbar)")
+    # Vorgabe 60 (S59): AvsRefs EEL-gettime() liest sonst die WANDUHR — der
+    # Batch-Renderer schafft 120 Frames in Sekundenbruchteilen, und ein Preset,
+    # das seine eigene Bildrate misst (el-vis_hypno07: 1s-Zaehlfenster ->
+    # Laufmittel-Laenge), sieht dort fps=0 statt 60. Unsere Seite tickt fest
+    # mit frame/60 (LuaScriptEngine::m_scriptTime) — nur mit derselben
+    # Frame-Uhr messen beide dasselbe Preset-Verhalten.
+    ap.add_argument("--tick-hz", type=int, default=60,
+                    help="gettime()-Frame-Uhr fuer AvsRef (0 = Wanduhr wie im "
+                         "Original — bei gettime-Presets NICHT vergleichbar)")
     ap.add_argument("--out", type=Path,
                     default=ROOT / "../../../out/avsref_compare")
     args = ap.parse_args()
@@ -233,7 +244,8 @@ def main() -> int:
             # Originalname bleibt fuer Bericht und Montage.
             src = ascii_safe(avs, stage)
             ref_img = load_rgb(run_ref(src, args.frames, args.size, out / "ref",
-                                       args.beat_period, args.ape_dir))
+                                       args.beat_period, args.ape_dir,
+                                       args.tick_hz))
             lumi_img = load_rgb(run_lumi(src, args.frames, args.size, out / "lumi",
                                          args.beat_period))
             if ref_img.shape != lumi_img.shape:

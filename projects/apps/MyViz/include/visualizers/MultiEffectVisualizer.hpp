@@ -1089,6 +1089,16 @@ private:
 
     // Frame-scoped inputs
     float m_time = 0.0f;       ///< seconds since init (DebugBars orbit)
+    /// Uhrstand VOR dem Inkrement dieses Frames — das ist die Uhr, die
+    /// EEL-`gettime()` sieht: AVS misst "Sekunden seit Start", der erste
+    /// Frame liest 0. Mit `m_time` (schon inkrementiert) las er 1/60 — ein
+    /// Preset mit 1s-FPS-Zaehlfenster (el-vis_hypno07) feuerte sein Fenster
+    /// damit einen Frame zu frueh mit Zaehlerstand 0 und mass fps=0 (S59).
+    /// DOUBLE, eigener Akkumulator: die float-Summe von m_time driftet nach
+    /// zwei Dutzend Frames um eine Millisekunde — genau die Koernung, in der
+    /// gettime() tickt.
+    double m_scriptClock = 0.0;
+    double m_scriptClockAccum = 0.0;  ///< Summe aller dt (double)
     float m_deltaTime = 0.0f;  ///< seconds since last frame (script modules)
     float m_audioLevel = 0.0f; ///< smoothed waveform RMS 0..1
 };
