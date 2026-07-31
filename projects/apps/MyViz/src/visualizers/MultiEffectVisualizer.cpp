@@ -1559,7 +1559,8 @@ void main()
 const char* kConvolutionFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
-uniform sampler2D uTex;
+uniform sampler2D uTex;   // Eingabe (Puffer VOR dem Effekt)
+uniform sampler2D uProc;  // BEARBEITETER Puffer (Pass 1); in Pass 1 == uTex
 uniform vec2 uRes;
 uniform float uKernel[49];
 uniform float uScale;     // Teiler; 0 ist in der Laufzeit schon durch 1 ersetzt
@@ -1568,31 +1569,42 @@ uniform int uAbsolute;
 uniform int uTwoPass;
 uniform int uEdge;
 out vec4 fragColor;
-vec2 sampleUV(vec2 uv) { return uEdge == 1 ? fract(uv) : clamp(uv, 0.0, 1.0); }
 void main()
 {
-    vec2 texel = 1.0 / uRes;
-    // Die APE berechnet die LETZTE Zeile und die LETZTE Spalte nicht — ein
-    // Off-by-one ihrer Schleife. Der Zielpuffer behaelt dort seinen alten
-    // Inhalt, und weil er im Wechsel wiederverwendet wird, laeuft der Wert
-    // ueber die Frames auf: bei der Sonde `convolution_kante` (Kern nur Mitte,
-    // Gewicht 8) steht in der Referenz 255, waehrend wir jeden Frame frisch
-    // 8 * 16 = 128 hineinschrieben. Gemessen betrifft es exakt Zeile h-1 und
-    // Spalte w-1 (320 + 240 = 560 Pixel bei 320x240, S57).
-    if (gl_FragCoord.x >= uRes.x - 1.0 || gl_FragCoord.y < 1.0) discard;
+    // Rand-Semantik der APE, aus dem JIT-Quelltext (tom holden, 2002) und an
+    // Gradient-Sonden gemessen (S59):
+    //  - Reads KLEMMEN auf Zeile h-2 und Spalte w-2 — die letzte Eingabe-
+    //    Zeile/Spalte wird NIE gelesen (c[6] laedt beim Vorruecken den alten
+    //    Zeiger zurueck, die Spaltenvarianten emittieren min(.., width-2)).
+    //  - Geschrieben wird JEDES Pixel; ein separater Rand-Pass existiert nicht.
+    //  - Liegt der erste Kernel-Eintrag ab dem ZENTRUM (zerostringl >= 24),
+    //    schreibt die APE IN-PLACE: am unteren/rechten Rand lesen die
+    //    zurueckgeklemmten Taps dann schon BEARBEITETE Pixel (row-major vor
+    //    dem Schreibkopf) — die "doppelt gefaltete" Kante der Sonden.
+    //    Der Host bildet das als zweiten Pass ab; `uProc` liefert Pass 1.
+    // AVS-Pixelkoordinaten des Ziels (Zeilen von OBEN gezaehlt)
+    float curCol = floor(gl_FragCoord.x);
+    float curRow = uRes.y - 1.0 - floor(gl_FragCoord.y);
     vec3 sum = vec3(0.0);
     for (int j = 0; j < 7; j++)
         for (int i = 0; i < 7; i++)
         {
             float k = uKernel[j * 7 + i];
-            // Kernzeile j zaehlt wie im Dialog von OBEN nach unten, unsere
-            // Texturkoordinate v aber nach OBEN — der v-Anteil muss also
-            // gespiegelt werden. Ohne das war die Faltung vertikal
-            // seitenverkehrt: gemessen an Ein-Punkt-Sonden mit je einem
-            // Kern-Eintrag wanderte der Punkt nach unten, wo AvsRef ihn nach
-            // oben schob (Befund S50; horizontal stimmte es).
-            vec2 off = vec2(float(i - 3), float(3 - j)) * texel;
-            sum += texture(uTex, sampleUV(vTex + off)).rgb * k;
+            // Kernzeile j zaehlt wie im Dialog von OBEN nach unten (Befund
+            // S50: vertikal seitenverkehrt war messbar, horizontal nicht).
+            float tc = curCol + float(i - 3);
+            float tr = curRow + float(j - 3);
+            // `wrap` ist KEIN Koordinaten-Wrap (Fehldeutung S57): der
+            // JIT-Quelltext waehlt damit nur psubw statt psubusw — die
+            // NEGATIV-Verrechnung laeuft ueber statt zu saettigen (deshalb
+            // exklusiv mit `absolute`). Die Read-Koordinaten klemmen IMMER.
+            float cc = clamp(tc, 0.0, uRes.x - 2.0);
+            float cr = clamp(tr, 0.0, uRes.y - 2.0);
+            bool bearbeitet = (cr < curRow) ||
+                              (cr == curRow && cc < curCol);
+            vec2 uv = vec2((cc + 0.5) / uRes.x, 1.0 - (cr + 0.5) / uRes.y);
+            sum += (bearbeitet ? texture(uProc, uv).rgb
+                               : texture(uTex, uv).rgb) * k;
         }
     // Die APE rechnet in BYTES und ganzzahlig (gemessen S58, Sonden
     // `2_trans/convolution_*` gegen AvsRef):
@@ -2961,6 +2973,7 @@ void MultiEffectVisualizer::onCleanup()
     m_multiFilterShader.reset();
     m_addBordersShader.reset();
     m_reduceFbo.reset();
+    m_convScratch.reset();
     m_wbPropShader.reset();
     m_wbDispShader.reset();
     m_timescopeShader.reset();
@@ -8170,6 +8183,10 @@ void MultiEffectVisualizer::runConvolution(const ChainNode& node,
         m_convolutionShader->setUniformValue("uAbsolute", params.absolute ? 1 : 0);
         m_convolutionShader->setUniformValue("uTwoPass", params.twoPass ? 1 : 0);
         m_convolutionShader->setUniformValue("uEdge", std::clamp(params.edgeMode, 0, 1));
+        // Pass 1 kennt keinen bearbeiteten Puffer: uProc = uTex (Unit 0).
+        // Die "bearbeitet"-Zweige des Shaders lesen dann schlicht die Eingabe
+        // — exakt der fbout-Weg der APE.
+        m_convolutionShader->setUniformValue("uProc", 0);
         m_convolutionShader->release();
         transformPass(*m_convolutionShader);
     };
@@ -8177,6 +8194,60 @@ void MultiEffectVisualizer::runConvolution(const ChainNode& node,
     // ist es nicht: das haetten die Sonden `two1_k1_s2/s4` als v/4 bzw. v/8
     // gezeigt, gemessen sind v und v/2.
     pass();
+
+    // IN-PLACE-Kante der APE (S59, s. Shader-Kommentar): liegt der erste
+    // Kernel-Eintrag ab dem Zentrum (Index >= 24 row-major), schreibt die
+    // Referenz in den EINGABEPUFFER — die auf h-2/w-2 zurueckgeklemmten Taps
+    // der letzten Zeile/Spalte lesen dann schon bearbeitete Pixel. Pass 2
+    // rechnet genau diese Pixel mit uProc = Pass-1-Ergebnis nach; alle
+    // betroffenen Taps zeigen in die UNBETROFFENE Innenflaeche, deshalb
+    // reichen exakt zwei Paesse.
+    int ersterEintrag = -1;
+    for (int i = 0; i < 49; ++i)
+    {
+        if (params.kernel[static_cast<std::size_t>(i)] != 0)
+        {
+            ersterEintrag = i;
+            break;
+        }
+    }
+    const bool inPlace = ersterEintrag < 0 || ersterEintrag >= 24;
+    if (inPlace)
+    {
+        auto* f = QOpenGLContext::currentContext()->functions();
+        auto* extra = QOpenGLContext::currentContext()->extraFunctions();
+        if (m_convScratch == nullptr ||
+            m_convScratch->width() != m_surfaceWidth ||
+            m_convScratch->height() != m_surfaceHeight)
+        {
+            m_convScratch = std::make_unique<QOpenGLFramebufferObject>(
+                m_surfaceWidth, m_surfaceHeight);
+        }
+        // Nach transformPass: current = Pass 1, partner = Eingabe (intakt)
+        SurfacePair& pair = active();
+        pair.current()->release();
+        m_convScratch->bind();
+        f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+        m_convolutionShader->bind();
+        m_quadVao->bind();
+        f->glActiveTexture(GL_TEXTURE0);
+        f->glBindTexture(GL_TEXTURE_2D, pair.partner()->texture());
+        m_convolutionShader->setUniformValue("uTex", 0);
+        f->glActiveTexture(GL_TEXTURE1);
+        f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+        m_convolutionShader->setUniformValue("uProc", 1);
+        f->glActiveTexture(GL_TEXTURE0);
+        f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        m_quadVao->release();
+        m_convolutionShader->release();
+        m_convScratch->release();
+        extra->glBindFramebuffer(GL_READ_FRAMEBUFFER, m_convScratch->handle());
+        extra->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, pair.current()->handle());
+        extra->glBlitFramebuffer(0, 0, m_surfaceWidth, m_surfaceHeight, 0, 0,
+                                 m_surfaceWidth, m_surfaceHeight,
+                                 GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        bindActive();
+    }
 }
 
 void MultiEffectVisualizer::runNormalise()

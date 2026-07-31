@@ -974,6 +974,8 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_multiFilterShader;  ///< MultiFilter APE
     std::unique_ptr<QOpenGLShaderProgram> m_addBordersShader;   ///< Add Borders APE
     std::unique_ptr<QOpenGLFramebufferObject> m_reduceFbo;      ///< Normalise min/max readback (32x32)
+    /// Convolution-Pass-2-Ziel (in-place-Kante, S59) — liest Pass 1 + Eingabe
+    std::unique_ptr<QOpenGLFramebufferObject> m_convScratch;
     std::unique_ptr<QOpenGLShaderProgram> m_wbPropShader;  ///< water-bump wave propagation
     std::unique_ptr<QOpenGLShaderProgram> m_wbDispShader;  ///< water-bump refraction
     std::unique_ptr<QOpenGLShaderProgram> m_timescopeShader;
