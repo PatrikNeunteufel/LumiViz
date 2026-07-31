@@ -1228,7 +1228,10 @@ struct WaterBumpParams
     int dropX = 1;          ///< 0 near / 1 mid / 2 far (position code)
     int dropY = 1;          ///< dito senkrecht: 0 oben / 1 Mitte / 2 unten
     int dropRadius = 40;    ///< drop radius (px)
-    float displaceScale = 6.0f;  ///< refraction strength (host tuning)
+    /// Verstaerkung des Versatzes. Seit der Ganzzahl-Umstellung (S59) stehen
+    /// die Hoehen in REFERENZ-Einheiten — 1.0 = exakt r_waterbump; der alte
+    /// Wert 6.0 stammte aus der normierten Aera und verzerrte 6-fach.
+    float displaceScale = 1.0f;
 
     /// Parameter-Skript (Strang D): `density`, `depth`, `dropradius`, `displacescale` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
     std::string initCode;

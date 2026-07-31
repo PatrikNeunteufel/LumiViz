@@ -4254,7 +4254,7 @@
                 },
                 {
                     "art": "zahl",
-                    "default": 6,
+                    "default": 1,
                     "name": "displaceScale"
                 },
                 {

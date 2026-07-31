@@ -1914,83 +1914,125 @@ void main()
 }
 )";
 
-// AVS "Trans / Water Bump" (ID 31): height-field wave propagation. The height
-// buffer packs .r = current, .g = previous; a beat adds a drop. (r_waterbump)
-const char* kWaterBumpPropShader = R"(
-#version 330 core
-in vec2 vTex;
-uniform sampler2D uH;
-uniform vec2 uTexel;
-uniform float uDamp;
-uniform int uDrop;
-uniform vec2 uDropC;
-uniform float uDropR;
-uniform float uDropAmp;
-out vec4 fragColor;
-void main()
-{
-    vec2 t = uTexel;
-    float s =
-        texture(uH, vTex + vec2( t.x, 0.0)).r + texture(uH, vTex + vec2(-t.x, 0.0)).r +
-        texture(uH, vTex + vec2(0.0,  t.y)).r + texture(uH, vTex + vec2(0.0, -t.y)).r +
-        texture(uH, vTex + vec2( t.x,  t.y)).r + texture(uH, vTex + vec2(-t.x,  t.y)).r +
-        texture(uH, vTex + vec2( t.x, -t.y)).r + texture(uH, vTex + vec2(-t.x, -t.y)).r;
-    float cur = texture(uH, vTex).r;
-    float prev = texture(uH, vTex).g;
-    float nh = s * 0.25 - prev;   // wave equation (AVS sum8>>2 - prev)
-    nh -= nh * uDamp;             // damping
-    if (uDrop == 1)
-    {
-        float d = distance(vTex, uDropC) / max(uDropR, 1e-4);
-        if (d < 1.0) nh += cos(d * 1.5707963) * uDropAmp;
-    }
-    // Die Referenz BESCHREIBT die aeusserste Zeile und Spalte nie: `CalcWater`
-    // laeuft von `buffer_w + 1` bis `(buffer_h-1)*buffer_w` (r_waterbump.cpp:205,
-    // 212), und die Puffer sind nullinitialisiert. Dort steht also dauerhaft 0 —
-    // eine feste Wand, an der die Welle reflektiert. Wir haben stattdessen den
-    // Randwert geklemmt, wodurch die Welle am Rand weiterlief (S57).
-    vec2 px = vTex / uTexel;
-    if (px.x < 1.0 || px.y < 1.0 ||
-        px.x > 1.0 / uTexel.x - 1.0 || px.y > 1.0 / uTexel.y - 1.0)
-        nh = 0.0;
-    fragColor = vec4(nh, cur, 0.0, 1.0);   // new height, old current -> previous
-}
-)";
+// AVS "Trans / Water Bump" (ID 31): height-field wave propagation — seit S59
+// in den GANZZAHL-EinHEITEN der Referenz (r_waterbump.cpp). Der Hoehenpuffer
+// packt .r = aktuelle Seite (buffers[page]), .g = vorige Seite; beide Shader
+// teilen sich den SineBlob-Beitrag als Funktion (statt eines eigenen Passes),
+// weil die Referenz den Tropfen VOR Displacement UND CalcWater in die
+// aktuelle Seite addiert. Alle Werte sind ints in float32 (exakt bis 2^24;
+// der FBO ist deshalb RGBA32F, nicht 16F).
+//
+// SineBlob (r_waterbump.cpp:128-165): innerhalb des (CPU-seitig auf den Rand
+// geclippten, ENDE-EXKLUSIVEN) Rechtecks und des Radius addiert er
+//   (int)((cos(dist)+0xffff)*hoehe) >> 19   [hoehe = -depth, arithm. Shift]
+// mit dist = sqrt(square*(1024/radius)^2).
+#define WB_BLOB_GLSL \
+    "uniform int uDrop;\n" \
+    "uniform ivec2 uDropPos;\n"  /* AVS-Pixel des Zentrums */ \
+    "uniform ivec4 uDropClip;\n" /* left, top, right, bottom (relativ) */ \
+    "uniform int uDropRad2;\n" \
+    "uniform int uDropHeight;\n" \
+    "uniform float uDropLen;\n" \
+    "float blobAt(ivec2 avsP)\n" \
+    "{\n" \
+    "    if (uDrop == 0) return 0.0;\n" \
+    "    ivec2 rel = avsP - uDropPos;\n" \
+    "    if (rel.x < uDropClip.x || rel.x >= uDropClip.z ||\n" \
+    "        rel.y < uDropClip.y || rel.y >= uDropClip.w) return 0.0;\n" \
+    "    int square = rel.x * rel.x + rel.y * rel.y;\n" \
+    "    if (square >= uDropRad2) return 0.0;\n" \
+    "    float dist = sqrt(float(square) * uDropLen);\n" \
+    "    float t = trunc((cos(dist) + 65535.0) * float(uDropHeight));\n" \
+    "    return floor(t / 524288.0);\n" /* >> 19, arithmetisch */ \
+    "}\n"
 
-// Water Bump refraction: displace the image by the height gradient (r_waterbump).
-const char* kWaterBumpDispShader = R"(
-#version 330 core
-in vec2 vTex;
-uniform sampler2D uImg;
-uniform sampler2D uH;
-uniform vec2 uTexel;
-uniform vec2 uRes;
-uniform float uScale;
-out vec4 fragColor;
-void main()
-{
-    float hc = texture(uH, vTex).r;
-    float hr = texture(uH, vTex + vec2(uTexel.x, 0.0)).r;
-    float hd = texture(uH, vTex + vec2(0.0, uTexel.y)).r;
+// CalcWater (r_waterbump.cpp:202-233): nur der INNENBEREICH [1..w-2]x[1..h-2]
+// wird geschrieben — der Rand bleibt fuer immer 0 (feste Wand, S57):
+//   newh = (sum8(alt) >> 2) - vorher;  neu = newh - (newh >> density)
+const char* kWaterBumpPropShader =
+    "#version 330 core\n"
+    "in vec2 vTex;\n"
+    "uniform sampler2D uH;\n"
+    "uniform ivec2 uResI;\n"
+    "uniform int uDensity;\n"
+    WB_BLOB_GLSL
+    "out vec4 fragColor;\n"
+    "float curAt(ivec2 avsP)\n"
+    "{\n"
+    "    ivec2 tp = ivec2(avsP.x, uResI.y - 1 - avsP.y);\n"
+    "    return texelFetch(uH, tp, 0).r + blobAt(avsP);\n"
+    "}\n"
+    "void main()\n"
+    "{\n"
+    "    ivec2 tp = ivec2(gl_FragCoord.xy);\n"
+    "    ivec2 p = ivec2(tp.x, uResI.y - 1 - tp.y);\n"  // AVS: Zeilen von oben
+    "    float cur = curAt(p);\n"
+    "    if (p.x < 1 || p.y < 1 || p.x > uResI.x - 2 || p.y > uResI.y - 2)\n"
+    "    {\n"
+    "        fragColor = vec4(0.0, cur, 0.0, 1.0);\n"
+    "        return;\n"
+    "    }\n"
+    "    float s = curAt(p + ivec2( 1, 0)) + curAt(p + ivec2(-1, 0))\n"
+    "            + curAt(p + ivec2( 0, 1)) + curAt(p + ivec2( 0,-1))\n"
+    "            + curAt(p + ivec2( 1, 1)) + curAt(p + ivec2(-1, 1))\n"
+    "            + curAt(p + ivec2( 1,-1)) + curAt(p + ivec2(-1,-1));\n"
+    "    float prev = texelFetch(uH, tp, 0).g;\n"
+    "    float nh = floor(s / 4.0) - prev;\n"        // sum8 >> 2 (floor = arithm.)
+    "    nh = nh - floor(nh / float(1 << uDensity));\n"  // newh - (newh >> density)
+    "    fragColor = vec4(nh, cur, 0.0, 1.0);\n"
+    "}\n";
 
-    // BEFUND S57, noch nicht umsetzbar: der Versatz ist in der Referenz eine
-    // GANZZAHLIGE Pixelverschiebung (`ofs = offset + buffer_w*(dy>>3) +
-    // (dx>>3)`, r_waterbump.cpp:330). Der Shift rundet gegen -unendlich, und
-    // bei Hoehendifferenzen unter 8 ist der Versatz NULL — daher die grob
-    // gestuften Flaechen des Originals, wo wir glatte Ringe zeichnen (die
-    // Montage zeigt genau diesen Unterschied).
-    //
-    // Ein blosses `floor()` hier macht es SCHLECHTER (0,137 -> 0,233,
-    // nachgemessen): unsere Hoehen stehen nicht in den Einheiten der Referenz,
-    // also quantisiert es an der falschen Stelle. Dafuer muesste der ganze
-    // Hoehenpuffer auf die Referenz-Skala umgestellt werden — Tropfen
-    // (`SineBlob` mit `>> 19`), Daempfung (`newh - (newh >> density)`, ein
-    // arithmetischer Shift mit eigener Asymmetrie bei negativen Werten) und
-    // Displacement zusammen. Siehe `Offene_Punkte.md §1`.
-    vec2 off = vec2(hc - hr, hc - hd) * uScale / uRes;
-    fragColor = vec4(texture(uImg, vTex + off).rgb, 1.0);
-}
-)";
+// Water-Bump-Displacement (r_waterbump.cpp:315-347): GANZZAHLIGER, LINEARER
+// Pufferversatz — `ofs = offset + w*(dy>>3) + (dx>>3)`; ein grosser x-Versatz
+// laeuft dabei in die NACHBARZEILE ueber (linearer Puffer, kein 2D-Clamp).
+// Nur [1..w-2]x[1..h-2] wird versetzt; ausserhalb der Grenzen ([0,len)) und
+// am Rand kopiert die Referenz die Eingabe.
+const char* kWaterBumpDispShader =
+    "#version 330 core\n"
+    "in vec2 vTex;\n"
+    "uniform sampler2D uImg;\n"
+    "uniform sampler2D uH;\n"
+    "uniform ivec2 uResI;\n"
+    "uniform float uScale;\n"
+    WB_BLOB_GLSL
+    "out vec4 fragColor;\n"
+    "float curAt(ivec2 avsP)\n"
+    "{\n"
+    "    ivec2 tp = ivec2(avsP.x, uResI.y - 1 - avsP.y);\n"
+    "    return texelFetch(uH, tp, 0).r + blobAt(avsP);\n"
+    "}\n"
+    "vec3 imgAt(ivec2 avsP)\n"
+    "{\n"
+    "    return texelFetch(uImg, ivec2(avsP.x, uResI.y - 1 - avsP.y), 0).rgb;\n"
+    "}\n"
+    "void main()\n"
+    "{\n"
+    "    ivec2 tp = ivec2(gl_FragCoord.xy);\n"
+    "    ivec2 p = ivec2(tp.x, uResI.y - 1 - tp.y);\n"
+    "    if (p.x < 1 || p.y < 1 || p.x > uResI.x - 2 || p.y > uResI.y - 2)\n"
+    "    {\n"
+    "        // Rand: die Referenz beschreibt fbout hier NIE — dort steht der\n"
+    "        // Eingabepuffer des VORframes (1-Frame-Lag). Wir kopieren die\n"
+    "        // AKTUELLE Eingabe: der Lag-Nachbau hat in S59 den ersten Frame\n"
+    "        // verschluckt und die Trail-Messung verschlechtert — bewusste\n"
+    "        // Naeherung, s. Offene_Punkte.\n"
+    "        fragColor = vec4(imgAt(p), 1.0);\n"
+    "        return;\n"
+    "    }\n"
+    "    float dx = trunc((curAt(p) - curAt(p + ivec2(1, 0))) * uScale);\n"
+    "    float dy = trunc((curAt(p) - curAt(p + ivec2(0, 1))) * uScale);\n"
+    "    float ofs = float(p.y * uResI.x + p.x)\n"
+    "              + float(uResI.x) * floor(dy / 8.0) + floor(dx / 8.0);\n"
+    "    vec3 c;\n"
+    "    if (ofs >= 0.0 && ofs < float(uResI.x * uResI.y))\n"
+    "    {\n"
+    "        float row = floor(ofs / float(uResI.x));\n"
+    "        float col = ofs - row * float(uResI.x);\n"
+    "        c = imgAt(ivec2(int(col), int(row)));\n"
+    "    }\n"
+    "    else c = imgAt(p);\n"
+    "    fragColor = vec4(c, 1.0);\n"
+    "}\n";
 
 // AVS "Render / Timescope" (ID 39): one spectrum column, tinted by uColor.
 // Drawn scissored to a single x each frame (r_timescope.cpp).
@@ -8532,12 +8574,13 @@ void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
 
     auto* f = QOpenGLContext::currentContext()->functions();
 
-    // RGBA16F height ping-pong (.r current, .g previous), (re)made on resize.
+    // RGBA32F height ping-pong (.r aktuelle Seite, .g vorige Seite; Werte sind
+    // GANZE Zahlen in Referenz-Einheiten — 16F traegt nur bis 2048 exakt).
     if (rt.wbHeight[0] == nullptr || rt.wbW != m_surfaceWidth ||
         rt.wbH != m_surfaceHeight)
     {
         QOpenGLFramebufferObjectFormat fmt;
-        fmt.setInternalTextureFormat(GL_RGBA16F);
+        fmt.setInternalTextureFormat(GL_RGBA32F);
         for (auto& fbo : rt.wbHeight)
         {
             fbo = std::make_unique<QOpenGLFramebufferObject>(m_surfaceWidth,
@@ -8553,64 +8596,64 @@ void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
     }
     if (!rt.wbHeight[0]->isValid() || !rt.wbHeight[1]->isValid()) return;
 
-    const QVector2D texel(1.0f / static_cast<float>(m_surfaceWidth),
-                          1.0f / static_cast<float>(m_surfaceHeight));
-
-    // Drop on beat: random spot or a position code (0 near / 1 mid / 2 far).
+    // Tropfen auf Beat (SineBlob, r_waterbump.cpp:128-165 + 293-313): Zentrum,
+    // Radius und das ENDE-EXKLUSIVE Clip-Rechteck rechnet der Host; der
+    // cos-Beitrag laeuft als geteilte Funktion in BEIDEN Shadern, weil die
+    // Referenz den Blob VOR Displacement UND CalcWater in die aktuelle Seite
+    // addiert (ein eigener Pass wuerde die Reihenfolge brechen).
     int drop = 0;
-    QVector2D dropC(0.5f, 0.5f);
+    int dropX = 0, dropY = 0, radius = 1;
     if (m_frameBeat)
     {
         drop = 1;
         if (params.randomDrop)
         {
-            // r_waterbump.cpp:137-138: 1+radius+rand()%(dim-2*radius-1) — der
-            // Tropfen haelt seinen Radius Abstand vom Rand.
-            const int radius = 40;  // CalcWater-Standardradius des Originals
+            // r_waterbump.cpp:295-297: radius = drop_radius * max(w,h) / 100;
+            // Position 1+radius+rand()%(dim-2*radius-1) — Reihenfolge x, y.
+            radius = std::max(1, static_cast<int>(vDropR) *
+                                     std::max(m_surfaceWidth, m_surfaceHeight) / 100);
             const int spanX = std::max(1, m_surfaceWidth - 2 * radius - 1);
             const int spanY = std::max(1, m_surfaceHeight - 2 * radius - 1);
-            const float dx = static_cast<float>(1 + radius +
-                                                m_scriptContext->nextRand() % spanX);
-            const float dy = static_cast<float>(1 + radius +
-                                                m_scriptContext->nextRand() % spanY);
-            dropC = QVector2D(dx / static_cast<float>(m_surfaceWidth),
-                              dy / static_cast<float>(m_surfaceHeight));
+            dropX = 1 + radius + static_cast<int>(m_scriptContext->nextRand() % spanX);
+            dropY = 1 + radius + static_cast<int>(m_scriptContext->nextRand() % spanY);
         }
         else
         {
-            auto code = [](int c) { return c <= 0 ? 0.25f : (c >= 2 ? 0.75f : 0.5f); };
-            dropC = QVector2D(code(params.dropX), code(params.dropY));
+            radius = std::max(1, static_cast<int>(vDropR));
+            auto code = [](int c, int dim) {
+                return c <= 0 ? dim / 4 : (c >= 2 ? dim * 3 / 4 : dim / 2);
+            };
+            dropX = code(params.dropX, m_surfaceWidth);
+            dropY = code(params.dropY, m_surfaceHeight);
         }
     }
+    // Clip wie SineBlob: left/top/right/bottom relativ, Ende exklusiv
+    int cl = -radius, ct = -radius, cr = radius, cb = radius;
+    if (dropX - radius < 1) cl -= (dropX - radius - 1);
+    if (dropY - radius < 1) ct -= (dropY - radius - 1);
+    if (dropX + radius > m_surfaceWidth - 1)
+        cr -= (dropX + radius - m_surfaceWidth + 1);
+    if (dropY + radius > m_surfaceHeight - 1)
+        cb -= (dropY + radius - m_surfaceHeight + 1);
+    const float dropLen = (1024.0f / static_cast<float>(radius)) *
+                          (1024.0f / static_cast<float>(radius));
+    const auto setzeBlob = [&](QOpenGLShaderProgram& sh) {
+        sh.setUniformValue("uDrop", drop);
+        sh.setUniformValue("uDropPos", QPoint(dropX, dropY));
+        // ivec4 hat in QOpenGLShaderProgram keinen 4-Int-Overload
+        f->glUniform4i(sh.uniformLocation("uDropClip"), cl, ct, cr, cb);
+        sh.setUniformValue("uDropRad2", radius * radius);
+        sh.setUniformValue("uDropHeight", -static_cast<int>(vDepth));
+        sh.setUniformValue("uDropLen", dropLen);
+        sh.setUniformValue("uResI", QPoint(m_surfaceWidth, m_surfaceHeight));
+    };
 
-    // --- Wave propagation: current page -> the other page --------------------
+    // --- 1. Displacement mit der AKTUELLEN Seite (Reihenfolge der Referenz:
+    //        erst versetzen, dann CalcWater) --------------------------------
     const int src = rt.wbCur;
     const int dst = 1 - rt.wbCur;
-    rt.wbHeight[dst]->bind();
-    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
-    m_wbPropShader->bind();
-    m_quadVao->bind();
-    f->glActiveTexture(GL_TEXTURE0);
-    f->glBindTexture(GL_TEXTURE_2D, rt.wbHeight[src]->texture());
-    m_wbPropShader->setUniformValue("uH", 0);
-    m_wbPropShader->setUniformValue("uTexel", texel);
-    m_wbPropShader->setUniformValue(
-        "uDamp",
-        1.0f / static_cast<float>(1 << std::clamp(static_cast<int>(vDensity), 1, 12)));
-    m_wbPropShader->setUniformValue("uDrop", drop);
-    m_wbPropShader->setUniformValue("uDropC", dropC);
-    m_wbPropShader->setUniformValue(
-        "uDropR", static_cast<float>(vDropR) / static_cast<float>(m_surfaceWidth));
-    m_wbPropShader->setUniformValue("uDropAmp",
-                                    -static_cast<float>(vDepth) / 100.0f);
-    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    m_quadVao->release();
-    m_wbPropShader->release();
-    rt.wbHeight[dst]->release();
-    rt.wbCur = dst;
-
-    // --- Refraction: warp the image by the new height gradient ---------------
     SurfacePair& pair = active();
+    pair.current()->release();
     pair.partner()->bind();
     f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
     m_wbDispShader->bind();
@@ -8619,19 +8662,33 @@ void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
     f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
     m_wbDispShader->setUniformValue("uImg", 0);
     f->glActiveTexture(GL_TEXTURE1);
-    f->glBindTexture(GL_TEXTURE_2D, rt.wbHeight[rt.wbCur]->texture());
+    f->glBindTexture(GL_TEXTURE_2D, rt.wbHeight[src]->texture());
     m_wbDispShader->setUniformValue("uH", 1);
     f->glActiveTexture(GL_TEXTURE0);
-    m_wbDispShader->setUniformValue("uTexel", texel);
-    m_wbDispShader->setUniformValue("uRes",
-                                    QVector2D(static_cast<float>(m_surfaceWidth),
-                                              static_cast<float>(m_surfaceHeight)));
+    setzeBlob(*m_wbDispShader);
     m_wbDispShader->setUniformValue("uScale", static_cast<float>(vDisp));
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_wbDispShader->release();
     pair.partner()->release();
     pair.swap();
+
+    // --- 2. CalcWater: aktuelle Seite (+Blob) -> andere Seite ---------------
+    rt.wbHeight[dst]->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    m_wbPropShader->bind();
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, rt.wbHeight[src]->texture());
+    m_wbPropShader->setUniformValue("uH", 0);
+    setzeBlob(*m_wbPropShader);
+    m_wbPropShader->setUniformValue(
+        "uDensity", std::clamp(static_cast<int>(vDensity), 1, 30));
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    m_wbPropShader->release();
+    rt.wbHeight[dst]->release();
+    rt.wbCur = dst;
     bindActive();
 }
 

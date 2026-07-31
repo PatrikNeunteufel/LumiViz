@@ -8396,13 +8396,13 @@
         },
         {
           "art": "zahl",
-          "default": 6,
+          "default": 1,
           "name": "displaceScale",
           "panel": "double",
           "helfer": "addDouble",
           "lo": 0.0,
           "hi": 40.0,
-          "doc": "refraction strength (host tuning)"
+          "doc": "Verstaerkung des Versatzes. Seit der Ganzzahl-Umstellung (S59) stehen die Hoehen in REFERENZ-Einheiten — 1.0 = exakt r_waterbump; der alte Wert 6.0 stammte aus der normierten Aera und verzerrte 6-fach."
         },
         {
           "art": "zahl",

@@ -59,6 +59,21 @@ def main() -> int:
                 lumi = ca.load_rgb(ca.run_lumi(src, args.frames, size,
                                                sdir / "lumi", args.beat_period))
                 d = ca.compare(ref, lumi)
+                # Flaechen-Urteil (S59): die Mittelwert-Metrik luegt bei
+                # duennen Inhalten — der nie portierte Dot Fountain mass 0,002,
+                # weil beide Bilder ueberwiegend schwarz waren (S53/S57).
+                # Deshalb zusaetzlich: Wie unterscheiden sich die LEUCHTENDEN
+                # Flaechen? `menge` = relative Abweichung der Pixelzahl,
+                # `deckung` = Schnitt/Vereinigung (0 = voellig woanders).
+                ref_an = ca.luma(ref) > (8.0 / 255.0)
+                lumi_an = ca.luma(lumi) > (8.0 / 255.0)
+                n_ref = int(ref_an.sum())
+                n_lumi = int(lumi_an.sum())
+                d["menge"] = (abs(n_ref - n_lumi) / max(n_ref, 1)
+                              if max(n_ref, n_lumi) > 0 else 0.0)
+                vereint = int((ref_an | lumi_an).sum())
+                d["deckung"] = (int((ref_an & lumi_an).sum()) / vereint
+                                if vereint > 0 else 1.0)
                 ca.montage(ref, lumi, sdir / "montage" / f"{avs.stem}_{avs.parent.name}.png")
                 per_size[size] = d
             except Exception as e:  # noqa: BLE001 — je Preset weitermachen
@@ -71,13 +86,21 @@ def main() -> int:
         worst_dmean = max(v["d_mean"] for v in per_size.values())
         worst_mae = max(v["mae"] for v in per_size.values())
         worst_dml = max(v["d_maxluma"] for v in per_size.values())
+        worst_menge = max(v["menge"] for v in per_size.values())
+        worst_deckung = min(v["deckung"] for v in per_size.values())
+        # Schwellen der Flaechen-Pruefung bewusst grob (rand()-Effekte
+        # verschieben einzelne Pixel): Menge ±25 %, Deckung >= 0,5. Der
+        # unportierte Dot Fountain haette hier Menge ~0,8 / Deckung ~0,1
+        # gemessen — die Zeile war mit 0,002 MAE trotzdem "gruen".
         urteil = ("OK" if (worst_dmean <= 0.02 and worst_dml <= 0.10
-                           and worst_mae <= 0.03) else "PRUEFEN")
+                           and worst_mae <= 0.03 and worst_menge <= 0.25
+                           and worst_deckung >= 0.5) else "PRUEFEN")
         rows.append((rel, per_size, urteil))
         parts = " · ".join(
             f"{s}: dMean={v['d_mean']:.3f} MAE={v['mae']:.3f}"
             for s, v in per_size.items())
-        print(f"  {urteil:7s} {rel}  {parts}")
+        print(f"  {urteil:7s} {rel}  {parts}  Menge={worst_menge:.2f} "
+              f"Deckung={worst_deckung:.2f}")
 
     report = out / "report.md"
     with report.open("w", encoding="utf-8") as f:
