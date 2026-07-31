@@ -1673,15 +1673,21 @@ void main()
 )";
 
 // Sprite (Texer/Texer II): a quad centred at uCenter, half-size uHalf, textured.
+// uUv0/uUv1 sind die Texturkoordinaten der Quad-Ecken aPos=(-1,-1) bzw. (1,1) —
+// Texer II braucht ein EXAKTES, asymmetrisches UV-Fenster (Subpixel-Phase des
+// Original-Resamplers, S59); Texer I setzt (0,1)/(1,0) und verhaelt sich wie
+// vorher (der y-Flip steckt jetzt in den Ecken, nicht mehr im Fragment-Shader).
 const char* kSpriteVertexShader = R"(
 #version 330 core
 layout(location = 0) in vec2 aPos;
 uniform vec2 uCenter;
 uniform vec2 uHalf;
+uniform vec2 uUv0;
+uniform vec2 uUv1;
 out vec2 vTex;
 void main()
 {
-    vTex = aPos * 0.5 + 0.5;
+    vTex = mix(uUv0, uUv1, aPos * 0.5 + 0.5);
     gl_Position = vec4(uCenter + aPos * uHalf, 0.0, 1.0);
 }
 )";
@@ -1694,7 +1700,7 @@ uniform int uColorFilter;
 out vec4 fragColor;
 void main()
 {
-    vec4 c = texture(uImg, vec2(vTex.x, 1.0 - vTex.y));
+    vec4 c = texture(uImg, vTex);
     vec3 rgb = uColorFilter == 1 ? c.rgb * uTint : c.rgb;
     fragColor = vec4(rgb, c.a);
 }
@@ -6805,43 +6811,47 @@ bool MultiEffectVisualizer::ensureEmbeddedTexture(LeafRuntime& rt,
         // Texer/Texer II render their built-in default when the image is
         // missing (Acko default texture). Picture effects keep the hard fail.
         //
-        // Das Default-Sprite ist GEMESSEN, nicht geraten (S50): ein einzelnes
-        // Sprite mit sizex=sizey=1 additiv auf Schwarz gerendert liefert die
-        // Textur direkt zurueck (AvsRef mit echter texer2.ape). Ergebnis: 20x20
-        // Pixel, Peak 252, radialsymmetrisch. Die Stuetzstellen unten sind das
-        // radial gemittelte Profil in 0,5-Pixel-Schritten — gemittelt, weil das
-        // gerenderte Sprite einen Halbpixel-Versatz hat und die rohe Matrix
-        // dadurch bis zu 39 Stufen asymmetrisch ist. Ruecktransformiert bleibt
-        // der mittlere Fehler bei 2,1 Stufen (max 13,4) und die sichtbare
-        // Ausdehnung bei exakt 20 px — der Massstab, an dem sizex/sizey haengen
-        // (Referenz: Ausdehnung = 20 px * sizex, linear ueber 0,5..8 geprueft).
+        // Das Default-Sprite ist GEMESSEN, nicht geraten: die 21x21-Matrix
+        // unten ist der 1:1-Blit der Original-texer2.ape (AvsRef, resize aus,
+        // weiss auf Schwarz — der no-resize-Pfad kopiert die interne Textur
+        // unfiltriert zurueck; Community-Quelle e_texer2.cpp bestaetigt
+        // iw=ih=21). Ersetzt die radial gemittelte 20x20-Rekonstruktion aus
+        // S50 — deren Halbpixel-"Asymmetrie" war in Wahrheit die Subpixel-
+        // Phase des RESIZE-Pfads, nicht die Textur (Befund S59).
         //
         // Alpha ist bewusst 255: der Sprite-Pass blendet GL_SRC_ALPHA/GL_ONE,
         // ein Alpha=v haette das Profil QUADRIERT (der alte 16er-Kegel tat das
         // und kam deshalb auf nur 14 px sichtbare Breite).
         if (!fallbackDot) return false;
-        static constexpr std::array<float, 22> kDefaultRadial = {
-            252.0f, 251.5f, 251.0f, 249.5f, 248.9f, 247.1f,
-            244.6f, 240.1f, 230.4f, 223.4f, 204.8f, 190.2f,
-            173.5f, 156.7f, 133.7f, 117.2f,  97.0f,  78.1f,
-             58.1f,  45.5f,  27.9f,   0.0f};
-        constexpr int kDot = 20;
+        constexpr int kDot = 21;
+        static constexpr std::array<unsigned char, kDot * kDot> kDefaultSprite = {
+              0,   0,   0,   0,   0,   0,   2,   7,  12,  15,  17,  15,  12,   7,   2,   0,   0,   0,   0,   0,   0,
+              0,   0,   0,   0,   2,  10,  21,  32,  41,  46,  49,  46,  41,  32,  21,  10,   2,   0,   0,   0,   0,
+              0,   0,   0,   4,  17,  33,  49,  64,  76,  83,  86,  83,  76,  64,  49,  33,  17,   4,   0,   0,   0,
+              0,   0,   4,  19,  39,  61,  82, 100, 115, 124, 127, 124, 115, 101,  82,  61,  39,  19,   4,   0,   0,
+              0,   2,  16,  39,  65,  92, 118, 140, 155, 164, 167, 164, 155, 140, 118,  92,  65,  39,  16,   2,   0,
+              0,   9,  32,  61,  92, 124, 153, 174, 191, 201, 204, 201, 191, 174, 153, 124,  92,  61,  32,   9,   0,
+              2,  20,  48,  82, 117, 152, 181, 205, 221, 231, 234, 231, 221, 204, 181, 152, 117,  82,  48,  20,   2,
+              6,  30,  63, 100, 139, 174, 204, 228, 241, 247, 249, 247, 241, 228, 204, 174, 139, 100,  63,  30,   6,
+             11,  39,  75, 114, 154, 190, 220, 241, 249, 252, 253, 252, 249, 241, 220, 190, 154, 114,  75,  39,  10,
+             14,  45,  82, 123, 163, 199, 230, 247, 252, 254, 254, 254, 252, 247, 230, 199, 163, 123,  82,  45,  14,
+             15,  47,  84, 125, 165, 202, 232, 248, 253, 254, 254, 254, 253, 248, 232, 202, 165, 125,  84,  47,  15,
+             14,  44,  81, 122, 162, 198, 229, 246, 252, 253, 254, 253, 252, 246, 229, 198, 162, 122,  81,  44,  14,
+             10,  39,  73, 112, 153, 188, 219, 240, 249, 252, 253, 252, 249, 240, 219, 188, 153, 112,  73,  39,  10,
+              5,  30,  62,  98, 137, 172, 202, 226, 240, 246, 248, 246, 240, 226, 202, 172, 137,  98,  62,  30,   5,
+              2,  19,  47,  79, 115, 149, 178, 201, 218, 228, 231, 228, 218, 202, 178, 149, 115,  79,  47,  19,   1,
+              0,   8,  31,  59,  89, 121, 149, 171, 187, 197, 200, 197, 187, 171, 149, 121,  89,  59,  31,   8,   0,
+              0,   1,  15,  37,  62,  89, 114, 136, 152, 160, 163, 160, 152, 136, 114,  89,  63,  37,  15,   1,   0,
+              0,   0,   3,  17,  37,  58,  79,  97, 111, 120, 123, 120, 111,  97,  79,  58,  37,  17,   3,   0,   0,
+              0,   0,   0,   3,  14,  30,  46,  61,  72,  79,  82,  79,  72,  61,  46,  30,  14,   3,   0,   0,   0,
+              0,   0,   0,   0,   1,   8,  18,  29,  37,  43,  45,  43,  37,  28,  18,   8,   1,   0,   0,   0,   0,
+              0,   0,   0,   0,   0,   0,   1,   5,   9,  13,  14,  13,   9,   5,   2,   0,   0,   0,   0,   0,   0};
         img = QImage(kDot, kDot, QImage::Format_RGBA8888);
         for (int y = 0; y < kDot; ++y)
         {
             for (int x = 0; x < kDot; ++x)
             {
-                const float dx = x - (kDot - 1) * 0.5f;
-                const float dy = y - (kDot - 1) * 0.5f;
-                const float r = std::sqrt(dx * dx + dy * dy) * 2.0f;  // 0,5-px-Raster
-                const auto lo = static_cast<std::size_t>(r);
-                float v = 0.0f;
-                if (lo + 1 < kDefaultRadial.size())
-                {
-                    const float f = r - static_cast<float>(lo);
-                    v = kDefaultRadial[lo] * (1.0f - f) + kDefaultRadial[lo + 1] * f;
-                }
-                const int b = static_cast<int>(std::lround(std::clamp(v, 0.0f, 255.0f)));
+                const int b = kDefaultSprite[static_cast<std::size_t>(y) * kDot + x];
                 img.setPixel(x, y, qRgba(b, b, b, 255));
             }
         }
@@ -7352,6 +7362,9 @@ void MultiEffectVisualizer::runTexer(const ChainNode& node, const TexerParams& p
     m_spriteShader->setUniformValue("uImg", 0);
     m_spriteShader->setUniformValue("uTint", QVector3D(1.0f, 1.0f, 1.0f));
     m_spriteShader->setUniformValue("uColorFilter", 0);
+    // Altes Verhalten: volle Textur, y gespiegelt (s. kSpriteVertexShader)
+    m_spriteShader->setUniformValue("uUv0", QVector2D(0.0f, 1.0f));
+    m_spriteShader->setUniformValue("uUv1", QVector2D(1.0f, 0.0f));
     const float hx = static_cast<float>(rt.picW) / static_cast<float>(m_surfaceWidth);
     const float hy = static_cast<float>(rt.picH) / static_cast<float>(m_surfaceHeight);
     m_spriteShader->setUniformValue("uHalf", QVector2D(hx, hy));
@@ -7453,8 +7466,15 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
     f->glBindTexture(GL_TEXTURE_2D, rt.picTexture);
     m_spriteShader->setUniformValue("uImg", 0);
     m_spriteShader->setUniformValue("uColorFilter", params.colorFiltering ? 1 : 0);
-    const float baseHx = static_cast<float>(rt.picW) / static_cast<float>(m_surfaceWidth);
-    const float baseHy = static_cast<float>(rt.picH) / static_cast<float>(m_surfaceHeight);
+    // Ausserhalb der Textur ist NULL (die Referenz liest jenseits des Bildes
+    // nichts): CLAMP_TO_BORDER mit schwarzem, durchsichtigem Rand — nur fuer
+    // die Texer-II-Zeichnung; Erzeugung/Texer I bleiben auf CLAMP_TO_EDGE.
+    {
+        const float kRand0[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        f->glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, kRand0);
+    }
 
     // Punkt-Vertrag wie r_sscope (SuperscopeModule::executePointLua): je Punkt
     // werden NUR i, v, skip und die Farb-Vorbelegung gesetzt. x/y/sizex/sizey
@@ -7493,46 +7513,146 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
         engine.setNumber("skip", 0.0);
         if (rt.texerHost->has(Slot::Point)) rt.texerHost->run(Slot::Point);
         if (engine.number("skip") > 0.5) continue;
-        const float x = static_cast<float>(engine.number("x"));
-        const float y = static_cast<float>(engine.number("y"));
+        const double x = engine.number("x");
+        const double y = engine.number("y");
         // "Resize" aus = Sprite in Originalgröße, sizex/sizey wirken nicht.
-        const float sx = params.resizing ? static_cast<float>(engine.number("sizex")) : 1.0f;
-        const float sy = params.resizing ? static_cast<float>(engine.number("sizey")) : 1.0f;
+        const double sx = params.resizing ? engine.number("sizex") : 1.0;
+        const double sy = params.resizing ? engine.number("sizey") : 1.0;
         m_spriteShader->setUniformValue(
             "uTint", QVector3D(static_cast<float>(engine.number("red")),
                                static_cast<float>(engine.number("green")),
                                static_cast<float>(engine.number("blue"))));
 
-        const float cx = x;
-        const float cy = -y;  // AVS y is down
-        const float hx = baseHx * sx;
-        const float hy = baseHy * sy;
-        const auto zeichne = [&](float mx, float my) {
-            m_spriteShader->setUniformValue("uCenter", QVector2D(mx, my));
-            m_spriteShader->setUniformValue("uHalf", QVector2D(hx, hy));
+        // Ziel-Rechteck + Sampling-Fenster EXAKT wie die Original-APE (S59,
+        // an Impuls-Sonden bit-genau gemessen, Herleitung im Session-Report):
+        //   c       = (pos/2+0.5)·(dim−1)          [Pixelraster dim−1!]
+        //   r       = c ± iw·s/2 ∓ 0.5             [iw = Bildbreite−1]
+        //   r2      = fistp-Rundung (round-half-even)
+        //   Phase   = (r2.left − r.left)/Spanne, als 16.16 ab Startspalte
+        //   Schritt = (iw−1)/(Spanne+1) in 16.16   [Spanne+1 = iw·s]
+        //   gemalt  = r2.left..(r2.right|1)        [qword-Ende: IMMER ungerade]
+        // Die 8-Bit-Gewichtskaskade der Referenz uebernimmt hier der
+        // GL-Bilinearfilter — gleiche Stuetzstellen, gleiche Subpixel-Phase.
+        struct Achse
+        {
+            int p0 = 0, p1 = 0;   // gemalte Pixel inklusive
+            double t0 = 0.0, t1 = 0.0;  // Texcoords an den Quad-KANTEN
+            bool ok = false;
+        };
+        const auto achse = [](double pos, double groesse, int dim, int texDim) {
+            Achse a;
+            const int iw = texDim - 1;
+            const int w = dim - 1;
+            if (iw <= 1 || w <= 0) return a;
+            const double c = (pos * 0.5 + 0.5) * w;
+            const double rl = c - iw * groesse * 0.5 + 0.5;
+            const double rr = c + iw * groesse * 0.5 - 0.5;
+            const auto fistp = [](double v) {
+                return static_cast<int>(std::nearbyint(v));  // half-even
+            };
+            int r2l = fistp(rl);
+            int r2r = fistp(rr);
+            if (r2r < 0 || r2l > w || rr <= rl) return a;
+            double x0 = (r2l - rl) / (rr - rl);
+            if (rl < 0.0)
+            {
+                x0 = -rl / (rr - rl);
+                r2l = 0;
+            }
+            if (rr > w) r2r = w;
+            const double fx0 = x0 * iw;
+            const int cxi = fistp(fx0);
+            const int dxf =
+                65535 - static_cast<int>((0.5 - (fx0 - cxi)) * 65536.0);
+            const int sdx =
+                static_cast<int>((iw - 1) / (rr - rl + 1.0) * 65536.0);
+            long long cx0 = (static_cast<long long>(cxi) << 16) + dxf;
+            if (cx0 < 0)
+            {
+                cx0 += sdx;
+                ++r2l;
+            }
+            if (r2r <= r2l) return a;
+            a.p0 = r2l;
+            // Rechte/untere Malgrenze der Referenz (12/12 Messfaelle):
+            // ceil(r.right), mindestens aber auf ungerade erweitert —
+            // das qword-Ende der MMX-Schleife malt ueber das gerundete
+            // Rechteck hinaus.
+            a.p1 = std::min(
+                std::max(static_cast<int>(std::ceil(rr)), r2r | 1), w);
+            // Texcoord an der linken Quad-Kante (Fenster-x = p0) und rechten
+            // (p1+1): Fragmentmitte px+0.5 sampelt u = (cx0+(px−p0)·sdx)/2^16.
+            const double u0 = (static_cast<double>(cx0) - 0.5 * sdx) / 65536.0;
+            const double u1 =
+                (static_cast<double>(cx0) +
+                 (a.p1 + 0.5 - a.p0) * static_cast<double>(sdx)) / 65536.0;
+            a.t0 = (u0 + 0.5) / texDim;
+            a.t1 = (u1 + 0.5) / texDim;
+            a.ok = true;
+            return a;
+        };
+        // Resize AUS = 1:1-Blit: linke Kante rint(c) − iw/2, IW Spalten,
+        // Texcoords 0..1 (Texelmitten treffen Pixelmitten — kein Filtern).
+        const auto achseBlit = [](double pos, int dim, int texDim) {
+            Achse a;
+            const int iw = texDim - 1;
+            const int w = dim - 1;
+            if (texDim <= 0 || w <= 0) return a;
+            const double c = (pos * 0.5 + 0.5) * w;
+            const int links = static_cast<int>(std::nearbyint(c)) - iw / 2;
+            const int rechts = links + iw;
+            if (rechts < 0 || links > w) return a;
+            a.p0 = std::max(links, 0);
+            a.p1 = std::min(rechts, w);
+            a.t0 = static_cast<double>(a.p0 - links) / texDim;
+            a.t1 = static_cast<double>(a.p1 - links + 1) / texDim;
+            a.ok = a.p1 >= a.p0;
+            return a;
+        };
+        const int W = m_surfaceWidth;
+        const int H = m_surfaceHeight;
+        const auto zeichne = [&](double px, double py) {
+            const Achse ax = params.resizing ? achse(px, sx, W, rt.picW)
+                                             : achseBlit(px, W, rt.picW);
+            const Achse ay = params.resizing ? achse(py, sy, H, rt.picH)
+                                             : achseBlit(py, H, rt.picH);
+            if (!ax.ok || !ay.ok) return;
+            // Pixelrechteck -> NDC-Kanten (y: AVS zaehlt von oben, GL von
+            // unten; Zeile r beginnt bei NDC 1 − r·2/H)
+            const float x0n = static_cast<float>(ax.p0) * 2.0f / W - 1.0f;
+            const float x1n = static_cast<float>(ax.p1 + 1) * 2.0f / W - 1.0f;
+            const float yTn = 1.0f - static_cast<float>(ay.p0) * 2.0f / H;
+            const float yBn = 1.0f - static_cast<float>(ay.p1 + 1) * 2.0f / H;
+            m_spriteShader->setUniformValue(
+                "uCenter", QVector2D((x0n + x1n) * 0.5f, (yBn + yTn) * 0.5f));
+            m_spriteShader->setUniformValue(
+                "uHalf", QVector2D((x1n - x0n) * 0.5f, (yTn - yBn) * 0.5f));
+            // aPos=(-1,-1) = NDC unten links = AVS-Zeile p1/Spalte p0
+            m_spriteShader->setUniformValue(
+                "uUv0", QVector2D(static_cast<float>(ax.t0),
+                                  static_cast<float>(ay.t1)));
+            m_spriteShader->setUniformValue(
+                "uUv1", QVector2D(static_cast<float>(ax.t1),
+                                  static_cast<float>(ay.t0)));
             f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         };
-        zeichne(cx, cy);
+        zeichne(x, y);
         // `wrapAround`: das Bild ist ein Torus — was rechts hinausragt, kommt
-        // links wieder herein. NDC ist 2 breit, die Gegenseite liegt also genau
-        // 2,0 entfernt. Bis S57 war dieses Feld im Panel verstellbar und wurde
-        // von KEINEM Renderer gelesen (Feld-Sonde stumm, MAE 0,0000). Die
-        // Referenz ist eine Binaer-APE (`texer2.ape`, kein Quellcode im
-        // ref-Baum), umgesetzt ist deshalb die Semantik, die am Feld steht.
-        //
-        // Gezeichnet werden nur die Kopien, die den Sichtbereich wirklich
-        // schneiden: ein Sprite in der Bildmitte bleibt bei EINER Zeichnung,
-        // eines in der Ecke kostet vier.
+        // links wieder herein. Der EEL-Raum ist 2 breit, die Gegenseite liegt
+        // also 2,0 entfernt. Bis S57 war dieses Feld im Panel verstellbar und
+        // wurde von KEINEM Renderer gelesen (Feld-Sonde stumm, MAE 0,0000).
         if (params.wrapAround)
         {
+            const double hxN = rt.picW * sx / W;
+            const double hyN = rt.picH * sy / H;
             for (int ox = -1; ox <= 1; ++ox)
             {
                 for (int oy = -1; oy <= 1; ++oy)
                 {
                     if (ox == 0 && oy == 0) continue;
-                    const float mx = cx + static_cast<float>(ox) * 2.0f;
-                    const float my = cy + static_cast<float>(oy) * 2.0f;
-                    if (std::abs(mx) - hx > 1.0f || std::abs(my) - hy > 1.0f)
+                    const double mx = x + ox * 2.0;
+                    const double my = y + oy * 2.0;
+                    if (std::abs(mx) - hxN > 1.0 || std::abs(my) - hyN > 1.0)
                         continue;
                     zeichne(mx, my);
                 }
