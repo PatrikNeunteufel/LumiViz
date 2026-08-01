@@ -95,7 +95,7 @@
         "type": "strangeAttractor",
         "enabled": true,
         "name": "Strange Attractor",
-        "initCode": "a = -3.0; c = -3; d = -3.0; rotation = 6"
+        "initCode": "a = -3.0; b = -3.0; c = -3; d = -3.0; rotation = 6"
       }
     ],
     "clearEveryFrame": false

@@ -95,7 +95,7 @@
         "type": "terrain3d",
         "enabled": true,
         "name": "Terrain 3D",
-        "frameCode": "res = 1; n = 1; rings = 1; relax = 1.0; flatten = 1"
+        "frameCode": "res = 1; n = 1; rings = 1; relax = 1.0; flatten = 1; blue = 1; green = 1; red = 1"
       }
     ],
     "clearEveryFrame": false

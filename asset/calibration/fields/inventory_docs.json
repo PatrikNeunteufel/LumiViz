@@ -5212,7 +5212,14 @@
           "name": "code",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "AVS point expression (empty = identity)"
+          "doc": "AVS point expression (empty = identity)",
+          "skriptvars": [
+            "alpha",
+            "d",
+            "r",
+            "x",
+            "y"
+          ]
         },
         {
           "art": "bool",
@@ -6769,6 +6776,7 @@
           "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen.",
           "skriptvars": [
             "a",
+            "b",
             "c",
             "d",
             "rotation"
@@ -6830,6 +6838,7 @@
           "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen.",
           "skriptvars": [
             "a",
+            "b",
             "c",
             "d",
             "rotation"
@@ -6862,6 +6871,7 @@
           "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen.",
           "skriptvars": [
             "a",
+            "b",
             "c",
             "d",
             "rotation"
@@ -7464,7 +7474,10 @@
             "n",
             "rings",
             "relax",
-            "flatten"
+            "flatten",
+            "blue",
+            "green",
+            "red"
           ],
           "skriptvars_wirkungslos": [
             "res",
@@ -7555,7 +7568,10 @@
             "n",
             "rings",
             "relax",
-            "flatten"
+            "flatten",
+            "blue",
+            "green",
+            "red"
           ],
           "skriptvars_wirkungslos": [
             "res",
@@ -7574,7 +7590,10 @@
             "n",
             "rings",
             "relax",
-            "flatten"
+            "flatten",
+            "blue",
+            "green",
+            "red"
           ],
           "skriptvars_wirkungslos": [
             "res",
@@ -7601,7 +7620,10 @@
             "n",
             "rings",
             "relax",
-            "flatten"
+            "flatten",
+            "blue",
+            "green",
+            "red"
           ],
           "skriptvars_wirkungslos": [
             "res",
@@ -7747,7 +7769,9 @@
             "blue",
             "i",
             "v",
-            "skip"
+            "skip",
+            "x",
+            "y"
           ],
           "skriptvars_wirkungslos": [
             "i",
@@ -7785,7 +7809,9 @@
             "blue",
             "i",
             "v",
-            "skip"
+            "skip",
+            "x",
+            "y"
           ],
           "skriptvars_wirkungslos": [
             "i",
@@ -7815,7 +7841,9 @@
             "blue",
             "i",
             "v",
-            "skip"
+            "skip",
+            "x",
+            "y"
           ],
           "skriptvars_wirkungslos": [
             "i",
@@ -7838,7 +7866,9 @@
             "blue",
             "i",
             "v",
-            "skip"
+            "skip",
+            "x",
+            "y"
           ],
           "skriptvars_wirkungslos": [
             "i",

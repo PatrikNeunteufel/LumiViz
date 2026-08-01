@@ -170,6 +170,36 @@ sichtbar wirken — die Sonde maß 1/320 ihrer Wirkung (S55 gesehen, S56 behoben
 Spalten über die Lauflänge; Balken und Diagonale werden weiter je Frame
 gezeichnet und bleiben als Orientierung stehen.
 
+## Strang G — Skript-Lint über die Asset-Chains (`lint_chain_scripts.py`, S62)
+
+Die Feld-Sonden prüfen die MODULE; die handgeschriebenen Chains in
+`asset/effectchain|examples|composits` prüft niemand. Anlass war
+`domain.lvfx`: die Beat-Richtungsumkehr lief über `dx`/`dy` — Variablen, die
+der domainWarp-Vertrag nie liest. Der Flip war ein stummer No-op (MAE
+mit/ohne Beats exakt 0,0000; nach dem Fix 0,1817).
+
+```bash
+python lint_chain_scripts.py                # die drei Asset-Sammlungen
+python lint_chain_scripts.py datei.lvfx     # einzeln
+```
+
+Befund = eine Variable wird in einem Skript-Slot GESCHRIEBEN, aber weder vom
+Modul (skriptvars aus `inventory_docs.json`) noch von einem Slot desselben
+Knotens GELESEN. `reg00…`/`q…` sind knotenübergreifend und nie ein Befund;
+EEL ist case-insensitiv. Keine transitive Analyse (`a=…; b=a;` mit
+ungelesenem `b` meldet nur `b`).
+
+**Was der Erstlauf (S62) über den ERNTER fand:** drei Vertragslücken in
+`harvest_field_docs.py` — (1) `b` wurde pauschal als Beat-Eingabe verworfen,
+beim Attraktor ist es aber der De-Jong-Parameter (jetzt konditional: nur wenn
+der Host `b` selbst mit dem Beat-Flag belegt); (2) Movements Skriptfeld heißt
+schlicht `code` und fehlte im Feldnamen-Filter; (3) Mechanismus 2 sah nur die
+`setNumber`-Seeds — Nur-Lese-Ziele wie Texer-IIs `x`/`y` fehlten (jetzt Union
+mit den `number()`-Reads, gleiche Regel wie Mechanismus 3). Danach blieben
+als echte Befunde nur tote Variablen in importierten Originalen
+(alien alloy `xx`/`yy`, test1 `m`/`u`/`tm`, 13c `pi`) — wörtliche Importe,
+bleiben unangetastet.
+
 ## Strang F — wirkt das Feld auch beim EDITIEREN? (`run_edit_probes.py`)
 
 Dieselben Sonden, eine andere Frage. Anlass war Patriks Beobachtung, ein Feld

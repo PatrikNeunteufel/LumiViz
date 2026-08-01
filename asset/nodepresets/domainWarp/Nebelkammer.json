@@ -7,6 +7,9 @@
         "scale": 2.2,
         "warp": 0.65,
         "warpScale": 1.0,
-        "speed": 0.35
+        "speed": 0.35,
+        "initCode": "puls=0",
+        "frameCode": "puls=puls*0.92;\nwarp=0.65+puls*0.9;\nspeed=0.35+mid*0.4",
+        "beatCode": "puls=1;"
     }
 }

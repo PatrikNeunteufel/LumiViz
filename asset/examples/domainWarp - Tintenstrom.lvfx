@@ -19,7 +19,10 @@
                 "warp": 1.2,
                 "warpScale": 2.0,
                 "speed": 0.18,
-                "colorScale": 1.4
+                "colorScale": 1.4,
+                "initCode": "dirx=1;diry=1",
+                "frameCode": "warp=0.35+bass*0.9;\nspeed=dirx*(0.3+vol*9.5);\noy=oy+diry*0.02*(1+sin(vol))",
+                "beatCode": "dirx=-dirx;diry=-diry;"
             }
         ]
     }

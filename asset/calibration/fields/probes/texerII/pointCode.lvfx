@@ -97,7 +97,7 @@
         "name": "Texer II",
         "imageData": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAHklEQVR4nGP4z8CAFWEXxYNGNVCkAZcMLjCqgSYaADtOfpCTQ+5gAAAAAElFTkSuQmCC",
         "initCode": "n=48",
-        "pointCode": "n = 1; sizex = 1; sizey = 1; red = 1; green = 1; blue = 1; i = 1; v = 1; skip = 1"
+        "pointCode": "n = 1; sizex = 1; sizey = 1; red = 1; green = 1; blue = 1; i = 1; v = 1; skip = 1; x = 1; y = 1"
       }
     ],
     "clearEveryFrame": false

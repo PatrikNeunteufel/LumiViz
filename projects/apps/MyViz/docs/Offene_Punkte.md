@@ -1,6 +1,6 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.29.0
+> **Version:** 1.30.0
 > **Datum:** 2026-08-01 (Session 62)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -1028,6 +1028,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.30.0 | 2026-08-01 | Session 62, Teil 2 — Befund Patrik: domain.lvfx-Richtungsumkehr war ein stummer No-op (`dx`/`dy` kein domainWarp-Vertrag; alt MAE 0,0000, gefixt 0,1817 über `speed`-Vorzeichen + `oy`-Pan). Daraus: **neuer Prüfstand Strang G** `lint_chain_scripts.py` (stumme Skript-Zuweisungen in Asset-Chains; fields/README) — fand DREI Ernter-Vertragslücken (`b` beim Attraktor pauschal verworfen, Movements Feld `code` fehlte im Filter, Nur-Lese-Ziele wie Texer-II-`x`/`y` unsichtbar; alle gefixt, inventory_docs +9 Variablen, Teil-Sondenlauf 47 WIRKT/3 SCHWACH/0 STUMM). domainWarp-Vorlagen Tintenstrom/Nebelkammer tragen jetzt Skriptfelder (Beispiele regeneriert, Beat-Wirkung gemessen 0,12/0,038). Rest-Lint: 9 tote Variablen in importierten Originalen (bleiben wörtlich) |
 | 1.29.0 | 2026-08-01 | Session 62 — **Grafikkarten-Auswahl umgesetzt** (§8 ✅): `core/GpuPreference` (UserGpuPreferences-Registry als SSOT), SettingsPanel-Combo mit Sofort-Neustart, `gpu.ini`/`GpuSelector`/Export-Flags entfernt, Tests 491. §8-Messlauf beidseitig gefahren: Baseline 610M (`out/gpu_baseline_radeon610m/`) und RTX 4090 (`out/gpu_after_rtx4090/`) — **keine Verschiebung**, Doppellauf-Sonden karten-übergreifend SHA256-identisch |
 | 1.28.0 | 2026-08-01 | Session 61 (Abschluss) — Vorgabe Patrik für S62 in §8 eingearbeitet: **Grafikkarten-Auswahl ist der Auftrag der nächsten Session** (einmal gesetzt, via Settings umstellbar, Änderung löst SOFORT Neustart aus; §8-Regel Vorher/Nachher-Messlauf gilt). Session-Report `LumiViz_Session61…`, Handover und `Changelog_Session61.md` nachgezogen |
 | 1.27.0 | 2026-08-01 | Session 61 (Sichtprüfung, zweite Welle) — **(1) SuperScope-Herz stand KOPF:** die Figuren-EEL läuft im AVS-kalibrierten Chain-Host (+y = unten), die Mathe-Formel war y-up; y im EEL negiert (Modul-SSOT `SuperscopeModule` + Vorlagen-Datei synchron, der Bibliotheks-Wächter verlangt Gleichheit; die NATIVE Rechnung des Standalone-Visualizers bleibt y-up und damit unverändert richtig). **(2) „bloom zeigt gar nichts":** der Present-Bloom war intakt — die Beispiel-SZENE war untauglich (1-px-Spirale verliert im Glow-Downsample fast alle Energie, der Threshold frisst den Rest). Bloom-Beispiele stehen jetzt auf einer hellen Lichtfaden-Bühne mit Trail; Wirkung bewiesen (Mit/Ohne-Bloom-Diff 0,134). Tests 485/485 |

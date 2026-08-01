@@ -98,7 +98,7 @@
         "imageData": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAHklEQVR4nGP4z8CAFWEXxYNGNVCkAZcMLjCqgSYaADtOfpCTQ+5gAAAAAElFTkSuQmCC",
         "initCode": "n=48",
         "pointCode": "x=(i*2)-1; y=sin(i*6.28)*0.5; sizex=2; sizey=2; red=1; green=0.5; blue=0.2",
-        "frameCode": "n = 1; sizex = 1; sizey = 1; red = 1; green = 1; blue = 1; i = 1; v = 1; skip = 1"
+        "frameCode": "n = 1; sizex = 1; sizey = 1; red = 1; green = 1; blue = 1; i = 1; v = 1; skip = 1; x = 1; y = 1"
       }
     ],
     "clearEveryFrame": false

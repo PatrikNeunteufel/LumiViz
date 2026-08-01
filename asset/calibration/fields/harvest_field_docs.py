@@ -563,15 +563,31 @@ def harvest_script_vars() -> dict[str, dict]:
             i += 1
         body = src[m.end():i - 1]
         gesetzt = re.findall(r'\.setNumber\s*\(\s*"(\w+)"', body)
-        # `b`/`w`/`h` und der Audio-Satz sind EINGABEN des Hosts, keine Ziele.
-        eingaben = {"b", "w", "h", "bass", "mid", "treb", "vol", "beat", "time"}
-        vars_ = [v for v in dict.fromkeys(gesetzt) if v not in eingaben]
+        # `w`/`h` und der Audio-Satz sind EINGABEN des Hosts, keine Ziele.
+        # `b` ist ZWEIDEUTIG: in den AVS-Hosts das Beat-Flag (Eingabe), beim
+        # Attraktor aber der De-Jong-/Clifford-PARAMETER — der Renderer liest
+        # ihn nach dem Slot-Lauf zurueck. Die pauschale Ausnahme hat genau
+        # dieses `b` verschluckt (S62-Befund ueber den Chain-Lint: die
+        # Beispiel-Vorlage morphte `b` per Audio, der Vertrag kannte es nicht).
+        # Eingabe ist `b` nur, wenn der Host es selbst mit dem Beat-Flag
+        # belegt.
+        eingaben = {"w", "h", "bass", "mid", "treb", "vol", "beat", "time"}
+        if re.search(r'setNumber\s*\(\s*"b"\s*,\s*m_frameBeat', body):
+            eingaben.add("b")
+        # Die Wahrheit ist, was der Effekt nach dem Slot-Lauf AUSLIEST (gleiche
+        # Regel wie Mechanismus 3). Nur auf die Seeds zu schauen verschluckt
+        # Nur-Lese-Ziele: Texer II liest `x`/`y` je Punkt heraus, ohne sie je
+        # zu setzen — der Vertrag kannte sie deshalb nicht (S62-Befund des
+        # Chain-Lints, Fehlalarm auf alien alloy).
+        gelesen = set(re.findall(r'\.number\s*\(\s*"(\w+)"', body))
+        gelesen |= set(re.findall(r'->number\s*\(\s*"(\w+)"', body))
+        vars_ = [v for v in dict.fromkeys(gesetzt + sorted(gelesen - set(gesetzt)))
+                 if v not in eingaben]
         if not vars_:
             continue
         out[sm.group(1)] = {
             "vars": vars_,
-            "tot": [v for v in vars_
-                    if not re.search(r'\.number\s*\(\s*"' + re.escape(v) + r'"', body)],
+            "tot": [v for v in vars_ if v not in gelesen],
         }
 
     # Dritter Mechanismus (S55): EFFEKT-Skripte. Superscope, Color Modifier,
@@ -720,8 +736,12 @@ def main() -> int:
             # S55: auch die Punkt-/Kurven-Slots. Sie sind derselbe Fall — nur
             # laufen sie je Punkt statt je Frame, und ihre Variablen stehen im
             # dritten Erntemechanismus (was der Effekt herausliest).
+            # "code" ist das EINE Skriptfeld von Movement (AVS-Erbe: der
+            # Ausdruck heisst dort schlicht `code`) — fehlte in dieser Liste,
+            # und movement.code stand mit leerem Vertrag da (S62-Befund des
+            # Chain-Lints: ein gelintetes `y` galt faelschlich als stumm).
             if (f["name"] in ("initCode", "frameCode", "beatCode", "pointCode",
-                              "levelCode", "pixelCode")
+                              "levelCode", "pixelCode", "code")
                     and struct in skript):
                 e["skriptvars"] = skript[struct]["vars"]
                 if skript[struct]["tot"]:
