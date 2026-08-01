@@ -18,13 +18,14 @@ from pathlib import Path
 
 from avs_preset_lib import (ape, blitter_feedback, blur, buffer_save, bump,
                             clear_screen, colorfade, custom_bpm, convolution,
-                            dot_grid, dot_plane, dynamic_movement,
+                            dot_fountain, dot_grid, dot_plane, dynamic_movement,
                             dynamic_shift, effect_list, entry, fadeout,
                             fast_brightness, grain, i32, interferences,
                             interleave, ints, mirror, mosaic, movement_user,
                             onbeat_clear, osc_ring, preset, rotating_stars,
-                            roto_blitter, starfield, superscope, timescope,
-                            unique_tone, water, water_bump)
+                            roto_blitter, set_render_mode, starfield,
+                            superscope, timescope, unique_tone, water,
+                            water_bump)
 
 for _s in (sys.stdout, sys.stderr):
     if hasattr(_s, "reconfigure"):
@@ -97,15 +98,25 @@ def thema_wurmloecher():
         twist = round(rng.uniform(-0.6, 0.6), 2)
         zoom = round(rng.uniform(0.18, 0.34), 2)
         mos = rng.choice([0, 8, 12, 18])
-        # Bandquelle: zwei springende Balken + Ring, Feedback + Mosaik.
-        bands = superscope(
-            point="x=bx;y=i*2-1;", frame="",
+        # Bandquelle: breite Balken (SRM width 3) + wandernde Sprossenleiter.
+        # Ein Fadeout IN der Schleife haelt das Energie-Gleichgewicht — ohne
+        # ihn saettigt der Blitter-Kreis nach Weiss, mit Nachbrenner erst recht.
+        bands = fadeout(fadelen=10)
+        bands += set_render_mode(mode=1, width=3)
+        bands += superscope(
+            point="x=bx;y=i*2-1;", frame="bx=bx+0.004;",
             beat="bx=(rand(180)-90)*0.01;", init="n=2;bx=0;",
             colors=(col(pal[0]), col(pal[1])))
         bands += superscope(
-            point="x=i*2-1;y=by;", beat="by=(rand(140)-70)*0.01;",
+            point="x=i*2-1;y=by;", frame="by=by-0.006;",
+            beat="by=(rand(140)-70)*0.01;",
             init="n=2;by=0;", colors=(col(pal[2]),))
-        inner = bands + blitter_feedback(scale=rng.choice([26, 30, 34]),
+        bands += superscope(
+            point=("zn=floor(i*10);lok=i*10-zn;"
+                   "y=-0.9+zn*0.2;x=(lok*2-1)*0.95;"),
+            frame="", beat="", init="n=200;",
+            colors=(col(pal[3]), col(pal[0])))
+        inner = bands + blitter_feedback(scale=rng.choice([30, 33, 34]),
                                          scale2=30, blend=1)
         inner += chanshift(onbeat=1)
         if mos:
@@ -169,18 +180,27 @@ def thema_kaleidoskop():
                    "blue=0.7+0.3*sin(t*1.3-pp);"),
             frame="t=t+0.02+ti*0.06;ti=ti*0.85;", beat="ti=1;",
             init=f"n={rng.choice([220, 300, 420])};t=0;ti=0;")
-        kette = fadeout(fadelen=rng.choice([10, 14, 20]),
+        # Schleifen-Hygiene: Das Echo laeuft als REPLACE (die Kopien ersetzen
+        # das Bild — additiv auf dem Feedback saettigte nach Weiss, ein /2-
+        # Halbierer konvergierte auf Mittelgrau), der Fadeout ist kraeftig.
+        # Reihenfolge = Schleifen-Hygiene: Echo (REPLACE, Verstaerkung < 1)
+        # und Spiegel verarbeiten NUR die Historie; die frische Bluete kommt
+        # ZULETZT und bleibt voll hell. Additiv-Echo auf dem Feedback
+        # saettigte nach Weiss, ein /2-Halbierer konvergierte auf Grau.
+        kopien = arme + 1
+        kette = fadeout(fadelen=rng.choice([16, 22, 28]),
                         color=col(rng.choice([0x000000, 0x000818])))
-        kette += quelle
         kette += dynamic_movement(
             point=f"d=d*{round(rng.uniform(0.955, 0.985), 3)};"
                   f"r=r+{round(rng.uniform(0.01, 0.05), 3)};",
             rectcoords=0, xres=16, yres=16)
-        kette += interferences(n_points=arme + 1, rotationinc=rng.choice([1, 2, 3]),
-                               distance=rng.choice([10, 16, 24]), alpha=110,
-                               blend=1, onbeat=1, speed=0.25)
+        kette += interferences(n_points=kopien, rotationinc=rng.choice([1, 2, 3]),
+                               distance=rng.choice([10, 16, 24]),
+                               alpha=216 // kopien,
+                               blend=0, onbeat=1, speed=0.25)
         kette += mirror(mode=rng.choice([5, 10, 12, 15]), onbeat=1, smooth=1,
                         slower=6)
+        kette += quelle
         _ = pal
         out.append((f"{k+1:02d}_facette", preset(kette)))
     return out
@@ -192,7 +212,7 @@ def thema_sternenstaub():
     for k in range(20):
         rng = random.Random(f"stern{k}")
         pal = PALS[(k + 5) % len(PALS)]
-        kette = fadeout(fadelen=rng.choice([16, 24, 32]))
+        kette = fadeout(fadelen=rng.choice([24, 32, 40]))
         kette += starfield(color=col(pal[2]),
                            warp_speed=round(rng.uniform(2.0, 8.0), 1),
                            max_stars=rng.choice([250, 400, 600]), blend=1)
@@ -202,6 +222,11 @@ def thema_sternenstaub():
                                + (col(pal[0]),),
                                angle=rng.choice([-30, -18, 24]))
         else:
+            # Fontaene traegt die Flaeche, die Sternchen sind der Akzent.
+            kette += dot_fountain(rotvel=rng.choice([-20, 14, 24]),
+                                  colors=tuple(col(c) for c in pal[:4])
+                                  + (col(pal[1]),),
+                                  angle=rng.choice([-24, -12, 18]))
             kette += rotating_stars(colors=(col(pal[1]), col(pal[3])))
         kette += roto_blitter(zoom_scale=rng.choice([29, 30, 33]),
                               rot_dir=rng.choice([26, 31, 36]),
@@ -221,9 +246,12 @@ def thema_maschinenraum():
     for k in range(20):
         rng = random.Random(f"maschine{k}")
         pal = PAL["stahl"] if k % 3 else PAL["glut"]
-        kette = custom_bpm(skip=1, skipval=rng.choice([0, 1, 3]))
-        kette += onbeat_clear(color=col(rng.choice(pal)), nf=rng.choice([1, 2, 4]))
-        kette += fadeout(fadelen=rng.choice([6, 10, 14]))
+        kette = custom_bpm(skip=1, skipval=rng.choice([0, 1]))
+        kette += onbeat_clear(color=col(rng.choice(pal)), nf=rng.choice([1, 2]))
+        kette += fadeout(fadelen=rng.choice([10, 14, 18]))
+        # Dauerlicht: Spektral-Vorhang als Werkshalle im Hintergrund.
+        kette += timescope(color=col(pal[1]), which_ch=2, nbands=288, blend=1)
+        kette += set_render_mode(mode=1, width=3)
         # Kolben: springende Rechteck-Balken im Takt.
         kette += superscope(
             point=("sp=floor(i*8);lok=i*8-sp;"
@@ -235,9 +263,11 @@ def thema_maschinenraum():
             colors=(col(pal[0]), col(pal[1])))
         kette += interleave(x=rng.choice([0, 2, 4]), y=rng.choice([1, 2, 3]),
                             color=col(0x000000), blend=0)
-        kette += mosaic(quality=rng.choice([100, 100, 40]),
-                        quality2=rng.choice([8, 12, 20]), onbeat=1,
-                        dur_frames=10)
+        # Stanze mittelgrob halten: bei quality2 unter ~25 kollabiert die
+        # Referenz auf schwarze Block-Anker (Beobachtung S61, unvermessen).
+        kette += mosaic(quality=rng.choice([100, 100, 60]),
+                        quality2=rng.choice([28, 36, 44]), onbeat=1,
+                        dur_frames=8)
         if k % 4 == 0:
             kette += convolution(kernel=list(KANTE), scale=1)
         kette += dynamic_shift(
