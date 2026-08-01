@@ -425,6 +425,23 @@ LVFX_SPIRAL = {
     "pointCode": SPIRAL_POINT, "frameCode": "t=t+1;",
     "initCode": "n=500; t=0;", "pointCount": 500,
 }
+# Bloom braucht eine HELLE, gebuendelte Quelle: eine 1-px-Spirale verliert im
+# Glow-Downsample (1/4-Aufloesung) fast alle Energie, der Threshold frisst den
+# Rest — "bloom zeigt gar nichts" (S61-Befund Patrik). Der weisse 3D-Lichtfaden
+# mit Trail ist die klassische Bloom-Buehne (Lights-Aesthetik).
+LVFX_LICHTFADEN = {
+    "type": "superScope", "enabled": True, "name": "Quelle: Lichtfaden",
+    "pointCode": ("u=i*6.2832;px=sin(u*3+t);py=sin(u*4);pz=cos(u*2+t*0.7);"
+                  "y1=py*cx-pz*sx;z1=py*sx+pz*cx;"
+                  "x1=px*cy-z1*sy;z2=px*sy+z1*cy;"
+                  "dd=1.5/(z2+2.5);x=x1*dd;y=y1*dd;"
+                  "red=1;green=0.95;blue=0.85;"),
+    "frameCode": ("rx=rx+0.012;ry=ry+0.017;cx=cos(rx);sx=sin(rx);"
+                  "cy=cos(ry);sy=sin(ry);t=t+0.02;"),
+    "initCode": "n=420;rx=0;ry=0;t=0;", "pointCount": 420,
+}
+LVFX_TRAIL = {"type": "fadeout", "enabled": True, "name": "Trail",
+              "fadeLen": 10}
 # Host-Typen, die selbst zeichnen — sie stehen allein.
 LVFX_RENDER = RENDER_TYPES | {
     "fractal2D", "fractal3D", "domainWarp", "fractalZoomer", "lyapunov",
@@ -436,11 +453,13 @@ LVFX_RENDER = RENDER_TYPES | {
 def lvfx_scene(typ: str, name: str, node: dict) -> dict:
     child = {"type": typ, "enabled": True, "name": f"{name} ({typ})"}
     child.update({k: v for k, v in node.items() if k != "type"})
-    if typ in LVFX_RENDER:
+    if typ == "bloom":          # helle Lichtfaden-Buehne mit Trail
+        children, clear = [dict(LVFX_TRAIL), dict(LVFX_LICHTFADEN), child], False
+    elif typ in LVFX_RENDER:
         children, clear = [child], True
     elif typ in TRAIL_TYPES:
         children, clear = [child, dict(LVFX_SPIRAL)], False
-    else:                       # Filter (auch Bloom) hinter der Quelle
+    else:                       # Filter hinter der Quelle
         children, clear = [dict(LVFX_SPIRAL), child], True
     return {
         "header": {"formatVersion": 1, "generator": "LumiViz MultiEffect"},

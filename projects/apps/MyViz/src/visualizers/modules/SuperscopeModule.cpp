@@ -294,9 +294,13 @@ void SuperscopeModule::loadPresetCode(SuperscopePreset preset)
             m_initCode = "n=200; t=0; pi=acos(-1)";
             m_beatCode = "";
             m_frameCode = "t=t+0.01";
+            // y NEGIERT: das EEL laeuft im AVS-kalibrierten Chain-Host, dort
+            // zeigt +y nach UNTEN — die Mathe-Formel (y-up) stand Kopf
+            // (S61-Befund Patrik). Die native Rechnung unten bleibt y-up,
+            // der Standalone-Visualizer rendert GL-Konvention.
             m_pointCode = "th=i*pi*2; sc=0.04+v*0.01; "
                           "x=sc*16*pow(sin(th),3); "
-                          "y=sc*(13*cos(th)-5*cos(2*th)-2*cos(3*th)-cos(4*th))";
+                          "y=-sc*(13*cos(th)-5*cos(2*th)-2*cos(3*th)-cos(4*th))";
             m_pointCount = 200;
             break;
 

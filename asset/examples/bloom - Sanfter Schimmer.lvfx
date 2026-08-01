@@ -8,16 +8,22 @@
         "enabled": true,
         "name": "root",
         "description": "Beispiel fuer Voreinstellung 'Sanfter Schimmer' (bloom)",
-        "clearEveryFrame": true,
+        "clearEveryFrame": false,
         "children": [
+            {
+                "type": "fadeout",
+                "enabled": true,
+                "name": "Trail",
+                "fadeLen": 10
+            },
             {
                 "type": "superScope",
                 "enabled": true,
-                "name": "Quelle: Farb-Spirale",
-                "pointCode": "d=i*0.85; r=i*18.85+t*0.2; x=cos(r)*d*0.9; y=sin(r)*d*0.7+0.1;\nred=i; green=1-i; blue=0.4+0.3*sin(i*12);",
-                "frameCode": "t=t+1;",
-                "initCode": "n=500; t=0;",
-                "pointCount": 500
+                "name": "Quelle: Lichtfaden",
+                "pointCode": "u=i*6.2832;px=sin(u*3+t);py=sin(u*4);pz=cos(u*2+t*0.7);y1=py*cx-pz*sx;z1=py*sx+pz*cx;x1=px*cy-z1*sy;z2=px*sy+z1*cy;dd=1.5/(z2+2.5);x=x1*dd;y=y1*dd;red=1;green=0.95;blue=0.85;",
+                "frameCode": "rx=rx+0.012;ry=ry+0.017;cx=cos(rx);sx=sin(rx);cy=cos(ry);sy=sin(ry);t=t+0.02;",
+                "initCode": "n=420;rx=0;ry=0;t=0;",
+                "pointCount": 420
             },
             {
                 "type": "bloom",
