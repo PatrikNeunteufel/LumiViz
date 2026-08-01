@@ -3633,6 +3633,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     {
         addInt("rotVel", tr("Rotation speed"), p->rotVel, -50, 50, [](ChainNode& n, int v) { std::get<DotPlaneParams>(n.params).rotVel = v; });
         addInt("angle", tr("Angle"), p->angle, -90, 90, [](ChainNode& n, int v) { std::get<DotPlaneParams>(n.params).angle = v; });
+        addDouble("startRotation", tr("Start rotation"), p->startRotation, 0.0, 360.0, 1.0, [](ChainNode& n, double v) { std::get<DotPlaneParams>(n.params).startRotation = static_cast<float>(v); });
         addRefDouble("camDistance", tr("Camera distance"), p->camDistance, 50.0, 2000.0, 10.0, 400.0, 1, [](ChainNode& n, double v) { std::get<DotPlaneParams>(n.params).camDistance = static_cast<float>(v); });
         addRefDouble("settle", tr("Settle"), p->settle, 0.0, 2.0, 0.01, 0.15, 3, [](ChainNode& n, double v) { std::get<DotPlaneParams>(n.params).settle = static_cast<float>(v); });
         for (int i = 0; i < 5; ++i)
@@ -3646,6 +3647,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     {
         addInt("rotVel", tr("Rotation speed"), p->rotVel, -50, 50, [](ChainNode& n, int v) { std::get<DotFountainParams>(n.params).rotVel = v; });
         addInt("angle", tr("Angle"), p->angle, -90, 90, [](ChainNode& n, int v) { std::get<DotFountainParams>(n.params).angle = v; });
+        addDouble("startRotation", tr("Start rotation"), p->startRotation, 0.0, 360.0, 1.0, [](ChainNode& n, double v) { std::get<DotFountainParams>(n.params).startRotation = static_cast<float>(v); });
         for (int i = 0; i < 5; ++i)
             addColor("colors", tr("Color %1").arg(i + 1), p->colors[i], [i](ChainNode& n, uint32_t v) { std::get<DotFountainParams>(n.params).colors[i] = v; });
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DotFountainParams>(n.params).initCode = std::move(v); });

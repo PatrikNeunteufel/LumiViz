@@ -33,6 +33,7 @@
         "initCode": "",
         "name": "Dot Fountain",
         "rotVel": 16,
+        "startRotation": 0,
         "type": "dotFountain"
       }
     ],

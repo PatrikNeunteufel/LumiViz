@@ -35,6 +35,7 @@
         "name": "Dot Plane",
         "rotVel": 16,
         "settle": 0.15000000596046448,
+        "startRotation": 0,
         "type": "dotPlane"
       }
     ],

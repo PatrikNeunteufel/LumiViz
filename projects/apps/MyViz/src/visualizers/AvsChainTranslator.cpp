@@ -934,6 +934,10 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
                 p.colors[i] = avsColor(static_cast<std::int32_t>(src.colors[i]));
             p.rotVel = src.field("rotvel");
             p.angle = src.field("angle");
+            // Das Original speichert seine laufende Rotation mit (r = rr/32,
+            // r_dotpln load_config) — ohne sie steht die Ebene dauerhaft
+            // verdreht (Tie Tunnel: 1435/32 = 44,84 Grad).
+            p.startRotation = static_cast<float>(src.field("r_raw")) / 32.0f;
             out.params = p;
             return true;
         }
@@ -945,6 +949,7 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
                 p.colors[i] = avsColor(static_cast<std::int32_t>(src.colors[i]));
             p.rotVel = src.field("rotvel");
             p.angle = src.field("angle");
+            p.startRotation = static_cast<float>(src.field("r_raw")) / 32.0f;
             out.params = p;
             return true;
         }

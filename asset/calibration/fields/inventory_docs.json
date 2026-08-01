@@ -7,7 +7,7 @@
   },
   "summe": {
     "typen": 85,
-    "felder": 719,
+    "felder": 721,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -2152,6 +2152,16 @@
           "lo": -50.0,
           "hi": 50.0,
           "doc": "Drehgeschwindigkeit (Vorzeichen = Richtung)."
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "startRotation",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 360.0,
+          "doc": "Start-Drehwinkel in Grad — wie Dot Plane speichert das Original seine laufende Rotation im Preset (`r = rr/32`, r_dotfnt load_config)."
         }
       ]
     },
@@ -2352,6 +2362,16 @@
           "lo": 0.0,
           "hi": 2.0,
           "doc": "Absinken je Frame: `vel -= settle*h/255`"
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "startRotation",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 360.0,
+          "doc": "Start-Drehwinkel in Grad — das Original SPEICHERT seine laufende Rotation im Preset (`r = rr/32`, r_dotpln load_config) und steht damit beim Laden sofort in der gespeicherten Stellung (Tie Tunnel: 44,84°)."
         }
       ]
     },

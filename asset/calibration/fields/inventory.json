@@ -1,7 +1,7 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 719,
+        "felder": 721,
         "typen": 85
     },
     "typen": [
@@ -1111,6 +1111,11 @@
                     "art": "zahl",
                     "default": 16,
                     "name": "rotVel"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "startRotation"
                 }
             ],
             "name": "Dot Fountain",
@@ -1213,6 +1218,11 @@
                     "art": "zahl",
                     "default": 0.15000000596046448,
                     "name": "settle"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "startRotation"
                 }
             ],
             "name": "Dot Plane",

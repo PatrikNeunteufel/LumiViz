@@ -1481,6 +1481,10 @@ struct DotPlaneParams
     uint32_t colors[5] = {0x0000FF, 0x00FFFF, 0x00FF00, 0xFFFF00, 0xFF0000};
     int rotVel = 16;   ///< rotation speed (-50..50 in AVS)
     int angle = -20;   ///< viewing tilt angle
+    /// Start-Drehwinkel in Grad — das Original SPEICHERT seine laufende
+    /// Rotation im Preset (`r = rr/32`, r_dotpln load_config) und steht damit
+    /// beim Laden sofort in der gespeicherten Stellung (Tie Tunnel: 44,84°).
+    float startRotation = 0.0f;
 
     // KLASSE A (Knoten_Parameter_Konzept §2): die Vorgaben sind die Werte aus
     // `r_dotpln.cpp` — eine Abweichung entfernt das Bild MESSBAR von der
@@ -1510,6 +1514,9 @@ struct DotFountainParams
     int rotVel = 16;
     /// Neigung der Ansicht in Grad.
     int angle = -20;
+    /// Start-Drehwinkel in Grad — wie Dot Plane speichert das Original seine
+    /// laufende Rotation im Preset (`r = rr/32`, r_dotfnt load_config).
+    float startRotation = 0.0f;
 
     /// Parameter-Skript (Strang D): `rotvel`, `angle` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
     std::string initCode;

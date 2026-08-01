@@ -10524,8 +10524,22 @@ void MultiEffectVisualizer::runDotPlane(const ChainNode& node, const DotPlanePar
         rt.dpHeights.assign(static_cast<std::size_t>(kN * kN), 0.0f);
         rt.dpVel.assign(static_cast<std::size_t>(kN * kN), 0.0f);
         rt.dpColors.assign(static_cast<std::size_t>(kN * kN), 0u);
-        rt.dpR = 0.0f;
+        // Startwinkel aus dem Preset: r_dotpln speichert die laufende Rotation
+        // mit (`r = rr/32`) und steht beim Laden sofort in dieser Stellung.
+        // Ohne ihn stand Tie Tunnels Ebene dauerhaft 44,84 Grad verdreht —
+        // durch die Band-Rueckkopplung wurde daraus die falsche Farb-Phase
+        // der Tunnelbaender (S61).
+        rt.dpR = params.startRotation;
+        rt.dpRSeed = params.startRotation;
         rt.dpSeeded = true;
+    }
+    else if (rt.dpRSeed != params.startRotation)
+    {
+        // STARTWERT-Bauart wie `interfRotationSeed`: ein Panel-Edit ruft nur
+        // recompileChain(), nicht resetRuntimes() — ohne den Vergleich kaeme
+        // ein neuer Wert nie an.
+        rt.dpR = params.startRotation;
+        rt.dpRSeed = params.startRotation;
     }
 
     // initcolortab: 4 Segmente je 16 Schritte, exakte int-Arithmetik.
@@ -10697,6 +10711,15 @@ void MultiEffectVisualizer::runDotFountain(const ChainNode& node,
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     if (static_cast<int>(rt.fountain.size()) != kCount)
         rt.fountain.assign(kCount, FountainP{});
+
+    // Startwinkel aus dem Preset (r_dotfnt speichert `r = rr/32` mit) —
+    // STARTWERT-Bauart wie `interfRotationSeed`; NaN-Init triggert den
+    // ersten Seed.
+    if (rt.dotRotSeed != params.startRotation)
+    {
+        rt.dotRot = params.startRotation;
+        rt.dotRotSeed = params.startRotation;
+    }
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
     double vRotVel = params.rotVel, vAngle = params.angle;

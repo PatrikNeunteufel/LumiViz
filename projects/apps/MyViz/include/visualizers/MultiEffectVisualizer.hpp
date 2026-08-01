@@ -51,6 +51,7 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
 
+#include <limits>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -485,6 +486,9 @@ private:
         float dotOffX = 0.0f;      ///< Dot Grid: scroll offset
         float dotOffY = 0.0f;
         float dotRot = 0.0f;       ///< Dot Fountain: accumulating rotation
+        /// Preset-Startwinkel, mit dem `dotRot` geseedet wurde (Bauart
+        /// `interfRotationSeed`: STARTWERT, danach laeuft der Winkel selbst).
+        float dotRotSeed = std::numeric_limits<float>::quiet_NaN();
         std::vector<FountainP> fountain;  ///< Dot Fountain particles
 
         // Dot Plane (r_dotpln, S48-Neuschrieb): scrollendes 64x64-Grid mit
@@ -494,6 +498,8 @@ private:
         std::vector<float> dpVel;        ///< vtable
         std::vector<uint32_t> dpColors;  ///< ctable (FB-Ints)
         float dpR = 0.0f;                ///< akkumulierte Rotation (Grad)
+        /// Preset-Startwinkel, mit dem `dpR` geseedet wurde (s. `dotRotSeed`).
+        float dpRSeed = std::numeric_limits<float>::quiet_NaN();
         bool dpSeeded = false;
 
         int apeChanMode = -1;      ///< Channel Shift on-beat held permutation

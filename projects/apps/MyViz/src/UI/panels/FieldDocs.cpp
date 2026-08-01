@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     719>
+                     721>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
@@ -382,6 +382,8 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "Parameter-Skript (Strang D): `rotvel`, `angle` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
     {"dotFountain.rotVel",
      "Drehgeschwindigkeit (Vorzeichen = Richtung)."},
+    {"dotFountain.startRotation",
+     "Start-Drehwinkel in Grad \342\200\224 wie Dot Plane speichert das Original seine laufende Rotation im Preset (`r = rr/32`, r_dotfnt load_config)."},
     {"dotGrid.beatCode",
      "Parameter-Skript (Strang D): `spacing`, `xmove`, `ymove`, `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
     {"dotGrid.blend",
@@ -414,6 +416,8 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "rotation speed (-50..50 in AVS)"},
     {"dotPlane.settle",
      "Absinken je Frame: `vel -= settle*h/255`"},
+    {"dotPlane.startRotation",
+     "Start-Drehwinkel in Grad \342\200\224 das Original SPEICHERT seine laufende Rotation im Preset (`r = rr/32`, r_dotpln load_config) und steht damit beim Laden sofort in der gespeicherten Stellung (Tie Tunnel: 44,84\302\260)."},
     {"dynamicDistanceModifier.beatCode",
      "Skript-Variablen: **nur `d`** (+ `b` und der Audio-Satz)."},
     {"dynamicDistanceModifier.blend",

@@ -983,6 +983,7 @@ struct WriteVisitor
         o["colors"] = cols;
         o["rotVel"] = p.rotVel;
         o["angle"] = p.angle;
+        o["startRotation"] = p.startRotation;
         o["camDistance"] = p.camDistance;
         o["settle"] = p.settle;
         o["initCode"] = QString::fromStdString(p.initCode);
@@ -996,6 +997,7 @@ struct WriteVisitor
         o["colors"] = cols;
         o["rotVel"] = p.rotVel;
         o["angle"] = p.angle;
+        o["startRotation"] = p.startRotation;
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
@@ -2283,6 +2285,8 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
             fill(p.colors);
             p.rotVel = getInt(o, "rotVel", p.rotVel);
             p.angle = getInt(o, "angle", p.angle);
+            p.startRotation =
+                static_cast<float>(getDouble(o, "startRotation", p.startRotation));
             p.camDistance = static_cast<float>(getDouble(o, "camDistance", p.camDistance));
             p.settle = static_cast<float>(getDouble(o, "settle", p.settle));
             p.initCode = getStr(o, "initCode", p.initCode);
@@ -2294,6 +2298,8 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         fill(p.colors);
         p.rotVel = getInt(o, "rotVel", p.rotVel);
         p.angle = getInt(o, "angle", p.angle);
+        p.startRotation =
+            static_cast<float>(getDouble(o, "startRotation", p.startRotation));
         p.initCode = getStr(o, "initCode", p.initCode);
         p.frameCode = getStr(o, "frameCode", p.frameCode);
         p.beatCode = getStr(o, "beatCode", p.beatCode);
