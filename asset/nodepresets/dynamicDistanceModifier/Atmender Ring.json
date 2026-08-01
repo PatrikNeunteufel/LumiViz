@@ -5,7 +5,7 @@
         "type": "dynamicDistanceModifier",
         "initCode": "t=0",
         "frameCode": "t=t+0.08",
-        "pixelCode": "d=d*(1+0.05*sin(t))",
+        "pixelCode": "d=d*(1+0.12*sin(t))",
         "subpixel": true
     }
 }

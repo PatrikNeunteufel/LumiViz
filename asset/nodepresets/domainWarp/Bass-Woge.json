@@ -5,6 +5,6 @@
         "type": "domainWarp",
         "octaves": 5,
         "scale": 2.6,
-        "frameCode": "warp=0.35+bass*0.9;speed=0.12+vol*0.25"
+        "frameCode": "warp=0.35+bass*0.9;speed=0.3+vol*0.5"
     }
 }

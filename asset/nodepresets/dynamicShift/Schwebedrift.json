@@ -4,7 +4,7 @@
     "node": {
         "type": "dynamicShift",
         "initCode": "t=0",
-        "frameCode": "t=t+0.05;x=4*sin(t);y=3*cos(t*0.8)",
+        "frameCode": "t=t+0.05;x=10*sin(t);y=7*cos(t*0.8)",
         "subpixel": true
     }
 }

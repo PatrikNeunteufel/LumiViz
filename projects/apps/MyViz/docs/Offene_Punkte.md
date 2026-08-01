@@ -1,6 +1,6 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.25.0
+> **Version:** 1.26.0
 > **Datum:** 2026-08-01 (Session 61)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -700,6 +700,17 @@ Winamp-Komfort).
 
 ## 7. Backlog (bewusst nichts tun)
 
+### ⚪ fractalZoomer: float-Erschöpfung im Endlos-Zoom (Befund S61)
+
+Der Zoomer akkumuliert seinen Zoom unbegrenzt — nach Minuten Laufzeit ist
+float32 erschöpft, das Bild wird Pixelbrei oder schwarz (Befund Patrik,
+Sichtprüfung der Beispiele; die 120-Frame-Validierung konnte das nicht sehen).
+Die Vorlagen sind entschärft (langsamere zoomSpeeds), das verlängert aber nur.
+**Echter Fix ist Host-seitig:** Tiefen-Reset bzw. Zoom-Loop (bei erreichter
+Präzisionsgrenze weich auf den Startausschnitt zurückblenden), ggf. plus
+double-Präzision fürs Zentrum. Der akkumulierte Zoom ist per Skript nicht
+erreichbar (nur `zoomspeed`), ein Vorlagen-Workaround existiert also nicht.
+
 ### ⚪ Video-/Kamera-Quellmodul + Stilfilter (Wunsch Patrik S55)
 
 **Zeitpunkt: später** — ausdrücklich nicht in der Kalibrier-Runde. Hier steht nur,
@@ -1012,6 +1023,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.26.0 | 2026-08-01 | Session 61 (Sichtprüfungs-Runde Patrik über die Beispiele) — **drei Befund-Klassen behoben:** (1) **Farb-Doppelfehler in BEIDEN Generatoren**: `avsColor` ist ein NO-OP (AVS-Farben sind bereits 0x00RRGGBB, S46) — mein R/B-Tausch beim Erzeugen verdrehte ALLE Farben (Feuer→blau, Ozean→orange), und der AvsRef-Vergleich blieb grün, weil beide Seiten dieselbe verdrehte Datei lasen. **Lehre: ein Rückabbildungs-Vergleich beweist Übereinstimmung, nicht Intention.** (2) **domainWarp stand praktisch still** — `uTime` wanderte nur ins Warp-Feld, nie in den Abtastpunkt; Shader-Fix Grunddrift (Host-Modul, kein Referenzvertrag; Bewegungs-Diff 0,006→0,025). (3) **Lebendigkeits-Pass über 15 Vorlagen** (Starfield-Dichte, Attraktor-Audio-Morphing, Lorenz-Tempo, DDM/Shift kräftiger, Burning-Ship-Ausschnitt, domainWarp-Tempi, Zoomer entschärft). **Neu notiert (⚪ §7): `fractalZoomer` erschöpft nach Minuten die float-Präzision** (Endlos-Zoom → Pixelbrei/Schwarz) — braucht einen Host-seitigen Tiefen-Reset/Loop. Tests 485/485, beide Sammlungen regeneriert und beidseitig re-validiert |
 | 1.25.0 | 2026-08-01 | Session 61 (vierter Block) — **`asset/composits/`: 200 GANZE Presets in 10 Themenwelten** (je 20, el-vis/UnConeD-Bauarten: Buffer-Tunnel, Feedback-Schleifen, Beat-Physik, 3D-EEL-Projektionen). 8 Themen als Original-EEL-konformes .avs (Wurmlöcher · Plasmanebel · Kaleidoskop · Sternenstaub · Maschinenraum · Drahtgeister · Tiefsee · Farbenrausch), 2 als .lvfx mit Host-Modulen (Fraktalträume · Lichterstadt). Generator `make_composit_presets.py` (seeded, reproduzierbar). **Validiert: 200/200 rendern in LumiViz, 160/160 .avs auch in AvsRef, keine Schwarz-/Weiß-Ausreißer.** Dabei gelernte Schleifen-Hygiene im Generator dokumentiert (Echo als REPLACE mit Verstärkung < 1, Quelle ans Kettenende, Fadeout im Buffer-Kreis) und eine unvermessene Beobachtung notiert: extremes On-Beat-Mosaik (quality2 ≲ 25) kollabiert in der REFERENZ auf schwarze Block-Anker, bei uns nicht — bei Bedarf per Sonde vermessen |
 | 1.24.0 | 2026-08-01 | Session 61 (dritter Block) — **`asset/examples/`: je Vorlage ein Beispiel-Preset (125, flach, Name = `<typkey> - <Vorlagenname>`)** mit Matrix-Material als Render-Quellen; Generator `asset/calibration/avs/make_example_presets.py` (Rückabbildung des kalibrierten Imports). **90 als .avs** (AvsRef-vergleichbar) · 35 als .lvfx (host-eigene Typen, Host-Konstanten-Vorlagen, LumiViz-EEL-Dialekt — die S53-Figuren Star/Starburst nutzen `mod()`/`>`, das Original-EEL nicht kennt). **Vergleichslauf über alle 90: 85 OK, 5 PRUEFEN, 0 Fehler** — 2× grain (bekannte §9-Grenze, Menge exakt) + 3× Feedback-Weichheit (s. neue §1-Zeile). Dabei zwei Vorlagen-Fixes: `flame/Hufeisen-Nebel` kollabierte mit 4 Abbildungen (jetzt 3) · `mirror/Zufallsspiegel` trug `slower: true` statt einer Zahl. Tests 485/485 |
 | 1.23.0 | 2026-08-01 | Session 61 (Fortsetzung) — **Vorlagen-Fließarbeit (Strang C): 41 neue Basis-Voreinstellungen, Katalog 125 für 39 Typen.** Fraktal-Familie + Bloom komplett erstausgestattet (27, Bloom-Werte aus `lights_demo`), Histogramm-Lücken blur/simpleScope/customBpm (8), Import-Ernte-Erstling: 6 kuratierte Dynamic-Movement-Warps wörtlich aus der Sammlung (Quellen im Katalog). Ernte-Werkzeug über `AvsStandalone --dump` (89 Presets, 700+ Kandidaten für weitere Runden). Tests 485/485 (Ladbarkeits-Gate deckt alle neuen Dateien). **Host-Klassiker-Vorlagen brauchen einen Entscheid** (VisualizerPresetManager kennt keinen Asset-Ordner — Umbau nach NodePresetStore-Muster nötig, §7.3) |

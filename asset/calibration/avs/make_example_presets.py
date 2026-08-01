@@ -53,8 +53,14 @@ WAVE = superscope(point="x=2*i-1; y=v*0.5-0.2;", init="n=288",
 
 
 def swap_rb(c: int) -> int:
-    """Host-0x00RRGGBB <-> Datei-COLORREF (avsColor ist selbstinvers)."""
-    return ((c & 0xFF) << 16) | (c & 0x00FF00) | ((c >> 16) & 0xFF)
+    """AVS-Preset-Farben sind BEREITS 0x00RRGGBB — kein COLORREF!
+    `avsColor` im Translator ist ein No-op (Beweis S46: GR_SelectColor
+    tauscht den Dialog-COLORREF bei Ein- UND Ausgang, gespeichert wird der
+    Framebuffer-Wert). Der fruehere R/B-Tausch hier verdrehte ALLE Farben
+    der generierten Beispiele (S61-Befund Patrik: Feuer wurde blau) —
+    und der AvsRef-Vergleich blieb gruen, weil beide Seiten dieselbe
+    verdrehte Datei lasen. Name bleibt fuer die Aufrufstellen."""
+    return c & 0xFFFFFF
 
 
 def blend_pair(host: int):

@@ -2309,6 +2309,11 @@ void main()
     vec2 uv = (vTex - 0.5) * 2.0;
     uv.x *= uAspect;
     vec2 p = uv * uScale + uOffset;
+    // Grunddrift: uTime wanderte frueher NUR ins Warp-Feld q — bei kleinem
+    // uWarp stand das Bild damit praktisch still (S61-Befund Patrik,
+    // "domainWarp bewegt gar nichts"). Der Abtastpunkt selbst driftet jetzt
+    // mit der Zeit; das Warp-Feld behaelt seine eigene Bewegung.
+    p += vec2(uTime * 0.25, uTime * 0.17);
     vec2 q = vec2(fbm(p + vec2(0.0, uTime)), fbm(p + vec2(5.2, 1.3 - uTime)));
     vec2 r = vec2(fbm(p + uWarp * q * uWarpScale + vec2(1.7, 9.2)),
                   fbm(p + uWarp * q * uWarpScale + vec2(8.3, 2.8)));

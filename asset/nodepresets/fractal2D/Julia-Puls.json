@@ -9,7 +9,7 @@
         "maxIter": 200,
         "smooth": true,
         "initCode": "z0=1.1",
-        "frameCode": "z0=z0+(1.1-z0)*0.08;zoom=z0;rot=rot+0.0015",
+        "frameCode": "z0=z0+(1.1-z0)*0.08;zoom=z0;rot=rot+0.0015+bass*0.004",
         "beatCode": "z0=1.45"
     }
 }

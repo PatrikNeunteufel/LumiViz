@@ -23,7 +23,8 @@
                 "scale": 0.35,
                 "rotationSpeed": 0.03,
                 "dotSize": 1.5,
-                "blend": 1
+                "blend": 1,
+                "frameCode": "a=-1.4+bass*0.35"
             }
         ]
     }

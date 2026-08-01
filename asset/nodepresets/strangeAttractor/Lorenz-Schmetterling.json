@@ -9,8 +9,9 @@
         "c": 1.0,
         "points": 8000,
         "scale": 0.28,
-        "rotationSpeed": 0.08,
+        "rotationSpeed": 0.035,
         "dotSize": 2.0,
-        "blend": 1
+        "blend": 1,
+        "frameCode": "c=1+treb*0.4"
     }
 }

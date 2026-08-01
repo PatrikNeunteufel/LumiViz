@@ -35,13 +35,10 @@ ROOT = Path(__file__).parent
 OUT = (ROOT / "../../composits").resolve()
 
 
-def swap_rb(c):
-    return ((c & 0xFF) << 16) | (c & 0x00FF00) | ((c >> 16) & 0xFF)
-
-
 def col(c):
-    """Palette (0xRRGGBB) -> Datei-COLORREF."""
-    return swap_rb(c)
+    """AVS-Preset-Farben sind BEREITS 0x00RRGGBB (avsColor = No-op, S46) —
+    der fruehere R/B-Tausch hier verdrehte alle Palettenfarben (S61)."""
+    return c & 0xFFFFFF
 
 
 def chanshift(mode=1023, onbeat=1):

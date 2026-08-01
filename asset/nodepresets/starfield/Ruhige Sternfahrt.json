@@ -4,7 +4,7 @@
     "node": {
         "type": "starfield",
         "warpSpeed": 4,
-        "maxStars": 350,
+        "maxStars": 900,
         "onBeat": false
     }
 }
