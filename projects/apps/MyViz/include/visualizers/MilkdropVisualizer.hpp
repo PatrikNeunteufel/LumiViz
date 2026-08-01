@@ -222,6 +222,10 @@ private:
     [[nodiscard]] int activeBlurLevels() const;
     bool ensureBlurTargets(int sourceW, int sourceH);
     void releaseBlurTargets();
+    /// Kaltstart-Saat (S63): beide Feedback-Texturen mit deterministischem
+    /// Vollbereichs-Rauschen fuellen — Verstaerker-Presets ohne eigene
+    /// Energiequelle brauchen ererbten Pufferinhalt (Original: undef. VRAM)
+    void seedFeedbackNoise(int w, int h);
     /// @brief H+V blur chain over the previous frame (call BEFORE beginFrame)
     void runBlurPasses(const FrameVars& fv);
     void computeWarpMesh(const FrameVars& fv);

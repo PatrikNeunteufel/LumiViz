@@ -2874,6 +2874,29 @@ bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outRep
     return parsed.ok;
 }
 
+bool MultiEffectVisualizer::replaceMilkdropPresetInPlace(
+    lumi::milkdrop::PresetState& state, const QString& presetDir,
+    std::map<std::string, std::string> embeddedImages)
+{
+    // S63: .milk→.milk-Wechsel erhaelt die Feedback-Historie — im Original
+    // erbt jedes Preset das Bild des Vorgaengers (Kern-Aesthetik; der Haupt-
+    // puffer wird beim Wechsel NIE geloescht). Ein setChain mit neuen Node-Ids
+    // + Runtime-Reset wuerfe den MilkdropVisualizer samt FeedbackBuffer weg —
+    // deshalb bei bestehender Milkdrop-Wurzel nur die Params tauschen: gleiche
+    // Node-Id → gleiche Runtime, Revision++ → applyPresetState im Kern.
+    if (m_root.children.size() != 1) return false;
+    ChainNode& node = m_root.children.front();
+    auto* params = std::get_if<MilkdropNodeParams>(&node.params);
+    if (params == nullptr) return false;
+
+    node.displayName = state.name.empty() ? std::string("Milkdrop") : state.name;
+    params->preset = std::move(state);
+    params->presetDir = presetDir.toStdString();
+    params->embeddedImages = std::move(embeddedImages);
+    params->revision += 1;
+    return true;
+}
+
 namespace {
 
 /// N1: eine Wurzel-Liste mit genau einem Milkdrop-Meganode (Entscheid E1)
@@ -2935,6 +2958,7 @@ bool MultiEffectVisualizer::loadMilkFile(const QString& path, QStringList* outRe
         probe.applyPresetState(state, dir, outReport);
     }
 
+    if (replaceMilkdropPresetInPlace(state, dir, {})) return true;
     m_pendingRuntimeReset = true;  // neue Node-Ids — alte GL-Runtimes freigeben
     setChain(makeMilkdropRoot(std::move(state), dir));
     return true;
@@ -2954,6 +2978,7 @@ bool MultiEffectVisualizer::loadMilkDocument(const QString& path, QStringList* o
         MilkdropVisualizer probe;
         probe.applyPresetState(state, dir, outReport);
     }
+    if (replaceMilkdropPresetInPlace(state, dir, {})) return true;
     m_pendingRuntimeReset = true;
     setChain(makeMilkdropRoot(std::move(state), dir));
     return true;

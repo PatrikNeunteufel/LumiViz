@@ -1340,6 +1340,36 @@ void MilkdropVisualizer::releaseBlurTargets()
     m_blurSrcH = 0;
 }
 
+void MilkdropVisualizer::seedFeedbackNoise(int w, int h)
+{
+    if (!m_feedback.ready()) return;
+    QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
+
+    // fixer Seed → jeder Kaltstart ist bit-identisch reproduzierbar (Prüfstände)
+    std::vector<unsigned char> noise(static_cast<std::size_t>(w) * h * 4);
+    unsigned int s = 0x5EED63u;
+    for (std::size_t i = 0; i < noise.size(); i += 4)
+    {
+        // xorshift32 — ein Zug je Pixel, RGB aus den Bytes, Alpha deckend
+        s ^= s << 13;
+        s ^= s >> 17;
+        s ^= s << 5;
+        noise[i + 0] = static_cast<unsigned char>(s);
+        noise[i + 1] = static_cast<unsigned char>(s >> 8);
+        noise[i + 2] = static_cast<unsigned char>(s >> 16);
+        noise[i + 3] = 255;
+    }
+    for (const unsigned int tex : {m_feedback.previousTexture(), m_feedback.currentTexture()})
+    {
+        f->glBindTexture(GL_TEXTURE_2D, tex);
+        f->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE,
+                           noise.data());
+    }
+    f->glBindTexture(GL_TEXTURE_2D, 0);
+    trace::log(QStringLiteral("seedFeedbackNoise: %1x%2 (Kaltstart-Saat, Seed fix)")
+                   .arg(w).arg(h));
+}
+
 void MilkdropVisualizer::runBlurPasses(const FrameVars& fv)
 {
     const int levels = activeBlurLevels();
@@ -2443,15 +2473,11 @@ void MilkdropVisualizer::onRender(float deltaTime)
     QOpenGLFunctions* f = ctx->functions();
     if (!wasReady)
     {
-        // fresh buffers hold garbage — start from black on both sides
-        for (int i = 0; i < 2; ++i)
-        {
-            m_feedback.beginFrame();
-            f->glViewport(0, 0, w, h);
-            f->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            f->glClear(GL_COLOR_BUFFER_BIT);
-            m_feedback.swapOnly();
-        }
+        // Kaltstart-Saat (S63): NICHT schwarz nullen — Verstaerker-Presets
+        // (z. B. Fractopia) haben keine eigene Energiequelle und leben vom
+        // ererbten Pufferinhalt; das Original startet mit undefiniertem VRAM.
+        // Deterministisches Vollbereichs-Rauschen = reproduzierbares Aequivalent.
+        seedFeedbackNoise(w, h);
     }
 
     updateAudio(deltaTime);

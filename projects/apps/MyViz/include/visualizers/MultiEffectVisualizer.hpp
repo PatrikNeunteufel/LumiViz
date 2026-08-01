@@ -99,6 +99,12 @@ public:
      * @return false only when the file does not parse as a MilkDrop preset.
      */
     bool loadMilkFile(const QString& path, QStringList* outReport = nullptr);
+    /// S63: .milk→.milk-Wechsel ohne Runtime-Reset — bestehende Milkdrop-Wurzel
+    /// bekommt nur neue Params (Revision++), die Feedback-Historie bleibt
+    /// erhalten (Original-Semantik: ein Preset erbt das Bild des Vorgaengers)
+    bool replaceMilkdropPresetInPlace(lumi::milkdrop::PresetState& state,
+                                      const QString& presetDir,
+                                      std::map<std::string, std::string> embeddedImages);
 
     /**
      * @brief Load a translated milkdrop .lvfx sister document (M6.1 format)

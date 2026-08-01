@@ -260,13 +260,16 @@ private:
 
         // Kein renderMutex noetig: Standalone hat keinen Render-Thread —
         // Laden und render() laufen sequenziell im GUI-Thread.
-        // Endungs-Dispatch: .lvfx/.lvfx2 (Ketten-Bisektion!) oder .avs
+        // Endungs-Dispatch: .lvfx/.lvfx2 (Ketten-Bisektion!), .milk
+        // (Milkdrop-Node im Host — der App-Weg, Session 63) oder .avs
         QStringList report;
         const QString suffix = QFileInfo(path).suffix().toLower();
         const bool isChain = suffix == QStringLiteral("lvfx") ||
                              suffix == QStringLiteral("lvfx2");
-        const bool ok = isChain ? m_viz->loadChainFile(path, &report)
-                                : m_viz->loadAvsFile(path, &report);
+        const bool isMilk = suffix == QStringLiteral("milk");
+        const bool ok = isChain  ? m_viz->loadChainFile(path, &report)
+                        : isMilk ? m_viz->loadMilkFile(path, &report)
+                                 : m_viz->loadAvsFile(path, &report);
         int warnings = 0;
         for (const QString& line : report)
         {
@@ -537,7 +540,7 @@ int main(int argc, char* argv[])
         const QDir dir(target);
         for (const QString& f :
              dir.entryList({QStringLiteral("*.avs"), QStringLiteral("*.lvfx"),
-                            QStringLiteral("*.lvfx2")},
+                            QStringLiteral("*.lvfx2"), QStringLiteral("*.milk")},
                            QDir::Files, QDir::Name))
         {
             presets << dir.absoluteFilePath(f);

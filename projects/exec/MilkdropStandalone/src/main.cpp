@@ -114,11 +114,14 @@ FrameStats computeStats(const std::vector<unsigned char>& rgba, int w, int h)
 class StandaloneWindow : public QOpenGLWindow
 {
 public:
-    StandaloneWindow(QStringList presets, bool autoMode, int autoFrames, QString shotDir)
+    StandaloneWindow(QStringList presets, bool autoMode, int autoFrames, QString shotDir,
+                     bool silence, bool dumpShaders)
         : m_presets(std::move(presets))
         , m_auto(autoMode)
         , m_autoFrames(autoFrames)
         , m_shotDir(std::move(shotDir))
+        , m_silence(silence)
+        , m_dumpShaders(dumpShaders)
     {
         setTitle(QStringLiteral("LumiViz MilkdropStandalone"));
     }
@@ -224,16 +227,41 @@ private:
         if (!ok) std::printf("[Standalone] LADEN FEHLGESCHLAGEN\n");
         std::printf("[Standalone] warpCustomSrc=%zu Zeichen, compCustomSrc=%zu Zeichen\n",
                     m_viz->warpCustomSource().size(), m_viz->compCustomSource().size());
+        if (m_dumpShaders) dumpShaderSources(path);
         setTitle(QStringLiteral("MilkdropStandalone — %1")
                      .arg(QFileInfo(path).completeBaseName()));
         m_frameInPreset = 0;
         update();
     }
 
+    /// Uebersetzte GLSL-Quellen neben die Screenshots legen (Kalibrier-Diagnose)
+    void dumpShaderSources(const QString& presetPath)
+    {
+        QDir().mkpath(m_shotDir);
+        const QString base = m_shotDir + QStringLiteral("/") +
+                             QFileInfo(presetPath).completeBaseName();
+        const auto write = [](const QString& file, const std::string& src) {
+            if (src.empty()) return;
+            QFile f(file);
+            if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                f.write(src.data(), static_cast<qint64>(src.size()));
+        };
+        write(base + QStringLiteral("_warp.glsl"), m_viz->warpCustomSource());
+        write(base + QStringLiteral("_comp.glsl"), m_viz->compCustomSource());
+        std::printf("[Standalone] Shader-Dump: %s_{warp,comp}.glsl\n", qPrintable(base));
+    }
+
     void feedSyntheticAudio()
     {
         constexpr int kFrames = 576;
         constexpr int kBins = 512;
+        if (m_silence)
+        {
+            static std::vector<float> zeroWave(kFrames * 2, 0.0f);
+            static std::vector<float> zeroSpec(kBins * 2, 0.0f);
+            m_viz->updateAudioStereo(zeroSpec.data(), kBins, zeroWave.data(), kFrames, 2);
+            return;
+        }
         // Beat-Puls ~120 BPM fuer die Loudness-Baender + lebendige Wave
         const double beat = 0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * 2.0));
         static std::vector<float> wave;
@@ -333,12 +361,18 @@ private:
     bool m_shotRequested = false;
     bool m_allCustom = true;
     bool m_closing = false;
+    bool m_silence = false;
+    bool m_dumpShaders = false;
 };
 
 } // namespace
 
 int main(int argc, char* argv[])
 {
+    // Messwerkzeug: 1 logischer Pixel = 1 Framebuffer-Pixel — sonst rendert der
+    // Visualizer bei Windows-Skalierung (z. B. 150 %) nur ins linke untere
+    // Teilrechteck des groesseren Fensters und --size waere display-abhaengig
+    qputenv("QT_ENABLE_HIGHDPI_SCALING", "0");
     QGuiApplication app(argc, argv);
     QCoreApplication::setApplicationName(QStringLiteral("MilkdropStandalone"));
     lumi::milkdrop::trace::setEcho(true);  // Trace zusaetzlich auf die Konsole
@@ -363,10 +397,18 @@ int main(int argc, char* argv[])
     const QCommandLineOption optSize(QStringLiteral("size"),
                                      QStringLiteral("Fenstergroesse WxH"),
                                      QStringLiteral("WxH"), QStringLiteral("800x600"));
+    const QCommandLineOption optSilence(
+        QStringLiteral("silence"),
+        QStringLiteral("Stille statt synthetischem Audio (Hunger-Test)"));
+    const QCommandLineOption optDumpShaders(
+        QStringLiteral("dump-shaders"),
+        QStringLiteral("uebersetzte GLSL-Quellen nach --out schreiben"));
     parser.addOption(optAuto);
     parser.addOption(optFrames);
     parser.addOption(optOut);
     parser.addOption(optSize);
+    parser.addOption(optSilence);
+    parser.addOption(optDumpShaders);
     parser.process(app);
 
     // --- Preset-Liste aufbauen -------------------------------------------------------------
@@ -415,7 +457,8 @@ int main(int argc, char* argv[])
     const int h = (wh.size() == 2) ? std::max(64, wh[1].toInt()) : 600;
 
     StandaloneWindow window(presets, parser.isSet(optAuto), parser.value(optFrames).toInt(),
-                            parser.value(optOut));
+                            parser.value(optOut), parser.isSet(optSilence),
+                            parser.isSet(optDumpShaders));
     window.resize(w, h);
     window.show();
 

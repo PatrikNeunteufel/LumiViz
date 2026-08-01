@@ -407,6 +407,12 @@ asset/calibration/screenshot/
 # Regel [Oo]ut/ oben; `build/` braucht einen eigenen Eintrag.
 tools/AvsRef/build/
 
+# MilkdropRef (Referenz-Renderer, S63): Kompilat + lokal entpacktes
+# d3dx9-NuGet (Microsoft-Redistributable — bewusst nicht committen,
+# Beschaffung: tools/MilkdropRef/README.md)
+tools/MilkdropRef/build/
+tools/MilkdropRef/third_party/
+
 # Build-System-Quellcode und Doku sind NIE Build-Output (VS-Regeln wie **/packages/* greifen sonst!)
 !cmake/**
 !docs/**

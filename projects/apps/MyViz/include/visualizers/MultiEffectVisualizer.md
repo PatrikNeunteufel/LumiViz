@@ -109,6 +109,13 @@ nach dem AVS-Render-Modell (Analyse §5.1). Import-Ziel für .avs-Presets
   M6.1-Format) installieren eine Wurzel-Liste mit einem Milkdrop-Node;
   Report-Parität über eine GL-freie Probe-Instanz. Speichern läuft immer über
   den Chain-Serializer (Key `"milkdrop"`, Preset eingebettet).
+- **Feedback-Erhalt beim .milk→.milk-Wechsel (S63):** Ist die Wurzel bereits
+  ein einzelner Milkdrop-Node, tauscht `replaceMilkdropPresetInPlace` nur die
+  Params (Revision++) statt `setChain` + Runtime-Reset — gleiche Node-Id ⇒
+  gleiche Runtime ⇒ der FeedbackBuffer überlebt. Original-Semantik: ein Preset
+  erbt das Bild des Vorgängers (der Hauptpuffer wird beim Wechsel nie
+  gelöscht); Verstärker-Presets ohne eigene Energiequelle blieben sonst
+  schwarz (Ground-Truth-Befund via MilkdropRef, `tools/MilkdropRef`).
 - GL-Freigabe des Kerns via `cleanup()` in `resetRuntimes` (Kontext current).
 
 ## Absicherung
