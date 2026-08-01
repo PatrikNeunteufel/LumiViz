@@ -1,0 +1,16 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "dynamicMovement",
+        "pointCode": "r=atan2(y,x);\r\nd=sqrt(sqr(x)+sqr(y));x=sin(t);x=sqrt(abs(x))*sign(x);\r\nr=r+(0.3+ti*.5)*(d-.5)*x;\r\nd=d*(.99+sin(r*2)*.003);\r\nx=cos(r)*d;y=sin(r)*d",
+        "frameCode": "ti=ti*.7;t=t-0.01",
+        "beatCode": "ti=1",
+        "rectCoords": true,
+        "subpixel": true,
+        "wrap": false,
+        "xres": 17,
+        "yres": 17,
+        "blend": false
+    }
+}

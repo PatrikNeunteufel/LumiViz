@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "fractal2D",
+        "ftype": 2,
+        "centerX": -1.7548,
+        "centerY": -0.0338,
+        "zoom": 55.0,
+        "maxIter": 250,
+        "smooth": true,
+        "colorScale": 0.03
+    }
+}

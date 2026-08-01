@@ -1,0 +1,8 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "lyapunov",
+        "frameCode": "amin=2.8+sin(time*0.13)*0.25;amax=3.9;bmin=3.0+cos(time*0.11)*0.2;bmax=3.9"
+    }
+}

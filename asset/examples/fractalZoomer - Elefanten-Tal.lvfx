@@ -1,0 +1,26 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Elefanten-Tal' (fractalZoomer)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "fractalZoomer",
+                "enabled": true,
+                "name": "Elefanten-Tal (fractalZoomer)",
+                "ftype": 0,
+                "centerX": 0.2869319,
+                "centerY": 0.0142869,
+                "maxIter": 260,
+                "zoomSpeed": 1.015,
+                "feedback": 0.5
+            }
+        ]
+    }
+}

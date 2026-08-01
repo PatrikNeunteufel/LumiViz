@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "bloom",
+        "downsample": 2,
+        "radius": 8,
+        "intensity": 1.3,
+        "threshold": 0.0,
+        "vignette": true,
+        "vignetteStrength": 0.3,
+        "post": true
+    }
+}

@@ -1,0 +1,50 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Fraktaltraum 17 (Sunset)",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "dynamicMovement",
+                "enabled": true,
+                "name": "Trail-Sog",
+                "pointCode": "d=d*0.971;r=r+0.01;",
+                "xres": 16,
+                "yres": 16,
+                "subpixel": true
+            },
+            {
+                "type": "fractal2D",
+                "enabled": true,
+                "name": "Julia",
+                "ftype": 1,
+                "blend": 2,
+                "juliaX": -0.724,
+                "juliaY": 0.17,
+                "maxIter": 180,
+                "gradientPreset": "Sunset",
+                "initCode": "z0=1.1",
+                "beatCode": "z0=1.5",
+                "frameCode": "z0=z0+(1.1-z0)*0.07;zoom=z0;rot=rot+0.002+bass*0.004;"
+            },
+            {
+                "type": "bloom",
+                "enabled": true,
+                "name": "Glanz",
+                "downsample": 2,
+                "radius": 8,
+                "intensity": 0.93,
+                "threshold": 0.2,
+                "vignette": true,
+                "vignetteStrength": 0.3,
+                "post": true
+            }
+        ]
+    }
+}

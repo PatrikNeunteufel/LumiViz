@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "lyapunov",
+        "sequence": "BBBBBBAAAAAA",
+        "aMin": 3.4,
+        "aMax": 4.0,
+        "bMin": 2.5,
+        "bMax": 3.4,
+        "warmup": 100,
+        "iterations": 400
+    }
+}

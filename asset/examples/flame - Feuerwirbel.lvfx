@@ -1,0 +1,27 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Feuerwirbel' (flame)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "flame",
+                "enabled": true,
+                "name": "Feuerwirbel (flame)",
+                "variation": 3,
+                "functions": 3,
+                "points": 20000,
+                "scale": 0.5,
+                "rotationSpeed": 0.04,
+                "dotSize": 1.5,
+                "blend": 1
+            }
+        ]
+    }
+}

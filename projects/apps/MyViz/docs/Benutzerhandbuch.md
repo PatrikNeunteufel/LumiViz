@@ -1,6 +1,6 @@
 # MyViz — Benutzerhandbuch
 
-> **Version:** 1.2.0
+> **Version:** 1.4.0
 > **Datum:** 2026-07-27
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -288,13 +288,18 @@ Ganz oben im Eigenschafts-Editor steht die Zeile **Preset**. Sie gilt für
   Session 53 solche Voreinstellungen — das frühere Dropdown „Figure" ist
   entfallen. Da sie nur die Formeln enthalten, behältst du beim Laden deine
   Farbtafel und Linienbreite.
-- Seit Session 60 liefert die App einen **Grundkatalog von 84 Voreinstellungen
-  für 26 Knotentypen** mit: Bewegungs-Klassiker (u. a. die acht originalen
-  AVS-Movement-Formeln wie *Big Swirl Out* und *6-way Kaleida*), Faltungskerne
-  (Weichzeichner, Schärfen, Kanten, Relief), Farbverläufe (Feuer, Ozean, Neon),
-  Wasser-, Gitter-, Zoom-, Spiegel- und Beat-Vorlagen. Alles Teil-Presets:
-  sie setzen nur die Felder, die den Charakter ausmachen. Der vollständige
-  Katalog mit Erklärung je Vorlage steht in `asset/nodepresets/README.md`.
+- Seit Session 60/61 liefert die App einen **Grundkatalog von 125
+  Voreinstellungen für 39 Knotentypen** mit: Bewegungs-Klassiker (u. a. die
+  acht originalen AVS-Movement-Formeln wie *Big Swirl Out* und *6-way
+  Kaleida*), Faltungskerne (Weichzeichner, Schärfen, Kanten, Relief),
+  Farbverläufe (Feuer, Ozean, Neon), Wasser-, Gitter-, Zoom-, Spiegel- und
+  Beat-Vorlagen, die **Fraktal-Familie** (Mandelbrot-Ausschnitte, Mandelbulb,
+  Plasma, Attraktoren, Reaktions-Diffusion), **Bloom** (inkl. der
+  Lights-Referenzwerte) sowie sechs aus der Preset-Sammlung **geerntete
+  Dynamic-Movement-Warps** (Quelle je Vorlage im Katalog genannt). Alles
+  Teil-Presets: sie setzen nur die Felder, die den Charakter ausmachen. Der
+  vollständige Katalog mit Erklärung je Vorlage steht in
+  `asset/nodepresets/README.md`.
 
 Eigene Voreinstellungen liegen im Benutzerdaten-Ordner (*Einstellungen →
 Panels → Benutzerdaten: Open Folder*), mitgelieferte unter
@@ -383,6 +388,7 @@ Gruppen dürfen gleichzeitig aktiv sein und mischen sich über ihren
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.4.0 | 2026-08-01 | §11: Grundkatalog auf 125 Vorlagen für 39 Knotentypen erweitert (Session 61 — Fraktal-Familie, Bloom, blur/simpleScope/customBpm, sechs geerntete Dynamic-Movement-Warps mit Quellenangabe) |
 | 1.3.0 | 2026-08-01 | §11: Grundkatalog der mitgelieferten Voreinstellungen (Session 60 — 84 Vorlagen für 26 Knotentypen, Katalogverweis auf `asset/nodepresets/README.md`) |
 | 1.2.0 | 2026-07-27 | §11 erweitert (Session 53): Voreinstellungen je Knoten (mit Feldauswahl beim Speichern, SuperScope-Figuren als Presets), Werte per Formel (Init/Frame/Beat, Variablen-Regeln, Movement-Ausnahme), Bild-Auswahl bei Picture/Texer, *New Effect Chain*. §8 auf vier Reiter berichtigt (waren zwei) + Bilder-Suchordner und Benutzerdaten-Ordner. §9 um `Ctrl+Shift+N` |
 | 1.1.0 | 2026-07-23 | +§11 (Session 42): Effektketten-Editor, Milkdrop-Node mit sechs Sektionen (inkl. Wave/Shape/Sprite anlegen, Parameter-Sektion, sektions-genaue ⓘ-Referenzen, Shader-ⓘ), Host-Gruppen mit Crossfade (Kurven, Wechsel-Button, .lvfx2) |

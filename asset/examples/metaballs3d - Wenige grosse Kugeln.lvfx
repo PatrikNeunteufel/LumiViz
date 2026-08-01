@@ -1,0 +1,30 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Wenige grosse Kugeln' (metaballs3d)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "metaballs3d",
+                "enabled": true,
+                "name": "Wenige grosse Kugeln (metaballs3d)",
+                "blend": 0,
+                "colors": [
+                    16742936,
+                    16763210,
+                    14693420
+                ],
+                "count": 3,
+                "radius": 0.35,
+                "speed": 0.25,
+                "threshold": 1.0
+            }
+        ]
+    }
+}

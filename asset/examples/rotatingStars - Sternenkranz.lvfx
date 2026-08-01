@@ -1,0 +1,23 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Sternenkranz' (rotatingStars)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "rotatingStars",
+                "enabled": true,
+                "name": "Sternenkranz (rotatingStars)",
+                "stars": 6,
+                "rotSpeed": 0.05,
+                "orbit": 0.6
+            }
+        ]
+    }
+}

@@ -1,0 +1,17 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "dynamicMovement",
+        "pointCode": "x = x + dx;\r\ny = y + dy;",
+        "frameCode": "dx = cos(dr) * speed;\r\ndy = sin(dr) * speed;",
+        "beatCode": "dr = (rand(200) / 100) * $PI;",
+        "initCode": "speed=.05;dr = (rand(200) / 100) * $PI;",
+        "rectCoords": true,
+        "subpixel": true,
+        "wrap": true,
+        "xres": 3,
+        "yres": 3,
+        "blend": false
+    }
+}

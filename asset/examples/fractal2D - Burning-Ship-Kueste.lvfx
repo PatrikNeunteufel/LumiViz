@@ -1,0 +1,27 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Burning-Ship-Kueste' (fractal2D)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "fractal2D",
+                "enabled": true,
+                "name": "Burning-Ship-Kueste (fractal2D)",
+                "ftype": 2,
+                "centerX": -1.7548,
+                "centerY": -0.0338,
+                "zoom": 55.0,
+                "maxIter": 250,
+                "smooth": true,
+                "colorScale": 0.03
+            }
+        ]
+    }
+}

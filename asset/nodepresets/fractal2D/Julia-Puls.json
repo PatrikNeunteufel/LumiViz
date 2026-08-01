@@ -1,0 +1,15 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "fractal2D",
+        "ftype": 1,
+        "juliaX": -0.8,
+        "juliaY": 0.156,
+        "maxIter": 200,
+        "smooth": true,
+        "initCode": "z0=1.1",
+        "frameCode": "z0=z0+(1.1-z0)*0.08;zoom=z0;rot=rot+0.0015",
+        "beatCode": "z0=1.45"
+    }
+}

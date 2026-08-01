@@ -1,0 +1,52 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Fraktaltraum 12 (Fire)",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "reactionDiffusion",
+                "enabled": true,
+                "name": "Grund",
+                "feed": 0.03,
+                "kill": 0.0649,
+                "stepsPerFrame": 6,
+                "gradientPreset": "Fire",
+                "blend": 0
+            },
+            {
+                "type": "strangeAttractor",
+                "enabled": true,
+                "name": "Bahn",
+                "ftype": 1,
+                "a": -0.87,
+                "b": -1.77,
+                "c": 1.08,
+                "d": -0.41,
+                "points": 9000,
+                "scale": 0.35,
+                "blend": 1,
+                "gradientPreset": "Fire",
+                "rotationSpeed": 0.05
+            },
+            {
+                "type": "bloom",
+                "enabled": true,
+                "name": "Glanz",
+                "downsample": 2,
+                "radius": 8,
+                "intensity": 1.39,
+                "threshold": 0.2,
+                "vignette": false,
+                "vignetteStrength": 0.3,
+                "post": true
+            }
+        ]
+    }
+}

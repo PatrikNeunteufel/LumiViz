@@ -1,0 +1,27 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Hufeisen-Nebel' (flame)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "flame",
+                "enabled": true,
+                "name": "Hufeisen-Nebel (flame)",
+                "variation": 4,
+                "functions": 3,
+                "points": 30000,
+                "scale": 0.4,
+                "rotationSpeed": 0.02,
+                "dotSize": 2.0,
+                "blend": 1
+            }
+        ]
+    }
+}

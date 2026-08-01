@@ -1,0 +1,23 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Bass-Woge' (domainWarp)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "domainWarp",
+                "enabled": true,
+                "name": "Bass-Woge (domainWarp)",
+                "octaves": 5,
+                "scale": 2.6,
+                "frameCode": "warp=0.35+bass*0.9;speed=0.12+vol*0.25"
+            }
+        ]
+    }
+}

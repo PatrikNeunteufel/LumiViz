@@ -1,0 +1,52 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Fraktaltraum 4 (Galaxy)",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "reactionDiffusion",
+                "enabled": true,
+                "name": "Grund",
+                "feed": 0.0545,
+                "kill": 0.0649,
+                "stepsPerFrame": 6,
+                "gradientPreset": "Galaxy",
+                "blend": 0
+            },
+            {
+                "type": "strangeAttractor",
+                "enabled": true,
+                "name": "Bahn",
+                "ftype": 2,
+                "a": 0.86,
+                "b": -0.35,
+                "c": 1.4,
+                "d": -1.58,
+                "points": 9000,
+                "scale": 0.35,
+                "blend": 1,
+                "gradientPreset": "Galaxy",
+                "rotationSpeed": 0.05
+            },
+            {
+                "type": "bloom",
+                "enabled": true,
+                "name": "Glanz",
+                "downsample": 2,
+                "radius": 6,
+                "intensity": 1.3,
+                "threshold": 0.2,
+                "vignette": false,
+                "vignetteStrength": 0.3,
+                "post": true
+            }
+        ]
+    }
+}

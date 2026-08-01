@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "bloom",
+        "downsample": 2,
+        "radius": 8,
+        "threshold": 0.15,
+        "post": true,
+        "initCode": "gl=0.7",
+        "frameCode": "gl=gl+(0.7-gl)*0.1;intensity=gl",
+        "beatCode": "gl=1.8"
+    }
+}

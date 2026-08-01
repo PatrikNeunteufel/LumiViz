@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "blur",
+        "strength": 1,
+        "roundUp": false
+    }
+}

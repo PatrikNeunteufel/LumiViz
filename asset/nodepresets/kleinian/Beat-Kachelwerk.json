@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "kleinian",
+        "p": 5,
+        "q": 4,
+        "colorScale": 0.17,
+        "frameCode": "rot=rot+0.001",
+        "beatCode": "morph=morph+0.35"
+    }
+}

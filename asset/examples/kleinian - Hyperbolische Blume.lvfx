@@ -1,0 +1,24 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Hyperbolische Blume' (kleinian)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "kleinian",
+                "enabled": true,
+                "name": "Hyperbolische Blume (kleinian)",
+                "p": 7,
+                "q": 3,
+                "colorScale": 0.17,
+                "frameCode": "rot=rot+0.002"
+            }
+        ]
+    }
+}

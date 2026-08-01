@@ -1,0 +1,16 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "dynamicMovement",
+        "pointCode": "d=d/(1+sqr(x+xm)*0.5);",
+        "frameCode": "xm=xm*0.9+xmc*0.1;",
+        "beatCode": "xmc=rand(200)/100-1;",
+        "rectCoords": false,
+        "subpixel": true,
+        "wrap": false,
+        "xres": 17,
+        "yres": 17,
+        "blend": false
+    }
+}

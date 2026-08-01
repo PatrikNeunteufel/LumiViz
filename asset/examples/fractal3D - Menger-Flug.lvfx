@@ -1,0 +1,23 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Menger-Flug' (fractal3D)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "fractal3D",
+                "enabled": true,
+                "name": "Menger-Flug (fractal3D)",
+                "ftype": 2,
+                "dist": 2.8,
+                "frameCode": "yaw=yaw+0.003;dist=2.8-bass*0.4"
+            }
+        ]
+    }
+}

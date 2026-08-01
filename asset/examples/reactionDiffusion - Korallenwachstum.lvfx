@@ -1,0 +1,24 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Korallenwachstum' (reactionDiffusion)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "reactionDiffusion",
+                "enabled": true,
+                "name": "Korallenwachstum (reactionDiffusion)",
+                "feed": 0.0545,
+                "kill": 0.062,
+                "stepsPerFrame": 8,
+                "seedOnBeat": true
+            }
+        ]
+    }
+}

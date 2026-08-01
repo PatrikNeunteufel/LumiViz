@@ -1,0 +1,36 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Fraktaltraum 18 (Rainbow)",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "fractal3D",
+                "enabled": true,
+                "name": "Bulb",
+                "ftype": 0,
+                "power": 8.0,
+                "gradientPreset": "Rainbow",
+                "frameCode": "yaw=yaw+0.004;dist=3.1-bass*0.6;pitch=0.3+0.15*sin(time*0.19);"
+            },
+            {
+                "type": "bloom",
+                "enabled": true,
+                "name": "Glanz",
+                "downsample": 2,
+                "radius": 6,
+                "intensity": 0.91,
+                "threshold": 0.2,
+                "vignette": false,
+                "vignetteStrength": 0.3,
+                "post": true
+            }
+        ]
+    }
+}

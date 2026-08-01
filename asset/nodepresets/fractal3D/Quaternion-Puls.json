@@ -1,0 +1,15 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "fractal3D",
+        "ftype": 3,
+        "juliaX": 0.2,
+        "juliaY": 0.3,
+        "juliaZ": 0.1,
+        "juliaW": 0.0,
+        "initCode": "d0=3.2",
+        "frameCode": "d0=d0+(3.2-d0)*0.08;dist=d0;yaw=yaw+0.005",
+        "beatCode": "d0=2.5"
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Grosse Show-Sterne' (rotatingStars)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "rotatingStars",
+                "enabled": true,
+                "name": "Grosse Show-Sterne (rotatingStars)",
+                "baseRadius": 0.18,
+                "audioGain": 1.2,
+                "rotSpeed": 0.1
+            }
+        ]
+    }
+}

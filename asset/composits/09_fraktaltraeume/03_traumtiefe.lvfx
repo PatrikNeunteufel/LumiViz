@@ -1,0 +1,54 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Fraktaltraum 3 (Ocean)",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "fractalZoomer",
+                "enabled": true,
+                "name": "Zoom",
+                "ftype": 1,
+                "centerX": -0.743643887,
+                "centerY": 0.131825904,
+                "juliaX": -0.7269,
+                "juliaY": 0.1889,
+                "maxIter": 220,
+                "zoomSpeed": 1.014,
+                "rotationSpeed": -0.0014,
+                "feedback": 0.49,
+                "gradientPreset": "Ocean"
+            },
+            {
+                "type": "kleinian",
+                "enabled": true,
+                "name": "Kachel",
+                "p": 5,
+                "q": 3,
+                "colorScale": 0.17,
+                "blend": 1,
+                "gradientPreset": "Ocean",
+                "frameCode": "rot=rot+0.0015;",
+                "beatCode": "morph=morph+0.3;"
+            },
+            {
+                "type": "bloom",
+                "enabled": true,
+                "name": "Glanz",
+                "downsample": 2,
+                "radius": 6,
+                "intensity": 1.27,
+                "threshold": 0.2,
+                "vignette": true,
+                "vignetteStrength": 0.3,
+                "post": true
+            }
+        ]
+    }
+}

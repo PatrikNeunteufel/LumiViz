@@ -1,0 +1,16 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "dynamicMovement",
+        "pointCode": "x=x+.025*sin(y*2*(1+sin(xtd))+xt)*2;\r\ny=y+.025*sin(x*2*(2-sin(ytd))+yt)*2;\r\n\r\n",
+        "frameCode": "xt=xt+xts;\r\nyt=yt+yts;\r\nxtd=xtd+xtds;\r\nytd=ytd+ytds;\r\n",
+        "beatCode": "xts=rand(10)/100-0.05;\r\nyts=rand(10)/100-0.05;\r\nxtd=rand(10)/100-0.05;\r\nytd=rand(10)/100-0.05;",
+        "rectCoords": true,
+        "subpixel": true,
+        "wrap": false,
+        "xres": 17,
+        "yres": 17,
+        "blend": true
+    }
+}

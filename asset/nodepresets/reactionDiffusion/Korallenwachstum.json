@@ -1,0 +1,11 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "reactionDiffusion",
+        "feed": 0.0545,
+        "kill": 0.062,
+        "stepsPerFrame": 8,
+        "seedOnBeat": true
+    }
+}

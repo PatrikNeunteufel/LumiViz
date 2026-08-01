@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "simpleScope",
+        "mode": 2,
+        "channel": 2,
+        "position": 2
+    }
+}

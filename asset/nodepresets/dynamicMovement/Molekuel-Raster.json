@@ -1,0 +1,16 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "dynamicMovement",
+        "pointCode": "frx=asin(sin(frx*80))/3.14159+0.5;\r\nfry=asin(sin(fry*80))/3.14159+0.5;\r\nx=x-sin(frx*t)*0.04;y=y-sin(fry*t)*0.04",
+        "frameCode": "frx=0.112;fry=0.37;t=t-s;s=s*0.95",
+        "beatCode": "s=0.08+0.006*rand(150)",
+        "rectCoords": true,
+        "subpixel": true,
+        "wrap": false,
+        "xres": 5,
+        "yres": 5,
+        "blend": false
+    }
+}

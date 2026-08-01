@@ -1,0 +1,24 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Zellteilung' (reactionDiffusion)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "reactionDiffusion",
+                "enabled": true,
+                "name": "Zellteilung (reactionDiffusion)",
+                "feed": 0.0367,
+                "kill": 0.0649,
+                "stepsPerFrame": 8,
+                "seedOnBeat": true
+            }
+        ]
+    }
+}

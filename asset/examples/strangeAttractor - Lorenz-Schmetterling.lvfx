@@ -1,0 +1,29 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Lorenz-Schmetterling' (strangeAttractor)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "strangeAttractor",
+                "enabled": true,
+                "name": "Lorenz-Schmetterling (strangeAttractor)",
+                "ftype": 0,
+                "a": 1.4,
+                "b": 1.6,
+                "c": 1.0,
+                "points": 8000,
+                "scale": 0.28,
+                "rotationSpeed": 0.08,
+                "dotSize": 2.0,
+                "blend": 1
+            }
+        ]
+    }
+}

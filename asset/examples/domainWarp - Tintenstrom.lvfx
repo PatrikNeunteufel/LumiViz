@@ -1,0 +1,26 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Tintenstrom' (domainWarp)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "domainWarp",
+                "enabled": true,
+                "name": "Tintenstrom (domainWarp)",
+                "octaves": 6,
+                "scale": 3.5,
+                "warp": 1.2,
+                "warpScale": 2.0,
+                "speed": 0.05,
+                "colorScale": 1.4
+            }
+        ]
+    }
+}

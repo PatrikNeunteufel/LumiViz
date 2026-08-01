@@ -1,0 +1,24 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Wurmspur' (reactionDiffusion)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "reactionDiffusion",
+                "enabled": true,
+                "name": "Wurmspur (reactionDiffusion)",
+                "feed": 0.078,
+                "kill": 0.061,
+                "stepsPerFrame": 8,
+                "seedOnBeat": true
+            }
+        ]
+    }
+}

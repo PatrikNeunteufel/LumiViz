@@ -1,0 +1,11 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "fractal3D",
+        "ftype": 0,
+        "power": 8.0,
+        "dist": 3.0,
+        "frameCode": "yaw=yaw+0.004;pitch=0.3+sin(time*0.2)*0.12"
+    }
+}

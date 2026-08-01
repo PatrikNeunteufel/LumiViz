@@ -1,0 +1,21 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Atmendes Fenster' (lyapunov)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "lyapunov",
+                "enabled": true,
+                "name": "Atmendes Fenster (lyapunov)",
+                "frameCode": "amin=2.8+sin(time*0.13)*0.25;amax=3.9;bmin=3.0+cos(time*0.11)*0.2;bmax=3.9"
+            }
+        ]
+    }
+}

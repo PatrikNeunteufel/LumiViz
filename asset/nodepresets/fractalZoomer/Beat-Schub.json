@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "fractalZoomer",
+        "initCode": "zs=1.005",
+        "frameCode": "zs=zs+(1.005-zs)*0.06;zoomspeed=zs",
+        "beatCode": "zs=1.05"
+    }
+}

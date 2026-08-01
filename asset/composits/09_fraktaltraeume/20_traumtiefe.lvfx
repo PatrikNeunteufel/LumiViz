@@ -1,0 +1,52 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Fraktaltraum 20 (Monochrome)",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "reactionDiffusion",
+                "enabled": true,
+                "name": "Grund",
+                "feed": 0.03,
+                "kill": 0.0649,
+                "stepsPerFrame": 6,
+                "gradientPreset": "Monochrome",
+                "blend": 0
+            },
+            {
+                "type": "strangeAttractor",
+                "enabled": true,
+                "name": "Bahn",
+                "ftype": 2,
+                "a": 0.78,
+                "b": 0.32,
+                "c": 2.01,
+                "d": -0.02,
+                "points": 9000,
+                "scale": 0.35,
+                "blend": 1,
+                "gradientPreset": "Monochrome",
+                "rotationSpeed": 0.05
+            },
+            {
+                "type": "bloom",
+                "enabled": true,
+                "name": "Glanz",
+                "downsample": 2,
+                "radius": 6,
+                "intensity": 0.94,
+                "threshold": 0.2,
+                "vignette": false,
+                "vignetteStrength": 0.3,
+                "post": true
+            }
+        ]
+    }
+}

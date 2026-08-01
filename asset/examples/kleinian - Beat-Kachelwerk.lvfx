@@ -1,0 +1,25 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Beat-Kachelwerk' (kleinian)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "kleinian",
+                "enabled": true,
+                "name": "Beat-Kachelwerk (kleinian)",
+                "p": 5,
+                "q": 4,
+                "colorScale": 0.17,
+                "frameCode": "rot=rot+0.001",
+                "beatCode": "morph=morph+0.35"
+            }
+        ]
+    }
+}

@@ -1,0 +1,27 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Seepferdchen-Tal' (fractal2D)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "fractal2D",
+                "enabled": true,
+                "name": "Seepferdchen-Tal (fractal2D)",
+                "ftype": 0,
+                "centerX": -0.7435,
+                "centerY": 0.1314,
+                "zoom": 90.0,
+                "maxIter": 300,
+                "smooth": true,
+                "colorScale": 0.02
+            }
+        ]
+    }
+}

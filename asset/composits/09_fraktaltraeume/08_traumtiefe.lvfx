@@ -1,0 +1,52 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Fraktaltraum 8 (Rainbow)",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "reactionDiffusion",
+                "enabled": true,
+                "name": "Grund",
+                "feed": 0.0367,
+                "kill": 0.0649,
+                "stepsPerFrame": 6,
+                "gradientPreset": "Rainbow",
+                "blend": 0
+            },
+            {
+                "type": "strangeAttractor",
+                "enabled": true,
+                "name": "Bahn",
+                "ftype": 2,
+                "a": 0.1,
+                "b": 0.38,
+                "c": 2.29,
+                "d": -1.98,
+                "points": 9000,
+                "scale": 0.35,
+                "blend": 1,
+                "gradientPreset": "Rainbow",
+                "rotationSpeed": 0.05
+            },
+            {
+                "type": "bloom",
+                "enabled": true,
+                "name": "Glanz",
+                "downsample": 2,
+                "radius": 6,
+                "intensity": 0.98,
+                "threshold": 0.2,
+                "vignette": false,
+                "vignetteStrength": 0.3,
+                "post": true
+            }
+        ]
+    }
+}

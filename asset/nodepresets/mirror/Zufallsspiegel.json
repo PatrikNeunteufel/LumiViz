@@ -5,6 +5,6 @@
         "type": "mirror",
         "onBeatRandom": true,
         "smooth": true,
-        "slower": true
+        "slower": 4
     }
 }

@@ -1,0 +1,31 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Qualle' (tentacles3d)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "tentacles3d",
+                "enabled": true,
+                "name": "Qualle (tentacles3d)",
+                "blend": 1,
+                "colors": [
+                    11619583,
+                    6958304,
+                    15769855
+                ],
+                "count": 12,
+                "length": 0.95,
+                "segments": 40,
+                "speed": 0.4,
+                "thickness": 14.0
+            }
+        ]
+    }
+}

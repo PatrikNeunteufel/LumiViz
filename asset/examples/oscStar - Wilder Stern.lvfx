@@ -1,0 +1,23 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Wilder Stern' (oscStar)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "oscStar",
+                "enabled": true,
+                "name": "Wilder Stern (oscStar)",
+                "size": 14,
+                "rot": 8,
+                "amplitude": 1.6
+            }
+        ]
+    }
+}

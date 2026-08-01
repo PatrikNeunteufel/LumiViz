@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "domainWarp",
+        "octaves": 5,
+        "scale": 2.2,
+        "warp": 0.65,
+        "warpScale": 1.0,
+        "speed": 0.12
+    }
+}

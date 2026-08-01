@@ -1,0 +1,23 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Beat-Schub' (fractalZoomer)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "fractalZoomer",
+                "enabled": true,
+                "name": "Beat-Schub (fractalZoomer)",
+                "initCode": "zs=1.005",
+                "frameCode": "zs=zs+(1.005-zs)*0.06;zoomspeed=zs",
+                "beatCode": "zs=1.05"
+            }
+        ]
+    }
+}

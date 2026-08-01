@@ -1,0 +1,16 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "fractalZoomer",
+        "ftype": 1,
+        "centerX": 0.0,
+        "centerY": 0.0,
+        "juliaX": -0.7269,
+        "juliaY": 0.1889,
+        "maxIter": 220,
+        "zoomSpeed": 1.01,
+        "rotationSpeed": 0.003,
+        "feedback": 0.6
+    }
+}

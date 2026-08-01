@@ -1,0 +1,11 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "customBpm",
+        "skip": true,
+        "skipCount": 3,
+        "arbitrary": false,
+        "invert": false
+    }
+}

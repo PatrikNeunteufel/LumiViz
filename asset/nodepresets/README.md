@@ -61,7 +61,7 @@ das Verzeichnis bei jedem Öffnen des Editors neu. Am einfachsten entsteht so ei
 Datei in der App selbst (**Speichern unter…** in der Zeile „Voreinstellung"); danach
 aus dem Benutzerordner hierher kopieren.
 
-## Katalog der mitgelieferten Voreinstellungen (Stand S60)
+## Katalog der mitgelieferten Voreinstellungen (Stand S61)
 
 Alle Einträge sind **Teil-Presets**: sie setzen nur die Felder, die den Charakter
 ausmachen — Farbtafeln, Blends und alles Übrige bleiben beim Nutzer, sofern nicht
@@ -124,3 +124,48 @@ ausdrücklich Teil der Vorlage.
 | `videoDelay` | Halbe Sekunde | Bild von vor 30 Frames (Echo-Baustein) |
 | | Beat-Echo | Verzögerung um genau einen Beat |
 | `timescope` | Spektral-Vorhang | wandernde Spektrum-Spalten |
+| `bloom` | Lights-Referenz | die Referenzwerte aus `lights_demo` (sigma 8, Intensity 1,3, Vignette 0,3) |
+| | Sanfter Schimmer | dezenter Glanz nur auf Glanzlichtern (Threshold 0,35) |
+| | Beat-Glut | Glow-Intensität zündet je Beat und klingt weich ab |
+| `fractal2D` | Seepferdchen-Tal | klassischer Mandelbrot-Ausschnitt (Seahorse Valley, Zoom 90) |
+| | Julia-Puls | Julia-Menge; Beat stößt den Zoom an, langsame Drehung |
+| | Burning-Ship-Kueste | das „kleine Schiff" des Burning-Ship-Fraktals |
+| `fractal3D` | Mandelbulb-Orbit | Kamera umkreist den Bulb, Pitch atmet mit der Zeit |
+| | Menger-Flug | Menger-Schwamm; Bass zieht die Kamera heran |
+| | Quaternion-Puls | Quaternion-Julia; Beat holt die Kamera kurz nah heran |
+| `domainWarp` | Nebelkammer | ruhiges Plasma — mittlere Verwerfung, langsame Drift |
+| | Bass-Woge | Verwerfung hängt am Bass, Tempo an der Lautstärke |
+| | Tintenstrom | starke, feine Verwerfung — marmorierter Tintenfluss |
+| `fractalZoomer` | Elefanten-Tal | Endlos-Zoom auf das Elephant Valley der Mandelbrot-Menge |
+| | Julia-Strudel | rotierender Julia-Zoom mit kräftiger Feedback-Schleife |
+| | Beat-Schub | Zoomtempo springt je Beat und pendelt zurück |
+| `lyapunov` | Zircon City | die berühmte BBBBBBAAAAAA-Ansicht (Markus/Dewdney) |
+| | Atmendes Fenster | der Ausschnitt atmet langsam über sin/cos der Zeit |
+| `kleinian` | Hyperbolische Blume | {7,3}-Kachelung, langsam drehend |
+| | Beat-Kachelwerk | {5,4}; jeder Beat schiebt die Morph-Phase weiter |
+| `strangeAttractor` | Lorenz-Schmetterling | der klassische Lorenz-Attraktor, dicht gezeichnet |
+| | Clifford-Schleier | Clifford-Attraktor (a −1,4 · b 1,6 · c 1 · d 0,7) |
+| | De-Jong-Gespinst | Peter-de-Jong-Attraktor (1,4 · −2,3 · 2,4 · −2,1) |
+| `flame` | Feuerwirbel | Swirl-Variation, drei Abbildungen — rotierende Glut |
+| | Hufeisen-Nebel | Horseshoe-Variation, drei Abbildungen (mit vier kollabiert die Bahn) |
+| `reactionDiffusion` | Korallenwachstum | Gray-Scott „Coral" (feed 0,0545 / kill 0,062) |
+| | Zellteilung | „Mitosis" (0,0367 / 0,0649) — teilende Zellen |
+| | Wurmspur | „Worms" (0,078 / 0,061) — wandernde Bänder |
+| `blur` | Abklingender Trail | strength 1 ohne round-up — das Bild klingt je Anwendung ab (Trail-Motor) |
+| | Stehender Weichzeichner | strength 2 mit round-up — weichzeichnen ohne Abklingen |
+| `simpleScope` | Analyzer-Balken | solid analyzer unten — die klassischen Spektrum-Balken |
+| | Linien-Oszi | line scope mittig — das klassische Oszilloskop |
+| | Punktwolke | dot scope mittig — die Waveform als Punktstaub |
+| `customBpm` | Halbes Tempo | lässt jeden zweiten Beat durch |
+| | Viertel-Beat | lässt jeden vierten Beat durch |
+| | Metronom 500ms | fester Kunst-Beat alle 500 ms (unabhängig vom Audio) |
+| `dynamicMovement` (Import-Ernte S61) | Galaxien-Drall | Beat-getriebener Spiralen-Twist (aus „UnConeD — Milkyway") |
+| | Wandernde Linse | horizontale Zerr-Linse, Ziel wandert je Beat (aus „amphirion — nebulous, skupers remix") |
+| | Beat-Richtungsdrift | konstanter Drift, Richtung würfelt je Beat (aus „L1quid — Take the Veil") |
+| | Molekuel-Raster | gefaltetes Sinus-Raster, Beat stößt den Impuls an (aus „EL-VIS — Molecules, S_KuPeRS Remix") |
+| | Sinus-Flechtwerk | gekreuzte Sinus-Verwerfung, je Beat neu gestimmt (aus „amphirion — nebulous") |
+| | Takt-Spirale | Rotation/Zoom im gemessenen Beat-Takt (aus „D&L — Life Is Violated") |
+
+Die Zeilen „Import-Ernte S61" sind wörtlich aus Presets der Sammlung
+`VisualsPresets` übernommen (Entscheid S60: Quelle = Sammlung via Import);
+die Quell-Presets und ihre Autoren stehen je Zeile in Klammern.

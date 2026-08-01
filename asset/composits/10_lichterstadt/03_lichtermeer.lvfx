@@ -1,0 +1,55 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Lichterstadt 3 (Sunset)",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "domainWarp",
+                "enabled": true,
+                "name": "Grundnebel",
+                "octaves": 5,
+                "scale": 3.14,
+                "warp": 0.46,
+                "speed": 0.15,
+                "colorScale": 1.26,
+                "gradientPreset": "Sunset",
+                "blend": 0,
+                "frameCode": "warp=0.4+bass*0.7;"
+            },
+            {
+                "type": "superScope",
+                "enabled": true,
+                "name": "Lichtfaden",
+                "pointCode": "u=i*6.2832;px=sin(u*3+t);py=sin(u*4);pz=cos(u*2+t*0.7);y1=py*cx-pz*sx;z1=py*sx+pz*cx;x1=px*cy-z1*sy;z2=px*sy+z1*cy;dd=1.5/(z2+2.5);x=x1*dd;y=y1*dd;red=0.9;green=0.8;blue=1;",
+                "frameCode": "rx=rx+0.012;ry=ry+0.017;cx=cos(rx);sx=sin(rx);cy=cos(ry);sy=sin(ry);t=t+0.02;",
+                "initCode": "n=420;rx=0;ry=0;t=0;",
+                "pointCount": 420
+            },
+            {
+                "type": "fadeout",
+                "enabled": true,
+                "name": "Nachleuchten",
+                "fadeLen": 8
+            },
+            {
+                "type": "bloom",
+                "enabled": true,
+                "name": "Stadtglanz",
+                "downsample": 2,
+                "radius": 8,
+                "intensity": 1.3,
+                "threshold": 0.0,
+                "vignette": true,
+                "vignetteStrength": 0.39,
+                "post": true
+            }
+        ]
+    }
+}

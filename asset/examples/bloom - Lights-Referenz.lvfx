@@ -1,0 +1,36 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Lights-Referenz' (bloom)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "superScope",
+                "enabled": true,
+                "name": "Quelle: Farb-Spirale",
+                "pointCode": "d=i*0.85; r=i*18.85+t*0.2; x=cos(r)*d*0.9; y=sin(r)*d*0.7+0.1;\nred=i; green=1-i; blue=0.4+0.3*sin(i*12);",
+                "frameCode": "t=t+1;",
+                "initCode": "n=500; t=0;",
+                "pointCount": 500
+            },
+            {
+                "type": "bloom",
+                "enabled": true,
+                "name": "Lights-Referenz (bloom)",
+                "downsample": 2,
+                "radius": 8,
+                "intensity": 1.3,
+                "threshold": 0.0,
+                "vignette": true,
+                "vignetteStrength": 0.3,
+                "post": true
+            }
+        ]
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Kalter Schwarm' (metaballs3d)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "metaballs3d",
+                "enabled": true,
+                "name": "Kalter Schwarm (metaballs3d)",
+                "blend": 1,
+                "colors": [
+                    1797344,
+                    3592680,
+                    9105663
+                ],
+                "count": 14,
+                "radius": 0.11,
+                "speed": 0.9,
+                "threshold": 1.4
+            }
+        ]
+    }
+}

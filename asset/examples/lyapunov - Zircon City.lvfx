@@ -1,0 +1,27 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Beispiel fuer Voreinstellung 'Zircon City' (lyapunov)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "lyapunov",
+                "enabled": true,
+                "name": "Zircon City (lyapunov)",
+                "sequence": "BBBBBBAAAAAA",
+                "aMin": 3.4,
+                "aMax": 4.0,
+                "bMin": 2.5,
+                "bMax": 3.4,
+                "warmup": 100,
+                "iterations": 400
+            }
+        ]
+    }
+}

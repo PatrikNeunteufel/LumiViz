@@ -1,0 +1,17 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "strangeAttractor",
+        "ftype": 2,
+        "a": 1.4,
+        "b": -2.3,
+        "c": 2.4,
+        "d": -2.1,
+        "points": 12000,
+        "scale": 0.4,
+        "rotationSpeed": 0.02,
+        "dotSize": 1.5,
+        "blend": 1
+    }
+}
