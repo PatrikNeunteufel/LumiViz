@@ -11,6 +11,8 @@
 
 #include "UI/panels/SettingsPanel.hpp"
 #include "UI/managers/ShortcutManager.hpp"
+#include "core/GpuInfo.hpp"
+#include "core/GpuPreference.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/ShortcutRegistry.hpp"
@@ -22,7 +24,12 @@
 #include <QGridLayout>
 #include <QTabWidget>
 #include <QComboBox>
+#include <QCoreApplication>
 #include <QKeySequenceEdit>
+#include <QOffscreenSurface>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
+#include <QProcess>
 #include <QSettings>
 #include <QSpacerItem>
 #include <QSpinBox>
@@ -34,11 +41,48 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QStandardPaths>
+#include <QTimer>
 #include <QUrl>
 
 #include <optional>
 
 #include <BasicLogger.h>
+
+// =============================================================================
+// GPU-Praeferenz-Helfer
+// =============================================================================
+
+namespace
+{
+
+/// Exe-Pfad, wie ihn die Windows-Grafikeinstellung als Wertnamen erwartet.
+std::wstring nativeExePath()
+{
+    return QDir::toNativeSeparators(QCoreApplication::applicationFilePath())
+        .toStdWString();
+}
+
+/// GL_RENDERER eines frischen Kontexts — dieselbe Karte, auf der auch die
+/// Visualizer-Kontexte landen. Einmalige Abfrage beim Panel-Aufbau.
+QString activeOpenGlRenderer()
+{
+    QOffscreenSurface surface;
+    surface.create();
+    QOpenGLContext context;
+    if (!context.create() || !context.makeCurrent(&surface))
+    {
+        return QStringLiteral("unknown");
+    }
+    const GLubyte* renderer = context.functions()->glGetString(GL_RENDERER);
+    const QString name =
+        (renderer != nullptr)
+            ? QString::fromLatin1(reinterpret_cast<const char*>(renderer))
+            : QStringLiteral("unknown");
+    context.doneCurrent();
+    return name;
+}
+
+} // anonymous namespace
 
 // =============================================================================
 // Construction
@@ -153,6 +197,60 @@ void SettingsPanel::onFrameModeChanged(int index)
     m_pVSyncCheckBox->blockSignals(true);
     m_pVSyncCheckBox->setChecked(index == 2);  // VSync mode
     m_pVSyncCheckBox->blockSignals(false);
+}
+
+void SettingsPanel::onGpuPreferenceChanged(int index)
+{
+    if (m_isUpdating || index < 0)
+    {
+        return;
+    }
+
+    const auto mode = static_cast<GpuPreference::Mode>(
+        m_pGpuPreferenceCombo->itemData(index).toInt());
+
+    // Unveraendert (z. B. programmatisches Zuruecksetzen) — kein Neustart.
+    const auto stored = GpuPreference::readForExecutable(nativeExePath());
+    if (stored.value_or(GpuPreference::Mode::Automatic) == mode)
+    {
+        return;
+    }
+
+    if (!GpuPreference::writeForExecutable(nativeExePath(), mode))
+    {
+        QMessageBox::warning(
+            this, tr("Graphics Card"),
+            tr("Could not store the GPU preference in the Windows registry."));
+        m_isUpdating = true;
+        const int oldIdx = m_pGpuPreferenceCombo->findData(static_cast<int>(
+            stored.value_or(GpuPreference::Mode::Automatic)));
+        m_pGpuPreferenceCombo->setCurrentIndex(oldIdx >= 0 ? oldIdx : 0);
+        m_isUpdating = false;
+        return;
+    }
+
+    BasicLogger::logInfo(std::string("SettingsPanel: GPU preference -> ") +
+                         GpuPreference::modeToString(mode) +
+                         ", restarting now");
+
+    // SOFORT-Neustart (Entscheid S61): neue Instanz starten, diese beenden.
+    // Verzoegert ueber den Event-Loop, damit der Combo-Signal-Pfad sauber
+    // zurueckkehrt, bevor Fenster und Render-Threads abgebaut werden.
+    QTimer::singleShot(0, qApp, []() {
+        const QString exe = QCoreApplication::applicationFilePath();
+        QStringList args = QCoreApplication::arguments();
+        if (!args.isEmpty())
+        {
+            args.removeFirst();  // argv[0] ist die Exe selbst
+        }
+        if (!QProcess::startDetached(exe, args, QDir::currentPath()))
+        {
+            BasicLogger::logError("SettingsPanel: restart failed to launch (" +
+                                  exe.toStdString() + ")");
+            return;  // lieber weiterlaufen als kommentarlos enden
+        }
+        QCoreApplication::quit();
+    });
 }
 
 void SettingsPanel::onTargetFpsChanged(int value)
@@ -326,6 +424,51 @@ QWidget* SettingsPanel::createPerformanceTab()
     m_pVSyncCheckBox->setToolTip(tr("Synchronize with monitor refresh rate"));
     layout->addRow(tr("VSync:"), m_pVSyncCheckBox);
 
+    // GPU-Praeferenz: der Windows-Eintrag pro Anwendung ist die einzige
+    // Steuerung (core/GpuPreference) und greift erst beim Prozessstart —
+    // deshalb loest eine Aenderung SOFORT den Neustart aus (Entscheid S61).
+    // Die Combo traegt den Registry-Zahlenwert als itemData, damit die
+    // Reihenfolge der Eintraege frei bleibt.
+    m_pGpuPreferenceCombo = new QComboBox(widget);
+    m_pGpuPreferenceCombo->addItem(
+        tr("Automatic (Windows decides)"),
+        static_cast<int>(GpuPreference::Mode::Automatic));
+    m_pGpuPreferenceCombo->addItem(
+        tr("High Performance"),
+        static_cast<int>(GpuPreference::Mode::HighPerformance));
+    m_pGpuPreferenceCombo->addItem(
+        tr("Power Saving"),
+        static_cast<int>(GpuPreference::Mode::PowerSaving));
+    m_pGpuPreferenceCombo->setToolTip(
+        tr("Which graphics card renders MyViz. Stored per application in "
+           "Windows; changing it RESTARTS MyViz immediately."));
+    {
+        const auto stored = GpuPreference::readForExecutable(nativeExePath());
+        const int mode = static_cast<int>(
+            stored.value_or(GpuPreference::Mode::Automatic));
+        const int idx = m_pGpuPreferenceCombo->findData(mode);
+        m_pGpuPreferenceCombo->setCurrentIndex(idx >= 0 ? idx : 0);
+    }
+    layout->addRow(tr("Graphics Card:"), m_pGpuPreferenceCombo);
+
+    // Tatsaechlich genutzte GPU (GL_RENDERER) — die Wahrheit nach dem Start,
+    // nicht die Einstellung. Tooltip listet alle erkannten Karten.
+    m_pActiveGpuLabel = new QLabel(activeOpenGlRenderer(), widget);
+    m_pActiveGpuLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    {
+        QStringList lines;
+        for (const auto& gpu : GpuInfo::enumerate())
+        {
+            lines << QStringLiteral("%1 — %2, %3 MB VRAM")
+                         .arg(QString::fromStdString(gpu.name),
+                              QString::fromStdString(gpu.typeString()))
+                         .arg(gpu.vramMB());
+        }
+        m_pActiveGpuLabel->setToolTip(
+            tr("Detected graphics cards:\n") + lines.join(QLatin1Char('\n')));
+    }
+    layout->addRow(tr("Active GPU:"), m_pActiveGpuLabel);
+
     layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
     return widget;
@@ -491,6 +634,8 @@ void SettingsPanel::setupConnections()
             this, &SettingsPanel::onAudioDeviceChanged);
     connect(m_pFrameModeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &SettingsPanel::onFrameModeChanged);
+    connect(m_pGpuPreferenceCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &SettingsPanel::onGpuPreferenceChanged);
     connect(m_pTargetFpsSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
             this, &SettingsPanel::onTargetFpsChanged);
     connect(m_pVSyncCheckBox, &QCheckBox::toggled,

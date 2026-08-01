@@ -1,0 +1,49 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "dirx=dirx*(-1);diry=diry*(-1);",
+                "blend": 1,
+                "colorCycle": 0,
+                "colorScale": 1.399999976158142,
+                "enabled": true,
+                "frameCode": "warp=0.35+bass*.9;speed=0.3+vol*9.5;\ndx=dirx*5;\ndy=diry+5*sin(vol)",
+                "gain": 0.9599999785423279,
+                "gradientPreset": "Neon",
+                "initCode": "dirx=1;diry=1",
+                "lacunarity": 1.850000023841858,
+                "name": "Tintenstrom (domainWarp)",
+                "octaves": 5,
+                "offsetX": 0,
+                "offsetY": 0,
+                "scale": 0.699999988079071,
+                "speed": -6.245004513516506e-17,
+                "type": "domainWarp",
+                "warp": 1,
+                "warpScale": 0.10000000149011612
+            }
+        ],
+        "clearEveryFrame": true,
+        "description": "Beispiel fuer Voreinstellung 'Tintenstrom' (domainWarp)",
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "root",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

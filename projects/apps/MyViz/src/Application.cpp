@@ -28,13 +28,14 @@
 #include "Application.hpp"
 #include "UI/MainWindow.hpp"
 #include "core/GpuInfo.hpp"
-#include "core/GpuSelector.hpp"
+#include "core/GpuPreference.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 #include "visualizers/modules/processing/SmoothingModule.hpp"
 #include "visualizers/modules/source/AudioSourceModule.hpp"
 
 // Qt includes
 #include <QApplication>
+#include <QDir>
 #include <QStandardPaths>
 #include <QTimer>
 
@@ -44,17 +45,6 @@
 // Standard Library
 #include <chrono>
 #include <thread>
-
-// =============================================================================
-// GPU Export Flags for Hybrid Graphics (NVIDIA Optimus / AMD PowerXpress)
-// =============================================================================
-// These symbols are read by GPU drivers BEFORE the application starts.
-// They hint the driver to use the dedicated GPU instead of integrated.
-//
-// Safe to include even if no dedicated GPU exists - flags are just ignored.
-// The actual GPU selection is configured via gpu.ini (see GpuSelector).
-
-MYVIZ_ENABLE_HIGH_PERFORMANCE_GPU
 
 // =============================================================================
 // Helper: FrameMode to String
@@ -104,7 +94,6 @@ struct Application::Impl
     // -------------------------------------------------------------------------
     // GPU Selection
     // -------------------------------------------------------------------------
-    GpuSelector gpuSelector;
     std::vector<GpuDevice> availableGpus;
 
     // -------------------------------------------------------------------------
@@ -279,31 +268,30 @@ bool Application::init(int argc, char* argv[])
     }
 
     // -------------------------------------------------------------------------
-    // GPU Enumeration and Selection
+    // GPU Enumeration
     // -------------------------------------------------------------------------
-    // Enumerate GPUs BEFORE creating QApplication (for logging purposes)
-    // The actual GPU used depends on driver settings and export flags in main.cpp
-    
+    // Enumerate GPUs BEFORE creating QApplication (for logging purposes).
+    // Which GPU actually renders steers the per-app Windows entry
+    // UserGpuPreferences (core/GpuPreference), applied by the OS at process
+    // start — configurable in the Settings panel, a change restarts the app.
+
     BasicLogger::logInfo("Enumerating GPUs...");
     m_impl->availableGpus = GpuInfo::enumerate();
     GpuInfo::logGpuInfo(m_impl->availableGpus);
-    
-    // Load GPU preferences (create default config if not exists)
-    m_impl->gpuSelector.createDefaultConfig("gpu.ini");
-    m_impl->gpuSelector.loadConfig("gpu.ini");
-    
-    // Select preferred GPU (for mismatch checking later)
-    const GpuDevice* preferredGpu = m_impl->gpuSelector.selectGpu(m_impl->availableGpus);
-    if (preferredGpu != nullptr)
-    {
-        BasicLogger::logInfo("Preferred GPU: " + preferredGpu->name);
-    }
 
     // -------------------------------------------------------------------------
     // Create QApplication
     // -------------------------------------------------------------------------
     BasicLogger::logDebug("Creating QApplication...");
     m_impl->pQtApp = std::make_unique<QApplication>(argc, argv);
+
+    const auto storedGpuMode = GpuPreference::readForExecutable(
+        QDir::toNativeSeparators(QCoreApplication::applicationFilePath())
+            .toStdWString());
+    BasicLogger::logInfo(std::string("Stored GPU preference: ") +
+                         (storedGpuMode.has_value()
+                              ? GpuPreference::modeToString(*storedGpuMode)
+                              : "none (Windows decides)"));
 
     m_impl->pQtApp->setApplicationName(QString::fromStdString(m_impl->name));
     m_impl->pQtApp->setApplicationVersion(QString::fromStdString(m_impl->version));

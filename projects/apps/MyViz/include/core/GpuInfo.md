@@ -1,11 +1,11 @@
-# GpuInfo & GpuSelector — GPU-Erkennung und Auswahl
+# GpuInfo — GPU-Erkennung
 
-> **Version:** 1.0.0  
-> **Datum:** 2025-12-28  
+> **Version:** 2.0.0  
+> **Datum:** 2026-08-01  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert  
-> **Modul:** MyViz::Core::GpuInfo, MyViz::Core::GpuSelector  
-> **Dateien:** GpuInfo.hpp, GpuInfo.cpp, GpuSelector.hpp, GpuSelector.cpp  
+> **Modul:** MyViz::Core::GpuInfo  
+> **Dateien:** GpuInfo.hpp, GpuInfo.cpp  
 > **Namespace:** (global)  
 > **Abhängigkeiten:** DXGI (Windows), BasicLogger  
 > **Zielgruppe:** Entwickler  
@@ -19,10 +19,8 @@
 2. [Abhängigkeiten](#2-abhängigkeiten)
 3. [API](#3-api)
 4. [Verwendung](#4-verwendung)
-5. [Konfigurationsdatei](#5-konfigurationsdatei)
-6. [Export-Flags](#6-export-flags)
-7. [Plattformen](#7-plattformen)
-8. [Changelog](#8-changelog)
+5. [Plattformen](#5-plattformen)
+6. [Changelog](#6-changelog)
 
 ---
 
@@ -30,16 +28,19 @@
 
 ### 1.1 Zweck
 
-Diese Module ermöglichen die Erkennung aller verfügbaren GPUs und die Konfiguration, welche GPU für das Rendering verwendet werden soll. Dies ist besonders wichtig für Laptops mit Hybrid-Grafik (NVIDIA Optimus / AMD PowerXpress).
+GpuInfo zählt alle verfügbaren GPUs des Systems auf (Name, Hersteller, Typ,
+VRAM). Das ist die Anzeige- und Log-Grundlage für Systeme mit Hybrid-Grafik
+(integrierte + dedizierte Karte).
 
-### 1.2 Module
+**Abgrenzung:** Welche GPU tatsächlich rendert, steuert seit Session 62 der
+per-Anwendung-Windows-Eintrag `UserGpuPreferences` — siehe
+[GpuPreference.md](GpuPreference.md). Das frühere Duo aus `gpu.ini`/`GpuSelector`
+und Export-Flags (`NvOptimusEnablement` u. a.) ist entfernt: es konnte die GPU
+nie verbindlich wählen (Windows überstimmt die Flags, sobald ein
+UserGpuPreferences-Eintrag existiert — und ohne Eintrag griff es auf diesem
+Gerät nachweislich nicht).
 
-| Modul | Verantwortlichkeit |
-|-------|-------------------|
-| **GpuInfo** | GPU-Enumeration via DXGI |
-| **GpuSelector** | Präferenz-Management und Auswahl |
-
-### 1.3 Problem: Hybrid-Grafik
+### 1.2 Problem: Hybrid-Grafik
 
 Moderne Laptops haben oft zwei GPUs:
 
@@ -58,7 +59,7 @@ Moderne Laptops haben oft zwei GPUs:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Windows wählt standardmäßig die integrierte GPU → schlechte Performance!
+Windows wählt standardmäßig die integrierte GPU.
 
 ---
 
@@ -108,17 +109,6 @@ struct GpuDevice
 | `findByVendor(gpus, vendor)` | Sucht nach Hersteller |
 | `logGpuInfo(gpus)` | Loggt alle GPU-Infos |
 
-### 3.4 GpuSelector Klasse
-
-| Methode | Beschreibung |
-|---------|--------------|
-| `loadConfig(file)` | Lädt Präferenzen |
-| `saveConfig(file)` | Speichert Präferenzen |
-| `createDefaultConfig(file)` | Erstellt Standard-Config |
-| `selectGpu(gpus)` | Wählt GPU nach Präferenz |
-| `isPreferredGpuActive(name)` | Prüft aktive GPU |
-| `getGpuMismatchWarning(...)` | Generiert Warntext |
-
 ---
 
 ## 4. Verwendung
@@ -127,96 +117,29 @@ struct GpuDevice
 
 ```cpp
 // In Application::init()
-
-// 1. GPUs enumerieren
 auto gpus = GpuInfo::enumerate();
 GpuInfo::logGpuInfo(gpus);
-
-// 2. Config laden
-GpuSelector selector;
-selector.createDefaultConfig("gpu.ini");
-selector.loadConfig("gpu.ini");
-
-// 3. Bevorzugte GPU ermitteln
-const GpuDevice* preferred = selector.selectGpu(gpus);
-if (preferred)
-{
-    BasicLogger::logInfo("Preferred: " + preferred->name);
-}
 ```
 
-### 4.2 Nach OpenGL-Context
+### 4.2 Anzeige im SettingsPanel
+
+Das SettingsPanel (Performance-Tab) zeigt neben der GPU-Auswahl die
+tatsächlich genutzte Karte (`GL_RENDERER` eines frischen Kontexts) und listet
+im Tooltip alle per `enumerate()` erkannten Karten.
+
+### 4.3 Nach OpenGL-Context
 
 ```cpp
-// In VisualizerWidget::initializeGL()
 const char* renderer = glGetString(GL_RENDERER);
-// "AMD Radeon(TM) 610M"  ← falsche GPU!
-// "NVIDIA GeForce RTX 4090 Laptop GPU"  ← richtige GPU!
+// "AMD Radeon(TM) 610M"                  ← integrierte Karte
+// "NVIDIA GeForce RTX 4090 Laptop GPU"  ← dedizierte Karte
 ```
 
 ---
 
-## 5. Konfigurationsdatei
+## 5. Plattformen
 
-### 5.1 Format (gpu.ini)
-
-```ini
-# MyViz GPU Configuration
-
-[GPU]
-PreferHighPerformance=true
-PreferredVendor=NVIDIA
-PreferredName=RTX 4090
-```
-
-### 5.2 Optionen
-
-| Option | Werte | Beschreibung |
-|--------|-------|--------------|
-| `PreferHighPerformance` | true/false | Dedizierte GPU bevorzugen |
-| `PreferredVendor` | NVIDIA/AMD/Intel | Hersteller bevorzugen |
-| `PreferredName` | String | Namensteil suchen |
-
----
-
-## 6. Export-Flags
-
-### 6.1 Problem
-
-Die GPU-Auswahl passiert **bevor** die Anwendung startet. Der Treiber entscheidet basierend auf:
-1. Windows Graphics Settings
-2. NVIDIA Control Panel / AMD Adrenalin
-3. **Export-Symbole in der Executable**
-
-### 6.2 Lösung: Export-Symbole
-
-In `main.cpp`:
-
-```cpp
-#include "Core/GpuSelector.hpp"
-
-// Diese Symbole werden vom Treiber gelesen
-MYVIZ_ENABLE_HIGH_PERFORMANCE_GPU
-```
-
-Das Macro expandiert zu:
-
-```cpp
-extern "C" {
-    __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
-    __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
-}
-```
-
-### 6.3 Hinweis
-
-Die Export-Flags sind nur **Hints**. Der User kann sie in Windows-Einstellungen überschreiben. Die GpuSelector-Config kann nicht zur Laufzeit die GPU wechseln - sie dient der Erkennung und Warnung.
-
----
-
-## 7. Plattformen
-
-### 7.1 Übersicht
+### 5.1 Übersicht
 
 | Plattform | Status | API | Benötigt |
 |-----------|--------|-----|----------|
@@ -224,40 +147,24 @@ Die Export-Flags sind nur **Hints**. Der User kann sie in Windows-Einstellungen 
 | Linux | ✅ Implementiert | sysfs + lspci | lspci (optional) |
 | macOS | ✅ Implementiert | IOKit | IOKit.framework |
 
-### 7.2 Windows
+### 5.2 Windows
 
 Verwendet DXGI (DirectX Graphics Infrastructure) für die GPU-Enumeration.
 - Keine zusätzlichen Dependencies
 - `dxgi.lib` wird automatisch verlinkt
 
-### 7.3 Linux
+### 5.3 Linux
 
 Verwendet zwei Methoden:
 1. **sysfs** (`/sys/class/drm/`) - Für Vendor/Device IDs
 2. **lspci** - Für GPU-Namen (optional, Fallback auf IDs)
 
-```bash
-# lspci installieren (falls nicht vorhanden)
-sudo apt install pciutils  # Debian/Ubuntu
-sudo dnf install pciutils  # Fedora
-```
+### 5.4 macOS
 
-### 7.4 macOS
+Verwendet IOKit für die GPU-Enumeration (Framework-Verlinkung in CMake nötig:
+IOKit + CoreFoundation).
 
-Verwendet IOKit für die GPU-Enumeration.
-
-**CMake-Integration erforderlich:**
-
-```cmake
-if(APPLE)
-    target_link_libraries(${TARGET_NAME} PRIVATE
-        "-framework IOKit"
-        "-framework CoreFoundation"
-    )
-endif()
-```
-
-### 7.5 Fallback
+### 5.5 Fallback
 
 Wenn die Enumeration auf einer Plattform fehlschlägt:
 - Eine leere GPU-Liste wird zurückgegeben
@@ -266,8 +173,9 @@ Wenn die Enumeration auf einer Plattform fehlschlägt:
 
 ---
 
-## 8. Changelog
+## 6. Changelog
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **1.0.0** | **2025-12-28** | **Initial: DXGI-Enumeration, Config-System, Export-Flags** |
+| **2.0.0** | **2026-08-01** | **Session 62: GpuSelector/gpu.ini/Export-Flags entfernt — GPU-Wahl lebt jetzt in [GpuPreference.md](GpuPreference.md) (UserGpuPreferences-Registry, SettingsPanel). GpuInfo auf reine Erkennung reduziert** |
+| 1.0.0 | 2025-12-28 | Initial: DXGI-Enumeration, Config-System, Export-Flags |

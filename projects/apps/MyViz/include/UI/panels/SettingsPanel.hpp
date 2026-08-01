@@ -56,6 +56,9 @@ protected:
 private Q_SLOTS:
     void onAudioDeviceChanged(int index);
     void onFrameModeChanged(int index);
+    /// Schreibt die Windows-GPU-Praeferenz (core/GpuPreference) und startet die
+    /// App SOFORT neu — der Eintrag greift erst beim naechsten Prozessstart.
+    void onGpuPreferenceChanged(int index);
     void onTargetFpsChanged(int value);
     void onVSyncChanged(bool checked);
     void onResetImportBrowserDir();
@@ -92,6 +95,10 @@ private:
     QComboBox* m_pFrameModeCombo = nullptr;
     QSpinBox* m_pTargetFpsSpinBox = nullptr;
     QCheckBox* m_pVSyncCheckBox = nullptr;
+    /// GPU-Praeferenz (Automatisch/Energiesparen/Hohe Leistung) — Wert lebt in
+    /// der Windows-Registrierung (SSOT), Aenderung loest den Neustart aus.
+    QComboBox* m_pGpuPreferenceCombo = nullptr;
+    QLabel* m_pActiveGpuLabel = nullptr;
 
     // Panels Tab
     QPushButton* m_pResetImportDirButton = nullptr;

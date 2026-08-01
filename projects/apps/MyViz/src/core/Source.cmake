@@ -11,7 +11,7 @@ dbg(DBG_OFTEN
 set(_local_sources
     # (no sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/GpuInfo.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/GpuSelector.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/GpuPreference.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)

@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.27.0
-> **Datum:** 2026-08-01 (Session 61)
+> **Version:** 1.29.0
+> **Datum:** 2026-08-01 (Session 62)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -959,24 +959,29 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
   wirkungslos, weil die Vorbelegung jedes Frames ihn überschrieb. Beides
   behoben; dazu die nie abgefragte `lastError()`-Meldung, `timescope.useChannel`
   und skriptbare Beat-Fader in Colorfade.
-- 🔴 **Grafikkarten-Auswahl in den Einstellungen** (Vorgabe Patrik, S54) —
-  **prioritär, aber ERST NACH der Kalibrier-Runde.** Der Rechner hat eine
-  RTX 4090 Laptop GPU; App, Standalone und GL-Tests laufen trotzdem auf der
-  `AMD Radeon(TM) 610M` (der Standalone meldet sie beim Start). Gewünscht ist
-  eine **persistent gespeicherte** Auswahl.
-  - Zur Laufzeit lässt sich die GPU in OpenGL nicht umschalten. Der Weg für
-    eine einstellbare Präferenz ist der Windows-Eintrag pro Anwendung
-    (`HKCU\…\DirectX\UserGpuPreferences`, dasselbe was die Windows-Oberfläche
-    schreibt) — greift beim nächsten Start. Der statische
-    `NvOptimusEnablement`-Export wirkt sofort, ist aber nicht einstellbar.
-  - **Warum erst nach der Kalibrierung:** ein GPU-Wechsel ändert Interpolation
-    und Rundung im Treiber, also möglicherweise die Bilder. Matrix (40/43),
-    Modul-Sonden (83/87), die eingefrorenen Zwillinge und die Bit-Identität der
-    Feld-Sonden müssten danach **alle neu eingemessen** werden. Der Umbau
-    gehört deshalb mit einem Vorher/Nachher-Messlauf zusammen, der die
-    Verschiebung beziffert.
-  - Umfang: Auswahl „Automatisch / Hohe Leistung / Energiesparen", Anzeige der
-    tatsächlich genutzten GPU (`GL_RENDERER`), Hinweis auf den nötigen Neustart.
+- ✅ **Grafikkarten-Auswahl in den Einstellungen** (Vorgabe Patrik S54,
+  konkretisiert S61, **umgesetzt S62**) — SettingsPanel → Performance:
+  Combo „Automatic / High Performance / Power Saving" + Anzeige der
+  tatsächlich genutzten GPU (`GL_RENDERER`, Tooltip listet alle erkannten
+  Karten); eine Änderung schreibt den Windows-Eintrag pro Anwendung
+  (`HKCU\…\DirectX\UserGpuPreferences`, neues Kernmodul `core/GpuPreference`,
+  Modul-Doku dort) und löst **SOFORT den Neustart** aus. Das alte, wirkungslose
+  Trio `gpu.ini`/`GpuSelector`/`NvOptimusEnablement`-Export ist entfernt —
+  die Registry ist die einzige Steuerung (SSOT); Windows überstimmt die
+  Export-Flags ohnehin, sobald ein Eintrag existiert. Tests: 491 (+6
+  Token-Logik `test_GpuPreference`).
+  - **§8-Messlauf gefahren (S62), Ergebnis: KEINE Verschiebung.** Vorher-
+    Baseline auf der 610M (`out/gpu_baseline_radeon610m/`): Matrix 41/43
+    (0 Fehler, PRUEFEN = nur die abgenommenen Wächter water/grain) ·
+    Modul-Sonden 91/91 · Feld-Sonden WIRKT 669/SCHWACH 33/STUMM 0 ·
+    Bit-Identität 3/3 · Zwillinge 67/67. Nachher auf der RTX 4090 (per
+    Registry-Eintrag für den Standalone, danach entfernt —
+    `out/gpu_after_rtx4090/VERGLEICH.md`): **alle Urteile und Metriken
+    identisch**, die drei Doppellauf-Sonden sogar **karten-übergreifend
+    SHA256-identisch**. Die Prüfstände sind auf diesem Gerätepaar
+    GPU-stabil; einzige Abweichung war die dokumentierte rand()-Instabilität
+    zwischen Läufen. Offen bleibt nur der Klick-Sichttest des
+    Sofort-Neustarts in der App (Handarbeit Patrik).
 - 🔴 **`bilinear` wirkt nicht — und ist ein ORIGINAL-Feld** (Dynamic Distance
   Modifier + Dynamic Shift, Befund der Feld-Sonden S54). Im AVS heißt es
   `subpixel` und ist ein echter Preset-Wert (`r_ddm.cpp:175`,
@@ -1023,6 +1028,8 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.29.0 | 2026-08-01 | Session 62 — **Grafikkarten-Auswahl umgesetzt** (§8 ✅): `core/GpuPreference` (UserGpuPreferences-Registry als SSOT), SettingsPanel-Combo mit Sofort-Neustart, `gpu.ini`/`GpuSelector`/Export-Flags entfernt, Tests 491. §8-Messlauf beidseitig gefahren: Baseline 610M (`out/gpu_baseline_radeon610m/`) und RTX 4090 (`out/gpu_after_rtx4090/`) — **keine Verschiebung**, Doppellauf-Sonden karten-übergreifend SHA256-identisch |
+| 1.28.0 | 2026-08-01 | Session 61 (Abschluss) — Vorgabe Patrik für S62 in §8 eingearbeitet: **Grafikkarten-Auswahl ist der Auftrag der nächsten Session** (einmal gesetzt, via Settings umstellbar, Änderung löst SOFORT Neustart aus; §8-Regel Vorher/Nachher-Messlauf gilt). Session-Report `LumiViz_Session61…`, Handover und `Changelog_Session61.md` nachgezogen |
 | 1.27.0 | 2026-08-01 | Session 61 (Sichtprüfung, zweite Welle) — **(1) SuperScope-Herz stand KOPF:** die Figuren-EEL läuft im AVS-kalibrierten Chain-Host (+y = unten), die Mathe-Formel war y-up; y im EEL negiert (Modul-SSOT `SuperscopeModule` + Vorlagen-Datei synchron, der Bibliotheks-Wächter verlangt Gleichheit; die NATIVE Rechnung des Standalone-Visualizers bleibt y-up und damit unverändert richtig). **(2) „bloom zeigt gar nichts":** der Present-Bloom war intakt — die Beispiel-SZENE war untauglich (1-px-Spirale verliert im Glow-Downsample fast alle Energie, der Threshold frisst den Rest). Bloom-Beispiele stehen jetzt auf einer hellen Lichtfaden-Bühne mit Trail; Wirkung bewiesen (Mit/Ohne-Bloom-Diff 0,134). Tests 485/485 |
 | 1.26.0 | 2026-08-01 | Session 61 (Sichtprüfungs-Runde Patrik über die Beispiele) — **drei Befund-Klassen behoben:** (1) **Farb-Doppelfehler in BEIDEN Generatoren**: `avsColor` ist ein NO-OP (AVS-Farben sind bereits 0x00RRGGBB, S46) — mein R/B-Tausch beim Erzeugen verdrehte ALLE Farben (Feuer→blau, Ozean→orange), und der AvsRef-Vergleich blieb grün, weil beide Seiten dieselbe verdrehte Datei lasen. **Lehre: ein Rückabbildungs-Vergleich beweist Übereinstimmung, nicht Intention.** (2) **domainWarp stand praktisch still** — `uTime` wanderte nur ins Warp-Feld, nie in den Abtastpunkt; Shader-Fix Grunddrift (Host-Modul, kein Referenzvertrag; Bewegungs-Diff 0,006→0,025). (3) **Lebendigkeits-Pass über 15 Vorlagen** (Starfield-Dichte, Attraktor-Audio-Morphing, Lorenz-Tempo, DDM/Shift kräftiger, Burning-Ship-Ausschnitt, domainWarp-Tempi, Zoomer entschärft). **Neu notiert (⚪ §7): `fractalZoomer` erschöpft nach Minuten die float-Präzision** (Endlos-Zoom → Pixelbrei/Schwarz) — braucht einen Host-seitigen Tiefen-Reset/Loop. Tests 485/485, beide Sammlungen regeneriert und beidseitig re-validiert |
 | 1.25.0 | 2026-08-01 | Session 61 (vierter Block) — **`asset/composits/`: 200 GANZE Presets in 10 Themenwelten** (je 20, el-vis/UnConeD-Bauarten: Buffer-Tunnel, Feedback-Schleifen, Beat-Physik, 3D-EEL-Projektionen). 8 Themen als Original-EEL-konformes .avs (Wurmlöcher · Plasmanebel · Kaleidoskop · Sternenstaub · Maschinenraum · Drahtgeister · Tiefsee · Farbenrausch), 2 als .lvfx mit Host-Modulen (Fraktalträume · Lichterstadt). Generator `make_composit_presets.py` (seeded, reproduzierbar). **Validiert: 200/200 rendern in LumiViz, 160/160 .avs auch in AvsRef, keine Schwarz-/Weiß-Ausreißer.** Dabei gelernte Schleifen-Hygiene im Generator dokumentiert (Echo als REPLACE mit Verstärkung < 1, Quelle ans Kettenende, Fadeout im Buffer-Kreis) und eine unvermessene Beobachtung notiert: extremes On-Beat-Mosaik (quality2 ≲ 25) kollabiert in der REFERENZ auf schwarze Block-Anker, bei uns nicht — bei Bedarf per Sonde vermessen |
