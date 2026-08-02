@@ -331,6 +331,15 @@ void ScopeRenderer::renderThinLines(const std::vector<SuperscopePoint>& points)
         // Light District: `ip=bnot(ip); skip=ip`), blieb damit zwischen zwei
         // gezeichneten Punkten immer ein Bruch — es wurde GAR NICHTS gezeichnet,
         // wo die Referenz jedes zweite Segment zieht (Befund S58).
+        // breakStrip: harter Trenner ohne Ankerfunktion — Punkt wird nicht
+        // einmal in den Vertex-Puffer uebernommen (s. SuperscopePoint)
+        if (pt.breakStrip)
+        {
+            if (currentCount > 0) segments.emplace_back(currentStart, currentCount);
+            currentStart = static_cast<int>(vertices.size() / 6);
+            currentCount = 0;
+            continue;
+        }
         if (pt.skip)
         {
             if (currentCount > 0) segments.emplace_back(currentStart, currentCount);
@@ -441,6 +450,8 @@ void ScopeRenderer::renderThickLines(const std::vector<SuperscopePoint>& points,
         const auto& p1 = points[i + 1];
         // `skip` unterdrueckt NUR das Segment, das im uebersprungenen Punkt
         // ENDET — der Punkt bleibt Ankerpunkt des naechsten (r_sscope:334).
+        // breakStrip-Trenner ankern dagegen NICHT (beide Nachbarsegmente weg).
+        if (p0.breakStrip || p1.breakStrip) continue;
         if (p1.skip) continue;
 
         const int ax0 = avsSpalte(p0.x, w);

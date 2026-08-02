@@ -6,8 +6,10 @@
  *         lines 8749-8779 + utility.cpp AdjustRateToFPS; BSD, Nullsoft/MilkDrop3)
  *
  * @author LumiPulse Team (port); original algorithm: Nullsoft, Inc. (BSD)
- * @date   July 2026
- * @version 1.0.0
+ * @date   July 2026 (1.1.0: August 2026 — Kaltstart rampt von 0 wie das Original,
+ *         die Erste-Wert-Saat machte alle Baender bitgleich 1.0 und provozierte
+ *         exakte 0/0-Divisionen in Band-Differenz-Presets, S64)
+ * @version 1.1.0
  *
  * @details
  * MilkDrop presets read bass/mid/treb as loudness RELATIVE to the long-term
@@ -46,7 +48,7 @@ public:
 
     MilkLoudness() { reset(); }
 
-    /// @brief Back to the cold-start state (all averages at the first fed value)
+    /// @brief Back to the cold-start state (averages ramp from 0 like the original)
     void reset()
     {
         m_frame = 0;
@@ -66,12 +68,11 @@ public:
         const std::array<double, kBands> imm = {bassImm, midImm, trebImm};
         if (fps <= 0.0) fps = kReferenceFps;
 
-        // cold start: seed the averages with the first frame instead of ramping from 0
-        if (m_frame == 0)
-        {
-            m_avg = imm;
-            m_longAvg = imm;
-        }
+        // Kaltstart rampt von 0 wie das Original (fruehe Frames spiken ~1/(1-rate)).
+        // Die fruehere Erste-Wert-Saat lieferte fuer ALLE Baender bitgleich 1.0 —
+        // Presets, die durch Band-Differenzen teilen (gb003: (bb-mn)/(mx-mn)),
+        // liefen in ein exaktes 0/0, das die Referenz dank Rundungsrauschen der
+        // Band-Quotienten nie sieht (S64).
 
         for (int i = 0; i < kBands; ++i)
         {

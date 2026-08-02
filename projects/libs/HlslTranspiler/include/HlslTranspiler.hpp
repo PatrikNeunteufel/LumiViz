@@ -2112,6 +2112,17 @@ private:
         return {code, target};
     }
 
+    /// Nenner-Check fuer die _div-Emission: nur ein nachweislich von Null
+    /// verschiedenes Zahlen-Literal (ggf. mit Vorzeichen) ist gefahrlos.
+    [[nodiscard]] static bool isNonZeroNumberLiteral(const Expr& e)
+    {
+        const Expr* n = &e;
+        while (n->kind == Expr::Kind::Unary && (n->text == "-" || n->text == "+"))
+            n = &n->args[0];
+        if (n->kind != Expr::Kind::Number) return false;
+        return std::stod(n->text) != 0.0;
+    }
+
     EmitResult emitBinary(Expr& e)
     {
         EmitResult a = emitExpr(e.args[0]);
@@ -2161,6 +2172,19 @@ private:
         // beliebtes Gate-Muster) — GLSL lehnt bool-Arithmetik ab (C3-Rest)
         if (a.type.base == Base::Bool) a = convertTo(a, {Base::Float}, e.line);
         if (b.type.base == Base::Bool) b = convertTo(b, {Base::Float}, e.line);
+
+        // Division ueber _div (Host-Geruest): D3D9 rechnet Legacy-Float
+        // (0*INF=0, rcp(0) endlich) — IEEE-`0/0` ergibt NaN und vergiftet
+        // jede Summe (S64, Rainbow Attack NEON: Vollschwarz). Beweisbar
+        // ungefaehrliche Literal-Nenner bleiben rohe Division.
+        if (op == "/" && !a.type.isMat() && !b.type.isMat() &&
+            !isNonZeroNumberLiteral(e.args[1]))
+        {
+            const Type common = commonType(a.type, b.type, e.line);
+            a = convertTo(a, common, e.line);
+            b = convertTo(b, common, e.line);
+            return {"_div(" + a.code + ", " + b.code + ")", common};
+        }
 
         // Arithmetik: mat*vec / vec*mat / mat*mat gehen in GLSL direkt
         if (a.type.isMat() || b.type.isMat())
@@ -2227,6 +2251,13 @@ private:
             rhs.type.size() > lhs.type.size())
         {
             rhs = convertTo(rhs, lhs.type, e.line);
+        }
+        // `/=` unter dem D3D9-Divisionsvertrag (s. emitBinary) — Literal-Nenner
+        // bleibt rohe Division
+        if (e.text == "/=" && !lhs.type.isMat() && !isNonZeroNumberLiteral(e.args[1]))
+        {
+            rhs = convertTo(rhs, lhs.type, e.line);
+            return {lhs.code + " = _div(" + lhs.code + ", " + rhs.code + ")", lhs.type};
         }
         return {lhs.code + " " + e.text + " " + rhs.code, lhs.type};
     }

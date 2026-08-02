@@ -223,6 +223,13 @@ vec3 GetBlur1(vec2 p) { return texture(sampler_blur1, p).rgb * _blur_scale.x + _
 vec3 GetBlur2(vec2 p) { return texture(sampler_blur2, p).rgb * _blur_scale.z + _blur_scale.w; }
 vec3 GetBlur3(vec2 p) { return texture(sampler_blur3, p).rgb * _blur_sb3.x + _blur_sb3.y; }
 float lum(vec3 v) { return dot(v, vec3(0.32, 0.49, 0.29)); }
+// D3D9-Divisionsvertrag (Transpiler emittiert _div): Legacy-Float kennt kein
+// NaN aus 0/0 (0*rcp(0)=0) und rcp(0) bleibt endlich — IEEE-NaN wuerde jede
+// Summe vergiften (S64, Rainbow Attack NEON: Vollschwarz).
+float _div(float a, float b) { return (b == 0.0) ? (sign(a) * 1.0e30) : (a / b); }
+vec2 _div(vec2 a, vec2 b) { return vec2(_div(a.x, b.x), _div(a.y, b.y)); }
+vec3 _div(vec3 a, vec3 b) { return vec3(_div(a.x, b.x), _div(a.y, b.y), _div(a.z, b.z)); }
+vec4 _div(vec4 a, vec4 b) { return vec4(_div(a.x, b.x), _div(a.y, b.y), _div(a.z, b.z), _div(a.w, b.w)); }
 )";
     // q1..q32 + noise samplers (base + fc/pc/fw/pw prefixes) + texsize_noise_*
     for (int i = 1; i <= 32; ++i) s += "uniform float q" + std::to_string(i) + ";\n";
@@ -1343,6 +1350,15 @@ void MilkdropVisualizer::releaseBlurTargets()
 void MilkdropVisualizer::seedFeedbackNoise(int w, int h)
 {
     if (!m_feedback.ready()) return;
+    // Prüfstand-Schalter (S64): Kaltstart ohne Saat — wie die Referenz mit
+    // genulltem WDDM-VRAM. Misst, welche Presets die Saat NOCH brauchen und
+    // welche sie in den Weiß-Ast kippt (riding-the-wave-Familie).
+    if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_NOSEED"))
+    {
+        trace::log(QStringLiteral("seedFeedbackNoise: uebersprungen "
+                                  "(LUMIVIZ_MILKDROP_NOSEED)"));
+        return;
+    }
     QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
 
     // fixer Seed → jeder Kaltstart ist bit-identisch reproduzierbar (Prüfstände)
@@ -2822,13 +2838,15 @@ void MilkdropVisualizer::drawMotionVectors(const FrameVars& fv)
     std::vector<SuperscopePoint> pts;
     pts.reserve(static_cast<std::size_t>(nX * nY) * 3);
     const auto pushSegment = [&](double x0, double y0, double x1, double y1) {
-        // ScopeRenderer VERWIRFT skip-Punkte (Strip-Trenner) — deshalb ein
-        // Dummy-Trennpunkt ZWISCHEN den Segmenten, nie auf einem echten Punkt
-        // (Sichttest-Befund Session 39: sonst ueberlebt nur der erste Vektor)
+        // Harter Trenner zwischen den Segmenten (LINELIST-Semantik der
+        // Referenz): breakStrip, denn ein skip-Punkt bliebe seit S58 ANKER
+        // und zoege ein Geister-Segment aus seiner (0,0)-Position zu jedem
+        // Vektor (Befund S64: infinity-2-Weissflut)
         if (!pts.empty())
         {
             SuperscopePoint separator;
             separator.skip = true;
+            separator.breakStrip = true;
             pts.push_back(separator);
         }
         SuperscopePoint a;
@@ -3497,10 +3515,12 @@ void MilkdropVisualizer::drawBasicWave(const FrameVars& fv)
     else
     {
         smoothWaveSegment(pts, 0, nBreak, smoothed);
-        // Dummy-Trennpunkt: der ScopeRenderer verwirft skip-Punkte — ein
-        // markierter ECHTER Punkt wuerde das erste Sample von Linie B kosten
+        // Harter Trenner zwischen Stereo-Linie A und B: breakStrip — ein
+        // skip-Punkt bliebe seit S58 Anker und zoege eine Geisterlinie aus
+        // der Bildmitte zum ersten Sample von Linie B (Befund S64)
         SuperscopePoint separator;
         separator.skip = true;
+        separator.breakStrip = true;
         smoothed.push_back(separator);
         smoothWaveSegment(pts, nBreak, static_cast<int>(pts.size()) - nBreak, smoothed);
     }

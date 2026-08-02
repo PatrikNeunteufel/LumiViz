@@ -122,6 +122,25 @@ TEST_CASE("HlslTranspiler: log10 -> log(x) * 1/ln(10)")
     CHECK(contains(r.glslBody, "0.43429448190325176"));
 }
 
+TEST_CASE("HlslTranspiler: Division -> _div (D3D9-Legacy-Float, S64)")
+{
+    // Rainbow Attack NEON: `3*q22/cross` mit q22=cross=0 — D3D9 liefert 0
+    // (0*rcp=0), IEEE-GLSL NaN, und `ret += NaN` schwaerzt das Vollbild.
+    // Nicht beweisbare Nenner laufen ueber das _div des Host-Geruests;
+    // Literal-Nenner bleiben rohe Division.
+    const HlslResult r = transpile(body("float a = ret.x / q22;\n"
+                                        "float b = ret.x / 2;\n"
+                                        "ret = ret / uv.x;\n"
+                                        "ret /= (q23 * q24);"),
+                                   ShaderKind::Comp);
+    INFO(r.error);
+    REQUIRE(r.ok);
+    CHECK(contains(r.glslBody, "_div(ret.x, q22)"));
+    CHECK(contains(r.glslBody, "(ret.x / 2.0)"));
+    CHECK(contains(r.glslBody, "_div(ret, vec3(uv.x))"));
+    CHECK(contains(r.glslBody, "ret = _div(ret, vec3((q23 * q24)))"));
+}
+
 TEST_CASE("HlslTranspiler C3: while-Schleife mit int-Zaehler und n++ (S43)")
 {
     // Muster aus 'martin + Stahlregen - martin in da mash 12b'

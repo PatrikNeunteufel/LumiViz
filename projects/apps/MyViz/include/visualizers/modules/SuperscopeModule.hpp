@@ -125,6 +125,13 @@ struct SuperscopePoint
     float b = 1.0f;         ///< Blue (0 to 1)
     float a = 1.0f;         ///< Alpha (0 to 1)
     bool skip = false;      ///< Skip this point (break line)
+    /// Reiner Strip-Trenner OHNE Ankerfunktion (Motion Vectors, Stereo-Wave):
+    /// `skip` folgt der AVS-Semantik — der Punkt unterdrueckt nur das in ihm
+    /// ENDENDE Segment und bleibt Anker des naechsten (S58). Ein Dummy-Punkt
+    /// mit skip allein zieht darum eine Geisterlinie aus seiner (0,0)-Position
+    /// zum Folgepunkt (Befund S64: infinity-2-Weissflut, 3071 Center-Quads je
+    /// Frame). breakStrip-Punkte werden nirgends gezeichnet UND ankern nicht.
+    bool breakStrip = false;
     /// Per-point drawmode (r_sscope EEL var, only meaningful when the point
     /// code mentions `drawmode`): true = line segment to this point, false =
     /// dot. Hosts without per-point support ignore it.

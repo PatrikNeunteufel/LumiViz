@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.30.0
-> **Datum:** 2026-08-01 (Session 62)
+> **Version:** 1.31.0
+> **Datum:** 2026-08-02 (Session 63)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -646,8 +646,22 @@ Winamp-Komfort).
 
 ## 3. MilkDrop
 
+**Kalibrier-Runde läuft seit S63.** Werkzeuge: Triage-Kette
+`asset/calibration/milkdrop/` (`triage_presets.py` → `make_triage_report.py`
+→ `compare_ref.py`) + **MilkdropRef** (`tools/MilkdropRef/`, Ground Truth um
+den Original-Kern; README dort = SSOT, Test-Presets IMMER unter
+`asset/Milkdrop3/` ablegen). S63-Befund: 32/311 auffällig → 29 Port-Bugs
+(Referenz-Urteil) → Schwarz-Cluster-Ursache gefixt (Kaltstart-Saat +
+Feedback-Erhalt) → **22 bleiben**.
+
 | Was | Stand | |
 |---|---|---|
+| **🟠 22 Rest-Auffällige der Pack-Triage** | Cluster: Hell-Flach übersteuert (infinity 2/3, Moebius spiral 1, glass bead 005 — Verdacht Comp-Sättigung/Blend) · Rest-Schwarz (glass bead 003, searchlight, pixies reworked, 02_MW_new01B, rainbow spider2, Rainbow Attack NEON) · Dunkel-Flach (witchcraft-Familie, R-Serie). Liste: `out/milkdrop_triage_fix/klassen.json` (regenerierbar). Weg: Preset-Bisektion + `--dump-shaders` + MilkdropRef-Gegenprobe | 🟠 |
+| **Prüfpunkt R239/R239b** | leben seit der Kaltstart-Saat („OK"), die Referenz zeigt sie SCHWARZ — Langzeitlauf klären: klingt die Saat ab wie im Original? Merkregel: „OK geworden" nach Energie-Fix ≠ „richtig geworden" | ⬜ |
+| **myPresets/ (41)** | nie triagiert (Triage lief nur über den Pack-Root) | ⬜ |
+| **Loudness bei Stille** | `bass/mid/treb = 1.000` konstant bei Null-Signal (0/0-Normalisierung) — gegen Referenzverhalten prüfen | ⬜ |
+| **MilkdropRef-MessageBoxen** | „Unable to read data file" blockiert Batch-Läufe bei falscher Preset-Basis — patched-Kandidat (MessageBox → stderr) | 🔧 |
+| **MD3/2077-Feature-Frage (Patrik)** | erst nach dem MD2-Grundpfad: welche 2077-Presets nutzen MD3-exklusive Features, die uns fehlen? | 🟡 |
 | **`rot_*`-Matrizen optisch** | seit S52 im Code (24 Matrizen + Matrix-Indizierung), 9 Presets im Pack betroffen. Werte sind zufällig und unser PRNG ist ein anderer als der von MilkDrop — prüfbar ist nur: laden sie durch, bewegt sich Plausibles | ⬜ |
 | ~~**Texturen `worms`, `rose`, `grad3`**~~ | ✅ **beschafft (S60):** im Original-Winamp-Pack fehlen sie tatsächlich (21 Texturen, geprüft gegen `ref/winamp_orig`), aber der **MegaPack-`textures`-Ordner** (`…\VisualsPresets\MilkDrop 135k+ Presets MegaPack 2026\textures`, 8415 Dateien) hat alle drei — nach `asset/Milkdrop3/textures/` kopiert. Damit sind 27 von 35 Fehler-Log-Zeilen weg. ⚠ Herkunft Community-Pack: Lizenzfrage vor dem Commit kurz bedenken. Bei künftigen fehlenden Texturen zuerst dort suchen (verwandt: „Assets-Ordner-Fallback" §7) | ✅ |
 | **In-App-Sichttest-Runde** | c1- + m5-Presets über den Node-Pfad, Panel-Baum + Editor-Sektionen, Session-A-Features (Wave/Shape/Sprite anlegen/entfernen/klonen, Sprite-Editor, fShader-Wash). Offen seit S42 — [Status Punkt 0](visuals/MilkDrop_Import_Status.md) | ⬜ |

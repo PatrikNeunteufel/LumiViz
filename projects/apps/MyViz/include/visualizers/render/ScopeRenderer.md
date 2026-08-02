@@ -30,6 +30,13 @@ renderer.destroy();                      // onCleanup / Kontextwechsel
   z.B. additiv (`GL_SRC_ALPHA, GL_ONE`) um den Scope-Draw.
 - **Mode-Wahl:** `Lines` mit `lineWidth>1` rendert als Thick-Triangle-Strip, sonst
   als `GL_LINE_STRIP` (identisch zum Superscope).
+- **`skip` vs. `breakStrip` (S64):** `skip` folgt der AVS-Semantik — es
+  unterdrückt nur das im Punkt ENDENDE Segment, der Punkt bleibt Anker des
+  nächsten (S58). Ein Dummy-Trennpunkt braucht darum `breakStrip`: er wird nie
+  gezeichnet UND ankert nicht (beide Nachbarsegmente entfallen). Befund S64:
+  die Milkdrop-Motion-Vectors nutzten skip-Dummys bei (0,0) — seit S58 zog
+  jeder Vektor ein Geister-Quad aus der Bildmitte (infinity 2: mean 0,999
+  statt 0,029; mit breakStrip 0,045).
 
 ## Nutzer & Ausblick
 

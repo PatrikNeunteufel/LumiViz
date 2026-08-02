@@ -282,7 +282,22 @@ TEST_CASE("MilkLoudness: reset() setzt auf Kaltstart zurueck")
     for (int i = 0; i < 100; ++i) loud.update(0.4, 0.3, 0.2, 30.0);
     loud.reset();
     CHECK(loud.frame() == 0);
-    // Kaltstart: erster Frame seedet die Mittelwerte -> rel = 1.0 (kein Spike)
+    // Kaltstart rampt von 0 wie das Original (S64): Frame 0 spikt auf
+    // ~1/(1-warmupRate) = 10 bei 30 fps — Presets sind dafuer geschrieben
     loud.update(0.7, 0.1, 0.1, 30.0);
-    CHECK(loud.bass() == doctest::Approx(1.0).epsilon(0.01));
+    CHECK(loud.bass() == doctest::Approx(10.0).epsilon(0.01));
+}
+
+TEST_CASE("MilkLoudness: Kaltstart-Ramp — Fruehwerte spiken wie das Original (S64)")
+{
+    // Die alte Erste-Wert-Saat lieferte fuer ALLE Baender exakt 1.0 — Presets,
+    // die durch Band-Differenzen teilen (gb003: (bb-mn)/(mx-mn)), liefen damit
+    // GARANTIERT in ein exaktes 0/0-NaN, das im Akkumulator kleben bleibt.
+    // Mit dem Original-Ramp haengt Band-Gleichheit nur noch am Rundungszufall
+    // der Band-Quotienten — wie in der Referenz. 60 fps: 1/(1-0.9^0.5) ~ 19.49
+    MilkLoudness loud;
+    loud.update(0.61, 0.37, 0.23, 60.0);
+    CHECK(loud.bass() == doctest::Approx(19.49).epsilon(0.01));
+    CHECK(std::isfinite(loud.mid()));
+    CHECK(std::isfinite(loud.treb()));
 }

@@ -15,6 +15,7 @@ rechts Referenz).
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
@@ -22,7 +23,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 REPO = Path(__file__).resolve().parents[3]
-DIR = REPO / "out/milkdrop_triage"
+DIR = REPO / "out/milkdrop_triage"  # Default; --dir zeigt auf einen anderen Lauf
 THUMB = (256, 192)
 LABEL_H = 14
 PAIRS_PER_ROW = 3
@@ -68,6 +69,11 @@ def verdict(ours: dict, ref: dict) -> str:
 
 
 def main() -> int:
+    global DIR
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dir", type=Path, default=DIR,
+                    help="Triage-Lauf-Ordner (klassen.json + shots/ + ref_shots/)")
+    DIR = ap.parse_args().dir
     klassen = json.loads((DIR / "klassen.json").read_text(encoding="utf-8"))
     problem: list[tuple[str, str]] = []
     for cls in ("SCHWARZ", "MONOCHROM", "SCHWACH"):

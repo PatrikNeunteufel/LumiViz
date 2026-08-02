@@ -1,7 +1,7 @@
 # HlslTranspiler — HLSL(ps_2/3-Teilmenge) → GLSL 330 (Import-Zeit)
 
-> **Version:** 1.0.0  
-> **Datum:** 2026-07-22  
+> **Version:** 1.4.0  
+> **Datum:** 2026-08-02  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert (Import-Phase Stufe C1, Session 40 — Entscheid E4)  
 > **Modul:** lumi::hlsl (Lib **HlslTranspiler**, header-only INTERFACE)  
@@ -17,8 +17,9 @@
 
 Übersetzt NUR den Preset-Anteil eines MilkDrop-warp_/comp_-Shaders
 (Deklarationen + Funktionen + `shader_body { ... }`) nach GLSL — die Umgebung
-(include.fx: sampler_*, GetBlurN, q1–q32, bass/…, rand_*) stellt der Host als
-GLSL-Präambel (`milkCustomPreamble()` in MilkdropVisualizer.cpp).
+(include.fx: sampler_*, GetBlurN, q1–q32, bass/…, rand_*, `_div`-Overloads für
+den D3D9-Divisionsvertrag) stellt der Host als GLSL-Präambel
+(`milkCustomPreamble()` in MilkdropVisualizer.cpp).
 
 **Pipeline:** `preprocess` (#define-Makros, Objekt- + Funktionsform) → Lexer
 (2-Token-Lookahead) → Parser (Präzedenz-Kaskade; Deklarationen, if/else,
@@ -56,4 +57,5 @@ Preset-Texte. 311er-Pack-Sweep: **0 GL-Kompilierfehler, 2 Fallbacks**.
 | 1.0.0 | 2026-07-22 | Erstfassung (Session 40, C1): Präprozessor, Lexer/Parser/CodeGen, Typ-Inferenz + Promotions, Intrinsic-Tabelle, Funktionsdefinitionen, Korpus-Gate |
 | 1.1.0 | 2026-07-23 | Session 43 (GreatWho-Sichttest-Befund): **implizite HLSL-Verengung auch bei Compound-Zuweisungen** (`ret -= tex2D(...)`, `ret.xy *= GetBlurN(...)` — fxc kürzte still, GLSL lehnte ab → stiller MD1-Fallback erst zur GL-Laufzeit) + **log10** (→ `log(x)·1/ln 10`, komponentenweise); comp-Korpus 409→410 |
 | 1.2.0 | 2026-07-23 | Session 43: **C3-Kern** (Import-Fehler-Befund Patrik, 311er-Pack) — `for`/`while` + `break`/`continue` + `++`/`--` (Präfix/Postfix) · `tex3D` auf die eingebauten `noisevol_lq/hq` (auch als `sampler` redeklariert; 3D-Texturen + Uniforms liefert der Host) · include.fx-Konstanten `M_PI`/`M_PI_2`(=2π)/`M_INV_PI_2` + rohe q-Bänke `_qa`–`_qh` · Alias-`#define` auf Funktionsnamen (`#define sat saturate`; Body-Trim) · **HLSL-Truncation in Intrinsics** (gemischte Vektor-Breiten → kleinste Breite) · Vektor-Vergleiche (→ `lessThan()`-Familie als 0/1-Vektor) · `float↔bool`-Konvertierungen · `smoothstep`. Korpus: warp 526→**563/574 (98 %)**, comp 509→**566/598 (95 %)**. C3-Rest (sauberer Fehler): Arrays, do/while, `#if`, float2x3, modf, out-Parameter |
+| 1.4.0 | 2026-08-02 | Session 64 (MilkDrop-Kalibrierung, Schwarz-Cluster): **D3D9-Divisionsvertrag** — `/` und `/=` emittieren `_div(a, b)` (Host-Geruest definiert die Overloads float/vec2–4), denn D3D9 rechnet Legacy-Float (0·INF=0, rcp(0) endlich), IEEE-GLSL macht aus `0/0` NaN und `ret += NaN` schwärzt das Vollbild (Beweis: Rainbow Attack NEON, Flash-Term `3*q22/cross` mit q22=cross=0). Beweisbar von Null verschiedene Literal-Nenner bleiben rohe Division |
 | 1.3.0 | 2026-07-23 | Session 43: **C3-Rest — Stufe C3 abgeschlossen** (Entscheid Patrik): Arrays (lokal/global, Index mit `int()`-Cast, `{…}`-Init) · `#if`/`#ifdef`/`#else`/`#endif` (konstante Bedingungen) · do/while · out/inout-Parameter (GLSL-nativ, L-Value-Durchreichung) · float2x3/float3x2 (transponierte Konstruktor-Emission, GLSL matCxR) · `mul()`-Formen inkl. Vektor·Vektor = dot · **Uniform-Schattenkopien generalisiert** (fxc erlaubte Schreibzugriffe auf globale Konstanten: `q25=…`, `texsize.xy=…`) · **GLSL-Reserviert-Namen-Aliase** (`mod`/`noise3`/`noise4`/… als Preset-Bezeichner → `_hl`-Suffix) · Statement-Makros ungeklammert · Bool in Arithmetik/Unary numerisch · `%`-Harmonisierung · Skalar→Matrix-Splat · `round`, `modf`, `smoothstep`. **Korpus: warp 566/574 (98,6 %), comp 595/598 (99,5 %); 311er-Sweep: 0 GL-Fehler, 2 Fallbacks** (rot_* ×1, defektes Preset ×1) |

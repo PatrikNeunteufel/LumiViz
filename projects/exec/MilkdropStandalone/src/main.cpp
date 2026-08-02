@@ -264,6 +264,16 @@ private:
         }
         // Beat-Puls ~120 BPM fuer die Loudness-Baender + lebendige Wave
         const double beat = 0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * 2.0));
+        // Band-eigene Huellkurven (S64): EIN gemeinsamer Faktor machte
+        // bass=mid=treb nach der Loudness-Normalisierung IDENTISCH — Presets,
+        // die durch Band-Differenzen teilen (glass bead 003: (bb-mn)/(mx-mn)),
+        // liefen in 0/0-NaN. Die Referenz-FFT hat immer dekorrelierte Baender.
+        // Die WAVE bleibt unveraendert — sie ist der formelgleiche
+        // MilkdropRef-Vertrag (576-Sample-PCM).
+        const double beatMid =
+            0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * 1.5 + 1.3));
+        const double beatTreb =
+            0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * 2.7 + 2.1));
         static std::vector<float> wave;
         static std::vector<float> spec;
         wave.assign(kFrames * 2, 0.0f);
@@ -278,7 +288,10 @@ private:
         }
         for (int b = 0; b < kBins; ++b)
         {
-            const float v = static_cast<float>(beat * 0.8 / (1.0 + b * 0.03));
+            // Band-Grenzen der MilkLoudness-Terzen (761,2/2897,1 Hz auf 512
+            // Bins linear bis 22050 Hz): Bin ~17,7 bzw. ~67,3
+            const double env = (b < 18) ? beat : (b < 68) ? beatMid : beatTreb;
+            const float v = static_cast<float>(env * 0.8 / (1.0 + b * 0.03));
             spec[static_cast<std::size_t>(b) * 2 + 0] = v;
             spec[static_cast<std::size_t>(b) * 2 + 1] = v;
         }
