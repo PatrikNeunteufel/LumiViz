@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.31.0
-> **Datum:** 2026-08-02 (Session 63)
+> **Version:** 1.32.0
+> **Datum:** 2026-08-02 (Session 64)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -648,16 +648,19 @@ Winamp-Komfort).
 
 **Kalibrier-Runde läuft seit S63.** Werkzeuge: Triage-Kette
 `asset/calibration/milkdrop/` (`triage_presets.py` → `make_triage_report.py`
-→ `compare_ref.py`) + **MilkdropRef** (`tools/MilkdropRef/`, Ground Truth um
-den Original-Kern; README dort = SSOT, Test-Presets IMMER unter
-`asset/Milkdrop3/` ablegen). S63-Befund: 32/311 auffällig → 29 Port-Bugs
-(Referenz-Urteil) → Schwarz-Cluster-Ursache gefixt (Kaltstart-Saat +
-Feedback-Erhalt) → **22 bleiben**.
+→ `compare_ref.py --dir <lauf>`) + **MilkdropRef** (`tools/MilkdropRef/`,
+Ground Truth um den Original-Kern; README dort = SSOT, Test-Presets IMMER
+unter `asset/Milkdrop3/` ablegen). **S64: acht Fixklassen, OK 289→295,
+Prüfstände jetzt SAATLOS** (Entscheid Patrik; `--seed` = App-Opt-in) —
+Baseline `out/milkdrop_triage_s64f`: 16 auffällig = 5 korrekt PRESET-IST-SO
+(R239/R239b, sprite3, XorDev 001b, acid wiring 2) + **11 Port-Bugs**.
+Diagnose-Schalter: `LUMIVIZ_MILKDROP_NOSEED`, `LUMIVIZ_MILKDROP_DUMP_WARP`.
 
 | Was | Stand | |
 |---|---|---|
-| **🟠 22 Rest-Auffällige der Pack-Triage** | Cluster: Hell-Flach übersteuert (infinity 2/3, Moebius spiral 1, glass bead 005 — Verdacht Comp-Sättigung/Blend) · Rest-Schwarz (glass bead 003, searchlight, pixies reworked, 02_MW_new01B, rainbow spider2, Rainbow Attack NEON) · Dunkel-Flach (witchcraft-Familie, R-Serie). Liste: `out/milkdrop_triage_fix/klassen.json` (regenerierbar). Weg: Preset-Bisektion + `--dump-shaders` + MilkdropRef-Gegenprobe | 🟠 |
-| **Prüfpunkt R239/R239b** | leben seit der Kaltstart-Saat („OK"), die Referenz zeigt sie SCHWARZ — Langzeitlauf klären: klingt die Saat ab wie im Original? Merkregel: „OK geworden" nach Energie-Fix ≠ „richtig geworden" | ⬜ |
+| **🎯 Regelwerk-Strang (Entscheid Patrik S64, NÄCHSTE SESSION)** | Node-Param `Legacy \| Modern \| Benutzerdefiniert` (Master-Combo + Einzelschalter je Emulation: Div-Vertrag, UNORM-Trunc, q-Epsilon, UV-/NaN-Sanitize); Import-Default legacy, Neubauten modern. Dazu PS-Version-Override je Typ (warp/comp × auto/PS2/PS3/MD1-erzwingen = Strip-Bisektion als App-Feature). Nur Pixelshader sind preset-versioniert (Vertex-Stufe = per-Vertex-EEL-Mesh, versionslos). Umfang: Schema + Serialisierung + Panel + Transpiler-Flag | 🎯 |
+| **🟠 11 Rest-Port-Bugs** (`out/milkdrop_triage_s64f/VERGLEICH.md`) | **piercing 01** (S63-App-Befund Patrik, seit saatlos erstmals messbar: flach 0,127 vs Ref 0,306 — unangefasst) · **pixies-Familie (2)**: Partikel leben, ~4× dünner als Ref; Zeichenpfad/gmegabuf/while/exec2/loop(150000)/Init+Frame-Durchlauf alle per Sonde entlastet · **Gin Tonic 003** solo-weiß (Familie geheilt, dieses nicht — eigener Bisect) · **q-/UB-Dunkelklasse (7)**: purple pulsator, crystal palace, R039, R068, R070, R211, R248 — Look hängt an doppeltem UB der Referenz (Heap-Garbage-q × Fixpunkt-Überlauf), nur klassenweise nachstellbar → 🟡 Entscheid: als „IST-SO-artig (Legacy-Grenze)" einstufen oder weiter emulieren? | 🟠 |
+| ~~**Prüfpunkt R239/R239b**~~ | ✅ **aufgelöst (S64):** Prüfstände saatlos → beidseitig schwarz, korrekt PRESET-IST-SO. Die S63-Falle („OK geworden ≠ richtig geworden") ist damit methodisch beseitigt | ✅ |
 | **myPresets/ (41)** | nie triagiert (Triage lief nur über den Pack-Root) | ⬜ |
 | **Loudness bei Stille** | `bass/mid/treb = 1.000` konstant bei Null-Signal (0/0-Normalisierung) — gegen Referenzverhalten prüfen | ⬜ |
 | **MilkdropRef-MessageBoxen** | „Unable to read data file" blockiert Batch-Läufe bei falscher Preset-Basis — patched-Kandidat (MessageBox → stderr) | 🔧 |
@@ -713,6 +716,19 @@ Feedback-Erhalt) → **22 bleiben**.
   (Composer-Spuren) ist Fernziel.
 
 ## 7. Backlog (bewusst nichts tun)
+
+### ⚪ Shadertoy-Import (Idee Patrik S64)
+
+Eigener Node-Typ mit **modernem Regelwerk** (kein Legacy-Ballast):
+Shadertoy-Shader sind GLSL-Fragmentshader mit standardisierter Schnittstelle
+(`mainImage(fragColor, fragCoord)`, Uniforms `iResolution/iTime/iFrame/
+iMouse/iChannel0–3`) — Übersetzung GLSL-ES→GLSL 330 ist leichtgewichtig.
+**Audioreaktivität ist Shadertoy-nativ:** Audio-iChannel = 512×2-Textur
+(Zeile 0 FFT, Zeile 1 Waveform) — unser Analyzer liefert genau das; dazu
+optional LumiViz-Uniforms (bass/mid/treb/beat), womit auch nicht-reaktive
+Shadertoys nachträglich reaktiv werden. Ausbaustufe 2: Multipass
+(Buffer A–D ≈ FeedbackBuffer). ⚠ Lizenz: Shadertoy-Inhalte sind meist
+CC BY-NC-SA — privat nutzen ja, nichts ins Repo.
 
 ### ⚪ fractalZoomer: float-Erschöpfung im Endlos-Zoom (Befund S61)
 
@@ -1042,6 +1058,8 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.32.0 | 2026-08-02 | Session 64 — **zweite MilkDrop-Kalibrier-Runde: acht Fixklassen, OK 289→295, Prüfstände SAATLOS** (Entscheid Patrik; `--seed` = App-Opt-in). §3 neu geschnitten: R239-Prüfpunkt ✅ aufgelöst (korrekt IST-SO), Rest = 11 Port-Bugs in vier Klassen (piercing 01 erstmals messbar · pixies ×2 · Gin Tonic 003 · q-/UB-Dunkelklasse ×7 mit 🟡 Einstufungs-Entscheid); **🎯 Regelwerk-Strang** (Legacy/Modern/Benutzerdefiniert + PS-Version-Override je Typ) als Auftrag der nächsten Session; §7 + Shadertoy-Import-Idee. Fixklassen: D3D9-Div-Vertrag (`_div`), Band-Hüllkurven, Loudness-Kaltstart-Ramp, `breakStrip` (MV-Geisterquads), UNORM8-Trunkierung, NaN-Sanitize, q-Garbage-Epsilon, Double-UV-Wrap. Forschung: 2077-Look der R-Serie = Heap-Garbage × Fixpunkt-Überlauf (doppelt UB, dokumentierte Legacy-Grenze). Tests 493/493, 5 Voll-Triagen, 0 Regressionen |
+| 1.31.0 | 2026-08-02 | Session 63 (Abschluss) — §3 neu geschnitten nach der Triage (Kaltstart-Saat + Feedback-Erhalt, 10 geheilt, 22 Rest als Arbeitsliste), R239-Prüfpunkt + myPresets/-Triage + Loudness-Stille als offene Punkte aufgenommen |
 | 1.30.0 | 2026-08-01 | Session 62, Teil 2 — Befund Patrik: domain.lvfx-Richtungsumkehr war ein stummer No-op (`dx`/`dy` kein domainWarp-Vertrag; alt MAE 0,0000, gefixt 0,1817 über `speed`-Vorzeichen + `oy`-Pan). Daraus: **neuer Prüfstand Strang G** `lint_chain_scripts.py` (stumme Skript-Zuweisungen in Asset-Chains; fields/README) — fand DREI Ernter-Vertragslücken (`b` beim Attraktor pauschal verworfen, Movements Feld `code` fehlte im Filter, Nur-Lese-Ziele wie Texer-II-`x`/`y` unsichtbar; alle gefixt, inventory_docs +9 Variablen, Teil-Sondenlauf 47 WIRKT/3 SCHWACH/0 STUMM). domainWarp-Vorlagen Tintenstrom/Nebelkammer tragen jetzt Skriptfelder (Beispiele regeneriert, Beat-Wirkung gemessen 0,12/0,038). Rest-Lint: 9 tote Variablen in importierten Originalen (bleiben wörtlich) |
 | 1.29.0 | 2026-08-01 | Session 62 — **Grafikkarten-Auswahl umgesetzt** (§8 ✅): `core/GpuPreference` (UserGpuPreferences-Registry als SSOT), SettingsPanel-Combo mit Sofort-Neustart, `gpu.ini`/`GpuSelector`/Export-Flags entfernt, Tests 491. §8-Messlauf beidseitig gefahren: Baseline 610M (`out/gpu_baseline_radeon610m/`) und RTX 4090 (`out/gpu_after_rtx4090/`) — **keine Verschiebung**, Doppellauf-Sonden karten-übergreifend SHA256-identisch |
 | 1.28.0 | 2026-08-01 | Session 61 (Abschluss) — Vorgabe Patrik für S62 in §8 eingearbeitet: **Grafikkarten-Auswahl ist der Auftrag der nächsten Session** (einmal gesetzt, via Settings umstellbar, Änderung löst SOFORT Neustart aus; §8-Regel Vorher/Nachher-Messlauf gilt). Session-Report `LumiViz_Session61…`, Handover und `Changelog_Session61.md` nachgezogen |

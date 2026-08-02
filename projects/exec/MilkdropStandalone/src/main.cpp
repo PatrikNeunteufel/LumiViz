@@ -416,13 +416,23 @@ int main(int argc, char* argv[])
     const QCommandLineOption optDumpShaders(
         QStringLiteral("dump-shaders"),
         QStringLiteral("uebersetzte GLSL-Quellen nach --out schreiben"));
+    const QCommandLineOption optSeed(
+        QStringLiteral("seed"),
+        QStringLiteral("Kaltstart-Saat aktivieren (App-Verhalten). Default ist "
+                       "SAATLOS wie MilkdropRef mit genulltem WDDM-VRAM "
+                       "(Entscheid Patrik S64)"));
     parser.addOption(optAuto);
     parser.addOption(optFrames);
     parser.addOption(optOut);
     parser.addOption(optSize);
     parser.addOption(optSilence);
     parser.addOption(optDumpShaders);
+    parser.addOption(optSeed);
     parser.process(app);
+    // Saatlos = Prüfstand-Vertrag: derselbe Kaltstart wie der Referenz-Renderer.
+    // Die App behält ihre Saat (Verstärker-Presets beim ERSTEN Preset der
+    // Sitzung); hier zählt Vergleichbarkeit.
+    if (!parser.isSet(optSeed)) qputenv("LUMIVIZ_MILKDROP_NOSEED", "1");
 
     // --- Preset-Liste aufbauen -------------------------------------------------------------
     QString target = parser.positionalArguments().isEmpty()

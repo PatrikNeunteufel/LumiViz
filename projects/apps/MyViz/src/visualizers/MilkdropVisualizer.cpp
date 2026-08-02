@@ -83,7 +83,13 @@ uniform float uDecay;
 uniform float uDecaySub;
 in vec2 vTex;
 out vec4 frag;
-void main() { frag = vec4(texture(uTex, vTex).rgb * uDecay - vec3(uDecaySub), 1.0); }
+void main()
+{
+    vec3 c = texture(uTex, vTex).rgb * uDecay - vec3(uDecaySub);
+    // D3D9-UNORM8-Trunkierung (S64, R211): abschneiden statt runden, sonst
+    // stallt der Decay bei v*(1-d) < 0,5/255 (Grauboden statt Schwarz)
+    frag = vec4(floor(c * 255.0 + 0.0001) / 255.0, 1.0);
+}
 )";
 
 // blur pass 1: long horizontal kernel + progressive range compression
@@ -279,7 +285,8 @@ using lumi::milkdrop::SamplerName;
 }
 
 /// Full fragment source from a transpile result (preamble + globals + main)
-[[nodiscard]] std::string assembleCustomFragment(const lumi::hlsl::HlslResult& r)
+[[nodiscard]] std::string assembleCustomFragment(const lumi::hlsl::HlslResult& r,
+                                                 bool truncateUnorm)
 {
     std::string s = milkCustomPreamble();
     for (const std::string& name : r.customSamplers)
@@ -306,7 +313,19 @@ using lumi::milkdrop::SamplerName;
     vec3 ret = vec3(0.0);
 )";
     s += r.glslBody;
-    s += "    fragOut = vec4(ret, 1.0);\n}\n";
+    if (truncateUnorm)
+    {
+        // D3D9-UNORM8-Trunkierung (S64, R211): D3D9 schneidet beim 8-bit-
+        // Write AB, GL rundet zur naechsten Stufe — multiplikativer Decay
+        // stallt sonst bei v*(1-d) < 0,5/255 (Grauboden exakt 16/255 bei
+        // decay 0,97). Nur der Feedback-Pfad (Warp) braucht das; der Comp
+        // schreibt auf den Bildschirm, ohne Rueckkopplung.
+        s += "    fragOut = vec4(floor(ret * 255.0 + 0.0001) / 255.0, 1.0);\n}\n";
+    }
+    else
+    {
+        s += "    fragOut = vec4(ret, 1.0);\n}\n";
+    }
     return s;
 }
 
@@ -538,7 +557,7 @@ std::string MilkdropVisualizer::debugAssembleFragment(const std::string& hlslTex
     const lumi::hlsl::HlslResult r = lumi::hlsl::transpile(
         hlslText, isWarp ? lumi::hlsl::ShaderKind::Warp : lumi::hlsl::ShaderKind::Comp);
     if (!r.ok) return "// TRANSPILE-FEHLER: " + r.error;
-    return assembleCustomFragment(r);
+    return assembleCustomFragment(r, isWarp);
 }
 
 const char* MilkdropVisualizer::debugCustomVertexShader()
@@ -1109,6 +1128,24 @@ void MilkdropVisualizer::runPerFrameInit()
         m_script->run(Slot::Init);
         m_monitor = m_script->engine().number("monitor");
     }
+    else
+    {
+        // OHNE per_frame_init bleibt q_values_after_init_code in der Referenz
+        // UNINITIALISIERTER Heap (state.cpp:440 — nie beschrieben): winzige
+        // Garbage-Werte statt exakt 0. Die R-Serie (2077) teilt durch diese
+        // q's — mit exakt 0 werden die Ketten INF/NaN und der Feedback-Puffer
+        // stirbt (S64-Befund), mit winzig-endlichen Werten bleiben sie endlich
+        // (Sonde: Referenz-xx ~ 6e5 statt INF). Deterministisches Epsilon je
+        // Index, deutlich UNTER der EEL-Vergleichstoleranz (closefact 1e-5):
+        // ==0-Checks bleiben wahr, nur Divisionen werden endlich. Presets MIT
+        // Init behalten exakt 0 fuer ungesetzte q's (ns-eel-VM-Startwert).
+        // Direkt in den KONTEXT schreiben — der Init-Snapshot friert m_q ein,
+        // nicht die Lua-Globals.
+        for (int i = 1; i <= 32; ++i)
+        {
+            m_context->setQ(i, 1e-6 * (1.0 + 0.1 * i));
+        }
+    }
     // freeze q_values_after_init_code (M2 contract, state.cpp:1689)
     m_context->captureInitSnapshot();
 
@@ -1508,7 +1545,7 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
         const lumi::hlsl::HlslResult r = lumi::hlsl::transpile(text, kind);
         if (r.ok)
         {
-            outSrc = assembleCustomFragment(r);
+            outSrc = assembleCustomFragment(r, kind == lumi::hlsl::ShaderKind::Warp);
             trace::log(QStringLiteral("prepareCustomShaders: %1 → GLSL ok "
                                       "(%2 Zeichen, %3 Custom-Sampler)")
                            .arg(QLatin1String(which))
@@ -2558,13 +2595,55 @@ void MilkdropVisualizer::onRender(float deltaTime)
     m_feedback.beginFrame();
     f->glViewport(0, 0, w, h);
     f->glDisable(GL_DEPTH_TEST);
+    if (m_frame < 6 && qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_DUMP_WARP"))
+    {
+        // Warp-EINGABE: previous-Textur via Wegwerf-FBO lesen (glGetTexImage
+        // ist ueber Qt nicht gelinkt); danach current wieder binden
+        std::vector<unsigned char> px(static_cast<std::size_t>(w) * h * 4);
+        GLuint tmpFbo = 0;
+        f->glGenFramebuffers(1, &tmpFbo);
+        f->glBindFramebuffer(GL_FRAMEBUFFER, tmpFbo);
+        f->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                  GL_TEXTURE_2D, m_feedback.previousTexture(), 0);
+        f->glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, px.data());
+        f->glDeleteFramebuffers(1, &tmpFbo);
+        m_feedback.beginFrame();
+        QImage img(px.data(), w, h, w * 4, QImage::Format_RGBA8888);
+        const QString dir = qEnvironmentVariable("LUMIVIZ_MILKDROP_DUMP_WARP");
+        img.mirrored().save(
+            QStringLiteral("%1/warpin_f%2.png").arg(dir).arg(m_frame));
+        trace::log(QStringLiteral("dumpWarp f%1: decay=%2 warpKlasse=%3")
+                       .arg(m_frame)
+                       .arg(fv.decay)
+                       .arg(static_cast<int>(m_state.warpInfo.shaderClass)));
+    }
     drawWarpPass(fv);
+    // Diagnose-Dump (S64, R211-Trail-Verlust): Pufferinhalt DIREKT nach dem
+    // Warp — zeigt, was der Warp aus dem Vorframe truegt. Nur per Env-Schalter.
+    if (m_frame < 6 && qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_DUMP_WARP"))
+    {
+        std::vector<unsigned char> px(static_cast<std::size_t>(w) * h * 4);
+        f->glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, px.data());
+        QImage img(px.data(), w, h, w * 4, QImage::Format_RGBA8888);
+        const QString dir =
+            qEnvironmentVariable("LUMIVIZ_MILKDROP_DUMP_WARP");
+        img.mirrored().save(QStringLiteral("%1/warpout_f%2.png").arg(dir).arg(m_frame));
+    }
     drawMotionVectors(fv);
     drawCustomShapes();
     drawCustomWaves();
     drawBasicWave(fv);
     drawBorders(fv);
     if (fv.darkenCenter) drawDarkenCenter();
+    if (m_frame < 6 && qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_DUMP_WARP"))
+    {
+        std::vector<unsigned char> px(static_cast<std::size_t>(w) * h * 4);
+        f->glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, px.data());
+        QImage img(px.data(), w, h, w * 4, QImage::Format_RGBA8888);
+        const QString dir = qEnvironmentVariable("LUMIVIZ_MILKDROP_DUMP_WARP");
+        img.mirrored().save(
+            QStringLiteral("%1/postwave_f%2.png").arg(dir).arg(m_frame));
+    }
 
     // --- present (single vertical flip lives here) -----------------------------------------
     compositeToScreen(fv);
@@ -2689,11 +2768,49 @@ void MilkdropVisualizer::computeWarpMesh(const FrameVars& fv)
             u += texelX;
             v += texelY;
 
+            // UV-Sanitize (S64, R211-Klasse — q-lose per_pixel-Divisionen):
+            // nicht-endlich → 0 (D3D9-Konvertierungsregel NaN→0). Riesen-UVs
+            // aus /q-Epsilon-Ketten wrappen wir IN DOUBLE in die Kachel: die
+            // D3D9-Fixpunkt-Konvertierung behaelt niederwertige Bits (gestreute
+            // Zuordnung, der organische 2077-Look), waehrend float-fract auf
+            // >2^24 exakt 0 wird (Konstantbild). Schwelle weit ausserhalb
+            // jedes regulaeren Presets.
+            const auto fitUv = [&](double c) {
+                if (!std::isfinite(c)) return 0.0;
+                if (std::fabs(c) > 1e4)
+                    return fv.wrap ? c - std::floor(c) : clampd(c, 0.0, 1.0);
+                return c;
+            };
+            u = fitUv(u);
+            v = fitUv(v);
             m_vertexUv[static_cast<std::size_t>(n) * 2] = u;
             m_vertexUv[static_cast<std::size_t>(n) * 2 + 1] = v;
         }
     }
 
+    if (m_frame < 3 && qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_DUMP_WARP"))
+    {
+        double uMin = 1e9, uMax = -1e9, vMin = 1e9, vMax = -1e9;
+        for (std::size_t i = 0; i + 1 < m_vertexUv.size(); i += 2)
+        {
+            uMin = std::min(uMin, m_vertexUv[i]);
+            uMax = std::max(uMax, m_vertexUv[i]);
+            vMin = std::min(vMin, m_vertexUv[i + 1]);
+            vMax = std::max(vMax, m_vertexUv[i + 1]);
+        }
+        trace::log(QStringLiteral("meshUv f%1: u=[%2..%3] v=[%4..%5] n=%6")
+                       .arg(m_frame)
+                       .arg(uMin).arg(uMax).arg(vMin).arg(vMax)
+                       .arg(m_vertexUv.size() / 2));
+        trace::log(QStringLiteral("meshFv f%1: zoom=%2 zoomExp=%3 rot=%4 warp=%5 "
+                                  "cx=%6 cy=%7 dx=%8 dy=%9 sx=%10 sy=%11 uv0=(%12,%13)")
+                       .arg(m_frame)
+                       .arg(fv.zoom).arg(fv.zoomExp).arg(fv.rot).arg(fv.warp)
+                       .arg(fv.cx).arg(fv.cy).arg(fv.dx).arg(fv.dy)
+                       .arg(fv.sx).arg(fv.sy)
+                       .arg(m_vertexUv.empty() ? 0.0 : m_vertexUv[0])
+                       .arg(m_vertexUv.size() < 2 ? 0.0 : m_vertexUv[1]));
+    }
     // triangulate: pos = grid NDC, uv = (u, 1-v) — reference v is D3D-style (0 = top)
     m_meshData.clear();
     m_meshData.reserve(static_cast<std::size_t>(gx * gy) * 6 * 4);
