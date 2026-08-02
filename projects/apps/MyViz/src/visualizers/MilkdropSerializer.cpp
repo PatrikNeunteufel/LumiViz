@@ -4,8 +4,8 @@
  * @brief  Implementation of the milkdrop preset JSON persistence (Roadmap 6, M6)
  *
  * @author LumiPulse Team
- * @date   July 2026
- * @version 1.0.0
+ * @date   August 2026
+ * @version 1.1.0
  ****************************************************************************************
  */
 
@@ -42,6 +42,44 @@ std::string getStr(const QJsonObject& o, const char* key)
 QString qstr(const std::string& s)
 {
     return QString::fromStdString(s);
+}
+
+// --- Regelwerk-Enums als Strings (Strang R, S65) ------------------------------
+// Fehlende/unbekannte Werte fallen auf Legacy bzw. Auto zurück — damit laden
+// ALLE Bestands-Dokumente unverändert (Migrations-Vertrag, Plan R2).
+QString regelwerkKey(Regelwerk r)
+{
+    switch (r)
+    {
+    case Regelwerk::Modern: return QStringLiteral("modern");
+    case Regelwerk::Benutzerdefiniert: return QStringLiteral("benutzerdefiniert");
+    case Regelwerk::Legacy: break;
+    }
+    return QStringLiteral("legacy");
+}
+Regelwerk regelwerkFromKey(const QString& key)
+{
+    if (key == QLatin1String("modern")) return Regelwerk::Modern;
+    if (key == QLatin1String("benutzerdefiniert")) return Regelwerk::Benutzerdefiniert;
+    return Regelwerk::Legacy;
+}
+QString psOverrideKey(PsOverride p)
+{
+    switch (p)
+    {
+    case PsOverride::PS2: return QStringLiteral("ps2");
+    case PsOverride::PS3: return QStringLiteral("ps3");
+    case PsOverride::MD1erzwingen: return QStringLiteral("md1");
+    case PsOverride::Auto: break;
+    }
+    return QStringLiteral("auto");
+}
+PsOverride psOverrideFromKey(const QString& key)
+{
+    if (key == QLatin1String("ps2")) return PsOverride::PS2;
+    if (key == QLatin1String("ps3")) return PsOverride::PS3;
+    if (key == QLatin1String("md1")) return PsOverride::MD1erzwingen;
+    return PsOverride::Auto;
 }
 
 QJsonObject waveToJson(const WaveState& w)
@@ -303,6 +341,16 @@ QJsonObject presetToJson(const PresetState& state)
     for (const SpriteState& s : state.sprites) sprites.append(spriteToJson(s));
     p["sprites"] = sprites;
 
+    // Regelwerk (Strang R, S65) — die Rohfelder reisen mit, damit ein
+    // Benutzerdefiniert-Preset seine Schalterstellung behält
+    p["regelwerk"] = regelwerkKey(state.regelwerk);
+    p["divVertragD3d9"] = state.divVertragD3d9;
+    p["unormTrunkierung"] = state.unormTrunkierung;
+    p["qGarbageEpsilon"] = state.qGarbageEpsilon;
+    p["uvSanitize"] = state.uvSanitize;
+    p["psWarp"] = psOverrideKey(state.psWarp);
+    p["psComp"] = psOverrideKey(state.psComp);
+
     // meta
     p["generation"] = state.generation;
     p["psVersion"] = state.psVersion;
@@ -426,6 +474,15 @@ PresetState presetFromJson(const QJsonObject& doc, QStringList* report)
     {
         if (v.isObject()) s.sprites.push_back(spriteFromJson(v.toObject()));
     }
+
+    // Regelwerk (Strang R, S65): fehlende Felder ⇒ Legacy + Auto (Migration)
+    s.regelwerk = regelwerkFromKey(p.value("regelwerk").toString());
+    s.divVertragD3d9 = getBool(p, "divVertragD3d9", s.divVertragD3d9);
+    s.unormTrunkierung = getBool(p, "unormTrunkierung", s.unormTrunkierung);
+    s.qGarbageEpsilon = getBool(p, "qGarbageEpsilon", s.qGarbageEpsilon);
+    s.uvSanitize = getBool(p, "uvSanitize", s.uvSanitize);
+    s.psWarp = psOverrideFromKey(p.value("psWarp").toString());
+    s.psComp = psOverrideFromKey(p.value("psComp").toString());
 
     s.generation = getInt(p, "generation", s.generation);
     s.psVersion = getInt(p, "psVersion", s.psVersion);

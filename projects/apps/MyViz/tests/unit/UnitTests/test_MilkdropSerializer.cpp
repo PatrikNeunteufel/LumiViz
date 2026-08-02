@@ -280,6 +280,82 @@ TEST_CASE("MilkdropSerializer: Sprite-Roundtrip (MilkDrop2077-Sektionen)")
     CHECK(b.code == "x=0.5+0.1*sin(time);");
 }
 
+// Strang R (S65), Waechter R2: Regelwerk-Felder roundtrippen; fehlende Felder
+// migrieren auf Legacy + Auto (alle Bestands-Dokumente laden unveraendert).
+TEST_CASE("MilkdropSerializer: Regelwerk-Roundtrip (gesetzte Felder)")
+{
+    using lumi::milkdrop::PsOverride;
+    using lumi::milkdrop::Regelwerk;
+
+    PresetState a;
+    a.regelwerk = Regelwerk::Benutzerdefiniert;
+    a.divVertragD3d9 = false;
+    a.unormTrunkierung = true;
+    a.qGarbageEpsilon = false;
+    a.uvSanitize = true;
+    a.psWarp = PsOverride::PS3;
+    a.psComp = PsOverride::MD1erzwingen;
+
+    const PresetState b = presetFromJson(presetToJson(a), nullptr);
+    CHECK(b.regelwerk == Regelwerk::Benutzerdefiniert);
+    CHECK_FALSE(b.divVertragD3d9);
+    CHECK(b.unormTrunkierung);
+    CHECK_FALSE(b.qGarbageEpsilon);
+    CHECK(b.uvSanitize);
+    CHECK(b.psWarp == PsOverride::PS3);
+    CHECK(b.psComp == PsOverride::MD1erzwingen);
+
+    // Modern roundtrippt ebenso (Schalter-Rohfelder bleiben erhalten)
+    PresetState m;
+    m.regelwerk = Regelwerk::Modern;
+    const PresetState m2 = presetFromJson(presetToJson(m), nullptr);
+    CHECK(m2.regelwerk == Regelwerk::Modern);
+    const auto e = lumi::milkdrop::effektiveSchalter(m2);
+    CHECK_FALSE(e.divVertragD3d9);
+    CHECK_FALSE(e.unormTrunkierung);
+}
+
+TEST_CASE("MilkdropSerializer: Regelwerk-Migration (fehlende/unbekannte Felder)")
+{
+    using lumi::milkdrop::PsOverride;
+    using lumi::milkdrop::Regelwerk;
+
+    QJsonObject header;
+    header["type"] = "milkdrop";
+
+    SUBCASE("Bestands-Dokument ohne Regelwerk-Felder -> Legacy + Auto")
+    {
+        QJsonObject preset;
+        preset["decay"] = 0.95;  // ein Alt-Feld, sonst nichts
+        QJsonObject doc;
+        doc["header"] = header;
+        doc["preset"] = preset;
+
+        const PresetState s = presetFromJson(doc, nullptr);
+        CHECK(s.regelwerk == Regelwerk::Legacy);
+        CHECK(s.psWarp == PsOverride::Auto);
+        CHECK(s.psComp == PsOverride::Auto);
+        const auto e = lumi::milkdrop::effektiveSchalter(s);
+        CHECK(e.divVertragD3d9);
+        CHECK(e.unormTrunkierung);
+        CHECK(e.qGarbageEpsilon);
+        CHECK(e.uvSanitize);
+    }
+    SUBCASE("unbekannte Enum-Strings fallen auf Legacy/Auto zurueck")
+    {
+        QJsonObject preset;
+        preset["regelwerk"] = "zukunftsmodus";
+        preset["psWarp"] = "ps9";
+        QJsonObject doc;
+        doc["header"] = header;
+        doc["preset"] = preset;
+
+        const PresetState s = presetFromJson(doc, nullptr);
+        CHECK(s.regelwerk == Regelwerk::Legacy);
+        CHECK(s.psWarp == PsOverride::Auto);
+    }
+}
+
 TEST_CASE("MilkdropTranslator: s1-Kalibrier-Presets tragen ihre Sprites")
 {
     const std::filesystem::path dir =

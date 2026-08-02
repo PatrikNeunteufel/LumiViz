@@ -4,8 +4,8 @@
  * @brief  Translated .milk preset state for the MilkdropVisualizer (MD1 core set)
  *
  * @author LumiPulse Team
- * @date   July 2026
- * @version 1.0.0
+ * @date   August 2026
+ * @version 1.1.0
  *
  * @details
  * MilkDrop-Import M3: the render-facing state of one preset — every scalar the
@@ -22,6 +22,13 @@
  * M5: blur controls (b1n/b1x/../b1ed, state.cpp:1344-1350) and the warp/comp
  * shader classification (MilkShaderClassifier) — Md1Default/Md1Plus shaders
  * render exactly via baked constants, Custom falls back to the live MD1 path.
+ *
+ * Strang R (S65): jeder Node deklariert sein Regelwerk — Legacy (Import-
+ * Default, alle S64-D3D9-Emulationen aktiv), Modern (IEEE pur) oder
+ * Benutzerdefiniert (Einzelschalter). Dazu PS-Version-Overrides je Stufe.
+ * Bedeutung + Beweis je Schalter: MilkdropVisualizer.md §Fixklassen
+ * (1.15.0-1.18.0). Wirksam werden die Schalter über effektiveSchalter() —
+ * Renderer/Transpiler lesen NUR die abgeleiteten Werte, nie die Rohfelder.
  ****************************************************************************************
  */
 
@@ -35,6 +42,47 @@
 #include <vector>
 
 namespace lumi::milkdrop {
+
+/**
+ * @brief Betriebsart eines Milkdrop-Nodes (Strang R, S65)
+ *
+ * Legacy = original-treu (alle vier D3D9-Emulationen AN — das heutige
+ * Import-Verhalten, Baseline s64f). Modern = IEEE/GL pur (alle AUS, für
+ * Neubauten). Benutzerdefiniert = die Einzelschalter des PresetState zählen.
+ */
+enum class Regelwerk
+{
+    Legacy,
+    Modern,
+    Benutzerdefiniert,
+};
+
+/**
+ * @brief Pixel-Shader-Override je Stufe (warp/comp)
+ *
+ * Auto folgt den PSVERSION-Feldern der .milk; PS2/PS3 erzwingen die Stufe;
+ * MD1erzwingen verwirft die Custom-Shader-Texte komplett und rendert den
+ * exakten MD1-Pfad (die S64-Strip-Bisektion als App-Feature).
+ */
+enum class PsOverride
+{
+    Auto,
+    PS2,
+    PS3,
+    MD1erzwingen,
+};
+
+/**
+ * @brief Die vier D3D9-Emulationen als WIRKSAME Werte (aus der Betriebsart
+ *        abgeleitet — Renderer/Transpiler lesen ausschliesslich diese Struktur)
+ */
+struct RegelwerkSchalter
+{
+    bool divVertragD3d9 = true;   ///< Transpiler emittiert _div statt rohem /
+    bool unormTrunkierung = true; ///< Feedback-Pfad trunkiert wie D3D9 statt zu runden
+    bool qGarbageEpsilon = true;  ///< Init-lose Presets starten mit q≈1e-6 statt exakt 0
+    bool uvSanitize = true;       ///< NaN→0 + Double-Wrap für Riesen-UVs
+};
 
 /**
  * @brief One custom wave (defaults = CState::Default, state.cpp:593-608)
@@ -200,11 +248,41 @@ struct PresetState
     // --- preset sprites (MilkDrop2077 [SPRITEn]-Sektionen) ---------------------------------
     std::vector<SpriteState> sprites;
 
+    // --- Regelwerk (Strang R, S65) ---------------------------------------------------------
+    // Default Legacy = heutiges Import-Verhalten (Baseline s64f bleibt gültig).
+    // Die vier Schalter sind NUR bei Benutzerdefiniert wirksam — Zugriff immer
+    // über effektiveSchalter(), nie direkt.
+    Regelwerk regelwerk = Regelwerk::Legacy;
+    bool divVertragD3d9 = true;
+    bool unormTrunkierung = true;
+    bool qGarbageEpsilon = true;
+    bool uvSanitize = true;
+    PsOverride psWarp = PsOverride::Auto;
+    PsOverride psComp = PsOverride::Auto;
+
     // --- meta ------------------------------------------------------------------------------
     int generation = 1;             ///< 1/2/3 (MilkParser)
     int psVersion = -1;             ///< -1 = shaderless (MD1 path is exact, not a fallback)
     std::string name;               ///< display name (file stem, set by the loader)
 };
+
+/**
+ * @brief Ableitung Betriebsart → wirksame Schalter (Legacy = alle AN,
+ *        Modern = alle AUS, Benutzerdefiniert = die Rohfelder des Presets)
+ */
+[[nodiscard]] inline RegelwerkSchalter effektiveSchalter(const PresetState& s)
+{
+    switch (s.regelwerk)
+    {
+    case Regelwerk::Modern:
+        return {false, false, false, false};
+    case Regelwerk::Benutzerdefiniert:
+        return {s.divVertragD3d9, s.unormTrunkierung, s.qGarbageEpsilon, s.uvSanitize};
+    case Regelwerk::Legacy:
+        break;
+    }
+    return {true, true, true, true};
+}
 
 /**
  * @brief Map a parsed .milk onto the render state (missing keys keep defaults)

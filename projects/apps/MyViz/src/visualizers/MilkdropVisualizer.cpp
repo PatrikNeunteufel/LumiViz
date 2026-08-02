@@ -81,14 +81,17 @@ const char* kWarpFragmentShader = R"(#version 330 core
 uniform sampler2D uTex;
 uniform float uDecay;
 uniform float uDecaySub;
+uniform float uTruncate;
 in vec2 vTex;
 out vec4 frag;
 void main()
 {
     vec3 c = texture(uTex, vTex).rgb * uDecay - vec3(uDecaySub);
     // D3D9-UNORM8-Trunkierung (S64, R211): abschneiden statt runden, sonst
-    // stallt der Decay bei v*(1-d) < 0,5/255 (Grauboden statt Schwarz)
-    frag = vec4(floor(c * 255.0 + 0.0001) / 255.0, 1.0);
+    // stallt der Decay bei v*(1-d) < 0,5/255 (Grauboden statt Schwarz).
+    // uTruncate = Regelwerk-Schalter (Strang R): Modern rundet wie GL.
+    if (uTruncate > 0.5) c = floor(c * 255.0 + 0.0001) / 255.0;
+    frag = vec4(c, 1.0);
 }
 )";
 
@@ -647,6 +650,45 @@ void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringLi
                    .arg(QLatin1String(traceShaderClassName(m_state.compInfo.shaderClass)))
                    .arg(m_state.compShaderText.size()));
 
+    // Diagnose-Override (Prüfstand, Strang R): LUMIVIZ_MILKDROP_REGELWERK=
+    // modern|legacy erzwingt die Betriebsart unabhängig vom Dokument — reiner
+    // Werkzeug-Schalter wie NOSEED/DUMP_WARP, kein App-Zustand (wird nicht
+    // persistiert; m_state ist eine Kopie des Node-Zustands).
+    if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_REGELWERK"))
+    {
+        const QByteArray v = qgetenv("LUMIVIZ_MILKDROP_REGELWERK").toLower();
+        if (v == "modern")
+            m_state.regelwerk = lumi::milkdrop::Regelwerk::Modern;
+        else if (v == "legacy")
+            m_state.regelwerk = lumi::milkdrop::Regelwerk::Legacy;
+        trace::log(QStringLiteral("applyState: Regelwerk-Override aktiv (%1)")
+                       .arg(QString::fromLatin1(v)));
+    }
+
+    // Regelwerk (Strang R): MD1erzwingen verwirft die WIRKUNG der Shader-Texte
+    // je Stufe (Klassifikation → None, der exakte MD1-Pfad rendert — die
+    // S64-Strip-Bisektion als App-Feature). Die Texte selbst bleiben im State
+    // (Panel/Persistenz); Auto/PS2/PS3 ändern am Renderweg nichts, die
+    // GLSL-330-Emission ist für beide PS-Stufen identisch.
+    {
+        using lumi::milkdrop::PsOverride;
+        const auto forceMd1 = [&report](lumi::milk::ShaderInfo& info, const char* which) {
+            if (info.shaderClass == lumi::milk::ShaderClass::None) return;
+            info = lumi::milk::ShaderInfo{};
+            trace::log(QStringLiteral("applyState: %1-Shader per Regelwerk auf MD1 "
+                                      "erzwungen (Custom-Text bleibt erhalten)")
+                           .arg(QLatin1String(which)));
+            if (report != nullptr)
+            {
+                report->append(QStringLiteral("ℹ %1-Shader: MD1 erzwungen (Regelwerk) — "
+                                              "Shader-Text wird ignoriert")
+                                   .arg(QLatin1String(which)));
+            }
+        };
+        if (m_state.psWarp == PsOverride::MD1erzwingen) forceMd1(m_state.warpInfo, "Warp");
+        if (m_state.psComp == PsOverride::MD1erzwingen) forceMd1(m_state.compInfo, "Comp");
+    }
+
     if (report != nullptr)
     {
         // stage-B classification (M5): default-family shaders are exact, custom
@@ -1140,10 +1182,14 @@ void MilkdropVisualizer::runPerFrameInit()
         // ==0-Checks bleiben wahr, nur Divisionen werden endlich. Presets MIT
         // Init behalten exakt 0 fuer ungesetzte q's (ns-eel-VM-Startwert).
         // Direkt in den KONTEXT schreiben — der Init-Snapshot friert m_q ein,
-        // nicht die Lua-Globals.
-        for (int i = 1; i <= 32; ++i)
+        // nicht die Lua-Globals. Regelwerk-Schalter (Strang R): Modern startet
+        // mit exakt 0 (ns-eel-VM-Startwert ohne Heap-Nachbau).
+        if (lumi::milkdrop::effektiveSchalter(m_state).qGarbageEpsilon)
         {
-            m_context->setQ(i, 1e-6 * (1.0 + 0.1 * i));
+            for (int i = 1; i <= 32; ++i)
+            {
+                m_context->setQ(i, 1e-6 * (1.0 + 0.1 * i));
+            }
         }
     }
     // freeze q_values_after_init_code (M2 contract, state.cpp:1689)
@@ -1542,10 +1588,16 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
                            .arg(text.size()));
             return;
         }
-        const lumi::hlsl::HlslResult r = lumi::hlsl::transpile(text, kind);
+        // Regelwerk (Strang R): Divisionsvertrag und UNORM-Trunkierung folgen
+        // den wirksamen Schaltern des Nodes (Legacy = S64-Verhalten)
+        const auto schalter = lumi::milkdrop::effektiveSchalter(m_state);
+        lumi::hlsl::TranspileOptions opts;
+        opts.d3d9Div = schalter.divVertragD3d9;
+        const lumi::hlsl::HlslResult r = lumi::hlsl::transpile(text, kind, opts);
         if (r.ok)
         {
-            outSrc = assembleCustomFragment(r, kind == lumi::hlsl::ShaderKind::Warp);
+            outSrc = assembleCustomFragment(r, kind == lumi::hlsl::ShaderKind::Warp &&
+                                                   schalter.unormTrunkierung);
             trace::log(QStringLiteral("prepareCustomShaders: %1 → GLSL ok "
                                       "(%2 Zeichen, %3 Custom-Sampler)")
                            .arg(QLatin1String(which))
@@ -2682,6 +2734,8 @@ void MilkdropVisualizer::computeWarpMesh(const FrameVars& fv)
     const bool perVertex = m_script != nullptr && m_script->has(Slot::Point);
     lumi::scripting::LuaScriptEngine* eng =
         (m_script != nullptr) ? &m_script->engine() : nullptr;
+    // Regelwerk-Schalter (Strang R): einmal je Mesh-Lauf ableiten
+    const bool uvSanitize = lumi::milkdrop::effektiveSchalter(m_state).uvSanitize;
 
     int n = 0;
     for (int iy = 0; iy < vertsY; ++iy)
@@ -2774,8 +2828,10 @@ void MilkdropVisualizer::computeWarpMesh(const FrameVars& fv)
             // D3D9-Fixpunkt-Konvertierung behaelt niederwertige Bits (gestreute
             // Zuordnung, der organische 2077-Look), waehrend float-fract auf
             // >2^24 exakt 0 wird (Konstantbild). Schwelle weit ausserhalb
-            // jedes regulaeren Presets.
+            // jedes regulaeren Presets. Regelwerk-Schalter (Strang R): Modern
+            // reicht die IEEE-Werte roh durch (NaN inklusive).
             const auto fitUv = [&](double c) {
+                if (!uvSanitize) return c;
                 if (!std::isfinite(c)) return 0.0;
                 if (std::fabs(c) > 1e4)
                     return fv.wrap ? c - std::floor(c) : clampd(c, 0.0, 1.0);
@@ -2890,6 +2946,9 @@ void MilkdropVisualizer::drawWarpPass(const FrameVars& fv)
     m_warpProgram->setUniformValue("uTex", 0);
     m_warpProgram->setUniformValue("uDecay", static_cast<float>(decayMul));
     m_warpProgram->setUniformValue("uDecaySub", static_cast<float>(decaySub));
+    m_warpProgram->setUniformValue(
+        "uTruncate",
+        lumi::milkdrop::effektiveSchalter(m_state).unormTrunkierung ? 1.0f : 0.0f);
 
     m_meshVao->bind();
     m_meshVbo->bind();

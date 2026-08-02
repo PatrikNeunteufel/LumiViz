@@ -141,6 +141,28 @@ TEST_CASE("HlslTranspiler: Division -> _div (D3D9-Legacy-Float, S64)")
     CHECK(contains(r.glslBody, "ret = _div(ret, vec3((q23 * q24)))"));
 }
 
+TEST_CASE("HlslTranspiler: d3d9Div=false emittiert rohe Division (Strang R, S65)")
+{
+    // Modern-Regelwerk: derselbe Fixture-Code wie oben, aber OHNE den
+    // Divisionsvertrag — kein einziges _div in der Emission (IEEE pur).
+    lumi::hlsl::TranspileOptions opts;
+    opts.d3d9Div = false;
+    const HlslResult r = transpile(body("float a = ret.x / q22;\n"
+                                        "float b = ret.x / 2;\n"
+                                        "ret = ret / uv.x;\n"
+                                        "ret /= (q23 * q24);"),
+                                   ShaderKind::Comp, opts);
+    INFO(r.error);
+    REQUIRE(r.ok);
+    CHECK_FALSE(contains(r.glslBody, "_div("));
+    CHECK(contains(r.glslBody, "(ret.x / q22)"));
+    CHECK(contains(r.glslBody, "(ret.x / 2.0)"));
+    CHECK(contains(r.glslBody, "ret /= "));
+
+    // Default-Optionen == Legacy-Verhalten (Bestands-Aufrufer unveraendert)
+    CHECK(lumi::hlsl::TranspileOptions{}.d3d9Div);
+}
+
 TEST_CASE("HlslTranspiler C3: while-Schleife mit int-Zaehler und n++ (S43)")
 {
     // Muster aus 'martin + Stahlregen - martin in da mash 12b'

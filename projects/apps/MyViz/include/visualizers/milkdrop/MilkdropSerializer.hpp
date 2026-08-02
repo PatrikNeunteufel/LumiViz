@@ -4,8 +4,8 @@
  * @brief  JSON persistence for translated MilkDrop presets (Import Roadmap 6, M6)
  *
  * @author LumiPulse Team
- * @date   July 2026
- * @version 1.0.0
+ * @date   August 2026
+ * @version 1.1.0
  *
  * @details
  * The .lvfx sister format (MilkDrop_Import_Konzept §2.3): the TRANSLATED
@@ -20,6 +20,10 @@
  * (single source of truth is the shader text). Missing fields fall back to
  * the CState defaults already encoded in PresetState — an older document
  * loads cleanly on a newer build (AVS philosophy, never fail hard).
+ *
+ * 1.1.0 (Strang R, S65): Regelwerk-Felder (regelwerk, vier Einzelschalter,
+ * psWarp/psComp) als optionale Strings/Bools — fehlend ⇒ Legacy + Auto,
+ * damit laden alle Bestands-Dokumente unverändert.
  ****************************************************************************************
  */
 

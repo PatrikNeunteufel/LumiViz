@@ -1,0 +1,201 @@
+# Regelwerk & neue Module — Umsetzungsplan (Stränge R / S / G)
+
+> **Version:** 1.1.0
+> **Datum:** 2026-08-02 (Session 65)
+> **Typ:** Steuerdokument (Plan + Entscheide)
+> **Status:** Strang R ✅ umgesetzt (Session 65, R1–R5 grün); S und G offen
+> **Sprache:** Deutsch
+> **Kontext:** MilkDrop-Kalibrierung S63/S64 (acht Legacy-Fixklassen),
+> `Vereinheitlichung_Konzept.md` (Standalones→Module), `Offene_Punkte.md` §3/§7
+
+Drei Stränge, in dieser Reihenfolge. R ist das Fundament (legacy/modern als
+explizite Betriebsart), S und G bauen darauf auf (beide sind „modern"-Bürger
+erster Klasse). Die Rest-Kalibrierung (11 Port-Bugs, §3) läuft unabhängig
+weiter und wird durch R nicht verändert (Import-Default = legacy = heutiges
+Verhalten; die Triage-Baseline `s64f` bleibt gültig).
+
+---
+
+## Strang R — Regelwerk Legacy/Modern ✅ (Session 65)
+
+**Ziel:** Jeder MilkDrop-Node deklariert seine Betriebsart. Imports laufen
+per Default original-treu (alle S64-Emulationen aktiv), Neubauten modern
+(IEEE, keine Legacy-Krücken). Einzelschalter erlauben Mischformen.
+
+### R1 — Schema & Zustand
+
+- `MilkdropPresetState` erhält:
+  - `regelwerk: Legacy | Modern | Benutzerdefiniert` (Default beim Import: `Legacy`)
+  - Einzelschalter (nur bei `Benutzerdefiniert` wirksam, sonst aus der Betriebsart abgeleitet):
+    - `divVertragD3d9` (Transpiler emittiert `_div` statt rohem `/`)
+    - `unormTrunkierung` (Feedback-Pfad trunkiert wie D3D9 statt zu runden)
+    - `qGarbageEpsilon` (Init-lose Presets starten mit q≈1e-6 statt exakt 0)
+    - `uvSanitize` (NaN→0 + Double-Wrap für Riesen-UVs)
+  - PS-Version-Override: `psWarp`, `psComp` ∈ `Auto | PS2 | PS3 | MD1erzwingen`
+    (`Auto` = PSVERSION-Felder der .milk; `MD1erzwingen` = Custom-Text
+    ignorieren → die S64-Strip-Bisektion als App-Feature)
+- Ableitung: `Legacy` = alle vier Schalter AN · `Modern` = alle AUS.
+- SSOT der Bedeutung je Schalter: `MilkdropVisualizer.md` §Fixklassen
+  (1.15.0–1.18.0) — dort ist jede Emulation mit Beweis dokumentiert.
+
+### R2 — Serialisierung & Migration
+
+- `.lvfx`-Roundtrip über den ChainSerializer (neue Felder optional; fehlend
+  ⇒ `Legacy` + `Auto` — damit sind ALLE Bestands-Presets unverändert).
+- MilkParser bleibt unangetastet (das Regelwerk ist Node-, nicht
+  Dateiformat-Sache).
+- Wächter-Test: Roundtrip mit gesetzten/fehlenden Feldern; Migrations-Default.
+
+### R3 — Wirkung im Renderer/Transpiler
+
+- `HlslTranspiler::transpile()` erhält eine Option `d3d9Div` (Default true):
+  false ⇒ roher `/`-Operator. Goldens/Tests für beide Emissionen.
+- `MilkdropVisualizer`: UNORM-Trunkierung (MD1-Warp-Uniform-Flag +
+  Custom-Warp-Epilog-Variante), q-Epsilon und UV-Sanitize je Node-Zustand
+  gaten. Shader-Rebuild bei Umschalten (Revision++, wie Param-Wechsel).
+- PS-Override: Auswahl der Shader-Texte im `applyState`-Pfad (`MD1erzwingen`
+  ⇒ Custom-Texte verwerfen, Klassifizierer-Weg wie bisher).
+
+### R4 — Panel-UI
+
+- MultiEffectPanel, Milkdrop-Editor: Combo „Regelwerk" + aufklappbare
+  Einzelschalter (nur bei `Benutzerdefiniert` aktiv) + zwei PS-Combos.
+- Tooltips nennen je Schalter den Original-Bezug (eine Zeile je Fixklasse).
+
+### R5 — Prüfstand & Abnahme
+
+- Triage-Doppellauf: Voll-Triage mit Default (Legacy) MUSS bitgleich zur
+  s64f-Klassenliste sein (0 Wechsel) — beweist, dass R nichts am
+  Import-Verhalten ändert.
+- Stichproben-Lauf `Modern` über 5 bekannte Presets (NEON, R211, gb003,
+  infinity 2, riding the wave) mit dokumentierten Erwartungs-Deltas
+  (NaN-Schwarz kehrt zurück etc.) — beweist, dass die Schalter WIRKEN.
+- Unit-Tests: Transpiler-Option (beide Emissionen), Roundtrip, Ableitung
+  Legacy/Modern→Schalter.
+
+**Fertig-Kriterium R:** Beide Läufe grün, Panel bedienbar, Doku
+(MilkdropVisualizer.md + dieses Dokument) nachgezogen.
+
+**Abnahme (Session 65):** Voll-Triage s65 klassengleich zu s64f (311 Presets,
+0 Wechsel, OK 295) · Modern-Stichprobe belegt Schalter-Wirkung (NEON →
+NaN-Schwarz, riding → Trunkierungs-Delta; Bug-Fixes gb003/infinity 2 bleiben
+korrekt unangetastet — `out/milkdrop_modern_s65/MODERN_STICHPROBE.md`) ·
+Tests 498 grün · Zusatz-Werkzeug: `LUMIVIZ_MILKDROP_REGELWERK=modern|legacy`
+(Diagnose-Override, kein App-Zustand) · Panel-Sichtprüfung offen (Patrik).
+
+---
+
+## Strang S — Shadertoy-Modul (nach R)
+
+**Ziel:** Eigener Node-Typ „Shadertoy" (modernes Regelwerk, kein
+Legacy-Ballast): Shader per **URL/ID direkt importieren** oder Code
+einfügen, Audio-Reaktivität eingebaut und nachrüstbar.
+
+### S1 — Node + GLSL-Wrapper (MVP, Code-Einfügen)
+
+- Neuer Visualizer/Node `ShadertoyVisualizer` (Muster: MilkdropVisualizer,
+  aber drastisch schlanker — ein Fragment-Pass, FBO in Chain-Auflösung).
+- Wrapper GLSL-ES→GLSL 330: `mainImage(out vec4, in vec2)` in `main()`
+  einbetten; Uniform-Block `iResolution, iTime, iTimeDelta, iFrame, iMouse,
+  iDate, iSampleRate, iChannelTime[4], iChannelResolution[4]`.
+  Zeit = deterministische Sim-Uhr (frame/60 — Batch-Renderer-Merkregel!).
+- Editor-Feld „Shader-Code" (mehrzeilig, einfügen aus Zwischenablage);
+  Kompilierfehler mit Zeilennummer im Import-Report-Stil.
+- Prüfstand: 3–5 bekannte lizenzfreie Test-Shader als Sonden (eigene,
+  NICHT von Shadertoy kopierte) + Standalone-Statistikpfad wiederverwenden.
+
+### S2 — Audio (der Kern des Wunsches)
+
+- `iChannel0` (konfigurierbar welcher Kanal) = **Shadertoy-natives
+  Audio-Layout**: 512×2-Textur, Zeile 0 = FFT-Spektrum, Zeile 1 = Waveform
+  (unser Analyzer liefert beides; Skalierung an Shadertoy-Wertebereich
+  0..1 anpassen und per Sonde gegen einen Referenz-Shader vermessen).
+- Zusätzlich LumiViz-Uniforms: `bass, mid, treb, vol, beat` (MilkLoudness +
+  BeatEstimator) — damit werden auch NICHT-audioreaktive Shadertoys
+  nachrüstbar (Nutzer ersetzt Konstanten im Code durch diese Uniforms).
+- Ausbaustufe: „Audio-Mod"-Skript-Slot am Node (EEL/Lua wie überall):
+  rechnet pro Frame benutzerdefinierte Uniforms (`mod1..mod8`) aus
+  Audio-Größen — Audio-Mapping ohne Shader-Änderung.
+
+### S3 — URL-/ID-Import (Wunsch Patrik S64)
+
+- Editor-Feld „Shadertoy-URL oder -ID" + Knopf „Importieren":
+  `https://www.shadertoy.com/view/<ID>` → offizielle API
+  `https://www.shadertoy.com/api/v1/shaders/<ID>?key=<AppKey>` (JSON:
+  Name/Autor/Lizenzhinweis, Renderpässe, Inputs).
+- **API-Key** (kostenlose Registrierung) in den Settings (lokal,
+  `CMakeUserPresets`-Klasse „sensibel" — NICHT ins Repo).
+- Grenzen sauber melden (Import-Report-Muster): API liefert nur Shader mit
+  Sichtbarkeit „public+api" → Fallback bleibt Code-Einfügen; nicht
+  unterstützte Inputs (Video, Cubemap, Keyboard, VR) ⇒ Platzhalter +
+  Meldung. Textur-/Noise-Inputs: Stufe 1 nur Shadertoys Standard-Noise
+  (generieren wir selbst), Media-Downloads erst Stufe 2.
+- Metadaten (Name/Autor/URL/Lizenz) im Node speichern und im Panel zeigen —
+  **Lizenz-Vorbehalt: Shadertoy-Default ist CC BY-NC-SA; Inhalte bleiben
+  lokal (VisualsPresets extern), nichts davon ins Repo.**
+- Netzwerk: Qt Network, nur auf Knopfdruck (kein Auto-Fetch).
+
+### S4 — Multipass (Ausbaustufe)
+
+- Buffer A–D als zusätzliche FBO-Pässe je Frame (Topologie aus dem
+  API-JSON; Selbst-Referenz = FeedbackBuffer-Muster). Erst nach S1–S3,
+  eigener Sichttest.
+
+**Fertig-Kriterium S:** MVP S1+S2 mit Sonden grün und einem
+audioreaktiven Beispiel im Vorlagen-Bestand; S3 mit einem eigenen
+API-Testshader belegt; Grenzenliste im Panel/Report sichtbar.
+
+---
+
+## Strang G — GPU-Vertex-Module (im Zuge der Vereinheitlichung)
+
+**Ziel:** GPU-Vertex-Arbeit dort, wo sie hingehört — NEUE Module unter
+modernem Regelwerk. Legacy-Imports bleiben CPU-Mesh (Sequenz-Vertrag des
+EEL, §7-Notiz „GPU-Vertex-Module").
+
+### G1 — Mesh-Warp-Modul
+
+- Warp-Funktion als GLSL im Vertex-Shader, Gitterauflösung frei (bis
+  256×192 — GPU skaliert), Parameter + Audio als Uniforms, Presets über
+  die Config-Pipeline (PipelineStage-Schema wie alle Module).
+- Startpunkt: der bestehende Warp-Mesh-Vertexpfad des MilkdropVisualizers
+  als Vorbild, aber zustandslos-parallel definiert.
+
+### G2 — GPU-Partikel-Modul
+
+- Instancing (ein Draw, N Instanzen) + Zustand in Ping-Pong-Texturen oder
+  Transform-Feedback; Spawn/Kraftfeld/Lebensdauer als Parameter, Audio-
+  Kopplung über Uniforms + Audio-Mod-Slot (aus S2 wiederverwendet).
+- Die „moderne Antwort" auf die searchlight-Klasse: zehntausende Partikel
+  statt 800×16-gmegabuf-Schleifen.
+
+### G3 — Kür (nur Notiz, kein Auftrag)
+
+- „Mesh-Qualität"-Option für Legacy-Imports: NUR wenn der Transpiler das
+  per_pixel-Skript als ZUSTANDSLOS beweist (kein reg/gmegabuf/rand),
+  optional GPU-Auswertung mit feinerem Gitter — als Modern-Schalter mit
+  dokumentierter Abweichung.
+
+**Einordnung:** G startet erst mit der Vereinheitlichung (V2–V5,
+`Vereinheitlichung_Konzept.md`) — R und S hängen nicht daran.
+
+---
+
+## Reihenfolge & Abhängigkeiten
+
+| # | Strang | Voraussetzung | Session-Schätzung |
+|---|---|---|---|
+| 1 | **R** Regelwerk | — (Auftrag nächste Session) | 1 Session |
+| 2 | **S1–S2** Shadertoy-MVP + Audio | R (nutzt „modern") | 1 Session |
+| 3 | **S3** URL-Import | S1; API-Key Patrik | 0,5 Session |
+| 4 | **S4** Multipass | S1–S3 | 0,5–1 Session |
+| 5 | **G1/G2** GPU-Module | Vereinheitlichung V2+ | je ~1 Session |
+
+Parallel weiter: Rest-11-Kalibrierung (§3) — unabhängig von R/S/G.
+
+## Changelog
+
+| Version | Datum | Änderung |
+|---|---|---|
+| 1.1.0 | 2026-08-02 | Strang R umgesetzt (Session 65): R1 Schema (`Regelwerk` + 4 Schalter + PS-Overrides, `effektiveSchalter()`), R2 Serialisierung (MilkdropSerializer 1.1.0, Migration fehlend ⇒ Legacy+Auto), R3 Gates (HlslTranspiler 1.5.0 `d3d9Div`, `uTruncate`-Uniform, q-/UV-Gates, MD1erzwingen), R4 Panel (Combo+Schalter+PS-Combos, Revision-Bump), R5 Abnahme (Triage s65 = s64f klassengleich, Modern-Stichprobe mit belegten Deltas). Panel-Sichtprüfung offen |
+| 1.0.0 | 2026-08-02 | Erstfassung (Session 64) — Entscheide Patrik: Regelwerk-Strang mit Master+Einzelschaltern und PS-Override; Shadertoy-Modul inkl. URL-/ID-Import und Audio-Nachrüstung; GPU-Vertex-Module als Vereinheitlichungs-Bürger |

@@ -658,7 +658,7 @@ Diagnose-Schalter: `LUMIVIZ_MILKDROP_NOSEED`, `LUMIVIZ_MILKDROP_DUMP_WARP`.
 
 | Was | Stand | |
 |---|---|---|
-| **🎯 Regelwerk-Strang (Entscheid Patrik S64, NÄCHSTE SESSION)** | Node-Param `Legacy \| Modern \| Benutzerdefiniert` (Master-Combo + Einzelschalter je Emulation: Div-Vertrag, UNORM-Trunc, q-Epsilon, UV-/NaN-Sanitize); Import-Default legacy, Neubauten modern. Dazu PS-Version-Override je Typ (warp/comp × auto/PS2/PS3/MD1-erzwingen = Strip-Bisektion als App-Feature). Nur Pixelshader sind preset-versioniert (Vertex-Stufe = per-Vertex-EEL-Mesh, versionslos). Umfang: Schema + Serialisierung + Panel + Transpiler-Flag | 🎯 |
+| **🎯 Regelwerk-Strang (Entscheid Patrik S64, NÄCHSTE SESSION)** | Node-Param `Legacy \| Modern \| Benutzerdefiniert` (Master-Combo + Einzelschalter je Emulation: Div-Vertrag, UNORM-Trunc, q-Epsilon, UV-/NaN-Sanitize); Import-Default legacy, Neubauten modern. Dazu PS-Version-Override je Typ (warp/comp × auto/PS2/PS3/MD1-erzwingen = Strip-Bisektion als App-Feature). **Genauer Plan (R1–R5 + Abnahme): [Regelwerk_und_Neue_Module_Plan.md](visuals/Regelwerk_und_Neue_Module_Plan.md)** — dort auch Strang S (Shadertoy) und G (GPU-Module) | 🎯 |
 | **🟠 11 Rest-Port-Bugs** (`out/milkdrop_triage_s64f/VERGLEICH.md`) | **piercing 01** (S63-App-Befund Patrik, seit saatlos erstmals messbar: flach 0,127 vs Ref 0,306 — unangefasst) · **pixies-Familie (2)**: Partikel leben, ~4× dünner als Ref; Zeichenpfad/gmegabuf/while/exec2/loop(150000)/Init+Frame-Durchlauf alle per Sonde entlastet · **Gin Tonic 003** solo-weiß (Familie geheilt, dieses nicht — eigener Bisect) · **q-/UB-Dunkelklasse (7)**: purple pulsator, crystal palace, R039, R068, R070, R211, R248 — Look hängt an doppeltem UB der Referenz (Heap-Garbage-q × Fixpunkt-Überlauf), nur klassenweise nachstellbar → 🟡 Entscheid: als „IST-SO-artig (Legacy-Grenze)" einstufen oder weiter emulieren? | 🟠 |
 | ~~**Prüfpunkt R239/R239b**~~ | ✅ **aufgelöst (S64):** Prüfstände saatlos → beidseitig schwarz, korrekt PRESET-IST-SO. Die S63-Falle („OK geworden ≠ richtig geworden") ist damit methodisch beseitigt | ✅ |
 | **myPresets/ (41)** | nie triagiert (Triage lief nur über den Pack-Root) | ⬜ |
@@ -717,18 +717,29 @@ Diagnose-Schalter: `LUMIVIZ_MILKDROP_NOSEED`, `LUMIVIZ_MILKDROP_DUMP_WARP`.
 
 ## 7. Backlog (bewusst nichts tun)
 
-### ⚪ Shadertoy-Import (Idee Patrik S64)
+### ➜ Shadertoy-Modul (Entscheid Patrik S64 — geplant, Strang S)
 
-Eigener Node-Typ mit **modernem Regelwerk** (kein Legacy-Ballast):
-Shadertoy-Shader sind GLSL-Fragmentshader mit standardisierter Schnittstelle
-(`mainImage(fragColor, fragCoord)`, Uniforms `iResolution/iTime/iFrame/
-iMouse/iChannel0–3`) — Übersetzung GLSL-ES→GLSL 330 ist leichtgewichtig.
-**Audioreaktivität ist Shadertoy-nativ:** Audio-iChannel = 512×2-Textur
-(Zeile 0 FFT, Zeile 1 Waveform) — unser Analyzer liefert genau das; dazu
-optional LumiViz-Uniforms (bass/mid/treb/beat), womit auch nicht-reaktive
-Shadertoys nachträglich reaktiv werden. Ausbaustufe 2: Multipass
-(Buffer A–D ≈ FeedbackBuffer). ⚠ Lizenz: Shadertoy-Inhalte sind meist
-CC BY-NC-SA — privat nutzen ja, nichts ins Repo.
+Eigener Node-Typ mit **modernem Regelwerk**, inkl. **URL-/ID-Import**
+(Shadertoy-API auf Knopfdruck, API-Key in den Settings; Fallback
+Code-Einfügen) und eingebauter/nachrüstbarer **Audioreaktivität**
+(Shadertoy-natives 512×2-Audio-iChannel FFT+Waveform + LumiViz-Uniforms
+bass/mid/treb/beat + Audio-Mod-Skript-Slot). Ausbaustufe Multipass A–D.
+⚠ Lizenz CC BY-NC-SA: Inhalte bleiben lokal, nichts ins Repo.
+**Genauer Plan (S1–S4): [Regelwerk_und_Neue_Module_Plan.md](visuals/Regelwerk_und_Neue_Module_Plan.md)**
+— Start nach Strang R.
+
+### ➜ GPU-Vertex-Module statt CPU-Mesh (Frage Patrik S64, beantwortet — geplant, Strang G)
+
+**Legacy-Imports bleiben CPU:** das per-Vertex-EEL läuft im Original
+SEQUENTIELL (Zustand über Vertizes: Akkumulatoren, rand()-Strom, gmegabuf) —
+GPU-Parallelität kann diesen Vertrag prinzipiell nicht halten, und 825
+Mesh-Vertizes kosten auf der CPU nichts (die teure per-Pixel-Arbeit ist
+längst GPU). **GPU-Vertex-Arbeit gehört in NEUE Module (modernes Regelwerk):**
+Mesh-Warp-Modul (Warp als GLSL-Vertex-Shader, beliebig feine Gitter),
+GPU-Partikel-Modul (Instancing/Transform-Feedback — die moderne Antwort auf
+die searchlight-Klasse). Kür-Idee: „Mesh-Qualität"-Option für nachweislich
+ZUSTANDSLOSE per_pixel-Skripte (Transpiler-Analyse) mit GPU-Auswertung und
+feinerem Gitter als Modern-Schalter.
 
 ### ⚪ fractalZoomer: float-Erschöpfung im Endlos-Zoom (Befund S61)
 

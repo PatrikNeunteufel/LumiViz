@@ -4241,6 +4241,126 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     [milkOf](ChainNode& n, std::string v) {
                         milkOf(n).presetDir = std::move(v);
                     });
+
+            // --- Regelwerk (Strang R, S65) ---------------------------------------
+            // Combo + vier Einzelschalter (nur bei Benutzerdefiniert aktiv; sonst
+            // zeigen sie die abgeleiteten Werte) + PS-Overrides je Stufe. Jede
+            // Aenderung bumpt via milkOf die Revision → der Render-Host baut
+            // Skripte/Shader neu (Transpiler-Emission haengt am Schalter).
+            {
+                using lumi::milkdrop::PsOverride;
+                using lumi::milkdrop::Regelwerk;
+                using PS = lumi::milkdrop::PresetState;
+
+                auto* rwCombo = new QComboBox(m_propContainer);
+                rwCombo->addItems({tr("Legacy (original-treu)"), tr("Modern (IEEE)"),
+                                   tr("Benutzerdefiniert")});
+                rwCombo->setCurrentIndex(static_cast<int>(p->preset.regelwerk));
+                rwCombo->setToolTip(
+                    tr("Legacy = alle D3D9-Emulationen AN (Import-Default, "
+                       "original-treu). Modern = IEEE/GL pur, keine Legacy-"
+                       "Kruecken. Benutzerdefiniert = die Einzelschalter zaehlen."));
+                form->addRow(tr("Regelwerk"), rwCombo);
+
+                const auto effektiv = lumi::milkdrop::effektiveSchalter(p->preset);
+                const bool custom = p->preset.regelwerk == Regelwerk::Benutzerdefiniert;
+                const auto makeSwitch = [&](const QString& label, const QString& tip,
+                                            bool PS::* member, bool shown) {
+                    auto* cb = new QCheckBox(m_propContainer);
+                    cb->setChecked(shown);
+                    cb->setEnabled(custom);
+                    cb->setToolTip(tip);
+                    connect(cb, &QCheckBox::toggled, this,
+                            [this, path, milkOf, member](bool v) {
+                                mutate(path, [&](ChainNode& n) {
+                                    milkOf(n).preset.*member = v;
+                                });
+                            });
+                    form->addRow(label, cb);
+                    return cb;
+                };
+                auto* cbDiv = makeSwitch(
+                    tr("D3D9-Divisionsvertrag"),
+                    tr("D3D9 rechnet Legacy-Float: 0/0 = 0, x/0 bleibt endlich — "
+                       "IEEE-NaN wuerde Summen schwaerzen (S64, Rainbow Attack NEON)."),
+                    &PS::divVertragD3d9, effektiv.divVertragD3d9);
+                auto* cbUnorm = makeSwitch(
+                    tr("UNORM8-Trunkierung"),
+                    tr("D3D9 schneidet beim 8-bit-Write ab, GL rundet — ohne "
+                       "Trunkierung stallt der Decay bei v*(1-d) < 0,5/255 "
+                       "(S64, R211-Grauboden)."),
+                    &PS::unormTrunkierung, effektiv.unormTrunkierung);
+                auto* cbQ = makeSwitch(
+                    tr("q-Garbage-Epsilon"),
+                    tr("Ohne per_frame_init liest das Original uninitialisierten "
+                       "Heap (q = 1e-6 statt 0) — Divisionen bleiben endlich "
+                       "(S64, R-Serie)."),
+                    &PS::qGarbageEpsilon, effektiv.qGarbageEpsilon);
+                auto* cbUv = makeSwitch(
+                    tr("UV-Sanitize"),
+                    tr("NaN-UVs → 0 (D3D9-Konvertierungsregel) und Riesen-UVs in "
+                       "double in die Kachel gewrappt (Fixpunkt behaelt Bits — "
+                       "S64, 2077-Look)."),
+                    &PS::uvSanitize, effektiv.uvSanitize);
+
+                connect(rwCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                        this,
+                        [this, path, milkOf, cbDiv, cbUnorm, cbQ, cbUv](int idx) {
+                            const auto rw =
+                                static_cast<Regelwerk>(std::clamp(idx, 0, 2));
+                            // WYSIWYG beim Wechsel auf Benutzerdefiniert: die
+                            // ANGEZEIGTEN Werte werden die Rohfelder — der Start
+                            // entspricht dem Verhalten der alten Betriebsart.
+                            mutate(path, [&](ChainNode& n) {
+                                auto& mp = milkOf(n);
+                                mp.preset.regelwerk = rw;
+                                if (rw == Regelwerk::Benutzerdefiniert)
+                                {
+                                    mp.preset.divVertragD3d9 = cbDiv->isChecked();
+                                    mp.preset.unormTrunkierung = cbUnorm->isChecked();
+                                    mp.preset.qGarbageEpsilon = cbQ->isChecked();
+                                    mp.preset.uvSanitize = cbUv->isChecked();
+                                }
+                            });
+                            const bool cust = rw == Regelwerk::Benutzerdefiniert;
+                            for (QCheckBox* cb : {cbDiv, cbUnorm, cbQ, cbUv})
+                                cb->setEnabled(cust);
+                            if (!cust)
+                            {
+                                const bool on = rw == Regelwerk::Legacy;
+                                for (QCheckBox* cb : {cbDiv, cbUnorm, cbQ, cbUv})
+                                {
+                                    cb->blockSignals(true);
+                                    cb->setChecked(on);
+                                    cb->blockSignals(false);
+                                }
+                            }
+                        });
+
+                const auto makePsCombo = [&](const QString& label, PsOverride value,
+                                             PsOverride PS::* member) {
+                    auto* combo = new QComboBox(m_propContainer);
+                    combo->addItems({tr("Auto (.milk)"), tr("PS2"), tr("PS3"),
+                                     tr("MD1 erzwingen")});
+                    combo->setCurrentIndex(static_cast<int>(value));
+                    combo->setToolTip(
+                        tr("Auto folgt den PSVERSION-Feldern der .milk. PS2/PS3 "
+                           "ueberschreiben nur die Angabe (die GLSL-Emission ist "
+                           "fuer beide Stufen identisch). MD1 erzwingen ignoriert "
+                           "den Custom-Shader-Text und rendert den exakten "
+                           "MD1-Pfad (S64-Strip-Bisektion als Feature)."));
+                    connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                            this, [this, path, milkOf, member](int idx) {
+                                mutate(path, [&](ChainNode& n) {
+                                    milkOf(n).preset.*member =
+                                        static_cast<PsOverride>(std::clamp(idx, 0, 3));
+                                });
+                            });
+                    form->addRow(label, combo);
+                };
+                makePsCombo(tr("PS-Version Warp"), p->preset.psWarp, &PS::psWarp);
+                makePsCombo(tr("PS-Version Comp"), p->preset.psComp, &PS::psComp);
+            }
         }
         else if (milkSection == 0)  // Code-Slots (EEL, Dialekt Milkdrop)
         {

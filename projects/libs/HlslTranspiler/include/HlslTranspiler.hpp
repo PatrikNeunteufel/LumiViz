@@ -5,8 +5,8 @@
  *         (Import-Phase Stufe C1 — Entscheid E4, Session 40)
  *
  * @author LumiPulse Team
- * @date   July 2026
- * @version 1.3.0
+ * @date   August 2026
+ * @version 1.5.0
  *
  * @details
  * Übersetzt NUR den Preset-Anteil eines warp_/comp_-Shaders (Deklarationen +
@@ -42,6 +42,9 @@
  * über `mul()`.
  *
  * NICHT unterstützt (sauberer Fehler): #elif, Nicht-Literal-#if.
+ *
+ * 1.5.0 (Strang R, S65): TranspileOptions mit `d3d9Div` (Default true = der
+ * S64-Divisionsvertrag). false ⇒ roher `/`-Operator (Modern-Regelwerk, IEEE).
  ****************************************************************************************
  */
 
@@ -65,6 +68,19 @@ enum class ShaderKind
 {
     Warp,
     Comp
+};
+
+/**
+ * @brief Emissions-Optionen (Strang R, S65)
+ *
+ * d3d9Div = der S64-Divisionsvertrag: `/` und `/=` emittieren `_div(a, b)`
+ * (Host-Gerüst definiert die Overloads), weil D3D9 Legacy-Float rechnet
+ * (0·INF=0, rcp(0) endlich) und IEEE-`0/0`-NaN jede Summe vergiftet.
+ * false ⇒ roher `/`-Operator (Modern-Regelwerk).
+ */
+struct TranspileOptions
+{
+    bool d3d9Div = true;
 };
 
 /**
@@ -1363,7 +1379,8 @@ struct EmitResult
 class CodeGen
 {
 public:
-    explicit CodeGen(ShaderKind kind, HlslResult& out) : m_out(out)
+    explicit CodeGen(ShaderKind kind, HlslResult& out, TranspileOptions opts = {})
+        : m_out(out), m_opts(opts)
     {
         pushScope();
         seedBuiltins(kind);
@@ -2176,8 +2193,9 @@ private:
         // Division ueber _div (Host-Geruest): D3D9 rechnet Legacy-Float
         // (0*INF=0, rcp(0) endlich) — IEEE-`0/0` ergibt NaN und vergiftet
         // jede Summe (S64, Rainbow Attack NEON: Vollschwarz). Beweisbar
-        // ungefaehrliche Literal-Nenner bleiben rohe Division.
-        if (op == "/" && !a.type.isMat() && !b.type.isMat() &&
+        // ungefaehrliche Literal-Nenner bleiben rohe Division. Unter dem
+        // Modern-Regelwerk (d3d9Div=false, Strang R) entfaellt der Vertrag.
+        if (op == "/" && m_opts.d3d9Div && !a.type.isMat() && !b.type.isMat() &&
             !isNonZeroNumberLiteral(e.args[1]))
         {
             const Type common = commonType(a.type, b.type, e.line);
@@ -2254,7 +2272,8 @@ private:
         }
         // `/=` unter dem D3D9-Divisionsvertrag (s. emitBinary) — Literal-Nenner
         // bleibt rohe Division
-        if (e.text == "/=" && !lhs.type.isMat() && !isNonZeroNumberLiteral(e.args[1]))
+        if (e.text == "/=" && m_opts.d3d9Div && !lhs.type.isMat() &&
+            !isNonZeroNumberLiteral(e.args[1]))
         {
             rhs = convertTo(rhs, lhs.type, e.line);
             return {lhs.code + " = _div(" + lhs.code + ", " + rhs.code + ")", lhs.type};
@@ -2508,6 +2527,7 @@ private:
     };
 
     HlslResult& m_out;
+    TranspileOptions m_opts;
     std::vector<std::unordered_map<std::string, Type>> m_scopes;
     std::unordered_map<std::string, FunctionSig> m_functions;
     std::string m_globalInit;       ///< Initialisierer mutabler Globals (main-Anfang)
@@ -2524,7 +2544,8 @@ private:
 /**
  * @brief Transpile one preset shader text (warp_/comp_ block) to GLSL parts
  */
-[[nodiscard]] inline HlslResult transpile(std::string_view presetShaderText, ShaderKind kind)
+[[nodiscard]] inline HlslResult transpile(std::string_view presetShaderText, ShaderKind kind,
+                                          TranspileOptions opts = {})
 {
     HlslResult result;
     try
@@ -2535,7 +2556,7 @@ private:
         std::vector<detail::Stmt> body;
         detail::Parser parser(preprocessed);
         parser.parseProgram(globals, functions, body);
-        detail::CodeGen gen(kind, result);
+        detail::CodeGen gen(kind, result, opts);
         gen.emitGlobals(globals);
         gen.emitFunctions(functions);
         gen.emitBody(body);

@@ -465,3 +465,65 @@ TEST_CASE("MilkdropVisualizer: c1-Kalibrier-Presets fuellen die Custom-GLSL-Quel
     // c1-Satz: 8 Custom-Shader (Gate identisch zum GL-Smoke-Test)
     CHECK(customShaders == 8);
 }
+
+// Strang R (S65): Betriebsart → wirksame Schalter. Renderer/Transpiler lesen
+// NUR effektiveSchalter() — Legacy/Modern ignorieren die Rohfelder komplett.
+TEST_CASE("MilkdropRegelwerk: Ableitung Betriebsart -> wirksame Schalter")
+{
+    using lumi::milkdrop::effektiveSchalter;
+    using lumi::milkdrop::Regelwerk;
+
+    PresetState s;
+
+    SUBCASE("Import-Default ist Legacy: alle vier Emulationen AN")
+    {
+        CHECK(s.regelwerk == Regelwerk::Legacy);
+        const auto e = effektiveSchalter(s);
+        CHECK(e.divVertragD3d9);
+        CHECK(e.unormTrunkierung);
+        CHECK(e.qGarbageEpsilon);
+        CHECK(e.uvSanitize);
+    }
+    SUBCASE("Legacy ueberstimmt abweichende Rohfelder")
+    {
+        s.regelwerk = Regelwerk::Legacy;
+        s.divVertragD3d9 = false;
+        s.uvSanitize = false;
+        const auto e = effektiveSchalter(s);
+        CHECK(e.divVertragD3d9);
+        CHECK(e.uvSanitize);
+    }
+    SUBCASE("Modern schaltet alle vier Emulationen AUS")
+    {
+        s.regelwerk = Regelwerk::Modern;
+        s.divVertragD3d9 = true;  // Rohfeld darf nicht durchschlagen
+        const auto e = effektiveSchalter(s);
+        CHECK_FALSE(e.divVertragD3d9);
+        CHECK_FALSE(e.unormTrunkierung);
+        CHECK_FALSE(e.qGarbageEpsilon);
+        CHECK_FALSE(e.uvSanitize);
+    }
+    SUBCASE("Benutzerdefiniert reicht die Rohfelder durch")
+    {
+        s.regelwerk = Regelwerk::Benutzerdefiniert;
+        s.divVertragD3d9 = false;
+        s.unormTrunkierung = true;
+        s.qGarbageEpsilon = false;
+        s.uvSanitize = true;
+        const auto e = effektiveSchalter(s);
+        CHECK_FALSE(e.divVertragD3d9);
+        CHECK(e.unormTrunkierung);
+        CHECK_FALSE(e.qGarbageEpsilon);
+        CHECK(e.uvSanitize);
+    }
+}
+
+TEST_CASE("MilkdropRegelwerk: uebersetzter Import startet Legacy + Auto")
+{
+    const auto r = parse("[preset00]\nfDecay=0.96\n");
+    REQUIRE(r.ok);
+    const PresetState s = translate(r);
+    CHECK(s.regelwerk == lumi::milkdrop::Regelwerk::Legacy);
+    CHECK(s.psWarp == lumi::milkdrop::PsOverride::Auto);
+    CHECK(s.psComp == lumi::milkdrop::PsOverride::Auto);
+}
