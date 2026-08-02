@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "28_kifs_kristall",
+        "description": "Generiert aus asset/shadertoys/28_kifs_kristall.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 28 KIFS-Kristall — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KIFS (Kaleidoscopic Iterated Function System).\n//\n// IDEE: Die Ebene wird wiederholt gefaltet (abs), rotiert und skaliert —\n// aus einer einzigen Linie entsteht ein kristallines Adergeflecht. Der\n// minimale Abstand zu einer Achse über alle Iterationen wird als glühende\n// Ader gerendert. Mitten drehen den Faltwinkel: der Kristall morpht.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   FALTUNGEN    = 7;     // Iterationstiefe\nconst float SKALA        = 1.35;  // Streckung je Faltung\nconst float WINKEL_GRUND = 0.60;  // Faltwinkel (DIE Form-Stellschraube)\nconst float WINKEL_MITTEN = 0.25; // Mitten verdrehen den Winkel (Morphing)\nconst float WINKEL_DRIFT = 0.05;  // langsame Eigenbewegung\nconst float ADER_DICKE   = 0.012; // Kernbreite der Adern\nconst float ADER_GLOW    = 0.08;  // Halo\nconst float ZOOM         = 1.3;\n// ----------------------------------------------------------------------------\n\nvec2 rot2(vec2 p, float a) { return vec2(p.x * cos(a) - p.y * sin(a),\n                                         p.x * sin(a) + p.y * cos(a)); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y * ZOOM;\n    float mid = texture(iChannel0, vec2(0.30, 0.25)).x;\n    float treb = texture(iChannel0, vec2(0.70, 0.25)).x;\n    float winkel = WINKEL_GRUND + WINKEL_MITTEN * mid + iTime * WINKEL_DRIFT;\n\n    vec2 p = uv;\n    float dMin = 1e9;\n    float tiefe = 0.0;  // Iteration, in der der Minimalabstand fiel (Farbe)\n    float s = 1.0;\n    for (int i = 0; i < FALTUNGEN; ++i)\n    {\n        p = abs(p);              // Faltung an beiden Achsen\n        p = rot2(p, winkel);     // verdrehen\n        p = p * SKALA - vec2(0.35, 0.15) * SKALA;  // strecken + versetzen\n        s *= SKALA;\n        // Abstand zur x-Achse dieser Iterationsstufe (im Original-Maßstab)\n        float d = abs(p.y) / s;\n        if (d < dMin) { dMin = d; tiefe = float(i); }\n    }\n    // Adern: harter Kern + Halo; Höhen lassen sie gleißen\n    float kern = smoothstep(ADER_DICKE, ADER_DICKE * 0.4, dMin);\n    float halo = smoothstep(ADER_GLOW, 0.0, dMin) * 0.35;\n    vec3 farbe = 0.5 + 0.5 * cos(tiefe * 0.9 + iTime * 0.25 + vec3(0.0, 2.1, 4.2));\n    vec3 col = (kern * (0.8 + 0.6 * treb) + halo) * farbe;\n    col += vec3(0.01, 0.012, 0.02);  // Grundschimmer\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

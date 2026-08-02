@@ -46,6 +46,7 @@
 #include "UI/panels/PlayerPanel.hpp"
 #include "UI/panels/PlaylistPanel.hpp"
 #include "UI/panels/ImportBrowserPanel.hpp"
+#include "UI/panels/ShadertoyBrowserPanel.hpp"
 #include "UI/panels/ConfigPanel.hpp"
 #include "UI/panels/MultiEffectPanel.hpp"
 #include "UI/panels/SettingsPanel.hpp"
@@ -116,6 +117,25 @@ void initPanelDefaults(PanelRegistry& registry)
         },
         [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
             return std::make_unique<ImportBrowserPanel>(svc);
+        },
+        false);
+
+    // =========================================================================
+    // SHADERTOY BROWSER PANEL (Strang S3)
+    // =========================================================================
+    // Shadertoy-API-Suche mit Vorschaubildern; Doppelklick laedt den Shader
+    // als Ein-Node-Chain (AppData/shadertoy, LoadEffectChainEvent).
+
+    registry.registerPanel(
+        PanelDescriptor{
+            "shadertoy_browser",  // id
+            "Shadertoy Browser",  // title
+            260,                  // order
+            false,                // defaultVisible (hidden by default)
+            "View/Panels"         // menuPath
+        },
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<ShadertoyBrowserPanel>(svc);
         },
         false);
 

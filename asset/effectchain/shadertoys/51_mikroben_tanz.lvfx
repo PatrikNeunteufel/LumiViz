@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "51_mikroben_tanz",
+        "description": "Generiert aus asset/shadertoys/51_mikroben_tanz.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 51 Mikroben-Tanz — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. BIOLOGIE: wuselnde Wimpertierchen.\n//\n// IDEE: Jede Mikrobe ist eine Kette von Kreisen entlang einer schlängelnden\n// Mittellinie (sin-Ketten mit Phasenversatz = Schwimmbewegung). Kopf dick,\n// Schwanz dünn; ein Wimpernsaum flimmert außen. Die Lautstärke macht das\n// Gewusel hektischer.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   MIKROBEN    = 7;\nconst int   GLIEDER     = 10;    // Kettenglieder je Mikrobe\nconst float GROESSE     = 0.05;  // Kopfradius\nconst float SCHLAENGELN = 0.35;  // Amplitude der Schwimmwelle\nconst float TEMPO_VOL   = 1.2;   // Lautstärke-Zuschlag aufs Tempo\n// ----------------------------------------------------------------------------\n\nfloat h1(float n) { return fract(sin(n) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float vol = texture(iChannel0, vec2(0.15, 0.25)).x;\n    float tempo = 1.0 + TEMPO_VOL * vol;\n\n    // \"Nährlösung\": leichte Trübung mit Lichtkegel von oben\n    vec3 col = vec3(0.02, 0.035, 0.045) * (1.2 - 0.5 * length(uv));\n\n    for (int m = 0; m < MIKROBEN; ++m)\n    {\n        float fm = float(m);\n        // Kopfbahn: geschlossene Wanderkurve je Mikrobe\n        float t = iTime * tempo * (0.25 + 0.3 * h1(fm * 3.7)) + fm * 2.2;\n        vec2 kopf = vec2(0.85 * sin(t) * (0.5 + 0.5 * h1(fm * 5.1)),\n                         0.7 * sin(t * 1.37 + fm));\n        vec2 richtung = normalize(vec2(cos(t), 1.37 * cos(t * 1.37 + fm)) + 1e-4);\n        vec2 quer = vec2(-richtung.y, richtung.x);\n        vec3 farbe = 0.5 + 0.5 * cos(fm * 1.9 + vec3(0.0, 2.1, 4.2));\n\n        for (int g = 0; g < GLIEDER; ++g)\n        {\n            float fg = float(g) / float(GLIEDER - 1);  // 0 Kopf .. 1 Schwanz\n            // Glied sitzt hinter dem Kopf, quer ausgelenkt (laufende Welle)\n            vec2 p = kopf - richtung * fg * 0.35 +\n                     quer * SCHLAENGELN * 0.2 * sin(fg * 9.0 - iTime * 6.0 * tempo + fm);\n            float r = GROESSE * (1.0 - 0.75 * fg);\n            float d = length(uv - p);\n            // Körper halbtransparent + Wimpernsaum (schmaler Ring flimmert)\n            col += smoothstep(r, r * 0.3, d) * farbe * 0.25;\n            float saum = smoothstep(0.012, 0.0, abs(d - r)) *\n                         (0.5 + 0.5 * sin(atan(uv.y - p.y, uv.x - p.x) * 20.0 +\n                                          iTime * 12.0));\n            col += saum * farbe * 0.2;\n        }\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

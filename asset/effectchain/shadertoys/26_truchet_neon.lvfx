@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "26_truchet_neon",
+        "description": "Generiert aus asset/shadertoys/26_truchet_neon.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 26 Truchet-Neon — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. TRUCHET-KACHELN (verschlungene Neonbahnen).\n//\n// IDEE: Jede Gitterzelle enthält zwei Viertelkreis-Bögen; ein Hash\n// entscheidet die Orientierung — zusammen entsteht ein endloses,\n// zusammenhängendes Bahnennetz. Der Abstand zur Bahn wird als Neon-Glow\n// gerendert; jede Zelle leuchtet mit \"ihrem\" FFT-Band. Zwei Skalen\n// überlagern sich.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float ZOOM        = 5.0;    // Kacheln pro Bildhöhe\nconst float BAHN_DICKE  = 0.03;   // Kernbreite der Neon-Bahn\nconst float GLOW_WEITE  = 0.10;   // Glow-Halo um die Bahn\nconst float DRIFT_TEMPO = 0.20;   // das Muster zieht diagonal\nconst float PULS_TEMPO  = 2.0;    // Lauflicht entlang der Bahnen\nconst float HELL_AUDIO  = 1.3;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\n// Abstand zur Truchet-Bahn in einer Zelle (zwei Viertelkreise, r = 0.5)\nfloat truchet(vec2 f, float variante)\n{\n    if (variante > 0.5) f.x = 1.0 - f.x;  // gespiegelte Orientierung\n    float d1 = abs(length(f) - 0.5);              // Bogen um (0,0)\n    float d2 = abs(length(f - vec2(1.0)) - 0.5);  // Bogen um (1,1)\n    return min(d1, d2);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y * ZOOM;\n    uv += iTime * DRIFT_TEMPO * vec2(0.7, 0.4);\n    vec3 col = vec3(0.01, 0.01, 0.02);\n\n    // zwei Skalen: groß + halbe Größe versetzt (dichteres Geflecht)\n    for (int layer = 0; layer < 2; ++layer)\n    {\n        vec2 p = uv * (1.0 + float(layer)) + float(layer) * 17.3;\n        vec2 id = floor(p);\n        vec2 f = fract(p);\n        float rnd = n21(id);\n        float d = truchet(f, fract(rnd * 2.0));\n        // Zellband: der Hash wählt den FFT-Bin\n        float band = texture(iChannel0, vec2(0.05 + 0.6 * rnd, 0.25)).x;\n        // Neon: harter Kern + weicher Halo\n        float kern = smoothstep(BAHN_DICKE, BAHN_DICKE * 0.5, d);\n        float halo = smoothstep(GLOW_WEITE, 0.0, d) * 0.4;\n        // Lauflicht: Helligkeit wellt entlang der Bahn (über den Winkel)\n        float lauf = 0.6 + 0.4 * sin(iTime * PULS_TEMPO + rnd * 6.28318 +\n                                     (f.x + f.y) * 6.0);\n        vec3 farbe = 0.5 + 0.5 * cos(rnd * 6.28318 + float(layer) * 2.0 +\n                                     vec3(0.0, 2.1, 4.2));\n        col += (kern + halo) * farbe * lauf * (0.25 + HELL_AUDIO * band) /\n               (1.0 + float(layer));\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

@@ -1,9 +1,9 @@
 # Regelwerk & neue Module — Umsetzungsplan (Stränge R / S / G)
 
-> **Version:** 1.1.0
+> **Version:** 1.4.0
 > **Datum:** 2026-08-02 (Session 65)
 > **Typ:** Steuerdokument (Plan + Entscheide)
-> **Status:** Strang R ✅ umgesetzt (Session 65, R1–R5 grün); S und G offen
+> **Status:** Strang R ✅ + Strang S KOMPLETT (S1–S4, Session 65; Netz-Abnahme S3 braucht API-Key Patrik); G offen
 > **Sprache:** Deutsch
 > **Kontext:** MilkDrop-Kalibrierung S63/S64 (acht Legacy-Fixklassen),
 > `Vereinheitlichung_Konzept.md` (Standalones→Module), `Offene_Punkte.md` §3/§7
@@ -85,7 +85,7 @@ Tests 498 grün · Zusatz-Werkzeug: `LUMIVIZ_MILKDROP_REGELWERK=modern|legacy`
 
 ---
 
-## Strang S — Shadertoy-Modul (nach R)
+## Strang S — Shadertoy-Modul (S1+S2 ✅ · S3 code-komplett, Session 65)
 
 **Ziel:** Eigener Node-Typ „Shadertoy" (modernes Regelwerk, kein
 Legacy-Ballast): Shader per **URL/ID direkt importieren** oder Code
@@ -135,15 +135,58 @@ einfügen, Audio-Reaktivität eingebaut und nachrüstbar.
   lokal (VisualsPresets extern), nichts davon ins Repo.**
 - Netzwerk: Qt Network, nur auf Knopfdruck (kein Auto-Fetch).
 
-### S4 — Multipass (Ausbaustufe)
+### S4 — Multipass (Ausbaustufe) ✅ (Session 65)
 
 - Buffer A–D als zusätzliche FBO-Pässe je Frame (Topologie aus dem
   API-JSON; Selbst-Referenz = FeedbackBuffer-Muster). Erst nach S1–S3,
   eigener Sichttest.
 
+**Stand S65:** `ShadertoyPass` (Code + 4 Kanal-Bindungen; −1/0..3/4 =
+nichts/Buffer/Audio, SSOT `imageInput`+`input` — `audioChannel` nur noch
+Lese-Migration), RGBA32F-Ping-Pong je Buffer in Chain-Auflösung, Swap nach
+jedem Pass (Selbst-/Vorwärts-Referenz = Vorframe, Rückwärts = frisch —
+Original-Semantik), Buffer-Wrapper ohne Blend/Clamp, Import löst die
+Buffer-Topologie über Output-Ids auf (common in allen Pässen), Panel mit
+Bindungs-Combos + Buffer-Editoren. Sonde `shadertoy_feedback.lvfx`:
+Lissajous-Trail beweist das Vorframe-Lesen (mean 0,015, ohne Ping-Pong
+wäre es ein Einzelpunkt ~0,001). Sichttest (Patrik) offen. Tests 509.
+
 **Fertig-Kriterium S:** MVP S1+S2 mit Sonden grün und einem
 audioreaktiven Beispiel im Vorlagen-Bestand; S3 mit einem eigenen
 API-Testshader belegt; Grenzenliste im Panel/Report sichtbar.
+
+**Stand S65 (S1+S2 umgesetzt):** Chain-Node `shadertoy` (host-nativ wie
+Reaction Diffusion — die eigene Visualizer-Klasse entfiel bewusst, „ein
+Fragment-Pass, FBO in Chain-Auflösung" IST die Chain-Surface) +
+`ShadertoyWrapper.hpp` (GL-frei: Uniform-Satz, `#line 1` für Nutzer-Zeilen
+in Kompilierfehlern, Blend-Epilog, eigener Starter-Shader). Audio: geteilte
+512×2-R8-Textur (Zeile 0 FFT, Zeile 1 Waveform) am wählbaren iChannel +
+bass/mid/treb/vol/beat-Uniforms. Panel: Code-Editor (mono), Fehleranzeige
+(`shadertoyError()`), Audio-Kanal-/Blend-Combos, Metadaten-Anzeige.
+Sonden `asset/effectchain/shadertoy_{uvgrad,zeit,audioringe}.lvfx`:
+uvgrad punktgenau (0,500/0,500/0,251 ≈ Soll), Orientierung y-up korrekt
+(Sichtkontrolle), Zeit-Puls deterministisch (Sim-Uhr), Ringe audio-moduliert
+— `out/shadertoy_sonden_s65/SONDEN_ERGEBNIS.md`. Tests 502.
+OFFEN: Audio-Skala-Feinabstimmung (dB vs. linear, PORT-Annahme dokumentiert),
+Audio-Mod-Skript-Slot (S2-Ausbaustufe), Sichttest mit Ton (Patrik).
+
+**Stand S65 — S3 code-komplett (Netz-Abnahme offen):**
+`ShadertoyImport.hpp` (netz-/GL-frei, voll getestet): ID-Extraktion aus
+URL/Roh-Eingabe, API-/Query-/Thumbnail-URLs, Antwort-Parser (image+common
+übernommen, common vorangestellt; music-Input → Audio-iChannel; Textur/Video/
+Cubemap ⇒ Platzhalter-Meldung; Multipass ⇒ S4-Hinweis; Metadaten + Lizenz-
+Default CC BY-NC-SA). Node-Editor: URL/ID-Feld + „Importieren" (GET nur auf
+Knopfdruck, 10-s-Timeout) + 🌐-Knopf (Shader-Seite bzw. shadertoy.com) +
+API-Key-Feld (QSettings `shadertoy/apiKey`, lokal — nie im Preset/Repo).
+NEU dazu (Wunsch Patrik): **ShadertoyBrowserPanel** (Dock-Panel
+„Shadertoy Browser", ImportBrowser-Muster) — Suche + Sortierung
+(Beliebt/Neu/Hot/Geliebt) über die Query-API, Thumbnail-Grid (offizielle
+Vorschaubilder, Laufzeit-Fetch), Doppelklick lädt den Shader als
+Ein-Node-Chain (AppData/shadertoy/<id>.lvfx, LoadEffectChainEvent — dieselbe
+Orchestrierung wie der Import Browser). WICHTIG: API nutzt App-Key, KEINE
+Login-Daten — sichtbar ist nur Sichtbarkeit „public+api"; private Shader
+bleiben Code-Einfügen. Qt6-Component `Network` in Solution.json ergänzt.
+ABNAHME OFFEN: ein echter API-Lauf mit Key (Patrik) + Panel-Sichtprüfung.
 
 ---
 
@@ -197,5 +240,8 @@ Parallel weiter: Rest-11-Kalibrierung (§3) — unabhängig von R/S/G.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.4.0 | 2026-08-02 | Strang S4 umgesetzt (Session 65) — Strang S damit KOMPLETT: ShadertoyPass + Kanal-Bindungs-Kodierung (SSOT, audioChannel-Feld entfernt → Lese-Migration), RGBA32F-Ping-Pong je Buffer (Swap nach jedem Pass = Original-Lese-Semantik), Buffer-Wrapper roh, Import mit Buffer-Topologie (Output-Ids, common überall), Panel-Bindungs-Combos + Buffer-Editoren, Sonde shadertoy_feedback (Lissajous-Trail = Vorframe-Beweis). Tests 509 |
+| 1.3.0 | 2026-08-02 | Strang S3 code-komplett (Session 65): ShadertoyImport.hpp (ID/URL/Query/Thumbnail + Antwort-Parser, netz-/GL-frei getestet), Node-Editor-Import (URL-Feld, API-Key in QSettings, 🌐-Knopf) + NEU ShadertoyBrowserPanel (Dock-Panel: Query-Suche + Sortierung + Thumbnail-Grid, Doppelklick lädt via AppData-.lvfx + LoadEffectChainEvent). Klärung: API = App-Key, keine Login-Daten, nur „public+api". Qt6 `Network` ergänzt. Netz-Abnahme (echter Key) + Sichtprüfung offen |
+| 1.2.0 | 2026-08-02 | Strang S1+S2 umgesetzt (Session 65): Chain-Node `shadertoy` host-nativ (Entscheid: keine eigene Visualizer-Klasse — RD-Muster), ShadertoyWrapper.hpp (GL-frei, #line-Vertrag, Blend-Epilog, eigener Starter), 512×2-Audio-iChannel + LumiViz-Uniforms, Panel-Editor mit Fehleranzeige, drei Sonden-Vorlagen (uvgrad punktgenau, y-up bestätigt, Zeit deterministisch, Ringe audio-moduliert). S3 wartet auf API-Key |
 | 1.1.0 | 2026-08-02 | Strang R umgesetzt (Session 65): R1 Schema (`Regelwerk` + 4 Schalter + PS-Overrides, `effektiveSchalter()`), R2 Serialisierung (MilkdropSerializer 1.1.0, Migration fehlend ⇒ Legacy+Auto), R3 Gates (HlslTranspiler 1.5.0 `d3d9Div`, `uTruncate`-Uniform, q-/UV-Gates, MD1erzwingen), R4 Panel (Combo+Schalter+PS-Combos, Revision-Bump), R5 Abnahme (Triage s65 = s64f klassengleich, Modern-Stichprobe mit belegten Deltas). Panel-Sichtprüfung offen |
 | 1.0.0 | 2026-08-02 | Erstfassung (Session 64) — Entscheide Patrik: Regelwerk-Strang mit Master+Einzelschaltern und PS-Override; Shadertoy-Modul inkl. URL-/ID-Import und Audio-Nachrüstung; GPU-Vertex-Module als Vereinheitlichungs-Bürger |

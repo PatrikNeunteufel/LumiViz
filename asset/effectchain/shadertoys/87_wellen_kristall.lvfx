@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "87_wellen_kristall",
+        "description": "Generiert aus asset/shadertoys/87_wellen_kristall.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 87 Wellen-Kristall — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KOMBI: Wasser × Kristall — das Wellen-\n// Höhenfeld wird FACETTIERT (Normale auf ein grobes Raster quantisiert):\n// gefrorenes, kristallines Wasser, dessen Facetten einzeln blitzen.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float FACETTEN   = 14.0;  // Quantisierungs-Raster der Normalen\nconst float WELLEN_TEMPO = 1.0;\nconst float GLANZ      = 32.0;\nconst float MITTEN_CHOP = 0.6;\n// ----------------------------------------------------------------------------\n\nfloat height(vec2 p, float t, float mid)\n{\n    float h = sin(dot(p, vec2(1.0, 0.4)) * 3.0 + t * 1.2);\n    h += sin(dot(p, vec2(-0.5, 1.0)) * 4.5 - t * 0.9);\n    h += (0.4 + MITTEN_CHOP * mid) * sin(dot(p, vec2(0.3, -1.0)) * 7.0 + t * 1.9);\n    return h * 0.33;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y * 2.0;\n    float mid = texture(iChannel0, vec2(0.30, 0.25)).x;\n    float t = iTime * WELLEN_TEMPO;\n\n    vec2 e = vec2(0.03, 0.0);\n    float h = height(uv, t, mid);\n    vec3 n = normalize(vec3(height(uv - e.xy, t, mid) - height(uv + e.xy, t, mid),\n                            height(uv - e.yx, t, mid) - height(uv + e.yx, t, mid),\n                            0.4));\n    // DIE Kristallisierung: Normale aufs Raster runden = flache Facetten\n    n = normalize(floor(n * FACETTEN) / FACETTEN + 1e-4);\n\n    vec3 l = normalize(vec3(0.5, 0.6, 0.7));\n    float diff = max(dot(n, l), 0.0);\n    float spec = pow(max(dot(reflect(-l, n), vec3(0.0, 0.0, 1.0)), 0.0), GLANZ);\n    // Eisfarben: Facetten-Ton aus der Normalen-Richtung (jede Facette anders)\n    vec3 eis = 0.5 + 0.5 * cos(n.x * 5.0 + n.y * 7.0 + vec3(4.0, 4.6, 5.2));\n    vec3 col = mix(vec3(0.02, 0.08, 0.15), eis * vec3(0.4, 0.7, 0.9), diff);\n    col += spec * vec3(1.0, 1.0, 0.95);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

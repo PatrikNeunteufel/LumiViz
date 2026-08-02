@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "60_radar_phosphor",
+        "description": "Generiert aus asset/shadertoys/60_radar_phosphor.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 60 Radar-Phosphor — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. TECHNIK: Radarschirm mit Nachleuchten.\n//\n// IDEE: Der Nachleucht-Effekt OHNE Buffer: die Helligkeit hängt vom\n// Winkelabstand HINTER dem rotierenden Strahl ab (je weiter zurück, desto\n// dunkler) — exakt wie Phosphor verblasst. Blips sitzen an gehashten\n// Positionen und leben ein paar Umdrehungen; Bass = Umlauftempo.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float UMLAUF_GRUND = 0.5;   // Umdrehungen pro Sekunde\nconst float UMLAUF_BASS  = 0.4;\nconst float NACHLEUCHTEN = 3.5;   // Verblass-Stärke (größer = kürzer)\nconst int   BLIPS        = 8;\nconst float BLIP_GROESSE = 0.012;\nconst float RING_ZAHL    = 4.0;   // Entfernungsringe\n// ----------------------------------------------------------------------------\n\nfloat h1(float n) { return fract(sin(n) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float r = length(uv);\n    float a = atan(uv.y, uv.x);\n\n    float umlauf = iTime * (UMLAUF_GRUND + UMLAUF_BASS * bass) * 6.28318;\n    // Winkelabstand hinter dem Strahl: 0 = frisch überstrichen\n    float hinter = fract((umlauf - a) / 6.28318);\n    float phosphor = exp(-hinter * NACHLEUCHTEN);\n\n    vec3 col = vec3(0.0);\n    if (r < 1.0)\n    {\n        // Grundschirm + Entfernungsringe + Fadenkreuz\n        col = vec3(0.0, 0.05, 0.015);\n        float ring = smoothstep(0.008, 0.0, abs(fract(r * RING_ZAHL) - 0.5) / RING_ZAHL);\n        float kreuz = smoothstep(0.004, 0.0, min(abs(uv.x), abs(uv.y)));\n        col += (ring * 0.5 + kreuz * 0.4) * vec3(0.0, 0.35, 0.12);\n        // Phosphor-Keil hinter dem Strahl\n        col += phosphor * vec3(0.05, 0.6, 0.18) * (1.0 - r * 0.5);\n        // Strahl selbst\n        col += smoothstep(0.02, 0.0, hinter) * vec3(0.3, 1.0, 0.45);\n        // Blips: leuchten auf, wenn der Strahl sie überstreicht, verblassen mit\n        for (int i = 0; i < BLIPS; ++i)\n        {\n            float fi = float(i);\n            // Blip wandert langsam (Kurs), lebt zyklisch\n            vec2 p = (0.25 + 0.65 * h1(fi * 3.3)) *\n                     vec2(cos(h1(fi * 7.1) * 6.28318 + iTime * 0.05),\n                          sin(h1(fi * 7.1) * 6.28318 + iTime * 0.04));\n            float pa = atan(p.y, p.x);\n            float ph = exp(-fract((umlauf - pa) / 6.28318) * NACHLEUCHTEN * 0.7);\n            col += smoothstep(BLIP_GROESSE, 0.0, length(uv - p)) *\n                   vec3(0.5, 1.0, 0.6) * ph * 1.5;\n        }\n        col *= smoothstep(1.0, 0.97, r);  // Schirmrand\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

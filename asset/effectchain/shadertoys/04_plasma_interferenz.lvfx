@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "04_plasma_interferenz",
+        "description": "Generiert aus asset/shadertoys/04_plasma_interferenz.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 04 Plasma-Interferenz — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: Summe von vier Sinuswellen (zwei ebene, zwei radiale um wandernde\n// Zentren); die Summe läuft durch eine Cosinus-Palette.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float TEMPO_GRUND   = 0.30;  // Grundtempo (war 0.6 — ruhiger)\nconst float TEMPO_BASS    = 0.35;  // Bass-Beschleunigung obendrauf (war 0.8)\nconst float FREQ_WELLE1   = 3.0;   // ebene Welle 1 (größer = feiner)\nconst float FREQ_WELLE2   = 2.5;   // ebene Welle 2\nconst float FREQ_RADIAL1  = 4.0;   // Radialwelle um Zentrum 1\nconst float FREQ_RADIAL2  = 3.0;   // Radialwelle um Zentrum 2 (Basis)\nconst float FREQ_MITTEN   = 4.0;   // + Mitten-Anteil auf Radialwelle 2\nconst float KONTRAST      = 2.4;   // Kantenschärfe der Farbübergänge (war 1.2)\nconst float SCHWARZ_SCHWELLE = 0.35; // unter dieser Helligkeit: SCHWARZ\nconst float SCHWARZ_KANTE = 0.02;  // Übergangsbreite der Schwarz-Kante\n                                   // (0.02 = hart, 0.3 = weicher Verlauf)\nconst float PALETTEN_DRIFT = 0.25; // Eigenrotation der Farben\nconst float HELL_GRUND    = 0.6;   // Grundhelligkeit\nconst float HELL_BASS     = 0.4;   // Bass-Pumpen der Helligkeit\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float mid  = texture(iChannel0, vec2(0.30, 0.25)).x;\n    float t = iTime * (TEMPO_GRUND + TEMPO_BASS * bass);\n\n    float v = sin(uv.x * FREQ_WELLE1 + t)\n            + sin((uv.y + uv.x) * FREQ_WELLE2 - t * 1.3)\n            // Radialwellen: die Zentren wandern selbst auf Kreisbahnen\n            + sin(length(uv - vec2(sin(t * 0.7), cos(t * 0.9))) * FREQ_RADIAL1)\n            + sin(length(uv + vec2(cos(t * 0.5), sin(t * 0.4))) *\n                  (FREQ_RADIAL2 + FREQ_MITTEN * mid));\n\n    // KONTRAST staucht/streckt v vor der Palette: groß = harte Kanten\n    vec3 col = 0.5 + 0.5 * cos(v * KONTRAST + iTime * PALETTEN_DRIFT +\n                               vec3(0.0, 2.1, 4.2));\n    // HARTE Schwarz-Kante: dunkle Bereiche schlagartig auf Schwarz schneiden\n    // (kein Verlauf) — die Schwelle wandert mit v, dadurch entstehen scharf\n    // umrandete Farbinseln auf Schwarz\n    float helligkeit = dot(col, vec3(0.333));\n    col *= smoothstep(SCHWARZ_SCHWELLE - SCHWARZ_KANTE,\n                      SCHWARZ_SCHWELLE + SCHWARZ_KANTE, helligkeit);\n    fragColor = vec4(col * (HELL_GRUND + HELL_BASS * bass), 1.0);\n}\n"
+      }
+    ]
+  }
+}

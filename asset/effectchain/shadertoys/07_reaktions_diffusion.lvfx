@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "07_reaktions_diffusion",
+        "description": "Generiert aus asset/shadertoys/07_reaktions_diffusion.{image,bufferA}.glsl (Multipass).",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 07 Reaktions-Diffusion, Image — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy-Tab \"Image\": iChannel0 = Buffer A.\n//\n// IDEE: B-Konzentration (.g) durch eine Cosinus-Palette; Hintergrund bleibt\n// ausgeblendet.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float FARB_ZYKLEN  = 1.5;  // Farbzyklen über den B-Bereich\nconst float FARB_DRIFT   = 0.02; // langsame Palettendrift\nconst float SICHTBAR_AB  = 0.02; // Konzentration, ab der etwas erscheint\nconst float VOLL_AB      = 0.25; //  … voll sichtbar\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    float b = texture(iChannel0, uv).g;\n    vec3 col = 0.5 + 0.5 * cos(6.28318 * (b * FARB_ZYKLEN + iTime * FARB_DRIFT) +\n                               vec3(0.0, 2.1, 4.2));\n    fragColor = vec4(col * smoothstep(SICHTBAR_AB, VOLL_AB, b), 1.0);\n}\n",
+        "buffers": [
+          {
+            "code": "// 07 Reaktions-Diffusion, Buffer A — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy-Tab \"Buffer A\": iChannel0 = Buffer A (SELBST = Vorframe!),\n//                           iChannel1 = Music.\n//\n// IDEE: Gray-Scott: zwei \"Chemikalien\" A (.r, Nährstoff) und B (.g, Muster).\n// Beide diffundieren (Laplace), A+2B→3B, A wird nachgefüllt (FEED), B\n// zerfällt (KILL). Braucht 1–2 Minuten zum Entfalten!\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float FEED       = 0.052; // DIE Musterwahl: 0.055/0.062 Flecken,\nconst float KILL       = 0.062; // 0.029/0.057 Streifen, 0.026/0.051 Chaos\nconst float FEED_BASS  = 0.012; // Bass-Modulation von FEED\nconst float DIFF_A     = 1.0;   // Diffusionsrate A (Verhältnis ~2:1 zu B lassen)\nconst float DIFF_B     = 0.5;   // Diffusionsrate B\nconst float SAAT_RADIUS = 0.05; // Start-Fleck in der Mitte\nconst float INJEKT_STAERKE = 0.5; // Nachsäen bei Bass-Schlägen\nconst float INJEKT_RADIUS  = 0.02;\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    vec2 px = 1.0 / iResolution.xy;\n\n    // Frame 0/1: Startzustand — überall A=1, Keimfleck mit B=1 in der Mitte\n    if (iFrame < 2)\n    {\n        float seed = step(length((uv - 0.5) * vec2(iResolution.x / iResolution.y, 1.0)),\n                          SAAT_RADIUS);\n        fragColor = vec4(1.0, seed, 0.0, 1.0);\n        return;\n    }\n\n    vec2 ab = texture(iChannel0, uv).rg;\n    // Laplace: 4 Nachbarn − 4×Mitte = Abweichung von der Umgebung (Diffusion)\n    vec2 lap = texture(iChannel0, uv + vec2(px.x, 0.0)).rg\n             + texture(iChannel0, uv - vec2(px.x, 0.0)).rg\n             + texture(iChannel0, uv + vec2(0.0, px.y)).rg\n             + texture(iChannel0, uv - vec2(0.0, px.y)).rg\n             - 4.0 * ab;\n\n    float bass = texture(iChannel1, vec2(0.05, 0.25)).x;\n    float feed = FEED + FEED_BASS * bass;\n    float rxn = ab.x * ab.y * ab.y;  // Reaktionsrate A·B²\n\n    float a = ab.x + DIFF_A * lap.x - rxn + feed * (1.0 - ab.x);\n    float b = ab.y + DIFF_B * lap.y + rxn - (KILL + feed) * ab.y;\n\n    // Wandernder Injektor: bass² = nur echte Schläge säen nach\n    vec2 p = 0.5 + 0.35 * vec2(cos(iTime * 0.7), sin(iTime * 1.1));\n    b += INJEKT_STAERKE * smoothstep(INJEKT_RADIUS, 0.0, length(uv - p)) *\n         bass * bass;\n\n    fragColor = vec4(clamp(a, 0.0, 1.0), clamp(b, 0.0, 1.0), 0.0, 1.0);\n}\n",
+            "input": [
+              0,
+              4,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

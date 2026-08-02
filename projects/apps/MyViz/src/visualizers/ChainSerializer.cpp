@@ -1120,6 +1120,36 @@ struct WriteVisitor
         scanShader(p.preset.compShaderText);
         if (!images.isEmpty()) o["images"] = images;
     }
+    void operator()(const ShadertoyParams& p) const
+    {
+        o["code"] = QString::fromStdString(p.code);
+        // SSOT der Kanal-Bindungen ist imageInput (das frühe audioChannel-Feld
+        // existiert nur noch als Lese-Migration)
+        QJsonArray imageInput;
+        for (int v : p.imageInput) imageInput.append(v);
+        o["imageInput"] = imageInput;
+        o["blend"] = p.blend;
+        // Buffer A..D (S4) — nur schreiben, wenn vorhanden (schlankes JSON)
+        if (!p.buffers.empty())
+        {
+            QJsonArray buffers;
+            for (const ShadertoyPass& pass : p.buffers)
+            {
+                QJsonObject b;
+                b["code"] = QString::fromStdString(pass.code);
+                QJsonArray input;
+                for (int v : pass.input) input.append(v);
+                b["input"] = input;
+                buffers.append(b);
+            }
+            o["buffers"] = buffers;
+        }
+        // Metadaten (S3-Import) — nur schreiben, wenn vorhanden (schlankes JSON)
+        if (!p.name.empty()) o["name"] = QString::fromStdString(p.name);
+        if (!p.author.empty()) o["author"] = QString::fromStdString(p.author);
+        if (!p.url.empty()) o["url"] = QString::fromStdString(p.url);
+        if (!p.license.empty()) o["license"] = QString::fromStdString(p.license);
+    }
     void operator()(const PassthroughParams& p) const
     {
         o["sourceId"] = p.sourceId;
@@ -2376,6 +2406,44 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.revision = 1;  // frisch geladen = erste Revision fuer den Render-Host
         return p;
     }
+    if (type == "shadertoy")
+    {
+        ShadertoyParams p;
+        p.code = getStr(o, "code", p.code);
+        p.blend = getInt(o, "blend", p.blend);
+        const auto readInput = [](const QJsonArray& arr, std::array<int, 4>& out) {
+            for (int c = 0; c < 4 && c < arr.size(); ++c)
+                out[static_cast<std::size_t>(c)] = std::clamp(arr[c].toInt(-1), -1, 4);
+        };
+        if (o.value("imageInput").isArray())
+        {
+            p.imageInput = {-1, -1, -1, -1};
+            readInput(o.value("imageInput").toArray(), p.imageInput);
+        }
+        else
+        {
+            // Migration: frühe Dokumente kennen nur audioChannel (S1–S3)
+            const int audio = getInt(o, "audioChannel", 0);
+            p.imageInput = {-1, -1, -1, -1};
+            if (audio >= 0 && audio < 4)
+                p.imageInput[static_cast<std::size_t>(audio)] =
+                    lumi::multieffect::kShadertoyInputAudio;
+        }
+        for (const QJsonValue& v : o.value("buffers").toArray())
+        {
+            if (!v.isObject() || p.buffers.size() >= 4) continue;
+            const QJsonObject b = v.toObject();
+            ShadertoyPass pass;
+            pass.code = b.value("code").toString().toStdString();
+            readInput(b.value("input").toArray(), pass.input);
+            p.buffers.push_back(std::move(pass));
+        }
+        p.name = getStr(o, "name", p.name);
+        p.author = getStr(o, "author", p.author);
+        p.url = getStr(o, "url", p.url);
+        p.license = getStr(o, "license", p.license);
+        return p;
+    }
     // "passthrough" and any unknown key
     return PassthroughParams{getInt(o, "sourceId", 0), getStr(o, "note")};
 }
@@ -2470,6 +2538,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const SetRenderModeParams&) const { return "setRenderMode"; }
         QString operator()(const DebugBarsParams&) const { return "debugBars"; }
         QString operator()(const MilkdropNodeParams&) const { return "milkdrop"; }
+        QString operator()(const ShadertoyParams&) const { return "shadertoy"; }
         QString operator()(const PassthroughParams&) const { return "passthrough"; }
     };
     return std::visit(Visitor{}, params);

@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "31_neon_stadt_3d",
+        "description": "Generiert aus asset/shadertoys/31_neon_stadt_3d.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 31 Neon-Stadt 3D — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. RAYMARCHING (unendliches Stadtraster).\n//\n// IDEE: Der Raum wird in Blöcke gekachelt (mod); jede Zelle enthält einen\n// Quader mit gehashter Höhe = Hochhaus. Die Kamera fliegt eine Straße\n// entlang; Fensterbänder leuchten mit dem Spektrum, Kanten glühen neon.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   MARSCH      = 90;\nconst float BLOCK       = 2.0;    // Rastermaß (Straßenbreite inklusive)\nconst float HAUS_BREITE = 0.55;   // Quaderbreite in der Zelle\nconst float HOEHE_MAX   = 2.2;    // maximale Hochhaushöhe\nconst float FLUG_TEMPO  = 0.9;\nconst float NEON_GLOW   = 1.2;    // Kanten-/Fensterglühen\nconst float FENSTER_DICHTE = 9.0; // Fensterbänder pro Höheneinheit\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat sdBox(vec3 p, vec3 b)\n{\n    vec3 q = abs(p) - b;\n    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);\n}\n// Szene: gekacheltes Häuserraster; Rückgabe x = Distanz, y = Haus-Zufall\nvec2 stadt(vec3 p)\n{\n    vec2 id = floor(p.xz / BLOCK);\n    vec2 lokal = mod(p.xz, BLOCK) - 0.5 * BLOCK;\n    float rnd = n21(id);\n    float hoehe = 0.3 + HOEHE_MAX * rnd * rnd;   // rnd² = wenige sehr hohe\n    float d = sdBox(vec3(lokal.x, p.y - hoehe * 0.5, lokal.y),\n                    vec3(HAUS_BREITE, hoehe * 0.5, HAUS_BREITE));\n    d = min(d, p.y);  // Boden\n    return vec2(d, rnd);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n\n    // Kamera: mittig auf der Straße (Zellgrenze), leicht schwebend\n    vec3 ro = vec3(BLOCK * 0.5, 0.8 + 0.1 * sin(iTime * 0.5),\n                   iTime * (FLUG_TEMPO + bass));\n    vec3 rd = normalize(vec3(uv.x, uv.y - 0.1, 1.3));\n\n    float t = 0.0;\n    vec2 h = vec2(1.0, 0.0);\n    int schritte = 0;\n    for (int i = 0; i < MARSCH; ++i)\n    {\n        h = stadt(ro + rd * t);\n        schritte = i;\n        if (h.x < 0.002 || t > 40.0) break;\n        t += h.x;\n    }\n    // Nachthimmel mit Horizontglühen\n    vec3 col = mix(vec3(0.02, 0.01, 0.05), vec3(0.15, 0.05, 0.2),\n                   pow(max(1.0 - abs(rd.y), 0.0), 4.0));\n    if (h.x < 0.002)\n    {\n        vec3 p = ro + rd * t;\n        float rnd = h.y;\n        // Fensterbänder: horizontale Streifen über die Höhe; jedes Haus\n        // hört auf \"seinen\" FFT-Bin\n        float band = texture(iChannel0, vec2(0.05 + 0.6 * rnd, 0.25)).x;\n        float fenster = step(0.6, fract(p.y * FENSTER_DICHTE)) *\n                        step(0.15, p.y);  // Erdgeschoss dunkel\n        vec3 neon = 0.5 + 0.5 * cos(rnd * 6.28318 + vec3(0.0, 2.1, 4.2));\n        col = vec3(0.02, 0.02, 0.04);                       // Fassade\n        col += fenster * neon * band * NEON_GLOW;           // Fenster\n        col += smoothstep(0.05, 0.0, p.y) * neon * 0.4;     // Straßen-Reflex\n        col = mix(col, vec3(0.02, 0.01, 0.05), smoothstep(15.0, 40.0, t));\n    }\n    // Streifschuss-Glow an Silhouetten\n    col += pow(float(schritte) / float(MARSCH), 3.0) * vec3(0.3, 0.1, 0.5) *\n           (0.5 + bass);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

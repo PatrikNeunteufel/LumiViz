@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "48_zellteilung",
+        "description": "Generiert aus asset/shadertoys/48_zellteilung.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 48 Zellteilung — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. BIOLOGIE: Metaball-Zellen, die sich teilen.\n//\n// IDEE: Zellpaare entstehen aus je zwei Metaballs, deren Abstand periodisch\n// von 0 (eine Zelle) bis \"getrennt\" wächst — die Iso-Fläche schnürt sich\n// dabei sichtbar ein wie eine Mitose. Membran = schmale Zone um die\n// Iso-Schwelle, Kern = zweiter, kleinerer Metaball-Satz.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   ZELLEN       = 5;     // Anzahl Zellpaare\nconst float TEILUNGS_DAUER = 6.0; // Sekunden je Teilungszyklus\nconst float ZELL_RADIUS  = 0.16;\nconst float MEMBRAN_DICKE = 0.06;\nconst float ISO          = 1.0;\nconst float BASS_PULS    = 0.25;  // Bass lässt das Plasma wabern\n// ----------------------------------------------------------------------------\n\nfloat h1(float n) { return fract(sin(n) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n\n    float feld = 0.0;\n    float kern = 0.0;\n    for (int i = 0; i < ZELLEN; ++i)\n    {\n        float fi = float(i);\n        // Zellzentrum driftet langsam\n        vec2 z = 0.65 * vec2(sin(iTime * 0.15 + fi * 2.4) + (h1(fi * 3.1) - 0.5),\n                             cos(iTime * 0.11 + fi * 4.1) * 0.8);\n        // Teilungsphase 0..1: Abstand der beiden Hälften\n        float phase = fract(iTime / TEILUNGS_DAUER + h1(fi * 7.7));\n        float trennung = smoothstep(0.3, 0.9, phase) * 0.34;\n        vec2 richtung = vec2(cos(fi * 2.1), sin(fi * 2.1));\n        float r = ZELL_RADIUS * (1.0 + BASS_PULS * bass);\n        vec2 a = z + richtung * trennung;\n        vec2 b = z - richtung * trennung;\n        feld += r * r / (dot(uv - a, uv - a) + 1e-4);\n        feld += r * r / (dot(uv - b, uv - b) + 1e-4);\n        // Kerne: kleiner, gleiche Zentren\n        float rk = r * 0.35;\n        kern += rk * rk / (dot(uv - a, uv - a) + 1e-4);\n        kern += rk * rk / (dot(uv - b, uv - b) + 1e-4);\n    }\n    float zellflaeche = smoothstep(ISO - 0.05, ISO + 0.05, feld);\n    // Membran: schmales Band um die Iso-Schwelle\n    float membran = exp(-pow((feld - ISO) / (MEMBRAN_DICKE * ISO), 2.0));\n    float kernfl = smoothstep(ISO, ISO * 1.4, kern);\n\n    vec3 col = vec3(0.01, 0.02, 0.03);                     // Nährlösung\n    col += zellflaeche * vec3(0.10, 0.20, 0.16);           // Zellplasma\n    col += membran * vec3(0.35, 0.95, 0.6);                // Membran-Glow\n    col += kernfl * vec3(0.9, 0.5, 0.75);                  // Zellkern\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

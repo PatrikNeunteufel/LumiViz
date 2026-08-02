@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "54_newton_bassin",
+        "description": "Generiert aus asset/shadertoys/54_newton_bassin.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 54 Newton-Bassin — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. FRAKTAL: Newton-Verfahren für z³ = 1.\n//\n// IDEE: Von jedem Pixel aus läuft das Newton-Verfahren; welche der drei\n// Wurzeln es findet, färbt das Becken — die Grenzen sind fraktal verwoben.\n// Die Wurzeln selbst ROTIEREN langsam (Polynome mit gedrehten Wurzeln),\n// die Konvergenz-Geschwindigkeit schattiert. Mitten drehen schneller.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   SCHRITTE   = 32;\nconst float DREH_TEMPO = 0.10;\nconst float DREH_MITTEN = 0.25;\nconst float ZOOM       = 1.6;\nconst float SCHATTEN   = 0.10;   // Abdunklung pro benötigtem Schritt\n// ----------------------------------------------------------------------------\n\nvec2 cmul(vec2 a, vec2 b) { return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x); }\nvec2 cdiv(vec2 a, vec2 b) { return cmul(a, vec2(b.x, -b.y)) / max(dot(b, b), 1e-9); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y * ZOOM;\n    float mid = texture(iChannel0, vec2(0.30, 0.25)).x;\n    float phi = iTime * (DREH_TEMPO + DREH_MITTEN * mid);\n\n    // die drei rotierenden Wurzeln von z³ = e^{3iφ}\n    vec2 w0 = vec2(cos(phi), sin(phi));\n    vec2 w1 = vec2(cos(phi + 2.0944), sin(phi + 2.0944));\n    vec2 w2 = vec2(cos(phi + 4.1888), sin(phi + 4.1888));\n\n    vec2 z = uv;\n    float schritte = 0.0;\n    for (int i = 0; i < SCHRITTE; ++i)\n    {\n        // Newton für p(z) = (z−w0)(z−w1)(z−w2):\n        // z -= p / p'  mit  p'/p = Σ 1/(z−wk)  →  z -= 1 / Σ 1/(z−wk)\n        vec2 s = cdiv(vec2(1.0, 0.0), z - w0) + cdiv(vec2(1.0, 0.0), z - w1) +\n                 cdiv(vec2(1.0, 0.0), z - w2);\n        vec2 dz = cdiv(vec2(1.0, 0.0), s);\n        z -= dz;\n        schritte += 1.0;\n        if (dot(dz, dz) < 1e-6) break;\n    }\n    // welche Wurzel? → Farbbecken\n    float d0 = dot(z - w0, z - w0);\n    float d1 = dot(z - w1, z - w1);\n    float d2 = dot(z - w2, z - w2);\n    vec3 col = (d0 < d1 && d0 < d2) ? vec3(0.9, 0.35, 0.25)\n             : (d1 < d2)            ? vec3(0.25, 0.75, 0.9)\n                                    : vec3(0.55, 0.9, 0.35);\n    // Konvergenz-Schatten: fraktale Grenzen werden dunkel\n    col *= exp(-schritte * SCHATTEN);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

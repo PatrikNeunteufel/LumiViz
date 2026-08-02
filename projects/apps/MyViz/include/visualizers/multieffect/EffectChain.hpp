@@ -2182,6 +2182,63 @@ struct ReactionDiffusionParams
 };
 
 /**
+ * Shadertoy-Node (Strang S, `Regelwerk_und_Neue_Module_Plan.md` §S — S65):
+ * EIN Fragment-Pass in Chain-Auflösung, Code in Shadertoy-Konvention
+ * (`mainImage(out vec4, in vec2)`, GLSL-ES; Wrapper: ShadertoyWrapper.hpp).
+ * Modernes Regelwerk — kein Legacy-Ballast. `audioChannel` bestimmt, welcher
+ * iChannel die 512×2-Audio-Textur trägt (Zeile 0 = FFT-Spektrum, Zeile 1 =
+ * Waveform, 0..1); zusätzlich stehen bass/mid/treb/vol/beat als Uniforms im
+ * Shader bereit (Nachrüstung nicht-audioreaktiver Shader ohne Textur-Zugriff).
+ * Metadaten füllt der URL-Import (S3) — Inhalte bleiben lokal
+ * (Shadertoy-Default-Lizenz CC BY-NC-SA, Plan §S3).
+ */
+/// Kanal-Bindungs-Kodierung des Shadertoy-Nodes (S4): was hängt an iChannelN?
+/// -1 = nichts (schwarz) · 0..3 = Ausgang von Buffer A..D · 4 = Audio-Textur.
+inline constexpr int kShadertoyInputNone = -1;
+inline constexpr int kShadertoyInputAudio = 4;
+
+/**
+ * Ein Buffer-Pass des Shadertoy-Nodes (S4 — Buffer A..D): eigener
+ * mainImage-Quelltext + 4 Kanal-Bindungen. Buffer rendern je Frame in der
+ * Reihenfolge A→D in eigene Ping-Pong-Ziele (RGBA32F, Chain-Auflösung);
+ * eine Referenz auf sich selbst oder einen SPÄTEREN Buffer liest das
+ * VORFRAME (FeedbackBuffer-Muster), eine auf einen früheren das frische Bild
+ * dieses Frames — Original-Semantik.
+ */
+struct ShadertoyPass
+{
+    std::string code;                       ///< mainImage-Quelltext dieses Buffers
+    std::array<int, 4> input = {kShadertoyInputNone, kShadertoyInputNone,
+                                kShadertoyInputNone, kShadertoyInputNone};
+};
+
+struct ShadertoyParams
+{
+    std::string code;      ///< mainImage-Quelltext des Image-Passes (leer = Starter)
+    /// Kanal-Bindungen des Image-Passes (Kodierung s. kShadertoyInput* —
+    /// SSOT; ein frühes `audioChannel`-Feld wird beim Laden migriert).
+    std::array<int, 4> imageInput = {kShadertoyInputAudio, kShadertoyInputNone,
+                                     kShadertoyInputNone, kShadertoyInputNone};
+    int blend = 0;         ///< aufs Bild: 0 ersetzen, 1 additiv, 2 50/50
+    /// Buffer A..D (S4, max 4; Index = Buchstabe). Leer = Ein-Pass-Shader.
+    std::vector<ShadertoyPass> buffers;
+    std::string name;      ///< Metadaten (S3-Import; Panel zeigt sie nur an)
+    std::string author;
+    std::string url;
+    std::string license;
+};
+
+/// iChannel-Index der Audio-Textur in einer Bindungs-Liste (-1 = keiner)
+[[nodiscard]] inline int shadertoyAudioChannel(const std::array<int, 4>& input)
+{
+    for (int c = 0; c < 4; ++c)
+    {
+        if (input[static_cast<std::size_t>(c)] == kShadertoyInputAudio) return c;
+    }
+    return -1;
+}
+
+/**
  * MilkDrop-Meganode (Import Roadmap 6, N1 — Entscheid E1): renders the whole
  * fixed MilkDrop frame pipeline (warp mesh, waves/shapes, blur pyramid,
  * stage-B/C shaders, composite) into the chain buffer. The TRANSLATED preset
@@ -2250,7 +2307,7 @@ using EffectParams =
                  HostGroupParams, TextParams, AviParams, CommentParams,
                  ImportNotesParams, RenderScaleParams, BloomParams, Camera3DParams,
                  SuperScope3DParams, Terrain3DParams, GlowOrbsParams,
-                 PassthroughParams>;
+                 ShadertoyParams, PassthroughParams>;
 
 // =============================================================================
 // Chain node
@@ -2407,6 +2464,7 @@ struct CompileResult
         const char* operator()(const SuperScope3DParams&) const { return "SuperScope 3D"; }
         const char* operator()(const Terrain3DParams&) const { return "Terrain 3D"; }
         const char* operator()(const GlowOrbsParams&) const { return "Glow Orbs"; }
+        const char* operator()(const ShadertoyParams&) const { return "Shadertoy"; }
         const char* operator()(const PassthroughParams&) const { return "Passthrough"; }
     };
     return std::visit(Visitor{}, params);

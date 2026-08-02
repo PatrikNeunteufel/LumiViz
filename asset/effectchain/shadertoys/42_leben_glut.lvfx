@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "42_leben_glut",
+        "description": "Generiert aus asset/shadertoys/42_leben_glut.{image,bufferA}.glsl (Multipass).",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 42 Leben-Glut, Image — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// \"Image\": iChannel0 = Buffer A. Lebende Zellen weißgelb, die Glut dahinter\n// läuft die Feuer-Rampe hinunter (gelb → rot → dunkel).\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float GLUT_HELL = 1.4;\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    vec4 z = texture(iChannel0, uv);\n    float g = z.g;  // Glutstufe 0..1\n    vec3 col = vec3(g * GLUT_HELL, g * g * GLUT_HELL * 0.7, g * g * g * 0.4);\n    if (z.r > 0.5) col = vec3(1.0, 0.95, 0.75);  // lebende Front\n    fragColor = vec4(col + vec3(0.015, 0.008, 0.01), 1.0);\n}\n",
+        "buffers": [
+          {
+            "code": "// 42 Leben-Glut, Buffer A — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// \"Buffer A\": iChannel0 = Buffer A (SELBST!), iChannel1 = Music.\n//\n// IDEE: \"Generations\"-Ableger von Game of Life: gestorbene Zellen\n// verschwinden nicht, sondern durchlaufen GLUT-STUFEN (.g zählt herunter)\n// — wie verglühende Asche hinter der lebenden Front. Bass sät nach.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float ZELLGROESSE = 3.0;\nconst float GLUT_DAUER  = 0.06;  // Abkühl-Schritt pro Frame (kleiner = länger)\nconst float SAAT_DICHTE = 0.18;\nconst float BASS_SAAT   = 0.45;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat zelle(vec2 id)\n{\n    vec2 uv = (id + 0.5) * ZELLGROESSE / iResolution.xy;\n    return step(0.5, texture(iChannel0, uv).r);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 id = floor(fragCoord / ZELLGROESSE);\n    if (iFrame < 2)\n    {\n        fragColor = vec4(step(1.0 - SAAT_DICHTE, n21(id)), 0.0, 0.0, 1.0);\n        return;\n    }\n    float summe = 0.0;\n    for (int y = -1; y <= 1; ++y)\n    for (int x = -1; x <= 1; ++x)\n    {\n        if (x == 0 && y == 0) continue;\n        summe += zelle(id + vec2(float(x), float(y)));\n    }\n    vec4 alt = texture(iChannel0, (id + 0.5) * ZELLGROESSE / iResolution.xy);\n    float war = step(0.5, alt.r);\n    float lebt = (war > 0.5) ? ((summe == 2.0 || summe == 3.0) ? 1.0 : 0.0)\n                             : ((summe == 3.0) ? 1.0 : 0.0);\n    // Glut: beim Sterben auf 1 setzen, dann pro Frame abkühlen\n    float glut = alt.g;\n    if (war > 0.5 && lebt < 0.5) glut = 1.0;          // frisch gestorben\n    else glut = max(glut - GLUT_DAUER, 0.0);          // abkühlen\n\n    float bass = texture(iChannel1, vec2(0.05, 0.25)).x;\n    if (bass > BASS_SAAT)\n    {\n        vec2 p = 0.5 + 0.35 * vec2(cos(iTime * 1.1), sin(iTime * 0.7));\n        if (length(fragCoord / iResolution.xy - p) < 0.05 &&\n            n21(id + iTime) > 0.6) lebt = 1.0;\n    }\n    fragColor = vec4(lebt, glut, 0.0, 1.0);\n}\n",
+            "input": [
+              0,
+              4,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

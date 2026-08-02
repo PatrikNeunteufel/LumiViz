@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "47_funken_fontaene",
+        "description": "Generiert aus asset/shadertoys/47_funken_fontaene.{image,bufferA}.glsl (Multipass).",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 47 Funken-Fontäne, Image — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// \"Image\": iChannel0 = Buffer A. Anzeige + warmer Boden-Reflex.\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    vec3 c = texture(iChannel0, uv).rgb;\n    // Bodenreflex: unteres Bild leicht gespiegelt und abgedunkelt\n    if (uv.y < 0.08)\n    {\n        vec3 spiegel = texture(iChannel0, vec2(uv.x, 0.16 - uv.y)).rgb;\n        c += spiegel * 0.25 * (uv.y / 0.08);\n    }\n    fragColor = vec4(c + vec3(0.008, 0.004, 0.006), 1.0);\n}\n",
+        "buffers": [
+          {
+            "code": "// 47 Funken-Fontäne, Buffer A — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// \"Buffer A\": iChannel0 = Buffer A (SELBST!), iChannel1 = Music.\n//\n// IDEE: Ein Boden-Vulkan sprüht Funken (ballistische Bahnen mit Streuwinkel\n// und Zufallsimpuls, endlos wrappend); die Lautstärke macht den Strahl\n// höher und dichter, der Trail zieht Goldfäden.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float TRAIL      = 0.88;\nconst int   FUNKEN     = 90;\nconst float STREUWINKEL = 0.35;  // halber Kegelwinkel (rad)\nconst float IMPULS     = 0.9;    // Grund-Abschussstärke\nconst float IMPULS_VOL = 0.5;    // Lautstärke-Zuschlag\nconst float SCHWERKRAFT = 0.9;\nconst float LEBENSDAUER = 1.8;   // Sekunden je Funke\n// ----------------------------------------------------------------------------\n\nfloat h1(float n) { return fract(sin(n) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float vol = texture(iChannel1, vec2(0.15, 0.25)).x;\n    vec3 col = texture(iChannel0, fragCoord / iResolution.xy).rgb * TRAIL;\n\n    vec2 quelle = vec2(0.0, -0.85);\n    for (int i = 0; i < FUNKEN; ++i)\n    {\n        float fi = float(i);\n        // Lebenszyklus: jeder Funke hat Phasenversatz, wrappt endlos\n        float t = fract(iTime / LEBENSDAUER + h1(fi * 3.3)) * LEBENSDAUER;\n        float alter = t / LEBENSDAUER;\n        float w = 1.5708 + STREUWINKEL * (h1(fi * 7.1) * 2.0 - 1.0);  // um senkrecht\n        float kraft = (IMPULS + IMPULS_VOL * vol) * (0.7 + 0.5 * h1(fi * 5.7));\n        vec2 p = quelle + vec2(cos(w), sin(w)) * kraft * t -\n                 vec2(0.0, 0.5 * SCHWERKRAFT * t * t);\n        float glut = (1.0 - alter);\n        // Farbe: weißgold jung, orange-rot alt\n        vec3 farbe = mix(vec3(1.0, 0.55, 0.15), vec3(1.0, 0.95, 0.8), glut);\n        col += smoothstep(0.005, 0.0, length(uv - p)) * farbe * glut * glut;\n    }\n    fragColor = vec4(min(col, vec3(2.5)), 1.0);\n}\n",
+            "input": [
+              0,
+              4,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

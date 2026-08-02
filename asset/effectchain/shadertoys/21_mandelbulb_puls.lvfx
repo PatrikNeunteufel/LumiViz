@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "21_mandelbulb_puls",
+        "description": "Generiert aus asset/shadertoys/21_mandelbulb_puls.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 21 Mandelbulb-Puls — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. RAYMARCHING-FRAKTAL (3D).\n//\n// IDEE: Der Mandelbulb ist die 3D-Verallgemeinerung der Mandelbrot-Menge:\n// z -> z^POWER + c in Kugelkoordinaten. Ein Distance Estimator (DE) liefert\n// eine sichere Marschdistanz; ein Orbit-Trap (kleinster |z| unterwegs)\n// färbt die Oberfläche. Der Bass pulst die Power — das Fraktal \"atmet\".\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float POWER_GRUND  = 8.0;   // klassischer Bulb; 2..12 = andere Wesen\nconst float POWER_BASS   = 1.5;   // Bass-Puls auf die Power\nconst int   FRAKTAL_ITER = 8;     // Fraktal-Iterationen (Detailtiefe)\nconst int   MARSCH       = 90;    // Raymarch-Schritte\nconst float KAMERA_DIST  = 2.6;   // Abstand der Kamera\nconst float DREH_TEMPO   = 0.25;  // Umkreisung des Bulbs\nconst float GLOW_STAERKE = 1.2;   // Rand-Glow aus der Schrittzahl\n// ----------------------------------------------------------------------------\n\nfloat g_power;\nfloat g_trap;  // Orbit-Trap: kleinster |z| während der Iteration\n\n// Distance Estimator des Mandelbulb (Standard-Herleitung über |z'|)\nfloat mandelbulbDE(vec3 p)\n{\n    vec3 z = p;\n    float dr = 1.0;\n    float r = 0.0;\n    g_trap = 1e9;\n    for (int i = 0; i < FRAKTAL_ITER; ++i)\n    {\n        r = length(z);\n        g_trap = min(g_trap, r);\n        if (r > 2.0) break;\n        // Kugelkoordinaten: Winkel mit POWER multiplizieren, Radius potenzieren\n        float theta = acos(clamp(z.z / max(r, 1e-6), -1.0, 1.0)) * g_power;\n        float phi = atan(z.y, z.x) * g_power;\n        float zr = pow(r, g_power);\n        dr = pow(r, g_power - 1.0) * g_power * dr + 1.0;\n        z = zr * vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta)) + p;\n    }\n    return 0.5 * log(max(r, 1e-6)) * r / dr;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float treb = texture(iChannel0, vec2(0.70, 0.25)).x;\n    g_power = POWER_GRUND + POWER_BASS * bass;\n\n    // Kamera umkreist den Bulb\n    float ca = iTime * DREH_TEMPO;\n    vec3 ro = KAMERA_DIST * vec3(cos(ca), 0.35 * sin(ca * 0.7), sin(ca));\n    vec3 ww = normalize(-ro);                        // Blick zur Mitte\n    vec3 uu = normalize(cross(ww, vec3(0.0, 1.0, 0.0)));\n    vec3 vv = cross(uu, ww);\n    vec3 rd = normalize(uv.x * uu + uv.y * vv + 1.8 * ww);\n\n    float t = 0.0;\n    float d = 1.0;\n    int schritte = 0;\n    for (int i = 0; i < MARSCH; ++i)\n    {\n        d = mandelbulbDE(ro + rd * t);\n        schritte = i;\n        if (d < 0.0008 * t || t > 6.0) break;\n        t += d;\n    }\n    vec3 col = vec3(0.01, 0.01, 0.03);\n    if (d < 0.0008 * t)\n    {\n        // Farbe aus dem Orbit-Trap (Fraktal-Tiefe) + Cosinus-Palette\n        vec3 base = 0.5 + 0.5 * cos(g_trap * 5.0 + iTime * 0.2 + vec3(0.0, 2.1, 4.2));\n        // simple Tiefen-Schattierung statt teurer Normalen\n        float licht = clamp(1.0 - t / 5.0, 0.0, 1.0);\n        col = base * licht;\n    }\n    // Rand-Glow: viele Schritte = knapp vorbei = Silhouette leuchtet\n    col += GLOW_STAERKE * (0.15 + 0.5 * treb) *\n           pow(float(schritte) / float(MARSCH), 3.0) * vec3(0.4, 0.6, 1.0);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

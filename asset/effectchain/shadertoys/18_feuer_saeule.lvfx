@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "18_feuer_saeule",
+        "description": "Generiert aus asset/shadertoys/18_feuer_saeule.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 18 Feuer-Säule — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: FBM-Rauschen nach oben gescrollt = Flammenzug; Säulenform durch\n// \"unten stark, Mitte breit\". Feuer-Rampe: R=f, G=f², B=f³.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float ZUG_GRUND    = 1.2;  // Zuggeschwindigkeit nach oben\nconst float ZUG_VOL      = 1.0;  //  … Lautstärke-Zuschlag\nconst float ZUNGEN_BREITE = 3.0; // horizontale Noise-Frequenz\nconst float FLAMMEN_HOEHE = 1.3; // größer = höhere Flammen\nconst float SAEULE_BREITE = 2.6; // kleiner = breitere Säule\nconst float BREITE_VOL   = 1.2;  // Lautstärke verbreitert die Säule\nconst int   OKTAVEN      = 5;    // FBM-Detail (mehr = feiner, teurer)\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p);\n    vec2 f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\n// FBM: Oktaven mit halber Amplitude, doppelter Frequenz\nfloat fbm(vec2 p)\n{\n    float v = 0.0;\n    float a = 0.5;\n    for (int i = 0; i < OKTAVEN; ++i)\n    {\n        v += a * vnoise(p);\n        p *= 2.03;  // ungerader Faktor vermeidet Gitterartefakte\n        a *= 0.5;\n    }\n    return v;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    float vol = texture(iChannel0, vec2(0.10, 0.25)).x;\n    // Noise-y wandert mit der Zeit = Flammen ziehen hoch\n    vec2 p = vec2(uv.x * ZUNGEN_BREITE, uv.y * 2.0 - iTime * (ZUG_GRUND + ZUG_VOL * vol));\n    float flame = fbm(p) * (FLAMMEN_HOEHE - uv.y);            // oben ausdünnen\n    float center = 1.0 - abs(uv.x - 0.5) * (SAEULE_BREITE - BREITE_VOL * vol);\n    float f = clamp(flame * center * (1.1 + 1.3 * vol), 0.0, 1.0);\n    // Feuer-Rampe: f / f² / f³ = Glut-Farbstufen\n    vec3 col = vec3(f * 1.6, f * f * 1.1, f * f * f * 0.7);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

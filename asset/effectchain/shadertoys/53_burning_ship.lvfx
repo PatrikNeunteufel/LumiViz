@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "53_burning_ship",
+        "description": "Generiert aus asset/shadertoys/53_burning_ship.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 53 Burning Ship — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. FRAKTAL: das \"brennende Schiff\".\n//\n// IDEE: Wie Mandelbrot, aber mit abs() vor dem Quadrieren — das erzeugt die\n// charakteristischen brennenden Masten. Feurige Palette, atmender Zoom auf\n// die Schiffs-Silhouette; der Bass facht die Glut an.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst vec2  ZENTRUM     = vec2(-1.755, -0.03);  // die kleine Schiffs-Kopie\nconst float ZOOM_MITTE  = 3.2;\nconst float ZOOM_HUB    = 1.2;\nconst float ATEM_TEMPO  = 0.12;\nconst int   ITERATIONEN = 120;\nconst float GLUT_BASS   = 0.5;\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    uv.y = -uv.y;  // das Schiff \"richtig herum\"\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n\n    float zoom = exp(ZOOM_MITTE + ZOOM_HUB * sin(iTime * ATEM_TEMPO));\n    vec2 c = ZENTRUM + uv / zoom;\n    vec2 z = vec2(0.0);\n    float m = 0.0;\n    bool drin = true;\n    for (int i = 0; i < ITERATIONEN; ++i)\n    {\n        z = abs(z);  // DER Burning-Ship-Trick\n        z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;\n        if (dot(z, z) > 64.0) { drin = false; break; }\n        m += 1.0;\n    }\n    vec3 col = vec3(0.0);\n    if (!drin)\n    {\n        float glatt = m - log2(log2(dot(z, z)) * 0.5);\n        float t = glatt / float(ITERATIONEN);\n        // Feuer-Palette: schwarz → rot → orange → weißgelb\n        float f = pow(t, 0.5) * (1.2 + GLUT_BASS * bass);\n        col = vec3(f * 1.5, f * f * 1.2, f * f * f * 0.8);\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

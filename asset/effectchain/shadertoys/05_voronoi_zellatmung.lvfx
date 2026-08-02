@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "05_voronoi_zellatmung",
+        "description": "Generiert aus asset/shadertoys/05_voronoi_zellatmung.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 05 Voronoi-Zellatmung — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: Voronoi = \"welcher Zellkern ist am nächsten?\". Kerne kreisen in\n// ihren Gitterzellen; jede Zelle hat eine EIGENE Größe (gewichteter\n// Abstand) und glüht mit \"ihrem\" FFT-Band.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float ZOOM              = 3.0;   // mehr = mehr, kleinere Zellen\nconst float WANDER_RADIUS     = 0.40;  // Kreisbahn der Kerne (Bewegungsstärke)\nconst float WANDER_TEMPO      = 0.25;  // Grundtempo der Kern-Kreise\nconst float AUDIO_TEMPO       = 2.5;   // Audio-Schub aufs Tempo: laute Bänder\n                                       // treiben \"ihre\" Zellen an (0 = aus)\nconst float GROESSEN_STREUUNG = 0.90;  // 0 = alle gleich groß, 1 = stark verschieden\nconst float GLOW_RADIUS       = 0.32;  // Grund-Glühradius je Zelle\nconst float AUDIO_WEITUNG     = 0.40;  // Radius-Zuwachs bei lautem Band\nconst float KANTEN_WEICHE     = 0.006; // Kantenbreite: 0.006 = HARTE Kante\n                                       // Farbe→Schwarz (größer = Verlauf)\nconst float HELL_GRUND        = 0.35;  // Grundhelligkeit einer Zelle\nconst float HELL_AUDIO        = 1.2;   // Audio-Aufhellung\n// ----------------------------------------------------------------------------\n\nvec2 hash2(vec2 p)\n{\n    // 2D-Hash: stabiles Pseudo-Zufalls-Paar 0..1 je Gitterzelle\n    p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));\n    return fract(sin(p) * 43758.5453);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y * ZOOM;\n    vec2 g = floor(uv);\n    vec2 f = fract(uv);\n    float dMin = 8.0;\n    vec2 idMin = vec2(0.0);\n    // 3x3-Nachbarschaft: der nächste Kern kann im Nachbarfeld liegen\n    for (int y = -1; y <= 1; ++y)\n    for (int x = -1; x <= 1; ++x)\n    {\n        vec2 o = vec2(float(x), float(y));\n        vec2 h = hash2(g + o);\n        // Tempo aus dem Audio: das Band DIESES Kerns schiebt seine Phase an —\n        // laute Bänder lassen ihre Zellen zucken/schneller kreisen\n        float kernBand = texture(iChannel0, vec2(0.05 + 0.60 * h.x, 0.25)).x;\n        float phase = iTime * (WANDER_TEMPO + h.x) + AUDIO_TEMPO * kernBand;\n        vec2 c = o + 0.5 + WANDER_RADIUS * sin(phase + 6.28318 * h) - f;\n        // GEWICHTETER Abstand: Zellen mit kleinem Gewicht \"reichen weiter\"\n        // und wirken größer — das macht die Größen-Streuung\n        float gewicht = 1.0 + GROESSEN_STREUUNG * (h.y - 0.5);\n        float d = dot(c, c) * gewicht;\n        if (d < dMin) { dMin = d; idMin = h; }\n    }\n    // Zell-Hash wählt den FFT-Bin: jede Zelle hört ihr eigenes Band\n    float band = texture(iChannel0, vec2(0.05 + 0.60 * idMin.x, 0.25)).x;\n    float r = GLOW_RADIUS + AUDIO_WEITUNG * band;  // Soll-Glühradius\n    // scharfe Kante: nur KANTEN_WEICHE breiter Übergang am Radius\n    float glow = 1.0 - smoothstep(r - KANTEN_WEICHE, r, sqrt(dMin));\n    vec3 col = glow * (0.5 + 0.5 * cos(6.28318 * idMin.y + iTime * 0.5 +\n                                       vec3(0.0, 2.1, 4.2)));\n    col *= HELL_GRUND + HELL_AUDIO * band;\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

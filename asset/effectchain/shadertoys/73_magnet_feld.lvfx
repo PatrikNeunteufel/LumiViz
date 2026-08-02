@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "73_magnet_feld",
+        "description": "Generiert aus asset/shadertoys/73_magnet_feld.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 73 Magnet-Feld — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. GLOW: Feldlinien zweier wandernder Pole.\n//\n// IDEE: Das Potential zweier Ladungen (+/−) wird berechnet; seine\n// HÖHENLINIEN (fract-Bänder des Potentials) sind die Feldlinien — sie\n// verformen sich live, wenn die Pole umeinander kreisen. Ströme laufen\n// als Helligkeit die Linien entlang. Mitten = Polabstand.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float LINIEN     = 14.0;  // Höhenlinien-Dichte\nconst float LINIEN_DICKE = 0.10; // relative Breite einer Linie\nconst float POL_TEMPO  = 0.4;\nconst float ABSTAND    = 0.45;\nconst float ABSTAND_MITTEN = 0.25;\nconst float STROM_TEMPO = 2.0;\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float mid = texture(iChannel0, vec2(0.30, 0.25)).x;\n    float abst = ABSTAND + ABSTAND_MITTEN * mid;\n\n    // Pole kreisen umeinander\n    vec2 plus  = abst * vec2(cos(iTime * POL_TEMPO), sin(iTime * POL_TEMPO));\n    vec2 minus = -plus;\n    float d1 = length(uv - plus) + 1e-3;\n    float d2 = length(uv - minus) + 1e-3;\n    // Potential + Feldlinien (fract-Bänder)\n    float pot = log(d2 / d1);  // Dipol-Potential (2D)\n    float band = abs(fract(pot * LINIEN * 0.15915) - 0.5) * 2.0;  // 0 auf Linie\n    float linie = smoothstep(LINIEN_DICKE, LINIEN_DICKE * 0.3, band);\n    // Strom: Lauflicht entlang des Potentials\n    float strom = pow(0.5 + 0.5 * sin(pot * 8.0 - iTime * STROM_TEMPO), 5.0);\n\n    vec3 col = vec3(0.012, 0.012, 0.03);\n    col += linie * vec3(0.15, 0.3, 0.6);\n    col += linie * strom * vec3(0.4, 0.8, 1.0) * 1.2;\n    // Pole selbst glühen (+ rot, − blau)\n    col += exp(-d1 * 14.0) * vec3(1.0, 0.3, 0.2) * 1.5;\n    col += exp(-d2 * 14.0) * vec3(0.2, 0.4, 1.0) * 1.5;\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

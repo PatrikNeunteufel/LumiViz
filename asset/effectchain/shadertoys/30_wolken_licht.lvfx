@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "30_wolken_licht",
+        "description": "Generiert aus asset/shadertoys/30_wolken_licht.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 30 Wolken-Licht — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. VOLUMETRIK (durchleuchtete Wolkenschicht).\n//\n// IDEE: Ein echter Volumen-Marsch: entlang des Blickstrahls wird die\n// FBM-Dichte aufsummiert; je Sample wird zusätzlich ein kurzer Schritt\n// Richtung Sonne gegangen (Selbstabschattung). Der Bass verdichtet die\n// Wolken, die Höhen lassen die Sonne gleißen.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   SAMPLES      = 24;    // Volumen-Samples (Qualität vs. Kosten)\nconst float DICHTE_GRUND = 1.2;\nconst float DICHTE_BASS  = 0.8;\nconst float WOLKEN_TEMPO = 0.06;  // Zug der Wolken\nconst vec3  SONNE        = vec3(0.5, 0.35, 0.6); // Richtung (wird normalisiert)\nconst float STREUUNG     = 0.7;   // wie hell die Sonne durchscheint\nconst int   OKTAVEN      = 4;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p), f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\nfloat fbm(vec2 p)\n{\n    float v = 0.0, a = 0.5;\n    for (int i = 0; i < OKTAVEN; ++i) { v += a * vnoise(p); p *= 2.11; a *= 0.5; }\n    return v;\n}\n// Wolkendichte an einem 3D-Punkt (Schicht y = 0..1; 2D-FBM + Höhenprofil)\nfloat dichte(vec3 p, float basis)\n{\n    float profil = smoothstep(0.0, 0.3, p.y) * smoothstep(1.0, 0.6, p.y);\n    float d = fbm(p.xz * 0.8 + iTime * WOLKEN_TEMPO) - 0.45;\n    return clamp(d, 0.0, 1.0) * profil * basis;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float treb = texture(iChannel0, vec2(0.70, 0.25)).x;\n    vec3 sonne = normalize(SONNE);\n    float basis = DICHTE_GRUND + DICHTE_BASS * bass;\n\n    vec3 ro = vec3(0.0, 0.2, iTime * 0.3);\n    vec3 rd = normalize(vec3(uv.x, uv.y + 0.35, 1.2));\n\n    // Himmel hinter den Wolken\n    vec3 col = mix(vec3(0.5, 0.65, 0.9), vec3(0.1, 0.2, 0.45),\n                   clamp(rd.y * 1.5, 0.0, 1.0));\n    col += pow(max(dot(rd, sonne), 0.0), 128.0) * vec3(1.2, 1.0, 0.7) *\n           (1.0 + treb);\n\n    // Volumen-Marsch durch die Schicht y ∈ [0.4, 1.4]\n    float transmission = 1.0;\n    vec3 wolke = vec3(0.0);\n    for (int i = 0; i < SAMPLES; ++i)\n    {\n        float t = 1.0 + float(i) * 0.35;\n        vec3 p = ro + rd * t;\n        p.y = (p.y + 0.6);  // Schicht ins Sichtfeld heben\n        float d = dichte(p, basis) * 0.30;\n        if (d > 0.001)\n        {\n            // Licht-Sample: ein Schritt Richtung Sonne = Selbstabschattung\n            float licht = dichte(p + sonne * 0.5, basis);\n            float hell = exp(-licht * 2.5) * STREUUNG + 0.15;\n            wolke += transmission * d * vec3(hell);\n            transmission *= exp(-d * 1.8);\n            if (transmission < 0.05) break;\n        }\n    }\n    col = col * transmission + wolke * vec3(1.0, 0.97, 0.92) * 2.0;\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

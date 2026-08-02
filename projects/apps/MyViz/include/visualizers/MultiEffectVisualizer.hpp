@@ -81,6 +81,17 @@ public:
     lumi::multieffect::CompileResult recompileChain();
 
     /**
+     * Letzter GL-Kompilierfehler eines Shadertoy-Nodes ("" = fehlerfrei).
+     * Der Panel-Editor zeigt ihn beim (Neu-)Aufbau an — dank `#line 1` im
+     * Wrapper tragen die Treiber-Logs die ZEILEN DES NUTZER-CODES (Strang S).
+     */
+    [[nodiscard]] std::string shadertoyError(uint64_t nodeId) const
+    {
+        const auto it = m_leafRuntimes.find(nodeId);
+        return it != m_leafRuntimes.end() ? it->second.stError : std::string();
+    }
+
+    /**
      * @brief Parse an .avs file, translate it into the chain, and install it.
      * @param path Absolute path to a Nullsoft AVS preset.
      * @param outReport Optional: receives parser + translation warnings.
@@ -544,6 +555,22 @@ private:
         // Engine je Node; GL-Freigabe via cleanup() in resetRuntimes
         std::unique_ptr<MilkdropVisualizer> milk;
         uint64_t milkRevision = 0;  ///< zuletzt uebernommene Params-Revision
+
+        // Shadertoy-Node (Strang S, S65): pro Node kompiliertes Wrapper-Programm.
+        // Programm stirbt mit m_leafRuntimes.clear() (Context ist dort current).
+        std::unique_ptr<QOpenGLShaderProgram> stProgram;
+        std::string stCompiled;  ///< Code-Snapshot hinter den Programmen (alle Pässe)
+        std::string stError;     ///< letzter Kompilierfehler ("" = ok; Panel fragt ab)
+        int stFrame = 0;         ///< iFrame seit Kompilierung (deterministisch)
+        // Multipass (S4): Buffer A..D als RGBA32F-Ping-Pong in Chain-Auflösung.
+        // Nach jedem Buffer-Render wird cur GESWAPT — dadurch liest ein
+        // späterer Pass automatisch das frische Bild, ein früherer/selbst-
+        // referenzierender das Vorframe (Original-Semantik).
+        std::unique_ptr<QOpenGLShaderProgram> stBufProgram[4];
+        std::unique_ptr<QOpenGLFramebufferObject> stBufFbo[4][2];
+        int stBufCur[4] = {0, 0, 0, 0};
+        int stBufW = 0;
+        int stBufH = 0;
     };
 
     /** Render-thread state of one list node, keyed by ChainNode::nodeId. */
@@ -843,6 +870,12 @@ private:
                   const lumi::multieffect::FlameParams& params);
     void runReactionDiffusion(const lumi::multieffect::ChainNode& node,
                               const lumi::multieffect::ReactionDiffusionParams& params);
+    /// Shadertoy-Node (Strang S): ein Fragment-Pass in Chain-Auflösung.
+    void runShadertoy(const lumi::multieffect::ChainNode& node,
+                      const lumi::multieffect::ShadertoyParams& params);
+    /// 512×2-Audio-Textur des Shadertoy-Vertrags hochladen (Zeile 0 = FFT,
+    /// Zeile 1 = Waveform, 0..1) — je Aufruf frisch (1 KiB, unkritisch).
+    void updateShadertoyAudioTexture();
     /// Bake a gradient preset into a node's 256x1 palette LUT (Batch H shared).
     void ensureFractalLut(LeafRuntime& rt, const std::string& preset);
 
@@ -999,6 +1032,9 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_kleinianShader;    ///< Kleinian tiling (Batch H)
     std::unique_ptr<QOpenGLShaderProgram> m_rdShader;          ///< Reaction-Diffusion sim/show (Batch H)
     unsigned int m_specTex = 0;  ///< 1D spectrum upload for Timescope (deleted in onCleanup)
+    /// Shadertoy-Audio (Strang S): geteilte 512×2-R8-Textur (Zeile 0 = FFT,
+    /// Zeile 1 = Waveform); je runShadertoy frisch hochgeladen, Freigabe onCleanup
+    unsigned int m_stAudioTex = 0;
 
     // Multi Delay: 6 host-shared frame ring buffers (r_multidelay), cleared with
     // the runtimes. Input nodes fill them; output nodes read the delayed frame.

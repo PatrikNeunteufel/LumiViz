@@ -13,6 +13,7 @@
 
 #include "visualizers/multieffect/AvsChainTranslator.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
+#include "visualizers/multieffect/ShadertoyWrapper.hpp"
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 
@@ -39,6 +40,7 @@
 #include <QString>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <filesystem>
 
@@ -3091,6 +3093,12 @@ void MultiEffectVisualizer::onCleanup()
             ctx->functions()->glDeleteTextures(1, &m_specTex);
         m_specTex = 0;
     }
+    if (m_stAudioTex != 0)
+    {
+        if (auto* ctx = QOpenGLContext::currentContext())
+            ctx->functions()->glDeleteTextures(1, &m_stAudioTex);
+        m_stAudioTex = 0;
+    }
     m_quadVao.reset();
     m_quadVbo.reset();
     m_warpVao.reset();
@@ -3872,6 +3880,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const SuperScope3DParams& params) const { self.runSuperScope3D(node, params); }
         void operator()(const Terrain3DParams& params) const { self.runTerrain3D(node, params); }
         void operator()(const GlowOrbsParams& params) const { self.runGlowOrbs(node, params); }
+        void operator()(const ShadertoyParams& params) const { self.runShadertoy(node, params); }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
     std::visit(Visitor{*this, node}, node.params);
@@ -12151,6 +12160,242 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
     pair.swap();
     m_quadVao->release();
     bindActive();
+}
+
+// =============================================================================
+// Shadertoy-Node (Strang S, S65) — ein Fragment-Pass in Chain-Auflösung
+// =============================================================================
+
+void MultiEffectVisualizer::updateShadertoyAudioTexture()
+{
+    auto* f = QOpenGLContext::currentContext()->functions();
+    // 512×2, Zeile 0 = FFT-Spektrum (0..1, App-Skala), Zeile 1 = Waveform
+    // (0,5 + 0,5·x — Shadertoy-Konvention: Nulllinie in der Mitte).
+    // PORT-Annahme: Shadertoy speist getByteFrequencyData (dB-skaliert) —
+    // unsere App-Skala ist linear-normalisiert; die Feinabstimmung ist ein
+    // dokumentierter Sichttest-Punkt (Plan §S2 „per Sonde vermessen").
+    std::array<unsigned char, 1024> pixels{};
+    const std::vector<float> spec = getSpectrum();
+    const std::vector<float> wave = getWaveform();
+    const auto sampleAt = [](const std::vector<float>& v, int i, int n) {
+        if (v.empty()) return 0.0f;
+        const std::size_t idx = static_cast<std::size_t>(
+            (static_cast<double>(i) / n) * static_cast<double>(v.size()));
+        return v[std::min(idx, v.size() - 1)];
+    };
+    for (int i = 0; i < 512; ++i)
+    {
+        const float s = std::clamp(sampleAt(spec, i, 512), 0.0f, 1.0f);
+        const float w = std::clamp(0.5f + 0.5f * sampleAt(wave, i, 512), 0.0f, 1.0f);
+        pixels[static_cast<std::size_t>(i)] = static_cast<unsigned char>(s * 255.0f + 0.5f);
+        pixels[static_cast<std::size_t>(512 + i)] =
+            static_cast<unsigned char>(w * 255.0f + 0.5f);
+    }
+
+    if (m_stAudioTex == 0)
+    {
+        f->glGenTextures(1, &m_stAudioTex);
+        f->glBindTexture(GL_TEXTURE_2D, m_stAudioTex);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 512, 2, 0, GL_RED,
+                        GL_UNSIGNED_BYTE, nullptr);
+    }
+    else
+    {
+        f->glBindTexture(GL_TEXTURE_2D, m_stAudioTex);
+    }
+    f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    f->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 2, GL_RED, GL_UNSIGNED_BYTE,
+                       pixels.data());
+    f->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+}
+
+void MultiEffectVisualizer::runShadertoy(const ChainNode& node,
+                                         const ShadertoyParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+    const int nBuffers = static_cast<int>(std::min<std::size_t>(params.buffers.size(), 4));
+
+    // Kompilieren nur bei Code-Wechsel (Snapshot-Vertrag wie fracCompiled) —
+    // der Snapshot umfasst ALLE Pässe; Bindungs-Änderungen brauchen keinen
+    // Rebuild (Texturen/Uniforms je Draw). `#line 1` zeigt Nutzer-Zeilen.
+    std::string snapshot = params.code;
+    for (const auto& b : params.buffers) snapshot += "\n\x01" + b.code;
+    if (rt.stProgram == nullptr || rt.stCompiled != snapshot)
+    {
+        rt.stCompiled = snapshot;
+        rt.stError.clear();
+        rt.stFrame = 0;
+        const auto compile = [&](const std::string& frag, const char* label)
+            -> std::unique_ptr<QOpenGLShaderProgram> {
+            auto program = std::make_unique<QOpenGLShaderProgram>();
+            if (!program->addShaderFromSourceCode(QOpenGLShader::Vertex,
+                                                  kQuadVertexShader) ||
+                !program->addShaderFromSourceCode(QOpenGLShader::Fragment,
+                                                  frag.c_str()) ||
+                !program->link())
+            {
+                rt.stError = std::string(label) + ": " + program->log().toStdString();
+                return nullptr;
+            }
+            return program;
+        };
+        rt.stProgram = compile(lumi::shadertoy::wrapFragment(params.code), "Image");
+        for (int i = 0; i < 4; ++i)
+        {
+            rt.stBufProgram[i].reset();
+            if (rt.stProgram != nullptr && i < nBuffers)
+            {
+                const std::string label = std::string("Buffer ") +
+                                          static_cast<char>('A' + i);
+                rt.stBufProgram[i] = compile(
+                    lumi::shadertoy::wrapBufferFragment(
+                        params.buffers[static_cast<std::size_t>(i)].code),
+                    label.c_str());
+                if (rt.stBufProgram[i] == nullptr) rt.stProgram.reset();
+            }
+        }
+        if (rt.stProgram == nullptr)
+        {
+            BasicLogger::logWarning("MultiEffect: Shadertoy-Kompilierfehler: " +
+                                    rt.stError.substr(0, 400));
+        }
+    }
+    if (rt.stProgram == nullptr) return;  // Kompilierfehler ⇒ Passthrough
+
+    // Buffer-Ziele (S4): RGBA32F-Ping-Pong in Chain-Auflösung; bei Groessen-
+    // wechsel neu (Feedback-Zustand beginnt dann frisch — wie Chain-Surfaces)
+    if (nBuffers > 0 &&
+        (rt.stBufFbo[0][0] == nullptr || rt.stBufW != m_surfaceWidth ||
+         rt.stBufH != m_surfaceHeight))
+    {
+        QOpenGLFramebufferObjectFormat fmt;
+        fmt.setInternalTextureFormat(GL_RGBA32F);
+        for (int i = 0; i < 4; ++i)
+        {
+            for (int k = 0; k < 2; ++k)
+            {
+                rt.stBufFbo[i][k] = std::make_unique<QOpenGLFramebufferObject>(
+                    m_surfaceWidth, m_surfaceHeight, fmt);
+                rt.stBufFbo[i][k]->bind();
+                f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+                f->glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+                f->glClear(GL_COLOR_BUFFER_BIT);
+                rt.stBufFbo[i][k]->release();
+            }
+            rt.stBufCur[i] = 0;
+        }
+        rt.stBufW = m_surfaceWidth;
+        rt.stBufH = m_surfaceHeight;
+    }
+
+    const bool wantsAudio = [&]() {
+        if (lumi::multieffect::shadertoyAudioChannel(params.imageInput) >= 0) return true;
+        for (const auto& b : params.buffers)
+        {
+            if (lumi::multieffect::shadertoyAudioChannel(b.input) >= 0) return true;
+        }
+        return false;
+    }();
+    if (wantsAudio) updateShadertoyAudioTexture();
+
+    float bass = 0.0f, mid = 0.0f, treb = 0.0f;
+    computeAudioBands(getSpectrum(), bass, mid, treb);
+
+    const QVector3D res(static_cast<float>(m_surfaceWidth),
+                        static_cast<float>(m_surfaceHeight), 1.0f);
+    const QVector3D audioRes(512.0f, 2.0f, 1.0f);
+
+    // Gemeinsamer Uniform-/Bindungs-Satz je Pass. Buffer-Lesen: stBufCur[j]
+    // zeigt nach dem Swap des jeweiligen Passes auf das FRISCHE Bild — ein
+    // frueherer Pass liefert also dieses Frame, self/spaeter das Vorframe.
+    const auto setupPass = [&](QOpenGLShaderProgram& p,
+                               const std::array<int, 4>& input) {
+        p.setUniformValue("iResolution", res);
+        p.setUniformValue("iTime", static_cast<float>(m_scriptClock));
+        p.setUniformValue("iTimeDelta", m_deltaTime);
+        p.setUniformValue("iFrame", rt.stFrame);
+        p.setUniformValue("iFrameRate",
+                          m_deltaTime > 0.0f ? 1.0f / m_deltaTime : 60.0f);
+        p.setUniformValue("iMouse", QVector4D(0, 0, 0, 0));
+        // iDate deterministisch (Batch-Renderer-Merkregel): Sim-Uhr als Sekunden
+        p.setUniformValue(
+            "iDate", QVector4D(2026.0f, 1.0f, 1.0f, static_cast<float>(m_scriptClock)));
+        p.setUniformValue("iSampleRate", 44100.0f);
+        for (int c = 0; c < 4; ++c)
+        {
+            const int bind = input[static_cast<std::size_t>(c)];
+            unsigned int tex = 0;
+            QVector3D chRes(0, 0, 1);
+            if (bind == lumi::multieffect::kShadertoyInputAudio)
+            {
+                tex = m_stAudioTex;
+                chRes = audioRes;
+            }
+            else if (bind >= 0 && bind < nBuffers)
+            {
+                tex = rt.stBufFbo[bind][rt.stBufCur[bind]]->texture();
+                chRes = res;
+            }
+            p.setUniformValue(("iChannelTime[" + std::to_string(c) + "]").c_str(),
+                              0.0f);  // Video-Inputs: Stufe 2
+            p.setUniformValue(
+                ("iChannelResolution[" + std::to_string(c) + "]").c_str(), chRes);
+            p.setUniformValue(("iChannel" + std::to_string(c)).c_str(), c);
+            f->glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(c));
+            f->glBindTexture(GL_TEXTURE_2D, tex);
+        }
+        p.setUniformValue("bass", bass);
+        p.setUniformValue("mid", mid);
+        p.setUniformValue("treb", treb);
+        p.setUniformValue("vol", m_audioLevel);
+        p.setUniformValue("beat", m_frameBeat ? 1.0f : 0.0f);
+    };
+
+    m_quadVao->bind();
+
+    // Buffer-Pässe in Reihenfolge A→D (Original-Semantik)
+    for (int i = 0; i < nBuffers; ++i)
+    {
+        QOpenGLShaderProgram& bp = *rt.stBufProgram[i];
+        QOpenGLFramebufferObject* target = rt.stBufFbo[i][1 - rt.stBufCur[i]].get();
+        target->bind();
+        f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+        bp.bind();
+        setupPass(bp, params.buffers[static_cast<std::size_t>(i)].input);
+        f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        bp.release();
+        target->release();
+        rt.stBufCur[i] = 1 - rt.stBufCur[i];  // Swap: cur = frisches Bild
+    }
+
+    // Image-Pass auf die Chain-Surface (mit Blend gegen das aktuelle Bild)
+    SurfacePair& pair = active();
+    pair.current()->release();
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+
+    QOpenGLShaderProgram& p = *rt.stProgram;
+    p.bind();
+    setupPass(p, params.imageInput);
+    p.setUniformValue("_lumiPrev", 4);
+    f->glActiveTexture(GL_TEXTURE4);
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    p.setUniformValue("_lumiBlend", std::clamp(params.blend, 0, 2));
+    f->glActiveTexture(GL_TEXTURE0);
+
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    m_quadVao->release();
+    p.release();
+    pair.partner()->release();
+    pair.swap();
+    bindActive();
+    ++rt.stFrame;
 }
 
 // =============================================================================

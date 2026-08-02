@@ -1,0 +1,26 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "shadertoy",
+                "name": "Sonde Feedback-Trail (S4)",
+                "description": "S-Pruefstand Multipass (S65): Buffer A liest SICH SELBST (iChannel0 = Buffer A, Vorframe) mit Decay 0.97 und injiziert einen wandernden Lichtpunkt - der Image-Pass zeigt Buffer A. Ohne funktionierendes Ping-Pong: nur ein Punkt (mean ~0.001); mit: Lissajous-Leuchtspur.",
+                "imageInput": [0, -1, -1, -1],
+                "blend": 0,
+                "code": "// LumiViz-Sonde (eigener Shader, S65): Buffer A anzeigen\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    fragColor = vec4(texture(iChannel0, uv).rgb, 1.0);\n}\n",
+                "buffers": [
+                    {
+                        "input": [0, -1, -1, -1],
+                        "code": "// LumiViz-Sonde: Selbst-Referenz = Vorframe + Decay + Wanderpunkt\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    vec3 prev = texture(iChannel0, uv).rgb * 0.97;\n    vec2 p = 0.5 + 0.38 * vec2(cos(iTime * 1.7), sin(iTime * 2.3));\n    float d = length((uv - p) * vec2(iResolution.x / iResolution.y, 1.0));\n    vec3 inject = smoothstep(0.05, 0.0, d) * vec3(1.0, 0.6, 0.2);\n    fragColor = vec4(max(prev, inject), 1.0);\n}\n"
+                    }
+                ]
+            }
+        ]
+    }
+}

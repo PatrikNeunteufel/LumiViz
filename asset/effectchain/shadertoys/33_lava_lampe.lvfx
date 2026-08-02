@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "33_lava_lampe",
+        "description": "Generiert aus asset/shadertoys/33_lava_lampe.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 33 Lava-Lampe — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. 2D-METABALL-FELD mit harter Iso-Kante.\n//\n// IDEE: Mehrere Blobs steigen und sinken (verschiedene Tempi/Phasen);\n// ihre Gauß-Felder summieren sich, eine Iso-Schwelle mit HARTER Kante\n// formt die Lava. Innen ein Glut-Gradient, außen Glas-Vignette.\n// Der Bass bläht die Blobs, die Lautstärke heizt die Farbe.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   BLOBS       = 6;\nconst float BLOB_GROESSE = 0.16;\nconst float BASS_BLAEHUNG = 0.08;\nconst float STEIG_TEMPO = 0.25;   // Auf-/Abstiegs-Tempo\nconst float ISO_SCHWELLE = 1.0;   // Feldstärke, ab der \"Lava\" ist\nconst float ISO_KANTE   = 0.02;   // Kantenbreite: 0.02 = hart\nconst float GLUT        = 1.3;    // Innenglut-Verstärkung\n// ----------------------------------------------------------------------------\n\nfloat h1(float n) { return fract(sin(n) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float vol  = texture(iChannel0, vec2(0.15, 0.25)).x;\n\n    float feld = 0.0;\n    for (int i = 0; i < BLOBS; ++i)\n    {\n        float fi = float(i);\n        // Auf/Ab: sin mit eigenem Tempo/Phase je Blob; x pendelt leicht\n        float phase = iTime * STEIG_TEMPO * (0.6 + 0.8 * h1(fi * 3.3)) + fi * 2.4;\n        vec2 p = vec2(0.7 * (h1(fi * 7.1) - 0.5) + 0.08 * sin(phase * 1.7),\n                      0.75 * sin(phase));\n        float r = BLOB_GROESSE * (0.7 + 0.6 * h1(fi * 5.9)) + BASS_BLAEHUNG * bass;\n        float d2 = dot(uv - p, uv - p);\n        feld += r * r / (d2 + 1e-4);  // Metaball-Beitrag (~1 am Rand r)\n    }\n    // HARTE Iso-Kante: Lava/kein-Lava ohne Verlauf\n    float lava = smoothstep(ISO_SCHWELLE - ISO_KANTE, ISO_SCHWELLE + ISO_KANTE, feld);\n    // Innenglut: Feldstärke über der Schwelle = Kern heller/gelber\n    float kern = clamp((feld - ISO_SCHWELLE) * 0.5, 0.0, 1.0);\n    vec3 lavaFarbe = mix(vec3(0.9, 0.2, 0.05), vec3(1.0, 0.85, 0.3),\n                         kern * GLUT * (0.6 + 0.8 * vol));\n    // Hintergrund: warmes Lampenglas mit Vignette\n    vec3 glas = mix(vec3(0.10, 0.02, 0.05), vec3(0.03, 0.01, 0.02),\n                    length(uv));\n    vec3 col = mix(glas, lavaFarbe, lava);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

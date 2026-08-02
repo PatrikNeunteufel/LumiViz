@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "11_aurora_vorhang",
+        "description": "Generiert aus asset/shadertoys/11_aurora_vorhang.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 11 Aurora-Vorhang — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: Leuchtbänder = Gauß-Glocken um Höhenlinien, die per Value-Noise\n// wogen und seitlich ziehen. Mitten = Breite, Höhen = Helligkeit. + Sterne.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   BAENDER       = 4;     // Anzahl Nordlicht-Bänder\nconst float WOGEN_TEMPO   = 0.45;  // vertikales Wogen\nconst float ZUG_TEMPO     = 0.30;  // seitlicher Zug\nconst float WOGEN_AMP     = 0.20;  // Höhenausschlag der Bänder\nconst float BREITE_GRUND  = 0.05;  // Bandbreite Grundwert\nconst float BREITE_FLACKER = 0.10; //  … Noise-Flackern\nconst float BREITE_MITTEN = 0.08;  //  … Mitten-Verbreiterung\nconst float HELL_GRUND    = 0.22;\nconst float HELL_HOEHEN   = 0.30;\nconst float STERN_DICHTE  = 0.9985; // näher an 1 = weniger Sterne\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\n// Value-Noise: Zufall an Gitterpunkten, dazwischen weich interpoliert\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p);\n    vec2 f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    float treb = texture(iChannel0, vec2(0.70, 0.25)).x;\n    float mid  = texture(iChannel0, vec2(0.30, 0.25)).x;\n    vec3 col = mix(vec3(0.00, 0.01, 0.04), vec3(0.01, 0.00, 0.06), uv.y);\n    for (int i = 0; i < BAENDER; ++i)\n    {\n        float fi = float(i);\n        // Höhenlinie: Grundhöhe + Noise-Wogen (x wandert = seitlicher Zug)\n        float band = 0.50 + 0.12 * fi +\n                     WOGEN_AMP * vnoise(vec2(uv.x * 2.0 - iTime * ZUG_TEMPO + fi * 5.0,\n                                             iTime * WOGEN_TEMPO + fi));\n        float w = BREITE_GRUND +\n                  BREITE_FLACKER * vnoise(vec2(uv.x * 4.0 - iTime * 0.25, fi * 3.0)) +\n                  BREITE_MITTEN * mid;\n        float glow = exp(-pow((uv.y - band) / w, 2.0));  // Gauß-Glocke\n        vec3 tint = mix(vec3(0.1, 0.9, 0.5), vec3(0.5, 0.2, 0.9), fi / 3.0);\n        col += glow * tint * (HELL_GRUND + HELL_HOEHEN * treb);\n    }\n    // Sterne: seltenste Hash-Werte im 2x2-Raster leuchten\n    float star = step(STERN_DICHTE, n21(floor(fragCoord / 2.0))) * (0.3 + 0.7 * treb);\n    col += star;\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

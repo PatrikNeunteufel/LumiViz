@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "27_schwarzes_loch",
+        "description": "Generiert aus asset/shadertoys/27_schwarzes_loch.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 27 Schwarzes Loch — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. GRAVITATIONSLINSE (2D-Näherung).\n//\n// IDEE: Die Bildkoordinaten werden zum Zentrum hin gebogen (Ablenkung\n// ~1/Abstand — die Linsen-Näherung), dann wird damit eine wirbelnde\n// Akkretionsscheibe (FBM in Polar) gesampelt. Innerhalb des\n// Ereignishorizonts bleibt es schwarz; ein Photonenring glüht am Rand.\n// Doppler-Färbung: die auf uns zukommende Seite bläulich, die andere rot.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float HORIZONT      = 0.18;  // Radius des schwarzen Kerns\nconst float LINSE         = 0.10;  // Stärke der Lichtablenkung\nconst float SCHEIBEN_TEMPO = 0.8;  // Rotation der Akkretionsscheibe\nconst float SCHEIBE_INNEN = 0.20;  // Scheibenring innen/außen\nconst float SCHEIBE_AUSSEN = 0.85;\nconst float DOPPLER       = 0.5;   // Blau/Rot-Asymmetrie\nconst float BASS_GLUT     = 0.8;   // Bass heizt die Scheibe\nconst int   OKTAVEN       = 4;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p), f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\nfloat fbm(vec2 p)\n{\n    float v = 0.0, a = 0.5;\n    for (int i = 0; i < OKTAVEN; ++i) { v += a * vnoise(p); p *= 2.13; a *= 0.5; }\n    return v;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n\n    float r = length(uv) + 1e-4;\n    // Gravitationslinse: Punkte werden zum Zentrum hin verschoben (~1/r)\n    vec2 gebogen = uv * (1.0 - LINSE / r);\n    float rb = length(gebogen) + 1e-4;\n    float ab = atan(gebogen.y, gebogen.x);\n\n    vec3 col = vec3(0.0);\n    if (r > HORIZONT)\n    {\n        // Akkretionsscheibe: FBM entlang der (gebogenen) Polarkoordinaten,\n        // differentiell rotierend (innen schneller — wie echte Scheiben)\n        float rot = iTime * SCHEIBEN_TEMPO / max(rb, 0.15);\n        float dichte = fbm(vec2(ab * 2.0 + rot, rb * 6.0));\n        float ring = smoothstep(SCHEIBE_INNEN, SCHEIBE_INNEN + 0.1, rb) *\n                     smoothstep(SCHEIBE_AUSSEN, SCHEIBE_AUSSEN - 0.3, rb);\n        float glut = dichte * ring * (1.0 + BASS_GLUT * bass);\n        // Doppler: linke/rechte Seite verschieden getönt\n        float seite = 0.5 + 0.5 * sin(ab);\n        vec3 heiss = mix(vec3(1.0, 0.45, 0.15), vec3(0.55, 0.75, 1.0),\n                         DOPPLER * seite + (1.0 - DOPPLER) * 0.5);\n        col = glut * glut * 2.2 * heiss;\n        // Photonenring: schmaler Glühsaum direkt am Horizont\n        col += smoothstep(0.03, 0.0, abs(r - HORIZONT * 1.15)) *\n               vec3(1.0, 0.8, 0.5) * (0.8 + bass);\n        // Hintergrund-Sterne, ebenfalls gelinst\n        float stern = step(0.9975, n21(floor(gebogen * 60.0)));\n        col += stern * 0.6 * smoothstep(SCHEIBE_INNEN, SCHEIBE_AUSSEN, rb);\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

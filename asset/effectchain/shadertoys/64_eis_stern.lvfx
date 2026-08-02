@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "64_eis_stern",
+        "description": "Generiert aus asset/shadertoys/64_eis_stern.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 64 Eis-Stern — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KRISTALL: wachsende Schneeflocke.\n//\n// IDEE: 6-fach-Symmetrie durch Winkelfaltung; im gefalteten Keil wachsen\n// Hauptast + Seitenäste (Strecken-SDFs), deren LÄNGE mit der Zeit\n// zyklisch wächst — die Flocke friert vor, schmilzt, friert neu.\n// Schimmer: ein Lichtband läuft radial über das Eis. Höhen = Glitzern.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float WACHS_DAUER = 8.0;   // Sekunden je Wachstumszyklus\nconst int   SEITENAESTE = 4;\nconst float AST_WINKEL  = 0.9;   // Winkel der Seitenäste\nconst float DICKE       = 0.010;\nconst float SCHIMMER_TEMPO = 1.5;\nconst float GLITZER_HOEHEN = 1.0;\n// ----------------------------------------------------------------------------\n\nvec2 rot2(vec2 p, float a) { return vec2(p.x * cos(a) - p.y * sin(a),\n                                         p.x * sin(a) + p.y * cos(a)); }\nfloat strecke(vec2 p, vec2 a, vec2 b)\n{\n    vec2 pa = p - a, ba = b - a;\n    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);\n    return length(pa - ba * h);\n}\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float treb = texture(iChannel0, vec2(0.70, 0.25)).x;\n    float wuchs = smoothstep(0.0, 0.7, fract(iTime / WACHS_DAUER)) *\n                  smoothstep(1.0, 0.85, fract(iTime / WACHS_DAUER));  // wachsen+schmelzen\n\n    // 6-fach falten (+ Spiegel): alles landet in einem 30°-Keil\n    float a = atan(uv.y, uv.x);\n    float r = length(uv);\n    a = abs(mod(a, 1.0472) - 0.5236);\n    vec2 p = vec2(cos(a), sin(a)) * r;\n\n    // Hauptast + Seitenäste (Länge über `wuchs` animiert)\n    float haupt = 0.85 * wuchs;\n    float d = strecke(p, vec2(0.0), vec2(haupt, 0.0));\n    for (int i = 1; i <= SEITENAESTE; ++i)\n    {\n        float basis = haupt * float(i) / float(SEITENAESTE + 1);\n        float laenge = 0.28 * wuchs * (1.0 - basis / max(haupt, 1e-3) * 0.7);\n        vec2 wurzel = vec2(basis, 0.0);\n        vec2 spitze = wurzel + laenge * vec2(cos(AST_WINKEL), sin(AST_WINKEL));\n        d = min(d, strecke(p, wurzel, spitze));\n    }\n    float eis = smoothstep(DICKE, DICKE * 0.3, d);\n    float halo = smoothstep(DICKE * 6.0, 0.0, d) * 0.3;\n\n    // Schimmer: radiales Lichtband + Glitzerpunkte auf dem Eis\n    float band = pow(0.5 + 0.5 * sin(r * 14.0 - iTime * SCHIMMER_TEMPO), 5.0);\n    float glitzer = step(0.985, n21(floor(uv * 90.0) + floor(iTime * 6.0))) *\n                    eis * GLITZER_HOEHEN * treb;\n    vec3 col = vec3(0.01, 0.02, 0.05);\n    col += (eis * (0.6 + 0.4 * band) + halo) * vec3(0.55, 0.8, 1.0);\n    col += glitzer * vec3(1.0);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

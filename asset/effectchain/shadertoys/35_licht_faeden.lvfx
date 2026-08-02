@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "35_licht_faeden",
+        "description": "Generiert aus asset/shadertoys/35_licht_faeden.{image,bufferA}.glsl (Multipass).",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 35 Licht-Fäden, Image — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy-Tab \"Image\": iChannel0 = Buffer A. Anzeige + Bloom-Andeutung.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float BLOOM_RADIUS = 0.004;\nconst float BLOOM_STAERKE = 0.5;\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    vec3 c = texture(iChannel0, uv).rgb;\n    // 4-Tap-Bloom: weiche Aura um die Fäden\n    c += BLOOM_STAERKE * 0.25 *\n         (texture(iChannel0, uv + vec2(BLOOM_RADIUS, 0.0)).rgb +\n          texture(iChannel0, uv - vec2(BLOOM_RADIUS, 0.0)).rgb +\n          texture(iChannel0, uv + vec2(0.0, BLOOM_RADIUS)).rgb +\n          texture(iChannel0, uv - vec2(0.0, BLOOM_RADIUS)).rgb);\n    fragColor = vec4(c * 0.85, 1.0);\n}\n",
+        "buffers": [
+          {
+            "code": "// 35 Licht-Fäden, Buffer A — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy-Tab \"Buffer A\": iChannel0 = Buffer A (SELBST = Vorframe!),\n//                           iChannel1 = Music.\n//\n// IDEE: Leuchtpunkte reiten auf einem CURL-NOISE-Feld (divergenzfrei =\n// organische Strömungslinien): die Position je Punkt wird über eine\n// geschlossene Bahn approximiert, deren Form das Feld verbiegt. Der\n// Decay-Trail zieht daraus seidige Lichtfäden (\"Lights\"-Ästhetik).\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   FAEDEN       = 24;    // Anzahl Fäden\nconst float TRAIL        = 0.955; // Fadenlänge (näher an 1 = länger)\nconst float FELD_STAERKE = 0.45;  // wie stark das Feld die Bahnen verbiegt\nconst float FELD_GROESSE = 2.2;   // Wirbelgröße\nconst float TEMPO        = 0.35;\nconst float PUNKT_GROESSE = 0.006;\nconst float BASS_ENERGIE = 1.0;   // Bass macht die Fäden heller\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p), f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\nvec2 curl(vec2 p)\n{\n    vec2 e = vec2(0.02, 0.0);\n    float dx = vnoise(p + e.xy) - vnoise(p - e.xy);\n    float dy = vnoise(p + e.yx) - vnoise(p - e.yx);\n    return vec2(dy, -dx) / (2.0 * e.x);\n}\nfloat h1(float n) { return fract(sin(n) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel1, vec2(0.05, 0.25)).x;\n    vec3 col = texture(iChannel0, fragCoord / iResolution.xy).rgb * TRAIL;\n\n    for (int i = 0; i < FAEDEN; ++i)\n    {\n        float fi = float(i);\n        // Grundbahn: langsame Ellipse je Faden (Hash-Radien/-Phasen) …\n        float ph = iTime * TEMPO * (0.5 + h1(fi * 3.7)) + fi * 2.4;\n        vec2 p = vec2(0.9 * (h1(fi * 5.1) - 0.5) * 2.0 * cos(ph),\n                      0.7 * (h1(fi * 8.3) - 0.5) * 2.0 * sin(ph * 1.3));\n        // … vom Curl-Feld verbogen (Feld wandert langsam mit)\n        p += FELD_STAERKE * curl(p * FELD_GROESSE + iTime * 0.1);\n        float d = length(uv - p);\n        vec3 farbe = 0.5 + 0.5 * cos(fi * 0.7 + iTime * 0.2 + vec3(0.0, 2.1, 4.2));\n        col += smoothstep(PUNKT_GROESSE, 0.0, d) * farbe *\n               (0.5 + BASS_ENERGIE * bass);\n    }\n    fragColor = vec4(min(col, vec3(2.5)), 1.0);\n}\n",
+            "input": [
+              0,
+              4,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

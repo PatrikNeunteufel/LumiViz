@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "25_apollonian_tanz",
+        "description": "Generiert aus asset/shadertoys/25_apollonian_tanz.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 25 Apollonian-Tanz — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. INVERSIONS-FRAKTAL (Kugel-Inversionen).\n//\n// IDEE: Wiederholte Kugel-Inversion (p /= dot(p,p)) mit Kachelung erzeugt\n// das apollonische Kugelgepäck — unendlich ineinander geschachtelte Kugeln.\n// Wir schneiden eine 2D-Ebene hindurch; der Skalenfaktor färbt. Der Bass\n// pumpt den Inversionsradius: die Kugeln tanzen.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   INVERSIONEN = 7;     // Iterationstiefe (mehr = feinere Kugeln)\nconst float SKALA       = 1.25;  // Grund-Inversionsstärke\nconst float SKALA_BASS  = 0.12;  // Bass-Pumpen der Inversion\nconst float ZOOM        = 1.1;\nconst float DREH_TEMPO  = 0.10;\nconst float KANTE       = 0.015; // Kugelrand-Schärfe (klein = hart)\n// ----------------------------------------------------------------------------\n\nvec2 rot2(vec2 p, float a) { return vec2(p.x * cos(a) - p.y * sin(a),\n                                         p.x * sin(a) + p.y * cos(a)); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y * ZOOM;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    uv = rot2(uv, iTime * DREH_TEMPO);\n\n    float s = SKALA + SKALA_BASS * bass;\n    vec3 p = vec3(uv, 0.35 + 0.1 * sin(iTime * 0.2));  // Schnittebene wandert\n    float scale = 1.0;   // akkumulierter Skalenfaktor (für Distanz + Farbe)\n    float trap = 1e9;\n    for (int i = 0; i < INVERSIONEN; ++i)\n    {\n        // Kacheln auf -1..1, dann Kugel-Inversion am Ursprung\n        p = -1.0 + 2.0 * fract(0.5 * p + 0.5);\n        float r2 = dot(p, p);\n        trap = min(trap, r2);\n        float k = s / r2;   // Inversionsfaktor\n        p *= k;\n        scale *= k;\n    }\n    // Abstand zur Kugeloberfläche im Original-Raum (durch scale zurück)\n    float d = 0.25 * abs(p.y) / scale;\n    // harte Kugelränder: alles jenseits KANTE ist schwarz\n    float flaeche = 1.0 - smoothstep(0.0, KANTE, d);\n    // Farbe: Trap + Skala als Fraktal-Tiefe\n    vec3 col = flaeche * (0.5 + 0.5 * cos(log2(scale) * 0.8 + trap * 4.0 +\n                                          iTime * 0.3 + vec3(0.0, 2.1, 4.2)));\n    // leises Hintergrund-Glimmen statt hartem Schwarz im Nichts\n    col += (1.0 - flaeche) * vec3(0.015, 0.01, 0.03);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

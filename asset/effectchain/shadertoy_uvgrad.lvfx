@@ -1,0 +1,20 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "shadertoy",
+                "name": "Sonde UV-Gradient",
+                "description": "S-Pruefstand (S65): deterministischer UV-Verlauf ohne Zeit/Audio - Erwartung mean RGB ca. (0.5, 0.5, 0.25); prueft Pipeline + Bildorientierung (rot waechst nach rechts, gruen nach oben).",
+                "audioChannel": -1,
+                "blend": 0,
+                "code": "// LumiViz-Sonde (eigener Shader, S65): reiner UV-Verlauf\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    fragColor = vec4(uv.x, uv.y, 0.25, 1.0);\n}\n"
+            }
+        ]
+    }
+}

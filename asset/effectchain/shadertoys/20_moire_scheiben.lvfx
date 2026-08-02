@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "20_moire_scheiben",
+        "description": "Generiert aus asset/shadertoys/20_moire_scheiben.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 20 Moiré-Scheiben — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: Zwei Ringsysteme um kreisende Zentren; leicht verstimmte Frequenzen\n// interferieren zu wandernden Moiré-Schlieren.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float ZENTRUM_RADIUS = 0.30;  // Kreisbahn der beiden Zentren\nconst float TEMPO_1X       = 0.90;  // Umlauftempi Zentrum 1 (x/y verschieden\nconst float TEMPO_1Y       = 0.75;  //  = elliptische Bahn)\nconst float TEMPO_2X       = 0.65;\nconst float TEMPO_2Y       = 0.85;\nconst float RING_DICHTE    = 24.0;  // Ringe pro Einheit\nconst float DICHTE_MITTEN  = 18.0;  //  … Mitten-Zuschlag\nconst float VERSTIMMUNG    = 1.04;  // Frequenzverhältnis der Systeme (DIE\nconst float VERSTIMM_BASS  = 0.08;  //  Moiré-Stellschraube) + Bass-Anteil\nconst float FARB_KONTRAST  = 2.0;\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float mid  = texture(iChannel0, vec2(0.30, 0.25)).x;\n    vec2 c1 =  ZENTRUM_RADIUS * vec2(cos(iTime * TEMPO_1X), sin(iTime * TEMPO_1Y));\n    vec2 c2 = -ZENTRUM_RADIUS * vec2(cos(iTime * TEMPO_2X), sin(iTime * TEMPO_2Y));\n    float f = RING_DICHTE + DICHTE_MITTEN * mid;\n    float r1 = sin(length(uv - c1) * f);\n    float r2 = sin(length(uv - c2) * f * (VERSTIMMUNG + VERSTIMM_BASS * bass));\n    float m = r1 * r2;  // Interferenz: gleichphasig hell, gegenphasig dunkel\n    vec3 col = (0.5 + 0.5 * cos(m * FARB_KONTRAST + iTime * 0.4 +\n                                vec3(0.0, 2.1, 4.2))) *\n               smoothstep(-0.2, 0.7, m);\n    col *= smoothstep(1.7, 0.5, length(uv));\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

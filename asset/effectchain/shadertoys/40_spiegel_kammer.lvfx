@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "40_spiegel_kammer",
+        "description": "Generiert aus asset/shadertoys/40_spiegel_kammer.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 40 Spiegel-Kammer — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. 2D-IFS (gefaltete Spiegelräume).\n//\n// IDEE: Die Ebene wird mehrfach gespiegelt (abs), rotiert und skaliert —\n// wie ein Blick in einen verspiegelten Raum, der sich selbst enthält.\n// In jeder Tiefe wird ein Neon-Rechteckrahmen gezeichnet; die Überlagerung\n// aller Tiefen ergibt die unendliche Kammer. Mitten = Faltwinkel-Morphing,\n// Bass = Rahmen-Puls.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   TIEFEN       = 6;     // Spiegelungs-Tiefen\nconst float SKALA        = 1.45;  // Vergrößerung je Tiefe\nconst float WINKEL_GRUND = 0.35;\nconst float WINKEL_MITTEN = 0.30; // Mitten drehen die Spiegel\nconst float WINKEL_DRIFT = 0.04;\nconst float RAHMEN_GROESSE = 0.55;\nconst float RAHMEN_DICKE = 0.015;\nconst float BASS_PULS    = 0.10;  // Bass pumpt die Rahmengröße\n// ----------------------------------------------------------------------------\n\nvec2 rot2(vec2 p, float a) { return vec2(p.x * cos(a) - p.y * sin(a),\n                                         p.x * sin(a) + p.y * cos(a)); }\n// Abstand zum Rechteckrahmen (Kante eines Quadrats)\nfloat rahmen(vec2 p, float halbe)\n{\n    vec2 q = abs(p) - halbe;\n    return abs(length(max(q, 0.0)) + min(max(q.x, q.y), 0.0));\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float mid  = texture(iChannel0, vec2(0.30, 0.25)).x;\n    float winkel = WINKEL_GRUND + WINKEL_MITTEN * mid + iTime * WINKEL_DRIFT;\n    float groesse = RAHMEN_GROESSE + BASS_PULS * bass;\n\n    vec3 col = vec3(0.01, 0.01, 0.02);\n    vec2 p = uv;\n    float s = 1.0;\n    for (int i = 0; i < TIEFEN; ++i)\n    {\n        // Neon-Rahmen dieser Tiefe (Abstand in den Original-Maßstab zurück)\n        float d = rahmen(p, groesse) / s;\n        float kern = smoothstep(RAHMEN_DICKE, RAHMEN_DICKE * 0.4, d);\n        float halo = smoothstep(RAHMEN_DICKE * 6.0, 0.0, d) * 0.25;\n        vec3 farbe = 0.5 + 0.5 * cos(float(i) * 1.1 + iTime * 0.3 +\n                                     vec3(0.0, 2.1, 4.2));\n        col += (kern + halo) * farbe / (1.0 + float(i) * 0.6);\n        // Spiegelung für die nächste Tiefe: falten, drehen, vergrößern\n        p = abs(p) - groesse * 0.5;\n        p = rot2(p, winkel);\n        p *= SKALA;\n        s *= SKALA;\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

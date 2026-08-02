@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "76_plasma_kugel",
+        "description": "Generiert aus asset/shadertoys/76_plasma_kugel.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 76 Plasma-Kugel — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. GLOW: Plasmaglobus mit Blitzfäden.\n//\n// IDEE: Fäden laufen vom Zentrum zur Glaskugel-Innenwand; jeder Faden ist\n// ein Winkel-Pfad, den FBM-artiges Wackeln (sin-Summen je Radius) verbiegt.\n// Die Fäden wandern langsam und ZUCKEN mit den Höhen; wo sie die Wand\n// treffen, entsteht ein heller Fußpunkt.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   FAEDEN     = 7;\nconst float KUGEL      = 0.85;\nconst float FADEN_GLOW = 0.0012;\nconst float WACKELN    = 0.35;\nconst float ZUCKEN_HOEHEN = 0.5;\nconst float WANDERN    = 0.25;   // Fußpunkte wandern um die Kugel\n// ----------------------------------------------------------------------------\n\nfloat h1(float n) { return fract(sin(n) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float treb = texture(iChannel0, vec2(0.70, 0.25)).x;\n    float r = length(uv);\n    float a = atan(uv.y, uv.x);\n\n    vec3 col = vec3(0.008, 0.006, 0.02);\n    // Glaskugel: Rand + leichter Verlauf\n    col += smoothstep(0.01, 0.0, abs(r - KUGEL)) * vec3(0.3, 0.4, 0.6);\n    col += smoothstep(KUGEL, 0.0, r) * vec3(0.02, 0.01, 0.05);\n\n    if (r < KUGEL)\n    {\n        for (int i = 0; i < FAEDEN; ++i)\n        {\n            float fi = float(i);\n            // Zielwinkel des Fadens (wandert + zuckt)\n            float ziel = fi * 6.28318 / float(FAEDEN) + iTime * WANDERN *\n                         (h1(fi * 3.1) - 0.5) * 2.0 +\n                         ZUCKEN_HOEHEN * treb * sin(iTime * 17.0 + fi * 5.0);\n            // Fadenpfad: Winkel weicht mit dem Radius sinusförmig ab\n            float pfad = ziel + WACKELN * (sin(r * 9.0 + iTime * 3.0 + fi * 2.0) *\n                                           (0.3 + r)) * (1.0 - r / KUGEL);\n            // Winkelabstand (wrap-korrekt über sin)\n            float d = abs(sin((a - pfad) * 0.5)) * r * 2.0;\n            float faden = FADEN_GLOW / (d * d + 0.0006) * 0.05;\n            vec3 farbe = mix(vec3(0.5, 0.3, 1.0), vec3(0.9, 0.5, 1.0),\n                             h1(fi * 7.7));\n            col += faden * farbe * smoothstep(KUGEL, KUGEL * 0.3, r);\n            // Fußpunkt an der Wand\n            vec2 fuss = KUGEL * vec2(cos(pfad), sin(pfad));\n            col += exp(-dot(uv - fuss, uv - fuss) * 300.0) *\n                   vec3(0.8, 0.6, 1.0) * 0.8;\n        }\n        // Elektroden-Kern\n        col += exp(-r * 9.0) * vec3(0.9, 0.7, 1.0) * 1.2;\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

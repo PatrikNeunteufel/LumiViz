@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "80_bio_lumineszenz",
+        "description": "Generiert aus asset/shadertoys/80_bio_lumineszenz.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 80 Bio-Lumineszenz — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. BIOLOGIE × GLOW: leuchtende Brandungswelle.\n//\n// IDEE: Nächtlicher Strand: eine Wellenkante (sin + FBM) läuft zyklisch\n// auf den Strand und zieht sich zurück; ENTLANG der Kante leuchtet\n// Plankton türkis (Glow um die Kantenlinie), Gischt-Punkte funkeln.\n// Die Lautstärke ist die Brandungs-Energie (Leuchtkraft + Wellenhub).\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float WELLEN_TEMPO = 0.25;  // Brandungszyklen pro Sekunde\nconst float WELLEN_HUB   = 0.25;  // wie weit die Welle aufläuft\nconst float LEUCHT_VOL   = 1.2;   // Plankton-Leuchtkraft aus der Lautstärke\nconst float KANTEN_GLOW  = 0.04;\nconst float GISCHT       = 0.995; // Funkeldichte (näher 1 = weniger)\nconst int   OKTAVEN      = 4;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p), f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\nfloat fbm(vec2 p)\n{\n    float v = 0.0, a = 0.5;\n    for (int i = 0; i < OKTAVEN; ++i) { v += a * vnoise(p); p *= 2.07; a *= 0.5; }\n    return v;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    float vol = texture(iChannel0, vec2(0.15, 0.25)).x;\n\n    // Wellenkante: Grundlinie + Auflauf-Zyklus + FBM-Ausfransung\n    float zyklus = sin(iTime * WELLEN_TEMPO * 6.28318);\n    float kante = 0.35 + WELLEN_HUB * zyklus * (0.6 + 0.4 * vol) +\n                  0.08 * fbm(vec2(uv.x * 6.0, iTime * 0.4));\n    float dKante = uv.y - kante;\n\n    vec3 col;\n    if (dKante < 0.0)\n    {\n        // Meer: dunkelblau, mit Tiefe dunkler; leichte Wellenstreifen\n        float streifen = 0.5 + 0.5 * sin(uv.y * 60.0 + fbm(uv * 8.0) * 6.0 -\n                                         iTime * 1.5);\n        col = mix(vec3(0.0, 0.03, 0.08), vec3(0.0, 0.08, 0.14), streifen * 0.5);\n        col *= 0.4 + 0.6 * uv.y / max(kante, 0.01);\n    }\n    else\n    {\n        // Strand: dunkler Sand, nass nahe der Kante (spiegelt das Leuchten)\n        float nass = exp(-dKante * 12.0);\n        col = vec3(0.05, 0.045, 0.04) * (0.6 + 0.4 * uv.y);\n        col += nass * vec3(0.0, 0.25, 0.28) * 0.4 * (0.5 + LEUCHT_VOL * vol);\n    }\n    // DAS Leuchten: Plankton entlang der Wellenkante\n    float leuchten = exp(-abs(dKante) / KANTEN_GLOW);\n    col += leuchten * vec3(0.1, 0.9, 0.85) * (0.35 + LEUCHT_VOL * vol);\n    // Gischt-Funkeln nahe der Kante\n    float funkel = step(GISCHT, n21(floor(uv * 200.0) + floor(iTime * 8.0))) *\n                   exp(-abs(dKante) * 8.0);\n    col += funkel * vec3(0.6, 1.0, 0.95);\n    // Nachthimmel-Abdunklung oben\n    col *= 1.0 - 0.4 * smoothstep(0.6, 1.0, uv.y);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "50_dna_helix",
+        "description": "Generiert aus asset/shadertoys/50_dna_helix.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 50 DNA-Helix — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. BIOLOGIE: rotierende Doppelhelix.\n//\n// IDEE: Zwei Sinus-Stränge (um 180° versetzt) laufen vertikal; die\n// x-Position je Höhe ist die Projektion der rotierenden Helix. Sprossen\n// (Basenpaare) verbinden die Stränge in festen Abständen; die Tiefe\n// (cos-Anteil) steuert Größe + Helligkeit — vorne dick, hinten dünn.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float WINDUNGEN   = 3.0;   // Windungen im Bild\nconst float DREH_TEMPO  = 0.8;\nconst float RADIUS      = 0.35;  // Helix-Radius\nconst float STRANG_DICKE = 0.02;\nconst int   SPROSSEN    = 24;    // Basenpaare im Bild\nconst float BASS_DREH   = 1.0;   // Bass beschleunigt die Rotation\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float dreh = iTime * (DREH_TEMPO + BASS_DREH * bass);\n\n    vec3 col = vec3(0.01, 0.012, 0.03);\n    // Phase entlang der Höhe\n    float phase = uv.y * WINDUNGEN * 6.28318 + dreh;\n\n    // die beiden Stränge: x = R·sin(phase [+π]); Tiefe = cos(...)\n    for (int s = 0; s < 2; ++s)\n    {\n        float ph = phase + float(s) * 3.14159;\n        float x = RADIUS * sin(ph);\n        float tiefe = 0.5 + 0.5 * cos(ph);  // 1 = vorn\n        float d = abs(uv.x - x);\n        float dicke = STRANG_DICKE * (0.5 + tiefe);\n        float strang = smoothstep(dicke, dicke * 0.3, d);\n        vec3 farbe = (s == 0) ? vec3(0.3, 0.7, 1.0) : vec3(1.0, 0.5, 0.7);\n        col += strang * farbe * (0.35 + 0.65 * tiefe);\n    }\n    // Sprossen: horizontale Verbinder an quantisierten Höhen\n    for (int i = 0; i < SPROSSEN; ++i)\n    {\n        float y = -1.0 + 2.0 * (float(i) + 0.5) / float(SPROSSEN);\n        // y-Spanne des Bildes ist ±(Bildhöhe/2·Aspekt-normiert) — hier ±1\n        float ph = y * WINDUNGEN * 6.28318 + dreh;\n        float x1 = RADIUS * sin(ph);\n        float x2 = RADIUS * sin(ph + 3.14159);\n        float tiefe = 0.5 + 0.5 * cos(ph);\n        // Punkt-zu-Strecke-Abstand (horizontales Segment auf Höhe y)\n        float xa = min(x1, x2), xb = max(x1, x2);\n        vec2 p = vec2(clamp(uv.x, xa, xb), y);\n        float d = length(uv - p);\n        float sprosse = smoothstep(0.012, 0.004, d);\n        // Basenfarbe wechselt je Sprosse (2 Paare: gelbgrün / orangeblau)\n        vec3 basis = (mod(float(i), 2.0) < 1.0) ? vec3(0.6, 0.9, 0.3)\n                                                : vec3(1.0, 0.7, 0.2);\n        col += sprosse * basis * (0.25 + 0.75 * tiefe);\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

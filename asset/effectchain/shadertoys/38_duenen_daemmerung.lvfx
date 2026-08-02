@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "38_duenen_daemmerung",
+        "description": "Generiert aus asset/shadertoys/38_duenen_daemmerung.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 38 Dünen-Dämmerung — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. TERRAIN-RAYMARCHING (Wüste im Abendlicht).\n//\n// IDEE: Ein Höhenfeld aus überlagerten, scharf gefalteten Sinuswellen\n// (abs(sin) = Dünenkämme) + FBM-Ripples wird geraymarcht; Sonnenstand tief,\n// warme Palette, langer Schattenwurf über dot(n, sonne). Die Mitten lassen\n// den Sand \"flimmern\" (Ripple-Amplitude).\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float DUENEN_HOEHE = 0.5;\nconst float RIPPLE       = 0.03;  // kleine Sandwellen\nconst float RIPPLE_MITTEN = 0.04; // Audio-Zuschlag auf die Ripples\nconst float FLUG_TEMPO   = 0.5;\nconst int   MARSCH       = 72;\nconst vec3  SONNE        = vec3(-0.55, 0.12, 0.3); // tiefer Abendstand\n// ----------------------------------------------------------------------------\n\nfloat g_ripple;\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p), f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\nfloat duenen(vec2 p)\n{\n    // Dünenkämme: abs(sin) ist an der Spitze SCHARF — genau wie echte Kämme;\n    // zwei Richtungen überlagert, Grundwellen leicht gedreht\n    float h = DUENEN_HOEHE * (1.0 - abs(sin(p.x * 0.5 + sin(p.y * 0.3) * 0.8)));\n    h += 0.5 * DUENEN_HOEHE * (1.0 - abs(sin(dot(p, vec2(0.35, 0.25)) + 1.7)));\n    h += g_ripple * vnoise(p * 8.0);  // feine Sand-Ripples\n    return h;\n}\nvec3 himmel(vec3 rd, vec3 sonne)\n{\n    vec3 sky = mix(vec3(0.9, 0.5, 0.25), vec3(0.25, 0.2, 0.45),\n                   clamp(rd.y * 2.0, 0.0, 1.0));\n    sky += pow(max(dot(rd, sonne), 0.0), 64.0) * vec3(1.3, 0.9, 0.5);\n    return sky;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float mid = texture(iChannel0, vec2(0.30, 0.25)).x;\n    g_ripple = RIPPLE + RIPPLE_MITTEN * mid;\n    vec3 sonne = normalize(SONNE);\n\n    vec3 ro = vec3(0.0, 1.1, iTime * FLUG_TEMPO);\n    vec3 rd = normalize(vec3(uv.x, uv.y - 0.12, 1.4));\n\n    vec3 col;\n    if (rd.y > 0.05) { col = himmel(rd, sonne); }\n    else\n    {\n        float t = 0.0;\n        float hDiff = 0.0;\n        for (int i = 0; i < MARSCH; ++i)\n        {\n            vec3 p = ro + rd * t;\n            hDiff = p.y - duenen(p.xz);\n            if (hDiff < 0.01 || t > 35.0) break;\n            t += max(0.15, hDiff * 0.7);\n        }\n        vec3 p = ro + rd * t;\n        vec2 e = vec2(0.05, 0.0);\n        vec3 n = normalize(vec3(duenen(p.xz - e.xy) - duenen(p.xz + e.xy),\n                                2.0 * e.x,\n                                duenen(p.xz - e.yx) - duenen(p.xz + e.yx)));\n        float licht = max(dot(n, sonne), 0.0);\n        // Sand: Licht-/Schattenseite der Dünen deutlich getrennt\n        vec3 sand = mix(vec3(0.35, 0.18, 0.15), vec3(1.0, 0.65, 0.35),\n                        pow(licht, 0.7));\n        col = mix(sand, himmel(rd, sonne), smoothstep(15.0, 35.0, t));  // Dunst\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

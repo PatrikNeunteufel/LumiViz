@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "88_blitz_adern",
+        "description": "Generiert aus asset/shadertoys/88_blitz_adern.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 88 Blitz-Adern — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KOMBI: KIFS-Kristall × Blitz — das\n// Adergeflecht liegt dunkel da; in Zeitfenstern SCHIESST ein Stromstoß\n// durchs Netz (die Adern flammen nacheinander auf, Tiefe für Tiefe).\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   FALTUNGEN   = 7;\nconst float SKALA       = 1.35;\nconst float WINKEL      = 0.62;\nconst float ADER_DICKE  = 0.012;\nconst float STOSS_RATE  = 0.7;   // Stromstöße pro Sekunde\nconst float BASS_ZUENDET = 0.35; // ab dieser Bass-Stärke voller Stoß\n// ----------------------------------------------------------------------------\n\nvec2 rot2(vec2 p, float a) { return vec2(p.x * cos(a) - p.y * sin(a),\n                                         p.x * sin(a) + p.y * cos(a)); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y * 1.3;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n\n    // Stromstoß-Fenster: `front` läuft je Fenster von 0..FALTUNGEN durch\n    float fenster = iTime * STOSS_RATE;\n    float front = fract(fenster) * float(FALTUNGEN + 2);\n    float staerke = smoothstep(BASS_ZUENDET, BASS_ZUENDET + 0.15, bass) * 0.7 + 0.3;\n\n    vec2 p = uv;\n    float s = 1.0;\n    vec3 col = vec3(0.008, 0.008, 0.02);\n    for (int i = 0; i < FALTUNGEN; ++i)\n    {\n        p = abs(p);\n        p = rot2(p, WINKEL + 0.03 * sin(iTime * 0.2));\n        p = p * SKALA - vec2(0.35, 0.15) * SKALA;\n        s *= SKALA;\n        float d = abs(p.y) / s;\n        float ader = smoothstep(ADER_DICKE, ADER_DICKE * 0.3, d);\n        // Grundzustand: dunkles Geflecht\n        col += ader * vec3(0.05, 0.06, 0.10);\n        // Stromfront: die Tiefe |i − front| < 1 flammt blauweiß auf\n        float blitz = exp(-pow(float(i) - front, 2.0) * 1.2) * staerke;\n        col += ader * blitz * vec3(0.6, 0.75, 1.0) * 1.8;\n        col += exp(-d * 40.0) * blitz * vec3(0.3, 0.4, 0.8) * 0.5;  // Korona\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

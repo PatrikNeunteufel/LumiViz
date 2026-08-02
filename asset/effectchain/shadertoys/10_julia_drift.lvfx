@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "10_julia_drift",
+        "description": "Generiert aus asset/shadertoys/10_julia_drift.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 10 Julia-Drift — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: Julia-Menge (z → z² + c); c wandert auf einer Kreisbahn (jede\n// Position = andere Julia-Welt) und zuckt mit dem Bass.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float ZOOM         = 1.4;    // Bildausschnitt\nconst float BAHN_RADIUS  = 0.7885; // Kreisbahn von c (nahe Kardioide = spannend)\nconst float BAHN_TEMPO_X = 0.11;   // Wander-Tempo (größer = schnellere Weltwechsel)\nconst float BAHN_TEMPO_Y = 0.13;\nconst float BASS_ZUCKEN  = 0.08;   // Stärke der Bass-Störung auf c\nconst int   ITERATIONEN  = 96;     // Feinheit der Ränder (teurer)\nconst float FARB_ZYKLEN  = 1.2;    // Farbzyklen über den Iterations-Bereich\nconst float FARB_DRIFT   = 0.03;\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y * ZOOM;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n\n    vec2 c = BAHN_RADIUS * vec2(cos(iTime * BAHN_TEMPO_X), sin(iTime * BAHN_TEMPO_Y));\n    c += BASS_ZUCKEN * bass * vec2(cos(iTime * 1.7), sin(iTime * 2.3));\n\n    // Iteration: z² komplex = (x²−y², 2xy)\n    vec2 z = uv;\n    float m = 0.0;\n    for (int i = 0; i < ITERATIONEN; ++i)\n    {\n        z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;\n        if (dot(z, z) > 16.0) break;  // explodiert\n        m += 1.0;\n    }\n    float s = m / float(ITERATIONEN);  // 0 = sofort raus, 1 = Innenbereich\n    vec3 col = 0.5 + 0.5 * cos(6.28318 * (s * FARB_ZYKLEN + iTime * FARB_DRIFT) +\n                               vec3(0.0, 2.1, 4.2));\n    col *= smoothstep(1.0, 0.85, s);  // Innenbereich schwarz\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

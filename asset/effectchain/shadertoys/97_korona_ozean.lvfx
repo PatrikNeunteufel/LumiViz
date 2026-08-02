@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "97_korona_ozean",
+        "description": "Generiert aus asset/shadertoys/97_korona_ozean.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 97 Korona-Ozean — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KOMBI: Sonnen-Korona × Ozean — eine\n// brodelnde Sonne versinkt im Meer; die Wellen tragen ihre Spiegelung\n// als glitzernde Lichtstraße. Bass = Brodeln, Mitten = Wellengang.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst vec2  SONNE_POS   = vec2(0.0, 0.28);\nconst float SONNE_RADIUS = 0.30;\nconst float HORIZONT    = 0.0;\nconst float WELLEN      = 0.5;\nconst float LICHTSTRASSE = 0.25;  // Breite der Spiegelstraße\nconst int   OKTAVEN     = 4;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p), f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\nfloat fbm(vec2 p)\n{\n    float v = 0.0, a = 0.5;\n    for (int i = 0; i < OKTAVEN; ++i) { v += a * vnoise(p); p *= 2.09; a *= 0.5; }\n    return v;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float mid  = texture(iChannel0, vec2(0.30, 0.25)).x;\n    vec3 col;\n\n    if (uv.y > HORIZONT)\n    {\n        // Abendhimmel + Sonne mit brodelnder Oberfläche und Korona\n        col = mix(vec3(0.85, 0.4, 0.2), vec3(0.2, 0.1, 0.35),\n                  clamp(uv.y * 1.6, 0.0, 1.0));\n        vec2 d = uv - SONNE_POS;\n        float r = length(d);\n        if (r < SONNE_RADIUS)\n        {\n            float a = atan(d.y, d.x);\n            float brodel = fbm(vec2(a * 3.0 + iTime * 0.1,\n                                    r * 8.0 - iTime * (0.5 + bass)));\n            col = mix(vec3(1.0, 0.5, 0.1), vec3(1.0, 0.9, 0.5), brodel);\n        }\n        else\n        {\n            col += exp(-(r - SONNE_RADIUS) * 4.0) * vec3(1.0, 0.5, 0.15) *\n                   (0.6 + 0.3 * bass);\n        }\n    }\n    else\n    {\n        // Meer: Streifenwellen + Lichtstraße unter der Sonne\n        float tiefe = -uv.y;\n        float welle = fbm(vec2(uv.x * 6.0, tiefe * 18.0 - iTime * (1.0 + WELLEN * mid)));\n        col = mix(vec3(0.06, 0.08, 0.16), vec3(0.15, 0.12, 0.25), welle * 0.6);\n        // Lichtstraße: schmaler x-Korridor unter der Sonne, Wellen brechen ihn\n        float strasse = exp(-pow((uv.x - SONNE_POS.x) / (LICHTSTRASSE * (0.5 + tiefe)), 2.0));\n        float glitzer = smoothstep(0.45, 0.75, welle);\n        col += strasse * (0.35 + 0.65 * glitzer) * vec3(1.0, 0.55, 0.2) *\n               (0.6 + 0.4 * bass) * smoothstep(1.0, 0.0, tiefe);\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

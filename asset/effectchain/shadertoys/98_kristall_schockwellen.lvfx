@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "98_kristall_schockwellen",
+        "description": "Generiert aus asset/shadertoys/98_kristall_schockwellen.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 98 Kristall-Schockwellen — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KOMBI: Puls-Ringe × Facetten — die\n// Schockwellen laufen durch ein Voronoi-Facettenfeld: jede Facette blitzt\n// GESCHLOSSEN auf, wenn die Wellenfront ihr Zentrum passiert (kristallines\n// Aufleuchten statt glattem Ring). Bass startet Zentrums-Wellen.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float FACETTEN   = 5.0;\nconst float RATE       = 0.5;    // Wellen pro Sekunde\nconst float TEMPO      = 0.5;    // Expansions-Tempo\nconst float BLITZ_DAUER = 0.35;  // wie lange eine Facette nachleuchtet\nconst float BASS_WELLE = 0.5;\n// ----------------------------------------------------------------------------\n\nvec2 hash2(vec2 p)\n{\n    p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));\n    return fract(sin(p) * 43758.5453);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n\n    // Facette dieses Pixels: Kernposition + Id\n    vec2 g = floor(uv * FACETTEN);\n    vec2 f = fract(uv * FACETTEN);\n    float dMin = 8.0;\n    vec2 id = vec2(0.0);\n    vec2 kern = vec2(0.0);\n    for (int y = -1; y <= 1; ++y)\n    for (int x = -1; x <= 1; ++x)\n    {\n        vec2 o = vec2(float(x), float(y));\n        vec2 h = hash2(g + o);\n        vec2 c = o + h - f;\n        float d = dot(c, c);\n        if (d < dMin) { dMin = d; id = h; kern = (g + o + h) / FACETTEN; }\n    }\n    float kernR = length(kern);  // Abstand des FACETTEN-ZENTRUMS zur Mitte\n\n    vec3 col = vec3(0.012, 0.012, 0.03);\n    // Facetten-Grundton (dunkel, leicht variiert) + Kanten\n    float kante = smoothstep(0.0, 0.03, sqrt(dMin));\n    col += vec3(0.03, 0.04, 0.07) * (0.5 + id.y) * kante;\n\n    // Wellen (2 Fenster + Bass-Welle): Front-Radius vs. kernR\n    for (int k = 0; k < 3; ++k)\n    {\n        float fk = float(k);\n        float rate = (k == 2) ? 1.4 : RATE;\n        if (k == 2 && bass < BASS_WELLE) continue;\n        float fenster = iTime * rate + fk * 0.37;\n        float alterT = fract(fenster) / rate;   // Sekunden seit Start\n        float front = TEMPO * alterT * ((k == 2) ? 1.6 : 1.0);\n        // Facette blitzt, wenn die Front gerade ihr Zentrum passiert hat\n        float seit = front - kernR;\n        if (seit > 0.0 && seit < BLITZ_DAUER)\n        {\n            float blitz = 1.0 - seit / BLITZ_DAUER;\n            vec3 farbe = 0.5 + 0.5 * cos(id.x * 6.28318 + fk * 2.0 +\n                                         vec3(0.0, 2.1, 4.2));\n            col += blitz * blitz * farbe * kante * 1.4;\n        }\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

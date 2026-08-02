@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.32.0
-> **Datum:** 2026-08-02 (Session 64)
+> **Version:** 1.33.0
+> **Datum:** 2026-08-02 (Session 65)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -18,6 +18,19 @@ Handover; dann dieses Dokument nachziehen.
 
 Legende: 🔴 blockiert anderes · 🟠 Befund mit Messwert · 🟡 Entscheid nötig ·
 ⬜ Sichttest/Urteil offen · ⚪ Backlog (bewusst nichts tun) · 🔧 Kleinkram
+
+> ## ✅ Erledigt in S65 (Aufträge Patrik)
+>
+> **Strang R (Regelwerk Legacy/Modern) KOMPLETT + abgenommen** — Triage s65
+> klassengleich s64f (0 Wechsel, OK 295), Modern-Stichprobe beweist die Schalter.
+> **Strang S (Shadertoy) S1–S4 KOMPLETT** — Node host-nativ, 512×2-Audio,
+> URL-/ID-Import (Netz-Abnahme braucht API-Key), Multipass Buffer A–D,
+> NEU ShadertoyBrowserPanel. Dazu Editor-Komfort (ⓘ/⤢/Tooltips für GLSL/HLSL),
+> Speichern-Namensvorschlag und der **100-Shader-Vorrat** in `asset/shadertoys/`
+> (fürs Shadertoy-Konto → API-Key). Details: `Changelog_Session65.md`,
+> Plan-Doku `visuals/Regelwerk_und_Neue_Module_Plan.md` (1.4.0).
+> **NEU OFFEN:** Sichttests neue UI (Patrik) · S3-Netz-Abnahme mit Key ·
+> Audio-Skala dB-vs-linear · Shader-Feintuning nach Ton-Test (45/56/64 vorgemerkt).
 
 > ## ✅ Erledigt in S53 (war die Vorgabe Patrik aus S52)
 >

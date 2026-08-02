@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "100_grand_finale",
+        "description": "Generiert aus asset/shadertoys/100_grand_finale.{image,bufferA}.glsl (Multipass).",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 100 Grand Finale, Image — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// \"Image\": iChannel0 = Buffer A. Sternenhimmel + Feuerwerk oben, darunter\n// die wellige Ozean-Spiegelung des Buffers.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float HORIZONT   = -0.35;  // wie im Buffer\nconst float WELLEN     = 0.012;  // Spiegel-Verzerrung\nconst float SPIEGEL    = 0.45;   // Spiegelhelligkeit\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv01 = fragCoord / iResolution.xy;\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    vec3 col;\n    if (uv.y > HORIZONT)\n    {\n        col = texture(iChannel0, uv01).rgb;\n        col += vec3(0.006, 0.006, 0.018);\n        // Sterne (nur über dem Horizont)\n        col += step(0.998, n21(floor(uv * 90.0))) * 0.4;\n    }\n    else\n    {\n        // Spiegelung: an der Horizontlinie klappen + Wellen-Wabern\n        float tiefe = HORIZONT - uv.y;\n        float ySpiegel = HORIZONT + tiefe;\n        vec2 quelle = vec2(uv.x + WELLEN * sin(uv.y * 60.0 + iTime * 2.5),\n                           ySpiegel);\n        // zurück in 0..1-Koordinaten des Buffers\n        vec2 q01 = (quelle * iResolution.y + iResolution.xy) / (2.0 * iResolution.xy);\n        col = texture(iChannel0, q01).rgb * SPIEGEL * (1.0 - tiefe * 0.6);\n        col += vec3(0.01, 0.02, 0.04);  // Wasser-Grundton\n    }\n    fragColor = vec4(col, 1.0);\n}\n",
+        "buffers": [
+          {
+            "code": "// 100 Grand Finale, Buffer A — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// \"Buffer A\": iChannel0 = SELBST, iChannel1 = Music. KOMBI-FINALE:\n// Feuerwerk ÜBER einer Ozean-Spiegelung MIT Sternenhimmel — das Abschluss-\n// Stück des 100er-Vorrats. Trail für die Raketen, Wellen spiegeln unten.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float TRAIL      = 0.90;\nconst float RAKETEN    = 0.8;    // Starts pro Sekunde\nconst int   FUNKEN     = 36;\nconst float HORIZONT   = -0.35;\nconst float BASS_EXTRA = 0.45;\n// ----------------------------------------------------------------------------\n\nfloat h1(float n) { return fract(sin(n) * 43758.5453); }\nvec3 ereignis(vec2 uv, float seed, float t)\n{\n    vec3 col = vec3(0.0);\n    vec2 start = vec2(-0.8 + 1.6 * h1(seed * 7.7), HORIZONT);\n    vec2 ziel  = vec2(start.x + 0.2 * (h1(seed * 3.1) - 0.5),\n                      0.25 + 0.4 * h1(seed * 9.3));\n    float auf = 0.8;\n    if (t < auf)\n    {\n        vec2 p = mix(start, ziel, t / auf);\n        col += smoothstep(0.006, 0.0, length(uv - p)) * vec3(1.0, 0.85, 0.6);\n    }\n    else if (t < auf + 2.0)\n    {\n        float e = t - auf;\n        float glut = exp(-e * 1.8);\n        vec3 farbe = 0.5 + 0.5 * cos(seed * 41.0 + vec3(0.0, 2.1, 4.2));\n        for (int i = 0; i < FUNKEN; ++i)\n        {\n            float fi = float(i);\n            float w = 6.28318 * fi / float(FUNKEN) + h1(seed + fi) * 0.25;\n            vec2 p = ziel + vec2(cos(w), sin(w)) * (0.3 + 0.15 * h1(seed * 13.0 + fi)) * e -\n                     vec2(0.0, 0.12 * e * e);\n            col += smoothstep(0.0045, 0.0, length(uv - p)) * farbe * glut;\n        }\n    }\n    return col;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel1, vec2(0.05, 0.25)).x;\n    vec3 col = texture(iChannel0, fragCoord / iResolution.xy).rgb * TRAIL;\n\n    for (int k = 0; k < 2; ++k)\n    {\n        float fenster = iTime * RAKETEN * 0.5 + float(k) * 0.5;\n        col += ereignis(uv, floor(fenster) * 2.0 + float(k),\n                        fract(fenster) / (RAKETEN * 0.5));\n    }\n    if (bass > BASS_EXTRA)\n    {\n        float fenster = iTime * 1.4;\n        col += ereignis(uv, floor(fenster) * 7.0 + 2.3, fract(fenster) / 1.4) * 1.2;\n    }\n    fragColor = vec4(min(col, vec3(2.5)), 1.0);\n}\n",
+            "input": [
+              0,
+              4,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

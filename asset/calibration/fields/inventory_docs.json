@@ -6,8 +6,8 @@
     "beschreibung": "EffectChain.hpp (Doxygen)"
   },
   "summe": {
-    "typen": 85,
-    "felder": 721,
+    "typen": 86,
+    "felder": 724,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -4942,6 +4942,7 @@
               "darken": false,
               "darkenCenter": false,
               "decay": 0.98,
+              "divVertragD3d9": true,
               "dx": 0,
               "dy": 0,
               "gammaAdj": 2,
@@ -4974,7 +4975,11 @@
               "perFrame": "",
               "perFrameInit": "",
               "perPixel": "",
+              "psComp": "auto",
               "psVersion": -1,
+              "psWarp": "auto",
+              "qGarbageEpsilon": true,
+              "regelwerk": "legacy",
               "rot": 0,
               "shader": 0,
               "shapes": [],
@@ -4983,6 +4988,8 @@
               "sx": 1,
               "sy": 1,
               "texWrap": true,
+              "unormTrunkierung": true,
+              "uvSanitize": true,
               "videoEchoAlpha": 0,
               "videoEchoOrientation": 0,
               "videoEchoZoom": 2,
@@ -6541,6 +6548,42 @@
           "panel": "bool",
           "helfer": "addBool",
           "doc": "override the blend (AVS bit 31)"
+        }
+      ]
+    },
+    {
+      "typkey": "shadertoy",
+      "name": "Shadertoy",
+      "struct": "ShadertoyParams",
+      "felder": [
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "blend",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 3,
+          "doc": "aufs Bild: 0 ersetzen, 1 additiv, 2 50/50"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "code",
+          "panel": "sonderzeile",
+          "doc": "mainImage-Quelltext des Image-Passes (leer = Starter)"
+        },
+        {
+          "art": "liste",
+          "default": [
+            4,
+            -1,
+            -1,
+            -1
+          ],
+          "laenge": 4,
+          "name": "imageInput",
+          "panel": "sonderzeile",
+          "doc": "Kanal-Bindungen des Image-Passes (Kodierung s. kShadertoyInput* — SSOT; ein frühes `audioChannel`-Feld wird beim Laden migriert)."
         }
       ]
     },

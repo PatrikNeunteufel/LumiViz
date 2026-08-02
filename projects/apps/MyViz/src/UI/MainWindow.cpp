@@ -806,8 +806,20 @@ void MainWindow::setupEventHandlers()
             // Alte milkdrop-Schwester-Dokumente bleiben LADbar (Dispatch oben).
             auto [widget, host] = requireMultiEffect("Save Effect Chain");
             if (host == nullptr) return;
+            // Namensvorschlag (Wunsch S65): das zuletzt geladene/importierte
+            // Preset (SSOT: ScreenshotManager, wird bei .lvfx/.avs/.milk-Loads
+            // gesetzt) — ein importiertes AVS/MilkDrop speichert so als
+            // gleichnamige .lvfx-Kette.
+            QString suggestion;
+            if (m_pScreenshotManager != nullptr &&
+                !m_pScreenshotManager->currentPreset().isEmpty())
+            {
+                const QFileInfo last(m_pScreenshotManager->currentPreset());
+                suggestion = last.absolutePath() + QLatin1Char('/') +
+                             last.completeBaseName() + QStringLiteral(".lvfx");
+            }
             QString path = QFileDialog::getSaveFileName(
-                this, tr("Save Effect Chain"), QString(),
+                this, tr("Save Effect Chain"), suggestion,
                 tr("LumiViz Effect Chain (*.lvfx *.lvfx2)"));
             if (path.isEmpty()) return;
 

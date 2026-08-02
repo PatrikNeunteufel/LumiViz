@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "92_magnet_neuronen",
+        "description": "Generiert aus asset/shadertoys/92_magnet_neuronen.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 92 Magnet-Neuronen — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KOMBI: Magnetfeld × Neuronen — DREI Pole\n// bilden ein Feldliniennetz, auf dem NEURONALE Pulse feuern (Lauflichter\n// die Linien entlang, Feuerrate aus den Höhen); die Pole sind die Somata.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float LINIEN     = 12.0;\nconst float LINIEN_DICKE = 0.09;\nconst float POL_TEMPO  = 0.3;\nconst float PULS_TEMPO = 2.5;\nconst float PULS_HOEHEN = 3.0;\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float treb = texture(iChannel0, vec2(0.70, 0.25)).x;\n\n    // drei kreisende Pole mit Ladungen +, −, +\n    vec2 p1 = 0.55 * vec2(cos(iTime * POL_TEMPO), sin(iTime * POL_TEMPO));\n    vec2 p2 = 0.55 * vec2(cos(iTime * POL_TEMPO + 2.094), sin(iTime * POL_TEMPO + 2.094));\n    vec2 p3 = 0.55 * vec2(cos(iTime * POL_TEMPO + 4.189), sin(iTime * POL_TEMPO + 4.189));\n    float d1 = length(uv - p1) + 1e-3;\n    float d2 = length(uv - p2) + 1e-3;\n    float d3 = length(uv - p3) + 1e-3;\n    float pot = log(d2) - 0.5 * log(d1) - 0.5 * log(d3);  // Potential\n\n    float band = abs(fract(pot * LINIEN * 0.15915) - 0.5) * 2.0;\n    float linie = smoothstep(LINIEN_DICKE, LINIEN_DICKE * 0.3, band);\n    // Neuronen-Puls: läuft das Potential entlang, Rate aus den Höhen\n    float puls = pow(0.5 + 0.5 * sin(pot * 7.0 - iTime *\n                                     (PULS_TEMPO + PULS_HOEHEN * treb)), 8.0);\n    vec3 col = vec3(0.01, 0.012, 0.028);\n    col += linie * vec3(0.10, 0.18, 0.30);\n    col += linie * puls * vec3(0.5, 0.9, 1.0) * 1.4;\n    // Somata: die Pole glühen und pulsieren\n    float atem = 0.7 + 0.3 * sin(iTime * 2.0);\n    col += exp(-d1 * 12.0) * vec3(1.0, 0.4, 0.6) * atem;\n    col += exp(-d2 * 12.0) * vec3(0.4, 0.6, 1.0) * atem;\n    col += exp(-d3 * 12.0) * vec3(0.5, 1.0, 0.6) * atem;\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

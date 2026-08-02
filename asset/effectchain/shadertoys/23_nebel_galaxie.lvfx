@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "23_nebel_galaxie",
+        "description": "Generiert aus asset/shadertoys/23_nebel_galaxie.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 23 Nebel-Galaxie — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. FBM-VOLUMETRIK (2D-Fake, mehrschichtig).\n//\n// IDEE: Eine Spiralgalaxie: die Winkelkoordinate wird mit log(r) verdreht\n// (logarithmische Spirale), darüber liegt mehrschichtiges FBM als Nebel;\n// zwei Sternebenen parallaxen. Bass = Kernglühen, Höhen = Sternfunkeln.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float SPIRAL_ARME   = 2.0;   // Anzahl Spiralarme\nconst float SPIRAL_ENGE   = 3.5;   // wie eng die Arme gewickelt sind\nconst float DREH_TEMPO    = 0.05;  // Rotation der Galaxie\nconst int   NEBEL_OKTAVEN = 5;     // FBM-Detail\nconst float KERN_GLUT     = 1.2;   // Helligkeit des Zentrums\nconst float STERN_DICHTE  = 0.997; // näher an 1 = weniger Sterne\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p), f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\nfloat fbm(vec2 p)\n{\n    float v = 0.0, a = 0.5;\n    for (int i = 0; i < NEBEL_OKTAVEN; ++i) { v += a * vnoise(p); p *= 2.07; a *= 0.5; }\n    return v;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float treb = texture(iChannel0, vec2(0.70, 0.25)).x;\n\n    float r = length(uv) + 1e-4;\n    float a = atan(uv.y, uv.x) - iTime * DREH_TEMPO;\n    // logarithmische Spirale: Winkel + Enge·log(r) — DAS macht die Arme\n    float arm = a * SPIRAL_ARME + SPIRAL_ENGE * log(r);\n    float armDichte = 0.5 + 0.5 * cos(arm);\n\n    // Nebel: FBM in spiralverzerrten Koordinaten (folgt den Armen)\n    vec2 np = vec2(arm * 0.6, r * 4.0 - iTime * 0.05);\n    float nebel = fbm(np) * armDichte;\n    nebel *= smoothstep(1.4, 0.2, r);  // außen ausblenden\n\n    // Farbmischung: Kern warm, Arme blau-violett\n    vec3 kern = vec3(1.0, 0.85, 0.6) * (KERN_GLUT + 0.8 * bass) *\n                exp(-r * 4.5);\n    vec3 arme = mix(vec3(0.15, 0.25, 0.6), vec3(0.6, 0.3, 0.7),\n                    fbm(np + 7.0)) * nebel * 1.4;\n    vec3 col = kern + arme;\n\n    // zwei Sternebenen (verschiedene Raster = Parallaxe beim Drehen)\n    for (int layer = 0; layer < 2; ++layer)\n    {\n        vec2 sp = uv * (3.0 + 2.0 * float(layer));\n        float stern = step(STERN_DICHTE, n21(floor(sp * 40.0) + float(layer) * 13.0));\n        // Funkeln: Zufallsphase je Stern, Höhen verstärken\n        float blink = 0.5 + 0.5 * sin(iTime * 3.0 + n21(floor(sp * 40.0)) * 40.0);\n        col += stern * blink * (0.25 + 0.75 * treb);\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

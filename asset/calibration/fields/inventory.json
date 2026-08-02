@@ -1,8 +1,8 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 721,
-        "typen": 85
+        "felder": 724,
+        "typen": 86
     },
     "typen": [
         {
@@ -3388,6 +3388,33 @@
             ],
             "name": "Set Render Mode",
             "typkey": "setRenderMode"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "code"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                        4,
+                        -1,
+                        -1,
+                        -1
+                    ],
+                    "laenge": 4,
+                    "name": "imageInput"
+                }
+            ],
+            "name": "Shadertoy",
+            "typkey": "shadertoy"
         },
         {
             "felder": [

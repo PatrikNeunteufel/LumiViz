@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "06_tunnel_herzschlag",
+        "description": "Generiert aus asset/shadertoys/06_tunnel_herzschlag.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 06 Tunnel mit Herzschlag — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: Polar-Tunnel: z = TIEFE/r täuscht Tiefe vor (Bildmitte = fern).\n// Der Bass gibt Vortrieb; das Spektrum leuchtet als Aura um die Mitte.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float VORTRIEB_GRUND = 0.40;  // Grund-Fahrgeschwindigkeit (war 0.6)\nconst float VORTRIEB_BASS  = 0.80;  // Bass-Schub obendrauf (war 1.4)\nconst float TIEFE          = 0.40;  // Tunnel-Streckung (kleiner = länger)\nconst float RING_DICHTE    = 6.28318; // Ringe in Fahrtrichtung\nconst float STREIFEN       = 8.0;   // Anzahl Längsstreifen\nconst float TWIST          = 0.15;  // Verdrehung der Streifen (war 0.7 — wackelte)\nconst float ROT_TEMPO      = 0.35;  // Tunnel-Rotation (0 = aus)\nconst float ROT_BASS       = 0.60;  // Bass beschleunigt die Rotation\nconst float WECHSEL_SEK    = 4.0;   // alle N Sekunden wechselt die Drehrichtung\n                                    // (echte Beat-Flips bräuchten Zustand —\n                                    // in LumiViz ginge das über einen Buffer)\nconst float KANTE          = 0.10;  // Muster-Kante: 0.02 = hart, 0.3 = weich\nconst float AURA_STAERKE   = 1.0;   // Spektrum-Aura um die Mitte\nconst float MITTE_DUNKEL   = 0.15;  // Größe des dunklen Fluchtpunkts\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float r = length(uv) + 1e-4;   // nie 0 (Division)\n    float a = atan(uv.y, uv.x);\n    // Rotation: Richtung wechselt als Rechteckwelle alle WECHSEL_SEK, der\n    // Bass beschleunigt; sign(sin(...)) = +1/−1 im Wechsel\n    float richtung = sign(sin(iTime * 3.14159 / WECHSEL_SEK) + 1e-4);\n    a += richtung * iTime * (ROT_TEMPO + ROT_BASS * bass);\n    float drive = iTime * (VORTRIEB_GRUND + VORTRIEB_BASS * bass);\n    float z = TIEFE / r + drive;   // Tiefen-Koordinate\n\n    // Wandmuster: Ringe × Längsstreifen; smoothstep um 0.5 macht aus dem\n    // weichen Sinus-Produkt eine HARTE Hell/Dunkel-Kante (KANTE = Breite)\n    float stripes = 0.5 + 0.5 * sin(z * RING_DICHTE) *\n                    sin(a * STREIFEN + drive * TWIST);\n    stripes = smoothstep(0.5 - KANTE, 0.5 + KANTE, stripes);\n    // Winkel 0..1 wählt den FFT-Bin: das Spektrum liegt einmal um den Tunnel\n    float fft = texture(iChannel0, vec2(fract(a / 6.28318), 0.25)).x;\n\n    vec3 col = (0.5 + 0.5 * cos(z + a + vec3(0.0, 2.1, 4.2))) * stripes;\n    col += AURA_STAERKE * fft * vec3(0.8, 0.3, 0.6) * smoothstep(1.2, 0.0, r);\n    col *= smoothstep(0.0, MITTE_DUNKEL, r);  // Fluchtpunkt dunkel\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

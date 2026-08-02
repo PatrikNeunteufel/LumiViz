@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "89_feuer_tunnel",
+        "description": "Generiert aus asset/shadertoys/89_feuer_tunnel.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 89 Feuer-Tunnel — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KOMBI: Tunnel × Feuer — die Tunnelwände\n// sind brennendes FBM (Flammen ziehen ENTGEGEN der Fahrtrichtung), die\n// Feuer-Rampe färbt; der Fluchtpunkt glüht wie ein Ofen. Bass = Schub.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float VORTRIEB    = 0.6;\nconst float VORTRIEB_BASS = 1.2;\nconst float TIEFE       = 0.4;\nconst float FLAMMEN_ZUG = 2.0;   // wie schnell die Flammen rückwärts ziehen\nconst float OFEN_GLUT   = 1.2;\nconst int   OKTAVEN     = 4;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p), f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\nfloat fbm(vec2 p)\n{\n    float v = 0.0, a = 0.5;\n    for (int i = 0; i < OKTAVEN; ++i) { v += a * vnoise(p); p *= 2.13; a *= 0.5; }\n    return v;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float r = length(uv) + 1e-4;\n    float a = atan(uv.y, uv.x);\n    float z = TIEFE / r + iTime * (VORTRIEB + VORTRIEB_BASS * bass);\n\n    // Wand-Feuer: FBM über (Winkel × Tiefe), zieht nach hinten (+z-Richtung)\n    float feuer = fbm(vec2(a * 1.59155 * 4.0, z * 0.8 + iTime * FLAMMEN_ZUG));\n    feuer *= 0.6 + 0.7 * bass;\n    // Feuer-Rampe + Tiefenstaffelung (fern = dunkler/röter)\n    float fern = clamp(r * 1.4, 0.0, 1.0);\n    float f = clamp(feuer * (0.5 + fern), 0.0, 1.0);\n    vec3 col = vec3(f * 1.5, f * f * 1.05, f * f * f * 0.55);\n    // Ofen-Fluchtpunkt: weißglühendes Zentrum\n    col += exp(-r * 5.0) * vec3(1.0, 0.75, 0.4) * OFEN_GLUT * (0.7 + 0.6 * bass);\n    col *= smoothstep(0.0, 0.05, r);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

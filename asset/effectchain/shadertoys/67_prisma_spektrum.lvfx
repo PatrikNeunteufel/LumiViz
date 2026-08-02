@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "67_prisma_spektrum",
+        "description": "Generiert aus asset/shadertoys/67_prisma_spektrum.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 67 Prisma-Spektrum — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KRISTALL/OPTIK: Lichtbrechung mit Dispersion.\n//\n// IDEE: Ein weißer Strahl trifft ein Dreiecks-Prisma; hinter dem Prisma\n// fächert er in Spektralfarben auf (je Wellenlänge ein eigener\n// Brechungswinkel — hier als Fächer aus schmalen Glow-Strahlen).\n// Der Fächer atmet mit den Mitten, Staubpartikel funkeln im Licht.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float PRISMA_GROESSE = 0.42;\nconst int   SPEKTRAL     = 24;   // Strahlen im Fächer\nconst float FAECHER      = 0.5;  // Öffnungswinkel (rad)\nconst float FAECHER_MITTEN = 0.25;\nconst float STRAHL_GLOW  = 0.0015;\nconst float STAUB        = 0.996; // Partikeldichte (näher 1 = weniger)\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat strecke(vec2 p, vec2 a, vec2 b)\n{\n    vec2 pa = p - a, ba = b - a;\n    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);\n    return length(pa - ba * h);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float mid = texture(iChannel0, vec2(0.30, 0.25)).x;\n    vec3 col = vec3(0.008, 0.008, 0.015);\n\n    // Prisma: gleichseitiges Dreieck in der Mitte (Kanten über 3 Halbebenen)\n    vec2 p = uv;\n    float d = max(p.y - PRISMA_GROESSE * 0.5,\n                  max(0.866 * p.x - 0.5 * p.y - PRISMA_GROESSE * 0.5,\n                      -0.866 * p.x - 0.5 * p.y - PRISMA_GROESSE * 0.5));\n    float glas = smoothstep(0.01, -0.01, d);\n    float kante = smoothstep(0.012, 0.0, abs(d));\n\n    // Eingangsstrahl: von links auf die Prisma-Mitte\n    vec2 eintritt = vec2(-PRISMA_GROESSE * 0.45, 0.0);\n    float strahlEin = smoothstep(0.012, 0.0,\n                                 strecke(uv, vec2(-1.8, 0.35), eintritt));\n    col += strahlEin * vec3(1.0) * 0.8;\n\n    // Spektralfächer: aus dem Prisma heraus, Winkel je \"Wellenlänge\"\n    vec2 austritt = vec2(PRISMA_GROESSE * 0.35, -0.05);\n    float basisWinkel = -0.35;\n    float oeffnung = FAECHER + FAECHER_MITTEN * mid;\n    for (int i = 0; i < SPEKTRAL; ++i)\n    {\n        float fi = float(i) / float(SPEKTRAL - 1);          // 0 rot .. 1 violett\n        float w = basisWinkel - oeffnung * (fi - 0.5);\n        vec2 ziel = austritt + 2.5 * vec2(cos(w), sin(w));\n        float ds = strecke(uv, austritt, ziel);\n        // Spektralfarbe über die Cosinus-Palette (rot → violett)\n        vec3 farbe = 0.5 + 0.5 * cos(6.28318 * (fi * 0.75) + vec3(0.0, 2.1, 4.2));\n        col += STRAHL_GLOW / (ds * ds + 0.0008) * farbe * 0.04;\n    }\n    // Glaskörper: leicht getrübt + helle Kanten\n    col = mix(col, col * 0.6 + vec3(0.10, 0.12, 0.16), glas);\n    col += kante * vec3(0.7, 0.8, 1.0) * 0.5;\n    // Staub im Licht\n    float staub = step(STAUB, n21(floor(uv * 160.0) + floor(iTime * 3.0)));\n    col += staub * 0.25 * smoothstep(1.4, 0.3, length(uv));\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

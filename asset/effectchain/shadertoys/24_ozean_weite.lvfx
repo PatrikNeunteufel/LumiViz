@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "24_ozean_weite",
+        "description": "Generiert aus asset/shadertoys/24_ozean_weite.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 24 Ozean-Weite — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. HEIGHTFIELD-RAYMARCHING (3D-Ozean + Himmel).\n//\n// IDEE: Ein Höhenfeld aus FBM-Wellen wird per Raymarch geschnitten (fester\n// Schritt + Verfeinerung), die Normale beleuchtet das Wasser, der Himmel\n// mit Sonne spiegelt sich (Fresnel). Bass = Wellengang, Mitten = Chop.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float WELLEN_HOEHE  = 0.35;  // Grund-Amplitude\nconst float WELLEN_BASS   = 0.30;  // Bass-Zuschlag auf den Wellengang\nconst float WELLEN_TEMPO  = 0.9;\nconst int   OKTAVEN       = 4;     // FBM-Detail der Wellen\nconst int   MARSCH        = 64;    // Sichtweite/Qualität\nconst float FLUG_TEMPO    = 1.2;   // Vorwärtsfahrt\nconst vec3  SONNE         = vec3(0.4, 0.25, 0.6); // Richtung (wird normalisiert)\n// ----------------------------------------------------------------------------\n\nfloat g_amp;\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p), f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\n// Wellenhöhe am Punkt xz (FBM, zeitbewegt — zwei Richtungen gegeneinander)\nfloat wellen(vec2 p)\n{\n    float h = 0.0, a = 1.0;\n    vec2 q = p;\n    for (int i = 0; i < OKTAVEN; ++i)\n    {\n        h += a * vnoise(q + iTime * WELLEN_TEMPO * vec2(0.6, 0.3) * (1.0 + 0.3 * float(i)));\n        q = q * 2.1 + vec2(3.7);\n        a *= 0.45;\n    }\n    return (h - 1.0) * g_amp;  // um 0 zentrieren\n}\nvec3 himmel(vec3 rd, vec3 sonne)\n{\n    float grau = pow(max(rd.y, 0.0), 0.5);\n    vec3 sky = mix(vec3(0.75, 0.55, 0.35), vec3(0.15, 0.35, 0.6), grau);\n    float s = pow(max(dot(rd, sonne), 0.0), 256.0);\n    return sky + s * vec3(1.2, 1.0, 0.8);  // Sonnen-Glare\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    g_amp = WELLEN_HOEHE + WELLEN_BASS * bass;\n    vec3 sonne = normalize(SONNE);\n\n    vec3 ro = vec3(0.0, 1.2, iTime * FLUG_TEMPO);\n    vec3 rd = normalize(vec3(uv.x, uv.y - 0.15, 1.4));\n\n    vec3 col;\n    if (rd.y > 0.02)  // Blick über den Horizont: nur Himmel\n    {\n        col = himmel(rd, sonne);\n    }\n    else\n    {\n        // Raymarch gegen das Höhenfeld: fester Schritt, dann halbieren\n        float t = 0.0;\n        float dt = 0.4;\n        float hDiff = 0.0;\n        for (int i = 0; i < MARSCH; ++i)\n        {\n            vec3 p = ro + rd * t;\n            hDiff = p.y - wellen(p.xz);\n            if (hDiff < 0.01 || t > 40.0) break;\n            t += max(dt, hDiff * 0.8);  // adaptiv: hoch überm Wasser = große Schritte\n        }\n        vec3 p = ro + rd * t;\n        // Normale aus Höhen-Differenzen\n        vec2 e = vec2(0.05, 0.0);\n        vec3 n = normalize(vec3(wellen(p.xz - e.xy) - wellen(p.xz + e.xy),\n                                2.0 * e.x,\n                                wellen(p.xz - e.yx) - wellen(p.xz + e.yx)));\n        float fresnel = pow(1.0 - max(dot(n, -rd), 0.0), 3.0);\n        vec3 tiefe = mix(vec3(0.02, 0.12, 0.18), vec3(0.05, 0.3, 0.35),\n                         max(dot(n, sonne), 0.0));\n        vec3 spiegel = himmel(reflect(rd, n), sonne);\n        col = mix(tiefe, spiegel, 0.25 + 0.75 * fresnel);\n        col = mix(col, himmel(rd, sonne), smoothstep(20.0, 40.0, t));  // Dunst\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

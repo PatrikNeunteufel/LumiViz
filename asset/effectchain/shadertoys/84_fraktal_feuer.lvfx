@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "84_fraktal_feuer",
+        "description": "Generiert aus asset/shadertoys/84_fraktal_feuer.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 84 Fraktal-Feuer — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KOMBI: Julia-Fraktal × Feuer — die\n// Fraktal-Silhouette BRENNT: FBM-Flammen ziehen aus dem Julia-Rand nach\n// oben, der Rand selbst glüht als Glutlinie. Bass facht an.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float ZOOM       = 1.5;\nconst int   JULIA_ITER = 48;\nconst float FLAMMEN_HOEHE = 0.35; // wie weit die Flammen überm Rand züngeln\nconst float ZUG_TEMPO  = 1.4;\nconst int   OKTAVEN    = 4;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p), f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\nfloat fbm(vec2 p)\n{\n    float v = 0.0, a = 0.5;\n    for (int i = 0; i < OKTAVEN; ++i) { v += a * vnoise(p); p *= 2.11; a *= 0.5; }\n    return v;\n}\n// glatter Julia-\"Abstand\": 0 innen, wächst außen\nfloat julia(vec2 uv)\n{\n    vec2 z = uv;\n    vec2 c = vec2(-0.62, 0.43) + 0.02 * vec2(sin(iTime * 0.1), cos(iTime * 0.13));\n    float m = 0.0;\n    for (int i = 0; i < JULIA_ITER; ++i)\n    {\n        z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;\n        if (dot(z, z) > 16.0) break;\n        m += 1.0;\n    }\n    return 1.0 - m / float(JULIA_ITER);  // 0 = tief innen, 1 = weit außen\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y * ZOOM;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n\n    float rand = julia(uv);\n    // Flammen: die Julia-Randnähe wird mit aufsteigendem FBM moduliert —\n    // Flammen \"wachsen\" aus dem Rand nach oben\n    float flammenZone = julia(uv + vec2(0.0, -FLAMMEN_HOEHE *\n                                        fbm(vec2(uv.x * 4.0,\n                                                 uv.y * 2.0 - iTime * ZUG_TEMPO))));\n    float f = clamp((1.0 - flammenZone * 2.2) * (1.1 + 1.2 * bass), 0.0, 1.0);\n    vec3 col = vec3(f * 1.5, f * f * 1.1, f * f * f * 0.6);  // Feuer-Rampe\n    // Kernkörper: dunkel verkohlt mit glühendem Rand\n    float koerper = smoothstep(0.55, 0.5, rand);\n    col = mix(col, vec3(0.03, 0.02, 0.02), koerper);\n    col += smoothstep(0.06, 0.0, abs(rand - 0.5)) *\n           vec3(1.0, 0.5, 0.1) * (0.7 + bass);  // Glutlinie am Rand\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

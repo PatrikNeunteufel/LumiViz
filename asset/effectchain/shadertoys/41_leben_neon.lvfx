@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "41_leben_neon",
+        "description": "Generiert aus asset/shadertoys/41_leben_neon.{image,bufferA}.glsl (Multipass).",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 41 Leben-Neon, Image — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// \"Image\": iChannel0 = Buffer A. Junge Zellen gleißen weiß, alte kühlen\n// durch die Neon-Palette ab; dazu 4-Tap-Glow.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float GLOW_RADIUS = 0.004;\nconst float GLOW = 0.6;\nconst float ALTER_FARBE = 6.0;  // wie schnell das Alter die Farbe dreht\n// ----------------------------------------------------------------------------\n\nvec3 lebenFarbe(vec2 uv)\n{\n    vec4 z = texture(iChannel0, uv);\n    if (z.r < 0.5) return vec3(0.0);\n    float alter = z.g;  // 0 = frisch\n    vec3 jung = vec3(1.0);\n    vec3 farbe = 0.5 + 0.5 * cos(alter * ALTER_FARBE + vec3(0.0, 2.1, 4.2));\n    return mix(jung, farbe * 0.8, smoothstep(0.0, 0.15, alter));\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    vec3 c = lebenFarbe(uv);\n    c += GLOW * 0.25 * (lebenFarbe(uv + vec2(GLOW_RADIUS, 0.0)) +\n                        lebenFarbe(uv - vec2(GLOW_RADIUS, 0.0)) +\n                        lebenFarbe(uv + vec2(0.0, GLOW_RADIUS)) +\n                        lebenFarbe(uv - vec2(0.0, GLOW_RADIUS)));\n    fragColor = vec4(c + vec3(0.01, 0.01, 0.02), 1.0);\n}\n",
+        "buffers": [
+          {
+            "code": "// 41 Leben-Neon, Buffer A — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// \"Buffer A\": iChannel0 = Buffer A (SELBST!), iChannel1 = Music.\n//\n// IDEE: Conways Game of Life auf Pixel-Zellen. .r = lebendig (0/1),\n// .g = Alter (Frames seit Geburt, für die Farbe im Image-Pass).\n// Der Bass sät frische Zellen an wandernder Stelle nach — die Musik\n// \"füttert\" das Leben.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float ZELLGROESSE = 3.0;   // Pixel pro Zelle (größer = gröber)\nconst float SAAT_DICHTE = 0.30;  // Startbelegung (Frame 0)\nconst float BASS_SAAT   = 0.5;   // ab dieser Bass-Stärke wird nachgesät\nconst float SAAT_RADIUS = 0.06;  // Größe des Nachsä-Flecks\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\n// Zell-Zustand an Zellkoordinate (0/1)\nfloat zelle(vec2 zellId, vec2 gitter)\n{\n    vec2 uv = (zellId + 0.5) * ZELLGROESSE / iResolution.xy;\n    return step(0.5, texture(iChannel0, uv).r);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 gitter = floor(iResolution.xy / ZELLGROESSE);\n    vec2 id = floor(fragCoord / ZELLGROESSE);\n\n    if (iFrame < 2)  // Ur-Saat: Zufallsmuster\n    {\n        float lebend = step(1.0 - SAAT_DICHTE, n21(id));\n        fragColor = vec4(lebend, 0.0, 0.0, 1.0);\n        return;\n    }\n    // 8 Nachbarn zählen (Conway-Regel B3/S23)\n    float summe = 0.0;\n    for (int y = -1; y <= 1; ++y)\n    for (int x = -1; x <= 1; ++x)\n    {\n        if (x == 0 && y == 0) continue;\n        summe += zelle(id + vec2(float(x), float(y)), gitter);\n    }\n    vec4 alt = texture(iChannel0, (id + 0.5) * ZELLGROESSE / iResolution.xy);\n    float war = step(0.5, alt.r);\n    float lebt = (war > 0.5) ? ((summe == 2.0 || summe == 3.0) ? 1.0 : 0.0)\n                             : ((summe == 3.0) ? 1.0 : 0.0);\n    float alter = lebt * (alt.g * war + 1.0 / 255.0) * 255.0;  // Frames zählen\n    alter = min(alter, 250.0);\n\n    // Bass-Nachsaat: an wandernder Stelle zufällige Zellen beleben\n    float bass = texture(iChannel1, vec2(0.05, 0.25)).x;\n    if (bass > BASS_SAAT)\n    {\n        vec2 p = 0.5 + 0.35 * vec2(cos(iTime * 0.9), sin(iTime * 1.3));\n        vec2 uv = fragCoord / iResolution.xy;\n        if (length(uv - p) < SAAT_RADIUS && n21(id + iTime) > 0.5) lebt = 1.0;\n    }\n    fragColor = vec4(lebt, alter / 255.0, 0.0, 1.0);\n}\n",
+            "input": [
+              0,
+              4,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

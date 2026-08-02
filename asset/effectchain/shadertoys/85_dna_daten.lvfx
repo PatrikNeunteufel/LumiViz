@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "85_dna_daten",
+        "description": "Generiert aus asset/shadertoys/85_dna_daten.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 85 DNA-Daten — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KOMBI: DNA-Helix × Daten-Regen — die\n// Helixstränge bestehen aus fallenden Glyphen-Spalten (die Erbinformation\n// \"regnet\" die Helix hinunter), Sprossen als Datenbrücken.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float WINDUNGEN  = 2.5;\nconst float DREH_TEMPO = 0.6;\nconst float RADIUS     = 0.4;\nconst float FALL_TEMPO = 0.35;   // Glyphen fallen die Stränge entlang\nconst float ZEILEN     = 36.0;   // Glyphen-Raster vertikal\nconst float STRANG_BREITE = 0.075;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float dreh = iTime * (DREH_TEMPO + bass * 0.8);\n    vec3 col = vec3(0.005, 0.012, 0.008);\n\n    float phase = uv.y * WINDUNGEN * 6.28318 + dreh;\n    for (int s = 0; s < 2; ++s)\n    {\n        float ph = phase + float(s) * 3.14159;\n        float x = RADIUS * sin(ph);\n        float tiefe = 0.5 + 0.5 * cos(ph);\n        float d = abs(uv.x - x);\n        if (d < STRANG_BREITE)\n        {\n            // Glyphen-Zelle im Strang: 3x3-Bitmuster, fällt mit der Zeit\n            float zeile = floor((uv.y + iTime * FALL_TEMPO) * ZEILEN);\n            vec2 sub = floor(vec2((uv.x - x) / STRANG_BREITE * 0.5 + 0.5,\n                                  fract((uv.y + iTime * FALL_TEMPO) * ZEILEN)) * 3.0);\n            float bit = step(0.45, n21(vec2(zeile, float(s) * 13.0) + sub * 0.37));\n            vec3 farbe = (s == 0) ? vec3(0.25, 1.0, 0.45) : vec3(0.3, 0.75, 1.0);\n            col += bit * farbe * (0.25 + 0.75 * tiefe);\n        }\n    }\n    // Sprossen: Datenbrücken in festen Höhen, Helligkeit pulsiert\n    for (int i = 0; i < 14; ++i)\n    {\n        float y = -1.0 + 2.0 * (float(i) + 0.5) / 14.0;\n        float ph = y * WINDUNGEN * 6.28318 + dreh;\n        float x1 = RADIUS * sin(ph);\n        float x2 = RADIUS * sin(ph + 3.14159);\n        float tiefe = 0.5 + 0.5 * cos(ph);\n        vec2 p = vec2(clamp(uv.x, min(x1, x2), max(x1, x2)), y);\n        float d = length(uv - p);\n        float puls = 0.5 + 0.5 * sin(iTime * 3.0 + float(i) * 1.7);\n        col += smoothstep(0.008, 0.003, d) * vec3(0.5, 0.9, 0.7) *\n               tiefe * puls * 0.8;\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

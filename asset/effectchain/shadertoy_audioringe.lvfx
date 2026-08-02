@@ -1,0 +1,20 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "shadertoy",
+                "name": "Audioreaktive Ringe",
+                "description": "Vorlage + S-Pruefstand (S65): der LumiViz-Starter-Shader - iChannel0 traegt die 512x2-Audio-Textur (Zeile 0 Spektrum, Zeile 1 Waveform), bass/treb wirken als Uniforms. Ohne Audio bleibt der Grundring stehen; mit Audio atmet er.",
+                "audioChannel": 0,
+                "blend": 0,
+                "code": "// LumiViz-Starter: audioreaktive Ringe (bass/mid/treb als Uniforms,\n// iChannel0 = 512x2-Audio: Zeile 0 Spektrum, Zeile 1 Waveform)\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float d = length(uv);\n    float wave = texture(iChannel0, vec2(fract(d), 0.75)).x - 0.5;\n    float ring = smoothstep(0.06, 0.0, abs(d - 0.5 - 0.35 * bass - 0.4 * wave));\n    vec3 col = ring * (0.5 + 0.5 * cos(iTime + d * 6.0 + vec3(0.0, 2.1, 4.2)));\n    col += 0.15 * treb * (1.0 - d);\n    fragColor = vec4(col, 1.0);\n}\n"
+            }
+        ]
+    }
+}

@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "52_blatt_adern",
+        "description": "Generiert aus asset/shadertoys/52_blatt_adern.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 52 Blatt-Adern — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. BIOLOGIE × FRAKTAL: durchleuchtetes Blatt.\n//\n// IDEE: Ein Adernetz aus gespiegelten, skalierten Faltungen (KIFS light,\n// gegen die Mittelrippe gefaltet) auf einer Blattform (zwei Kreisbögen).\n// Gegenlicht: das Blattgrün leuchtet, die Adern bleiben dunkler und ein\n// Lichtfleck wandert (Sonne durchs Laub). Mitten = Blattzittern.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   ADER_TIEFE  = 6;\nconst float ADER_WINKEL = 0.85;  // Abzweig-Winkel der Seitenadern\nconst float ADER_DICKE  = 0.008;\nconst float ZITTERN     = 0.02;  // Mitten-Zittern\nconst float SONNE_TEMPO = 0.3;   // wandernder Lichtfleck\n// ----------------------------------------------------------------------------\n\nvec2 rot2(vec2 p, float a) { return vec2(p.x * cos(a) - p.y * sin(a),\n                                         p.x * sin(a) + p.y * cos(a)); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float mid = texture(iChannel0, vec2(0.30, 0.25)).x;\n    uv = rot2(uv, ZITTERN * mid * sin(iTime * 7.0));  // Blatt zittert im Takt\n    uv.y += 0.1;\n\n    // Blattform: Schnitt zweier verschobener Kreise (Lanzett-Form)\n    float blatt = max(length(uv - vec2(0.45, 0.0)) - 1.0,\n                      length(uv + vec2(0.45, 0.0)) - 1.0);\n    float drin = smoothstep(0.01, -0.01, blatt);\n\n    // Adern: gegen die Mittelrippe falten und wiederholt abzweigen\n    vec2 p = vec2(uv.x, abs(uv.y));  // Spiegel an der Mittelrippe\n    float dMin = abs(uv.y);          // Mittelrippe selbst\n    float s = 1.0;\n    for (int i = 0; i < ADER_TIEFE; ++i)\n    {\n        p = rot2(p - vec2(0.22, 0.0), -ADER_WINKEL);  // zur Seitenader drehen\n        p.y = abs(p.y);                                // nächste Abzweigung\n        s *= 1.35;\n        p *= 1.35;\n        dMin = min(dMin, abs(p.y) / s);\n    }\n    float ader = smoothstep(ADER_DICKE, ADER_DICKE * 0.3, dMin);\n\n    // Gegenlicht: Blattgrün + wandernder Sonnenfleck\n    vec2 sonne = 0.5 * vec2(cos(iTime * SONNE_TEMPO), sin(iTime * SONNE_TEMPO * 0.7));\n    float licht = exp(-dot(uv - sonne, uv - sonne) * 3.0);\n    vec3 gruen = mix(vec3(0.1, 0.35, 0.05), vec3(0.5, 0.9, 0.2), licht);\n    vec3 col = drin * (gruen * (1.0 - 0.55 * ader));   // Adern dunkler\n    col += drin * ader * licht * vec3(0.7, 0.9, 0.3) * 0.3;  // Adern im Licht\n    col += (1.0 - drin) * vec3(0.02, 0.025, 0.04);     // Hintergrund\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

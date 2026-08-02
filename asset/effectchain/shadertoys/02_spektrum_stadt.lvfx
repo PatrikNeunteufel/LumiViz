@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "02_spektrum_stadt",
+        "description": "Generiert aus asset/shadertoys/02_spektrum_stadt.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 02 Spektrum-Stadt — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: Das Spektrum als Skyline (Spaltenhöhe = FFT-Bin), darunter eine\n// wabernde Wasser-Spiegelung. Jedes Fenster hat seinen eigenen Zufall:\n// Helligkeit, Farbton (warm/kalt), manche sind ganz aus.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float HORIZONT        = 0.35;  // Höhe der Wasserlinie (0..1 von unten)\nconst float SPALTEN         = 48.0;  // Anzahl Gebäude\nconst float HOEHE_MAX       = 0.60;  // maximale Gebäudehöhe\nconst float VERSTAERKUNG    = 1.8;   // FFT-Verstärkung (mehr Ausschlag)\nconst float ANHEBUNG        = 0.65;  // pow-Exponent <1 hebt LEISE Bins an\nconst float SPEKTRUM_ANTEIL = 0.70;  // nur die unteren 70% des FFT nutzen\nconst float WABERN_STAERKE  = 0.01;  // Wasser-Wabern: Amplitude\nconst float WABERN_FREQ     = 60.0;  //  … Frequenz\nconst float WABERN_TEMPO    = 2.0;   //  … Tempo\nconst float FENSTER_X       = 96.0;  // Fenster-Raster horizontal\nconst float FENSTER_Y       = 60.0;  //  … vertikal\nconst float FENSTER_AN      = 0.65;  // Anteil leuchtender Fenster (0.65 = 65%)\nconst float FLACKER_TEMPO   = 0.15;  // wie oft Fenster an/aus wechseln\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;  // 0..1, y=0 unten\n    bool water = uv.y < HORIZONT;\n    vec2 p = uv;\n    if (water)\n    {\n        // an der Wasserlinie spiegeln + sinusförmig wabern\n        p.y = 2.0 * HORIZONT - uv.y +\n              WABERN_STAERKE * sin(uv.x * WABERN_FREQ + iTime * WABERN_TEMPO);\n    }\n    // Spaltenindex quantisieren: eine Spalte teilt sich einen FFT-Bin\n    float spalte = floor(p.x * SPALTEN) / SPALTEN;\n    float roh = texture(iChannel0, vec2(spalte * SPEKTRUM_ANTEIL + 0.02, 0.25)).x;\n    // pow(<1) hebt leise Bins an, VERSTAERKUNG skaliert — mehr Ausschlag\n    float fft = clamp(pow(roh, ANHEBUNG) * VERSTAERKUNG, 0.0, 1.0);\n    float h = HORIZONT + 0.02 + fft * HOEHE_MAX;  // Dachkante\n\n    vec3 sky = mix(vec3(0.02, 0.03, 0.08), vec3(0.15, 0.05, 0.25), p.y);\n    vec3 c = sky;\n    if (p.y < h)  // Gebäude\n    {\n        // Fenster-Zelle bestimmen (Id für den Zufall je Fenster)\n        vec2 zelle = vec2(floor(p.x * FENSTER_X), floor(p.y * FENSTER_Y + spalte * 7.0));\n        float istFenster = step(0.75, fract(p.x * FENSTER_X)) *\n                           step(0.60, fract(p.y * FENSTER_Y + spalte * 7.0));\n        // Drei Zufallswerte je Fenster: an/aus, Helligkeit, Farbton.\n        // Der an/aus-Zufall wandert langsam mit der Zeit -> Fenster flackern um\n        float zufallAn   = n21(zelle + floor(iTime * FLACKER_TEMPO));\n        float zufallHell = n21(zelle + 31.7);\n        float zufallTon  = n21(zelle + 77.3);\n        float an = step(1.0 - FENSTER_AN, zufallAn);       // manche ganz aus\n        float hell = 0.35 + 0.65 * zufallHell;             // Helligkeits-Streuung\n        // Farbton: warmgelb <-> kaltweißblau je Fenster\n        vec3 fensterFarbe = mix(vec3(1.0, 0.75, 0.30), vec3(0.75, 0.85, 1.0),\n                                zufallTon);\n        c = mix(vec3(0.05, 0.06, 0.10), fensterFarbe,\n                istFenster * an * hell * (0.4 + 0.6 * fft));\n        // Dachkanten-Glow (oberste 3%)\n        c += fft * vec3(0.1, 0.3, 0.5) * smoothstep(h - 0.03, h, p.y);\n    }\n    if (water) c *= vec3(0.4, 0.5, 0.6);  // Spiegelbild abdunkeln\n    fragColor = vec4(c, 1.0);\n}\n"
+      }
+    ]
+  }
+}

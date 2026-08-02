@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "79_kometen_schweif",
+        "description": "Generiert aus asset/shadertoys/79_kometen_schweif.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 79 Kometen-Schweif — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. GLOW: Komet auf elliptischer Bahn.\n//\n// IDEE: Der Schweif OHNE Buffer: entlang der bekannten Bahn werden die\n// POSITIONEN DER VERGANGENHEIT nachgerechnet und als verblassende\n// Glühpunkte gezeichnet (je älter, desto schwächer + breiter gestreut).\n// Staub- und Ionenschweif trennen sich (Ionen zeigen von der \"Sonne\" weg).\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   SPUR_PUNKTE = 48;   // nachgerechnete Vergangenheits-Punkte\nconst float SPUR_DAUER  = 2.0;  // Sekunden Schweif\nconst float BAHN_TEMPO  = 0.5;\nconst float KERN_GROESSE = 0.02;\nconst float BASS_AUSBRUCH = 0.6;\n// ----------------------------------------------------------------------------\n\nvec2 bahn(float t)\n{\n    // elliptische Bahn um die \"Sonne\" links oben\n    return vec2(-0.5 + 1.1 * cos(t), 0.25 + 0.55 * sin(t * 1.0));\n}\nfloat h1(float n) { return fract(sin(n) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    vec2 sonne = vec2(-0.9, 0.65);\n\n    vec3 col = vec3(0.006, 0.006, 0.018);\n    // Sternchen + \"Sonne\"\n    col += step(0.9975, h1(dot(floor(uv * 70.0), vec2(1.0, 57.0)))) * 0.4;\n    col += exp(-dot(uv - sonne, uv - sonne) * 30.0) * vec3(1.0, 0.9, 0.6) * 0.6;\n\n    float jetzt = iTime * BAHN_TEMPO;\n    vec2 kern = bahn(jetzt);\n    // Schweif: Vergangenheit nachrechnen\n    for (int i = 1; i < SPUR_PUNKTE; ++i)\n    {\n        float fi = float(i) / float(SPUR_PUNKTE);\n        float t = jetzt - fi * SPUR_DAUER * BAHN_TEMPO;\n        vec2 p = bahn(t);\n        float alterFaktor = 1.0 - fi;\n        // Ionenschweif: von der Sonne weg versetzt, je älter desto weiter\n        vec2 weg = normalize(p - sonne);\n        vec2 ion = p + weg * fi * 0.5;\n        // Staubschweif: bleibt näher an der Bahn, streut leicht\n        vec2 staub = p + weg * fi * 0.2 +\n                     0.05 * fi * vec2(h1(fi * 91.0) - 0.5, h1(fi * 57.0) - 0.5);\n        float dIon = length(uv - ion);\n        float dStaub = length(uv - staub);\n        col += exp(-dIon * dIon * 900.0) * vec3(0.3, 0.6, 1.0) *\n               alterFaktor * 0.5;\n        col += exp(-dStaub * dStaub * 600.0) * vec3(0.9, 0.8, 0.6) *\n               alterFaktor * 0.4;\n    }\n    // Kern + Koma (Bass = Ausbruch: Koma bläht sich)\n    float koma = 1.0 + smoothstep(BASS_AUSBRUCH, 1.0, bass) * 1.5;\n    float dK = length(uv - kern);\n    col += smoothstep(KERN_GROESSE, 0.0, dK) * vec3(1.0);\n    col += exp(-dK * dK * 120.0 / koma) * vec3(0.7, 0.85, 1.0) * 0.8;\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

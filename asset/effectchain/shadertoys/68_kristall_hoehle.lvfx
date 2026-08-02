@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "68_kristall_hoehle",
+        "description": "Generiert aus asset/shadertoys/68_kristall_hoehle.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 68 Kristall-Höhle — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. RAYMARCHING: Höhle voller Kristallnadeln.\n//\n// IDEE: Gekachelte, verdrehte Oktaeder-Nadeln (SDF) ragen aus Boden und\n// Decke; die Kamera schwebt hindurch. Kristalle schimmern über einen\n// tiefenabhängigen Farbzyklus + Fresnel-Kantenlicht. Bass = Puls-Glühen.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   MARSCH     = 80;\nconst float KACHEL     = 1.6;\nconst float NADEL_DICKE = 0.22;\nconst float FLUG_TEMPO = 0.4;\nconst float GLUEH_BASS = 0.8;\n// ----------------------------------------------------------------------------\n\nvec2 rot2(vec2 p, float a) { return vec2(p.x * cos(a) - p.y * sin(a),\n                                         p.x * sin(a) + p.y * cos(a)); }\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\n// Oktaeder-SDF (|x|+|y|+|z| = konstant), vertikal gestreckt = Nadel\nfloat nadel(vec3 p, float streck)\n{\n    p.y /= streck;\n    return (abs(p.x) + abs(p.y) + abs(p.z) - NADEL_DICKE) * 0.57735 * streck;\n}\nfloat szene(vec3 p)\n{\n    vec2 id = floor(p.xz / KACHEL);\n    vec2 lokal = mod(p.xz, KACHEL) - 0.5 * KACHEL;\n    float rnd = n21(id);\n    // je Zelle eine verdrehte Nadel von unten UND oben\n    vec3 q = vec3(lokal.x, p.y, lokal.y);\n    q.xz = rot2(q.xz, rnd * 6.28318);\n    float unten = nadel(q - vec3(0.0, -1.2 + rnd * 0.6, 0.0), 2.5 + 2.0 * rnd);\n    float oben  = nadel(q - vec3(0.0,  1.2 - rnd * 0.4, 0.0), 2.0 + 1.5 * rnd);\n    return min(unten, oben);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n\n    vec3 ro = vec3(0.3 * sin(iTime * 0.2), 0.15 * sin(iTime * 0.17),\n                   iTime * FLUG_TEMPO);\n    vec3 rd = normalize(vec3(uv, 1.3));\n    rd.xz = rot2(rd.xz, 0.1 * sin(iTime * 0.15));\n\n    float t = 0.0;\n    float d = 1.0;\n    int schritte = 0;\n    for (int i = 0; i < MARSCH; ++i)\n    {\n        d = szene(ro + rd * t);\n        schritte = i;\n        if (d < 0.002 || t > 14.0) break;\n        t += d * 0.85;  // konservativer Schritt (verdrehte Kacheln)\n    }\n    vec3 col = vec3(0.01, 0.005, 0.02);\n    if (d < 0.002)\n    {\n        vec3 p = ro + rd * t;\n        vec2 e = vec2(0.004, 0.0);\n        vec3 n = normalize(vec3(szene(p + e.xyy) - szene(p - e.xyy),\n                                szene(p + e.yxy) - szene(p - e.yxy),\n                                szene(p + e.yyx) - szene(p - e.yyx)));\n        float fresnel = pow(1.0 - max(dot(n, -rd), 0.0), 2.0);\n        // Schimmer: Farbzyklus über Tiefe + Höhe, pulst mit dem Bass\n        vec3 kristall = 0.5 + 0.5 * cos(p.z * 0.8 + p.y * 2.0 + iTime * 0.3 +\n                                        vec3(0.0, 2.1, 4.2));\n        col = kristall * (0.25 + 0.4 * max(dot(n, normalize(vec3(0.5, 0.8, -0.3))), 0.0));\n        col += fresnel * kristall * (0.5 + GLUEH_BASS * bass);\n        col *= exp(-t * 0.22);  // Höhlen-Dunkelheit\n    }\n    col += pow(float(schritte) / float(MARSCH), 3.0) * vec3(0.3, 0.15, 0.5) * 0.6;\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

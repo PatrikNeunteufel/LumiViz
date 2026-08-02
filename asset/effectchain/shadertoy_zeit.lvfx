@@ -1,0 +1,20 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "shadertoy",
+                "name": "Sonde Zeit-Puls",
+                "description": "S-Pruefstand (S65): iTime-getriebener Puls (deterministische Sim-Uhr) - prueft iTime/iFrame; Endbild haengt nur von der Frame-Zahl ab.",
+                "audioChannel": -1,
+                "blend": 0,
+                "code": "// LumiViz-Sonde (eigener Shader, S65): Zeit-Puls\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    float puls = 0.5 + 0.5 * sin(iTime * 2.0);\n    float rad = length(uv - 0.5);\n    float welle = 0.5 + 0.5 * sin(rad * 40.0 - iTime * 4.0);\n    fragColor = vec4(puls * uv.x, welle * puls, 1.0 - puls, 1.0);\n}\n"
+            }
+        ]
+    }
+}

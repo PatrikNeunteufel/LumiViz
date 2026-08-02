@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     721>
+                     724>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
@@ -1136,6 +1136,12 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "line width for following scopes (px, 0 = leave)"},
     {"setRenderMode.overrideBlend",
      "override the blend (AVS bit 31)"},
+    {"shadertoy.blend",
+     "aufs Bild: 0 ersetzen, 1 additiv, 2 50/50"},
+    {"shadertoy.code",
+     "mainImage-Quelltext des Image-Passes (leer = Starter)"},
+    {"shadertoy.imageInput",
+     "Kanal-Bindungen des Image-Passes (Kodierung s. kShadertoyInput* \342\200\224 SSOT; ein fr\303\274hes `audioChannel`-Feld wird beim Laden migriert)."},
     {"simpleScope.beatCode",
      "Parameter-Skript (Strang D): `mode`, `channel`, `position` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
     {"simpleScope.channel",

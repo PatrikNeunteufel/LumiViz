@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "16_laser_scanner",
+        "description": "Generiert aus asset/shadertoys/16_laser_scanner.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 16 Laser-Scanner — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: Rotierende Strahlen: abs(sin(Winkelabstand)) wird auf dem Strahl 0,\n// 1/(d²+eps) macht daraus einen Glow-Strich. Bass = Tempo, Höhen = Gleißen.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   STRAHLEN     = 5;\nconst float TEMPO_GRUND  = 0.5;    // Rotationstempo\nconst float TEMPO_BASS   = 1.5;    //  … Bass-Zuschlag\nconst float SCHAERFE     = 0.002;  // kleiner = dünnere, grellere Strahlen\nconst float HELL_GRUND   = 0.0006; // Strahlhelligkeit\nconst float HELL_HOEHEN  = 0.0008;\nconst float MITTE_FREI   = 0.05;   // Strahlen erst ab diesem Radius\nconst float GLUT_STAERKE = 1.0;    // Bass-Glut im Zentrum\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float treb = texture(iChannel0, vec2(0.70, 0.25)).x;\n    float a = atan(uv.y, uv.x);\n    float r = length(uv);\n    vec3 col = vec3(0.01, 0.01, 0.02);\n    for (int i = 0; i < STRAHLEN; ++i)\n    {\n        float fi = float(i);\n        // Winkelabstand zum Strahl i (Tempo gestaffelt, Start versetzt)\n        float beam = a - iTime * (TEMPO_GRUND + TEMPO_BASS * bass) *\n                             (fi * 0.3 + 0.4) - fi * 2.4;\n        float d = abs(sin(beam));  // 0 exakt auf dem Strahl\n        col += (HELL_GRUND + HELL_HOEHEN * treb) / (d * d + SCHAERFE) *\n               (0.5 + 0.5 * cos(fi * 1.7 + vec3(0.0, 2.1, 4.2)));\n    }\n    col *= smoothstep(MITTE_FREI, 0.3, r) * smoothstep(1.8, 0.7, r);\n    col += GLUT_STAERKE * bass * vec3(0.3, 0.05, 0.1) * smoothstep(0.25, 0.0, r);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

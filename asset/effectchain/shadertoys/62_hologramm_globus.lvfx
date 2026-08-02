@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "62_hologramm_globus",
+        "description": "Generiert aus asset/shadertoys/62_hologramm_globus.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 62 Hologramm-Globus — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. TECHNIK: Drahtgitter-Globus als Hologramm.\n//\n// IDEE: Eine Kugel wird als Punktprojektion gerendert: Längen-/Breitenkreise\n// entstehen aus der Rückprojektion der Bildkoordinate auf die Kugel (nur\n// die VORDERSEITE), dazu Scanlines, Flacker-Störungen und chromatischer\n// Versatz — der klassische Sci-Fi-Look. Mitten = Störungsgrad.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float RADIUS      = 0.65;\nconst float DREH_TEMPO  = 0.35;\nconst float GITTER      = 8.0;   // Längen-/Breitenkreise\nconst float LINIEN_DICKE = 0.03;\nconst float SCANLINES   = 180.0;\nconst float STOERUNG    = 0.5;   // Grund-Flackern\nconst float STOER_MITTEN = 1.0;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\n// Gitterhelligkeit der Kugel-Vorderseite an Bildposition q (oder 0)\nfloat globus(vec2 q, float drehung)\n{\n    float r2 = dot(q, q);\n    if (r2 > RADIUS * RADIUS) return 0.0;\n    // Rückprojektion: z aus der Kugelgleichung, dann Länge/Breite\n    float z = sqrt(RADIUS * RADIUS - r2);\n    vec3 p = vec3(q, z) / RADIUS;\n    float laenge = atan(p.z, p.x) + drehung;\n    float breite = asin(clamp(p.y, -1.0, 1.0));\n    float g1 = pow(0.5 + 0.5 * cos(laenge * GITTER), 1.0 / LINIEN_DICKE * 0.03);\n    float g2 = pow(0.5 + 0.5 * cos(breite * GITTER * 2.0), 1.0 / LINIEN_DICKE * 0.03);\n    // Vorderseite heller als Randpartien (z als Beleuchtung)\n    return (g1 + g2) * (0.35 + 0.65 * p.z);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float mid = texture(iChannel0, vec2(0.30, 0.25)).x;\n    float drehung = iTime * DREH_TEMPO;\n\n    // Störung: ganze Zeilen springen kurz zur Seite\n    float zeile = floor(fragCoord.y / 3.0);\n    float stoer = STOERUNG + STOER_MITTEN * mid;\n    float ruckel = (n21(vec2(zeile, floor(iTime * 8.0))) - 0.5) *\n                   step(0.93, n21(vec2(floor(iTime * 8.0), zeile))) * 0.06 * stoer;\n    vec2 q = uv + vec2(ruckel, 0.0);\n\n    // chromatischer Versatz: RGB minimal auseinander\n    float g = globus(q, drehung);\n    float rKanal = globus(q + vec2(0.004 * stoer, 0.0), drehung);\n    float bKanal = globus(q - vec2(0.004 * stoer, 0.0), drehung);\n    vec3 col = vec3(rKanal * 0.5, g, bKanal * 1.2) * vec3(0.3, 0.9, 1.0);\n\n    // Scanlines + Flackern\n    col *= 0.8 + 0.2 * sin(fragCoord.y * 6.28318 * SCANLINES / iResolution.y);\n    col *= 0.9 + 0.1 * sin(iTime * 47.0);\n    // Sockel-Lichtkegel\n    col += smoothstep(0.9, 0.0, length(uv + vec2(0.0, 0.9))) * vec3(0.05, 0.15, 0.2);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "29_fluss_feld",
+        "description": "Generiert aus asset/shadertoys/29_fluss_feld.{image,bufferA}.glsl (Multipass).",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 29 Fluss-Feld, Image — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy-Tab \"Image\": iChannel0 = Buffer A. Anzeige + leichte Aufsteilung.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float SAETTIGUNG = 1.15; // >1 = kräftigere Farben\nconst float GAMMA      = 0.9;  // <1 = heller\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    vec3 c = texture(iChannel0, uv).rgb;\n    float grau = dot(c, vec3(0.333));\n    c = mix(vec3(grau), c, SAETTIGUNG);       // Sättigung anheben\n    c = pow(max(c, 0.0), vec3(GAMMA));        // Gamma\n    fragColor = vec4(c, 1.0);\n}\n",
+        "buffers": [
+          {
+            "code": "// 29 Fluss-Feld, Buffer A — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy-Tab \"Buffer A\": iChannel0 = Buffer A (SELBST = Vorframe!),\n//                           iChannel1 = Music.\n//\n// IDEE: FARB-ADVEKTION (Mini-Fluid): jedes Pixel liest das Vorframe an der\n// Stelle, von der die Strömung es \"herträgt\" (uv − v·dt). Das Strömungsfeld\n// ist der CURL eines Value-Noise (divergenzfrei = wirbelig, ohne Quellen).\n// Wandernde Farbquellen tropfen Tinte hinein; der Bass rührt kräftiger.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float STROEMUNG    = 0.0035; // Advektions-Schrittweite (Fließtempo)\nconst float BASS_RUEHREN = 2.0;    // Bass verstärkt die Strömung\nconst float WIRBEL_GROESSE = 3.0;  // Noise-Skala des Feldes (mehr = kleinere Wirbel)\nconst float FELD_WANDEL  = 0.10;   // wie schnell sich das Wirbelfeld ändert\nconst float VERBLASSEN   = 0.995;  // Tinte hält lang (0.98 = schneller weg)\nconst int   QUELLEN      = 3;      // Anzahl Tintenquellen\nconst float QUELL_GROESSE = 0.02;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p), f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\n// Curl des Noise: (dN/dy, −dN/dx) — divergenzfreies Wirbelfeld\nvec2 curl(vec2 p)\n{\n    vec2 e = vec2(0.01, 0.0);\n    float dx = vnoise(p + e.xy) - vnoise(p - e.xy);\n    float dy = vnoise(p + e.yx) - vnoise(p - e.yx);\n    return vec2(dy, -dx) / (2.0 * e.x);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    float bass = texture(iChannel1, vec2(0.05, 0.25)).x;\n\n    // Strömung am Pixel (Feld wandert langsam durch die 3. Noise-Achse\n    // — hier als Zeitversatz in den Koordinaten)\n    vec2 v = curl(uv * WIRBEL_GROESSE + iTime * FELD_WANDEL);\n    // ADVEKTION: Vorframe dort lesen, wo die Strömung herkommt\n    vec2 quelle = uv - v * STROEMUNG * (1.0 + BASS_RUEHREN * bass);\n    vec3 col = texture(iChannel0, quelle).rgb * VERBLASSEN;\n\n    // Tintenquellen: wandern auf Lissajous-Bahnen, jede mit eigener Farbe\n    for (int i = 0; i < QUELLEN; ++i)\n    {\n        float fi = float(i);\n        vec2 p = 0.5 + 0.35 * vec2(cos(iTime * (0.3 + fi * 0.17) + fi * 2.1),\n                                   sin(iTime * (0.4 + fi * 0.13) + fi * 4.2));\n        float d = length((uv - p) * vec2(iResolution.x / iResolution.y, 1.0));\n        vec3 tinte = 0.5 + 0.5 * cos(fi * 2.1 + iTime * 0.2 + vec3(0.0, 2.1, 4.2));\n        col = max(col, tinte * smoothstep(QUELL_GROESSE, 0.0, d));\n    }\n    fragColor = vec4(col, 1.0);\n}\n",
+            "input": [
+              0,
+              4,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

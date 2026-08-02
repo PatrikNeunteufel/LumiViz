@@ -1,0 +1,41 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "blend": 0,
+                "code": "// 06 Tunnel mit Herzschlag — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: Polar-Tunnel: z = TIEFE/r täuscht Tiefe vor (Bildmitte = fern).\n// Der Bass gibt Vortrieb; das Spektrum leuchtet als Aura um die Mitte.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float VORTRIEB_GRUND = 0.080;  // Grund-Fahrgeschwindigkeit (war 0.6)\nconst float VORTRIEB_BASS  = 0.010;  // Bass-Schub obendrauf (war 1.4)\nconst float TIEFE          = .90;  // Tunnel-Streckung (kleiner = länger)\nconst float RING_DICHTE    = 2.28318; // Ringe in Fahrtrichtung\nconst float STREIFEN       = 8.0;   // Anzahl Längsstreifen\nconst float TWIST          = 0.05;  // Verdrehung der Streifen (war 0.7 — wackelte)\nconst float SCHAERFE       = 2.5;   // Muster-Kantenschärfe (1 = weich)\nconst float AURA_STAERKE   = 0.0;   // Spektrum-Aura um die Mitte\nconst float MITTE_DUNKEL   = 0.15;  // Größe des dunklen Fluchtpunkts\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float r = length(uv) + 1e-4;   // nie 0 (Division)\n    float a = atan(uv.y, uv.x);\n    float drive = iTime * (VORTRIEB_GRUND + VORTRIEB_BASS * bass);\n    float z = TIEFE / r + drive;   // Tiefen-Koordinate\n\n    // Wandmuster: Ringe × Längsstreifen; pow() schärft die Kanten\n    float stripes = 0.5 + 0.5 * sin(z * RING_DICHTE) *\n                    sin(a * STREIFEN + drive * TWIST);\n    stripes = pow(stripes, SCHAERFE);\n    // Winkel 0..1 wählt den FFT-Bin: das Spektrum liegt einmal um den Tunnel\n    float fft = texture(iChannel0, vec2(fract(a / 6.28318), 0.25)).x;\n\n    vec3 col = (0.5 + 0.5 * cos(z + a + vec3(0.0, 2.1, 4.2))) * stripes;\n    col += AURA_STAERKE * fft * vec3(0.8, 0.3, 0.6) * smoothstep(1.2, 0.0, r);\n    col *= smoothstep(0.0, MITTE_DUNKEL, r);  // Fluchtpunkt dunkel\n    fragColor = vec4(col, 1.0);\n}\n",
+                "description": "Generiert aus asset/shadertoys/06_tunnel_herzschlag.glsl (SSOT dort; Shadertoy-portabel).",
+                "enabled": true,
+                "imageInput": [
+                    4,
+                    -1,
+                    -1,
+                    -1
+                ],
+                "name": "06_tunnel_herzschlag",
+                "type": "shadertoy"
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

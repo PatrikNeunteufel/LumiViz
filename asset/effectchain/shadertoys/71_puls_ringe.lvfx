@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "71_puls_ringe",
+        "description": "Generiert aus asset/shadertoys/71_puls_ringe.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 71 Puls-Ringe — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. GLOW: expandierende Schockwellen.\n//\n// IDEE: In festen Zeitfenstern startet je ein Ring an gehashter Position\n// und expandiert auslaufend (Radius ~ sqrt(t) wie eine echte Welle,\n// Helligkeit ~ 1/Radius). Mehrere Fenster überlappen. Der Bass gebiert\n// zusätzliche Ringe in der Mitte.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float RATE       = 0.8;   // Ringe pro Sekunde\nconst int   FENSTER    = 4;     // parallel lebende Ringe\nconst float LEBENSDAUER = 2.5;\nconst float TEMPO      = 0.55;  // Expansionstempo\nconst float RING_DICKE = 0.015;\nconst float BASS_RING  = 0.5;   // Bass-Schwelle für den Zentrumsring\n// ----------------------------------------------------------------------------\n\nfloat h1(float n) { return fract(sin(n) * 43758.5453); }\nvec3 ring(vec2 uv, vec2 zentrum, float alter, float farbSaat)\n{\n    if (alter < 0.0 || alter > 1.0) return vec3(0.0);\n    float radius = TEMPO * sqrt(alter * LEBENSDAUER);\n    float d = abs(length(uv - zentrum) - radius);\n    float hell = (1.0 - alter) * (1.0 - alter);\n    vec3 farbe = 0.5 + 0.5 * cos(farbSaat * 6.28318 + vec3(0.0, 2.1, 4.2));\n    return smoothstep(RING_DICKE, RING_DICKE * 0.2, d) * farbe * hell +\n           exp(-d * 25.0) * farbe * hell * 0.4;  // Halo\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    vec3 col = vec3(0.012, 0.01, 0.025);\n\n    for (int k = 0; k < FENSTER; ++k)\n    {\n        float fk = float(k);\n        float fenster = iTime * RATE / float(FENSTER) + fk / float(FENSTER);\n        float saat = floor(fenster) * float(FENSTER) + fk;\n        float alter = fract(fenster) * float(FENSTER) * RATE * LEBENSDAUER /\n                      (RATE * LEBENSDAUER);  // 0..N — clampen unten\n        vec2 z = vec2(h1(saat * 3.3) * 1.6 - 0.8, h1(saat * 7.7) * 1.2 - 0.6);\n        col += ring(uv, z, fract(fenster) * float(FENSTER) / (RATE * LEBENSDAUER),\n                    h1(saat * 11.1));\n    }\n    // Bass-Ring aus der Mitte (eigenes schnelles Fenster)\n    if (bass > BASS_RING)\n    {\n        float fenster = iTime * 1.5;\n        col += ring(uv, vec2(0.0), fract(fenster), 0.1) * (0.5 + bass);\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

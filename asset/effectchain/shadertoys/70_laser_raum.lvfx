@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "70_laser_raum",
+        "description": "Generiert aus asset/shadertoys/70_laser_raum.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 70 Laser-Raum — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. GLOW: perspektivisches Lasergitter im Nebel.\n//\n// IDEE: Ein Boden- und Deckengitter in Ein-Punkt-Perspektive (Projektion\n// y/z, x/z), die Gitterlinien glühen; Nebel dämpft mit der Tiefe. Die Bahn\n// scrollt vorwärts (Bass = Tempo), Vertikallaser wischen quer (Höhen).\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float TEMPO_GRUND = 1.2;\nconst float TEMPO_BASS  = 2.0;\nconst float GITTER      = 2.0;   // Linienabstand\nconst float LINIEN_GLOW = 0.02;\nconst float RAUM_HOEHE  = 0.8;\nconst float NEBEL       = 0.12;\nconst int   WISCHER     = 3;     // Quer-Laser\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float treb = texture(iChannel0, vec2(0.70, 0.25)).x;\n    float fahrt = iTime * (TEMPO_GRUND + TEMPO_BASS * bass);\n\n    vec3 col = vec3(0.01, 0.005, 0.02);\n    // Boden (uv.y < 0) und Decke (uv.y > 0) als projizierte Ebenen\n    for (int seite = 0; seite < 2; ++seite)\n    {\n        float vorzeichen = (seite == 0) ? -1.0 : 1.0;\n        float y = uv.y * vorzeichen;\n        if (y < -0.02) continue;\n        float z = RAUM_HOEHE / max(y, 0.02);        // Tiefe aus der Projektion\n        float x = uv.x * z;                          // Weltkoordinate quer\n        // Gitter: Quer- und Längslinien im Weltmaß\n        float quer = abs(fract((z + fahrt) / GITTER) - 0.5);\n        float laengs = abs(fract(x / GITTER) - 0.5);\n        float linie = LINIEN_GLOW / (quer * quer + 0.002) +\n                      LINIEN_GLOW / (laengs * laengs + 0.002);\n        vec3 farbe = (seite == 0) ? vec3(0.9, 0.2, 0.8) : vec3(0.2, 0.6, 1.0);\n        col += linie * 0.02 * farbe * exp(-z * NEBEL);\n    }\n    // Quer-Wischer: vertikale Laser wandern durchs Bild\n    for (int i = 0; i < WISCHER; ++i)\n    {\n        float fi = float(i);\n        float x = sin(iTime * (0.7 + fi * 0.23) + fi * 2.1) * 0.9;\n        float d = abs(uv.x - x);\n        col += (0.0008 + 0.0016 * treb) / (d * d + 0.001) * 0.15 *\n               (0.5 + 0.5 * cos(fi * 2.0 + vec3(0.0, 2.1, 4.2)));\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

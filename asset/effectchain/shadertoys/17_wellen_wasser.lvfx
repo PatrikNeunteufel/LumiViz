@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "17_wellen_wasser",
+        "description": "Generiert aus asset/shadertoys/17_wellen_wasser.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 17 Wellen-Wasser — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: Drei ebene Wellenzüge als Höhenfeld; Fake-Normale aus Nachbarhöhen\n// + Lambert/Glanz-Beleuchtung. Mitten treiben Welle 3, Kamera driftet.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst vec2  KAMERA_DRIFT = vec2(0.20, 0.10); // Drift-Richtung × Tempo\nconst float FREQ_1       = 3.0;   // Wellenfrequenzen (größer = kürzer)\nconst float FREQ_2       = 4.0;\nconst float FREQ_3       = 6.0;\nconst float TEMPO_1      = 1.8;   // Wellen-Tempi\nconst float TEMPO_2      = 1.4;\nconst float TEMPO_3      = 2.5;\nconst float STEILHEIT    = 0.35;  // n.z: kleiner = kontrastreichere Normale\nconst float GLANZ        = 48.0;  // Glanzpunkt-Schärfe (pow-Exponent)\n// ----------------------------------------------------------------------------\n\nfloat height(vec2 p, float t, float mid)\n{\n    // dot(p, richtung) = ebene Welle entlang dieser Richtung\n    float h = 0.0;\n    h += sin(dot(p, vec2(1.0, 0.3)) * FREQ_1 + t * TEMPO_1);\n    h += sin(dot(p, vec2(-0.6, 1.0)) * FREQ_2 - t * TEMPO_2);\n    h += (0.5 + mid) * sin(dot(p, vec2(0.3, -1.0)) * FREQ_3 + t * TEMPO_3);\n    return h * 0.33;  // ~ -1..1\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y * 2.0;\n    uv += iTime * KAMERA_DRIFT;\n    float mid = texture(iChannel0, vec2(0.30, 0.25)).x;\n    float t = iTime;\n    vec2 e = vec2(0.02, 0.0);\n    float h = height(uv, t, mid);\n    // Normale aus zentralen Differenzen\n    vec3 n = normalize(vec3(height(uv - e.xy, t, mid) - height(uv + e.xy, t, mid),\n                            height(uv - e.yx, t, mid) - height(uv + e.yx, t, mid),\n                            STEILHEIT));\n    vec3 l = normalize(vec3(0.5, 0.6, 0.7));  // Sonne\n    float diff = max(dot(n, l), 0.0);\n    float spec = pow(max(dot(reflect(-l, n), vec3(0.0, 0.0, 1.0)), 0.0), GLANZ);\n    vec3 deep = vec3(0.0, 0.15, 0.30);     // Wellental\n    vec3 shallow = vec3(0.1, 0.50, 0.60);  // Wellenberg\n    vec3 col = mix(deep, shallow, 0.5 + 0.5 * h) * (0.4 + 0.6 * diff) +\n               spec * (0.5 + mid);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "94_hex_datenstrom",
+        "description": "Generiert aus asset/shadertoys/94_hex_datenstrom.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 94 Hex-Datenstrom — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KOMBI: Hexgitter × Daten-Regen — die\n// Datenkolonnen fallen durch ein Sechseck-Raster: Hex-Zellen leuchten auf,\n// wenn eine Kolonne sie durchquert (Kopf hell, Spur verblasst).\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float ZOOM       = 6.0;\nconst float FALL_GRUND = 0.30;\nconst float FALL_BASS  = 0.5;\nconst float SPUR       = 0.45;   // Spurlänge (0..1 der Bildhöhe)\nconst float FUGE       = 0.04;\n// ----------------------------------------------------------------------------\n\nfloat hexDist(vec2 p)\n{\n    p = abs(p);\n    return max(dot(p, vec2(0.8660254, 0.5)), p.x);\n}\nvec4 hexCoords(vec2 p)\n{\n    vec2 r = vec2(1.0, 1.7320508);\n    vec2 h = r * 0.5;\n    vec2 a = mod(p, r) - h;\n    vec2 b = mod(p - h, r) - h;\n    vec2 g = dot(a, a) < dot(b, b) ? a : b;\n    return vec4(g, p - g);\n}\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y * ZOOM;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    vec4 h = hexCoords(uv);\n    vec2 id = h.zw;\n    float rnd = n21(vec2(id.x, 0.0));  // Spalten-Zufall (gleiche x-Spalte)\n\n    // Kolonnen-Kopf in dieser Spalte (Weltkoordinate y, fällt endlos)\n    float spanne = ZOOM * 2.4;  // sichtbare y-Spanne (großzügig)\n    float kopf = spanne * 0.5 - fract(iTime * (FALL_GRUND + FALL_BASS * bass) *\n                                      (0.5 + rnd) + rnd * 7.0) * spanne;\n    float dy = kopf - id.y;  // Abstand des Zellzentrums HINTER dem Kopf\n    float spur = (dy > 0.0 && dy < SPUR * spanne) ? 1.0 - dy / (SPUR * spanne) : 0.0;\n\n    float d = hexDist(h.xy);\n    float zelle = smoothstep(0.5, 0.5 - FUGE, d);\n    // Zell-Innenmuster: Bitflackern wie Glyphen\n    float bit = step(0.35, n21(id + floor(iTime * 4.0)));\n\n    vec3 col = vec3(0.004, 0.012, 0.006);\n    col += zelle * spur * bit * vec3(0.2, 1.0, 0.45) * (0.3 + spur);\n    col += zelle * step(0.92, spur) * vec3(0.8, 1.0, 0.85);  // Kopfzelle weiß\n    col += smoothstep(0.5, 0.47, d) * smoothstep(0.44, 0.47, d) *\n           vec3(0.0, 0.15, 0.05);  // Zellrahmen schwach\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

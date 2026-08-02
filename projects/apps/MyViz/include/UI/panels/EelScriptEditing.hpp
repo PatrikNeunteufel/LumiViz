@@ -351,11 +351,14 @@ inline void showScriptReference(QWidget* parent, const QString& html)
 }
 
 /// Full, resizable editor: big code pane + the module's reference side-by-side.
-/// Returns true and fills `out` when accepted.
+/// Returns true and fills `out` when accepted. `eelHighlight = false` lässt den
+/// EEL-Highlighter weg — für Fremdsprachen-Felder (HLSL/GLSL, Strang S/S42),
+/// deren Bezeichner die EEL-Kategorien nur falsch einfärben würden.
 [[nodiscard]] inline bool openScriptEditor(QWidget* parent, const QString& label,
                                            const QString& text, const QString& refHtml,
                                            QString& out,
-                                           const QSet<QString>& conflicts = {})
+                                           const QSet<QString>& conflicts = {},
+                                           bool eelHighlight = true)
 {
     QDialog dlg(parent);
     dlg.setWindowTitle(QObject::tr("Edit script — %1").arg(label));
@@ -368,7 +371,7 @@ inline void showScriptReference(QWidget* parent, const QString& html)
     QFont mono(QStringLiteral("Consolas"));
     mono.setStyleHint(QFont::Monospace);
     editor->setFont(mono);
-    new EelHighlighter(editor->document(), conflicts);
+    if (eelHighlight) new EelHighlighter(editor->document(), conflicts);
     auto* ref = new QTextBrowser(split);
     ref->setHtml(refHtml);
     split->addWidget(editor);

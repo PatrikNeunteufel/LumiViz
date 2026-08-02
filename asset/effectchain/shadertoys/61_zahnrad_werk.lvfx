@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "61_zahnrad_werk",
+        "description": "Generiert aus asset/shadertoys/61_zahnrad_werk.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 61 Zahnrad-Werk — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. TECHNIK: kämmende Zahnräder.\n//\n// IDEE: Ein Zahnrad-SDF: Kreis + Zahnkranz (cos über den Winkel moduliert\n// den Radius) + Nabe + Speichen. Drei Räder kämmen (Drehzahl ∝ 1/Radius,\n// gegensinnig); der Bass ist das \"Drehmoment\" (Tempo aller Räder).\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float TEMPO_GRUND = 0.4;\nconst float TEMPO_BASS  = 0.8;\nconst float ZAHN_HOEHE  = 0.045;\nconst float KANTE       = 0.008;  // Metallkante (klein = hart)\n// ----------------------------------------------------------------------------\n\nvec2 rot2(vec2 p, float a) { return vec2(p.x * cos(a) - p.y * sin(a),\n                                         p.x * sin(a) + p.y * cos(a)); }\n// Zahnrad-Abstandsfeld: Rückgabe < 0 = im Metall\nfloat zahnrad(vec2 p, float radius, float zaehne, float drehung)\n{\n    p = rot2(p, drehung);\n    float a = atan(p.y, p.x);\n    float r = length(p);\n    float kranz = radius + ZAHN_HOEHE * (0.5 + 0.5 * cos(a * zaehne));  // Zähne\n    float d = r - kranz;\n    d = max(d, 0.18 * radius / 0.35 * 0.35 - r);  // Nabenloch… vereinfachte Nabe\n    // Speichenfenster: 4 Löcher zwischen Nabe und Kranz\n    float fenster = min(abs(fract(a * 0.6366 + 0.125) - 0.5) * radius * 3.0,\n                        max(r - radius * 0.35, radius * 0.8 - r));\n    d = max(d, -fenster + 0.05 * radius);\n    return d;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float t = iTime * (TEMPO_GRUND + TEMPO_BASS * bass);\n\n    // drei kämmende Räder: Positionen so, dass die Kränze sich berühren\n    vec3 col = vec3(0.015, 0.015, 0.025);\n    float gesamt = 1e9;\n    float glanzWinkel = 0.0;\n    // (Radius, Zähne, Position, Richtung)\n    for (int i = 0; i < 3; ++i)\n    {\n        float radius = (i == 0) ? 0.34 : (i == 1) ? 0.22 : 0.27;\n        float zaehne = floor(radius * 44.0);\n        vec2 pos = (i == 0) ? vec2(-0.35, -0.05)\n                 : (i == 1) ? vec2(0.24, 0.28)\n                            : vec2(0.33, -0.33);\n        float richtung = (i == 1) ? -1.0 : ((i == 2) ? -1.0 : 1.0);\n        // Drehzahl ∝ 1/Zähne (Kämm-Bedingung), Phase fein justiert\n        float dreh = richtung * t * 12.0 / zaehne + float(i) * 0.3;\n        float d = zahnrad(uv - pos, radius, zaehne, dreh);\n        if (d < gesamt) { gesamt = d; glanzWinkel = atan(uv.y - pos.y, uv.x - pos.x) + dreh; }\n    }\n    float metall = smoothstep(KANTE, -KANTE, gesamt);\n    // Metall-Look: Grundton + umlaufender Glanzstreifen + Kantenlicht\n    vec3 stahl = vec3(0.55, 0.58, 0.65);\n    float glanz = pow(0.5 + 0.5 * cos(glanzWinkel * 2.0 + 1.0), 8.0);\n    col = mix(col, stahl * (0.35 + 0.5 * glanz), metall);\n    col += smoothstep(KANTE, 0.0, abs(gesamt)) * vec3(0.9, 0.85, 0.6) * 0.35; // Kante\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "77_sonnen_korona",
+        "description": "Generiert aus asset/shadertoys/77_sonnen_korona.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 77 Sonnen-Korona — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. GLOW: brodelnde Sonne mit Protuberanzen.\n//\n// IDEE: Die Scheibe brodelt (FBM in Polar, rotierend), die Korona besteht\n// aus radialen FBM-Filamenten (Winkel-Noise moduliert die Reichweite).\n// Protuberanzen = einzelne Bögen, die mit dem Bass aufsteigen.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float SONNE_RADIUS = 0.42;\nconst float KORONA_WEITE = 0.6;   // Reichweite der Filamente\nconst float BRODELN      = 0.6;\nconst float BASS_ERUPTION = 0.6;  // Bass-Schwelle für Protuberanzen\nconst int   OKTAVEN      = 4;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p), f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\nfloat fbm(vec2 p)\n{\n    float v = 0.0, a = 0.5;\n    for (int i = 0; i < OKTAVEN; ++i) { v += a * vnoise(p); p *= 2.09; a *= 0.5; }\n    return v;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float r = length(uv);\n    float a = atan(uv.y, uv.x);\n    vec3 col = vec3(0.01, 0.005, 0.01);\n\n    if (r < SONNE_RADIUS)\n    {\n        // brodelnde Oberfläche: FBM in rotierenden Polarkoordinaten\n        float brodel = fbm(vec2(a * 3.0 + iTime * 0.1, r * 8.0 - iTime * BRODELN));\n        col = mix(vec3(1.0, 0.45, 0.05), vec3(1.0, 0.9, 0.4), brodel);\n        // Randverdunkelung wie bei echten Sternen\n        col *= 0.75 + 0.25 * sqrt(1.0 - r / SONNE_RADIUS);\n    }\n    else\n    {\n        // Korona-Filamente: Reichweite je Winkel aus FBM\n        float reichweite = KORONA_WEITE * (0.4 + 0.6 * fbm(vec2(a * 2.5, iTime * 0.15)));\n        float filament = exp(-(r - SONNE_RADIUS) / max(reichweite, 1e-3) * 3.0);\n        col += filament * vec3(1.0, 0.6, 0.2) * (0.5 + 0.3 * bass);\n        // Protuberanz: ein Bogen bei wanderndem Winkel, zündet mit dem Bass\n        float pw = iTime * 0.2;\n        float bogen = exp(-pow((a - pw - sin(pw) * 2.0) * 3.0, 2.0)) *\n                      exp(-pow((r - SONNE_RADIUS - 0.12 * (0.5 + bass)) * 12.0, 2.0));\n        col += bogen * vec3(1.0, 0.5, 0.15) * smoothstep(BASS_ERUPTION, 1.0, bass) * 2.0;\n    }\n    // Gesamt-Glare\n    col += exp(-max(r - SONNE_RADIUS, 0.0) * 5.0) * vec3(0.4, 0.2, 0.05) * 0.5;\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

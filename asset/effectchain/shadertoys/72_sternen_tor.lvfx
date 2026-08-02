@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "72_sternen_tor",
+        "description": "Generiert aus asset/shadertoys/72_sternen_tor.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 72 Sternen-Tor — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. GLOW: Portalring mit Ereignisfläche.\n//\n// IDEE: Ein glühender Ring (Chevron-Zacken über den Winkel) um eine\n// wabernde \"Wasserfläche\" (sin-Interferenz, radial nach innen gezogen).\n// Beim Bass wallt die Fläche auf und der Ring gleißt. Sterne dahinter.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float RING_RADIUS = 0.62;\nconst float RING_DICKE  = 0.05;\nconst float CHEVRONS    = 9.0;   // Zacken auf dem Ring\nconst float WALLEN      = 0.5;   // Bass-Aufwallen der Fläche\nconst float FLAECHE_TEMPO = 1.2;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float r = length(uv);\n    float a = atan(uv.y, uv.x);\n\n    // Sternenhimmel hinter allem\n    vec3 col = vec3(0.005, 0.005, 0.015);\n    col += step(0.998, n21(floor(uv * 80.0))) * 0.5;\n\n    if (r < RING_RADIUS - RING_DICKE * 0.5)\n    {\n        // Ereignisfläche: Interferenz zweier Radialwellen, zur Mitte gesogen\n        float welle = sin(r * 18.0 - iTime * FLAECHE_TEMPO * 3.0) +\n                      sin(a * 3.0 + r * 9.0 - iTime * FLAECHE_TEMPO * 2.0);\n        float tiefe = 1.0 - r / RING_RADIUS;\n        vec3 wasser = mix(vec3(0.05, 0.15, 0.3), vec3(0.3, 0.6, 0.95),\n                          0.5 + 0.25 * welle * (1.0 + WALLEN * bass));\n        col = wasser * (0.5 + 0.5 * tiefe);\n        // Sog-Glanz in der Mitte\n        col += exp(-r * 6.0) * vec3(0.6, 0.8, 1.0) * (0.4 + 0.6 * bass);\n    }\n    // Ring: Grundtorus + Chevron-Zacken glühen umlaufend\n    float ringD = abs(r - RING_RADIUS);\n    float ring = smoothstep(RING_DICKE, RING_DICKE * 0.3, ringD);\n    float chevron = pow(0.5 + 0.5 * cos(a * CHEVRONS - iTime * 0.6), 6.0);\n    col += ring * (vec3(0.35, 0.3, 0.2) +\n                   chevron * vec3(1.0, 0.6, 0.2) * (0.7 + 0.8 * bass));\n    col += exp(-ringD * 18.0) * vec3(0.9, 0.6, 0.3) * 0.35;  // Ring-Halo\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

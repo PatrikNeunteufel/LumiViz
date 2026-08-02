@@ -13,6 +13,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/ConfigPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/FieldDocs.cpp"  # ERZEUGT (harvest_field_docs.py)
     "${CMAKE_CURRENT_LIST_DIR}/ImportBrowserPanel.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ShadertoyBrowserPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/MultiEffectPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PanelAutoReg.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PanelBase.cpp"

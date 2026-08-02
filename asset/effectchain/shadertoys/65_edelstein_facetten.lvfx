@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "65_edelstein_facetten",
+        "description": "Generiert aus asset/shadertoys/65_edelstein_facetten.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 65 Edelstein-Facetten — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KRISTALL: geschliffener Stein mit Blitzen.\n//\n// IDEE: Voronoi-Zellen als FACETTEN: jede Zelle bekommt eine Pseudo-Normale\n// aus ihrer Kern-Id; ein rotierendes \"Licht\" lässt Facette für Facette\n// aufblitzen (spekularer cos-Peak). Innerhalb einer Stein-Silhouette,\n// tiefes Rot mit weißen Blitzen. Der Bass dreht das Licht schneller.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float FACETTEN    = 4.5;   // Facettendichte\nconst float LICHT_TEMPO = 0.6;\nconst float LICHT_BASS  = 1.2;\nconst float BLITZ_SCHAERFE = 24.0; // Glanz-Exponent (größer = härtere Blitze)\nconst float STEIN_GROESSE = 0.75;\n// ----------------------------------------------------------------------------\n\nvec2 hash2(vec2 p)\n{\n    p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));\n    return fract(sin(p) * 43758.5453);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n\n    // Stein-Silhouette: Achteck (Smaragd-Schliff) über gefaltete Achsen\n    vec2 q = abs(uv);\n    float acht = max(max(q.x, q.y), (q.x + q.y) * 0.7071);\n    float stein = smoothstep(STEIN_GROESSE + 0.01, STEIN_GROESSE - 0.01, acht);\n\n    // Facetten: Voronoi-Kern-Id im Stein\n    vec2 g = floor(uv * FACETTEN);\n    vec2 f = fract(uv * FACETTEN);\n    float dMin = 8.0;\n    vec2 idMin = vec2(0.0);\n    for (int y = -1; y <= 1; ++y)\n    for (int x = -1; x <= 1; ++x)\n    {\n        vec2 o = vec2(float(x), float(y));\n        vec2 h = hash2(g + o);\n        vec2 c = o + h - f;  // statische Kerne = starre Facetten\n        float d = dot(c, c);\n        if (d < dMin) { dMin = d; idMin = h; }\n    }\n    // Pseudo-Normale der Facette aus ihrer Id; Lichtwinkel rotiert\n    float normalWinkel = idMin.x * 6.28318;\n    float licht = iTime * (LICHT_TEMPO + LICHT_BASS * bass);\n    float blitz = pow(0.5 + 0.5 * cos(normalWinkel - licht), BLITZ_SCHAERFE);\n    // Facetten-Grundton: tiefes Rubinrot, leicht je Facette variiert\n    vec3 rubin = vec3(0.5, 0.02, 0.08) * (0.6 + 0.8 * idMin.y);\n    // Kanten zwischen Facetten dunkel (Schliffkanten)\n    float kante = smoothstep(0.0, 0.02, sqrt(dMin));\n    vec3 col = stein * (rubin * kante + blitz * vec3(1.0, 0.9, 0.95));\n    // Untergrund: Samt mit Lichtkegel\n    col += (1.0 - stein) * vec3(0.03, 0.01, 0.02) * (1.3 - length(uv));\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

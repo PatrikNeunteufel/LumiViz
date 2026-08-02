@@ -20,6 +20,8 @@
 #include "visualizers/modules/ColorGradientModule.hpp"   // fractal palette presets
 #include "visualizers/multieffect/ChainSerializer.hpp"  // effectTypeKey
 #include "visualizers/multieffect/NodePresetStore.hpp"  // Voreinstellungen je Knoten
+#include "visualizers/multieffect/ShadertoyImport.hpp"  // URL-/ID-Import (Strang S3)
+#include "visualizers/multieffect/ShadertoyWrapper.hpp" // Starter-Shader (Strang S)
 #include "services/IEventBus.hpp"
 #include "services/events/UIEvents.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
@@ -35,6 +37,7 @@
 #include <QIcon>
 #include <QDropEvent>
 #include <QComboBox>
+#include <QDesktopServices>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
@@ -57,6 +60,9 @@
 #include <QLineEdit>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QScrollArea>
@@ -253,6 +259,16 @@ const std::vector<EffectType>& effectPalette()
         {"— MilkDrop —", nullptr},
         {"Milkdrop (Preset-Pipeline)",
          [] { return EffectParams{MilkdropNodeParams{}}; }, Origin::MilkDrop},
+
+        // Strang S (S65): modernes Regelwerk, Code-Einfügen; URL-Import = S3
+        {"— Shadertoy —", nullptr},
+        {"Shadertoy (GLSL)",
+         [] {
+             ShadertoyParams p;
+             p.code = lumi::shadertoy::starterShader();
+             return EffectParams{p};
+         },
+         Origin::Native},
 
         {"— Scopes & Sources —", nullptr},
         {"SuperScope", [] { return EffectParams{SuperScopeParams{}}; }},
@@ -796,6 +812,64 @@ QString milkShaderReferenceHtml()
                "<h3>In / Out</h3>%1<h3>Constants</h3>%2<h3>Samplers</h3>%3"
                "<h3>Functions</h3>%4")
         .arg(io, consts, samplers, fns);
+}
+
+/// Referenz des Shadertoy-Nodes (Strang S): Uniform-Satz, Audio-Textur-Layout,
+/// Buffer-Semantik, LumiViz-Extras — die ⓘ-Seite der GLSL-Editoren.
+QString shadertoyReferenceHtml()
+{
+    auto table = [](const QString& rows) {
+        return QStringLiteral(
+                   "<table cellspacing='0' cellpadding='4' "
+                   "style='border-collapse:collapse'>"
+                   "<tr><th align='left'>Name</th><th align='left'>Typ</th>"
+                   "<th align='left'>Bedeutung</th></tr>%1</table>")
+            .arg(rows);
+    };
+    auto row = [](const char* n, const char* t, const char* m) {
+        return QStringLiteral("<tr><td><code>%1</code></td><td>%2</td><td>%3</td></tr>")
+            .arg(QLatin1String(n), QLatin1String(t), QLatin1String(m));
+    };
+    const QString uniforms = table(
+        row("iResolution", "vec3", "Auflösung in Pixeln (x, y, 1)") +
+        row("iTime", "float", "Sekunden seit Start (deterministische Sim-Uhr)") +
+        row("iTimeDelta", "float", "Sekunden seit dem letzten Frame") +
+        row("iFrame", "int", "Frames seit (Re-)Kompilierung") +
+        row("iFrameRate", "float", "aktuelle Bildrate") +
+        row("iMouse", "vec4", "immer 0 (keine Maus im Node)") +
+        row("iDate", "vec4", "deterministisch: (2026, 1, 1, Sim-Sekunden)") +
+        row("iSampleRate", "float", "44100") +
+        row("iChannel0..3", "sampler2D", "Kanal-Bindungen laut Combos (s. unten)") +
+        row("iChannelResolution[4]", "vec3", "Auflösung je Kanal (Audio: 512×2)") +
+        row("iChannelTime[4]", "float", "immer 0 (Video-Inputs kommen später)"));
+    const QString audio = table(
+        row("texture(iChannelN, vec2(f, 0.25)).x", "float 0..1",
+            "FFT-Spektrum: f 0..1 = tief..hoch (Zeile 0 der 512×2-Textur)") +
+        row("texture(iChannelN, vec2(t, 0.75)).x", "float 0..1",
+            "Waveform: 0,5 = Nulllinie (Zeile 1); t = Sample-Position") +
+        row("bass, mid, treb", "float", "LumiViz-Extra: Band-Lautstärken (~0..1)") +
+        row("vol, beat", "float", "LumiViz-Extra: Pegel · Beat-Impuls (0/1)"));
+    return QStringLiteral(
+               "<h2>Shadertoy — mainImage(out vec4, in vec2)</h2>"
+               "<p>GLSL (ES-3.0-kompatibel). <code>fragCoord</code> = Pixel ab "
+               "links-unten; <code>fragCoord / iResolution.xy</code> = 0..1-UV. "
+               "Der Alpha-Wert wird im Image-Pass ignoriert (Blend-Regler des "
+               "Nodes), in Buffer-Pässen bleibt er erhalten (RGBA32F).</p>"
+               "<h3>Uniforms</h3>%1"
+               "<h3>Audio (512×2-Textur am gewählten Kanal)</h3>%2"
+               "<h3>Buffer A–D (Multipass)</h3>"
+               "<p>Buffer sind eigene Renderziele je Node (RGBA32F, "
+               "Chain-Auflösung), die je Frame VOR dem Image-Pass in der "
+               "Reihenfolge A→D rendern. Ein Kanal, der auf den EIGENEN oder "
+               "einen SPÄTEREN Buffer zeigt, liest das Bild des VORHERIGEN "
+               "Frames (Feedback: Trails, Simulationen, Historien); ein Kanal "
+               "auf einen FRÜHEREN Buffer liest das frische Bild dieses Frames. "
+               "Nicht angelegte Buffer liefern Schwarz. Beim Veröffentlichen "
+               "auf Shadertoy entspricht das exakt den Buffer-Tabs.</p>"
+               "<p style='color:#888'>LumiViz-Extras (bass/mid/treb/vol/beat) "
+               "laufen NICHT auf shadertoy.com — für portable Shader nur die "
+               "Audio-Textur benutzen.</p>")
+        .arg(uniforms, audio);
 }
 
 } // namespace
@@ -2807,6 +2881,58 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         });
         addRow(field, label, edit);
     };
+    // Fremdsprachen-Code-Editor (GLSL, Strang S): wie addScript mit ⓘ-Referenz
+    // und ⤢-Groß-Editor, aber OHNE EEL-Highlighter (falsche Einfärbung) und
+    // mit frei wählbarer Referenzseite + Tooltip.
+    auto addCodeEditor = [&](const QString& label, const std::string& value,
+                             const QString& placeholder, const QString& refHtml,
+                             const QString& toolTip, int minHeight,
+                             std::function<void(ChainNode&, std::string)> set) {
+        auto* edit = new QPlainTextEdit(m_propContainer);
+        edit->setPlainText(QString::fromStdString(value));
+        edit->setPlaceholderText(placeholder);
+        edit->setLineWrapMode(QPlainTextEdit::NoWrap);
+        edit->setMinimumHeight(minHeight);
+        edit->setMaximumHeight(minHeight * 3);
+        QFont mono(QStringLiteral("Consolas"));
+        mono.setStyleHint(QFont::Monospace);
+        edit->setFont(mono);
+        connect(edit, &QPlainTextEdit::textChanged, this, [this, path, set, edit]() {
+            const std::string text = edit->toPlainText().toStdString();
+            mutate(path, [&](ChainNode& n) { set(n, text); });
+        });
+        auto* header = new QWidget(m_propContainer);
+        auto* hl = new QHBoxLayout(header);
+        hl->setContentsMargins(0, 0, 0, 0);
+        hl->addWidget(new QLabel(label, header));
+        hl->addStretch(1);
+        auto* refBtn = new QToolButton(header);
+        refBtn->setText(QString::fromUtf8("ⓘ"));
+        refBtn->setToolTip(tr("Referenz anzeigen (Uniforms, Audio, Buffer)"));
+        auto* expandBtn = new QToolButton(header);
+        expandBtn->setText(QString::fromUtf8("⤢"));
+        expandBtn->setToolTip(tr("In großem, größenveränderbarem Editor öffnen"));
+        hl->addWidget(refBtn);
+        hl->addWidget(expandBtn);
+        connect(refBtn, &QToolButton::clicked, this,
+                [this, refHtml]() { showScriptReference(this, refHtml); });
+        connect(expandBtn, &QToolButton::clicked, this,
+                [this, edit, label, refHtml]() {
+                    QString out;
+                    if (openScriptEditor(this, label, edit->toPlainText(), refHtml,
+                                         out, {}, /*eelHighlight=*/false))
+                    {
+                        edit->setPlainText(out);  // triggers textChanged -> mutate
+                    }
+                });
+        auto* box = new QWidget(m_propContainer);
+        auto* v = new QVBoxLayout(box);
+        v->setContentsMargins(0, 0, 0, 0);
+        v->addWidget(header);
+        v->addWidget(edit);
+        if (!toolTip.isEmpty()) box->setToolTip(toolTip);
+        form->addRow(box);
+    };
 
     const QStringList kBlendNames = {"Ignore", "Replace", "50/50", "Maximum",
                                      "Additive", "Sub 1-2", "Sub 2-1", "EveryLine",
@@ -4068,6 +4194,311 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addScript("frameCode", tr("Frame code"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).frameCode = std::move(v); });
         addScript("beatCode", tr("Beat code"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ReactionDiffusionParams>(n.params).beatCode = std::move(v); });
     }
+    else if (auto* p = std::get_if<ShadertoyParams>(&params))
+    {
+        // Shadertoy-Node (Strang S, S65): Code in mainImage-Konvention, ein
+        // Fragment-Pass. Metadaten (S3-Import) sind reine Anzeige.
+        if (!p->name.empty() || !p->author.empty() || !p->license.empty())
+        {
+            auto* meta = new QLabel(
+                tr("%1 von %2 — Lizenz: %3")
+                    .arg(QString::fromStdString(p->name),
+                         QString::fromStdString(
+                             p->author.empty() ? std::string("?") : p->author),
+                         QString::fromStdString(p->license.empty()
+                                                    ? std::string("unbekannt")
+                                                    : p->license)),
+                m_propContainer);
+            meta->setWordWrap(true);
+            form->addRow(meta);
+        }
+
+        // Kompilierfehler des Render-Hosts: dank `#line 1` im Wrapper tragen
+        // die Treiber-Logs die Zeilennummern des NUTZER-Codes. Aktualisiert
+        // sich beim Neuaufbau des Editors (Knoten erneut anklicken).
+        uint64_t stNodeId = 0;
+        {
+            QMutexLocker lock(m_mutex);
+            if (ChainNode* n = nodeAtPath(path)) stNodeId = n->nodeId;
+        }
+        const std::string stErr =
+            m_host != nullptr ? m_host->shadertoyError(stNodeId) : std::string();
+        if (!stErr.empty())
+        {
+            auto* err = new QLabel(
+                tr("⚠ Kompilierfehler:\n%1")
+                    .arg(QString::fromStdString(stErr).left(600)),
+                m_propContainer);
+            err->setWordWrap(true);
+            err->setStyleSheet(QStringLiteral("color:#d08080"));
+            form->addRow(err);
+        }
+
+        // --- URL-/ID-Import (S3): offizielle API, GET NUR auf Knopfdruck -----
+        {
+            auto* row = new QWidget(m_propContainer);
+            auto* hl = new QHBoxLayout(row);
+            hl->setContentsMargins(0, 0, 0, 0);
+            auto* urlEdit = new QLineEdit(row);
+            urlEdit->setPlaceholderText(
+                QStringLiteral("https://www.shadertoy.com/view/... oder ID"));
+            if (!p->url.empty())
+                urlEdit->setText(QString::fromStdString(p->url));
+            auto* importBtn = new QPushButton(tr("Importieren"), row);
+            importBtn->setToolTip(
+                tr("Lädt den Shader über die offizielle API (nur Sichtbarkeit "
+                   "'public+api'). Braucht einen API-Key (Feld darunter)."));
+            auto* openBtn = new QToolButton(row);
+            openBtn->setText(QStringLiteral("🌐"));
+            openBtn->setToolTip(
+                tr("Shadertoy im Browser öffnen — die Seite dieses Shaders, "
+                   "sonst shadertoy.com zum Stöbern."));
+            hl->addWidget(urlEdit, 1);
+            hl->addWidget(importBtn);
+            hl->addWidget(openBtn);
+            form->addRow(tr("Shadertoy-URL / ID"), row);
+
+            const std::string nodeUrl = p->url;
+            connect(openBtn, &QToolButton::clicked, this, [urlEdit, nodeUrl]() {
+                // Feld-Inhalt gewinnt (frisch eingefügte URL), sonst die
+                // Node-Metadaten, sonst die Startseite
+                const QString typed = urlEdit->text().trimmed();
+                const QString id = lumi::shadertoy::extractShaderId(typed);
+                QUrl target(QStringLiteral("https://www.shadertoy.com/"));
+                if (!id.isEmpty())
+                    target = QUrl(QStringLiteral("https://www.shadertoy.com/view/") + id);
+                else if (!nodeUrl.empty())
+                    target = QUrl(QString::fromStdString(nodeUrl));
+                QDesktopServices::openUrl(target);
+            });
+
+            auto* keyEdit = new QLineEdit(row->parentWidget());
+            keyEdit->setEchoMode(QLineEdit::Password);
+            keyEdit->setPlaceholderText(tr("Shadertoy-API-Key (lokal gespeichert)"));
+            {
+                QSettings settings;
+                keyEdit->setText(
+                    settings.value(QStringLiteral("shadertoy/apiKey")).toString());
+            }
+            keyEdit->setToolTip(
+                tr("Kostenlos unter shadertoy.com → Profile → Apps. Wird NUR "
+                   "lokal gespeichert (QSettings) — nie im Preset oder Repo."));
+            connect(keyEdit, &QLineEdit::editingFinished, this, [keyEdit]() {
+                QSettings settings;
+                settings.setValue(QStringLiteral("shadertoy/apiKey"),
+                                  keyEdit->text().trimmed());
+            });
+            form->addRow(tr("API-Key"), keyEdit);
+
+            connect(importBtn, &QPushButton::clicked, this,
+                    [this, path, urlEdit, keyEdit]() {
+                        const QString id =
+                            lumi::shadertoy::extractShaderId(urlEdit->text());
+                        if (id.isEmpty())
+                        {
+                            QMessageBox::warning(
+                                this, tr("Shadertoy-Import"),
+                                tr("Keine Shader-ID erkennbar — URL im Format "
+                                   "shadertoy.com/view/<ID> oder die ID selbst "
+                                   "eingeben."));
+                            return;
+                        }
+                        const QString key = keyEdit->text().trimmed();
+                        if (key.isEmpty())
+                        {
+                            QMessageBox::warning(
+                                this, tr("Shadertoy-Import"),
+                                tr("API-Key fehlt. Kostenlos anlegen: "
+                                   "shadertoy.com → Profile → Apps, dann hier "
+                                   "eintragen (bleibt lokal)."));
+                            return;
+                        }
+                        if (m_netManager == nullptr)
+                        {
+                            m_netManager = new QNetworkAccessManager(this);
+                            m_netManager->setTransferTimeout(10000);
+                        }
+                        QNetworkRequest req(lumi::shadertoy::apiRequestUrl(id, key));
+                        QNetworkReply* reply = m_netManager->get(req);
+                        connect(reply, &QNetworkReply::finished, this,
+                                [this, path, id, reply]() {
+                                    reply->deleteLater();
+                                    if (reply->error() != QNetworkReply::NoError)
+                                    {
+                                        QMessageBox::warning(
+                                            this, tr("Shadertoy-Import"),
+                                            tr("Netzwerkfehler: %1")
+                                                .arg(reply->errorString()));
+                                        return;
+                                    }
+                                    const auto result = lumi::shadertoy::parseApiReply(
+                                        reply->readAll(), id);
+                                    if (!result.ok)
+                                    {
+                                        QMessageBox::warning(this,
+                                                             tr("Shadertoy-Import"),
+                                                             result.error);
+                                        return;
+                                    }
+                                    mutate(path, [&](ChainNode& n) {
+                                        auto* sp =
+                                            std::get_if<ShadertoyParams>(&n.params);
+                                        if (sp == nullptr) return;
+                                        const int blend = sp->blend;  // Nutzerwahl behalten
+                                        *sp = result.params;
+                                        sp->blend = blend;
+                                        if (n.displayName.empty() ||
+                                            n.displayName == "Shadertoy")
+                                            n.displayName = sp->name;
+                                    });
+                                    QString note =
+                                        tr("Shader '%1' importiert.")
+                                            .arg(QString::fromStdString(
+                                                result.params.name));
+                                    if (!result.report.isEmpty())
+                                        note += QStringLiteral("\n\n") +
+                                                result.report.join(QStringLiteral("\n"));
+                                    QMessageBox::information(
+                                        this, tr("Shadertoy-Import"), note);
+                                    // Editor neu aufbauen: Code/Metadaten anzeigen
+                                    QMetaObject::invokeMethod(
+                                        this, [this, path] { buildPropertyEditor(path); },
+                                        Qt::QueuedConnection);
+                                });
+                    });
+        }
+
+        // GLSL-Code-Editor mit ⓘ-Referenz + ⤢-Groß-Editor (AVS-Komfort)
+        addCodeEditor(
+            tr("Shader-Code (Image)"), p->code,
+            tr("void mainImage(out vec4 fragColor, in vec2 fragCoord) { ... }"),
+            shadertoyReferenceHtml(),
+            tr("mainImage in Shadertoy-Konvention; fragCoord = Pixel ab "
+               "links-unten. ⓘ zeigt Uniforms, Audio-Layout und "
+               "Buffer-Semantik; ⤢ öffnet den großen Editor."),
+            160, [](ChainNode& n, std::string v) {
+                std::get<ShadertoyParams>(n.params).code = std::move(v);
+            });
+        // Kanal-Bindungen (S4): je iChannel Nichts / Buffer A–D / Audio.
+        // Kodierung s. kShadertoyInput*; Combo-Index = Wert + 1.
+        const QStringList kInputNames = {tr("Nichts"), tr("Buffer A"), tr("Buffer B"),
+                                         tr("Buffer C"), tr("Buffer D"), tr("Audio")};
+        const auto inputToIndex = [](int v) { return std::clamp(v + 1, 0, 5); };
+        const auto indexToInput = [](int idx) { return std::clamp(idx, 0, 5) - 1; };
+        const auto addInputCombos =
+            [&](const std::array<int, 4>& input,
+                std::function<std::array<int, 4>&(ChainNode&)> access,
+                const QString& prefix) {
+                for (int c = 0; c < 4; ++c)
+                {
+                    auto* combo = new QComboBox(m_propContainer);
+                    combo->addItems(kInputNames);
+                    combo->setCurrentIndex(
+                        inputToIndex(input[static_cast<std::size_t>(c)]));
+                    combo->setToolTip(
+                        tr("Audio = 512x2-Textur (Zeile 0 Spektrum, Zeile 1 "
+                           "Waveform). Buffer-Referenz auf sich selbst oder "
+                           "spaeter liest das Vorframe (Feedback)."));
+                    connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                            this, [this, path, access, c, indexToInput](int idx) {
+                                mutate(path, [&](ChainNode& n) {
+                                    access(n)[static_cast<std::size_t>(c)] =
+                                        indexToInput(idx);
+                                });
+                            });
+                    form->addRow(prefix.arg(c), combo);
+                }
+            };
+        addInputCombos(p->imageInput,
+                       [](ChainNode& n) -> std::array<int, 4>& {
+                           return std::get<ShadertoyParams>(n.params).imageInput;
+                       },
+                       tr("Image iChannel%1"));
+        addEnum("blend", tr("Blend"), std::clamp(p->blend, 0, 2),
+                {tr("Ersetzen"), tr("Additiv"), tr("50/50")},
+                [](ChainNode& n, int v) {
+                    std::get<ShadertoyParams>(n.params).blend = v;
+                });
+
+        // --- Buffer A..D (S4): je ein Code-Editor + Bindungen + Entfernen ----
+        for (int bi = 0; bi < static_cast<int>(p->buffers.size()) && bi < 4; ++bi)
+        {
+            const auto& buf = p->buffers[static_cast<std::size_t>(bi)];
+            auto* head = new QWidget(m_propContainer);
+            auto* hh = new QHBoxLayout(head);
+            hh->setContentsMargins(0, 8, 0, 0);
+            hh->addWidget(new QLabel(
+                tr("— Buffer %1 —").arg(QChar(static_cast<char16_t>('A' + bi))), head));
+            hh->addStretch(1);
+            auto* removeBtn = new QToolButton(head);
+            removeBtn->setText(QStringLiteral("✕"));
+            removeBtn->setToolTip(tr("Buffer entfernen (folgende rücken auf — "
+                                     "Referenzen ggf. anpassen)"));
+            connect(removeBtn, &QToolButton::clicked, this, [this, path, bi]() {
+                mutate(path, [&](ChainNode& n) {
+                    auto& sp = std::get<ShadertoyParams>(n.params);
+                    if (bi < static_cast<int>(sp.buffers.size()))
+                        sp.buffers.erase(sp.buffers.begin() + bi);
+                });
+                QMetaObject::invokeMethod(
+                    this, [this, path] { buildPropertyEditor(path); },
+                    Qt::QueuedConnection);
+            });
+            hh->addWidget(removeBtn);
+            form->addRow(head);
+
+            addCodeEditor(
+                tr("Code Buffer %1").arg(QChar(static_cast<char16_t>('A' + bi))),
+                buf.code,
+                tr("void mainImage(out vec4 fragColor, in vec2 fragCoord) { ... }"),
+                shadertoyReferenceHtml(),
+                tr("Buffer-Pass: schreibt roh in ein RGBA32F-Ziel (kein "
+                   "Blend/Clamp, Alpha bleibt). Eine Bindung auf sich selbst "
+                   "liest das Vorframe (Feedback)."),
+                120, [bi](ChainNode& n, std::string v) {
+                    auto& sp = std::get<ShadertoyParams>(n.params);
+                    if (bi < static_cast<int>(sp.buffers.size()))
+                        sp.buffers[static_cast<std::size_t>(bi)].code = std::move(v);
+                });
+            addInputCombos(buf.input,
+                           [bi](ChainNode& n) -> std::array<int, 4>& {
+                               return std::get<ShadertoyParams>(n.params)
+                                   .buffers[static_cast<std::size_t>(bi)]
+                                   .input;
+                           },
+                           tr("%1 iChannel%2").arg(QChar(static_cast<char16_t>('A' + bi))).arg("%1"));
+        }
+        if (p->buffers.size() < 4)
+        {
+            auto* addBtn = new QPushButton(tr("Buffer hinzufügen"), m_propContainer);
+            addBtn->setToolTip(
+                tr("Neuer Buffer-Pass (A–D): rendert VOR dem Image-Pass in ein "
+                   "eigenes RGBA32F-Ziel; Selbst-Referenz liest das Vorframe."));
+            connect(addBtn, &QPushButton::clicked, this, [this, path]() {
+                mutate(path, [&](ChainNode& n) {
+                    auto& sp = std::get<ShadertoyParams>(n.params);
+                    if (sp.buffers.size() >= 4) return;
+                    ShadertoyPass pass;
+                    pass.code = "void mainImage(out vec4 fragColor, in vec2 "
+                                "fragCoord)\n{\n    fragColor = vec4(0.0);\n}\n";
+                    sp.buffers.push_back(std::move(pass));
+                });
+                QMetaObject::invokeMethod(
+                    this, [this, path] { buildPropertyEditor(path); },
+                    Qt::QueuedConnection);
+            });
+            form->addRow(addBtn);
+        }
+
+        auto* hint = new QLabel(
+            tr("Uniforms: voller Shadertoy-Satz (iTime, iResolution, iChannel0-3, "
+               "...) + bass/mid/treb/vol/beat. Audio-Bindung = 512x2-Textur "
+               "(Zeile 0 Spektrum, Zeile 1 Waveform); Buffer rendern A→D vor "
+               "dem Image-Pass."),
+            m_propContainer);
+        hint->setWordWrap(true);
+        form->addRow(hint);
+    }
     else if (auto* p = std::get_if<DebugBarsParams>(&params))
     {
         addColor("color", tr("Color"), p->color, [](ChainNode& n, uint32_t v) { std::get<DebugBarsParams>(n.params).color = v; });
@@ -4616,7 +5047,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             });
                         });
                 // ⓘ-Referenz (Befund S42: die HLSL-Editoren hatten keine) —
-                // Inputs/Konstanten/Sampler/Funktionen der Praeambel
+                // Inputs/Konstanten/Sampler/Funktionen der Praeambel.
+                // ⤢-Groß-Editor nachgeführt (S65, wie AVS-Skripte; ohne
+                // EEL-Highlighter — HLSL-Bezeichner würden falsch eingefärbt).
                 auto* header = new QWidget(m_propContainer);
                 auto* hl = new QHBoxLayout(header);
                 hl->setContentsMargins(0, 0, 0, 0);
@@ -4626,10 +5059,25 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 refBtn->setText(QString::fromUtf8("ⓘ"));
                 refBtn->setToolTip(
                     tr("Shader-Referenz (Inputs, Konstanten, Sampler, Funktionen)"));
+                auto* expandBtn = new QToolButton(header);
+                expandBtn->setText(QString::fromUtf8("⤢"));
+                expandBtn->setToolTip(
+                    tr("In großem, größenveränderbarem Editor öffnen"));
                 hl->addWidget(refBtn);
+                hl->addWidget(expandBtn);
                 connect(refBtn, &QToolButton::clicked, this, [this]() {
                     showScriptReference(this, milkShaderReferenceHtml());
                 });
+                connect(expandBtn, &QToolButton::clicked, this,
+                        [this, edit, label]() {
+                            QString out;
+                            if (openScriptEditor(this, label, edit->toPlainText(),
+                                                 milkShaderReferenceHtml(), out, {},
+                                                 /*eelHighlight=*/false))
+                            {
+                                edit->setPlainText(out);  // textChanged -> mutate
+                            }
+                        });
                 form->addRow(header);
                 form->addRow(edit);
             };

@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "37_glas_torus",
+        "description": "Generiert aus asset/shadertoys/37_glas_torus.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 37 Glas-Torus — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. RAYMARCHING + FAKE-GLAS (Reflexion/Brechung).\n//\n// IDEE: Ein rotierender Torus wird geraymarcht; \"Glas\" entsteht ohne echten\n// zweiten Strahl: die Umgebung (prozeduraler Streifen-Himmel) wird einmal\n// über den Reflexionsvektor und einmal über einen gebrochenen Vektor\n// gesampelt und per Fresnel gemischt. Bass = Torus-Dicke.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float RING_RADIUS = 0.75;  // großer Radius\nconst float DICKE_GRUND = 0.24;  // Rohr-Radius\nconst float DICKE_BASS  = 0.10;\nconst float DREH_TEMPO  = 0.5;\nconst float BRECHUNG    = 0.8;   // Brechungsstärke des \"Glases\"\nconst int   MARSCH      = 72;\n// ----------------------------------------------------------------------------\n\nfloat g_dicke;\nvec2 rot2(vec2 p, float a) { return vec2(p.x * cos(a) - p.y * sin(a),\n                                         p.x * sin(a) + p.y * cos(a)); }\nfloat torus(vec3 p)\n{\n    vec2 q = vec2(length(p.xz) - RING_RADIUS, p.y);\n    return length(q) - g_dicke;\n}\n// prozedurale Umgebung: Verlaufs-Himmel + farbige Lichtstreifen\nvec3 umgebung(vec3 rd)\n{\n    vec3 sky = mix(vec3(0.04, 0.03, 0.08), vec3(0.15, 0.1, 0.25),\n                   rd.y * 0.5 + 0.5);\n    float streifen = pow(0.5 + 0.5 * sin(atan(rd.z, rd.x) * 6.0 + iTime * 0.4),\n                         6.0);\n    sky += streifen * (0.5 + 0.5 * cos(rd.y * 4.0 + iTime * 0.3 +\n                                       vec3(0.0, 2.1, 4.2))) * 0.8;\n    return sky;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    g_dicke = DICKE_GRUND + DICKE_BASS * bass;\n\n    vec3 ro = vec3(0.0, 0.0, -2.6);\n    vec3 rd = normalize(vec3(uv, 1.5));\n    // Torus rotiert — wir drehen stattdessen den Strahl (billiger)\n    float wa = iTime * DREH_TEMPO;\n    ro.yz = rot2(ro.yz, 0.7);  rd.yz = rot2(rd.yz, 0.7);\n    ro.xz = rot2(ro.xz, wa);   rd.xz = rot2(rd.xz, wa);\n\n    float t = 0.0;\n    float d = 1.0;\n    for (int i = 0; i < MARSCH; ++i)\n    {\n        d = torus(ro + rd * t);\n        if (d < 0.001 || t > 6.0) break;\n        t += d;\n    }\n    vec3 col = umgebung(rd);\n    if (d < 0.001)\n    {\n        vec3 p = ro + rd * t;\n        vec2 e = vec2(0.002, 0.0);\n        vec3 n = normalize(vec3(torus(p + e.xyy) - torus(p - e.xyy),\n                                torus(p + e.yxy) - torus(p - e.yxy),\n                                torus(p + e.yyx) - torus(p - e.yyx)));\n        float fresnel = pow(1.0 - max(dot(n, -rd), 0.0), 3.0);\n        vec3 spiegel = umgebung(reflect(rd, n));\n        // \"Brechung\": Blickstrahl zur Normalen hin verbogen weiter-gesampelt\n        vec3 gebrochen = umgebung(normalize(mix(rd, -n, BRECHUNG * 0.3)));\n        col = mix(gebrochen * vec3(0.85, 0.95, 1.0), spiegel,\n                  0.2 + 0.8 * fresnel);\n        // Kantenlicht\n        col += fresnel * fresnel * vec3(0.4, 0.6, 1.0) * 0.6;\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

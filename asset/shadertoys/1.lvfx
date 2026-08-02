@@ -1,0 +1,35 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "audioChannel": 3,
+                "blend": 0,
+                "code": "// ref:\n// https://www.shadertoy.com/view/tssSDN\n// https://qiita.com/ukeyshima/items/221b0384d39f521cad8f\n\n#define MAX_DIST 1000.\n#define SURF_DIST .0001\n#define EPS .0001\n#define PI 3.141592\n#define PI2 PI*2.\n#define saturate(a) clamp(a,0.,1.)\n#define S(a,b,t) smoothstep(a,b,t)\n#define TS(a,b,c,d,t) smoothstep(a,b,t) * smoothstep(d,c,t)\n#define REP(p,r) mod(p,r) - r * .5  \n\n/*\n * utilities\n */\n\nfloat rand(vec2 co){\n    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);\n}\n\nmat2 rot(float a) {\n    float s = sin(a), c = cos(a);\n    return mat2(c, -s, s, c);\n}\n\nfloat sdSphere(vec3 p, float s) {\n    return length(p) - s;\n}\n\nfloat sdBox(vec3 p, vec3 b) {\n    vec3 q = abs(p) - b;\n    return length(max(q, 0.)) + min(max(q.x, max(q.y, q.z)), 0.);\n}\n\nfloat opUnion(float d1, float d2) {\n    return min(d1, d2);\n}\n\n// ref: https://www.shadertoy.com/view/ldlcRf\nvec2 minMat(vec2 d1, vec2 d2) {\n\treturn (d1.x < d2.x) ? d1 : d2;\n}\n\n/* end utilities */\n\nfloat rep = .04;\n\nvec2 scene(vec3 p) {\n\n    vec2 d = vec2(100000., 0.);\n    float mat = 0.;\n    float t = iTime;\n    vec2 m = iMouse.xy / iResolution.xy;\n    \n    vec3 q = p;\n    \n    // float rep = .05;\n\n    vec3 spo = vec3(\n        sin(t * 1.8) * .25,\n        .32,\n        cos(t * 2.2) * .3\n    );\n    vec3 sp = q - spo;\n    d.x = sdSphere(sp, .075);\n\n    vec2 id = floor(q.xz / rep);\n\n    float hash = rand(id * .001);\n\n    q.xz = mod(q.xz, rep) - rep * .5;\n\n    vec3 bcp = vec3(0);\n    bcp.xz = id * rep + rep * .5;\n    \n    float bsDist = length(spo.xz - bcp.xz);\n    \n    float s = smoothstep(0., .5, bsDist);\n    \n    q -= vec3(\n        0.,\n        .125 - (sin(hash * PI2 + t * (2. + bsDist * .015)) * .05) * (1. - pow(s, .9)),\n        0.\n    );\n    \n    d =  minMat(\n        d, \n        vec2(sdBox(q, vec3(rep * .5, .1, rep * .5)), 1.)\n    );   \n    \n    return d;\n}\n\nvec3 getNormal(vec3 p) {\n    vec2 e = vec2(EPS, 0);\n    return normalize(\n    \tvec3(\n            scene(p + e.xyy).x - scene(p - e.xyy).x,\n            scene(p + e.yxy).x - scene(p - e.yxy).x,\n            scene(p + e.yyx).x - scene(p - e.yyx).x\n        )\n    );\n}\n\nvec2 raymarch(vec3 ro, vec3 rd, float side) {\n    float accDist = 0.;    \n    float mat = 0.;\n\n    for(int i = 0; i < 128; i++) {\n        vec3 p = ro + rd * accDist;\n        vec2 result = scene(p);\n        float dist = result.x * side;\n        vec3 rdi = 1. / rd;\n        mat = result.y;\n        if(abs(dist) < SURF_DIST || accDist > MAX_DIST) {\n            break;\n        }\n\n        accDist += min(\n            min(\n                (step(0., rd.x) - mod(p.x, rep)) * rdi.x,\n                (step(0., rd.z) - mod(p.z, rep)) * rdi.z\n            ) + .0001,\n           dist\n        );        \n    }\n    \n    return vec2(accDist, mat);\n}\n\n\n/*\n// front: z-\nvec3 getRayDir(vec2 uv, vec3 p, vec3 l, float z) {\n    vec3 forward = normalize(l - p);\n    vec3 right = normalize(cross(vec3(0., 1., 0.), forward));\n    vec3 up = normalize(cross(forward, right));\n    \n    return normalize(right * uv.x + up * uv.y + forward * z);        \n}\n*/\n\n// front z+\nvec3 getRayDir(vec2 uv, vec3 p, vec3 l, float z) {\n    vec3 forward = normalize(l - p);\n    vec3 right = normalize(cross(forward, vec3(0., 1., 0.)));\n    vec3 up = normalize(cross(right, forward));\n    \n    return normalize(right * uv.x + up * uv.y + forward * z);        \n}\n\nmat3 camera(vec3 ro, vec3 ta, float cr )\n{\n\tvec3 cw = normalize(ta - ro);\n\tvec3 cp = vec3(sin(cr), cos(cr),0.);\n\tvec3 cu = normalize( cross(cw,cp) );\n\tvec3 cv = normalize( cross(cu,cw) );\n    return mat3( cu, cv, cw );\n}\n\nvoid mainImage( out vec4 fragColor, in vec2 fragCoord )\n{\n    float t = iTime;\n\n    vec2 uv = (fragCoord.xy * 2. - iResolution.xy) / min(iResolution.x, iResolution.y);\n    vec2 m = (iMouse.xy * 2. - iResolution.xy) / min(iResolution.x, iResolution.y);\n\n    vec3 ro = vec3(\n        m.x * 0. + 1.,\n        m.y * 0. + 1.,\n        1.2\n    );\n    vec3 ta = vec3(0., .2, 0.);\n    vec3 rd = getRayDir(uv, ro, ta, 3.5);\n\n    vec2 result = raymarch(ro, rd, 1.);\n    float dist = result.x;\n    float mat = result.y;\n    \n    vec3 col = vec3(0.);\n    \n    if(dist < MAX_DIST) {    \n        vec3 p = ro + rd * dist;\n        vec3 l = normalize(vec3(1., 1., -1.));\n        vec3 n = getNormal(p);    \n        vec3 r = reflect(rd, n);\n\n        float diffuse = dot(l, n) * .5 + .5;\n        vec3 diffuseColor = vec3(diffuse);\n\n        if(mat < .5) {\n            diffuseColor *= vec3(1., 0., 0.);\n        } else {\n            diffuseColor *= vec3(1., 1., 1.); \n            if(n.x > .5) {\n                diffuseColor = diffuse * vec3(1., 0., 0.);\n            }\n            if(n.y > .5) {\n                diffuseColor = diffuse * vec3(1., .9, .9);\n            }\n            if(n.z > .5) {\n                diffuseColor = diffuse * vec3(.6, 0., 0.);\n            }\n        }\n\n        col = diffuseColor;       \n    }\n\n        \n    col = pow(col, vec3(.4545));\n    \n    fragColor = vec4(col, 1.);\n}",
+                "enabled": true,
+                "name": "Shadertoy",
+                "type": "shadertoy"
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

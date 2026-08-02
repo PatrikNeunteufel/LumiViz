@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "09_raymarch_blobs",
+        "description": "Generiert aus asset/shadertoys/09_raymarch_blobs.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 09 Raymarch-Blobs — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: Raymarching (Sphere-Tracing) über ein SDF: drei Kugeln, per\n// smooth-min zu Metaballs verschmolzen; Radien atmen mit Bass/Mitten/Höhen.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float RADIUS_1     = 0.45;  // Grundradien der drei Blobs\nconst float RADIUS_2     = 0.35;\nconst float RADIUS_3     = 0.30;\nconst float ATMUNG_1     = 0.35;  // Radius-Zuwachs je Audio-Band (Bass/Mitte/Höhen)\nconst float ATMUNG_2     = 0.30;\nconst float ATMUNG_3     = 0.25;\nconst float VERSCHMELZUNG = 0.4;  // smooth-min-k: größer = zäherer Teig\nconst int   SCHRITTE     = 80;    // Marsch-Schritte (Qualität vs. Kosten)\nconst float MAX_DIST     = 6.0;\n// ----------------------------------------------------------------------------\n\nfloat g_bass, g_mid, g_treb;  // global, damit map() sie sieht\n\n// smooth-min: weiches Minimum mit Übergangsbreite k (Metaball-Verschmelzung)\nfloat smin(float a, float b, float k)\n{\n    float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);\n    return mix(b, a, h) - k * h * (1.0 - h);\n}\n// SDF der Szene: Abstand zur nächsten Oberfläche (Kugel: length−Radius)\nfloat map(vec3 p)\n{\n    float d = length(p - vec3(0.7 * cos(iTime), 0.5 * sin(iTime * 1.3), 0.0)) -\n              (RADIUS_1 + ATMUNG_1 * g_bass);\n    d = smin(d, length(p - vec3(-0.6 * cos(iTime * 0.8), -0.4 * sin(iTime), 0.2)) -\n                    (RADIUS_2 + ATMUNG_2 * g_mid), VERSCHMELZUNG);\n    d = smin(d, length(p - vec3(0.0, 0.7 * cos(iTime * 0.6), -0.2)) -\n                    (RADIUS_3 + ATMUNG_3 * g_treb), VERSCHMELZUNG);\n    return d;\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    g_bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    g_mid  = texture(iChannel0, vec2(0.30, 0.25)).x;\n    g_treb = texture(iChannel0, vec2(0.70, 0.25)).x;\n\n    vec3 ro = vec3(0.0, 0.0, -2.6);      // Kamera\n    vec3 rd = normalize(vec3(uv, 1.6));  // Strahl (1.6 = Brennweite)\n\n    // Sphere-Tracing: immer um die sichere Distanz d vorrücken\n    float t = 0.0;\n    float d = 1.0;\n    for (int i = 0; i < SCHRITTE; ++i)\n    {\n        d = map(ro + rd * t);\n        if (d < 0.001 || t > MAX_DIST) break;\n        t += d;\n    }\n    vec3 col = vec3(0.01, 0.01, 0.03);\n    if (d < 0.001)\n    {\n        vec3 p = ro + rd * t;\n        // Normale = SDF-Gradient (zentrale Differenzen)\n        vec2 e = vec2(0.002, 0.0);\n        vec3 n = normalize(vec3(map(p + e.xyy) - map(p - e.xyy),\n                                map(p + e.yxy) - map(p - e.yxy),\n                                map(p + e.yyx) - map(p - e.yyx)));\n        vec3 l = normalize(vec3(0.6, 0.7, -0.5));\n        float diff = max(dot(n, l), 0.0);\n        float spec = pow(max(dot(reflect(-l, n), -rd), 0.0), 32.0);\n        vec3 base = 0.5 + 0.5 * cos(p.z * 2.0 + iTime * 0.5 + vec3(0.0, 2.1, 4.2));\n        col = base * (0.15 + 0.85 * diff) + spec * vec3(1.0);\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

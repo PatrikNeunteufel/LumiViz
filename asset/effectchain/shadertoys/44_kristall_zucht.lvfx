@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "44_kristall_zucht",
+        "description": "Generiert aus asset/shadertoys/44_kristall_zucht.{image,bufferA}.glsl (Multipass).",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 44 Kristall-Zucht, Image — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// \"Image\": iChannel0 = Buffer A. Die Geburtszeit (.g) wird als\n// SCHIMMERNDE Interferenzfarbe gerendert — ein Lichtband wandert über die\n// Wachstumsringe; dazu Eis-Glow um die Nadeln.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float SCHIMMER_TEMPO = 1.2; // wandnerndes Lichtband\nconst float GLOW_RADIUS    = 0.003;\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    vec4 z = texture(iChannel0, uv);\n    vec3 col = vec3(0.01, 0.015, 0.03);\n    if (z.r > 0.5)\n    {\n        // Interferenz über die Geburtszeit + wanderndes Schimmer-Band\n        float ring = z.g * 40.0;\n        float schimmer = 0.6 + 0.4 * sin(ring * 6.28318 - iTime * SCHIMMER_TEMPO);\n        col = (0.5 + 0.5 * cos(ring + vec3(0.0, 2.1, 4.2))) *\n              mix(vec3(0.5, 0.8, 1.0), vec3(1.0), schimmer) * 0.9;\n    }\n    // Eisglow um die Nadeln (4 Nachbar-Samples)\n    float halo = texture(iChannel0, uv + vec2(GLOW_RADIUS, 0.0)).r +\n                 texture(iChannel0, uv - vec2(GLOW_RADIUS, 0.0)).r +\n                 texture(iChannel0, uv + vec2(0.0, GLOW_RADIUS)).r +\n                 texture(iChannel0, uv - vec2(0.0, GLOW_RADIUS)).r;\n    col += halo * 0.08 * vec3(0.4, 0.7, 1.0);\n    fragColor = vec4(col, 1.0);\n}\n",
+        "buffers": [
+          {
+            "code": "// 44 Kristall-Zucht, Buffer A — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// \"Buffer A\": iChannel0 = Buffer A (SELBST!), iChannel1 = Music.\n//\n// IDEE: Kristallwachstums-Automat (DLA-artig): eine Zelle \"friert\", wenn\n// ein Nachbar gefroren ist UND ein Zufallswurf gelingt — vom Keim wachsen\n// verästelte Kristallnadeln. .g speichert die GEBURTSZEIT: der Image-Pass\n// schimmert die Jahresringe damit an. Höhen beschleunigen das Wachstum.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float WACHSTUM     = 0.16;  // Grund-Anfrierwahrscheinlichkeit je Frame\nconst float WACHSTUM_HOEHEN = 0.25; // Höhen-Zuschlag\nconst float RICHTUNGS_BIAS = 0.5; // 6-zählige Vorzugsrichtungen (0 = isotrop)\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat gefroren(vec2 uv) { return step(0.5, texture(iChannel0, uv).r); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    vec2 px = 1.0 / iResolution.xy;\n    if (iFrame < 2)\n    {\n        // Keim in der Mitte\n        float keim = step(length((uv - 0.5) * iResolution.xy), 3.0);\n        fragColor = vec4(keim, 0.0, 0.0, 1.0);\n        return;\n    }\n    vec4 alt = texture(iChannel0, uv);\n    if (alt.r > 0.5) { fragColor = alt; return; }  // einmal Kristall, immer\n\n    // gefrorene Nachbarn? (4er-Nachbarschaft reicht für Nadeln)\n    float nachbarn = gefroren(uv + vec2(px.x, 0.0)) + gefroren(uv - vec2(px.x, 0.0)) +\n                     gefroren(uv + vec2(0.0, px.y)) + gefroren(uv - vec2(0.0, px.y));\n    float treb = texture(iChannel1, vec2(0.70, 0.25)).x;\n    float p = WACHSTUM + WACHSTUM_HOEHEN * treb;\n    // Richtungs-Bias: 6-zählig um die Mitte (hexagonaler Habitus)\n    float winkel = atan(uv.y - 0.5, uv.x - 0.5);\n    p *= 1.0 + RICHTUNGS_BIAS * cos(winkel * 6.0);\n\n    float friert = step(0.5, nachbarn) * step(n21(fragCoord + iTime), p);\n    // Geburtszeit merken (Sekunden, auf 0..1 gestaucht für die Textur)\n    float geburt = friert * fract(iTime * 0.02);\n    fragColor = vec4(friert, geburt, 0.0, 1.0);\n}\n",
+            "input": [
+              0,
+              4,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

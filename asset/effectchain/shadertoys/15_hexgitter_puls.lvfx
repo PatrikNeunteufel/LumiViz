@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "15_hexgitter_puls",
+        "description": "Generiert aus asset/shadertoys/15_hexgitter_puls.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 15 Hexgitter-Puls — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: Hex-Gitter; jede Zelle hört auf \"ihren\" FFT-Bin (Hash wählt ihn)\n// und glüht danach; dazu ein pulsierender Ring je Zelle. Gitter driftet.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float ZOOM        = 4.0;   // Zellgröße (mehr = kleinere Zellen)\nconst vec2  DRIFT       = vec2(0.25, 0.15); // Gitter-Drift (Richtung × Tempo)\nconst float HELL_GRUND  = 0.08;  // Zell-Grundhelligkeit\nconst float HELL_AUDIO  = 1.4;   // Audio-Aufhellung\nconst float RING_RADIUS = 0.32;  // Ring-Grundradius\nconst float RING_PULS   = 0.15;  // Puls-Amplitude des Rings\nconst float RING_DICKE  = 0.06;\nconst float FUGE        = 0.03;  // Fugenbreite zwischen den Zellen\n// ----------------------------------------------------------------------------\n\nfloat hexDist(vec2 p)\n{\n    // Abstand im Hex-Metrik: max aus Kantennormale und x\n    p = abs(p);\n    return max(dot(p, vec2(0.8660254, 0.5)), p.x);\n}\nvec4 hexCoords(vec2 p)\n{\n    // zwei versetzte Rechteck-Gitter; das nähere gewinnt.\n    // xy = Vektor zur Zellmitte, zw = Zell-Id\n    vec2 r = vec2(1.0, 1.7320508);\n    vec2 h = r * 0.5;\n    vec2 a = mod(p, r) - h;\n    vec2 b = mod(p - h, r) - h;\n    vec2 g = dot(a, a) < dot(b, b) ? a : b;\n    return vec4(g, p - g);\n}\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y * ZOOM;\n    uv += iTime * DRIFT;  // Bewegung auch ohne Audio\n    vec4 h = hexCoords(uv);\n    float rnd = n21(h.zw);  // stabiler Zufall je Zelle\n    float fft = texture(iChannel0, vec2(0.03 + 0.65 * rnd, 0.25)).x;\n    float d = hexDist(h.xy);\n    float cell = smoothstep(0.50, 0.50 - FUGE, d);  // Zellfläche mit Fuge\n    float ring = smoothstep(RING_DICKE, 0.0,\n                            abs(d - (RING_RADIUS + RING_PULS *\n                                     sin(iTime + rnd * 6.28318))));\n    vec3 base = 0.5 + 0.5 * cos(rnd * 6.28318 + iTime * 0.4 + vec3(0.0, 2.1, 4.2));\n    vec3 col = cell * base * (HELL_GRUND + HELL_AUDIO * fft) + ring * base * 0.35;\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

@@ -40,6 +40,7 @@ class QVBoxLayout;
 class QScrollArea;
 class QLabel;
 class QMutex;
+class QNetworkAccessManager;
 class MultiEffectVisualizer;
 
 /// Where a drop landed relative to the target item (public mirror of Qt's
@@ -161,6 +162,9 @@ private:
 
     MultiEffectVisualizer* m_host = nullptr;
     QMutex* m_mutex = nullptr;
+
+    /// Shadertoy-Import (Strang S3): GET nur auf Knopfdruck, lazy angelegt
+    QNetworkAccessManager* m_netManager = nullptr;
 
     ChainTreeWidget* m_tree = nullptr;
     QComboBox* m_addTypeCombo = nullptr;

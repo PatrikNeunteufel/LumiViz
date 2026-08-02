@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "36_mandel_zoom",
+        "description": "Generiert aus asset/shadertoys/36_mandel_zoom.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 36 Mandel-Zoom — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. MANDELBROT mit atmendem Zoom.\n//\n// IDEE: Die Mandelbrot-Menge an einem \"Seepferdchen\"-Punkt; der Zoom atmet\n// exponentiell (exp(sin)) hinein und wieder heraus — ein hypnotisches\n// Pumpen. Glatte Iterationszählung (log-log) verhindert Farbringe.\n// Der Bass verschiebt die Palette, die Höhen lassen den Rand glitzern.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst vec2  ZENTRUM     = vec2(-0.74543, 0.11301); // Seepferdchen-Tal\nconst float ZOOM_MITTE  = 2.6;   // mittlere Zoom-Stufe (exp-Skala)\nconst float ZOOM_HUB    = 1.8;   // Atem-Amplitude (exp-Skala)\nconst float ATEM_TEMPO  = 0.15;\nconst int   ITERATIONEN = 160;\nconst float FARB_ZYKLEN = 0.08;  // Farbzyklen pro Iteration\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float treb = texture(iChannel0, vec2(0.70, 0.25)).x;\n\n    // atmender Zoom: exponentiell rein/raus\n    float zoom = exp(ZOOM_MITTE + ZOOM_HUB * sin(iTime * ATEM_TEMPO));\n    vec2 c = ZENTRUM + uv / zoom;\n\n    vec2 z = vec2(0.0);\n    float m = 0.0;\n    bool drin = true;\n    for (int i = 0; i < ITERATIONEN; ++i)\n    {\n        z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;\n        if (dot(z, z) > 64.0) { drin = false; break; }\n        m += 1.0;\n    }\n    vec3 col = vec3(0.0);\n    if (!drin)\n    {\n        // glatte Iterationszahl: m − log2(log|z|) entfernt die Stufenringe\n        float glatt = m - log2(log2(dot(z, z)) * 0.5);\n        col = 0.5 + 0.5 * cos(6.28318 * (glatt * FARB_ZYKLEN + bass * 0.15) +\n                              iTime * 0.1 + vec3(0.0, 2.1, 4.2));\n        // Rand-Glitzern: hohe Iterationszahlen (nahe der Menge) leuchten auf\n        col += treb * 0.6 * smoothstep(0.75, 1.0, m / float(ITERATIONEN));\n    }\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

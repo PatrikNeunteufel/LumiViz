@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "43_zell_kolonie",
+        "description": "Generiert aus asset/shadertoys/43_zell_kolonie.{image,bufferA}.glsl (Multipass).",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 43 Zell-Kolonie, Image — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// \"Image\": iChannel0 = Buffer A. Dichtefeld (.g) als Membran-Farbverlauf:\n// Koloniekern petrol, Membran leuchtet giftgrün.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float MEMBRAN_SCHWELLE = 0.35; // Dichte, an der die Membran liegt\nconst float MEMBRAN_BREITE   = 0.12;\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    vec4 z = texture(iChannel0, uv);\n    float dichte = z.g;\n    // Membran: schmale Zone um die Schwelle glüht\n    float membran = exp(-pow((dichte - MEMBRAN_SCHWELLE) / MEMBRAN_BREITE, 2.0));\n    vec3 col = vec3(0.01, 0.02, 0.03);\n    col += z.r * vec3(0.05, 0.25, 0.22) * (0.5 + dichte);   // Koloniekörper\n    col += membran * vec3(0.35, 1.0, 0.25) * 0.8;           // Membran-Glow\n    fragColor = vec4(col, 1.0);\n}\n",
+        "buffers": [
+          {
+            "code": "// 43 Zell-Kolonie, Buffer A — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// \"Buffer A\": iChannel0 = Buffer A (SELBST!), iChannel1 = Music.\n//\n// IDEE: \"Larger than Life\"-Ableger: die Nachbarschaft ist ein 5×5-Feld,\n// Geburt/Überleben in BÄNDERN statt exakten Zahlen — statt Pixelgewimmel\n// entstehen organische, amöbenhafte Kolonien mit glatten Rändern.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float ZELLGROESSE = 2.0;\nconst float GEBURT_MIN  = 7.5;   // Nachbarsumme-Band für Geburt (von 24)\nconst float GEBURT_MAX  = 10.5;\nconst float LEBEN_MIN   = 5.5;   // Band fürs Überleben\nconst float LEBEN_MAX   = 12.5;\nconst float SAAT_DICHTE = 0.42;\nconst float BASS_SAAT   = 0.45;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat zelle(vec2 id)\n{\n    vec2 uv = (id + 0.5) * ZELLGROESSE / iResolution.xy;\n    return step(0.5, texture(iChannel0, uv).r);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 id = floor(fragCoord / ZELLGROESSE);\n    if (iFrame < 2)\n    {\n        fragColor = vec4(step(1.0 - SAAT_DICHTE, n21(id)), 0.0, 0.0, 1.0);\n        return;\n    }\n    // 5×5-Nachbarschaft (ohne Zentrum): 24 Nachbarn\n    float summe = 0.0;\n    for (int y = -2; y <= 2; ++y)\n    for (int x = -2; x <= 2; ++x)\n    {\n        if (x == 0 && y == 0) continue;\n        summe += zelle(id + vec2(float(x), float(y)));\n    }\n    float war = zelle(id);\n    float lebt = (war > 0.5)\n        ? ((summe > LEBEN_MIN && summe < LEBEN_MAX) ? 1.0 : 0.0)\n        : ((summe > GEBURT_MIN && summe < GEBURT_MAX) ? 1.0 : 0.0);\n\n    // weiches Dichtefeld mitschreiben (.g): 24er-Summe normiert — der\n    // Image-Pass rendert damit glatte Membranen statt harter Pixel\n    float dichte = summe / 24.0;\n\n    float bass = texture(iChannel1, vec2(0.05, 0.25)).x;\n    if (bass > BASS_SAAT)\n    {\n        vec2 p = 0.5 + 0.3 * vec2(sin(iTime * 0.8), cos(iTime * 1.2));\n        if (length(fragCoord / iResolution.xy - p) < 0.05 &&\n            n21(id + iTime) > 0.5) lebt = 1.0;\n    }\n    fragColor = vec4(lebt, dichte, 0.0, 1.0);\n}\n",
+            "input": [
+              0,
+              4,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

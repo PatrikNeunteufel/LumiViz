@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "63_oszilloskop_phosphor",
+        "description": "Generiert aus asset/shadertoys/63_oszilloskop_phosphor.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 63 Oszilloskop-Phosphor — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. TECHNIK: XY-Oszilloskop mit Waveform.\n//\n// IDEE: Die ECHTE Audio-Waveform (Zeile y=0.75 der Musik-Textur) wird als\n// Kurve gezeichnet: für jedes Pixel wird die Welle an mehreren x-Stellen\n// gesampelt und der minimale Abstand zur Kurve bestimmt — daraus Strahl +\n// Phosphor-Glow auf Gitterschirm. Höhen färben den Strahl weißer.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   KURVEN_SAMPLES = 48;  // Abtastung der Kurve (mehr = glatter)\nconst float AMPLITUDE   = 0.55;  // Darstellungs-Verstärkung der Welle\nconst float STRAHL_KERN = 0.006;\nconst float PHOSPHOR    = 0.05;  // Glow-Weite\nconst float GITTER      = 8.0;   // Rasterlinien\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float aspekt = iResolution.x / iResolution.y;\n    float treb = texture(iChannel0, vec2(0.70, 0.25)).x;\n\n    // minimaler Abstand Pixel ↔ Waveform-Kurve\n    float dMin = 1e9;\n    for (int i = 0; i < KURVEN_SAMPLES; ++i)\n    {\n        float fx = float(i) / float(KURVEN_SAMPLES - 1);       // 0..1\n        float x = (fx * 2.0 - 1.0) * aspekt;                    // Bildbreite\n        float w = texture(iChannel0, vec2(fx, 0.75)).x - 0.5;   // Waveform ±0.5\n        float y = w * 2.0 * AMPLITUDE;\n        dMin = min(dMin, length(uv - vec2(x, y)));\n    }\n    float kern = smoothstep(STRAHL_KERN, STRAHL_KERN * 0.3, dMin);\n    float glow = exp(-dMin / PHOSPHOR);\n\n    // Schirm: dunkelgrün mit Raster\n    vec3 col = vec3(0.01, 0.03, 0.015);\n    vec2 raster = abs(fract(uv * GITTER * 0.5 + 0.5) - 0.5);\n    col += smoothstep(0.02, 0.0, min(raster.x, raster.y) / GITTER) *\n           vec3(0.0, 0.1, 0.04);\n    // Strahl + Phosphor\n    vec3 strahl = mix(vec3(0.2, 1.0, 0.4), vec3(0.9, 1.0, 0.9), treb);\n    col += glow * strahl * 0.35 + kern * strahl;\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

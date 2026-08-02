@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "19_orbit_partikel",
+        "description": "Generiert aus asset/shadertoys/19_orbit_partikel.{image,bufferA}.glsl (Multipass).",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 19 Orbit-Partikel, Image — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy-Tab \"Image\": iChannel0 = Buffer A. Anzeige + Vignette.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float VIGNETTE_STAERKE = 0.45;\nconst float VIGNETTE_RADIUS  = 1.3;\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    vec3 c = texture(iChannel0, uv).rgb;\n    c *= 1.0 - VIGNETTE_STAERKE * pow(length(uv - 0.5) * VIGNETTE_RADIUS, 2.0);\n    fragColor = vec4(c, 1.0);\n}\n",
+        "buffers": [
+          {
+            "code": "// 19 Orbit-Partikel, Buffer A — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy-Tab \"Buffer A\": iChannel0 = Buffer A (SELBST = Vorframe!),\n//                           iChannel1 = Music.\n//\n// IDEE: Glühpunkte auf elliptischen Bahnen (alles gehasht je Partikel);\n// der Decay-Trail zieht die Schweife. Bass weitet die Bahnen.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   PARTIKEL     = 48;\nconst float TRAIL        = 0.93;  // näher an 1 = längere Schweife\nconst float BAHN_MIN     = 0.25;  // kleinster Bahnradius\nconst float BAHN_STREUUNG = 0.65; // Radius-Streuung\nconst float BASS_WEITUNG = 0.20;  // Bass weitet alle Bahnen\nconst float TEMPO_MIN    = 0.3;   // langsamster Umlauf\nconst float PUNKT_GROESSE = 0.012;\nconst float PUNKT_HOEHEN = 0.010; // Höhen vergrößern die Punkte\n// ----------------------------------------------------------------------------\n\nfloat h1(float n) { return fract(sin(n) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel1, vec2(0.05, 0.25)).x;\n    float treb = texture(iChannel1, vec2(0.70, 0.25)).x;\n    vec3 col = texture(iChannel0, fragCoord / iResolution.xy).rgb * TRAIL;\n    for (int i = 0; i < PARTIKEL; ++i)\n    {\n        float fi = float(i);\n        float rad = BAHN_MIN + BAHN_STREUUNG * h1(fi * 3.1) + BASS_WEITUNG * bass;\n        // Drehrichtung per Hash-Vorzeichen\n        float speed = (TEMPO_MIN + h1(fi * 7.7)) * (h1(fi) > 0.5 ? 1.0 : -1.0);\n        float ang = iTime * speed + fi * 2.4;\n        // Ellipse: y um Hash-Faktor gestaucht\n        vec2 p = rad * vec2(cos(ang), sin(ang) * (0.6 + 0.4 * h1(fi * 5.3)));\n        float d = length(uv - p);\n        col += smoothstep(PUNKT_GROESSE + PUNKT_HOEHEN * treb, 0.0, d) *\n               (0.5 + 0.5 * cos(fi * 0.8 + vec3(0.0, 2.1, 4.2)));\n    }\n    fragColor = vec4(min(col, vec3(2.0)), 1.0);  // Deckel gegen Aufschaukeln\n}\n",
+            "input": [
+              0,
+              4,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

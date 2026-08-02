@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "39_blitz_gewitter",
+        "description": "Generiert aus asset/shadertoys/39_blitz_gewitter.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 39 Blitz-Gewitter — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. PROZEDURALE BLITZE über Wolken-FBM.\n//\n// IDEE: Ein Blitz ist eine vertikale Linie, deren x-Verlauf über die Höhe\n// per FBM verbogen wird (Zickzack); 1/d²-Glow macht ihn gleißend. Die\n// Blitz-Saat wechselt in Zeitfenstern — jeder Schlag sieht anders aus.\n// Der Bass triggert die Sichtbarkeit (Gewitter im Takt), Wolken flackern mit.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float SCHLAG_RATE  = 1.2;   // Zeitfenster pro Sekunde (Saat-Wechsel)\nconst float BASS_TRIGGER = 0.35;  // ab dieser Bass-Stärke zündet der Blitz voll\nconst float ZACKEN       = 0.35;  // Zickzack-Amplitude\nconst float ZACKEN_FEIN  = 3.0;   // Zickzack-Frequenz\nconst float GLOW         = 0.0025; // Blitz-Glühen (größer = breiter)\nconst float VERZWEIGUNG  = 0.5;   // Stärke des Neben-Asts\nconst int   OKTAVEN      = 4;\n// ----------------------------------------------------------------------------\n\nfloat n21(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }\nfloat vnoise(vec2 p)\n{\n    vec2 i = floor(p), f = fract(p);\n    f = f * f * (3.0 - 2.0 * f);\n    return mix(mix(n21(i), n21(i + vec2(1.0, 0.0)), f.x),\n               mix(n21(i + vec2(0.0, 1.0)), n21(i + vec2(1.0, 1.0)), f.x), f.y);\n}\nfloat fbm(vec2 p)\n{\n    float v = 0.0, a = 0.5;\n    for (int i = 0; i < OKTAVEN; ++i) { v += a * vnoise(p); p *= 2.19; a *= 0.5; }\n    return v;\n}\n// Abstand zum Blitzpfad: x(y) = FBM-verbogene Senkrechte zur Saat `seed`\nfloat blitz(vec2 uv, float seed, float staerke)\n{\n    float pfadX = (n21(vec2(seed, 3.7)) - 0.5) * 1.2;  // Einschlags-Spur\n    float zick = (fbm(vec2(uv.y * ZACKEN_FEIN + seed * 91.0, seed * 17.0)) - 0.5) *\n                 ZACKEN * (1.0 - uv.y * 0.3);\n    float d = abs(uv.x - pfadX - zick);\n    return staerke * GLOW / (d * d + 0.0004);\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    vec2 p01 = fragCoord / iResolution.xy;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n\n    // Zeitfenster: floor(iTime·Rate) = Saat des aktuellen Schlags;\n    // fract() = Alter des Schlags (frisch = hell, dann verlöschen)\n    float fenster = iTime * SCHLAG_RATE;\n    float seed = floor(fenster);\n    float alter = fract(fenster);\n    float zuend = smoothstep(BASS_TRIGGER, BASS_TRIGGER + 0.2, bass);\n    float staerke = zuend * exp(-alter * 6.0);  // schneller Abfall nach dem Schlag\n\n    // Wolkendecke: dunkles FBM, vom Blitz von innen angeleuchtet\n    float wolken = fbm(p01 * vec2(3.0, 1.5) + vec2(iTime * 0.05, 0.0));\n    vec3 col = mix(vec3(0.02, 0.02, 0.05), vec3(0.10, 0.10, 0.16), wolken);\n    col += wolken * staerke * vec3(0.25, 0.28, 0.4);  // Wolken-Flackern\n\n    // Hauptblitz + schwächerer Nebenast (andere Saat, versetzt)\n    float b = blitz(uv, seed, staerke);\n    b += VERZWEIGUNG * blitz(uv + vec2(0.05, 0.0), seed + 0.31, staerke);\n    // nur unterhalb der Wolkenkante sichtbar\n    b *= smoothstep(0.9, 0.4, p01.y);\n    col += b * vec3(0.75, 0.8, 1.0);\n    // Boden-Reflex beim Schlag\n    col += staerke * smoothstep(0.15, 0.0, p01.y) * vec3(0.1, 0.12, 0.2);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

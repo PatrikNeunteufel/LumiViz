@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "95_lava_wurmloch",
+        "description": "Generiert aus asset/shadertoys/95_lava_wurmloch.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 95 Lava-Wurmloch — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. KOMBI: Wurmloch × Lava-Metaballs — im\n// Torsions-Tunnel schweben glühende Lava-Blasen (Metaballs in Tunnel-\n// Koordinaten, mit der Tiefe vorbeiziehend). Bass = Sog + Blasen-Glut.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float SOG        = 0.7;\nconst float SOG_BASS   = 1.2;\nconst float TORSION    = 0.3;\nconst int   BLASEN     = 6;\nconst float BLASEN_GROESSE = 0.5;\nconst float ISO        = 1.0;\nconst float ISO_KANTE  = 0.06;\n// ----------------------------------------------------------------------------\n\nfloat h1(float n) { return fract(sin(n) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float r = length(uv) + 1e-4;\n    float a = atan(uv.y, uv.x);\n    float z = 1.0 / r + iTime * (SOG + SOG_BASS * bass);\n    a += z * TORSION;\n\n    // Tunnelwand: dunkle Basalt-Streifen\n    float wand = 0.5 + 0.5 * sin(a * 6.0 + z * 2.0);\n    vec3 col = vec3(0.05, 0.03, 0.03) * (0.4 + 0.4 * wand) * smoothstep(0.0, 0.2, r);\n\n    // Lava-Blasen: Metaball-Feld in (Winkel, Tiefe)-Koordinaten\n    float feld = 0.0;\n    for (int i = 0; i < BLASEN; ++i)\n    {\n        float fi = float(i);\n        // Blase sitzt bei festem Winkel + wandernder Tiefe (zieht vorbei)\n        float bw = h1(fi * 3.7) * 6.28318;\n        float bz = fract(h1(fi * 7.1) + iTime * 0.1 * (0.5 + h1(fi))) * 12.0;\n        // Abstand im (a, z)-Raum (Winkel wrap-korrekt)\n        float da = abs(sin((a - bw) * 0.5)) * 2.0;\n        float dz = z - bz;\n        // Wrap der Tiefe (Blasen kommen periodisch wieder)\n        dz = mod(dz + 6.0, 12.0) - 6.0;\n        float d2 = da * da + dz * dz * 0.4;\n        feld += BLASEN_GROESSE / (d2 + 0.15);\n    }\n    float lava = smoothstep(ISO - ISO_KANTE, ISO + ISO_KANTE, feld);\n    float kern = clamp((feld - ISO) * 0.6, 0.0, 1.0);\n    vec3 lavaFarbe = mix(vec3(0.9, 0.25, 0.05), vec3(1.0, 0.9, 0.4),\n                         kern * (0.7 + 0.8 * bass));\n    col = mix(col, lavaFarbe, lava * smoothstep(0.0, 0.15, r));\n    // Tiefen-Glut im Fluchtpunkt\n    col += exp(-r * 4.0) * vec3(1.0, 0.4, 0.1) * (0.4 + 0.6 * bass);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

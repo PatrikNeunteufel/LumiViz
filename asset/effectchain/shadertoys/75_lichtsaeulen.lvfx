@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_lvfx (S65)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "75_lichtsaeulen",
+        "description": "Generiert aus asset/shadertoys/75_lichtsaeulen.glsl (SSOT dort; Shadertoy-portabel).",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// 75 Lichtsäulen — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music. GLOW: Spektrum als Säulen-Skyline aus Licht.\n//\n// IDEE: Vertikale Lichtsäulen (1/d²-Glow um Spaltenmitten), deren Höhe das\n// FFT-Spektrum ist; Spitzen glühen heißer, ein Boden spiegelt weich.\n// Wie Scheinwerfer einer nächtlichen Bühne — pure Glow-Ästhetik.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float SAEULEN    = 24.0;\nconst float GLOW       = 0.0006;\nconst float HOEHE      = 1.1;\nconst float ANHEBUNG   = 0.6;   // pow < 1 hebt leise Bins\nconst float SPIEGEL    = 0.35;  // Boden-Reflex\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    vec3 col = vec3(0.008, 0.008, 0.02);\n    float boden = -0.55;\n\n    for (int i = 0; i < int(SAEULEN); ++i)\n    {\n        float fi = (float(i) + 0.5) / SAEULEN;\n        float x = (fi * 2.0 - 1.0) * 1.5;\n        float fft = pow(texture(iChannel0, vec2(fi * 0.7 + 0.02, 0.25)).x, ANHEBUNG);\n        float top = boden + fft * HOEHE;\n        // Abstand zur Säulen-Strecke (vertikal, von boden bis top)\n        vec2 p = vec2(x, clamp(uv.y, boden, top));\n        float d = length(uv - p);\n        vec3 farbe = 0.5 + 0.5 * cos(fi * 4.0 + iTime * 0.3 + vec3(0.0, 2.1, 4.2));\n        col += GLOW / (d * d + 0.0005) * farbe * 0.12 * (0.3 + fft);\n        // heiße Spitze\n        float ds = length(uv - vec2(x, top));\n        col += GLOW * 2.0 / (ds * ds + 0.0008) * vec3(1.0, 0.95, 0.9) * 0.08 * fft;\n        // Bodenreflex: gespiegelte, gedämpfte Säule\n        vec2 ps = vec2(x, clamp(uv.y, 2.0 * boden - top, boden));\n        float dr = length(uv - ps);\n        col += GLOW / (dr * dr + 0.001) * farbe * 0.12 * SPIEGEL * (0.3 + fft);\n    }\n    // Bodenlinie\n    col += smoothstep(0.006, 0.0, abs(uv.y - boden)) * vec3(0.15, 0.15, 0.25);\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}
