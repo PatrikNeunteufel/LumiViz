@@ -5,7 +5,7 @@
  *
  * @author LumiPulse Team
  * @date   July 2026
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @details
  * Import-Fundament-Entwurf §3 (Roadmap 4.3): the MilkDrop/AVS feedback essence
@@ -92,6 +92,19 @@ public:
     /// @brief Swap previous/current WITHOUT blitting to a target (the caller
     ///        presents the image itself, e.g. MilkDrop-style composite pass)
     void swapOnly() { std::swap(m_current, m_previous); }
+
+    /// @brief FBO handle of the previous buffer (0 if not ready) — for callers
+    ///        that need to read pixels back (1.1.0: Puffer-Wechsel-Fading, S66)
+    [[nodiscard]] unsigned int previousFboHandle() const
+    {
+        return m_previous != nullptr ? m_previous->handle() : 0;
+    }
+
+    /// @brief FBO handle of the current buffer (0 if not ready)
+    [[nodiscard]] unsigned int currentFboHandle() const
+    {
+        return m_current != nullptr ? m_current->handle() : 0;
+    }
 
 private:
     bool ensureQuadPipeline();

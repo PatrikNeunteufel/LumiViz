@@ -2896,6 +2896,37 @@ bool MultiEffectVisualizer::replaceMilkdropPresetInPlace(
     params->presetDir = presetDir.toStdString();
     params->embeddedImages = std::move(embeddedImages);
     params->revision += 1;
+
+    // Puffer-Wechsel (S66): den effektiven Erbe-Anteil JETZT aufloesen (die
+    // App-Einstellung kommt wie der Render-Scale vor dem Laden per Setter) —
+    // der Render-Thread wendet ihn bei neuem Zaehlerstand auf den Feedback-
+    // Buffer an. Behalten = 1 (Original-Semantik, No-op im Kern).
+    {
+        const bool app = params->pufferWechsel == PufferWechsel::AppEinstellung;
+        const PufferWechsel modus =
+            app ? m_milkPufferWechselDefault : params->pufferWechsel;
+        const double fading =
+            app ? m_milkPufferFadingDefault : params->pufferFading;
+        const double ausblendSek =
+            app ? m_milkPufferAusblendSekDefault : params->pufferAusblendSek;
+        params->wechselAusblendSek = 0.0;
+        switch (modus)
+        {
+        case PufferWechsel::Loeschen: params->wechselErbe = 0.0; break;
+        case PufferWechsel::Fading:
+            params->wechselErbe = fading < 0.0 ? 0.0 : (fading > 1.0 ? 1.0 : fading);
+            break;
+        case PufferWechsel::Ausblenden:
+            // Erbe bleibt zunaechst (1.0), stirbt dann ueber die Dauer weg
+            params->wechselErbe = 1.0;
+            params->wechselAusblendSek =
+                ausblendSek < 0.1 ? 0.1 : (ausblendSek > 60.0 ? 60.0 : ausblendSek);
+            break;
+        case PufferWechsel::AppEinstellung:
+        case PufferWechsel::Behalten: params->wechselErbe = 1.0; break;
+        }
+        params->wechselZaehler += 1;
+    }
     return true;
 }
 
@@ -5742,6 +5773,19 @@ void MultiEffectVisualizer::runMilkdropNode(const ChainNode& node,
         rt.milk = std::make_unique<MilkdropVisualizer>();
         rt.milk->initialize();
         rt.milkRevision = 0;
+        // frische Runtime = frischer Puffer: ein vor dem Aufbau passierter
+        // Preset-Tausch hinterlaesst kein Erbe — Zaehler still uebernehmen
+        rt.milkWechselZaehler = params.wechselZaehler;
+    }
+    // Puffer-Wechsel (S66): der beim In-Place-Tausch aufgeloeste Erbe-Anteil
+    // (1 = Behalten → No-op im Kern). VOR dem Revision-Block, damit das Erbe
+    // im selben Frame wie das neue Preset greift.
+    if (rt.milkWechselZaehler != params.wechselZaehler)
+    {
+        rt.milkWechselZaehler = params.wechselZaehler;
+        rt.milk->requestFeedbackErbe(params.wechselErbe);
+        if (params.wechselAusblendSek > 0.0)
+            rt.milk->requestFeedbackAusblenden(params.wechselAusblendSek);
     }
     if (rt.milkRevision != params.revision)
     {

@@ -142,6 +142,27 @@ public:
     }
 
     /**
+     * @brief App-Default fuer den Puffer-Wechsel beim .milk→.milk-Tausch
+     *        (S66, Settings-Panel): greift, wenn der Milkdrop-Node auf
+     *        PufferWechsel::AppEinstellung steht. Wie beim Render-Scale vor
+     *        jedem loadMilk*-Aufruf unter renderMutex() setzen.
+     * @param modus  Behalten/Loeschen/Fading (AppEinstellung ist hier ungueltig
+     *               und faellt auf Behalten zurueck)
+     * @param fading Erbe-Anteil 0..1 fuer den Modus Fading
+     */
+    void setMilkdropPufferWechselDefault(lumi::multieffect::PufferWechsel modus,
+                                         double fading, double ausblendSek = 2.0)
+    {
+        using lumi::multieffect::PufferWechsel;
+        m_milkPufferWechselDefault =
+            modus == PufferWechsel::AppEinstellung ? PufferWechsel::Behalten : modus;
+        m_milkPufferFadingDefault =
+            fading < 0.0 ? 0.0 : (fading > 1.0 ? 1.0 : fading);
+        m_milkPufferAusblendSekDefault =
+            ausblendSek < 0.1 ? 0.1 : (ausblendSek > 60.0 ? 60.0 : ausblendSek);
+    }
+
+    /**
      * @brief Erzwingt deterministisch alle N Frames einen Beat statt des
      *        Detektors (0 = Detektor) — Gegenstueck zu AvsRef --beat-period
      *        fuer frame-exakte Diffs von History-Presets (S46-Merkregel:
@@ -555,6 +576,9 @@ private:
         // Engine je Node; GL-Freigabe via cleanup() in resetRuntimes
         std::unique_ptr<MilkdropVisualizer> milk;
         uint64_t milkRevision = 0;  ///< zuletzt uebernommene Params-Revision
+        /// Puffer-Wechsel (S66): zuletzt gesehener wechselZaehler — bei neuem
+        /// Stand meldet der Host wechselErbe beim Kern an
+        uint64_t milkWechselZaehler = 0;
 
         // Shadertoy-Node (Strang S, S65): pro Node kompiliertes Wrapper-Programm.
         // Programm stirbt mit m_leafRuntimes.clear() (Context ist dort current).
@@ -1095,6 +1119,12 @@ private:
     int m_beatPeriodOverride = 0;  ///< >0: Beat alle N Frames (AvsRef --beat-period)
     int m_beatPeriodFrame = 0;     ///< Frame-Zaehler des Overrides (Reset beim Laden)
     int m_importRenderScaleDivisor = 1;  ///< Auto-Render-Scale beim AVS-Import (S47)
+    /// App-Default Puffer-Wechsel (S66; Node-Einstellung AppEinstellung
+    /// delegiert hierher — Behalten = Original-Semantik)
+    lumi::multieffect::PufferWechsel m_milkPufferWechselDefault =
+        lumi::multieffect::PufferWechsel::Behalten;
+    double m_milkPufferFadingDefault = 0.5;  ///< Erbe-Anteil des App-Defaults
+    double m_milkPufferAusblendSekDefault = 2.0;  ///< Ausblend-Dauer (s)
 
     // Live render mode set by a Set Render Mode node for the following render
     // effects (AVS semantics). Reset at frame start; `set` means "override".

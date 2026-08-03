@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Pyramid-Spiral-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_03",
+        "description": "Schritt 3 - Raymarching: Strahl trifft Kugel (generiert aus Pyramid-Spiral-Shader-Tutorial.md, SSOT dort)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// SDF: Abstand vom Punkt p zur Oberflaeche einer Kugel mit Radius 1\nfloat map(vec3 p)\n{\n    return length(p) - 1.0;\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    // Kamera: Position (ray origin) und Blickrichtung (ray direction)\n    vec3 ro = vec3(0.0, 0.0, -3.0);          // 3 Einheiten vor der Szene\n    vec3 rd = normalize(vec3(uv, 1.0));      // durch \"unseren\" Pixel nach vorn\n\n    float dist = 0.0;                        // bisher zurueckgelegte Strecke\n    vec3 color = vec3(0.0);                  // Hintergrund: schwarz\n\n    for (int i = 0; i < 80; i++)\n    {\n        vec3 p = ro + rd * dist;             // aktuelle Position auf dem Strahl\n        float d = map(p);                    // Abstand zur naechsten Oberflaeche\n\n        if (d < 0.001) {                     // nah genug -> Treffer!\n            color = vec3(1.0);\n            break;\n        }\n        if (dist > 15.0) break;              // zu weit -> ins Leere gelaufen\n\n        dist += d;                           // sicheren Schritt vorwaerts gehen\n    }\n\n    fragColor = vec4(color, 1.0);\n}\n"
+      }
+    ]
+  }
+}

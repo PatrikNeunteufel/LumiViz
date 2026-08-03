@@ -116,6 +116,22 @@ nach dem AVS-Render-Modell (Analyse §5.1). Import-Ziel für .avs-Presets
   erbt das Bild des Vorgängers (der Hauptpuffer wird beim Wechsel nie
   gelöscht); Verstärker-Presets ohne eigene Energiequelle blieben sonst
   schwarz (Ground-Truth-Befund via MilkdropRef, `tools/MilkdropRef`).
+- **Puffer-Wechsel-Schalter (S66):** Das Erbe ist je Node steuerbar —
+  `MilkdropNodeParams.pufferWechsel` ∈ AppEinstellung/Behalten/Loeschen/
+  Fading/Ausblenden (+ `pufferFading` 0..1 als EINMALIGER Mix-Anteil,
+  `pufferAusblendSek` 0.1–60 als Zeit-Ausblendung; Panel-Edit OHNE
+  Revision-Bump, der Schalter wirkt erst beim nächsten Tausch).
+  `replaceMilkdropPresetInPlace` löst den effektiven Erbe-Anteil auf
+  (AppEinstellung → App-Default via `setMilkdropPufferWechselDefault`, vom
+  MainWindow vor jedem loadMilk* aus QSettings `milkdrop/pufferWechsel` +
+  `pufferFadingProzent` + `pufferAusblendSek` gesetzt — Muster Render-Scale
+  S47) und bumpt `wechselZaehler`; `runMilkdropNode` meldet bei neuem
+  Zählerstand `wechselErbe` via `requestFeedbackErbe()` an (Ausblenden:
+  Erbe 1.0 + `requestFeedbackAusblenden(wechselAusblendSek)` — der Kern
+  dämpft das Echo je Frame nach dem Warp, bis das Erbe gestorben ist).
+  Die Wechsel-Felder sind transient (nicht im Chain-Dokument); persistiert
+  werden `pufferWechsel`/`pufferFading`/`pufferAusblendSek`
+  (fehlend ⇒ AppEinstellung + 0.5 + 2.0).
 - GL-Freigabe des Kerns via `cleanup()` in `resetRuntimes` (Kontext current).
 
 ## Absicherung

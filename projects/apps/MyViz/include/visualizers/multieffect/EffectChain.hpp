@@ -2239,6 +2239,26 @@ struct ShadertoyParams
 }
 
 /**
+ * Umgang mit dem GEERBTEN Feedback-Bild beim .milk→.milk-Wechsel im Host
+ * (S66). Das Original loescht den Hauptpuffer beim Preset-Wechsel nie —
+ * chaotische Feedback-Presets kippen deshalb je nach Vorgaenger in andere
+ * Aeste. Behalten = Original-Semantik; Loeschen = wie Kaltstart (frische
+ * Rausch-Saat); Fading = EINMALIGER Mix aus Erbe und Saat im Moment des
+ * Wechsels (Anteil = pufferFading); Ausblenden = das Erbe stirbt ueber
+ * pufferAusblendSek Sekunden weg (Echo je Frame zusaetzlich gedaempft —
+ * was das neue Preset frisch zeichnet, bleibt); AppEinstellung folgt dem
+ * Default aus dem Settings-Panel.
+ */
+enum class PufferWechsel
+{
+    AppEinstellung,
+    Behalten,
+    Loeschen,
+    Fading,
+    Ausblenden,
+};
+
+/**
  * MilkDrop-Meganode (Import Roadmap 6, N1 — Entscheid E1): renders the whole
  * fixed MilkDrop frame pipeline (warp mesh, waves/shapes, blur pyramid,
  * stage-B/C shaders, composite) into the chain buffer. The TRANSLATED preset
@@ -2271,6 +2291,26 @@ struct MilkdropNodeParams
      * reload) only when it sees a new revision — frames never re-parse.
      */
     uint64_t revision = 1;
+
+    /// Puffer-Verhalten beim .milk→.milk-Wechsel — Node-Einstellung, ueberlebt
+    /// den In-Place-Preset-Tausch (wie meshX/meshY). Persistiert im Chain-Doc.
+    PufferWechsel pufferWechsel = PufferWechsel::AppEinstellung;
+    /// Fading: Anteil des ERBES 0..1 (0 = wie Loeschen, 1 = wie Behalten);
+    /// nur im Modus Fading wirksam.
+    double pufferFading = 0.5;
+    /// Ausblenden: Dauer in Sekunden, ueber die das Erbe wegstirbt (Echo je
+    /// Frame zusaetzlich gedaempft); nur im Modus Ausblenden wirksam.
+    double pufferAusblendSek = 2.0;
+    /**
+     * Transient (nicht persistiert): bumpt je In-Place-Preset-Tausch; der
+     * Render-Host wendet bei neuem Zaehlerstand `wechselErbe` auf den
+     * FeedbackBuffer an. `wechselErbe` ist der beim Tausch AUFGELOESTE
+     * Erbe-Anteil (AppEinstellung bereits eingerechnet; 1 = nichts tun);
+     * `wechselAusblendSek` > 0 startet zusaetzlich die Zeit-Ausblendung.
+     */
+    uint64_t wechselZaehler = 0;
+    double wechselErbe = 1.0;
+    double wechselAusblendSek = 0.0;
 };
 
 /** Conserved effect the host cannot render yet — passes the buffer through. */

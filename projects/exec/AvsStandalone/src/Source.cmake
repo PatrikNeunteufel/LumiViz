@@ -55,6 +55,13 @@ set(_local_inlines
 set(_local_impl
 )
 
+# MSVC: MultiEffectVisualizer.cpp sprengt das COFF-Abschnittslimit (fatal
+# error C1128 im Debug-Build, S66) — /bigobj nur fuer diese Datei (Muster
+# UI/panels/Source.cmake; die Property ist Directory-scoped und muss deshalb
+# in JEDEM Target-Verzeichnis gesetzt werden, das die Datei mitkompiliert).
+set_source_files_properties("${_myviz_src}/visualizers/MultiEffectVisualizer.cpp"
+    PROPERTIES COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:MSVC>:/bigobj>")
+
 # ==============================================================================
 # Aggregate to TARGET variables
 # ==============================================================================

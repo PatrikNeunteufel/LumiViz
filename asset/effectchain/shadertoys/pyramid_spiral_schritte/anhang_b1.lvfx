@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Pyramid-Spiral-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "anhang_b1",
+        "description": "Anhang B1 - Formen und Groessen streuen (generiert aus Pyramid-Spiral-Shader-Tutorial.md, SSOT dort)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst int   FORM          = 1;    // 0 = Oktaeder, 1 = Kugel, 2 = Wuerfel\nconst float GROESSE       = 0.06; // Grundradius (Zellregel: unter 0.15 bleiben!)\nconst float GROESSE_STREU = 0.7;  // 0 = alle gleich, 1 = maximal gestreut\n// ----------------------------------------------------------------------------\n\n// 2D-Hash: Zell-Index -> \"Zufallszahl\" 0..1 (deterministisch, jeder Frame gleich)\nfloat hash21(vec2 id)\n{\n    return fract(sin(dot(id, vec2(127.1, 311.7))) * 43758.5453);\n}\n\n// Die Form-Weiche: dieselbe Schnittstelle wie sdOctahedron, drei Gestalten\nfloat sdForm(vec3 p, float s)\n{\n    if (FORM == 0) { p = abs(p); return (p.x + p.y + p.z - s) * 0.57735027; }\n    if (FORM == 1) { return length(p) - s; }\n    vec3 q = abs(p) - s * 0.8;                       // Wuerfel\n    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);\n}\n\nfloat map(vec3 p)\n{\n    // Zell-Index VOR der Faltung ablesen - jede Kopie bekommt eine Identitaet\n    vec2 id = vec2(floor(p.x / 0.3), floor(p.z / 0.4));\n\n    // Wiederholung wie in Schritt 8\n    p.z = mod(p.z, 0.4) - 0.2;\n    p.x = mod(p.x, 0.3) - 0.15;\n\n    // Groesse je Zelle streuen: 0.4x bis 1.6x der Grundgroesse\n    float s = GROESSE * mix(1.0, 0.4 + 1.2 * hash21(id), GROESSE_STREU);\n    return sdForm(p, s);\n}\n\nvec3 calcNormal(vec3 p)\n{\n    vec2 e = vec2(0.002, 0.0);\n    return normalize(vec3(\n        map(p + e.xyy) - map(p - e.xyy),\n        map(p + e.yxy) - map(p - e.yxy),\n        map(p + e.yyx) - map(p - e.yyx)\n    ));\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    vec3 rd = normalize(vec3(uv, 1.0));\n    vec3 ro = vec3(0.15, 0.1, -iTime * 0.8);\n\n    float dist = 0.0;\n    vec3 color = vec3(0.0);\n\n    for (int i = 0; i < 80; i++)\n    {\n        vec3 p = ro + rd * dist;\n        float d = map(p);\n\n        if (d < 0.001) {\n            vec3 n = calcNormal(p);\n            vec3 lightDir = normalize(vec3(1.0, 1.0, -1.0));\n            float diffuse = max(dot(n, lightDir), 0.0);\n            color = vec3(0.1) + vec3(0.9) * diffuse;\n            break;\n        }\n        if (dist > 15.0) break;\n\n        dist += d;\n    }\n\n    fragColor = vec4(color, 1.0);\n}\n"
+      }
+    ]
+  }
+}

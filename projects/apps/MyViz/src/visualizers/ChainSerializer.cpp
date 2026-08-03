@@ -1057,6 +1057,21 @@ struct WriteVisitor
         o["meshX"] = p.meshX;
         o["meshY"] = p.meshY;
         o["debugGrid"] = p.debugGrid;
+        // Puffer-Wechsel (S66) — Node-Einstellung; die transienten Felder
+        // (wechselZaehler/wechselErbe) reisen bewusst NICHT mit
+        o["pufferWechsel"] = [&p] {
+            switch (p.pufferWechsel)
+            {
+            case PufferWechsel::Behalten: return QStringLiteral("behalten");
+            case PufferWechsel::Loeschen: return QStringLiteral("loeschen");
+            case PufferWechsel::Fading: return QStringLiteral("fading");
+            case PufferWechsel::Ausblenden: return QStringLiteral("ausblenden");
+            case PufferWechsel::AppEinstellung: break;
+            }
+            return QStringLiteral("app");
+        }();
+        o["pufferFading"] = p.pufferFading;
+        o["pufferAusblendSek"] = p.pufferAusblendSek;
 
         // Bild-Einbettung (Entscheid Patrik S43): beim SPEICHERN genau die
         // aktuell referenzierten Bilder einbetten — Datei-Bytes bevorzugt
@@ -2396,6 +2411,24 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.meshX = getInt(o, "meshX", p.meshX);
         p.meshY = getInt(o, "meshY", p.meshY);
         p.debugGrid = getBool(o, "debugGrid", p.debugGrid);
+        // Puffer-Wechsel (S66): fehlende/unbekannte Werte ⇒ AppEinstellung
+        // (Migration — Bestands-Dokumente laden unveraendert)
+        {
+            const QString pw = o.value("pufferWechsel").toString();
+            p.pufferWechsel = pw == QLatin1String("behalten")
+                                  ? PufferWechsel::Behalten
+                              : pw == QLatin1String("loeschen")
+                                  ? PufferWechsel::Loeschen
+                              : pw == QLatin1String("fading")
+                                  ? PufferWechsel::Fading
+                              : pw == QLatin1String("ausblenden")
+                                  ? PufferWechsel::Ausblenden
+                                  : PufferWechsel::AppEinstellung;
+            const double f = getDouble(o, "pufferFading", p.pufferFading);
+            p.pufferFading = f < 0.0 ? 0.0 : (f > 1.0 ? 1.0 : f);
+            const double ab = getDouble(o, "pufferAusblendSek", p.pufferAusblendSek);
+            p.pufferAusblendSek = ab < 0.1 ? 0.1 : (ab > 60.0 ? 60.0 : ab);
+        }
         // Bild-Einbettung (S43) — fehlt der Block, bleibt die Map leer
         const QJsonObject images = o.value("images").toObject();
         for (auto it = images.begin(); it != images.end(); ++it)

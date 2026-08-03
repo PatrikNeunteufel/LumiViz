@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.33.0
-> **Datum:** 2026-08-02 (Session 65)
+> **Version:** 1.35.0
+> **Datum:** 2026-08-03 (Session 66, Abschluss)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -18,6 +18,44 @@ Handover; dann dieses Dokument nachziehen.
 
 Legende: 🔴 blockiert anderes · 🟠 Befund mit Messwert · 🟡 Entscheid nötig ·
 ⬜ Sichttest/Urteil offen · ⚪ Backlog (bewusst nichts tun) · 🔧 Kleinkram
+
+> ## ✅ Erledigt in S66 (Aufträge Patrik)
+>
+> **Puffer-Wechsel-Schalter** (Anlass: „Rock The House sieht je nach Vorgänger
+> anders aus" = S63-Feedback-Erbe): je Milkdrop-Node Behalten/Löschen/Fading
+> (einmaliger Mix, Erbe-Regler)/**Ausblenden über Zeit** (Echo-Dämpfung je
+> Frame nach dem Warp, Sekunden-Regler), App-Default im Settings-Panel;
+> Sichttest Behalten/Löschen bestanden, **Sichttest Ausblenden offen**.
+> Merke: Löschen = Rausch-Saat + rand_preset-Seed-Reset, NICHT schwarz
+> (Verstärker-Presets) und OHNE Loudness-Reset (loadDiag: Musik auf leerer
+> Warmup-Rampe ⇒ bass≈17-Explosion — erprobt und verworfen).
+>
+> ## 🔴 TOP 1 NÄCHSTE SESSION — Preset-Wechsel-Divergenz ENDGÜLTIG lösen
+>
+> **Auftrag Patrik: „wirklich tief analysieren, das muss gelöst werden."**
+> Trotz Trace-bewiesener Löschung (Saat in beide Puffer + Seed-Reset je Wechsel)
+> sieht Patrik bei der RTH-Familie weiter Farb-Übernahme vom Vorgänger.
+> Forschungsstand S66: loadDiag belegt stark unterschiedliches Audio-Futter
+> (App-Start ≈ Stille, specSum 0,6–2 vs. laufende Musik 4–7); RTH-Farben sind
+> rein time-getrieben (wave_r/g/b = 0.5+0.5·sin(1.13/1.23/1.33·time)) —
+> Futter-/Zyklus-These, aber NICHT abgenommen. **Plan (S66-Report TOP 1):**
+> (1) headless GL-Wächter-Test (GlSmoke-Muster): Frame-Hashes Kaltstart vs.
+> Löschen-Wechsel bei deterministischem Audio MÜSSEN gleich sein · (2)
+> kontrolliertes A/B mit TestAudio + LUMIVIZ_MILKDROP_DUMP_WARP; loadDiag um
+> wave_r/g/b + time erweitern · (3) erst bei belegter Differenz GPU-Verdächtige
+> (Sampler-Bindung, Blur-Restinhalt, Chain-Buffer) · (4) danach Sichttest
+> Ausblenden + Abnahme des Schalters. **Benutzerhandbuch 1.5.0** (Behalten-Semantik exakt, Regelwerk,
+> §12 Shadertoy, GPU, 2 Screenshots — skriptgesteuert aus der App).
+> **Panel-Komfort:** Splitter Baum/Editor (Stellung persistiert),
+> Panel-Mindestbreite + sizeHint-Default 560×780, Milkdrop-Sektionen in
+> Pipeline-Reihenfolge mit GETRENNTEN Warp-/Comp-Sektionen. Feld-Inventar 726.
+> **NEU OFFEN (Entscheid Patrik, S66): Meganode-Split-Strang** — MilkDrop-
+> Stufen-Container (Waves/Shapes/…) im Baum UMORDENBAR mit echter Pipeline-
+> Wirkung + zusätzliche Container für AVS-/LumiViz-Renderer MITTEN in der
+> MilkDrop-Pipeline; Import-Default bleibt IMMER die Original-Reihenfolge.
+> Braucht Konzept-Kapitel in `visuals/Vereinheitlichung_Konzept.md`
+> (Puffer-Übergabe FeedbackBuffer↔Chain-Buffer, Y-Konvention, Datenmodell
+> Stufen-Reihenfolge + Serialisierung mit Migration).
 
 > ## ✅ Erledigt in S65 (Aufträge Patrik)
 >

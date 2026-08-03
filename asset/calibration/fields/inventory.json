@@ -1,7 +1,7 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 724,
+        "felder": 727,
         "typen": 86
     },
     "typen": [
@@ -2580,6 +2580,21 @@
                     "art": "text",
                     "default": "",
                     "name": "presetDir"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "pufferAusblendSek"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.5,
+                    "name": "pufferFading"
+                },
+                {
+                    "art": "text",
+                    "default": "app",
+                    "name": "pufferWechsel"
                 }
             ],
             "name": "Milkdrop",

@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Pyramid-Spiral-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_02",
+        "description": "Schritt 2 - Zentrieren und Seitenverhaeltnis (generiert aus Pyramid-Spiral-Shader-Tutorial.md, SSOT dort)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "void mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    // Ursprung in die Mitte, Division durch die HOEHE (nur y!)\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    // Abstand zur Mitte als Helligkeit anzeigen\n    fragColor = vec4(vec3(length(uv)), 1.0);\n}\n"
+      }
+    ]
+  }
+}

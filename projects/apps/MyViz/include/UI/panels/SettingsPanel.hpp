@@ -31,6 +31,7 @@
 class QTabWidget;
 class QComboBox;
 class QSpinBox;
+class QDoubleSpinBox;
 class QCheckBox;
 class QPushButton;
 class QLabel;
@@ -107,6 +108,12 @@ private:
     /// AVS-Import: Render-Scale-Divisor des automatisch eingefuegten Knotens
     /// (QSettings "import/avsRenderScaleDivisor", 1 = neutral — S47)
     QSpinBox* m_pAvsRenderScaleSpinBox = nullptr;
+    /// MilkDrop: App-Default fuer den Puffer-Wechsel beim Preset-Tausch (S66;
+    /// QSettings "milkdrop/pufferWechsel" + "milkdrop/pufferFadingProzent" —
+    /// gilt fuer Nodes mit Einstellung "App-Einstellung")
+    QComboBox* m_pMilkPufferWechselCombo = nullptr;
+    QSpinBox* m_pMilkPufferFadingSpinBox = nullptr;
+    QDoubleSpinBox* m_pMilkPufferAusblendSpinBox = nullptr;
 
     // Hotkeys Tab
     QLabel* m_pHotkeyStatusLabel = nullptr;

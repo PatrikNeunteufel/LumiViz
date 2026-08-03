@@ -37,6 +37,7 @@
 #include <QIcon>
 #include <QDropEvent>
 #include <QComboBox>
+#include <QSlider>
 #include <QDesktopServices>
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -138,7 +139,9 @@ constexpr int kMilkBasisWaveElement = kMilkSectionBase - 1;
 struct MilkPathInfo
 {
     QList<int> nodePath;  ///< Pfad zum Chain-Node (ohne Sentinels)
-    int section = -1;     ///< 0=Code 1=Waves 2=Shapes 3=Shader 4=Sprites
+    /// 0=Code 1=Waves 2=Shapes 3=Shader-Warp 4=Sprites 5=Parameter
+    /// 6=Shader-Comp (S66: Warp/Comp getrennt; Baum zeigt Pipeline-Folge)
+    int section = -1;
     int element = -1;     ///< Element-Index innerhalb der Sektion (oder -1)
 };
 
@@ -974,8 +977,12 @@ void MultiEffectPanel::setupUI()
     m_addButton = makeButton("+", tr("Add effect (into the selected list, else root)"));
     m_removeButton = makeButton("-", tr("Remove selected"));
     m_cloneButton = makeButton(QString::fromUtf8("⧉"), tr("Clone selected (with its subtree)"));
-    m_upButton = makeButton(QString::fromUtf8("↑"), tr("Move up"));
-    m_downButton = makeButton(QString::fromUtf8("↓"), tr("Move down"));
+    m_upButton = makeButton(QString::fromUtf8("↑"),
+                            tr("Move up (at the top edge: out of the list, "
+                               "placed before it)"));
+    m_downButton = makeButton(QString::fromUtf8("↓"),
+                              tr("Move down (at the bottom edge: out of the "
+                                 "list, placed after it)"));
     toolbar->addWidget(m_addButton);
     toolbar->addWidget(m_removeButton);
     toolbar->addWidget(m_cloneButton);
@@ -1006,7 +1013,6 @@ void MultiEffectPanel::setupUI()
         onDropRequested(s, t, w);
     };
     m_tree->onDeleteKey = [this] { onRemove(); };
-    root->addWidget(m_tree, 1);
 
     m_propScroll = new QScrollArea(this);
     m_propScroll->setWidgetResizable(true);
@@ -1014,7 +1020,31 @@ void MultiEffectPanel::setupUI()
     m_propLayout = new QVBoxLayout(m_propContainer);
     m_propLayout->setAlignment(Qt::AlignTop);
     m_propScroll->setWidget(m_propContainer);
-    root->addWidget(m_propScroll, 1);
+
+    // Aufteilung Baum/Eigenschafts-Editor verstellbar (S66, Wunsch Patrik):
+    // vertikaler Splitter statt fester 50:50-Stretches; die Stellung wird in
+    // QSettings gemerkt und beim naechsten Aufbau wiederhergestellt.
+    auto* split = new QSplitter(Qt::Vertical, this);
+    split->setChildrenCollapsible(false);
+    split->addWidget(m_tree);
+    split->addWidget(m_propScroll);
+    split->setStretchFactor(0, 1);
+    split->setStretchFactor(1, 1);
+    {
+        const QByteArray state =
+            QSettings().value(QStringLiteral("multieffect/chainSplitter")).toByteArray();
+        if (!state.isEmpty()) split->restoreState(state);
+    }
+    connect(split, &QSplitter::splitterMoved, this, [split]() {
+        QSettings().setValue(QStringLiteral("multieffect/chainSplitter"),
+                             split->saveState());
+    });
+    root->addWidget(split, 1);
+
+    // Mindestbreite: darunter beginnen die Formularfelder zu quetschen — die
+    // Felder selbst folgen der Panelbreite (AllNonFixedFieldsGrow + resizable
+    // ScrollArea), brauchen aber einen sinnvollen Boden.
+    setMinimumWidth(420);
 
     connect(m_addButton, &QToolButton::clicked, this, &MultiEffectPanel::onAddEffect);
     connect(m_removeButton, &QToolButton::clicked, this, &MultiEffectPanel::onRemove);
@@ -1157,13 +1187,21 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
             if (w.enabled) ++wavesOn;
         for (const auto& s : milk->preset.shapes)
             if (s.enabled) ++shapesOn;
-        const QStringList sections = {
-            tr("Code (per_frame / per_pixel)"),
-            tr("Waves (Basis + %1 Custom aktiv)").arg(wavesOn),
-            tr("Shapes (%1 aktiv)").arg(shapesOn),
-            tr("Shader (Warp/Comp)"),
-            tr("Sprites (%1)").arg(milk->preset.sprites.size()),
-            tr("Parameter (Basiswerte)")};
+        // Anzeige-Reihenfolge = Render-Pipeline (S66, Entscheid Patrik):
+        // Parameter (Rahmen) zuoberst, dann die Stufen in Frame-Reihenfolge —
+        // Code → Warp → Shapes → Waves → Comp → Sprites (Overlay zuletzt).
+        // Die SEKTIONS-ID (zweites Feld) bleibt stabil: 0=Code 1=Waves
+        // 2=Shapes 3=Shader-Warp 4=Sprites 5=Parameter 6=Shader-Comp — Pfade,
+        // Editor-Dispatch und Toolbar-Logik hängen an der Id, nicht an der
+        // Baum-Position. Reine Anzeige: die Pipeline selbst ist fest.
+        const QList<QPair<int, QString>> sections = {
+            {5, tr("Parameter (Basiswerte)")},
+            {0, tr("Code (per_frame / per_pixel)")},
+            {3, tr("Shader Warp (HLSL)")},
+            {2, tr("Shapes (%1 aktiv)").arg(shapesOn)},
+            {1, tr("Waves (Basis + %1 Custom aktiv)").arg(wavesOn)},
+            {6, tr("Shader Comp (HLSL)")},
+            {4, tr("Sprites (%1)").arg(milk->preset.sprites.size())}};
         const bool haveMilkIcons = !lumi::ui::presetIconDir().isEmpty();
         const QIcon& milkIcon =
             lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::MilkDrop);
@@ -1222,10 +1260,10 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
             m_tree->setItemWidget(el, 1, eye);
         };
 
-        for (int s = 0; s < sections.size(); ++s)
+        for (const auto& [s, label] : sections)
         {
             auto* sec = new QTreeWidgetItem(item);
-            sec->setText(0, sections[s]);
+            sec->setText(0, label);
             sec->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
             if (haveMilkIcons) sec->setIcon(2, milkIcon);  // Typ-Spalte (S43)
             QList<int> secPath = path;
@@ -1642,6 +1680,39 @@ void MultiEffectPanel::onMove(int delta)
         ChainNode* parent = nodeAtPath(parentPath);
         if (parent == nullptr) return;
         const int n = static_cast<int>(parent->children.size());
+
+        // Container-Ausstieg (S66, Befund Patrik: steht die Effect List
+        // zuunterst, ist "dahinter auf Eltern-Ebene" per Drop kaum treffbar):
+        // Am RAND der Geschwister schiebt ↑/↓ den Block eine Ebene HINAUS —
+        // vor bzw. hinter den Eltern-Container. Nur ganze Ebenen, nie aus der
+        // Wurzel; Hinein geht weiterhin ueber Drop AUF den Container.
+        const bool atEdge = contiguous && !parentPath.isEmpty() &&
+                            ((delta < 0 && minI == 0) ||
+                             (delta > 0 && idxs.last() == n - 1));
+        if (atEdge)
+        {
+            QList<int> grandPath = parentPath;
+            const int parentIdx = grandPath.takeLast();
+            ChainNode* grand = nodeAtPath(grandPath);
+            if (grand == nullptr) return;
+            std::vector<ChainNode> picked;
+            for (int i : idxs)
+                picked.push_back(std::move(parent->children[static_cast<size_t>(i)]));
+            for (int j = count - 1; j >= 0; --j)
+                parent->children.erase(parent->children.begin() + idxs[j]);
+            const int insertAt = delta < 0 ? parentIdx : parentIdx + 1;
+            for (int k = 0; k < count; ++k)
+                grand->children.insert(grand->children.begin() + insertAt + k,
+                                       std::move(picked[static_cast<size_t>(k)]));
+            for (int k = 0; k < count; ++k)
+            {
+                QList<int> np = grandPath;
+                np.append(insertAt + k);
+                newSel.append(np);
+            }
+            return;
+        }
+
         const int newBase = std::clamp(minI + delta, 0, n - count);
         if (newBase == minI && contiguous) return;  // already there, can't move
 
@@ -4653,7 +4724,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         {
             auto* info = new QLabel(
                 tr("MilkDrop-Preset '%1' — PS%2 · Warp: %3 · Comp: %4 · %5 Sprite(s)\n"
-                   "Sektionen (Code / Waves / Shapes / Shader) als Kinder im Baum")
+                   "Sektionen als Kinder im Baum, in Render-Reihenfolge: Code → "
+                   "Warp → Shapes → Waves → Comp → Sprites (Parameter = Rahmen)")
                     .arg(QString::fromStdString(p->preset.name))
                     .arg(p->preset.psVersion)
                     .arg(className(p->preset.warpInfo.shaderClass))
@@ -4791,6 +4863,90 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 };
                 makePsCombo(tr("PS-Version Warp"), p->preset.psWarp, &PS::psWarp);
                 makePsCombo(tr("PS-Version Comp"), p->preset.psComp, &PS::psComp);
+            }
+
+            // --- Puffer-Wechsel (S66) --------------------------------------------
+            // Was mit dem GEERBTEN Feedback-Bild beim .milk→.milk-Wechsel
+            // passiert. BEWUSST ohne milkOf: kein Revision-Bump — der Schalter
+            // wirkt erst beim naechsten Preset-Tausch und darf das laufende
+            // Preset nicht neu starten.
+            {
+                auto* pwCombo = new QComboBox(m_propContainer);
+                pwCombo->addItems({tr("App-Einstellung"),
+                                   tr("Behalten (Original)"), tr("Löschen"),
+                                   tr("Fading (einmaliger Mix)"),
+                                   tr("Ausblenden (über Zeit)")});
+                pwCombo->setCurrentIndex(
+                    static_cast<int>(p->pufferWechsel));
+                pwCombo->setToolTip(
+                    tr("Was beim Laden des NAECHSTEN Presets mit dem geerbten "
+                       "Bild passiert. Behalten = Original-MilkDrop (jedes "
+                       "Preset erbt das Bild des Vorgaengers — chaotische "
+                       "Feedback-Presets kippen je nach Vorgaenger in andere "
+                       "Aeste). Löschen = frischer Start wie beim App-Start "
+                       "(deterministische Rausch-Saat, NICHT schwarz — sonst "
+                       "blieben Verstärker-Presets tot). Fading = EINMALIGER "
+                       "Mix aus Erbe und Saat im Moment des Wechsels (Anteil "
+                       "unten). Ausblenden = das Erbe stirbt über die "
+                       "eingestellte Zeit weg, was das neue Preset zeichnet "
+                       "bleibt. App-Einstellung folgt dem Default aus dem "
+                       "Settings-Panel."));
+                form->addRow(tr("Puffer bei Preset-Wechsel"), pwCombo);
+
+                auto* fadeSlider = new QSlider(Qt::Horizontal, m_propContainer);
+                fadeSlider->setRange(0, 100);
+                fadeSlider->setValue(
+                    static_cast<int>(p->pufferFading * 100.0 + 0.5));
+                fadeSlider->setEnabled(p->pufferWechsel ==
+                                       PufferWechsel::Fading);
+                fadeSlider->setToolTip(
+                    tr("Erbe-Anteil beim Fading: 0 % = wie Löschen, "
+                       "100 % = wie Behalten."));
+                form->addRow(tr("Fading-Erbe (%)"), fadeSlider);
+
+                auto* ausblendSpin = new QDoubleSpinBox(m_propContainer);
+                ausblendSpin->setRange(0.1, 60.0);
+                ausblendSpin->setSingleStep(0.5);
+                ausblendSpin->setSuffix(tr(" s"));
+                ausblendSpin->setValue(p->pufferAusblendSek);
+                ausblendSpin->setEnabled(p->pufferWechsel ==
+                                         PufferWechsel::Ausblenden);
+                ausblendSpin->setToolTip(
+                    tr("Ausblenden: Dauer, bis das geerbte Bild vollständig "
+                       "verschwunden ist (das Echo wird je Frame zusätzlich "
+                       "gedämpft; frische Zeichnungen des neuen Presets "
+                       "bleiben)."));
+                form->addRow(tr("Ausblend-Dauer"), ausblendSpin);
+
+                connect(pwCombo,
+                        QOverload<int>::of(&QComboBox::currentIndexChanged),
+                        this,
+                        [this, path, fadeSlider, ausblendSpin](int idx) {
+                            const auto pw = static_cast<PufferWechsel>(
+                                std::clamp(idx, 0, 4));
+                            mutate(path, [&](ChainNode& n) {
+                                std::get<MilkdropNodeParams>(n.params)
+                                    .pufferWechsel = pw;
+                            });
+                            fadeSlider->setEnabled(pw == PufferWechsel::Fading);
+                            ausblendSpin->setEnabled(pw ==
+                                                     PufferWechsel::Ausblenden);
+                        });
+                connect(fadeSlider, &QSlider::valueChanged, this,
+                        [this, path](int v) {
+                            mutate(path, [&](ChainNode& n) {
+                                std::get<MilkdropNodeParams>(n.params)
+                                    .pufferFading = v / 100.0;
+                            });
+                        });
+                connect(ausblendSpin,
+                        QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+                        this, [this, path](double v) {
+                            mutate(path, [&](ChainNode& n) {
+                                std::get<MilkdropNodeParams>(n.params)
+                                    .pufferAusblendSek = v;
+                            });
+                        });
             }
         }
         else if (milkSection == 0)  // Code-Slots (EEL, Dialekt Milkdrop)
@@ -5013,7 +5169,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                           setShape(&lumi::milkdrop::ShapeState::frameCode));
             }
         }
-        else if (milkSection == 3)  // Warp/Comp-Shader (HLSL, SSOT — Klassifikation wird neu abgeleitet)
+        // Warp- und Comp-Shader sind seit S66 GETRENNTE Sektionen (3 = Warp,
+        // 6 = Comp) — im Baum stehen sie an ihrer Pipeline-Position (Warp
+        // frueh, Comp beim Composite). Editor-Logik bleibt gemeinsam (HLSL,
+        // SSOT — Klassifikation wird beim Aendern neu abgeleitet).
+        else if (milkSection == 3 || milkSection == 6)
         {
             auto addHlsl = [&](const QString& label, const std::string& value,
                                bool isWarp) {
@@ -5081,8 +5241,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 form->addRow(header);
                 form->addRow(edit);
             };
-            addHlsl(tr("Warp-Shader (HLSL)"), p->preset.warpShaderText, true);
-            addHlsl(tr("Comp-Shader (HLSL)"), p->preset.compShaderText, false);
+            if (milkSection == 3)
+                addHlsl(tr("Warp-Shader (HLSL)"), p->preset.warpShaderText, true);
+            else
+                addHlsl(tr("Comp-Shader (HLSL)"), p->preset.compShaderText, false);
         }
         else if (milkSection == 4)  // Sprites (N3.3 — Sektion oder Einzel-Element)
         {

@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Pyramid-Spiral-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "anhang_a1",
+        "description": "Anhang A1 - Audiosignal sichtbar machen (generiert aus Pyramid-Spiral-Shader-Tutorial.md, SSOT dort)",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "void mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n\n    // Zeile 0 der Audio-Textur: FFT-Spektrum an der x-Position dieses Pixels\n    float fft  = texture(iChannel0, vec2(uv.x, 0.25)).x;\n\n    // Zeile 1: Wellenform\n    float wave = texture(iChannel0, vec2(uv.x, 0.75)).x;\n\n    vec3 color = vec3(0.02);\n\n    // Spektrum als Balken: Pixel unterhalb des FFT-Werts einfaerben\n    if (uv.y < fft)\n        color = vec3(uv.x, 1.0 - uv.x, 0.5);\n\n    // Wellenform als duenne weisse Linie darueberlegen\n    color += vec3(smoothstep(0.01, 0.0, abs(uv.y - wave)));\n\n    fragColor = vec4(color, 1.0);\n}\n"
+      }
+    ]
+  }
+}

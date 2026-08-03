@@ -33,6 +33,7 @@
 #include <QSettings>
 #include <QSpacerItem>
 #include <QSpinBox>
+#include <QDoubleSpinBox>
 #include <QCheckBox>
 #include <QDesktopServices>
 #include <QDir>
@@ -504,6 +505,71 @@ QWidget* SettingsPanel::createPanelsTab()
     }
     layout->addRow(tr("AVS Import Render Scale:"), m_pAvsRenderScaleSpinBox);
 
+    // MilkDrop-Puffer-Wechsel (S66): App-Default fuer Milkdrop-Nodes, deren
+    // eigener Schalter auf "App-Einstellung" steht. Behalten = Original-
+    // Semantik (jedes Preset erbt das Bild des Vorgaengers).
+    m_pMilkPufferWechselCombo = new QComboBox(widget);
+    m_pMilkPufferWechselCombo->addItem(tr("Keep image (original)"),
+                                       QStringLiteral("behalten"));
+    m_pMilkPufferWechselCombo->addItem(tr("Clear (fresh start)"),
+                                       QStringLiteral("loeschen"));
+    m_pMilkPufferWechselCombo->addItem(tr("Fade (one-time mix, see %)"),
+                                       QStringLiteral("fading"));
+    m_pMilkPufferWechselCombo->addItem(tr("Fade out (over time, see s)"),
+                                       QStringLiteral("ausblenden"));
+    m_pMilkPufferWechselCombo->setToolTip(
+        tr("What happens to the inherited feedback image when a MilkDrop "
+           "preset is replaced by another one. Keep = original MilkDrop "
+           "behavior (presets inherit the predecessor's image). Clear = "
+           "fresh deterministic start like after app launch. Fade = mix of "
+           "inherited image and fresh seed. Nodes can override this per "
+           "node in the Effect Chain editor."));
+    {
+        QSettings settings;
+        const QString stored =
+            settings.value(QStringLiteral("milkdrop/pufferWechsel"),
+                           QStringLiteral("behalten"))
+                .toString();
+        const int idx = m_pMilkPufferWechselCombo->findData(stored);
+        m_pMilkPufferWechselCombo->setCurrentIndex(idx >= 0 ? idx : 0);
+    }
+    layout->addRow(tr("MilkDrop Preset Switch:"), m_pMilkPufferWechselCombo);
+
+    m_pMilkPufferFadingSpinBox = new QSpinBox(widget);
+    m_pMilkPufferFadingSpinBox->setRange(0, 100);
+    m_pMilkPufferFadingSpinBox->setSuffix(tr(" %"));
+    m_pMilkPufferFadingSpinBox->setToolTip(
+        tr("Fade mode only: how much of the inherited image survives "
+           "(0 % = like Clear, 100 % = like Keep)."));
+    {
+        QSettings settings;
+        m_pMilkPufferFadingSpinBox->setValue(
+            settings.value(QStringLiteral("milkdrop/pufferFadingProzent"), 50)
+                .toInt());
+    }
+    m_pMilkPufferFadingSpinBox->setEnabled(
+        m_pMilkPufferWechselCombo->currentData().toString() ==
+        QLatin1String("fading"));
+    layout->addRow(tr("MilkDrop Fade Amount:"), m_pMilkPufferFadingSpinBox);
+
+    m_pMilkPufferAusblendSpinBox = new QDoubleSpinBox(widget);
+    m_pMilkPufferAusblendSpinBox->setRange(0.1, 60.0);
+    m_pMilkPufferAusblendSpinBox->setSingleStep(0.5);
+    m_pMilkPufferAusblendSpinBox->setSuffix(tr(" s"));
+    m_pMilkPufferAusblendSpinBox->setToolTip(
+        tr("Fade-out mode only: how long until the inherited image has "
+           "completely died away (fresh drawing of the new preset stays)."));
+    {
+        QSettings settings;
+        m_pMilkPufferAusblendSpinBox->setValue(
+            settings.value(QStringLiteral("milkdrop/pufferAusblendSek"), 2.0)
+                .toDouble());
+    }
+    m_pMilkPufferAusblendSpinBox->setEnabled(
+        m_pMilkPufferWechselCombo->currentData().toString() ==
+        QLatin1String("ausblenden"));
+    layout->addRow(tr("MilkDrop Fade-out Time:"), m_pMilkPufferAusblendSpinBox);
+
     // Bilder-Suchordner (Vorgabe S50, umgesetzt S53): AVS legt seine Bilder im
     // AVS-Wurzelverzeichnis ab, die Presets aber in Unterordnern. Der Import
     // sucht bereits drei Ebenen aufwaerts — dieser Ordner ist die letzte
@@ -650,6 +716,32 @@ void SettingsPanel::setupConnections()
             this, [](int value) {
                 QSettings settings;
                 settings.setValue(QStringLiteral("import/avsRenderScaleDivisor"),
+                                  value);
+            });
+    connect(m_pMilkPufferWechselCombo,
+            QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            [this](int index) {
+                if (index < 0) return;
+                const QString key =
+                    m_pMilkPufferWechselCombo->itemData(index).toString();
+                QSettings settings;
+                settings.setValue(QStringLiteral("milkdrop/pufferWechsel"), key);
+                m_pMilkPufferFadingSpinBox->setEnabled(
+                    key == QLatin1String("fading"));
+                m_pMilkPufferAusblendSpinBox->setEnabled(
+                    key == QLatin1String("ausblenden"));
+            });
+    connect(m_pMilkPufferFadingSpinBox,
+            QOverload<int>::of(&QSpinBox::valueChanged), this, [](int value) {
+                QSettings settings;
+                settings.setValue(
+                    QStringLiteral("milkdrop/pufferFadingProzent"), value);
+            });
+    connect(m_pMilkPufferAusblendSpinBox,
+            QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+            [](double value) {
+                QSettings settings;
+                settings.setValue(QStringLiteral("milkdrop/pufferAusblendSek"),
                                   value);
             });
 }

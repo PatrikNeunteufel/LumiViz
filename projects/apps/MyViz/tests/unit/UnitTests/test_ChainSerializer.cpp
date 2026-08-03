@@ -2019,4 +2019,159 @@ TEST_SUITE("MilkdropNode")
         }
         CHECK(hasTranspileNote);
     }
+
+    TEST_CASE("Puffer-Wechsel (S66): Roundtrip + Migration + transiente Felder")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        MilkdropNodeParams mp;
+        mp.preset.name = "wechsel";
+        mp.pufferWechsel = PufferWechsel::Fading;
+        mp.pufferFading = 0.25;
+        mp.wechselZaehler = 7;   // transient — darf NICHT mitreisen
+        mp.wechselErbe = 0.25;
+        ChainNode n;
+        n.params = std::move(mp);
+        root.children.push_back(std::move(n));
+        compileChain(root);
+
+        const ChainNode back = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(back.children.size() == 1);
+        const auto* rp = std::get_if<MilkdropNodeParams>(&back.children[0].params);
+        REQUIRE(rp != nullptr);
+        CHECK(rp->pufferWechsel == PufferWechsel::Fading);
+        CHECK(rp->pufferFading == doctest::Approx(0.25));
+        CHECK(rp->pufferAusblendSek == doctest::Approx(2.0));
+        CHECK(rp->wechselZaehler == 0);
+        CHECK(rp->wechselErbe == doctest::Approx(1.0));
+        CHECK(rp->wechselAusblendSek == doctest::Approx(0.0));
+
+        // Ausblenden-Roundtrip (S66): Modus + Dauer reisen mit
+        {
+            ChainNode root2;
+            root2.params = ListParams{};
+            MilkdropNodeParams mp2;
+            mp2.pufferWechsel = PufferWechsel::Ausblenden;
+            mp2.pufferAusblendSek = 5.5;
+            ChainNode n2;
+            n2.params = std::move(mp2);
+            root2.children.push_back(std::move(n2));
+            compileChain(root2);
+            const ChainNode back2 = chainFromJson(chainToJson(root2), nullptr);
+            const auto* rp2 =
+                std::get_if<MilkdropNodeParams>(&back2.children[0].params);
+            REQUIRE(rp2 != nullptr);
+            CHECK(rp2->pufferWechsel == PufferWechsel::Ausblenden);
+            CHECK(rp2->pufferAusblendSek == doctest::Approx(5.5));
+        }
+
+        // Migration: Dokument OHNE die Felder ⇒ AppEinstellung + 0.5
+        QJsonObject o = chainToJson(root);
+        QJsonObject rootObj = o.value("root").toObject();
+        QJsonArray children = rootObj.value("children").toArray();
+        QJsonObject node = children.at(0).toObject();
+        node.remove("pufferWechsel");
+        node.remove("pufferFading");
+        children[0] = node;
+        rootObj["children"] = children;
+        o["root"] = rootObj;
+        const ChainNode legacy = chainFromJson(o, nullptr);
+        const auto* lp = std::get_if<MilkdropNodeParams>(&legacy.children[0].params);
+        REQUIRE(lp != nullptr);
+        CHECK(lp->pufferWechsel == PufferWechsel::AppEinstellung);
+        CHECK(lp->pufferFading == doctest::Approx(0.5));
+    }
+
+    TEST_CASE("Puffer-Wechsel (S66): In-Place-Tausch loest den Erbe-Anteil auf")
+    {
+        const std::filesystem::path preset = repoRoot() / "asset" / "calibration" /
+                                             "milkdrop" / "c1" / "01_warp_drift.milk";
+        REQUIRE(std::filesystem::exists(preset));
+        const QString path = QString::fromStdString(preset.string());
+
+        MultiEffectVisualizer host;
+        REQUIRE(host.loadMilkFile(path, nullptr));
+        {
+            const auto* mp =
+                std::get_if<MilkdropNodeParams>(&host.chain().children[0].params);
+            REQUIRE(mp != nullptr);
+            CHECK(mp->wechselZaehler == 0);
+        }
+
+        // Zweites Laden = In-Place-Tausch. App-Default Behalten ⇒ Erbe 1.0
+        REQUIRE(host.loadMilkFile(path, nullptr));
+        {
+            const auto* mp =
+                std::get_if<MilkdropNodeParams>(&host.chain().children[0].params);
+            REQUIRE(mp != nullptr);
+            CHECK(mp->wechselZaehler == 1);
+            CHECK(mp->wechselErbe == doctest::Approx(1.0));
+            CHECK(mp->revision == 2);
+        }
+
+        // App-Default Loeschen greift bei Node-Einstellung AppEinstellung
+        host.setMilkdropPufferWechselDefault(PufferWechsel::Loeschen, 0.5);
+        REQUIRE(host.loadMilkFile(path, nullptr));
+        {
+            const auto* mp =
+                std::get_if<MilkdropNodeParams>(&host.chain().children[0].params);
+            REQUIRE(mp != nullptr);
+            CHECK(mp->wechselZaehler == 2);
+            CHECK(mp->wechselErbe == doctest::Approx(0.0));
+        }
+
+        // Node-Einstellung Fading uebersteuert den App-Default
+        {
+            auto* mp =
+                std::get_if<MilkdropNodeParams>(&host.chain().children[0].params);
+            REQUIRE(mp != nullptr);
+            mp->pufferWechsel = PufferWechsel::Fading;
+            mp->pufferFading = 0.3;
+        }
+        REQUIRE(host.loadMilkFile(path, nullptr));
+        {
+            const auto* mp =
+                std::get_if<MilkdropNodeParams>(&host.chain().children[0].params);
+            REQUIRE(mp != nullptr);
+            CHECK(mp->wechselZaehler == 3);
+            CHECK(mp->wechselErbe == doctest::Approx(0.3));
+            // die Node-Einstellung selbst ueberlebt den Preset-Tausch
+            CHECK(mp->pufferWechsel == PufferWechsel::Fading);
+            CHECK(mp->pufferFading == doctest::Approx(0.3));
+        }
+
+        // Ausblenden (S66): Erbe bleibt (1.0), Dauer wird transportiert
+        {
+            auto* mp =
+                std::get_if<MilkdropNodeParams>(&host.chain().children[0].params);
+            REQUIRE(mp != nullptr);
+            mp->pufferWechsel = PufferWechsel::Ausblenden;
+            mp->pufferAusblendSek = 3.5;
+        }
+        REQUIRE(host.loadMilkFile(path, nullptr));
+        {
+            const auto* mp =
+                std::get_if<MilkdropNodeParams>(&host.chain().children[0].params);
+            REQUIRE(mp != nullptr);
+            CHECK(mp->wechselZaehler == 4);
+            CHECK(mp->wechselErbe == doctest::Approx(1.0));
+            CHECK(mp->wechselAusblendSek == doctest::Approx(3.5));
+        }
+
+        // ... und ein Folgewechsel mit Fading raeumt die Ausblend-Dauer wieder ab
+        {
+            auto* mp =
+                std::get_if<MilkdropNodeParams>(&host.chain().children[0].params);
+            REQUIRE(mp != nullptr);
+            mp->pufferWechsel = PufferWechsel::Fading;
+        }
+        REQUIRE(host.loadMilkFile(path, nullptr));
+        {
+            const auto* mp =
+                std::get_if<MilkdropNodeParams>(&host.chain().children[0].params);
+            REQUIRE(mp != nullptr);
+            CHECK(mp->wechselZaehler == 5);
+            CHECK(mp->wechselAusblendSek == doctest::Approx(0.0));
+        }
+    }
 }

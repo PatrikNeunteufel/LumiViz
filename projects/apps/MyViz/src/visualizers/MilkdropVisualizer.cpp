@@ -43,6 +43,7 @@
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
+#include <utility>
 
 using lumi::modules::ModuleParamDesc;
 using lumi::modules::ParamType;
@@ -759,6 +760,7 @@ void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringLi
     m_frame = 0;
     m_monitor = 0.0;
     m_initRan = false;
+    m_traceLoadFrames = 5;  // Lade-Diagnose (S66): Audio-Futter der ersten Frames
 }
 
 void MilkdropVisualizer::rebuildScripts(QStringList* report)
@@ -863,6 +865,31 @@ void MilkdropVisualizer::updateAudio(float deltaTime)
         }
     }
     m_loudness.update(imm[0], imm[1], imm[2], m_fps);
+
+    // Lade-Diagnose (S66, „Ast kippt trotz Komplett-Kaltstart"): die ersten
+    // fuenf Frames nach jedem applyState zeigen das komplette Audio-Futter —
+    // trennt hart, ob die Divergenz aus dem Audio-Stack kommt (Werte
+    // unterscheiden sich) oder aus dem Renderpfad (Werte identisch).
+    if (m_traceLoadFrames > 0)
+    {
+        double specSum = 0.0;
+        for (float v : spec) specSum += v;
+        trace::log(QStringLiteral("loadDiag f%1: dt=%2 fps=%3 imm=%4/%5/%6 "
+                                  "specSum=%7 n=%8 bass=%9 mid=%10 treb=%11 att=%12")
+                       .arg(6 - m_traceLoadFrames)
+                       .arg(deltaTime, 0, 'f', 5)
+                       .arg(m_fps, 0, 'f', 2)
+                       .arg(imm[0], 0, 'g', 6)
+                       .arg(imm[1], 0, 'g', 6)
+                       .arg(imm[2], 0, 'g', 6)
+                       .arg(specSum, 0, 'g', 6)
+                       .arg(spec.size())
+                       .arg(m_loudness.bass(), 0, 'f', 4)
+                       .arg(m_loudness.mid(), 0, 'f', 4)
+                       .arg(m_loudness.treb(), 0, 'f', 4)
+                       .arg(m_loudness.bassAtt(), 0, 'f', 4));
+        --m_traceLoadFrames;
+    }
 
     // Loudness-Diagnose (S43, Befund „Rock The House schwarz"): eine
     // Trace-Zeile ~alle 5 s mit der bass-DYNAMIK seit der letzten Zeile —
@@ -1430,6 +1457,29 @@ void MilkdropVisualizer::releaseBlurTargets()
     m_blurSrcH = 0;
 }
 
+std::vector<unsigned char> MilkdropVisualizer::kaltstartBasis(int w, int h)
+{
+    std::vector<unsigned char> noise(static_cast<std::size_t>(w) * h * 4);
+    // Unter NOSEED ist die Kaltstart-Basis SCHWARZ (Referenz mit genulltem
+    // WDDM-VRAM) — Puffer-Wechsel "Loeschen" bleibt damit auch im Prüfstand
+    // definiert, statt stumm das Erbe zu behalten.
+    if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_NOSEED")) return noise;
+    // fixer Seed → jeder Kaltstart ist bit-identisch reproduzierbar (Prüfstände)
+    unsigned int s = 0x5EED63u;
+    for (std::size_t i = 0; i < noise.size(); i += 4)
+    {
+        // xorshift32 — ein Zug je Pixel, RGB aus den Bytes, Alpha deckend
+        s ^= s << 13;
+        s ^= s >> 17;
+        s ^= s << 5;
+        noise[i + 0] = static_cast<unsigned char>(s);
+        noise[i + 1] = static_cast<unsigned char>(s >> 8);
+        noise[i + 2] = static_cast<unsigned char>(s >> 16);
+        noise[i + 3] = 255;
+    }
+    return noise;
+}
+
 void MilkdropVisualizer::seedFeedbackNoise(int w, int h)
 {
     if (!m_feedback.ready()) return;
@@ -1444,20 +1494,7 @@ void MilkdropVisualizer::seedFeedbackNoise(int w, int h)
     }
     QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
 
-    // fixer Seed → jeder Kaltstart ist bit-identisch reproduzierbar (Prüfstände)
-    std::vector<unsigned char> noise(static_cast<std::size_t>(w) * h * 4);
-    unsigned int s = 0x5EED63u;
-    for (std::size_t i = 0; i < noise.size(); i += 4)
-    {
-        // xorshift32 — ein Zug je Pixel, RGB aus den Bytes, Alpha deckend
-        s ^= s << 13;
-        s ^= s >> 17;
-        s ^= s << 5;
-        noise[i + 0] = static_cast<unsigned char>(s);
-        noise[i + 1] = static_cast<unsigned char>(s >> 8);
-        noise[i + 2] = static_cast<unsigned char>(s >> 16);
-        noise[i + 3] = 255;
-    }
+    const std::vector<unsigned char> noise = kaltstartBasis(w, h);
     for (const unsigned int tex : {m_feedback.previousTexture(), m_feedback.currentTexture()})
     {
         f->glBindTexture(GL_TEXTURE_2D, tex);
@@ -1467,6 +1504,96 @@ void MilkdropVisualizer::seedFeedbackNoise(int w, int h)
     f->glBindTexture(GL_TEXTURE_2D, 0);
     trace::log(QStringLiteral("seedFeedbackNoise: %1x%2 (Kaltstart-Saat, Seed fix)")
                    .arg(w).arg(h));
+}
+
+void MilkdropVisualizer::requestFeedbackErbe(double keep)
+{
+    const double k = std::clamp(keep, 0.0, 1.0);
+    if (k >= 1.0) return;  // Behalten = Original-Semantik, kein Eingriff
+    // Mehrere Wechsel ohne Frame dazwischen: die staerkste Loeschung gewinnt
+    // (ein uebersprungener Zwischen-Wechsel haette den Puffer ja auch geleert)
+    m_pendingFeedbackErbe =
+        m_pendingFeedbackErbe < 0.0 ? k : std::min(m_pendingFeedbackErbe, k);
+    // Loeschen (keep=0): zusaetzlich den rand_preset-PRNG auf den Kaltstart-
+    // Wert setzen (ein Zug je Ladung: rot_*-Matrizen, hue-Phasen) — laeuft im
+    // Host-Render-Thread VOR applyPresetState, das Apply wuerfelt damit wie
+    // eine frische Instanz. Die LOUDNESS wird bewusst NICHT zurueckgesetzt
+    // (S66-Diagnose loadDiag): ein Reset laesst laufende Musik auf die leere
+    // Warmup-Rampe treffen — bass explodierte auf ~17 und trat das Preset
+    // unnatuerlich in den naechsten Ast. Eingeschwungen (~1.0-relativ) ist
+    // sowohl Original-Semantik (Sound-Analyse global) als auch der ruhigere
+    // Start; der App-Kaltstart wirkt nur deshalb anders, wenn dort noch
+    // keine Musik laeuft (Stille-Guard) — das ist Futter, kein Erbe.
+    if (k <= 0.0)
+    {
+        m_randSeed = kRandSeedInit;
+        trace::log(QStringLiteral("requestFeedbackErbe: rand_preset-Seed-Kaltstart"));
+    }
+    trace::log(QStringLiteral("requestFeedbackErbe: keep=%1").arg(k));
+}
+
+void MilkdropVisualizer::requestFeedbackAusblenden(double sekunden)
+{
+    const double s = std::clamp(sekunden, 0.0, 60.0);
+    if (s <= 0.0) return;
+    // Mehrere Wechsel ohne Frame dazwischen: die Ausblendung beginnt neu —
+    // das juengste Erbe soll ueber die volle Dauer sterben.
+    m_erbeAusblendRest = s;
+    m_erbeAusblendDauer = s;
+    trace::log(QStringLiteral("requestFeedbackAusblenden: %1 s").arg(s));
+}
+
+void MilkdropVisualizer::applyFeedbackErbe(int w, int h, double keep)
+{
+    if (!m_feedback.ready()) return;
+    QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
+    const std::vector<unsigned char> basis = kaltstartBasis(w, h);
+
+    if (keep <= 0.0)
+    {
+        // Loeschen = exakt der Kaltstart (bit-identisch zur Saat; unter
+        // NOSEED schwarz — die Basis traegt den Schalter bereits)
+        for (const unsigned int tex :
+             {m_feedback.previousTexture(), m_feedback.currentTexture()})
+        {
+            f->glBindTexture(GL_TEXTURE_2D, tex);
+            f->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA,
+                               GL_UNSIGNED_BYTE, basis.data());
+        }
+        f->glBindTexture(GL_TEXTURE_2D, 0);
+        trace::log(QStringLiteral("applyFeedbackErbe: %1x%2 geloescht (keep=0)")
+                       .arg(w).arg(h));
+        return;
+    }
+
+    // Fading: das Erbe EINMALIG gegen die Kaltstart-Basis mischen. Readback +
+    // CPU-Mix — laeuft genau einmal je Preset-Wechsel, nie im Frame-Takt.
+    GLint boundFbo = 0;
+    f->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &boundFbo);
+    const double k = std::clamp(keep, 0.0, 1.0);
+    std::vector<unsigned char> erbe(basis.size());
+    const std::pair<unsigned int, unsigned int> puffer[] = {
+        {m_feedback.previousFboHandle(), m_feedback.previousTexture()},
+        {m_feedback.currentFboHandle(), m_feedback.currentTexture()},
+    };
+    for (const auto& [fbo, tex] : puffer)
+    {
+        f->glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        f->glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, erbe.data());
+        for (std::size_t i = 0; i < erbe.size(); ++i)
+        {
+            erbe[i] = static_cast<unsigned char>(
+                static_cast<double>(erbe[i]) * k +
+                static_cast<double>(basis[i]) * (1.0 - k) + 0.5);
+        }
+        f->glBindTexture(GL_TEXTURE_2D, tex);
+        f->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA,
+                           GL_UNSIGNED_BYTE, erbe.data());
+    }
+    f->glBindFramebuffer(GL_FRAMEBUFFER, static_cast<unsigned int>(boundFbo));
+    f->glBindTexture(GL_TEXTURE_2D, 0);
+    trace::log(QStringLiteral("applyFeedbackErbe: %1x%2 gemischt (keep=%3)")
+                   .arg(w).arg(h).arg(k));
 }
 
 void MilkdropVisualizer::runBlurPasses(const FrameVars& fv)
@@ -2584,6 +2711,17 @@ void MilkdropVisualizer::onRender(float deltaTime)
         // Deterministisches Vollbereichs-Rauschen = reproduzierbares Aequivalent.
         seedFeedbackNoise(w, h);
     }
+    // Puffer-Wechsel (S66): angemeldetes Erbe anwenden. Nach einem frischen
+    // Aufbau (Kaltstart/Resize) gibt es kein Erbe — pending verfaellt dort,
+    // eine laufende Zeit-Ausblendung ebenso (nichts mehr auszublenden).
+    // (Loudness-/PRNG-Kaltstart bei keep=0 passiert bereits in
+    // requestFeedbackErbe — VOR dem applyPresetState des neuen Presets.)
+    if (m_pendingFeedbackErbe >= 0.0)
+    {
+        if (wasReady) applyFeedbackErbe(w, h, m_pendingFeedbackErbe);
+        m_pendingFeedbackErbe = -1.0;
+    }
+    if (!wasReady) m_erbeAusblendRest = 0.0;
 
     updateAudio(deltaTime);
     if (!m_initRan) runPerFrameInit();
@@ -2680,6 +2818,33 @@ void MilkdropVisualizer::onRender(float deltaTime)
         const QString dir =
             qEnvironmentVariable("LUMIVIZ_MILKDROP_DUMP_WARP");
         img.mirrored().save(QStringLiteral("%1/warpout_f%2.png").arg(dir).arg(m_frame));
+    }
+    // Puffer-Wechsel "Ausblenden" (S66): waehrend der Restzeit stirbt das ERBE
+    // weg — das Echo wird direkt nach dem Warp multiplikativ gedaempft
+    // (exponentiell; nach Ablauf der Dauer < 1/256 = unter 8-bit-Sicht).
+    // Alles, was das neue Preset AB HIER frisch zeichnet (Motion Vectors,
+    // Shapes, Waves, Borders), bleibt ungedaempft und traegt sich selbst.
+    if (m_erbeAusblendRest > 0.0 && deltaTime > 0.0f)
+    {
+        const double dt = std::min(static_cast<double>(deltaTime), 0.1);
+        const double dim =
+            std::exp(std::log(1.0 / 256.0) * dt /
+                     std::max(m_erbeAusblendDauer, 1e-3));
+        const float d = static_cast<float>(std::clamp(dim, 0.0, 1.0));
+        const float quad[] = {
+            -1.0f, -1.0f, d, d, d, 1.0f,  1.0f, -1.0f, d, d, d, 1.0f,
+             1.0f,  1.0f, d, d, d, 1.0f, -1.0f, -1.0f, d, d, d, 1.0f,
+             1.0f,  1.0f, d, d, d, 1.0f, -1.0f,  1.0f, d, d, d, 1.0f};
+        f->glEnable(GL_BLEND);
+        f->glBlendFunc(GL_ZERO, GL_SRC_COLOR);  // dst *= src: reine Daempfung
+        drawColorQuads(quad, 6, GL_TRIANGLES);
+        f->glDisable(GL_BLEND);
+        m_erbeAusblendRest -= dt;
+        if (m_erbeAusblendRest <= 0.0)
+        {
+            m_erbeAusblendRest = 0.0;
+            trace::log(QStringLiteral("feedbackAusblenden: abgeschlossen"));
+        }
     }
     drawMotionVectors(fv);
     drawCustomShapes();

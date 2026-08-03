@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     724>
+                     727>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
@@ -866,6 +866,12 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "translated .milk incl. HLSL texts"},
     {"milkdrop.presetDir",
      "Texture search base (S43: upward search over textures/ + sprites/)."},
+    {"milkdrop.pufferAusblendSek",
+     "Ausblenden: Dauer in Sekunden, ueber die das Erbe wegstirbt (Echo je Frame zusaetzlich gedaempft); nur im Modus Ausblenden wirksam."},
+    {"milkdrop.pufferFading",
+     "Fading: Anteil des ERBES 0..1 (0 = wie Loeschen, 1 = wie Behalten); nur im Modus Fading wirksam."},
+    {"milkdrop.pufferWechsel",
+     "Puffer-Verhalten beim .milk\342\206\222.milk-Wechsel \342\200\224 Node-Einstellung, ueberlebt den In-Place-Preset-Tausch (wie meshX/meshY). Persistiert im Chain-Doc."},
     {"mirror.beatCode",
      "Parameter-Skript (Strang D): `mode`, `slower` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
     {"mirror.frameCode",

@@ -1,7 +1,7 @@
 # MyViz — Benutzerhandbuch
 
-> **Version:** 1.4.0
-> **Datum:** 2026-07-27
+> **Version:** 1.5.1
+> **Datum:** 2026-08-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -28,6 +28,7 @@ Konfigurations-Panels steht im
 9. [Tastenkürzel](#9-tastenkürzel)
 10. [Automatisch gemerkt / Bekanntes](#10-automatisch-gemerkt--bekanntes)
 11. [Effektketten, Milkdrop & Host-Gruppen](#11-effektketten-milkdrop--host-gruppen)
+12. [Shadertoy](#12-shadertoy)
 
 ---
 
@@ -145,13 +146,20 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
 
 - **Audio:** Ausgabegerät wählen; Puffergröße (kleiner = weniger Latenz,
   größer = stabiler) und Samplerate.
-- **Performance:** Frame-Modus und Ziel-FPS.
+- **Performance:** Frame-Modus und Ziel-FPS · **Graphics Card** — welche
+  Grafikkarte MyViz rendert (Automatisch / High Performance / Power Saving).
+  Der Wert landet in der Windows-Grafikeinstellung und greift erst beim
+  Prozessstart, deshalb **startet die App bei einer Änderung sofort neu**.
+  Darunter zeigt *Active GPU* die tatsächlich benutzte Karte.
 - **Panels:** Startordner des Import-Browsers zurücksetzen · Render-Scale-Divisor
   für AVS-Importe · **Bilder-Suchordner** — wird beim Import durchsucht, wenn
   neben dem Preset kein Bild für Picture/Texer liegt, und ist der Startordner der
   Bildauswahl in der Effektkette · **Benutzerdaten-Ordner öffnen** — dort liegen
   deine eigenen Knoten-Voreinstellungen (`nodepresets/<typ>/`); der Ordner wird
-  beim ersten Öffnen angelegt.
+  beim ersten Öffnen angelegt · **MilkDrop Preset Switch** + **MilkDrop Fade
+  Amount** — der App-Standard dafür, was beim MilkDrop-Preset-Wechsel mit dem
+  geerbten Bild passiert (Details und die Regeln je Node: §11,
+  „Preset-Wechsel: das geerbte Bild").
 - **Hotkeys:** Tastenbelegung je Aktion (siehe §9).
 
 Der **Frame-Modus** (auch über *Settings → Frame Mode* im Menü) bestimmt die
@@ -362,6 +370,91 @@ Vectors, Blur).
   fShader in den Shader ein — die Parameter-Regler wirken dort erst, wenn
   der Shader geleert wird (Original-Verhalten).
 
+### Preset-Wechsel: das geerbte Bild
+
+MilkDrop löscht den Bildpuffer beim Preset-Wechsel **nie** — jedes Preset
+startet auf dem letzten Bild seines Vorgängers. Das ist Kern-Ästhetik des
+Originals: „Verstärker"-Presets ohne eigene Energiequelle leben von diesem
+Erbe, und chaotische Feedback-Presets (z. B. die *Rock The House*-Familie)
+kippen je nach Vorgänger dauerhaft in **andere Farb-/Form-Äste**. Dasselbe
+Preset kann nach Vorgänger A also anders aussehen als nach Vorgänger B oder
+nach einem App-Start — das ist kein Fehler, sondern Original-Verhalten.
+
+Seit Session 66 ist das Verhalten einstellbar. Im Milkdrop-Node (Sektion
+**Parameter**) steht **„Puffer bei Preset-Wechsel"**:
+
+| Einstellung | Wirkung beim Laden des nächsten Presets |
+|---|---|
+| **App-Einstellung** | folgt dem Standard aus *Einstellungen → Panels* (Vorgabe: Behalten) |
+| **Behalten (Original)** | das Bild bleibt vollständig — Original-MilkDrop-Semantik |
+| **Löschen** | frischer Start: deterministische Rausch-Saat + neu gewürfelte Preset-Zufallswerte (Rotations-/Farbphasen wie bei einer frischen Instanz). Die Audio-Analyse läuft bewusst eingeschwungen weiter (ein Reset ließe laufende Musik auf der leeren Rampe zu extremen Beat-Spitzen explodieren). **Wichtig:** Was die Musik gerade liefert, prägt ein reaktives Preset immer — leiser App-Start und volle Musik ergeben zwangsläufig verschiedene Bilder; das ist Eingabe, kein geerbter Zustand |
+| **Fading (einmaliger Mix)** | Mix **im Moment des Wechsels**: der Regler **Fading-Erbe (%)** bestimmt, wie viel vom alten Bild als Startpunkt überlebt (0 % = Löschen, 100 % = Behalten) — kein zeitlicher Verlauf |
+| **Ausblenden (über Zeit)** | das geerbte Bild **stirbt über die Ausblend-Dauer weg**: das Echo wird jedes Bild zusätzlich gedämpft und nicht nachgespeist; was das neue Preset frisch zeichnet, bleibt. Nach Ablauf ist nur noch das neue Preset zu sehen |
+
+> **„Löschen" ist nicht Schwarz:** Der frische Start ist die Rausch-Saat des
+> Kaltstarts — mit Schwarz blieben „Verstärker"-Presets ohne eigene
+> Energiequelle für immer dunkel. Presets wie *Rock The House* zünden aus der
+> Saat in unter einer Sekunde wieder ein Vollbild; entscheidend ist, dass es
+> **ihr eigenes** Bild ist und nicht die Farben/Formen des Vorgängers trägt.
+
+Die Einstellung gehört zum **Node**, nicht zum Preset — sie überlebt das
+Durchblättern von Presets (Bild auf/ab) und wird mit der Kette gespeichert.
+
+![Milkdrop-Node: Puffer bei Preset-Wechsel](bilder/handbuch/milkdrop_puffer_wechsel.png)
+
+Der App-Standard dazu steht in *Einstellungen → Panels* („MilkDrop Preset
+Switch" + „MilkDrop Fade Amount" — der Prozentwert ist nur im Fade-Modus
+aktiv):
+
+![Settings: MilkDrop Preset Switch](bilder/handbuch/settings_milkdrop_wechsel.png)
+
+**Was bei „Behalten" genau erhalten bleibt** — die Erbschaft ist bewusst
+klein:
+
+- **Das Bild im Feedback-Puffer** (beide Hälften des Doppelpuffers). Es ist
+  die einzige echte Erbschaft und überlebt auch Fenstergrößen-Änderungen
+  (das Bild wird beim Resize umkopiert).
+- **Die Lautstärke-Historie** der Audio-Analyse (die Langzeit-Mittel hinter
+  `bass`/`mid`/`treb` und `*_att`) läuft über den Wechsel weiter — wie im
+  Original, wo die Sound-Analyse global ist.
+- **Die Host-Einstellungen des Nodes:** Mesh X/Y, Kalibrier-Raster,
+  Textur-Basisordner und der Puffer-Wechsel-Schalter selbst.
+
+**Alles andere startet bei jedem Preset-Wechsel neu:**
+
+- Alle **Skripte**: `per_frame_init` läuft neu; `q1..q64`, `reg00..reg99`,
+  `gmegabuf`, eigene Variablen und `monitor` sind frisch.
+- **`time`, `frame`, `progress`** beginnen bei 0.
+- **Custom Waves/Shapes/Sprites** (inkl. `t1..t8`-Schnappschüsse und
+  Sprite-Lebenszustand).
+- **Warp-/Comp-Shader** werden neu übersetzt, **Texturen** neu geladen,
+  die fShader-Farbwash-Phasen neu bestimmt.
+
+Zwei Grenzfälle: Beim Laden einer **ganzen Ketten-Datei** (.lvfx-Kette) oder
+beim Visualizer-Wechsel wird die Laufzeit immer komplett neu aufgebaut — dort
+gibt es kein Erbe, unabhängig vom Schalter. Und der Prüfstand-Schalter
+`LUMIVIZ_MILKDROP_NOSEED` macht die „frische Saat" schwarz statt verrauscht
+(Kalibrier-Werkzeug, kein App-Zustand).
+
+### Regelwerk: Legacy / Modern / Benutzerdefiniert
+
+Jeder Milkdrop-Node deklariert in der **Parameter**-Sektion seine Betriebsart
+(**Regelwerk**, Session 65):
+
+- **Legacy (original-treu)** — Standard bei jedem Import: alle vier
+  D3D9-Emulationen sind aktiv, das Bild entspricht dem kalibrierten
+  Original-Verhalten.
+- **Modern (IEEE)** — reines IEEE/GL-Rechnen ohne die Legacy-Krücken; für
+  eigene, neue Presets.
+- **Benutzerdefiniert** — die vier Einzelschalter zählen:
+  D3D9-Divisionsvertrag (0/0 = 0), UNORM-Trunkierung im Feedback-Pfad,
+  q-Garbage-Epsilon für Presets ohne `per_frame_init`, UV-Sanitize
+  (NaN→0 + Riesen-UV-Wrap). Jeder Tooltip nennt den Beweis-Fall.
+
+Dazu je Shader-Stufe ein **PS-Version-Override** (Auto/PS2/PS3/„MD1
+erzwingen" — Letzteres ignoriert den Custom-Shader-Text und rendert den
+exakten MD1-Pfad).
+
 ### Host-Gruppen & Crossfade
 
 Eine **Host-Gruppe** (Dropdown „Host Group") kapselt ein komplettes Visual —
@@ -384,10 +477,42 @@ Gruppen dürfen gleichzeitig aktiv sein und mischen sich über ihren
 
 ---
 
+## 12. Shadertoy
+
+Seit Session 65 gibt es den Ketten-Knoten **„Shadertoy (GLSL)"**: er führt
+einen Shadertoy-Shader (`mainImage`-Funktion) als Effekt in der Kette aus —
+mit dem vollen Uniform-Satz (`iTime`, `iResolution`, `iMouse`, `iFrame` …)
+plus LumiViz-Extras (`bass`, `mid`, `treb`, `vol`, `beat`).
+
+- **Audio:** eine 512×2-Textur im Shadertoy-Layout (Zeile 0 = Spektrum,
+  Zeile 1 = Waveform) an einem wählbaren `iChannel`.
+- **Multipass:** Buffer A–D wie auf shadertoy.com — jeder Puffer wählt seine
+  Eingänge (Buffer/Audio/nichts); Selbst-Referenz liest das Vorframe.
+- **Blend:** Ersetzen, Additiv oder 50:50 mit dem Ketten-Bild darunter.
+- **Fehler:** Kompilierfehler zeigen die Zeilennummern **deines** Codes; der
+  Knoten reicht das Bild solange unverändert durch.
+- **Editor-Komfort:** Groß-Editor und ⓘ-Referenz (Uniforms, Audio-Layout,
+  Buffer) an jedem GLSL-Feld.
+
+**Import von shadertoy.com:** Im Knoten-Editor eine Shadertoy-URL oder -ID
+eintragen und **Importieren** drücken (Netzzugriff nur auf Knopfdruck; dafür
+ist ein Shadertoy-**API-Key** in den Einstellungen nötig — die API liefert
+nur Shader der Sichtbarkeit „public + api"). Der **Shadertoy-Browser**
+(Panel) sucht mit Stichwort und Sortierung, zeigt Thumbnails, und ein
+Doppelklick lädt den Shader als Ein-Knoten-Kette.
+
+**Mitgeliefert:** 100 eigene, portable Shader in vier Serien liegen als
+fertige Ketten unter `asset/effectchain/shadertoys/` — jeder mit einem
+„STELLSCHRAUBEN"-Konstantenblock am Anfang zum Spielen.
+
+---
+
 ## Changelog
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.5.1 | 2026-08-03 | §11: fünfte Option „Ausblenden (über Zeit)" (Erbe stirbt über die Dauer weg), Fading als „einmaliger Mix" präzisiert, Hinweis „Löschen ≠ Schwarz" (Rausch-Saat) |
+| 1.5.0 | 2026-08-03 | §11: „Preset-Wechsel: das geerbte Bild" (S66-Schalter Behalten/Löschen/Fading + exakte Liste, was Behalten erhält) und „Regelwerk" (S65). +§12 Shadertoy (S65). §8: Graphics-Card-Einstellung (S61) + MilkDrop-Preset-Switch-Standard |
 | 1.4.0 | 2026-08-01 | §11: Grundkatalog auf 125 Vorlagen für 39 Knotentypen erweitert (Session 61 — Fraktal-Familie, Bloom, blur/simpleScope/customBpm, sechs geerntete Dynamic-Movement-Warps mit Quellenangabe) |
 | 1.3.0 | 2026-08-01 | §11: Grundkatalog der mitgelieferten Voreinstellungen (Session 60 — 84 Vorlagen für 26 Knotentypen, Katalogverweis auf `asset/nodepresets/README.md`) |
 | 1.2.0 | 2026-07-27 | §11 erweitert (Session 53): Voreinstellungen je Knoten (mit Feldauswahl beim Speichern, SuperScope-Figuren als Presets), Werte per Formel (Init/Frame/Beat, Variablen-Regeln, Movement-Ausnahme), Bild-Auswahl bei Picture/Texer, *New Effect Chain*. §8 auf vier Reiter berichtigt (waren zwei) + Bilder-Suchordner und Benutzerdaten-Ordner. §9 um `Ctrl+Shift+N` |

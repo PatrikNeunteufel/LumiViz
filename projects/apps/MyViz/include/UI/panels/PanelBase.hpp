@@ -48,6 +48,7 @@
 #include <QWidget>
 #include <QString>
 
+#include <algorithm>
 #include <vector>
 
 // Forward declarations
@@ -88,6 +89,20 @@ public:
 
     void saveState() override;
     void restoreState() override;
+
+    /**
+     * @brief Vorzugsgroesse fuer frisch geoeffnete Panels (S66, Wunsch Patrik):
+     *        Qt-ADS nimmt beim ersten Oeffnen (Floating/Auto-Hide) den sizeHint
+     *        des Inhalts — der fiel je nach Layout winzig aus (Settings-Fenster
+     *        445x218, Import-Browser weiss mit ~370x360). Ein grosszuegiger
+     *        Default zeigt den Panel-Inhalt sofort vollstaendig; angedockt gilt
+     *        weiterhin die Layout-/Splitter-Groesse.
+     */
+    [[nodiscard]] QSize sizeHint() const override
+    {
+        const QSize fromLayout = QWidget::sizeHint();
+        return {std::max(fromLayout.width(), 560), std::max(fromLayout.height(), 780)};
+    }
 
     // =========================================================================
     // Visibility Tracking

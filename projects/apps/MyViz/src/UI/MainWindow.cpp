@@ -68,6 +68,39 @@
 // BasicLogger
 #include <BasicLogger.h>
 
+namespace
+{
+
+/// Puffer-Wechsel-Default (S66) aus der App-Einstellung an den Host geben —
+/// unter renderMutex() VOR jedem loadMilk*-Aufruf (Muster: Render-Scale S47).
+/// Nodes mit eigenem Schalter ("Behalten"/"Löschen"/"Fading") ignorieren ihn.
+void applyMilkdropPufferWechselDefault(MultiEffectVisualizer& host)
+{
+    using lumi::multieffect::PufferWechsel;
+    QSettings settings;
+    const QString key =
+        settings.value(QStringLiteral("milkdrop/pufferWechsel"),
+                       QStringLiteral("behalten"))
+            .toString();
+    const PufferWechsel modus = key == QLatin1String("loeschen")
+                                    ? PufferWechsel::Loeschen
+                                : key == QLatin1String("fading")
+                                    ? PufferWechsel::Fading
+                                : key == QLatin1String("ausblenden")
+                                    ? PufferWechsel::Ausblenden
+                                    : PufferWechsel::Behalten;
+    const double fading =
+        settings.value(QStringLiteral("milkdrop/pufferFadingProzent"), 50)
+            .toInt() /
+        100.0;
+    const double ausblendSek =
+        settings.value(QStringLiteral("milkdrop/pufferAusblendSek"), 2.0)
+            .toDouble();
+    host.setMilkdropPufferWechselDefault(modus, fading, ausblendSek);
+}
+
+} // anonymous namespace
+
 // =============================================================================
 // Construction / Destruction
 // =============================================================================
@@ -651,6 +684,9 @@ void MainWindow::setupEventHandlers()
             bool ok = false;
             {
                 QMutexLocker lock(&widget->renderMutex());
+                // Puffer-Wechsel-Default (S66) aus der App-Einstellung — greift
+                // fuer Nodes auf "App-Einstellung" (Muster: Render-Scale S47).
+                applyMilkdropPufferWechselDefault(*host);
                 ok = host->loadMilkFile(path, &report);
             }
             if (!ok)
@@ -742,6 +778,8 @@ void MainWindow::setupEventHandlers()
                 bool ok = false;
                 {
                     QMutexLocker lock(&widget->renderMutex());
+                    // Puffer-Wechsel-Default (S66) — wie beim .milk-Import
+                    applyMilkdropPufferWechselDefault(*host);
                     ok = host->loadMilkDocument(path, &report);
                 }
                 if (!ok)

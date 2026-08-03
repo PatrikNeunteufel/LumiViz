@@ -49,7 +49,13 @@ CompileResult r = compileChain(root);   // nach JEDER Mutation (Entscheid E4)
   Qt-/GL-frei), `presetDir` (Textur-Suchbasis, NICHT eingebettet), `meshX/Y`
   (Clamp 8..96 / 6..72), `debugGrid` und eine **`revision`** — jeder Edit bumpt
   sie, nur dann übernimmt der Render-Host den State (Skripte/Shader/Texturen);
-  Compile-Pass stellt `revision >= 1` sicher.
+  Compile-Pass stellt `revision >= 1` sicher. **Puffer-Wechsel (S66):**
+  `pufferWechsel` (`PufferWechsel` ∈ AppEinstellung/Behalten/Loeschen/Fading)
+  + `pufferFading` (Erbe-Anteil 0..1) steuern, was der Host beim
+  .milk→.milk-Tausch mit dem geerbten Feedback-Bild macht — Node-Einstellung,
+  überlebt den In-Place-Preset-Tausch; dazu die TRANSIENTEN Felder
+  `wechselZaehler`/`wechselErbe` (bumpt/aufgelöster Anteil je Tausch, nicht
+  persistiert).
 
 ## Tests
 

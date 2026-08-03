@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Pyramid-Spiral-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_05",
+        "description": "Schritt 5 - Das Oktaeder (generiert aus Pyramid-Spiral-Shader-Tutorial.md, SSOT dort)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// SDF eines Oktaeders (Doppelpyramide) mit \"Radius\" s\nfloat sdOctahedron(vec3 p, float s)\n{\n    p = abs(p);\n    return (p.x + p.y + p.z - s) * 0.57735027;\n}\n\nfloat map(vec3 p)\n{\n    return sdOctahedron(p, 1.0);\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    vec3 ro = vec3(0.0, 0.0, -3.0);\n    vec3 rd = normalize(vec3(uv, 1.0));\n\n    float dist = 0.0;\n    vec3 color = vec3(0.0);\n\n    for (int i = 0; i < 80; i++)\n    {\n        vec3 p = ro + rd * dist;\n        float d = map(p);\n\n        if (d < 0.001) {\n            color = vec3(1.0 - dist * 0.25);\n            break;\n        }\n        if (dist > 15.0) break;\n\n        dist += d;\n    }\n\n    fragColor = vec4(color, 1.0);\n}\n"
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Pyramid-Spiral-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_01",
+        "description": "Schritt 1 - Der erste Pixel: UV-Koordinaten (generiert aus Pyramid-Spiral-Shader-Tutorial.md, SSOT dort)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "void mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    // Pixelposition in den Bereich 0..1 bringen\n    vec2 uv = fragCoord / iResolution.xy;\n\n    // uv.x als Rot, uv.y als Gruen ausgeben\n    fragColor = vec4(uv.x, uv.y, 0.0, 1.0);\n}\n"
+      }
+    ]
+  }
+}

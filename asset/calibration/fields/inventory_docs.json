@@ -7,7 +7,7 @@
   },
   "summe": {
     "typen": 86,
-    "felder": 724,
+    "felder": 727,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -5022,6 +5022,27 @@
           "default": "",
           "name": "presetDir",
           "doc": "Texture search base (S43: upward search over textures/ + sprites/)."
+        },
+        {
+          "art": "zahl",
+          "default": 2,
+          "name": "pufferAusblendSek",
+          "panel": "sonderzeile",
+          "doc": "Ausblenden: Dauer in Sekunden, ueber die das Erbe wegstirbt (Echo je Frame zusaetzlich gedaempft); nur im Modus Ausblenden wirksam."
+        },
+        {
+          "art": "zahl",
+          "default": 0.5,
+          "name": "pufferFading",
+          "panel": "sonderzeile",
+          "doc": "Fading: Anteil des ERBES 0..1 (0 = wie Loeschen, 1 = wie Behalten); nur im Modus Fading wirksam."
+        },
+        {
+          "art": "text",
+          "default": "app",
+          "name": "pufferWechsel",
+          "panel": "sonderzeile",
+          "doc": "Puffer-Verhalten beim .milk→.milk-Wechsel — Node-Einstellung, ueberlebt den In-Place-Preset-Tausch (wie meshX/meshY). Persistiert im Chain-Doc."
         }
       ]
     },

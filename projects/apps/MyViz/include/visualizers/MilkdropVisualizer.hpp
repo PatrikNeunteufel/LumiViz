@@ -120,6 +120,22 @@ public:
     /// liefert spaeter die echte Slot-Dauer). < 0 = eigener 60-s-Zyklus.
     void setProgressOverride(double p) { m_progressOverride = p; }
 
+    /**
+     * @brief Puffer-Wechsel (S66): Erbe-Anteil des Feedback-Bildes fuer den
+     *        NAECHSTEN Frame anmelden (kein GL — der Render-Thread wendet ihn
+     *        vor dem Frame an). keep 1 = Behalten (No-op), 0 = wie Kaltstart
+     *        (frische Rausch-Saat), dazwischen = Mix Erbe/Saat.
+     */
+    void requestFeedbackErbe(double keep);
+
+    /**
+     * @brief Puffer-Wechsel "Ausblenden" (S66): das geerbte Bild stirbt ueber
+     *        `sekunden` weg — das Echo wird je Frame zusaetzlich gedaempft
+     *        (nach dem Warp, VOR den frischen Zeichnungen des neuen Presets).
+     *        Nach Ablauf ist nur noch der Eigenanteil des Presets im Puffer.
+     */
+    void requestFeedbackAusblenden(double sekunden);
+
     /// @brief Currently loaded preset state (for tests/panel)
     [[nodiscard]] const lumi::milkdrop::PresetState& presetState() const { return m_state; }
 
@@ -226,6 +242,13 @@ private:
     /// Vollbereichs-Rauschen fuellen — Verstaerker-Presets ohne eigene
     /// Energiequelle brauchen ererbten Pufferinhalt (Original: undef. VRAM)
     void seedFeedbackNoise(int w, int h);
+    /// Kaltstart-Basis (S66): das deterministische Saat-Rauschen als RGBA8-
+    /// Puffer (bzw. Nullen unter LUMIVIZ_MILKDROP_NOSEED) — gemeinsame Quelle
+    /// von seedFeedbackNoise und applyFeedbackErbe
+    [[nodiscard]] static std::vector<unsigned char> kaltstartBasis(int w, int h);
+    /// Puffer-Wechsel (S66): beide Feedback-Texturen = Erbe*keep + Saat*(1-keep)
+    /// (keep<=0: reine Saat ohne Readback). Render-Thread, Kontext current.
+    void applyFeedbackErbe(int w, int h, double keep);
     /// @brief H+V blur chain over the previous frame (call BEFORE beginFrame)
     void runBlurPasses(const FrameVars& fv);
     void computeWarpMesh(const FrameVars& fv);
@@ -301,6 +324,17 @@ private:
     /// Qt-Default-FBO; Meganode: aktiver Chain-Buffer des MultiEffect-Hosts)
     unsigned int m_targetFbo = 0;
     lumi::render::FeedbackBuffer m_feedback;
+    /// Puffer-Wechsel (S66): angemeldeter Erbe-Anteil fuer den naechsten Frame
+    /// (-1 = nichts pending; GUI-Thread schreibt unter renderMutex, Render-
+    /// Thread konsumiert vor dem Frame)
+    double m_pendingFeedbackErbe = -1.0;
+    /// Lade-Diagnose (S66): >0 = noch so viele Frames Audio-Futter tracen
+    int m_traceLoadFrames = 0;
+    /// Zeit-Ausblendung (S66): Restzeit/Dauer in Sekunden (<=0 = inaktiv).
+    /// Waehrend der Restzeit daempft ein Dim-Pass das Echo nach dem Warp so,
+    /// dass das Erbe nach der Dauer unter die 8-bit-Sichtbarkeit faellt.
+    double m_erbeAusblendRest = 0.0;
+    double m_erbeAusblendDauer = 0.0;
     lumi::render::ScopeRenderer m_scope;
     std::unique_ptr<QOpenGLShaderProgram> m_warpProgram;    ///< pos+uv, prev texture × decay
     std::unique_ptr<QOpenGLShaderProgram> m_textureProgram; ///< pos+uv quad × uniform color
@@ -327,7 +361,10 @@ private:
     std::array<unsigned int, 2> m_noiseVolTex{};///< noisevol lq, hq (AddNoiseVol-Port, C3)
     unsigned int m_placeholderTex = 0;          ///< 1x1 grey (fehlende Texturen)
     std::array<unsigned int, 4> m_samplerObj{}; ///< wrapLin, clampLin, wrapPoint, clampPoint
-    unsigned int m_randSeed = 0x9e3779b9u;      ///< rand_frame/rand_preset PRNG
+    /// Startwert des Engine-PRNG — auch der Kaltstart-Reset bei
+    /// Puffer-Wechsel "Loeschen" (S66) springt hierauf zurueck
+    static constexpr unsigned int kRandSeedInit = 0x9e3779b9u;
+    unsigned int m_randSeed = kRandSeedInit;    ///< rand_frame/rand_preset PRNG
     std::array<float, 4> m_hueRandStart{};      ///< fShader-Wash Phasen (m_fRandStart-Port)
     double m_progressOverride = -1.0;           ///< HG3: progress vom Host (<0 = 60-s-Zyklus)
 
