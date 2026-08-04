@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Composite-Postfx-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "anhang_a1",
+        "description": "Anhang A1 - Die Audio-Infrastruktur am Sichtpruefstand (mainImage = LumiViz-Zugabe) (generiert aus CompositePostfx-tutorial.md, SSOT dort)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          4
+        ],
+        "blend": 0,
+        "code": "// ============================================================================\n// Anhang A1 - die Audio-Infrastruktur (Common-Block des Tutorials) am\n// Sichtpruefstand. Der Tutorial-Block definiert nur Globals + bandLevel +\n// audioFuellen; das mainImage unten ist eine LumiViz-Zugabe (NICHT im\n// Tutorial-Text), damit die Chain etwas zeigt: fuenf Balken fuer\n// gBass/gMid/gTreb/gVol/gGate, darueber die rohe FFT-Zeile als Kurve\n// (die im Standalone-Testsignal dB-gesaettigt am Deckel klebt - die\n// Skalen-Falle aus dem Tutorial-Text, live).\n// ============================================================================\n\n// ---- AUDIO (Common) - iChannel3 = Music in jedem lesenden Pass! ------------\nfloat gBass = 0.0, gMid = 0.0, gTreb = 0.0, gVol = 0.0, gGate = 0.0;\n\nfloat bandLevel(float lo, float hi)\n{\n    float sum = 0.0;\n    const int N = 12;\n    for (int i = 0; i < N; i++) {\n        float x = mix(lo, hi, (float(i) + 0.5) / float(N));\n        sum += texture(iChannel3, vec2(x, 0.25)).x;\n    }\n    return sum / float(N);\n}\n\n// einmal am Anfang von mainImage jedes lesenden Passes aufrufen\nvoid audioFuellen()\n{\n    gBass = bandLevel(0.00, 0.05);\n    gMid  = bandLevel(0.05, 0.25);\n    gTreb = bandLevel(0.25, 0.70);\n    gVol  = bandLevel(0.00, 0.70);\n    gGate = smoothstep(0.60, 0.75, gBass);   // Beat-Gate (Skala: Handarbeit, s. Schablone)\n\n    // LumiViz-Anpassung (die B-Regel der Serie, NICHT der Shadertoy-Text):\n    // App-Uniforms statt FFT-Absolutpegel. Die dB-FFT-Zeile des Standalone-\n    // Testsignals saettigt bei 1.0 (Sonde S67) - Absolut-Schwellen wie\n    // smoothstep(0.60, 0.75, ...) koennen dort nie mehr schalten; `beat`\n    // ersetzt das handkalibrierte Gate. Auf shadertoy.com gilt der\n    // Tutorial-Text oben unveraendert.\n    gBass = bass;\n    gMid  = mid;\n    gTreb = treb;\n    gVol  = vol;\n    gGate = beat;\n}\n\n// ---- LumiViz-Sichtpruefstand (NICHT im Tutorial-Text) ----------------------\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 st = fragCoord / iResolution.xy;\n\n    audioFuellen();\n\n    float wert = st.x < 0.2 ? gBass : st.x < 0.4 ? gMid : st.x < 0.6 ? gTreb\n               : st.x < 0.8 ? gVol  : gGate;\n\n    float f = fract(st.x * 5.0);\n    float balken = step(st.y, wert) * step(0.03, f) * step(f, 0.97);\n\n    // rohe FFT-Zeile als Referenzkurve (Zeile 0 der 512x2-Audio-Textur)\n    float fft = texture(iChannel3, vec2(st.x, 0.25)).x;\n    float kurve = smoothstep(0.008, 0.0, abs(st.y - fft));\n\n    vec3 farbe = mix(vec3(0.20, 0.45, 1.00), vec3(1.00, 0.55, 0.15), st.x);\n    fragColor = vec4(farbe * balken + vec3(0.9, 0.95, 1.0) * kurve * 0.5\n                     + 0.02, 1.0);\n}\n"
+      }
+    ]
+  }
+}

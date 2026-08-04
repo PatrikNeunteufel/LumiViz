@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Stratospheric-Tunnel-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_01",
+        "description": "Schritt 1 - Die Buehne: der Polar-Blick in die Roehre (rekonstruiert aus StratosphericTunnel-tutorial.md, SSOT dort; Schritte 6-12 und A3 sind materialisierte Diff-Schritte)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "void mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    // Ursprung in die Bildmitte, Teilen durch die HOEHE (unverzerrt)\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    float r = length(uv);            // Abstand zur Bildmitte\n    float w = atan(uv.y, uv.x);      // Winkel um die Bildmitte: -pi..pi\n\n    // Polar-Mapping wie im Vorbild: Tiefe ~ 1/Radius, Umfang ~ Winkel\n    float tief0 = 0.5 / max(r, 1e-3);        // Wandtiefe dieses Pixels\n    float tiefe = tief0 + iTime * 1.5;       // ... und die Fahrt nach vorn\n\n    // 14 Roehren-Baender um den Umfang, Spanten-Ringe in der Tiefe\n    float roehren = 0.5 - 0.5 * cos(w * 14.0);\n    float spanten = smoothstep(0.4, 0.0, abs(fract(tiefe / 4.0) - 0.5) * 4.0);\n\n    vec3 wandfarbe = mix(vec3(0.05, 0.06, 0.10), vec3(0.15, 0.18, 0.26), roehren);\n    wandfarbe += vec3(0.25, 0.30, 0.45) * spanten * 0.5;\n\n    // Ferne (= Bildmitte) versinkt im Dunkel\n    float schleier = exp(-0.10 * tief0);\n\n    fragColor = vec4(wandfarbe * schleier, 1.0);\n}\n"
+      }
+    ]
+  }
+}

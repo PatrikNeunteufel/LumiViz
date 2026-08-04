@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Space-Debris-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_01",
+        "description": "Schritt 1 - Die Buehne: Sternenhimmel aus der Blickrichtung (rekonstruiert aus SpaceDebris-tutorial.md, SSOT dort)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "float hash21(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\n\n// Wuerfelflaechen-Projektion: Blickrichtung -> 2D-Koordinate fuer das Sterngitter\nvec2 richtungsUv(vec3 rd)\n{\n    vec3 a = abs(rd);\n    if (a.z >= a.x && a.z >= a.y) return rd.xy / a.z;\n    if (a.x >= a.y)               return rd.zy / a.x;\n    return rd.xz / a.y;\n}\n\n// Drei Sternschichten: je feiner das Gitter, desto schwaecher die Sterne\nvec3 sterne(vec3 rd)\n{\n    vec3 acc = vec3(0.0);\n    for (int s = 0; s < 3; s++) {\n        float fs = float(s);\n        vec2 su = richtungsUv(rd) * (24.0 + 30.0 * fs) + 13.7 * fs;\n        float h = hash21(floor(su));\n        float stern = smoothstep(0.988 + 0.004 * fs, 1.0, h);\n        acc += stern * (0.30 + 0.70 * fract(h * 41.7)) * (1.0 - 0.28 * fs);\n    }\n    return acc * vec3(0.80, 0.87, 1.00);\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    // Ursprung in die Bildmitte, Teilen durch die HOEHE (unverzerrt)\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    vec3 rd = normalize(vec3(uv, 1.4));   // 1.4 = Brennweite\n\n    // Weltraum: fast schwarz, minimal blaeulich ...\n    vec3 color = vec3(0.008, 0.010, 0.018);\n    // ... unten ein warmer Vorbote des Planeten (kommt in Schritt 7 wirklich)\n    color += vec3(0.05, 0.02, 0.008) * clamp(-uv.y * 1.5, 0.0, 1.0);\n\n    color += sterne(rd);\n\n    fragColor = vec4(color, 1.0);\n}\n"
+      }
+    ]
+  }
+}

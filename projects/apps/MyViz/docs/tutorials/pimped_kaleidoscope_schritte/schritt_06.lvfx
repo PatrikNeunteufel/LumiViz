@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Pimped-Kaleidoscope-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_06",
+        "description": "Schritt 6 - Sharpen: die Unsharp Mask (generiert aus PimpedKaleidoscope-tutorial.md, SSOT dort)",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "void mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    fragColor = vec4(texture(iChannel0, fragCoord / iResolution.xy).rgb, 1.0);\n}\n",
+        "buffers": [
+          {
+            "code": "// ---- LumiViz-Anpassung (NICHT im Tutorial-Text) ----------------------------\n// Die Buffer-Ping-Pongs des Shadertoy-Nodes filtern derzeit NEAREST\n// (Qt-FBO-Default, MultiEffectVisualizer::runShadertoy) - der bilineare\n// Tiefpass, den Schritt 6 als Stabilisator des Sharpen voraussetzt (und den\n// Shadertoy-Buffer mitbringen), fehlt damit: das System kocht in Pixelgriess\n// hoch (exakt die \"Probe aufs Exempel\" aus Schritt 6). lesBilinear() stellt\n// die Shadertoy-Lesesemantik im Shader selbst her. Auf shadertoy.com ist\n// diese Funktion UNNOETIG - dort steht im Tutorial schlicht texture().\nvec3 lesBilinear(vec2 st)\n{\n    vec2 p  = st * iResolution.xy - 0.5;\n    vec2 i  = floor(p);\n    vec2 fr = p - i;\n    vec2 px = 1.0 / iResolution.xy;\n    vec2 b  = (i + 0.5) * px;\n    vec3 c00 = texture(iChannel0, b).rgb;\n    vec3 c10 = texture(iChannel0, b + vec2(px.x, 0.0)).rgb;\n    vec3 c01 = texture(iChannel0, b + vec2(0.0, px.y)).rgb;\n    vec3 c11 = texture(iChannel0, b + px).rgb;\n    return mix(mix(c00, c10, fr.x), mix(c01, c11, fr.x), fr.y);\n}\n// ---- Ende LumiViz-Anpassung ------------------------------------------------\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float SEED_HELL  = 1.0;    // Gesamthelligkeit der Lichtsaat\nconst float BAHN_WEITE = 0.35;   // Radius der Lissajous-Bahn\nconst float DECAY      = 0.90;   // Daempfung je Frame (< 1!)\nconst float ZOOM       = 1.010;  // NEU: > 1 = Inhalt waechst nach aussen\nconst float DREH       = 0.006;  // NEU: Drehung in Radiant PRO FRAME\nconst float SHARPEN = 0.35;  // Unsharp-Mask-Staerke (Preset: 0.35)\n// ----------------------------------------------------------------------------\n\n#define R(a) mat2(cos(a), sin(a), -sin(a), cos(a))\n\n// NEU: zentrierte Koordinaten -> 0..1-Texturkoordinaten (fuers Sampling)\nvec2 uvZuTex(vec2 uv)\n{\n    return uv * vec2(iResolution.y / iResolution.x, 1.0) + 0.5;\n}\n\nvec3 palette(float t)\n{\n    return 0.55 + 0.45 * cos(6.28318 * (t + vec3(0.0, 0.33, 0.67)));\n}\n\nvec3 seeds(vec2 uv)\n{\n    vec3 acc = vec3(0.0);\n\n    vec2 pos = vec2(sin(iTime * 0.31), sin(iTime * 0.23))\n             * BAHN_WEITE * vec2(1.0, 0.7);\n    vec3 farbe = palette(iTime * 0.021);\n\n    vec2 d1 = uv - pos;\n    vec2 d2 = uv + pos;\n    acc += farbe     * 0.0006 / (0.0004 + dot(d1, d1));\n    acc += farbe.bgr * 0.0006 / (0.0004 + dot(d2, d2));\n\n    float r  = 0.26 + 0.10 * sin(iTime * 0.171);\n    float dr = length(uv) - r;\n    acc += palette(iTime * 0.021 + 0.5) * 0.0012 / (0.0008 + 8.0 * dr * dr);\n\n    return acc * SEED_HELL;\n}\n\n// NEU: kleiner Kreuz-Blur als GetBlur1-Ersatz.\n// Milkdrop haelt weichgezeichnete Bildkopien gratis vor (GetBlur1..3) -\n// Shadertoy nicht, also mitteln wir die vier Pixel-Nachbarn selbst.\nvec3 blur4(vec2 st)\n{\n    vec2 px = 1.0 / iResolution.xy;\n    return ( lesBilinear(st + vec2( px.x, 0.0))\n           + lesBilinear(st + vec2(-px.x, 0.0))\n           + lesBilinear(st + vec2(0.0,  px.y))\n           + lesBilinear(st + vec2(0.0, -px.y)) ) * 0.25;\n}\n\n// GEAENDERT: mainImage - Unsharp Mask zwischen Lesen und Decay\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    vec2 st  = uvZuTex(R(-DREH) * (uv / ZOOM));\n    vec3 alt = lesBilinear(st);\n\n    // Unsharp Mask: (Bild - weiche Kopie) = die feinen Details;\n    // die geben wir dem Bild verstaerkt zurueck\n    alt += (alt - blur4(st)) * SHARPEN;\n\n    vec3 neu = max(alt * DECAY + seeds(uv), 0.0);   // nie unter Null!\n    fragColor = vec4(neu, 1.0);\n}\n",
+            "input": [
+              0,
+              -1,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

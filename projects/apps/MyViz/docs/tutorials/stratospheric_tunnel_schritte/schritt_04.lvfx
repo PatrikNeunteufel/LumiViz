@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Stratospheric-Tunnel-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_04",
+        "description": "Schritt 4 - Roehren und Spanten (rekonstruiert aus StratosphericTunnel-tutorial.md, SSOT dort; Schritte 6-12 und A3 sind materialisierte Diff-Schritte)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "#define R(a) mat2(cos(a), sin(a), -sin(a), cos(a))\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float RADIUS        = 1.0;    // Grundradius des Tunnels\nconst float ROEHREN       = 14.0;   // Roehren um den Umfang (ganzzahlig!)\nconst float ROEHREN_TIEFE = 0.10;   // Woelbung der Roehren\nconst float SPANT_ABSTAND = 4.0;    // Abstand der Spanten-Ringe (z)\nconst float SPANT_TIEFE   = 0.05;   // Hoehe der Spanten\n// ----------------------------------------------------------------------------\n\nconst float TAU = 6.28318530;\n\n// Relief: wie weit die Wand am Ort (w, z) in den Tunnel hineinragt\nfloat wandRelief(float w, float z)\n{\n    // Roehren: weiches cos-Profil, Fugen bei w*ROEHREN = 2*pi*k\n    float roehre = ROEHREN_TIEFE * (0.5 - 0.5 * cos(w * ROEHREN));\n\n    // Spanten: schmale erhabene Ringe in festen z-Intervallen\n    float sz    = abs(fract(z / SPANT_ABSTAND) - 0.5) * SPANT_ABSTAND;\n    float spant = SPANT_TIEFE * smoothstep(0.35, 0.0, sz);\n\n    return roehre + spant;\n}\n\nfloat mapTunnel(vec3 p)\n{\n    float w = atan(p.y, p.x);\n    return RADIUS - wandRelief(w, p.z) - length(p.xy);\n}\n\nfloat march(vec3 ro, vec3 rd)\n{\n    float t = 0.02;\n    for (int i = 0; i < 120; i++) {\n        float d = mapTunnel(ro + rd * t);\n        if (d < 0.0015 + 0.001 * t) break;\n        t += d * 0.7;                 // Drossel: das Relief macht d zur Schaetzung\n        if (t > 60.0) break;\n    }\n    return min(t, 60.0);\n}\n\n// Normale aus zentralen Differenzen der SDF\nvec3 wandNormale(vec3 p)\n{\n    vec2 e = vec2(0.004, 0.0);\n    return normalize(vec3(mapTunnel(p + e.xyy) - mapTunnel(p - e.xyy),\n                          mapTunnel(p + e.yxy) - mapTunnel(p - e.yxy),\n                          mapTunnel(p + e.yyx) - mapTunnel(p - e.yyx)));\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    vec3 ro = vec3(0.0, 0.0, iTime * 2.0);\n    vec3 rd = normalize(vec3(uv, 1.4));\n\n    float t = march(ro, rd);\n    vec3 p = ro + rd * t;\n\n    float w  = atan(p.y, p.x);\n    float wu = w / TAU + 0.5;\n\n    float schach = mod(floor(wu * ROEHREN) + floor(p.z * 1.5), 2.0);\n    vec3 basis = mix(vec3(0.05, 0.06, 0.10), vec3(0.16, 0.19, 0.27), schach);\n\n    vec3 n = wandNormale(p);\n\n    vec3 zk = ro - p;\n    float dk = max(length(zk), 1e-3);\n    float dif = max(dot(n, zk / dk), 0.0);\n    vec3 color = basis * (1.6 * dif / (1.0 + dk * dk * 0.12) + 0.02);\n\n    fragColor = vec4(color, 1.0);\n}\n"
+      }
+    ]
+  }
+}

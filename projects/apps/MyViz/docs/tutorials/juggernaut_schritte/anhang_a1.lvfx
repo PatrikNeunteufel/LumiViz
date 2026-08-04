@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Juggernaut-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "anhang_a1",
+        "description": "Anhang A1 - bandLevel und Beat-Gate (rekonstruiert aus Juggernaut-tutorial.md, SSOT dort)",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// iChannel0: Music\n\n// Mittelwert eines FFT-Bandes (lo..hi in 0..1 der Spektrum-Breite)\nfloat bandLevel(float lo, float hi)\n{\n    float sum = 0.0;\n    const int N = 12;\n    for (int i = 0; i < N; i++) {\n        float x = mix(lo, hi, (float(i) + 0.5) / float(N));\n        sum += texture(iChannel0, vec2(x, 0.25)).x;\n    }\n    return sum / float(N);\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n\n    float bass = bandLevel(0.00, 0.05);\n    float vol  = bandLevel(0.00, 0.70);\n    float gate = smoothstep(0.60, 0.75, bass);    // das Beat-Gate\n\n    // Hintergrund: die STIMMUNGs-Vorschau - Lautheit blendet dark -> brighter\n    float stimmung = clamp(vol * 1.4 - 0.25, 0.0, 1.0);\n    vec3 color = mix(vec3(0.010, 0.012, 0.022), vec3(0.10, 0.13, 0.20), stimmung);\n\n    // links: roher Bass-Pegel  |  rechts: das Gate (aus oder an)\n    if (uv.x < 0.47) color = uv.y < bass ? vec3(0.9, 0.3, 0.3) : color;\n    if (uv.x > 0.53) color = uv.y < gate ? vec3(0.3, 0.9, 1.0) : color;\n\n    fragColor = vec4(color, 1.0);\n}\n"
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Juggernaut-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_02",
+        "description": "Schritt 2 - Das Raymarch-Geruest: die nackte Riesenkugel (rekonstruiert aus Juggernaut-tutorial.md, SSOT dort)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "#define R(a) mat2(cos(a), sin(a), -sin(a), cos(a))\n\nconst float RADIUS = 6.0;    // Radius des Molochs\n\nfloat map(vec3 p)\n{\n    return length(p) - RADIUS;   // vorerst: die nackte Riesenkugel\n}\n\nfloat march(vec3 ro, vec3 rd)\n{\n    float t = 0.0;\n    for (int i = 0; i < 160; i++) {\n        vec3 p = ro + rd * t;\n        float d = map(p);\n        if (d < 0.001 + 0.0008 * t) return t;   // Toleranz waechst mit der Ferne\n        if (t > 40.0) break;\n        t += d * 0.5;                            // Drossel - Begruendung: Schritt 5\n    }\n    return -1.0;\n}\n\nvec3 calcNormal(vec3 p)\n{\n    const vec2 e = vec2(0.004, 0.0);\n    return normalize(vec3(map(p + e.xyy) - map(p - e.xyy),\n                          map(p + e.yxy) - map(p - e.yxy),\n                          map(p + e.yyx) - map(p - e.yyx)));\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    vec3 ro = vec3(0.0, 0.0, 10.0);          // 10 Einheiten vor der Kugel\n    vec3 rd = normalize(vec3(uv, -1.5));     // Blick in -z, Brennweite 1.5\n\n    float t = march(ro, rd);\n\n    vec3 col;\n    if (t > 0.0) {\n        vec3 n = calcNormal(ro + rd * t);\n        float dif = max(dot(n, normalize(vec3(0.5, 0.7, 0.4))), 0.0);\n        col = vec3(0.16, 0.17, 0.19) * (dif + 0.15);   // neutrales Werkstatt-Licht\n    } else {\n        col = mix(vec3(0.030, 0.028, 0.045), vec3(0.010, 0.012, 0.022),\n                  clamp(rd.y * 1.5 + 0.5, 0.0, 1.0));\n    }\n\n    fragColor = vec4(col, 1.0);\n}\n"
+      }
+    ]
+  }
+}

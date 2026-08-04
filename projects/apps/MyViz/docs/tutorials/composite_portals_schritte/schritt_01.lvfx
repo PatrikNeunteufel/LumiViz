@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Composite-Portals-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_01",
+        "description": "Schritt 1 - Kondensieren I: das Tunnel-Skelett (aus CompositePortals-tutorial.md, SSOT dort; .glsl = materialisierte Rekonstruktion)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// ============================================================================\n// SKELETT 1: Stratospheric Tunnel, kondensiert.\n// Behalten:   Roehrenwand, Neonfugen, Fenster, Scheinwerfer, Vortrieb.\n// Gestrichen: Pfad/Gabel, Spanten, Relief, Ringlichter, Fensterlicht,\n//             Banking, Kamera-Choreografie, Politur (bis auf Notbelichtung).\n// ============================================================================\n\n// ---- STELLSCHRAUBEN: TUNNEL ------------------------------------------------\nconst float T_RADIUS  = 1.0;    // Grundradius der Roehre\nconst float T_ROEHREN = 12.0;   // Roehren um den Umfang (ganzzahlig!)\nconst float T_TIEFE   = 0.10;   // Woelbung der Roehren\nconst float T_SPALTEN = 6.0;    // Fensterspalten um den Umfang (ganzzahlig!)\nconst float T_ABSTAND = 5.0;    // Fensterabstand entlang z\nconst float T_DICHTE  = 0.55;   // Anteil der Zellen mit Fenster\nconst float T_NEON    = 0.010;  // Helligkeit der Neonfugen\nconst float T_LICHT   = 1.4;    // Kamera-Scheinwerfer\n// ----------------------------------------------------------------------------\n\nconst float TAU = 6.28318530;\n\nfloat hash21(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\n\nvec3 pal(float t) { return 0.5 + 0.5 * cos(TAU * (t + vec3(0.0, 0.33, 0.67))); }\n\nfloat tunnelMap(vec3 p)\n{\n    float w = atan(p.y, p.x);\n    float relief = T_TIEFE * (0.5 - 0.5 * cos(w * T_ROEHREN));\n    return T_RADIUS - relief - length(p.xy);\n}\n\nfloat tunnelMarch(vec3 ro, vec3 rd)\n{\n    float t = 0.02;\n    for (int i = 0; i < 90; i++) {\n        float d = tunnelMap(ro + rd * t);\n        if (d < 0.0015 + 0.001 * t) break;\n        t += d * 0.7;\n        if (t > 40.0) break;\n    }\n    return min(t, 40.0);\n}\n\nvec3 tunnelNormale(vec3 p)\n{\n    vec2 e = vec2(0.004, 0.0);\n    return normalize(vec3(tunnelMap(p + e.xyy) - tunnelMap(p - e.xyy),\n                          tunnelMap(p + e.yxy) - tunnelMap(p - e.yxy),\n                          tunnelMap(p + e.yyx) - tunnelMap(p - e.yyx)));\n}\n\nfloat tunnelFenster(float w, float z)   // 0 = Wand, 1 = Fensteroeffnung\n{\n    vec2 zelle = vec2(fract(w / TAU + 0.5) * T_SPALTEN, z / T_ABSTAND);\n    vec2 id = floor(zelle);\n    if (hash21(id + 3.1) > T_DICHTE) return 0.0;\n    vec2 c = fract(zelle) - 0.5;\n    c.x *= TAU * T_RADIUS / T_SPALTEN;\n    c.y *= T_ABSTAND;\n    float d = max(abs(c.x) - 0.30, abs(c.y) - 0.85);\n    return smoothstep(0.05, -0.05, d);\n}\n\nvec3 tunnelNeon(float w, float z)\n{\n    float fu  = w * T_ROEHREN / TAU;\n    float gid = mod(floor(fu + 0.5), T_ROEHREN);\n    float ad  = abs(fract(fu + 0.5) - 0.5) * TAU * T_RADIUS / T_ROEHREN;\n    return pal(hash21(vec2(gid, 2.6)) * 0.4 + 0.55) * T_NEON / (0.0015 + ad * ad * 60.0);\n}\n\nvec3 tunnelShade(vec3 p, vec3 n, vec3 ro, float w)\n{\n    vec3 basis = vec3(0.06, 0.07, 0.10);\n    vec3 zk = ro - p;\n    float dk = max(length(zk), 1e-3);\n    vec3 col = basis * (T_LICHT * max(dot(n, zk / dk), 0.0) / (1.0 + dk * dk * 0.12) + 0.02);\n    col += tunnelNeon(w, p.z);\n    return col;\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    vec3 ro = vec3(0.0, 0.0, iTime * 1.5);      // Vortrieb pur, gerade Achse\n    vec3 rd = normalize(vec3(uv, 1.4));\n\n    float t = tunnelMarch(ro, rd);\n    vec3 p = ro + rd * t;\n    float w = atan(p.y, p.x);\n\n    vec3 col = tunnelShade(p, tunnelNormale(p), ro, w);\n    col = mix(col, vec3(0.010, 0.014, 0.030), 1.0 - exp(-0.0016 * t * t));\n\n    // PLATZHALTER: hier oeffnet in Schritt 4 das Portal in die Debris-Welt\n    float F = tunnelFenster(w, p.z) * exp(-0.001 * t * t);\n    col = mix(col, vec3(0.02, 0.03, 0.07), F);\n\n    col = 1.0 - exp(-col * 1.6);                // Notbelichtung (s. Regel 3)\n    fragColor = vec4(pow(col, vec3(1.0 / 2.2)), 1.0);\n}\n"
+      }
+    ]
+  }
+}

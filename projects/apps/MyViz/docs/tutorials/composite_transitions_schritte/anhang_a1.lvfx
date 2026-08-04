@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Composite-Transitions-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "anhang_a1",
+        "description": "Anhang A1 - Beat-Envelope-Pruefstand (Zustandsmaschine + Audio-Zustand) (generiert aus CompositeTransitions-tutorial.md, SSOT dort)",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "void mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    vec4 zust  = texelFetch(iChannel0, ivec2(0, 0), 0);\n    vec4 audio = texelFetch(iChannel0, ivec2(1, 0), 0);\n\n    // Hintergrund = Blendwert: dunkelblau haelt A, dunkelrot haelt B\n    float kurve = smoothstep(0.0, 1.0, zust.x);\n    float t = mix(kurve, 1.0 - kurve, zust.y);\n    vec3 col = mix(vec3(0.04, 0.07, 0.16), vec3(0.14, 0.03, 0.03), t);\n\n    // Balken: geglaetteter Bass | Beat-Envelope | Blende-Phase\n    if (uv.x < 0.31)                col = uv.y < audio.x ? vec3(0.9, 0.6, 0.2) : col;\n    if (uv.x > 0.35 && uv.x < 0.65) col = uv.y < audio.y ? vec3(0.3, 0.9, 1.0) : col;\n    if (uv.x > 0.69)                col = uv.y < zust.x  ? vec3(0.8, 0.3, 0.9) : col;\n\n    fragColor = vec4(col, 1.0);\n}\n",
+        "buffers": [
+          {
+            "code": "// ============================================================================\n// BUFFER A (Pruefstand A1) - Zustandsmaschine + Audio-Zustand\n// Pixel (0,0): x = phase, y = welt, z = haltezeit, w = cooldown\n// Pixel (1,0): x = glatterBass, y = beatEnv, z = energieVorrat, w = glatteLautheit\n// iChannel0: Buffer A (Selbstreferenz), iChannel1: Music\n// ============================================================================\n\nconst float HALTEDAUER  = 24.0;  // Timer ist nur noch FALLBACK (greift bei Stille)\nconst float BLENDEDAUER = 4.0;\nconst float COOLDOWN    = 2.0;\nconst float MIN_HALTE   = 3.0;   // Mindest-Verweilzeit: Hysterese gegen Geflacker\n\nfloat bandLevel(float lo, float hi)\n{\n    float sum = 0.0;\n    const int N = 12;\n    for (int i = 0; i < N; i++) {\n        float x = mix(lo, hi, (float(i) + 0.5) / float(N));\n        sum += texture(iChannel1, vec2(x, 0.25)).x;\n    }\n    return sum / float(N);\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec4 zust  = texelFetch(iChannel0, ivec2(0, 0), 0);\n    vec4 audio = texelFetch(iChannel0, ivec2(1, 0), 0);\n    if (iFrame == 0) { zust = vec4(0.0); audio = vec4(0.0); }\n\n    float dt = clamp(iTimeDelta, 1.0 / 240.0, 1.0 / 24.0);\n\n    // ---- AUDIO-ZUSTAND: das B3-Muster der Schablone, voll ausgefuehrt ------\n    float bass  = bandLevel(0.00, 0.05);\n    float vol   = bandLevel(0.00, 0.70);\n\n    float glatt = mix(audio.x, bass, 0.10);            // Tiefpass ueber die Zeit\n    // LumiViz-Anpassung (Regel aus Anhang B1, NICHT der Shadertoy-Text):\n    // Die dB-FFT-Zeile des Standalone-Testsignals saettigt bei 1.0\n    // (Sonde S67) - `bass` steht damit konstant auf 1.0, und der\n    // adaptive Trigger `bass > glatt*1.35 + 0.02` kann nie feuern\n    // (im Probe-Lauf blieb nur der Timer-Fallback). B1 nennt den\n    // Ausweg: schlag aus dem App-Uniform `beat` speisen (0/1 je Frame,\n    // BeatEstimator der App). Auf shadertoy.com gilt weiter der\n    // Tutorial-Text (adaptiver Trigger auf der Music-Textur).\n    float schlag = step(0.5, beat);\n    float env   = max(audio.y * 0.90, schlag);         // zuendet hart, klingt weich aus\n\n    float vorrat = audio.z + bass * dt * 0.4;          // laedt kontinuierlich ...\n    float drop   = schlag * step(1.5, vorrat);         // ... Kick nach viel Ruhe = DROP\n    vorrat *= 1.0 - schlag * 0.8;                      // jeder Schlag entlaedt\n\n    float lautheit = mix(audio.w, vol, 0.05);          // sehr traege Lautheit\n\n    // ---- WECHSEL-ZUSTAND: die Maschine aus Schritt 11, Trigger = Beat ------\n    float phase = zust.x, welt = zust.y, halte = zust.z, cool = zust.w;\n\n    if (phase <= 0.0) {\n        halte += dt;\n        // DER Trigger-Tausch: Beat schaltet den Welt-Wechsel (Timer als Fallback)\n        bool wechsel = (schlag > 0.5 && halte > MIN_HALTE) || halte > HALTEDAUER;\n        if (wechsel && cool <= 0.0) phase = 0.0001;\n    } else {\n        phase += dt / BLENDEDAUER;\n        if (phase >= 1.0) {\n            phase = 0.0; welt = 1.0 - welt;\n            halte = 0.0; cool = COOLDOWN;\n        }\n    }\n    cool = max(cool - dt, 0.0);\n\n    // ---- beide Zustandspixel schreiben -------------------------------------\n    if (ivec2(fragCoord) == ivec2(1, 0))\n        fragColor = vec4(glatt, env, vorrat, lautheit);\n    else\n        fragColor = vec4(phase, welt, halte, cool);\n}\n",
+            "input": [
+              0,
+              4,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

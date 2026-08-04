@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Pimped-Kaleidoscope-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_01",
+        "description": "Schritt 1 - Die Buehne: ein wanderndes Licht (generiert aus PimpedKaleidoscope-tutorial.md, SSOT dort)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "void mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    // Ursprung in die Bildmitte, Teilen durch die HOEHE (unverzerrt)\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    // Lissajous-Bahn: die POSITION ist eine glatte sin-Funktion der Zeit -\n    // an den Umkehrpunkten wird das Licht von selbst langsam (cos-Ableitung)\n    vec2 pos = vec2(sin(iTime * 0.31), sin(iTime * 0.23)) * vec2(0.35, 0.25);\n\n    // 1/d2-Licht: Helligkeit = Kehrwert des Abstandsquadrats\n    vec2 d = uv - pos;\n    float licht = 0.0006 / (0.0004 + dot(d, d));\n\n    fragColor = vec4(licht * vec3(0.45, 0.70, 1.00), 1.0);\n}\n"
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Pimped-Kaleidoscope-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_02",
+        "description": "Schritt 2 - Die Lichtsaat: Punkte-Paar, Ring, Palette (generiert aus PimpedKaleidoscope-tutorial.md, SSOT dort)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float SEED_HELL  = 1.0;    // Gesamthelligkeit der Lichtsaat\nconst float BAHN_WEITE = 0.35;   // Radius der Lissajous-Bahn\n// ----------------------------------------------------------------------------\n\n// Cosinus-Palette: t -> Farbe; drei phasenversetzte Wellen\nvec3 palette(float t)\n{\n    return 0.55 + 0.45 * cos(6.28318 * (t + vec3(0.0, 0.33, 0.67)));\n}\n\n// Die Lichtsaat: Punkte-Paar + Ring, jede Zutat auf eigener sin-Uhr\nvec3 seeds(vec2 uv)\n{\n    vec3 acc = vec3(0.0);\n\n    // (a) Punkte-Paar: EINE Bahn, zwei Lichter punktsymmetrisch dazu\n    vec2 pos = vec2(sin(iTime * 0.31), sin(iTime * 0.23))\n             * BAHN_WEITE * vec2(1.0, 0.7);\n    vec3 farbe = palette(iTime * 0.021);\n\n    vec2 d1 = uv - pos;\n    vec2 d2 = uv + pos;                    // das Gegenstueck: Punktspiegelung\n    acc += farbe     * 0.0006 / (0.0004 + dot(d1, d1));\n    acc += farbe.bgr * 0.0006 / (0.0004 + dot(d2, d2));  // Kanaele getauscht\n\n    // (b) Ring: Abstand zur KREISLINIE statt zum Punkt; der Radius atmet\n    float r  = 0.26 + 0.10 * sin(iTime * 0.171);\n    float dr = length(uv) - r;\n    acc += palette(iTime * 0.021 + 0.5) * 0.0012 / (0.0008 + 8.0 * dr * dr);\n\n    return acc * SEED_HELL;\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n    fragColor = vec4(seeds(uv), 1.0);\n}\n"
+      }
+    ]
+  }
+}

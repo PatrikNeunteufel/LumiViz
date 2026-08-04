@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Stratospheric-Tunnel-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_03",
+        "description": "Schritt 3 - Die Wand-Karte und der Scheinwerfer (rekonstruiert aus StratosphericTunnel-tutorial.md, SSOT dort; Schritte 6-12 und A3 sind materialisierte Diff-Schritte)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "#define R(a) mat2(cos(a), sin(a), -sin(a), cos(a))\n\nconst float RADIUS = 1.0;\nconst float TAU    = 6.28318530;\n\nfloat mapTunnel(vec3 p)\n{\n    return RADIUS - length(p.xy);\n}\n\nfloat march(vec3 ro, vec3 rd)\n{\n    float t = 0.02;\n    for (int i = 0; i < 120; i++) {\n        float d = mapTunnel(ro + rd * t);\n        if (d < 0.0015 + 0.001 * t) break;\n        t += d;\n        if (t > 60.0) break;\n    }\n    return min(t, 60.0);\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    vec3 ro = vec3(0.0, 0.0, iTime * 2.0);\n    vec3 rd = normalize(vec3(uv, 1.4));\n\n    float t = march(ro, rd);\n    vec3 p = ro + rd * t;\n\n    float w  = atan(p.y, p.x);        // Winkel um die Achse: -pi..pi\n    float wu = w / TAU + 0.5;         // 0..1 einmal um den Umfang\n\n    // Schachbrett auf der abgerollten Wandflaeche (Winkel, z)\n    float schach = mod(floor(wu * 14.0) + floor(p.z * 1.5), 2.0);\n    vec3 basis = mix(vec3(0.05, 0.06, 0.10), vec3(0.16, 0.19, 0.27), schach);\n\n    // Normale des nackten Zylinders: zeigt von der Wand zur Achse\n    vec3 n = normalize(vec3(-p.xy, 0.0));\n\n    // SCHEINWERFER: Punktlicht an der Kamera, 1/d^2-artiger Abfall\n    vec3 zk = ro - p;                        // vom Wandpunkt zur Kamera\n    float dk = max(length(zk), 1e-3);\n    float dif = max(dot(n, zk / dk), 0.0);\n    vec3 color = basis * (1.6 * dif / (1.0 + dk * dk * 0.12) + 0.02);\n\n    fragColor = vec4(color, 1.0);\n}\n"
+      }
+    ]
+  }
+}

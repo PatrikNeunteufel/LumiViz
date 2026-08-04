@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Crystal-Lights-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_01",
+        "description": "Schritt 1 - Die Buehne: Bildaufteilung (rekonstruiert aus CrystalLights-tutorial.md, SSOT dort)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// Schritt 1 - Die Buehne: Bildaufteilung\n// Voll-Listing aus CrystalLights-tutorial.md (SSOT dort).\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    // Ursprung in die Bildmitte, Teilen durch die HOEHE (unverzerrt)\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    // Horizont knapp UEBER der Mitte: Terrain bekommt etwas mehr als\n    // die halbe Bildflaeche - Reserve fuer Huegel kommt spaeter von selbst\n    const float HORIZONT = 0.15;\n\n    vec3 himmel = mix(vec3(0.10, 0.12, 0.22), vec3(0.02, 0.03, 0.08),\n                      clamp((uv.y - HORIZONT) * 2.5, 0.0, 1.0));\n    vec3 boden  = mix(vec3(0.30, 0.55, 0.65), vec3(0.04, 0.09, 0.13),\n                      clamp((HORIZONT - uv.y) * 1.6, 0.0, 1.0));\n\n    fragColor = vec4(uv.y > HORIZONT ? himmel : boden, 1.0);\n}\n"
+      }
+    ]
+  }
+}

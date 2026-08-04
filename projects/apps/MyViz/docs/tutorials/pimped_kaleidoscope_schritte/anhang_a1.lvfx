@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Pimped-Kaleidoscope-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "anhang_a1",
+        "description": "Anhang A1 - Das Beat-Gate (Rock-The-House-Trick) (generiert aus PimpedKaleidoscope-tutorial.md, SSOT dort)",
+        "imageInput": [
+          4,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// Eigenstaendiger Testshader - iChannel0: Music\n\n// Bandpegel: N Stuetzstellen aus Zeile 0 (FFT) mitteln\nfloat bandLevel(float lo, float hi)\n{\n    float sum = 0.0;\n    const int N = 12;\n    for (int i = 0; i < N; i++) {\n        float x = mix(lo, hi, (float(i) + 0.5) / float(N));\n        sum += texture(iChannel0, vec2(x, 0.25)).x;\n    }\n    return sum / float(N);\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n\n    float bass = bandLevel(0.00, 0.05);\n    float gate = smoothstep(0.60, 0.75, bass);   // DAS Beat-Gate\n\n    vec3 color = vec3(0.02);\n    if (uv.x < 0.47) color = uv.y < bass ? vec3(0.9, 0.3, 0.3) : color;\n    if (uv.x > 0.53) color = uv.y < gate ? vec3(0.3, 0.9, 1.0) : color;\n    color += gate * vec3(0.10, 0.06, 0.02);\n\n    fragColor = vec4(color, 1.0);\n}\n"
+      }
+    ]
+  }
+}

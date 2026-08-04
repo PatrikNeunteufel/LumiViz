@@ -1,7 +1,7 @@
 # MyViz — Dokumentations-Index
 
-> **Version:** 2.1.0
-> **Datum:** 2026-07-27
+> **Version:** 2.2.0
+> **Datum:** 2026-08-04
 > **Typ:** Index
 > **Status:** Aktiv
 > **Sprache:** Deutsch
@@ -25,6 +25,7 @@ auf Session 37 stehengeblieben waren.
 | [visuals/](visuals/) | Visualizer-Domäne: [Visualizer-Architektur](visuals/Visualizer_Architecture.md) (IVisualizer, Modul-System, Parameter) · [Parameter-Referenz](visuals/Parameter_Reference.md) (alle Visualizer, Pipeline-Schema!) · [OpenGL-Context-Handling](visuals/OpenGL_Context_Handling.md) · [Config-Pipeline-Konzept](visuals/Config_Pipeline_Concept.md) (Phase 4, **Stabil**) · [Umsetzungsplan](visuals/Config_Pipeline_Umsetzungsplan.md) · [Key-Migration Alt→Neu](visuals/Parameter_Key_Migration.md) · [Preview-Viewer-Entwurf](visuals/Preview_Viewer_Entwurf.md) · [Render-Thread-Entwurf](visuals/Render_Thread_Entwurf.md) (umgesetzt) · [Import-Analyse AVS/MilkDrop](visuals/Import_Analyse_AVS_MilkDrop.md) (ref/-Repos, EEL→Lua, Import-Roadmap) · [Import-Fundament-Entwurf](visuals/Import_Fundament_Entwurf.md) (Roadmap 4, umgesetzt) · [Multieffekt-Host-Entwurf](visuals/Import_Multieffekt_Host_Entwurf.md) (Roadmap 5, **umgesetzt 5.1–5.7b**) · [Modul-Abdeckung](visuals/Import_Modul_Abdeckung.md) (Abdeckungsmatrix Builtins+APEs + Priorisierung) · [Modul-Umsetzungsplan](visuals/Import_Modul_Umsetzungsplan.md) (Rezept + Batches A–G) · [MilkDrop-Import-Konzept](visuals/MilkDrop_Import_Konzept.md) (Roadmap 6, M1–M6 + Shader-Stufen + Entscheide) · [**MilkDrop-Import-Status**](visuals/MilkDrop_Import_Status.md) (SSOT Fortschritt + Bezeichnungs-Legende) · [Vereinheitlichungs-Konzept](visuals/Vereinheitlichung_Konzept.md) (Skript-Set AVS↔Milk, Standalone-Portierung, Gradients — Vorbereitung Meganode-Split, Entwurf) · [**AVS-Kalibrier-Methodik**](visuals/AVS_Kalibrier_Methodik.md) (Standard-Vorgehen: flächenunabhängiges Urteil, Sondenformen, Bisektion, Layouts pinnen, Verifikationsgürtel) · [**Knoten-Parameter-Konzept**](visuals/Knoten_Parameter_Konzept.md) (Voreinstellungen je Knoten, fehlende Editor-Felder, festgenagelte Werte freimachen, dynamische EEL-Felder — Default-Vertrag + Etappen, Entwurf) |
 | [ui/](ui/) | UI-Domäne: [Panel-System](ui/Panel_System.md) (Qt-ADS-Docking) · [Menü-System](ui/Menu_System.md) · [ConfigPanel-Guide](ui/ConfigPanel_Guide.md) · [Visual-Playlist-Konzept](ui/Visual_Playlist_Konzept.md) (Preset-Auto-Wechsel + Import-Browser-Erweiterung + Ausblick Composer, Konzept) · [**Hotkey-Konzept**](ui/Hotkey_Konzept.md) (Ausbaustufen, Reservierung der Transporttasten, Aktions-Modell, Settings-Editor) · [Screenshot-Ablage](ui/Screenshot_Ablage.md) (Ordner je Programmlauf, Aufnahme im Render-Thread, Vollbild-Fehlerregel) |
 | [presets/](presets/) | Persistenz-Domäne: [Preset-System](presets/Preset_System.md) · [Dateiformat-Referenz](presets/FileFormat_Reference.md) · [Layout-Persistenz](presets/Layout_Persistence.md) |
+| [tutorials/](tutorials/) | **Lehr- & Referenzmaterial** (Blueprint-System-Formate): [Shader-Tutorial-Serie](tutorials/ShaderTutorials-overview.md) (Wegleitung + 9 Tutorials, Shadertoy↔LumiViz) · [Raymarching-Referenz](tutorials/Raymarching-reference.md) — Heimat auch für künftige Milkdrop-/AVS-Tutorials und weitere Referenzdokumente |
 | [sessions/](sessions/) | **Produkt-Changelogs** je Arbeitsphase ([jüngster Stand](sessions/Changelog_Session53.md)) |
 
 Die beiden Kalibrier-Protokolle ([AVS-Sichttest-Protokoll](visuals/AVS_Sichttest_Protokoll.md),

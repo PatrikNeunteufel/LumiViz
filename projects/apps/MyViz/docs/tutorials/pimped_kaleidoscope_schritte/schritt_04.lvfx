@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz make_schritte (Pimped-Kaleidoscope-Tutorial)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "schritt_04",
+        "description": "Schritt 4 - Decay: die Vergessenskurve (generiert aus PimpedKaleidoscope-tutorial.md, SSOT dort)",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "void mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    fragColor = vec4(texture(iChannel0, fragCoord / iResolution.xy).rgb, 1.0);\n}\n",
+        "buffers": [
+          {
+            "code": "// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float SEED_HELL  = 1.0;    // Gesamthelligkeit der Lichtsaat\nconst float BAHN_WEITE = 0.35;   // Radius der Lissajous-Bahn\nconst float DECAY      = 0.90;   // NEU: Daempfung je Frame - MUSS < 1 bleiben!\n// ----------------------------------------------------------------------------\n\nvec3 palette(float t)\n{\n    return 0.55 + 0.45 * cos(6.28318 * (t + vec3(0.0, 0.33, 0.67)));\n}\n\nvec3 seeds(vec2 uv)\n{\n    vec3 acc = vec3(0.0);\n\n    vec2 pos = vec2(sin(iTime * 0.31), sin(iTime * 0.23))\n             * BAHN_WEITE * vec2(1.0, 0.7);\n    vec3 farbe = palette(iTime * 0.021);\n\n    vec2 d1 = uv - pos;\n    vec2 d2 = uv + pos;\n    acc += farbe     * 0.0006 / (0.0004 + dot(d1, d1));\n    acc += farbe.bgr * 0.0006 / (0.0004 + dot(d2, d2));\n\n    float r  = 0.26 + 0.10 * sin(iTime * 0.171);\n    float dr = length(uv) - r;\n    acc += palette(iTime * 0.021 + 0.5) * 0.0012 / (0.0008 + 8.0 * dr * dr);\n\n    return acc * SEED_HELL;\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;\n\n    vec3 alt = texture(iChannel0, fragCoord / iResolution.xy).rgb;\n\n    // GEAENDERT: der Gegenspieler - jeder alte Wert verliert 10% pro Frame\n    vec3 neu = alt * DECAY + seeds(uv);\n\n    fragColor = vec4(neu, 1.0);\n}\n",
+            "input": [
+              0,
+              -1,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
