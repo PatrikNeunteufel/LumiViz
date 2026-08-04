@@ -1,0 +1,40 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "blend": 0,
+                "code": "void mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    // Pixelposition in den Bereich 0..1 bringen\n    vec2 uv = fragCoord / iResolution.xy;\n\n    fragColor = vec4(uv.x*(2*vol), uv.y+(1-bass*1), 0.0, 1.0);\n}",
+                "enabled": true,
+                "imageInput": [
+                    4,
+                    -1,
+                    -1,
+                    -1
+                ],
+                "name": "Shadertoy",
+                "type": "shadertoy"
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

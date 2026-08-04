@@ -7,6 +7,8 @@ Dieser Ordner enthält eine zusammenhängende **Tutorial-Serie zum Shader-Bau vo
 
 Die Stil-Vorbilder der Serie sind Milkdrop-Presets von martin (`asset/Milkdrop3/presets/`) – die Tutorials portieren sie **nicht**, sondern übernehmen ihre Stilmittel und bauen die Technik eigenständig in Shadertoy-GLSL auf.
 
+Zum Nachschlagen neben den Tutorials: **[Raymarching-reference.md](Raymarching-reference.md)** – die formale Referenz (Blueprint-System, Typ Reference) zu Algorithmus, SDF-Katalog, Marsch-Varianten mit Entscheidungshilfe, Raumoperationen, Beleuchtung und Artefakt-Katalog. Die Tutorials leiten her, die Referenz schlägt nach.
+
 > ⚠️ **Ehrlichkeits-Hinweis für die ganze Serie:** Die Shader sind sorgfältig konstruiert, aber nicht gegengerendert – beim ersten Durchspielen können einzelne Konstanten Feintuning brauchen. Die Stellschrauben dafür sind jeweils benannt.
 
 ---
