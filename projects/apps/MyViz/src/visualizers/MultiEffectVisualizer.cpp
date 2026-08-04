@@ -5777,6 +5777,10 @@ void MultiEffectVisualizer::runMilkdropNode(const ChainNode& node,
         // Preset-Tausch hinterlaesst kein Erbe — Zaehler still uebernehmen
         rt.milkWechselZaehler = params.wechselZaehler;
     }
+    // Sicht-Blende (S67): App-Einstellung je Frame durchreichen (billige
+    // Zuweisung) — VOR dem ersten render(), damit schon die Kaltstart-Saat
+    // der frischen Runtime unter der Blende liegt.
+    rt.milk->setSichtBlende(m_milkSichtBlende);
     // Puffer-Wechsel (S66): der beim In-Place-Tausch aufgeloeste Erbe-Anteil
     // (1 = Behalten → No-op im Kern). VOR dem Revision-Block, damit das Erbe
     // im selben Frame wie das neue Preset greift.

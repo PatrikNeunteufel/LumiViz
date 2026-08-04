@@ -1,6 +1,6 @@
 # MyViz — Benutzerhandbuch
 
-> **Version:** 1.5.1
+> **Version:** 1.6.0
 > **Datum:** 2026-08-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -396,6 +396,12 @@ Seit Session 66 ist das Verhalten einstellbar. Im Milkdrop-Node (Sektion
 > Energiequelle für immer dunkel. Presets wie *Rock The House* zünden aus der
 > Saat in unter einer Sekunde wieder ein Vollbild; entscheidend ist, dass es
 > **ihr eigenes** Bild ist und nicht die Farben/Formen des Vorgängers trägt.
+>
+> Damit die Saat selbst nicht als Rausch-Blitz zu sehen ist, blendet
+> **„MilkDrop Start Fade-in"** (*Einstellungen → Panels*, Vorgabe: an) das
+> Bild nach jedem frischen Saat-Start (App-Start, Größenwechsel, Löschen)
+> etwa eine halbe Sekunde von Schwarz ein — rein kosmetisch, die Preset-
+> Dynamik und die Saat-Energie bleiben unangetastet.
 
 Die Einstellung gehört zum **Node**, nicht zum Preset — sie überlebt das
 Durchblättern von Presets (Bild auf/ab) und wird mit der Kette gespeichert.
@@ -511,6 +517,7 @@ fertige Ketten unter `asset/effectchain/shadertoys/` — jeder mit einem
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.6.0 | 2026-08-04 | §11: neue Einstellung „MilkDrop Start Fade-in" (Sicht-Blende, S67) — halbe Sekunde Schwarz-Einblendung über der Rausch-Saat bei App-Start/Größenwechsel/Löschen; Vorgabe an |
 | 1.5.1 | 2026-08-03 | §11: fünfte Option „Ausblenden (über Zeit)" (Erbe stirbt über die Dauer weg), Fading als „einmaliger Mix" präzisiert, Hinweis „Löschen ≠ Schwarz" (Rausch-Saat) |
 | 1.5.0 | 2026-08-03 | §11: „Preset-Wechsel: das geerbte Bild" (S66-Schalter Behalten/Löschen/Fading + exakte Liste, was Behalten erhält) und „Regelwerk" (S65). +§12 Shadertoy (S65). §8: Graphics-Card-Einstellung (S61) + MilkDrop-Preset-Switch-Standard |
 | 1.4.0 | 2026-08-01 | §11: Grundkatalog auf 125 Vorlagen für 39 Knotentypen erweitert (Session 61 — Fraktal-Familie, Bloom, blur/simpleScope/customBpm, sechs geerntete Dynamic-Movement-Warps mit Quellenangabe) |

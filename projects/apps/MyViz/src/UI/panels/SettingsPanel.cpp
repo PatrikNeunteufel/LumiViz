@@ -570,6 +570,22 @@ QWidget* SettingsPanel::createPanelsTab()
         QLatin1String("ausblenden"));
     layout->addRow(tr("MilkDrop Fade-out Time:"), m_pMilkPufferAusblendSpinBox);
 
+    // Sicht-Blende (S67): versteckt die Rausch-Saat (Kaltstart/Clear) hinter
+    // einer kurzen Schwarz-Einblendung — rein kosmetisch, Dynamik unberuehrt.
+    m_pMilkSichtBlendeCheckBox = new QCheckBox(tr("Enable"), widget);
+    m_pMilkSichtBlendeCheckBox->setToolTip(
+        tr("Briefly fades in from black (~0.5 s) whenever a MilkDrop buffer "
+           "starts from the fresh noise seed (app start, resize, Clear "
+           "switch) — hides the visible noise. Purely cosmetic: the preset "
+           "dynamics and the seed energy are unaffected. Takes effect the "
+           "next time a preset or chain is loaded."));
+    {
+        QSettings settings;
+        m_pMilkSichtBlendeCheckBox->setChecked(
+            settings.value(QStringLiteral("milkdrop/sichtBlende"), true).toBool());
+    }
+    layout->addRow(tr("MilkDrop Start Fade-in:"), m_pMilkSichtBlendeCheckBox);
+
     // Bilder-Suchordner (Vorgabe S50, umgesetzt S53): AVS legt seine Bilder im
     // AVS-Wurzelverzeichnis ab, die Presets aber in Unterordnern. Der Import
     // sucht bereits drei Ebenen aufwaerts — dieser Ordner ist die letzte
@@ -743,6 +759,12 @@ void SettingsPanel::setupConnections()
                 QSettings settings;
                 settings.setValue(QStringLiteral("milkdrop/pufferAusblendSek"),
                                   value);
+            });
+
+    connect(m_pMilkSichtBlendeCheckBox, &QCheckBox::toggled, this,
+            [](bool checked) {
+                QSettings settings;
+                settings.setValue(QStringLiteral("milkdrop/sichtBlende"), checked);
             });
 }
 

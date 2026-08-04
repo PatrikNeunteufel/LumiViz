@@ -163,6 +163,14 @@ public:
     }
 
     /**
+     * @brief Sicht-Blende (S67, Settings-Panel `milkdrop/sichtBlende`): an ⇒
+     *        Milkdrop-Nodes blenden nach frischer Rausch-Saat (Kaltstart/
+     *        Resize/Loeschen-Wipe) ~0,5 s von Schwarz ein (rein kosmetisch).
+     *        Wie die anderen Milkdrop-Defaults unter renderMutex() setzen.
+     */
+    void setMilkdropSichtBlende(bool an) { m_milkSichtBlende = an; }
+
+    /**
      * @brief Erzwingt deterministisch alle N Frames einen Beat statt des
      *        Detektors (0 = Detektor) — Gegenstueck zu AvsRef --beat-period
      *        fuer frame-exakte Diffs von History-Presets (S46-Merkregel:
@@ -1125,6 +1133,7 @@ private:
         lumi::multieffect::PufferWechsel::Behalten;
     double m_milkPufferFadingDefault = 0.5;  ///< Erbe-Anteil des App-Defaults
     double m_milkPufferAusblendSekDefault = 2.0;  ///< Ausblend-Dauer (s)
+    bool m_milkSichtBlende = false;  ///< Sicht-Blende nach Saat (S67, QSettings)
 
     // Live render mode set by a Set Render Mode node for the following render
     // effects (AVS semantics). Reset at frame start; `set` means "override".

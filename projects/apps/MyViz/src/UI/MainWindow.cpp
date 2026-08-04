@@ -97,6 +97,10 @@ void applyMilkdropPufferWechselDefault(MultiEffectVisualizer& host)
         settings.value(QStringLiteral("milkdrop/pufferAusblendSek"), 2.0)
             .toDouble();
     host.setMilkdropPufferWechselDefault(modus, fading, ausblendSek);
+    // Sicht-Blende (S67): ~0,5 s Schwarz-Einblendung ueber der Rausch-Saat
+    // (Kaltstart/Loeschen-Wipe) — Default AN, abschaltbar im Settings-Panel
+    host.setMilkdropSichtBlende(
+        settings.value(QStringLiteral("milkdrop/sichtBlende"), true).toBool());
 }
 
 } // anonymous namespace
@@ -821,6 +825,10 @@ void MainWindow::setupEventHandlers()
             bool ok = false;
             {
                 QMutexLocker lock(&widget->renderMutex());
+                // Milkdrop-Defaults auch hier — die Kette kann Milkdrop-Nodes
+                // enthalten (Sicht-Blende S67 braucht den Stand VOR dem ersten
+                // Frame der frischen Runtime)
+                applyMilkdropPufferWechselDefault(*host);
                 ok = host->loadChainFile(path, &report);
             }
             if (!ok)

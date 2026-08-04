@@ -8,13 +8,16 @@
  *         und in `<TEMP>/lumiviz_milkdrop_trace.log`
  *
  * @author Patrik Neunteufel
- * @date   Juli 2026
- * @version 1.0.0
+ * @date   Juli 2026 (1.1.0: August 2026 — --ab-Wechsellauf mit Frame-Hashes
+ *         + --blende (Sicht-Blende des Kerns, App-Verhalten), S67)
+ * @version 1.1.0
  *
  * @details
  * Aufruf:
  *   MilkdropStandalone [presetDateiOderOrdner] [--auto] [--frames N]
  *                      [--out DIR] [--size WxH]
+ *   MilkdropStandalone A.milk B.milk --ab [--wechsel loeschen|behalten]
+ *                      [--frames M] [--ab-frames N] [--audio-neustart]
  *
  * - Ohne Argument wird der c1-Kalibrier-Satz gesucht
  *   (`asset/calibration/milkdrop/c1`, vom Exe-Pfad aufwaerts).
@@ -23,6 +26,13 @@
  * - `--auto`: jedes Preset N Frames rendern (Default 120), Screenshot +
  *   Pixel-Statistik (belegt "schwarz oder nicht"), dann beenden —
  *   Exit-Code 0 nur, wenn alle Presets den Custom-Branch erreicht haben.
+ * - `--ab` (S67, Preset-Wechsel-Wächter): erstes Preset --frames M Frames
+ *   rendern, dann auf das LETZTE Preset wechseln (dieselbe Visualizer-Instanz
+ *   wie in der App; `--wechsel loeschen` ruft vorher requestFeedbackErbe(0) —
+ *   exakt der App-Lösch-Pfad) und --ab-frames N Frames je einen FNV-1a-Hash
+ *   + Mittel-RGB des Readbacks loggen. Nur EIN Preset ⇒ Kaltstart-Referenz
+ *   (sofort hashen). Deterministisch: Audio ist rein m_time-getrieben,
+ *   dt fix 1/60 — zwei Läufe mit gleichem M sind bis zum Wechsel bitgleich.
  *
  * Der Visualizer laeuft hier im GUI-Thread (paintGL) — dieselben Methoden,
  * die in der App der Render-Thread aufruft. Audio kommt synthetisch (Sinus +
@@ -126,6 +136,18 @@ public:
         setTitle(QStringLiteral("LumiViz MilkdropStandalone"));
     }
 
+    /// A/B-Wechsellauf (S67) aktivieren — Details im Datei-Kopf
+    void configureAbRun(bool loeschen, int abFrames, bool audioNeustart)
+    {
+        m_ab = true;
+        m_abLoeschen = loeschen;
+        m_abFrames = abFrames;
+        m_abAudioNeustart = audioNeustart;
+    }
+
+    /// Sicht-Blende des Kerns aktivieren (S67, App-Verhalten nachstellen)
+    void setBlende(bool an) { m_blende = an; }
+
     /// Exit-Code des --auto-Laufs: 0 nur wenn alle Presets Custom rendern
     [[nodiscard]] bool allCustom() const { return m_allCustom; }
 
@@ -139,6 +161,7 @@ protected:
                         context()->functions()->glGetString(GL_RENDERER)));
         m_viz = std::make_unique<MilkdropVisualizer>();
         m_viz->initialize();
+        m_viz->setSichtBlende(m_blende);
         m_viz->resize(size());
         loadPreset(0);
     }
@@ -156,7 +179,11 @@ protected:
         ++m_frameInPreset;
         m_time += 1.0 / 60.0;
 
-        if (m_auto && m_frameInPreset >= m_autoFrames)
+        if (m_ab)
+        {
+            stepAbRun();
+        }
+        else if (m_auto && m_frameInPreset >= m_autoFrames)
         {
             finishAutoPreset();
         }
@@ -321,6 +348,80 @@ private:
         return stats;
     }
 
+    /// A/B-Wächter (S67): Phase 0 = Vorlauf-Preset, Phase 1 = Ziel-Preset mit
+    /// Hash je Frame. Bei nur EINEM Preset startet Phase 1 sofort (Kaltstart-
+    /// Referenz desselben Messformats).
+    void stepAbRun()
+    {
+        if (m_abPhase == 0)
+        {
+            if (m_presets.size() < 2)
+            {
+                m_abPhase = 1;  // Kaltstart-Lauf: sofort messen (dieser Frame zaehlt)
+            }
+            else if (m_frameInPreset >= m_autoFrames)
+            {
+                std::printf("[AB] Wechsel nach %d Frames: '%s' -> '%s' (Modus %s%s)\n",
+                            m_frameInPreset,
+                            qPrintable(QFileInfo(m_presets[m_index]).completeBaseName()),
+                            qPrintable(QFileInfo(m_presets.last()).completeBaseName()),
+                            m_abLoeschen ? "Loeschen" : "Behalten",
+                            m_abAudioNeustart ? ", Audio-Uhr neu" : "");
+                // App-Reihenfolge (runMilkdropNode): erst requestFeedbackErbe
+                // (setzt bei keep=0 auch den rand_preset-Seed zurueck), DANN
+                // applyPresetState via loadMilkFile; der Puffer-Wipe folgt im
+                // naechsten render() — exakt der Loesch-Pfad der App
+                if (m_abLoeschen) m_viz->requestFeedbackErbe(0.0);
+                if (m_abAudioNeustart) m_time = 0.0;
+                m_abPhase = 1;
+                loadPreset(static_cast<int>(m_presets.size()) - 1);
+                return;  // Frame 1 des Ziel-Presets hasht der naechste paintGL
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        FrameStats stats;
+        const quint64 hash = frameHash(&stats);
+        std::printf("[AB] f%04d hash=%016llx rgb=(%.4f, %.4f, %.4f)\n", m_frameInPreset,
+                    static_cast<unsigned long long>(hash), stats.meanR, stats.meanG,
+                    stats.meanB);
+        // Bild-Kontrollpunkte fuer den Sichtvergleich alt/neu
+        if (m_frameInPreset == 1 || m_frameInPreset == 30 || m_frameInPreset == 120 ||
+            m_frameInPreset == m_abFrames)
+        {
+            saveShot(QStringLiteral("ab_f%1").arg(m_frameInPreset, 4, 10, QLatin1Char('0')));
+        }
+        if (m_frameInPreset >= m_abFrames)
+        {
+            std::printf("[AB] fertig (%d Mess-Frames).\n", m_abFrames);
+            std::fflush(stdout);
+            m_closing = true;
+            QTimer::singleShot(0, this, &QWindow::close);
+        }
+    }
+
+    /// FNV-1a-64 ueber den kompletten RGBA-Readback des aktuellen Frames
+    quint64 frameHash(FrameStats* statsOut)
+    {
+        const int w = std::max(1, width());
+        const int h = std::max(1, height());
+        std::vector<unsigned char> rgba(static_cast<std::size_t>(w) * h * 4);
+        QOpenGLFunctions* f = context()->functions();
+        f->glBindFramebuffer(GL_FRAMEBUFFER, context()->defaultFramebufferObject());
+        f->glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, rgba.data());
+        if (statsOut != nullptr) *statsOut = computeStats(rgba, w, h);
+        quint64 hv = 14695981039346656037ULL;
+        for (const unsigned char b : rgba)
+        {
+            hv ^= b;
+            hv *= 1099511628211ULL;
+        }
+        return hv;
+    }
+
     void finishAutoPreset()
     {
         const FrameStats stats = saveShot(QStringLiteral("auto"));
@@ -376,6 +477,12 @@ private:
     bool m_closing = false;
     bool m_silence = false;
     bool m_dumpShaders = false;
+    bool m_blende = false;          ///< Sicht-Blende (S67, App-Verhalten)
+    bool m_ab = false;              ///< A/B-Wechsellauf (S67)
+    bool m_abLoeschen = true;       ///< Wechselmodus: Loeschen (sonst Behalten)
+    bool m_abAudioNeustart = false; ///< Audio-Uhr beim Wechsel auf 0
+    int m_abFrames = 300;           ///< Mess-Frames nach dem Wechsel
+    int m_abPhase = 0;              ///< 0 = Vorlauf, 1 = Messphase
 };
 
 } // namespace
@@ -421,6 +528,24 @@ int main(int argc, char* argv[])
         QStringLiteral("Kaltstart-Saat aktivieren (App-Verhalten). Default ist "
                        "SAATLOS wie MilkdropRef mit genulltem WDDM-VRAM "
                        "(Entscheid Patrik S64)"));
+    const QCommandLineOption optAb(
+        QStringLiteral("ab"),
+        QStringLiteral("A/B-Wechsellauf (S67): erstes Preset --frames Frames, dann "
+                       "Wechsel aufs letzte Preset, --ab-frames Frames hashen"));
+    const QCommandLineOption optAbFrames(QStringLiteral("ab-frames"),
+                                         QStringLiteral("Mess-Frames nach dem Wechsel"),
+                                         QStringLiteral("N"), QStringLiteral("300"));
+    const QCommandLineOption optWechsel(
+        QStringLiteral("wechsel"),
+        QStringLiteral("Wechselmodus im --ab-Lauf: loeschen|behalten"),
+        QStringLiteral("MODUS"), QStringLiteral("loeschen"));
+    const QCommandLineOption optAudioNeustart(
+        QStringLiteral("audio-neustart"),
+        QStringLiteral("Audio-Uhr beim --ab-Wechsel auf 0 setzen (Kaltstart-Vergleich)"));
+    const QCommandLineOption optBlende(
+        QStringLiteral("blende"),
+        QStringLiteral("Sicht-Blende aktivieren (~0,5 s Schwarz-Einblendung "
+                       "nach frischer Saat — App-Verhalten)"));
     parser.addOption(optAuto);
     parser.addOption(optFrames);
     parser.addOption(optOut);
@@ -428,40 +553,48 @@ int main(int argc, char* argv[])
     parser.addOption(optSilence);
     parser.addOption(optDumpShaders);
     parser.addOption(optSeed);
+    parser.addOption(optAb);
+    parser.addOption(optAbFrames);
+    parser.addOption(optWechsel);
+    parser.addOption(optAudioNeustart);
+    parser.addOption(optBlende);
     parser.process(app);
     // Saatlos = Prüfstand-Vertrag: derselbe Kaltstart wie der Referenz-Renderer.
     // Die App behält ihre Saat (Verstärker-Presets beim ERSTEN Preset der
     // Sitzung); hier zählt Vergleichbarkeit.
     if (!parser.isSet(optSeed)) qputenv("LUMIVIZ_MILKDROP_NOSEED", "1");
 
-    // --- Preset-Liste aufbauen -------------------------------------------------------------
-    QString target = parser.positionalArguments().isEmpty()
-                         ? locateCalibrationDir()
-                         : parser.positionalArguments().first();
-    if (target.isEmpty())
+    // --- Preset-Liste aufbauen (mehrere Pfade erlaubt — der --ab-Lauf braucht A und B)
+    QStringList targets = parser.positionalArguments();
+    if (targets.isEmpty()) targets << locateCalibrationDir();
+    if (targets.first().isEmpty())
     {
         std::fprintf(stderr,
                      "FEHLER: kein Preset angegeben und c1-Kalibrier-Satz nicht gefunden\n");
         return 2;
     }
     QStringList presets;
-    const QFileInfo info(target);
-    if (info.isDir())
+    for (const QString& target : targets)
     {
-        const QDir dir(target);
-        for (const QString& f :
-             dir.entryList({QStringLiteral("*.milk")}, QDir::Files, QDir::Name))
+        const QFileInfo info(target);
+        if (info.isDir())
         {
-            presets << dir.absoluteFilePath(f);
+            const QDir dir(target);
+            for (const QString& f :
+                 dir.entryList({QStringLiteral("*.milk")}, QDir::Files, QDir::Name))
+            {
+                presets << dir.absoluteFilePath(f);
+            }
         }
-    }
-    else if (info.isFile())
-    {
-        presets << info.absoluteFilePath();
+        else if (info.isFile())
+        {
+            presets << info.absoluteFilePath();
+        }
     }
     if (presets.isEmpty())
     {
-        std::fprintf(stderr, "FEHLER: keine .milk-Presets unter '%s'\n", qPrintable(target));
+        std::fprintf(stderr, "FEHLER: keine .milk-Presets unter '%s'\n",
+                     qPrintable(targets.join(QStringLiteral("' '"))));
         return 2;
     }
     std::printf("[Standalone] %d Preset(s) | Trace: %s\n",
@@ -482,6 +615,19 @@ int main(int argc, char* argv[])
     StandaloneWindow window(presets, parser.isSet(optAuto), parser.value(optFrames).toInt(),
                             parser.value(optOut), parser.isSet(optSilence),
                             parser.isSet(optDumpShaders));
+    if (parser.isSet(optAb))
+    {
+        const QString modus = parser.value(optWechsel).toLower();
+        if (modus != QStringLiteral("loeschen") && modus != QStringLiteral("behalten"))
+        {
+            std::fprintf(stderr, "FEHLER: --wechsel erwartet loeschen|behalten\n");
+            return 2;
+        }
+        window.configureAbRun(modus == QStringLiteral("loeschen"),
+                              std::max(1, parser.value(optAbFrames).toInt()),
+                              parser.isSet(optAudioNeustart));
+    }
+    window.setBlende(parser.isSet(optBlende));
     window.resize(w, h);
     window.show();
 

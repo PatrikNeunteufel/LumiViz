@@ -114,6 +114,7 @@ private:
     QComboBox* m_pMilkPufferWechselCombo = nullptr;
     QSpinBox* m_pMilkPufferFadingSpinBox = nullptr;
     QDoubleSpinBox* m_pMilkPufferAusblendSpinBox = nullptr;
+    QCheckBox* m_pMilkSichtBlendeCheckBox = nullptr;
 
     // Hotkeys Tab
     QLabel* m_pHotkeyStatusLabel = nullptr;

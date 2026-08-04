@@ -132,6 +132,12 @@ nach dem AVS-Render-Modell (Analyse §5.1). Import-Ziel für .avs-Presets
   Die Wechsel-Felder sind transient (nicht im Chain-Dokument); persistiert
   werden `pufferWechsel`/`pufferFading`/`pufferAusblendSek`
   (fehlend ⇒ AppEinstellung + 0.5 + 2.0).
+- **Sicht-Blende (S67):** `setMilkdropSichtBlende(bool)` (App-Einstellung,
+  QSettings `milkdrop/sichtBlende`, MainWindow setzt sie mit den anderen
+  Milkdrop-Defaults vor loadMilk*/loadChainFile) — `runMilkdropNode` reicht
+  sie je Frame an den Kern durch (`MilkdropVisualizer::setSichtBlende`):
+  nach frischer Rausch-Saat blendet das Composite ~0,5 s von Schwarz ein
+  (rein kosmetisch, Details MilkdropVisualizer.md 1.23.0).
 - GL-Freigabe des Kerns via `cleanup()` in `resetRuntimes` (Kontext current).
 
 ## Absicherung

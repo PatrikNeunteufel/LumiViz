@@ -136,6 +136,16 @@ public:
      */
     void requestFeedbackAusblenden(double sekunden);
 
+    /**
+     * @brief Sicht-Blende (S67): an ⇒ nach jeder frischen Rausch-Saat
+     *        (Kaltstart/Resize-Saat, Loeschen-/Fading-Wipe) blendet das
+     *        Composite ~0,5 s von Schwarz ein — rein kosmetisch am Ziel,
+     *        die Puffer-Dynamik (Verstaerker-Zuendung) bleibt unberuehrt.
+     *        Default AUS (Pruefstaende/Triage unveraendert); die App schaltet
+     *        sie per QSettings `milkdrop/sichtBlende` zu.
+     */
+    void setSichtBlende(bool an);
+
     /// @brief Currently loaded preset state (for tests/panel)
     [[nodiscard]] const lumi::milkdrop::PresetState& presetState() const { return m_state; }
 
@@ -335,6 +345,11 @@ private:
     /// dass das Erbe nach der Dauer unter die 8-bit-Sichtbarkeit faellt.
     double m_erbeAusblendRest = 0.0;
     double m_erbeAusblendDauer = 0.0;
+    /// Sicht-Blende (S67): Composite blendet nach frischer Saat von Schwarz
+    /// ein (kosmetisch, s. setSichtBlende). Rest in Sekunden, <=0 = inaktiv.
+    static constexpr double kSichtBlendeSek = 0.5;
+    bool m_sichtBlendeAn = false;
+    double m_sichtBlendeRest = 0.0;
     lumi::render::ScopeRenderer m_scope;
     std::unique_ptr<QOpenGLShaderProgram> m_warpProgram;    ///< pos+uv, prev texture × decay
     std::unique_ptr<QOpenGLShaderProgram> m_textureProgram; ///< pos+uv quad × uniform color

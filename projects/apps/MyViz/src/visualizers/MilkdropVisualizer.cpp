@@ -1504,6 +1504,13 @@ void MilkdropVisualizer::seedFeedbackNoise(int w, int h)
     f->glBindTexture(GL_TEXTURE_2D, 0);
     trace::log(QStringLiteral("seedFeedbackNoise: %1x%2 (Kaltstart-Saat, Seed fix)")
                    .arg(w).arg(h));
+    if (m_sichtBlendeAn) m_sichtBlendeRest = kSichtBlendeSek;
+}
+
+void MilkdropVisualizer::setSichtBlende(bool an)
+{
+    m_sichtBlendeAn = an;
+    if (!an) m_sichtBlendeRest = 0.0;
 }
 
 void MilkdropVisualizer::requestFeedbackErbe(double keep)
@@ -1563,6 +1570,7 @@ void MilkdropVisualizer::applyFeedbackErbe(int w, int h, double keep)
         f->glBindTexture(GL_TEXTURE_2D, 0);
         trace::log(QStringLiteral("applyFeedbackErbe: %1x%2 geloescht (keep=0)")
                        .arg(w).arg(h));
+        if (m_sichtBlendeAn) m_sichtBlendeRest = kSichtBlendeSek;
         return;
     }
 
@@ -1594,6 +1602,7 @@ void MilkdropVisualizer::applyFeedbackErbe(int w, int h, double keep)
     f->glBindTexture(GL_TEXTURE_2D, 0);
     trace::log(QStringLiteral("applyFeedbackErbe: %1x%2 gemischt (keep=%3)")
                    .arg(w).arg(h).arg(k));
+    if (m_sichtBlendeAn) m_sichtBlendeRest = kSichtBlendeSek;
 }
 
 void MilkdropVisualizer::runBlurPasses(const FrameVars& fv)
@@ -2740,11 +2749,16 @@ void MilkdropVisualizer::onRender(float deltaTime)
     // basic wave. PORT: motion vectors are drawn after the warp instead of
     // into the previous image (one frame later into the feedback loop).
     // Stufe C1/C2: transpilierte Programme + Noise-/Custom-Texturen (lazy)
+    // IMMER aufrufen (S67): der Rev-Vergleich steckt im ensure selbst. Hinter
+    // dem Quellen-Gate blieben beim In-Place-Wechsel auf ein Preset OHNE
+    // Custom-Quellen (Md1Default/None) die PROGRAMME DES VORGAENGERS gebaut —
+    // dessen Warp/Comp renderten das neue Preset weiter ("RTH erbt Farbe",
+    // Beweis: Standalone --ab, Spotlight->RTH_2024 vs Beauty->RTH_2024).
+    ensureCustomPrograms();
     if (!m_warpCustomSrc.empty() || !m_compCustomSrc.empty())
     {
         ensureNoiseTextures();
         ensureCustomTextureUploads();
-        ensureCustomPrograms();
     }
 
     // Diagnose (Session 41): Render-Zustand loggen, sobald er sich aendert —
@@ -2868,6 +2882,32 @@ void MilkdropVisualizer::onRender(float deltaTime)
     // plugin.cpp:1131); burn-in zeichnet zusaetzlich in den Feedback-Buffer
     drawUserSprites();
     if (m_debugGrid) drawDebugGrid();
+    // Sicht-Blende (S67): waehrend der Restzeit blendet das ZIEL von Schwarz
+    // ein (dst *= Rampe) — versteckt die Rausch-Saat, ohne die Puffer-Dynamik
+    // anzufassen (der Feedback-Loop laeuft ungedimmt weiter).
+    if (m_sichtBlendeRest > 0.0 && deltaTime > 0.0f)
+    {
+        const double dt = std::min(static_cast<double>(deltaTime), 0.1);
+        // Ease-in (quadratisch): die Saat liegt in der Blendenmitte nochmal
+        // deutlich dunkler als bei einer linearen Rampe
+        const double rampe =
+            std::clamp(1.0 - m_sichtBlendeRest / kSichtBlendeSek, 0.0, 1.0);
+        const float auf = static_cast<float>(rampe * rampe);
+        const float quad[] = {
+            -1.0f, -1.0f, auf, auf, auf, 1.0f,  1.0f, -1.0f, auf, auf, auf, 1.0f,
+             1.0f,  1.0f, auf, auf, auf, 1.0f, -1.0f, -1.0f, auf, auf, auf, 1.0f,
+             1.0f,  1.0f, auf, auf, auf, 1.0f, -1.0f,  1.0f, auf, auf, auf, 1.0f};
+        f->glEnable(GL_BLEND);
+        f->glBlendFunc(GL_ZERO, GL_SRC_COLOR);  // dst *= src: reine Daempfung
+        drawColorQuads(quad, 6, GL_TRIANGLES);
+        f->glDisable(GL_BLEND);
+        m_sichtBlendeRest -= dt;
+        if (m_sichtBlendeRest <= 0.0)
+        {
+            m_sichtBlendeRest = 0.0;
+            trace::log(QStringLiteral("sichtBlende: abgeschlossen"));
+        }
+    }
     m_feedback.swapOnly();
 
     ++m_frame;

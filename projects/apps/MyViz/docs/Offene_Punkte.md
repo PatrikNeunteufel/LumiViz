@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.35.0
-> **Datum:** 2026-08-03 (Session 66, Abschluss)
+> **Version:** 1.36.0
+> **Datum:** 2026-08-04 (Session 67, Zwischenstand)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -30,21 +30,47 @@ Legende: 🔴 blockiert anderes · 🟠 Befund mit Messwert · 🟡 Entscheid n�
 > (Verstärker-Presets) und OHNE Loudness-Reset (loadDiag: Musik auf leerer
 > Warmup-Rampe ⇒ bass≈17-Explosion — erprobt und verworfen).
 >
-> ## 🔴 TOP 1 NÄCHSTE SESSION — Preset-Wechsel-Divergenz ENDGÜLTIG lösen
+> ## ✅ TOP 1 GELÖST in S67 — Preset-Wechsel-Divergenz („RTH erbt Farbe")
 >
-> **Auftrag Patrik: „wirklich tief analysieren, das muss gelöst werden."**
-> Trotz Trace-bewiesener Löschung (Saat in beide Puffer + Seed-Reset je Wechsel)
-> sieht Patrik bei der RTH-Familie weiter Farb-Übernahme vom Vorgänger.
-> Forschungsstand S66: loadDiag belegt stark unterschiedliches Audio-Futter
-> (App-Start ≈ Stille, specSum 0,6–2 vs. laufende Musik 4–7); RTH-Farben sind
-> rein time-getrieben (wave_r/g/b = 0.5+0.5·sin(1.13/1.23/1.33·time)) —
-> Futter-/Zyklus-These, aber NICHT abgenommen. **Plan (S66-Report TOP 1):**
-> (1) headless GL-Wächter-Test (GlSmoke-Muster): Frame-Hashes Kaltstart vs.
-> Löschen-Wechsel bei deterministischem Audio MÜSSEN gleich sein · (2)
-> kontrolliertes A/B mit TestAudio + LUMIVIZ_MILKDROP_DUMP_WARP; loadDiag um
-> wave_r/g/b + time erweitern · (3) erst bei belegter Differenz GPU-Verdächtige
-> (Sampler-Bindung, Blur-Restinhalt, Chain-Buffer) · (4) danach Sichttest
-> Ausblenden + Abnahme des Schalters. **Benutzerhandbuch 1.5.0** (Behalten-Semantik exakt, Regelwerk,
+> **Ursache gefunden und gefixt (S67):** `ensureCustomPrograms()` stand in
+> `onRender` hinter dem Gate „nur wenn Custom-Quellen vorhanden" — beim
+> In-Place-Wechsel auf ein Md1Default-/None-klassifiziertes Preset (RTH_2024:
+> Warp `ret*0.93`, Comp Passthrough) wurde der Rev-Wechsel nie verarbeitet und
+> die **Warp-/Comp-GL-PROGRAMME DES VORGÄNGERS renderten das neue Preset
+> weiter** (Trace-Signatur: `warpSrc=nein … Branch warp=CUSTOM`). Bei aa9dc9d0
+> unsichtbar (jeder Wechsel = frische Instanz), in der Triage unsichtbar (ein
+> Preset je Lauf). Beweis: **MilkdropStandalone 1.1.0 `--ab`-Wechsellauf**
+> (FNV-Hash je Frame): vorher Spotlight→RTH vs. Beauty→RTH **0/300** gleiche
+> Frames (rot-abklingend vs. weiß-aufhellend) trotz Trace-bewiesenem Wipe —
+> nachher **300/300 bitgleich**. Kaltstart vs. Wechsel+Audio-Neustart
+> konvergiert ab ~f120 (Rest = bewusst behaltene Loudness-Historie).
+> Doku: MilkdropVisualizer.md 1.22.0. Tests grün, alle 3 Builds grün.
+> **Noch offen aus dem S66-Plan: Sichttest Ausblenden + App-Sichttest des
+> Fixes durch Patrik (Spotlight → RTH_2024 mit Löschen ≙ App-Neustart).**
+>
+> ## 🟡 S67 — Rausch-Saat sichtbar: UNTERSUCHT, Entscheid offen
+>
+> **Befund Patrik (S67):** Beim Preset-Wechsel und nach App-Start ist bei
+> fast allen Presets zu Beginn Rauschen sichtbar — „das war zuvor nie".
+> **Untersuchung (S67, abgeschlossen):** Quelle geklärt — Patriks QSettings
+> stehen seit S66 auf `milkdrop/pufferWechsel=loeschen`; Löschen wipet auf die
+> S63-Rausch-Saat, die der ehrliche Decay-Pfad ~0,5–1 s zeigt. Vor S66 war
+> effektiv immer Behalten aktiv (Code-Default `behalten`) — nie Rauschen.
+> Der Start-Fall ist die S63-Kaltstart-Saat (Puffer-Erzeugung beim ersten
+> Load). **Messung Standalone `--ab --wechsel behalten` (mit S67-Fix):**
+> kein Rauschen, Vorgänger-Einfluss bei RTH_2024 nach ~0,5 s optisch weg,
+> ab f0120 (2 s) BIT-IDENTISCH über verschiedene Vorgänger — und ab ~2 s
+> sogar bitgleich mit dem Löschen-Lauf (Modus konvergiert).
+> **Empfehlung: App-Default zurück auf Behalten** (Settings-Panel → Keep);
+> Löschen bleibt als Spezialwerkzeug je Node. **✅ Sicht-Blende UMGESETZT
+> (S67, Entscheid Patrik „mit Settings-Schalter"):** `setSichtBlende` im
+> Kern (Ease-in ~0,5 s über Kaltstart-/Resize-Saat und Löschen-/Fading-Wipe,
+> Composite-seitig — f60-Hash mit/ohne Blende identisch = beweisbar rein
+> kosmetisch), QSettings `milkdrop/sichtBlende` Default AN, Settings-Panel
+> „MilkDrop Start Fade-in", Standalone `--blende`; Prüfstände unverändert
+> (Kern-Default AUS). Handbuch 1.6.0. **⬜ Sichttest Patrik offen.**
+>
+> **Benutzerhandbuch 1.5.0** (Behalten-Semantik exakt, Regelwerk,
 > §12 Shadertoy, GPU, 2 Screenshots — skriptgesteuert aus der App).
 > **Panel-Komfort:** Splitter Baum/Editor (Stellung persistiert),
 > Panel-Mindestbreite + sizeHint-Default 560×780, Milkdrop-Sektionen in
@@ -1120,6 +1146,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.36.0 | 2026-08-04 | Session 67 (Zwischenstand) — **TOP 1 GELÖST:** „RTH erbt Farbe" war ein GPU-Programm-Rest: `ensureCustomPrograms()` hinter dem Quellen-Gate ⇒ beim In-Place-Wechsel auf ein Md1Default-Preset rendeten die Warp-/Comp-Programme des VORGÄNGERS weiter. Fix in MilkdropVisualizer (Aufruf unconditional, 1.22.0); Beweis MilkdropStandalone 1.1.0 `--ab` (0/300 → 300/300 bitgleiche Frames). **NEU 🟠:** Rausch-Saat beim Löschen-Wechsel sichtbar (stört; vorher von Shader-Leichen überdeckt? — Untersuchung + Entscheid a/b/c offen). Hinweis: 1.33.0–1.35.0 wurden nur im Kopf gebumpt (S65/S66), Zeilen fehlen — Historie in den Session-Changelogs |
 | 1.32.0 | 2026-08-02 | Session 64 — **zweite MilkDrop-Kalibrier-Runde: acht Fixklassen, OK 289→295, Prüfstände SAATLOS** (Entscheid Patrik; `--seed` = App-Opt-in). §3 neu geschnitten: R239-Prüfpunkt ✅ aufgelöst (korrekt IST-SO), Rest = 11 Port-Bugs in vier Klassen (piercing 01 erstmals messbar · pixies ×2 · Gin Tonic 003 · q-/UB-Dunkelklasse ×7 mit 🟡 Einstufungs-Entscheid); **🎯 Regelwerk-Strang** (Legacy/Modern/Benutzerdefiniert + PS-Version-Override je Typ) als Auftrag der nächsten Session; §7 + Shadertoy-Import-Idee. Fixklassen: D3D9-Div-Vertrag (`_div`), Band-Hüllkurven, Loudness-Kaltstart-Ramp, `breakStrip` (MV-Geisterquads), UNORM8-Trunkierung, NaN-Sanitize, q-Garbage-Epsilon, Double-UV-Wrap. Forschung: 2077-Look der R-Serie = Heap-Garbage × Fixpunkt-Überlauf (doppelt UB, dokumentierte Legacy-Grenze). Tests 493/493, 5 Voll-Triagen, 0 Regressionen |
 | 1.31.0 | 2026-08-02 | Session 63 (Abschluss) — §3 neu geschnitten nach der Triage (Kaltstart-Saat + Feedback-Erhalt, 10 geheilt, 22 Rest als Arbeitsliste), R239-Prüfpunkt + myPresets/-Triage + Loudness-Stille als offene Punkte aufgenommen |
 | 1.30.0 | 2026-08-01 | Session 62, Teil 2 — Befund Patrik: domain.lvfx-Richtungsumkehr war ein stummer No-op (`dx`/`dy` kein domainWarp-Vertrag; alt MAE 0,0000, gefixt 0,1817 über `speed`-Vorzeichen + `oy`-Pan). Daraus: **neuer Prüfstand Strang G** `lint_chain_scripts.py` (stumme Skript-Zuweisungen in Asset-Chains; fields/README) — fand DREI Ernter-Vertragslücken (`b` beim Attraktor pauschal verworfen, Movements Feld `code` fehlte im Filter, Nur-Lese-Ziele wie Texer-II-`x`/`y` unsichtbar; alle gefixt, inventory_docs +9 Variablen, Teil-Sondenlauf 47 WIRKT/3 SCHWACH/0 STUMM). domainWarp-Vorlagen Tintenstrom/Nebelkammer tragen jetzt Skriptfelder (Beispiele regeneriert, Beat-Wirkung gemessen 0,12/0,038). Rest-Lint: 9 tote Variablen in importierten Originalen (bleiben wörtlich) |
