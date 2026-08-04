@@ -1,5 +1,60 @@
 # Composite: PostFX – Eine Nachbearbeitungs-Küche von Grund auf
 
+> **Dokumenttyp:** Tutorial  
+> **Version:** 1.2.0  
+> **Status:** Stabil  
+> **Domain:** Programming  
+> **Kategorie:** Algorithms  
+> **Programmiersprache:** GLSL (Shadertoy/WebGL2)  
+> **Voraussetzungen:** [Juggernaut-Shader-Tutorial](Juggernaut-tutorial.md) (die Szene, komplett), [Pimped-Kaleidoscope-Shader-Tutorial](PimpedKaleidoscope-tutorial.md), Schritte 3–6 und 8–9  
+> **Schwierigkeitsgrad:** Experte  
+> **Tutorial-Typ:** Integration (Multipass-Nachbearbeitungs-Kette über einer fertigen Szene)  
+> **Zeitschätzung:** 6–8 h für die Schritte 1–13 auf shadertoy.com (inkl. Experimentieren), zusätzlich ~1–2 h für die Anhänge A/B; reines Durchlesen ~2 h  
+> **Gültigkeit:** Shadertoy-Multipass-Shader (WebGL2, Tabs Common/Buffer A/B/C/Image); Anhang B zusätzlich für den Shadertoy-Node der LumiViz-Effect-Chain (Stand Session 65/67)  
+> **Zweck:** Schritt-für-Schritt-Umbau des Juggernaut-Molochs in eine Multipass-Nachbearbeitungs-Kette – Szene mit Tiefen-Nebenkanal in Buffer A, Bloom-Kette über Buffer B/C, Image-Pass mit Depth of Field, Faltungs-Finish, Temporal-Glättung und Politur am Ketten-Ende.  
+> **Zielgruppe:** Shader-Entwickler mit Raymarching- und Buffer-Erfahrung; Leser der Shader-Tutorial-Serie  
+> **Sprache:** Deutsch  
+
+> ⚠ **HINWEIS: Nicht-normative ASCII-Darstellungen**
+>
+> Die ASCII-Skizze im Bauplan-Abschnitt dient ausschließlich der **illustrativen Unterstützung**
+> und setzt eine Monospace-Schrift voraus. Verbindlich sind die textuelle Beschreibung und der Code.
+
+---
+
+## Inhaltsverzeichnis
+
+1. Einleitung
+2. Lernziele
+3. Voraussetzungen
+4. Übersicht der Schritte
+5. Der Bauplan: Was wir eigentlich rendern
+6. Schritt 1 – Kondensieren: das Szenen-Skelett
+7. Schritt 2 – Der Umzug: Buffer A, Image und der Common-Tab
+8. Schritt 3 – Der Nebenkanal: Tiefe im Alpha
+9. Schritt 4 – Bright-Pass: die Schwelle
+10. Schritt 5 – Separierbarer Blur I: horizontal
+11. Schritt 6 – Separierbarer Blur II: vertikal – das Bloom steht
+12. Schritt 7 – Depth of Field: die Tiefe wird Blende
+13. Schritt 8 – Kaleidoskop als Post I: das Finish
+14. Schritt 9 – Kaleidoskop als Post II: Faltung vor oder nach dem Bloom?
+15. Schritt 10 – Temporal-Glättung: der Szenen-Pass bekommt ein Gedächtnis
+16. Schritt 11 – Die Anrichte: Politur ans Ende der Kette
+17. Schritt 12 – Die STIMMUNGs-Kopplung: eine Blende für die ganze Küche
+18. Schritt 13 – Der fertige Shader: Common + Buffer A + B + C + Image
+19. Anhang A: Audio-Reaktivität (Schritte A1–A3)
+20. Anhang B: Der Weg in die App – kompakt (B1–B2)
+21. End-Validierung
+22. Fehlerbehebung
+23. Nächste Schritte
+24. Abspann
+25. Siehe auch
+26. Changelog
+
+---
+
+## Einleitung
+
 **Ziel:** Kein neues Motiv – eine neue **Maschine hinter dem Motiv**. Der Juggernaut-Moloch aus dem gleichnamigen Tutorial wird durch eine **Multipass-Nachbearbeitungs-Kette** veredelt: Die 3D-Szene zieht in **Buffer A** um und liefert neben dem Bild ihre **Tiefe im Alpha-Kanal** mit; **Buffer B und C** bauen daraus ein echtes **Bloom** (Bright-Pass + separierbarer Gauß-Blur – das ehrliche Pendant zu Milkdrops `GetBlur1/2/3`); der **Image-Pass** wird zur Anrichte: **Depth of Field** aus dem Tiefenkanal, ein wählbares **Kaleidoskop-Finish** über die fertige Szene, **Temporal-Glättung** gegen Flimmern – und die komplette Politur (Nebel, Tonemapping, Vignette), die endlich dort wohnt, wo sie hingehört: **am Ende der Kette**. Die `STIMMUNG`-Stellschraube der Szene reicht dabei bis in die Post hinein: *dark* bekommt mehr Bloom, eine offenere Blende und dichteren Nebel.
 
 **Stil-Vorbilder** (diesmal vor allem die Serie selbst – plus das eine Milkdrop-Werkzeug, das alle ihre Presets benutzen):
@@ -16,7 +71,66 @@
 - Die Reihenfolge folgt diesmal der Küchen-Logik: **Rohware → Architektur → Bloom → Tiefe → Finish → Politur.** Erst die kondensierte Szene, dann die Pass-Struktur, dann Station für Station – und ganz am Ende das Anrichten.
 - Vorwissen: Das **Juggernaut-Tutorial** wird vorausgesetzt (die Szene wird kondensiert, nicht neu hergeleitet – wer eine `map`- oder `kamera`-Zeile nicht versteht, findet dort die ausführliche Fassung). Vom **Pimped-Kaleidoscope-Tutorial** braucht es die Schritte 3–6 (Buffer, Feedback, Blur) und 8–9 (Faltungen). Neu ist diesmal die Königsdisziplin **Datenfluss**: mehrere Pässe, die einander zuarbeiten – und ein Nebenkanal, der Geometrie-Wissen als Bilddaten transportiert.
 
-**Inhalt**
+Die Schritt-Konvention der Serie deckt die vier Elemente eines Tutorial-Schritts (Ziel, Anleitung, Validierung, Vertiefung) mit festen Markierungen ab – Tab. 1 zeigt die Zuordnung, die in jedem Schritt dieses Dokuments gilt. Besonderheit dieses Multipass-Tutorials: Die Durchführung eines Schritts besteht ab Schritt 2 aus **mehreren Code-Blöcken** – je einem pro betroffenem Tab (Common, Buffer A, Buffer B, Buffer C, Image), jeweils mit Tab-Zuordnung und iChannel-Verdrahtung:
+
+| Konvention im Schritt | Bedeutung |
+|---|---|
+| **Neu:** | Ziel des Schritts – die eine Technik bzw. Architektur-Entscheidung, die hinzukommt |
+| Code-Blöcke je Tab (**Common** / **Buffer A/B/C** / **Image**) | Durchführung – der vollständige bzw. geänderte Code des jeweiligen Passes samt Verdrahtung; „*unverändert*" = der Tab bleibt wörtlich wie im Vorschritt stehen |
+| **Ergebnis:** | Validierung des Schritts – das prüfbare Sichtergebnis (oft über den Küchen-Monitor `ANSICHT`) |
+| „Was passiert hier" | Anleitung und Erklärung des Codes |
+| 🎨 Experimentieren | Optionale Vertiefung und Variationen |
+
+*Tab. 1: Konventions-Mapping – Schritt-Markierungen dieses Tutorials und ihre Rolle in der Schritt-Struktur*
+
+## Lernziele
+
+Nach diesem Tutorial können Sie …
+
+1. … eine fertige Single-Pass-Szene in eine **Multipass-Architektur** umziehen – Szene in Buffer A, Anzeige im Image-Pass, Stellschrauben und geteilte Helfer im Common-Tab als SSOT – und den Umzug über die Pixel-Identität des Bildes validieren (Schritte 1–2).
+2. … **Nebenkanal-Daten** etablieren: die Marsch-Distanz des Raymarchers als Tiefe in den Alpha-Kanal exportieren und über eine Monitor-Ansicht als Graustufenbild prüfen (Schritt 3).
+3. … eine **Bloom-Kette** aus Bright-Pass mit weichem Knie und separierbarem Gauß-Blur (horizontal + vertikal) implementieren und das Ergebnis vor dem Tonemapping additiv mischen – inklusive der Kostenrechnung `2·N` statt `N²` (Schritte 4–6).
+4. … ein **Gather-DOF** aus dem Tiefenkanal implementieren, mit Zerstreuungskreis, Sicherheitsdeckel und pendelnder Fokus-Ebene (Schritt 7).
+5. … ein **Faltungs-Finish** (Kaleidoskop) als Lese-Transformation über eine 3D-Szene legen und die Architektur-Entscheidung „Faltung vor oder nach dem Bloom" anhand der Faltnähte begründen (Schritte 8–9).
+6. … **Temporal-Glättung** über die Selbstreferenz von Buffer A stabil einsetzen – Farbanteil gemischt, Tiefe frisch – und ihren Preis (Geisterbilder) gezielt dosieren (Schritt 10).
+7. … die **Politur** (Nebel, Tonemapping, Vignette, Dither) ans Ende der Kette verlagern und Szene wie Post über eine gemeinsame STIMMUNGs-Kopplung an einem Regler führen (Schritte 11–12).
+
+## Voraussetzungen
+
+**Wissen:**
+
+- [Juggernaut-Shader-Tutorial](Juggernaut-tutorial.md) – liefert die Szene, die hier kondensiert (nicht neu hergeleitet) wird; wer eine `map`- oder `kamera`-Zeile nicht versteht, findet dort die ausführliche Fassung.
+- [Pimped-Kaleidoscope-Shader-Tutorial](PimpedKaleidoscope-tutorial.md), Schritte 3–6 (Buffer, Feedback, Blur) und 8–9 (Faltungen) – die Multipass- und Faltungs-Grundlagen dieses Tutorials, inklusive der Common-Tab-Disziplin (dort Schritt 13).
+
+**Software:**
+
+- Ein aktueller, WebGL2-fähiger Browser (Chrome, Firefox, Edge oder Safari in einer aktuellen Desktop-Version) – Shadertoy ist eine Web-Plattform, es ist keine Installation nötig.
+- Zugang zu [shadertoy.com](https://www.shadertoy.com/new) – Shader lassen sich ohne Konto erstellen und ausführen; zum Speichern eigener Shader ist ein kostenloses Konto erforderlich.
+- Für Anhang A: ein „Music"-Kanal im Shadertoy-Editor (eingebaute Track-Auswahl, keine eigene Datei nötig).
+
+**Optional (nur Anhang B):**
+
+- LumiViz/MyViz mit Shadertoy-Node in der Effect-Chain (Stand Session 65/67); für den URL-Import zusätzlich ein kostenloser Shadertoy-App-Key.
+
+## Übersicht der Schritte
+
+Das Tutorial führt in 13 Schritten von der kondensierten Szene zum fertigen Multipass-Shader; die Anhänge ergänzen Audio-Reaktivität (A1–A3) und den Weg in die App (B1–B2):
+
+1. Kondensieren: das Szenen-Skelett
+2. Der Umzug: Buffer A, Image und der Common-Tab
+3. Der Nebenkanal: Tiefe im Alpha
+4. Bright-Pass: die Schwelle
+5. Separierbarer Blur I: horizontal
+6. Separierbarer Blur II: vertikal – das Bloom steht
+7. Depth of Field: die Tiefe wird Blende
+8. Kaleidoskop als Post I: das Finish
+9. Kaleidoskop als Post II: Faltung vor oder nach dem Bloom?
+10. Temporal-Glättung: der Szenen-Pass bekommt ein Gedächtnis
+11. Die Anrichte: Politur ans Ende der Kette
+12. Die STIMMUNGs-Kopplung: eine Blende für die ganze Küche
+13. Der fertige Shader: Common + Buffer A + B + C + Image
+
+Dieselben Schritte, nach Phasen gruppiert (Tab. 2):
 
 | Phase | Schritte | Thema |
 |---|---|---|
@@ -30,6 +144,8 @@
 | Endstand | 13 | Der fertige Shader: Common + Buffer A + B + C + Image |
 | Anhang A | A1–A3 | Audio auf die Küchenstationen (Bass→Bloom & Co.) |
 | Anhang B | B1–B2 | Multipass-Import + die Effect-Chain-Brücke |
+
+*Tab. 2: Phasen-Gliederung der Schritte und Anhänge*
 
 ---
 
@@ -66,6 +182,8 @@ Bevor die erste Zeile fällt, ein Blick auf die Architektur – diesmal ist sie 
         COMMON: STELLSCHRAUBEN + geteilte Helfer – wird JEDEM Pass
                 vorangestellt (das SSOT der ganzen Küche)
 ```
+
+*Fig. 1 [Blockdiagramm]: Die Fließband-Küche – Buffer A (Szene, rgb = HDR, a = Tiefe, Temporal-Selbstreferenz), Bloom-Kette Buffer B/C, Image-Anrichte und der Common-Kopf als SSOT aller Pässe*
 
 Vier Pässe, ein geteilter Kopf. Drei Beobachtungen, die das ganze Tutorial tragen:
 
@@ -1172,7 +1290,7 @@ float effNebelDichte()  { return NEBEL * mix(0.0035, 0.0012, STIMMUNG); }
 
 ## Schritt 13 – Der fertige Shader: Common + Buffer A + B + C + Image
 
-**Neu:** Kein neuer Effekt – der Endstand als **Gesamtlisting**, Tab für Tab, zum Einfügen. Vorweg die Verdrahtung als Tabelle (der häufigste Stolperstein beim Nachbauen):
+**Neu:** Kein neuer Effekt – der Endstand als **Gesamtlisting**, Tab für Tab, zum Einfügen. Vorweg die Verdrahtung als Tabelle (Tab. 3 – der häufigste Stolperstein beim Nachbauen):
 
 | Tab | iChannel0 | iChannel1 | Aufgabe |
 |---|---|---|---|
@@ -1181,6 +1299,8 @@ float effNebelDichte()  { return NEBEL * mix(0.0035, 0.0012, STIMMUNG); }
 | Buffer B | Buffer A | – | Bright-Pass + horizontaler Gauß |
 | Buffer C | Buffer B | – | vertikaler Gauß → fertiges Bloom |
 | Image | Buffer A | Buffer C | Finish, DOF, Nebel, Bloom-Mix, Politur |
+
+*Tab. 3: Verdrahtung des Gesamtlistings – Tab, iChannel-Belegung und Aufgabe je Pass*
 
 **Common** *(Tab „Common")*
 
@@ -1590,7 +1710,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
 ### Was passiert hier – die Kette im Rückblick
 
-Lies die Tabs noch einmal in Render-Reihenfolge – jeder ist eine Antwort auf eine einzige Frage:
+Lies die Tabs noch einmal in Render-Reihenfolge – jeder ist eine Antwort auf eine einzige Frage (Tab. 4):
 
 | Pass | Frage | Werkzeug |
 |---|---|---|
@@ -1598,6 +1718,8 @@ Lies die Tabs noch einmal in Render-Reihenfolge – jeder ist eine Antwort auf e
 | Buffer B | Was davon leuchtet – und wie sieht es quer verschmiert aus? | Schwelle + halber Gauß |
 | Buffer C | … und ganz verschmiert? | die zweite Gauß-Hälfte |
 | Image | Wie wird daraus EIN Bild? | Finish, DOF, Nebel, Mischung, Politur |
+
+*Tab. 4: Die Kette im Rückblick – je Pass eine Frage und ihr Werkzeug*
 
 Das ist zugleich die Landkarte für eigene Ketten: **Stationen, die je genau eine Frage beantworten, in einer begründeten Reihenfolge, mit einem Monitor auf jeder Leitung.** Wer ab hier eine eigene Post-Küche baut – für eine andere Szene, ein anderes Motiv –, tauscht Buffer A aus und behält den Rest wörtlich. Genau das ist der Punkt der Architektur.
 
@@ -1647,6 +1769,8 @@ void audioFuellen()
 
 ![Anhang A1: die Audio-Infrastruktur am Sichtprüfstand – fünf Pegel-Balken (LumiViz-Fassung: App-Uniforms), darüber klebt die dB-gesättigte FFT-Zeile des Testsignals am oberen Rand – die Skalen-Falle, live](composite_postfx_bilder/anhang_a1.png)
 
+**Ergebnis:** Der Audio-Block kompiliert im Common in allen Pässen mit, und nach einem `audioFuellen();` am Anfang eines lesenden `mainImage` liegen `gBass/gMid/gTreb/gVol/gGate` gefüllt vor – prüfbar am Pegel-Balken-Sichtprüfstand (Bild oben): Fünf Balken folgen der Musik, die FFT-Zeile darüber zeigt die Skalen-Falle live.
+
 Die Globals wohnen im Common, werden aber **je Pass** gefüllt (jeder Pass ist ein eigenes Programm – `audioFuellen()` am Anfang jedes `mainImage`, das Audio braucht). Wer weiche Envelopes statt roher Pegel will: Das Buffer-Zustandspixel-Muster steht in der Schablone (Crystal Lights, B3) und ließe sich hier in eine Ecke von Buffer A legen.
 
 ---
@@ -1662,6 +1786,10 @@ Kein neuer Shader – die Landkarte. Das Besondere einer Post-Kette: Die Mapping
 | 3 | Höhen | **Bright-Pass-Schwelle senken** | Buffer B, in `hell()`: `effSchwelle() * (1.0 - 0.5 * gTreb)` (beide Vorkommen) | Hi-Hats reißen die Schwelle herunter → sekundenweise glüht *alles* ein wenig: die **Glitzer-Explosion**; teuflisch wirksam, sparsam dosieren |
 | 4 | Mitten | **Kaleidoskop-Faltungs-Drift** | Common, in `falteWinkel()`: `ang = mod(ang + gMid * 0.5, sektor);` vor dem `abs` | Die Melodie schiebt das Mandala um seine Achse – eine *Amplitude* auf dem Winkel-Offset (Pegel rein, Pegel raus – kein akkumulierender Zustand, darum erlaubt) |
 | 5 | Lautheit | **Nachzieh-Länge** | Buffer A: `mix(col, alt, NACHZIEH * (1.0 - 0.6 * min(gVol * 2.0, 1.0)))` | Laute Passagen = kurzes Gedächtnis (knackig), leise = lange Schweife (träumerisch) – die Zeitauflösung des Bildes folgt der Dichte der Musik |
+
+*Tab. 5: Mapping-Katalog – Audio-Signal, Küchenstation, Eingriff (Pass) und Begründung*
+
+**Ergebnis:** Für jedes der fünf Mappings sind Signal, Station, Eingriffsort (Pass samt Zeile) und Begründung benannt – die Schnipsel aus Tab. 5 lassen sich in Schritt A3 unverändert übernehmen.
 
 **Die Post-spezifische Warnung: Szene und Küche getrennt halten.** Wer die Juggernaut-Anhang-A-Mappings (Fenster zünden bei `gGate`, STIMMUNG folgt `gVol`) in Buffer A übernimmt *und* die Katalog-Mappings oben aktiviert, baut **Doppel-Mappings**: Der Bass macht die Fenster heller (Szene) → hellere Fenster reißen die Schwelle *ohnehin* stärker → und Mapping 1 verstärkt das Bloom *nochmals* – der Effekt schaukelt sich multiplikativ auf und clippt bei jedem Kick ins Weiße. Die Regel: **Ein Signal → eine Station.** Entweder der Bass zündet die Lichter (Szene reagiert, Küche bleibt neutral) oder er pumpt das Bloom (Szene bleibt stoisch, Küche reagiert) – beides zusammen nur mit halbierten Amplituden und offenen Augen. Der stoische Moloch mit tanzender Küche ist übrigens der interessantere Charakter: *Die Welt bleibt, wie sie ist – nur unser Blick auf sie pulsiert.*
 
@@ -1756,6 +1884,48 @@ Faustregel: **Gehört der Effekt zum Werk → in den Shader. Gehört er zur Büh
 
 ---
 
+## End-Validierung
+
+Diese Validierung steht wie in der ganzen Serie **hinter den Anhängen**, prüft aber den Kern: Alle sieben Lernziele hängen an den Schritten 1–13; die Anhänge (Audio, App-Wege) sind über ihre eigenen **Ergebnis:**-Zeilen abgedeckt. Jedes Kriterium ist am laufenden Shader auf shadertoy.com (bzw. an den generierten Chains im AvsStandalone – dort mit den dokumentierten Abweichungen aus der Einleitung) objektiv prüfbar:
+
+1. **Kompilierbarkeit und Verdrahtung:** Alle fünf Tabs des Gesamtlistings aus Schritt 13 kompilieren ohne Fehlermeldung, die iChannel-Belegung entspricht Zeile für Zeile Tab. 3, und der Shader rendert ein bewegtes Bild – kein Schwarzbild, kein Standbild. *(Basis aller Lernziele)*
+2. **Multipass-Umzug:** Der Schritt-2-Stand rendert pixelgenau dasselbe Bild wie der Single-Pass aus Schritt 1; eine Stellschrauben-Änderung im Common (z. B. `RADIUS`) wirkt gleichzeitig in Szene und Post – der Common-Tab ist das SSOT. *(Lernziel 1)*
+3. **Nebenkanal:** `ANSICHT = 1` zeigt den Moloch als Tiefenrelief – nahe Platten dunkelgrau, ferne Rundung heller, Himmel weiß; das Relief atmet mit der Kamera, bleibt aber frei von Temporal-Schweifen und reagiert nicht auf Audio (die Tiefe ist frisch und musik-unabhängig). *(Lernziele 2 und 6, Gegenprobe)*
+4. **Bloom:** Die Bloom-Höfe sind im **Pixel-Diff an/aus objektiv nachweisbar**: Ein Standbild mit `BLOOM_STAERKE = 0.0` unterscheidet sich vom selben Frame mit Normalwert genau an den weichen, additiven Höfen um Positionslichter, Korona und Rim-Säume – nirgendwo sonst. `ANSICHT = 2` zeigt die Leitung stationsweise: Schritt 4 nackte Lichtquellen, Schritt 5 horizontale Striche, ab Schritt 6 runde Höfe. *(Lernziel 3)*
+5. **DOF:** Die Schärfe-Ebene pendelt erkennbar durch die Szene (mal nahe Platten scharf, mal die ferne Rundung); `BLENDE = 0.0` schaltet die Tiefenunschärfe vollständig ab (Zerstreuungskreis wird 0). *(Lernziel 4)*
+6. **Finish-Einordnung:** `FINISH = 1` faltet das fertige Bild samt Tiefe zur Rosette (das DOF faltet mit, kein Sektor-Versatz); der Wechsel `FALT_VOR_BLOOM` 0 ↔ 1 verändert sichtbar die Faltnähte – vor dem Bloom fließt der Glow über die Nähte, danach bleibt er sektor-getrennt. *(Lernziel 5)*
+7. **Temporal:** Mit `NACHZIEH > 0` beruhigt sich das Tap-Restzappeln und blinkende Lichter ziehen einen kurzen Schweif nach; `NACHZIEH = 0.0` stellt als Gegenprobe das ungefilterte Bild wieder her. *(Lernziel 6)*
+8. **Politur am Ketten-Ende und Kopplung:** Nebel, Tonemapping und Vignette wirken sichtbar auch auf die Bloom-Höfe (die Politur sieht das ganze Bild, nicht nur die Szene); `STIMMUNG` von 0 auf 1 gedreht wechselt das komplette Grading inklusive Post – dark = fette Post (mehr Bloom, offene Blende, dichter Nebel), brighter = nüchterne. *(Lernziel 7)*
+
+---
+
+## Fehlerbehebung
+
+Die häufigsten Stolperstellen dieses Tutorials, gesammelt nach Symptom (Tab. 6). Die schritt-lokalen Hinweise (etwa die Tap-Lücken-Fußnote in Schritt 5 oder die Naht-Grenze des DOF in Schritt 8) bleiben davon unberührt – hier stehen die Probleme, die typischerweise beim Zusammenbau, beim Nachbau in der App oder beim Experimentieren auftreten:
+
+| # | Symptom | Ursache | Lösung |
+|---|---|---|---|
+| 1 | Schwarzes oder „seltsames" Bild nach dem Zusammenbau | **Die Verdrahtung – Fehlerquelle Nr. 1 dieses Tutorials:** die iChannel-Belegung weicht von der Verdrahtungstabelle ab (häufigster Fall: iChannel0 im Image nicht auf Buffer A) | Kanal-Leisten aller Tabs Zeile für Zeile gegen Tab. 3 prüfen – erst dann den Code verdächtigen; Stimm-Reihenfolge des Küchen-Monitors: erst `ANSICHT = 1` (stimmt die Tiefe?), dann `ANSICHT = 2` (stimmt die Bloom-Leitung?), zuletzt das fertige Bild |
+| 2 | Kein Glühen in der dark-Stimmung – `ANSICHT = 2` bleibt fast leer | `SCHWELLE = 0.7` liegt in dark über jeder **lum-gewichteten** Lichtquelle: die „~1.4" der Fenster ist ihr Rot-Kanal, `lum()` drückt sie auf ~0.53 (Befund des Gegen-Renderns, Abspann) | `SCHWELLE` senken – die generierten Chains rendern mit `0.3`, dem Wert aus dem 🎨-Kasten von Schritt 4; anschließend `BLOOM_STAERKE` nachziehen (Post-Parameter sind Verhältnis-Größen, Abspann) |
+| 3 | In LumiViz: kantige, abgestufte Blur-/DOF-Ergebnisse statt weicher Höfe | Die Buffer-FBOs der App filtern derzeit NEAREST – Gauß-Taps, DOF-Gather und gefaltete Lesungen setzen die bilineare Shadertoy-Semantik voraus | Das manuelle bilineare Lesen (`lesBilinear0/1`) der generierten Chains verwenden (Einleitung; die Anpassung steckt nur in den generierten Dateien, die Codeblöcke hier bleiben Shadertoy-treu) |
+| 4 | Audio-Mappings im LumiViz-Standalone ohne Wirkung oder dauerhaft „voll" | Die dB-FFT des synthetischen Testsignals sättigt bei 1.0 – FFT-Absolutschwellen wie das Beat-Gate aus A1 greifen dort nicht | In der App die Audio-Uniforms über den Adapter fahren (so rendern die A1/A3-Chains); Schwellen bleiben Handarbeit pro Musikmaterial – oder die adaptive Envelope aus der Schablone (Crystal Lights, B3) verwenden |
+| 5 | Geisterbilder/Schlieren hinter den blinkenden Lichtern | `NACHZIEH` zu hoch – oder die Framerate ist niedriger als beim Stimmen (der Temporal-Mix hängt an der Framerate: bei 30 fps wirkt `0.35` doppelt so lang wie bei 60) | `NACHZIEH` senken (Schritt 10); einmal im Vollbild gegenprüfen (Abspann) |
+| 6 | Niedrige Framerate / Ruckeln | Vier Vollbild-Pässe mit Raymarcher, 2×13 Gauß-Taps und 9 DOF-Taps sind teuer, besonders auf integrierten GPUs | Shadertoy-Vorschau verkleinern; `RAD` (Blur-Taps je Seite) reduzieren oder den DOF-Tap-Satz verkleinern – oder das Bloom als echten Halbbild-Node in die Chain verlagern (Anhang B2) |
+| 7 | Konstanten wirken anders als beschrieben | Die Stände sind konstruiert und in LumiViz gegengerendert, aber auf shadertoy.com selbst noch ungeprüft; nicht jeder Zahlwert ist gegen das Zielbild feinabgeglichen | Die Stellschraube in kleinen Schritten nachstimmen; die beschriebene **Wirkrichtung** jeder Konstante stimmt, der Absolutwert ist Startpunkt, nicht Dogma |
+
+*Tab. 6: Fehlerbehebung – Symptom, Ursache, Lösung*
+
+---
+
+## Nächste Schritte
+
+Die Fortsetzung folgt der [Wegleitung](ShaderTutorials-overview.md) der Serie:
+
+- **[Composite: Transitions](CompositeTransitions-tutorial.md)** – das letzte Composite der Serie: endloser Wechsel Kristall-Terrain ↔ Juggernaut mit Übergangs-Phasen, Masken-Wipes mit Glühsaum, Parameter-Morph statt Bild-Mix und einer Zustandsmaschine in Buffer A (beat-getriggerter Wechsel als Preset-Wechsel-Analogon). Es setzt das hier geübte Kondensieren und den Buffer-Zustand direkt ein.
+- **Die Brücke begehen:** Die Faustregel aus Anhang B2 – *„Gehört der Effekt zum Werk → in den Shader. Gehört er zur Bühne → in die Chain."* – als Praxis-Übung umsetzen: die generische Bloom-Kette (Schwelle → H → V → Mix) als eigene Chain-Nodes nachbauen; dabei wird aus Shadertoy-Wissen App-Architektur-Wissen (Abspann).
+
+---
+
 ## Abspann
 
 Damit ist die Küche komplett: eine kondensierte Szene, die lineares HDR und ihre Tiefe liefert; ein Bright-Pass mit Knie; ein separierbarer Gauß in zwei Pässen samt Kostenrechnung; Tiefenschärfe und Tiefen-Nebel aus dem Alpha-Kanal; ein Kaleidoskop-Finish mit einer Reihenfolge-Debatte; ein zahmes Temporal-Feedback; und eine Politur, die endlich am Ende der Kette wohnt – alles an einer STIMMUNGs-Blende, die von der Szene bis in die Nachbearbeitung reicht.
@@ -1770,5 +1940,33 @@ Wer weitermachen will: Fast jeder 🎨-Kasten ist ein eigener Shader – besonde
 Screenshots: gerendert mit AvsStandalone (Testing-Build), Chains in `composite_postfx_schritte/`.
 
 Und jetzt: Musik an. 🎵🔭
+
+---
+
+## Siehe auch
+
+**Voraussetzungen:**
+
+- [Juggernaut-Shader-Tutorial](Juggernaut-tutorial.md) – die Szene dieses Tutorials im Vollausbau: Gitter-Oktaven, Licht-Welten, `STIMMUNG`-Blende und die Ersatzkonstruktionen (God-Rays, Strahlenkeulen), die hier durch die echte Post-Kette ersetzt werden.
+- [Pimped-Kaleidoscope-Shader-Tutorial](PimpedKaleidoscope-tutorial.md) – Multipass-, Feedback-, Blur- und Faltungs-Grundlagen (Schritte 3–6 und 8–9) sowie die Common-Tab-Disziplin (dort Schritt 13).
+
+**Verwandte Dokumente:**
+
+- [Shader-Tutorials-Wegleitung](ShaderTutorials-overview.md) – Fokus-Tabellen, Lesereihenfolge und Technik-Index der gesamten Tutorial-Serie.
+- [Crystal-Lights-Shader-Tutorial](CrystalLights-tutorial.md) – die „Schablone" dieses Tutorials für Audio (Anhang A dort: `bandLevel`, Skalenfalle, Envelopes über Buffer-Zustand) und für den Weg Shadertoy ↔ LumiViz (Anhang B dort: Vollreferenz der drei Import-Wege, Portabilitäts-Checkliste, Audio-Adapter).
+- [Raymarching – Referenz](Raymarching-reference.md) – die technische Referenz zum Marsch-Algorithmus der Szene in Buffer A; das „Warum" hinter dem kondensierten Raymarcher zum Nachschlagen.
+
+**Weiterführendes:**
+
+- [Composite-Portals-Shader-Tutorial](CompositePortals-tutorial.md) – das Schwester-Composite: führt das Kondensieren ausführlich ein (dort Lehrtechnik, hier Werkzeug in Schritt 1) und merged zwei Szenen in einem Pass statt in einer Kette.
+- [Milkdrop3-Presets](<../../../../../asset/Milkdrop3/presets/>) – die Stil-Vorbilder mit `GetBlur1/2/3` im Original-Einsatz (frosty caves, pimped caleidoscope, juggernaut): das Vorbild der hier gebauten Bloom-Infrastruktur (vgl. Schritt 6, 💡).
+
+## Changelog
+
+| Version | Datum | Änderungen |
+|---|---|---|
+| **1.2.0** | 2026-08-05 | Formalisierung nach Tutorial_Base (Muster: der Pilot [CrystalLights-tutorial.md](CrystalLights-tutorial.md)): Blockquote-Header, Inhaltsverzeichnis, Konventions-Mapping (Tab. 1, multipass-spezifisch: Code-Blöcke je Tab), Lernziele, Voraussetzungen, Übersicht der Schritte, End-Validierung, Fehlerbehebung, Nächste Schritte, Siehe auch; Tabellen als Tab. 1–6 indexiert, Pass-Diagramm als Fig. 1 [Blockdiagramm] getaggt; **Ergebnis:**-Zeilen in den Schritten A1 und A2 ergänzt. Didaktischer Bestand (Schritt-Texte, Code, 🎨-Kästen, Anhänge) inhaltlich unverändert; der Schritt-4-Fließtext zur `SCHWELLE` bleibt bewusst beim Shadertoy-Stand `0.7` (Diskrepanz zur Chain-Kalibrierung in Fehlerbehebung und Abspann dokumentiert, Nachstimmen offen). Inklusive Umzug der Serie nach `projects/apps/MyViz/docs/tutorials/` und Umbenennung nach FNM-01 zu `CompositePostfx-tutorial.md` (Entscheid Patrik, 2026-08-04). |
+| **1.1.0** | 2026-08-04 | Multipass-Schritt-Chains + Screenshots: je Schritt eine lauffähige Chain in `composite_postfx_schritte/` (generiert per `make_schritte.py` – das Markdown ist die SSOT) und ein eingebettetes Render-Bild in `composite_postfx_bilder/` (AvsStandalone, Testing-Build, 800×450). Vier dokumentierte Abweichungen nur in den generierten Dateien: manuelles bilineares Lesen `lesBilinear0/1` (die Buffer-FBOs der App filtern NEAREST), Chain-Kalibrierung `SCHWELLE 0.7 → 0.3` (dark-Stimmung-Befund: keine Lichtquelle lum-gewichtet über 0.7), Monitor-/Schalter-Stände je Schritt-Bild sowie App-Audio-Uniforms in A1/A3 (dB-Sättigung des Testsignals). |
+| **1.0.0** | 2026-08-04 | Erstfassung: 13 Schritte (Rohware → Architektur → Bloom → Tiefe → Finish → Zeit → Politur → Endstand) + Anhang A (Audio auf die Küchenstationen) + Anhang B (Multipass-Import + Effect-Chain-Brücke). |
 
 

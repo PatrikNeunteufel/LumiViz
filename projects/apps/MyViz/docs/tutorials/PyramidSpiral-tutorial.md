@@ -1,5 +1,64 @@
 # Pyramid Spiral – Ein Shader von Grund auf
 
+> **Dokumenttyp:** Tutorial  
+> **Version:** 1.2.0  
+> **Status:** Stabil  
+> **Domain:** Programming  
+> **Kategorie:** Algorithms  
+> **Programmiersprache:** GLSL (Shadertoy/WebGL2)  
+> **Voraussetzungen:** Keine; dies ist der Einstieg der Shader-Tutorial-Serie  
+> **Schwierigkeitsgrad:** Grundlagen  
+> **Tutorial-Typ:** Implementierung  
+> **Zeitschätzung:** 6–8 h für die Schritte 1–16 auf shadertoy.com (inkl. Experimentieren), zusätzlich ~3 h für die Anhänge A/B; reines Durchlesen ~2 h  
+> **Gültigkeit:** Shadertoy-Image-Shader (WebGL2); die 📦-LumiViz-Kästen zusätzlich für den Shadertoy-Node der LumiViz-Effect-Chain (Stand Session 65/67)  
+> **Zweck:** Schritt-für-Schritt-Aufbau des Shaders „Pyramid Spiral" (Noztol) – ein geraymarchter Kaleidoskop-Tunnel aus leuchtenden Oktaedern – vom ersten Pixel bis zum fertigen Original samt Audio-Reaktivität und Varianten-Weiche.  
+> **Zielgruppe:** Einsteiger in die Shader-Programmierung ohne Vorwissen; Leser der Shader-Tutorial-Serie (Serien-Einstieg)  
+> **Sprache:** Deutsch  
+
+> ⚠ **HINWEIS: Nicht-normative Symbol-Markierungen**
+>
+> Dieses Dokument enthält keine ASCII-Diagramme; die Emoji-Markierungen der Schritte (💡, 🎨, 🧠, ⚠️, ↪, 📦)
+> dienen ausschließlich der **illustrativen Unterstützung** als Lesehilfe. Verbindlich sind die textuelle
+> Beschreibung und der Code.
+
+---
+
+## Inhaltsverzeichnis
+
+1. Einleitung
+2. Lernziele
+3. Voraussetzungen
+4. Übersicht der Schritte
+5. Bevor es losgeht: Wie ein Fragment-Shader denkt
+6. Schritt 1 – Der erste Pixel: UV-Koordinaten
+7. Schritt 2 – Zentrieren und Seitenverhältnis korrigieren
+8. Schritt 3 – Raymarching: Ein Strahl trifft eine Kugel
+9. Schritt 4 – Tiefe sichtbar machen
+10. Schritt 5 – Das Oktaeder: die Pyramidenform des Originals
+11. Schritt 6 – Normalen und erstes Licht
+12. Schritt 7 – Den Raum wiederholen: aus eins mach unendlich
+13. Schritt 8 – Der unendliche Flug: Repetition in der Tiefe
+14. Schritt 9 – Das Kaleidoskop: 9 Arme aus einem
+15. Schritt 10 – Der Twist: aus dem Tunnel wird eine Spirale
+16. Schritt 11 – Animation: die Spirale dreht sich, die Kamera lebt
+17. Schritt 12 – Farbe: die Cosinus-Palette
+18. Schritt 13 – Licht wie im Original: Fresnel + Glanzpunkt
+19. Schritt 14 – Glow: Licht aus den Beinahe-Treffern
+20. Schritt 15 – Nebel und Stabilität: die Ingenieurs-Zeilen
+21. Schritt 16 – Politur: Tonemapping, Gamma, Vignette – das Original
+22. Rückblick: Die Methode hinter den 16 Schritten
+23. Anhang A: Audio-Reaktivität – der Shader hört Musik (A1–A3)
+24. Anhang B: Die Weiche – Varianten am Objekt-Feld (B1–B3)
+25. End-Validierung
+26. Fehlerbehebung
+27. Nächste Schritte
+28. Siehe auch
+29. Changelog
+
+---
+
+## Einleitung
+
 **Ziel:** Den Shader [„Pyramid Spiral" von Noztol](https://www.shadertoy.com/view/fcy3R3) in 16 kleinen, nachvollziehbaren Schritten selbst aufbauen – ein geraymarchter, unendlicher Kaleidoskop-Tunnel aus leuchtenden Oktaedern.
 
 **So funktioniert dieses Tutorial:**
@@ -9,7 +68,67 @@
 - Die Reihenfolge ist kein Zufall: **Geometrie → Bewegung → Farbe → Licht → Politur.** Genau so bauen erfahrene Shader-Entwickler ihre Werke auf – erst muss die Form stimmen, dann kommt der Schmuck.
 - **In LumiViz:** Jeder Schritt liegt zusätzlich als lauffähige Ein-Node-Chain in `pyramid_spiral_schritte/` (generiert aus diesem Dokument per `make_schritte.py` – das Markdown ist die SSOT). Die Screenshots bei den Schritten stammen aus genau diesen Chains, gerendert im AvsStandalone (`AvsStandalone pyramid_spiral_schritte --auto --frames 300 --size 800x450 --out pyramid_spiral_bilder`); die Anhang-Bilder hören dabei das synthetische Testsignal des Standalone.
 
-**Inhalt**
+Die Schritt-Konvention der Serie deckt die vier Elemente eines Tutorial-Schritts (Ziel, Anleitung, Validierung, Vertiefung) mit festen Markierungen ab – Tab. 1 zeigt die Zuordnung, die in jedem Schritt dieses Dokuments gilt:
+
+| Konvention im Schritt | Bedeutung |
+|---|---|
+| **Neu:** | Ziel des Schritts – die eine Technik, die hinzukommt |
+| Code-Block | Durchführung – der vollständige, lauffähige Shader-Code |
+| **Ergebnis:** | Validierung des Schritts – das prüfbare Sichtergebnis |
+| „Was passiert hier" | Anleitung und Erklärung des Codes |
+| 🎨 Experimentieren | Optionale Vertiefung und Variationen |
+
+*Tab. 1: Konventions-Mapping – Schritt-Markierungen dieses Tutorials und ihre Rolle in der Schritt-Struktur*
+
+## Lernziele
+
+Nach diesem Tutorial können Sie …
+
+1. … ein zentriertes, seitenverhältnis-korrigiertes **UV-Koordinatensystem** aufbauen und Zwischenwerte (Koordinaten, Distanzen, Normalen, Iterationszahlen) als Farbe zur Fehlersuche ausgeben (Schritte 1–2; Debug-Ansichten in 3, 4, 6).
+2. … einen **SDF-Raymarcher** (Sphere Tracing) mit Kamera, Treffer- und Abbruchbedingung sowie Gradient-Normalen implementieren und mit Diffus-, Fresnel- und Specular-Beleuchtung kombinieren (Schritte 3–6, 13).
+3. … den Raum per **Domain Repetition, Kaleidoskop-Faltung und Twist** verbiegen, dabei die Zellgrößen-Regel einhalten und Marsch-Artefakte durch Kantenrundung und Schrittdrosselung beheben (Schritte 7–10, 15).
+4. … Bewegung, Farbe und Politur **deterministisch aus der Zeit** aufbauen: Cosinus-Ease-Kurven für Rotation und Kamera, die Cosinus-Palette als Farbsteuerung sowie Glow, Nebel, Tonemapping, Gamma und Vignette in korrekter Pipeline-Reihenfolge (Schritte 11–12, 14–16).
+5. … die Shadertoy-**Audio-Textur** (FFT + Wellenform) auslesen, zu stabilen Bandpegeln mitteln und nach dem Muster „musikalische Rolle → visuelle Rolle" auf Shader-Parameter legen – ohne die Teleport-Falle `iTime * Audio` (Anhang A).
+6. … Zellen der Domain Repetition per **Zell-Index und Hash individualisieren** und daraus Varianten implementieren: gestreute Formen/Größen, einen 3D-Equalizer mit Zellwand-Bremse und beat-getriggerte Blitze (Anhang B).
+
+## Voraussetzungen
+
+**Wissen:**
+
+- Keine – dieses Tutorial ist der Einstieg der Shader-Tutorial-Serie und setzt kein Shader- oder GPU-Vorwissen voraus. Schulmathematik (Vektoren, Sinus/Cosinus) genügt; alle weiteren Konzepte werden im Text eingeführt.
+
+**Software:**
+
+- Ein aktueller, WebGL2-fähiger Browser (Chrome, Firefox, Edge oder Safari in einer aktuellen Desktop-Version) – Shadertoy ist eine Web-Plattform, es ist keine Installation nötig.
+- Zugang zu [shadertoy.com](https://www.shadertoy.com/new) – Shader lassen sich ohne Konto erstellen und ausführen; zum Speichern eigener Shader ist ein kostenloses Konto erforderlich.
+- Für Anhang A sowie die Schritte B2/B3: ein „Music"-Kanal im Shadertoy-Editor (eingebaute Track-Auswahl, keine eigene Datei nötig).
+
+**Optional (nur für die LumiViz-Hinweise):**
+
+- LumiViz/MyViz mit Shadertoy-Node in der Effect-Chain (Stand Session 65/67) – für die 📦-Kästen und die mitgelieferten Schritt-Chains in `pyramid_spiral_schritte/`.
+
+## Übersicht der Schritte
+
+Das Tutorial führt in 16 Schritten vom ersten Pixel zum fertigen Original; die Anhänge ergänzen Audio-Reaktivität (A1–A3) und die Varianten-Weiche am Objekt-Feld (B1–B3):
+
+1. Der erste Pixel: UV-Koordinaten
+2. Zentrieren und Seitenverhältnis korrigieren
+3. Raymarching: Ein Strahl trifft eine Kugel
+4. Tiefe sichtbar machen
+5. Das Oktaeder: die Pyramidenform des Originals
+6. Normalen und erstes Licht
+7. Den Raum wiederholen: aus eins mach unendlich
+8. Der unendliche Flug: Repetition in der Tiefe
+9. Das Kaleidoskop: 9 Arme aus einem
+10. Der Twist: aus dem Tunnel wird eine Spirale
+11. Animation: die Spirale dreht sich, die Kamera lebt
+12. Farbe: die Cosinus-Palette
+13. Licht wie im Original: Fresnel + Glanzpunkt
+14. Glow: Licht aus den Beinahe-Treffern
+15. Nebel und Stabilität: die Ingenieurs-Zeilen
+16. Politur: Tonemapping, Gamma, Vignette – das Original
+
+Dieselben Schritte, nach Phasen gruppiert (Tab. 2):
 
 | Phase | Schritte | Thema |
 |---|---|---|
@@ -22,6 +141,8 @@
 | Politur | 16 | Tonemapping, Gamma, Vignette |
 | Anhang A | A1–A3 | Audio-Reaktivität |
 | Anhang B | B1–B3 | Die Weiche: Formen, 3D-Equalizer, Beat-Blitze |
+
+*Tab. 2: Phasen-Gliederung der Schritte und Anhänge*
 
 ---
 
@@ -39,6 +160,8 @@ Alles in diesem Tutorial ist eine Antwort auf diese Frage. Shadertoy gibt dir da
 | `iResolution` | Auflösung des Bildes in Pixeln |
 | `iTime` | Sekunden seit Start – unsere einzige Uhr |
 | `fragColor` | Die Ausgabe: RGBA-Farbe des Pixels |
+
+*Tab. 3: Shadertoy-Uniforms – die Ein- und Ausgaben eines Image-Shaders*
 
 🧠 **Merke:** Ein Shader *zeichnet* nichts. Er *berechnet* für jeden Ort im Bild, welche Farbe dort sein muss, damit das Gesamtbild entsteht. Dieses Umdenken ist die eigentliche Hürde – der Rest ist Mathematik.
 
@@ -1541,7 +1664,7 @@ Viel Spaß beim Verbiegen des Raums. 🌀
 
 ---
 
-# Anhang: Audio-Reaktivität – der Shader hört Musik
+# Anhang A: Audio-Reaktivität – der Shader hört Musik
 
 Der fertige Shader ist hübsch – aber er ist taub. In diesem Anhang bekommt er Ohren: Erst machen wir das Audiosignal *sichtbar* (derselbe Debug-zuerst-Ansatz wie in Schritt 1), dann destillieren wir daraus brauchbare Steuerwerte, und zum Schluss verdrahten wir sie mit der Spirale.
 
@@ -1553,6 +1676,8 @@ Der fertige Shader ist hübsch – aber er ist taub. In diesem Anhang bekommt er
 |---|---|---|
 | 0 (unten) | `texture(iChannel0, vec2(x, 0.25)).x` | **FFT-Spektrum** – Frequenzen von links (Bass) nach rechts (Höhen), Werte 0..1 |
 | 1 (oben) | `texture(iChannel0, vec2(x, 0.75)).x` | **Wellenform** – der rohe Schwingungsverlauf des aktuellen Moments |
+
+*Tab. 4: Die 512×2-Audio-Textur – FFT-Zeile und Wellenform-Zeile*
 
 Das Spektrum ist bereits logarithmisch (dB) skaliert und zeitlich leicht geglättet – man kann es also direkt verwenden, ohne selbst eine FFT rechnen zu müssen.
 
@@ -1662,6 +1787,8 @@ Die Bereichsgrenzen sind bewusst gewählt (bei ~11 kHz Texturbreite):
 | `bass` | 0.00–0.05 | bis ~550 Hz | Kickdrum, Bassline |
 | `mid` | 0.05–0.25 | ~550 Hz–2.8 kHz | Gesang, Gitarren, Synths |
 | `treb` | 0.25–0.70 | ~2.8–7.7 kHz | Hi-Hats, Becken, „Luft" |
+
+*Tab. 5: Die drei Frequenzbänder – x-Bereiche, ungefähre Frequenzen und musikalische Bedeutung*
 
 Oberhalb von x ≈ 0.7 ist bei den meisten Aufnahmen kaum noch Energie – der Bereich bliebe im Mittelwert nur Ballast.
 
@@ -1824,6 +1951,8 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
 | Bass (1)+(4) | Oktaeder-Größe + Glow-Menge | Der Beat ist das *Fundament* – also darf er Masse und Licht der ganzen Szene pumpen |
 | Mitten (2) | Palette-Verschiebung | Melodie = Verlauf, Stimmung – Farbe ist ihr visuelles Gegenstück |
 | Höhen (3) | Specular-Stärke | Hi-Hats sind kurz, spitz, glitzernd – exakt der Charakter von Glanzlichtern |
+
+*Tab. 6: Die vier Audio-Mappings in A3 – musikalische Rolle → visuelle Rolle*
 
 Und wieder trägt Schritt 7 Früchte: Der Bass-Puls in `map` muss die **Zellgrößen-Regel** respektieren. `0.06 * 1.7 = 0.102` bleibt unter der halben Zellbreite 0.15 – wer den Faktor auf `* 2.0` dreht, verletzt die Regel bei lauten Passagen und erntet genau die Durchschieß-Artefakte von damals, nur jetzt *im Takt der Musik*.
 
@@ -2429,3 +2558,71 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 Wie in Anhang A gilt: Alles hier läuft 1:1 im Shadertoy-Node. Zusätzlich lohnt in LumiViz vor allem der **`beat`-Uniform**: Er ersetzt das starre BPM-Raster durch die echte Beat-Erkennung der App — `gPuls` wird dann aus `beat` gespeist statt aus `fract(iTime * BPM / 60)`. Das Ausglühen bleibt trotzdem eine Zeitfunktion (der Shader hat weiterhin kein Gedächtnis); wer echtes Nachleuchten über Sekunden will, hängt in der Effect-Chain einen Feedback-/Trail-Node hinter den Shadertoy-Node.
 
 Die Weiche ist gestellt – wohin sie weiterführt, entscheidest du. 🚦
+
+---
+
+## End-Validierung
+
+Diese Validierung steht bewusst **hinter den Anhängen**: A1–A3 und B1–B3 sind reguläre Schritte dieses Tutorials, und die Lernziele 5 (Audio-Reaktivität) und 6 (Zell-Individualisierung) sind erst dort erreichbar – die End-Validierung muss aber alle Lernziele abdecken. Die Kriterien 1–5 prüfen den Kern (Schritte 1–16), die Kriterien 6–7 die Anhänge. Jedes Kriterium ist am laufenden Shader auf shadertoy.com objektiv prüfbar:
+
+1. **Kompilierbarkeit:** Das Gesamtlisting aus Schritt 16 kompiliert auf shadertoy.com ohne Fehlermeldung und rendert die animierte, farbige Spirale – kein Schwarzbild, kein Standbild. *(Basis aller Lernziele)*
+2. **Koordinatensystem:** Im Stand von Schritt 2 ist der radiale Verlauf **kreisrund**, nicht oval; Gegenprobe: Division durch `iResolution.xy` statt `iResolution.y` macht ihn sichtbar oval, zurückgestellt verschwindet die Verzerrung wieder. *(Lernziel 1)*
+3. **Raymarcher und Licht:** Im Stand von Schritt 6 zeigt die einkommentierte Debug-Zeile `color = n * 0.5 + 0.5;` pro Oktaeder-Fläche eine homogene RGB-Farbe (Normalen korrekt); im Stand von Schritt 13 sind Flächenmitten dunkel und Kanten/Silhouetten farbglühend, mit wandernden Glanzblitzen. *(Lernziel 2)*
+4. **Raumfaltung:** Ab Schritt 9 zeigt ein Standbild neun Arme (Sektorzahl `/ 9.0` abzählbar); `sdOctahedron(p, 0.6)` in Schritt 7 erzeugt die beschriebenen Durchschieß-Artefakte, Radius 0.25 beseitigt sie wieder; die Stabilitäts-Faktoren aus Schritt 15 auf `1.0` zurückgesetzt bringen Kanten- und Fern-Flimmern zurück, restauriert verschwindet es. *(Lernziel 3)*
+5. **Animation und Politur:** Die Rotation schwingt sichtbar an und aus (Umkehrpunkte mit Winkelgeschwindigkeit null statt monotonem Kreiseln); Auskommentieren der drei Politur-Blöcke in Schritt 16 verändert das Bild deutlich (flache Weißflecken, abgesoffene Mitteltöne, ruhige Ränder), einkommentiert kehrt der fertige Look zurück. *(Lernziel 4)*
+6. **Audio:** Im A3-Stand (iChannel0 = Music) schwellen die Oktaeder und der Glow im Takt der Kickdrum, die Farben schieben sich mit der Melodie, Glanzblitze folgen den Hi-Hats; **ohne belegten Kanal** läuft die Spirale unverändert stumm weiter. *(Lernziel 5)*
+7. **Varianten:** In B1 wechselt der `FORM`-Schalter die Objektform ohne weitere Codeänderung und `GROESSE_STREU` streut die Größen pro Zelle flackerfrei; in B2 türmt sich der Bass als Grat in der Bildmitte und alle vier `KAMERA`-Fahrten laufen ohne Durchschieß-Artefakte; in B3 zünden pro Beat wechselnde Zellen und glühen bis zum nächsten Schlag aus. *(Lernziel 6)*
+
+---
+
+## Fehlerbehebung
+
+Die häufigsten Stolperstellen dieses Tutorials, gesammelt nach Symptom (Tab. 7). Die schritt-lokalen ⚠-Hinweise (etwa zur Zellgrößen-Regel in Schritt 7 oder zur Zellwand-Bremse in B2) bleiben davon unberührt – hier stehen die Probleme, die typischerweise erst beim Zusammenbau oder beim Experimentieren auftreten:
+
+| # | Symptom | Ursache | Lösung |
+|---|---|---|---|
+| 1 | Schwarzes Bild nach dem Einfügen | Code unvollständig kopiert (Hilfsfunktionen fehlen) oder Kompilierfehler – Shadertoy rendert dann nichts bzw. den letzten lauffähigen Stand | Das vollständige Listing des Schritts kopieren, mit `Alt+Enter` kompilieren und die Fehlerkonsole unter dem Editor lesen |
+| 2 | Löcher und Geisterkanten, Strahl springt durch Geometrie | Zellgrößen-Regel verletzt – die Form ragt über die halbe Zellbreite hinaus, die SDF sieht die Nachbarkopie nicht (Schritt 7); in B2/B3 zusätzlich: Zellwand-Bremse entfernt oder Puffer zu groß | Form-Radius unter die halbe Zellbreite bringen; beim Audio-Puls in A3 den Maximal-Radius nachrechnen; in B2/B3 die `wand`-Zeile aktiv lassen |
+| 3 | Unruhige Kanten, Flimmern in der Ferne | Twist lässt die SDF zu große Abstände melden, Fernbereich ist unterabgetastet | Die Stabilitäts-Zeilen aus Schritt 15 aktiv lassen (`(shape - 0.005) * 0.8` und `dist += d * 0.9`) und die Nebeldichte zur Abbruchgrenze passend halten |
+| 4 | Periodisches Schwarzbild beim Flug (Schritt 8) | Kamera fliegt exakt auf einer Gitterlinie und damit periodisch mitten durch ein Oktaeder | Kamera versetzen (`ro = vec3(0.15, 0.1, ...)`) oder ab Schritt 9 die konstruktionsbedingt freie Mittelachse des Kaleidoskops nutzen |
+| 5 | Bild in den Anhängen schwarz bzw. unbewegt | iChannel0 nicht mit „Music" belegt – die Audio-Textur liefert nur Nullen, das ist kein Fehler im Code | Kanal-Kachel unter dem Code-Editor prüfen und im Tab „Music" einen Track wählen (Vorbereitung am Anfang von Anhang A) |
+| 6 | Kamera „teleportiert" im Takt der Musik | Audio-Pegel auf den Faktor vor `iTime` gelegt – `iTime * speed` ist eine Position, die bei Pegeländerung springt | Audio nur auf zustandslose Größen legen (Größe, Helligkeit, Farbe, Winkel-Offsets) – die Warnung in Schritt A3 |
+| 7 | Konstanten wirken anders als beschrieben | Die Shader dieser Serie sind konstruiert, nachgerechnet und in LumiViz gegengerendert (Screenshots im Text) – aber nicht jeder Zahlwert ist gegen das beschriebene Zielbild feinabgeglichen, und der Sichttest auf shadertoy.com ist noch offen | Die Stellschraube in kleinen Schritten nachstimmen; die beschriebene **Wirkrichtung** jeder Konstante stimmt, der Absolutwert ist Startpunkt, nicht Dogma |
+
+*Tab. 7: Fehlerbehebung – Symptom, Ursache, Lösung*
+
+---
+
+## Nächste Schritte
+
+Die Fortsetzung folgt der [Wegleitung](ShaderTutorials-overview.md) der Serie:
+
+- **Als Nächstes:** [Crystal-Lights](CrystalLights-tutorial.md) – die zweite große Renderschule (Höhenfeld-Raymarching statt Tunnel) mit Noise/FBM/Voronoi, Brechung und Kamera-Choreografie; sein Anhang B ist die **Vollreferenz Shadertoy ↔ LumiViz** der Serie.
+- **Danach verzweigt der Weg:** [Stratospheric-Tunnel](StratosphericTunnel-tutorial.md) (Architektur, Lichtdesign, Kamerapfade – der direkteste Nachfolger dieses Tunnels), [Space-Debris](SpaceDebris-tutorial.md) (Objektfelder – vertieft die Domain Repetition aus Schritt 7/B1 in 3D mit Rotation) oder [Pimped-Kaleidoscope](PimpedKaleidoscope-tutorial.md) (2D-Strang, Feedback und Zustand – braucht nur die Grundlagen dieses Tutorials).
+- **Später:** [Juggernaut](Juggernaut-tutorial.md) und die Composites – [Portals](CompositePortals-tutorial.md), [Postfx](CompositePostfx-tutorial.md), [Transitions](CompositeTransitions-tutorial.md) – setzen die Gesamtlistings der Basis-Tutorials voraus.
+
+---
+
+## Siehe auch
+
+**Voraussetzungen:**
+
+- Keine – dieses Tutorial ist der Einstieg der Shader-Tutorial-Serie; alle übrigen Tutorials der Serie setzen es voraus.
+
+**Verwandte Dokumente:**
+
+- [Shader-Tutorials-Wegleitung](ShaderTutorials-overview.md) – Fokus-Tabellen, Lesereihenfolge und Technik-Index der gesamten Tutorial-Serie.
+- [Raymarching – Referenz](Raymarching-reference.md) – die technische Referenz zu Algorithmus, Distanzfunktionen, Normalen, Varianten und Artefakten; das „Warum" hinter den Schritten 3–10 zum Nachschlagen.
+
+**Weiterführendes:**
+
+- [„Pyramid Spiral" von Noztol](https://www.shadertoy.com/view/fcy3R3) – der Original-Shader auf shadertoy.com, dessen Aufbau dieses Tutorial Schritt für Schritt nachvollzieht.
+- [iquilezles.org](https://iquilezles.org/articles/) – die Artikelsammlung von Inigo Quilez zu Distanzfunktionen, Paletten und Raymarching; die Primärquelle der meisten hier verwendeten Techniken.
+
+## Changelog
+
+| Version | Datum | Änderungen |
+|---|---|---|
+| **1.2.0** | 2026-08-05 | Formalisierung nach Tutorial_Base (nach dem Muster des Piloten Crystal-Lights): Blockquote-Header, Inhaltsverzeichnis, Lernziele, Voraussetzungen, Übersicht der Schritte, Konventions-Mapping (Tab. 1), End-Validierung, Fehlerbehebung, Nächste Schritte, Siehe auch; bestehende Tabellen als Tab. 2–6 indexiert, Fehlerbehebung als Tab. 7; Anhang-A-Überschrift zur Serien-Konvention um „A" ergänzt. Didaktischer Bestand (16 Schritte, Anhänge A/B mit der Weiche, Code, Bilder, 🎨-Kästen) inhaltlich unverändert. Zuvor Umzug der Serie nach `projects/apps/MyViz/docs/tutorials/` und Umbenennung nach FNM-01 zu `PyramidSpiral-tutorial.md` (Entscheid Patrik, 2026-08-04). |
+| **1.1.0** | 2026-08-04 | Schritt-Chains + Screenshots (bereits vor der Formalisierung): je Schritt eine lauffähige Ein-Node-Chain in `pyramid_spiral_schritte/` (generiert per `make_schritte.py`, das Markdown ist die SSOT) und ein eingebettetes Render-Bild in `pyramid_spiral_bilder/` (AvsStandalone, 800×450; Anhang-Bilder mit dem synthetischen Testsignal des Standalone); Einleitungs-Bullet „In LumiViz". |
+| **1.0.0** | 2026-08-04 | Erstfassung: 16 Schritte (Geometrie → Bewegung → Farbe → Licht → Politur) + Anhang A (Audio-Reaktivität, A1–A3) + Anhang B (Die Weiche: Formen, 3D-Equalizer, Beat-Blitze, B1–B3). |

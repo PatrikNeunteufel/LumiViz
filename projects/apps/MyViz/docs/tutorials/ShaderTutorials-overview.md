@@ -1,4 +1,32 @@
-# Shader-Tutorials – Wegleitung & Lesehilfe
+# Shader-Tutorials — Übersicht & Wegleitung
+
+> **Dokumenttyp:** Overview  
+> **Ebene:** Kategorie  
+> **Version:** 1.2.0  
+> **Status:** Stabil  
+> **Domain:** Programming  
+> **Kategorie:** Algorithms  
+> **Gültigkeit:** Shader-Tutorial-Serie in `projects/apps/MyViz/docs/tutorials/` (Shadertoy-GLSL ↔ LumiViz)  
+> **Zweck:** Fachliche Orientierung über die Tutorial-Serie: Fokus je Tutorial, Lesereihenfolge, Technik-Index, Dokumentenlandkarte  
+> **Zielgruppe:** Shader-Einsteiger und LumiViz-Autoren  
+> **Sprache:** Deutsch
+
+> ℹ **Hinweis:** Dieses Dokument enthält ASCII-Diagramme; die Darstellung setzt eine Monospace-Schrift voraus.
+
+## Inhaltsverzeichnis
+
+1. Zweck & Scope
+2. Taxonomie
+3. Überblick: Welches Tutorial hat welchen Fokus? (Konzept-Vergleich)
+4. Dokumentenlandkarte
+5. Lesehilfe: In welcher Reihenfolge? (Leseempfehlungen)
+6. Technik-Index (Entscheidungsmatrix)
+7. Ausschlusskriterien
+8. Glossar (Verweis)
+9. Weiterführende Dokumente & Ausblick
+10. Changelog
+
+## Zweck & Scope
 
 Dieser Ordner (`projects/apps/MyViz/docs/tutorials/`) enthält eine zusammenhängende **Tutorial-Serie zum Shader-Bau von Grund auf** — und ist zugleich die Heimat künftiger Tutorial-Serien (Milkdrop-Presets, AVS) sowie der formalen Referenzdokumente. Alle Tutorials teilen dieselbe Schule: Jeder Schritt ist ein vollständiger, lauffähiger Shader für [shadertoy.com/new](https://www.shadertoy.com/new), jeder Schritt fügt genau eine Technik hinzu, und die Reihenfolge ist immer **Geometrie → Material → Licht → Bewegung → Politur**. Jedes Tutorial endet mit einem Gesamtlisting (STELLSCHRAUBEN-Konstantenblock, Konvention der Vorrats-Shader in `asset/shadertoys/`) und zwei Anhängen:
 
@@ -13,6 +41,32 @@ Zum Nachschlagen neben den Tutorials: **[Raymarching-reference.md](Raymarching-r
 
 ---
 
+## Taxonomie
+
+Die Serie gliedert sich in drei Äste; die Ordnerstruktur (ein Dokument je Thema plus `<name>_schritte/`- und `<name>_bilder/`-Unterordner) spiegelt genau diesen Baum.
+
+```text
+Shader-Tutorials (docs/tutorials/)
+│
+├── Basis-Tutorials ─ ein Shader je Tutorial, von Grund auf
+│   ├── PyramidSpiral ········ Raymarching-Fundament (Einstieg)
+│   ├── CrystalLights ········ Höhenfelder, Brechung, Kamera
+│   ├── StratosphericTunnel ·· Röhren, Fenster, Pfade, Vergabelung
+│   ├── SpaceDebris ·········· 3D-Repetition, Taumeln, Stimmungen
+│   ├── PimpedKaleidoscope ··· 2D-Feedback-Strang (Buffer/Zustand)
+│   └── Juggernaut ··········· Megastruktur, God-Rays, dark↔bright
+│
+├── Composite-Tutorials ─ mergen die fertigen Basis-Shader
+│   ├── CompositePortals ····· Szenen-Merge, Material-Id, AA
+│   ├── CompositePostfx ······ Multipass-Kette, Bloom, DOF
+│   └── CompositeTransitions · Übergänge, Zustandsmaschine
+│
+└── Referenzdokumente ─ Nachschlagen statt Herleiten
+    └── Raymarching-reference · Algorithmus, SDF-Katalog, Varianten
+```
+
+*Fig. 1 [Blockdiagramm]: Taxonomie der Tutorial-Serie*
+
 ## Überblick: Welches Tutorial hat welchen Fokus?
 
 | Tutorial | Was entsteht | Technik-Fokus | Niveau |
@@ -24,6 +78,8 @@ Zum Nachschlagen neben den Tutorials: **[Raymarching-reference.md](Raymarching-r
 | [Pimped-Kaleidoscope](PimpedKaleidoscope-tutorial.md) | Psychedelisches Falt-Kaleidoskop mit Leuchtspuren | **Der Kontrast zur Serie – 2D statt Raymarching:** Feedback-Systeme über Buffer A (Vorframe, Decay, Zoom/Rot, Sharpen, Dither – Milkdrops Warp-Rezept), drei kombinierbare Faltungen, „unsichtbare Kamera" als Lese-Transformation, Wellenform-Seed | Aufbau |
 | [Juggernaut](Juggernaut-tutorial.md) | Kolossale dunkle Megastruktur im Dunst | Größenwirkung/Low-Angle, **smin/smax-Verschneidung**, Panel-Greebles in Detail-Oktaven, **God-Rays/volumetrischer Glow**, Orbit-Kamera, **dark↔brighter als überblendbare Licht-Stimmung** | Vertiefung |
 
+*Tab. 1: Basis-Tutorials — Fokus und Niveau*
+
 **Stil-Vorbilder:** Pyramid-Spiral ← „Pyramid Spiral" (Noztol, Shadertoy) · Crystal-Lights ← *frosty caves 2* · Stratospheric-Tunnel ← *stratospheric turbulences 2* · Space-Debris ← *space debris* · Pimped-Kaleidoscope ← *shader pimped caleidoscope* · Juggernaut ← *juggernaut brighter / juggernaut 2 dark* · Audio-Gates überall ← *Rock The House*.
 
 ### Composite-Tutorials (mergen die fertigen Shader)
@@ -33,6 +89,30 @@ Zum Nachschlagen neben den Tutorials: **[Raymarching-reference.md](Raymarching-r
 | [Composite-Portals](CompositePortals-tutorial.md) | Tunnel-Flug, dessen Fenster in die echte Debris-Welt blicken; Kristall-Terrain als Tunnelboden | Tunnel + Debris + Crystal-Lights | **Kondensieren** (Gesamtlisting → Skelett), Namespacing zweier Welten, **Portal-Strahlen** (Szene-in-Szene, Maßstab/Diorama), **Material-Id-Dispatch**, Anti-Aliasing (fwidth, Supersampling), Kohärenz gegen den Collage-Effekt |
 | [Composite-Postfx](CompositePostfx-tutorial.md) | Der Juggernaut, veredelt durch eine echte Nachbearbeitungs-Kette | Juggernaut + Kaleidoscope | **Multipass-Architektur** (Buffer A→B→C→Image, Common als SSOT), Tiefe im Alpha-Kanal, **Bloom** (Bright-Pass + separierbarer Blur — das GetBlur1/2/3-Pendant), **Depth of Field**, Kaleidoskop als Finish (vor/nach Bloom), Temporal-Glättung, „Politur ans Ketten-Ende" |
 | [Composite-Transitions](CompositeTransitions-tutorial.md) | Endloser Wechsel Kristall-Terrain ↔ Juggernaut mit wählbarer Blendart | Crystal-Lights + Juggernaut | Übergangs-Phasen (Halten/Blenden), **Masken-Wipes mit Glühsaum**, Blendarten-Katalog, **Parameter-Morph** statt Bild-Mix, Kamera-Kontinuität, **Zustandsmaschine in Buffer A** (beat-getriggerter Wechsel = Milkdrop-Preset-Wechsel-Analogon) |
+
+*Tab. 2: Composite-Tutorials — Quellen und Fokus*
+
+---
+
+## Dokumentenlandkarte
+
+Die Landkarte zeigt je Thema den Dokumentbestand. Die Serie ist tutorial-getrieben: Referenz-Tiefe liefert bislang ein geteiltes Dokument (Raymarching) für den 3D-Strang; Concept-Dokumente (Herleitungen jenseits der Tutorials) existieren noch keine und sind als ausstehend markiert.
+
+| Thema | Tutorial | Reference | Concept | Status |
+|---|---|---|---|---|
+| Raymarching-Fundament | [PyramidSpiral](PyramidSpiral-tutorial.md) | [Raymarching](Raymarching-reference.md) (geteilt) | ausstehend | 🟡 |
+| Höhenfelder/Brechung | [CrystalLights](CrystalLights-tutorial.md) | [Raymarching](Raymarching-reference.md) (geteilt) | ausstehend | 🟡 |
+| Röhren/Fenster/Pfade | [StratosphericTunnel](StratosphericTunnel-tutorial.md) | [Raymarching](Raymarching-reference.md) (geteilt) | ausstehend | 🟡 |
+| 3D-Repetition/Taumeln | [SpaceDebris](SpaceDebris-tutorial.md) | [Raymarching](Raymarching-reference.md) (geteilt) | ausstehend | 🟡 |
+| 2D-Feedback/Kaleidoskop | [PimpedKaleidoscope](PimpedKaleidoscope-tutorial.md) | ausstehend (Feedback-Referenz) | ausstehend | 🟡 |
+| Megastruktur/God-Rays | [Juggernaut](Juggernaut-tutorial.md) | [Raymarching](Raymarching-reference.md) (geteilt) | ausstehend | 🟡 |
+| Szenen-Merge/Portale | [CompositePortals](CompositePortals-tutorial.md) | [Raymarching](Raymarching-reference.md) (geteilt) | ausstehend | 🟡 |
+| Multipass/PostFX | [CompositePostfx](CompositePostfx-tutorial.md) | ausstehend (Feedback-Referenz) | ausstehend | 🟡 |
+| Übergänge/Zustand | [CompositeTransitions](CompositeTransitions-tutorial.md) | ausstehend (Feedback-Referenz) | ausstehend | 🟡 |
+
+*Tab. 3: Dokumentenlandkarte (🟡 = Tutorial vorhanden und in LumiViz gegengerendert; Referenz-/Concept-Ausbau und shadertoy.com-Sichttest offen)*
+
+**Coverage:** Tutorials 9/9 (100 %) · Reference: 1 geteiltes Dokument für den 3D-Strang, Feedback-Referenz ausstehend · Concepts 0/9 (0 % — bislang bewusst: die „Warum"-Tiefe steckt in den „Was passiert hier"-Abschnitten der Tutorials).
 
 ---
 
@@ -63,6 +143,8 @@ Zum Nachschlagen neben den Tutorials: **[Raymarching-reference.md](Raymarching-r
                               └────────────────┘
 ```
 
+*Fig. 2 [Blockdiagramm]: Empfohlene Lesereihenfolge mit Verzweigung in 3D- und 2D-Strang*
+
 **Empfohlener Weg:**
 
 1. **Pyramid-Spiral zuerst** – ohne Ausnahme. Dort werden die Grundlagen (Fragment-Shader-Denken, UV, SDF, Marsch, Normalen, Hash) so erklärt, dass alle anderen Tutorials sie nur noch referenzieren.
@@ -79,6 +161,8 @@ Zum Nachschlagen neben den Tutorials: **[Raymarching-reference.md](Raymarching-r
 ---
 
 ## Technik-Index: „Ich will … lernen"
+
+Der Technik-Index ist zugleich die **Entscheidungsmatrix** der Serie: Zeile suchen, Tutorial + Schritt aufschlagen.
 
 | Ich will … | Tutorial (Schritt) |
 |---|---|
@@ -126,8 +210,41 @@ Zum Nachschlagen neben den Tutorials: **[Raymarching-reference.md](Raymarching-r
 | Zustandsmaschine in Buffer A (Ereignis-Wechsel) | Composite-Transitions 11 |
 | Beat-getriggerter Preset-Wechsel, Drop-Detektor | Composite-Transitions A1–A2 |
 
+*Tab. 4: Technik-Index / Entscheidungsmatrix (Technik → Tutorial + Schritt)*
+
 ---
 
-## Ausblick
+## Ausschlusskriterien
 
-**Kandidaten für spätere Grundlagen-Tutorials** (bewusst nicht in die Composites gequetscht): Licht & Schatten (Schattenstrahlen, SDF-AO, Spiegelungen) · Volumetrik (echte Dichte-Integrale statt Glow) · Escape-Time-Fraktale (Mandelbox – die `mbox`-Brücke zu frosty caves) · Texturen & Cubemaps.
+Genauso wichtig wie „wo finde ich was" ist „wofür ist die Serie das falsche Werkzeug":
+
+| Vorhaben | Warum hier nicht | Alternative |
+|---|---|---|
+| Ein fertiges Milkdrop-/AVS-Preset 1:1 portieren | Die Serie lehrt Eigenbau nach Stil-Vorbildern, keine Ports | Import-Pipeline der App (AVS-/MilkDrop-Import, siehe `visuals/`-Doku) |
+| Schnell ein fertiges Visual für eine Chain | Tutorials sind Lernwege, keine Vorlagen-Sammlung | Vorrats-Shader in `asset/effectchain/shadertoys/` (100 .lvfx) |
+| Schatten/AO, echte Volumetrik, Escape-Time-Fraktale, Texturen lernen | Noch nicht Teil der Serie | Ausblick-Kandidaten (unten); Grundzüge: [Raymarching-Referenz](Raymarching-reference.md) §8 |
+| Milkdrop-Warp/Comp-Shader (HLSL) schreiben | Serie ist Shadertoy-GLSL | Milkdrop-Tutorial-Serie (künftig, dieser Ordner) |
+
+*Tab. 5: Ausschlusskriterien mit Alternativen*
+
+## Glossar (Verweis)
+
+Die Fachbegriffe der Serie (SDF, Sphere Tracing, Lipschitz-Konstante, Drosselfaktor, Domain Repetition, Beer-Lambert …) definiert zentral das Glossar der [Raymarching-Referenz](Raymarching-reference.md) (§12) — hier bewusst nicht dupliziert.
+
+---
+
+## Weiterführende Dokumente & Ausblick
+
+**Im Ordner:** [Raymarching-Referenz](Raymarching-reference.md) (formale Referenz zum 3D-Strang) · die 9 Tutorials gemäß Tab. 1/2. **Außerhalb:** App-Doku-Einstieg [INDEX.md](../INDEX.md) · Vorrats-Shader `asset/effectchain/shadertoys/` · Stil-Vorbild-Presets `asset/Milkdrop3/presets/`.
+
+**Kandidaten für spätere Grundlagen-Tutorials** (bewusst nicht in die Composites gequetscht): Licht & Schatten (Schattenstrahlen, SDF-AO, Spiegelungen) · Volumetrik (echte Dichte-Integrale statt Glow) · Escape-Time-Fraktale (Mandelbox – die `mbox`-Brücke zu frosty caves) · Texturen & Cubemaps. Dazu ausstehend: eine Feedback-/Multipass-Referenz als Pendant zur Raymarching-Referenz (siehe Landkarte) und künftige Serien für Milkdrop-Presets und AVS.
+
+## Changelog
+
+| Version | Änderung |
+|---|---|
+| 1.2.0 | Formalisierung als Kategorie-Overview nach Overview_Base: Header, Taxonomie (Fig. 1), Dokumentenlandkarte mit Coverage (Tab. 3), Ausschlusskriterien (Tab. 5), Glossar-Verweis, Changelog; Tabellen/Diagramme indexiert. Bewusste Abweichungen: Leseempfehlungen (Domain-Ebene) beibehalten, da die Serie faktisch als eigenständiges Fachgebiet gelesen wird; Inhaltsverzeichnis ohne Anker-Links (Konvention der Serie). |
+| 1.1.0 | Umzug nach `projects/apps/MyViz/docs/tutorials/` + FNM-Umbenennung aller Dokumente; Raymarching-Referenz verlinkt; Render-Status der Serie (LumiViz gegengerendert) samt Nachstimm-Kandidaten nachgeführt. |
+| 1.0.0 | Erstfassung als „Shader-Tutorials-Wegleitung" (Fokus-Tabellen, Lesehilfe, Technik-Index, Ausblick). |
+
+*Tab. 6: Versionshistorie*

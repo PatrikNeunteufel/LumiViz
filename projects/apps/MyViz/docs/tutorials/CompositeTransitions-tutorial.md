@@ -1,5 +1,59 @@
 # Composite: Transitions – Zwei Welten, ein Werk
 
+> **Dokumenttyp:** Tutorial  
+> **Version:** 1.2.0  
+> **Status:** Stabil  
+> **Domain:** Programming  
+> **Kategorie:** Algorithms  
+> **Programmiersprache:** GLSL (Shadertoy/WebGL2)  
+> **Voraussetzungen:** [Crystal-Lights](CrystalLights-tutorial.md) + [Juggernaut](Juggernaut-tutorial.md) (die zwei Welten), [Composite-Portals](CompositePortals-tutorial.md) (Kondensieren), [Pimped-Kaleidoscope](PimpedKaleidoscope-tutorial.md) (Buffer-Zustand)  
+> **Schwierigkeitsgrad:** Experte  
+> **Tutorial-Typ:** Integration  
+> **Zeitschätzung:** 8–10 h für die Schritte 1–12 auf shadertoy.com (inkl. Experimentieren), zusätzlich ~2 h für die Anhänge A/B; reines Durchlesen ~2 h  
+> **Gültigkeit:** Shadertoy-Shader (WebGL2) – Schritte 1–10 Single-Pass (Image), ab Schritt 11 Multipass (Common + Buffer A + Image); Anhang B zusätzlich für den Shadertoy-Node der LumiViz-Effect-Chain (Stand Session 65/67)  
+> **Zweck:** Schritt-für-Schritt-Aufbau eines Composites, das endlos zwischen zwei fertigen Welten der Serie wechselt – vom harten Schnitt über Masken-Wipes, Parameter-Morph und Kamera-Kontinuität bis zur beat-getriggerten Zustandsmaschine in Buffer A; das Shadertoy-Analogon zum Milkdrop-Preset-Wechsel.  
+> **Zielgruppe:** Shader-Entwickler, die die Quell-Tutorials der Serie abgeschlossen haben; Leser der Shader-Tutorial-Serie  
+> **Sprache:** Deutsch  
+
+> ⚠ **HINWEIS: Nicht-normative ASCII-Darstellungen**
+>
+> Die ASCII-Skizzen (Zeitachse im Bauplan-Abschnitt, Masken-Mechanik in Schritt 6, Zustandsmaschine in Schritt 11) dienen ausschließlich der **illustrativen Unterstützung**
+> und setzen eine Monospace-Schrift voraus. Verbindlich sind die textuelle Beschreibung und der Code.
+
+---
+
+## Inhaltsverzeichnis
+
+1. Einleitung
+2. Lernziele
+3. Voraussetzungen
+4. Übersicht der Schritte
+5. Der Bauplan: Was wir eigentlich rendern
+6. Schritt 1 – Welt A als Skelett: das Kristall-Terrain, kondensiert
+7. Schritt 2 – Welt B als Skelett: der Juggernaut, kondensiert
+8. Schritt 3 – Beide in einer Datei: der harte Schnitt
+9. Schritt 4 – Der naive Crossfade: der lehrreiche Fehlstart
+10. Schritt 5 – Übergangs-Kurven: Halten, Blenden, Halten
+11. Schritt 6 – Maskierte Übergänge: der Noise-Wipe mit Glühsaum
+12. Schritt 7 – Blendarten: Radial- und Richtungs-Wipe
+13. Schritt 8 – Masken-Early-Out: nur zahlen, was man sieht
+14. Schritt 9 – Parameter-Morph: die Welten wachsen aufeinander zu
+15. Schritt 10 – Kamera-Kontinuität: eine Fahrt, zwei Welten
+16. Schritt 11 – Die Zustandsmaschine in Buffer A: der Wechsel als Ereignis
+17. Schritt 12 – Kohärenz-Politur: der Wechsel als Auftritt – das fertige Werk
+18. Anhang A: Audio – der beat-getriggerte Wechsel (Schritte A1–A3)
+19. Anhang B: LumiViz – In-Shader-Übergang vs. Chain-Wechsel (B1–B2)
+20. End-Validierung
+21. Fehlerbehebung
+22. Nächste Schritte
+23. Abspann
+24. Siehe auch
+25. Changelog
+
+---
+
+## Einleitung
+
 **Ziel:** Ein Programm, das **endlos zwischen zwei fertigen Shadern dieser Tutorial-Serie wechselt** – dem bunten, kalten **Kristall-Terrain** aus *Crystal Lights* und dem monochrom-dunklen **Juggernaut**-Moloch – und dabei alle Spielarten des **Übergangs** beherrscht: harter Schnitt, Crossfade, Verweil-Plateaus, maskierte Wipes mit glühender Wechselfront, Parameter-Morph, eine Kamera, die beide Welten trägt, und am Ende ein **beat-getriggerter Wechsel** über eine Zustandsmaschine in Buffer A. Das ist das Shadertoy-Analogon zum **Milkdrop-Preset-Wechsel**: Nicht die Welten sind diesmal das Thema, sondern der Moment dazwischen.
 
 **Stil-Vorbilder** (diesmal keine Presets, sondern zwei Tutorials dieser Serie – beide im selben Ordner – plus eine Maschine):
@@ -16,7 +70,67 @@
 - **In LumiViz:** Jeder Schritt liegt zusätzlich als lauffähige Chain in `composite_transitions_schritte/` (generiert aus diesem Dokument per `make_schritte.py` – das Markdown ist die SSOT; Schritte 1–10 als Ein-Node-Single-Pass, ab Schritt 11 als Multipass-Shadertoy-Node Buffer A + Image, das Common des Gesamtlistings wird dabei beiden Pässen vorangestellt). Die Screenshots bei den Schritten stammen aus genau diesen Chains, gerendert im AvsStandalone (`AvsStandalone <gruppe> --auto --frames N --size 800x450 --out composite_transitions_bilder`) – weil Übergangs-Schritte ihren Charakter nur **mitten in der Blende** zeigen, rendert jede Schritt-Gruppe bis zu einem eigens aus den Timing-Konstanten gerechneten Frame (Sim-Uhr des Standalone: fest 1/60 s je Frame; die Wahl je Schritt dokumentiert `make_schritte.py`). Eine dokumentierte LumiViz-Anpassung steckt NUR in den generierten Anhang-Chains, die Codeblöcke hier bleiben Shadertoy-treu: `schlag` kommt dort aus dem App-Uniform `beat`, denn die dB-FFT des Standalone-Testsignals sättigt bei 1.0, und der adaptive Trigger aus A1 kann an einem konstant gesättigten Band nie feuern (die B1-Regel; der Timer-Kern der Schritte 3–12 ist davon unberührt und wechselt deterministisch).
 - Vorausgesetzt sind die beiden Quell-Tutorials (mindestens ihre Gesamtlistings und „Bauplan"-Kapitel) – die Welten selbst erklären wir hier **nicht** noch einmal, sondern kondensieren sie. Die Kondensier-Technik als eigenes Thema (was darf raus, was muss bleiben) behandelt das Portals-Composite-Tutorial ausführlicher; hier wenden wir sie nur an, und zwar so, dass jeder Schritt trotzdem für sich lauffähig ist.
 
-**Inhalt**
+Die Schritt-Konvention der Serie deckt die vier Elemente eines Tutorial-Schritts (Ziel, Anleitung, Validierung, Vertiefung) mit festen Markierungen ab – Tab. 1 zeigt die Zuordnung, die in jedem Schritt dieses Dokuments gilt:
+
+| Konvention im Schritt | Bedeutung |
+|---|---|
+| **Neu:** | Ziel des Schritts – die eine Technik, die hinzukommt |
+| Code-Block | Durchführung – der vollständige bzw. geänderte Shader-Code |
+| **Ergebnis:** | Validierung des Schritts – das prüfbare Sichtergebnis |
+| „Was passiert hier" | Anleitung und Erklärung des Codes |
+| 🎨 Experimentieren | Optionale Vertiefung und Variationen |
+
+*Tab. 1: Konventions-Mapping – Schritt-Markierungen dieses Tutorials und ihre Rolle in der Schritt-Struktur*
+
+## Lernziele
+
+Nach diesem Tutorial können Sie …
+
+1. … zwei fertige Shader dieser Serie zu **Skeletten kondensieren** und per Namespacing (`a_`/`b_`-Präfixe, geteilter Werkzeugkasten) kollisionsfrei in einer Datei **mergen** (Schritte 1–3).
+2. … **Übergangs-Phasen** mit einstellbaren Halte- und Blendedauern konstruieren – sin-Uhr, `clamp`-Plateaus, `smoothstep`-Enden und die exakte Amplituden-Formel (Schritte 4–5).
+3. … **Masken-Wipes mit Glühsaum** bauen: Front-Feld (Noise/radial/gerichtet), wandernde Schwelle mit Masken-Vertrag, `1/d²`-Glut auf dem Maskenabstand und Early-Out für den Doppelpreis im Saum (Schritte 6–8).
+4. … einen **Parameter-Morph statt Bild-Mix** fahren – gemeinsame Meta-Regler für Größen mit gemeinsamer Rolle, lineares Mischen und ein Tonemapping für beide Welten (Schritt 9).
+5. … **Kamera-Kontinuität** herstellen: eine geteilte Orbit-Basis mit gemorphten Welt-Zielen (Distanz, Höhe, Blickpunkt, Brennweite, Boden-Anker) (Schritt 10).
+6. … eine **1-Pixel-Zustandsmaschine in Buffer A** implementieren – `phase`/`welt`/`haltezeit`/`cooldown`, integrierende Blende mit Einrasten, Trigger als austauschbare eine Zeile (Schritt 11).
+7. … **beat-getriggerte Wechsel** mit adaptivem Trigger absichern – Cooldown, Mindest-Verweilzeit und Einrasten als dreischichtige Hysterese gegen das Wechsel-Geflacker (Anhang A).
+
+## Voraussetzungen
+
+**Wissen:**
+
+- [Crystal-Lights-Tutorial](CrystalLights-tutorial.md) – **Welt A**: mindestens das Gesamtlisting (Schritt 14) und das Bauplan-Kapitel; die Welt wird hier kondensiert, nicht erklärt.
+- [Juggernaut-Tutorial](Juggernaut-tutorial.md) – **Welt B**: ebenso Gesamtlisting und Bauplan-Kapitel; die dark-Stimmung wird hier festgenagelt.
+- [Composite-Portals-Tutorial](CompositePortals-tutorial.md) – die **Kondensier-Technik** (was darf raus, was muss bleiben) als eigenes Thema; hier wird sie nur angewandt.
+- [Pimped-Kaleidoscope-Tutorial](PimpedKaleidoscope-tutorial.md) – **Feedback und Buffer-Zustand** inklusive Buffer-Anlauf-Effekten; Schritt 11 und Anhang A setzen dieses Denken voraus.
+
+**Software:**
+
+- Ein aktueller, WebGL2-fähiger Browser (Chrome, Firefox, Edge oder Safari in einer aktuellen Desktop-Version) – Shadertoy ist eine Web-Plattform, es ist keine Installation nötig.
+- Zugang zu [shadertoy.com](https://www.shadertoy.com/new) – Shader lassen sich ohne Konto erstellen und ausführen; zum Speichern eigener Shader (und für die Multipass-Tabs ab Schritt 11) ist ein kostenloses Konto erforderlich.
+- Für Anhang A: ein „Music"-Kanal im Shadertoy-Editor (eingebaute Track-Auswahl, keine eigene Datei nötig).
+
+**Optional (nur Anhang B):**
+
+- LumiViz/MyViz mit Shadertoy-Node (Multipass-Support) in der Effect-Chain (Stand Session 65/67).
+
+## Übersicht der Schritte
+
+Das Tutorial führt in 12 Schritten von den zwei Skeletten zum fertigen Werk; Anhang A ergänzt den beat-getriggerten Wechsel (A1–A3), Anhang B die LumiViz-Einordnung (B1–B2):
+
+1. Welt A als Skelett: das Kristall-Terrain, kondensiert
+2. Welt B als Skelett: der Juggernaut, kondensiert
+3. Beide in einer Datei: der harte Schnitt
+4. Der naive Crossfade: der lehrreiche Fehlstart
+5. Übergangs-Kurven: Halten, Blenden, Halten
+6. Maskierte Übergänge: der Noise-Wipe mit Glühsaum
+7. Blendarten: Radial- und Richtungs-Wipe
+8. Masken-Early-Out: nur zahlen, was man sieht
+9. Parameter-Morph: die Welten wachsen aufeinander zu
+10. Kamera-Kontinuität: eine Fahrt, zwei Welten
+11. Die Zustandsmaschine in Buffer A: der Wechsel als Ereignis
+12. Kohärenz-Politur: der Wechsel als Auftritt – das fertige Werk
+
+Dieselben Schritte, nach Phasen gruppiert (Tab. 2):
 
 | Phase | Schritte | Thema |
 |---|---|---|
@@ -28,6 +142,8 @@
 | Politur | 12 | Kohärenz, Wechsel-Akzente, Anti-Flau-Checkliste – das fertige Werk |
 | Anhang A | A1–A3 | Audio: der beat-getriggerte Wechsel (Kernthema, voll ausgeführt) |
 | Anhang B | B1–B2 | LumiViz: In-Shader-Übergang vs. Chain-Wechsel in der App |
+
+*Tab. 2: Phasen-Gliederung der Schritte und Anhänge*
 
 ---
 
@@ -49,6 +165,8 @@ zeit ─────────────────────────
                      │  3. AKZENT: Gluehsaum an der Front,
                      │     Belichtungs-Kick im Wechselmoment
 ```
+
+*Fig. 1 [Blockdiagramm]: Die Zeitachse des Werks – Halte-Phasen und Blenden im ewigen Kreislauf; während der Blende laufen Morph, Maske und Akzent zugleich*
 
 Drei Erkenntnisse stecken in dieser Skizze, und sie ordnen die Schritte:
 
@@ -668,6 +786,8 @@ front(uv):   0 ─────────────────────�
                      Gluehsaum sitzt genau hier
 ```
 
+*Fig. 2 [Blockdiagramm]: Die Masken-Mechanik – jedes Pixel sitzt fest auf der Front-Achse, die Schwelle s(t) wandert mitsamt Misch-Saum und Glühsaum darüber hinweg*
+
 **Die Maske ist das Schwellwert-Muster der Serie – auf die Zeit angewandt.** Crystal Lights baute aus `smoothstep(schwelle, …, noise)` örtliche Materialzonen; hier läuft die **Schwelle selbst** mit `t` durch den Wertebereich: `s = mix(−2·SAUM, 1+2·SAUM, t)`. Jedes Pixel besitzt über `front(uv)` einen festen „Wechsel-Zeitpunkt" zwischen 0 und 1 – Pixel mit kleinem Front-Wert kippen früh zur Welt B, Pixel mit großem spät. Die Überstände `±2·SAUM` an beiden Enden garantieren, dass bei `t = 0` wirklich *alle* Pixel A zeigen und bei `t = 1` alle B – auch die im halben Saum. Das `1.0 −` dreht die Leserichtung: Maske 1 = Welt B.
 
 Dass die Front **ausgefranst** ist, kommt gratis aus dem FBM: Die Niveaulinien eines fraktalen Feldes sind selbst fraktal – die Grenze wabert, franst, schließt Inseln ein, die erst später kippen. Genau der Look der MilkDrop-Blend-Patterns („Plasma-Wipe"), und genau deshalb liegt `front` über den **Bildschirm**-UVs: Die Blende ist ein Ereignis *auf der Leinwand*, nicht in einer der Welten – sie muss beiden gegenüber neutral sein. *(Ein Front-Feld in Weltkoordinaten wäre auch möglich – aber in wessen Welt?)*
@@ -797,6 +917,8 @@ Rechnen wir die Währung dieses Shaders einmal aus – *Marsch-Schritte pro Pixe
 | Blende, Pixel **im** Saum | 90 | 110 | **200** |
 | Schritt 4–7 (ohne Early-Out), immer | 90 | 110 | **200** |
 
+*Tab. 3: Kostenrechnung – Marsch-Schritte pro Pixel je Zustand, mit und ohne Masken-Early-Out*
+
 Der Saum umfasst bei `SAUM = 0.06` nur wenige Prozent der Pixel – der Early-Out drückt die Durchschnittskosten der Blende also von 200 auf etwa 105, und die der Halte-Phasen (den Löwenanteil der Zeit!) auf den Einzelwelt-Preis. **Deshalb** wurden die Skelette in Schritt 1/2 auf 90/110 Schritte gesenkt: Der Worst Case (Saum-Pixel: 200 Schritte plus zweimal Beleuchtung) muss flüssig bleiben, denn er entscheidet über den Eindruck des Übergangs – ein Wechsel, der ruckelt, ist kein Ereignis, sondern ein Schluckauf.
 
 Zwei Feinheiten der Umsetzung:
@@ -895,12 +1017,16 @@ vec3 a_lampColor(float t)
 | Kamera-Distanz, -Höhe, -Brennweite | Schritt 10 |
 | Farbdrift-Tempo/-Tiefe (Politur) | Schritt 12 |
 
+*Tab. 4: Morph-Kandidaten – Größen mit gemeinsamer Rolle in beiden Welten*
+
 | ❌ morpht nicht (keine Korrespondenz) | warum |
 |---|---|
 | Terrainhöhe ↔ Orb-Radius | ein *Feld* und ein *Objekt* – es gibt keine Zwischenform, die nicht beides kaputt macht |
 | Höhenfeld-Marsch ↔ SDF-Marsch | zwei Algorithmen; ein „halber" Marsch existiert nicht |
 | Lampenraster ↔ Panelzellen | verschiedene Topologien (2D-Ebene vs. Kugeloberfläche) – die Zell-Identitäten haben keine Paarung |
 | Blink-Rhythmen | jede Lampe/jedes Fenster hat seine Hash-Identität; „interpolierte Identität" ist Rauschen |
+
+*Tab. 5: Nicht morphbare Größen – Strukturen ohne Korrespondenz bleiben Sache der Maske*
 
 Alles aus der zweiten Liste bleibt Sache der **Maske** – deshalb sind Morph und Maske keine Konkurrenten, sondern Arbeitsteilung: *Der Morph gleicht die Atmosphären an, die Maske tauscht die Strukturen.* Genau so macht es MilkDrop: Skalare Preset-Variablen (Zoom, Warp, Farbanteile) werden über die Blendzeit interpoliert, während die Blend-Maske die Bildanteile tauscht – ein „halbes Warp-Feld" versucht auch dort niemand.
 
@@ -1122,6 +1248,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
           phase >= 1:  welt kippt (A <-> B),
           halte = 0,  cool = COOLDOWN  ("Einrasten")
 ```
+
+*Fig. 3 [Zustandsdiagramm]: Die Zustandsmaschine – zwei Zustände (Halten, Blenden), Trigger mit Cooldown-Gate, Einrasten mit Weltwechsel*
 
 Drei Regeln stecken darin, jede eine Lektion:
 
@@ -1765,6 +1893,10 @@ Kein neuer Shader – eine Landkarte. Alle Schnipsel beziehen sich auf das Gesam
 | 4 | Lautheit (träge) | **Glühsaum-Breite** | Common: `float gLautheit = 0.0;` + in `maske()`/`saumGlut()` jedes `SAUM` durch `(SAUM * (0.7 + 2.0 * gLautheit))` ersetzen; Image setzt `gLautheit = audio.w;` | Laute Passagen = breite, lodernde Front; leise = schmaler Schnitt. Die *träge* Lautheit (Zeitkonstante ~Sekunden) hält die Frontbreite ruhig – roher Pegel würde die Kante im Frame-Takt zittern lassen |
 | 5 | Beat-Envelope | Wechsel-Akzent | Image: `belichtung *= 1.0 + KICK * puls + 0.10 * audio.y;` | Der kleine Bruder von Mapping 1: Auch *ohne* Wechsel zuckt das Bild dezent mit – das Werk hört hörbar zu, selbst mitten im Halten. Sparsam dosieren |
 
+*Tab. 6: Mapping-Katalog – Audio-Signal, Eingriffsort und Begründung*
+
+**Ergebnis:** Für jedes der fünf Mappings sind Signal, Eingriffsort (Pass samt Zeile) und Begründung benannt – die Schnipsel aus Tab. 6 lassen sich in Schritt A3 unverändert übernehmen.
+
 **Zwei Warnungen**, beide sind hier Chefsache:
 
 - **Cooldown und Hysterese sind nicht optional.** Ohne `MIN_HALTE`/`COOLDOWN`/Einrasten wechselt das Werk im Kick-Takt – acht Blenden in vier Sekunden sind kein Visual, sondern ein Stroboskop mit Umbaupause. Wer die Empfindlichkeit hochdreht (Faktor 1.35 runter), muss die Hysterese *mit* hochdrehen. Die beiden Regler arbeiten als Paar: Empfindlichkeit wählt die Kicks aus, Hysterese verteilt sie über die Zeit.
@@ -1855,6 +1987,8 @@ Dieses Tutorial baut einen Preset-Wechsel **im** Shader nach – aber LumiViz *h
 | Vorbereitung | hoch – beide Welten müssen als Skelette **im selben Code** stehen | null – jedes Preset-Paar geht sofort |
 | Kosten | im Saum beide Welten pro Pixel | immer genau eine Chain |
 
+*Tab. 7: In-Shader-Übergang vs. Chain-Wechsel – was welches Werkzeug kann*
+
 Kurz: **Der In-Shader-Übergang ist die Kür für ein kuratiertes Welten-Paar** – wenn der Übergang selbst das Kunstwerk sein soll (Konzert-Visual, Installations-Loop). **Der Chain-Wechsel ist das Werkzeug für den Alltag** – Playlist, Zufalls-Rotation, fremde Presets. Die Zwischenstufe gibt es auch: dieses Werk als *ein* Node in einer Chain, die per App-Wechsel gegen andere getauscht wird – der Wechsel im Wechsel.
 
 **Panel-Parameter-Kandidaten** für den Node-Editor (die natürlichen ersten Griffe, alle bereits als STELLSCHRAUBEN oben im Common):
@@ -1863,6 +1997,50 @@ Kurz: **Der In-Shader-Übergang ist die Kür für ein kuratiertes Welten-Paar** 
 - `BLENDART` – Crossfade/Noise/Radial/Richtung (das Pendant zur Puffer-Wechsel-Strategie des MilkDrop-Nodes)
 - die **Trigger-Empfindlichkeit** (der `1.35`-Faktor aus A1) samt `MIN_HALTE` – Beat-gierig bis drop-geduldig
 - `GLUT` und `KICK` – wie laut der Übergang auftritt
+
+---
+
+## End-Validierung
+
+Diese Validierung steht bewusst **hinter den Anhängen**: A1–A3 sind reguläre Schritte dieses Tutorials, und das Lernziel 7 (der beat-getriggerte Wechsel) ist erst dort erreichbar – die End-Validierung muss aber alle Lernziele abdecken. Die Kriterien 1–7 prüfen den Kern (Schritte 1–12), das Kriterium 8 den Anhang A. Jedes Kriterium ist am laufenden Shader auf shadertoy.com (bzw. wo vermerkt in LumiViz) objektiv prüfbar:
+
+1. **Kompilierbarkeit:** Das Gesamtlisting aus Schritt 12 (Common + Buffer A + Image; in beiden Pässen iChannel0 = Buffer A) kompiliert auf shadertoy.com ohne Fehlermeldung und rendert ein bewegtes Bild – kein Standbild, kein dauerhaftes Schwarzbild (ein einzelner schwarzer Anlauf-Frame ist plattformbedingt zulässig, Schritt 11). *(Basis aller Lernziele)*
+2. **Skelette und Merge:** Schritt 1 und Schritt 2 laufen einzeln und sind auf einen Blick als Kristall-Terrain bzw. Moloch wiedererkennbar; die Montage in Schritt 3 kompiliert ohne Namenskollision (genau eine `R`-Definition) und schneidet hart zwischen beiden Welten. *(Lernziel 1)*
+3. **Phasen:** Mit den Defaults hält jede Welt ~9 s pur und blendet in ~4 s – die Halte-/Blendedauer-Formeln aus Schritt 5 stimmen mit der Stoppuhr überein; `BLENDE_ANTEIL = 1.0` (Stand Schritt 5) erzeugt den plateaulosen Dauer-Mischzustand, `0.08` einen Fast-Schnitt. *(Lernziel 2)*
+4. **Maske:** Mitten in der Blende stehen zwei kontrastreiche Welten mit glühender, ausgefranster Front im Bild – kein flächiges Doppelbild; der Magenta-Debug (🎨 Schritt 8) zeigt den Doppelzahler-Saum als schmalen Streifen, und `BLENDART` 0/1/2/3 liefern die vier beschriebenen Übergangs-Charaktere. *(Lernziel 3)*
+5. **Morph:** Während der Blende dunstet Welt A sichtbar ein und ihre Lampen glimmen rötlicher, während die frisch erscheinenden Moloch-Fenster eisblau nachblinken; `gMorph = 0.0` fest verdrahtet stellt beide Welten wieder unangenähert nebeneinander. *(Lernziel 4)*
+6. **Kamera-Kontinuität:** Beide Seiten der Front zeigen dieselbe Bewegung und denselben Horizont; der Rückbau auf zwei Kameras (🎨 Schritt 10) stellt den Doppelbelichtungs-Eindruck nach, mit einer Kamera verschwindet er. *(Lernziel 5)*
+7. **Zustandsmaschine:** Der Timer-Modus wechselt deterministisch die Welt – zwei Läufe desselben Stands sind Frame für Frame vergleichbar (in LumiViz mit Sim-Uhr bildgleich: Frame 1440 zeigt in beiden Läufen dieselbe zweite Blende nach dem bei 13 s eingerasteten ersten Wechsel); nach jeder Blende rastet `phase = 0` ein und `welt` kippt genau einmal. *(Lernziel 6)*
+8. **Beat-Trigger mit Hysterese:** Im A3-Stand fällt der Wechsel auf markante Kicks, frühestens alle `MIN_HALTE + COOLDOWN` Sekunden – nie im Kick-Takt; ein Kick während einer laufenden Blende verpufft, und bei Stille übernimmt der Timer-Fallback (`HALTEDAUER = 24`). *(Lernziel 7)*
+
+---
+
+## Fehlerbehebung
+
+Die häufigsten Stolperstellen dieses Tutorials, gesammelt nach Symptom (Tab. 8). Die schritt-lokalen Hinweise (etwa die Montage-Regel in Schritt 3 oder die Kaltstart-Notiz in Schritt 11) bleiben davon unberührt – hier stehen die Probleme, die typischerweise erst beim Zusammenbau oder beim Experimentieren auftreten:
+
+| # | Symptom | Ursache | Lösung |
+|---|---|---|---|
+| 1 | Dauerhaft schwarzes Bild nach dem Einfügen | Multipass-Verdrahtung unvollständig (iChannel0 ≠ Buffer A in einem der Pässe), Common-Inhalte fehlen einem Pass, oder Kompilierfehler – Shadertoy rendert dann nichts | Einrichtung aus dem Gesamtlisting prüfen (Buffer A → iChannel0 = Buffer A; Image → iChannel0 = Buffer A), Common vollständig anlegen, Fehlerkonsole unter dem Editor lesen |
+| 2 | Ein einzelner schwarzer Frame beim Start (Kaltstart) | Das Image liest auf manchen Plattformen vor dem ersten Buffer-A-Durchlauf (Schritt 11) | Verschmerzbar (genau ein Frame); wer es sauber will, liest die Buffer-Anlauf-Behandlung im [Pimped-Kaleidoscope-Tutorial](PimpedKaleidoscope-tutorial.md) nach |
+| 3 | Kompilierfehler `'…' : undeclared identifier` oder `redefinition` | Ab Schritt 5 zeigen die Listings nur noch **geänderte** Funktionen, und Schritt 3 ist Baukasten-Montage aus Schritt 1 + 2 | Den vollständigen Stand des vorherigen Schritts behalten und nur die gezeigten Funktionen ersetzen; bei der Montage `#define R(a) ...` nur **einmal** übernehmen (Hinweis in Schritt 3) |
+| 4 | Wechsel-Geflacker: die Welt kippt im Kick-Takt hin und her | Hysterese fehlt oder ist zu schwach – `MIN_HALTE`/`COOLDOWN` zu klein bzw. Trigger-Empfindlichkeit erhöht (Faktor 1.35 gesenkt), ohne die Hysterese mitzuziehen | Die drei Hysterese-Schichten aus A1 (Mindest-Verweilzeit, Cooldown, Einrasten der Phase) aktiv lassen; Empfindlichkeit und Hysterese als Paar regeln (A2, Warnung 1) |
+| 5 | Adaptiver Beat-Trigger bleibt stumm (z. B. am Standalone-Testsignal) | Das FFT-Band ist konstant gesättigt (dB-Skala am Anschlag bei 1.0) – `bass > glatt·1.35` kann über dem eigenen gleitenden Mittel nie liegen | Echte, dynamische Musik verwenden; in LumiViz-Chains `schlag` aus dem App-Uniform `beat` speisen (die B1-Regel – so machen es die generierten Anhang-Chains) |
+| 6 | Beat-Läufe sind nicht frame-deterministisch reproduzierbar | Die Zustandsmaschine integriert `iTimeDelta` – bei schwankender Framerate verschieben sich die Trigger-Frames (Schritt 11) | Für Prüfstände den Timer-Modus verwenden oder in LumiViz rendern (deterministische Sim-Uhr mit festem Frame-Schritt, B1) |
+| 7 | Niedrige Framerate während der Blende | Saum-Pixel zahlen beide Welten (~200 Marsch-Schritte, Tab. 3); `SAUM` zu breit, oder `BLENDART = 0` macht das ganze Bild zum Mischbereich | Early-Out aktiv lassen (Schritt 8), `SAUM` senken, Wipe statt Crossfade wählen; notfalls die Skelett-Schrittzahlen weiter drücken |
+| 8 | Konstanten wirken anders als beschrieben | Die Schritte sind konstruiert, nachgerechnet und in LumiViz gegengerendert (Screenshots im Text) – aber shadertoy.com ist ungeprüft, und nicht jeder Zahlwert ist gegen das Zielbild feinabgeglichen | Die Stellschraube in kleinen Schritten nachstimmen; die beschriebene **Wirkrichtung** jeder Konstante stimmt, der Absolutwert ist Startpunkt, nicht Dogma |
+
+*Tab. 8: Fehlerbehebung – Symptom, Ursache, Lösung*
+
+---
+
+## Nächste Schritte
+
+Mit diesem Composite ist die Lesereihenfolge der [Wegleitung](ShaderTutorials-overview.md) abgeschlossen – Transitions ist das letzte Glied der Serie (Basis-Tutorials → Portals → Postfx → Transitions). Wie es weitergehen kann:
+
+- **Ausblick-Kandidaten der Wegleitung** (bewusst nicht in die Composites gequetscht): Licht & Schatten (Schattenstrahlen, SDF-AO, Spiegelungen) · Volumetrik (echte Dichte-Integrale statt Glow) · Escape-Time-Fraktale (Mandelbox – die `mbox`-Brücke zu frosty caves) · Texturen & Cubemaps.
+- **Rückwärts vertiefen:** Einzelne Techniken dieses Werks führt der Technik-Index der [Wegleitung](ShaderTutorials-overview.md) zum jeweiligen Tutorial samt Schritt; die Kondensier-Technik vertieft [Composite-Portals](CompositePortals-tutorial.md), die Multipass-Ketten [Composite-Postfx](CompositePostfx-tutorial.md).
+- **Eigene Werke:** die 🎨-Kandidaten aus dem Abspann – Drop-Modus mit langen Fronten (A2, Mapping 2), Blendart-pro-Wechsel (Schritt 11), die dritte Welt (Schritt 12) und das Varianten-Paar dark ↔ brighter (fast alles Morph, fast nichts Maske).
 
 ---
 
@@ -1880,4 +2058,32 @@ Wer weitermachen will: Fast jeder 🎨-Kasten ist ein eigenes Werk – besonders
 Und jetzt: Musik an – und auf den Wechsel warten. 🎵🔀
 
 Screenshots: gerendert mit AvsStandalone (Testing-Build), Chains in `composite_transitions_schritte/`.
+
+---
+
+## Siehe auch
+
+**Voraussetzungen:**
+
+- [Crystal-Lights-Tutorial](CrystalLights-tutorial.md) – Welt A im Vollausbau; dessen Anhang B ist zugleich die Vollreferenz Shadertoy ↔ LumiViz, auf der Anhang B hier aufsetzt.
+- [Juggernaut-Tutorial](Juggernaut-tutorial.md) – Welt B im Vollausbau, inklusive der hier auf dark festgenagelten Zwei-Stimmungen-Blende.
+- [Composite-Portals-Tutorial](CompositePortals-tutorial.md) – die Kondensier-Technik (Gesamtlisting → Skelett, Namespacing) als eigenes Thema.
+- [Pimped-Kaleidoscope-Tutorial](PimpedKaleidoscope-tutorial.md) – Feedback und Buffer-Zustand, inklusive der Buffer-Anlauf-Effekte hinter dem Kaltstart-Hinweis aus Schritt 11.
+
+**Verwandte Dokumente:**
+
+- [Shader-Tutorials-Wegleitung](ShaderTutorials-overview.md) – Fokus-Tabellen, Lesereihenfolge und Technik-Index der gesamten Tutorial-Serie.
+- [Raymarching – Referenz](Raymarching-reference.md) – die technische Referenz zu Marsch-Algorithmus, Distanzfunktionen, Normalen und Artefakten hinter beiden Welt-Skeletten.
+
+**Weiterführendes:**
+
+- [Composite-Postfx-Tutorial](CompositePostfx-tutorial.md) – das dritte Composite der Serie: Multipass-Nachbearbeitung (Bloom, DOF, Temporal-Glättung) als die andere große Anwendung der Buffer-Architektur aus Schritt 11.
+
+## Changelog
+
+| Version | Datum | Änderungen |
+|---|---|---|
+| **1.2.0** | 2026-08-05 | Formalisierung nach Tutorial_Base (nach dem Muster des Piloten [Crystal-Lights](CrystalLights-tutorial.md)): Blockquote-Header, Inhaltsverzeichnis, Lernziele, Voraussetzungen, Übersicht der Schritte, Konventions-Mapping (Tab. 1), End-Validierung, Fehlerbehebung, Nächste Schritte, Siehe auch; Tabellen als Tab. 1–8 indexiert, ASCII-Skizzen als Fig. 1–3 getaggt (Zeitachse, Masken-Mechanik, Zustandsmaschine); **Ergebnis:**-Zeile in Schritt A2 ergänzt. Didaktischer Bestand (Schritt-Texte, Code, 🎨-Kästen, Anhänge) inhaltlich unverändert. Einschließlich Umzug der Serie nach `projects/apps/MyViz/docs/tutorials/` und Umbenennung nach FNM-01 zu `CompositeTransitions-tutorial.md` (Entscheid Patrik, 2026-08-04). |
+| **1.1.0** | 2026-08-04 | Schritt-Chains + Screenshots: je Schritt eine lauffähige Chain in `composite_transitions_schritte/` (Schritte 1–10 als Ein-Node-Single-Pass, ab Schritt 11 Multipass Buffer A + Image; `make_schritte.py` generiert die Chains aus diesem Dokument – das Markdown ist die SSOT) und ein eingebettetes Render-Bild je Schritt in `composite_transitions_bilder/` (AvsStandalone, 800×450; Frame-Wahl je Schritt aus den Timing-Konstanten gerechnet, damit die Bilder mitten in den Blendphasen stehen). Beat-Trigger der generierten Anhang-Chains auf das App-Uniform `beat` umgestellt – Befund: die dB-FFT des Standalone-Testsignals sättigt bei 1.0, der adaptive Trigger kann an einem konstant gesättigten Band nie feuern (B1-Regel); die Codeblöcke hier bleiben Shadertoy-treu. |
+| **1.0.0** | 2026-08-04 | Erstfassung: 12 Schritte (Skelette → Blende → Maske → Morph → Zustand → Politur) + Anhang A (der beat-getriggerte Wechsel als Kernthema, voll ausgeführt) + Anhang B (LumiViz: In-Shader-Übergang vs. Chain-Wechsel). |
 

@@ -1,5 +1,60 @@
 # Stratospheric Tunnel – Ein Röhren-Tunnel-Flug von Grund auf
 
+> **Dokumenttyp:** Tutorial  
+> **Version:** 1.2.0  
+> **Status:** Stabil  
+> **Domain:** Programming  
+> **Kategorie:** Algorithms  
+> **Programmiersprache:** GLSL (Shadertoy/WebGL2)  
+> **Voraussetzungen:** [Pyramid-Spiral-Shader-Tutorial](PyramidSpiral-tutorial.md), Schritte 1–7; [Crystal-Lights-Tutorial](CrystalLights-tutorial.md), Noise/FBM  
+> **Schwierigkeitsgrad:** Fortgeschritten  
+> **Tutorial-Typ:** Implementierung  
+> **Zeitschätzung:** 6–8 h für die Schritte 1–13 auf shadertoy.com (inkl. Experimentieren), zusätzlich ~1,5 h für die Anhänge A/B; reines Durchlesen ~2 h  
+> **Gültigkeit:** Shadertoy-Image-Shader (WebGL2); Anhang B zusätzlich für den Shadertoy-Node der LumiViz-Effect-Chain (Stand Session 65/67)  
+> **Zweck:** Schritt-für-Schritt-Aufbau eines geraymarchten Röhren-Tunnel-Flugs mit Wand-Relief, Fenstern zur Stratosphäre, vier Lichtquellen, gekrümmtem Pfad und Vergabelungen – vom leeren Shader bis zum fertigen Werk samt Audio-Reaktivität.  
+> **Zielgruppe:** Shader-Entwickler mit Raymarching-Grundlagen; Leser der Shader-Tutorial-Serie  
+> **Sprache:** Deutsch  
+
+> ⚠ **HINWEIS: Nicht-normative ASCII-Darstellungen**
+>
+> Die ASCII-Skizzen im Bauplan-Abschnitt dienen ausschließlich der **illustrativen Unterstützung**
+> und setzen eine Monospace-Schrift voraus. Verbindlich sind die textuelle Beschreibung und der Code.
+
+---
+
+## Inhaltsverzeichnis
+
+1. Einleitung
+2. Lernziele
+3. Voraussetzungen
+4. Übersicht der Schritte
+5. Der Bauplan: Was wir eigentlich rendern
+6. Schritt 1 – Die Bühne: der Polar-Blick in die Röhre
+7. Schritt 2 – Raymarch: der echte Zylinder
+8. Schritt 3 – Die Wand-Karte und der Scheinwerfer
+9. Schritt 4 – Röhren und Spanten: die Wand bekommt Profil
+10. Schritt 5 – Rausch-Relief: die Wand wird organisch
+11. Schritt 6 – Fenster: Löcher in der Wand
+12. Schritt 7 – Der Außenraum: Sterne und Horizontglühen
+13. Schritt 8 – Neon-Streifen: Licht in den Fugen
+14. Schritt 9 – Ring-Lichter und einfallendes Fensterlicht
+15. Schritt 10 – Der Pfad: der Tunnel macht Kurven
+16. Schritt 11 – Vortrieb mit Umkehr und Banking
+17. Schritt 12 – Vergabelungen: der Tunnel teilt sich
+18. Schritt 13 – Politur: Nebel, Farbdrift, Tonemapping – der fertige Shader
+19. Anhang A: Audio-Reaktivität (Schritte A1–A3)
+20. Anhang B: Der Weg in die App – kompakt (B1–B2)
+21. End-Validierung
+22. Fehlerbehebung
+23. Nächste Schritte
+24. Abspann
+25. Siehe auch
+26. Changelog
+
+---
+
+## Einleitung
+
 **Ziel:** Ein geraymarchter, **unendlicher Röhren-Tunnel-Flug** hoch in der Stratosphäre. Die Tunnelwand besteht aus Röhren, die um den Umfang laufen, mit Spanten-Ringen und einem Rausch-Relief darüber. In die Wand sind **Fenster** geschnitten – durch sie sieht man den Außenraum: ein Sternenfeld mit vorbeiströmenden Sternschichten und das Horizontglühen der Stratosphäre. Beleuchtet wird der Tunnel aus **vier kombinierbaren Quellen**: Neon-Streifen längs der Röhrenfugen, Ring-Lichter in Intervallen, durch die Fenster einfallendes Außenlicht und der Scheinwerfer der Kamera. Der Tunnel ist **gekrümmt** (die Achse folgt einer Pfadfunktion), der Vortrieb kehrt gelegentlich **weich um**, die Kamera legt sich in Kurven, und in regelmäßigen Abständen **gabelt** sich der Tunnel in zwei Äste – von denen die Kamera deterministisch einen wählt.
 
 **Stil-Vorbild** (liegt im Repo unter `asset/Milkdrop3/presets/`):
@@ -16,7 +71,66 @@ Dieses Tutorial ist der direkte Nachfolger von **CrystalLights-tutorial.md** (gl
 - Raymarching-Grundlagen (SDF, Marsch-Schleife, Normalen aus Differenzen, der `fract(sin(dot(...)))`-Hash) werden zügig behandelt – wer sie noch nie gesehen hat, liest vorher die Schritte 1–7 des Pyramid-Spiral-Tutorials oder die Schritte 3–5 von Crystal Lights. Neu ist diesmal die Königsdisziplin **Blick entlang der Geometrie**: In einem Tunnel laufen die Strahlen fast parallel zur Wand – das stellt eigene Anforderungen an Marsch und Toleranzen.
 - **In LumiViz:** Jeder Schritt liegt zusätzlich als lauffähige Ein-Node-Chain in `stratospheric_tunnel_schritte/` (generiert per `make_schritte.py` – das Markdown ist die SSOT; die Diff-Schritte 6–12 und A3 sind dort als vollständige `.glsl` materialisiert). Die Screenshots bei den Schritten stammen aus genau diesen Chains, gerendert im AvsStandalone (`AvsStandalone stratospheric_tunnel_schritte --auto --frames 300 --size 800x450 --out stratospheric_tunnel_bilder`); die Anhang-Bilder hören dabei das synthetische Testsignal des Standalone.
 
-**Inhalt**
+Die Schritt-Konvention der Serie deckt die vier Elemente eines Tutorial-Schritts (Ziel, Anleitung, Validierung, Vertiefung) mit festen Markierungen ab – Tab. 1 zeigt die Zuordnung, die in jedem Schritt dieses Dokuments gilt:
+
+| Konvention im Schritt | Bedeutung |
+|---|---|
+| **Neu:** | Ziel des Schritts – die eine Technik, die hinzukommt |
+| Code-Block | Durchführung – der vollständige bzw. geänderte Shader-Code |
+| **Ergebnis:** | Validierung des Schritts – das prüfbare Sichtergebnis |
+| „Was passiert hier" | Anleitung und Erklärung des Codes |
+| 🎨 Experimentieren | Optionale Vertiefung und Variationen |
+
+*Tab. 1: Konventions-Mapping – Schritt-Markierungen dieses Tutorials und ihre Rolle in der Schritt-Struktur*
+
+## Lernziele
+
+Nach diesem Tutorial können Sie …
+
+1. … einen **Röhren-Tunnel** als Polar-SDF implementieren – vom 2D-Polar-Fake über den Zylinder-Marsch bis zur abgerollten Wand-Karte `(w, z)` – und den Marsch so drosseln, dass die fast wandparallelen Strahlen ohne Durchschuss-Artefakte auftreffen (Schritte 1–3).
+2. … **Wand-Relief-Typen** (Röhrenprofil, Spanten-Ringe, FBM-Rauschen mit Varianten) als Radius-Felder über der abgerollten Wandfläche implementieren und kombinieren – inklusive nahtfreier Periodik am Winkel-Umlauf (Schritte 4–5).
+3. … **Fenstermasken** in die Wand schneiden und dahinter einen Außenraum (Sternenfeld mit strömenden Schichten, Horizontglühen) rendern – parametrierbar von Bunker bis Panorama, auf Wunsch atmend (Schritte 6–7).
+4. … **vier Lichtquellen** (Kamera-Scheinwerfer, Neon-Streifen in den Fugen, pulsierende Ring-Lichter, einfallendes Fensterlicht) mit je eigenem Rhythmus kombinieren und gegeneinander ausbalancieren (Schritte 3, 8–9).
+5. … eine **Pfadkrümmung** mit weicher Vortriebs-Umkehr und Banking choreografieren – die Kamera folgt der gekrümmten Achse, legt sich in Kurven und kehrt deterministisch ohne Sprung um (Schritte 10–11).
+6. … eine **Tunnel-Vergabelung** per `abs`-Faltung konstruieren, samt gehashter, deterministischer Astwahl je Gabelung (Schritt 12).
+7. … **Audio-Reaktivität** mit Beat-Gate und Mapping-Katalog in den Shader einbauen und über Adapter-Funktionen portabel zwischen Shadertoy und LumiViz halten (Anhang A, B1).
+
+## Voraussetzungen
+
+**Wissen:**
+
+- [Pyramid-Spiral-Shader-Tutorial](PyramidSpiral-tutorial.md), Schritte 1–7 – UV-Aufbau, SDF-Raymarching-Grundlagen, Normalen aus Differenzen, Hash-Funktionen. Diese Basics werden hier nur zügig wiederholt.
+- [Crystal-Lights-Tutorial](CrystalLights-tutorial.md) – Value-Noise und FBM (Schritte 4–5 dort) sowie das Denken in Feldern über einer Karte; dessen Anhang B ist außerdem die Vollreferenz Shadertoy ↔ LumiViz, auf die Anhang B hier verweist.
+
+**Software:**
+
+- Ein aktueller, WebGL2-fähiger Browser (Chrome, Firefox, Edge oder Safari in einer aktuellen Desktop-Version) – Shadertoy ist eine Web-Plattform, es ist keine Installation nötig.
+- Zugang zu [shadertoy.com](https://www.shadertoy.com/new) – Shader lassen sich ohne Konto erstellen und ausführen; zum Speichern eigener Shader ist ein kostenloses Konto erforderlich.
+- Für Anhang A: ein „Music"-Kanal im Shadertoy-Editor (eingebaute Track-Auswahl, keine eigene Datei nötig).
+
+**Optional (nur Anhang B):**
+
+- LumiViz/MyViz mit Shadertoy-Node in der Effect-Chain (Stand Session 65/67).
+
+## Übersicht der Schritte
+
+Das Tutorial führt in 13 Schritten vom leeren Shader zum fertigen Werk; die Anhänge ergänzen Audio-Reaktivität (A1–A3) und den kompakten Weg in die App (B1–B2):
+
+1. Die Bühne: der Polar-Blick in die Röhre
+2. Raymarch: der echte Zylinder
+3. Die Wand-Karte und der Scheinwerfer
+4. Röhren und Spanten: die Wand bekommt Profil
+5. Rausch-Relief: die Wand wird organisch
+6. Fenster: Löcher in der Wand
+7. Der Außenraum: Sterne und Horizontglühen
+8. Neon-Streifen: Licht in den Fugen
+9. Ring-Lichter und einfallendes Fensterlicht
+10. Der Pfad: der Tunnel macht Kurven
+11. Vortrieb mit Umkehr und Banking
+12. Vergabelungen: der Tunnel teilt sich
+13. Politur: Nebel, Farbdrift, Tonemapping – der fertige Shader
+
+Dieselben Schritte, nach Phasen gruppiert (Tab. 2):
 
 | Phase | Schritte | Thema |
 |---|---|---|
@@ -28,6 +142,8 @@ Dieses Tutorial ist der direkte Nachfolger von **CrystalLights-tutorial.md** (gl
 | Politur | 13 | Nebel, Farbdrift, Tonemapping, der fertige Shader |
 | Anhang A | A1–A3 | Audio-Reaktivität (Bänder, Beat-Gates, Mapping-Katalog) |
 | Anhang B | B1–B2 | Der Weg Shadertoy → LumiViz (kompakt, mit Verweisen) |
+
+*Tab. 2: Phasen-Gliederung der Schritte und Anhänge*
 
 ---
 
@@ -47,6 +163,8 @@ Bevor die erste Zeile fällt, ein Blick auf die Architektur des Bildes – sie e
    ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 ```
 
+*Fig. 1 [Blockdiagramm]: Der Tunnel im Längsblick – Außenraum (nur durch Fenster sichtbar), Wand aus Röhren/Relief/Fenstern, Neonfugen und Ringlichter, Kamera mit Scheinwerfer auf der gekrümmten, sich gabelnden Achse*
+
 Und die Wand selbst, einmal **abgerollt** – das wichtigste Denkbild des ganzen Shaders:
 
 ```
@@ -57,6 +175,8 @@ Und die Wand selbst, einmal **abgerollt** – das wichtigste Denkbild des ganzen
    │Rohr│ ▢  │Rohr│Rohr│Rohr│ ▢  │   │  Neonfuge (zwischen den Roehren)
    └────┴────┴────┴────┴────┴────┘   ▢  Fenster
 ```
+
+*Fig. 2 [Blockdiagramm]: Die abgerollte Wandfläche als Karte (Winkel w × Tiefe z) – Röhren, Spanten-Ringe/Ringlichter, Neonfugen und Fenster als Felder über derselben Karte*
 
 Der Strahl jedes Pixels startet an der Kamera auf der Tunnelachse und läuft nach vorn, bis er die Wand trifft:
 
@@ -1486,6 +1606,10 @@ Kein neuer Shader – eine Landkarte. Der Tunnel hat vier Lichtquellen, eine Geo
 | 5 | Lautheit | **Fenster öffnen sich** | in `fensterMask()`: `float o = 0.8 + FENSTER_DYN * sin(...) + 0.5 * gVol;` | Energie reißt die Wand auf und flutet den Tunnel mit Außenlicht (Quelle 4 zieht automatisch mit!) – der dramatischste Eingriff |
 | 6 | Bass-**Gate** | Die Vignette öffnet sich | in `mainImage()`: `color *= 1.0 - (0.30 - 0.12 * gGate) * dot(uv, uv);` | Beim Kick „weitet sich die Pupille" – billig, wirksam, greift nicht in die Geometrie |
 
+*Tab. 3: Mapping-Katalog – Audio-Signal, Lichtquelle bzw. Stellschraube, Eingriff und Begründung*
+
+**Ergebnis:** Für jedes der sechs Mappings sind Signal, Eingriffsort (Funktion samt Zeile) und Begründung benannt – die Schnipsel aus Tab. 3 lassen sich in Schritt A3 unverändert übernehmen.
+
 Die zwei Warnungen der Vorgänger-Tutorials gelten hier in verschärfter Form:
 
 - **Nie auf die Faktoren vor `iTime`.** Dieser Shader hat besonders viele Uhren: den Vortrieb `zpos` (Audio darauf = Teleport-Kamera bei jedem Beat!), die Fenster-Phasen, das Neon-Flackern, den Ring-Puls, die Palettenrotation. Alle Mappings oben gehen deshalb auf **Amplituden** (Stärke, Öffnungsgrad, Radius), nie auf Uhren. Wer „bei Bass schneller fliegen" will, braucht Zustand – B2 verweist auf die Buffer-Lösung.
@@ -1636,7 +1760,52 @@ Shadertoy hat keine Panels – LumiViz schon. Wer den Shader als Chain-Node einr
 | `GABEL_WEITE` | Slider 0–2 | 0 = nie gabeln, 0.9 = Doppellauf, 1.6 = echte Trennung |
 | `SCHEINWERFER` / `FENSTERLICHT` | Slider | Licht-Mischpult der vier Quellen (Neon/Ringe über ihre Stärken) |
 
+*Tab. 4: Panel-taugliche Stellschrauben – Konstante, Panel-Typ und Wirkung*
+
 Nicht als Live-Regler geeignet: `RADIUS` (skaliert fast alle abgeleiteten Konstanten mit), `FENSTER_SPALTEN` (Ganzzahl-Naht wie `ROEHREN`), `GABEL_PERIODE` (Sprünge in `gabelSeite`-Zellen beim Verstellen → die Kamera kann schlagartig den Ast wechseln).
+
+---
+
+## End-Validierung
+
+Diese Validierung steht bewusst **hinter den Anhängen**: A1–A3 sind reguläre Schritte dieses Tutorials, und das Lernziel 7 (Audio-Reaktivität) ist erst dort erreichbar – die End-Validierung muss aber alle Lernziele abdecken. Die Kriterien 1–7 prüfen den Kern (Schritte 1–13), Kriterium 8 den Anhang. Jedes Kriterium ist am laufenden Shader auf shadertoy.com objektiv prüfbar:
+
+1. **Kompilierbarkeit:** Das Gesamtlisting aus Schritt 13 kompiliert auf shadertoy.com ohne Fehlermeldung und rendert ein bewegtes Bild – kein Schwarzbild, kein Standbild. *(Basis aller Lernziele)*
+2. **Tunnel-Marsch:** Die Röhrenwand steht geschlossen im Bild – keine Durchschuss-Löcher, kein Aufreißen in der Ferne. Gegenprobe: Die Marsch-Drossel `0.7` auf `1.0` anheben (bei hohem `KURVE`-/`RELIEF`-Wert) erzeugt sichtbare Löcher bzw. Flimmern in der Wand; zurück auf `0.7` verschwinden sie wieder. *(Lernziel 1)*
+3. **Wand-Relief:** `ROEHREN` verstellen (z. B. `8.0`/`14.0`/`24.0`) ändert die Zahl der Längsbahnen ohne Naht am Winkel-Umlauf; `RELIEF = 0.0` liefert glatte Röhren, der Endstand-Wert wieder die organisch gebeulte Wand. *(Lernziel 2)*
+4. **Fenster und Außenraum:** `FENSTER_DICHTE = 0.0` schließt die Wand vollständig (keine Sterne im Bild), hohe Werte öffnen ein Panorama; hinter jedem Fenster liegen Sternenfeld und Horizontglühen, mit `FENSTER_DYN > 0` atmen die Fenster erkennbar. *(Lernziel 3)*
+5. **Vier Lichtquellen:** Jede Quelle fehlt einzeln sichtbar, wenn ihre Stellschraube auf 0 steht (`SCHEINWERFER`, `NEON_STAERKE`, `RING_STAERKE`, `FENSTERLICHT`); im Endstand flackern die Neonfugen unabhängig, die Ringlichter pulsieren asynchron, und die Fensterlicht-Flecken liegen den Fenstern gegenüber. *(Lernziel 4)*
+6. **Pfad und Fahrt:** Mit `KURVE > 0` schlängelt sich der Tunnel und die Kamera legt sich in Kurven (der Fenster-Horizont kippt – Banking); der Vortrieb verlangsamt periodisch, hängt kurz in der Schwebe und rollt weich rückwärts (die Ringe kommen entgegen), ohne Positionssprung. *(Lernziel 5)*
+7. **Vergabelung:** Alle `GABEL_PERIODE` Einheiten öffnet sich eine zweite Tunnelmündung, die Kamera zieht in einen der Äste; die Astwahl ist deterministisch – dieselbe Stelle der Strecke ergibt bei jedem Durchlauf dieselbe Wahl. `GABEL_WEITE = 0.0` schaltet die Gabelungen ab. *(Lernziel 6)*
+8. **Audio:** Im A3-Stand (iChannel0 = Music) zünden die Neonfugen bei jedem Bass-Kick längs des ganzen Tunnels und der Radius pumpt mit dem Bass; **ohne Musik** läuft das Eigenleben (einzelne Fugen, gemächliche Ringe, atmende Fenster) unverändert weiter. Nach dem B1-Umbau entscheidet allein der Adapter-Block über die Plattform. *(Lernziel 7)*
+
+---
+
+## Fehlerbehebung
+
+Die häufigsten Stolperstellen dieses Tutorials, gesammelt nach Symptom (Tab. 5). Die schritt-lokalen ⚠-Hinweise (etwa zur Ganzzahl-Naht in Schritt 4 oder zur Marsch-Drossel in Schritt 10) bleiben davon unberührt – hier stehen die Probleme, die typischerweise erst beim Zusammenbau oder beim Experimentieren auftreten, dazu die beiden bekannten Befunde aus dem Render-Lauf:
+
+| # | Symptom | Ursache | Lösung |
+|---|---|---|---|
+| 1 | Schwarzes Bild nach dem Einfügen | Code unvollständig kopiert (Hilfsfunktionen fehlen) oder Kompilierfehler – Shadertoy rendert dann nichts bzw. den letzten lauffähigen Stand | Gesamtlisting aus Schritt 13 komplett kopieren, mit `Alt+Enter` kompilieren und die Fehlerkonsole unter dem Editor lesen |
+| 2 | Kompilierfehler `'…' : undeclared identifier` | Ab Schritt 6 zeigen die Listings nur noch **geänderte** Funktionen – der Rest des Vorschritts muss stehen bleiben | Den vollständigen Stand des vorherigen Schritts behalten und nur die gezeigten Funktionen ersetzen bzw. ergänzen (in `stratospheric_tunnel_schritte/` liegen die Diff-Schritte 6–12 und A3 materialisiert als vollständige `.glsl`) |
+| 3 | Löcher oder Flimmern in der Wand, besonders in Kurven | Die Strahlen laufen fast parallel zur Wand – die Marsch-Drossel `0.7` wird bei aggressiven `KURVE`-/`RELIEF`-Werten zu großzügig | Drossel senken bzw. Iterationszahl erhöhen (Schritt 10); `KURVE` unter ~1.2 halten oder die Panel-Grenze aus Tab. 4 übernehmen |
+| 4 | Schritte 3–7 wirken deutlich dunkler als die Ergebnis-Texte beschreiben | Bekannter Nachstimm-Kandidat aus dem LumiViz-Render-Lauf (Abspann): Vor Neon/Tonemapping trägt allein der Scheinwerfer, und die Helligkeits- und Nebel-Konstanten sind konservativ gewählt | `SCHEINWERFER` bzw. später `NEON_STAERKE`/`RING_STAERKE` und die Tonemapping-Belichtung `1.6` anheben, Nebel-Konstanten senken – die beschriebene **Wirkrichtung** jeder Konstante stimmt, der Absolutwert ist Startpunkt, nicht Dogma |
+| 5 | Niedrige Framerate / Ruckeln | Marsch-Iterationen plus Außenraum-Auswertung je Fensterpixel sind teuer, besonders auf integrierten GPUs | Shadertoy-Vorschau verkleinern; Iterationszahl, FBM-Oktaven oder die Zahl der Sternschichten in `aussenRaum()` reduzieren |
+| 6 | Audio-Mappings reagieren nicht | iChannel0 nicht mit „Music" belegt, Track pausiert, oder die Gate-Schwelle passt nicht zum Track | Kanal-Kachel prüfen (A1); Schwellen `0.60/0.75` sind Handarbeit pro Musikrichtung – oder die adaptive Buffer-Lösung aus Crystal-Lights B3 übernehmen (B1) |
+| 7 | In den Standalone-Renderings (A1/A3-Bilder) steht das Beat-Gate dauerhaft offen, die Pegel-Balken kleben am Vollausschlag | dB-Sättigung des synthetischen Testsignals: Die FFT-Zeile liegt auf der dB-Skala nahe 1, der Bass reißt die Schwelle `0.60/0.75` permanent | Kein Fehler im Shader – für die Beurteilung des Gates echte Musik auf shadertoy.com verwenden oder die Schwellen für das Testsignal anheben (A1) |
+
+*Tab. 5: Fehlerbehebung – Symptom, Ursache, Lösung*
+
+---
+
+## Nächste Schritte
+
+Die Fortsetzung folgt der [Wegleitung](ShaderTutorials-overview.md) der Serie:
+
+- **Parallel im 3D-Strang:** [Space-Debris](SpaceDebris-tutorial.md) (3D-Domain-Repetition mit Rotation je Zelle, Formbibliothek, Licht-Stimmungen) steht unabhängig neben diesem Tutorial – beide setzen nur Pyramid-Spiral und Crystal-Lights voraus und lassen sich in beliebiger Reihenfolge lesen.
+- **Danach:** [Juggernaut](Juggernaut-tutorial.md) kommt im 3D-Strang zuletzt – es setzt die Marsch-Sicherheit aus Tunnel und Debris voraus (Verschneidungen sind keine exakten SDFs mehr) und baut auf deren Licht-Ideen auf.
+- **Zuletzt die Composites:** [Portals](CompositePortals-tutorial.md) verbaut genau diesen Tunnel weiter (seine Fenster blicken dort in die echte Debris-Welt), danach [Postfx](CompositePostfx-tutorial.md) (Multipass-Ketten) und [Transitions](CompositeTransitions-tutorial.md) (Kondensieren + Buffer-Zustand).
 
 ---
 
@@ -1655,6 +1824,33 @@ Wer weitermachen will:
 Und jetzt: Musik an. 🎵🛰️
 
 Screenshots: gerendert mit AvsStandalone (Testing-Build), Chains in `stratospheric_tunnel_schritte/`.
+
+---
+
+## Siehe auch
+
+**Voraussetzungen:**
+
+- [Pyramid-Spiral-Shader-Tutorial](PyramidSpiral-tutorial.md) – die Raymarching-Grundlagen (UV, SDF, Normalen, Hash), auf denen dieses Tutorial aufbaut (Schritte 1–7 dort genügen).
+- [Crystal-Lights-Tutorial](CrystalLights-tutorial.md) – Noise/FBM und das Denken in Feldern über einer Karte; dessen Anhang B ist die Vollreferenz Shadertoy ↔ LumiViz, auf die Anhang B hier verweist.
+
+**Verwandte Dokumente:**
+
+- [Shader-Tutorials-Wegleitung](ShaderTutorials-overview.md) – Fokus-Tabellen, Lesereihenfolge und Technik-Index der gesamten Tutorial-Serie.
+- [Raymarching – Referenz](Raymarching-reference.md) – die technische Referenz zu Algorithmus, Distanzfunktionen, Marsch-Varianten und Artefakten; das „Warum" hinter den Schritten 2–5 und 10 zum Nachschlagen.
+
+**Weiterführendes:**
+
+- `asset/Milkdrop3/presets/martin - stratospheric turbulences 2.milk` – das Stil-Vorbild-Preset (MilkDrop): derselbe Tunnel als Masken-Malerei auf der Polar-Karte aus Schritt 1, mit dem Feedback-Buffer als Gedächtnis.
+- [iquilezles.org](https://iquilezles.org/articles/) – die Artikelsammlung von Inigo Quilez zu Distanzfunktionen, Noise/FBM und Raymarching-Varianten; die Primärquelle vieler hier verwendeter Techniken.
+
+## Changelog
+
+| Version | Datum | Änderungen |
+|---|---|---|
+| **1.2.0** | 2026-08-05 | Formalisierung nach Tutorial_Base (nach dem Muster des Piloten Crystal Lights): Blockquote-Header, ASCII-Hinweis, Inhaltsverzeichnis, Lernziele, Voraussetzungen, Übersicht der Schritte, Konventions-Mapping (Tab. 1), End-Validierung, Fehlerbehebung (Tab. 5 – inkl. der bekannten Befunde „Schritte 3–7 dunkler" und dB-Sättigung des Testsignals bei A1), Nächste Schritte, Siehe auch; Tabellen als Tab. 1–5 und Bauplan-Skizzen als Fig. 1/2 indexiert; **Ergebnis:**-Zeile in Schritt A2 ergänzt. Didaktischer Bestand (13 Schritte, Anhänge, Code, Bilder, 🎨-Kästen, Abspann) inhaltlich unverändert. Zuvor Umzug der Serie nach `projects/apps/MyViz/docs/tutorials/` und Umbenennung nach FNM-01 zu `StratosphericTunnel-tutorial.md` (Entscheid Patrik, 2026-08-04). |
+| **1.1.0** | 2026-08-04 | Schritt-Chains + Screenshots: je Schritt eine lauffähige Ein-Node-Chain in `stratospheric_tunnel_schritte/` (`make_schritte.py` generiert die `.lvfx`; die Diff-Schritte 6–12 und A3 als vollständige `.glsl` materialisiert) und ein eingebettetes Render-Bild in `stratospheric_tunnel_bilder/` (Render-Nachweis AvsStandalone, Testing-Build, 800×450, Frame 300; Anhang-Bilder mit synthetischem Testsignal). „In LumiViz"-Bullet in der Einleitung ergänzt; Render-Befund „Schritte 3–7 dunkler" im Abspann dokumentiert. |
+| **1.0.0** | 2026-08-04 | Erstfassung: 13 Schritte (Geometrie → Wand → Fenster/Außenraum → Licht → Kamera → Politur) + Anhang A (Audio-Reaktivität) + Anhang B (Shadertoy → LumiViz kompakt, mit Verweisen auf die Crystal-Lights-Vollreferenz). |
 
 
 

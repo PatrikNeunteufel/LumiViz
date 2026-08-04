@@ -1,5 +1,61 @@
 # Space Debris – Ein Trümmerfeld im Orbit von Grund auf
 
+> **Dokumenttyp:** Tutorial  
+> **Version:** 1.2.0  
+> **Status:** Stabil  
+> **Domain:** Programming  
+> **Kategorie:** Algorithms  
+> **Programmiersprache:** GLSL (Shadertoy/WebGL2)  
+> **Voraussetzungen:** [Pyramid-Spiral-Shader-Tutorial](PyramidSpiral-tutorial.md) (SDF-Marsch, Domain Repetition), [Crystal-Lights-Shader-Tutorial](CrystalLights-tutorial.md) (Noise/FBM, Kamera-Basis)  
+> **Schwierigkeitsgrad:** Fortgeschritten  
+> **Tutorial-Typ:** Implementierung  
+> **Zeitschätzung:** 6–8 h für die Schritte 1–14 auf shadertoy.com (inkl. Experimentieren), zusätzlich ~1,5 h für die Anhänge A/B; reines Durchlesen ~2 h  
+> **Gültigkeit:** Shadertoy-Image-Shader (WebGL2); Anhang B zusätzlich für den Shadertoy-Node der LumiViz-Effect-Chain (Stand Session 65/67)  
+> **Zweck:** Schritt-für-Schritt-Aufbau eines taumelnden Trümmerfelds im Orbit über einem Glutplaneten – 3D-Domain-Repetition mit Zell-Individualität, vom leeren Shader bis zum fertigen Werk samt Audio-Reaktivität.  
+> **Zielgruppe:** Shader-Entwickler mit Raymarching-Grundlagen; Leser der Shader-Tutorial-Serie  
+> **Sprache:** Deutsch  
+
+> ⚠ **HINWEIS: Nicht-normative ASCII-Darstellungen**
+>
+> Die ASCII-Skizze im Bauplan-Abschnitt dient ausschließlich der **illustrativen Unterstützung**
+> und setzt eine Monospace-Schrift voraus. Verbindlich sind die textuelle Beschreibung und der Code.
+
+---
+
+## Inhaltsverzeichnis
+
+1. Einleitung
+2. Lernziele
+3. Voraussetzungen
+4. Übersicht der Schritte
+5. Der Bauplan: Was wir eigentlich rendern
+6. Schritt 1 – Die Bühne: Sternenhimmel aus der Blickrichtung
+7. Schritt 2 – Das Raymarching-Gerüst: eine einzelne Kugel
+8. Schritt 3 – Domain-Repetition: aus einer Kugel wird ein Feld
+9. Schritt 4 – Ausdünnung & Varianz: leere Zellen, Cluster – und die Zellwand-Klammer
+10. Schritt 5 – Die Formbibliothek: Brocken, Platten, Träger, Ringe
+11. Schritt 6 – Taumeln: jede Zelle rotiert um ihre eigene Achse
+12. Schritt 7 – Der Planet: glühender Grund unter dem Feld
+13. Schritt 8 – Atmosphäre & Wolken
+14. Schritt 9 – Hartes Sonnenlicht
+15. Schritt 10 – Das Glühen von unten: der Planet als zweite Lichtquelle
+16. Schritt 11 – Blinklichter: Signalfarben je Trümmerteil
+17. Schritt 12 – Die Kamera: Drift, Umkehr, Rollen, Nicken
+18. Schritt 13 – Die Kamera-Blase und Sternen-Parallaxe
+19. Schritt 14 – Politur: Dunst, Farbdrift, Tonemapping – der fertige Shader
+20. Anhang A: Audio-Reaktivität (Schritte A1–A3)
+21. Anhang B: Der Weg in die App – kompakt (B1–B3)
+22. End-Validierung
+23. Fehlerbehebung
+24. Nächste Schritte
+25. Abspann
+26. Siehe auch
+27. Changelog
+
+---
+
+## Einleitung
+
 **Ziel:** Ein **treibendes Trümmerfeld im Orbit** – Brocken, Paneele, Träger und Ringe, jedes Teil mit eigener Größe, Form und eigenem, konstantem **Taumeln**, verteilt in Clustern über den unendlichen Raum. Unter dem Feld glüht ein **Planet**: ein Lavagrund aus mehrschichtigem Rauschen, überzogen von einer in Zeitlupe ziehenden Wolkenschicht und einem orangen **Atmosphären-Saum**. Beleuchtet wird die Szene doppelt – hartes, weißes Sonnenlicht von der Seite und das warme Glühen des Planeten von unten; einzelne Trümmer tragen blinkende **Positionslichter** in langsam rotierenden Signalfarben. Am Ende driftet eine Kamera schwerelos durch das Feld: weiche Richtungsumkehr, langsames Eigen-Rollen und ein Blick, der zwischen Trümmerfeld und Planet-Horizont pendelt.
 
 **Stil-Vorbild** (liegt im Repo unter `asset/Milkdrop3/presets/`):
@@ -14,7 +70,66 @@
 - Die Reihenfolge folgt der bewährten Schule der Serie: **Geometrie → Material → Licht → Bewegung → Politur.** Erst muss das Feld stimmen, dann kommt der Schmuck.
 - Voraussetzungen: klassisches SDF-Raymarching (map, Marsch, Normale aus dem Gradienten) wie in den Schritten 1–7 des Pyramid-Spiral-Tutorials, und das `fract(sin(dot(...)))`-Hash-Idiom – beides wird hier zügig wiederholt, nicht neu hergeleitet. Der direkte Vorgänger dieser Serie ist das **Crystal-Lights-Tutorial** (gleiche Struktur, gleicher Ordner); auf dessen Anhänge verweisen wir mehrfach. Neu ist diesmal die Königsdisziplin **3D-Domain-Repetition mit Zell-Individualität** – ein unendliches Feld, in dem trotzdem jedes Teil ein Individuum ist.
 
-**Inhalt**
+Die Schritt-Konvention der Serie deckt die vier Elemente eines Tutorial-Schritts (Ziel, Anleitung, Validierung, Vertiefung) mit festen Markierungen ab – Tab. 1 zeigt die Zuordnung, die in jedem Schritt dieses Dokuments gilt:
+
+| Konvention im Schritt | Bedeutung |
+|---|---|
+| **Neu:** | Ziel des Schritts – die eine Technik, die hinzukommt |
+| Code-Block | Durchführung – der vollständige bzw. geänderte Shader-Code |
+| **Ergebnis:** | Validierung des Schritts – das prüfbare Sichtergebnis |
+| „Was passiert hier" | Anleitung und Erklärung des Codes |
+| 🎨 Experimentieren | Optionale Vertiefung und Variationen |
+
+*Tab. 1: Konventions-Mapping – Schritt-Markierungen dieses Tutorials und ihre Rolle in der Schritt-Struktur*
+
+## Lernziele
+
+Nach diesem Tutorial können Sie …
+
+1. … eine **3D-Domain-Repetition** mit `floor`/`mod` aufbauen, deren **Zell-Id** jedes Exemplar adressierbar macht – Belegung, Größe, Form, Achse, Albedo und Blinkrhythmus als deterministische Hash-Funktionen der Id (Schritte 3–6, 9, 11).
+2. … die **Zellwand-Klammer** als beweisbare untere Distanz-Schranke herleiten, das Umkugel-Budget der Zellregel nachrechnen und eine Verletzung (negative `MARGE`) gezielt erzeugen, erkennen und beheben (Schritte 4–6; Fehlerbehebung).
+3. … eine **Formbibliothek** mit Hash-Weiche implementieren und jedes Teil per **Rodrigues-Rotation** um eine eigene, konstante Achse mit eigenem Tempo und eigener Phase taumeln lassen (Schritte 5–6).
+4. … einen **Planeten mit Atmosphäre analytisch** einbauen – Kugelschnitt statt Marsch, FBM-Glutgrund mit Domain-Warping, Zeitlupen-Wolken und ein exp-Atmosphären-Saum über der Scheitelhöhe des Strahls (Schritte 7–8).
+5. … **Licht-Stimmungen kombinieren** – hartes Sonnenlicht ohne Umgebungslicht, das Planet-Glühen als zweite gerichtete Quelle mit Landkarten-Farbe, Emissions-Blinklichter – und sie per Audio-Mapping verstärken, ohne das Eigenleben des Shaders zu ersetzen (Schritte 9–11; Anhang A).
+6. … eine **Schwerelosigkeits-Kamera** mit sechs inkommensurablen Sinus-Uhren deterministisch choreografieren – Drift mit weicher Umkehr, Eigen-Rollen, Nick-Uhr – und die Bahn per **Kamera-Blase** kollisionsfrei halten (Schritte 12–13).
+
+## Voraussetzungen
+
+**Wissen:**
+
+- [Pyramid-Spiral-Shader-Tutorial](PyramidSpiral-tutorial.md), Schritte 1–7 – SDF-Marsch (`map`, Marsch-Schleife, Normale aus dem Gradienten), das `fract(sin(dot(...)))`-Hash-Idiom und die Domain Repetition. Diese Basics werden hier zügig wiederholt, nicht neu hergeleitet.
+- [Crystal-Lights-Shader-Tutorial](CrystalLights-tutorial.md) – der direkte Vorgänger der Serie: Value-Noise/FBM und die Kamera-Basis werden hier weiterverwendet; auf dessen Anhänge A (Audio-Grundlagen) und B (Shadertoy ↔ LumiViz) verweisen die Anhänge dieses Tutorials mehrfach.
+
+**Software:**
+
+- Ein aktueller, WebGL2-fähiger Browser (Chrome, Firefox, Edge oder Safari in einer aktuellen Desktop-Version) – Shadertoy ist eine Web-Plattform, es ist keine Installation nötig.
+- Zugang zu [shadertoy.com](https://www.shadertoy.com/new) – Shader lassen sich ohne Konto erstellen und ausführen; zum Speichern eigener Shader ist ein kostenloses Konto erforderlich.
+- Für Anhang A: ein „Music"-Kanal im Shadertoy-Editor (eingebaute Track-Auswahl, keine eigene Datei nötig).
+
+**Optional (nur Anhang B):**
+
+- LumiViz/MyViz mit Shadertoy-Node in der Effect-Chain (Stand Session 65/67); für den URL-Import zusätzlich ein kostenloser Shadertoy-App-Key.
+
+## Übersicht der Schritte
+
+Das Tutorial führt in 14 Schritten vom leeren Shader zum fertigen Werk; die Anhänge ergänzen Audio-Reaktivität (A1–A3) und den Weg in die App (B1–B3):
+
+1. Die Bühne: Sternenhimmel aus der Blickrichtung
+2. Das Raymarching-Gerüst: eine einzelne Kugel
+3. Domain-Repetition: aus einer Kugel wird ein Feld
+4. Ausdünnung & Varianz: leere Zellen, Cluster – und die Zellwand-Klammer
+5. Die Formbibliothek: Brocken, Platten, Träger, Ringe
+6. Taumeln: jede Zelle rotiert um ihre eigene Achse
+7. Der Planet: glühender Grund unter dem Feld
+8. Atmosphäre & Wolken
+9. Hartes Sonnenlicht
+10. Das Glühen von unten: der Planet als zweite Lichtquelle
+11. Blinklichter: Signalfarben je Trümmerteil
+12. Die Kamera: Drift, Umkehr, Rollen, Nicken
+13. Die Kamera-Blase und Sternen-Parallaxe
+14. Politur: Dunst, Farbdrift, Tonemapping – der fertige Shader
+
+Dieselben Schritte, nach Phasen gruppiert (Tab. 2):
 
 | Phase | Schritte | Thema |
 |---|---|---|
@@ -26,6 +141,8 @@
 | Politur | 14 | Dunst, Farbdrift, Tonemapping, der fertige Shader |
 | Anhang A | A1–A3 | Audio-Reaktivität (Beat-Gate, Mapping-Katalog, Einbau) |
 | Anhang B | B1–B3 | Shadertoy ↔ LumiViz (kompakt, mit Verweisen auf Crystal Lights) |
+
+*Tab. 2: Phasen-Gliederung der Schritte und Anhänge*
 
 ---
 
@@ -44,6 +161,8 @@ Bevor die erste Zeile fällt, ein Blick auf die Architektur des Bildes – sie e
    ≈≈≈≈≈≈≈  Wolkenschicht  ≈≈≈≈≈≈≈    zieht in Zeitlupe (Preset: time*0.002)
    ████████  GLUT-GRUND  █████████    Planet = Riesenkugel unter der Kamera
 ```
+
+*Fig. 1 [Blockdiagramm]: Die drei Etagen des Bildes – Sterne, Trümmerfeld als Zellgitter mit der Kamera mittendrin, Planet mit Wolkenschicht und Atmosphären-Saum*
 
 Drei Etagen also – aber anders geschichtet als beim Kristall-Terrain des Vorgängers: Die Kamera hängt diesmal **mitten in der mittleren Etage**. Der Strahl jedes Pixels läuft durch diese Welt und trifft entweder
 
@@ -593,6 +712,8 @@ float marchDebris(vec3 ro, vec3 rd)
 | Platte | √(0.85² + 0.06² + 0.55²) | ≈ **1.01** |
 | Träger | √(0.08² + 0.95² + 0.08²) | ≈ **0.96** |
 | Ring | 0.62 + 0.10 | = **0.72** |
+
+*Tab. 3: Zellregel-Nachweis – Umkugel-Radius je Form der Bibliothek, in Einheiten von `gr`*
 
 Maximum 1.08 ≤ 1.1 – das Budget aus Schritt 4 hält, `MARGE = 0.4` bleibt gültig. **Diese Tabelle ist der Vertrag der Formbibliothek:** Wer eine fünfte Form ergänzt, rechnet ihre Umkugel nach und prüft sie gegen `1.1·gr` – sonst bricht die Klammer, und zwar nicht an der neuen Form, sondern als scheinbar zusammenhanglose Wand-Artefakte irgendwo im Feld. *(Wichtig für Schritt 6: Die Umkugel ist rotationsinvariant – ein Teil, das in seine Umkugel passt, passt auch getaumelt hinein. Das Budget ist bereits taumelfest.)*
 
@@ -1633,6 +1754,10 @@ Kein neuer Shader – die Landkarte. Wie immer gilt: *musikalische Rolle → vis
 | 5 | Lautheit | Dichte-Schwelle | in `belegt()`: `float schwelle = DICHTE * 1.6 * smoothstep(0.25, 0.75, cluster) * (0.85 + 0.5 * gVol);` | Laute Passagen = volleres Feld. **Der dramatischste und riskanteste Eingriff** – nur mit geglättetem Pegel benutzen (B3), sonst ploppen Trümmer im Frame-Takt |
 | 6 | Höhen | Metall-Glints | in `shadeDebris` Term (2): `… * 0.8 * (0.3 + 2.2 * gTreb)` | Spitze Transienten auf spitze Reflexe – die Glints „klicken" mit den Hi-Hats |
 
+*Tab. 4: Mapping-Katalog – Audio-Signal, Stellschraube, Eingriff und Begründung*
+
+**Ergebnis:** Für jedes der sechs Mappings sind Signal, Eingriffsort (Funktion samt Zeile) und Begründung benannt – die Schnipsel aus Tab. 4 lassen sich in Schritt A3 unverändert übernehmen.
+
 **Die Warnung dieses Shaders – Uhren sind tabu, Amplituden und Offsets sind erlaubt:** Der Shader ist voll von Ausdrücken der Form `winkel = iTime · tempo` – die Taumel-Uhr jeder Zelle, die sechs Kamera-Uhren, die Farbrotation von `signalFarbe`. Das sind **Positionen** (im Winkel- bzw. Ortsraum), und Audio auf ihren Zeitfaktor zu legen („bei Bass schneller taumeln": `iTime · tempo · (1 + gBass)`) multipliziert die **gesamte bisherige Laufzeit** mit dem Momentanpegel – jedes Teil teleportiert bei jedem Pegelzucken in eine andere Orientierung, die Kamera springt durchs Feld. Deshalb mappt Nr. 3 einen **Zusatzwinkel** (beschränkt, kehrt bei Stille auf null zurück), und wer die Kamera atmen lassen will, legt Audio auf die **Bahn-Amplitude** (`ro *= 1.0 + gBass * 0.1`), nie auf `zt`. Wer wirklich „schneller bei Bass" will, braucht eine aufintegrierte Zeit – also Zustand – also Buffer A (B3).
 
 **Zweite Warnung – Geometrie-Mappings ändern die Welt unter der Kamera:** Nr. 5 verformt das Feld selbst. Die Kamera-Blase fängt das ab (neu erscheinende Teile in Kameranähe sind weggeschrumpft), aber im Bild ploppen ferne Teile trotzdem – mit rohem `gVol` im Frame-Takt, unansehnlich. Regel: Geometrie nur an **träge** Signale koppeln (geglättete Lautheit, Envelope), Licht und Farbe dürfen an nervöse.
@@ -1745,6 +1870,8 @@ Der Grundshader (Schritt 14) braucht **keine iChannels** – Weg 1 (Copy & Paste
 | `ZELLE`, `GROESSE_MAX` | **nur gekoppelt** | – | die **Zellregel** (Schritt 4/5): unabhängig verstellt wird `MARGE` negativ → Wand-Artefakte. Entweder als festes Paar lassen oder einen einzigen „Maßstab"-Regler bauen, der beide gemeinsam skaliert |
 | `PLANET_*`, `SONNE` | eher nein | – | Szenen-Identität; wer sie ändert, baut einen anderen Shader |
 
+*Tab. 5: Panel-Eignung der Stellschrauben – Regler-Vorschläge und die Zellregel-Kopplung*
+
 **Der Audio-Adapter für diesen Shader** – nach dem Muster aus Crystal Lights B2 (genau einen Block aktiv lassen; in A3(b) dann `gBass = aBass();` usw.):
 
 ```glsl
@@ -1773,6 +1900,52 @@ Die zwei Stellen, an denen dieser Shader nach **Zustand** verlangt, sind in A2 m
 
 ---
 
+## End-Validierung
+
+Diese Validierung steht bewusst **hinter den Anhängen**: A1–A3 sind reguläre Schritte dieses Tutorials, und der Audio-Teil von Lernziel 5 ist erst dort erreichbar – die End-Validierung muss aber alle Lernziele abdecken. Die Kriterien 1–7 prüfen den Kern (Schritte 1–14), Kriterium 8 die Anhänge. Jedes Kriterium ist am laufenden Shader auf shadertoy.com objektiv prüfbar:
+
+1. **Kompilierbarkeit:** Das Gesamtlisting aus Schritt 14 kompiliert auf shadertoy.com ohne Fehlermeldung und rendert ein bewegtes Bild – kein Schwarzbild, kein Standbild. *(Basis aller Lernziele)*
+2. **Repetition & Zell-Individualität:** Das Feld zeigt gleichzeitig alle vier Formen in verschiedenen Größen, Lagen und Helligkeiten, verteilt in Schwärmen mit echter Leere dazwischen; jede Eigenschaft eines Teils (Form, Größe, Achse, Farbe) bleibt über die Zeit konstant – nichts wechselt seine Identität zwischen Frames. *(Lernziel 1)*
+3. **Zellwand-Klammer:** `MARGE` testweise erhöht (z. B. auf 1.2) ändert das Bild nicht, nur das Tempo – die Klammer ist konservativ. Gegenprobe: `GROESSE_MAX = 1.6` (`MARGE` negativ) erzeugt sichtbare Wand-Artefakte; zurück auf `1.0` verschwinden sie wieder. *(Lernziel 2)*
+4. **Taumeln:** `TAUMEL = 0.0` friert das Feld ein; bei `1.0` dreht jedes Teil um seine eigene, konstante Achse mit eigenem Tempo – kein gemeinsamer Takt, und die Beulen der Brocken taumeln mit ihrem Teil mit. *(Lernziel 3)*
+5. **Planet & Atmosphäre:** Der Horizont krümmt sich sichtbar unter dem Feld weg (`PLANET_RADIUS = 20` dramatisch, `300` fast flach); die Wolken ziehen nur in Zeitlupe erkennbar; der Atmosphären-Saum glüht ausschließlich am Limbus – beim Blick senkrecht nach oben bleibt der Zenit dunkel (`tca`-Ausstieg). *(Lernziel 4)*
+6. **Licht-Stimmungen:** Sonnenabgewandte Flächen sind ohne Blinklicht vollständig schwarz (kein Umgebungslicht); Trümmer-Unterseiten über Glut-Kontinenten glimmen sichtbar wärmer als über dunkler Kruste; Positionslichter flammen auch auf Nachtseiten auf – jedes in eigener Farbe und eigenem Rhythmus, und die Farbpalette rotiert in Zeitlupe. *(Lernziel 5)*
+7. **Kamera:** Die Drift verlangsamt an den Bahnenden sichtbar und kehrt ohne Sprung um; der Horizont ist nie dauerhaft waagerecht (Rollen); mit entferntem Blasen-Faktor tritt Near-Clipping auf, mit Blase nicht. *(Lernziel 6)*
+8. **Audio:** Im A3-Stand (iChannel0 = Music) zünden bei jedem Bass-Kick Positionslichter feldweit und die Glut pumpt unter der Szene; **ohne Musik** laufen Taumeln, Einzel-Blinken, Wolken und Kamerafahrt unverändert weiter. *(Lernziel 5, Audio-Teil)*
+
+---
+
+## Fehlerbehebung
+
+Die häufigsten Stolperstellen dieses Tutorials, gesammelt nach Symptom (Tab. 6). Die schritt-lokalen ⚠-Hinweise (etwa zur Zellregel in den Schritten 4–6) bleiben davon unberührt – hier stehen die Probleme, die typischerweise erst beim Zusammenbau, beim Experimentieren oder beim Gegenrendern auftreten:
+
+| # | Symptom | Ursache | Lösung |
+|---|---|---|---|
+| 1 | Schwarzes Bild nach dem Einfügen | Code unvollständig kopiert (Hilfsfunktionen fehlen) oder Kompilierfehler – Shadertoy rendert dann nichts bzw. den letzten lauffähigen Stand | Gesamtlisting aus Schritt 14 komplett kopieren, mit `Alt+Enter` kompilieren und die Fehlerkonsole unter dem Editor lesen |
+| 2 | Kompilierfehler `'…' : undeclared identifier` | Ab Schritt 6 zeigen die Listings nur noch **geänderte** Funktionen – der Rest des Vorschritts muss stehen bleiben | Den vollständigen Stand des vorherigen Schritts behalten und nur die gezeigten Funktionen ersetzen bzw. ergänzen (Hinweis am Anfang von Schritt 6) |
+| 3 | Wand-Artefakte: flackernde Schnittflächen an unsichtbaren Ebenen im Feld | Zellregel verletzt – `GROESSE_MAX` zu groß bzw. `ZELLE` zu klein (`MARGE` negativ), oder eine neue Form ohne Umkugel-Nachweis | Umkugel-Budget nachrechnen (Tab. 3) und `MARGE = ZELLE·0.5 − 1.1·GROESSE_MAX` positiv halten; die beiden Konstanten nur als Paar verstellen (Schritte 4–5, Tab. 5) |
+| 4 | Die Feldmitte bleibt leer, obwohl die Kamera woanders ist | `gKamera` wird nicht vor dem Marsch gesetzt – die Kamera-Blase schrumpft dann die Zellen um den Ursprung statt um die Kamera | `gKamera = ro;` direkt nach `kamera(…)` und **vor** `marchDebris` setzen (Schritt 13) |
+| 5 | Sterne erscheinen als kleine Quadrate statt als Punkte | Bekannter Schönheits-Kandidat aus dem Render-Lauf (Abspann): die zellweise Schwelle aus Schritt 1 leuchtet die ganze Gitterzelle aus, ohne Punktformung | Punktformung nachrüsten, z. B. `stern *= smoothstep(0.5, 0.1, length(fract(su) - 0.5));` in `sterne()` – oder als Stilentscheid belassen |
+| 6 | Leere Schneisen fluchten als Kreuz/Korridor im Bild (Schritte 3–11) | Die geradlinige Provisoriums-Kamera blickt exakt entlang der Gitterachse – die achsparallelen Zellkorridore fluchten perspektivisch zu einem Kreuz | Kein Bug: verschwindet mit der choreografierten Kamera aus Schritt 12 (Gier, Nick und Rollen brechen die Flucht); zum Prüfen `rd` testweise leicht schwenken |
+| 7 | Der Planet ist nicht zu sehen (Schritte 7–11) | Die Provisoriums-Kamera blickt geradeaus; der Planet liegt unter dem Feld | `rd` testweise kippen (Schritt 7 nennt −0.4; die Schritt-Chains rendern mit −0.7, sonst bleibt der Planet hinter dem Feld verdeckt) – ab Schritt 12 übernimmt die Nick-Uhr |
+| 8 | Niedrige Framerate / Ruckeln | 110 Marsch-Iterationen mit Hash-Kaskade und Rotationsmatrix pro `map`-Aufruf sind teuer, besonders auf integrierten GPUs | Shadertoy-Vorschau verkleinern; Marsch-Iterationen (`110`) oder FBM-Oktaven (`5`) reduzieren – nicht das Taumeln (Begründung in Schritt 6) |
+| 9 | Audio-Mappings reagieren nicht – oder stehen dauerhaft am Anschlag | iChannel0 nicht mit „Music" belegt bzw. Schwellen passen nicht zum Track; mit dem synthetischen Testsignal des Standalone sättigen die dB-skalierten FFT-Bänder nahe 1.0 – das Gate steht dauerhaft offen (so entstanden auch die Anhang-Bilder) | Kanal-Kachel prüfen (A1); Schwellen `0.60/0.75` pro Musikrichtung nachstimmen und für Sichttests Musik mit echter Dynamik verwenden – oder gleich die adaptive Envelope aus B3 |
+| 10 | Konstanten wirken anders als beschrieben | Die Shader dieser Serie sind konstruiert, nachgerechnet und in LumiViz gegengerendert (Screenshots im Text) – aber nicht jeder Zahlwert ist gegen das beschriebene Zielbild feinabgeglichen, und shadertoy.com ist noch ungeprüft (Abspann) | Die Stellschraube in kleinen Schritten nachstimmen; die beschriebene **Wirkrichtung** jeder Konstante stimmt, der Absolutwert ist Startpunkt, nicht Dogma |
+
+*Tab. 6: Fehlerbehebung – Symptom, Ursache, Lösung*
+
+---
+
+## Nächste Schritte
+
+Die Fortsetzung folgt der [Wegleitung](ShaderTutorials-overview.md) der Serie:
+
+- **Parallel im 3D-Strang:** [Stratospheric-Tunnel](StratosphericTunnel-tutorial.md) (Wand-Relief, Fenster, Pfadkrümmung) steht auf derselben Stufe wie dieses Tutorial – beide vertiefen das SDF-Raymarching unabhängig voneinander.
+- **Danach:** [Juggernaut](Juggernaut-tutorial.md) setzt die hier erarbeitete Marsch-Sicherheit (Klammer, Drossel, Budgets) voraus.
+- **Zum Schluss die Composites:** [Portals](CompositePortals-tutorial.md) und [Transitions](CompositeTransitions-tutorial.md) verbauen die fertigen Basis-Shader weiter, [Postfx](CompositePostfx-tutorial.md) hängt Multipass-Veredelung dahinter.
+
+---
+
 ## Abspann
 
 Damit ist die Reise komplett: ein unendliches Zellgitter, in dem jede Adresse ein Individuum ist – Form, Größe, Taumelachse, Rost, Blinklicht, alles aus `hash(id)`; darunter ein analytischer Planet mit Glutadern, Zeitlupenwolken und Atmosphären-Saum; darüber drei Schichten Sterne; mittendrin eine schwerelose Kamera auf sechs inkommensurablen Uhren. Und als roter Faden die Zellregel samt Zellwand-Klammer – das eine Stück beweisbare Sicherheit in einem Shader voller erlaubter Lügen.
@@ -1788,4 +1961,31 @@ Wer weitermachen will:
 Und jetzt: Musik an. 🎵🛰️
 
 *Screenshots: gerendert mit AvsStandalone (Testing-Build), Chains in `space_debris_schritte/`.*
+
+---
+
+## Siehe auch
+
+**Voraussetzungen:**
+
+- [Pyramid-Spiral-Shader-Tutorial](PyramidSpiral-tutorial.md) – SDF-Marsch, Normalen, Hash-Idiom und Domain Repetition, auf denen dieses Tutorial aufbaut (Schritte 1–7 dort genügen).
+- [Crystal-Lights-Shader-Tutorial](CrystalLights-tutorial.md) – Noise/FBM und die Kamera-Basis; dessen Anhänge A/B sind die Vollreferenz für Audio-Grundlagen und die drei Wege Shadertoy ↔ LumiViz, auf die die Anhänge hier verweisen.
+
+**Verwandte Dokumente:**
+
+- [Shader-Tutorials-Wegleitung](ShaderTutorials-overview.md) – Fokus-Tabellen, Lesereihenfolge und Technik-Index der gesamten Tutorial-Serie.
+- [Raymarching – Referenz](Raymarching-reference.md) – die technische Referenz zu Algorithmus, Distanzfunktionen, Normalen und Artefakten; besonders die Abschnitte zur Zellregel und zu den Marsch-Varianten (Klammer vs. Drossel) als Nachschlagewerk zu den Schritten 2–6.
+
+**Weiterführendes:**
+
+- [martin – space debris](<../../../../../asset/Milkdrop3/presets/martin - space debris.milk>) – das Stil-Vorbild-Preset (MilkDrop): `rs_lav`-Glutgrund, `noise3`-Oktaven, `scol`-Signalfarben, Zeitlupen-Wolken und `tilt`-Rollen im Original.
+- [iquilezles.org](https://iquilezles.org/articles/) – die Artikelsammlung von Inigo Quilez zu Distanzfunktionen, Domain-Repetition und Noise/FBM; die Primärquelle der meisten hier verwendeten Techniken.
+
+## Changelog
+
+| Version | Datum | Änderungen |
+|---|---|---|
+| **1.2.0** | 2026-08-05 | Formalisierung nach Tutorial_Base (nach dem Muster des Piloten [Crystal Lights](CrystalLights-tutorial.md)): Blockquote-Header, Inhaltsverzeichnis, Konventions-Mapping (Tab. 1), Lernziele, Voraussetzungen, Übersicht der Schritte, End-Validierung, Fehlerbehebung, Nächste Schritte, Siehe auch; Tabellen als Tab. 1–6 und Bauplan-Skizze als Fig. 1 indexiert; **Ergebnis:**-Zeile in Schritt A2 ergänzt. Didaktischer Bestand (Schritt-Texte, Code, 🎨-Kästen, Anhänge) inhaltlich unverändert. Inklusive Umzug der Serie nach `projects/apps/MyViz/docs/tutorials/` und Umbenennung nach FNM-01 zu `SpaceDebris-tutorial.md` (Entscheid Patrik, 2026-08-04). |
+| **1.1.0** | 2026-08-04 | Schritt-Chains + Screenshots: je Schritt eine lauffähige Ein-Node-Chain in `space_debris_schritte/` (`.glsl` = materialisierte, kumulativ ausgebaute Rekonstruktion der Diff-Schritte, `make_schritte.py` generiert die `.lvfx`) und ein eingebettetes Render-Bild in `space_debris_bilder/` (Render-Nachweis AvsStandalone, Testing-Build, 800×450; Anhang-Bilder mit synthetischem Testsignal). Dokumentierte Abweichung: die Schritt-Chains rendern den Kamera-Kipp der Schritte 7–11 mit −0.7 statt der im Text genannten −0.4, sonst bleibt der Planet hinter dem Feld verdeckt. |
+| **1.0.0** | 2026-08-04 | Erstfassung: 14 Schritte (Geometrie → Material → Licht → Bewegung → Politur) + Anhang A (Audio-Reaktivität) + Anhang B (Shadertoy ↔ LumiViz kompakt, mit Verweisen auf Crystal Lights). |
 

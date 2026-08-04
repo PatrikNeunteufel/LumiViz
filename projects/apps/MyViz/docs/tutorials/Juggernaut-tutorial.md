@@ -1,5 +1,61 @@
 # Juggernaut – Ein kolossaler Moloch von Grund auf
 
+> **Dokumenttyp:** Tutorial  
+> **Version:** 1.2.0  
+> **Status:** Stabil  
+> **Domain:** Programming  
+> **Kategorie:** Algorithms  
+> **Programmiersprache:** GLSL (Shadertoy/WebGL2)  
+> **Voraussetzungen:** [Pyramid-Spiral-Shader-Tutorial](PyramidSpiral-tutorial.md), Schritte 1–7; dazu [Stratospheric-Tunnel-Shader-Tutorial](StratosphericTunnel-tutorial.md) oder [Space-Debris-Shader-Tutorial](SpaceDebris-tutorial.md)  
+> **Schwierigkeitsgrad:** Experte  
+> **Tutorial-Typ:** Implementierung  
+> **Zeitschätzung:** 6–8 h für die Schritte 1–14 auf shadertoy.com (inkl. Experimentieren), zusätzlich ~1–2 h für die Anhänge A/B; reines Durchlesen ~2 h  
+> **Gültigkeit:** Shadertoy-Image-Shader (WebGL2); Anhang B zusätzlich für den Shadertoy-Node der LumiViz-Effect-Chain (Stand Session 65/67)  
+> **Zweck:** Schritt-für-Schritt-Aufbau einer kolossalen, dunklen Megastruktur als SDF-Raymarcher – smin/smax-Greebles in drei Detail-Oktaven, zwei komplette Licht-Setups mit `STIMMUNG`-Blende, volumetrische God-Rays und Orbit-Kamera, vom leeren Shader bis zum fertigen Werk samt Audio-Reaktivität.  
+> **Zielgruppe:** Shader-Entwickler mit Marsch-Sicherheit aus den Basis-Tutorials der Serie; Leser der Shader-Tutorial-Serie  
+> **Sprache:** Deutsch  
+
+> ⚠ **HINWEIS: Nicht-normative ASCII-Darstellungen**
+>
+> Die ASCII-Skizze im Bauplan-Abschnitt dient ausschließlich der **illustrativen Unterstützung**
+> und setzt eine Monospace-Schrift voraus. Verbindlich sind die textuelle Beschreibung und der Code.
+
+---
+
+## Inhaltsverzeichnis
+
+1. Einleitung
+2. Lernziele
+3. Voraussetzungen
+4. Übersicht der Schritte
+5. Der Bauplan: Was wir eigentlich rendern
+6. Schritt 1 – Die Bühne: eine Silhouette, die das Bild sprengt
+7. Schritt 2 – Das Raymarch-Gerüst: die nackte Riesenkugel
+8. Schritt 3 – Die Kamera winzig, der Moloch riesig
+9. Schritt 4 – Greebles I: das Panel-Gitter (und smin/smax)
+10. Schritt 5 – Greebles II: Detail-Oktaven (Aufbauten und Rillen)
+11. Schritt 6 – Die schiefe Achse: der Moloch dreht sich
+12. Schritt 7 – Licht-Setup DARK: Gegenlicht und Silhouette
+13. Schritt 8 – Licht-Setup BRIGHTER: warmes Streiflicht
+14. Schritt 9 – Die STIMMUNGs-Blende: EIN Shader, ZWEI Licht-Welten
+15. Schritt 10 – Positionslichter: der Moloch ist bewohnt
+16. Schritt 11 – God-Rays I: der volumetrische Glow
+17. Schritt 12 – God-Rays II: die Streu-Sonne mit 27 Keulen
+18. Schritt 13 – Die Kamera-Choreografie: Orbit mit Pendeln
+19. Schritt 14 – Politur: Dunst, Farbdrift, Tonemapping, Dither – der fertige Shader
+20. Anhang A: Audio-Reaktivität (Schritte A1–A3)
+21. Anhang B: Shadertoy ↔ LumiViz, kompakt (B1–B3)
+22. End-Validierung
+23. Fehlerbehebung
+24. Nächste Schritte
+25. Abspann
+26. Siehe auch
+27. Changelog
+
+---
+
+## Einleitung
+
 **Ziel:** Eine **kolossale, dunkle Megastruktur** – ein Riesen-Orb, über und über mit Paneelen, Aufbauten und Rillen bedeckt – schwebt träge rotierend im Dunst. Die Kamera ist winzig dagegen: Sie umkreist den Moloch in Bodennähe, mal ehrfürchtig nah, mal mit Übersicht, und die Struktur füllt dabei den halben Himmel. Um die Silhouette stehen **God-Rays** – radiales Streulicht einer Sonne, die (je nach Stimmung) hinter oder neben dem Koloss steht. Und das Kern-Feature: **eine einzige Stellschraube `STIMMUNG`** blendet zwischen zwei kompletten Licht-Welten – `0.0` = *dark* (schwaches Gegenlicht, Silhouette, rote Positionslichter, dichter Dunst) und `1.0` = *brighter* (warmes Streiflicht, lesbare Panel-Struktur, hellerer Himmel).
 
 **Stil-Vorbilder** (beide liegen im Repo unter `asset/Milkdrop3/presets/`):
@@ -18,7 +74,66 @@ Wichtig: Wir **portieren nicht das Preset** (das ist ein Feedback-System über d
 - Raymarching-Grundlagen (SDF, `map`/`calcNormal`/Marsch, `fract(sin(dot(...)))`-Hash) setzen wir voraus – wer sie noch nie gesehen hat, liest zuerst die Schritte 1–7 des **Pyramid-Spiral-Tutorials** (im selben Ordner). Neu sind diesmal: **weiche Boolesche Operatoren** (`smin`/`smax`), **Greebles** durch Gitter-Verschneidung, und Beleuchtung als **umschaltbare Stimmung**.
 - **In LumiViz:** Jeder Schritt liegt zusätzlich als lauffähige Ein-Node-Chain in `juggernaut_schritte/` (dieses Markdown ist die SSOT; da ab Schritt 9 nur noch Diffs abgedruckt sind, liegen dort je Schritt eine `.glsl`-Datei als materialisierte Rekonstruktion und die per `make_schritte.py` daraus verpackte `.lvfx`-Chain). Die Screenshots bei den Schritten stammen aus genau diesen Chains, gerendert im AvsStandalone (`AvsStandalone juggernaut_schritte --auto --frames 300 --size 800x450 --out juggernaut_bilder`); die Anhang-Bilder hören dabei das synthetische Testsignal des Standalone.
 
-**Inhalt**
+Die Schritt-Konvention der Serie deckt die vier Elemente eines Tutorial-Schritts (Ziel, Anleitung, Validierung, Vertiefung) mit festen Markierungen ab – Tab. 1 zeigt die Zuordnung, die in jedem Schritt dieses Dokuments gilt:
+
+| Konvention im Schritt | Bedeutung |
+|---|---|
+| **Neu:** | Ziel des Schritts – die eine Technik, die hinzukommt |
+| Code-Block | Durchführung – der vollständige bzw. geänderte Shader-Code |
+| **Ergebnis:** | Validierung des Schritts – das prüfbare Sichtergebnis |
+| „Was passiert hier" | Anleitung und Erklärung des Codes |
+| 🎨 Experimentieren | Optionale Vertiefung und Variationen |
+
+*Tab. 1: Konventions-Mapping – Schritt-Markierungen dieses Tutorials und ihre Rolle in der Schritt-Struktur*
+
+## Lernziele
+
+Nach diesem Tutorial können Sie …
+
+1. … **Größenwirkung inszenieren:** ein Objekt per Anschnitt, Low-Angle und Weitwinkel „das Bild sprengen" lassen und die Wirkung über die Rechnung Objektwinkel (`asin(Radius/Abstand)`) gegen Bildwinkel (`atan(0.5/Brennweite)`) gezielt einstellen (Schritte 1–3).
+2. … **smin/smax-Greebles** implementieren: weiche Boolesche Operatoren mit einem kubischen Gitter zu drei Detail-Oktaven (Platten, Aufbauten, Rillen) auf einer Kugel verschneiden – inklusive der Drossel-Rechnung, die den Marsch trotz nicht mehr exakter SDF lochfrei hält (Schritte 4–6).
+3. … **zwei komplette Licht-Setups** (dark: Gegenlicht/Rim/Dunkelheit; brighter: Streiflicht/Füll-Licht/Glanz) aufbauen und über die eine Stellschraube `STIMMUNG` als Zutaten-Mischung überblenden, sodass jeder Zwischenwert ein gültiges Licht-Setup ergibt (Schritte 7–9).
+4. … **volumetrische God-Rays** akkumulieren: Glow mit dem `k/(a + d²)`-Idiom entlang des Marsches aufsummieren und mit einer analytischen Streu-Sonne (Korona plus Strahlenkeulen um die Sonnenachse) zu einem Phänomen kombinieren (Schritte 11–12).
+5. … eine **Orbit-Kamera** mit Radius-, Höhen- und Nick-Pendeln aus inkommensurablen sin-Uhren choreografieren – mit weicher Richtungsumkehr und nachgerechneter Kollisions-Sicherheit (Schritt 13).
+6. … **Audio-Reaktivität** einbauen, deren Haupt-Mapping die Lautheit auf die `STIMMUNG`-Blende legt und deren Beat-Gate die Positionslichter zündet – mit Sockel-plus-Hub-Faktoren, die den Shader bei Stille lebendig lassen (Anhang A).
+
+## Voraussetzungen
+
+**Wissen:**
+
+- [Pyramid-Spiral-Shader-Tutorial](PyramidSpiral-tutorial.md), Schritte 1–7 – UV-Aufbau, SDF-Raymarching-Grundlagen (`map`/`calcNormal`/Marsch), Hash-Funktionen. Diese Basics werden hier vorausgesetzt und nicht mehr wiederholt.
+- [Stratospheric-Tunnel-Shader-Tutorial](StratosphericTunnel-tutorial.md) **oder** [Space-Debris-Shader-Tutorial](SpaceDebris-tutorial.md) – Marsch-Sicherheit an nicht-exakten SDFs bzw. Licht-Ideen aus dem 3D-Strang; eines der beiden genügt (Lesehilfe: [Wegleitung](ShaderTutorials-overview.md)). Dieses Tutorial ist als **Experten-Stufe** der Serie eingeordnet, weil die Verschneidungen ab Schritt 4 keine exakten SDFs mehr liefern und der Marsch bewusst am Limit gefahren wird.
+
+**Software:**
+
+- Ein aktueller, WebGL2-fähiger Browser (Chrome, Firefox, Edge oder Safari in einer aktuellen Desktop-Version) – Shadertoy ist eine Web-Plattform, es ist keine Installation nötig.
+- Zugang zu [shadertoy.com](https://www.shadertoy.com/new) – Shader lassen sich ohne Konto erstellen und ausführen; zum Speichern eigener Shader ist ein kostenloses Konto erforderlich.
+- Für Anhang A: ein „Music"-Kanal im Shadertoy-Editor (eingebaute Track-Auswahl, keine eigene Datei nötig).
+
+**Optional (nur Anhang B):**
+
+- LumiViz/MyViz mit Shadertoy-Node in der Effect-Chain (Stand Session 65/67); für den URL-Import zusätzlich ein kostenloser Shadertoy-App-Key.
+
+## Übersicht der Schritte
+
+Das Tutorial führt in 14 Schritten vom leeren Shader zum fertigen Werk; die Anhänge ergänzen Audio-Reaktivität (A1–A3) und den Weg in die App (B1–B3):
+
+1. Die Bühne: eine Silhouette, die das Bild sprengt
+2. Das Raymarch-Gerüst: die nackte Riesenkugel
+3. Die Kamera winzig, der Moloch riesig
+4. Greebles I: das Panel-Gitter (und smin/smax)
+5. Greebles II: Detail-Oktaven (Aufbauten und Rillen)
+6. Die schiefe Achse: der Moloch dreht sich
+7. Licht-Setup DARK: Gegenlicht und Silhouette
+8. Licht-Setup BRIGHTER: warmes Streiflicht
+9. Die STIMMUNGs-Blende: EIN Shader, ZWEI Licht-Welten
+10. Positionslichter: der Moloch ist bewohnt
+11. God-Rays I: der volumetrische Glow
+12. God-Rays II: die Streu-Sonne mit 27 Keulen
+13. Die Kamera-Choreografie: Orbit mit Pendeln
+14. Politur: Dunst, Farbdrift, Tonemapping, Dither – der fertige Shader
+
+Dieselben Schritte, nach Phasen gruppiert (Tab. 2):
 
 | Phase | Schritte | Thema |
 |---|---|---|
@@ -30,6 +145,8 @@ Wichtig: Wir **portieren nicht das Preset** (das ist ein Feedback-System über d
 | Politur | 14 | Dunst, Farbdrift, Tonemapping, Dither – der fertige Shader |
 | Anhang A | A1–A3 | Audio-Reaktivität (Beat-Gate, Mapping-Katalog, Einbau) |
 | Anhang B | B1–B3 | Shadertoy ↔ LumiViz, kompakt |
+
+*Tab. 2: Phasen-Gliederung der Schritte und Anhänge*
 
 ---
 
@@ -51,6 +168,8 @@ Bevor die erste Zeile fällt, ein Blick auf die Architektur des Bildes – sie e
                           bzw. seitlich (brighter)
      📷  Kamera: winzig, Low-Angle, langsamer Orbit mit Radius-Pendeln
 ```
+
+*Fig. 1 [Blockdiagramm]: Der Bauplan – Riesenkugel mit kubischem Panel-Gitter in drei Detail-Oktaven, blinkende Positionslichter, God-Rays um die Silhouette, Sonne hinter (dark) bzw. seitlich (brighter) des Orbs, winzige Low-Angle-Orbit-Kamera*
 
 Drei Zutaten also, und eine Klammer darüber:
 
@@ -1963,6 +2082,10 @@ Kein neuer Shader – eine Landkarte. Alle Schnipsel beziehen sich auf das Gesam
 | 5 | Höhen | Dither/Grain | in `mainImage`: Dither-Zeile `* (1.0 + 6.0 * gTreb)` | Hi-Hats = Körnung. Direktes `treb_att`-Zitat – wobei das brighter-Preset invers mappt (`saturate(1-treb_att)`: Rauschen bei *leisen* Höhen, als Stille-Patina). Beide Richtungen sind legitim; unten steht die direkte, die inverse ist eine 🎨-Variante |
 | 6 | Bass, dezent | Korona-Keulen | in `himmel()`: `keulen`-Amplitude `0.25` → `0.25 + 0.20 * gBass` | Die Strahlen zucken im Takt – sparsam dosieren, sonst wird die Sonne zum Stroboskop |
 
+*Tab. 3: Mapping-Katalog – Audio-Signal, Stellschraube, Eingriff und Begründung*
+
+**Ergebnis:** Für jedes der sechs Mappings sind Signal, Eingriffsort (Funktion samt Zeile) und Begründung benannt – die Schnipsel aus Tab. 3 lassen sich in Schritt A3 unverändert übernehmen (die Mappings 1–5 wandern dort in den Shader, Mapping 6 bleibt optional).
+
 **Zwei Warnungen**, beide verschärft gültig:
 
 - **Die Orbit-Uhren nicht mappen.** Alle vier Kamera-Uhren (0.021/0.013/0.017/0.029) und die Eigendrehung (0.02) sind *Positions*-Uhren – ein audio-gesteuerter Faktor vor `iTime` teleportiert die Kamera bei jeder Pegeländerung (die Herleitung steht in der Schablone, A2). Wer „bei Bass schneller kreisen" will, braucht Zustand (→ B3-Verweis in Anhang B) – oder legt den Bass auf eine *Amplitude* (z. B. `wink`-Amplitude `2.6 · (1 + 0.1·gBass)` – schon das ist grenzwertig ruckelig).
@@ -2087,6 +2210,50 @@ Das rohe `gVol`-Mapping aus A3 schaltet die Stimmung im Frame-Takt – funktiona
 
 ---
 
+## End-Validierung
+
+Diese Validierung steht bewusst **hinter den Anhängen**: A1–A3 sind reguläre Schritte dieses Tutorials, und das Lernziel 6 (Audio-Reaktivität) ist erst dort erreichbar – die End-Validierung muss aber alle Lernziele abdecken. Die Kriterien 1–6 prüfen den Kern (Schritte 1–14), das Kriterium 7 den Anhang. Jedes Kriterium ist am laufenden Shader auf shadertoy.com objektiv prüfbar:
+
+1. **Kompilierbarkeit:** Das Gesamtlisting aus Schritt 14 kompiliert auf shadertoy.com ohne Fehlermeldung und rendert ein bewegtes Bild – kein Schwarzbild, kein Standbild. *(Basis aller Lernziele)*
+2. **Größenwirkung:** In der Nah-Phase des Orbits schneidet der Moloch mindestens zwei Bildränder an. Gegenprobe: `RADIUS = 1.0` zeigt eine frei im Bild schwebende Murmel; zurück auf `6.0` sprengt die Struktur das Bild wieder. *(Lernziel 1)*
+3. **Greebles und Marsch:** Bei `STIMMUNG = 1.0` sind alle drei Detail-Oktaven unterscheidbar – Platten mit Fugen, aufgesetzte Blöcke, feine Rillen-Schraffur im Streiflicht. Gegenprobe: `DROSSEL = 1.0` erzeugt sichtbare Löcher und Glitzer-Pixel an den Plattenkanten; zurück auf `0.5` verschwinden sie. *(Lernziele 2 und – als Artefakt-Übung – die Drossel-Rechnung aus Schritt 5)*
+4. **STIMMUNGs-Blende:** `STIMMUNG = 0.0` und `STIMMUNG = 1.0` erzeugen **sichtbar verschiedene Bilder** – dark: fast schwarze Silhouette mit kaltem Rim, roten Lichtern und dichtem Dunst; brighter: lesbare Panel-Struktur im warmen Streiflicht unter hellerem Himmel. Zwischenwerte (z. B. `0.35`) liefern ein plausibles Zwielicht ohne Doppelbelichtungs-Artefakte – die Sonne steht auf einer Zwischenrichtung, nicht zweimal im Bild. *(Lernziel 3)*
+5. **God-Rays:** Um die Silhouette steht ein Glow-Kranz, der beim Orbit an der Geometrie klebt (Parallaxe); in der Fern-Phase des Orbits sind die Strahlenkeulen um die Sonne zu erkennen (zur Kontrolle macht `STRAHLEN = 5.0` sie grob und unübersehbar). `GODRAY = 0.0` entfernt den Kranz, die Keulen im Himmel bleiben – zwei getrennte Techniken, ein Phänomen. *(Lernziel 4)*
+6. **Kamera:** Der Orbit verlangsamt an den Bahn-Enden sichtbar und kehrt weich um, ohne Sprung; der Abstand pendelt zwischen Nah-Wand und Ganz-Übersicht; die Kamera fährt nie in die Struktur (Freiraum-Rechnung aus Schritt 13: ≥ 2.1 Einheiten). *(Lernziel 5)*
+7. **Audio:** Im A3-Stand (iChannel0 = Music) hängt der Moloch in leisen Passagen als dunkle Silhouette im Dunst und tritt in lauten ins Licht; jeder Bass-Kick zündet einen Lichter-Schauer über die Struktur; **ohne Musik** laufen Drehung, Blinken und Orbit unverändert weiter. *(Lernziel 6)*
+
+---
+
+## Fehlerbehebung
+
+Die häufigsten Stolperstellen dieses Tutorials, gesammelt nach Symptom (Tab. 4). Die schritt-lokalen ⚠-Hinweise (etwa zur SDF-Ehrlichkeit in Schritt 4) bleiben davon unberührt – hier stehen die Probleme, die typischerweise erst beim Zusammenbau, beim Experimentieren oder beim Abgleich mit den Screenshots auftreten:
+
+| # | Symptom | Ursache | Lösung |
+|---|---|---|---|
+| 1 | Schwarzes Bild nach dem Einfügen | Code unvollständig kopiert (Hilfsfunktionen fehlen) oder Kompilierfehler – Shadertoy rendert dann nichts bzw. den letzten lauffähigen Stand | Gesamtlisting aus Schritt 14 komplett kopieren, mit `Alt+Enter` kompilieren und die Fehlerkonsole unter dem Editor lesen |
+| 2 | Kompilierfehler `'…' : undeclared identifier` | Ab Schritt 9 zeigen die Listings nur noch **geänderte** Funktionen – der Rest des Vorschritts muss stehen bleiben | Mit den Sammelpunkten abgleichen: Zwischenstand am Ende von Schritt 10 bzw. Gesamtlisting in Schritt 14 (Hinweis am Anfang von Schritt 9) |
+| 3 | Löcher/Glitzer-Pixel an den Plattenkanten | Marsch-Drossel zu groß – Zellen-Versätze und Rillen-Displacement machen die SDF zur bloßen Abschätzung | `DROSSEL = 0.5` (Rechnung in Schritt 5); wer `RILLE` erhöht, rechnet die Drossel-Abschätzung nach und senkt weiter |
+| 4 | Der dark-Endstand (Schritt 14, `STIMMUNG = 0.0`) rendert deutlich **heller** als die „fast schwarze Masse" der Prosa | Bekannter Befund der LumiViz-Gegenrender (siehe Abspann): Belichtung, Glow und Dunst greifen in den untersten 10 % des Wertebereichs ineinander | Nachstimm-Kandidaten: Belichtung `2.4` senken, Glow-Faktor `0.06` senken, Dunstfarbe abdunkeln – eine Zahl zur Zeit ändern und die anderen nachziehen; die „Was passiert hier"-Absicht ist verlässlicher als die Konstante daneben |
+| 5 | Strahlenkeulen (Schritt 12) nicht zu sehen | Bei frontnaher Kamera verdeckt der Moloch die Sonne fast vollständig – der Kranz zeigt sich nur als Glimmen an den oberen Bildecken (so auch im Schritt-12-Screenshot) | Den Orbit aus Schritt 13 abwarten (Fern-Phase) oder zum Testen `NAH = 20.0` setzen; zur Kontrolle zusätzlich `STRAHLEN = 5.0` |
+| 6 | Niedrige Framerate / Ruckeln | 160 Marsch-Iterationen mit Drossel 0.5 plus sechsfache `map`-Auswertung der Normalen sind teuer, besonders auf integrierten GPUs | Shadertoy-Vorschau verkleinern; Iterationen (`160`) reduzieren oder die feinste Oktave (`ZELLE3`-Rillen) probeweise deaktivieren |
+| 7 | Audio-Balken/Gate stehen dauerhaft auf Vollausschlag | Pegel-Sättigung: das synthetische Testsignal des Standalone (und stark gemasterte Tracks) liegt dauerhaft über den Gate-Schwellen – die A1-/A3-Bilder zeigen genau diesen Fall | Schwellen (`0.60/0.75`) und die Stimmungs-Gerade (`·1.4 − 0.25`) im A1-Mini-Shader pro Musikmaterial kalibrieren, erst dann in den Hauptshader übernehmen; für adaptive Trigger die Buffer-Envelope (Anhang B3) |
+| 8 | Audio-Mappings reagieren nicht | iChannel0 nicht mit „Music" belegt, Track pausiert, oder die Gate-Schwelle passt nicht zum Track | Kanal-Kachel prüfen (A1); Schwellen sind Handarbeit pro Musikrichtung – oder gleich die geglättete Lösung aus Anhang B3 |
+| 9 | Konstanten wirken anders als beschrieben | Die Shader dieser Serie sind konstruiert, nachgerechnet und in LumiViz gegengerendert (Screenshots im Text) – aber nicht jeder Zahlwert ist gegen das beschriebene Zielbild feinabgeglichen, und shadertoy.com ist noch ungeprüft | Die Stellschraube in kleinen Schritten nachstimmen; die beschriebene **Wirkrichtung** jeder Konstante stimmt, der Absolutwert ist Startpunkt, nicht Dogma |
+
+*Tab. 4: Fehlerbehebung – Symptom, Ursache, Lösung*
+
+---
+
+## Nächste Schritte
+
+Die Fortsetzung folgt der [Wegleitung](ShaderTutorials-overview.md) der Serie – nach diesem Tutorial sind die **Composites** dran, und zwei davon bauen direkt auf dem Moloch auf:
+
+- **[Composite-Postfx](CompositePostfx-tutorial.md)** veredelt genau diese Szene: Der Moloch wandert als Werk in eine Multipass-Kette (Bloom, Tiefenschärfe, Temporal-Glättung) – die Politur von Schritt 14, eine Etage höher.
+- **[Composite-Transitions](CompositeTransitions-tutorial.md)** nutzt den Moloch als **Welt B**: beat-getriggerte Übergänge zwischen den fertigen Szenen der Serie – die STIMMUNGs-Blende von Schritt 9, auf ganze Welten übertragen.
+- **[Composite-Portals](CompositePortals-tutorial.md)** merged die Basis-Szenen der Serie zu einer Portal-Welt – wer die anderen Basis-Tutorials noch nicht verbaut hat, steigt dort ein.
+
+---
+
 ## Abspann
 
 Damit ist der Moloch komplett: eine Kugel, drei Gitter-Oktaven, zwei Licht-Welten mit einer Blende dazwischen, ein volumetrischer Strahlenkranz mit 27 Keulen als Verbeugung vor dem Vorbild – und eine Kamera, die klein genug bleibt, um das alles groß aussehen zu lassen.
@@ -2101,4 +2268,32 @@ Wer weitermachen will: Fast jeder 🎨-Kasten ist ein eigener Shader – besonde
 Und jetzt: Musik an. 🎵🌑
 
 *Screenshots: gerendert mit AvsStandalone (Testing-Build), Chains in `juggernaut_schritte/`.*
+
+---
+
+## Siehe auch
+
+**Voraussetzungen:**
+
+- [Pyramid-Spiral-Shader-Tutorial](PyramidSpiral-tutorial.md) – die Raymarching-Grundlagen (UV, SDF, `map`/`calcNormal`/Marsch, Hash), auf denen dieses Tutorial aufbaut (Schritte 1–7 dort genügen).
+- [Stratospheric-Tunnel-Shader-Tutorial](StratosphericTunnel-tutorial.md) bzw. [Space-Debris-Shader-Tutorial](SpaceDebris-tutorial.md) – Marsch-Sicherheit an nicht-exakten SDFs und die Licht-Ideen des 3D-Strangs; eines der beiden genügt als Zubringer (Lesehilfe der Wegleitung).
+
+**Verwandte Dokumente:**
+
+- [Shader-Tutorials-Wegleitung](ShaderTutorials-overview.md) – Fokus-Tabellen, Lesereihenfolge und Technik-Index der gesamten Tutorial-Serie.
+- [Raymarching – Referenz](Raymarching-reference.md) – die technische Referenz zum Nachschlagen; hier besonders §6 (Raumoperationen: Verschneidungen und ihre Folgen für die Drossel) und §8 (Beleuchtung: das Glow-Idiom) als das „Warum" hinter den Schritten 4–5 und 11.
+- [Crystal-Lights-Shader-Tutorial](CrystalLights-tutorial.md) – die „Schablone" dieses Tutorials: Anhang A/B dort sind die Vollreferenz für die Audio-Grundlagen und den Weg Shadertoy ↔ LumiViz, auf die die Anhänge hier verweisen.
+
+**Weiterführendes:**
+
+- [MilkDrop2077 vs martin – juggernaut brighter](<../../../../../asset/Milkdrop3/presets/MilkDrop2077 vs martin - juggernaut brighter.milk>) und [MilkDrop2077 vs martin – juggernaut 2 dark](<../../../../../asset/Milkdrop3/presets/MilkDrop2077 vs martin - juggernaut 2 dark.milk2>) – das Stil-Vorbild-Paar (MilkDrop): Riesen-Orb, 27er-Shine-Loop, kubisches `h1`-Gitter, Dither und die zwei Licht-Stimmungen im Original.
+- [iquilezles.org](https://iquilezles.org/articles/) – die Artikelsammlung von Inigo Quilez zu Distanzfunktionen, smin und Raymarching-Artefakten; die Primärquelle der polynomialen `smin`/`smax`-Form aus Schritt 4.
+
+## Changelog
+
+| Version | Datum | Änderungen |
+|---|---|---|
+| **1.2.0** | 2026-08-05 | Formalisierung nach Tutorial_Base (Muster: Crystal-Lights-Pilot): Blockquote-Header, Inhaltsverzeichnis, Lernziele, Voraussetzungen, Übersicht der Schritte, Konventions-Mapping (Tab. 1), End-Validierung, Fehlerbehebung, Nächste Schritte, Siehe auch; Tabellen als Tab. 1–4 und Bauplan-Skizze als Fig. 1 indexiert; **Ergebnis:**-Zeile in Schritt A2 ergänzt; bekannte Befunde (dark-Endstand heller als Prosa, frontverdeckte Strahlenkeulen, Testsignal-Sättigung) als Fehlerbehebungs-Zeilen aufgenommen. Didaktischer Bestand (Schritt-Texte, Code, 🎨-Kästen, Anhänge) inhaltlich unverändert. Einschließlich Umzug der Serie nach `projects/apps/MyViz/docs/tutorials/` und Umbenennung nach FNM-01 zu `Juggernaut-tutorial.md` (Entscheid Patrik, 2026-08-04). |
+| **1.1.0** | 2026-08-04 | Schritt-Chains + Screenshots: je Schritt eine lauffähige Ein-Node-Chain in `juggernaut_schritte/` (`.glsl` = materialisierte Rekonstruktion der Diff-Schritte, `make_schritte.py` generiert die `.lvfx`) und ein eingebettetes Render-Bild in `juggernaut_bilder/` (Render-Nachweis AvsStandalone, Testing-Build, 800×450, Frame 300; Anhang-Bilder mit synthetischem Testsignal). |
+| **1.0.0** | 2026-08-04 | Erstfassung: 14 Schritte (Geometrie → Material → Licht → Bewegung → Politur, Kern-Feature `STIMMUNG`-Blende) + Anhang A (Audio-Reaktivität mit Mapping-Katalog) + Anhang B (Shadertoy ↔ LumiViz, kompakt mit Verweis auf die Crystal-Lights-Vollreferenz). |
 

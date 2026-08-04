@@ -1,6 +1,6 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.38.0
+> **Version:** 1.39.0
 > **Datum:** 2026-08-04 (Session 67)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -817,6 +817,20 @@ bass/mid/treb/beat + Audio-Mod-Skript-Slot). Ausbaustufe Multipass A–D.
 **Genauer Plan (S1–S4): [Regelwerk_und_Neue_Module_Plan.md](visuals/Regelwerk_und_Neue_Module_Plan.md)**
 — Start nach Strang R.
 
+### ⚪ Shadertoy-Buffer-FBOs: GL_NEAREST statt GL_LINEAR (Befund Tutorial-Screenshots, 2026-08-05)
+
+Die Multipass-Buffer des Shadertoy-Nodes filtern beim Lesen GL_NEAREST
+(Qt-FBO-Default, kein `glTexParameteri` im Render-Pfad) — shadertoy.com
+filtert LINEAR. Folge: Feedback-Shader mit Unsharp-Mask/Sharpen explodieren
+in Pixelgrieß, Blur-/DOF-Taps mit Zwischenpositionen brauchen Workarounds.
+Beweis + Workaround: die generierten Tutorial-Chains (PimpedKaleidoscope,
+CompositePostfx) tragen eine `lesBilinear()`-GLSL-Anpassung, als
+„LumiViz-Anpassung" im Shader-Kopf markiert. **Fix:** je Buffer-FBO
+`GL_TEXTURE_MIN/MAG_FILTER = GL_LINEAR` setzen; danach die
+`lesBilinear`-Workarounds aus den Chains zurückbauen und die betroffenen
+Tutorial-Bilder neu rendern. (Ein zuvor angebotener Task-Chip hierzu wurde
+geschlossen — dieser Eintrag ist der Merkposten.)
+
 ### ➜ GPU-Vertex-Module statt CPU-Mesh (Frage Patrik S64, beantwortet — geplant, Strang G)
 
 **Legacy-Imports bleiben CPU:** das per-Vertex-EEL läuft im Original
@@ -1158,6 +1172,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.39.0 | 2026-08-05 | Tutorial-Session (paralleler Doku-Strang) — **NEU ⚪ §7:** Shadertoy-Buffer-FBOs filtern GL_NEAREST statt LINEAR (Befund der Tutorial-Screenshot-Läufe; `lesBilinear`-Workaround in den generierten Chains, App-Fix als Backlog-Eintrag statt Task-Chip). Kontext: Shader-Tutorial-Serie komplett nach `docs/tutorials/` umgezogen (FNM-Namen), formalisiert (Tutorial_Base/Overview_Base/Reference_Base) und via AvsStandalone gegengerendert — Details in `docs/tutorials/ShaderTutorials-overview.md` |
 | 1.38.0 | 2026-08-04 | Session 67 (Abschluss-Nachträge) — **Audio-Skala dB-vs-linear ✅** (Sonde + Umsetzung: Shadertoy-Audio-Textur nach WebAudio-Vertrag, ShadertoyWrapper.md 1.2.0; NEU `getspecdb()` für Chain-Skripte, Idee Patrik — LuaScriptEngine + Transpiler-Whitelist + Editor-Referenz, Test-Case 512). **Dunkelklasse ✅ ENTSCHIEDEN (Patrik): IST-SO-artig** (7+1 inkl. XorDev 001b), formales Urteil `s67b/VERGLEICH.md` (ref_shots erzeugt); ⚪ optionaler Backlog: Dossiers → gezielte Emulation bei freien Ressourcen. Rest-Bug-Liste = Gin Tonic 003 |
 | 1.37.0 | 2026-08-04 | Session 67 (Fortsetzung) — **Fixklasse 9: EEL-Divisions-Vertrag, OK 295→298.** Referenz-EEL dividiert safe (Nenner 0 ⇒ exakt 0; dreifach per Sonde gegen MilkdropRef gemessen, Sonden-Methodik NEU in `asset/Milkdrop3/sonden/`), unsere Lua-Engine IEEE ⇒ NaN-Kaskaden. EelTranspiler 1.3.0 `eel.div` (nur Milkdrop-Dialekt; AVS-Sonde als neuer ⬜). **pixies ×2 GEHEILT** (Kamera-Matrix-NaN via `LUMIVIZ_MILKDROP_TRACE_VARS` gefunden), **piercing 01 geklärt** (Saatlos-Vertragsgrenze: Rausch-Input < 1/255-Quantisierung, App mit Saat korrekt), XorDev 001b lebt (Ref stirbt an anderem UB → Dunkelklasse-Entscheid). Baseline `s67b` (3 Wechsel, alle aufwärts; `s67a` = Gate Shader-Fix+Blende klassengleich). MilkdropRef-MessageBoxen → stderr (`ref_msgbox.h`, /FI). Standalone 1.1.0: `--ab`, `--blende`, `--audio-beat`. Tests 511 grün |
 | 1.36.0 | 2026-08-04 | Session 67 (Zwischenstand) — **TOP 1 GELÖST:** „RTH erbt Farbe" war ein GPU-Programm-Rest: `ensureCustomPrograms()` hinter dem Quellen-Gate ⇒ beim In-Place-Wechsel auf ein Md1Default-Preset rendeten die Warp-/Comp-Programme des VORGÄNGERS weiter. Fix in MilkdropVisualizer (Aufruf unconditional, 1.22.0); Beweis MilkdropStandalone 1.1.0 `--ab` (0/300 → 300/300 bitgleiche Frames). **NEU 🟠:** Rausch-Saat beim Löschen-Wechsel sichtbar (stört; vorher von Shader-Leichen überdeckt? — Untersuchung + Entscheid a/b/c offen). Hinweis: 1.33.0–1.35.0 wurden nur im Kopf gebumpt (S65/S66), Zeilen fehlen — Historie in den Session-Changelogs |

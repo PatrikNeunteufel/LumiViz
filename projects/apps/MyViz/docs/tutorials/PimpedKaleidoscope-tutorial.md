@@ -1,5 +1,60 @@
 # Pimped Kaleidoscope – Ein Feedback-Kaleidoskop von Grund auf
 
+> **Dokumenttyp:** Tutorial  
+> **Version:** 1.2.0  
+> **Status:** Stabil  
+> **Domain:** Programming  
+> **Kategorie:** Algorithms  
+> **Programmiersprache:** GLSL (Shadertoy/WebGL2)  
+> **Voraussetzungen:** [Pyramid-Spiral-Shader-Tutorial](PyramidSpiral-tutorial.md), Schritte 1–2, sowie Hash-Idiom und Cosinus-Palette der Serie – kein Raymarching nötig: der 2D-Strang ist bewusst raymarching-frei  
+> **Schwierigkeitsgrad:** Fortgeschritten  
+> **Tutorial-Typ:** Implementierung  
+> **Zeitschätzung:** 5–7 h für die Schritte 1–13 auf shadertoy.com (inkl. Experimentieren), zusätzlich ~1,5 h für die Anhänge A/B; reines Durchlesen ~1,5 h  
+> **Gültigkeit:** Shadertoy-Multipass-Shader (WebGL2, Common + Buffer A + Image); Anhang B zusätzlich für den Shadertoy-Node der LumiViz-Effect-Chain (Stand Session 65/67)  
+> **Zweck:** Schritt-für-Schritt-Aufbau eines Feedback-Kaleidoskops mit Shadertoy-Multipass und Buffer-Selbstreferenz – Milkdrops Warp-Schleife nachgebaut, von der Lichtsaat über das Feedback-Grundrezept und drei Faltstufen bis zum fertigen Werk samt Audio-Reaktivität.  
+> **Zielgruppe:** Shader-Entwickler ohne Raymarching-Vorwissen (leichtester Einstieg der Serie); Leser der Shader-Tutorial-Serie  
+> **Sprache:** Deutsch  
+
+> ⚠ **HINWEIS: Nicht-normative ASCII-Darstellungen**
+>
+> Die ASCII-Skizze im Bauplan-Abschnitt dient ausschließlich der **illustrativen Unterstützung**
+> und setzt eine Monospace-Schrift voraus. Verbindlich sind die textuelle Beschreibung und der Code.
+
+---
+
+## Inhaltsverzeichnis
+
+1. Einleitung
+2. Lernziele
+3. Voraussetzungen
+4. Übersicht der Schritte
+5. Der Bauplan: Was wir eigentlich rendern
+6. Schritt 1 – Die Bühne: ein wanderndes Licht
+7. Schritt 2 – Die Lichtsaat: Punkte-Paar, Ring, Palette
+8. Schritt 3 – Buffer A: das Bild bekommt ein Gedächtnis (und brennt aus)
+9. Schritt 4 – Decay: die Vergessenskurve
+10. Schritt 5 – Die Lese-Transformation: Zoom und Drehung
+11. Schritt 6 – Sharpen: die Unsharp Mask
+12. Schritt 7 – Die Dither-Saat
+13. Schritt 8 – Winkel-Faltung: das klassische Kaleidoskop
+14. Schritt 9 – Die Spiegel-Kachel
+15. Schritt 10 – Rotations-Überlagerung: die anz-Schleife
+16. Schritt 11 – Die unsichtbare Kamera
+17. Schritt 12 – Politur: Farbrotation, Entsättigung, Tonemapping
+18. Schritt 13 – Der fertige Shader: Common + Buffer A + Image
+19. Anhang A: Audio-Reaktivität (Schritte A1–A3)
+20. Anhang B: Der Weg in die App – und zurück (B1–B3)
+21. End-Validierung
+22. Fehlerbehebung
+23. Nächste Schritte
+24. Abspann
+25. Siehe auch
+26. Changelog
+
+---
+
+## Einleitung
+
 **Ziel:** Ein **Kaleidoskop mit Gedächtnis**: Wandernde, farbige Lichtpunkte malen in einen Bildspeicher, der sich jeden Frame **selbst wieder einliest** – leicht gezoomt, leicht gedreht, geschärft und gedämpft. Aus den Lichtern werden glühende Schweife, aus den Schweifen Spiralen, und eine dreistufige Spiegel-Faltung macht daraus ein lebendes Mandala. Es ist das einzige **reine 2D-Tutorial** dieser Serie – mit Absicht: Nach zwei Raymarching-Welten (Pyramid Spiral, Crystal Lights) kommt die Tiefe diesmal nicht aus dem *Raum*, sondern aus der *Zeit*. Das Werkzeug dafür heißt **Feedback**, und es ist wörtlich Milkdrops Warp-Schleife – nachgebaut mit Shadertoy-Bordmitteln (Buffer A liest sich selbst).
 
 **Stil-Vorbilder** (beide liegen im Repo unter `asset/Milkdrop3/presets/`):
@@ -7,7 +62,7 @@
 - *martin – shader pimped caleidoscope.milk*: die komplette Blaupause dieses Tutorials. Sein **Warp-Shader** ist das Feedback-Rezept in vier Zeilen: Unsharp-Mask/Sharpen (`ret += (ret - GetBlur1(...))*0.35`), Decay (`ret *= 0.9`), eine Dither-Rauschsaat aus `sampler_noise_lq` und eine leichte Entsättigung (`lerp(ret, lum(ret), 0.1)`). Sein **Comp-Shader** ist das Faltwerk: `anz = 3` rotierte Kopien des Bildes, jede durch die Spiegel-Kachel `abs(frac(uv2*aspect.yx)-.5)` gefaltet und per `max()` gemischt – dazu wandernde Lichtpunkte als Farbquelle (`ret1 = (roam_sin+0.5)/(0.01+length(uv*r1-pos*0.07*q7))` – unsere Seeds!) und die Vignette `ret = ret1*(1-rad)`. Jede dieser Zutaten bekommt hier ihren eigenen Schritt.
 - *GreatWho – Rock The House_2024.milk*: das harte Bass-Gate (`a = if(above(bass,0.95), 2, 0)`) – wie schon beim Vorgänger die Vorlage für die Beat-Zündung in Anhang A.
 
-Und ein drittes Vorbild ist die Serie selbst: Die `1/d²`-Lichter, die Cosinus-Palette und das `1-exp`-Tonemapping kennst du aus dem **Crystal-Lights-Tutorial** (gleicher Ordner) – hier kommen sie in neuer Rolle wieder: nicht als fertiges Bild, sondern als **Saat**, die das Feedback-System füttert.
+Und ein drittes Vorbild ist die Serie selbst: Die `1/d²`-Lichter, die Cosinus-Palette und das `1-exp`-Tonemapping kennst du aus dem **[Crystal-Lights-Tutorial](CrystalLights-tutorial.md)** (gleicher Ordner) – hier kommen sie in neuer Rolle wieder: nicht als fertiges Bild, sondern als **Saat**, die das Feedback-System füttert.
 
 **So funktioniert dieses Tutorial:**
 
@@ -17,7 +72,66 @@ Und ein drittes Vorbild ist die Serie selbst: Die `1/d²`-Lichter, die Cosinus-P
 - **In LumiViz:** Jeder Schritt liegt zusätzlich als lauffähige Chain in `pimped_kaleidoscope_schritte/` (generiert aus diesem Dokument per `make_schritte.py` – das Markdown ist die SSOT; ab Schritt 3 als Multipass-Shadertoy-Node Buffer A + Image, das Common aus Schritt 13 wird dabei beiden Pässen vorangestellt). Die Screenshots bei den Schritten stammen aus genau diesen Chains, gerendert im AvsStandalone (`AvsStandalone pimped_kaleidoscope_schritte --auto --frames 300 --size 800x450 --out pimped_kaleidoscope_bilder`) – bei einem Feedback-System gehören die 300 Frames Anlaufzeit zum Bild (Kaltstart, Schritt 3). Zwei dokumentierte LumiViz-Anpassungen stecken NUR in den generierten Dateien, die Codeblöcke hier bleiben Shadertoy-treu: manuelles bilineares Lesen (`lesBilinear`, die Buffer-FBOs der App filtern derzeit NEAREST – ohne den bilinearen Tiefpass explodiert der Sharpen aus Schritt 6 wie dort beschrieben) und in Anhang A3 die App-Audio-Uniforms statt der FFT-Absolutschwellen (die B2-Regel; die dB-FFT des Standalone-Testsignals sättigt bei 1.0).
 - Vorwissen: keins der Raymarching-Kapitel nötig – dieses Tutorial ist bewusst der leichteste Einstieg der Serie. Das Hash-Idiom `fract(sin(dot(...)))` und die Cosinus-Palette tauchen ohne lange Herleitung auf; wer sie zum ersten Mal sieht, findet die Herleitungen in den Schritten 4 und 9 des Crystal-Lights-Tutorials. Neu ist diesmal die Königsdisziplin **Feedback** – ein System, das seinen eigenen Ausgang als Eingang liest und dessen Verhalten man *züchtet* statt konstruiert.
 
-**Inhalt**
+Die Schritt-Konvention der Serie deckt die vier Elemente eines Tutorial-Schritts (Ziel, Anleitung, Validierung, Vertiefung) mit festen Markierungen ab – mit einer Besonderheit dieses Tutorials: Ab Schritt 3 ist der Shader **mehrteilig**, jeder Schritt zeigt darum **zwei Code-Blöcke** (Buffer A + Image). Tab. 1 zeigt die Zuordnung, die in jedem Schritt dieses Dokuments gilt:
+
+| Konvention im Schritt | Bedeutung |
+|---|---|
+| **Neu:** | Ziel des Schritts – die eine Technik, die hinzukommt |
+| Code-Blöcke **Buffer A** / **Image** | Durchführung – ab Schritt 3 je Pass ein Block mit dem vollständigen bzw. geänderten Code; „unverändert" heißt: der Stand des Vorschritts bleibt wörtlich stehen (Schritt 13 ergänzt **Common** als dritten Block) |
+| **Ergebnis:** | Validierung des Schritts – das prüfbare Sichtergebnis |
+| „Was passiert hier" | Anleitung und Erklärung des Codes |
+| 💡-Kästen | Vertiefende Randfragen (Design-Entscheidungen, Stabilität) |
+| 🧠 **Merke:** | Merksätze zu den Systemprinzipien des Feedbacks |
+| 🎨 Experimentieren | Optionale Vertiefung und Variationen |
+
+*Tab. 1: Konventions-Mapping – Schritt-Markierungen dieses Tutorials und ihre Rolle in der Schritt-Struktur*
+
+## Lernziele
+
+Nach diesem Tutorial können Sie …
+
+1. … einen **Shadertoy-Multipass mit Buffer-Selbstreferenz** aufsetzen (Buffer A liest per iChannel sein eigenes Vorframe, Image zeigt an) und das Kaltstart-Verhalten eines frischen Buffers vorführen (Schritte 3, 13).
+2. … das **Feedback-Grundrezept** Decay / Zoom+Rot / Sharpen / Dither implementieren und über seine Bilanz **stabil halten** – inklusive der Gleichgewichts-Rechnung (geometrische Reihe) und der Sharpen-Stabilitätsprobe (Schritte 4–7).
+3. … drei **Kaleidoskop-Faltungen** (Winkel-Faltung, Spiegel-Kachel, Rotations-Überlagerung) nahtfrei implementieren und unter Beachtung ihrer Symmetrien kombinieren (Schritte 8–10).
+4. … die **„unsichtbare Kamera"** als Lese-Transformation des Feedbacks steuern – Geschwindigkeiten statt Positionen vorgeben, die der Buffer aufintegriert (Schritte 5, 11).
+5. … einen **Wellenform-Seed** einbauen, der die Audio-Wellenform als Leuchtspur in den Kreislauf stempelt, samt Beat-Gate und Mapping-Katalog eines Feedback-Systems (Anhang A).
+
+## Voraussetzungen
+
+**Wissen:**
+
+- [Pyramid-Spiral-Shader-Tutorial](PyramidSpiral-tutorial.md), Schritte 1–2 – der UV-Aufbau (Ursprung Mitte, höhen-normiert) und die sin-Uhren-Konvention. Mehr braucht es nicht: Dieses Tutorial ist der **bewusst raymarching-freie 2D-Strang** der Serie – keines der Raymarching-Kapitel wird vorausgesetzt.
+- Das Hash-Idiom `fract(sin(dot(...)))` und die Cosinus-Palette der Serie – sie tauchen hier ohne lange Herleitung auf; wer sie zum ersten Mal sieht, findet die Herleitungen in den Schritten 4 und 9 des [Crystal-Lights-Tutorials](CrystalLights-tutorial.md) (dessen übrige Inhalte werden nicht vorausgesetzt).
+
+**Software:**
+
+- Ein aktueller, WebGL2-fähiger Browser (Chrome, Firefox, Edge oder Safari in einer aktuellen Desktop-Version) – Shadertoy ist eine Web-Plattform, es ist keine Installation nötig.
+- Zugang zu [shadertoy.com](https://www.shadertoy.com/new) – Shader lassen sich ohne Konto erstellen und ausführen; zum Speichern eigener Shader ist ein kostenloses Konto erforderlich.
+- Für Anhang A: ein „Music"-Kanal im Shadertoy-Editor (eingebaute Track-Auswahl, keine eigene Datei nötig).
+
+**Optional (nur Anhang B):**
+
+- LumiViz/MyViz mit Shadertoy-Node in der Effect-Chain, inklusive Multipass-Unterstützung Buffer A–D (Stand Session 65/67); für den URL-Import zusätzlich ein kostenloser Shadertoy-App-Key.
+
+## Übersicht der Schritte
+
+Das Tutorial führt in 13 Schritten vom leeren Shader zum fertigen Werk; die Anhänge ergänzen Audio-Reaktivität (A1–A3) und den Weg in die App (B1–B3):
+
+1. Die Bühne: ein wanderndes Licht
+2. Die Lichtsaat: Punkte-Paar, Ring, Palette
+3. Buffer A: das Bild bekommt ein Gedächtnis (und brennt aus)
+4. Decay: die Vergessenskurve
+5. Die Lese-Transformation: Zoom und Drehung
+6. Sharpen: die Unsharp Mask
+7. Die Dither-Saat
+8. Winkel-Faltung: das klassische Kaleidoskop
+9. Die Spiegel-Kachel
+10. Rotations-Überlagerung: die anz-Schleife
+11. Die unsichtbare Kamera
+12. Politur: Farbrotation, Entsättigung, Tonemapping
+13. Der fertige Shader: Common + Buffer A + Image
+
+Dieselben Schritte, nach Phasen gruppiert (Tab. 2):
 
 | Phase | Schritte | Thema |
 |---|---|---|
@@ -28,6 +142,8 @@ Und ein drittes Vorbild ist die Serie selbst: Die `1/d²`-Lichter, die Cosinus-P
 | Politur | 12–13 | Farbrotation, Entsättigung, Tonemapping – der fertige Shader |
 | Anhang A | A1–A3 | Audio-Reaktivität (Beat-Gate, Mapping-Katalog, Wellenform-Seed) |
 | Anhang B | B1–B3 | Multipass-Import nach LumiViz, Audio-Adapter, Panel-Parameter |
+
+*Tab. 2: Phasen-Gliederung der Schritte und Anhänge*
 
 ---
 
@@ -55,6 +171,8 @@ Bevor die erste Zeile fällt, ein Blick auf die Architektur – sie ist diesmal 
         └──────────────────────────────────────────────┘
 ```
 
+*Fig. 1 [Blockdiagramm]: Der Feedback-Kreislauf – Buffer A liest sein eigenes Vorframe (gezoomt, gedreht, geschärft, gedämpft, plus Seeds und Dither-Saat), Image faltet und poliert die Anzeige*
+
 Zwei Pässe also. **Buffer A** ist der Motor: Er liest *sein eigenes* Vorframe, transformiert es, mischt frische Seeds hinein und dämpft das Ganze – jeder Frame ist eine Iteration derselben Vorschrift, und alles, was wir auf dem Schirm als „Schweif", „Spirale" oder „Gespinst" sehen, ist **aufsummierte Vergangenheit**. **Image** ist die Brille: Er faltet den Bufferinhalt zum Kaleidoskop und poliert die Farben – rein kosmetisch, ohne Rückwirkung auf den Kreislauf.
 
 Wer Milkdrop kennt, erkennt die Landkarte sofort – dieses Tutorial ist eine Übersetzung des Vorbild-Presets, Zutat für Zutat:
@@ -70,6 +188,8 @@ Wer Milkdrop kennt, erkennt die Landkarte sofort – dieses Tutorial ist eine Ü
 | Comp: `anz = 3`-Rotationsschleife | Image: `kaleido()` | 10 |
 | Comp: `ret = ret1*(1-rad)` | Image: Vignette | 12 |
 | Warp: `lerp(ret, lum(ret), 0.1)` | Image: Entsättigung | 12 |
+
+*Tab. 3: Übersetzungstabelle – die Warp-/Comp-Zutaten des Vorbild-Presets und ihre Schritte in diesem Tutorial*
 
 Eine Faltung fehlt in der Tabelle: die **Winkel-Faltung** (Schritt 8) hat das Preset gar nicht – sie ist unsere Zugabe, das „klassische" Kaleidoskop mit N Spiegel-Sektoren. Zusammen mit Kachel und Rotations-Kopien ergibt das drei **kombinierbare** Faltstufen; ihre Reihenfolge ist ein eigenes Thema (Schritt 10 – dort lauert eine hübsche Symmetrie-Falle).
 
@@ -1105,6 +1225,8 @@ Lies das Buffer-A-`mainImage` noch einmal von oben nach unten – es ist Zeile f
 | `+ seeds(uv)` | Shapes/Wave, die Milkdrop in den Buffer malt |
 | `+ (hash21 - 0.45)*DITHER` | `+ (tex2D(sampler_noise_lq, ...)-0.1)*0.02` |
 
+*Tab. 4: Der Kreislauf im Rückblick – Buffer-A-Zeilen und ihre Entsprechungen im Preset-Warp*
+
 Und das Image-`mainImage` ist der Comp-Shader: Faltwerk, Vignette, Farb-Politur. Wer ab hier eigene Feedback-Shader baut, hat mit diesen zwei Blöcken das komplette Vokabular – alles Weitere ist Rezeptur.
 
 ### 🎨 Experimentieren – jetzt am Gesamtwerk
@@ -1180,6 +1302,10 @@ Kein neuer Shader – die Landkarte. Ein Feedback-Kaleidoskop hat andere gute (u
 | 4 | Mitten | **Palette**-Offset | in `seeds()`: `palette(iTime * 0.021 + gMid * 0.3)` | Melodie = Stimmung = Farbe; die Seeds (und damit alle Schweife, die sie ziehen) wandern mit der Harmonik durch den Farbkreis |
 | 5 | Beat | **Sektorzahl**-Sprünge | siehe Diskussion unten | Der dramatischste Eingriff – und der heikelste |
 | 6 | Wellenform | **Wellenform-Seed** | `saat += waveSeed(uv, fragCoord);` (A3) | Das Alleinstellungsmerkmal dieses Tutorials: Die Musik malt ihre eigene Kurve als Leuchtspur in den Kreislauf |
+
+*Tab. 5: Mapping-Katalog – Audio-Signal, Stellschraube, Eingriff und Begründung*
+
+**Ergebnis:** Kein neues Bild, aber eine geprüfte Landkarte: Für jedes der sechs Mappings sind Eingriffsort (Buffer A oder Image), Code-Schnipsel und Begründung benannt – und mit der Positions-vs.-Geschwindigkeits-Unterscheidung (unten) ist für jede weitere Mapping-Idee entscheidbar, ob sie Falle oder Feature ist.
 
 **Die Positions-Uhr-Warnung, Feedback-Ausgabe.** Die Serien-Regel „nie den Faktor vor `iTime` mappen" gilt hier verschärft und differenzierter:
 
@@ -1283,7 +1409,7 @@ vec3 waveSeed(vec2 uv, vec2 fragCoord)
 ---
 # Anhang B: Der Weg in die App – und zurück
 
-Die Grundlagen stehen im Vorgänger und werden hier nicht wiederholt: **Die drei Import-Wege** (Copy & Paste in den Shadertoy-Node, URL-/ID-Import mit App-Key, Shadertoy-Browser-Panel) **und die allgemeine Portabilitäts-Checkliste findest du in „CrystalLights-tutorial.md", Anhang B.** Unser Shader hält sich an dieselbe Konvention wie die 100 Vorrats-Shader in `asset/shadertoys/` (nur Standard-Uniforms, STELLSCHRAUBEN-Block) – alle drei Wege funktionieren also unverändert. Hier nur das, was an *diesem* Shader besonders ist: Er ist **Multipass mit Selbstreferenz**. *(UI-Namen und Verhalten: Stand Session 65/67.)*
+Die Grundlagen stehen im Vorgänger und werden hier nicht wiederholt: **Die drei Import-Wege** (Copy & Paste in den Shadertoy-Node, URL-/ID-Import mit App-Key, Shadertoy-Browser-Panel) **und die allgemeine Portabilitäts-Checkliste findest du in [CrystalLights-tutorial.md](CrystalLights-tutorial.md), Anhang B.** Unser Shader hält sich an dieselbe Konvention wie die 100 Vorrats-Shader in `asset/shadertoys/` (nur Standard-Uniforms, STELLSCHRAUBEN-Block) – alle drei Wege funktionieren also unverändert. Hier nur das, was an *diesem* Shader besonders ist: Er ist **Multipass mit Selbstreferenz**. *(UI-Namen und Verhalten: Stand Session 65/67.)*
 
 ---
 
@@ -1319,7 +1445,52 @@ Shadertoy hat keine Regler – LumiViz schon: Der Node-Editor zeigt Parameter im
 | `KOPIEN` | ○ | `int` und Schleifengrenze – auf Shadertoy eine Recompile-Konstante; im Node ggf. als fester Satz (1/3/5) anbieten |
 | `ENTSAETT`, `VIGNETTE` | ★ Politur | unkritisch |
 
+*Tab. 6: Panel-Parameter-Triage – Stellschrauben und ihre Regler-Eignung im Node-Editor*
+
 Wer den Endstand (oder eine Lieblings-Variante) als Vorlage neben die anderen legt: Konvention siehe `asset/effectchain/shadertoys/` – die `.glsl` ist SSOT, `make_lvfx.py` generiert die Chain-Vorlage; Multipass-Shader liegen dort als Paare.
+
+---
+
+## End-Validierung
+
+Diese Validierung steht bewusst **hinter den Anhängen**: A1–A3 sind reguläre Schritte dieses Tutorials, und das Lernziel 5 (Wellenform-Seed, Audio) ist erst dort erreichbar – die End-Validierung muss aber alle Lernziele abdecken. Die Kriterien 1–6 prüfen den Kern (Schritte 1–13), das Kriterium 7 die Anhänge. Jedes Kriterium ist am laufenden Shader auf shadertoy.com objektiv prüfbar:
+
+1. **Kompilierbarkeit:** Das Gesamtlisting aus Schritt 13 (Common + Buffer A + Image, in beiden Pässen iChannel0 = Buffer A) kompiliert auf shadertoy.com ohne Fehlermeldung und rendert ein bewegtes Bild – kein Schwarzbild, kein Standbild. *(Basis aller Lernziele)*
+2. **Selbstreferenz und Kaltstart:** Nach einer Änderung der Fenstergröße startet das Bild nachweislich schwarz und füllt sich binnen weniger Sekunden neu – der geleerte Buffer liest sein eigenes Vorframe und schwingt sich wieder ein. *(Lernziel 1)*
+3. **Feedback-Wirkung:** Die Lichter ziehen Schweife, und die aufsummierten Trails sind **sichtbar heller als die reine Saat**. Gegenprobe: `DECAY = 0.0` (das Feedback trägt nichts bei) zeigt nur die nackten, dunklen Seeds ohne jede Spur; zurück auf `0.90` kehren die deutlich helleren Trails wieder – die Gleichgewichts-Verzehnfachung aus Schritt 4, direkt am Bild. *(Lernziele 1 und 2)*
+4. **Stabilität des Rezepts:** Mit den Standard-Konstanten kippt das Bild über Minuten weder ins Weiß noch ins Schwarz. Gegenproben: `DECAY = 1.0` brennt binnen einer Minute aus (Schritt 3); im Schritt-6-Stand lässt `ZOOM = 1.0; DREH = 0.0` den Sharpen ungefiltert in Pixelgrieß hochkochen (Schritt 6); die Standardwerte stellen beides wieder her. *(Lernziel 2)*
+5. **Faltwerk:** `SEKTOREN = 1.0` reduziert auf den einzelnen Klappspiegel, `6.0` zeigt die nahtfreie Rosette (Gegenprobe: ohne die `abs`-Spiegelung reißt das Bild an den Sektorgrenzen sichtbar); und die Symmetrie-Falle aus Schritt 10 ist vorführbar – naive Rotation **vor** der Winkel-Faltung macht bei `KOPIEN = 3`, `SEKTOREN = 6` alle Kopien identisch, die Rotation zwischen den Faltstufen belebt sie wieder. *(Lernziel 3)*
+6. **Unsichtbare Kamera:** Die Drehrichtung der Spiralarme kehrt im Lauf von etwa einer halben Minute weich um, ohne Bildsprung – und ein Dauerdrall-Zusatz auf `dreh` (z. B. `+ 0.006`) verdreht das Bild stetig weiter statt es zu teleportieren: Geschwindigkeit, nicht Position. *(Lernziel 4)*
+7. **Audio und Wellenform-Seed:** Im A3-Stand (iChannel1 = Music in Buffer A) zünden die Seeds bei jedem Bass-Kick und **glühen über das Feedback aus** statt hart abzureißen; die Wellenform der Musik zieht als gefaltete Leuchtader durch das Mandala; **ohne Musik** läuft das volle Eigenleben unverändert weiter. *(Lernziel 5)*
+
+---
+
+## Fehlerbehebung
+
+Die häufigsten Stolperstellen dieses Tutorials, gesammelt nach Symptom (Tab. 7). Die schritt-lokalen Hinweise (etwa die Stabilitätsrechnung in Schritt 6) bleiben davon unberührt – hier stehen die Probleme, die typischerweise erst beim Zusammenbau, beim Experimentieren oder beim Umzug in die App auftreten:
+
+| # | Symptom | Ursache | Lösung |
+|---|---|---|---|
+| 1 | Schwarzes Bild nach dem Einfügen | Multipass unvollständig: Buffer-A-Tab fehlt, die Selbstreferenz (iChannel0 = Buffer A) ist nicht gesetzt, der Common-Tab fehlt – oder ein Kompilierfehler | Tab- und Kanal-Setup aus Schritt 3 bzw. 13 prüfen (beide Pässe!), Gesamtlisting komplett in alle drei Tabs kopieren, Fehlerkonsole unter dem Editor lesen |
+| 2 | Kurzes Schwarzbild nach Laden oder Fenster-Resize | Der Kaltstart: Ein frischer oder geleerter Buffer startet leer, das System schwingt sich erst ein (Schritt 3) | Kein Fehler – wenige Sekunden warten; in LumiViz zusätzlich Puffer-Wechsel-Verhalten je Node und optionales Start-Fade-in (B1) |
+| 3 | Bild frisst sich ins gleißende Weiß (Ausbrand) | `DECAY ≥ 1.0` – direkt gesetzt oder via Mapping 2 ohne `min`-Klammer; alternativ zu heiße Saat-/Sharpen-Spannen: die Bilanz kippt in positive Rückkopplung (Schritt 3) | `DECAY < 1` halten (Schritt 4), die `min(..., 0.97)`-Klammer aus A3/B2 nie entfernen; Stimm-Reihenfolge aus dem Abspann: `DECAY`/`SHARPEN` runter |
+| 4 | Grelles Pixelgrieß-Kochen trotz `DECAY < 1` | Sharpen ohne Tiefpass: `ZOOM = 1.0` und `DREH = 0.0` schalten das bilineare Zwischen-Sampling aus – die Stabilitätsrechnung aus Schritt 6 kippt | Bewegung anlassen oder `SHARPEN` senken – im Feedback-System sind Bewegung und Stabilität gekoppelt (Schritt 6) |
+| 5 | In LumiViz Grieß/Explosion, obwohl derselbe Code auf Shadertoy stabil ist | Die Buffer-FBOs der App filtern derzeit NEAREST – der bilineare Tiefpass fehlt, der Sharpen explodiert | Manuell bilinear lesen (`lesBilinear`) wie in den generierten Schritt-Chains (Einleitung, Bullet „In LumiViz"); bei eigenen Ports genauso vorgehen |
+| 6 | Beat-Gate steht am Standalone-Testsignal dauerhaft auf voll (A1-Bild) | Die dB-FFT des synthetischen Testsignals sättigt bei 1.0 – die Absolutschwellen `0.60/0.75` greifen nie | In der App die Audio-Uniforms über den B2-Adapter verwenden (`aBeat()` statt Absolutschwelle); Schwellen sind ohnehin Handarbeit pro Musikmaterial (A1) |
+| 7 | Kompilierfehler `'…' : undeclared identifier` | Ab Schritt 6 zeigen die Listings nur noch **geänderte** Funktionen – der Rest des Vorschritts muss stehen bleiben | Den vollständigen Stand des vorherigen Schritts behalten und nur die gezeigten Funktionen ersetzen; im Zweifel das Gesamtlisting aus Schritt 13 verwenden |
+| 8 | Konstanten wirken anders als beschrieben | Feedback-Systeme reagieren empfindlich auf Konstanten-**Paare** (`DECAY`/`SHARPEN`); shadertoy.com ist noch ungeprüft, und die Trails hängen an Framerate und Auflösung (Schritte 4 und 6) | Stimm-Reihenfolge aus dem Abspann: erst `SHARPEN = 0` und `DECAY` allein einpendeln, dann Sharpen in 0.1-Schritten, die Faltungen zuletzt beurteilen |
+
+*Tab. 7: Fehlerbehebung – Symptom, Ursache, Lösung*
+
+---
+
+## Nächste Schritte
+
+Die Fortsetzung folgt der [Wegleitung](ShaderTutorials-overview.md) der Serie – die Composites verbauen genau das hier Gelernte weiter:
+
+- **[Composite-Postfx](CompositePostfx-tutorial.md)** nutzt die Techniken dieses Tutorials als **Post-Pässe**: Multipass-Ketten A→B→C→Image mit Common als SSOT, Bloom über separierbaren Blur (die GetBlur-Verwandtschaft aus Schritt 6) und ein Kaleidoskop-Finish als Veredelungsstufe.
+- **[Composite-Transitions](CompositeTransitions-tutorial.md)** baut auf dem **Buffer-Zustand** auf: die 1-Pixel-Zustandsmaschine in Buffer A (das A1/B-Muster dieses Tutorials, weitergedacht) für beat-getriggerte Szenenwechsel und den Drop-Detektor.
+- **3D-Strang (unabhängig):** Wer nach dem 2D-Ausflug ins Raymarching (zurück) will, findet die Reihenfolge in der Wegleitung – [Stratospheric-Tunnel](StratosphericTunnel-tutorial.md), [Space-Debris](SpaceDebris-tutorial.md), dann [Juggernaut](Juggernaut-tutorial.md) und [Composite-Portals](CompositePortals-tutorial.md).
 
 ---
 
@@ -1335,6 +1506,33 @@ Zwei ehrliche Schlussworte:
 Und jetzt: Musik an. 🎵🔮
 
 Screenshots: gerendert mit AvsStandalone (Testing-Build), Chains in `pimped_kaleidoscope_schritte/`.
+
+---
+
+## Siehe auch
+
+**Voraussetzungen:**
+
+- [Pyramid-Spiral-Shader-Tutorial](PyramidSpiral-tutorial.md) – der UV-Aufbau und die sin-Uhren-Konvention (Schritte 1–2 dort genügen; der Rest ist Raymarching und hier bewusst nicht nötig).
+- [Crystal-Lights-Tutorial](CrystalLights-tutorial.md) – die Herleitungen von Hash-Idiom (Schritt 4), Cosinus-Palette und `1/d²`-Licht (Schritt 9) sowie die Anhang-B-Vollreferenz Shadertoy ↔ LumiViz, auf die Anhang B hier aufbaut.
+
+**Verwandte Dokumente:**
+
+- [Shader-Tutorials-Wegleitung](ShaderTutorials-overview.md) – Fokus-Tabellen, Lesereihenfolge und Technik-Index der gesamten Tutorial-Serie.
+- [Raymarching – Referenz](Raymarching-reference.md) – §2.3 „Nicht-Raymarching-Ansätze" ordnet Feedback-/2D-Shader wie diesen in die Werkzeuglandschaft der Serie ein; als Kontrastlektüre zum 3D-Strang.
+
+**Weiterführendes:**
+
+- [martin – shader pimped caleidoscope](<../../../../../asset/Milkdrop3/presets/martin - shader pimped caleidoscope.milk>) – das Stil-Vorbild-Preset (MilkDrop): Warp-Rezept (Sharpen/Decay/Dither) und Comp-Faltwerk im Original – nach diesem Tutorial wie ein alter Bekannter lesbar.
+- [GreatWho – Rock The House_2024](<../../../../../asset/Milkdrop3/presets/myPresets/md examples/GreatWho - Rock The House_2024.milk>) – das Beat-Gate-Vorbild aus Anhang A1 im Original.
+
+## Changelog
+
+| Version | Datum | Änderungen |
+|---|---|---|
+| **1.2.0** | 2026-08-05 | Formalisierung nach Tutorial_Base (nach dem Muster des Piloten [CrystalLights-tutorial.md](CrystalLights-tutorial.md)): Blockquote-Header, Inhaltsverzeichnis, Lernziele, Voraussetzungen, Übersicht der Schritte, Konventions-Mapping (Tab. 1, mit den Zwei-Block-Schritten Buffer A + Image), End-Validierung, Fehlerbehebung (Tab. 7), Nächste Schritte, Siehe auch; Tabellen als Tab. 1–7 und Kreislauf-Skizze als Fig. 1 [Blockdiagramm] indexiert; **Ergebnis:**-Zeile in Schritt A2 ergänzt. Didaktischer Bestand (Schritt-Texte, Code, 💡/🧠/🎨-Kästen, Anhänge) inhaltlich unverändert. Anschließend Umzug der Serie nach `projects/apps/MyViz/docs/tutorials/` und Umbenennung nach FNM-01 zu `PimpedKaleidoscope-tutorial.md` (Entscheid Patrik, 2026-08-04). |
+| **1.1.0** | 2026-08-04 | Multipass-Schritt-Chains + Screenshots: je Schritt eine lauffähige Chain in `pimped_kaleidoscope_schritte/` (ab Schritt 3 als Multipass-Shadertoy-Node Buffer A + Image, generiert per `make_schritte.py` – das Markdown ist die SSOT) und ein eingebettetes Render-Bild in `pimped_kaleidoscope_bilder/` (AvsStandalone, 800×450, Frame 300). Zwei LumiViz-Anpassungen nur in den generierten Dateien dokumentiert (Codeblöcke bleiben Shadertoy-treu): manuelles bilineares Lesen `lesBilinear` (NEAREST-FBOs der App) und in A3 die App-Audio-Uniforms statt der FFT-Absolutschwellen (dB-Sättigung des Standalone-Testsignals). |
+| **1.0.0** | 2026-08-04 | Erstfassung: 13 Schritte (Saat → Gedächtnis → Faltung → Bewegung → Politur) + Anhang A (Audio-Reaktivität mit Beat-Gate, Mapping-Katalog und Wellenform-Seed) + Anhang B (Multipass-Import nach LumiViz, Audio-Adapter, Panel-Parameter). |
 
 
 

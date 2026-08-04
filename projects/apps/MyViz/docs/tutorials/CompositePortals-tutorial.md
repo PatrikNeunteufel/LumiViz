@@ -1,5 +1,59 @@
 # Composite: Portals – Drei Shader werden EIN Werk
 
+> **Dokumenttyp:** Tutorial  
+> **Version:** 1.2.0  
+> **Status:** Stabil  
+> **Domain:** Programming  
+> **Kategorie:** Algorithms  
+> **Programmiersprache:** GLSL (Shadertoy/WebGL2)  
+> **Voraussetzungen:** [Stratospheric-Tunnel-Tutorial](StratosphericTunnel-tutorial.md), [Space-Debris-Tutorial](SpaceDebris-tutorial.md), [Crystal-Lights-Tutorial](CrystalLights-tutorial.md) – deren Gesamtlistings sind das Ausgangsmaterial  
+> **Schwierigkeitsgrad:** Experte  
+> **Tutorial-Typ:** Integration  
+> **Zeitschätzung:** 5–7 h für die Schritte 1–12 auf shadertoy.com (inkl. Experimentieren), zusätzlich ~1–2 h für die Anhänge A/B; reines Durchlesen ~2 h  
+> **Gültigkeit:** Shadertoy-Image-Shader (WebGL2); Anhang B zusätzlich für den Shadertoy-Node der LumiViz-Effect-Chain (Stand Session 65/67)  
+> **Zweck:** Handwerklicher Merge dreier fertiger Shader der Serie zu EINEM Werk – Kondensieren, Namespacing, Portal-Strahlen, Material-Id-Dispatch, Kanten-Glättung und Kohärenz-Klammer, von den Gesamtlistings bis zum fertigen Composite.  
+> **Zielgruppe:** Shader-Entwickler, die die drei Quell-Tutorials kennen; Leser der Shader-Tutorial-Serie  
+> **Sprache:** Deutsch  
+
+> ⚠ **HINWEIS: Nicht-normative ASCII-Darstellungen**
+>
+> Die ASCII-Skizze im Bauplan-Abschnitt dient ausschließlich der **illustrativen Unterstützung**
+> und setzt eine Monospace-Schrift voraus. Verbindlich sind die textuelle Beschreibung und der Code.
+
+---
+
+## Inhaltsverzeichnis
+
+1. Einleitung
+2. Lernziele
+3. Voraussetzungen
+4. Übersicht der Schritte
+5. Der Bauplan: Was wir eigentlich rendern
+6. Schritt 1 – Kondensieren I: die Regeln und das Tunnel-Skelett
+7. Schritt 2 – Kondensieren II: das Debris-Skelett
+8. Schritt 3 – Namespacing: zwei Welten in einer Datei
+9. Schritt 4 – Das Portal: der Fensterstrahl wechselt die Welt
+10. Schritt 5 – Maßstab & Weltrahmen: das Fenster als Diorama
+11. Schritt 6 – Portal-Politur: atmende Öffnung und Neon-Rahmen
+12. Schritt 7 – Material-Id: map() lernt zwei Antworten
+13. Schritt 8 – Der Kristallboden: ein Höhenfeld im min()
+14. Schritt 9 – Kristall-Shading: Brechung, Lampen, Absorption
+15. Schritt 10 – Anti-Aliasing: Kanten in Pixelbreite und 2×2-Supersampling
+16. Schritt 11 – Kohärenz: eine Uhr, eine Palette, ein Tonemapping
+17. Schritt 12 – Das Gesamtlisting
+18. Anhang A: Audio-Reaktivität (Schritte A1–A3)
+19. Anhang B: Der Weg in die App – kompakt (B1–B2)
+20. End-Validierung
+21. Fehlerbehebung
+22. Nächste Schritte
+23. Abspann
+24. Siehe auch
+25. Changelog
+
+---
+
+## Einleitung
+
 **Ziel:** Ein **Composite** – kein neuer Shader von Grund auf, sondern der handwerkliche **Merge dreier fertiger Shader** dieser Tutorial-Serie zu einem neuen Werk. Das Endbild: der Flug durch den Neon-Röhren-Tunnel aus *Stratospheric Tunnel* – aber durch dessen **Fenster** sieht man nicht mehr nur ein gemaltes Sternenfeld, sondern die **echte Space-Debris-Szene**: taumelnde Trümmer, den Glutplaneten, den Atmosphären-Saum. Und der Tunnelboden ist auf regelmäßigen Streckenabschnitten kein Röhrenblech mehr, sondern das **Crystal-Lights-Terrain**: halbtransparenter Kristall mit blinkenden Lampen darunter. Drei Welten, ein Strahl, ein Bild.
 
 Der Weg dorthin ist der eigentliche Lehrstoff. Vier Techniken trägt dieses Tutorial, die in keinem der Einzel-Tutorials vorkommen: **Kondensieren** (ein 300-Zeilen-Gesamtlisting auf ein Skelett eindampfen, das den Look noch trägt), **Namespacing** (zwei komplette Welten kollisionsfrei in einer Datei), die **Portal-Technik** (ein Strahl wechselt mitten im Bild die Welt) und der **Material-Id-Dispatch** (eine map, zwei Materialien). Dazu die Königs-Lektion jedes Composites: **Kohärenz** – warum drei gute Shader zusammen erst einmal wie eine Collage aussehen, und was dagegen hilft.
@@ -18,7 +72,65 @@ Der Weg dorthin ist der eigentliche Lehrstoff. Vier Techniken trägt dieses Tuto
 - **Voraussetzung:** die drei Quell-Tutorials – nicht unbedingt durchgearbeitet, aber die jeweiligen Bauplan-Kapitel und Gesamtlistings sollte man gesehen haben. Techniken, die dort hergeleitet wurden (Terrain-Marsch, Zellregel, `1/d²`-Lichter, Beer-Lambert …), werden hier benutzt und nur noch mit einem Satz erinnert.
 - **In LumiViz:** Jeder Schritt liegt zusätzlich als lauffähige Ein-Node-Chain in `composite_portals_schritte/` (dieses Markdown ist die SSOT; weil es ab Schritt 4 nur noch Diffs zeigt, liegen die vollständigen Schritt-Shader dort als materialisierte Rekonstruktion `*.glsl`, gepackt per `make_schritte.py`). Die Screenshots bei den Schritten stammen aus genau diesen Chains, gerendert im AvsStandalone (`AvsStandalone composite_portals_schritte --auto --frames 300 --size 800x450 --out composite_portals_bilder`; Schritte 9–10 bzw. 11–12 mit `--frames 100` bzw. `--frames 120`, damit die Kamera zum Screenshot-Zeitpunkt in einer Kristallzone steht); die Anhang-Bilder hören dabei das synthetische Testsignal des Standalone.
 
-**Inhalt**
+Die Schritt-Konvention der Serie deckt die vier Elemente eines Tutorial-Schritts (Ziel, Anleitung, Validierung, Vertiefung) mit festen Markierungen ab – Tab. 1 zeigt die Zuordnung, die in jedem Schritt dieses Dokuments gilt:
+
+| Konvention im Schritt | Bedeutung |
+|---|---|
+| **Neu:** | Ziel des Schritts – die eine Technik, die hinzukommt |
+| Code-Block | Durchführung – der vollständige bzw. geänderte Shader-Code |
+| **Ergebnis:** | Validierung des Schritts – das prüfbare Sichtergebnis |
+| „Was passiert hier" | Anleitung und Erklärung des Codes |
+| 🎨 Experimentieren | Optionale Vertiefung und Variationen |
+
+*Tab. 1: Konventions-Mapping – Schritt-Markierungen dieses Tutorials und ihre Rolle in der Schritt-Struktur*
+
+## Lernziele
+
+Nach diesem Tutorial können Sie …
+
+1. … ein ~300-Zeilen-**Gesamtlisting** nach den fünf Kondensier-Regeln auf ein Look-tragendes **Skelett** eindampfen, das den Zuordnungs-Test besteht und dessen Schnittstellen (Welt-Funktion, Platzhalter mit Vertrag) für den Merge freiliegen (Schritte 1–2).
+2. … zwei vollständige Welten per **Namespacing** (Welt-Präfixe, geteilte Helfer genau einmal) kollisionsfrei in einem Shader mergen und den Merge per Split-Screen validieren (Schritt 3).
+3. … **Portal-Strahlen** implementieren: die Strahl-Übergabe an eine zweite Welt mit eigenem Koordinatenrahmen und **Maßstabswechsel**, bezahlt nur von Portal-Pixeln – samt atmender Öffnung und Neon-Rahmen (Schritte 4–6).
+4. … einen **Material-Id-Dispatch** bauen, dessen map ein Paar (Distanz, Id) liefert und ein Höhenfeld per `min()` in einen SDF-Marsch einbettet – inklusive konservativer Schranke gegen Durchschuss (Schritte 7–9).
+5. … Kanten per **fwidth** pixelgenau glätten und ein 2×2-**Supersampling** mit ehrlicher Kostenrechnung als Stellschraube einbauen (Schritt 10).
+6. … **Kohärenz** gegen den Collage-Effekt herstellen: eine Uhr, eine Palette, Licht über die Weltgrenze, eine Schluss-Klammer – und im Audio-Fall EIN Audio-Satz für alle Welten (Schritte 11–12; Anhang A).
+
+## Voraussetzungen
+
+**Wissen** (die drei Quell-Tutorials – nicht unbedingt durchgearbeitet, aber die jeweiligen Bauplan-Kapitel und Gesamtlistings sollte man gesehen haben; ihre Gesamtlistings sind das Ausgangsmaterial dieses Tutorials):
+
+- [Stratospheric-Tunnel-Tutorial](StratosphericTunnel-tutorial.md) – die Wirtsszene; sein Gesamtlisting ist das Ausgangsmaterial für Skelett 1 (Schritt 1).
+- [Space-Debris-Tutorial](SpaceDebris-tutorial.md) – die Außenwelt hinter den Fenstern; sein Gesamtlisting ist das Ausgangsmaterial für Skelett 2 (Schritt 2).
+- [Crystal-Lights-Tutorial](CrystalLights-tutorial.md) – der Boden-Merge (Schritte 8–9); dessen Anhänge A/B sind zugleich die Serien-Referenz für Audio-Grundlagen und den Weg in die App.
+
+**Software:**
+
+- Ein aktueller, WebGL2-fähiger Browser (Chrome, Firefox, Edge oder Safari in einer aktuellen Desktop-Version) – Shadertoy ist eine Web-Plattform, es ist keine Installation nötig.
+- Zugang zu [shadertoy.com](https://www.shadertoy.com/new) – Shader lassen sich ohne Konto erstellen und ausführen; zum Speichern eigener Shader ist ein kostenloses Konto erforderlich.
+- Für Anhang A: ein „Music"-Kanal im Shadertoy-Editor (eingebaute Track-Auswahl, keine eigene Datei nötig).
+
+**Optional (nur Anhang B):**
+
+- LumiViz/MyViz mit Shadertoy-Node in der Effect-Chain (Stand Session 65/67).
+
+## Übersicht der Schritte
+
+Das Tutorial führt in 12 Schritten von den fertigen Gesamtlistings zum Composite; die Anhänge ergänzen Audio-Reaktivität (A1–A3) und den Weg in die App (B1–B2):
+
+1. Kondensieren I: die Regeln und das Tunnel-Skelett
+2. Kondensieren II: das Debris-Skelett
+3. Namespacing: zwei Welten in einer Datei
+4. Das Portal: der Fensterstrahl wechselt die Welt
+5. Maßstab & Weltrahmen: das Fenster als Diorama
+6. Portal-Politur: atmende Öffnung und Neon-Rahmen
+7. Material-Id: map() lernt zwei Antworten
+8. Der Kristallboden: ein Höhenfeld im min()
+9. Kristall-Shading: Brechung, Lampen, Absorption
+10. Anti-Aliasing: Kanten in Pixelbreite und 2×2-Supersampling
+11. Kohärenz: eine Uhr, eine Palette, ein Tonemapping
+12. Das Gesamtlisting
+
+Dieselben Schritte, nach Phasen gruppiert (Tab. 2):
 
 | Phase | Schritte | Thema |
 |---|---|---|
@@ -30,6 +142,8 @@ Der Weg dorthin ist der eigentliche Lehrstoff. Vier Techniken trägt dieses Tuto
 | Kohärenz | 11–12 | EINE Uhr, EINE Palette, EIN Tonemapping – und das Gesamtlisting |
 | Anhang A | A1–A3 | Audio-Reaktivität: EIN Audio-Satz für beide Welten |
 | Anhang B | B1–B2 | LumiViz kompakt: Panel-Parameter; In-Shader-Merge vs. Chain-Composition |
+
+*Tab. 2: Phasen-Gliederung der Schritte und Anhänge*
 
 ---
 
@@ -51,6 +165,8 @@ Bevor die erste Zeile fällt, ein Blick auf die Architektur des Bildes – sie e
         │     ●   Lampen unter dem Kristall  ●   │    weise, per min() in der map
         └────────────────────────────────────────┘
 ```
+
+*Fig. 1 [Blockdiagramm]: Die drei Welten des Composites – Tunnel als Wirt, Debris-Welt nur hinter den Fenstern (Strahl-Übergabe mit eigenem Rahmen und Maßstab), Kristallboden abschnittsweise per min() in der map*
 
 Der Strahl jedes Pixels erlebt das Composite so:
 
@@ -1748,6 +1864,10 @@ Kein neuer Shader – die Landkarte. Vorweg aber das composite-spezifische Prinz
 | 5 | Lautheit | Kristall-Grundglimmen | in `kristallLampen()`: `+ 0.06` → `+ 0.02 + 0.25·gVol` | Laute Passagen fluten den Boden mit Dauerlicht, leise lassen nur das Einzel-Blinken |
 | 6 | Bass-**Gate** | Portal-Rahmen blitzen | in `portalRahmen()`: `puls = max(puls, gGate)` | Der Rahmen ist die Naht der Welten – beim Beat leuchtet genau sie auf |
 
+*Tab. 3: Mapping-Katalog – Audio-Signal, Eingriffsort und Begründung, jeweils für beide Welten*
+
+**Ergebnis:** Für jedes der sechs Mappings sind Signal, Eingriffsort (Funktion samt Diff in A3) und Begründung benannt, und der fünfte Kohärenz-Punkt steht fest: EIN Audio-Satz für beide Welten. Die Schnipsel aus Tab. 3 lassen sich in Schritt A3 unverändert übernehmen.
+
 Die Warnungen der Serie gelten unverändert: **nie auf Faktoren vor der Uhr** (`gZeit`-Tempi sind Positionen – Audio darauf teleportiert Kamera und Taumler), und Geometrie-Mappings (hier: Mapping 1, das einzige geometrische) flackern mit rohen Pegeln – das Gate ist deshalb bewusst binär mit smoothstep-Saum, und die Luxus-Fassung nimmt die Envelope aus Crystal Lights B3.
 
 ---
@@ -1861,6 +1981,8 @@ Die Sektions-Gliederung des Konstantenblocks ist bewusst panel-tauglich geschnit
 | `D_ZELLE`, `D_GROESSE` | **nur gekoppelt** | – | die Zellregel: unabhängig verstellt wird `D_MARGE` negativ → Wand-Artefakte. Als Paar oder gar nicht |
 | `D_URSPRUNG`, `D_SONNE`, `K_HOEHE` | eher nein | – | Szenen-Identität bzw. Geometrie-Verzahnung mit dem Radius; wer sie ändert, baut einen anderen Shader |
 
+*Tab. 4: Panel-Parameter – Stellschraube, Panel-Eignung, Vorschlag und Bemerkung*
+
 Zwei App-Vorteile zahlen genau auf dieses Composite ein: Die **deterministische Sim-Uhr** macht die komplett zufallsfreie Choreografie (Taumel-Phasen, Portal-Atmen, Kamera) frame-genau reproduzierbar – Vergleichsbilder und Prüfstände funktionieren. Und die fertigen **Audio-Uniforms** ersetzen `bandLevel` samt Schwellen-Handarbeit; `gGate = beat` über den Adapter, fertig.
 
 ## B2 – In-Shader-Merge oder Chain-Composition? Die Abgrenzung
@@ -1872,6 +1994,48 @@ In LumiViz gäbe es für „Tunnel + Trümmerfeld" noch einen ganz anderen Weg: 
 **Der In-Shader-Merge mischt WELTEN vor dem Shading.** Alles, was dieses Tutorial ausmacht, ist mit Blends prinzipiell unerreichbar: Das **Portal** braucht die Strahl-Übergabe pro Pixel (die Außenwelt muss exakt durch die Fensteröffnung der Innenwelt beschnitten und perspektivisch korrekt sein – ein Blend würde die Trümmer *über die Wand* legen). Der **Material-Mix** braucht das `min()` in der map (der Kristallboden verzahnt sich geometrisch mit der Röhre). Die **Motivkopplung** braucht Licht, das die Weltgrenze quert. Und die Kohärenz-Klammer (ein Tonemapping über alles) widerspricht dem Chain-Modell, in dem jeder Node seine eigene Politur mitbringt.
 
 Die Faustregel zum Mitnehmen: **Sobald eine Welt die andere verdecken, beschneiden, beleuchten oder geometrisch berühren soll → In-Shader-Merge (dieses Tutorial). Wenn die Schichten einander nur überlagern → Chain-Composition, und zwar ohne schlechtes Gewissen – sie ist dann das einfachere UND bessere Werkzeug.** Mischformen sind erlaubt und üblich: das Composite hier als ein Node, plus ein Chain-Bloom darüber.
+
+---
+
+## End-Validierung
+
+Diese Validierung steht bewusst **hinter den Anhängen**: A1–A3 sind reguläre Schritte dieses Tutorials, und der Audio-Teil des Kohärenz-Lernziels (EIN Audio-Satz für beide Welten) ist erst dort erreichbar – die End-Validierung muss aber alle Lernziele abdecken. Die Kriterien 1–7 prüfen den Kern (Schritte 1–12), Kriterium 8 den Anhang. Jedes Kriterium ist am laufenden Shader auf shadertoy.com objektiv prüfbar:
+
+1. **Kompilierbarkeit:** Das Gesamtlisting aus Schritt 12 kompiliert auf shadertoy.com ohne Fehlermeldung und rendert ein bewegtes Bild – kein Schwarzbild, kein Standbild. *(Basis aller Lernziele)*
+2. **Kondensieren:** Die beiden Skelette (Schritte 1–2) laufen jeweils eigenständig und bestehen den Zuordnungs-Test: Wer die Originale kennt, erkennt Tunnel bzw. Trümmerfeld sicher wieder – bei gut 90 bzw. gut 100 Zeilen statt je ~300 und gesenkten Schrittzahlen (90 bzw. 60). *(Lernziel 1)*
+3. **Namespacing:** Der Split-Screen aus Schritt 3 zeigt beide Welten nebeneinander in einer Datei, ohne Kompilierfehler. Gegenprobe: Entfernt man ein Welt-Präfix (etwa `tunnelMap` und `debrisMap` beide zu `map`), meldet der Compiler die Kollision – die Präfix-Disziplin ist nicht kosmetisch. *(Lernziel 2)*
+4. **Portal:** Durch die Fensteröffnungen ist die **echte** Debris-Welt sichtbar – beim Vorbeiflug schiebt sich die Perspektive am Fensterrand korrekt mit (Parallaxe statt Textur-Effekt); `P_MASSSTAB` `1.0` ↔ `4.0` wechselt zwischen Ausschnitt und Diorama, und die Außenwelt strömt entsprechend schneller an der Wand vorbei. *(Lernziel 3)*
+5. **Material-Id:** `K_ANTEIL = 0.0` zeigt durchgehend Röhrenboden, `0.9` fast durchgehend Kristallzonen; auf den Kristallabschnitten glühen die Lampen unter dem Boden, dicke Stellen färben ihr Licht blaugrün (Absorption), und die Schollen-Kanten stehen ohne Durchschuss-Löcher im Bild. *(Lernziel 4)*
+6. **Anti-Aliasing:** Mit `AA = 1` sind Fenster- und Rahmenkanten auf jede Distanz exakt pixelweich (kein Treppchen-Flimmern an fernen Portalen); `AA = 2` beruhigt zusätzlich Trümmer-Silhouetten und Plattenkanten – erkennbar am ruhigeren Bild und an der spürbar (~4×) gesunkenen Framerate. *(Lernziel 5)*
+7. **Kohärenz:** `TEMPO` skaliert alle Bewegungen gemeinsam (Fahrt, Taumeln, Portal-Atmen, Farbdrift); Neonfugen, Portal-Rahmen und Kristall-Lampen driften durch dieselbe Palette; das Planetenlicht fällt sichtbar warm auf die Innenwand des Tunnels. *(Lernziel 6)*
+8. **Audio-Kohärenz:** Im A3-Stand (iChannel0 = Music) reißen beim Kick alle Portale gemeinsam auf und die Rahmen blitzen im selben Moment, in dem die Glut pumpt – kein zeitlicher Versatz zwischen den Welten; **ohne Musik** läuft das Eigenleben (atmende Portale, Einzel-Blinken, Taumeln) unverändert weiter. *(Lernziel 6, Audio-Teilaspekt)*
+
+---
+
+## Fehlerbehebung
+
+Die häufigsten Stolperstellen dieses Tutorials, gesammelt nach Symptom (Tab. 5). Die schritt-lokalen Hinweise (etwa die Kollisions-Fallen in Schritt 3 oder die Kostenrechnung in Schritt 10) bleiben davon unberührt – hier stehen die Probleme, die typischerweise erst beim Zusammenbau oder beim Experimentieren auftreten:
+
+| # | Symptom | Ursache | Lösung |
+|---|---|---|---|
+| 1 | Schwarzes Bild nach dem Einfügen | Code unvollständig kopiert (Hilfsfunktionen fehlen) oder Kompilierfehler – Shadertoy rendert dann nichts bzw. den letzten lauffähigen Stand | Gesamtlisting aus Schritt 12 komplett kopieren, mit `Alt+Enter` kompilieren und die Fehlerkonsole unter dem Editor lesen |
+| 2 | Kompilierfehler `'…' : undeclared identifier` | Ab Schritt 4 zeigen die Listings nur noch **Änderungen** – der jeweils letzte Vollstand muss stehen bleiben | Den vollständigen Stand des vorherigen Schritts behalten und nur die gezeigten Funktionen ersetzen bzw. ergänzen (Hinweis in der Einleitung); im Zweifel das Gesamtlisting aus Schritt 12 |
+| 3 | Kompilierfehler `redefinition` beim eigenen Merge | Präfix-Disziplin verletzt – beide Welten definieren denselben Namen (die Kollisions-Fallen aus Schritt 3) | Alles Weltspezifische konsequent prefixen (`tunnel…`/`debris…`/`kristall…`), geteilte Helfer (`hash21`, `R`, `TAU`, `pal`, `fbm`) genau **einmal** definieren |
+| 4 | Eine Welt überstrahlt die anderen / das Bild zerfällt in helle und dunkle Zonen | Die **Helligkeits-Balancen der drei Welten** sind Startwerte, kein Feinabgleich (Ehrlichkeits-Hinweis im Abspann) – die ersten Verdächtigen beim Feintuning | `T_NEON`, `D_GLUT` und den Lampen-Faktor `0.06` einzeln in kleinen Schritten gegeneinander nachstimmen; erst zuletzt `BELICHTUNG` als Gesamt-Klammer anfassen |
+| 5 | Niedrige Framerate / Ruckeln | Worst-Case ~150 map-Auswertungen pro Strahl; `AA = 2` **vervierfacht** auf ~600 (Kostenrechnung in Schritt 10) | `AA = 1` lassen – `fwidth` erledigt die auffälligsten Kanten fast gratis; Shadertoy-Vorschau verkleinern; `T_DICHTE` senken (weniger Portal-Pixel = weniger Zweit-Märsche) |
+| 6 | Audio-Mappings reagieren nicht | iChannel0 nicht mit „Music" belegt, Track pausiert, oder die Gate-Schwelle passt nicht zum Track | Kanal-Kachel prüfen (A1); Schwellen `0.60/0.75` sind Handarbeit pro Musikrichtung – oder die adaptive Buffer-A-Envelope aus Crystal Lights, Anhang B3 |
+| 7 | A1-Prüfstand: beide Balken stehen dauerhaft voll, das Gate „klebt" offen | Das synthetische Testsignal des Standalone **sättigt die Shadertoy-dB-Skala** – sein Bass liegt dauerhaft über der Gate-Schwelle (so entstand auch das A1-Bild dieses Tutorials) | Mit echter Musik prüfen oder die Schwellen für das Testsignal anheben; das Gate-Prinzip selbst ist davon unberührt |
+
+*Tab. 5: Fehlerbehebung – Symptom, Ursache, Lösung*
+
+---
+
+## Nächste Schritte
+
+Die Fortsetzung folgt der [Wegleitung](ShaderTutorials-overview.md) der Serie – nach dem ersten Composite die beiden anderen:
+
+- **[Composite: Postfx](CompositePostfx-tutorial.md)** – statt Welten zu mergen, wird ein fertiges Werk **veredelt**: Multipass A→B→C→Image, Bloom über Bright-Pass und separierbaren Gauß, Gather-DOF, Temporal-Glättung – die Bühne hinter dem Werk.
+- **[Composite: Transitions](CompositeTransitions-tutorial.md)** – **Übergänge** zwischen Werken: Masken-Wipes mit Glühsaum, Parameter-Morph statt Bild-Mix, Kamera-Kontinuität und die 1-Pixel-Zustandsmaschine in Buffer A für beat-getriggerte Wechsel.
 
 ---
 
@@ -1890,6 +2054,29 @@ Wer weitermachen will:
 Und jetzt: Musik an. 🎵🌌
 
 *Screenshots: gerendert mit AvsStandalone (Testing-Build), Chains in `composite_portals_schritte/`.*
+
+---
+
+## Siehe auch
+
+**Voraussetzungen (die drei Quell-Tutorials):**
+
+- [Stratospheric-Tunnel-Tutorial](StratosphericTunnel-tutorial.md) – die Wirtsszene: Röhrenwand, Fensterraster, Neonfugen, Scheinwerfer; das Ausgangsmaterial von Skelett 1.
+- [Space-Debris-Tutorial](SpaceDebris-tutorial.md) – die Außenwelt: Zellgitter mit Zellregel, Taumler, Glutplanet mit Atmosphären-Saum; das Ausgangsmaterial von Skelett 2.
+- [Crystal-Lights-Tutorial](CrystalLights-tutorial.md) – der Boden-Merge: Höhenfeld, Lampen, Beer-Lambert-Absorption; dessen Anhang B ist zugleich die Vollreferenz Shadertoy ↔ LumiViz, auf die Anhang B hier verweist.
+
+**Verwandte Dokumente:**
+
+- [Shader-Tutorials-Wegleitung](ShaderTutorials-overview.md) – Fokus-Tabellen, Lesereihenfolge und Technik-Index der gesamten Tutorial-Serie.
+- [Raymarching – Referenz](Raymarching-reference.md) – die technische Referenz zu Algorithmus, Distanzfunktionen, Schranken und Artefakten; das „Warum" hinter Marsch-Drosseln, konservativen Schranken und der Durchschuss-Diskussion (Schritt 8) zum Nachschlagen.
+
+## Changelog
+
+| Version | Datum | Änderungen |
+|---|---|---|
+| **1.2.0** | 2026-08-05 | Formalisierung nach Tutorial_Base (nach dem Muster des Piloten Crystal Lights): Blockquote-Header, Inhaltsverzeichnis, Konventions-Mapping (Tab. 1), Lernziele, Voraussetzungen, Übersicht der Schritte, End-Validierung, Fehlerbehebung, Nächste Schritte, Siehe auch; Tabellen als Tab. 1–5 und Bauplan-Skizze als Fig. 1 indexiert; **Ergebnis:**-Zeile in Schritt A2 ergänzt. Didaktischer Bestand (Schritt-Texte, Code, 🎨-Kästen, Anhänge) inhaltlich unverändert. Zuvor Umzug der Serie nach `projects/apps/MyViz/docs/tutorials/` und Umbenennung nach FNM-01 zu `CompositePortals-tutorial.md` (Entscheid Patrik, 2026-08-05); der Kommentarfix `shadeWand` → `tunnelShade` in Schritt 11 erfolgte separat mit dem Screenshot-Nachzug. |
+| **1.1.0** | 2026-08-05 | Schritt-Chains + Screenshots: je Schritt eine lauffähige Ein-Node-Chain in `composite_portals_schritte/` (`.glsl` = materialisierte Rekonstruktion der Diff-Schritte, `make_schritte.py` generiert die `.lvfx`) und ein eingebettetes Render-Bild in `composite_portals_bilder/` (AvsStandalone, Testing-Build, 800×450; abweichend vom Serien-Standard Frame 300: Schritte 9–10 mit `--frames 100`, Schritte 11–12 mit `--frames 120`, damit die Kamera zum Screenshot-Zeitpunkt in einer Kristallzone steht; Anhang-Bilder mit synthetischem Testsignal). Ehrlichkeits-Hinweis auf „in LumiViz gegengerendert, shadertoy.com-Sichttest offen" nachgezogen. |
+| **1.0.0** | 2026-08-04 | Erstfassung: 12 Schritte (Kondensieren → Namespacing → Portal → Material-Mix → Kanten → Kohärenz) + Anhang A (Audio-Reaktivität, EIN Audio-Satz für beide Welten) + Anhang B (LumiViz kompakt: Panel-Parameter, In-Shader-Merge vs. Chain-Composition). |
 
 
 
