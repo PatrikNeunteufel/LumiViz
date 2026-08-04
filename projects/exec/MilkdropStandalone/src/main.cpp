@@ -8,8 +8,9 @@
  *         und in `<TEMP>/lumiviz_milkdrop_trace.log`
  *
  * @author Patrik Neunteufel
- * @date   Juli 2026 (1.1.0: August 2026 — --ab-Wechsellauf mit Frame-Hashes
- *         + --blende (Sicht-Blende des Kerns, App-Verhalten), S67)
+ * @date   Juli 2026 (1.1.0: August 2026 — --ab-Wechsellauf mit Frame-Hashes,
+ *         --blende (Sicht-Blende des Kerns) + --audio-beat (korrelierte
+ *         Band-Huellkurven fuer Beat-Detektor-Presets), S67)
  * @version 1.1.0
  *
  * @details
@@ -147,6 +148,9 @@ public:
 
     /// Sicht-Blende des Kerns aktivieren (S67, App-Verhalten nachstellen)
     void setBlende(bool an) { m_blende = an; }
+
+    /// Korrelierte Audio-Huellkurven (S67, Diagnose Beat-Detektor-Presets)
+    void setAudioBeat(bool an) { m_audioBeat = an; }
 
     /// Exit-Code des --auto-Laufs: 0 nur wenn alle Presets Custom rendern
     [[nodiscard]] bool allCustom() const { return m_allCustom; }
@@ -297,10 +301,19 @@ private:
         // liefen in 0/0-NaN. Die Referenz-FFT hat immer dekorrelierte Baender.
         // Die WAVE bleibt unveraendert — sie ist der formelgleiche
         // MilkdropRef-Vertrag (576-Sample-PCM).
+        // --audio-beat (S67): KORRELIERTE Huellkurven mit leichtem Jitter —
+        // die Referenz-FFT des Beat-PCM laesst alle Baender GEMEINSAM
+        // pulsieren; Beat-Detektoren wie `above(vol_att, 1.25*peak)`
+        // (pixies-Feuerwerk) feuern nur dann. Der Jitter haelt die Baender
+        // ungleich (S64-Falle exakter 0/0-Banddifferenzen bleibt vermieden).
         const double beatMid =
-            0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * 1.5 + 1.3));
+            m_audioBeat
+                ? beat * (0.97 + 0.02 * std::sin(m_time * 1.1))
+                : 0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * 1.5 + 1.3));
         const double beatTreb =
-            0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * 2.7 + 2.1));
+            m_audioBeat
+                ? beat * (0.94 + 0.03 * std::sin(m_time * 1.7 + 0.5))
+                : 0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * 2.7 + 2.1));
         static std::vector<float> wave;
         static std::vector<float> spec;
         wave.assign(kFrames * 2, 0.0f);
@@ -478,6 +491,7 @@ private:
     bool m_silence = false;
     bool m_dumpShaders = false;
     bool m_blende = false;          ///< Sicht-Blende (S67, App-Verhalten)
+    bool m_audioBeat = false;       ///< korrelierte Huellkurven (S67, Diagnose)
     bool m_ab = false;              ///< A/B-Wechsellauf (S67)
     bool m_abLoeschen = true;       ///< Wechselmodus: Loeschen (sonst Behalten)
     bool m_abAudioNeustart = false; ///< Audio-Uhr beim Wechsel auf 0
@@ -546,6 +560,11 @@ int main(int argc, char* argv[])
         QStringLiteral("blende"),
         QStringLiteral("Sicht-Blende aktivieren (~0,5 s Schwarz-Einblendung "
                        "nach frischer Saat — App-Verhalten)"));
+    const QCommandLineOption optAudioBeat(
+        QStringLiteral("audio-beat"),
+        QStringLiteral("korrelierte Band-Huellkurven mit Jitter (Diagnose: "
+                       "Beat-Detektor-Presets wie pixies feuern nur, wenn "
+                       "alle Baender gemeinsam pulsieren)"));
     parser.addOption(optAuto);
     parser.addOption(optFrames);
     parser.addOption(optOut);
@@ -558,6 +577,7 @@ int main(int argc, char* argv[])
     parser.addOption(optWechsel);
     parser.addOption(optAudioNeustart);
     parser.addOption(optBlende);
+    parser.addOption(optAudioBeat);
     parser.process(app);
     // Saatlos = Prüfstand-Vertrag: derselbe Kaltstart wie der Referenz-Renderer.
     // Die App behält ihre Saat (Verstärker-Presets beim ERSTEN Preset der
@@ -628,6 +648,7 @@ int main(int argc, char* argv[])
                               parser.isSet(optAudioNeustart));
     }
     window.setBlende(parser.isSet(optBlende));
+    window.setAudioBeat(parser.isSet(optAudioBeat));
     window.resize(w, h);
     window.show();
 

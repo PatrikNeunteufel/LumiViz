@@ -189,6 +189,7 @@ private:
     static int lAppGet(lua_State* L);
     static int lAppSet(lua_State* L);
     static int lGetSpec(lua_State* L);
+    static int lGetSpecDb(lua_State* L);
     static int lGetOsc(lua_State* L);
     static int lGetTime(lua_State* L);
 

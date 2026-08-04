@@ -2740,6 +2740,27 @@ void MilkdropVisualizer::onRender(float deltaTime)
     if (m_context != nullptr) m_context->restoreInitSnapshot();
     pushFrameInputs();
     if (m_script != nullptr && m_script->has(Slot::Frame)) m_script->run(Slot::Frame);
+    // Diagnose (S67, Muster NOSEED/DUMP_WARP): LUMIVIZ_MILKDROP_TRACE_VARS=
+    // "style,obj_num,..." traced die benannten Engine-Variablen nach dem
+    // per_frame — die ersten 10 Frames je Ladung, danach jeden 60. Frame.
+    if (m_script != nullptr && (m_frame < 10 || m_frame % 60 == 0) &&
+        qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_TRACE_VARS"))
+    {
+        const QStringList names =
+            qEnvironmentVariable("LUMIVIZ_MILKDROP_TRACE_VARS")
+                .split(QLatin1Char(','), Qt::SkipEmptyParts);
+        QStringList parts;
+        auto& e = m_script->engine();
+        for (const QString& n : names)
+        {
+            parts << QStringLiteral("%1=%2")
+                         .arg(n.trimmed())
+                         .arg(e.number(n.trimmed().toUtf8().constData()));
+        }
+        trace::log(QStringLiteral("traceVars f%1: %2")
+                       .arg(m_frame)
+                       .arg(parts.join(QStringLiteral(" "))));
+    }
     pullFrameOutputs(fv);
     if (m_context != nullptr) m_context->captureFrameSnapshot();
 

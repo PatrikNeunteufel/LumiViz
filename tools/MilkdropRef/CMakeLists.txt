@@ -79,8 +79,11 @@ target_compile_definitions(MilkdropRef PRIVATE
     _CRT_NONSTDC_NO_DEPRECATE
 )
 # Alt-Code: Warnungen stummschalten, damit echte Fehler sichtbar bleiben;
-# /Zc:forScope-: VC6-Schleifen-Scope (i lebt nach der for-Schleife weiter)
-target_compile_options(MilkdropRef PRIVATE /W1 /wd4996 /Zc:forScope-)
+# /Zc:forScope-: VC6-Schleifen-Scope (i lebt nach der for-Schleife weiter);
+# /FI ref_msgbox.h: MessageBox → stderr (S67) — Fehlerdialoge blockierten
+# Batch-Läufe (z. B. "Unable to read the data file" bei falscher Preset-Basis)
+target_compile_options(MilkdropRef PRIVATE /W1 /wd4996 /Zc:forScope-
+    "/FI${CMAKE_CURRENT_SOURCE_DIR}/patched/ref_msgbox.h")
 # Nur der eigene Host braucht C++17 (std::filesystem) — der Referenzbaum
 # bleibt auf dem MSVC-Default, wie ihn plugin.vcxproj baute
 set_source_files_properties(src/milkdropref_main.cpp PROPERTIES

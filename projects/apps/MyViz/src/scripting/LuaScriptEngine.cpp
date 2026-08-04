@@ -122,6 +122,18 @@ int lToInt(lua_State* L)
     return 1;
 }
 
+// EEL / (S67): Nenner 0 ⇒ 0 — Referenz-Vertrag, per Sonden gegen MilkdropRef
+// gemessen (sonde2_div0/maxnan: 0.2/0 und 0/0 sind dort 0, kein inf/NaN).
+// IEEE-inf/NaN aus x/0 loeste NaN-Kaskaden aus (pixies-Kamera-Matrix stirbt
+// in Frame 0 an cal=0 -> 0.2/0 -> cos(inf)).
+int lDiv(lua_State* L)
+{
+    const double a = luaL_checknumber(L, 1);
+    const double b = luaL_checknumber(L, 2);
+    lua_pushnumber(L, b == 0.0 ? 0.0 : a / b);
+    return 1;
+}
+
 // EEL sqrt: sqrt(|x|) — never NaN for negative input
 int lEelSqrt(lua_State* L)
 {
@@ -270,6 +282,23 @@ int LuaScriptEngine::lGetSpec(lua_State* L)
     return 1;
 }
 
+// getspecdb (S67, Idee Patrik): getspec-Signatur, aber WebAudio-dB-Skala —
+// dieselbe Spanne wie die Shadertoy-Audio-Textur (20·log10 auf [-100,-30] dB
+// ⇒ 0..1). Leise Spektral-Ausläufer, die linear im Rauschboden verschwinden
+// (0,001 ⇒ linear ~0), liegen hier gut nutzbar bei ~0,57. Ohne Glättung —
+// Skripte glätten selbst (EEL-Idiom x = x*a + neu*(1-a)).
+int LuaScriptEngine::lGetSpecDb(lua_State* L)
+{
+    auto* self = static_cast<LuaScriptEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
+    const int bc = static_cast<int>(luaL_checknumber(L, 1) * 576.0);
+    const int bw = static_cast<int>(luaL_optnumber(L, 2, 0.0) * 576.0);
+    const int ch = static_cast<int>(luaL_optnumber(L, 3, 0.0) + 0.5);
+    const double lin = getvis(self->m_visdata.data(), bc, bw, ch, 0) * 0.5;
+    const double db = 20.0 * std::log10(std::max(lin, 1e-6));
+    lua_pushnumber(L, std::clamp((db + 100.0) / 70.0, 0.0, 1.0));
+    return 1;
+}
+
 int LuaScriptEngine::lGetOsc(lua_State* L)
 {
     auto* self = static_cast<LuaScriptEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
@@ -408,6 +437,7 @@ void LuaScriptEngine::buildSandbox()
     // --- audio analysis (bare globals, AVS getspec/getosc/gettime) ---
     const struct { const char* name; lua_CFunction fn; } audioFns[] = {
         {"getspec", &LuaScriptEngine::lGetSpec},
+        {"getspecdb", &LuaScriptEngine::lGetSpecDb},
         {"getosc", &LuaScriptEngine::lGetOsc},
         {"gettime", &LuaScriptEngine::lGetTime},
     };
@@ -425,6 +455,7 @@ void LuaScriptEngine::buildSandbox()
         {"below", lBelow},   {"band", lBand},     {"bor", lBor},
         {"bnot", lBnot},     {"bitand", lBitAnd}, {"bitor", lBitOr},
         {"mod", lMod},       {"toint", lToInt},   {"sqrt", lEelSqrt},
+        {"div", lDiv},
         {"invsqrt", lInvSqrt}, {"sigmoid", lSigmoid}, {"sign", lSign},
         {nullptr, nullptr}
     };

@@ -142,7 +142,7 @@ public:
             "invsqrt", "pow", "exp", "log", "abs", "sign", "min", "max", "floor",
             "ceil", "mod", "rand", "sigmoid", "if", "above", "below", "equal",
             "bnot", "band", "bor", "assign", "loop", "while", "megabuf", "gmegabuf",
-            "getspec", "getosc", "gettime"};
+            "getspec", "getspecdb", "getosc", "gettime"};
         for (const QString& f : kFns) m_funcNames.insert(f);
         m_funcRe = QRegularExpression("\\b(" + kFns.join('|') + ")\\b");
         m_numRe = QRegularExpression("\\b\\d+(\\.\\d+)?\\b");
@@ -288,6 +288,11 @@ private:
         fnRow("getspec(band, width, ch)", "≈ 0..1",
               "spectrum energy. band 0..1 (low→high), width 0..1 (averaging window), "
               "ch 0=both 1=left 2=right") +
+        fnRow("getspecdb(band, width, ch)", "0..1",
+              "getspec on the WebAudio dB scale (20·log10 mapped from -100..-30 dB "
+              "— same scale as the Shadertoy audio texture). Quiet spectrum tails "
+              "that read ≈0 linearly become usable (~0.5-0.8). LumiViz extra — "
+              "not an AVS/MilkDrop builtin") +
         fnRow("getosc(band, width, ch)", "≈ -1..1",
               "waveform (oscilloscope) sample; same band/width/ch as getspec") +
         fnRow("gettime(sc)", "seconds", "seconds since start minus sc (use gettime(0))"));

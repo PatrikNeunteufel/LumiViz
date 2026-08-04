@@ -5,7 +5,8 @@
  *
  * @author LumiPulse Team
  * @date   July 2026
- * @version 1.0.0
+ * @version 1.3.0 (S67: Division emittiert eel.div — Nenner 0 => 0,
+ *          Referenz-Vertrag per Sonde gegen MilkdropRef gemessen)
  *
  * @details
  * Emits Lua source for the LuaScriptEngine sandbox (Import-Analyse §7.4):
@@ -152,7 +153,16 @@ private:
             case Tok::Plus:    return "(" + a + " + " + b + ")";
             case Tok::Minus:   return "(" + a + " - " + b + ")";
             case Tok::Star:    return "(" + a + " * " + b + ")";
-            case Tok::Slash:   return "(" + a + " / " + b + ")";
+            // EEL-Division (S67): Nenner 0 => 0 (MD3-Referenz-Vertrag, per
+            // Sonde gegen MilkdropRef gemessen: x/0 und 0/0 sind dort exakt 0,
+            // kein IEEE-inf/NaN; eel.div lebt im Prelude der Engine).
+            // NUR Milkdrop-Dialekt — die AVS-evallib-Division sieht roh aus
+            // (kein Schutz-Trailer); deren Vertrag entscheidet erst eine
+            // AvsRef-Sonde, bis dahin bleibt AVS bei roher Lua-Division.
+            case Tok::Slash:
+                return m_dialect == Dialect::Avs
+                           ? "(" + a + " / " + b + ")"
+                           : "eel.div(" + a + ", " + b + ")";
             case Tok::Caret:   return "(" + a + " ^ " + b + ")";
             case Tok::Percent: return "eel.mod(" + a + ", " + b + ")";
             case Tok::Amp:     return "eel.bitand(" + a + ", " + b + ")";
@@ -301,14 +311,19 @@ private:
         return call;
     }
 
-    static std::string compoundValue(const std::string& current, Tok op, const std::string& value)
+    // seit S67 nicht mehr static: DivAssign braucht den Dialekt (eel.div)
+    std::string compoundValue(const std::string& current, Tok op,
+                              const std::string& value) const
     {
         switch (op)
         {
             case Tok::PlusAssign:  return "(" + current + " + " + value + ")";
             case Tok::MinusAssign: return "(" + current + " - " + value + ")";
             case Tok::MulAssign:   return "(" + current + " * " + value + ")";
-            case Tok::DivAssign:   return "(" + current + " / " + value + ")";
+            case Tok::DivAssign:
+                return m_dialect == Dialect::Avs
+                           ? "(" + current + " / " + value + ")"
+                           : "eel.div(" + current + ", " + value + ")";
             case Tok::ModAssign:   return "eel.mod(" + current + ", " + value + ")";
             case Tok::OrAssign:    return "eel.bitor(" + current + ", " + value + ")";
             case Tok::AndAssign:   return "eel.bitand(" + current + ", " + value + ")";
@@ -428,7 +443,10 @@ private:
         static const std::set<std::string> kDirect = {
             "sin", "cos", "tan", "asin", "acos", "atan", "atan2", "floor", "ceil",
             "exp", "log", "abs", "min", "max", "rand", "mod",  // mod = env-fmod
-            "getosc", "getspec", "gettime"
+            "getosc", "getspec", "gettime",
+            // getspecdb (S67): getspec in WebAudio-dB-Skala (LumiViz-Extra,
+            // kein AVS-/MilkDrop-Builtin — Skala wie die Shadertoy-Audio-Textur)
+            "getspecdb"
         };
         if (kDirect.count(fn) > 0)
         {
@@ -525,7 +543,8 @@ private:
                     "ceil", "exp", "log", "log10", "abs", "min", "max", "sqrt",
                     "invsqrt", "sigmoid", "sign", "sqr", "pow", "equal", "above",
                     "below", "band", "bor", "bnot", "megabuf", "gmegabuf",
-                    "getosc", "getspec", "gettime", "if", "exec2", "exec3"
+                    "getosc", "getspec", "getspecdb", "gettime", "if", "exec2",
+                    "exec3"
                 };
                 if (kPureFns.count(node.name) == 0) return false;  // rand, loop, unknown...
                 break;

@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.36.0
-> **Datum:** 2026-08-04 (Session 67, Zwischenstand)
+> **Version:** 1.38.0
+> **Datum:** 2026-08-04 (Session 67)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -45,8 +45,8 @@ Legende: 🔴 blockiert anderes · 🟠 Befund mit Messwert · 🟡 Entscheid n�
 > nachher **300/300 bitgleich**. Kaltstart vs. Wechsel+Audio-Neustart
 > konvergiert ab ~f120 (Rest = bewusst behaltene Loudness-Historie).
 > Doku: MilkdropVisualizer.md 1.22.0. Tests grün, alle 3 Builds grün.
-> **Noch offen aus dem S66-Plan: Sichttest Ausblenden + App-Sichttest des
-> Fixes durch Patrik (Spotlight → RTH_2024 mit Löschen ≙ App-Neustart).**
+> **App-Sichttest Fix + Sicht-Blende: ✅ Patrik (S67, „passt nun").
+> Noch offen aus dem S66-Plan: Sichttest Ausblenden-Modus.**
 >
 > ## 🟡 S67 — Rausch-Saat sichtbar: UNTERSUCHT, Entscheid offen
 >
@@ -68,7 +68,7 @@ Legende: 🔴 blockiert anderes · 🟠 Befund mit Messwert · 🟡 Entscheid n�
 > Composite-seitig — f60-Hash mit/ohne Blende identisch = beweisbar rein
 > kosmetisch), QSettings `milkdrop/sichtBlende` Default AN, Settings-Panel
 > „MilkDrop Start Fade-in", Standalone `--blende`; Prüfstände unverändert
-> (Kern-Default AUS). Handbuch 1.6.0. **⬜ Sichttest Patrik offen.**
+> (Kern-Default AUS). Handbuch 1.6.0. **Sichttest: ✅ Patrik (S67).**
 >
 > **Benutzerhandbuch 1.5.0** (Behalten-Semantik exakt, Regelwerk,
 > §12 Shadertoy, GPU, 2 Screenshots — skriptgesteuert aus der App).
@@ -94,7 +94,11 @@ Legende: 🔴 blockiert anderes · 🟠 Befund mit Messwert · 🟡 Entscheid n�
 > (fürs Shadertoy-Konto → API-Key). Details: `Changelog_Session65.md`,
 > Plan-Doku `visuals/Regelwerk_und_Neue_Module_Plan.md` (1.4.0).
 > **NEU OFFEN:** Sichttests neue UI (Patrik) · S3-Netz-Abnahme mit Key ·
-> Audio-Skala dB-vs-linear · Shader-Feintuning nach Ton-Test (45/56/64 vorgemerkt).
+> ~~Audio-Skala dB-vs-linear~~ **✅ S67: Sonde gefahren + dB umgesetzt**
+> (WebAudio-Vertrag in der Audio-Textur, ShadertoyWrapper.md 1.2.0; dazu NEU
+> `getspecdb()` für eigene Chain-Skripte — Idee Patrik; Absolut-Offset-
+> Feinabgleich wandert in die S3-Netz-Abnahme) ·
+> Shader-Feintuning nach Ton-Test (45/56/64 vorgemerkt).
 
 > ## ✅ Erledigt in S53 (war die Vorgabe Patrik aus S52)
 >
@@ -731,16 +735,24 @@ unter `asset/Milkdrop3/` ablegen). **S64: acht Fixklassen, OK 289→295,
 Prüfstände jetzt SAATLOS** (Entscheid Patrik; `--seed` = App-Opt-in) —
 Baseline `out/milkdrop_triage_s64f`: 16 auffällig = 5 korrekt PRESET-IST-SO
 (R239/R239b, sprite3, XorDev 001b, acid wiring 2) + **11 Port-Bugs**.
-Diagnose-Schalter: `LUMIVIZ_MILKDROP_NOSEED`, `LUMIVIZ_MILKDROP_DUMP_WARP`.
+**S67: Fixklasse 9 (EEL-Divisions-Vertrag) ⇒ OK 295→298** — neue Baseline
+`out/milkdrop_triage_s67b`: exakt 3 Klassenwechsel, alle aufwärts (pixies ×2
+SCHWARZ→OK, XorDev 001b MONOCHROM→OK; letzteres lebt bei uns jetzt lebhaft,
+die Ref bleibt an ANDEREM UB schwarz — wandert in den Dunkelklasse-Entscheid).
+`out/milkdrop_triage_s67a` = Zwischen-Gate: Shader-Leichen-Fix + Sicht-Blende
+allein sind klassengleich zu s64f.
+Diagnose-Schalter: `LUMIVIZ_MILKDROP_NOSEED`, `LUMIVIZ_MILKDROP_DUMP_WARP`,
+NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 
 | Was | Stand | |
 |---|---|---|
 | **🎯 Regelwerk-Strang (Entscheid Patrik S64, NÄCHSTE SESSION)** | Node-Param `Legacy \| Modern \| Benutzerdefiniert` (Master-Combo + Einzelschalter je Emulation: Div-Vertrag, UNORM-Trunc, q-Epsilon, UV-/NaN-Sanitize); Import-Default legacy, Neubauten modern. Dazu PS-Version-Override je Typ (warp/comp × auto/PS2/PS3/MD1-erzwingen = Strip-Bisektion als App-Feature). **Genauer Plan (R1–R5 + Abnahme): [Regelwerk_und_Neue_Module_Plan.md](visuals/Regelwerk_und_Neue_Module_Plan.md)** — dort auch Strang S (Shadertoy) und G (GPU-Module) | 🎯 |
-| **🟠 11 Rest-Port-Bugs** (`out/milkdrop_triage_s64f/VERGLEICH.md`) | **piercing 01** (S63-App-Befund Patrik, seit saatlos erstmals messbar: flach 0,127 vs Ref 0,306 — unangefasst) · **pixies-Familie (2)**: Partikel leben, ~4× dünner als Ref; Zeichenpfad/gmegabuf/while/exec2/loop(150000)/Init+Frame-Durchlauf alle per Sonde entlastet · **Gin Tonic 003** solo-weiß (Familie geheilt, dieses nicht — eigener Bisect) · **q-/UB-Dunkelklasse (7)**: purple pulsator, crystal palace, R039, R068, R070, R211, R248 — Look hängt an doppeltem UB der Referenz (Heap-Garbage-q × Fixpunkt-Überlauf), nur klassenweise nachstellbar → 🟡 Entscheid: als „IST-SO-artig (Legacy-Grenze)" einstufen oder weiter emulieren? | 🟠 |
+| **🟠 Rest-Port-Bugs — S67-Stand: von 11 auf 8, davon 7 = Dunkelklasse** | **✅ pixies-Familie (2) GEHEILT (S67):** Ursache war der **EEL-Division-Vertrag** — die Referenz-EEL liefert bei Nenner 0 exakt 0 (dreifach per Sonde gemessen, `asset/Milkdrop3/sonden/`), unsere Lua-Engine IEEE-inf/NaN; die NaN-Kaskade (`cal=0 → 0.2/0 → cos(inf)`) zerstörte die Kamera-Matrix in f0 (Beweis: `LUMIVIZ_MILKDROP_TRACE_VARS`, reg30–38=NaN). Fix: EelTranspiler 1.3.0 emittiert `eel.div` (NUR Milkdrop-Dialekt; AVS wartet auf AvsRef-Sonde). searchlight 0,000→0,103 (Ref 0,054), 2000 shapes 0,000→0,111 (Ref 0,268) · **✅ piercing 01 GEKLÄRT — kein Port-Bug:** Rausch-Input `rand*0.0042` (±0,0021) liegt UNTER der 1/255-Quantisierung und stirbt an der UNORM-Trunkierung (auch im Original!) — das Preset braucht Fremd-Energie; die Ref zündet aus nicht-genulltem D3D9-Speicher, der saatlose Prüfstand kann das nicht. Mit `--seed` (App-Pfad): lebt, 0,406/max 0,812 ≈ Ref 0,306/0,794. Einstufung: Saatlos-Vertragsgrenze · **Gin Tonic 003** solo-weiß (1,000 vs Ref 0,036) — Saat/Safe-Div ändern nichts, eigener Bisect offen · **q-/UB-Dunkelklasse (7+1): ✅ ENTSCHIEDEN (Patrik, S67) — IST-SO-artig (Legacy-Grenze wie R239)**: purple pulsator, crystal palace, R039, R068, R070, R211, R248 + XorDev 001b (invers: Ref stirbt an UB, wir leben) — Look hängt an doppeltem UB der Referenz (Heap-Garbage-q × Fixpunkt-Überlauf), nicht exakt reproduzierbar; aus der Bug-Liste raus. Formales Urteil: `out/milkdrop_triage_s67b/VERGLEICH.md` (R070/R248 mit Saat nahe Ref: 0,017/0,019 bzw. 0,008/0,022). **⚪ Optionaler Backlog-Pfad (Entscheid Patrik): erst Einzeldossiers (Screenshot-Paar + UB-Ursache je Preset), dann gezielte Emulation — NUR wenn Ressourcen übrig.** Verbleibender echter Rest-Bug: **Gin Tonic 003** (s. oben) | ✅ |
 | ~~**Prüfpunkt R239/R239b**~~ | ✅ **aufgelöst (S64):** Prüfstände saatlos → beidseitig schwarz, korrekt PRESET-IST-SO. Die S63-Falle („OK geworden ≠ richtig geworden") ist damit methodisch beseitigt | ✅ |
+| **AVS-EEL-Divisions-Sonde** (NEU S67) | Der `eel.div`-Vertrag (Nenner 0 ⇒ 0) ist nur für die MD3-EEL gemessen; die AVS-evallib-Division sieht ungeschützt aus (kein `_emit`-Trailer). AvsRef-Sonde bauen (Superscope-Probe analog `asset/Milkdrop3/sonden/`) → dann entscheiden, ob der AVS-Dialekt ebenfalls `eel.div` bekommt (EelTranspiler 1.3.0 gated aktuell auf Milkdrop) | ⬜ |
 | **myPresets/ (41)** | nie triagiert (Triage lief nur über den Pack-Root) | ⬜ |
 | **Loudness bei Stille** | `bass/mid/treb = 1.000` konstant bei Null-Signal (0/0-Normalisierung) — gegen Referenzverhalten prüfen | ⬜ |
-| **MilkdropRef-MessageBoxen** | „Unable to read data file" blockiert Batch-Läufe bei falscher Preset-Basis — patched-Kandidat (MessageBox → stderr) | 🔧 |
+| ~~**MilkdropRef-MessageBoxen**~~ | ✅ **erledigt (S67):** `patched/ref_msgbox.h` per `/FI` in alle Übersetzungseinheiten — alle MessageBoxen werden stderr-Zeilen + IDOK (nachdem die Falle erneut einen Sonden-Lauf blockierte). Merke: `data/include.fx` wird relativ `<presetordner>/../data` gesucht — Sonden nach `asset/Milkdrop3/sonden/` | ✅ |
 | **MD3/2077-Feature-Frage (Patrik)** | erst nach dem MD2-Grundpfad: welche 2077-Presets nutzen MD3-exklusive Features, die uns fehlen? | 🟡 |
 | **`rot_*`-Matrizen optisch** | seit S52 im Code (24 Matrizen + Matrix-Indizierung), 9 Presets im Pack betroffen. Werte sind zufällig und unser PRNG ist ein anderer als der von MilkDrop — prüfbar ist nur: laden sie durch, bewegt sich Plausibles | ⬜ |
 | ~~**Texturen `worms`, `rose`, `grad3`**~~ | ✅ **beschafft (S60):** im Original-Winamp-Pack fehlen sie tatsächlich (21 Texturen, geprüft gegen `ref/winamp_orig`), aber der **MegaPack-`textures`-Ordner** (`…\VisualsPresets\MilkDrop 135k+ Presets MegaPack 2026\textures`, 8415 Dateien) hat alle drei — nach `asset/Milkdrop3/textures/` kopiert. Damit sind 27 von 35 Fehler-Log-Zeilen weg. ⚠ Herkunft Community-Pack: Lizenzfrage vor dem Commit kurz bedenken. Bei künftigen fehlenden Texturen zuerst dort suchen (verwandt: „Assets-Ordner-Fallback" §7) | ✅ |
@@ -1146,6 +1158,8 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.38.0 | 2026-08-04 | Session 67 (Abschluss-Nachträge) — **Audio-Skala dB-vs-linear ✅** (Sonde + Umsetzung: Shadertoy-Audio-Textur nach WebAudio-Vertrag, ShadertoyWrapper.md 1.2.0; NEU `getspecdb()` für Chain-Skripte, Idee Patrik — LuaScriptEngine + Transpiler-Whitelist + Editor-Referenz, Test-Case 512). **Dunkelklasse ✅ ENTSCHIEDEN (Patrik): IST-SO-artig** (7+1 inkl. XorDev 001b), formales Urteil `s67b/VERGLEICH.md` (ref_shots erzeugt); ⚪ optionaler Backlog: Dossiers → gezielte Emulation bei freien Ressourcen. Rest-Bug-Liste = Gin Tonic 003 |
+| 1.37.0 | 2026-08-04 | Session 67 (Fortsetzung) — **Fixklasse 9: EEL-Divisions-Vertrag, OK 295→298.** Referenz-EEL dividiert safe (Nenner 0 ⇒ exakt 0; dreifach per Sonde gegen MilkdropRef gemessen, Sonden-Methodik NEU in `asset/Milkdrop3/sonden/`), unsere Lua-Engine IEEE ⇒ NaN-Kaskaden. EelTranspiler 1.3.0 `eel.div` (nur Milkdrop-Dialekt; AVS-Sonde als neuer ⬜). **pixies ×2 GEHEILT** (Kamera-Matrix-NaN via `LUMIVIZ_MILKDROP_TRACE_VARS` gefunden), **piercing 01 geklärt** (Saatlos-Vertragsgrenze: Rausch-Input < 1/255-Quantisierung, App mit Saat korrekt), XorDev 001b lebt (Ref stirbt an anderem UB → Dunkelklasse-Entscheid). Baseline `s67b` (3 Wechsel, alle aufwärts; `s67a` = Gate Shader-Fix+Blende klassengleich). MilkdropRef-MessageBoxen → stderr (`ref_msgbox.h`, /FI). Standalone 1.1.0: `--ab`, `--blende`, `--audio-beat`. Tests 511 grün |
 | 1.36.0 | 2026-08-04 | Session 67 (Zwischenstand) — **TOP 1 GELÖST:** „RTH erbt Farbe" war ein GPU-Programm-Rest: `ensureCustomPrograms()` hinter dem Quellen-Gate ⇒ beim In-Place-Wechsel auf ein Md1Default-Preset rendeten die Warp-/Comp-Programme des VORGÄNGERS weiter. Fix in MilkdropVisualizer (Aufruf unconditional, 1.22.0); Beweis MilkdropStandalone 1.1.0 `--ab` (0/300 → 300/300 bitgleiche Frames). **NEU 🟠:** Rausch-Saat beim Löschen-Wechsel sichtbar (stört; vorher von Shader-Leichen überdeckt? — Untersuchung + Entscheid a/b/c offen). Hinweis: 1.33.0–1.35.0 wurden nur im Kopf gebumpt (S65/S66), Zeilen fehlen — Historie in den Session-Changelogs |
 | 1.32.0 | 2026-08-02 | Session 64 — **zweite MilkDrop-Kalibrier-Runde: acht Fixklassen, OK 289→295, Prüfstände SAATLOS** (Entscheid Patrik; `--seed` = App-Opt-in). §3 neu geschnitten: R239-Prüfpunkt ✅ aufgelöst (korrekt IST-SO), Rest = 11 Port-Bugs in vier Klassen (piercing 01 erstmals messbar · pixies ×2 · Gin Tonic 003 · q-/UB-Dunkelklasse ×7 mit 🟡 Einstufungs-Entscheid); **🎯 Regelwerk-Strang** (Legacy/Modern/Benutzerdefiniert + PS-Version-Override je Typ) als Auftrag der nächsten Session; §7 + Shadertoy-Import-Idee. Fixklassen: D3D9-Div-Vertrag (`_div`), Band-Hüllkurven, Loudness-Kaltstart-Ramp, `breakStrip` (MV-Geisterquads), UNORM8-Trunkierung, NaN-Sanitize, q-Garbage-Epsilon, Double-UV-Wrap. Forschung: 2077-Look der R-Serie = Heap-Garbage × Fixpunkt-Überlauf (doppelt UB, dokumentierte Legacy-Grenze). Tests 493/493, 5 Voll-Triagen, 0 Regressionen |
 | 1.31.0 | 2026-08-02 | Session 63 (Abschluss) — §3 neu geschnitten nach der Triage (Kaltstart-Saat + Feedback-Erhalt, 10 geheilt, 22 Rest als Arbeitsliste), R239-Prüfpunkt + myPresets/-Triage + Loudness-Stille als offene Punkte aufgenommen |

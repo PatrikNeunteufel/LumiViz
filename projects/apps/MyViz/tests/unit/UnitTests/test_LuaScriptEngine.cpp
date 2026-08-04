@@ -77,6 +77,35 @@ TEST_CASE("LuaEngine: Audio — getspec/getosc/gettime lesen die VisData (AVS-tr
     CHECK(evalOrFail(lua, "gettime(2.5)") == doctest::Approx(10.0));
 }
 
+TEST_CASE("LuaEngine: getspecdb — WebAudio-dB-Skala der Shadertoy-Audio-Textur (S67)")
+{
+    LuaScriptEngine lua;
+
+    // Ohne VisData: linear 0 → unter -100 dB → 0.
+    CHECK(evalOrFail(lua, "getspecdb(0.5, 0.05, 0)") == doctest::Approx(0.0));
+
+    // Vollausschlag: linear 1.0 = 0 dB → über -30 dB geklemmt → 1.0.
+    std::array<unsigned char, 576 * 4> vis{};
+    for (int i = 0; i < 576; ++i)
+    {
+        vis[static_cast<size_t>(i)] = 255;
+        vis[static_cast<size_t>(i) + 576] = 255;
+    }
+    lua.setVisData(vis.data());
+    CHECK(evalOrFail(lua, "getspecdb(0.5, 0.05, 0)") == doctest::Approx(1.0));
+
+    // Leiser Ausläufer: Byte 1 beidseitig ⇒ linear (1+1)/255·0,5 ≈ 0,00392 =
+    // -48,1 dB ⇒ (−48,1+100)/70 ≈ 0,741 — linear wäre das praktisch 0,
+    // in dB gut nutzbar (die Kernaussage der S67-Skalen-Sonde).
+    for (int i = 0; i < 576 * 2; ++i) vis[static_cast<size_t>(i)] = 1;
+    lua.setVisData(vis.data());
+    const double lin = evalOrFail(lua, "getspec(0.5, 0.05, 0)");
+    const double db = evalOrFail(lua, "getspecdb(0.5, 0.05, 0)");
+    CHECK(lin == doctest::Approx(2.0 / 255.0 * 0.5));
+    CHECK(db == doctest::Approx((20.0 * std::log10(2.0 / 255.0 * 0.5) + 100.0) / 70.0));
+    CHECK(db > 0.7);  // dB macht den Ausläufer nutzbar
+}
+
 // =============================================================================
 // Sandbox
 // =============================================================================

@@ -4,8 +4,9 @@
  * @brief  Public API: EEL source -> Lua 5.4 source (one-shot import-time transpile)
  *
  * @author LumiPulse Team
- * @date   July 2026
- * @version 1.0.0
+ * @date   July 2026 (1.3.0: August 2026 — EEL-Division als eel.div, S67;
+ *         Versionshinker 1.0→1.2 der Header glattgezogen, Stand s. Doku)
+ * @version 1.3.0
  *
  * @details
  * Header-only library (no Qt, no app dependencies). Translates EEL scripts

@@ -10,6 +10,14 @@ formelgleichem synthetischem Audio.
 > Referenz-Quellbaum bleibt unangetastet; nötige Anpassungen leben als
 > gepatchte Kopien in `patched/`.
 
+**MessageBox → stderr (S67):** `patched/ref_msgbox.h` wird per `/FI` in alle
+Übersetzungseinheiten gezwungen — die Original-Fehlerdialoge („MILKDROP
+ERROR", z. B. „Unable to read the data file" bei falscher Preset-Basis)
+blockierten Batch-Läufe; jetzt stderr-Zeile + IDOK. Merke außerdem:
+`data/include.fx` wird relativ zu `<presetordner>/../data` gesucht —
+EEL-/Verhaltens-Sonden deshalb nach `asset/Milkdrop3/sonden/` legen
+(Nachbar von `data/`, außerhalb des Triage-Korpus `presets/`).
+
 ## Setup: d3dx9 (einmalig)
 
 Das NuGet-Paket **Microsoft.DXSDK.D3DX** nach `third_party/dxsdk-d3dx/`

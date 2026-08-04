@@ -1067,6 +1067,10 @@ private:
     /// Shadertoy-Audio (Strang S): geteilte 512×2-R8-Textur (Zeile 0 = FFT,
     /// Zeile 1 = Waveform); je runShadertoy frisch hochgeladen, Freigabe onCleanup
     unsigned int m_stAudioTex = 0;
+    /// FFT-Glättungszustand der Shadertoy-Audio-Textur (S67): WebAudio-
+    /// AnalyserNode-Vertrag — smoothingTimeConstant 0,8 auf der MAGNITUDE,
+    /// erst danach die dB-Spanne [-100,-30] (getByteFrequencyData)
+    std::array<float, 512> m_stAudioSmooth{};
 
     // Multi Delay: 6 host-shared frame ring buffers (r_multidelay), cleared with
     // the runtimes. Input nodes fill them; output nodes read the delayed frame.

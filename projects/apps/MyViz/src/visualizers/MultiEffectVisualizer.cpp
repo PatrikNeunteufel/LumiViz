@@ -12217,11 +12217,17 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
 void MultiEffectVisualizer::updateShadertoyAudioTexture()
 {
     auto* f = QOpenGLContext::currentContext()->functions();
-    // 512×2, Zeile 0 = FFT-Spektrum (0..1, App-Skala), Zeile 1 = Waveform
-    // (0,5 + 0,5·x — Shadertoy-Konvention: Nulllinie in der Mitte).
-    // PORT-Annahme: Shadertoy speist getByteFrequencyData (dB-skaliert) —
-    // unsere App-Skala ist linear-normalisiert; die Feinabstimmung ist ein
-    // dokumentierter Sichttest-Punkt (Plan §S2 „per Sonde vermessen").
+    // 512×2, Zeile 0 = FFT-Spektrum, Zeile 1 = Waveform (0,5 + 0,5·x —
+    // Shadertoy-Konvention: Nulllinie in der Mitte).
+    // FFT-SKALA (S67, Sonde dB-vs-linear): Shadertoy speist die WebAudio-
+    // AnalyserNode via getByteFrequencyData — Magnitude erst mit
+    // smoothingTimeConstant 0,8 geglättet, dann 20·log10 auf die dB-Spanne
+    // [minDecibels,maxDecibels] = [-100,-30] gespannt. Die frühere lineare
+    // App-Skala ließ alles unter Magnitude ~0,03 im Byte-Bereich 0–8
+    // verschwinden (Zahlensonde: 0,001 ⇒ linear 0 vs. dB 146) — Audio-
+    // Shader, die auf den dB-Boden abgestimmt sind, liefen fast ohne Futter.
+    // Absolut-Offset unserer Normalisierung vs. WebAudio bleibt eine
+    // Annahme — Feinabgleich in der S3-Netz-Abnahme (echtes Side-by-Side).
     std::array<unsigned char, 1024> pixels{};
     const std::vector<float> spec = getSpectrum();
     const std::vector<float> wave = getWaveform();
@@ -12233,7 +12239,11 @@ void MultiEffectVisualizer::updateShadertoyAudioTexture()
     };
     for (int i = 0; i < 512; ++i)
     {
-        const float s = std::clamp(sampleAt(spec, i, 512), 0.0f, 1.0f);
+        const float mag = std::clamp(sampleAt(spec, i, 512), 0.0f, 1.0f);
+        float& sm = m_stAudioSmooth[static_cast<std::size_t>(i)];
+        sm = 0.8f * sm + 0.2f * mag;
+        const float db = 20.0f * std::log10(std::max(sm, 1e-6f));
+        const float s = std::clamp((db + 100.0f) / 70.0f, 0.0f, 1.0f);
         const float w = std::clamp(0.5f + 0.5f * sampleAt(wave, i, 512), 0.0f, 1.0f);
         pixels[static_cast<std::size_t>(i)] = static_cast<unsigned char>(s * 255.0f + 0.5f);
         pixels[static_cast<std::size_t>(512 + i)] =
