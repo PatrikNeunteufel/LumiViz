@@ -19,6 +19,9 @@
  * 1. **Audio** - Device, buffer size, sample rate
  * 2. **Performance** - Frame mode, target FPS, VSync
  * 3. **Panels** - panel housekeeping (reset Import Browser start folder)
+ * 4. **Editor** - Beautify-Format der Skript-Editoren (QSettings-Block
+ *    "editor/...", gelesen von EelScriptEditing::formatOptionsFromSettings, S69)
+ * 5. **Hotkeys** - Hotkey-Editor
  ****************************************************************************************
  */
 
@@ -80,6 +83,9 @@ private:
     QWidget* createAudioTab();
     QWidget* createPerformanceTab();
     QWidget* createPanelsTab();
+    /// Beautify-Format der Skript-Editoren (Offene_Punkte §7, S69):
+    /// Einzugsbreite, Operator-Abstaende, Leerzeilen-Klemme ("editor/*").
+    QWidget* createEditorTab();
     /// Hotkey-Editor (docs/ui/Hotkey_Konzept.md §6): Tabelle je Kategorie mit
     /// Aufnahmefeld, Kollisions-/Reservierungspruefung und Zuruecksetzen.
     QWidget* createHotkeyTab();
@@ -115,6 +121,11 @@ private:
     QSpinBox* m_pMilkPufferFadingSpinBox = nullptr;
     QDoubleSpinBox* m_pMilkPufferAusblendSpinBox = nullptr;
     QCheckBox* m_pMilkSichtBlendeCheckBox = nullptr;
+
+    // Editor Tab (Beautify-Format, S69)
+    QSpinBox* m_pEditorIndentSpinBox = nullptr;
+    QCheckBox* m_pEditorOpSpacesCheckBox = nullptr;
+    QSpinBox* m_pEditorMaxBlankSpinBox = nullptr;
 
     // Hotkeys Tab
     QLabel* m_pHotkeyStatusLabel = nullptr;

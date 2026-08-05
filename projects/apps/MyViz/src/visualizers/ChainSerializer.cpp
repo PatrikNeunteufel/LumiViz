@@ -13,6 +13,7 @@
 
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/milkdrop/MilkdropTextureResolve.hpp"
+#include "visualizers/multieffect/MeshWarpWrapper.hpp"  // Gitter-Klemmen (G1, S69)
 
 #include <QFile>
 #include <QJsonArray>
@@ -1164,6 +1165,17 @@ struct WriteVisitor
         if (!p.author.empty()) o["author"] = QString::fromStdString(p.author);
         if (!p.url.empty()) o["url"] = QString::fromStdString(p.url);
         if (!p.license.empty()) o["license"] = QString::fromStdString(p.license);
+    }
+    void operator()(const MeshWarpParams& p) const
+    {
+        o["code"] = QString::fromStdString(p.code);
+        o["gridX"] = p.gridX;
+        o["gridY"] = p.gridY;
+        o["mixAmount"] = p.mixAmount;
+        o["wrapUv"] = p.wrapUv;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const PassthroughParams& p) const
     {
@@ -2477,6 +2489,21 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.license = getStr(o, "license", p.license);
         return p;
     }
+    if (type == "meshWarp")
+    {
+        MeshWarpParams p;
+        p.code = getStr(o, "code", p.code);
+        p.gridX = std::clamp(getInt(o, "gridX", p.gridX), lumi::meshwarp::kMinGrid,
+                             lumi::meshwarp::kMaxGridX);
+        p.gridY = std::clamp(getInt(o, "gridY", p.gridY), lumi::meshwarp::kMinGrid,
+                             lumi::meshwarp::kMaxGridY);
+        p.mixAmount = std::clamp(getDouble(o, "mixAmount", p.mixAmount), 0.0, 1.0);
+        p.wrapUv = getBool(o, "wrapUv", p.wrapUv);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        return p;
+    }
     // "passthrough" and any unknown key
     return PassthroughParams{getInt(o, "sourceId", 0), getStr(o, "note")};
 }
@@ -2572,6 +2599,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const DebugBarsParams&) const { return "debugBars"; }
         QString operator()(const MilkdropNodeParams&) const { return "milkdrop"; }
         QString operator()(const ShadertoyParams&) const { return "shadertoy"; }
+        QString operator()(const MeshWarpParams&) const { return "meshWarp"; }
         QString operator()(const PassthroughParams&) const { return "passthrough"; }
     };
     return std::visit(Visitor{}, params);

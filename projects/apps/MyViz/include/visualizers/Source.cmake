@@ -27,6 +27,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/multieffect/NodePresetStore.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/multieffect/ShadertoyImport.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/multieffect/ShadertoyWrapper.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/multieffect/MeshWarpWrapper.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/OscilloscopeVisualizer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PipelineKeys.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PulsingVisualizer.hpp"

@@ -14,6 +14,7 @@
 #include "visualizers/multieffect/AvsChainTranslator.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 #include "visualizers/multieffect/ShadertoyWrapper.hpp"
+#include "visualizers/multieffect/MeshWarpWrapper.hpp"  // Mesh-Warp-Node (G1, S69)
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 
@@ -3912,6 +3913,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const Terrain3DParams& params) const { self.runTerrain3D(node, params); }
         void operator()(const GlowOrbsParams& params) const { self.runGlowOrbs(node, params); }
         void operator()(const ShadertoyParams& params) const { self.runShadertoy(node, params); }
+        void operator()(const MeshWarpParams& params) const { self.runMeshWarp(node, params); }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
     std::visit(Visitor{*this, node}, node.params);
@@ -12454,6 +12456,129 @@ void MultiEffectVisualizer::runShadertoy(const ChainNode& node,
     pair.swap();
     bindActive();
     ++rt.stFrame;
+}
+
+void MultiEffectVisualizer::runMeshWarp(const ChainNode& node,
+                                        const MeshWarpParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    // Parameter-Skript (Strang D): Regler je Frame rechenbar.
+    double gridX = params.gridX;
+    double gridY = params.gridY;
+    double mixAmount = params.mixAmount;
+    runParamScript(rt, "meshwarp", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"gridx", &gridX}, {"gridy", &gridY}, {"mixamount", &mixAmount}});
+    const int gx = std::clamp(static_cast<int>(std::lround(gridX)),
+                              lumi::meshwarp::kMinGrid, lumi::meshwarp::kMaxGridX);
+    const int gy = std::clamp(static_cast<int>(std::lround(gridY)),
+                              lumi::meshwarp::kMinGrid, lumi::meshwarp::kMaxGridY);
+
+    // Kompilieren nur bei Code-Wechsel (Shadertoy-Muster; #line 1 = Nutzer-
+    // Zeilen im Treiber-Log). Fehler ins geteilte stError — der Panel-Dialog
+    // pollt shadertoyError() nach Apply (S69).
+    if (rt.mwProgram == nullptr || rt.mwCompiled != params.code)
+    {
+        rt.mwCompiled = params.code;
+        rt.stError.clear();
+        rt.mwFrame = 0;
+        auto program = std::make_unique<QOpenGLShaderProgram>();
+        if (!program->addShaderFromSourceCode(
+                QOpenGLShader::Vertex,
+                lumi::meshwarp::wrapVertex(params.code).c_str()) ||
+            !program->addShaderFromSourceCode(QOpenGLShader::Fragment,
+                                              lumi::meshwarp::fragmentShader()) ||
+            !program->link())
+        {
+            rt.stError = "Warp: " + program->log().toStdString();
+            BasicLogger::logWarning("MultiEffect: Mesh-Warp-Kompilierfehler: " +
+                                    rt.stError.substr(0, 400));
+            program.reset();
+        }
+        rt.mwProgram = std::move(program);
+    }
+    if (rt.mwProgram == nullptr) return;  // Kompilierfehler ⇒ Passthrough
+
+    // Gitter-Objekte nur bei Auflösungs-Wechsel neu (Terrain-Muster).
+    if (rt.mwVao == nullptr || rt.mwGridX != gx || rt.mwGridY != gy)
+    {
+        const std::vector<float> verts = lumi::meshwarp::buildGridVertices(gx, gy);
+        const std::vector<unsigned int> idx = lumi::meshwarp::buildGridIndices(gx, gy);
+        rt.mwVao = std::make_unique<QOpenGLVertexArrayObject>();
+        rt.mwVao->create();
+        rt.mwVao->bind();
+        rt.mwVbo = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
+        rt.mwVbo->create();
+        rt.mwVbo->setUsagePattern(QOpenGLBuffer::StaticDraw);
+        rt.mwVbo->bind();
+        rt.mwVbo->allocate(verts.data(),
+                           static_cast<int>(verts.size() * sizeof(float)));
+        f->glEnableVertexAttribArray(0);
+        f->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float),
+                                 nullptr);
+        rt.mwIbo = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::IndexBuffer);
+        rt.mwIbo->create();
+        rt.mwIbo->bind();
+        rt.mwIbo->allocate(idx.data(),
+                           static_cast<int>(idx.size() * sizeof(unsigned int)));
+        rt.mwVao->release();
+        rt.mwGridX = gx;
+        rt.mwGridY = gy;
+        rt.mwIndexCount = static_cast<int>(idx.size());
+    }
+
+    float bass = 0.0f, mid = 0.0f, treb = 0.0f;
+    computeAudioBands(getSpectrum(), bass, mid, treb);
+
+    // Quelle lesen, Partner beschreiben, tauschen (transformPass-Muster).
+    SurfacePair& pair = active();
+    pair.current()->release();
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+
+    QOpenGLShaderProgram& p = *rt.mwProgram;
+    p.bind();
+    p.setUniformValue("uTex", 0);
+    p.setUniformValue("uResolution", QVector2D(static_cast<float>(m_surfaceWidth),
+                                               static_cast<float>(m_surfaceHeight)));
+    p.setUniformValue("uTime", static_cast<float>(m_scriptClock));
+    p.setUniformValue("uDelta", m_deltaTime);
+    p.setUniformValue("uFrame", rt.mwFrame);
+    p.setUniformValue("uMixAmount",
+                      static_cast<float>(std::clamp(mixAmount, 0.0, 1.0)));
+    p.setUniformValue("uWrap", params.wrapUv ? 1 : 0);
+    p.setUniformValue("bass", bass);
+    p.setUniformValue("mid", mid);
+    p.setUniformValue("treb", treb);
+    p.setUniformValue("vol", m_audioLevel);
+    p.setUniformValue("beat", m_frameBeat ? 1.0f : 0.0f);
+
+    // Warp will weich abtasten: LINEAR nur fuer diesen Draw — die Chain-
+    // Surface ist geteilt, ihr Filter-Zustand wird danach wiederhergestellt
+    // (AVS-treue Effekte verlassen sich auf ihre eigene Abtastung).
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    GLint minFilter = GL_NEAREST;
+    GLint magFilter = GL_NEAREST;
+    f->glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, &minFilter);
+    f->glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, &magFilter);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    rt.mwVao->bind();
+    f->glDrawElements(GL_TRIANGLES, rt.mwIndexCount, GL_UNSIGNED_INT, nullptr);
+    rt.mwVao->release();
+
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
+    f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
+
+    p.release();
+    pair.partner()->release();
+    pair.swap();
+    bindActive();
+    ++rt.mwFrame;
 }
 
 // =============================================================================

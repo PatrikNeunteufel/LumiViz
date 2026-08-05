@@ -22,6 +22,10 @@
 #include "visualizers/multieffect/NodePresetStore.hpp"  // Voreinstellungen je Knoten
 #include "visualizers/multieffect/ShadertoyImport.hpp"  // URL-/ID-Import (Strang S3)
 #include "visualizers/multieffect/ShadertoyWrapper.hpp" // Starter-Shader (Strang S)
+#include "visualizers/multieffect/MeshWarpWrapper.hpp"  // Starter-Warp + Klemmen (G1)
+#include "scripting/ScriptFormatter.hpp"                // Beautify-Kerne (S69)
+#include <EelTranspiler.hpp>                            // Apply-Syntaxprobe EEL (S69)
+#include <HlslTranspiler.hpp>                           // Apply-Syntaxprobe HLSL (S69)
 #include "services/IEventBus.hpp"
 #include "services/events/UIEvents.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
@@ -269,6 +273,16 @@ const std::vector<EffectType>& effectPalette()
          [] {
              ShadertoyParams p;
              p.code = lumi::shadertoy::starterShader();
+             return EffectParams{p};
+         },
+         Origin::Native},
+
+        // Strang G1 (S69): GPU-Vertex-Warp, modernes Regelwerk
+        {"— GPU-Module —", nullptr},
+        {"Mesh Warp (GLSL)",
+         [] {
+             MeshWarpParams p;
+             p.code = lumi::meshwarp::starterWarp();
              return EffectParams{p};
          },
          Origin::Native},
@@ -873,6 +887,51 @@ QString shadertoyReferenceHtml()
                "laufen NICHT auf shadertoy.com — für portable Shader nur die "
                "Audio-Textur benutzen.</p>")
         .arg(uniforms, audio);
+}
+
+/// Referenz des Mesh-Warp-Nodes (Strang G1, S69): warp()-Vertrag + Uniforms —
+/// die ⓘ-Seite des GLSL-Editors.
+QString meshWarpReferenceHtml()
+{
+    auto table = [](const QString& rows) {
+        return QStringLiteral(
+                   "<table cellspacing='0' cellpadding='4' "
+                   "style='border-collapse:collapse'>"
+                   "<tr><th align='left'>Name</th><th align='left'>Typ</th>"
+                   "<th align='left'>Bedeutung</th></tr>%1</table>")
+            .arg(rows);
+    };
+    auto row = [](const char* n, const char* t, const char* m) {
+        return QStringLiteral("<tr><td><code>%1</code></td><td>%2</td><td>%3</td></tr>")
+            .arg(QLatin1String(n), QLatin1String(t), QLatin1String(m));
+    };
+    const QString uniforms = table(
+        row("uResolution", "vec2", "Chain-Auflösung in Pixeln") +
+        row("uTime", "float", "Sekunden seit Start (deterministische Sim-Uhr)") +
+        row("uDelta", "float", "Sekunden seit dem letzten Frame") +
+        row("uFrame", "int", "Frames seit (Re-)Kompilierung") +
+        row("bass, mid, treb", "float", "Band-Lautstärken (~0..1)") +
+        row("vol", "float", "Gesamt-Pegel") +
+        row("beat", "float", "Beat-Impuls (0/1)"));
+    return QStringLiteral(
+               "<h2>Mesh Warp — vec2 warp(vec2 uv)</h2>"
+               "<p>GLSL-Funktion, die je GITTER-VERTEX im Vertex-Shader läuft "
+               "(GPU-Antwort auf die Movement-Klasse — modernes Regelwerk). "
+               "<code>uv</code> ist die Gitter-Position 0..1; die Rückgabe ist "
+               "die QUELL-UV, an der das aktuelle Chain-Bild abgetastet wird "
+               "(MilkDrop-Warp-Semantik: das Gitter bleibt, die Quelle "
+               "wandert). Identität <code>return uv;</code> = Passthrough.</p>"
+               "<h3>Uniforms</h3>%1"
+               "<h3>Regler</h3>"
+               "<p><b>Gitter X/Y</b>: Auflösung des Warp-Gitters — zwischen "
+               "den Vertizes wird linear interpoliert, grobe Gitter machen "
+               "den Warp kantig (als Stilmittel nutzbar). <b>Mix</b>: Anteil "
+               "des gewarpten Bilds (1 = ersetzen). <b>Wrap</b>: Quell-UV "
+               "außerhalb 0..1 wiederholen statt klemmen.</p>"
+               "<p style='color:#888'>Ohne Clear/Decay in der Kette koppelt "
+               "der Warp aufs eigene Vorbild (Feedback) — gewollt für Trails, "
+               "sonst einen Clear-/Fadeout-Knoten davorschalten.</p>")
+        .arg(uniforms);
 }
 
 } // namespace
@@ -2746,7 +2805,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         spin->setDecimals(decimals);
         spin->setValue(value);
         auto* lbl = new QLabel(label, m_propContainer);
-        const auto mark = [lbl, label, reference, this](double v) {
+        const auto mark = [lbl, label, reference](double v) {
             const bool off = std::abs(v - reference) > 1e-6;
             lbl->setText(off ? label + QStringLiteral(" ⚠") : label);
             lbl->setToolTip(off ? tr("Differs from the AVS reference value (%1) — "
@@ -2904,11 +2963,31 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         hl->addWidget(expandBtn);
         connect(varsBtn, &QToolButton::clicked, this,
                 [this, scriptRef]() { showScriptReference(this, scriptRef); });
+        // Groß-Editor mit Apply/Beautify (S69): Apply schreibt ins Inline-Feld
+        // (textChanged -> mutate -> recompileChain) und probt die EEL-Syntax
+        // synchron im Dialekt des Knotens (Milkdrop vs. AVS — eel.div-Grenze).
+        const bool milkDialekt = fieldTypeKey == QLatin1String("milkdrop");
         connect(expandBtn, &QToolButton::clicked, this,
-                [this, edit, label, scriptRef, conflicts]() {
+                [this, edit, label, scriptRef, conflicts, milkDialekt]() {
+                    lumi::scriptedit::ScriptEditorHooks hooks;
+                    hooks.apply = [edit, milkDialekt](const QString& t) -> QString {
+                        edit->setPlainText(t);  // textChanged -> mutate
+                        const auto probe = lumi::eel::transpile(
+                            t.toStdString(), milkDialekt
+                                                 ? lumi::eel::Dialect::Milkdrop
+                                                 : lumi::eel::Dialect::Avs);
+                        return probe.ok ? QString()
+                                        : QString::fromStdString(probe.error);
+                    };
+                    hooks.beautify = [](const QString& t) {
+                        return QString::fromStdString(lumi::scripting::beautifyEel(
+                            t.toStdString(),
+                            lumi::scriptedit::formatOptionsFromSettings()));
+                    };
                     QString out;
                     if (openScriptEditor(this, label, edit->toPlainText(), scriptRef,
-                                         out, conflicts))
+                                         out, conflicts, /*eelHighlight=*/true,
+                                         hooks))
                     {
                         edit->setPlainText(out);  // triggers textChanged -> mutate
                     }
@@ -2954,10 +3033,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     };
     // Fremdsprachen-Code-Editor (GLSL, Strang S): wie addScript mit ⓘ-Referenz
     // und ⤢-Groß-Editor, aber OHNE EEL-Highlighter (falsche Einfärbung) und
-    // mit frei wählbarer Referenzseite + Tooltip.
+    // mit frei wählbarer Referenzseite + Tooltip. `exportName` (S69) =
+    // Dateinamens-Vorschlag `preset_name.modul.glsl` für Import…/Export…
     auto addCodeEditor = [&](const QString& label, const std::string& value,
                              const QString& placeholder, const QString& refHtml,
                              const QString& toolTip, int minHeight,
+                             const QString& exportName,
                              std::function<void(ChainNode&, std::string)> set) {
         auto* edit = new QPlainTextEdit(m_propContainer);
         edit->setPlainText(QString::fromStdString(value));
@@ -2987,11 +3068,35 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         hl->addWidget(expandBtn);
         connect(refBtn, &QToolButton::clicked, this,
                 [this, refHtml]() { showScriptReference(this, refHtml); });
+        // Groß-Editor mit Apply/Beautify (S69): GLSL kompiliert erst im
+        // Render-Thread — der Dialog pollt den Treiber-Fehler des Knotens
+        // nach (#line 1: Zeilennummern des Nutzer-Codes, wie im Panel).
         connect(expandBtn, &QToolButton::clicked, this,
-                [this, edit, label, refHtml]() {
+                [this, edit, label, refHtml, path, exportName]() {
+                    lumi::scriptedit::ScriptEditorHooks hooks;
+                    hooks.exportFileName = exportName;
+                    hooks.apply = [edit](const QString& t) -> QString {
+                        edit->setPlainText(t);  // textChanged -> mutate
+                        return {};
+                    };
+                    hooks.pollError = [this, path]() -> QString {
+                        if (m_host == nullptr || m_mutex == nullptr) return {};
+                        uint64_t nodeId = 0;
+                        {
+                            QMutexLocker lock(m_mutex);
+                            if (ChainNode* n = nodeAtPath(path)) nodeId = n->nodeId;
+                        }
+                        return QString::fromStdString(m_host->shadertoyError(nodeId))
+                            .left(600);
+                    };
+                    hooks.beautify = [](const QString& t) {
+                        return QString::fromStdString(lumi::scripting::beautifyGlsl(
+                            t.toStdString(),
+                            lumi::scriptedit::formatOptionsFromSettings()));
+                    };
                     QString out;
                     if (openScriptEditor(this, label, edit->toPlainText(), refHtml,
-                                         out, {}, /*eelHighlight=*/false))
+                                         out, {}, /*eelHighlight=*/false, hooks))
                     {
                         edit->setPlainText(out);  // triggers textChanged -> mutate
                     }
@@ -4439,7 +4544,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     });
         }
 
-        // GLSL-Code-Editor mit ⓘ-Referenz + ⤢-Groß-Editor (AVS-Komfort)
+        // GLSL-Code-Editor mit ⓘ-Referenz + ⤢-Groß-Editor (AVS-Komfort).
+        // Export-Namensbasis (S69): Shader-Metadaten-Name vor Node-Name.
+        const QString stExportBase = !p->name.empty()
+                                         ? QString::fromStdString(p->name)
+                                     : !nodeName.empty()
+                                         ? QString::fromStdString(nodeName)
+                                         : QStringLiteral("shadertoy");
         addCodeEditor(
             tr("Shader-Code (Image)"), p->code,
             tr("void mainImage(out vec4 fragColor, in vec2 fragCoord) { ... }"),
@@ -4447,7 +4558,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             tr("mainImage in Shadertoy-Konvention; fragCoord = Pixel ab "
                "links-unten. ⓘ zeigt Uniforms, Audio-Layout und "
                "Buffer-Semantik; ⤢ öffnet den großen Editor."),
-            160, [](ChainNode& n, std::string v) {
+            160,
+            lumi::scriptedit::shaderExportName(stExportBase,
+                                               QStringLiteral("image")),
+            [](ChainNode& n, std::string v) {
                 std::get<ShadertoyParams>(n.params).code = std::move(v);
             });
         // Kanal-Bindungen (S4): je iChannel Nichts / Buffer A–D / Audio.
@@ -4526,7 +4640,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 tr("Buffer-Pass: schreibt roh in ein RGBA32F-Ziel (kein "
                    "Blend/Clamp, Alpha bleibt). Eine Bindung auf sich selbst "
                    "liest das Vorframe (Feedback)."),
-                120, [bi](ChainNode& n, std::string v) {
+                120,
+                lumi::scriptedit::shaderExportName(
+                    stExportBase, QStringLiteral("buffer%1").arg(QChar(
+                                      static_cast<char16_t>('A' + bi)))),
+                [bi](ChainNode& n, std::string v) {
                     auto& sp = std::get<ShadertoyParams>(n.params);
                     if (bi < static_cast<int>(sp.buffers.size()))
                         sp.buffers[static_cast<std::size_t>(bi)].code = std::move(v);
@@ -4569,6 +4687,73 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             m_propContainer);
         hint->setWordWrap(true);
         form->addRow(hint);
+    }
+    else if (auto* p = std::get_if<MeshWarpParams>(&params))
+    {
+        // Mesh-Warp-Node (Strang G1, S69): GPU-Vertex-Warp des Chain-Bilds.
+        // Kompilierfehler des Render-Hosts (geteiltes stError-Feld — s.
+        // shadertoyError()): aktualisiert sich beim Neuaufbau des Editors.
+        uint64_t mwNodeId = 0;
+        {
+            QMutexLocker lock(m_mutex);
+            if (ChainNode* n = nodeAtPath(path)) mwNodeId = n->nodeId;
+        }
+        const std::string mwErr =
+            m_host != nullptr ? m_host->shadertoyError(mwNodeId) : std::string();
+        if (!mwErr.empty())
+        {
+            auto* err = new QLabel(
+                tr("⚠ Kompilierfehler:\n%1")
+                    .arg(QString::fromStdString(mwErr).left(600)),
+                m_propContainer);
+            err->setWordWrap(true);
+            err->setStyleSheet(QStringLiteral("color:#d08080"));
+            form->addRow(err);
+        }
+
+        const QString mwExportBase = !nodeName.empty()
+                                         ? QString::fromStdString(nodeName)
+                                         : QStringLiteral("meshwarp");
+        addCodeEditor(
+            tr("Warp-Funktion (GLSL)"), p->code,
+            tr("vec2 warp(vec2 uv) { return uv; }"), meshWarpReferenceHtml(),
+            tr("Läuft je Gitter-Vertex im Vertex-Shader; Rückgabe = Quell-UV "
+               "der Abtastung. ⓘ zeigt den Vertrag und die Uniforms; ⤢ öffnet "
+               "den großen Editor."),
+            160,
+            lumi::scriptedit::shaderExportName(mwExportBase,
+                                               QStringLiteral("meshwarp")),
+            [](ChainNode& n, std::string v) {
+                std::get<MeshWarpParams>(n.params).code = std::move(v);
+            });
+        addInt("gridX", tr("Gitter X"), p->gridX, lumi::meshwarp::kMinGrid,
+               lumi::meshwarp::kMaxGridX, [](ChainNode& n, int v) {
+                   std::get<MeshWarpParams>(n.params).gridX = v;
+               });
+        addInt("gridY", tr("Gitter Y"), p->gridY, lumi::meshwarp::kMinGrid,
+               lumi::meshwarp::kMaxGridY, [](ChainNode& n, int v) {
+                   std::get<MeshWarpParams>(n.params).gridY = v;
+               });
+        addDouble("mixAmount", tr("Mix"), p->mixAmount, 0.0, 1.0, 0.01,
+                  [](ChainNode& n, double v) {
+                      std::get<MeshWarpParams>(n.params).mixAmount = v;
+                  });
+        addBool("wrapUv", tr("UV wiederholen (Wrap)"), p->wrapUv,
+                [](ChainNode& n, bool v) {
+                    std::get<MeshWarpParams>(n.params).wrapUv = v;
+                });
+        addScript("initCode", tr("Init"), p->initCode,
+                  [](ChainNode& n, std::string v) {
+                      std::get<MeshWarpParams>(n.params).initCode = std::move(v);
+                  });
+        addScript("frameCode", tr("Frame"), p->frameCode,
+                  [](ChainNode& n, std::string v) {
+                      std::get<MeshWarpParams>(n.params).frameCode = std::move(v);
+                  });
+        addScript("beatCode", tr("Beat"), p->beatCode,
+                  [](ChainNode& n, std::string v) {
+                      std::get<MeshWarpParams>(n.params).beatCode = std::move(v);
+                  });
     }
     else if (auto* p = std::get_if<DebugBarsParams>(&params))
     {
@@ -5228,12 +5413,43 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 connect(refBtn, &QToolButton::clicked, this, [this]() {
                     showScriptReference(this, milkShaderReferenceHtml());
                 });
+                // Groß-Editor mit Apply/Beautify (S69): HLSL-Syntaxprobe
+                // synchron über den HlslTranspiler (leer = MD1-Pfad, keine
+                // Probe); Re-Indent wie GLSL (Brace-basiert). Export-Vorschlag
+                // aus Node-Name + warp/comp (Endung .glsl laut Vorgabe —
+                // Inhalt ist das HLSL-shader_body).
+                const QString hlslExportBase =
+                    nodeName.empty() ? QStringLiteral("milkdrop")
+                                     : QString::fromStdString(nodeName);
                 connect(expandBtn, &QToolButton::clicked, this,
-                        [this, edit, label]() {
+                        [this, edit, label, isWarp, hlslExportBase]() {
+                            lumi::scriptedit::ScriptEditorHooks hooks;
+                            hooks.exportFileName =
+                                lumi::scriptedit::shaderExportName(
+                                    hlslExportBase, isWarp
+                                                        ? QStringLiteral("warp")
+                                                        : QStringLiteral("comp"));
+                            hooks.apply = [edit, isWarp](const QString& t) -> QString {
+                                edit->setPlainText(t);  // textChanged -> mutate
+                                if (t.trimmed().isEmpty()) return {};
+                                const auto probe = lumi::hlsl::transpile(
+                                    t.toStdString(),
+                                    isWarp ? lumi::hlsl::ShaderKind::Warp
+                                           : lumi::hlsl::ShaderKind::Comp);
+                                return probe.ok
+                                           ? QString()
+                                           : QString::fromStdString(probe.error);
+                            };
+                            hooks.beautify = [](const QString& t) {
+                                return QString::fromStdString(
+                                    lumi::scripting::beautifyGlsl(
+                                        t.toStdString(),
+                                        lumi::scriptedit::formatOptionsFromSettings()));
+                            };
                             QString out;
                             if (openScriptEditor(this, label, edit->toPlainText(),
                                                  milkShaderReferenceHtml(), out, {},
-                                                 /*eelHighlight=*/false))
+                                                 /*eelHighlight=*/false, hooks))
                             {
                                 edit->setPlainText(out);  // textChanged -> mutate
                             }

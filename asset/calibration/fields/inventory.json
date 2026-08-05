@@ -1,8 +1,8 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 727,
-        "typen": 86
+        "felder": 735,
+        "typen": 87
     },
     "typen": [
         {
@@ -2388,6 +2388,52 @@
             ],
             "name": "Lyapunov",
             "typkey": "lyapunov"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "code"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 96,
+                    "name": "gridX"
+                },
+                {
+                    "art": "zahl",
+                    "default": 72,
+                    "name": "gridY"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "mixAmount"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "wrapUv"
+                }
+            ],
+            "name": "Mesh Warp",
+            "typkey": "meshWarp"
         },
         {
             "felder": [

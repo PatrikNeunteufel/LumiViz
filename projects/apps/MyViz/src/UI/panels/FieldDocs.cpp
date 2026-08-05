@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     727>
+                     735>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
@@ -832,6 +832,22 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "a/b pattern (A/B chars; others ignored)"},
     {"lyapunov.warmup",
      "settle iterations before measuring"},
+    {"meshWarp.beatCode",
+     "Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
+    {"meshWarp.code",
+     "GLSL: definiert `vec2 warp(vec2 uv)` (uv 0..1, R\303\274ckgabe = Quell-UV). Uniforms: uTime, uDelta, uFrame, uResolution, bass, mid, treb, vol, beat. Leer = Identit\303\244t (Passthrough)"},
+    {"meshWarp.frameCode",
+     "Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
+    {"meshWarp.gridX",
+     "Gitter-Quads in X (2..256) \342\200\224 GPU-Vertex-Arbeit, hohe Werte kosten kaum; grob = kantiger Warp"},
+    {"meshWarp.gridY",
+     "Gitter-Quads in Y (2..192)"},
+    {"meshWarp.initCode",
+     "Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
+    {"meshWarp.mixAmount",
+     "Anteil des gewarpten Bilds 0..1 (1 = ersetzen; darunter Mix mit der ungewarpten Abtastung)"},
+    {"meshWarp.wrapUv",
+     "Quell-UV au\303\237erhalb 0..1: an = wiederholen (fract), aus = Randpixel klemmen"},
     {"metaballs3d.beatCode",
      "Parameter-Skript (Strang D): `count`, `radius`, `speed`, `threshold`, `spread`, `depth`, `phase` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
     {"metaballs3d.blend",

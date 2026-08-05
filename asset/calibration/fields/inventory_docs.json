@@ -6,8 +6,8 @@
     "beschreibung": "EffectChain.hpp (Doxygen)"
   },
   "summe": {
-    "typen": 86,
-    "felder": 727,
+    "typen": 87,
+    "felder": 735,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -4744,6 +4744,98 @@
           "lo": 0.0,
           "hi": 2000.0,
           "doc": "settle iterations before measuring"
+        }
+      ]
+    },
+    {
+      "typkey": "meshWarp",
+      "name": "Mesh Warp",
+      "struct": "MeshWarpParams",
+      "felder": [
+        {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "gridx",
+            "gridy",
+            "mixamount"
+          ]
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "code",
+          "panel": "sonderzeile",
+          "doc": "GLSL: definiert `vec2 warp(vec2 uv)` (uv 0..1, Rückgabe = Quell-UV). Uniforms: uTime, uDelta, uFrame, uResolution, bass, mid, treb, vol, beat. Leer = Identität (Passthrough)",
+          "skriptvars": [
+            "gridx",
+            "gridy",
+            "mixamount"
+          ]
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "gridx",
+            "gridy",
+            "mixamount"
+          ]
+        },
+        {
+          "art": "zahl",
+          "default": 96,
+          "name": "gridX",
+          "panel": "int",
+          "helfer": "addInt",
+          "doc": "Gitter-Quads in X (2..256) — GPU-Vertex-Arbeit, hohe Werte kosten kaum; grob = kantiger Warp"
+        },
+        {
+          "art": "zahl",
+          "default": 72,
+          "name": "gridY",
+          "panel": "int",
+          "helfer": "addInt",
+          "doc": "Gitter-Quads in Y (2..192)"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "gridx",
+            "gridy",
+            "mixamount"
+          ]
+        },
+        {
+          "art": "zahl",
+          "default": 1,
+          "name": "mixAmount",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 1.0,
+          "doc": "Anteil des gewarpten Bilds 0..1 (1 = ersetzen; darunter Mix mit der ungewarpten Abtastung)"
+        },
+        {
+          "art": "bool",
+          "default": true,
+          "name": "wrapUv",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "Quell-UV außerhalb 0..1: an = wiederholen (fract), aus = Randpixel klemmen"
         }
       ]
     },

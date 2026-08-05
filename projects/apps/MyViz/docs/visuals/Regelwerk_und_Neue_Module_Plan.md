@@ -1,9 +1,9 @@
 # Regelwerk & neue Module — Umsetzungsplan (Stränge R / S / G)
 
-> **Version:** 1.4.0
-> **Datum:** 2026-08-02 (Session 65)
+> **Version:** 1.5.0
+> **Datum:** 2026-08-06 (Session 69)
 > **Typ:** Steuerdokument (Plan + Entscheide)
-> **Status:** Strang R ✅ + Strang S KOMPLETT (S1–S4, Session 65; Netz-Abnahme S3 braucht API-Key Patrik); G offen
+> **Status:** Strang R ✅ + Strang S KOMPLETT (S1–S4, Session 65; Netz-Abnahme S3 braucht API-Key Patrik) + **G1 ✅ umgesetzt (S69, Sichttest offen)**; G2 offen
 > **Sprache:** Deutsch
 > **Kontext:** MilkDrop-Kalibrierung S63/S64 (acht Legacy-Fixklassen),
 > `Vereinheitlichung_Konzept.md` (Standalones→Module), `Offene_Punkte.md` §3/§7
@@ -196,13 +196,27 @@ ABNAHME OFFEN: ein echter API-Lauf mit Key (Patrik) + Panel-Sichtprüfung.
 modernem Regelwerk. Legacy-Imports bleiben CPU-Mesh (Sequenz-Vertrag des
 EEL, §7-Notiz „GPU-Vertex-Module").
 
-### G1 — Mesh-Warp-Modul
+### G1 — Mesh-Warp-Modul ✅ (Session 69, Sichttest offen)
 
 - Warp-Funktion als GLSL im Vertex-Shader, Gitterauflösung frei (bis
   256×192 — GPU skaliert), Parameter + Audio als Uniforms, Presets über
   die Config-Pipeline (PipelineStage-Schema wie alle Module).
 - Startpunkt: der bestehende Warp-Mesh-Vertexpfad des MilkdropVisualizers
   als Vorbild, aber zustandslos-parallel definiert.
+
+**Stand S69 (umgesetzt):** Chain-Node `meshWarp` (host-nativ, RD-/Shadertoy-
+Muster statt Config-Pipeline-Visualizer — dieselbe Revision des Plans wie
+beim Shadertoy-Node S65). `MeshWarpWrapper.hpp` (GL-frei: Vertex-Wrapper mit
+`#line`-Vertrag, Fragment mit Wrap/Mix IM Shader, Gitter-Erzeugung, Klemmen
+2..256×192) + `runMeshWarp` (transformPass-Muster, Programm-/Gitter-Rebuild
+nur bei Wechsel, Quell-Filter LINEAR nur für den Draw, danach restauriert) +
+Panel-Sektion (GLSL-Groß-Editor mit Apply/Beautify/Import/Export S69,
+Fehler-Poll über das geteilte `stError`) + Parameter-Skripte (`gridx`,
+`gridy`, `mixamount`). **Entscheid Patrik (S69): G1 VOR Vereinheitlichung
+V2** — Audio ad-hoc als Uniforms (Shadertoy-Muster); V2 zentralisiert später
+nur die Quelle, der Uniform-Vertrag bleibt. Sichtbeweis
+`asset/effectchain/meshwarp_sonde.lvfx` (`out/meshwarp_sonde_s69/`,
+Warnungen=0); Tests 547 (+9). Sichttest Patrik offen.
 
 ### G2 — GPU-Partikel-Modul
 
@@ -219,8 +233,12 @@ EEL, §7-Notiz „GPU-Vertex-Module").
   optional GPU-Auswertung mit feinerem Gitter — als Modern-Schalter mit
   dokumentierter Abweichung.
 
-**Einordnung:** G startet erst mit der Vereinheitlichung (V2–V5,
-`Vereinheitlichung_Konzept.md`) — R und S hängen nicht daran.
+**Einordnung (revidiert S69, Entscheid Patrik):** ursprünglich „G startet
+erst mit der Vereinheitlichung (V2–V5)" — G1 ist stattdessen DIREKT
+gestartet: Audio ad-hoc als Uniforms nach dem erprobten Shadertoy-Muster
+(MilkLoudness/BeatEstimator-Bausteine liegen bereit), V2 zentralisiert
+später nur die Quelle hinter demselben Uniform-Vertrag. V2–V5 bleiben als
+eigener Punkt offen (Offene_Punkte §6).
 
 ---
 
@@ -240,6 +258,7 @@ Parallel weiter: Rest-11-Kalibrierung (§3) — unabhängig von R/S/G.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.5.0 | 2026-08-06 | Strang G1 umgesetzt (Session 69): Chain-Node `meshWarp` host-nativ (MeshWarpWrapper.hpp GL-frei, runMeshWarp im transformPass-Muster, Panel-GLSL-Editor mit Apply/Beautify/Import/Export, Parameter-Skripte). Einordnung revidiert (Entscheid Patrik): G1 VOR Vereinheitlichung V2 — Audio ad-hoc als Uniforms, Shadertoy-Muster. Sonde meshwarp_sonde.lvfx, Tests 547. G2 + Sichttest offen |
 | 1.4.0 | 2026-08-02 | Strang S4 umgesetzt (Session 65) — Strang S damit KOMPLETT: ShadertoyPass + Kanal-Bindungs-Kodierung (SSOT, audioChannel-Feld entfernt → Lese-Migration), RGBA32F-Ping-Pong je Buffer (Swap nach jedem Pass = Original-Lese-Semantik), Buffer-Wrapper roh, Import mit Buffer-Topologie (Output-Ids, common überall), Panel-Bindungs-Combos + Buffer-Editoren, Sonde shadertoy_feedback (Lissajous-Trail = Vorframe-Beweis). Tests 509 |
 | 1.3.0 | 2026-08-02 | Strang S3 code-komplett (Session 65): ShadertoyImport.hpp (ID/URL/Query/Thumbnail + Antwort-Parser, netz-/GL-frei getestet), Node-Editor-Import (URL-Feld, API-Key in QSettings, 🌐-Knopf) + NEU ShadertoyBrowserPanel (Dock-Panel: Query-Suche + Sortierung + Thumbnail-Grid, Doppelklick lädt via AppData-.lvfx + LoadEffectChainEvent). Klärung: API = App-Key, keine Login-Daten, nur „public+api". Qt6 `Network` ergänzt. Netz-Abnahme (echter Key) + Sichtprüfung offen |
 | 1.2.0 | 2026-08-02 | Strang S1+S2 umgesetzt (Session 65): Chain-Node `shadertoy` host-nativ (Entscheid: keine eigene Visualizer-Klasse — RD-Muster), ShadertoyWrapper.hpp (GL-frei, #line-Vertrag, Blend-Epilog, eigener Starter), 512×2-Audio-iChannel + LumiViz-Uniforms, Panel-Editor mit Fehleranzeige, drei Sonden-Vorlagen (uvgrad punktgenau, y-up bestätigt, Zeit deterministisch, Ringe audio-moduliert). S3 wartet auf API-Key |

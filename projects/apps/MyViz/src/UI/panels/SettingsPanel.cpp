@@ -11,6 +11,7 @@
 
 #include "UI/panels/SettingsPanel.hpp"
 #include "UI/managers/ShortcutManager.hpp"
+#include "scripting/ScriptFormatter.hpp"  // FormatOptions-Defaults (Editor-Tab, S69)
 #include "core/GpuInfo.hpp"
 #include "core/GpuPreference.hpp"
 #include "services/ServiceContainer.hpp"
@@ -357,6 +358,7 @@ void SettingsPanel::setupUI()
     m_pTabWidget->addTab(createAudioTab(), tr("Audio"));
     m_pTabWidget->addTab(createPerformanceTab(), tr("Performance"));
     m_pTabWidget->addTab(createPanelsTab(), tr("Panels"));
+    m_pTabWidget->addTab(createEditorTab(), tr("Editor"));
     m_pTabWidget->addTab(createHotkeyTab(), tr("Hotkeys"));
 
     mainLayout->addWidget(m_pTabWidget);
@@ -710,6 +712,64 @@ QWidget* SettingsPanel::createHotkeyTab()
     return widget;
 }
 
+QWidget* SettingsPanel::createEditorTab()
+{
+    // Beautify-Format der Skript-Editoren (Offene_Punkte §7, S69): gemeinsamer
+    // Block fuer ALLE Skript-Typen (AVS-/Milkdrop-EEL, LumiViz, GLSL/HLSL).
+    // SSOT der Defaults ist FormatOptions — gelesen wird der Block von
+    // EelScriptEditing::formatOptionsFromSettings() beim Beautify-Klick.
+    auto* widget = new QWidget();
+    auto* layout = new QFormLayout(widget);
+
+    const lumi::scripting::FormatOptions def;
+
+    m_pEditorIndentSpinBox = new QSpinBox(widget);
+    m_pEditorIndentSpinBox->setRange(0, 16);
+    m_pEditorIndentSpinBox->setSuffix(tr(" spaces"));
+    m_pEditorIndentSpinBox->setToolTip(
+        tr("Beautify: spaces per indent level (EEL paren depth, GLSL/HLSL "
+           "brace depth)."));
+    m_pEditorOpSpacesCheckBox = new QCheckBox(tr("Enable"), widget);
+    m_pEditorOpSpacesCheckBox->setToolTip(
+        tr("Beautify (EEL only): single spaces around binary operators "
+           "(x = 1 + 2). Off = compact (x=1+2). GLSL/HLSL lines keep their "
+           "own spacing either way."));
+    m_pEditorMaxBlankSpinBox = new QSpinBox(widget);
+    m_pEditorMaxBlankSpinBox->setRange(0, 9);
+    m_pEditorMaxBlankSpinBox->setToolTip(
+        tr("Beautify: consecutive blank lines are clamped to this many."));
+    {
+        QSettings settings;
+        m_pEditorIndentSpinBox->setValue(
+            settings.value(QStringLiteral("editor/indentWidth"), def.indentWidth)
+                .toInt());
+        m_pEditorOpSpacesCheckBox->setChecked(
+            settings
+                .value(QStringLiteral("editor/spaceAroundOperators"),
+                       def.spaceAroundOperators)
+                .toBool());
+        m_pEditorMaxBlankSpinBox->setValue(
+            settings.value(QStringLiteral("editor/maxBlankLines"), def.maxBlankLines)
+                .toInt());
+    }
+    layout->addRow(tr("Beautify Indent Width:"), m_pEditorIndentSpinBox);
+    layout->addRow(tr("Spaces around Operators:"), m_pEditorOpSpacesCheckBox);
+    layout->addRow(tr("Max. Blank Lines:"), m_pEditorMaxBlankSpinBox);
+
+    auto* hint = new QLabel(
+        tr("Applies to the Beautify button of the large script editors in the "
+           "Effect Chain panel. Beautify only rewrites whitespace — tokens "
+           "and comments survive unchanged."),
+        widget);
+    hint->setWordWrap(true);
+    hint->setStyleSheet(QStringLiteral("color:#888"));
+    layout->addRow(hint);
+
+    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+
+    return widget;
+}
+
 void SettingsPanel::setupConnections()
 {
     connect(m_pAudioDeviceCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -765,6 +825,25 @@ void SettingsPanel::setupConnections()
             [](bool checked) {
                 QSettings settings;
                 settings.setValue(QStringLiteral("milkdrop/sichtBlende"), checked);
+            });
+
+    // Editor-Tab (Beautify-Format, S69) — Werte greifen beim naechsten
+    // Beautify-Klick (formatOptionsFromSettings liest je Aufruf frisch).
+    connect(m_pEditorIndentSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
+            this, [](int value) {
+                QSettings settings;
+                settings.setValue(QStringLiteral("editor/indentWidth"), value);
+            });
+    connect(m_pEditorOpSpacesCheckBox, &QCheckBox::toggled, this,
+            [](bool checked) {
+                QSettings settings;
+                settings.setValue(QStringLiteral("editor/spaceAroundOperators"),
+                                  checked);
+            });
+    connect(m_pEditorMaxBlankSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
+            this, [](int value) {
+                QSettings settings;
+                settings.setValue(QStringLiteral("editor/maxBlankLines"), value);
             });
 }
 

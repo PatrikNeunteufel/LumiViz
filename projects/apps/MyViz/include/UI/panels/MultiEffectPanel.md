@@ -27,6 +27,21 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
 - **Parameter-Editor** je selektiertem Knoten: Spinner/Checkbox/Farbwähler/
   Enum + **EEL-Skript-Textfelder** (Init/Frame/Beat/Point bzw. Level) für alle
   Effekt-Typen (inkl. Mosaic); Passthrough-Knoten zeigen nur ihre Konserven-Notiz.
+- **Groß-Editor (⤢) mit Apply + Beautify (Session 69, Offene_Punkte §7):** alle
+  Skriptfelder (EEL, Shadertoy-GLSL, Milkdrop-HLSL) öffnen den Dialog aus
+  [EelScriptEditing](EelScriptEditing.hpp) (1.1.0, `ScriptEditorHooks`).
+  **Apply** übernimmt ohne Schließen (Inline-Feld → `mutate` →
+  `recompileChain`) und zeigt Fehler IM Dialog: EEL/HLSL per synchroner
+  Transpiler-Probe (EEL im Dialekt des Knotens — Milkdrop vs. AVS),
+  Shadertoy-GL per Nach-Polling auf `shadertoyError(nodeId)` (kompiliert erst
+  im Render-Thread — der Viewport muss dafür rendern). **Beautify**
+  formatiert nur Weißraum ([ScriptFormatter](../../scripting/ScriptFormatter.md):
+  EEL-Statement-Umbruch, GLSL/HLSL-Brace-Re-Indent); Stellschrauben im
+  Settings-Tab „Editor" (QSettings `editor/...`). Die **Shader-Felder**
+  (Shadertoy Image+Buffer, Warp/Comp) tragen zusätzlich **Import…/Export…**
+  (Datei ↔ Editor, UTF-8; Export-Vorschlag `preset_name.modul.glsl` via
+  `shaderExportName()`, letzter Ordner in `editor/shaderFileDir`; Import
+  ersetzt nur den Editor-Inhalt — übernommen wird erst mit Apply/OK).
 - **Voreinstellungs-Zeile „Preset" (Session 53, Etappen 1 + 1b):** ganz oben im
   Editor, **für jeden Knotentyp** — Dropdown (mitgeliefert + eigene, letztere mit
   `*`), „Save as…", Löschen (nur eigene). Sie kennt keinen einzigen Typ beim Namen:

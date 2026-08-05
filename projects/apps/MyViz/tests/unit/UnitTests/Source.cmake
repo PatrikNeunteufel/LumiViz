@@ -50,6 +50,8 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_FieldInventory.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ParamScript.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ScriptContext.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_ScriptFormatter.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_MeshWarpWrapper.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ScriptModules.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_BeatEstimator.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_GpuPreference.cpp"

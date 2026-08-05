@@ -15,6 +15,7 @@ set(_local_headers
     # (headers - *.h; *.hpp)
     "${CMAKE_CURRENT_LIST_DIR}/LuaScriptEngine.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/ScriptBaseKeys.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ScriptFormatter.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.40.0
-> **Datum:** 2026-08-04 (Session 67)
+> **Version:** 1.43.0
+> **Datum:** 2026-08-06 (Session 69)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -817,24 +817,47 @@ bass/mid/treb/beat + Audio-Mod-Skript-Slot). Ausbaustufe Multipass A–D.
 **Genauer Plan (S1–S4): [Regelwerk_und_Neue_Module_Plan.md](visuals/Regelwerk_und_Neue_Module_Plan.md)**
 — Start nach Strang R.
 
-### ⚪ Editor-Komfort im Multi-Chain-Panel: Apply + Beautify (Wunsch Patrik, 2026-08-05)
+### ⬜ Editor-Komfort im Multi-Chain-Panel: Apply + Beautify (Wunsch Patrik, 2026-08-05 — **umgesetzt S69, Sichttest offen**)
 
-Die expandierten Editorfelder (alle Skript-Typen: AVS-EEL, Milkdrop-EEL,
-LumiViz-Skripte, Shadertoy-GLSL) übernehmen Änderungen erst mit „OK"
-(Dialog schließt). Gewünscht:
-1. **Apply-Button** (`QDialogButtonBox::Apply`): übernimmt + recompiliert,
-   Dialog bleibt offen — Live-Tuning gegen den Viewport. Kompilierfehler
-   dabei IM Dialog anzeigen, nicht nur im Panel dahinter.
-2. **Beautify-Button**: GLSL = brace-basiertes Re-Indent; EEL = ein
-   Statement pro Zeile (`;`-Umbruch) + Einzug nach Klammertiefe von
-   `loop(`/`if(`/`exec2/3(`. Milkdrop-Spezialfall (geklärt 2026-08-05):
-   betrifft NUR das Zurückschreiben in `.milk`-Dateien — der MilkParser
-   setzt die `per_frame_N=`-Zeilen beim Import zu ganzen Strings zusammen
-   (`assembleCode`), und als Chain-Node/`.lvfx` leben die Skripte als
-   ebendiese Strings. Nur ein etwaiger `.milk`-Export müsste rückverteilen.
-3. **Settings** (gemeinsamer Block im Settings-Dialog): Einzugsbreite
-   (Tab = n Leerzeichen), Leerzeichen um Operatoren, max. Leerzeilen —
-   clang-format-artig, aber bewusst minimal.
+Umgesetzt (S69), alle drei Punkte — offen ist nur noch der UI-Sichttest:
+1. **Apply-Button** (`QDialogButtonBox::Apply`) im Groß-Editor
+   (`EelScriptEditing.hpp` 1.1.0, `ScriptEditorHooks`): übernimmt +
+   recompiliert (Text → Inline-Feld → `mutate` → `recompileChain`), Dialog
+   bleibt offen. Fehler IM Dialog: EEL synchron per `eel::transpile`-Probe
+   (Dialekt des Knotens: Milkdrop vs. AVS), HLSL synchron per
+   `hlsl::transpile`, Shadertoy-GLSL per Nach-Polling (300/900/1800 ms) auf
+   `shadertoyError(nodeId)` — GL kompiliert erst im Render-Thread, d. h. der
+   Fehler kommt nur an, solange der Viewport rendert.
+2. **Beautify-Button**: Kerne in `include/scripting/ScriptFormatter.hpp`
+   (pur, ohne Qt — 26 doctest-Cases inkl. Whitespace-only-Vertrag: Token
+   byte-identisch). GLSL/HLSL = brace-basiertes Re-Indent; EEL = ein
+   Statement pro Zeile + Einzug nach Klammertiefe. Milkdrop-Spezialfall
+   (geklärt 2026-08-05): `per_frame_N=`-Rückverteilung betrifft NUR einen
+   etwaigen `.milk`-Export — als Chain-Node/`.lvfx` leben die Skripte als
+   ganze Strings (`assembleCode`).
+3. **Settings**: neuer Tab „Editor" im Settings-Panel — Einzugsbreite,
+   Leerzeichen um Operatoren (nur EEL), max. Leerzeilen (QSettings
+   `editor/...`, Defaults = `FormatOptions`, je Beautify-Klick frisch
+   gelesen).
+4. **Import…/Export… für Shader-Felder** (Nachwunsch Patrik, gleiche
+   Session): Groß-Editor der Shader-Felder (Shadertoy Image+Buffer A–D,
+   Milkdrop Warp/Comp) lädt/speichert Dateien (UTF-8, Filter
+   `*.glsl *.hlsl *.frag *.txt`); Export-Vorschlag `preset_name.modul.glsl`
+   (`shaderExportName()` — Basis: Shader-Metadaten- bzw. Node-Name,
+   sanitisiert; Modul: image/bufferA–D/warp/comp — Endung laut Vorgabe
+   auch für die HLSL-Felder `.glsl`). Letzter Ordner in QSettings
+   `editor/shaderFileDir`. Import ersetzt nur den Editor-Inhalt —
+   übernommen wird erst mit Apply/OK.
+
+### ⚪ Effekt-Palette: Rolle sichtbar machen + filtern (Wunsch Patrik, 2026-08-06)
+
+Die Palette/Baumliste zeigt heute nur Herkunft (AVS/MilkDrop/LumiViz-Icon),
+nicht die ROLLE eines Moduls — Render (zeichnet) vs. Transform (verformt das
+Bild davor; Anlass: Mesh Warp alleine in der Kette = schwarz, war als
+Transform nicht erkennbar). Ideen (Ausarbeitung in eigener Session):
+zweites Typ-Icon neben dem Herkunfts-Icon ODER eigene Typ-Spalte; nach
+Rolle filterbar; womöglich ist das Add-Dropdown insgesamt das falsche
+Werkzeug dafür. Erst konzipieren, dann bauen.
 
 ### ⚪ Shadertoy-Buffer-FBOs: GL_NEAREST statt GL_LINEAR (Befund Tutorial-Screenshots, 2026-08-05)
 
@@ -850,18 +873,28 @@ CompositePostfx) tragen eine `lesBilinear()`-GLSL-Anpassung, als
 Tutorial-Bilder neu rendern. (Ein zuvor angebotener Task-Chip hierzu wurde
 geschlossen — dieser Eintrag ist der Merkposten.)
 
-### ➜ GPU-Vertex-Module statt CPU-Mesh (Frage Patrik S64, beantwortet — geplant, Strang G)
+### ➜ GPU-Vertex-Module (Strang G — **G1 ✅ umgesetzt S69, Sichttest offen; G2 offen**)
 
 **Legacy-Imports bleiben CPU:** das per-Vertex-EEL läuft im Original
 SEQUENTIELL (Zustand über Vertizes: Akkumulatoren, rand()-Strom, gmegabuf) —
 GPU-Parallelität kann diesen Vertrag prinzipiell nicht halten, und 825
 Mesh-Vertizes kosten auf der CPU nichts (die teure per-Pixel-Arbeit ist
-längst GPU). **GPU-Vertex-Arbeit gehört in NEUE Module (modernes Regelwerk):**
-Mesh-Warp-Modul (Warp als GLSL-Vertex-Shader, beliebig feine Gitter),
-GPU-Partikel-Modul (Instancing/Transform-Feedback — die moderne Antwort auf
-die searchlight-Klasse). Kür-Idee: „Mesh-Qualität"-Option für nachweislich
-ZUSTANDSLOSE per_pixel-Skripte (Transpiler-Analyse) mit GPU-Auswertung und
-feinerem Gitter als Modern-Schalter.
+längst GPU). **GPU-Vertex-Arbeit gehört in NEUE Module (modernes Regelwerk).**
+
+**G1 Mesh-Warp ✅ (S69):** Chain-Node `meshWarp` — Nutzer-GLSL
+`vec2 warp(vec2 uv)` je Gitter-Vertex im Vertex-Shader (Gitter 2..256×192,
+Mix-Regler, Wrap/Clamp im Shader), `MeshWarpWrapper.hpp` (GL-frei, 9 Tests),
+Panel mit GLSL-Groß-Editor (Apply/Beautify/Import/Export), Parameter-Skripte
+`gridx`/`gridy`/`mixamount`. **Entscheid Patrik: G1 VOR Vereinheitlichung
+V2** — Audio ad-hoc als Uniforms (Shadertoy-Muster); Details
+[Regelwerk_und_Neue_Module_Plan.md](visuals/Regelwerk_und_Neue_Module_Plan.md)
+1.5.0. Sichtbeweis `asset/effectchain/meshwarp_sonde.lvfx`
+(`out/meshwarp_sonde_s69/`). **⬜ Sichttest Patrik offen.**
+
+**G2 GPU-Partikel (offen):** Instancing/Transform-Feedback — die moderne
+Antwort auf die searchlight-Klasse. Kür-Idee G3: „Mesh-Qualität"-Option für
+nachweislich ZUSTANDSLOSE per_pixel-Skripte (Transpiler-Analyse) mit
+GPU-Auswertung und feinerem Gitter als Modern-Schalter.
 
 ### ⚪ fractalZoomer: float-Erschöpfung im Endlos-Zoom (Befund S61)
 
@@ -1191,6 +1224,9 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.43.0 | 2026-08-06 | **NEU ⚪ §7:** Effekt-Palette soll die ROLLE zeigen (Render vs. Transform — Typ-Icon neben Herkunfts-Icon oder Typ-Spalte, filterbar; Add-Dropdown evtl. ersetzen). Anlass: Mesh Warp alleine = schwarz. Ausarbeitung in eigener Session (Entscheid Patrik) |
+| 1.42.0 | 2026-08-06 | Session 69 (Fortsetzung) — **Strang G1 Mesh-Warp UMGESETZT (⬜ Sichttest offen):** Chain-Node `meshWarp` (Nutzer-GLSL `warp(uv)` je Gitter-Vertex, Gitter 2..256×192, Mix/Wrap, Parameter-Skripte), NEU `MeshWarpWrapper.hpp` (GL-frei) + `runMeshWarp` (transformPass-Muster, LINEAR nur je Draw + restauriert, Fehler ins geteilte `stError` → Apply-Poll), Palette „— GPU-Module —", FieldDocs/Inventar-Gates nachgezogen (87 Typen/735 Felder). **Entscheid Patrik: G1 VOR Vereinheitlichung V2** (Audio ad-hoc, Shadertoy-Muster; Plan-Doku 1.5.0). Sonde `meshwarp_sonde.lvfx` + Render-Sichtbeweis. Tests 547 (+9), alle 3 Builds grün |
+| 1.41.0 | 2026-08-05 | Session 69 — **§7 Editor-Komfort UMGESETZT (⚪→⬜ Sichttest offen):** Groß-Editor mit Apply (übernehmen + recompilen ohne Schließen; Fehler IM Dialog — EEL/HLSL synchrone Transpiler-Probe, Shadertoy-GL per Nach-Polling auf `shadertoyError`) + Beautify (NEU `include/scripting/ScriptFormatter.hpp`, pur: EEL-Statement-Umbruch mit Klammertiefen-Einzug, GLSL/HLSL-Brace-Re-Indent, Whitespace-only-Vertrag) + Settings-Tab „Editor" (Einzugsbreite, Operator-Abstände, Leerzeilen-Klemme; QSettings `editor/...`) + **Import…/Export… für Shader-Felder** (Nachwunsch: Datei ↔ Editor, Vorschlag `preset_name.modul.glsl`, Ordner-Gedächtnis). EelScriptEditing 1.1.0 (`ScriptEditorHooks`), alle 3 Editor-Stellen des Multi-Chain-Panels verdrahtet. Tests 538 (+26 ScriptFormatter), alle 3 Builds grün |
 | 1.40.0 | 2026-08-05 | **NEU ⚪ §7:** Editor-Komfort Multi-Chain-Panel — Apply-Button (übernehmen ohne Schließen, Fehler im Dialog) + Beautify (GLSL-Re-Indent, EEL-Statement-Umbruch mit Klammertiefen-Einzug, Milkdrop-Zeilen-Roundtrip) + Format-Settings (Einzugsbreite u. a.). Wunsch Patrik aus der Heart-Equation-Experimentier-Session |
 | 1.39.0 | 2026-08-05 | Tutorial-Session (paralleler Doku-Strang) — **NEU ⚪ §7:** Shadertoy-Buffer-FBOs filtern GL_NEAREST statt LINEAR (Befund der Tutorial-Screenshot-Läufe; `lesBilinear`-Workaround in den generierten Chains, App-Fix als Backlog-Eintrag statt Task-Chip). Kontext: Shader-Tutorial-Serie komplett nach `docs/tutorials/` umgezogen (FNM-Namen), formalisiert (Tutorial_Base/Overview_Base/Reference_Base) und via AvsStandalone gegengerendert — Details in `docs/tutorials/ShaderTutorials-overview.md` |
 | 1.38.0 | 2026-08-04 | Session 67 (Abschluss-Nachträge) — **Audio-Skala dB-vs-linear ✅** (Sonde + Umsetzung: Shadertoy-Audio-Textur nach WebAudio-Vertrag, ShadertoyWrapper.md 1.2.0; NEU `getspecdb()` für Chain-Skripte, Idee Patrik — LuaScriptEngine + Transpiler-Whitelist + Editor-Referenz, Test-Case 512). **Dunkelklasse ✅ ENTSCHIEDEN (Patrik): IST-SO-artig** (7+1 inkl. XorDev 001b), formales Urteil `s67b/VERGLEICH.md` (ref_shots erzeugt); ⚪ optionaler Backlog: Dossiers → gezielte Emulation bei freien Ressourcen. Rest-Bug-Liste = Gin Tonic 003 |

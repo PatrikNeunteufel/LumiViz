@@ -2239,6 +2239,35 @@ struct ShadertoyParams
 }
 
 /**
+ * Mesh-Warp-Node (Strang G1, `Regelwerk_und_Neue_Module_Plan.md` §G — S69):
+ * die GPU-Antwort auf die Movement-Klasse. Eine Nutzer-GLSL-Funktion
+ * `vec2 warp(vec2 uv)` läuft je GITTER-VERTEX im Vertex-Shader und bestimmt,
+ * wo das aktuelle Chain-Bild abgetastet wird — zustandslos-parallel,
+ * modernes Regelwerk (Legacy-Imports bleiben CPU-Mesh, Sequenz-Vertrag).
+ * Wrapper/Gitter: MeshWarpWrapper.hpp; Audio ad-hoc als Uniforms
+ * (Shadertoy-Muster — Entscheid Patrik S69: G1 vor Vereinheitlichung V2).
+ */
+struct MeshWarpParams
+{
+    /// GLSL: definiert `vec2 warp(vec2 uv)` (uv 0..1, Rückgabe = Quell-UV). Uniforms: uTime, uDelta, uFrame, uResolution, bass, mid, treb, vol, beat. Leer = Identität (Passthrough)
+    std::string code;
+    /// Gitter-Quads in X (2..256) — GPU-Vertex-Arbeit, hohe Werte kosten kaum; grob = kantiger Warp
+    int gridX = 96;
+    /// Gitter-Quads in Y (2..192)
+    int gridY = 72;
+    /// Anteil des gewarpten Bilds 0..1 (1 = ersetzen; darunter Mix mit der ungewarpten Abtastung)
+    double mixAmount = 1.0;
+    /// Quell-UV außerhalb 0..1: an = wiederholen (fract), aus = Randpixel klemmen
+    bool wrapUv = true;
+    /// Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    /// Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string frameCode;
+    /// Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string beatCode;
+};
+
+/**
  * Umgang mit dem GEERBTEN Feedback-Bild beim .milk→.milk-Wechsel im Host
  * (S66). Das Original loescht den Hauptpuffer beim Preset-Wechsel nie —
  * chaotische Feedback-Presets kippen deshalb je nach Vorgaenger in andere
@@ -2347,7 +2376,7 @@ using EffectParams =
                  HostGroupParams, TextParams, AviParams, CommentParams,
                  ImportNotesParams, RenderScaleParams, BloomParams, Camera3DParams,
                  SuperScope3DParams, Terrain3DParams, GlowOrbsParams,
-                 ShadertoyParams, PassthroughParams>;
+                 ShadertoyParams, MeshWarpParams, PassthroughParams>;
 
 // =============================================================================
 // Chain node
@@ -2505,6 +2534,7 @@ struct CompileResult
         const char* operator()(const Terrain3DParams&) const { return "Terrain 3D"; }
         const char* operator()(const GlowOrbsParams&) const { return "Glow Orbs"; }
         const char* operator()(const ShadertoyParams&) const { return "Shadertoy"; }
+        const char* operator()(const MeshWarpParams&) const { return "Mesh Warp"; }
         const char* operator()(const PassthroughParams&) const { return "Passthrough"; }
     };
     return std::visit(Visitor{}, params);

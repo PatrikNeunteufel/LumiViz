@@ -6,7 +6,7 @@
  *
  * @author LumiPulse Team
  * @date   July 2026
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @details
  * The SSOT variable categories (Skript_Variablen_Konzept §3) with the MilkDrop
@@ -15,26 +15,43 @@
  * two dialogs (read-only reference popup, large expand editor). Used by the
  * MultiEffectPanel and, from M6 on, the MilkdropPanel — header-only so panels
  * just include it (EelHighlighter has no Q_OBJECT: no moc needed).
+ *
+ * 1.1.0 (S69, Offene_Punkte §7): der Groß-Editor bekommt optionale Hooks —
+ * Apply (übernehmen + recompilen ohne Schließen, Fehlertext IM Dialog, mit
+ * Nach-Polling für asynchrone GL-Compiles) und Beautify (ScriptFormatter,
+ * Optionen aus den QSettings, Block "editor/...").
  ****************************************************************************************
  */
 
 #pragma once
 
+#include "scripting/ScriptFormatter.hpp"
+
 #include <QColor>
 #include <QDialog>
 #include <QDialogButtonBox>
+#include <QFile>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QFont>
+#include <QLabel>
+#include <QMessageBox>
 #include <QPlainTextEdit>
+#include <QPushButton>
 #include <QRegularExpression>
+#include <QScrollBar>
 #include <QSet>
+#include <QSettings>
 #include <QSplitter>
 #include <QString>
 #include <QSyntaxHighlighter>
 #include <QTextBrowser>
 #include <QTextCharFormat>
+#include <QTimer>
 #include <QVBoxLayout>
 
 #include <array>
+#include <functional>
 #include <utility>
 
 namespace lumi::scriptedit {
@@ -355,15 +372,74 @@ inline void showScriptReference(QWidget* parent, const QString& html)
     dlg.exec();
 }
 
+/// Format-Optionen der Beautify-Kerne aus den QSettings (gemeinsamer Block
+/// "Editor" im Settings-Dialog, S69). Defaults = FormatOptions-Defaults.
+[[nodiscard]] inline lumi::scripting::FormatOptions formatOptionsFromSettings()
+{
+    QSettings s;
+    lumi::scripting::FormatOptions o;
+    o.indentWidth =
+        s.value(QStringLiteral("editor/indentWidth"), o.indentWidth).toInt();
+    o.spaceAroundOperators =
+        s.value(QStringLiteral("editor/spaceAroundOperators"), o.spaceAroundOperators)
+            .toBool();
+    o.maxBlankLines =
+        s.value(QStringLiteral("editor/maxBlankLines"), o.maxBlankLines).toInt();
+    return o;
+}
+
+/**
+ * @brief Optionale Hooks des Groß-Editors (S69, Offene_Punkte §7).
+ *
+ * Ohne Hooks verhält sich der Dialog wie bisher (nur OK/Cancel). Alle
+ * Callbacks werden aus dem GUI-Thread gerufen, solange der modale Dialog
+ * offen ist — Aufrufer dürfen `this`/Widgets capturen.
+ */
+struct ScriptEditorHooks
+{
+    /// Apply-Knopf: Text übernehmen + recompilen, Dialog bleibt offen
+    /// (Live-Tuning gegen den Viewport). Rückgabe = SOFORT bekannter
+    /// Fehlertext ("" = fehlerfrei/unbekannt) — z. B. eine synchrone
+    /// Transpiler-Probe. Kein Hook = kein Apply-Knopf.
+    std::function<QString(const QString&)> apply;
+    /// Verzögerte Fehlerabfrage für Compiles, die erst im Render-Thread
+    /// laufen (Shadertoy-GL): wird nach einem fehlerfreien Apply mehrfach
+    /// gepollt und aktualisiert die Fehlerzeile im Dialog.
+    std::function<QString()> pollError;
+    /// Beautify-Knopf: Text -> verschönerter Text (ScriptFormatter).
+    /// Kein Hook = kein Beautify-Knopf.
+    std::function<QString(const QString&)> beautify;
+    /// Dateinamens-Vorschlag für den Shader-Export, Muster
+    /// `preset_name.modul.glsl` (Wunsch Patrik, S69). Nicht leer = der Dialog
+    /// zeigt Import…/Export…-Knöpfe (Datei ↔ Editor-Text, UTF-8; der letzte
+    /// Ordner bleibt in QSettings "editor/shaderFileDir" gemerkt).
+    QString exportFileName;
+};
+
+/// Export-Namensvorschlag `preset_name.modul.glsl`: Preset-Anteil von
+/// Dateisystem-feindlichen Zeichen befreit, Weißraum → `_`.
+[[nodiscard]] inline QString shaderExportName(QString presetName, const QString& modul)
+{
+    static const QRegularExpression kBad(QStringLiteral("[\\\\/:*?\"<>|]"));
+    static const QRegularExpression kWs(QStringLiteral("\\s+"));
+    presetName.replace(kBad, QString());
+    presetName = presetName.trimmed();
+    presetName.replace(kWs, QStringLiteral("_"));
+    if (presetName.isEmpty()) presetName = QStringLiteral("preset");
+    return presetName + QLatin1Char('.') + modul + QStringLiteral(".glsl");
+}
+
 /// Full, resizable editor: big code pane + the module's reference side-by-side.
 /// Returns true and fills `out` when accepted. `eelHighlight = false` lässt den
 /// EEL-Highlighter weg — für Fremdsprachen-Felder (HLSL/GLSL, Strang S/S42),
 /// deren Bezeichner die EEL-Kategorien nur falsch einfärben würden.
+/// `hooks` (S69): Apply-/Beautify-Knöpfe + Fehlerzeile im Dialog.
 [[nodiscard]] inline bool openScriptEditor(QWidget* parent, const QString& label,
                                            const QString& text, const QString& refHtml,
                                            QString& out,
                                            const QSet<QString>& conflicts = {},
-                                           bool eelHighlight = true)
+                                           bool eelHighlight = true,
+                                           const ScriptEditorHooks& hooks = {})
 {
     QDialog dlg(parent);
     dlg.setWindowTitle(QObject::tr("Edit script — %1").arg(label));
@@ -384,7 +460,140 @@ inline void showScriptReference(QWidget* parent, const QString& html)
     split->setStretchFactor(0, 3);
     split->setStretchFactor(1, 2);
     lay->addWidget(split, 1);
-    auto* bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
+
+    // Status-/Fehlerzeile (S69): zeigt das Apply-Ergebnis IM Dialog — nicht
+    // nur im Panel dahinter (Offene_Punkte §7 Punkt 1).
+    auto* status = new QLabel(&dlg);
+    status->setWordWrap(true);
+    status->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    status->setVisible(false);
+    lay->addWidget(status);
+    const auto setStatus = [status](const QString& err) {
+        if (err.isEmpty())
+        {
+            status->setStyleSheet(QStringLiteral("color:#7fbf7f"));
+            status->setText(QObject::tr("✓ Übernommen — keine Fehler."));
+        }
+        else
+        {
+            status->setStyleSheet(QStringLiteral("color:#d08080"));
+            status->setText(QStringLiteral("⚠ ") + err);
+        }
+        status->setVisible(true);
+    };
+
+    QDialogButtonBox::StandardButtons buttons =
+        QDialogButtonBox::Ok | QDialogButtonBox::Cancel;
+    if (hooks.apply) buttons |= QDialogButtonBox::Apply;
+    auto* bb = new QDialogButtonBox(buttons, &dlg);
+    if (!hooks.exportFileName.isEmpty())
+    {
+        // Shader-Datei ↔ Editor-Text (Wunsch Patrik, S69). Der Ordner wird
+        // app-weit gemerkt; der Vorschlag folgt `preset_name.modul.glsl`.
+        const QString filter =
+            QObject::tr("Shader (*.glsl *.hlsl *.frag *.txt);;Alle Dateien (*)");
+        const auto rememberedDir = []() {
+            return QSettings()
+                .value(QStringLiteral("editor/shaderFileDir"), QString())
+                .toString();
+        };
+        const auto rememberDir = [](const QString& filePath) {
+            QSettings().setValue(QStringLiteral("editor/shaderFileDir"),
+                                 QFileInfo(filePath).absolutePath());
+        };
+        auto* importBtn =
+            bb->addButton(QObject::tr("Import…"), QDialogButtonBox::ActionRole);
+        importBtn->setToolTip(
+            QObject::tr("Shader-Datei laden — ersetzt den Editor-Inhalt "
+                        "(übernommen wird erst mit Apply/OK)."));
+        QObject::connect(
+            importBtn, &QPushButton::clicked, &dlg,
+            [editor, filter, rememberedDir, rememberDir, &dlg]() {
+                const QString path = QFileDialog::getOpenFileName(
+                    &dlg, QObject::tr("Shader importieren"), rememberedDir(),
+                    filter);
+                if (path.isEmpty()) return;
+                QFile f(path);
+                if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+                {
+                    QMessageBox::warning(
+                        &dlg, QObject::tr("Import"),
+                        QObject::tr("Datei nicht lesbar: %1").arg(path));
+                    return;
+                }
+                editor->setPlainText(QString::fromUtf8(f.readAll()));
+                rememberDir(path);
+            });
+        const QString exportName = hooks.exportFileName;
+        auto* exportBtn =
+            bb->addButton(QObject::tr("Export…"), QDialogButtonBox::ActionRole);
+        exportBtn->setToolTip(
+            QObject::tr("Editor-Inhalt als Datei speichern (Vorschlag: %1).")
+                .arg(exportName));
+        QObject::connect(
+            exportBtn, &QPushButton::clicked, &dlg,
+            [editor, filter, exportName, rememberedDir, rememberDir, &dlg]() {
+                QString start = rememberedDir();
+                start = start.isEmpty() ? exportName
+                                        : start + QLatin1Char('/') + exportName;
+                const QString path = QFileDialog::getSaveFileName(
+                    &dlg, QObject::tr("Shader exportieren"), start, filter);
+                if (path.isEmpty()) return;
+                QFile f(path);
+                if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate |
+                            QIODevice::Text))
+                {
+                    QMessageBox::warning(
+                        &dlg, QObject::tr("Export"),
+                        QObject::tr("Datei nicht schreibbar: %1").arg(path));
+                    return;
+                }
+                f.write(editor->toPlainText().toUtf8());
+                rememberDir(path);
+            });
+    }
+    if (hooks.beautify)
+    {
+        auto* beautifyBtn =
+            bb->addButton(QObject::tr("Beautify"), QDialogButtonBox::ActionRole);
+        beautifyBtn->setToolTip(
+            QObject::tr("Code neu formatieren (nur Weißraum — Einstellungen "
+                        "unter Settings → Editor). Übernimmt noch nichts."));
+        const auto beautifyFn = hooks.beautify;
+        QObject::connect(beautifyBtn, &QPushButton::clicked, &dlg,
+                         [editor, beautifyFn]() {
+                             // Cursor-Zeile grob erhalten (Text wird ersetzt).
+                             const int scroll = editor->verticalScrollBar() != nullptr
+                                                    ? editor->verticalScrollBar()->value()
+                                                    : 0;
+                             editor->setPlainText(beautifyFn(editor->toPlainText()));
+                             if (editor->verticalScrollBar() != nullptr)
+                                 editor->verticalScrollBar()->setValue(scroll);
+                         });
+    }
+    if (hooks.apply)
+    {
+        auto* applyBtn = bb->button(QDialogButtonBox::Apply);
+        applyBtn->setToolTip(
+            QObject::tr("Übernehmen ohne Schließen — die Chain recompiliert, "
+                        "der Viewport zeigt den Stand sofort."));
+        const auto applyFn = hooks.apply;
+        const auto pollFn = hooks.pollError;
+        QObject::connect(
+            applyBtn, &QPushButton::clicked, &dlg,
+            [editor, applyFn, pollFn, setStatus, &dlg]() {
+                const QString err = applyFn(editor->toPlainText());
+                setStatus(err);
+                // GL-Compiles laufen erst im Render-Thread: kurz nachpollen,
+                // damit der Treiber-Fehler (oder das Verschwinden eines alten)
+                // noch im offenen Dialog ankommt.
+                if (err.isEmpty() && pollFn)
+                    for (const int delayMs : {300, 900, 1800})
+                        QTimer::singleShot(delayMs, &dlg, [pollFn, setStatus]() {
+                            setStatus(pollFn());
+                        });
+            });
+    }
     QObject::connect(bb, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
     QObject::connect(bb, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
     lay->addWidget(bb);

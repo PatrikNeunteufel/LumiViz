@@ -81,9 +81,11 @@ public:
     lumi::multieffect::CompileResult recompileChain();
 
     /**
-     * Letzter GL-Kompilierfehler eines Shadertoy-Nodes ("" = fehlerfrei).
-     * Der Panel-Editor zeigt ihn beim (Neu-)Aufbau an — dank `#line 1` im
-     * Wrapper tragen die Treiber-Logs die ZEILEN DES NUTZER-CODES (Strang S).
+     * Letzter GL-Kompilierfehler eines Shadertoy- ODER Mesh-Warp-Nodes
+     * ("" = fehlerfrei; beide Typen teilen das stError-Feld der LeafRuntime —
+     * ein Knoten ist genau ein Typ). Der Panel-Editor zeigt ihn beim
+     * (Neu-)Aufbau an und pollt ihn nach Apply (S69) — dank `#line 1` im
+     * Wrapper tragen die Treiber-Logs die ZEILEN DES NUTZER-CODES.
      */
     [[nodiscard]] std::string shadertoyError(uint64_t nodeId) const
     {
@@ -603,6 +605,21 @@ private:
         int stBufCur[4] = {0, 0, 0, 0};
         int stBufW = 0;
         int stBufH = 0;
+
+        // Mesh-Warp-Node (Strang G1, S69): Vertex-Warp-Programm + Gitter.
+        // Kompilierfehler landen im GETEILTEN stError (ein Knoten ist genau
+        // EIN Typ — shadertoyError() liefert damit auch Mesh-Warp-Fehler an
+        // den Panel-Dialog). Qt-GL-Objekte sterben mit m_leafRuntimes.clear()
+        // (Context ist dort current — Shadertoy-Muster).
+        std::unique_ptr<QOpenGLShaderProgram> mwProgram;
+        std::string mwCompiled;   ///< Code-Snapshot hinter dem Programm
+        std::unique_ptr<QOpenGLVertexArrayObject> mwVao;
+        std::unique_ptr<QOpenGLBuffer> mwVbo;  ///< Gitter-Vertizes (x,y 0..1)
+        std::unique_ptr<QOpenGLBuffer> mwIbo;  ///< Triangle-Indizes
+        int mwGridX = 0;          ///< Gitter, für das VBO/IBO gebaut sind
+        int mwGridY = 0;
+        int mwIndexCount = 0;
+        int mwFrame = 0;          ///< uFrame seit Kompilierung (deterministisch)
     };
 
     /** Render-thread state of one list node, keyed by ChainNode::nodeId. */
@@ -905,6 +922,10 @@ private:
     /// Shadertoy-Node (Strang S): ein Fragment-Pass in Chain-Auflösung.
     void runShadertoy(const lumi::multieffect::ChainNode& node,
                       const lumi::multieffect::ShadertoyParams& params);
+    /// Mesh-Warp-Node (Strang G1, S69): Nutzer-GLSL `warp()` je Gitter-Vertex
+    /// im Vertex-Shader — Quell-UV-Remap des aktuellen Chain-Bilds.
+    void runMeshWarp(const lumi::multieffect::ChainNode& node,
+                     const lumi::multieffect::MeshWarpParams& params);
     /// 512×2-Audio-Textur des Shadertoy-Vertrags hochladen (Zeile 0 = FFT,
     /// Zeile 1 = Waveform, 0..1) — je Aufruf frisch (1 KiB, unkritisch).
     void updateShadertoyAudioTexture();
