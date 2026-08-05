@@ -1,0 +1,50 @@
+Heart Equation als AVS-Superscope (3D-Doppelherz)
+==================================================
+y = |x|^(2/3) + 0.9*sin(k*x)*sqrt(3-x^2),  k pendelt 0..100 (Beat: Sprung auf 100).
+Zwei Herzen senkrecht zueinander (gemeinsame y-Achse), Rotation um alle drei
+Achsen mit SEPARAT einstellbaren, audio-abhaengigen Geschwindigkeiten.
+
+Fertig eingebaut in: heart_equation.avs (zwei Superscope-Effekte, im
+AvsStandalone gegengerendert). Dieser Text ist die lesbare Fassung zum
+Einfuegen/Anpassen.
+
+ROTATIONS-STELLSCHRAUBEN (im FRAME-Abschnitt, je Achse separat):
+  ax = ax + BASIS_X + GAIN_X * getspec(BAND, BREITE, KANAL)
+  Defaults: X: 0.004 + 0.050*Bass(0.02,0.08)   "Kippen"
+            Y: 0.006 + 0.050*Mitten(0.2,0.2)   "Drehen"
+            Z: 0.002 + 0.040*Hoehen(0.6,0.3)   "Rollen"
+  BASIS = Grundtempo ohne Musik, GAIN = Audio-Anteil. getspec(Position,
+  Breite, Kanal) liefert 0..1 aus dem Spektrum (0 = Bass-Ende).
+
+// INIT
+n=512;ax=0;ay=0;az=0;kk=0;tt=0;
+
+// FRAME
+tt=tt+0.015;kk=50-50*cos(tt*0.7);
+sb=getspec(0.02,0.08,0);sm=getspec(0.2,0.2,0);st=getspec(0.6,0.3,0);
+ax=ax+0.004+0.050*sb;
+ay=ay+0.006+0.050*sm;
+az=az+0.002+0.040*st;
+
+// BEAT
+kk=100;
+
+// POINT  (Herz A, xy-Ebene — fuer Herz B die eine Zeile ersetzen, s. unten)
+xx=(i*2-1)*1.7320508;env=0.9*sqrt(abs(3-xx*xx));
+yy=pow(abs(xx),0.6666667)+env*sin(kk*xx)-0.3;
+px=xx;py=yy;pz=0;
+cc=cos(ax);ss=sin(ax);t1=py*cc-pz*ss;pz=py*ss+pz*cc;py=t1;
+cc=cos(ay);ss=sin(ay);t1=px*cc+pz*ss;pz=pz*cc-px*ss;px=t1;
+cc=cos(az);ss=sin(az);t1=px*cc-py*ss;py=px*ss+py*cc;px=t1;
+pp=1.5/(4+pz);x=px*pp*0.5625;y=0-py*pp;
+red=1;green=0.3+0.4*i;blue=0.6;
+
+Herz B (zweiter Superscope, senkrecht auf der y-Achse): identischer Code,
+nur  px=xx;py=yy;pz=0;  ersetzen durch  px=0;py=yy;pz=xx;
+(und z. B. red=0.4;green=0.6+0.3*i;blue=1; als zweite Farbe).
+
+Hinweise:
+- x enthaelt die 16:9-Korrektur (0.5625); bei 4:3 stattdessen 0.75.
+- Kein Kommentar-Support im klassischen AVS-EEL — deshalb sind die Code-
+  Bloecke kommentarfrei; diese Datei ist die Doku dazu.
+- Orientierung im AvsStandalone verifiziert (y = 0-py... stellt das Herz auf).

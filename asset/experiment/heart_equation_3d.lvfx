@@ -1,0 +1,36 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz Experiment (heart equation 3d)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "heart_equation_3d",
+        "description": "Heart Equation 3D: Doppelherz, Zufalls-Rotation, Raumbewegung (SSOT: heart_equation_3d.glsl)",
+        "imageInput": [
+          0,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// Raymarcht die zwei Herz-Platten; liest die Winkel aus Buffer A (iChannel0).\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float K_TEMPO    = 0.35;                  // Pendeltempo der Sinus-Fuellung\nconst float DICKE      = 0.06;                  // Plattendicke\nconst vec3  POS_AMP    = vec3(0.9, 0.5, 1.6);   // Bewegung im Raum: Amplitude je Achse\nconst vec3  POS_FREQ   = vec3(0.21, 0.17, 0.13);// ... und Tempo (inkommensurabel)\nconst float FARBE_A    = 0.95;                  // Basisfarbton Herz A (Palette 0..1, ~rosa)\nconst float FARBE_B    = 0.60;                  // Basisfarbton Herz B (~blau)\nconst float FARB_DRIFT = 0.02;                  // Farbton-Drift pro Sekunde (0 = fest)\n// ----------------------------------------------------------------------------\n\n#define R(a) mat2(cos(a), sin(a), -sin(a), cos(a))\n\nvec3 palette(float t) { return 0.55 + 0.45*cos(6.28318*(t + vec3(0.0, 0.33, 0.67))); }\n\n// 2D-Herzregion (<0 innen): Band um die Grundlinie, auf den Definitionsbereich geklemmt\nfloat herzRegion(vec2 q)\n{\n    float base = pow(abs(q.x), 2.0/3.0);\n    float env  = 0.9*sqrt(max(3.0 - q.x*q.x, 0.0));\n    float d    = abs(q.y + 0.3 - base) - env;    // Welt-y ist um -0.3 zentriert\n    return max(d, abs(q.x) - 1.7320508);\n}\n\nvec3 gWinkel;\nvec3 gPos;\n\nvec3 dreh(vec3 p)                                // Welt -> Objekt (inverse Rotation)\n{\n    p.xy *= R(-gWinkel.z);\n    p.xz *= R(-gWinkel.y);\n    p.yz *= R(-gWinkel.x);\n    return p;\n}\n\nfloat map(vec3 p)\n{\n    p = dreh(p - gPos);\n    float dA = max(herzRegion(p.xy),           abs(p.z) - DICKE);  // Herz A: xy-Ebene\n    float dB = max(herzRegion(vec2(p.z, p.y)), abs(p.x) - DICKE);  // Herz B: zy-Ebene\n    return min(dA, dB) * 0.5;                    // Region ist Schranke -> Drossel\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (fragCoord - 0.5*iResolution.xy)/iResolution.y;\n    gWinkel = texelFetch(iChannel0, ivec2(0,0), 0).xyz;\n    gPos    = POS_AMP * sin(iTime * POS_FREQ);   // Bewegung im Raum (glatte Bahn)\n\n    float kk = 50.0 - 50.0*cos(iTime*K_TEMPO);\n\n    vec3 ro = vec3(0.0, 0.0, -7.5);\n    vec3 rd = normalize(vec3(uv, 1.4));\n\n    float t = 0.0, glow = 0.0, hit = -1.0;\n    for (int i = 0; i < 90; i++)\n    {\n        float d = map(ro + rd*t);\n        glow += 0.002/(0.02 + abs(d));\n        if (d < 0.002) { hit = t; break; }\n        if (t > 22.0) break;\n        t += d;\n    }\n\n    float drift = iTime * FARB_DRIFT;\n    vec3 col = vec3(0.0);\n    if (hit > 0.0)\n    {\n        vec3 p = dreh(ro + rd*hit - gPos);\n        float istA = step(abs(p.z), abs(p.x));   // A, wenn der Punkt in der xy-Platte liegt\n        float lx   = mix(p.z, p.x, istA);        // lokale Querkoordinate der Platte\n        vec2  q    = vec2(lx, p.y);\n\n        float streifen = 0.6 + 0.4*sin(kk*lx);   // die Sinus-Fuellung als Textur\n        float saum     = smoothstep(-0.25, 0.0, herzRegion(q));  // Herzrand betonen\n        vec3  basis    = palette(mix(FARBE_B, FARBE_A, istA) + drift + 0.03*lx);\n\n        col = basis * (0.25 + 0.75*streifen) + basis * saum * 0.8;\n    }\n    col += glow * 0.06 * palette(0.5*(FARBE_A + FARBE_B) + drift);\n\n    col = 1.0 - exp(-col*1.3);\n    fragColor = vec4(pow(col, vec3(1.0/2.2)), 1.0);\n}",
+        "buffers": [
+          {
+            "code": "// Integriert die drei Rotationswinkel als Zustand in Pixel (0,0).\n\n// ---- ROTATIONS-STELLSCHRAUBEN (je Achse separat einstellbar) ---------------\nconst vec3  BASIS      = vec3(0.25, 0.35, 0.15); // Grundtempo je Achse [rad/s]\nconst vec3  GAIN       = vec3(1.20, 1.00, 0.80); // Audio-Anteil je Achse\nconst float SEG_DAUER  = 3.0;   // alle N Sekunden wuerfelt jede Achse neu\nconst float STILLSTAND = 0.35;  // Chance je Achse und Segment, NICHT zu rotieren\n// ----------------------------------------------------------------------------\n\nfloat hash11(float p) { return fract(sin(p*127.1)*43758.5453); }\n\nfloat bandLevel(float lo, float hi)\n{\n    float s = 0.0;\n    for (int i = 0; i < 8; i++)\n        s += texture(iChannel1, vec2(mix(lo, hi, (float(i)+0.5)/8.0), 0.25)).x;\n    return s/8.0;\n}\n\n// Zufallsgeschwindigkeit der Achse a im Zeit-Segment seg: -1..1 oder exakt 0\nfloat omega(float seg, float a)\n{\n    float r1 = hash11(seg*3.7 + a*17.3);\n    float r2 = hash11(seg*9.1 + a*31.7 + 5.0);\n    return (r1 < STILLSTAND) ? 0.0 : (r2*2.0 - 1.0);\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec4 z = texelFetch(iChannel0, ivec2(0,0), 0);\n    if (iFrame == 0) z = vec4(0.0);\n\n    float dt  = clamp(iTimeDelta, 1.0/240.0, 1.0/24.0);\n    float seg = floor(iTime / SEG_DAUER);\n    vec3 band = vec3(bandLevel(0.00,0.05), bandLevel(0.05,0.25), bandLevel(0.25,0.70));\n    vec3 w    = vec3(omega(seg,0.0), omega(seg,1.0), omega(seg,2.0)) * (BASIS + GAIN*band);\n\n    z.xyz += w * dt;                      // Winkel = integrierte Geschwindigkeit\n    fragColor = z;\n}\n\n// ==============================",
+            "input": [
+              0,
+              4,
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "header": {
+    "formatVersion": 1,
+    "generator": "LumiViz Experiment (heart equation)"
+  },
+  "root": {
+    "type": "list",
+    "clearEveryFrame": false,
+    "children": [
+      {
+        "type": "shadertoy",
+        "name": "heart_equation",
+        "description": "Heart Equation 2D (SSOT: heart_equation.glsl)",
+        "imageInput": [
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "blend": 0,
+        "code": "// Heart Equation  -  y = |x|^(2/3) + 0.9*sin(k*x)*sqrt(3-x^2)\n// k pendelt 0..100: aus der Sinus-Fuellung entsteht das Herz.\n// Quelle der Formel: Threads-Post _mrqubit_; Umsetzung: LumiViz-Experiment.\n// Laeuft unveraendert auf shadertoy.com und im LumiViz-Shadertoy-Node (keine iChannels).\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float TEMPO = 0.35;   // Pendel-Tempo von k\nconst float K_MAX = 100.0;  // obere k-Grenze\nconst float ZOOM  = 4.4;    // Welt-Hoehe in Einheiten\nconst float GLOW  = 0.014;  // Linien-Glow\nconst float VERBLASEN = 3.0; // Daempfung der Streifen AUSSERHALB des Herzens\n                             // (0.0 = alter Look, groesser = schneller verblasst)\n// ----------------------------------------------------------------------------\n\nfloat kurve(float x, float k)\n{\n    float env = sqrt(max(3.0 - x*x, 0.0));       // Huellkurve (0 ausserhalb)\n    return pow(abs(x), 2.0/3.0) + 0.9*sin(k*x)*env;\n}\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (fragCoord - 0.5*iResolution.xy)/iResolution.y * ZOOM;\n    uv.y += 0.35;                                 // Herz ins Zentrum ruecken\n\n    float k = 0.5*K_MAX*(1.0 - cos(iTime*TEMPO)); // 0..K_MAX, weiche Umkehr\n\n    // Abstand zur Kurve, steigungsnormiert - sonst verschwinden steile Flanken\n    float fx   = kurve(uv.x, k);\n    float e    = 2.0*ZOOM/iResolution.y;\n    float dfdx = (kurve(uv.x+e,k) - kurve(uv.x-e,k)) / (2.0*e);\n    float d    = abs(uv.y - fx) / sqrt(1.0 + dfdx*dfdx);\n\n    float imBereich = step(abs(uv.x), sqrt(3.0)); // Definitionsbereich\n\n    // die Huellkurve selbst = der Herzrand\n    float base  = pow(abs(uv.x), 2.0/3.0);\n    float env   = 0.9*sqrt(max(3.0 - uv.x*uv.x, 0.0));\n    float dRand = min(abs(uv.y-(base+env)), abs(uv.y-(base-env)));\n    float innen = imBereich * step(base-env, uv.y) * step(uv.y, base+env);\n\n    // Abstand ausserhalb des Herzrands: dort wird die Sinus-Spur weich verblasst\n    float aussen = max(max(uv.y - (base+env), (base-env) - uv.y), 0.0);\n    float blende = exp(-aussen * VERBLASEN);\n\n    vec3 rosa = mix(vec3(1.0,0.15,0.35), vec3(1.0,0.55,0.75),\n                    0.5 + 0.5*sin(uv.x*2.0 + iTime*0.7));\n    vec3 col  = imBereich * GLOW/(d + 0.004) * rosa * blende // Sinus-Spur, aussen verblasst\n              + imBereich * 0.004/(dRand + 0.006) * vec3(1.0,0.3,0.5)\n              + innen * 0.03 * vec3(0.40,0.05,0.12);         // zarte Fuellung\n\n    col = 1.0 - exp(-col);                                 // Tonemapping der Serie\n    fragColor = vec4(pow(col, vec3(1.0/2.2)), 1.0);\n}\n"
+      }
+    ]
+  }
+}

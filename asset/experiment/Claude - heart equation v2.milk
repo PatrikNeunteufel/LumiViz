@@ -1,0 +1,140 @@
+MILKDROP_PRESET_VERSION=201
+PSVERSION=0
+[preset00]
+fRating=4.000
+fGammaAdj=1.700
+fDecay=0.900
+fVideoEchoZoom=1.000
+fVideoEchoAlpha=0.000
+nVideoEchoOrientation=0
+nWaveMode=0
+bAdditiveWaves=1
+bWaveDots=0
+bWaveThick=1
+bModWaveAlphaByVolume=0
+bMaximizeWaveColor=0
+bTexWrap=0
+bDarkenCenter=0
+bRedBlueStereo=0
+bBrighten=0
+bDarken=1
+bSolarize=0
+bInvert=0
+fWaveAlpha=0.001
+fWaveScale=1.000
+fWaveSmoothing=0.500
+fWaveParam=0.000
+fModWaveAlphaStart=0.750
+fModWaveAlphaEnd=0.950
+fWarpAnimSpeed=1.000
+fWarpScale=1.000
+fZoomExponent=1.00000
+fShader=0.000
+zoom=1.00000
+rot=0.00000
+cx=0.500
+cy=0.500
+dx=0.00000
+dy=0.00000
+warp=0.00000
+sx=1.00000
+sy=1.00000
+wave_r=0.000
+wave_g=0.000
+wave_b=0.000
+wave_x=0.500
+wave_y=0.500
+ob_size=0.000
+ob_r=0.000
+ob_g=0.000
+ob_b=0.000
+ob_a=0.000
+ib_size=0.000
+ib_r=0.000
+ib_g=0.000
+ib_b=0.000
+ib_a=0.000
+nMotionVectorsX=0.000
+nMotionVectorsY=0.000
+mv_dx=0.000
+mv_dy=0.000
+mv_l=0.000
+mv_r=0.000
+mv_g=0.000
+mv_b=0.000
+mv_a=0.000
+per_frame_init_1=ax = 0; ay = 0; az = 0; wx = 0; wy = 0; wz = 0; cnt = 999;
+per_frame_1=// STELLSCHRAUBEN: seg = Wuerfel-Intervall (Frames), p0 = Stillstand-Chance (%),
+per_frame_2=// tx/ty/tz = Grundtempo je Achse, +GAIN*Band = Audio-Anteil
+per_frame_3=seg = 90; p0 = 35; tx = 0.014; ty = 0.018; tz = 0.010;
+per_frame_4=cnt = cnt + 1;
+per_frame_5=neu = above(cnt, seg);
+per_frame_6=cnt = cnt*(1 - neu);
+per_frame_7=wx = if(neu, if(above(rand(100), p0), rand(200)/100 - 1, 0), wx);
+per_frame_8=wy = if(neu, if(above(rand(100), p0), rand(200)/100 - 1, 0), wy);
+per_frame_9=wz = if(neu, if(above(rand(100), p0), rand(200)/100 - 1, 0), wz);
+per_frame_10=ax = ax + wx*(tx + 0.020*bass_att);
+per_frame_11=ay = ay + wy*(ty + 0.016*mid_att);
+per_frame_12=az = az + wz*(tz + 0.012*treb_att);
+per_frame_13=q1 = ax; q2 = ay; q3 = az;
+per_frame_14=q4 = 50 - 50*cos(time*0.35) + 25*above(bass,1.3)*(bass-1.3);
+per_frame_15=// BEWEGUNG IM RAUM (Amplituden einstellbar) + FARBEN (Basiston + Drift/s)
+per_frame_16=q5 = 0.20*sin(time*0.31); q6 = 0.12*sin(time*0.23); q7 = 1.0*sin(time*0.17);
+per_frame_17=q8 = 0.95 + time*0.02;
+per_frame_18=q9 = 0.60 + time*0.02;
+wavecode_0_enabled=1
+wavecode_0_samples=512
+wavecode_0_sep=0
+wavecode_0_bSpectrum=0
+wavecode_0_bUseDots=0
+wavecode_0_bDrawThick=1
+wavecode_0_bAdditive=0
+wavecode_0_scaling=1.00000
+wavecode_0_smoothing=0.00000
+wavecode_0_r=1.000
+wavecode_0_g=0.200
+wavecode_0_b=0.400
+wavecode_0_a=1.000
+wave_0_per_point1=xx = (sample*2 - 1)*1.7320508;
+wave_0_per_point2=env = 0.9*sqrt(abs(3 - xx*xx));
+wave_0_per_point3=yy = pow(abs(xx), 0.6666667) + env*sin(q4*xx) - 0.3;
+wave_0_per_point4=px = xx; py = yy; pz = 0;
+wave_0_per_point5=cc = cos(q1); ss = sin(q1); t1 = py*cc - pz*ss; pz = py*ss + pz*cc; py = t1;
+wave_0_per_point6=cc = cos(q2); ss = sin(q2); t1 = px*cc + pz*ss; pz = pz*cc - px*ss; px = t1;
+wave_0_per_point7=cc = cos(q3); ss = sin(q3); t1 = px*cc - py*ss; py = px*ss + py*cc; px = t1;
+wave_0_per_point8=px = px + q5; py = py + q6; pz = pz + q7;
+wave_0_per_point9=pp = 1.5/(4.5 + pz);
+wave_0_per_point10=x = 0.5 + px*pp*0.42;
+wave_0_per_point11=y = 0.5 - py*pp*0.75;
+wave_0_per_point12=red = 0.55 + 0.45*cos(6.283*(q8 + 0.10*sample)); green = 0.55 + 0.45*cos(6.283*(q8 + 0.10*sample + 0.333)); blue = 0.55 + 0.45*cos(6.283*(q8 + 0.10*sample + 0.667));
+wavecode_1_enabled=1
+wavecode_1_samples=512
+wavecode_1_sep=0
+wavecode_1_bSpectrum=0
+wavecode_1_bUseDots=0
+wavecode_1_bDrawThick=1
+wavecode_1_bAdditive=0
+wavecode_1_scaling=1.00000
+wavecode_1_smoothing=0.00000
+wavecode_1_r=0.400
+wavecode_1_g=0.600
+wavecode_1_b=1.000
+wavecode_1_a=1.000
+wave_1_per_point1=xx = (sample*2 - 1)*1.7320508;
+wave_1_per_point2=env = 0.9*sqrt(abs(3 - xx*xx));
+wave_1_per_point3=yy = pow(abs(xx), 0.6666667) + env*sin(q4*xx) - 0.3;
+wave_1_per_point4=px = 0; py = yy; pz = xx;
+wave_1_per_point5=cc = cos(q1); ss = sin(q1); t1 = py*cc - pz*ss; pz = py*ss + pz*cc; py = t1;
+wave_1_per_point6=cc = cos(q2); ss = sin(q2); t1 = px*cc + pz*ss; pz = pz*cc - px*ss; px = t1;
+wave_1_per_point7=cc = cos(q3); ss = sin(q3); t1 = px*cc - py*ss; py = px*ss + py*cc; px = t1;
+wave_1_per_point8=px = px + q5; py = py + q6; pz = pz + q7;
+wave_1_per_point9=pp = 1.5/(4.5 + pz);
+wave_1_per_point10=x = 0.5 + px*pp*0.42;
+wave_1_per_point11=y = 0.5 - py*pp*0.75;
+wave_1_per_point12=red = 0.55 + 0.45*cos(6.283*(q9 + 0.10*sample)); green = 0.55 + 0.45*cos(6.283*(q9 + 0.10*sample + 0.333)); blue = 0.55 + 0.45*cos(6.283*(q9 + 0.10*sample + 0.667));
+wavecode_2_enabled=0
+wavecode_3_enabled=0
+shapecode_0_enabled=0
+shapecode_1_enabled=0
+shapecode_2_enabled=0
+shapecode_3_enabled=0
