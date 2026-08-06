@@ -620,6 +620,17 @@ private:
         int mwGridY = 0;
         int mwIndexCount = 0;
         int mwFrame = 0;          ///< uFrame seit Kompilierung (deterministisch)
+
+        // GPU-Partikel-Node (Strang G2, S69): Update- + Render-Programm,
+        // Zustand als RGBA32F-Ping-Pong (ein Texel = pos.xy + vel.xy).
+        // Kompilierfehler wieder im geteilten stError (s. Mesh-Warp-Notiz).
+        std::unique_ptr<QOpenGLShaderProgram> gpUpdate;
+        std::unique_ptr<QOpenGLShaderProgram> gpRender;
+        std::string gpCompiled;   ///< forceCode-Snapshot hinter den Programmen
+        std::unique_ptr<QOpenGLFramebufferObject> gpStateFbo[2];
+        int gpCur = 0;            ///< Index des AKTUELLEN Zustands
+        int gpRows = 0;           ///< Zustands-Zeilen, für die die FBOs stehen
+        bool gpFresh = true;      ///< nächster Update-Pass initialisiert (uReset)
     };
 
     /** Render-thread state of one list node, keyed by ChainNode::nodeId. */
@@ -926,6 +937,10 @@ private:
     /// im Vertex-Shader — Quell-UV-Remap des aktuellen Chain-Bilds.
     void runMeshWarp(const lumi::multieffect::ChainNode& node,
                      const lumi::multieffect::MeshWarpParams& params);
+    /// GPU-Partikel-Node (Strang G2, S69): Zustands-Ping-Pong (pos+vel je
+    /// Texel) + instanzierter Sprite-Draw; Alter/Respawn hash-basiert.
+    void runGpuParticles(const lumi::multieffect::ChainNode& node,
+                         const lumi::multieffect::GpuParticlesParams& params);
     /// 512×2-Audio-Textur des Shadertoy-Vertrags hochladen (Zeile 0 = FFT,
     /// Zeile 1 = Waveform, 0..1) — je Aufruf frisch (1 KiB, unkritisch).
     void updateShadertoyAudioTexture();

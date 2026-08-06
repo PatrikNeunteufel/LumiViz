@@ -1,9 +1,9 @@
 # Regelwerk & neue Module — Umsetzungsplan (Stränge R / S / G)
 
-> **Version:** 1.5.0
+> **Version:** 1.6.0
 > **Datum:** 2026-08-06 (Session 69)
 > **Typ:** Steuerdokument (Plan + Entscheide)
-> **Status:** Strang R ✅ + Strang S KOMPLETT (S1–S4, Session 65; Netz-Abnahme S3 braucht API-Key Patrik) + **G1 ✅ umgesetzt (S69, Sichttest offen)**; G2 offen
+> **Status:** Strang R ✅ + Strang S KOMPLETT (S1–S4, Session 65; Netz-Abnahme S3 braucht API-Key Patrik) + **Strang G KOMPLETT: G1+G2 ✅ umgesetzt (S69, Sichttests offen)**; G3 = Kür-Notiz
 > **Sprache:** Deutsch
 > **Kontext:** MilkDrop-Kalibrierung S63/S64 (acht Legacy-Fixklassen),
 > `Vereinheitlichung_Konzept.md` (Standalones→Module), `Offene_Punkte.md` §3/§7
@@ -218,13 +218,28 @@ nur die Quelle, der Uniform-Vertrag bleibt. Sichtbeweis
 `asset/effectchain/meshwarp_sonde.lvfx` (`out/meshwarp_sonde_s69/`,
 Warnungen=0); Tests 547 (+9). Sichttest Patrik offen.
 
-### G2 — GPU-Partikel-Modul
+### G2 — GPU-Partikel-Modul ✅ (Session 69, Sichttest offen)
 
 - Instancing (ein Draw, N Instanzen) + Zustand in Ping-Pong-Texturen oder
   Transform-Feedback; Spawn/Kraftfeld/Lebensdauer als Parameter, Audio-
   Kopplung über Uniforms + Audio-Mod-Slot (aus S2 wiederverwendet).
 - Die „moderne Antwort" auf die searchlight-Klasse: zehntausende Partikel
   statt 800×16-gmegabuf-Schleifen.
+
+**Stand S69 (umgesetzt):** Chain-Node `gpuParticles` (Render-Modul,
+host-nativ). Entscheid der Bauform: **Ping-Pong-Texturen** (ein RGBA32F-Texel
+= pos+vel; erprobtes Shadertoy-Buffer-Muster) statt Transform-Feedback;
+**Alter/Respawn hash-basiert OHNE Speicher** (feste Phase/Lebensdauer je
+Partikel, Zyklus-Erkennung per floor-Vergleich — deterministisch mit der
+Sim-Uhr, kein rand()). Instanzierter Sprite-Draw (VTF/texelFetch, geteilter
+Quad-VAO, `glDrawArraysInstanced`), max. 65536 Partikel. Statt des
+Audio-Mod-Slots aus S2: **Parameter-Skripte** (Strang D — `spawnx spawny
+spread speed dir fan gravx gravy drag life size`) + optionales
+**Kraftfeld-GLSL** `vec2 kraft(pos, vel, alter)` mit Audio-Uniforms
+(Groß-Editor mit Apply/Beautify/Import/Export, Fehler-Poll). Sichtbeweis
+`asset/effectchain/gpuparticles_sonde.lvfx` (8192er-Fontäne, Wirbel+Trails,
+`out/gpuparticles_sonde_s69/`, Warnungen=0); Tests 554 (+7).
+Sichttest Patrik offen.
 
 ### G3 — Kür (nur Notiz, kein Auftrag)
 
@@ -258,6 +273,7 @@ Parallel weiter: Rest-11-Kalibrierung (§3) — unabhängig von R/S/G.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.6.0 | 2026-08-06 | Strang G2 umgesetzt (Session 69) — Strang G damit KOMPLETT (G3 bleibt Kür-Notiz): Chain-Node `gpuParticles` (Zustands-Ping-Pong RGBA32F pos+vel, hash-basierter Lebenslauf ohne Speicher, instanzierter Sprite-Draw, max. 65536), Kraftfeld-GLSL + Parameter-Skripte statt Audio-Mod-Slot, GpuParticlesWrapper.hpp GL-frei. Sonde gpuparticles_sonde.lvfx (Fontäne), Tests 554. Sichttests G1+G2 offen |
 | 1.5.0 | 2026-08-06 | Strang G1 umgesetzt (Session 69): Chain-Node `meshWarp` host-nativ (MeshWarpWrapper.hpp GL-frei, runMeshWarp im transformPass-Muster, Panel-GLSL-Editor mit Apply/Beautify/Import/Export, Parameter-Skripte). Einordnung revidiert (Entscheid Patrik): G1 VOR Vereinheitlichung V2 — Audio ad-hoc als Uniforms, Shadertoy-Muster. Sonde meshwarp_sonde.lvfx, Tests 547. G2 + Sichttest offen |
 | 1.4.0 | 2026-08-02 | Strang S4 umgesetzt (Session 65) — Strang S damit KOMPLETT: ShadertoyPass + Kanal-Bindungs-Kodierung (SSOT, audioChannel-Feld entfernt → Lese-Migration), RGBA32F-Ping-Pong je Buffer (Swap nach jedem Pass = Original-Lese-Semantik), Buffer-Wrapper roh, Import mit Buffer-Topologie (Output-Ids, common überall), Panel-Bindungs-Combos + Buffer-Editoren, Sonde shadertoy_feedback (Lissajous-Trail = Vorframe-Beweis). Tests 509 |
 | 1.3.0 | 2026-08-02 | Strang S3 code-komplett (Session 65): ShadertoyImport.hpp (ID/URL/Query/Thumbnail + Antwort-Parser, netz-/GL-frei getestet), Node-Editor-Import (URL-Feld, API-Key in QSettings, 🌐-Knopf) + NEU ShadertoyBrowserPanel (Dock-Panel: Query-Suche + Sortierung + Thumbnail-Grid, Doppelklick lädt via AppData-.lvfx + LoadEffectChainEvent). Klärung: API = App-Key, keine Login-Daten, nur „public+api". Qt6 `Network` ergänzt. Netz-Abnahme (echter Key) + Sichtprüfung offen |

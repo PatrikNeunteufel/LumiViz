@@ -14,7 +14,8 @@
 #include "visualizers/multieffect/AvsChainTranslator.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 #include "visualizers/multieffect/ShadertoyWrapper.hpp"
-#include "visualizers/multieffect/MeshWarpWrapper.hpp"  // Mesh-Warp-Node (G1, S69)
+#include "visualizers/multieffect/MeshWarpWrapper.hpp"      // Mesh-Warp-Node (G1, S69)
+#include "visualizers/multieffect/GpuParticlesWrapper.hpp"  // GPU-Partikel (G2, S69)
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 
@@ -3914,6 +3915,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const GlowOrbsParams& params) const { self.runGlowOrbs(node, params); }
         void operator()(const ShadertoyParams& params) const { self.runShadertoy(node, params); }
         void operator()(const MeshWarpParams& params) const { self.runMeshWarp(node, params); }
+        void operator()(const GpuParticlesParams& params) const { self.runGpuParticles(node, params); }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
     std::visit(Visitor{*this, node}, node.params);
@@ -12579,6 +12581,164 @@ void MultiEffectVisualizer::runMeshWarp(const ChainNode& node,
     pair.swap();
     bindActive();
     ++rt.mwFrame;
+}
+
+void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,
+                                            const GpuParticlesParams& params)
+{
+    using lumi::gpuparticles::kStateWidth;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+    auto* ef = QOpenGLContext::currentContext()->extraFunctions();
+
+    // Parameter-Skript (Strang D): alle Bewegungs-Regler je Frame rechenbar.
+    double spawnX = params.spawnX, spawnY = params.spawnY;
+    double spread = params.spawnSpread, speed = params.speed;
+    double dir = params.direction, fan = params.fan;
+    double gravX = params.gravityX, gravY = params.gravityY;
+    double drag = params.drag, life = params.lifeSeconds;
+    double size = params.sizePx;
+    runParamScript(rt, "gpuparticles", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"spawnx", &spawnX},
+                    {"spawny", &spawnY},
+                    {"spread", &spread},
+                    {"speed", &speed},
+                    {"dir", &dir},
+                    {"fan", &fan},
+                    {"gravx", &gravX},
+                    {"gravy", &gravY},
+                    {"drag", &drag},
+                    {"life", &life},
+                    {"size", &size}});
+    const int count = std::clamp(params.count, lumi::gpuparticles::kMinCount,
+                                 lumi::gpuparticles::kMaxCount);
+
+    // Kompilieren nur bei Kraftfeld-Wechsel (Shadertoy-Muster; #line 1 =
+    // Nutzer-Zeilen). Fehler ins geteilte stError → Panel + Apply-Poll.
+    if (rt.gpUpdate == nullptr || rt.gpCompiled != params.forceCode)
+    {
+        rt.gpCompiled = params.forceCode;
+        rt.stError.clear();
+        const auto compile = [&](const std::string& vert, const std::string& frag,
+                                 const char* label)
+            -> std::unique_ptr<QOpenGLShaderProgram> {
+            auto program = std::make_unique<QOpenGLShaderProgram>();
+            if (!program->addShaderFromSourceCode(QOpenGLShader::Vertex,
+                                                  vert.c_str()) ||
+                !program->addShaderFromSourceCode(QOpenGLShader::Fragment,
+                                                  frag.c_str()) ||
+                !program->link())
+            {
+                rt.stError = std::string(label) + ": " +
+                             program->log().toStdString();
+                return nullptr;
+            }
+            return program;
+        };
+        rt.gpUpdate = compile(std::string(kQuadVertexShader),
+                              lumi::gpuparticles::updateFragment(params.forceCode),
+                              "Kraftfeld");
+        rt.gpRender = rt.gpUpdate == nullptr
+                          ? nullptr
+                          : compile(lumi::gpuparticles::renderVertex(),
+                                    lumi::gpuparticles::renderFragment(),
+                                    "Render");
+        if (rt.gpRender == nullptr)
+        {
+            rt.gpUpdate.reset();
+            BasicLogger::logWarning("MultiEffect: GPU-Partikel-Kompilierfehler: " +
+                                    rt.stError.substr(0, 400));
+        }
+        rt.gpFresh = true;
+    }
+    if (rt.gpUpdate == nullptr) return;  // Kompilierfehler ⇒ zeichnet nichts
+
+    // Zustands-Ping-Pong: Groesse folgt der Partikelzahl (Zeilen fix breit).
+    const int rows = lumi::gpuparticles::stateRows(count);
+    if (rt.gpStateFbo[0] == nullptr || rt.gpRows != rows)
+    {
+        QOpenGLFramebufferObjectFormat fmt;
+        fmt.setInternalTextureFormat(GL_RGBA32F);
+        for (int k = 0; k < 2; ++k)
+            rt.gpStateFbo[k] = std::make_unique<QOpenGLFramebufferObject>(
+                kStateWidth, rows, fmt);
+        rt.gpRows = rows;
+        rt.gpCur = 0;
+        rt.gpFresh = true;
+    }
+
+    float bass = 0.0f, mid = 0.0f, treb = 0.0f;
+    computeAudioBands(getSpectrum(), bass, mid, treb);
+    const auto setCommon = [&](QOpenGLShaderProgram& p) {
+        p.setUniformValue("uResolution",
+                          QVector2D(static_cast<float>(m_surfaceWidth),
+                                    static_cast<float>(m_surfaceHeight)));
+        p.setUniformValue("uTime", static_cast<float>(m_scriptClock));
+        p.setUniformValue("uDelta", m_deltaTime);
+        p.setUniformValue("uCount", count);
+        p.setUniformValue("uLife", static_cast<float>(std::max(0.05, life)));
+        p.setUniformValue("uLifeJitter",
+                          static_cast<float>(std::clamp(params.lifeJitter, 0.0, 1.0)));
+        p.setUniformValue("bass", bass);
+        p.setUniformValue("mid", mid);
+        p.setUniformValue("treb", treb);
+        p.setUniformValue("vol", m_audioLevel);
+        p.setUniformValue("beat", m_frameBeat ? 1.0f : 0.0f);
+    };
+
+    // --- Update-Pass: Partner-Zustand beschreiben, aktuellen lesen ----------
+    QOpenGLFramebufferObject* target = rt.gpStateFbo[1 - rt.gpCur].get();
+    target->bind();
+    f->glViewport(0, 0, kStateWidth, rows);
+    QOpenGLShaderProgram& up = *rt.gpUpdate;
+    up.bind();
+    setCommon(up);
+    up.setUniformValue("uState", 0);
+    up.setUniformValue("uSpawn", QVector2D(static_cast<float>(spawnX),
+                                           static_cast<float>(spawnY)));
+    up.setUniformValue("uSpread", static_cast<float>(std::max(0.0, spread)));
+    up.setUniformValue("uSpeed", static_cast<float>(speed));
+    up.setUniformValue("uDir", static_cast<float>(dir));
+    up.setUniformValue("uFan", static_cast<float>(fan));
+    up.setUniformValue("uGravity", QVector2D(static_cast<float>(gravX),
+                                             static_cast<float>(gravY)));
+    up.setUniformValue("uDrag", static_cast<float>(std::max(0.0, drag)));
+    up.setUniformValue("uReset", rt.gpFresh ? 1 : 0);
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, rt.gpStateFbo[rt.gpCur]->texture());
+    m_quadVao->bind();
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    up.release();
+    target->release();
+    rt.gpCur = 1 - rt.gpCur;
+    rt.gpFresh = false;
+
+    // --- Render-Pass: instanzierte Sprites AUF das aktuelle Chain-Bild ------
+    bindActive();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    QOpenGLShaderProgram& rp = *rt.gpRender;
+    rp.bind();
+    setCommon(rp);
+    rp.setUniformValue("uState", 0);
+    rp.setUniformValue("uSize", static_cast<float>(std::max(0.5, size)));
+    rp.setUniformValue("uSizeEnd",
+                       static_cast<float>(std::max(0.0, params.sizeEndFactor)));
+    rp.setUniformValue("uColorStart", colorToVec(params.colorStart));
+    rp.setUniformValue("uColorEnd", colorToVec(params.colorEnd));
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, rt.gpStateFbo[rt.gpCur]->texture());
+    f->glEnable(GL_BLEND);
+    if (params.additive)
+        f->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    else
+        f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    m_quadVao->bind();
+    ef->glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, count);
+    m_quadVao->release();
+    f->glDisable(GL_BLEND);
+    rp.release();
 }
 
 // =============================================================================

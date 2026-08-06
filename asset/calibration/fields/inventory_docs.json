@@ -6,8 +6,8 @@
     "beschreibung": "EffectChain.hpp (Doxygen)"
   },
   "summe": {
-    "typen": 87,
-    "felder": 735,
+    "typen": 88,
+    "felder": 756,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -3828,6 +3828,245 @@
           "skriptvars_wirkungslos": [
             "i"
           ]
+        }
+      ]
+    },
+    {
+      "typkey": "gpuParticles",
+      "name": "GPU Particles",
+      "struct": "GpuParticlesParams",
+      "felder": [
+        {
+          "art": "bool",
+          "default": true,
+          "name": "additive",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "Additiv zeichnen (Glow-Look) statt Alpha-Mischung"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "spawnx",
+            "spawny",
+            "spread",
+            "speed",
+            "dir",
+            "fan",
+            "gravx",
+            "gravy",
+            "drag",
+            "life",
+            "size"
+          ]
+        },
+        {
+          "art": "zahl",
+          "default": 4202688,
+          "name": "colorEnd",
+          "panel": "farbe",
+          "helfer": "addColor",
+          "doc": "Farbe am Lebensende 0x00RRGGBB (Verlauf übers Alter)"
+        },
+        {
+          "art": "zahl",
+          "default": 16765056,
+          "name": "colorStart",
+          "panel": "farbe",
+          "helfer": "addColor",
+          "doc": "Farbe beim Spawn 0x00RRGGBB"
+        },
+        {
+          "art": "zahl",
+          "default": 4096,
+          "name": "count",
+          "panel": "int",
+          "helfer": "addInt",
+          "doc": "Partikel-Anzahl 1..65536 — GPU-seitig, hohe Werte kosten wenig; Änderung baut den Zustand neu auf (frischer Start)"
+        },
+        {
+          "art": "zahl",
+          "default": 90,
+          "name": "direction",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": -360.0,
+          "hi": 360.0,
+          "doc": "Start-Richtung in Grad (0 = rechts, 90 = oben)"
+        },
+        {
+          "art": "zahl",
+          "default": 0.6,
+          "name": "drag",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 10.0,
+          "doc": "Luftwiderstand 1/s (0 = keiner; bremst die Geschwindigkeit exponentiell)"
+        },
+        {
+          "art": "zahl",
+          "default": 360,
+          "name": "fan",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 360.0,
+          "doc": "Fächer-/Streuwinkel in Grad um die Richtung (360 = radial in alle Richtungen)"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "forceCode",
+          "panel": "sonderzeile",
+          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "spawnx",
+            "spawny",
+            "spread",
+            "speed",
+            "dir",
+            "fan",
+            "gravx",
+            "gravy",
+            "drag",
+            "life",
+            "size"
+          ]
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "gravityX",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": -5.0,
+          "hi": 5.0,
+          "doc": "Schwerkraft X in UV/s²"
+        },
+        {
+          "art": "zahl",
+          "default": -0.15,
+          "name": "gravityY",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": -5.0,
+          "hi": 5.0,
+          "doc": "Schwerkraft Y in UV/s² (negativ = fällt nach unten)"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "spawnx",
+            "spawny",
+            "spread",
+            "speed",
+            "dir",
+            "fan",
+            "gravx",
+            "gravy",
+            "drag",
+            "life",
+            "size"
+          ]
+        },
+        {
+          "art": "zahl",
+          "default": 0.35,
+          "name": "lifeJitter",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 1.0,
+          "doc": "Lebensdauer-Streuung 0..1 (0.35 = ±35 % je Partikel, hash-fest)"
+        },
+        {
+          "art": "zahl",
+          "default": 2.5,
+          "name": "lifeSeconds",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.1,
+          "hi": 30.0,
+          "doc": "Lebensdauer in Sekunden (Basis; danach Respawn am Spawn-Punkt)"
+        },
+        {
+          "art": "zahl",
+          "default": 0.4,
+          "name": "sizeEndFactor",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 4.0,
+          "doc": "Größen-Faktor am Lebensende (1 = konstant, <1 schrumpft)"
+        },
+        {
+          "art": "zahl",
+          "default": 6,
+          "name": "sizePx",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.5,
+          "hi": 128.0,
+          "doc": "Sprite-Größe in Pixeln (beim Spawn)"
+        },
+        {
+          "art": "zahl",
+          "default": 0.03,
+          "name": "spawnSpread",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 1.0,
+          "doc": "Spawn-Streuradius in UV (0 = Punktquelle)"
+        },
+        {
+          "art": "zahl",
+          "default": 0.5,
+          "name": "spawnX",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 1.0,
+          "doc": "Spawn-Zentrum X 0..1 (0 = links)"
+        },
+        {
+          "art": "zahl",
+          "default": 0.35,
+          "name": "spawnY",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 1.0,
+          "doc": "Spawn-Zentrum Y 0..1 (0 = unten)"
+        },
+        {
+          "art": "zahl",
+          "default": 0.25,
+          "name": "speed",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 5.0,
+          "doc": "Start-Tempo in UV/s (je Partikel 0.6..1.4-fach gestreut)"
         }
       ]
     },

@@ -1,0 +1,40 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "fadeout",
+                "name": "Nachleuchten",
+                "description": "G2-Pruefstand (S69): sanfter Decay, damit die Partikel Spuren ziehen (Render-Modul zeichnet additiv darueber)."
+            },
+            {
+                "type": "gpuParticles",
+                "name": "Sonde GPU-Partikel",
+                "description": "G2-Pruefstand (S69): Fontaene aus 8192 Partikeln - Spawn unten Mitte, Schwerkraft zieht runter, Wirbel-Kraftfeld (audio-frei deterministisch nur mit Sim-Uhr + Standalone-Testsignal).",
+                "count": 8192,
+                "spawnX": 0.5,
+                "spawnY": 0.15,
+                "spawnSpread": 0.01,
+                "speed": 0.55,
+                "direction": 90.0,
+                "fan": 55.0,
+                "gravityX": 0.0,
+                "gravityY": -0.35,
+                "drag": 0.4,
+                "lifeSeconds": 2.2,
+                "lifeJitter": 0.4,
+                "sizePx": 5.0,
+                "sizeEndFactor": 0.25,
+                "colorStart": 16764032,
+                "colorEnd": 4202688,
+                "additive": true,
+                "forceCode": "// LumiViz-Sonde (S69): leichter Seitenwind + Wirbel, zeitgetrieben\nvec2 kraft(vec2 pos, vec2 vel, float alter)\n{\n    vec2 d = pos - vec2(0.5);\n    vec2 wirbel = vec2(-d.y, d.x) * 0.4;\n    vec2 wind = vec2(0.12 * sin(uTime * 0.8), 0.0);\n    return wirbel + wind;\n}\n"
+            }
+        ]
+    }
+}

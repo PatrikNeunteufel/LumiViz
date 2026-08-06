@@ -1,6 +1,6 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.43.0
+> **Version:** 1.44.0
 > **Datum:** 2026-08-06 (Session 69)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -873,7 +873,7 @@ CompositePostfx) tragen eine `lesBilinear()`-GLSL-Anpassung, als
 Tutorial-Bilder neu rendern. (Ein zuvor angebotener Task-Chip hierzu wurde
 geschlossen — dieser Eintrag ist der Merkposten.)
 
-### ➜ GPU-Vertex-Module (Strang G — **G1 ✅ umgesetzt S69, Sichttest offen; G2 offen**)
+### ➜ GPU-Vertex-Module (Strang G — **G1+G2 ✅ umgesetzt S69, Sichttests offen; G3 = Kür-Notiz**)
 
 **Legacy-Imports bleiben CPU:** das per-Vertex-EEL läuft im Original
 SEQUENTIELL (Zustand über Vertizes: Akkumulatoren, rand()-Strom, gmegabuf) —
@@ -891,10 +891,19 @@ V2** — Audio ad-hoc als Uniforms (Shadertoy-Muster); Details
 1.5.0. Sichtbeweis `asset/effectchain/meshwarp_sonde.lvfx`
 (`out/meshwarp_sonde_s69/`). **⬜ Sichttest Patrik offen.**
 
-**G2 GPU-Partikel (offen):** Instancing/Transform-Feedback — die moderne
-Antwort auf die searchlight-Klasse. Kür-Idee G3: „Mesh-Qualität"-Option für
-nachweislich ZUSTANDSLOSE per_pixel-Skripte (Transpiler-Analyse) mit
-GPU-Auswertung und feinerem Gitter als Modern-Schalter.
+**G2 GPU-Partikel ✅ (S69):** Chain-Node `gpuParticles` (Render-Modul) —
+Zustand als RGBA32F-Ping-Pong (ein Texel = pos+vel), Alter/Respawn
+hash-basiert OHNE Speicher (deterministisch, kein rand()), instanzierter
+Sprite-Draw (max. 65536 Partikel), 17 Regler + Farben/Additiv, optionales
+Kraftfeld-GLSL `kraft(pos, vel, alter)` mit Audio-Uniforms (Groß-Editor
+komplett), Parameter-Skripte `spawnx…size`. Details
+[Regelwerk_und_Neue_Module_Plan.md](visuals/Regelwerk_und_Neue_Module_Plan.md)
+1.6.0; Sichtbeweis `asset/effectchain/gpuparticles_sonde.lvfx`
+(`out/gpuparticles_sonde_s69/`). **⬜ Sichttest Patrik offen.**
+
+Kür-Idee G3 (Notiz): „Mesh-Qualität"-Option für nachweislich ZUSTANDSLOSE
+per_pixel-Skripte (Transpiler-Analyse) mit GPU-Auswertung und feinerem
+Gitter als Modern-Schalter.
 
 ### ⚪ fractalZoomer: float-Erschöpfung im Endlos-Zoom (Befund S61)
 
@@ -1224,6 +1233,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.44.0 | 2026-08-06 | Session 69 (Fortsetzung) — **Strang G2 GPU-Partikel UMGESETZT (⬜ Sichttest offen), Strang G damit KOMPLETT:** Chain-Node `gpuParticles` (RGBA32F-Ping-Pong pos+vel, hash-basierter Lebenslauf ohne Speicher, instanzierter Sprite-Draw max. 65536, Kraftfeld-GLSL + Parameter-Skripte), NEU `GpuParticlesWrapper.hpp` (GL-frei). FieldDocs/Inventar 88 Typen/756 Felder, 0 Lücken. `/bigobj` für test_ChainSerializer.cpp (C1128 Debug, Varianten-Wachstum). Sonde `gpuparticles_sonde.lvfx` + Render-Sichtbeweis (Fontäne). Tests 554 (+7), alle 3 Builds grün |
 | 1.43.0 | 2026-08-06 | **NEU ⚪ §7:** Effekt-Palette soll die ROLLE zeigen (Render vs. Transform — Typ-Icon neben Herkunfts-Icon oder Typ-Spalte, filterbar; Add-Dropdown evtl. ersetzen). Anlass: Mesh Warp alleine = schwarz. Ausarbeitung in eigener Session (Entscheid Patrik) |
 | 1.42.0 | 2026-08-06 | Session 69 (Fortsetzung) — **Strang G1 Mesh-Warp UMGESETZT (⬜ Sichttest offen):** Chain-Node `meshWarp` (Nutzer-GLSL `warp(uv)` je Gitter-Vertex, Gitter 2..256×192, Mix/Wrap, Parameter-Skripte), NEU `MeshWarpWrapper.hpp` (GL-frei) + `runMeshWarp` (transformPass-Muster, LINEAR nur je Draw + restauriert, Fehler ins geteilte `stError` → Apply-Poll), Palette „— GPU-Module —", FieldDocs/Inventar-Gates nachgezogen (87 Typen/735 Felder). **Entscheid Patrik: G1 VOR Vereinheitlichung V2** (Audio ad-hoc, Shadertoy-Muster; Plan-Doku 1.5.0). Sonde `meshwarp_sonde.lvfx` + Render-Sichtbeweis. Tests 547 (+9), alle 3 Builds grün |
 | 1.41.0 | 2026-08-05 | Session 69 — **§7 Editor-Komfort UMGESETZT (⚪→⬜ Sichttest offen):** Groß-Editor mit Apply (übernehmen + recompilen ohne Schließen; Fehler IM Dialog — EEL/HLSL synchrone Transpiler-Probe, Shadertoy-GL per Nach-Polling auf `shadertoyError`) + Beautify (NEU `include/scripting/ScriptFormatter.hpp`, pur: EEL-Statement-Umbruch mit Klammertiefen-Einzug, GLSL/HLSL-Brace-Re-Indent, Whitespace-only-Vertrag) + Settings-Tab „Editor" (Einzugsbreite, Operator-Abstände, Leerzeilen-Klemme; QSettings `editor/...`) + **Import…/Export… für Shader-Felder** (Nachwunsch: Datei ↔ Editor, Vorschlag `preset_name.modul.glsl`, Ordner-Gedächtnis). EelScriptEditing 1.1.0 (`ScriptEditorHooks`), alle 3 Editor-Stellen des Multi-Chain-Panels verdrahtet. Tests 538 (+26 ScriptFormatter), alle 3 Builds grün |

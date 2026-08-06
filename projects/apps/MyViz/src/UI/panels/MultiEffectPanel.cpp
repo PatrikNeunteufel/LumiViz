@@ -22,7 +22,8 @@
 #include "visualizers/multieffect/NodePresetStore.hpp"  // Voreinstellungen je Knoten
 #include "visualizers/multieffect/ShadertoyImport.hpp"  // URL-/ID-Import (Strang S3)
 #include "visualizers/multieffect/ShadertoyWrapper.hpp" // Starter-Shader (Strang S)
-#include "visualizers/multieffect/MeshWarpWrapper.hpp"  // Starter-Warp + Klemmen (G1)
+#include "visualizers/multieffect/MeshWarpWrapper.hpp"      // Starter-Warp + Klemmen (G1)
+#include "visualizers/multieffect/GpuParticlesWrapper.hpp"  // Starter-Kraftfeld + Klemmen (G2)
 #include "scripting/ScriptFormatter.hpp"                // Beautify-Kerne (S69)
 #include <EelTranspiler.hpp>                            // Apply-Syntaxprobe EEL (S69)
 #include <HlslTranspiler.hpp>                           // Apply-Syntaxprobe HLSL (S69)
@@ -277,12 +278,19 @@ const std::vector<EffectType>& effectPalette()
          },
          Origin::Native},
 
-        // Strang G1 (S69): GPU-Vertex-Warp, modernes Regelwerk
+        // Strang G (S69): GPU-Vertex-Arbeit, modernes Regelwerk
         {"— GPU-Module —", nullptr},
         {"Mesh Warp (GLSL)",
          [] {
              MeshWarpParams p;
              p.code = lumi::meshwarp::starterWarp();
+             return EffectParams{p};
+         },
+         Origin::Native},
+        {"GPU-Partikel (Instancing)",
+         [] {
+             GpuParticlesParams p;
+             p.forceCode = lumi::gpuparticles::starterForce();
              return EffectParams{p};
          },
          Origin::Native},
@@ -887,6 +895,55 @@ QString shadertoyReferenceHtml()
                "laufen NICHT auf shadertoy.com — für portable Shader nur die "
                "Audio-Textur benutzen.</p>")
         .arg(uniforms, audio);
+}
+
+/// Referenz des GPU-Partikel-Nodes (Strang G2, S69): kraft()-Vertrag +
+/// Uniforms + Determinismus-Notiz — die ⓘ-Seite des Kraftfeld-Editors.
+QString gpuParticlesReferenceHtml()
+{
+    auto table = [](const QString& rows) {
+        return QStringLiteral(
+                   "<table cellspacing='0' cellpadding='4' "
+                   "style='border-collapse:collapse'>"
+                   "<tr><th align='left'>Name</th><th align='left'>Typ</th>"
+                   "<th align='left'>Bedeutung</th></tr>%1</table>")
+            .arg(rows);
+    };
+    auto row = [](const char* n, const char* t, const char* m) {
+        return QStringLiteral("<tr><td><code>%1</code></td><td>%2</td><td>%3</td></tr>")
+            .arg(QLatin1String(n), QLatin1String(t), QLatin1String(m));
+    };
+    const QString uniforms = table(
+        row("uResolution", "vec2", "Chain-Auflösung in Pixeln") +
+        row("uTime", "float", "Sekunden seit Start (deterministische Sim-Uhr)") +
+        row("uDelta", "float", "Sekunden seit dem letzten Frame") +
+        row("bass, mid, treb", "float", "Band-Lautstärken (~0..1)") +
+        row("vol", "float", "Gesamt-Pegel") +
+        row("beat", "float", "Beat-Impuls (0/1)"));
+    return QStringLiteral(
+               "<h2>GPU-Partikel — vec2 kraft(vec2 pos, vec2 vel, float alter)</h2>"
+               "<p>RENDER-Modul (zeichnet auf das Chain-Bild): zehntausende "
+               "Partikel per Instancing — die moderne Antwort auf die "
+               "searchlight-Klasse. Das optionale GLSL-Kraftfeld liefert eine "
+               "ZUSATZ-Beschleunigung in UV/s² (zu Schwerkraft und Drag); "
+               "<code>pos</code>/<code>vel</code> in UV bzw. UV/s, "
+               "<code>alter</code> läuft 0..1 über die Lebensdauer. Leer = "
+               "nur Schwerkraft/Drag.</p>"
+               "<h3>Uniforms</h3>%1"
+               "<h3>Lebenslauf</h3>"
+               "<p>Alter und Respawn sind HASH-basiert ohne Speicher: jedes "
+               "Partikel hat feste Phase und Lebensdauer (±Streuung), am "
+               "Zyklusende startet es frisch am Spawn — mit neuer "
+               "Zufallsrichtung aus dem Hash des Zyklus. Mit der Sim-Uhr ist "
+               "der Lauf voll reproduzierbar (kein rand()).</p>"
+               "<h3>Regler</h3>"
+               "<p><b>Anzahl</b> baut den Zustand neu (frischer Start). "
+               "<b>Richtung/Fächer</b>: 0° = rechts, 90° = oben; Fächer 360° "
+               "= radial. <b>Drag</b> bremst exponentiell. Die "
+               "Parameter-Skripte (Init/Frame/Beat) können alle Bewegungs-"
+               "Regler je Frame rechnen (<code>spawnx</code>, "
+               "<code>speed</code>, <code>dir</code>, …).</p>")
+        .arg(uniforms);
 }
 
 /// Referenz des Mesh-Warp-Nodes (Strang G1, S69): warp()-Vertrag + Uniforms —
@@ -4753,6 +4810,126 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addScript("beatCode", tr("Beat"), p->beatCode,
                   [](ChainNode& n, std::string v) {
                       std::get<MeshWarpParams>(n.params).beatCode = std::move(v);
+                  });
+    }
+    else if (auto* p = std::get_if<GpuParticlesParams>(&params))
+    {
+        // GPU-Partikel-Node (Strang G2, S69): Render-Modul, zeichnet aufs
+        // Chain-Bild. Kompilierfehler wie Mesh-Warp über das geteilte
+        // stError-Feld (shadertoyError + Apply-Poll).
+        uint64_t gpNodeId = 0;
+        {
+            QMutexLocker lock(m_mutex);
+            if (ChainNode* n = nodeAtPath(path)) gpNodeId = n->nodeId;
+        }
+        const std::string gpErr =
+            m_host != nullptr ? m_host->shadertoyError(gpNodeId) : std::string();
+        if (!gpErr.empty())
+        {
+            auto* err = new QLabel(
+                tr("⚠ Kompilierfehler:\n%1")
+                    .arg(QString::fromStdString(gpErr).left(600)),
+                m_propContainer);
+            err->setWordWrap(true);
+            err->setStyleSheet(QStringLiteral("color:#d08080"));
+            form->addRow(err);
+        }
+
+        addInt("count", tr("Anzahl"), p->count, lumi::gpuparticles::kMinCount,
+               lumi::gpuparticles::kMaxCount, [](ChainNode& n, int v) {
+                   std::get<GpuParticlesParams>(n.params).count = v;
+               });
+        addDouble("spawnX", tr("Spawn X"), p->spawnX, 0.0, 1.0, 0.01,
+                  [](ChainNode& n, double v) {
+                      std::get<GpuParticlesParams>(n.params).spawnX = v;
+                  });
+        addDouble("spawnY", tr("Spawn Y"), p->spawnY, 0.0, 1.0, 0.01,
+                  [](ChainNode& n, double v) {
+                      std::get<GpuParticlesParams>(n.params).spawnY = v;
+                  });
+        addDouble("spawnSpread", tr("Spawn-Streuung"), p->spawnSpread, 0.0, 1.0,
+                  0.005, [](ChainNode& n, double v) {
+                      std::get<GpuParticlesParams>(n.params).spawnSpread = v;
+                  });
+        addDouble("speed", tr("Tempo (UV/s)"), p->speed, 0.0, 5.0, 0.01,
+                  [](ChainNode& n, double v) {
+                      std::get<GpuParticlesParams>(n.params).speed = v;
+                  });
+        addDouble("direction", tr("Richtung (°)"), p->direction, -360.0, 360.0,
+                  1.0, [](ChainNode& n, double v) {
+                      std::get<GpuParticlesParams>(n.params).direction = v;
+                  });
+        addDouble("fan", tr("Fächer (°)"), p->fan, 0.0, 360.0, 1.0,
+                  [](ChainNode& n, double v) {
+                      std::get<GpuParticlesParams>(n.params).fan = v;
+                  });
+        addDouble("gravityX", tr("Schwerkraft X"), p->gravityX, -5.0, 5.0, 0.01,
+                  [](ChainNode& n, double v) {
+                      std::get<GpuParticlesParams>(n.params).gravityX = v;
+                  });
+        addDouble("gravityY", tr("Schwerkraft Y"), p->gravityY, -5.0, 5.0, 0.01,
+                  [](ChainNode& n, double v) {
+                      std::get<GpuParticlesParams>(n.params).gravityY = v;
+                  });
+        addDouble("drag", tr("Drag (1/s)"), p->drag, 0.0, 10.0, 0.05,
+                  [](ChainNode& n, double v) {
+                      std::get<GpuParticlesParams>(n.params).drag = v;
+                  });
+        addDouble("lifeSeconds", tr("Lebensdauer (s)"), p->lifeSeconds, 0.1, 30.0,
+                  0.1, [](ChainNode& n, double v) {
+                      std::get<GpuParticlesParams>(n.params).lifeSeconds = v;
+                  });
+        addDouble("lifeJitter", tr("Lebensdauer-Streuung"), p->lifeJitter, 0.0,
+                  1.0, 0.05, [](ChainNode& n, double v) {
+                      std::get<GpuParticlesParams>(n.params).lifeJitter = v;
+                  });
+        addDouble("sizePx", tr("Größe (px)"), p->sizePx, 0.5, 128.0, 0.5,
+                  [](ChainNode& n, double v) {
+                      std::get<GpuParticlesParams>(n.params).sizePx = v;
+                  });
+        addDouble("sizeEndFactor", tr("End-Größenfaktor"), p->sizeEndFactor, 0.0,
+                  4.0, 0.05, [](ChainNode& n, double v) {
+                      std::get<GpuParticlesParams>(n.params).sizeEndFactor = v;
+                  });
+        addColor("colorStart", tr("Farbe Spawn"), p->colorStart,
+                 [](ChainNode& n, uint32_t v) {
+                     std::get<GpuParticlesParams>(n.params).colorStart = v;
+                 });
+        addColor("colorEnd", tr("Farbe Ende"), p->colorEnd,
+                 [](ChainNode& n, uint32_t v) {
+                     std::get<GpuParticlesParams>(n.params).colorEnd = v;
+                 });
+        addBool("additive", tr("Additiv (Glow)"), p->additive,
+                [](ChainNode& n, bool v) {
+                    std::get<GpuParticlesParams>(n.params).additive = v;
+                });
+        const QString gpExportBase = !nodeName.empty()
+                                         ? QString::fromStdString(nodeName)
+                                         : QStringLiteral("particles");
+        addCodeEditor(
+            tr("Kraftfeld (GLSL, optional)"), p->forceCode,
+            tr("vec2 kraft(vec2 pos, vec2 vel, float alter) { return vec2(0.0); }"),
+            gpuParticlesReferenceHtml(),
+            tr("Zusatz-Beschleunigung je Partikel in UV/s² (zu Schwerkraft "
+               "und Drag). ⓘ zeigt den Vertrag und die Uniforms; ⤢ öffnet "
+               "den großen Editor. Leer = keine Zusatzkraft."),
+            120,
+            lumi::scriptedit::shaderExportName(gpExportBase,
+                                               QStringLiteral("kraft")),
+            [](ChainNode& n, std::string v) {
+                std::get<GpuParticlesParams>(n.params).forceCode = std::move(v);
+            });
+        addScript("initCode", tr("Init"), p->initCode,
+                  [](ChainNode& n, std::string v) {
+                      std::get<GpuParticlesParams>(n.params).initCode = std::move(v);
+                  });
+        addScript("frameCode", tr("Frame"), p->frameCode,
+                  [](ChainNode& n, std::string v) {
+                      std::get<GpuParticlesParams>(n.params).frameCode = std::move(v);
+                  });
+        addScript("beatCode", tr("Beat"), p->beatCode,
+                  [](ChainNode& n, std::string v) {
+                      std::get<GpuParticlesParams>(n.params).beatCode = std::move(v);
                   });
     }
     else if (auto* p = std::get_if<DebugBarsParams>(&params))

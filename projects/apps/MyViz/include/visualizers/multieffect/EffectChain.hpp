@@ -2268,6 +2268,61 @@ struct MeshWarpParams
 };
 
 /**
+ * GPU-Partikel-Node (Strang G2, `Regelwerk_und_Neue_Module_Plan.md` §G — S69):
+ * die moderne Antwort auf die searchlight-Klasse — zehntausende Partikel per
+ * Instancing statt 800×16-gmegabuf-Schleifen. Zustand (pos+vel) lebt als ein
+ * RGBA32F-Texel je Partikel im Ping-Pong (GpuParticlesWrapper.hpp); Alter/
+ * Respawn sind hash-basiert OHNE Speicher (deterministisch mit der Sim-Uhr).
+ * RENDER-Modul: zeichnet auf das Chain-Bild (Audio ad-hoc als Uniforms,
+ * Shadertoy-Muster — Entscheid Patrik S69: Strang G vor Vereinheitlichung V2).
+ */
+struct GpuParticlesParams
+{
+    /// Partikel-Anzahl 1..65536 — GPU-seitig, hohe Werte kosten wenig; Änderung baut den Zustand neu auf (frischer Start)
+    int count = 4096;
+    /// Spawn-Zentrum X 0..1 (0 = links)
+    double spawnX = 0.5;
+    /// Spawn-Zentrum Y 0..1 (0 = unten)
+    double spawnY = 0.35;
+    /// Spawn-Streuradius in UV (0 = Punktquelle)
+    double spawnSpread = 0.03;
+    /// Start-Tempo in UV/s (je Partikel 0.6..1.4-fach gestreut)
+    double speed = 0.25;
+    /// Start-Richtung in Grad (0 = rechts, 90 = oben)
+    double direction = 90.0;
+    /// Fächer-/Streuwinkel in Grad um die Richtung (360 = radial in alle Richtungen)
+    double fan = 360.0;
+    /// Schwerkraft X in UV/s²
+    double gravityX = 0.0;
+    /// Schwerkraft Y in UV/s² (negativ = fällt nach unten)
+    double gravityY = -0.15;
+    /// Luftwiderstand 1/s (0 = keiner; bremst die Geschwindigkeit exponentiell)
+    double drag = 0.6;
+    /// Lebensdauer in Sekunden (Basis; danach Respawn am Spawn-Punkt)
+    double lifeSeconds = 2.5;
+    /// Lebensdauer-Streuung 0..1 (0.35 = ±35 % je Partikel, hash-fest)
+    double lifeJitter = 0.35;
+    /// Sprite-Größe in Pixeln (beim Spawn)
+    double sizePx = 6.0;
+    /// Größen-Faktor am Lebensende (1 = konstant, <1 schrumpft)
+    double sizeEndFactor = 0.4;
+    /// Farbe beim Spawn 0x00RRGGBB
+    uint32_t colorStart = 0xFFD080;
+    /// Farbe am Lebensende 0x00RRGGBB (Verlauf übers Alter)
+    uint32_t colorEnd = 0x4020C0;
+    /// Additiv zeichnen (Glow-Look) statt Alpha-Mischung
+    bool additive = true;
+    /// GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag
+    std::string forceCode;
+    /// Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    /// Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string frameCode;
+    /// Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string beatCode;
+};
+
+/**
  * Umgang mit dem GEERBTEN Feedback-Bild beim .milk→.milk-Wechsel im Host
  * (S66). Das Original loescht den Hauptpuffer beim Preset-Wechsel nie —
  * chaotische Feedback-Presets kippen deshalb je nach Vorgaenger in andere
@@ -2376,7 +2431,8 @@ using EffectParams =
                  HostGroupParams, TextParams, AviParams, CommentParams,
                  ImportNotesParams, RenderScaleParams, BloomParams, Camera3DParams,
                  SuperScope3DParams, Terrain3DParams, GlowOrbsParams,
-                 ShadertoyParams, MeshWarpParams, PassthroughParams>;
+                 ShadertoyParams, MeshWarpParams, GpuParticlesParams,
+                 PassthroughParams>;
 
 // =============================================================================
 // Chain node
@@ -2535,6 +2591,7 @@ struct CompileResult
         const char* operator()(const GlowOrbsParams&) const { return "Glow Orbs"; }
         const char* operator()(const ShadertoyParams&) const { return "Shadertoy"; }
         const char* operator()(const MeshWarpParams&) const { return "Mesh Warp"; }
+        const char* operator()(const GpuParticlesParams&) const { return "GPU Particles"; }
         const char* operator()(const PassthroughParams&) const { return "Passthrough"; }
     };
     return std::visit(Visitor{}, params);

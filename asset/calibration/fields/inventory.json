@@ -1,8 +1,8 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 735,
-        "typen": 87
+        "felder": 756,
+        "typen": 88
     },
     "typen": [
         {
@@ -1908,6 +1908,117 @@
             ],
             "name": "Glow Orbs",
             "typkey": "glowOrbs"
+        },
+        {
+            "felder": [
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "additive"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4202688,
+                    "name": "colorEnd"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16765056,
+                    "name": "colorStart"
+                },
+                {
+                    "art": "zahl",
+                    "default": 4096,
+                    "name": "count"
+                },
+                {
+                    "art": "zahl",
+                    "default": 90,
+                    "name": "direction"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.6,
+                    "name": "drag"
+                },
+                {
+                    "art": "zahl",
+                    "default": 360,
+                    "name": "fan"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "forceCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "gravityX"
+                },
+                {
+                    "art": "zahl",
+                    "default": -0.15,
+                    "name": "gravityY"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.35,
+                    "name": "lifeJitter"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2.5,
+                    "name": "lifeSeconds"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.4,
+                    "name": "sizeEndFactor"
+                },
+                {
+                    "art": "zahl",
+                    "default": 6,
+                    "name": "sizePx"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.03,
+                    "name": "spawnSpread"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.5,
+                    "name": "spawnX"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.35,
+                    "name": "spawnY"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.25,
+                    "name": "speed"
+                }
+            ],
+            "name": "GPU Particles",
+            "typkey": "gpuParticles"
         },
         {
             "felder": [

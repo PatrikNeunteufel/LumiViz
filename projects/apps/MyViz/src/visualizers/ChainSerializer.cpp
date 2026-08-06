@@ -13,7 +13,8 @@
 
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/milkdrop/MilkdropTextureResolve.hpp"
-#include "visualizers/multieffect/MeshWarpWrapper.hpp"  // Gitter-Klemmen (G1, S69)
+#include "visualizers/multieffect/MeshWarpWrapper.hpp"      // Gitter-Klemmen (G1, S69)
+#include "visualizers/multieffect/GpuParticlesWrapper.hpp"  // Partikel-Klemmen (G2, S69)
 
 #include <QFile>
 #include <QJsonArray>
@@ -1173,6 +1174,30 @@ struct WriteVisitor
         o["gridY"] = p.gridY;
         o["mixAmount"] = p.mixAmount;
         o["wrapUv"] = p.wrapUv;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
+    void operator()(const GpuParticlesParams& p) const
+    {
+        o["count"] = p.count;
+        o["spawnX"] = p.spawnX;
+        o["spawnY"] = p.spawnY;
+        o["spawnSpread"] = p.spawnSpread;
+        o["speed"] = p.speed;
+        o["direction"] = p.direction;
+        o["fan"] = p.fan;
+        o["gravityX"] = p.gravityX;
+        o["gravityY"] = p.gravityY;
+        o["drag"] = p.drag;
+        o["lifeSeconds"] = p.lifeSeconds;
+        o["lifeJitter"] = p.lifeJitter;
+        o["sizePx"] = p.sizePx;
+        o["sizeEndFactor"] = p.sizeEndFactor;
+        o["colorStart"] = static_cast<double>(p.colorStart);
+        o["colorEnd"] = static_cast<double>(p.colorEnd);
+        o["additive"] = p.additive;
+        o["forceCode"] = QString::fromStdString(p.forceCode);
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
@@ -2489,6 +2514,34 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.license = getStr(o, "license", p.license);
         return p;
     }
+    if (type == "gpuParticles")
+    {
+        GpuParticlesParams p;
+        p.count = std::clamp(getInt(o, "count", p.count),
+                             lumi::gpuparticles::kMinCount,
+                             lumi::gpuparticles::kMaxCount);
+        p.spawnX = getDouble(o, "spawnX", p.spawnX);
+        p.spawnY = getDouble(o, "spawnY", p.spawnY);
+        p.spawnSpread = getDouble(o, "spawnSpread", p.spawnSpread);
+        p.speed = getDouble(o, "speed", p.speed);
+        p.direction = getDouble(o, "direction", p.direction);
+        p.fan = getDouble(o, "fan", p.fan);
+        p.gravityX = getDouble(o, "gravityX", p.gravityX);
+        p.gravityY = getDouble(o, "gravityY", p.gravityY);
+        p.drag = getDouble(o, "drag", p.drag);
+        p.lifeSeconds = getDouble(o, "lifeSeconds", p.lifeSeconds);
+        p.lifeJitter = std::clamp(getDouble(o, "lifeJitter", p.lifeJitter), 0.0, 1.0);
+        p.sizePx = getDouble(o, "sizePx", p.sizePx);
+        p.sizeEndFactor = getDouble(o, "sizeEndFactor", p.sizeEndFactor);
+        p.colorStart = getColor(o, "colorStart", p.colorStart);
+        p.colorEnd = getColor(o, "colorEnd", p.colorEnd);
+        p.additive = getBool(o, "additive", p.additive);
+        p.forceCode = getStr(o, "forceCode", p.forceCode);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        return p;
+    }
     if (type == "meshWarp")
     {
         MeshWarpParams p;
@@ -2600,6 +2653,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const MilkdropNodeParams&) const { return "milkdrop"; }
         QString operator()(const ShadertoyParams&) const { return "shadertoy"; }
         QString operator()(const MeshWarpParams&) const { return "meshWarp"; }
+        QString operator()(const GpuParticlesParams&) const { return "gpuParticles"; }
         QString operator()(const PassthroughParams&) const { return "passthrough"; }
     };
     return std::visit(Visitor{}, params);
