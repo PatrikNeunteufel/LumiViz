@@ -1218,6 +1218,14 @@ struct WriteVisitor
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
     }
+    void operator()(const PixelFilterParams& p) const
+    {
+        o["code"] = QString::fromStdString(p.code);
+        o["mixAmount"] = p.mixAmount;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
     void operator()(const PassthroughParams& p) const
     {
         o["sourceId"] = p.sourceId;
@@ -2593,6 +2601,16 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
+    if (type == "pixelFilter")
+    {
+        PixelFilterParams p;
+        p.code = getStr(o, "code", p.code);
+        p.mixAmount = std::clamp(getDouble(o, "mixAmount", p.mixAmount), 0.0, 1.0);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        return p;
+    }
     // "passthrough" and any unknown key
     return PassthroughParams{getInt(o, "sourceId", 0), getStr(o, "note")};
 }
@@ -2691,6 +2709,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const MeshWarpParams&) const { return "meshWarp"; }
         QString operator()(const GpuParticlesParams&) const { return "gpuParticles"; }
         QString operator()(const VideoSourceParams&) const { return "videoSource"; }
+        QString operator()(const PixelFilterParams&) const { return "pixelFilter"; }
         QString operator()(const PassthroughParams&) const { return "passthrough"; }
     };
     return std::visit(Visitor{}, params);

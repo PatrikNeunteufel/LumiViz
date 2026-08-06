@@ -1,0 +1,92 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "blendIn": 0,
+                "blendOut": 10,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "beatCode": "",
+                        "blend": 0,
+                        "cameraId": "\\\\?\\usb#vid_3277&pid_0018&mi_00#7&cce78d1&0&0000#{e5323777-f976-4f5b-9b55-b94699c46e44}\\global",
+                        "enabled": true,
+                        "filePath": "",
+                        "fit": 0,
+                        "frameCode": "",
+                        "initCode": "",
+                        "loop": true,
+                        "name": "Video Source",
+                        "opacity": 1,
+                        "recordingName": "",
+                        "source": 1,
+                        "speed": 1,
+                        "streaming": false,
+                        "type": "videoSource"
+                    },
+                    {
+                        "beatCode": "",
+                        "code": "// Bleistift-Skizze (XDoG-Idee): Difference-of-Gaussians auf der Helligkeit\n// als weicher Strich, Papierkorn aus einem Positions-Hash (deterministisch).\nfloat lum(vec2 p) { return dot(texture(uTex, p).rgb, vec3(0.299, 0.587, 0.114)); }\nfloat blur(vec2 uv, float r)\n{\n    vec2 px = r / uResolution;\n    float s = lum(uv) * 4.0;\n    s += lum(uv + vec2(px.x, 0.0)) * 2.0 + lum(uv - vec2(px.x, 0.0)) * 2.0;\n    s += lum(uv + vec2(0.0, px.y)) * 2.0 + lum(uv - vec2(0.0, px.y)) * 2.0;\n    s += lum(uv + px) + lum(uv - px) + lum(uv + vec2(px.x, -px.y)) + lum(uv + vec2(-px.x, px.y));\n    return s / 16.0;\n}\nvec4 farbe(vec2 uv, vec4 src)\n{\n    float fein = blur(uv, 1.0);\n    float grob = blur(uv, 2.5);\n    float dog = fein - grob;\n    float strich = 1.0 - smoothstep(0.0, 0.012 + 0.01 * bass, dog);\n    float schatten = smoothstep(0.75, 0.15, fein) * 0.35;\n    float korn = fract(sin(dot(floor(uv * uResolution * 0.5), vec2(12.9898, 78.233))) * 43758.5453);\n    vec3 papier = vec3(0.96, 0.95, 0.91) - korn * 0.03;\n    vec3 grafit = vec3(0.22, 0.22, 0.26);\n    return vec4(mix(papier, grafit, clamp(strich * 0.85 + schatten, 0.0, 1.0)), 1.0);\n}\n",
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "mixAmount": 1,
+                        "name": "Pixel Filter",
+                        "type": "pixelFilter"
+                    },
+                    {
+                        "enabled": true,
+                        "name": "Invert",
+                        "type": "invert"
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "beatCode": "s=1.12",
+                "blend": false,
+                "enabled": true,
+                "frameCode": "t=t+0.08",
+                "initCode": "t=0",
+                "name": "Dynamic Distance Modifier",
+                "pixelCode": "d=d*(1+0.12*sin(t))",
+                "subpixel": true,
+                "type": "dynamicDistanceModifier"
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

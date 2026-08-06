@@ -1,6 +1,6 @@
 # MyViz — Benutzerhandbuch
 
-> **Version:** 1.7.0
+> **Version:** 1.8.0
 > **Datum:** 2026-08-06
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -30,6 +30,7 @@ Konfigurations-Panels steht im
 11. [Effektketten, Milkdrop & Host-Gruppen](#11-effektketten-milkdrop--host-gruppen)
 12. [Shadertoy](#12-shadertoy)
 13. [Video & Kamera als Quelle](#13-video--kamera-als-quelle)
+14. [Stilfilter (Pixel Filter)](#14-stilfilter-pixel-filter)
 
 ---
 
@@ -555,10 +556,42 @@ Aufnahme-Klick erteilt zugleich die Kamera-Freigabe des App-Laufs.
 
 ---
 
+## 14. Stilfilter (Pixel Filter)
+
+Seit Session 70 gibt es den Ketten-Knoten **„Pixel Filter (GLSL)"**
+(Palette, Rubrik „GPU-Module"): ein frei skriptbarer Stilfilter, der je
+Pixel über das Ketten-Bild läuft — und damit auf **jede** Quelle wirkt:
+Video, Kamera, Scopes, MilkDrop, Shadertoy.
+
+- **Eigene Filter schreiben:** eine GLSL-Funktion
+  `vec4 farbe(vec2 uv, vec4 src)` liefert die neue Farbe (`src` =
+  Quellpixel; Nachbarn über `texture(uTex, …)` — so entstehen Kantenzüge).
+  Der Audio-Satz (`bass`, `mid`, `treb`, `vol`, `beat`) steht als Uniforms
+  bereit. Groß-Editor, Apply und ⓘ-Referenz wie bei Shadertoy.
+  (*Warum „farbe"? `filter` ist in GLSL ein reserviertes Wort.*)
+- **Werks-Looks:** 12 Voreinstellungen liegen bei — **Take-On-Me-Comic**
+  (der a-ha-Rotoskopie-Look: Tusche-Konturen, Papier, beat-zitternde
+  Schraffur), Bleistift-Skizze, Posterize, Zeitungsdruck, CRT, VHS,
+  Kuwahara-Ölbild, Sepia, Noir-Schwarzweiß, Wärmebild, Pixel-Art,
+  Duotone-Neon. Laden über die Zeile „Voreinstellung"; eigene Filter
+  speichert **„Save as…"** in dieselbe Sammlung.
+- **Filter stapeln:** mehrere Filter = mehrere Knoten hintereinander —
+  umsortieren, ein-/ausschalten und gruppieren wie jeden anderen Knoten.
+  Ein Knoten ist genau EIN Render-Pass; Looks mit echtem Multipass
+  (Blur-Pyramiden) baut man im Shadertoy-Knoten mit Buffer A–D.
+- **Mix-Regler:** blendet zwischen Original und Filter (per Skript
+  `mixamount` auch audio-gesteuert — z. B. Comic nur auf dem Beat).
+- **Klassiker-Kombi:** Video-/Kamera-Quelle (§13) + Take-On-Me-Comic =
+  das Musikvideo-Gefühl live; Demo: `asset/examples/pixelFilter -
+  Take-On-Me.lvfx`.
+
+---
+
 ## Changelog
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.8.0 | 2026-08-06 | NEU §14 „Stilfilter (Pixel Filter)" (S70): skriptbarer Pixel-Filter (farbe()-Vertrag, Mix, Stapeln als Knoten) + 12 Werks-Looks inkl. Take-On-Me-Comic |
 | 1.7.0 | 2026-08-06 | NEU §13 „Video & Kamera als Quelle" (S70): videoSource-Knoten (Datei/Kamera/Testaufnahme, Streaming vs. Frame-Schritt, Einpassung, Blend/Deckkraft, Parameter-Skripte) + Settings-Tab „Kamera" mit Testaufnahmen |
 | 1.6.0 | 2026-08-04 | §11: neue Einstellung „MilkDrop Start Fade-in" (Sicht-Blende, S67) — halbe Sekunde Schwarz-Einblendung über der Rausch-Saat bei App-Start/Größenwechsel/Löschen; Vorgabe an |
 | 1.5.1 | 2026-08-03 | §11: fünfte Option „Ausblenden (über Zeit)" (Erbe stirbt über die Dauer weg), Fading als „einmaliger Mix" präzisiert, Hinweis „Löschen ≠ Schwarz" (Rausch-Saat) |

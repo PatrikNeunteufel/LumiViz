@@ -61,7 +61,7 @@ das Verzeichnis bei jedem Öffnen des Editors neu. Am einfachsten entsteht so ei
 Datei in der App selbst (**Speichern unter…** in der Zeile „Voreinstellung"); danach
 aus dem Benutzerordner hierher kopieren.
 
-## Katalog der mitgelieferten Voreinstellungen (Stand S61)
+## Katalog der mitgelieferten Voreinstellungen (Stand S70)
 
 Alle Einträge sind **Teil-Presets**: sie setzen nur die Felder, die den Charakter
 ausmachen — Farbtafeln, Blends und alles Übrige bleiben beim Nutzer, sofern nicht
@@ -159,6 +159,46 @@ ausdrücklich Teil der Vorlage.
 | `customBpm` | Halbes Tempo | lässt jeden zweiten Beat durch |
 | | Viertel-Beat | lässt jeden vierten Beat durch |
 | | Metronom 500ms | fester Kunst-Beat alle 500 ms (unabhängig vom Audio) |
+| `meshWarp` (GPU-Module S69) | Bass-Swirl | Drehung um die Mitte, Bass verstärkt — der Palette-Starter als Vorlage |
+| | Tunnel-Sog | dauerhafter Sog zur Mitte mit Rotations-Drall (Feedback-Tunnel) |
+| | Wellengang | laufende Sinus-Wellen quer durchs Bild (Waveform-Wasser) |
+| | Fischaugen-Atmung | Fischaugen-Wölbung, die mit der Zeit/dem Bass atmet |
+| | Spiegelkabinett | Kaleido-Faltung der UV — Inhalt gehört zentriert (Stimm-Befund S69) |
+| `gpuParticles` (GPU-Module S69) | Fontaene | klassische Partikel-Fontäne (Schwerkraft + Fächer) |
+| | Funkenregen | fallende Funken über die Bildbreite |
+| | Bass-Explosion | radiale Explosion, vom Bass gezündet |
+| | Nebel-Drift | große, langsame, halbtransparente Partikel |
+| | Wirbelsturm | Kraftfeld-Wirbel um die Mitte (kraft()-GLSL) |
+| `list` (Batch 1, S69) | Beat-Gate | Liste nur im Beat-Fenster aktiv (Slot-Akkumulator statt `time`) |
+| | Bass-Blende | Listen-Blend folgt dem Bass |
+| | Puls-Layer | Layer pulst periodisch über den eigenen Akkumulator |
+| | AB-Wechsler | Liste schaltet je Beat ein/aus — zwei versetzte Kopien ergeben den A/B-Wechsel |
+| `brightness` | Bass-Boost | Helligkeit folgt dem Bass |
+| | Kanal-Atmung | R/G/B atmen phasenversetzt |
+| `colorfade` | Beat-Blitz | Fader zündet je Beat und klingt ab |
+| | Farbdrift | langsame Dauerdrift der Farbkanäle |
+| `colorModifier` | Kontrast-Pump | Kontrast pumpt mit dem Bass (Level-Code, recompute) |
+| | Gamma-Atmung | Gamma atmet langsam über die Zeit |
+| `mosaic` | Beat-Kachel | Kachelgröße springt je Beat und federt zurück |
+| `channelShift` | Beat-Rotation | Kanal-Rotation schaltet je Beat weiter |
+| `colorClip` | Bass-Fresser | Clip-Distanz folgt dem Bass |
+| `multiFilter` | Chrome-Beat | Chrome-Filter je Beat |
+| `addBorders` | Puls-Rahmen | Rahmenbreite pulst mit dem Bass (weißer Rahmen) |
+| `onBeatClear` | Vierer-Reset | löscht jeden vierten Beat |
+| `clear` | Nachtblau-Schleier | halbtransparentes Tiefblau je Frame (weicher Trail-Deckel) |
+| `bufferSave` | Echo-Speicher | Speichern/Wiederherstellen im Wechsel (dir 2, Slot 0) — Echo-Baustein |
+| `pixelFilter` (Stilfilter S70) | Take-On-Me-Comic | Bleistift-Rotoskopie à la a-ha: Sobel-Kantenzug, Papier/Tinte, Beat-zitternde Schraffur |
+| | Bleistift-Skizze | XDoG-Strich (Difference-of-Gaussians) + Papierkorn |
+| | Posterize-PopArt | kräftige Sättigung, wenige Farbstufen — Stufenzahl atmet mit dem Bass |
+| | Zeitungsdruck-Halftone | Halftone-Punkte auf 45°-Raster, Punktgröße = Dunkelheit |
+| | CRT-Monitor | Tonnen-Verzerrung, Scanlines, RGB-Lochmaske, Vignette |
+| | VHS-Band | Chroma-Versatz, Zeilen-Zittern, wanderndes Störband — Beat verstärkt den Glitch |
+| | Kuwahara-Oelbild | Varianz-ärmster 3×3-Quadrant gewinnt — malerische Flächen, stehende Kanten |
+| | Sepia-Nostalgie | Sepia-Matrix + Vignette + Korn + Projektor-Flackern |
+| | Noir-Schwarzweiss | harte Kontrastkurve, Korn, Vignette — Bass drückt den Kontrast |
+| | Waermebild | Helligkeit auf Thermal-Palette (blau→grün→gelb→rot→weiß), Pegel hebt die Temperatur |
+| | Pixel-Art | grobe Blöcke + reduzierte Palette, Blockgröße pulsiert mit dem Beat |
+| | Duotone-Neon | Helligkeit auf zwei driftende Neonfarben, Höhen hellen die Lichter |
 | `dynamicMovement` (Import-Ernte S61) | Galaxien-Drall | Beat-getriebener Spiralen-Twist (aus „UnConeD — Milkyway") |
 | | Wandernde Linse | horizontale Zerr-Linse, Ziel wandert je Beat (aus „amphirion — nebulous, skupers remix") |
 | | Beat-Richtungsdrift | konstanter Drift, Richtung würfelt je Beat (aus „L1quid — Take the Veil") |

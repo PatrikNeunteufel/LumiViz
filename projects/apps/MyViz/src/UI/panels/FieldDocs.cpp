@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     769>
+                     774>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
@@ -1114,6 +1114,16 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "base64 of the raw image (\"\" = unresolved)"},
     {"pictureII.initCode",
      "Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
+    {"pixelFilter.beatCode",
+     "Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
+    {"pixelFilter.code",
+     "GLSL: definiert `vec4 farbe(vec2 uv, vec4 src)` (uv 0..1, src = Quellpixel; Nachbarn via texture(uTex, ...); `filter` ist in GLSL reserviert). Uniforms: uTime, uDelta, uFrame, uResolution, bass, mid, treb, vol, beat. Leer = Identit\303\244t (Passthrough)"},
+    {"pixelFilter.frameCode",
+     "Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
+    {"pixelFilter.initCode",
+     "Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
+    {"pixelFilter.mixAmount",
+     "Anteil des gefilterten Bilds 0..1 (1 = ersetzen; darunter Mix mit dem Original)"},
     {"reactionDiffusion.beatCode",
      "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz \342\200\224 damit wandert das Muster im Betrieb. Leer = kein Skript."},
     {"reactionDiffusion.blend",

@@ -1,0 +1,27 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "shadertoy",
+                "name": "Tanzende Formen",
+                "description": "Demo-Szene (S70): weiche Blobs tanzen zur Musik, ein Waveform-Band laeuft unten durch - bewusst runde, klare Formen, damit der Comic-Filter kraeftige Konturen findet.",
+                "imageInput": [0, -1, -1, -1],
+                "blend": 0,
+                "code": "// Take-On-Me-Demo (S70): Blob-Tanz + Waveform-Band. Die Szene ist bewusst\n// HELL (Papier-Helligkeit) mit harten Blob-Kanten - so schraffiert der\n// Comic-Filter nur die Formen und zieht kraeftige Konturen (Stimm-Befund).\nfloat blob(vec2 uv, vec2 m, float r)\n{\n    return smoothstep(r, r * 0.92, length(uv - m));\n}\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = fragCoord / iResolution.xy;\n    vec2 asp = vec2(iResolution.x / iResolution.y, 1.0);\n    vec2 p = uv * asp;\n    vec3 farbe = vec3(0.78, 0.80, 0.86) - 0.06 * uv.y;\n    float t = iTime;\n    float b1 = blob(p, vec2(0.5 + 0.28 * cos(t * 0.8), 0.55 + 0.18 * sin(t * 1.1)) * asp, 0.16 + 0.10 * bass);\n    float b2 = blob(p, vec2(0.5 + 0.30 * cos(t * 0.6 + 2.1), 0.45 + 0.22 * sin(t * 0.9 + 1.3)) * asp, 0.12 + 0.08 * mid);\n    float b3 = blob(p, vec2(0.5 + 0.22 * cos(t * 1.3 + 4.2), 0.60 + 0.16 * sin(t * 0.7 + 3.7)) * asp, 0.09 + 0.07 * treb);\n    farbe = mix(farbe, vec3(0.55, 0.30, 0.30), b1);\n    farbe = mix(farbe, vec3(0.35, 0.45, 0.60), b2);\n    farbe = mix(farbe, vec3(0.65, 0.55, 0.35), b3);\n    float welle = texture(iChannel0, vec2(uv.x, 0.75)).x * 2.0 - 1.0;\n    float band = smoothstep(0.02, 0.008, abs(uv.y - 0.16 - welle * 0.09));\n    farbe = mix(farbe, vec3(0.20, 0.20, 0.28), band);\n    fragColor = vec4(farbe, 1.0);\n}\n"
+            },
+            {
+                "type": "pixelFilter",
+                "name": "Take-On-Me-Comic",
+                "description": "Die Werks-Voreinstellung Take-On-Me-Comic: Sobel-Kantenzug, Papier/Tinte, Beat-zitternde Schraffur - der a-ha-Rotoskopie-Look ueber der ganzen Szene.",
+                "mixAmount": 1.0,
+                "code": "// Take-On-Me-Comic (a-ha): Bleistift-Rotoskopie — Sobel-Kantenzug,\n// Papier/Tinte, Schraffur in dunklen Flaechen. Die Schraffur-Phase zittert\n// alle paar Frames (Rotoskopie-Wackeln), der Beat gibt einen Extra-Ruck.\nfloat lum(vec2 p) { return dot(texture(uTex, p).rgb, vec3(0.299, 0.587, 0.114)); }\nvec4 farbe(vec2 uv, vec4 src)\n{\n    vec2 px = 1.0 / uResolution;\n    float tl = lum(uv + px * vec2(-1.0,  1.0));\n    float tt = lum(uv + px * vec2( 0.0,  1.0));\n    float tr = lum(uv + px * vec2( 1.0,  1.0));\n    float ll = lum(uv + px * vec2(-1.0,  0.0));\n    float rr = lum(uv + px * vec2( 1.0,  0.0));\n    float bl = lum(uv + px * vec2(-1.0, -1.0));\n    float bb = lum(uv + px * vec2( 0.0, -1.0));\n    float br = lum(uv + px * vec2( 1.0, -1.0));\n    float gx = tr + 2.0 * rr + br - tl - 2.0 * ll - bl;\n    float gy = tl + 2.0 * tt + tr - bl - 2.0 * bb - br;\n    float kante = smoothstep(0.18, 0.45, length(vec2(gx, gy)));\n    float hell = dot(src.rgb, vec3(0.299, 0.587, 0.114));\n    float phase = fract(sin(floor(float(uFrame) / 3.0) * 12.9898) * 43758.5453);\n    phase += beat * 0.5;\n    float welle = sin((uv.x + uv.y) * uResolution.y * 0.35 + phase * 6.2832);\n    float linie = smoothstep(0.15, -0.15, welle);\n    float dunkel = smoothstep(0.60, 0.15, hell);\n    vec3 papier = vec3(0.94, 0.92, 0.87);\n    vec3 tinte = vec3(0.10, 0.09, 0.12);\n    float deckung = clamp(kante + linie * dunkel * 0.75, 0.0, 1.0);\n    return vec4(mix(papier, tinte, deckung), 1.0);\n}\n"
+            }
+        ]
+    }
+}

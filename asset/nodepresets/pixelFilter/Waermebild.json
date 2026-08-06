@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "pixelFilter",
+        "code": "// Waermebild: Helligkeit auf eine Thermal-Palette (blau-gruen-gelb-rot-weiss)\n// abgebildet; der Pegel hebt die \"Temperatur\" insgesamt.\nvec4 farbe(vec2 uv, vec4 src)\n{\n    float t = clamp(dot(src.rgb, vec3(0.299, 0.587, 0.114)) + 0.25 * vol, 0.0, 1.0);\n    vec3 farbe = t < 0.25 ? mix(vec3(0.05, 0.02, 0.30), vec3(0.0, 0.55, 0.75), t / 0.25)\n               : t < 0.50 ? mix(vec3(0.0, 0.55, 0.75), vec3(0.15, 0.75, 0.15), (t - 0.25) / 0.25)\n               : t < 0.75 ? mix(vec3(0.15, 0.75, 0.15), vec3(0.95, 0.85, 0.10), (t - 0.50) / 0.25)\n                          : mix(vec3(0.95, 0.85, 0.10), vec3(1.0, 1.0, 1.0), (t - 0.75) / 0.25);\n    return vec4(farbe, 1.0);\n}\n",
+        "mixAmount": 1.0
+    }
+}

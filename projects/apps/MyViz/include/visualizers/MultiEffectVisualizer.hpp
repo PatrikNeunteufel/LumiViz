@@ -644,6 +644,12 @@ private:
         double vsPhase = 0.0;     ///< Frame-Schritt-Akkumulator (Sim-Uhr x fps x Tempo)
         std::uint64_t vsLiveNummer = 0;  ///< zuletzt hochgeladene Live-Bild-Nummer
         bool vsLive = false;      ///< Live-Feed gestartet -> stopp() beim Cleanup
+
+        // Pixel-Filter-Node (S70): Fragment-Programm des Nutzer-Filters.
+        // Kompilierfehler wieder im geteilten stError (s. Mesh-Warp-Notiz).
+        std::unique_ptr<QOpenGLShaderProgram> pfProgram;
+        std::string pfCompiled;   ///< Code-Snapshot hinter dem Programm
+        int pfFrame = 0;          ///< uFrame seit Kompilierung (deterministisch)
     };
 
     /** Render-thread state of one list node, keyed by ChainNode::nodeId. */
@@ -779,6 +785,9 @@ private:
     /// Kamera (live, nur nach Freigabe) oder Testaufnahme.
     void runVideoSource(const lumi::multieffect::ChainNode& node,
                         const lumi::multieffect::VideoSourceParams& params);
+    /// Pixel-Filter-Node (S70): Nutzer-GLSL je Pixel (Stilfilter-Strang).
+    void runPixelFilter(const lumi::multieffect::ChainNode& node,
+                        const lumi::multieffect::PixelFilterParams& params);
     /// GL blend state for an AVS BLEND_LINE mode 0..9 (S9; 8 falls back to add).
     static void applyLineBlend(int mode, int adjustAlpha);
     /// Restore GL_FUNC_ADD + disable blending after a line-blend draw.

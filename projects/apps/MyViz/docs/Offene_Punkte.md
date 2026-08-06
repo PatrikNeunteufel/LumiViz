@@ -1032,19 +1032,29 @@ Ursprüngliche Sondierung (S55, weiter gültig für die Rest-Punkte):
     sonden-/standalone-prüfbar · der Quellknoten bekommt drei Betriebsarten
     **Datei · Kamera (live) · Testaufnahme** (letztere auch als Fallback,
     wenn kein Gerät da ist).
-  - **Stilfilter-Architektur entschieden:** EIN skriptbares Filtermodul
-    **`pixelFilter`** (Nutzer-GLSL `vec4 filter(vec2 uv, vec4 src)` mit
-    Nachbar-Sampling fürs Ketten-Bild; meshWarp-Muster: Audio-Uniforms,
-    geteiltes `stError`, Groß-Editor mit Apply/Beautify) — die Filter selbst
-    als **Werks-Voreinstellungen** (`asset/nodepresets/pixelFilter/`), NICHT
-    1–3 Festmodule. Begründung: die Comic-Stufen brauchen einander im selben
-    Pass (die Quantisierung will das Original, nicht das Bild mit
-    eingebrannten Kanten); das Voreinstellungs-System steht seit S69.
-    Flaggschiff Take-On-Me-Comic (Kantenzug + Quantisierung + Schraffur mit
-    Beat-Zittern der Schraffur-Phase); fast gratis daneben: Posterize,
-    Halftone/Zeitungsdruck, CRT/VHS, Kuwahara-Ölbild, XDoG-Bleistift.
+  - **Stilfilter-Architektur entschieden UND UMGESETZT (Teil B, S70 —
+    ⬜ Sichttest offen):** EIN skriptbares Filtermodul **`pixelFilter`**
+    (Nutzer-GLSL `vec4 farbe(vec2 uv, vec4 src)` mit Nachbar-Sampling fürs
+    Ketten-Bild; meshWarp-Muster: Audio-Uniforms, geteiltes `stError`,
+    Groß-Editor mit Apply/Beautify; NEU `PixelFilterWrapper.hpp` GL-frei +
+    testerzwungen) — die Filter selbst als **Werks-Voreinstellungen**
+    (`asset/nodepresets/pixelFilter/`, 12 Looks inkl. Katalog-Zeilen), NICHT
+    1–3 Festmodule. **BEFUND S70: `filter` ist in GLSL ein RESERVIERTES
+    Wort** (AMD lehnt ab) → Vertrag heißt `farbe()` (kraft()-Muster);
+    Wächter-Test erzwingt, dass der Wrapper das Wort nie als Bezeichner
+    trägt. Flaggschiff **Take-On-Me-Comic** (Sobel-Kantenzug +
+    Farbquantisierung + Beat-zitternde Schraffur), dazu Bleistift-Skizze
+    (XDoG), Posterize-PopArt, Zeitungsdruck-Halftone, CRT-Monitor, VHS-Band,
+    Kuwahara-Oelbild, Sepia-Nostalgie (Wunsch Patrik), Noir-Schwarzweiss,
+    Waermebild, Pixel-Art, Duotone-Neon. Beweise: `pixelfilter_sonde.lvfx`
+    (Doppellauf SHA256-identisch; Posterize-Stufen + Konturen sichtgeprüft)
+    + Demo `asset/examples/pixelFilter - Take-On-Me.lvfx` (Stimm-Befund:
+    Comic-Szenen brauchen HELLE Grundflächen und harte Kanten — dunkle
+    Hintergründe verschraffieren vollflächig). Benutzerhandbuch 1.8.0 §14.
     Grenze der Bauart: EIN Pass — Multipass-Looks laufen über den
-    Shadertoy-Knoten (s. iChannel-Erweiterungen unten).
+    Shadertoy-Knoten (s. iChannel-Erweiterungen unten). Der Filter-Stack
+    ist die Kette selbst (mehrere Knoten, umsortierbar; Entscheid Patrik
+    S70 — keine interne Unterliste, Klone sind unabhängige Kopien).
   - **Filter-Fundgruben online:** **ISF (Interactive Shader Format,
     isf.video / editor.isf.video, Vidvox)** = „Shadertoy für Filter" — GLSL +
     JSON-Parameterdeklaration, Kategorie „FX" hat exakt den
@@ -1358,6 +1368,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.52.0 | 2026-08-06 | Session 70 (Teil B) — **§7 Stilfilter UMGESETZT (⬜ Sichttest):** Chain-Node `pixelFilter` (Nutzer-GLSL `farbe(uv, src)` je Pixel, Nachbar-Sampling, Mix-Regler + Parameter-Skript `mixamount`; NEU `PixelFilterWrapper.hpp`; runPixelFilter im transformPass-Muster, Fehler ins geteilte stError; Palette „— GPU-Module —") + **12 Werks-Voreinstellungen** (Take-On-Me-Comic als Flaggschiff; Sepia auf Wunsch Patrik; Katalog-Zeilen im nodepresets-README) + 7 Wrapper-/Serializer-Tests (563 gesamt) + FieldDocs 90 Typen/774 Felder (0 Lücken) + Sonde (SHA256-Doppellauf identisch) + Demo. **BEFUND: `filter` = GLSL-Reserviert-Wort** (AMD lehnt ab) → Vertrag `farbe()`, Wächter-Test. Stimm-Befund: Comic braucht helle Grundflächen/harte Kanten. Benutzerhandbuch 1.8.0 (§14) |
 | 1.51.0 | 2026-08-06 | Session 70 (Fortsetzung 2) — **Zombie-Prozess Schicht 2 gefunden und behoben (Stack-Beweis Patrik):** Haupt-Thread hing in `Application::shutdown` → `~QApplication` → Event-Queue-Entsorgung → `~Feed` — das stopp()-Queued-Lambda trug den letzten shared_ptr, die QCamera starb mitten im QApplication-Abriss. Fix: Feed-Eigentum bleibt beim Dienst (`m_friedhof` + `friedhofLeeren()` auf dem Main-Thread), Queued-Lambdas tragen kein Eigentum, `alleStoppen()` räumt Feeds+Friedhof synchron und zerstört die Qt-Objekte explizit. Verifikation: App-Start→Schließen ohne und mit Kamera-Dialog beendet sauber (2 Skript-Läufe); Tests 556 grün, alle 3 Builds grün. NEU Merkregel: Queued-Lambdas nie mit letztem Eigentum an Qt-Multimedia-Objekten |
 | 1.50.0 | 2026-08-06 | Session 70 (Fortsetzung) — **Kamera-Sichttest Patrik: läuft** (USB-WebCam im videoSource-Knoten). Drei Nachzüge: (1) **Kamera-Freigabe-Dialog beim Preset-Laden** (Wunsch Patrik): einmal je geladener Kette, nur bei aktiver Kamera-Quelle ohne Freigabe; EINZIGE Vollbild-Ausnahme (aktives Fenster + StaysOnTop). (2) **BEFUND behoben: Zombie-Prozess nach App-Ende bei benutzter Kamera** — Queued-Stopps erreichen den Main-Thread beim Herunterfahren nicht mehr, MF-Capture-Threads hielten den Prozess (LED aus ≠ Teardown); Fix `LiveVideoFeed::alleStoppen()` synchron an aboutToQuit. (3) ⚪ Rest-Risiko fremde YUV-Kameras notiert (Rezept: NV12/YUYV-Wandlung in VideoFrameUtil). Tests 556 grün, alle 3 Builds grün |
 | 1.49.0 | 2026-08-06 | Session 70 — **§7 Video-Weg Teil A UMGESETZT (⚪→⬜ Sichttest):** Chain-Node `videoSource` (Datei/Kamera/Testaufnahme; Streaming via NEU `services/LiveVideoFeed`, Frame-Schritt via VideoFrameCache 1.1.0 mit `Clip::fps`; Einpassung/Blend/Deckkraft; Parameter-Skripte `speed`/`opacity`) + Settings-Tab „Kamera" (Testaufnahmen benutzerlokal; Aufnahme-Klick = Kamera-Freigabe des App-Laufs) + Panel/Palette/Serializer/Klemmen + FieldDocs 89 Typen/769 Felder (0 Lücken) + 2 Serializer-Tests (556 gesamt grün). Sonde `videosource_sonde.lvfx`: Doppellauf SHA256-identisch. **BEFUND behoben: `QVideoFrame::toImage()` = schwarz unter Qt 6.10.1** (Rohdaten per map() da) → NEU `services/VideoFrameUtil.hpp` als toImage-Ersatz für LiveVideoFeed UND VideoFrameCache (betraf auch den avi-Cache-Fallback VR09) |

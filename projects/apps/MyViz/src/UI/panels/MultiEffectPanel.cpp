@@ -24,6 +24,7 @@
 #include "visualizers/multieffect/ShadertoyWrapper.hpp" // Starter-Shader (Strang S)
 #include "visualizers/multieffect/MeshWarpWrapper.hpp"      // Starter-Warp + Klemmen (G1)
 #include "visualizers/multieffect/GpuParticlesWrapper.hpp"  // Starter-Kraftfeld + Klemmen (G2)
+#include "visualizers/multieffect/PixelFilterWrapper.hpp"   // Starter-Filter (Stilfilter, S70)
 #include "scripting/ScriptFormatter.hpp"                // Beautify-Kerne (S69)
 #include <EelTranspiler.hpp>                            // Apply-Syntaxprobe EEL (S69)
 #include <HlslTranspiler.hpp>                           // Apply-Syntaxprobe HLSL (S69)
@@ -296,6 +297,15 @@ const std::vector<EffectType>& effectPalette()
          [] {
              GpuParticlesParams p;
              p.forceCode = lumi::gpuparticles::starterForce();
+             return EffectParams{p};
+         },
+         Origin::Native},
+        // Stilfilter-Strang (S70): skriptbarer Pixel-Filter, Werks-Looks
+        // (Take-On-Me-Comic & Co.) liegen als Voreinstellungen bei.
+        {"Pixel Filter (GLSL)",
+         [] {
+             PixelFilterParams p;
+             p.code = lumi::pixelfilter::starterFilter();
              return EffectParams{p};
          },
          Origin::Native},
@@ -997,6 +1007,54 @@ QString meshWarpReferenceHtml()
                "<p style='color:#888'>Ohne Clear/Decay in der Kette koppelt "
                "der Warp aufs eigene Vorbild (Feedback) — gewollt für Trails, "
                "sonst einen Clear-/Fadeout-Knoten davorschalten.</p>")
+        .arg(uniforms);
+}
+
+/// Referenz des Pixel-Filter-Nodes (Stilfilter-Strang, S70): filter()-Vertrag
+/// + Uniforms — die ⓘ-Seite des GLSL-Editors.
+QString pixelFilterReferenceHtml()
+{
+    auto table = [](const QString& rows) {
+        return QStringLiteral(
+                   "<table cellspacing='0' cellpadding='4' "
+                   "style='border-collapse:collapse'>"
+                   "<tr><th align='left'>Name</th><th align='left'>Typ</th>"
+                   "<th align='left'>Bedeutung</th></tr>%1</table>")
+            .arg(rows);
+    };
+    auto row = [](const char* n, const char* t, const char* m) {
+        return QStringLiteral("<tr><td><code>%1</code></td><td>%2</td><td>%3</td></tr>")
+            .arg(QLatin1String(n), QLatin1String(t), QLatin1String(m));
+    };
+    const QString uniforms = table(
+        row("uTex", "sampler2D", "das aktuelle Chain-Bild (für Nachbar-Abtastung)") +
+        row("uResolution", "vec2", "Chain-Auflösung in Pixeln") +
+        row("uTime", "float", "Sekunden seit Start (deterministische Sim-Uhr)") +
+        row("uDelta", "float", "Sekunden seit dem letzten Frame") +
+        row("uFrame", "int", "Frames seit (Re-)Kompilierung") +
+        row("bass, mid, treb", "float", "Band-Lautstärken (~0..1)") +
+        row("vol", "float", "Gesamt-Pegel") +
+        row("beat", "float", "Beat-Impuls (0/1)"));
+    return QStringLiteral(
+               "<h2>Pixel Filter — vec4 farbe(vec2 uv, vec4 src)</h2>"
+               "<p>GLSL-Funktion, die je PIXEL im Fragment-Shader läuft — das "
+               "skriptbare Stilfilter-Modul (Comic, Posterize, Halftone, "
+               "CRT/VHS, Kuwahara …). <code>uv</code> ist die Pixel-Position "
+               "0..1, <code>src</code> das Quellpixel; Nachbarn holt "
+               "<code>texture(uTex, uv + …)</code> (Kantenzüge!). Identität "
+               "<code>return src;</code> = Passthrough. Der Filter wirkt auf "
+               "das GANZE Chain-Bild darunter — Video, Kamera, Scopes, "
+               "MilkDrop gleichermaßen. (<code>filter</code> selbst ist in "
+               "GLSL ein reserviertes Wort — daher <code>farbe</code>.)</p>"
+               "<h3>Uniforms</h3>%1"
+               "<h3>Regler</h3>"
+               "<p><b>Mix</b>: Anteil des gefilterten Bilds (1 = ersetzen); "
+               "per Parameter-Skript <code>mixamount</code> auch audio-reaktiv."
+               "</p>"
+               "<p style='color:#888'>Ein Knoten = EIN Pass. Mehrere Filter "
+               "stapelst du als mehrere Knoten in der Kette (umsortierbar); "
+               "echte Multipass-Looks (Blur-Pyramiden u. ä.) laufen über den "
+               "Shadertoy-Knoten mit Buffer A–D.</p>")
         .arg(uniforms);
 }
 
@@ -4871,6 +4929,65 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addScript("beatCode", tr("Beat"), p->beatCode,
                   [](ChainNode& n, std::string v) {
                       std::get<MeshWarpParams>(n.params).beatCode = std::move(v);
+                  });
+    }
+    else if (auto* p = std::get_if<PixelFilterParams>(&params))
+    {
+        // Pixel-Filter-Node (Stilfilter-Strang, S70): Nutzer-GLSL je Pixel.
+        // Kompilierfehler über das geteilte stError-Feld (shadertoyError +
+        // Apply-Poll — Muster Mesh-Warp).
+        uint64_t pfNodeId = 0;
+        {
+            QMutexLocker lock(m_mutex);
+            if (ChainNode* n = nodeAtPath(path)) pfNodeId = n->nodeId;
+        }
+        const std::string pfErr =
+            m_host != nullptr ? m_host->shadertoyError(pfNodeId) : std::string();
+        if (!pfErr.empty())
+        {
+            auto* err = new QLabel(
+                tr("⚠ Kompilierfehler:\n%1")
+                    .arg(QString::fromStdString(pfErr).left(600)),
+                m_propContainer);
+            err->setWordWrap(true);
+            err->setStyleSheet(QStringLiteral("color:#d08080"));
+            form->addRow(err);
+        }
+
+        const QString pfExportBase = !nodeName.empty()
+                                         ? QString::fromStdString(nodeName)
+                                         : QStringLiteral("pixelfilter");
+        addCodeEditor(
+            tr("Filter-Funktion (GLSL)"), p->code,
+            tr("vec4 farbe(vec2 uv, vec4 src) { return src; }"),
+            pixelFilterReferenceHtml(),
+            tr("Läuft je Pixel im Fragment-Shader; src = Quellpixel, Nachbarn "
+               "über texture(uTex, …). ⓘ zeigt den Vertrag und die Uniforms; "
+               "⤢ öffnet den großen Editor."),
+            160,
+            lumi::scriptedit::shaderExportName(pfExportBase,
+                                               QStringLiteral("pixelfilter")),
+            [](ChainNode& n, std::string v) {
+                std::get<PixelFilterParams>(n.params).code = std::move(v);
+            });
+        addDouble("mixAmount", tr("Mix"), p->mixAmount, 0.0, 1.0, 0.01,
+                  [](ChainNode& n, double v) {
+                      std::get<PixelFilterParams>(n.params).mixAmount = v;
+                  });
+        addScript("initCode", tr("Init"), p->initCode,
+                  [](ChainNode& n, std::string v) {
+                      std::get<PixelFilterParams>(n.params).initCode =
+                          std::move(v);
+                  });
+        addScript("frameCode", tr("Frame"), p->frameCode,
+                  [](ChainNode& n, std::string v) {
+                      std::get<PixelFilterParams>(n.params).frameCode =
+                          std::move(v);
+                  });
+        addScript("beatCode", tr("Beat"), p->beatCode,
+                  [](ChainNode& n, std::string v) {
+                      std::get<PixelFilterParams>(n.params).beatCode =
+                          std::move(v);
                   });
     }
     else if (auto* p = std::get_if<GpuParticlesParams>(&params))

@@ -16,6 +16,7 @@
 #include "visualizers/multieffect/ShadertoyWrapper.hpp"
 #include "visualizers/multieffect/MeshWarpWrapper.hpp"      // Mesh-Warp-Node (G1, S69)
 #include "visualizers/multieffect/GpuParticlesWrapper.hpp"  // GPU-Partikel (G2, S69)
+#include "visualizers/multieffect/PixelFilterWrapper.hpp"   // Pixel-Filter (Stilfilter, S70)
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 #include "services/LiveVideoFeed.hpp"  // videoSource: Kamera/Streaming (S70)
@@ -3991,6 +3992,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const MeshWarpParams& params) const { self.runMeshWarp(node, params); }
         void operator()(const GpuParticlesParams& params) const { self.runGpuParticles(node, params); }
         void operator()(const VideoSourceParams& params) const { self.runVideoSource(node, params); }
+        void operator()(const PixelFilterParams& params) const { self.runPixelFilter(node, params); }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
     std::visit(Visitor{*this, node}, node.params);
@@ -12844,6 +12846,81 @@ void MultiEffectVisualizer::runMeshWarp(const ChainNode& node,
     pair.swap();
     bindActive();
     ++rt.mwFrame;
+}
+
+void MultiEffectVisualizer::runPixelFilter(const ChainNode& node,
+                                           const PixelFilterParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    // Parameter-Skript (Strang D): Regler je Frame rechenbar.
+    double mixAmount = params.mixAmount;
+    runParamScript(rt, "pixelfilter", params.initCode, params.frameCode,
+                   params.beatCode, {{"mixamount", &mixAmount}});
+
+    // Kompilieren nur bei Code-Wechsel (Shadertoy-Muster; #line 1 = Nutzer-
+    // Zeilen im Treiber-Log). Fehler ins geteilte stError — der Panel-Dialog
+    // pollt shadertoyError() nach Apply (S69). Vertex = geteilter Quad-Shader.
+    if (rt.pfProgram == nullptr || rt.pfCompiled != params.code)
+    {
+        rt.pfCompiled = params.code;
+        rt.stError.clear();
+        rt.pfFrame = 0;
+        auto program = std::make_unique<QOpenGLShaderProgram>();
+        if (!program->addShaderFromSourceCode(QOpenGLShader::Vertex,
+                                              kQuadVertexShader) ||
+            !program->addShaderFromSourceCode(
+                QOpenGLShader::Fragment,
+                lumi::pixelfilter::wrapFragment(params.code).c_str()) ||
+            !program->link())
+        {
+            rt.stError = "Filter: " + program->log().toStdString();
+            BasicLogger::logWarning("MultiEffect: Pixel-Filter-Kompilierfehler: " +
+                                    rt.stError.substr(0, 400));
+            program.reset();
+        }
+        rt.pfProgram = std::move(program);
+    }
+    if (rt.pfProgram == nullptr) return;  // Kompilierfehler ⇒ Passthrough
+
+    float bass = 0.0f, mid = 0.0f, treb = 0.0f;
+    computeAudioBands(getSpectrum(), bass, mid, treb);
+
+    // Quelle lesen, Partner beschreiben, tauschen (transformPass-Muster).
+    SurfacePair& pair = active();
+    pair.current()->release();
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+
+    QOpenGLShaderProgram& p = *rt.pfProgram;
+    p.bind();
+    p.setUniformValue("uTex", 0);
+    p.setUniformValue("uResolution",
+                      QVector2D(static_cast<float>(m_surfaceWidth),
+                                static_cast<float>(m_surfaceHeight)));
+    p.setUniformValue("uTime", static_cast<float>(m_scriptClock));
+    p.setUniformValue("uDelta", m_deltaTime);
+    p.setUniformValue("uFrame", rt.pfFrame);
+    p.setUniformValue("uMixAmount",
+                      static_cast<float>(std::clamp(mixAmount, 0.0, 1.0)));
+    p.setUniformValue("bass", bass);
+    p.setUniformValue("mid", mid);
+    p.setUniformValue("treb", treb);
+    p.setUniformValue("vol", m_audioLevel);
+    p.setUniformValue("beat", m_frameBeat ? 1.0f : 0.0f);
+
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    m_quadVao->bind();
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+
+    p.release();
+    pair.partner()->release();
+    pair.swap();
+    bindActive();
+    ++rt.pfFrame;
 }
 
 void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,

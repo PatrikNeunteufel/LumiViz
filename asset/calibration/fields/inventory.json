@@ -1,8 +1,8 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 769,
-        "typen": 89
+        "felder": 774,
+        "typen": 90
     },
     "typen": [
         {
@@ -3306,6 +3306,37 @@
             ],
             "name": "Picture II",
             "typkey": "pictureII"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "code"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "mixAmount"
+                }
+            ],
+            "name": "Pixel Filter",
+            "typkey": "pixelFilter"
         },
         {
             "felder": [

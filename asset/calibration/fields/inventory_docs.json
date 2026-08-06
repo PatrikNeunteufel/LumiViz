@@ -6,8 +6,8 @@
     "beschreibung": "EffectChain.hpp (Doxygen)"
   },
   "summe": {
-    "typen": 89,
-    "felder": 769,
+    "typen": 90,
+    "felder": 774,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -6408,6 +6408,66 @@
           "skriptvars": [
             "blend"
           ]
+        }
+      ]
+    },
+    {
+      "typkey": "pixelFilter",
+      "name": "Pixel Filter",
+      "struct": "PixelFilterParams",
+      "felder": [
+        {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "mixamount"
+          ]
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "code",
+          "panel": "sonderzeile",
+          "doc": "GLSL: definiert `vec4 farbe(vec2 uv, vec4 src)` (uv 0..1, src = Quellpixel; Nachbarn via texture(uTex, ...); `filter` ist in GLSL reserviert). Uniforms: uTime, uDelta, uFrame, uResolution, bass, mid, treb, vol, beat. Leer = Identität (Passthrough)",
+          "skriptvars": [
+            "mixamount"
+          ]
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "mixamount"
+          ]
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "mixamount"
+          ]
+        },
+        {
+          "art": "zahl",
+          "default": 1,
+          "name": "mixAmount",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 1.0,
+          "doc": "Anteil des gefilterten Bilds 0..1 (1 = ersetzen; darunter Mix mit dem Original)"
         }
       ]
     },

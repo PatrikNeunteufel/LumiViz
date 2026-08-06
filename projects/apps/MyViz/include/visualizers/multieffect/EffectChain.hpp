@@ -2322,6 +2322,30 @@ struct GpuParticlesParams
     std::string beatCode;
 };
 
+/**
+ * Pixel-Filter-Node (Stilfilter-Strang, Offene_Punkte §7 — S70; Entscheid
+ * Patrik: EIN skriptbares Filtermodul + Werks-Voreinstellungen statt
+ * Festmodule). TRANSFORM-Modul: eine Nutzer-GLSL-Funktion
+ * `vec4 farbe(vec2 uv, vec4 src)` laeuft je PIXEL im Fragment-Shader und
+ * faerbt das Chain-Bild um (Nachbar-Abtastung ueber uTex erlaubt — Kantenzuege);
+ * wirkt damit auf JEDE Quelle (Video, Kamera, Scopes, MilkDrop).
+ * Wrapper: PixelFilterWrapper.hpp; Audio ad-hoc als Uniforms (Shadertoy-
+ * Muster). Ein Knoten = EIN Pass; der Filter-STACK ist die Kette selbst.
+ */
+struct PixelFilterParams
+{
+    /// GLSL: definiert `vec4 farbe(vec2 uv, vec4 src)` (uv 0..1, src = Quellpixel; Nachbarn via texture(uTex, ...); `filter` ist in GLSL reserviert). Uniforms: uTime, uDelta, uFrame, uResolution, bass, mid, treb, vol, beat. Leer = Identität (Passthrough)
+    std::string code;
+    /// Anteil des gefilterten Bilds 0..1 (1 = ersetzen; darunter Mix mit dem Original)
+    double mixAmount = 1.0;
+    /// Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    /// Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string frameCode;
+    /// Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string beatCode;
+};
+
 /// Klemm-Grenzen des Video-/Kamera-Quellknotens — SSOT fuer Leser, Panel und
 /// Renderer (Muster: lumi::meshwarp in MeshWarpWrapper.hpp).
 namespace videosource {
@@ -2482,7 +2506,7 @@ using EffectParams =
                  ImportNotesParams, RenderScaleParams, BloomParams, Camera3DParams,
                  SuperScope3DParams, Terrain3DParams, GlowOrbsParams,
                  ShadertoyParams, MeshWarpParams, GpuParticlesParams,
-                 VideoSourceParams, PassthroughParams>;
+                 VideoSourceParams, PixelFilterParams, PassthroughParams>;
 
 // =============================================================================
 // Chain node
@@ -2643,6 +2667,7 @@ struct CompileResult
         const char* operator()(const MeshWarpParams&) const { return "Mesh Warp"; }
         const char* operator()(const GpuParticlesParams&) const { return "GPU Particles"; }
         const char* operator()(const VideoSourceParams&) const { return "Video Source"; }
+        const char* operator()(const PixelFilterParams&) const { return "Pixel Filter"; }
         const char* operator()(const PassthroughParams&) const { return "Passthrough"; }
     };
     return std::visit(Visitor{}, params);

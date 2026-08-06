@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "pixelFilter",
+        "code": "// Posterize-PopArt: kraeftige Saettigung + wenige Farbstufen; die\n// Stufenzahl atmet leicht mit dem Bass.\nvec4 farbe(vec2 uv, vec4 src)\n{\n    float grau = dot(src.rgb, vec3(0.299, 0.587, 0.114));\n    vec3 satt = mix(vec3(grau), src.rgb, 1.6);\n    float stufen = 4.0 + floor(2.0 * bass);\n    vec3 ton = floor(clamp(satt, 0.0, 1.0) * stufen + 0.5) / stufen;\n    return vec4(ton, 1.0);\n}\n",
+        "mixAmount": 1.0
+    }
+}

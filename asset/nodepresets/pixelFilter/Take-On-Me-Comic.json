@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "pixelFilter",
+        "code": "// Take-On-Me-Comic (a-ha): Bleistift-Rotoskopie — Sobel-Kantenzug,\n// Papier/Tinte, Schraffur in dunklen Flaechen. Die Schraffur-Phase zittert\n// alle paar Frames (Rotoskopie-Wackeln), der Beat gibt einen Extra-Ruck.\nfloat lum(vec2 p) { return dot(texture(uTex, p).rgb, vec3(0.299, 0.587, 0.114)); }\nvec4 farbe(vec2 uv, vec4 src)\n{\n    vec2 px = 1.0 / uResolution;\n    float tl = lum(uv + px * vec2(-1.0,  1.0));\n    float tt = lum(uv + px * vec2( 0.0,  1.0));\n    float tr = lum(uv + px * vec2( 1.0,  1.0));\n    float ll = lum(uv + px * vec2(-1.0,  0.0));\n    float rr = lum(uv + px * vec2( 1.0,  0.0));\n    float bl = lum(uv + px * vec2(-1.0, -1.0));\n    float bb = lum(uv + px * vec2( 0.0, -1.0));\n    float br = lum(uv + px * vec2( 1.0, -1.0));\n    float gx = tr + 2.0 * rr + br - tl - 2.0 * ll - bl;\n    float gy = tl + 2.0 * tt + tr - bl - 2.0 * bb - br;\n    float kante = smoothstep(0.18, 0.45, length(vec2(gx, gy)));\n    float hell = dot(src.rgb, vec3(0.299, 0.587, 0.114));\n    // Schraffur 45 Grad; Phase springt alle 3 Frames + Beat-Ruck\n    float phase = fract(sin(floor(float(uFrame) / 3.0) * 12.9898) * 43758.5453);\n    phase += beat * 0.5;\n    float welle = sin((uv.x + uv.y) * uResolution.y * 0.35 + phase * 6.2832);\n    float linie = smoothstep(0.15, -0.15, welle);\n    float dunkel = smoothstep(0.60, 0.15, hell);\n    vec3 papier = vec3(0.94, 0.92, 0.87);\n    vec3 tinte = vec3(0.10, 0.09, 0.12);\n    float deckung = clamp(kante + linie * dunkel * 0.75, 0.0, 1.0);\n    return vec4(mix(papier, tinte, deckung), 1.0);\n}\n",
+        "mixAmount": 1.0
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "pixelFilter",
+        "code": "// Sepia-Nostalgie: klassische Sepia-Matrix + Vignette + feines Korn und\n// ein kaum merkliches Helligkeits-Flackern wie beim alten Projektor.\nfloat hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }\nvec4 farbe(vec2 uv, vec4 src)\n{\n    vec3 c = src.rgb;\n    vec3 sepia = vec3(dot(c, vec3(0.393, 0.769, 0.189)),\n                      dot(c, vec3(0.349, 0.686, 0.168)),\n                      dot(c, vec3(0.272, 0.534, 0.131)));\n    vec2 d = uv - 0.5;\n    sepia *= 1.0 - 0.45 * dot(d, d) * 2.2;               // Vignette\n    float korn = hash(uv * uResolution * 0.5 + floor(uTime * 24.0));\n    sepia += (korn - 0.5) * 0.05;\n    sepia *= 0.97 + 0.03 * sin(uTime * 11.0);            // Projektor-Flackern\n    return vec4(clamp(sepia, 0.0, 1.0), 1.0);\n}\n",
+        "mixAmount": 1.0
+    }
+}
