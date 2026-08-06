@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "meshWarp",
+        "code": "// Fischaugen-Atmung: radiale Verzerrung pulsiert mit Zeit und Bass\nvec2 warp(vec2 uv)\n{\n    vec2 d = uv - 0.5;\n    float r2 = dot(d, d);\n    float k = 0.35 * sin(uTime * 0.8) + 0.9 * bass;\n    return 0.5 + d * (1.0 - k * r2);\n}\n",
+        "mixAmount": 1.0,
+        "wrapUv": false
+    }
+}

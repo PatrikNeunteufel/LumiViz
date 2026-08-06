@@ -1,6 +1,6 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.44.0
+> **Version:** 1.47.0
 > **Datum:** 2026-08-06 (Session 69)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -849,6 +849,31 @@ Umgesetzt (S69), alle drei Punkte — offen ist nur noch der UI-Sichttest:
    `editor/shaderFileDir`. Import ersetzt nur den Editor-Inhalt —
    übernommen wird erst mit Apply/OK.
 
+### ⚪ Szenen-Wechsler-Modul (Idee Patrik, 2026-08-06 — Konzept in eigener Session)
+
+Szenen = **EffectListen in beliebiger Verschachtelungstiefe** mit stabiler ID
+(neues Feld oder Name) — WICHTIG (Einwand Patrik): Host-Gruppen wohnen nur im
+Top-Level, das Konzept darf nicht an ihnen hängen; sie sind der Spezialfall
+„Top-Level-Szene mit Gratis-Crossfade" (HG2). Ein neues Wechsler-Modul
+schaltet Szenen an/aus — **Fading auch nested**: Laufzeit-Gewicht je Liste
+(blendWeight-Analogon), das der Wechsler über eine Rampe fährt und das mit
+dem Out-Alpha der Liste multipliziert wird (persistiertes `enabled` bleibt
+unangetastet — Dokument ≠ Laufzeit). **Re-Init nested**: ListRuntime hat
+`needsClear` schon — „Szene frisch" = needsClear + Init-Slots erneut, pro
+Liste statt pro Gruppe. Trigger-Stufen:
+1. **Sicher machbar:** Song-Wechsel (Player/Playlist-Events), echte
+   Track-Position auch nach Spulen (`trackTime`-Input), Beat-/Takt-Zähler,
+   Live-Energie-Klassen (ruhig/laut/Build-up/Drop via Langzeit-Statistik +
+   Novelty).
+2. **Strophe/Bridge/Refrain:** live nur „mehr oder weniger" (Wechsel-
+   Erkennung ja, Label nein); GUT per **Offline-Pre-Analyse beim Laden**
+   (BASS-Decode → Self-Similarity → Segmentgrenzen + Wiederholungs-Cluster:
+   wiederholt = Refrain-Kandidat). Verwandt: AudioLookahead-Service
+   (Lights-Backlog §7). Prüfstand: das schwach portierte Lights-WebGL-Demo
+   (`asset/effectchain/lights_demo.*`).
+Bezug: P2 Visual-Playlist (§6) und Hotkeys Stufe 3 (Composer) überschneiden
+sich — im Konzept abgrenzen.
+
 ### ⚪ Effekt-Palette: Rolle sichtbar machen + filtern (Wunsch Patrik, 2026-08-06)
 
 Die Palette/Baumliste zeigt heute nur Herkunft (AVS/MilkDrop/LumiViz-Icon),
@@ -1233,6 +1258,9 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.47.0 | 2026-08-06 | **NEU 5 Demos in asset/examples** (Konvention `<typkey> - <Name>.lvfx`): meshWarp Bass-Tunnel (Audio-Ring + Sog-Feedback), Wellengang (Waveform-Band), Spiegelkabinett (Kaleido-Scheibe: rotieren→falten→atmen); gpuParticles Feuerfontaene (Gold-Glut, Bass-Tempo), Wirbelnebel (16k-Galaxie + Schmier-Swirl = beide GPU-Module). Alle gegengerendert + sichtgeprüft (Warnungen=0); Befunde beim Stimmen: additive Partikel brauchen kräftiges Fadeout (Weiß-Ausbrand), Kaleido-Faltung braucht ZENTRIERTEN Inhalt (außermittig kollabiert das Feedback), dünne Linien verlieren Helligkeit über LINEAR-Resampling im Warp-Feedback |
+| 1.46.0 | 2026-08-06 | **Voreinstellungs-Batch 1 gebaut (18 Dateien, 12 Typen):** list (Beat-Gate, Bass-Blende, Puls-Layer, AB-Wechsler — Listen-Slots ohne `time`, eigener Akkumulator), brightness (Bass-Boost, Kanal-Atmung), colorfade (Beat-Blitz, Farbdrift), colorModifier (Kontrast-Pump, Gamma-Atmung), mosaic Beat-Kachel, channelShift Beat-Rotation, colorClip Bass-Fresser, multiFilter Chrome-Beat, addBorders Puls-Rahmen, onBeatClear Vierer-Reset, clear Nachtblau-Schleier, bufferSave Echo-Speicher. Wächter-Test grün (704 Assertions). Offen: Batch 2 Scope-Figuren (texerII/triangle/superScope3D/terrain3D/glowOrbs/dotPlane/dotFountain/camera3d …) + Sichttest der Formeln |
+| 1.45.0 | 2026-08-06 | **NEU Werks-Voreinstellungen** für meshWarp (5: Bass-Swirl, Tunnel-Sog, Wellengang, Fischaugen-Atmung, Spiegelkabinett) + gpuParticles (5: Fontäne, Funkenregen, Bass-Explosion, Nebel-Drift, Wirbelsturm) — Wächter-Test grün. Befund: 32 skriptfähige Typen ohne Voreinstellungen (Batch-Plan: EffectList + Farb-/Transform-Klasse zuerst, Scope-Figuren danach; milkdrop/shadertoy bewusst ohne — eigene Preset-Ebene). **NEU ⚪ §7 Szenen-Wechsler-Modul** (Idee Patrik: Szenen-IDs + Fading + Re-Init, Trigger bis Strophe/Refrain via Offline-Pre-Analyse — Konzept in eigener Session) |
 | 1.44.0 | 2026-08-06 | Session 69 (Fortsetzung) — **Strang G2 GPU-Partikel UMGESETZT (⬜ Sichttest offen), Strang G damit KOMPLETT:** Chain-Node `gpuParticles` (RGBA32F-Ping-Pong pos+vel, hash-basierter Lebenslauf ohne Speicher, instanzierter Sprite-Draw max. 65536, Kraftfeld-GLSL + Parameter-Skripte), NEU `GpuParticlesWrapper.hpp` (GL-frei). FieldDocs/Inventar 88 Typen/756 Felder, 0 Lücken. `/bigobj` für test_ChainSerializer.cpp (C1128 Debug, Varianten-Wachstum). Sonde `gpuparticles_sonde.lvfx` + Render-Sichtbeweis (Fontäne). Tests 554 (+7), alle 3 Builds grün |
 | 1.43.0 | 2026-08-06 | **NEU ⚪ §7:** Effekt-Palette soll die ROLLE zeigen (Render vs. Transform — Typ-Icon neben Herkunfts-Icon oder Typ-Spalte, filterbar; Add-Dropdown evtl. ersetzen). Anlass: Mesh Warp alleine = schwarz. Ausarbeitung in eigener Session (Entscheid Patrik) |
 | 1.42.0 | 2026-08-06 | Session 69 (Fortsetzung) — **Strang G1 Mesh-Warp UMGESETZT (⬜ Sichttest offen):** Chain-Node `meshWarp` (Nutzer-GLSL `warp(uv)` je Gitter-Vertex, Gitter 2..256×192, Mix/Wrap, Parameter-Skripte), NEU `MeshWarpWrapper.hpp` (GL-frei) + `runMeshWarp` (transformPass-Muster, LINEAR nur je Draw + restauriert, Fehler ins geteilte `stError` → Apply-Poll), Palette „— GPU-Module —", FieldDocs/Inventar-Gates nachgezogen (87 Typen/735 Felder). **Entscheid Patrik: G1 VOR Vereinheitlichung V2** (Audio ad-hoc, Shadertoy-Muster; Plan-Doku 1.5.0). Sonde `meshwarp_sonde.lvfx` + Render-Sichtbeweis. Tests 547 (+9), alle 3 Builds grün |

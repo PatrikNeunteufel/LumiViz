@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "channelShift",
+        "onBeat": false,
+        "frameCode": "mode=if(beat,mod(mode+1,6),mode);"
+    }
+}

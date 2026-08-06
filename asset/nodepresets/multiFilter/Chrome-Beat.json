@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "multiFilter",
+        "effect": 0,
+        "onBeat": true
+    }
+}

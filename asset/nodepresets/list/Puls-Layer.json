@@ -1,0 +1,11 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "list",
+        "blendOut": 10,
+        "useCode": true,
+        "initCode": "t=0;",
+        "frameCode": "t=t+0.016; alphaout=128+96*sin(t*2);"
+    }
+}

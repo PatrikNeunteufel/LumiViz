@@ -1,0 +1,37 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "fadeout",
+                "name": "Nachleuchten",
+                "fadeLen": 6
+            },
+            {
+                "type": "superScope",
+                "name": "Waveform-Band",
+                "description": "Waveform quer uebers Bild - der Wellengang-Warp macht die Spuren wellig.",
+                "initCode": "n=400;",
+                "pointCode": "x=2*i-1; y=v*0.55; red=0.2+0.8*i; green=0.5+0.3*v; blue=1-0.6*i;",
+                "pointCount": 400,
+                "renderMode": 1,
+                "lineWidth": 2.0
+            },
+            {
+                "type": "meshWarp",
+                "name": "Wellengang",
+                "description": "Gekreuzte Sinuswellen, Mitten heben die Amplitude (Werks-Voreinstellung Wellengang).",
+                "gridX": 128,
+                "gridY": 96,
+                "mixAmount": 1.0,
+                "wrapUv": true,
+                "code": "vec2 warp(vec2 uv)\n{\n    float amp = 0.015 + 0.03 * mid;\n    uv.x += amp * sin(uv.y * 12.0 + uTime * 1.6);\n    uv.y += amp * sin(uv.x * 9.0 - uTime * 1.1);\n    return uv;\n}\n"
+            }
+        ]
+    }
+}

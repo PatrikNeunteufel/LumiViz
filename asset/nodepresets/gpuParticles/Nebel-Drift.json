@@ -1,0 +1,25 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "gpuParticles",
+        "count": 1200,
+        "spawnX": 0.5,
+        "spawnY": 0.5,
+        "spawnSpread": 0.6,
+        "speed": 0.04,
+        "direction": 0.0,
+        "fan": 360.0,
+        "gravityX": 0.0,
+        "gravityY": 0.0,
+        "drag": 0.15,
+        "lifeSeconds": 9.0,
+        "lifeJitter": 0.6,
+        "sizePx": 56.0,
+        "sizeEndFactor": 2.2,
+        "colorStart": 2110842,
+        "colorEnd": 4327807,
+        "additive": false,
+        "forceCode": "// traege Stroemung, Pegel schiebt sanft\nvec2 kraft(vec2 pos, vec2 vel, float alter)\n{\n    vec2 d = pos - vec2(0.5);\n    return vec2(-d.y, d.x) * 0.05 + vec2(0.02 * sin(uTime * 0.3), 0.01 * vol);\n}\n"
+    }
+}

@@ -1,0 +1,26 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "gpuParticles",
+        "count": 8192,
+        "spawnX": 0.5,
+        "spawnY": 0.12,
+        "spawnSpread": 0.01,
+        "speed": 0.5,
+        "direction": 90.0,
+        "fan": 50.0,
+        "gravityX": 0.0,
+        "gravityY": -0.35,
+        "drag": 0.4,
+        "lifeSeconds": 2.4,
+        "lifeJitter": 0.4,
+        "sizePx": 5.0,
+        "sizeEndFactor": 0.25,
+        "colorStart": 16764032,
+        "colorEnd": 4202688,
+        "additive": true,
+        "forceCode": "",
+        "frameCode": "speed=0.4+bass*0.7;"
+    }
+}

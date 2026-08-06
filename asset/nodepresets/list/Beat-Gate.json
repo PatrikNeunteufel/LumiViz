@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "list",
+        "useCode": true,
+        "initCode": "halt=0;",
+        "frameCode": "halt=max(halt*0.85,beat); enabled=above(halt,0.3);"
+    }
+}

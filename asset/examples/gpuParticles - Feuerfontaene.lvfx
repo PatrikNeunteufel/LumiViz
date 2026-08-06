@@ -1,0 +1,41 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "fadeout",
+                "name": "Nachleuchten",
+                "fadeLen": 12
+            },
+            {
+                "type": "gpuParticles",
+                "name": "Feuerfontaene",
+                "description": "Fontaene aus 8192 Partikeln - Tempo folgt dem Bass, warme Farben, additiver Glow (Werks-Voreinstellung Fontaene).",
+                "count": 8192,
+                "spawnX": 0.5,
+                "spawnY": 0.12,
+                "spawnSpread": 0.01,
+                "speed": 0.5,
+                "direction": 90.0,
+                "fan": 50.0,
+                "gravityX": 0.0,
+                "gravityY": -0.35,
+                "drag": 0.4,
+                "lifeSeconds": 2.4,
+                "lifeJitter": 0.4,
+                "sizePx": 5.0,
+                "sizeEndFactor": 0.25,
+                "colorStart": 16770944,
+                "colorEnd": 8398848,
+                "additive": true,
+                "forceCode": "",
+                "frameCode": "speed=0.4+bass*0.7;"
+            }
+        ]
+    }
+}

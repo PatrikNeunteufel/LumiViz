@@ -1,0 +1,16 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "colorfade",
+        "faderR": -4,
+        "faderG": -4,
+        "faderB": -4,
+        "beatFaderR": 24,
+        "beatFaderG": 24,
+        "beatFaderB": 24,
+        "onBeatFrames": 6,
+        "slowFade": true,
+        "onBeatRandom": false
+    }
+}

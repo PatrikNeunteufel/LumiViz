@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "colorModifier",
+        "recompute": true,
+        "frameCode": "g=1+0.5*sin(time*0.8);",
+        "levelCode": "red=pow(red,g); green=pow(green,g); blue=pow(blue,g);"
+    }
+}

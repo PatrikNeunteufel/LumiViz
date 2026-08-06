@@ -1,0 +1,8 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "brightness",
+        "frameCode": "red=600*sin(time*0.7); green=600*sin(time*0.7+2.09); blue=600*sin(time*0.7+4.19);"
+    }
+}

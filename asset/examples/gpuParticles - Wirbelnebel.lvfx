@@ -1,0 +1,50 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "fadeout",
+                "name": "Nachleuchten",
+                "fadeLen": 10
+            },
+            {
+                "type": "gpuParticles",
+                "name": "Wirbelsturm",
+                "description": "32768 Partikel im Bass-getriebenen Wirbel mit Sog zur Mitte (Werks-Voreinstellung Wirbelsturm).",
+                "count": 16384,
+                "spawnX": 0.5,
+                "spawnY": 0.5,
+                "spawnSpread": 0.32,
+                "speed": 0.08,
+                "direction": 0.0,
+                "fan": 360.0,
+                "gravityX": 0.0,
+                "gravityY": 0.0,
+                "drag": 0.12,
+                "lifeSeconds": 3.5,
+                "lifeJitter": 0.5,
+                "sizePx": 2.0,
+                "sizeEndFactor": 0.4,
+                "colorStart": 4259839,
+                "colorEnd": 16724991,
+                "additive": true,
+                "forceCode": "vec2 kraft(vec2 pos, vec2 vel, float alter)\n{\n    vec2 d = pos - vec2(0.5);\n    vec2 wirbel = vec2(-d.y, d.x) * (0.9 + 1.6 * bass);\n    vec2 sog = -d * 0.25;\n    return wirbel + sog;\n}\n"
+            },
+            {
+                "type": "meshWarp",
+                "name": "Schmier-Swirl",
+                "description": "Beide GPU-Module zusammen: sanfter Mesh-Warp verschmiert die Partikelspuren im Feedback (mixAmount 0.85).",
+                "gridX": 96,
+                "gridY": 72,
+                "mixAmount": 0.85,
+                "wrapUv": true,
+                "code": "vec2 warp(vec2 uv)\n{\n    vec2 d = uv - 0.5;\n    float winkel = 0.10 * sin(uTime * 0.4) + 0.5 * bass * exp(-6.0 * dot(d, d));\n    float s = sin(winkel);\n    float c = cos(winkel);\n    return 0.5 + mat2(c, -s, s, c) * d / (1.0 + 0.02 * sin(uTime * 0.9));\n}\n"
+            }
+        ]
+    }
+}

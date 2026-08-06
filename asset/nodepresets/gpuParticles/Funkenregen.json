@@ -1,0 +1,25 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "gpuParticles",
+        "count": 16384,
+        "spawnX": 0.5,
+        "spawnY": 1.05,
+        "spawnSpread": 0.55,
+        "speed": 0.08,
+        "direction": 270.0,
+        "fan": 25.0,
+        "gravityX": 0.0,
+        "gravityY": -0.22,
+        "drag": 0.9,
+        "lifeSeconds": 3.5,
+        "lifeJitter": 0.5,
+        "sizePx": 2.5,
+        "sizeEndFactor": 0.4,
+        "colorStart": 16755232,
+        "colorEnd": 10494976,
+        "additive": true,
+        "forceCode": "// leichter Seitenwind, Hoehen ruetteln\nvec2 kraft(vec2 pos, vec2 vel, float alter)\n{\n    return vec2(0.05 * sin(uTime * 0.7 + pos.y * 6.0) + 0.04 * treb, 0.0);\n}\n"
+    }
+}

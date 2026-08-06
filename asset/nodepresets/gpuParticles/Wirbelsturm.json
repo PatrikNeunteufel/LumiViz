@@ -1,0 +1,25 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "gpuParticles",
+        "count": 32768,
+        "spawnX": 0.5,
+        "spawnY": 0.5,
+        "spawnSpread": 0.32,
+        "speed": 0.08,
+        "direction": 0.0,
+        "fan": 360.0,
+        "gravityX": 0.0,
+        "gravityY": 0.0,
+        "drag": 0.12,
+        "lifeSeconds": 5.0,
+        "lifeJitter": 0.5,
+        "sizePx": 2.0,
+        "sizeEndFactor": 0.5,
+        "colorStart": 4259839,
+        "colorEnd": 16724991,
+        "additive": true,
+        "forceCode": "// Wirbel + leichter Sog zur Mitte; Bass beschleunigt die Rotation\nvec2 kraft(vec2 pos, vec2 vel, float alter)\n{\n    vec2 d = pos - vec2(0.5);\n    vec2 wirbel = vec2(-d.y, d.x) * (0.9 + 1.6 * bass);\n    vec2 sog = -d * 0.25;\n    return wirbel + sog;\n}\n"
+    }
+}

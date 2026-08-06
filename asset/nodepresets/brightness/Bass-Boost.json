@@ -1,0 +1,8 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "brightness",
+        "frameCode": "red=900*min(1,bass); green=700*min(1,bass); blue=700*min(1,bass);"
+    }
+}

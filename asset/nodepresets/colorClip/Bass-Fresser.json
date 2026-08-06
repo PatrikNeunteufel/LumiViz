@@ -1,0 +1,11 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "colorClip",
+        "mode": 1,
+        "clipColor": 3158064,
+        "outColor": 0,
+        "frameCode": "distance=10+60*min(1,bass);"
+    }
+}

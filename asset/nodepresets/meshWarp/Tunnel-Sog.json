@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "meshWarp",
+        "code": "// Tunnel-Sog: zieht das Bild je Frame zur Mitte und dreht leicht -\n// uebers Feedback entsteht der klassische Tunnel (Quelle davor noetig).\nvec2 warp(vec2 uv)\n{\n    vec2 d = uv - 0.5;\n    float winkel = 0.06 + 0.05 * bass;\n    float s = sin(winkel);\n    float c = cos(winkel);\n    float sog = 0.97 - 0.04 * bass;\n    return 0.5 + mat2(c, -s, s, c) * d * sog;\n}\n",
+        "mixAmount": 1.0,
+        "wrapUv": false
+    }
+}

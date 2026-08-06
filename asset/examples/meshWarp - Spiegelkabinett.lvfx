@@ -1,0 +1,38 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "fadeout",
+                "name": "Nachleuchten",
+                "fadeLen": 4
+            },
+            {
+                "type": "superScope",
+                "name": "Bass-Spirale",
+                "description": "Rotierende Spirale, Tempo folgt dem Bass - Futter fuer die Vierfach-Faltung.",
+                "initCode": "n=320; t=0; dreh=0;",
+                "frameCode": "t=t+0.02; dreh=dreh+0.01+0.03*bass;",
+                "pointCode": "r=i*0.45; w=i*18.85+dreh; x=cos(w)*r; y=sin(w)*r; red=0.8+0.2*sin(w); green=0.5+0.4*sin(t*1.7); blue=1;",
+                "pointCount": 320,
+                "renderMode": 1,
+                "lineWidth": 4.0
+            },
+            {
+                "type": "meshWarp",
+                "name": "Spiegelkabinett",
+                "description": "Kaleidoskop: erst drehen (Zeit + Hoehen), dann vierfach falten, leichtes Auswaertsatmen kaskadiert uebers Feedback.",
+                "gridX": 96,
+                "gridY": 72,
+                "mixAmount": 1.0,
+                "wrapUv": true,
+                "code": "vec2 warp(vec2 uv)\n{\n    vec2 d = uv - 0.5;\n    float dreh = 0.15 * uTime + 0.4 * treb;\n    float s = sin(dreh);\n    float c = cos(dreh);\n    d = mat2(c, -s, s, c) * d;\n    d = abs(d) * 1.04;\n    return 0.5 + d;\n}\n"
+            }
+        ]
+    }
+}

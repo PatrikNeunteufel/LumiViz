@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "list",
+        "blendOut": 10,
+        "useCode": true,
+        "frameCode": "alphaout=64+191*min(1,bass);"
+    }
+}

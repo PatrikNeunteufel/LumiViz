@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "meshWarp",
+        "code": "// Spiegelkabinett: Vierfach-Faltung um die Mitte, Hoehen drehen sie\nvec2 warp(vec2 uv)\n{\n    vec2 d = abs(uv - 0.5);\n    float dreh = 0.2 * sin(uTime * 0.3) + 0.3 * treb;\n    float s = sin(dreh);\n    float c = cos(dreh);\n    return 0.5 + mat2(c, -s, s, c) * d;\n}\n",
+        "mixAmount": 1.0,
+        "wrapUv": true
+    }
+}

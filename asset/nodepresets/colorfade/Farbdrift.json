@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "colorfade",
+        "slowFade": true,
+        "onBeatRandom": false,
+        "frameCode": "faderr=6*sin(time*0.5); faderg=6*sin(time*0.5+2.1); faderb=6*sin(time*0.5+4.2);"
+    }
+}

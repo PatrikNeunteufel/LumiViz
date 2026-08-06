@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "onBeatClear",
+        "everyNBeats": 4,
+        "blend": false,
+        "color": 0
+    }
+}

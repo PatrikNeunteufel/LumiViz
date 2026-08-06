@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "meshWarp",
+        "code": "// Bass-Swirl (Palette-Starter): Drehung um die Mitte, Bass verstaerkt\nvec2 warp(vec2 uv)\n{\n    vec2 d = uv - 0.5;\n    float winkel = 0.30 * sin(uTime * 0.4) + 1.2 * bass * exp(-6.0 * dot(d, d));\n    float s = sin(winkel);\n    float c = cos(winkel);\n    float zoom = 1.0 + 0.03 * sin(uTime * 0.9) + 0.05 * treb;\n    return 0.5 + mat2(c, -s, s, c) * d / zoom;\n}\n",
+        "mixAmount": 1.0,
+        "wrapUv": true
+    }
+}

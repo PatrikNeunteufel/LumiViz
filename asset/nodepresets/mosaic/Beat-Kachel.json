@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "mosaic",
+        "onBeat": true,
+        "quality": 100,
+        "quality2": 12,
+        "durationFrames": 20,
+        "blend": 0
+    }
+}

@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "meshWarp",
+        "code": "// Wellengang: gekreuzte Sinuswellen, Mitten heben die Amplitude\nvec2 warp(vec2 uv)\n{\n    float amp = 0.015 + 0.03 * mid;\n    uv.x += amp * sin(uv.y * 12.0 + uTime * 1.6);\n    uv.y += amp * sin(uv.x * 9.0 - uTime * 1.1);\n    return uv;\n}\n",
+        "mixAmount": 1.0,
+        "wrapUv": true
+    }
+}

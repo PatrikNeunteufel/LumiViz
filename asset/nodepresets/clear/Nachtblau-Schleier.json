@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "clear",
+        "blend": 2,
+        "color": 1057856,
+        "onlyFirst": false
+    }
+}

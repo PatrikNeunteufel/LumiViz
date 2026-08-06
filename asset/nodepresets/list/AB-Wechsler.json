@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "list",
+        "useCode": true,
+        "initCode": "an=1;",
+        "frameCode": "an=if(beat,1-an,an); enabled=an;"
+    }
+}
