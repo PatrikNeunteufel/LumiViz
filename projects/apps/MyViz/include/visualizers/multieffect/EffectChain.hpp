@@ -2322,6 +2322,56 @@ struct GpuParticlesParams
     std::string beatCode;
 };
 
+/// Klemm-Grenzen des Video-/Kamera-Quellknotens — SSOT fuer Leser, Panel und
+/// Renderer (Muster: lumi::meshwarp in MeshWarpWrapper.hpp).
+namespace videosource {
+constexpr double kMinSpeed = 0.05;  ///< Abspieltempo-Faktor untere Grenze
+constexpr double kMaxSpeed = 20.0;  ///< Abspieltempo-Faktor obere Grenze
+constexpr int kSourceMax = 2;       ///< Quelle 0..2 (Datei/Kamera/Testaufnahme)
+constexpr int kFitMax = 2;          ///< Einpassung 0..2 (strecken/einpassen/fuellen)
+constexpr int kBlendMax = 2;        ///< Mischung 0..2 (ersetzen/additiv/50-50)
+}  // namespace videosource
+
+/**
+ * Video-/Kamera-Quellknoten (LumiViz-eigen; Wunsch Patrik S55, umgesetzt S70 —
+ * Sondierung: Offene_Punkte §7). RENDER-Modul: zeichnet Videobilder auf das
+ * Chain-Bild. Drei Quellen: Datei (FFmpeg-Backend ueber Qt Multimedia),
+ * Kamera (live — das Geraet startet NIE automatisch, nur nach ausdruecklicher
+ * Freigabe im Panel je App-Lauf) und Testaufnahme (benutzerlokale Kamera-Clips
+ * aus dem Settings-Tab „Kamera" — der deterministische Stellvertreter der
+ * Kamera fuer Sonden/Standalone). Der AVS-`avi`-Knoten bleibt unangetastet
+ * (an ihm haengt die Kalibrierung).
+ */
+struct VideoSourceParams
+{
+    /// Quelle: 0 = Datei, 1 = Kamera (live), 2 = Testaufnahme (Clip aus dem Settings-Tab „Kamera")
+    int source = 0;
+    /// Datei-Quelle: Videopfad (MP4/MKV/WebM/MOV/WMV/AVI — FFmpeg-Backend). Leer = nichts zeichnen
+    std::string filePath;
+    /// Kamera-Quelle: Geraete-ID aus der Panel-Wahl (leer = keine). Das Geraet startet erst nach der Kamera-Freigabe im Panel — nie automatisch beim Preset-Laden
+    std::string cameraId;
+    /// Testaufnahme: Dateiname des Clips in der benutzerlokalen Ablage (ohne Pfad)
+    std::string recordingName;
+    /// Echtzeit-Streaming: an = Frames uhrzeitgetrieben via QMediaPlayer (lange Videos, wenig RAM — nicht deterministisch), aus = Frame-Index deterministisch ueber die Sim-Uhr (VideoFrameCache dekodiert die Datei KOMPLETT in den Speicher — kurze Clips/Sonden)
+    bool streaming = false;
+    /// Abspieltempo-Faktor 0.05..20 (nur Frame-Schritt; 1 = Original-Tempo ueber die Clip-Framerate)
+    double speed = 1.0;
+    /// Am Ende von vorn beginnen (aus = letztes Bild halten); nur Datei/Testaufnahme
+    bool loop = true;
+    /// Einpassung ins Chain-Bild: 0 = strecken, 1 = einpassen (Letterbox), 2 = fuellen (beschneiden)
+    int fit = 0;
+    /// Mischung aufs Chain-Bild: 0 = ersetzen, 1 = additiv, 2 = 50/50
+    int blend = 0;
+    /// Deckkraft 0..1 (skaliert den Beitrag in allen Blend-Arten)
+    double opacity = 1.0;
+    /// Parameter-Skript (Strang D): `speed`, `opacity` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    /// Parameter-Skript (Strang D): `speed`, `opacity` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string frameCode;
+    /// Parameter-Skript (Strang D): `speed`, `opacity` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string beatCode;
+};
+
 /**
  * Umgang mit dem GEERBTEN Feedback-Bild beim .milk→.milk-Wechsel im Host
  * (S66). Das Original loescht den Hauptpuffer beim Preset-Wechsel nie —
@@ -2432,7 +2482,7 @@ using EffectParams =
                  ImportNotesParams, RenderScaleParams, BloomParams, Camera3DParams,
                  SuperScope3DParams, Terrain3DParams, GlowOrbsParams,
                  ShadertoyParams, MeshWarpParams, GpuParticlesParams,
-                 PassthroughParams>;
+                 VideoSourceParams, PassthroughParams>;
 
 // =============================================================================
 // Chain node
@@ -2592,6 +2642,7 @@ struct CompileResult
         const char* operator()(const ShadertoyParams&) const { return "Shadertoy"; }
         const char* operator()(const MeshWarpParams&) const { return "Mesh Warp"; }
         const char* operator()(const GpuParticlesParams&) const { return "GPU Particles"; }
+        const char* operator()(const VideoSourceParams&) const { return "Video Source"; }
         const char* operator()(const PassthroughParams&) const { return "Passthrough"; }
     };
     return std::visit(Visitor{}, params);

@@ -16,6 +16,7 @@
 #include "core/GpuPreference.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
+#include "services/LiveVideoFeed.hpp"  // Kamera-Tab: Freigabe + Testaufnahmen-Ordner (S70)
 #include "services/ShortcutRegistry.hpp"
 #include "services/events/UIEvents.hpp"
 #include "audio/IAudioEngine.hpp"
@@ -45,6 +46,15 @@
 #include <QStandardPaths>
 #include <QTimer>
 #include <QUrl>
+#include <QCamera>                 // Kamera-Tab (S70)
+#include <QCameraDevice>
+#include <QDateTime>
+#include <QFile>
+#include <QListWidget>
+#include <QMediaCaptureSession>
+#include <QMediaDevices>
+#include <QMediaFormat>
+#include <QMediaRecorder>
 
 #include <optional>
 
@@ -359,6 +369,7 @@ void SettingsPanel::setupUI()
     m_pTabWidget->addTab(createPerformanceTab(), tr("Performance"));
     m_pTabWidget->addTab(createPanelsTab(), tr("Panels"));
     m_pTabWidget->addTab(createEditorTab(), tr("Editor"));
+    m_pTabWidget->addTab(createKameraTab(), tr("Kamera"));
     m_pTabWidget->addTab(createHotkeyTab(), tr("Hotkeys"));
 
     mainLayout->addWidget(m_pTabWidget);
@@ -768,6 +779,216 @@ QWidget* SettingsPanel::createEditorTab()
     layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
     return widget;
+}
+
+QWidget* SettingsPanel::createKameraTab()
+{
+    // Kamera-Testaufnahmen (S70, Idee Patrik): kurze Clips benutzerlokal
+    // aufnehmen. Dreifacher Nutzen (Offene_Punkte §7): der Windows-
+    // Berechtigungsdialog kommt beim bewussten Klick · die Aufnahme laeuft als
+    // Datei ueber den VideoFrameCache im Frame-Schritt (deterministisch,
+    // sondentauglich) · der videoSource-Knoten bekommt mit "Testaufnahme"
+    // eine dritte Betriebsart samt Fallback ohne Geraet.
+    auto* widget = new QWidget();
+    auto* layout = new QFormLayout(widget);
+
+    m_pKamGeraetCombo = new QComboBox(widget);
+    m_pKamGeraetCombo->setToolTip(
+        tr("Kameragerät für die Testaufnahme. Die Liste zu füllen öffnet "
+           "keine Kamera — das passiert erst beim Aufnahme-Klick."));
+    aktualisiereKamGeraete();
+    layout->addRow(tr("Kamera:"), m_pKamGeraetCombo);
+
+    auto* suchenBtn = new QPushButton(tr("Geräte neu suchen"), widget);
+    connect(suchenBtn, &QPushButton::clicked, this,
+            [this]() { aktualisiereKamGeraete(); });
+    layout->addRow(QString(), suchenBtn);
+
+    m_pKamDauerSpin = new QSpinBox(widget);
+    m_pKamDauerSpin->setRange(2, 30);
+    m_pKamDauerSpin->setSuffix(tr(" s"));
+    m_pKamDauerSpin->setValue(
+        QSettings().value(QStringLiteral("kamera/aufnahmeDauer"), 5).toInt());
+    m_pKamDauerSpin->setToolTip(tr("Länge der Testaufnahme in Sekunden."));
+    layout->addRow(tr("Dauer:"), m_pKamDauerSpin);
+
+    m_pKamAufnahmeButton = new QPushButton(tr("● Testaufnahme starten"), widget);
+    m_pKamAufnahmeButton->setToolTip(
+        tr("Startet die Kamera und nimmt einen Clip in den benutzerlokalen "
+           "Ordner auf (Windows fragt ggf. nach der Kameraberechtigung). "
+           "Der Klick erteilt zugleich die Kamera-Freigabe dieses App-Laufs "
+           "für die Video-Quellknoten."));
+    connect(m_pKamAufnahmeButton, &QPushButton::clicked, this,
+            [this]() { starteTestaufnahme(); });
+    layout->addRow(m_pKamAufnahmeButton);
+
+    m_pKamStatusLabel = new QLabel(widget);
+    m_pKamStatusLabel->setWordWrap(true);
+    layout->addRow(m_pKamStatusLabel);
+
+    m_pKamListe = new QListWidget(widget);
+    m_pKamListe->setFixedHeight(120);
+    m_pKamListe->setToolTip(
+        tr("Vorhandene Testaufnahmen — im Video-Quellknoten unter "
+           "Quelle „Testaufnahme“ wählbar."));
+    aktualisiereTestaufnahmenListe();
+    layout->addRow(tr("Aufnahmen:"), m_pKamListe);
+
+    auto* loeschenBtn = new QPushButton(tr("Gewählte Aufnahme löschen"), widget);
+    connect(loeschenBtn, &QPushButton::clicked, this, [this]() {
+        auto* item = m_pKamListe != nullptr ? m_pKamListe->currentItem() : nullptr;
+        if (item == nullptr) return;
+        const QString datei =
+            lumi::services::LiveVideoFeed::testaufnahmenOrdner() +
+            QStringLiteral("/") + item->text();
+        if (QMessageBox::question(
+                this, tr("Testaufnahme löschen"),
+                tr("»%1« wirklich löschen?").arg(item->text())) !=
+            QMessageBox::Yes)
+            return;
+        QFile::remove(datei);
+        aktualisiereTestaufnahmenListe();
+    });
+    auto* ordnerBtn = new QPushButton(tr("Ordner öffnen"), widget);
+    ordnerBtn->setToolTip(tr("Öffnet den benutzerlokalen Testaufnahmen-Ordner "
+                             "im Dateimanager."));
+    connect(ordnerBtn, &QPushButton::clicked, this, []() {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(
+            lumi::services::LiveVideoFeed::testaufnahmenOrdner()));
+    });
+    auto* knopfZeile = new QWidget(widget);
+    auto* knopfLayout = new QHBoxLayout(knopfZeile);
+    knopfLayout->setContentsMargins(0, 0, 0, 0);
+    knopfLayout->addWidget(loeschenBtn);
+    knopfLayout->addWidget(ordnerBtn);
+    layout->addRow(knopfZeile);
+
+    auto* hint = new QLabel(
+        tr("Testaufnahmen liegen benutzerlokal (nicht im Projekt) und dienen "
+           "dem Video-Quellknoten als deterministischer Kamera-Ersatz — auch "
+           "als Fallback, wenn gerade keine Kamera angeschlossen ist."),
+        widget);
+    hint->setWordWrap(true);
+    hint->setStyleSheet(QStringLiteral("color:#888"));
+    layout->addRow(hint);
+
+    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+
+    return widget;
+}
+
+void SettingsPanel::aktualisiereKamGeraete()
+{
+    if (m_pKamGeraetCombo == nullptr) return;
+    const QString vorher = m_pKamGeraetCombo->currentData().toString();
+    m_pKamGeraetCombo->clear();
+    m_pKamGeraetCombo->addItem(tr("— keine —"), QString());
+    const auto geraete = QMediaDevices::videoInputs();
+    for (const QCameraDevice& d : geraete)
+    {
+        m_pKamGeraetCombo->addItem(d.description(), QString::fromUtf8(d.id()));
+        if (QString::fromUtf8(d.id()) == vorher)
+            m_pKamGeraetCombo->setCurrentIndex(m_pKamGeraetCombo->count() - 1);
+    }
+}
+
+void SettingsPanel::aktualisiereTestaufnahmenListe()
+{
+    if (m_pKamListe == nullptr) return;
+    m_pKamListe->clear();
+    const QDir ordner(lumi::services::LiveVideoFeed::testaufnahmenOrdner());
+    const auto eintraege = ordner.entryList(QDir::Files, QDir::Name);
+    for (const QString& name : eintraege) m_pKamListe->addItem(name);
+}
+
+void SettingsPanel::starteTestaufnahme()
+{
+    if (m_pKamRecorder != nullptr) return;  // eine Aufnahme laeuft schon
+    const QString id = m_pKamGeraetCombo->currentData().toString();
+    if (id.isEmpty())
+    {
+        m_pKamStatusLabel->setText(tr("⚠ Bitte zuerst eine Kamera wählen."));
+        return;
+    }
+    QCameraDevice geraet;
+    const auto geraete = QMediaDevices::videoInputs();
+    for (const QCameraDevice& d : geraete)
+    {
+        if (QString::fromUtf8(d.id()) == id)
+        {
+            geraet = d;
+            break;
+        }
+    }
+    if (geraet.isNull())
+    {
+        m_pKamStatusLabel->setText(tr("⚠ Kamera nicht mehr vorhanden — "
+                                      "Geräte neu suchen."));
+        return;
+    }
+
+    // DIE ausdrueckliche Nutzeraktion (Vertrag Offene_Punkte §7): ab jetzt
+    // duerfen auch die videoSource-Knoten die Kamera dieses App-Laufs starten.
+    lumi::services::LiveVideoFeed::instance().erlaubeKamera();
+
+    const int sek = m_pKamDauerSpin->value();
+    QSettings().setValue(QStringLiteral("kamera/aufnahmeDauer"), sek);
+    const QString datei =
+        lumi::services::LiveVideoFeed::testaufnahmenOrdner() +
+        QStringLiteral("/testaufnahme_") +
+        QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd_HHmmss")) +
+        QStringLiteral(".mp4");
+
+    m_pKamera = new QCamera(geraet, this);
+    m_pKamSession = new QMediaCaptureSession(this);
+    m_pKamRecorder = new QMediaRecorder(this);
+    m_pKamSession->setCamera(m_pKamera);
+    m_pKamSession->setRecorder(m_pKamRecorder);
+    m_pKamRecorder->setOutputLocation(QUrl::fromLocalFile(datei));
+    QMediaFormat format(QMediaFormat::MPEG4);
+    format.setVideoCodec(QMediaFormat::VideoCodec::H264);
+    m_pKamRecorder->setMediaFormat(format);
+    connect(m_pKamRecorder, &QMediaRecorder::errorOccurred, this,
+            [this](QMediaRecorder::Error, const QString& text) {
+                m_pKamStatusLabel->setText(
+                    tr("⚠ Aufnahme fehlgeschlagen: %1").arg(text));
+                beendeTestaufnahme();
+            });
+    connect(m_pKamRecorder, &QMediaRecorder::recorderStateChanged, this,
+            [this](QMediaRecorder::RecorderState zustand) {
+                if (zustand == QMediaRecorder::StoppedState)
+                    beendeTestaufnahme();
+            });
+    m_pKamera->start();
+    m_pKamRecorder->record();
+    m_pKamStatusLabel->setText(tr("● Aufnahme läuft (%1 s)…").arg(sek));
+    m_pKamAufnahmeButton->setEnabled(false);
+    QTimer::singleShot(sek * 1000, this, [this]() {
+        if (m_pKamRecorder != nullptr) m_pKamRecorder->stop();
+    });
+}
+
+void SettingsPanel::beendeTestaufnahme()
+{
+    if (m_pKamRecorder == nullptr) return;  // schon abgeraeumt (Fehler-Pfad)
+    m_pKamRecorder->disconnect(this);  // gegen Reentry aus recorderStateChanged
+    if (m_pKamera != nullptr) m_pKamera->stop();
+    m_pKamRecorder->deleteLater();
+    m_pKamRecorder = nullptr;
+    if (m_pKamSession != nullptr)
+    {
+        m_pKamSession->deleteLater();
+        m_pKamSession = nullptr;
+    }
+    if (m_pKamera != nullptr)
+    {
+        m_pKamera->deleteLater();
+        m_pKamera = nullptr;
+    }
+    m_pKamAufnahmeButton->setEnabled(true);
+    if (!m_pKamStatusLabel->text().startsWith(QStringLiteral("⚠")))
+        m_pKamStatusLabel->setText(tr("✓ Testaufnahme gespeichert."));
+    aktualisiereTestaufnahmenListe();
 }
 
 void SettingsPanel::setupConnections()

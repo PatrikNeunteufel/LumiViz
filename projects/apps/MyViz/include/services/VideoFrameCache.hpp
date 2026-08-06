@@ -4,8 +4,8 @@
  * @brief  Frame-genauer Video-Decoder-Cache ueber Qt Multimedia (FFmpeg-Backend)
  *
  * @author Patrik Neunteufel
- * @date   Juli 2026
- * @version 1.0.0
+ * @date   Juli 2026 (fps-Feld August 2026, S70)
+ * @version 1.1.0
  *
  * @details
  * Stufe 1 des Video-Wegs (Entscheid S59): der AVS-`avi`-Knoten dekodiert
@@ -59,6 +59,9 @@ public:
         /// RGBX8888, top-down; erst lesen, wenn status == FERTIG (danach
         /// unveraenderlich — der Ladevorgang schreibt nur VOR dem Umschalten)
         std::vector<QImage> frames;
+        /// Bildrate der Quelle (S70, fuer Original-Tempo-Abspielen); wie
+        /// `frames` erst nach FERTIG lesen. 25 = Ausweichwert der Ladung.
+        double fps = 25.0;
         std::atomic<int> status{LAEDT};
     };
 

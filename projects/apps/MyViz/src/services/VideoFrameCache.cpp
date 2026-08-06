@@ -4,12 +4,14 @@
  * @brief  Implementation des frame-genauen Video-Decoder-Caches (Qt Multimedia)
  *
  * @author Patrik Neunteufel
- * @date   Juli 2026
- * @version 1.0.0
+ * @date   Juli 2026 (fps-Feld August 2026, S70)
+ * @version 1.1.0
  ****************************************************************************************
  */
 
 #include "services/VideoFrameCache.hpp"
+
+#include "services/VideoFrameUtil.hpp"  // toImage-Ersatz (Befund S70)
 
 #include <QCoreApplication>
 #include <QEventLoop>
@@ -120,7 +122,9 @@ void VideoFrameCache::lade(const QString& pfad, std::shared_ptr<Clip> clip)
         if (!warteAuf(&senke, &QVideoSink::videoFrameChanged, 3000)) break;
         const QVideoFrame frame = senke.videoFrame();
         if (!frame.isValid()) break;
-        QImage img = frame.toImage().convertToFormat(QImage::Format_RGBX8888);
+        // S70: map()+Rohbytes statt toImage() — das liefert unter Qt 6.10.1
+        // schwarze Bilder (Befund-Doku: VideoFrameUtil.hpp).
+        QImage img = videoFrameZuBild(frame);
         if (img.isNull()) break;
         bytes += static_cast<qint64>(img.width()) * img.height() * 4;
         if (bytes > kMaxBytes)
@@ -143,6 +147,7 @@ void VideoFrameCache::lade(const QString& pfad, std::shared_ptr<Clip> clip)
     }
     std::printf("[VideoFrameCache] %s: %zu Frames @ %.3f fps dekodiert\n",
                 qPrintable(pfad), clip->frames.size(), fps);
+    clip->fps = fps;  // vor dem Umschalten schreiben (Leser-Vertrag s. Clip)
     clip->status.store(FERTIG);
 }
 

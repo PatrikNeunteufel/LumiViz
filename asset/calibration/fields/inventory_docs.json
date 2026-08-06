@@ -6,8 +6,8 @@
     "beschreibung": "EffectChain.hpp (Doxygen)"
   },
   "summe": {
-    "typen": 88,
-    "felder": 756,
+    "typen": 89,
+    "felder": 769,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -8791,6 +8791,132 @@
           "panel": "bool",
           "helfer": "addBool",
           "doc": "delay in beats vs frames"
+        }
+      ]
+    },
+    {
+      "typkey": "videoSource",
+      "name": "Video Source",
+      "struct": "VideoSourceParams",
+      "felder": [
+        {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `speed`, `opacity` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `speed`, `opacity` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `speed`, `opacity` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "speed",
+            "opacity"
+          ]
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "blend",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 3,
+          "doc": "Mischung aufs Chain-Bild: 0 = ersetzen, 1 = additiv, 2 = 50/50"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "cameraId",
+          "panel": "sonderzeile",
+          "doc": "Kamera-Quelle: Geraete-ID aus der Panel-Wahl (leer = keine). Das Geraet startet erst nach der Kamera-Freigabe im Panel — nie automatisch beim Preset-Laden"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "filePath",
+          "panel": "text",
+          "helfer": "addText",
+          "doc": "Datei-Quelle: Videopfad (MP4/MKV/WebM/MOV/WMV/AVI — FFmpeg-Backend). Leer = nichts zeichnen"
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "fit",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 3,
+          "doc": "Einpassung ins Chain-Bild: 0 = strecken, 1 = einpassen (Letterbox), 2 = fuellen (beschneiden)"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `speed`, `opacity` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `speed`, `opacity` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "speed",
+            "opacity"
+          ]
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D): `speed`, `opacity` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "speed",
+            "opacity"
+          ]
+        },
+        {
+          "art": "bool",
+          "default": true,
+          "name": "loop",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "Am Ende von vorn beginnen (aus = letztes Bild halten); nur Datei/Testaufnahme"
+        },
+        {
+          "art": "zahl",
+          "default": 1,
+          "name": "opacity",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 1.0,
+          "doc": "Deckkraft 0..1 (skaliert den Beitrag in allen Blend-Arten)"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "recordingName",
+          "panel": "sonderzeile",
+          "doc": "Testaufnahme: Dateiname des Clips in der benutzerlokalen Ablage (ohne Pfad)"
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "source",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 3,
+          "doc": "Quelle: 0 = Datei, 1 = Kamera (live), 2 = Testaufnahme (Clip aus dem Settings-Tab „Kamera\")"
+        },
+        {
+          "art": "zahl",
+          "default": 1,
+          "name": "speed",
+          "panel": "double",
+          "helfer": "addDouble",
+          "doc": "Abspieltempo-Faktor 0.05..20 (nur Frame-Schritt; 1 = Original-Tempo ueber die Clip-Framerate)"
+        },
+        {
+          "art": "bool",
+          "default": false,
+          "name": "streaming",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "Echtzeit-Streaming: an = Frames uhrzeitgetrieben via QMediaPlayer (lange Videos, wenig RAM — nicht deterministisch), aus = Frame-Index deterministisch ueber die Sim-Uhr (VideoFrameCache dekodiert die Datei KOMPLETT in den Speicher — kurze Clips/Sonden)"
         }
       ]
     },

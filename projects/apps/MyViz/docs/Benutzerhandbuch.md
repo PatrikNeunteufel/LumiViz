@@ -1,7 +1,7 @@
 # MyViz — Benutzerhandbuch
 
-> **Version:** 1.6.0
-> **Datum:** 2026-08-03
+> **Version:** 1.7.0
+> **Datum:** 2026-08-06
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -29,6 +29,7 @@ Konfigurations-Panels steht im
 10. [Automatisch gemerkt / Bekanntes](#10-automatisch-gemerkt--bekanntes)
 11. [Effektketten, Milkdrop & Host-Gruppen](#11-effektketten-milkdrop--host-gruppen)
 12. [Shadertoy](#12-shadertoy)
+13. [Video & Kamera als Quelle](#13-video--kamera-als-quelle)
 
 ---
 
@@ -513,10 +514,52 @@ fertige Ketten unter `asset/effectchain/shadertoys/` — jeder mit einem
 
 ---
 
+## 13. Video & Kamera als Quelle
+
+Seit Session 70 gibt es den Ketten-Knoten **„Video/Kamera (Quelle)"**
+(Palette, Rubrik „Scopes & Sources"): er zeichnet Videobilder auf das
+Ketten-Bild — als Startpunkt einer Kette oder als Ebene mitten drin.
+
+**Drei Quellen** (Umschalter im Knoten):
+
+- **Datei** — MP4, MKV, WebM, MOV, WMV, AVI (über das FFmpeg-Backend von
+  Qt Multimedia). Der Pfad bleibt im Preset stehen; Videos werden **nicht**
+  eingebettet. Relative Pfade werden beim Laden gegen den Preset-Ordner
+  aufgelöst.
+- **Kamera (live)** — Gerät aus der Liste wählen. **Eine Kamera startet nie
+  von selbst:** erst der Knopf „Kamera freigeben (dieser App-Lauf)" schaltet
+  sie frei (dann fragt Windows ggf. nach der Berechtigung). Beim Laden eines
+  Presets mit Kamera-Quelle fragt die App einmal per Dialog, ob sie freigeben
+  soll — ohne Freigabe bleibt der Knoten schwarz.
+- **Testaufnahme** — ein kurzer Kamera-Clip aus den Einstellungen (s. u.),
+  der wie eine Datei abgespielt wird: der reproduzierbare Kamera-Ersatz,
+  auch als Ausweich, wenn gerade keine Kamera angeschlossen ist.
+
+**Abspielverhalten:**
+
+- **Echtzeit-Streaming** (Schalter): an = die Datei streamt uhrgetrieben
+  (beliebig lange Videos, wenig Speicher); aus = **Frame-Schritt** — die
+  Datei wird einmal komplett dekodiert und läuft dann deterministisch mit
+  der Sim-Uhr (kurze Clips; zwei Läufe sind bit-identisch).
+- **Tempo** (0,05–20×), **Schleife** (aus = letztes Bild halten),
+  **Deckkraft** und **Blend** (Ersetzen/Additiv/50:50).
+- **Einpassung:** Strecken · Einpassen (Balken zeigen das Ketten-Bild
+  darunter) · Füllen (beschneiden).
+- **Parameter-Skripte** `init`/`frame`/`beat` können `speed` und `opacity`
+  audio-reaktiv steuern (`bass`, `mid`, `treb`, `vol`, `beat`).
+
+**Testaufnahmen (Einstellungen → Kamera):** Gerät wählen, Dauer einstellen,
+**„● Testaufnahme starten"** — der Clip landet benutzerlokal (nicht im
+Projekt) und erscheint danach im Knoten unter Quelle „Testaufnahme". Der
+Aufnahme-Klick erteilt zugleich die Kamera-Freigabe des App-Laufs.
+
+---
+
 ## Changelog
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.7.0 | 2026-08-06 | NEU §13 „Video & Kamera als Quelle" (S70): videoSource-Knoten (Datei/Kamera/Testaufnahme, Streaming vs. Frame-Schritt, Einpassung, Blend/Deckkraft, Parameter-Skripte) + Settings-Tab „Kamera" mit Testaufnahmen |
 | 1.6.0 | 2026-08-04 | §11: neue Einstellung „MilkDrop Start Fade-in" (Sicht-Blende, S67) — halbe Sekunde Schwarz-Einblendung über der Rausch-Saat bei App-Start/Größenwechsel/Löschen; Vorgabe an |
 | 1.5.1 | 2026-08-03 | §11: fünfte Option „Ausblenden (über Zeit)" (Erbe stirbt über die Dauer weg), Fading als „einmaliger Mix" präzisiert, Hinweis „Löschen ≠ Schwarz" (Rausch-Saat) |
 | 1.5.0 | 2026-08-03 | §11: „Preset-Wechsel: das geerbte Bild" (S66-Schalter Behalten/Löschen/Fading + exakte Liste, was Behalten erhält) und „Regelwerk" (S65). +§12 Shadertoy (S65). §8: Graphics-Card-Einstellung (S61) + MilkDrop-Preset-Switch-Standard |

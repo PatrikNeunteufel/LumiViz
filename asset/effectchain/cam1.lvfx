@@ -1,0 +1,89 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "",
+                "blend": 0,
+                "cameraId": "\\\\?\\usb#vid_3277&pid_0018&mi_00#7&cce78d1&0&0000#{e5323777-f976-4f5b-9b55-b94699c46e44}\\global",
+                "enabled": true,
+                "filePath": "",
+                "fit": 0,
+                "frameCode": "",
+                "initCode": "",
+                "loop": true,
+                "name": "Video Source",
+                "opacity": 1,
+                "recordingName": "",
+                "source": 1,
+                "speed": 1,
+                "streaming": false,
+                "type": "videoSource"
+            },
+            {
+                "beatCode": "x=rand(33)-16;y=rand(29)-14",
+                "blend": true,
+                "enabled": true,
+                "frameCode": "t=t+0.05;x=10*sin(t);y=7*cos(t*0.8)",
+                "initCode": "t=0",
+                "name": "Dynamic Shift",
+                "subpixel": true,
+                "type": "dynamicShift"
+            },
+            {
+                "beatCode": "",
+                "blend": 0,
+                "durationFrames": 41,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Mosaic",
+                "onBeat": true,
+                "quality": 47,
+                "quality2": 8,
+                "type": "mosaic"
+            },
+            {
+                "audioChannel": 2,
+                "beatCode": "fa=rand(5)+1; fb=rand(5)+2",
+                "colorBlend": 0,
+                "colorCycleFrames": 60,
+                "colors": [
+                ],
+                "dotSize": 4,
+                "enabled": true,
+                "frameCode": "t=t+0.01",
+                "gradientPreset": "Neon",
+                "initCode": "n=400; t=0; pi=acos(-1); fa=3; fb=4",
+                "lineBlend": 1,
+                "lineWidth": 4,
+                "name": "SuperScope",
+                "pointCode": "x=sin(fa*i*pi*2+t)*0.8; y=cos(fb*i*pi*2)*0.8+v*0.2",
+                "pointCount": 400,
+                "renderMode": 1,
+                "spectrumSource": false,
+                "type": "superScope"
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

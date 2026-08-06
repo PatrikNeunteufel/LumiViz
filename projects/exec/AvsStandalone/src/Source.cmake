@@ -37,6 +37,7 @@ set(_local_sources
     "${_myviz_src}/scripting/ScriptSlotHost.cpp"
     "${_myviz_src}/scripting/LuaScriptEngine.cpp"
     "${_myviz_src}/services/VideoFrameCache.cpp"
+    "${_myviz_src}/services/LiveVideoFeed.cpp"
 )
 
 set(_local_headers

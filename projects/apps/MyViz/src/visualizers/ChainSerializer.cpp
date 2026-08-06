@@ -1202,6 +1202,22 @@ struct WriteVisitor
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
     }
+    void operator()(const VideoSourceParams& p) const
+    {
+        o["source"] = p.source;
+        o["filePath"] = QString::fromStdString(p.filePath);
+        o["cameraId"] = QString::fromStdString(p.cameraId);
+        o["recordingName"] = QString::fromStdString(p.recordingName);
+        o["streaming"] = p.streaming;
+        o["speed"] = p.speed;
+        o["loop"] = p.loop;
+        o["fit"] = p.fit;
+        o["blend"] = p.blend;
+        o["opacity"] = p.opacity;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
     void operator()(const PassthroughParams& p) const
     {
         o["sourceId"] = p.sourceId;
@@ -2557,6 +2573,26 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
+    if (type == "videoSource")
+    {
+        namespace vs = lumi::multieffect::videosource;
+        VideoSourceParams p;
+        p.source = std::clamp(getInt(o, "source", p.source), 0, vs::kSourceMax);
+        p.filePath = getStr(o, "filePath", p.filePath);
+        p.cameraId = getStr(o, "cameraId", p.cameraId);
+        p.recordingName = getStr(o, "recordingName", p.recordingName);
+        p.streaming = getBool(o, "streaming", p.streaming);
+        p.speed = std::clamp(getDouble(o, "speed", p.speed), vs::kMinSpeed,
+                             vs::kMaxSpeed);
+        p.loop = getBool(o, "loop", p.loop);
+        p.fit = std::clamp(getInt(o, "fit", p.fit), 0, vs::kFitMax);
+        p.blend = std::clamp(getInt(o, "blend", p.blend), 0, vs::kBlendMax);
+        p.opacity = std::clamp(getDouble(o, "opacity", p.opacity), 0.0, 1.0);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        return p;
+    }
     // "passthrough" and any unknown key
     return PassthroughParams{getInt(o, "sourceId", 0), getStr(o, "note")};
 }
@@ -2654,6 +2690,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const ShadertoyParams&) const { return "shadertoy"; }
         QString operator()(const MeshWarpParams&) const { return "meshWarp"; }
         QString operator()(const GpuParticlesParams&) const { return "gpuParticles"; }
+        QString operator()(const VideoSourceParams&) const { return "videoSource"; }
         QString operator()(const PassthroughParams&) const { return "passthrough"; }
     };
     return std::visit(Visitor{}, params);

@@ -97,6 +97,11 @@ private:
 
     // Tree <-> chain
     void rebuildTree();
+    /// Kamera-Freigabe-Dialog (S70): fragt EINMAL je geladener Kette nach,
+    /// wenn sie eine Kamera-Quelle enthaelt und die Freigabe dieses App-Laufs
+    /// noch fehlt — der Dialog selbst ist die ausdrueckliche Nutzeraktion
+    /// des Kamera-Vertrags (Offene_Punkte §7). Laeuft queued nach rebuildTree.
+    void pruefeKameraFreigabe();
     void addTreeItem(QTreeWidgetItem* parentItem,
                      const lumi::multieffect::ChainNode& node, QList<int> path);
     [[nodiscard]] lumi::multieffect::ChainNode* nodeAtPath(const QList<int>& path);
@@ -181,6 +186,9 @@ private:
 
     bool m_updating = false;   ///< guards item-changed while rebuilding
     bool m_selecting = false;  ///< guards recursive selection enforcement
+    /// Kamera-Dialog schon gezeigt (je geladener Kette; Reset bei
+    /// EffectChainChangedEvent/setHost — Struktur-Edits fragen nicht erneut).
+    bool m_kameraDialogGezeigt = false;
 
     /// Non-null backing for the gradient combo's preview delegate (the delegate
     /// renders each preset into its own temp module; it only needs a live ptr).

@@ -21,7 +21,10 @@
  * 3. **Panels** - panel housekeeping (reset Import Browser start folder)
  * 4. **Editor** - Beautify-Format der Skript-Editoren (QSettings-Block
  *    "editor/...", gelesen von EelScriptEditing::formatOptionsFromSettings, S69)
- * 5. **Hotkeys** - Hotkey-Editor
+ * 5. **Kamera** - Testaufnahmen (S70): kurze Kamera-Clips benutzerlokal
+ *    aufnehmen — deterministische Kamera-Stellvertreter des videoSource-
+ *    Knotens; die Aufnahme ist zugleich die Kamera-Freigabe des App-Laufs
+ * 6. **Hotkeys** - Hotkey-Editor
  ****************************************************************************************
  */
 
@@ -38,6 +41,10 @@ class QDoubleSpinBox;
 class QCheckBox;
 class QPushButton;
 class QLabel;
+class QListWidget;
+class QCamera;
+class QMediaCaptureSession;
+class QMediaRecorder;
 
 /**
  * @class SettingsPanel
@@ -86,6 +93,18 @@ private:
     /// Beautify-Format der Skript-Editoren (Offene_Punkte §7, S69):
     /// Einzugsbreite, Operator-Abstaende, Leerzeilen-Klemme ("editor/*").
     QWidget* createEditorTab();
+    /// Kamera-Testaufnahmen (S70): Geraetewahl + Aufnahme in den
+    /// benutzerlokalen Ordner (LiveVideoFeed::testaufnahmenOrdner) + Liste.
+    QWidget* createKameraTab();
+    /// Fuellt die Kamera-Geraeteliste neu (das Aufzaehlen oeffnet KEINE Kamera).
+    void aktualisiereKamGeraete();
+    /// Fuellt die Liste der vorhandenen Testaufnahmen neu.
+    void aktualisiereTestaufnahmenListe();
+    /// Startet die Testaufnahme — DIE ausdrueckliche Nutzeraktion, die auch
+    /// die Kamera-Freigabe dieses App-Laufs erteilt (LiveVideoFeed).
+    void starteTestaufnahme();
+    /// Beendet die Aufnahme, raeumt die Kamera-Objekte ab, frischt die Liste.
+    void beendeTestaufnahme();
     /// Hotkey-Editor (docs/ui/Hotkey_Konzept.md §6): Tabelle je Kategorie mit
     /// Aufnahmefeld, Kollisions-/Reservierungspruefung und Zuruecksetzen.
     QWidget* createHotkeyTab();
@@ -126,6 +145,18 @@ private:
     QSpinBox* m_pEditorIndentSpinBox = nullptr;
     QCheckBox* m_pEditorOpSpacesCheckBox = nullptr;
     QSpinBox* m_pEditorMaxBlankSpinBox = nullptr;
+
+    // Kamera Tab (Testaufnahmen, S70)
+    QComboBox* m_pKamGeraetCombo = nullptr;
+    QSpinBox* m_pKamDauerSpin = nullptr;      ///< Aufnahmedauer in Sekunden
+    QPushButton* m_pKamAufnahmeButton = nullptr;
+    QLabel* m_pKamStatusLabel = nullptr;
+    QListWidget* m_pKamListe = nullptr;       ///< vorhandene Testaufnahmen
+    /// Aufnahme-Objekte — nur waehrend einer laufenden Aufnahme belegt
+    /// (QObject-Kinder des Panels; deleteLater beim Beenden).
+    QCamera* m_pKamera = nullptr;
+    QMediaCaptureSession* m_pKamSession = nullptr;
+    QMediaRecorder* m_pKamRecorder = nullptr;
 
     // Hotkeys Tab
     QLabel* m_pHotkeyStatusLabel = nullptr;

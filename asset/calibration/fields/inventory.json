@@ -1,8 +1,8 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 756,
-        "typen": 88
+        "felder": 769,
+        "typen": 89
     },
     "typen": [
         {
@@ -4444,6 +4444,77 @@
             ],
             "name": "Video Delay",
             "typkey": "videoDelay"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "cameraId"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "filePath"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "fit"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "loop"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "opacity"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "recordingName"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "source"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "speed"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "streaming"
+                }
+            ],
+            "name": "Video Source",
+            "typkey": "videoSource"
         },
         {
             "felder": [

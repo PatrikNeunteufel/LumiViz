@@ -1,7 +1,7 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.47.0
-> **Datum:** 2026-08-06 (Session 69)
+> **Version:** 1.49.0
+> **Datum:** 2026-08-06 (Session 70)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -941,10 +941,54 @@ Präzisionsgrenze weich auf den Startausschnitt zurückblenden), ggf. plus
 double-Präzision fürs Zentrum. Der akkumulierte Zoom ist per Skript nicht
 erreichbar (nur `zoomspeed`), ein Vorlagen-Workaround existiert also nicht.
 
-### ⚪ Video-/Kamera-Quellmodul + Stilfilter (Wunsch Patrik S55)
+### ⬜ Video-/Kamera-Quellmodul + Stilfilter (Wunsch Patrik S55; Teil A umgesetzt S70)
 
-**Zeitpunkt: später** — ausdrücklich nicht in der Kalibrier-Runde. Hier steht nur,
-was bei der Sondierung schon feststeht, damit es nicht noch einmal erhoben wird.
+**Stand S70: Teil A (Quellmodul) UMGESETZT — Sichttest offen.** Neuer
+Chain-Node `videoSource` (Palette „Scopes & Sources"): Quelle
+Datei/Kamera/Testaufnahme, Echtzeit-Streaming (NEU `services/LiveVideoFeed`)
+vs. deterministischer Frame-Schritt (VideoFrameCache 1.1.0, NEU `Clip::fps`),
+Tempo/Schleife/Einpassung/Blend/Deckkraft, Parameter-Skripte `speed`/`opacity`,
+relative Pfade lösen gegen den Preset-Ordner auf. Settings-Tab „Kamera" mit
+Testaufnahmen (benutzerlokal, AppData); Kamera-Freigabe je App-Lauf
+(Panel-Knopf bzw. Aufnahme-Klick — nie beim Preset-Laden). Sonde
+`videosource_sonde.lvfx` (Doppellauf SHA256-identisch, Warnungen=0,
+Sichtprüfung Balken+Letterbox ok). Benutzerhandbuch §13.
+**BEFUND S70 (behoben): `QVideoFrame::toImage()` liefert unter Qt 6.10.1
+(FFmpeg-Backend) SCHWARZE Bilder bei korrekten Zeitstempeln** — Rohdaten per
+`map()` vollständig da. Workaround NEU `services/VideoFrameUtil.hpp`
+(`videoFrameZuBild`), gilt für LiveVideoFeed UND VideoFrameCache — damit war
+auch der avi-Cache-Fallback (VR09, S59) auf dieser Qt-Version schwarz.
+**Offen:** ⬜ Sichttests (Knoten-Panel, Kamera-Pfad ✅ Patrik S70
+(USB-WebCam läuft), Testaufnahme-Aufnahme, Streaming-Langvideo) · Demo folgt
+mit Teil B (`pixelFilter` — Video + Comic-Filter ist das eigentliche
+Schaufenster) · Teil B siehe Stilfilter-Architektur unten ·
+⚪ **Rest-Risiko fremde Kameras:** `videoFrameZuBild` wandelt nur
+RGB-Formate selbst; YUV (NV12/YUYV) fällt auf `toImage()` zurück — liefert
+eine Kamera nur YUV UND trifft dort der toImage-Schwarz-Bug, bliebe sie
+schwarz. Rezept: manuelle NV12/YUYV→RGB-Wandlung in `VideoFrameUtil.hpp`
+nachrüsten, erst wenn eine echte Kamera es zeigt. ·
+**NEU S70: Kamera-Freigabe-Dialog beim Preset-Laden** (Wunsch Patrik) —
+`MultiEffectPanel::pruefeKameraFreigabe()` fragt einmal je geladener Kette,
+wenn sie eine aktive Kamera-Quelle trägt und die Freigabe fehlt (der Dialog
+ist die ausdrückliche Nutzeraktion; Standalone bleibt dialogfrei). Als
+EINZIGE Ausnahme erscheint er auch über dem Vollbild (Eltern = aktives
+Fenster + WindowStaysOnTop — Entscheid Patrik S70). ·
+**BEFUND S70 (behoben, Stack-Beweis Patrik): Zombie-Prozess nach App-Ende
+bei benutzter Kamera.** Zwei Schichten: (a) die Queued-Stopps des
+LiveVideoFeed kommen beim Herunterfahren nicht mehr an → Fix
+`alleStoppen()` synchron an `QCoreApplication::aboutToQuit`. (b) Der
+eigentliche Hänger (Haupt-Thread-Stack: `Application::shutdown` →
+`~QApplication` → Event-Queue-Entsorgung → `~Feed`): das stopp()-Lambda
+trug den LETZTEN shared_ptr auf den Feed — wird das Event nie zugestellt,
+zerstört die Event-Queue-Entsorgung die QCamera MITTEN im
+QApplication-Abriss → Deadlock. Fix: Eigentum bleibt IMMER beim Dienst
+(`m_friedhof`), Queued-Lambdas tragen nichts; `alleStoppen()` räumt Feeds
+UND Friedhof synchron ab und zerstört die Qt-Objekte explizit (Kamera-LED
+geht beim Fenster-Schließen übrigens trotzdem aus — Windows beendet nur
+die Geräte-Sitzung, nicht die Prozess-Objekte). Merkregel: **Queued-Lambdas
+dürfen nie letztes Eigentum an Qt-Multimedia-Objekten tragen.**
+
+Ursprüngliche Sondierung (S55, weiter gültig für die Rest-Punkte):
 
 - **Quellmodul** (LumiViz-eigen, **neben** dem AVS-`avi`-Knoten — der bleibt, die
   Kalibrierung hängt an ihm). Ein Knoten, ein Quellumschalter: **Datei oder
@@ -973,6 +1017,62 @@ was bei der Sondierung schon feststeht, damit es nicht noch einmal erhoben wird.
   Farbquantisierung auf wenige flache Töne (optional mit Bilateral-Vorglättung,
   damit die Flächen ruhig werden) · Schraffur/Rauschen für die Zeichentrick-
   Textur. Reiht sich neben die anderen Stil-Ideen (s. Lights-Module).
+- **Erhebungen/Entscheide S70 (Diskussion Patrik, Strang eröffnet):**
+  - **Abkürzer:** Qt Multimedia ist seit S59 im Build (`"Multimedia"` in
+    `Solution.json`) und `services/VideoFrameCache` (deterministischer
+    Frame-Index-Decode via FFmpeg-Backend) existiert — der Datei-Pfad des
+    Quellmoduls setzt darauf auf, neu sind Node/Panel/Kamera.
+  - **Kamera-Testaufnahmen in den Settings** (Idee Patrik): Settings-Tab
+    „Kamera" — Gerätewahl, Aufnahme-Knopf (wenige Sekunden), Ablage
+    **benutzerlokal** (AppData; NICHT im Repo, Kameramaterial ist persönlich —
+    für eingecheckte Tests stattdessen ein synthetisch erzeugter Clip).
+    Dreifacher Nutzen: der Windows-Berechtigungsdialog kommt beim bewussten
+    Klick statt zur Unzeit · die Aufnahme ist eine Datei → läuft über den
+    VideoFrameCache im Frame-Schritt, damit wird der Kamera-Pfad
+    sonden-/standalone-prüfbar · der Quellknoten bekommt drei Betriebsarten
+    **Datei · Kamera (live) · Testaufnahme** (letztere auch als Fallback,
+    wenn kein Gerät da ist).
+  - **Stilfilter-Architektur entschieden:** EIN skriptbares Filtermodul
+    **`pixelFilter`** (Nutzer-GLSL `vec4 filter(vec2 uv, vec4 src)` mit
+    Nachbar-Sampling fürs Ketten-Bild; meshWarp-Muster: Audio-Uniforms,
+    geteiltes `stError`, Groß-Editor mit Apply/Beautify) — die Filter selbst
+    als **Werks-Voreinstellungen** (`asset/nodepresets/pixelFilter/`), NICHT
+    1–3 Festmodule. Begründung: die Comic-Stufen brauchen einander im selben
+    Pass (die Quantisierung will das Original, nicht das Bild mit
+    eingebrannten Kanten); das Voreinstellungs-System steht seit S69.
+    Flaggschiff Take-On-Me-Comic (Kantenzug + Quantisierung + Schraffur mit
+    Beat-Zittern der Schraffur-Phase); fast gratis daneben: Posterize,
+    Halftone/Zeitungsdruck, CRT/VHS, Kuwahara-Ölbild, XDoG-Bleistift.
+    Grenze der Bauart: EIN Pass — Multipass-Looks laufen über den
+    Shadertoy-Knoten (s. iChannel-Erweiterungen unten).
+  - **Filter-Fundgruben online:** **ISF (Interactive Shader Format,
+    isf.video / editor.isf.video, Vidvox)** = „Shadertoy für Filter" — GLSL +
+    JSON-Parameterdeklaration, Kategorie „FX" hat exakt den
+    pixelFilter-Vertrag (Eingangsbild rein, Bild raus); die JSON-Regler
+    entsprechen fast 1:1 unseren Reglern/Voreinstellungen → **ISF-Import
+    (Teilmenge FX) als möglicher späterer Strang.** Außerdem:
+    ReShade-Shader-Repos (github.com/crosire/reshade-shaders, qUINT,
+    SweetFX — HLSL-Dialekt, Ideen-Quelle) · godotshaders.com (Kategorie
+    „Screen-reading shaders") · obs-shaderfilter-Sammlungen.
+    **Shadertoy-Suchworte für Bildfilter:** toon, cel shading, kuwahara,
+    hatching, pencil, halftone, CRT. Literatur-Stichworte: **XDoG**
+    (Winnemöller — Bleistift/Comic-Kanten) · **anisotropes Kuwahara**
+    (Ölbild-Flächen).
+  - **iChannel-Erweiterungen des Shadertoy-Knotens** (machen ihn zur
+    Multipass-Filterplattform; Shadertoy-Bildfilter mit `iChannel0`-Eingang
+    werden direkt lauffähig): (1) NEU Quelle **„Ketten-Eingang"** — heute
+    kann ein iChannel nur Audio oder Buffer A–D (Kommentar „Video-Inputs:
+    Stufe 2" in `MultiEffectVisualizer` setupPass); (2) NEU Quelle
+    **„AVS-Global-Buffer 1–8"** (Frage Patrik S70 — **geht**: die
+    Buffer-Save-Slots sind GL-FBOs im `OffscreenBufferPool`,
+    `activePool().get(slot,…)->texture()` bindet direkt als Textur;
+    Host-Gruppen-Scoping kommt über `activePool()` gratis mit; Semantik =
+    Buffer-Stand beim Lauf des Knotens, die Reihenfolge in der Kette zählt
+    wie bei Buffer Save). **Handbuch-Pflicht (Wunsch Patrik S70):** bei
+    Umsetzung beide neuen iChannel-Quellen ins `Benutzerhandbuch.md` §12
+    (Kanal-Tabelle: Audio · Buffer A–D · Ketten-Eingang · AVS-Buffer 1–8,
+    je mit Anwendungsbeispiel — z. B. Shadertoy-Bildfilter auf die Kette,
+    eingefrorenes Buffer-Save-Bild als Textur).
 - Abgrenzung: **nicht** das Video-**Capture**-Modul (Aufnahme von Bild+Ton) —
   das ist der Punkt unten in derselben Liste, umgekehrte Richtung.
 
@@ -1258,6 +1358,10 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.51.0 | 2026-08-06 | Session 70 (Fortsetzung 2) — **Zombie-Prozess Schicht 2 gefunden und behoben (Stack-Beweis Patrik):** Haupt-Thread hing in `Application::shutdown` → `~QApplication` → Event-Queue-Entsorgung → `~Feed` — das stopp()-Queued-Lambda trug den letzten shared_ptr, die QCamera starb mitten im QApplication-Abriss. Fix: Feed-Eigentum bleibt beim Dienst (`m_friedhof` + `friedhofLeeren()` auf dem Main-Thread), Queued-Lambdas tragen kein Eigentum, `alleStoppen()` räumt Feeds+Friedhof synchron und zerstört die Qt-Objekte explizit. Verifikation: App-Start→Schließen ohne und mit Kamera-Dialog beendet sauber (2 Skript-Läufe); Tests 556 grün, alle 3 Builds grün. NEU Merkregel: Queued-Lambdas nie mit letztem Eigentum an Qt-Multimedia-Objekten |
+| 1.50.0 | 2026-08-06 | Session 70 (Fortsetzung) — **Kamera-Sichttest Patrik: läuft** (USB-WebCam im videoSource-Knoten). Drei Nachzüge: (1) **Kamera-Freigabe-Dialog beim Preset-Laden** (Wunsch Patrik): einmal je geladener Kette, nur bei aktiver Kamera-Quelle ohne Freigabe; EINZIGE Vollbild-Ausnahme (aktives Fenster + StaysOnTop). (2) **BEFUND behoben: Zombie-Prozess nach App-Ende bei benutzter Kamera** — Queued-Stopps erreichen den Main-Thread beim Herunterfahren nicht mehr, MF-Capture-Threads hielten den Prozess (LED aus ≠ Teardown); Fix `LiveVideoFeed::alleStoppen()` synchron an aboutToQuit. (3) ⚪ Rest-Risiko fremde YUV-Kameras notiert (Rezept: NV12/YUYV-Wandlung in VideoFrameUtil). Tests 556 grün, alle 3 Builds grün |
+| 1.49.0 | 2026-08-06 | Session 70 — **§7 Video-Weg Teil A UMGESETZT (⚪→⬜ Sichttest):** Chain-Node `videoSource` (Datei/Kamera/Testaufnahme; Streaming via NEU `services/LiveVideoFeed`, Frame-Schritt via VideoFrameCache 1.1.0 mit `Clip::fps`; Einpassung/Blend/Deckkraft; Parameter-Skripte `speed`/`opacity`) + Settings-Tab „Kamera" (Testaufnahmen benutzerlokal; Aufnahme-Klick = Kamera-Freigabe des App-Laufs) + Panel/Palette/Serializer/Klemmen + FieldDocs 89 Typen/769 Felder (0 Lücken) + 2 Serializer-Tests (556 gesamt grün). Sonde `videosource_sonde.lvfx`: Doppellauf SHA256-identisch. **BEFUND behoben: `QVideoFrame::toImage()` = schwarz unter Qt 6.10.1** (Rohdaten per map() da) → NEU `services/VideoFrameUtil.hpp` als toImage-Ersatz für LiveVideoFeed UND VideoFrameCache (betraf auch den avi-Cache-Fallback VR09) |
+| 1.48.0 | 2026-08-06 | Session 70 — **§7 Video-/Kamera-Quellmodul + Stilfilter: Strang eröffnet (Entscheid Patrik), Sondierung erweitert:** Abkürzer VideoFrameCache/Multimedia liegt seit S59 · NEU Kamera-**Testaufnahmen** in den Settings (benutzerlokal; macht den Kamera-Pfad deterministisch prüfbar; dritte Betriebsart + Fallback) · Stilfilter-Architektur entschieden: EIN skriptbarer **`pixelFilter`**-Node + Filter als Werks-Voreinstellungen (statt Festmodule) · Filter-Fundgruben notiert (**ISF** = „Shadertoy für Filter", mögl. späterer FX-Import; ReShade/godotshaders/obs-shaderfilter; Shadertoy-Suchworte toon/cel/kuwahara/hatching/pencil/halftone/CRT; XDoG/anisotropes Kuwahara) · **iChannel-Erweiterungen** Shadertoy-Knoten: „Ketten-Eingang" + „AVS-Global-Buffer 1–8" (technisch geklärt: FBO-Pool-Texturen, activePool-Scoping) |
 | 1.47.0 | 2026-08-06 | **NEU 5 Demos in asset/examples** (Konvention `<typkey> - <Name>.lvfx`): meshWarp Bass-Tunnel (Audio-Ring + Sog-Feedback), Wellengang (Waveform-Band), Spiegelkabinett (Kaleido-Scheibe: rotieren→falten→atmen); gpuParticles Feuerfontaene (Gold-Glut, Bass-Tempo), Wirbelnebel (16k-Galaxie + Schmier-Swirl = beide GPU-Module). Alle gegengerendert + sichtgeprüft (Warnungen=0); Befunde beim Stimmen: additive Partikel brauchen kräftiges Fadeout (Weiß-Ausbrand), Kaleido-Faltung braucht ZENTRIERTEN Inhalt (außermittig kollabiert das Feedback), dünne Linien verlieren Helligkeit über LINEAR-Resampling im Warp-Feedback |
 | 1.46.0 | 2026-08-06 | **Voreinstellungs-Batch 1 gebaut (18 Dateien, 12 Typen):** list (Beat-Gate, Bass-Blende, Puls-Layer, AB-Wechsler — Listen-Slots ohne `time`, eigener Akkumulator), brightness (Bass-Boost, Kanal-Atmung), colorfade (Beat-Blitz, Farbdrift), colorModifier (Kontrast-Pump, Gamma-Atmung), mosaic Beat-Kachel, channelShift Beat-Rotation, colorClip Bass-Fresser, multiFilter Chrome-Beat, addBorders Puls-Rahmen, onBeatClear Vierer-Reset, clear Nachtblau-Schleier, bufferSave Echo-Speicher. Wächter-Test grün (704 Assertions). Offen: Batch 2 Scope-Figuren (texerII/triangle/superScope3D/terrain3D/glowOrbs/dotPlane/dotFountain/camera3d …) + Sichttest der Formeln |
 | 1.45.0 | 2026-08-06 | **NEU Werks-Voreinstellungen** für meshWarp (5: Bass-Swirl, Tunnel-Sog, Wellengang, Fischaugen-Atmung, Spiegelkabinett) + gpuParticles (5: Fontäne, Funkenregen, Bass-Explosion, Nebel-Drift, Wirbelsturm) — Wächter-Test grün. Befund: 32 skriptfähige Typen ohne Voreinstellungen (Batch-Plan: EffectList + Farb-/Transform-Klasse zuerst, Scope-Figuren danach; milkdrop/shadertoy bewusst ohne — eigene Preset-Ebene). **NEU ⚪ §7 Szenen-Wechsler-Modul** (Idee Patrik: Szenen-IDs + Fading + Re-Init, Trigger bis Strophe/Refrain via Offline-Pre-Analyse — Konzept in eigener Session) |

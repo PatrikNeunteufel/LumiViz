@@ -1,0 +1,30 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "clearEveryFrame": false,
+        "children": [
+            {
+                "type": "videoSource",
+                "name": "Sonde Video-Quelle",
+                "description": "S70-Pruefstand: Testvideo im deterministischen Frame-Schritt (VideoFrameCache, Sim-Uhr x fps) - Einpassen mit Balken, ohne Audio-Skripte; zwei Laeufe muessen bit-identisch sein.",
+                "source": 0,
+                "filePath": "calibration/fields/testvideo.avi",
+                "cameraId": "",
+                "recordingName": "",
+                "streaming": false,
+                "speed": 1.0,
+                "loop": true,
+                "fit": 1,
+                "blend": 0,
+                "opacity": 1.0,
+                "initCode": "",
+                "frameCode": "",
+                "beatCode": ""
+            }
+        ]
+    }
+}

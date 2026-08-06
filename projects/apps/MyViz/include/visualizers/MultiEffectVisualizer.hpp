@@ -631,6 +631,19 @@ private:
         int gpCur = 0;            ///< Index des AKTUELLEN Zustands
         int gpRows = 0;           ///< Zustands-Zeilen, für die die FBOs stehen
         bool gpFresh = true;      ///< nächster Update-Pass initialisiert (uReset)
+
+        // videoSource-Node (S70): LumiViz-Quellknoten Datei/Kamera/Testaufnahme.
+        // Frame-Schritt laeuft ueber den VideoFrameCache (deterministisch),
+        // Kamera/Streaming ueber den LiveVideoFeed (uhrzeitgetrieben).
+        std::shared_ptr<lumi::services::VideoFrameCache::Clip> vsClip;
+        std::string vsQuelle;     ///< aufgeloeste Quelle (Wechsel-Erkennung, S55-Regel)
+        unsigned int vsTexture = 0;  ///< GL-Textur des zuletzt hochgeladenen Bilds
+        int vsTexW = 0;           ///< Bildmasse der Textur (fuer die Einpassung)
+        int vsTexH = 0;
+        int vsLastIndex = -1;     ///< zuletzt hochgeladener Cache-Frame-Index
+        double vsPhase = 0.0;     ///< Frame-Schritt-Akkumulator (Sim-Uhr x fps x Tempo)
+        std::uint64_t vsLiveNummer = 0;  ///< zuletzt hochgeladene Live-Bild-Nummer
+        bool vsLive = false;      ///< Live-Feed gestartet -> stopp() beim Cleanup
     };
 
     /** Render-thread state of one list node, keyed by ChainNode::nodeId. */
@@ -762,6 +775,10 @@ private:
                 const lumi::multieffect::AviParams& params);
     /// Release the VfW handles of an AVI node (safe on empty runtimes).
     static void closeAviRuntime(LeafRuntime& rt);
+    /// videoSource-Quellknoten (S70): Datei (Frame-Schritt/Streaming),
+    /// Kamera (live, nur nach Freigabe) oder Testaufnahme.
+    void runVideoSource(const lumi::multieffect::ChainNode& node,
+                        const lumi::multieffect::VideoSourceParams& params);
     /// GL blend state for an AVS BLEND_LINE mode 0..9 (S9; 8 falls back to add).
     static void applyLineBlend(int mode, int adjustAlpha);
     /// Restore GL_FUNC_ADD + disable blending after a line-blend draw.
@@ -1058,6 +1075,8 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_moveTabShader;  ///< r_trans-Tabelle
     std::unique_ptr<QOpenGLShaderProgram> m_moveRemapShader;
     std::unique_ptr<QOpenGLShaderProgram> m_textShader;
+    /// videoSource-Overlay (S70): Einpassung + Deckkraft + Blend in einem Pass
+    std::unique_ptr<QOpenGLShaderProgram> m_videoShader;
     std::unique_ptr<QOpenGLShaderProgram> m_feedbackShader;
     std::unique_ptr<QOpenGLShaderProgram> m_mosaicShader;
     std::unique_ptr<QOpenGLShaderProgram> m_grainShader;

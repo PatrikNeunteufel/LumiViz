@@ -18,6 +18,7 @@
 #include "visualizers/multieffect/GpuParticlesWrapper.hpp"  // GPU-Partikel (G2, S69)
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
+#include "services/LiveVideoFeed.hpp"  // videoSource: Kamera/Streaming (S70)
 
 #include <BasicLogger.h>
 
@@ -28,6 +29,7 @@
 #include <QByteArray>
 #include <QMatrix4x4>
 #include <QQuaternion>
+#include <QVector2D>
 #include <QVector4D>
 #include <QDateTime>
 #include <QDir>
@@ -199,6 +201,39 @@ void main()
     else if (uBlend == 2) mixed = (fb + t.rgb) * 0.5;
     else                  mixed = t.rgb;
     fragColor = vec4(mix(fb, mixed, t.a), 1.0);
+}
+)";
+
+// videoSource-Overlay (S70): komponiert das Videobild mit Einpassung
+// (uUvScale/uUvOffset bilden Surface-UV auf Video-UV ab — ausserhalb bleibt
+// die Basis stehen, Letterbox-Balken zeigen also das Chain-Bild), Blend
+// (0 ersetzen, 1 additiv, 2 50/50) und Deckkraft. Das Video liegt wie beim
+// Text/AVI-Overlay top-down vor (y-Flip beim Abtasten).
+const char* kVideoSourceFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform sampler2D uImg;
+uniform int uBlend;
+uniform float uOpacity;
+uniform vec2 uUvScale;
+uniform vec2 uUvOffset;
+out vec4 fragColor;
+void main()
+{
+    vec3 fb = texture(uTex, vTex).rgb;
+    vec2 uv = vTex * uUvScale + uUvOffset;
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0)
+    {
+        fragColor = vec4(fb, 1.0);
+        return;
+    }
+    vec3 t = texture(uImg, vec2(uv.x, 1.0 - uv.y)).rgb;
+    vec3 mixed;
+    if (uBlend == 1)      mixed = min(fb + t, vec3(1.0));
+    else if (uBlend == 2) mixed = (fb + t) * 0.5;
+    else                  mixed = t;
+    fragColor = vec4(mix(fb, mixed, uOpacity), 1.0);
 }
 )";
 
@@ -2803,6 +2838,35 @@ void resolveAviPaths(ChainNode& node, const QString& baseDir, QStringList* repor
     }
     for (ChainNode& child : node.children) resolveAviPaths(child, baseDir, report);
 }
+
+// videoSource (S70): relative Videopfade beim .lvfx-Laden gegen den Preset-
+// Ordner aufloesen (+ bis zu 4 Ebenen aufwaerts — Muster resolveAviPaths).
+// Nur der Speicher-Zustand wird absolut; die Datei behaelt ihren relativen
+// Pfad, bis der Nutzer neu speichert.
+void resolveVideoSourcePaths(ChainNode& node, const QString& baseDir)
+{
+    if (auto* p = std::get_if<VideoSourceParams>(&node.params))
+    {
+        const QString roh = QString::fromStdString(p->filePath);
+        if (!roh.isEmpty() && !QFileInfo::exists(roh) &&
+            QFileInfo(roh).isRelative())
+        {
+            QDir dir(baseDir);
+            for (int level = 0; level <= 4; ++level)
+            {
+                const QString candidate = dir.filePath(roh);
+                if (QFileInfo::exists(candidate))
+                {
+                    p->filePath = candidate.toStdString();
+                    break;
+                }
+                if (!dir.cdUp()) break;
+            }
+        }
+    }
+    for (ChainNode& child : node.children)
+        resolveVideoSourcePaths(child, baseDir);
+}
 }  // namespace
 
 bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outReport)
@@ -3033,6 +3097,8 @@ bool MultiEffectVisualizer::loadChainFile(const QString& path, QStringList* outR
 {
     ChainNode loaded;
     if (!loadChainFromFile(path, loaded, outReport)) return false;
+    // videoSource (S70): relative Videopfade gegen den Preset-Ordner aufloesen
+    resolveVideoSourcePaths(loaded, QFileInfo(path).absolutePath());
     m_pendingRuntimeReset = true;  // new node ids — free old GL runtimes (render thread)
     m_beatPeriodFrame = 0;  // --beat-period zaehlt je Preset ab 0 (wie AvsRef)
     m_root = std::move(loaded);
@@ -3186,6 +3252,7 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_moveTabShader = makeProgram(kQuadVertexShader, kMoveTabFragmentShader);
     m_moveRemapShader = makeProgram(kQuadVertexShader, kMoveRemapFragmentShader);
     m_textShader = makeProgram(kQuadVertexShader, kTextFragmentShader);
+    m_videoShader = makeProgram(kQuadVertexShader, kVideoSourceFragmentShader);
     m_feedbackShader = makeProgram(kQuadVertexShader, kFeedbackFragmentShader);
     m_mosaicShader = makeProgram(kQuadVertexShader, kMosaicFragmentShader);
     m_grainShader = makeProgram(kQuadVertexShader, kGrainFragmentShader);
@@ -3485,6 +3552,7 @@ void MultiEffectVisualizer::resetRuntimes()
             if (rt.fracLut != 0) f->glDeleteTextures(1, &rt.fracLut);
             if (rt.textTexture != 0) f->glDeleteTextures(1, &rt.textTexture);
             if (rt.aviTexture != 0) f->glDeleteTextures(1, &rt.aviTexture);
+            if (rt.vsTexture != 0) f->glDeleteTextures(1, &rt.vsTexture);
             if (rt.moveTabTex != 0) f->glDeleteTextures(1, &rt.moveTabTex);
             if (rt.grainTex != 0) f->glDeleteTextures(1, &rt.grainTex);
             closeAviRuntime(rt);  // VfW handles (no GL, but lifecycle-coupled)
@@ -3492,6 +3560,12 @@ void MultiEffectVisualizer::resetRuntimes()
             // (braucht den current Context — deshalb hier, nicht im Dtor)
             if (rt.milk != nullptr) rt.milk->cleanup();
         }
+    }
+    // videoSource: laufende Live-Feeds (Kamera/Streaming) beenden — braucht
+    // keinen GL-Context, muss aber auch ohne einen passieren (S70).
+    for (auto& [id, rt] : m_leafRuntimes)
+    {
+        if (rt.vsLive) lumi::services::LiveVideoFeed::instance().stopp(id);
     }
     // Preset-Wechsel: der rand()-Strom faengt wieder bei Seed 1 an — AvsRef
     // startet je Preset einen frischen Prozess und ruft nie srand() (S49).
@@ -3916,6 +3990,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const ShadertoyParams& params) const { self.runShadertoy(node, params); }
         void operator()(const MeshWarpParams& params) const { self.runMeshWarp(node, params); }
         void operator()(const GpuParticlesParams& params) const { self.runGpuParticles(node, params); }
+        void operator()(const VideoSourceParams& params) const { self.runVideoSource(node, params); }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
     std::visit(Visitor{*this, node}, node.params);
@@ -7548,6 +7623,194 @@ void MultiEffectVisualizer::runAvi(const ChainNode& node, const AviParams& param
     pair.swap();
     bindActive();
 #endif
+}
+
+void MultiEffectVisualizer::runVideoSource(const ChainNode& node,
+                                           const VideoSourceParams& params)
+{
+    namespace vs = lumi::multieffect::videosource;
+    using lumi::services::LiveVideoFeed;
+    using lumi::services::VideoFrameCache;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (s. runParamScript).
+    double vSpeed = params.speed, vOpacity = params.opacity;
+    runParamScript(rt, "videosource", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"speed", &vSpeed}, {"opacity", &vOpacity}});
+    vSpeed = std::clamp(vSpeed, vs::kMinSpeed, vs::kMaxSpeed);
+    vOpacity = std::clamp(vOpacity, 0.0, 1.0);
+
+    // Quelle aufloesen. Testaufnahmen liegen benutzerlokal (AppData) — der
+    // Knoten traegt nur den Dateinamen, der Ordner ist Geraete-Sache.
+    QString pfad;
+    if (params.source == 0)
+        pfad = QString::fromStdString(params.filePath);
+    else if (params.source == 2 && !params.recordingName.empty())
+        pfad = LiveVideoFeed::testaufnahmenOrdner() + QStringLiteral("/") +
+               QString::fromStdString(params.recordingName);
+    const bool live =
+        params.source == 1 || (params.source == 0 && params.streaming);
+    const std::string quelle =
+        params.source == 1 ? "kamera:" + params.cameraId
+                           : (live ? "strom:" : "cache:") + pfad.toStdString();
+
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    // Ein Quellen-Wechsel im Panel muss ankommen (S55-Regel des avi-Knotens).
+    if (rt.vsQuelle != quelle)
+    {
+        if (rt.vsLive)
+        {
+            LiveVideoFeed::instance().stopp(node.nodeId);
+            rt.vsLive = false;
+        }
+        if (rt.vsTexture != 0)
+        {
+            f->glDeleteTextures(1, &rt.vsTexture);
+            rt.vsTexture = 0;  // sonst zeigt die neue Quelle das alte Bild
+        }
+        rt.vsClip.reset();
+        rt.vsLastIndex = -1;
+        rt.vsPhase = 0.0;
+        rt.vsLiveNummer = 0;
+        rt.vsQuelle = quelle;
+    }
+
+    bool neuesBild = false;
+    QImage bild;
+    if (live)
+    {
+        auto& feed = LiveVideoFeed::instance();
+        if (params.source == 1)
+        {
+            if (params.cameraId.empty()) return;
+            // No-op ohne Kamera-Freigabe dieses App-Laufs (LiveVideoFeed).
+            feed.starteKamera(node.nodeId,
+                              QString::fromStdString(params.cameraId));
+        }
+        else
+        {
+            if (pfad.isEmpty()) return;
+            feed.starteDatei(node.nodeId, pfad, params.loop, vSpeed);
+        }
+        rt.vsLive = true;
+        std::uint64_t nummer = 0;
+        QImage frisch = feed.letztesBild(node.nodeId, &nummer);
+        if (!frisch.isNull() && nummer != rt.vsLiveNummer)
+        {
+            rt.vsLiveNummer = nummer;
+            bild = std::move(frisch);
+            neuesBild = true;
+        }
+    }
+    else
+    {
+        // Frame-Schritt: deterministisch ueber die Sim-Uhr (dt x fps x Tempo
+        // akkumuliert — nicht die Wanduhr; Feld-Sonden-Grundlage wie beim
+        // avi-Knoten). Der Cache dekodiert die Datei einmal komplett.
+        if (pfad.isEmpty()) return;
+        if (rt.vsClip == nullptr)
+            rt.vsClip = VideoFrameCache::instance().hole(pfad);
+        if (rt.vsClip->status.load(std::memory_order_acquire) !=
+            VideoFrameCache::FERTIG)
+            return;
+        const auto& frames = rt.vsClip->frames;
+        const int n = static_cast<int>(frames.size());
+        if (n <= 0) return;
+        const double fps = rt.vsClip->fps > 0.0 ? rt.vsClip->fps : 25.0;
+        rt.vsPhase += static_cast<double>(m_deltaTime) * fps * vSpeed;
+        if (params.loop)
+        {
+            rt.vsPhase = std::fmod(rt.vsPhase, static_cast<double>(n));
+        }
+        else if (rt.vsPhase > static_cast<double>(n - 1))
+        {
+            rt.vsPhase = static_cast<double>(n - 1);  // letztes Bild halten
+        }
+        const int index =
+            std::clamp(static_cast<int>(rt.vsPhase), 0, n - 1);
+        if (index != rt.vsLastIndex)
+        {
+            rt.vsLastIndex = index;
+            bild = frames[static_cast<std::size_t>(index)];
+            neuesBild = true;
+        }
+    }
+
+    if (neuesBild && !bild.isNull())
+    {
+        if (bild.format() != QImage::Format_RGBX8888)
+            bild = bild.convertToFormat(QImage::Format_RGBX8888);
+        if (rt.vsTexture == 0)
+        {
+            f->glGenTextures(1, &rt.vsTexture);
+            f->glBindTexture(GL_TEXTURE_2D, rt.vsTexture);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        f->glBindTexture(GL_TEXTURE_2D, rt.vsTexture);
+        f->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bild.width(), bild.height(),
+                        0, GL_RGBA, GL_UNSIGNED_BYTE, bild.constBits());
+        rt.vsTexW = bild.width();
+        rt.vsTexH = bild.height();
+    }
+    if (rt.vsTexture == 0 || m_videoShader == nullptr) return;
+
+    // Einpassung: Abbildung Surface-UV -> Video-UV. rect = Anteil der Surface,
+    // den das Video belegt (einpassen: rect <= 1 mit Balken; fuellen:
+    // rect >= 1, beschnitten). Ausserhalb laesst der Shader die Basis stehen.
+    QVector2D uvScale(1.0f, 1.0f);
+    QVector2D uvOffset(0.0f, 0.0f);
+    if (params.fit != 0 && rt.vsTexW > 0 && rt.vsTexH > 0 &&
+        m_surfaceHeight > 0)
+    {
+        const double sa =
+            static_cast<double>(m_surfaceWidth) / m_surfaceHeight;
+        const double va = static_cast<double>(rt.vsTexW) / rt.vsTexH;
+        double rw = 1.0, rh = 1.0;
+        if (params.fit == 1)  // einpassen (Letterbox)
+        {
+            if (sa > va) rw = va / sa;
+            else rh = sa / va;
+        }
+        else  // fuellen (beschneiden)
+        {
+            if (sa > va) rh = sa / va;
+            else rw = va / sa;
+        }
+        uvScale = QVector2D(static_cast<float>(1.0 / rw),
+                            static_cast<float>(1.0 / rh));
+        uvOffset = QVector2D(static_cast<float>(-(1.0 - rw) / (2.0 * rw)),
+                             static_cast<float>(-(1.0 - rh) / (2.0 * rh)));
+    }
+
+    // Komponieren im Shader (Muster runAvi: Basis + Bild, danach swap).
+    SurfacePair& pair = active();
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    m_videoShader->bind();
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    m_videoShader->setUniformValue("uTex", 0);
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, rt.vsTexture);
+    m_videoShader->setUniformValue("uImg", 1);
+    f->glActiveTexture(GL_TEXTURE0);
+    m_videoShader->setUniformValue("uBlend", std::clamp(params.blend, 0, vs::kBlendMax));
+    m_videoShader->setUniformValue("uOpacity", static_cast<float>(vOpacity));
+    m_videoShader->setUniformValue("uUvScale", uvScale);
+    m_videoShader->setUniformValue("uUvOffset", uvOffset);
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    m_videoShader->release();
+    pair.partner()->release();
+    pair.swap();
+    bindActive();
 }
 
 void MultiEffectVisualizer::runTexer(const ChainNode& node, const TexerParams& params)

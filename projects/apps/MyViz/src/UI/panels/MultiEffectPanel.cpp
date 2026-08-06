@@ -28,10 +28,15 @@
 #include <EelTranspiler.hpp>                            // Apply-Syntaxprobe EEL (S69)
 #include <HlslTranspiler.hpp>                           // Apply-Syntaxprobe HLSL (S69)
 #include "services/IEventBus.hpp"
+#include "services/LiveVideoFeed.hpp"                   // videoSource: Kamera/Testaufnahmen (S70)
 #include "services/events/UIEvents.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
 
+#include <QCameraDevice>                                // videoSource: Geraeteliste (S70)
+#include <QMediaDevices>
+
 #include <QAbstractItemView>
+#include <QApplication>
 #include <QCheckBox>
 #include <QColorDialog>
 #include <QFileDialog>
@@ -296,6 +301,10 @@ const std::vector<EffectType>& effectPalette()
          Origin::Native},
 
         {"— Scopes & Sources —", nullptr},
+        // videoSource (S70): LumiViz-eigene Video-/Kamera-Quelle (der
+        // AVS-`avi`-Typ bleibt ein reiner Import-Typ ohne Paletteneintrag).
+        {"Video/Kamera (Quelle)",
+         [] { return EffectParams{VideoSourceParams{}}; }, Origin::Native},
         {"SuperScope", [] { return EffectParams{SuperScopeParams{}}; }},
         {"Simple (Scope)", [] { return EffectParams{SimpleScopeParams{}}; }},
         {"Oscilliscope Star", [] { return EffectParams{OscStarParams{}}; }},
@@ -1194,6 +1203,7 @@ void MultiEffectPanel::connectToActiveVisualizer()
         // The chain was replaced externally (AVS import / preset load) — rebuild.
         m_eventSubscriptions.push_back(bus->subscribeScoped<EffectChainChangedEvent>(
             [this](const EffectChainChangedEvent&) {
+                m_kameraDialogGezeigt = false;  // neue Kette darf neu fragen (S70)
                 rebuildTree();
                 clearPropertyEditor();
             }));
@@ -1204,6 +1214,7 @@ void MultiEffectPanel::setHost(MultiEffectVisualizer* host, QMutex* mutex)
 {
     m_host = host;
     m_mutex = mutex;
+    m_kameraDialogGezeigt = false;  // neuer Host = neue Kette, neu fragen (S70)
     const bool active = m_host != nullptr;
     m_hint->setVisible(!active);
     m_tree->setEnabled(active);
@@ -1236,6 +1247,56 @@ void MultiEffectPanel::rebuildTree()
     }
     m_tree->expandAll();
     m_updating = false;
+    // Kamera-Freigabe-Dialog queued NACH dem Aufbau (kein Modal-Dialog mitten
+    // im Tree-Umbau) — fragt nur, wenn die Kette eine Kamera-Quelle traegt.
+    QMetaObject::invokeMethod(
+        this, [this] { pruefeKameraFreigabe(); }, Qt::QueuedConnection);
+}
+
+namespace
+{
+/// Enthaelt die Kette (rekursiv) eine Kamera-Quelle mit gewaehltem Geraet?
+bool chainHatKameraQuelle(const ChainNode& node)
+{
+    if (const auto* p = std::get_if<VideoSourceParams>(&node.params))
+    {
+        if (node.enabled && p->source == 1 && !p->cameraId.empty()) return true;
+    }
+    for (const ChainNode& child : node.children)
+    {
+        if (chainHatKameraQuelle(child)) return true;
+    }
+    return false;
+}
+}  // namespace
+
+void MultiEffectPanel::pruefeKameraFreigabe()
+{
+    auto& feed = lumi::services::LiveVideoFeed::instance();
+    if (m_host == nullptr || m_mutex == nullptr) return;
+    if (feed.kameraErlaubt() || m_kameraDialogGezeigt) return;
+    bool hatKamera = false;
+    {
+        QMutexLocker lock(m_mutex);
+        hatKamera = chainHatKameraQuelle(m_host->chain());
+    }
+    if (!hatKamera) return;
+    m_kameraDialogGezeigt = true;  // je geladener Kette nur einmal fragen
+    // EINZIGE Vollbild-Ausnahme (Entscheid Patrik S70): der Dialog erscheint
+    // auch ueber dem Vollbild — Eltern ist das AKTIVE Fenster (das Panel kann
+    // dort versteckt sein) und der Dialog liegt immer obenauf.
+    QWidget* eltern = QApplication::activeWindow() != nullptr
+                          ? QApplication::activeWindow()
+                          : static_cast<QWidget*>(this);
+    QMessageBox frage(QMessageBox::Question, tr("Kamera-Quelle im Preset"),
+                      tr("Dieses Preset enthält eine Kamera-Quelle. Kameras "
+                         "starten nie automatisch — jetzt für diesen App-Lauf "
+                         "freigeben?\n\n(Windows fragt danach ggf. nach der "
+                         "Kameraberechtigung. Ohne Freigabe bleibt der "
+                         "Video-Knoten schwarz.)"),
+                      QMessageBox::Yes | QMessageBox::No, eltern);
+    frage.setWindowFlag(Qt::WindowStaysOnTopHint, true);
+    if (frage.exec() == QMessageBox::Yes) feed.erlaubeKamera();
 }
 
 void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode& node,
@@ -5913,6 +5974,170 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                [](ChainNode& n, int v) { std::get<AviParams>(n.params).persist = v; });
         addInt("speedMs", tr("Frame time (ms)"), p->speedMs, 0, 1000,
                [](ChainNode& n, int v) { std::get<AviParams>(n.params).speedMs = v; });
+    }
+    else if (auto* p = std::get_if<VideoSourceParams>(&params))
+    {
+        namespace vs = lumi::multieffect::videosource;
+        // videoSource (S70): LumiViz-Quellknoten — Datei/Kamera/Testaufnahme.
+        // Der AVS-`avi`-Knoten bleibt daneben unangetastet (Kalibrierung).
+        addEnum("source", tr("Quelle"), std::clamp(p->source, 0, vs::kSourceMax),
+                {tr("Datei"), tr("Kamera (live)"), tr("Testaufnahme")},
+                [](ChainNode& n, int v) {
+                    std::get<VideoSourceParams>(n.params).source = v;
+                });
+        addText("filePath", tr("Videodatei"), p->filePath,
+                [](ChainNode& n, std::string v) {
+                    std::get<VideoSourceParams>(n.params).filePath = std::move(v);
+                });
+        {
+            auto* browseBtn =
+                new QPushButton(tr("Videodatei wählen…"), m_propContainer);
+            browseBtn->setToolTip(
+                tr("Setzt das Feld Videodatei. Der Pfad bleibt im Preset stehen "
+                   "— Videos werden nicht eingebettet."));
+            connect(browseBtn, &QPushButton::clicked, this, [this, path]() {
+                const QString file = QFileDialog::getOpenFileName(
+                    this, tr("Videodatei wählen"), QString(),
+                    tr("Videos (*.mp4 *.mkv *.webm *.mov *.wmv *.avi);;"
+                       "Alle Dateien (*)"));
+                if (file.isEmpty()) return;
+                mutate(path, [&](ChainNode& n) {
+                    std::get<VideoSourceParams>(n.params).filePath =
+                        file.toStdString();
+                });
+                QMetaObject::invokeMethod(
+                    this, [this, path] { buildPropertyEditor(path); },
+                    Qt::QueuedConnection);
+            });
+            form->addRow(browseBtn);
+        }
+        {
+            // Kamera-Wahl: die Liste zu zeigen oeffnet KEINE Kamera; das
+            // Geraet startet erst nach der Freigabe (Knopf darunter) und nur,
+            // wenn die Quelle "Kamera" gewaehlt ist — Vertrag Offene_Punkte §7.
+            auto* combo = new QComboBox(m_propContainer);
+            combo->addItem(tr("— keine —"), QString());
+            int selected = 0;
+            const QString aktuelleId = QString::fromStdString(p->cameraId);
+            const auto geraete = QMediaDevices::videoInputs();
+            for (const QCameraDevice& d : geraete)
+            {
+                combo->addItem(d.description(), QString::fromUtf8(d.id()));
+                if (QString::fromUtf8(d.id()) == aktuelleId)
+                    selected = combo->count() - 1;
+            }
+            if (selected == 0 && !aktuelleId.isEmpty())
+            {
+                // Gespeicherte, gerade abwesende Kamera sichtbar halten —
+                // sonst wuerde ein Panel-Besuch die Wahl still loeschen.
+                combo->addItem(tr("(nicht angeschlossen) %1").arg(aktuelleId),
+                               aktuelleId);
+                selected = combo->count() - 1;
+            }
+            combo->setCurrentIndex(selected);
+            combo->setToolTip(
+                tr("Kameragerät für die Quelle „Kamera“. Gestartet wird erst "
+                   "nach der Freigabe unten — nie beim Preset-Laden."));
+            connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                    this, [this, path, combo](int idx) {
+                        const std::string id =
+                            combo->itemData(idx).toString().toStdString();
+                        mutate(path, [&](ChainNode& n) {
+                            std::get<VideoSourceParams>(n.params).cameraId = id;
+                        });
+                    });
+            form->addRow(tr("Kamera"), combo);
+
+            auto* camBtn = new QPushButton(
+                tr("Kamera freigeben (dieser App-Lauf)"), m_propContainer);
+            camBtn->setToolTip(
+                tr("Ausdrückliche Freigabe: erst danach startet die gewählte "
+                   "Kamera (Windows fragt ggf. nach der Berechtigung). Gilt bis "
+                   "zum Beenden der App."));
+            camBtn->setEnabled(
+                !lumi::services::LiveVideoFeed::instance().kameraErlaubt());
+            connect(camBtn, &QPushButton::clicked, this, [camBtn]() {
+                lumi::services::LiveVideoFeed::instance().erlaubeKamera();
+                camBtn->setEnabled(false);
+            });
+            form->addRow(camBtn);
+        }
+        {
+            // Testaufnahmen: Clips aus dem benutzerlokalen Ordner
+            // (Settings-Tab „Kamera") — deterministischer Kamera-Stellvertreter.
+            auto* combo = new QComboBox(m_propContainer);
+            combo->addItem(tr("— keine —"), QString());
+            int selected = 0;
+            const QString aktuell = QString::fromStdString(p->recordingName);
+            const QDir ordner(
+                lumi::services::LiveVideoFeed::testaufnahmenOrdner());
+            const auto eintraege = ordner.entryList(QDir::Files, QDir::Name);
+            for (const QString& name : eintraege)
+            {
+                combo->addItem(name, name);
+                if (name == aktuell) selected = combo->count() - 1;
+            }
+            if (selected == 0 && !aktuell.isEmpty())
+            {
+                combo->addItem(tr("(fehlt) %1").arg(aktuell), aktuell);
+                selected = combo->count() - 1;
+            }
+            combo->setCurrentIndex(selected);
+            combo->setToolTip(
+                tr("Kamera-Testaufnahme als deterministische Quelle — läuft "
+                   "wie eine Datei (Frame-Schritt, sondentauglich)."));
+            connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                    this, [this, path, combo](int idx) {
+                        const std::string name =
+                            combo->itemData(idx).toString().toStdString();
+                        mutate(path, [&](ChainNode& n) {
+                            std::get<VideoSourceParams>(n.params).recordingName =
+                                name;
+                        });
+                    });
+            form->addRow(tr("Testaufnahme"), combo);
+        }
+        addBool("streaming", tr("Echtzeit-Streaming"), p->streaming,
+                [](ChainNode& n, bool v) {
+                    std::get<VideoSourceParams>(n.params).streaming = v;
+                });
+        addDouble("speed", tr("Tempo"), p->speed, vs::kMinSpeed, vs::kMaxSpeed,
+                  0.05, [](ChainNode& n, double v) {
+                      std::get<VideoSourceParams>(n.params).speed = v;
+                  });
+        addBool("loop", tr("Schleife"), p->loop, [](ChainNode& n, bool v) {
+            std::get<VideoSourceParams>(n.params).loop = v;
+        });
+        addEnum("fit", tr("Einpassung"), std::clamp(p->fit, 0, vs::kFitMax),
+                {tr("Strecken"), tr("Einpassen (Balken)"),
+                 tr("Füllen (beschneiden)")},
+                [](ChainNode& n, int v) {
+                    std::get<VideoSourceParams>(n.params).fit = v;
+                });
+        addEnum("blend", tr("Blend"), std::clamp(p->blend, 0, vs::kBlendMax),
+                {tr("Replace"), tr("Additive"), tr("50/50")},
+                [](ChainNode& n, int v) {
+                    std::get<VideoSourceParams>(n.params).blend = v;
+                });
+        addDouble("opacity", tr("Deckkraft"), p->opacity, 0.0, 1.0, 0.01,
+                  [](ChainNode& n, double v) {
+                      std::get<VideoSourceParams>(n.params).opacity = v;
+                  });
+        addScript("initCode", tr("Init"), p->initCode,
+                  [](ChainNode& n, std::string v) {
+                      std::get<VideoSourceParams>(n.params).initCode =
+                          std::move(v);
+                  });
+        addScript("frameCode", tr("Frame"), p->frameCode,
+                  [](ChainNode& n, std::string v) {
+                      std::get<VideoSourceParams>(n.params).frameCode =
+                          std::move(v);
+                  });
+        addScript("beatCode", tr("Beat"), p->beatCode,
+                  [](ChainNode& n, std::string v) {
+                      std::get<VideoSourceParams>(n.params).beatCode =
+                          std::move(v);
+                  });
     }
     else if (auto* p = std::get_if<CommentParams>(&params))
     {

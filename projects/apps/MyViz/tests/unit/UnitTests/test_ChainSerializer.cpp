@@ -778,6 +778,72 @@ TEST_SUITE("ChainSerializer")
         CHECK(effectTypeKey(EffectParams{AviParams{}}) == "avi");
     }
 
+    TEST_CASE("videoSource-Parameter ueberleben den Round-Trip (S70)")
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        VideoSourceParams vp;
+        vp.source = 2;
+        vp.filePath = "C:/videos/take_on_me.mp4";
+        vp.cameraId = "usb-cam-42";
+        vp.recordingName = "testaufnahme_20260806_120000.mp4";
+        vp.streaming = true;
+        vp.speed = 1.5;
+        vp.loop = false;
+        vp.fit = 1;
+        vp.blend = 2;
+        vp.opacity = 0.65;
+        vp.initCode = "speed=1;";
+        vp.frameCode = "opacity=0.5+0.5*bass;";
+        vp.beatCode = "speed=2;";
+        leaf.params = vp;
+        root.children.push_back(std::move(leaf));
+
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        REQUIRE(restored.children.size() == 1);
+        const auto& v = std::get<VideoSourceParams>(restored.children[0].params);
+        CHECK(v.source == 2);
+        CHECK(v.filePath == "C:/videos/take_on_me.mp4");
+        CHECK(v.cameraId == "usb-cam-42");
+        CHECK(v.recordingName == "testaufnahme_20260806_120000.mp4");
+        CHECK(v.streaming == true);
+        CHECK(v.speed == doctest::Approx(1.5));
+        CHECK(v.loop == false);
+        CHECK(v.fit == 1);
+        CHECK(v.blend == 2);
+        CHECK(v.opacity == doctest::Approx(0.65));
+        CHECK(v.initCode == "speed=1;");
+        CHECK(v.frameCode == "opacity=0.5+0.5*bass;");
+        CHECK(v.beatCode == "speed=2;");
+        CHECK(effectTypeKey(EffectParams{VideoSourceParams{}}) == "videoSource");
+    }
+
+    TEST_CASE("videoSource: Leser klemmt Quelle, Tempo, Einpassung, Blend, "
+              "Deckkraft (S70)")
+    {
+        namespace vs = lumi::multieffect::videosource;
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        VideoSourceParams vp;
+        vp.source = 99;    // Serialisieren schreibt roh …
+        vp.speed = 1000.0;
+        vp.fit = -3;
+        vp.blend = 7;
+        vp.opacity = 4.0;
+        leaf.params = vp;
+        root.children.push_back(std::move(leaf));
+        const ChainNode restored = chainFromJson(chainToJson(root), nullptr);
+        const auto& v = std::get<VideoSourceParams>(restored.children[0].params);
+        // … der Leser klemmt auf die videosource-Grenzen (SSOT EffectChain.hpp)
+        CHECK(v.source == vs::kSourceMax);
+        CHECK(v.speed == doctest::Approx(vs::kMaxSpeed));
+        CHECK(v.fit == 0);
+        CHECK(v.blend == vs::kBlendMax);
+        CHECK(v.opacity == doctest::Approx(1.0));
+    }
+
     TEST_CASE("Starfield-Parameter ueberleben den Round-Trip")
     {
         ChainNode root;
