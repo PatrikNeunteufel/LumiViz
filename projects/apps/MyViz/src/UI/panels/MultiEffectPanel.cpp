@@ -3215,6 +3215,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                              const QString& placeholder, const QString& refHtml,
                              const QString& toolTip, int minHeight,
                              const QString& exportName,
+                             const QString& vertragKey,
                              std::function<void(ChainNode&, std::string)> set) {
         auto* edit = new QPlainTextEdit(m_propContainer);
         edit->setPlainText(QString::fromStdString(value));
@@ -3248,9 +3249,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         // Render-Thread — der Dialog pollt den Treiber-Fehler des Knotens
         // nach (#line 1: Zeilennummern des Nutzer-Codes, wie im Panel).
         connect(expandBtn, &QToolButton::clicked, this,
-                [this, edit, label, refHtml, path, exportName]() {
+                [this, edit, label, refHtml, path, exportName, vertragKey]() {
                     lumi::scriptedit::ScriptEditorHooks hooks;
                     hooks.exportFileName = exportName;
+                    hooks.vertragKey = vertragKey;
                     hooks.apply = [edit](const QString& t) -> QString {
                         edit->setPlainText(t);  // textChanged -> mutate
                         return {};
@@ -4736,7 +4738,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                "Buffer-Semantik; ⤢ öffnet den großen Editor."),
             160,
             lumi::scriptedit::shaderExportName(stExportBase,
+                                               QStringLiteral("shadertoy"),
                                                QStringLiteral("image")),
+            QStringLiteral("shadertoy"),
             [](ChainNode& n, std::string v) {
                 std::get<ShadertoyParams>(n.params).code = std::move(v);
             });
@@ -4818,8 +4822,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                    "liest das Vorframe (Feedback)."),
                 120,
                 lumi::scriptedit::shaderExportName(
-                    stExportBase, QStringLiteral("buffer%1").arg(QChar(
-                                      static_cast<char16_t>('A' + bi)))),
+                    stExportBase, QStringLiteral("shadertoy"),
+                    QStringLiteral("buffer%1").arg(
+                        QChar(static_cast<char16_t>('A' + bi)))),
+                QStringLiteral("shadertoy"),
                 [bi](ChainNode& n, std::string v) {
                     auto& sp = std::get<ShadertoyParams>(n.params);
                     if (bi < static_cast<int>(sp.buffers.size()))
@@ -4899,6 +4905,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             160,
             lumi::scriptedit::shaderExportName(mwExportBase,
                                                QStringLiteral("meshwarp")),
+            QStringLiteral("meshwarp"),
             [](ChainNode& n, std::string v) {
                 std::get<MeshWarpParams>(n.params).code = std::move(v);
             });
@@ -4967,6 +4974,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             160,
             lumi::scriptedit::shaderExportName(pfExportBase,
                                                QStringLiteral("pixelfilter")),
+            QStringLiteral("pixelfilter"),
             [](ChainNode& n, std::string v) {
                 std::get<PixelFilterParams>(n.params).code = std::move(v);
             });
@@ -5093,7 +5101,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                "den großen Editor. Leer = keine Zusatzkraft."),
             120,
             lumi::scriptedit::shaderExportName(gpExportBase,
-                                               QStringLiteral("kraft")),
+                                               QStringLiteral("gpuparticles")),
+            QStringLiteral("gpuparticles"),
             [](ChainNode& n, std::string v) {
                 std::get<GpuParticlesParams>(n.params).forceCode = std::move(v);
             });
@@ -5771,8 +5780,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 // Groß-Editor mit Apply/Beautify (S69): HLSL-Syntaxprobe
                 // synchron über den HlslTranspiler (leer = MD1-Pfad, keine
                 // Probe); Re-Indent wie GLSL (Brace-basiert). Export-Vorschlag
-                // aus Node-Name + warp/comp (Endung .glsl laut Vorgabe —
-                // Inhalt ist das HLSL-shader_body).
+                // aus Node-Name + warp/comp. ENDUNG .hlsl (Entscheid Patrik
+                // S71): der Inhalt IST HLSL — externe Editoren faerben dann
+                // richtig ein, und die Vertrags-Trennung bleibt ehrlich.
                 const QString hlslExportBase =
                     nodeName.empty() ? QStringLiteral("milkdrop")
                                      : QString::fromStdString(nodeName);
@@ -5781,9 +5791,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             lumi::scriptedit::ScriptEditorHooks hooks;
                             hooks.exportFileName =
                                 lumi::scriptedit::shaderExportName(
-                                    hlslExportBase, isWarp
-                                                        ? QStringLiteral("warp")
-                                                        : QStringLiteral("comp"));
+                                    hlslExportBase, QStringLiteral("milkdrop"),
+                                    isWarp ? QStringLiteral("warp")
+                                           : QStringLiteral("comp"));
+                            hooks.vertragKey = QStringLiteral("milkdrop");
                             hooks.apply = [edit, isWarp](const QString& t) -> QString {
                                 edit->setPlainText(t);  // textChanged -> mutate
                                 if (t.trimmed().isEmpty()) return {};

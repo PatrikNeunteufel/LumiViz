@@ -410,15 +410,162 @@ struct ScriptEditorHooks
     /// Kein Hook = kein Beautify-Knopf.
     std::function<QString(const QString&)> beautify;
     /// Dateinamens-Vorschlag für den Shader-Export, Muster
-    /// `preset_name.modul.glsl` (Wunsch Patrik, S69). Nicht leer = der Dialog
-    /// zeigt Import…/Export…-Knöpfe (Datei ↔ Editor-Text, UTF-8; der letzte
-    /// Ordner bleibt in QSettings "editor/shaderFileDir" gemerkt).
+    /// `<preset>[.<slot>].<vertrag>.<endung>` (S69, Schema S71). Nicht leer =
+    /// der Dialog zeigt Import…/Export…-Knöpfe (Datei ↔ Editor-Text, UTF-8).
     QString exportFileName;
+    /// Vertrag dieses Feldes (`ShaderVertrag::key`, z. B. "pixelfilter").
+    /// Steuert den Import-Dateifilter, das Ordner-Gedächtnis
+    /// (`editor/shaderFileDir/<vertrag>`) und die Vertragsprüfung beim
+    /// Import. Leer = keine Prüfung, gemeinsamer Ordner.
+    QString vertragKey;
 };
 
-/// Export-Namensvorschlag `preset_name.modul.glsl`: Preset-Anteil von
-/// Dateisystem-feindlichen Zeichen befreit, Weißraum → `_`.
-[[nodiscard]] inline QString shaderExportName(QString presetName, const QString& modul)
+/**
+ * @brief Ein bekannter Shader-Vertrag: welcher Knoten erwartet welchen Einstieg
+ *
+ * SSOT fuer drei Dinge, die sonst auseinanderlaufen (S71): den Export-Namen,
+ * den Import-Dateifilter und die Vertragspruefung beim Import. Die Vertraege
+ * sind paarweise UNVEREINBAR — ein Shadertoy-Shader in einem pixelFilter
+ * ergibt nur einen kryptischen Compilerfehler tief aus dem Wrapper.
+ */
+struct ShaderVertrag
+{
+    QString key;       ///< Namensbestandteil/Ordner, z. B. "shadertoy"
+    QString anzeige;   ///< Klartext fuer Meldungen, z. B. "Shadertoy"
+    QString funktion;  ///< Einstiegspunkt, z. B. "mainImage"
+    QString signatur;  ///< vollstaendige Signatur fuer die Meldung
+    QString endung;    ///< "glsl" oder "hlsl" — was die Datei wirklich ist
+};
+
+/// Alle bekannten Vertraege (SSOT). Reihenfolge egal; `key` ist eindeutig.
+[[nodiscard]] inline const QList<ShaderVertrag>& shaderVertraege()
+{
+    static const QList<ShaderVertrag> kVertraege = {
+        {QStringLiteral("pixelfilter"), QStringLiteral("Stilfilter"),
+         QStringLiteral("farbe"), QStringLiteral("vec4 farbe(vec2 uv, vec4 src)"),
+         QStringLiteral("glsl")},
+        {QStringLiteral("shadertoy"), QStringLiteral("Shadertoy"),
+         QStringLiteral("mainImage"),
+         QStringLiteral("void mainImage(out vec4 fragColor, in vec2 fragCoord)"),
+         QStringLiteral("glsl")},
+        {QStringLiteral("meshwarp"), QStringLiteral("Mesh-Warp"),
+         QStringLiteral("warp"), QStringLiteral("vec2 warp(vec2 uv)"),
+         QStringLiteral("glsl")},
+        {QStringLiteral("gpuparticles"), QStringLiteral("GPU-Partikel"),
+         QStringLiteral("kraft"),
+         QStringLiteral("vec2 kraft(vec2 pos, vec2 vel, float alter)"),
+         QStringLiteral("glsl")},
+        // Milkdrop-Felder sind HLSL — die Endung sagt das jetzt auch, damit
+        // externe Editoren richtig einfaerben (Entscheid Patrik S71).
+        {QStringLiteral("milkdrop"), QStringLiteral("MilkDrop"),
+         QStringLiteral("shader_body"), QStringLiteral("shader_body { … }"),
+         QStringLiteral("hlsl")},
+    };
+    return kVertraege;
+}
+
+/// Vertrag zu einem Schluessel (nullptr = unbekannt).
+[[nodiscard]] inline const ShaderVertrag* shaderVertrag(const QString& key)
+{
+    for (const auto& v : shaderVertraege())
+        if (v.key == key) return &v;
+    return nullptr;
+}
+
+/// Kommt `funktion` im Text als AUFRUF/Definition vor (Wortgrenze + Klammer)?
+[[nodiscard]] inline bool nenntFunktion(const QString& text, const QString& funktion)
+{
+    const QRegularExpression re(QStringLiteral("\\b") +
+                                QRegularExpression::escape(funktion) +
+                                QStringLiteral("\\s*[({]"));
+    return re.match(text).hasMatch();
+}
+
+/// Traegt der Text einen eingebetteten ISF-JSON-Kopf (`/*{ … }*/` am Anfang)?
+/// Bei ISF steckt die Parameter-Deklaration IM Shader, nicht in einer
+/// Nachbardatei — eine `.fs` ist also fuer sich vollstaendig.
+[[nodiscard]] inline bool istIsfDatei(const QString& text)
+{
+    const QString kopf = text.left(400).trimmed();
+    return kopf.startsWith(QStringLiteral("/*")) &&
+           kopf.contains(QLatin1Char('{')) &&
+           (kopf.contains(QStringLiteral("\"ISFVSN\"")) ||
+            kopf.contains(QStringLiteral("\"INPUTS\"")) ||
+            kopf.contains(QStringLiteral("\"CATEGORIES\"")));
+}
+
+/**
+ * @brief Passt `text` zum erwarteten Vertrag? Sonst: was steckt drin?
+ * @param text       eingelesener Dateiinhalt
+ * @param eigenerKey Vertrag des Feldes, in das geladen werden soll
+ * @return leerer String = passt (oder nichts Bekanntes erkannt, dann nicht
+ *         meckern); sonst ein fertiger Warntext samt Handlungsempfehlung.
+ */
+[[nodiscard]] inline QString pruefeShaderVertrag(const QString& text,
+                                                 const QString& eigenerKey)
+{
+    const ShaderVertrag* eigen = shaderVertrag(eigenerKey);
+    if (eigen == nullptr) return {};
+    // Erwarteter Einstieg vorhanden => passt, keine Warnung.
+    if (nenntFunktion(text, eigen->funktion)) return {};
+    if (istIsfDatei(text))
+    {
+        return QObject::tr(
+            "Diese Datei ist ein <b>ISF-Shader</b> (Parameter-Deklaration als "
+            "JSON im Kopf).<br>Der Vertrag hier lautet <code>%1</code>.<br><br>"
+            "ISF-Dateien lassen sich noch nicht automatisch übersetzen — der "
+            "Code kann aber als Vorlage dienen. Trotzdem laden?")
+            .arg(eigen->signatur);
+    }
+    for (const auto& fremd : shaderVertraege())
+    {
+        if (fremd.key == eigenerKey) continue;
+        if (!nenntFunktion(text, fremd.funktion)) continue;
+        return QObject::tr(
+            "Diese Datei sieht nach einem <b>%1</b>-Shader aus "
+            "(<code>%2</code>).<br>Hier wird aber <code>%3</code> erwartet.<br><br>"
+            "Dafür ist der <b>%1</b>-Knoten zuständig. Trotzdem laden?")
+            .arg(fremd.anzeige, fremd.funktion, eigen->signatur);
+    }
+    return {};  // nichts Bekanntes erkannt — Fragment/Hilfsfunktionen erlauben
+}
+
+/**
+ * @brief Freien Dateinamen im Ordner finden: `name.ext` → `name(2).ext`, …
+ *
+ * Der Zaehler sitzt VOR den Endungen, damit `.vertrag.endung` intakt bleibt
+ * (`preset(2).image.shadertoy.glsl`, nicht `preset.image.shadertoy(2).glsl`).
+ * Qt fragt beim Speichern zwar ohnehin nach dem Ueberschreiben — ein freier
+ * Vorschlag verhindert aber, dass man in die Lage ueberhaupt kommt.
+ */
+[[nodiscard]] inline QString freierDateiname(const QString& ordner,
+                                             const QString& vorschlag)
+{
+    if (ordner.isEmpty() || !QFileInfo::exists(ordner + QLatin1Char('/') + vorschlag))
+        return vorschlag;
+    // Stamm = alles vor der ERSTEN Endung, Rest = alle Endungen zusammen.
+    const int punkt = vorschlag.indexOf(QLatin1Char('.'));
+    const QString stamm = punkt < 0 ? vorschlag : vorschlag.left(punkt);
+    const QString endungen = punkt < 0 ? QString() : vorschlag.mid(punkt);
+    for (int i = 2; i < 1000; ++i)
+    {
+        const QString kandidat =
+            stamm + QLatin1Char('(') + QString::number(i) + QLatin1Char(')') + endungen;
+        if (!QFileInfo::exists(ordner + QLatin1Char('/') + kandidat)) return kandidat;
+    }
+    return vorschlag;
+}
+
+/**
+ * @brief Export-Namensvorschlag `<preset>[.<slot>].<vertrag>.<endung>`
+ *
+ * Klassifikation von RECHTS nach LINKS immer spezifischer (Entscheid Patrik
+ * S71, Muster der Dateiendungen selbst): Dateityp · Vertrag · Slot · Name.
+ * @param slot optionaler Feld-Anteil (z. B. "image", "bufferA", "warp")
+ */
+[[nodiscard]] inline QString shaderExportName(QString presetName,
+                                              const QString& vertragKey,
+                                              const QString& slot = {})
 {
     static const QRegularExpression kBad(QStringLiteral("[\\\\/:*?\"<>|]"));
     static const QRegularExpression kWs(QStringLiteral("\\s+"));
@@ -426,7 +573,11 @@ struct ScriptEditorHooks
     presetName = presetName.trimmed();
     presetName.replace(kWs, QStringLiteral("_"));
     if (presetName.isEmpty()) presetName = QStringLiteral("preset");
-    return presetName + QLatin1Char('.') + modul + QStringLiteral(".glsl");
+    const ShaderVertrag* v = shaderVertrag(vertragKey);
+    const QString endung = v != nullptr ? v->endung : QStringLiteral("glsl");
+    QString name = presetName;
+    if (!slot.isEmpty()) name += QLatin1Char('.') + slot;
+    return name + QLatin1Char('.') + vertragKey + QLatin1Char('.') + endung;
 }
 
 /// Full, resizable editor: big code pane + the module's reference side-by-side.
@@ -488,19 +639,39 @@ struct ScriptEditorHooks
     auto* bb = new QDialogButtonBox(buttons, &dlg);
     if (!hooks.exportFileName.isEmpty())
     {
-        // Shader-Datei ↔ Editor-Text (Wunsch Patrik, S69). Der Ordner wird
-        // app-weit gemerkt; der Vorschlag folgt `preset_name.modul.glsl`.
+        // Shader-Datei ↔ Editor-Text (Wunsch Patrik, S69; Vertrags-Trennung
+        // S71). Der Ordner wird JE VERTRAG gemerkt — ein gemeinsames
+        // Gedaechtnis fuehrte sonst direkt in die Verwechslung, weil die
+        // Vertraege unvereinbar sind.
+        const ShaderVertrag* vertrag = shaderVertrag(hooks.vertragKey);
+        const QString eigeneEndung =
+            vertrag != nullptr ? vertrag->endung : QStringLiteral("glsl");
+        // Der eigene Vertrag steht zuerst; ISF (.fs/.vs) ist mit aufgefuehrt,
+        // weil das die Konvention der groessten Filter-Fundgrube ist.
         const QString filter =
-            QObject::tr("Shader (*.glsl *.hlsl *.frag *.txt);;Alle Dateien (*)");
-        const auto rememberedDir = []() {
-            return QSettings()
-                .value(QStringLiteral("editor/shaderFileDir"), QString())
-                .toString();
+            QObject::tr("Passende Shader (*.%1.%2);;"
+                        "Shader (*.glsl *.hlsl *.frag *.vert *.fs *.vs *.txt);;"
+                        "Alle Dateien (*)")
+                .arg(hooks.vertragKey.isEmpty() ? QStringLiteral("*")
+                                                : hooks.vertragKey,
+                     eigeneEndung);
+        const QString dirKey = QStringLiteral("editor/shaderFileDir/") +
+                               (hooks.vertragKey.isEmpty()
+                                    ? QStringLiteral("allgemein")
+                                    : hooks.vertragKey);
+        const auto rememberedDir = [dirKey]() {
+            QSettings s;
+            QString d = s.value(dirKey, QString()).toString();
+            // Ausweich auf das alte gemeinsame Gedaechtnis (Bestand vor S71)
+            if (d.isEmpty())
+                d = s.value(QStringLiteral("editor/shaderFileDir"), QString())
+                        .toString();
+            return d;
         };
-        const auto rememberDir = [](const QString& filePath) {
-            QSettings().setValue(QStringLiteral("editor/shaderFileDir"),
-                                 QFileInfo(filePath).absolutePath());
+        const auto rememberDir = [dirKey](const QString& filePath) {
+            QSettings().setValue(dirKey, QFileInfo(filePath).absolutePath());
         };
+        const QString vertragKey = hooks.vertragKey;
         auto* importBtn =
             bb->addButton(QObject::tr("Import…"), QDialogButtonBox::ActionRole);
         importBtn->setToolTip(
@@ -508,7 +679,7 @@ struct ScriptEditorHooks
                         "(übernommen wird erst mit Apply/OK)."));
         QObject::connect(
             importBtn, &QPushButton::clicked, &dlg,
-            [editor, filter, rememberedDir, rememberDir, &dlg]() {
+            [editor, filter, vertragKey, rememberedDir, rememberDir, &dlg]() {
                 const QString path = QFileDialog::getOpenFileName(
                     &dlg, QObject::tr("Shader importieren"), rememberedDir(),
                     filter);
@@ -521,7 +692,29 @@ struct ScriptEditorHooks
                         QObject::tr("Datei nicht lesbar: %1").arg(path));
                     return;
                 }
-                editor->setPlainText(QString::fromUtf8(f.readAll()));
+                const QString inhalt = QString::fromUtf8(f.readAll());
+                // VERTRAGSPRUEFUNG (S71): Ordner und Filter helfen nur beim
+                // gewohnten Weg — aus dem Download-Ordner greift keiner von
+                // beiden. Deshalb hier in den Inhalt schauen und WARNEN, statt
+                // den Nutzer in einen kryptischen Shader-Compilerfehler
+                // laufen zu lassen. Bewusst kein Verbot: Fragmente und
+                // Hilfsfunktionen zu laden bleibt erlaubt.
+                const QString warnung = pruefeShaderVertrag(inhalt, vertragKey);
+                if (!warnung.isEmpty())
+                {
+                    QMessageBox box(&dlg);
+                    box.setIcon(QMessageBox::Warning);
+                    box.setWindowTitle(QObject::tr("Anderer Shader-Vertrag"));
+                    box.setTextFormat(Qt::RichText);
+                    box.setText(warnung);
+                    box.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+                    box.setDefaultButton(QMessageBox::No);
+                    box.button(QMessageBox::Yes)
+                        ->setText(QObject::tr("Trotzdem laden"));
+                    box.button(QMessageBox::No)->setText(QObject::tr("Abbrechen"));
+                    if (box.exec() != QMessageBox::Yes) return;
+                }
+                editor->setPlainText(inhalt);
                 rememberDir(path);
             });
         const QString exportName = hooks.exportFileName;
@@ -533,9 +726,12 @@ struct ScriptEditorHooks
         QObject::connect(
             exportBtn, &QPushButton::clicked, &dlg,
             [editor, filter, exportName, rememberedDir, rememberDir, &dlg]() {
-                QString start = rememberedDir();
-                start = start.isEmpty() ? exportName
-                                        : start + QLatin1Char('/') + exportName;
+                const QString dir = rememberedDir();
+                // Freien Namen vorschlagen, statt auf die Ueberschreib-Frage
+                // zu warten (Wunsch Patrik S71).
+                const QString name = freierDateiname(dir, exportName);
+                QString start =
+                    dir.isEmpty() ? name : dir + QLatin1Char('/') + name;
                 const QString path = QFileDialog::getSaveFileName(
                     &dlg, QObject::tr("Shader exportieren"), start, filter);
                 if (path.isEmpty()) return;

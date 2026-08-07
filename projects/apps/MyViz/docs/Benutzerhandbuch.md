@@ -1,6 +1,6 @@
 # MyViz — Benutzerhandbuch
 
-> **Version:** 1.8.0
+> **Version:** 1.9.0
 > **Datum:** 2026-08-06
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -585,12 +585,37 @@ Video, Kamera, Scopes, MilkDrop, Shadertoy.
   das Musikvideo-Gefühl live; Demo: `asset/examples/pixelFilter -
   Take-On-Me.lvfx`.
 
+### Filter als Datei laden und weitergeben
+
+Der Groß-Editor (⤢) hat an allen Shader-Feldern **„Import…"** und
+**„Export…"** — praktisch, um Filter zu sammeln, zu sichern oder zu teilen.
+
+- **Export** schlägt einen sprechenden Namen vor:
+  `<Preset>[.<Feld>].<Vertrag>.glsl`, zum Beispiel
+  `MeinLook.pixelfilter.glsl` oder `Tunnel.image.shadertoy.glsl`. Existiert
+  die Datei schon, zählt der Vorschlag automatisch hoch
+  (`MeinLook(2).pixelfilter.glsl`). MilkDrop-Felder werden als `.hlsl`
+  gespeichert — sie sind HLSL, keine GLSL.
+- **Import** ersetzt nur den Editor-Text; übernommen wird er erst mit
+  **Apply** oder **OK**. Jedes Feld merkt sich seinen **eigenen** Ordner.
+- **Warnung bei falschem Vertrag:** Die Shader-Sorten sind nicht
+  austauschbar — ein Stilfilter erwartet `farbe(uv, src)`, ein Shadertoy
+  `mainImage(...)`, ein Mesh-Warp `warp(uv)`. Lädst du versehentlich das
+  Falsche, sagt LumiViz das im Klartext und nennt den zuständigen Knoten,
+  statt dich in einen unverständlichen Shader-Fehler laufen zu lassen. Laden
+  kannst du trotzdem — etwa wenn du nur einzelne Hilfsfunktionen übernehmen
+  willst.
+- **Fremde Shader:** Wer Filter aus dem Netz übernimmt (Shadertoy, ISF &
+  Co.), sollte die **Lizenz des jeweiligen Shaders** beachten — bei
+  Shadertoy-Importen zeigt der Knoten Autor und Lizenz oben an.
+
 ---
 
 ## Changelog
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.9.0 | 2026-08-07 | NEU §14 „Filter als Datei laden und weitergeben" (S71): Import…/Export… an allen Shader-Feldern erklärt (Namensschema `<Preset>[.<Feld>].<Vertrag>.glsl`, automatisch hochzählender Vorschlag, eigener Ordner je Feld, `.hlsl` für MilkDrop), Warnung bei falschem Shader-Vertrag, Lizenz-Hinweis für fremde Shader. Schließt eine Doku-Lücke seit S69 |
 | 1.8.0 | 2026-08-06 | NEU §14 „Stilfilter (Pixel Filter)" (S70): skriptbarer Pixel-Filter (farbe()-Vertrag, Mix, Stapeln als Knoten) + 12 Werks-Looks inkl. Take-On-Me-Comic |
 | 1.7.0 | 2026-08-06 | NEU §13 „Video & Kamera als Quelle" (S70): videoSource-Knoten (Datei/Kamera/Testaufnahme, Streaming vs. Frame-Schritt, Einpassung, Blend/Deckkraft, Parameter-Skripte) + Settings-Tab „Kamera" mit Testaufnahmen |
 | 1.6.0 | 2026-08-04 | §11: neue Einstellung „MilkDrop Start Fade-in" (Sicht-Blende, S67) — halbe Sekunde Schwarz-Einblendung über der Rausch-Saat bei App-Start/Größenwechsel/Löschen; Vorgabe an |

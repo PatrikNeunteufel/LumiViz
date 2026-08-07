@@ -40,8 +40,18 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
   Settings-Tab „Editor" (QSettings `editor/...`). Die **Shader-Felder**
   (Shadertoy Image+Buffer, Warp/Comp) tragen zusätzlich **Import…/Export…**
   (Datei ↔ Editor, UTF-8; Export-Vorschlag `preset_name.modul.glsl` via
-  `shaderExportName()`, letzter Ordner in `editor/shaderFileDir`; Import
-  ersetzt nur den Editor-Inhalt — übernommen wird erst mit Apply/OK).
+  `shaderExportName()`; Import ersetzt nur den Editor-Inhalt — übernommen wird
+  erst mit Apply/OK). **Vertrags-Trennung (S71):** die Shader-Verträge sind
+  paarweise unvereinbar (`farbe` · `mainImage` · `warp` · `kraft` · HLSL), ein
+  Fehlgriff ergäbe nur einen kryptischen Compilerfehler aus dem Wrapper.
+  Deshalb SSOT `ShaderVertrag` in `EelScriptEditing.hpp`, daraus: Namensschema
+  **`<preset>[.<slot>].<vertrag>.<endung>`** (rechts→links spezifischer;
+  Milkdrop-Felder `.hlsl`, weil sie es sind), **Ordner-Gedächtnis je Vertrag**
+  (`editor/shaderFileDir/<vertrag>`), Dateifilter „Passende Shader" zuerst
+  (inkl. `.fs`/`.vs` für ISF) und eine **Vertragsprüfung beim Import**
+  (`pruefeShaderVertrag`): erkannter Fremdvertrag → Klartext-Warnung mit
+  Hinweis auf den zuständigen Knoten und „Trotzdem laden" (Fragmente sollen
+  ladbar bleiben).
 - **Voreinstellungs-Zeile „Preset" (Session 53, Etappen 1 + 1b):** ganz oben im
   Editor, **für jeden Knotentyp** — Dropdown (mitgeliefert + eigene, letztere mit
   `*`), „Save as…", Löschen (nur eigene). Sie kennt keinen einzigen Typ beim Namen:

@@ -1,6 +1,6 @@
 # MyViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.64.0
+> **Version:** 1.66.0
 > **Datum:** 2026-08-07 (Session 71)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -849,6 +849,46 @@ Umgesetzt (S69), alle drei Punkte — offen ist nur noch der UI-Sichttest:
    `editor/shaderFileDir`. Import ersetzt nur den Editor-Inhalt —
    übernommen wird erst mit Apply/OK.
 
+### ➜ ISF-Import + generischer Parameter-Baum (Entscheid Patrik S71 — nächster Strang)
+
+> **Steuerdokument:** [`visuals/ISF_Import_Parameterbaum_Plan.md`](visuals/ISF_Import_Parameterbaum_Plan.md)
+> (1.0.0 — vier Stufen, Pflichtkette, Lizenz-Querschnitt, Risiken; Freigabe offen)
+
+**Ziel:** ISF-Filter (`.fs`, s. §7-Block „Filter-Fundgruben") laden und mit
+ihren eigenen Parametern bedienbar machen. Der Vorbau steht seit S71
+(Vertrags-SSOT, Namensschema, Ordner je Vertrag, Vertragsprüfung beim Import —
+Changelog 1.65.0). Drei Bausteine, in dieser Reihenfolge:
+
+1. **ISF-Parser** — pur, GL-/Qt-frei, unit-testbar: JSON-Kopf aus dem
+   führenden Blockkommentar extrahieren, `INPUTS` typisiert einlesen, den
+   GLSL-Körper auf den `farbe()`-Vertrag übersetzen (`IMG_PIXEL`/
+   `IMG_NORM_PIXEL`/`IMG_SIZE` → `uTex`/`uv`, `RENDERSIZE`/`TIME`/
+   `TIMEDELTA`/`FRAMEINDEX`/`isf_FragNormCoord`, `inputImage` → `src`).
+   Muster: `PixelFilterWrapper.hpp` (GL-frei + testerzwungen).
+2. **Generische Parameter-Ablage im Node** — getippte Werte, die der
+   Serializer mitschreibt. Zieht die Pflichtkette nach sich (Leser-Klemmen,
+   FieldDocs/Inventar-Gate, Wächter-Test).
+3. **Parameter-Baum im Panel (Entwurf Patrik):** aufgebaut **wie die
+   Effect-Chain** — Baum-Ansicht, aber mit **Wert-Spalte rechts** und
+   **typsicheren Editoren** je Zeile (ISF deklariert den Typ: `bool` →
+   Checkbox, `float` → SpinBox mit MIN/MAX aus dem JSON, `long` mit
+   `LABELS`/`VALUES` → echtes Dropdown mit Klartext, `color` → Farbwähler,
+   `point2D` → zwei Felder). Bewusst **nested-fähig** angelegt, auch wenn
+   ISF-`INPUTS` flach sind — `PASSES`/`IMPORTED` sind es nicht, und die
+   Struktur trägt dann mehr als nur ISF.
+
+**⚪ NEU (Idee Patrik S71): dasselbe Prinzip auch für die ANDEREN Module.**
+Ein generischer, typsicherer Parameter-Baum wäre kein ISF-Sonderweg, sondern
+die gemeinsame Darstellung für alle Knoten — und genau die Infrastruktur, die
+der Backlog-Punkt „dynamische Modulparameter" (alle Params per
+init/frame/beat/point) ohnehin braucht. Beim Bau von Stufe 2/3 deshalb nicht
+ISF-spezifisch schneiden. Prüfen, wie sich das zur bestehenden
+Panel-Erzeugung (`addInt`/`addDouble`/`addCombo`/`addCodeEditor`) verhält:
+Ablösung oder zweiter Weg?
+
+**Lizenz-Pflicht gilt auch hier** (s. 🔴 im §7-Block oben): Herkunft, Autor
+und Lizenz (`CREDIT` im ISF-JSON) gehören ins Preset, nicht nur in die Doku.
+
 ### ⚪ Szenen-Wechsler-Modul (Idee Patrik, 2026-08-06 — Konzept in eigener Session)
 
 Szenen = **EffectListen in beliebiger Verschachtelungstiefe** mit stabiler ID
@@ -1068,12 +1108,31 @@ Ursprüngliche Sondierung (S55, weiter gültig für die Rest-Punkte):
     Shadertoy-Knoten (s. iChannel-Erweiterungen unten). Der Filter-Stack
     ist die Kette selbst (mehrere Knoten, umsortierbar; Entscheid Patrik
     S70 — keine interne Unterliste, Klone sind unabhängige Kopien).
+  - **🔴 LIZENZ-PFLICHT bei JEDEM Fremd-Import (Vorgabe Patrik S71 — muss im
+    Loader stecken, nicht nur in der Doku, sonst geht es unter):** Shadertoy
+    verpflichtet API-Nutzer ausdrücklich, die Lizenz **jedes einzelnen
+    Shaders** zu respektieren (Default dort ist meist CC BY-NC-SA); ISF trägt
+    ein `CREDIT`-Feld im JSON-Kopf. **Regel: ein Import schreibt Herkunft
+    (URL/ID bzw. Dateiname), Autor und Lizenz als Felder ins Preset** und
+    zeigt sie im Panel an — sonst wandern fremde Shader unbemerkt in
+    weitergegebene `.lvfx`. Beim Bauen des Importers ist das Teil der
+    Pflichtkette, nicht Kür. Zu klären ist dabei, ob die Felder in den
+    ChainNode oder in die Preset-Metadaten gehören (Serializer + FieldDocs).
   - **Filter-Fundgruben online:** **ISF (Interactive Shader Format,
-    isf.video / editor.isf.video, Vidvox)** = „Shadertoy für Filter" — GLSL +
-    JSON-Parameterdeklaration, Kategorie „FX" hat exakt den
-    pixelFilter-Vertrag (Eingangsbild rein, Bild raus); die JSON-Regler
-    entsprechen fast 1:1 unseren Reglern/Voreinstellungen → **ISF-Import
-    (Teilmenge FX) als möglicher späterer Strang.** Außerdem:
+    isf.video / editor.isf.video, Vidvox)** = „Shadertoy für Filter" —
+    GLSL + JSON-Parameterdeklaration. **Format geklärt (S71, gegen die Spec
+    geprüft):** das JSON steckt als **Blockkommentar `/*{ … }*/` am
+    Dateianfang**, es gibt KEINE Nachbardatei; Endung **`.fs`** (optional
+    `.vs` für einen Vertex-Shader gleichen Namens) — beides sind normale
+    GLSL-Dateien mit spezialisierter Endung. **FX-Erkennung ist maschinell
+    eindeutig: ein Filter hat einen Input `inputImage` vom Typ `image`**
+    (Generatoren haben keinen, Übergänge stattdessen `startImage`/`endImage`/
+    `progress`). Übersetzungsschicht auf `pixelFilter`: INPUTS-Typen
+    (`float`/`bool`/`long`/`color`/`point2D`/`image`/`audio`/`audioFFT`) →
+    unsere Regler; ISF-Uniforms `RENDERSIZE`/`TIME`/`TIMEDELTA`/`FRAMEINDEX`/
+    `isf_FragNormCoord` und die Helfer `IMG_PIXEL()`/`IMG_NORM_PIXEL()`/
+    `IMG_SIZE()` → unser `uv`/`uTex`. → **ISF-Import (Teilmenge FX) als
+    eigener Strang.** Außerdem:
     ReShade-Shader-Repos (github.com/crosire/reshade-shaders, qUINT,
     SweetFX — HLSL-Dialekt, Ideen-Quelle) · godotshaders.com (Kategorie
     „Screen-reading shaders") · obs-shaderfilter-Sammlungen.
@@ -1381,6 +1440,8 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.66.0 | 2026-08-07 | Session 71 (Filter-Strang, Planung) — **NEU §7-Block „ISF-Import + generischer Parameter-Baum" als nächster Strang** (Entscheid Patrik). Dreistufig: (1) ISF-Parser pur/testbar nach dem `PixelFilterWrapper`-Muster, (2) generische Parameter-Ablage im Node inkl. Pflichtkette (Serializer/FieldDocs/Wächter), (3) **Parameter-Baum im Panel — Entwurf Patrik: Aufbau wie die Effect-Chain, aber mit Wert-Spalte und typsicheren Editoren je Zeile** (ISF deklariert den Typ; `long` mit LABELS/VALUES wird ein echtes Klartext-Dropdown), bewusst nested-fähig (INPUTS sind flach, `PASSES`/`IMPORTED` nicht). **⚪ NEU (Idee Patrik): dasselbe Prinzip für ALLE Module** — kein ISF-Sonderweg, sondern die Infrastruktur, die auch „dynamische Modulparameter" braucht; beim Bau nicht ISF-spezifisch schneiden, Verhältnis zur bestehenden Panel-Erzeugung klären. KLEINFIXES am Vorbau: Export schlägt jetzt einen **freien Dateinamen** vor (`preset(2).image.shadertoy.glsl` — Zähler VOR den Endungen, damit `.vertrag.endung` intakt bleibt; Qts Überschreib-Frage bleibt als Netz) · `.vert` im Dateifilter ergänzt (Gegenstück zum vorhandenen `.frag`; `.gs` bewusst NICHT — ISF kennt nur `.fs`/`.vs`, und wir haben kein Geometry-Feld). **KORREKTUR einer früheren Aussage in dieser Session: der Shadertoy-Import ist im Kern NICHT offen** — `ShadertoyBrowserPanel` (Strang S3) hat Query-API-Suche, Thumbnail-Grid, Doppelklick-Import als .lvfx, API-Key-Feld und Link-Knopf; **offen sind dort der iChannel-Ausbau UND die Lizenz-Kette** (Einwand Patrik): die Felder `name`/`author`/`url`/`license` existieren zwar samt Serializer und Panel-Anzeige, hängen aber NUR an `ShadertoyParams` (für ISF/pixelFilter fehlen sie) — und der **Shader-Export im Editor schreibt sie nicht mit**, die Herkunft geht beim Export also verloren. Beides ist im Plan §5.2/§8 aufgenommen |
+| 1.65.0 | 2026-08-07 | Session 71 (Filter-Strang, Vorbau) — **Shader-Import gegen Vertrags-Verwechslung gesichert (Einwand Patrik: „muss man da nicht aufpassen, dass man nicht Shadertoy im pixelFilter importiert?").** Ist-Stand war ungeschützt: EIN gemeinsames Ordner-Gedächtnis `editor/shaderFileDir` für alle Shader-Felder, ein Filter für alle, keine Prüfung — ein Shadertoy in einem pixelFilter ergab nur einen kryptischen Compilerfehler aus dem Wrapper. NEU **`ShaderVertrag`-SSOT** in `EelScriptEditing.hpp` (key · Anzeige · Einstiegsfunktion · Signatur · echte Endung) für pixelfilter/shadertoy/meshwarp/gpuparticles/milkdrop, die drei Dinge gemeinsam trägt: (1) **Namensschema `<preset>[.<slot>].<vertrag>.<endung>`** — Klassifikation von rechts nach links immer spezifischer (Entscheid Patrik, Muster der Dateiendungen selbst); vorher stand nur der Slot drin (`preset.image.glsl` verriet nicht, dass es Shadertoy ist). (2) **Ordner-Gedächtnis je Vertrag** `editor/shaderFileDir/<vertrag>` (mit Ausweich auf den alten gemeinsamen Wert) + Dateifilter „Passende Shader" zuerst, `.fs`/`.vs` (ISF) mit aufgenommen. (3) **Vertragsprüfung beim Import** (`pruefeShaderVertrag`): fehlt der erwartete Einstieg und wird ein fremder erkannt, kommt eine Klartext-Warnung samt **Hinweis auf den zuständigen Knoten** — bewusst mit „Trotzdem laden" (Fragmente/Hilfsfunktionen bleiben erlaubt, Entscheid Patrik); ISF-Dateien werden am JSON-Kopf erkannt und benannt. **Milkdrop-Felder exportieren jetzt `.hlsl`** statt `.glsl` (Entscheid Patrik nach Empfehlung: der Inhalt IST HLSL, externe Editoren färben richtig ein — für unsere eigene Prüfung ist die Endung ohnehin nicht maßgeblich, die schaut in den Inhalt). **NEU 🔴 Lizenz-Pflicht im §7-Block** (Vorgabe Patrik): jeder Fremd-Import muss Herkunft/Autor/Lizenz ins Preset schreiben — im Loader, nicht nur in der Doku. **ISF-Format gegen die Spec geprüft** (kein separates JSON: eingebetteter Kopf, `.fs`; FX-Erkennung über `inputImage`) |
 | 1.64.0 | 2026-08-07 | Session 71 (Abschluss) — **✅ SICHTTEST PATRIK ABGENOMMEN: der Kamera-Strang ist komplett.** (1) Dialog bestätigen → Kamera läuft → Preset-Wechsel → Schließen: **sauber, kein Prozess bleibt zurück** (zusätzlich per Task-Manager geprüft). (2) **Kein UI-Lag mehr spürbar**, obwohl die RGBX-Wandlung wieder auf dem Main-Thread läuft — die 720p/30fps-Formatklemme aus S70 reicht also aus, der Worker-Thread war für die Bildrate gar nicht nötig. Damit ist der Zielkonflikt „Lag gegen Prozessende" AUFGELÖST statt abgewogen: `LUMIVIZ_MEDIEN_THREAD` bleibt nur als Messschalter. Der 🔴-Punkt aus 1.59.0 ist geschlossen |
 | 1.63.0 | 2026-08-07 | Session 71 (Fortsetzung 3) — **🎯 URSACHE DES PROZESS-HÄNGERS GEFUNDEN (A/B am Prüfstand): der EIGENE THREAD für die Multimedia-Seite.** Anstoß Patrik (Erinnerung „es ging, als alles im Main-Thread lief" + Auftrag, die Commits zu vergleichen). Der Commit-Vergleich zeigte: nur ZWEI Commits berühren LiveVideoFeed.cpp — `f93c83a` (S70 Teil A, dort steht wörtlich „App-Ende ohne/mit Kamera sauber") und `ace8d1c`. Der einzige strukturelle Unterschied: f93c83a hatte **keinen Zusatz-Thread**. A/B mit Schalter `LUMIVIZ_MEDIEN_THREAD` isolierte genau diese Variable: **MIT Thread 2/2 Hänger, OHNE Thread 3/3 sauberes Prozessende** (7,8 s = reine Laufzeit), Kamera läuft in beiden Fällen. Unabhängig von Media-Backend (FFmpeg wie WMF je 2/2 Hänger), von der Lage der Pipeline (Main- vs. Worker-Thread — der Ein-Thread-Besitz-Umbau auf den Medien-Thread half NICHT) und von COM-Init (`CoInitializeEx`/`CoUninitialize` auf dem Thread half nicht). **FIX: LiveVideoFeed arbeitet per Vorgabe auf dem Main-Thread**; `LUMIVIZ_MEDIEN_THREAD=1` schaltet den Worker-Thread für Messungen wieder ein. **ZWEITER BEFUND: `std::_Exit()` beendet den Prozess NICHT** (am Prüfstand reproduziert) — ExitProcess muss alle Threads abräumen, einer steckte im Treiber. Deshalb stand seit S70 „erzwungenes Prozessende" im Log, während die App weiterhing: die Logzeile täuschte einen Erfolg vor, den es nie gab. Der _Exit-Notausgang ist ersatzlos ENTFERNT (App + Standalone). Bootstrap_Integration 1.3.0: §6.4.5 korrigiert (_Exit ist kein Notausgang), NEU §6.6 (kein eigener Thread für fremde Medien-Pipelines). Tests 563 grün, alle 3 Builds grün, App-Schließen ohne Kamera 677 ms. **OFFEN: Sichttest Patrik mit KAMERA** (Dialog → Kamera läuft → Preset-Wechsel → Schließen; zusätzlich UI-Lag beurteilen, da die Wandlung wieder auf dem Main-Thread läuft — die 720p/30fps-Klemme aus S70 bleibt aktiv) |
 | 1.62.0 | 2026-08-07 | Session 71 (Fortsetzung 2) — **REGRESSION aus 1.61.0 gefunden und behoben: App fror nach dem Kamera-Freigabe-Dialog ein, die Kamera ging gar nicht erst an** (Sichttest Patrik). Ursache: das neue `altenFeedRaeumen()` im Zusammenspiel mit dem Aufrufmuster des Render-Threads — der ruft `starte*` in JEDEM Frame, und bis der gequeuete Bau durch ist (Kamera-Pipeline-Start dauert), steht der Feed noch nicht in `m_feeds`. Jedes Frame queute also einen weiteren Bauauftrag, und jeder räumte über `altenFeedRaeumen()` die eben gebaute Kamera wieder ab ⇒ Endlosschleife aus Auf-/Abbau auf dem Main-Thread. FIX: NEU **Bau-Riegel `m_imBau`** — ein Bauauftrag je Knoten und Zielquelle, ausgetragen an jedem Ausgang von `baueDatei`/`baueKamera`; `alleStoppen()` verwirft offene Aufträge. VERIFIKATION am Prüfstand (echte Kamera, 3 Preset-Wechsel, 2 Läufe): Kamerabild kommt an (Screenshot-Sichtprüfung: Raumkonturen durch den Take-On-Me-Filter), Feed-Teardown **201/202 ms**, Warnungen=0. Tests 563 grün, alle 3 Builds grün, App-Schließen ohne Kamera 671 ms. **OFFEN: Sichttest Patrik** (Dialog bestätigen → Kamera muss anlaufen; Preset-Wechsel; Schließen) |

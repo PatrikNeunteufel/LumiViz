@@ -36,7 +36,11 @@ Die Application-Klasse ist der zentrale Einstiegspunkt für die MyViz-Anwendung.
 
 ### 1.2 Verantwortlichkeiten
 
-- Lifecycle-Management (init/run/shutdown)
+- Lifecycle-Management (init/run/shutdown) — die vollständige Abbau-Kette
+  inkl. aller `aboutToQuit`-Handler und der verbindlichen Reihenfolge-Regeln
+  steht in
+  [`docs/core-services/Bootstrap_Integration.md`](../docs/core-services/Bootstrap_Integration.md)
+  §5 (Kette) und §6 (Lebenszyklus-Vertrag für Threads/Fremd-Pipelines)
 - Qt-Event-Loop Kontrolle via `exec()`
 - Timer-basiertes Frame-Timing mit drei Modi (Limited, Unlimited, VSync)
 - FPS-Messung in Echtzeit
