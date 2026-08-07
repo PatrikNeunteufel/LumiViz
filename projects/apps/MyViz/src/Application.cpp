@@ -29,6 +29,8 @@
 #include "UI/MainWindow.hpp"
 #include "core/GpuInfo.hpp"
 #include "core/GpuPreference.hpp"
+#include "services/LiveVideoFeed.hpp"    // Feed-Stopp nach GL-Abbau (S70)
+#include "services/VideoFrameCache.hpp"  // Decoder-Thread-Abbau (S71)
 #include "visualizers/modules/ColorGradientModule.hpp"
 #include "visualizers/modules/processing/SmoothingModule.hpp"
 #include "visualizers/modules/source/AudioSourceModule.hpp"
@@ -44,6 +46,7 @@
 
 // Standard Library
 #include <chrono>
+#include <cstdlib>
 #include <thread>
 
 // =============================================================================
@@ -440,6 +443,40 @@ void Application::shutdown()
     // Cleanup in reverse order
     BasicLogger::logDebug("Destroying MainWindow...");
     m_impl->pMainWindow.reset();
+
+    // Kamera-/Video-Feeds ERST NACH dem Fenster-/GL-Abbau stoppen (S70):
+    // eine sterbende MF-/D3D-Pipeline waehrend des GL-Teardowns verklemmt
+    // den GPU-Kanal (Haupt-Thread hing in nvoglv64). Der Riegel gegen
+    // Neustarts sitzt seit aboutToQuit; hier stirbt die Pipeline geordnet,
+    // BEVOR ~QApplication die Event-Queue entsorgt (Zombie-Befunde S70).
+    // Beide Multimedia-Dienste werden HIER explizit abgebaut, nicht per
+    // aboutToQuit-Lambda: die Abbau-Position muss festliegen und darf nicht
+    // davon abhaengen, wann ein lazy Singleton zufaellig zuerst gebraucht
+    // wurde (Lebenszyklus-Vertrag 6.1, docs/core-services/Bootstrap_Integration.md).
+    BasicLogger::logDebug("Stopping video feeds...");
+    auto& videoFeeds = lumi::services::LiveVideoFeed::instance();
+    videoFeeds.herunterfahren();
+    lumi::services::VideoFrameCache::instance().herunterfahren();
+
+    // NOTAUSGANG (S70, entschaerft S71). Ursprung: die D3D11-Worker der
+    // Media-Foundation-Pipeline (nvwgf2umx-Threads) starben nie, der
+    // ~QApplication haengt dann in den Multimedia-Postroutinen.
+    // S71 hat die Ursache gefunden und behoben (Abschalt-Vertrag im
+    // LiveVideoFeed: der Wandler mappte Frames einer sterbenden Pipeline).
+    // Der Notausgang bleibt vorerst als Netz stehen, bis mehrere
+    // Sichttests den regulaeren Weg bestaetigt haben.
+    // KRITERIUM ERWEITERT (S71): frueher „Kamera lief" — ein Lauf mit
+    // reinem DATEI-Feed hing genauso (Log 00:28:55), die Blockade war nie
+    // kameraspezifisch. Jetzt greift es bei jedem Qt-Multimedia-Lauf,
+    // inklusive der Settings-Testaufnahme.
+    if (videoFeeds.feedGelaufen())
+    {
+        m_initialized = false;
+        BasicLogger::logInfo(
+            "Application::shutdown() complete (erzwungenes Prozessende — "
+            "Multimedia-Teardown-Netz, S70/S71)");
+        std::_Exit(0);
+    }
 
     BasicLogger::logDebug("Destroying QApplication...");
     m_impl->pQtApp.reset();

@@ -17,6 +17,7 @@
 #include <QEventLoop>
 #include <QMediaMetaData>
 #include <QMediaPlayer>
+#include <QThread>
 #include <QTimer>
 #include <QUrl>
 #include <QVideoFrame>
@@ -30,10 +31,13 @@ namespace lumi::services {
 namespace {
 
 /// Auf ein Signal warten, hoechstens `ms` Millisekunden; false = Timeout.
-/// Verschachtelte Event-Loop auf dem Main-Thread — genau dafuer ist der
-/// Ladevorgang per Queued-Invoke DORTHIN gelegt (QMediaPlayer braucht sie).
+/// Verschachtelte Event-Loop auf dem Decoder-Thread (QMediaPlayer braucht eine).
+/// `abbruch` wird zyklisch geprueft: `QThread::quit()` beendet eine
+/// VERSCHACHTELTE Loop nicht — ohne diesen Wachtimer haengt der Abbau bis zum
+/// vollen Timeout (Lebenszyklus-Vertrag 6.4.3, Befund S71).
 template <typename Sender, typename Signal>
-bool warteAuf(Sender* sender, Signal signal, int ms)
+bool warteAuf(Sender* sender, Signal signal, int ms,
+              const std::atomic<bool>* abbruch = nullptr)
 {
     QEventLoop loop;
     bool gefeuert = false;
@@ -42,6 +46,14 @@ bool warteAuf(Sender* sender, Signal signal, int ms)
         loop.quit();
     });
     QTimer::singleShot(ms, &loop, &QEventLoop::quit);
+    QTimer wachtimer;
+    if (abbruch != nullptr)
+    {
+        QObject::connect(&wachtimer, &QTimer::timeout, &loop, [&loop, abbruch] {
+            if (abbruch->load(std::memory_order_acquire)) loop.quit();
+        });
+        wachtimer.start(50);
+    }
     loop.exec();
     return gefeuert;
 }
@@ -55,13 +67,35 @@ VideoFrameCache& VideoFrameCache::instance()
 {
     static VideoFrameCache* s_instanz = [] {
         auto* c = new VideoFrameCache();
-        // hole() darf vom Render-Thread kommen — das Objekt (und damit die
-        // Queued-Invokes) gehoert auf den Main-Thread mit Event-Loop.
+        // LAG-BEFUND S70: der Vollausbau eines laengeren Videos (Seek je
+        // Frame + verschachtelte Event-Loops) fror auf dem Main-Thread das
+        // UI ein (Drag&Drop tot). Das Dekodieren laeuft deshalb auf einem
+        // EIGENEN Decoder-Thread mit Event-Loop; QMediaPlayer lebt dort.
         if (QCoreApplication::instance() != nullptr)
-            c->moveToThread(QCoreApplication::instance()->thread());
+        {
+            auto* faden = new QThread();
+            faden->setObjectName(QStringLiteral("VideoFrameCache"));
+            faden->start();
+            c->moveToThread(faden);
+            c->m_faden = faden;
+        }
         return c;
     }();
     return *s_instanz;
+}
+
+void VideoFrameCache::herunterfahren()
+{
+    // Abbruch ZUERST: der Decoder verlaesst auch eine verschachtelte
+    // Event-Loop (Wachtimer in warteAuf) — quit() alleine taete das nicht.
+    abbrechen();
+    if (m_faden == nullptr || !m_faden->isRunning()) return;
+    m_faden->quit();
+    if (!m_faden->wait(5000))
+    {
+        std::fprintf(stderr,
+                     "[VideoFrameCache] Decoder-Thread endete nicht in 5 s\n");
+    }
 }
 
 std::shared_ptr<VideoFrameCache::Clip> VideoFrameCache::hole(const QString& pfad)
@@ -93,7 +127,16 @@ void VideoFrameCache::lade(const QString& pfad, std::shared_ptr<Clip> clip)
     };
     for (int versuch = 0; versuch < 100 && !geladen(); ++versuch)
     {
-        if (!warteAuf(&spieler, &QMediaPlayer::mediaStatusChanged, 100)) break;
+        if (m_abbruch.load(std::memory_order_acquire)) break;
+        if (!warteAuf(&spieler, &QMediaPlayer::mediaStatusChanged, 100, &m_abbruch))
+            break;
+    }
+    if (m_abbruch.load(std::memory_order_acquire))
+    {
+        std::fprintf(stderr, "[VideoFrameCache] Laden abgebrochen: %s\n",
+                     qPrintable(pfad));
+        clip->status.store(FEHLGESCHLAGEN);
+        return;
     }
     if (spieler.mediaStatus() == QMediaPlayer::InvalidMedia ||
         spieler.duration() <= 0)
@@ -116,10 +159,18 @@ void VideoFrameCache::lade(const QString& pfad, std::shared_ptr<Clip> clip)
     qint64 bytes = 0;
     for (int i = 0; i < n; ++i)
     {
+        if (m_abbruch.load(std::memory_order_acquire))
+        {
+            std::fprintf(stderr, "[VideoFrameCache] Laden abgebrochen: %s\n",
+                         qPrintable(pfad));
+            clip->status.store(FEHLGESCHLAGEN);
+            return;
+        }
         // Frame-Mitte anfahren, damit Rundung nicht auf die Frame-Grenze faellt
         const qint64 ziel = static_cast<qint64>((i + 0.5) * 1000.0 / fps);
         spieler.setPosition(std::min(ziel, dauerMs - 1));
-        if (!warteAuf(&senke, &QVideoSink::videoFrameChanged, 3000)) break;
+        if (!warteAuf(&senke, &QVideoSink::videoFrameChanged, 3000, &m_abbruch))
+            break;
         const QVideoFrame frame = senke.videoFrame();
         if (!frame.isValid()) break;
         // S70: map()+Rohbytes statt toImage() — das liefert unter Qt 6.10.1

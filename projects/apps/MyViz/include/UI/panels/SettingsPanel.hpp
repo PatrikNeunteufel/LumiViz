@@ -103,8 +103,19 @@ private:
     /// Startet die Testaufnahme — DIE ausdrueckliche Nutzeraktion, die auch
     /// die Kamera-Freigabe dieses App-Laufs erteilt (LiveVideoFeed).
     void starteTestaufnahme();
-    /// Beendet die Aufnahme, raeumt die Kamera-Objekte ab, frischt die Liste.
-    void beendeTestaufnahme();
+    /**
+     * @brief Beendet die Aufnahme, raeumt die Kamera-Objekte ab, frischt die Liste
+     * @param synchron Objekte SOFORT zerstoeren statt per deleteLater
+     *
+     * Der Normalweg (`synchron = false`) muss deleteLater nutzen: der Aufruf
+     * kommt aus einem Signal des Recorders, ein direktes delete waere ein
+     * delete des Senders mitten in der Emission. Beim Herunterfahren gibt es
+     * aber keine Event-Loop mehr, die deleteLater ausfuehrt — die Objekte
+     * stuerben sonst erst in der Event-Queue-Entsorgung des ~QApplication
+     * bzw. per Parent-Destruktor mitten im Fenster-Abbau (Zombie-Klasse,
+     * Befund S71). Der aboutToQuit-Haken raeumt deshalb `synchron = true`.
+     */
+    void beendeTestaufnahme(bool synchron = false);
     /// Hotkey-Editor (docs/ui/Hotkey_Konzept.md §6): Tabelle je Kategorie mit
     /// Aufnahmefeld, Kollisions-/Reservierungspruefung und Zuruecksetzen.
     QWidget* createHotkeyTab();

@@ -28,6 +28,7 @@
 #include "services/EventBus.hpp"
 #include "services/ICommandBus.hpp"
 #include "services/CommandBus.hpp"
+#include "services/LiveVideoFeed.hpp"  // Kamera-Stopp im closeEvent (S70)
 #include "services/MenuRegistry.hpp"
 #include "services/events/UIEvents.hpp"
 
@@ -1323,6 +1324,12 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 void MainWindow::closeEvent(QCloseEvent* event)
 {
     BasicLogger::logInfo("MainWindow closed - quitting application");
+    // Kamera-Feeds werden hier bewusst NICHT gestoppt (S70, dritter Anlauf):
+    // eine STERBENDE MF-/D3D-Pipeline waehrend des GL-Teardowns verklemmt
+    // den GPU-Kanal (Haupt-Thread hing in nvoglv64). Reihenfolge jetzt:
+    // Riegel bei aboutToQuit (keine Neustarts mehr), GL/Fenster abbauen
+    // waehrend die Kamera normal weiterlaeuft, DANACH der Kamera-Stopp in
+    // Application::shutdown (LiveVideoFeed::herunterfahren).
     QMainWindow::closeEvent(event);
     QCoreApplication::quit();
 }

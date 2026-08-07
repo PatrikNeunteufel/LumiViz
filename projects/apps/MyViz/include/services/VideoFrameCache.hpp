@@ -4,8 +4,8 @@
  * @brief  Frame-genauer Video-Decoder-Cache ueber Qt Multimedia (FFmpeg-Backend)
  *
  * @author Patrik Neunteufel
- * @date   Juli 2026 (fps-Feld August 2026, S70)
- * @version 1.1.0
+ * @date   Juli 2026 (fps-Feld + Decoder-Thread August 2026, S70/S71)
+ * @version 1.3.0
  *
  * @details
  * Stufe 1 des Video-Wegs (Entscheid S59): der AVS-`avi`-Knoten dekodiert
@@ -17,9 +17,16 @@
  * Frames uhrzeitgetrieben, reproduzierbare Laeufe brauchen Index-Zugriff.
  *
  * Threading: `hole()` ist render-thread-tauglich (Mutex + Queued-Invoke);
- * das Dekodieren laeuft auf dem MAIN-Thread (QMediaPlayer braucht dessen
- * Event-Loop). Der Aufrufer pollt `Clip::status` und liest `frames` erst
- * bei FERTIG — danach ist der Clip unveraenderlich.
+ * das Dekodieren laeuft seit S70 auf einem EIGENEN Decoder-Thread mit
+ * Event-Loop (QMediaPlayer braucht eine — aber nicht die des GUI: der
+ * Vollausbau eines laengeren Videos auf dem Main-Thread fror das UI ein,
+ * Lag-Befund S70). Der Aufrufer pollt `Clip::status` und liest `frames`
+ * erst bei FERTIG — danach ist der Clip unveraenderlich. `abbrechen()`
+ * bricht laufende Ladevorgaenge ab — auch aus einer VERSCHACHTELTEN
+ * Event-Loop heraus (Wachtimer in `warteAuf`; `QThread::quit()` beendet eine
+ * solche Loop NICHT). Der Thread-Abbau laeuft ueber `herunterfahren()` aus
+ * `Application::shutdown()`, nicht per aboutToQuit-Lambda
+ * (Lebenszyklus-Vertrag 6.1, docs/core-services/Bootstrap_Integration.md).
  ****************************************************************************************
  */
 
@@ -34,6 +41,8 @@
 #include <atomic>
 #include <memory>
 #include <vector>
+
+class QThread;
 
 namespace lumi::services {
 
@@ -73,14 +82,26 @@ public:
      */
     std::shared_ptr<Clip> hole(const QString& pfad);
 
+    /// Laufende Ladevorgaenge abbrechen (Clip wird FEHLGESCHLAGEN).
+    void abbrechen() { m_abbruch.store(true, std::memory_order_release); }
+
+    /// Abbruch + Decoder-Thread geordnet beenden. Aufruf aus
+    /// `Application::shutdown()` — bewusst NICHT per aboutToQuit-Lambda:
+    /// die Abbau-Position muss festliegen und darf nicht davon abhaengen,
+    /// wann der Dienst zufaellig zuerst gebraucht wurde
+    /// (Lebenszyklus-Vertrag 6.1, docs/core-services/Bootstrap_Integration.md).
+    void herunterfahren();
+
 private:
     explicit VideoFrameCache() = default;
 
-    /// Laeuft auf dem Main-Thread (Queued-Invoke aus hole())
+    /// Laeuft auf dem Decoder-Thread (Queued-Invoke aus hole(); S70)
     void lade(const QString& pfad, std::shared_ptr<Clip> clip);
 
     QMutex m_mutex;
     QHash<QString, std::shared_ptr<Clip>> m_clips;
+    std::atomic<bool> m_abbruch{false};  ///< s. abbrechen()
+    QThread* m_faden = nullptr;          ///< Decoder-Thread, s. herunterfahren()
 };
 
 } // namespace lumi::services

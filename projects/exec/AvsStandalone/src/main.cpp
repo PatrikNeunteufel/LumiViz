@@ -31,8 +31,10 @@
 
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
+#include "services/LiveVideoFeed.hpp"  // Kamera-Freigabe + Teardown-Messung (S71)
 
 #include <QCommandLineParser>
+#include <QElapsedTimer>
 #include <QJsonDocument>
 #include <QDir>
 #include <QFileInfo>
@@ -521,7 +523,27 @@ int main(int argc, char* argv[])
                        "uebernehmen (bildet einen Panel-Edit nach)"),
         QStringLiteral("DATEI"));
     parser.addOption(optEditNach);
+    // MESS-SCHALTER (S71, Teardown-Untersuchung): gibt die Kamera fuer diesen
+    // Lauf frei. Der Kamera-Vertrag (Offene_Punkte §7) verlangt eine
+    // ausdrueckliche Nutzeraktion — das explizite Setzen dieses Flags IST
+    // sie. Ohne das Flag bleibt der Standalone wie bisher geraetefrei, damit
+    // Sonden-/Korpuslaeufe nie eine Kamera oeffnen.
+    const QCommandLineOption optKamera(
+        QStringLiteral("kamera-freigeben"),
+        QStringLiteral("Kamera fuer diesen Lauf freigeben (nur Messlaeufe!)"));
+    parser.addOption(optKamera);
+    // Feed-Abbau am Prozessende messen (Lebenszyklus-Vertrag 6.1)
+    const QCommandLineOption optFeedZeit(
+        QStringLiteral("feed-teardown-messen"),
+        QStringLiteral("Dauer von LiveVideoFeed::herunterfahren() ausgeben"));
+    parser.addOption(optFeedZeit);
     parser.process(app);
+
+    if (parser.isSet(optKamera))
+    {
+        lumi::services::LiveVideoFeed::instance().erlaubeKamera();
+        std::printf("[Standalone] Kamera FREIGEGEBEN (Messlauf)\n");
+    }
 
     // --- Preset-Liste aufbauen -------------------------------------------------------------
     QString target = parser.positionalArguments().isEmpty()
@@ -579,10 +601,35 @@ int main(int argc, char* argv[])
     window.show();
 
     const int rc = app.exec();
+
+    // Feed-Abbau NACH der Event-Loop, wie Application::shutdown es tut
+    // (Lebenszyklus-Vertrag 6.1) — und messbar: genau hier hing die App.
+    {
+        QElapsedTimer uhr;
+        uhr.start();
+        lumi::services::LiveVideoFeed::instance().herunterfahren();
+        const qint64 ms = uhr.elapsed();
+        if (parser.isSet(optFeedZeit) || ms > 100)
+        {
+            std::printf("[Standalone] Feed-Teardown: %lld ms%s\n",
+                        static_cast<long long>(ms),
+                        ms > 1000 ? "   << BLOCKIERT" : "");
+            std::fflush(stdout);
+        }
+    }
+
     if (parser.isSet(optAuto) && !window.allLoaded())
     {
         std::fprintf(stderr, "[Standalone] MINDESTENS EIN PRESET NICHT GELADEN\n");
         return 1;
+    }
+    // Marker S71: kommt diese Zeile, liegt ein danach folgender Haenger im
+    // ~QGuiApplication bzw. in fremden statischen Destruktoren — NICHT mehr
+    // in unserem Code. Nur im Messlauf, damit Sondenlaeufe still bleiben.
+    if (parser.isSet(optFeedZeit))
+    {
+        std::printf("[Standalone] main() fertig — ab hier ~QGuiApplication\n");
+        std::fflush(stdout);
     }
     return rc;
 }

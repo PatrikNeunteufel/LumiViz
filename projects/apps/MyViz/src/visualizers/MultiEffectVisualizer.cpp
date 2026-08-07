@@ -7697,13 +7697,19 @@ void MultiEffectVisualizer::runVideoSource(const ChainNode& node,
             feed.starteDatei(node.nodeId, pfad, params.loop, vSpeed);
         }
         rt.vsLive = true;
-        std::uint64_t nummer = 0;
-        QImage frisch = feed.letztesBild(node.nodeId, &nummer);
-        if (!frisch.isNull() && nummer != rt.vsLiveNummer)
+        // Erst der billige Nummer-Check; die RGBX-Wandlung (letztesBild)
+        // laeuft nur bei einem NEUEN Frame und HIER auf dem Render-Thread —
+        // nie auf dem GUI-Thread (Lag-Befund S70).
+        const std::uint64_t nummer = feed.bildNummer(node.nodeId);
+        if (nummer != 0 && nummer != rt.vsLiveNummer)
         {
-            rt.vsLiveNummer = nummer;
-            bild = std::move(frisch);
-            neuesBild = true;
+            QImage frisch = feed.letztesBild(node.nodeId, nullptr);
+            if (!frisch.isNull())
+            {
+                rt.vsLiveNummer = nummer;
+                bild = std::move(frisch);
+                neuesBild = true;
+            }
         }
     }
     else
@@ -7755,8 +7761,21 @@ void MultiEffectVisualizer::runVideoSource(const ChainNode& node,
         }
         f->glBindTexture(GL_TEXTURE_2D, rt.vsTexture);
         f->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bild.width(), bild.height(),
-                        0, GL_RGBA, GL_UNSIGNED_BYTE, bild.constBits());
+        // Nur bei Groessenwechsel neu ALLOZIEREN; sonst glTexSubImage2D —
+        // eine Neu-Allokation je Kamera-Frame (30/s) churnt den Treiber
+        // (Lag-/Teardown-Befund S70).
+        if (rt.vsTexW != bild.width() || rt.vsTexH != bild.height())
+        {
+            f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bild.width(),
+                            bild.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                            bild.constBits());
+        }
+        else
+        {
+            f->glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, bild.width(),
+                               bild.height(), GL_RGBA, GL_UNSIGNED_BYTE,
+                               bild.constBits());
+        }
         rt.vsTexW = bild.width();
         rt.vsTexH = bild.height();
     }

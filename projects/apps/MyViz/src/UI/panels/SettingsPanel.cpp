@@ -929,7 +929,12 @@ void SettingsPanel::starteTestaufnahme()
 
     // DIE ausdrueckliche Nutzeraktion (Vertrag Offene_Punkte §7): ab jetzt
     // duerfen auch die videoSource-Knoten die Kamera dieses App-Laufs starten.
-    lumi::services::LiveVideoFeed::instance().erlaubeKamera();
+    auto& feeds = lumi::services::LiveVideoFeed::instance();
+    feeds.erlaubeKamera();
+    // Diese Aufnahme ist eine EIGENE Qt-Multimedia-Pipeline neben dem Dienst
+    // — sie muss sich melden, sonst greift der Notausgang in
+    // Application::shutdown nach einer Testaufnahme nicht (Befund S71).
+    feeds.merkeFremdenFeed();
 
     const int sek = m_pKamDauerSpin->value();
     QSettings().setValue(QStringLiteral("kamera/aufnahmeDauer"), sek);
@@ -968,23 +973,37 @@ void SettingsPanel::starteTestaufnahme()
     });
 }
 
-void SettingsPanel::beendeTestaufnahme()
+void SettingsPanel::beendeTestaufnahme(bool synchron)
 {
     if (m_pKamRecorder == nullptr) return;  // schon abgeraeumt (Fehler-Pfad)
     m_pKamRecorder->disconnect(this);  // gegen Reentry aus recorderStateChanged
+    if (m_pKamRecorder->recorderState() != QMediaRecorder::StoppedState)
+        m_pKamRecorder->stop();
     if (m_pKamera != nullptr) m_pKamera->stop();
-    m_pKamRecorder->deleteLater();
-    m_pKamRecorder = nullptr;
+    // Die Session zuerst von ihren Teilnehmern loesen, damit die Zerstoerung
+    // in keiner Reihenfolge auf ein halb abgebautes Gespann trifft.
     if (m_pKamSession != nullptr)
     {
-        m_pKamSession->deleteLater();
-        m_pKamSession = nullptr;
+        m_pKamSession->setRecorder(nullptr);
+        m_pKamSession->setCamera(nullptr);
     }
-    if (m_pKamera != nullptr)
+    if (synchron)
     {
-        m_pKamera->deleteLater();
-        m_pKamera = nullptr;
+        // Herunterfahren: keine Event-Loop mehr fuer deleteLater (s. Header)
+        delete m_pKamRecorder;
+        delete m_pKamSession;
+        delete m_pKamera;
     }
+    else
+    {
+        m_pKamRecorder->deleteLater();
+        if (m_pKamSession != nullptr) m_pKamSession->deleteLater();
+        if (m_pKamera != nullptr) m_pKamera->deleteLater();
+    }
+    m_pKamRecorder = nullptr;
+    m_pKamSession = nullptr;
+    m_pKamera = nullptr;
+    if (synchron) return;  // beim Beenden keine UI mehr anfassen
     m_pKamAufnahmeButton->setEnabled(true);
     if (!m_pKamStatusLabel->text().startsWith(QStringLiteral("⚠")))
         m_pKamStatusLabel->setText(tr("✓ Testaufnahme gespeichert."));
@@ -993,6 +1012,15 @@ void SettingsPanel::beendeTestaufnahme()
 
 void SettingsPanel::setupConnections()
 {
+    // Eine laufende Testaufnahme wird VOR dem Fenster-/GL-Abbau geordnet
+    // beendet: sonst sterben Kamera/Session/Recorder als QObject-Kinder
+    // mitten im ~MainWindow — die Konstellation, die den Teardown vergiftet
+    // (Befund S71). Synchron, weil es hier keine Event-Loop mehr gibt.
+    if (auto* app = QCoreApplication::instance())
+    {
+        connect(app, &QCoreApplication::aboutToQuit, this,
+                [this] { beendeTestaufnahme(true); });
+    }
     connect(m_pAudioDeviceCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &SettingsPanel::onAudioDeviceChanged);
     connect(m_pFrameModeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
