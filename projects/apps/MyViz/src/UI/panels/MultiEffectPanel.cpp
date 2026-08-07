@@ -13,6 +13,7 @@
 
 #include "UI/panels/EelScriptEditing.hpp"                 // shared EEL editor toolkit
 #include "UI/panels/FieldDocs.hpp"                       // Tooltip je Feld (§10)
+#include "UI/panels/ParameterBaum.hpp"                   // generischer Parameter-Baum (S72)
 #include "UI/widgets/GradientPresetDelegate.hpp"          // gradient combo previews
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
@@ -25,6 +26,7 @@
 #include "visualizers/multieffect/MeshWarpWrapper.hpp"      // Starter-Warp + Klemmen (G1)
 #include "visualizers/multieffect/GpuParticlesWrapper.hpp"  // Starter-Kraftfeld + Klemmen (G2)
 #include "visualizers/multieffect/PixelFilterWrapper.hpp"   // Starter-Filter (Stilfilter, S70)
+#include "visualizers/multieffect/IsfImport.hpp"            // ISF-Filter-Import (S72)
 #include "scripting/ScriptFormatter.hpp"                // Beautify-Kerne (S69)
 #include <EelTranspiler.hpp>                            // Apply-Syntaxprobe EEL (S69)
 #include <HlslTranspiler.hpp>                           // Apply-Syntaxprobe HLSL (S69)
@@ -1569,6 +1571,23 @@ ChainNode* MultiEffectPanel::nodeAtPath(const QList<int>& path)
     return node;
 }
 
+QString MultiEffectPanel::herkunftKopfFuer(const QList<int>& path)
+{
+    Herkunft h;
+    {
+        QMutexLocker lock(m_mutex);
+        const ChainNode* n = nodeAtPath(path);
+        if (n == nullptr) return {};
+        const Herkunft* q = herkunftVon(n->params);
+        if (q == nullptr) return {};
+        h = *q;  // Kopie: der Kopf wird ausserhalb des Locks gebaut
+    }
+    return lumi::scriptedit::herkunftKopf(QString::fromStdString(h.name),
+                                          QString::fromStdString(h.author),
+                                          QString::fromStdString(h.url),
+                                          QString::fromStdString(h.license));
+}
+
 QList<int> MultiEffectPanel::currentPath() const
 {
     auto* item = m_tree->currentItem();
@@ -3103,6 +3122,30 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             if (others.contains(g)) initConflicts.insert(g);
     }
 
+    // Herkunft eines Fremd-Imports (S72) — EINE Zeile fuer JEDEN importfaehigen
+    // Knoten, nicht mehr nur fuer Shadertoy. Reine Anzeige: die Felder gehoeren
+    // dem Import, von Hand aendert man sie nicht. Ohne sichtbare Lizenz wandern
+    // fremde Shader unbemerkt in weitergegebene `.lvfx` (Vorgabe Patrik S71).
+    auto addHerkunft = [&](const Herkunft& h) {
+        if (h.leer()) return;
+        const QString name = h.name.empty() ? tr("(ohne Titel)")
+                                            : QString::fromStdString(h.name);
+        const QString autor = h.author.empty() ? tr("unbekannt")
+                                               : QString::fromStdString(h.author);
+        const QString lizenz = h.license.empty()
+                                   ? tr("unbekannt")
+                                   : QString::fromStdString(h.license);
+        QString text = tr("%1 von %2 — Lizenz: %3").arg(name, autor, lizenz);
+        if (!h.url.empty())
+            text += QStringLiteral("\n") + QString::fromStdString(h.url);
+        auto* meta = new QLabel(text, m_propContainer);
+        meta->setWordWrap(true);
+        meta->setTextInteractionFlags(Qt::TextBrowserInteraction);
+        meta->setToolTip(tr("Herkunft des importierten Inhalts. Beim Weitergeben "
+                            "des Presets gilt diese Lizenz."));
+        form->addRow(meta);
+    };
+
     auto addScript = [&](const char* field, const QString& label,
                          const std::string& value,
                          std::function<void(ChainNode&, std::string)> set) {
@@ -3253,6 +3296,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     lumi::scriptedit::ScriptEditorHooks hooks;
                     hooks.exportFileName = exportName;
                     hooks.vertragKey = vertragKey;
+                    // Herkunft JETZT holen, nicht beim Aufbau der Zeile: ein
+                    // zwischenzeitlicher Import soll im Export stehen (S72).
+                    hooks.herkunftKopf = herkunftKopfFuer(path);
                     hooks.apply = [edit](const QString& t) -> QString {
                         edit->setPlainText(t);  // textChanged -> mutate
                         return {};
@@ -4551,21 +4597,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     else if (auto* p = std::get_if<ShadertoyParams>(&params))
     {
         // Shadertoy-Node (Strang S, S65): Code in mainImage-Konvention, ein
-        // Fragment-Pass. Metadaten (S3-Import) sind reine Anzeige.
-        if (!p->name.empty() || !p->author.empty() || !p->license.empty())
-        {
-            auto* meta = new QLabel(
-                tr("%1 von %2 — Lizenz: %3")
-                    .arg(QString::fromStdString(p->name),
-                         QString::fromStdString(
-                             p->author.empty() ? std::string("?") : p->author),
-                         QString::fromStdString(p->license.empty()
-                                                    ? std::string("unbekannt")
-                                                    : p->license)),
-                m_propContainer);
-            meta->setWordWrap(true);
-            form->addRow(meta);
-        }
+        // Fragment-Pass. Herkunft (S3-Import) ist reine Anzeige.
+        addHerkunft(p->herkunft);
 
         // Kompilierfehler des Render-Hosts: dank `#line 1` im Wrapper tragen
         // die Treiber-Logs die Zeilennummern des NUTZER-Codes. Aktualisiert
@@ -4596,8 +4629,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             auto* urlEdit = new QLineEdit(row);
             urlEdit->setPlaceholderText(
                 QStringLiteral("https://www.shadertoy.com/view/... oder ID"));
-            if (!p->url.empty())
-                urlEdit->setText(QString::fromStdString(p->url));
+            if (!p->herkunft.url.empty())
+                urlEdit->setText(QString::fromStdString(p->herkunft.url));
             auto* importBtn = new QPushButton(tr("Importieren"), row);
             importBtn->setToolTip(
                 tr("Lädt den Shader über die offizielle API (nur Sichtbarkeit "
@@ -4612,7 +4645,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             hl->addWidget(openBtn);
             form->addRow(tr("Shadertoy-URL / ID"), row);
 
-            const std::string nodeUrl = p->url;
+            const std::string nodeUrl = p->herkunft.url;
             connect(openBtn, &QToolButton::clicked, this, [urlEdit, nodeUrl]() {
                 // Feld-Inhalt gewinnt (frisch eingefügte URL), sonst die
                 // Node-Metadaten, sonst die Startseite
@@ -4703,12 +4736,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                         sp->blend = blend;
                                         if (n.displayName.empty() ||
                                             n.displayName == "Shadertoy")
-                                            n.displayName = sp->name;
+                                            n.displayName = sp->herkunft.name;
                                     });
                                     QString note =
                                         tr("Shader '%1' importiert.")
                                             .arg(QString::fromStdString(
-                                                result.params.name));
+                                                result.params.herkunft.name));
                                     if (!result.report.isEmpty())
                                         note += QStringLiteral("\n\n") +
                                                 result.report.join(QStringLiteral("\n"));
@@ -4724,8 +4757,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
 
         // GLSL-Code-Editor mit ⓘ-Referenz + ⤢-Groß-Editor (AVS-Komfort).
         // Export-Namensbasis (S69): Shader-Metadaten-Name vor Node-Name.
-        const QString stExportBase = !p->name.empty()
-                                         ? QString::fromStdString(p->name)
+        const QString stExportBase = !p->herkunft.name.empty()
+                                         ? QString::fromStdString(p->herkunft.name)
                                      : !nodeName.empty()
                                          ? QString::fromStdString(nodeName)
                                          : QStringLiteral("shadertoy");
@@ -4744,12 +4777,22 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             [](ChainNode& n, std::string v) {
                 std::get<ShadertoyParams>(n.params).code = std::move(v);
             });
-        // Kanal-Bindungen (S4): je iChannel Nichts / Buffer A–D / Audio.
-        // Kodierung s. kShadertoyInput*; Combo-Index = Wert + 1.
-        const QStringList kInputNames = {tr("Nichts"), tr("Buffer A"), tr("Buffer B"),
-                                         tr("Buffer C"), tr("Buffer D"), tr("Audio")};
-        const auto inputToIndex = [](int v) { return std::clamp(v + 1, 0, 5); };
-        const auto indexToInput = [](int idx) { return std::clamp(idx, 0, 5) - 1; };
+        // Kanal-Bindungen: je iChannel Nichts / Buffer A–D / Audio (S4) sowie
+        // Ketten-Eingang und AVS-Global-Buffer 1–8 (S72). Kodierung s.
+        // kShadertoyInput* (SSOT); Combo-Index = Wert + 1 — die Liste MUSS
+        // darum lückenlos in der Reihenfolge der Werte stehen.
+        QStringList kInputNames = {tr("Nichts"),   tr("Buffer A"), tr("Buffer B"),
+                                   tr("Buffer C"), tr("Buffer D"), tr("Audio"),
+                                   tr("Ketten-Eingang")};
+        for (int n = 1; n <= lumi::multieffect::kShadertoyInputAvsCount; ++n)
+            kInputNames << tr("AVS-Buffer %1").arg(n);
+        const int kInputMax = lumi::multieffect::kShadertoyInputMax + 1;
+        const auto inputToIndex = [kInputMax](int v) {
+            return std::clamp(v + 1, 0, kInputMax);
+        };
+        const auto indexToInput = [kInputMax](int idx) {
+            return std::clamp(idx, 0, kInputMax) - 1;
+        };
         const auto addInputCombos =
             [&](const std::array<int, 4>& input,
                 std::function<std::array<int, 4>&(ChainNode&)> access,
@@ -4763,7 +4806,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     combo->setToolTip(
                         tr("Audio = 512x2-Textur (Zeile 0 Spektrum, Zeile 1 "
                            "Waveform). Buffer-Referenz auf sich selbst oder "
-                           "spaeter liest das Vorframe (Feedback)."));
+                           "spaeter liest das Vorframe (Feedback).\n"
+                           "Ketten-Eingang = das Bild, das dieser Knoten "
+                           "vorfindet — damit laufen Shadertoy-Bildfilter "
+                           "direkt.\nAVS-Buffer 1–8 = die Slots von "
+                           "„Buffer Save\", Stand beim Lauf dieses Knotens "
+                           "(nie beschrieben = schwarz)."));
                     connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
                             this, [this, path, access, c, indexToInput](int idx) {
                                 mutate(path, [&](ChainNode& n) {

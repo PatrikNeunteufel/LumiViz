@@ -268,9 +268,9 @@ void ShadertoyBrowserPanel::importShader(const QString& id)
         root.params = lumi::multieffect::ListParams{};
         lumi::multieffect::ChainNode node;
         node.params = result.params;
-        node.displayName = result.params.name.empty()
+        node.displayName = result.params.herkunft.name.empty()
                                ? id.toStdString()
-                               : result.params.name;
+                               : result.params.herkunft.name;
         root.children.push_back(std::move(node));
 
         const QString dir =
@@ -292,10 +292,11 @@ void ShadertoyBrowserPanel::importShader(const QString& id)
         {
             bus->publish(LoadEffectChainEvent{path.toStdString()});
         }
-        QString note = tr("%1 von %2 geladen (%3).")
-                           .arg(QString::fromStdString(result.params.name),
-                                QString::fromStdString(result.params.author),
-                                QString::fromStdString(result.params.license));
+        QString note =
+            tr("%1 von %2 geladen (%3).")
+                .arg(QString::fromStdString(result.params.herkunft.name),
+                     QString::fromStdString(result.params.herkunft.author),
+                     QString::fromStdString(result.params.herkunft.license));
         if (!result.report.isEmpty())
             note += QLatin1Char('\n') + result.report.join(QLatin1Char('\n'));
         setStatus(note);

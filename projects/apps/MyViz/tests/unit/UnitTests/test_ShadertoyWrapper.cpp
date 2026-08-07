@@ -23,6 +23,7 @@
 
 using lumi::multieffect::ChainNode;
 using lumi::multieffect::EffectParams;
+using lumi::multieffect::IsfFilterParams;
 using lumi::multieffect::ShadertoyParams;
 
 namespace {
@@ -95,10 +96,10 @@ TEST_CASE("ChainSerializer: Shadertoy-Node roundtrippt (inkl. Metadaten)")
     p.code = "void mainImage(out vec4 c, in vec2 f) { c = vec4(f.x); }";
     p.imageInput = {-1, -1, lumi::multieffect::kShadertoyInputAudio, -1};
     p.blend = 1;
-    p.name = "Testbild";
-    p.author = "LumiViz";
-    p.url = "https://example.invalid/xyz";
-    p.license = "CC BY-NC-SA 3.0";
+    p.herkunft.name = "Testbild";
+    p.herkunft.author = "LumiViz";
+    p.herkunft.url = "https://example.invalid/xyz";
+    p.herkunft.license = "CC BY-NC-SA 3.0";
 
     ChainNode node;
     node.params = p;
@@ -113,12 +114,18 @@ TEST_CASE("ChainSerializer: Shadertoy-Node roundtrippt (inkl. Metadaten)")
     CHECK(lumi::multieffect::shadertoyAudioChannel(q->imageInput) == 2);
     CHECK(q->imageInput[2] == lumi::multieffect::kShadertoyInputAudio);
     CHECK(q->blend == 1);
-    CHECK(q->name == p.name);
-    CHECK(q->author == p.author);
-    CHECK(q->url == p.url);
-    CHECK(q->license == p.license);
+    CHECK(q->herkunft.name == p.herkunft.name);
+    CHECK(q->herkunft.author == p.herkunft.author);
+    CHECK(q->herkunft.url == p.herkunft.url);
+    CHECK(q->herkunft.license == p.herkunft.license);
+    // Die Herkunft steht in einem EIGENEN Unterobjekt (S72) …
+    REQUIRE(o.value("herkunft").isObject());
+    CHECK(o.value("herkunft").toObject().value("name").toString() == "Testbild");
+    CHECK(o.value("herkunft").toObject().value("author").toString() == "LumiViz");
+    CHECK(o.value("herkunft").toObject().value("license").toString() ==
+          "CC BY-NC-SA 3.0");
 
-    // fehlende Felder ⇒ Defaults (audioChannel 0, blend 0, Metadaten leer)
+    // fehlende Felder ⇒ Defaults (audioChannel 0, blend 0, Herkunft leer)
     QJsonObject bare;
     bare["type"] = "shadertoy";
     bare["code"] = "void mainImage(out vec4 c, in vec2 f) { c = vec4(0.0); }";
@@ -127,7 +134,114 @@ TEST_CASE("ChainSerializer: Shadertoy-Node roundtrippt (inkl. Metadaten)")
     REQUIRE(qd != nullptr);
     CHECK(lumi::multieffect::shadertoyAudioChannel(qd->imageInput) == 0);
     CHECK(qd->blend == 0);
-    CHECK(qd->name.empty());
+    CHECK(qd->herkunft.leer());
+    // Leere Herkunft schreibt KEINEN Schluessel (schlankes JSON — und der
+    // Grund, warum sie nicht im Feld-Inventar auftaucht).
+    CHECK_FALSE(lumi::multieffect::nodeToJson(d).contains("herkunft"));
+}
+
+TEST_CASE("ChainSerializer: die neuen iChannel-Quellen roundtrippen (S72)")
+{
+    using namespace lumi::multieffect;
+    // Die Kodierung ist SSOT im Header — die Reihenfolge haengt daran, weil
+    // der Panel-Combo-Index schlicht `Wert + 1` ist.
+    CHECK(kShadertoyInputAudio == 4);
+    CHECK(kShadertoyInputChain == 5);
+    CHECK(kShadertoyInputAvsBase == 6);
+    CHECK(kShadertoyInputMax == 13);
+
+    ShadertoyParams p;
+    p.code = "void mainImage(out vec4 c, in vec2 f) { c = vec4(0.0); }";
+    p.imageInput = {kShadertoyInputChain,      // Ketten-Eingang
+                    kShadertoyInputAvsBase,     // AVS-Buffer 1
+                    kShadertoyInputMax,         // AVS-Buffer 8
+                    kShadertoyInputAudio};
+
+    ChainNode node;
+    node.params = p;
+    QStringList report;
+    const ChainNode back =
+        lumi::multieffect::nodeFromJson(lumi::multieffect::nodeToJson(node), &report);
+    const auto* q = std::get_if<ShadertoyParams>(&back.params);
+    REQUIRE(q != nullptr);
+    CHECK(q->imageInput[0] == kShadertoyInputChain);
+    CHECK(q->imageInput[1] == kShadertoyInputAvsBase);
+    CHECK(q->imageInput[2] == kShadertoyInputMax);
+    CHECK(lumi::multieffect::shadertoyAudioChannel(q->imageInput) == 3);
+
+    // Ein Wert JENSEITS der Kodierung wird geklemmt — sonst bindet der
+    // Renderer einen Slot, den es nicht gibt.
+    QJsonObject o;
+    o["type"] = "shadertoy";
+    QJsonArray zuGross;
+    zuGross.append(99);
+    zuGross.append(-7);
+    zuGross.append(kShadertoyInputMax);
+    zuGross.append(0);
+    o["imageInput"] = zuGross;
+    const ChainNode k = lumi::multieffect::nodeFromJson(o, &report);
+    const auto* qk = std::get_if<ShadertoyParams>(&k.params);
+    REQUIRE(qk != nullptr);
+    CHECK(qk->imageInput[0] == kShadertoyInputMax);
+    CHECK(qk->imageInput[1] == kShadertoyInputNone);
+}
+
+TEST_CASE("ChainSerializer: Herkunft kollidiert nicht mehr mit dem Knotennamen")
+{
+    // BEFUND S72: bis S71 schrieb der Shadertoy-Visitor `name` FLACH an den
+    // Knoten — dorthin, wo `nodeToJson` schon `o["name"] = displayName` gelegt
+    // hatte. Der Visitor laeuft danach, also gewann der Shader-Name: ein
+    // umbenannter Knoten hiess nach dem Speichern wieder wie sein Shader.
+    ShadertoyParams p;
+    p.code = "void mainImage(out vec4 c, in vec2 f) { c = vec4(1.0); }";
+    p.herkunft.name = "Seascape";
+    p.herkunft.author = "TDM";
+
+    ChainNode node;
+    node.params = p;
+    node.displayName = "Mein Wasser";  // <- der Nutzer hat umbenannt
+
+    QStringList report;
+    const ChainNode back =
+        lumi::multieffect::nodeFromJson(lumi::multieffect::nodeToJson(node), &report);
+    CHECK(back.displayName == "Mein Wasser");
+    const auto* q = std::get_if<ShadertoyParams>(&back.params);
+    REQUIRE(q != nullptr);
+    CHECK(q->herkunft.name == "Seascape");
+}
+
+TEST_CASE("ChainSerializer: Alt-Format der Shadertoy-Metadaten liest weiter")
+{
+    // Bestehende `.lvfx` tragen die vier Felder flach am Knoten. Sie muessen
+    // ohne Zutun in der `Herkunft` landen (Abwaertskompatibilitaet S72).
+    QJsonObject alt;
+    alt["type"] = "shadertoy";
+    alt["code"] = "void mainImage(out vec4 c, in vec2 f) { c = vec4(0.5); }";
+    alt["name"] = "Altes Testbild";
+    alt["author"] = "autorin";
+    alt["url"] = "https://www.shadertoy.com/view/Xds3zN";
+    alt["license"] = "CC BY-NC-SA 3.0";
+
+    QStringList report;
+    const ChainNode n = lumi::multieffect::nodeFromJson(alt, &report);
+    const auto* q = std::get_if<ShadertoyParams>(&n.params);
+    REQUIRE(q != nullptr);
+    CHECK(q->herkunft.name == "Altes Testbild");
+    CHECK(q->herkunft.author == "autorin");
+    CHECK(q->herkunft.url == "https://www.shadertoy.com/view/Xds3zN");
+    CHECK(q->herkunft.license == "CC BY-NC-SA 3.0");
+
+    // Gegenprobe: ein Knoten OHNE Herkunftsfelder darf seinen Anzeigenamen
+    // nicht als Herkunft missverstehen — sonst bekaeme jeder alte Knoten eine
+    // Pseudo-Herkunft aus dem eigenen Namen.
+    QJsonObject schlicht;
+    schlicht["type"] = "isfFilter";
+    schlicht["name"] = "Mein Filter";
+    const ChainNode s = lumi::multieffect::nodeFromJson(schlicht, &report);
+    const auto* sf = std::get_if<IsfFilterParams>(&s.params);
+    REQUIRE(sf != nullptr);
+    CHECK(s.displayName == "Mein Filter");
+    CHECK(sf->herkunft.leer());
 
     CHECK(std::string(lumi::multieffect::effectTypeName(EffectParams{ShadertoyParams{}})) ==
           "Shadertoy");
@@ -172,10 +286,10 @@ TEST_CASE("ShadertoyImport: parseApiReply uebernimmt image+common, mappt Audio")
     })";
     const auto r = lumi::shadertoy::parseApiReply(reply, "Xds3zN");
     REQUIRE_MESSAGE(r.ok, r.error.toStdString());
-    CHECK(r.params.name == "Testshader");
-    CHECK(r.params.author == "autorin");
-    CHECK(r.params.url == "https://www.shadertoy.com/view/Xds3zN");
-    CHECK(r.params.license.find("CC BY-NC-SA") != std::string::npos);
+    CHECK(r.params.herkunft.name == "Testshader");
+    CHECK(r.params.herkunft.author == "autorin");
+    CHECK(r.params.herkunft.url == "https://www.shadertoy.com/view/Xds3zN");
+    CHECK(r.params.herkunft.license.find("CC BY-NC-SA") != std::string::npos);
     // common wird vorangestellt, image folgt
     CHECK(r.params.code.find("float helper()") != std::string::npos);
     CHECK(r.params.code.find("void mainImage") != std::string::npos);

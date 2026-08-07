@@ -243,11 +243,13 @@ struct ImportResult
                                           .toStdString();
     };
     p.code = withCommon(imageCode);
-    p.name = info.value(QStringLiteral("name")).toString().toStdString();
-    p.author = info.value(QStringLiteral("username")).toString().toStdString();
-    p.url = (QStringLiteral("https://www.shadertoy.com/view/") + shaderId).toStdString();
+    p.herkunft.name = info.value(QStringLiteral("name")).toString().toStdString();
+    p.herkunft.author =
+        info.value(QStringLiteral("username")).toString().toStdString();
+    p.herkunft.url =
+        (QStringLiteral("https://www.shadertoy.com/view/") + shaderId).toStdString();
     // Die API liefert keine Lizenz — Shadertoy-Default gilt (Plan §S3)
-    p.license = "CC BY-NC-SA 3.0 (Shadertoy-Default)";
+    p.herkunft.license = "CC BY-NC-SA 3.0 (Shadertoy-Default)";
 
     // Kanal-Bindungen: music → Audio, buffer → Buffer-Index (über die
     // Output-Id), alles andere = Platzhalter-Meldung

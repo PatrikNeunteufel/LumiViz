@@ -3993,6 +3993,9 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const GpuParticlesParams& params) const { self.runGpuParticles(node, params); }
         void operator()(const VideoSourceParams& params) const { self.runVideoSource(node, params); }
         void operator()(const PixelFilterParams& params) const { self.runPixelFilter(node, params); }
+        // ISF-Filter (S72): der Renderer folgt in I2 — bis dahin reicht der
+        // Knoten das Bild unveraendert durch, statt gar nicht zu bauen.
+        void operator()(const IsfFilterParams&) const { /* Renderer folgt (I2) */ }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
     std::visit(Visitor{*this, node}, node.params);
@@ -12686,6 +12689,35 @@ void MultiEffectVisualizer::runShadertoy(const ChainNode& node,
             {
                 tex = rt.stBufFbo[bind][rt.stBufCur[bind]]->texture();
                 chRes = res;
+            }
+            else if (bind == lumi::multieffect::kShadertoyInputChain)
+            {
+                // KETTEN-EINGANG (S72): das Bild, das der Knoten vorfindet —
+                // damit laufen Shadertoy-BILDFILTER mit iChannel0-Eingang
+                // direkt. Dieselbe Textur haengt beim Image-Pass ohnehin als
+                // `_lumiPrev` an TEXTURE4; hier bekommt sie zusaetzlich einen
+                // regulaeren Kanal, damit auch die BUFFER-Paesse sie sehen.
+                // Lesen ist gefahrlos: pair.current() ist waehrend der
+                // Buffer-Paesse nicht das Ziel-FBO, und der Image-Pass
+                // zeichnet nach pair.partner().
+                tex = active().current()->texture();
+                chRes = res;
+            }
+            else if (bind >= lumi::multieffect::kShadertoyInputAvsBase &&
+                     bind <= lumi::multieffect::kShadertoyInputMax)
+            {
+                // AVS-GLOBAL-BUFFER 1..8 (S72, Frage Patrik S70): die FBOs des
+                // OffscreenBufferPool — dieselben, die „Buffer Save"
+                // beschreibt. `allocate=false`: ein nie beschriebener Buffer
+                // bleibt schwarz, statt hier Speicher anzulegen.
+                // Host-Gruppen-Scoping kommt ueber activePool() gratis mit.
+                const int slot = bind - lumi::multieffect::kShadertoyInputAvsBase;
+                if (QOpenGLFramebufferObject* fbo = activePool().get(
+                        slot, m_surfaceWidth, m_surfaceHeight, false))
+                {
+                    tex = fbo->texture();
+                    chRes = res;
+                }
             }
             p.setUniformValue(("iChannelTime[" + std::to_string(c) + "]").c_str(),
                               0.0f);  // Video-Inputs: Stufe 2

@@ -115,6 +115,120 @@ enum class BlendMode : int
 }
 
 // =============================================================================
+// Herkunft eines Fremd-Imports (Lizenz-Pflicht, S72)
+// =============================================================================
+
+/**
+ * Woher ein fremder Inhalt stammt und unter welcher Lizenz er steht.
+ *
+ * **Regel (Vorgabe Patrik S71):** JEDER Fremd-Import schreibt Herkunft, Autor,
+ * Quelle und Lizenz in den Knoten — im Loader, nicht nur in der Doku, sonst
+ * wandern fremde Shader unbemerkt in weitergegebene `.lvfx`. Shadertoy
+ * verpflichtet API-Nutzer ausdrücklich auf die Lizenz JEDES EINZELNEN Shaders
+ * (Default meist CC BY-NC-SA), ISF trägt ein `CREDIT`-Feld im JSON-Kopf.
+ *
+ * Bis S71 hingen die vier Felder direkt an `ShadertoyParams` — für ISF und
+ * `pixelFilter` gab es sie deshalb gar nicht. Hier stehen sie EINMAL, und
+ * jeder importfähige Knoten trägt sie als `herkunft`.
+ *
+ * **JSON:** ein eigenes Unterobjekt `herkunft` am Knoten. Bis S71 lagen die
+ * vier Schlüssel flach — und `name` kollidierte dort mit dem KNOTENNAMEN
+ * (`nodeToJson` schreibt `o["name"] = displayName`, der Params-Visitor lief
+ * danach und überschrieb ihn). Ein umbenannter Shadertoy-Knoten verlor so
+ * seinen Namen beim Speichern; seit S72 ist das behoben. Alte Dateien liest
+ * der Serializer weiter (Fallback auf die flachen Schlüssel).
+ * Eine leere Herkunft wird gar nicht geschrieben (schlankes JSON) — deshalb
+ * taucht sie auch im Feld-Inventar nicht auf, das einen Vorgabe-Knoten
+ * serialisiert.
+ */
+struct Herkunft
+{
+    std::string name;     ///< Titel des Originals (Shadertoy-Name, ISF-Dateiname)
+    std::string author;   ///< Urheber laut Quelle (Shadertoy-Username, ISF-CREDIT)
+    std::string url;      ///< Fundstelle (Shadertoy-URL; bei Dateien der Pfad)
+    std::string license;  ///< Lizenztext, so wie die Quelle ihn nennt
+
+    /// Nichts bekannt — dann schreibt der Serializer keinen einzigen Schlüssel.
+    [[nodiscard]] bool leer() const
+    {
+        return name.empty() && author.empty() && url.empty() && license.empty();
+    }
+};
+
+// =============================================================================
+// Generischer Parameter-Baum (S72)
+// =============================================================================
+
+/// Was für ein Wert in einem `ParamWert` steckt — bestimmt den Editor im
+/// Parameter-Baum (Plan §6: typsichere Editoren je Zeile).
+enum class ParamTyp : int
+{
+    Bool = 0,      ///< Kästchen
+    Ganzzahl = 1,  ///< Zähler ohne Nachkommastellen
+    Zahl = 2,      ///< Zähler mit Nachkommastellen
+    Farbe = 3,     ///< Farbwähler (RGBA in `vektor`)
+    Punkt2D = 4,   ///< zwei Felder (XY in `vektor`)
+    Text = 5,      ///< Zeile
+    Auswahl = 6,   ///< Klartext-Dropdown (`auswahlLabels`/`auswahlWerte`)
+};
+
+/**
+ * Ein Blatt des Parameter-Baums: ein bedienbarer Wert samt allem, was ein
+ * Editor über ihn wissen muss.
+ *
+ * **Bewusst generisch, kein ISF-Sonderweg** (Vorgabe Patrik S71): dieselbe
+ * Ablage trägt später die Parameter JEDES Moduls — sie ist die Infrastruktur,
+ * die auch der Backlog-Punkt „dynamische Modulparameter" braucht.
+ */
+struct ParamWert
+{
+    std::string key;    ///< Bezeichner, unter dem der Shader/das Skript ihn liest
+    std::string label;  ///< Klartext für die Anzeige (leer = `key`)
+    ParamTyp typ = ParamTyp::Zahl;
+
+    /// Zahl/Ganzzahl/Auswahl — bei Auswahl steht hier der WERT, nicht der Index.
+    double zahl = 0.0;
+    bool ja = false;        ///< Bool
+    std::string text;       ///< Text
+    /// Farbe (r,g,b,a) bzw. Punkt2D (x,y) — die restlichen Stellen sind 0.
+    std::array<double, 4> vektor{{0.0, 0.0, 0.0, 0.0}};
+
+    double min = 0.0;        ///< untere Grenze, nur gültig bei `hatBereich`
+    double max = 1.0;        ///< obere Grenze, nur gültig bei `hatBereich`
+    bool hatBereich = false;  ///< false = der Editor gibt sich einen weiten Bereich
+
+    std::vector<std::string> auswahlLabels;  ///< Klartext je Eintrag (Auswahl)
+    std::vector<int> auswahlWerte;           ///< der Wert je Eintrag (Auswahl)
+};
+
+/**
+ * Ein Knoten des Parameter-Baums: eigene Werte plus Untergruppen.
+ *
+ * **Verschachtelung von Anfang an** (Entwurf Patrik): ISF-`INPUTS` sind zwar
+ * flach, `PASSES`/`IMPORTED` sind es nicht — und der Ausbau auf alle Module
+ * braucht sie ohnehin. Nachträglich einzuziehen wäre teurer als sie jetzt
+ * mitzuführen.
+ */
+struct ParamGruppe
+{
+    std::string key;    ///< Bezeichner der Gruppe (leer = Wurzel)
+    std::string label;  ///< Klartext der aufklappbaren Zeile
+    std::vector<ParamWert> werte;
+    std::vector<ParamGruppe> gruppen;
+
+    /// Kein einziger Wert, auch nicht in einer Untergruppe.
+    [[nodiscard]] bool leer() const
+    {
+        if (!werte.empty()) return false;
+        for (const ParamGruppe& g : gruppen)
+        {
+            if (!g.leer()) return false;
+        }
+        return true;
+    }
+};
+
+// =============================================================================
 // Per-effect parameter structs (variant alternative == effect type)
 // =============================================================================
 
@@ -2192,10 +2306,24 @@ struct ReactionDiffusionParams
  * Metadaten füllt der URL-Import (S3) — Inhalte bleiben lokal
  * (Shadertoy-Default-Lizenz CC BY-NC-SA, Plan §S3).
  */
-/// Kanal-Bindungs-Kodierung des Shadertoy-Nodes (S4): was hängt an iChannelN?
-/// -1 = nichts (schwarz) · 0..3 = Ausgang von Buffer A..D · 4 = Audio-Textur.
+/// Kanal-Bindungs-Kodierung des Shadertoy-Nodes — SSOT. Was hängt an iChannelN?
+/// -1 = nichts (schwarz) · 0..3 = Ausgang von Buffer A..D · 4 = Audio-Textur ·
+/// 5 = Ketten-Eingang · 6..13 = AVS-Global-Buffer 1..8 (S72).
 inline constexpr int kShadertoyInputNone = -1;
 inline constexpr int kShadertoyInputAudio = 4;
+/// Das Bild, das der Knoten von der Kette bekommt — damit werden
+/// Shadertoy-BILDFILTER mit `iChannel0`-Eingang direkt lauffähig (S72).
+inline constexpr int kShadertoyInputChain = 5;
+/// Erster AVS-Global-Buffer; `kShadertoyInputAvsBase + n` ist Buffer `n+1`
+/// (S72). Es sind die FBOs des `OffscreenBufferPool` — dieselben, die
+/// „Buffer Save" beschreibt. Semantik: der Stand BEIM LAUF des Knotens, die
+/// Reihenfolge in der Kette zählt also. Host-Gruppen-Scoping kommt über
+/// `activePool()` gratis mit.
+inline constexpr int kShadertoyInputAvsBase = 6;
+inline constexpr int kShadertoyInputAvsCount = 8;
+/// Größter gültiger Wert — Leser und Panel klemmen dagegen.
+inline constexpr int kShadertoyInputMax =
+    kShadertoyInputAvsBase + kShadertoyInputAvsCount - 1;
 
 /**
  * Ein Buffer-Pass des Shadertoy-Nodes (S4 — Buffer A..D): eigener
@@ -2222,10 +2350,9 @@ struct ShadertoyParams
     int blend = 0;         ///< aufs Bild: 0 ersetzen, 1 additiv, 2 50/50
     /// Buffer A..D (S4, max 4; Index = Buchstabe). Leer = Ein-Pass-Shader.
     std::vector<ShadertoyPass> buffers;
-    std::string name;      ///< Metadaten (S3-Import; Panel zeigt sie nur an)
-    std::string author;
-    std::string url;
-    std::string license;
+    /// Woher der Shader stammt (S3-Import; Panel zeigt es an). Seit S72 die
+    /// gemeinsame `Herkunft` statt vier eigener Felder — s. dort.
+    Herkunft herkunft;
 };
 
 /// iChannel-Index der Audio-Textur in einer Bindungs-Liste (-1 = keiner)
@@ -2344,6 +2471,74 @@ struct PixelFilterParams
     std::string frameCode;
     /// Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
     std::string beatCode;
+};
+
+/// Bindungs-Kodierung einer Bildquelle des ISF-Knotens — SSOT.
+/// AVS-Konvention (Entscheid Patrik S72): **nichts gewählt = normale
+/// Pipeline**, also das Ketten-Bild. Sonst ein AVS-Global-Buffer.
+namespace isffilter {
+constexpr int kQuelleKette = -1;    ///< Vorgabe: das Bild, das der Knoten vorfindet
+constexpr int kQuelleSchwarz = -2;  ///< bewusst nichts (z. B. Generator-Eingang)
+constexpr int kQuelleBufferBasis = 0;  ///< 0..7 = AVS-Global-Buffer 1..8
+constexpr int kQuelleBufferAnzahl = 8;
+constexpr int kQuelleMax = kQuelleBufferBasis + kQuelleBufferAnzahl - 1;
+constexpr int kGeometrieMax = 2;  ///< 0 Quad · 1 Einzeldreieck · 2 Gitter
+constexpr int kGridMin = 2;
+constexpr int kGridMax = 256;
+}  // namespace isffilter
+
+/// Ein Bild-Eingang des ISF-Shaders und woher er gespeist wird.
+struct IsfBildQuelle
+{
+    std::string name;  ///< Bezeichner im Shader (`inputImage`, `startImage`, …)
+    int bindung = isffilter::kQuelleKette;  ///< s. `isffilter::kQuelle*`
+};
+
+/**
+ * ISF-Filter-Knoten (Entscheid Patrik S72): ein importierter oder selbst
+ * geschriebener Shader im **Interactive Shader Format** — mit BEIDEN
+ * Shader-Stufen in getrennten Feldern.
+ *
+ * Warum ein eigener Knoten statt eines Ausbaus des `pixelFilter`: ISF kennt
+ * neben dem Fragment- auch einen **Vertex-Shader**, und damit Sorten, die ein
+ * reiner Pixelfilter grundsätzlich nicht kann. Der `pixelFilter` bleibt, was
+ * er ist — ein Pass, ein Feld.
+ *
+ * **Es gibt keine Kategorien, nur unterschiedlich viele Bildquellen** (Befund
+ * S72, am Vidvox-Korpus belegt): ein *Filter* hat eine (`inputImage`), ein
+ * *Übergang* zwei (`startImage`/`endImage`), ein *Generator* keine — und
+ * jede dieser Sorten darf zusätzlich einen `.vs` haben (`Rotate` ist ein
+ * Übergang mit, `Life` ein Generator mit Vertex-Shader). Deshalb wird beim
+ * Import nichts mehr abgelehnt; das Panel zeigt schlicht so viele
+ * Quell-Auswahlen, wie der Shader Bild-Eingänge deklariert.
+ */
+struct IsfFilterParams
+{
+    /// Der Fragment-Shader, so wie er in der `.fs` steht (ohne JSON-Kopf).
+    std::string fragCode;
+    /// Der Vertex-Shader aus der gleichnamigen `.vs`. Leer = Standard: die
+    /// Geometrie wird unverändert durchgereicht.
+    std::string vertexCode;
+    /// Bild-Eingänge des Shaders in Deklarations-Reihenfolge, je mit Quelle.
+    std::vector<IsfBildQuelle> quellen;
+    /// Eigene Regler des Shaders (ISF-`INPUTS`) — s. `ParamGruppe`. Ihre
+    /// Werte fließen als `const`-Block in `fragCode` (Nahtstelle: die
+    /// Sentinel in IsfImport.hpp).
+    ParamGruppe parameter;
+    /// Herkunft/Lizenz des Imports — s. `Herkunft`. Wird im Panel angezeigt.
+    Herkunft herkunft;
+    /// Bauart der gezeichneten Geometrie: 0 = Quad (ISF-treu, Vorgabe) ·
+    /// 1 = ein übergroßes Dreieck (keine Diagonale ⇒ keine geknickte
+    /// Varying-Interpolation) · 2 = Gitter (echte Verformung).
+    int geometrie = 0;
+    /// Gitter-Quads in X — nur bei `geometrie == 2`.
+    int gridX = 64;
+    /// Gitter-Quads in Y — nur bei `geometrie == 2`.
+    int gridY = 48;
+    /// Auf das bestehende Bild: 0 ersetzen, 1 additiv, 2 50/50.
+    int blend = 0;
+    /// Anteil des Ergebnisses 0..1 (1 = ersetzen).
+    double mixAmount = 1.0;
 };
 
 /// Klemm-Grenzen des Video-/Kamera-Quellknotens — SSOT fuer Leser, Panel und
@@ -2506,7 +2701,22 @@ using EffectParams =
                  ImportNotesParams, RenderScaleParams, BloomParams, Camera3DParams,
                  SuperScope3DParams, Terrain3DParams, GlowOrbsParams,
                  ShadertoyParams, MeshWarpParams, GpuParticlesParams,
-                 VideoSourceParams, PixelFilterParams, PassthroughParams>;
+                 VideoSourceParams, PixelFilterParams, IsfFilterParams,
+                 PassthroughParams>;
+
+/**
+ * Die Herkunft eines Knotens — oder `nullptr`, wenn sein Typ keine trägt.
+ *
+ * SSOT der Frage „welche Knoten sind importfähig?" (S72). Panel, Shader-Export
+ * und spätere Importeure fragen hier, statt je Knotentyp einen eigenen Zweig zu
+ * schreiben; ein neuer importfähiger Typ wird an EINER Stelle nachgetragen.
+ */
+[[nodiscard]] inline const Herkunft* herkunftVon(const EffectParams& params)
+{
+    if (const auto* p = std::get_if<ShadertoyParams>(&params)) return &p->herkunft;
+    if (const auto* p = std::get_if<IsfFilterParams>(&params)) return &p->herkunft;
+    return nullptr;
+}
 
 // =============================================================================
 // Chain node
@@ -2668,6 +2878,7 @@ struct CompileResult
         const char* operator()(const GpuParticlesParams&) const { return "GPU Particles"; }
         const char* operator()(const VideoSourceParams&) const { return "Video Source"; }
         const char* operator()(const PixelFilterParams&) const { return "Pixel Filter"; }
+        const char* operator()(const IsfFilterParams&) const { return "ISF Filter"; }
         const char* operator()(const PassthroughParams&) const { return "Passthrough"; }
     };
     return std::visit(Visitor{}, params);

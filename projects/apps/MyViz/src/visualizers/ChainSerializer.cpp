@@ -59,6 +59,190 @@ uint32_t getColor(const QJsonObject& o, const char* key, uint32_t def)
     return o.contains(key) ? static_cast<uint32_t>(o.value(key).toDouble(def)) : def;
 }
 
+// --- Herkunft eines Fremd-Imports (S72) --------------------------------------
+// Die Herkunft steht in einem EIGENEN Unterobjekt `herkunft`. Bis S71 schrieb
+// der Shadertoy-Visitor sie flach an den Knoten — und `name` KOLLIDIERTE dort
+// mit dem Knotennamen: `nodeToJson` setzt `o["name"] = displayName`, der
+// Visitor laeuft danach und ueberschrieb ihn mit dem Shader-Namen. Ein
+// umbenannter Shadertoy-Knoten verlor seinen Namen beim Speichern (BEFUND S72,
+// aufgefallen am Waechter "leere Herkunft schreibt keinen Schluessel").
+//
+// Leere Herkunft schreibt gar nichts (schlankes JSON) — deshalb taucht sie auch
+// im Feld-Inventar nicht auf, das einen Vorgabe-Knoten serialisiert.
+void schreibeHerkunft(QJsonObject& o, const Herkunft& h)
+{
+    if (h.leer()) return;
+    QJsonObject j;
+    if (!h.name.empty()) j["name"] = QString::fromStdString(h.name);
+    if (!h.author.empty()) j["author"] = QString::fromStdString(h.author);
+    if (!h.url.empty()) j["url"] = QString::fromStdString(h.url);
+    if (!h.license.empty()) j["license"] = QString::fromStdString(h.license);
+    o["herkunft"] = j;
+}
+void leseHerkunft(const QJsonObject& o, Herkunft& h)
+{
+    if (o.value("herkunft").isObject())
+    {
+        const QJsonObject j = o.value("herkunft").toObject();
+        h.name = getStr(j, "name", h.name);
+        h.author = getStr(j, "author", h.author);
+        h.url = getStr(j, "url", h.url);
+        h.license = getStr(j, "license", h.license);
+        return;
+    }
+    // Alt-Format (bis S71, nur Shadertoy): flach am Knoten. `author`/`url`/
+    // `license` gab es auf Knotenebene nie sonst, die duerfen bedingungslos
+    // gelesen werden. Das flache `name` ist ZWEIDEUTIG — bei jedem anderen
+    // Knoten ist es der Anzeigename. Es zaehlt darum nur, wenn eines der drei
+    // eindeutigen Felder belegt ist; sonst bekaeme jeder alte Knoten eine
+    // Herkunft, die aus seinem eigenen Namen besteht.
+    h.author = getStr(o, "author", h.author);
+    h.url = getStr(o, "url", h.url);
+    h.license = getStr(o, "license", h.license);
+    if (!h.author.empty() || !h.url.empty() || !h.license.empty())
+        h.name = getStr(o, "name", h.name);
+}
+
+// --- Parameter-Baum (S72) ----------------------------------------------------
+// Rekursiv, weil `ParamGruppe` es ist. Geschrieben wird schlank: was auf der
+// Vorgabe steht, steht nicht im JSON. Eine leere Ablage erzeugt gar keinen
+// Schluessel — deshalb taucht sie im Feld-Inventar nicht auf.
+QJsonObject wertZuJson(const ParamWert& w)
+{
+    QJsonObject o;
+    o["key"] = QString::fromStdString(w.key);
+    if (!w.label.empty() && w.label != w.key)
+        o["label"] = QString::fromStdString(w.label);
+    o["typ"] = static_cast<int>(w.typ);
+    switch (w.typ)
+    {
+        case ParamTyp::Bool:
+            o["ja"] = w.ja;
+            break;
+        case ParamTyp::Text:
+            o["text"] = QString::fromStdString(w.text);
+            break;
+        case ParamTyp::Farbe:
+        case ParamTyp::Punkt2D:
+        {
+            QJsonArray v;
+            const int n = w.typ == ParamTyp::Farbe ? 4 : 2;
+            for (int i = 0; i < n; ++i) v.append(w.vektor[static_cast<std::size_t>(i)]);
+            o["vektor"] = v;
+            break;
+        }
+        default:
+            o["zahl"] = w.zahl;
+            break;
+    }
+    if (w.hatBereich)
+    {
+        o["min"] = w.min;
+        o["max"] = w.max;
+    }
+    if (!w.auswahlLabels.empty())
+    {
+        QJsonArray l;
+        for (const std::string& s : w.auswahlLabels) l.append(QString::fromStdString(s));
+        o["auswahlLabels"] = l;
+    }
+    if (!w.auswahlWerte.empty())
+    {
+        QJsonArray a;
+        for (int v : w.auswahlWerte) a.append(v);
+        o["auswahlWerte"] = a;
+    }
+    return o;
+}
+
+ParamWert wertAusJson(const QJsonObject& o)
+{
+    ParamWert w;
+    w.key = getStr(o, "key", w.key);
+    w.label = getStr(o, "label", w.key);
+    // Klemmen: ein Typ ausserhalb der Aufzaehlung wuerde im Panel einen
+    // Editor waehlen, den es nicht gibt.
+    const int t = std::clamp(getInt(o, "typ", static_cast<int>(ParamTyp::Zahl)),
+                             static_cast<int>(ParamTyp::Bool),
+                             static_cast<int>(ParamTyp::Auswahl));
+    w.typ = static_cast<ParamTyp>(t);
+    w.ja = getBool(o, "ja", w.ja);
+    w.text = getStr(o, "text", w.text);
+    w.zahl = getDouble(o, "zahl", w.zahl);
+    {
+        const QJsonArray v = o.value("vektor").toArray();
+        for (int i = 0; i < 4 && i < v.size(); ++i)
+            w.vektor[static_cast<std::size_t>(i)] = v.at(i).toDouble();
+    }
+    if (o.contains("min") && o.contains("max"))
+    {
+        w.min = getDouble(o, "min", w.min);
+        w.max = getDouble(o, "max", w.max);
+        // Verdrehte Grenzen kaeme sonst als toter Regler im Panel an.
+        if (w.min > w.max) std::swap(w.min, w.max);
+        w.hatBereich = true;
+        w.zahl = std::clamp(w.zahl, w.min, w.max);
+    }
+    for (const QJsonValue& l : o.value("auswahlLabels").toArray())
+        w.auswahlLabels.push_back(l.toString().toStdString());
+    for (const QJsonValue& a : o.value("auswahlWerte").toArray())
+        w.auswahlWerte.push_back(a.toInt());
+    return w;
+}
+
+/// Tiefe der Verschachtelung klemmen: eine zyklisch/absurd tiefe Datei wuerde
+/// den Leser sonst bis in den Stapelueberlauf treiben.
+constexpr int kParamTiefeMax = 8;
+
+QJsonObject gruppeZuJson(const ParamGruppe& g)
+{
+    QJsonObject o;
+    if (!g.key.empty()) o["key"] = QString::fromStdString(g.key);
+    if (!g.label.empty()) o["label"] = QString::fromStdString(g.label);
+    if (!g.werte.empty())
+    {
+        QJsonArray w;
+        for (const ParamWert& x : g.werte) w.append(wertZuJson(x));
+        o["werte"] = w;
+    }
+    if (!g.gruppen.empty())
+    {
+        QJsonArray gr;
+        for (const ParamGruppe& x : g.gruppen) gr.append(gruppeZuJson(x));
+        o["gruppen"] = gr;
+    }
+    return o;
+}
+
+ParamGruppe gruppeAusJson(const QJsonObject& o, int tiefe = 0)
+{
+    ParamGruppe g;
+    g.key = getStr(o, "key", g.key);
+    g.label = getStr(o, "label", g.label);
+    for (const QJsonValue& v : o.value("werte").toArray())
+    {
+        if (v.isObject()) g.werte.push_back(wertAusJson(v.toObject()));
+    }
+    if (tiefe < kParamTiefeMax)
+    {
+        for (const QJsonValue& v : o.value("gruppen").toArray())
+        {
+            if (v.isObject()) g.gruppen.push_back(gruppeAusJson(v.toObject(), tiefe + 1));
+        }
+    }
+    return g;
+}
+
+void schreibeParameter(QJsonObject& o, const ParamGruppe& g)
+{
+    if (g.leer()) return;
+    o["parameter"] = gruppeZuJson(g);
+}
+void leseParameter(const QJsonObject& o, ParamGruppe& g)
+{
+    if (o.value("parameter").isObject()) g = gruppeAusJson(o.value("parameter").toObject());
+}
+
 // --- param -> JSON (writes fields into `o`, type key set by caller) ----------
 struct WriteVisitor
 {
@@ -1161,11 +1345,8 @@ struct WriteVisitor
             }
             o["buffers"] = buffers;
         }
-        // Metadaten (S3-Import) — nur schreiben, wenn vorhanden (schlankes JSON)
-        if (!p.name.empty()) o["name"] = QString::fromStdString(p.name);
-        if (!p.author.empty()) o["author"] = QString::fromStdString(p.author);
-        if (!p.url.empty()) o["url"] = QString::fromStdString(p.url);
-        if (!p.license.empty()) o["license"] = QString::fromStdString(p.license);
+        // Herkunft (S3-Import) — flach am Knoten, leere Felder weglassen
+        schreibeHerkunft(o, p.herkunft);
     }
     void operator()(const MeshWarpParams& p) const
     {
@@ -1225,6 +1406,32 @@ struct WriteVisitor
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
+    void operator()(const IsfFilterParams& p) const
+    {
+        o["fragCode"] = QString::fromStdString(p.fragCode);
+        o["vertexCode"] = QString::fromStdString(p.vertexCode);
+        o["geometrie"] = p.geometrie;
+        o["gridX"] = p.gridX;
+        o["gridY"] = p.gridY;
+        o["blend"] = p.blend;
+        o["mixAmount"] = p.mixAmount;
+        // Bildquellen: Name + Bindung. Der NAME muss mit, weil er aus dem
+        // Shader stammt und die Reihenfolge allein ihn nicht wiederherstellt.
+        if (!p.quellen.empty())
+        {
+            QJsonArray q;
+            for (const IsfBildQuelle& s : p.quellen)
+            {
+                QJsonObject e;
+                e["name"] = QString::fromStdString(s.name);
+                e["bindung"] = s.bindung;
+                q.append(e);
+            }
+            o["quellen"] = q;
+        }
+        schreibeParameter(o, p.parameter);
+        schreibeHerkunft(o, p.herkunft);
     }
     void operator()(const PassthroughParams& p) const
     {
@@ -2507,7 +2714,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.blend = getInt(o, "blend", p.blend);
         const auto readInput = [](const QJsonArray& arr, std::array<int, 4>& out) {
             for (int c = 0; c < 4 && c < arr.size(); ++c)
-                out[static_cast<std::size_t>(c)] = std::clamp(arr[c].toInt(-1), -1, 4);
+                out[static_cast<std::size_t>(c)] =
+                    std::clamp(arr[c].toInt(kShadertoyInputNone), kShadertoyInputNone,
+                               kShadertoyInputMax);
         };
         if (o.value("imageInput").isArray())
         {
@@ -2532,10 +2741,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
             readInput(b.value("input").toArray(), pass.input);
             p.buffers.push_back(std::move(pass));
         }
-        p.name = getStr(o, "name", p.name);
-        p.author = getStr(o, "author", p.author);
-        p.url = getStr(o, "url", p.url);
-        p.license = getStr(o, "license", p.license);
+        // Alt-Format-Lesen kommt gratis: die Schluessel sind dieselben wie vor
+        // S72, als die vier Felder noch direkt an ShadertoyParams hingen.
+        leseHerkunft(o, p.herkunft);
         return p;
     }
     if (type == "gpuParticles")
@@ -2609,6 +2817,37 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.initCode = getStr(o, "initCode", p.initCode);
         p.frameCode = getStr(o, "frameCode", p.frameCode);
         p.beatCode = getStr(o, "beatCode", p.beatCode);
+        return p;
+    }
+    if (type == "isfFilter")
+    {
+        IsfFilterParams p;
+        p.fragCode = getStr(o, "fragCode", p.fragCode);
+        p.vertexCode = getStr(o, "vertexCode", p.vertexCode);
+        p.geometrie = std::clamp(getInt(o, "geometrie", p.geometrie), 0,
+                                 lumi::multieffect::isffilter::kGeometrieMax);
+        p.gridX = std::clamp(getInt(o, "gridX", p.gridX),
+                             lumi::multieffect::isffilter::kGridMin,
+                             lumi::multieffect::isffilter::kGridMax);
+        p.gridY = std::clamp(getInt(o, "gridY", p.gridY),
+                             lumi::multieffect::isffilter::kGridMin,
+                             lumi::multieffect::isffilter::kGridMax);
+        p.blend = std::clamp(getInt(o, "blend", p.blend), 0, 2);
+        p.mixAmount = std::clamp(getDouble(o, "mixAmount", p.mixAmount), 0.0, 1.0);
+        for (const QJsonValue& v : o.value("quellen").toArray())
+        {
+            if (!v.isObject()) continue;
+            const QJsonObject e = v.toObject();
+            IsfBildQuelle s;
+            s.name = getStr(e, "name", s.name);
+            if (s.name.empty()) continue;  // ohne Namen nicht zuzuordnen
+            s.bindung = std::clamp(getInt(e, "bindung", s.bindung),
+                                   lumi::multieffect::isffilter::kQuelleSchwarz,
+                                   lumi::multieffect::isffilter::kQuelleMax);
+            p.quellen.push_back(std::move(s));
+        }
+        leseParameter(o, p.parameter);
+        leseHerkunft(o, p.herkunft);
         return p;
     }
     // "passthrough" and any unknown key
@@ -2710,6 +2949,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const GpuParticlesParams&) const { return "gpuParticles"; }
         QString operator()(const VideoSourceParams&) const { return "videoSource"; }
         QString operator()(const PixelFilterParams&) const { return "pixelFilter"; }
+        QString operator()(const IsfFilterParams&) const { return "isfFilter"; }
         QString operator()(const PassthroughParams&) const { return "passthrough"; }
     };
     return std::visit(Visitor{}, params);

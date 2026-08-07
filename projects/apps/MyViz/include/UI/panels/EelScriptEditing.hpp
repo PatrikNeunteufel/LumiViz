@@ -413,6 +413,10 @@ struct ScriptEditorHooks
     /// `<preset>[.<slot>].<vertrag>.<endung>` (S69, Schema S71). Nicht leer =
     /// der Dialog zeigt Import…/Export…-Knöpfe (Datei ↔ Editor-Text, UTF-8).
     QString exportFileName;
+    /// Fertiger Herkunfts-Kopf (s. `herkunftKopf`), den der Export dem Code
+    /// VORANSTELLT — sonst verliert eine exportierte Datei Autor und Lizenz
+    /// ihres Originals (Befund S71, Lizenz-Pflicht S72). Leer = kein Kopf.
+    QString herkunftKopf;
     /// Vertrag dieses Feldes (`ShaderVertrag::key`, z. B. "pixelfilter").
     /// Steuert den Import-Dateifilter, das Ordner-Gedächtnis
     /// (`editor/shaderFileDir/<vertrag>`) und die Vertragsprüfung beim
@@ -435,6 +439,12 @@ struct ShaderVertrag
     QString funktion;  ///< Einstiegspunkt, z. B. "mainImage"
     QString signatur;  ///< vollstaendige Signatur fuer die Meldung
     QString endung;    ///< "glsl" oder "hlsl" — was die Datei wirklich ist
+    /// Weitere Muster, die im Dateidialog ZUERST auftauchen sollen, weil der
+    /// Knoten sie direkt annimmt (S72: der Stilfilter uebersetzt ISF-`.fs`
+    /// automatisch). Ohne diesen Eintrag zeigte die Vorauswahl nur
+    /// `*.pixelfilter.glsl` — eine frisch heruntergeladene ISF-Datei war im
+    /// Dialog schlicht unsichtbar.
+    QString importZusatz;
 };
 
 /// Alle bekannten Vertraege (SSOT). Reihenfolge egal; `key` ist eindeutig.
@@ -444,6 +454,13 @@ struct ShaderVertrag
         {QStringLiteral("pixelfilter"), QStringLiteral("Stilfilter"),
          QStringLiteral("farbe"), QStringLiteral("vec4 farbe(vec2 uv, vec4 src)"),
          QStringLiteral("glsl")},
+        // ISF-Filter (S72, Entscheid Patrik): eigener Knoten mit BEIDEN
+        // Shader-Stufen. `main()` ist hier der Einstieg — ISF-Dateien werden
+        // NICHT auf einen eigenen Vertrag umgeschrieben, sie laufen wie sie
+        // sind. `*.fs` gehoert darum in die Vorauswahl des Dateidialogs.
+        {QStringLiteral("isffilter"), QStringLiteral("ISF-Filter"),
+         QStringLiteral("main"), QStringLiteral("void main()"),
+         QStringLiteral("fs"), QStringLiteral("*.fs")},
         {QStringLiteral("shadertoy"), QStringLiteral("Shadertoy"),
          QStringLiteral("mainImage"),
          QStringLiteral("void mainImage(out vec4 fragColor, in vec2 fragCoord)"),
@@ -520,6 +537,11 @@ struct ShaderVertrag
     for (const auto& fremd : shaderVertraege())
     {
         if (fremd.key == eigenerKey) continue;
+        // `main` identifiziert KEIN Format — es steht in fast jedem Shader.
+        // Der ISF-Knoten hat es als Einstieg; wuerde er hier mitlaufen, waere
+        // jede gewoehnliche `void main()`-Datei angeblich ein ISF-Filter.
+        // ISF wird stattdessen an seinem JSON-Kopf erkannt (Zweig oben).
+        if (fremd.funktion == QLatin1String("main")) continue;
         if (!nenntFunktion(text, fremd.funktion)) continue;
         return QObject::tr(
             "Diese Datei sieht nach einem <b>%1</b>-Shader aus "
@@ -578,6 +600,39 @@ struct ShaderVertrag
     QString name = presetName;
     if (!slot.isEmpty()) name += QLatin1Char('.') + slot;
     return name + QLatin1Char('.') + vertragKey + QLatin1Char('.') + endung;
+}
+
+/**
+ * @brief Herkunfts-Kopf für den Shader-Export (Lizenz-Pflicht, S72)
+ *
+ * BEFUND S71: der Export schrieb nur den Code — Autor und Lizenz eines
+ * importierten Shaders gingen dabei verloren. Wer die Datei weitergab, gab sie
+ * ohne jeden Hinweis auf ihre Herkunft weiter. Der Kopf schließt das.
+ *
+ * Der Block beginnt bewusst mit `/* LumiViz` und NICHT mit `/*{` — letzteres
+ * ist der ISF-JSON-Kopf, und ein Export darf nie versehentlich wie eine
+ * ISF-Datei aussehen (ein Wächter-Test hält das fest). Alle vier Felder leer
+ * ⇒ leerer Rückgabewert, dann wird gar nichts vorangestellt.
+ */
+[[nodiscard]] inline QString herkunftKopf(const QString& name, const QString& autor,
+                                          const QString& url, const QString& lizenz)
+{
+    if (name.isEmpty() && autor.isEmpty() && url.isEmpty() && lizenz.isEmpty())
+        return {};
+    QString k = QStringLiteral("/* LumiViz-Export — Herkunft des Inhalts\n");
+    const auto zeile = [&k](const char* feld, const QString& wert) {
+        if (!wert.isEmpty())
+            k += QStringLiteral("   %1: %2\n")
+                     .arg(QString::fromUtf8(feld), QString(wert).replace(
+                                                       QStringLiteral("*/"),
+                                                       QStringLiteral("*_/")));
+    };
+    zeile("Titel", name);
+    zeile("Autor", autor);
+    zeile("Quelle", url);
+    zeile("Lizenz", lizenz);
+    k += QStringLiteral("   Beim Weitergeben gilt diese Lizenz.\n*/\n");
+    return k;
 }
 
 /// Full, resizable editor: big code pane + the module's reference side-by-side.
@@ -648,13 +703,23 @@ struct ShaderVertrag
             vertrag != nullptr ? vertrag->endung : QStringLiteral("glsl");
         // Der eigene Vertrag steht zuerst; ISF (.fs/.vs) ist mit aufgefuehrt,
         // weil das die Konvention der groessten Filter-Fundgrube ist.
-        const QString filter =
-            QObject::tr("Passende Shader (*.%1.%2);;"
-                        "Shader (*.glsl *.hlsl *.frag *.vert *.fs *.vs *.txt);;"
-                        "Alle Dateien (*)")
+        QString passend = QStringLiteral("*.%1.%2").arg(
+            hooks.vertragKey.isEmpty() ? QStringLiteral("*") : hooks.vertragKey,
+            eigeneEndung);
+        if (vertrag != nullptr && !vertrag->importZusatz.isEmpty())
+            passend += QLatin1Char(' ') + vertrag->importZusatz;
+        const QString kRest =
+            QObject::tr(";;Shader (*.glsl *.hlsl *.frag *.vert *.fs *.vs *.txt)"
+                        ";;Alle Dateien (*)");
+        const QString filter = QObject::tr("Passende Shader (%1)").arg(passend) + kRest;
+        // Beim EXPORT ohne den Import-Zusatz: wir schreiben nie ISF, `*.fs`
+        // waere dort ein falsches Versprechen.
+        const QString exportFilter =
+            QObject::tr("Passende Shader (*.%1.%2)")
                 .arg(hooks.vertragKey.isEmpty() ? QStringLiteral("*")
                                                 : hooks.vertragKey,
-                     eigeneEndung);
+                     eigeneEndung) +
+            kRest;
         const QString dirKey = QStringLiteral("editor/shaderFileDir/") +
                                (hooks.vertragKey.isEmpty()
                                     ? QStringLiteral("allgemein")
@@ -718,6 +783,7 @@ struct ShaderVertrag
                 rememberDir(path);
             });
         const QString exportName = hooks.exportFileName;
+        const QString kopf = hooks.herkunftKopf;
         auto* exportBtn =
             bb->addButton(QObject::tr("Export…"), QDialogButtonBox::ActionRole);
         exportBtn->setToolTip(
@@ -725,7 +791,8 @@ struct ShaderVertrag
                 .arg(exportName));
         QObject::connect(
             exportBtn, &QPushButton::clicked, &dlg,
-            [editor, filter, exportName, rememberedDir, rememberDir, &dlg]() {
+            [editor, exportFilter, exportName, kopf, rememberedDir, rememberDir,
+             &dlg]() {
                 const QString dir = rememberedDir();
                 // Freien Namen vorschlagen, statt auf die Ueberschreib-Frage
                 // zu warten (Wunsch Patrik S71).
@@ -733,7 +800,7 @@ struct ShaderVertrag
                 QString start =
                     dir.isEmpty() ? name : dir + QLatin1Char('/') + name;
                 const QString path = QFileDialog::getSaveFileName(
-                    &dlg, QObject::tr("Shader exportieren"), start, filter);
+                    &dlg, QObject::tr("Shader exportieren"), start, exportFilter);
                 if (path.isEmpty()) return;
                 QFile f(path);
                 if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate |
@@ -744,7 +811,15 @@ struct ShaderVertrag
                         QObject::tr("Datei nicht schreibbar: %1").arg(path));
                     return;
                 }
-                f.write(editor->toPlainText().toUtf8());
+                // Herkunft VORANSTELLEN (S72) — nur, wenn der Code sie nicht
+                // ohnehin schon traegt (Export einer zuvor exportierten Datei).
+                QString inhalt = editor->toPlainText();
+                if (!kopf.isEmpty() &&
+                    !inhalt.contains(QStringLiteral("LumiViz-Export")))
+                {
+                    inhalt = kopf + inhalt;
+                }
+                f.write(inhalt.toUtf8());
                 rememberDir(path);
             });
     }

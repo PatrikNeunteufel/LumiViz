@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     774>
+                     781>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
@@ -782,6 +782,20 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "vertical stripe spacing (px, 0 = off)"},
     {"interleave.y2",
      "Ziel-Abstand senkrecht im Beat-Uebergang"},
+    {"isfFilter.blend",
+     "Auf das bestehende Bild: 0 ersetzen, 1 additiv, 2 50/50."},
+    {"isfFilter.fragCode",
+     "Der Fragment-Shader, so wie er in der `.fs` steht (ohne JSON-Kopf)."},
+    {"isfFilter.geometrie",
+     "Bauart der gezeichneten Geometrie: 0 = Quad (ISF-treu, Vorgabe) \302\267 1 = ein \303\274bergro\303\237es Dreieck (keine Diagonale \342\207\222 keine geknickte Varying-Interpolation) \302\267 2 = Gitter (echte Verformung)."},
+    {"isfFilter.gridX",
+     "Gitter-Quads in X \342\200\224 nur bei `geometrie == 2`."},
+    {"isfFilter.gridY",
+     "Gitter-Quads in Y \342\200\224 nur bei `geometrie == 2`."},
+    {"isfFilter.mixAmount",
+     "Anteil des Ergebnisses 0..1 (1 = ersetzen)."},
+    {"isfFilter.vertexCode",
+     "Der Fragment-Shader, so wie er in der `.fs` steht (ohne JSON-Kopf). Der Vertex-Shader aus der gleichnamigen `.vs`. Leer = Standard: die Geometrie wird unver\303\244ndert durchgereicht."},
     {"jherikoGlobal.beatCode",
      "EEL-Slots ohne eigenes Bild: der Knoten rechnet nur und legt seine Ergebnisse in den geteilten Variablen (`reg00`..`reg99`, `gmegabuf`) ab, aus denen die folgenden Knoten lesen. `loadMode` steuert, wann der Init-Slot erneut laeuft."},
     {"jherikoGlobal.frameCode",

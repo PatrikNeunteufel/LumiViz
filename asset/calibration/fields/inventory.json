@@ -1,8 +1,8 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 774,
-        "typen": 90
+        "felder": 781,
+        "typen": 91
     },
     "typen": [
         {
@@ -2245,6 +2245,47 @@
             ],
             "name": "Invert",
             "typkey": "invert"
+        },
+        {
+            "felder": [
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "fragCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "geometrie"
+                },
+                {
+                    "art": "zahl",
+                    "default": 64,
+                    "name": "gridX"
+                },
+                {
+                    "art": "zahl",
+                    "default": 48,
+                    "name": "gridY"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "mixAmount"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "vertexCode"
+                }
+            ],
+            "name": "ISF Filter",
+            "typkey": "isfFilter"
         },
         {
             "felder": [

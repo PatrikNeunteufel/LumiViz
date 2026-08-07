@@ -1,6 +1,6 @@
 # MyViz — Benutzerhandbuch
 
-> **Version:** 1.9.0
+> **Version:** 1.10.0
 > **Datum:** 2026-08-06
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -492,10 +492,22 @@ einen Shadertoy-Shader (`mainImage`-Funktion) als Effekt in der Kette aus —
 mit dem vollen Uniform-Satz (`iTime`, `iResolution`, `iMouse`, `iFrame` …)
 plus LumiViz-Extras (`bass`, `mid`, `treb`, `vol`, `beat`).
 
-- **Audio:** eine 512×2-Textur im Shadertoy-Layout (Zeile 0 = Spektrum,
-  Zeile 1 = Waveform) an einem wählbaren `iChannel`.
-- **Multipass:** Buffer A–D wie auf shadertoy.com — jeder Puffer wählt seine
-  Eingänge (Buffer/Audio/nichts); Selbst-Referenz liest das Vorframe.
+### Was an einem `iChannel` hängen kann
+
+Jeder der vier `iChannel` bekommt seine Quelle über eine eigene Auswahl —
+im Image-Pass und in jedem Buffer-Pass getrennt.
+
+| Quelle | Was ankommt | Wofür |
+|---|---|---|
+| **Nichts** | schwarz | Kanal bewusst leer lassen |
+| **Buffer A–D** | Ausgang des jeweiligen Puffers | Multipass wie auf shadertoy.com. Eine Referenz auf sich selbst oder einen **späteren** Puffer liest das **Vorframe** (Feedback), eine auf einen früheren das frische Bild dieses Frames. |
+| **Audio** | 512×2-Textur im Shadertoy-Layout (Zeile 0 = Spektrum, Zeile 1 = Waveform) | alles Audioreaktive — dazu gibt es `bass`/`mid`/`treb`/`vol`/`beat` auch als einfache Zahlen |
+| **Ketten-Eingang** *(neu, S72)* | das Bild, das dieser Knoten von der Kette vorfindet | **Shadertoy-Bildfilter laufen damit direkt.** Sehr viele Shader auf shadertoy.com erwarten an `iChannel0` ein Bild und verzerren/färben es — ohne diese Quelle blieb das schwarz. Beispiel: einen Blur-/Glitch-Shader hinter einen Superscope hängen. |
+| **AVS-Buffer 1–8** *(neu, S72)* | der Inhalt eines „Buffer Save"-Slots | ein **eingefrorenes** Bild als Textur weiterverwenden: irgendwo in der Kette mit „Buffer Save" in Slot 3 schreiben, hier Slot 3 lesen. Der Stand ist der **beim Lauf dieses Knotens** — die Reihenfolge in der Kette zählt also, genau wie bei Buffer Save selbst. Ein nie beschriebener Slot ist schwarz. |
+
+In Host-Gruppen greifen die AVS-Buffer automatisch auf die Puffer **der
+eigenen Gruppe** zu — dieselbe Trennung wie bei Buffer Save.
+
 - **Blend:** Ersetzen, Additiv oder 50:50 mit dem Ketten-Bild darunter.
 - **Fehler:** Kompilierfehler zeigen die Zeilennummern **deines** Codes; der
   Knoten reicht das Bild solange unverändert durch.
@@ -606,8 +618,40 @@ Der Groß-Editor (⤢) hat an allen Shader-Feldern **„Import…"** und
   kannst du trotzdem — etwa wenn du nur einzelne Hilfsfunktionen übernehmen
   willst.
 - **Fremde Shader:** Wer Filter aus dem Netz übernimmt (Shadertoy, ISF &
-  Co.), sollte die **Lizenz des jeweiligen Shaders** beachten — bei
-  Shadertoy-Importen zeigt der Knoten Autor und Lizenz oben an.
+  Co.), sollte die **Lizenz des jeweiligen Shaders** beachten. Jeder Import
+  schreibt Titel, Autor, Quelle und Lizenz in den Knoten; oben im Knoten
+  stehen sie sichtbar. Beim **Export** wandert dieselbe Angabe als
+  Kommentarblock an den Anfang der Datei — die Herkunft geht also beim
+  Weitergeben nicht mehr verloren.
+
+### ISF-Filter laden (fertige Filter aus dem Netz)
+
+**ISF** („Interactive Shader Format", *isf.video*) ist so etwas wie
+Shadertoy für Filter: GLSL-Dateien mit der Endung **`.fs`**, die ihre
+Regler gleich mitbringen. Die Kategorie **FX** passt genau auf den
+Stilfilter — LumiViz übersetzt sie beim Import automatisch.
+
+So geht's: im Stilfilter-Knoten den Groß-Editor (**⤢**) öffnen →
+**Import…** → eine `.fs`-Datei wählen. Danach steht der übersetzte Filter
+im Editor, oben im Knoten die **Herkunft**, und darunter erscheinen die
+**Regler des Filters** als aufklappbarer Baum — mit dem richtigen
+Bedienelement je Sorte: Kästchen, Zähler, Klartext-Auswahl, Farbwähler,
+XY-Feld. Ein Regler wirkt sofort.
+
+Zwei Dinge, die LumiViz dabei sagt statt sie zu verschlucken:
+
+- **Nicht jede `.fs` ist ein Filter.** *Generatoren* (erzeugen ein Bild aus
+  dem Nichts) und *Übergänge* (blenden zwischen zwei Bildern) haben kein
+  Quellbild und werden mit einer Klartext-Meldung abgelehnt. Ebenso
+  Dateien, die **Geometrie** verformen — dafür ist der Mesh-Warp-Knoten da.
+- **Manche Filter brauchen eine zweite Datei.** Kanten-, Blur- und
+  Schärfefilter legen ihre Nachbar-Koordinaten in einer gleichnamigen
+  **`.vs`** ab. Liegt sie neben der `.fs`, wird sie automatisch
+  mitgenommen; fehlt sie, sagt LumiViz welche Datei es braucht.
+
+Was der Filter nicht übernehmen kann (zusätzliche Bilder, Multipass,
+Audio-Texturen), steht nach dem Import als Hinweisliste im Dialog — der
+Filter läuft trotzdem.
 
 ---
 
@@ -615,6 +659,7 @@ Der Groß-Editor (⤢) hat an allen Shader-Feldern **„Import…"** und
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.10.0 | 2026-08-07 | Session 72 (Filter-Strang). **§12: Tabelle „Was an einem `iChannel` hängen kann"** — die beiden neuen Quellen **Ketten-Eingang** (macht Shadertoy-Bildfilter direkt lauffähig) und **AVS-Buffer 1–8** (Buffer-Save-Slots als Textur, Stand beim Lauf des Knotens, Host-Gruppen-Trennung) je mit Anwendungsbeispiel. **§14 NEU „ISF-Filter laden"** — Import von `.fs`-Dateien, Parameter-Baum mit typrichtigen Bedienelementen, was abgelehnt wird (Generator/Übergang/Geometrie) und warum manche Filter eine `.vs` brauchen. §14 Lizenz-Absatz: Herkunft wandert jetzt auch in die **exportierte Datei** |
 | 1.9.0 | 2026-08-07 | NEU §14 „Filter als Datei laden und weitergeben" (S71): Import…/Export… an allen Shader-Feldern erklärt (Namensschema `<Preset>[.<Feld>].<Vertrag>.glsl`, automatisch hochzählender Vorschlag, eigener Ordner je Feld, `.hlsl` für MilkDrop), Warnung bei falschem Shader-Vertrag, Lizenz-Hinweis für fremde Shader. Schließt eine Doku-Lücke seit S69 |
 | 1.8.0 | 2026-08-06 | NEU §14 „Stilfilter (Pixel Filter)" (S70): skriptbarer Pixel-Filter (farbe()-Vertrag, Mix, Stapeln als Knoten) + 12 Werks-Looks inkl. Take-On-Me-Comic |
 | 1.7.0 | 2026-08-06 | NEU §13 „Video & Kamera als Quelle" (S70): videoSource-Knoten (Datei/Kamera/Testaufnahme, Streaming vs. Frame-Schritt, Einpassung, Blend/Deckkraft, Parameter-Skripte) + Settings-Tab „Kamera" mit Testaufnahmen |

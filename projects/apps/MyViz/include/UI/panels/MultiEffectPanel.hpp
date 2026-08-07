@@ -105,6 +105,10 @@ private:
     void addTreeItem(QTreeWidgetItem* parentItem,
                      const lumi::multieffect::ChainNode& node, QList<int> path);
     [[nodiscard]] lumi::multieffect::ChainNode* nodeAtPath(const QList<int>& path);
+    /// Herkunfts-Kopf fuer den Shader-Export dieses Knotens (S72) — leer, wenn
+    /// der Typ keine Herkunft traegt oder sie unbelegt ist. Nimmt den STAND
+    /// BEIM AUFRUF, damit ein zwischenzeitlicher Import im Export landet.
+    [[nodiscard]] QString herkunftKopfFuer(const QList<int>& path);
     [[nodiscard]] QList<int> currentPath() const;
     /// All selected item paths (same parent, sorted by index). Falls back to the
     /// current item when the selection is empty.

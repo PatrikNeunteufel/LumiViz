@@ -59,6 +59,8 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_GpuPreference.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_EffectChain.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ShadertoyWrapper.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_ShaderVertrag.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_IsfImport.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_Playlist.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_VisualizerPresetManager.cpp"
 )
