@@ -106,6 +106,17 @@ struct ImportErgebnis
     /// Bild-Eingaenge in DEKLARATIONS-Reihenfolge. Die Anzahl bestimmt die
     /// Sorte (s. `sortenName`), die Namen sind die Sampler im Shader.
     QStringList bildInputs;
+    /// `audio`-Eingaenge: die **Waveform** (Zeitsignal). In ISF sind das
+    /// GEWOEHNLICHE SAMPLER, die per `IMG_NORM_PIXEL` abgetastet werden — sie
+    /// gehoeren deshalb in die Quellen-Liste, nicht in die Regler (Befund S72
+    /// aus dem GL-Smoke: ohne ihre Sampler-Deklaration bricht der Shader mit
+    /// „undeclared identifier" ab). Sie zaehlen NICHT zur Sorte: ein Filter
+    /// mit Audio-Eingang ist ein Filter, kein Uebergang.
+    QStringList audioWaveInputs;
+    /// `audioFFT`-Eingaenge: das **Spektrum**. Getrennt gefuehrt, weil beide
+    /// Sorten verschiedene Texturen bekommen — sie zusammenzuwerfen war der
+    /// urspruengliche Fehler (s. `isffilter::kQuelleAudioWave`).
+    QStringList audioFftInputs;
 
     QList<IsfParam> parameter;
     lumi::multieffect::Herkunft herkunft;
@@ -286,13 +297,14 @@ namespace detail {
         for (const QJsonValue& w : in.value(QStringLiteral("VALUES")).toArray())
             p.auswahlWerte << w.toInt();
 
-        if (p.typ == IsfTyp::Audio || p.typ == IsfTyp::AudioFft)
+        if (p.typ == IsfTyp::Audio)
         {
-            r.report << QStringLiteral(
-                            "ℹ Audio-Input „%1\" bleibt leer — der Knoten hat "
-                            "die Audio-Werte bass/mid/treb/vol/beat, aber "
-                            "keine Audio-Textur.")
-                            .arg(p.name);
+            r.audioWaveInputs << p.name;  // Sampler, kein Regler
+            continue;
+        }
+        if (p.typ == IsfTyp::AudioFft)
+        {
+            r.audioFftInputs << p.name;
             continue;
         }
         if (p.typ == IsfTyp::Unbekannt)
@@ -412,17 +424,25 @@ namespace detail {
  * ausgewählt heißt normale Pipeline (Entscheid Patrik S72).
  */
 [[nodiscard]] inline std::vector<lumi::multieffect::IsfBildQuelle> alsBildQuellen(
-    const QStringList& namen)
+    const QStringList& bild, const QStringList& audioWave = {},
+    const QStringList& audioFft = {})
 {
+    namespace ic = lumi::multieffect::isffilter;
     std::vector<lumi::multieffect::IsfBildQuelle> out;
-    out.reserve(static_cast<std::size_t>(namen.size()));
-    for (const QString& n : namen)
-    {
-        lumi::multieffect::IsfBildQuelle q;
-        q.name = n.toStdString();
-        q.bindung = lumi::multieffect::isffilter::kQuelleKette;
-        out.push_back(std::move(q));
-    }
+    const auto anhaengen = [&out](const QStringList& namen, int bindung) {
+        for (const QString& n : namen)
+        {
+            lumi::multieffect::IsfBildQuelle q;
+            q.name = n.toStdString();
+            q.bindung = bindung;
+            out.push_back(std::move(q));
+        }
+    };
+    anhaengen(bild, ic::kQuelleKette);
+    // Audio-Eingaenge sind ebenfalls Sampler — dieselbe Liste, aber je nach
+    // ISF-Typ die Waveform- oder die Spektrum-Textur.
+    anhaengen(audioWave, ic::kQuelleAudioWave);
+    anhaengen(audioFft, ic::kQuelleAudioFft);
     return out;
 }
 

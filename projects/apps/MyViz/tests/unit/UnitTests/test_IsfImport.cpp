@@ -191,16 +191,24 @@ TEST_CASE("IsfImport: alle INPUT-Typen kommen typrichtig an")
     CHECK(modus->auswahlLabels.at(1) == QStringLiteral("Mittel"));
     CHECK(modus->auswahlWerte.size() == 3);
 
-    // Audio-Inputs kann der Knoten nicht bedienen — gemeldet, nicht still als
-    // Regler ausgegeben.
-    CHECK(std::any_of(r.report.begin(), r.report.end(), [](const QString& z) {
-        return z.contains(QStringLiteral("Audio-Input"));
-    }));
+    // Audio-Inputs sind in ISF gewoehnliche SAMPLER, keine Regler — sie
+    // landen in der Quellen-Liste (Befund S72 aus dem GL-Smoke: ohne ihre
+    // Sampler-Deklaration bricht der Shader mit "undeclared identifier" ab).
+    REQUIRE(r.audioWaveInputs.size() == 1);
+    CHECK(r.audioWaveInputs.first() == QStringLiteral("tonspur"));
+    CHECK(r.audioFftInputs.isEmpty());
     CHECK_FALSE(std::any_of(r.parameter.begin(), r.parameter.end(),
                             [](const lumi::isf::IsfParam& p) {
                                 return p.typ == IsfTyp::Audio ||
                                        p.typ == IsfTyp::AudioFft;
                             }));
+    // Sie zaehlen NICHT zur Sorte: ein Filter mit Audio-Eingang bleibt ein
+    // Filter (zwei BILD-Eingaenge hat diese Fixture, s. oben).
+    const auto quellen = lumi::isf::alsBildQuellen(r.bildInputs, r.audioWaveInputs,
+                                                   r.audioFftInputs);
+    REQUIRE(quellen.size() == 3);
+    CHECK(quellen[2].name == "tonspur");
+    CHECK(quellen[2].bindung == lumi::multieffect::isffilter::kQuelleAudioWave);
 }
 
 TEST_CASE("IsfImport: der .vs bleibt ein EIGENER Shader")

@@ -2479,6 +2479,17 @@ struct PixelFilterParams
 namespace isffilter {
 constexpr int kQuelleKette = -1;    ///< Vorgabe: das Bild, das der Knoten vorfindet
 constexpr int kQuelleSchwarz = -2;  ///< bewusst nichts (z. B. Generator-Eingang)
+/// ISF-Audio-Eingaenge sind gewoehnliche SAMPLER — und zwar ZWEI mit
+/// verschiedener Bedeutung: `audio` traegt die **Waveform** (Zeitsignal),
+/// `audioFFT` das **Spektrum**; Breite = Samples/Bins, Hoehe = Kanaele.
+///
+/// **Befund S72:** zuerst hingen beide an der kombinierten 512×2-Textur des
+/// Shadertoy-Knotens (Zeile 0 Spektrum, Zeile 1 Waveform). Ein Shader, der
+/// bei `y = 0.5` abtastet, landete mit `GL_LINEAR` genau ZWISCHEN den Zeilen
+/// und las eine Mischung aus beidem — es kompilierte und zappelte zur Musik,
+/// war aber inhaltlich falsch. Deshalb zwei getrennte Bindungen.
+constexpr int kQuelleAudioWave = -3;  ///< Waveform-Textur (ISF `audio`)
+constexpr int kQuelleAudioFft = -4;   ///< Spektrum-Textur (ISF `audioFFT`)
 constexpr int kQuelleBufferBasis = 0;  ///< 0..7 = AVS-Global-Buffer 1..8
 constexpr int kQuelleBufferAnzahl = 8;
 constexpr int kQuelleMax = kQuelleBufferBasis + kQuelleBufferAnzahl - 1;

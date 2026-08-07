@@ -849,6 +849,82 @@ Umgesetzt (S69), alle drei Punkte — offen ist nur noch der UI-Sichttest:
    `editor/shaderFileDir`. Import ersetzt nur den Editor-Inhalt —
    übernommen wird erst mit Apply/OK.
 
+### 🟠 Key-Variablen-Regel für JEDES Import-Format (S72)
+
+> **SSOT der Regel:** `include/scripting/ScriptBaseKeys.hpp` (Entscheid D2,
+> `Vereinheitlichung_Konzept.md` §4). Dort steht die AVS/MilkDrop-Seite
+> vollständig — alles Weitere hier ist **neu aus S72**.
+>
+> **Geltungsbereich (Vorgabe Patrik S72):** Die Regel gilt für **alle**
+> Import-Formate — AVS, MilkDrop, **Shadertoy**, **ISF** — und für jedes
+> künftige. Sie ist bewusst formatunabhängig formuliert: ein neues Format
+> bringt nur seine Builtin-Liste mit, die Regel selbst bleibt.
+
+**Die Regel, wie Patrik sie in S72 formuliert hat** (Beispiel `bass`):
+`bass` ist ein **MilkDrop**-Original. Ein natives Lumi-Skript darf es für das
+Bass-Signal benutzen. Ein importiertes **AVS**-Preset kennt es dort aber
+*nicht* als Key-Variable — also ist `bass` in dieser Datei eine gewöhnliche
+Nutzer-Variable und wird zu **`bass_p`** umbenannt. Gleiches gilt für alle
+anderen. Verschärfung Patrik: *„wenn es mehrere `bass` als Original gibt und
+die Definition der Auswertung gleich ist, passt es ja auch"* — dann ist es
+kein Konflikt, sondern ein **gemeinsamer Schlüssel**, und das Binden an den
+injizierten Wert IST die treue Semantik.
+
+Daraus drei Fälle, maschinell entscheidbar:
+
+| Lage im Quellformat | Folge |
+|---|---|
+| vorhanden, **gleiche** Auswertung | gemeinsamer Schlüssel — **nicht** umbenennen |
+| vorhanden, **andere** Auswertung | umbenennen |
+| **nicht** vorhanden | gewöhnliche Nutzer-Variable — umbenennen |
+
+**Die Builtin-Listen je Format** (das Einzige, was ein neues Format mitbringen
+muss):
+
+| Format | Builtins, die NIE umbenannt werden |
+|---|---|
+| AVS | `beat` (r_list); Rest siehe `kInjectedKeys` |
+| MilkDrop | `bass`, `mid`, `treb`, `treble`, `vol`, `time` |
+| Shadertoy | `iTime`, `iTimeDelta`, `iResolution`, `iFrame`, `iFrameRate`, `iMouse`, `iDate`, `iSampleRate`, `iChannel0..3`, `iChannelTime`, `iChannelResolution`, `mainImage` |
+| ISF | `TIME`, `TIMEDELTA`, `FRAMEINDEX`, `RENDERSIZE`, `PASSINDEX`, `DATE`, `isf_FragNormCoord`, `vv_FragNormCoord` |
+| LumiViz (Zusatz in allen) | `bass`, `mid`, `treb`, `vol`, `beat`, `dt`, `getosc`, `getspec`, `getspecdb`, `_lumi*` |
+
+**Offen (vier Befunde S72):**
+
+0. **🟠 Shadertoy hat dieselbe Lücke — seit S65, unbemerkt.** Die
+   Shadertoy-Prälude deklariert `uniform float bass;` (und mid/treb/vol/beat).
+   Ein Shader von shadertoy.com, der eine **eigene** Variable `bass` benutzt,
+   ergibt damit eine **Doppel-Deklaration** und kompiliert nicht — mit einem
+   Fehler, der auf den Nutzer-Code zeigt, obwohl die Ursache in unserer
+   Prälude sitzt. Dieselbe Regel, dieselbe Behebung wie unten. Häufigkeit im
+   Netz-Korpus noch nicht gemessen (Shadertoy-Inhalte liegen lizenzbedingt
+   nicht im Repo — Messung über den Browser-Import, sobald jemand darauf
+   stößt).
+1. **ISF fehlt in der Tabelle.** `IsfFilterWrapper::istPraeludenName()` trägt
+   eine **eigene** Liste reservierter Namen — eine zweite Quelle neben
+   `kInjectedKeys`. Richtig wäre: ISF-Builtins (`TIME`, `TIMEDELTA`,
+   `FRAMEINDEX`, `RENDERSIZE`, `PASSINDEX`, `DATE`, `isf_FragNormCoord`,
+   `vv_FragNormCoord`) in die SSOT, und der Wrapper fragt
+   `collidesOnImport(name, format)`.
+2. **Namensschema inkonsistent.** Entscheid D2 lautet `name` → `name_p`
+   (mit Eskalation bei erneuter Kollision). Für ISF wurde stattdessen
+   `_lumiIn_<name>` erfunden — dasselbe Konzept in zwei Schreibweisen. Auf
+   `_p` vereinheitlichen; die Eskalationsregel mit übernehmen, denn ein
+   `INPUT` *kann* `bass_p` heißen.
+3. **`KeyOrigin` ist zu eng.** Ein Wert je Name kann „mehrere Formate, gleiche
+   Auswertung" nicht ausdrücken. Ersetzen durch eine Format-**Menge** plus
+   Kurzbeschreibung der Auswertung.
+
+⚠ **Groß-/Kleinschreibung:** die AVS-Regel vergleicht case-INSENSITIV (EEL),
+GLSL ist case-SENSITIV — `time` und `TIME` sind für ISF **zwei verschiedene
+Namen**. Die gemeinsame Regel braucht das format-abhängig.
+
+**Warum es zählt:** ein `INPUT bass` ist in ISF ein **Schieberegler, den der
+Nutzer zieht**. Ihn an unsere Audio-Energie zu binden, machte daraus still
+einen audiogesteuerten Wert — das wäre keine Treue, sondern eine
+Verhaltensänderung. Im Vidvox-Korpus kommt der Fall (Stand S72) kein einziges
+Mal vor; die Regel greift bei der ersten Datei, die es tut.
+
 ### ➜ ISF-Import + generischer Parameter-Baum (Entscheid Patrik S71 — nächster Strang)
 
 > **Steuerdokument:** [`visuals/ISF_Import_Parameterbaum_Plan.md`](visuals/ISF_Import_Parameterbaum_Plan.md)

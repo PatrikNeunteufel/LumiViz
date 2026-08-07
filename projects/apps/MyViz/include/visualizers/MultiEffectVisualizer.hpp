@@ -650,6 +650,28 @@ private:
         std::unique_ptr<QOpenGLShaderProgram> pfProgram;
         std::string pfCompiled;   ///< Code-Snapshot hinter dem Programm
         int pfFrame = 0;          ///< uFrame seit Kompilierung (deterministisch)
+
+        // ISF-Filter-Node (S72): eigenes Programm-PAAR — anders als die
+        // uebrigen GPU-Knoten bringt ein ISF-Shader auch eine Vertex-Stufe
+        // mit. Kompilierfehler wieder im geteilten stError.
+        std::unique_ptr<QOpenGLShaderProgram> isfProgram;
+        std::string isfFragCompiled;  ///< Fragment-Snapshot hinter dem Programm
+        std::string isfVertCompiled;  ///< Vertex-Snapshot hinter dem Programm
+        /// Die Sampler-Namen sind Teil des Shader-TEXTES (uniform-Zeilen) —
+        /// aendert sich die Quellen-Liste, muss neu uebersetzt werden.
+        std::string isfQuellenSignatur;
+        /// Ebenso die Regler: ihre Namen und Typen stehen als uniform-Zeilen
+        /// im Praeludium.
+        std::string isfParamSignatur;
+        int isfFrame = 0;         ///< FRAMEINDEX seit Kompilierung
+        /// Geometrie fuer Einzeldreieck und Gitter. Der Quad braucht keine —
+        /// dafuer dient der geteilte `m_quadVao` (gleiche Attribut-Belegung).
+        std::unique_ptr<QOpenGLVertexArrayObject> isfVao;
+        std::unique_ptr<QOpenGLBuffer> isfVbo;
+        int isfVertexAnzahl = 0;  ///< Eckpunkte im VBO
+        int isfGeoBauart = -1;    ///< Bauart, fuer die der Puffer gebaut wurde
+        int isfGeoX = 0;          ///< Gitterweite, fuer die er gebaut wurde
+        int isfGeoY = 0;
     };
 
     /** Render-thread state of one list node, keyed by ChainNode::nodeId. */
@@ -788,6 +810,13 @@ private:
     /// Pixel-Filter-Node (S70): Nutzer-GLSL je Pixel (Stilfilter-Strang).
     void runPixelFilter(const lumi::multieffect::ChainNode& node,
                         const lumi::multieffect::PixelFilterParams& params);
+    void runIsfFilter(const lumi::multieffect::ChainNode& node,
+                      const lumi::multieffect::IsfFilterParams& params);
+    /// Geometrie-Puffer des ISF-Knotens fuer die gewaehlte Bauart bereitstellen
+    /// (Einzeldreieck/Gitter; der Quad benutzt den geteilten `m_quadVao`).
+    /// Baut nur neu, wenn Bauart oder Gitterweite sich geaendert haben.
+    void sorgeFuerIsfGeometrie(LeafRuntime& rt,
+                               const lumi::multieffect::IsfFilterParams& params);
     /// GL blend state for an AVS BLEND_LINE mode 0..9 (S9; 8 falls back to add).
     static void applyLineBlend(int mode, int adjustAlpha);
     /// Restore GL_FUNC_ADD + disable blending after a line-blend draw.
@@ -1135,6 +1164,22 @@ private:
     /// AnalyserNode-Vertrag — smoothingTimeConstant 0,8 auf der MAGNITUDE,
     /// erst danach die dB-Spanne [-100,-30] (getByteFrequencyData)
     std::array<float, 512> m_stAudioSmooth{};
+    /// ISF-Audio (S72): ISF erwartet ZWEI getrennte Texturen — `audio` traegt
+    /// die Waveform, `audioFFT` das Spektrum (Breite = Samples/Bins, Hoehe =
+    /// Kanaele). Sie aus derselben Rechnung zu speisen wie die
+    /// Shadertoy-Textur ist Absicht: die dB-Skala und die 0,8-Glaettung
+    /// (S67-Befund) duerfen nicht auseinanderlaufen, sonst saehe dasselbe
+    /// Stueck Musik je nach Knotentyp anders aus.
+    unsigned int m_isfWaveTex = 0;
+    unsigned int m_isfFftTex = 0;
+    /// Frame-Stempel der drei Audio-Texturen: JEDER Knoten, der Audio will,
+    /// fordert sie an — ohne diesen Riegel laedt eine Kette mit drei solchen
+    /// Knoten dieselben Daten dreimal je Frame hoch.
+    std::uint64_t m_audioTexFrame = 0;
+    bool m_audioTexAktuell = false;
+    /// Baut alle drei Audio-Texturen aus EINER Rechnung — hoechstens einmal
+    /// je Frame. `updateShadertoyAudioTexture` ruft sie ebenfalls.
+    void aktualisiereAudioTexturen();
 
     // Multi Delay: 6 host-shared frame ring buffers (r_multidelay), cleared with
     // the runtimes. Input nodes fill them; output nodes read the delayed frame.

@@ -2842,7 +2842,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
             s.name = getStr(e, "name", s.name);
             if (s.name.empty()) continue;  // ohne Namen nicht zuzuordnen
             s.bindung = std::clamp(getInt(e, "bindung", s.bindung),
-                                   lumi::multieffect::isffilter::kQuelleSchwarz,
+                                   lumi::multieffect::isffilter::kQuelleAudioFft,
                                    lumi::multieffect::isffilter::kQuelleMax);
             p.quellen.push_back(std::move(s));
         }

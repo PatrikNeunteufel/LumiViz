@@ -17,6 +17,7 @@
 #include "visualizers/multieffect/MeshWarpWrapper.hpp"      // Mesh-Warp-Node (G1, S69)
 #include "visualizers/multieffect/GpuParticlesWrapper.hpp"  // GPU-Partikel (G2, S69)
 #include "visualizers/multieffect/PixelFilterWrapper.hpp"   // Pixel-Filter (Stilfilter, S70)
+#include "visualizers/multieffect/IsfFilterWrapper.hpp"     // ISF-Filter (S72)
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 #include "services/LiveVideoFeed.hpp"  // videoSource: Kamera/Streaming (S70)
@@ -3647,6 +3648,11 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         m_audioLevel += (rms - m_audioLevel) * 0.3f;
     }
 
+    // Neues Frame: die Audio-Texturen sind wieder faellig. Jeder Knoten, der
+    // sie will, fordert sie an — hochgeladen werden sie trotzdem nur einmal
+    // (S72; vorher lud jeder Shadertoy-Knoten dieselben Daten erneut hoch).
+    m_audioTexAktuell = false;
+
     // Chain-scoped beat, AVS-faithful (ref main.cpp:290-329): onset from the
     // per-channel mean |waveform| (max of L/R), then refined/predicted by the
     // bpm.cpp port — its return value IS the beat, exactly like the original
@@ -3993,9 +3999,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const GpuParticlesParams& params) const { self.runGpuParticles(node, params); }
         void operator()(const VideoSourceParams& params) const { self.runVideoSource(node, params); }
         void operator()(const PixelFilterParams& params) const { self.runPixelFilter(node, params); }
-        // ISF-Filter (S72): der Renderer folgt in I2 — bis dahin reicht der
-        // Knoten das Bild unveraendert durch, statt gar nicht zu bauen.
-        void operator()(const IsfFilterParams&) const { /* Renderer folgt (I2) */ }
+        void operator()(const IsfFilterParams& params) const { self.runIsfFilter(node, params); }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
     std::visit(Visitor{*this, node}, node.params);
@@ -12505,6 +12509,70 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
 // Shadertoy-Node (Strang S, S65) — ein Fragment-Pass in Chain-Auflösung
 // =============================================================================
 
+void MultiEffectVisualizer::aktualisiereAudioTexturen()
+{
+    // Alle Audio-Texturen kommen aus EINER Rechnung (S72): Shadertoy und ISF
+    // packen dieselben Daten nur anders. Liefen die Skalen auseinander, saehe
+    // dasselbe Stueck Musik je nach Knotentyp anders aus — und niemand
+    // wuesste, warum.
+    if (m_audioTexAktuell) return;  // je Frame nur ein Upload, s. Header
+    m_audioTexAktuell = true;
+    updateShadertoyAudioTexture();
+
+    auto* f = QOpenGLContext::currentContext()->functions();
+    // ISF-Zuschnitt: je eine Zeile, Breite 512 — `audio` = Waveform,
+    // `audioFFT` = Spektrum. Getrennt, weil ein Shader bei y = 0.5 abtastet
+    // und in einer kombinierten 512x2-Textur mit GL_LINEAR eine Mischung
+    // aus beidem bekaeme (Befund S72).
+    std::array<unsigned char, 512> wave{};
+    std::array<unsigned char, 512> fft{};
+    const std::vector<float> w = getWaveform();
+    const auto sampleAt = [](const std::vector<float>& v, int i) {
+        if (v.empty()) return 0.0f;
+        const std::size_t idx =
+            static_cast<std::size_t>((static_cast<double>(i) / 512.0) *
+                                     static_cast<double>(v.size()));
+        return v[std::min(idx, v.size() - 1)];
+    };
+    for (int i = 0; i < 512; ++i)
+    {
+        // Spektrum: DIESELBE Kurve wie oben — m_stAudioSmooth ist bereits
+        // von updateShadertoyAudioTexture() fortgeschrieben, hier wird nur
+        // noch gelesen (kein zweiter Glaettungszustand).
+        const float db =
+            20.0f * std::log10(std::max(m_stAudioSmooth[static_cast<std::size_t>(i)],
+                                        1e-6f));
+        const float s = std::clamp((db + 100.0f) / 70.0f, 0.0f, 1.0f);
+        fft[static_cast<std::size_t>(i)] =
+            static_cast<unsigned char>(s * 255.0f + 0.5f);
+        const float v = std::clamp(0.5f + 0.5f * sampleAt(w, i), 0.0f, 1.0f);
+        wave[static_cast<std::size_t>(i)] =
+            static_cast<unsigned char>(v * 255.0f + 0.5f);
+    }
+
+    const auto lade = [f](unsigned int& tex, const unsigned char* daten) {
+        if (tex == 0)
+        {
+            f->glGenTextures(1, &tex);
+            f->glBindTexture(GL_TEXTURE_2D, tex);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        else
+        {
+            f->glBindTexture(GL_TEXTURE_2D, tex);
+        }
+        f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 512, 1, 0, GL_RED,
+                        GL_UNSIGNED_BYTE, daten);
+    };
+    lade(m_isfWaveTex, wave.data());
+    lade(m_isfFftTex, fft.data());
+    f->glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 void MultiEffectVisualizer::updateShadertoyAudioTexture()
 {
     auto* f = QOpenGLContext::currentContext()->functions();
@@ -12972,6 +13040,282 @@ void MultiEffectVisualizer::runPixelFilter(const ChainNode& node,
     pair.swap();
     bindActive();
     ++rt.pfFrame;
+}
+
+void MultiEffectVisualizer::sorgeFuerIsfGeometrie(LeafRuntime& rt,
+                                                  const IsfFilterParams& params)
+{
+    namespace ic = lumi::multieffect::isffilter;
+    const int bauart = std::clamp(params.geometrie, 0, ic::kGeometrieMax);
+    const int gx = std::clamp(params.gridX, ic::kGridMin, ic::kGridMax);
+    const int gy = std::clamp(params.gridY, ic::kGridMin, ic::kGridMax);
+
+    if (bauart == 0)
+    {
+        // Quad = der geteilte m_quadVao (gleiche Attribut-Belegung, -1..1).
+        rt.isfVao.reset();
+        rt.isfVbo.reset();
+        rt.isfGeoBauart = 0;
+        return;
+    }
+    // Nur neu bauen, wenn sich wirklich etwas geaendert hat — ein VBO je
+    // Frame neu hochzuladen kostet bei 256x256 spuerbar.
+    if (rt.isfVao != nullptr && rt.isfGeoBauart == bauart &&
+        (bauart != 2 || (rt.isfGeoX == gx && rt.isfGeoY == gy)))
+        return;
+
+    std::vector<float> ecken;
+    if (bauart == 1)
+    {
+        // EIN uebergrosses Dreieck ueber den ganzen Schirm: keine Diagonale,
+        // also auch keine geknickte Varying-Interpolation und kein doppeltes
+        // Rastern an der Naht.
+        ecken = {-1.0f, -1.0f, 3.0f, -1.0f, -1.0f, 3.0f};
+    }
+    else
+    {
+        // Gitter: zwei Dreiecke je Zelle. Ohne Indexpuffer — die Zahl der
+        // Eckpunkte bleibt auch bei 256x256 im Rahmen, und der Vertex-Shader
+        // ist hier ohnehin der teure Teil.
+        ecken.reserve(static_cast<std::size_t>(gx) * static_cast<std::size_t>(gy) * 12);
+        const auto setze = [&ecken](float u, float v) {
+            ecken.push_back(u * 2.0f - 1.0f);
+            ecken.push_back(v * 2.0f - 1.0f);
+        };
+        for (int y = 0; y < gy; ++y)
+        {
+            for (int x = 0; x < gx; ++x)
+            {
+                const float u0 = static_cast<float>(x) / static_cast<float>(gx);
+                const float u1 = static_cast<float>(x + 1) / static_cast<float>(gx);
+                const float v0 = static_cast<float>(y) / static_cast<float>(gy);
+                const float v1 = static_cast<float>(y + 1) / static_cast<float>(gy);
+                setze(u0, v0); setze(u1, v0); setze(u1, v1);
+                setze(u0, v0); setze(u1, v1); setze(u0, v1);
+            }
+        }
+    }
+
+    if (rt.isfVao == nullptr)
+    {
+        rt.isfVao = std::make_unique<QOpenGLVertexArrayObject>();
+        rt.isfVao->create();
+    }
+    if (rt.isfVbo == nullptr)
+    {
+        rt.isfVbo = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::VertexBuffer);
+        rt.isfVbo->create();
+    }
+    rt.isfVao->bind();
+    rt.isfVbo->bind();
+    rt.isfVbo->allocate(ecken.data(),
+                        static_cast<int>(ecken.size() * sizeof(float)));
+    auto* f = QOpenGLContext::currentContext()->functions();
+    f->glEnableVertexAttribArray(0);
+    f->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
+    rt.isfVbo->release();
+    rt.isfVao->release();
+
+    rt.isfVertexAnzahl = static_cast<int>(ecken.size() / 2);
+    rt.isfGeoBauart = bauart;
+    rt.isfGeoX = gx;
+    rt.isfGeoY = gy;
+}
+
+void MultiEffectVisualizer::runIsfFilter(const ChainNode& node,
+                                         const IsfFilterParams& params)
+{
+    namespace ic = lumi::multieffect::isffilter;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    auto* f = QOpenGLContext::currentContext()->functions();
+
+    // Der Shader-TEXT haengt an Quellen und Reglern (beide werden zu
+    // uniform-Zeilen im Praeludium) — aendert sich einer der beiden, muss neu
+    // uebersetzt werden, sonst zeigt ein frisch importierter Shader auf
+    // Sampler, die es im Programm gar nicht gibt.
+    std::string quellenSig;
+    for (const auto& q : params.quellen) quellenSig += q.name + ";";
+    std::string paramSig;
+    for (const auto& w : params.parameter.werte)
+        paramSig += w.key + ":" + std::to_string(static_cast<int>(w.typ)) + ";";
+
+    if (rt.isfProgram == nullptr || rt.isfFragCompiled != params.fragCode ||
+        rt.isfVertCompiled != params.vertexCode ||
+        rt.isfQuellenSignatur != quellenSig || rt.isfParamSignatur != paramSig)
+    {
+        rt.isfFragCompiled = params.fragCode;
+        rt.isfVertCompiled = params.vertexCode;
+        rt.isfQuellenSignatur = quellenSig;
+        rt.isfParamSignatur = paramSig;
+        rt.stError.clear();
+        rt.isfFrame = 0;
+        auto program = std::make_unique<QOpenGLShaderProgram>();
+        const std::string vert =
+            lumi::isffilter::wrapVertex(params.vertexCode, params.parameter);
+        const std::string frag = lumi::isffilter::wrapFragment(
+            params.fragCode, params.quellen, params.parameter);
+        if (!program->addShaderFromSourceCode(QOpenGLShader::Vertex, vert.c_str()) ||
+            !program->addShaderFromSourceCode(QOpenGLShader::Fragment, frag.c_str()) ||
+            !program->link())
+        {
+            rt.stError = "ISF: " + program->log().toStdString();
+            BasicLogger::logWarning("MultiEffect: ISF-Filter-Kompilierfehler: " +
+                                    rt.stError.substr(0, 400));
+            program.reset();
+        }
+        rt.isfProgram = std::move(program);
+    }
+    if (rt.isfProgram == nullptr) return;  // Kompilierfehler ⇒ Passthrough
+
+    sorgeFuerIsfGeometrie(rt, params);
+
+    float bass = 0.0f, mid = 0.0f, treb = 0.0f;
+    computeAudioBands(getSpectrum(), bass, mid, treb);
+
+    // Quelle lesen, Partner beschreiben, tauschen (transformPass-Muster).
+    SurfacePair& pair = active();
+    pair.current()->release();
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+
+    QOpenGLShaderProgram& p = *rt.isfProgram;
+    p.bind();
+    p.setUniformValue("RENDERSIZE",
+                      QVector2D(static_cast<float>(m_surfaceWidth),
+                                static_cast<float>(m_surfaceHeight)));
+    p.setUniformValue("TIME", static_cast<float>(m_scriptClock));
+    p.setUniformValue("TIMEDELTA", m_deltaTime);
+    p.setUniformValue("FRAMEINDEX", rt.isfFrame);
+    // Einpass-Knoten: PASSINDEX ist immer 0. Die Groesse muss trotzdem da
+    // sein — auch Einpass-Dateien der Bibliothek lesen sie (Befund S72 aus
+    // dem GL-Smoke: „'PASSINDEX' : undeclared identifier").
+    p.setUniformValue("PASSINDEX", 0);
+    // DATE deterministisch (Batch-Renderer-Merkregel wie beim Shadertoy-Node).
+    p.setUniformValue("DATE", QVector4D(2026.0f, 1.0f, 1.0f,
+                                        static_cast<float>(m_scriptClock)));
+    p.setUniformValue("bass", bass);
+    p.setUniformValue("mid", mid);
+    p.setUniformValue("treb", treb);
+    p.setUniformValue("vol", m_audioLevel);
+    p.setUniformValue("beat", m_frameBeat ? 1.0f : 0.0f);
+    p.setUniformValue("_lumiBlend", std::clamp(params.blend, 0, 2));
+    p.setUniformValue("_lumiMixAmount",
+                      static_cast<float>(std::clamp(params.mixAmount, 0.0, 1.0)));
+
+    // Regler: der `key` IST der Uniform-Name. Ein Wert, den der Shader gar
+    // nicht liest, wegoptimiert der Treiber — setUniformValue schadet nicht.
+    for (const auto& w : params.parameter.werte)
+    {
+        if (w.key.empty()) continue;
+        // Bei einer Namenskollision heisst das Uniform anders (Import-
+        // Kollisionsregel, s. IsfFilterWrapper::echterName) — gesetzt wird
+        // der ECHTE Name, sonst liefe der Wert ins Leere.
+        const std::string echt = lumi::isffilter::echterName(w.key);
+        const char* name = echt.c_str();
+        switch (w.typ)
+        {
+            case lumi::multieffect::ParamTyp::Bool:
+                p.setUniformValue(name, w.ja);
+                break;
+            case lumi::multieffect::ParamTyp::Ganzzahl:
+            case lumi::multieffect::ParamTyp::Auswahl:
+                p.setUniformValue(name, static_cast<int>(w.zahl));
+                break;
+            case lumi::multieffect::ParamTyp::Punkt2D:
+                p.setUniformValue(name, QVector2D(static_cast<float>(w.vektor[0]),
+                                                  static_cast<float>(w.vektor[1])));
+                break;
+            case lumi::multieffect::ParamTyp::Farbe:
+                p.setUniformValue(name, QVector4D(static_cast<float>(w.vektor[0]),
+                                                  static_cast<float>(w.vektor[1]),
+                                                  static_cast<float>(w.vektor[2]),
+                                                  static_cast<float>(w.vektor[3])));
+                break;
+            case lumi::multieffect::ParamTyp::Text:
+                break;  // hat in GLSL keine Entsprechung
+            default:
+                p.setUniformValue(name, static_cast<float>(w.zahl));
+                break;
+        }
+    }
+
+    // Das Bild, das der Knoten vorfindet: Blend-Grundlage UND Vorgabe jeder
+    // Quelle (AVS-Konvention "nichts gewaehlt = normale Pipeline").
+    const unsigned int kettenTex = pair.current()->texture();
+    int einheit = 0;
+    p.setUniformValue("_lumiPrev", einheit);
+    f->glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(einheit));
+    f->glBindTexture(GL_TEXTURE_2D, kettenTex);
+    ++einheit;
+
+    // getosc()/getspec() sollen IMMER gehen — anders als die ISF-Audio-
+    // Eingaenge, die ein Shader erst deklarieren muesste (Wunsch Patrik S72:
+    // dasselbe Vokabular wie in den Skripten).
+    aktualisiereAudioTexturen();
+    const auto bindeTextur = [&](const char* name, unsigned int tex) {
+        p.setUniformValue(name, einheit);
+        f->glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(einheit));
+        f->glBindTexture(GL_TEXTURE_2D, tex);
+        ++einheit;
+    };
+    bindeTextur("_lumiAudioWave", m_isfWaveTex);
+    bindeTextur("_lumiAudioFft", m_isfFftTex);
+
+    // Je Bildquelle eine Textureinheit. Mehr als das GL-Minimum von 16 kann
+    // ein ISF-Shader nicht sinnvoll haben; ueberzaehlige bleiben schwarz.
+    for (const auto& q : params.quellen)
+    {
+        if (q.name.empty() || einheit >= 16) continue;
+        unsigned int tex = 0;
+        if (q.bindung == ic::kQuelleKette)
+        {
+            tex = kettenTex;
+        }
+        else if (q.bindung == ic::kQuelleAudioWave ||
+                 q.bindung == ic::kQuelleAudioFft)
+        {
+            // ISF-Zuschnitt: ZWEI getrennte Texturen. Die kombinierte
+            // Shadertoy-Textur waere hier falsch (Befund S72) — ein Shader,
+            // der bei y = 0.5 abtastet, laese eine Mischung aus Spektrum und
+            // Waveform.
+            aktualisiereAudioTexturen();
+            tex = q.bindung == ic::kQuelleAudioWave ? m_isfWaveTex : m_isfFftTex;
+        }
+        else if (q.bindung >= ic::kQuelleBufferBasis && q.bindung <= ic::kQuelleMax)
+        {
+            // allocate=false: ein nie beschriebener Slot bleibt schwarz,
+            // statt hier Speicher anzulegen (Muster der iChannel-Bindung).
+            if (QOpenGLFramebufferObject* fbo = activePool().get(
+                    q.bindung - ic::kQuelleBufferBasis, m_surfaceWidth,
+                    m_surfaceHeight, false))
+                tex = fbo->texture();
+        }
+        // kQuelleSchwarz (und ein leerer Slot) lassen tex auf 0 = schwarz.
+        p.setUniformValue(lumi::isffilter::echterName(q.name).c_str(), einheit);
+        f->glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(einheit));
+        f->glBindTexture(GL_TEXTURE_2D, tex);
+        ++einheit;
+    }
+    f->glActiveTexture(GL_TEXTURE0);
+
+    if (rt.isfGeoBauart == 0 || rt.isfVao == nullptr)
+    {
+        m_quadVao->bind();
+        f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        m_quadVao->release();
+    }
+    else
+    {
+        rt.isfVao->bind();
+        f->glDrawArrays(GL_TRIANGLES, 0, rt.isfVertexAnzahl);
+        rt.isfVao->release();
+    }
+
+    p.release();
+    pair.partner()->release();
+    pair.swap();
+    bindActive();
+    ++rt.isfFrame;
 }
 
 void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,
