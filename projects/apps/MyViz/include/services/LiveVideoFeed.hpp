@@ -5,7 +5,7 @@
  *
  * @author Patrik Neunteufel
  * @date   August 2026
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @details
  * Gegenstueck zum VideoFrameCache (der dekodiert deterministisch KOMPLETT in den
@@ -23,18 +23,33 @@
  * Settings-Testaufnahme) gesetzt wurde. Ein Preset-Laden alleine oeffnet damit
  * nie den Windows-Berechtigungsdialog.
  *
- * Threading: starteDatei/starteKamera/stopp sind render-thread-tauglich (Queued-
- * Invoke auf den Main-Thread, dessen Event-Loop Qt Multimedia braucht —
- * dasselbe Muster wie VideoFrameCache). `letztesBild` kopiert unter Mutex.
+ * EIN-THREAD-BESITZ (Umbau S71, Entscheid Patrik — der Kern der Loesung):
+ * ALLE Qt-Multimedia-Objekte eines Feeds (QCamera, QMediaCaptureSession,
+ * QMediaPlayer, QVideoSink) werden auf dem MEDIEN-THREAD erzeugt, benutzt und
+ * zerstoert. Der Main-Thread erteilt nur Auftraege ("Feed anlegen", "Feed
+ * beenden") und wartet beim Herunterfahren auf die Bestaetigung.
  *
- * ABSCHALT-VERTRAG (Befund S71, Kern des Teardown-Deadlocks): ein Feed wird
- * NIE gestoppt oder zerstoert, solange der Wandler-Thread noch einen seiner
- * Frames anfasst. `feedStilllegen()` ist die EINZIGE erlaubte Reihenfolge —
- * Totflagge, Senke abklemmen, Wandler-Barriere, DANN stop/zerstoeren. Wird sie
- * verletzt, mappt der Wandler ein Frame einer bereits sterbenden MF-/D3D-
- * Pipeline, blockiert im Treiber und haelt den Pipeline-Puffer fuer immer —
- * genau daran starben die nvwgf2umx-Worker (Log-Beweis: `wait(5000)` des
- * Wandlers lief in JEDEM Lauf mit Feed in den Timeout).
+ * Bis S71 lagen Pipeline (Main-Thread) und Frame-Verarbeitung (eigener Thread)
+ * AUSEINANDER — das war die eigentliche Krankheit: die Pipeline starb auf dem
+ * einen Thread, waehrend der andere noch ihre Frames hielt. Jede Absicherung
+ * an dieser Naht (Totflagge, Barriere, Bau-Riegel, Quit-Schleife) kurierte nur
+ * Symptome. Auf EINEM Thread koennen Frame-Verarbeitung und Abbau einander
+ * nicht mehr ueberholen; die Wandlung laeuft zudem wieder im Lieferkontext,
+ * dem laut S70 einzig sicheren Ort fuer Hardware-Frames. Zusaetzlich bindet
+ * Media Foundation (COM) seine Objekte an das Apartment des erzeugenden
+ * Threads — auf dem Medien-Thread haengen sie nicht mehr am GUI-Apartment,
+ * das ~QGuiApplication abraeumt.
+ *
+ * Threading: starteDatei/starteKamera/stopp sind render-thread-tauglich
+ * (Queued-Invoke auf den Medien-Thread). `letztesBild`/`bildNummer` kopieren
+ * unter Mutex und sind von jedem Thread aus zulaessig.
+ *
+ * ABSCHALT-VERTRAG (Befund S71): ein Feed wird NIE gestoppt oder zerstoert,
+ * solange noch eines seiner Frames verarbeitet wird. `feedStilllegen()` ist
+ * die EINZIGE Abbau-Stelle — Totflagge, Senke abklemmen, Barriere, DANN
+ * stop/zerstoeren. Seit dem Ein-Thread-Besitz ist die Barriere auf dem
+ * Medien-Thread ein No-op (dort kann per Definition kein Frame parallel
+ * laufen); sie bleibt als Absicherung fuer Aufrufe von aussen stehen.
  ****************************************************************************************
  */
 
@@ -47,6 +62,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -146,15 +162,15 @@ private:
 
     struct Feed;
 
-    /// Laufen auf dem Main-Thread (Queued-Invoke aus starteDatei/-Kamera/stopp)
+    /// Laufen auf dem MEDIEN-THREAD (Queued-Invoke aus starteDatei/-Kamera):
+    /// dort entstehen alle Qt-Multimedia-Objekte und dort sterben sie auch.
     void baueDatei(std::uint64_t nodeId, const QString& pfad, bool loop,
                    double tempo);
     void baueKamera(std::uint64_t nodeId, const QString& geraeteId);
-    /// Entsorgt gestoppte Feeds (m_friedhof) auf dem Main-Thread. Das
+    /// Entsorgt gestoppte Feeds (m_friedhof) auf dem Medien-Thread. Das
     /// Queued-Lambda von stopp() traegt bewusst KEIN Eigentum — landet das
-    /// Event nie (Shutdown), raeumt alleStoppen() synchron ab. Sonst stirbt
-    /// die QCamera beim Entsorgen der Event-Queue MITTEN im ~QApplication
-    /// (S70-Befund #2: Haupt-Thread haengt in Application::shutdown).
+    /// Event nie (Shutdown), raeumt alleStoppen() ab. Sonst stirbt die
+    /// QCamera beim Entsorgen der Event-Queue (S70-Befund #2).
     void friedhofLeeren();
     /**
      * @brief Einen bestehenden Feed dieses Knotens vertragsgemaess abbauen
@@ -172,50 +188,54 @@ private:
     /// Bauauftrag austragen (jeder Ausgang von baueDatei/baueKamera).
     void bauAustragen(std::uint64_t nodeId);
     /**
-     * @brief EINEN Feed vertragsgemaess abschalten (Main-Thread)
+     * @brief EINEN Feed vertragsgemaess abschalten (MEDIEN-THREAD)
      *
      * Die einzige erlaubte Abschalt-Reihenfolge (s. ABSCHALT-VERTRAG oben):
-     * 1. Totflagge setzen — der Wandler laesst ab jetzt jedes Frame liegen,
+     * 1. Totflagge setzen — ab jetzt bleibt jedes Frame liegen,
      * 2. Senke abklemmen — es kommen keine neuen Frames mehr nach,
-     * 3. `wandlerBarriere()` — alle bereits zugestellten Frames sind durch
-     *    und ihre Pipeline-Puffer zurueckgegeben,
+     * 3. `wandlerBarriere()` — auf dem Medien-Thread ein No-op (dort kann
+     *    kein Frame parallel laufen), Absicherung fuer Aufrufe von aussen,
      * 4. erst DANN stop() und Zerstoerung der Qt-Multimedia-Objekte.
      */
     void feedStilllegen(const std::shared_ptr<Feed>& feed);
     /**
-     * @brief Warten, bis der Wandler-Thread alle bisherigen Frames durch hat
+     * @brief Sicherstellen, dass kein Frame mehr in Verarbeitung ist
      *
-     * Postet ein leeres Lambda HINTER die schon zugestellten Frame-Events und
-     * wartet auf dessen Ausfuehrung (Semaphore, kein verschachtelter
-     * Event-Loop). Timeout, damit ein blockierter Wandler den Abbau nur
-     * verzoegert statt ihn zu verklemmen — die Warnung im Log ist dann der
-     * Beleg, dass ein Frame im Treiber steckt.
+     * Auf dem Medien-Thread selbst sofort erfuellt (der Handler laeuft dort,
+     * er kann nicht gleichzeitig laufen). Von aussen: leeres Lambda hinter
+     * die Queue posten und darauf warten (Semaphore mit Timeout, kein
+     * verschachtelter Event-Loop).
      */
     void wandlerBarriere(int maxMs);
-    /// Sink-Anschluss: jedes Bild nach RGBX8888 wandeln und unter `mutex`
-    /// in den Feed legen. `kontext` lebt auf dem Wandler-Thread — die
-    /// Zustellung ist queued, der Handler laeuft DORT (Lag-Befund S70:
-    /// GUI-Thread fror ein; Render-Thread haengt bei Hardware-Frames).
+    /// Sink-Anschluss: jedes Bild nach RGBX8888 wandeln und unter `mutex` in
+    /// den Feed legen. Senke und Kontext leben auf dem Medien-Thread — die
+    /// Zustellung ist damit DIRECT und die Wandlung laeuft im Lieferkontext
+    /// (S70: der einzig sichere Ort fuer Hardware-Frames).
     void verbindeSenke(QVideoSink* senke, QMutex* mutex, QObject* kontext,
                        const std::shared_ptr<Feed>& feed);
+    /// Auf dem Medien-Thread ausfuehren und auf Fertigmeldung warten
+    /// (Semaphore + Timeout, NICHT BlockingQueued: ein haengender
+    /// Medien-Thread darf den Abbau verzoegern, nicht verklemmen).
+    /// @return false = Timeout, die Arbeit ist NICHT bestaetigt
+    bool aufMedienThread(const std::function<void()>& arbeit, int maxMs);
 
     QMutex m_mutex;
     std::unordered_map<std::uint64_t, std::shared_ptr<Feed>> m_feeds;
     /// BAU-RIEGEL (Befund S71): laufender Bauauftrag je Knoten (Wert =
     /// Zielquelle). Der Render-Thread ruft `starte*` in JEDEM Frame; bis der
-    /// gequeuete Bau auf dem Main-Thread durch ist, steht der Feed noch nicht
-    /// in `m_feeds` — ohne diesen Riegel wuerde jedes Frame einen weiteren
-    /// Bauauftrag queuen, und jeder davon raeumt (altenFeedRaeumen) die eben
-    /// gebaute Kamera wieder ab: eine Endlosschleife aus Auf- und Abbau, die
-    /// den Main-Thread blockiert und die Kamera nie hochkommen laesst.
+    /// gequeuete Bau durch ist, steht der Feed noch nicht in `m_feeds` — ohne
+    /// diesen Riegel wuerde jedes Frame einen weiteren Bauauftrag queuen, und
+    /// jeder davon raeumt (altenFeedRaeumen) die eben gebaute Kamera wieder
+    /// ab: eine Endlosschleife aus Auf- und Abbau, die den Medien-Thread
+    /// blockiert und die Kamera nie hochkommen laesst.
     std::unordered_map<std::uint64_t, QString> m_imBau;
-    /// Gestoppte Feeds bis zur Main-Thread-Entsorgung (s. friedhofLeeren)
+    /// Gestoppte Feeds bis zur Entsorgung auf dem Medien-Thread
     std::vector<std::shared_ptr<Feed>> m_friedhof;
-    /// Wandler-Thread (Lag-Befund S70): die Frame-Verbindungen werden queued
-    /// an m_wandlerKontext zugestellt — die RGBX-Wandlung laeuft dort, weder
-    /// GUI- noch Render-Thread fassen QVideoFrames an.
-    QThread* m_wandler = nullptr;
-    QObject* m_wandlerKontext = nullptr;  ///< Empfaenger-Kontext auf m_wandler
+    /// MEDIEN-THREAD (Umbau S71): traegt die KOMPLETTE Qt-Multimedia-Seite —
+    /// Aufbau, Frame-Verarbeitung und Abbau aller Feeds. Der Main-Thread
+    /// erteilt nur Auftraege (s. EIN-THREAD-BESITZ im Dateikopf).
+    QThread* m_medien = nullptr;
+    QObject* m_medienKontext = nullptr;  ///< Auftrags-Kontext auf m_medien
     std::atomic<bool> m_kameraErlaubt{false};
     std::atomic<bool> m_feedLief{false};  ///< s. feedGelaufen()
     /// Shutdown-Riegel (S70): nach alleStoppen() darf NICHTS mehr starten —

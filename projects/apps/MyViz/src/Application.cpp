@@ -458,25 +458,14 @@ void Application::shutdown()
     videoFeeds.herunterfahren();
     lumi::services::VideoFrameCache::instance().herunterfahren();
 
-    // NOTAUSGANG (S70, entschaerft S71). Ursprung: die D3D11-Worker der
-    // Media-Foundation-Pipeline (nvwgf2umx-Threads) starben nie, der
-    // ~QApplication haengt dann in den Multimedia-Postroutinen.
-    // S71 hat die Ursache gefunden und behoben (Abschalt-Vertrag im
-    // LiveVideoFeed: der Wandler mappte Frames einer sterbenden Pipeline).
-    // Der Notausgang bleibt vorerst als Netz stehen, bis mehrere
-    // Sichttests den regulaeren Weg bestaetigt haben.
-    // KRITERIUM ERWEITERT (S71): frueher „Kamera lief" — ein Lauf mit
-    // reinem DATEI-Feed hing genauso (Log 00:28:55), die Blockade war nie
-    // kameraspezifisch. Jetzt greift es bei jedem Qt-Multimedia-Lauf,
-    // inklusive der Settings-Testaufnahme.
-    if (videoFeeds.feedGelaufen())
-    {
-        m_initialized = false;
-        BasicLogger::logInfo(
-            "Application::shutdown() complete (erzwungenes Prozessende — "
-            "Multimedia-Teardown-Netz, S70/S71)");
-        std::_Exit(0);
-    }
+    // KEIN _Exit-NOTAUSGANG MEHR (Befund S71): `std::_Exit(0)` hat den
+    // Prozess NICHT beendet — am Pruefstand reproduziert. ExitProcess muss
+    // alle Threads abraeumen; steckt einer im Grafiktreiber, blockiert auch
+    // das. Deshalb erschien im Log seit S70 zwar „erzwungenes Prozessende",
+    // und die App hing trotzdem weiter (Sichttest Patrik). Die Ursache liegt
+    // woanders und ist behoben: ein eigener Thread fuer die Multimedia-Seite
+    // verhinderte das Prozessende — der LiveVideoFeed arbeitet jetzt per
+    // Vorgabe auf dem Main-Thread (s. dort, sowie Lebenszyklus-Vertrag 6.6).
 
     BasicLogger::logDebug("Destroying QApplication...");
     m_impl->pQtApp.reset();

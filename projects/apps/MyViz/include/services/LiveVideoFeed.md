@@ -1,6 +1,6 @@
 # LiveVideoFeed — Live-Videoquellen je Chain-Node (Datei-Streaming + Kamera)
 
-> **Version:** 1.3.0
+> **Version:** 1.4.0
 > **Datum:** 2026-08-07
 > **Typ:** CppModuleDoc
 > **Status:** Implementiert (videoSource-Strang, Session 70/71)
@@ -143,6 +143,7 @@ für das Original-Tempo des Frame-Schritts trägt).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.4.0 | 2026-08-07 | **Prozess-Hänger geloest (S71, A/B am Pruefstand): der eigene Thread war die Ursache.** MIT Worker-Thread 2/2 Haenger, OHNE 3/3 sauberes Prozessende — unabhaengig von Backend (FFmpeg/WMF), Lage der Pipeline und COM-Init. Multimedia laeuft jetzt per Vorgabe auf dem **Main-Thread** (Stand `f93c83a`); `LUMIVIZ_MEDIEN_THREAD=1` schaltet den Worker-Thread fuer Messungen ein. Aufbau/Abbau als Auftrag+ACK (`aufMedienThread`), Barriere auf dem eigenen Thread ein No-op. `std::_Exit()`-Notausgang ENTFERNT — er beendete den Prozess nachweislich nicht |
 | 1.3.0 | 2026-08-07 | **Teardown-Deadlock behoben (S71, am Standalone mit echter Kamera gemessen):** NEU Abschalt-Vertrag §4a — `Feed::tot` (Wandler-Prüfung vor `map()`), `feedStilllegen()` als einzige Abbau-Stelle, `wandlerBarriere()` mit Timeout (misst 2–4 ms), NEU `altenFeedRaeumen()` gegen den Vertragsbruch bei `m_feeds[id] = neu`; **Wandler-Thread-Ende in der Schleife** (einzelnes `quit()` verpufft: 3/3 Timeout gegen 4/4 Erfolg); `herunterfahren()` löscht den Kontext erst nach dem Thread-Ende (deleteLater lief dort nie); `kameraGelaufen()` → `feedGelaufen()` (Datei-Feeds hingen genauso) + `merkeFremdenFeed()` für die Settings-Testaufnahme. Feed-Teardown 5320 ms → **200 ms** |
 | 1.2.0 | 2026-08-06 | Endgültige Lag-Architektur: Wandler-Thread mit queued Frame-Zustellung (Render-Thread-Wandlung hing bei Hardware-Frames); Kamera-Format 720p/≤30fps; aboutToQuit beendet den Wandler geordnet |
 | 1.1.0 | 2026-08-06 | Lag-Befund S70: NEU `bildNummer()` als billiger Vorab-Check (Zwischenstand, Wandlung auf dem Render-Thread — ersetzt durch 1.2.0) |

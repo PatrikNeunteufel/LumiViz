@@ -1,6 +1,6 @@
 # Bootstrap & Integration — Init-Reihenfolge, Services, Event-Flow, Shutdown
 
-> **Version:** 1.2.0
+> **Version:** 1.3.0
 > **Datum:** 2026-08-07
 > **Typ:** Guide
 > **Status:** Aktiv
@@ -250,16 +250,35 @@ Teardown der Pipeline.
    der Thread annimmt (`LiveVideoFeed::herunterfahren()`, greift im zweiten
    Versuch nach ~200 ms). Eine feste Wartezeit wäre geraten; die Schleife
    korrigiert sich selbst.
-5. **Notausgang statt Ratlosigkeit:** Bleibt eine Fremdbibliothek nachweislich
-   hängen, beendet `Application::shutdown()` den Prozess nach **vollständigem
-   eigenem Cleanup** per `std::_Exit(0)`. Das Kriterium muss die Ursache
-   abdecken, nicht ihr auffälligstes Symptom — es heißt „ein Multimedia-Feed
-   lief", nicht „eine Kamera lief" (S71: ein reiner Datei-Feed hing genauso).
-   Der Notausgang ist berechtigt: nach einem Kamera-Lauf hängt der Prozess
-   **nach `main()`** im `~QGuiApplication` bzw. in fremden statischen
-   Destruktoren — am Standalone reproduziert, mit einem Marker hinter dem
-   letzten eigenen Aufruf belegt. Das ist außerhalb unseres Codes; heilbar
-   ist nur, was davor liegt.
+5. **`std::_Exit()` ist KEIN Notausgang.** Naheliegend wäre, einen fremden
+   Teardown-Hänger durch hartes Prozessende zu überspringen. Das funktioniert
+   nicht: `ExitProcess` muss alle Threads abräumen, und steckt einer im
+   Grafiktreiber, blockiert auch das. In S70/S71 stand deshalb ein halbes Jahr
+   lang „erzwungenes Prozessende" im Log, während die App weiterhing — die
+   Logzeile täuschte einen Erfolg vor, den es nie gab. Wer einen Hänger nicht
+   erklären kann, hat ihn nicht gefunden; ein Notausgang verdeckt nur die
+   Suche.
+
+### 6.6 Kein eigener Thread für fremde Medien-Pipelines
+
+**Befund S71, A/B am Prüfstand mit echter Kamera:** Ein eigener `QThread`, der
+Kamera-Frames verarbeitet hat, **verhindert das Prozessende** — 2/2 Hänger mit
+Thread gegen 3/3 sauberes Ende ohne. Das gilt auch dann, wenn der Thread vorher
+sauber beendet wurde (`quit()`+`wait()` erfolgreich), und ist unabhängig von:
+Media-Backend (FFmpeg wie WMF), Lage der Pipeline (Main- oder Worker-Thread)
+und COM-Initialisierung des Threads (`CoInitializeEx`/`CoUninitialize` half
+nicht). Es ist exakt der Unterschied zum Commit `f93c83a`, in dem das Beenden
+nachweislich sauber war.
+
+> **Regel:** Qt-Multimedia-Objekte (und vermutlich jede COM-/treibernahe
+> Fremd-Pipeline) laufen auf dem **Main-Thread**. Wird ein Worker-Thread für
+> Durchsatz gebraucht, ist das eine begründete Ausnahme mit Messpflicht —
+> und der Preis kann ein Prozess sein, der sich nicht mehr beenden lässt.
+
+`LiveVideoFeed` arbeitet deshalb per Vorgabe auf dem Main-Thread;
+`LUMIVIZ_MEDIEN_THREAD=1` schaltet den Worker-Thread für A/B-Messungen wieder
+ein. Die Last, gegen die er eingeführt wurde (RGBX-Wandlung je Frame), ist
+durch die 720p/30fps-Klemme deutlich kleiner als im ursprünglichen Lag-Befund.
 
 ### 6.4a Abbau darf nie im Renderpfad ausgelöst werden
 

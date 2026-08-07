@@ -46,7 +46,7 @@ namespace lumi::services {
 /// nur im Lieferkontext) — der Render-Thread blockierte, das Fenster-
 /// Schliessen wartete auf ihn, die Kamera blieb an. LOESUNG: die
 /// Frame-Verbindung wird QUEUED auf einen eigenen WANDLER-Thread zugestellt
-/// (Empfaenger-Kontext m_wandlerKontext); der Handler wandelt DORT, gibt den
+/// (Empfaenger-Kontext m_medienKontext); der Handler wandelt DORT, gibt den
 /// Pipeline-Puffer sofort zurueck und legt fertige QImages unter m_mutex ab
 /// — GUI- und Render-Thread fassen nie ein QVideoFrame an.
 struct LiveVideoFeed::Feed
@@ -81,15 +81,46 @@ LiveVideoFeed& LiveVideoFeed::instance()
         if (auto* app = QCoreApplication::instance())
         {
             d->moveToThread(app->thread());
-            // Wandler-Thread (Lag-Befund S70): die Frame-Verbindungen werden
-            // queued an den Kontext auf diesem Thread zugestellt — die
-            // Wandlung laeuft dort, weder GUI- noch Render-Thread fassen
-            // QVideoFrames an.
-            d->m_wandler = new QThread();
-            d->m_wandler->setObjectName(QStringLiteral("LiveVideoWandler"));
-            d->m_wandler->start();
-            d->m_wandlerKontext = new QObject();
-            d->m_wandlerKontext->moveToThread(d->m_wandler);
+            // MEDIEN-THREAD (Umbau S71, s. EIN-THREAD-BESITZ im Header):
+            // traegt die komplette Qt-Multimedia-Seite — Aufbau, Frames und
+            // Abbau. Der Kontext ist der Empfaenger aller Auftraege; weil
+            // Senken und Kameras DORT entstehen, werden die Frame-Signale
+            // direkt zugestellt (Wandlung im Lieferkontext) und der Abbau
+            // kann die Frame-Verarbeitung nicht mehr ueberholen.
+            //
+            // ENTSCHEIDENDER BEFUND S71 (A/B am Pruefstand, echte Kamera):
+            // Ein EIGENER Thread, der Kamera-Frames verarbeitet hat,
+            // verhindert das Prozessende — 2/2 Haenger MIT Thread gegen 3/3
+            // sauberes Ende OHNE. Das gilt auch dann, wenn er vorher sauber
+            // beendet wurde, und ist unabhaengig vom Media-Backend (FFmpeg
+            // wie WMF) und davon, ob die Pipeline auf dem Main- oder dem
+            // Worker-Thread lebt; ein CoInitializeEx/CoUninitialize-Paar auf
+            // dem Thread half ebenfalls nicht. Es ist exakt der Unterschied
+            // zum Commit f93c83a, in dem das Beenden nachweislich sauber war
+            // (dort gab es KEINEN Zusatz-Thread).
+            //
+            // DEFAULT ist deshalb der Main-Thread: eine App, die sich nicht
+            // schliessen laesst, waere schlimmer als der UI-Lag, gegen den
+            // der Thread eingefuehrt wurde (und der seit der 720p/30fps-
+            // Klemme deutlich kleiner ausfaellt). `LUMIVIZ_MEDIEN_THREAD=1`
+            // schaltet ihn wieder ein — fuer A/B-Messungen und fuer den Fall,
+            // dass der Lag doch stoert.
+            if (qEnvironmentVariable("LUMIVIZ_MEDIEN_THREAD",
+                                     QStringLiteral("0")) == QLatin1String("1"))
+            {
+                d->m_medien = new QThread();
+                d->m_medien->setObjectName(QStringLiteral("LiveVideoMedien"));
+                d->m_medien->start();
+                d->m_medienKontext = new QObject();
+                d->m_medienKontext->moveToThread(d->m_medien);
+                std::fprintf(stderr,
+                             "[LiveVideoFeed] MEDIEN-THREAD AN — Prozessende "
+                             "kann nach Kamera-Nutzung haengen (Befund S71)\n");
+            }
+            else
+            {
+                d->m_medienKontext = d;  // Auftraege laufen auf dem Main-Thread
+            }
             // Shutdown-Haken (S70, dritter Anlauf): bei aboutToQuit NUR den
             // Riegel setzen (keine Kamera-Neustarts mehr) — der eigentliche
             // Stopp laeuft in herunterfahren() NACH dem Fenster-/GL-Abbau
@@ -106,12 +137,47 @@ LiveVideoFeed& LiveVideoFeed::instance()
     return *s_instanz;
 }
 
+bool LiveVideoFeed::aufMedienThread(const std::function<void()>& arbeit,
+                                    int maxMs)
+{
+    if (m_medienKontext == nullptr || m_medien == nullptr ||
+        !m_medien->isRunning())
+    {
+        arbeit();  // kein Medien-Thread (Tests/Notausgang) => hier erledigen
+        return true;
+    }
+    if (QThread::currentThread() == m_medien)
+    {
+        arbeit();  // schon dort — ein Auftrag an sich selbst waere ein Deadlock
+        return true;
+    }
+    // Fertigmeldung per Semaphore statt BlockingQueuedConnection: ein
+    // haengender Medien-Thread darf den Abbau VERZOEGERN, nicht verklemmen.
+    // Der shared_ptr haelt die Semaphore am Leben, falls wir aufgeben und das
+    // Lambda erst spaeter laeuft.
+    auto fertig = std::make_shared<QSemaphore>();
+    QMetaObject::invokeMethod(
+        m_medienKontext,
+        [arbeit, fertig] {
+            arbeit();
+            fertig->release();
+        },
+        Qt::QueuedConnection);
+    return fertig->tryAcquire(1, maxMs);
+}
+
 void LiveVideoFeed::herunterfahren()
 {
-    // alleStoppen() haelt den Abschalt-Vertrag ein — danach ist kein Frame
-    // mehr in Arbeit und der Wandler kann seine Event-Loop verlassen.
-    alleStoppen();
-    if (m_wandler != nullptr && m_wandler->isRunning())
+    // AUFTRAG + ACK (Entscheid Patrik): der Abbau laeuft DORT, wo die
+    // Multimedia-Objekte leben — der Main-Thread wartet nur auf die
+    // Fertigmeldung und beendet danach den Thread.
+    if (!aufMedienThread([this] { alleStoppen(); }, 5000))
+    {
+        BasicLogger::logWarning(
+            "[LiveVideoFeed] Feed-Abbau auf dem Medien-Thread nicht "
+            "bestaetigt (5 s) — Thread wird trotzdem beendet");
+    }
+    if (m_medien != nullptr && m_medien->isRunning())
     {
         QElapsedTimer uhr;
         uhr.start();
@@ -128,8 +194,8 @@ void LiveVideoFeed::herunterfahren()
         bool beendet = false;
         for (int versuch = 0; versuch < 25 && !beendet; ++versuch)
         {
-            m_wandler->quit();
-            beendet = m_wandler->wait(200);
+            m_medien->quit();
+            beendet = m_medien->wait(200);
         }
         if (beendet)
         {
@@ -152,16 +218,25 @@ void LiveVideoFeed::herunterfahren()
     // deleteLater() waere ein Event an einen Thread ohne Event-Loop und
     // wuerde nie ausgefuehrt (der Kontext samt anhaengender Frames bliebe
     // liegen). Ohne laufenden Thread gibt es hier kein Rennen.
-    delete m_wandlerKontext;
-    m_wandlerKontext = nullptr;
+    // Ausnahme: ohne Medien-Thread IST der Kontext der Dienst selbst.
+    if (m_medienKontext != this) delete m_medienKontext;
+    m_medienKontext = nullptr;
 }
 
 void LiveVideoFeed::wandlerBarriere(int maxMs)
 {
-    if (m_wandlerKontext == nullptr || m_wandler == nullptr ||
-        !m_wandler->isRunning())
+    if (m_medienKontext == nullptr || m_medien == nullptr ||
+        !m_medien->isRunning())
     {
-        return;  // kein laufender Wandler => kein Frame in Flug
+        return;  // kein laufender Medien-Thread => kein Frame in Flug
+    }
+    if (QThread::currentThread() == m_medien)
+    {
+        // Wir SIND der Verarbeiter: der Frame-Handler laeuft auf genau
+        // diesem Thread und kann daher nicht parallel laufen. Seit dem
+        // Ein-Thread-Besitz ist das der Normalfall — die Barriere kostet
+        // hier nichts (und ein Auftrag an sich selbst waere ein Deadlock).
+        return;
     }
     // Die Semaphore gehoert einem shared_ptr, NICHT dem Stack: laeuft die
     // Wartezeit ab, liegt das Lambda noch in der Wandler-Queue und wuerde
@@ -172,7 +247,7 @@ void LiveVideoFeed::wandlerBarriere(int maxMs)
     QElapsedTimer uhr;
     uhr.start();
     QMetaObject::invokeMethod(
-        m_wandlerKontext, [durch] { durch->release(); }, Qt::QueuedConnection);
+        m_medienKontext, [durch] { durch->release(); }, Qt::QueuedConnection);
     if (!durch->tryAcquire(1, maxMs))
     {
         BasicLogger::logWarning(
@@ -266,8 +341,9 @@ void LiveVideoFeed::starteDatei(std::uint64_t nodeId, const QString& pfad,
             {
                 it->second->tempo = tempo;
                 auto feed = it->second;
+                // Auf dem Medien-Thread: dort lebt der QMediaPlayer.
                 QMetaObject::invokeMethod(
-                    this,
+                    m_medienKontext,
                     [feed, tempo] {
                         if (feed->spieler != nullptr)
                             feed->spieler->setPlaybackRate(tempo);
@@ -281,7 +357,8 @@ void LiveVideoFeed::starteDatei(std::uint64_t nodeId, const QString& pfad,
     // ruft hier in jedem Frame an, bis der Feed steht.
     if (!bauVormerken(nodeId, quelle)) return;
     QMetaObject::invokeMethod(
-        this, [this, nodeId, pfad, loop, tempo] { baueDatei(nodeId, pfad, loop, tempo); },
+        m_medienKontext,
+        [this, nodeId, pfad, loop, tempo] { baueDatei(nodeId, pfad, loop, tempo); },
         Qt::QueuedConnection);
 }
 
@@ -300,7 +377,7 @@ void LiveVideoFeed::starteKamera(std::uint64_t nodeId, const QString& geraeteId)
     // raeumt die eben gebaute Kamera wieder ab (App friert ein, S71).
     if (!bauVormerken(nodeId, quelle)) return;
     QMetaObject::invokeMethod(
-        this, [this, nodeId, geraeteId] { baueKamera(nodeId, geraeteId); },
+        m_medienKontext, [this, nodeId, geraeteId] { baueKamera(nodeId, geraeteId); },
         Qt::QueuedConnection);
 }
 
@@ -323,7 +400,7 @@ void LiveVideoFeed::stopp(std::uint64_t nodeId)
             ") aktive Feeds=" + std::to_string(m_feeds.size()));
     }
     QMetaObject::invokeMethod(
-        this, [this] { friedhofLeeren(); }, Qt::QueuedConnection);
+        m_medienKontext, [this] { friedhofLeeren(); }, Qt::QueuedConnection);
 }
 
 bool LiveVideoFeed::bauVormerken(std::uint64_t nodeId, const QString& quelle)
@@ -447,7 +524,7 @@ void LiveVideoFeed::baueDatei(std::uint64_t nodeId, const QString& pfad,
     feed->spieler->setLoops(loop ? QMediaPlayer::Infinite : 1);
     feed->spieler->setSource(QUrl::fromLocalFile(pfad));
     feed->spieler->setPlaybackRate(tempo);
-    verbindeSenke(feed->senke.get(), &m_mutex, m_wandlerKontext, feed);
+    verbindeSenke(feed->senke.get(), &m_mutex, m_medienKontext, feed);
     feed->spieler->play();
     // Auch der Datei-Weg ist eine Qt-Multimedia-Pipeline mit Wandler-Frames
     // — der Notausgang in Application::shutdown haengt daran (Befund S71:
@@ -526,7 +603,7 @@ void LiveVideoFeed::baueKamera(std::uint64_t nodeId, const QString& geraeteId)
     feed->session = std::make_unique<QMediaCaptureSession>();
     feed->session->setCamera(feed->kamera.get());
     feed->session->setVideoSink(feed->senke.get());
-    verbindeSenke(feed->senke.get(), &m_mutex, m_wandlerKontext, feed);
+    verbindeSenke(feed->senke.get(), &m_mutex, m_medienKontext, feed);
     feed->kamera->start();
     m_feedLief.store(true, std::memory_order_release);  // s. feedGelaufen()
 
