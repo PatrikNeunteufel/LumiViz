@@ -34,8 +34,9 @@ LumiViz-Modularisierung übersetzt (Stage-Modell, Parameter-Schema, später Mult
 mit moderner GL-Technik gerendert, und Expressions laufen in **Lua statt EEL** — EEL wird
 beim Import einmalig transpiliert, zur Laufzeit existiert kein EEL.
 
-Analysierte Repos (alle unter `C:\Users\patri\source\repos\Visuals_Project\cmake\ref\`,
-Datei-Referenzen in dieser Doku sind relativ zum jeweiligen Repo-Root):
+Analysierte Repos (Referenz-Klone, im Arbeitsbaum neben LumiViz unter `../ref/`
+erwartet — sie sind **nicht** Teil dieses Repositorys; Datei-Referenzen in dieser
+Doku sind relativ zum jeweiligen Repo-Root):
 
 | Repo | Inhalt | Rolle für den Import |
 |---|---|---|

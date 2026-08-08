@@ -492,9 +492,30 @@ void MainWindow::setupDefaultLayout()
 
     if (pVisualizer != nullptr)
     {
-        // Set default visualizer to the Multi Effect host (AVS import target)
-        pVisualizer->setVisualizer(QStringLiteral("multieffect"));
-        BasicLogger::logDebug("  Default visualizer created with Multi Effect host");
+        // Zuletzt gewaehlten Visualizer wiederherstellen (S73). Vorher stand
+        // hier fest "multieffect" — wer mit Superscope oder Pulsing arbeitete,
+        // landete nach jedem Start wieder im Multieffekt-Host. Der Multieffekt
+        // bleibt die Vorgabe fuer den allerersten Start (Ziel des AVS-Imports).
+        QSettings settings;
+        const QString wanted =
+            settings
+                .value(QStringLiteral("ui/lastVisualizer"),
+                       QStringLiteral("multieffect"))
+                .toString();
+        pVisualizer->setVisualizer(wanted);
+
+        // Jede weitere Wahl mitschreiben. Bewusst NUR fuer den ersten
+        // Visualizer: weitere Fenster sind Beiwerk, sonst gewaenne das zuletzt
+        // umgeschaltete Nebenfenster die Vorgabe des naechsten Starts.
+        connect(pVisualizer, &VisualizerWidget::visualizerChanged, this,
+                [](const QString& id) {
+                    if (id.isEmpty()) return;
+                    QSettings s;
+                    s.setValue(QStringLiteral("ui/lastVisualizer"), id);
+                });
+
+        BasicLogger::logDebug("  Default visualizer created with: " +
+                              wanted.toStdString());
     }
     
     // -------------------------------------------------------------------------

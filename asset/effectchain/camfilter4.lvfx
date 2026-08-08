@@ -17,7 +17,7 @@
                 "cameraId": "\\\\?\\usb#vid_3277&pid_0018&mi_00#7&cce78d1&0&0000#{e5323777-f976-4f5b-9b55-b94699c46e44}\\global",
                 "description": "S70-Pruefstand: Testvideo im deterministischen Frame-Schritt (VideoFrameCache, Sim-Uhr x fps) - Einpassen mit Balken, ohne Audio-Skripte; zwei Laeufe muessen bit-identisch sein.",
                 "enabled": true,
-                "filePath": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/calibration/fields/testvideo.avi",
+                "filePath": "../calibration/fields/testvideo.avi",
                 "fit": 1,
                 "frameCode": "",
                 "initCode": "",

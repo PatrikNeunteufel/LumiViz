@@ -153,7 +153,8 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   Der Wert landet in der Windows-Grafikeinstellung und greift erst beim
   Prozessstart, deshalb **startet die App bei einer Änderung sofort neu**.
   Darunter zeigt *Active GPU* die tatsächlich benutzte Karte.
-- **Panels:** Startordner des Import-Browsers zurücksetzen · Render-Scale-Divisor
+- **Panels:** Startordner des Import-Browsers zurücksetzen — er springt danach in
+  den **Programmordner**, wo der mitgelieferte Ordner `presets/` liegt · Render-Scale-Divisor
   für AVS-Importe · **Bilder-Suchordner** — wird beim Import durchsucht, wenn
   neben dem Preset kein Bild für Picture/Texer liegt, und ist der Startordner der
   Bildauswahl in der Effektkette · **Benutzerdaten-Ordner öffnen** — dort liegen

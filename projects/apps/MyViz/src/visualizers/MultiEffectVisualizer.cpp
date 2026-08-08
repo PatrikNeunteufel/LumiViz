@@ -3102,6 +3102,13 @@ bool MultiEffectVisualizer::loadChainFile(const QString& path, QStringList* outR
     if (!loadChainFromFile(path, loaded, outReport)) return false;
     // videoSource (S70): relative Videopfade gegen den Preset-Ordner aufloesen
     resolveVideoSourcePaths(loaded, QFileInfo(path).absolutePath());
+    // avi (S73): dasselbe fuer den AVI-Knoten. Bis hierher lief die Aufloesung
+    // NUR beim .avs-Import (loadAvsFile) — eine .lvfx trug den absoluten Pfad
+    // des Erstellers und war auf jedem anderen Rechner tot. `resolveAviPaths`
+    // sucht ueber den blanken Dateinamen, repariert also auch Altbestand mit
+    // absolutem `filename`. Ein bereits gesetzter `resolvedPath` bleibt
+    // unangetastet (die Sonde `avi.resolvedPath` haengt daran).
+    resolveAviPaths(loaded, QFileInfo(path).absolutePath(), nullptr);
     m_pendingRuntimeReset = true;  // new node ids — free old GL runtimes (render thread)
     m_beatPeriodFrame = 0;  // --beat-period zaehlt je Preset ab 0 (wie AvsRef)
     m_root = std::move(loaded);

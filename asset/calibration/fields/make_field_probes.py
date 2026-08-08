@@ -55,12 +55,25 @@ TESTBILD_B64 = base64.b64encode((Path(__file__).parent / "testbild.png")
                                 .read_bytes()).decode("ascii")
 
 # Die Test-Videos (make_testvideo.py). Der AVI-Knoten laedt ueber Video for
-# Windows von der Platte, nicht eingebettet — also ein absoluter Pfad.
-TESTVIDEO = (Path(__file__).parent / "testvideo.avi").resolve().as_posix()
+# Windows von der Platte, nicht eingebettet.
+#
+# BLANKER NAME, kein absoluter Pfad (S73): `loadChainFile` ruft seit S73 auch
+# `resolveAviPaths` auf — die Aufwaertssuche findet die Datei vom Sondenordner
+# aus zwei Ebenen hoeher. Vorher stand hier `.resolve()`, und die erzeugten
+# Sonden trugen den absoluten Pfad des Erstellers: auf jedem anderen Rechner
+# tot, und der Benutzername stand im oeffentlichen Repo.
+TESTVIDEO = "testvideo.avi"
 # 24 Bit, der Normalfall bei unkomprimierten AVIs — bis S55 verwarf `runAvi`
 # genau diese stillschweigend. Die beiden Pfad-Sonden laufen deshalb darauf:
 # faellt der Fix, meldet `avi.filename` sofort STUMM.
-TESTVIDEO24 = (Path(__file__).parent / "testvideo24.avi").resolve().as_posix()
+TESTVIDEO24 = "testvideo24.avi"
+
+# AUSNAHME `avi.resolvedPath`: dieses Feld IST der absolute Pfad — die Sonde
+# setzt es ohne `filename`, und `resolveAviPaths` fasst einen gesetzten
+# `resolvedPath` bewusst nicht an. Ein relativer Wert waere dort wirkungslos,
+# darum bleibt es beim aufgeloesten Pfad. Diese eine Sonde ist damit an den
+# Rechner gebunden, auf dem sie erzeugt wurde, und vor Gebrauch neu zu bauen.
+TESTVIDEO24_ABS = (Path(__file__).parent / "testvideo24.avi").resolve().as_posix()
 
 HIER = Path(__file__).parent
 DOCS = HIER / "inventory_docs.json"
@@ -235,7 +248,7 @@ HANDWERK: dict[str, object] = {
     # genauso abgelaufen wie eines von 1. 30 haelt bis zum Schluss.
     "colorfade.onBeatFrames": 30,
     "avi.filename": TESTVIDEO24,
-    "avi.resolvedPath": TESTVIDEO24,
+    "avi.resolvedPath": TESTVIDEO24_ABS,
     # ------------------------------------------------------------------------
     # EFFEKT-Skripte (S55). Nicht zu verwechseln mit den PARAMETER-Skripten des
     # Strangs D: die rechnen einmal je Frame die Felder des Knotens aus, und

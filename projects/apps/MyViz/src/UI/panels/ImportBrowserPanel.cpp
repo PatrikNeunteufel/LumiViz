@@ -26,8 +26,37 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QSettings>
+#include <QCoreApplication>
+#include <QTimer>
 
 #include <BasicLogger.h>
+
+namespace
+{
+/// Vorgabe-Startordner: das Verzeichnis der Exe (S73).
+///
+/// Dort liegt seit S73 der mitgelieferte Ordner `presets/` (Root-CMakeLists,
+/// POST_BUILD) — wer zuruecksetzt oder die App zum ersten Mal startet, sieht
+/// also sofort etwas Ladbares. Vorher stand hier `QDir::homePath()`, und der
+/// Browser oeffnete im Benutzerordner, wo garantiert kein Preset liegt.
+QString defaultStartDir()
+{
+    return QCoreApplication::applicationDirPath();
+}
+
+/// Preset fuer den allerersten Start (S73) — eines der mitgelieferten.
+///
+/// Relativ zur Exe, NICHT absolut: der Ordner `presets/` wird bei jedem Build
+/// neben die jeweilige Exe kopiert (Root-CMakeLists), es gibt also keinen
+/// festen Pfad, der ueber alle Build-Konfigurationen und Rechner stimmt.
+/// Fehlt die Datei (eigener Build ohne asset/presets), bleibt der Start leer —
+/// das ist kein Fehlerfall.
+QString defaultPresetPath()
+{
+    return QCoreApplication::applicationDirPath() +
+           QStringLiteral("/presets/avs/EyeCandy2/02_flowers.avs");
+}
+}  // namespace
 
 // =============================================================================
 // Construction
@@ -43,17 +72,41 @@ ImportBrowserPanel::ImportBrowserPanel(ServiceContainer& services, QWidget* pare
     const QString lastDir = settings.value(QStringLiteral("lastDir")).toString();
     m_filter = static_cast<Filter>(
         settings.value(QStringLiteral("filter"), static_cast<int>(Filter::All)).toInt());
+    // Zuletzt geladenes Preset (S73) — MUSS innerhalb der Gruppe gelesen
+    // werden, sonst kommt es aus der Wurzel und ist immer leer.
+    m_lastPreset = settings.value(QStringLiteral("lastPreset")).toString();
     settings.endGroup();
 
+    // Beim allerersten Start tritt das mitgelieferte Preset an seine Stelle;
+    // existiert weder das eine noch das andere, bleibt es leer und der Start
+    // laeuft wie vorher.
+    if (m_lastPreset.isEmpty()) m_lastPreset = defaultPresetPath();
+    if (!QFileInfo::exists(m_lastPreset)) m_lastPreset.clear();
+
     QString start = lastDir;
+    // Der Ordner des Presets gewinnt: sonst zeigte der Browser einen anderen
+    // Ordner als das, was gerade laeuft.
+    if (!m_lastPreset.isEmpty())
+    {
+        start = QFileInfo(m_lastPreset).absolutePath();
+    }
     if (start.isEmpty() || !QDir(start).exists())
     {
-        start = QDir::homePath();
+        start = defaultStartDir();
     }
     m_dir = QDir(start);
 
     setupUI();
     setupConnections();
+
+    // Liste SOFORT fuellen (S73), nicht erst in onActivate().
+    //
+    // Der Blaettern-Hotkey ist ausdruecklich dafuer da, ohne sichtbares Panel
+    // zu wirken (docs/ui/Hotkey_Konzept.md §1) — er liest aber die Liste. War
+    // das Panel seit dem Start nie offen, war sie leer, und `preset.next`/
+    // `preset.previous` taten nach jedem Neustart nichts, bis man einmal im
+    // Browser etwas geladen hatte. Ein Verzeichnis-Listing kostet nichts.
+    refresh();
 
     // Permanent subscription (survives onDeactivate): the Settings panel can
     // reset the remembered folder while this panel is hidden.
@@ -67,6 +120,14 @@ ImportBrowserPanel::ImportBrowserPanel(ServiceContainer& services, QWidget* pare
         m_stepSubscription = bus->subscribeScoped<PresetStepEvent>(
             [this](const PresetStepEvent& e) { onPresetStep(e.delta); });
     }
+
+    // Zuletzt geladenes Preset wieder anwerfen (S73) — VERZOEGERT ueber die
+    // Ereignisschleife: hier im Konstruktor steht der Visualizer, der das
+    // Import-Event verarbeiten muss, noch nicht. Der Aufhaenger ist bewusst der
+    // Konstruktor und nicht restoreState(): PanelManager::restoreState() wird
+    // im ganzen Programm nirgends aufgerufen, die Ueberschreibung liefe also
+    // nie (Befund S73).
+    QTimer::singleShot(0, this, [this] { restoreLastPreset(); });
 }
 
 // =============================================================================
@@ -98,6 +159,7 @@ void ImportBrowserPanel::saveState()
     settings.beginGroup(settingsPrefix());
     settings.setValue(QStringLiteral("lastDir"), m_dir.absolutePath());
     settings.setValue(QStringLiteral("filter"), static_cast<int>(m_filter));
+    settings.setValue(QStringLiteral("lastPreset"), m_lastPreset);
     settings.endGroup();
 }
 
@@ -105,6 +167,37 @@ void ImportBrowserPanel::restoreState()
 {
     PanelBase::restoreState();
     refresh();
+}
+
+void ImportBrowserPanel::restoreLastPreset()
+{
+    if (m_lastPreset.isEmpty()) return;
+    if (!QFileInfo::exists(m_lastPreset))
+    {
+        BasicLogger::logInfo("ImportBrowserPanel: last preset is gone: " +
+                             m_lastPreset.toStdString());
+        m_lastPreset.clear();
+        return;
+    }
+
+    // BEWUSST OHNE die Liste (S73): die wird erst in onActivate() gefuellt, und
+    // dieses Panel ist beim Start womoeglich gar nicht sichtbar. Der Ladeweg
+    // haengt allein am Pfad; markiert wird spaeter, sobald die Liste entsteht
+    // (selectLastPresetInList aus refresh()).
+    const int type =
+        entryTypeForSuffix(QFileInfo(m_lastPreset).suffix());
+    if (type != Type_Avs && type != Type_Milk && type != Type_Lvfx)
+    {
+        BasicLogger::logWarning("ImportBrowserPanel: last preset has an "
+                                "unknown suffix: " + m_lastPreset.toStdString());
+        m_lastPreset.clear();
+        return;
+    }
+
+    BasicLogger::logInfo("ImportBrowserPanel: restoring last preset: " +
+                         m_lastPreset.toStdString());
+    openEntry(type, m_lastPreset);
+    selectLastPresetInList();
 }
 
 // =============================================================================
@@ -216,7 +309,27 @@ void ImportBrowserPanel::refresh()
     // Re-apply the current search text to the freshly built list.
     onSearchChanged(m_pSearchEdit->text());
 
+    // Das laufende Preset markieren, sooft die Liste neu entsteht (S73) —
+    // damit sichtbar ist, was gerade zu sehen ist. Reines Markieren, es wird
+    // NICHT geladen: das Laden haengt an restoreLastPreset() bzw. am Nutzer.
+    selectLastPresetInList();
+
     setStatus(tr("%1 preset(s) · %2 folder(s)").arg(presetCount).arg(dirs.size()));
+}
+
+void ImportBrowserPanel::selectLastPresetInList()
+{
+    if (m_lastPreset.isEmpty() || m_pListWidget == nullptr) return;
+
+    const QFileInfo wanted(m_lastPreset);
+    for (int row = 0; row < m_pListWidget->count(); ++row)
+    {
+        QListWidgetItem* item = m_pListWidget->item(row);
+        if (QFileInfo(item->data(Qt::UserRole).toString()) != wanted) continue;
+        m_pListWidget->setCurrentRow(row);
+        m_pListWidget->scrollToItem(item);
+        return;
+    }
 }
 
 // =============================================================================
@@ -226,9 +339,18 @@ void ImportBrowserPanel::refresh()
 void ImportBrowserPanel::onItemDoubleClicked(QListWidgetItem* item)
 {
     if (item == nullptr) return;
+    openEntry(item->data(Qt::UserRole + 1).toInt(),
+              item->data(Qt::UserRole).toString());
+}
 
-    const int type = item->data(Qt::UserRole + 1).toInt();
-    const QString path = item->data(Qt::UserRole).toString();
+void ImportBrowserPanel::openEntry(int type, const QString& path)
+{
+    // Merken, was zuletzt WIRKLICH geladen wurde (S73) — Ordner und ".." nicht.
+    // Beim naechsten Start wird genau das wieder markiert und geladen.
+    if (type == Type_Avs || type == Type_Milk || type == Type_Lvfx)
+    {
+        m_lastPreset = path;
+    }
 
     switch (type)
     {
@@ -385,10 +507,16 @@ void ImportBrowserPanel::resetStoredDir()
     QSettings settings;
     settings.beginGroup(settingsPrefix());
     settings.remove(QStringLiteral("lastDir"));
+    // Auch die Preset-Erinnerung faellt (S73) — sonst zeigte der Browser nach
+    // dem Zuruecksetzen den Programmordner, beim naechsten Start aber wieder
+    // den Ordner des gemerkten Presets.
+    settings.remove(QStringLiteral("lastPreset"));
     settings.endGroup();
+    m_lastPreset.clear();
 
-    navigateTo(QDir::homePath());
-    setStatus(tr("Start folder reset to %1").arg(QDir::homePath()));
+    const QString target = defaultStartDir();
+    navigateTo(target);
+    setStatus(tr("Start folder reset to %1").arg(target));
     BasicLogger::logInfo("ImportBrowserPanel: stored start folder reset");
 }
 

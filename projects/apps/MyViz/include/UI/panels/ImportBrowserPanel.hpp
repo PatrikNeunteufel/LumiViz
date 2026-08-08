@@ -123,9 +123,24 @@ private:
     void setStatus(const QString& text);
     void onImportResult(const std::string& path, bool ok, int noteCount);
     void onPresetStep(int delta);
-    /// Forget the persisted start folder and return to the home directory
-    /// (ResetImportBrowserDirEvent from the Settings panel)
+    /// Forget the persisted start folder and return to the application
+    /// directory, where the bundled presets/ folder lives (S73; was the home
+    /// directory before). Triggered by ResetImportBrowserDirEvent from the
+    /// Settings panel.
     void resetStoredDir();
+
+    /// Das zuletzt geladene Preset wieder laden (S73). Laeuft verzoegert aus
+    /// dem Konstruktor, damit der Visualizer schon steht, wenn das
+    /// Import-Event kommt.
+    void restoreLastPreset();
+
+    /// Gemeinsamer Weg "Eintrag oeffnen" fuer Doppelklick, Blaettern-Hotkey
+    /// und die Wiederherstellung beim Start — eine Wahrheit, ein Ort, an dem
+    /// `m_lastPreset` fortgeschrieben wird.
+    void openEntry(int type, const QString& path);
+
+    /// Das laufende Preset in der Liste markieren, ohne es zu laden.
+    void selectLastPresetInList();
 
     // UI Elements
     QLineEdit* m_pPathEdit = nullptr;
@@ -139,6 +154,11 @@ private:
     // State
     QDir m_dir;
     Filter m_filter = Filter::All;
+
+    /// Zuletzt GELADENES Preset (absoluter Pfad, leer = keins). Wird beim
+    /// Doppelklick bzw. beim Blaettern gesetzt — also genau dann, wenn ein
+    /// Preset wirklich zur Anzeige kam, nicht schon beim blossen Anklicken.
+    QString m_lastPreset;
 
     /// Lives for the whole panel lifetime (NOT cleared in onDeactivate) — the
     /// Settings-panel reset must reach this panel even while it is hidden.
