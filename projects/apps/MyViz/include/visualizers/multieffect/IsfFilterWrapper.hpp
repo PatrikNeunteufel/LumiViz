@@ -223,8 +223,19 @@ float getspec(float band, float width, float channel)
     for (const auto& q : quellen)
     {
         if (q.name.empty()) continue;
-        s += "uniform sampler2D " + echterName(q.name) + ";\n";
+        const std::string n = echterName(q.name);
+        s += "uniform sampler2D " + n + ";\n";
         s += umbenennung(q.name);
+        // Begleit-Groessen des ISF-Host-Vertrags (Befund S72 aus dem
+        // GL-Smoke: `_inputImage_imgRect` war „undeclared identifier"). In
+        // VDMX kann eine Textur ein AUSSCHNITT eines groesseren Atlas sein —
+        // daher Rechteck, Groesse und Kipp-Flag. Bei uns ist jede Textur
+        // eigenstaendig, aufrecht und vollstaendig, also sind die Werte
+        // konstant. Als `#define`, damit sie ohne Host-Verdrahtung stimmen
+        // und der Treiber sie wegoptimiert.
+        s += "#define _" + q.name + "_imgRect vec4(0.0, 0.0, 1.0, 1.0)\n";
+        s += "#define _" + q.name + "_imgSize vec2(textureSize(" + n + ", 0))\n";
+        s += "#define _" + q.name + "_flip false\n";
     }
     return s;
 }
@@ -239,7 +250,8 @@ float getspec(float band, float width, float channel)
 [[nodiscard]] inline std::string wrapFragment(
     const std::string& userCode,
     const std::vector<lumi::multieffect::IsfBildQuelle>& quellen,
-    const lumi::multieffect::ParamGruppe& parameter)
+    const lumi::multieffect::ParamGruppe& parameter,
+    const std::vector<lumi::multieffect::IsfPassZiel>& passes = {})
 {
     std::string s = R"(#version 330 core
 in vec2 isf_FragNormCoord;
@@ -247,6 +259,18 @@ out vec4 _lumiFrag;
 )";
     s += isfGemeinsam();
     s += samplerDeklarationen(quellen);
+    // Die TARGET-Namen der Durchgaenge sind im Shader gewoehnliche Sampler —
+    // genau daran scheiterten vor dem Multipass-Ausbau 76 der 327
+    // Vidvox-Dateien ("undefined variable bufferPassA").
+    {
+        std::vector<lumi::multieffect::IsfBildQuelle> ziele;
+        for (const auto& z : passes)
+        {
+            if (z.target.empty()) continue;
+            ziele.push_back({z.target, 0});
+        }
+        s += samplerDeklarationen(ziele);
+    }
     s += uniformDeklarationen(parameter);
     s += R"(uniform sampler2D _lumiPrev;
 uniform int _lumiBlend;

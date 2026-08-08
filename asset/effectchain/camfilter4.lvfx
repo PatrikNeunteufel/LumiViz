@@ -1,0 +1,227 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "",
+                "blend": 0,
+                "cameraId": "\\\\?\\usb#vid_3277&pid_0018&mi_00#7&cce78d1&0&0000#{e5323777-f976-4f5b-9b55-b94699c46e44}\\global",
+                "description": "S70-Pruefstand: Testvideo im deterministischen Frame-Schritt (VideoFrameCache, Sim-Uhr x fps) - Einpassen mit Balken, ohne Audio-Skripte; zwei Laeufe muessen bit-identisch sein.",
+                "enabled": true,
+                "filePath": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/calibration/fields/testvideo.avi",
+                "fit": 1,
+                "frameCode": "",
+                "initCode": "",
+                "loop": true,
+                "name": "Sonde Video-Quelle",
+                "opacity": 1,
+                "recordingName": "",
+                "source": 1,
+                "speed": 1,
+                "streaming": true,
+                "type": "videoSource"
+            },
+            {
+                "beatCode": "",
+                "color": 16776960,
+                "enabled": true,
+                "frameCode": "size=3+22*min(1,bass*50+treb*200+mid*20);",
+                "initCode": "",
+                "name": "Add Borders",
+                "size": 100,
+                "type": "addBorders"
+            },
+            {
+                "blend": 0,
+                "enabled": true,
+                "fragCode": "//\tA simple three pass blur – first reduce the size, then do a weighted blur, then do the same thing \n\n#if __VERSION__ <= 120\nvarying vec2 left_coord;\nvarying vec2 right_coord;\nvarying vec2 above_coord;\nvarying vec2 below_coord;\n\nvarying vec2 lefta_coord;\nvarying vec2 righta_coord;\nvarying vec2 leftb_coord;\nvarying vec2 rightb_coord;\n#else\nin vec2 left_coord;\nin vec2 right_coord;\nin vec2 above_coord;\nin vec2 below_coord;\n\nin vec2 lefta_coord;\nin vec2 righta_coord;\nin vec2 leftb_coord;\nin vec2 rightb_coord;\n#endif\n\n\n\nvoid main()\n{\n\t\n\tvec4 color = IMG_THIS_NORM_PIXEL(inputImage);\n\tvec4 colorL = IMG_NORM_PIXEL(inputImage, left_coord);\n\tvec4 colorR = IMG_NORM_PIXEL(inputImage, right_coord);\n\tvec4 colorA = IMG_NORM_PIXEL(inputImage, above_coord);\n\tvec4 colorB = IMG_NORM_PIXEL(inputImage, below_coord);\n\n\tvec4 colorLA = IMG_NORM_PIXEL(inputImage, lefta_coord);\n\tvec4 colorRA = IMG_NORM_PIXEL(inputImage, righta_coord);\n\tvec4 colorLB = IMG_NORM_PIXEL(inputImage, leftb_coord);\n\tvec4 colorRB = IMG_NORM_PIXEL(inputImage, rightb_coord);\n\n\tvec4 avg = (color + colorL + colorR + colorA + colorB + colorLA + colorRA + colorLB + colorRB) / 9.0;\n\t\n\tif (PASSINDEX == 1)\t{\n\t\tvec4 blur = IMG_THIS_NORM_PIXEL(smaller);\n\t\tavg = mix(color, (avg + depth*blur)/(1.0+depth), softness);\n\t}\n\telse if (PASSINDEX == 2)\t{\n\t\tvec4 blur = IMG_THIS_NORM_PIXEL(small);\n\t\tavg = mix(color, (avg + depth*blur)/(1.0+depth), softness);\n\t}\n\tgl_FragColor = avg;\n}",
+                "geometrie": 0,
+                "gridX": 64,
+                "gridY": 48,
+                "herkunft": {
+                    "author": "VIDVOX",
+                    "name": "Soft Blur"
+                },
+                "mixAmount": 1,
+                "name": "Soft Blur",
+                "parameter": {
+                    "werte": [
+                        {
+                            "key": "softness",
+                            "max": 1,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0.9
+                        },
+                        {
+                            "key": "depth",
+                            "max": 10,
+                            "min": 1,
+                            "typ": 2,
+                            "zahl": 10
+                        }
+                    ]
+                },
+                "passes": [
+                    {
+                        "breite": "max(floor($WIDTH*0.02),1.0)",
+                        "hoehe": "max(floor($HEIGHT*0.02),1.0)",
+                        "target": "smaller"
+                    },
+                    {
+                        "breite": "max(floor($WIDTH*0.25),1.0)",
+                        "hoehe": "max(floor($HEIGHT*0.25),1.0)",
+                        "target": "small"
+                    },
+                    {
+                    }
+                ],
+                "quellen": [
+                    {
+                        "bindung": -1,
+                        "name": "inputImage"
+                    }
+                ],
+                "type": "isfFilter",
+                "vertexCode": "#if __VERSION__ <= 120\nvarying vec2 left_coord;\nvarying vec2 right_coord;\nvarying vec2 above_coord;\nvarying vec2 below_coord;\n\nvarying vec2 lefta_coord;\nvarying vec2 righta_coord;\nvarying vec2 leftb_coord;\nvarying vec2 rightb_coord;\n#else\nout vec2 left_coord;\nout vec2 right_coord;\nout vec2 above_coord;\nout vec2 below_coord;\n\nout vec2 lefta_coord;\nout vec2 righta_coord;\nout vec2 leftb_coord;\nout vec2 rightb_coord;\n#endif\n\n\nvoid main()\n{\n\tisf_vertShaderInit();\n\tvec2 texc = vec2(isf_FragNormCoord[0],isf_FragNormCoord[1]);\n\tvec2 d = 1.0/RENDERSIZE;\n\n\tleft_coord = clamp(vec2(texc.xy + vec2(-d.x , 0)),0.0,1.0);\n\tright_coord = clamp(vec2(texc.xy + vec2(d.x , 0)),0.0,1.0);\n\tabove_coord = clamp(vec2(texc.xy + vec2(0,d.y)),0.0,1.0);\n\tbelow_coord = clamp(vec2(texc.xy + vec2(0,-d.y)),0.0,1.0);\n\n\tlefta_coord = clamp(vec2(texc.xy + vec2(-d.x , d.x)),0.0,1.0);\n\trighta_coord = clamp(vec2(texc.xy + vec2(d.x , d.x)),0.0,1.0);\n\tleftb_coord = clamp(vec2(texc.xy + vec2(-d.x , -d.x)),0.0,1.0);\n\trightb_coord = clamp(vec2(texc.xy + vec2(d.x , -d.x)),0.0,1.0);\n}"
+            },
+            {
+                "beatCode": "",
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Blur",
+                "roundUp": true,
+                "strength": 2,
+                "type": "blur"
+            },
+            {
+                "absolute": false,
+                "beatCode": "",
+                "bias": 0,
+                "edgeMode": 0,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "kernel": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    -1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    -1,
+                    4,
+                    -1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    -1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "name": "Convolution",
+                "scale": 1,
+                "twoPass": false,
+                "type": "convolution"
+            },
+            {
+                "beatCode": "",
+                "blend": 0,
+                "buffern": 0,
+                "depth": 37,
+                "depth2": 90,
+                "durationFrames": 18,
+                "enabled": true,
+                "frameCode": "x=0.5;y=0.5",
+                "initCode": "",
+                "invert": false,
+                "name": "Bump",
+                "oldStyle": false,
+                "onBeat": true,
+                "type": "bump"
+            },
+            {
+                "beatCode": "",
+                "code": "// CRT-Monitor: leichte Tonnen-Verzerrung, Scanlines, RGB-Maske, Vignette.\nvec4 farbe(vec2 uv, vec4 src)\n{\n    vec2 d = uv - 0.5;\n    vec2 kruemm = uv + d * dot(d, d) * 0.25;            // Tonnen-Verzerrung\n    if (kruemm.x < 0.0 || kruemm.x > 1.0 || kruemm.y < 0.0 || kruemm.y > 1.0)\n        return vec4(0.0, 0.0, 0.0, 1.0);\n    vec3 farbe = texture(uTex, kruemm).rgb;\n    float zeile = sin(kruemm.y * uResolution.y * 3.14159);\n    farbe *= 0.82 + 0.18 * zeile * zeile;               // Scanlines\n    float spalte = mod(floor(kruemm.x * uResolution.x), 3.0);\n    vec3 maske = spalte < 1.0 ? vec3(1.0, 0.72, 0.72)\n               : spalte < 2.0 ? vec3(0.72, 1.0, 0.72) : vec3(0.72, 0.72, 1.0);\n    farbe *= maske * 1.12;                              // Lochmaske\n    farbe *= 1.0 - 0.55 * dot(d, d) * 2.0;             // Vignette\n    return vec4(farbe, 1.0);\n}\n",
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "mixAmount": 1,
+                "name": "Pixel Filter",
+                "type": "pixelFilter"
+            },
+            {
+                "beatCode": "c=f;f=0;dl=dt_p",
+                "blend": false,
+                "buffern": 0,
+                "enabled": true,
+                "frameCode": "f = f + 1;\nt = ((f * $pi * 2)/c)/beatdiv;\ndt_p = dl + t;\ndr = cos(dt_p)*speed*2;\ndd = 1 - (sin(dt_p)*speed);",
+                "initCode": "c=200;f=0;dt_p=0;dl=0;beatdiv=4;speed=.15",
+                "name": "Dynamic Movement",
+                "nomove": false,
+                "pointCode": "r = r + dr;\nd = d * dd;",
+                "rectCoords": false,
+                "subpixel": false,
+                "type": "dynamicMovement",
+                "wrap": false,
+                "xres": 2,
+                "yres": 2
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

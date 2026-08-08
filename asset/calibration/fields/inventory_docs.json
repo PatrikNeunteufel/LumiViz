@@ -8,7 +8,7 @@
   "summe": {
     "typen": 91,
     "felder": 781,
-    "ohne_panel": 7,
+    "ohne_panel": 0,
     "ohne_doc": 0
   },
   "typen": [
@@ -4507,42 +4507,58 @@
           "art": "zahl",
           "default": 0,
           "name": "blend",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 3,
           "doc": "Auf das bestehende Bild: 0 ersetzen, 1 additiv, 2 50/50."
         },
         {
           "art": "text",
           "default": "",
           "name": "fragCode",
+          "panel": "sonderzeile",
           "doc": "Der Fragment-Shader, so wie er in der `.fs` steht (ohne JSON-Kopf)."
         },
         {
           "art": "zahl",
           "default": 0,
           "name": "geometrie",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 3,
           "doc": "Bauart der gezeichneten Geometrie: 0 = Quad (ISF-treu, Vorgabe) · 1 = ein übergroßes Dreieck (keine Diagonale ⇒ keine geknickte Varying-Interpolation) · 2 = Gitter (echte Verformung)."
         },
         {
           "art": "zahl",
           "default": 64,
           "name": "gridX",
+          "panel": "int",
+          "helfer": "addInt",
           "doc": "Gitter-Quads in X — nur bei `geometrie == 2`."
         },
         {
           "art": "zahl",
           "default": 48,
           "name": "gridY",
+          "panel": "int",
+          "helfer": "addInt",
           "doc": "Gitter-Quads in Y — nur bei `geometrie == 2`."
         },
         {
           "art": "zahl",
           "default": 1,
           "name": "mixAmount",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 1.0,
           "doc": "Anteil des Ergebnisses 0..1 (1 = ersetzen)."
         },
         {
           "art": "text",
           "default": "",
           "name": "vertexCode",
+          "panel": "sonderzeile",
           "doc": "Der Fragment-Shader, so wie er in der `.fs` steht (ohne JSON-Kopf). Der Vertex-Shader aus der gleichnamigen `.vs`. Leer = Standard: die Geometrie wird unverändert durchgereicht."
         }
       ]

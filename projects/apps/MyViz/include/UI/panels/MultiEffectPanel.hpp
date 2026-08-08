@@ -109,6 +109,13 @@ private:
     /// der Typ keine Herkunft traegt oder sie unbelegt ist. Nimmt den STAND
     /// BEIM AUFRUF, damit ein zwischenzeitlicher Import im Export landet.
     [[nodiscard]] QString herkunftKopfFuer(const QList<int>& path);
+    /// Import-Hinweise des zuletzt geladenen ISF-Shaders je Knoten (S72).
+    /// Sie stehen als Zeile IM PANEL, nicht in einem Dialog (Entscheid
+    /// Patrik: "das sollte kein Dialogfeld zeigen sondern einfach im Panel
+    /// stehn") — ein Dialog je Effekt beim Laden einer Kette waere eine
+    /// Klickorgie. Bewusst nur zur Laufzeit: die Hinweise gelten dem eben
+    /// geladenen Shader, nicht dem Preset.
+    QHash<std::uint64_t, QString> m_isfHinweise;
     [[nodiscard]] QList<int> currentPath() const;
     /// All selected item paths (same parent, sorted by index). Falls back to the
     /// current item when the selection is empty.

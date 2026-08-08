@@ -1430,6 +1430,23 @@ struct WriteVisitor
             }
             o["quellen"] = q;
         }
+        // Multipass-Durchgaenge (PASSES). Die TARGET-Namen sind Teil des
+        // Shader-Textes (uniform-Zeilen), muessen also mitgesichert werden.
+        if (!p.passes.empty())
+        {
+            QJsonArray pa;
+            for (const IsfPassZiel& z : p.passes)
+            {
+                QJsonObject e;
+                if (!z.target.empty()) e["target"] = QString::fromStdString(z.target);
+                if (!z.breite.empty()) e["breite"] = QString::fromStdString(z.breite);
+                if (!z.hoehe.empty()) e["hoehe"] = QString::fromStdString(z.hoehe);
+                if (z.gleitkomma) e["gleitkomma"] = true;
+                if (z.bestaendig) e["bestaendig"] = true;
+                pa.append(e);
+            }
+            o["passes"] = pa;
+        }
         schreibeParameter(o, p.parameter);
         schreibeHerkunft(o, p.herkunft);
     }
@@ -2845,6 +2862,20 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
                                    lumi::multieffect::isffilter::kQuelleAudioFft,
                                    lumi::multieffect::isffilter::kQuelleMax);
             p.quellen.push_back(std::move(s));
+        }
+        for (const QJsonValue& v : o.value("passes").toArray())
+        {
+            if (!v.isObject()) continue;
+            const QJsonObject e = v.toObject();
+            IsfPassZiel z;
+            z.target = getStr(e, "target", z.target);
+            z.breite = getStr(e, "breite", z.breite);
+            z.hoehe = getStr(e, "hoehe", z.hoehe);
+            z.gleitkomma = getBool(e, "gleitkomma", z.gleitkomma);
+            z.bestaendig = getBool(e, "bestaendig", z.bestaendig);
+            // Mehr als 8 Durchgaenge hat kein Shader der Bibliothek; die
+            // Grenze schuetzt vor einer Datei, die den Speicher sprengt.
+            if (p.passes.size() < 8) p.passes.push_back(std::move(z));
         }
         leseParameter(o, p.parameter);
         leseHerkunft(o, p.herkunft);

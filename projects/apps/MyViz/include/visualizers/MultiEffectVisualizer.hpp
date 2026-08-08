@@ -672,6 +672,21 @@ private:
         int isfGeoBauart = -1;    ///< Bauart, fuer die der Puffer gebaut wurde
         int isfGeoX = 0;          ///< Gitterweite, fuer die er gebaut wurde
         int isfGeoY = 0;
+        /// Multipass (ISF `PASSES`): je TARGET ein Puffer-PAAR. Das Paar ist
+        /// noetig, weil ein Durchgang sein EIGENES Ziel lesen darf — das ist
+        /// der Feedback-Fall (`PERSISTENT`): gelesen wird das Vorframe,
+        /// geschrieben das neue Bild. Ohne Paar laese und schriebe derselbe
+        /// Puffer gleichzeitig (undefiniert).
+        struct IsfZiel
+        {
+            std::array<std::unique_ptr<QOpenGLFramebufferObject>, 2> fbo;
+            int cur = 0;   ///< welcher der beiden das FRISCHE Bild traegt
+            int breite = 0;
+            int hoehe = 0;
+            bool gleitkomma = false;
+        };
+        std::vector<IsfZiel> isfZiele;
+        std::string isfPassSignatur;  ///< Snapshot, fuer den die Ziele gebaut sind
     };
 
     /** Render-thread state of one list node, keyed by ChainNode::nodeId. */
@@ -817,6 +832,11 @@ private:
     /// Baut nur neu, wenn Bauart oder Gitterweite sich geaendert haben.
     void sorgeFuerIsfGeometrie(LeafRuntime& rt,
                                const lumi::multieffect::IsfFilterParams& params);
+    /// Puffer der Multipass-Ziele bereitstellen (Groesse aus den
+    /// WIDTH/HEIGHT-Ausdruecken). Baut nur neu, wenn sich Deklaration oder
+    /// Bildgroesse geaendert haben.
+    void sorgeFuerIsfZiele(LeafRuntime& rt,
+                           const lumi::multieffect::IsfFilterParams& params);
     /// GL blend state for an AVS BLEND_LINE mode 0..9 (S9; 8 falls back to add).
     static void applyLineBlend(int mode, int adjustAlpha);
     /// Restore GL_FUNC_ADD + disable blending after a line-blend draw.

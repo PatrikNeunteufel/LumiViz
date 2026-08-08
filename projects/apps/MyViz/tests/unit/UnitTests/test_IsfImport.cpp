@@ -98,8 +98,13 @@ TEST_CASE("IsfImport: Filter — ein Bild-Eingang, Code unveraendert")
     CHECK(r.parameter.first().min == doctest::Approx(2.0));
     CHECK(r.parameter.first().max == doctest::Approx(30.0));
     CHECK(r.herkunft.name == "posterize");
-    CHECK(r.herkunft.author == "by zoidberg");
-    CHECK(r.herkunft.license.empty());  // keine im Kopf => Hinweis im Report
+    // Ein fuehrendes "by " aus CREDIT faellt weg — das Panel setzt selbst
+    // ein "von" davor, sonst laese sich "von by zoidberg" (Sichttest S72).
+    CHECK(r.herkunft.author == "zoidberg");
+    // Keine Lizenz im Kopf — das Panel zeigt dafuer „Lizenz: unbekannt";
+    // eine zusaetzliche Dialog-Meldung gibt es bewusst NICHT.
+    CHECK(r.herkunft.license.empty());
+    CHECK(r.report.isEmpty());
 }
 
 TEST_CASE("IsfImport: Generator und Uebergang werden ANGENOMMEN, nicht abgelehnt")
@@ -130,12 +135,11 @@ TEST_CASE("IsfImport: Generator und Uebergang werden ANGENOMMEN, nicht abgelehnt
                     });
     CHECK(hatProgress);
 
-    // Die Sorte steht auch als Klartext im Report (Info-Zeile im Panel).
-    const bool sorteGemeldet =
-        std::any_of(ru.report.begin(), ru.report.end(), [](const QString& z) {
-            return z.contains(QStringLiteral("Erkannt als"));
-        });
-    CHECK(sorteGemeldet);
+    // Der Report bleibt dem vorbehalten, was der Nutzer SONST nicht sieht
+    // (Entscheid Patrik S72). Sorte und Lizenz stehen im Panel als eigene
+    // Zeile bzw. Feld — im Dialog waeren sie nur Laerm. Eine gewoehnliche
+    // Datei ohne Besonderheit meldet deshalb GAR NICHTS.
+    CHECK(ru.report.isEmpty());
 }
 
 TEST_CASE("IsfImport: nur was gar kein ISF ist, wird zurueckgewiesen")
@@ -235,6 +239,56 @@ TEST_CASE("IsfImport: der .vs bleibt ein EIGENER Shader")
     const auto ohne = lumi::isf::importiereIsf(fs, QStringLiteral("kanten"));
     CHECK(ohne.ok);
     CHECK(ohne.vertexCode.isEmpty());
+}
+
+TEST_CASE("IsfImport: PASSES werden gelesen, Groessen-Ausdruecke gerechnet")
+{
+    // Multipass ist die Klasse von Effekten, die in EINEM Durchgang
+    // grundsaetzlich nicht geht (separabler Blur, Bloom, Auto-Levels). Vor
+    // dem Ausbau scheiterten daran 76 der 327 Vidvox-Dateien.
+    // Zwei Fallstricke in einer Zeile: QString::fromUtf8 statt QStringLiteral,
+    // weil der Rohstring KOMMAS enthaelt und ein funktionsaehnliches Makro sie
+    // zu Argumenten zerlegte — und ein EIGENER Begrenzer `ISF`, weil
+    // `"floor($HEIGHT/8)"` die Sequenz `)"` enthaelt und den Rohstring sonst
+    // vorzeitig beendet.
+    const QString quelle = QString::fromUtf8(R"ISF(/*{
+    "INPUTS": [ { "NAME": "inputImage", "TYPE": "image" } ],
+    "PASSES": [
+        { "TARGET": "reduziert", "WIDTH": "$WIDTH/16", "HEIGHT": "floor($HEIGHT/8)",
+          "FLOAT": true, "PERSISTENT": true },
+        { "TARGET": "zwischen" },
+        { }
+    ]
+}*/
+void main() { gl_FragColor = IMG_THIS_PIXEL(reduziert); }
+)ISF");
+    const auto r = lumi::isf::importiereIsf(quelle, QStringLiteral("mehrpass"));
+    REQUIRE_MESSAGE(r.ok, r.error.toStdString());
+    REQUIRE(r.passes.size() == 3);
+    CHECK(r.passes[0].target == "reduziert");
+    CHECK(r.passes[0].gleitkomma);
+    CHECK(r.passes[0].bestaendig);
+    CHECK(r.passes[1].target == "zwischen");
+    CHECK_FALSE(r.passes[1].gleitkomma);
+    // Der LETZTE Durchgang hat kein Ziel — er schreibt aufs Kettenbild.
+    CHECK(r.passes[2].target.empty());
+
+    // Die Groessen-AUSDRUECKE sind der Kern: daran haengen die
+    // Reduktionsstufen eines Histogramms.
+    CHECK(lumi::isf::passGroesse(r.passes[0].breite, 1920, 1920, 1080) == 120);
+    CHECK(lumi::isf::passGroesse(r.passes[0].hoehe, 1080, 1920, 1080) == 135);
+    // Ohne Ausdruck: volle Bildgroesse.
+    CHECK(lumi::isf::passGroesse("", 1920, 1920, 1080) == 1920);
+    // Was NICHT aufgeht, faellt auf Vollbild zurueck — ein zu grosser Puffer
+    // rechnet langsamer, aber richtig; ein geratener lieferte stumm falsche
+    // Bilder.
+    CHECK(lumi::isf::passGroesse("$WIDTH/0", 1920, 1920, 1080) == 1920);
+    CHECK(lumi::isf::passGroesse("kaputt(", 1920, 1920, 1080) == 1920);
+    CHECK(lumi::isf::passGroesse("$UNBEKANNT", 1920, 1920, 1080) == 1920);
+    // Nach oben geklemmt, damit ein Ausdruck nicht den Grafikspeicher sprengt.
+    CHECK(lumi::isf::passGroesse("$WIDTH*100", 1920, 1920, 1080) == 8192);
+    // min/max und Klammern gehen ebenfalls.
+    CHECK(lumi::isf::passGroesse("max(2, min($WIDTH, 64))", 1920, 1920, 1080) == 64);
 }
 
 TEST_CASE("IsfImport: istIsf erkennt das Format streng")

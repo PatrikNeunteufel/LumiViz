@@ -1,0 +1,313 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "",
+                "blend": 0,
+                "cameraId": "\\\\?\\usb#vid_3277&pid_0018&mi_00#7&cce78d1&0&0000#{e5323777-f976-4f5b-9b55-b94699c46e44}\\global",
+                "description": "S70-Pruefstand: Testvideo im deterministischen Frame-Schritt (VideoFrameCache, Sim-Uhr x fps) - Einpassen mit Balken, ohne Audio-Skripte; zwei Laeufe muessen bit-identisch sein.",
+                "enabled": true,
+                "filePath": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/calibration/fields/testvideo.avi",
+                "fit": 1,
+                "frameCode": "",
+                "initCode": "",
+                "loop": true,
+                "name": "Sonde Video-Quelle",
+                "opacity": 1,
+                "recordingName": "",
+                "source": 1,
+                "speed": 1,
+                "streaming": true,
+                "type": "videoSource"
+            },
+            {
+                "beatCode": "",
+                "color": 16776960,
+                "enabled": true,
+                "frameCode": "size=3+22*min(1,bass*50+treb*200+mid*20);",
+                "initCode": "",
+                "name": "Add Borders",
+                "size": 100,
+                "type": "addBorders"
+            },
+            {
+                "blend": 0,
+                "enabled": true,
+                "fragCode": "vec3 rgb2hsv(vec3 c)\t{\n\tvec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\t//vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));\n\t//vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));\n\tvec4 p = c.g < c.b ? vec4(c.bg, K.wz) : vec4(c.gb, K.xy);\n\tvec4 q = c.r < p.x ? vec4(p.xyw, c.r) : vec4(c.r, p.yzx);\n\t\n\tfloat d = q.x - min(q.w, q.y);\n\tfloat e = 1.0e-10;\n\treturn vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);\n}\n\nvec3 hsv2rgb(vec3 c)\t{\n\tvec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);\n\tvec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);\n\treturn c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);\n}\n\nfloat gray(vec4 c)\t{\n\treturn (c.r + c.g + c.b) * c.a / 3.0;\t\n}\n\nvoid main()\n{\n\tif (PASSINDEX == 0)\t{\n\t\tvec4 \t\tinputColor = IMG_NORM_PIXEL(inputImage, isf_FragNormCoord);\n\t\tgl_FragColor = inputColor;\n\t}\n\telse if (PASSINDEX == 1)\t{\n\t\tvec4 \t\tinputColor = IMG_NORM_PIXEL(bufferPassA, isf_FragNormCoord);\n\t\tvec4 \t\toldColor = IMG_NORM_PIXEL(autoColorBuffer, vec2(0.5,0.5));\n\t\tgl_FragColor = mix(inputColor, oldColor, 0.8);\n\t}\n\telse if (PASSINDEX == 2)\t{\n\t\tvec4 \t\tinputColor = IMG_THIS_PIXEL(inputImage);\n\t\tvec4\t\tinColor = baseColor;\n\t\tfloat\t\tindex = floor(gray(inputColor) * float(colorCount));\t\n\t\t//float\t\tindex = floor(isf_FragNormCoord.x * float(colorCount));\n\t\tfloat\t\tvariation = 0.3236;\t//\t1/5 the golden ratio\n\t\tint\t\t\tcolorMode = colorModeOverride;\n\n\t\tif (sampleMode == 0)\t{\n\t\t\tinColor = baseColor;\n\t\t\tinColor.rgb = rgb2hsv(inColor.rgb);\n\t\t}\n\t\telse if (sampleMode == 1)\t{\n\t\t\tinColor = IMG_NORM_PIXEL(inputImage, pixelFollowLocation);\n\t\t\tinColor.rgb = rgb2hsv(inColor.rgb);\n\t\t}\n\t\telse if (sampleMode == 2)\t{\n\t\t\tinColor = IMG_NORM_PIXEL(autoColorBuffer, vec2(0.5,0.5));\n\t\t\tinColor.rgb = rgb2hsv(inColor.rgb);\n\t\t\tif (inColor.b < 0.1)\t{\n\t\t\t\tinColor = inColor * 1.5;\t\n\t\t\t}\n\t\t}\n\t\n\t\tvec4\t\toutColor = inColor;\n\t\n\t\t//\tBasic complimentary  saturation and brightness variations on two fixed 180 degree opposite hues\n\t\tif (colorMode == 0)\t{\n\t\t\tif (mod(index, 2.0) >= 1.0)\t{\n\t\t\t\toutColor.r = outColor.r + 0.5;\n\t\t\t\toutColor.r = outColor.r - floor(outColor.r);\n\t\t\t}\n\t\t\n\t\t\toutColor.g = outColor.g - variation * floor(index / 2.0);\n\t\t\n\t\t\tif (outColor.g < 0.1)\t{\n\t\t\t\toutColor.g = outColor.g + variation * floor(index / 2.0);\n\t\t\t\toutColor.g = outColor.g - floor(outColor.g);\n\t\t\t}\n\t\t\n\t\t\toutColor.b = outColor.b - variation * floor(index / 4.0);\n\t\t\tif (outColor.b < 0.2)\t{\n\t\t\t\toutColor.b = outColor.b + variation * floor(index / 4.0);\n\t\t\t\toutColor.b = outColor.b - floor(outColor.b);\n\t\t\t}\n\t\t}\n\t\t//\tSplit complimentary  saturation and brightness variations on a 3 fixed 120 degree hues\n\t\telse if (colorMode == 1)\t{\n\t\t\tfloat divisor = 3.0;\n\t\t\tfloat ratio = 0.45;\n\t\t\tif (mod(index, 3.0) >= 2.0)\t{\n\t\t\t\toutColor.r = outColor.r - ratio;\n\t\t\t}\n\t\t\telse if (mod(index, 3.0) >= 1.0)\t{\n\t\t\t\toutColor.r = outColor.r + ratio;\n\t\t\t}\n\t\t\n\t\t\t//outColor.g = outColor.g + variation * floor(index / divisor);\n\t\t\n\t\t\tif (mod(index, 5.0) >= 3.0)\t{\n\t\t\t\toutColor.g = outColor.g - variation;\n\t\t\t\toutColor.g = outColor.g - floor(outColor.g);\n\t\t\t}\n\t\t\toutColor.b = outColor.b - variation * floor(index / (divisor));\n\t\t\tif (outColor.b < 0.1)\t{\n\t\t\t\toutColor.b = outColor.b + variation * floor(index / (divisor));\n\t\t\t\toutColor.b = outColor.b - floor(outColor.b);\n\t\t\t}\n\t\t}\n\t\t//\tCompound complimentary  a combination of shades, complimentary and analogous colors with slight shifts\n\t\telse if (colorMode == 2)\t{\n\t\t\tif (mod(index, 3.0) >= 2.0)\t{\n\t\t\t\toutColor.r = outColor.r + 0.5;\n\t\t\t\toutColor.r = outColor.r + variation * index * 1.0 / float(colorCount - 1) / 4.0;\n\t\t\t}\n\t\t\telse\t{\n\t\t\t\toutColor.r = outColor.r + variation * index * 1.0 / float(colorCount - 1);\n\t\t\t}\n\t\t\toutColor.r = outColor.r - floor(outColor.r);\n\t\t\n\t\t\n\t\t\tif (mod(index, 2.0) >= 1.0)\t{\n\t\t\t\toutColor.g = outColor.g + index * variation / 2.0;\n\t\t\t}\n\t\t\telse if (mod(index, 3.0) >= 2.0)\t{\n\t\t\t\toutColor.g = outColor.g - variation / 2.0;\n\t\t\t}\n\t\t\telse\t{\n\t\t\t\toutColor.g = outColor.g - index * variation / float(colorCount - 1);\n\t\t\t}\n\t\t\tif (outColor.g > 1.0)\t{\n\t\t\t\toutColor.g = outColor.g - floor(outColor.g);\n\t\t\t}\n\t\t}\n\t\t//\tSpectrum  hue shifts based on number of colors with minor saturation shifts\n\t\telse if (colorMode == 3)\t{\n\t\t\toutColor.r = outColor.r + index * 1.0 / float(colorCount);\n\t\t\tif (mod(index, 3.0) >= 2.0)\t{\n\t\t\t\toutColor.g = outColor.g - variation / 2.0;\n\t\t\t\toutColor.g = outColor.g - floor(outColor.g);\n\t\t\t}\n\t\t\telse if (mod(index, 4.0) >= 3.0)\t{\n\t\t\t\toutColor.g = outColor.g + variation / 2.0;\n\t\t\t\t//outColor.g = outColor.g - floor(outColor.g);\n\t\t\t}\n\t\t}\n\t\t//\tShades  saturation and brightness variations on a single fixed hue\n\t\telse if (colorMode == 4)\t{\n\t\t\tif (mod(index, 2.0) >= 1.0)\t{\n\t\t\t\toutColor.b = outColor.b - (index * variation) / float(colorCount-1);\n\t\t\t}\n\t\t\telse\t{\n\t\t\t\toutColor.b = outColor.b + (index * variation) / float(colorCount-1);\n\t\t\t\toutColor.b = outColor.b - floor(outColor.b);\n\t\t\t}\n\t\t\tif (outColor.b < 0.075)\t{\n\t\t\t\toutColor.b = 1.0 - outColor.b * variation;\n\t\t\t}\n\t\t\n\t\t\tif (mod(index, 3.0) >= 2.0)\t{\n\t\t\t\toutColor.g = outColor.g - (index * variation) / 2.0;\n\t\t\t}\n\t\t\telse if (mod(index, 4.0) >= 3.0)\t{\n\t\t\t\toutColor.g = outColor.g + (index * variation) / 2.0;\n\t\t\t}\n\t\t\n\t\t\tif ((outColor.g > 1.0) || (outColor.g < 0.05))\t{\n\t\t\t\toutColor.g = outColor.g - floor(outColor.g);\n\t\t\t}\n\t\t}\n\t\t//\tAnalogous  small hue and saturation shifts \n\t\telse if (colorMode == 5)\t{\n\n\t\t\toutColor.r = outColor.r + variation * index * 1.0 / float(colorCount - 1); \t\t\n\n\t\t\tif (mod(index, 3.0) >= 1.0)\t{\n\t\t\t\toutColor.g = outColor.g - variation / 2.0;\n\t\t\t\tif (outColor.g < 0.0)\t{\n\t\t\t\t\toutColor.g = outColor.g + variation / 2.0;\n\t\t\t\t}\n\t\t\t\tif (outColor.g > 1.0)\t{\n\t\t\t\t\toutColor.g = outColor.g - floor(outColor.g);\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\t//\tCompound Analogous  similar to analogous but with negative hue shifts\n\t\telse if (colorMode == 6)\t{\n\t\t\tif (mod(index, 3.0) >= 1.0)\t{\n\t\t\t\toutColor.r = outColor.r + variation * index * 1.0 / float(colorCount - 1);\n\t\t\t}\n\t\t\telse\t{\n\t\t\t\toutColor.r = outColor.r - variation * index * 0.5 / float(colorCount - 1);\t\n\t\t\t}\n\t\t\tif (mod(index, 3.0) >= 1.0)\t{\n\t\t\t\toutColor.g = outColor.g - variation / 2.0;\n\t\t\t\tif (outColor.g < 0.0)\t{\n\t\t\t\t\toutColor.g = outColor.g + variation;\n\t\t\t\t}\n\t\t\t\tif (outColor.g > 1.0)\t{\n\t\t\t\t\toutColor.g = outColor.g - floor(outColor.g);\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (mod(index, 4.0) >= 2.0)\t{\n\t\t\t\tif (outColor.b < variation)\t{\n\t\t\t\t\toutColor.b = outColor.b + variation;\n\t\t\t\t}\t\t\t\t\n\t\t\t}\n\t\t}\n\t\n\t\tgl_FragColor = vec4(hsv2rgb(outColor.rgb), inColor.a);\n\t}\n}",
+                "geometrie": 0,
+                "gridX": 64,
+                "gridY": 48,
+                "herkunft": {
+                    "author": "VIDVOX",
+                    "name": "Auto Color Tone"
+                },
+                "mixAmount": 1,
+                "name": "Auto Color Tone",
+                "parameter": {
+                    "werte": [
+                        {
+                            "auswahlLabels": [
+                                "Base Color",
+                                "Pixel Follow",
+                                "Color Average"
+                            ],
+                            "auswahlWerte": [
+                                0,
+                                1,
+                                2
+                            ],
+                            "key": "sampleMode",
+                            "label": "Sample Mode",
+                            "typ": 6,
+                            "zahl": 0
+                        },
+                        {
+                            "auswahlLabels": [
+                                "Basic Complementary",
+                                "Split Complementary",
+                                "Compound Complementary",
+                                "Spectrum",
+                                "Shades",
+                                "Analogous",
+                                "Compound Analogous"
+                            ],
+                            "auswahlWerte": [
+                                0,
+                                1,
+                                2,
+                                3,
+                                4,
+                                5,
+                                6
+                            ],
+                            "key": "colorModeOverride",
+                            "label": "Color Mode",
+                            "typ": 6,
+                            "zahl": 1
+                        },
+                        {
+                            "auswahlLabels": [
+                                "2",
+                                "3",
+                                "4",
+                                "5",
+                                "6",
+                                "7",
+                                "8",
+                                "9",
+                                "10",
+                                "11",
+                                "12",
+                                "13",
+                                "14",
+                                "15",
+                                "16"
+                            ],
+                            "auswahlWerte": [
+                                2,
+                                3,
+                                4,
+                                5,
+                                6,
+                                7,
+                                8,
+                                9,
+                                10,
+                                11,
+                                12,
+                                13,
+                                14,
+                                15,
+                                16
+                            ],
+                            "key": "colorCount",
+                            "label": "Color Count",
+                            "typ": 6,
+                            "zahl": 7
+                        },
+                        {
+                            "key": "baseColor",
+                            "label": "Base Color",
+                            "typ": 3,
+                            "vektor": [
+                                0.25,
+                                0.59,
+                                0.9,
+                                1
+                            ]
+                        },
+                        {
+                            "key": "pixelFollowLocation",
+                            "label": "Pixel Point",
+                            "typ": 4,
+                            "vektor": [
+                                0.5,
+                                0.5
+                            ]
+                        }
+                    ]
+                },
+                "passes": [
+                    {
+                        "breite": "$WIDTH / 100.0",
+                        "hoehe": "$HEIGHT / 100.0",
+                        "target": "bufferPassA"
+                    },
+                    {
+                        "breite": "1.0",
+                        "hoehe": "1.0",
+                        "target": "autoColorBuffer"
+                    },
+                    {
+                    }
+                ],
+                "quellen": [
+                    {
+                        "bindung": -1,
+                        "name": "inputImage"
+                    }
+                ],
+                "type": "isfFilter",
+                "vertexCode": ""
+            },
+            {
+                "beatCode": "",
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Blur",
+                "roundUp": true,
+                "strength": 2,
+                "type": "blur"
+            },
+            {
+                "absolute": false,
+                "beatCode": "",
+                "bias": 0,
+                "edgeMode": 0,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "kernel": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    -1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    -1,
+                    4,
+                    -1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    -1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "name": "Convolution",
+                "scale": 1,
+                "twoPass": false,
+                "type": "convolution"
+            },
+            {
+                "beatCode": "",
+                "blend": 0,
+                "buffern": 0,
+                "depth": 37,
+                "depth2": 90,
+                "durationFrames": 18,
+                "enabled": true,
+                "frameCode": "x=0.5;y=0.5",
+                "initCode": "",
+                "invert": false,
+                "name": "Bump",
+                "oldStyle": false,
+                "onBeat": true,
+                "type": "bump"
+            },
+            {
+                "beatCode": "",
+                "code": "// CRT-Monitor: leichte Tonnen-Verzerrung, Scanlines, RGB-Maske, Vignette.\nvec4 farbe(vec2 uv, vec4 src)\n{\n    vec2 d = uv - 0.5;\n    vec2 kruemm = uv + d * dot(d, d) * 0.25;            // Tonnen-Verzerrung\n    if (kruemm.x < 0.0 || kruemm.x > 1.0 || kruemm.y < 0.0 || kruemm.y > 1.0)\n        return vec4(0.0, 0.0, 0.0, 1.0);\n    vec3 farbe = texture(uTex, kruemm).rgb;\n    float zeile = sin(kruemm.y * uResolution.y * 3.14159);\n    farbe *= 0.82 + 0.18 * zeile * zeile;               // Scanlines\n    float spalte = mod(floor(kruemm.x * uResolution.x), 3.0);\n    vec3 maske = spalte < 1.0 ? vec3(1.0, 0.72, 0.72)\n               : spalte < 2.0 ? vec3(0.72, 1.0, 0.72) : vec3(0.72, 0.72, 1.0);\n    farbe *= maske * 1.12;                              // Lochmaske\n    farbe *= 1.0 - 0.55 * dot(d, d) * 2.0;             // Vignette\n    return vec4(farbe, 1.0);\n}\n",
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "mixAmount": 1,
+                "name": "Pixel Filter",
+                "type": "pixelFilter"
+            },
+            {
+                "beatCode": "c=f;f=0;dl=dt_p",
+                "blend": false,
+                "buffern": 0,
+                "enabled": true,
+                "frameCode": "f = f + 1;\nt = ((f * $pi * 2)/c)/beatdiv;\ndt_p = dl + t;\ndr = cos(dt_p)*speed*2;\ndd = 1 - (sin(dt_p)*speed);",
+                "initCode": "c=200;f=0;dt_p=0;dl=0;beatdiv=4;speed=.15",
+                "name": "Dynamic Movement",
+                "nomove": false,
+                "pointCode": "r = r + dr;\nd = d * dd;",
+                "rectCoords": false,
+                "subpixel": false,
+                "type": "dynamicMovement",
+                "wrap": false,
+                "xres": 2,
+                "yres": 2
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

@@ -2506,6 +2506,36 @@ struct IsfBildQuelle
 };
 
 /**
+ * Ein Durchgang eines Multipass-Shaders (ISF `PASSES`).
+ *
+ * Der Shader-Text ist bei ALLEN Durchgängen derselbe; `PASSINDEX` sagt ihm,
+ * im wievielten er steckt. Ein Durchgang mit `target` rendert in einen
+ * benannten Puffer, der danach unter genau diesem Namen als Sampler lesbar
+ * ist — auch von späteren Durchgängen. Der letzte Durchgang trägt
+ * üblicherweise KEIN Ziel und schreibt damit aufs Kettenbild.
+ *
+ * Das ist die Klasse von Effekten, die in einem Durchgang grundsätzlich nicht
+ * geht: separabler Weichzeichner (erst waagerecht, dann senkrecht), Bloom
+ * (trennen → weichzeichnen → addieren), Auto-Levels/Histogramm (Reduktion
+ * über das ganze Bild).
+ */
+struct IsfPassZiel
+{
+    /// Puffername = Sampler-Name im Shader. Leer = zeichnet aufs Kettenbild.
+    std::string target;
+    /// Größen-AUSDRÜCKE der ISF-Spec (`$WIDTH/16`, `floor($HEIGHT*0.5)` …).
+    /// Leer = volle Bildgröße. Reduktionsstufen hängen genau daran.
+    std::string breite;
+    std::string hoehe;
+    /// `FLOAT`: 32-Bit-Gleitkomma statt 8 Bit — nötig, sobald ein Durchgang
+    /// Werte außerhalb 0..1 oder feine Zwischenstände sammelt (Histogramme).
+    bool gleitkomma = false;
+    /// `PERSISTENT`: der Inhalt überlebt das Frame. DAS ist der Feedback-Fall
+    /// — ein Durchgang liest sein eigenes Ziel vom Vorframe.
+    bool bestaendig = false;
+};
+
+/**
  * ISF-Filter-Knoten (Entscheid Patrik S72): ein importierter oder selbst
  * geschriebener Shader im **Interactive Shader Format** — mit BEIDEN
  * Shader-Stufen in getrennten Feldern.
@@ -2532,6 +2562,8 @@ struct IsfFilterParams
     std::string vertexCode;
     /// Bild-Eingänge des Shaders in Deklarations-Reihenfolge, je mit Quelle.
     std::vector<IsfBildQuelle> quellen;
+    /// Durchgänge eines Multipass-Shaders (`PASSES`). Leer = ein Durchgang.
+    std::vector<IsfPassZiel> passes;
     /// Eigene Regler des Shaders (ISF-`INPUTS`) — s. `ParamGruppe`. Ihre
     /// Werte fließen als `const`-Block in `fragCode` (Nahtstelle: die
     /// Sentinel in IsfImport.hpp).

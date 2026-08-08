@@ -18,6 +18,7 @@
 #include "visualizers/multieffect/GpuParticlesWrapper.hpp"  // GPU-Partikel (G2, S69)
 #include "visualizers/multieffect/PixelFilterWrapper.hpp"   // Pixel-Filter (Stilfilter, S70)
 #include "visualizers/multieffect/IsfFilterWrapper.hpp"     // ISF-Filter (S72)
+#include "visualizers/multieffect/IsfImport.hpp"            // passGroesse (PASSES, S72)
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 #include "services/LiveVideoFeed.hpp"  // videoSource: Kamera/Streaming (S70)
@@ -13122,6 +13123,56 @@ void MultiEffectVisualizer::sorgeFuerIsfGeometrie(LeafRuntime& rt,
     rt.isfGeoY = gy;
 }
 
+void MultiEffectVisualizer::sorgeFuerIsfZiele(LeafRuntime& rt,
+                                              const IsfFilterParams& params)
+{
+    // Signatur = alles, was die Puffer bestimmt. Die BILDGROESSE gehoert
+    // dazu: die Ausdruecke rechnen relativ dazu ($WIDTH/16), ein Resize
+    // aendert also jede Zielgroesse.
+    std::string sig = std::to_string(m_surfaceWidth) + "x" +
+                      std::to_string(m_surfaceHeight) + "|";
+    for (const auto& z : params.passes)
+    {
+        sig += z.target + "," + z.breite + "," + z.hoehe + "," +
+               (z.gleitkomma ? "f" : "-") + (z.bestaendig ? "p" : "-") + ";";
+    }
+    if (rt.isfPassSignatur == sig && rt.isfZiele.size() == params.passes.size())
+        return;
+    rt.isfPassSignatur = sig;
+    rt.isfZiele.clear();
+    rt.isfZiele.resize(params.passes.size());
+
+    for (std::size_t i = 0; i < params.passes.size(); ++i)
+    {
+        const auto& z = params.passes[i];
+        auto& ziel = rt.isfZiele[i];
+        if (z.target.empty()) continue;  // letzter Durchgang: aufs Kettenbild
+        ziel.breite = lumi::isf::passGroesse(z.breite, m_surfaceWidth,
+                                             m_surfaceWidth, m_surfaceHeight);
+        ziel.hoehe = lumi::isf::passGroesse(z.hoehe, m_surfaceHeight,
+                                            m_surfaceWidth, m_surfaceHeight);
+        ziel.gleitkomma = z.gleitkomma;
+        QOpenGLFramebufferObjectFormat fmt;
+        // FLOAT-Ziele sammeln Werte ausserhalb 0..1 (Histogramme, Summen) —
+        // in 8 Bit waeren sie abgeschnitten.
+        if (z.gleitkomma) fmt.setInternalTextureFormat(GL_RGBA32F);
+        for (auto& f : ziel.fbo)
+        {
+            f = std::make_unique<QOpenGLFramebufferObject>(ziel.breite, ziel.hoehe,
+                                                          fmt);
+            // Frisch angelegte Puffer SCHWARZ: ein persistenter Puffer wird im
+            // ersten Frame gelesen, bevor ihn je jemand beschrieben hat.
+            if (f->bind())
+            {
+                auto* gl = QOpenGLContext::currentContext()->functions();
+                gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                gl->glClear(GL_COLOR_BUFFER_BIT);
+                f->release();
+            }
+        }
+    }
+}
+
 void MultiEffectVisualizer::runIsfFilter(const ChainNode& node,
                                          const IsfFilterParams& params)
 {
@@ -13138,6 +13189,8 @@ void MultiEffectVisualizer::runIsfFilter(const ChainNode& node,
     std::string paramSig;
     for (const auto& w : params.parameter.werte)
         paramSig += w.key + ":" + std::to_string(static_cast<int>(w.typ)) + ";";
+    // Die TARGET-Namen der Durchgaenge sind ebenfalls uniform-Zeilen.
+    for (const auto& z : params.passes) quellenSig += "@" + z.target + ";";
 
     if (rt.isfProgram == nullptr || rt.isfFragCompiled != params.fragCode ||
         rt.isfVertCompiled != params.vertexCode ||
@@ -13153,7 +13206,7 @@ void MultiEffectVisualizer::runIsfFilter(const ChainNode& node,
         const std::string vert =
             lumi::isffilter::wrapVertex(params.vertexCode, params.parameter);
         const std::string frag = lumi::isffilter::wrapFragment(
-            params.fragCode, params.quellen, params.parameter);
+            params.fragCode, params.quellen, params.parameter, params.passes);
         if (!program->addShaderFromSourceCode(QOpenGLShader::Vertex, vert.c_str()) ||
             !program->addShaderFromSourceCode(QOpenGLShader::Fragment, frag.c_str()) ||
             !program->link())
@@ -13168,15 +13221,21 @@ void MultiEffectVisualizer::runIsfFilter(const ChainNode& node,
     if (rt.isfProgram == nullptr) return;  // Kompilierfehler ⇒ Passthrough
 
     sorgeFuerIsfGeometrie(rt, params);
+    // VOR jedem Binden von Textureinheiten (BEFUND S72): die Aktualisierung
+    // laedt ihre Texturen auf die GERADE AKTIVE Einheit. Stand sie nach dem
+    // Binden des Kettenbilds, ueberschrieb sie dessen Einheit 0 — `_lumiPrev`
+    // zeigte danach auf die Audio-Textur, und JEDER Filter tastete Audio
+    // statt Bild ab (sichtbar als "kein Filter tut etwas").
+    aktualisiereAudioTexturen();
 
     float bass = 0.0f, mid = 0.0f, treb = 0.0f;
     computeAudioBands(getSpectrum(), bass, mid, treb);
 
+    sorgeFuerIsfZiele(rt, params);
+
     // Quelle lesen, Partner beschreiben, tauschen (transformPass-Muster).
     SurfacePair& pair = active();
     pair.current()->release();
-    pair.partner()->bind();
-    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
 
     QOpenGLShaderProgram& p = *rt.isfProgram;
     p.bind();
@@ -13242,74 +13301,125 @@ void MultiEffectVisualizer::runIsfFilter(const ChainNode& node,
     // Das Bild, das der Knoten vorfindet: Blend-Grundlage UND Vorgabe jeder
     // Quelle (AVS-Konvention "nichts gewaehlt = normale Pipeline").
     const unsigned int kettenTex = pair.current()->texture();
-    int einheit = 0;
-    p.setUniformValue("_lumiPrev", einheit);
-    f->glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(einheit));
-    f->glBindTexture(GL_TEXTURE_2D, kettenTex);
-    ++einheit;
 
-    // getosc()/getspec() sollen IMMER gehen — anders als die ISF-Audio-
-    // Eingaenge, die ein Shader erst deklarieren muesste (Wunsch Patrik S72:
-    // dasselbe Vokabular wie in den Skripten).
-    aktualisiereAudioTexturen();
-    const auto bindeTextur = [&](const char* name, unsigned int tex) {
-        p.setUniformValue(name, einheit);
-        f->glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(einheit));
-        f->glBindTexture(GL_TEXTURE_2D, tex);
-        ++einheit;
+    // Alle Sampler binden. Laeuft je DURCHGANG neu, weil ein spaeterer
+    // Durchgang die Ziele der frueheren liest — die Bindungen aendern sich
+    // also zwischen den Durchgaengen.
+    const auto bindeAlleQuellen = [&]() {
+        int einheit = 0;
+        const auto binde = [&](const std::string& name, unsigned int tex) {
+            // GL garantiert nur 16 Einheiten; darueber hinaus bleibt es
+            // schwarz, statt eine ungueltige Einheit zu setzen.
+            if (einheit >= 16) return;
+            p.setUniformValue(lumi::isffilter::echterName(name).c_str(), einheit);
+            f->glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(einheit));
+            f->glBindTexture(GL_TEXTURE_2D, tex);
+            ++einheit;
+        };
+        binde("_lumiPrev", kettenTex);
+        // getosc()/getspec() sollen IMMER gehen — anders als die ISF-Audio-
+        // Eingaenge, die ein Shader erst deklarieren muesste (Wunsch Patrik).
+        binde("_lumiAudioWave", m_isfWaveTex);
+        binde("_lumiAudioFft", m_isfFftTex);
+
+        for (const auto& q : params.quellen)
+        {
+            if (q.name.empty()) continue;
+            unsigned int tex = 0;
+            if (q.bindung == ic::kQuelleKette)
+            {
+                tex = kettenTex;
+            }
+            else if (q.bindung == ic::kQuelleAudioWave ||
+                     q.bindung == ic::kQuelleAudioFft)
+            {
+                // ISF-Zuschnitt: ZWEI getrennte Texturen. Die kombinierte
+                // Shadertoy-Textur waere hier falsch (Befund S72) — ein
+                // Shader, der bei y = 0.5 abtastet, laese eine Mischung aus
+                // Spektrum und Waveform.
+                tex = q.bindung == ic::kQuelleAudioWave ? m_isfWaveTex
+                                                        : m_isfFftTex;
+            }
+            else if (q.bindung >= ic::kQuelleBufferBasis &&
+                     q.bindung <= ic::kQuelleMax)
+            {
+                // allocate=false: ein nie beschriebener Slot bleibt schwarz,
+                // statt hier Speicher anzulegen.
+                if (QOpenGLFramebufferObject* fbo = activePool().get(
+                        q.bindung - ic::kQuelleBufferBasis, m_surfaceWidth,
+                        m_surfaceHeight, false))
+                    tex = fbo->texture();
+            }
+            // kQuelleSchwarz (und ein leerer Slot) lassen tex auf 0 = schwarz.
+            binde(q.name, tex);
+        }
+
+        // Die Ziele der Durchgaenge — unter ihrem TARGET-Namen. Gelesen wird
+        // IMMER das `cur`-Bild: fuer einen frueheren Durchgang ist das sein
+        // frisches Ergebnis dieses Frames, fuer den eigenen oder einen
+        // spaeteren das VORFRAME (Feedback — die PERSISTENT-Semantik).
+        for (std::size_t i = 0; i < rt.isfZiele.size(); ++i)
+        {
+            const auto& z = params.passes[i];
+            if (z.target.empty()) continue;
+            const auto& ziel = rt.isfZiele[i];
+            const auto& fbo = ziel.fbo[static_cast<std::size_t>(ziel.cur)];
+            binde(z.target, fbo != nullptr ? fbo->texture() : 0);
+        }
+        f->glActiveTexture(GL_TEXTURE0);
     };
-    bindeTextur("_lumiAudioWave", m_isfWaveTex);
-    bindeTextur("_lumiAudioFft", m_isfFftTex);
 
-    // Je Bildquelle eine Textureinheit. Mehr als das GL-Minimum von 16 kann
-    // ein ISF-Shader nicht sinnvoll haben; ueberzaehlige bleiben schwarz.
-    for (const auto& q : params.quellen)
-    {
-        if (q.name.empty() || einheit >= 16) continue;
-        unsigned int tex = 0;
-        if (q.bindung == ic::kQuelleKette)
+    const auto zeichne = [&]() {
+        if (rt.isfGeoBauart == 0 || rt.isfVao == nullptr)
         {
-            tex = kettenTex;
+            m_quadVao->bind();
+            f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            m_quadVao->release();
         }
-        else if (q.bindung == ic::kQuelleAudioWave ||
-                 q.bindung == ic::kQuelleAudioFft)
+        else
         {
-            // ISF-Zuschnitt: ZWEI getrennte Texturen. Die kombinierte
-            // Shadertoy-Textur waere hier falsch (Befund S72) — ein Shader,
-            // der bei y = 0.5 abtastet, laese eine Mischung aus Spektrum und
-            // Waveform.
-            aktualisiereAudioTexturen();
-            tex = q.bindung == ic::kQuelleAudioWave ? m_isfWaveTex : m_isfFftTex;
+            rt.isfVao->bind();
+            f->glDrawArrays(GL_TRIANGLES, 0, rt.isfVertexAnzahl);
+            rt.isfVao->release();
         }
-        else if (q.bindung >= ic::kQuelleBufferBasis && q.bindung <= ic::kQuelleMax)
-        {
-            // allocate=false: ein nie beschriebener Slot bleibt schwarz,
-            // statt hier Speicher anzulegen (Muster der iChannel-Bindung).
-            if (QOpenGLFramebufferObject* fbo = activePool().get(
-                    q.bindung - ic::kQuelleBufferBasis, m_surfaceWidth,
-                    m_surfaceHeight, false))
-                tex = fbo->texture();
-        }
-        // kQuelleSchwarz (und ein leerer Slot) lassen tex auf 0 = schwarz.
-        p.setUniformValue(lumi::isffilter::echterName(q.name).c_str(), einheit);
-        f->glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(einheit));
-        f->glBindTexture(GL_TEXTURE_2D, tex);
-        ++einheit;
-    }
-    f->glActiveTexture(GL_TEXTURE0);
+    };
 
-    if (rt.isfGeoBauart == 0 || rt.isfVao == nullptr)
+    // --- Zwischen-Durchgaenge (alle mit TARGET) --------------------------
+    // Derselbe Shader, nur mit anderem PASSINDEX und anderem Ziel. Genau das
+    // macht die Effekte moeglich, die in EINEM Durchgang nicht gehen:
+    // separabler Weichzeichner, Bloom, Auto-Levels/Histogramm.
+    for (std::size_t i = 0; i < rt.isfZiele.size(); ++i)
     {
-        m_quadVao->bind();
-        f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        m_quadVao->release();
+        const auto& z = params.passes[i];
+        if (z.target.empty()) continue;  // der schreibt aufs Kettenbild
+        auto& ziel = rt.isfZiele[i];
+        auto& schreib = ziel.fbo[static_cast<std::size_t>(1 - ziel.cur)];
+        if (schreib == nullptr) continue;
+        schreib->bind();
+        f->glViewport(0, 0, ziel.breite, ziel.hoehe);
+        p.setUniformValue("PASSINDEX", static_cast<int>(i));
+        // Ein Zwischen-Durchgang darf NICHT gegen das Kettenbild geblendet
+        // werden — er ist eine Rechenstufe, kein Bild.
+        p.setUniformValue("_lumiBlend", 0);
+        p.setUniformValue("_lumiMixAmount", 1.0f);
+        bindeAlleQuellen();
+        zeichne();
+        schreib->release();
+        ziel.cur = 1 - ziel.cur;  // ab jetzt traegt dieser das frische Bild
     }
-    else
-    {
-        rt.isfVao->bind();
-        f->glDrawArrays(GL_TRIANGLES, 0, rt.isfVertexAnzahl);
-        rt.isfVao->release();
-    }
+
+    // --- Letzter Durchgang: aufs Kettenbild ------------------------------
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    p.setUniformValue("PASSINDEX",
+                      params.passes.empty()
+                          ? 0
+                          : static_cast<int>(params.passes.size() - 1));
+    p.setUniformValue("_lumiBlend", std::clamp(params.blend, 0, 2));
+    p.setUniformValue("_lumiMixAmount",
+                      static_cast<float>(std::clamp(params.mixAmount, 0.0, 1.0)));
+    bindeAlleQuellen();
+    zeichne();
 
     p.release();
     pair.partner()->release();

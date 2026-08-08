@@ -27,6 +27,7 @@
 #include "visualizers/multieffect/GpuParticlesWrapper.hpp"  // Starter-Kraftfeld + Klemmen (G2)
 #include "visualizers/multieffect/PixelFilterWrapper.hpp"   // Starter-Filter (Stilfilter, S70)
 #include "visualizers/multieffect/IsfImport.hpp"            // ISF-Filter-Import (S72)
+#include "visualizers/multieffect/IsfFilterWrapper.hpp"     // Starter-Shader ISF (S72)
 #include "scripting/ScriptFormatter.hpp"                // Beautify-Kerne (S69)
 #include <EelTranspiler.hpp>                            // Apply-Syntaxprobe EEL (S69)
 #include <HlslTranspiler.hpp>                           // Apply-Syntaxprobe HLSL (S69)
@@ -308,6 +309,18 @@ const std::vector<EffectType>& effectPalette()
          [] {
              PixelFilterParams p;
              p.code = lumi::pixelfilter::starterFilter();
+             return EffectParams{p};
+         },
+         Origin::Native},
+        // ISF-Filter (S72): fuehrt Interactive-Shader-Format-Dateien
+        // unveraendert aus — mit BEIDEN Shader-Stufen. Ein frisch
+        // eingefuegter Knoten hat eine Bildquelle und ist damit ein Filter.
+        {"ISF Filter (Fragment + Vertex)",
+         [] {
+             IsfFilterParams p;
+             p.fragCode = lumi::isffilter::starterFragment();
+             p.quellen = {{"inputImage",
+                           lumi::multieffect::isffilter::kQuelleKette}};
              return EffectParams{p};
          },
          Origin::Native},
@@ -5045,6 +5058,311 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                       std::get<PixelFilterParams>(n.params).beatCode =
                           std::move(v);
                   });
+    }
+    else if (auto* p = std::get_if<IsfFilterParams>(&params))
+    {
+        namespace ic = lumi::multieffect::isffilter;
+        uint64_t isfNodeIdVorab = 0;
+        {
+            QMutexLocker lock(m_mutex);
+            if (ChainNode* n = nodeAtPath(path)) isfNodeIdVorab = n->nodeId;
+        }
+
+        // --- Import: EIGENER Knopf, nicht im Groß-Editor (Entscheid Patrik
+        //     S72). Er lädt die `.fs` samt gleichnamiger `.vs` und schreibt
+        //     Code, Quellen, Regler und Herkunft in EINEM Zug in den Knoten.
+        {
+            auto* importBtn = new QPushButton(tr("ISF-Datei importieren…"),
+                                              m_propContainer);
+            importBtn->setToolTip(
+                tr("Lädt einen Shader im Interactive Shader Format (.fs). "
+                   "Eine gleichnamige .vs wird automatisch mitgenommen."));
+            connect(importBtn, &QPushButton::clicked, this, [this, path]() {
+                QSettings s;
+                const QString dirKey =
+                    QStringLiteral("editor/shaderFileDir/isffilter");
+                const QString pfad = QFileDialog::getOpenFileName(
+                    this, tr("ISF-Filter importieren"),
+                    s.value(dirKey, QString()).toString(),
+                    tr("ISF-Shader (*.fs);;Alle Dateien (*)"));
+                if (pfad.isEmpty()) return;
+                QFile f(pfad);
+                if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+                {
+                    QMessageBox::warning(this, tr("ISF-Import"),
+                                         tr("Datei nicht lesbar: %1").arg(pfad));
+                    return;
+                }
+                const QString inhalt = QString::fromUtf8(f.readAll());
+                const QFileInfo fi(pfad);
+                // Der `.vs`-Begleiter liegt NEBEN der `.fs` — der Dialog
+                // liefert nur eine Datei, die Schwester wird hier gesucht.
+                QString vertex;
+                QFile vf(fi.absolutePath() + QLatin1Char('/') +
+                         fi.completeBaseName() + QStringLiteral(".vs"));
+                if (vf.open(QIODevice::ReadOnly | QIODevice::Text))
+                    vertex = QString::fromUtf8(vf.readAll());
+
+                const auto r = lumi::isf::importiereIsf(
+                    inhalt, fi.completeBaseName(), vertex);
+                if (!r.ok)
+                {
+                    QMessageBox::warning(this, tr("ISF-Import"), r.error);
+                    return;
+                }
+                s.setValue(dirKey, fi.absolutePath());
+                mutate(path, [&r](ChainNode& n) {
+                    auto& ip = std::get<IsfFilterParams>(n.params);
+                    ip.fragCode = r.fragCode.toStdString();
+                    ip.vertexCode = r.vertexCode.toStdString();
+                    ip.quellen = lumi::isf::alsBildQuellen(
+                        r.bildInputs, r.audioWaveInputs, r.audioFftInputs);
+                    ip.parameter = lumi::isf::alsParamGruppe(r.parameter);
+                    ip.passes = r.passes;
+                    // Umbenennen, solange der Name NICHT von Hand gesetzt
+                    // wurde. Alt hiess die Bedingung nur „leer oder ISF
+                    // Filter" — nach dem ersten Import trug der Knoten dann
+                    // dauerhaft den Namen der ERSTEN Datei, waehrend Herkunft
+                    // und Inhalt laengst zur zweiten gehoerten (Sichttest
+                    // Patrik S72: Knoten „3d Rotate" zeigte „Auto Levels").
+                    const bool nameVomImport =
+                        n.displayName.empty() || n.displayName == "ISF Filter" ||
+                        n.displayName == ip.herkunft.name;
+                    ip.herkunft = r.herkunft;
+                    if (nameVomImport) n.displayName = r.herkunft.name;
+                });
+                // Hinweise stehen IM PANEL, nicht in einem Dialog (Entscheid
+                // Patrik S72) — ein Dialog je Effekt waere eine Klickorgie.
+                {
+                    QMutexLocker lock(m_mutex);
+                    if (ChainNode* n = nodeAtPath(path))
+                    {
+                        if (r.report.isEmpty())
+                            m_isfHinweise.remove(n->nodeId);
+                        else
+                            m_isfHinweise[n->nodeId] =
+                                r.report.join(QLatin1Char('\n'));
+                    }
+                }
+                QMetaObject::invokeMethod(
+                        this, [this, path]() { buildPropertyEditor(path); },
+                        Qt::QueuedConnection);
+            });
+            form->addRow(importBtn);
+        }
+
+        // Herkunft/Lizenz als FELD, nicht als Dialog (Entscheid Patrik S72).
+        addHerkunft(p->herkunft);
+
+        // Import-Hinweise ebenso als Zeile statt als Dialog.
+        {
+            const QString hinweise = m_isfHinweise.value(isfNodeIdVorab);
+            if (!hinweise.isEmpty())
+            {
+                auto* lbl = new QLabel(hinweise, m_propContainer);
+                lbl->setWordWrap(true);
+                lbl->setStyleSheet(QStringLiteral("color:#a0a0a0"));
+                form->addRow(lbl);
+            }
+        }
+
+        // Sorten-Info (Wunsch Patrik): sie folgt der ANZAHL der Bildquellen,
+        // nicht ihrer Bindung — eine Quelle auf „schwarz" ist ein Filter, der
+        // Schwarz filtert; KEINE Quelle ist ein Generator.
+        {
+            int bilder = 0;
+            for (const auto& q : p->quellen)
+            {
+                if (q.bindung != ic::kQuelleAudioWave &&
+                    q.bindung != ic::kQuelleAudioFft)
+                    ++bilder;
+            }
+            auto* info = new QLabel(
+                tr("Sorte: %1").arg(lumi::isf::sortenName(bilder)),
+                m_propContainer);
+            info->setToolTip(tr("Ergibt sich aus der Zahl der Bildquellen — "
+                                "Quellen hinzufügen oder entfernen ändert sie."));
+            form->addRow(info);
+        }
+
+        // Kompilierfehler über das geteilte stError-Feld (Muster Mesh-Warp).
+        uint64_t isfNodeId = 0;
+        {
+            QMutexLocker lock(m_mutex);
+            if (ChainNode* n = nodeAtPath(path)) isfNodeId = n->nodeId;
+        }
+        const std::string isfErr =
+            m_host != nullptr ? m_host->shadertoyError(isfNodeId) : std::string();
+        if (!isfErr.empty())
+        {
+            auto* err = new QLabel(tr("⚠ Kompilierfehler:\n%1")
+                                       .arg(QString::fromStdString(isfErr).left(600)),
+                                   m_propContainer);
+            err->setWordWrap(true);
+            err->setStyleSheet(QStringLiteral("color:#d08080"));
+            form->addRow(err);
+        }
+
+        // --- Quellen-Liste: NAME (der Sampler im Shader) + BINDUNG, mit
+        //     "+" und "✕". Ein selbst geschriebener Knoten bekommt seine
+        //     Eingänge so von Hand; beim Import füllt der Parser sie.
+        {
+            QStringList bindungen = {tr("Ketten-Bild"), tr("schwarz"),
+                                     tr("Audio (Waveform)"), tr("Audio (Spektrum)")};
+            for (int n = 1; n <= ic::kQuelleBufferAnzahl; ++n)
+                bindungen << tr("AVS-Buffer %1").arg(n);
+            // Kodierung -> Combo-Index (die Werte sind nicht lückenlos).
+            const auto zuIndex = [](int b) {
+                if (b == ic::kQuelleKette) return 0;
+                if (b == ic::kQuelleSchwarz) return 1;
+                if (b == ic::kQuelleAudioWave) return 2;
+                if (b == ic::kQuelleAudioFft) return 3;
+                return 4 + std::clamp(b - ic::kQuelleBufferBasis, 0,
+                                      ic::kQuelleBufferAnzahl - 1);
+            };
+            const auto zuBindung = [](int i) {
+                if (i == 0) return ic::kQuelleKette;
+                if (i == 1) return ic::kQuelleSchwarz;
+                if (i == 2) return ic::kQuelleAudioWave;
+                if (i == 3) return ic::kQuelleAudioFft;
+                return ic::kQuelleBufferBasis + (i - 4);
+            };
+            for (std::size_t qi = 0; qi < p->quellen.size(); ++qi)
+            {
+                const auto& q = p->quellen[qi];
+                auto* row = new QWidget(m_propContainer);
+                auto* hl = new QHBoxLayout(row);
+                hl->setContentsMargins(0, 0, 0, 0);
+                auto* nameEdit = new QLineEdit(QString::fromStdString(q.name), row);
+                nameEdit->setToolTip(
+                    tr("Bezeichner, unter dem der Shader diese Quelle abtastet "
+                       "(z. B. inputImage)."));
+                auto* combo = new QComboBox(row);
+                combo->addItems(bindungen);
+                combo->setCurrentIndex(zuIndex(q.bindung));
+                auto* del = new QToolButton(row);
+                del->setText(QStringLiteral("✕"));
+                del->setToolTip(tr("Diese Quelle entfernen"));
+                hl->addWidget(nameEdit, 1);
+                hl->addWidget(combo, 1);
+                hl->addWidget(del);
+                form->addRow(tr("Quelle %1").arg(qi + 1), row);
+
+                connect(nameEdit, &QLineEdit::editingFinished, this,
+                        [this, path, qi, nameEdit]() {
+                            const std::string t =
+                                nameEdit->text().trimmed().toStdString();
+                            mutate(path, [qi, &t](ChainNode& n) {
+                                auto& ip = std::get<IsfFilterParams>(n.params);
+                                if (qi < ip.quellen.size()) ip.quellen[qi].name = t;
+                            });
+                        });
+                connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                        this, [this, path, qi, zuBindung](int idx) {
+                            mutate(path, [qi, idx, zuBindung](ChainNode& n) {
+                                auto& ip = std::get<IsfFilterParams>(n.params);
+                                if (qi < ip.quellen.size())
+                                    ip.quellen[qi].bindung = zuBindung(idx);
+                            });
+                        });
+                connect(del, &QToolButton::clicked, this, [this, path, qi]() {
+                    mutate(path, [qi](ChainNode& n) {
+                        auto& ip = std::get<IsfFilterParams>(n.params);
+                        if (qi < ip.quellen.size())
+                            ip.quellen.erase(ip.quellen.begin() +
+                                             static_cast<long>(qi));
+                    });
+                    QMetaObject::invokeMethod(
+                        this, [this, path]() { buildPropertyEditor(path); },
+                        Qt::QueuedConnection);
+                });
+            }
+            auto* addBtn = new QPushButton(tr("+ Quelle"), m_propContainer);
+            addBtn->setToolTip(tr("Einen weiteren Bild-Eingang anlegen. Der Name "
+                                  "muss dem Sampler im Shader entsprechen."));
+            connect(addBtn, &QPushButton::clicked, this, [this, path]() {
+                mutate(path, [](ChainNode& n) {
+                    auto& ip = std::get<IsfFilterParams>(n.params);
+                    ip.quellen.push_back(
+                        {"inputImage" + std::to_string(ip.quellen.size() + 1),
+                         ic::kQuelleKette});
+                });
+                QMetaObject::invokeMethod(
+                        this, [this, path]() { buildPropertyEditor(path); },
+                        Qt::QueuedConnection);
+            });
+            form->addRow(addBtn);
+        }
+
+        // --- Parameter-Baum: die INPUTS des Shaders. Sie sind echte
+        //     Uniforms — eine Änderung kostet KEINE Neuübersetzung.
+        if (!p->parameter.leer())
+        {
+            auto* baum = lumi::parambaum::baueParameterBaum(
+                m_propContainer, p->parameter,
+                [this, path](const lumi::multieffect::ParamGruppe& neu) {
+                    mutate(path, [&neu](ChainNode& n) {
+                        std::get<IsfFilterParams>(n.params).parameter = neu;
+                    });
+                });
+            baum->setMinimumHeight(120);
+            baum->setMaximumHeight(280);
+            form->addRow(baum);
+        }
+
+        // --- Die beiden Shader-Stufen ---------------------------------------
+        const QString isfBase = !nodeName.empty()
+                                    ? QString::fromStdString(nodeName)
+                                    : QStringLiteral("isf");
+        addCodeEditor(
+            tr("Fragment (.fs)"), p->fragCode,
+            tr("void main() { gl_FragColor = IMG_THIS_PIXEL(inputImage); }"),
+            pixelFilterReferenceHtml(),
+            tr("ISF-Code, unverändert ausgeführt: IMG_*-Makros, RENDERSIZE, "
+               "TIME, PASSINDEX sowie getosc()/getspec() stehen bereit."),
+            160,
+            lumi::scriptedit::shaderExportName(isfBase, QStringLiteral("isffilter"),
+                                               QStringLiteral("fs")),
+            QStringLiteral("isffilter"),
+            [](ChainNode& n, std::string v) {
+                std::get<IsfFilterParams>(n.params).fragCode = std::move(v);
+            });
+        addCodeEditor(
+            tr("Vertex (.vs) — optional"), p->vertexCode,
+            tr("void main() { isf_vertShaderInit(); }"), pixelFilterReferenceHtml(),
+            tr("Leer = Standard. Hier rechnen ISF-Filter ihre Nachbar-"
+               "Koordinaten vor; isf_vertShaderInit() setzt Position und "
+               "Koordinate."),
+            110,
+            lumi::scriptedit::shaderExportName(isfBase, QStringLiteral("isffilter"),
+                                               QStringLiteral("vs")),
+            QStringLiteral("isffilter"),
+            [](ChainNode& n, std::string v) {
+                std::get<IsfFilterParams>(n.params).vertexCode = std::move(v);
+            });
+
+        addEnum("geometrie", tr("Geometrie"), std::clamp(p->geometrie, 0, 2),
+                {tr("Quad (ISF-treu)"), tr("Ein Dreieck"), tr("Gitter")},
+                [](ChainNode& n, int v) {
+                    std::get<IsfFilterParams>(n.params).geometrie = v;
+                });
+        addInt("gridX", tr("Gitter X"), p->gridX, ic::kGridMin, ic::kGridMax,
+               [](ChainNode& n, int v) {
+                   std::get<IsfFilterParams>(n.params).gridX = v;
+               });
+        addInt("gridY", tr("Gitter Y"), p->gridY, ic::kGridMin, ic::kGridMax,
+               [](ChainNode& n, int v) {
+                   std::get<IsfFilterParams>(n.params).gridY = v;
+               });
+        addDouble("mixAmount", tr("Mix"), p->mixAmount, 0.0, 1.0, 0.01,
+                  [](ChainNode& n, double v) {
+                      std::get<IsfFilterParams>(n.params).mixAmount = v;
+                  });
+        addEnum("blend", tr("Blend"), std::clamp(p->blend, 0, 2),
+                {tr("Ersetzen"), tr("Additiv"), tr("50/50")},
+                [](ChainNode& n, int v) {
+                    std::get<IsfFilterParams>(n.params).blend = v;
+                });
     }
     else if (auto* p = std::get_if<GpuParticlesParams>(&params))
     {

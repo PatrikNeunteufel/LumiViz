@@ -57,7 +57,10 @@
 #include <QString>
 #include <QStringList>
 
+#include <algorithm>
 #include <array>
+#include <cmath>
+#include <vector>
 
 namespace lumi::isf {
 
@@ -118,6 +121,10 @@ struct ImportErgebnis
     /// urspruengliche Fehler (s. `isffilter::kQuelleAudioWave`).
     QStringList audioFftInputs;
 
+    /// Durchgaenge aus `PASSES` (leer = ein Durchgang). Ihre `TARGET`-Namen
+    /// sind im Shader gewoehnliche Sampler.
+    std::vector<lumi::multieffect::IsfPassZiel> passes;
+
     QList<IsfParam> parameter;
     lumi::multieffect::Herkunft herkunft;
     QStringList report;  ///< Grenzen/Hinweise, "ℹ "-Praefix (Import-Report-Stil)
@@ -162,6 +169,159 @@ namespace detail {
         s += QStringLiteral(".0");
     return s;
 }
+
+/**
+ * Winziger Rechner fuer die `WIDTH`/`HEIGHT`-Ausdruecke der PASSES.
+ *
+ * ISF erlaubt dort Ausdruecke ueber `$WIDTH`/`$HEIGHT` und die INPUT-Namen —
+ * `"$WIDTH/16"` macht aus einem Pass eine Reduktionsstufe, und genau davon
+ * haengt ab, ob ein Histogramm-Shader ueberhaupt funktioniert. Unterstuetzt
+ * werden Zahlen, `$name`, die vier Grundrechenarten mit Vorrang, Klammern und
+ * `floor`/`ceil`/`min`/`max`.
+ *
+ * Bewusst KEIN vollstaendiger Ausdrucks-Parser: was hier nicht aufgeht,
+ * faellt auf die volle Bildgroesse zurueck — ein zu grosser Puffer rechnet
+ * langsamer, aber richtig, waehrend ein geratener falscher stumm falsche
+ * Bilder liefert.
+ */
+class MaszRechner
+{
+public:
+    MaszRechner(const QString& text, double breite, double hoehe,
+                const QList<IsfParam>& params)
+        : m_t(text), m_w(breite), m_h(hoehe), m_p(params)
+    {
+    }
+
+    /// Wert des Ausdrucks; `ok` bleibt false, wenn etwas nicht aufging.
+    [[nodiscard]] double rechne(bool& ok)
+    {
+        m_i = 0;
+        const double v = ausdruck();
+        ueberspringe();
+        ok = m_ok && m_i >= m_t.size();
+        return v;
+    }
+
+private:
+    void ueberspringe()
+    {
+        while (m_i < m_t.size() && m_t.at(m_i).isSpace()) ++m_i;
+    }
+    [[nodiscard]] bool schluck(QChar c)
+    {
+        ueberspringe();
+        if (m_i < m_t.size() && m_t.at(m_i) == c)
+        {
+            ++m_i;
+            return true;
+        }
+        return false;
+    }
+    double ausdruck()
+    {
+        double v = term();
+        for (;;)
+        {
+            if (schluck(QLatin1Char('+'))) v += term();
+            else if (schluck(QLatin1Char('-'))) v -= term();
+            else return v;
+        }
+    }
+    double term()
+    {
+        double v = faktor();
+        for (;;)
+        {
+            if (schluck(QLatin1Char('*'))) v *= faktor();
+            else if (schluck(QLatin1Char('/')))
+            {
+                const double d = faktor();
+                // Teilen durch 0 waere ein Puffer der Groesse unendlich —
+                // lieber als Fehler melden und auf Vollbild zurueckfallen.
+                if (d == 0.0) { m_ok = false; return v; }
+                v /= d;
+            }
+            else return v;
+        }
+    }
+    double faktor()
+    {
+        ueberspringe();
+        if (schluck(QLatin1Char('(')))
+        {
+            const double v = ausdruck();
+            if (!schluck(QLatin1Char(')'))) m_ok = false;
+            return v;
+        }
+        if (schluck(QLatin1Char('-'))) return -faktor();
+        if (m_i < m_t.size() && m_t.at(m_i) == QLatin1Char('$'))
+        {
+            ++m_i;
+            return groesse(bezeichner());
+        }
+        if (m_i < m_t.size() && (m_t.at(m_i).isDigit() || m_t.at(m_i) == QLatin1Char('.')))
+        {
+            const int a = m_i;
+            while (m_i < m_t.size() &&
+                   (m_t.at(m_i).isDigit() || m_t.at(m_i) == QLatin1Char('.')))
+                ++m_i;
+            bool zahlOk = false;
+            const double v = m_t.mid(a, m_i - a).toDouble(&zahlOk);
+            if (!zahlOk) m_ok = false;
+            return v;
+        }
+        const QString name = bezeichner();
+        if (name.isEmpty()) { m_ok = false; return 0.0; }
+        // Funktionsaufruf?
+        if (schluck(QLatin1Char('(')))
+        {
+            const double a = ausdruck();
+            double b = 0.0;
+            const bool zwei = schluck(QLatin1Char(','));
+            if (zwei) b = ausdruck();
+            if (!schluck(QLatin1Char(')'))) m_ok = false;
+            if (name == QLatin1String("floor")) return std::floor(a);
+            if (name == QLatin1String("ceil")) return std::ceil(a);
+            if (name == QLatin1String("min")) return std::min(a, b);
+            if (name == QLatin1String("max")) return std::max(a, b);
+            m_ok = false;
+            return a;
+        }
+        return groesse(name);
+    }
+    [[nodiscard]] QString bezeichner()
+    {
+        ueberspringe();
+        const int a = m_i;
+        while (m_i < m_t.size() &&
+               (m_t.at(m_i).isLetterOrNumber() || m_t.at(m_i) == QLatin1Char('_')))
+            ++m_i;
+        return m_t.mid(a, m_i - a);
+    }
+    /// `$WIDTH`/`$HEIGHT` sowie die Vorgabewerte der INPUTS — mehr kann ein
+    /// Groessen-Ausdruck sinnvoll brauchen.
+    [[nodiscard]] double groesse(const QString& name)
+    {
+        if (name.compare(QLatin1String("WIDTH"), Qt::CaseInsensitive) == 0)
+            return m_w;
+        if (name.compare(QLatin1String("HEIGHT"), Qt::CaseInsensitive) == 0)
+            return m_h;
+        for (const IsfParam& p : m_p)
+        {
+            if (p.name == name) return p.zahl;
+        }
+        m_ok = false;
+        return 0.0;
+    }
+
+    QString m_t;
+    int m_i = 0;
+    double m_w = 0.0;
+    double m_h = 0.0;
+    QList<IsfParam> m_p;
+    bool m_ok = true;
+};
 
 }  // namespace detail
 
@@ -319,24 +479,42 @@ namespace detail {
 
     // --- Herkunft (Lizenz-Pflicht S72) ---------------------------------------
     r.herkunft.name = dateiName.trimmed().toStdString();
-    r.herkunft.author =
-        kopf.value(QStringLiteral("CREDIT")).toString().trimmed().toStdString();
+    // CREDIT steht in der Bibliothek meist als „by <Name>". Das Panel setzt
+    // selbst ein „von" davor — ohne diesen Schnitt laese sich „von by Carter
+    // Rosenberg" (Sichttest Patrik S72).
+    QString credit = kopf.value(QStringLiteral("CREDIT")).toString().trimmed();
+    if (credit.startsWith(QStringLiteral("by "), Qt::CaseInsensitive))
+        credit = credit.mid(3).trimmed();
+    r.herkunft.author = credit.toStdString();
     r.herkunft.license =
         kopf.value(QStringLiteral("LICENSE")).toString().trimmed().toStdString();
-    if (r.herkunft.license.empty())
-    {
-        r.report << QStringLiteral(
-            "ℹ Die Datei nennt keine Lizenz. Vor dem Weitergeben des Presets "
-            "die Lizenz der Quelle nachtragen.");
-    }
+    // KEINE Report-Zeile fuer eine fehlende Lizenz (Entscheid Patrik S72:
+    // "message wegen Lizenz kann in einem Lizenz-Feld angezeigt werden") —
+    // das Herkunfts-Feld im Panel zeigt sie ohnehin als „Lizenz: unbekannt".
+    // Eine zweite Meldung im Dialog waere nur Laerm.
 
-    // --- Grenzen melden (Hinweise, keine Ablehnung) --------------------------
-    if (kopf.value(QStringLiteral("PASSES")).toArray().size() > 1)
+    // --- PASSES: die Durchgaenge eines Multipass-Shaders ---------------------
+    for (const QJsonValue& v : kopf.value(QStringLiteral("PASSES")).toArray())
     {
-        r.report << QStringLiteral(
-            "ℹ Multipass-Shader (PASSES): dieser Knoten rechnet EINEN "
-            "Durchgang. Mehrpass-Looks laufen über den Shadertoy-Knoten mit "
-            "Buffer A–D.");
+        if (!v.isObject()) continue;
+        const QJsonObject pj = v.toObject();
+        lumi::multieffect::IsfPassZiel pz;
+        pz.target = pj.value(QStringLiteral("TARGET")).toString().toStdString();
+        // WIDTH/HEIGHT sind AUSDRUECKE, keine Zahlen — die Reduktionsstufen
+        // eines Histogramms haengen genau daran (`$WIDTH/16`). Zahl wie Text
+        // annehmen, damit `"WIDTH": 16` nicht durchfaellt.
+        const auto masz = [&pj](const char* schluessel) {
+            const QJsonValue w = pj.value(QLatin1String(schluessel));
+            if (w.isString()) return w.toString().trimmed().toStdString();
+            if (w.isDouble())
+                return QString::number(w.toDouble(), 'g', 9).toStdString();
+            return std::string();
+        };
+        pz.breite = masz("WIDTH");
+        pz.hoehe = masz("HEIGHT");
+        pz.gleitkomma = pj.value(QStringLiteral("FLOAT")).toBool();
+        pz.bestaendig = pj.value(QStringLiteral("PERSISTENT")).toBool();
+        r.passes.push_back(std::move(pz));
     }
     if (kopf.contains(QStringLiteral("IMPORTED")))
     {
@@ -344,8 +522,11 @@ namespace detail {
             "ℹ IMPORTED-Texturen werden nicht geladen — die betroffenen "
             "Abtastungen liefern Schwarz.");
     }
-    r.report << QStringLiteral("ℹ Erkannt als: %1").arg(
-        sortenName(static_cast<int>(r.bildInputs.size())));
+    // Ebenso KEINE Zeile fuer die Sorte — die steht als Info-Zeile im Panel
+    // (`sortenName`) und aendert sich dort mit, wenn Quellen dazukommen.
+    // Der Report bleibt damit dem vorbehalten, was der Nutzer SONST nicht
+    // sieht: Multipass, IMPORTED-Texturen, unbekannte INPUT-Typen. Hat eine
+    // Datei nichts davon, erscheint gar kein Dialog.
 
     // --- Code: unveraendert durchreichen -------------------------------------
     // Kein Umschreiben, kein Falten: die ISF-Sprache liefert der Wrapper.
@@ -444,6 +625,30 @@ namespace detail {
     anhaengen(audioWave, ic::kQuelleAudioWave);
     anhaengen(audioFft, ic::kQuelleAudioFft);
     return out;
+}
+
+/**
+ * @brief Größe eines Pass-Ziels in Pixeln
+ * @param ausdruck  `WIDTH`/`HEIGHT` der Pass-Deklaration (leer = Vollbild)
+ * @param vollbild  die Kantenlänge des Kettenbilds in dieser Richtung
+ *
+ * Geht der Ausdruck nicht auf, kommt die **volle Bildgröße** zurück: ein zu
+ * großer Puffer rechnet langsamer, aber richtig — ein geratener falscher
+ * lieferte stumm falsche Bilder.
+ */
+[[nodiscard]] inline int passGroesse(const std::string& ausdruck, int vollbild,
+                                     int breite, int hoehe,
+                                     const QList<IsfParam>& params = {})
+{
+    if (ausdruck.empty()) return vollbild;
+    detail::MaszRechner rechner(QString::fromStdString(ausdruck), breite, hoehe,
+                                params);
+    bool ok = false;
+    const double v = rechner.rechne(ok);
+    if (!ok || !(v >= 1.0)) return vollbild;
+    // Nach oben klemmen: ein Ausdruck wie `$WIDTH*100` wuerde sonst den
+    // Grafikspeicher sprengen.
+    return static_cast<int>(std::min(v, 8192.0));
 }
 
 }  // namespace lumi::isf

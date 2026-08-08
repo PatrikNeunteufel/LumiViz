@@ -65,7 +65,7 @@ std::filesystem::path repoRoot()
     const std::string vert =
         lumi::isffilter::wrapVertex(r.vertexCode.toStdString(), parameter);
     const std::string frag = lumi::isffilter::wrapFragment(
-        r.fragCode.toStdString(), quellen, parameter);
+        r.fragCode.toStdString(), quellen, parameter, r.passes);
 
     QOpenGLShaderProgram program;
     if (!program.addShaderFromSourceCode(QOpenGLShader::Vertex, vert.c_str()))
@@ -211,10 +211,12 @@ TEST_CASE("IsfGlSmoke: Referenz-Korpus linkt (Vidvox ISF-Files)")
     MESSAGE("ISF-GL-Smoke: ", ok, " von ", gesamt, " Dateien kompiliert und gelinkt");
     for (const auto& f : fehler) MESSAGE("  ", f);
     CHECK(gesamt > 0);
-    // Kein 100-%-Anspruch: die Bibliothek enthaelt Multipass- und
-    // IMPORTED-Dateien, die ohne ihre zusaetzlichen Puffer/Texturen nicht
-    // linken KOENNEN. Die Zahl ist der Messwert, an dem sich Fortschritt und
-    // Rueckschritt ablesen lassen — ein Einbruch faellt sofort auf.
-    CHECK(ok * 100 / gesamt >= 60);
+    // Kein 100-%-Anspruch, aber eine SCHARFE Untergrenze: mit dem
+    // Multipass-Ausbau (S72) stieg die Quote von 251 auf 321 von 327 (98 %).
+    // Die verbleibenden brauchen Dinge, die es bei uns nicht gibt —
+    // `cursorImage` (VDMX-Mauszeiger) — oder haben eigene GLSL-Dialekt-
+    // Fehler (`uint` gegen `int`). 95 % faengt einen Rueckschritt, ohne
+    // einen unehrlichen Vollstaendigkeits-Anspruch zu behaupten.
+    CHECK(ok * 100 / gesamt >= 95);
     ctx.doneCurrent();
 }

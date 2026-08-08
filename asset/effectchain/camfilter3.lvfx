@@ -1,0 +1,235 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "",
+                "blend": 0,
+                "cameraId": "\\\\?\\usb#vid_3277&pid_0018&mi_00#7&cce78d1&0&0000#{e5323777-f976-4f5b-9b55-b94699c46e44}\\global",
+                "description": "S70-Pruefstand: Testvideo im deterministischen Frame-Schritt (VideoFrameCache, Sim-Uhr x fps) - Einpassen mit Balken, ohne Audio-Skripte; zwei Laeufe muessen bit-identisch sein.",
+                "enabled": true,
+                "filePath": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/calibration/fields/testvideo.avi",
+                "fit": 1,
+                "frameCode": "",
+                "initCode": "",
+                "loop": true,
+                "name": "Sonde Video-Quelle",
+                "opacity": 1,
+                "recordingName": "",
+                "source": 1,
+                "speed": 1,
+                "streaming": true,
+                "type": "videoSource"
+            },
+            {
+                "beatCode": "",
+                "color": 16776960,
+                "enabled": true,
+                "frameCode": "size=3+22*min(1,bass*50+treb*200+mid*20);",
+                "initCode": "",
+                "name": "Add Borders",
+                "size": 100,
+                "type": "addBorders"
+            },
+            {
+                "blend": 0,
+                "enabled": true,
+                "fragCode": "float character(float n, vec2 p) // some compilers have the word \"char\" reserved\n{\n\tp = floor(p*vec2(4.0, -4.0) + 2.5);\n\tif (clamp(p.x, 0.0, 4.0) == p.x && clamp(p.y, 0.0, 4.0) == p.y)\n\t{\n\t\tif (int(mod(n/exp2(p.x + 5.0*p.y), 2.0)) == 1) return 1.0;\n\t}\t\n\treturn 0.0;\n}\n\n\n\nvoid main()\t{\n\tfloat _size = size*36.0+8.0;\n\tvec2 uv = gl_FragCoord.xy;\n\tvec4 inputColor = IMG_NORM_PIXEL(inputImage, (floor(uv/_size)*_size/RENDERSIZE.xy));\n\tvec3 col = inputColor.rgb;\n\tfloat gray = (col.r + col.g + col.b)/3.0;\n\tgray = pow(gray, gamma);\n\tcol = mix(tintColor.rgb, col.rgb, 1.0-tint);\n\t\n\tfloat n =  65536.0;             // .\n\tif (gray > 0.2) n = 65600.0;    // :\n\tif (gray > 0.3) n = 332772.0;   // *\n\tif (gray > 0.4) n = 15255086.0; // o \n\tif (gray > 0.5) n = 23385164.0; // &\n\tif (gray > 0.6) n = 15252014.0; // 8\n\tif (gray > 0.7) n = 13199452.0; // @\n\tif (gray > 0.8) n = 11512810.0; // #\n\t\t\n\tvec2 p = mod(uv/(_size/2.0), 2.0) - vec2(1.0);\n\tcol = col*character(n, p);\n\tfloat alpha = mix(tintColor.a * inputColor.a, inputColor.a, 1.0-tint);\n\tif (alphaMode)\t{\n\t\talpha = (col.r + col.g + col.b)/3.0;\n\t\talpha = (alpha > 0.01) ? tintColor.a : alpha;\n\t}\n\t\n\tgl_FragColor = vec4(col,alpha);\n\n}",
+                "geometrie": 0,
+                "gridX": 64,
+                "gridY": 48,
+                "herkunft": {
+                    "author": "VIDVOX (Ported from https://www.shadertoy.com/view/lssGDj)",
+                    "name": "ASCII Art"
+                },
+                "mixAmount": 1,
+                "name": "ASCII Art",
+                "parameter": {
+                    "werte": [
+                        {
+                            "key": "size",
+                            "max": 1,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0.1
+                        },
+                        {
+                            "key": "gamma",
+                            "max": 2,
+                            "min": 0.5,
+                            "typ": 2,
+                            "zahl": 1
+                        },
+                        {
+                            "key": "tint",
+                            "max": 1,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 1
+                        },
+                        {
+                            "key": "tintColor",
+                            "typ": 3,
+                            "vektor": [
+                                0,
+                                1,
+                                0,
+                                1
+                            ]
+                        },
+                        {
+                            "ja": false,
+                            "key": "alphaMode",
+                            "typ": 0
+                        }
+                    ]
+                },
+                "quellen": [
+                    {
+                        "bindung": -1,
+                        "name": "inputImage"
+                    }
+                ],
+                "type": "isfFilter",
+                "vertexCode": ""
+            },
+            {
+                "beatCode": "",
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Blur",
+                "roundUp": true,
+                "strength": 2,
+                "type": "blur"
+            },
+            {
+                "absolute": false,
+                "beatCode": "",
+                "bias": 0,
+                "edgeMode": 0,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "kernel": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    -1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    -1,
+                    4,
+                    -1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    -1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "name": "Convolution",
+                "scale": 1,
+                "twoPass": false,
+                "type": "convolution"
+            },
+            {
+                "beatCode": "",
+                "blend": 0,
+                "buffern": 0,
+                "depth": 37,
+                "depth2": 90,
+                "durationFrames": 18,
+                "enabled": true,
+                "frameCode": "x=0.5;y=0.5",
+                "initCode": "",
+                "invert": false,
+                "name": "Bump",
+                "oldStyle": false,
+                "onBeat": true,
+                "type": "bump"
+            },
+            {
+                "beatCode": "",
+                "code": "// CRT-Monitor: leichte Tonnen-Verzerrung, Scanlines, RGB-Maske, Vignette.\nvec4 farbe(vec2 uv, vec4 src)\n{\n    vec2 d = uv - 0.5;\n    vec2 kruemm = uv + d * dot(d, d) * 0.25;            // Tonnen-Verzerrung\n    if (kruemm.x < 0.0 || kruemm.x > 1.0 || kruemm.y < 0.0 || kruemm.y > 1.0)\n        return vec4(0.0, 0.0, 0.0, 1.0);\n    vec3 farbe = texture(uTex, kruemm).rgb;\n    float zeile = sin(kruemm.y * uResolution.y * 3.14159);\n    farbe *= 0.82 + 0.18 * zeile * zeile;               // Scanlines\n    float spalte = mod(floor(kruemm.x * uResolution.x), 3.0);\n    vec3 maske = spalte < 1.0 ? vec3(1.0, 0.72, 0.72)\n               : spalte < 2.0 ? vec3(0.72, 1.0, 0.72) : vec3(0.72, 0.72, 1.0);\n    farbe *= maske * 1.12;                              // Lochmaske\n    farbe *= 1.0 - 0.55 * dot(d, d) * 2.0;             // Vignette\n    return vec4(farbe, 1.0);\n}\n",
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "mixAmount": 1,
+                "name": "Pixel Filter",
+                "type": "pixelFilter"
+            },
+            {
+                "beatCode": "c=f;f=0;dl=dt_p",
+                "blend": false,
+                "buffern": 0,
+                "enabled": true,
+                "frameCode": "f = f + 1;\nt = ((f * $pi * 2)/c)/beatdiv;\ndt_p = dl + t;\ndr = cos(dt_p)*speed*2;\ndd = 1 - (sin(dt_p)*speed);",
+                "initCode": "c=200;f=0;dt_p=0;dl=0;beatdiv=4;speed=.15",
+                "name": "Dynamic Movement",
+                "nomove": false,
+                "pointCode": "r = r + dr;\nd = d * dd;",
+                "rectCoords": false,
+                "subpixel": false,
+                "type": "dynamicMovement",
+                "wrap": false,
+                "xres": 2,
+                "yres": 2
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}
