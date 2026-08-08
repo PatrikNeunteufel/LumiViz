@@ -393,10 +393,55 @@ old/
 /asset/Milkdrop3/
 /asset/VisualsPresets/
 
+# AVS-Preset-Sammlungen der Community (GreatWho-Packs, Community Picks, ...) —
+# dieselbe Begruendung wie oben. Waren bis Session 73 versehentlich getrackt.
+/asset/avs/
 
-# HINWEIS: BASS-Binaries unter externals/ (win/c/x64/*.lib, win/x64/*.dll, linux/libs/, bin/)
-# sind aus LIZENZGRUENDEN bewusst NICHT getrackt (proprietaer, un4seen.com).
-# Beschaffung bei Bedarf: siehe externals/bass/SETUP.md
+# Fremde Logos/Marken (Winamp/AVS, MilkDrop) — nicht unsere Rechte.
+# Das LumiViz-eigene Logo bleibt getrackt.
+/asset/img/logo/**/avs.*
+/asset/img/logo/**/avs_*.*
+/asset/img/logo/**/milkdrop.*
+/asset/img/logo/**/milkdrop_*.*
+
+# Windows-Verknuepfungen: enthalten lokale Pfade des Erstellers
+*.lnk
+
+# Browser-Lesezeichen-Exporte: persoenliche Daten, gehoeren nicht ins Repo.
+# Die Datei bleibt lokal liegen, wird aber nicht mehr versioniert.
+bookmarks*.html
+
+# Playlists: enthalten absolute Pfade in die private Musiksammlung samt
+# Album- und Titelnamen. Bleiben lokal, werden nicht versioniert.
+/playlist/
+
+# Fremder Lehr-Shader (Ugur Guney, 2014) — auf shadertoy.com ohne
+# Lizenzangabe veroeffentlicht, Standard dort ist CC BY-NC-SA. Bleibt als
+# lokales Lernmaterial liegen, wird aber nicht weitergegeben.
+/projects/apps/MyViz/docs/tutorials/shadertoy_tutorial.glsl
+
+# Lokale Benutzer-Presets (Qt-Pfade, vcpkg-Toolchain) — die Vorlage
+# CMakeUserPresets.example.json ist getrackt, die Kopie nicht.
+/CMakeUserPresets.json
+
+
+# --- BASS: KOMPLETT ausgeschlossen (Lizenz) ---------------------------------
+# BASS gehoert un4seen developments Ltd.; die Lizenz schliesst Weiterverbreitung
+# und Unterlizenzierung aus. Das betrifft NICHT NUR die Binaries, sondern das
+# GESAMTE SDK: Header, Beispiele, Doku (.chm), Delphi-/VB-Units.
+#
+# Frueher standen hier nur Verzeichnisregeln (x64/, x86/, bin/). Die haben die
+# 32-Bit-DLL in win/, die Linux-Libs in linux/libs/<arch>/ und die macOS-Dylibs
+# in osx/ NICHT erfasst — 63 Binaerdateien lagen dadurch im Repo (behoben in
+# Session 73). Darum jetzt: alles unter externals/bass/ ausser der Anleitung.
+#
+# Beschaffung: externals/bass/SETUP.md
+/externals/bass/*
+!/externals/bass/SETUP.md
+
+# Lua-Kompilate (die Header bleiben getrackt)
+/externals/lua54/**/lib/
+/externals/lua54/**/bin/
 
 # --- Wegwerf-Artefakte ------------------------------------------------------
 # Screenshot-Ablage: Ausgabe der Druck-Taste, ein Ordner je Programmlauf

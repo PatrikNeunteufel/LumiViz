@@ -1,0 +1,28 @@
+name: ❓ Frage
+description: Etwas ist unklar — zur Bedienung, zum Bauen oder zum Aufbau
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fragen sind willkommen. Zwei Orte, die die Antwort oft schon enthalten:
+
+        - **Bauen klappt nicht** → [BUILDING.md](../../BUILDING.md), Abschnitt
+          „Wenn etwas schiefgeht“ — besonders Linker-Fehler zu `bass.lib`
+        - **Wie funktioniert X?** →
+          [docs/INDEX.md](../../projects/apps/MyViz/docs/INDEX.md)
+
+  - type: textarea
+    id: frage
+    attributes:
+      label: Deine Frage
+    validations:
+      required: true
+
+  - type: textarea
+    id: kontext
+    attributes:
+      label: Was hast du schon versucht?
+      description: >
+        Bei Bau- oder Startproblemen: Betriebssystem, Compiler, Qt-Version und die
+        vollständige Fehlermeldung bitte mit angeben.

@@ -1,0 +1,49 @@
+name: 💡 Funktionswunsch
+description: Eine Idee für LumiViz
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Welches Problem löst es?
+      description: >
+        Fang beim Problem an, nicht bei der Lösung — das führt oft zu einem
+        besseren Vorschlag als der ursprünglich gedachte.
+      placeholder: Beim Songwechsel springt das Bild hart um; ein Übergang wäre schöner.
+    validations:
+      required: true
+
+  - type: textarea
+    id: vorschlag
+    attributes:
+      label: Wie stellst du es dir vor?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: bereich
+    attributes:
+      label: Welcher Bereich?
+      options:
+        - Visualizer / Effekt-Knoten
+        - Import (AVS, MilkDrop, Shader)
+        - Audio / Playlist
+        - Oberfläche / Bedienung
+        - Build / Werkzeuge
+        - anderes / weiß nicht
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternativen
+    attributes:
+      label: Alternativen, die du erwogen hast
+      description: Optional.
+
+  - type: checkboxes
+    id: mitarbeit
+    attributes:
+      label: Mitarbeit
+      options:
+        - label: Ich würde das selbst umsetzen wollen
+          required: false

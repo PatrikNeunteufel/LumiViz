@@ -1,0 +1,97 @@
+name: 🎨 Preset-Befund (AVS / MilkDrop / Shader)
+description: Ein importiertes Preset sieht anders aus als im Original
+labels: ["preset-befund", "kalibrierung"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Das ist die wertvollste Art von Fehlerbericht für LumiViz.** Der Import
+        wird gegen Referenz-Renderer der Originale kalibriert; jede Abweichung,
+        die jemand findet, ist ein echter Befund.
+
+        Zwei Bitten vorab:
+
+        - **Bilder von beidem.** Ohne Vergleich lässt sich eine Abweichung nicht
+          beurteilen. Ideal: derselbe Moment, dieselbe Fenstergröße.
+        - **Preset-Datei nur, wenn du sie weitergeben darfst.** Viele
+          Community-Presets haben ungeklärte Rechte. Beschreib sie sonst lieber
+          (Name, Sammlung, Autor) oder baue ein möglichst kleines eigenes Preset,
+          das denselben Fehler zeigt.
+
+  - type: dropdown
+    id: format
+    attributes:
+      label: Format
+      options:
+        - AVS
+        - MilkDrop
+        - Shadertoy (GLSL)
+        - ISF
+    validations:
+      required: true
+
+  - type: input
+    id: preset
+    attributes:
+      label: Welches Preset?
+      description: Name und Herkunft — nicht die Datei selbst, falls die Rechte unklar sind.
+      placeholder: "Community Picks / Degnic - Helium.avs"
+    validations:
+      required: true
+
+  - type: textarea
+    id: abweichung
+    attributes:
+      label: Worin unterscheidet es sich?
+      description: >
+        So genau wie möglich. „Sieht falsch aus“ ist schwer zu greifen —
+        „die Spur verblasst zu schnell“ oder „die Rotation läuft andersherum“ dagegen sehr gut.
+    validations:
+      required: true
+
+  - type: textarea
+    id: bilder
+    attributes:
+      label: Bilder — Original und LumiViz
+      description: Bilder hier hineinziehen. Bitte beschriften, welches welches ist.
+    validations:
+      required: true
+
+  - type: input
+    id: effekt
+    attributes:
+      label: Verdächtiger Effekt / Knoten
+      description: Falls du es eingrenzen konntest — sonst leer lassen.
+      placeholder: blur, Trail-Modus
+
+  - type: dropdown
+    id: groesse
+    attributes:
+      label: Bei welcher Fenstergröße?
+      description: >
+        Manche Abweichungen zeigen sich nur bei größeren Flächen — deshalb wird
+        in zwei Größen verglichen.
+      options:
+        - klein (etwa 320×240)
+        - groß (etwa 1024×768 oder mehr)
+        - bei beiden
+        - nicht geprüft
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: LumiViz-Stand
+      placeholder: 7b38a1b
+    validations:
+      required: true
+
+  - type: input
+    id: audio
+    attributes:
+      label: Womit beschallt?
+      description: >
+        Audioabhängige Effekte sehen mit jedem Stück anders aus. Ein Stück, das
+        auch ich habe, oder ein Testton macht den Vergleich reproduzierbar.
+      placeholder: Sinus-Sweep / bestimmter Titel / Stille

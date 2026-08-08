@@ -1,0 +1,30 @@
+# Lizenz
+
+LumiViz steht unter einer **dualen Lizenz**. Du darfst wählen:
+
+- **MIT** — siehe [LICENSE-MIT](LICENSE-MIT)
+- **Apache-2.0** — siehe [LICENSE-APACHE](LICENSE-APACHE)
+
+Beide Lizenzen gelten alternativ, nicht kumulativ: verwende LumiViz nach der
+Lizenz, die dir besser passt. MIT ist die kürzere und ist mit GPLv2 verträglich;
+Apache-2.0 enthält zusätzlich eine ausdrückliche Patentrechte-Gewährung.
+
+## Beiträge
+
+Sofern nicht ausdrücklich anders erklärt, gilt jeder Beitrag, den du
+absichtlich zur Aufnahme in LumiViz einreichst, als unter denselben beiden
+Lizenzen stehend — ohne zusätzliche Bedingungen.
+
+## Wichtig: Diese Lizenz deckt nur den LumiViz-eigenen Code
+
+LumiViz nutzt und portiert Fremdkomponenten mit **eigenen** Lizenzen. Ein Teil
+davon ist **proprietär** — insbesondere die Audio-Bibliothek **BASS**
+(un4seen developments Ltd.), die zum Bauen zwingend nötig, aber **nicht** in
+diesem Repository enthalten ist und **nicht** unter der obigen Dual-Lizenz
+steht. BASS ist nur für nicht-kommerzielle Nutzung kostenlos; kommerzielle
+Nutzung erfordert eine Lizenz von un4seen.
+
+Vollständige Aufstellung aller Fremdkomponenten mit ihren Lizenzen und
+Copyright-Vermerken: **[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)**.
+Wer LumiViz weitergibt — als Quelltext oder als Programm — muss die dort
+genannten Vermerke mitliefern.

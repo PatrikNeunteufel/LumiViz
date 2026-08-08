@@ -1,0 +1,80 @@
+name: 🐞 Fehlerbericht
+description: Etwas funktioniert nicht wie erwartet
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke fürs Melden! Wenn ein **importiertes Preset** anders aussieht als im
+        Original, nimm bitte stattdessen die Vorlage „Preset-Befund“ — dort werden
+        die richtigen Angaben abgefragt.
+
+  - type: textarea
+    id: was-passiert
+    attributes:
+      label: Was passiert?
+      description: Kurz und konkret.
+      placeholder: Beim Wechsel in den Vollbildmodus bleibt das Bild schwarz, der Ton läuft weiter.
+    validations:
+      required: true
+
+  - type: textarea
+    id: schritte
+    attributes:
+      label: Schritte zum Nachvollziehen
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: erwartet
+    attributes:
+      label: Was hättest du erwartet?
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: LumiViz-Stand
+      description: Commit-Kurzhash (`git rev-parse --short HEAD`) oder Datum des Checkouts.
+      placeholder: 7b38a1b
+    validations:
+      required: true
+
+  - type: dropdown
+    id: betriebssystem
+    attributes:
+      label: Betriebssystem
+      options:
+        - Windows
+        - Linux
+        - macOS
+    validations:
+      required: true
+
+  - type: input
+    id: umgebung
+    attributes:
+      label: Compiler, Qt-Version, Grafikkarte
+      placeholder: MSVC 2022 · Qt 6.10.1 · NVIDIA RTX 4090, Treiber 566.36
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log-Auszug
+      description: >
+        LumiViz schreibt beim Start ein Log neben die Exe. Der Ausschnitt rund um
+        den Fehler hilft sehr — besonders bei Problemen mit OpenGL, Audio oder GPU-Auswahl.
+      render: text
+
+  - type: textarea
+    id: sonstiges
+    attributes:
+      label: Sonstiges
+      description: Screenshots, betroffene Datei, alles was hilft.

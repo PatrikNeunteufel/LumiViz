@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Sicherheitslücke melden
+    url: https://github.com/PatrikNeunteufel/LumiViz/security/policy
+    about: Bitte NICHT als öffentliches Issue — die Sicherheitsrichtlinie erklärt den Weg.
+  - name: 📖 Dokumentation
+    url: https://github.com/PatrikNeunteufel/LumiViz/blob/master/projects/apps/MyViz/docs/INDEX.md
+    about: Architektur, Benutzerhandbuch und Parameter-Referenz.
+  - name: 🔨 Bauen klappt nicht?
+    url: https://github.com/PatrikNeunteufel/LumiViz/blob/master/BUILDING.md
+    about: Voraussetzungen, BASS beschaffen, häufige Fehler.
