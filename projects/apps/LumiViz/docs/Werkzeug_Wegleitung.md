@@ -15,7 +15,7 @@ einmal echte Arbeitszeit gekostet, mehrere davon an einem einzigen Nachmittag.
 ## Inhalt
 
 1. [Welches Werkzeug wofür](#1-welches-werkzeug-wofür)
-2. [Die fünf Fallen](#2-die-fünf-fallen)
+2. [Die sechs Fallen](#2-die-sechs-fallen)
 3. [Rezepte](#3-rezepte)
 
 ---
@@ -35,7 +35,7 @@ was die App aus Einstellungen zieht, müssen sie als Schalter bekommen.
 
 ---
 
-## 2. Die fünf Fallen
+## 2. Die sechs Fallen
 
 ### 2.1 🔴 Debug-Build statt Release — Faktor 20
 
@@ -113,7 +113,33 @@ die Anführungszeichen müssen **im String** stehen:
 Start-Process $exe -ArgumentList @('"asset/presets/milkdrop/fuck me im famous"','--auto')
 ```
 
-### 2.5 🟡 `--auto` braucht ein offenes Fenster
+### 2.5 🟠 `MilkdropRef` braucht die MilkDrop-Ordnerstruktur
+
+Der Original-Kern sucht seine Datendatei unter **`<presetordner>/../data/include.fx`**
+— eine Ebene über dem Preset-Ordner. Zeigt man ihn auf einen beliebigen Ordner
+mit `.milk`-Dateien, bricht er ab:
+
+```
+FEHLER: PluginInitialize
+```
+
+und im Fenster steht „Unable to read the data file". Der genannte Pfad im
+Dialog verrät, wo er gesucht hat.
+
+**Regel: Presets für einen Referenzlauf immer unter einer Wurzel ablegen, die
+`data/` enthält** — also `asset/Milkdrop3/` oder eine Nachbildung davon:
+
+```
+<wurzel>/data/include.fx      (aus asset/Milkdrop3/data/)
+<wurzel>/textures/            (nur nötig, wenn Presets Texturen nutzen)
+<wurzel>/presets/*.milk       (hierauf zeigt der Aufruf)
+```
+
+Das betrifft **nur** MilkdropRef. LumiViz selbst braucht weder `data/` noch
+`textures/`, solange ein Preset keine Textur anfordert — die mitgelieferten
+19 tun das nicht.
+
+### 2.6 🟡 `--auto` braucht ein offenes Fenster
 
 Die Standalones rendern im GUI-Thread (`paintGL`) — dieselben Methoden, die in
 der App der Render-Thread aufruft. Das Fenster muss offen bleiben, bis der Lauf

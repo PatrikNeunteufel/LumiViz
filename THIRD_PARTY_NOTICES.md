@@ -162,6 +162,26 @@ Dieselben LGPL-Pflichten wie bei Qt.
 > Copyright (C) 1994-2020 Lua.org, PUC-Rio — **MIT**
 > <https://www.lua.org/>
 
+### Was sonst noch im Binärpaket liegt
+
+Ein gebautes LumiViz bringt weitere Bibliotheken mit, die Qt beistellt oder das
+System verlangt. Sie tauchen im Quelltext nicht auf, wohl aber in jedem ZIP des
+Build-Ordners:
+
+| Datei | Herkunft | Lizenz |
+|---|---|---|
+| `avcodec-*.dll`, `avformat-*.dll`, `avutil-*.dll` | **FFmpeg**, von Qt Multimedia beigestellt | LGPL — <https://ffmpeg.org/> |
+| `icuuc.dll` | **ICU**, von Qt beigestellt | ICU/Unicode-Lizenz |
+| `dxcompiler.dll`, `dxil.dll` | **DirectX Shader Compiler** (Microsoft) | Microsoft-Redistributable |
+| `Qt6*.dll` und die Plugin-Ordner | **Qt 6** | LGPL-3.0 (s. o.) |
+| `bass.dll`, `bassflac.dll` | **BASS** (un4seen) | proprietär, nicht-kommerziell frei (s. u.) |
+| `lua54.dll` | **Lua 5.4** | MIT |
+
+**Qt Advanced Docking System wird STATISCH gelinkt** — es steckt also in der
+Exe, nicht in einer eigenen DLL. Die LGPL-2.1 verlangt in dem Fall, dass
+Empfänger die Bibliothek austauschen können. Das ist erfüllt, weil der gesamte
+LumiViz-Quelltext öffentlich ist und jeder neu bauen kann.
+
 ### CMakeCraft — das Build-System
 
 > Copyright (c) 2026 Patrik Neunteufel

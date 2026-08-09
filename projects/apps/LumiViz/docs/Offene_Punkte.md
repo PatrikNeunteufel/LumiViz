@@ -727,6 +727,54 @@ Winamp-Komfort).
 
 ## 3. MilkDrop
 
+### 🟠 Wellenform-Modus 7 steht auf dem Kopf (Befund S73, Patrik)
+
+Aufgefallen an `GreatWho - Dancing Hearts`: das Herz zeigt bei uns nach oben,
+im Original nach unten. **Kein globaler Spiegelfehler** — der Gegentest über
+alle 19 Presets des mitgelieferten Satzes zeigt, dass nur die
+`nWaveMode=7`-Presets gespiegelt besser passen:
+
+| Preset | nWaveMode | MAE normal | MAE gespiegelt |
+|---|---|---|---|
+| Dancing Hearts | 7 | 0,388 | **0,260** |
+| Dancing Hearts (2nd edit) | 7 | 0,323 | **0,213** |
+| Rock The House | 7 | 0,042 | 0,040 |
+| Rock The House_newmove | 7 | 0,034 | 0,031 |
+| 14 weitere | 0 bzw. 6 | — | keine Verbesserung, teils schlechter |
+
+⚠️ **Einschränkung der Beweislage (Befund Patrik, S73):** die Zahlen stammen aus
+einem `--auto`-STAPELLAUF, und MilkDrop-Presets **erben das Bild des Vorgängers**.
+Preset N zeigt darin Reste von N−1 — an `Helix` sichtbar belegt: im Stapel stand
+ein Herz im Bild (das alphabetisch davor laufende `Dancing Hearts`), im eigenen
+Prozess gestartet verschwindet es. **Unverunreinigt ist nur das jeweils erste
+Preset eines Laufs** — hier `Dancing Hearts (2nd edit)` mit 0,323 → 0,213.
+Die Richtung des Befunds steht damit, die genauen Werte sind neu zu erheben
+(Plan-Aufgabe 1).
+
+Die beiden Rock-The-House sind zu dunkel, als dass der Spiegel die Zahl bewegt —
+die Richtung stimmt trotzdem. Damit ist der Fehler auf **einen** Zweig eingegrenzt:
+`MilkdropVisualizer.cpp:3887-3903`, Modus 7 („zwei Linien (Stereo) mit
+Trennung", links `+sep`, rechts `−sep`, beide über `perpX`/`perpY`).
+
+**Zwei Verdächtige, noch nicht entschieden:** das Vorzeichen von `perpY`
+(`ang2 + 1.57` gegen `ang2 - 1.57`) oder der Übergang in Bildschirmkoordinaten.
+Was davon stimmt, entscheidet der Zeilenvergleich gegen `milkdropfs.cpp` —
+nicht raten, die Y-Konvention ist in diesem Port ausdrücklich EINE einzige
+Rechenebene mit genau einem Flip im Composite (Kopfkommentar der Datei).
+
+**Gegenprobe nach dem Fix:** die vier Mode-7-Presets müssen ohne Spiegel besser
+werden, die 14 anderen dürfen sich NICHT verschlechtern. Der Vergleichslauf
+steht in §8 unter „MilkDrop-Vergleich".
+
+➜ **Steuerdokument:** [Kalibrier-Plan mitgelieferte Presets](visuals/Kalibrier_Plan_Mitgelieferte_Presets.md)
+— vier Aufgaben (Vergleichswerkzeug · Modus 7 · Farben · fünf AVS-Befunde) mit
+Reihenfolge, Gegenproben und Fertig-Kriterium.
+
+**Restabweichung beachten:** auch gespiegelt bleibt Dancing Hearts bei MAE 0,260
+— die Farben unterscheiden sich zusätzlich (bei uns weiß/rosa, im Original
+gelb/orange). Das ist ein ZWEITER Befund, der nichts mit der Spiegelung zu tun
+hat und noch niemand angesehen hat.
+
 **Kalibrier-Runde läuft seit S63.** Werkzeuge: Triage-Kette
 `asset/calibration/milkdrop/` (`triage_presets.py` → `make_triage_report.py`
 → `compare_ref.py --dir <lauf>`) + **MilkdropRef** (`tools/MilkdropRef/`,

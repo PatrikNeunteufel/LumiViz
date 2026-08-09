@@ -110,6 +110,43 @@ if(TARGET LumiViz AND EXISTS "${_lumi_presets_src}")
             VERBATIM)
     endforeach()
     message(STATUS "[Docs] Anwender-Dokumentation wird nach dem Build kopiert")
+
+    # --------------------------------------------------------------------------
+    # Lizenzen neben die Exe (S73) — PFLICHT bei Binaer-Weitergabe
+    # --------------------------------------------------------------------------
+    # Wer den Build-Ordner als ZIP weitergibt, verbreitet ein Binaerprogramm.
+    # Damit greifen Pflichten, die beim reinen Quelltext nicht galten:
+    #
+    #   - Nullsoft BSD-3 (portierter AVS-/MilkDrop-Code steckt in der Exe):
+    #     "Redistributions in binary form must reproduce the above copyright
+    #     notice ... in the documentation and/or other materials provided with
+    #     the distribution." Der Vermerk MUSS also mitgeliefert werden.
+    #   - Qt und die von Qt mitgelieferten FFmpeg-Bibliotheken (LGPL):
+    #     Lizenztext beilegen, Quellen benennen, Relinken ermoeglichen.
+    #   - BASS (un4seen): Weitergabe der DLL mit der Anwendung ist gedeckt,
+    #     solange die Nutzung nicht-kommerziell bleibt.
+    #
+    # Darum liegen diese vier Dateien ab jetzt IMMER neben der Exe — nicht
+    # als Kuer, sondern damit ein ZIP aus dem Build-Ordner vollstaendig ist.
+    set(_lumi_lizenzen
+        "LICENSE"
+        "LICENSE-MIT"
+        "LICENSE-APACHE"
+        "THIRD_PARTY_NOTICES.md")
+
+    foreach(_l IN LISTS _lumi_lizenzen)
+        if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${_l}")
+            message(WARNING "[Lizenz] ${_l} fehlt — das Binaerpaket waere unvollstaendig")
+            continue()
+        endif()
+        add_custom_command(TARGET LumiViz POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${CMAKE_CURRENT_LIST_DIR}/${_l}"
+                    "$<TARGET_FILE_DIR:LumiViz>/${_l}"
+            COMMENT "[Lizenz] ${_l}"
+            VERBATIM)
+    endforeach()
+    message(STATUS "[Lizenz] Lizenzdateien werden nach dem Build kopiert")
 elseif(NOT TARGET LumiViz)
     message(WARNING "[Presets] Target LumiViz nicht gefunden — Presets werden NICHT kopiert")
 else()
