@@ -68,6 +68,9 @@ inline int clampI(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : v
 constexpr unsigned int kRandSeed = 1u;
 } // namespace
 
+/// Diagnose aus dem gepatchten ns-eel (S74): Fragmentgroessen der JIT-Tabelle
+extern "C" void nseel_dumpFragmentSizes(void);
+
 // Render-Kern-Globals (Pendant zu render.cpp, das wir nicht mitkompilieren)
 C_RenderListClass* g_render_effects = NULL;
 C_RLibrary* g_render_library = NULL;
@@ -396,6 +399,116 @@ int main(int argc, char** argv)
             NSEEL_code_free((NSEEL_CODEHANDLE)handle);
         }
         AVS_EEL_IF_VM_free(vm);
+
+    }
+
+    // FUNKTIONS-SELBSTTEST (S74) — eigener Schalter AVSREF_EELTEST, NICHT
+    // AVSREF_DEBUG: der Test bringt den Prozess bei `atan` zum Absturz
+    // (STATUS_BREAKPOINT), und AVSREF_DEBUG muss fuer alles andere benutzbar
+    // bleiben.
+    if (getenv("AVSREF_EELTEST"))
+    {
+        // Erst die Fragmentgroessen der JIT-Tabelle — sie zeigen einen
+        // Linker-Schaden, bevor der Ausfuehrungstest daran stirbt.
+        nseel_dumpFragmentSizes();
+
+        // Jede Funktion der ns-eel-Tabelle einzeln
+        // durch Compile + JIT-Execute und gegen die C-Bibliothek gehalten.
+        //
+        // Anlass: Presets, deren Skript `atan` oder `log` enthaelt, rendern in
+        // diesem Werkzeug NICHTS — unabhaengig davon, in welchem Slot die
+        // Funktion steht und ob ihr Ergebnis ueberhaupt benutzt wird. Die
+        // Frage, die das entscheidet: liegt es an DIESEM Build (JIT-Fragmente
+        // unter modernem MSVC — das Original wurde mit VC6 gebaut) oder an
+        // ns-eel selbst? Schlaegt eine Funktion schon hier fehl, ist es der
+        // Build und das Werkzeug ist an dieser Stelle blind. Rechnet sie hier
+        // richtig und faellt trotzdem im Preset aus, liegt es weiter oben.
+        struct FnProbe { const char* ausdruck; double erwartet; double toleranz; };
+        static const FnProbe proben[] = {
+            {"r=sin(0.5)",    0.479425538604203, 1e-9},
+            {"r=cos(0.5)",    0.877582561890373, 1e-9},
+            {"r=tan(0.5)",    0.546302489843790, 1e-9},
+            {"r=asin(0.5)",   0.523598775598299, 1e-9},
+            {"r=acos(0.5)",   1.047197551196598, 1e-9},
+            {"r=atan(0.5)",   0.463647609000806, 1e-9},
+            {"r=atan2(1,2)",  0.463647609000806, 1e-9},
+            {"r=sqr(3)",      9.0,               1e-9},
+            {"r=sqrt(9)",     3.0,               1e-9},
+            {"r=pow(2,10)",   1024.0,            1e-9},
+            {"r=exp(1)",      2.718281828459045, 1e-9},
+            {"r=log(10)",     2.302585092994046, 1e-9},
+            {"r=log10(100)",  2.0,               1e-9},
+            {"r=abs(-3)",     3.0,               1e-9},
+            {"r=min(3,5)",    3.0,               1e-9},
+            {"r=max(3,5)",    5.0,               1e-9},
+            {"r=sign(-2)",   -1.0,               1e-9},
+            {"r=floor(2.7)",  2.0,               1e-9},
+            // invsqrt ist die schnelle Naeherung (Bit-Trick + EINE
+            // Newton-Iteration, `nseel_asm_invsqrt`) — 0,49915 statt 0,5 ist
+            // das erwartete Verhalten des Originals, kein Fehler. Wer hier
+            // scharf stellt, jagt eine Absicht.
+            {"r=invsqrt(4)",  0.5,               2e-3},
+            // Ablaufsteuerung — dieselbe Fragment-Falle wie atan/log (S74):
+            // diese drei kamen erst durch den Voll-Durchlauf ueber alle 40
+            // Funktionen ans Licht, weil `atan`/`log` den Blick vorher
+            // gebunden hatten.
+            {"r=assign(q,7)",             7.0,   1e-9},
+            // Einfachform OHNE Zuweisung im Argument …
+            {"r=exec2(1,2)",              2.0,   1e-9},
+            {"r=exec3(1,2,3)",            3.0,   1e-9},
+            {"q=0;loop(8,q=q+2);r=q",    16.0,   1e-9},
+            // … und dieselbe Funktion MIT Zuweisung im Argument. Weicht nur
+            // diese ab, ist nicht die Funktion das Problem, sondern was ns-eel
+            // als Argument zulaesst (S74).
+            {"r=exec2(q=3,q+1)",          4.0,   1e-9},
+            {"r=exec3(q=3,q=q*2,q+1)",    7.0,   1e-9},
+            {"q=0;r=exec2(loop(8,q=q+2),q)", 16.0, 1e-9},
+            // Grenze der Grammatik einkreisen
+            {"q=5;r=exec2(q,q+1)",        6.0,   1e-9},   // Zuweisung DAVOR
+            {"q=0;loop(4,q);r=9",         9.0,   1e-9},   // loop OHNE Zuweisung
+            {"q=0;r=(q=3)+1",             4.0,   1e-9},   // Zuweisung in Klammern
+            {"q=0;r=if(1,q=3,0)+1",       4.0,   1e-9},   // Zuweisung als if-Argument
+            // Variablen statt Konstanten als Argument
+            {"t=2;r=exec2(t,t*0.5)",      1.0,   1e-9},
+            {"t=2;r=exec3(t,t*2,t*0.25)", 0.5,   1e-9},
+            {"t=3;r=exec2(loop(4,t),t)",  3.0,   1e-9},
+            {"t=3;r=exec2(t,t)",          3.0,   1e-9},   // ohne Rechnung im Argument
+        };
+        int fehler = 0;
+        for (const FnProbe& probe : proben)
+        {
+            // VOR dem Compile ausgeben und ausspuelen: faellt der JIT in
+            // 0xCC-Fuellbytes (STATUS_BREAKPOINT), stirbt der Prozess ohne
+            // weitere Meldung — dann ist die zuletzt gedruckte Zeile der Taeter.
+            fprintf(stderr, "[eel] pruefe %s ...\n", probe.ausdruck);
+            fflush(stderr);
+            NSEEL_VMCTX fvm = NSEEL_VM_alloc();
+            double* rvar = NSEEL_VM_regvar(fvm, "r");
+            *rvar = -12345.0;
+            const int fh = AVS_EEL_IF_Compile((int)fvm, (char*)probe.ausdruck);
+            if (fh == 0)
+            {
+                fprintf(stderr, "[eel] %-14s COMPILE-FEHLER: %s\n", probe.ausdruck,
+                        last_error_string);
+                ++fehler;
+            }
+            else
+            {
+                char zv[2][2][576] = {};
+                AVS_EEL_IF_Execute((void*)fh, zv);
+                const double abweichung = fabs(*rvar - probe.erwartet);
+                if (abweichung > probe.toleranz)
+                {
+                    fprintf(stderr, "[eel] %-14s FALSCH: %.15g statt %.15g\n",
+                            probe.ausdruck, *rvar, probe.erwartet);
+                    ++fehler;
+                }
+                NSEEL_code_free((NSEEL_CODEHANDLE)fh);
+            }
+            AVS_EEL_IF_VM_free(fvm);
+        }
+        fprintf(stderr, "[eel] Funktions-Selbsttest: %d von %d fehlerhaft\n", fehler,
+                (int)(sizeof(proben) / sizeof(proben[0])));
     }
 
     // --- Render-Schleife -------------------------------------------------------------------

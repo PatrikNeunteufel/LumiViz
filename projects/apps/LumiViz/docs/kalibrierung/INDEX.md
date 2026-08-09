@@ -41,6 +41,7 @@ belegt. Sie gelten formatübergreifend.
 | 5 | **Eine kleine Zahl ist kein Beweis. Ins Bild sehen.** | Ein 1-Pixel-Unterschied bewegt den Mittelwert nicht: MAE 0,001, während eine Seite schwarz ist und die andere zeichnet |
 | 6 | **Bei Schalterreihen die Gruppierung je Seite vergleichen, nicht nur den Messwert je Stufe.** | Die Adjustable-Blende bestand jede Stufe mit MAE 0,002 — erst der Vergleich „wie viele verschiedene Bilder erzeugt jede Seite über die Skala" zeigte, dass wir ab 128 sättigen und die Referenz nicht |
 | 7 | **Erst prüfen, ob der Effekt auf der Gegenseite überhaupt läuft — dann den Port zerlegen.** | `Water` wurde Zeile für Zeile gegen das Original gelegt und war korrekt. Im Preset stand `enabled = 0`: die Referenz übersprang den Effekt, wir führten ihn aus. MAE 0,332 für einen fehlerfreien Port |
+| 8 | **Die Referenz ist selbst ein Messgerät. Wo sie schweigt, ist nichts bewiesen.** | `AvsRef` rendert eine leere Fläche, sobald ein Skript `atan` oder `log` benutzt — ein Linker-Schaden im JIT dieses Builds. Der Befund „wir zeichnen, die Referenz nicht" war deren Fehler, nicht unserer: `10_the ring` fiel nach dem Fix von MAE 0,113 auf 0,001. Abnahme: `AVSREF_EELTEST=1` (§2.1) |
 
 > Regel 1, 5 und 6 sind dieselbe Regel aus drei Richtungen: **die Metrik lügt
 > bei dünnen Inhalten.** Das Urteil fällt über Bild + Metrik + Verhalten über
@@ -82,7 +83,7 @@ Rechnung. Beides zeigt ein Einzelbild bei Frame 120 nicht.
 
 | Format | Unsere Seite | Referenz (Original) | Vergleichs-Harness |
 |---|---|---|---|
-| **AVS** | `AvsStandalone` | `tools/AvsRef` (originaler vis_avs-Kern) | `asset/calibration/avs/compare_avsref.py` |
+| **AVS** | `AvsStandalone` | `tools/AvsRef` (originaler vis_avs-Kern) — vor Messreihen abnehmen, s. §2.1 | `asset/calibration/avs/compare_avsref.py` |
 | **MilkDrop** | `MilkdropStandalone` | `tools/MilkdropRef` (originaler MilkDrop3-Kern, D3D9) | `asset/calibration/milkdrop/compare_ref.py` — **nur Triage, ein Prozess je Preset fehlt** (Aufgabe 1 des Kalibrier-Plans) |
 | **Shadertoy** | `AvsStandalone` (lädt `.lvfx`) | — **keine** | — |
 | **ISF** | `AvsStandalone` (lädt `.lvfx`) | — **keine** | — |
@@ -101,6 +102,39 @@ Solution:
 ```bash
 cmake --build tools/AvsRef/build --config Release
 ```
+
+### §2.1 Das Referenz-Werkzeug selbst abnehmen
+
+Ein Referenz-Renderer, den jemand neu baut, ist ein **Messgerät** — und
+Messgeräte werden abgenommen (Regel 1). `AvsRef` hat einen eingebauten
+Selbsttest:
+
+```bash
+AVSREF_EELTEST=1 AvsRef "<beliebiges preset.avs>" --frames 1 --size 64x64 --out "<tmp>"
+```
+
+Er gibt die **Fragmentgrößen der ns-eel-JIT-Tabelle** aus und rechnet 19
+EEL-Funktionen gegen die C-Bibliothek nach. Erwartet: `0 von 19 fehlerhaft`
+und keine als `VERDAECHTIG` markierte Größe.
+
+**Warum das nötig ist** (Befund S74): ns-eel kopiert Maschinencode zwischen
+`nseel_asm_<fn>` und `nseel_asm_<fn>_end` und bestimmt die Länge als
+**Adressdifferenz zweier nackter Funktionen**. Der Vertrag setzt damit
+Quellreihenfolge im Speicher voraus — eine Annahme, die moderne
+Compiler-Vorgaben stillschweigend brechen. Mit `/Gy` (Release-Vorgabe) bekam
+jede Funktion ihre eigene COMDAT, der Linker sortierte die leeren
+`_end`-Marken von `atan` und `log` hinter die jeweils folgende Funktion, und
+deren Fragmente wurden 128 statt 48 bzw. 80 statt 32 Bytes lang. Die
+Ausführung lief in Fremdcode und `0xCC`-Füllbytes (`int 3`); im Preset fing
+die SEH-Absicherung das ab und der Effekt rendert **schwarz, ohne jede
+Meldung**.
+
+Behoben mit `/Gy-` für `patched/nseel-cfunc.c`. Das hat allein `10_the ring`
+von MAE 0,113 auf 0,001 gebracht — ein Befund, der nie einer war.
+
+> **`invsqrt` ist absichtlich ungenau** (schneller Bit-Trick + eine
+> Newton-Iteration, 0,49915 statt 0,5). Im Selbsttest mit eigener Toleranz
+> geführt.
 
 ### Was für Shadertoy und ISF fehlt
 

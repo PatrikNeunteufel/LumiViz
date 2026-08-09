@@ -32,6 +32,50 @@
 
 namespace lumi::eel {
 
+namespace detail {
+
+/**
+ * @brief Zuweisungen aufspueren, die AVS als TEILAUSDRUCK ablehnt (S74)
+ *
+ * In AVS-EEL ist eine Zuweisung nur als eigenstaendige Anweisung erlaubt —
+ * nie als Funktionsargument, in Klammern oder im Rumpf von `loop`. Am
+ * laufenden Paar gemessen: `AvsRef` uebersetzt ein solches Skript GAR NICHT,
+ * und der betroffene Effekt rendert dort **nichts**. Wir uebersetzen es und
+ * zeichnen — fehlerhaft ist unser Ergebnis nicht, aber es ist ein anderes.
+ *
+ * Fuer MilkDrop gilt das NICHT: ns-eel2 kennt `_set` als Operator, und
+ * `while(exec2(q=q+1, below(q,5)))` liefert dort auf beiden Seiten dasselbe
+ * (ebenfalls gemessen, S74). Die Pruefung laeuft deshalb nur im AVS-Dialekt.
+ *
+ * @param anweisung true, wenn @p node an einer Anweisungsstelle steht
+ */
+inline void findeUnzulaessigeZuweisungen(const Node& node, bool anweisung,
+                                         std::vector<std::string>& warnungen)
+{
+    if (node.kind == NodeKind::Assign && !anweisung)
+    {
+        warnungen.push_back(
+            "Zeile " + std::to_string(node.line) +
+            ": Zuweisung innerhalb eines Ausdrucks (z. B. als Funktionsargument"
+            " oder im Rumpf von loop). AVS laesst das NICHT zu — dort scheitert"
+            " die Uebersetzung des ganzen Skripts, und der Effekt bleibt"
+            " unsichtbar. LumiViz fuehrt ihn aus; das Bild weicht damit vom"
+            " Original ab. Gleichstand erreicht man, indem man die Zuweisung"
+            " als eigene Anweisung davorzieht — oder den Knoten abschaltet,"
+            " denn genau das tut AVS.");
+    }
+    // Nur die Kinder einer Anweisungsliste stehen wieder an einer
+    // Anweisungsstelle; alles andere (Argumente, Operanden, Klammern,
+    // Zuweisungswert) ist Ausdruckstelle.
+    const bool kindAnweisung = node.kind == NodeKind::StmtList;
+    for (const NodePtr& kid : node.kids)
+    {
+        if (kid != nullptr) findeUnzulaessigeZuweisungen(*kid, kindAnweisung, warnungen);
+    }
+}
+
+} // namespace detail
+
 /**
  * @brief Result of a transpilation run
  */
@@ -69,6 +113,13 @@ inline TranspileResult transpile(std::string_view source, Dialect dialect)
     {
         result.error = parser.error();
         return result;
+    }
+
+    // AVS lehnt Zuweisungen in Teilausdruecken ab (S74) — melden, bevor der
+    // Codegen laeuft, damit die Zeile vor den Codegen-Warnungen steht.
+    if (dialect == Dialect::Avs)
+    {
+        detail::findeUnzulaessigeZuweisungen(*program, true, result.warnings);
     }
 
     detail::CodeGen codegen(dialect, result.warnings);

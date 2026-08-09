@@ -29,6 +29,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <windows.h>
+#include <stdio.h>   /* AvsRef-Patch (S74): stderr fuer nseel_dumpFragmentSizes */
 #include "ns-eel-int.h"
 
 #ifdef NSEEL_REENTRANT_EXECUTION
@@ -178,6 +179,30 @@ functionType *nseel_getFunctionFromTable(int idx)
     return fnTableUser+idx;
   }
   return fnTable1+idx;
+}
+
+/* AvsRef-Patch (S74): Fragmentgroessen der JIT-Tabelle ausgeben.
+
+   ns-eel kopiert Maschinencode zwischen `nseel_asm_<fn>` und
+   `nseel_asm_<fn>_end` und bestimmt die Laenge als Adressdifferenz zweier
+   nackter Funktionen. Ordnet der Linker um oder faltet er identische
+   Funktionen zusammen, wird die Laenge falsch — kopiert wird dann
+   Fuellmaterial (0xCC = int 3), und der JIT-Lauf endet in
+   STATUS_BREAKPOINT. Diese Ausgabe zeigt es sofort: eine negative oder
+   auffaellig grosse Groesse ist der Taeter. */
+void nseel_dumpFragmentSizes(void)
+{
+  int i;
+  fprintf(stderr, "[jit] %-10s %-10s %-10s %s\n", "Funktion", "Start", "Ende", "Groesse");
+  for (i = 0; nseel_getFunctionFromTable(i); i++)
+  {
+    functionType *f = nseel_getFunctionFromTable(i);
+    long groesse = (long)((char *)f->func_e - (char *)f->afunc);
+    fprintf(stderr, "[jit] %-10s %p %p %6ld%s\n", f->name, f->afunc,
+            f->func_e, groesse,
+            (groesse <= 0 || groesse > 512) ? "   << VERDAECHTIG" : "");
+  }
+  fflush(stderr);
 }
 
 int NSEEL_init() // returns 0 on success

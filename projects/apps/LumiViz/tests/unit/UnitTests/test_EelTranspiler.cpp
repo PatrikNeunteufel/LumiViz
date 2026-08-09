@@ -336,3 +336,68 @@ TEST_CASE("EelTranspiler: Spiral-Punkt-Skript (AVS-Stil) rechnet korrekt")
     CHECK(runner.var("x") == doctest::Approx(std::sin(expectedA) * expectedR));
     CHECK(runner.var("y") == doctest::Approx(std::cos(expectedA) * expectedR));
 }
+
+// =============================================================================
+// AVS-Grammatik: Zuweisung als Teilausdruck (S74)
+//
+// In AVS-EEL ist eine Zuweisung nur als eigenstaendige Anweisung erlaubt. Am
+// laufenden Paar gemessen: `AvsRef` uebersetzt ein Skript mit einer Zuweisung
+// im Argument GAR NICHT, der Effekt bleibt dort unsichtbar. Wir uebersetzen es
+// und zeichnen — das ist ein echter Verhaltensunterschied und muss im
+// Import-Bericht stehen.
+//
+// Fuer MilkDrop gilt die Einschraenkung NICHT (ns-eel2 kennt `_set` als
+// Operator) — ebenfalls gemessen. Die Warnung darf dort nicht erscheinen.
+// =============================================================================
+
+namespace {
+
+/// Enthaelt eine der Warnungen den Hinweis auf die Zuweisungs-Regel?
+bool hatZuweisungsWarnung(const std::vector<std::string>& warnungen)
+{
+    for (const std::string& w : warnungen)
+    {
+        if (w.find("Zuweisung innerhalb eines Ausdrucks") != std::string::npos) return true;
+    }
+    return false;
+}
+
+}  // namespace
+
+TEST_CASE("EelTranspiler: Zuweisung im Funktionsargument wird gemeldet (AVS)")
+{
+    const auto result = transpile("q=0; r=exec2(q=3, q+1)", Dialect::Avs);
+    REQUIRE(result.ok);   // wir uebersetzen weiter — nur melden, nicht abbrechen
+    CHECK(hatZuweisungsWarnung(result.warnings));
+}
+
+TEST_CASE("EelTranspiler: Zuweisung im loop-Rumpf wird gemeldet (AVS)")
+{
+    const auto result = transpile("q=0; loop(8, q=q+2); r=q", Dialect::Avs);
+    REQUIRE(result.ok);
+    CHECK(hatZuweisungsWarnung(result.warnings));
+}
+
+TEST_CASE("EelTranspiler: Zuweisung in Klammern wird gemeldet (AVS)")
+{
+    const auto result = transpile("q=0; r=(q=3)+1", Dialect::Avs);
+    REQUIRE(result.ok);
+    CHECK(hatZuweisungsWarnung(result.warnings));
+}
+
+TEST_CASE("EelTranspiler: gewoehnliche Anweisungsfolge loest KEINE Warnung aus")
+{
+    const auto result = transpile("q=3; r=exec2(q, q+1); s=q*2", Dialect::Avs);
+    REQUIRE(result.ok);
+    CHECK_FALSE(hatZuweisungsWarnung(result.warnings));
+}
+
+TEST_CASE("EelTranspiler: MilkDrop erlaubt die Form — keine Warnung")
+{
+    // ns-eel2 kennt `_set` als Operator; gegen MilkdropRef gemessen liefern
+    // beide Seiten dasselbe Ergebnis (S74).
+    const auto result = transpile("q=0; while(exec2(q=q+1, below(q,5)))",
+                                  Dialect::Milkdrop);
+    REQUIRE(result.ok);
+    CHECK_FALSE(hatZuweisungsWarnung(result.warnings));
+}

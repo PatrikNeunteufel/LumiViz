@@ -198,6 +198,47 @@ Gitter-Raster allein gegen die Referenz, vorher/nachher:
 Regression: die zehn mitgelieferten Presets liefern unverändert dieselben
 Werte (5/10 OK) — keines nutzt mehr als 4096 Punkte. Tests 593 grün.
 
+### 🟠 `07_movin wall`: Movement-Subpixel schaukelt sich über Frames auf (S74)
+
+Das Preset war der Fall „kein Einzelknoten auffällig, ganzes Preset bei 0,073".
+Mit Raster gemessen sind alle 9 Knoten einzeln sauber (max. 0,015). Die
+kumulative Bisektion zeigt zwei Sprünge:
+
+| Stufe | dazu | MAE |
+|---|---|---|
+| l01–l06 | APE, UniqueTone, SuperScope, FastBrightness, Fadeout, SuperScope | ≤ 0,005 |
+| **l07** | **+ Movement (Id 15)** | **0,037** |
+| t02 | + UniqueTone (Id 38) auf Wurzelebene | 0,077 |
+
+**Der Frameverlauf entscheidet den Charakter** (Regel 7): der Fehler wächst
+stetig — 0,0032 (Frame 4) · 0,0060 (13) · 0,0084 (25) · 0,0106 (28) · 0,037
+(120) — und unser Mittelwert liegt durchgehend **leicht über** der Referenz.
+Das ist kein Rechenfehler je Frame, sondern ein kleiner Überschuss, der sich
+in der Rückkopplung aufsummiert.
+
+Eingegrenzt auf die **Subpixel-Interpolation** des Movement. Die
+Adress-Tabelle ist originalgetreu portiert, samt 5-Bit-Quantisierung der
+Anteile (`ScriptGridModule.cpp:342-365`). Der Unterschied steckt im
+Verrechnen:
+
+| | Original (`BLEND4`, `r_defs.h:328`) | Wir (`kMovementShader`) |
+|---|---|---|
+| Gewichte | vier vorab, je über `g_blendtable` **abgeschnitten** | separabel in zwei Schritten |
+| Normierung | **/255** — die Tabelle ist `(unsigned char)((i/255.0)*j)` | **`>>8`, also /256** |
+| Abschneide-Punkte | 8 (4 Gewichte + 4 Produkte) | 3 |
+
+Die Anteile gehen im Original als `(transp>>24) & (31<<3)` hinein, also 0…248
+in Achterschritten — nie 255. Bei einem Bildmittel von 0,09 (≈ 23/255) ist ein
+Unterschied von 1 LSB bereits ~4 %, und genau in dieser Größenordnung liegt
+die gemessene Abweichung je Frame.
+
+**Nicht geändert.** Die `/256`-gegen-`/255`-Normierung ist ein belegter
+Vertragsunterschied, ihr Vorzeichen allein erklärt die Richtung aber nicht —
+sie macht uns dunkler, gemessen sind wir heller. Bit-Treue hier herzustellen
+heißt, `g_blendtable` samt seiner Abschneide-Punkte nachzubilden; das ist eine
+eigene, abgegrenzte Aufgabe. Der Prüfstand dafür steht (Raster + Movement,
+Frameverlauf über `--save-every`).
+
 ### ✅ Raster-Blends waren vertikal gespiegelt (S74, behoben)
 
 AVS zählt Bildzeilen von **oben**, `gl_FragCoord.y` von **unten**. Bei gerader
@@ -352,7 +393,304 @@ auffällig gewesen wäre.
 Daneben, kleiner, aus demselben Lauf: **`Blur` (Id 6)** MAE 0,009 / dMean
 0,025 — ebenfalls erst mit Raster sichtbar.
 
-### 🔴 `10_the ring`: wir zeichnen einen SuperScope, den die Referenz nicht zeichnet (S74)
+### ✅ Skript-Funktionen: AVS 40/40, MilkDrop 32/32 (S74)
+
+Beide Zweige vollständig durchgemessen — jede Funktion einzeln, nicht in
+Presets vermutet.
+
+| Zweig | Werkzeug | Umfang | Ergebnis |
+|---|---|---|---|
+| **AVS** | `make_eelprobe_avs.py` | 40 (33 ns-eel + 7 AVS-eigene) | **40/40** |
+| **MilkDrop** | `make_eelprobe_milk.py` | 32 (ns-eel2) | **32/32** |
+
+AVS auf MAE 0,000 bei 24-Bit-Kodierung über 320 Abtaststellen; MilkDrop auf
+0,0039 = 1/255, also reine 8-Bit-Rundung.
+
+**Kein einziger Funktionswert weicht ab.** Was der Durchlauf zutage gefördert
+hat, waren zwei andere Dinge: die fehlenden Speicher-Funktionen (unten,
+behoben) und der Grammatik-Unterschied (weiter unten, offen).
+
+> **Zwei eigene Messfehler unterwegs, beide gefunden und korrigiert:**
+> (1) Die AVS-Proben für `exec2`/`exec3`/`loop` benutzten eine Zuweisung im
+> Argument — AVS lehnt das ab, die Referenz rechnete nichts, und die Probe maß
+> die Grammatik statt der Funktion. Mit legaler Syntax: alle drei OK.
+> (2) Der innere MilkDrop-Rahmen taugte nicht als Messmittel (Referenz füllt
+> ihn mit konstantem Rot); gemessen wird im Randbereich. Beim ersten Lauf
+> meldete das **0 von 31** — wenn alles ausschlägt, ist das Messgerät
+> verdächtig, nicht die 31 Funktionen.
+
+### ✅ MilkDrop: `memset` und `memcpy` umgesetzt (S74, behoben)
+
+Voll-Durchlauf über alle 31 Funktionen von ns-eel2 (`make_eelprobe_milk.py`),
+je Funktion sechs Abtaststellen, ein Prozess je Preset:
+**29 von 31 stimmen** (Abweichung 0,0039 = 1/255, reine 8-Bit-Rundung).
+
+| Funktion | LumiViz | MilkdropRef |
+|---|---|---|
+| `memset(20, 0.5, 4)` → `megabuf(20)` | **0,000** | 0,498 |
+| `memcpy(28, 8, 4)` → `megabuf(28)` | **0,000** | 0,373 |
+
+Bestätigt im Code: `EelTranspilerCodeGen.hpp:465` führt `memset`, `memcpy`
+und `freembuf` als **bekannte No-Ops** („ersetzt durch 0.0"), mit Warnung im
+Import-Bericht. Der Messwert bestätigt den Stub — neu ist damit nicht die
+Tatsache, sondern die **Auswirkung**: ein Preset, das über `memset` ein Feld
+vorbelegt und danach daraus liest, bekommt bei uns Nullen.
+
+`freembuf` ist als No-Op dagegen **unschädlich**: die Referenz behält den Wert
+nach `freembuf(0)` ebenfalls (beide Seiten 0,375). Nur die beiden
+schreibenden Funktionen fehlen wirklich.
+
+**Behoben:** `LuaScriptEngine::lMemset` / `lMemcpy` arbeiten auf demselben
+megabuf, den `megabuf()` schon benutzt; `EelTranspilerCodeGen.hpp` bildet die
+beiden Namen darauf ab statt auf den No-Op. Übernommen aus `nseel-ram.c`:
+das Beschneiden negativer Indizes nach vorn (Länge verkürzen, bei 0 beginnen)
+und die Rückgabe des ursprünglichen Ziel-Index. `memcpy` läuft über eine
+Zwischenkopie, weil Quelle und Ziel sich überlappen dürfen.
+
+| | vorher | nachher |
+|---|---|---|
+| `memset(20, 0.5, 4)` → `megabuf(20)` | 0,000 | **0,502** (Referenz 0,498) |
+| `memcpy(28, 8, 4)` → `megabuf(28)` | 0,000 | **0,376** (Referenz 0,373) |
+| MilkDrop-Funktionen gesamt | 29/31 | **32/32** |
+
+`freembuf` bleibt No-Op — nachweislich zu Recht: die Referenz behält den Wert
+nach `freembuf(0)` ebenfalls (beide Seiten 0,375).
+
+Regression: Tests 593 grün, AVS-Schaufenster-Presets unverändert 7/10.
+
+> **Eigener Fehler im ersten Anlauf:** meine `memcpy`-Probe las eine Zelle, die
+> ich unmittelbar davor selbst gesetzt hatte — sie meldete OK, ohne `memcpy`
+> je anzufassen. Im Generator korrigiert und kommentiert. Dieselbe Klasse wie
+> „Prüf-Knoten zeichnet nicht": eine Probe, die ihr eigenes Ergebnis vorwegnimmt.
+
+### ✅ EEL-Grammatik: wir erlauben Zuweisungen, die AVS ablehnt — jetzt gemeldet (S74)
+
+**Der erste nachgewiesene echte Verhaltensunterschied — und ausgerechnet in der
+Richtung, dass WIR zu viel können.**
+
+Gefunden im Voll-Durchlauf über alle 40 AVS-EEL-Funktionen (s. u.). Drei
+Funktionen wichen ab: `exec2`, `exec3`, `loop`. Ursache ist aber keine dieser
+Funktionen, sondern die **Grammatik**:
+
+| Ausdruck | AvsRef | LumiViz |
+|---|---|---|
+| `q=5;r=exec2(q,q+1)` — Zuweisung davor | ✅ | ✅ |
+| `q=0;loop(4,q);r=9` — Schleife ohne Zuweisung | ✅ | ✅ |
+| `r=exec2(1,2)` · `r=exec3(1,2,3)` · `assign(q,7)` | ✅ | ✅ |
+| `q=0;r=(q=3)+1` — Zuweisung in Klammern | ❌ | ✅ |
+| `r=if(1,q=3,0)+1` — Zuweisung als Argument | ❌ | ✅ |
+| `r=exec2(q=3,q+1)` | ❌ | ✅ |
+| `loop(8,q=q+2)` — Zuweisung im Schleifenrumpf | ❌ | ✅ |
+
+**Regel:** In AVS-EEL ist eine Zuweisung nur als eigenständige Anweisung
+erlaubt, nie als Teilausdruck. Das steckt in den Parser-Tabellen
+(`nseel-eval.c` / `nseel-lextab.c`) — reine C-Daten, also **Original-Verhalten
+und kein Build-Artefakt** wie der `atan`-Fall.
+
+**Folge:** Ein Preset mit solch einer Zuweisung compiliert in AVS gar nicht;
+der betroffene Effekt rendert dort **nichts**. Wir übersetzen ihn und
+zeichnen. Fehlerhaft ist unser Ergebnis nicht — aber es ist ein anderes.
+
+**Praktische Tragweite: gering.** Ein Preset-Autor sieht in AVS sofort, dass
+sein Effekt verschwindet, und schreibt es um. In freier Wildbahn dürfte die
+Form deshalb kaum vorkommen. Genau deshalb ist sie aber gefährlich, wenn sie
+doch auftaucht: sie fällt niemandem auf.
+
+**Umgesetzt (Vorschlag Patrik):** Der AVS-Übersetzer prüft beim Import jeden
+Code-Slot und meldet den Fund im Import-Bericht — mit Knotenpfad, Slot und
+Zeile:
+
+> `root/0 (point): Zeile 1: Zuweisung innerhalb eines Ausdrucks (z. B. als
+> Funktionsargument oder im Rumpf von loop). AVS laesst das NICHT zu — dort
+> scheitert die Uebersetzung des ganzen Skripts, und der Effekt bleibt
+> unsichtbar. LumiViz fuehrt ihn aus; das Bild weicht damit vom Original ab.
+> Gleichstand erreicht man, indem man die Zuweisung als eigene Anweisung
+> davorzieht — oder den Knoten abschaltet, denn genau das tut AVS.`
+
+Die Erkennung sitzt in `AvsChainTranslator::reportEelGrammatik`, nicht im
+Transpiler-Aufrufpfad: `ScriptSlotHost` **verwirft** die Transpiler-Warnungen,
+und der Skript-Compile läuft ohnehin erst beim ersten Rendern an — der
+Import-Bericht entsteht früher. Der Transpiler meldet es zusätzlich
+(`findeUnzulaessigeZuweisungen`, nur im AVS-Dialekt), sodass die Regel an
+einer Stelle definiert ist.
+
+**Kein Fehlalarm:** Scan über 50 echte Presets (Schaufenster, Kalibrier-Korpus,
+Testpresets) → **0 Treffer**. Das deckt sich mit der Erwartung: ein
+Preset-Autor sieht in AVS sofort, dass sein Effekt verschwindet.
+
+Fünf Unit-Tests halten die Regel fest, inklusive der Gegenprobe, dass
+**MilkDrop keine Warnung bekommt** — ns-eel2 erlaubt die Form, gegen
+MilkdropRef gemessen.
+
+> Das ist der Fall, für den ein Dialog gedacht war. Beim `atan`/`log`-Befund
+> wäre er falsch gewesen (dort war unser Messgerät kaputt) — hier ist er
+> richtig, weil der Unterschied gemessen und reproduzierbar ist.
+
+### ✅ AVS-EEL: alle 40 Funktionen einzeln gegen die Referenz (S74)
+
+`make_eelprobe_avs.py` erzeugt je Funktion ein Preset, das sie über 320
+Abtaststellen ihres Definitionsbereichs durchläuft; der Wert wird über drei
+Kanäle kodiert (`red = v`, `green = Rest(v·256)`, `blue = Rest(v·65536)`) und
+erreicht damit rund 24 Bit statt der 8 eines Einzelkanals.
+
+**Ergebnis: 37 von 40 übereinstimmend** (MAE 0,000). Die drei Abweichler sind
+`exec2`, `exec3`, `loop` — und zwar aus dem Grammatik-Grund darüber, nicht
+wegen der Funktionen selbst.
+
+Mitgeprüft und in Ordnung: `getosc`, `getspec` (hängen am synthetischen Audio),
+`gettime` (mit `--tick-hz 60`), `megabuf`, `gmegabuf`, `getkbmouse`.
+`rand` ist nicht wertvergleichbar (auf 0 gezwungen, geprüft wird nur der Lauf);
+`invsqrt` weicht **absichtlich** ab (schnelle Näherung, dMaxLuma 0,081).
+
+### ✅ `AvsRef`: JIT-Fragmente von `atan` und `log` waren überlang (S74, behoben)
+
+**Ein Fehler im Referenz-Werkzeug, nicht in LumiViz** — er hat jeden Vergleich
+von Presets entwertet, die eine der beiden Funktionen verwenden, und dabei wie
+ein massiver LumiViz-Befund ausgesehen.
+
+**Ursache, an den Adressen belegt.** `AVSREF_EELTEST=1` gibt die
+Fragmentgrößen der JIT-Tabelle aus:
+
+| | Start | Ende | Größe |
+|---|---|---|---|
+| `atan` | 0059B160 | 0059B1E0 | **128** |
+| `atan2` | 0059B190 | 0059B1D0 | 64 — **liegt mitten in `atan`** |
+| `log` | 0059B4B0 | 0059B500 | **80** |
+| `log10` | 0059B4D0 | 0059B4F0 | 32 — **liegt mitten in `log`** |
+
+Der Linker hat die leeren `_end`-Marken hinter die jeweils *folgende* Funktion
+sortiert. `atan`s Fragment umfasste damit den kompletten `atan2`-Körper; nach
+dem eigenen Code lief die Ausführung in Fremdcode und `0xCC`-Füllbytes
+(`int 3`). Im Preset fängt die SEH-Absicherung von AVS das ab — der Effekt
+rendert schwarz, ohne jede Meldung.
+
+**Behoben** mit `/Gy-` für `patched/nseel-cfunc.c`
+(`tools/AvsRef/CMakeLists.txt`): ohne Funktions-COMDATs liegen die Funktionen
+in **Quellreihenfolge**, und genau das setzt der JIT-Vertrag voraus. Danach:
+`atan` 48 Bytes, `log` 32, keine Überlappungen.
+
+| | vorher | nachher |
+|---|---|---|
+| Funktions-Selbsttest | Absturz bei `atan` (0x80000003) | **0 von 19 fehlerhaft** |
+| `fn_atan` / `fn_log` | Referenz schwarz | **MAE 0,000** |
+| **`10_the ring`** | **0,113 (PRUEFEN)** | **0,001 (OK)** |
+| Schaufenster-Presets | 6/10 OK | **7/10 OK** |
+
+Kalibrier-Korpus unverändert 25/26.
+
+> **`invsqrt` ist absichtlich ungenau** — schneller Bit-Trick plus eine
+> Newton-Iteration, liefert 0,49915 statt 0,5. Im Selbsttest mit eigener
+> Toleranz geführt; wer dort scharf stellt, jagt eine Absicht.
+
+#### Was das für die Presets heißt
+
+**Nichts — sie waren nie kaputt, und LumiViz war nie falsch.** Nach dem Fix
+stimmen unsere `atan`- und `log`-Ergebnisse mit der Referenz überein
+(MAE 0,000). Ein Dialog „hier verhält sich LumiViz anders als AVS" wäre also
+sachlich falsch gewesen; die Warnung, die ich zwischenzeitlich ins
+Kalibrier-Handbuch geschrieben hatte, ist mit dem Fix gegenstandslos und
+wieder entfernt.
+
+> **Merkregel:** Ein Referenz-Werkzeug, das jemand neu baut, ist selbst ein
+> Messgerät und gehört abgenommen. Der JIT-Vertrag von ns-eel („Fragmentlänge
+> = Adressdifferenz zweier Funktionen") setzt Quellreihenfolge im Speicher
+> voraus — eine Annahme, die moderne Compiler-Vorgaben stillschweigend
+> brechen. `AVSREF_EELTEST=1` prüft das jetzt in einem Lauf.
+
+<details>
+<summary>Der Weg dorthin (S74) — vier Messungen, die je eine Erklärung ausschlossen</summary>
+
+Gefunden beim Aufklären von `10_the ring` (s. u.). Fünfzehn EEL-Funktionen
+einzeln als SuperScope-Farbe geprüft, 60 Frames, sonst identischer Aufbau:
+
+| Ergebnis | Funktionen |
+|---|---|
+| ✅ übereinstimmend | `sin` `cos` `tan` `asin` `acos` **`atan2`** `sqrt` `pow` **`log10`** `exp` `abs` `sigmoid` `invsqrt` |
+| ❌ Referenz zeichnet **gar nichts** | **`atan`** · **`log`** |
+
+#### Der Mechanismus ist belegt, nicht vermutet
+
+Vier Messungen, jede schließt eine Erklärung aus:
+
+1. **Kein Wertunterschied.** Die Referenz liefert `max = 0,000` über das ganze
+   Bild — kein falsches Bild, sondern gar keins. Es gibt keinen Wert zu
+   vergleichen.
+2. **Keine Frage der Stelligkeit oder Bedeutung.** `atan` steht in
+   `nseel-compiler.c:140` mit **1** Parameter, `atan2` mit 2; `log` ist der
+   natürliche, `log10` der dekadische Logarithmus. Verschiedene Funktionen,
+   korrekt aufgerufen — eine falsche Stelligkeit hätte AvsRef als
+   Compile-Fehler gemeldet, und es kam keiner.
+3. **Nicht der Aufrufort, nicht die Verwendung.** Die **bloße Anwesenheit**
+   von `atan` in irgendeinem Slot legt den Knoten lahm — auch im `init`-Slot,
+   auch wenn das Ergebnis nirgends benutzt wird und der Punkt-Code feste
+   Farben setzt.
+4. **Nicht das Preset, nicht der Renderer.** Ein Funktions-Selbsttest in
+   AvsRef (`AVSREF_EELTEST=1`) compiliert und JIT-führt jede Tabellenfunktion
+   einzeln aus, ohne Preset und ohne Renderer. `sin` `cos` `tan` `asin` `acos`
+   laufen — **`atan` beendet den Prozess mit `STATUS_BREAKPOINT` (0x80000003)**.
+
+`0xCC` ist der Füllbyte-Wert, mit dem MSVC den Raum zwischen Funktionen
+auffüllt, und `0xCC` ist zugleich `int 3`. ns-eel kopiert Maschinencode-
+Fragmente zwischen `nseel_asm_<fn>` und `nseel_asm_<fn>_end` und bestimmt
+deren Größe als **Adressdifferenz zweier nackter Funktionen**
+(`nseel-cfunc.c:109-118`). Stimmt die Größe nicht, wird Füllmaterial
+mitkopiert und ausgeführt — genau das passiert hier. Im Preset fängt die
+SEH-Absicherung von AVS den Fehler ab, der Effekt wird übersprungen, das Bild
+bleibt schwarz; der Selbsttest hat keine solche Absicherung und stirbt sofort.
+
+**Damit ist es ein Fehler DIESES Builds, nicht von AVS.** Das Original wurde
+mit VC6 gebaut; `tools/AvsRef/CMakeLists.txt` arbeitet gegen dieselbe
+Fragilität schon mit `/OPT:NOICF /INCREMENTAL:NO`, für diese beiden Fragmente
+reicht es nicht.
+
+#### Was das für die Presets heißt
+
+**Nichts.** Weder ist LumiViz hier falsch, noch sind die Presets kaputt:
+
+- `atan` ist eine dokumentierte, verbreitete AVS-Funktion, und Preset-Autoren
+  schreiben, was sie wirken sehen. Wäre sie in Winamp reihenweise abgestürzt,
+  stünde sie in keinem Preset — sie steht aber in `10_the ring`.
+- Ein Dialog, der dem Anwender „hier verhält sich LumiViz anders als AVS"
+  meldet, wäre nach dieser Messlage **falsch**: Ein Verhaltensunterschied ist
+  gerade nicht nachgewiesen, sondern ausgeschlossen worden. Die Warnung gehört
+  ins Kalibrier-Werkzeug, nicht in die App.
+
+</details>
+
+**Folge für die Kalibrierung, sofort wirksam:** ein Preset, dessen EEL `atan`
+oder `log` enthält, ist gegen `AvsRef` **nicht messbar**. Vor jedem Befund
+prüfen:
+
+```bash
+grep -c "atan\|log" <preset-quelle>
+```
+
+`atan2` und `log10` sind ausdrücklich in Ordnung — nur die beiden kurzen Namen.
+
+Zu tun: `nseel-cfunc.c` in `tools/AvsRef/patched/` kopieren und die beiden
+Funktionszeiger gegen eigene, nicht-intrinsische Wrapper tauschen
+(`#pragma function(atan, log)` oder eine eigene `double lumi_atan(double)`).
+Danach die 15er-Probe wiederholen — sie liegt als Prüfstand vor.
+
+### 🟠 `10_the ring`: der SuperScope-Befund war der `atan`-Fehler (S74, entwertet)
+
+> **Aufgelöst (S74):** der Knoten enthält `blue=atan(i+y)`, und `AvsRef`
+> rendert bei `atan` gar nichts (s. Befund darüber). Der Sichtbefund „wir
+> zeichnen eine Linie, die Referenz nicht" war damit **kein LumiViz-Fehler,
+> sondern die Blindstelle des Referenz-Werkzeugs.** Unsere Ausgabe ist
+> formeltreu — nachgerechnet: `t` bleibt 0, damit `red = 0`,
+> `blue = atan(3i-1)` läuft 0 → 1, `green = cos(2i-1)·sin(i)` bleibt unter
+> 0,45; das ergibt die blaue Linie, unten am hellsten. **Bewiesen ist das
+> nicht** — solange die Referenz nichts zeichnet, gibt es nichts zu
+> vergleichen. Das Preset ist erst nach dem `atan`-Fix messbar.
+>
+> Die drei ursprünglichen Kandidaten sind dabei alle ausgeschlossen worden,
+> jeder mit einer eigenen Variante des Knotens: **entartete Geometrie** (alle
+> Punkte auf x=0) — `x` spreizen ändert nichts · **EEL-Semantik bei
+> undefinierten Variablen** (`ti`) — `t=0` erzwingen ändert nichts ·
+> **Farb-Clipping** — mit festen Farben zeichnen beide Seiten identisch
+> (Mittel 0,0031 auf beiden). Der letzte Test war der Treffer: nicht die
+> Farben *werte* waren das Problem, sondern die Funktion in ihrer Berechnung.
 
 Bisektion mit `bisect_avs.py`, Aufbau des Presets:
 Top-Level `[36 SuperScope, 15 Movement, -2 Liste, 43 DynamicMovement]`.

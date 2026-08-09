@@ -186,6 +186,12 @@ private:
     static int lMbWrite(lua_State* L);
     static int lGmbRead(lua_State* L);
     static int lGmbWrite(lua_State* L);
+    /// ns-eel2 `memset(ziel, wert, laenge)` / `memcpy(ziel, quelle, laenge)`
+    /// auf dem megabuf. Bis S74 waren beide No-Ops, die 0 lieferten — gemessen
+    /// gegen MilkdropRef: dort schreibt `memset(20,0.5,4)` eine 0,5, bei uns
+    /// stand danach 0. Beide liefern wie das Original den ZIEL-Index zurueck.
+    static int lMemset(lua_State* L);
+    static int lMemcpy(lua_State* L);
     static int lAppGet(lua_State* L);
     static int lAppSet(lua_State* L);
     static int lGetSpec(lua_State* L);

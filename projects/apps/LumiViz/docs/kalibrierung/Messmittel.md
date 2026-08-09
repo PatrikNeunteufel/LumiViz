@@ -158,6 +158,38 @@ Modi liefern denselben Wert. In S74 sind dabei zwei Anläufe verpufft
 eignet sich ein zweites Raster**, dessen Muster sich vom Untergrund
 unterscheidet.
 
+## Skript-Funktionen: der Voll-Durchlauf
+
+Ein einzelner falscher Funktionswert verstellt ein ganzes Preset, ohne dass man
+ihm ansieht, woher es kommt. Deshalb werden **alle** Funktionen einzeln
+gemessen, nicht in Presets vermutet.
+
+| Zweig | Werkzeug | Umfang | Stand S74 |
+|---|---|---|---|
+| **AVS** | `asset/calibration/avs/make_eelprobe_avs.py` | 40 (33 ns-eel + 7 AVS-eigene) | **37/40** |
+| **MilkDrop** | `asset/calibration/milkdrop/make_eelprobe_milk.py` | 31 (ns-eel2) | **29/31** |
+
+**AVS-Bauform:** ein SuperScope tastet die Funktion über 320 Stellen ihres
+Definitionsbereichs ab; der Wert wird über drei Kanäle kodiert
+(`red = v`, `green = Rest(v·256)`, `blue = Rest(v·65536)`) — rund 24 Bit.
+
+**MilkDrop-Bauform:** MilkDrop hat kein Gegenstück zum SuperScope (der
+Per-Pixel-Code steuert die Verzerrung, nicht die Farbe). Bleibt der **äußere
+Rahmen** — drei Kanäle je Datei, zwei Dateien je Funktion, 8 Bit. Grob, aber
+ausreichend, um einen falschen Wert zu finden.
+
+> **Nur der äußere Rahmen ist abgenommen.** Der innere war der erste Versuch
+> und fiel durch: die Referenz füllt dort ein konstantes Rot (0,78/0/0), das
+> bei verschiedenen Presets gleich bleibt — kein berechneter Wert. Ebenso
+> füllt `ob_size = 0.5` bei der Referenz nicht bis in die Bildmitte. Gemessen
+> wird deshalb im **Randbereich**, wo beide Seiten auf 1/255 übereinstimmen.
+
+**Fallstrick, der eine Probe wertlos macht:** eine Probe darf ihr Ergebnis
+nicht selbst vorwegnehmen. Die erste `memcpy`-Probe las eine Zelle, die der
+Vorbereitungscode unmittelbar davor gesetzt hatte — sie meldete OK, ohne
+`memcpy` je anzufassen. Dieselbe Klasse wie ein Prüf-Knoten, der nicht
+zeichnet.
+
 ## Andere Formate
 
 | Format | Stand |

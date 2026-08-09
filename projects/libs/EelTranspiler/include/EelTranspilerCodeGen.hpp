@@ -460,9 +460,29 @@ private:
             return call;
         }
 
+        // --- Speicher-Funktionen von ns-eel2 (S74) ---
+        // Bis S74 standen sie in der No-Op-Liste darunter und lieferten 0.
+        // Gegen MilkdropRef gemessen: `memset(20, 0.5, 4)` schreibt dort eine
+        // 0,5, bei uns stand danach 0 — ein Preset, das ein Feld vorbelegt und
+        // daraus liest, bekam Nullen. Beide arbeiten auf demselben megabuf,
+        // den `megabuf()` schon benutzt.
+        if (fn == "memset" || fn == "memcpy")
+        {
+            std::string call = "eel." + fn + "(";
+            for (std::size_t k = 0; k < node.kids.size(); ++k)
+            {
+                if (k > 0) call += ", ";
+                call += genExpr(*node.kids[k], out);
+            }
+            call += ")";
+            return call;
+        }
+
         // --- known no-ops (decision: Maus-Funktionen als Stubs) ---
-        if (fn == "getkbmouse" || fn == "setmousepos" ||
-            fn == "freembuf" || fn == "memcpy" || fn == "memset")
+        // `freembuf` bleibt No-Op und ist das nachweislich zu Recht: gegen
+        // MilkdropRef gemessen behaelt auch das Original den Wert nach
+        // `freembuf(0)` (beide Seiten 0,375).
+        if (fn == "getkbmouse" || fn == "setmousepos" || fn == "freembuf")
         {
             warn(node.line, "'" + fn + "' wird nicht unterstuetzt — ersetzt durch 0.0");
             for (const auto& kid : node.kids) genStatement(*kid, out);  // keep side effects

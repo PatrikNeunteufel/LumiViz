@@ -8,9 +8,9 @@ Multieffekt-Host, der **AVS-** und **MilkDrop**-Presets importiert und
 nachrechnet. Dazu kommen Shader-Knoten für **Shadertoy**-GLSL und das
 **Interactive Shader Format (ISF)**.
 
-> **Status:** aktiv in Entwicklung, Einzelentwickler-Projekt. Es gibt noch keine
-> Release-Binaries — wer LumiViz nutzen will, baut es selbst (siehe
-> [BUILDING.md](BUILDING.md)).
+> **Status:** aktiv in Entwicklung, Einzelentwickler-Projekt. Fertige Binaries
+> liegen unter [Releases](../../releases) für Windows x64; wer selbst bauen
+> will, findet die Anleitung in [BUILDING.md](BUILDING.md).
 
 ---
 
@@ -30,9 +30,10 @@ nachrechnet. Dazu kommen Shader-Knoten für **Shadertoy**-GLSL und das
 | ![Rock The House](asset/img/screenshots/milkdrop/rock-the-house.png) | ![The Beauty and the Math](asset/img/screenshots/milkdrop/beauty-and-the-math.png) |
 | ![Twisted](asset/img/screenshots/milkdrop/twisted.png) | ![Playaround](asset/img/screenshots/milkdrop/playaround.png) |
 
-Alle acht sind Standbilder aus laufenden Presets — sie bewegen sich zur Musik.
-Die gezeigten Presets liegen im Repository und werden beim Bauen neben die
-Anwendung gelegt; du kannst sie also sofort selbst starten.
+Alle acht sind Standbilder aus laufenden Presets — sie bewegen sich zur Musik,
+und zwar buchstäblich: die Bilder entstanden zu einem echten Musikstück, nicht
+zu einem Testton. Die gezeigten Presets liegen im Repository und werden beim
+Bauen neben die Anwendung gelegt; du kannst sie also sofort selbst starten.
 
 ---
 

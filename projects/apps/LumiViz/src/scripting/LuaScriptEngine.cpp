@@ -224,6 +224,74 @@ int LuaScriptEngine::lMbWrite(lua_State* L)
     return 1;
 }
 
+/// ns-eel2 `memset(ziel, wert, laenge)` (`nseel-ram.c:222`).
+///
+/// Vorne beschneiden statt abweisen: ein negativer Zielindex verkuerzt die
+/// Laenge und beginnt bei 0 — genau wie das Original. Rueckgabe ist der
+/// urspruengliche Zielindex, nicht die Anzahl geschriebener Zellen.
+int LuaScriptEngine::lMemset(lua_State* L)
+{
+    auto* self = static_cast<LuaScriptEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
+    const double zielRoh = luaL_checknumber(L, 1);
+    const double wert = luaL_checknumber(L, 2);
+    auto ziel = static_cast<std::int64_t>(std::floor(zielRoh + 0.0001));
+    auto laenge = static_cast<std::int64_t>(std::floor(luaL_checknumber(L, 3) + 0.0001));
+    if (ziel < 0)
+    {
+        laenge += ziel;
+        ziel = 0;
+    }
+    if (ziel + laenge > kBufCapacity) laenge = kBufCapacity - ziel;
+    for (std::int64_t k = 0; k < laenge && ziel < kBufCapacity; ++k, ++ziel)
+    {
+        self->m_megabuf[ziel] = wert;
+    }
+    lua_pushnumber(L, zielRoh);
+    return 1;
+}
+
+/// ns-eel2 `memcpy(ziel, quelle, laenge)` (`nseel-ram.c:175`).
+///
+/// Ueber eine Zwischenkopie: Ziel- und Quellbereich duerfen sich ueberlappen,
+/// und ohne Puffer wuerde eine vorwaerts laufende Schleife bei ziel > quelle
+/// den noch zu lesenden Bereich ueberschreiben.
+int LuaScriptEngine::lMemcpy(lua_State* L)
+{
+    auto* self = static_cast<LuaScriptEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
+    const double zielRoh = luaL_checknumber(L, 1);
+    auto ziel = static_cast<std::int64_t>(std::floor(zielRoh + 0.0001));
+    auto quelle = static_cast<std::int64_t>(std::floor(luaL_checknumber(L, 2) + 0.0001));
+    auto laenge = static_cast<std::int64_t>(std::floor(luaL_checknumber(L, 3) + 0.0001));
+    if (quelle < 0)
+    {
+        laenge += quelle;
+        ziel -= quelle;
+        quelle = 0;
+    }
+    if (ziel < 0)
+    {
+        laenge += ziel;
+        quelle -= ziel;
+        ziel = 0;
+    }
+    laenge = std::min({laenge, kBufCapacity - ziel, kBufCapacity - quelle});
+    if (laenge > 0)
+    {
+        std::vector<double> zwischen(static_cast<std::size_t>(laenge), 0.0);
+        for (std::int64_t k = 0; k < laenge; ++k)
+        {
+            const auto it = self->m_megabuf.find(quelle + k);
+            if (it != self->m_megabuf.end()) zwischen[static_cast<std::size_t>(k)] = it->second;
+        }
+        for (std::int64_t k = 0; k < laenge; ++k)
+        {
+            self->m_megabuf[ziel + k] = zwischen[static_cast<std::size_t>(k)];
+        }
+    }
+    lua_pushnumber(L, zielRoh);
+    return 1;
+}
+
 int LuaScriptEngine::lGmbRead(lua_State* L)
 {
     auto* self = static_cast<LuaScriptEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
@@ -466,6 +534,8 @@ void LuaScriptEngine::buildSandbox()
         {"mbwrite", &LuaScriptEngine::lMbWrite},
         {"gmbread", &LuaScriptEngine::lGmbRead},
         {"gmbwrite", &LuaScriptEngine::lGmbWrite},
+        {"memset", &LuaScriptEngine::lMemset},   // S74
+        {"memcpy", &LuaScriptEngine::lMemcpy},   // S74
     };
     for (const auto& [name, fn] : boundFns)
     {

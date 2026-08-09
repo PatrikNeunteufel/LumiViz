@@ -128,6 +128,24 @@ target_compile_definitions(AvsRef PRIVATE
 # Alt-Code: Warnungen stummschalten, damit echte Fehler sichtbar bleiben
 target_compile_options(AvsRef PRIVATE /W1 /wd4996)
 
+# ns-eel-JIT: KEINE Funktions-COMDATs in nseel-cfunc.c (S74).
+#
+# Der JIT kopiert Maschinencode zwischen `nseel_asm_<fn>` und
+# `nseel_asm_<fn>_end` und bestimmt die Laenge als Adressdifferenz zweier
+# nackter Funktionen — der Vertrag setzt also QUELLREIHENFOLGE im Speicher
+# voraus. Mit /Gy (Release-Vorgabe) bekommt jede Funktion ihre eigene COMDAT,
+# und der Linker darf umsortieren. Genau das ist passiert: die leeren
+# `_end`-Marken von `atan` und `log` landeten HINTER der jeweils folgenden
+# Funktion, wodurch deren Fragmente 128 statt 48 bzw. 80 statt 32 Bytes lang
+# wurden und den Nachbarcode samt 0xCC-Fuellbytes mitkopierten. Ergebnis:
+# STATUS_BREAKPOINT im JIT-Lauf, im Preset von der SEH abgefangen — der Effekt
+# rendert schwarz, ohne jede Meldung.
+#
+# /Gy- legt die Funktionen in EINEN Abschnitt in Quellreihenfolge. Nachweis:
+# `AVSREF_EELTEST=1` gibt die Fragmentgroessen aus und prueft 19 Funktionen
+# gegen die C-Bibliothek.
+set_source_files_properties(patched/nseel-cfunc.c PROPERTIES COMPILE_OPTIONS "/Gy-")
+
 target_link_libraries(AvsRef PRIVATE
     user32 gdi32 comctl32 comdlg32 shell32 ole32 vfw32 winmm
 )

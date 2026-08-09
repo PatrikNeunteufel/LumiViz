@@ -13,6 +13,8 @@
 
 #include "scripting/ScriptBaseKeys.hpp"
 
+#include "EelTranspiler.hpp"   // Grammatik-Pruefung beim Import (S74)
+
 #include <algorithm>
 #include <cctype>
 #include <cstring>
@@ -181,6 +183,38 @@ void reportKeyCollisions(const EffectNode& n, const std::string& path, Context& 
                              "' -> '" + collisionTarget(n, key.name) +
                              "' (in AVS kein Builtin, Kollision mit dem Lumi-Set;"
                              " Entscheid D2)");
+    }
+}
+
+/**
+ * @brief Zuweisungen melden, die AVS als Teilausdruck ablehnt (S74)
+ *
+ * In AVS-EEL ist eine Zuweisung nur als eigenstaendige Anweisung erlaubt —
+ * nie als Funktionsargument, in Klammern oder im Rumpf von `loop`. Gegen
+ * `AvsRef` gemessen: ein solches Skript wird dort GAR NICHT uebersetzt, und
+ * der Effekt bleibt unsichtbar. Wir uebersetzen es und zeichnen; das Bild
+ * weicht damit vom Original ab, ohne dass es jemandem auffaellt.
+ *
+ * Der Import-Bericht ist der richtige Ort dafuer: er entsteht beim Laden und
+ * wird dem Anwender gezeigt. Der Transpiler selbst meldet es zwar auch, aber
+ * seine Warnungen laufen erst beim ersten Rendern an und werden von
+ * `ScriptSlotHost` nicht weitergereicht.
+ *
+ * Fuer MilkDrop gilt die Regel NICHT (ns-eel2 kennt `_set` als Operator) —
+ * diese Pruefung sitzt deshalb im AVS-Uebersetzer.
+ */
+void reportEelGrammatik(const EffectNode& n, const std::string& path, Context& ctx)
+{
+    for (const char* slot : {"init", "frame", "beat", "point", "level"})
+    {
+        const std::string_view src = n.slot(slot);
+        if (src.empty()) continue;
+        const auto result = lumi::eel::transpile(src, lumi::eel::Dialect::Avs);
+        for (const std::string& w : result.warnings)
+        {
+            if (w.find("Zuweisung innerhalb eines Ausdrucks") == std::string::npos) continue;
+            ctx.report.push_back(path + " (" + slot + "): " + w);
+        }
     }
 }
 
@@ -1230,6 +1264,7 @@ ChainNode translateNode(const EffectNode& src, const std::string& path, Context&
     }
 
     reportKeyCollisions(src, path, ctx);
+    reportEelGrammatik(src, path, ctx);
 
     // Set Render Mode: a live state-setter node (like Custom BPM). It carries the
     // line width (bits 16-23), line blend (bits 0-7), Adjustable alpha (bits 8-15)
