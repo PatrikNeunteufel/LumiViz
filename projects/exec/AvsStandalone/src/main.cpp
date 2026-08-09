@@ -8,13 +8,16 @@
  *         kein Panel, kein Render-Thread)
  *
  * @author Patrik Neunteufel
- * @date   Juli 2026
- * @version 1.0.0
+ * @date   Juli 2026 (1.1.0: August 2026 — --audio-datei, echte Musik statt
+ *         Sinus, S74)
+ * @version 1.1.0
  *
  * @details
  * Aufruf:
  *   AvsStandalone [presetDateiOderOrdner] [--auto] [--frames N]
  *                 [--out DIR] [--size WxH] [--render-scale N]
+ *   AvsStandalone preset.avs --audio-datei X.mp3 [--audio-start SEK]
+ *                 [--audio-gain F] [--audio-stumm]
  *
  * - `--render-scale N` (S73): Divisor des Import-Render-Scale-Knotens, das
  *   Gegenstueck zur App-Einstellung `import/avsRenderScaleDivisor`. **Bis S73
@@ -31,9 +34,16 @@
  *   Pixel-Statistik, Import-Report auf Konsole (Zeilen OHNE ℹ-Praefix sind
  *   Warnungen) — Exit-Code 0 nur, wenn alle Presets geladen haben.
  *
+ * - `--audio-datei` (S74): echte Musik statt des synthetischen Signals —
+ *   bild-indiziert abgetastet, also weiterhin deterministisch. Interaktiv
+ *   laeuft die Datei zusaetzlich HOERBAR mit (im --auto-Lauf nicht).
+ *   **Nur fuer Schaufenster und Augenschein:** AvsRef erzeugt sein Audio
+ *   selbst, gegen echte Musik vergleicht man zwei verschiedene Eingaben.
+ *
  * Der Host laeuft hier im GUI-Thread (paintGL) — dieselben Methoden, die in
  * der App der Render-Thread aufruft. Audio kommt synthetisch (Sinus +
- * Beat-Puls), damit Scopes/Beat-Effekte leben.
+ * Beat-Puls), damit Scopes/Beat-Effekte leben — oder aus einer Datei
+ * (`--audio-datei`).
  ****************************************************************************************
  */
 
@@ -41,6 +51,12 @@
 #include "visualizers/multieffect/ChainSerializer.hpp"
 #include "services/LiveVideoFeed.hpp"  // Kamera-Freigabe + Teardown-Messung (S71)
 
+#include "AudioDateiQuelle.hpp"
+#include "SynthAudio.hpp"
+
+#include <QAudioDevice>
+#include <QAudioFormat>
+#include <QAudioSink>
 #include <QCommandLineParser>
 #include <QElapsedTimer>
 #include <QJsonDocument>
@@ -49,6 +65,7 @@
 #include <QGuiApplication>
 #include <QImage>
 #include <QKeyEvent>
+#include <QMediaDevices>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QOpenGLWindow>
@@ -58,6 +75,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
@@ -181,6 +199,21 @@ public:
     /// --no-ape: aus APEs uebersetzte Knoten abschalten (AvsRef kennt sie nicht)
     void setNoApe(bool on) { m_noApe = on; }
 
+    /// Echte Musik statt des synthetischen Signals (S74). Der Zeiger gehoert
+    /// dem Aufrufer und muss das Fenster ueberleben. NICHT fuer
+    /// Referenzvergleiche — AvsRef erzeugt sein Audio selbst.
+    void setAudioQuelle(const lumi::werkzeug::AudioDateiQuelle* quelle)
+    {
+        m_audioQuelle = quelle;
+    }
+    /// Die Datei zusaetzlich hoerbar ausgeben (nur interaktiv sinnvoll)
+    void setAudioHoerbar(bool an) { m_audioHoerbar = an; }
+
+    /// Muster des synthetischen Signals (S74): klassisch = Sinus+Beat-Puls wie
+    /// bisher, musik = aus einer Aufnahme abgeleitete Huellkurven. Beides ist
+    /// deterministisch und auf der Referenz-Seite identisch erzeugbar.
+    void setMuster(lumi::synth::Muster m) { m_muster = m; }
+
 protected:
     void initializeGL() override
     {
@@ -193,6 +226,16 @@ protected:
         m_viz->initialize();
         m_viz->resize(size());
         m_viz->setBeatPeriodOverride(m_beatPeriod);
+        // Im Musik-Muster liefert die Beat-SPUR der Vorlage den Beat — die
+        // Referenz-Seite rechnet mit demselben Feld (S74). Ein ausdrueckliches
+        // --beat-period schlaegt sie aber: nur mit konstantem Beat laesst sich
+        // messen, ob ein Befund am Renderpfad haengt oder am Pruefsignal.
+        if (m_muster == lumi::synth::Muster::Musik && m_beatPeriod <= 0)
+        {
+            const lumi::synth::MusikProfil& p = lumi::synth::eingebautesProfil();
+            if (p.bilder > 0) m_viz->setBeatTrackOverride(p.beats, p.bilder);
+        }
+        starteKlangausgabe();
         loadPreset(0);
     }
 
@@ -204,7 +247,7 @@ protected:
     void paintGL() override
     {
         if (m_viz == nullptr) return;
-        feedSyntheticAudio();
+        feedAudio();
         m_viz->render(1.0f / 60.0f);
         if (m_auto && m_saveEvery > 0 && m_frameInPreset % m_saveEvery == 0)
         {
@@ -212,6 +255,7 @@ protected:
                                                QLatin1Char('0')));
         }
         ++m_frameInPreset;
+        ++m_audioBild;
         m_time += 1.0 / 60.0;
         if (!m_editNach.isEmpty() && !m_editGetan
             && m_frameInPreset >= m_autoFrames / 2)
@@ -228,6 +272,9 @@ protected:
 
     bool event(QEvent* ev) override
     {
+        // Klangausgabe VOR dem GL-Abbau stillegen (Lebenszyklus-Vertrag:
+        // erst die Zulieferer stoppen, dann die Verbraucher abbauen)
+        if (ev->type() == QEvent::Close) beendeKlangausgabe();
         // GL-Aufraeumen SOLANGE das Plattform-Fenster noch lebt (s. Milkdrop-
         // Standalone: danach greifen die GL-Wrapper-Dtoren ins Leere)
         if (ev->type() == QEvent::Close && m_viz != nullptr)
@@ -366,45 +413,79 @@ private:
         std::printf("[Standalone] Edit angewandt nach Frame %d\n", m_frameInPreset);
     }
 
+    /// Klangausgabe der Audiodatei starten (nur wenn ausdruecklich gewuenscht
+    /// und ein Ausgabegeraet passt). Scheitert das, laeuft der Lauf stumm
+    /// weiter — das Bild haengt nicht an der Tonausgabe.
+    void starteKlangausgabe()
+    {
+        if (!m_audioHoerbar || m_audioQuelle == nullptr || !m_audioQuelle->bereit()) return;
+        QAudioFormat fmt;
+        fmt.setSampleRate(lumi::werkzeug::AudioDateiQuelle::kAbtastrate);
+        fmt.setChannelCount(lumi::werkzeug::AudioDateiQuelle::kKanaele);
+        fmt.setSampleFormat(QAudioFormat::Float);
+        const QAudioDevice geraet = QMediaDevices::defaultAudioOutput();
+        if (geraet.isNull() || !geraet.isFormatSupported(fmt))
+        {
+            std::printf("[Audio] kein passendes Ausgabegeraet — Lauf bleibt stumm\n");
+            std::fflush(stdout);
+            return;
+        }
+        m_geber = std::make_unique<lumi::werkzeug::PcmGeber>(*m_audioQuelle);
+        m_geber->open(QIODevice::ReadOnly);
+        m_senke = std::make_unique<QAudioSink>(geraet, fmt);
+        m_senke->start(m_geber.get());
+        // Ausspuelen: der interaktive Lauf endet oft per Abbruch, und dann
+        // bliebe die Zeile im Puffer stehen — genau die will man aber sehen
+        std::printf("[Audio] Klangausgabe laeuft (%s)\n", qPrintable(geraet.description()));
+        std::fflush(stdout);
+    }
+
+    void beendeKlangausgabe()
+    {
+        if (m_senke != nullptr) m_senke->stop();
+        m_senke.reset();
+        if (m_geber != nullptr) m_geber->close();
+        m_geber.reset();
+    }
+
+    /// Audio-Weiche: echte Datei, wenn eine geladen ist — sonst das
+    /// synthetische Signal.
+    void feedAudio()
+    {
+        if (m_audioQuelle != nullptr && m_audioQuelle->bereit())
+        {
+            static std::vector<float> wave(
+                lumi::werkzeug::AudioDateiQuelle::kWaveFrames * 2);
+            static std::vector<float> spec(lumi::werkzeug::AudioDateiQuelle::kBins * 2);
+            m_audioQuelle->frameFuellen(m_audioBild, wave.data(), spec.data());
+            m_viz->updateAudioStereo(spec.data(), lumi::werkzeug::AudioDateiQuelle::kBins,
+                                     wave.data(),
+                                     lumi::werkzeug::AudioDateiQuelle::kWaveFrames, 2);
+            return;
+        }
+        feedSyntheticAudio();
+    }
+
+    /// Synthetisches Signal aus dem GEMEINSAMEN Erzeuger (S74). Die Formel
+    /// stand bis dahin viermal im Baum — hier, im MilkdropStandalone und in
+    /// beiden Referenz-Werkzeugen, jedes Mal als Kopie. Jetzt bindet jeder
+    /// dieselbe `SynthAudio.hpp` ein; Auseinanderlaufen ist baulich
+    /// ausgeschlossen. Vorgaben ergeben Bit fuer Bit das alte Signal.
     void feedSyntheticAudio()
     {
-        constexpr int kFrames = 576;
-        constexpr int kBins = 512;
-        // Beat-Puls ~120 BPM fuer Beat-Effekte + lebendige Scopes
-        const double beat = 0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * 2.0));
-        static std::vector<float> wave;
-        static std::vector<float> spec;
-        wave.assign(kFrames * 2, 0.0f);
-        spec.assign(kBins * 2, 0.0f);
-        for (int i = 0; i < kFrames; ++i)
-        {
-            const double ph = m_time * 220.0 * 2.0 * kPi + i * (2.0 * kPi / 64.0);
-            const float l = static_cast<float>(beat * 0.5 * std::sin(ph));
-            const float r = static_cast<float>(beat * 0.5 * std::sin(ph + 0.7));
-            wave[static_cast<std::size_t>(i) * 2 + 0] = l;
-            wave[static_cast<std::size_t>(i) * 2 + 1] = r;
-        }
-        for (int b = 0; b < kBins; ++b)
-        {
-            const float v = static_cast<float>(beat * 0.8 / (1.0 + b * 0.03));
-            spec[static_cast<std::size_t>(b) * 2 + 0] = v;
-            // Vorgabe: BEIDE Kanaele gleich. Das ist Absicht — an diesem Signal
-            // haengen Matrix, Modul-Sonden und alle Feld-Sonden; wer es aendert,
-            // muss alles neu einmessen.
-            //
-            // `--stereo-spektrum` (S55) macht daraus ein Signal, das sich
-            // links/rechts unterscheidet: rechts faellt steiler ab und wird zu
-            // hohen Baendern hin leiser. Nur damit koennen Kanalfelder
-            // (`timescope.channel`/`useChannel`) ueberhaupt etwas zeigen —
-            // vorher waren links, rechts und Mitte zwangslaeufig identisch und
-            // die Sonden mussten „nicht pruefbar" heissen. Weiterhin
-            // DETERMINISTISCH: nur eine andere Formel, kein echtes Material.
-            spec[static_cast<std::size_t>(b) * 2 + 1] =
-                m_stereoSpektrum
-                    ? static_cast<float>(beat * 0.8 / (1.0 + b * 0.12))
-                    : v;
-        }
-        m_viz->updateAudioStereo(spec.data(), kBins, wave.data(), kFrames, 2);
+        lumi::synth::Optionen opt;
+        opt.muster = m_muster;
+        opt.geschmack = lumi::synth::Geschmack::Avs;
+        // Vorgabe: BEIDE Spektrumkanaele gleich. Das ist Absicht — an diesem
+        // Signal haengen Matrix, Modul-Sonden und alle Feld-Sonden; wer es
+        // aendert, muss alles neu einmessen. `--stereo-spektrum` (S55) macht
+        // links/rechts unterscheidbar, damit Kanalfelder ueberhaupt etwas
+        // zeigen koennen.
+        opt.stereoSpektrum = m_stereoSpektrum;
+        static lumi::synth::Frame klang;
+        lumi::synth::erzeuge(m_audioBild, opt, klang);
+        m_viz->updateAudioStereo(klang.spec, lumi::synth::kBins, klang.wave,
+                                 lumi::synth::kWaveFrames, 2);
     }
 
     FrameStats saveShot(const QString& tag)
@@ -489,6 +570,16 @@ private:
     /// --render-scale: Divisor des Import-Render-Scale-Knotens (1 = neutral).
     /// Gegenstueck zur App-Einstellung `import/avsRenderScaleDivisor`.
     int m_renderScale = 1;
+    /// Echte Musik als Audioquelle (S74) — Eigentum des Aufrufers
+    const lumi::werkzeug::AudioDateiQuelle* m_audioQuelle = nullptr;
+    /// Bild-Zaehler der Audio-Zufuhr; ueber Preset-Wechsel hinweg fortlaufend
+    /// (m_frameInPreset startet je Preset neu und taugt dafuer nicht)
+    std::int64_t m_audioBild = 0;
+    bool m_audioHoerbar = false;
+    std::unique_ptr<lumi::werkzeug::PcmGeber> m_geber;
+    std::unique_ptr<QAudioSink> m_senke;
+    /// Muster des synthetischen Signals (S74); Vorgabe = das alte Verhalten
+    lumi::synth::Muster m_muster = lumi::synth::Muster::Klassisch;
 };
 
 } // namespace
@@ -570,7 +661,92 @@ int main(int argc, char* argv[])
         QStringLiteral("feed-teardown-messen"),
         QStringLiteral("Dauer von LiveVideoFeed::herunterfahren() ausgeben"));
     parser.addOption(optFeedZeit);
+    // --- Echte Musik als Audioquelle (S74, Aufgabe 6) -----------------------------------
+    const QCommandLineOption optAudioDatei(
+        QStringLiteral("audio-datei"),
+        QStringLiteral("Audiodatei (MP3/WAV/FLAC/...) statt des synthetischen "
+                       "Signals. NUR fuer Schaufenster und Augenschein — "
+                       "AvsRef erzeugt sein Audio selbst, jeder "
+                       "Referenzvergleich mit echter Musik ist wertlos"),
+        QStringLiteral("PFAD"));
+    const QCommandLineOption optAudioStart(
+        QStringLiteral("audio-start"),
+        QStringLiteral("Startversatz in der Audiodatei in Sekunden"),
+        QStringLiteral("SEK"), QStringLiteral("0"));
+    const QCommandLineOption optAudioGain(
+        QStringLiteral("audio-gain"),
+        QStringLiteral("Faktor auf Wellenform und Spektrum der Audiodatei "
+                       "(Vorgabe 1). Echte Musik ist deutlich leiser als das "
+                       "synthetische Signal"),
+        QStringLiteral("F"), QStringLiteral("1"));
+    const QCommandLineOption optAudioStumm(
+        QStringLiteral("audio-stumm"),
+        QStringLiteral("die Audiodatei NICHT hoerbar ausgeben (im --auto-Lauf "
+                       "ohnehin die Vorgabe)"));
+    // --- Muster des synthetischen Signals (S74, Auftrag Patrik) --------------------------
+    const QCommandLineOption optMuster(
+        QStringLiteral("audio-muster"),
+        QStringLiteral("Muster des SYNTHETISCHEN Signals: klassisch|musik. "
+                       "klassisch = 220-Hz-Sinus + Beat-Puls (Vorgabe, "
+                       "bit-identisch seit S43) · musik = aus einer Aufnahme "
+                       "abgeleitete Bandhuellkurven samt Beat-Spur, neu "
+                       "synthetisiert. BEIDE sind deterministisch und von "
+                       "AvsRef identisch erzeugbar — anders als --audio-datei"),
+        QStringLiteral("NAME"), QStringLiteral("klassisch"));
+    const QCommandLineOption optProfilSchreiben(
+        QStringLiteral("audio-profil-schreiben"),
+        QStringLiteral("aus --audio-datei ein Musik-Profil rechnen und als "
+                       "C++-Kopf schreiben (Ziel: "
+                       "projects/exec/common/MusikProfil.hpp), dann beenden"),
+        QStringLiteral("DATEI"));
+    const QCommandLineOption optProfilDauer(
+        QStringLiteral("audio-profil-dauer"),
+        QStringLiteral("Laenge des Ausschnitts fuer --audio-profil-schreiben "
+                       "in Sekunden (wird auf ganze Schlaege gerundet)"),
+        QStringLiteral("SEK"), QStringLiteral("20"));
+    parser.addOption(optAudioDatei);
+    parser.addOption(optAudioStart);
+    parser.addOption(optAudioGain);
+    parser.addOption(optAudioStumm);
+    parser.addOption(optMuster);
+    parser.addOption(optProfilSchreiben);
+    parser.addOption(optProfilDauer);
     parser.process(app);
+
+    // --- Profil schreiben: eigener Betrieb, kein Fenster ---------------------------------
+    if (parser.isSet(optProfilSchreiben))
+    {
+        if (!parser.isSet(optAudioDatei))
+        {
+            std::fprintf(stderr,
+                         "FEHLER: --audio-profil-schreiben braucht --audio-datei\n");
+            return 2;
+        }
+        lumi::werkzeug::AudioDateiQuelle quelle;
+        QString fehler;
+        if (!quelle.laden(parser.value(optAudioDatei), &fehler))
+        {
+            std::fprintf(stderr, "FEHLER: Audiodatei nicht nutzbar — %s\n",
+                         qPrintable(fehler));
+            return 2;
+        }
+        quelle.setStartSekunden(parser.value(optAudioStart).toDouble());
+        if (!quelle.profilSchreiben(parser.value(optProfilSchreiben),
+                                    parser.value(optProfilDauer).toDouble(), &fehler))
+        {
+            std::fprintf(stderr, "FEHLER: Profil nicht geschrieben — %s\n",
+                         qPrintable(fehler));
+            return 2;
+        }
+        return 0;
+    }
+
+    lumi::synth::Muster muster = lumi::synth::Muster::Klassisch;
+    if (!lumi::synth::musterAusText(qPrintable(parser.value(optMuster)), muster))
+    {
+        std::fprintf(stderr, "FEHLER: --audio-muster erwartet klassisch|musik\n");
+        return 2;
+    }
 
     if (parser.isSet(optKamera))
     {
@@ -631,6 +807,53 @@ int main(int argc, char* argv[])
     window.setSaveEvery(parser.value(optSaveEvery).toInt());
     window.setBeatPeriod(parser.value(optBeatPeriod).toInt());
     window.setRenderScale(parser.value(optRenderScale).toInt());
+    window.setMuster(muster);
+    if (muster == lumi::synth::Muster::Musik)
+    {
+        const lumi::synth::MusikProfil& p = lumi::synth::eingebautesProfil();
+        std::printf("[Audio] Muster musik: %s, %d Bilder Schleife (%.2f s)\n", p.herkunft,
+                    p.bilder, p.bilder / lumi::synth::kBildrate);
+        if (p.bilder <= 0)
+        {
+            std::fprintf(stderr, "FEHLER: kein Musik-Profil eingebaut — erst mit "
+                                 "--audio-profil-schreiben erzeugen\n");
+            return 2;
+        }
+    }
+
+    // --- Audiodatei laden, BEVOR das GL-Fenster steht (Dekodieren dauert) ---------------
+    lumi::werkzeug::AudioDateiQuelle audioQuelle;
+    if (parser.isSet(optAudioDatei))
+    {
+        QString fehler;
+        audioQuelle.setVerstaerkung(parser.value(optAudioGain).toDouble());
+        if (!audioQuelle.laden(parser.value(optAudioDatei), &fehler))
+        {
+            std::fprintf(stderr, "FEHLER: Audiodatei nicht nutzbar — %s\n",
+                         qPrintable(fehler));
+            return 2;
+        }
+        audioQuelle.setStartSekunden(parser.value(optAudioStart).toDouble());
+        std::printf("[Audio] '%s' geladen: %.1f s, Start bei %.1f s, Gain %.2f\n",
+                    qPrintable(audioQuelle.quelle()), audioQuelle.dauerSekunden(),
+                    parser.value(optAudioStart).toDouble(),
+                    parser.value(optAudioGain).toDouble());
+        // Unuebersehbar: mit echter Musik ist JEDER Referenzvergleich hinfaellig
+        std::printf("[Audio] ACHTUNG: echte Musik — NICHT fuer Referenzvergleiche "
+                    "gegen AvsRef (dessen Audio ist synthetisch)\n");
+        window.setAudioQuelle(&audioQuelle);
+        // Hoerbar nur im interaktiven Lauf: Stapellaeufe sollen deterministisch
+        // und still durchlaufen
+        const bool hoerbar = !parser.isSet(optAuto) && !parser.isSet(optAudioStumm);
+        window.setAudioHoerbar(hoerbar);
+        std::printf("[Audio] hoerbare Ausgabe: %s\n",
+                    hoerbar ? "ja"
+                            : (parser.isSet(optAuto) ? "nein (Stapellauf)"
+                                                     : "nein (--audio-stumm)"));
+        // Ausspuelen: der interaktive Lauf endet meist per Abbruch, und dann
+        // bliebe der ganze Audio-Block im Puffer stehen
+        std::fflush(stdout);
+    }
     window.resize(w, h);
     window.show();
 

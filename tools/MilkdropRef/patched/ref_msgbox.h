@@ -14,18 +14,32 @@
  */
 #pragma once
 #include <windows.h>
-#include <cstdio>
+// C-Header, NICHT <cstdio> (S74): dieser Kopf wird per /FI in ALLE
+// Uebersetzungseinheiten gezwungen — auch in die neun .c-Dateien des
+// ns-eel2-Kerns. Ein C++-Header bricht dort mit
+// „STL1003: Unexpected compiler, expected C++ compiler". Seit S67 latent:
+// solange nur die eigene .cpp neu uebersetzt wurde, fiel es nicht auf; beim
+// ersten Vollaufbau danach steht das Projekt.
+#include <stdio.h>
+#include <wchar.h>
 
-static inline int lumiRefMsgBoxW(HWND, const wchar_t* text, const wchar_t* title,
-                                 UINT)
+// Parameter BENANNT (S74): namenlose Parameter sind C++-Syntax, und dieser
+// Kopf wird auch in C-Uebersetzungseinheiten gezwungen (C2055).
+static inline int lumiRefMsgBoxW(HWND hwnd, const wchar_t* text,
+                                 const wchar_t* title, UINT art)
 {
+    (void)hwnd;
+    (void)art;
     fwprintf(stderr, L"[MilkdropRef] %ls: %ls\n", title ? title : L"",
              text ? text : L"");
     fflush(stderr);
     return IDOK;
 }
-static inline int lumiRefMsgBoxA(HWND, const char* text, const char* title, UINT)
+static inline int lumiRefMsgBoxA(HWND hwnd, const char* text, const char* title,
+                                 UINT art)
 {
+    (void)hwnd;
+    (void)art;
     fprintf(stderr, "[MilkdropRef] %s: %s\n", title ? title : "",
             text ? text : "");
     fflush(stderr);

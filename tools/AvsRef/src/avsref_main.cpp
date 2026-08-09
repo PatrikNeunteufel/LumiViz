@@ -51,6 +51,12 @@
 #include <string>
 #include <vector>
 
+// Der synthetische Klang kommt seit S74 aus der GEMEINSAMEN Quelle, die auch
+// die beiden Standalones einbinden — vorher stand die Formel hier als Kopie
+// mit dem Kommentar „formelgleich zu …". Der Header ist bewusst Qt-frei und
+// C++14-tauglich, damit dieses 32-bit-Alt-Projekt ihn uebersetzen kann.
+#include "SynthAudio.hpp"
+
 namespace
 {
 // std::clamp braeuchte C++17 — der Alt-Code bleibt auf dem MSVC-Default
@@ -69,37 +75,10 @@ C_RLibrary* g_render_library = NULL;
 namespace
 {
 
-constexpr double kPi = 3.14159265358979323846;
-
-// --- Synthetisches Audio: EXAKT AvsStandalone::feedSyntheticAudio ------------------------
-struct SyntheticFrame
-{
-    float wave[576 * 2];  // interleaved L/R
-    float spec[512 * 2];  // interleaved L/R
-};
-
-void makeSyntheticAudio(double time, SyntheticFrame& out, bool silence)
-{
-    if (silence)
-    {
-        memset(out.wave, 0, sizeof(out.wave));
-        memset(out.spec, 0, sizeof(out.spec));
-        return;
-    }
-    const double beat = 0.55 + 0.45 * std::max(0.0, sin(time * 2.0 * kPi * 2.0));
-    for (int i = 0; i < 576; ++i)
-    {
-        const double ph = time * 220.0 * 2.0 * kPi + i * (2.0 * kPi / 64.0);
-        out.wave[i * 2 + 0] = static_cast<float>(beat * 0.5 * sin(ph));
-        out.wave[i * 2 + 1] = static_cast<float>(beat * 0.5 * sin(ph + 0.7));
-    }
-    for (int b = 0; b < 512; ++b)
-    {
-        const float v = static_cast<float>(beat * 0.8 / (1.0 + b * 0.03));
-        out.spec[b * 2 + 0] = v;
-        out.spec[b * 2 + 1] = v;
-    }
-}
+// --- Synthetisches Audio: aus der gemeinsamen SynthAudio.hpp (S74) -----------------------
+// Der Geschmack ist `Avs` — ein Beat-Faktor ueber alle Bins, so wie
+// AvsStandalone es fuettert. Bit fuer Bit dasselbe Signal wie vor S74.
+typedef lumi::synth::Frame SyntheticFrame;
 
 // --- Float->Byte: EXAKT MultiEffectVisualizer::buildVisData ------------------------------
 unsigned char specByte(const float* chan, int i)
@@ -282,6 +261,11 @@ int main(int argc, char** argv)
     int tickHz = 0;       // --tick-hz N: gettime() als Frame-Uhr (0 = Wanduhr)
     bool silence = false; // --silence: Stille statt Kalibrier-Signal
     std::string apeDir;   // --ape-dir: echte APE-Sammlung (leer = keine APEs)
+    // --audio-muster (S74): klassisch = Sinus+Beat-Puls wie bisher, musik =
+    // aus einer Aufnahme abgeleitete Huellkurven samt Beat-Spur. Beides kommt
+    // aus SynthAudio.hpp, die LumiViz genauso einbindet — deshalb bleiben die
+    // Vergleiche in BEIDEN Mustern gueltig.
+    lumi::synth::Muster muster = lumi::synth::Muster::Klassisch;
     for (int i = 1; i < argc; ++i)
     {
         const std::string a = argv[i];
@@ -293,6 +277,14 @@ int main(int argc, char** argv)
         else if (a == "--silence") silence = true;
         else if (a == "--out" && i + 1 < argc) outDir = argv[++i];
         else if (a == "--ape-dir" && i + 1 < argc) apeDir = argv[++i];
+        else if (a == "--audio-muster" && i + 1 < argc)
+        {
+            if (!lumi::synth::musterAusText(argv[++i], muster))
+            {
+                fprintf(stderr, "FEHLER: --audio-muster erwartet klassisch|musik\n");
+                return 2;
+            }
+        }
         else if (a == "--size" && i + 1 < argc)
         {
             if (sscanf(argv[++i], "%dx%d", &width, &height) != 2 || width < 64 || height < 64)
@@ -455,13 +447,25 @@ int main(int argc, char** argv)
                 extern int g_avsref_tick_ms;
                 g_avsref_tick_ms = (int)((long long)frame * 1000 / tickHz);
             }
+            lumi::synth::Optionen synthOpt;
+            synthOpt.muster = muster;
+            synthOpt.geschmack = lumi::synth::Geschmack::Avs;
+            synthOpt.stille = silence;
             SyntheticFrame synth;
-            makeSyntheticAudio(frame / 60.0, synth, silence);
+            lumi::synth::erzeuge(frame, synthOpt, synth);
             buildVisData(synth, visdata);
 
+            // Rangfolge: ausdrueckliches --beat-period schlaegt alles. Nur so
+            // laesst sich der Beat zwischen den Mustern KONSTANT halten — und
+            // genau das braucht die Frage, ob ein Befund am Renderpfad haengt
+            // oder bloss am Pruefsignal (S74).
             int isBeat;
             if (beatPeriod > 0)
                 isBeat = (frame % beatPeriod) == 0 ? 1 : 0;
+            else if (muster == lumi::synth::Muster::Musik)
+                // Beat-SPUR der Vorlage — dieselben Flags, die LumiViz per
+                // setBeatTrackOverride bekommt (S74)
+                isBeat = lumi::synth::istBeat(frame, synthOpt) ? 1 : 0;
             else
                 isBeat = refineBeat(beatState.onset(visdata));
 

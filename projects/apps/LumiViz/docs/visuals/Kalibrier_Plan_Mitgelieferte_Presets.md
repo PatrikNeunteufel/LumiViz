@@ -1,9 +1,9 @@
 # Kalibrier-Plan: die mitgelieferten Presets
 
-> **Version:** 1.0.0
-> **Datum:** 2026-08-09 (Session 73, für Session 74)
+> **Version:** 1.1.0
+> **Datum:** 2026-08-09 (Session 73, für Session 74; 1.1.0: Aufgabe 6 umgesetzt)
 > **Typ:** Umsetzungsplan
-> **Status:** Entwurf — noch nicht begonnen
+> **Status:** In Arbeit — Aufgabe 6 ✅, 1–5 offen
 > **Sprache:** Deutsch
 > **Gültigkeit:** die 10 AVS- und 19 MilkDrop-Presets aus `asset/presets/`
 > **Anlass:** Erster Vergleichslauf gegen AvsRef/MilkdropRef in S73 (Auftrag Patrik)
@@ -217,7 +217,35 @@ Zeitkonstante), nicht gegen das Original.
 
 ---
 
-## Aufgabe 6 — Echte Musik als Audioquelle für die Standalones
+## Aufgabe 6 — Echte Musik als Audioquelle für die Standalones ✅ (S74)
+
+**Umgesetzt in Session 74** — Vorgezogen auf Wunsch Patriks, weil echte Musik
+die Beurteilung „welche Effekte wirken wirklich" überhaupt erst ermöglicht.
+
+Gemeinsames Bauteil `projects/exec/common/AudioDateiQuelle.{hpp,cpp}`, von
+beiden Standalones mitkompiliert. Schalter an beiden:
+`--audio-datei`, `--audio-start`, `--audio-gain`, `--audio-stumm`.
+Bedienung und Fallstricke: [Werkzeug-Wegleitung](../Werkzeug_Wegleitung.md)
+§2.7 und Rezept „Presets an echter Musik ansehen".
+
+**Belegt:**
+
+| Prüfung | Ergebnis |
+|---|---|
+| Determinismus | zwei Läufe, 90 Frames, `--save-every 15`: **7 von 7 Bildern bitgleich** |
+| Musik wirkt | Bild mit Musik ≠ Bild mit Sinus (gleiches Preset, gleiche Frames) |
+| `--audio-start` / `--audio-gain` | ändern das Bild je einzeln nachweisbar |
+| Bandmodell | MilkLoudness liefert bass/mid/treb im erwarteten Bereich (bass 0,68…19,5 beim Einschwingen, danach ~0,8; mid 1,9; treb 0,74) |
+| Hörbare Ausgabe | läuft interaktiv über das Vorgabegerät; `--auto`/`--ab` bleiben still |
+
+**Befund beim Bauen:** der erste Kopierpfad rief `QAudioBuffer::constData<T>()`
+je Sample — eine Vier-Minuten-Datei brauchte damit **68 s** zum Einlesen, und
+der Standalone sah beim Start aus wie aufgehängt (dieselbe Täuschung wie beim
+Debug-Build, Falle 2.1). Basiszeiger und Formatverzweigung aus der Schleife
+gezogen: **3,8 s** für denselben Lauf.
+
+<details>
+<summary>Ursprüngliche Aufgabenstellung (S73)</summary>
 
 **Auftrag Patrik (S73):** die Standalones sollen eine echte Audiodatei
 abspielen können statt des synthetischen Signals. Referenzdatei:
@@ -266,6 +294,12 @@ vergleicht man zwei verschiedene Eingaben, und jede Zahl daraus ist wertlos.
 Das im Skript aus Aufgabe 1 hart absichern: wird eine Audiodatei gesetzt,
 verweigert der Vergleichslauf den Dienst oder markiert den Report unübersehbar.
 
+</details>
+
+**Absicherung (umgesetzt):** `compare_avsref.py` (`run_lumi`) wirft, sobald
+`--audio-datei` durchgereicht wird. Das Werkzeug aus Aufgabe 1 muss dieselbe
+Sperre bekommen.
+
 ---
 
 ## Reihenfolge und Aufwand
@@ -276,7 +310,7 @@ verweigert der Vergleichslauf den Dienst oder markiert den Report unübersehbar.
 | 2 | Wellenform-Modus 7 | klein | 1 (für die Gegenprobe) |
 | 4 | AVS-Bisektion, 5 Presets | mittel | — |
 | 5 | Puffer beim Preset-Wechsel | klein–mittel | — (nutzt `--ab`, existiert) |
-| 6 | Echte Musik als Audioquelle | mittel | — (unabhängig) |
+| ~~6~~ | ~~Echte Musik als Audioquelle~~ | ✅ S74 | — |
 | 3 | Farb-Befund | offen | 1, 2 |
 
 **Empfehlung:** mit **Aufgabe 1** anfangen. Ohne belastbare Zahlen wird jeder

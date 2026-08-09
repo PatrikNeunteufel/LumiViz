@@ -4,10 +4,22 @@
 Aufruf:
   python bisect_avs.py <preset.avs> <zielordner>            # Top-Level + 1. Liste
   python bisect_avs.py <preset.avs> <zielordner> 1,2        # Liste am Index-Pfad
+  python bisect_avs.py <preset.avs> <zielordner> --solo     # JEDER Knoten EINZELN
+  python bisect_avs.py <preset.avs> <ziel> --solo --raster raster.avs
 
 Erzeugt stage_t<k>.avs (Top-Level-Praefixe), stage_l<k>.avs (erste Liste mit
 nur den ersten k Kindern) bzw. stage_p<k>.avs (Pfad-Modus). Die Stufen danach
-durch compare_avsref.py jagen -> erste divergente Stufe = Taeter. ACHTUNG:
+durch compare_avsref.py jagen -> erste divergente Stufe = Taeter.
+
+SOLO-MODUS (--solo, Vorgabe Patrik S74: "pruefe alle separat, bevor du
+Kombinationen testest"): erzeugt solo_t<k>.avs / solo_l<k>.avs mit GENAU EINEM
+Knoten. Die kumulativen Stufen beantworten "ab wo laeuft es auseinander" —
+aber sie beantworten es falsch, sobald ein frueher Knoten fuer sich schon
+abweicht und die Metrik das verschluckt. Genau das ist bei `10_the ring`
+passiert: Stufe t01 (SuperScope allein) meldete MAE 0,001, obwohl die Referenz
+dort SCHWARZ ist und wir eine Linie zeichnen — eine 1-Pixel-Linie bewegt den
+Mittelwert nicht. Der Sprung erschien erst bei t02 und zeigte auf das falsche
+Modul. Einzelmessung zuerst, dann Kombinationen. ACHTUNG:
 Stufen, die einen Buffer-Kreislauf abschneiden (BufferSave am Listenende),
 sind nicht isoliert bewertbar. Format: Entries [id:int32][len:int32][blob];
 Listen (id=-2) tragen Mode-Byte (0x80 -> +int32 mode, dann Extended-Bytes
@@ -96,16 +108,71 @@ def bisect_path(data, root_mode, top, path, out):
         (out / f"stage_p{k:02d}.avs").write_bytes(SIG + root_mode + body)
 
 
+def solo_stages(data, root_mode, top, out, raster=b""):
+    """Je Knoten EIN Preset, das nur diesen Knoten enthaelt.
+
+    Top-Level-Knoten wandern unveraendert ins Wurzel-Preset. Kinder der ersten
+    Liste bleiben in IHRER Liste (mit deren Praefix) — sonst misst man den
+    Wechsel des Blend-Kontexts mit statt des Knotens.
+
+    `raster` (Rohbytes der Entries aus make_raster_avs.py) liefert die Quelle.
+    Ohne sie ist ein Transform-Knoten nicht messbar: auf der schwarzen
+    Startflaeche liefern beide Renderer schwarz, und der Vergleich meldet
+    0,000 — was nur „nichts zu sehen" heisst, nicht „geprueft". Beim
+    Einzelknoten-Lauf von S74 betraf das die Mehrzahl aller Knoten (Vorgabe
+    Patrik: fuer Transform-Knoten ein vordefiniertes Raster).
+
+    **Das Raster gehoert IN die Liste, nicht davor.** Am laufenden Paar
+    nachgemessen (S74): vor die Liste gesetzt ist es im Ergebnis nicht mehr zu
+    sehen — beide Renderer liefern schwarz, die Liste raeumt die Flaeche unter
+    sich weg. Nur als erstes KIND derselben Liste steht die Quelle im selben
+    Blend-Kontext wie der Knoten, der gemessen werden soll. Top-Level-Knoten
+    bekommen es entsprechend auf Wurzelebene davor.
+    """
+    namen = []
+    for idx, (eid, raw, bs, be) in enumerate(top):
+        if eid == -2:
+            continue  # Listen kommen ueber ihre Kinder dran
+        (out / f"solo_t{idx + 1:02d}.avs").write_bytes(SIG + root_mode + raster + raw)
+        namen.append((f"solo_t{idx + 1:02d}", eid))
+    for idx, (eid, raw, bs, be) in enumerate(top):
+        if eid != -2:
+            continue
+        lp, kids = list_children(data, bs, be)
+        for k, (kid_id, kid_raw, _, _) in enumerate(kids):
+            le = build_list_entry(lp, ([raster] if raster else []) + [kid_raw])
+            (out / f"solo_l{k + 1:02d}.avs").write_bytes(SIG + root_mode + le)
+            namen.append((f"solo_l{k + 1:02d}", kid_id))
+        break
+    for name, eid in namen:
+        print(f"  {name}.avs  <- Effekt-Id {eid}")
+    return namen
+
+
 def main():
     src = Path(sys.argv[1])
     out = Path(sys.argv[2])
-    path = [int(x) for x in sys.argv[3].split(",")] if len(sys.argv) > 3 else None
+    argv = sys.argv[3:]
+    solo = "--solo" in argv
+    raster = b""
+    if "--raster" in argv:
+        i = argv.index("--raster")
+        rdata = Path(argv[i + 1]).read_bytes()
+        assert rdata.startswith(SIG), "Raster ist kein .avs"
+        raster = rdata[len(SIG) + 1:]   # Signatur + Wurzel-Modus-Byte weg
+        del argv[i:i + 2]
+    rest = [a for a in argv if not a.startswith("--")]
+    path = [int(x) for x in rest[0].split(",")] if rest else None
     out.mkdir(parents=True, exist_ok=True)
     data = src.read_bytes()
     assert data.startswith(SIG)
     root_mode = data[len(SIG):len(SIG) + 1]
     top = parse_entries(data, len(SIG) + 1, len(data))
     print(f"Top-Level: {len(top)} Entries: {[e[0] for e in top]}")
+    if solo:
+        solo_stages(data, root_mode, top, out, raster)
+        print("ok ->", out)
+        return
     if path is not None:
         bisect_path(data, root_mode, top, path, out)
         print("ok ->", out)

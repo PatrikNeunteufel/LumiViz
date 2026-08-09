@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.70.0
-> **Datum:** 2026-08-09 (Session 73)
+> **Version:** 1.72.0
+> **Datum:** 2026-08-09 (Session 74)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -141,6 +141,327 @@ Seite-an-Seite-Urteile und Sichttest-Rückstände (§2–§4) — Handarbeit Pat
 eigener Strang, blockieren das maschinelle Kriterium nicht.
 
 ## 1. AVS-Kalibrierung — offene Befunde mit Messwert
+
+### 🟠 Listen-Blend: Adjustable sättigt bei uns ab 128 (S74, Spur)
+
+Prüfstand: Gitter-Raster als Untergrund, Verlauf als Prüf-Knoten in der Liste,
+`blendin = 10` (Adjustable), `inblendval` über die Skala. Verglichen wurden
+nicht nur die Messwerte, sondern die **Bild-Gruppierung je Seite**:
+
+| `inblendval` | 0 | 64 | 128 | 192 | 255 |
+|---|---|---|---|---|---|
+| Referenz | A | B | C | D | E — **fünf verschiedene** |
+| LumiViz | A | B | C | C | C — **drei verschiedene** |
+
+Ab 128 ändert sich bei uns nichts mehr, die Referenz läuft bis 255 weiter.
+Verdacht: die Alpha-Skala wird als 0…128 statt 0…255 gelesen, oder sie wird
+bei 0,5 geklemmt.
+
+Dieselbe Auswertung zeigt zwei weitere Modi, die bei uns auf „Replace"
+zusammenfallen und in der Referenz eigenständig sind: **7 (Multiplikativ-Kette)**
+und **10 (Adjustable)**.
+
+**Noch nicht quantifiziert.** Der Messwert bleibt in allen Fällen bei MAE
+0,002 — die Abweichung betrifft zu wenig Fläche. Ein Gegenversuch mit zwei
+deckenden Flächen (Verlauf + Graukeil) hat die Blende gar nicht angeregt:
+dort kollabieren **beide** Seiten auf ein einziges Bild. Es fehlt eine Probe,
+die die Blende flächig fordert und dabei beide Ebenen sichtbar lässt.
+
+**Sauber bestanden im selben Lauf:** alle 13 Blend-In-Modi (MAE ≤ 0,003),
+beide Reihenfolgen (der Unterschied durch die Reihenfolge tritt auf beiden
+Seiten gleich auf), und die Buffer-Proben — letztere allerdings **ohne
+Aussagekraft**: mit unbeschriebenen Buffern liefern beide Seiten je ein
+einziges Bild, die Probe unterscheidet nicht. Buffer braucht einen eigenen
+Prüfstand mit BufferSave/BufferRestore.
+
+### ✅ SuperScope-Punktzahl: Grenze auf Original-Niveau (S74, behoben)
+
+`SuperscopeModule.cpp` klemmte `n` auf **4096**, das Original
+(`r_sscope.cpp:282`) auf `128*1024` = **131072** — Faktor 32 zu niedrig.
+**Jedes AVS-Preset mit mehr als 4096 Punkten rendert abgeschnitten**, und zwar
+unauffällig: das Bild sieht vollständig aus, es endet nur früher.
+
+Behoben an drei Stellen über eine gemeinsame Konstante
+`SuperscopeModule::kMaxPointCount` (Setzen, Skript-`n`, Editor-Obergrenze).
+Keine Puffergrenze dahinter — Punkt- und Vertex-Listen wachsen dynamisch.
+
+Gitter-Raster allein gegen die Referenz, vorher/nachher:
+
+| Gitter | Punkte | vorher | nachher |
+|---|---|---|---|
+| 64 | 4096 | 0,001 | 0,001 |
+| 72 | 5184 | 0,056 | **0,001** |
+| 80 | 6400 | 0,100 | **0,001** |
+| 96 | 9216 | 0,165 | **0,001** |
+| 128 | 16384 | — | **0,002** |
+
+Regression: die zehn mitgelieferten Presets liefern unverändert dieselben
+Werte (5/10 OK) — keines nutzt mehr als 4096 Punkte. Tests 593 grün.
+
+### ✅ Raster-Blends waren vertikal gespiegelt (S74, behoben)
+
+AVS zählt Bildzeilen von **oben**, `gl_FragCoord.y` von **unten**. Bei gerader
+Bildhöhe kippt damit die Parität — und die beiden Blend-Modi, die auf einem
+Zeilen- oder Pixelraster arbeiten, trafen genau die Gegenpixel:
+
+- **Modus 7** „jede zweite Zeile" (`r_list.cpp:617`, kopiert die oberen
+  geraden Zeilen)
+- **Modus 8** „jeder zweite Pixel" (`r_list.cpp:628`, zeilenversetztes
+  Schachbrett; identisch als `r_stack.cpp` Blend 3)
+
+Aufgefallen im neuen Buffer-Prüfstand: der Kreislauf
+Raster → sichern → zweites Bild → zurückholen mit Blend 3 lieferte
+**MAE 0,451**.
+
+**Ohne Codeänderung belegt:** dieselbe Probe bei ungerader Höhe liefert 0,002
+statt 0,451 (320×241 gegen 320×240). Damit war die Ursache gezeigt, bevor eine
+Zeile geändert wurde.
+
+Behoben im gemeinsamen Blend-Shader (`MultiEffectVisualizer.cpp`): neues
+Uniform `uResY`, beide Modi rechnen jetzt über die AVS-Zeile
+`uResY - 1 - gl_FragCoord.y`.
+
+| | vorher | nachher |
+|---|---|---|
+| Buffer-Kreislauf Blend 3 | 0,451 | **0,002** |
+| Buffer-Kreislauf Blend 5 | — | **0,002** |
+
+**Der ganze Buffer-Pfad ist damit abgenommen: 19/19 OK** — sechs Blend-Modi,
+alle acht Buffer, Kreuzprobe (in 0 sichern, aus 1 holen), ungeschriebener
+Buffer, Nur-Sichern und der wechselnde Modus. Beide Seiten erzeugen aus den
+sechs Modi **je sechs verschiedene Bilder** mit gleicher Gruppierung — der
+Prüfstand unterscheidet also wirklich (Regel 6).
+
+> **Eigener Irrtum unterwegs:** Blend 3 heißt in `r_stack.cpp` nicht
+> „einstellbar". Ich hatte ihn im Generator so benannt und daraus geschlossen,
+> „der Alphawert wirkt nicht" — er wirkt dort gar nicht, weil der Modus ein
+> Schachbrett ist. Benennung im Generator korrigiert.
+
+### ✅ Der `enabled`-Schalter im Effekt-Blob wurde ignoriert (S74, behoben)
+
+**Der größte Einzelbefund der Session, und er lag nicht dort, wo er aussah.**
+
+`Water` (Id 20) maß gegen das Kalibrier-Raster MAE 0,332. Der Port wurde Zeile
+für Zeile gegen `r_water.cpp` gelegt — Vier-Nachbarn-Summe, `/2`, minus
+Vorframe, Klemmung je Kanal, `lastframe` als **Eingang** des Vorframes
+(`:455`), Randbehandlung: alles korrekt. Es gab nichts zu fixen.
+
+Der Frame-für-Frame-Lauf hat es entschieden:
+
+| Frame | MAE | unser Mittel | Referenz-Mittel |
+|---|---|---|---|
+| 1 | 0,100 | 0,198 | **0,0997** |
+| 3 | 0,323 | 0,415 | **0,0997** |
+| 7 | 0,455 | 0,529 | **0,0997** |
+| 12 | 0,331 | 0,383 | **0,0997** |
+
+Der Referenz-Mittelwert steht **konstant** — dort passiert überhaupt nichts.
+Im Preset steht `enabled = 0`, und `r_water.cpp` beginnt mit
+`if (!enabled) return;`. **Wir führten einen Effekt aus, den das Original
+überspringt.**
+
+Ursache im Übersetzer: der `enabled`-Schalter wurde **je Effekt einzeln**
+gelesen, und bei `kWater` und `kScatter` fehlte er schlicht. Behoben als
+**zentrale Vorgabe** vor dem Effekt-Switch (`AvsChainTranslator.cpp`), damit
+die Lücke sich nicht wiederholen kann. Dafür neu:
+`EffectNode::hasField()` — `field()` liefert 0 sowohl für „fehlt" als auch für
+„ist 0", und bei einem Flag bedeutet das das Gegenteil voneinander. Zweige, die
+den Wert als Bitfeld oder Modus lesen (Starfield, Text …), überschreiben die
+Vorgabe danach.
+
+**Wirkung:**
+
+| | vorher | nachher |
+|---|---|---|
+| Water gegen Raster | 0,332 | **0,001** |
+| `02_color extasy` | 0,119 (PRUEFEN) | **0,004 (OK)** |
+| Schaufenster-Presets | 5/10 OK | **6/10 OK** |
+
+**Regression geprüft:** Kalibrier-Korpus **25/26 OK**. Der eine Ausreißer
+(`sonde_div2`, dMaxLuma 0,928 bei MAE 0,003) ist vorbestehend — mit
+zurückgenommener Änderung gegengemessen, identische Werte. Tests 593 grün.
+
+> **Merkregel:** Ein Effekt, der bei uns rechnet und im Original abgeschaltet
+> ist, sieht in jeder Metrik wie ein Rechenfehler aus. Bevor ein Port
+> auseinandergenommen wird, gehört geprüft, ob er auf der anderen Seite
+> überhaupt läuft. Der Frame-1-Wert verrät es: weicht schon das erste Bild ab,
+> ist es kein Aufschaukeln.
+
+`SuperscopeModule.cpp:586` klemmt `n` auf **4096**, das Original
+(`r_sscope.cpp:282`) erst auf `128*1024` = **131072** — Faktor 32 zu niedrig.
+**Jedes AVS-Preset mit mehr als 4096 Punkten rendert bei uns abgeschnitten.**
+
+Belegt an einer Dichte-Reihe, Gitter-Raster allein gegen die Referenz:
+
+| Gitter | Punkte | MAE | dMaxLuma |
+|---|---|---|---|
+| 32 | 1024 | 0,001 | 0,004 |
+| 64 | 4096 | 0,001 | 0,004 |
+| 72 | 5184 | 0,056 | 0,140 |
+| 80 | 6400 | 0,100 | 0,262 |
+| 90 | 8100 | 0,144 | 0,352 |
+| 96 | 9216 | 0,165 | 0,397 |
+
+Die Kante liegt exakt bei 4096: bis dahin null Abweichung, darüber wächst sie
+proportional zum abgeschnittenen Anteil. Im Bild füllt die Referenz die ganze
+Fläche, unser Bild bricht bei rund 64 % der Höhe ab (bei 6400 Punkten sind
+4096 gezeichnet).
+
+**Fix-Ort benannt, nicht ausgeführt:** die Grenze steht an zwei Stellen
+(`:372` beim Setzen, `:586` beim Auswerten von `n`), dazu `p.maxValue = 4096`
+als Editor-Obergrenze. Vor dem Anheben zu klären, ob der Vertex-Puffer
+mitwächst — 131072 Punkte je Scope ist eine andere Größenordnung.
+
+**Nebenwirkung auf die Messungen:** der Blend-In-Lauf über alle 13
+Listen-Modi ist deshalb ungültig. Er meldet durchgehend Abweichungen
+(MAE 0,131–0,184), aber sechs der dreizehn Modi zeigen exakt die Zahl des
+kaputten Messmittels (0,165/0,251/0,397) — gemessen wurde überwiegend die
+Probe, nicht der Blend. Zu wiederholen mit einem Raster unter 4096 Punkten.
+
+**Folge: der Blend-In-Lauf über alle 13 Listen-Modi ist wertlos.** Er meldet
+durchgehend Abweichungen (MAE 0,131–0,184), aber sechs der dreizehn Modi
+zeigen exakt die Zahl des kaputten Messmittels (0,165/0,251/0,397) — gemessen
+wurde überwiegend die Probe, nicht der Blend. Zu wiederholen, sobald ein
+dichtes Messmittel abgenommen ist.
+
+> **Regel, die das kostet:** ein Messmittel wird abgenommen, BEVOR damit
+> gemessen wird. Beim 32er-Raster habe ich das getan (0,001, leeres
+> Differenzbild), beim 96er nicht — und hätte um ein Haar dreizehn
+> Blend-Befunde gemeldet, die keine sind.
+
+### 🔴 `Water` (Id 20) verschmiert viel zu stark (S74)
+
+Gemessen mit dem Kalibrier-Raster (s. §1.0): Raster + **nur** dem
+Water-Knoten aus `02_color extasy`, 120 Frames, 320×240.
+
+| | dMean | dMaxLuma | MAE |
+|---|---|---|---|
+| ohne Raster (schwarze Fläche) | 0,000 | 0,000 | 0,000 → „OK" |
+| **mit Raster** | **0,375** | 0,023 | **0,332** |
+
+Im Bild: die Referenz lässt das Raster nahezu unberührt, die schwarzen
+Zwischenräume zwischen den Linien bleiben schwarz. Bei uns läuft die ganze
+Fläche mit Farbe voll — der Effekt streut weit über die Nachbarschaft hinaus,
+die das Original benutzt. Verdacht: Reichweite oder Dämpfung der
+Wasser-Nachbarschaft (`r_water.cpp` ist ein 4-Nachbarn-Mittel mit Dämpfung).
+
+**Das ist der größte bisher gemessene Einzelknoten-Befund** und erklärt den
+Preset-Wert von `02_color extasy` (MAE 0,119), ohne den bisher ein Knoten
+auffällig gewesen wäre.
+
+Daneben, kleiner, aus demselben Lauf: **`Blur` (Id 6)** MAE 0,009 / dMean
+0,025 — ebenfalls erst mit Raster sichtbar.
+
+### 🔴 `10_the ring`: wir zeichnen einen SuperScope, den die Referenz nicht zeichnet (S74)
+
+Bisektion mit `bisect_avs.py`, Aufbau des Presets:
+Top-Level `[36 SuperScope, 15 Movement, -2 Liste, 43 DynamicMovement]`.
+
+| Stufe | Inhalt | MAE klassisch | MAE musik |
+|---|---|---|---|
+| t01 | nur SuperScope | 0,001 | 0,001 |
+| t02 | + Movement | **0,188** | **0,363** |
+| t03 | + Liste | 0,156 | 0,302 |
+| t04 | vollständig | 0,113 | 0,264 |
+
+**Die Zahl bei t01 lügt.** Der Sprung sieht nach „Movement ist der Täter" aus,
+aber die Montage zeigt: schon bei t01 ist **AvsRef vollständig schwarz**
+(`Luma max = 0,000`), während LumiViz eine blaue Vertikale in der Bildmitte
+zeichnet. Eine 1-Pixel-Linie bewegt den Mittelwert kaum — der MAE von 0,001
+hat den Unterschied verdeckt. Movement (`x=0`, Rechteck-Koordinaten) schmiert
+diese Linie danach über das ganze Bild, und erst dort wird die Abweichung
+messbar. **Der Täter ist der SuperScope, nicht das Movement.**
+
+Der Knoten:
+
+```
+init:  n=800
+frame: t=t-ti*0.5
+point: x=0; y=i*2-1; green=cos(y)*sin(i+t); blue=atan(i+y); red=sin(t*0.2)
+```
+
+Unsere Ausgabe ist formeltreu: `ti` ist undefiniert (= 0), also bleibt `t = 0`;
+damit `red = 0`, `blue = atan(3i-1)` läuft 0 → 1, `green = cos(2i-1)·sin(i)`
+bleibt unter 0,45 — eine blaue Linie, unten am hellsten. Genau das zeigt das
+Bild. **Warum die Referenz gar nichts zeichnet, ist offen.**
+
+Ausgeschlossen ist bereits:
+
+- **Kein AvsRef-Defekt im SuperScope-Pfad allgemein**: `09_rotating_things`
+  enthält **15** SuperScopes und stimmt bei MAE 0,010 überein.
+- **Kein Seitenverhältnis-Problem**: der MAE des ganzen Presets bleibt über
+  240×240 / 320×240 / 480×240 flach (0,108 / 0,113 / 0,117). Die Ring-Form
+  ändert sich mit dem Format auf beiden Seiten gleichermaßen.
+
+Zu klären als Nächstes: warum die Referenz diesen einen Knoten verwirft —
+degenerierte Geometrie (alle 800 Punkte auf derselben x-Koordinate),
+Farb-Clipping oder eine EEL-Semantik bei undefinierten Variablen. Die Antwort
+entscheidet, ob wir zu viel zeichnen oder die Referenz zu wenig.
+
+**Zweiter, unabhängiger Befund im selben Preset:** der äußere Ring ist bei uns
+deutlich dunkler (Referenz hell gelb/weiß, wir dunkel orange). Getrennt
+verfolgen — er hängt an der Liste, nicht am SuperScope.
+
+---
+
+### §1.0 Methode: erst einzeln, dann Kombinationen — und Transforms brauchen ein Raster
+
+Zwei Vorgaben Patriks aus S74, beide sofort durch Messwerte bestätigt:
+
+**„Prüfe alle separat, bevor du Kombinationen testest."** Die kumulative
+Bisektion (`stage_t<k>`) beantwortet „ab wo läuft es auseinander" — und
+beantwortet es falsch, sobald ein früher Knoten für sich schon abweicht und
+die Metrik das verschluckt. Bei `10_the ring` meldete Stufe t01 MAE 0,001,
+obwohl die Referenz dort schwarz ist und wir eine Linie zeichnen; der Sprung
+erschien erst bei t02 und zeigte auf das falsche Modul. Neu:
+`bisect_avs.py … --solo` erzeugt je Knoten ein Preset mit genau diesem Knoten.
+
+**„Für Transform-Knoten würde ein vordefiniertes Raster helfen."** Transforms
+(Movement, Water, Blur, Fadeout, …) sind einzeln nicht messbar: auf der
+schwarzen Startfläche liefern beide Renderer schwarz und der Vergleich meldet
+0,000 — was nur „nichts zu sehen" heißt, nicht „geprüft". Neu:
+`make_raster_avs.py` erzeugt ein Punktgitter als **echten SuperScope im
+Preset** (kein Host-Overlay — nur so zeichnet die Referenz dasselbe Raster).
+Die Farbe kodiert die Herkunft (rot = Spalte, grün = Zeile), Verschiebung und
+Verzerrung sind damit direkt ablesbar.
+`bisect_avs.py … --solo --raster raster.avs` setzt es als Quelle davor.
+
+**Abnahme des Messmittels:** das Raster allein liefert gegen `AvsRef` MAE
+0,001 bei leerem Differenzbild — es ist neutral und als Grundlage brauchbar.
+
+> **Das Raster gehört IN die Liste, nicht davor.** Am laufenden Paar
+> nachgemessen: vor die Liste gesetzt ist es im Ergebnis nicht mehr zu sehen,
+> beide Renderer liefern schwarz — die Liste räumt die Fläche unter sich weg.
+> Erst als erstes KIND derselben Liste steht die Quelle im selben
+> Blend-Kontext wie der Knoten, der gemessen werden soll. Der erste Anlauf hat
+> genau daran nichts gefunden.
+
+**Folge:** alle Einzelknoten-Urteile „0,000 = OK" aus einem Lauf **ohne**
+Raster sind wertlos und müssen mit Raster wiederholt werden. Der Water-Befund
+oben ist genau so entstanden — von „0,000 OK" auf MAE 0,332.
+
+#### Listen-Prüfstand: Blend In/Out, Buffer, Reihenfolge
+
+`make_listenprobe_avs.py` (neu, S74) baut Proben mit dem Raster als Untergrund
+und einer Liste darüber, deren Kopf variiert wird: alle 13 Blend-In-Modi, die
+Adjustable-Skala (0/64/128/192/255), Buffer 0–2 mit und ohne Invertierung,
+sowie beide Reihenfolgen im selben Listen-Kontext.
+
+Zwei Format-Fallen haben dabei je einen kompletten Lauf entwertet, beide
+liefern **falsch-negative** Ergebnisse — die Probe misst brav über alle Modi
+denselben Wert und sieht aus wie ein bestandener Test:
+
+- **Die Größe der erweiterten Daten steht im oberen Byte von `mode`**
+  (`set_extended_datasize(36)`). Fehlt sie, ist `ext = 5`, `load_config` liest
+  **keinen** der acht Kopf-Werte und läuft mitten in die Kinder. Symptom:
+  `abgeschnittener Config-Blob (deklariert 128, vorhanden 52)` — beide
+  Renderer verwerfen die Liste stillschweigend.
+- **`blendout` liegt invertiert im Feld** (`((mode>>16)&31)^1`), und 0 heißt
+  nicht „Vorgabe", sondern „Ergebnis nicht zurückschreiben". Die Liste rendert
+  dann intern und wirft das Ergebnis weg; sichtbar bleibt nur der Untergrund.
+  Richtig ist 1 = Replace.
+
+---
 
 Metrik ist der Abstand zur Referenz (`AvsRef`), 0 = gleich. Methodik:
 [AVS_Kalibrier_Methodik.md](visuals/AVS_Kalibrier_Methodik.md) — **Urteil über
@@ -1423,6 +1744,49 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 ## 8. Werkzeug- und Doku-Schulden
 
+- 🟠 **Die AVS-Befundlage hängt stark am Prüfsignal** (Messung S74). Alle 10
+  mitgelieferten Presets, 120 Frames, 320×240, **`--beat-period 30` in beiden
+  Läufen** — der Beat ist damit konstant, es unterscheidet sich nur das
+  Prüfsignal:
+
+  | Preset | klassisch MAE / dMaxLuma | musik MAE / dMaxLuma | |
+  |---|---|---|---|
+  | `10_the ring` | 0,113 / 0,262 | **0,264 / 0,209** | **verdreifacht** (dMean 0,064 → 0,354) |
+  | `02_color extasy` | 0,119 / 0,092 | 0,091 / 0,128 | bleibt |
+  | `07_movin wall` | 0,073 / 0,000 | 0,055 / 0,000 | bleibt |
+  | `09_rotating_things` | 0,010 / 0,002 | 0,008 / 0,002 | bleibt (klein) |
+  | `02_flowers` | 0,015 / **0,150** | 0,005 / 0,013 | **verschwindet** |
+  | `01_fractal Dreams` | 0,012 / 0,004 (OK) | 0,004 / **0,104** | **neu** |
+  | 4 weitere | OK | OK | — |
+
+  Drei Klassen, die getrennt gehören:
+
+  1. **Signal-unabhängig** (`02_color extasy`, `07_movin wall`,
+     `09_rotating_things`) — in beiden Mustern gleich groß. Das sind die
+     belastbarsten Befunde; hier lohnt die Bisektion zuerst.
+  2. **Skaliert mit der Signalstärke** (`10_the ring`) — MAE mehr als
+     verdoppelt, dMean fünffach. Das passt zur Vermutung im Kalibrier-Plan
+     (Clipping/Additiv-Blending) und ist jetzt der **größte** Befund
+     überhaupt. Das kräftigere Signal hat ihn erst sichtbar gemacht.
+  3. **Signal-abhängig in beide Richtungen** (`02_flowers` weg,
+     `01_fractal Dreams` neu) — beides bleibt ein echter Unterschied
+     zwischen den Renderern, nur regt ihn jeweils das andere Signal an. Ein
+     Befund verschwindet nicht dadurch, dass man ihn nicht mehr anregt; die
+     Information ist, **welche** Eingabe ihn auslöst, und das grenzt den
+     Knoten ein (Spektrum-abhängig statt wellenform-abhängig).
+
+  **Folge für Aufgabe 4:** nicht mehr fünf Befunde, sondern sechs — und mit
+  einer Reihenfolge, die vorher nicht sichtbar war. Noch offen: dieselbe
+  Messung bei 1024×768 (Merkregel S47, zwei Größen).
+- 🔧 **`MilkdropRef` liess sich seit S67 nicht mehr voll neu bauen** (gefunden
+  und behoben S74). `patched/ref_msgbox.h` wird per `/FI` in ALLE
+  Übersetzungseinheiten gezwungen — auch in die neun `.c`-Dateien des
+  ns-eel2-Kerns — und zog mit `<cstdio>` einen C++-Header sowie namenlose
+  Parameter hinein (`STL1003`, dann `C2055`). Solange nur die eigene `.cpp`
+  neu übersetzt wurde, fiel nichts auf; der erste Vollaufbau danach stand.
+  Behoben mit `<stdio.h>`/`<wchar.h>` und benannten Parametern. **Merkregel:
+  ein `/FI`-Kopf muss in JEDER Sprache des Projekts übersetzen.**
+
 - 🟠 **`PanelManager::restoreState()` wird nirgends aufgerufen** (Befund S73). Die
   Kette Panel → `restoreState()` ist gebaut, aber tot: `PanelManager::restoreState()`
   hat im ganzen Programm **keinen einzigen Aufrufer**. Damit laufen auch
@@ -1595,6 +1959,8 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.72.0 | 2026-08-09 | Session 74 (das Pruefsignal, Auftrag Patrik: „fuer Vergleiche synthetisch, aber aus dem MP3 intensiver synthetisiert") — **das synthetische Signal kommt jetzt aus EINER Quelle** (`projects/exec/common/SynthAudio.hpp`) statt aus vier Kopien. Bis S74 stand die Formel in AvsStandalone, MilkdropStandalone, `tools/AvsRef` und `tools/MilkdropRef` je einmal, jedes Mal mit dem Kommentar „formelgleich zu …" — genau die Sorte Abmachung, die still auseinanderlaeuft. Der Kopf ist bewusst Qt-frei und C++14-tauglich, damit das 32-bit-AvsRef und der D3D9-MilkdropRef ihn uebersetzen. Dabei festgehalten, was vorher unausgesprochen war: die WELLENFORM war in allen vier gleich, das SPEKTRUM nicht — der AVS-Pfad legt einen Beat-Faktor ueber alle Bins, der MilkDrop-Pfad gibt Bass/Mitten/Hoehen eigene Huellkurven (S64, sonst 0/0-NaN bei Banddifferenzen). Beide Fassungen bleiben, `Geschmack` waehlt aus; Zusammenlegen waere ein Eingriff in Messreihen und gehoert eigens entschieden. **NEU `--audio-muster klassisch|musik` an ALLEN VIER Werkzeugen** plus `compare_avsref.py`: `musik` traegt acht log-verteilte Bandhuellkurven je Bild und eine Beat-Spur, gewonnen aus 20 s echter Aufnahme, und synthetisiert daraus NEU (acht Sinus mit musikalisch bewegten Amplituden). Es wird keine Musik abgespielt, das Profil laesst sich nicht zurueckrechnen — und weil beide Seiten dieselbe Datei einbinden, **bleiben Referenzvergleiche gueltig**, anders als bei `--audio-datei`. Erzeugt wird das Profil mit `AvsStandalone --audio-profil-schreiben` (Analyse: FFT je Bild, Bandnormierung je Band, Onset-Erkennung, Tempo per Autokorrelation mit 120-BPM-Prior — ohne den Prior landete die Schaetzung zweimal eine Oktave daneben, 257 dann 63 statt ~129 BPM). **REGRESSION BELEGT:** `klassisch` ist bit-identisch zu vor dem Umbau (gleicher PNG-Hash), und der Referenzvergleich liefert exakt die S73-Zahlen (`09_rotating_things` MAE 0,010 / `02_flowers` 0,015). Im AVS-Pfad kommt der Beat im Musik-Muster aus der Beat-SPUR — dafuer `MultiEffectVisualizer::setBeatTrackOverride()` als Geschwister des vorhandenen `setBeatPeriodOverride()` (Test-Hook, wie dieser). **ZWEI BEFUNDE NEBENBEI**, beide in §8: `02_flowers` verliert im Musik-Muster seinen dMaxLuma-Befund (0,150 → 0,017) — noch kein Freispruch, der Beat unterscheidet sich zwischen den Laeufen; und **MilkdropRef liess sich seit S67 nicht mehr voll neu bauen** (`/FI ref_msgbox.h` zog `<cstdio>` und namenlose Parameter in die neun `.c`-Dateien des ns-eel2-Kerns), gefunden und behoben. Tests 593 gruen, alle vier Werkzeuge gebaut |
+| 1.71.0 | 2026-08-09 | Session 74 (echte Musik in den Standalones) — **Aufgabe 6 des Kalibrier-Plans umgesetzt, vorgezogen auf Wunsch Patriks:** beide Standalones nehmen jetzt eine Audiodatei statt des synthetischen Sinus (`--audio-datei`, `--audio-start`, `--audio-gain`, `--audio-stumm`). Gemeinsames Bauteil `projects/exec/common/AudioDateiQuelle.{hpp,cpp}` — dekodiert die Datei per `QAudioDecoder` EINMAL komplett (kein BASS noetig, Qt Multimedia lag schon dabei), liefert je Bild 576 Stereo-Rahmen PCM plus 512 Baender aus einer Hann-gefensterten 1024-Punkt-FFT, linear 0..22050 Hz — **dasselbe Bandmodell, das `MilkdropVisualizer::updateAudio` fuer die MilkLoudness-Terzen (200/761,2/2897,1/11025 Hz) voraussetzt**. Abgetastet wird nach BILD-INDEX (`t = Bild/60`), nicht nach Echtzeit: zwei Laeufe mit derselben Datei und derselben Bildzahl sind bitgleich — **belegt an einer Sequenz: 7 von 7 Bildern identisch** (90 Frames, `--save-every 15`). Interaktiv laeuft die Datei zusaetzlich HOERBAR mit (QAudioSink im Pull-Betrieb ueber das dekodierte PCM); `--auto` und `--ab` bleiben still, damit Stapellaeufe deterministisch bleiben. **DREIFACH ABGESICHERT, weil echte Musik jeden Referenzvergleich wertlos macht** (AvsRef/MilkdropRef erzeugen ihr Audio selbst): `[Audio] ACHTUNG`-Zeile bei jedem Lauf, harte Sperre in `compare_avsref.py` (`run_lumi` wirft bei `--audio-datei`), und die hoerbare Ausgabe schaltet sich im Stapellauf selbst ab. **EIGENER FEHLER, gefunden und behoben:** der erste Kopierpfad rief `QAudioBuffer::constData<T>()` je Sample (~21 Mio. Aufrufe bei vier Minuten) — Ladezeit **68 s**, und der Standalone sah dabei aus wie aufgehaengt, dieselbe Taeuschung wie beim Debug-Build. Basiszeiger und Formatverzweigung aus der Schleife gezogen: **3,8 s**. Werkzeug-Wegleitung 1.1.0 (siebte Falle + Rezept), Kalibrier-Plan 1.1.0 (Aufgabe 6 ✅) |
 | 1.70.0 | 2026-08-09 | Session 73 (Schaufenster + Anwender-Doku) — **README zeigt jetzt, was LumiViz kann:** zwei Galerien mit je vier Standbildern (AVS: fractal Dreams, flowers, rings, wormhole · MilkDrop: Rock The House, The Beauty and the Math, Twisted, Playaround) und ein Kapitel „Fremde Presets importieren", das AVS und MilkDrop als das benennt, was sie sind — zwei sehr verschiedene Formate, beide gegen ihren Original-Renderer gemessen. Die Falschaussage „Presets werden nicht mitgeliefert" ist raus (seit dem Vorgaenger-Commit werden 29 mitgeliefert). NEU **drei Anwender-Dokumente**: `Preset_Quickstart.md` (eine Seite, fuenf Schritte), `Preset_Anleitung.md` (zehn Kapitel: Reihenfolge als halber Look, die 54 Knotentypen in drei Sorten, Rueckkopplung, Audio, die vier Formel-Etappen, Fehlersuch-Tabelle) und `Werkzeug_Wegleitung.md`. Handbuch + beide Preset-Dokumente wandern per POST_BUILD nach `<Build>/docs/` (SSOT bleibt `docs/`, dort entstehen nur Kopien; die Wegleitung bleibt draussen — Entwicklerstoff). **ZWEI WERKZEUG-LUECKEN GESCHLOSSEN, beide beim Screenshot-Machen aufgefallen:** (a) **`AvsStandalone` kannte den Render-Scale-Divisor nicht** — die App setzt vor jedem Import `setImportRenderScaleDivisor()` aus `import/avsRenderScaleDivisor` (bei Patrik 4), der Standalone nie. Folge: JEDER Standalone-Vergleich bei grossen Fenstern war systematisch falsch; bei den ueblichen kleinen Fenstern faellt es nicht auf, deshalb blieb es unbemerkt. NEU `--render-scale N`. (b) **Das synthetische Audio hatte eine starre Klangfarbe** — fester 1/f-Abfall, feste Bandgewichte, Beat starr bei 2 Hz; jeder Frame klang gleich gefaerbt. NEU `--beat-hz N` und `--klangfarbe` (wandernde Spektralbalance + Oberwellen). **Ohne die Schalter aendert sich nichts** (kipp=0 faellt exakt aufs alte Verhalten zurueck) — bestehende Kalibrierlaeufe bleiben bit-identisch. Messwert am Preset „Rock The House": Mittelwert 0,011 → **0,203**, Luma max 0,29 → **1,00**. **DRITTE FALLE, ohne Codeanteil:** Stapellaeufe im DEBUG-Build sind **Faktor 20** langsamer (306 s gegen 15 s fuer zehn Presets) und wirken wie ein Haenger — dokumentiert in der Werkzeug-Wegleitung samt GPU-Vorgabe am EXE-Pfad, Pfaden mit Leerzeichen und „Fenster nicht schliessen" |
 | 1.69.0 | 2026-08-09 | Session 73 (Umbenennung + Versions-SSOT) — **die App heisst jetzt ueberall LumiViz.** `projects/apps/MyViz/` → `projects/apps/LumiViz/` (898 Dateien), Targets `MyViz`/`MyViz.Core`/`MyViz.UnitTests` → `LumiViz*`, 290 Textstellen in 145 Dateien byte-weise ersetzt (MyViz ist reines ASCII — keine Kodierungswandlung, keine Mojibake-Gefahr). Erleichternd: es gab **keinen `myviz`-Namensraum und keine `MyViz`-Klassen**, im C++ waren es nur Zeichenketten und Kommentare. **NEU: Name und Version sind SSOT** — beide stehen in `Solution.json`, das Root-`CMakeLists.txt` liest sie per `string(JSON …)` heraus und reicht sie als `LUMI_APP_NAME`/`LUMI_APP_VERSION` an `LumiViz` und `LumiViz.Core`; im Code fragt nur noch `AppInfo.hpp`. Vorher standen sie **dreifach** (Solution.json, hart in `Application.cpp`, Literal `"Version 0.1.0"` im About-Dialog) — der About-Dialog zeigte seit dem Vorlagen-Stand eine Version, die es nie gab. **Version 0.1.0 → 0.2.0** (Entscheid Patrik): erste tatsaechlich beziehbare Fassung; 0.9.0 waere ein falsches Signal („1.0 steht bevor") bei offener Kalibrier-Runde. Solution-Name `MinimalSolution` (Vorlagen-Rest) → `LumiViz`. **EINSTELLUNGS-UEBERNAHME:** Organisation und Anwendungsname bilden den QSettings-Pfad — ohne Zutun waeren Fensteranordnung, Hotkeys, GPU-Wahl und das gemerkte Preset scheinbar weg. `migriereAlteEinstellungen()` kopiert einmalig von „MyViz Project/MyViz" nach „LumiViz Project/LumiViz", nur wenn dort noch nichts steht, und loescht die alten Werte NICHT. Am laufenden Programm belegt: **37 Schluessel uebernommen**. **DABEI EIN EIGENER FEHLER AUFGEFLOGEN:** war ein Preset gemerkt, dessen Datei es nicht mehr gibt (hier: der alte `exec/MyViz`-Build), fiel der Start auf gar nichts zurueck statt auf das mitgelieferte — die Vorgabe griff nur bei LEEREM Wert. Behoben, mit Log-Hinweis. Der Test-Timeout aus 1.68.0 hat sich sofort bewaehrt: der Kaltlauf nach dem Neuaufbau brauchte 26,1 s und waere an den alten 30 s knapp vorbeigeschrammt. **NOTIZ:** die GPU-Vorgabe in `UserGpuPreferences` haengt am EXE-PFAD — aus `MyViz.exe` wurde `LumiViz.exe`, der alte Eintrag verwaist und ist bei Bedarf neu zu setzen. Tests 593 gruen (`LumiViz.UnitTests`), Debug- und Testing-Build gruen |
 | 1.68.0 | 2026-08-08 | Session 73 (Veroeffentlichung + Startzustand) — Repo lizenz- und datenschutzbereinigt und OEFFENTLICH gestellt (Historie mit `git filter-repo` umgeschrieben, 87→52 MB; duale Lizenz MIT/Apache-2.0, THIRD_PARTY_NOTICES, README, BUILDING, `.github/`). **Drei App-Fehler behoben, alle drei am laufenden Programm nachgewiesen:** (a) **`.lvfx`-Ketten waren an den Rechner des Erstellers gebunden** — `resolveAviPaths` lief NUR beim `.avs`-Import, beim `.lvfx`-Laden uebernahm der Serialisierer den gespeicherten absoluten Pfad unveraendert; `videoSource` hatte die Aufloesung seit S70, `avi` nicht. Fix in `loadChainFile`, die Suche geht ueber den blanken Dateinamen und repariert damit auch Altbestand. (b) **Der Blaettern-Hotkey tat nach jedem Neustart nichts**, bis man einmal im Browser etwas geladen hatte: `onPresetStep` liest die Liste, die aber erst in `onActivate()` entstand — war das Panel nie offen, war sie leer. Die Liste wird jetzt im Konstruktor gefuellt; belegt mit `step 1 from 4 -> 5 (11 entries)` ohne je das Panel zu oeffnen. (c) **Der Startzustand wurde nicht wieder aufgenommen** — Import-Browser laedt und markiert jetzt das zuletzt geladene Preset (Vorgabe `presets/avs/EyeCandy2/02_flowers.avs`, RELATIV zur Exe), und der zuletzt gewaehlte Visualizer wird gemerkt (`ui/lastVisualizer`; `MainWindow` setzte vorher hart `multieffect`). NEU ausserdem: **Preset-Auswahl wandert per POST_BUILD neben die Exe** (`asset/presets/` → `<Build>/presets/`, Pflegenotiz erklaert das Erweitern), Import-Browser startet im **Programmordner** statt im Benutzerordner, Test-Timeout 30→120 s (der ERSTE ctest-Lauf nach einem Build schlug reproduzierbar an die 30 s). **DREI FALLEN festgehalten:** `PanelManager::restoreState()` hat KEINEN Aufrufer (§8) · die Sonden-Liste taugt beim Start nicht als Anker · QSettings-Lesen MUSS innerhalb von `beginGroup()` stehen, sonst kommt der Wert aus der Wurzel und ist immer leer. Ausserdem **60 neue Feld-Sonden** fuer die Knotentypen seit S69–S72 mitgenommen (Entscheid Patrik) — erzeugt, aber noch nie gelaufen (§4). Tests 593 gruen, Debug- und Testing-Build gruen |

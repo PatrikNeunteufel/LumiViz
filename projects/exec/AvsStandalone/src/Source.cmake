@@ -38,6 +38,8 @@ set(_local_sources
     "${_myviz_src}/scripting/LuaScriptEngine.cpp"
     "${_myviz_src}/services/VideoFrameCache.cpp"
     "${_myviz_src}/services/LiveVideoFeed.cpp"
+    # Gemeinsam mit MilkdropStandalone (S74): echte Musik als Audioquelle
+    "${CMAKE_SOURCE_DIR}/projects/exec/common/AudioDateiQuelle.cpp"
 )
 
 set(_local_headers
@@ -45,6 +47,7 @@ set(_local_headers
 
 set(_local_includes
     "${CMAKE_SOURCE_DIR}/projects/apps/LumiViz/include"
+    "${CMAKE_SOURCE_DIR}/projects/exec/common"
 )
 
 set(_local_templates

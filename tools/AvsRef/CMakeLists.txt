@@ -108,9 +108,13 @@ add_executable(AvsRef
     ${AVS_SOURCES}
 )
 
-# patched/ VOR dem Referenzbaum: gepatchtes rlib.h gewinnt fuer alle TUs
+# patched/ VOR dem Referenzbaum: gepatchtes rlib.h gewinnt fuer alle TUs.
+# projects/exec/common: der GEMEINSAME synthetische Klang (SynthAudio.hpp, S74)
+# — dieselbe Datei, die die beiden LumiViz-Standalones einbinden. Genau darauf
+# beruht die Vergleichbarkeit; vorher war die Formel hier eine Kopie.
 target_include_directories(AvsRef PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/patched ${VIS} ${NSEEL}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../projects/exec/common
 )
 # Defines wie im Original-.dsp (ohne WA2_EMBED — kein Winamp)
 target_compile_definitions(AvsRef PRIVATE

@@ -168,6 +168,21 @@ class SuperscopeModule
 {
 public:
     /**
+     * @brief Obergrenze der Punktzahl — dieselbe wie im Original
+     *
+     * `r_sscope.cpp:282` klemmt `n` auf `128*1024`. Bis Session 74 stand hier
+     * 4096; jedes Preset mit mehr Punkten rendert dann abgeschnitten, ohne
+     * dass es auffaellt (das Bild sieht vollstaendig aus, es endet nur
+     * frueher). Nachgemessen an einer Gitter-Reihe gegen `AvsRef`: bis 4096
+     * Punkte null Abweichung, ab 5184 waechst sie proportional zum
+     * abgeschnittenen Anteil.
+     *
+     * Keine Puffergrenze dahinter — Punkt- und Vertex-Listen wachsen
+     * dynamisch (`ScopeRenderer` reserviert nach `points.size()`).
+     */
+    static constexpr int kMaxPointCount = 128 * 1024;
+
+    /**
      * @param context Geteilter Skript-Kontext (reg00..reg99, gmegabuf) — im
      *        Import-Pfad der ScriptContext der Kette, damit ein Scope die
      *        Register liest und schreibt, die andere Effekte setzen. AVS haelt

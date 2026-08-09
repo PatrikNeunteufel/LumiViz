@@ -531,6 +531,23 @@ bool mapBuiltin(const EffectNode& src, const std::string& path, Context& ctx,
                 ChainNode& out)
 {
     if (!src.apeId.empty() && mapApe(src, out)) return true;
+
+    // Der `enabled`-Schalter im Effekt-Blob ist ZENTRAL, nicht je Zweig (S74).
+    // In AVS liest fast jedes `load_config` ihn als erstes Feld, und `render`
+    // beginnt mit `if (!enabled) return;`. Ihn je Effekt einzeln nachzutragen
+    // ging schief: `Water` (Id 20) und `Scatter` (Id 22) lasen ihn nie, und wir
+    // haben Effekte ausgefuehrt, die das Original ueberspringt. Gemessen an
+    // `02_color extasy`, wo `Water` mit enabled=0 gespeichert ist: die Referenz
+    // laesst das Bild ueber alle Frames unveraendert (Mittelwert konstant
+    // 0,0997), wir verdoppelten die Helligkeit schon im ersten Frame — MAE
+    // 0,332 gegen das Kalibrier-Raster.
+    //
+    // `hasField` statt `field`, weil ein fehlendes Feld sonst 0 liefert und
+    // JEDEN Effekt ohne diesen Schalter abschalten wuerde. Zweige, die den
+    // Wert als Bitfeld oder Modus lesen (Starfield, Text, ...), ueberschreiben
+    // ihn danach — die Reihenfolge stimmt.
+    if (src.hasField("enabled")) out.enabled = src.field("enabled") != 0;
+
     switch (src.id)
     {
         case kFadeout:

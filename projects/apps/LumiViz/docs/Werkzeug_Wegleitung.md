@@ -1,7 +1,9 @@
 # Werkzeug-Wegleitung — welches Programm wofür, und welche Fallen es hat
 
-> **Version:** 1.0.0
-> **Datum:** 2026-08-09 (Session 73)
+> **Version:** 1.2.0
+> **Datum:** 2026-08-09 (Session 73; 1.1.0: Session 74 — echte Musik als
+> Audioquelle, Falle 2.7; 1.2.0: Session 74 — das synthetische Signal hat zwei
+> Muster und kommt aus EINER Quelle)
 > **Typ:** Guide
 > **Status:** Aktiv
 > **Sprache:** Deutsch
@@ -15,7 +17,7 @@ einmal echte Arbeitszeit gekostet, mehrere davon an einem einzigen Nachmittag.
 ## Inhalt
 
 1. [Welches Werkzeug wofür](#1-welches-werkzeug-wofür)
-2. [Die sechs Fallen](#2-die-sechs-fallen)
+2. [Die sieben Fallen](#2-die-sieben-fallen)
 3. [Rezepte](#3-rezepte)
 
 ---
@@ -33,9 +35,16 @@ einmal echte Arbeitszeit gekostet, mehrere davon an einem einzigen Nachmittag.
 **Merksatz:** Die Standalones stellen die App *nach*. Sie sind nicht die App —
 was die App aus Einstellungen zieht, müssen sie als Schalter bekommen.
 
+**Das Prüfsignal ist gemeinsam.** Alle vier Werkzeuge erzeugen ihren
+synthetischen Klang aus derselben Datei
+(`projects/exec/common/SynthAudio.hpp`). Bis S74 stand die Formel viermal im
+Baum, jedes Mal als Kopie mit dem Kommentar „formelgleich zu …" — genau die
+Sorte Abmachung, die irgendwann still auseinanderläuft. Wer am Prüfsignal
+etwas ändert, ändert es jetzt für alle vier auf einmal.
+
 ---
 
-## 2. Die sechs Fallen
+## 2. Die sieben Fallen
 
 ### 2.1 🔴 Debug-Build statt Release — Faktor 20
 
@@ -148,6 +157,34 @@ durch ist. Während eines schweren Presets reagiert es nicht.
 **Regel: Fenster stehen lassen.** Der Lauf endet von selbst und meldet
 `--auto abgeschlossen (N Presets), Ende.`
 
+### 2.7 🔴 Echte Musik macht jeden Referenzvergleich wertlos
+
+Seit S74 können beide Standalones eine Audiodatei abspielen
+(`--audio-datei`, s. Rezept unten). Das ist für „sieht das gut aus" ein
+Gewinn — und für Treue-Messungen ein Fallstrick.
+
+`AvsRef` und `MilkdropRef` erzeugen ihr Audio **selbst**, formelgleich zum
+synthetischen Signal der Standalones. Genau darauf beruht die
+Vergleichbarkeit. Hört unsere Seite echte Musik und die Referenz weiter ihren
+Sinus, vergleicht man zwei verschiedene Eingaben — die Zahlen sehen dabei
+genauso seriös aus wie echte.
+
+**Regel: `--audio-datei` ist für Schaufenster und Augenschein.
+Referenzläufe bleiben beim synthetischen Signal.**
+
+Wer für Vergleiche ein **kräftigeres** Signal braucht, nimmt nicht die
+Audiodatei, sondern `--audio-muster musik` (Rezept unten): dieselbe Dynamik,
+aber neu synthetisiert und auf der Referenz-Seite identisch erzeugbar.
+
+Abgesichert an drei Stellen:
+
+- Der Standalone schreibt bei jedem Lauf mit Audiodatei eine
+  `[Audio] ACHTUNG`-Zeile in die Ausgabe.
+- `compare_avsref.py` verweigert den Dienst, wenn `--audio-datei` durchgereicht
+  wird (`run_lumi`).
+- Hörbar wird die Datei nur im **interaktiven** Lauf; `--auto` und `--ab`
+  bleiben still und deterministisch.
+
 ---
 
 ## 3. Rezepte
@@ -176,6 +213,69 @@ MilkdropStandalone "<ordner>" --auto --frames 90 --size 1280x720 --out "<zielord
 
 MilkDrop-Presets sind gitterbasiert und damit auflösungsunabhängig — hier gibt
 es **keinen** Render-Scale-Divisor.
+
+### Kräftigeres Prüfsignal, ohne die Vergleichbarkeit zu verlieren
+
+Das klassische Prüfsignal ist ein 220-Hz-Sinus mit Beat-Puls — für viele
+Presets zu wenig, um überhaupt etwas zu zeigen. Seit S74 gibt es ein zweites
+Muster, das aus einer echten Aufnahme abgeleitet ist:
+
+```bash
+AvsStandalone "<preset.avs>" --auto --frames 120 --audio-muster musik --out "<zielordner>"
+```
+
+`--audio-muster musik` gibt es an **allen vier** Werkzeugen — beiden
+Standalones **und** `AvsRef`/`MilkdropRef`. Alle vier binden dieselbe
+`projects/exec/common/SynthAudio.hpp` ein, das Signal ist also auf beiden
+Seiten identisch erzeugbar. **Referenzvergleiche bleiben damit gültig**, anders
+als bei `--audio-datei` (Falle 2.7).
+
+Auch der Vergleichs-Harness kennt es:
+
+```bash
+python asset/calibration/avs/compare_avsref.py --audio-muster musik
+```
+
+Was das Muster enthält: acht log-verteilte Bandhüllkurven je Bild plus eine
+Beat-Spur, gewonnen aus einem Ausschnitt der Vorlage
+(`projects/exec/common/MusikProfil.hpp`, erzeugt). Daraus wird ein Klang **neu
+synthetisiert** — acht Sinus mit musikalisch bewegten Amplituden. Es wird keine
+Musik abgespielt, und aus dem Profil lässt sich die Aufnahme nicht
+zurückrechnen.
+
+Neu erzeugen (anderer Titel, andere Stelle, andere Länge):
+
+```bash
+AvsStandalone --audio-datei "<musik.mp3>" --audio-start 45 --audio-profil-dauer 20 --audio-profil-schreiben projects/exec/common/MusikProfil.hpp
+```
+
+Danach **alle vier Werkzeuge neu bauen** — das Profil ist einkompiliert.
+
+> **`klassisch` bleibt die Vorgabe und ist bit-identisch zu vor S74.** An
+> diesem Signal hängen die Modul-Matrix, die Modul-Sonden und alle
+> Feld-Sonden; ein Wechsel der Vorgabe würde alles neu einmessen bedeuten.
+
+### Presets an echter Musik ansehen (Schaufenster)
+
+Beide Standalones nehmen seit S74 eine Audiodatei statt des synthetischen
+Sinus. Interaktiv läuft sie zusätzlich **hörbar** mit:
+
+```bash
+MilkdropStandalone "<preset.milk>" --size 1280x720 --audio-datei "<musik.mp3>" --audio-start 45
+```
+
+| Schalter | Wirkung |
+|---|---|
+| `--audio-datei PFAD` | MP3/WAV/FLAC/… statt Sinus; alles, was Qt Multimedia dekodiert |
+| `--audio-start SEK` | Startversatz — trifft den Refrain statt der Einleitung |
+| `--audio-gain F` | Faktor auf Wellenform und Spektrum; echte Musik ist deutlich leiser als das synthetische Signal (dort ~0,8 Spitze im Spektrum) |
+| `--audio-stumm` | nur das Bild füttern, nichts hören |
+
+Abgetastet wird nach **Bild-Index** (`t = Bild/60`), nicht nach Echtzeit — zwei
+Läufe mit derselben Datei und derselben Bildzahl sind bitgleich. Die Datei wird
+beim Start einmal komplett dekodiert (vier Minuten ≈ 84 MB, ~2 s).
+
+⚠️ Nicht für Referenzvergleiche — siehe Falle 2.7.
 
 ### Treue gegen das Original prüfen
 

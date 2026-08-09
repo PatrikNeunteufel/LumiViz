@@ -10,8 +10,9 @@
  * @author Patrik Neunteufel
  * @date   Juli 2026 (1.1.0: August 2026 — --ab-Wechsellauf mit Frame-Hashes,
  *         --blende (Sicht-Blende des Kerns) + --audio-beat (korrelierte
- *         Band-Huellkurven fuer Beat-Detektor-Presets), S67)
- * @version 1.1.0
+ *         Band-Huellkurven fuer Beat-Detektor-Presets), S67;
+ *         1.2.0: August 2026 — --audio-datei, echte Musik statt Sinus, S74)
+ * @version 1.2.0
  *
  * @details
  * Aufruf:
@@ -19,6 +20,8 @@
  *                      [--out DIR] [--size WxH]
  *   MilkdropStandalone A.milk B.milk --ab [--wechsel loeschen|behalten]
  *                      [--frames M] [--ab-frames N] [--audio-neustart]
+ *   MilkdropStandalone preset.milk --audio-datei X.mp3 [--audio-start SEK]
+ *                      [--audio-gain F] [--audio-stumm]
  *
  * - Ohne Argument wird der c1-Kalibrier-Satz gesucht
  *   (`asset/calibration/milkdrop/c1`, vom Exe-Pfad aufwaerts).
@@ -35,21 +38,35 @@
  *   (sofort hashen). Deterministisch: Audio ist rein m_time-getrieben,
  *   dt fix 1/60 — zwei Läufe mit gleichem M sind bis zum Wechsel bitgleich.
  *
+ * - `--audio-datei` (S74): echte Musik statt des synthetischen Signals —
+ *   bild-indiziert abgetastet, also weiterhin deterministisch. Interaktiv
+ *   laeuft die Datei zusaetzlich HOERBAR mit (im --auto-/--ab-Lauf nicht).
+ *   **Nur fuer Schaufenster und Augenschein:** MilkdropRef erzeugt sein Audio
+ *   selbst, gegen echte Musik vergleicht man zwei verschiedene Eingaben.
+ *
  * Der Visualizer laeuft hier im GUI-Thread (paintGL) — dieselben Methoden,
  * die in der App der Render-Thread aufruft. Audio kommt synthetisch (Sinus +
- * Beat-Puls), damit Waves/Loudness leben.
+ * Beat-Puls), damit Waves/Loudness leben — oder aus einer Datei
+ * (`--audio-datei`).
  ****************************************************************************************
  */
 
 #include "visualizers/MilkdropVisualizer.hpp"
 #include "visualizers/milkdrop/MilkdropTrace.hpp"
 
+#include "AudioDateiQuelle.hpp"
+#include "SynthAudio.hpp"
+
+#include <QAudioDevice>
+#include <QAudioFormat>
+#include <QAudioSink>
 #include <QCommandLineParser>
 #include <QDir>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QImage>
 #include <QKeyEvent>
+#include <QMediaDevices>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QOpenGLWindow>
@@ -59,14 +76,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <memory>
 #include <vector>
 
 namespace
 {
-
-constexpr double kPi = 3.14159265358979323846;
 
 /// c1-Kalibrier-Satz vom Exe-Verzeichnis aufwaerts suchen (Repo-Layout)
 QString locateCalibrationDir()
@@ -156,6 +172,21 @@ public:
     /// Wandernde Spektralbalance + Oberwellen in der Wave.
     void setKlangfarbe(bool an) { m_klangfarbe = an; }
 
+    /// Echte Musik statt des synthetischen Signals (S74). Der Zeiger gehoert
+    /// dem Aufrufer und muss das Fenster ueberleben. NICHT fuer
+    /// Referenzvergleiche — MilkdropRef erzeugt sein Audio selbst.
+    void setAudioQuelle(const lumi::werkzeug::AudioDateiQuelle* quelle)
+    {
+        m_audioQuelle = quelle;
+    }
+    /// Die Datei zusaetzlich hoerbar ausgeben (nur interaktiv sinnvoll)
+    void setAudioHoerbar(bool an) { m_audioHoerbar = an; }
+
+    /// Muster des synthetischen Signals (S74): klassisch = Sinus+Beat-Puls wie
+    /// bisher, musik = aus einer Aufnahme abgeleitete Huellkurven. Beides ist
+    /// deterministisch und von MilkdropRef identisch erzeugbar.
+    void setMuster(lumi::synth::Muster m) { m_muster = m; }
+
     /// Exit-Code des --auto-Laufs: 0 nur wenn alle Presets Custom rendern
     [[nodiscard]] bool allCustom() const { return m_allCustom; }
 
@@ -171,6 +202,7 @@ protected:
         m_viz->initialize();
         m_viz->setSichtBlende(m_blende);
         m_viz->resize(size());
+        starteKlangausgabe();
         loadPreset(0);
     }
 
@@ -182,9 +214,10 @@ protected:
     void paintGL() override
     {
         if (m_viz == nullptr) return;
-        feedSyntheticAudio();
+        feedAudio();
         m_viz->render(1.0f / 60.0f);
         ++m_frameInPreset;
+        ++m_audioBild;
         m_time += 1.0 / 60.0;
 
         if (m_ab)
@@ -203,6 +236,12 @@ protected:
         // GL-Aufraeumen SOLANGE das Plattform-Fenster noch lebt — danach gibt
         // es keinen current-faehigen Kontext mehr und die GL-Wrapper-Dtoren
         // des Visualizers wuerden ins Leere greifen (Access Violation)
+        if (ev->type() == QEvent::Close)
+        {
+            // Klangausgabe VOR dem GL-Abbau stillegen (Lebenszyklus-Vertrag:
+            // erst die Zulieferer stoppen, dann die Verbraucher abbauen)
+            beendeKlangausgabe();
+        }
         if (ev->type() == QEvent::Close && m_viz != nullptr)
         {
             makeCurrent();
@@ -286,96 +325,82 @@ private:
         std::printf("[Standalone] Shader-Dump: %s_{warp,comp}.glsl\n", qPrintable(base));
     }
 
-    void feedSyntheticAudio()
+    /// Klangausgabe der Audiodatei starten (nur wenn ausdruecklich gewuenscht
+    /// und ein Ausgabegeraet passt). Scheitert das, laeuft der Lauf stumm
+    /// weiter — das Bild haengt nicht an der Tonausgabe.
+    void starteKlangausgabe()
     {
-        constexpr int kFrames = 576;
-        constexpr int kBins = 512;
-        if (m_silence)
+        if (!m_audioHoerbar || m_audioQuelle == nullptr || !m_audioQuelle->bereit()) return;
+        QAudioFormat fmt;
+        fmt.setSampleRate(lumi::werkzeug::AudioDateiQuelle::kAbtastrate);
+        fmt.setChannelCount(lumi::werkzeug::AudioDateiQuelle::kKanaele);
+        fmt.setSampleFormat(QAudioFormat::Float);
+        const QAudioDevice geraet = QMediaDevices::defaultAudioOutput();
+        if (geraet.isNull() || !geraet.isFormatSupported(fmt))
         {
-            static std::vector<float> zeroWave(kFrames * 2, 0.0f);
-            static std::vector<float> zeroSpec(kBins * 2, 0.0f);
-            m_viz->updateAudioStereo(zeroSpec.data(), kBins, zeroWave.data(), kFrames, 2);
+            std::printf("[Audio] kein passendes Ausgabegeraet — Lauf bleibt stumm\n");
+            std::fflush(stdout);
             return;
         }
-        // Beat-Puls fuer die Loudness-Baender + lebendige Wave.
-        // Vorgabe 2 Hz = 120 BPM; --beat-hz aendert die Schlagfolge (S73) —
-        // dichte Beats treiben Presets, die auf Beat-Ereignisse reagieren,
-        // sichtbar staerker als der 120er-Grundtakt.
-        const double beat =
-            0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * m_beatHz));
+        m_geber = std::make_unique<lumi::werkzeug::PcmGeber>(*m_audioQuelle);
+        m_geber->open(QIODevice::ReadOnly);
+        m_senke = std::make_unique<QAudioSink>(geraet, fmt);
+        m_senke->start(m_geber.get());
+        // Ausspuelen: der interaktive Lauf endet oft per Abbruch, und dann
+        // bliebe die Zeile im Puffer stehen — genau die will man aber sehen
+        std::printf("[Audio] Klangausgabe laeuft (%s)\n", qPrintable(geraet.description()));
+        std::fflush(stdout);
+    }
 
-        // --klangfarbe (S73): die SPEKTRALBALANCE wandert langsam zwischen
-        // Bass und Hoehen, statt der festen 1/f-Neigung. Ohne das klingt jeder
-        // Frame gleich „gefaerbt", und Presets, die ihre Farbe oder Verzerrung
-        // aus dem Bandverhaeltnis ziehen, zeigen ueber die ganze Laufzeit
-        // dasselbe Bild. Bewusst getrennt von --audio-beat: das steuert die
-        // KORRELATION der Huellkurven, dies hier die Verteilung ueber die
-        // Frequenz. Beides ist kombinierbar.
-        const double kipp = m_klangfarbe ? std::sin(m_time * 0.37) : 0.0;  // -1..+1
-        // Band-eigene Huellkurven (S64): EIN gemeinsamer Faktor machte
-        // bass=mid=treb nach der Loudness-Normalisierung IDENTISCH — Presets,
-        // die durch Band-Differenzen teilen (glass bead 003: (bb-mn)/(mx-mn)),
-        // liefen in 0/0-NaN. Die Referenz-FFT hat immer dekorrelierte Baender.
-        // Die WAVE bleibt unveraendert — sie ist der formelgleiche
-        // MilkdropRef-Vertrag (576-Sample-PCM).
-        // --audio-beat (S67): KORRELIERTE Huellkurven mit leichtem Jitter —
-        // die Referenz-FFT des Beat-PCM laesst alle Baender GEMEINSAM
-        // pulsieren; Beat-Detektoren wie `above(vol_att, 1.25*peak)`
-        // (pixies-Feuerwerk) feuern nur dann. Der Jitter haelt die Baender
-        // ungleich (S64-Falle exakter 0/0-Banddifferenzen bleibt vermieden).
-        const double beatMid =
-            m_audioBeat
-                ? beat * (0.97 + 0.02 * std::sin(m_time * 1.1))
-                : 0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * 1.5 + 1.3));
-        const double beatTreb =
-            m_audioBeat
-                ? beat * (0.94 + 0.03 * std::sin(m_time * 1.7 + 0.5))
-                : 0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * 2.7 + 2.1));
-        static std::vector<float> wave;
-        static std::vector<float> spec;
-        wave.assign(kFrames * 2, 0.0f);
-        spec.assign(kBins * 2, 0.0f);
-        for (int i = 0; i < kFrames; ++i)
+    void beendeKlangausgabe()
+    {
+        if (m_senke != nullptr) m_senke->stop();
+        m_senke.reset();
+        if (m_geber != nullptr) m_geber->close();
+        m_geber.reset();
+    }
+
+    /// Audio-Weiche: echte Datei, wenn eine geladen ist — sonst das
+    /// synthetische Signal. `--silence` schlaegt beides (Hunger-Test).
+    void feedAudio()
+    {
+        if (m_audioQuelle != nullptr && m_audioQuelle->bereit() && !m_silence)
         {
-            const double ph = m_time * 220.0 * 2.0 * kPi + i * (2.0 * kPi / 64.0);
-            // Mit --klangfarbe bekommt die Wave zwei Oberwellen mit eigenem,
-            // langsamem Gewicht — aus dem reinen Sinus wird ein Klang, dessen
-            // Obertongehalt sich aendert. Normiert, damit die Amplitude
-            // gleich bleibt und Loudness-Vergleiche nicht verrutschen.
-            const auto welle = [&](double phase) {
-                if (!m_klangfarbe) return std::sin(phase);
-                const double g2 = 0.5 + 0.5 * std::sin(m_time * 0.23);
-                const double g3 = 0.5 + 0.5 * std::sin(m_time * 0.31 + 1.7);
-                return (std::sin(phase) + g2 * 0.6 * std::sin(2.0 * phase) +
-                        g3 * 0.4 * std::sin(3.0 * phase)) /
-                       (1.0 + g2 * 0.6 + g3 * 0.4);
-            };
-            const float l = static_cast<float>(beat * 0.5 * welle(ph));
-            const float r = static_cast<float>(beat * 0.5 * welle(ph + 0.7));
-            wave[static_cast<std::size_t>(i) * 2 + 0] = l;
-            wave[static_cast<std::size_t>(i) * 2 + 1] = r;
+            static std::vector<float> wave(
+                lumi::werkzeug::AudioDateiQuelle::kWaveFrames * 2);
+            static std::vector<float> spec(lumi::werkzeug::AudioDateiQuelle::kBins * 2);
+            m_audioQuelle->frameFuellen(m_audioBild, wave.data(), spec.data());
+            m_viz->updateAudioStereo(spec.data(), lumi::werkzeug::AudioDateiQuelle::kBins,
+                                     wave.data(),
+                                     lumi::werkzeug::AudioDateiQuelle::kWaveFrames, 2);
+            return;
         }
-        for (int b = 0; b < kBins; ++b)
-        {
-            // Band-Grenzen der MilkLoudness-Terzen (761,2/2897,1 Hz auf 512
-            // Bins linear bis 22050 Hz): Bin ~17,7 bzw. ~67,3
-            const double env = (b < 18) ? beat : (b < 68) ? beatMid : beatTreb;
-            // Neigung des Abfalls und Bandgewichte wandern mit `kipp`:
-            // kipp < 0 = baesslastig, kipp > 0 = hoehenlastig. Bei
-            // --klangfarbe aus ist kipp = 0, und es bleibt exakt beim alten
-            // Verhalten (1/(1+0,03·b), alle Baender gleich gewichtet) —
-            // bestehende Prüfläufe aendern sich dadurch NICHT.
-            const double abfall = 0.03 * (1.0 - 0.85 * kipp);
-            const double gewicht =
-                (b < 18)   ? 1.0 - 0.60 * std::max(0.0, kipp)
-                : (b < 68) ? 1.0 - 0.30 * std::abs(kipp)
-                           : 1.0 + 0.80 * std::max(0.0, kipp);
-            const float v =
-                static_cast<float>(env * 0.8 * gewicht / (1.0 + b * abfall));
-            spec[static_cast<std::size_t>(b) * 2 + 0] = v;
-            spec[static_cast<std::size_t>(b) * 2 + 1] = v;
-        }
-        m_viz->updateAudioStereo(spec.data(), kBins, wave.data(), kFrames, 2);
+        feedSyntheticAudio();
+    }
+
+    /// Synthetisches Signal aus dem GEMEINSAMEN Erzeuger (S74). Die Formel
+    /// stand bis dahin viermal im Baum — hier, im AvsStandalone und in beiden
+    /// Referenz-Werkzeugen, jedes Mal als Kopie. Jetzt bindet jeder dieselbe
+    /// `SynthAudio.hpp` ein; Auseinanderlaufen ist baulich ausgeschlossen.
+    /// Vorgaben ergeben Bit fuer Bit das alte Signal — auch --klangfarbe,
+    /// --audio-beat und --beat-hz sind unveraendert mit uebergesiedelt.
+    void feedSyntheticAudio()
+    {
+        lumi::synth::Optionen opt;
+        opt.muster = m_muster;
+        // MilkDrop-Geschmack: Bass/Mitten/Hoehen bekommen EIGENE Huellkurven.
+        // Ein gemeinsamer Faktor machte sie nach der Loudness-Normalisierung
+        // identisch, und Presets, die durch Banddifferenzen teilen, liefen in
+        // 0/0-NaN (S64).
+        opt.geschmack = lumi::synth::Geschmack::Milkdrop;
+        opt.beatHz = m_beatHz;
+        opt.klangfarbe = m_klangfarbe;
+        opt.audioBeat = m_audioBeat;
+        opt.stille = m_silence;
+        static lumi::synth::Frame klang;
+        lumi::synth::erzeuge(m_audioBild, opt, klang);
+        m_viz->updateAudioStereo(klang.spec, lumi::synth::kBins, klang.wave,
+                                 lumi::synth::kWaveFrames, 2);
     }
 
     FrameStats saveShot(const QString& tag)
@@ -425,7 +450,11 @@ private:
                 // applyPresetState via loadMilkFile; der Puffer-Wipe folgt im
                 // naechsten render() — exakt der Loesch-Pfad der App
                 if (m_abLoeschen) m_viz->requestFeedbackErbe(0.0);
-                if (m_abAudioNeustart) m_time = 0.0;
+                if (m_abAudioNeustart)
+                {
+                    m_time = 0.0;
+                    m_audioBild = 0;  // gilt fuer beide Quellen (S74)
+                }
                 m_abPhase = 1;
                 loadPreset(static_cast<int>(m_presets.size()) - 1);
                 return;  // Frame 1 des Ziel-Presets hasht der naechste paintGL
@@ -539,6 +568,16 @@ private:
     bool m_abAudioNeustart = false; ///< Audio-Uhr beim Wechsel auf 0
     int m_abFrames = 300;           ///< Mess-Frames nach dem Wechsel
     int m_abPhase = 0;              ///< 0 = Vorlauf, 1 = Messphase
+    /// Echte Musik als Audioquelle (S74) — Eigentum des Aufrufers
+    const lumi::werkzeug::AudioDateiQuelle* m_audioQuelle = nullptr;
+    /// Bild-Zaehler der Audio-Zufuhr; ueber Preset-Wechsel hinweg fortlaufend
+    /// (m_frameInPreset startet je Preset neu und taugt dafuer nicht)
+    std::int64_t m_audioBild = 0;
+    bool m_audioHoerbar = false;
+    std::unique_ptr<lumi::werkzeug::PcmGeber> m_geber;
+    std::unique_ptr<QAudioSink> m_senke;
+    /// Muster des synthetischen Signals (S74); Vorgabe = das alte Verhalten
+    lumi::synth::Muster m_muster = lumi::synth::Muster::Klassisch;
 };
 
 } // namespace
@@ -629,10 +668,60 @@ int main(int argc, char* argv[])
         QStringLiteral("wandernde Spektralbalance (Bass<->Hoehen) und "
                        "Oberwellen in der Wave — sonst klingt jeder Frame "
                        "gleich gefaerbt und das Bild bleibt eintoenig"));
+    // --- Echte Musik als Audioquelle (S74, Aufgabe 6) -----------------------------------
+    const QCommandLineOption optAudioDatei(
+        QStringLiteral("audio-datei"),
+        QStringLiteral("Audiodatei (MP3/WAV/FLAC/...) statt des synthetischen "
+                       "Signals. NUR fuer Schaufenster und Augenschein — "
+                       "MilkdropRef erzeugt sein Audio selbst, jeder "
+                       "Referenzvergleich mit echter Musik ist wertlos"),
+        QStringLiteral("PFAD"));
+    const QCommandLineOption optAudioStart(
+        QStringLiteral("audio-start"),
+        QStringLiteral("Startversatz in der Audiodatei in Sekunden"),
+        QStringLiteral("SEK"), QStringLiteral("0"));
+    const QCommandLineOption optAudioGain(
+        QStringLiteral("audio-gain"),
+        QStringLiteral("Faktor auf Wellenform und Spektrum der Audiodatei "
+                       "(Vorgabe 1). Echte Musik ist deutlich leiser als das "
+                       "synthetische Signal"),
+        QStringLiteral("F"), QStringLiteral("1"));
+    const QCommandLineOption optAudioStumm(
+        QStringLiteral("audio-stumm"),
+        QStringLiteral("die Audiodatei NICHT hoerbar ausgeben (im --auto- und "
+                       "--ab-Lauf ohnehin die Vorgabe)"));
     parser.addOption(optAudioBeat);
     parser.addOption(optBeatHz);
     parser.addOption(optKlangfarbe);
+    const QCommandLineOption optMuster(
+        QStringLiteral("audio-muster"),
+        QStringLiteral("Muster des SYNTHETISCHEN Signals: klassisch|musik. "
+                       "klassisch = 220-Hz-Sinus + Beat-Puls (Vorgabe, "
+                       "bit-identisch seit S41) · musik = aus einer Aufnahme "
+                       "abgeleitete Bandhuellkurven, neu synthetisiert. BEIDE "
+                       "sind deterministisch und von MilkdropRef identisch "
+                       "erzeugbar — anders als --audio-datei"),
+        QStringLiteral("NAME"), QStringLiteral("klassisch"));
+    parser.addOption(optAudioDatei);
+    parser.addOption(optAudioStart);
+    parser.addOption(optAudioGain);
+    parser.addOption(optAudioStumm);
+    parser.addOption(optMuster);
     parser.process(app);
+
+    lumi::synth::Muster muster = lumi::synth::Muster::Klassisch;
+    if (!lumi::synth::musterAusText(qPrintable(parser.value(optMuster)), muster))
+    {
+        std::fprintf(stderr, "FEHLER: --audio-muster erwartet klassisch|musik\n");
+        return 2;
+    }
+    if (muster == lumi::synth::Muster::Musik &&
+        lumi::synth::eingebautesProfil().bilder <= 0)
+    {
+        std::fprintf(stderr, "FEHLER: kein Musik-Profil eingebaut — erst mit "
+                             "AvsStandalone --audio-profil-schreiben erzeugen\n");
+        return 2;
+    }
     // Saatlos = Prüfstand-Vertrag: derselbe Kaltstart wie der Referenz-Renderer.
     // Die App behält ihre Saat (Verstärker-Presets beim ERSTEN Preset der
     // Sitzung); hier zählt Vergleichbarkeit.
@@ -705,6 +794,46 @@ int main(int argc, char* argv[])
     window.setAudioBeat(parser.isSet(optAudioBeat));
     window.setBeatHz(parser.value(optBeatHz).toDouble());
     window.setKlangfarbe(parser.isSet(optKlangfarbe));
+    window.setMuster(muster);
+    if (muster == lumi::synth::Muster::Musik)
+    {
+        const lumi::synth::MusikProfil& p = lumi::synth::eingebautesProfil();
+        std::printf("[Audio] Muster musik: %s, %d Bilder Schleife (%.2f s)\n", p.herkunft,
+                    p.bilder, p.bilder / lumi::synth::kBildrate);
+    }
+
+    // --- Audiodatei laden, BEVOR das GL-Fenster steht (Dekodieren dauert) ---------------
+    lumi::werkzeug::AudioDateiQuelle audioQuelle;
+    if (parser.isSet(optAudioDatei))
+    {
+        QString fehler;
+        audioQuelle.setVerstaerkung(parser.value(optAudioGain).toDouble());
+        if (!audioQuelle.laden(parser.value(optAudioDatei), &fehler))
+        {
+            std::fprintf(stderr, "FEHLER: Audiodatei nicht nutzbar — %s\n",
+                         qPrintable(fehler));
+            return 2;
+        }
+        audioQuelle.setStartSekunden(parser.value(optAudioStart).toDouble());
+        std::printf("[Audio] '%s' geladen: %.1f s, Start bei %.1f s, Gain %.2f\n",
+                    qPrintable(audioQuelle.quelle()), audioQuelle.dauerSekunden(),
+                    parser.value(optAudioStart).toDouble(),
+                    parser.value(optAudioGain).toDouble());
+        // Unuebersehbar: mit echter Musik ist JEDER Referenzvergleich hinfaellig
+        std::printf("[Audio] ACHTUNG: echte Musik — NICHT fuer Referenzvergleiche "
+                    "gegen MilkdropRef (dessen Audio ist synthetisch)\n");
+        window.setAudioQuelle(&audioQuelle);
+        // Hoerbar nur im interaktiven Lauf: Stapel- und A/B-Laeufe sollen
+        // deterministisch und still durchlaufen
+        const bool stapel = parser.isSet(optAuto) || parser.isSet(optAb);
+        const bool hoerbar = !stapel && !parser.isSet(optAudioStumm);
+        window.setAudioHoerbar(hoerbar);
+        std::printf("[Audio] hoerbare Ausgabe: %s\n",
+                    hoerbar ? "ja" : (stapel ? "nein (Stapellauf)" : "nein (--audio-stumm)"));
+        // Ausspuelen: der interaktive Lauf endet meist per Abbruch, und dann
+        // bliebe der ganze Audio-Block im Puffer stehen
+        std::fflush(stdout);
+    }
     window.resize(w, h);
     window.show();
 

@@ -369,7 +369,12 @@ void SuperscopeModule::loadPresetCode(SuperscopePreset preset)
 void SuperscopeModule::setPointCount(int count)
 {
     // Lower bound 1, not 8: AVS scopes legitimately use n=2 (plain lines).
-    const int clamped = std::clamp(count, 1, 4096);
+    // Obergrenze = die des Originals (r_sscope.cpp:282, `128*1024`). Bis S74
+    // stand hier 4096 — Faktor 32 zu wenig, und jedes Preset mit mehr Punkten
+    // rendert abgeschnitten. Nachgemessen an einer Gitter-Reihe: bis 4096
+    // null Abweichung zur Referenz, ab 5184 waechst sie proportional zum
+    // abgeschnittenen Anteil (MAE 0,056 bei 5184, 0,165 bei 9216).
+    const int clamped = std::clamp(count, 1, kMaxPointCount);
     const bool changed = clamped != m_pointCount;
     m_pointCount = clamped;
     m_n = static_cast<double>(m_pointCount);
@@ -583,7 +588,8 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
             m_lastScriptError = m_script->lastError();
         }
 
-        effectiveCount = std::clamp(static_cast<int>(engine.number("n")), 1, 4096);
+        effectiveCount =
+            std::clamp(static_cast<int>(engine.number("n")), 1, kMaxPointCount);
 
         // Frame-level readback of scripted render vars (per-point switching is
         // not supported — the host draws one primitive batch per frame).
@@ -1182,7 +1188,10 @@ std::vector<ModuleParamDesc> SuperscopeModule::paramDescs(const std::string& pre
         p.displayName = "Points";
         p.type = ParamType::Int;
         p.minValue = 8;
-        p.maxValue = 4096;
+        // Wie die Laufzeit-Grenze (S74): ein Preset mit n=9216 muss sich im
+        // Editor auch darstellen lassen, sonst schneidet das Feld beim
+        // naechsten Speichern ab, was der Renderer korrekt zeichnet.
+        p.maxValue = kMaxPointCount;
         p.defaultValue = m_pointCount;
         p.subGroup = "Render";
         p.order = order++;

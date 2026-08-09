@@ -14,10 +14,16 @@ hier liegt alles Übergreifende je Domäne.
 Ganzes (Player, Playlist, Visualizer, Vollbild, Docking, Einstellungen).
 
 **Vor jedem Prüf- oder Messlauf:** [**Werkzeug-Wegleitung**](Werkzeug_Wegleitung.md) —
-welches Programm wofür (App · Standalones · Referenz-Renderer) und die fünf Fallen,
+welches Programm wofür (App · Standalones · Referenz-Renderer) und die sieben Fallen,
 die schon Arbeitszeit gekostet haben: Debug statt Release (Faktor 20), fehlender
 Render-Scale-Divisor im Standalone, GPU-Vorgabe am EXE-Pfad, Pfade mit Leerzeichen,
-Fenster nicht schließen.
+Fenster nicht schließen, echte Musik im Referenzvergleich.
+
+**Treue gegen das Original nachweisen:** [**Kalibrierung**](kalibrierung/INDEX.md) —
+formatübergreifender Einstieg (AVS · MilkDrop · Shadertoy · ISF): die fünf
+Methodenregeln, die Werkzeuge je Format, die Audio-Testsignale und der Stand
+je Format. Dazu [Messmittel](kalibrierung/Messmittel.md) — die Kalibrier-Raster
+und wie sie abgenommen werden.
 
 **Was ist noch zu tun:** [**Offene Punkte**](Offene_Punkte.md) — die Arbeitsliste
 (Kalibrier-Befunde, offene Urteile, Sichttests, Entscheide, Backlog). Ein Ort;

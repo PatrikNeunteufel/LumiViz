@@ -186,6 +186,25 @@ public:
     }
 
     /**
+     * @brief Beat-SPUR statt fester Periode (S74) — Geschwister von
+     *        setBeatPeriodOverride() fuer das musik-abgeleitete Pruefsignal.
+     *
+     * Eine feste Periode passt nicht zu einem Signal, dessen Dynamik aus einer
+     * echten Aufnahme stammt: die Schlaege liegen dort da, wo die Musik sie
+     * hat. @p flags ist ein zyklisch gelesenes Feld aus @p laenge Flags (ein
+     * Bild je Eintrag, 0/1); der Speicher gehoert dem Aufrufer und muss den
+     * Visualizer ueberleben (im Werkzeug ist es statischer Programmspeicher).
+     *
+     * Schlaegt die Periode; @p flags = nullptr schaltet zurueck.
+     */
+    void setBeatTrackOverride(const unsigned char* flags, int laenge)
+    {
+        m_beatTrack = (flags != nullptr && laenge > 0) ? flags : nullptr;
+        m_beatTrackLaenge = (m_beatTrack != nullptr) ? laenge : 0;
+        m_beatPeriodFrame = 0;
+    }
+
+    /**
      * @brief Test-Hook (GL-Gates, S48): Kopie der aktuellen Root-Surface als
      *        Bild — nur mit current GL-Context aufrufen (nach render());
      *        leer, solange noch kein Frame gerendert wurde. Liest die interne
@@ -1258,6 +1277,9 @@ private:
     lumi::modules::BeatEstimator m_beatEstimator{0};
     bool m_frameBeat = false;  ///< beat flag effects/list scripts may mutate
     int m_beatPeriodOverride = 0;  ///< >0: Beat alle N Frames (AvsRef --beat-period)
+    /// Beat-Spur des musik-abgeleiteten Pruefsignals (S74); schlaegt die Periode
+    const unsigned char* m_beatTrack = nullptr;
+    int m_beatTrackLaenge = 0;
     int m_beatPeriodFrame = 0;     ///< Frame-Zaehler des Overrides (Reset beim Laden)
     int m_importRenderScaleDivisor = 1;  ///< Auto-Render-Scale beim AVS-Import (S47)
     /// App-Default Puffer-Wechsel (S66; Node-Einstellung AppEinstellung

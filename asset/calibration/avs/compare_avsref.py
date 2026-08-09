@@ -82,9 +82,16 @@ def ascii_safe(avs: Path, stage: Path) -> Path:
 
 
 def run_ref(avs: Path, frames: int, size: str, out: Path, beat_period: int = 0,
-            ape_dir: Path = None, tick_hz: int = 0) -> Path:
-    """AvsRef rendern; liefert den BMP-Pfad des letzten Frames."""
+            ape_dir: Path = None, tick_hz: int = 0, muster: str = "klassisch") -> Path:
+    """AvsRef rendern; liefert den BMP-Pfad des letzten Frames.
+
+    `muster` waehlt das synthetische Signal (S74). Beide Renderer binden
+    dieselbe `SynthAudio.hpp` ein — der Vergleich bleibt damit in JEDEM Muster
+    gueltig, anders als bei `--audio-datei` (echte Musik, gesperrt).
+    """
     extra = ["--beat-period", str(beat_period)] if beat_period > 0 else []
+    if muster != "klassisch":
+        extra += ["--audio-muster", muster]
     if tick_hz > 0:
         extra += ["--tick-hz", str(tick_hz)]
     if ape_dir and Path(ape_dir).is_dir():
@@ -128,18 +135,31 @@ def run_lumi_dir(ordner: Path, frames: int, size: str, out: Path,
 
 
 def run_lumi(avs: Path, frames: int, size: str, out: Path, beat_period: int = 0,
-             extra_args: list[str] | None = None) -> Path:
+             extra_args: list[str] | None = None, muster: str = "klassisch") -> Path:
     """AvsStandalone --auto rendern; liefert den PNG-Pfad des Screenshots.
 
     `extra_args` reicht weitere Schalter durch — gedacht fuer Sonden, die ein
     anderes Testsignal brauchen als der Rest (`--stereo-spektrum`, S55). Wer so
     etwas benutzt, misst NICHT mehr gegen dieselbe Grundlage wie die uebrigen
     Laeufe; das gehoert je Sonde begruendet.
+
+    `--audio-datei` ist hier HART gesperrt (S74): AvsRef erzeugt sein Audio
+    selbst, formelgleich zum synthetischen Signal des Standalones. Hoert nur
+    unsere Seite echte Musik, vergleicht man zwei verschiedene Eingaben — jede
+    Zahl daraus waere wertlos, sieht aber genauso serioes aus wie eine echte.
     """
+    if any(str(a).startswith("--audio-datei") for a in (extra_args or [])):
+        raise RuntimeError(
+            "--audio-datei ist im Referenzvergleich gesperrt: AvsRef erzeugt "
+            "sein Audio selbst (synthetisch). Echte Musik nur fuer Schaufenster "
+            "und Augenschein — siehe Kalibrier_Plan_Mitgelieferte_Presets.md, "
+            "Aufgabe 6.")
     import os
     env = dict(os.environ)
     env["QT_ENABLE_HIGHDPI_SCALING"] = "0"  # logische == physische Pixel
     extra = ["--beat-period", str(beat_period)] if beat_period > 0 else []
+    if muster != "klassisch":
+        extra += ["--audio-muster", muster]
     extra += list(extra_args or [])
     proc = subprocess.run(
         [str(LUMI_EXE), str(avs), "--auto", "--frames", str(frames),
@@ -210,6 +230,17 @@ def main() -> int:
     ap.add_argument("--tick-hz", type=int, default=60,
                     help="gettime()-Frame-Uhr fuer AvsRef (0 = Wanduhr wie im "
                          "Original — bei gettime-Presets NICHT vergleichbar)")
+    # S74: das synthetische Signal gibt es in zwei Mustern. `musik` leitet
+    # Bandhuellkurven und Beat-Spur aus einer echten Aufnahme ab und
+    # synthetisiert daraus neu — BEIDE Renderer binden dazu dieselbe
+    # SynthAudio.hpp ein, der Vergleich bleibt also gueltig. Das ist etwas
+    # ganz anderes als `--audio-datei` (echte Musik, in run_lumi gesperrt).
+    ap.add_argument("--audio-muster", default="klassisch",
+                    choices=["klassisch", "musik"],
+                    help="synthetisches Signal: klassisch (Sinus+Beat-Puls, "
+                         "Vorgabe) oder musik (aus einer Aufnahme abgeleitet). "
+                         "Im Muster musik kommt der Beat aus der Beat-SPUR der "
+                         "Vorlage, --beat-period wird dann nicht gebraucht")
     ap.add_argument("--out", type=Path,
                     default=ROOT / "../../../out/avsref_compare")
     args = ap.parse_args()
@@ -245,9 +276,11 @@ def main() -> int:
             src = ascii_safe(avs, stage)
             ref_img = load_rgb(run_ref(src, args.frames, args.size, out / "ref",
                                        args.beat_period, args.ape_dir,
-                                       args.tick_hz))
+                                       args.tick_hz,
+                                       muster=args.audio_muster))
             lumi_img = load_rgb(run_lumi(src, args.frames, args.size, out / "lumi",
-                                         args.beat_period))
+                                         args.beat_period,
+                                         muster=args.audio_muster))
             if ref_img.shape != lumi_img.shape:
                 raise RuntimeError(
                     f"Groessen ungleich: ref{ref_img.shape} vs lumi{lumi_img.shape}"

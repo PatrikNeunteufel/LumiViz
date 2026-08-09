@@ -63,9 +63,13 @@ add_executable(MilkdropRef
     ${VIS}/plugin.rc
 )
 
-# patched/ VOR dem Referenzbaum, falls Kopien noetig werden (AvsRef-Muster)
+# patched/ VOR dem Referenzbaum, falls Kopien noetig werden (AvsRef-Muster).
+# projects/exec/common: der GEMEINSAME synthetische Klang (SynthAudio.hpp, S74)
+# — dieselbe Datei, die MilkdropStandalone einbindet. Genau darauf beruht die
+# Vergleichbarkeit; vorher war die Formel hier eine Kopie.
 target_include_directories(MilkdropRef PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/patched ${VIS} ${NSEEL} ${DXSDK}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../projects/exec/common
 )
 # Defines wie plugin.vcxproj Release|Win32
 target_compile_definitions(MilkdropRef PRIVATE

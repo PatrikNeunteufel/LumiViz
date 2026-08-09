@@ -118,6 +118,21 @@ struct EffectNode
         return 0;
     }
 
+    /// @brief Does a decoded field of this name exist?
+    ///
+    /// `field()` cannot answer this — it returns 0 for both "absent" and
+    /// "present and zero". For flags such as `enabled` those two cases mean
+    /// the opposite of each other, so the distinction has to be available
+    /// (S74: the translator ran effects the original skips).
+    [[nodiscard]] bool hasField(std::string_view fieldName) const
+    {
+        for (const IntField& f : fields)
+        {
+            if (f.name == fieldName) return true;
+        }
+        return false;
+    }
+
     /// @brief Lookup of a code slot by name ("" if absent)
     [[nodiscard]] std::string_view slot(std::string_view slotName) const
     {

@@ -29,6 +29,8 @@ set(_local_sources
     "${_myviz_src}/visualizers/ScopeRenderer.cpp"
     "${_myviz_src}/scripting/ScriptSlotHost.cpp"
     "${_myviz_src}/scripting/LuaScriptEngine.cpp"
+    # Gemeinsam mit AvsStandalone (S74): echte Musik als Audioquelle
+    "${CMAKE_SOURCE_DIR}/projects/exec/common/AudioDateiQuelle.cpp"
 )
 
 set(_local_headers
@@ -36,6 +38,7 @@ set(_local_headers
 
 set(_local_includes
     "${CMAKE_SOURCE_DIR}/projects/apps/LumiViz/include"
+    "${CMAKE_SOURCE_DIR}/projects/exec/common"
 )
 
 set(_local_templates

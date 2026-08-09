@@ -39,6 +39,11 @@
 #include <string>
 #include <vector>
 
+// Der synthetische Klang kommt seit S74 aus der GEMEINSAMEN Quelle, die auch
+// die beiden LumiViz-Standalones und AvsRef einbinden — vorher stand die
+// Formel hier als Kopie mit dem Kommentar "formelgleich zu ...".
+#include "SynthAudio.hpp"
+
 // --- Globals, die der Kern erwartet (Vorbild Milkdrop2PcmVisualizer.cpp) ---------------
 CPlugin g_plugin;
 HINSTANCE api_orig_hinstance = nullptr;
@@ -89,25 +94,33 @@ bool initD3d(HWND hwnd, int width, int height)
     return true;
 }
 
-/// Synthetisches Audio — FORMELGLEICH zu MilkdropStandalone::feedSyntheticAudio
-/// (Sinus 220 Hz + 120-BPM-Beat-Puls), als 8-bit-PCM mit 128-Mitte
-void buildPcm(int frame, bool silence, unsigned char* left, unsigned char* right)
+/// Synthetisches Audio aus der GEMEINSAMEN SynthAudio.hpp (S74) als 8-bit-PCM
+/// mit 128-Mitte. Bis S74 stand die Formel hier als Kopie mit dem Kommentar
+/// „formelgleich zu MilkdropStandalone::feedSyntheticAudio" — jetzt binden
+/// beide dieselbe Datei ein. Vorgabe ergibt Bit fuer Bit dasselbe PCM.
+///
+/// MilkDrop rechnet seine FFT SELBST aus diesem PCM; das Spektrum, das
+/// LumiViz seinem Milkdrop-Knoten fertig hinlegt, kommt hier also gar nicht
+/// vor. Im Muster `musik` faellt das weniger ins Gewicht als im klassischen:
+/// dort stammen Wellenform und Spektrum aus denselben Bandhuellkurven, eine
+/// FFT ueber die Wellenform ergibt also dasselbe Bild.
+void buildPcm(int frame, const lumi::synth::Optionen& opt, unsigned char* left,
+              unsigned char* right)
 {
-    if (silence)
+    if (opt.stille)
     {
         std::memset(left, 128, kSamples);
         std::memset(right, 128, kSamples);
         return;
     }
-    const double t = frame / 60.0;
-    const double beat = 0.55 + 0.45 * (std::max)(0.0, std::sin(t * 2.0 * kPi * 2.0));
+    static lumi::synth::Frame klang;
+    lumi::synth::erzeuge(frame, opt, klang);
     for (int i = 0; i < kSamples; ++i)
     {
-        const double ph = t * 220.0 * 2.0 * kPi + i * (2.0 * kPi / 64.0);
-        const double l = beat * 0.5 * std::sin(ph);
-        const double r = beat * 0.5 * std::sin(ph + 0.7);
-        left[i] = static_cast<unsigned char>(std::lround(l * 127.0) + 128);
-        right[i] = static_cast<unsigned char>(std::lround(r * 127.0) + 128);
+        left[i] = static_cast<unsigned char>(
+            std::lround(klang.wave[i * 2 + 0] * 127.0) + 128);
+        right[i] = static_cast<unsigned char>(
+            std::lround(klang.wave[i * 2 + 1] * 127.0) + 128);
     }
 }
 
@@ -232,6 +245,10 @@ int main(int argc, char** argv)
     int width = 640, height = 480;
     bool silence = false;
     bool show = false;
+    // --audio-muster (S74): klassisch = Sinus+Beat-Puls wie bisher, musik =
+    // aus einer Aufnahme abgeleitete Huellkurven. Beides aus SynthAudio.hpp,
+    // die MilkdropStandalone genauso einbindet.
+    lumi::synth::Muster muster = lumi::synth::Muster::Klassisch;
 
     for (int i = 1; i < argc; ++i)
     {
@@ -240,6 +257,15 @@ int main(int argc, char** argv)
         else if (arg == "--out" && i + 1 < argc) outDir = argv[++i];
         else if (arg == "--silence") silence = true;
         else if (arg == "--show") show = true;
+        else if (arg == "--audio-muster" && i + 1 < argc)
+        {
+            if (!lumi::synth::musterAusText(argv[++i], muster))
+            {
+                std::fprintf(stderr,
+                             "FEHLER: --audio-muster erwartet klassisch|musik\n");
+                return 2;
+            }
+        }
         else if (arg == "--size" && i + 1 < argc)
         {
             const std::string wh = argv[++i];
@@ -256,7 +282,8 @@ int main(int argc, char** argv)
     {
         std::fprintf(stderr,
                      "Aufruf: MilkdropRef <preset.milk|ordner> [--frames N] [--out DIR] "
-                     "[--size WxH] [--silence] [--show]\n");
+                     "[--size WxH] [--silence] [--show] "
+                     "[--audio-muster klassisch|musik]\n");
         return 2;
     }
 
@@ -363,7 +390,11 @@ int main(int argc, char** argv)
 
         for (int f = 0; f < frames; ++f)
         {
-            buildPcm(f, silence, pcmL, pcmR);
+            lumi::synth::Optionen synthOpt;
+            synthOpt.muster = muster;
+            synthOpt.geschmack = lumi::synth::Geschmack::Milkdrop;
+            synthOpt.stille = silence;
+            buildPcm(f, synthOpt, pcmL, pcmR);
             if (g_plugin.PluginRender(pcmL, pcmR) == 0)
             {
                 std::fprintf(stderr, "[MilkdropRef] RENDER-ABBRUCH bei Frame %d\n", f);

@@ -252,6 +252,7 @@ uniform sampler2D uBuf;   // global buffer for mode 12 (Buffer)
 uniform int uMode;
 uniform float uAlpha;
 uniform bool uBufInvert;
+uniform int uResY;        // Zielhoehe — fuer die AVS-Zeilenzaehlung von oben
 out vec4 fragColor;
 void main()
 {
@@ -271,10 +272,15 @@ void main()
     else if (uMode == 4)  r = min(d + s, vec3(1.0)); // Additive
     else if (uMode == 5)  r = max(d - s, vec3(0.0)); // Subtractive 1-2 (dst-src)
     else if (uMode == 6)  r = max(s - d, vec3(0.0)); // Subtractive 2-1 (src-dst)
+    // AVS zaehlt Zeilen von OBEN, gl_FragCoord.y von unten. Bei GERADER Hoehe
+    // kippt die Paritaet damit, und beide Raster-Modi treffen genau die
+    // Gegenpixel (S74: MAE 0,451 bei Hoehe 240 gegen 0,002 bei 241 — dieselbe
+    // Probe). `uResY` ist deshalb Pflicht, nicht Komfort.
     else if (uMode == 7)                             // Every other line
-        r = ((int(gl_FragCoord.y) & 1) == 0) ? s : d;
+        r = (((uResY - 1 - int(gl_FragCoord.y)) & 1) == 0) ? s : d;
     else if (uMode == 8)                             // Every other pixel (checkerboard)
-        r = (((int(gl_FragCoord.x) + int(gl_FragCoord.y)) & 1) == 0) ? s : d;
+        r = (((int(gl_FragCoord.x) + (uResY - 1 - int(gl_FragCoord.y))) & 1) == 0)
+                ? s : d;
     else if (uMode == 9)                             // XOR (per 8-bit channel)
     {
         ivec3 di = ivec3(d * 255.0 + 0.5);
@@ -3672,7 +3678,15 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         for (float sample : v) sum += std::abs(sample);
         return sum / static_cast<float>(v.size());
     };
-    if (m_beatPeriodOverride > 0)
+    if (m_beatTrack != nullptr)
+    {
+        // Beat-SPUR des musik-abgeleiteten Pruefsignals (S74): die Schlaege
+        // liegen da, wo die Vorlage sie hat. Zyklisch, damit lange Laeufe
+        // weiterlaufen — dieselbe Rechnung wie auf der Referenz-Seite.
+        m_frameBeat = m_beatTrack[m_beatPeriodFrame % m_beatTrackLaenge] != 0;
+        ++m_beatPeriodFrame;
+    }
+    else if (m_beatPeriodOverride > 0)
     {
         // Deterministischer Beat wie AvsRef --beat-period: Frame 0, N, 2N …
         m_frameBeat = (m_beatPeriodFrame % m_beatPeriodOverride) == 0;
@@ -13661,6 +13675,7 @@ void MultiEffectVisualizer::blendPass(SurfacePair& dst, unsigned int srcTexture,
     m_blendShader->setUniformValue("uAlpha",
                                    static_cast<float>(adjustAlpha) / 255.0f);
     m_blendShader->setUniformValue("uBufInvert", bufferInvert);
+    m_blendShader->setUniformValue("uResY", m_surfaceHeight);
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_blendShader->release();
