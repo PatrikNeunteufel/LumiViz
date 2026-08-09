@@ -305,7 +305,7 @@ eventBus->subscribe<CreateVisualizerEvent>(
 
 | ID | Titel | Order | Modal | Shortcut |
 |----|-------|-------|-------|----------|
-| about | About MyViz | 900 | ✅ | F1 |
+| about | About LumiViz | 900 | ✅ | F1 |
 
 ### Widgets
 

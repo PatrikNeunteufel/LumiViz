@@ -28,9 +28,9 @@ Diese Referenz dokumentiert alle **Datei-Formate** des Preset-Systems. Alle Pres
 ### Speicherorte
 
 ```
-%APPDATA%/MyViz/presets/           (Windows)
-~/.local/share/MyViz/presets/      (Linux)
-~/Library/Application Support/MyViz/presets/  (macOS)
+%APPDATA%/LumiViz/presets/           (Windows)
+~/.local/share/LumiViz/presets/      (Linux)
+~/Library/Application Support/LumiViz/presets/  (macOS)
 ├── visualizer/
 │   └── {visualizerId}/
 │       └── {name}.lvp

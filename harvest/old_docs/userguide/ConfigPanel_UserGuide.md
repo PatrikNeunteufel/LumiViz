@@ -54,7 +54,7 @@ Das ConfigPanel ist die zentrale Benutzeroberfläche zur Konfiguration von Visua
 
 ### Für Endbenutzer
 
-- [ ] MyViz gestartet
+- [ ] LumiViz gestartet
 - [ ] Visualizer ausgewählt
 
 ### Für Entwickler
@@ -68,7 +68,7 @@ Das ConfigPanel ist die zentrale Benutzeroberfläche zur Konfiguration von Visua
 
 ### ConfigPanel öffnen
 
-1. Starte MyViz
+1. Starte LumiViz
 2. Wähle einen Visualizer (z.B. "Pulsing")
 3. Das ConfigPanel erscheint automatisch oder über **View → Config**
 

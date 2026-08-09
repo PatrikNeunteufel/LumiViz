@@ -16,7 +16,7 @@
  * EelTranspiler's job, translation into LumiViz presets happens in Roadmap 5).
  *
  * Reference for all layouts: ref/vis_avs (BSD-3, Nullsoft 2005) — see
- * projects/apps/MyViz/docs/visuals/Import_Analyse_AVS_MilkDrop.md §5.
+ * projects/apps/LumiViz/docs/visuals/Import_Analyse_AVS_MilkDrop.md §5.
  ****************************************************************************************
  */
 

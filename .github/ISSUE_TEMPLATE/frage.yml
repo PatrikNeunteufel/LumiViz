@@ -10,7 +10,7 @@ body:
         - **Bauen klappt nicht** → [BUILDING.md](../../BUILDING.md), Abschnitt
           „Wenn etwas schiefgeht“ — besonders Linker-Fehler zu `bass.lib`
         - **Wie funktioniert X?** →
-          [docs/INDEX.md](../../projects/apps/MyViz/docs/INDEX.md)
+          [docs/INDEX.md](../../projects/apps/LumiViz/docs/INDEX.md)
 
   - type: textarea
     id: frage

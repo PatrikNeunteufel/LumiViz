@@ -42,7 +42,7 @@ LumiViz-Presets (das macht der MilkdropVisualizer ab M3). Verhalten aus den
 Referenz-Presets (`ref/winamp_orig`, `asset/Milkdrop3`) und der
 MilkDrop3-Quelle (BSD) abgelesen; projectM diente NUR als Konzept-Referenz
 (LGPL — kein Code übernommen). Konzept:
-`projects/apps/MyViz/docs/visuals/MilkDrop_Import_Konzept.md` §2.2.
+`projects/apps/LumiViz/docs/visuals/MilkDrop_Import_Konzept.md` §2.2.
 
 ## 2. API
 

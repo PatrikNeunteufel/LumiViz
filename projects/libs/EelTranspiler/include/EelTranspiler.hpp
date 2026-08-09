@@ -12,7 +12,7 @@
  * Header-only library (no Qt, no app dependencies). Translates EEL scripts
  * (AVS Superscope slots, MilkDrop per_frame/per_vertex) into Lua source for
  * the LuaScriptEngine sandbox (eel-Prelude). Contract and dialect semantics:
- * projects/apps/MyViz/docs/visuals/Import_Analyse_AVS_MilkDrop.md §7 + §10.
+ * projects/apps/LumiViz/docs/visuals/Import_Analyse_AVS_MilkDrop.md §7 + §10.
  *
  * Error philosophy (Import-Analyse §4.3): a syntax error yields ok=false with
  * a positioned message — the caller treats the script slot as empty (AVS

@@ -182,7 +182,7 @@ Dieses Dokument definiert die vollständige Architektur des LumiPulse Visual Sys
 │                          PROJECT STRUCTURE                                  │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  MyViz/                                                                     │
+│  LumiViz/                                                                     │
 │  ├── include/                                                               │
 │  │   └── visualizers/                                                       │
 │  │       ├── IVisual.hpp                 ← Visual Interface                 │

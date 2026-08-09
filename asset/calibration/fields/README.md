@@ -30,7 +30,7 @@ C++-Gate `test_FieldInventory.cpp` — es ist die einzige Stelle, die alle Felde
 sicher kennt. Neu schreiben nach einer Feldänderung:
 
 ```bash
-LUMIVIZ_UPDATE_FIELD_INVENTORY=1 MyViz.UnitTests.exe -tc="Feld-Inventar*"
+LUMIVIZ_UPDATE_FIELD_INVENTORY=1 LumiViz.UnitTests.exe -tc="Feld-Inventar*"
 ```
 
 **Die Reihenfolge ist eine Kette, und sie hat nur eine Richtung:**

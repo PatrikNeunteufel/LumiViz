@@ -1,6 +1,6 @@
 # harvest/old_docs — archivierte App-Doku (Stand vor der Doku-Neuordnung, Session 29)
 
-> **Herkunft:** Kompletter Inhalt von `projects/apps/MyViz/docs/` (außer `sessions/` —
+> **Herkunft:** Kompletter Inhalt von `projects/apps/LumiViz/docs/` (außer `sessions/` —
 > die Produkt-Changelogs bleiben am deklarierten Ort). Verschoben 2026-07-18
 > (Session 29, Phase 4-Vorbereitung) — die App-Doku wird nach Domänen neu aufgebaut
 > (UI · Audio · Visuals · Services), die alten Inhalte dienen als Quelle.

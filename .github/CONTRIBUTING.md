@@ -32,7 +32,7 @@ die Lizenz in `THIRD_PARTY_NOTICES.md` ergänzt werden.
   eigene Issue-Vorlage. Bitte Screenshots von beidem beilegen.
 - **Plattformen außer Windows.** Linux und macOS werden nicht regelmäßig
   durchgebaut. Baufehler dort sind echte Befunde.
-- **Tests.** Neue Testfälle in `projects/apps/MyViz/tests/` sind immer willkommen.
+- **Tests.** Neue Testfälle in `projects/apps/LumiViz/tests/` sind immer willkommen.
 
 ## Konventionen
 
@@ -65,7 +65,7 @@ Vor dem Absenden:
 Änderungen am Rendern brauchen zusätzlich einen **Sichttest**: Screenshot
 vorher/nachher, und bei Import-Effekten den Vergleich gegen den Referenz-Renderer
 (`tools/AvsRef` bzw. `tools/MilkdropRef`). Wie das methodisch geht, steht in
-`projects/apps/MyViz/docs/visuals/AVS_Kalibrier_Methodik.md`.
+`projects/apps/LumiViz/docs/visuals/AVS_Kalibrier_Methodik.md`.
 
 ## Verhalten
 

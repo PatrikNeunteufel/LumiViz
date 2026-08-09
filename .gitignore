@@ -418,7 +418,7 @@ bookmarks*.html
 # Fremder Lehr-Shader (Ugur Guney, 2014) — auf shadertoy.com ohne
 # Lizenzangabe veroeffentlicht, Standard dort ist CC BY-NC-SA. Bleibt als
 # lokales Lernmaterial liegen, wird aber nicht weitergegeben.
-/projects/apps/MyViz/docs/tutorials/shadertoy_tutorial.glsl
+/projects/apps/LumiViz/docs/tutorials/shadertoy_tutorial.glsl
 
 # Lokale Benutzer-Presets (Qt-Pfade, vcpkg-Toolchain) — die Vorlage
 # CMakeUserPresets.example.json ist getrackt, die Kopie nicht.

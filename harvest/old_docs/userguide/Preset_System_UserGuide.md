@@ -67,7 +67,7 @@ Das Preset-System ermöglicht das Speichern, Laden und Teilen von Visualizer-Kon
 
 ### Für Endbenutzer
 
-- [ ] MyViz installiert
+- [ ] LumiViz installiert
 - [ ] Mindestens ein Visualizer aktiv
 
 ---
@@ -205,9 +205,9 @@ Die Dateien werden hier gespeichert:
 
 | OS | Pfad |
 |----|------|
-| Windows | `%APPDATA%/MyViz/presets/` |
-| Linux | `~/.local/share/MyViz/presets/` |
-| macOS | `~/Library/Application Support/MyViz/presets/` |
+| Windows | `%APPDATA%/LumiViz/presets/` |
+| Linux | `~/.local/share/LumiViz/presets/` |
+| macOS | `~/Library/Application Support/LumiViz/presets/` |
 
 **Unterordner:**
 
@@ -346,7 +346,7 @@ MeinePresets/
 ```
 
 Anweisung für Benutzer:
-> "Kopiere den Inhalt von `MeinePresets/` nach `%APPDATA%/MyViz/presets/`"
+> "Kopiere den Inhalt von `MeinePresets/` nach `%APPDATA%/LumiViz/presets/`"
 
 ---
 

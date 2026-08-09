@@ -151,6 +151,10 @@ public:
 
     /// Korrelierte Audio-Huellkurven (S67, Diagnose Beat-Detektor-Presets)
     void setAudioBeat(bool an) { m_audioBeat = an; }
+    /// Schlagfolge in Hz (2,0 = 120 BPM). Werte <= 0 werden auf 2,0 geklemmt.
+    void setBeatHz(double hz) { m_beatHz = hz > 0.0 ? hz : 2.0; }
+    /// Wandernde Spektralbalance + Oberwellen in der Wave.
+    void setKlangfarbe(bool an) { m_klangfarbe = an; }
 
     /// Exit-Code des --auto-Laufs: 0 nur wenn alle Presets Custom rendern
     [[nodiscard]] bool allCustom() const { return m_allCustom; }
@@ -293,8 +297,21 @@ private:
             m_viz->updateAudioStereo(zeroSpec.data(), kBins, zeroWave.data(), kFrames, 2);
             return;
         }
-        // Beat-Puls ~120 BPM fuer die Loudness-Baender + lebendige Wave
-        const double beat = 0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * 2.0));
+        // Beat-Puls fuer die Loudness-Baender + lebendige Wave.
+        // Vorgabe 2 Hz = 120 BPM; --beat-hz aendert die Schlagfolge (S73) —
+        // dichte Beats treiben Presets, die auf Beat-Ereignisse reagieren,
+        // sichtbar staerker als der 120er-Grundtakt.
+        const double beat =
+            0.55 + 0.45 * std::max(0.0, std::sin(m_time * 2.0 * kPi * m_beatHz));
+
+        // --klangfarbe (S73): die SPEKTRALBALANCE wandert langsam zwischen
+        // Bass und Hoehen, statt der festen 1/f-Neigung. Ohne das klingt jeder
+        // Frame gleich „gefaerbt", und Presets, die ihre Farbe oder Verzerrung
+        // aus dem Bandverhaeltnis ziehen, zeigen ueber die ganze Laufzeit
+        // dasselbe Bild. Bewusst getrennt von --audio-beat: das steuert die
+        // KORRELATION der Huellkurven, dies hier die Verteilung ueber die
+        // Frequenz. Beides ist kombinierbar.
+        const double kipp = m_klangfarbe ? std::sin(m_time * 0.37) : 0.0;  // -1..+1
         // Band-eigene Huellkurven (S64): EIN gemeinsamer Faktor machte
         // bass=mid=treb nach der Loudness-Normalisierung IDENTISCH — Presets,
         // die durch Band-Differenzen teilen (glass bead 003: (bb-mn)/(mx-mn)),
@@ -321,8 +338,20 @@ private:
         for (int i = 0; i < kFrames; ++i)
         {
             const double ph = m_time * 220.0 * 2.0 * kPi + i * (2.0 * kPi / 64.0);
-            const float l = static_cast<float>(beat * 0.5 * std::sin(ph));
-            const float r = static_cast<float>(beat * 0.5 * std::sin(ph + 0.7));
+            // Mit --klangfarbe bekommt die Wave zwei Oberwellen mit eigenem,
+            // langsamem Gewicht — aus dem reinen Sinus wird ein Klang, dessen
+            // Obertongehalt sich aendert. Normiert, damit die Amplitude
+            // gleich bleibt und Loudness-Vergleiche nicht verrutschen.
+            const auto welle = [&](double phase) {
+                if (!m_klangfarbe) return std::sin(phase);
+                const double g2 = 0.5 + 0.5 * std::sin(m_time * 0.23);
+                const double g3 = 0.5 + 0.5 * std::sin(m_time * 0.31 + 1.7);
+                return (std::sin(phase) + g2 * 0.6 * std::sin(2.0 * phase) +
+                        g3 * 0.4 * std::sin(3.0 * phase)) /
+                       (1.0 + g2 * 0.6 + g3 * 0.4);
+            };
+            const float l = static_cast<float>(beat * 0.5 * welle(ph));
+            const float r = static_cast<float>(beat * 0.5 * welle(ph + 0.7));
             wave[static_cast<std::size_t>(i) * 2 + 0] = l;
             wave[static_cast<std::size_t>(i) * 2 + 1] = r;
         }
@@ -331,7 +360,18 @@ private:
             // Band-Grenzen der MilkLoudness-Terzen (761,2/2897,1 Hz auf 512
             // Bins linear bis 22050 Hz): Bin ~17,7 bzw. ~67,3
             const double env = (b < 18) ? beat : (b < 68) ? beatMid : beatTreb;
-            const float v = static_cast<float>(env * 0.8 / (1.0 + b * 0.03));
+            // Neigung des Abfalls und Bandgewichte wandern mit `kipp`:
+            // kipp < 0 = baesslastig, kipp > 0 = hoehenlastig. Bei
+            // --klangfarbe aus ist kipp = 0, und es bleibt exakt beim alten
+            // Verhalten (1/(1+0,03·b), alle Baender gleich gewichtet) —
+            // bestehende Prüfläufe aendern sich dadurch NICHT.
+            const double abfall = 0.03 * (1.0 - 0.85 * kipp);
+            const double gewicht =
+                (b < 18)   ? 1.0 - 0.60 * std::max(0.0, kipp)
+                : (b < 68) ? 1.0 - 0.30 * std::abs(kipp)
+                           : 1.0 + 0.80 * std::max(0.0, kipp);
+            const float v =
+                static_cast<float>(env * 0.8 * gewicht / (1.0 + b * abfall));
             spec[static_cast<std::size_t>(b) * 2 + 0] = v;
             spec[static_cast<std::size_t>(b) * 2 + 1] = v;
         }
@@ -492,6 +532,8 @@ private:
     bool m_dumpShaders = false;
     bool m_blende = false;          ///< Sicht-Blende (S67, App-Verhalten)
     bool m_audioBeat = false;       ///< korrelierte Huellkurven (S67, Diagnose)
+    double m_beatHz = 2.0;          ///< Schlagfolge (S73), 2,0 = 120 BPM
+    bool m_klangfarbe = false;      ///< wandernde Spektralbalance (S73)
     bool m_ab = false;              ///< A/B-Wechsellauf (S67)
     bool m_abLoeschen = true;       ///< Wechselmodus: Loeschen (sonst Behalten)
     bool m_abAudioNeustart = false; ///< Audio-Uhr beim Wechsel auf 0
@@ -577,7 +619,19 @@ int main(int argc, char* argv[])
     parser.addOption(optWechsel);
     parser.addOption(optAudioNeustart);
     parser.addOption(optBlende);
+    const QCommandLineOption optBeatHz(
+        QStringLiteral("beat-hz"),
+        QStringLiteral("Schlagfolge des synthetischen Audios in Hz "
+                       "(Vorgabe 2 = 120 BPM; 4 oder 6 fuer dichte Beats)"),
+        QStringLiteral("HZ"), QStringLiteral("2"));
+    const QCommandLineOption optKlangfarbe(
+        QStringLiteral("klangfarbe"),
+        QStringLiteral("wandernde Spektralbalance (Bass<->Hoehen) und "
+                       "Oberwellen in der Wave — sonst klingt jeder Frame "
+                       "gleich gefaerbt und das Bild bleibt eintoenig"));
     parser.addOption(optAudioBeat);
+    parser.addOption(optBeatHz);
+    parser.addOption(optKlangfarbe);
     parser.process(app);
     // Saatlos = Prüfstand-Vertrag: derselbe Kaltstart wie der Referenz-Renderer.
     // Die App behält ihre Saat (Verstärker-Presets beim ERSTEN Preset der
@@ -649,6 +703,8 @@ int main(int argc, char* argv[])
     }
     window.setBlende(parser.isSet(optBlende));
     window.setAudioBeat(parser.isSet(optAudioBeat));
+    window.setBeatHz(parser.value(optBeatHz).toDouble());
+    window.setKlangfarbe(parser.isSet(optKlangfarbe));
     window.resize(w, h);
     window.show();
 

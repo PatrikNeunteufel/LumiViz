@@ -2,7 +2,7 @@
 
 > **Version:** 1.0.0  
 > **Letzte Aktualisierung:** 2026-01-02  
-> **Für:** MyViz v1.0  
+> **Für:** LumiViz v1.0  
 > **Sprache:** Deutsch  
 
 ---

@@ -16,9 +16,9 @@ dbg(${DBG_OFTEN}
 
 # Die Multieffekt-Host-Schliessung der App wird DIREKT mitkompiliert (wie beim
 # MilkdropStandalone): die Executables-Phase laeuft VOR dem App-Container,
-# MyViz.Core existiert hier noch nicht. Explizite Liste — waechst der Host,
+# LumiViz.Core existiert hier noch nicht. Explizite Liste — waechst der Host,
 # muss sie mitwachsen (der Linker meldet es).
-set(_myviz_src "${CMAKE_SOURCE_DIR}/projects/apps/MyViz/src")
+set(_myviz_src "${CMAKE_SOURCE_DIR}/projects/apps/LumiViz/src")
 
 set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/main.cpp"
@@ -44,7 +44,7 @@ set(_local_headers
 )
 
 set(_local_includes
-    "${CMAKE_SOURCE_DIR}/projects/apps/MyViz/include"
+    "${CMAKE_SOURCE_DIR}/projects/apps/LumiViz/include"
 )
 
 set(_local_templates

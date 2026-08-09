@@ -24,9 +24,9 @@ Qt-ADS Layout-Persistence speichert und stellt Panel-Positionen über App-Neusta
 
 | Platform | Speicherort |
 |----------|-------------|
-| Windows | `HKEY_CURRENT_USER\Software\MyViz Project\MyViz` |
-| Linux | `~/.config/MyViz Project/MyViz.conf` |
-| macOS | `~/Library/Preferences/com.myviz-project.MyViz.plist` |
+| Windows | `HKEY_CURRENT_USER\Software\LumiViz Project\LumiViz` |
+| Linux | `~/.config/LumiViz Project/LumiViz.conf` |
+| macOS | `~/Library/Preferences/com.myviz-project.LumiViz.plist` |
 
 ### QSettings-Struktur
 

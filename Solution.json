@@ -1,8 +1,8 @@
 {
     "schemaVersion": "1.0",
     "solution": {
-        "name": "MinimalSolution",
-        "version": "0.1.0"
+        "name": "LumiViz",
+        "version": "0.2.0"
     },
     "settings": {
         "standards": {
@@ -153,7 +153,7 @@
       },
       {
         "name": "MilkdropStandalone",
-        "description": "Isolierter C1/C2-Renderpfad-Test: MilkdropVisualizer in eigenem GL-Fenster (Session 41). Kompiliert die Milkdrop-Quellen der App direkt (Executables laufen VOR dem App-Container — MyViz.Core existiert hier noch nicht)",
+        "description": "Isolierter C1/C2-Renderpfad-Test: MilkdropVisualizer in eigenem GL-Fenster (Session 41). Kompiliert die Milkdrop-Quellen der App direkt (Executables laufen VOR dem App-Container — LumiViz.Core existiert hier noch nicht)",
         "skip": false,
         "type": "CONSOLE",
         "path": "projects/exec/MilkdropStandalone/src",
@@ -167,11 +167,12 @@
     ],
     "apps": [
       {
-        "name": "MyViz",
-        "description": "",
+        "name": "LumiViz",
+        "description": "Audio-Visualizer mit AVS-, MilkDrop-, Shadertoy- und ISF-Import",
         "skip": false,
-        "displayName": "MyViz",
-        "version": "0.1.0",
+        "displayName": "LumiViz",
+        "//version": "SSOT fuer Name UND Version (S73). Das Root-CMakeLists liest beide Werte HIER heraus und reicht sie als Kompilat-Definitionen an den Code weiter (AppInfo.hpp). Vorher standen sie dreifach: hier, in Application.cpp und als Literal im About-Dialog.",
+        "version": "0.2.0",
 
         "core": {
           "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],
@@ -210,7 +211,7 @@
               "//timeout": "S73: von 30 auf 120 erhoeht. Die Suite braucht warm ~12 s, aber der ERSTE Lauf direkt nach einem Build ~30 s (frische Binaries, Virenscanner) — und schlug damit reproduzierbar an die alte Grenze. Der Wert soll Haenger fangen, nicht kalte Starts.",
               "timeout": 120,
               "labels": [ "unit", "core", "fast" ],
-              "dependencies": [ "MyViz.Core", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],
+              "dependencies": [ "LumiViz.Core", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],
               "externals": [ "Qt6", "bass", "lua54" ],
               "external_options": {
                 "lua54": { "LUA_EMBEDDED": false }

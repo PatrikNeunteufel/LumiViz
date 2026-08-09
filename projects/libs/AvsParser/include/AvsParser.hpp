@@ -18,7 +18,7 @@
  * spot and is reported as a warning — parsing never throws, never hard-fails.
  *
  * Format reference: ref/vis_avs/avs/vis_avs/r_list.cpp (BSD-3, Nullsoft 2005);
- * layout notes in projects/apps/MyViz/docs/visuals/Import_Analyse_AVS_MilkDrop.md §5.3.
+ * layout notes in projects/apps/LumiViz/docs/visuals/Import_Analyse_AVS_MilkDrop.md §5.3.
  ****************************************************************************************
  */
 

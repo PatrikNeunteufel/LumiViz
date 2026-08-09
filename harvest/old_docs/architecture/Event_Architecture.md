@@ -8,7 +8,7 @@
 
 ## Übersicht
 
-MyViz verwendet das Publish/Subscribe Pattern für lose Kopplung zwischen Komponenten.
+LumiViz verwendet das Publish/Subscribe Pattern für lose Kopplung zwischen Komponenten.
 
 ```
 ┌────────────────────┐     ┌────────────────────┐     ┌────────────────────┐

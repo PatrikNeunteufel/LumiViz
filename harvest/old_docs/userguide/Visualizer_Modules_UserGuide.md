@@ -347,7 +347,7 @@ if (loaded)
 Die Presets werden als JSON gespeichert:
 
 ```
-%APPDATA%/MyViz/presets/
+%APPDATA%/LumiViz/presets/
 ├── visualizer/pulsing/Energetic.lvp
 ├── smoothing/MySmooth.smooth
 ├── audio/MyAudio.audio

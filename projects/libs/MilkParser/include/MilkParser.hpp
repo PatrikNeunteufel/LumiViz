@@ -25,7 +25,7 @@
  * Parser behaviour derived from the reference presets (ref/winamp_orig,
  * asset/Milkdrop3) and the MilkDrop3 source (BSD); the projectM parser was
  * used as a concept reference only (LGPL — no code taken). Concept:
- * projects/apps/MyViz/docs/visuals/MilkDrop_Import_Konzept.md §2.2.
+ * projects/apps/LumiViz/docs/visuals/MilkDrop_Import_Konzept.md §2.2.
  ****************************************************************************************
  */
 

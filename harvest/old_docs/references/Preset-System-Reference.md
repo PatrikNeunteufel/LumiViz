@@ -34,7 +34,7 @@
         "name": "Neon Pulse",
         "visualizerId": "pulsing",
         "description": "Vibrant neon pulsing effect",
-        "author": "MyViz Team",
+        "author": "LumiViz Team",
         "version": 1,
         "formatVersion": 1
     },
@@ -158,7 +158,7 @@ When a preset is loaded:
 ### 4.1 Windows
 
 ```
-%APPDATA%\MyViz Project\MyViz\presets\
+%APPDATA%\LumiViz Project\LumiViz\presets\
 ├── pulsing\
 │   ├── Default.json
 │   └── Neon Pulse.json
@@ -172,7 +172,7 @@ When a preset is loaded:
 ### 4.2 Linux
 
 ```
-~/.config/MyViz Project/MyViz/presets/
+~/.config/LumiViz Project/LumiViz/presets/
 ├── pulsing/
 ├── waveform/
 └── gradients/
@@ -181,7 +181,7 @@ When a preset is loaded:
 ### 4.3 macOS
 
 ```
-~/Library/Application Support/MyViz Project/MyViz/presets/
+~/Library/Application Support/LumiViz Project/LumiViz/presets/
 ├── pulsing/
 ├── waveform/
 └── gradients/

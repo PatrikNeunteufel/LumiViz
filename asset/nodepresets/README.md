@@ -19,7 +19,7 @@ gespeicherten Kette (`.lvfx`) unter `"type"` steht: `superScope`, `movement`,
 `dynamicMovement`, `metaballs3d`, `list` …
 
 Selbst gespeicherte Voreinstellungen landen **nicht** hier, sondern im Benutzerordner
-(`<AppData>/MyViz/nodepresets/<typkey>/`). Bei gleichem Namen gewinnt der
+(`<AppData>/LumiViz/nodepresets/<typkey>/`). Bei gleichem Namen gewinnt der
 Benutzerordner; mitgelieferte Dateien lassen sich in der App nicht überschreiben oder
 löschen.
 

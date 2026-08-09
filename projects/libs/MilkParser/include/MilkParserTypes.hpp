@@ -19,7 +19,7 @@
  * yet still parses cleanly and is visible for the import report.
  *
  * Format reference: ref/MilkDrop3/code (BSD) and ref/winamp_orig (behaviour);
- * concept: projects/apps/MyViz/docs/visuals/MilkDrop_Import_Konzept.md §2.2.
+ * concept: projects/apps/LumiViz/docs/visuals/MilkDrop_Import_Konzept.md §2.2.
  ****************************************************************************************
  */
 

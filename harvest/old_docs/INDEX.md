@@ -1,4 +1,4 @@
-# MyViz — Dokumentations-Index
+# LumiViz — Dokumentations-Index
 
 > **Version:** 1.0.0
 > **Datum:** 2026-07-18

@@ -14,7 +14,15 @@
  * @details
  * Aufruf:
  *   AvsStandalone [presetDateiOderOrdner] [--auto] [--frames N]
- *                 [--out DIR] [--size WxH]
+ *                 [--out DIR] [--size WxH] [--render-scale N]
+ *
+ * - `--render-scale N` (S73): Divisor des Import-Render-Scale-Knotens, das
+ *   Gegenstueck zur App-Einstellung `import/avsRenderScaleDivisor`. **Bis S73
+ *   fehlte er hier ganz** — der Standalone rendert dann ungeskaliert, und
+ *   klassische AVS-Presets (feste Pixelgroessen) zerfallen bei grossen
+ *   Fenstern in Streifen. Bei den ueblichen kleinen Fenstern faellt das nicht
+ *   auf, weshalb die Luecke lange unbemerkt blieb. Wer das Bild der App
+ *   nachstellen will, MUSS denselben Divisor setzen wie dort.
  *
  * - Ohne Argument wird der Referenz-Korpus gesucht
  *   (`../ref/vis_avs/avs/vis_avs/presets`, vom Exe-Pfad aufwaerts).
@@ -166,6 +174,9 @@ public:
     /// --beat-period N: deterministischer Beat alle N Frames statt des
     /// Detektors — Gegenstueck zu AvsRef --beat-period (frame-exakte Diffs)
     void setBeatPeriod(int frames) { m_beatPeriod = frames; }
+    /// Divisor des Import-Render-Scale-Knotens (1 = neutral) — die App holt
+    /// ihn aus `import/avsRenderScaleDivisor`, hier kommt er per Schalter.
+    void setRenderScale(int divisor) { m_renderScale = divisor > 0 ? divisor : 1; }
 
     /// --no-ape: aus APEs uebersetzte Knoten abschalten (AvsRef kennt sie nicht)
     void setNoApe(bool on) { m_noApe = on; }
@@ -270,6 +281,15 @@ private:
         const bool isChain = suffix == QStringLiteral("lvfx") ||
                              suffix == QStringLiteral("lvfx2");
         const bool isMilk = suffix == QStringLiteral("milk");
+        // Import-Render-Scale wie in der App (S73). Bis hierher kannte der
+        // Standalone den Divisor NICHT — er rendert dann ungeskaliert, und
+        // klassische AVS-Presets (feste Pixelgroessen) zerfallen bei grossen
+        // Fenstern in Balken. Bei kleinen Fenstern faellt es nicht auf, was
+        // die Luecke lange verdeckt hat. Die App holt den Wert aus
+        // `import/avsRenderScaleDivisor`; hier kommt er per --render-scale,
+        // damit das Werkzeug keine App-Einstellungen mitlesen muss.
+        m_viz->setImportRenderScaleDivisor(m_renderScale);
+
         const bool ok = isChain  ? m_viz->loadChainFile(path, &report)
                         : isMilk ? m_viz->loadMilkFile(path, &report)
                                  : m_viz->loadAvsFile(path, &report);
@@ -466,6 +486,9 @@ private:
     int m_beatPeriod = 0;
     bool m_noApe = false;
     int m_lastWarnings = 0;
+    /// --render-scale: Divisor des Import-Render-Scale-Knotens (1 = neutral).
+    /// Gegenstueck zur App-Einstellung `import/avsRenderScaleDivisor`.
+    int m_renderScale = 1;
 };
 
 } // namespace
@@ -506,6 +529,15 @@ int main(int argc, char* argv[])
         QStringLiteral("beat-period"),
         QStringLiteral("deterministischer Beat alle N Frames (wie AvsRef)"),
         QStringLiteral("N"), QStringLiteral("0"));
+    const QCommandLineOption optRenderScale(
+        QStringLiteral("render-scale"),
+        QStringLiteral("Divisor des Import-Render-Scale-Knotens (1 = neutral). "
+                       "Gegenstueck zur App-Einstellung "
+                       "import/avsRenderScaleDivisor — klassische AVS-Presets "
+                       "brauchen 2 oder 4, sonst zerfaellt das Bild bei "
+                       "grossen Fenstern"),
+        QStringLiteral("N"), QStringLiteral("1"));
+    parser.addOption(optRenderScale);
     parser.addOption(optSaveEvery);
     parser.addOption(optBeatPeriod);
     parser.addOption(optAuto);
@@ -598,6 +630,7 @@ int main(int argc, char* argv[])
     window.setEditNach(parser.value(optEditNach));
     window.setSaveEvery(parser.value(optSaveEvery).toInt());
     window.setBeatPeriod(parser.value(optBeatPeriod).toInt());
+    window.setRenderScale(parser.value(optRenderScale).toInt());
     window.resize(w, h);
     window.show();
 

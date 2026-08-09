@@ -222,9 +222,9 @@ void ConfigPanel::onParamChanged(const std::string& paramId,
 ### 5.1 Speicherort
 
 ```
-%APPDATA%/MyViz/presets/           (Windows)
-~/.local/share/MyViz/presets/      (Linux)
-~/Library/Application Support/MyViz/presets/  (macOS)
+%APPDATA%/LumiViz/presets/           (Windows)
+~/.local/share/LumiViz/presets/      (Linux)
+~/Library/Application Support/LumiViz/presets/  (macOS)
 ├── visualizer/
 │   └── pulsing/
 │       ├── Energetic.lvp

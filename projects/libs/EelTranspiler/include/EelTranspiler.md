@@ -30,7 +30,7 @@
 
 Einmalige Übersetzung von EEL-Skripten (AVS-Superscope-Slots, MilkDrop
 per_frame/per_vertex) in Lua-Quelltext für die
-[LuaScriptEngine](../../../apps/MyViz/include/scripting/LuaScriptEngine.md)-Sandbox —
+[LuaScriptEngine](../../../apps/LumiViz/include/scripting/LuaScriptEngine.md)-Sandbox —
 zur Laufzeit existiert kein EEL (Zielbild Import-Analyse §4). Aufbau klassisch
 dreistufig (§7.4): Lexer → Pratt-Parser (Superset-Grammatik, ~12 Präzedenzstufen)
 → Codegen (AST → Lua-String, hoisting-basiert).

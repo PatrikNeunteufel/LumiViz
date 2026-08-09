@@ -1,0 +1,1617 @@
+# LumiViz — Offene Punkte (Arbeitsliste)
+
+> **Version:** 1.70.0
+> **Datum:** 2026-08-09 (Session 73)
+> **Typ:** Status/Arbeitsliste
+> **Status:** Aktiv — **SSOT für „was ist noch offen"**
+> **Sprache:** Deutsch
+> **Ersetzt:** `Offene_Implementierungen.md` + `Offene_Sichttests.md` (beide standen
+> auf Session 37/38 und waren in weiten Teilen überholt — Git hat sie)
+
+Dieses Dokument beantwortet **eine** Frage: was ist noch zu tun. Die Detail-Konzepte
+bleiben, wo sie sind; hier steht je Punkt nur so viel, dass man ihn aufgreifen kann,
+plus der Verweis auf die Quelle.
+
+**Pflege:** am Ende jeder Session nachziehen — zusammen mit dem Handover
+(`.claude/handover/HANDOVER.md`, lokal). Wo beide sich widersprechen, gilt das
+Handover; dann dieses Dokument nachziehen.
+
+Legende: 🔴 blockiert anderes · 🟠 Befund mit Messwert · 🟡 Entscheid nötig ·
+⬜ Sichttest/Urteil offen · ⚪ Backlog (bewusst nichts tun) · 🔧 Kleinkram
+
+> ## ✅ Erledigt in S66 (Aufträge Patrik)
+>
+> **Puffer-Wechsel-Schalter** (Anlass: „Rock The House sieht je nach Vorgänger
+> anders aus" = S63-Feedback-Erbe): je Milkdrop-Node Behalten/Löschen/Fading
+> (einmaliger Mix, Erbe-Regler)/**Ausblenden über Zeit** (Echo-Dämpfung je
+> Frame nach dem Warp, Sekunden-Regler), App-Default im Settings-Panel;
+> Sichttest Behalten/Löschen bestanden, **Sichttest Ausblenden offen**.
+> Merke: Löschen = Rausch-Saat + rand_preset-Seed-Reset, NICHT schwarz
+> (Verstärker-Presets) und OHNE Loudness-Reset (loadDiag: Musik auf leerer
+> Warmup-Rampe ⇒ bass≈17-Explosion — erprobt und verworfen).
+>
+> ## ✅ TOP 1 GELÖST in S67 — Preset-Wechsel-Divergenz („RTH erbt Farbe")
+>
+> **Ursache gefunden und gefixt (S67):** `ensureCustomPrograms()` stand in
+> `onRender` hinter dem Gate „nur wenn Custom-Quellen vorhanden" — beim
+> In-Place-Wechsel auf ein Md1Default-/None-klassifiziertes Preset (RTH_2024:
+> Warp `ret*0.93`, Comp Passthrough) wurde der Rev-Wechsel nie verarbeitet und
+> die **Warp-/Comp-GL-PROGRAMME DES VORGÄNGERS renderten das neue Preset
+> weiter** (Trace-Signatur: `warpSrc=nein … Branch warp=CUSTOM`). Bei aa9dc9d0
+> unsichtbar (jeder Wechsel = frische Instanz), in der Triage unsichtbar (ein
+> Preset je Lauf). Beweis: **MilkdropStandalone 1.1.0 `--ab`-Wechsellauf**
+> (FNV-Hash je Frame): vorher Spotlight→RTH vs. Beauty→RTH **0/300** gleiche
+> Frames (rot-abklingend vs. weiß-aufhellend) trotz Trace-bewiesenem Wipe —
+> nachher **300/300 bitgleich**. Kaltstart vs. Wechsel+Audio-Neustart
+> konvergiert ab ~f120 (Rest = bewusst behaltene Loudness-Historie).
+> Doku: MilkdropVisualizer.md 1.22.0. Tests grün, alle 3 Builds grün.
+> **App-Sichttest Fix + Sicht-Blende: ✅ Patrik (S67, „passt nun").
+> Noch offen aus dem S66-Plan: Sichttest Ausblenden-Modus.**
+>
+> ## 🟡 S67 — Rausch-Saat sichtbar: UNTERSUCHT, Entscheid offen
+>
+> **Befund Patrik (S67):** Beim Preset-Wechsel und nach App-Start ist bei
+> fast allen Presets zu Beginn Rauschen sichtbar — „das war zuvor nie".
+> **Untersuchung (S67, abgeschlossen):** Quelle geklärt — Patriks QSettings
+> stehen seit S66 auf `milkdrop/pufferWechsel=loeschen`; Löschen wipet auf die
+> S63-Rausch-Saat, die der ehrliche Decay-Pfad ~0,5–1 s zeigt. Vor S66 war
+> effektiv immer Behalten aktiv (Code-Default `behalten`) — nie Rauschen.
+> Der Start-Fall ist die S63-Kaltstart-Saat (Puffer-Erzeugung beim ersten
+> Load). **Messung Standalone `--ab --wechsel behalten` (mit S67-Fix):**
+> kein Rauschen, Vorgänger-Einfluss bei RTH_2024 nach ~0,5 s optisch weg,
+> ab f0120 (2 s) BIT-IDENTISCH über verschiedene Vorgänger — und ab ~2 s
+> sogar bitgleich mit dem Löschen-Lauf (Modus konvergiert).
+> **Empfehlung: App-Default zurück auf Behalten** (Settings-Panel → Keep);
+> Löschen bleibt als Spezialwerkzeug je Node. **✅ Sicht-Blende UMGESETZT
+> (S67, Entscheid Patrik „mit Settings-Schalter"):** `setSichtBlende` im
+> Kern (Ease-in ~0,5 s über Kaltstart-/Resize-Saat und Löschen-/Fading-Wipe,
+> Composite-seitig — f60-Hash mit/ohne Blende identisch = beweisbar rein
+> kosmetisch), QSettings `milkdrop/sichtBlende` Default AN, Settings-Panel
+> „MilkDrop Start Fade-in", Standalone `--blende`; Prüfstände unverändert
+> (Kern-Default AUS). Handbuch 1.6.0. **Sichttest: ✅ Patrik (S67).**
+>
+> **Benutzerhandbuch 1.5.0** (Behalten-Semantik exakt, Regelwerk,
+> §12 Shadertoy, GPU, 2 Screenshots — skriptgesteuert aus der App).
+> **Panel-Komfort:** Splitter Baum/Editor (Stellung persistiert),
+> Panel-Mindestbreite + sizeHint-Default 560×780, Milkdrop-Sektionen in
+> Pipeline-Reihenfolge mit GETRENNTEN Warp-/Comp-Sektionen. Feld-Inventar 726.
+> **NEU OFFEN (Entscheid Patrik, S66): Meganode-Split-Strang** — MilkDrop-
+> Stufen-Container (Waves/Shapes/…) im Baum UMORDENBAR mit echter Pipeline-
+> Wirkung + zusätzliche Container für AVS-/LumiViz-Renderer MITTEN in der
+> MilkDrop-Pipeline; Import-Default bleibt IMMER die Original-Reihenfolge.
+> Braucht Konzept-Kapitel in `visuals/Vereinheitlichung_Konzept.md`
+> (Puffer-Übergabe FeedbackBuffer↔Chain-Buffer, Y-Konvention, Datenmodell
+> Stufen-Reihenfolge + Serialisierung mit Migration).
+
+> ## ✅ Erledigt in S65 (Aufträge Patrik)
+>
+> **Strang R (Regelwerk Legacy/Modern) KOMPLETT + abgenommen** — Triage s65
+> klassengleich s64f (0 Wechsel, OK 295), Modern-Stichprobe beweist die Schalter.
+> **Strang S (Shadertoy) S1–S4 KOMPLETT** — Node host-nativ, 512×2-Audio,
+> URL-/ID-Import (Netz-Abnahme braucht API-Key), Multipass Buffer A–D,
+> NEU ShadertoyBrowserPanel. Dazu Editor-Komfort (ⓘ/⤢/Tooltips für GLSL/HLSL),
+> Speichern-Namensvorschlag und der **100-Shader-Vorrat** in `asset/shadertoys/`
+> (fürs Shadertoy-Konto → API-Key). Details: `Changelog_Session65.md`,
+> Plan-Doku `visuals/Regelwerk_und_Neue_Module_Plan.md` (1.4.0).
+> **NEU OFFEN:** Sichttests neue UI (Patrik) · S3-Netz-Abnahme mit Key ·
+> ~~Audio-Skala dB-vs-linear~~ **✅ S67: Sonde gefahren + dB umgesetzt**
+> (WebAudio-Vertrag in der Audio-Textur, ShadertoyWrapper.md 1.2.0; dazu NEU
+> `getspecdb()` für eigene Chain-Skripte — Idee Patrik; Absolut-Offset-
+> Feinabgleich wandert in die S3-Netz-Abnahme) ·
+> Shader-Feintuning nach Ton-Test (45/56/64 vorgemerkt).
+
+> ## ✅ Erledigt in S53 (war die Vorgabe Patrik aus S52)
+>
+> **Panel-Editoren für `Metaballs 3D` und `Tentacles 3D`** — beide Knoten haben
+> jetzt volle Editoren im `MultiEffectPanel` (Metaballs: Kugelzahl, Radius,
+> Tempo, Isowert, Blend · Tentacles: Zahl, Segmente, Länge, Dicke, Tempo, Blend),
+> je mit editierbarer Farbtafel, und stehen in der Palette („Scopes & Sources").
+> Die Farbtafel-Zeile ist dabei aus dem SuperScope-Block herausgelöst und
+> geteilt worden (`addColorTable`).
+
+---
+
+## 0. Fertig-Kriterium der Kalibrier-Runde — ✅ ERFÜLLT (S60, 2026-08-01)
+
+**Alle sechs Haken sitzen — die Kalibrier-Runde (S44–S60) ist abgeschlossen.**
+Von den zwei benannten §1-Treue-Resten außerhalb der Haken ist **Tie Tunnel
+seit S61 GELÖST** (Dot-Plane-Startwinkel, s. §1); es bleibt **VR09-AVI**
+(reine Indeo-Decoder-Differenz) — §9-Kandidat nach Sichturteil Patrik mit Ton.
+
+Die Kalibrier-Runde (lief seit S44) ist **fertig**, wenn alle sechs Haken
+sitzen. Das Kriterium selbst ist **eingefroren**: neue Befunde, die schärfere
+Metriken noch ausgraben, verlängern diese Liste nicht — sie fallen unter
+Haken 2 (fixen oder als bewusste Grenze in §9 abnehmen). Alles, was nicht
+unter §0 fällt, ist Nach-Kalibrier-Arbeit, lebt in §6/§7 und taucht in
+Session-Plänen erst wieder auf, wenn §0 abgehakt ist.
+
+| # | Haken | Stand (S60) | |
+|---|---|---|---|
+| 1 | **Modul-Sonden grün** — und halten es bis zum Abschluss | ✅ **91/91** (S60-Ende; +2 wrap-Sonden, nach allen Umbauten gehalten) | ✅ |
+| 2 | **Modul-Matrix 43/43** nach Mittelwert- **und** Flächen-Urteil. Eine Zeile, die nicht grün wird, darf nur über einen begründeten Eintrag in §9 schließen, **mit Abnahme Patrik** (Kandidaten: `water`-Chaos-Rauschen · `grain`-Zufallsstrom · ggf. Tie Tunnel) | ✅ **43/43 — ERFÜLLT (S60):** 41 Zeilen grün gemessen (S60 gelöst: `31_water_bump` Uniform-Fix · vier Flächen-Befunde PIXELGENAU · `04_blitter_feedback` nearest+y-Anker) + `20_water`/`24_grain` **von Patrik als bewusste Grenze abgenommen** (§9, Montagen; Zeilen bleiben Wächter) | ✅ |
+| 3 | **Feld- und Edit-Sonden-Vollauf grün** (kein WIRKUNGSLOS, kein unerklärter STUMM) — stand seit S57 aus | ✅ **erfüllt (S60):** Edit-Vollauf **567 GLEICH · 127 TEILWEISE · 10 VERDECKT · 0 WIRKUNGSLOS** · Feld-Vollauf nach dem waterBump-Fix **674 WIRKT · 29 SCHWACH · 1 STUMM** — der eine ist `convolution.edgeMode`, der dokumentierte Schatten der offenen wrap-Arithmetik (Haken 5); der erste Lauf (664/29/11) hatte die waterBump-Regression gefunden (§1). waterBump-Edit-Sonden 1/9/0 nachgeholt | ✅ |
+| 4 | **Abschluss-Messlauf der abgenommenen Kern-Presets** in beiden Größen, ohne Regression | ✅ **erfüllt (S60):** 24/24 s-Kalibrier-Sonden UND 8/8 Kern-Presets OK in 320×240 + 640×480 (Alternate Reality 0,002 · splendora 0,003 · hypno07 0,008 · Lost Cause 0,002 · Bright Light District 0,002 · Rotor 0,011 · Real Impressionist 0,008 · Deep Red Sea 0,004) — alle auf/unter Abnahme-Niveau | ✅ |
+| 5 | **Mess-Werkzeug-Schulden** | ✅ **alle drei erledigt (S60):** (a) `srand` nach Preset-Laden war seit S52 in `avsref_main` drin — der §8-Eintrag war eine Doku-Leiche · (b) **`r_avi`-Uhr virtualisiert** (`patched/r_avi.cpp`, `avsref_tick()` über `g_avsref_tick_ms`) — AVI-Presets sind messbar; erste VR09-Messung deckt sofort einen App-Befund auf (§1) · (c) **wrap-Arithmetik an der Original-APE vermessen und umgesetzt** (2 Dauersonden + scale-2/4/128-Grenztest: scale 1 = Sättigung, scale ≥ 2 = (pos−neg) mod 65536 mit UNSIGNED-Division — 254/255-Werte exakt getroffen); Modul-Sonden **91/91**, `convolution.edgeMode` **WIRKT** (Grundkonfig scale 2). ~~Trail-Kreislauf-Sonde~~ (hinfällig S60) | ✅ |
+| 6 | **Offene Entscheide getroffen** oder ausdrücklich nach §7 verschoben: die §5-Tabelle · Feldreihenfolge (§7) · Umfang + Namenskonvention der Basis-Voreinstellungen (§7 — Entscheid vorziehen, Umsetzung nach §0) | ✅ **komplett (S60)** — §5 abgeräumt (Hotkeys, Playlist, Lights→Backlog, Config-Pipeline-Tabelle gestrichen, MilkDrop-Texturen beschafft), Feldreihenfolge bleibt Ist, Vorlagen-Konvention steht | ✅ |
+
+**Nicht Teil von §0** (ausdrücklich danach): Basis-Voreinstellungen je Modul
+(§7) · Vereinheitlichung V2–V5 (§6) · Video-Weg Stufe 2 (§7) ·
+Grafikkarten-Auswahl (§8, braucht den Vorher/Nachher-Messlauf) · die
+Seite-an-Seite-Urteile und Sichttest-Rückstände (§2–§4) — Handarbeit Patrik,
+eigener Strang, blockieren das maschinelle Kriterium nicht.
+
+## 1. AVS-Kalibrierung — offene Befunde mit Messwert
+
+Metrik ist der Abstand zur Referenz (`AvsRef`), 0 = gleich. Methodik:
+[AVS_Kalibrier_Methodik.md](visuals/AVS_Kalibrier_Methodik.md) — **Urteil über
+gezeichnete Pixelmenge + Schwerpunkt**, nicht über dMean allein (die Metrik lügt bei
+dünnen Inhalten).
+
+| Preset / Sonde | Wert | Diagnosestand | |
+|---|---|---|---|
+| ~~**07 Milky Way Xtreme**~~ | **0,346 → 0,033** | ✅ derselbe Texer-Farbfix (S52), Vorstand gemessen | ✅ |
+| ~~**19 High Voltage**~~ | **0,126 → 0,040** | ✅ derselbe Texer-Farbfix (S52), Vorstand gemessen | ✅ |
+| ~~**15 Alien Alloy**~~ | **0,647 → 0,008** | ✅ **gelöst (S52):** Texer II setzte die Sprite-Farbe **je Punkt** auf Weiß zurück — also *nach* dem Frame-Slot, in dem dieses Preset sie berechnet (`red=sin(ct+2.07)*0.5+0.5` …). Wir zeichneten durchgehend weiße Sprites; da sie die einzige Energiequelle des Wirbels sind, lief das Bild über die Frames nach Schwarz. Gegenstück zum `sizex`/`sizey`-Befund aus S51, dieselbe Ursache an anderer Variable. Rest-MAE 0,298 = Phasenversatz, gehört zum rand-Faden | ✅ |
+| ~~**01 Picture II**~~ | 0,516 → **0,008 / MAE 0,029** (320) · **0,008 / 0,016** (640) | ✅ **grün (S58), vier Befunde.** (1) **Parser:** der Dateiname von „Picture II" steht in einem FESTEN 260-Byte-Feld (MAX_PATH), nicht als NUL-terminierte Zeichenkette — der Blob misst 284 = 260 + 6×4. Wir lasen variabel, blieben nach dem ersten NUL stehen und nahmen den Rest des Puffers als Zahlen; hier stand noch `.bmp` von einer früheren Eingabe, also war `blendMode` 1 886 350 382 statt 0 und alle sechs Felder Müll. Das Bild kam nie an. (2) **Randspalte:** der SuperScope zeichnet `x=1-2/w`, was in double exakt Spalte w−1 ergibt und über float gerundet w−2; ein Movement (`dg=.9015*sw/320` — die Falte liegt bei 640 ausserhalb des Bildes, bei 320 mitten drin) sammelt bei 640×480 ALLE Ausgabepixel auf genau dieser Spalte ein und zieht sie über den Schirm. Daher die Größenabhängigkeit. (3) **Dynamic Shift** am Rand — s. eigene Zeile. (4) **Die Picture-II-APE hat SECHS Betriebsarten**, wir kannten drei: der zweite Aufruf im Preset mischt mit **Maximum**, bei uns wurde daraus ein Mittelwert und das Bild lief hell aus. Damit grün in beiden Größen | ✅ |
+| ~~**Custom BPM (id 33)**~~ | Zeile 9 → **0** | ✅ **gelöst (S52):** vier Abweichungen von `r_bpm.cpp` — (1) **Off-by-one**: das Original lässt jeden `skipVal+1`-ten Beat durch, wir jeden `skipVal`-ten · (2) die drei Betriebsarten sind dort **exklusiv** (jeder Zweig kehrt sofort zurück), bei uns liefen sie hintereinander und konnten sich kombinieren · (3) `skipfirst` wurde geparst, aber nie übernommen · (4) `skipval=0` heißt „jeden Beat", unsere Untergrenze 1 machte „jeden zweiten" daraus. Sonde `bpm_zaehler_skip3` jetzt MAE 0,000 | ✅ |
+| ~~**Inhaler**~~ | **0,345 → 0,168** | ✅ Custom-BPM-Fix. Bisektion (S52): der Scope allein war referenzgleich (MAE 0,003), es hing am Filter davor. Der rand-**Strom** ist als Ursache ausgeschlossen (vier Sonden, MAE 0,000) | ✅ |
+| ~~**Reflectosphere**~~ | **0,174 → 0,085** | ✅ derselbe Fix | ✅ |
+| ~~**The Lion King**~~ | **0,021 → 0,013 (grün)** | ✅ derselbe Fix | ✅ |
+| ~~**Deep Red Sea**~~ | **0,943 → 0,011** | ✅ **gelöst (S52)** — zwei Fehler: (a) der **Adjustable-Blend** war vertauscht (`v` gewichtet in `r_defs.h:250-257` den *Framebuffer*, wir gaben es der neuen Farbe) · (b) `runClear` reichte die **eigene** Clear-Aufzählung roh in `applyLineBlend`, das die BLEND_LINE-Tabelle erwartet — aus „50/50 gegen Schwarz" wurde „MAX gegen Schwarz", also ein **No-op**, das Bild klang nie ab. Zieht mit: Wtf I'm Lost 0,094 → 0,003 · High Voltage 0,114 → 0,005 | ✅ |
+| ~~**Alternate Reality**~~ | 0,622 → **0,025 / MAE 0,029** (320) · 0,867 → **0,015 / 0,017** (640) | ✅ **abgenommen (S58, Entscheid Patrik): der Rest gilt als Rauschen.** Zuerst war die REFERENZ nicht reproduzierbar (s. Zeile „AvsRef: APE-DLL"), danach zwei App-Befunde: Channel Shift zog einen Zufallszug zuviel (Startwert statt Zug im ersten Frame), und die Convolution-APE rechnet ganz anders als angenommen (eigene Zeile). Damit sind die Bisektionsstufen 1–8 grün (0,000–0,006) und das gesättigte Pink ist weg — die Referenz bleibt weiß, wir jetzt auch. **Rest (MAE 0,339):** die Rückkopplung **Buffer Save Slot 0 → Dynamic Movement mit `buffern=1`**. Frame 1 ist exakt, ab Frame 2 laufen beide Seiten um 1,3 % auseinander, gesättigt bei 3 % ab Frame ~20; die zweite Convolution verstärkt das auf 24 %, weil ihr `absolute` jedes negative Zwischenergebnis auf 255 kippt. **Die Ursache war der BEAT-BEREICH:** in `r_list.cpp:747-751` wirken `SET_BEAT`/`CLR_BEAT` eines Kindes nur auf die lokale `isBeat`-Variable der Liste, also auf deren nachfolgende Kinder — der Elternteil sieht davon nichts. Wir stellten `m_frameBeat` global um; das Custom BPM in der Unterliste filterte damit jeden vierten Beat für die GANZE Kette. Die beiden Dynamic Movements dahinter zogen ihre acht `rand(4)` je Beat-Code deshalb viermal seltener als in der Referenz, und der geteilte Zufallsstrom lief auseinander. Mit dem Listen-Bereich: MAE 0,339 → **0,029**. Zuvor **ausgeschlossen** (gemessen, nicht vermutet): das Rand-Modell aus S57 (Abweichung gleichmäßig verteilt, Randanteil 6 % = Flächenanteil; mit abgeschaltetem Discard bleibt es bei 0,231), die Dynamic Movement selbst (verbatim auf Referenzbild, 2×2-Schachbrett und Punktgitter: 0,000–0,031), ihr Gitter- und `BLEND_ADJ`-Rechenwerk (seit S49 ganzzahlig), die 50/50-Mischung, die verworfene Liste. **Rest:** bei 320×240 liegt dMean mit 0,025 knapp über der Schwelle 0,02 (MAE 0,029 hält sie); bei 640×480 ist die Zeile grün. Kein Handlungsbedarf — wäre allenfalls noch ein kleines Anpassen. Ursprünglicher Befund: 🔴 **S52: wird durch den korrekten Clear SCHLECHTER** (Vorstand dreimal gemessen). Das Preset klart 50/50 gegen ein helles Orange; solange unser Clear ein No-op war, lag der Hintergrund zufällig näher an der Referenz. Jetzt sättigt er pink, die Referenz bleibt **weiß** — bei identischer Labyrinth-Struktur. Der kaputte Clear hat hier einen **zweiten** Fehler verdeckt; Augenmerk auf die Listen-Blends um den Clear | 🔴 |
+| ~~**greatwho2006 15/16**~~ | Symmetrie **0,042 → 0,0000** | ✅ **gelöst (S52), Befund Patrik „sollten sauber spiegeln":** Mirror wertete alle vier Richtungen in EINEM Shader-Durchgang aus der unveränderten Textur aus, die Regeln überschrieben sich. Das Original läuft vier Schleifen nacheinander (`r_mirror.cpp` 167/188/210/230), jede sieht das Ergebnis der vorigen — daher ergeben zwei aktive Achsen dort ein symmetrisches Bild. Jetzt ein Durchgang je Richtung in Referenz-Reihenfolge | ✅ |
+| ~~**30 Bright Light District**~~ | 0,252 → **0,017 / MAE 0,021** (320) · 0,206 → **0,020 / 0,018** (640) | ✅ **grün in beiden Größen (S58).** Gefallen sind hier der Dynamic-Shift-Umbau (dMean 0,270 → 0,026) und die `skip`-Semantik der Scopes (zwei der drei Flügel fehlten ganz). Der letzte Schritt (0,070 → 0,017 bei 320) kam von der **Pixelmitte der Scope-Linien**: die gesamte Restabweichung entsprang EINEM Movement an Position 3, dessen Skript mit `y=if(below(d,.5775),0,y)` die ganze Innenscheibe aus EINER Quellzeile holt und mit `x=sin(ly*80)*4/sw` über vier Spalten schwenkt — eine 240-fache Vergrösserung derselben Bildspalte, unter der jeder Rasterversatz sichtbar wird. Ausgeschlossen wurden davor: die Zufallszahl im Skript (drei feste `p` ändern nichts), jede einzelne Skriptzeile für sich (sechs Teilsonden grün) und die Zeilenabbildung (Subpixel-Kennlinie über 20 Stufen deckungsgleich) | ✅ |
+| ~~**P3_HpR20 Rotor**~~ | 0,461 → **0,018** (320) · **0,006** (640) | ✅ **grün (S58)** — ohne eigene Arbeit gefallen, die Befunde dieser Session haben gereicht. Montage: dasselbe Flammenblatt an derselben Stelle, der 4×-Diff ist Kantenrauschen. Der Rest stand seit S48 | ✅ |
+| ~~**Tie Tunnel DM**~~ | 0,074/0,098 → **0,010/0,009** (320) · **0,002/0,010** (640) | ✅ **GELÖST (S61) — der GESPEICHERTE STARTWINKEL der Dot Plane.** Die Bisektion lief in vier Schritten: (1) Top-Level-Stufen — die Bänder-Liste allein maß 0,000, +Dynamic Movement 0,073; aber das „0,000" war schwarz-gegen-schwarz (die Liste rendert NUR in Buffer-Slot 0, die DM liest ihn per `buffern=1`). (2) Blit-Sonde auf Slot 0 (DM `nomove=1`): der Buffer selbst divergiert schleichend ab ~Frame 12 — Täter in der Rückkopplungsschleife Water→DotPlane→Scopes→BlitterFB→ChannelShift→Mosaic→BufferSave. (3) Auslass-Sonden: ohne Dot Plane fällt die Divergenz von 0,044 auf 0,017, alle anderen Glieder ändern nichts (Water dämpft nur als Verstärker). (4) Dot Plane isoliert in Preset-Konfiguration: MAE 0,006, Montage zeigt die Ebene VERDREHT. Ursache: `r_dotpln::load_config` liest ein 8. Feld **`r = rr/32`** — die im Preset gespeicherte laufende Rotation (hier 1435/32 = **44,84°**). Unser Import warf das Feld weg (AvsParser dekodierte `r_raw` längst, der Translator ignorierte es), die Ebene stand dauerhaft 44,84° verdreht; die fast-schwarzen Band-Farben (Scopes 0x000001!) machten aus dem verdrehten Farbmaterial über die Verstärkerschleife die falsche **Farb-Phase der Tunnelbänder** — Geometrie ref-gleich, weil die DM nur die Quell-ZEILEN anders traf. Fix: `startRotation` in DotPlane- UND DotFountainParams (r_dotfnt speichert genauso), STARTWERT-Bauart wie `interfRotationSeed`. Verifikation: Dot-Plane-Sonde 0,000 über ALLE 120 Frames · Tie Tunnel grün in beiden Größen · Schwester-Preset Tie Tunnel SSC 0,001 · Matrix 01/19 weiter pixelgenau · Zwillinge 67/67 (2 erklärte Refreezes) · Tests 485. Historie: 🟠 **S60 nachgemessen: deutlich besser, und der WÜRFEL SITZT** — die Montage zeigt ihn deckungsgleich (die S59-Linien-Umbauten haben die Versatz-These erledigt; `dt→dt_p` ist als D2-Regel implementiert und die Skripte weisen `dt` vor jedem Lesen zu — die Spur ist tot). **Rest: die FARB-PHASE der Tunnelbänder** (ref magenta-lastig, wir blau-lastig in denselben Geometrien) — braucht eine eigene Bisektions-Session (Band-Quelle isolieren, Farbzyklus-Phase messen). Historie S57: 🟠 **S57 angearbeitet, nicht gelöst.** Die Montage zeigt: **Struktur stimmt** (Tunnel, Streifen, Würfel), aber der **Würfel steht versetzt** — im Diff erscheint er doppelt — und die Tunnelflächen sind leicht verschoben. Die sieben SuperScopes (Cockpit, Crossbar, vier Wings, Stars) teilen denselben Frame-Code `t=t+0.02` und berechnen daraus dieselbe Kamerabahn; ein Versatz von EINEM Frame würde genau so aussehen. **Das ist ausgeschlossen:** mit 119 bzw. 121 Frames steigt der Abstand auf 0,307 bzw. 0,402, mit 120 bleibt er bei 0,148 — die Zeitbasis läuft synchron. Nächste Verdächtige: die perspektivische Projektion der Scopes (Grösse statt Position) und der `dt → dt_p`-Umbau des Imports (sieben Hinweise in diesem Preset). Der Wert hat sich gegenüber der S49-Notiz leicht verbessert (0,154 → 0,148), vermutlich durch den Water-Umbau — das Preset nutzt Water | 🟠 |
+| **Blitter-Zoom-in: Trail weicher als Referenz** | Beispiele 0,062–0,163 | 🟠 **NEU (S61, Beispiel-Sweep):** drei der 90 .avs-Beispiele fallen auf — `blitterFeedback - Sog nach innen` (0,163/MAE 0,143), `Beat-Sprung` (0,062) und `dynamicMovement - Molekuel-Raster` (0,060). Die Montagen zeigen ÜBERALL dieselbe Struktur und Farbe, unser Bild ist über die Rückkopplung nur **weicher** (Ringe verschmieren, die Referenz bleibt scharf) — der Zoom-IN-Pfad (subpixel/BLEND4) verliert je Durchgang etwas mehr Hochfrequenz, die Trail-Szene stapelt das über 120 Frames. Kein Strukturfehler; die Matrix-Zeile 04 (Grundkonfig) blieb grün, sichtbar wird es erst bei DAUER-Zoom-in. Kandidat: Bilinear-Gewichte/Rundung des blitter_normal-Pfads gegen r_blit BLEND4 vermessen (Bauart wie der S60-Zoom-out-Befund). Metrik-Bremse: fixen oder §9 mit Abnahme | 🟠 |
+| ~~**Sonde `convolution_kante`**~~ | 4547/3981 → **4547/4540 px** | ✅ **gelöst (S57).** Die APE berechnet die **letzte Zeile und die letzte Spalte nicht** — ein Off-by-one ihrer Schleife. Der Zielpuffer behält dort seinen alten Inhalt, und weil er im Wechsel wiederverwendet wird, läuft der Wert über die Frames auf: in der Referenz stand dort **255** (gesättigt nach mehrfacher 8×-Verstärkung), bei uns jedes Mal frisch **128** = 8 × 16. Der Weg dorthin: die 560 Pixel im Bild verorten (Zeile 239 + Spalte 319, je vollständig), dann mit der **Identitäts-Sonde** belegen, dass das Eingangsbild identisch ist, und über den Kern (`[0]*24 + [8] + [0]*24` — nur die Mitte) die Randbehandlung ausschliessen. Modul-Sonden **78/80 → 79/80**. Nebenwirkung: `convolution.edgeMode` fällt von 0,0014 auf 0,0007 (SCHWACH), weil der Rand-Unterschied jetzt nur noch links und oben entstehen kann — erklärbar, kein Befund | ✅ |
+| ~~**Sonde `6_alloy/paar_original`**~~ | 39546/37671 → **grün** | ✅ **gelöst (S59) — durch den bit-exakten Texer-II-Resampler**, nicht durch die S57-These (rand-Startphase): die Sprite-Rasterung selbst wich ab (Subpixel-Phase, Malbreite). Ursprünglich: 🟠 **S57: Ursache bewiesen — die ZUFALLS-STARTPHASE.** Die Kette ist Dynamic Movement + Texer II, und ihr Init lautet `t=rand(100)/50`. Zwei neue Sonden mit **festem** `t` (`paar_t_fest_082`, `paar_t_fest_2`) sind **grün** (Menge 0,02 · Lage 0,5 bzw. 1,5) — bei gleichem Startwert rechnen beide Seiten also gleich, und Physik wie Darstellung scheiden aus. Unser `rand()` ist der exakte MSVC-LCG mit Seed 1 (erster Zug 41 → `t = 0,82`); es steht beim Init dieses Effekts nur an einer anderen Stelle des Stroms als bei AvsRef. **Nächster Schritt:** bestimmen, wie viele Züge die Referenz vor dem ersten Effekt-Init macht (Konstruktoren ziehen — Grain zieht 491+1, S49) und unseren Strom entsprechend ausrichten | 🟠 |
+| **Modul-Matrix-Reste** | **40/43** (S60) | **S60: vier der fünf Flächen-Befunde PIXELGENAU gelöst** (je Menge 0,00/Deckung 1,00 in beiden Größen): **`13_rotating_stars`** — exakter r_rotstar-Port: Sterngröße aus dem größten LOKALEN Peak der rohen visdata-Bytes (Bedingung: beide Nachbarn um >4 unterboten, in SIGNED char — Bytes >127 zählen nie), Größe `(s+9)/352` je Achse, `rotSpeed` 0,1, und die Cast-Eigenheit: der ERSTE Eckpunkt entsteht mit getrennten `(int)`-Casts, die Schleifen-Ecken mit EINEM Cast über die Summe (floor statt trunc bei negativem Anteil) · **`02_osc_star`** — exakter r_oscstar-Port: 64 Schritte je Arm, fortlaufender Byte-Index über die 5 Arme, dfactor-Hüllkurve 1/1024→~1/128, `is=min(w·s,h·s)` ganzzahlig · **`14_osc_ring`** — exakter r_oscring-Port: 80 Segmente, Spiegel-Index `q>40?80−q:q`, negativer Winkellauf, EIN impliziter Cast über die Summe · **`17_dot_grid`** — das Gitter stand VERTIKAL GESPIEGELT (Push ohne y-Negation vor `avsZeile`); bei spacing 8 traf nie eine Zeile, dMean sah es nicht. Alle Sternchen-Segmente laufen jetzt durch den linedraw-Bresenham-Port (ThickLines, Breite aus SRM) statt GL-Linien. **`04_blitter_feedback` GRÜN (S60, zwei Befunde):** (1) **blitter_out (Zoom-out) sampelt IMMER nearest** (`src[s_x>>16]`, r_blit.cpp:143) — der `subpixel`-Schalter wirkt nur im Zoom-in (`blitter_normal`/BLEND4); unser Shader bilinear-filterte auch im Zoom-out (konstante Kanten-Differenz ab Frame 2, KEINE Akkumulation — die anderen MAT_TRAIL-Zeilen waren grün). (2) **y-Anker der Abbildung war h−1,5 statt h−0,5** — jede Quellzeile lag eine AVS-Zeile zu tief, der Fehler stapelte sich über die Feedback-Kaskade (Deckung 0,72 → 0,93). Jetzt 0,002/0,007 (320) · 0,001/0,004 (740), Menge 0,01. Restdiff = verstreute Einzelpixel entlang der Waveform (Messerkanten über die Rückkopplung). **Offen (2):** `water` (Chaos-Rauschen, Deckung 0,96) · `grain` (Zufallsstrom-Versatz, Deckung 0,56) — §9-Kandidaten, Abnahme Patrik angefragt (S60, Montagen übergeben). Historie S59: das Flächen-Urteil deckte die fünf Befunde auf (Stand davor 40/43 nach Mittelwert allein) — dünne Zeichner, die die Mittelwert-Metrik nie sehen konnte: `13_rotating_stars` (Ref: winzige Punkt-Sterne, wir GROSSE — Deckung 0!) · `02_osc_star` (Deckung 0,02) · `14_osc_ring` (0) · `17_dot_grid` (gleiche Menge, NULL Überlapp — Verdacht Bewegungs-Akkumulation) · `04_blitter_feedback` (grenzwertig 0,30/0,72). Dazu die drei Altbestände `water` (Chaos-Rauschen) · `grain` (Zufallsstrom-Versatz) · `water_bump` (Trail-Zeile, s. eigener S59-Punkt). Stand vor dem Flächen-Urteil: 40/43. Historie S57: **`dot_grid` ist grün** (dMean 0,047 → **0,000**): wir zeichneten 2 Pixel grosse Punkte statt einzelner, setzten sie auf Zwischenpositionen statt auf ganze Pixel (`xp`/`yp` sind 8.8-Festkomma) und interpolierten die Farbe zu 1 statt zu 63/64. **`interferences` ist GRÜN** (0,053 → **0,027**, dMean 0,025 → **0,001**): die Referenz laesst eine Kopie ausserhalb des Bildes **nichts** beitragen, unser Shader klemmte auf den Randpixel und schmierte ihn nach innen. **`water` erheblich verbessert** (dMean 0,029 → **0,002**, MAE 0,069 → 0,055): Nachbarn ausserhalb werden weggelassen statt geklemmt, und die Halbierung ist ganzzahlig — bei einem rueckgekoppelten Effekt bleibt ein Randfehler nicht am Rand. Der Rest ist **kein Strukturfehler**: die Montage zeigt beide Seiten deckungsgleich, der Diff ist feines Rauschen ueber den Wellenzonen — Chaos-Verstaerkung wie bei `24_grain`. Zwei neue Zeilen kamen hinzu und sind beide grün: `06_blur/02_trail_rounddown` und `03_trail_roundup` (§1c). **Korrektur S53:** der S52-Stand „37/41, vier Reste" war ungenau — `24_grain/01_static100` ist gelb (dMean **0,000**, MAE **0,046**, dreimal identisch gemessen, also kein Rauschen). Die Montage zeigt beide Seiten deckungsgleich, der 4×-Diff ist ein **gleichmäßiges Flächenrauschen**: die Kornmenge stimmt, der Zufallsstrom ist gegen die Referenz versetzt. Kein Strukturfehler — und es betrifft **statisches** Grain, der 🔧-Punkt unten meint das nicht-statische | 🟠 |
+| ~~**`Dot Fountain` ist nicht portiert**~~ | **0,000 / 0,000 — Diff komplett schwarz** | ✅ **portiert (S57), pixelgenau.** Das 30×256-Gitter, die Alterungs-Schleife (jede Stufe rutscht eine weiter und bekommt dabei ihre Physik), die Erzeugung aus der Wellenform (`t*5/4 - 64`, bei Beat +128) und die 3D-Matrix stehen jetzt zeilengenau nach `r_dotfnt.cpp`. Der letzte Fehler war die Kanalzuordnung: die Farbtabelle liegt in 0x00RRGGBB vor, nicht in AVS-Reihenfolge — rot und blau waren vertauscht, die Montage zeigte es sofort. Matrix-Helfer und `initcolortab` teilen sich Dot Plane und Dot Fountain jetzt (`avsMat*`, `avsInitColorTab`); vorher lagen sie doppelt. **Die Warnung zur Zeile bleibt gültig:** sie mass auch im völlig falschen Zustand 0,002, weil beide Bilder überwiegend schwarz sind — ein flächenbasiertes Urteil fehlt weiterhin. Ursprünglicher Befund: 🔴 **S53:** Die Referenz `r_dotfnt.cpp` ist ein **30×256-Gitter** (7680 Punkte, rotierende Höhenwand, 3D-Matrix `translate(0,-20,400)` wie `Dot Plane`, Höhe aus dem Spektrum). Unser Renderer sind **400 freie Partikel** mit eigener Physik — der Header sagt es selbst („Simplified particle model here"). Die Montage zeigt links einen hohen geordneten Brunnen über die volle Bildhöhe, mittig einen flachen Fleck von ~⅕ der Fläche; der 4×-Diff **ist** das Referenzbild. Die Matrix-Zeile `19_dot_fountain` misst trotzdem 0,002 und zählt zu den 37 — **die Metrik lügt bei dünnen Inhalten**, beide Bilder sind überwiegend schwarz. Faktisch also **36/41**. Fix = echte Portierung nach dem `Dot Plane`-Muster (Matrix + Farbtabellen-Arithmetik liegen dort zeilengenau vor); zusätzlich braucht die Zeile ein **flächenbasiertes** Urteil, sonst bewacht sie weiter nichts | 🔴 |
+| ~~Color-Map-Kennlinie~~ | ±1 → **0** | ✅ **gelöst (S57).** Die APE rechnet in DREI ganzzahligen Schritten, und der Verlust steckt in der Schrittweite selbst: `step = 65536/span`, dann `t = (d·step) >> 8`, dann `(a·(256−t) + b·t) >> 8`. Das erklärt, warum Zweierpotenzen exakt waren (65536/16 geht auf) und 200 nicht (327,68 → 327). Unsere alte Formel `a + (b−a)·d/span` traf auf dem Graukeil **1 von 255** Punkten. Jetzt **922/922** über sechs Spannweiten, beide Kennlinien-Blöcke 0 Abweichungen. Die `04_span*`-Sonden existierten seit S49, wurden aber nie ausgewertet — der Bericht prüfte 15 Stichproben, und daran sind fünf Formeln nicht unterscheidbar; die Auswertung ist jetzt in `analyse_colormap.py` | ✅ |
+| ~~Colorfade-Zufalls-Beatmodus~~ | — | ✅ **gelöst (S57)**, zusammen mit dem `enabled`-Bitfeld — es war dieselbe Sache. Colorfade folgt jetzt `r_colorfade` zeilengenau: Bitfeld beim Import (1 an · 2 on-beat-random · 4 slow fade), persistenter Fader-Zustand, Nachziehen um EINEN Schritt je Frame samt der Grün/Blau-**Vertauschung** (`faderpos[1]` folgt `faders[2]`, beim direkten Setzen gilt sie nicht), drei exklusive Beat-Zweige. Folge: **ohne `slowFade` wirken die Beat-Fader nicht** — im Original ist ihr Zweig gar nicht erreichbar. Alle 12 Felder wirken | ✅ |
+| ~~nicht-statisches Grain~~ | Sonde **0,0363** | ✅ **umgesetzt (S57)**, mit benannter Grenze: der Pfad existiert und flimmert je Frame (§1c), aber die **Zug-Reihenfolge** der Referenz ist nicht nachgebildet — sie läuft sequentiell durch eine 491-Byte-Tabelle und zieht den Faktor nur, wenn die Schwelle trifft, also inhaltsabhängig. Parallel je Pixel nicht berechenbar. Der geteilte `rand()`-Strom wird um die **Obergrenze** `(w·h·2)/16` weitergestellt (die Referenz zieht datenabhängig weniger) — das ist die S49-Merkregel, so weit sie hier einlösbar ist | ✅ |
+
+| ~~**AvsRef lud eine APE-DLL statt seines eingebauten Effekts**~~ | 6 von 8 Läufen verschieden | ✅ **gelöst (S58) — das war die Voraussetzung für alles andere.** `channelshift.ape` ruft in `load_config` ein `srand(time(0))`, und zwar im EIGENEN CRT der DLL: das `srand(kRandSeed)` von `avsref_main` erreicht sie nicht. Die Referenz wählte damit **je Wanduhr-Sekunde** eine andere Kanal-Permutation — acht Läufe im Sekundenabstand, sechs verschiedene Ergebnisse. Jedes Preset mit „Channel Shift on beat" war so unmessbar; die „~0,68" bei Alternate Reality waren zu einem guten Teil das. AvsRef trägt jetzt `initbuiltinape()` VOR `initdll()` ein und überspringt eine `.ape`, die einen eingebauten Namen doppelt (`_dll_name_taken`). Betrifft fünf Namen: Channel Shift · Color Reduction · Multiplier · Holden04: Video Delay · Holden05: Multi Delay. Danach vier Läufe, viermal dasselbe Bild — und genau das, was der `srand(1)`-Strom vorhersagt | ✅ |
+| ~~**Channel Shift zog einen Zufallszug zuviel**~~ | Referenz BGR, wir BRG | ✅ **gelöst (S58).** `r_chanshift:124-126` zieht NUR auf dem Beat; bis dahin gilt die Vorgabe aus dem Preset. Wir zogen zusätzlich im ersten Frame (`apeChanMode < 0`) — ein Zug zuviel aus dem geteilten Strom, danach war jede weitere Permutation um eine Ziehung versetzt. Der Startwert kommt jetzt aus dem **Preset-Wert** und wird bei Änderung neu gesetzt (Bauart wie `interferences.rotation`, S57) | ✅ |
+| ~~**Convolution-APE: bias/absolute/twoPass falsch verstanden**~~ | 33/33 Sonden exakt | ✅ **gelöst (S58).** Die APE rechnet ganzzahlig in BYTES: `x = (summe + bias·256) / scale`, Richtung Null abgeschnitten, dann 0..255 geklemmt. **`bias` zählt also in ganzen 256ern** — schon `bias=1` hebt jeden Kanal über 255; wir addierten `bias/255`. Belegt an (200,100,40): `bias=1/scale=2` → (228,178,148), `bias=1/scale=256` → (1,1,1). Dazu: **`absolute` ist kein Betrag** (negatives Ergebnis → 255; Kern −4 bei scale 2 misst weiß statt 80), **`twoPass` verdoppelt** statt zweimal zu falten (Kern 1 bei scale 4 → v/2, nicht v/16), `scale=0` gilt als 1, und der Konfigurationswert von `bias` wirkt als **vorzeichenbehaftetes Byte** (+128 wie −128, +256 wirkungslos, +257 wie +1). Fünf Dauersonden in `2_trans/convolution_*` | ✅ |
+| ~~**SuperScope: die letzte Bildspalte**~~ | Spalte w−2 statt w−1 | ✅ **gelöst (S58).** `SuperscopePoint::x/y` waren **float**. `x=1-2/w` ergibt in double exakt `w−1`, über float gerundet `w−1−ε` und damit `w−2`. Die Formel in `renderPixelDots` (`(int)((x+1)·w·0.5)`) war richtig, nur der Eingangswert war verloren. Der Fehler steckt in **jeder** Bildbreite, fällt aber nur auf, wenn ein Effekt genau diese Spalte abtastet. Jetzt double bis zur Pixelabbildung; die Vertex-Puffer bekommen weiter float, ausdrücklich gecastet. **Ohne automatischen Wächter** — eine einzelne Spalte liegt unter jeder Schwelle der Sonden-Metrik (Menge 0 · Lage 1 px · MAE 0,003); ein Versuch mit Movement-Verstärker maß am Ende das Movement und ist wieder raus | ✅ |
+| ~~**Dynamic Shift: weicher Rand statt harter Kante**~~ | Randspalte exakt | ✅ **gelöst (S58), zieht Bright Light District mit** (dMean 0,270 → 0,026). `r_shift.cpp:190-310` verschiebt in ganzen Pixeln plus 8-Bit-Bruchteil, und der Bruchteil kippt asymmetrisch: `if (part<0) part=-part; else { ++a; part=255-part; }`. Daraus folgt, was man nicht rät — **eine Verschiebung von NULL in y kostet die erste und die letzte Zeile** (`ya++`, `endy=h-1+ya`), `x=-.2` kostet die letzte **Spalte**, und die Referenz schreibt sie **hart auf Schwarz**. Wir verschoben normiert mit weichem Rand, der Saum blieb stehen. Dazu war der Blend vertauscht (`BLEND_ADJ(verschoben, framebuffer, ialpha)` — das VERSCHOBENE Bild trägt `ialpha`) und `ialpha ≤ 0` heisst in der Referenz **sofortige Rückkehr**, nicht Durchsicht | ✅ |
+| ~~**Der Beat gehörte dem FRAME statt der LISTE**~~ | AR 0,339 → **0,029** | ✅ **gelöst (S58) — der grösste Einzelschritt der Session.** `SET_BEAT`/`CLR_BEAT` eines Kindes wirken in `r_list.cpp:747-751` nur auf die lokale `isBeat`-Variable der Liste, also auf deren nachfolgende Kinder; dasselbe gilt für das `beat` des Listen-Skripts. Wir stellten `m_frameBeat` global um. Folge: ein `Custom BPM` in einer Unterliste filterte den Beat für die GANZE Kette, und jeder Effekt mit Beat-Code dahinter zog seine Zufallszahlen viel seltener als in der Referenz — bei Alternate Reality acht `rand(4)` je Dynamic Movement. `renderList` sichert und stellt den Beat jetzt wieder her | ✅ |
+| ~~**SuperScope `skip` verwarf den Punkt**~~ | zwei von drei Flügeln fehlten | ✅ **gelöst (S58).** `skip` unterdrückt in AVS NUR das Zeichnen des Segments, das in diesem Punkt endet — `lx/ly` werden trotzdem gesetzt (r_sscope:295-334, die Zuweisung steht HINTER dem if-Block), der Punkt bleibt also Ankerpunkt. Wir verwarfen ihn ganz; bei einem Skript, das `skip` je Punkt umschaltet (`ip=bnot(ip); skip=ip`), blieb damit zwischen zwei gezeichneten Punkten immer ein Bruch und es wurde **gar nichts** gezeichnet. Dazu die Schwelle: die Referenz prüft `< 0.00001`, nicht `> 0.5`. Folgefehler derselben Änderung, mitgefixt: die Richtungsbestimmung der dicken Linien fragte den VORGÄNGER auf `skip` ab und gab dem Endpunkt eines Strichs die Richtung (0,0) — das Viereck war verdreht und deckte statt sechs nur drei Spalten. Sonde `1_render/scope_skip_wechsel` | ✅ |
+| ~~**Picture II: drei Betriebsarten statt sechs**~~ | 0,22 → **0,002** | ✅ **gelöst (S58).** An der Referenz gemessen (Sonden `p2_bm0..5` auf bekanntem Untergrund): **0 ersetzen · 1 additiv · 2 Maximum · 3 Minimum · 4 50/50 · 5 Subtraktion (Framebuffer minus Bild)**. Unser Import warf alles ab 2 auf 50/50. In „The Real Impressionist" mischt der zweite Aufruf mit **Maximum** — daraus wurde ein Mittelwert, und das Bild lief hell aus. Der Bildshader nummeriert weiter 0..2 wie bisher (dort hängt `Picture`, ID 34, dran), der Import bildet über eine Tabelle ab | ✅ |
+| ~~**Scope-Linien lagen eine Spalte links**~~ | Diagonale 159..161 → **160..162** | ✅ **gelöst (S58).** AVS zieht Linien zwischen GANZZAHLIGEN Pixeln (`x=(int)((var_x+1)*w*0.5)`, dann Bresenham), GL rastert gegen Pixel-MITTEN — eine Stützstelle bei Fensterkoordinate 160,0 liegt genau auf der Grenze und fällt eine Spalte nach links. Die Stützstellen werden jetzt auf die Mitte des Pixels gesetzt, den AVS berechnet. Aufgefallen ist es erst durch eine 240-fache Vergrösserung in Bright Light District; gemessen am Referenzbild selbst (Diagonale je Zeile). Wirkung: BLD 320 von 0,070 auf **0,017**, Matrix-Zeile `36_superscope` auf **0,000/0,000** | ✅ |
+| ~~**Scope-Segmente hatten einen Farbverlauf**~~ | Stufe t03 → **0,000** | ✅ **gelöst (S58).** AVS färbt ein Liniensegment EINFARBIG: `line(framebuffer, lx,ly, x,y, w,h, thiscolor, linesize)` bekommt die Farbe des AKTUELLEN Punktes und malt damit die ganze Strecke vom Vorgänger her (r_sscope:297/325) — entlang der Strecke wird nichts interpoliert. Wir liessen die Vertexfarben interpolieren; bei wenigen Stützstellen mit starkem Verlauf ist das sichtbar („Lost Cause" zieht eine Linie über FÜNF Punkte von Weiss nach Blau). `flat` mit der GL-Vorgabe LAST_VERTEX trifft die Referenz genau: das Segment bekommt die Farbe seines Endpunkts | ✅ |
+| ~~**12 Lost Cause**~~ | → **0,002 / 0,002** | ✅ **grün (S58/S59):** Farbtafel-gehört-dem-Frame-Fix (S58); mit den S59-Linien-Umbauten nachgemessen 0,002. Ursprünglich: 🟠 **NEU (S58, Befund Patrik: im Vollbild vorher schwarz).** Die Geometrie stimmt — derselbe Tunnel, dieselben Stufen; bei uns läuft das mittlere Band nach WEISS aus, wo die Referenz ein geschichtetes Blau behält. `dMaxLuma` ist in beiden Größen exakt 0,175, also ein konstanter Helligkeitsüberschuss. **Eingegrenzt:** ohne den Fade Out in der Liste ist das Preset grün (0,012 / 0,023) — der Fade ist aber nicht die Ursache, sondern macht sie sichtbar: ohne ihn sättigt die Schleife auf beiden Seiten und verdeckt alles. **Ausgeschlossen (gemessen):** die Abklingkurve des Fade Out selbst (184/168/152/120/72/8/0 auf beiden Seiten identisch) · die Beat-Zeitpunkte (Leiter-Sonde: acht Sprossen in denselben Zeilen) · die Dynamic Movement mit den zwei statischen Scopes (0,003). **Der Verlauf zeigt, wo es passiert:** bis Frame 31 grün (0,005), bei Frame 60 schon 0,141 — die Abweichung entsteht in der ABKLINGPHASE nach der Injektion, nicht bei der Injektion. Die Schleife ist: Liste mit `blendIn=0` (eigener, stehender Puffer) + Fade Out innen, `blendOut=4` (additiv) in den Elternpuffer, der von einer Dynamic Movement getragen wird | 🟠 |
+| ~~**splendora**~~ | 0,178/0,157 → **0,003/0,002** (320) · **0,004/0,006** (640) | ✅ **grün (S59), zwei Befunde:** (1) **Channel-Shift-Mode 1023 ist RGB** — das Preset trägt die Dialog-IDs der ORIGINAL-`channelshift.ape` (aus der DLL-Ressource geparst: 1023=RGB), der vis_avs-Port verlegte RGB auf 1183; unser default-Zweig klemmte 1023 auf BGR = R↔B-Tausch. (2) **Eine AVS-Linie malt ihr MAX-Ende nie** (linedraw.cpp ende-exklusiv, Fast-Paths klemmen VOR der Exklusivität auf h−1/w−1) — der Movement-Clamp des Ring-Hintergrunds sampelte die unterste Zeile, bei uns mit der falschen Farbe. `renderThickLines` läuft jetzt je Segment den Integer-Bresenham der Referenz mit; `linesize` RUNDET (`(int)(x+0.5)`) | ✅ |
+| ~~**el-vis_hypno07_FTL01_v2**~~ | 0,104/0,248 → **0,008/0,009** (320) · **0,008/0,008** (640) | ✅ **grün (S59), Uhren-Familie:** Das Preset misst per `gettime`-Zählfenster seine eigene FPS. (1) AvsRef maß die WANDUHR (Batch: 120 Frames in Sekundenbruchteilen → fps=0) — Patch `--tick-hz N` = virtuelle Frame-Uhr in `patched/avs_eelif.cpp`, Harness-Default 60. (2) Unser Host injizierte jeden Frame `time` und überschrieb die USER-Konstante `time=2.0` — `compileAll()` scannt jetzt auf Zuweisung, dann keine Injektion. (3) Skript-Uhr: Start bei 0 statt 1/60 (`m_scriptClock` VOR dem Inkrement), double-Akkumulator, ms-Körnung wie GetTickCount. (4) **Texer-II-Resampler bit-exakt** (s. eigene Zeile) | ✅ |
+| ~~**Texer-II-Resampler**~~ | Sprite-Ringe ~1 px → **14 Impuls-Fälle bit-exakt** | ✅ **S59, per IMPULSANTWORT reverse-engineered** (1-Pixel-Bild durch die Original-APE = der Sampling-Kernel): Zentrum `(pos/2+0,5)·(dim−1)` · Rechteck `c ± iw·s/2 ∓ 0,5` (iw=IW−1, fistp) · Phase `(r2.left−r.left)/Spanne` · Schritt `(iw−1)/(iw·s)` in 16.16 · Malende `max(ceil(r.right), r2.right|1)` · 8-Bit-Gewichte mit XOR-Komplement + Trunc-Kaskade (Peak 252). Default-Sprite = gemessene 21×21-Matrix (no-resize = 1:1-Blit). Community-Quelle (grandchild) weicht numerisch ab — Struktur-Vorlage, keine Bit-Referenz. Nebeneffekt: `paar_original` grün | ✅ |
+| **el-visVR09(war)** | Gate referenz-treu; Rest = Decoder | 🟠 **S60, zweiter Teil: das `speed`-Gate ist jetzt REFERENZ-TREU** — der Befund war unser Sofort-Start (`aviTexture==0` zündete Video-Frame 0 bei t=0; die Referenz zeigt bis zum ersten Gate-Ablauf nichts und lag dauerhaft einen Video-Frame zurück). Bewiesen mit drei Gate-Sonden auf dem deterministischen Testvideo: **speed 0/100/400 alle dMean 0,000** (vorher 0,29–0,34). Stream-Länge verifiziert identisch (`r_avi length=31` = unser Cache). **Der VR09-Rest (0,385/0,220) ist reine DECODER-DIFFERENZ** (VfW-Indeo-32-bit vs. Qt/FFmpeg-Indeo, durchs Feedback aufgeschaukelt) — in 64-Bit nicht bit-exakt schließbar → §9-Kandidat nach Deinem **Sichturteil mit echtem Ton**. avi-Feld-Sonden 6/6 WIRKT, Edit 4/2/0 | 🟠 |
+| ~~**Convolution „wrap"-Arithmetik**~~ | vermessen + umgesetzt | ✅ **S60, an der ORIGINAL-APE vermessen** (Sonden `convolution_wrap_neg`/`_scale` + scale-2/4/128-Grenztest): bei **scale 1 ist wrap wirkungslos** (kein Divisionspfad im JIT — identisch zur Sättigung), ab **scale ≥ 2** gilt `lane16 = (pos−neg) mod 65536` mit **UNSIGNED-Division** durch scale (Belege exakt: Untergrund 16 → −16 → 65520/256 = **255**; Linienpixel −494 → 65042/256 = **254**). Shader rechnet den Zweig jetzt ganzzahlig nach (pos/neg getrennt akkumuliert, Normal-Pfad byte-identisch); exklusiv mit `absolute`; bias+wrap unvermessen (dokumentiert). Modul-Sonden **91/91**, `convolution.edgeMode` **WIRKT** (Grundkonfig scale 2) | ✅ |
+| ~~**Rand der Convolution: der INHALT**~~ | 552 px → **alle 8 Sonden MAE 0,000** | ✅ **GELÖST (S59).** Tom Holdens Original-Quelle (2002) lebt als Laufzeit-JIT im community-vis_avs (`e_convolution.cpp`). Daraus + Gradient-Sonden: Reads klemmen IMMER auf Zeile h−2/Spalte w−2 (die letzte Eingabe-Zeile/-Spalte wird NIE gelesen); bei `zerostringl ≥ 24` (erster Kernel-Eintrag ab Zentrum) schreibt die APE IN-PLACE — die zurückgeklemmten Rand-Taps lesen dann schon BEARBEITETE Pixel („doppelt gefaltete" Kante, 16→5→1). Als exakter Zwei-Pass umgesetzt. **Dazu: „wrap" ist KEIN Koordinaten-Wrap** (Fehldeutung S57), sondern psubw statt psubusw — Überlauf statt Sättigung der Negativ-Verrechnung (darum exklusiv mit `absolute`); der fract()-Zweig ist raus. **Offen als eigener Punkt: die Überlauf-Arithmetik selbst ist unvermessen** (keine Sonde mit Negativ-Kernel + wrap). Nebeneffekt: Alternate Reality 0,026 → **0,002** — echt grün, die S58-Rausch-Abnahme ist hinfällig. Ursprünglich: 🟠 **S58, Nebenbefund.** Das Modell aus S57 („die APE berechnet die letzte Zeile und Spalte nicht") stimmt, aber der Zielpuffer enthält bei uns etwas anderes als bei der Referenz. Drei der fünf neuen Convolution-Sonden melden deshalb PRÜFEN — immer mit derselben Signatur: unsere Pixelzahl liegt um **552** über der Referenz. Sichtbar, sobald eine Faltung die Bildhelligkeit ändert. Bei Alternate Reality als Ursache **ausgeschlossen** (Abweichung dort gleichmäßig verteilt) | 🟠 |
+
+### ✅ `41_interferences` gelöst — und was `water`/`water_bump` daraus lernen (S57)
+
+**Die Randbehandlung war die Ursache.** Die Referenz liest eine verschobene Kopie
+nur innerhalb des Bildes (`if (xp >= 0 && xp < w && yoffs[i] != -1)`, :236) und
+laesst den Beitrag sonst auf **0**; unser Shader klemmte auf den Randpixel und
+schmierte ihn nach innen. **dMean 0,025 → 0,001, MAE 0,053 → 0,027, Zeile grün.**
+
+Dazu zwei weitere Abweichungen von `r_interf.cpp`, beide vorher behoben (sie
+allein brachten 0,053 → 0,051):
+
+1. **Die Übergangswerte sind ganzzahlig.** Der `(int)` steht in der Referenz um
+   die Interpolation, nicht um das Ergebnis
+   (`_distance = distance + (int)((float)(distance2-distance) * s)`, :194-196),
+   und die Versätze sind **ganze Pixel** (`xpoints[i] = (int)(cos(a)*_distance)`,
+   :205). Wir gaben den Bruchteil an den Shader, der dazwischen interpoliert.
+   Ebenso ist `rotation` dort ein **int** und wird ganzzahlig akkumuliert (:384).
+2. **Die Gewichtung läuft über die Byte-Tabelle** `g_blendtable[_alpha][wert]`
+   (:216), also `(alpha·wert)/255` als Ganzzahl — jede Kopie verliert bis zu ein
+   255stel, und bei vier Kopien summiert sich das. Der Shader rechnet das jetzt
+   in 8-Bit-Einheiten nach, wie der Blur seit S57.
+
+**Dieselbe Klasse bei `water`** (dMean 0,029 → 0,002): dort behandelt die Referenz
+jeden Rand als eigenen Zweig (Ecke 2, Kante 3, Mitte 4 Nachbarn) und halbiert
+**ganzzahlig**. Eine Kuriosität hat sich dabei NICHT bestaetigt: die oberste und
+unterste Zeile werden im Original gar nicht halbiert (:168-188) — nachgebildet
+wurde das Bild deutlich schlechter (0,131), AvsRef zeigt diesen Saum also nicht.
+Der Sonderfall ist bewusst weggelassen.
+
+### ~~`31_water_bump`~~: Ganzzahl-Kern portiert (S59) — ✅ GRÜN (S60): der „Trail-Rest" war ein stilles Uniform-Loch
+
+**S60, gefunden durch den Feld-Sonden-Vollauf (10× STUMM):** `setzeBlob` setzte
+`uDropPos` und `uResI` per `setUniformValue(QPoint)` — **Qt lädt QPoint als
+FLOAT-vec2 (`glUniform2fv`) hoch**, die Shader deklarieren `ivec2`. Der stille
+GL-Typfehler ließ beide Uniforms auf (0,0); mit `uResI=(0,0)` nahm jedes Pixel
+den Rand-Zweig, und dessen doppelte Y-Spiegelung ergab zufällig die perfekte
+Identität: der ganze Knoten war ein **bit-exakter Passthrough** — ohne Warnung.
+Die S59-Schlussmessung der Trail-Zeile (0,100/0,148) maß diesen Passthrough,
+nicht den Ganzzahl-Kern. Fix: Integer-Uniforms IMMER über `glUniform*i`
+(wie beim `uDropClip`-ivec4 schon geschehen). **Danach: Feld-Sonden 10/10
+WIRKT · Matrix-Zeile 31 GRÜN — 0,003/0,011 (320) · 0,002/0,006 (740),
+Deckung 0,98.** Die in S59 geplante Trail-Kreislauf-Sonde ist damit hinfällig.
+Merkregel: **eine Qt-Komfort-Überladung sagt nichts über den GLSL-Typ** —
+`QPoint` sieht nach int aus und kommt als float an. — Historie S59:
+
+**S59: der komplette Umbau auf Referenz-Einheiten ist drin** (SineBlob
+`(int)((cos+0xffff)·h)>>19` mit CPU-geclipptem ende-exklusivem Rechteck,
+CalcWater `(sum8>>2 − prev) − (newh>>density)`, Displacement als LINEARER
+Pufferversatz mit Zeilenüberlauf, Rand = feste Wand, Puffer RGBA32F,
+`displaceScale`-Default 1,0 statt 6,0). **Statisch referenztreu:** auf dem
+bit-identischen refbild bleiben 28–48 Restpixel von 76 800 (GPU-cos vs.
+x87-cos an /8-Messerkanten). **Offen: die Trail-Matrixzeile** — 320:
+0,100/0,148 (vor dem Umbau 0,034/0,134), 640 gleichauf (0,007/0,027). Der
+Nachbau des 1-Frame-Rand-Lags (ref-fbout = Eingabe des Vorframes) verschluckte
+den ersten Frame (Ursache im GL-Ablauf nicht verortet) und verschlechterte die
+Messung → nach Merkregel zurückgenommen; Rand = Kopie der aktuellen Eingabe
+(bewusste Näherung). ✅ **Entschieden (Patrik, S60): der Ganzzahl-Kern
+bleibt** (quellentreu + statisch exakt). Offen ist nur noch die
+Trail-Kreislauf-Sonde für den 320er-Rest (S57-Lehre: die Sonde muss den
+Kreislauf schließen) — §0 Haken 5. — Historie S57:
+
+Die Montage zeigt einen **strukturellen** Unterschied, keinen Rundungsrest: die
+Referenz ist grob **gestuft** (zerklüftete Farbflächen), unsere Welle glatt und
+regelmäßig. Der Grund steht in einer Zeile:
+
+```c
+ofs = offset + buffer_w*(dy>>3) + (dx>>3);   // r_waterbump.cpp:330
+```
+
+Der Versatz ist eine **ganzzahlige Pixelverschiebung**. Der Shift rundet gegen
+−unendlich, und bei einer Höhendifferenz unter 8 ist der Versatz schlicht
+**null** — daher die Stufen. Wir verschieben stufenlos und interpolieren linear,
+zeichnen also glatte Ringe.
+
+**Ein blosses `floor()` reicht nicht** — nachgemessen wird es damit schlechter
+(0,137 → **0,233**): unsere Höhen stehen nicht in den Einheiten der Referenz,
+also quantisiert es an der falschen Stelle. Der Höhenpuffer ist RGBA16F, der
+Wertebereich also nicht das Problem; die **Skala** ist es. Umzustellen wären
+zusammen: die Tropfen-Erzeugung (`SineBlob` mit `>> 19`), die Dämpfung
+(`newh - (newh >> density)` — ein arithmetischer Shift mit eigener Asymmetrie bei
+negativen Werten) und das Displacement.
+
+Eine referenztreue Teilkorrektur ist bereits drin (ohne Messgewinn, 0,136 →
+0,137): die Referenz **beschreibt die äusserste Zeile und Spalte nie**
+(`CalcWater` läuft von `buffer_w + 1`, die Puffer sind nullinitialisiert), dort
+steht also eine feste Wand, an der die Welle reflektiert.
+
+**Vor „Regression!" den Vorstand MESSEN** (stash + Rebuild), nie gegen notierte Zahlen
+einer anderen Messreihe — zwei von drei Auffälligkeiten in S51 waren auf HEAD identisch.
+
+**Und: die Montage ansehen, bevor man eine Zahl deutet.** Bei Alien Alloy stand hier
+acht Zeilen lang „es fehlt Menge, die Sprites sind zu wenige". Tatsächlich war unser
+Bild *schwarz bis auf die Sprites* — die gemessenen 4685 Pixel WAREN die Sprites, und
+gefehlt hat alles andere. Aus der falschen Leseart folgten drei Sonden, die alle grün
+waren und nichts fanden (`reg00`-Transport, `sizex`-Vertrag, Randgeometrie).
+
+**Die Streuung liegt bei AvsRef, nicht bei uns** (S52, gemessen auf Nachfrage Patrik).
+Vier Läufe desselben Presets, jeder Renderer mit **sich selbst** verglichen:
+
+| | MAE über vier Läufe |
+|---|---|
+| **AvsStandalone (wir)** | **0,0000** — bit-identisch |
+| **AvsRef (Referenz)** | 0,055 – 0,064 |
+
+Jeder Vergleich hat damit eine Rauschgrenze, unter die gar nicht gemessen werden kann.
+`--beat-period` hilft nicht (0,071) — der Beat ist nicht die Quelle. Zwei belegte
+Mechanismen: `r_chanshift.cpp:340` ruft `srand(time(0))` in **`load_config`**, jedes
+Preset mit Channel Shift sät den CRT-Strom beim Laden mit der aktuellen Sekunde neu;
+und AvsRef lädt mit `--ape-dir` echte APE-DLLs, deren Fremdcode eigene Zeitbezüge haben
+kann. **Vor jeder Deutung einer Einzelzahl: mehrfach messen.**
+
+**Beat-getriebene Presets sind mit `--beat-period 0` gar nicht vergleichbar** (S52).
+Beide Renderer erkennen Beats selbst aus dem synthetischen Audio und kommen dabei auf
+verschiedene Zeitpunkte; wo ein Effekt je Beat Zustand aufbaut, divergiert er
+zwangsläufig, ohne dass ein Render-Fehler vorliegt. Beleg Moving Particle: die Physik
+ist zeilengleich mit `r_parts.cpp`, und mit festem Beat konvergiert es —
+beat-period 0 → MAE 0,042 · 24 → 0,005 · **60 → 0,001**. Solche Presets deshalb
+**immer mit `--beat-period`** vergleichen, sonst misst man die Beat-Erkennung statt
+des Effekts.
+
+**Eine Sonde, die den Hintergrund jeden Frame neu zeichnet, kann keinen
+Rückkopplungs-Verlust sehen.** Vier weitere Sonden blieben deshalb grün (DM+Texer,
+DM-Flags, alle drei Blend-Modi): sie säten mit einem Vollbild-Muster je Frame neu.
+Erst der Nachbau des echten Paares — Sprites am Rand als **einzige** Energiequelle —
+zeigte die Divergenz. Wächst der Abstand über die Frames (hier 0,010 → 0,568), ist
+die Ursache im Kreislauf, und die Sonde muss ihn schließen.
+
+## 1b. Wirkt ein Feld beim EDITIEREN wie nach dem Laden? (Strang F, S55)
+
+**Herkunft:** Beobachtung Patrik — „der wirkliche Effekt wird erst sichtbar,
+wenn man das Preset gespeichert hat und es wieder geladen wird", bemerkt an
+Movement. Der Mechanismus ist belegt: **Laden** setzt
+`m_pendingRuntimeReset` → `resetRuntimes()`, jeder Knoten baut seine Runtime
+frisch auf; **Editieren** ruft `recompileChain()`, und das ist nur
+`compileChain(m_root)` — **kein** Runtime-Reset. Was ein Knoten einmalig beim
+Aufbau übernimmt, hängt danach fest.
+
+**Werkzeug:** `asset/calibration/fields/run_edit_probes.py` + `--edit-nach` im
+AvsStandalone (bildet den Panel-Weg nach: Params tauschen, `recompileChain()`,
+kein Reset). Urteil über **vier** Bilder — geladen · editiert · Vorgabe ·
+Gegenrichtung: `TEILWEISE` = wirkt, trägt aber noch die Vorgeschichte (bei
+Effekten mit Verlauf der Normalfall) · `GLEICH`. Ist editiert Pixel für Pixel
+die Vorgabe, entscheidet das **vierte** Bild (S56, s. u.):
+`WIRKUNGSLOS` = auch die Gegenrichtung ändert nichts, der Wert kommt nicht an
+(harter Befund) · `VERDECKT` = die Gegenrichtung ändert das Bild, der Wert
+kommt an und wird hier nur von der Vorgeschichte verdeckt (**kein** Befund).
+
+**Stand:** die 15 WIRKUNGSLOS aus S55 sind abgearbeitet — **7 echte Befunde,
+alle gefixt** (3 in S55, 4 in S56), **8 waren Messartefakte** (`VERDECKT`).
+Nebenbei: die Rede von „13 verbliebenen" war eine Fehlzählung — `avi` stand mit
+**zwei** Feldern in der Liste (`filename` · `resolvedPath`), es waren 12.
+
+| Feld | MAE | Stand |
+|---|---|---|
+| ~~`movement.sourceMapped`~~ | 0,081 | ✅ **gefixt S55** — wurde nur bei frischer Runtime übernommen (`< 0`). Jetzt wird der zuletzt übernommene Preset-Wert mitgeführt, das Beat-Kippen bleibt. Nachgemessen: Movement 7/7 GLEICH |
+| ~~`avi.filename` · `avi.resolvedPath`~~ | 0,234 | ✅ **gefixt S55** — `aviTried` merkte sich nur, DASS geöffnet wurde; ein Pfadwechsel griff nie. Jetzt Pfad-Schnappschuss + Neuöffnen (Textur wird verworfen). Nachgemessen: keine WIRKUNGSLOS mehr, Feld-Sonden 6/6 ohne Regression |
+| ~~`texer.imageData`~~ | 0,070 | ✅ **gefixt S56** — `ensureEmbeddedTexture` stieg bei `picTexture != 0` aus, die Textur hing am Aufbau fest. Jetzt Schnappschuss der Bilddaten (`picSnapshot`, Bauart wie `cmSnapshot`), bei Wechsel wird neu hochgeladen. Nachgemessen: texer 6/6 GLEICH; Picture/Picture II/Texer II 19/19 GLEICH ohne Regression |
+| ~~`milkdrop.meshX` · `meshY` · `debugGrid`~~ | 0,036 · 0,053 · 0,006 | ✅ **gefixt S56** — die drei standen IM Revisions-Block von `runMilkdropNode`, und `revision` zählt nur Preset-/Skript-/Shader-Edits. Es sind reine `setParam`-Zuweisungen ohne Neuaufbau, stehen jetzt je Frame außerhalb. Nachgemessen: debugGrid GLEICH, meshX/meshY TEILWEISE (Feedback-Puffer), keine WIRKUNGSLOS |
+| `bufferSave.slot` · `dir` · `initCode` · `frameCode` · `beatCode` | 0,109 | ⬜ **kein Befund (S56)** — `VERDECKT`, s. u. |
+| `bassSpin.smoothing` | 0,184 | ⬜ **kein Befund (S56)** — `VERDECKT` |
+| `customBpm.skip` | 0,109 | ⬜ **kein Befund (S56)** — `VERDECKT` |
+| `mirror.slower` | 0,014 | ⬜ **kein Befund (S56)** — `VERDECKT` |
+
+### Der Quercheck aus S55 war falsch (Korrektur S56)
+
+S55 erklärte alle 13 für bestätigt, mit dieser Regel: *wirkt das Feld in den
+Feld-Sonden, und ist der Edit-MAE gleich dem Feld-MAE? Dann ist es ein Befund.*
+**Die Regel unterscheidet nicht, was sie unterscheiden soll.** „Editiert ==
+Vorgabe" hat zwei mögliche Ursachen, und beide erfüllen sie:
+
+(a) der Wert kommt beim Edit nicht an — der Befund;
+(b) der Wert kommt an, kann aber nichts mehr ausrichten, weil der Zustand aus
+    der ersten Hälfte ihn **verdeckt** (der Puffer hält seinen Inhalt, die
+    Rampe ist abgelaufen, der Zähler steht anderswo).
+
+Getrennt wird das durch die **Gegenrichtung**: Start = Sonde (Feld gesetzt),
+Edit → Grund. Der Zustand der ersten Hälfte ist dann der des *gesetzten* Feldes
+und kann den Rückweg nicht auf dieselbe Weise verdecken. Ergebnis für alle
+acht: **das Bild ändert sich** (`bufferSave.*` 0,1094 · `bassSpin.smoothing`
+0,2295 · `customBpm.skip` 0,1094 · `mirror.slower` 0,0143) — der Wert kommt an.
+
+Dazu zwei **Positivkontrollen**, die dieselbe Vorwärtsrichtung fahren und nur
+die Verdeckung wegnehmen:
+
+- `bufferSave.slot` mit dem Leser auf dem **leeren Slot 7**: WIRKUNGSLOS →
+  **GLEICH** (MAE 0,0000). Der Slot-Wechsel kommt vollständig an.
+- `mirror.slower` mit `onBeatRandom`, damit die 16-Stufen-Rampe nie zur Ruhe
+  kommt: WIRKUNGSLOS → **TEILWEISE**.
+
+Die Sonde kann das jetzt selbst: das vierte Bild ist in `run_edit_probes.py`
+eingebaut und kostet nur im Verdachtsfall einen Renderlauf. Neues Urteil
+`VERDECKT`; der Rückgabewert bleibt nur bei `WIRKUNGSLOS` ungleich 0.
+
+**Merkregel bleibt, aber schärfer:** `WIRKUNGSLOS` ist wie `STUMM` zuerst eine
+**Frage**. Beantwortet wird sie weder mit einer plausiblen Geschichte noch mit
+einem Quercheck, der beide Ursachen gleich behandelt, sondern mit einer
+Messung, die sie **trennt**.
+
+**Geprüft und in Ordnung:** alle 16 Knoten mit Verlauf (multiDelay, videoDelay,
+bufferSave, blitterFeedback, rotoBlitter, waterBump, water, fyrewurX,
+movingParticle, bassSpin, timescope, avi, customBpm, reactionDiffusion,
+fractalZoomer, milkdrop) übernehmen ihre Felder **unbedingt je Frame** — keine
+einzige bedingte Übernahme (statische Prüfung S55, Vorgabe Patrik).
+
+Das passt zum Befund S56: kein einziger der acht `VERDECKT`-Fälle liegt an
+einer festgehaltenen Übernahme — sie lesen ihre Felder je Frame, wie hier
+statisch geprüft, und die Gegenrichtung bestätigt es messend. Auch
+`bufferSave.initCode`/`frameCode`/`beatCode` sind sauber: `runParamScript`
+übersetzt bei jeder Textänderung neu (`paramCompiled != combined`).
+
+**Entscheid Patrik S55:** einzeln je Knoten reparieren, nicht generisch. Ein
+generisches Verwerfen des Aufbau-Zustands bei jedem Reglerdreh würde Skripte
+neu übersetzen und Bilder/Videos neu laden — das kann beim Ziehen ruckeln, und
+die Grenze zwischen „Aufbau" und „Verlauf" müsste je Knoten von Hand gezogen
+werden.
+
+## 1c. Die stummen Feld-Sonden (Strang E, Durchsicht S56–S57)
+
+**Stand: 115 → 15 → 0** (S57 abgeschlossen). `STUMM` ist wie `WIRKUNGSLOS`
+**zuerst eine Frage** — aber nicht immer dieselbe Antwort: von den ersten 100
+durchgesehenen waren **zwei** ein Befund an der App (Roto Blitter, Kleinian), von
+den **letzten 15 sechs**. Die leichten Fälle standen vorn, und wer nach 100
+Messartefakten aufhört, lässt die Befunde liegen.
+
+### Der eine App-Befund: die Alt-Format-Weichen griffen zu oft
+
+Drei Stellen im Deserialisierer erkannten ein Alt-Dokument an der **Abwesenheit
+des neuen Felds** statt an der **Anwesenheit des alten**. Ein Preset, das
+`zoomScale` schlicht nicht nennt, bekam deshalb den Migrationspfad — und der
+rechnet aus Werten, die nie im Dokument standen:
+
+```
+Roto Blitter ohne `zoomScale`  ->  zoomScale = (1,0 - 1,0) * 1024 = 0
+                                   statt des neutralen 31
+```
+
+Der Knoten zoomte so weit hinein, dass das Bild **einfarbig gelb** war; alle
+fünf seiner Felder galten als stumm. Dieselbe Bauart bei `blitterFeedback`
+(`scale`) und `simpleScope` (`mode`). Die Weiche hängt jetzt am Altfeld, und ein
+Dokument mit beidem folgt dem neuen. **Roto Blitter 5 → 0, Simple Scope 1 → 0.**
+
+Das ist auch die Auflösung der „Migrations-Artefakte" aus §1d: der Zweig griff
+wirklich zu oft — nur war der Schluss „mein Test ist zu streng" halb falsch.
+
+### Alles andere lag am Testaufbau oder am Werkzeug
+
+| Ursache | Fälle | Beispiel |
+|---|---|---|
+| Betriebsart nicht aktiv | ~20 | `list.inAdjustAlpha` braucht Blend = Adjustable · `colorClip.distance` nur im Modus „near" · `convolution.absolute` braucht einen Kern ≠ Identität · `superScope.colors` wird bei `colorBlend = 0` nie gelesen (der Verlauf gewinnt) |
+| Beat-Ziel gleich dem Normalwert | 9 | `movingParticle.size2`, `blitterFeedback.scale2`, `interleave.x2`, `mosaic.quality2` |
+| Knoten zeichnet nichts | 5 | **Texer II** hat kein `pointCount`; `n` kommt allein aus dem Init-Slot. Ohne ihn läuft der Punkt-Code null mal — gemessen identisch mit „gar kein Knoten" |
+| Zähler-Phase | 4 | **Custom BPM** mit `skipCount = 1` lässt die Beats 2, 4, 6 durch — der siebte (Schlussframe) fällt heraus, und der Gegenwert 16 lässt nie durch. Beide löschten am Schluss nicht. Lauflänge auf 151 (sechster Beat) |
+| `{"type": 1}` statt `{"ftype": 1}` | 8 | `type` ist der KNOTENTYP — der Eintrag machte aus dem Fraktal-Knoten den unbekannten Typ „1", und daraus baut der Leser bewusst einen **Passthrough** |
+| Gegenwert trifft die Vorgabe | 6 | `timescope.blend` · `kleinian.colorScale` (ganzzahlig, s. u.) · `text.normSpeed` · `interferences.rotation` (255 = volle Umdrehung = 0) |
+| Trennzeichen / erfundenes Nachbarfeld | 7 | Der Text-Knoten trennt mit `;`, nicht mit Leerzeichen · `text.xShift` nannte ein `shiftSpeed`, das es nicht gibt |
+| Nicht prüfbar, mit Grund | 3 | `hostgroup.curveIn`/`curveOut` (nur linear implementiert) · `customBpm.arbitraryMs` (hängt an der **Wanduhr**, nicht am Frame) |
+
+**Kleinian war der zweite echte Befund**, aber an der Vorgabe: die Färbung läuft
+über `fract(Spiegelungszahl · colorScale)`, und die Spiegelungszahl ist eine
+**ganze Zahl** — jedes ganzzahlige `colorScale` ergibt exakt 0, also eine
+einfarbige Scheibe. Gemessen: 1,0 und 4,0 liefern dasselbe Bild (MAE 0,0000),
+erst 0,17 zeigt die Kachelung. Fünf weitere Felder (`p`, `q`, `morph`,
+`iterations`, `rotation`) standen deshalb als stumm da. Vorgabe jetzt 0,17.
+
+### Drei Wächter aus drei Fehlern
+
+- **Zusatzfelder einer Grundkonfiguration** werden gegen das Feld-Inventar
+  geprüft (`make_field_probes.py`) — getrennt nach Schadenswirkung: der *innere*
+  Schlüssel landet im Preset und ist ein Fehler, der *äußere* wählt nur aus und
+  wird gezählt (71 aus den Kreuzprodukten).
+- **Verwaiste Sonden werden gelöscht.** Was ein Lauf nicht mehr erzeugt, muss
+  weg — `hostgroup/curveIn.lvfx` lief weiter mit und stand als „stumm" im
+  Report, obwohl längst als nicht prüfbar erklärt.
+- **Panel-Schlüssel** gegen das Inventar (§10).
+
+### Ein Eigentor, das hierher gehört
+
+Meine erste Runde Tabellen-Einträge stand **vor** den alten im selben Dict — im
+Python-Dict gewinnt der spätere, sie waren wirkungslos. Und die `add*`-Helfer
+bekamen in §10 den Feldnamen als erstes Argument, wodurch `lo`/`hi` in der Ernte
+um eine Position rutschten: der Ernter fand **269 → 0 Bereiche**, und alle
+Zahlen-Gegenwerte fielen still auf die Notregel. Aufgefallen nur, weil
+`text.normSpeed` partout stumm blieb.
+
+### Die letzten 15 (es waren 16): aufgelöst (S57)
+
+**0 stumme Sonden**, mit Vollauf belegt. Neun lagen am Messaufbau, eine ist mit
+diesem Testsignal grundsätzlich nicht prüfbar, und **sechs waren Befunde an der
+App** — jeder derselben Bauart wie die fünf aus S53: ein Feld steht im Panel,
+lässt sich verstellen, und **kein Renderer liest es**.
+
+Damit kippt die Bilanz der Durchsicht: von 100 durchgesehenen waren zwei ein
+App-Befund, von den letzten 16 waren es sechs. Die leichten Fälle standen vorn.
+
+**Es waren 16, nicht 15.** Der Vollauf hat `bump.durationFrames` zutage gebracht —
+in S56 viermal als stumm gemessen, zuletzt in einem gezielten `bump`-Teillauf, und
+in der kumulierten Bilanz „15" trotzdem nicht enthalten. Genau davor warnte der
+Satz „ein Gesamtstand ist **nicht gemessen**": eine Zahl, die aus Teilläufen
+addiert wird, kann einen Fall verlieren.
+
+**Vollauf-Bilanz (S57 gegen S56, 702 bzw. 707 Sonden):**
+
+| | S56 | S57 |
+|---|---|---|
+| WIRKT | 568 | **674** |
+| SCHWACH | 24 | 28 |
+| STUMM | 115 | **0** |
+
+**Keine einzige Sonde ist schlechter geworden**, 109 sind besser — die vier
+zusätzlichen SCHWACH sind aus STUMM aufgestiegen, nicht aus WIRKT gefallen. Die
+fünf Sonden Differenz sind die als *nicht prüfbar* festgeschriebenen Felder, die
+in S56 noch mitliefen (`camera3d.fogColor`, `customBpm.arbitraryMs`,
+`hostgroup.curveIn`/`curveOut`, `rotatingStars.bandHi`). Der Vollauf selbst zählte
+673/28/1; die letzte stumme Zeile wurde danach gezielt gelöst und nachgemessen
+(`bump.durationFrames` → 0,1156), sie steht hier als WIRKT.
+
+**Am Messaufbau (9)** — alle nachgemessen:
+
+| Feld | Ursache | jetzt |
+|---|---|---|
+| `list.onBeatFrames` | Der Gegenwert war **3**, nicht 200: die Dämpfung für weite Bereiche (1..200 gegen Vorgabe 1) nimmt das Dreifache. Drei Frames sind bei einem Schlussframe fünf Frames nach dem Beat genauso abgelaufen wie einer. Dazu stand das **Kind** der Liste still — ohne bewegten Inhalt zeigt keine Fensterlänge etwas | 0,2459 |
+| `bloom.post` | Wählt, WO der Glow entsteht (Present oder Kette). Beide Wege erzeugen denselben Glow aus derselben Quelle; der Unterschied lebt davon, dass der **nächste Frame** ihn sieht. Auf einem Untergrund, der jeden Frame löscht, gibt es kein nächstes Mal | 0,7997 |
+| `camera3d.tz` | Zwei Dinge: der Wert stand **zweimal** in `HANDWERK` (0,6 gewann über die Korrektur 3,0 — im Python-Dict gewinnt der spätere, die S56-Merkregel), und die Kamera steht auf der z-Achse: die Blickrichtung wird normalisiert, für jedes `tz < pz` ist sie exakt (0,0,−1). Erst ein Blickziel **neben** der Achse macht die Tiefe zu einem Winkel | 0,0345 |
+| `convolution.edgeMode` | Wählt, was der Kern jenseits des Bildrandes liest. Der Untergrund ist am Rand überall 0x101010 — bei einfarbigem Rand liefern Festklemmen und Umlaufen dasselbe, und zwar exakt | 0,0014 |
+| `dotPlane.colors` | Die Tafel hat **fünf** Stützstellen, der Gegenwert setzte zwei — und die zweite traf die Vorgabe. Es änderte sich genau eine von fünf | 0,0368 |
+| `multiDelay.mode` | Der Gegenwert 2 machte Prüfling **und** Nachfolger zu Lesern des geteilten Rings. Niemand schrieb, und auf einem leeren Ring sind „aus" und „auslesen" derselbe No-op | 0,0094 |
+| `setRenderMode.adjustAlpha` | „Adjustable" ist beim Set Render Mode **7**; die Grundkonfiguration setzte 10, und `runSetRenderMode` klemmt auf 0..9 — aus dem Raten wurde still 9 = Minimum. Die Nummer ist je Knoten eine andere (`bufferSave.blend` 10, `colorMap.blendMode` 9), das steht jetzt am Tabelleneintrag | 0,0031 |
+| `terrain3d.colorLow` | Die Palette läuft über die Höhe. Mit der Vorgabe `ringAmp = 1` schiebt das Spektrum das ganze Gelände nach oben — im Bild ist nur die Gipfelfarbe | 0,0580 |
+| `bump.durationFrames` | Auf einem Beat setzt Bump die Tiefe auf `depth2` — **unabhängig** von der Rampenlänge. Am Schlussframe, der selbst ein Beat ist, steht deshalb in beiden Presets dieselbe Tiefe. Eigene Lauflänge 201 (20 Frames nach dem letzten Beat): dort ist die Vorgabe 15 abgelaufen, der Gegenwert 100 hält noch — bei ihm ist der Rampenschritt `\|30−100\|/100` als Integer-Division sogar 0, die Tiefe fällt gar nicht (der S46-Sonderfall) | 0,1156 |
+
+**Nicht prüfbar, festgeschrieben (1):** `rotatingStars.bandHi` — der Knoten nimmt
+aus dem Fenster nur die **Spitze**, und das Spektrum des Standalone-Signals fällt
+ab jeder Stelle monoton: das Maximum liegt immer im ersten Band, unabhängig
+davon, wo das Fenster endet. Mit sechs Fenstern gemessen ([0,·), [3,·), [4,·),
+[12,·), [40,·), [120,·)), jedes schmalste gab Pixel für Pixel dasselbe Bild wie
+das weite. Gegenprobe: `bandLo` kommt an — fünf einzelne Bänder, fünf
+verschiedene Bilder. Damit sind es **drei** nicht prüfbare Felder, zusammen mit
+`customBpm.arbitraryMs` (hängt an der **Wanduhr**: 181 Frames rendern in
+Millisekunden, weder 500 ms noch 5000 ms lösen aus) und `camera3d.fogColor`
+(**dämpft** Sprites nur, statt sie zu färben — unser Zeuge ist ein SuperScope 3D,
+also ausschließlich Sprites).
+
+**Sechs App-Befunde, alle behoben (S57)** — Messwerte der Sonde nach dem Fix:
+
+| Feld | Befund | Fix | jetzt |
+|---|---|---|---|
+| `blur.roundUp` | AVS rechnet den Blur in **8-Bit-Ganzzahlen** und schneidet jeden Teilterm ab (`DIV_2`/`DIV_4`/`DIV_8`/`DIV_16` sind Byte-Shifts); „round mode" legt je Kernel einen festen Ausgleich obendrauf. Unser Shader rechnete in float mit exakter Gewichtssumme — kein Verlust, kein Ausgleich, das Feld nirgends gelesen. Dazu stand unsere **Vorgabe auf `true`**, AVS' Default ist 0 | Byte-Arithmetik im Shader, Ausgleich **+4/+5/+3** je Stärke (r_blur.cpp), Vorgabe auf `false`. Der Mittelterm braucht zwei Gewichte: `DIV_2 + DIV_4` sind zwei getrennt abgeschnittene Terme, nicht einer mit 0,75 | 0,0118 = 3/255, die Arithmetik trifft exakt |
+| `grain.staticGrain` | Wir zeichneten **immer** statisch (feste Rauschtextur), die Vorgabe `false` versprach das Gegenteil. Der Code sagte es selbst: „nur der NICHT-statische Pfad braucht die Tabelle" | Zweiter Shader-Zweig, je Frame frische Werte über das `randAt`-Muster von Scatter. **Nicht** bitgleich zur Referenz: dort läuft eine Position sequentiell durch eine 491-Byte-Tabelle und der Faktor wird nur gezogen, wenn die Schwelle trifft — datenabhängig, parallel nicht berechenbar. Gleich sind Verteilung, Wertebereich, Frame-Frische | 0,0363 |
+| `oscRing.channel` · `oscStar.channel` | Beide riefen `getWaveform()`/`getSpectrum()` **ohne Kanal**. Die S56-Vermutung „das Signal ist nicht stereo" war falsch — die Wellenform des Standalone hat längst L≠R (Phasenversatz 0,7), und `simpleScope.channel` wirkt, weil dieser Knoten `visWaveform(channel)` liest | `waveOfChannel`/`specOfChannel` neben den bestehenden Accessoren, eine Stelle für beide Knoten. **Bildneutral** für vorhandene Presets: `getWaveform()` mischt bei Stereo selbst zur Mitte, und die Vorgabe ist `channel = 2` = Mitte | 0,0013 · 0,0118 |
+| `texer.blend` | Der Renderer kannte nur „0" und „alles andere": **1 und 2 waren derselbe GL-Zustand**, 50/50 gab es nicht, und 0 („ersetzen") war additiv ohne Alpha-Gewichtung | Alle drei Betriebsarten mit den Faktoren aus `applyLineBlend`, damit ein Sprite wie eine Linie mischt | 0,0655 |
+| `texerII.wrapAround` | Nirgends gelesen | Torus-Wiederholung: die Kopien 2,0 entfernt, gezeichnet nur wo sie den Sichtbereich schneiden. Referenz ist eine Binär-APE (`texer2.ape`, kein Quellcode im ref-Baum) — umgesetzt ist die Semantik, die am Feld steht | 0,0278 |
+
+**~~Beobachtung~~ ✅ gelöst (S57):** `fractalZoomer.feedback` heißt „trail
+persistence 0..1", der Shader las es aber nur als **Schalter**
+(`> 0.01f ? 50/50 : ersetzen`) — 0,3 und 1,0 ergaben dasselbe Bild. Jetzt ein
+echtes Gewicht (`mix(col, alt, feedback)`) über ein eigenes Uniform, damit der
+Nachbar-Knoten `fractal2D` seine **benannte** Betriebsart „50/50" behält. Der
+Test, der vorher 0,0000 gab (0,3 gegen 1,0), liefert **0,2391**; die Vorgabe 0,5
+ist exakt das alte 50/50, bestehende Presets bleiben also unverändert.
+
+### Die Matrix hatte keinen Blur mit Trail (S57)
+
+Der Grund, warum `blur.roundUp` zwei Kalibrier-Runden überlebt hat: die einzige
+Blur-Zeile lief auf **statischem** Material, das jeden Frame neu gezeichnet wird.
+Eine Rundung um 4/255 ist dort eine Stelle hinter der Anzeige — nachgemessen
+liefern `roundUp` an und aus in `01_normal` beide **MAE 0,003**. Erst ohne Basis
+(`MAT_TRAIL`) akkumuliert sie sichtbar.
+
+Zwei neue Zeilen bewachen jetzt beide Richtungen, und sie belegen den Fix:
+
+| Zeile | 320×240 dMean/dMaxLuma/MAE | Urteil |
+|---|---|---|
+| `06_blur/02_trail_rounddown` | 0,007 / 0,016 / 0,009 | OK |
+| `06_blur/03_trail_roundup` | 0,005 / **0,001** / 0,012 | OK |
+
+Der harte Beleg, dass der Fix nötig war: die beiden **Referenzbilder**
+unterscheiden sich in **230 400 von 307 200 Bytes** bei maximaler Abweichung 255
+— zwei völlig verschiedene Bilder. Vor dem Fix hätte unser Renderer für beide
+Presets dasselbe geliefert (das Feld wurde nirgends gelesen), also wäre
+mindestens eine der Zeilen krachend falsch gewesen. Jetzt sind beide grün.
+
+### Zwei Werkzeug-Löcher, die dabei aufgefallen sind
+
+- **Ein Faltungskern ist keine Farbtafel.** Die Listen-Regel füllte alle 49
+  Stellen von `convolution.kernel` mit Palettenfarben — Gewichte um 16 Millionen,
+  das Bild übersteuert vollständig, und die Sonde meldete mit MAE **0,8906**
+  „wirkt", ohne etwas gemessen zu haben. Jetzt Laplace aus `HANDWERK`: **0,0993**.
+- **Weiß gehört nicht in die Gegen-Palette.** `0xFFFFFF` ist der Ersatzwert, den
+  mehrere Renderer für eine LEERE Tafel einsetzen (`cycleScopeColor`,
+  `paletteRgb`) — eine Tafel mit Weiß darin kann dort genau das Vorgabebild
+  treffen. In der ersten Fassung meiner neuen Tafel-Regel fiel
+  `superScope.colors` deshalb von WIRKT auf **STUMM**, drei weitere wurden
+  schwächer. Ohne Weiß und Graustufen wirken alle dreizehn Tafeln, mehrere
+  deutlich stärker als vorher (`oscStar.colors` 0,0009 → 0,0099).
+
+## 1d. Vorgaben: die zweite Quelle ist abgeschafft (S56)
+
+Jede Vorgabe stand an **zwei** Stellen: als Initialisierer im `…Params`-Struct
+und als dritter Parameter im Deserialisierer (`getInt(o, "x", 5)`). Liefen sie
+auseinander, hing der Wert davon ab, **woher der Knoten kam** — ein frisch
+eingefügter trug den Struct-Wert, ein **geladener** den des Deserialisierers.
+
+Aufgefallen am Kleinian-Fix (§1c): Struct-Vorgabe geändert, gebaut — die Sonden
+sahen nichts, weil sie aus einem Preset laden.
+
+**Entscheid Patrik: die zweite Quelle abschaffen.** Umgesetzt — der
+Deserialisierer bezieht die Vorgabe jetzt aus dem Ziel selbst:
+
+```cpp
+p.iterations = getInt(o, "iterations", p.iterations);   // vorher: …, 30);
+```
+
+Das Params-Objekt wird ohnehin auf Vorgabe konstruiert, also steht die Zahl nur
+noch im Struct. **415 Stellen** maschinell umgestellt, dazu **243 `getStr`**,
+die gar keinen Vorgabewert kannten (neue Überladung mit Default). Vier
+`BlendMode`-Ziele brauchten einen Cast von Hand.
+
+**Eine bewusste Ausnahme bleibt:** `starfield.blend` liest `1`, obwohl die
+Vorgabe `0` ist — *„legacy files rendered additively"*. Der Wert steht dort für
+**alte Dateien**, nicht für den Knoten. Sie trägt ihre Begründung im Code und
+ist im Wächter benannt.
+
+**Zwei Vorbedingungen**, damit der Umbau bild-neutral bleibt:
+
+- **Demo-Skripte raus aus vier Structs** (`dynamicShift`, `bump`,
+  `dynamicDistanceModifier`, `texerII.pointCode`). Der Deserialisierer ließ
+  diese Slots beim Laden schon immer leer; wären sie im Struct geblieben, hätte
+  ein importiertes Preset sie ab jetzt **geerbt**. Ihr Platz ist eine
+  Voreinstellung (§11) — die Texte stehen in der Git-Historie.
+- **`metaballs3d.colors`/`tentacles3d.colors`** von `{}` auf `{0xFFFFFF}`: der
+  Leser heilte eine leere Tafel ohnehin auf Weiß, eine leere ließ sich also gar
+  nicht speichern. Gefunden vom neuen Roundtrip-Test.
+
+**Eine gewollte Verhaltensänderung:** `timescope.blend` wird beim Laden nicht
+mehr auf `0` gezwungen, sondern erbt die Struct-Vorgabe `3` (= folge dem Set
+Render Mode, der AVS-Default laut `r_timescope.cpp:147-148`). Betroffen sind nur
+Presets, die das Feld gar nicht nennen.
+
+### Zwei Wächter statt eines
+
+| | prüft | wo |
+|---|---|---|
+| **statisch** | steht im Deserialisierer noch ein Vorgabe-**Literal**? | `harvest_field_docs.py` — „Vorgabe-Literale im Leser: 0" |
+| **Roundtrip** | übersteht jedes Feld Struct → JSON → Struct? | `test_FieldInventory.cpp` |
+
+### Korrektur an meiner eigenen Meldung
+
+Der erste Wächter-Entwurf fütterte `nodeFromJson` mit `{"type": …}`, also einem
+JSON **ohne jedes Feld**, und meldete **20 Abweichungen**. Diese Zahl war falsch:
+neun davon waren **Alt-Format-Migrationen**, die genau auf einem leeren Objekt
+anspringen und dann aus fehlenden Werten rechnen (`blitterFeedback.scale2` kam so
+auf **−102** — im Code steht dort `30`, wie im Struct).
+
+Echt waren: **2** abweichende Literale (`starfield.blend` bewusst,
+`timescope.blend` nicht) und **9** Skript-Felder, bei denen `getStr` keinen
+Vorgabewert kannte. Ermittelt wurde das statisch, nicht zur Laufzeit — dieselbe
+Lehre wie bei den Sonden: *eine gemeldete Abweichung ist zuerst eine Frage an das
+Messverfahren.*
+
+## 1e. Bedienung: der Editor muss nach jedem Baumumbau dastehen
+
+**Befund Patrik (S55, S56).** Wer einen Knoten einfügt oder verschiebt, will ihn
+sofort bearbeiten. Beides ging nicht: der Eigenschaften-Editor blieb leer, bis
+man einmal weg- und wieder hinklickte.
+
+Die Ursache ist an beiden Stellen dieselbe. `selectByPath`/`selectPaths` setzen
+die Auswahl unter `m_selecting`, und das Auswahl-Signal ist dabei **stillgelegt**
+(sonst würde jeder Zwischenschritt einen Editor-Neubau auslösen). Das
+anschliessende `setCurrentItem` ändert nur noch das *aktuelle* Element — es
+ändert die Auswahl nicht mehr und löst deshalb kein Signal aus. Also baut
+niemand den Editor.
+
+Der Doppelschritt ist die Lösung: **markieren UND `buildPropertyEditor` rufen.**
+Einfügen hat ihn seit S55, Verschieben seit S56.
+
+⬜ **Beides ist nicht erprobt** — das geht nur durch Anklicken bzw. Ziehen.
+
+## 1f. Strang F abgearbeitet: wirkt jedes Feld auch beim EDITIEREN? (S57)
+
+Der Rückstand aus S56 ist gemessen — ein Vollauf über alle 702 Sonden, nachdem
+S57 sechs Renderer und mehrere Sonden-Aufbauten verändert hatte.
+
+**558 GLEICH · 133 TEILWEISE · 11 VERDECKT · 0 WIRKUNGSLOS.**
+
+Der Lauf fand **einen** Befund, und der ist behoben:
+`interferences.rotation` ist ein **Startwert** für einen selbstlaufenden Zähler
+(`rt.interfRotation += rotInc` je Frame). Übernommen wurde er nur unter
+`!interfSeeded` — also **einmal beim Aufbau**. Da ein Panel-Edit nur
+`recompileChain()` ruft und nicht `resetRuntimes()`, blieb der Zähler für immer
+auf dem Wert des ersten Aufbaus: ein neu eingestellter Startwinkel kam nie an.
+
+```cpp
+if (!rt.interfSeeded || rt.interfRotationSeed != params.rotation)   // vorher: nur !interfSeeded
+```
+
+Verglichen wird der **Preset-Wert**, nicht die Frame-Kopie — sonst würde ein
+Skript, das `rotation` je Frame schreibt, den Zähler in jedem Frame zurücksetzen.
+Danach `GLEICH 0,0000`, und die Feld-Sonde liegt unverändert bei 0,0548 (keine
+Regression beim Laden).
+
+Das ist eine eigene Fehlerklasse, die vorher keinen Namen hatte: **ein Startwert
+ist kein Parameter.** Wo ein Feld nur einen fortlaufenden Zustand initialisiert,
+macht ein `…Seeded`-Flag den Wert nach dem ersten Aufbau unerreichbar. Strang F
+hat alle 702 Felder daraufhin geprüft und genau diesen einen Fall gefunden.
+
+Die Verschiebung gegenüber S56 (587/112/8 → 558/133/11) kommt von den Sonden, die
+S57 verändert hat: mehr Bewegung im Bild heißt mehr Vorgeschichte, also wandern
+Felder von GLEICH nach TEILWEISE. `TEILWEISE` ist bei Effekten mit Verlauf der
+Normalfall und kein Befund.
+
+## 2. Urteile, die nur Seite-an-Seite fallen können
+
+Prüfplan, Presets, Audio und Kriterien stehen in
+[AVS_Sichttest_Protokoll.md §7](visuals/AVS_Sichttest_Protokoll.md). Angelegt in S45,
+**keine Zeile ausgefüllt**. Test-Audio: `…\cmake\TestAudio\` (WAV = Master, MP3 für
+Winamp-Komfort).
+
+| # | Frage | Ohne Antwort passiert | |
+|---|---|---|---|
+| P1 | **S7** — konvergiert echtes AVS bei XOR-in/50-50-out-Listen auch zu Uniform-Grau? | unklar, ob überhaupt ein Bug vorliegt | ⬜ |
+| P2 | **S13** — zeichnet AVS im nicht-quadratischen Fenster eine Ellipse, wo wir einen Kreis zeichnen? | Scope-Mapping bleibt aspektquadratisch | ⬜ |
+| P3 | **S9-Rest** — sättigt das Original bei ZeroG/Novae/Rotor auch zu Weiß/Gelb? | ColorMap-auf-Weiß / FastBright-Ketten unbisektiert | ⬜ |
+| P4 | **S12** — Spektrum-Amplitudenskala (`kSpecGain`) | Sichtkalibrierung offen | ⬜ |
+| P5 | **S1** — fuzzify/blocky-Optik (Körnung, Blockraster) | S1-Rest nicht geschlossen | ⬜ |
+| P6 | **Ego** — Subtract-Helligkeitsbalance | Schwarz ist gefixt (S14), Balance ungeprüft | ⬜ |
+| P7 | Kür: Blend-Modi + L/R-Kanalvertrag | — | ⬜ |
+
+**Nicht nachgemessen seit S45** (ein Teil dürfte durch S48–S52 erledigt sein):
+
+- **HISTORY-pRELOADED, 12 Befunde** ([Protokoll §5](visuals/AVS_Sichttest_Protokoll.md)):
+  HpR05 fast nur schwarz · HpR10 Kontrast · HpR11/HpR12 zu dunkel · HpR14 wird in <1 s
+  weiß · HpRX2 „da fehlt was" · HpRX3/HpRX4/HpRX6 nur schwarz · HpRX5 wird zu hell ·
+  HpRX7 Matrix-Text-Dichte.
+- **JC-big stuff, 3 Weiß-Sättigungs-Verdachtsfälle** (§2.1): don't make a mess ·
+  don't try to aphect ME · how much 4 the cool glowin thingi — Bisektion ausstehend.
+
+## 3. MilkDrop
+
+**Kalibrier-Runde läuft seit S63.** Werkzeuge: Triage-Kette
+`asset/calibration/milkdrop/` (`triage_presets.py` → `make_triage_report.py`
+→ `compare_ref.py --dir <lauf>`) + **MilkdropRef** (`tools/MilkdropRef/`,
+Ground Truth um den Original-Kern; README dort = SSOT, Test-Presets IMMER
+unter `asset/Milkdrop3/` ablegen). **S64: acht Fixklassen, OK 289→295,
+Prüfstände jetzt SAATLOS** (Entscheid Patrik; `--seed` = App-Opt-in) —
+Baseline `out/milkdrop_triage_s64f`: 16 auffällig = 5 korrekt PRESET-IST-SO
+(R239/R239b, sprite3, XorDev 001b, acid wiring 2) + **11 Port-Bugs**.
+**S67: Fixklasse 9 (EEL-Divisions-Vertrag) ⇒ OK 295→298** — neue Baseline
+`out/milkdrop_triage_s67b`: exakt 3 Klassenwechsel, alle aufwärts (pixies ×2
+SCHWARZ→OK, XorDev 001b MONOCHROM→OK; letzteres lebt bei uns jetzt lebhaft,
+die Ref bleibt an ANDEREM UB schwarz — wandert in den Dunkelklasse-Entscheid).
+`out/milkdrop_triage_s67a` = Zwischen-Gate: Shader-Leichen-Fix + Sicht-Blende
+allein sind klassengleich zu s64f.
+Diagnose-Schalter: `LUMIVIZ_MILKDROP_NOSEED`, `LUMIVIZ_MILKDROP_DUMP_WARP`,
+NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
+
+| Was | Stand | |
+|---|---|---|
+| **🎯 Regelwerk-Strang (Entscheid Patrik S64, NÄCHSTE SESSION)** | Node-Param `Legacy \| Modern \| Benutzerdefiniert` (Master-Combo + Einzelschalter je Emulation: Div-Vertrag, UNORM-Trunc, q-Epsilon, UV-/NaN-Sanitize); Import-Default legacy, Neubauten modern. Dazu PS-Version-Override je Typ (warp/comp × auto/PS2/PS3/MD1-erzwingen = Strip-Bisektion als App-Feature). **Genauer Plan (R1–R5 + Abnahme): [Regelwerk_und_Neue_Module_Plan.md](visuals/Regelwerk_und_Neue_Module_Plan.md)** — dort auch Strang S (Shadertoy) und G (GPU-Module) | 🎯 |
+| **🟠 Rest-Port-Bugs — S67-Stand: von 11 auf 8, davon 7 = Dunkelklasse** | **✅ pixies-Familie (2) GEHEILT (S67):** Ursache war der **EEL-Division-Vertrag** — die Referenz-EEL liefert bei Nenner 0 exakt 0 (dreifach per Sonde gemessen, `asset/Milkdrop3/sonden/`), unsere Lua-Engine IEEE-inf/NaN; die NaN-Kaskade (`cal=0 → 0.2/0 → cos(inf)`) zerstörte die Kamera-Matrix in f0 (Beweis: `LUMIVIZ_MILKDROP_TRACE_VARS`, reg30–38=NaN). Fix: EelTranspiler 1.3.0 emittiert `eel.div` (NUR Milkdrop-Dialekt; AVS wartet auf AvsRef-Sonde). searchlight 0,000→0,103 (Ref 0,054), 2000 shapes 0,000→0,111 (Ref 0,268) · **✅ piercing 01 GEKLÄRT — kein Port-Bug:** Rausch-Input `rand*0.0042` (±0,0021) liegt UNTER der 1/255-Quantisierung und stirbt an der UNORM-Trunkierung (auch im Original!) — das Preset braucht Fremd-Energie; die Ref zündet aus nicht-genulltem D3D9-Speicher, der saatlose Prüfstand kann das nicht. Mit `--seed` (App-Pfad): lebt, 0,406/max 0,812 ≈ Ref 0,306/0,794. Einstufung: Saatlos-Vertragsgrenze · **Gin Tonic 003 — S67 UNTERSUCHT, 🟡 Einstufung zur Absegnung:** Der „bass overbright"-Warp (`blur = sin(bass·90)·rad`, Periode 0,07 in bass) macht das Bild-Regime zentistellen-empfindlich auf die Bandwerte. BEIDE Renderer besitzen beide Regimes: unter `--silence` ist die REF weiß (1,000) und WIR moderat (0,34) — exakt invertiert zum Beat-Audio-Fall (Ref 0,035 dunkel, wir 1,000 weiß). Band-Pipelines (unsere Synthetik vs. Ref-FFT des PCM) können auf 0,07-Präzision strukturell nie übereinstimmen ⇒ **Empfehlung: IST-SO-artig (Audio-Statistik-Vertragsgrenze des Prüfstands), kein Renderpfad-Bug** · **q-/UB-Dunkelklasse (7+1): ✅ ENTSCHIEDEN (Patrik, S67) — IST-SO-artig (Legacy-Grenze wie R239)**: purple pulsator, crystal palace, R039, R068, R070, R211, R248 + XorDev 001b (invers: Ref stirbt an UB, wir leben) — Look hängt an doppeltem UB der Referenz (Heap-Garbage-q × Fixpunkt-Überlauf), nicht exakt reproduzierbar; aus der Bug-Liste raus. Formales Urteil: `out/milkdrop_triage_s67b/VERGLEICH.md` (R070/R248 mit Saat nahe Ref: 0,017/0,019 bzw. 0,008/0,022). **⚪ Optionaler Backlog-Pfad (Entscheid Patrik): erst Einzeldossiers (Screenshot-Paar + UB-Ursache je Preset), dann gezielte Emulation — NUR wenn Ressourcen übrig.** Verbleibender echter Rest-Bug: **Gin Tonic 003** (s. oben) | ✅ |
+| ~~**Prüfpunkt R239/R239b**~~ | ✅ **aufgelöst (S64):** Prüfstände saatlos → beidseitig schwarz, korrekt PRESET-IST-SO. Die S63-Falle („OK geworden ≠ richtig geworden") ist damit methodisch beseitigt | ✅ |
+| ~~**AVS-EEL-Divisions-Sonde**~~ | ✅ **gemessen (S67):** `asset/calibration/avs/sonden/` (make_div_sonde.py erzeugt Superscope-Sonden binär) — AvsRef: **2/0 = inf** (wie unsere rohe Lua-Division) ⇒ **AVS bleibt korrekt bei roher Division, das Dialekt-Gate in EelTranspiler 1.3.0 ist bestätigt.** ⚪ Bewusste Grenze entdeckt: `0/0` ist im alten evallib NaN mit x87-UNORDERED-Vergleichs-Quirk (equal(NaN,0)=1 UND above(NaN,1e6)=1 gleichzeitig — Ref malt Gelb, wir Schwarz, da IEEE-Vergleiche alle false); nur relevant für Presets, die auf 0/0-Ergebnissen vergleichen — kein Korpus-Befund bekannt, nicht emulieren | ✅ |
+| ~~**myPresets/ (41)**~~ | ✅ **triagiert (S67, 4 Läufe `out/milkdrop_triage_mypresets_s67*` — Wurzel + 3 Unterordner, das Triage-Skript globbt nicht rekursiv):** 27 OK, 14 auffällig — alle 14 sind eigene GreatWho-WIP-Presets der **Energie-/Verstärker-Klasse**: saatlos dunkel, auch mit Einmal-Saat (Saat zerfällt, Presets brauchen Dauer-Energie/Erbe). Stichproben-Beweis: Spotlight V1 ist in der REFERENZ saatlos ebenfalls flach-dunkel (0,05) und enthält null Divisionen ⇒ keine Port-Bugs, App-Verhalten (mit Erbe) ist der relevante Test. Optional ⚪: Ref-Vollvergleich der 14, falls je gewünscht | ✅ |
+| ~~**Loudness bei Stille**~~ | ✅ **geprüft (S67, Sonden 5–7):** Referenz bei Stille ebenfalls ≈1,0 (Bracket-Sonde: bass ∈ (0,9…1,1]), nur nicht BIT-exakt wie unsere Guard (1,000; `equal(bass,1)` feuert bei uns, in der Ref nicht). Materiell äquivalent; das Restrisiko exakter Band-Differenzen (0/0 in Presets wie gb003) ist seit `eel.div` (0/0 ⇒ 0) entschärft — kein Handlungsbedarf | ✅ |
+| ~~**MilkdropRef-MessageBoxen**~~ | ✅ **erledigt (S67):** `patched/ref_msgbox.h` per `/FI` in alle Übersetzungseinheiten — alle MessageBoxen werden stderr-Zeilen + IDOK (nachdem die Falle erneut einen Sonden-Lauf blockierte). Merke: `data/include.fx` wird relativ `<presetordner>/../data` gesucht — Sonden nach `asset/Milkdrop3/sonden/` | ✅ |
+| **MD3/2077-Feature-Frage (Patrik)** | erst nach dem MD2-Grundpfad: welche 2077-Presets nutzen MD3-exklusive Features, die uns fehlen? | 🟡 |
+| **`rot_*`-Matrizen optisch** | seit S52 im Code (24 Matrizen + Matrix-Indizierung), 9 Presets im Pack betroffen. Werte sind zufällig und unser PRNG ist ein anderer als der von MilkDrop — prüfbar ist nur: laden sie durch, bewegt sich Plausibles | ⬜ |
+| ~~**Texturen `worms`, `rose`, `grad3`**~~ | ✅ **beschafft (S60):** im Original-Winamp-Pack fehlen sie tatsächlich (21 Texturen, geprüft gegen `ref/winamp_orig`), aber der **MegaPack-`textures`-Ordner** (`…\VisualsPresets\MilkDrop 135k+ Presets MegaPack 2026\textures`, 8415 Dateien) hat alle drei — nach `asset/Milkdrop3/textures/` kopiert. Damit sind 27 von 35 Fehler-Log-Zeilen weg. ⚠ Herkunft Community-Pack: Lizenzfrage vor dem Commit kurz bedenken. Bei künftigen fehlenden Texturen zuerst dort suchen (verwandt: „Assets-Ordner-Fallback" §7) | ✅ |
+| **In-App-Sichttest-Runde** | c1- + m5-Presets über den Node-Pfad, Panel-Baum + Editor-Sektionen, Session-A-Features (Wave/Shape/Sprite anlegen/entfernen/klonen, Sprite-Editor, fShader-Wash). Offen seit S42 — [Status Punkt 0](visuals/MilkDrop_Import_Status.md) | ⬜ |
+| **Decay-Dither** + **`.milk`-Export** | Punkt 8, ganz ans Ende | 🟡 |
+| **Playlist-Anbindung** | hängt an E6 (§6) | 🟡 |
+| Host-Gruppen-Feinschliff | exakter paarweiser 2er-Mix statt sequentiellem Adjustable | 🔧 |
+
+## 4. Sichttests, die nie stattgefunden haben
+
+| Was | Umfang | |
+|---|---|---|
+| **Batch H — 9 Fraktal-Module** | Fractal 2D (9 Typen) · Fractal 3D (Raymarch-DE) · Domain Warp · Fractal Zoomer · Lyapunov · Kleinian · Strange Attractors · Flame/IFS · Reaction-Diffusion. Gebaut in S37, Unit-Tests grün, **GL-Sichttest komplett offen**. Kalibrierpunkte je Modul: Färbung/Banding, Kamera-Defaults, feed/kill, Reseed bei Divergenz, Punktzahl vs. Helligkeit. Querschnitt: Gradient-Paletten je Modul, Blend über die Kette, Audio-EEL-Reaktion | ⬜ |
+| **FeedbackBuffer / `post.trail.*`** | Roadmap 4.3 — Sichttest (Trail-Look, Resize, Undock/Vollbild) + **Frametime-Vergleich** ausstehend. Einziges Modul-Doku mit offenem Status ([FeedbackBuffer.md](../include/visualizers/render/FeedbackBuffer.md)) | ⬜ |
+| **BeatEstimator** | Roadmap 4.4 — Beat-Stabilität am laufenden Bild | ⬜ |
+| **Multi-Drag zwischen Listen** | Block-Reparenting, Index-Mathematik nur compile-verifiziert; bei Bugs auf „Reorder in gleicher Ebene" beschränken | ⬜ |
+| **Stereo `getspec`/`getosc`** | ch=1 (L) vs. ch=2 (R) getrennt? Nur compile-verifiziert. ⚠ **Hörtest**. Stellschrauben: `BASS_DATA_FFT_INDIVIDUAL`-Layout (`bin*chans+ch`) + Waveform-Interleaving | ⬜ |
+| **Reset Start Folder** (S73) | Einstellungen › Panels › *Reset Start Folder* zeigt jetzt in den **Programmordner** statt in den Benutzerordner. Der Startordner-Weg ist am laufenden Programm belegt (Log), der **Knopf selbst wurde nie gedrückt**. Zwei Klicks: drücken, Browser muss im Programmordner stehen und `presets/` zeigen | ⬜ |
+| **Die 60 neuen Feld-Sonden** (S73) | Sonden für `gpuParticles`, `isfFilter`, `meshWarp`, `pixelFilter`, `shadertoy`, `videoSource`, `dotFountain`/`dotPlane`-`startRotation`, `milkdrop/puffer*` sind erzeugt und committet, aber **nie gelaufen**. Ein Sondenlauf zeigt, welche Felder wirken und welche STUMM melden — erwartungsgemäß findet sich dabei auch Testaufbau-Rauschen (§1c) | ⬜ |
+
+## 5. Offene Entscheide
+
+| Quelle | Entscheid | |
+|---|---|---|
+| ~~[Hotkey_Konzept §9](ui/Hotkey_Konzept.md)~~ | ✅ **entschieden (Patrik, S60):** §9.2 Stufe 1 blättert NICHT in Unterordner (nur aktuelle Ebene) · §9.3 am Verzeichnisende **umlaufen** · §9.4 Blättern wirkt auf den **zuletzt gewählten** Eintrag · §9.5 Menü-Einträge zeigen die Tasten. *(§9.1 in S52 entschieden: `Bild ab` = vorwärts.)* Umsetzung/Konzept-Nachzug bei der nächsten Hotkey-Arbeit (nach §0) | ✅ |
+| ~~[Visual_Playlist §6](ui/Visual_Playlist_Konzept.md)~~ | ✅ **entschieden (Patrik, S60):** **Pfad-Referenzen** statt eingebetteter `.lvfx` (kaputte Pfade beim Laden melden) · **Auslöser-Default: KEIN automatischer Wechsel** (manuell; Songwechsel/Timer sind opt-in) · Timer-Wechsel, wenn aktiviert, **beat-quantisiert** (nächster Beat) · Import-Browser-Erweiterung **erst mit der Playlist**. P2 damit entsperrt, Umsetzung nach §0 | ✅ |
+| ~~[Lights_Module_Entwurf](visuals/Lights_Module_Entwurf.md)~~ | ✅ **entschieden (Patrik, S60): nach §7 (Backlog) verschoben** — BASS-Lookahead-Service (`AudioLookahead`) erst mit den Lights-Modulen; bis dahin reichen Beat-Prädiktion + `gettime()` | ✅ |
+| [Parameter_Reference §10](visuals/Parameter_Reference.md) | Deklarierte Preset-Defaults vs. Dropdown-Indizes bereinigen · `solidColor`/`peak.color.fixed` ohne deklarierten Default | 🔧 |
+| ~~**60 neue Feld-Sonden**~~ (S73) | ✅ **entschieden (Patrik, S73): mitgenommen.** Der Lauf von `make_field_probes.py` (nötig für den Pfad-Fix) hat nebenbei Sonden für Knotentypen erzeugt, die es seit S69–S72 gibt und für die nie welche existierten: `gpuParticles`, `isfFilter`, `meshWarp`, `pixelFilter`, `shadertoy`, `videoSource`, `dotFountain/startRotation`, `dotPlane/startRotation`, `milkdrop/puffer*`. Keine lokalen Pfade darin. **Sie sind noch nie gelaufen** — ob sie etwas messen oder STUMM melden, ist offen; das entscheidet erst ein Sondenlauf (§4) | ✅ |
+| ~~MilkDrop-Texturen~~ | ✅ beschafft aus dem MegaPack (S60), siehe §3 | ✅ |
+| ~~**Multi Delay: wem gehört die Verzögerung?**~~ (Befund S55) | ✅ **entschieden und umgesetzt (Patrik S55): Puffer-Besitz, original-treu.** Der Ausgabe-Knoten liest jetzt den **ältesten** Frame des Rings (`head`), sein eigenes `delay` wirkt nicht mehr — wie `outpos[buffer]` im Original. Bis dahin änderte das `delay` des Schreibers nur die Ringgröße und blieb unsichtbar. Vorstand gemessen: ungleiche Werte kann es im Original **gar nicht geben** (jeder Knoten speichert alle sechs Puffer-Einstellungen und schreibt sie global, `r_multidelay.cpp:387-401`), im Referenz-Korpus nutzen **2** Presets den Effekt, in eigenen `.lvfx` nur die Sonden | ✅ |
+| ~~**Colorfade: `enabled`-Bitfeld fehlt**~~ (Befund S55) | ✅ **erledigt S57, Zeile war nur nie abgehakt (bemerkt S60):** Colorfade ist nach `r_colorfade` portiert — Bitfeld beim Import, persistenter Fader-Zustand, Annäherungsrampe, drei exklusive Beat-Zweige; alle 12 Felder wirken (§1-Zeile „Colorfade-Zufalls-Beatmodus") | ✅ |
+| ~~[Config_Pipeline_Umsetzungsplan](visuals/Config_Pipeline_Umsetzungsplan.md)~~ | ✅ **entschieden + umgesetzt (S60):** die Abnahme-Tabellen A1–A8/N1–N7 sind **als erledigt gestrichen** (Vermerk im Dokument; die `⬜` bleiben als Historie stehen) — Schritte 0–7 ✅ seit S30, Sichttests 5.1–5.5 abgenommen | ✅ |
+
+## 6. Konzept-Phasen, noch nicht begonnen
+
+- 🟡 **Vereinheitlichung V2–V5** ([Konzept v1.2.0](visuals/Vereinheitlichung_Konzept.md)):
+  V2 Audio-SSOT (MilkLoudness überall, `visdata`-Baustein, `getspec`/`getosc` in
+  Milk-Slots, `ScriptInputFeeder`) · V3 Konstanten + Funktions-Abgleich gegen EEL2 ·
+  V4 Standalones → Module · V5 Gradient-Parameter-Typ + LUT-Baustein.
+  **V1** (Basis-Key-Registry + Import-Umbenennung) ist mit `ScriptBaseKeys.hpp` und
+  der D2-Regel in S51 vorgezogen worden. Ausführung ausdrücklich **nach** der
+  Kalibrier-Runde.
+- 🟡 **P3 Skript-SSOT modul×slot** ([Skript_Variablen_Konzept](visuals/Skript_Variablen_Konzept.md) §3/§8):
+  1. Symboltabelle Modul×Slot×Name → Kategorie/Typ/Range/Text · 2. Referenz daraus
+  generieren statt Hand-HTML · 3. Kategorie-Highlighter modul-bewusst ·
+  4. Fehler-Markierung je Slot statt global konservativ.
+- 🟡 **P2 Visual-Playlist** — hängt an den Entscheiden §5.
+- 🔧 **P1 Set Render Mode auf alle Scope-Effekte** — durch S45/S3 weitgehend erledigt
+  (`drawScopeShape`, `drawDots` zeichnen über den SRM-Zustand); als Punkt nie
+  formal geschlossen. Prüfen und schließen.
+- ⚪ **Hotkeys Stufe 2/3** — Stufe 2 (Transport) ist in S52 verdrahtet; Stufe 3
+  (Composer-Spuren) ist Fernziel.
+
+## 7. Backlog (bewusst nichts tun)
+
+### ➜ Shadertoy-Modul (Entscheid Patrik S64 — geplant, Strang S)
+
+Eigener Node-Typ mit **modernem Regelwerk**, inkl. **URL-/ID-Import**
+(Shadertoy-API auf Knopfdruck, API-Key in den Settings; Fallback
+Code-Einfügen) und eingebauter/nachrüstbarer **Audioreaktivität**
+(Shadertoy-natives 512×2-Audio-iChannel FFT+Waveform + LumiViz-Uniforms
+bass/mid/treb/beat + Audio-Mod-Skript-Slot). Ausbaustufe Multipass A–D.
+⚠ Lizenz CC BY-NC-SA: Inhalte bleiben lokal, nichts ins Repo.
+**Genauer Plan (S1–S4): [Regelwerk_und_Neue_Module_Plan.md](visuals/Regelwerk_und_Neue_Module_Plan.md)**
+— Start nach Strang R.
+
+### ⬜ Editor-Komfort im Multi-Chain-Panel: Apply + Beautify (Wunsch Patrik, 2026-08-05 — **umgesetzt S69, Sichttest offen**)
+
+Umgesetzt (S69), alle drei Punkte — offen ist nur noch der UI-Sichttest:
+1. **Apply-Button** (`QDialogButtonBox::Apply`) im Groß-Editor
+   (`EelScriptEditing.hpp` 1.1.0, `ScriptEditorHooks`): übernimmt +
+   recompiliert (Text → Inline-Feld → `mutate` → `recompileChain`), Dialog
+   bleibt offen. Fehler IM Dialog: EEL synchron per `eel::transpile`-Probe
+   (Dialekt des Knotens: Milkdrop vs. AVS), HLSL synchron per
+   `hlsl::transpile`, Shadertoy-GLSL per Nach-Polling (300/900/1800 ms) auf
+   `shadertoyError(nodeId)` — GL kompiliert erst im Render-Thread, d. h. der
+   Fehler kommt nur an, solange der Viewport rendert.
+2. **Beautify-Button**: Kerne in `include/scripting/ScriptFormatter.hpp`
+   (pur, ohne Qt — 26 doctest-Cases inkl. Whitespace-only-Vertrag: Token
+   byte-identisch). GLSL/HLSL = brace-basiertes Re-Indent; EEL = ein
+   Statement pro Zeile + Einzug nach Klammertiefe. Milkdrop-Spezialfall
+   (geklärt 2026-08-05): `per_frame_N=`-Rückverteilung betrifft NUR einen
+   etwaigen `.milk`-Export — als Chain-Node/`.lvfx` leben die Skripte als
+   ganze Strings (`assembleCode`).
+3. **Settings**: neuer Tab „Editor" im Settings-Panel — Einzugsbreite,
+   Leerzeichen um Operatoren (nur EEL), max. Leerzeilen (QSettings
+   `editor/...`, Defaults = `FormatOptions`, je Beautify-Klick frisch
+   gelesen).
+4. **Import…/Export… für Shader-Felder** (Nachwunsch Patrik, gleiche
+   Session): Groß-Editor der Shader-Felder (Shadertoy Image+Buffer A–D,
+   Milkdrop Warp/Comp) lädt/speichert Dateien (UTF-8, Filter
+   `*.glsl *.hlsl *.frag *.txt`); Export-Vorschlag `preset_name.modul.glsl`
+   (`shaderExportName()` — Basis: Shader-Metadaten- bzw. Node-Name,
+   sanitisiert; Modul: image/bufferA–D/warp/comp — Endung laut Vorgabe
+   auch für die HLSL-Felder `.glsl`). Letzter Ordner in QSettings
+   `editor/shaderFileDir`. Import ersetzt nur den Editor-Inhalt —
+   übernommen wird erst mit Apply/OK.
+
+### 🟠 Key-Variablen-Regel für JEDES Import-Format (S72)
+
+> **SSOT der Regel:** `include/scripting/ScriptBaseKeys.hpp` (Entscheid D2,
+> `Vereinheitlichung_Konzept.md` §4). Dort steht die AVS/MilkDrop-Seite
+> vollständig — alles Weitere hier ist **neu aus S72**.
+>
+> **Geltungsbereich (Vorgabe Patrik S72):** Die Regel gilt für **alle**
+> Import-Formate — AVS, MilkDrop, **Shadertoy**, **ISF** — und für jedes
+> künftige. Sie ist bewusst formatunabhängig formuliert: ein neues Format
+> bringt nur seine Builtin-Liste mit, die Regel selbst bleibt.
+
+**Die Regel, wie Patrik sie in S72 formuliert hat** (Beispiel `bass`):
+`bass` ist ein **MilkDrop**-Original. Ein natives Lumi-Skript darf es für das
+Bass-Signal benutzen. Ein importiertes **AVS**-Preset kennt es dort aber
+*nicht* als Key-Variable — also ist `bass` in dieser Datei eine gewöhnliche
+Nutzer-Variable und wird zu **`bass_p`** umbenannt. Gleiches gilt für alle
+anderen. Verschärfung Patrik: *„wenn es mehrere `bass` als Original gibt und
+die Definition der Auswertung gleich ist, passt es ja auch"* — dann ist es
+kein Konflikt, sondern ein **gemeinsamer Schlüssel**, und das Binden an den
+injizierten Wert IST die treue Semantik.
+
+Daraus drei Fälle, maschinell entscheidbar:
+
+| Lage im Quellformat | Folge |
+|---|---|
+| vorhanden, **gleiche** Auswertung | gemeinsamer Schlüssel — **nicht** umbenennen |
+| vorhanden, **andere** Auswertung | umbenennen |
+| **nicht** vorhanden | gewöhnliche Nutzer-Variable — umbenennen |
+
+**Die Builtin-Listen je Format** (das Einzige, was ein neues Format mitbringen
+muss):
+
+| Format | Builtins, die NIE umbenannt werden |
+|---|---|
+| AVS | `beat` (r_list); Rest siehe `kInjectedKeys` |
+| MilkDrop | `bass`, `mid`, `treb`, `treble`, `vol`, `time` |
+| Shadertoy | `iTime`, `iTimeDelta`, `iResolution`, `iFrame`, `iFrameRate`, `iMouse`, `iDate`, `iSampleRate`, `iChannel0..3`, `iChannelTime`, `iChannelResolution`, `mainImage` |
+| ISF | `TIME`, `TIMEDELTA`, `FRAMEINDEX`, `RENDERSIZE`, `PASSINDEX`, `DATE`, `isf_FragNormCoord`, `vv_FragNormCoord` |
+| LumiViz (Zusatz in allen) | `bass`, `mid`, `treb`, `vol`, `beat`, `dt`, `getosc`, `getspec`, `getspecdb`, `_lumi*` |
+
+**Offen (vier Befunde S72):**
+
+0. **🟠 Shadertoy hat dieselbe Lücke — seit S65, unbemerkt.** Die
+   Shadertoy-Prälude deklariert `uniform float bass;` (und mid/treb/vol/beat).
+   Ein Shader von shadertoy.com, der eine **eigene** Variable `bass` benutzt,
+   ergibt damit eine **Doppel-Deklaration** und kompiliert nicht — mit einem
+   Fehler, der auf den Nutzer-Code zeigt, obwohl die Ursache in unserer
+   Prälude sitzt. Dieselbe Regel, dieselbe Behebung wie unten. Häufigkeit im
+   Netz-Korpus noch nicht gemessen (Shadertoy-Inhalte liegen lizenzbedingt
+   nicht im Repo — Messung über den Browser-Import, sobald jemand darauf
+   stößt).
+1. **ISF fehlt in der Tabelle.** `IsfFilterWrapper::istPraeludenName()` trägt
+   eine **eigene** Liste reservierter Namen — eine zweite Quelle neben
+   `kInjectedKeys`. Richtig wäre: ISF-Builtins (`TIME`, `TIMEDELTA`,
+   `FRAMEINDEX`, `RENDERSIZE`, `PASSINDEX`, `DATE`, `isf_FragNormCoord`,
+   `vv_FragNormCoord`) in die SSOT, und der Wrapper fragt
+   `collidesOnImport(name, format)`.
+2. **Namensschema inkonsistent.** Entscheid D2 lautet `name` → `name_p`
+   (mit Eskalation bei erneuter Kollision). Für ISF wurde stattdessen
+   `_lumiIn_<name>` erfunden — dasselbe Konzept in zwei Schreibweisen. Auf
+   `_p` vereinheitlichen; die Eskalationsregel mit übernehmen, denn ein
+   `INPUT` *kann* `bass_p` heißen.
+3. **`KeyOrigin` ist zu eng.** Ein Wert je Name kann „mehrere Formate, gleiche
+   Auswertung" nicht ausdrücken. Ersetzen durch eine Format-**Menge** plus
+   Kurzbeschreibung der Auswertung.
+
+⚠ **Groß-/Kleinschreibung:** die AVS-Regel vergleicht case-INSENSITIV (EEL),
+GLSL ist case-SENSITIV — `time` und `TIME` sind für ISF **zwei verschiedene
+Namen**. Die gemeinsame Regel braucht das format-abhängig.
+
+**Warum es zählt:** ein `INPUT bass` ist in ISF ein **Schieberegler, den der
+Nutzer zieht**. Ihn an unsere Audio-Energie zu binden, machte daraus still
+einen audiogesteuerten Wert — das wäre keine Treue, sondern eine
+Verhaltensänderung. Im Vidvox-Korpus kommt der Fall (Stand S72) kein einziges
+Mal vor; die Regel greift bei der ersten Datei, die es tut.
+
+### ✅ ISF-Import + Parameter-Baum — UMGESETZT in S72 (als EIGENER Knoten)
+
+> Der Plan darunter ist **überholt**: er wollte ISF auf den `pixelFilter`
+> abbilden. Entscheid Patrik S72: **eigener Knotentyp `isfFilter`** mit
+> beiden Shader-Stufen — damit entfielen alle Kompromisse des Plans.
+> Stand: 321 von 327 Vidvox-Dateien kompilieren und linken (inkl. Multipass).
+> Offen davon nur noch der **Sichttest**. Details: `Changelog_Session72.md`.
+
+### ➜ (überholt) ISF-Import + generischer Parameter-Baum (Plan S71)
+
+> **Steuerdokument:** [`visuals/ISF_Import_Parameterbaum_Plan.md`](visuals/ISF_Import_Parameterbaum_Plan.md)
+> (1.0.0 — vier Stufen, Pflichtkette, Lizenz-Querschnitt, Risiken; Freigabe offen)
+
+**Ziel:** ISF-Filter (`.fs`, s. §7-Block „Filter-Fundgruben") laden und mit
+ihren eigenen Parametern bedienbar machen. Der Vorbau steht seit S71
+(Vertrags-SSOT, Namensschema, Ordner je Vertrag, Vertragsprüfung beim Import —
+Changelog 1.65.0). Drei Bausteine, in dieser Reihenfolge:
+
+1. **ISF-Parser** — pur, GL-/Qt-frei, unit-testbar: JSON-Kopf aus dem
+   führenden Blockkommentar extrahieren, `INPUTS` typisiert einlesen, den
+   GLSL-Körper auf den `farbe()`-Vertrag übersetzen (`IMG_PIXEL`/
+   `IMG_NORM_PIXEL`/`IMG_SIZE` → `uTex`/`uv`, `RENDERSIZE`/`TIME`/
+   `TIMEDELTA`/`FRAMEINDEX`/`isf_FragNormCoord`, `inputImage` → `src`).
+   Muster: `PixelFilterWrapper.hpp` (GL-frei + testerzwungen).
+2. **Generische Parameter-Ablage im Node** — getippte Werte, die der
+   Serializer mitschreibt. Zieht die Pflichtkette nach sich (Leser-Klemmen,
+   FieldDocs/Inventar-Gate, Wächter-Test).
+3. **Parameter-Baum im Panel (Entwurf Patrik):** aufgebaut **wie die
+   Effect-Chain** — Baum-Ansicht, aber mit **Wert-Spalte rechts** und
+   **typsicheren Editoren** je Zeile (ISF deklariert den Typ: `bool` →
+   Checkbox, `float` → SpinBox mit MIN/MAX aus dem JSON, `long` mit
+   `LABELS`/`VALUES` → echtes Dropdown mit Klartext, `color` → Farbwähler,
+   `point2D` → zwei Felder). Bewusst **nested-fähig** angelegt, auch wenn
+   ISF-`INPUTS` flach sind — `PASSES`/`IMPORTED` sind es nicht, und die
+   Struktur trägt dann mehr als nur ISF.
+
+**⚪ NEU (Idee Patrik S71): dasselbe Prinzip auch für die ANDEREN Module.**
+Ein generischer, typsicherer Parameter-Baum wäre kein ISF-Sonderweg, sondern
+die gemeinsame Darstellung für alle Knoten — und genau die Infrastruktur, die
+der Backlog-Punkt „dynamische Modulparameter" (alle Params per
+init/frame/beat/point) ohnehin braucht. Beim Bau von Stufe 2/3 deshalb nicht
+ISF-spezifisch schneiden. Prüfen, wie sich das zur bestehenden
+Panel-Erzeugung (`addInt`/`addDouble`/`addCombo`/`addCodeEditor`) verhält:
+Ablösung oder zweiter Weg?
+
+**Lizenz-Pflicht gilt auch hier** (s. 🔴 im §7-Block oben): Herkunft, Autor
+und Lizenz (`CREDIT` im ISF-JSON) gehören ins Preset, nicht nur in die Doku.
+
+### ⚪ Szenen-Wechsler-Modul (Idee Patrik, 2026-08-06 — Konzept in eigener Session)
+
+Szenen = **EffectListen in beliebiger Verschachtelungstiefe** mit stabiler ID
+(neues Feld oder Name) — WICHTIG (Einwand Patrik): Host-Gruppen wohnen nur im
+Top-Level, das Konzept darf nicht an ihnen hängen; sie sind der Spezialfall
+„Top-Level-Szene mit Gratis-Crossfade" (HG2). Ein neues Wechsler-Modul
+schaltet Szenen an/aus — **Fading auch nested**: Laufzeit-Gewicht je Liste
+(blendWeight-Analogon), das der Wechsler über eine Rampe fährt und das mit
+dem Out-Alpha der Liste multipliziert wird (persistiertes `enabled` bleibt
+unangetastet — Dokument ≠ Laufzeit). **Re-Init nested**: ListRuntime hat
+`needsClear` schon — „Szene frisch" = needsClear + Init-Slots erneut, pro
+Liste statt pro Gruppe. Trigger-Stufen:
+1. **Sicher machbar:** Song-Wechsel (Player/Playlist-Events), echte
+   Track-Position auch nach Spulen (`trackTime`-Input), Beat-/Takt-Zähler,
+   Live-Energie-Klassen (ruhig/laut/Build-up/Drop via Langzeit-Statistik +
+   Novelty).
+2. **Strophe/Bridge/Refrain:** live nur „mehr oder weniger" (Wechsel-
+   Erkennung ja, Label nein); GUT per **Offline-Pre-Analyse beim Laden**
+   (BASS-Decode → Self-Similarity → Segmentgrenzen + Wiederholungs-Cluster:
+   wiederholt = Refrain-Kandidat). Verwandt: AudioLookahead-Service
+   (Lights-Backlog §7). Prüfstand: das schwach portierte Lights-WebGL-Demo
+   (`asset/effectchain/lights_demo.*`).
+Bezug: P2 Visual-Playlist (§6) und Hotkeys Stufe 3 (Composer) überschneiden
+sich — im Konzept abgrenzen.
+
+### ⚪ Effekt-Palette: Rolle sichtbar machen + filtern (Wunsch Patrik, 2026-08-06)
+
+Die Palette/Baumliste zeigt heute nur Herkunft (AVS/MilkDrop/LumiViz-Icon),
+nicht die ROLLE eines Moduls — Render (zeichnet) vs. Transform (verformt das
+Bild davor; Anlass: Mesh Warp alleine in der Kette = schwarz, war als
+Transform nicht erkennbar). Ideen (Ausarbeitung in eigener Session):
+zweites Typ-Icon neben dem Herkunfts-Icon ODER eigene Typ-Spalte; nach
+Rolle filterbar; womöglich ist das Add-Dropdown insgesamt das falsche
+Werkzeug dafür. Erst konzipieren, dann bauen.
+
+### ⚪ Shadertoy-Buffer-FBOs: GL_NEAREST statt GL_LINEAR (Befund Tutorial-Screenshots, 2026-08-05)
+
+Die Multipass-Buffer des Shadertoy-Nodes filtern beim Lesen GL_NEAREST
+(Qt-FBO-Default, kein `glTexParameteri` im Render-Pfad) — shadertoy.com
+filtert LINEAR. Folge: Feedback-Shader mit Unsharp-Mask/Sharpen explodieren
+in Pixelgrieß, Blur-/DOF-Taps mit Zwischenpositionen brauchen Workarounds.
+Beweis + Workaround: die generierten Tutorial-Chains (PimpedKaleidoscope,
+CompositePostfx) tragen eine `lesBilinear()`-GLSL-Anpassung, als
+„LumiViz-Anpassung" im Shader-Kopf markiert. **Fix:** je Buffer-FBO
+`GL_TEXTURE_MIN/MAG_FILTER = GL_LINEAR` setzen; danach die
+`lesBilinear`-Workarounds aus den Chains zurückbauen und die betroffenen
+Tutorial-Bilder neu rendern. (Ein zuvor angebotener Task-Chip hierzu wurde
+geschlossen — dieser Eintrag ist der Merkposten.)
+
+### ➜ GPU-Vertex-Module (Strang G — **G1+G2 ✅ umgesetzt S69, Sichttests offen; G3 = Kür-Notiz**)
+
+**Legacy-Imports bleiben CPU:** das per-Vertex-EEL läuft im Original
+SEQUENTIELL (Zustand über Vertizes: Akkumulatoren, rand()-Strom, gmegabuf) —
+GPU-Parallelität kann diesen Vertrag prinzipiell nicht halten, und 825
+Mesh-Vertizes kosten auf der CPU nichts (die teure per-Pixel-Arbeit ist
+längst GPU). **GPU-Vertex-Arbeit gehört in NEUE Module (modernes Regelwerk).**
+
+**G1 Mesh-Warp ✅ (S69):** Chain-Node `meshWarp` — Nutzer-GLSL
+`vec2 warp(vec2 uv)` je Gitter-Vertex im Vertex-Shader (Gitter 2..256×192,
+Mix-Regler, Wrap/Clamp im Shader), `MeshWarpWrapper.hpp` (GL-frei, 9 Tests),
+Panel mit GLSL-Groß-Editor (Apply/Beautify/Import/Export), Parameter-Skripte
+`gridx`/`gridy`/`mixamount`. **Entscheid Patrik: G1 VOR Vereinheitlichung
+V2** — Audio ad-hoc als Uniforms (Shadertoy-Muster); Details
+[Regelwerk_und_Neue_Module_Plan.md](visuals/Regelwerk_und_Neue_Module_Plan.md)
+1.5.0. Sichtbeweis `asset/effectchain/meshwarp_sonde.lvfx`
+(`out/meshwarp_sonde_s69/`). **⬜ Sichttest Patrik offen.**
+
+**G2 GPU-Partikel ✅ (S69):** Chain-Node `gpuParticles` (Render-Modul) —
+Zustand als RGBA32F-Ping-Pong (ein Texel = pos+vel), Alter/Respawn
+hash-basiert OHNE Speicher (deterministisch, kein rand()), instanzierter
+Sprite-Draw (max. 65536 Partikel), 17 Regler + Farben/Additiv, optionales
+Kraftfeld-GLSL `kraft(pos, vel, alter)` mit Audio-Uniforms (Groß-Editor
+komplett), Parameter-Skripte `spawnx…size`. Details
+[Regelwerk_und_Neue_Module_Plan.md](visuals/Regelwerk_und_Neue_Module_Plan.md)
+1.6.0; Sichtbeweis `asset/effectchain/gpuparticles_sonde.lvfx`
+(`out/gpuparticles_sonde_s69/`). **⬜ Sichttest Patrik offen.**
+
+Kür-Idee G3 (Notiz): „Mesh-Qualität"-Option für nachweislich ZUSTANDSLOSE
+per_pixel-Skripte (Transpiler-Analyse) mit GPU-Auswertung und feinerem
+Gitter als Modern-Schalter.
+
+### ⚪ fractalZoomer: float-Erschöpfung im Endlos-Zoom (Befund S61)
+
+Der Zoomer akkumuliert seinen Zoom unbegrenzt — nach Minuten Laufzeit ist
+float32 erschöpft, das Bild wird Pixelbrei oder schwarz (Befund Patrik,
+Sichtprüfung der Beispiele; die 120-Frame-Validierung konnte das nicht sehen).
+Die Vorlagen sind entschärft (langsamere zoomSpeeds), das verlängert aber nur.
+**Echter Fix ist Host-seitig:** Tiefen-Reset bzw. Zoom-Loop (bei erreichter
+Präzisionsgrenze weich auf den Startausschnitt zurückblenden), ggf. plus
+double-Präzision fürs Zentrum. Der akkumulierte Zoom ist per Skript nicht
+erreichbar (nur `zoomspeed`), ein Vorlagen-Workaround existiert also nicht.
+
+### ⬜ Video-/Kamera-Quellmodul + Stilfilter (Wunsch Patrik S55; Teil A umgesetzt S70)
+
+**Stand S70: Teil A (Quellmodul) UMGESETZT — Sichttest offen.** Neuer
+Chain-Node `videoSource` (Palette „Scopes & Sources"): Quelle
+Datei/Kamera/Testaufnahme, Echtzeit-Streaming (NEU `services/LiveVideoFeed`)
+vs. deterministischer Frame-Schritt (VideoFrameCache 1.1.0, NEU `Clip::fps`),
+Tempo/Schleife/Einpassung/Blend/Deckkraft, Parameter-Skripte `speed`/`opacity`,
+relative Pfade lösen gegen den Preset-Ordner auf. Settings-Tab „Kamera" mit
+Testaufnahmen (benutzerlokal, AppData); Kamera-Freigabe je App-Lauf
+(Panel-Knopf bzw. Aufnahme-Klick — nie beim Preset-Laden). Sonde
+`videosource_sonde.lvfx` (Doppellauf SHA256-identisch, Warnungen=0,
+Sichtprüfung Balken+Letterbox ok). Benutzerhandbuch §13.
+**BEFUND S70 (behoben): `QVideoFrame::toImage()` liefert unter Qt 6.10.1
+(FFmpeg-Backend) SCHWARZE Bilder bei korrekten Zeitstempeln** — Rohdaten per
+`map()` vollständig da. Workaround NEU `services/VideoFrameUtil.hpp`
+(`videoFrameZuBild`), gilt für LiveVideoFeed UND VideoFrameCache — damit war
+auch der avi-Cache-Fallback (VR09, S59) auf dieser Qt-Version schwarz.
+**Kamera-Teardown-Deadlock: ✅ GELÖST UND ABGENOMMEN (S71, Sichttest Patrik).**
+Ursache war **der eigene Thread für die Multimedia-Seite** — A/B am Prüfstand
+mit echter Kamera: mit Worker-Thread 2/2 Hänger, ohne 3/3 sauberes
+Prozessende; unabhängig von Media-Backend (FFmpeg/WMF), von der Lage der
+Pipeline und von COM-Init. Qt-Multimedia läuft deshalb wieder auf dem
+Main-Thread (Stand `f93c83a`), und der UI-Lag bleibt dank der 720p/30fps-Klemme
+aus — der Worker-Thread war für die Bildrate gar nicht nötig.
+**`std::_Exit()` war nie eine Lösung** und ist entfernt: es beendet den Prozess
+nicht, wenn ein Thread im Treiber steckt (die Logzeile „erzwungenes
+Prozessende" täuschte seit S70 einen Erfolg vor). Auf dem Weg dorthin ebenfalls
+behoben und behalten: Abschalt-Vertrag `feedStilllegen()`, `altenFeedRaeumen()`
+und der Bau-Riegel `m_imBau` (Details Changelog 1.60.0–1.63.0,
+`include/services/LiveVideoFeed.md` §4a). Regelwerk:
+`docs/core-services/Bootstrap_Integration.md` §6 (neu §6.6). (Knoten-Panel, Kamera-Pfad ✅ Patrik S70
+(USB-WebCam läuft, Lag behoben), Testaufnahme-Aufnahme, Streaming-Langvideo) · Demo folgt
+mit Teil B (`pixelFilter` — Video + Comic-Filter ist das eigentliche
+Schaufenster) · Teil B siehe Stilfilter-Architektur unten ·
+⚪ **Rest-Risiko fremde Kameras:** `videoFrameZuBild` wandelt nur
+RGB-Formate selbst; YUV (NV12/YUYV) fällt auf `toImage()` zurück — liefert
+eine Kamera nur YUV UND trifft dort der toImage-Schwarz-Bug, bliebe sie
+schwarz. Rezept: manuelle NV12/YUYV→RGB-Wandlung in `VideoFrameUtil.hpp`
+nachrüsten, erst wenn eine echte Kamera es zeigt. ·
+**NEU S70: Kamera-Freigabe-Dialog beim Preset-Laden** (Wunsch Patrik) —
+`MultiEffectPanel::pruefeKameraFreigabe()` fragt einmal je geladener Kette,
+wenn sie eine aktive Kamera-Quelle trägt und die Freigabe fehlt (der Dialog
+ist die ausdrückliche Nutzeraktion; Standalone bleibt dialogfrei). Als
+EINZIGE Ausnahme erscheint er auch über dem Vollbild (Eltern = aktives
+Fenster + WindowStaysOnTop — Entscheid Patrik S70). ·
+**BEFUND S70 (behoben, Stack-Beweis Patrik): Zombie-Prozess nach App-Ende
+bei benutzter Kamera.** Zwei Schichten: (a) die Queued-Stopps des
+LiveVideoFeed kommen beim Herunterfahren nicht mehr an → Fix
+`alleStoppen()` synchron an `QCoreApplication::aboutToQuit`. (b) Der
+eigentliche Hänger (Haupt-Thread-Stack: `Application::shutdown` →
+`~QApplication` → Event-Queue-Entsorgung → `~Feed`): das stopp()-Lambda
+trug den LETZTEN shared_ptr auf den Feed — wird das Event nie zugestellt,
+zerstört die Event-Queue-Entsorgung die QCamera MITTEN im
+QApplication-Abriss → Deadlock. Fix: Eigentum bleibt IMMER beim Dienst
+(`m_friedhof`), Queued-Lambdas tragen nichts; `alleStoppen()` räumt Feeds
+UND Friedhof synchron ab und zerstört die Qt-Objekte explizit (Kamera-LED
+geht beim Fenster-Schließen übrigens trotzdem aus — Windows beendet nur
+die Geräte-Sitzung, nicht die Prozess-Objekte). Merkregel: **Queued-Lambdas
+dürfen nie letztes Eigentum an Qt-Multimedia-Objekten tragen.**
+
+Ursprüngliche Sondierung (S55, weiter gültig für die Rest-Punkte):
+
+- **Quellmodul** (LumiViz-eigen, **neben** dem AVS-`avi`-Knoten — der bleibt, die
+  Kalibrierung hängt an ihm). Ein Knoten, ein Quellumschalter: **Datei oder
+  Kamera**. Umfang laut Entscheid Patrik: Datei **und** Kamera **und**
+  Frame-Schritt.
+- **Technik steht bereit:** Qt Multimedia liegt in der Installation
+  (`C:/Qt/6.10.1/msvc2022_64`), Backends `ffmpegmediaplugin.dll` **und**
+  `windowsmediaplugin.dll`. Damit MP4/H.264, MKV, WebM, MOV, WMV — **ohne neue
+  Fremdbibliothek**. In `Solution.json` nur `"Multimedia"` zu den Qt6-Komponenten
+  plus Plugin-Deploy. Kamera über `QMediaDevices::videoInputs()` +
+  `QCamera`/`QMediaCaptureSession`; beide Quellen liefern über **denselben**
+  `QVideoSink`, deshalb ein Knoten und nicht zwei.
+- **Frame-Schritt ist Pflicht**, nicht Kür: Qt liefert Frames uhrzeitgetrieben,
+  der `avi`-Knoten holt sie nach Index. Nur deshalb sind zwei Läufe bit-identisch
+  — die Grundlage der ganzen Feld-Sonden-Familie (`STUMM` = MAE exakt null). Ohne
+  eine deterministische Betriebsart für den Standalone wäre der Knoten
+  `NICHT_PRUEFBAR`.
+- **Kamera nie automatisch öffnen** — nicht im Standalone, nicht in Tests, im
+  Panel erst auf ausdrückliche Gerätewahl. Sonst fragt Windows zur Unzeit nach
+  der Kameraberechtigung.
+- **Stilfilter sind NICHT Teil des Quellmoduls.** Die Kette arbeitet auf dem
+  Framebuffer, ein Filterknoten wirkt also auf **jede** Quelle — Video, Kamera,
+  Superscope, MilkDrop. Wunsch Patrik: **Comic-/Rotoskopie-Look wie „Take On Me"
+  (a-ha)**. Technisch drei Bausteine, je ein Fragment-Shader-Schritt:
+  Kantenzug (Sobel oder Difference-of-Gaussians = Bleistiftstrich) ·
+  Farbquantisierung auf wenige flache Töne (optional mit Bilateral-Vorglättung,
+  damit die Flächen ruhig werden) · Schraffur/Rauschen für die Zeichentrick-
+  Textur. Reiht sich neben die anderen Stil-Ideen (s. Lights-Module).
+- **Erhebungen/Entscheide S70 (Diskussion Patrik, Strang eröffnet):**
+  - **Abkürzer:** Qt Multimedia ist seit S59 im Build (`"Multimedia"` in
+    `Solution.json`) und `services/VideoFrameCache` (deterministischer
+    Frame-Index-Decode via FFmpeg-Backend) existiert — der Datei-Pfad des
+    Quellmoduls setzt darauf auf, neu sind Node/Panel/Kamera.
+  - **Kamera-Testaufnahmen in den Settings** (Idee Patrik): Settings-Tab
+    „Kamera" — Gerätewahl, Aufnahme-Knopf (wenige Sekunden), Ablage
+    **benutzerlokal** (AppData; NICHT im Repo, Kameramaterial ist persönlich —
+    für eingecheckte Tests stattdessen ein synthetisch erzeugter Clip).
+    Dreifacher Nutzen: der Windows-Berechtigungsdialog kommt beim bewussten
+    Klick statt zur Unzeit · die Aufnahme ist eine Datei → läuft über den
+    VideoFrameCache im Frame-Schritt, damit wird der Kamera-Pfad
+    sonden-/standalone-prüfbar · der Quellknoten bekommt drei Betriebsarten
+    **Datei · Kamera (live) · Testaufnahme** (letztere auch als Fallback,
+    wenn kein Gerät da ist).
+  - **Stilfilter-Architektur entschieden UND UMGESETZT (Teil B, S70 —
+    ⬜ Sichttest offen):** EIN skriptbares Filtermodul **`pixelFilter`**
+    (Nutzer-GLSL `vec4 farbe(vec2 uv, vec4 src)` mit Nachbar-Sampling fürs
+    Ketten-Bild; meshWarp-Muster: Audio-Uniforms, geteiltes `stError`,
+    Groß-Editor mit Apply/Beautify; NEU `PixelFilterWrapper.hpp` GL-frei +
+    testerzwungen) — die Filter selbst als **Werks-Voreinstellungen**
+    (`asset/nodepresets/pixelFilter/`, 12 Looks inkl. Katalog-Zeilen), NICHT
+    1–3 Festmodule. **BEFUND S70: `filter` ist in GLSL ein RESERVIERTES
+    Wort** (AMD lehnt ab) → Vertrag heißt `farbe()` (kraft()-Muster);
+    Wächter-Test erzwingt, dass der Wrapper das Wort nie als Bezeichner
+    trägt. Flaggschiff **Take-On-Me-Comic** (Sobel-Kantenzug +
+    Farbquantisierung + Beat-zitternde Schraffur), dazu Bleistift-Skizze
+    (XDoG), Posterize-PopArt, Zeitungsdruck-Halftone, CRT-Monitor, VHS-Band,
+    Kuwahara-Oelbild, Sepia-Nostalgie (Wunsch Patrik), Noir-Schwarzweiss,
+    Waermebild, Pixel-Art, Duotone-Neon. Beweise: `pixelfilter_sonde.lvfx`
+    (Doppellauf SHA256-identisch; Posterize-Stufen + Konturen sichtgeprüft)
+    + Demo `asset/examples/pixelFilter - Take-On-Me.lvfx` (Stimm-Befund:
+    Comic-Szenen brauchen HELLE Grundflächen und harte Kanten — dunkle
+    Hintergründe verschraffieren vollflächig). Benutzerhandbuch 1.8.0 §14.
+    Grenze der Bauart: EIN Pass — Multipass-Looks laufen über den
+    Shadertoy-Knoten (s. iChannel-Erweiterungen unten). Der Filter-Stack
+    ist die Kette selbst (mehrere Knoten, umsortierbar; Entscheid Patrik
+    S70 — keine interne Unterliste, Klone sind unabhängige Kopien).
+  - **🔴 LIZENZ-PFLICHT bei JEDEM Fremd-Import (Vorgabe Patrik S71 — muss im
+    Loader stecken, nicht nur in der Doku, sonst geht es unter):** Shadertoy
+    verpflichtet API-Nutzer ausdrücklich, die Lizenz **jedes einzelnen
+    Shaders** zu respektieren (Default dort ist meist CC BY-NC-SA); ISF trägt
+    ein `CREDIT`-Feld im JSON-Kopf. **Regel: ein Import schreibt Herkunft
+    (URL/ID bzw. Dateiname), Autor und Lizenz als Felder ins Preset** und
+    zeigt sie im Panel an — sonst wandern fremde Shader unbemerkt in
+    weitergegebene `.lvfx`. Beim Bauen des Importers ist das Teil der
+    Pflichtkette, nicht Kür. Zu klären ist dabei, ob die Felder in den
+    ChainNode oder in die Preset-Metadaten gehören (Serializer + FieldDocs).
+  - **Filter-Fundgruben online:** **ISF (Interactive Shader Format,
+    isf.video / editor.isf.video, Vidvox)** = „Shadertoy für Filter" —
+    GLSL + JSON-Parameterdeklaration. **Format geklärt (S71, gegen die Spec
+    geprüft):** das JSON steckt als **Blockkommentar `/*{ … }*/` am
+    Dateianfang**, es gibt KEINE Nachbardatei; Endung **`.fs`** (optional
+    `.vs` für einen Vertex-Shader gleichen Namens) — beides sind normale
+    GLSL-Dateien mit spezialisierter Endung. **FX-Erkennung ist maschinell
+    eindeutig: ein Filter hat einen Input `inputImage` vom Typ `image`**
+    (Generatoren haben keinen, Übergänge stattdessen `startImage`/`endImage`/
+    `progress`). Übersetzungsschicht auf `pixelFilter`: INPUTS-Typen
+    (`float`/`bool`/`long`/`color`/`point2D`/`image`/`audio`/`audioFFT`) →
+    unsere Regler; ISF-Uniforms `RENDERSIZE`/`TIME`/`TIMEDELTA`/`FRAMEINDEX`/
+    `isf_FragNormCoord` und die Helfer `IMG_PIXEL()`/`IMG_NORM_PIXEL()`/
+    `IMG_SIZE()` → unser `uv`/`uTex`. → **ISF-Import (Teilmenge FX) als
+    eigener Strang.** Außerdem:
+    ReShade-Shader-Repos (github.com/crosire/reshade-shaders, qUINT,
+    SweetFX — HLSL-Dialekt, Ideen-Quelle) · godotshaders.com (Kategorie
+    „Screen-reading shaders") · obs-shaderfilter-Sammlungen.
+    **Shadertoy-Suchworte für Bildfilter:** toon, cel shading, kuwahara,
+    hatching, pencil, halftone, CRT. Literatur-Stichworte: **XDoG**
+    (Winnemöller — Bleistift/Comic-Kanten) · **anisotropes Kuwahara**
+    (Ölbild-Flächen).
+  - **iChannel-Erweiterungen des Shadertoy-Knotens** (machen ihn zur
+    Multipass-Filterplattform; Shadertoy-Bildfilter mit `iChannel0`-Eingang
+    werden direkt lauffähig): (1) NEU Quelle **„Ketten-Eingang"** — heute
+    kann ein iChannel nur Audio oder Buffer A–D (Kommentar „Video-Inputs:
+    Stufe 2" in `MultiEffectVisualizer` setupPass); (2) NEU Quelle
+    **„AVS-Global-Buffer 1–8"** (Frage Patrik S70 — **geht**: die
+    Buffer-Save-Slots sind GL-FBOs im `OffscreenBufferPool`,
+    `activePool().get(slot,…)->texture()` bindet direkt als Textur;
+    Host-Gruppen-Scoping kommt über `activePool()` gratis mit; Semantik =
+    Buffer-Stand beim Lauf des Knotens, die Reihenfolge in der Kette zählt
+    wie bei Buffer Save). **Handbuch-Pflicht (Wunsch Patrik S70):** bei
+    Umsetzung beide neuen iChannel-Quellen ins `Benutzerhandbuch.md` §12
+    (Kanal-Tabelle: Audio · Buffer A–D · Ketten-Eingang · AVS-Buffer 1–8,
+    je mit Anwendungsbeispiel — z. B. Shadertoy-Bildfilter auf die Kette,
+    eingefrorenes Buffer-Save-Bild als Textur).
+- Abgrenzung: **nicht** das Video-**Capture**-Modul (Aufnahme von Bild+Ton) —
+  das ist der Punkt unten in derselben Liste, umgekehrte Richtung.
+
+⚪ Preset-Warmup/Pre-Roll (bei Laden/Resize N Frames vorrechnen — gegen
+Schwarz-Start/Flackern) · BASS-Lookahead-Service `AudioLookahead`
+(Lights-Entwurf Entscheid 3 — hierher verschoben S60, erst mit den
+Lights-Modulen) · Custom-Functions-Modul · Video-Capture-Modul ·
+dynamische Modulparameter (alle Params per init/frame/beat/point) ·
+Stereo `bass`/`mid`/`treb` · Variable-Set Variante B (benannte Globals) ·
+Assets-Ordner-Fallback für Bild-Lader · **MilkdropRef** (zurückgestellt —
+Reaktivierungs-Kriterium: ein MilkDrop-Treue-Bug, der nach mehr als einer Session
+Diagnose keine klare Ursache hat. Für *Semantik*-Fragen reicht der Quelltext:
+`cmake/ref/winamp_orig/Src/Plugins/Visualization/vis_milk2/`).
+
+### ✅ Zwei unbekannte APEs nachgebaut (S52, Befund Patrik)
+
+`Metaballs 3D` und `Tentacles 3D` (beide UnConeD, Pack „Whacko AVS IV") waren
+Passthrough — „Yummy Plastics" und „Rubber Starfish" blieben deshalb **leer**. Beide
+sind seit S52 als **Verhaltens-Nachbau** umgesetzt (Parser → Params → Translator →
+Renderer → Serializer), Muster wie FyrewurX (S38): ihr 72-Byte-Blob trägt **nur eine
+Farbtafel** (16 Slots + Anzahl), die Geometrie ist host-eigen. Beide Presets laden
+jetzt warnungsfrei und zeichnen.
+
+**Was daran offen bleibt** — ein Nachbau ist kein Port: die Metrik wird nie
+konvergieren (Yummy Plastics dMean 0,205), weil Bahnen, Anzahl und Farbfolge unsere
+sind. Beurteilbar ist nur der *Charakter*, und der stimmt im Seite-an-Seite:
+verschmelzende, plastisch schattierte Körper mit Glanzlicht bzw. schwingende Tentakel.
+Drei Punkte wurden dabei am Bild der echten APE kalibriert (Deck- statt Additiv-Blend,
+gewichtete statt nächster-Nachbar-Farbe, Schattierung über die Kuppelhöhe statt über
+den rohen 1/r²-Gradienten). Feinschliff ist Kür. 🔧
+
+### ➜ Vorgaben Patrik für Session 54
+
+Ausgearbeitet als **Etappen 7–9** im
+[Knoten_Parameter_Konzept.md](visuals/Knoten_Parameter_Konzept.md) (§9–§11):
+
+1. 🔴 **Test-Presets für JEDES Modul und JEDES Feld** (Strang E, Konzept §9). Ein
+   Preset je Feld, nur dieses eine vom Default abweichend; für Transformationen
+   mit klar definiertem statischem Untergrundbild wie auf der MilkDrop-Seite.
+   Urteil = zwei Läufe (Default vs. gesetzt); kein Unterschied heißt: das Feld
+   wirkt nicht. Nach S53 dringlich — 47 Renderer haben je drei neue Skriptfelder,
+   und `movement3b.lvfx` hat gezeigt, dass ein Feld dastehen kann, ohne wirken zu
+   können (§9 unten).
+2. ✅ **Tooltip an JEDEM Feld** (Strang F, Konzept §10) — **erledigt S56,
+   717/717 Felder.** Erzeugte Tabelle `src/UI/panels/FieldDocs.cpp` aus den
+   Doxygen-Kommentaren, Feldname als erstes Argument in allen **826**
+   `add*`-Aufrufen (maschinell über die Setter-Zuordnung, nicht über das Label),
+   Tooltip auf Bedienelement **und** Beschriftung. Von den 178 gemeldeten Lücken
+   waren **163 echt** (geschrieben) und **15 Blindstellen des Ernters**.
+   Zwei Wächter: `test_FieldDocs.cpp` hart ohne Ausnahmeliste, und der Ernter
+   prüft die Panel-Schlüssel gegen das Feld-Inventar.
+   **Nicht erprobt:** dass der Hinweis im Betrieb erscheint — das geht nur durch
+   Überfahren.
+3. 🟡 **Basis-Voreinstellungen für alle Module** (Strang G, Konzept §11) —
+   **Entscheid Patrik (S60):** (a) Umfang = **Teil-Presets** (nur Geometrie/
+   Verhalten, Farbtafel bleibt) · (b) Ablage `asset/nodepresets/<typkey>/`,
+   Dateiname = sprechender Anzeigename wie die 16 bestehenden Vorlagen
+   („Kalter Schwarm.json") · (c) Quelle = `…\cmake\VisualsPresets` via Import.
+   **Erste Lieferung ✅ (S60, nach §0-Abschluss): 68 neue Vorlagen für 23
+   Typen** (u. a. dynamicMovement 6 · movement 12 — davon 8 wörtliche
+   r_trans-Builtin-Formeln — · convolution 5 · colorMap 4 · rotoBlitter 3 ·
+   waterBump/dotGrid/blitterFeedback je 3 · dynamicShift/DDM/mirror/
+   interferences/starfield/uniqueTone/interleave/videoDelay u. a. je 2) —
+   Hand-Design aus den kalibrierten Referenz-Semantiken, Katalog mit
+   Erklärungen in `asset/nodepresets/README.md`.
+   **Zweite Lieferung ✅ (S61): 41 neue Vorlagen, Katalog jetzt 125 für 39
+   Typen** — (a) **Fraktal-Familie + Bloom** (27): bloom 3 (Referenzwerte aus
+   `lights_demo`) · fractal2D/fractal3D/domainWarp/fractalZoomer je 3 ·
+   lyapunov/kleinian/flame je 2 · strangeAttractor/reactionDiffusion je 3;
+   (b) **Histogramm-Lücken per Hand** (8): blur 2 · simpleScope 3 ·
+   customBpm 3; (c) **Import-Ernte** (6): kuratierte Dynamic-Movement-Warps
+   wörtlich aus der Sammlung (UnConeD Milkyway, nebulous, Take the Veil,
+   Molecules, Life Is Violated — Quellen im Katalog). Ernte-Werkzeug:
+   `AvsStandalone --dump` über Whacko AVS V + Winamp 5 Picks (89 Presets →
+   455 SuperScope-/100 DM-/120 Movement-/30 ColorMap-Kandidaten, Rest
+   unkuratiert im Scratchpad). Der Ladbarkeits-Test deckt alle neuen Dateien
+   (485/485). **Offen:** Sichtprüfung Patrik im Betrieb (jetzt 125, insb.
+   die geschätzten Wertebereiche bei starfield/interferences/interleave und
+   die neuen Fraktal-Ausschnitte) · weitere Ernte-Runden (SuperScope-Szenen,
+   Movement, ColorMap-Paletten) · **Host-Klassiker (Equalizer/Oscilloscope/
+   Waveform/Pulsing): 🟡 ENTSCHEID NÖTIG** — deren Presets laufen über den
+   `VisualizerPresetManager`, der NUR den Benutzerordner (AppData) kennt;
+   mitgelieferte Vorlagen bräuchten dort erst einen Asset-Suchpfad nach dem
+   Muster von `NodePresetStore` (kleiner Umbau, wartet auf Freigabe).
+   **Priorisierung liegt bereit** (S60-Häufigkeits-Scan über 3380 Korpus-
+   Presets; Anteil = Presets, die den Effekt nutzen): Dynamic Movement 63 % ·
+   Movement 57 % · Simple 45 % · Color Map 39 % · Convolution 34 %
+   (Kernel-Vorlagen: Blur/Schärfen/Kanten/Relief!) · SuperScope 29 %
+   (13 Vorlagen existieren) · Blur 26 % · Water 24 % · Unique Tone 23 % ·
+   Bump 23 % · Buffer Save 21 % · Roto Blitter 18 % · Mirror 16 % ·
+   Custom BPM 15 % · Texer II 5 %. Dazu die host-eigenen Module ohne
+   AVS-Statistik (Equalizer · Oscilloscope · Pulsing · Fraktal-Familie —
+   Vorlagen dort = Hand-Design mit Sichtprüfung).
+4. ✅ **Feldreihenfolge im Editor — entschieden (Patrik, S60): es bleibt bei
+   Init · Frame · Beat · Point.** Die Anzeige folgt der Ausführung
+   (`runParamScript` und alle Skript-Träger fahren Frame VOR Beat, wie AVS)
+   und der AVS-Dialog-Konvention — kein Umbau.
+
+### 🔴 Movement: Beat-Umkehr kann strukturell nicht wirken (Befund Patrik S53)
+
+`asset/effectchain/movement3b.lvfx` setzt `bt=1` (Init), `bt=(-1)*bt` (Beat) und
+liest `bt` im Point-Code (`r=r+bt*0.02`). Die Rotation kehrt nie um — aus **zwei**
+unabhängigen Gründen:
+
+1. **Zwei getrennte Skript-Umgebungen.** Init/Frame/Beat laufen seit S53 im
+   Parameter-Skript (`runParamScript`, eigener `ScriptSlotHost`), der Point-Code
+   dagegen im `ScriptGridModule`. Geteilt sind zwischen Hosts nur `reg00..reg99`,
+   `q1..q64` und `gmegabuf` — ein freier Name wie `bt` ist im Point-Code schlicht
+   0. Damit ist `r=r+bt*0.02` ein No-op; nur `d=d-0.02` wirkt.
+2. **Movement ist eine statische Tabelle.** `applyMovementTable` cacht über
+   `rectCoords + wrap + subpixel + code` — den **Skripttext**, nicht die Werte.
+   Der Point-Code läuft nur bei Größen- oder Textänderung (r_trans.cpp:453-526,
+   w*h Skript-Läufe). Selbst mit geteiltem `bt` bliebe das Bild stehen. AVS
+   macht es genauso — deshalb hat AVS-Movement gar keinen Beat-Code.
+
+Für beat-abhängige Bewegung ist **Dynamic Movement** der richtige Knoten: er
+wertet je Frame aus und hat Init/Frame/Beat/Point in EINEM Host. Der Editor weist
+seit S53 darauf hin.
+
+✅ **Entschieden (Patrik, S53): Movement verliert seine Strang-D-Felder wieder.**
+Sie hätten nur `sourcemapped` und `blend` je Frame umschalten können — alles
+Geometrische landet im Tabellen-Cache. Der Nutzen stand in keinem Verhältnis zur
+Verwirrung, die sie stiften. Damit hat Movement wieder genau einen Skript-Träger
+(den Point-Code im `ScriptGridModule`), und die Regel „alle Slots eines Knotens
+teilen eine Umgebung" gilt wieder **ausnahmslos** — geprüft über alle Renderer.
+
+**Merkregel:** Movement und Dynamic Movement sind keine Stufen desselben Effekts.
+`r_trans` legt eine Tabelle **je Pixel** an (exakt, keine Interpolation, aber
+statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
+**Gitter** je Frame (beweglich, interpoliert, mit Buffer-Zugriff und Alpha).
+
+## 8. Werkzeug- und Doku-Schulden
+
+- 🟠 **`PanelManager::restoreState()` wird nirgends aufgerufen** (Befund S73). Die
+  Kette Panel → `restoreState()` ist gebaut, aber tot: `PanelManager::restoreState()`
+  hat im ganzen Programm **keinen einzigen Aufrufer**. Damit laufen auch
+  `PanelBase::restoreState()`, `PlaylistPanel::restoreState()` und
+  `ImportBrowserPanel::restoreState()` nie. Das Gegenstück `saveState()` **wird**
+  gerufen — aus `DockManager.cpp:211`, mit dem Kommentar „nothing else calls
+  PanelManager::saveState()". Aufgefallen, weil die Preset-Wiederherstellung (S73)
+  zuerst dort aufgehängt war und stumm nichts tat; sie sitzt jetzt im Konstruktor.
+  Zu tun: entweder den Aufruf ergänzen (dann prüfen, was die drei Überschreibungen
+  beim Start plötzlich tun) oder die tote Kette entfernen. **Nicht einfach den
+  Aufruf nachziehen, ohne die Folgen zu prüfen** — `refresh()` und
+  Zustands-Wiederherstellung laufen dann doppelt.
+- 🔧 **`asset/calibration/fields/probes/avi/resolvedPath.lvfx` ist maschinengebunden**
+  (bewusst, S73). Die Sonde setzt **nur** `resolvedPath` — das Feld *ist* der
+  absolute Pfad, ein relativer Wert wäre dort wirkungslos, und
+  `resolveAviPaths` fasst einen gesetzten `resolvedPath` absichtlich nicht an.
+  Als einzige getrackte Datei enthält sie damit einen lokalen Pfad. Vor Gebrauch
+  auf einem anderen Rechner neu erzeugen (`make_field_probes.py`). Begründung
+  steht im Generator.
+
+- 🔧 **Die eingefrorenen `.lvfx`-Zwillinge stehen auf 27/67** (vorgefunden S58, nicht
+  von dort verursacht). `freeze_lvfx_twins.py --verify` meldet durchweg dieselbe
+  Abweichung: die Strang-D-Felder `initCode`/`frameCode`/`beatCode` sind seit dem
+  Parameter-Skript-Ausbau in jedem Knoten dazugekommen, die Zwillinge aber nie
+  nachgezogen worden. Der Prüfstand ist damit blind. Zu tun: einmal durchsehen,
+  ob wirklich nur diese Felder dazukamen, dann `--refreeze`. **Kein Zwilling
+  enthält Picture II** — der Parser-Fix aus S58 ist nicht beteiligt.
+- 🔧 **Der SuperScope-Randspalten-Fix hat keinen Wächter** (S58). Eine einzelne
+  Bildspalte liegt unter jeder Schwelle der Modul-Sonden-Metrik (Menge 0 · Lage
+  1 px · MAE 0,003). Ein Versuch, sie über ein Movement als Verstärker sichtbar zu
+  machen, ist gescheitert: die Sammelstelle des Movements liegt selbst auf einer
+  Klemm-/Wrap-Grenze, die Sonde maß am Ende das Movement und ist wieder raus.
+  Beleg ist derzeit nur die Spaltenmessung im Report S58.
+- ✅ **Timescope maß 1/320 seiner Wirkung** (S55 gesehen, S56 behoben). Alle acht
+  Felder lagen unter der SCHWACH-Schwelle (MAE 0,0004–0,0009). Der Knoten zeichnet
+  eine **ein Pixel breite Spalte je Frame** und schiebt sie um eins weiter — der
+  Untergrund malte sie im Folgeframe wieder zu, im Schlussbild stand genau **eine**
+  Spalte. Dieselbe Familie wie die Rückkopplungs-Sonden in §1: *ein Untergrund, der
+  jeden Frame neu zeichnet, kann nichts sehen, was sich über Frames aufbaut.* Fix:
+  neue Tabelle `UNTERGRUND_JE_TYP` in `make_field_probes.py` — für Timescope löscht
+  der Untergrund **nur im ersten Frame**, die Spalten sammeln sich über die Lauf-
+  länge. **7 SCHWACH → 7 WIRKT** (MAE 0,0009 → 0,127).
+  Dazu war `timescope.blend` **STUMM aus einem zweiten Grund**: die Vorgabe `3`
+  heißt „folge dem Set Render Mode", und dessen Vorgabe ist `0` = Ersetzen — der
+  abgeleitete Gegenwert 0 war Pixel für Pixel dieselbe Betriebsart. Gemessen:
+  blend 0 → 0,0000 · 1 → 0,0249 · 2 → 0,1815. HANDWERK-Eintrag auf **2** (50/50),
+  weil das als einziges auch dann nicht mit der Vorgabe zusammenfällt, wenn später
+  ein Set Render Mode mit anderem `lineBlend` in den Untergrund gerät.
+  **Timescope jetzt 8/8 WIRKT**, Edit-Sonden 8/8 TEILWEISE (die gesammelten
+  Spalten sind Vorgeschichte — genau das erwartete Urteil).
+
+- ✅ **AvsRef deterministisch machen** (S22) — **war seit S52 erledigt und stand
+  hier als Doku-Leiche (bemerkt S60):** `avsref_main.cpp:430` setzt
+  `srand(kRandSeed)` exakt an der geforderten Stelle (NACH `__LoadPreset`,
+  damit es jedes `load_config`-`srand(time(0))` überschreibt). Die
+  ~0,06-Rauschgrenze war schon seit S58 (`initbuiltinape`) faktisch weg.
+- 🔧 **`bisect_avs.py` Pfad-Modus** rekonstruiert nicht verlustfrei (dieselbe
+  Konstruktion: Referenz einmal 240, einmal 4 Pixel) — bis dahin nur die
+  Top-Level-Leiter nutzen.
+- 🔴 **Wächter-Lücken in der Modul-Matrix**: „Effect-List mit Extended-Config + EEL"
+  und „Scope liest `reg` aus einem anderen Knoten" — beide Konstruktionen haben in
+  S50 je einen **Totalausfall** verursacht und hatten keinen Wächter. Ebenso eine
+  APE-Zeile (Convolution, Texer II, Video Delay, Multiplier, Picture II,
+  Channel Shift, AddBorders, Multifilter). Die Bauer stehen seit S50 in
+  `avs_preset_lib.py`.
+- 🔴 **D2-Kollisionsregel hat keinen Wächter**: Matrix und Sonden enthalten keine
+  kollidierenden Namen und können eine Regression strukturell nicht sehen. Nur ein
+  Sweep über echte Presets bewacht sie.
+- 🔧 **Produkt-Changelog Session 45 fehlt** in [sessions/](sessions/) — die Reihe
+  läuft 43, 44, **46**, 47 … Der Session-Report existiert lokal
+  (`.claude/sessions/LumiViz_Session45_…`), nur der Changelog wurde nie
+  geschrieben. Nachziehen oder die Lücke bewusst vermerken.
+- ✅ **Knoten-Parameter-Ausbau** (Vorgabe Patrik, S53) — Steuerdokument
+  [Knoten_Parameter_Konzept.md](visuals/Knoten_Parameter_Konzept.md), **alle sechs
+  Etappen umgesetzt**; der Sichttest im Betrieb läuft seit S54 maschinell
+  (s. Strang E unten).
+  Vier Stränge: (A) ✅
+  Voreinstellungen je Knoten, generisch über `nodeToJson`/`nodeFromJson` — greift
+  für **alle 85 Knotentypen** (gemessen S54 über `std::variant_size_v`; die
+  früher notierten 81 waren zu niedrig) (`NodePresetStore` + Zeile im Panel +
+  `asset/nodepresets/`), mit **Merge-Semantik** und **Feldauswahl beim Speichern**;
+  die 13 SuperScope-Figuren sind Dateien geworden, das „Figure"-Dropdown ist
+  entfallen; (B) ✅ **vollständig** — zuletzt `Convolution.kernel` (7×7-Gitter),
+  `ColorMap.stopPos/stopColor` (Stützstellen) und die **Bild-Felder** (Zeile
+  „Image" mit `Choose…`/`Clear` + Bilder-Suchordner in den Einstellungen, damit
+  ist auch der S50-Punkt erledigt); (C) ✅ **vollständig** — Klasse B (Rotating
+  Stars, das **null** Parameter hatte · Osc Star · Osc Ring · Metaballs ·
+  Tentacles · FyrewurX · Triangle) und Klasse A (Dot Plane · Bass Spin · Moving
+  Particle, mit **⚠-Kennzeichnung** bei Abweichung vom AVS-Wert, Entscheid §8.4);
+  (D) ✅ **vollständig** — dynamische EEL-Felder (init/frame/beat) für **jeden
+  Knoten mit numerischen Parametern**: 48 Renderer rufen `runParamScript`, ein
+  leeres Feld kostet nichts (kein Host, kein Transpiler, kein Lua-Aufruf).
+  **Der Default-Vertrag ist der kritische Teil** — jeder neue Parameter muss bei
+  Default pixelgleich bleiben, sonst kippt die Kalibrier-Runde.
+- ✅ **Strang E — Feld-Sonden** (Vorgabe Patrik §9, umgesetzt S54):
+  `asset/calibration/fields/` mit Inventar-Golden (**85 Typen, 717 Felder**,
+  C++-Gate `test_FieldInventory`), Ernte der Wertebereiche/Beschreibungen/
+  Skriptvariablen, Generator und Zwei-Läufe-Urteil. **Was er sofort fand:**
+  43 von 129 Skript-Frame-Kopien wurden nie gelesen (das Skript rechnete, sein
+  Ergebnis verfiel), und der **Init-Slot** war bei allen 47 Renderern
+  wirkungslos, weil die Vorbelegung jedes Frames ihn überschrieb. Beides
+  behoben; dazu die nie abgefragte `lastError()`-Meldung, `timescope.useChannel`
+  und skriptbare Beat-Fader in Colorfade.
+- ✅ **Grafikkarten-Auswahl in den Einstellungen** (Vorgabe Patrik S54,
+  konkretisiert S61, **umgesetzt S62**) — SettingsPanel → Performance:
+  Combo „Automatic / High Performance / Power Saving" + Anzeige der
+  tatsächlich genutzten GPU (`GL_RENDERER`, Tooltip listet alle erkannten
+  Karten); eine Änderung schreibt den Windows-Eintrag pro Anwendung
+  (`HKCU\…\DirectX\UserGpuPreferences`, neues Kernmodul `core/GpuPreference`,
+  Modul-Doku dort) und löst **SOFORT den Neustart** aus. Das alte, wirkungslose
+  Trio `gpu.ini`/`GpuSelector`/`NvOptimusEnablement`-Export ist entfernt —
+  die Registry ist die einzige Steuerung (SSOT); Windows überstimmt die
+  Export-Flags ohnehin, sobald ein Eintrag existiert. Tests: 491 (+6
+  Token-Logik `test_GpuPreference`).
+  - **§8-Messlauf gefahren (S62), Ergebnis: KEINE Verschiebung.** Vorher-
+    Baseline auf der 610M (`out/gpu_baseline_radeon610m/`): Matrix 41/43
+    (0 Fehler, PRUEFEN = nur die abgenommenen Wächter water/grain) ·
+    Modul-Sonden 91/91 · Feld-Sonden WIRKT 669/SCHWACH 33/STUMM 0 ·
+    Bit-Identität 3/3 · Zwillinge 67/67. Nachher auf der RTX 4090 (per
+    Registry-Eintrag für den Standalone, danach entfernt —
+    `out/gpu_after_rtx4090/VERGLEICH.md`): **alle Urteile und Metriken
+    identisch**, die drei Doppellauf-Sonden sogar **karten-übergreifend
+    SHA256-identisch**. Die Prüfstände sind auf diesem Gerätepaar
+    GPU-stabil; einzige Abweichung war die dokumentierte rand()-Instabilität
+    zwischen Läufen. Offen bleibt nur der Klick-Sichttest des
+    Sofort-Neustarts in der App (Handarbeit Patrik).
+- 🔴 **`bilinear` wirkt nicht — und ist ein ORIGINAL-Feld** (Dynamic Distance
+  Modifier + Dynamic Shift, Befund der Feld-Sonden S54). Im AVS heißt es
+  `subpixel` und ist ein echter Preset-Wert (`r_ddm.cpp:175`,
+  `r_shift.cpp:98`); unser Import liest ihn korrekt aus
+  (`AvsChainTranslator.cpp:661`). Er schaltet zwei Abtastwege:
+  `BLEND4(...)` mit Zwischenwerten gegen ganzzahliges Abtasten
+  (`r_ddm.cpp:313`) — glatte Übergänge gegen harte Pixelkanten. **Es fehlt
+  also etwas**, der zweite Zweig existiert bei uns gar nicht; wir tasten immer
+  mit BLEND4 ab.
+  **Zweiter Teil des Befunds:** die Vorgabe steht bei Distance Modifier
+  verkehrt — das Original startet mit `subpixel = 0` (`r_ddm.cpp:210`),
+  Dynamic Shift mit 1 (`r_shift.cpp:127`), bei uns beide `true`. Jedes
+  importierte DDM-Preset mit dem Original-Default rendert damit interpoliert
+  statt hart.
+  Anbinden und Default berichtigen gehören zusammen — beides verschiebt das
+  Bild und muss über die Matrix gemessen werden.
+- 🔴 **104 Felder ohne erzeugbare Sonde** — durchweg Skriptfelder von Knoten
+  **ohne** `runParamScript` (Fractal 2D/3D, Flame, Fractal Zoomer, Domain Warp …).
+  Sie haben eigene Slots, deren schreibbare Variablen der Ernter nicht kennt.
+  Entweder dort dieselbe Quelle erschließen oder die Namen in einer Tabelle
+  pflegen.
+- 🔧 **Kanalabhängige Felder sind derzeit blind**: der Standalone erzeugt das
+  Spektrum für beide Kanäle gleich (`main.cpp`: `spec[b*2+0] == spec[b*2+1]`),
+  nur die Waveform ist stereo. Timescopes Kanalfelder stehen deshalb als
+  „nicht prüfbar", nicht als Befund. Für ein Urteil bräuchte es echtes
+  Stereo-Material (`…\cmake\TestAudio`) — die Änderung des synthetischen Signals
+  würde alle Matrix- und Sonden-Zahlen verschieben.
+- 🔧 Kür: en-Übersetzungen (de = SSOT) · `CMakeUserPresets.json` → `.example` ·
+  App-Umbenennung **LumiViz → LumiViz** · Pulsing-Defaults-Mismatch ·
+  `File → Open Audio…`-Stub · Undock-Dauertest · Waveform-Glättungs-Default.
+
+## 9. Bewusste Grenzen — kein Handlungsbedarf
+
+| Bereich | Grenze |
+|---|---|
+| **`20_water`** | ✅ **Abgenommen (Patrik, S60):** Struktur deckungsgleich (Deckung 0,96, dMean 0,002), der Diff ist feines Rauschen ausschließlich über den Wellenzonen — Chaos-Verstärkung von GPU-float- vs. x87-Rundung durch die rückgekoppelte Wellengleichung. Randbehandlung seit S57 referenz-treu. Die Matrix-Zeile bleibt als Wächter mit diesen Erwartungswerten stehen |
+| **`24_grain`** | ✅ **Abgenommen (Patrik, S60):** Kornmenge und Helligkeit exakt (dMean 0,000, Menge 0,00, dreimal identisch), nur die Einzelkörner sitzen anders (Deckung 0,56): die Referenz zieht ihren Zufall sequentiell und DATENABHÄNGIG durch die 491-Byte-Tabelle — parallel je Pixel prinzipiell nicht nachbildbar (S57). Zeile bleibt als Wächter stehen |
+| AVS-Builtins | SVP Loader (10) = externe UVS/SVP-DLL, nicht decodierbar |
+| AVS-APEs | 5 verworfen: GeissFluid · ParticleSystem · MIDI Trace · AVI Player · AVSTrans Automation (closed-source bzw. Meta) · Framerate Limiter = no-op (der Host taktet) |
+| HLSL-Transpiler | `#elif` und Nicht-Literal-`#if` → sauberer Fehler, MD1-Fallback wie im Original |
+| MilkDrop-Referenz | GPU-Rendering ist nicht bit-deterministisch — Vergleich über Statistik/Montagen, nie Pixelgleichheit |
+
+## 10. Changelog
+
+| Version | Datum | Änderung |
+|---|---|---|
+| 1.70.0 | 2026-08-09 | Session 73 (Schaufenster + Anwender-Doku) — **README zeigt jetzt, was LumiViz kann:** zwei Galerien mit je vier Standbildern (AVS: fractal Dreams, flowers, rings, wormhole · MilkDrop: Rock The House, The Beauty and the Math, Twisted, Playaround) und ein Kapitel „Fremde Presets importieren", das AVS und MilkDrop als das benennt, was sie sind — zwei sehr verschiedene Formate, beide gegen ihren Original-Renderer gemessen. Die Falschaussage „Presets werden nicht mitgeliefert" ist raus (seit dem Vorgaenger-Commit werden 29 mitgeliefert). NEU **drei Anwender-Dokumente**: `Preset_Quickstart.md` (eine Seite, fuenf Schritte), `Preset_Anleitung.md` (zehn Kapitel: Reihenfolge als halber Look, die 54 Knotentypen in drei Sorten, Rueckkopplung, Audio, die vier Formel-Etappen, Fehlersuch-Tabelle) und `Werkzeug_Wegleitung.md`. Handbuch + beide Preset-Dokumente wandern per POST_BUILD nach `<Build>/docs/` (SSOT bleibt `docs/`, dort entstehen nur Kopien; die Wegleitung bleibt draussen — Entwicklerstoff). **ZWEI WERKZEUG-LUECKEN GESCHLOSSEN, beide beim Screenshot-Machen aufgefallen:** (a) **`AvsStandalone` kannte den Render-Scale-Divisor nicht** — die App setzt vor jedem Import `setImportRenderScaleDivisor()` aus `import/avsRenderScaleDivisor` (bei Patrik 4), der Standalone nie. Folge: JEDER Standalone-Vergleich bei grossen Fenstern war systematisch falsch; bei den ueblichen kleinen Fenstern faellt es nicht auf, deshalb blieb es unbemerkt. NEU `--render-scale N`. (b) **Das synthetische Audio hatte eine starre Klangfarbe** — fester 1/f-Abfall, feste Bandgewichte, Beat starr bei 2 Hz; jeder Frame klang gleich gefaerbt. NEU `--beat-hz N` und `--klangfarbe` (wandernde Spektralbalance + Oberwellen). **Ohne die Schalter aendert sich nichts** (kipp=0 faellt exakt aufs alte Verhalten zurueck) — bestehende Kalibrierlaeufe bleiben bit-identisch. Messwert am Preset „Rock The House": Mittelwert 0,011 → **0,203**, Luma max 0,29 → **1,00**. **DRITTE FALLE, ohne Codeanteil:** Stapellaeufe im DEBUG-Build sind **Faktor 20** langsamer (306 s gegen 15 s fuer zehn Presets) und wirken wie ein Haenger — dokumentiert in der Werkzeug-Wegleitung samt GPU-Vorgabe am EXE-Pfad, Pfaden mit Leerzeichen und „Fenster nicht schliessen" |
+| 1.69.0 | 2026-08-09 | Session 73 (Umbenennung + Versions-SSOT) — **die App heisst jetzt ueberall LumiViz.** `projects/apps/MyViz/` → `projects/apps/LumiViz/` (898 Dateien), Targets `MyViz`/`MyViz.Core`/`MyViz.UnitTests` → `LumiViz*`, 290 Textstellen in 145 Dateien byte-weise ersetzt (MyViz ist reines ASCII — keine Kodierungswandlung, keine Mojibake-Gefahr). Erleichternd: es gab **keinen `myviz`-Namensraum und keine `MyViz`-Klassen**, im C++ waren es nur Zeichenketten und Kommentare. **NEU: Name und Version sind SSOT** — beide stehen in `Solution.json`, das Root-`CMakeLists.txt` liest sie per `string(JSON …)` heraus und reicht sie als `LUMI_APP_NAME`/`LUMI_APP_VERSION` an `LumiViz` und `LumiViz.Core`; im Code fragt nur noch `AppInfo.hpp`. Vorher standen sie **dreifach** (Solution.json, hart in `Application.cpp`, Literal `"Version 0.1.0"` im About-Dialog) — der About-Dialog zeigte seit dem Vorlagen-Stand eine Version, die es nie gab. **Version 0.1.0 → 0.2.0** (Entscheid Patrik): erste tatsaechlich beziehbare Fassung; 0.9.0 waere ein falsches Signal („1.0 steht bevor") bei offener Kalibrier-Runde. Solution-Name `MinimalSolution` (Vorlagen-Rest) → `LumiViz`. **EINSTELLUNGS-UEBERNAHME:** Organisation und Anwendungsname bilden den QSettings-Pfad — ohne Zutun waeren Fensteranordnung, Hotkeys, GPU-Wahl und das gemerkte Preset scheinbar weg. `migriereAlteEinstellungen()` kopiert einmalig von „MyViz Project/MyViz" nach „LumiViz Project/LumiViz", nur wenn dort noch nichts steht, und loescht die alten Werte NICHT. Am laufenden Programm belegt: **37 Schluessel uebernommen**. **DABEI EIN EIGENER FEHLER AUFGEFLOGEN:** war ein Preset gemerkt, dessen Datei es nicht mehr gibt (hier: der alte `exec/MyViz`-Build), fiel der Start auf gar nichts zurueck statt auf das mitgelieferte — die Vorgabe griff nur bei LEEREM Wert. Behoben, mit Log-Hinweis. Der Test-Timeout aus 1.68.0 hat sich sofort bewaehrt: der Kaltlauf nach dem Neuaufbau brauchte 26,1 s und waere an den alten 30 s knapp vorbeigeschrammt. **NOTIZ:** die GPU-Vorgabe in `UserGpuPreferences` haengt am EXE-PFAD — aus `MyViz.exe` wurde `LumiViz.exe`, der alte Eintrag verwaist und ist bei Bedarf neu zu setzen. Tests 593 gruen (`LumiViz.UnitTests`), Debug- und Testing-Build gruen |
+| 1.68.0 | 2026-08-08 | Session 73 (Veroeffentlichung + Startzustand) — Repo lizenz- und datenschutzbereinigt und OEFFENTLICH gestellt (Historie mit `git filter-repo` umgeschrieben, 87→52 MB; duale Lizenz MIT/Apache-2.0, THIRD_PARTY_NOTICES, README, BUILDING, `.github/`). **Drei App-Fehler behoben, alle drei am laufenden Programm nachgewiesen:** (a) **`.lvfx`-Ketten waren an den Rechner des Erstellers gebunden** — `resolveAviPaths` lief NUR beim `.avs`-Import, beim `.lvfx`-Laden uebernahm der Serialisierer den gespeicherten absoluten Pfad unveraendert; `videoSource` hatte die Aufloesung seit S70, `avi` nicht. Fix in `loadChainFile`, die Suche geht ueber den blanken Dateinamen und repariert damit auch Altbestand. (b) **Der Blaettern-Hotkey tat nach jedem Neustart nichts**, bis man einmal im Browser etwas geladen hatte: `onPresetStep` liest die Liste, die aber erst in `onActivate()` entstand — war das Panel nie offen, war sie leer. Die Liste wird jetzt im Konstruktor gefuellt; belegt mit `step 1 from 4 -> 5 (11 entries)` ohne je das Panel zu oeffnen. (c) **Der Startzustand wurde nicht wieder aufgenommen** — Import-Browser laedt und markiert jetzt das zuletzt geladene Preset (Vorgabe `presets/avs/EyeCandy2/02_flowers.avs`, RELATIV zur Exe), und der zuletzt gewaehlte Visualizer wird gemerkt (`ui/lastVisualizer`; `MainWindow` setzte vorher hart `multieffect`). NEU ausserdem: **Preset-Auswahl wandert per POST_BUILD neben die Exe** (`asset/presets/` → `<Build>/presets/`, Pflegenotiz erklaert das Erweitern), Import-Browser startet im **Programmordner** statt im Benutzerordner, Test-Timeout 30→120 s (der ERSTE ctest-Lauf nach einem Build schlug reproduzierbar an die 30 s). **DREI FALLEN festgehalten:** `PanelManager::restoreState()` hat KEINEN Aufrufer (§8) · die Sonden-Liste taugt beim Start nicht als Anker · QSettings-Lesen MUSS innerhalb von `beginGroup()` stehen, sonst kommt der Wert aus der Wurzel und ist immer leer. Ausserdem **60 neue Feld-Sonden** fuer die Knotentypen seit S69–S72 mitgenommen (Entscheid Patrik) — erzeugt, aber noch nie gelaufen (§4). Tests 593 gruen, Debug- und Testing-Build gruen |
+| 1.67.0 | 2026-08-08 | Session 72 (Filter-Strang KOMPLETT) — **ISF ist ein EIGENER Knotentyp `isfFilter`** (Entscheid Patrik: „lassen wir den pixel filter lieber so wie er war"), der Shader UNVERAENDERT ausfuehrt: beide Shader-Stufen in getrennten Feldern, Import-Knopf im Panel, bearbeitbare Quellen-Liste, Sorten-Info, Lizenzfeld, Parameter-Baum, Bauart Quad/Dreieck/Gitter — **und Multipass (PASSES)**. Der Kurswechsel hat vier Mechaniken ERSATZLOS gestrichen (Makro-Ersetzung, main-Umschreiben, .vs-Falten, Varying-Spiegelung) und alle drei Ablehnungen aufgehoben: **es gibt keine Kategorien, nur unterschiedlich viele Bildquellen** (0/1/2 = Generator/Filter/Uebergang; jede Sorte darf einen .vs haben — am Korpus belegt). Messwert GL-Smoke (echter 3.3-Core-Kontext, kompilieren UND linken): 251 → 319 (Multipass) → **321 von 327** (98 %); Waechter-Untergrenze 95 %. Kopf-Korpus 327/327 angenommen. **VIER BEHOBENE FEHLER:** (a) `nodeToJson` schrieb `o["name"] = displayName`, danach ueberschrieb der Shadertoy-Visitor genau diesen Schluessel — ein umbenannter Shadertoy-Knoten VERLOR SEINEN NAMEN beim Speichern; (b) `aktualisiereAudioTexturen()` lief NACH dem Binden des Kettenbilds und lud auf Einheit 0 — `_lumiPrev` zeigte auf die Audio-Textur, JEDER Filter tastete Audio statt Bild ab (Sichttest Patrik „kein einziger filter funktioniert"; weder Unit-Tests noch GL-Smoke koennen das sehen); (c) beide ISF-Audio-Typen hingen an der kombinierten 512×2-Shadertoy-Textur — ein Shader, der bei y=0.5 abtastet, las eine MISCHUNG aus Spektrum und Waveform (aufgedeckt allein durch die Rueckfrage „geht das auch richtig?"); (d) `IMG_SIZE` lieferte pauschal RENDERSIZE statt der Sampler-Groesse. NEU ausserdem: gemeinsame Audio-Texturen aus EINER Rechnung (Idee Patrik, hoechstens ein Upload je Frame statt einem je Knoten), `getosc()`/`getspec()` als GLSL-Funktionen mit AVS-Signatur (Idee Patrik), generische `Herkunft` + Herkunfts-Kopf beim Shader-Export (S71-Befund geschlossen), generischer Parameter-Baum (`ParamGruppe`/`ParameterBaum.hpp`), **iChannel-Ausbau des Shadertoy-Knotens** (Ketten-Eingang + AVS-Buffer 1–8, Handbuch §12). Der S71-Vorbau (`ShaderVertrag`, Import-Pruefung, Export-Namensschema) war GANZ UNGETESTET — hat jetzt eine eigene Suite. NEU 🟠-Block **„Key-Variablen-Regel fuer JEDES Import-Format"** (Vorgabe Patrik, gilt auch fuer Shadertoy und kuenftige) mit vier Befunden, darunter ein UNGEPRUEFTER Shadertoy-Fall seit S65. Tests 593, Feld-Inventar 91 Typen/781 Felder mit 0 Luecken, alle 3 Builds gruen. Benutzerhandbuch 1.10.0 |
+| 1.66.0 | 2026-08-07 | Session 71 (Filter-Strang, Planung) — **NEU §7-Block „ISF-Import + generischer Parameter-Baum" als nächster Strang** (Entscheid Patrik). Dreistufig: (1) ISF-Parser pur/testbar nach dem `PixelFilterWrapper`-Muster, (2) generische Parameter-Ablage im Node inkl. Pflichtkette (Serializer/FieldDocs/Wächter), (3) **Parameter-Baum im Panel — Entwurf Patrik: Aufbau wie die Effect-Chain, aber mit Wert-Spalte und typsicheren Editoren je Zeile** (ISF deklariert den Typ; `long` mit LABELS/VALUES wird ein echtes Klartext-Dropdown), bewusst nested-fähig (INPUTS sind flach, `PASSES`/`IMPORTED` nicht). **⚪ NEU (Idee Patrik): dasselbe Prinzip für ALLE Module** — kein ISF-Sonderweg, sondern die Infrastruktur, die auch „dynamische Modulparameter" braucht; beim Bau nicht ISF-spezifisch schneiden, Verhältnis zur bestehenden Panel-Erzeugung klären. KLEINFIXES am Vorbau: Export schlägt jetzt einen **freien Dateinamen** vor (`preset(2).image.shadertoy.glsl` — Zähler VOR den Endungen, damit `.vertrag.endung` intakt bleibt; Qts Überschreib-Frage bleibt als Netz) · `.vert` im Dateifilter ergänzt (Gegenstück zum vorhandenen `.frag`; `.gs` bewusst NICHT — ISF kennt nur `.fs`/`.vs`, und wir haben kein Geometry-Feld). **KORREKTUR einer früheren Aussage in dieser Session: der Shadertoy-Import ist im Kern NICHT offen** — `ShadertoyBrowserPanel` (Strang S3) hat Query-API-Suche, Thumbnail-Grid, Doppelklick-Import als .lvfx, API-Key-Feld und Link-Knopf; **offen sind dort der iChannel-Ausbau UND die Lizenz-Kette** (Einwand Patrik): die Felder `name`/`author`/`url`/`license` existieren zwar samt Serializer und Panel-Anzeige, hängen aber NUR an `ShadertoyParams` (für ISF/pixelFilter fehlen sie) — und der **Shader-Export im Editor schreibt sie nicht mit**, die Herkunft geht beim Export also verloren. Beides ist im Plan §5.2/§8 aufgenommen |
+| 1.65.0 | 2026-08-07 | Session 71 (Filter-Strang, Vorbau) — **Shader-Import gegen Vertrags-Verwechslung gesichert (Einwand Patrik: „muss man da nicht aufpassen, dass man nicht Shadertoy im pixelFilter importiert?").** Ist-Stand war ungeschützt: EIN gemeinsames Ordner-Gedächtnis `editor/shaderFileDir` für alle Shader-Felder, ein Filter für alle, keine Prüfung — ein Shadertoy in einem pixelFilter ergab nur einen kryptischen Compilerfehler aus dem Wrapper. NEU **`ShaderVertrag`-SSOT** in `EelScriptEditing.hpp` (key · Anzeige · Einstiegsfunktion · Signatur · echte Endung) für pixelfilter/shadertoy/meshwarp/gpuparticles/milkdrop, die drei Dinge gemeinsam trägt: (1) **Namensschema `<preset>[.<slot>].<vertrag>.<endung>`** — Klassifikation von rechts nach links immer spezifischer (Entscheid Patrik, Muster der Dateiendungen selbst); vorher stand nur der Slot drin (`preset.image.glsl` verriet nicht, dass es Shadertoy ist). (2) **Ordner-Gedächtnis je Vertrag** `editor/shaderFileDir/<vertrag>` (mit Ausweich auf den alten gemeinsamen Wert) + Dateifilter „Passende Shader" zuerst, `.fs`/`.vs` (ISF) mit aufgenommen. (3) **Vertragsprüfung beim Import** (`pruefeShaderVertrag`): fehlt der erwartete Einstieg und wird ein fremder erkannt, kommt eine Klartext-Warnung samt **Hinweis auf den zuständigen Knoten** — bewusst mit „Trotzdem laden" (Fragmente/Hilfsfunktionen bleiben erlaubt, Entscheid Patrik); ISF-Dateien werden am JSON-Kopf erkannt und benannt. **Milkdrop-Felder exportieren jetzt `.hlsl`** statt `.glsl` (Entscheid Patrik nach Empfehlung: der Inhalt IST HLSL, externe Editoren färben richtig ein — für unsere eigene Prüfung ist die Endung ohnehin nicht maßgeblich, die schaut in den Inhalt). **NEU 🔴 Lizenz-Pflicht im §7-Block** (Vorgabe Patrik): jeder Fremd-Import muss Herkunft/Autor/Lizenz ins Preset schreiben — im Loader, nicht nur in der Doku. **ISF-Format gegen die Spec geprüft** (kein separates JSON: eingebetteter Kopf, `.fs`; FX-Erkennung über `inputImage`) |
+| 1.64.0 | 2026-08-07 | Session 71 (Abschluss) — **✅ SICHTTEST PATRIK ABGENOMMEN: der Kamera-Strang ist komplett.** (1) Dialog bestätigen → Kamera läuft → Preset-Wechsel → Schließen: **sauber, kein Prozess bleibt zurück** (zusätzlich per Task-Manager geprüft). (2) **Kein UI-Lag mehr spürbar**, obwohl die RGBX-Wandlung wieder auf dem Main-Thread läuft — die 720p/30fps-Formatklemme aus S70 reicht also aus, der Worker-Thread war für die Bildrate gar nicht nötig. Damit ist der Zielkonflikt „Lag gegen Prozessende" AUFGELÖST statt abgewogen: `LUMIVIZ_MEDIEN_THREAD` bleibt nur als Messschalter. Der 🔴-Punkt aus 1.59.0 ist geschlossen |
+| 1.63.0 | 2026-08-07 | Session 71 (Fortsetzung 3) — **🎯 URSACHE DES PROZESS-HÄNGERS GEFUNDEN (A/B am Prüfstand): der EIGENE THREAD für die Multimedia-Seite.** Anstoß Patrik (Erinnerung „es ging, als alles im Main-Thread lief" + Auftrag, die Commits zu vergleichen). Der Commit-Vergleich zeigte: nur ZWEI Commits berühren LiveVideoFeed.cpp — `f93c83a` (S70 Teil A, dort steht wörtlich „App-Ende ohne/mit Kamera sauber") und `ace8d1c`. Der einzige strukturelle Unterschied: f93c83a hatte **keinen Zusatz-Thread**. A/B mit Schalter `LUMIVIZ_MEDIEN_THREAD` isolierte genau diese Variable: **MIT Thread 2/2 Hänger, OHNE Thread 3/3 sauberes Prozessende** (7,8 s = reine Laufzeit), Kamera läuft in beiden Fällen. Unabhängig von Media-Backend (FFmpeg wie WMF je 2/2 Hänger), von der Lage der Pipeline (Main- vs. Worker-Thread — der Ein-Thread-Besitz-Umbau auf den Medien-Thread half NICHT) und von COM-Init (`CoInitializeEx`/`CoUninitialize` auf dem Thread half nicht). **FIX: LiveVideoFeed arbeitet per Vorgabe auf dem Main-Thread**; `LUMIVIZ_MEDIEN_THREAD=1` schaltet den Worker-Thread für Messungen wieder ein. **ZWEITER BEFUND: `std::_Exit()` beendet den Prozess NICHT** (am Prüfstand reproduziert) — ExitProcess muss alle Threads abräumen, einer steckte im Treiber. Deshalb stand seit S70 „erzwungenes Prozessende" im Log, während die App weiterhing: die Logzeile täuschte einen Erfolg vor, den es nie gab. Der _Exit-Notausgang ist ersatzlos ENTFERNT (App + Standalone). Bootstrap_Integration 1.3.0: §6.4.5 korrigiert (_Exit ist kein Notausgang), NEU §6.6 (kein eigener Thread für fremde Medien-Pipelines). Tests 563 grün, alle 3 Builds grün, App-Schließen ohne Kamera 677 ms. **OFFEN: Sichttest Patrik mit KAMERA** (Dialog → Kamera läuft → Preset-Wechsel → Schließen; zusätzlich UI-Lag beurteilen, da die Wandlung wieder auf dem Main-Thread läuft — die 720p/30fps-Klemme aus S70 bleibt aktiv) |
+| 1.62.0 | 2026-08-07 | Session 71 (Fortsetzung 2) — **REGRESSION aus 1.61.0 gefunden und behoben: App fror nach dem Kamera-Freigabe-Dialog ein, die Kamera ging gar nicht erst an** (Sichttest Patrik). Ursache: das neue `altenFeedRaeumen()` im Zusammenspiel mit dem Aufrufmuster des Render-Threads — der ruft `starte*` in JEDEM Frame, und bis der gequeuete Bau durch ist (Kamera-Pipeline-Start dauert), steht der Feed noch nicht in `m_feeds`. Jedes Frame queute also einen weiteren Bauauftrag, und jeder räumte über `altenFeedRaeumen()` die eben gebaute Kamera wieder ab ⇒ Endlosschleife aus Auf-/Abbau auf dem Main-Thread. FIX: NEU **Bau-Riegel `m_imBau`** — ein Bauauftrag je Knoten und Zielquelle, ausgetragen an jedem Ausgang von `baueDatei`/`baueKamera`; `alleStoppen()` verwirft offene Aufträge. VERIFIKATION am Prüfstand (echte Kamera, 3 Preset-Wechsel, 2 Läufe): Kamerabild kommt an (Screenshot-Sichtprüfung: Raumkonturen durch den Take-On-Me-Filter), Feed-Teardown **201/202 ms**, Warnungen=0. Tests 563 grün, alle 3 Builds grün, App-Schließen ohne Kamera 671 ms. **OFFEN: Sichttest Patrik** (Dialog bestätigen → Kamera muss anlaufen; Preset-Wechsel; Schließen) |
+| 1.61.0 | 2026-08-07 | Session 71 (Fortsetzung) — **Teardown AM PRÜFSTAND GEMESSEN statt vermutet (Auftrag Patrik): Feed-Abbau 5320 ms → 200 ms, stabil über 4 Läufe.** Der erste S71-Fix griff NICHT (Sichttest Patrik: „schliesst noch immer nicht" + wachsendes Rauschen beim Preset-Wechsel). NEU Prüfstand: `AvsStandalone --kamera-freigeben --feed-teardown-messen` (Kamera-Vertrag: das explizite Flag IST die Nutzeraktion; ohne Flag bleibt der Standalone gerätefrei) + `LiveVideoFeed::herunterfahren()` am Standalone-Ende. **DREI Hypothesen nacheinander WIDERLEGT** (Beleg im Log statt Vermutung): (a) „Feeds akkumulieren" — falsch, beim Schließen `aktive Feeds=0 Friedhof=0`; (b) „Wandler steckt im map()" — falsch, `begonnen==fertig`, keine Frames in Arbeit; (c) „Queue-Stau" — falsch, Zähler stand still. **ECHTE URSACHE: ein einzelnes `QThread::quit()` unmittelbar nach dem Feed-Abbau geht VERLOREN** — der Wandler arbeitet dann noch interne Ereignisse der sterbenden MF-Pipeline ab und ist nicht quit-fähig, OBWOHL seine Event-Loop normal läuft (Herzschlag-Timer als Beweis) und kein Frame in Arbeit ist. Gemessen: `quit(); wait(5000)` 3/3 Timeout · dieselbe Stelle mit Pause davor 3/3 Erfolg · von innen gepostetes Quit-Event 3/3 Timeout · **wiederholtes `quit()`+`wait(200)` 4/4 Erfolg im zweiten Versuch**. FIX = Schleife (selbstkorrigierend statt geratener Wartezeit) → Vertrag 6.4.4. ZUSÄTZLICH gefunden und behoben: `m_feeds[nodeId] = neu` zerstörte den Alt-Feed als NEBENWIRKUNG der Zuweisung — unter dem Mutex und ohne Abschalt-Vertrag (genau der Gifttrigger, greift bei jedem Quellen-/Preset-Wechsel) → NEU `altenFeedRaeumen()`. **Rest-Hänger EINGEGRENZT:** nach einem Kamera-Lauf hängt der Prozess NACH `main()` im `~QGuiApplication`/fremden statischen Destruktoren (Marker-Beweis) — außerhalb unseres Codes, dafür ist der `_Exit`-Notausgang da. Bootstrap_Integration 1.2.0: NEU §6.4.4 (Joins wiederholen) + §6.5 (Messen statt vermuten). Tests 563 grün, alle 3 Builds grün, App-Schließen ohne Kamera 677 ms. **OFFEN: Sichttest Patrik** (App mit Kamera + Preset-Wechsel — Rauschdauer sollte nicht mehr wachsen) |
+| 1.60.0 | 2026-08-07 | Session 71 — **🔴 KAMERA-TEARDOWN-DEADLOCK: URSACHE GEFUNDEN UND BEHOBEN (⬜ Sichttest Patrik).** Der Befund kam aus dem LOG, nicht aus dem Debugger: zwischen `Stopping video feeds...` und der nächsten Zeile lagen in JEDEM Lauf mit Feed exakt 5 s = der Timeout von `m_wandler->wait(5000)`. **Der Wandler-Thread beendete sich nie** — `alleStoppen()`/`friedhofLeeren()` riefen `kamera->stop()` und zerstörten die Objekte, WÄHREND der Wandler noch ein `QVideoFrame` derselben Pipeline mappte; ein `map()` auf einer sterbenden MF-/D3D-Pipeline blockiert im Treiber und hält deren Puffer für immer. **Genau daran starben die nvwgf2umx-Worker nie** — die S70-Einstufung „treiberintern, in-Prozess nicht heilbar" war falsch, es war hausgemacht. FIX (LiveVideoFeed 1.3.0): NEU **Abschalt-Vertrag** `feedStilllegen()` als einzige Abbau-Stelle — (1) Totflagge `Feed::tot` (der Wandler prüft sie VOR dem map und gibt den Puffer sofort zurück), (2) Senke abklemmen, (3) NEU `wandlerBarriere()` (leeres Lambda hinter die Queue + Semaphore, 2 s Timeout) — erst danach (4) stop/zerstören. `herunterfahren()` löscht den Wandler-Kontext erst NACH dem Thread-Ende (das `deleteLater()` davor wurde nie ausgeführt: Event an einen Thread ohne Event-Loop). **ZWEI weitere Befunde behoben:** (a) `kameraGelaufen()` → **`feedGelaufen()`** — der Notausgang hing am falschen Kriterium: der Lauf 00:28:55 hatte NUR einen Datei-Feed und hing genauso; (b) die **Settings-Testaufnahme war eine zweite, unbewachte MF-Pipeline** (QCamera/Session/Recorder als Panel-Kinder, am Dienst vorbei) — sie meldet sich jetzt per `merkeFremdenFeed()` und wird an `aboutToQuit` SYNCHRON abgebaut (`deleteLater` ist dort wirkungslos, die Objekte starben sonst per Parent-Destruktor mitten im Fenster-Abbau). **NEU: Lebenszyklus-Vertrag** `docs/core-services/Bootstrap_Integration.md` **1.1.0 §6** (Regelung Einschalten vs. Herunterfahren, Wunsch Patrik) — §5 zeigt jetzt die volle Kette inkl. aller aboutToQuit-Handler; VideoFrameCache 1.3.0 danach angeglichen: `herunterfahren()` statt aboutToQuit-Lambda (Abbau-Position darf nicht davon abhängen, wann ein lazy Singleton zuerst gebraucht wurde) + `abbrechen()` wirkt jetzt auch in der verschachtelten Event-Loop (Wachtimer in `warteAuf` — `quit()` beendet eine solche Loop nicht). Tests 563 grün, alle 3 Builds grün, Start/Schließen-Regressionsprobe 699 ms sauber. **OFFEN: der Beweis am echten Gerät** — Sichttest Kamera-Lauf + Schließen |
+| 1.59.0 | 2026-08-07 | Session 70 (Abschluss) — **🔴 Kamera-Teardown-Deadlock BLEIBT OFFEN (Sichttest Patrik):** auch MIT dem _Exit-Ausweg aus 1.58.0 hängt die App — und zwar auch dann, wenn die Kamera zur LAUFZEIT gestoppt wurde (Wechsel auf einen Effekt ohne Kamera) und erst später geschlossen wird. Konsequenz: schon die ZERSTÖRUNG der Kamera-Pipeline im laufenden Prozess vergiftet ihn (nvwgf2umx-D3D-Worker sterben nie); der Hänger kann dann VOR dem _Exit-Punkt sitzen (Fenster-/GL-Abbau). Ohne Kamera-Start schließt die App sauber. **Ansätze für die frische Session:** (a) Haupt-Thread-Stack im Hänge-Zustand MIT externem Code (wo genau vor _Exit?), (b) Kamera-Feed bei Knoten-Wechsel NICHT zerstören, sondern nur stoppen/pausieren und bis Prozessende am Leben halten (Zerstörung ist der Gifttrigger, nicht der Betrieb), (c) `QT_MEDIA_BACKEND=windows` (WMF- statt FFmpeg-Backend) testen — anderes Teardown, evtl. auch ohne toImage-Bug, (d) GPU-Präferenz-Gegenprobe (610M vs. 4090, Hybrid-Verdacht), (e) _Exit noch früher (direkt im closeEvent nach Settings-Sicherung) als Brachial-Variante. Alle S70-Fixes davor bleiben gültig (Lag behoben, Zombie-Klassen 1+2 behoben, Riegel) |
+| 1.58.0 | 2026-08-07 | Session 70 (Fortsetzung 8) — **Schließ-Hänger ENDBEFUND + kontrollierter Ausweg.** Nach der Reihenfolge-Umkehr: Musik aus (eigenes Cleanup komplett), aber Haupt-Thread hängt in Qt6Core bei den Multimedia-Postroutinen des ~QApplication — Screenshot: ~10 nvwgf2umx-Threads (NVIDIA-D3D11-Worker der Kamera-MF-Pipeline) sterben NIE. In drei Abbau-Reihenfolgen reproduziert → in-Prozess nicht heilbar (Treiber-/MF-Deadlock, mutmaßlich Hybrid-GPU 610M+4090). **Ausweg (Plan B, chirurgisch):** `Application::shutdown` beendet den Prozess per `std::_Exit(0)` NUR wenn in diesem Lauf eine Kamera lief (`LiveVideoFeed::kameraGelaufen()`), NACH vollständigem eigenem Cleanup (Fenster/GL weg, BASS frei, Feeds tot, Settings gesichert) — übersprungen werden nur fremde statische Destruktoren. Ohne Kamera bleibt der normale Abbauweg unverändert. Tests 563 grün, alle 3 Builds grün |
+| 1.57.0 | 2026-08-07 | Session 70 (Fortsetzung 7) — **Schließ-Hänger: ABBAU-REIHENFOLGE UMGEKEHRT.** Sichttest zeigte: Fenster zu, LED aus, Musik läuft weiter, Haupt-Thread IN nvoglv64 (nicht in einem Wait) → der GL-Teardown wartet auf einen GPU-Kanal, den die parallel STERBENDE Kamera-MF-/D3D-Pipeline verklemmt. Zur Laufzeit koexistieren GL und Kamera-D3D problemlos — also: (1) aboutToQuit setzt NUR den Riegel (`beendenVorbereiten`, keine Neustarts), (2) Fenster/GL sterben, während die Kamera normal weiterläuft, (3) NEU `LiveVideoFeed::herunterfahren()` (alleStoppen + Wandler-Ende) läuft in `Application::shutdown` ZWISCHEN MainWindow- und QApplication-Abbau. closeEvent stoppt nicht mehr. Falls auch das nicht reicht, ist die Ursache Treiber-intern → Entscheid-Kandidat: harter Prozess-Abschluss am Ende von main() nach vollständigem eigenem Cleanup. Tests 563 grün, alle 3 Builds grün |
+| 1.56.0 | 2026-08-06 | Session 70 (Fortsetzung 6) — **Schließ-Hänger Ursache #3: Kamera-WIEDERBELEBUNG im Teardown.** Nach alleStoppen() rief der noch laufende Render-Thread weiter `starteKamera()` auf (er rendert bis zum Fenster-Abbau) → Feed weg → baueKamera wurde NEU gequeued und startete mitten im Teardown eine frische MF-Pipeline gegen den GL-Abbau (Haupt-Thread hing in nvoglv64, LED war da schon aus — passt exakt zu „hängt nur bei laufender Kamera"). DREITEILIGER FIX: (1) **Shutdown-Riegel** `m_beendet` — alleStoppen() sperrt alle starte*/baue*-Pfade, auch schon gequeuete Events prüfen ihn beim Lauf; (2) **Kamera-Stopp schon im MainWindow::closeEvent** (MF-Abwicklung bekommt den Schließvorgang als Vorsprung, aboutToQuit bleibt Sicherheitsnetz); (3) `runVideoSource` lädt Kamera-Frames per **glTexSubImage2D** statt glTexImage2D-Neuallokation je Frame (Treiber-Churn, auch Lag-relevant). Tests 563 grün, alle 3 Builds grün |
+| 1.55.0 | 2026-08-06 | Session 70 (Fortsetzung 5) — **Schließ-Hänger Ursache #2 gefunden (Kamera blieb AN, aboutToQuit nie erreicht):** die 1.53.0-Idee „Wandlung auf dem Render-Thread" hängt bei HARDWARE-Frames — map()/toImage() funktioniert nur im Lieferkontext; der Render-Thread blockierte, das Fenster-Schließen wartete auf ihn (Screenshot Patrik: 180 Threads, Haupt-Thread in Qt6Core). **Endgültige Architektur (LiveVideoFeed 1.2.0): eigener WANDLER-Thread** — die videoFrameChanged-Verbindung wird queued an einen Kontext auf diesem Thread zugestellt, die RGBX-Wandlung läuft dort (sicherer Lieferkontext, Puffer sofort zurück), fertige QImages unter Mutex; GUI- und Render-Thread fassen nie ein QVideoFrame an. Senke bleibt auf dem Main-Thread (kein moveToThread-Exot). aboutToQuit: alleStoppen → Wandler-Kontext deleteLater → Thread quit+wait. Hinweis Sichttest: wiederholte 0xC00D3EA3 („von anderer App verdrängt") = ein ALTER Zombie hielt die Kamera — vor jedem Test prüfen, dass kein LumiViz.exe mehr läuft. Skript-Test Start→Dialog→Schließen: sauber beendet; Tests 563 grün, alle 3 Builds grün |
+| 1.54.0 | 2026-08-06 | Session 70 (Fortsetzung 4) — **Schließ-Hänger nach dem Lag-Fix behoben (Befund #3, Regression aus 1.53.0):** durch die Roh-Frame-Haltung wartete `QCamera::stop()` im aboutToQuit auf die Rückgabe des in `feed->roh` gehaltenen Puffers — Main-Thread hing, App ließ sich nicht schließen. Fix: Roh-Frame wird in `alleStoppen`/`friedhofLeeren` VOR dem Stopp freigegeben. **Lag-Nachstimmung:** `baueKamera` wählt jetzt ein Kamera-Format um 720p/≤30fps statt des Geräte-Maximums (RGBX-Wandlung skaliert mit der Pixelzahl; 1080p60 > 4× so teuer wie 720p30, ohne Gewinn für den Visualizer). Merkregel ergänzt: gehaltene QVideoFrames sind ausgeliehene PIPELINE-PUFFER — immer freigeben, bevor die Quelle gestoppt wird. Tests 563 grün, alle 3 Builds grün |
+| 1.53.0 | 2026-08-06 | Session 70 (Fortsetzung 3) — **LAG-BEFUND behoben (Sichttest Patrik: extremes UI-Einfrieren mit Live-Kamera, Drag&Drop tot):** ZWEI Main-Thread-Fresser im S70-Code. (a) Haupttäter Kamera: `verbindeSenke` wandelte JEDES Kamera-Frame (30-60 fps, 1080p ≈ 8 MB) auf dem GUI-Thread nach RGBX — Event-Loop gesättigt. Fix LiveVideoFeed 1.1.0: Senke legt nur das rohe QVideoFrame ab (refcounted); NEU `bildNummer()` als billiger Vorab-Check, Wandlung in `letztesBild()` auf dem RENDER-Thread und nur bei neuen Frames. (b) Frame-Schritt-Datei: `VideoFrameCache::lade` dekodierte KOMPLETT auf dem Main-Thread (Seek je Frame + verschachtelte Event-Loops — bricht auch DnD). Fix 1.2.0: eigener Decoder-Thread mit Event-Loop + `abbrechen()`-Haken an aboutToQuit (Zombie-Klasse). Sonden-Doppelläufe nach der Threading-Änderung weiter SHA256-identisch; Tests 563 grün, alle 3 Builds grün. Merke: pixelFilter-GPU-Kosten (max. 36 Abtastungen) drücken höchstens FPS auf der 610M — GPU-Wahl auf die 4090 stellen, wenn Filter-Stapel + Kamera kombiniert werden |
+| 1.52.0 | 2026-08-06 | Session 70 (Teil B) — **§7 Stilfilter UMGESETZT (⬜ Sichttest):** Chain-Node `pixelFilter` (Nutzer-GLSL `farbe(uv, src)` je Pixel, Nachbar-Sampling, Mix-Regler + Parameter-Skript `mixamount`; NEU `PixelFilterWrapper.hpp`; runPixelFilter im transformPass-Muster, Fehler ins geteilte stError; Palette „— GPU-Module —") + **12 Werks-Voreinstellungen** (Take-On-Me-Comic als Flaggschiff; Sepia auf Wunsch Patrik; Katalog-Zeilen im nodepresets-README) + 7 Wrapper-/Serializer-Tests (563 gesamt) + FieldDocs 90 Typen/774 Felder (0 Lücken) + Sonde (SHA256-Doppellauf identisch) + Demo. **BEFUND: `filter` = GLSL-Reserviert-Wort** (AMD lehnt ab) → Vertrag `farbe()`, Wächter-Test. Stimm-Befund: Comic braucht helle Grundflächen/harte Kanten. Benutzerhandbuch 1.8.0 (§14) |
+| 1.51.0 | 2026-08-06 | Session 70 (Fortsetzung 2) — **Zombie-Prozess Schicht 2 gefunden und behoben (Stack-Beweis Patrik):** Haupt-Thread hing in `Application::shutdown` → `~QApplication` → Event-Queue-Entsorgung → `~Feed` — das stopp()-Queued-Lambda trug den letzten shared_ptr, die QCamera starb mitten im QApplication-Abriss. Fix: Feed-Eigentum bleibt beim Dienst (`m_friedhof` + `friedhofLeeren()` auf dem Main-Thread), Queued-Lambdas tragen kein Eigentum, `alleStoppen()` räumt Feeds+Friedhof synchron und zerstört die Qt-Objekte explizit. Verifikation: App-Start→Schließen ohne und mit Kamera-Dialog beendet sauber (2 Skript-Läufe); Tests 556 grün, alle 3 Builds grün. NEU Merkregel: Queued-Lambdas nie mit letztem Eigentum an Qt-Multimedia-Objekten |
+| 1.50.0 | 2026-08-06 | Session 70 (Fortsetzung) — **Kamera-Sichttest Patrik: läuft** (USB-WebCam im videoSource-Knoten). Drei Nachzüge: (1) **Kamera-Freigabe-Dialog beim Preset-Laden** (Wunsch Patrik): einmal je geladener Kette, nur bei aktiver Kamera-Quelle ohne Freigabe; EINZIGE Vollbild-Ausnahme (aktives Fenster + StaysOnTop). (2) **BEFUND behoben: Zombie-Prozess nach App-Ende bei benutzter Kamera** — Queued-Stopps erreichen den Main-Thread beim Herunterfahren nicht mehr, MF-Capture-Threads hielten den Prozess (LED aus ≠ Teardown); Fix `LiveVideoFeed::alleStoppen()` synchron an aboutToQuit. (3) ⚪ Rest-Risiko fremde YUV-Kameras notiert (Rezept: NV12/YUYV-Wandlung in VideoFrameUtil). Tests 556 grün, alle 3 Builds grün |
+| 1.49.0 | 2026-08-06 | Session 70 — **§7 Video-Weg Teil A UMGESETZT (⚪→⬜ Sichttest):** Chain-Node `videoSource` (Datei/Kamera/Testaufnahme; Streaming via NEU `services/LiveVideoFeed`, Frame-Schritt via VideoFrameCache 1.1.0 mit `Clip::fps`; Einpassung/Blend/Deckkraft; Parameter-Skripte `speed`/`opacity`) + Settings-Tab „Kamera" (Testaufnahmen benutzerlokal; Aufnahme-Klick = Kamera-Freigabe des App-Laufs) + Panel/Palette/Serializer/Klemmen + FieldDocs 89 Typen/769 Felder (0 Lücken) + 2 Serializer-Tests (556 gesamt grün). Sonde `videosource_sonde.lvfx`: Doppellauf SHA256-identisch. **BEFUND behoben: `QVideoFrame::toImage()` = schwarz unter Qt 6.10.1** (Rohdaten per map() da) → NEU `services/VideoFrameUtil.hpp` als toImage-Ersatz für LiveVideoFeed UND VideoFrameCache (betraf auch den avi-Cache-Fallback VR09) |
+| 1.48.0 | 2026-08-06 | Session 70 — **§7 Video-/Kamera-Quellmodul + Stilfilter: Strang eröffnet (Entscheid Patrik), Sondierung erweitert:** Abkürzer VideoFrameCache/Multimedia liegt seit S59 · NEU Kamera-**Testaufnahmen** in den Settings (benutzerlokal; macht den Kamera-Pfad deterministisch prüfbar; dritte Betriebsart + Fallback) · Stilfilter-Architektur entschieden: EIN skriptbarer **`pixelFilter`**-Node + Filter als Werks-Voreinstellungen (statt Festmodule) · Filter-Fundgruben notiert (**ISF** = „Shadertoy für Filter", mögl. späterer FX-Import; ReShade/godotshaders/obs-shaderfilter; Shadertoy-Suchworte toon/cel/kuwahara/hatching/pencil/halftone/CRT; XDoG/anisotropes Kuwahara) · **iChannel-Erweiterungen** Shadertoy-Knoten: „Ketten-Eingang" + „AVS-Global-Buffer 1–8" (technisch geklärt: FBO-Pool-Texturen, activePool-Scoping) |
+| 1.47.0 | 2026-08-06 | **NEU 5 Demos in asset/examples** (Konvention `<typkey> - <Name>.lvfx`): meshWarp Bass-Tunnel (Audio-Ring + Sog-Feedback), Wellengang (Waveform-Band), Spiegelkabinett (Kaleido-Scheibe: rotieren→falten→atmen); gpuParticles Feuerfontaene (Gold-Glut, Bass-Tempo), Wirbelnebel (16k-Galaxie + Schmier-Swirl = beide GPU-Module). Alle gegengerendert + sichtgeprüft (Warnungen=0); Befunde beim Stimmen: additive Partikel brauchen kräftiges Fadeout (Weiß-Ausbrand), Kaleido-Faltung braucht ZENTRIERTEN Inhalt (außermittig kollabiert das Feedback), dünne Linien verlieren Helligkeit über LINEAR-Resampling im Warp-Feedback |
+| 1.46.0 | 2026-08-06 | **Voreinstellungs-Batch 1 gebaut (18 Dateien, 12 Typen):** list (Beat-Gate, Bass-Blende, Puls-Layer, AB-Wechsler — Listen-Slots ohne `time`, eigener Akkumulator), brightness (Bass-Boost, Kanal-Atmung), colorfade (Beat-Blitz, Farbdrift), colorModifier (Kontrast-Pump, Gamma-Atmung), mosaic Beat-Kachel, channelShift Beat-Rotation, colorClip Bass-Fresser, multiFilter Chrome-Beat, addBorders Puls-Rahmen, onBeatClear Vierer-Reset, clear Nachtblau-Schleier, bufferSave Echo-Speicher. Wächter-Test grün (704 Assertions). Offen: Batch 2 Scope-Figuren (texerII/triangle/superScope3D/terrain3D/glowOrbs/dotPlane/dotFountain/camera3d …) + Sichttest der Formeln |
+| 1.45.0 | 2026-08-06 | **NEU Werks-Voreinstellungen** für meshWarp (5: Bass-Swirl, Tunnel-Sog, Wellengang, Fischaugen-Atmung, Spiegelkabinett) + gpuParticles (5: Fontäne, Funkenregen, Bass-Explosion, Nebel-Drift, Wirbelsturm) — Wächter-Test grün. Befund: 32 skriptfähige Typen ohne Voreinstellungen (Batch-Plan: EffectList + Farb-/Transform-Klasse zuerst, Scope-Figuren danach; milkdrop/shadertoy bewusst ohne — eigene Preset-Ebene). **NEU ⚪ §7 Szenen-Wechsler-Modul** (Idee Patrik: Szenen-IDs + Fading + Re-Init, Trigger bis Strophe/Refrain via Offline-Pre-Analyse — Konzept in eigener Session) |
+| 1.44.0 | 2026-08-06 | Session 69 (Fortsetzung) — **Strang G2 GPU-Partikel UMGESETZT (⬜ Sichttest offen), Strang G damit KOMPLETT:** Chain-Node `gpuParticles` (RGBA32F-Ping-Pong pos+vel, hash-basierter Lebenslauf ohne Speicher, instanzierter Sprite-Draw max. 65536, Kraftfeld-GLSL + Parameter-Skripte), NEU `GpuParticlesWrapper.hpp` (GL-frei). FieldDocs/Inventar 88 Typen/756 Felder, 0 Lücken. `/bigobj` für test_ChainSerializer.cpp (C1128 Debug, Varianten-Wachstum). Sonde `gpuparticles_sonde.lvfx` + Render-Sichtbeweis (Fontäne). Tests 554 (+7), alle 3 Builds grün |
+| 1.43.0 | 2026-08-06 | **NEU ⚪ §7:** Effekt-Palette soll die ROLLE zeigen (Render vs. Transform — Typ-Icon neben Herkunfts-Icon oder Typ-Spalte, filterbar; Add-Dropdown evtl. ersetzen). Anlass: Mesh Warp alleine = schwarz. Ausarbeitung in eigener Session (Entscheid Patrik) |
+| 1.42.0 | 2026-08-06 | Session 69 (Fortsetzung) — **Strang G1 Mesh-Warp UMGESETZT (⬜ Sichttest offen):** Chain-Node `meshWarp` (Nutzer-GLSL `warp(uv)` je Gitter-Vertex, Gitter 2..256×192, Mix/Wrap, Parameter-Skripte), NEU `MeshWarpWrapper.hpp` (GL-frei) + `runMeshWarp` (transformPass-Muster, LINEAR nur je Draw + restauriert, Fehler ins geteilte `stError` → Apply-Poll), Palette „— GPU-Module —", FieldDocs/Inventar-Gates nachgezogen (87 Typen/735 Felder). **Entscheid Patrik: G1 VOR Vereinheitlichung V2** (Audio ad-hoc, Shadertoy-Muster; Plan-Doku 1.5.0). Sonde `meshwarp_sonde.lvfx` + Render-Sichtbeweis. Tests 547 (+9), alle 3 Builds grün |
+| 1.41.0 | 2026-08-05 | Session 69 — **§7 Editor-Komfort UMGESETZT (⚪→⬜ Sichttest offen):** Groß-Editor mit Apply (übernehmen + recompilen ohne Schließen; Fehler IM Dialog — EEL/HLSL synchrone Transpiler-Probe, Shadertoy-GL per Nach-Polling auf `shadertoyError`) + Beautify (NEU `include/scripting/ScriptFormatter.hpp`, pur: EEL-Statement-Umbruch mit Klammertiefen-Einzug, GLSL/HLSL-Brace-Re-Indent, Whitespace-only-Vertrag) + Settings-Tab „Editor" (Einzugsbreite, Operator-Abstände, Leerzeilen-Klemme; QSettings `editor/...`) + **Import…/Export… für Shader-Felder** (Nachwunsch: Datei ↔ Editor, Vorschlag `preset_name.modul.glsl`, Ordner-Gedächtnis). EelScriptEditing 1.1.0 (`ScriptEditorHooks`), alle 3 Editor-Stellen des Multi-Chain-Panels verdrahtet. Tests 538 (+26 ScriptFormatter), alle 3 Builds grün |
+| 1.40.0 | 2026-08-05 | **NEU ⚪ §7:** Editor-Komfort Multi-Chain-Panel — Apply-Button (übernehmen ohne Schließen, Fehler im Dialog) + Beautify (GLSL-Re-Indent, EEL-Statement-Umbruch mit Klammertiefen-Einzug, Milkdrop-Zeilen-Roundtrip) + Format-Settings (Einzugsbreite u. a.). Wunsch Patrik aus der Heart-Equation-Experimentier-Session |
+| 1.39.0 | 2026-08-05 | Tutorial-Session (paralleler Doku-Strang) — **NEU ⚪ §7:** Shadertoy-Buffer-FBOs filtern GL_NEAREST statt LINEAR (Befund der Tutorial-Screenshot-Läufe; `lesBilinear`-Workaround in den generierten Chains, App-Fix als Backlog-Eintrag statt Task-Chip). Kontext: Shader-Tutorial-Serie komplett nach `docs/tutorials/` umgezogen (FNM-Namen), formalisiert (Tutorial_Base/Overview_Base/Reference_Base) und via AvsStandalone gegengerendert — Details in `docs/tutorials/ShaderTutorials-overview.md` |
+| 1.38.0 | 2026-08-04 | Session 67 (Abschluss-Nachträge) — **Audio-Skala dB-vs-linear ✅** (Sonde + Umsetzung: Shadertoy-Audio-Textur nach WebAudio-Vertrag, ShadertoyWrapper.md 1.2.0; NEU `getspecdb()` für Chain-Skripte, Idee Patrik — LuaScriptEngine + Transpiler-Whitelist + Editor-Referenz, Test-Case 512). **Dunkelklasse ✅ ENTSCHIEDEN (Patrik): IST-SO-artig** (7+1 inkl. XorDev 001b), formales Urteil `s67b/VERGLEICH.md` (ref_shots erzeugt); ⚪ optionaler Backlog: Dossiers → gezielte Emulation bei freien Ressourcen. Rest-Bug-Liste = Gin Tonic 003 |
+| 1.37.0 | 2026-08-04 | Session 67 (Fortsetzung) — **Fixklasse 9: EEL-Divisions-Vertrag, OK 295→298.** Referenz-EEL dividiert safe (Nenner 0 ⇒ exakt 0; dreifach per Sonde gegen MilkdropRef gemessen, Sonden-Methodik NEU in `asset/Milkdrop3/sonden/`), unsere Lua-Engine IEEE ⇒ NaN-Kaskaden. EelTranspiler 1.3.0 `eel.div` (nur Milkdrop-Dialekt; AVS-Sonde als neuer ⬜). **pixies ×2 GEHEILT** (Kamera-Matrix-NaN via `LUMIVIZ_MILKDROP_TRACE_VARS` gefunden), **piercing 01 geklärt** (Saatlos-Vertragsgrenze: Rausch-Input < 1/255-Quantisierung, App mit Saat korrekt), XorDev 001b lebt (Ref stirbt an anderem UB → Dunkelklasse-Entscheid). Baseline `s67b` (3 Wechsel, alle aufwärts; `s67a` = Gate Shader-Fix+Blende klassengleich). MilkdropRef-MessageBoxen → stderr (`ref_msgbox.h`, /FI). Standalone 1.1.0: `--ab`, `--blende`, `--audio-beat`. Tests 511 grün |
+| 1.36.0 | 2026-08-04 | Session 67 (Zwischenstand) — **TOP 1 GELÖST:** „RTH erbt Farbe" war ein GPU-Programm-Rest: `ensureCustomPrograms()` hinter dem Quellen-Gate ⇒ beim In-Place-Wechsel auf ein Md1Default-Preset rendeten die Warp-/Comp-Programme des VORGÄNGERS weiter. Fix in MilkdropVisualizer (Aufruf unconditional, 1.22.0); Beweis MilkdropStandalone 1.1.0 `--ab` (0/300 → 300/300 bitgleiche Frames). **NEU 🟠:** Rausch-Saat beim Löschen-Wechsel sichtbar (stört; vorher von Shader-Leichen überdeckt? — Untersuchung + Entscheid a/b/c offen). Hinweis: 1.33.0–1.35.0 wurden nur im Kopf gebumpt (S65/S66), Zeilen fehlen — Historie in den Session-Changelogs |
+| 1.32.0 | 2026-08-02 | Session 64 — **zweite MilkDrop-Kalibrier-Runde: acht Fixklassen, OK 289→295, Prüfstände SAATLOS** (Entscheid Patrik; `--seed` = App-Opt-in). §3 neu geschnitten: R239-Prüfpunkt ✅ aufgelöst (korrekt IST-SO), Rest = 11 Port-Bugs in vier Klassen (piercing 01 erstmals messbar · pixies ×2 · Gin Tonic 003 · q-/UB-Dunkelklasse ×7 mit 🟡 Einstufungs-Entscheid); **🎯 Regelwerk-Strang** (Legacy/Modern/Benutzerdefiniert + PS-Version-Override je Typ) als Auftrag der nächsten Session; §7 + Shadertoy-Import-Idee. Fixklassen: D3D9-Div-Vertrag (`_div`), Band-Hüllkurven, Loudness-Kaltstart-Ramp, `breakStrip` (MV-Geisterquads), UNORM8-Trunkierung, NaN-Sanitize, q-Garbage-Epsilon, Double-UV-Wrap. Forschung: 2077-Look der R-Serie = Heap-Garbage × Fixpunkt-Überlauf (doppelt UB, dokumentierte Legacy-Grenze). Tests 493/493, 5 Voll-Triagen, 0 Regressionen |
+| 1.31.0 | 2026-08-02 | Session 63 (Abschluss) — §3 neu geschnitten nach der Triage (Kaltstart-Saat + Feedback-Erhalt, 10 geheilt, 22 Rest als Arbeitsliste), R239-Prüfpunkt + myPresets/-Triage + Loudness-Stille als offene Punkte aufgenommen |
+| 1.30.0 | 2026-08-01 | Session 62, Teil 2 — Befund Patrik: domain.lvfx-Richtungsumkehr war ein stummer No-op (`dx`/`dy` kein domainWarp-Vertrag; alt MAE 0,0000, gefixt 0,1817 über `speed`-Vorzeichen + `oy`-Pan). Daraus: **neuer Prüfstand Strang G** `lint_chain_scripts.py` (stumme Skript-Zuweisungen in Asset-Chains; fields/README) — fand DREI Ernter-Vertragslücken (`b` beim Attraktor pauschal verworfen, Movements Feld `code` fehlte im Filter, Nur-Lese-Ziele wie Texer-II-`x`/`y` unsichtbar; alle gefixt, inventory_docs +9 Variablen, Teil-Sondenlauf 47 WIRKT/3 SCHWACH/0 STUMM). domainWarp-Vorlagen Tintenstrom/Nebelkammer tragen jetzt Skriptfelder (Beispiele regeneriert, Beat-Wirkung gemessen 0,12/0,038). Rest-Lint: 9 tote Variablen in importierten Originalen (bleiben wörtlich) |
+| 1.29.0 | 2026-08-01 | Session 62 — **Grafikkarten-Auswahl umgesetzt** (§8 ✅): `core/GpuPreference` (UserGpuPreferences-Registry als SSOT), SettingsPanel-Combo mit Sofort-Neustart, `gpu.ini`/`GpuSelector`/Export-Flags entfernt, Tests 491. §8-Messlauf beidseitig gefahren: Baseline 610M (`out/gpu_baseline_radeon610m/`) und RTX 4090 (`out/gpu_after_rtx4090/`) — **keine Verschiebung**, Doppellauf-Sonden karten-übergreifend SHA256-identisch |
+| 1.28.0 | 2026-08-01 | Session 61 (Abschluss) — Vorgabe Patrik für S62 in §8 eingearbeitet: **Grafikkarten-Auswahl ist der Auftrag der nächsten Session** (einmal gesetzt, via Settings umstellbar, Änderung löst SOFORT Neustart aus; §8-Regel Vorher/Nachher-Messlauf gilt). Session-Report `LumiViz_Session61…`, Handover und `Changelog_Session61.md` nachgezogen |
+| 1.27.0 | 2026-08-01 | Session 61 (Sichtprüfung, zweite Welle) — **(1) SuperScope-Herz stand KOPF:** die Figuren-EEL läuft im AVS-kalibrierten Chain-Host (+y = unten), die Mathe-Formel war y-up; y im EEL negiert (Modul-SSOT `SuperscopeModule` + Vorlagen-Datei synchron, der Bibliotheks-Wächter verlangt Gleichheit; die NATIVE Rechnung des Standalone-Visualizers bleibt y-up und damit unverändert richtig). **(2) „bloom zeigt gar nichts":** der Present-Bloom war intakt — die Beispiel-SZENE war untauglich (1-px-Spirale verliert im Glow-Downsample fast alle Energie, der Threshold frisst den Rest). Bloom-Beispiele stehen jetzt auf einer hellen Lichtfaden-Bühne mit Trail; Wirkung bewiesen (Mit/Ohne-Bloom-Diff 0,134). Tests 485/485 |
+| 1.26.0 | 2026-08-01 | Session 61 (Sichtprüfungs-Runde Patrik über die Beispiele) — **drei Befund-Klassen behoben:** (1) **Farb-Doppelfehler in BEIDEN Generatoren**: `avsColor` ist ein NO-OP (AVS-Farben sind bereits 0x00RRGGBB, S46) — mein R/B-Tausch beim Erzeugen verdrehte ALLE Farben (Feuer→blau, Ozean→orange), und der AvsRef-Vergleich blieb grün, weil beide Seiten dieselbe verdrehte Datei lasen. **Lehre: ein Rückabbildungs-Vergleich beweist Übereinstimmung, nicht Intention.** (2) **domainWarp stand praktisch still** — `uTime` wanderte nur ins Warp-Feld, nie in den Abtastpunkt; Shader-Fix Grunddrift (Host-Modul, kein Referenzvertrag; Bewegungs-Diff 0,006→0,025). (3) **Lebendigkeits-Pass über 15 Vorlagen** (Starfield-Dichte, Attraktor-Audio-Morphing, Lorenz-Tempo, DDM/Shift kräftiger, Burning-Ship-Ausschnitt, domainWarp-Tempi, Zoomer entschärft). **Neu notiert (⚪ §7): `fractalZoomer` erschöpft nach Minuten die float-Präzision** (Endlos-Zoom → Pixelbrei/Schwarz) — braucht einen Host-seitigen Tiefen-Reset/Loop. Tests 485/485, beide Sammlungen regeneriert und beidseitig re-validiert |
+| 1.25.0 | 2026-08-01 | Session 61 (vierter Block) — **`asset/composits/`: 200 GANZE Presets in 10 Themenwelten** (je 20, el-vis/UnConeD-Bauarten: Buffer-Tunnel, Feedback-Schleifen, Beat-Physik, 3D-EEL-Projektionen). 8 Themen als Original-EEL-konformes .avs (Wurmlöcher · Plasmanebel · Kaleidoskop · Sternenstaub · Maschinenraum · Drahtgeister · Tiefsee · Farbenrausch), 2 als .lvfx mit Host-Modulen (Fraktalträume · Lichterstadt). Generator `make_composit_presets.py` (seeded, reproduzierbar). **Validiert: 200/200 rendern in LumiViz, 160/160 .avs auch in AvsRef, keine Schwarz-/Weiß-Ausreißer.** Dabei gelernte Schleifen-Hygiene im Generator dokumentiert (Echo als REPLACE mit Verstärkung < 1, Quelle ans Kettenende, Fadeout im Buffer-Kreis) und eine unvermessene Beobachtung notiert: extremes On-Beat-Mosaik (quality2 ≲ 25) kollabiert in der REFERENZ auf schwarze Block-Anker, bei uns nicht — bei Bedarf per Sonde vermessen |
+| 1.24.0 | 2026-08-01 | Session 61 (dritter Block) — **`asset/examples/`: je Vorlage ein Beispiel-Preset (125, flach, Name = `<typkey> - <Vorlagenname>`)** mit Matrix-Material als Render-Quellen; Generator `asset/calibration/avs/make_example_presets.py` (Rückabbildung des kalibrierten Imports). **90 als .avs** (AvsRef-vergleichbar) · 35 als .lvfx (host-eigene Typen, Host-Konstanten-Vorlagen, LumiViz-EEL-Dialekt — die S53-Figuren Star/Starburst nutzen `mod()`/`>`, das Original-EEL nicht kennt). **Vergleichslauf über alle 90: 85 OK, 5 PRUEFEN, 0 Fehler** — 2× grain (bekannte §9-Grenze, Menge exakt) + 3× Feedback-Weichheit (s. neue §1-Zeile). Dabei zwei Vorlagen-Fixes: `flame/Hufeisen-Nebel` kollabierte mit 4 Abbildungen (jetzt 3) · `mirror/Zufallsspiegel` trug `slower: true` statt einer Zahl. Tests 485/485 |
+| 1.23.0 | 2026-08-01 | Session 61 (Fortsetzung) — **Vorlagen-Fließarbeit (Strang C): 41 neue Basis-Voreinstellungen, Katalog 125 für 39 Typen.** Fraktal-Familie + Bloom komplett erstausgestattet (27, Bloom-Werte aus `lights_demo`), Histogramm-Lücken blur/simpleScope/customBpm (8), Import-Ernte-Erstling: 6 kuratierte Dynamic-Movement-Warps wörtlich aus der Sammlung (Quellen im Katalog). Ernte-Werkzeug über `AvsStandalone --dump` (89 Presets, 700+ Kandidaten für weitere Runden). Tests 485/485 (Ladbarkeits-Gate deckt alle neuen Dateien). **Host-Klassiker-Vorlagen brauchen einen Entscheid** (VisualizerPresetManager kennt keinen Asset-Ordner — Umbau nach NodePresetStore-Muster nötig, §7.3) |
+| 1.22.0 | 2026-08-01 | Session 61 — **Tie Tunnel DM GELÖST: 0,074/0,098 → 0,010/0,009 (320) · 0,002/0,010 (640).** Die Farb-Phase der Tunnelbänder war der **weggeworfene Startwinkel der Dot Plane**: `r_dotpln`/`r_dotfnt` speichern ihre laufende Rotation als 8. Feld (`r = rr/32`, hier 44,84°) — Parser kannte es (`r_raw`), Translator verwarf es. Neues Feld `startRotation` (beide Params, STARTWERT-Bauart wie `interfRotationSeed`), Serializer/Panel/Tooltips/Inventar nachgezogen. Bisektionsweg dokumentiert in der §1-Zeile (Blit-Sonde auf Buffer-Slot 0 + Auslass-Sonden). Verifikation: Dot-Plane-Sonde 0,000 über alle Frames · Tie Tunnel SSC 0,001 · Matrix 01/19 pixelgenau · Zwillinge 67/67 (2 erklärte Refreezes) · Tests **485/485** · beide Builds grün. §0-Reste damit auf EINEN geschrumpft (VR09 = Indeo-Decoder, wartet auf Sichturteil mit Ton) |
+| 1.21.0 | 2026-08-01 | Session 60 (Nachspiel) — **AVI-Gate referenz-treu** (Sofort-Start entfernt; 3 Gate-Sonden auf dem Testvideo 0,000; Stream-Länge 31=31 verifiziert; VR09-Rest = Indeo-Decoder-Differenz → §9-Kandidat nach Sichturteil) · **Tie Tunnel nachgemessen 0,148 → 0,074/0,098, Würfel sitzt** (dt→dt_p-Spur tot — D2 implementiert, Skripte weisen `dt` vor jedem Lesen zu); Rest = Farb-Phase der Tunnelbänder, eigene Bisektions-Session · **Basis-Voreinstellungen, erste Lieferung: 68 Vorlagen für 23 Typen** mit Katalog in `asset/nodepresets/README.md` (Teil-Presets aus den kalibrierten Referenz-Semantiken; darunter die 8 wörtlichen r_trans-Builtin-Formeln als Movement-Vorlagen; Sichtprüfung Patrik offen) |
+| 1.20.0 | 2026-08-01 | Session 60 (Finale) — **§0 KOMPLETT: DIE KALIBRIER-RUNDE (S44–S60) IST ABGESCHLOSSEN.** Haken 4 erfüllt: Abschluss-Messlauf 24/24 s-Sonden + 8/8 Kern-Presets in beiden Größen ohne Regression. Endstand: Modul-Sonden 91/91 · Matrix 43/43 (41 gemessen + water/grain §9) · Feld-/Edit-Vollauf grün (0 WIRKUNGSLOS, 0 unerklärte STUMM) · Zwillinge 67/67 · Tests 485/485. Außerhalb der Haken: zwei benannte §1-Reste (Tie Tunnel · VR09-Vorschub) — Entscheid Nacharbeit vs. §9 steht aus |
+| 1.19.0 | 2026-08-01 | Session 60 (Nacht) — **Haken 2, 5 und 6 sind zu.** `water`/`grain` von Patrik als bewusste Grenze abgenommen (§9) → **Matrix 43/43 erfüllt**. Werkzeug-Schulden: `srand` war seit S52 drin (Doku-Leiche §8) · **`r_avi`-Uhr virtualisiert** (`patched/r_avi.cpp`, AVI-Presets messbar — erste VR09-Messung deckt sofort den Vorschub-Befund auf: unser `avi`-Knoten kennt das `lastspeed+speed`-Gate der Referenz nicht, §1) · **wrap-Arithmetik an der Original-APE vermessen und im Shader umgesetzt** (scale 1 = Sättigung; scale ≥ 2 = (pos−neg) mod 65536, unsigned Division; zwei neue Dauersonden) — Modul-Sonden **91/91**, `convolution.edgeMode` WIRKT. Tests 485/485. Abschluss-Messlauf (Haken 4) läuft |
+| 1.18.0 | 2026-07-31 | Session 60 (Abschluss) — **`04_blitter_feedback` grün, Matrix 41/43.** Zwei Befunde: blitter_out (Zoom-out) sampelt IMMER nearest (subpixel wirkt nur im Zoom-in) · der y-Anker der Sampling-Abbildung war um eine Zeile zu tief (h−1,5 statt h−0,5) und stapelte sich über die Feedback-Kaskade. 0,023/Deckung 0,72 → **0,007/Deckung 0,93** (320). Blitter-Feldsonden 8/8 WIRKT, Tests 485/485. Übrig in Haken 2: `water`/`grain` — Montagen an Patrik zur §9-Abnahme übergeben |
+| 1.17.0 | 2026-07-31 | Session 60 (Fortsetzung) — **vier der fünf Flächen-Befunde PIXELGENAU gelöst, Matrix 40/43** (Menge 0,00/Deckung 1,00 je Zeile in beiden Größen): rotating_stars (r_rotstar-Port: Lokal-Peak in signed visdata-Bytes, `(s+9)/352`, rotSpeed 0,1, Erstpunkt-vs-Schleifen-Cast) · osc_star (r_oscstar-Port: 64 Schritte/Arm, laufender Byte-Index, dfactor-Hüllkurve) · osc_ring (r_oscring-Port: Spiegel-Index, negativer Winkellauf, Summen-Cast) · dot_grid (Gitter stand vertikal gespiegelt — Push ohne y-Negation). Sternchen-Segmente rastern jetzt über den linedraw-Bresenham-Port (ThickLines Breite 1) statt GL-Linien. **blitter_feedback diagnostiziert:** konstante Quell-Differenz der Blitter-Arithmetik (keine Akkumulation), 8-Bit-Port nach Blur-Muster ausstehend. Vorgaben-Pipeline komplett nachgezogen: Struct-Anker (Referenzwerte), Default-Vertrag-Test, Inventar-Golden, Ernter (719 Tooltips), Zwillinge 67/67 refreezed (3 erklärte Diffs), Sonden neu erzeugt (audioGain/bandLo begründet „nicht prüfbar": Lokal-Peak existiert im monotonen Testsignal nicht; Audio-Zweig über Matrix-Zeile 13 belegt). **Verifikation: Matrix 40/43 · Modul-Sonden 89/89 · Tests 485/485 · beide Builds grün** |
+| 1.16.0 | 2026-07-31 | Session 60 — **Feld-/Edit-Sonden-Vollauf nachgeholt (Haken 3)** und er hat sich sofort bezahlt gemacht: Edit-Vollauf grün (567/127/10/0 WIRKUNGSLOS), Feld-Vollauf fand **waterBump komplett stumm** (10 Felder, vorher alle WIRKT) — Ursache ein **stilles Uniform-Loch** (`setUniformValue(QPoint)` lädt float-vec2 auf ivec2-Uniforms, `uResI=(0,0)` machte den Rand-Zweig zur perfekten Identität = bit-exakter Passthrough). Fix `glUniform2i`; danach 10/10 WIRKT **und Matrix-Zeile 31 GRÜN** (0,003/0,011 · 0,002/0,006, Deckung 0,98) — der „S59-Trail-Rest" 0,100/0,148 war dieser Passthrough, die geplante Kreislauf-Sonde ist hinfällig. Matrix **36/43**. Zweiter STUMM `convolution.edgeMode` = erwarteter Schatten der offenen wrap-Arithmetik (Haken 5). **Haken 6 komplett abgeräumt** (Entscheide S60: Hotkeys §9.2–9.5 · Playlist inkl. Default „kein automatischer Wechsel" · Lights-Lookahead→Backlog · Config-Pipeline-Abnahmetabelle gestrichen · Feldreihenfolge bleibt · Vorlagen-Konvention; Colorfade-§5-Zeile war seit S57 erledigt) · **MilkDrop-Texturen worms/rose/grad3 aus dem MegaPack beschafft** · Vorlagen-Priorisierung per Effekt-Histogramm über 3380 Korpus-Presets (§7). **Verifikation:** Feld-Sweep nach Fix 674/29/1 (der eine = edgeMode, erklärt) · waterBump-Edit-Sonden 1 GLEICH/9 TEILWEISE/0 WIRKUNGSLOS · Tests 485/485 · beide Builds grün → **Haken 3 ✅** |
+| 1.15.0 | 2026-07-31 | Session 60 — **§0 Fertig-Kriterium der Kalibrier-Runde festgenagelt** (sechs messbare Haken; das Kriterium ist EINGEFROREN — neue Metrik-Funde fallen unter Haken 2 statt die Liste zu verlängern; Nach-§0-Arbeit ausdrücklich ausgelagert: Basis-Voreinstellungen, V2–V5, Video-Weg Stufe 2, Grafikkarten-Auswahl, Sichttest-Stränge §2–§4) · **water_bump entschieden (Patrik): Ganzzahl-Kern bleibt**, offen nur noch die Trail-Kreislauf-Sonde (Haken 5) · Basis-Voreinstellungen als erster Post-Kalibrier-Strang terminiert |
+| 1.14.0 | 2026-07-31 | Session 59 — **Strang B komplett, Strang C komplett, D-Bestand weitgehend; Modul-Sonden ERSTMALS 89/89.** **splendora grün** (Channel-Shift-ID 1023=RGB der Original-APE; AVS-Linien am MAX-Ende exklusiv → renderThickLines = Integer-Bresenham der Referenz; linesize RUNDET) · **hypno07 grün** (Uhren-Familie: AvsRef `--tick-hz`-Frame-Uhr für gettime, `time`-Injektion nur wenn das Skript den Namen nicht besitzt, Skript-Uhr Start 0/double/ms-Körnung; **Texer-II-Resampler per Impulsantwort bit-exakt**, Default-Sprite = gemessene 21×21-Matrix — zieht `paar_original` mit) · **el-visVR09: S58-Urteil gekippt** (nach 10 s hat die Referenz Bild — `ELVIS_WAR.AVI` ist Indeo 3.2, 64-Bit-VfW kann es nicht) **und gefixt**: `services/VideoFrameCache` (Qt Multimedia/FFmpeg) als Decode-Fallback, deterministisch nach Frame-Index (Entscheid Patrik: Stufe 2 sofort; nur `"Multimedia"` in Solution.json, windeployqt deployt selbst) · **Convolution-Rand GELÖST** (Original-JIT-Quelle: Reads klemmen IMMER auf h−2/w−2; `zerostringl ≥ 24` → in-place, Rand liest bearbeitete Pixel → exakter 2-Pass; „wrap" = Arithmetik-Flag psubw/psubusw, KEIN Koordinaten-Wrap — alle 8 Sonden 0,000; **Alternate Reality dadurch echt grün 0,002**) · Randspalten-Wächter-Sonde (89.) · Zwillinge durchgesehen + refreezed 67/67 · **water_bump auf Ganzzahl-Kern** (statisch 28–48 Restpixel; Trail-Zeile offen, Entscheid Patrik) · **Flächen-Urteil (Menge/Deckung) im Matrix-Runner deckt 5 versteckte Befunde auf** (rotating_stars, osc_star, osc_ring, dot_grid, blitter_feedback) — Matrix ehrlich 35/43 · Changelogs 45+56 nachgeschrieben (Reihe lückenlos). Tests 485/485 |
+| 1.13.0 | 2026-07-30 | Session 58 — **die vier unangetasteten Kalibrier-Befunde abgeraeumt: alle vier bei 640×480 gruen, drei davon auch bei 320×240.** Zuerst musste die REFERENZ reproduzierbar werden: AvsRef lud `channelshift.ape` statt seines eingebauten Effekts, und die DLL sät ihren Zufall aus der Wanduhr (sechs verschiedene Ergebnisse in acht Läufen). Danach fünf App-Befunde: **Channel Shift** zog einen Zufallszug zuviel · die **Convolution-APE** rechnet ganzzahlig in Bytes mit `bias` in 256er-Schritten, `absolute` = 255 statt Betrag, `twoPass` = Verdopplung · **Picture II** liest seinen Dateinamen aus einem festen 260-Byte-Feld · **SuperScope**-Punkte müssen double bleiben, sonst fehlt die letzte Bildspalte · **Dynamic Shift** verschiebt ganzzahlig mit hart geschwärztem Rand und vertauschtem Blend. Danach drei weitere: **der Beat gehört der LISTE, nicht dem Frame** (ein Custom BPM in einer Unterliste filterte den Beat für die ganze Kette und brachte damit den geteilten Zufallsstrom aus dem Tritt — der grösste Einzelschritt, Alternate Reality MAE 0,339 → 0,029) · **SuperScope `skip`** verwarf den Punkt, statt nur das Segment zu unterdrücken (zwei von drei Flügeln in Bright Light District fehlten ganz) · **Picture II hat sechs Betriebsarten**, nicht drei. Ergebnis in zwei Grössen (dMean / MAE): Alternate Reality 0,622 → **0,025/0,029** · **0,015/0,017 ✅** — Picture II 0,516 → **0,008/0,029 ✅** · **0,008/0,016 ✅** — Rotor 0,461 → **0,018/0,020 ✅** · **0,006/0,016 ✅** — Bright Light District 0,252 → **0,017/0,021 ✅** · **0,020/0,018 ✅**. Der letzte Schritt kam von der **Pixelmitte der Scope-Linien** (AVS zieht zwischen ganzzahligen Pixeln, GL rastert gegen Pixelmitten). Damit sind alle vier bei 640×480 grün und drei von vier auch bei 320×240; nur Alternate Reality liegt dort mit dMean 0,025 knapp über der Schwelle. Matrix 40/43 (`36_superscope` jetzt 0,000/0,000), Modul-Sonden 84/88 (fünf neue Convolution-Sonden + `scope_skip_wechsel`), Tests 485/485 grün |
+| 1.12.0 | 2026-07-30 | Session 57b — **drei weitere Kalibrier-Befunde gelöst**, damit sieben von zwölf. **`41_interferences` grün** (dMean 0,025 → 0,001): die Referenz laesst eine Kopie ausserhalb des Bildes nichts beitragen, wir klemmten auf den Randpixel. **`17_dot_grid` grün** (0,047 → 0,000): 2 Pixel grosse Punkte statt einzelner, Zwischenpositionen statt ganzer Pixel, Farbmischung zu 1 statt zu 63/64. **`Dot Fountain` portiert** (0,000/0,000, Diff schwarz): 30×256-Gitter statt 400 freier Partikel. **`convolution_kante` gelöst** (px 3981 → 4540): die APE berechnet die letzte Zeile/Spalte nicht, der Zielpuffer läuft dort auf — Randbehandlung war es NICHT. **`20_water`** von Struktur- auf Rauschbefund reduziert (dMean 0,029 → 0,002). Bewiesen, aber nicht behoben: **`6_alloy/paar_original`** ist die Zufalls-Startphase (zwei neue Sonden mit festem `t` sind grün), **Tie Tunnel DM** ist KEIN Frame-Versatz (119/121 messen schlechter), **`31_water_bump`** braucht die Höhen-Skala der Referenz. Vier Fehlerklassen-Treffer derselben Art: die Referenz rechnet ganzzahlig und liest ausserhalb nichts. Matrix 40/43, Modul-Sonden 81/82, Tests 485/485 grün |
+| 1.11.0 | 2026-07-30 | Session 57 (Fortsetzung) — **vier Kalibrier-Befunde aus §1 gelöst.** `fractalZoomer.feedback` ist eine echte Stärke statt eines Schalters (0,3 gegen 1,0: 0,0000 → **0,2391**). **Color-Map-Kennlinie exakt**: die APE rechnet in DREI ganzzahligen Schritten mit `step = 65536/span` als eigentlichem Verlust — **922/922** Punkte über sechs Spannweiten, vorher traf unsere Formel auf dem Graukeil 1 von 255. Die `04_span*`-Sonden lagen seit S49 unausgewertet herum; ihre Auswertung ist jetzt im Analyseskript. **Colorfade nach `r_colorfade` portiert** (löst „Zufalls-Beatmodus" UND „fehlendes `enabled`-Bitfeld" — dieselbe Sache): Bitfeld beim Import, persistenter Fader-Zustand, Nachziehen um einen Schritt je Frame samt Grün/Blau-Vertauschung, drei exklusive Beat-Zweige; ohne `slowFade` wirken die Beat-Fader nicht, wie im Original. Alle 12 Colorfade-Felder wirken. **`interferences` teilweise**: zwei belegte Abweichungen behoben (ganzzahlige Übergangswerte und Pixel-Versätze; Byte-Blendtable), 0,053 → 0,051 — der Rest ist als Kanten-Helligkeit eingegrenzt, nächster Verdacht ist die Randbehandlung. Matrix 38/43 und Tests 485/485 unverändert |
+| 1.10.0 | 2026-07-30 | Session 57 — **die stummen Feld-Sonden sind bei 0** (§1c). Von den letzten 15 waren **sechs ein Befund an der App**, alle behoben: `blur.roundUp` (AVS rechnet den Blur in 8-Bit und schneidet jeden Teilterm ab, „round mode" legt +4/+5/+3 je Stärke obendrauf — wir rechneten float ohne Verlust und lasen das Feld nirgends; Vorgabe stand zudem falsch auf `true`), `grain.staticGrain` (wir zeichneten immer statisch, die Vorgabe versprach das Gegenteil), `oscRing.channel`/`oscStar.channel` (riefen `getWaveform()` ohne Kanal — die S56-Vermutung „Signal ist nicht stereo" war falsch), `texer.blend` (1 und 2 waren derselbe GL-Zustand, 50/50 fehlte), `texerII.wrapAround` (nirgends gelesen). Acht lagen am Messaufbau — darunter `camera3d.tz` mit einem **Doppeleintrag im selben Dict** (die S56-Merkregel, nochmal) und `setRenderMode.adjustAlpha`, wo „Adjustable" 7 heißt und geraten 10 dastand. Eine als **nicht prüfbar** festgeschrieben (`rotatingStars.bandHi`, mit sechs Fenstern belegt). Zwei neue Werkzeug-Tabellen (`VORLAUF_JE_FELD`, `UNTERGRUND_JE_FELD`), Tafel-Regel füllt jetzt alle Stützstellen, `convolution.kernel` misst statt zu übersteuern. **Matrix 36/41 unverändert** (keine Regression) **+ zwei neue Blur-Trail-Zeilen, beide grün** — die Matrix hatte vorher keinen Blur mit Rückkopplung, deshalb überlebte der Befund zwei Kalibrier-Runden. Tests 485/485, beide Builds grün. **Strang F nachgemessen** (§1f, Freigabe Patrik): Vollauf **558 GLEICH / 133 TEILWEISE / 11 VERDECKT / 0 WIRKUNGSLOS**, ein Befund gefunden und behoben — `interferences.rotation` ist ein **Startwert** für einen selbstlaufenden Zähler und wurde nur unter `!interfSeeded` übernommen, kam beim Editieren also nie an. Neue Fehlerklasse: **ein Startwert ist kein Parameter.** Die sechs Renderer-Fixes sind von Patrik im Betrieb abgenommen |
+| 1.9.1 | 2026-07-30 | Session 56, Abschluss — **§1e neu**: der Eigenschaften-Editor muss nach JEDEM Baumumbau dastehen. Nach dem **Verschieben** blieb er leer, aus derselben Ursache wie beim Einfügen in S55: `selectPaths` setzt die Auswahl unter `m_selecting`, das Auswahl-Signal ist dabei stillgelegt, und das folgende `setCurrentItem` löst keines mehr aus — also baute niemand den Editor. Befund Patrik, behoben (Doppelschritt markieren + `buildPropertyEditor`, wie beim Einfügen). Dazu die stummen Feld-Sonden von 115 auf **15**: Buffer Blend (Gegenwert 24 wählte wie die Vorgabe den aktuellen Frame, und Modus 0 liest gar kein A), Interferences (Schlussframe mitten in den Beat-Übergang gelegt), Effect List (Init-Slot über eine geteilte Variable; das Beat-Fenster greift laut `r_list` nur bei einer AUSgeschalteten Liste) |
+| 1.9.0 | 2026-07-29 | Session 56 (Fortsetzung) — **stumme Feld-Sonden 115 → 27** (§1c): ein App-Befund — die drei Alt-Format-Weichen im Deserialisierer griffen bei JEDEM Preset, das das neue Feld nicht nennt, und Roto Blitter zoomte dadurch auf 0 statt auf den neutralen 31 (Bild einfarbig, alle fünf Felder stumm). Dazu Kleinians ganzzahliges `colorScale`, Texer II ohne `n`, Custom BPMs Zähler-Phase. **Zweite Quelle der Vorgaben abgeschafft** (§1d, Entscheid Patrik): 415 Literale und 243 `getStr` beziehen ihre Vorgabe jetzt aus dem Struct, eine benannte Ausnahme bleibt. Vier neue Wächter (Zusatzfelder einer Grundkonfiguration, verwaiste Sonden, Panel-Schlüssel, Roundtrip). §10 Tooltips 717/717. Tests 485, beide Builds grün |
+| 1.8.0 | 2026-07-29 | Session 56 — **§1b berichtigt:** der S55-Quercheck unterschied nicht, was er unterscheiden sollte; von den 15 `WIRKUNGSLOS` waren **7 echte Befunde** (alle gefixt) und **8 Messartefakte**. Neues Urteil `VERDECKT` samt Gegenrichtung in der Edit-Sonde. **§8:** Timescope maß 1/320 seiner Wirkung (Untergrund übermalte die Ein-Pixel-Spalten) — behoben, 8/8 WIRKT. **§10 Tooltips erledigt:** 717/717 Felder erklärt, 826 Panel-Zeilen tragen ihren Feldnamen, zwei Wächter |
+| 1.6.0 | 2026-07-27 | Session 53 — Vorgaben Patrik für S54 aufgenommen (Test-Presets je Feld · Tooltips · Basis-Voreinstellungen · Feldreihenfolge) und der Movement-Befund aus `movement3b.lvfx` dokumentiert (Beat-Umkehr kann dort strukturell nicht wirken) |
+| 1.5.0 | 2026-07-27 | Session 53 — Sonden-Bilanz berichtigt: **78/80** (`6_alloy/paar_original` kam dazu, am Vorstand als Altbestand belegt); Etappen 2–4 des Knoten-Parameter-Ausbaus + S50-Punkt ✅ |
+| 1.4.0 | 2026-07-27 | Session 53 — Matrix-Bilanz berichtigt: **36/41** mit fünf Resten (`grain` kam dazu, war in S52 nicht mitgezählt); Etappe 1 des Knoten-Parameter-Ausbaus ✅ |
+| 1.3.0 | 2026-07-27 | Session 53 — **`Dot Fountain` ist keine Portierung** (§1, 🔴), Matrix-Zeile falsch grün → faktisch 35 echte grüne; Abdeckung ✅→◐, Builtin-Bilanz 44→43 |
+| 1.2.0 | 2026-07-27 | Session 53 — Knoten-Parameter-Ausbau als 🟡 aufgenommen (§8), Steuerdokument `Knoten_Parameter_Konzept.md` angelegt |
+| 1.1.0 | 2026-07-27 | Session 53 — Panel-Editoren Metaballs/Tentacles erledigt (Kopfblock), neuer Kleinkram-Punkt: weitere nicht editierbare Farbtafeln |
+| 1.0.0 | 2026-07-27 | Erstfassung (Session 52) — zusammengeführt aus `Offene_Implementierungen.md` (Stand S37) und `Offene_Sichttests.md` (Stand S37/38), beide überholt und entfernt, plus den aktuellen Befunden aus Handover, `MilkDrop_Import_Status.md` und `AVS_Sichttest_Protokoll.md` |

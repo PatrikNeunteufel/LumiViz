@@ -1,7 +1,7 @@
 # tests/ — Preset-Kopien für die Seite-an-Seite-Runde (P1–P7)
 
 Arbeitskopien zum Prüfplan in
-`projects/apps/MyViz/docs/visuals/AVS_Sichttest_Protokoll.md` §7 — EIN Ordner,
+`projects/apps/LumiViz/docs/visuals/AVS_Sichttest_Protokoll.md` §7 — EIN Ordner,
 aus dem BEIDE Player (LumiViz und Winamp/AVS) laden. **Originale bleiben
 unangetastet:** Sammlungen in `…\cmake\VisualsPresets\avs\`, Kalibrier-Presets
 in `../avs/`. Passende Playlist: `playlist/testaudio.m3u` (WAV-Master aus

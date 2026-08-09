@@ -23,7 +23,7 @@
 
 ### 1.1 Architecture Principles
 
-Every visualizer in MyViz follows a modular architecture with these core principles:
+Every visualizer in LumiViz follows a modular architecture with these core principles:
 
 - **Composition over Inheritance**: Visualizers compose reusable modules (AudioSourceModule, ColorGradientModule, etc.)
 - **Parameter-Driven Configuration**: All settings are exposed as typed parameters via `paramDescs()`, `getParam()`, `setParam()`
@@ -349,7 +349,7 @@ When loading a preset:
 ### 6.2 Preset Storage Locations
 
 ```
-%APPDATA%/MyViz Project/MyViz/presets/
+%APPDATA%/LumiViz Project/LumiViz/presets/
 ├── pulsing/
 │   ├── Default.json
 │   └── Neon Pulse.json

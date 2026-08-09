@@ -38,22 +38,22 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-HEADER = ROOT / "projects/apps/MyViz/include/visualizers/multieffect/EffectChain.hpp"
-PANEL = ROOT / "projects/apps/MyViz/src/UI/panels/MultiEffectPanel.cpp"
-SERIALIZER = ROOT / "projects/apps/MyViz/src/visualizers/ChainSerializer.cpp"
-VISUALIZER = ROOT / "projects/apps/MyViz/src/visualizers/MultiEffectVisualizer.cpp"
+HEADER = ROOT / "projects/apps/LumiViz/include/visualizers/multieffect/EffectChain.hpp"
+PANEL = ROOT / "projects/apps/LumiViz/src/UI/panels/MultiEffectPanel.cpp"
+SERIALIZER = ROOT / "projects/apps/LumiViz/src/visualizers/ChainSerializer.cpp"
+VISUALIZER = ROOT / "projects/apps/LumiViz/src/visualizers/MultiEffectVisualizer.cpp"
 # Die Skript-Traeger, an die Renderer ihre Slots abgeben. Ihre `number("…")`
 # sind die Variablen, die der Effekt aus dem Skript herausliest — und nur die
 # koennen wirken (s. harvest_script_vars, dritter Mechanismus).
 MODUL_QUELLEN = {
-    "ScriptGridModule": ROOT / "projects/apps/MyViz/src/visualizers/modules/ScriptGridModule.cpp",
-    "ScriptLutModule": ROOT / "projects/apps/MyViz/src/visualizers/modules/ScriptLutModule.cpp",
-    "SuperscopeModule": ROOT / "projects/apps/MyViz/src/visualizers/modules/SuperscopeModule.cpp",
+    "ScriptGridModule": ROOT / "projects/apps/LumiViz/src/visualizers/modules/ScriptGridModule.cpp",
+    "ScriptLutModule": ROOT / "projects/apps/LumiViz/src/visualizers/modules/ScriptLutModule.cpp",
+    "SuperscopeModule": ROOT / "projects/apps/LumiViz/src/visualizers/modules/SuperscopeModule.cpp",
 }
 INVENTORY = Path(__file__).parent / "inventory.json"
 OUT = Path(__file__).parent / "inventory_docs.json"
 # Die Tooltip-Tabelle des Panels (§10) — erzeugt, nicht von Hand gepflegt.
-FIELDDOCS_CPP = ROOT / "projects/apps/MyViz/src/UI/panels/FieldDocs.cpp"
+FIELDDOCS_CPP = ROOT / "projects/apps/LumiViz/src/UI/panels/FieldDocs.cpp"
 
 # Panel-Helfer, die einen Wertebereich tragen (Argument 3 und 4 sind lo/hi).
 RANGED = {"addInt": "int", "addDouble": "double", "addRefDouble": "double"}
@@ -699,7 +699,7 @@ def main() -> int:
     args = ap.parse_args()
 
     if not INVENTORY.exists():
-        print("FEHLER: inventory.json fehlt — erst MyViz.UnitTests mit "
+        print("FEHLER: inventory.json fehlt — erst LumiViz.UnitTests mit "
               "LUMIVIZ_UPDATE_FIELD_INVENTORY=1 laufen lassen")
         return 2
 

@@ -1,6 +1,6 @@
 # harvest/tests — Unit-Tests der viz::core-Generation
 
-**Quelle:** `NewViz2025/tests/core/` (Catch2). **Ziel: Phase 3** — Test-Fundament für MyViz/LumiViz.
+**Quelle:** `NewViz2025/tests/core/` (Catch2). **Ziel: Phase 3** — Test-Fundament für LumiViz/LumiViz.
 
 ## Inhalt
 
@@ -16,9 +16,9 @@
 ## Wiederverwertung
 
 - **Framework wechseln:** Catch2 → doctest (`TEST_CASE`/`CHECK` sind fast 1:1; `SECTION` → `SUBCASE`).
-- **API-Abgleich nötig:** Der heutige MyViz-EventBus (`IEventBus` mit Prioritäten + Queue) hat eine
+- **API-Abgleich nötig:** Der heutige LumiViz-EventBus (`IEventBus` mit Prioritäten + Queue) hat eine
   andere API als der getestete viz::core-EventBus (Scoped/Weak-Handles). Tests, deren Feature noch
   fehlt, dokumentieren das **Soll** — erst Feature nachrüsten (siehe harvest/core-module), dann Test portieren.
-- **ServiceContainer:** MyViz' ServiceContainer ist dem getesteten sehr ähnlich → die 834 Zeilen
+- **ServiceContainer:** LumiViz' ServiceContainer ist dem getesteten sehr ähnlich → die 834 Zeilen
   sind der schnellste Weg zu echter Abdeckung. Hier anfangen.
-- Ziel-Ort: `projects/apps/MyViz/tests/unit/` (Targets in Solution.json aktivieren, `skip: false`).
+- Ziel-Ort: `projects/apps/LumiViz/tests/unit/` (Targets in Solution.json aktivieren, `skip: false`).

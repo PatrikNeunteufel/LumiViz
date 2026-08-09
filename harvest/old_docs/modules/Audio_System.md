@@ -408,20 +408,20 @@ FetchContent_Declare(
 )
 
 # Link gegen BASS
-target_link_libraries(MyViz.Core 
+target_link_libraries(LumiViz.Core 
     PRIVATE 
         bass
         bassflac   # Optional
 )
 
 # Copy DLLs to output
-add_custom_command(TARGET MyViz POST_BUILD
+add_custom_command(TARGET LumiViz POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${BASS_DIR}/bass.dll"
-        "$<TARGET_FILE_DIR:MyViz>"
+        "$<TARGET_FILE_DIR:LumiViz>"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${BASSFLAC_DIR}/bassflac.dll"
-        "$<TARGET_FILE_DIR:MyViz>"
+        "$<TARGET_FILE_DIR:LumiViz>"
 )
 ```
 
