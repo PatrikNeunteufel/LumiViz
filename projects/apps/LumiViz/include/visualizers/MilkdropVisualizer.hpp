@@ -338,6 +338,9 @@ private:
     /// (-1 = nichts pending; GUI-Thread schreibt unter renderMutex, Render-
     /// Thread konsumiert vor dem Frame)
     double m_pendingFeedbackErbe = -1.0;
+    /// Kaltstart-Saat steht aus — sie wird erst NACH dem ersten Bild gelegt,
+    /// weil der Original-Kern den Puffer im ersten Frame nullt (S75).
+    bool m_saatOffen = false;
     /// Lade-Diagnose (S66): >0 = noch so viele Frames Audio-Futter tracen
     int m_traceLoadFrames = 0;
     /// Zeit-Ausblendung (S66): Restzeit/Dauer in Sekunden (<=0 = inaktiv).

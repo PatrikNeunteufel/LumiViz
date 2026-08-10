@@ -67,9 +67,14 @@ add_executable(MilkdropRef
 # projects/exec/common: der GEMEINSAME synthetische Klang (SynthAudio.hpp, S74)
 # — dieselbe Datei, die MilkdropStandalone einbindet. Genau darauf beruht die
 # Vergleichbarkeit; vorher war die Formel hier eine Kopie.
+# Dazu die GEMEINSAME Kaltstart-Saat (KaltstartSaat.hpp, S75) aus dem
+# App-Include-Baum: nur wenn beide Seiten dieselbe Saat einstreuen, beginnen
+# sie im selben Startzustand — sonst zeichnen wir und die Referenz bleibt
+# schwarz (belegt an Starfield/Helix/Beauty).
 target_include_directories(MilkdropRef PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/patched ${VIS} ${NSEEL} ${DXSDK}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../projects/exec/common
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../projects/apps/LumiViz/include
 )
 # Defines wie plugin.vcxproj Release|Win32
 target_compile_definitions(MilkdropRef PRIVATE

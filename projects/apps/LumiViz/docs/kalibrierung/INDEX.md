@@ -1,7 +1,7 @@
 # Kalibrierung — Einstieg für alle Importformate
 
-> **Version:** 1.0.0
-> **Datum:** 2026-08-09 (Session 74)
+> **Version:** 1.2.0
+> **Datum:** 2026-08-10 (Session 75; 1.2.0: Regeln 9–12, MilkDrop-Harness §2.2)
 > **Typ:** Guide / Einstieg
 > **Status:** Aktiv
 > **Sprache:** Deutsch
@@ -27,10 +27,10 @@ steht, wird hier verlinkt und nicht abgeschrieben.
 
 ---
 
-## 1. Die fünf Regeln
+## 1. Die zehn Regeln
 
-Jede hat in Session 74 mindestens einen Lauf gekostet und ist an Messwerten
-belegt. Sie gelten formatübergreifend.
+Jede hat in Session 74 bzw. 75 mindestens einen Lauf gekostet und ist an
+Messwerten belegt. Sie gelten formatübergreifend.
 
 | # | Regel | Was passiert sonst |
 |---|---|---|
@@ -42,6 +42,10 @@ belegt. Sie gelten formatübergreifend.
 | 6 | **Bei Schalterreihen die Gruppierung je Seite vergleichen, nicht nur den Messwert je Stufe.** | Die Adjustable-Blende bestand jede Stufe mit MAE 0,002 — erst der Vergleich „wie viele verschiedene Bilder erzeugt jede Seite über die Skala" zeigte, dass wir ab 128 sättigen und die Referenz nicht |
 | 7 | **Erst prüfen, ob der Effekt auf der Gegenseite überhaupt läuft — dann den Port zerlegen.** | `Water` wurde Zeile für Zeile gegen das Original gelegt und war korrekt. Im Preset stand `enabled = 0`: die Referenz übersprang den Effekt, wir führten ihn aus. MAE 0,332 für einen fehlerfreien Port |
 | 8 | **Die Referenz ist selbst ein Messgerät. Wo sie schweigt, ist nichts bewiesen.** | `AvsRef` rendert eine leere Fläche, sobald ein Skript `atan` oder `log` benutzt — ein Linker-Schaden im JIT dieses Builds. Der Befund „wir zeichnen, die Referenz nicht" war deren Fehler, nicht unserer: `10_the ring` fiel nach dem Fix von MAE 0,113 auf 0,001. Abnahme: `AVSREF_EELTEST=1` (§2.1) |
+| 9 | **Beim Original-Quelltext zählt nur der Zweig, der WIRKLICH kompiliert wird.** | Der `#ifdef NO_MMX`-Zweig von `BLEND4` beschreibt eine ganz andere Arithmetik (`g_blendtable`, `/255`, acht Trunkierungen) als der MMX-Zweig, den AVS ausführt (separabel, `>>8`, drei). S74 hat den falschen gelesen und daraus eine Aufgabe „`g_blendtable` bit-treu nachbilden" abgeleitet — sie hätte den korrekten Port verschlechtert. Der tote Zweig **lässt sich nicht einmal übersetzen** (`inblendval` undeklariert). Prüfrezept: das Symbol im ganzen Baum suchen (`NO_MMX` wird nirgends definiert) und im Zweifel einen Build mit dem Schalter erzwingen |
+| 10 | **Ein Verstärker im Pfad macht einen fremden Fehler zum eigenen Befund.** | Bei `07_movin wall` ist jeder Einzelknoten grün (≤0,012) und das Ganze bei 0,073. Der Movement dehnt das Bild stark: er hebt den 1-Pixel-Kantenversatz eines SuperScope von 0,009 auf 0,109 — über den Wert des Gesamt-Presets. Die kumulative Bisektion zeigt dann auf den Verstärker, nicht auf die Quelle. Gegenmittel: **Knoten paarweise messen** (Verdächtiger + Verstärker), nicht nur solo und kumulativ |
+| 11 | **Beide Seiten müssen im selben STARTZUSTAND beginnen.** | Bei MilkDrop streuen wir beim Kaltstart Rauschen in den Feedback-Puffer (`seedFeedbackNoise`, S63 — Verstärker-Presets sterben sonst), die Referenz startet mit genulltem VRAM. In den ersten Frames zeichnen wir also, während sie noch schwarz ist. Das erzeugt einen scheinbaren Befund pro Preset. Gemessen wird deshalb über eine **Reihe von Startwerten** auf beiden Seiten (`compare_milkref.py --saaten`, §2.2). ⚠️ **Falle:** `MilkdropStandalone` setzt `LUMIVIZ_MILKDROP_NOSEED` **selbst**, solange `--seed` fehlt (sein Prüfstands-Vertrag seit S64) — eine Env-Variable allein bleibt wirkungslos. In S75 waren dadurch drei „verschiedene" Seeds bit-identisch, und eine erste Messung meldete fälschlich „die Saat ändert nichts (≤0,006)". Erst `--seed` **plus** `LUMIVIZ_MILKDROP_SEED` wirkt; abgenommen an `Magma`: ohne/mit Saat 0,274, zwei Seeds untereinander 0,044 |
+| 12 | **Die Warmlaufphase der Referenz ist keine Messung.** | Der MilkDrop-Kern braucht Frames, bis überhaupt etwas im Bild steht: `Starfield` ist bei Frame 10 noch schwarz und liefert ab Frame 30 MAE 0,005. Wer die frühe Marke als Befund wertet, bekommt eine Liste von Scheinfunden (S75, erster Durchgang: 0 von 19 OK). `compare_milkref.py` verwirft eine Marke, in der die Referenz nicht zeichnet — **aber nur**, wenn eine spätere zeigt, dass sie danach zeichnet. Bleibt sie durchgehend stumm, ist der Unterschied echt |
 
 > Regel 1, 5 und 6 sind dieselbe Regel aus drei Richtungen: **die Metrik lügt
 > bei dünnen Inhalten.** Das Urteil fällt über Bild + Metrik + Verhalten über
@@ -84,7 +88,7 @@ Rechnung. Beides zeigt ein Einzelbild bei Frame 120 nicht.
 | Format | Unsere Seite | Referenz (Original) | Vergleichs-Harness |
 |---|---|---|---|
 | **AVS** | `AvsStandalone` | `tools/AvsRef` (originaler vis_avs-Kern) — vor Messreihen abnehmen, s. §2.1 | `asset/calibration/avs/compare_avsref.py` |
-| **MilkDrop** | `MilkdropStandalone` | `tools/MilkdropRef` (originaler MilkDrop3-Kern, D3D9) | `asset/calibration/milkdrop/compare_ref.py` — **nur Triage, ein Prozess je Preset fehlt** (Aufgabe 1 des Kalibrier-Plans) |
+| **MilkDrop** | `MilkdropStandalone` | `tools/MilkdropRef` (originaler MilkDrop3-Kern, D3D9) | `asset/calibration/milkdrop/compare_milkref.py` (S75, Aufgabe 1 erledigt) — ein Prozess je Preset, Marken 10/30/120. `compare_ref.py` bleibt daneben: es wertet Screenshots eines Triage-Laufs aus und rendert selbst nichts |
 | **Shadertoy** | `AvsStandalone` (lädt `.lvfx`) | — **keine** | — |
 | **ISF** | `AvsStandalone` (lädt `.lvfx`) | — **keine** | — |
 | **Video/Kamera** | `AvsStandalone --kamera-freigeben` | — entfällt | — |
@@ -135,6 +139,127 @@ von MAE 0,113 auf 0,001 gebracht — ein Befund, der nie einer war.
 > **`invsqrt` ist absichtlich ungenau** (schneller Bit-Trick + eine
 > Newton-Iteration, 0,49915 statt 0,5). Im Selbsttest mit eigener Toleranz
 > geführt.
+
+### §2.2 Der MilkDrop-Lauf
+
+```bash
+python asset/calibration/milkdrop/compare_milkref.py --frames 10,30,120 --size 320x240 --out <ziel>
+```
+
+Was das Werkzeug anders macht als ein Stapellauf — und warum es nötig war:
+
+- **Ein Prozess je Preset und Marke.** `--auto <ordner>` rendert alles in einem
+  Prozess, und MilkDrop-Presets erben das Bild des Vorgängers (Original-
+  Verhalten). `Helix` zeigte so ein Herz aus dem davor laufenden
+  `Dancing Hearts` (S73). Alle Stapel-Zahlen davor sind Richtwerte, keine
+  Befunde.
+- **Mehrere Frame-Marken.** MilkDrop ist ein Rückkopplungssystem; ein
+  Einzelbild bei Frame 120 vermischt echten Fehler und Phasenversatz.
+- **Die Referenzwurzel baut es selbst auf** (`data/` + `presets/`, §2.5 der
+  Werkzeug-Wegleitung) — abgenommen mit `Blank.milk`, das dort dasselbe Bild
+  liefert wie im eingebauten Ordner.
+- **Saatlos als Vorgabe** (Regel 11), **Anlaufphase verworfen** (Regel 12).
+
+Drei Fallen, die dabei Läufe gekostet haben:
+
+1. 🔴 **Der Kern rendert seinen Preset-Browser ins Bild.** Startet MilkdropRef
+   im UI-Modus, liegt ein Verzeichnis-Overlay über dem Frame — und der
+   Vergleich liefert eine Zahl, die wie ein Messwert aussieht. `m_UI_mode`
+   wird deshalb vor jedem `LoadPreset` auf `UI_REGULAR` gesetzt; bleibt der
+   Kern danach im UI-Modus, meldet er `PRESET-NICHT-GELADEN` und das Urteil
+   lautet `REF-STUMM` statt einer Zahl.
+2. 🔴 **Urteile an einer Schwellenkante sind keine Urteile.** Die erste Fassung
+   stufte „tot" bei `lumaMax < 0,05` ein — damit stand `Starfield` mit MAE
+   0,002 als Befund in der Liste, weil eine Seite knapp unter und die andere
+   knapp über der Schwelle lag. Ein „eine Seite zeichnet nicht"-Befund
+   verlangt jetzt **zwei** Bedingungen mit Abstand: eine Seite praktisch
+   schwarz (< 0,02) UND die andere deutlich hell (> 0,20).
+3. 🟠 **`BEIDE-STUMM` ist kein Bestehen.** Zeigt keine Seite etwas, prüft die
+   Probe nichts — das Werkzeug weist es als eigenes Urteil aus, nicht als OK.
+4. 🟠 **Die hohen f10-Werte im Saat-Modus sind ECHT, kein Versatz.** Erste
+   Vermutung war ein Ein-Bild-Versatz (wir säten vor Frame 0, die Referenz
+   danach). Unsere Seite ist inzwischen angeglichen — sie sät ebenfalls erst
+   nach dem ersten Bild (`m_saatOffen`, folgt dem Original-Clear) —, und der
+   Wert bewegte sich kaum (`Starfield` f10: 0,984 → 0,960). Ins Bild gesehen:
+   die Saat **sättigt unsere Seite weiß**, während die Referenz beim selben
+   Preset schwarz bleibt. Gespiegelt ist nichts (vertikal wie horizontal
+   gegengerechnet: identische Werte). Der Unterschied ist real.
+
+**Stand des ersten vollständigen Laufs** (19 Presets, Marken 10/30/120,
+Startwerte `0x0` + `0x5EED63`): **0 OK · 13 BEFUND · 6 STARTABHÄNGIG.** Die
+sechs startabhängigen — `Magma`, `Magma 2`, `Playaround`, `Starfield`,
+`Rock The House_newmove` — sind damit erstmals *gemessen* statt vermutet: ihr
+Bild reagiert stärker auf den Startwert als auf den Renderer, ein
+Treue-Urteil ist dort grundsätzlich nicht zu holen. Das ist die S67-Dunkelklasse
+mit einer Zahl dahinter.
+
+### §2.3 🔴 `MilkdropRef` ist noch nicht abgenommen (S75)
+
+**Bevor mit diesen Zahlen gearbeitet wird, muss das hier geklärt sein.** Zwei
+Eigenheiten der Referenz, beide im Bild belegt:
+
+1. **Sporadisches Browser-Overlay.** Der Kern zeichnet gelegentlich seinen
+   Preset-Browser (roter Balken, „Directory of …") über den Frame. Ein Reset
+   von `m_UI_mode` auf `UI_REGULAR` vor `LoadPreset` **und** je Frame beseitigt
+   es *nicht* zuverlässig: der je-Frame-Zähler meldete null Kipps, während das
+   Overlay im Bild stand. `m_UI_mode` ist also nicht die steuernde Größe —
+   die echte Quelle ist noch zu finden.
+   **Woran man es merkt:** ein Preset springt zwischen Läufen von „schwarz" auf
+   einen mittleren Messwert. Beispiel `Starfield (Supernova-Edit)`: mit Overlay
+   MAE 0,031 („OK"), ohne Overlay ist die Referenz **komplett schwarz**. Das
+   Overlay macht aus einem Befund ein Schein-OK — die gefährlichere Richtung.
+2. **Die Referenz zeigt bei mehreren Presets nichts — und das ist kein neuer
+   Fehler, sondern war bisher nur unsichtbar.** Bei `Helix`, `The Beauty and
+   the Math` und der `Starfield`-Familie bleibt sie kalt gestartet schwarz,
+   auch mit `--audio-muster musik`.
+
+   **Beweis, dass es am Kaltstart liegt und nicht am Werkzeug** (S75): einen
+   Ordner mit `A_Blank.milk` + `B_Starfield.milk` im Stapel gerendert. Beide
+   melden **denselben** Mittelwert `(0.098, 0.041, 0.147)` — das Bild von
+   `B_Starfield` ist zu 100 % das geerbte von `A_Blank`. Im Stapellauf zeigt
+   also jedes Preset ein Bild, aber teils das des Vorgängers; deshalb wirkte
+   `MilkdropRef` bis S74 unauffällig. Ein Prozess je Preset nimmt dieses Erbe
+   weg — und legt offen, dass die Referenz ohne Startenergie nicht zündet
+   (dieselbe Familie wie `piercing 01`, S67: der Look hängt an nicht-genulltem
+   VRAM).
+
+   **Entscheid (Patrik, S75): über eine REIHE von Startwerten messen, nicht
+   über einen.** Beide Grundzustände gehören dazu — saatlos misst den reinen
+   Renderpfad, mit Saat den Zustand, den die App zeigt; erst zusammen ist die
+   Kalibrierung vollständig. Und mehrere Rausch-Seeds beantworten die Frage,
+   die ein einzelner nicht kann: **hängt das Preset am Startzustand?** Streut
+   sein Bild über die Seeds stärker als der Unterschied zwischen den
+   Renderern, ist es grundsätzlich nicht pixelvergleichbar — das ist die
+   Dunkelklasse aus S67, dann aber gemessen statt vermutet.
+
+   **Dabei aufgedeckt — der Kaltstart des Originals ist SCHWARZ.** Die
+   S63-Begründung „das Original startet mit undefiniertem VRAM" ist falsch:
+   `milkdropfs.cpp` nullt den Feedback-Puffer beim ersten Frame ausdrücklich
+   (`// on first frame, clear OLD VS` bei `m_nFramesSinceResize == 0`). Presets
+   zünden im Original beim **Preset-Wechsel**, weil der Puffer dann stehen
+   bleibt — nicht aus Speichermüll. Unsere Rausch-Saat ist damit eine bewusste
+   **Abweichung**, kein Nachbau; sie ersetzt beim Kaltstart das, was im
+   Original das Vorgängerbild liefert. Genau deshalb muss `MilkdropRef` die
+   Saat *nach* dem ersten Frame gesetzt bekommen — davor löscht der Kern sie.
+
+   **Und: der Startzustand erklärt die stummen Presets NICHT.** Mit
+   eingespeister Saat (an `Blank.milk` abgenommen: Mittelwert 0,028 → 0,970,
+   die Einspeisung wirkt also) bleibt `Starfield` in der Referenz weiterhin
+   komplett schwarz. Der Unterschied zu uns ist damit echt und kein Artefakt
+   der Vergleichsgrundlage.
+
+   Die Formel liegt dafür seit S75 in einer gemeinsamen Quelle,
+   `projects/apps/LumiViz/include/visualizers/KaltstartSaat.hpp`
+   (`lumi::saat::basis(w, h, seed)` + `reihe()`), Vorbild `SynthAudio.hpp`.
+   Unsere Seite wählt über `LUMIVIZ_MILKDROP_SEED` (Bestandsschalter
+   `LUMIVIZ_MILKDROP_NOSEED` = Seed aus); die App-Vorgabe `0x5EED63` bleibt
+   unverändert (bit-identisch gegengeprüft).
+   **Offen:** `MilkdropRef` muss die Saat noch in `m_lpVS` bekommen
+   (lockbare Offscreen-Surface + `StretchRect`), und `compare_milkref.py` muss
+   über die Reihe schleifen.
+
+Bis dahin gilt für MilkDrop: Urteile nur an der **Montage**, und nur dort, wo
+beide Seiten sichtbar zeichnen.
 
 ### Was für Shadertoy und ISF fehlt
 
@@ -210,7 +335,7 @@ Danach **alle vier Werkzeuge neu bauen** — die Tabelle ist einkompiliert.
 | Format | Messbar | Stand |
 |---|---|---|
 | **AVS** | ✅ vollständig | Methodik, Harness, Bisektion, Raster, Listen-Prüfstand. Laufende Runde über die 10 Schaufenster-Presets |
-| **MilkDrop** | ⚠️ eingeschränkt | Referenz vorhanden, aber **ein Prozess je Preset fehlt** — Presets erben das Bild des Vorgängers, alle Stapel-Zahlen sind nur Richtwerte |
+| **MilkDrop** | ⚠️ Harness ja, Referenz noch nicht abgenommen | `compare_milkref.py` (§2.2) löst das Stapel-Problem. Aber **`MilkdropRef` liefert noch keine verlässlichen Bilder** — sporadisches Browser-Overlay + Erlöschen (§2.3). Die Zahlen des ersten Laufs (3 OK / 12 BEFUND / 4 PRUEFEN) sind deshalb **kein Treuestand** |
 | **Shadertoy** | ❌ | nur GL-Smoke, kein Treue-Urteil |
 | **ISF** | ❌ | nur GL-Smoke, kein Treue-Urteil |
 

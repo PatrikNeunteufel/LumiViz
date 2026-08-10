@@ -44,6 +44,9 @@
 // Formel hier als Kopie mit dem Kommentar "formelgleich zu ...".
 #include "SynthAudio.hpp"
 
+// Kaltstart-Saat, geteilt mit der App (S75) — siehe saatEinspeisen().
+#include "visualizers/KaltstartSaat.hpp"
+
 // --- Globals, die der Kern erwartet (Vorbild Milkdrop2PcmVisualizer.cpp) ---------------
 CPlugin g_plugin;
 HINSTANCE api_orig_hinstance = nullptr;
@@ -235,6 +238,100 @@ void pumpMessages()
 
 } // namespace
 
+/**
+ * @brief Streut die Kaltstart-Saat in BEIDE Feedback-Texturen des Kerns.
+ *
+ * Warum ueberhaupt (S75): LumiViz saet beim Kaltstart Rauschen ein, der
+ * Original-Kern startet mit genulltem VRAM. Presets ohne eigene Energiequelle
+ * zuenden deshalb nur bei uns — `Starfield`, `Helix`, `The Beauty and the Math`
+ * bleiben in der Referenz schwarz. Bis S74 fiel das nicht auf, weil der
+ * Vergleich als Stapel lief und jedes Preset das Bild des Vorgaengers erbte.
+ *
+ * `m_lpVS` ist ein Render-Target in D3DPOOL_DEFAULT und damit nicht direkt
+ * lockbar. Weg: lockbare Offscreen-Plain-Surface fuellen, dann `StretchRect`
+ * auf die Textur-Surface.
+ *
+ * @param seed  Startwert; `lumi::saat::kSeedAus` (0) laesst die Puffer in Ruhe.
+ * @param outW,outH  gemessene Puffergroesse — der Aufrufer meldet sie, damit
+ *        `compare_milkref.py` pruefen kann, ob beide Seiten gleich gross sind.
+ *        Sind sie es NICHT, ergibt derselbe Seed verschiedene Startbilder und
+ *        jedes rueckgekoppelte Preset meldet einen Scheinbefund (Frage Patrik,
+ *        S75) — der Vergleich ist dann im Saat-Modus ungueltig.
+ */
+static bool saatEinspeisen(unsigned int seed, int& outW, int& outH)
+{
+    outW = outH = 0;
+    // g_device statt g_plugin.GetDevice() — letzteres ist protected in
+    // CPluginShell; der Host haelt das Device ohnehin selbst.
+    IDirect3DDevice9* dev = g_device;
+    if (dev == nullptr) return false;
+
+    bool ok = true;
+    for (int i = 0; i < 2; ++i)
+    {
+        IDirect3DTexture9* tex = g_plugin.m_lpVS[i];
+        if (tex == nullptr) continue;
+
+        D3DSURFACE_DESC desc;
+        if (tex->GetLevelDesc(0, &desc) != D3D_OK) { ok = false; continue; }
+        outW = static_cast<int>(desc.Width);
+        outH = static_cast<int>(desc.Height);
+        if (seed == lumi::saat::kSeedAus) continue;  // nur vermessen
+
+        IDirect3DSurface9* src = nullptr;
+        if (dev->CreateOffscreenPlainSurface(desc.Width, desc.Height, desc.Format,
+                                             D3DPOOL_DEFAULT, &src, nullptr) != D3D_OK)
+        {
+            ok = false;
+            continue;
+        }
+
+        D3DLOCKED_RECT lr;
+        if (src->LockRect(&lr, nullptr, 0) == D3D_OK)
+        {
+            const std::vector<unsigned char> noise =
+                lumi::saat::basis(static_cast<int>(desc.Width),
+                                  static_cast<int>(desc.Height), seed);
+            // Saat liegt als RGBA vor, D3DFMT_A8R8G8B8/X8R8G8B8 als BGRA.
+            for (UINT y = 0; y < desc.Height; ++y)
+            {
+                unsigned char* d =
+                    static_cast<unsigned char*>(lr.pBits) + static_cast<size_t>(y) * lr.Pitch;
+                const unsigned char* s =
+                    noise.data() + static_cast<size_t>(y) * desc.Width * 4;
+                for (UINT x = 0; x < desc.Width; ++x)
+                {
+                    d[x * 4 + 0] = s[x * 4 + 2];
+                    d[x * 4 + 1] = s[x * 4 + 1];
+                    d[x * 4 + 2] = s[x * 4 + 0];
+                    d[x * 4 + 3] = s[x * 4 + 3];
+                }
+            }
+            src->UnlockRect();
+
+            IDirect3DSurface9* dst = nullptr;
+            if (tex->GetSurfaceLevel(0, &dst) == D3D_OK)
+            {
+                if (dev->StretchRect(src, nullptr, dst, nullptr, D3DTEXF_NONE) != D3D_OK)
+                {
+                    ok = false;
+                }
+                dst->Release();
+            }
+            else
+            {
+                ok = false;
+            }
+        }
+        else
+        {
+            ok = false;
+        }
+        src->Release();
+    }
+    return ok;
+}
+
 int main(int argc, char** argv)
 {
     namespace fs = std::filesystem;
@@ -245,6 +342,7 @@ int main(int argc, char** argv)
     int width = 640, height = 480;
     bool silence = false;
     bool show = false;
+    unsigned int saat = lumi::saat::kSeedAus;  // Vorgabe: wie bisher ohne Saat
     // --audio-muster (S74): klassisch = Sinus+Beat-Puls wie bisher, musik =
     // aus einer Aufnahme abgeleitete Huellkurven. Beides aus SynthAudio.hpp,
     // die MilkdropStandalone genauso einbindet.
@@ -257,6 +355,12 @@ int main(int argc, char** argv)
         else if (arg == "--out" && i + 1 < argc) outDir = argv[++i];
         else if (arg == "--silence") silence = true;
         else if (arg == "--show") show = true;
+        else if (arg == "--saat" && i + 1 < argc)
+        {
+            // Startwert des Feedback-Puffers; 0 = aus (Bestandsverhalten).
+            // Basis 0 => "0x..." wird als hex gelesen, wie auf unserer Seite.
+            saat = static_cast<unsigned int>(std::strtoul(argv[++i], nullptr, 0));
+        }
         else if (arg == "--audio-muster" && i + 1 < argc)
         {
             if (!lumi::synth::musterAusText(argv[++i], muster))
@@ -386,10 +490,50 @@ int main(int argc, char** argv)
         std::printf("\n[MilkdropRef] === %s ===\n", preset.filename().string().c_str());
         std::fflush(stdout);
         g_plugin.m_bInitialPresetSelected = true;  // kein Zufalls-Startpreset
+        g_plugin.m_UI_mode = UI_REGULAR;
         g_plugin.LoadPreset(preset.wstring().c_str(), 0.0f);
 
+        // Abnahme des Messmittels (S75): scheitert LoadPreset, faellt der Kern
+        // in seinen Preset-BROWSER — und der zeichnet ein Verzeichnis-Overlay
+        // ins Bild. Ein Vergleich dagegen liefert eine Zahl, die wie ein
+        // Messwert aussieht und keiner ist (Kalibrier-Regel 8: die Referenz ist
+        // selbst ein Messgeraet). Statt das Overlay stehen zu lassen: melden
+        // und den UI-Modus zuruecksetzen, damit wenigstens das Bild sauber ist.
+        // Der Aufrufer (compare_milkref.py) urteilt dann REF-STUMM.
+        if (g_plugin.m_UI_mode != UI_REGULAR)
+        {
+            std::printf("[MilkdropRef] PRESET-NICHT-GELADEN (Kern im UI-Modus %d)\n",
+                        static_cast<int>(g_plugin.m_UI_mode));
+            std::fflush(stdout);
+            g_plugin.m_UI_mode = UI_REGULAR;
+            rc2 = 5;
+        }
+
+        // Groesse des Feedback-Puffers melden (S75): der Kern haelt `m_lpVS` in
+        // m_nTexSizeX/Y, NICHT in Fenstergroesse. Weicht das von unserem
+        // Puffer ab, ist eine gemeinsame Kaltstart-Saat nur dann gueltig, wenn
+        // sie POSITIONSBASIERT definiert ist — ein sequentieller Rauschstrom
+        // ergaebe bei anderer Breite ein voellig anderes Startbild und damit
+        // einen Scheinbefund ueber jedes rueckgekoppelte Preset (Frage Patrik).
+        int saatW = 0;
+        int saatH = 0;
+        bool saatOk = saatEinspeisen(lumi::saat::kSeedAus, saatW, saatH);
+        std::printf("[MilkdropRef] Feedback-Puffer: %dx%d (Fenster %dx%d), "
+                    "Saat 0x%X\n", saatW, saatH, width, height, saat);
+        std::fflush(stdout);
+
+        int uiKipp = 0;
         for (int f = 0; f < frames; ++f)
         {
+            // Der Kern kippt auch MITTEN im Lauf in den Preset-Browser (S75:
+            // erst nach dem Reset vor LoadPreset gesehen — das Overlay stand
+            // wieder im Bild und machte aus einem Scheinbefund ein
+            // Schein-OK). Deshalb je Frame zuruecksetzen und zaehlen.
+            if (g_plugin.m_UI_mode != UI_REGULAR)
+            {
+                ++uiKipp;
+                g_plugin.m_UI_mode = UI_REGULAR;
+            }
             lumi::synth::Optionen synthOpt;
             synthOpt.muster = muster;
             synthOpt.geschmack = lumi::synth::Geschmack::Milkdrop;
@@ -401,7 +545,29 @@ int main(int argc, char** argv)
                 rc2 = 4;
                 break;
             }
+            // Saat NACH dem ersten Frame: der Kern nullt `m_lpVS[0]` genau dort
+            // ausdruecklich (`milkdropfs.cpp`, "on first frame, clear OLD VS",
+            // bei m_nFramesSinceResize == 0). Davor eingestreutes Rauschen ist
+            // damit weg. Ab Frame 1 bleibt der Puffer stehen — das ist die
+            // Stelle, an der eine Saat wirkt.
+            if (f == 0 && saat != lumi::saat::kSeedAus)
+            {
+                if (!saatEinspeisen(saat, saatW, saatH))
+                {
+                    std::fprintf(stderr, "[MilkdropRef] SAAT-EINSPEISUNG "
+                                         "FEHLGESCHLAGEN\n");
+                    saatOk = false;
+                    rc2 = 6;
+                }
+            }
             pumpMessages();
+        }
+
+        if (uiKipp)
+        {
+            std::printf("[MilkdropRef] UI-MENUE-KIPP in %d von %d Frames "
+                        "(zurueckgesetzt)\n", uiKipp, frames);
+            std::fflush(stdout);
         }
 
         FrameStats st;

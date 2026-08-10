@@ -40,6 +40,10 @@
 #include <QVector3D>
 #include <QVector4D>
 
+// Die Kaltstart-Saat teilen sich App und MilkdropRef (S75) — nur so koennen
+// beide Seiten eines Referenzvergleichs im selben Startzustand beginnen.
+#include "visualizers/KaltstartSaat.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -1459,25 +1463,31 @@ void MilkdropVisualizer::releaseBlurTargets()
 
 std::vector<unsigned char> MilkdropVisualizer::kaltstartBasis(int w, int h)
 {
-    std::vector<unsigned char> noise(static_cast<std::size_t>(w) * h * 4);
+    // Die Formel liegt seit S75 in `projects/exec/common/KaltstartSaat.hpp` —
+    // MilkdropRef bindet denselben Kopf ein, damit im Referenzvergleich BEIDE
+    // Seiten im selben Startzustand beginnen koennen (`--saat`). Vorher hatte
+    // nur unsere Seite eine Saat, und Presets, die Startenergie brauchen,
+    // zuendeten deshalb nur bei uns.
+    //
     // Unter NOSEED ist die Kaltstart-Basis SCHWARZ (Referenz mit genulltem
     // WDDM-VRAM) — Puffer-Wechsel "Loeschen" bleibt damit auch im Prüfstand
     // definiert, statt stumm das Erbe zu behalten.
-    if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_NOSEED")) return noise;
-    // fixer Seed → jeder Kaltstart ist bit-identisch reproduzierbar (Prüfstände)
-    unsigned int s = 0x5EED63u;
-    for (std::size_t i = 0; i < noise.size(); i += 4)
+    // Bestandsschalter NOSEED (S64) = Seed aus. Zusaetzlich waehlt
+    // LUMIVIZ_MILKDROP_SEED einen anderen Startwert — fuer Messreihen ueber
+    // mehrere Seeds, die zeigen, wie stark ein Preset am Startzustand haengt.
+    unsigned int seed = lumi::saat::kSeed;
+    if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_NOSEED"))
     {
-        // xorshift32 — ein Zug je Pixel, RGB aus den Bytes, Alpha deckend
-        s ^= s << 13;
-        s ^= s >> 17;
-        s ^= s << 5;
-        noise[i + 0] = static_cast<unsigned char>(s);
-        noise[i + 1] = static_cast<unsigned char>(s >> 8);
-        noise[i + 2] = static_cast<unsigned char>(s >> 16);
-        noise[i + 3] = 255;
+        seed = lumi::saat::kSeedAus;
     }
-    return noise;
+    else if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_SEED"))
+    {
+        bool ok = false;
+        const unsigned int gewaehlt =
+            qEnvironmentVariable("LUMIVIZ_MILKDROP_SEED").toUInt(&ok, 0);
+        if (ok) seed = gewaehlt;
+    }
+    return lumi::saat::basis(w, h, seed);
 }
 
 void MilkdropVisualizer::seedFeedbackNoise(int w, int h)
@@ -2716,9 +2726,31 @@ void MilkdropVisualizer::onRender(float deltaTime)
     {
         // Kaltstart-Saat (S63): NICHT schwarz nullen — Verstaerker-Presets
         // (z. B. Fractopia) haben keine eigene Energiequelle und leben vom
-        // ererbten Pufferinhalt; das Original startet mit undefiniertem VRAM.
-        // Deterministisches Vollbereichs-Rauschen = reproduzierbares Aequivalent.
+        // ererbten Pufferinhalt.
+        //
+        // KORREKTUR S75: die Begruendung "das Original startet mit undefiniertem
+        // VRAM" stimmt NICHT. Der Kern nullt den Feedback-Puffer beim ersten
+        // Frame ausdruecklich — `milkdropfs.cpp`, "on first frame, clear OLD VS"
+        // (`m_nFramesSinceResize == 0` ⇒ `Clear(... 0x00000000 ...)`). Der
+        // Kaltstart des Originals ist also SCHWARZ. Presets zuenden dort beim
+        // PRESET-WECHSEL, weil der Puffer dann stehen bleibt (kein Clear).
+        //
+        // Diese Saat ist damit eine bewusste ABWEICHUNG vom Original, kein
+        // Nachbau: sie ersetzt beim Kaltstart das, was im Original das
+        // Vorgaengerbild liefert. Fuer Referenzvergleiche gehoert sie
+        // abgeschaltet (`LUMIVIZ_MILKDROP_NOSEED`) oder auf beiden Seiten
+        // gesetzt (`MilkdropRef --saat`, S75).
+        // ...aber NICHT sofort: das Original nullt den Puffer im ersten Frame
+        // (s. o.) und zeichnet erst danach hinein. Wer die Saat davor legt,
+        // liegt gegenueber der Referenz um EIN Bild vorn — im Referenzlauf
+        // schlaegt das auf die fruehen Marken durch (S75: `Starfield` f10
+        // 0,984, f30 0,152, f120 0,002). Deshalb erst beim naechsten Frame.
+        m_saatOffen = true;
+    }
+    else if (m_saatOffen)
+    {
         seedFeedbackNoise(w, h);
+        m_saatOffen = false;
     }
     // Puffer-Wechsel (S66): angemeldetes Erbe anwenden. Nach einem frischen
     // Aufbau (Kaltstart/Resize) gibt es kein Erbe — pending verfaellt dort,
@@ -3371,7 +3403,14 @@ void MilkdropVisualizer::drawCustomShapes()
 
             const int sides = std::clamp(static_cast<int>(e.number("sides")), 3, 100);
             const double cxN = e.number("x") * 2.0 - 1.0;
-            const double cyN = e.number("y") * -2.0 + 1.0;
+            // Y-FLIP (S75): die Referenz rechnet `y*-2+1` (D3D-NDC, +1 = oben).
+            // Unsere Feedback-Textur haelt das Bild aber KOPFUEBER — der
+            // Warp-Mesh legt Gitterzeile 0 (im Original oben) bewusst auf NDC
+            // -1, und `compositeToScreen` dreht beim Praesentieren zurueck.
+            // Wer hier die Referenzformel woertlich uebernimmt, zeichnet die
+            // Shape deshalb spiegelverkehrt in die Textur. Belegt an
+            // `Dancing Hearts`: Herz und Knoten standen auf dem Kopf.
+            const double cyN = e.number("y") * 2.0 - 1.0;
             const double rad = e.number("rad");
             const double ang = e.number("ang");
             const double texZoom = std::max(0.001, e.number("tex_zoom"));
@@ -3416,7 +3455,9 @@ void MilkdropVisualizer::drawCustomShapes()
                 const double t = static_cast<double>(j % sides) / sides;
                 const double theta = t * 6.283185307 + ang + 0.785398163;  // +pi/4
                 const double px = cxN + rad * std::cos(theta) * m_aspectY;
-                const double py = cyN + rad * std::sin(theta);
+                // Minus: dieselbe Y-Spiegelung wie bei cyN (s. o.) — sonst
+                // waere nur der Mittelpunkt versetzt und der Ring gedreht.
+                const double py = cyN - rad * std::sin(theta);
                 ring[static_cast<std::size_t>(j)] = {px, py};
                 const double tu =
                     0.5 + 0.5 * std::cos(t * 6.283185307 + texAng + 0.785398163) / texZoom *
@@ -3642,7 +3683,7 @@ void MilkdropVisualizer::drawCustomWaves()
             // fenstergross, Skript-x/y sind Bildschirm-Anteile 0..1
             // (Sichttest-Befund Session 39: 1.73x-Streckung ohne diesen Fix)
             pt.x = static_cast<float>(px * 2.0 - 1.0);
-            pt.y = static_cast<float>(py * -2.0 + 1.0);
+            pt.y = static_cast<float>(py * 2.0 - 1.0);  // Y-FLIP S75, s. cyN
             pt.r = static_cast<float>(clampd(pr, 0.0, 1.0));
             pt.g = static_cast<float>(clampd(pg, 0.0, 1.0));
             pt.b = static_cast<float>(clampd(pb, 0.0, 1.0));
@@ -3905,6 +3946,16 @@ void MilkdropVisualizer::drawBasicWave(const FrameVars& fv)
         }
     }
 
+    // Y-FLIP (S75) — EINE Stelle fuer ALLE Wellenform-Modi, nach dem
+    // Modus-Block und vor dem Glaetten. Die Modi rechnen woertlich wie die
+    // Referenz (D3D-NDC, +1 = oben); unsere Feedback-Textur haelt das Bild
+    // aber kopfueber (der Warp-Mesh legt Gitterzeile 0 auf NDC -1,
+    // `compositeToScreen` dreht beim Praesentieren zurueck). Hier zu spiegeln
+    // statt in jedem Modus haelt die Formeln oben deckungsgleich zum Original
+    // — und `wavePosY` bleibt unangetastet, weil Modus 7 es NICHT additiv,
+    // sondern in der Stereo-Trennung `sep = (wavePosY*0.5+0.5)^2` benutzt.
+    for (auto& p : pts) p.y = -p.y;
+
     if (alpha < 0.004 || pts.size() < 2) return;
 
     // one smoothing pass (SmoothWave), segment-aware
@@ -4086,10 +4137,20 @@ void MilkdropVisualizer::compositeToScreen(const FrameVars& fv)
             m_compCustomProgram->setUniformValue("_hue2", hv(2));
             m_compCustomProgram->setUniformValue("_hue3", hv(3));
         }
-        // Praesentations-Quad wie der MD1-Basis-Layer (Identitaets-Mapping)
-        const float quad[6][4] = {{-1.0f, -1.0f, 0.0f, 0.0f}, {1.0f, -1.0f, 1.0f, 0.0f},
-                                  {-1.0f, 1.0f, 0.0f, 1.0f},  {1.0f, -1.0f, 1.0f, 0.0f},
-                                  {1.0f, 1.0f, 1.0f, 1.0f},   {-1.0f, 1.0f, 0.0f, 1.0f}};
+        // Praesentations-Quad wie der MD1-Basis-Layer — INKLUSIVE des einen
+        // vertikalen Flips (Kopfkommentar: "the single vertical flip happens
+        // in the composite pass"). Der MD1-Zweig unten setzt ihn ueber
+        // `vRef = (py < 0) ? hi : lo`; dieser Zweig hatte ihn NICHT, und damit
+        // sah jeder Custom-Comp-Shader `uv.y` verkehrt herum:
+        // Referenz (D3D) hat uv.y = 0 OBEN, wir hatten 0 unten.
+        //
+        // Belegt S75 mit einer Sonde (`ret = float3(uv.y,0,0)`), Rotwert
+        // oben/unten: Referenz 0,125/0,875 gegen LumiViz 0,875/0,125 — exakt
+        // gespiegelt. Sichtbar wurde es an `Dancing Hearts`, dessen Herz bei
+        // uns auf dem Kopf stand (Befund Patrik).
+        const float quad[6][4] = {{-1.0f, -1.0f, 0.0f, 1.0f}, {1.0f, -1.0f, 1.0f, 1.0f},
+                                  {-1.0f, 1.0f, 0.0f, 0.0f},  {1.0f, -1.0f, 1.0f, 1.0f},
+                                  {1.0f, 1.0f, 1.0f, 0.0f},   {-1.0f, 1.0f, 0.0f, 0.0f}};
         m_meshVao->bind();
         m_meshVbo->bind();
         m_meshVbo->allocate(quad, sizeof(quad));

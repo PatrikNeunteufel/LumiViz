@@ -2,7 +2,7 @@
     "schemaVersion": "1.0",
     "solution": {
         "name": "LumiViz",
-        "version": "0.3.0"
+        "version": "0.4.0"
     },
     "settings": {
         "standards": {
@@ -172,7 +172,7 @@
         "skip": false,
         "displayName": "LumiViz",
         "//version": "SSOT fuer Name UND Version (S73). Das Root-CMakeLists liest beide Werte HIER heraus und reicht sie als Kompilat-Definitionen an den Code weiter (AppInfo.hpp). Vorher standen sie dreifach: hier, in Application.cpp und als Literal im About-Dialog.",
-        "version": "0.3.0",
+        "version": "0.4.0",
 
         "core": {
           "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],

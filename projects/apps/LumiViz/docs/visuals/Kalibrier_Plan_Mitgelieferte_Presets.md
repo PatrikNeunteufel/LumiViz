@@ -60,7 +60,31 @@ Gegenmittel (in dieser Reihenfolge, aufsteigender Aufwand):
 
 ---
 
-## Aufgabe 1 — Ein ehrliches MilkDrop-Vergleichswerkzeug
+## Aufgabe 1 — Ein ehrliches MilkDrop-Vergleichswerkzeug ✅ (S75)
+
+**Erledigt:** `asset/calibration/milkdrop/compare_milkref.py` — ein Prozess je
+Preset und Frame-Marke, Referenzwurzel automatisch, Montagen, `report.md`,
+Urteil OK/PRUEFEN/BEFUND/REF-STUMM/BEIDE-STUMM. Erster Lauf über die 19
+mitgelieferten (Marken 10/30/120, 320×240): 3 OK · 12 BEFUND · 4 PRUEFEN —
+**diese Zahlen sind noch kein Treuestand**, weil die Referenz selbst nicht
+abgenommen ist (INDEX §2.3: sporadisches Browser-Overlay, Erlöschen).
+Methodik und die drei Fallen, die dabei aufliefen, stehen in
+[kalibrierung/INDEX.md §2.2](../kalibrierung/INDEX.md) samt Regeln 11 + 12.
+
+Dabei an der Referenz behoben: `MilkdropRef` rendert seinen Preset-Browser ins
+Bild, wenn der Kern im UI-Modus startet (`m_UI_mode` wird jetzt vor jedem
+`LoadPreset` zurückgesetzt, `milkdropref_main.cpp`).
+
+**Reproduzierbarkeit:** „Diff = 0" ist hier **nicht** erreichbar — der
+Original-Kern taktet an der Wanduhr (`DoTime`/`EnforceMaxFPS`), und gerendert
+wird auf der GPU. Aus zwei Läufen mit identischer Konfiguration gemessen:
+Abweichung je Preset und Marke **≤ 0,006**, meist ≤ 0,002 (größte Streuung
+`Neomtwister` f120: 0,359 → 0,360; `Twisted b` f30: 0,291 → 0,289). Als
+Abnahme-Schwelle taugt damit **0,01**, nicht 0. Wer eine Änderung beurteilt,
+muss den Unterschied über dieser Streuung sehen.
+
+<details>
+<summary>Ursprüngliche Aufgabenstellung</summary>
 
 **Ziel:** ein Skript, das für einen Preset-Ordner belastbare Zahlen liefert.
 
@@ -80,6 +104,8 @@ danebenlegen — Entscheid beim Bauen.
 
 **Fertig, wenn:** ein Lauf über die 19 mitgelieferten Presets reproduzierbar
 dieselben Zahlen liefert (zweimal laufen lassen, Diff = 0).
+
+</details>
 
 ---
 

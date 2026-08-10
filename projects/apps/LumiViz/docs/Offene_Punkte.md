@@ -198,7 +198,60 @@ Gitter-Raster allein gegen die Referenz, vorher/nachher:
 Regression: die zehn mitgelieferten Presets liefern unverändert dieselben
 Werte (5/10 OK) — keines nutzt mehr als 4096 Punkte. Tests 593 grün.
 
-### 🟠 `07_movin wall`: Movement-Subpixel schaukelt sich über Frames auf (S74)
+### 🟠 `07_movin wall`: die SuperScopes tragen, das Movement verstärkt (S75)
+
+**Die S74-These ist widerlegt** — der Befund ist umgedeutet. Kurzfassung:
+
+| Sonde (Raster, 120 Frames, 320×240) | MAE |
+|---|---|
+| Movement (Id 15) **solo, in Rückkopplung** | **0,001** |
+| SuperScope `l03` solo | 0,012 |
+| SuperScope `l06` solo | 0,009 |
+| **`l06` + Movement** | **0,109** |
+| `l06` + Movement, `ti` fest statt `getspec` | 0,063 |
+
+**1. `g_blendtable` nachzubilden wäre Arbeit an totem Code.** `BLEND4`
+(`r_defs.h:328`) hat zwei Zweige. Der `NO_MMX`-Zweig mit `g_blendtable` und der
+`/255`-Normierung **lässt sich nicht einmal kompilieren**: `mmx_adjblend_block`
+(:642) ruft dort ein nicht existierendes `inblendval` (gemeint war `v`), und
+`BLEND_ADJ` ist unter `NO_MMX` gar nicht definiert. Gegengeprüft mit einem
+AvsRef-Build mit `-DNO_MMX` — er bricht mit `C2065` ab. `NO_MMX` wird zudem
+nirgends definiert, weder im Original noch in `tools/AvsRef`.
+
+Was AVS **ausführt**, ist der MMX-Zweig: separabel in zwei Stufen,
+`(a·(255−p) + b·p) >> 8`, drei Trunkierungen. Genau das rechnet unser Shader
+(`MultiEffectVisualizer.cpp:843-845`) in Ganzzahlen nach — seit S46 und
+korrekt. Auch `BLEND_AVG` (:226) und die Tabellen-Erzeugung
+(`r_trans.cpp:425-500`, Skript-Zweig mit `is_rect`) stimmen Zeile für Zeile mit
+`ScriptGridModule.cpp:295-365` überein.
+
+**2. Das Movement ist entlastet.** Bisher war es nur einmalig auf Raster
+gemessen. Solo über 120 Frames — also mit der Rückkopplung, die den Verdacht
+begründet hatte — liefert es **0,001**.
+
+**3. Es ist ein Verstärker.** Das Preset-Movement ist
+`y=(y+1)*((1-y)); x=(1+x)*(1-x)` (`effect=32767`, `rectangular=1`,
+`subpixel=1`, `wrap=0`, `blend=0`) — eine starke Vergrößerung. Sie bläst den
+1-Pixel-Kantenversatz des SuperScope von 0,009 auf **0,109** auf, mehr als das
+Gesamt-Preset (0,073). Dass `l06` stärker durchschlägt als `l03` (0,015), passt
+zur Lage: `l06` zeichnet mit `y=-sin(t)*u` in die Bildhälfte, die der Warp am
+stärksten dehnt.
+
+**4. Die Zeitdrift ist nicht die Ursache.** Beide Scopes tragen
+`frame: t=t-ti` mit `beat: ti=getspec(0.7,0.5,0)` — ein Akkumulator an einem
+Audio-Wert, der bei kleinster Abweichung linear driftet. Mit festem `ti` bleibt
+die Kombination bei **0,063**. (Die Zahl ist *nicht* gegen 0,109 aufrechenbar —
+festes `ti` erzeugt eine andere Figur; aussagekräftig ist allein, dass der
+Fehler bleibt.) Solo ändert sich gar nichts: 0,009 mit und ohne.
+
+**Der eigentliche Befund ist damit die SuperScope-Rasterung** — die
+Subpixel-Lage der Linien, dieselbe Familie wie der S58-Befund „Pixelmitte der
+Scope-Linien" bei `30 Bright Light District`. Prüfstand steht
+(`solo_l03`/`solo_l06` + Raster); der Movement ist als Lupe brauchbar, um den
+Versatz sichtbar zu machen.
+
+<details>
+<summary>S74-Fassung (widerlegt) — Movement-Subpixel schaukelt sich auf</summary>
 
 Das Preset war der Fall „kein Einzelknoten auffällig, ganzes Preset bei 0,073".
 Mit Raster gemessen sind alle 9 Knoten einzeln sauber (max. 0,015). Die
@@ -238,6 +291,8 @@ sie macht uns dunkler, gemessen sind wir heller. Bit-Treue hier herzustellen
 heißt, `g_blendtable` samt seiner Abschneide-Punkte nachzubilden; das ist eine
 eigene, abgegrenzte Aufgabe. Der Prüfstand dafür steht (Raster + Movement,
 Frameverlauf über `--save-every`).
+
+</details>
 
 ### ✅ Raster-Blends waren vertikal gespiegelt (S74, behoben)
 
@@ -1386,7 +1441,129 @@ Winamp-Komfort).
 
 ## 3. MilkDrop
 
-### 🟠 Wellenform-Modus 7 steht auf dem Kopf (Befund S73, Patrik)
+### ✅ Y-Achse war invertiert — Shapes, Wellenformen und Comp-Shader (S75, behoben)
+
+**Das ist die Ursache hinter dem „Modus 7"-Befund unten — und sie ist global,
+nicht auf eine Wellenform beschränkt** (Verdacht Patrik, S75: „andere
+MilkDrop-Effekte wirken auch, als stünden sie auf dem Kopf").
+
+**Beweis** — eine Sonde aus `Blank.milk` mit ersetztem Comp-Shader
+(`ret = float3(uv.y, 0, 0)`), 320×240, saatlos, beide Seiten je eigener
+Prozess:
+
+| | Rot oben | Rot unten | ⇒ |
+|---|---|---|---|
+| **Referenz** (MilkdropRef) | 0,125 | 0,875 | `uv.y` wächst **nach unten** (D3D-Konvention, (0,0) links oben) |
+| **LumiViz** | 0,875 | 0,125 | `uv.y` wächst **nach oben** (GL-Konvention) |
+
+Damit ist auch **die Referenz entlastet**: sie wurde *nicht* versehentlich
+„korrigiert" (Verdacht Patrik). `tools/MilkdropRef` enthält keine
+Inhalts-Spiegelung — nur `bih.biHeight = -h`, die BMP-Konvention für
+top-down-Zeilen; die Datei wurde seit ihrer Entstehung (S63) zweimal angefasst.
+Gegenprobe am Bild: das Herz in `Dancing Hearts` steht in der Referenz
+**richtig** (Rundungen oben, Spitze unten), bei uns auf dem Kopf.
+
+Die Datei dokumentiert im Kopf „Y convention: ONE internal math space … the
+single vertical flip happens in the composite pass" — genau dieser Vertrag ist
+verletzt, sobald ein Preset einen eigenen Comp-Shader mitbringt.
+
+**✅ Teil 1 behoben (S75): der Custom-Comp-Zweig hatte den Flip nicht.**
+`compositeToScreen` trägt laut Vertrag den einzigen vertikalen Flip — der
+MD1-Zweig setzt ihn über `vRef = (py < 0) ? hi : lo`, der Custom-Zweig zeichnete
+sein Präsentations-Quad dagegen mit `(-1,-1) → uv(0,0)`, also ungeflippt.
+Korrigiert; die Y-Sonde liefert seitdem auf **beiden** Seiten 0,125 oben /
+0,875 unten, Urteil OK. Gegenprobe über alle 19 (f120, saatlos): keine
+Verschlechterung.
+
+**🔴 Teil 2 offen — und das ist der, den man sieht.** `Dancing Hearts` hat
+**keinen** Comp-Shader (null `comp_*`-Zeilen; es nutzt `nWaveMode=7` +
+`shapecode_0_enabled=1`) und ist nach dem Fix unverändert bei MAE 0,376. Im
+Bild sind **beide** Elemente gespiegelt — das Herz *und* der kleine Knoten, der
+in der Referenz rechts **oben** sitzt und bei uns rechts **unten**. Betroffen
+ist also die Zeichenebene für **Wellenformen und Shapes**, nicht das Composite.
+
+**Tiefenanalyse (S75): die Formeln stimmen — die Textur-Konvention nicht.**
+Zeile für Zeile gegen `milkdropfs.cpp` gelegt, alle drei Stellen sind
+wortgleich zum Original:
+
+| | Original | wir |
+|---|---|---|
+| Shape-Vertex | `v[0].y = var_pf_y*-2+1` (:2300) | `cyN = y*-2.0+1.0` (:3406) |
+| Wave-Punkt | analog | `pt.y = py*-2.0+1.0` (:3677) |
+| Wave-Position | `fWavePosY = cy*2-1` (:2762) | `wavePosY = waveY*2.0-1.0` (:3747) |
+
+Auch der Original-Sonderfall stimmt: `wave_y` ist dort ausdrücklich
+„backwards (top==1) … so we keep it that way" (:2726) — genau so rechnen wir.
+
+**Damit liegt es nicht an den Formeln, sondern am Raum, in den sie zeichnen.**
+Unsere Feedback-Textur ist gegenüber der D3D-Textur vertikal gespiegelt —
+deshalb *braucht* das Composite überhaupt einen Flip (der laut Kopfkommentar
+„einzige"). Folge: Geometrie, die nach Original-Formel bei NDC `+1` (oben)
+landet, sitzt in unserer Textur oben — und der Präsentations-Flip kippt sie
+nach unten. Die uv-Abbildung ist danach korrekt (Y-Sonde grün), die
+**gezeichnete Geometrie** dagegen gespiegelt. Genau das sieht man am Herz.
+
+**✅ Teil 2 behoben (S75), Variante (b) — Spiegelung möglichst spät, Formeln
+bleiben wörtlich am Original.** Drei Stellen:
+
+| Stelle | vorher | jetzt |
+|---|---|---|
+| Custom Shapes, Mittelpunkt (:3406) | `y*-2+1` | `y*2-1` |
+| Custom Shapes, Ring (:3452) | `cyN + rad*sin` | `cyN − rad*sin` |
+| Custom-Wave-Punkte (:3686) | `py*-2+1` | `py*2-1` |
+| **Alle Wellenform-Modi** (:3949) | — | `for (auto& p : pts) p.y = -p.y;` |
+
+Die Wellenform wird **an einer einzigen Stelle** gespiegelt — nach dem
+Modus-Block, vor dem Glätten. Das hält die Modus-Formeln deckungsgleich zum
+Original und lässt `wavePosY` unangetastet, was nötig ist: Modus 7 benutzt es
+nicht additiv, sondern in der Stereo-Trennung `sep = (wavePosY*0.5+0.5)²`.
+
+**Gegenprobe (alle 19, f120, saatlos): 7 besser, 0 schlechter.**
+
+| Preset | vorher | nachher |
+|---|---|---|
+| Dancing Hearts | 0,376 | **0,230** |
+| Dancing Hearts (2nd edit) | 0,329 | **0,231** |
+| Neomtwister | 0,359 | **0,326** |
+| Twisted / Twisted b | 0,288 | **0,251** |
+| Lasershow | 0,081 | **0,056** |
+| Helix | 0,118 | **0,112** |
+
+Die scheinbare Ausnahme `Starfield (Supernova-Edit)` (0,002 → 0,043) ist keine:
+dort ist die **Referenz schwarz**, der Wert misst nur, wie viel *wir* zeichnen —
+ohne Referenzbild gibt es nichts zu treffen. Y-Sonde jetzt **MAE 0,000**,
+Gegenprobe „gespiegelt passt besser" ist umgeschlagen (0,374 statt vorher
+0,225), und im Bild steht das Herz richtig: Rundungen oben, Spitze unten,
+Knoten rechts oben wie in der Referenz.
+
+Die verbleibenden 0,230 bei `Dancing Hearts` sind der **Farbbefund**
+(Aufgabe 3: bei uns weiß/rosa, im Original gelb/orange) — ein eigener,
+unabhängiger Punkt.
+
+**Rest offen:** ob der **Warp-Shader** dieselbe Spiegelung braucht — dafür eine
+eigene Sonde mit `warp_1` (analog zur Y-Sonde). Bisher spricht nichts dafür:
+die y-symmetrischen Presets (`Magma`, `Rock The House`, `Starfield`) blieben
+über den Fix hinweg unverändert bei ≤0,047, und ein falsch orientierter Warp
+hätte sie bewegt.
+
+**Zusatzwunsch Patrik (S75):** im MilkDrop-Host-Modul zwei Optionsfelder
+**Flip X / Flip Y** anbieten — unabhängig vom Fix, als Gestaltungsmittel und
+als Diagnosehilfe.
+
+**Gegenprobe für den Fix (zwingend):** die Y-Sonde muss danach auf beiden
+Seiten denselben Verlauf zeigen, UND die 5 Presets, die heute gespiegelt besser
+passen, müssen sich verbessern, ohne dass die übrigen 14 schlechter werden.
+
+Gemessen über alle 19 mitgelieferten (Marke f120, saatlos): **5 passen
+gespiegelt besser** — `Dancing Hearts` (0,376 → 0,225), `Dancing Hearts (2nd
+edit)` (0,326 → 0,218), `Neomtwister` (0,359 → 0,271), `Lasershow`
+(0,079 → 0,054), `Playaround` (0,430 → 0,416). Die anderen 14 sind
+y-symmetrisch oder stumm und entscheiden daher nichts — sie **widerlegen den
+globalen Flip nicht**, anders als S73 geschlossen hatte.
+
+<details>
+<summary>S73-Fassung: „Wellenform-Modus 7 steht auf dem Kopf" (überholt — die
+Beschränkung auf Modus 7 war ein Artefakt y-symmetrischer Presets)</summary>
 
 Aufgefallen an `GreatWho - Dancing Hearts`: das Herz zeigt bei uns nach oben,
 im Original nach unten. **Kein globaler Spiegelfehler** — der Gegentest über
@@ -1468,6 +1645,8 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 | **Playlist-Anbindung** | hängt an E6 (§6) | 🟡 |
 | Host-Gruppen-Feinschliff | exakter paarweiser 2er-Mix statt sequentiellem Adjustable | 🔧 |
 
+</details>
+
 ## 4. Sichttests, die nie stattgefunden haben
 
 | Was | Umfang | |
@@ -1495,6 +1674,40 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 | ~~[Config_Pipeline_Umsetzungsplan](visuals/Config_Pipeline_Umsetzungsplan.md)~~ | ✅ **entschieden + umgesetzt (S60):** die Abnahme-Tabellen A1–A8/N1–N7 sind **als erledigt gestrichen** (Vermerk im Dokument; die `⬜` bleiben als Historie stehen) — Schritte 0–7 ✅ seit S30, Sichttests 5.1–5.5 abgenommen | ✅ |
 
 ## 6. Konzept-Phasen, noch nicht begonnen
+
+- 🟡 **Mash-Up-Sätze für 0.5.0 freigeben** (S75) — `GreatWho + Flexi - Rock The
+  House [Caturday Night]` (93) und `GreatWho + Martin + Geiss + Flexi -
+  Lasershow [240 bipolar mixes]` (243) sollen mitgeliefert werden, sind für
+  0.4.0 aber **bewusst draußen**: es sind Mash-Ups **Dritter** auf Basis
+  eigener Presets (vermutlich von **Flexi**), und die Erlaubnis des Erstellers
+  steht aus. **Vor der Aufnahme:** Kontakt herstellen, dann Namensnennung in
+  `asset/presets/README.md` **und** `THIRD_PARTY_NOTICES.md`. Aufnahme selbst
+  ist ein Kopiervorgang — die Sätze liegen unter `asset/Milkdrop3/presets/`,
+  der POST_BUILD-`copy_directory` nimmt neue Unterordner ohne Zutun mit.
+
+- 🟡 **Startwert (Seed) als Preset-Feld** (Idee Patrik, S75) — der Kaltstart-Seed
+  des Feedback-Puffers wandert aus der globalen Umgebung (`LUMIVIZ_MILKDROP_SEED`)
+  in ein **Init-Feld des Presets**. Anlass: der erste vollständige
+  MilkDrop-Referenzlauf stuft **6 von 19** Presets als `STARTABHÄNGIG` ein — ihr
+  Bild reagiert stärker auf den Startzustand als auf den Renderer
+  ([kalibrierung/INDEX §2.2](kalibrierung/INDEX.md)). Mit einem Seed im Preset
+  wird aus „hängt vom Zufall ab" ein **reproduzierbarer, gestalteter Zustand**:
+  der Autor legt fest, aus welchem Rauschen sein Preset zündet.
+  Importierte Presets haben das Feld nicht (dann Vorgabe wie bisher) — für
+  eigene Presets ist es ein Gestaltungsmittel. Zu klären: Feldname und Ablage
+  (eigener Namensraum, damit MilkDrop-Kompatibilität bleibt), Verhalten beim
+  Preset-Wechsel (Seed neu setzen oder Erbe behalten), und ob dasselbe für den
+  AVS-Zweig sinnvoll ist.
+- 🟡 **`onChange`-Slot: Skript beim Song-Wechsel** (Idee Patrik, S75) — neben
+  `init` ein Slot, der **beim Wechsel des Songs** ausgelöst wird; für
+  MilkDrop-, AVS- und eigene Module gleichermaßen. Damit kann ein Preset auf
+  einen neuen Titel reagieren (Farbwechsel, Reset von Zählern, neuer Seed —
+  s. o.), statt nur auf Beat und Zeit. Verwandt mit dem **Szenen-Wechsler**
+  (§7): der schaltet ganze Szenen, dieser Slot gibt dem einzelnen Preset einen
+  Einstiegspunkt. Zu definieren: Auslöser (nur Songwechsel oder auch
+  Playlist-Start/Stop?), welche Variablen dort sichtbar sind, Verhalten bei
+  Presets ohne den Slot, und wie er in den bestehenden Slot-Quartetten
+  (`init`/`frame`/`beat`/`point`) eingeordnet wird. **Nächste freie Session.**
 
 - 🟡 **Vereinheitlichung V2–V5** ([Konzept v1.2.0](visuals/Vereinheitlichung_Konzept.md)):
   V2 Audio-SSOT (MilkLoudness überall, `visdata`-Baustein, `getspec`/`getosc` in

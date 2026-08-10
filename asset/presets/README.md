@@ -10,8 +10,29 @@ ohne dass jemand erst eine Sammlung beschaffen muss.
 |---|---|---|
 | `avs/EyeCandy2/` | AVS (`.avs`) | 10 |
 | `milkdrop/fuck me im famous/` | MilkDrop (`.milk`) | 19 |
+| `milkdrop/Fuck me Im Famous - revisited/` | MilkDrop (`.milk`) | 3 |
 
-Beides Eigenwerk (GreatWho).
+Alles Eigenwerk (GreatWho).
+
+## Zurückgestellt für 0.5.0: die Mash-Up-Sätze
+
+Zwei große Sätze liegen bereit, sind aber **bewusst noch nicht hier**
+(Entscheid Patrik, S75) — sie kommen mit **0.5.0**, sobald die Erlaubnis
+geklärt ist:
+
+- `GreatWho + Flexi - Rock The House [Caturday Night]` (93)
+- `GreatWho + Martin + Geiss + Flexi - Lasershow [240 bipolar mixes]` (243)
+
+Es sind **Mash-Ups Dritter**: die *Basis* (`Rock The House`, `Lasershow`)
+stammt von GreatWho, die Mischungen selbst hat jemand anderes erstellt
+(vermutlich **Flexi**). Für diesen Ordner gilt „ausschließlich EIGENE Werke"
+(Root-`CMakeLists.txt` + [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md)
+→ „Nicht enthaltene Inhalte") — deshalb erst nach Rückmeldung des Erstellers,
+dann mit Namensnennung hier und in `THIRD_PARTY_NOTICES.md`.
+
+Die Dateien selbst bleiben verfügbar unter
+`asset/Milkdrop3/presets/` (nicht Teil des Binärpakets). Aufnahme = die beiden
+Ordner nach `milkdrop/` kopieren, mehr ist nicht nötig.
 
 **Das ist eine Auswahl, die wachsen soll — kein Abbild der ganzen Sammlung.**
 Der vollständige eigene Bestand (die `greatwho*`- und `GreatWhoPack*`-Sätze)
