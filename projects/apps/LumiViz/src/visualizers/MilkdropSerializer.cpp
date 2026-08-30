@@ -132,6 +132,7 @@ QJsonObject spriteToJson(const SpriteState& s)
 {
     QJsonObject o;
     o["index"] = s.index;
+    o["enabled"] = s.enabled;
     o["imageName"] = qstr(s.imageName);
     o["colorKey"] = static_cast<double>(s.colorKey);
     o["layer"] = s.layer;
@@ -154,6 +155,7 @@ SpriteState spriteFromJson(const QJsonObject& o)
 {
     SpriteState s;
     s.index = getInt(o, "index", s.index);
+    s.enabled = getBool(o, "enabled", s.enabled);
     s.imageName = getStr(o, "imageName");
     s.colorKey = static_cast<unsigned int>(
         getDouble(o, "colorKey", static_cast<double>(s.colorKey)));
@@ -260,6 +262,7 @@ QJsonObject presetToJson(const PresetState& state)
     p["invert"] = state.invert;
 
     // basic waveform
+    p["basicWaveEnabled"] = state.basicWaveEnabled;
     p["waveMode"] = state.waveMode;
     p["additiveWaves"] = state.additiveWaves;
     p["waveDots"] = state.waveDots;
@@ -350,6 +353,7 @@ QJsonObject presetToJson(const PresetState& state)
     p["uvSanitize"] = state.uvSanitize;
     p["psWarp"] = psOverrideKey(state.psWarp);
     p["psComp"] = psOverrideKey(state.psComp);
+    p["kaltstartSaat"] = state.kaltstartSaat;
 
     // meta
     p["generation"] = state.generation;
@@ -393,6 +397,7 @@ PresetState presetFromJson(const QJsonObject& doc, QStringList* report)
     s.solarize = getBool(p, "solarize", s.solarize);
     s.invert = getBool(p, "invert", s.invert);
 
+    s.basicWaveEnabled = getBool(p, "basicWaveEnabled", s.basicWaveEnabled);
     s.waveMode = getInt(p, "waveMode", s.waveMode);
     s.additiveWaves = getBool(p, "additiveWaves", s.additiveWaves);
     s.waveDots = getBool(p, "waveDots", s.waveDots);
@@ -481,6 +486,7 @@ PresetState presetFromJson(const QJsonObject& doc, QStringList* report)
     s.unormTrunkierung = getBool(p, "unormTrunkierung", s.unormTrunkierung);
     s.qGarbageEpsilon = getBool(p, "qGarbageEpsilon", s.qGarbageEpsilon);
     s.uvSanitize = getBool(p, "uvSanitize", s.uvSanitize);
+    s.kaltstartSaat = getBool(p, "kaltstartSaat", s.kaltstartSaat);
     s.psWarp = psOverrideFromKey(p.value("psWarp").toString());
     s.psComp = psOverrideFromKey(p.value("psComp").toString());
 

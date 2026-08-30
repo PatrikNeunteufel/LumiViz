@@ -142,6 +142,8 @@ struct ShapeState
 struct SpriteState
 {
     int index = 0;
+    bool enabled = true;            ///< LumiViz-Erweiterung (kein 2077-Key):
+                                    ///< Sprite abschaltbar wie Waves/Shapes
     std::string imageName;          ///< SpriteName (relativ zum Preset-Ordner)
     unsigned int colorKey = 0;      ///< SpriteColorKey (0xRRGGBB → Alpha 0)
     int layer = 0;                  ///< SpriteLayer (Sortierung, klein zuerst)
@@ -176,6 +178,9 @@ struct PresetState
     bool invert = false;
 
     // --- basic waveform ----------------------------------------------------------------
+    bool basicWaveEnabled = true;   ///< LumiViz-Erweiterung: Basis-Welle abschaltbar
+                                    ///< (MilkDrop kennt nur alpha=0; Default an =
+                                    ///< .milk-Importe und Bestand unveraendert)
     int waveMode = 0;               ///< 0..7 (renderer applies % 8)
     bool additiveWaves = false;
     bool waveDots = false;
@@ -259,6 +264,12 @@ struct PresetState
     bool uvSanitize = true;
     PsOverride psWarp = PsOverride::Auto;
     PsOverride psComp = PsOverride::Auto;
+
+    // --- Kaltstart (S76; Grundstein der S75-Idee "Preset-Seed") ---------------------------
+    bool kaltstartSaat = true;      ///< Rausch-Saat beim Kaltstart (heutiges
+                                    ///< Verhalten, startabhaengige Presets
+                                    ///< brauchen sie); aus = definiert
+                                    ///< schwarzer Start (blanke Pipeline)
 
     // --- meta ------------------------------------------------------------------------------
     int generation = 1;             ///< 1/2/3 (MilkParser)

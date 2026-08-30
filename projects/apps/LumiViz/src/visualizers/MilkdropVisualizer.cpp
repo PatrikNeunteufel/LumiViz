@@ -1461,7 +1461,8 @@ void MilkdropVisualizer::releaseBlurTargets()
     m_blurSrcH = 0;
 }
 
-std::vector<unsigned char> MilkdropVisualizer::kaltstartBasis(int w, int h)
+std::vector<unsigned char> MilkdropVisualizer::kaltstartBasis(int w, int h,
+                                                              bool saatAn)
 {
     // Die Formel liegt seit S75 in `projects/exec/common/KaltstartSaat.hpp` —
     // MilkdropRef bindet denselben Kopf ein, damit im Referenzvergleich BEIDE
@@ -1475,12 +1476,15 @@ std::vector<unsigned char> MilkdropVisualizer::kaltstartBasis(int w, int h)
     // Bestandsschalter NOSEED (S64) = Seed aus. Zusaetzlich waehlt
     // LUMIVIZ_MILKDROP_SEED einen anderen Startwert — fuer Messreihen ueber
     // mehrere Seeds, die zeigen, wie stark ein Preset am Startzustand haengt.
-    unsigned int seed = lumi::saat::kSeed;
+    // Preset-Schalter kaltstartSaat (S76, Grundstein der S75-Idee): aus =
+    // schwarze Basis, gleicher Vertrag wie NOSEED — Saat, Loeschen und Fading
+    // bleiben bit-konsistent, weil die Basis den Schalter traegt.
+    unsigned int seed = saatAn ? lumi::saat::kSeed : lumi::saat::kSeedAus;
     if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_NOSEED"))
     {
         seed = lumi::saat::kSeedAus;
     }
-    else if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_SEED"))
+    else if (saatAn && qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_SEED"))
     {
         bool ok = false;
         const unsigned int gewaehlt =
@@ -1504,7 +1508,8 @@ void MilkdropVisualizer::seedFeedbackNoise(int w, int h)
     }
     QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
 
-    const std::vector<unsigned char> noise = kaltstartBasis(w, h);
+    const std::vector<unsigned char> noise =
+        kaltstartBasis(w, h, m_state.kaltstartSaat);
     for (const unsigned int tex : {m_feedback.previousTexture(), m_feedback.currentTexture()})
     {
         f->glBindTexture(GL_TEXTURE_2D, tex);
@@ -1564,7 +1569,8 @@ void MilkdropVisualizer::applyFeedbackErbe(int w, int h, double keep)
 {
     if (!m_feedback.ready()) return;
     QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
-    const std::vector<unsigned char> basis = kaltstartBasis(w, h);
+    const std::vector<unsigned char> basis =
+        kaltstartBasis(w, h, m_state.kaltstartSaat);
 
     if (keep <= 0.0)
     {
@@ -2916,7 +2922,7 @@ void MilkdropVisualizer::onRender(float deltaTime)
     drawMotionVectors(fv);
     drawCustomShapes();
     drawCustomWaves();
-    drawBasicWave(fv);
+    if (m_state.basicWaveEnabled) drawBasicWave(fv);
     drawBorders(fv);
     if (fv.darkenCenter) drawDarkenCenter();
     if (m_frame < 6 && qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_DUMP_WARP"))
@@ -2935,6 +2941,9 @@ void MilkdropVisualizer::onRender(float deltaTime)
     // plugin.cpp:1131); burn-in zeichnet zusaetzlich in den Feedback-Buffer
     drawUserSprites();
     if (m_debugGrid) drawDebugGrid();
+    // Analyse-Overlay (S76): Flussfeld erzwungen sichtbar, NACH dem Composite
+    // — geht wie das Kalibrier-Raster nicht in den Feedback-Loop ein.
+    if (m_debugMv) drawMotionVectors(fv, /*erzwungen=*/true);
     // Sicht-Blende (S67): waehrend der Restzeit blendet das ZIEL von Schwarz
     // ein (dst *= Rampe) — versteckt die Rausch-Saat, ohne die Puffer-Dynamik
     // anzufassen (der Feedback-Loop laeuft ungedimmt weiter).
@@ -3253,9 +3262,9 @@ bool MilkdropVisualizer::reversePropagate(double fx, double fy, double& outX,
     return true;
 }
 
-void MilkdropVisualizer::drawMotionVectors(const FrameVars& fv)
+void MilkdropVisualizer::drawMotionVectors(const FrameVars& fv, bool erzwungen)
 {
-    if (fv.mvA < 0.001) return;
+    if (!erzwungen && fv.mvA < 0.001) return;
 
     int nX = static_cast<int>(fv.mvX);
     int nY = static_cast<int>(fv.mvY);
@@ -3338,7 +3347,7 @@ void MilkdropVisualizer::drawMotionVectors(const FrameVars& fv)
         pt.r = static_cast<float>(clampd(fv.mvR, 0.0, 1.0));
         pt.g = static_cast<float>(clampd(fv.mvG, 0.0, 1.0));
         pt.b = static_cast<float>(clampd(fv.mvB, 0.0, 1.0));
-        pt.a = static_cast<float>(clampd(fv.mvA, 0.0, 1.0));
+        pt.a = erzwungen ? 1.0f : static_cast<float>(clampd(fv.mvA, 0.0, 1.0));
     }
 
     QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
@@ -4375,7 +4384,7 @@ void MilkdropVisualizer::drawUserSprites()
 
     for (SpriteRuntime& rt : m_spriteRt)
     {
-        if (rt.dead) continue;
+        if (rt.dead || !rt.def.enabled) continue;
         const auto texIt = m_spriteTexIds.find(rt.def.imageName);
         if (texIt == m_spriteTexIds.end()) continue;  // Bild fehlt → inaktiv
         const QImage& img = m_spriteImages[rt.def.imageName];
@@ -4636,6 +4645,19 @@ std::vector<ModuleParamDesc> MilkdropVisualizer::paramDescs() const
     grid.order = 2;
     descs.push_back(grid);
 
+    ModuleParamDesc mv;
+    mv.id = "render.debugMv";
+    mv.displayName = "Motion-Vector-Overlay";
+    mv.group = "Debug";
+    mv.tooltip = "Warp-Flussfeld (mv-Raster) erzwungen mit Alpha 1 als Overlay "
+                 "ueber dem Bild — fuer Analyse; geht NICHT in den "
+                 "Feedback-Loop ein";
+    mv.stage = PipelineStage::Render;
+    mv.type = ParamType::Bool;
+    mv.defaultValue = false;
+    mv.order = 3;
+    descs.push_back(mv);
+
     return descs;
 }
 
@@ -4656,6 +4678,11 @@ bool MilkdropVisualizer::getParam(const std::string& id, ParamValue& out) const
         out = m_debugGrid;
         return true;
     }
+    if (id == "render.debugMv")
+    {
+        out = m_debugMv;
+        return true;
+    }
     return false;
 }
 
@@ -4666,6 +4693,13 @@ bool MilkdropVisualizer::setParam(const std::string& id, const ParamValue& value
         const bool* asBool = std::get_if<bool>(&value);
         if (asBool == nullptr) return false;
         m_debugGrid = *asBool;
+        return true;
+    }
+    if (id == "render.debugMv")
+    {
+        const bool* asBool = std::get_if<bool>(&value);
+        if (asBool == nullptr) return false;
+        m_debugMv = *asBool;
         return true;
     }
     const int* asInt = std::get_if<int>(&value);
@@ -4688,4 +4722,5 @@ void MilkdropVisualizer::resetToDefaults()
     m_meshX = kDefaultMeshX;
     m_meshY = kDefaultMeshY;
     m_debugGrid = false;
+    m_debugMv = false;
 }

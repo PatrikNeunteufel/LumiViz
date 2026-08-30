@@ -1243,6 +1243,7 @@ struct WriteVisitor
         o["meshX"] = p.meshX;
         o["meshY"] = p.meshY;
         o["debugGrid"] = p.debugGrid;
+        o["debugMotionVectors"] = p.debugMotionVectors;
         // Puffer-Wechsel (S66) — Node-Einstellung; die transienten Felder
         // (wechselZaehler/wechselErbe) reisen bewusst NICHT mit
         o["pufferWechsel"] = [&p] {
@@ -2696,6 +2697,8 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.meshX = getInt(o, "meshX", p.meshX);
         p.meshY = getInt(o, "meshY", p.meshY);
         p.debugGrid = getBool(o, "debugGrid", p.debugGrid);
+        p.debugMotionVectors =
+            getBool(o, "debugMotionVectors", p.debugMotionVectors);
         // Puffer-Wechsel (S66): fehlende/unbekannte Werte ⇒ AppEinstellung
         // (Migration — Bestands-Dokumente laden unveraendert)
         {

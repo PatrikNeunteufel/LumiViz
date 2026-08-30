@@ -56,4 +56,6 @@ aus (Akzeptanzkriterien 3/5 des Entwurfs).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.2.0 | 2026-08-12 | `ensure()` cleart frisch allozierte FBOs schwarz (Session 76): neues VRAM ist undefiniert (Treiber-Restbilder) — sichtbar im ersten Frame, bei decay=1.0 dauerhaft konserviert. Der Resize-Blit überschreibt `previous` danach wie gehabt |
+| 1.1.0 | 2026-08-03 | FBO-Handle-Getter für den Erbe-CPU-Mix (Session 66, Puffer-Wechsel Behalten/Löschen/Fading) |
 | 1.0.0 | 2026-07-20 | Erstfassung — FeedbackBuffer + Pool-Gerüst + Superscope-Trail (Session 33) |

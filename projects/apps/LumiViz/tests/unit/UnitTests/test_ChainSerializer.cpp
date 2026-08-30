@@ -1965,6 +1965,7 @@ TEST_SUITE("MilkdropNode")
         mp.meshX = 48;
         mp.meshY = 36;
         mp.debugGrid = true;
+        mp.debugMotionVectors = true;
         ChainNode milk;
         milk.params = std::move(mp);
         root.children.push_back(std::move(milk));
@@ -1993,6 +1994,7 @@ TEST_SUITE("MilkdropNode")
         CHECK(rp->meshX == 48);
         CHECK(rp->meshY == 36);
         CHECK(rp->debugGrid);
+        CHECK(rp->debugMotionVectors);
         CHECK(rp->revision >= 1);
     }
 

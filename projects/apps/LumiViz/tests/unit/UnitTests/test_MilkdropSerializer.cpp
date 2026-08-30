@@ -242,6 +242,7 @@ TEST_CASE("MilkdropSerializer: Sprite-Roundtrip (MilkDrop2077-Sektionen)")
     PresetState s;
     lumi::milkdrop::SpriteState sp;
     sp.index = 3;
+    sp.enabled = false;  // LumiViz-Erweiterung S76 (Default true)
     sp.imageName = "sprites\\Jello1.png";
     sp.colorKey = 0x102030u;
     sp.layer = 2;
@@ -263,6 +264,7 @@ TEST_CASE("MilkdropSerializer: Sprite-Roundtrip (MilkDrop2077-Sektionen)")
     REQUIRE(back.sprites.size() == 1);
     const auto& b = back.sprites[0];
     CHECK(b.index == 3);
+    CHECK_FALSE(b.enabled);
     CHECK(b.imageName == "sprites\\Jello1.png");
     CHECK(b.colorKey == 0x102030u);
     CHECK(b.layer == 2);
@@ -278,6 +280,28 @@ TEST_CASE("MilkdropSerializer: Sprite-Roundtrip (MilkDrop2077-Sektionen)")
     CHECK(b.repeatX == doctest::Approx(3.0));
     CHECK(b.repeatY == doctest::Approx(4.0));
     CHECK(b.code == "x=0.5+0.1*sin(time);");
+}
+
+// S76: Basis-Welle und Kaltstart-Saat schaltbar (LumiViz-Erweiterungen) —
+// Bestands-Dokumente ohne die Felder laden mit eingeschalteter Welle bzw.
+// Rausch-Saat (= bisheriges Verhalten).
+TEST_CASE("MilkdropSerializer: basicWaveEnabled/kaltstartSaat roundtrippen, fehlt = an")
+{
+    PresetState a;
+    a.basicWaveEnabled = false;
+    a.kaltstartSaat = false;
+    const PresetState b = presetFromJson(presetToJson(a), nullptr);
+    CHECK_FALSE(b.basicWaveEnabled);
+    CHECK_FALSE(b.kaltstartSaat);
+
+    QJsonObject doc = presetToJson(PresetState{});
+    QJsonObject p = doc.value("preset").toObject();
+    p.remove("basicWaveEnabled");
+    p.remove("kaltstartSaat");
+    doc["preset"] = p;
+    const PresetState alt = presetFromJson(doc, nullptr);
+    CHECK(alt.basicWaveEnabled);
+    CHECK(alt.kaltstartSaat);
 }
 
 // Strang R (S65), Waechter R2: Regelwerk-Felder roundtrippen; fehlende Felder

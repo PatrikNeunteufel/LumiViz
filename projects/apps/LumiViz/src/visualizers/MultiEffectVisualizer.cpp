@@ -2735,6 +2735,15 @@ MultiEffectVisualizer::MultiEffectVisualizer()
 CompileResult MultiEffectVisualizer::setChain(ChainNode root)
 {
     m_root = std::move(root);
+    // Neue Kette = frische Laufzeitwelt (S76-Befund „New Effect Chain leert
+    // nichts"): Node-Ids werden neu vergeben und koennen alte Ids recyceln —
+    // ohne Reset traefen sie auf fremde GL-Runtimes, und Buffer-Save-Slots/
+    // Surfaces truegen das letzte Bild der alten Kette weiter. Der Render-
+    // Thread raeumt beim naechsten Frame auf (resetRuntimes + firstFrame-
+    // Clear); die Load-Pfade setzten das Flag bisher selbst, jetzt gilt es
+    // fuer JEDEN Ketten-Tausch. Panel-Edits laufen ueber recompileChain()
+    // und behalten ihre Runtimes.
+    m_pendingRuntimeReset = true;
     return recompileChain();
 }
 
@@ -5922,6 +5931,8 @@ void MultiEffectVisualizer::runMilkdropNode(const ChainNode& node,
     rt.milk->setParam("render.meshX", lumi::modules::ParamValue{params.meshX});
     rt.milk->setParam("render.meshY", lumi::modules::ParamValue{params.meshY});
     rt.milk->setParam("render.debugGrid", lumi::modules::ParamValue{params.debugGrid});
+    rt.milk->setParam("render.debugMv",
+                      lumi::modules::ParamValue{params.debugMotionVectors});
 
     feedMilkAudio(*rt.milk);
     // Chain-Buffer-Groesse (physische Pixel) — width()/height() des Kerns

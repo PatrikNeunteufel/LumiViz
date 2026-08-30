@@ -66,6 +66,23 @@ bool FeedbackBuffer::ensure(int width, int height)
         return false;
     }
 
+    // Frisch alloziertes VRAM ist undefiniert (Treiber-Restinhalt) — beide
+    // Seiten starten definiert schwarz (S76-Befund: sichtbare Fremdbilder im
+    // ersten Frame; bei decay=1.0 blieben sie fuer immer). Der Resize-Blit
+    // unten ueberschreibt previous danach mit dem bewahrten Bild.
+    {
+        auto* f = QOpenGLContext::currentContext()->functions();
+        GLint vorher = 0;
+        f->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &vorher);
+        for (QOpenGLFramebufferObject* fbo : {m_current.get(), m_previous.get()})
+        {
+            fbo->bind();
+            f->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            f->glClear(GL_COLOR_BUFFER_BIT);
+        }
+        f->glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(vorher));
+    }
+
     if (keep != nullptr && QOpenGLFramebufferObject::hasOpenGLFramebufferBlit())
     {
         QOpenGLFramebufferObject::blitFramebuffer(

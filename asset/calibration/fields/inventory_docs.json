@@ -7,7 +7,7 @@
   },
   "summe": {
     "typen": 91,
-    "felder": 781,
+    "felder": 782,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -5303,6 +5303,12 @@
           "doc": "calibration overlay AFTER the composite"
         },
         {
+          "art": "bool",
+          "default": false,
+          "name": "debugMotionVectors",
+          "doc": "Motion-Vector-Overlay NACH dem Composite (Analyse, S76): zeichnet das Warp-Flussfeld erzwungen mit Alpha 1 ueber das Bild, ohne den Feedback-Loop zu beruehren — die Preset-Motion-Vectors (mv*-Werte) bleiben davon unberuehrt und zeichnen weiter in den Loop."
+        },
+        {
           "art": "zahl",
           "default": 32,
           "name": "meshX",
@@ -5324,6 +5330,7 @@
             },
             "preset": {
               "additiveWaves": false,
+              "basicWaveEnabled": true,
               "blur1EdgeDarken": 0.25,
               "blur1Max": 1,
               "blur1Min": 0,
@@ -5349,6 +5356,7 @@
               "ibR": 0.25,
               "ibSize": 0.01,
               "invert": false,
+              "kaltstartSaat": true,
               "maximizeWaveColor": true,
               "modWaveAlphaByVolume": false,
               "modWaveAlphaEnd": 0.95,

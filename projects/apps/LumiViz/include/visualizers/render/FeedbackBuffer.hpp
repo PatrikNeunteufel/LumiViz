@@ -5,7 +5,7 @@
  *
  * @author LumiPulse Team
  * @date   July 2026
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @details
  * Import-Fundament-Entwurf §3 (Roadmap 4.3): the MilkDrop/AVS feedback essence

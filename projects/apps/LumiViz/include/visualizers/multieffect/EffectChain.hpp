@@ -2681,6 +2681,11 @@ struct MilkdropNodeParams
     /// Warp-Gitter senkrecht (Original-Vorgabe 24; hoeher = feinerer Warp).
     int meshY = 24;
     bool debugGrid = false;  ///< calibration overlay AFTER the composite
+    /// Motion-Vector-Overlay NACH dem Composite (Analyse, S76): zeichnet das
+    /// Warp-Flussfeld erzwungen mit Alpha 1 ueber das Bild, ohne den
+    /// Feedback-Loop zu beruehren — die Preset-Motion-Vectors (mv*-Werte)
+    /// bleiben davon unberuehrt und zeichnen weiter in den Loop.
+    bool debugMotionVectors = false;
     /**
      * Bumped on every preset/script/shader edit (import sets 1). The render
      * host re-applies the state (script compile, shader transpile, texture

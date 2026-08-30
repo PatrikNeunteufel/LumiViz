@@ -76,9 +76,9 @@ PLAIN = {"addBool": "bool", "addColor": "farbe", "addEnum": "enum",
 #                  (MultiEffectPanel.cpp:4695)
 #   importNotes.*  Import-Bericht, read-only (MultiEffectPanel.cpp:4683)
 OHNE_PANEL_ERKLAERT = {
-    "milkdrop.debugGrid", "milkdrop.meshX", "milkdrop.meshY", "milkdrop.preset",
-    "milkdrop.presetDir", "passthrough.note", "passthrough.sourceId",
-    "importNotes.text",
+    "milkdrop.debugGrid", "milkdrop.debugMotionVectors", "milkdrop.meshX",
+    "milkdrop.meshY", "milkdrop.preset", "milkdrop.presetDir",
+    "passthrough.note", "passthrough.sourceId", "importNotes.text",
 }
 
 SAMMELWIDGETS = [

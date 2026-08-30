@@ -5,7 +5,7 @@
  *
  * @author LumiPulse Team
  * @date   July 2026
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @details
  * Import-Fundament-Entwurf §3 (Roadmap 4.3, API scaffolding only): the
@@ -21,7 +21,9 @@
 
 #pragma once
 
+#include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
+#include <QOpenGLFunctions>
 
 #include <array>
 #include <memory>
@@ -58,6 +60,16 @@ public:
             if (!allocate) return nullptr;
             auto fbo = std::make_unique<QOpenGLFramebufferObject>(width, height);
             if (!fbo->isValid()) return nullptr;
+            // Frisches VRAM ist undefiniert — ein nie beschriebener Slot muss
+            // schwarz lesen (AVS-Vertrag: leerer Global-Buffer = 0), nicht
+            // Treiber-Restbilder (S76-Befund).
+            auto* f = QOpenGLContext::currentContext()->functions();
+            GLint vorher = 0;
+            f->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &vorher);
+            fbo->bind();
+            f->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            f->glClear(GL_COLOR_BUFFER_BIT);
+            f->glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(vorher));
             slot = std::move(fbo);
         }
         return slot.get();

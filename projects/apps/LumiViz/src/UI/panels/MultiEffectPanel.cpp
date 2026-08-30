@@ -275,7 +275,22 @@ const std::vector<EffectType>& effectPalette()
 
         {"— MilkDrop —", nullptr},
         {"Milkdrop (Preset-Pipeline)",
-         [] { return EffectParams{MilkdropNodeParams{}}; }, Origin::MilkDrop},
+         [] {
+             // Blanker Start (Entscheid Patrik S76): die MilkDrop-Defaults
+             // (warp=1, decay=0.98, Basis-Wave an) waren als Einstieg
+             // undurchschaubar — eine frische Pipeline waberte, ohne dass
+             // irgendwo Code oder Shader stand. .milk-Importe und
+             // gespeicherte Ketten behalten die MilkDrop-Defaults (SSOT:
+             // PresetState-Initialisierer + Serializer-Fallbacks).
+             MilkdropNodeParams p;
+             p.preset.warp = 0.0;
+             p.preset.decay = 1.0;
+             p.preset.basicWaveEnabled = false;
+             p.preset.mvA = 0.0;            // 12x9-Raster weisser MV-Striche
+             p.preset.kaltstartSaat = false;  // schwarzer Start statt Rauschen
+             return EffectParams{p};
+         },
+         Origin::MilkDrop},
 
         // Strang S (S65): modernes Regelwerk, Code-Einfügen; URL-Import = S3
         {"— Shadertoy —", nullptr},
@@ -1433,10 +1448,13 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
     {
         int wavesOn = 0;
         int shapesOn = 0;
+        int spritesOn = 0;
         for (const auto& w : milk->preset.waves)
             if (w.enabled) ++wavesOn;
         for (const auto& s : milk->preset.shapes)
             if (s.enabled) ++shapesOn;
+        for (const auto& sp : milk->preset.sprites)
+            if (sp.enabled) ++spritesOn;
         // Anzeige-Reihenfolge = Render-Pipeline (S66, Entscheid Patrik):
         // Parameter (Rahmen) zuoberst, dann die Stufen in Frame-Reihenfolge —
         // Code → Warp → Shapes → Waves → Comp → Sprites (Overlay zuletzt).
@@ -1444,25 +1462,32 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
         // 2=Shapes 3=Shader-Warp 4=Sprites 5=Parameter 6=Shader-Comp — Pfade,
         // Editor-Dispatch und Toolbar-Logik hängen an der Id, nicht an der
         // Baum-Position. Reine Anzeige: die Pipeline selbst ist fest.
+        // Waves-Sektionslabel: die Basis-Welle zaehlt nur, wenn sie an ist
+        // (seit S76 schaltbar — die blanke Pipeline startet ohne sie).
+        const auto wavesLabel = [this](bool basisOn, int custom) {
+            return basisOn ? tr("Waves (Basis + %1 Custom aktiv)").arg(custom)
+                           : tr("Waves (%1 Custom aktiv)").arg(custom);
+        };
         const QList<QPair<int, QString>> sections = {
             {5, tr("Parameter (Basiswerte)")},
             {0, tr("Code (per_frame / per_pixel)")},
             {3, tr("Shader Warp (HLSL)")},
             {2, tr("Shapes (%1 aktiv)").arg(shapesOn)},
-            {1, tr("Waves (Basis + %1 Custom aktiv)").arg(wavesOn)},
+            {1, wavesLabel(milk->preset.basicWaveEnabled, wavesOn)},
             {6, tr("Shader Comp (HLSL)")},
-            {4, tr("Sprites (%1)").arg(milk->preset.sprites.size())}};
+            {4, tr("Sprites (%1 aktiv)").arg(spritesOn)}};
         const bool haveMilkIcons = !lumi::ui::presetIconDir().isEmpty();
         const QIcon& milkIcon =
             lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::MilkDrop);
 
-        // Auge-Toggle fuer Wave-/Shape-Elemente (S43, Sichttest-Befund):
-        // spiegelt `enabled` wie das Node-Auge — Mutation via mutate()
-        // (renderMutex + recompile) + Revision-Bump; Labels werden in-place
-        // nachgezogen (enabled-Toggle ist nicht strukturell, kein Rebuild).
-        auto addMilkEye = [this, path](QTreeWidgetItem* el, QTreeWidgetItem* sec,
-                                       int sectionIdx, int elementIdx,
-                                       int displayIndex, bool on) {
+        // Auge-Toggle fuer Wave-/Shape-/Sprite-Elemente + Basis-Waveform (S43,
+        // Sichttest-Befund; S76 verallgemeinert): spiegelt `enabled` wie das
+        // Node-Auge — Mutation via mutate() (renderMutex + recompile) +
+        // Revision-Bump. Labels/Zaehler/Auge-Text zieht syncMilkEyes nach —
+        // EINE Logik fuer beide Richtungen (Auge und Panel-Checkbox, SSOT);
+        // enabled-Toggle ist nicht strukturell, kein Rebuild.
+        auto addMilkEye = [this, path](QTreeWidgetItem* el, int sectionIdx,
+                                       int elementIdx, bool on) {
             auto* eye = new QToolButton(m_tree);
             eye->setCheckable(true);
             eye->setAutoRaise(true);
@@ -1471,11 +1496,7 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
                             : QString::fromUtf8("\xE2\x80\x94"));      // —
             eye->setToolTip(tr("Show / hide this element"));
             connect(eye, &QToolButton::toggled, this,
-                    [this, eye, el, sec, path, sectionIdx, elementIdx,
-                     displayIndex](bool v) {
-                        eye->setText(v ? QString::fromUtf8("\xF0\x9F\x91\x81")
-                                       : QString::fromUtf8("\xE2\x80\x94"));
-                        int onCount = 0;
+                    [this, el, path, sectionIdx, elementIdx](bool v) {
                         mutate(path, [&](ChainNode& n) {
                             auto* m = std::get_if<MilkdropNodeParams>(&n.params);
                             if (m == nullptr) return;
@@ -1487,22 +1508,20 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
                                         .enabled = v;
                                     ++m->revision;
                                 }
-                                for (const auto& e2 : vec)
-                                    if (e2.enabled) ++onCount;
                             };
-                            if (sectionIdx == 1) apply(m->preset.waves);
+                            if (sectionIdx == 1)
+                            {
+                                if (elementIdx == kMilkBasisWaveElement)
+                                {
+                                    m->preset.basicWaveEnabled = v;
+                                    ++m->revision;
+                                }
+                                else apply(m->preset.waves);
+                            }
                             else if (sectionIdx == 2) apply(m->preset.shapes);
+                            else if (sectionIdx == 4) apply(m->preset.sprites);
                         });
-                        m_updating = true;
-                        el->setText(0, (sectionIdx == 1 ? tr("Wave %1%2")
-                                                        : tr("Shape %1%2"))
-                                           .arg(displayIndex)
-                                           .arg(v ? QString() : tr(" (aus)")));
-                        sec->setText(
-                            0, sectionIdx == 1
-                                   ? tr("Waves (Basis + %1 Custom aktiv)").arg(onCount)
-                                   : tr("Shapes (%1 aktiv)").arg(onCount));
-                        m_updating = false;
+                        syncMilkEyes(path);
                         // Editor-Checkbox „... aktiv" nachziehen, falls sichtbar
                         if (m_tree->currentItem() == el)
                             buildPropertyEditor(currentPath());
@@ -1535,9 +1554,15 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
             };
             if (s == 1)
             {
-                // Basis-Waveform zuerst: sie rendert immer (auch bei 0 Custom
-                // Waves) und braucht darum einen sichtbaren Editor-Einstieg.
-                addElement(kMilkBasisWaveElement, tr("Basis-Waveform"));
+                // Basis-Waveform zuerst: sie existiert immer genau einmal und
+                // braucht einen sichtbaren Editor-Einstieg — seit S76 mit
+                // eigenem Auge (basicWaveEnabled) statt Immer-Rendern.
+                const bool basisOn = milk->preset.basicWaveEnabled;
+                auto* basisEl = addElement(
+                    kMilkBasisWaveElement,
+                    tr("Basis-Waveform") +
+                        (basisOn ? QString() : tr(" (aus)")));
+                addMilkEye(basisEl, 1, kMilkBasisWaveElement, basisOn);
                 for (int i = 0; i < static_cast<int>(milk->preset.waves.size()); ++i)
                 {
                     const auto& w = milk->preset.waves[i];
@@ -1545,7 +1570,7 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
                         i, tr("Wave %1%2")
                                .arg(w.index)
                                .arg(w.enabled ? QString() : tr(" (aus)")));
-                    addMilkEye(el, sec, 1, i, w.index, w.enabled);
+                    addMilkEye(el, 1, i, w.enabled);
                 }
             }
             else if (s == 2)
@@ -1557,16 +1582,22 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
                         i, tr("Shape %1%2")
                                .arg(sh.index)
                                .arg(sh.enabled ? QString() : tr(" (aus)")));
-                    addMilkEye(el, sec, 2, i, sh.index, sh.enabled);
+                    addMilkEye(el, 2, i, sh.enabled);
                 }
             }
             else if (s == 4)
             {
                 for (int i = 0; i < static_cast<int>(milk->preset.sprites.size()); ++i)
-                    addElement(i, tr("Sprite %1 — %2")
-                                      .arg(milk->preset.sprites[i].index)
-                                      .arg(QString::fromStdString(
-                                          milk->preset.sprites[i].imageName)));
+                {
+                    const auto& sp = milk->preset.sprites[i];
+                    const QString base =
+                        tr("Sprite %1 — %2")
+                            .arg(sp.index)
+                            .arg(QString::fromStdString(sp.imageName));
+                    auto* el = addElement(
+                        i, base + (sp.enabled ? QString() : tr(" (aus)")));
+                    addMilkEye(el, 4, i, sp.enabled);
+                }
             }
         }
     }
@@ -2361,6 +2392,110 @@ void MultiEffectPanel::selectByPath(const QList<int>& path)
     }
 }
 
+void MultiEffectPanel::syncMilkEyes(const QList<int>& nodePath)
+{
+    // Zustand unter dem Mutex kopieren — die UI-Arbeit passiert danach.
+    bool basisOn = true;
+    struct Elem
+    {
+        int index;
+        bool enabled;
+        QString name;  // nur Sprites (Bildname im Label)
+    };
+    std::vector<Elem> waves;
+    std::vector<Elem> shapes;
+    std::vector<Elem> sprites;
+    {
+        QMutexLocker lock(m_mutex);
+        const ChainNode* n = nodeAtPath(nodePath);
+        const auto* m = n ? std::get_if<MilkdropNodeParams>(&n->params) : nullptr;
+        if (m == nullptr) return;
+        basisOn = m->preset.basicWaveEnabled;
+        for (const auto& w : m->preset.waves)
+            waves.push_back({w.index, w.enabled, {}});
+        for (const auto& s : m->preset.shapes)
+            shapes.push_back({s.index, s.enabled, {}});
+        for (const auto& sp : m->preset.sprites)
+            sprites.push_back({sp.index, sp.enabled,
+                               QString::fromStdString(sp.imageName)});
+    }
+
+    const auto setEye = [this](QTreeWidgetItem* el, bool on) {
+        auto* eye = qobject_cast<QToolButton*>(m_tree->itemWidget(el, 1));
+        if (eye == nullptr) return;
+        const QSignalBlocker blocker(eye);  // kein Rueck-Mutieren
+        eye->setChecked(on);
+        eye->setText(on ? QString::fromUtf8("\xF0\x9F\x91\x81")   // 👁
+                        : QString::fromUtf8("\xE2\x80\x94"));      // —
+    };
+    const auto elemItem = [this, &nodePath](int section,
+                                            int element) -> QTreeWidgetItem* {
+        QList<int> p = nodePath;
+        p << (kMilkSectionBase + section) << element;
+        return itemAtPath(p);
+    };
+    const auto sectionItem = [this, &nodePath](int section) -> QTreeWidgetItem* {
+        QList<int> p = nodePath;
+        p << (kMilkSectionBase + section);
+        return itemAtPath(p);
+    };
+    const auto aus = [this](bool on) {
+        return on ? QString() : tr(" (aus)");
+    };
+
+    m_updating = true;
+    int wavesOn = 0;
+    if (QTreeWidgetItem* el = elemItem(1, kMilkBasisWaveElement))
+    {
+        el->setText(0, tr("Basis-Waveform") + aus(basisOn));
+        setEye(el, basisOn);
+    }
+    for (int i = 0; i < static_cast<int>(waves.size()); ++i)
+    {
+        if (waves[static_cast<std::size_t>(i)].enabled) ++wavesOn;
+        if (QTreeWidgetItem* el = elemItem(1, i))
+        {
+            const Elem& w = waves[static_cast<std::size_t>(i)];
+            el->setText(0, tr("Wave %1").arg(w.index) + aus(w.enabled));
+            setEye(el, w.enabled);
+        }
+    }
+    if (QTreeWidgetItem* sec = sectionItem(1))
+        sec->setText(0, basisOn
+                            ? tr("Waves (Basis + %1 Custom aktiv)").arg(wavesOn)
+                            : tr("Waves (%1 Custom aktiv)").arg(wavesOn));
+
+    int shapesOn = 0;
+    for (int i = 0; i < static_cast<int>(shapes.size()); ++i)
+    {
+        if (shapes[static_cast<std::size_t>(i)].enabled) ++shapesOn;
+        if (QTreeWidgetItem* el = elemItem(2, i))
+        {
+            const Elem& s = shapes[static_cast<std::size_t>(i)];
+            el->setText(0, tr("Shape %1").arg(s.index) + aus(s.enabled));
+            setEye(el, s.enabled);
+        }
+    }
+    if (QTreeWidgetItem* sec = sectionItem(2))
+        sec->setText(0, tr("Shapes (%1 aktiv)").arg(shapesOn));
+
+    int spritesOn = 0;
+    for (int i = 0; i < static_cast<int>(sprites.size()); ++i)
+    {
+        if (sprites[static_cast<std::size_t>(i)].enabled) ++spritesOn;
+        if (QTreeWidgetItem* el = elemItem(4, i))
+        {
+            const Elem& sp = sprites[static_cast<std::size_t>(i)];
+            el->setText(0, tr("Sprite %1 — %2").arg(sp.index).arg(sp.name) +
+                               aus(sp.enabled));
+            setEye(el, sp.enabled);
+        }
+    }
+    if (QTreeWidgetItem* sec = sectionItem(4))
+        sec->setText(0, tr("Sprites (%1 aktiv)").arg(spritesOn));
+    m_updating = false;
+}
+
 void MultiEffectPanel::onItemChanged(QTreeWidgetItem* item, int column)
 {
     if (m_updating || item == nullptr) return;
@@ -2948,7 +3083,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             if (QWidget* l = form->labelForField(widget)) l->setToolTip(tip);
     };
     auto addInt = [&](const char* field, const QString& label, int value, int lo,
-                      int hi, std::function<void(ChainNode&, int)> set) {
+                      int hi, std::function<void(ChainNode&, int)> set,
+                      const QString& tip = QString()) {
         auto* spin = new QSpinBox(m_propContainer);
         spin->setRange(lo, hi);
         spin->setValue(value);
@@ -2956,11 +3092,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 [this, path, set](int v) {
                     mutate(path, [&](ChainNode& n) { set(n, v); });
                 });
-        addRow(field, label, spin);
+        addRow(field, label, spin, tip);
     };
     auto addDouble = [&](const char* field, const QString& label, double value,
                          double lo, double hi, double step,
-                         std::function<void(ChainNode&, double)> set) {
+                         std::function<void(ChainNode&, double)> set,
+                         const QString& tip = QString()) {
         auto* spin = new QDoubleSpinBox(m_propContainer);
         spin->setRange(lo, hi);
         spin->setSingleStep(step);
@@ -2970,15 +3107,19 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 [this, path, set](double v) {
                     mutate(path, [&](ChainNode& n) { set(n, v); });
                 });
-        addRow(field, label, spin);
+        addRow(field, label, spin, tip);
     };
+    // `after` laeuft NACH der Mutation ausserhalb des Locks — fuer UI-Nachzug
+    // wie syncMilkEyes (SSOT: Baum-Auge folgt der Panel-Checkbox, S76).
     auto addBool = [&](const char* field, const QString& label, bool value,
                        std::function<void(ChainNode&, bool)> set,
-                       const QString& tip = QString()) {
+                       const QString& tip = QString(),
+                       std::function<void()> after = {}) {
         auto* box = new QCheckBox(m_propContainer);
         box->setChecked(value);
-        connect(box, &QCheckBox::toggled, this, [this, path, set](bool v) {
+        connect(box, &QCheckBox::toggled, this, [this, path, set, after](bool v) {
             mutate(path, [&](ChainNode& n) { set(n, v); });
+            if (after) after();
         });
         addRow(field, label, box, tip);
     };
@@ -3255,13 +3396,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     };
     auto addText = [&](const char* field, const QString& label,
                        const std::string& value,
-                       std::function<void(ChainNode&, std::string)> set) {
+                       std::function<void(ChainNode&, std::string)> set,
+                       const QString& tip = QString()) {
         auto* edit = new QLineEdit(QString::fromStdString(value), m_propContainer);
         connect(edit, &QLineEdit::editingFinished, this, [this, path, set, edit]() {
             const std::string t = edit->text().toStdString();
             mutate(path, [&](ChainNode& n) { set(n, t); });
         });
-        addRow(field, label, edit);
+        addRow(field, label, edit, tip);
     };
     // Fremdsprachen-Code-Editor (GLSL, Strang S): wie addScript mit ⓘ-Referenz
     // und ⤢-Groß-Editor, aber OHNE EEL-Highlighter (falsche Einfärbung) und
@@ -5655,6 +5797,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                    [milkOf](ChainNode& n, int v) { milkOf(n).meshY = v; });
             addBool("debugGrid", tr("Kalibrier-Raster"), p->debugGrid,
                     [milkOf](ChainNode& n, bool v) { milkOf(n).debugGrid = v; });
+            addBool("debugMotionVectors", tr("Motion-Vector-Overlay"),
+                    p->debugMotionVectors, [milkOf](ChainNode& n, bool v) {
+                        milkOf(n).debugMotionVectors = v;
+                    });
             addText("presetDir", tr("Textur-Basisordner"), p->presetDir,
                     [milkOf](ChainNode& n, std::string v) {
                         milkOf(n).presetDir = std::move(v);
@@ -5900,12 +6046,17 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 };
             };
             auto* hint = new QLabel(
-                tr("Die Basis-Waveform wird immer gerendert (Alpha 0 = "
-                   "unsichtbar). Startwerte — per_frame-Code kann wave_* je "
+                tr("Die eingebaute Standard-Welle des Presets (in MilkDrop "
+                   "immer an). Startwerte — per_frame-Code kann wave_* je "
                    "Frame ueberschreiben."),
                 m_propContainer);
             hint->setWordWrap(true);
             form->addRow(hint);
+            addBool("basicWaveEnabled", tr("Basis-Waveform aktiv"),
+                    p->preset.basicWaveEnabled, setB(&PS::basicWaveEnabled),
+                    tr("LumiViz-Schalter: aus = Welle wird nicht gerendert. "
+                       "MilkDrop-Presets kennen nur Alpha 0."),
+                    [this, path] { syncMilkEyes(path); });
             addInt("waveMode", tr("Wave-Modus (0-7)"), p->preset.waveMode, 0, 7, setI(&PS::waveMode));
             addBool("additiveWaves", tr("Additiv"), p->preset.additiveWaves, setB(&PS::additiveWaves));
             addBool("waveDots", tr("Punkte statt Linien"), p->preset.waveDots, setB(&PS::waveDots));
@@ -5948,7 +6099,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             auto& mp = milkOf(n);
                             if (i < mp.preset.waves.size())
                                 mp.preset.waves[i].enabled = v;
-                        });
+                        },
+                        QString(), [this, path] { syncMilkEyes(path); });
                 const auto setWave = [milkOf, i](std::string lumi::milkdrop::WaveState::* member) {
                     return [milkOf, i, member](ChainNode& n, std::string v) {
                         auto& mp = milkOf(n);
@@ -6024,7 +6176,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             auto& mp = milkOf(n);
                             if (i < mp.preset.shapes.size())
                                 mp.preset.shapes[i].enabled = v;
-                        });
+                        },
+                        QString(), [this, path] { syncMilkEyes(path); });
                 const auto setShape = [milkOf, i](std::string lumi::milkdrop::ShapeState::* member) {
                     return [milkOf, i, member](ChainNode& n, std::string v) {
                         auto& mp = milkOf(n);
@@ -6223,45 +6376,64 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     };
                 };
                 const QString t = tr("Sprite %1").arg(sp.index);
-                addText("imageName", t + tr(" · Bild (relativ zum Textur-Ordner)"),
-                        sp.imageName, spriteSet([](SpriteState& s, std::string v) {
-                            s.imageName = std::move(v);
-                        }));
-                addColor("colorKey", t + tr(" · Colorkey"), sp.colorKey,
-                         spriteSet([](SpriteState& s, uint32_t v) {
-                             s.colorKey = v;
-                         }));
-                addInt("layer", t + tr(" · Layer"), sp.layer, -100, 100,
-                       spriteSet([](SpriteState& s, int v) { s.layer = v; }));
-                addInt("blendMode", t + tr(" · Blend (0=Alpha 1=Decal 2=Add 3=SrcColor 4=Colorkey)"),
-                       sp.blendMode, 0, 4,
-                       spriteSet([](SpriteState& s, int v) { s.blendMode = v; }));
-                addDouble("alpha", t + tr(" · Alpha"), sp.alpha, 0.0, 1.0, 0.01,
-                          spriteSet([](SpriteState& s, double v) { s.alpha = v; }));
-                addDouble("burn", t + tr(" · Burn"), sp.burn, 0.0, 1.0, 0.01,
-                          spriteSet([](SpriteState& s, double v) { s.burn = v; }));
-                addDouble("x", t + tr(" · X"), sp.x, -5.0, 5.0, 0.01,
-                          spriteSet([](SpriteState& s, double v) { s.x = v; }));
-                addDouble("y", t + tr(" · Y"), sp.y, -5.0, 5.0, 0.01,
-                          spriteSet([](SpriteState& s, double v) { s.y = v; }));
-                addDouble("sx", t + tr(" · Skalierung X (negativ = gespiegelt)"),
-                          sp.sx, -10.0, 10.0, 0.01,
-                          spriteSet([](SpriteState& s, double v) { s.sx = v; }));
-                addDouble("sy", t + tr(" · Skalierung Y"), sp.sy, -10.0, 10.0, 0.01,
-                          spriteSet([](SpriteState& s, double v) { s.sy = v; }));
-                addDouble("rot", t + tr(" · Rotation (rad)"), sp.rot, -10.0, 10.0, 0.01,
-                          spriteSet([](SpriteState& s, double v) { s.rot = v; }));
-                addDouble("speed", t + tr(" · Speed (time-Skalierung)"), sp.speed,
-                          0.0, 10.0, 0.1,
-                          spriteSet([](SpriteState& s, double v) { s.speed = v; }));
-                addDouble("repeatX", t + tr(" · Repeat X"), sp.repeatX, 0.01, 100.0, 0.1,
-                          spriteSet([](SpriteState& s, double v) {
-                              s.repeatX = v;
-                          }));
-                addDouble("repeatY", t + tr(" · Repeat Y"), sp.repeatY, 0.01, 100.0, 0.1,
-                          spriteSet([](SpriteState& s, double v) {
-                              s.repeatY = v;
-                          }));
+                addBool("enabled", t + tr(" aktiv"), sp.enabled,
+                        spriteSet([](SpriteState& s, bool v) { s.enabled = v; }),
+                        QString(), [this, path] { syncMilkEyes(path); });
+                // N3.2 nachgezogen (S76): numerische Startwerte nur in der
+                // Einzel-Ansicht — die Sektions-Liste bleibt kompakt
+                // (aktiv + Code), wie bei Waves/Shapes. Labels kurz, Details
+                // im Tooltip (Panel-Breite folgt der Label-Spalte).
+                if (milkElem >= 0)
+                {
+                    addText("imageName", tr("Bild"), sp.imageName,
+                            spriteSet([](SpriteState& s, std::string v) {
+                                s.imageName = std::move(v);
+                            }),
+                            tr("Dateiname, relativ zum Textur-Ordner des "
+                               "Presets"));
+                    addColor("colorKey", tr("Colorkey"), sp.colorKey,
+                             spriteSet([](SpriteState& s, uint32_t v) {
+                                 s.colorKey = v;
+                             }));
+                    addInt("layer", tr("Layer"), sp.layer, -100, 100,
+                           spriteSet([](SpriteState& s, int v) { s.layer = v; }),
+                           tr("Zeichenreihenfolge — klein zuerst"));
+                    addInt("blendMode", tr("Blend-Modus"), sp.blendMode, 0, 4,
+                           spriteSet([](SpriteState& s, int v) {
+                               s.blendMode = v;
+                           }),
+                           tr("0=Alpha · 1=Decal · 2=Add · 3=SrcColor · "
+                              "4=Colorkey"));
+                    addDouble("alpha", tr("Alpha"), sp.alpha, 0.0, 1.0, 0.01,
+                              spriteSet([](SpriteState& s, double v) { s.alpha = v; }));
+                    addDouble("burn", tr("Burn"), sp.burn, 0.0, 1.0, 0.01,
+                              spriteSet([](SpriteState& s, double v) { s.burn = v; }));
+                    addDouble("x", tr("Position X"), sp.x, -5.0, 5.0, 0.01,
+                              spriteSet([](SpriteState& s, double v) { s.x = v; }));
+                    addDouble("y", tr("Position Y"), sp.y, -5.0, 5.0, 0.01,
+                              spriteSet([](SpriteState& s, double v) { s.y = v; }));
+                    addDouble("sx", tr("Skalierung X"), sp.sx, -10.0, 10.0, 0.01,
+                              spriteSet([](SpriteState& s, double v) { s.sx = v; }),
+                              tr("Negativ = gespiegelt"));
+                    addDouble("sy", tr("Skalierung Y"), sp.sy, -10.0, 10.0, 0.01,
+                              spriteSet([](SpriteState& s, double v) { s.sy = v; }),
+                              tr("Negativ = gespiegelt"));
+                    addDouble("rot", tr("Rotation (rad)"), sp.rot, -10.0, 10.0, 0.01,
+                              spriteSet([](SpriteState& s, double v) { s.rot = v; }));
+                    addDouble("speed", tr("Speed"), sp.speed, 0.0, 10.0, 0.1,
+                              spriteSet([](SpriteState& s, double v) {
+                                  s.speed = v;
+                              }),
+                              tr("Skaliert die sprite-lokale `time`"));
+                    addDouble("repeatX", tr("Repeat X"), sp.repeatX, 0.01, 100.0, 0.1,
+                              spriteSet([](SpriteState& s, double v) {
+                                  s.repeatX = v;
+                              }));
+                    addDouble("repeatY", tr("Repeat Y"), sp.repeatY, 0.01, 100.0, 0.1,
+                              spriteSet([](SpriteState& s, double v) {
+                                  s.repeatY = v;
+                              }));
+                }
                 addScript("code", t + tr(" · Code (per Frame)"), sp.code,
                           spriteSet([](SpriteState& s, std::string v) {
                               s.code = std::move(v);
@@ -6318,6 +6490,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             }
 
             group(tr("General / Composite"));
+            addBool("kaltstartSaat", tr("Kaltstart-Rauschsaat"),
+                    p->preset.kaltstartSaat, setB(&PS::kaltstartSaat),
+                    tr("An = Feedback-Puffer startet mit deterministischem "
+                       "Rauschen (MilkDrop-Verhalten; Verstaerker-Presets "
+                       "brauchen es). Aus = definiert schwarzer Start."));
             addDouble("decay", tr("Decay"), p->preset.decay, 0.0, 1.0, 0.001, setD(&PS::decay));
             addDouble("gammaAdj", tr("Gamma"), p->preset.gammaAdj, 0.0, 8.0, 0.01, setD(&PS::gammaAdj));
             addDouble("videoEchoZoom", tr("Echo-Zoom"), p->preset.videoEchoZoom, 0.001, 1000.0, 0.01, setD(&PS::videoEchoZoom));

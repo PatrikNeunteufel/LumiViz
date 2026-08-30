@@ -255,7 +255,8 @@ private:
     /// Kaltstart-Basis (S66): das deterministische Saat-Rauschen als RGBA8-
     /// Puffer (bzw. Nullen unter LUMIVIZ_MILKDROP_NOSEED) — gemeinsame Quelle
     /// von seedFeedbackNoise und applyFeedbackErbe
-    [[nodiscard]] static std::vector<unsigned char> kaltstartBasis(int w, int h);
+    [[nodiscard]] static std::vector<unsigned char> kaltstartBasis(int w, int h,
+                                                                   bool saatAn);
     /// Puffer-Wechsel (S66): beide Feedback-Texturen = Erbe*keep + Saat*(1-keep)
     /// (keep<=0: reine Saat ohne Readback). Render-Thread, Kontext current.
     void applyFeedbackErbe(int w, int h, double keep);
@@ -263,7 +264,9 @@ private:
     void runBlurPasses(const FrameVars& fv);
     void computeWarpMesh(const FrameVars& fv);
     void drawWarpPass(const FrameVars& fv);
-    void drawMotionVectors(const FrameVars& fv);
+    /// erzwungen = Debug-Overlay (S76): zeichnet auch bei mv_a=0, Alpha 1 —
+    /// als Post-Composite-Overlay aufgerufen, nicht im Feedback-Loop
+    void drawMotionVectors(const FrameVars& fv, bool erzwungen = false);
     void drawCustomShapes();
     void drawCustomWaves();
     void drawBasicWave(const FrameVars& fv);
@@ -446,6 +449,7 @@ private:
     int m_meshX = kDefaultMeshX;
     int m_meshY = kDefaultMeshY;
     bool m_debugGrid = false;   ///< calibration grid overlay (Config panel toggle)
+    bool m_debugMv = false;     ///< motion-vector overlay (analysis, S76)
 
     // aspect factors of the internal surface (plugin.cpp:2035)
     double m_aspectX = 1.0, m_aspectY = 1.0;

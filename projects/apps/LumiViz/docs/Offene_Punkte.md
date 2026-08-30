@@ -1698,6 +1698,11 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   (eigener Namensraum, damit MilkDrop-Kompatibilität bleibt), Verhalten beim
   Preset-Wechsel (Seed neu setzen oder Erbe behalten), und ob dasselbe für den
   AVS-Zweig sinnvoll ist.
+  **Grundstein umgesetzt (S76):** `PresetState.kaltstartSaat` (Bool, Default
+  an; Serializer-Fallback an, Panel „Kaltstart-Rauschsaat") — die Saat ist je
+  Preset **abschaltbar** (aus = schwarze Basis, gleicher Vertrag wie NOSEED;
+  die blanke Palette-Pipeline startet ohne). Offen bleibt die **Seed-Wahl**
+  als Feld (welches Rauschen, nicht nur ob).
 - 🟡 **`onChange`-Slot: Skript beim Song-Wechsel** (Idee Patrik, S75) — neben
   `init` ein Slot, der **beim Wechsel des Songs** ausgelöst wird; für
   MilkDrop-, AVS- und eigene Module gleichermaßen. Damit kann ein Preset auf

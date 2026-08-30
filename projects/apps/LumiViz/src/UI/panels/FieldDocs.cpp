@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     781>
+                     782>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
@@ -930,6 +930,8 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "Isowert der Oberflaeche"},
     {"milkdrop.debugGrid",
      "calibration overlay AFTER the composite"},
+    {"milkdrop.debugMotionVectors",
+     "Motion-Vector-Overlay NACH dem Composite (Analyse, S76): zeichnet das Warp-Flussfeld erzwungen mit Alpha 1 ueber das Bild, ohne den Feedback-Loop zu beruehren \342\200\224 die Preset-Motion-Vectors (mv*-Werte) bleiben davon unberuehrt und zeichnen weiter in den Loop."},
     {"milkdrop.meshX",
      "warp mesh (app setting in the original, no preset key)"},
     {"milkdrop.meshY",

@@ -122,6 +122,11 @@ private:
     [[nodiscard]] QList<QList<int>> selectedPaths() const;
     [[nodiscard]] QTreeWidgetItem* itemAtPath(const QList<int>& path) const;
     void selectByPath(const QList<int>& path);
+    /// SSOT-Nachzug (S76): stellt Augen, Element-Labels und Sektions-Zaehler
+    /// eines Milkdrop-Nodes auf den aktuellen Preset-Zustand ein — Gegenrichtung
+    /// zur Auge→Checkbox-Kopplung, damit die Panel-Checkbox „… aktiv" den Baum
+    /// nicht stehen laesst.
+    void syncMilkEyes(const QList<int>& nodePath);
     void selectPaths(const QList<QList<int>>& paths);
     /// Keep only selected items on the current item's level (same effect list).
     void enforceSameLevelSelection();
