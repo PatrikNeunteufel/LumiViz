@@ -1,0 +1,112 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "",
+                "blend": 0,
+                "color": 0,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Clear",
+                "onlyFirst": false,
+                "type": "clear"
+            },
+            {
+                "blend": 0,
+                "code": "// 06 Tunnel mit Herzschlag — Patrik Neunteufel (LumiViz, 2026). Eigenwerk.\n// Shadertoy: iChannel0 = Music (512x2: y=0.25 FFT, y=0.75 Waveform).\n//\n// IDEE: Polar-Tunnel: z = TIEFE/r täuscht Tiefe vor (Bildmitte = fern).\n// Der Bass gibt Vortrieb; das Spektrum leuchtet als Aura um die Mitte.\n\n// ---- STELLSCHRAUBEN --------------------------------------------------------\nconst float VORTRIEB_GRUND = 0.080;  // Grund-Fahrgeschwindigkeit (war 0.6)\nconst float VORTRIEB_BASS  = 0.010;  // Bass-Schub obendrauf (war 1.4)\nconst float TIEFE          = .90;  // Tunnel-Streckung (kleiner = länger)\nconst float RING_DICHTE    = 2.28318; // Ringe in Fahrtrichtung\nconst float STREIFEN       = 8.0;   // Anzahl Längsstreifen\nconst float TWIST          = 0.05;  // Verdrehung der Streifen (war 0.7 — wackelte)\nconst float SCHAERFE       = 2.5;   // Muster-Kantenschärfe (1 = weich)\nconst float AURA_STAERKE   = 0.0;   // Spektrum-Aura um die Mitte\nconst float MITTE_DUNKEL   = 0.15;  // Größe des dunklen Fluchtpunkts\n// ----------------------------------------------------------------------------\n\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord)\n{\n    vec2 uv = (2.0 * fragCoord - iResolution.xy) / iResolution.y;\n    float bass = texture(iChannel0, vec2(0.05, 0.25)).x;\n    float r = length(uv) + 1e-4;   // nie 0 (Division)\n    float a = atan(uv.y, uv.x);\n    float drive = iTime * (VORTRIEB_GRUND + VORTRIEB_BASS * bass);\n    float z = TIEFE / r + drive;   // Tiefen-Koordinate\n\n    // Wandmuster: Ringe × Längsstreifen; pow() schärft die Kanten\n    float stripes = 0.5 + 0.5 * sin(z * RING_DICHTE) *\n                    sin(a * STREIFEN + drive * TWIST);\n    stripes = pow(stripes, SCHAERFE);\n    // Winkel 0..1 wählt den FFT-Bin: das Spektrum liegt einmal um den Tunnel\n    float fft = texture(iChannel0, vec2(fract(a / 6.28318), 0.25)).x;\n\n    vec3 col = (0.5 + 0.5 * cos(z + a + vec3(0.0, 2.1, 4.2))) * stripes;\n    col += AURA_STAERKE * fft * vec3(0.8, 0.3, 0.6) * smoothstep(1.2, 0.0, r);\n    col *= smoothstep(0.0, MITTE_DUNKEL, r);  // Fluchtpunkt dunkel\n    fragColor = vec4(col, 1.0);\n}\n",
+                "description": "Generiert aus asset/shadertoys/06_tunnel_herzschlag.glsl (SSOT dort; Shadertoy-portabel).",
+                "enabled": true,
+                "imageInput": [
+                    4,
+                    -1,
+                    -1,
+                    -1
+                ],
+                "name": "06_tunnel_herzschlag",
+                "type": "shadertoy"
+            },
+            {
+                "additive": true,
+                "beatCode": "",
+                "colorEnd": 10494976,
+                "colorStart": 16755232,
+                "count": 16384,
+                "direction": 270,
+                "drag": 0.9,
+                "enabled": true,
+                "fan": 25,
+                "forceCode": "// leichter Seitenwind, Hoehen ruetteln\nvec2 kraft(vec2 pos, vec2 vel, float alter)\n{\n    return vec2(0.05 * sin(uTime * 0.7 + pos.y * 6.0) + 0.04 * treb, 0.0);\n}\n",
+                "frameCode": "speed=0.4+bass*0.7;",
+                "gravityX": 0,
+                "gravityY": -0.22,
+                "initCode": "",
+                "lifeJitter": 0.5,
+                "lifeSeconds": 3.5,
+                "name": "GPU Particles",
+                "sizeEndFactor": 0.4,
+                "sizePx": 16,
+                "spawnSpread": 0.55,
+                "spawnX": 0.5,
+                "spawnY": 1.05,
+                "speed": 0.08,
+                "type": "gpuParticles"
+            },
+            {
+                "beatCode": "",
+                "blend": false,
+                "color": 0,
+                "enabled": true,
+                "everyNBeats": 2,
+                "frameCode": "",
+                "initCode": "",
+                "name": "OnBeat Clear",
+                "type": "onBeatClear"
+            },
+            {
+                "beatCode": "",
+                "code": "// Wellengang: gekreuzte Sinuswellen, Mitten heben die Amplitude\nvec2 warp(vec2 uv)\n{\n    float amp = 0.015 + 0.03 * mid;\n    uv.x += amp * sin(uv.y * 12.0 + uTime * 1.6);\n    uv.y += amp * sin(uv.x * 9.0 - uTime * 1.1);\n    return uv;\n}\n",
+                "enabled": true,
+                "frameCode": "",
+                "gridX": 96,
+                "gridY": 72,
+                "initCode": "",
+                "mixAmount": 1,
+                "name": "Mesh Warp",
+                "type": "meshWarp",
+                "wrapUv": false
+            },
+            {
+                "beatCode": "",
+                "code": "// CRT-Monitor: leichte Tonnen-Verzerrung, Scanlines, RGB-Maske, Vignette.\nvec4 farbe(vec2 uv, vec4 src)\n{\n    vec2 d = uv - 0.5;\n    vec2 kruemm = uv + d * dot(d, d) * 0.25;            // Tonnen-Verzerrung\n    if (kruemm.x < 0.0 || kruemm.x > 1.0 || kruemm.y < 0.0 || kruemm.y > 1.0)\n        return vec4(0.0, 0.0, 0.0, 1.0);\n    vec3 farbe = texture(uTex, kruemm).rgb;\n    float zeile = sin(kruemm.y * uResolution.y * 3.14159);\n    farbe *= 0.82 + 0.18 * zeile * zeile;               // Scanlines\n    float spalte = mod(floor(kruemm.x * uResolution.x), 3.0);\n    vec3 maske = spalte < 1.0 ? vec3(1.0, 0.72, 0.72)\n               : spalte < 2.0 ? vec3(0.72, 1.0, 0.72) : vec3(0.72, 0.72, 1.0);\n    farbe *= maske * 1.12;                              // Lochmaske\n    farbe *= 1.0 - 0.55 * dot(d, d) * 2.0;             // Vignette\n    return vec4(farbe, 1.0);\n}\n",
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "mixAmount": 1,
+                "name": "Pixel Filter",
+                "type": "pixelFilter"
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

@@ -1,0 +1,554 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "blendIn": 0,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "beatCode": "",
+                        "channel": 2,
+                        "colors": [
+                            11141120,
+                            11162880,
+                            16776960,
+                            16755200
+                        ],
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "mode": 3,
+                        "name": "Simple",
+                        "position": 2,
+                        "type": "simpleScope"
+                    },
+                    {
+                        "beatCode": "",
+                        "blend": 3,
+                        "colors": [
+                            255,
+                            16776960
+                        ],
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Dot Grid",
+                        "spacing": 21,
+                        "type": "dotGrid",
+                        "xMove": 128,
+                        "yMove": 128
+                    },
+                    {
+                        "beatCode": "",
+                        "blend": 1,
+                        "color": 16777215,
+                        "damping": 0.9909999966621399,
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "maxDistance": 16,
+                        "name": "Moving Particle",
+                        "onBeatSize": true,
+                        "size": 8,
+                        "size2": 12,
+                        "spring": 0.004000000189989805,
+                        "type": "movingParticle"
+                    },
+                    {
+                        "beatCode": "",
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Blur",
+                        "roundUp": true,
+                        "strength": 3,
+                        "type": "blur"
+                    },
+                    {
+                        "blend": false,
+                        "builtinRemap": 0,
+                        "code": "x=x*.99;y=y*.99;",
+                        "enabled": true,
+                        "name": "Movement",
+                        "rectCoords": true,
+                        "sourceMapped": 0,
+                        "subpixel": true,
+                        "type": "movement",
+                        "wrap": false
+                    },
+                    {
+                        "blend": false,
+                        "builtinRemap": 0,
+                        "code": "r=r+bt*0.02;\nd=d-0.02;",
+                        "enabled": true,
+                        "name": "Movement",
+                        "rectCoords": false,
+                        "sourceMapped": 0,
+                        "subpixel": true,
+                        "type": "movement",
+                        "wrap": false
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "blend": 0,
+                "enabled": false,
+                "fragCode": "const float pi = 3.1415926535897932384626433832795;\n\nvec2 rotatePointNorm(vec2 pt, float rot)\t{\n\tvec2 returnMe = pt;\n\n\tfloat r = distance(vec2(0.50), returnMe);\n\tfloat a = atan((returnMe.y-0.5),(returnMe.x-0.5));\n\n\treturnMe.x = r * cos(a + 2.0 * pi * rot - pi) + 0.5;\n\treturnMe.y = r * sin(a + 2.0 * pi * rot - pi) + 0.5;\n\t\n\treturnMe = returnMe;\n\t\n\treturn returnMe;\n}\n\nvoid main()\t{\n\tvec4\t\tinputPixelColor;\n\tvec2\t\tpt = isf_FragNormCoord;\n\tvec2\t\tct = vec2(0.5,0.5);\n\t\n\tpt -= ct;\n\tpt.x /= width;\n\tpt += ct;\n\t\n\tpt = mix(vec2((pt.x*RENDERSIZE.x/RENDERSIZE.y)-(RENDERSIZE.x*.5-RENDERSIZE.y*.5)/RENDERSIZE.y,pt.y), \n\t\t\t\tvec2(pt.x,pt.y*(RENDERSIZE.y/RENDERSIZE.x)-(RENDERSIZE.y*.5-RENDERSIZE.x*.5)/RENDERSIZE.x), \n\t\t\t\tstep(RENDERSIZE.x,RENDERSIZE.y));\n\tpt = rotatePointNorm(pt,resultRotation+0.5);\n\tif (distance(pt,ct) < radius)\t{\n\t\tfloat\t\ta = (atan(ct.y-pt.y,ct.x-pt.x) + pi) / (2.0*pi);\n\t\t//inputPixelColor = IMG_NORM_PIXEL(inputImage,pt);\n\t\tpt.y -= 0.5;\n\t\tpt.y /= 2.0*sqrt(pow(radius,2.0)-pow((pt.x-0.5),2.0));\n\t\tpt.y += 0.5;\n\t\tinputPixelColor = IMG_NORM_PIXEL(inputImage,pt);\n\t}\n\t\n\tgl_FragColor = inputPixelColor;\n}",
+                "geometrie": 0,
+                "gridX": 64,
+                "gridY": 48,
+                "herkunft": {
+                    "author": "VIDVOX",
+                    "name": "Circle Warp"
+                },
+                "mixAmount": 1,
+                "name": "Circle Warp",
+                "parameter": {
+                    "werte": [
+                        {
+                            "key": "radius",
+                            "max": 0.5,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0.5
+                        },
+                        {
+                            "key": "width",
+                            "max": 2,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 1
+                        },
+                        {
+                            "key": "resultRotation",
+                            "max": 1,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0
+                        }
+                    ]
+                },
+                "quellen": [
+                    {
+                        "bindung": -1,
+                        "name": "inputImage"
+                    }
+                ],
+                "type": "isfFilter",
+                "vertexCode": ""
+            },
+            {
+                "blend": 0,
+                "enabled": false,
+                "fragCode": "float character(float n, vec2 p) // some compilers have the word \"char\" reserved\n{\n\tp = floor(p*vec2(4.0, -4.0) + 2.5);\n\tif (clamp(p.x, 0.0, 4.0) == p.x && clamp(p.y, 0.0, 4.0) == p.y)\n\t{\n\t\tif (int(mod(n/exp2(p.x + 5.0*p.y), 2.0)) == 1) return 1.0;\n\t}\t\n\treturn 0.0;\n}\n\n\n\nvoid main()\t{\n\tfloat _size = size*36.0+8.0;\n\tvec2 uv = gl_FragCoord.xy;\n\tvec4 inputColor = IMG_NORM_PIXEL(inputImage, (floor(uv/_size)*_size/RENDERSIZE.xy));\n\tvec3 col = inputColor.rgb;\n\tfloat gray = (col.r + col.g + col.b)/3.0;\n\tgray = pow(gray, gamma);\n\tcol = mix(tintColor.rgb, col.rgb, 1.0-tint);\n\t\n\tfloat n =  65536.0;             // .\n\tif (gray > 0.2) n = 65600.0;    // :\n\tif (gray > 0.3) n = 332772.0;   // *\n\tif (gray > 0.4) n = 15255086.0; // o \n\tif (gray > 0.5) n = 23385164.0; // &\n\tif (gray > 0.6) n = 15252014.0; // 8\n\tif (gray > 0.7) n = 13199452.0; // @\n\tif (gray > 0.8) n = 11512810.0; // #\n\t\t\n\tvec2 p = mod(uv/(_size/2.0), 2.0) - vec2(1.0);\n\tcol = col*character(n, p);\n\tfloat alpha = mix(tintColor.a * inputColor.a, inputColor.a, 1.0-tint);\n\tif (alphaMode)\t{\n\t\talpha = (col.r + col.g + col.b)/3.0;\n\t\talpha = (alpha > 0.01) ? tintColor.a : alpha;\n\t}\n\t\n\tgl_FragColor = vec4(col,alpha);\n\n}",
+                "geometrie": 0,
+                "gridX": 64,
+                "gridY": 48,
+                "herkunft": {
+                    "author": "VIDVOX (Ported from https://www.shadertoy.com/view/lssGDj)",
+                    "name": "ASCII Art"
+                },
+                "mixAmount": 1,
+                "name": "ASCII Art",
+                "parameter": {
+                    "werte": [
+                        {
+                            "key": "size",
+                            "max": 1,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0.1
+                        },
+                        {
+                            "key": "gamma",
+                            "max": 2,
+                            "min": 0.5,
+                            "typ": 2,
+                            "zahl": 1
+                        },
+                        {
+                            "key": "tint",
+                            "max": 1,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 1
+                        },
+                        {
+                            "key": "tintColor",
+                            "typ": 3,
+                            "vektor": [
+                                0,
+                                1,
+                                0,
+                                1
+                            ]
+                        },
+                        {
+                            "ja": false,
+                            "key": "alphaMode",
+                            "typ": 0
+                        }
+                    ]
+                },
+                "quellen": [
+                    {
+                        "bindung": -1,
+                        "name": "inputImage"
+                    }
+                ],
+                "type": "isfFilter",
+                "vertexCode": ""
+            },
+            {
+                "blend": 0,
+                "enabled": false,
+                "fragCode": "//\toriginal blur implementation as v002.blur in QC by anton marini and tom butterworth, ported by zoidberg\n\n#if __VERSION__ <= 120\nvarying vec2\t\ttexOffsets[3];\n#else\nin vec2\t\ttexOffsets[3];\n#endif\n\n\nvoid main() {\n\tvec4\t\tsample0;\n\tvec4\t\tsample1;\n\tvec4\t\tsample2;\n\tif (PASSINDEX == 0)\t{\n\t\tsample0 = IMG_NORM_PIXEL(inputImage,texOffsets[0]);\n\t\tsample1 = IMG_NORM_PIXEL(inputImage,texOffsets[1]);\n\t\tsample2 = IMG_NORM_PIXEL(inputImage,texOffsets[2]);\n\t}\n\telse if (PASSINDEX == 1)\t{\n\t\tsample0 = IMG_NORM_PIXEL(smallA,texOffsets[0]);\n\t\tsample1 = IMG_NORM_PIXEL(smallA,texOffsets[1]);\n\t\tsample2 = IMG_NORM_PIXEL(smallA,texOffsets[2]);\n\t}\n\telse if (PASSINDEX == 2)\t{\n\t\tsample0 = IMG_NORM_PIXEL(smallB,texOffsets[0]);\n\t\tsample1 = IMG_NORM_PIXEL(smallB,texOffsets[1]);\n\t\tsample2 = IMG_NORM_PIXEL(smallB,texOffsets[2]);\n\t}\n\telse if (PASSINDEX == 3)\t{\n\t\tsample0 = IMG_NORM_PIXEL(smallC,texOffsets[0]);\n\t\tsample1 = IMG_NORM_PIXEL(smallC,texOffsets[1]);\n\t\tsample2 = IMG_NORM_PIXEL(smallC,texOffsets[2]);\n\t}\n\telse if (PASSINDEX == 4)\t{\n\t\tsample0 = IMG_NORM_PIXEL(smallD,texOffsets[0]);\n\t\tsample1 = IMG_NORM_PIXEL(smallD,texOffsets[1]);\n\t\tsample2 = IMG_NORM_PIXEL(smallD,texOffsets[2]);\n\t}\n\telse if (PASSINDEX == 5)\t{\n\t\tsample0 = IMG_NORM_PIXEL(smallE,texOffsets[0]);\n\t\tsample1 = IMG_NORM_PIXEL(smallE,texOffsets[1]);\n\t\tsample2 = IMG_NORM_PIXEL(smallE,texOffsets[2]);\n\t}\n\telse if (PASSINDEX == 6)\t{\n\t\tsample0 = IMG_NORM_PIXEL(smallF,texOffsets[0]);\n\t\tsample1 = IMG_NORM_PIXEL(smallF,texOffsets[1]);\n\t\tsample2 = IMG_NORM_PIXEL(smallF,texOffsets[2]);\n\t}\n\telse if (PASSINDEX == 7)\t{\n\t\tsample0 = IMG_NORM_PIXEL(smallG,texOffsets[0]);\n\t\tsample1 = IMG_NORM_PIXEL(smallG,texOffsets[1]);\n\t\tsample2 = IMG_NORM_PIXEL(smallG,texOffsets[2]);\n\t}\n\telse if (PASSINDEX == 8)\t{\n\t\tsample0 = IMG_NORM_PIXEL(smallH,texOffsets[0]);\n\t\tsample1 = IMG_NORM_PIXEL(smallH,texOffsets[1]);\n\t\tsample2 = IMG_NORM_PIXEL(smallH,texOffsets[2]);\n\t}\n\telse if (PASSINDEX == 9)\t{\n\t\tsample0 = IMG_NORM_PIXEL(smallI,texOffsets[0]);\n\t\tsample1 = IMG_NORM_PIXEL(smallI,texOffsets[1]);\n\t\tsample2 = IMG_NORM_PIXEL(smallI,texOffsets[2]);\n\t}\n\telse\t{\n\t\tsample0 = vec4(1,0,0,1);\n\t\tsample1 = vec4(1,0,0,1);\n\t\tsample2 = vec4(1,0,0,1);\n\t}\n\tvec4 final = vec4((sample0 + sample1 + sample2).rgba / (3.0));\n\tvec4 original = IMG_NORM_PIXEL(inputImage,texOffsets[0]);\n\tif (PASSINDEX == 9)\t{\n\t\tfinal = mix(original,min((final * original), 1.0), intensity);\n\t\t//\tFirst do a gloom,\n\t\t//\tthen a bright / contrast tweak based on the amount\n\t\t//\tthen a bloom\n\t\tvec4 tmpColorA = final;\n\t\tfloat bright = intensity * 0.222;\n\t\tvec4 tmpColorB = tmpColorA + vec4(bright, bright, bright, bright);\n\t\t//\tcontrast\n\t\tfloat contrast = 1.0 + intensity * (2.893);\n\t\ttmpColorA.rgba = ((vec4(2.0) * (tmpColorB.rgba - vec4(0.5))) * vec4(contrast) / vec4(2.0)) + vec4(0.5);\n\t\tfinal = min((tmpColorA + tmpColorA * original), 1.0);\n\t}\n\telse\t{\n\t\tfinal = mix(sample0, final, intensity);\n\t}\n\tgl_FragColor = final;\n}",
+                "geometrie": 0,
+                "gridX": 64,
+                "gridY": 48,
+                "herkunft": {
+                    "author": "VIDVOX",
+                    "name": "Glow"
+                },
+                "mixAmount": 1,
+                "name": "Glow",
+                "parameter": {
+                    "werte": [
+                        {
+                            "key": "intensity",
+                            "max": 1,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 1
+                        }
+                    ]
+                },
+                "passes": [
+                    {
+                        "breite": "floor($WIDTH*min((0.2),1.0))",
+                        "hoehe": "floor($HEIGHT*min((0.2),1.0))",
+                        "target": "smallA"
+                    },
+                    {
+                        "breite": "floor($WIDTH*min((0.2),1.0))",
+                        "hoehe": "floor($HEIGHT*min((0.2),1.0))",
+                        "target": "smallB"
+                    },
+                    {
+                        "breite": "floor($WIDTH*min((0.3),1.0))",
+                        "hoehe": "floor($HEIGHT*min((0.3),1.0))",
+                        "target": "smallC"
+                    },
+                    {
+                        "breite": "floor($WIDTH*min((0.3),1.0))",
+                        "hoehe": "floor($HEIGHT*min((0.3),1.0))",
+                        "target": "smallD"
+                    },
+                    {
+                        "breite": "floor($WIDTH*min((0.5),1.0))",
+                        "hoehe": "floor($HEIGHT*min((0.5),1.0))",
+                        "target": "smallE"
+                    },
+                    {
+                        "breite": "floor($WIDTH*min((0.5),1.0))",
+                        "hoehe": "floor($HEIGHT*min((0.5),1.0))",
+                        "target": "smallF"
+                    },
+                    {
+                        "breite": "floor($WIDTH*min((0.8),1.0))",
+                        "hoehe": "floor($HEIGHT*min((0.8),1.0))",
+                        "target": "smallG"
+                    },
+                    {
+                        "breite": "floor($WIDTH*min((0.8),1.0))",
+                        "hoehe": "floor($HEIGHT*min((0.8),1.0))",
+                        "target": "smallH"
+                    },
+                    {
+                        "target": "smallI"
+                    },
+                    {
+                    }
+                ],
+                "quellen": [
+                    {
+                        "bindung": -1,
+                        "name": "inputImage"
+                    }
+                ],
+                "type": "isfFilter",
+                "vertexCode": "#if __VERSION__ <= 120\nvarying vec2\t\ttexOffsets[3];\n#else\nout vec2\t\ttexOffsets[3];\n#endif\n\nconst float radius = 10.0;\n\nvoid main(void)\t{\n\t//\tload the main shader stuff\n\tisf_vertShaderInit();\n\t\n\tif (PASSINDEX==0 || PASSINDEX==2 || PASSINDEX==4 || PASSINDEX==6 || PASSINDEX==8)\t{\n\t\tfloat\t\tpixelWidth = 1.0/RENDERSIZE[0]*radius;\n\t\tif (PASSINDEX >= 2)\n\t\t\tpixelWidth *= .7;\n\t\telse if (PASSINDEX >= 6)\n\t\t\tpixelWidth *= 1.0;\n\t\ttexOffsets[0] = isf_FragNormCoord;\n\t\ttexOffsets[1] = clamp(vec2(isf_FragNormCoord[0]-pixelWidth, isf_FragNormCoord[1]),0.0,1.0);\n\t\ttexOffsets[2] = clamp(vec2(isf_FragNormCoord[0]+pixelWidth, isf_FragNormCoord[1]),0.0,1.0);\n\t}\n\telse if (PASSINDEX==1 || PASSINDEX==3 || PASSINDEX==5 || PASSINDEX==7 || PASSINDEX==9)\t{\n\t\tfloat\t\tpixelHeight = 1.0/RENDERSIZE[1]*radius;\n\t\tif (PASSINDEX >= 3)\n\t\t\tpixelHeight *= .7;\n\t\telse if (PASSINDEX >= 6)\n\t\t\tpixelHeight *= 1.0;\n\t\ttexOffsets[0] = isf_FragNormCoord;\n\t\ttexOffsets[1] = clamp(vec2(isf_FragNormCoord[0], isf_FragNormCoord[1]-pixelHeight),0.0,1.0);\n\t\ttexOffsets[2] = clamp(vec2(isf_FragNormCoord[0], isf_FragNormCoord[1]+pixelHeight),0.0,1.0);\n\t}\n}"
+            },
+            {
+                "blend": 0,
+                "enabled": false,
+                "fragCode": "void main(void)\n{\n\tvec2 pt = isf_FragNormCoord;\n\tfloat slide = (isf_FragNormCoord.y > 0.5) ? slidetop : slidebot;\n\tfloat shift = (isf_FragNormCoord.x < 0.5) ? shifttop : shiftbot;\n\n\tbool mirrorHorizontal = (isf_FragNormCoord.y > 0.5) ? mirrorHorizontaltop : mirrorHorizontalbot;\n\tbool mirrorVertical = (isf_FragNormCoord.x < 0.5) ? mirrorVerticaltop : mirrorVerticalbot;\n\tpt.x += slide;\n\tpt.y += shift;\n\tvec2 moddedRetard = mod(pt,1.0);\n\t\n\tif(mirrorHorizontal && pt.x >= 1.0 && pt.x <= 2.0)\n\t\tmoddedRetard = vec2(1.0-moddedRetard.x, moddedRetard.y);\n\tif(mirrorVertical && pt.y >= 1.0 && pt.y <= 2.0)\n\t\tmoddedRetard = vec2(moddedRetard.x, 1.0-moddedRetard.y);\n\t\n\tvec4 pixel = IMG_NORM_PIXEL(inputImage, moddedRetard);\n\tgl_FragColor = pixel;\n}",
+                "geometrie": 0,
+                "gridX": 64,
+                "gridY": 48,
+                "herkunft": {
+                    "author": "Inspired by Side Scroller and Flip by BrianChasalow",
+                    "name": "Dual Side Scroller And Flip"
+                },
+                "mixAmount": 1,
+                "name": "Dual Side Scroller And Flip",
+                "parameter": {
+                    "werte": [
+                        {
+                            "key": "slidetop",
+                            "max": 2,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0
+                        },
+                        {
+                            "key": "shifttop",
+                            "max": 2,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0
+                        },
+                        {
+                            "ja": true,
+                            "key": "mirrorHorizontaltop",
+                            "typ": 0
+                        },
+                        {
+                            "ja": true,
+                            "key": "mirrorVerticaltop",
+                            "typ": 0
+                        },
+                        {
+                            "key": "slidebot",
+                            "max": 2,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0
+                        },
+                        {
+                            "key": "shiftbot",
+                            "max": 2,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0
+                        },
+                        {
+                            "ja": true,
+                            "key": "mirrorHorizontalbot",
+                            "typ": 0
+                        },
+                        {
+                            "ja": true,
+                            "key": "mirrorVerticalbot",
+                            "typ": 0
+                        }
+                    ]
+                },
+                "quellen": [
+                    {
+                        "bindung": -1,
+                        "name": "inputImage"
+                    }
+                ],
+                "type": "isfFilter",
+                "vertexCode": ""
+            },
+            {
+                "blend": 0,
+                "enabled": false,
+                "fragCode": "//\twith help from https://github.com/neilmendoza/ofxPostProcessing/blob/master/src/ToonPass.cpp\n\n\nvec3 getNormal(vec2 st){\n\tvec2 texcoord = clamp(st, 0.001, 0.999);\n\treturn IMG_NORM_PIXEL(inputImage,texcoord).rgb;\n}\n\nvoid main(void){\n\tfloat dxtex = 1.0 / RENDERSIZE.x;\n\tfloat dytex = 1.0 / RENDERSIZE.y;\n\n\tvec2 st = vec2(isf_FragNormCoord[0],isf_FragNormCoord[1]);\n\t// access center pixel and 4 surrounded pixel\n\tvec3 center = getNormal(st).rgb;\n\tvec3 left = getNormal(st + vec2(dxtex, 0.0)).rgb;\n\tvec3 right = getNormal(st + vec2(-dxtex, 0.0)).rgb;\n\tvec3 up = getNormal(st + vec2(0.0, -dytex)).rgb;\n\tvec3 down = getNormal(st + vec2(0.0, dytex)).rgb;\n\n\t// discrete Laplace operator\n\tvec3 laplace = abs(-4.0*center + left + right + up + down);\n\t// if one rgb-component of convolution result is over threshold => edge\n\tvec4 line = IMG_NORM_PIXEL(inputImage, st);\n\tif(laplace.r > normalEdgeThreshold\n\t|| laplace.g > normalEdgeThreshold\n\t|| laplace.b > normalEdgeThreshold){\n\t\tline = vec4(0.0, 0.0, 0.0, 1.0); // => color the pixel green\n\t} else {\n\t\tline = vec4(1.0, 1.0, 1.0, 1.0); // black\n\t}\n\n\t//end Line;\n\t//gl_FragColor = line;\n\t\n\tvec4 color = IMG_THIS_PIXEL(inputImage);\n\n\t// store previous alpha value\n\tfloat alpha = color.a;\n\t// quantize process: multiply by factor, round and divde by factor\n\tcolor = floor((qLevel * color)) / qLevel;\n\t// set fragment/pixel color\n\tcolor.a = alpha;\n\n\tgl_FragColor = color * line;\n\t\n}",
+                "geometrie": 0,
+                "gridX": 64,
+                "gridY": 48,
+                "herkunft": {
+                    "author": "VIDVOX",
+                    "name": "Toon"
+                },
+                "mixAmount": 1,
+                "name": "Toon",
+                "parameter": {
+                    "werte": [
+                        {
+                            "key": "normalEdgeThreshold",
+                            "max": 0.1,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0.03
+                        },
+                        {
+                            "key": "qLevel",
+                            "max": 64,
+                            "min": 2,
+                            "typ": 2,
+                            "zahl": 32
+                        }
+                    ]
+                },
+                "quellen": [
+                    {
+                        "bindung": -1,
+                        "name": "inputImage"
+                    }
+                ],
+                "type": "isfFilter",
+                "vertexCode": ""
+            },
+            {
+                "blend": 0,
+                "enabled": false,
+                "fragCode": "//\t2D hash returning (0..1, 0..1) per integer-grid input.\n//\tStandard \"iq\" sin-based hash; deterministic per input vec2.\nvec2 hash2(vec2 p)\t{\n    p = vec2(dot(p, vec2(127.1, 311.7)),\n             dot(p, vec2(269.5, 183.3)));\n    return fract(sin(p) * 43758.5453);\n}\n\n\n//\tDistance from point p to line segment a-b, in the same coordinate space.\nfloat segDist(vec2 p, vec2 a, vec2 b)\t{\n    vec2  ab = b - a;\n    vec2  ap = p - a;\n    float t  = clamp(dot(ap, ab) / max(dot(ab, ab), 0.000001), 0.0, 1.0);\n    return length(ap - ab * t);\n}\n\n\nvoid main()\t{\n    vec2 uv = isf_FragNormCoord;\n\n    //\tCell size in UV space, adjusted so cells render visually square in screen space.\n    float aspect = RENDERSIZE.x / RENDERSIZE.y;\n    vec2  cellUV = vec2(cellSize, cellSize * aspect);\n\n    //\tGrid coordinate: which cell we're in + position within that cell (0..1).\n    vec2 grid  = uv / cellUV;\n    vec2 cell  = floor(grid);\n    vec2 local = fract(grid);\n\n    //\tPer-vertex jittered offsets for the four cell corners.\n    //\tAdjacent cells share corners; the hash is purely a function of the\n    //\tcorner's absolute grid coordinate, so the shared vertex agrees on both\n    //\tsides and triangles don't tear at cell boundaries.\n    vec2 j00 = (hash2(cell + vec2(0.0, 0.0) + seed) - 0.5) * jitter;\n    vec2 j10 = (hash2(cell + vec2(1.0, 0.0) + seed) - 0.5) * jitter;\n    vec2 j01 = (hash2(cell + vec2(0.0, 1.0) + seed) - 0.5) * jitter;\n    vec2 j11 = (hash2(cell + vec2(1.0, 1.0) + seed) - 0.5) * jitter;\n\n    vec2 p00 = vec2(0.0, 0.0) + j00;\n    vec2 p10 = vec2(1.0, 0.0) + j10;\n    vec2 p01 = vec2(0.0, 1.0) + j01;\n    vec2 p11 = vec2(1.0, 1.0) + j11;\n\n    //\tEach cell is split into two triangles along its main diagonal p10 -> p01.\n    //\tThe 2D cross product of (diagonal) x (point - p10) is positive on the\n    //\tupper-left side, negative on the lower-right.\n    vec2  edge = p01 - p10;\n    vec2  toPt = local - p10;\n    float side = edge.x * toPt.y - edge.y * toPt.x;\n\n    vec2 va, vb, vc;\n    if (side > 0.0)\t{\n        //\tUpper-left triangle: (p00, p10, p01).\n        va = p00; vb = p10; vc = p01;\n    }\n    else\t{\n        //\tLower-right triangle: (p10, p11, p01).\n        va = p10; vb = p11; vc = p01;\n    }\n\n    //\tSample the input at the triangle's centroid -> flat-shaded fill.\n    //\t(local var named triCenter — 'centroid' is a reserved GLSL keyword.)\n    vec2 triCenter = (va + vb + vc) / 3.0;\n    vec2 sampleUV = (cell + triCenter) * cellUV;\n    sampleUV = clamp(sampleUV, vec2(0.0), vec2(1.0));\n\n    vec4 fillColor = IMG_NORM_PIXEL(inputImage, sampleUV);\n\n    //\tOptional outline: distance from the current pixel to the nearest\n    //\ttriangle edge, in cell-local UV; convert to screen pixels via cellUV.\n    vec3 finalColor = fillColor.rgb;\n    if (outlineWidth > 0.0)\t{\n        float d        = min(min(segDist(local, va, vb),\n                                 segDist(local, vb, vc)),\n                                 segDist(local, vc, va));\n        float dPixels  = d * cellUV.x * RENDERSIZE.x;\n        float edgeAA   = 1.0 - smoothstep(outlineWidth * 0.5,\n                                          outlineWidth * 0.5 + 1.0,\n                                          dPixels);\n        finalColor = mix(finalColor, outlineColor.rgb, edgeAA * outlineColor.a);\n    }\n\n    gl_FragColor = vec4(finalColor, fillColor.a);\n}",
+                "geometrie": 0,
+                "gridX": 64,
+                "gridY": 48,
+                "herkunft": {
+                    "author": "VIDVOX",
+                    "name": "Triangle Mosaic"
+                },
+                "mixAmount": 1,
+                "name": "Triangle Mosaic",
+                "parameter": {
+                    "werte": [
+                        {
+                            "key": "cellSize",
+                            "label": "Cell Size",
+                            "max": 0.25,
+                            "min": 0.005,
+                            "typ": 2,
+                            "zahl": 0.025
+                        },
+                        {
+                            "key": "jitter",
+                            "label": "Jitter",
+                            "max": 1,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0.5
+                        },
+                        {
+                            "key": "seed",
+                            "label": "Seed",
+                            "max": 100,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0
+                        },
+                        {
+                            "key": "outlineWidth",
+                            "label": "Outline Width",
+                            "max": 5,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 1
+                        },
+                        {
+                            "key": "outlineColor",
+                            "label": "Outline Color",
+                            "typ": 3,
+                            "vektor": [
+                                0,
+                                0,
+                                0,
+                                1
+                            ]
+                        }
+                    ]
+                },
+                "quellen": [
+                    {
+                        "bindung": -1,
+                        "name": "inputImage"
+                    }
+                ],
+                "type": "isfFilter",
+                "vertexCode": ""
+            },
+            {
+                "blend": 0,
+                "enabled": true,
+                "fragCode": "const float pi = 3.14159265359;\n\n\nvoid main()\t{\n\tvec4\t\tinputPixelColor = vec4(0.0);\n\tvec2\t\trotate = pointInput;\n \tvec2 \t\tp = 2.0 * isf_FragNormCoord.xy - 1.0;\n \tfloat\t\taspect = RENDERSIZE.x / RENDERSIZE.y;\n \tp.x = p.x * aspect;\n \t\n \tfloat\t\tr = sqrt(dot(p,p)) * (2.0-radiusScale);\n \tif (r < 1.0)\t{\n\t\tvec2 uv;\n    \tfloat f = imageScale * (1.0-sqrt(1.0-r))/(r);\n    \tuv.x = mod(p.x*f + rotate.x,1.0);\n    \tuv.y = mod(p.y*f + rotate.y,1.0);\n    \tinputPixelColor = IMG_NORM_PIXEL(inputImage, uv);\n\t}\n\n\n\t//\tboth of these are also the same\n\t//inputPixelColor = IMG_NORM_PIXEL(inputImage, loc);\n\t\n\tgl_FragColor = inputPixelColor;\n}",
+                "geometrie": 0,
+                "gridX": 64,
+                "gridY": 48,
+                "herkunft": {
+                    "author": "VIDVOX",
+                    "name": "Sphere Map"
+                },
+                "mixAmount": 1,
+                "name": "Sphere Map",
+                "parameter": {
+                    "werte": [
+                        {
+                            "key": "imageScale",
+                            "label": "Image Scale",
+                            "max": 1,
+                            "min": 0.125,
+                            "typ": 2,
+                            "zahl": 0.5
+                        },
+                        {
+                            "key": "radiusScale",
+                            "label": "Radius Scale",
+                            "max": 1.999,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 1
+                        },
+                        {
+                            "key": "pointInput",
+                            "label": "Rotate",
+                            "typ": 4,
+                            "vektor": [
+                                0,
+                                0
+                            ]
+                        }
+                    ]
+                },
+                "quellen": [
+                    {
+                        "bindung": -1,
+                        "name": "inputImage"
+                    }
+                ],
+                "type": "isfFilter",
+                "vertexCode": ""
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

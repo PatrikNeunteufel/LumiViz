@@ -1,0 +1,200 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "blendIn": 0,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "beatCode": "",
+                        "channel": 2,
+                        "colors": [
+                            11141120,
+                            11162880,
+                            16776960,
+                            16755200
+                        ],
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "mode": 3,
+                        "name": "Simple",
+                        "position": 2,
+                        "type": "simpleScope"
+                    },
+                    {
+                        "beatCode": "",
+                        "blend": 3,
+                        "colors": [
+                            255,
+                            16776960
+                        ],
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Dot Grid",
+                        "spacing": 21,
+                        "type": "dotGrid",
+                        "xMove": 128,
+                        "yMove": 128
+                    },
+                    {
+                        "beatCode": "",
+                        "blend": 1,
+                        "color": 16777215,
+                        "damping": 0.9909999966621399,
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "maxDistance": 16,
+                        "name": "Moving Particle",
+                        "onBeatSize": true,
+                        "size": 8,
+                        "size2": 12,
+                        "spring": 0.004000000189989805,
+                        "type": "movingParticle"
+                    },
+                    {
+                        "beatCode": "",
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Blur",
+                        "roundUp": true,
+                        "strength": 3,
+                        "type": "blur"
+                    },
+                    {
+                        "blend": false,
+                        "builtinRemap": 0,
+                        "code": "x=x*.99;y=y*.99;",
+                        "enabled": true,
+                        "name": "Movement",
+                        "rectCoords": true,
+                        "sourceMapped": 0,
+                        "subpixel": true,
+                        "type": "movement",
+                        "wrap": false
+                    },
+                    {
+                        "blend": false,
+                        "builtinRemap": 0,
+                        "code": "r=r+bt*0.02;\nd=d-0.02;",
+                        "enabled": true,
+                        "name": "Movement",
+                        "rectCoords": false,
+                        "sourceMapped": 0,
+                        "subpixel": true,
+                        "type": "movement",
+                        "wrap": false
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "blend": 0,
+                "enabled": true,
+                "fragCode": "//\t2D hash returning (0..1, 0..1) per integer-grid input.\n//\tStandard \"iq\" sin-based hash; deterministic per input vec2.\nvec2 hash2(vec2 p)\t{\n    p = vec2(dot(p, vec2(127.1, 311.7)),\n             dot(p, vec2(269.5, 183.3)));\n    return fract(sin(p) * 43758.5453);\n}\n\n\n//\tDistance from point p to line segment a-b, in the same coordinate space.\nfloat segDist(vec2 p, vec2 a, vec2 b)\t{\n    vec2  ab = b - a;\n    vec2  ap = p - a;\n    float t  = clamp(dot(ap, ab) / max(dot(ab, ab), 0.000001), 0.0, 1.0);\n    return length(ap - ab * t);\n}\n\n\nvoid main()\t{\n    vec2 uv = isf_FragNormCoord;\n\n    //\tCell size in UV space, adjusted so cells render visually square in screen space.\n    float aspect = RENDERSIZE.x / RENDERSIZE.y;\n    vec2  cellUV = vec2(cellSize, cellSize * aspect);\n\n    //\tGrid coordinate: which cell we're in + position within that cell (0..1).\n    vec2 grid  = uv / cellUV;\n    vec2 cell  = floor(grid);\n    vec2 local = fract(grid);\n\n    //\tPer-vertex jittered offsets for the four cell corners.\n    //\tAdjacent cells share corners; the hash is purely a function of the\n    //\tcorner's absolute grid coordinate, so the shared vertex agrees on both\n    //\tsides and triangles don't tear at cell boundaries.\n    vec2 j00 = (hash2(cell + vec2(0.0, 0.0) + seed) - 0.5) * jitter;\n    vec2 j10 = (hash2(cell + vec2(1.0, 0.0) + seed) - 0.5) * jitter;\n    vec2 j01 = (hash2(cell + vec2(0.0, 1.0) + seed) - 0.5) * jitter;\n    vec2 j11 = (hash2(cell + vec2(1.0, 1.0) + seed) - 0.5) * jitter;\n\n    vec2 p00 = vec2(0.0, 0.0) + j00;\n    vec2 p10 = vec2(1.0, 0.0) + j10;\n    vec2 p01 = vec2(0.0, 1.0) + j01;\n    vec2 p11 = vec2(1.0, 1.0) + j11;\n\n    //\tEach cell is split into two triangles along its main diagonal p10 -> p01.\n    //\tThe 2D cross product of (diagonal) x (point - p10) is positive on the\n    //\tupper-left side, negative on the lower-right.\n    vec2  edge = p01 - p10;\n    vec2  toPt = local - p10;\n    float side = edge.x * toPt.y - edge.y * toPt.x;\n\n    vec2 va, vb, vc;\n    if (side > 0.0)\t{\n        //\tUpper-left triangle: (p00, p10, p01).\n        va = p00; vb = p10; vc = p01;\n    }\n    else\t{\n        //\tLower-right triangle: (p10, p11, p01).\n        va = p10; vb = p11; vc = p01;\n    }\n\n    //\tSample the input at the triangle's centroid -> flat-shaded fill.\n    //\t(local var named triCenter — 'centroid' is a reserved GLSL keyword.)\n    vec2 triCenter = (va + vb + vc) / 3.0;\n    vec2 sampleUV = (cell + triCenter) * cellUV;\n    sampleUV = clamp(sampleUV, vec2(0.0), vec2(1.0));\n\n    vec4 fillColor = IMG_NORM_PIXEL(inputImage, sampleUV);\n\n    //\tOptional outline: distance from the current pixel to the nearest\n    //\ttriangle edge, in cell-local UV; convert to screen pixels via cellUV.\n    vec3 finalColor = fillColor.rgb;\n    if (outlineWidth > 0.0)\t{\n        float d        = min(min(segDist(local, va, vb),\n                                 segDist(local, vb, vc)),\n                                 segDist(local, vc, va));\n        float dPixels  = d * cellUV.x * RENDERSIZE.x;\n        float edgeAA   = 1.0 - smoothstep(outlineWidth * 0.5,\n                                          outlineWidth * 0.5 + 1.0,\n                                          dPixels);\n        finalColor = mix(finalColor, outlineColor.rgb, edgeAA * outlineColor.a);\n    }\n\n    gl_FragColor = vec4(finalColor, fillColor.a);\n}",
+                "geometrie": 0,
+                "gridX": 64,
+                "gridY": 48,
+                "herkunft": {
+                    "author": "VIDVOX",
+                    "name": "Triangle Mosaic"
+                },
+                "mixAmount": 1,
+                "name": "Triangle Mosaic",
+                "parameter": {
+                    "werte": [
+                        {
+                            "key": "cellSize",
+                            "label": "Cell Size",
+                            "max": 0.25,
+                            "min": 0.005,
+                            "typ": 2,
+                            "zahl": 0.025
+                        },
+                        {
+                            "key": "jitter",
+                            "label": "Jitter",
+                            "max": 1,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0.5
+                        },
+                        {
+                            "key": "seed",
+                            "label": "Seed",
+                            "max": 100,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 0
+                        },
+                        {
+                            "key": "outlineWidth",
+                            "label": "Outline Width",
+                            "max": 5,
+                            "min": 0,
+                            "typ": 2,
+                            "zahl": 1
+                        },
+                        {
+                            "key": "outlineColor",
+                            "label": "Outline Color",
+                            "typ": 3,
+                            "vektor": [
+                                0,
+                                0,
+                                0,
+                                1
+                            ]
+                        }
+                    ]
+                },
+                "quellen": [
+                    {
+                        "bindung": -1,
+                        "name": "inputImage"
+                    }
+                ],
+                "type": "isfFilter",
+                "vertexCode": ""
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}
