@@ -1,0 +1,141 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "",
+                "blend": 0,
+                "color": 0,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Clear",
+                "onlyFirst": false,
+                "type": "clear"
+            },
+            {
+                "blendIn": 4,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "audioChannel": 3,
+                        "beatCode": "k=rand(6)+3",
+                        "colorBlend": 1,
+                        "colorCycleFrames": 60,
+                        "colors": [
+                            11141120,
+                            127
+                        ],
+                        "dotSize": 4,
+                        "enabled": true,
+                        "frameCode": "t=t+0.01",
+                        "gradientPreset": "Neon",
+                        "initCode": "n=360; t=0; pi=acos(-1); k=5",
+                        "lineBlend": 2,
+                        "lineWidth": 10.5,
+                        "name": "SuperScope",
+                        "pointCode": "th=i*pi*2; r=(0.4+v*0.2)*cos(k*th+t); x=r*cos(th); y=r*sin(th)",
+                        "pointCount": 360,
+                        "renderMode": 2,
+                        "spectrumSource": false,
+                        "type": "superScope"
+                    },
+                    {
+                        "beatCode": "",
+                        "beatSpeed": 4,
+                        "blend": 1,
+                        "color": 11184640,
+                        "durationFrames": 15,
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "maxStars": 1000,
+                        "name": "Starfield",
+                        "onBeat": true,
+                        "type": "starfield",
+                        "warpSpeed": 6
+                    },
+                    {
+                        "beatCode": "",
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Blur",
+                        "roundUp": false,
+                        "strength": 1,
+                        "type": "blur"
+                    },
+                    {
+                        "blend": false,
+                        "builtinRemap": 0,
+                        "code": "r = r + 0.04;\nd = d * (0.96 + cos(d * $PI) * 0.05);",
+                        "enabled": true,
+                        "name": "Movement",
+                        "rectCoords": true,
+                        "sourceMapped": 1,
+                        "subpixel": true,
+                        "type": "movement",
+                        "wrap": false
+                    },
+                    {
+                        "enabled": true,
+                        "name": "Scatter",
+                        "type": "scatter"
+                    },
+                    {
+                        "beatCode": "ti=1",
+                        "blend": false,
+                        "buffern": 0,
+                        "enabled": true,
+                        "frameCode": "ti=ti*.7;t=t-0.01",
+                        "initCode": "t=0",
+                        "name": "Dynamic Movement",
+                        "nomove": false,
+                        "pointCode": "r=atan2(y,x);\nd=sqrt(sqr(x)+sqr(y));x=sin(t);x=sqrt(abs(x))*sign(x);\nr=r+(0.3+ti*.5)*(d-.5)*x;\nd=d*(.99+sin(r*2)*.003);\nx=cos(r)*d;y=sin(r)*d",
+                        "rectCoords": true,
+                        "subpixel": true,
+                        "type": "dynamicMovement",
+                        "wrap": false,
+                        "xres": 17,
+                        "yres": 17
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

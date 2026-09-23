@@ -1,0 +1,157 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "",
+                "blend": 0,
+                "color": 0,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Clear",
+                "onlyFirst": false,
+                "type": "clear"
+            },
+            {
+                "blendIn": 4,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "audioChannel": 2,
+                        "beatCode": "",
+                        "colorBlend": 0,
+                        "colorCycleFrames": 60,
+                        "colors": [
+                        ],
+                        "dotSize": 4,
+                        "enabled": true,
+                        "frameCode": "",
+                        "gradientPreset": "Neon",
+                        "initCode": "",
+                        "lineBlend": 1,
+                        "lineWidth": 2,
+                        "name": "SuperScope",
+                        "pointCode": "",
+                        "pointCount": 256,
+                        "renderMode": 1,
+                        "spectrumSource": false,
+                        "type": "superScope"
+                    }
+                ],
+                "clearEveryFrame": true,
+                "enabled": true,
+                "frameCode": "framecount = if(above(framecount, total), 0, framecount+1);\nenabled = if(band(above(framecount, afterbeat_on), below(framecount, afterbeat_on + runtime)), 1, 0)",
+                "inAdjustAlpha": 128,
+                "initCode": "afterbeat_on=0;runtime=40;total=80;",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": true
+            },
+            {
+                "blendIn": 4,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "beatCode": "",
+                        "channel": 0,
+                        "colors": [
+                            16777215
+                        ],
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "mode": 3,
+                        "name": "Simple",
+                        "position": 2,
+                        "type": "simpleScope"
+                    },
+                    {
+                        "beatCode": "",
+                        "channel": 0,
+                        "colors": [
+                            16777215
+                        ],
+                        "description": "Error",
+                        "enabled": false,
+                        "frameCode": "",
+                        "initCode": "",
+                        "mode": 3,
+                        "name": "Simple",
+                        "position": 0,
+                        "type": "simpleScope"
+                    },
+                    {
+                        "beatCode": "",
+                        "channel": 0,
+                        "colors": [
+                            16777215
+                        ],
+                        "description": "Error",
+                        "enabled": false,
+                        "frameCode": "",
+                        "initCode": "",
+                        "mode": 3,
+                        "name": "Simple",
+                        "position": 1,
+                        "type": "simpleScope"
+                    },
+                    {
+                        "blend": false,
+                        "builtinRemap": 0,
+                        "code": "y = (r*6)/($PI); x = d;",
+                        "enabled": true,
+                        "name": "Movement",
+                        "rectCoords": true,
+                        "sourceMapped": 0,
+                        "subpixel": true,
+                        "type": "movement",
+                        "wrap": true
+                    }
+                ],
+                "clearEveryFrame": true,
+                "enabled": true,
+                "frameCode": "framecount = if(above(framecount, total), 0, framecount+1);\nenabled = if(band(above(framecount, afterbeat_on), below(framecount, afterbeat_on + runtime)), 1, 0)",
+                "inAdjustAlpha": 128,
+                "initCode": "afterbeat_on=40;runtime=40;;total=80;",
+                "name": "Effect List",
+                "onBeatFrames": 5,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": true
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

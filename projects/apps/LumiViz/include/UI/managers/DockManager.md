@@ -1,7 +1,7 @@
 # DockManager — Qt-ADS Docking Integration
 
-> **Version:** 2.1.0  
-> **Datum:** 2026-07-22  
+> **Version:** 2.2.0  
+> **Datum:** 2026-09-23  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert  
 > **Modul:** LumiViz::UI::DockManager  
@@ -137,8 +137,8 @@ if (desc && !desc->allowMultiple && !m_impl->visualizers.empty()) {
 
 | Methode | Beschreibung |
 |---------|--------------|
-| `restoreLayout()` | **Public** - Stellt Layout wieder her oder wendet Defaults an |
-| `resetLayout()` | Setzt auf Default-Layout zurück |
+| `restoreLayout()` | **Public** - Hält das Werks-Layout als Default fest, stellt dann das gespeicherte her (sonst Defaults) und dockt fehlende Visualizer an (§5.6) |
+| `resetLayout()` | Setzt auf das Werks-Layout zurück (nicht auf das gespeicherte!) + §5.6 |
 | `saveDefaultLayout()` | Speichert aktuelles Layout als Default |
 | `savePerspective(name)` | Speichert benanntes Layout |
 | `loadPerspective(name)` | Lädt benanntes Layout |
@@ -148,7 +148,7 @@ if (desc && !desc->allowMultiple && !m_impl->visualizers.empty()) {
 
 | Methode | Beschreibung |
 |---------|--------------|
-| `populatePanelsMenu(menu)` | Befüllt Menü mit Panel-Toggles |
+| `populatePanelsMenu(menu)` | Befüllt Menü mit Panel-Toggles; merkt sich das Menü — später erzeugte Visualizer landen oben darin (über einem Trennstrich) |
 | `populatePerspectivesMenu(menu)` | Befüllt Menü mit Perspectives |
 
 ---
@@ -297,6 +297,45 @@ scheduleNativeResync();  // ruft recreateNativeWindow() je Visualizer
 Recreate würde sie sonst sichtbar machen) und die Startphase
 (`pMainWindow->isVisible() == false`).
 
+### 5.6 Visualizer fehlt im gespeicherten Layout (Session 77)
+
+Qt-ADS markiert jedes Dock, das in einem wiederhergestellten Zustand **nicht
+vorkommt**, als *unassigned*: geschlossen, ohne Dock-Area, unsichtbar
+(`DockManagerPrivate::restoreDockWidgetsOpenState`). Befund S77: nach einer
+Maus-Bewegung war im gespeicherten Zustand nur noch ein **leerer
+Floating-Container** — kein `visualizer`. Folge: der Visualizer blieb bei
+jedem Start verschwunden (nur Fullscreen zeigte ihn, weil der ihn als
+Top-Level aus dem Dock nimmt), und es gab keinen Ausweg in der UI:
+
+| Weg | Warum er nicht half |
+|-----|---------------------|
+| Neustart | derselbe gespeicherte Zustand |
+| Reset Layout | `restoreLayoutFromSettings()` hatte den gespeicherten Zustand als `defaultState` übernommen — Reset spielte das kaputte Layout erneut ab |
+| View > Panels | `populatePanelsMenu()` läuft vor `createVisualizer()` — der Visualizer stand nie im Menü |
+
+Seitdem:
+
+```cpp
+// restoreLayout(): Werks-Layout ZUERST festhalten, dann wiederherstellen
+pPanelManager->applyDefaultVisibility();
+defaultState = pAdsDockManager->saveState();
+restoreLayoutFromSettings();          // überschreibt defaultState nicht mehr
+ensureVisualizersDocked();            // auch am Ende von resetLayout()
+
+// ensureVisualizersDocked(): je Visualizer ohne Area bzw. geschlossen
+addDockWidget(openedDockAreas().isEmpty() ? Center : Right, pDock);
+pDock->toggleView(true);              // + Warnung im Log
+```
+
+`Right` statt `Center`: als Tab hinter der Effektkette bliebe er wieder
+versteckt. `addVisualizerToPanelsMenu()` (aus beiden `createVisualizer*`)
+trägt die `toggleViewAction()` ins gemerkte Panels-Menü ein. Grenze: das
+**X am Tab** löscht den Visualizer (`DockWidgetDeleteOnClose`) samt
+Menü-Eintrag — zurück dann über „New Visualizer" oder Neustart.
+
+**Nothilfe ohne Build:** App schließen, Registry-Schlüssel
+`HKCU\Software\LumiViz Project\LumiViz\DockManager` löschen → Werks-Layout.
+
 ---
 
 ## 6. PanelManager
@@ -374,6 +413,7 @@ ads::CDockManager::setAutoHideConfigFlags(
 
 | Version | Datum | Änderungen |
 |---------|-------|------------|
-| **2.1.0** | **2026-07-22** | **+scheduleNativeResync(): debounced recreateNativeWindow() aller eingebetteten Visualizer nach Float/Redock (S31-Geist verallgemeinert, §5.5) · Qt-ADS-Pin 4.4.1→5.0.0 (Fix: verschwindende Titelleiste + doppelter Auto-Hide-Player nach Undock/Redock — ADS-Framework-Bug)** |
+| **2.2.0** | **2026-09-23** | **+ensureVisualizersDocked(): im gespeicherten Layout fehlender Visualizer wird beim Start/Reset wieder angedockt (§5.6) · Reset Layout geht aufs Werks-Layout statt aufs gespeicherte · +addVisualizerToPanelsMenu(): Visualizer in View > Panels (Session 77)** |
+| 2.1.0 | 2026-07-22 | +scheduleNativeResync(): debounced recreateNativeWindow() aller eingebetteten Visualizer nach Float/Redock (S31-Geist verallgemeinert, §5.5) · Qt-ADS-Pin 4.4.1→5.0.0 (Fix: verschwindende Titelleiste + doppelter Auto-Hide-Player nach Undock/Redock — ADS-Framework-Bug) |
 | 2.0.0 | 2025-12-31 | +PanelManager, +dezentrale Events, +Layout-Persistence Fix (aboutToQuit, objectName), +allowMultiple Check, +restoreLayout() public |
 | 1.0.0 | 2025-12-28 | Initial: Qt-ADS Integration, Multi-Visualizer, Perspectives |

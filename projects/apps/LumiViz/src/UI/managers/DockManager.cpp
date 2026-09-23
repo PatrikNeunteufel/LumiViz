@@ -32,6 +32,7 @@
 #include <QMainWindow>
 #include <QMenu>
 #include <QAction>
+#include <QPointer>
 #include <QSettings>
 #include <QCoreApplication>
 #include <QTimer>
@@ -65,6 +66,11 @@ struct DockManager::Impl
     
     // Default layout state (for reset)
     QByteArray defaultState;
+
+    // View > Panels: set by populatePanelsMenu(); visualizers created later
+    // are inserted above the separator (QPointer: the menu bar owns both)
+    QPointer<QMenu> pPanelsMenu;
+    QPointer<QAction> pVisualizerMenuSeparator;
 
     // Event subscription IDs
     std::vector<int> subscriptionIds;
@@ -328,7 +334,8 @@ VisualizerWidget* DockManager::createVisualizer(
     {
         m_impl->defaultState = m_impl->pAdsDockManager->saveState();
     }
-    
+
+    addVisualizerToPanelsMenu(pDock);
     emit visualizerCreated(pVisualizer);
     
     BasicLogger::logDebug("  Visualizer created at position: " + 
@@ -400,9 +407,10 @@ VisualizerWidget* DockManager::createVisualizerRelativeTo(
         // Fallback: Add to main area
         m_impl->pAdsDockManager->addDockWidget(area, pDock);
     }
-    
+
+    addVisualizerToPanelsMenu(pDock);
     emit visualizerCreated(pVisualizer);
-    
+
     return pVisualizer;
 }
 
@@ -544,7 +552,8 @@ void DockManager::populatePanelsMenu(QMenu* pMenu)
     {
         return;
     }
-    
+    m_impl->pPanelsMenu = pMenu;
+
     // Add toggle actions for each dock widget
     for (auto* pDock : m_impl->pAdsDockManager->dockWidgetsMap())
     {
@@ -553,6 +562,23 @@ void DockManager::populatePanelsMenu(QMenu* pMenu)
             pMenu->addAction(pDock->toggleViewAction());
         }
     }
+}
+
+void DockManager::addVisualizerToPanelsMenu(ads::CDockWidget* pDock)
+{
+    // Vor populatePanelsMenu() erzeugte Visualizer nimmt dessen Schleife mit.
+    QMenu* pMenu = m_impl->pPanelsMenu;
+    if (pMenu == nullptr || pDock == nullptr)
+    {
+        return;
+    }
+    if (m_impl->pVisualizerMenuSeparator == nullptr && !pMenu->actions().isEmpty())
+    {
+        m_impl->pVisualizerMenuSeparator =
+            pMenu->insertSeparator(pMenu->actions().constFirst());
+    }
+    // nullptr-Separator (leeres Menue) haengt einfach an
+    pMenu->insertAction(m_impl->pVisualizerMenuSeparator, pDock->toggleViewAction());
 }
 
 void DockManager::populatePerspectivesMenu(QMenu* pMenu)
@@ -606,6 +632,36 @@ void DockManager::resetLayout()
     {
         m_impl->pAdsDockManager->restoreState(m_impl->defaultState);
     }
+    ensureVisualizersDocked();
+}
+
+void DockManager::ensureVisualizersDocked()
+{
+    for (auto* pVisualizer : m_impl->visualizers)
+    {
+        const auto it = m_impl->visualizerToDock.find(pVisualizer);
+        if (it == m_impl->visualizerToDock.end() || it->second == nullptr)
+        {
+            continue;
+        }
+        ads::CDockWidget* pDock = it->second;
+        if (pDock->dockAreaWidget() != nullptr && !pDock->isClosed())
+        {
+            continue;
+        }
+
+        // Neben die vorhandenen Docks statt als Tab dahinter — sonst bliebe
+        // der Visualizer hinter der Effektkette versteckt.
+        const bool hasDockedArea =
+            !m_impl->pAdsDockManager->openedDockAreas().isEmpty();
+        m_impl->pAdsDockManager->addDockWidget(
+            hasDockedArea ? ads::RightDockWidgetArea : ads::CenterDockWidgetArea,
+            pDock);
+        pDock->toggleView(true);
+        BasicLogger::logWarning("DockManager: visualizer '" +
+                                pDock->objectName().toStdString() +
+                                "' was missing from the layout - re-docked");
+    }
 }
 
 void DockManager::closeAll()
@@ -624,23 +680,21 @@ void DockManager::closeAll()
 bool DockManager::restoreLayout()
 {
     BasicLogger::logDebug("DockManager::restoreLayout() called");
-    
-    if (restoreLayoutFromSettings())
+
+    // Das Werks-Layout VOR dem Wiederherstellen festhalten: "Reset Layout"
+    // soll dorthin zurueck. Vorher wurde hier der gespeicherte Zustand zum
+    // Default — ein kaputtes Layout liess sich so nie zuruecksetzen (S77).
+    if (m_impl->pPanelManager != nullptr)
     {
-        BasicLogger::logInfo("Layout restored from settings");
-        return true;
+        m_impl->pPanelManager->applyDefaultVisibility();
     }
-    else
-    {
-        // No saved layout - apply default visibility and save as default
-        if (m_impl->pPanelManager != nullptr)
-        {
-            m_impl->pPanelManager->applyDefaultVisibility();
-        }
-        m_impl->defaultState = m_impl->pAdsDockManager->saveState();
-        BasicLogger::logInfo("No saved layout - applied defaults");
-        return false;
-    }
+    m_impl->defaultState = m_impl->pAdsDockManager->saveState();
+
+    const bool restored = restoreLayoutFromSettings();
+    BasicLogger::logInfo(restored ? "Layout restored from settings"
+                                  : "No saved layout - applied defaults");
+    ensureVisualizersDocked();
+    return restored;
 }
 
 // =============================================================================
@@ -796,10 +850,8 @@ bool DockManager::restoreLayoutFromSettings()
     
     settings.endGroup();
     
-    // Also save as default for reset
     if (success)
     {
-        m_impl->defaultState = state;
         BasicLogger::logInfo("DockManager: Layout restored successfully");
     }
     else

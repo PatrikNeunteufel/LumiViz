@@ -377,6 +377,26 @@ private:
     bool restoreLayoutFromSettings();
 
     /**
+     * @brief Docks every visualizer the restored layout left unassigned.
+     *
+     * Qt-ADS flags dock widgets that are absent from a restored state as
+     * unassigned: closed, without dock area, invisible — and the visualizer
+     * is missing from the Panels menu. A layout saved without the visualizer
+     * (S77: an empty floating container) thus hid it on every start, and
+     * "Reset Layout" replayed the same state. Called after every restore.
+     */
+    void ensureVisualizersDocked();
+
+    /**
+     * @brief Lists a visualizer dock in View > Panels (above the panels).
+     *
+     * populatePanelsMenu() runs before the first visualizer exists, so its
+     * loop never saw one — the visualizer could not be reopened from the
+     * menu (S77). No-op until populatePanelsMenu() has been called.
+     */
+    void addVisualizerToPanelsMenu(ads::CDockWidget* pDock);
+
+    /**
      * @brief Schedules a debounced native-handle rebuild for all embedded
      *        visualizers after a dock layout change (float/redock).
      *
