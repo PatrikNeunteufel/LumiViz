@@ -23,7 +23,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "size"
           ]
@@ -42,7 +42,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "size"
           ]
@@ -53,7 +53,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "size"
           ]
@@ -141,7 +141,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `mode`, `smoothing`, `spinstep`. Klasse A — s. Hinweis bei `DotPlaneParams`.",
+          "doc": "Parameter-Skript (Strang D): `mode`, `smoothing`, `spinstep`. Klasse A — s. Hinweis bei `DotPlaneParams`. Farben per Skript (Block B, S79): `colorleft_r`, `colorleft_g`, `colorleft_b`, `colorright_r`, `colorright_g`, `colorright_b` (0..1).",
           "skriptvars": [
             "mode",
             "smoothing",
@@ -170,7 +170,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `mode`, `smoothing`, `spinstep`. Klasse A — s. Hinweis bei `DotPlaneParams`.",
+          "doc": "Parameter-Skript (Strang D): `mode`, `smoothing`, `spinstep`. Klasse A — s. Hinweis bei `DotPlaneParams`. Farben per Skript (Block B, S79): `colorleft_r`, `colorleft_g`, `colorleft_b`, `colorright_r`, `colorright_g`, `colorright_b` (0..1).",
           "skriptvars": [
             "mode",
             "smoothing",
@@ -183,7 +183,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `mode`, `smoothing`, `spinstep`. Klasse A — s. Hinweis bei `DotPlaneParams`.",
+          "doc": "Parameter-Skript (Strang D): `mode`, `smoothing`, `spinstep`. Klasse A — s. Hinweis bei `DotPlaneParams`. Farben per Skript (Block B, S79): `colorleft_r`, `colorleft_g`, `colorleft_b`, `colorright_r`, `colorright_g`, `colorright_b` (0..1).",
           "skriptvars": [
             "mode",
             "smoothing",
@@ -508,11 +508,12 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `red`, `green`, `blue`, `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `red`, `green`, `blue`, `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "red",
             "green",
-            "blue"
+            "blue",
+            "distance"
           ]
         },
         {
@@ -557,11 +558,12 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `red`, `green`, `blue`, `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `red`, `green`, `blue`, `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "red",
             "green",
-            "blue"
+            "blue",
+            "distance"
           ]
         },
         {
@@ -580,11 +582,12 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `red`, `green`, `blue`, `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `red`, `green`, `blue`, `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "red",
             "green",
-            "blue"
+            "blue",
+            "distance"
           ]
         },
         {
@@ -904,7 +907,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Slots (Reihenfolge Frame VOR Beat): duerfen `px`..`pz`, `tx`..`tz`, `fov`, `roll`, `fogstart`, `fogend` ueberschreiben. Die Feldwerte oben sind die Startbelegung beim Uebersetzen.",
+          "doc": "EEL-Slots (Reihenfolge Frame VOR Beat): duerfen `px`..`pz`, `tx`..`tz`, `fov`, `roll`, `fogstart`, `fogend` ueberschreiben. Die Feldwerte oben sind die Startbelegung beim Uebersetzen. Farben per Skript (Block B, S79): `fogcolor_r`, `fogcolor_g`, `fogcolor_b` (0..1).",
           "skriptvars": [
             "px",
             "py",
@@ -962,7 +965,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Slots (Reihenfolge Frame VOR Beat): duerfen `px`..`pz`, `tx`..`tz`, `fov`, `roll`, `fogstart`, `fogend` ueberschreiben. Die Feldwerte oben sind die Startbelegung beim Uebersetzen.",
+          "doc": "EEL-Slots (Reihenfolge Frame VOR Beat): duerfen `px`..`pz`, `tx`..`tz`, `fov`, `roll`, `fogstart`, `fogend` ueberschreiben. Die Feldwerte oben sind die Startbelegung beim Uebersetzen. Farben per Skript (Block B, S79): `fogcolor_r`, `fogcolor_g`, `fogcolor_b` (0..1).",
           "skriptvars": [
             "px",
             "py",
@@ -982,7 +985,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Slots (Reihenfolge Frame VOR Beat): duerfen `px`..`pz`, `tx`..`tz`, `fov`, `roll`, `fogstart`, `fogend` ueberschreiben. Die Feldwerte oben sind die Startbelegung beim Uebersetzen.",
+          "doc": "EEL-Slots (Reihenfolge Frame VOR Beat): duerfen `px`..`pz`, `tx`..`tz`, `fov`, `roll`, `fogstart`, `fogend` ueberschreiben. Die Feldwerte oben sind die Startbelegung beim Uebersetzen. Farben per Skript (Block B, S79): `fogcolor_r`, `fogcolor_g`, `fogcolor_b` (0..1).",
           "skriptvars": [
             "px",
             "py",
@@ -1136,7 +1139,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "blend"
           ]
@@ -1164,7 +1167,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "blend"
           ]
@@ -1175,7 +1178,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "blend"
           ]
@@ -1201,7 +1204,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `clipcolor_r`, `clipcolor_g`, `clipcolor_b`, `outcolor_r`, `outcolor_g`, `outcolor_b` (0..1).",
           "skriptvars": [
             "distance"
           ]
@@ -1230,7 +1233,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `clipcolor_r`, `clipcolor_g`, `clipcolor_b`, `outcolor_r`, `outcolor_g`, `outcolor_b` (0..1).",
           "skriptvars": [
             "distance"
           ]
@@ -1241,7 +1244,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `clipcolor_r`, `clipcolor_g`, `clipcolor_b`, `outcolor_r`, `outcolor_g`, `outcolor_b` (0..1).",
           "skriptvars": [
             "distance"
           ]
@@ -1653,7 +1656,8 @@
           "doc": "Parameter-Skript (Strang D): `bias`, `scale`, `edgemode` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "bias",
-            "scale"
+            "scale",
+            "edgemode"
           ]
         },
         {
@@ -1684,7 +1688,8 @@
           "doc": "Parameter-Skript (Strang D): `bias`, `scale`, `edgemode` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "bias",
-            "scale"
+            "scale",
+            "edgemode"
           ]
         },
         {
@@ -1696,7 +1701,8 @@
           "doc": "Parameter-Skript (Strang D): `bias`, `scale`, `edgemode` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "bias",
-            "scale"
+            "scale",
+            "edgemode"
           ]
         },
         {
@@ -1809,7 +1815,8 @@
           "doc": "Parameter-Skript (Strang D): `arbitraryms`, `skipcount`, `skipfirst` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "arbitraryms",
-            "skipcount"
+            "skipcount",
+            "skipfirst"
           ]
         },
         {
@@ -1821,7 +1828,8 @@
           "doc": "Parameter-Skript (Strang D): `arbitraryms`, `skipcount`, `skipfirst` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "arbitraryms",
-            "skipcount"
+            "skipcount",
+            "skipfirst"
           ]
         },
         {
@@ -1833,7 +1841,8 @@
           "doc": "Parameter-Skript (Strang D): `arbitraryms`, `skipcount`, `skipfirst` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "arbitraryms",
-            "skipcount"
+            "skipcount",
+            "skipfirst"
           ]
         },
         {
@@ -2180,7 +2189,8 @@
           "skriptvars": [
             "spacing",
             "xmove",
-            "ymove"
+            "ymove",
+            "blend"
           ]
         },
         {
@@ -2213,7 +2223,8 @@
           "skriptvars": [
             "spacing",
             "xmove",
-            "ymove"
+            "ymove",
+            "blend"
           ]
         },
         {
@@ -2226,7 +2237,8 @@
           "skriptvars": [
             "spacing",
             "xmove",
-            "ymove"
+            "ymove",
+            "blend"
           ]
         },
         {
@@ -2655,7 +2667,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `fadelen` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `fadelen` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "fadelen"
           ]
@@ -2684,7 +2696,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `fadelen` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `fadelen` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "fadelen"
           ]
@@ -2695,7 +2707,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `fadelen` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `fadelen` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "fadelen"
           ]
@@ -2762,9 +2774,11 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): die Variationsbeiwerte und `rotation` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `variation` (0..4), `scale` und `rotation` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
-            "rotation"
+            "rotation",
+            "variation",
+            "scale"
           ]
         },
         {
@@ -2792,9 +2806,11 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): die Variationsbeiwerte und `rotation` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `variation` (0..4), `scale` und `rotation` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
-            "rotation"
+            "rotation",
+            "variation",
+            "scale"
           ]
         },
         {
@@ -2821,9 +2837,11 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): die Variationsbeiwerte und `rotation` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `variation` (0..4), `scale` und `rotation` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
-            "rotation"
+            "rotation",
+            "variation",
+            "scale"
           ]
         },
         {
@@ -3850,7 +3868,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1). Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1). Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1).",
           "skriptvars": [
             "spawnx",
             "spawny",
@@ -3932,7 +3950,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1). Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1).",
           "skriptvars": [
             "spawnx",
             "spawny",
@@ -3973,7 +3991,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1).",
           "skriptvars": [
             "spawnx",
             "spawny",
@@ -4385,10 +4403,12 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `x`, `y`, `x2`, `y2` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `x`, `y`, `x2`, `y2` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "x",
-            "y"
+            "y",
+            "x2",
+            "y2"
           ]
         },
         {
@@ -4424,10 +4444,12 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `x`, `y`, `x2`, `y2` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `x`, `y`, `x2`, `y2` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "x",
-            "y"
+            "y",
+            "x2",
+            "y2"
           ]
         },
         {
@@ -4436,10 +4458,12 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `x`, `y`, `x2`, `y2` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `x`, `y`, `x2`, `y2` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "x",
-            "y"
+            "y",
+            "x2",
+            "y2"
           ]
         },
         {
@@ -4614,11 +4638,13 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rotation` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rot` (= `rotation`) + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "morph",
             "zoom",
-            "rot"
+            "rot",
+            "p",
+            "q"
           ]
         },
         {
@@ -4656,11 +4682,13 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rotation` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rot` (= `rotation`) + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "morph",
             "zoom",
-            "rot"
+            "rot",
+            "p",
+            "q"
           ]
         },
         {
@@ -4677,11 +4705,13 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rotation` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rot` (= `rotation`) + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
             "morph",
             "zoom",
-            "rot"
+            "rot",
+            "p",
+            "q"
           ]
         },
         {
@@ -5699,7 +5729,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `size`, `size2`, `maxdistance`, `spring`, `damping`. Klasse A — s. Hinweis bei `DotPlaneParams`.",
+          "doc": "Parameter-Skript (Strang D): `size`, `size2`, `maxdistance`, `spring`, `damping`. Klasse A — s. Hinweis bei `DotPlaneParams`. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "size",
             "size2",
@@ -5741,7 +5771,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `size`, `size2`, `maxdistance`, `spring`, `damping`. Klasse A — s. Hinweis bei `DotPlaneParams`.",
+          "doc": "Parameter-Skript (Strang D): `size`, `size2`, `maxdistance`, `spring`, `damping`. Klasse A — s. Hinweis bei `DotPlaneParams`. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "size",
             "size2",
@@ -5756,7 +5786,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `size`, `size2`, `maxdistance`, `spring`, `damping`. Klasse A — s. Hinweis bei `DotPlaneParams`.",
+          "doc": "Parameter-Skript (Strang D): `size`, `size2`, `maxdistance`, `spring`, `damping`. Klasse A — s. Hinweis bei `DotPlaneParams`. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "size",
             "size2",
@@ -6018,7 +6048,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `everyNBeats` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `everyNBeats` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "everynbeats"
           ]
@@ -6055,7 +6085,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `everyNBeats` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `everyNBeats` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "everynbeats"
           ]
@@ -6066,7 +6096,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `everyNBeats` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `everyNBeats` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "everynbeats"
           ]
@@ -7167,7 +7197,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `maxstars`, `warpspeed`, `beatspeed`, `durationframes` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `maxstars`, `warpspeed`, `beatspeed`, `durationframes` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "maxstars",
             "warpspeed",
@@ -7218,7 +7248,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `maxstars`, `warpspeed`, `beatspeed`, `durationframes` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `maxstars`, `warpspeed`, `beatspeed`, `durationframes` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "maxstars",
             "warpspeed",
@@ -7232,7 +7262,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `maxstars`, `warpspeed`, `beatspeed`, `durationframes` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `maxstars`, `warpspeed`, `beatspeed`, `durationframes` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "maxstars",
             "warpspeed",
@@ -7301,7 +7331,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen.",
+          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "a",
             "b",
@@ -7363,7 +7393,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen.",
+          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "a",
             "b",
@@ -7396,7 +7426,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen.",
+          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "a",
             "b",
@@ -7996,7 +8026,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter.",
+          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter. Farben per Skript (Block B, S79): `meshcolor_r`, `meshcolor_g`, `meshcolor_b`, `colorlow_r`, `colorlow_g`, `colorlow_b`, `colorhigh_r`, `colorhigh_g`, `colorhigh_b` (0..1).",
           "skriptvars": [
             "res",
             "n",
@@ -8090,7 +8120,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter.",
+          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter. Farben per Skript (Block B, S79): `meshcolor_r`, `meshcolor_g`, `meshcolor_b`, `colorlow_r`, `colorlow_g`, `colorlow_b`, `colorhigh_r`, `colorhigh_g`, `colorhigh_b` (0..1).",
           "skriptvars": [
             "res",
             "n",
@@ -8112,7 +8142,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter.",
+          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter. Farben per Skript (Block B, S79): `meshcolor_r`, `meshcolor_g`, `meshcolor_b`, `colorlow_r`, `colorlow_g`, `colorlow_b`, `colorhigh_r`, `colorhigh_g`, `colorhigh_b` (0..1).",
           "skriptvars": [
             "res",
             "n",
@@ -8641,10 +8671,11 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `bands`, `channel`, `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `bands`, `channel`, `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "bands",
-            "channel"
+            "channel",
+            "blend"
           ]
         },
         {
@@ -8679,10 +8710,11 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `bands`, `channel`, `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `bands`, `channel`, `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "bands",
-            "channel"
+            "channel",
+            "blend"
           ]
         },
         {
@@ -8691,10 +8723,11 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `bands`, `channel`, `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `bands`, `channel`, `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "bands",
-            "channel"
+            "channel",
+            "blend"
           ]
         },
         {
@@ -8815,7 +8848,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "blend"
           ]
@@ -8843,7 +8876,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "blend"
           ]
@@ -8854,7 +8887,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
             "blend"
           ]

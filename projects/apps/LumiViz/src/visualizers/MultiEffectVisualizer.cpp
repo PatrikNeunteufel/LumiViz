@@ -2678,6 +2678,53 @@ QVector3D colorToVec(uint32_t color)
             static_cast<float>(color & 0xFF) / 255.0f};
 }
 
+/// Eine Farbe (0xRRGGBB) als Frame-Kopie fuer die Skripte (Block B, S79): drei
+/// Variablen `<name>_r/_g/_b` im Bereich 0..1. Ausserhalb 0..1 geschriebene
+/// Werte werden erst beim Verwenden geklemmt — die Fortschreibung behaelt sie,
+/// damit z. B. `color_r = color_r + 0.01` ueber 1 hinaus zaehlen und mit
+/// `fmod` zurueckgeholt werden kann.
+struct FarbKopie
+{
+    explicit FarbKopie(uint32_t c)
+        : r(static_cast<double>((c >> 16) & 0xFF) / 255.0),
+          g(static_cast<double>((c >> 8) & 0xFF) / 255.0),
+          b(static_cast<double>(c & 0xFF) / 255.0)
+    {
+    }
+    double r, g, b;
+
+    [[nodiscard]] QVector3D vec() const
+    {
+        return {static_cast<float>(std::clamp(r, 0.0, 1.0)),
+                static_cast<float>(std::clamp(g, 0.0, 1.0)),
+                static_cast<float>(std::clamp(b, 0.0, 1.0))};
+    }
+    [[nodiscard]] uint32_t packed() const
+    {
+        auto kanal = [](double v) {
+            return static_cast<uint32_t>(std::lround(std::clamp(v, 0.0, 1.0) * 255.0));
+        };
+        return (kanal(r) << 16) | (kanal(g) << 8) | kanal(b);
+    }
+};
+
+/// Fuer Module mit eigenem Skript-Host (Fraktale, 3D): `<name>_r/_g/_b` setzen
+/// bzw. nach dem Lauf zuruecklesen.
+void setzeFarbe(lumi::scripting::LuaScriptEngine& e, const std::string& name,
+                const FarbKopie& f)
+{
+    e.setNumber((name + "_r").c_str(), f.r);
+    e.setNumber((name + "_g").c_str(), f.g);
+    e.setNumber((name + "_b").c_str(), f.b);
+}
+void leseFarbe(const lumi::scripting::LuaScriptEngine& e, const std::string& name,
+               FarbKopie& f)
+{
+    f.r = e.number((name + "_r").c_str());
+    f.g = e.number((name + "_g").c_str());
+    f.b = e.number((name + "_b").c_str());
+}
+
 } // namespace
 
 MultiEffectVisualizer::MultiEffectVisualizer()
@@ -4356,13 +4403,17 @@ void MultiEffectVisualizer::runClear(const ChainNode& node,
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
     double vBlend = params.blend;
+    FarbKopie farbe(params.color);
     runParamScript(rt, "clear", params.initCode, params.frameCode,
                    params.beatCode,
-                   {{"blend", &vBlend}});
+                   {{"blend", &vBlend},
+                    {"color_r", &farbe.r},
+                    {"color_g", &farbe.g},
+                    {"color_b", &farbe.b}});
 
     if (params.onlyFirst && !m_firstFrame) return;
     auto* f = QOpenGLContext::currentContext()->functions();
-    const QVector3D color = colorToVec(params.color);
+    const QVector3D color = farbe.vec();  // Strang D
 
     // ACHTUNG: `ClearParams::blend` ist eine EIGENE Aufzaehlung (0 replace,
     // 1 additiv, 2 50/50, 3 Line-Blend) und NICHT die BLEND_LINE-Tabelle.
@@ -4404,11 +4455,16 @@ void MultiEffectVisualizer::runFadeout(const ChainNode& node,
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
     double vFadeLen = params.fadeLen;
+    FarbKopie farbe(params.color);
     runParamScript(rt, "fadeout", params.initCode, params.frameCode,
-                   params.beatCode, {{"fadelen", &vFadeLen}});
+                   params.beatCode,
+                   {{"fadelen", &vFadeLen},
+                    {"color_r", &farbe.r},
+                    {"color_g", &farbe.g},
+                    {"color_b", &farbe.b}});
 
     m_fadeShader->bind();
-    m_fadeShader->setUniformValue("uTarget", colorToVec(params.color));
+    m_fadeShader->setUniformValue("uTarget", farbe.vec());  // Strang D
     m_fadeShader->setUniformValue("uStep",
                                   static_cast<float>(vFadeLen) / 255.0f);
     m_fadeShader->release();
@@ -4427,11 +4483,17 @@ void MultiEffectVisualizer::runBrightness(const ChainNode& node,
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
     double vRed = params.red, vGreen = params.green, vBlue = params.blue;
+    double vDistance = params.distance;
+    FarbKopie farbe(params.color);  // Ausschlussfarbe
     runParamScript(rt, "brightness", params.initCode, params.frameCode,
                    params.beatCode,
                    {{"red", &vRed},
                     {"green", &vGreen},
-                    {"blue", &vBlue}});
+                    {"blue", &vBlue},
+                    {"distance", &vDistance},
+                    {"color_r", &farbe.r},
+                    {"color_g", &farbe.g},
+                    {"color_b", &farbe.b}});
 
     // Slider -> multiplier (r_bright.cpp:188): negative darkens to 0, positive
     // brightens up to 17x.
@@ -4445,9 +4507,9 @@ void MultiEffectVisualizer::runBrightness(const ChainNode& node,
                              factor(static_cast<int>(vGreen)),    // Frame-Kopien
                              factor(static_cast<int>(vBlue))));
     m_brightShader->setUniformValue("uExclude", params.exclude);
-    m_brightShader->setUniformValue("uExColor", colorToVec(params.color));
+    m_brightShader->setUniformValue("uExColor", farbe.vec());  // Strang D
     m_brightShader->setUniformValue("uDistance",
-                                    static_cast<float>(params.distance) / 255.0f);
+                                    static_cast<float>(vDistance) / 255.0f);  // Strang D
     m_brightShader->release();
     transformPass(*m_brightShader);
 }
@@ -4600,9 +4662,13 @@ void MultiEffectVisualizer::runOnBeatClear(const ChainNode& node,
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
     double vEvery = params.everyNBeats;
+    FarbKopie farbe(params.color);
     runParamScript(rt, "onbeatclear", params.initCode, params.frameCode,
                    params.beatCode,
-                   {{"everynbeats", &vEvery}});
+                   {{"everynbeats", &vEvery},
+                    {"color_r", &farbe.r},
+                    {"color_g", &farbe.g},
+                    {"color_b", &farbe.b}});
 
     // Beat counter -> clear every Nth beat (r_nfclr.cpp:97).
     if (!m_frameBeat) return;
@@ -4610,7 +4676,7 @@ void MultiEffectVisualizer::runOnBeatClear(const ChainNode& node,
     rt.beatCounter = 0;
 
     auto* f = QOpenGLContext::currentContext()->functions();
-    const QVector3D color = colorToVec(params.color);
+    const QVector3D color = farbe.vec();  // Strang D
     if (params.blend)
     {
         // 50/50 towards color: full-screen quad with constant-alpha 0.5 blend
@@ -5567,10 +5633,13 @@ void MultiEffectVisualizer::runCustomBpm(const ChainNode& node,
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
     double vMs = params.arbitraryMs, vSkip = params.skipCount;
+    double vSkipFirst = params.skipFirst;
     runParamScript(rt, "custombpm", params.initCode, params.frameCode,
                    params.beatCode,
                    {{"arbitraryms", &vMs},
-                    {"skipcount", &vSkip}});
+                    {"skipcount", &vSkip},
+                    {"skipfirst", &vSkipFirst}});
+    const int skipFirst = static_cast<int>(vSkipFirst);  // Strang D
 
     const bool inBeat = m_frameBeat;
 
@@ -5581,7 +5650,7 @@ void MultiEffectVisualizer::runCustomBpm(const ChainNode& node,
 
     // skipfirst: die ersten N Beats verschlucken. Wichtig — der Zaehler des
     // Skip-Zweigs laeuft dabei NICHT mit (die Referenz kehrt vor ihm zurueck).
-    if (params.skipFirst != 0 && rt.customBeatCount <= params.skipFirst)
+    if (skipFirst != 0 && rt.customBeatCount <= skipFirst)
     {
         if (inBeat) m_frameBeat = false;
         return;
@@ -6984,8 +7053,17 @@ void MultiEffectVisualizer::runBassSpin(const ChainNode& node,
 
     // Strang D auf einer Frame-Kopie. KLASSE A — s. Hinweis bei Moving Particle.
     double vMode = params.mode, vSmooth = params.smoothing, vStep = params.spinStep;
+    FarbKopie farbeL(params.colorLeft), farbeR(params.colorRight);
     runParamScript(rt, "bassspin", params.initCode, params.frameCode, params.beatCode,
-                   {{"mode", &vMode}, {"smoothing", &vSmooth}, {"spinstep", &vStep}});
+                   {{"mode", &vMode},
+                    {"smoothing", &vSmooth},
+                    {"spinstep", &vStep},
+                    {"colorleft_r", &farbeL.r},
+                    {"colorleft_g", &farbeL.g},
+                    {"colorleft_b", &farbeL.b},
+                    {"colorright_r", &farbeR.r},
+                    {"colorright_g", &farbeR.g},
+                    {"colorright_b", &farbeR.b}});
 
     const auto ndcX = [&](int px) {
         return (static_cast<float>(px) + 0.5f) / static_cast<float>(w) * 2.0f - 1.0f;
@@ -7016,8 +7094,7 @@ void MultiEffectVisualizer::runBassSpin(const ChainNode& node,
         const double s = static_cast<double>(ss) * a / 256.0;
         const int xp = static_cast<int>(std::cos(rt.bsRv[chn]) * s);
         const int yp = static_cast<int>(std::sin(rt.bsRv[chn]) * s);
-        const QVector3D col =
-            colorToVec(chn == 0 ? params.colorLeft : params.colorRight);
+        const QVector3D col = (chn == 0 ? farbeL : farbeR).vec();  // Strang D
 
         if (static_cast<int>(vMode) == 0)  // Linien: Speichen + Trail zur Spitze
         {
@@ -8779,11 +8856,19 @@ void MultiEffectVisualizer::runColorClip(const ChainNode& node,
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
     double vDistance = params.distance;
+    FarbKopie clipFarbe(params.clipColor), outFarbe(params.outColor);
     runParamScript(rt, "colorclip", params.initCode, params.frameCode,
-                   params.beatCode, {{"distance", &vDistance}});
+                   params.beatCode,
+                   {{"distance", &vDistance},
+                    {"clipcolor_r", &clipFarbe.r},
+                    {"clipcolor_g", &clipFarbe.g},
+                    {"clipcolor_b", &clipFarbe.b},
+                    {"outcolor_r", &outFarbe.r},
+                    {"outcolor_g", &outFarbe.g},
+                    {"outcolor_b", &outFarbe.b}});
 
-    const QVector3D clip = colorToVec(params.clipColor);
-    const QVector3D outc = colorToVec(params.outColor);
+    const QVector3D clip = clipFarbe.vec();  // Strang D
+    const QVector3D outc = outFarbe.vec();
     m_colorClipShader->bind();
     m_colorClipShader->setUniformValue("uMode", std::clamp(params.mode, 1, 3));
     m_colorClipShader->setUniformValue("uClip", clip);
@@ -8801,12 +8886,16 @@ void MultiEffectVisualizer::runUniqueTone(const ChainNode& node,
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
     double vBlend = params.blend;
+    FarbKopie farbe(params.color);
     runParamScript(rt, "uniquetone", params.initCode, params.frameCode,
                    params.beatCode,
-                   {{"blend", &vBlend}});
+                   {{"blend", &vBlend},
+                    {"color_r", &farbe.r},
+                    {"color_g", &farbe.g},
+                    {"color_b", &farbe.b}});
 
     m_uniqueToneShader->bind();
-    m_uniqueToneShader->setUniformValue("uColor", colorToVec(params.color));
+    m_uniqueToneShader->setUniformValue("uColor", farbe.vec());  // Strang D
     m_uniqueToneShader->setUniformValue("uInvert", params.invert ? 1 : 0);
     m_uniqueToneShader->setUniformValue(
         "uBlend", std::clamp(static_cast<int>(vBlend), 0, 2));  // Strang D
@@ -8820,28 +8909,33 @@ void MultiEffectVisualizer::runInterleave(const ChainNode& node,
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
-    double vX = params.x, vY = params.y;
+    double vX = params.x, vY = params.y, vX2 = params.x2, vY2 = params.y2;
+    FarbKopie farbe(params.color);
     runParamScript(rt, "interleave", params.initCode, params.frameCode,
                    params.beatCode,
                    {{"x", &vX},
-                    {"y", &vY}});
+                    {"y", &vY},
+                    {"x2", &vX2},
+                    {"y2", &vY2},
+                    {"color_r", &farbe.r},
+                    {"color_g", &farbe.g},
+                    {"color_b", &farbe.b}});
 
     if (!rt.interSeeded)
     {
-        rt.interCurX = static_cast<float>(params.x);
-        rt.interCurY = static_cast<float>(params.y);
+        rt.interCurX = static_cast<float>(vX);
+        rt.interCurY = static_cast<float>(vY);
         rt.interSeeded = true;
     }
     // Ease towards x/y (r_interleave sc1), jump to x2/y2 on beat.
     const float sc1 = (static_cast<float>(params.beatDuration) + 512.0f - 64.0f) / 512.0f;
-    // Strang D: die Frame-Kopien. `x2`/`y2` (der Beat-Sprung) haben keine
-    // Skriptvariable und bleiben deshalb am Preset-Wert.
+    // Strang D: die Frame-Kopien — auch fuer den Beat-Sprung x2/y2 (S79).
     rt.interCurX = rt.interCurX * sc1 + static_cast<float>(vX) * (1.0f - sc1);
     rt.interCurY = rt.interCurY * sc1 + static_cast<float>(vY) * (1.0f - sc1);
     if (m_frameBeat && params.onBeat)
     {
-        rt.interCurX = static_cast<float>(params.x2);
-        rt.interCurY = static_cast<float>(params.y2);
+        rt.interCurX = static_cast<float>(vX2);
+        rt.interCurY = static_cast<float>(vY2);
     }
 
     m_interleaveShader->bind();
@@ -8851,7 +8945,7 @@ void MultiEffectVisualizer::runInterleave(const ChainNode& node,
     m_interleaveShader->setUniformValue(
         "uSpacing", QPoint(std::max(0, static_cast<int>(rt.interCurX)),
                            std::max(0, static_cast<int>(rt.interCurY))));
-    m_interleaveShader->setUniformValue("uColor", colorToVec(params.color));
+    m_interleaveShader->setUniformValue("uColor", farbe.vec());  // Strang D
     m_interleaveShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
     m_interleaveShader->release();
     transformPass(*m_interleaveShader);
@@ -8863,11 +8957,12 @@ void MultiEffectVisualizer::runConvolution(const ChainNode& node,
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
-    double vBias = params.bias, vScale = params.scale;
+    double vBias = params.bias, vScale = params.scale, vEdge = params.edgeMode;
     runParamScript(rt, "convolution", params.initCode, params.frameCode,
                    params.beatCode,
                    {{"bias", &vBias},
-                    {"scale", &vScale}});
+                    {"scale", &vScale},
+                    {"edgemode", &vEdge}});
 
     std::array<float, 49> kf{};
     for (int i = 0; i < 49; ++i)
@@ -8893,7 +8988,7 @@ void MultiEffectVisualizer::runConvolution(const ChainNode& node,
         m_convolutionShader->setUniformValue("uBias", bias);
         m_convolutionShader->setUniformValue("uAbsolute", params.absolute ? 1 : 0);
         m_convolutionShader->setUniformValue("uTwoPass", params.twoPass ? 1 : 0);
-        m_convolutionShader->setUniformValue("uEdge", std::clamp(params.edgeMode, 0, 1));
+        m_convolutionShader->setUniformValue("uEdge", std::clamp(static_cast<int>(vEdge), 0, 1));  // Strang D
         // Pass 1 kennt keinen bearbeiteten Puffer: uProc = uTex (Unit 0).
         // Die "bearbeitet"-Zweige des Shaders lesen dann schlicht die Eingabe
         // — exakt der fbout-Weg der APE.
@@ -9028,14 +9123,19 @@ void MultiEffectVisualizer::runAddBorders(const ChainNode& node,
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
     double vSize = params.size;
+    FarbKopie farbe(params.color);
     runParamScript(rt, "addborders", params.initCode, params.frameCode,
-                   params.beatCode, {{"size", &vSize}});
+                   params.beatCode,
+                   {{"size", &vSize},
+                    {"color_r", &farbe.r},
+                    {"color_g", &farbe.g},
+                    {"color_b", &farbe.b}});
 
     m_addBordersShader->bind();
     m_addBordersShader->setUniformValue("uRes",
                                         QVector2D(static_cast<float>(m_surfaceWidth),
                                                   static_cast<float>(m_surfaceHeight)));
-    m_addBordersShader->setUniformValue("uColor", colorToVec(params.color));
+    m_addBordersShader->setUniformValue("uColor", farbe.vec());  // Strang D
     m_addBordersShader->setUniformValue("uSize",
                                         std::max(0, static_cast<int>(vSize)));
     m_addBordersShader->release();
@@ -9156,13 +9256,17 @@ void MultiEffectVisualizer::runMovingParticle(const ChainNode& node,
     double vSize = params.size, vSize2 = params.size2;
     double vMaxDist = params.maxDistance;
     double vSpring = params.spring, vDamping = params.damping;
+    FarbKopie farbe(params.color);
     runParamScript(rt, "movingparticle", params.initCode, params.frameCode,
                    params.beatCode,
                    {{"size", &vSize},
                     {"size2", &vSize2},
                     {"maxdistance", &vMaxDist},
                     {"spring", &vSpring},
-                    {"damping", &vDamping}});
+                    {"damping", &vDamping},
+                    {"color_r", &farbe.r},
+                    {"color_g", &farbe.g},
+                    {"color_b", &farbe.b}});
 
     // r_parts.cpp:124-125 — zwei Zuege aus dem Preset-Strom je Beat
     auto rnd = [this] {
@@ -9211,7 +9315,7 @@ void MultiEffectVisualizer::runMovingParticle(const ChainNode& node,
     lumi::modules::SuperscopePoint pt;
     pt.x = std::clamp(rt.mpPx * scale / halfW, -1.0f, 1.0f);
     pt.y = std::clamp(-rt.mpPy * scale / halfH, -1.0f, 1.0f);  // AVS y is top-down
-    const QVector3D c = colorToVec(params.color);
+    const QVector3D c = farbe.vec();  // Strang D
     pt.r = c.x();
     pt.g = c.y();
     pt.b = c.z();
@@ -9574,6 +9678,7 @@ void MultiEffectVisualizer::runCamera3D(const ChainNode& node,
     double tx = params.tx, ty = params.ty, tz = params.tz;
     double fov = params.fov, roll = params.roll;
     double fogStart = params.fogStart, fogEnd = params.fogEnd;
+    FarbKopie nebel(params.fogColor);
 
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
@@ -9586,7 +9691,8 @@ void MultiEffectVisualizer::runCamera3D(const ChainNode& node,
                                  std::to_string(tx) + ',' + std::to_string(ty) + ',' +
                                  std::to_string(tz) + ',' + std::to_string(fov) + ',' +
                                  std::to_string(roll) + ',' + std::to_string(fogStart) +
-                                 ',' + std::to_string(fogEnd);
+                                 ',' + std::to_string(fogEnd) + ',' +
+                                 std::to_string(params.fogColor);
         if (rt.cam3dHost == nullptr || rt.cam3dCompiled != snap)
         {
             rt.cam3dHost = std::make_unique<ScriptSlotHost>("camera3d", activeContext(),
@@ -9608,6 +9714,7 @@ void MultiEffectVisualizer::runCamera3D(const ChainNode& node,
             engine.setNumber("roll", roll);
             engine.setNumber("fogstart", fogStart);
             engine.setNumber("fogend", fogEnd);
+            setzeFarbe(engine, "fogcolor", nebel);
             rt.cam3dHost->run(Slot::Init);
         }
         auto& engine = rt.cam3dHost->engine();
@@ -9626,6 +9733,7 @@ void MultiEffectVisualizer::runCamera3D(const ChainNode& node,
         roll = engine.number("roll");
         fogStart = engine.number("fogstart");
         fogEnd = engine.number("fogend");
+        leseFarbe(engine, "fogcolor", nebel);
     }
 
     m_camera3d.pos = QVector3D(static_cast<float>(px), static_cast<float>(py),
@@ -9636,7 +9744,7 @@ void MultiEffectVisualizer::runCamera3D(const ChainNode& node,
     m_camera3d.rollDeg = static_cast<float>(roll);
     m_camera3d.fogStart = static_cast<float>(fogStart);
     m_camera3d.fogEnd = static_cast<float>(fogEnd);
-    m_camera3d.fogColor = colorToVec(params.fogColor);
+    m_camera3d.fogColor = nebel.vec();  // Skript-Kopie
 }
 
 void MultiEffectVisualizer::runSuperScope3D(const ChainNode& node,
@@ -9862,6 +9970,8 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
     float ringsF = params.ringAmp;
     float relaxF = params.relax;
     float flattenF = params.flatten;
+    FarbKopie netzFarbe(params.meshColor), tiefFarbe(params.colorLow),
+        hochFarbe(params.colorHigh);
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty() || !params.pointCode.empty();
     bool pointColors = false;
@@ -9872,7 +9982,10 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
                                  std::to_string(res) + ',' +
                                  std::to_string(params.ringAmp) + ',' +
                                  std::to_string(params.relax) + ',' +
-                                 std::to_string(params.flatten);
+                                 std::to_string(params.flatten) + ',' +
+                                 std::to_string(params.meshColor) + ',' +
+                                 std::to_string(params.colorLow) + ',' +
+                                 std::to_string(params.colorHigh);
         if (rt.terrainHost == nullptr || rt.terrainCompiled != snap)
         {
             rt.terrainHost = std::make_unique<ScriptSlotHost>(
@@ -9890,6 +10003,9 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
             engine.setNumber("rings", params.ringAmp);
             engine.setNumber("relax", params.relax);
             engine.setNumber("flatten", params.flatten);
+            setzeFarbe(engine, "meshcolor", netzFarbe);
+            setzeFarbe(engine, "colorlow", tiefFarbe);
+            setzeFarbe(engine, "colorhigh", hochFarbe);
             rt.terrainHost->run(Slot::Init);
         }
         auto& engine = rt.terrainHost->engine();
@@ -9919,6 +10035,9 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
         relaxF = std::clamp(static_cast<float>(engine.number("relax")), 0.0f, 1.0f);
         flattenF =
             std::clamp(static_cast<float>(engine.number("flatten")), 0.0f, 1.0f);
+        leseFarbe(engine, "meshcolor", netzFarbe);
+        leseFarbe(engine, "colorlow", tiefFarbe);
+        leseFarbe(engine, "colorhigh", hochFarbe);
         pointColors = rt.terrainHost->has(Slot::Point);
     }
 
@@ -10027,7 +10146,7 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
         m_terrain3dShader->bind();
         m_terrain3dShader->setUniformValue("uVp", vp);
         m_terrain3dShader->setUniformValue("uCamPos", cam.pos);
-        m_terrain3dShader->setUniformValue("uColor", colorToVec(params.meshColor));
+        m_terrain3dShader->setUniformValue("uColor", netzFarbe.vec());  // Skript-Kopie
         m_terrain3dShader->setUniformValue("uFogStart", cam.fogStart);
         m_terrain3dShader->setUniformValue("uFogEnd", cam.fogEnd);
         m_terrain3dShader->setUniformValue("uFogColor", cam.fogColor);
@@ -10050,8 +10169,8 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
         f->glDepthMask(GL_FALSE);
         const float projX = proj(0, 0);
         const float projY = proj(1, 1);
-        const QVector3D cLow = colorToVec(params.colorLow);
-        const QVector3D cHigh = colorToVec(params.colorHigh);
+        const QVector3D cLow = tiefFarbe.vec();  // Skript-Kopie
+        const QVector3D cHigh = hochFarbe.vec();
         const float hRange = std::max(0.05f, params.baseAmp * 2.0f);
         lumi::scripting::LuaScriptEngine* pointEngine =
             pointColors ? &rt.terrainHost->engine() : nullptr;
@@ -10328,12 +10447,17 @@ void MultiEffectVisualizer::runStarfield(const ChainNode& node,
     // Strang D auf einer Frame-Kopie (s. runParamScript).
     double vStars = params.maxStars, vWarp = params.warpSpeed;
     double vBeatSpeed = params.beatSpeed, vDuration = params.durationFrames;
+    FarbKopie farbe(params.color);
     runParamScript(rt, "starfield", params.initCode, params.frameCode,
                    params.beatCode,
                    {{"maxstars", &vStars},
                     {"warpspeed", &vWarp},
                     {"beatspeed", &vBeatSpeed},
-                    {"durationframes", &vDuration}});
+                    {"durationframes", &vDuration},
+                    {"color_r", &farbe.r},
+                    {"color_g", &farbe.g},
+                    {"color_b", &farbe.b}});
+    const uint32_t sternFarbe = farbe.packed();  // Strang D
 
     if (params.onBeat && m_frameBeat)
     {
@@ -10370,10 +10494,10 @@ void MultiEffectVisualizer::runStarfield(const ChainNode& node,
         st.y = rnd.nextRand() % std::max(1, h) - yOff;
         st.z = 255.0f;  // Zoff
     };
-    const int colR = static_cast<int>((params.color >> 16) & 0xFF);
-    const int colG = static_cast<int>((params.color >> 8) & 0xFF);
-    const int colB = static_cast<int>(params.color & 0xFF);
-    const bool tinted = (params.color & 0xFFFFFF) != 0xFFFFFF;
+    const int colR = static_cast<int>((sternFarbe >> 16) & 0xFF);
+    const int colG = static_cast<int>((sternFarbe >> 8) & 0xFF);
+    const int colB = static_cast<int>(sternFarbe & 0xFF);
+    const bool tinted = (sternFarbe & 0xFFFFFF) != 0xFFFFFF;
 
     std::vector<lumi::modules::SuperscopePoint> points;
     points.reserve(rt.stars.size());
@@ -10712,9 +10836,17 @@ void MultiEffectVisualizer::runTimescope(const ChainNode& node,
     if (m_surfaceWidth <= 0) return;
 
     // Strang D auf einer Frame-Kopie (s. runParamScript).
-    double vBands = params.bands, vChannel = params.channel;
+    double vBands = params.bands, vChannel = params.channel, vBlend = params.blend;
+    FarbKopie farbe(params.color);
     runParamScript(rt, "timescope", params.initCode, params.frameCode,
-                   params.beatCode, {{"bands", &vBands}, {"channel", &vChannel}});
+                   params.beatCode,
+                   {{"bands", &vBands},
+                    {"channel", &vChannel},
+                    {"blend", &vBlend},
+                    {"color_r", &farbe.r},
+                    {"color_g", &farbe.g},
+                    {"color_b", &farbe.b}});
+    const int blend = static_cast<int>(vBlend);  // Strang D
 
     rt.timescopeX = (rt.timescopeX + 1) % m_surfaceWidth;
 
@@ -10760,18 +10892,18 @@ void MultiEffectVisualizer::runTimescope(const ChainNode& node,
     f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
     f->glEnable(GL_SCISSOR_TEST);
     f->glScissor(rt.timescopeX, 0, 1, m_surfaceHeight);
-    if (params.blend == 1)
+    if (blend == 1)
     {
         f->glEnable(GL_BLEND);
         f->glBlendFunc(GL_ONE, GL_ONE);  // additive
     }
-    else if (params.blend == 2)
+    else if (blend == 2)
     {
         f->glEnable(GL_BLEND);
         f->glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
         f->glBlendColor(0.0f, 0.0f, 0.0f, 0.5f);  // 50/50
     }
-    else if (params.blend == 3)
+    else if (blend == 3)
     {
         // BLEND_LINE (r_timescope.cpp:147-148, AVS-Default) — folgt SRM (S3)
         f->glEnable(GL_BLEND);
@@ -10787,7 +10919,7 @@ void MultiEffectVisualizer::runTimescope(const ChainNode& node,
     f->glActiveTexture(GL_TEXTURE0);
     f->glBindTexture(GL_TEXTURE_2D, m_specTex);
     m_timescopeShader->setUniformValue("uSpec", 0);
-    m_timescopeShader->setUniformValue("uColor", colorToVec(params.color));
+    m_timescopeShader->setUniformValue("uColor", farbe.vec());  // Strang D
     m_timescopeShader->setUniformValue("uBands",
                                        static_cast<float>(std::clamp(
                                            static_cast<int>(vBands), 1, 576)));
@@ -10851,8 +10983,10 @@ void MultiEffectVisualizer::runDotGrid(const ChainNode& node, const DotGridParam
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     // Strang D auf einer Frame-Kopie (s. runParamScript).
     double vSpacing = params.spacing, vXMove = params.xMove, vYMove = params.yMove;
+    double vBlend = params.blend;
     runParamScript(rt, "dotgrid", params.initCode, params.frameCode, params.beatCode,
-                   {{"spacing", &vSpacing}, {"xmove", &vXMove}, {"ymove", &vYMove}});
+                   {{"spacing", &vSpacing}, {"xmove", &vXMove}, {"ymove", &vYMove},
+                    {"blend", &vBlend}});
 
     const int spacing = std::max(2, static_cast<int>(vSpacing));
     const int nc = static_cast<int>(params.colors.size());
@@ -10909,7 +11043,7 @@ void MultiEffectVisualizer::runDotGrid(const ChainNode& node, const DotGridParam
     }
     // EIN Pixel je Gitterpunkt (`framebuffer[x] = current_color`), nicht zwei —
     // mit Groesse 2 zeichneten wir die vierfache Flaeche.
-    drawDots(pts, 1.0f, params.blend);
+    drawDots(pts, 1.0f, static_cast<int>(vBlend));  // Strang D
 
     rt.dotOffX = static_cast<float>(xp + static_cast<int>(vXMove));
     rt.dotOffY = static_cast<float>(yp + static_cast<int>(vYMove));
@@ -12023,13 +12157,16 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
     ensureFractalLut(rt, params.gradientPreset);
 
     float morph = params.morph, zoom = params.zoom, rot = params.rotation;
+    // `p`/`q` als Zahlen (S79 — der Struct-Kommentar versprach sie seit jeher).
+    float pVal = static_cast<float>(params.p), qVal = static_cast<float>(params.q);
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
     {
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + "\n#" + std::to_string(morph) + ',' +
-                                 std::to_string(zoom) + ',' + std::to_string(rot);
+                                 std::to_string(zoom) + ',' + std::to_string(rot) + ',' +
+                                 std::to_string(params.p) + ',' + std::to_string(params.q);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("kleinian", activeContext(),
@@ -12040,6 +12177,7 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
             rt.fracHost->compileAll();
             auto& e = rt.fracHost->engine();
             e.setNumber("morph", morph); e.setNumber("zoom", zoom); e.setNumber("rot", rot);
+            e.setNumber("p", pVal); e.setNumber("q", qVal);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
@@ -12050,6 +12188,8 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
         morph = static_cast<float>(e.number("morph"));
         zoom = static_cast<float>(e.number("zoom"));
         rot = static_cast<float>(e.number("rot"));
+        pVal = static_cast<float>(e.number("p"));
+        qVal = static_cast<float>(e.number("q"));
     }
     else
     {
@@ -12067,8 +12207,8 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
     m_kleinianShader->setUniformValue("uAspect", aspect);
     m_kleinianShader->setUniformValue("uZoom", zoom);
     m_kleinianShader->setUniformValue("uRot", rot);
-    m_kleinianShader->setUniformValue("uP", std::clamp(params.p, 3, 20));
-    m_kleinianShader->setUniformValue("uQ", std::clamp(params.q, 3, 20));
+    m_kleinianShader->setUniformValue("uP", std::clamp(static_cast<int>(pVal), 3, 20));
+    m_kleinianShader->setUniformValue("uQ", std::clamp(static_cast<int>(qVal), 3, 20));
     m_kleinianShader->setUniformValue("uIters", std::clamp(params.iterations, 1, 200));
     m_kleinianShader->setUniformValue("uMorph", morph);
     m_kleinianShader->setUniformValue("uColorScale", params.colorScale);
@@ -12179,6 +12319,7 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
     if (!m_scopeRenderer.ready()) return;
 
     float a = params.a, b = params.b, c = params.c, d = params.d, rotation = params.rotation;
+    FarbKopie farbe(params.color);
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -12186,7 +12327,7 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + "\n#" + std::to_string(a) + ',' +
                                  std::to_string(b) + ',' + std::to_string(c) + ',' +
-                                 std::to_string(d);
+                                 std::to_string(d) + ',' + std::to_string(params.color);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("attractor", activeContext(),
@@ -12198,6 +12339,7 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
             auto& e = rt.fracHost->engine();
             e.setNumber("a", a); e.setNumber("b", b); e.setNumber("c", c);
             e.setNumber("d", d); e.setNumber("rotation", rotation);
+            setzeFarbe(e, "color", farbe);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
@@ -12208,6 +12350,7 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
         a = static_cast<float>(e.number("a")); b = static_cast<float>(e.number("b"));
         c = static_cast<float>(e.number("c")); d = static_cast<float>(e.number("d"));
         rotation = static_cast<float>(e.number("rotation"));
+        leseFarbe(e, "color", farbe);
     }
     else
     {
@@ -12226,7 +12369,7 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
 
     std::array<QVector3D, 256> cpuLut{};
     if (params.useGradient) buildCpuGradientLut(params.gradientPreset, cpuLut);
-    const QVector3D fixedCol = colorToVec(params.color);
+    const QVector3D fixedCol = farbe.vec();  // Skript-Kopie
 
     const int n = std::clamp(params.points, 1, 100000);
     std::vector<lumi::modules::SuperscopePoint> pts;
@@ -12301,12 +12444,18 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
     if (!m_scopeRenderer.ready()) return;
 
     float rotation = params.rotation;
+    // `variation`/`scale` (S79): der Struct-Kommentar versprach
+    // „Variationsbeiwerte" — die einzigen Stellgroessen dieser Art sind die
+    // Wahl der Variation und die Groesse der Figur.
+    float variationVal = static_cast<float>(params.variation), scale = params.scale;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
     {
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + "\n#" + std::to_string(rotation);
+                                 params.beatCode + "\n#" + std::to_string(rotation) + ',' +
+                                 std::to_string(params.variation) + ',' +
+                                 std::to_string(scale);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("flame", activeContext(),
@@ -12316,6 +12465,8 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
             rt.fracHost->engine().setNumber("rotation", rotation);
+            rt.fracHost->engine().setNumber("variation", variationVal);
+            rt.fracHost->engine().setNumber("scale", scale);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
@@ -12324,12 +12475,15 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         rotation = static_cast<float>(e.number("rotation"));
+        variationVal = static_cast<float>(e.number("variation"));
+        scale = static_cast<float>(e.number("scale"));
     }
     else
     {
         rt.fracHost.reset();
         rt.fracCompiled.clear();
     }
+    const int variationSel = std::clamp(static_cast<int>(variationVal), 0, 4);
 
     if (!rt.saSeeded || !std::isfinite(rt.saX) || !std::isfinite(rt.saY))
     {
@@ -12348,7 +12502,7 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
     }
     auto variation = [&](float vx, float vy) -> QVector2D {
         const float r2 = vx * vx + vy * vy + 1e-6f;
-        switch (params.variation)
+        switch (variationSel)
         {
             case 1: return {std::sin(vx), std::sin(vy)};                    // sinusoidal
             case 2: return {vx / r2, vy / r2};                             // spherical
@@ -12377,7 +12531,7 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
         const float fy = 0.5f * (y + v.y());
         if (!std::isfinite(fx) || !std::isfinite(fy)) { x = 0.05f; y = 0.05f; continue; }
         x = fx; y = fy;
-        const float sx = x * params.scale, sy = y * params.scale;
+        const float sx = x * scale, sy = y * scale;
         lumi::modules::SuperscopePoint pt;
         pt.x = std::clamp(sx * rc - sy * rs, -1.0f, 1.0f);
         pt.y = std::clamp(sx * rs + sy * rc, -1.0f, 1.0f);
@@ -13475,6 +13629,7 @@ void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,
     double gravX = params.gravityX, gravY = params.gravityY;
     double drag = params.drag, life = params.lifeSeconds;
     double size = params.sizePx;
+    FarbKopie farbeStart(params.colorStart), farbeEnde(params.colorEnd);
     runParamScript(rt, "gpuparticles", params.initCode, params.frameCode,
                    params.beatCode,
                    {{"spawnx", &spawnX},
@@ -13487,7 +13642,13 @@ void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,
                     {"gravy", &gravY},
                     {"drag", &drag},
                     {"life", &life},
-                    {"size", &size}});
+                    {"size", &size},
+                    {"colorstart_r", &farbeStart.r},
+                    {"colorstart_g", &farbeStart.g},
+                    {"colorstart_b", &farbeStart.b},
+                    {"colorend_r", &farbeEnde.r},
+                    {"colorend_g", &farbeEnde.g},
+                    {"colorend_b", &farbeEnde.b}});
     const int count = std::clamp(params.count, lumi::gpuparticles::kMinCount,
                                  lumi::gpuparticles::kMaxCount);
 
@@ -13602,8 +13763,8 @@ void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,
     rp.setUniformValue("uSize", static_cast<float>(std::max(0.5, size)));
     rp.setUniformValue("uSizeEnd",
                        static_cast<float>(std::max(0.0, params.sizeEndFactor)));
-    rp.setUniformValue("uColorStart", colorToVec(params.colorStart));
-    rp.setUniformValue("uColorEnd", colorToVec(params.colorEnd));
+    rp.setUniformValue("uColorStart", farbeStart.vec());  // Strang D
+    rp.setUniformValue("uColorEnd", farbeEnde.vec());
     f->glActiveTexture(GL_TEXTURE0);
     f->glBindTexture(GL_TEXTURE_2D, rt.gpStateFbo[rt.gpCur]->texture());
     f->glEnable(GL_BLEND);

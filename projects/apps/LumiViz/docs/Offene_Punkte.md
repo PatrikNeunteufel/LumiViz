@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.74.0
-> **Datum:** 2026-09-27 (Session 78)
+> **Version:** 1.75.0
+> **Datum:** 2026-09-27 (Session 79)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -1742,6 +1742,23 @@ Visualizer" oder Neustart. Für den **ersten** Visualizer wäre Ausblenden
 (ohne Delete) konsistenter mit den Panels. Entscheid offen; Details
 `include/UI/managers/DockManager.md` §5.6.
 
+### ➜ Formelfelder für alle Module (Entscheid 2a, S79)
+
+Inventar aller 84 Palettenmodule + Vorschläge:
+[visuals/Formelfelder_Inventar.md](visuals/Formelfelder_Inventar.md). **Block A
+✅ (S79):** acht Module versprachen Skriptvariablen, die nie gebunden waren —
+gebunden; Variablenreferenz im Panel aus der neuen SSOT
+`ScriptVariables.hpp` (vorher „No dedicated variable reference" bei rund
+vierzig Modulen), Test `test_ScriptVariablesGl` hält sie an der Laufzeit.
+**Block B ✅ (S79):** 16 Module mit Farbfeldern haben `<feldname>_r/_g/_b`
+(0..1, Klemmung erst beim Zeichnen) — Sichttest offen; Nachgang Farbtafeln der
+Scopes. **Offen:** C Farbpaletten der Fraktale
+(`colorscale`/`colorcycle`), D weitere statische Felder, E Module ohne
+Formelzugang (Set Render Mode, ISF-INPUTs, Shadertoy-Uniforms, Host Group),
+F generischer Weg (automatische Bindung + Mod-Quelle je Feld — eigene
+Konzept-Session). Jede neue Variable: Bindung in `run*` **und** Zeile in
+`ScriptVariables.cpp`, der Test meldet einseitige Änderungen.
+
 ### ⬜ Feldbreiten-Vertrag nur in der Effektkette (S78)
 
 Seit S78 gilt in der Effektkette: Felder ≥ 120 px, 5 px Panelrand,
@@ -1944,6 +1961,26 @@ Liste statt pro Gruppe. Trigger-Stufen:
    (`asset/effectchain/lights_demo.*`).
 Bezug: P2 Visual-Playlist (§6) und Hotkeys Stufe 3 (Composer) überschneiden
 sich — im Konzept abgrenzen.
+
+### ✅ Effekt-Palette als Fenster statt Dropdown (Entscheid + Umsetzung S79 — Sichttest offen)
+
+**Umgesetzt S79** (`EffectPaletteWindow`, Daten `EffectPalette.{hpp,cpp}`,
+Doku `include/UI/panels/MultiEffectPanel.md` §Funktion). **Sichttest Patrik
+offen:** Suche/Enter, Chips, ★/Zuletzt, Drag in Liste/zwischen Knoten/auf
+Leerfläche, Milkdrop-Element auf einen Milkdrop-Node, Fenster bleibt offen.
+Die Rollen-Zuordnung (Punkt darunter) ist mit umgesetzt — Filter-Chips im
+Fenster; eine Rollen-Spalte im Kettenbaum steht noch aus.
+
+Die Add-Combo trug 84 Module in 12 Kategorien, ohne Suche und
+Filter. **Entscheid S79:** ein **nicht-modales Palettenfenster** ersetzt sie —
+„+" öffnet es; Button „Hinzufügen" (in die gewählte Liste, sonst Root) **und**
+Drag & Drop in den Kettenbaum; es bleibt offen, bis man es schließt (X oder
+„Schließen"). Inhalt: Suchzeile (Name, Original-AVS-Name, Beschreibung),
+Kategorie-Baum mit Zählern, Filter-Chips Herkunft (AVS/APE/MilkDrop/LumiViz/
+GLSL) und **Rolle** (zeichnet / verändert Bild / Farbe / Steuerung — der
+Punkt darunter), zuletzt benutzt + Favoriten ★, Kurzbeschreibung mit Hinweis
+auf Formelfelder. Das Fenster hängt nicht an der Panelbreite (S78-Vertrag
+bleibt unberührt).
 
 ### ⚪ Effekt-Palette: Rolle sichtbar machen + filtern (Wunsch Patrik, 2026-08-06)
 
@@ -2534,6 +2571,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.75.0 | 2026-09-27 | Session 79 (Auftrag Patrik: Modulauswahl + Formelfelder) — **Palettenfenster umgesetzt** (nicht-modal; Suche über Name/Originalname/Beschreibung, Chips Herkunft AVS/APE/MilkDrop/LumiViz + Rolle, ★ Favoriten + Zuletzt, Detailzeile mit Formelfeldern, Add/Enter/Doppelklick + Drag & Drop in den Kettenbaum; Palettendaten nach `EffectPalette.{hpp,cpp}` ausgelagert, je Eintrag Rolle/Kurzbeschreibung/Originalname; Test `test_EffectPalette`; Sichttest offen). **Formelfelder Block B:** Farben per Skript als `<feldname>_r/_g/_b` in 16 Modulen (`FarbKopie`, Referenz + Struct-Doku + Tooltips nachgezogen). **Formelfelder:** Inventar aller 84 Module (`visuals/Formelfelder_Inventar.md`); Block A umgesetzt — `distance` (Brightness), `skipfirst` (Custom BPM), `x2`/`y2` (Interleave), `blend` (Timescope, Dot Grid), `edgemode` (Convolution), `p`/`q` (Kleinian), `variation`/`scale` (Flame) gebunden; Variablenreferenz aus der SSOT `ScriptVariables.hpp`, geprüft durch `test_ScriptVariablesGl` (Namens-Sonde in `LuaScriptEngine`). Neu in §7: Palettenfenster, Formelfelder B–F |
 | 1.74.0 | 2026-09-27 | Session 78 (Vorgabe Patrik: Feldbreiten der Effektkette) — Bestandsaufnahme aller ~90 Modul-Editoren, dann zentraler Breiten-Vertrag in `MultiEffectPanel`: Felder ≥ 120 px, 5 px Panelrand, seitliches Scrollen des Panels statt Überbreite, Dock-Minimum 240 px + Ränder, Effektliste mit Spalten-Mindestbreiten und eigenem Balken. Von Patrik abgenommen. Neu in §7: Vertrag nur in der Effektkette |
 | 1.73.0 | 2026-09-23 | Session 77 (Bugfix, Meldung Patrik: Visualizer nach einer Mausbewegung verschwunden, auch nach Neustart) — im gespeicherten Dock-Layout fehlte `visualizer` (nur ein leerer Floating-Container), Qt-ADS versteckte ihn deshalb als *unassigned*; Reset Layout spielte dasselbe Layout ab, View > Panels kannte ihn nicht. Behoben in `DockManager` 2.2.0 (§5.6): fehlende Visualizer nach Restore/Reset andocken, Reset aufs Werks-Layout, Visualizer im Panels-Menü. Neu in §7: Tab-X löscht den Visualizer (Entscheid offen) |
 | 1.72.0 | 2026-08-09 | Session 74 (das Pruefsignal, Auftrag Patrik: „fuer Vergleiche synthetisch, aber aus dem MP3 intensiver synthetisiert") — **das synthetische Signal kommt jetzt aus EINER Quelle** (`projects/exec/common/SynthAudio.hpp`) statt aus vier Kopien. Bis S74 stand die Formel in AvsStandalone, MilkdropStandalone, `tools/AvsRef` und `tools/MilkdropRef` je einmal, jedes Mal mit dem Kommentar „formelgleich zu …" — genau die Sorte Abmachung, die still auseinanderlaeuft. Der Kopf ist bewusst Qt-frei und C++14-tauglich, damit das 32-bit-AvsRef und der D3D9-MilkdropRef ihn uebersetzen. Dabei festgehalten, was vorher unausgesprochen war: die WELLENFORM war in allen vier gleich, das SPEKTRUM nicht — der AVS-Pfad legt einen Beat-Faktor ueber alle Bins, der MilkDrop-Pfad gibt Bass/Mitten/Hoehen eigene Huellkurven (S64, sonst 0/0-NaN bei Banddifferenzen). Beide Fassungen bleiben, `Geschmack` waehlt aus; Zusammenlegen waere ein Eingriff in Messreihen und gehoert eigens entschieden. **NEU `--audio-muster klassisch|musik` an ALLEN VIER Werkzeugen** plus `compare_avsref.py`: `musik` traegt acht log-verteilte Bandhuellkurven je Bild und eine Beat-Spur, gewonnen aus 20 s echter Aufnahme, und synthetisiert daraus NEU (acht Sinus mit musikalisch bewegten Amplituden). Es wird keine Musik abgespielt, das Profil laesst sich nicht zurueckrechnen — und weil beide Seiten dieselbe Datei einbinden, **bleiben Referenzvergleiche gueltig**, anders als bei `--audio-datei`. Erzeugt wird das Profil mit `AvsStandalone --audio-profil-schreiben` (Analyse: FFT je Bild, Bandnormierung je Band, Onset-Erkennung, Tempo per Autokorrelation mit 120-BPM-Prior — ohne den Prior landete die Schaetzung zweimal eine Oktave daneben, 257 dann 63 statt ~129 BPM). **REGRESSION BELEGT:** `klassisch` ist bit-identisch zu vor dem Umbau (gleicher PNG-Hash), und der Referenzvergleich liefert exakt die S73-Zahlen (`09_rotating_things` MAE 0,010 / `02_flowers` 0,015). Im AVS-Pfad kommt der Beat im Musik-Muster aus der Beat-SPUR — dafuer `MultiEffectVisualizer::setBeatTrackOverride()` als Geschwister des vorhandenen `setBeatPeriodOverride()` (Test-Hook, wie dieser). **ZWEI BEFUNDE NEBENBEI**, beide in §8: `02_flowers` verliert im Musik-Muster seinen dMaxLuma-Befund (0,150 → 0,017) — noch kein Freispruch, der Beat unterscheidet sich zwischen den Laeufen; und **MilkdropRef liess sich seit S67 nicht mehr voll neu bauen** (`/FI ref_msgbox.h` zog `<cstdio>` und namenlose Parameter in die neun `.c`-Dateien des ns-eel2-Kerns), gefunden und behoben. Tests 593 gruen, alle vier Werkzeuge gebaut |

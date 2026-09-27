@@ -42,6 +42,9 @@ class QLabel;
 class QMutex;
 class QNetworkAccessManager;
 class MultiEffectVisualizer;
+namespace lumi::ui {
+class EffectPaletteWindow;
+}
 
 /// Where a drop landed relative to the target item (public mirror of Qt's
 /// protected QAbstractItemView::DropIndicatorPosition).
@@ -71,6 +74,9 @@ public:
 
     std::function<void(QTreeWidgetItem* src, QTreeWidgetItem* target, ChainDrop where)>
         onDrop;
+    /// Ein Eintrag aus dem Palettenfenster wurde abgelegt (S79).
+    std::function<void(int paletteIndex, QTreeWidgetItem* target, ChainDrop where)>
+        onPaletteDrop;
     std::function<void()> onDeleteKey;  ///< Delete/Backspace pressed
 
     /// Spalten-Mindestbreiten (S78, Entscheid 2a): keine Spalte wird schmaler
@@ -80,6 +86,11 @@ public:
     void setColumnMinimums(const QList<int>& minimums);
 
 protected:
+    /// Neben den eigenen Zeilen auch Paletteneintraege (`lumi::ui::kPaletteMime`)
+    /// annehmen — erst dadurch zeigt Qt beim Ziehen den Einfuege-Indikator.
+    [[nodiscard]] QStringList mimeTypes() const override;
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dragMoveEvent(QDragMoveEvent* event) override;
     void dropEvent(QDropEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
@@ -155,7 +166,17 @@ private:
                 const std::function<void(lumi::multieffect::ChainNode&)>& fn);
     void mutateStructure(const std::function<void()>& fn);
     void setNodeEnabled(const QList<int>& path, bool enabled);
-    void onAddEffect();
+    /// „+": Palettenfenster oeffnen bzw. nach vorn holen (S79).
+    void openPalette();
+    /// Paletteneintrag an der Auswahl einfuegen (Button „Add" im Fenster).
+    void onAddEffect(int paletteIndex);
+    /// Paletteneintrag an der Drop-Stelle einfuegen (Drag aus dem Fenster).
+    void onPaletteDrop(int paletteIndex, QTreeWidgetItem* target, ChainDrop where);
+    /// Gemeinsamer Kern: neuen Knoten als `pos`-tes Kind von `parentPath`
+    /// einfuegen (pos < 0 = anhaengen), markieren, Editor aufbauen.
+    bool insertPaletteNode(int paletteIndex, const QList<int>& parentPath, int pos);
+    /// Milkdrop-Element (Wave/Shape/Sprite) in den Milkdrop-Node an `anchorPath`.
+    bool insertMilkElement(int paletteIndex, const QList<int>& anchorPath);
     void onRemove();
     void onClone();
     void onMove(int delta);
@@ -221,7 +242,8 @@ private:
     QNetworkAccessManager* m_netManager = nullptr;
 
     ChainTreeWidget* m_tree = nullptr;
-    QComboBox* m_addTypeCombo = nullptr;
+    lumi::ui::EffectPaletteWindow* m_palette = nullptr;  ///< lazy, S79
+    bool m_active = false;  ///< Multi-Effect-Visualizer angebunden?
     QToolButton* m_addButton = nullptr;
     QToolButton* m_removeButton = nullptr;
     QToolButton* m_cloneButton = nullptr;

@@ -636,8 +636,16 @@ bool LuaScriptEngine::run(Slot slot)
 // Environment variables
 // =============================================================================
 
+// Test-Sonde (setNameProbe). Im Betrieb nullptr — kostet einen Vergleich.
+namespace {
+std::set<std::string>* g_nameProbe = nullptr;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+}  // namespace
+
+void LuaScriptEngine::setNameProbe(std::set<std::string>* sink) { g_nameProbe = sink; }
+
 void LuaScriptEngine::setNumber(const char* name, double value)
 {
+    if (g_nameProbe != nullptr) g_nameProbe->insert(name);
     if (!pushEnv()) return;
     lua_pushnumber(m_state, value);
     lua_setfield(m_state, -2, name);
@@ -646,6 +654,7 @@ void LuaScriptEngine::setNumber(const char* name, double value)
 
 double LuaScriptEngine::number(const char* name) const
 {
+    if (g_nameProbe != nullptr) g_nameProbe->insert(name);
     if (!pushEnv()) return 0.0;
     lua_getfield(m_state, -1, name);  // __index yields 0.0 for unknown names
     const double value = lua_tonumber(m_state, -1);

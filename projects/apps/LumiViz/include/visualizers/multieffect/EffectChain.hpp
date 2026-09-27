@@ -296,6 +296,7 @@ struct ClearParams
     int blend = 0;
 
     /// Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -308,6 +309,7 @@ struct FadeoutParams
     uint32_t color = 0x000000;  ///< target color 0x00RRGGBB
 
     /// Parameter-Skript (Strang D): `fadelen` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -334,6 +336,7 @@ struct BrightnessParams
     int distance = 16;          ///< exclusion radius 0..255
 
     /// Parameter-Skript (Strang D): `red`, `green`, `blue`, `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -474,6 +477,7 @@ struct BassSpinParams
 
     /// Parameter-Skript (Strang D): `mode`, `smoothing`, `spinstep`.
     /// Klasse A — s. Hinweis bei `DotPlaneParams`.
+    /// Farben per Skript (Block B, S79): `colorleft_r`, `colorleft_g`, `colorleft_b`, `colorright_r`, `colorright_g`, `colorright_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -492,6 +496,7 @@ struct ColorClipParams
     int distance = 10;               ///< match radius (near mode)
 
     /// Parameter-Skript (Strang D): `distance` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Farben per Skript (Block B, S79): `clipcolor_r`, `clipcolor_g`, `clipcolor_b`, `outcolor_r`, `outcolor_g`, `outcolor_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -509,6 +514,7 @@ struct UniqueToneParams
     int blend = 0;              ///< 0 replace, 1 additive, 2 50/50
 
     /// Parameter-Skript (Strang D): `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -531,6 +537,7 @@ struct InterleaveParams
     int beatDuration = 4;       ///< ease length
 
     /// Parameter-Skript (Strang D): `x`, `y`, `x2`, `y2` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -626,6 +633,7 @@ struct OnBeatClearParams
     bool blend = false;         ///< 50/50 towards color instead of hard clear
 
     /// Parameter-Skript (Strang D): `everyNBeats` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -821,6 +829,7 @@ struct Camera3DParams
     /// EEL-Slots (Reihenfolge Frame VOR Beat): duerfen `px`..`pz`, `tx`..`tz`,
     /// `fov`, `roll`, `fogstart`, `fogend` ueberschreiben. Die Feldwerte oben
     /// sind die Startbelegung beim Uebersetzen.
+    /// Farben per Skript (Block B, S79): `fogcolor_r`, `fogcolor_g`, `fogcolor_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -886,6 +895,7 @@ struct Terrain3DParams
     uint32_t colorHigh = 0x40C0FF;  ///< Palette: Gipfel
     /// EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem
     /// Punkt-Code darunter.
+    /// Farben per Skript (Block B, S79): `meshcolor_r`, `meshcolor_g`, `meshcolor_b`, `colorlow_r`, `colorlow_g`, `colorlow_b`, `colorhigh_r`, `colorhigh_g`, `colorhigh_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1074,6 +1084,7 @@ struct MovingParticleParams
 
     /// Parameter-Skript (Strang D): `size`, `size2`, `maxdistance`, `spring`,
     /// `damping`. Klasse A — s. Hinweis bei `DotPlaneParams`.
+    /// Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1522,6 +1533,7 @@ struct StarfieldParams
     int blend = 0;               ///< 0 replace, 1 additive, 2 50/50 (r_stars)
 
     /// Parameter-Skript (Strang D): `maxstars`, `warpspeed`, `beatspeed`, `durationframes` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1560,6 +1572,7 @@ struct TimescopeParams
     bool useChannel = false;
 
     /// Parameter-Skript (Strang D): `bands`, `channel`, `blend` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1742,6 +1755,7 @@ struct AddBordersParams
     int size = 2;               ///< border width (px)
 
     /// Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -2130,7 +2144,7 @@ struct KleinianParams
     /// Auf das bestehende Bild: 0 ersetzen, 1 additiv (geklemmt), 2 50/50.
     int blend = 0;
     /// Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`,
-    /// `rotation` + Audio-Satz. Leer = kein Skript.
+    /// `rot` (= `rotation`) + Audio-Satz. Leer = kein Skript.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -2224,6 +2238,7 @@ struct StrangeAttractorParams
     /// Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz.
     /// Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt
     /// den Traeger neu auf und laesst den Init-Slot erneut laufen.
+    /// Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -2233,7 +2248,7 @@ struct StrangeAttractorParams
  * Batch H (host-native): a Flame / IFS (chaos-game) renderer. Each frame runs the
  * chaos game for `points` iterations over a small affine function system with a
  * non-linear `variation`, drawing the samples as additive dots. `functions`
- * selects the preset system (2..4 maps). EEL writes variation params / rotation.
+ * selects the preset system (2..4 maps). EEL writes variation / scale / rotation.
  */
 struct FlameParams
 {
@@ -2257,7 +2272,7 @@ struct FlameParams
     /// 0 ersetzen, 1 additiv, 2 50/50.
     int blend = 1;
 
-    /// Parameter-Skript (Strang D): die Variationsbeiwerte und `rotation` +
+    /// Parameter-Skript (Strang D): `variation` (0..4), `scale` und `rotation` +
     /// Audio-Satz. Leer = kein Skript.
     std::string initCode;
     std::string frameCode;
@@ -2442,10 +2457,13 @@ struct GpuParticlesParams
     /// GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag
     std::string forceCode;
     /// Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1).
     std::string initCode;
     /// Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1).
     std::string frameCode;
     /// Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1).
     std::string beatCode;
 };
 

@@ -16,14 +16,43 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
   alle Ebenen sichtbar ist). **Spalte 1 = Auge-Toggle** (👁/—, schmale Fixspalte)
   zum Ausblenden — setzt `enabled` (bei einer Gruppe die ganze Gruppe; der
   Renderer gated in `renderNode`).
-- **Toolbar:** Typ-Auswahl + **Add** (in die selektierte Liste, sonst Root),
-  **Remove**, **Clone** (⧉ — dupliziert Knoten inkl. Teilbaum direkt dahinter;
-  frische `nodeId`s), **Up/Down** (innerhalb des Elternknotens).
+- **Toolbar:** **+** öffnet das **Effekt-Palettenfenster** (s. u.), **Remove**,
+  **Clone** (⧉ — dupliziert Knoten inkl. Teilbaum direkt dahinter; frische
+  `nodeId`s), **Up/Down** (innerhalb des Elternknotens).
+- **Effekt-Palette (Session 79, Entscheid Patrik):** ersetzt die frühere
+  Add-Combo (84 Module ohne Suche). `EffectPaletteWindow` ist ein
+  **nicht-modales Tool-Fenster**, das offen bleibt, bis man es schließt (X oder
+  „Close"); Größe/Lage in QSettings `effectPalette/geometry`.
+  - **Suche** über Name, Originalname („Trans / Movement"), Kurzbeschreibung,
+    Kategorie, Herkunft und Rolle — jedes Wort muss vorkommen; der erste
+    Treffer wird markiert, **Enter** fügt ihn ein, **↓** springt in die Liste.
+  - **Filter-Chips** Herkunft (AVS · APE · MilkDrop · LumiViz) und Rolle
+    (Draws · Transforms · Colour · Control) — ODER innerhalb, UND zwischen den
+    Gruppen; keine Chip gedrückt = kein Filter.
+  - **★ Favourites** und **Recently used** (8) oben, gemerkt **über den Namen**
+    (`effectPalette/favorites|recent`), damit sie Palettenumbauten überleben.
+  - **Detailzeile:** Herkunft · Rolle · Originalname, Kurzbeschreibung, ob das
+    Modul Formelfelder hat (Zahl der Variablen aus `ScriptVariables.hpp`).
+  - **Einfügen** per **Add** / Doppelklick / Enter (wie früher „+": in die
+    markierte Liste, sonst unter den markierten Effekt, sonst ans Ende) **oder
+    per Drag & Drop** an die Stelle im Kettenbaum (gleiche Regeln wie beim
+    Verschieben). Milkdrop-Elemente (Wave/Shape/Sprite) nur auf/in einen
+    Milkdrop-Node. Ohne aktiven Multi-Effect-Visualizer bleibt die Palette
+    durchsuchbar, Einfügen ist gesperrt.
+  - **Daten:** `EffectPalette.{hpp,cpp}` (aus dem Panel herausgelöst) — je
+    Eintrag Name, Fabrik, **Rolle**, **Herkunft** (neu `Ape` getrennt von
+    `Avs`; Icon bleibt AVS), **Kurzbeschreibung**, **Originalname**.
+    Wächter: `test_EffectPalette.cpp`.
 - **Drag & Drop:** Effekte/Gruppen im Baum verschieben — auf eine Gruppe fallen
   lassen = **hineinschieben**, zwischen Knoten = umsortieren, auf Leerfläche =
   ans Root-Ende (**herausschieben**). Der Tree (`ChainTreeWidget`) mutiert nie
   selbst: `dropEvent` meldet nur Quelle/Ziel/Position, das Modell wird bewegt
-  (queued, außerhalb des Drop-Events) und der Baum daraus neu gebaut.
+  (queued, außerhalb des Drop-Events) und der Baum daraus neu gebaut. Seit S79
+  läuft der Baum im Modus `DragDrop` (vorher `InternalMove`), damit er auch
+  Paletteneinträge (MIME `application/x-lumiviz-palette-index`) annimmt;
+  eigene Zeilen werden weiter verschoben, Palette-Einträge kopiert, Zeilen
+  fremder Bäume abgewiesen. Der Palettenbaum erlaubt nur `CopyAction` — bei
+  „Move" entfernte Qt nach dem Drop die Quellzeile.
 - **Parameter-Editor** je selektiertem Knoten: Spinner/Checkbox/Farbwähler/
   Enum + **EEL-Skript-Textfelder** (Init/Frame/Beat/Point bzw. Level) für alle
   Effekt-Typen (inkl. Mosaic); Passthrough-Knoten zeigen nur ihre Konserven-Notiz.
@@ -160,7 +189,7 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
 - **Host-Gruppe (HG1, Session 42):** Container-Node wie eine Effect List, aber
   mit **eigenem Laufzeit-Bestand** (persistenter Feedback-Buffer, eigene
   Buffer-Save-Slots, eigener Skript-Kontext). Palette „Host Group";
-  **Tiefenregel** — keine Gruppe in einer Gruppe: das Add-Dropdown und
+  **Tiefenregel** — keine Gruppe in einer Gruppe: das Einfügen aus der Palette und
   Drag&Drop verweigern es, der Compile-Pass degradiert verschachtelte Gruppen
   aus Dateien zur Effect List. Editor: Blend Out/Alpha, **Crossfade-Dauer**
   (Änderung synchronisiert ALLE Gruppen, Entwurf §2.4), individuelle Ein-/

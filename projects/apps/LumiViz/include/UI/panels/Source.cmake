@@ -17,6 +17,8 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/PanelBase.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/ConfigPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/EelScriptEditing.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/EffectPalette.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/EffectPaletteWindow.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/FieldDocs.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/ParameterBaum.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/ImportBrowserPanel.hpp"

@@ -37,6 +37,7 @@
 #include <cstdint>
 #include <memory>
 #include <random>
+#include <set>
 #include <string>
 #include <unordered_map>
 
@@ -120,6 +121,12 @@ public:
 
     void setNumber(const char* name, double value);
     [[nodiscard]] double number(const char* name) const;  ///< 0.0 if unset/non-number
+
+    /// @brief Test-Sonde (S79): solange gesetzt, landet jeder Name, den
+    ///        setNumber() oder number() anfasst, in `sink` — ueber ALLE Engines
+    ///        hinweg. Prueft, dass die Variablenreferenz (ScriptVariables.hpp)
+    ///        nichts verspricht, was die Laufzeit nie bindet. nullptr = aus.
+    static void setNameProbe(std::set<std::string>* sink);
 
     // =========================================================================
     // Host-Zugriff auf den engine-lokalen megabuf (S48, Terrain-Grid): der

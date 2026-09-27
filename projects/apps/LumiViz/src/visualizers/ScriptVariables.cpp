@@ -1,0 +1,557 @@
+/**
+ ****************************************************************************************
+ * @file   ScriptVariables.cpp
+ * @brief  Die Variablentabellen je Knotentyp (SSOT, s. ScriptVariables.hpp)
+ *
+ * @author Patrik Neunteufel
+ * @date   September 2026
+ *
+ * @details
+ * Texte auf Englisch — sie erscheinen unveraendert in der Referenz des Panels.
+ * Die Zeilen folgen den Bindungen in `MultiEffectVisualizer::run*`; die
+ * Bereiche stammen aus den Feldkommentaren in `EffectChain.hpp`.
+ ****************************************************************************************
+ */
+
+#include "visualizers/multieffect/ScriptVariables.hpp"
+
+#include <type_traits>
+#include <unordered_map>
+#include <variant>
+
+namespace lumi::multieffect {
+
+namespace {
+
+/// Index eines Typs in der Variante — zur Uebersetzungszeit.
+template <class T, class V>
+struct IndexOf;
+template <class T, class... Ts>
+struct IndexOf<T, std::variant<Ts...>>
+{
+    static constexpr std::size_t value = [] {
+        std::size_t i = 0;
+        (void)((std::is_same_v<T, Ts> ? true : (++i, false)) || ...);
+        return i;
+    }();
+};
+template <class T>
+constexpr std::size_t ix = IndexOf<T, EffectParams>::value;
+
+constexpr ScriptVarBase kNone = ScriptVarBase::None;
+constexpr ScriptVarBase kAudio = ScriptVarBase::Audio;
+constexpr ScriptVarBase kParam = ScriptVarBase::ParamScript;
+
+// Wiederkehrende Beschreibungen.
+constexpr const char* kBlend3 = "0 replace, 1 additive, 2 50/50";
+constexpr const char* kBlend4 = "0 replace, 1 additive, 2 50/50, 3 line blend (Set Render Mode)";
+// Block B (S79): Farben als drei Kanaele 0..1; geklemmt wird erst beim Zeichnen.
+
+const std::unordered_map<std::size_t, ScriptVarTable>& tables()
+{
+    static const std::unordered_map<std::size_t, ScriptVarTable> kTables = {
+        // ---------------------------------------------------------------- Struktur
+        {ix<ListParams>,
+         {kAudio,
+          {{"enabled", "in/out", "0/1", "render the list this frame?"},
+           {"clear", "in/out", "0/1", "clear the list buffer first?"},
+           {"beat", "in/out", "0/1", "beat (may be mutated for the children)"},
+           {"alphain / alphaout", "in/out", "0..255", "blend alphas (adjustable modes)"},
+           {"w / h", "in", "px", "surface size"}}}},
+        {ix<ClearParams>,
+         {kParam,
+          {{"blend", "in/out", "0..3", kBlend4}, {"color_r / color_g / color_b", "in/out", "0..1", "clear colour"}}}},
+        {ix<FadeoutParams>,
+         {kParam,
+          {{"fadelen", "in/out", "0..92", "fade step per frame"}, {"color_r / color_g / color_b", "in/out", "0..1", "fade target colour"}}}},
+        {ix<OnBeatClearParams>,
+         {kParam,
+          {{"everynbeats", "in/out", ">=1", "clear on every N-th beat"}, {"color_r / color_g / color_b", "in/out", "0..1", "clear colour"}}}},
+        {ix<BufferSaveParams>,
+         {kParam,
+          {{"slot", "in/out", "0..7", "global buffer index"},
+           {"dir", "in/out", "0..3",
+            "0 save, 1 restore, 2 alternate (save first), 3 alternate (restore first)"},
+           {"adjustalpha", "in/out", "0..255", "adjustable blend alpha"}}}},
+        {ix<BufferBlendParams>,
+         {kParam,
+          {{"buffera / bufferb", "in/out", "0..8", "pool slot 0..7, 8 = current frame"},
+           {"mode", "in/out", "0..10", "blend mode"}}}},
+        {ix<CustomBpmParams>,
+         {kParam,
+          {{"arbitraryms", "in/out", "ms", "beat interval in arbitrary mode"},
+           {"skipcount", "in/out", ">=0", "let every (skipcount+1)-th beat through"},
+           {"skipfirst", "in/out", ">=0", "swallow the first N beats"}}}},
+        {ix<JherikoGlobalParams>,
+         {kAudio,
+          {{"reg00..reg99", "in/out", "any", "preset-global registers (shared across effects)",
+            false},
+           {"gmegabuf(i)", "in/out", "any", "global scratch buffer", false}}}},
+        {ix<VideoDelayParams>,
+         {kParam, {{"delay", "in/out", "frames", "delay amount (capped for VRAM)"}}}},
+        {ix<MultiDelayParams>,
+         {kParam,
+          {{"delay", "in/out", "frames", "delay length"},
+           {"buffer", "in/out", "0..5", "shared buffer index"}}}},
+
+        // ---------------------------------------------------------------- GPU-Module
+        {ix<MeshWarpParams>,
+         {kParam,
+          {{"gridx / gridy", "in/out", "2..256 / 2..192", "grid quads (coarse = edgy warp)"},
+           {"mixamount", "in/out", "0..1", "share of the warped image (1 = replace)"}}}},
+        {ix<GpuParticlesParams>,
+         {kParam,
+          {{"spawnx / spawny", "in/out", "0..1", "spawn centre (0 = left / bottom)"},
+           {"spread", "in/out", "UV", "spawn scatter radius (0 = point source)"},
+           {"speed", "in/out", "UV/s", "start speed"},
+           {"dir", "in/out", "deg", "start direction (0 = right, 90 = up)"},
+           {"fan", "in/out", "deg", "scatter angle around the direction (360 = radial)"},
+           {"gravx / gravy", "in/out", "UV/s^2", "gravity"},
+           {"drag", "in/out", "1/s", "air drag (0 = none)"},
+           {"life", "in/out", "s", "lifetime"},
+           {"size", "in/out", "px", "sprite size at spawn"},
+           {"colorstart_r / colorstart_g / colorstart_b", "in/out", "0..1", "colour at spawn"},
+           {"colorend_r / colorend_g / colorend_b", "in/out", "0..1", "colour at end of life"}}}},
+        {ix<PixelFilterParams>,
+         {kParam, {{"mixamount", "in/out", "0..1", "share of the filtered image (1 = replace)"}}}},
+        {ix<VideoSourceParams>,
+         {kParam,
+          {{"speed", "in/out", "0.05..20", "playback speed factor"},
+           {"opacity", "in/out", "0..1", "opacity (scales the contribution in all blend modes)"}}}},
+
+        // ---------------------------------------------------------------- Scopes & Quellen
+        {ix<SuperScopeParams>,
+         {kNone,
+          {{"n", "in/out", "8..4096", "point count (frame code may change it)"},
+           {"i", "in", "0..1", "point index, normalised (per point)"},
+           {"v", "in", "-1..1", "waveform sample at this point"},
+           {"b", "in", "0/1", "1 on a beat"},
+           {"w / h", "in", "px", "surface width / height"},
+           {"t", "own", "any", "your own accumulator (persists)"},
+           {"x / y", "out", "-1..1", "point position (per point)"},
+           {"red / green / blue", "in/out", "0..1", "point colour (pre-seeded)"},
+           {"linesize", "in/out", "px", "line width"},
+           {"drawmode", "in/out", "0/1", "0 dots, 1 lines"},
+           {"skip", "out", "0/1", ">0.5 hides this point"}}}},
+        {ix<SimpleScopeParams>,
+         {kParam,
+          {{"mode", "in/out", "0..3",
+            "0 solid analyzer, 1 line analyzer, 2 line scope, 3 solid scope"},
+           {"channel", "in/out", "0..2", "0 left, 1 right, 2 centre"},
+           {"position", "in/out", "0..2", "0 top, 1 bottom, 2 centre"}}}},
+        {ix<OscStarParams>,
+         {kParam,
+          {{"size", "in/out", "0..16", "spoke length"},
+           {"rot", "in/out", "any", "rotation speed (0 = still)"},
+           {"spokes", "in/out", ">=1", "number of spokes"},
+           {"rotscale", "in/out", "rad", "radians per rot unit and frame"},
+           {"amplitude", "in/out", "~1", "factor on the wave deflection"}}}},
+        {ix<OscRingParams>,
+         {kParam,
+          {{"size", "in/out", "0..16", "base radius"},
+           {"segments", "in/out", ">=3", "ring vertices"},
+           {"basescale", "in/out", "~0.1", "radius without audio"},
+           {"audioscale", "in/out", "~0.9", "audio share of the radius"}}}},
+        {ix<RotatingStarsParams>,
+         {kParam,
+          {{"points", "in/out", ">=2", "tips per star"},
+           {"skip", "in/out", ">=1", "vertex step when drawing (2 = pentagram)"},
+           {"stars", "in/out", ">=1", "stars on opposite orbits"},
+           {"rotspeed", "in/out", "rad", "orbit rotation per frame"},
+           {"orbit", "in/out", "NDC", "distance from the centre"},
+           {"baseradius", "in/out", "NDC", "star size without audio"},
+           {"audiogain", "in/out", "NDC", "growth from the spectrum peak"}}}},
+        {ix<BassSpinParams>,
+         {kParam,
+          {{"mode", "in/out", "0/1", "0 lines, 1 filled"},
+           {"smoothing", "in/out", "0..1", "weight of the new value"},
+           {"spinstep", "in/out", "rad", "rotation step per unit"},
+           {"colorleft_r / colorleft_g / colorleft_b", "in/out", "0..1", "left shape colour"},
+           {"colorright_r / colorright_g / colorright_b", "in/out", "0..1", "right shape colour"}}}},
+        {ix<MovingParticleParams>,
+         {kParam,
+          {{"size / size2", "in/out", "px", "particle radius / on-beat radius"},
+           {"maxdistance", "in/out", "any", "travel-radius scale"},
+           {"spring", "in/out", "~0.004", "pull towards the target per frame"},
+           {"damping", "in/out", "0..1", "velocity damping"},
+           {"color_r / color_g / color_b", "in/out", "0..1", "particle colour"}}}},
+        {ix<StarfieldParams>,
+         {kParam,
+          {{"maxstars", "in/out", "count", "star count"},
+           {"warpspeed", "in/out", "any", "base fly-through speed"},
+           {"beatspeed", "in/out", "any", "on-beat speed"},
+           {"durationframes", "in/out", "frames", "ease-back length"},
+           {"color_r / color_g / color_b", "in/out", "0..1", "star tint (white = untinted)"}}}},
+        {ix<FyrewurXParams>,
+         {kParam,
+          {{"sparks", "in/out", "count", "sparks per burst"},
+           {"speed", "in/out", "NDC/s", "initial spark speed"},
+           {"gravity", "in/out", "NDC/s^2", "downward pull"},
+           {"life", "in/out", "s", "spark lifetime"},
+           {"dotsize", "in/out", "px", "spark size"},
+           {"huedrift", "in/out", "0..1", "colour scatter per spark"},
+           {"burstspread", "in/out", "~1", "scatter of the burst centre"}}}},
+        {ix<Metaballs3DParams>,
+         {kParam,
+          {{"count", "in/out", "1..16", "number of balls"},
+           {"radius", "in/out", "NDC", "radius scale per ball"},
+           {"speed", "in/out", "any", "orbit speed"},
+           {"threshold", "in/out", "~1", "iso value of the surface"},
+           {"spread", "in/out", "~1", "orbit width factor"},
+           {"depth", "in/out", "any", "camera distance of the orbit centre"},
+           {"phase", "in/out", "rad", "phase offset per ball"}}}},
+        {ix<Tentacles3DParams>,
+         {kParam,
+          {{"count", "in/out", "1..16", "number of tentacles"},
+           {"segments", "in/out", ">=2", "vertices per tentacle"},
+           {"length", "in/out", "NDC", "length"},
+           {"thickness", "in/out", "px", "line width at the root"},
+           {"speed", "in/out", "any", "sway speed"},
+           {"sway", "in/out", "any", "sway amplitude at the tip"},
+           {"waves", "in/out", "any", "waves along the length"},
+           {"taper", "in/out", "0..1", "taper towards the tip (0 = even)"}}}},
+        {ix<TimescopeParams>,
+         {kParam,
+          {{"bands", "in/out", "count", "vertical spectrum resolution"},
+           {"channel", "in/out", "0..2", "0 left, 1 right, 2 centre"},
+           {"blend", "in/out", "0..3", kBlend4},
+           {"color_r / color_g / color_b", "in/out", "0..1", "column colour"}}}},
+        {ix<DotGridParams>,
+         {kParam,
+          {{"spacing", "in/out", "px", "grid spacing"},
+           {"xmove / ymove", "in/out", "1/256 px", "scroll per frame"},
+           {"blend", "in/out", "0..3", kBlend4}}}},
+        {ix<DotPlaneParams>,
+         {kParam,
+          {{"rotvel", "in/out", "-50..50", "rotation speed"},
+           {"angle", "in/out", "deg", "viewing tilt"},
+           {"camdistance", "in/out", "any", "camera distance"},
+           {"settle", "in/out", "any", "sinking per frame"}}}},
+        {ix<DotFountainParams>,
+         {kParam,
+          {{"rotvel", "in/out", "any", "rotation speed (sign = direction)"},
+           {"angle", "in/out", "deg", "viewing tilt"}}}},
+
+        // ---------------------------------------------------------------- Fraktale
+        {ix<Fractal2DParams>,
+         {kAudio,
+          {{"cx / cy", "in/out", "any", "view centre (re/im)"},
+           {"zoom", "in/out", ">0", "view scale (higher = closer)"},
+           {"rot", "in/out", "rad", "view rotation"},
+           {"jx / jy", "in/out", "-2..2", "Julia / Phoenix seed"},
+           {"power", "in/out", "1..16", "Multibrot / Nova exponent"}}}},
+        {ix<Fractal3DParams>,
+         {kAudio,
+          {{"yaw / pitch", "in/out", "rad", "camera orbit"},
+           {"dist", "in/out", ">0.1", "camera distance"},
+           {"power", "in/out", "1..16", "Mandelbulb exponent"},
+           {"scale / fold", "in/out", "any", "Mandelbox / KIFS params"}}}},
+        {ix<DomainWarpParams>,
+         {kAudio,
+          {{"scale", "in/out", ">0", "base frequency"},
+           {"warp", "in/out", "0..8", "domain-warp strength"},
+           {"speed", "in/out", "any", "time evolution"},
+           {"ox / oy", "in/out", "any", "pan offset"}}}},
+        {ix<FractalZoomerParams>,
+         {kAudio,
+          {{"cx / cy", "in/out", "any", "zoom target"},
+           {"zoomspeed", "in/out", "~1", "per-frame zoom factor"},
+           {"rotspeed", "in/out", "rad", "per-frame rotation"}}}},
+        {ix<LyapunovParams>,
+         {kAudio,
+          {{"amin / amax", "in/out", "0..4", "a-axis view range"},
+           {"bmin / bmax", "in/out", "0..4", "b-axis view range"}}}},
+        {ix<KleinianParams>,
+         {kAudio,
+          {{"p / q", "in/out", "3..20", "tiling symmetry {p,q} (rounded)"},
+           {"morph", "in/out", "any", "tiling morph phase"},
+           {"zoom", "in/out", ">0", "view scale"},
+           {"rot", "in/out", "rad", "view rotation"}}}},
+        {ix<StrangeAttractorParams>,
+         {kAudio,
+          {{"a / b / c / d", "in/out", "any", "map coefficients"},
+           {"rotation", "in/out", "rad", "extra view rotation"},
+           {"color_r / color_g / color_b", "in/out", "0..1", "dot colour (without gradient)"}}}},
+        {ix<FlameParams>,
+         {kAudio,
+          {{"variation", "in/out", "0..4",
+            "0 linear, 1 sinusoidal, 2 spherical, 3 swirl, 4 horseshoe"},
+           {"scale", "in/out", ">0", "size of the figure"},
+           {"rotation", "in/out", "rad", "extra view rotation"}}}},
+        {ix<ReactionDiffusionParams>,
+         {kAudio,
+          {{"feed", "in/out", "0..0.1", "Gray-Scott feed rate"},
+           {"kill", "in/out", "0..0.1", "Gray-Scott kill rate"}}}},
+
+        // ---------------------------------------------------------------- Bilder
+        {ix<PictureParams>, {kParam, {{"blend", "in/out", "0..2", kBlend3}}}},
+        {ix<PictureIIParams>, {kParam, {{"blend", "in/out", "0..2", kBlend3}}}},
+        {ix<TexerParams>,
+         {kParam,
+          {{"particles", "in/out", "count", "sprites along the waveform"},
+           {"blend", "in/out", "0..2", kBlend3}}}},
+        {ix<TexerIIParams>,
+         {kAudio,
+          {{"n", "in/out", "count", "sprite count"},
+           {"i", "in", "0..1", "point index (per point)"},
+           {"v", "in", "-1..1", "waveform sample at this point"},
+           {"b", "in", "0/1", "beat"},
+           {"w / h", "in", "px", "surface size"},
+           {"x / y", "out", "-1..1", "sprite centre"},
+           {"sizex / sizey", "in/out", "scale", "sprite size"},
+           {"red / green / blue", "in/out", "0..1", "sprite tint"},
+           {"skip", "out", "0/1", ">0.5 hides this sprite"}}}},
+        {ix<TriangleParams>,
+         {kAudio,
+          {{"n", "in/out", "count", "triangle count"},
+           {"i", "in", "0..1", "triangle index (per point)"},
+           {"b", "in", "0/1", "beat"},
+           {"w / h", "in", "px", "surface size"},
+           {"x1 / y1 / x2 / y2 / x3 / y3", "out", "-1..1", "the three vertices"},
+           {"red / green / blue", "in/out", "0..1", "fill colour"}}}},
+
+        // ---------------------------------------------------------------- Bewegung
+        {ix<MovementParams>,
+         {kNone,
+          {{"d", "in/out", "0..1", "distance from centre (polar; remap it)", false},
+           {"r", "in/out", "rad", "angle (polar)", false},
+           {"x / y", "in/out", "-1..1", "used instead of d/r when Rect coords is on", false}}}},
+        {ix<DynamicMovementParams>,
+         {kNone,
+          {{"d / r", "in/out", "0..1 / rad", "polar source coord (point code)"},
+           {"x / y", "in/out", "-1..1", "rect source coord when Rect coords is on"},
+           {"w / h", "in", "px", "surface size"},
+           {"sw / sh", "in", "px", "grid size"},
+           {"time / dt", "in", "s", "run time / frame time"},
+           {"b", "in", "0/1", "beat"},
+           {"alpha", "in/out", "0..1", "per-pixel blend (if used)"}}}},
+        {ix<DynamicShiftParams>,
+         {kAudio,
+          {{"x / y", "in/out", "px", "global image offset"},
+           {"w / h", "in", "px", "surface size"},
+           {"b", "in", "0/1", "beat"},
+           {"alpha", "in/out", "0..1", "50/50 blend weight"}}}},
+        {ix<DynamicDistanceModifierParams>,
+         {kAudio,
+          {{"d", "in/out", "0..1", "ring distance (remap it)"},
+           {"b", "in", "0/1", "beat"}}}},
+        {ix<BlitterFeedbackParams>,
+         {kParam,
+          {{"scale", "in/out", "0..256", "zoom target (32 = neutral)"},
+           {"scale2", "in/out", "0..256", "on-beat jump value"}}}},
+        {ix<RotoBlitterParams>,
+         {kParam,
+          {{"zoomscale", "in/out", "any", "zoom target (31 = neutral)"},
+           {"zoomscale2", "in/out", "any", "on-beat zoom"},
+           {"rotdir", "in/out", "any", "rotation: (rotdir-32) degrees per frame"}}}},
+        {ix<MosaicParams>,
+         {kParam,
+          {{"quality", "in/out", "1..100", "block resolution (100 = off)"},
+           {"quality2", "in/out", "1..100", "on-beat resolution"}}}},
+        {ix<WaterBumpParams>,
+         {kParam,
+          {{"density", "in/out", "any", "wave damping (higher = longer-lived waves)"},
+           {"depth", "in/out", "any", "drop amplitude"},
+           {"dropradius", "in/out", "px", "drop radius"},
+           {"displacescale", "in/out", "~1", "displacement gain"}}}},
+        {ix<BumpParams>,
+         {kAudio,
+          {{"x / y", "in/out", "0..1", "light position"},
+           {"bi", "in/out", "0..1", "bump intensity"},
+           {"isbeat / islbeat", "in", "-1/+1", "-1 on a beat / inside the on-beat depth window, else +1"},
+           {"t", "own", "any", "your own accumulator"}}}},
+        {ix<InterferencesParams>,
+         {kParam,
+          {{"points", "in/out", "1..8", "number of copies"},
+           {"distance", "in/out", "px", "copy offset radius"},
+           {"alpha", "in/out", "0..255", "per-copy weight"},
+           {"rotation", "in/out", "0..255", "rotation (of a full turn)"},
+           {"rotationinc", "in/out", "any", "rotation delta per frame"},
+           {"speed", "in/out", "any", "beat-morph transition speed"}}}},
+        {ix<MirrorParams>,
+         {kParam,
+          {{"mode", "in/out", "bits",
+            "1 top->bottom, 2 bottom->top, 4 left->right, 8 right->left"},
+           {"slower", "in/out", "1..16", "frames per ramp step"}}}},
+
+        // ---------------------------------------------------------------- Farbe & Pixel
+        {ix<BrightnessParams>,
+         {kParam,
+          {{"red / green / blue", "in/out", "-4096..4096", "channel brightness"},
+           {"distance", "in/out", "0..255", "exclusion radius"},
+           {"color_r / color_g / color_b", "in/out", "0..1", "exclusion colour"}}}},
+        {ix<FastBrightnessParams>, {kParam, {{"dir", "in/out", "0..2", "0 brighter, 1 darker, 2 off"}}}},
+        {ix<BlurParams>, {kParam, {{"strength", "in/out", "1..3", "1 light, 2 medium, 3 heavy"}}}},
+        {ix<ColorfadeParams>,
+         {kParam,
+          {{"faderr / faderg / faderb", "in/out", "-32..32", "per-frame colour step"},
+           {"beatfaderr / beatfaderg / beatfaderb", "in/out", "-32..32",
+            "colour step inside the beat window"},
+           {"onbeatframes", "in/out", "frames", "how long the beat state holds"}}}},
+        {ix<ColorModifierParams>,
+         {kNone,
+          {{"red / green / blue", "in/out", "0..1",
+            "channel value (level code maps in->out)"},
+           {"time / dt", "in", "s", "run time / frame time"},
+           {"b", "in", "0/1", "beat"}}}},
+        {ix<ColorMapParams>,
+         {kParam,
+          {{"key", "in/out", "0..5", "input selector"},
+           {"blendmode", "in/out", "0..9", "blend mode"},
+           {"adjustblend", "in/out", "0..255", "adjustable weight"}}}},
+        {ix<ColorClipParams>,
+         {kParam,
+          {{"distance", "in/out", "0..255", "match radius (near mode)"},
+           {"clipcolor_r / clipcolor_g / clipcolor_b", "in/out", "0..1", "threshold colour"},
+           {"outcolor_r / outcolor_g / outcolor_b", "in/out", "0..1", "replacement colour"}}}},
+        {ix<UniqueToneParams>,
+         {kParam, {{"blend", "in/out", "0..2", kBlend3}, {"color_r / color_g / color_b", "in/out", "0..1", "tone colour"}}}},
+        {ix<InterleaveParams>,
+         {kParam,
+          {{"x / y", "in/out", "px", "stripe spacing (0 = off)"},
+           {"x2 / y2", "in/out", "px", "spacing the beat jumps to"},
+           {"color_r / color_g / color_b", "in/out", "0..1", "stripe colour"}}}},
+        {ix<ConvolutionParams>,
+         {kParam,
+          {{"bias", "in/out", "any", "added to every channel after the division"},
+           {"scale", "in/out", "any", "divisor of the weighted sum (0 counts as 1)"},
+           {"edgemode", "in/out", "0/1", "0 extend, 1 wrap"}}}},
+        {ix<MultiFilterParams>,
+         {kParam,
+          {{"effect", "in/out", "0..3", "0 chrome, 1 double chrome, 2 triple chrome, 3 root"}}}},
+        {ix<ChannelShiftParams>, {kParam, {{"mode", "in/out", "0..5", "channel permutation"}}}},
+        {ix<ColorReductionParams>, {kParam, {{"levels", "in/out", "1..8", "bit depth per channel"}}}},
+        {ix<MultiplierParams>, {kParam, {{"mode", "in/out", "0..7", "multiplier mode"}}}},
+        {ix<GrainParams>, {kParam, {{"amount", "in/out", "0..100", "gated pixel fraction"}}}},
+        {ix<AddBordersParams>,
+         {kParam, {{"size", "in/out", "px", "border width"}, {"color_r / color_g / color_b", "in/out", "0..1", "border colour"}}}},
+
+        // ---------------------------------------------------------------- Post
+        {ix<BloomParams>,
+         {kParam,
+          {{"intensity", "in/out", "any", "glow factor"},
+           {"threshold", "in/out", "0..1", "brightness threshold before the blur"},
+           {"radius", "in/out", "px", "Gauss sigma (glow pixels)"},
+           {"vignettestrength", "in/out", "0..1", "edge darkening (with vignette)"}}}},
+
+        // ---------------------------------------------------------------- 3D
+        {ix<Camera3DParams>,
+         {kAudio,
+          {{"px / py / pz", "in/out", "world", "camera position"},
+           {"tx / ty / tz", "in/out", "world", "look-at target"},
+           {"fov", "in/out", "deg", "field of view"},
+           {"roll", "in/out", "deg", "camera roll"},
+           {"fogstart / fogend", "in/out", "world", "fog range"},
+           {"fogcolor_r / fogcolor_g / fogcolor_b", "in/out", "0..1", "fog colour"},
+           {"b", "in", "0/1", "beat"}}}},
+        {ix<SuperScope3DParams>,
+         {kAudio,
+          {{"n", "in/out", "count", "point count"},
+           {"i", "in", "0..1", "point index (per point)"},
+           {"v", "in", "-1..1", "waveform sample at this point"},
+           {"b", "in", "0/1", "beat"},
+           {"w / h", "in", "px", "surface size"},
+           {"x / y / z", "out", "world", "point position"},
+           {"size", "in/out", "px", "point size"},
+           {"red / green / blue", "in/out", "0..1", "point colour"},
+           {"skip", "out", "0/1", ">0.5 hides this point"}}}},
+        {ix<Terrain3DParams>,
+         {kAudio,
+          {{"res", "in", "count", "grid resolution per side"},
+           {"n", "in", "count", "grid points (res*res)"},
+           {"rings", "in/out", "0..10", "ring-wave amplitude"},
+           {"relax / flatten", "in/out", "0..1", "height relaxation / flattening"},
+           {"meshcolor_r / meshcolor_g / meshcolor_b", "in/out", "0..1", "mesh line colour"},
+           {"colorlow_r / colorlow_g / colorlow_b", "in/out", "0..1", "colour of low points"},
+           {"colorhigh_r / colorhigh_g / colorhigh_b", "in/out", "0..1", "colour of high points"},
+           {"b", "in", "0/1", "beat"},
+           {"i", "in", "index", "grid index 0..n-1 (per point)"},
+           {"gx / gy", "in", "0..1", "grid position (per point)"},
+           {"h", "in/out", "any", "height at this point"},
+           {"red / green / blue", "in/out", "0..1", "point colour"},
+           {"megabuf(i)", "in/out", "any", "the height grid", false}}}},
+        {ix<GlowOrbsParams>,
+         {kAudio,
+          {{"n", "in/out", "count", "number of orbs"},
+           {"b", "in", "0/1", "beat"},
+           {"i", "in", "0..1", "orb index (per orb)"},
+           {"x / y / z", "in/out", "world", "orb position"},
+           {"radius", "in/out", "world", "orb radius"},
+           {"sx / sy / sz", "in/out", "any", "stretch per axis"},
+           {"red / green / blue", "in/out", "0..1", "core colour"},
+           {"red2 / green2 / blue2", "in/out", "0..1", "halo colour"},
+           {"flash", "in/out", "0..1", "flash amount"}}}},
+
+        // ---------------------------------------------------------------- MilkDrop
+        {ix<MilkdropNodeParams>,
+         {kNone,
+          {{"time / fps / frame", "in", "s / Hz / n", "run time, frame rate, frame counter",
+            false},
+           {"bass / mid / treb", "in", "~1", "band loudness relative to its long-term mean",
+            false},
+           {"bass_att / mid_att / treb_att", "in", "~1", "attenuated band loudness", false},
+           {"zoom / rot / warp", "in/out", "any", "warp controls (per_frame)", false},
+           {"cx / cy / dx / dy / sx / sy", "in/out", "any", "warp centre / shift / stretch",
+            false},
+           {"decay / gamma", "in/out", "0..1 / 0..8", "feedback decay, composite gamma", false},
+           {"wave_a/r/g/b, wave_x/y", "in/out", "0..1", "basic wave colour / position", false},
+           {"q1..q32", "in/out", "any", "frame->pixel channel (M2 contract)", false},
+           {"x / y / rad / ang", "in", "0..1 / rad", "per_pixel position (rect + polar)",
+            false}}}},
+    };
+    return kTables;
+}
+
+}  // namespace
+
+const ScriptVarTable* scriptVariables(const EffectParams& params)
+{
+    const auto& t = tables();
+    const auto it = t.find(params.index());
+    return it != t.end() ? &it->second : nullptr;
+}
+
+const std::vector<ScriptVar>& scriptVarBaseRows(ScriptVarBase base)
+{
+    static const std::vector<ScriptVar> kNoRows;
+    static const std::vector<ScriptVar> kAudioRows = {
+        {"bass / mid / treb / treble", "in", "0..~1", "spectrum thirds (low/mid/high energy)"},
+        {"vol", "in", "0..1", "smoothed overall level"},
+        {"beat", "in", "0/1", "1 on a detected beat"},
+        {"time", "in", "seconds", "seconds since start"},
+    };
+    static const std::vector<ScriptVar> kParamRows = [] {
+        std::vector<ScriptVar> rows = {
+            {"b", "in", "0/1", "1 on a beat"},
+            {"w / h", "in", "px", "surface width / height"},
+        };
+        rows.insert(rows.end(), kAudioRows.begin(), kAudioRows.end());
+        return rows;
+    }();
+    switch (base)
+    {
+        case ScriptVarBase::Audio: return kAudioRows;
+        case ScriptVarBase::ParamScript: return kParamRows;
+        case ScriptVarBase::None: break;
+    }
+    return kNoRows;
+}
+
+std::vector<std::string> splitScriptVarNames(const char* names)
+{
+    std::vector<std::string> out;
+    const std::string s(names);
+    std::size_t pos = 0;
+    while (pos <= s.size())
+    {
+        const std::size_t cut = s.find(" / ", pos);
+        const std::string part = s.substr(pos, cut == std::string::npos ? std::string::npos
+                                                                        : cut - pos);
+        if (!part.empty()) out.push_back(part);
+        if (cut == std::string::npos) break;
+        pos = cut + 3;
+    }
+    return out;
+}
+
+}  // namespace lumi::multieffect

@@ -11,6 +11,8 @@ dbg(DBG_OFTEN
 set(_local_sources
     # (no sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/ConfigPanel.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/EffectPalette.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/EffectPaletteWindow.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/FieldDocs.cpp"  # ERZEUGT (harvest_field_docs.py)
     "${CMAKE_CURRENT_LIST_DIR}/ImportBrowserPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/ShadertoyBrowserPanel.cpp"

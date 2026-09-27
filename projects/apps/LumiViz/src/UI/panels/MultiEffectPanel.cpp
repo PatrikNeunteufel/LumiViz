@@ -12,6 +12,8 @@
 #include "UI/panels/MultiEffectPanel.hpp"
 
 #include "UI/panels/EelScriptEditing.hpp"                 // shared EEL editor toolkit
+#include "UI/panels/EffectPalette.hpp"                    // Palettentabelle (S79)
+#include "UI/panels/EffectPaletteWindow.hpp"              // Palettenfenster (S79)
 #include "UI/panels/FieldDocs.hpp"                       // Tooltip je Feld (§10)
 #include "UI/panels/ParameterBaum.hpp"                   // generischer Parameter-Baum (S72)
 #include "UI/widgets/GradientPresetDelegate.hpp"          // gradient combo previews
@@ -28,6 +30,7 @@
 #include "visualizers/multieffect/PixelFilterWrapper.hpp"   // Starter-Filter (Stilfilter, S70)
 #include "visualizers/multieffect/IsfImport.hpp"            // ISF-Filter-Import (S72)
 #include "visualizers/multieffect/IsfFilterWrapper.hpp"     // Starter-Shader ISF (S72)
+#include "visualizers/multieffect/ScriptVariables.hpp"      // Variablenreferenz (SSOT, S79)
 #include "scripting/ScriptFormatter.hpp"                // Beautify-Kerne (S69)
 #include <EelTranspiler.hpp>                            // Apply-Syntaxprobe EEL (S69)
 #include <HlslTranspiler.hpp>                           // Apply-Syntaxprobe HLSL (S69)
@@ -50,6 +53,7 @@
 #include <QFileInfo>
 #include <QIcon>
 #include <QDropEvent>
+#include <QMimeData>
 #include <QComboBox>
 #include <QSlider>
 #include <QDesktopServices>
@@ -97,6 +101,13 @@
 #include <utility>
 
 using namespace lumi::multieffect;
+using lumi::ui::EffectType;
+using lumi::ui::MilkElement;
+using lumi::ui::Origin;
+using lumi::ui::effectPalette;
+using lumi::ui::originForParams;
+using lumi::ui::originIcon;
+using lumi::ui::originToolTip;
 
 namespace {
 
@@ -128,45 +139,6 @@ void begrenzeCombo(QComboBox* combo)
                           view->verticalScrollBar()->sizeHint().width());
 }
 
-// The palette of effects that "Add" can insert (name -> default params). Entries
-// with make == nullptr are non-selectable category headers (grouped in the combo).
-//
-// Origin marks where a module comes from: Avs = ported from a Nullsoft AVS
-// effect (import target), MilkDrop = ported from MilkDrop (Roadmap 6, none
-// yet), Native = original LumiViz module (no AVS counterpart, e.g. the Batch-H
-// fractals + Debug Bars). Shown as per-origin icon (asset/img/logo/icons);
-// falls back to a text marker when the asset folder is not found at runtime.
-// Default is Avs, so only the non-AVS entries carry an explicit tag.
-enum class Origin
-{
-    Avs,
-    MilkDrop,
-    Native
-};
-
-/// Inhalts-Elemente eines Milkdrop-Nodes, die das Add-Dropdown anlegen kann
-/// (N3.1/N3.3): kein Chain-Effekt — sie landen im PresetState des selektierten
-/// Milkdrop-Nodes (Waves/Shapes capped auf 16, MD3-Superset).
-enum class MilkElement
-{
-    None,
-    Wave,
-    Shape,
-    Sprite
-};
-
-struct EffectType
-{
-    const char* name;
-    EffectParams (*make)();
-    Origin origin = Origin::Avs;
-    MilkElement milkElement = MilkElement::None;
-
-    [[nodiscard]] bool isHeader() const
-    {
-        return make == nullptr && milkElement == MilkElement::None;
-    }
-};
 
 /// Milkdrop-Anzeige-Kinder (E1: Preset → Code · Waves · Shapes · Shader ·
 /// Sprites): Pfad-Segmente >= dieser Basis sind SEKTIONEN des Eltern-Nodes,
@@ -234,237 +206,6 @@ int nextFreeMilkIndex(const Vec& vec)
     }
 }
 
-// Icon-Aufloesung + Format-Icons: geteilt mit dem Import-Browser
-// (UI/widgets/PresetTypeIcons.hpp) — hier nur das Origin-Mapping.
-const QIcon& originIcon(Origin origin)
-{
-    switch (origin)
-    {
-        case Origin::Avs:
-            return lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::Avs);
-        case Origin::MilkDrop:
-            return lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::MilkDrop);
-        default:
-            return lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::Native);
-    }
-}
-
-QString originText(Origin origin)
-{
-    switch (origin)
-    {
-        case Origin::Avs: return QStringLiteral("AVS");
-        case Origin::MilkDrop: return QStringLiteral("MilkDrop");
-        default: return QStringLiteral("LumiViz");
-    }
-}
-
-QString originToolTip(Origin origin)
-{
-    switch (origin)
-    {
-        case Origin::Avs: return QObject::tr("AVS-ported module");
-        case Origin::MilkDrop: return QObject::tr("MilkDrop-ported module");
-        default: return QObject::tr("Native LumiViz module");
-    }
-}
-
-const std::vector<EffectType>& effectPalette();
-
-/// Origin of an existing chain node, resolved over the palette (variant index).
-Origin originForParams(const EffectParams& params)
-{
-    static const std::vector<Origin> kByIndex = [] {
-        std::vector<Origin> byIndex(std::variant_size_v<EffectParams>, Origin::Avs);
-        for (const EffectType& t : effectPalette())
-        {
-            if (t.make == nullptr) continue;  // headers + Milkdrop-Elemente
-            byIndex[t.make().index()] = t.origin;
-        }
-        return byIndex;
-    }();
-    return params.index() < kByIndex.size() ? kByIndex[params.index()] : Origin::Avs;
-}
-
-const std::vector<EffectType>& effectPalette()
-{
-    static const std::vector<EffectType> kPalette = {
-        {"— Structure & Control —", nullptr},
-        {"Effect List", [] { return EffectParams{ListParams{}}; }},
-        {"Host Group", [] { return EffectParams{HostGroupParams{}}; }, Origin::Native},
-        {"Clear", [] { return EffectParams{ClearParams{}}; }},
-        {"Fadeout", [] { return EffectParams{FadeoutParams{}}; }},
-        {"OnBeat Clear", [] { return EffectParams{OnBeatClearParams{}}; }},
-        {"Buffer Save", [] { return EffectParams{BufferSaveParams{}}; }},
-        {"Buffer Blend", [] { return EffectParams{BufferBlendParams{}}; }},
-        {"Custom BPM", [] { return EffectParams{CustomBpmParams{}}; }},
-        {"Set Render Mode", [] { return EffectParams{SetRenderModeParams{}}; }},
-        {"Render Scale", [] { return EffectParams{RenderScaleParams{}}; }, Origin::Native},
-        {"Global Variables", [] { return EffectParams{JherikoGlobalParams{}}; }},
-        {"Video Delay", [] { return EffectParams{VideoDelayParams{}}; }},
-        {"Multi Delay", [] { return EffectParams{MultiDelayParams{}}; }},
-        {"Debug Bars", [] { return EffectParams{DebugBarsParams{}}; }, Origin::Native},
-
-        {"— MilkDrop —", nullptr},
-        {"Milkdrop (Preset-Pipeline)",
-         [] {
-             // Blanker Start (Entscheid Patrik S76): die MilkDrop-Defaults
-             // (warp=1, decay=0.98, Basis-Wave an) waren als Einstieg
-             // undurchschaubar — eine frische Pipeline waberte, ohne dass
-             // irgendwo Code oder Shader stand. .milk-Importe und
-             // gespeicherte Ketten behalten die MilkDrop-Defaults (SSOT:
-             // PresetState-Initialisierer + Serializer-Fallbacks).
-             MilkdropNodeParams p;
-             p.preset.warp = 0.0;
-             p.preset.decay = 1.0;
-             p.preset.basicWaveEnabled = false;
-             p.preset.mvA = 0.0;            // 12x9-Raster weisser MV-Striche
-             p.preset.kaltstartSaat = false;  // schwarzer Start statt Rauschen
-             return EffectParams{p};
-         },
-         Origin::MilkDrop},
-
-        // Strang S (S65): modernes Regelwerk, Code-Einfügen; URL-Import = S3
-        {"— Shadertoy —", nullptr},
-        {"Shadertoy (GLSL)",
-         [] {
-             ShadertoyParams p;
-             p.code = lumi::shadertoy::starterShader();
-             return EffectParams{p};
-         },
-         Origin::Native},
-
-        // Strang G (S69): GPU-Vertex-Arbeit, modernes Regelwerk
-        {"— GPU-Module —", nullptr},
-        {"Mesh Warp (GLSL)",
-         [] {
-             MeshWarpParams p;
-             p.code = lumi::meshwarp::starterWarp();
-             return EffectParams{p};
-         },
-         Origin::Native},
-        {"GPU-Partikel (Instancing)",
-         [] {
-             GpuParticlesParams p;
-             p.forceCode = lumi::gpuparticles::starterForce();
-             return EffectParams{p};
-         },
-         Origin::Native},
-        // Stilfilter-Strang (S70): skriptbarer Pixel-Filter, Werks-Looks
-        // (Take-On-Me-Comic & Co.) liegen als Voreinstellungen bei.
-        {"Pixel Filter (GLSL)",
-         [] {
-             PixelFilterParams p;
-             p.code = lumi::pixelfilter::starterFilter();
-             return EffectParams{p};
-         },
-         Origin::Native},
-        // ISF-Filter (S72): fuehrt Interactive-Shader-Format-Dateien
-        // unveraendert aus — mit BEIDEN Shader-Stufen. Ein frisch
-        // eingefuegter Knoten hat eine Bildquelle und ist damit ein Filter.
-        {"ISF Filter (Fragment + Vertex)",
-         [] {
-             IsfFilterParams p;
-             p.fragCode = lumi::isffilter::starterFragment();
-             p.quellen = {{"inputImage",
-                           lumi::multieffect::isffilter::kQuelleKette}};
-             return EffectParams{p};
-         },
-         Origin::Native},
-
-        {"— Scopes & Sources —", nullptr},
-        // videoSource (S70): LumiViz-eigene Video-/Kamera-Quelle (der
-        // AVS-`avi`-Typ bleibt ein reiner Import-Typ ohne Paletteneintrag).
-        {"Video/Kamera (Quelle)",
-         [] { return EffectParams{VideoSourceParams{}}; }, Origin::Native},
-        {"SuperScope", [] { return EffectParams{SuperScopeParams{}}; }},
-        {"Simple (Scope)", [] { return EffectParams{SimpleScopeParams{}}; }},
-        {"Oscilliscope Star", [] { return EffectParams{OscStarParams{}}; }},
-        {"Ring", [] { return EffectParams{OscRingParams{}}; }},
-        {"Rotating Stars", [] { return EffectParams{RotatingStarsParams{}}; }},
-        {"Bass Spin", [] { return EffectParams{BassSpinParams{}}; }},
-        {"Moving Particle", [] { return EffectParams{MovingParticleParams{}}; }},
-        {"Starfield", [] { return EffectParams{StarfieldParams{}}; }},
-        {"FyrewurX", [] { return EffectParams{FyrewurXParams{}}; }},
-        {"Metaballs 3D", [] { return EffectParams{Metaballs3DParams{}}; }},
-        {"Tentacles 3D", [] { return EffectParams{Tentacles3DParams{}}; }},
-        {"Timescope", [] { return EffectParams{TimescopeParams{}}; }},
-        {"Dot Grid", [] { return EffectParams{DotGridParams{}}; }},
-        {"Dot Plane", [] { return EffectParams{DotPlaneParams{}}; }},
-        {"Dot Fountain", [] { return EffectParams{DotFountainParams{}}; }},
-
-        {"— Fractals —", nullptr},
-        {"Fractal 2D", [] { return EffectParams{Fractal2DParams{}}; }, Origin::Native},
-        {"Fractal 3D", [] { return EffectParams{Fractal3DParams{}}; }, Origin::Native},
-        {"Domain Warp", [] { return EffectParams{DomainWarpParams{}}; }, Origin::Native},
-        {"Fractal Zoomer", [] { return EffectParams{FractalZoomerParams{}}; }, Origin::Native},
-        {"Lyapunov", [] { return EffectParams{LyapunovParams{}}; }, Origin::Native},
-        {"Kleinian", [] { return EffectParams{KleinianParams{}}; }, Origin::Native},
-        {"Strange Attractor", [] { return EffectParams{StrangeAttractorParams{}}; }, Origin::Native},
-        {"Flame", [] { return EffectParams{FlameParams{}}; }, Origin::Native},
-        {"Reaction Diffusion", [] { return EffectParams{ReactionDiffusionParams{}}; }, Origin::Native},
-
-        {"— Images —", nullptr},
-        {"Picture", [] { return EffectParams{PictureParams{}}; }},
-        {"Picture II", [] { return EffectParams{PictureIIParams{}}; }},
-        {"Texer", [] { return EffectParams{TexerParams{}}; }},
-        {"Texer II", [] { return EffectParams{TexerIIParams{}}; }},
-        {"Triangle", [] { return EffectParams{TriangleParams{}}; }},
-
-        {"— Motion & Distortion —", nullptr},
-        {"Movement", [] { return EffectParams{MovementParams{}}; }},
-        {"Dynamic Movement", [] { return EffectParams{DynamicMovementParams{}}; }},
-        {"Dynamic Shift", [] { return EffectParams{DynamicShiftParams{}}; }},
-        {"Dynamic Distance Modifier", [] { return EffectParams{DynamicDistanceModifierParams{}}; }},
-        {"Blitter Feedback", [] { return EffectParams{BlitterFeedbackParams{}}; }},
-        {"Roto Blitter", [] { return EffectParams{RotoBlitterParams{}}; }},
-        {"Mosaic", [] { return EffectParams{MosaicParams{}}; }},
-        {"Water", [] { return EffectParams{WaterParams{}}; }},
-        {"Water Bump", [] { return EffectParams{WaterBumpParams{}}; }},
-        {"Bump", [] { return EffectParams{BumpParams{}}; }},
-        {"Interferences", [] { return EffectParams{InterferencesParams{}}; }},
-        {"Scatter", [] { return EffectParams{ScatterParams{}}; }},
-        {"Mirror", [] { return EffectParams{MirrorParams{}}; }},
-
-        {"— Color & Pixel —", nullptr},
-        {"Brightness", [] { return EffectParams{BrightnessParams{}}; }},
-        {"Fast Brightness", [] { return EffectParams{FastBrightnessParams{}}; }},
-        {"Blur", [] { return EffectParams{BlurParams{}}; }},
-        {"Invert", [] { return EffectParams{InvertParams{}}; }},
-        {"Colorfade", [] { return EffectParams{ColorfadeParams{}}; }},
-        {"Color Modifier", [] { return EffectParams{ColorModifierParams{}}; }},
-        {"Color Map", [] { return EffectParams{ColorMapParams{}}; }},
-        {"Color Clip", [] { return EffectParams{ColorClipParams{}}; }},
-        {"Unique Tone", [] { return EffectParams{UniqueToneParams{}}; }},
-        {"Interleave", [] { return EffectParams{InterleaveParams{}}; }},
-        {"Convolution", [] { return EffectParams{ConvolutionParams{}}; }},
-        {"Normalise", [] { return EffectParams{NormaliseParams{}}; }},
-        {"MultiFilter", [] { return EffectParams{MultiFilterParams{}}; }},
-        {"Channel Shift", [] { return EffectParams{ChannelShiftParams{}}; }},
-        {"Color Reduction", [] { return EffectParams{ColorReductionParams{}}; }},
-        {"Multiplier", [] { return EffectParams{MultiplierParams{}}; }},
-        {"Grain", [] { return EffectParams{GrainParams{}}; }},
-        {"Add Borders", [] { return EffectParams{AddBordersParams{}}; }},
-
-        // Lights-Etappe 1 (S48): native Post-Process-Module (kein AVS-Pendant)
-        {"— Post —", nullptr},
-        {"Bloom", [] { return EffectParams{BloomParams{}}; }, Origin::Native},
-
-        // Lights-Etappe 1+2 (S48): 3D-Module (Kamera-Zustand + Szene)
-        {"— 3D —", nullptr},
-        {"3D Camera", [] { return EffectParams{Camera3DParams{}}; }, Origin::Native},
-        {"SuperScope 3D", [] { return EffectParams{SuperScope3DParams{}}; }, Origin::Native},
-        {"Terrain 3D", [] { return EffectParams{Terrain3DParams{}}; }, Origin::Native},
-        {"Glow Orbs", [] { return EffectParams{GlowOrbsParams{}}; }, Origin::Native},
-        // Milkdrop-Node-Inhalte (N3.1/N3.3): keine Chain-Effekte — "+" legt sie
-        // im PresetState des selektierten Milkdrop-Nodes an.
-        {"— Milkdrop-Node-Inhalte —", nullptr},
-        {"Custom Wave", nullptr, Origin::MilkDrop, MilkElement::Wave},
-        {"Custom Shape", nullptr, Origin::MilkDrop, MilkElement::Shape},
-        {"Sprite", nullptr, Origin::MilkDrop, MilkElement::Sprite},
-    };
-    return kPalette;
-}
 
 QColor colorFromU32(uint32_t c)
 {
@@ -639,130 +380,33 @@ void collectInitGlobalsExcept(const ChainNode& node, const ChainNode* skip,
 }
 
 
-// Module-specific variable table (accurate for the modules wired so far).
+// Module-specific variable table — rendered from the SSOT in
+// ScriptVariables.hpp (S79; vorher eine handgeschriebene Kette, die fuer rund
+// vierzig Knoten "No dedicated variable reference" zeigte).
 QString scriptReferenceHtml(const EffectParams& params)
 {
     const char* title = effectTypeName(params);
     QString vars;
-    auto table = [](const QString& rows) {
-        return QStringLiteral(
+    auto rowsOf = [](const std::vector<lumi::multieffect::ScriptVar>& list) {
+        QString rows;
+        for (const auto& v : list)
+            rows += refRow(v.names, v.dir, v.range, v.meaning);
+        return rows;
+    };
+    if (const auto* table = lumi::multieffect::scriptVariables(params))
+    {
+        vars = QStringLiteral(
                    "<table cellspacing='0' cellpadding='4' "
                    "style='border-collapse:collapse'>"
                    "<tr><th align='left'>Name</th><th align='left'>Type</th>"
                    "<th align='left'>Range</th><th align='left'>Meaning</th></tr>%1</table>")
-            .arg(rows);
-    };
-    // Shared by every Batch-H fractal: audio + time inputs.
-    const QString audioIn =
-        refRow("bass / mid / treble", "in", "0..~1", "spectrum thirds (low/mid/high energy)") +
-        refRow("vol", "in", "0..1", "smoothed overall level") +
-        refRow("beat", "in", "0/1", "1 on a detected beat") +
-        refRow("time", "in", "seconds", "seconds since start");
-
-    if (std::holds_alternative<SuperScopeParams>(params))
-        vars = table(
-            refRow("n", "in/out", "8..4096", "point count (frame code may change it)") +
-            refRow("i", "in", "0..1", "point index, normalised (per point)") +
-            refRow("v", "in", "-1..1", "waveform sample at this point") +
-            refRow("b", "in", "0/1", "1 on a beat") +
-            refRow("w / h", "in", "px", "surface width / height") +
-            refRow("t", "in/out", "any", "your own accumulator (persists)") +
-            refRow("x / y", "out", "-1..1", "point position (per point)") +
-            refRow("red / green / blue", "in/out", "0..1", "point colour (pre-seeded)") +
-            refRow("skip", "out", "0/1", ">0.5 hides this point"));
-    else if (std::holds_alternative<Fractal2DParams>(params))
-        vars = table(audioIn + refRow("cx / cy", "in/out", "any", "view centre (re/im)") +
-                     refRow("zoom", "in/out", ">0", "view scale (higher = closer)") +
-                     refRow("rot", "in/out", "rad", "view rotation") +
-                     refRow("jx / jy", "in/out", "-2..2", "Julia / Phoenix seed") +
-                     refRow("power", "in/out", "1..16", "Multibrot / Nova exponent"));
-    else if (std::holds_alternative<Fractal3DParams>(params))
-        vars = table(audioIn + refRow("yaw / pitch", "in/out", "rad", "camera orbit") +
-                     refRow("dist", "in/out", ">0.1", "camera distance") +
-                     refRow("power", "in/out", "1..16", "Mandelbulb exponent") +
-                     refRow("scale / fold", "in/out", "any", "Mandelbox / KIFS params"));
-    else if (std::holds_alternative<DomainWarpParams>(params))
-        vars = table(audioIn + refRow("scale", "in/out", ">0", "base frequency") +
-                     refRow("warp", "in/out", "0..8", "domain-warp strength") +
-                     refRow("speed", "in/out", "any", "time evolution") +
-                     refRow("ox / oy", "in/out", "any", "pan offset"));
-    else if (std::holds_alternative<FractalZoomerParams>(params))
-        vars = table(audioIn + refRow("cx / cy", "in/out", "any", "zoom target") +
-                     refRow("zoomspeed", "in/out", "~1", "per-frame zoom factor") +
-                     refRow("rotspeed", "in/out", "rad", "per-frame rotation"));
-    else if (std::holds_alternative<LyapunovParams>(params))
-        vars = table(audioIn + refRow("amin / amax", "in/out", "0..4", "a-axis view range") +
-                     refRow("bmin / bmax", "in/out", "0..4", "b-axis view range"));
-    else if (std::holds_alternative<KleinianParams>(params))
-        vars = table(audioIn + refRow("morph", "in/out", "any", "tiling morph phase") +
-                     refRow("zoom", "in/out", ">0", "view scale") +
-                     refRow("rot", "in/out", "rad", "view rotation"));
-    else if (std::holds_alternative<StrangeAttractorParams>(params))
-        vars = table(audioIn + refRow("a / b / c / d", "in/out", "any", "map coefficients") +
-                     refRow("rotation", "in/out", "rad", "extra view rotation"));
-    else if (std::holds_alternative<FlameParams>(params))
-        vars = table(audioIn + refRow("rotation", "in/out", "rad", "extra view rotation"));
-    else if (std::holds_alternative<ReactionDiffusionParams>(params))
-        vars = table(audioIn + refRow("feed", "in/out", "0..0.1", "Gray-Scott feed rate") +
-                     refRow("kill", "in/out", "0..0.1", "Gray-Scott kill rate"));
-    else if (std::holds_alternative<MilkdropNodeParams>(params))
-        vars = table(
-            audioIn +
-            refRow("bass_att / mid_att / treb_att", "in", "~1", "attenuated band loudness") +
-            refRow("zoom / rot / warp", "in/out", "any", "warp controls (per_frame)") +
-            refRow("cx / cy / dx / dy / sx / sy", "in/out", "any", "warp centre / shift / stretch") +
-            refRow("decay / gamma", "in/out", "0..1 / 0..8", "feedback decay, composite gamma") +
-            refRow("wave_a/r/g/b, wave_x/y", "in/out", "0..1", "basic wave colour / position") +
-            refRow("q1..q32", "in/out", "any", "frame→pixel channel (M2 contract)") +
-            refRow("x / y / rad / ang", "in", "0..1 / rad", "per_pixel position (rect + polar)"));
-    else if (std::holds_alternative<MovementParams>(params))
-        vars = table(refRow("d", "in/out", "0..1", "distance from centre (polar; remap it)") +
-                     refRow("r", "in/out", "rad", "angle (polar)") +
-                     refRow("x / y", "in/out", "-1..1", "used instead of d/r when Rect coords is on"));
-    else if (std::holds_alternative<DynamicMovementParams>(params))
-        vars = table(refRow("d / r", "in/out", "0..1 / rad", "polar source coord (point code)") +
-                     refRow("x / y", "in/out", "-1..1", "rect source coord when Rect coords is on") +
-                     refRow("w / h", "in", "px", "surface size") +
-                     refRow("b", "in", "0/1", "beat") +
-                     refRow("alpha", "out", "0..1", "per-pixel blend (if used)"));
-    else if (std::holds_alternative<DynamicShiftParams>(params))
-        vars = table(refRow("x / y", "out", "px", "global image offset") +
-                     refRow("w / h", "in", "px", "surface size") +
-                     refRow("b", "in", "0/1", "beat") +
-                     refRow("alpha", "out", "0..1", "50/50 blend weight"));
-    else if (std::holds_alternative<DynamicDistanceModifierParams>(params))
-        vars = table(refRow("d", "in/out", "0..1", "ring distance (remap it)") +
-                     refRow("b", "in", "0/1", "beat"));
-    else if (std::holds_alternative<BumpParams>(params))
-        vars = table(refRow("x / y", "out", "0..1", "light position") +
-                     refRow("t", "in/out", "any", "your own accumulator"));
-    else if (std::holds_alternative<TexerIIParams>(params))
-        vars = table(refRow("n", "in/out", "count", "sprite count") +
-                     refRow("i", "in", "0..1", "point index (per point)") +
-                     refRow("x / y", "out", "-1..1", "sprite centre") +
-                     refRow("sizex / sizey", "out", "scale", "sprite size") +
-                     refRow("red / green / blue", "out", "0..1", "sprite tint"));
-    else if (std::holds_alternative<TriangleParams>(params))
-        vars = table(refRow("n", "in/out", "count", "triangle count") +
-                     refRow("i", "in", "0..1", "triangle index (per point)") +
-                     refRow("x1..y3", "out", "-1..1", "the three vertices") +
-                     refRow("red / green / blue", "out", "0..1", "fill colour"));
-    else if (std::holds_alternative<ColorModifierParams>(params))
-        vars = table(refRow("red / green / blue", "in/out", "0..1",
-                            "channel value (level code maps in→out)"));
-    else if (std::holds_alternative<JherikoGlobalParams>(params))
-        vars = table(refRow("reg00..reg99", "in/out", "any",
-                            "preset-global registers (shared across effects)") +
-                     refRow("gmegabuf(i)", "in/out", "any", "global scratch buffer"));
-    else if (std::holds_alternative<ListParams>(params))
-        vars = table(refRow("enabled", "out", "0/1", "render the list this frame?") +
-                     refRow("clear", "out", "0/1", "clear the list buffer first?") +
-                     refRow("beat", "in/out", "0/1", "beat (may be mutated)") +
-                     refRow("alphain / alphaout", "out", "0..255", "blend alphas") +
-                     refRow("w / h", "in", "px", "surface size"));
+                   .arg(rowsOf(table->vars) +
+                        rowsOf(lumi::multieffect::scriptVarBaseRows(table->base)));
+    }
     else
-        vars = QStringLiteral(
-            "<p><i>No dedicated variable reference for this module yet.</i></p>");
+    {
+        vars = QStringLiteral("<p><i>This module has no script slots.</i></p>");
+    }
 
     const QString legend = highlightLegendHtml();
     return QStringLiteral("<h2>%1 — script variables</h2>%2%3%4")
@@ -1122,8 +766,41 @@ QString pixelFilterReferenceHtml()
 
 } // namespace
 
+QStringList ChainTreeWidget::mimeTypes() const
+{
+    QStringList types = QTreeWidget::mimeTypes();
+    types << QString::fromUtf8(lumi::ui::kPaletteMime);
+    return types;
+}
+
+namespace {
+/// Eigene Zeilen oder ein Paletteneintrag — sonst (Zeilen fremder Baeume,
+/// Dateien) nimmt der Kettenbaum nichts an.
+bool chainAccepts(const QDropEvent* event, const QObject* self)
+{
+    return event->source() == self ||
+           event->mimeData()->hasFormat(QString::fromUtf8(lumi::ui::kPaletteMime));
+}
+}  // namespace
+
+void ChainTreeWidget::dragEnterEvent(QDragEnterEvent* event)
+{
+    if (!chainAccepts(event, this)) { event->ignore(); return; }
+    QTreeWidget::dragEnterEvent(event);
+}
+
+void ChainTreeWidget::dragMoveEvent(QDragMoveEvent* event)
+{
+    if (!chainAccepts(event, this)) { event->ignore(); return; }
+    QTreeWidget::dragMoveEvent(event);  // setzt den Einfuege-Indikator
+    // Aus der Palette wird immer kopiert, eigene Zeilen immer verschoben.
+    if (event->isAccepted())
+        event->setDropAction(event->source() == this ? Qt::MoveAction : Qt::CopyAction);
+}
+
 void ChainTreeWidget::dropEvent(QDropEvent* event)
 {
+    if (!chainAccepts(event, this)) { event->ignore(); return; }
     QTreeWidgetItem* target = itemAt(event->position().toPoint());
     ChainDrop where = ChainDrop::Viewport;
     switch (dropIndicatorPosition())  // protected enum: only readable in-subclass
@@ -1133,10 +810,17 @@ void ChainTreeWidget::dropEvent(QDropEvent* event)
         case QAbstractItemView::BelowItem:  where = ChainDrop::Below;  break;
         case QAbstractItemView::OnViewport: where = ChainDrop::Viewport; break;
     }
-    QTreeWidgetItem* src = currentItem();  // single-selection: dragged == current
-    if (onDrop && src != nullptr)
+    const QString paletteMime = QString::fromUtf8(lumi::ui::kPaletteMime);
+    if (event->mimeData()->hasFormat(paletteMime))
     {
-        onDrop(src, target, where);
+        bool ok = false;
+        const int index = event->mimeData()->data(paletteMime).toInt(&ok);
+        if (ok && onPaletteDrop) onPaletteDrop(index, target, where);
+    }
+    else
+    {
+        QTreeWidgetItem* src = currentItem();  // single-selection: dragged == current
+        if (onDrop && src != nullptr) onDrop(src, target, where);
     }
     // Consume without calling the base: the chain owns ordering and the tree is
     // rebuilt from it, so the view must not move items on its own. IgnoreAction
@@ -1234,46 +918,9 @@ void MultiEffectPanel::setupUI()
     m_hint->setWordWrap(true);
     root->addWidget(m_hint);
 
-    // Toolbar: add-type combo + add / remove / up / down.
+    // Toolbar: Palette (+) / entfernen / klonen / hoch / runter. Die Add-Combo
+    // ist seit S79 ein eigenes Fenster (EffectPaletteWindow).
     auto* toolbar = new QHBoxLayout();
-    m_addTypeCombo = new QComboBox(this);
-    auto* comboModel = qobject_cast<QStandardItemModel*>(m_addTypeCombo->model());
-    const std::vector<EffectType>& palette = effectPalette();
-    const bool haveOriginIcons = !lumi::ui::presetIconDir().isEmpty();
-    for (size_t i = 0; i < palette.size(); ++i)
-    {
-        const EffectType& t = palette[i];
-        // Origin marker: per-origin icon (asset/img/logo/icons); text fallback
-        // when the icons are not found next to the repo/exe.
-        QString label = QString::fromUtf8(t.name);
-        if (!t.isHeader() && !haveOriginIcons)
-            label += QStringLiteral("   · ") + originText(t.origin);
-        if (!t.isHeader() && haveOriginIcons)
-            m_addTypeCombo->addItem(originIcon(t.origin), label);
-        else
-            m_addTypeCombo->addItem(label);
-        if (comboModel == nullptr) continue;
-        QStandardItem* item = comboModel->item(static_cast<int>(i));
-        if (item == nullptr) continue;
-        if (t.isHeader())
-        {
-            item->setFlags(item->flags() & ~(Qt::ItemIsSelectable | Qt::ItemIsEnabled));
-            QFont f = item->font();
-            f.setBold(true);
-            item->setFont(f);
-        }
-        else
-        {
-            item->setToolTip(originToolTip(t.origin));
-        }
-    }
-    // Start on the first selectable (non-header) entry, not a category title.
-    for (size_t i = 0; i < palette.size(); ++i)
-        if (!palette[i].isHeader()) { m_addTypeCombo->setCurrentIndex(static_cast<int>(i)); break; }
-    // Nicht nach dem laengsten Paletteneintrag bemessen — der triebe sonst die
-    // Mindestbreite des ganzen Panels (S78); die Liste klappt voll breit auf.
-    begrenzeCombo(m_addTypeCombo);
-    toolbar->addWidget(m_addTypeCombo, 1);
 
     auto makeButton = [this](const QString& text, const QString& tip) {
         auto* b = new QToolButton(this);
@@ -1281,7 +928,8 @@ void MultiEffectPanel::setupUI()
         b->setToolTip(tip);
         return b;
     };
-    m_addButton = makeButton("+", tr("Add effect (into the selected list, else root)"));
+    m_addButton = makeButton("+", tr("Open the effect palette (search, filter, add or "
+                                     "drag effects into the chain)"));
     m_removeButton = makeButton("-", tr("Remove selected"));
     m_cloneButton = makeButton(QString::fromUtf8("⧉"), tr("Clone selected (with its subtree)"));
     m_upButton = makeButton(QString::fromUtf8("↑"),
@@ -1295,6 +943,7 @@ void MultiEffectPanel::setupUI()
     toolbar->addWidget(m_cloneButton);
     toolbar->addWidget(m_upButton);
     toolbar->addWidget(m_downButton);
+    toolbar->addStretch();
     root->addLayout(toolbar);
 
     m_tree = new ChainTreeWidget(this);
@@ -1320,9 +969,16 @@ void MultiEffectPanel::setupUI()
     m_tree->setDragEnabled(true);
     m_tree->setAcceptDrops(true);
     m_tree->setDropIndicatorShown(true);
-    m_tree->setDragDropMode(QAbstractItemView::InternalMove);
+    // DragDrop statt InternalMove (S79): nur so nimmt der Baum auch Eintraege
+    // aus dem Palettenfenster an. Eigene Zeilen werden weiterhin verschoben
+    // (dropEvent), nie kopiert.
+    m_tree->setDragDropMode(QAbstractItemView::DragDrop);
+    m_tree->setDefaultDropAction(Qt::MoveAction);
     m_tree->onDrop = [this](QTreeWidgetItem* s, QTreeWidgetItem* t, ChainDrop w) {
         onDropRequested(s, t, w);
+    };
+    m_tree->onPaletteDrop = [this](int idx, QTreeWidgetItem* t, ChainDrop w) {
+        onPaletteDrop(idx, t, w);
     };
     m_tree->onDeleteKey = [this] { onRemove(); };
 
@@ -1370,7 +1026,7 @@ void MultiEffectPanel::setupUI()
     // seitlich gescrollt wird, ergibt sich aus Toolbar und Editor-Seite (S78).
     aktualisiereMindestbreite();
 
-    connect(m_addButton, &QToolButton::clicked, this, &MultiEffectPanel::onAddEffect);
+    connect(m_addButton, &QToolButton::clicked, this, &MultiEffectPanel::openPalette);
     connect(m_removeButton, &QToolButton::clicked, this, &MultiEffectPanel::onRemove);
     connect(m_cloneButton, &QToolButton::clicked, this, &MultiEffectPanel::onClone);
     connect(m_upButton, &QToolButton::clicked, this, [this] { onMove(-1); });
@@ -1417,8 +1073,10 @@ void MultiEffectPanel::setHost(MultiEffectVisualizer* host, QMutex* mutex)
     const bool active = m_host != nullptr;
     m_hint->setVisible(!active);
     m_tree->setEnabled(active);
-    m_addTypeCombo->setEnabled(active);
-    m_addButton->setEnabled(active);
+    // „+" bleibt bedienbar: die Palette laesst sich auch ohne Kette durchsehen,
+    // nur das Einfuegen wartet auf den Visualizer.
+    m_active = active;
+    if (m_palette != nullptr) m_palette->setInsertEnabled(active);
     m_removeButton->setEnabled(active);
     m_cloneButton->setEnabled(active);
     m_upButton->setEnabled(active);
@@ -1798,80 +1456,34 @@ void MultiEffectPanel::mutateStructure(const std::function<void()>& fn)
     clearPropertyEditor();
 }
 
-void MultiEffectPanel::onAddEffect()
+void MultiEffectPanel::openPalette()
+{
+    if (m_palette == nullptr)
+    {
+        m_palette = new lumi::ui::EffectPaletteWindow(this);
+        connect(m_palette, &lumi::ui::EffectPaletteWindow::addRequested, this,
+                &MultiEffectPanel::onAddEffect);
+    }
+    m_palette->setInsertEnabled(m_active);
+    m_palette->present();
+}
+
+void MultiEffectPanel::onAddEffect(int paletteIndex)
 {
     if (m_host == nullptr) return;
-    const int typeIdx = m_addTypeCombo->currentIndex();
-    if (typeIdx < 0) return;
-    const EffectType& chosen = effectPalette()[static_cast<size_t>(typeIdx)];
+    const auto& palette = effectPalette();
+    if (paletteIndex < 0 || paletteIndex >= static_cast<int>(palette.size())) return;
+    const EffectType& chosen = palette[static_cast<size_t>(paletteIndex)];
     if (chosen.isHeader()) return;  // category title, not an insertable effect
 
-    // Milkdrop-Node-Inhalt (N3.1/N3.3): landet im PresetState des selektierten
-    // Milkdrop-Nodes (bzw. seiner Sektion/seines Elements), nicht in der Chain.
+    const QList<int> sel = currentPath();
+    bool ok = false;
     if (chosen.milkElement != MilkElement::None)
     {
-        const MilkPathInfo mp = splitMilkPath(currentPath());
-        QList<int> newSel;
-        mutateStructure([&] {
-            ChainNode* node = nodeAtPath(mp.nodePath);
-            auto* milk =
-                node ? std::get_if<MilkdropNodeParams>(&node->params) : nullptr;
-            if (milk == nullptr) return;  // Auswahl ist kein Milkdrop-Node
-            auto& preset = milk->preset;
-            switch (chosen.milkElement)
-            {
-                case MilkElement::Wave:
-                {
-                    if (preset.waves.size() >= 16) return;  // MD3-Superset-Cap
-                    lumi::milkdrop::WaveState w;
-                    w.index = nextFreeMilkIndex(preset.waves);
-                    w.enabled = true;  // frisch angelegt = sichtbar gewollt
-                    preset.waves.push_back(std::move(w));
-                    ++milk->revision;
-                    newSel = mp.nodePath;
-                    newSel << (kMilkSectionBase + 1)
-                           << static_cast<int>(preset.waves.size()) - 1;
-                    break;
-                }
-                case MilkElement::Shape:
-                {
-                    if (preset.shapes.size() >= 16) return;
-                    lumi::milkdrop::ShapeState s;
-                    s.index = nextFreeMilkIndex(preset.shapes);
-                    s.enabled = true;
-                    preset.shapes.push_back(std::move(s));
-                    ++milk->revision;
-                    newSel = mp.nodePath;
-                    newSel << (kMilkSectionBase + 2)
-                           << static_cast<int>(preset.shapes.size()) - 1;
-                    break;
-                }
-                case MilkElement::Sprite:
-                {
-                    lumi::milkdrop::SpriteState sp;
-                    sp.index = nextFreeMilkIndex(preset.sprites);
-                    preset.sprites.push_back(std::move(sp));
-                    ++milk->revision;
-                    newSel = mp.nodePath;
-                    newSel << (kMilkSectionBase + 4)
-                           << static_cast<int>(preset.sprites.size()) - 1;
-                    break;
-                }
-                default: break;
-            }
-        });
-        if (!newSel.isEmpty()) selectByPath(newSel);
-        return;
+        ok = insertMilkElement(paletteIndex, sel);
     }
-
-    ChainNode fresh;
-    fresh.params = chosen.make();
-
-    const QList<int> sel = currentPath();
-    QList<int> neuerPfad;
-    mutateStructure([&] {
-        ChainNode* target = nodeAtPath(sel);
-
+    else
+    {
         // Wohin der neue Knoten kommt (Vorgabe Patrik S55):
         //   markierte Liste / Host-Gruppe -> als LETZTES Element hinein
         //   markierter Effekt             -> direkt DARUNTER, in dessen Liste
@@ -1881,17 +1493,87 @@ void MultiEffectPanel::onAddEffect()
         // Stelle, an der man gerade arbeitet.
         QList<int> elternPfad;
         int pos = -1;  // -1 = anhaengen
-        if (target != nullptr && target->isContainer())
         {
-            elternPfad = sel;
+            QMutexLocker lock(m_mutex);
+            const ChainNode* target = nodeAtPath(sel);
+            if (target != nullptr && target->isContainer())
+            {
+                elternPfad = sel;
+            }
+            else if (!sel.isEmpty())
+            {
+                elternPfad = sel;
+                pos = elternPfad.takeLast() + 1;
+            }
         }
-        else if (!sel.isEmpty())
-        {
-            elternPfad = sel;
-            pos = elternPfad.takeLast() + 1;
-        }
+        ok = insertPaletteNode(paletteIndex, elternPfad, pos);
+    }
+    if (ok && m_palette != nullptr) m_palette->noteUsed(paletteIndex);
+}
 
-        ChainNode* eltern = nodeAtPath(elternPfad);
+void MultiEffectPanel::onPaletteDrop(int paletteIndex, QTreeWidgetItem* target,
+                                     ChainDrop where)
+{
+    if (m_host == nullptr) return;
+    const auto& palette = effectPalette();
+    if (paletteIndex < 0 || paletteIndex >= static_cast<int>(palette.size())) return;
+    QList<int> targetPath;
+    if (target != nullptr) targetPath = pathFromVariant(target->data(0, Qt::UserRole));
+
+    // Wie onDropRequested: erst nach dem dropEvent des Baums einfuegen — der
+    // Neuaufbau loeschte sonst Items, die die Drag-Maschinerie noch anfasst.
+    QMetaObject::invokeMethod(
+        this,
+        [this, paletteIndex, targetPath, where] {
+            const EffectType& chosen = effectPalette()[static_cast<size_t>(paletteIndex)];
+            bool ok = false;
+            if (chosen.milkElement != MilkElement::None)
+            {
+                // Wave/Shape/Sprite: das Ziel muss ein Milkdrop-Node sein (oder
+                // eine seiner Sektionen/Elemente) — sonst passiert nichts.
+                ok = insertMilkElement(paletteIndex, targetPath);
+            }
+            else
+            {
+                // Ziel auf eine Milkdrop-Sektion/-Element: gemeint ist der Node.
+                const MilkPathInfo mp = splitMilkPath(targetPath);
+                QList<int> ziel = mp.nodePath;
+                ChainDrop wo = mp.section >= 0 ? ChainDrop::Below : where;
+
+                // Dieselben Regeln wie beim Verschieben (moveNodesLocked).
+                QList<int> elternPfad;
+                int pos = -1;
+                if (!ziel.isEmpty() && wo != ChainDrop::Viewport)
+                {
+                    QMutexLocker lock(m_mutex);
+                    const ChainNode* tnode = nodeAtPath(ziel);
+                    elternPfad = ziel;
+                    const int idx = elternPfad.takeLast();
+                    if (wo == ChainDrop::OnItem && tnode != nullptr && tnode->isContainer())
+                        elternPfad = ziel;  // hinein, ans Ende
+                    else if (wo == ChainDrop::Above)
+                        pos = idx;
+                    else
+                        pos = idx + 1;
+                }
+                ok = insertPaletteNode(paletteIndex, elternPfad, pos);
+            }
+            if (ok && m_palette != nullptr) m_palette->noteUsed(paletteIndex);
+        },
+        Qt::QueuedConnection);
+}
+
+bool MultiEffectPanel::insertPaletteNode(int paletteIndex, const QList<int>& parentPath,
+                                         int pos)
+{
+    const EffectType& chosen = effectPalette()[static_cast<size_t>(paletteIndex)];
+    if (chosen.make == nullptr) return false;
+    ChainNode fresh;
+    fresh.params = chosen.make();
+
+    QList<int> neuerPfad;
+    mutateStructure([&] {
+        ChainNode* eltern = nodeAtPath(parentPath);
         if (eltern == nullptr) return;
 
         // Tiefenregel (HG1, Entwurf §5.1): keine Host-Gruppe in eine
@@ -1899,39 +1581,82 @@ void MultiEffectPanel::onAddEffect()
         // Geprueft wird der EINFUEGE-ORT, nicht die Auswahl: seit der neue
         // Knoten neben einem markierten Effekt landen kann, sind das zwei
         // verschiedene Dinge.
-        if (fresh.isHostGroup())
-        {
-            ChainNode* walk = &m_host->chain();
-            bool insideGroup = walk->isHostGroup();
-            for (int idx : elternPfad)
-            {
-                if (idx < 0 || idx >= static_cast<int>(walk->children.size())) break;
-                walk = &walk->children[static_cast<size_t>(idx)];
-                insideGroup = insideGroup || walk->isHostGroup();
-            }
-            if (insideGroup) return;
-        }
+        if (fresh.isHostGroup() && pathTouchesHostGroup(m_host->chain(), parentPath)) return;
 
         const int anzahl = static_cast<int>(eltern->children.size());
-        if (pos < 0 || pos > anzahl) pos = anzahl;
-        eltern->children.insert(eltern->children.begin() + pos, std::move(fresh));
-        neuerPfad = elternPfad;
-        neuerPfad << pos;
+        const int at = (pos < 0 || pos > anzahl) ? anzahl : pos;
+        eltern->children.insert(eltern->children.begin() + at, std::move(fresh));
+        neuerPfad = parentPath;
+        neuerPfad << at;
     });
 
     // Den neuen Knoten markieren UND seinen Editor aufbauen. Ohne das blieb die
     // Auswahl auf dem alten Knoten stehen, und der neue liess sich erst
     // bearbeiten, wenn man einmal weg- und wieder hinklickte (Befund Patrik
-    // S55). Die Milk-Elemente oben markieren seit jeher; hier fehlte es ganz.
-    // `buildPropertyEditor` zusaetzlich, weil `mutateStructure` den Baum neu
-    // aufbaut und dabei `clearPropertyEditor()` ruft — ob `setCurrentItem`
+    // S55). `buildPropertyEditor` zusaetzlich, weil `mutateStructure` den Baum
+    // neu aufbaut und dabei `clearPropertyEditor()` ruft — ob `setCurrentItem`
     // danach ein Auswahl-Signal ausloest, haengt daran, ob der Baum die alte
     // Auswahl schon wiederhergestellt hat. Der Aufruf ist idempotent.
-    if (!neuerPfad.isEmpty())
-    {
-        selectByPath(neuerPfad);
-        buildPropertyEditor(neuerPfad);
-    }
+    if (neuerPfad.isEmpty()) return false;
+    selectByPath(neuerPfad);
+    buildPropertyEditor(neuerPfad);
+    return true;
+}
+
+bool MultiEffectPanel::insertMilkElement(int paletteIndex, const QList<int>& anchorPath)
+{
+    const EffectType& chosen = effectPalette()[static_cast<size_t>(paletteIndex)];
+    // Milkdrop-Node-Inhalt (N3.1/N3.3): landet im PresetState des Milkdrop-Nodes
+    // (bzw. seiner Sektion/seines Elements), nicht in der Chain.
+    const MilkPathInfo mp = splitMilkPath(anchorPath);
+    QList<int> newSel;
+    mutateStructure([&] {
+        ChainNode* node = nodeAtPath(mp.nodePath);
+        auto* milk = node ? std::get_if<MilkdropNodeParams>(&node->params) : nullptr;
+        if (milk == nullptr) return;  // Ziel ist kein Milkdrop-Node
+        auto& preset = milk->preset;
+        switch (chosen.milkElement)
+        {
+            case MilkElement::Wave:
+            {
+                if (preset.waves.size() >= 16) return;  // MD3-Superset-Cap
+                lumi::milkdrop::WaveState w;
+                w.index = nextFreeMilkIndex(preset.waves);
+                w.enabled = true;  // frisch angelegt = sichtbar gewollt
+                preset.waves.push_back(std::move(w));
+                ++milk->revision;
+                newSel = mp.nodePath;
+                newSel << (kMilkSectionBase + 1) << static_cast<int>(preset.waves.size()) - 1;
+                break;
+            }
+            case MilkElement::Shape:
+            {
+                if (preset.shapes.size() >= 16) return;
+                lumi::milkdrop::ShapeState s;
+                s.index = nextFreeMilkIndex(preset.shapes);
+                s.enabled = true;
+                preset.shapes.push_back(std::move(s));
+                ++milk->revision;
+                newSel = mp.nodePath;
+                newSel << (kMilkSectionBase + 2) << static_cast<int>(preset.shapes.size()) - 1;
+                break;
+            }
+            case MilkElement::Sprite:
+            {
+                lumi::milkdrop::SpriteState sp;
+                sp.index = nextFreeMilkIndex(preset.sprites);
+                preset.sprites.push_back(std::move(sp));
+                ++milk->revision;
+                newSel = mp.nodePath;
+                newSel << (kMilkSectionBase + 4) << static_cast<int>(preset.sprites.size()) - 1;
+                break;
+            }
+            default: break;
+        }
+    });
+    if (newSel.isEmpty()) return false;
+    selectByPath(newSel);
+    return true;
 }
 
 void MultiEffectPanel::onRemove()
