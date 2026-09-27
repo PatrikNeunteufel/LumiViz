@@ -770,11 +770,13 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Slots. Sie setzen `x`/`y` — die Lichtquelle in 0..1 (mit `oldStyle` in 0..100) — und teilen sich ihre Variablen.",
+          "doc": "EEL-Slots. Sie setzen `x`/`y` — die Lichtquelle in 0..1 (mit `oldStyle` in 0..100) — und teilen sich ihre Variablen. Weitere Felder per Skript (Block D, S79): `depth`, `depth2`.",
           "skriptvars": [
             "x",
             "y",
             "bi",
+            "depth",
+            "depth2",
             "isbeat",
             "islbeat"
           ],
@@ -838,11 +840,13 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Slots. Sie setzen `x`/`y` — die Lichtquelle in 0..1 (mit `oldStyle` in 0..100) — und teilen sich ihre Variablen.",
+          "doc": "EEL-Slots. Sie setzen `x`/`y` — die Lichtquelle in 0..1 (mit `oldStyle` in 0..100) — und teilen sich ihre Variablen. Weitere Felder per Skript (Block D, S79): `depth`, `depth2`.",
           "skriptvars": [
             "x",
             "y",
             "bi",
+            "depth",
+            "depth2",
             "isbeat",
             "islbeat"
           ],
@@ -857,11 +861,13 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Slots. Sie setzen `x`/`y` — die Lichtquelle in 0..1 (mit `oldStyle` in 0..100) — und teilen sich ihre Variablen.",
+          "doc": "EEL-Slots. Sie setzen `x`/`y` — die Lichtquelle in 0..1 (mit `oldStyle` in 0..100) — und teilen sich ihre Variablen. Weitere Felder per Skript (Block D, S79): `depth`, `depth2`.",
           "skriptvars": [
             "x",
             "y",
             "bi",
+            "depth",
+            "depth2",
             "isbeat",
             "islbeat"
           ],
@@ -1928,6 +1934,10 @@
             "oy",
             "colorscale",
             "colorcycle",
+            "warpscale",
+            "lacunarity",
+            "gain",
+            "octaves",
             "colorphase"
           ]
         },
@@ -1975,6 +1985,10 @@
             "oy",
             "colorscale",
             "colorcycle",
+            "warpscale",
+            "lacunarity",
+            "gain",
+            "octaves",
             "colorphase"
           ]
         },
@@ -2010,6 +2024,10 @@
             "oy",
             "colorscale",
             "colorcycle",
+            "warpscale",
+            "lacunarity",
+            "gain",
+            "octaves",
             "colorphase"
           ]
         },
@@ -2783,11 +2801,13 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `variation` (0..4), `scale` und `rotation` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `variation` (0..4), `scale` und `rotation` + Audio-Satz. Leer = kein Skript. Weitere Felder per Skript (Block D, S79): `rotationspeed`, `dotsize`.",
           "skriptvars": [
             "rotation",
             "variation",
-            "scale"
+            "scale",
+            "rotationspeed",
+            "dotsize"
           ]
         },
         {
@@ -2815,11 +2835,13 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `variation` (0..4), `scale` und `rotation` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `variation` (0..4), `scale` und `rotation` + Audio-Satz. Leer = kein Skript. Weitere Felder per Skript (Block D, S79): `rotationspeed`, `dotsize`.",
           "skriptvars": [
             "rotation",
             "variation",
-            "scale"
+            "scale",
+            "rotationspeed",
+            "dotsize"
           ]
         },
         {
@@ -2846,11 +2868,13 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `variation` (0..4), `scale` und `rotation` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `variation` (0..4), `scale` und `rotation` + Audio-Satz. Leer = kein Skript. Weitere Felder per Skript (Block D, S79): `rotationspeed`, `dotsize`.",
           "skriptvars": [
             "rotation",
             "variation",
-            "scale"
+            "scale",
+            "rotationspeed",
+            "dotsize"
           ]
         },
         {
@@ -2926,6 +2950,8 @@
             "power",
             "colorscale",
             "colorcycle",
+            "maxiter",
+            "escaper",
             "colorphase"
           ]
         },
@@ -3005,6 +3031,8 @@
             "power",
             "colorscale",
             "colorcycle",
+            "maxiter",
+            "escaper",
             "colorphase"
           ]
         },
@@ -3042,6 +3070,8 @@
             "power",
             "colorscale",
             "colorcycle",
+            "maxiter",
+            "escaper",
             "colorphase"
           ]
         },
@@ -3160,7 +3190,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`.",
+          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`. Weitere Felder per Skript (Block D, S79): `fov`, `juliax`, `juliay`, `juliaz`, `juliaw`, `lightyaw`, `lightpitch`, `ambient`.",
           "skriptvars": [
             "yaw",
             "pitch",
@@ -3170,6 +3200,14 @@
             "fold",
             "colorscale",
             "colorcycle",
+            "fov",
+            "juliax",
+            "juliay",
+            "juliaz",
+            "juliaw",
+            "lightyaw",
+            "lightpitch",
+            "ambient",
             "colorphase"
           ]
         },
@@ -3238,7 +3276,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`.",
+          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`. Weitere Felder per Skript (Block D, S79): `fov`, `juliax`, `juliay`, `juliaz`, `juliaw`, `lightyaw`, `lightpitch`, `ambient`.",
           "skriptvars": [
             "yaw",
             "pitch",
@@ -3248,6 +3286,14 @@
             "fold",
             "colorscale",
             "colorcycle",
+            "fov",
+            "juliax",
+            "juliay",
+            "juliaz",
+            "juliaw",
+            "lightyaw",
+            "lightpitch",
+            "ambient",
             "colorphase"
           ]
         },
@@ -3275,7 +3321,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`.",
+          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`. Weitere Felder per Skript (Block D, S79): `fov`, `juliax`, `juliay`, `juliaz`, `juliaw`, `lightyaw`, `lightpitch`, `ambient`.",
           "skriptvars": [
             "yaw",
             "pitch",
@@ -3285,6 +3331,14 @@
             "fold",
             "colorscale",
             "colorcycle",
+            "fov",
+            "juliax",
+            "juliay",
+            "juliaz",
+            "juliaw",
+            "lightyaw",
+            "lightpitch",
+            "ambient",
             "colorphase"
           ]
         },
@@ -3421,7 +3475,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`.",
+          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`. Weitere Felder per Skript (Block D, S79): `feedback`, `juliax`, `juliay`.",
           "skriptvars": [
             "cx",
             "cy",
@@ -3429,6 +3483,9 @@
             "rotspeed",
             "colorscale",
             "colorcycle",
+            "feedback",
+            "juliax",
+            "juliay",
             "colorphase"
           ]
         },
@@ -3488,7 +3545,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`.",
+          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`. Weitere Felder per Skript (Block D, S79): `feedback`, `juliax`, `juliay`.",
           "skriptvars": [
             "cx",
             "cy",
@@ -3496,6 +3553,9 @@
             "rotspeed",
             "colorscale",
             "colorcycle",
+            "feedback",
+            "juliax",
+            "juliay",
             "colorphase"
           ]
         },
@@ -3523,7 +3583,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`.",
+          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`. Weitere Felder per Skript (Block D, S79): `feedback`, `juliax`, `juliay`.",
           "skriptvars": [
             "cx",
             "cy",
@@ -3531,6 +3591,9 @@
             "rotspeed",
             "colorscale",
             "colorcycle",
+            "feedback",
+            "juliax",
+            "juliay",
             "colorphase"
           ]
         },
@@ -3733,9 +3796,12 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Zahl der Orbs); der Punkt-Code laeuft je Orb.",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Zahl der Orbs); der Punkt-Code laeuft je Orb. Weitere Felder per Skript (Block D, S79): `haloscale`, `halointensity`, `falloff`.",
           "skriptvars": [
             "n",
+            "haloscale",
+            "halointensity",
+            "falloff",
             "i",
             "x",
             "y",
@@ -3772,9 +3838,12 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Zahl der Orbs); der Punkt-Code laeuft je Orb.",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Zahl der Orbs); der Punkt-Code laeuft je Orb. Weitere Felder per Skript (Block D, S79): `haloscale`, `halointensity`, `falloff`.",
           "skriptvars": [
             "n",
+            "haloscale",
+            "halointensity",
+            "falloff",
             "i",
             "x",
             "y",
@@ -3821,9 +3890,12 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Zahl der Orbs); der Punkt-Code laeuft je Orb.",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n` (Zahl der Orbs); der Punkt-Code laeuft je Orb. Weitere Felder per Skript (Block D, S79): `haloscale`, `halointensity`, `falloff`.",
           "skriptvars": [
             "n",
+            "haloscale",
+            "halointensity",
+            "falloff",
             "i",
             "x",
             "y",
@@ -3863,6 +3935,9 @@
           "doc": "je Orb (i = Orb-Index)",
           "skriptvars": [
             "n",
+            "haloscale",
+            "halointensity",
+            "falloff",
             "i",
             "x",
             "y",
@@ -3904,7 +3979,7 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1). Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1). Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1).",
+          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1). Weitere Felder per Skript (Block D, S79): `sizeendfactor`, `lifejitter`. Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1). Weitere Felder per Skript (Block D, S79): `sizeendfactor`, `lifejitter`. Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1). Weitere Felder per Skript (Block D, S79): `sizeendfactor`, `lifejitter`.",
           "skriptvars": [
             "spawnx",
             "spawny",
@@ -3916,7 +3991,9 @@
             "gravy",
             "drag",
             "life",
-            "size"
+            "size",
+            "sizeendfactor",
+            "lifejitter"
           ]
         },
         {
@@ -3986,7 +4063,7 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1). Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1).",
+          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1). Weitere Felder per Skript (Block D, S79): `sizeendfactor`, `lifejitter`. Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1). Weitere Felder per Skript (Block D, S79): `sizeendfactor`, `lifejitter`.",
           "skriptvars": [
             "spawnx",
             "spawny",
@@ -3998,7 +4075,9 @@
             "gravy",
             "drag",
             "life",
-            "size"
+            "size",
+            "sizeendfactor",
+            "lifejitter"
           ]
         },
         {
@@ -4027,7 +4106,7 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1).",
+          "doc": "GLSL-Kraftfeld (optional): definiert `vec2 kraft(vec2 pos, vec2 vel, float alter)` — Zusatz-Beschleunigung in UV/s²; Uniforms uTime, uDelta, uResolution, bass, mid, treb, vol, beat. Leer = nur Schwerkraft/Drag Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1). Weitere Felder per Skript (Block D, S79): `sizeendfactor`, `lifejitter`.",
           "skriptvars": [
             "spawnx",
             "spawny",
@@ -4039,7 +4118,9 @@
             "gravy",
             "drag",
             "life",
-            "size"
+            "size",
+            "sizeendfactor",
+            "lifejitter"
           ]
         },
         {
@@ -4289,14 +4370,17 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `points`, `distance`, `alpha`, `rotation`, `rotationinc`, `speed` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `points`, `distance`, `alpha`, `rotation`, `rotationinc`, `speed` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Weitere Felder per Skript (Block D, S79): `distance2`, `alpha2`, `rotationinc2`.",
           "skriptvars": [
             "points",
             "distance",
             "alpha",
             "rotation",
             "rotationinc",
-            "speed"
+            "speed",
+            "distance2",
+            "alpha2",
+            "rotationinc2"
           ]
         },
         {
@@ -4334,14 +4418,17 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `points`, `distance`, `alpha`, `rotation`, `rotationinc`, `speed` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `points`, `distance`, `alpha`, `rotation`, `rotationinc`, `speed` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Weitere Felder per Skript (Block D, S79): `distance2`, `alpha2`, `rotationinc2`.",
           "skriptvars": [
             "points",
             "distance",
             "alpha",
             "rotation",
             "rotationinc",
-            "speed"
+            "speed",
+            "distance2",
+            "alpha2",
+            "rotationinc2"
           ]
         },
         {
@@ -4350,14 +4437,17 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `points`, `distance`, `alpha`, `rotation`, `rotationinc`, `speed` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `points`, `distance`, `alpha`, `rotation`, `rotationinc`, `speed` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Weitere Felder per Skript (Block D, S79): `distance2`, `alpha2`, `rotationinc2`.",
           "skriptvars": [
             "points",
             "distance",
             "alpha",
             "rotation",
             "rotationinc",
-            "speed"
+            "speed",
+            "distance2",
+            "alpha2",
+            "rotationinc2"
           ]
         },
         {
@@ -6639,12 +6729,15 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.",
+          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`. Weitere Felder per Skript (Block D, S79): `diffa`, `diffb`, `stepsperframe`.",
           "skriptvars": [
             "feed",
             "kill",
             "colorscale",
             "colorcycle",
+            "diffa",
+            "diffb",
+            "stepsperframe",
             "colorphase"
           ]
         },
@@ -6713,12 +6806,15 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.",
+          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`. Weitere Felder per Skript (Block D, S79): `diffa`, `diffb`, `stepsperframe`.",
           "skriptvars": [
             "feed",
             "kill",
             "colorscale",
             "colorcycle",
+            "diffa",
+            "diffb",
+            "stepsperframe",
             "colorphase"
           ]
         },
@@ -6736,12 +6832,15 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.",
+          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`. Weitere Felder per Skript (Block D, S79): `diffa`, `diffb`, `stepsperframe`.",
           "skriptvars": [
             "feed",
             "kill",
             "colorscale",
             "colorcycle",
+            "diffa",
+            "diffb",
+            "stepsperframe",
             "colorphase"
           ]
         },
@@ -7394,13 +7493,16 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
+          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1). Weitere Felder per Skript (Block D, S79): `scale`, `rotationspeed`, `dotsize`.",
           "skriptvars": [
             "a",
             "b",
             "c",
             "d",
-            "rotation"
+            "rotation",
+            "scale",
+            "rotationspeed",
+            "dotsize"
           ]
         },
         {
@@ -7456,13 +7558,16 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
+          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1). Weitere Felder per Skript (Block D, S79): `scale`, `rotationspeed`, `dotsize`.",
           "skriptvars": [
             "a",
             "b",
             "c",
             "d",
-            "rotation"
+            "rotation",
+            "scale",
+            "rotationspeed",
+            "dotsize"
           ]
         },
         {
@@ -7489,13 +7594,16 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
+          "doc": "Parameter-Skript (Strang D): `a`, `b`, `c`, `d`, `rotation` + Audio-Satz. Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt den Traeger neu auf und laesst den Init-Slot erneut laufen. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1). Weitere Felder per Skript (Block D, S79): `scale`, `rotationspeed`, `dotsize`.",
           "skriptvars": [
             "a",
             "b",
             "c",
             "d",
-            "rotation"
+            "rotation",
+            "scale",
+            "rotationspeed",
+            "dotsize"
           ]
         },
         {
@@ -7764,9 +7872,10 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n`; der Punkt-Code laeuft je Punkt.",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n`; der Punkt-Code laeuft je Punkt. Weitere Felder per Skript (Block D, S79): `falloff`.",
           "skriptvars": [
             "n",
+            "falloff",
             "i",
             "v",
             "x",
@@ -7799,9 +7908,10 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n`; der Punkt-Code laeuft je Punkt.",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n`; der Punkt-Code laeuft je Punkt. Weitere Felder per Skript (Block D, S79): `falloff`.",
           "skriptvars": [
             "n",
+            "falloff",
             "i",
             "v",
             "x",
@@ -7824,9 +7934,10 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n`; der Punkt-Code laeuft je Punkt.",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n`; der Punkt-Code laeuft je Punkt. Weitere Felder per Skript (Block D, S79): `falloff`.",
           "skriptvars": [
             "n",
+            "falloff",
             "i",
             "v",
             "x",
@@ -7849,9 +7960,10 @@
           "name": "pointCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n`; der Punkt-Code laeuft je Punkt. Laeuft je Punkt: `i` 0..1 und `v` (Audio) herein, gelesen werden `x`, `y`, `z` (Weltkoordinaten), `red`/`green`/`blue` und `size`.",
+          "doc": "EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und setzen unter anderem `n`; der Punkt-Code laeuft je Punkt. Weitere Felder per Skript (Block D, S79): `falloff`. Laeuft je Punkt: `i` 0..1 und `v` (Audio) herein, gelesen werden `x`, `y`, `z` (Weltkoordinaten), `red`/`green`/`blue` und `size`.",
           "skriptvars": [
             "n",
+            "falloff",
             "i",
             "v",
             "x",
@@ -8089,13 +8201,18 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter. Farben per Skript (Block B, S79): `meshcolor_r`, `meshcolor_g`, `meshcolor_b`, `colorlow_r`, `colorlow_g`, `colorlow_b`, `colorhigh_r`, `colorhigh_g`, `colorhigh_b` (0..1).",
+          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter. Farben per Skript (Block B, S79): `meshcolor_r`, `meshcolor_g`, `meshcolor_b`, `colorlow_r`, `colorlow_g`, `colorlow_b`, `colorhigh_r`, `colorhigh_g`, `colorhigh_b` (0..1). Weitere Felder per Skript (Block D, S79): `baseamp`, `yoffset`, `extent`, `dotsize`, `falloff`.",
           "skriptvars": [
             "res",
             "n",
             "rings",
             "relax",
             "flatten",
+            "baseamp",
+            "yoffset",
+            "extent",
+            "dotsize",
+            "falloff",
             "blue",
             "green",
             "red"
@@ -8183,13 +8300,18 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter. Farben per Skript (Block B, S79): `meshcolor_r`, `meshcolor_g`, `meshcolor_b`, `colorlow_r`, `colorlow_g`, `colorlow_b`, `colorhigh_r`, `colorhigh_g`, `colorhigh_b` (0..1).",
+          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter. Farben per Skript (Block B, S79): `meshcolor_r`, `meshcolor_g`, `meshcolor_b`, `colorlow_r`, `colorlow_g`, `colorlow_b`, `colorhigh_r`, `colorhigh_g`, `colorhigh_b` (0..1). Weitere Felder per Skript (Block D, S79): `baseamp`, `yoffset`, `extent`, `dotsize`, `falloff`.",
           "skriptvars": [
             "res",
             "n",
             "rings",
             "relax",
             "flatten",
+            "baseamp",
+            "yoffset",
+            "extent",
+            "dotsize",
+            "falloff",
             "blue",
             "green",
             "red"
@@ -8205,13 +8327,18 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter. Farben per Skript (Block B, S79): `meshcolor_r`, `meshcolor_g`, `meshcolor_b`, `colorlow_r`, `colorlow_g`, `colorlow_b`, `colorhigh_r`, `colorhigh_g`, `colorhigh_b` (0..1).",
+          "doc": "EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem Punkt-Code darunter. Farben per Skript (Block B, S79): `meshcolor_r`, `meshcolor_g`, `meshcolor_b`, `colorlow_r`, `colorlow_g`, `colorlow_b`, `colorhigh_r`, `colorhigh_g`, `colorhigh_b` (0..1). Weitere Felder per Skript (Block D, S79): `baseamp`, `yoffset`, `extent`, `dotsize`, `falloff`.",
           "skriptvars": [
             "res",
             "n",
             "rings",
             "relax",
             "flatten",
+            "baseamp",
+            "yoffset",
+            "extent",
+            "dotsize",
+            "falloff",
             "blue",
             "green",
             "red"
@@ -8242,6 +8369,11 @@
             "rings",
             "relax",
             "flatten",
+            "baseamp",
+            "yoffset",
+            "extent",
+            "dotsize",
+            "falloff",
             "blue",
             "green",
             "red"
@@ -9166,12 +9298,14 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `density`, `depth`, `dropradius`, `displacescale` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `density`, `depth`, `dropradius`, `displacescale` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Weitere Felder per Skript (Block D, S79): `dropx`, `dropy`.",
           "skriptvars": [
             "density",
             "depth",
             "dropradius",
-            "displacescale"
+            "displacescale",
+            "dropx",
+            "dropy"
           ]
         },
         {
@@ -9238,12 +9372,14 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `density`, `depth`, `dropradius`, `displacescale` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `density`, `depth`, `dropradius`, `displacescale` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Weitere Felder per Skript (Block D, S79): `dropx`, `dropy`.",
           "skriptvars": [
             "density",
             "depth",
             "dropradius",
-            "displacescale"
+            "displacescale",
+            "dropx",
+            "dropy"
           ]
         },
         {
@@ -9252,12 +9388,14 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `density`, `depth`, `dropradius`, `displacescale` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `density`, `depth`, `dropradius`, `displacescale` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Weitere Felder per Skript (Block D, S79): `dropx`, `dropy`.",
           "skriptvars": [
             "density",
             "depth",
             "dropradius",
-            "displacescale"
+            "displacescale",
+            "dropx",
+            "dropy"
           ]
         },
         {

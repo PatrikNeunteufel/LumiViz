@@ -850,6 +850,7 @@ struct SuperScope3DParams
 {
     /// EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und
     /// setzen unter anderem `n`; der Punkt-Code laeuft je Punkt.
+    /// Weitere Felder per Skript (Block D, S79): `falloff`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -896,6 +897,7 @@ struct Terrain3DParams
     /// EEL-Slots fuer das Gelaende; sie teilen sich ihre Variablen mit dem
     /// Punkt-Code darunter.
     /// Farben per Skript (Block B, S79): `meshcolor_r`, `meshcolor_g`, `meshcolor_b`, `colorlow_r`, `colorlow_g`, `colorlow_b`, `colorhigh_r`, `colorhigh_g`, `colorhigh_b` (0..1).
+    /// Weitere Felder per Skript (Block D, S79): `baseamp`, `yoffset`, `extent`, `dotsize`, `falloff`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -921,6 +923,7 @@ struct GlowOrbsParams
     float falloff = 3.0f;        ///< Halo-Profil k in exp(-r^2*k)
     /// EEL-Quartett. init/frame/beat laufen einmal je Aufbau/Frame/Beat und
     /// setzen unter anderem `n` (Zahl der Orbs); der Punkt-Code laeuft je Orb.
+    /// Weitere Felder per Skript (Block D, S79): `haloscale`, `halointensity`, `falloff`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1362,6 +1365,7 @@ struct WaterBumpParams
     float displaceScale = 1.0f;
 
     /// Parameter-Skript (Strang D): `density`, `depth`, `dropradius`, `displacescale` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Weitere Felder per Skript (Block D, S79): `dropx`, `dropy`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1391,6 +1395,7 @@ struct BumpParams
     // einzige Quelle. Die frueheren Demo-Skripte gehoeren als VOREINSTELLUNG
     // hierher (Konzept §11), nicht als Vorgabe: ein importiertes Preset darf
     // sie nicht erben. Sie stehen in `Offene_Punkte.md §1d`.
+    /// Weitere Felder per Skript (Block D, S79): `depth`, `depth2`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1419,6 +1424,7 @@ struct InterferencesParams
     int blend = 0;           ///< 0 replace, 1 additive, 2 50/50
 
     /// Parameter-Skript (Strang D): `points`, `distance`, `alpha`, `rotation`, `rotationinc`, `speed` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    /// Weitere Felder per Skript (Block D, S79): `distance2`, `alpha2`, `rotationinc2`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -1980,6 +1986,7 @@ struct Fractal2DParams
     int blend = 0;  ///< 0 replace, 1 additive, 2 50/50 over the current image
 
     /// Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`.
+    /// Weitere Felder per Skript (Block D, S79): `maxiter`, `escaper`.
     std::string initCode;   ///< EEL, once (seed cx,cy,zoom,…)
     std::string frameCode;  ///< EEL, per frame (audio-reactive view)
     std::string beatCode;   ///< EEL, on beat
@@ -2012,6 +2019,7 @@ struct DomainWarpParams
     int blend = 0;  ///< 0 replace, 1 additive, 2 50/50 over the current image
 
     /// Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.
+    /// Weitere Felder per Skript (Block D, S79): `warpscale`, `lacunarity`, `gain`, `octaves`.
     std::string initCode;   ///< EEL, once
     std::string frameCode;  ///< EEL, per frame (audio-reactive field)
     std::string beatCode;   ///< EEL, on beat
@@ -2062,6 +2070,7 @@ struct Fractal3DParams
     /// Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`,
     /// `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript.
     /// Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`.
+    /// Weitere Felder per Skript (Block D, S79): `fov`, `juliax`, `juliay`, `juliaz`, `juliaw`, `lightyaw`, `lightpitch`, `ambient`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -2195,6 +2204,7 @@ struct FractalZoomerParams
     /// Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`,
     /// `rotationSpeed` + Audio-Satz. Leer = kein Skript.
     /// Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`.
+    /// Weitere Felder per Skript (Block D, S79): `feedback`, `juliax`, `juliay`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -2245,6 +2255,7 @@ struct StrangeAttractorParams
     /// Leer = kein Skript. Achtung: eine Aenderung der Beiwerte im Panel setzt
     /// den Traeger neu auf und laesst den Init-Slot erneut laufen.
     /// Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).
+    /// Weitere Felder per Skript (Block D, S79): `scale`, `rotationspeed`, `dotsize`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -2280,6 +2291,7 @@ struct FlameParams
 
     /// Parameter-Skript (Strang D): `variation` (0..4), `scale` und `rotation` +
     /// Audio-Satz. Leer = kein Skript.
+    /// Weitere Felder per Skript (Block D, S79): `rotationspeed`, `dotsize`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -2312,6 +2324,7 @@ struct ReactionDiffusionParams
     /// Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit
     /// wandert das Muster im Betrieb. Leer = kein Skript.
     /// Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.
+    /// Weitere Felder per Skript (Block D, S79): `diffa`, `diffb`, `stepsperframe`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -2465,12 +2478,15 @@ struct GpuParticlesParams
     std::string forceCode;
     /// Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
     /// Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1).
+    /// Weitere Felder per Skript (Block D, S79): `sizeendfactor`, `lifejitter`.
     std::string initCode;
     /// Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
     /// Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1).
+    /// Weitere Felder per Skript (Block D, S79): `sizeendfactor`, `lifejitter`.
     std::string frameCode;
     /// Parameter-Skript (Strang D): `spawnx`, `spawny`, `spread`, `speed`, `dir`, `fan`, `gravx`, `gravy`, `drag`, `life`, `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
     /// Farben per Skript (Block B, S79): `colorstart_r`, `colorstart_g`, `colorstart_b`, `colorend_r`, `colorend_g`, `colorend_b` (0..1).
+    /// Weitere Felder per Skript (Block D, S79): `sizeendfactor`, `lifejitter`.
     std::string beatCode;
 };
 

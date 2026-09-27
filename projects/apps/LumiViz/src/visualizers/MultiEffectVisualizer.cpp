@@ -6208,6 +6208,10 @@ void MultiEffectVisualizer::runInterferences(const ChainNode& node,
     double vPoints = params.points, vDist = params.distance;
     double vAlpha = params.alpha, vRotation = params.rotation;
     double vRotInc = params.rotationInc, vSpeed = params.speed;
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynDistance2 = params.distance2;
+    double dynAlpha2 = params.alpha2;
+    double dynRotationInc2 = params.rotationInc2;
     runParamScript(rt, "interferences", params.initCode, params.frameCode,
                    params.beatCode,
                    {{"points", &vPoints},
@@ -6215,7 +6219,10 @@ void MultiEffectVisualizer::runInterferences(const ChainNode& node,
                     {"alpha", &vAlpha},
                     {"rotation", &vRotation},
                     {"rotationinc", &vRotInc},
-                    {"speed", &vSpeed}});
+                    {"speed", &vSpeed},
+                    {"distance2", &dynDistance2},
+                    {"alpha2", &dynAlpha2},
+                    {"rotationinc2", &dynRotationInc2}});
 
     const int points = std::clamp(static_cast<int>(vPoints), 1, 8);
     // `rotation` ist ein STARTWERT: danach laeuft `interfRotation` selbstaendig
@@ -6244,15 +6251,15 @@ void MultiEffectVisualizer::runInterferences(const ChainNode& node,
     // zu einen Schritt daneben.
     const int rotIncBasis = static_cast<int>(vRotInc);
     const int rotInc = rotIncBasis +
-                       static_cast<int>(static_cast<float>(params.rotationInc2 -
+                       static_cast<int>(static_cast<float>(static_cast<int>(dynRotationInc2) -
                                                            rotIncBasis) * s);
     const int alphaBasis = static_cast<int>(vAlpha);
     const int alpha = alphaBasis +
-                      static_cast<int>(static_cast<float>(params.alpha2 -
+                      static_cast<int>(static_cast<float>(static_cast<int>(dynAlpha2) -
                                                           alphaBasis) * s);
     const int distBasis = static_cast<int>(vDist);
     const int dist = distBasis +
-                     static_cast<int>(static_cast<float>(params.distance2 -
+                     static_cast<int>(static_cast<float>(static_cast<int>(dynDistance2) -
                                                          distBasis) * s);
 
     // Copy offsets, evenly spaced around the accumulating rotation `a`.
@@ -6361,8 +6368,13 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
     // Light-position script (init/frame/beat -> x, y). Errors disable a slot.
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynDepth = params.depth;
+    double dynDepth2 = params.depth2;
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode;
+                                 params.beatCode + "|" +
+                                 std::to_string(params.depth) + ',' +
+                                 std::to_string(params.depth2);
     if (rt.bumpHost == nullptr || rt.bumpCompiled != combined)
     {
         rt.bumpHost = std::make_unique<ScriptSlotHost>("bump", activeContext(),
@@ -6376,6 +6388,8 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
         engine.setNumber("x", 0.5);
         engine.setNumber("y", 0.5);
         engine.setNumber("bi", 1.0);
+        rt.bumpHost->engine().setNumber("depth", dynDepth);
+        rt.bumpHost->engine().setNumber("depth2", dynDepth2);
         rt.bumpHost->run(Slot::Init);
     }
     double scriptBi = 1.0;
@@ -6387,6 +6401,8 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
         feedAudio(rt.bumpHost->engine());
         if (rt.bumpHost->has(Slot::Frame)) rt.bumpHost->run(Slot::Frame);
         if (m_frameBeat && rt.bumpHost->has(Slot::Beat)) rt.bumpHost->run(Slot::Beat);
+        dynDepth = rt.bumpHost->engine().number("depth");
+        dynDepth2 = rt.bumpHost->engine().number("depth2");
         double lx = engine.number("x");
         double ly = engine.number("y");
         if (params.oldStyle) { lx /= 100.0; ly /= 100.0; }
@@ -6402,21 +6418,21 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
     // haelt hart bis nF abgelaufen ist (der S46-Sonderfall).
     if (params.onBeat && m_frameBeat)
     {
-        rt.bumpDepth = static_cast<float>(params.depth2);
+        rt.bumpDepth = static_cast<float>(static_cast<int>(dynDepth2));
         rt.bumpFramesLeft = std::max(1, params.durationFrames);
     }
     else if (rt.bumpFramesLeft == 0)
     {
-        rt.bumpDepth = static_cast<float>(params.depth);
+        rt.bumpDepth = static_cast<float>(static_cast<int>(dynDepth));
     }
     // r_bump.cpp:295-299: die Skript-Variable bi (0..1) skaliert die Tiefe
     const float thisDepth = rt.bumpDepth * static_cast<float>(scriptBi);
     if (rt.bumpFramesLeft > 0 && --rt.bumpFramesLeft > 0)
     {
-        const int a = std::abs(params.depth - params.depth2) /
+        const int a = std::abs(static_cast<int>(dynDepth) - static_cast<int>(dynDepth2)) /
                       std::max(1, params.durationFrames);
-        rt.bumpDepth += static_cast<float>(a) * (params.depth2 > params.depth
-                                                     ? -1.0f : 1.0f);
+        const bool steigt = static_cast<int>(dynDepth2) > static_cast<int>(dynDepth);
+        rt.bumpDepth += static_cast<float>(a) * (steigt ? -1.0f : 1.0f);
     }
 
     // r_bump.cpp:249: depth source is the framebuffer, or global buffer N-1
@@ -9338,12 +9354,17 @@ void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
     // Strang D auf einer Frame-Kopie (s. runParamScript).
     double vDensity = params.density, vDepth = params.depth;
     double vDropR = params.dropRadius, vDisp = params.displaceScale;
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynDropX = params.dropX;
+    double dynDropY = params.dropY;
     runParamScript(rt, "waterbump", params.initCode, params.frameCode,
                    params.beatCode,
                    {{"density", &vDensity},
                     {"depth", &vDepth},
                     {"dropradius", &vDropR},
-                    {"displacescale", &vDisp}});
+                    {"displacescale", &vDisp},
+                    {"dropx", &dynDropX},
+                    {"dropy", &dynDropY}});
 
     auto* f = QOpenGLContext::currentContext()->functions();
 
@@ -9396,8 +9417,8 @@ void MultiEffectVisualizer::runWaterBump(const ChainNode& node,
             auto code = [](int c, int dim) {
                 return c <= 0 ? dim / 4 : (c >= 2 ? dim * 3 / 4 : dim / 2);
             };
-            dropX = code(params.dropX, m_surfaceWidth);
-            dropY = code(params.dropY, m_surfaceHeight);
+            dropX = code(static_cast<int>(dynDropX), m_surfaceWidth);
+            dropY = code(static_cast<int>(dynDropY), m_surfaceHeight);
         }
     }
     // Clip wie SineBlob: left/top/right/bottom relativ, Ende exklusiv
@@ -9754,9 +9775,12 @@ void MultiEffectVisualizer::runSuperScope3D(const ChainNode& node,
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
     // EEL-Quartett; Parameterwerte im Snapshot (Panel-Aenderung -> Re-Seed).
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynFalloff = params.falloff;
     const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
                              params.beatCode + '\n' + params.pointCode + "\n#" +
-                             std::to_string(params.pointCount);
+                             std::to_string(params.pointCount) + "|" +
+                                 std::to_string(params.falloff);
     if (rt.scope3dHost == nullptr || rt.scope3dCompiled != snap)
     {
         rt.scope3dHost = std::make_unique<ScriptSlotHost>(
@@ -9770,6 +9794,7 @@ void MultiEffectVisualizer::runSuperScope3D(const ChainNode& node,
         auto& engine = rt.scope3dHost->engine();
         feedAudio(engine);  // S47-Regel: visdata muss den Erst-Lauf erreichen
         engine.setNumber("n", params.pointCount);
+        rt.scope3dHost->engine().setNumber("falloff", dynFalloff);
         rt.scope3dHost->run(Slot::Init);
     }
     auto& engine = rt.scope3dHost->engine();
@@ -9780,6 +9805,7 @@ void MultiEffectVisualizer::runSuperScope3D(const ChainNode& node,
     // Slot-Ordnung Frame VOR Beat (S47-Konvention)
     if (rt.scope3dHost->has(Slot::Frame)) rt.scope3dHost->run(Slot::Frame);
     if (m_frameBeat && rt.scope3dHost->has(Slot::Beat)) rt.scope3dHost->run(Slot::Beat);
+    dynFalloff = rt.scope3dHost->engine().number("falloff");
     const int n = std::clamp(static_cast<int>(engine.number("n")), 1, 4096);
 
     // Kamera (camera3d-Knoten oder Fallback) -> View/Proj einmal je Knoten.
@@ -9913,7 +9939,7 @@ void MultiEffectVisualizer::runSuperScope3D(const ChainNode& node,
     f->glBlendFunc(GL_ONE, GL_ONE);  // additiv (Lights-Punkt-Sprites)
     m_sprite3dShader->bind();
     m_sprite3dShader->setUniformValue("uFalloff",
-                                      std::clamp(params.falloff, 0.5f, 32.0f));
+                                      std::clamp(static_cast<float>(dynFalloff), 0.5f, 32.0f));
     m_sprite3dVao->bind();
     m_sprite3dVbo->bind();
     m_sprite3dVbo->allocate(m_sprite3dVertices.data(),
@@ -9972,6 +9998,12 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
     float flattenF = params.flatten;
     FarbKopie netzFarbe(params.meshColor), tiefFarbe(params.colorLow),
         hochFarbe(params.colorHigh);
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynBaseAmp = params.baseAmp;
+    double dynYOffset = params.yOffset;
+    double dynExtent = params.extent;
+    double dynDotSize = params.dotSize;
+    double dynFalloff = params.falloff;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty() || !params.pointCode.empty();
     bool pointColors = false;
@@ -9985,7 +10017,12 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
                                  std::to_string(params.flatten) + ',' +
                                  std::to_string(params.meshColor) + ',' +
                                  std::to_string(params.colorLow) + ',' +
-                                 std::to_string(params.colorHigh);
+                                 std::to_string(params.colorHigh) + "|" +
+                                 std::to_string(params.baseAmp) + ',' +
+                                 std::to_string(params.yOffset) + ',' +
+                                 std::to_string(params.extent) + ',' +
+                                 std::to_string(params.dotSize) + ',' +
+                                 std::to_string(params.falloff);
         if (rt.terrainHost == nullptr || rt.terrainCompiled != snap)
         {
             rt.terrainHost = std::make_unique<ScriptSlotHost>(
@@ -10006,6 +10043,11 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
             setzeFarbe(engine, "meshcolor", netzFarbe);
             setzeFarbe(engine, "colorlow", tiefFarbe);
             setzeFarbe(engine, "colorhigh", hochFarbe);
+            rt.terrainHost->engine().setNumber("baseamp", dynBaseAmp);
+            rt.terrainHost->engine().setNumber("yoffset", dynYOffset);
+            rt.terrainHost->engine().setNumber("extent", dynExtent);
+            rt.terrainHost->engine().setNumber("dotsize", dynDotSize);
+            rt.terrainHost->engine().setNumber("falloff", dynFalloff);
             rt.terrainHost->run(Slot::Init);
         }
         auto& engine = rt.terrainHost->engine();
@@ -10025,6 +10067,11 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
         if (rt.terrainHost->has(Slot::Frame)) rt.terrainHost->run(Slot::Frame);
         if (m_frameBeat && rt.terrainHost->has(Slot::Beat))
             rt.terrainHost->run(Slot::Beat);
+        dynBaseAmp = rt.terrainHost->engine().number("baseamp");
+        dynYOffset = rt.terrainHost->engine().number("yoffset");
+        dynExtent = rt.terrainHost->engine().number("extent");
+        dynDotSize = rt.terrainHost->engine().number("dotsize");
+        dynFalloff = rt.terrainHost->engine().number("falloff");
         if (wantsBuf)
         {
             for (int i = 0; i < cells; ++i)
@@ -10054,7 +10101,7 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
         for (int gx = 0; gx < res; ++gx)
         {
             const std::size_t i = static_cast<std::size_t>(gy * res + gx);
-            const float h0 = rt.terrainBase[i] * params.baseAmp;
+            const float h0 = rt.terrainBase[i] * static_cast<float>(dynBaseAmp);
             float h = rt.terrainH[i];
             if (ringsF > 0.0f)
             {
@@ -10090,10 +10137,10 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
     const auto worldAt = [&](int gx, int gy) {
         return QVector3D(
             (static_cast<float>(gx) / static_cast<float>(res - 1) - 0.5f) *
-                params.extent,
-            params.yOffset + rt.terrainH[static_cast<std::size_t>(gy * res + gx)],
+                static_cast<float>(dynExtent),
+            static_cast<float>(dynYOffset) + rt.terrainH[static_cast<std::size_t>(gy * res + gx)],
             (static_cast<float>(gy) / static_cast<float>(res - 1) - 0.5f) *
-                params.extent);
+                static_cast<float>(dynExtent));
     };
 
     // --- (a) dunkles Mesh: opak, schreibt ins gemeinsame Depth-RT -------------
@@ -10171,7 +10218,7 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
         const float projY = proj(1, 1);
         const QVector3D cLow = tiefFarbe.vec();  // Skript-Kopie
         const QVector3D cHigh = hochFarbe.vec();
-        const float hRange = std::max(0.05f, params.baseAmp * 2.0f);
+        const float hRange = std::max(0.05f, static_cast<float>(dynBaseAmp) * 2.0f);
         lumi::scripting::LuaScriptEngine* pointEngine =
             pointColors ? &rt.terrainHost->engine() : nullptr;
         m_sprite3dVertices.clear();
@@ -10186,8 +10233,8 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
                 if (w < 0.05f) continue;
                 const float ndcX = clip.x() / w;
                 const float ndcY = clip.y() / w;
-                const float halfX = params.dotSize * projX / w;
-                const float halfY = params.dotSize * projY / w;
+                const float halfX = static_cast<float>(dynDotSize) * projX / w;
+                const float halfY = static_cast<float>(dynDotSize) * projY / w;
                 if (ndcX + halfX < -1.0f || ndcX - halfX > 1.0f ||
                     ndcY + halfY < -1.0f || ndcY - halfY > 1.0f)
                 {
@@ -10238,7 +10285,7 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
             f->glBlendFunc(GL_ONE, GL_ONE);
             m_sprite3dShader->bind();
             m_sprite3dShader->setUniformValue(
-                "uFalloff", std::clamp(params.falloff, 0.5f, 32.0f));
+                "uFalloff", std::clamp(static_cast<float>(dynFalloff), 0.5f, 32.0f));
             m_sprite3dVao->bind();
             m_sprite3dVbo->bind();
             m_sprite3dVbo->allocate(
@@ -10262,9 +10309,16 @@ void MultiEffectVisualizer::runGlowOrbs(const ChainNode& node,
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     auto* f = QOpenGLContext::currentContext()->functions();
 
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynHaloScale = params.haloScale;
+    double dynHaloIntensity = params.haloIntensity;
+    double dynFalloff = params.falloff;
     const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
                              params.beatCode + '\n' + params.pointCode + "\n#" +
-                             std::to_string(params.orbCount);
+                             std::to_string(params.orbCount) + "|" +
+                                 std::to_string(params.haloScale) + ',' +
+                                 std::to_string(params.haloIntensity) + ',' +
+                                 std::to_string(params.falloff);
     if (rt.orbsHost == nullptr || rt.orbsCompiled != snap)
     {
         rt.orbsHost = std::make_unique<ScriptSlotHost>("glowOrbs", activeContext(),
@@ -10278,6 +10332,9 @@ void MultiEffectVisualizer::runGlowOrbs(const ChainNode& node,
         auto& engine = rt.orbsHost->engine();
         feedAudio(engine);  // S47-Regel: visdata vor dem Erst-Lauf
         engine.setNumber("n", params.orbCount);
+        rt.orbsHost->engine().setNumber("haloscale", dynHaloScale);
+        rt.orbsHost->engine().setNumber("halointensity", dynHaloIntensity);
+        rt.orbsHost->engine().setNumber("falloff", dynFalloff);
         rt.orbsHost->run(Slot::Init);
     }
     auto& engine = rt.orbsHost->engine();
@@ -10286,6 +10343,9 @@ void MultiEffectVisualizer::runGlowOrbs(const ChainNode& node,
     // Slot-Ordnung Frame VOR Beat (S47-Konvention)
     if (rt.orbsHost->has(Slot::Frame)) rt.orbsHost->run(Slot::Frame);
     if (m_frameBeat && rt.orbsHost->has(Slot::Beat)) rt.orbsHost->run(Slot::Beat);
+    dynHaloScale = rt.orbsHost->engine().number("haloscale");
+    dynHaloIntensity = rt.orbsHost->engine().number("halointensity");
+    dynFalloff = rt.orbsHost->engine().number("falloff");
     const int n = std::clamp(static_cast<int>(engine.number("n")), 1, 64);
 
     QMatrix4x4 view;
@@ -10369,7 +10429,7 @@ void MultiEffectVisualizer::runGlowOrbs(const ChainNode& node,
     m_orb3dShader->release();
 
     // --- (b) Halo-Billboards: additiv, Depth-Test OHNE Write => Rim-Glow ------
-    if (params.haloIntensity > 0.0f)
+    if (static_cast<float>(dynHaloIntensity) > 0.0f)
     {
         f->glDepthMask(GL_FALSE);
         const float projX = proj(0, 0);
@@ -10382,7 +10442,7 @@ void MultiEffectVisualizer::runGlowOrbs(const ChainNode& node,
             if (w < 0.05f) continue;
             const float ndcX = clip.x() / w;
             const float ndcY = clip.y() / w;
-            const float r = std::max(o.scale.x(), o.scale.y()) * params.haloScale;
+            const float r = std::max(o.scale.x(), o.scale.y()) * static_cast<float>(dynHaloScale);
             const float halfX = r * projX / w;
             const float halfY = r * projY / w;
             if (ndcX + halfX < -1.0f || ndcX - halfX > 1.0f ||
@@ -10391,7 +10451,7 @@ void MultiEffectVisualizer::runGlowOrbs(const ChainNode& node,
                 continue;
             }
             QVector3D c = (o.color * 0.7f + o.color2 * 0.3f) *
-                              (params.haloIntensity + o.flash) ;
+                              (static_cast<float>(dynHaloIntensity) + o.flash) ;
             if (fogActive)
             {
                 const float fogF = std::clamp(
@@ -10414,7 +10474,7 @@ void MultiEffectVisualizer::runGlowOrbs(const ChainNode& node,
             f->glBlendFunc(GL_ONE, GL_ONE);
             m_sprite3dShader->bind();
             m_sprite3dShader->setUniformValue(
-                "uFalloff", std::clamp(params.falloff, 0.5f, 32.0f));
+                "uFalloff", std::clamp(static_cast<float>(dynFalloff), 0.5f, 32.0f));
             m_sprite3dVao->bind();
             m_sprite3dVbo->bind();
             m_sprite3dVbo->allocate(
@@ -11657,6 +11717,9 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
     // Farbpalette als Skriptvariablen (Block C, S79)
     float palScale = params.colorScale, palCycle = params.colorCycle;
     FarbKopie innen(params.insideColor);
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynMaxIter = params.maxIter;
+    double dynEscapeR = params.escapeR;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -11669,7 +11732,9 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
                                  std::to_string(jy) + ',' + std::to_string(power) +
                                  "|" + std::to_string(params.colorScale) + ',' +
                                  std::to_string(params.colorCycle) + ',' +
-                                 std::to_string(params.insideColor);
+                                 std::to_string(params.insideColor) + "|" +
+                                 std::to_string(params.maxIter) + ',' +
+                                 std::to_string(params.escapeR);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("fractal2d", activeContext(),
@@ -11686,6 +11751,8 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
             rt.fracHost->engine().setNumber("colorscale", palScale);
             rt.fracHost->engine().setNumber("colorcycle", palCycle);
             setzeFarbe(rt.fracHost->engine(), "insidecolor", innen);
+            rt.fracHost->engine().setNumber("maxiter", dynMaxIter);
+            rt.fracHost->engine().setNumber("escaper", dynEscapeR);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
@@ -11696,6 +11763,8 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
         rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        dynMaxIter = rt.fracHost->engine().number("maxiter");
+        dynEscapeR = rt.fracHost->engine().number("escaper");
 
         cx = static_cast<float>(e.number("cx"));
         cy = static_cast<float>(e.number("cy"));
@@ -11730,10 +11799,11 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
     m_fractal2DShader->setUniformValue("uRot", rot);
     m_fractal2DShader->setUniformValue("uAspect", aspect);
     m_fractal2DShader->setUniformValue("uType", std::clamp(params.type, 0, 8));
-    m_fractal2DShader->setUniformValue("uMaxIter", std::clamp(params.maxIter, 1, 2048));
+    m_fractal2DShader->setUniformValue("uMaxIter",
+                                       std::clamp(static_cast<int>(dynMaxIter), 1, 2048));
     m_fractal2DShader->setUniformValue("uJulia", QVector2D(jx, jy));
     m_fractal2DShader->setUniformValue("uPower", std::clamp(power, 1.0f, 16.0f));
-    m_fractal2DShader->setUniformValue("uEscapeR", std::max(params.escapeR, 1.0f));
+    m_fractal2DShader->setUniformValue("uEscapeR", std::max(static_cast<float>(dynEscapeR), 1.0f));
     m_fractal2DShader->setUniformValue("uSmooth", params.smooth);
     m_fractal2DShader->setUniformValue("uColorScale", palScale);
     m_fractal2DShader->setUniformValue("uColorPhase", rt.fracColorPhase);
@@ -11800,6 +11870,11 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
 
     // Farbpalette als Skriptvariablen (Block C, S79)
     float palScale = params.colorScale, palCycle = params.colorCycle;
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynWarpScale = params.warpScale;
+    double dynLacunarity = params.lacunarity;
+    double dynGain = params.gain;
+    double dynOctaves = params.octaves;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -11809,7 +11884,11 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
                                  std::to_string(warp) + ',' + std::to_string(speed) + ',' +
                                  std::to_string(ox) + ',' + std::to_string(oy) +
                                  "|" + std::to_string(params.colorScale) + ',' +
-                                 std::to_string(params.colorCycle);
+                                 std::to_string(params.colorCycle) + "|" +
+                                 std::to_string(params.warpScale) + ',' +
+                                 std::to_string(params.lacunarity) + ',' +
+                                 std::to_string(params.gain) + ',' +
+                                 std::to_string(params.octaves);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("domainwarp", activeContext(),
@@ -11824,6 +11903,10 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
             e.setNumber("oy", oy);
             rt.fracHost->engine().setNumber("colorscale", palScale);
             rt.fracHost->engine().setNumber("colorcycle", palCycle);
+            rt.fracHost->engine().setNumber("warpscale", dynWarpScale);
+            rt.fracHost->engine().setNumber("lacunarity", dynLacunarity);
+            rt.fracHost->engine().setNumber("gain", dynGain);
+            rt.fracHost->engine().setNumber("octaves", dynOctaves);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
@@ -11834,6 +11917,10 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
         rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        dynWarpScale = rt.fracHost->engine().number("warpscale");
+        dynLacunarity = rt.fracHost->engine().number("lacunarity");
+        dynGain = rt.fracHost->engine().number("gain");
+        dynOctaves = rt.fracHost->engine().number("octaves");
 
         scale = static_cast<float>(e.number("scale"));
         warp = static_cast<float>(e.number("warp"));
@@ -11861,12 +11948,13 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
 
     m_domainWarpShader->bind();
     m_domainWarpShader->setUniformValue("uAspect", aspect);
-    m_domainWarpShader->setUniformValue("uOctaves", std::clamp(params.octaves, 1, 10));
-    m_domainWarpShader->setUniformValue("uLac", params.lacunarity);
-    m_domainWarpShader->setUniformValue("uGain", params.gain);
+    m_domainWarpShader->setUniformValue("uOctaves",
+                                        std::clamp(static_cast<int>(dynOctaves), 1, 10));
+    m_domainWarpShader->setUniformValue("uLac", static_cast<float>(dynLacunarity));
+    m_domainWarpShader->setUniformValue("uGain", static_cast<float>(dynGain));
     m_domainWarpShader->setUniformValue("uScale", scale);
     m_domainWarpShader->setUniformValue("uWarp", warp);
-    m_domainWarpShader->setUniformValue("uWarpScale", params.warpScale);
+    m_domainWarpShader->setUniformValue("uWarpScale", static_cast<float>(dynWarpScale));
     m_domainWarpShader->setUniformValue("uOffset", QVector2D(ox, oy));
     m_domainWarpShader->setUniformValue("uTime", rt.fracTime);
     m_domainWarpShader->setUniformValue("uColorScale", palScale);
@@ -12021,6 +12109,15 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
     // Farbpalette als Skriptvariablen (Block C, S79)
     float palScale = params.colorScale, palCycle = params.colorCycle;
     FarbKopie hinter(params.background);
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynFov = params.fov;
+    double dynJuliaX = params.juliaX;
+    double dynJuliaY = params.juliaY;
+    double dynJuliaZ = params.juliaZ;
+    double dynJuliaW = params.juliaW;
+    double dynLightYaw = params.lightYaw;
+    double dynLightPitch = params.lightPitch;
+    double dynAmbient = params.ambient;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -12032,7 +12129,15 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
                                  std::to_string(fold) +
                                  "|" + std::to_string(params.colorScale) + ',' +
                                  std::to_string(params.colorCycle) + ',' +
-                                 std::to_string(params.background);
+                                 std::to_string(params.background) + "|" +
+                                 std::to_string(params.fov) + ',' +
+                                 std::to_string(params.juliaX) + ',' +
+                                 std::to_string(params.juliaY) + ',' +
+                                 std::to_string(params.juliaZ) + ',' +
+                                 std::to_string(params.juliaW) + ',' +
+                                 std::to_string(params.lightYaw) + ',' +
+                                 std::to_string(params.lightPitch) + ',' +
+                                 std::to_string(params.ambient);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("fractal3d", activeContext(),
@@ -12048,6 +12153,14 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
             rt.fracHost->engine().setNumber("colorscale", palScale);
             rt.fracHost->engine().setNumber("colorcycle", palCycle);
             setzeFarbe(rt.fracHost->engine(), "background", hinter);
+            rt.fracHost->engine().setNumber("fov", dynFov);
+            rt.fracHost->engine().setNumber("juliax", dynJuliaX);
+            rt.fracHost->engine().setNumber("juliay", dynJuliaY);
+            rt.fracHost->engine().setNumber("juliaz", dynJuliaZ);
+            rt.fracHost->engine().setNumber("juliaw", dynJuliaW);
+            rt.fracHost->engine().setNumber("lightyaw", dynLightYaw);
+            rt.fracHost->engine().setNumber("lightpitch", dynLightPitch);
+            rt.fracHost->engine().setNumber("ambient", dynAmbient);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
@@ -12057,6 +12170,14 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
         rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        dynFov = rt.fracHost->engine().number("fov");
+        dynJuliaX = rt.fracHost->engine().number("juliax");
+        dynJuliaY = rt.fracHost->engine().number("juliay");
+        dynJuliaZ = rt.fracHost->engine().number("juliaz");
+        dynJuliaW = rt.fracHost->engine().number("juliaw");
+        dynLightYaw = rt.fracHost->engine().number("lightyaw");
+        dynLightPitch = rt.fracHost->engine().number("lightpitch");
+        dynAmbient = rt.fracHost->engine().number("ambient");
         yaw = static_cast<float>(e.number("yaw"));
         pitch = static_cast<float>(e.number("pitch"));
         dist = static_cast<float>(e.number("dist"));
@@ -12080,9 +12201,10 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
     const float cp = std::cos(pitch);
     const QVector3D cam(dist * cp * std::cos(yaw), dist * std::sin(pitch),
                         dist * cp * std::sin(yaw));
-    const float lp = std::cos(params.lightPitch);
-    QVector3D light(lp * std::cos(params.lightYaw), std::sin(params.lightPitch),
-                    lp * std::sin(params.lightYaw));
+    const float lp = std::cos(static_cast<float>(dynLightPitch));
+    QVector3D light(lp * std::cos(static_cast<float>(dynLightYaw)),
+                    std::sin(static_cast<float>(dynLightPitch)),
+                    lp * std::sin(static_cast<float>(dynLightYaw)));
     light.normalize();
     const float aspect = m_surfaceHeight > 0
                              ? static_cast<float>(m_surfaceWidth) /
@@ -12093,16 +12215,17 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
     m_fractal3DShader->setUniformValue("uAspect", aspect);
     m_fractal3DShader->setUniformValue("uType", std::clamp(params.type, 0, 4));
     m_fractal3DShader->setUniformValue("uCam", cam);
-    m_fractal3DShader->setUniformValue("uFov", params.fov);
+    m_fractal3DShader->setUniformValue("uFov", static_cast<float>(dynFov));
     m_fractal3DShader->setUniformValue("uPower", std::clamp(power, 1.0f, 16.0f));
     m_fractal3DShader->setUniformValue("uScale", scale);
     m_fractal3DShader->setUniformValue("uFold", fold);
     m_fractal3DShader->setUniformValue("uMaxSteps", std::clamp(params.maxSteps, 8, 512));
     m_fractal3DShader->setUniformValue("uMaxIter", std::clamp(params.maxIter, 1, 64));
     m_fractal3DShader->setUniformValue(
-        "uJulia", QVector4D(params.juliaX, params.juliaY, params.juliaZ, params.juliaW));
+        "uJulia", QVector4D(static_cast<float>(dynJuliaX), static_cast<float>(dynJuliaY),
+                            static_cast<float>(dynJuliaZ), static_cast<float>(dynJuliaW)));
     m_fractal3DShader->setUniformValue("uLight", light);
-    m_fractal3DShader->setUniformValue("uAmbient", params.ambient);
+    m_fractal3DShader->setUniformValue("uAmbient", static_cast<float>(dynAmbient));
     m_fractal3DShader->setUniformValue("uAO", params.ao);
     m_fractal3DShader->setUniformValue("uColorScale", palScale);
     m_fractal3DShader->setUniformValue("uColorPhase", rt.fracColorPhase);
@@ -12307,6 +12430,10 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
     // Farbpalette als Skriptvariablen (Block C, S79)
     float palScale = params.colorScale, palCycle = params.colorCycle;
     FarbKopie innen(params.insideColor);
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynFeedback = params.feedback;
+    double dynJuliaX = params.juliaX;
+    double dynJuliaY = params.juliaY;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -12317,7 +12444,10 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
                                  std::to_string(rotSpeed) +
                                  "|" + std::to_string(params.colorScale) + ',' +
                                  std::to_string(params.colorCycle) + ',' +
-                                 std::to_string(params.insideColor);
+                                 std::to_string(params.insideColor) + "|" +
+                                 std::to_string(params.feedback) + ',' +
+                                 std::to_string(params.juliaX) + ',' +
+                                 std::to_string(params.juliaY);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("fractalzoom", activeContext(),
@@ -12332,6 +12462,9 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
             rt.fracHost->engine().setNumber("colorscale", palScale);
             rt.fracHost->engine().setNumber("colorcycle", palCycle);
             setzeFarbe(rt.fracHost->engine(), "insidecolor", innen);
+            rt.fracHost->engine().setNumber("feedback", dynFeedback);
+            rt.fracHost->engine().setNumber("juliax", dynJuliaX);
+            rt.fracHost->engine().setNumber("juliay", dynJuliaY);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
@@ -12341,6 +12474,9 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
         rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        dynFeedback = rt.fracHost->engine().number("feedback");
+        dynJuliaX = rt.fracHost->engine().number("juliax");
+        dynJuliaY = rt.fracHost->engine().number("juliay");
         cx = static_cast<float>(e.number("cx"));
         cy = static_cast<float>(e.number("cy"));
         zoomSpeed = static_cast<float>(e.number("zoomspeed"));
@@ -12377,7 +12513,8 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
     m_fractal2DShader->setUniformValue("uAspect", aspect);
     m_fractal2DShader->setUniformValue("uType", t2type);
     m_fractal2DShader->setUniformValue("uMaxIter", std::clamp(params.maxIter, 1, 2048));
-    m_fractal2DShader->setUniformValue("uJulia", QVector2D(params.juliaX, params.juliaY));
+    m_fractal2DShader->setUniformValue(
+        "uJulia", QVector2D(static_cast<float>(dynJuliaX), static_cast<float>(dynJuliaY)));
     m_fractal2DShader->setUniformValue("uPower", 2.0f);
     m_fractal2DShader->setUniformValue("uEscapeR", 4.0f);
     m_fractal2DShader->setUniformValue("uSmooth", true);
@@ -12389,7 +12526,7 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
     // wurde hier nur auf die 50/50-Betriebsart geschaltet, weshalb 0,3 und 1,0
     // dasselbe Bild ergaben. Die Vorgabe 0,5 IST das alte 50/50 — bestehende
     // Presets mit dem Vorgabewert sehen unverändert aus.
-    const float trail = std::clamp(params.feedback, 0.0f, 1.0f);
+    const float trail = std::clamp(static_cast<float>(dynFeedback), 0.0f, 1.0f);
     m_fractal2DShader->setUniformValue("uBlend", trail > 0.0f ? 2 : 0);
     m_fractal2DShader->setUniformValue("uFeedback", trail);
     m_fractal2DShader->setUniformValue("uLut", 1);
@@ -12408,6 +12545,10 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
 
     float a = params.a, b = params.b, c = params.c, d = params.d, rotation = params.rotation;
     FarbKopie farbe(params.color);
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynScale = params.scale;
+    double dynRotationSpeed = params.rotationSpeed;
+    double dynDotSize = params.dotSize;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -12415,7 +12556,10 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + "\n#" + std::to_string(a) + ',' +
                                  std::to_string(b) + ',' + std::to_string(c) + ',' +
-                                 std::to_string(d) + ',' + std::to_string(params.color);
+                                 std::to_string(d) + ',' + std::to_string(params.color) + "|" +
+                                 std::to_string(params.scale) + ',' +
+                                 std::to_string(params.rotationSpeed) + ',' +
+                                 std::to_string(params.dotSize);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("attractor", activeContext(),
@@ -12428,6 +12572,9 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
             e.setNumber("a", a); e.setNumber("b", b); e.setNumber("c", c);
             e.setNumber("d", d); e.setNumber("rotation", rotation);
             setzeFarbe(e, "color", farbe);
+            rt.fracHost->engine().setNumber("scale", dynScale);
+            rt.fracHost->engine().setNumber("rotationspeed", dynRotationSpeed);
+            rt.fracHost->engine().setNumber("dotsize", dynDotSize);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
@@ -12435,6 +12582,9 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
         auto& e = rt.fracHost->engine();
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        dynScale = rt.fracHost->engine().number("scale");
+        dynRotationSpeed = rt.fracHost->engine().number("rotationspeed");
+        dynDotSize = rt.fracHost->engine().number("dotsize");
         a = static_cast<float>(e.number("a")); b = static_cast<float>(e.number("b"));
         c = static_cast<float>(e.number("c")); d = static_cast<float>(e.number("d"));
         rotation = static_cast<float>(e.number("rotation"));
@@ -12452,7 +12602,7 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
         rt.saX = 0.1; rt.saY = 0.0; rt.saZ = 0.0;
         rt.saSeeded = true;
     }
-    rt.saRot += params.rotationSpeed * m_deltaTime;
+    rt.saRot += static_cast<float>(dynRotationSpeed) * m_deltaTime;
     const float rc = std::cos(rt.saRot + rotation), rs = std::sin(rt.saRot + rotation);
 
     std::array<QVector3D, 256> cpuLut{};
@@ -12496,8 +12646,8 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
             px = x * 0.6; py = y * 0.6;
         }
         // scale + view rotation
-        const float sx = static_cast<float>(px) * params.scale;
-        const float sy = static_cast<float>(py) * params.scale;
+        const float sx = static_cast<float>(px) * static_cast<float>(dynScale);
+        const float sy = static_cast<float>(py) * static_cast<float>(dynScale);
         lumi::modules::SuperscopePoint pt;
         pt.x = std::clamp(sx * rc - sy * rs, -1.0f, 1.0f);
         pt.y = std::clamp(sx * rs + sy * rc, -1.0f, 1.0f);
@@ -12520,7 +12670,7 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
     }
     lumi::render::ScopeRenderer::Params rp;
     rp.mode = lumi::modules::SuperscopeRenderMode::Dots;
-    rp.dotSize = std::clamp(params.dotSize, 1.0f, 32.0f);
+    rp.dotSize = std::clamp(static_cast<float>(dynDotSize), 1.0f, 32.0f);
     rp.glowEnabled = false;
     m_scopeRenderer.draw(pts, rp);
     f->glDisable(GL_BLEND);
@@ -12536,6 +12686,9 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
     // „Variationsbeiwerte" — die einzigen Stellgroessen dieser Art sind die
     // Wahl der Variation und die Groesse der Figur.
     float variationVal = static_cast<float>(params.variation), scale = params.scale;
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynRotationSpeed = params.rotationSpeed;
+    double dynDotSize = params.dotSize;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -12543,7 +12696,9 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + "\n#" + std::to_string(rotation) + ',' +
                                  std::to_string(params.variation) + ',' +
-                                 std::to_string(scale);
+                                 std::to_string(scale) + "|" +
+                                 std::to_string(params.rotationSpeed) + ',' +
+                                 std::to_string(params.dotSize);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("flame", activeContext(),
@@ -12555,6 +12710,8 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
             rt.fracHost->engine().setNumber("rotation", rotation);
             rt.fracHost->engine().setNumber("variation", variationVal);
             rt.fracHost->engine().setNumber("scale", scale);
+            rt.fracHost->engine().setNumber("rotationspeed", dynRotationSpeed);
+            rt.fracHost->engine().setNumber("dotsize", dynDotSize);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
@@ -12562,6 +12719,8 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
         auto& e = rt.fracHost->engine();
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        dynRotationSpeed = rt.fracHost->engine().number("rotationspeed");
+        dynDotSize = rt.fracHost->engine().number("dotsize");
         rotation = static_cast<float>(e.number("rotation"));
         variationVal = static_cast<float>(e.number("variation"));
         scale = static_cast<float>(e.number("scale"));
@@ -12577,7 +12736,7 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
     {
         rt.saX = 0.05; rt.saY = 0.05; rt.saSeeded = true;
     }
-    rt.saRot += params.rotationSpeed * m_deltaTime;
+    rt.saRot += static_cast<float>(dynRotationSpeed) * m_deltaTime;
     const float rc = std::cos(rt.saRot + rotation), rs = std::sin(rt.saRot + rotation);
 
     const int nfun = std::clamp(params.functions, 2, 4);
@@ -12639,7 +12798,7 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
     }
     lumi::render::ScopeRenderer::Params rp;
     rp.mode = lumi::modules::SuperscopeRenderMode::Dots;
-    rp.dotSize = std::clamp(params.dotSize, 1.0f, 32.0f);
+    rp.dotSize = std::clamp(static_cast<float>(dynDotSize), 1.0f, 32.0f);
     rp.glowEnabled = false;
     m_scopeRenderer.draw(pts, rp);
     f->glDisable(GL_BLEND);
@@ -12656,6 +12815,10 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
     float feed = params.feed, kill = params.kill;
     // Farbpalette als Skriptvariablen (Block C, S79)
     float palScale = params.colorScale, palCycle = params.colorCycle;
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynDiffA = params.diffA;
+    double dynDiffB = params.diffB;
+    double dynStepsPerFrame = params.stepsPerFrame;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -12664,7 +12827,10 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
                                  params.beatCode + "\n#" + std::to_string(feed) + ',' +
                                  std::to_string(kill) +
                                  "|" + std::to_string(params.colorScale) + ',' +
-                                 std::to_string(params.colorCycle);
+                                 std::to_string(params.colorCycle) + "|" +
+                                 std::to_string(params.diffA) + ',' +
+                                 std::to_string(params.diffB) + ',' +
+                                 std::to_string(params.stepsPerFrame);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("reactdiff", activeContext(),
@@ -12677,6 +12843,9 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
             rt.fracHost->engine().setNumber("kill", kill);
             rt.fracHost->engine().setNumber("colorscale", palScale);
             rt.fracHost->engine().setNumber("colorcycle", palCycle);
+            rt.fracHost->engine().setNumber("diffa", dynDiffA);
+            rt.fracHost->engine().setNumber("diffb", dynDiffB);
+            rt.fracHost->engine().setNumber("stepsperframe", dynStepsPerFrame);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
@@ -12686,6 +12855,9 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
         rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
+        dynDiffA = rt.fracHost->engine().number("diffa");
+        dynDiffB = rt.fracHost->engine().number("diffb");
+        dynStepsPerFrame = rt.fracHost->engine().number("stepsperframe");
         feed = static_cast<float>(e.number("feed"));
         kill = static_cast<float>(e.number("kill"));
         palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
@@ -12735,12 +12907,12 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
     m_rdShader->setUniformValue("uMode", 1);
     m_rdShader->setUniformValue("uFeed", feed);
     m_rdShader->setUniformValue("uKill", kill);
-    m_rdShader->setUniformValue("uDA", params.diffA);
-    m_rdShader->setUniformValue("uDB", params.diffB);
+    m_rdShader->setUniformValue("uDA", static_cast<float>(dynDiffA));
+    m_rdShader->setUniformValue("uDB", static_cast<float>(dynDiffB));
     m_rdShader->setUniformValue(
         "uTexel", QVector2D(1.0f / static_cast<float>(simW), 1.0f / static_cast<float>(simH)));
     m_rdShader->setUniformValue("uState", 0);
-    const int steps = std::clamp(params.stepsPerFrame, 1, 64);
+    const int steps = std::clamp(static_cast<int>(dynStepsPerFrame), 1, 64);
     for (int s = 0; s < steps; ++s)
     {
         const bool seedNow = params.seedOnBeat && m_frameBeat && s == 0;
@@ -13730,6 +13902,9 @@ void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,
     double drag = params.drag, life = params.lifeSeconds;
     double size = params.sizePx;
     FarbKopie farbeStart(params.colorStart), farbeEnde(params.colorEnd);
+    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
+    double dynSizeEndFactor = params.sizeEndFactor;
+    double dynLifeJitter = params.lifeJitter;
     runParamScript(rt, "gpuparticles", params.initCode, params.frameCode,
                    params.beatCode,
                    {{"spawnx", &spawnX},
@@ -13748,7 +13923,9 @@ void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,
                     {"colorstart_b", &farbeStart.b},
                     {"colorend_r", &farbeEnde.r},
                     {"colorend_g", &farbeEnde.g},
-                    {"colorend_b", &farbeEnde.b}});
+                    {"colorend_b", &farbeEnde.b},
+                    {"sizeendfactor", &dynSizeEndFactor},
+                    {"lifejitter", &dynLifeJitter}});
     const int count = std::clamp(params.count, lumi::gpuparticles::kMinCount,
                                  lumi::gpuparticles::kMaxCount);
 
@@ -13817,7 +13994,7 @@ void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,
         p.setUniformValue("uCount", count);
         p.setUniformValue("uLife", static_cast<float>(std::max(0.05, life)));
         p.setUniformValue("uLifeJitter",
-                          static_cast<float>(std::clamp(params.lifeJitter, 0.0, 1.0)));
+                          static_cast<float>(std::clamp(dynLifeJitter, 0.0, 1.0)));
         p.setUniformValue("bass", bass);
         p.setUniformValue("mid", mid);
         p.setUniformValue("treb", treb);
@@ -13862,7 +14039,7 @@ void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,
     rp.setUniformValue("uState", 0);
     rp.setUniformValue("uSize", static_cast<float>(std::max(0.5, size)));
     rp.setUniformValue("uSizeEnd",
-                       static_cast<float>(std::max(0.0, params.sizeEndFactor)));
+                       static_cast<float>(std::max(0.0, dynSizeEndFactor)));
     rp.setUniformValue("uColorStart", farbeStart.vec());  // Strang D
     rp.setUniformValue("uColorEnd", farbeEnde.vec());
     f->glActiveTexture(GL_TEXTURE0);

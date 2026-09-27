@@ -1,9 +1,9 @@
 # LumiViz — Formelfelder je Modul (Inventar und Vorschläge)
 
-> **Version:** 1.2.0
+> **Version:** 1.3.0
 > **Datum:** 2026-09-27
 > **Typ:** Arbeitsdokument — Bestandsaufnahme aller 84 Palettenmodule + Vorschlagsliste
-> **Status:** Aktiv — Blöcke A, B und C umgesetzt (S79), D–F offen
+> **Status:** Aktiv — Blöcke A–D umgesetzt (S79), E–F offen
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Knoten_Parameter_Konzept.md](Knoten_Parameter_Konzept.md) (Strang D, §6) ·
 > [Skript_Variablen_Konzept.md](Skript_Variablen_Konzept.md) ·
@@ -222,12 +222,37 @@ Kompilieren gesetzt (sie stehen im Compile-Schnappschuss — eine
 Reglerbewegung setzt sie neu) und je Frame zurückgelesen. Die Phase läuft nach
 dem Skript mit `colorcycle · dt` weiter.
 
-### D — Weitere statische Felder
+### D — Weitere statische Felder ✅ (S79)
 
-Siehe Spalte „Kandidaten" (fett = empfohlen). Schwerpunkte: Bump
-`depth`/`depth2`, Strange Attractor `scale`/`rotationSpeed`/`dotSize`, Flame
-`rotationSpeed`/`dotSize`, Reaction Diffusion `diffA/B`, Terrain 3D, Glow Orbs,
-SuperScope 3D `falloff`, Interferences `*2`-Werte, MilkDrop-Wave/Shape-Felder.
+| Modul | neue Variablen |
+|---|---|
+| Fractal 2D | `maxiter`, `escaper` |
+| Fractal 3D | `fov`, `juliax/y/z/w`, `lightyaw`, `lightpitch`, `ambient` |
+| Domain Warp | `warpscale`, `lacunarity`, `gain`, `octaves` |
+| Fractal Zoomer | `feedback`, `juliax`, `juliay` |
+| Strange Attractor | `scale`, `rotationspeed`, `dotsize` |
+| Flame | `rotationspeed`, `dotsize` |
+| Reaction Diffusion | `diffa`, `diffb`, `stepsperframe` |
+| Bump | `depth`, `depth2` |
+| SuperScope 3D | `falloff` |
+| Terrain 3D | `baseamp`, `yoffset`, `extent`, `dotsize`, `falloff` |
+| Glow Orbs | `haloscale`, `halointensity`, `falloff` |
+| Interferences | `distance2`, `alpha2`, `rotationinc2` |
+| GPU-Partikel | `sizeendfactor`, `lifejitter` |
+| Water Bump | `dropx`, `dropy` |
+
+Module mit eigenem Host seeden beim Kompilieren (Werte im
+Compile-Schnappschuss; eine Reglerbewegung setzt sie neu — bei **Bump** heißt
+das jetzt auch: das Licht-Skript startet neu) und lesen nach dem Beat-Slot
+zurück; Parameter-Skript-Module binden über ihre Liste. Verwendet wird die
+Kopie erst ab der Rückleseposition — Terrains Neuaufbau des Gitters liest
+`baseAmp` weiter vom Regler. Ganzzahlfelder (`maxiter`, `octaves`,
+`stepsperframe`, `depth*`, `dropx/y` …) werden abgeschnitten.
+
+**Bewusst nicht:** MilkDrop-Wave/Shape-Felder (`samples`, `sep`, `instances`
+…) — der MilkDrop-Skriptvertrag bleibt originalgetreu (Presets müssen im
+echten MilkDrop laufen); Color-Map-Verlaufsstopps (Liste, keine Einzelwerte —
+gehört zu F).
 
 ### E — Module ganz ohne Formelzugang
 
