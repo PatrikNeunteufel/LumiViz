@@ -11654,6 +11654,9 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
     float rot = params.rotation, jx = params.juliaX, jy = params.juliaY;
     float power = params.power;
 
+    // Farbpalette als Skriptvariablen (Block C, S79)
+    float palScale = params.colorScale, palCycle = params.colorCycle;
+    FarbKopie innen(params.insideColor);
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -11663,7 +11666,10 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
                                  params.beatCode + "\n#" + std::to_string(cx) + ',' +
                                  std::to_string(cy) + ',' + std::to_string(zoom) + ',' +
                                  std::to_string(rot) + ',' + std::to_string(jx) + ',' +
-                                 std::to_string(jy) + ',' + std::to_string(power);
+                                 std::to_string(jy) + ',' + std::to_string(power) +
+                                 "|" + std::to_string(params.colorScale) + ',' +
+                                 std::to_string(params.colorCycle) + ',' +
+                                 std::to_string(params.insideColor);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("fractal2d", activeContext(),
@@ -11677,12 +11683,17 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
             e.setNumber("zoom", zoom);  e.setNumber("rot", rot);
             e.setNumber("jx", jx);      e.setNumber("jy", jy);
             e.setNumber("power", power);
+            rt.fracHost->engine().setNumber("colorscale", palScale);
+            rt.fracHost->engine().setNumber("colorcycle", palCycle);
+            setzeFarbe(rt.fracHost->engine(), "insidecolor", innen);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
 
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
+        // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
+        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
 
@@ -11693,6 +11704,11 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
         jx = static_cast<float>(e.number("jx"));
         jy = static_cast<float>(e.number("jy"));
         power = static_cast<float>(e.number("power"));
+        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
+        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
+        rt.fracColorPhase =
+            static_cast<float>(rt.fracHost->engine().number("colorphase"));
+        leseFarbe(rt.fracHost->engine(), "insidecolor", innen);
     }
     else
     {
@@ -11701,7 +11717,7 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
     }
 
     if (zoom < 1e-6f) zoom = 1e-6f;
-    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+    rt.fracColorPhase += palCycle * m_deltaTime;
 
     const float aspect = m_surfaceHeight > 0
                              ? static_cast<float>(m_surfaceWidth) /
@@ -11719,9 +11735,9 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
     m_fractal2DShader->setUniformValue("uPower", std::clamp(power, 1.0f, 16.0f));
     m_fractal2DShader->setUniformValue("uEscapeR", std::max(params.escapeR, 1.0f));
     m_fractal2DShader->setUniformValue("uSmooth", params.smooth);
-    m_fractal2DShader->setUniformValue("uColorScale", params.colorScale);
+    m_fractal2DShader->setUniformValue("uColorScale", palScale);
     m_fractal2DShader->setUniformValue("uColorPhase", rt.fracColorPhase);
-    m_fractal2DShader->setUniformValue("uInside", colorToVec(params.insideColor));
+    m_fractal2DShader->setUniformValue("uInside", innen.vec());
     m_fractal2DShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
     // Bei diesem Knoten ist `blend = 2` die BENANNTE Betriebsart „50/50" — das
     // Gewicht ist hier also fest, anders als beim Fractal Zoomer.
@@ -11782,6 +11798,8 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
     float scale = params.scale, warp = params.warp, speed = params.speed;
     float ox = params.offsetX, oy = params.offsetY;
 
+    // Farbpalette als Skriptvariablen (Block C, S79)
+    float palScale = params.colorScale, palCycle = params.colorCycle;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -11789,7 +11807,9 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + "\n#" + std::to_string(scale) + ',' +
                                  std::to_string(warp) + ',' + std::to_string(speed) + ',' +
-                                 std::to_string(ox) + ',' + std::to_string(oy);
+                                 std::to_string(ox) + ',' + std::to_string(oy) +
+                                 "|" + std::to_string(params.colorScale) + ',' +
+                                 std::to_string(params.colorCycle);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("domainwarp", activeContext(),
@@ -11802,12 +11822,16 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
             e.setNumber("scale", scale);  e.setNumber("warp", warp);
             e.setNumber("speed", speed);  e.setNumber("ox", ox);
             e.setNumber("oy", oy);
+            rt.fracHost->engine().setNumber("colorscale", palScale);
+            rt.fracHost->engine().setNumber("colorcycle", palCycle);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
 
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
+        // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
+        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
 
@@ -11816,6 +11840,10 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
         speed = static_cast<float>(e.number("speed"));
         ox = static_cast<float>(e.number("ox"));
         oy = static_cast<float>(e.number("oy"));
+        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
+        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
+        rt.fracColorPhase =
+            static_cast<float>(rt.fracHost->engine().number("colorphase"));
     }
     else
     {
@@ -11824,7 +11852,7 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
     }
 
     rt.fracTime += speed * m_deltaTime;
-    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+    rt.fracColorPhase += palCycle * m_deltaTime;
 
     const float aspect = m_surfaceHeight > 0
                              ? static_cast<float>(m_surfaceWidth) /
@@ -11841,7 +11869,7 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
     m_domainWarpShader->setUniformValue("uWarpScale", params.warpScale);
     m_domainWarpShader->setUniformValue("uOffset", QVector2D(ox, oy));
     m_domainWarpShader->setUniformValue("uTime", rt.fracTime);
-    m_domainWarpShader->setUniformValue("uColorScale", params.colorScale);
+    m_domainWarpShader->setUniformValue("uColorScale", palScale);
     m_domainWarpShader->setUniformValue("uColorPhase", rt.fracColorPhase);
     m_domainWarpShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
     m_domainWarpShader->setUniformValue("uLut", 1);
@@ -11990,6 +12018,9 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
 
     float yaw = params.yaw, pitch = params.pitch, dist = params.dist;
     float power = params.power, scale = params.scale, fold = params.fold;
+    // Farbpalette als Skriptvariablen (Block C, S79)
+    float palScale = params.colorScale, palCycle = params.colorCycle;
+    FarbKopie hinter(params.background);
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -11998,7 +12029,10 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
                                  params.beatCode + "\n#" + std::to_string(yaw) + ',' +
                                  std::to_string(pitch) + ',' + std::to_string(dist) + ',' +
                                  std::to_string(power) + ',' + std::to_string(scale) + ',' +
-                                 std::to_string(fold);
+                                 std::to_string(fold) +
+                                 "|" + std::to_string(params.colorScale) + ',' +
+                                 std::to_string(params.colorCycle) + ',' +
+                                 std::to_string(params.background);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("fractal3d", activeContext(),
@@ -12011,11 +12045,16 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
             e.setNumber("yaw", yaw);      e.setNumber("pitch", pitch);
             e.setNumber("dist", dist);    e.setNumber("power", power);
             e.setNumber("scale", scale);  e.setNumber("fold", fold);
+            rt.fracHost->engine().setNumber("colorscale", palScale);
+            rt.fracHost->engine().setNumber("colorcycle", palCycle);
+            setzeFarbe(rt.fracHost->engine(), "background", hinter);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
+        // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
+        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         yaw = static_cast<float>(e.number("yaw"));
@@ -12024,6 +12063,11 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
         power = static_cast<float>(e.number("power"));
         scale = static_cast<float>(e.number("scale"));
         fold = static_cast<float>(e.number("fold"));
+        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
+        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
+        rt.fracColorPhase =
+            static_cast<float>(rt.fracHost->engine().number("colorphase"));
+        leseFarbe(rt.fracHost->engine(), "background", hinter);
     }
     else
     {
@@ -12031,7 +12075,7 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
         rt.fracCompiled.clear();
     }
     dist = std::max(dist, 0.1f);
-    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+    rt.fracColorPhase += palCycle * m_deltaTime;
 
     const float cp = std::cos(pitch);
     const QVector3D cam(dist * cp * std::cos(yaw), dist * std::sin(pitch),
@@ -12060,9 +12104,9 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
     m_fractal3DShader->setUniformValue("uLight", light);
     m_fractal3DShader->setUniformValue("uAmbient", params.ambient);
     m_fractal3DShader->setUniformValue("uAO", params.ao);
-    m_fractal3DShader->setUniformValue("uColorScale", params.colorScale);
+    m_fractal3DShader->setUniformValue("uColorScale", palScale);
     m_fractal3DShader->setUniformValue("uColorPhase", rt.fracColorPhase);
-    m_fractal3DShader->setUniformValue("uBg", colorToVec(params.background));
+    m_fractal3DShader->setUniformValue("uBg", hinter.vec());
     m_fractal3DShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
     m_fractal3DShader->setUniformValue("uLut", 1);
     m_fractal3DShader->release();
@@ -12081,6 +12125,9 @@ void MultiEffectVisualizer::runLyapunov(const ChainNode& node,
     ensureFractalLut(rt, params.gradientPreset);
 
     float aMin = params.aMin, aMax = params.aMax, bMin = params.bMin, bMax = params.bMax;
+    // Farbpalette als Skriptvariablen (Block C, S79)
+    float palScale = params.colorScale, palCycle = params.colorCycle;
+    FarbKopie negativ(params.negColor);
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -12088,7 +12135,10 @@ void MultiEffectVisualizer::runLyapunov(const ChainNode& node,
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + "\n#" + std::to_string(aMin) + ',' +
                                  std::to_string(aMax) + ',' + std::to_string(bMin) + ',' +
-                                 std::to_string(bMax);
+                                 std::to_string(bMax) +
+                                 "|" + std::to_string(params.colorScale) + ',' +
+                                 std::to_string(params.colorCycle) + ',' +
+                                 std::to_string(params.negColor);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("lyapunov", activeContext(),
@@ -12100,24 +12150,34 @@ void MultiEffectVisualizer::runLyapunov(const ChainNode& node,
             auto& e = rt.fracHost->engine();
             e.setNumber("amin", aMin); e.setNumber("amax", aMax);
             e.setNumber("bmin", bMin); e.setNumber("bmax", bMax);
+            rt.fracHost->engine().setNumber("colorscale", palScale);
+            rt.fracHost->engine().setNumber("colorcycle", palCycle);
+            setzeFarbe(rt.fracHost->engine(), "negcolor", negativ);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
+        // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
+        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         aMin = static_cast<float>(e.number("amin"));
         aMax = static_cast<float>(e.number("amax"));
         bMin = static_cast<float>(e.number("bmin"));
         bMax = static_cast<float>(e.number("bmax"));
+        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
+        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
+        rt.fracColorPhase =
+            static_cast<float>(rt.fracHost->engine().number("colorphase"));
+        leseFarbe(rt.fracHost->engine(), "negcolor", negativ);
     }
     else
     {
         rt.fracHost.reset();
         rt.fracCompiled.clear();
     }
-    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+    rt.fracColorPhase += palCycle * m_deltaTime;
 
     // Sequence string -> int array (A/a -> 0, B/b -> 1), max 64.
     std::array<int, 64> seq{};
@@ -12136,8 +12196,8 @@ void MultiEffectVisualizer::runLyapunov(const ChainNode& node,
     m_lyapunovShader->setUniformValue("uSeqLen", len);
     m_lyapunovShader->setUniformValue("uWarmup", std::clamp(params.warmup, 0, 2000));
     m_lyapunovShader->setUniformValue("uIter", std::clamp(params.iterations, 1, 4000));
-    m_lyapunovShader->setUniformValue("uNeg", colorToVec(params.negColor));
-    m_lyapunovShader->setUniformValue("uColorScale", params.colorScale);
+    m_lyapunovShader->setUniformValue("uNeg", negativ.vec());
+    m_lyapunovShader->setUniformValue("uColorScale", palScale);
     m_lyapunovShader->setUniformValue("uColorPhase", rt.fracColorPhase);
     m_lyapunovShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
     m_lyapunovShader->setUniformValue("uLut", 1);
@@ -12159,6 +12219,8 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
     float morph = params.morph, zoom = params.zoom, rot = params.rotation;
     // `p`/`q` als Zahlen (S79 — der Struct-Kommentar versprach sie seit jeher).
     float pVal = static_cast<float>(params.p), qVal = static_cast<float>(params.q);
+    // Farbpalette als Skriptvariablen (Block C, S79)
+    float palScale = params.colorScale, palCycle = params.colorCycle;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -12166,7 +12228,9 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + "\n#" + std::to_string(morph) + ',' +
                                  std::to_string(zoom) + ',' + std::to_string(rot) + ',' +
-                                 std::to_string(params.p) + ',' + std::to_string(params.q);
+                                 std::to_string(params.p) + ',' + std::to_string(params.q) +
+                                 "|" + std::to_string(params.colorScale) + ',' +
+                                 std::to_string(params.colorCycle);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("kleinian", activeContext(),
@@ -12178,11 +12242,15 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
             auto& e = rt.fracHost->engine();
             e.setNumber("morph", morph); e.setNumber("zoom", zoom); e.setNumber("rot", rot);
             e.setNumber("p", pVal); e.setNumber("q", qVal);
+            rt.fracHost->engine().setNumber("colorscale", palScale);
+            rt.fracHost->engine().setNumber("colorcycle", palCycle);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
+        // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
+        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         morph = static_cast<float>(e.number("morph"));
@@ -12190,6 +12258,10 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
         rot = static_cast<float>(e.number("rot"));
         pVal = static_cast<float>(e.number("p"));
         qVal = static_cast<float>(e.number("q"));
+        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
+        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
+        rt.fracColorPhase =
+            static_cast<float>(rt.fracHost->engine().number("colorphase"));
     }
     else
     {
@@ -12197,7 +12269,7 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
         rt.fracCompiled.clear();
     }
     if (zoom < 1e-3f) zoom = 1e-3f;
-    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+    rt.fracColorPhase += palCycle * m_deltaTime;
     const float aspect = m_surfaceHeight > 0
                              ? static_cast<float>(m_surfaceWidth) /
                                    static_cast<float>(m_surfaceHeight)
@@ -12211,7 +12283,7 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
     m_kleinianShader->setUniformValue("uQ", std::clamp(static_cast<int>(qVal), 3, 20));
     m_kleinianShader->setUniformValue("uIters", std::clamp(params.iterations, 1, 200));
     m_kleinianShader->setUniformValue("uMorph", morph);
-    m_kleinianShader->setUniformValue("uColorScale", params.colorScale);
+    m_kleinianShader->setUniformValue("uColorScale", palScale);
     m_kleinianShader->setUniformValue("uColorPhase", rt.fracColorPhase);
     m_kleinianShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
     m_kleinianShader->setUniformValue("uLut", 1);
@@ -12232,6 +12304,9 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
 
     float cx = params.centerX, cy = params.centerY;
     float zoomSpeed = params.zoomSpeed, rotSpeed = params.rotationSpeed;
+    // Farbpalette als Skriptvariablen (Block C, S79)
+    float palScale = params.colorScale, palCycle = params.colorCycle;
+    FarbKopie innen(params.insideColor);
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
@@ -12239,7 +12314,10 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + "\n#" + std::to_string(cx) + ',' +
                                  std::to_string(cy) + ',' + std::to_string(zoomSpeed) + ',' +
-                                 std::to_string(rotSpeed);
+                                 std::to_string(rotSpeed) +
+                                 "|" + std::to_string(params.colorScale) + ',' +
+                                 std::to_string(params.colorCycle) + ',' +
+                                 std::to_string(params.insideColor);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("fractalzoom", activeContext(),
@@ -12251,17 +12329,27 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
             auto& e = rt.fracHost->engine();
             e.setNumber("cx", cx); e.setNumber("cy", cy);
             e.setNumber("zoomspeed", zoomSpeed); e.setNumber("rotspeed", rotSpeed);
+            rt.fracHost->engine().setNumber("colorscale", palScale);
+            rt.fracHost->engine().setNumber("colorcycle", palCycle);
+            setzeFarbe(rt.fracHost->engine(), "insidecolor", innen);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
+        // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
+        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         cx = static_cast<float>(e.number("cx"));
         cy = static_cast<float>(e.number("cy"));
         zoomSpeed = static_cast<float>(e.number("zoomspeed"));
         rotSpeed = static_cast<float>(e.number("rotspeed"));
+        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
+        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
+        rt.fracColorPhase =
+            static_cast<float>(rt.fracHost->engine().number("colorphase"));
+        leseFarbe(rt.fracHost->engine(), "insidecolor", innen);
     }
     else
     {
@@ -12274,7 +12362,7 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
     rt.fracTime *= (zoomSpeed > 1e-4f ? zoomSpeed : 1.0f);
     if (rt.fracTime > 1e12f) rt.fracTime = 1.0f;  // loop the trip
     rt.fracRot += rotSpeed;
-    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+    rt.fracColorPhase += palCycle * m_deltaTime;
     const float aspect = m_surfaceHeight > 0
                              ? static_cast<float>(m_surfaceWidth) /
                                    static_cast<float>(m_surfaceHeight)
@@ -12293,9 +12381,9 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
     m_fractal2DShader->setUniformValue("uPower", 2.0f);
     m_fractal2DShader->setUniformValue("uEscapeR", 4.0f);
     m_fractal2DShader->setUniformValue("uSmooth", true);
-    m_fractal2DShader->setUniformValue("uColorScale", params.colorScale);
+    m_fractal2DShader->setUniformValue("uColorScale", palScale);
     m_fractal2DShader->setUniformValue("uColorPhase", rt.fracColorPhase);
-    m_fractal2DShader->setUniformValue("uInside", colorToVec(params.insideColor));
+    m_fractal2DShader->setUniformValue("uInside", innen.vec());
     // `feedback` ist eine STAERKE, kein Schalter: sie gewichtet, wie viel vom
     // vorigen Bild stehen bleibt (0 = keine Schleife, 1 = Standbild). Bis S57
     // wurde hier nur auf die 50/50-Betriebsart geschaltet, weshalb 0,3 und 1,0
@@ -12566,13 +12654,17 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
     ensureFractalLut(rt, params.gradientPreset);
 
     float feed = params.feed, kill = params.kill;
+    // Farbpalette als Skriptvariablen (Block C, S79)
+    float palScale = params.colorScale, palCycle = params.colorCycle;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty();
     if (scripted)
     {
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + "\n#" + std::to_string(feed) + ',' +
-                                 std::to_string(kill);
+                                 std::to_string(kill) +
+                                 "|" + std::to_string(params.colorScale) + ',' +
+                                 std::to_string(params.colorCycle);
         if (rt.fracHost == nullptr || rt.fracCompiled != snap)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("reactdiff", activeContext(),
@@ -12583,22 +12675,30 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
             rt.fracHost->compileAll();
             rt.fracHost->engine().setNumber("feed", feed);
             rt.fracHost->engine().setNumber("kill", kill);
+            rt.fracHost->engine().setNumber("colorscale", palScale);
+            rt.fracHost->engine().setNumber("colorcycle", palCycle);
             rt.fracHost->run(Slot::Init);
             rt.fracCompiled = snap;
         }
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
+        // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
+        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         feed = static_cast<float>(e.number("feed"));
         kill = static_cast<float>(e.number("kill"));
+        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
+        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
+        rt.fracColorPhase =
+            static_cast<float>(rt.fracHost->engine().number("colorphase"));
     }
     else
     {
         rt.fracHost.reset();
         rt.fracCompiled.clear();
     }
-    rt.fracColorPhase += params.colorCycle * m_deltaTime;
+    rt.fracColorPhase += palCycle * m_deltaTime;
 
     // Simulate at a reduced resolution for speed (half the surface, min 64).
     const int simW = std::max(64, m_surfaceWidth / 2);
@@ -12671,7 +12771,7 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
     f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
     m_rdShader->bind();
     m_rdShader->setUniformValue("uMode", 2);
-    m_rdShader->setUniformValue("uColorScale", params.colorScale);
+    m_rdShader->setUniformValue("uColorScale", palScale);
     m_rdShader->setUniformValue("uColorPhase", rt.fracColorPhase);
     m_rdShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
     m_rdShader->setUniformValue("uState", 0);

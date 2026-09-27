@@ -1,9 +1,9 @@
 # LumiViz — Formelfelder je Modul (Inventar und Vorschläge)
 
-> **Version:** 1.1.0
+> **Version:** 1.2.0
 > **Datum:** 2026-09-27
 > **Typ:** Arbeitsdokument — Bestandsaufnahme aller 84 Palettenmodule + Vorschlagsliste
-> **Status:** Aktiv — Blöcke A und B umgesetzt (S79), C–F offen
+> **Status:** Aktiv — Blöcke A, B und C umgesetzt (S79), D–F offen
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Knoten_Parameter_Konzept.md](Knoten_Parameter_Konzept.md) (Strang D, §6) ·
 > [Skript_Variablen_Konzept.md](Skript_Variablen_Konzept.md) ·
@@ -203,11 +203,24 @@ Stars, Dot Plane/Fountain/Grid, Metaballs, Tentacles) — dort ist eine Tafel,
 keine Einzelfarbe; Vorschlag `colorindex` (welcher Eintrag) oder eine
 Überblend-Phase. Ebenso Debug Bars (ohne Skript) und Text (nur Import).
 
-### C — Farbpaletten der Fraktale
+### C — Farbpaletten der Fraktale ✅ (S79)
 
-Fractal 2D/3D, Domain Warp, Fractal Zoomer, Lyapunov, Kleinian, Reaction
-Diffusion: `colorScale`/`colorCycle` (+ Innen-/Hintergrundfarbe) als
-Variablen. Größter sichtbarer Gewinn je Zeile Code.
+Alle sieben Fraktale (Fractal 2D/3D, Domain Warp, Fractal Zoomer, Lyapunov,
+Kleinian, Reaction Diffusion) haben jetzt:
+
+| Variable | Bedeutung |
+|---|---|
+| `colorscale` | wie oft sich die Palette wiederholt (Regler `colorScale`) |
+| `colorcycle` | Drift der Palette je Sekunde (Regler `colorCycle`) |
+| `colorphase` | **laufende** Phase — Laufzeitzustand, je Frame hinein und heraus; z. B. Beat-Slot `colorphase = colorphase + 0.25` schiebt die Palette im Takt |
+| `insidecolor_*` | Fractal 2D, Fractal Zoomer: Farbe der Punkte in der Menge |
+| `background_*` | Fractal 3D: Hintergrund (Strahl trifft nichts) |
+| `negcolor_*` | Lyapunov: stabile Region (negativer Exponent) |
+
+`colorscale`/`colorcycle`/Farben werden wie die übrigen Fraktal-Werte beim
+Kompilieren gesetzt (sie stehen im Compile-Schnappschuss — eine
+Reglerbewegung setzt sie neu) und je Frame zurückgelesen. Die Phase läuft nach
+dem Skript mit `colorcycle · dt` weiter.
 
 ### D — Weitere statische Felder
 

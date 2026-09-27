@@ -1979,6 +1979,7 @@ struct Fractal2DParams
 
     int blend = 0;  ///< 0 replace, 1 additive, 2 50/50 over the current image
 
+    /// Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`.
     std::string initCode;   ///< EEL, once (seed cx,cy,zoom,…)
     std::string frameCode;  ///< EEL, per frame (audio-reactive view)
     std::string beatCode;   ///< EEL, on beat
@@ -2010,6 +2011,7 @@ struct DomainWarpParams
 
     int blend = 0;  ///< 0 replace, 1 additive, 2 50/50 over the current image
 
+    /// Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.
     std::string initCode;   ///< EEL, once
     std::string frameCode;  ///< EEL, per frame (audio-reactive field)
     std::string beatCode;   ///< EEL, on beat
@@ -2059,6 +2061,7 @@ struct Fractal3DParams
     int blend = 0;
     /// Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`,
     /// `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript.
+    /// Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -2096,6 +2099,7 @@ struct LyapunovParams
     int blend = 0;
     /// Parameter-Skript (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — der
     /// Ausschnitt — + Audio-Satz. Leer = kein Skript.
+    /// Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `negcolor_r`, `negcolor_g`, `negcolor_b`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -2145,6 +2149,7 @@ struct KleinianParams
     int blend = 0;
     /// Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`,
     /// `rot` (= `rotation`) + Audio-Satz. Leer = kein Skript.
+    /// Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -2189,6 +2194,7 @@ struct FractalZoomerParams
 
     /// Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`,
     /// `rotationSpeed` + Audio-Satz. Leer = kein Skript.
+    /// Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
@@ -2305,6 +2311,7 @@ struct ReactionDiffusionParams
     int blend = 0;
     /// Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit
     /// wandert das Muster im Betrieb. Leer = kein Skript.
+    /// Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;

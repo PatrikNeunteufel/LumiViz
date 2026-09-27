@@ -1925,7 +1925,10 @@
             "warp",
             "speed",
             "ox",
-            "oy"
+            "oy",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -1969,7 +1972,10 @@
             "warp",
             "speed",
             "ox",
-            "oy"
+            "oy",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -2001,7 +2007,10 @@
             "warp",
             "speed",
             "ox",
-            "oy"
+            "oy",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -2914,7 +2923,10 @@
             "rot",
             "jx",
             "jy",
-            "power"
+            "power",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -2990,7 +3002,10 @@
             "rot",
             "jx",
             "jy",
-            "power"
+            "power",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -3024,7 +3039,10 @@
             "rot",
             "jx",
             "jy",
-            "power"
+            "power",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -3142,14 +3160,17 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`.",
           "skriptvars": [
             "yaw",
             "pitch",
             "dist",
             "power",
             "scale",
-            "fold"
+            "fold",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -3217,14 +3238,17 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`.",
           "skriptvars": [
             "yaw",
             "pitch",
             "dist",
             "power",
             "scale",
-            "fold"
+            "fold",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -3251,14 +3275,17 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + Audio-Satz — Kamera und Form live. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`.",
           "skriptvars": [
             "yaw",
             "pitch",
             "dist",
             "power",
             "scale",
-            "fold"
+            "fold",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -3394,12 +3421,15 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`.",
           "skriptvars": [
             "cx",
             "cy",
             "zoomspeed",
-            "rotspeed"
+            "rotspeed",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -3458,12 +3488,15 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`.",
           "skriptvars": [
             "cx",
             "cy",
             "zoomspeed",
-            "rotspeed"
+            "rotspeed",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -3490,12 +3523,15 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`.",
           "skriptvars": [
             "cx",
             "cy",
             "zoomspeed",
-            "rotspeed"
+            "rotspeed",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -4638,13 +4674,16 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rot` (= `rotation`) + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rot` (= `rotation`) + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.",
           "skriptvars": [
             "morph",
             "zoom",
             "rot",
             "p",
-            "q"
+            "q",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -4682,13 +4721,16 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rot` (= `rotation`) + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rot` (= `rotation`) + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.",
           "skriptvars": [
             "morph",
             "zoom",
             "rot",
             "p",
-            "q"
+            "q",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -4705,13 +4747,16 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rot` (= `rotation`) + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `p`, `q` (als Zahlen), `morph`, `zoom`, `rot` (= `rotation`) + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.",
           "skriptvars": [
             "morph",
             "zoom",
             "rot",
             "p",
-            "q"
+            "q",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -4950,12 +4995,15 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — der Ausschnitt — + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — der Ausschnitt — + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `negcolor_r`, `negcolor_g`, `negcolor_b`.",
           "skriptvars": [
             "amin",
             "amax",
             "bmin",
-            "bmax"
+            "bmax",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -5013,12 +5061,15 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — der Ausschnitt — + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — der Ausschnitt — + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `negcolor_r`, `negcolor_g`, `negcolor_b`.",
           "skriptvars": [
             "amin",
             "amax",
             "bmin",
-            "bmax"
+            "bmax",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -5035,12 +5086,15 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — der Ausschnitt — + Audio-Satz. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — der Ausschnitt — + Audio-Satz. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `negcolor_r`, `negcolor_g`, `negcolor_b`.",
           "skriptvars": [
             "amin",
             "amax",
             "bmin",
-            "bmax"
+            "bmax",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -6585,10 +6639,13 @@
           "name": "beatCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.",
           "skriptvars": [
             "feed",
-            "kill"
+            "kill",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -6656,10 +6713,13 @@
           "name": "frameCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.",
           "skriptvars": [
             "feed",
-            "kill"
+            "kill",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
@@ -6676,10 +6736,13 @@
           "name": "initCode",
           "panel": "skript",
           "helfer": "addScript",
-          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript.",
+          "doc": "Parameter-Skript (Strang D): `feed`, `kill` + Audio-Satz — damit wandert das Muster im Betrieb. Leer = kein Skript. Farbpalette per Skript (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.",
           "skriptvars": [
             "feed",
-            "kill"
+            "kill",
+            "colorscale",
+            "colorcycle",
+            "colorphase"
           ]
         },
         {
