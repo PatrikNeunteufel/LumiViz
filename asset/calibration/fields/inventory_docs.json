@@ -7,7 +7,7 @@
   },
   "summe": {
     "typen": 91,
-    "felder": 782,
+    "felder": 788,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -4654,6 +4654,23 @@
       "struct": "IsfFilterParams",
       "felder": [
         {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D, Block E S79): jeder Regler unter seinem `key` (Punkt2D als `<key>_x`/`_y`, Farbe als `<key>_r`/`_g`/`_b`/`_a`, Kollision mit einem Host-Namen → `in_<key>`), dazu `blend`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "key",
+            "_y",
+            "_g",
+            "_b",
+            "_a",
+            "blend",
+            "mixamount"
+          ]
+        },
+        {
           "art": "zahl",
           "default": 0,
           "name": "blend",
@@ -4668,6 +4685,23 @@
           "name": "fragCode",
           "panel": "sonderzeile",
           "doc": "Der Fragment-Shader, so wie er in der `.fs` steht (ohne JSON-Kopf)."
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D, Block E S79): jeder Regler unter seinem `key` (Punkt2D als `<key>_x`/`_y`, Farbe als `<key>_r`/`_g`/`_b`/`_a`, Kollision mit einem Host-Namen → `in_<key>`), dazu `blend`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "key",
+            "_y",
+            "_g",
+            "_b",
+            "_a",
+            "blend",
+            "mixamount"
+          ]
         },
         {
           "art": "zahl",
@@ -4693,6 +4727,23 @@
           "panel": "int",
           "helfer": "addInt",
           "doc": "Gitter-Quads in Y — nur bei `geometrie == 2`."
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D, Block E S79): jeder Regler unter seinem `key` (Punkt2D als `<key>_x`/`_y`, Farbe als `<key>_r`/`_g`/`_b`/`_a`, Kollision mit einem Host-Namen → `in_<key>`), dazu `blend`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "key",
+            "_y",
+            "_g",
+            "_b",
+            "_a",
+            "blend",
+            "mixamount"
+          ]
         },
         {
           "art": "zahl",
@@ -7197,6 +7248,48 @@
           "lo": 0.0,
           "hi": 255.0,
           "doc": "Adjustable-blend alpha 0..255"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D, Block E S79): `linewidth`, `lineblend`, `adjustalpha`, `overrideblend` + `b`/`w`/`h` + Audio-Satz — etwa die Linienbreite im Takt. Leer = kein Skript (LumiViz-Erweiterung, AVS kennt hier keinen Code).",
+          "skriptvars": [
+            "linewidth",
+            "lineblend",
+            "adjustalpha",
+            "overrideblend"
+          ]
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D, Block E S79): `linewidth`, `lineblend`, `adjustalpha`, `overrideblend` + `b`/`w`/`h` + Audio-Satz — etwa die Linienbreite im Takt. Leer = kein Skript (LumiViz-Erweiterung, AVS kennt hier keinen Code).",
+          "skriptvars": [
+            "linewidth",
+            "lineblend",
+            "adjustalpha",
+            "overrideblend"
+          ]
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D, Block E S79): `linewidth`, `lineblend`, `adjustalpha`, `overrideblend` + `b`/`w`/`h` + Audio-Satz — etwa die Linienbreite im Takt. Leer = kein Skript (LumiViz-Erweiterung, AVS kennt hier keinen Code).",
+          "skriptvars": [
+            "linewidth",
+            "lineblend",
+            "adjustalpha",
+            "overrideblend"
+          ]
         },
         {
           "art": "zahl",

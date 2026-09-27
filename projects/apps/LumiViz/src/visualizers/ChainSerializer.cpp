@@ -570,6 +570,12 @@ struct WriteVisitor
         o["overrideBlend"] = p.enabled;
         o["lineWidth"] = p.lineWidth;
         o["lineBlend"] = p.lineBlend;
+        // Fehlte bis S79 — der Leser kannte den Schluessel, der Schreiber
+        // nicht: ein gespeichertes Adjustable-Alpha fiel still auf 128 zurueck.
+        o["adjustAlpha"] = p.adjustAlpha;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
         o["adjustAlpha"] = p.adjustAlpha;
     }
     void operator()(const Fractal3DParams& p) const
@@ -1417,6 +1423,9 @@ struct WriteVisitor
         o["gridY"] = p.gridY;
         o["blend"] = p.blend;
         o["mixAmount"] = p.mixAmount;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
         // Bildquellen: Name + Bindung. Der NAME muss mit, weil er aus dem
         // Shader stammt und die Reihenfolge allein ihn nicht wiederherstellt.
         if (!p.quellen.empty())
@@ -1893,6 +1902,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.lineWidth = getInt(o, "lineWidth", p.lineWidth);
         p.lineBlend = getInt(o, "lineBlend", p.lineBlend);
         p.adjustAlpha = getInt(o, "adjustAlpha", p.adjustAlpha);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "fractal3D")
@@ -2854,6 +2866,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
                              lumi::multieffect::isffilter::kGridMax);
         p.blend = std::clamp(getInt(o, "blend", p.blend), 0, 2);
         p.mixAmount = std::clamp(getDouble(o, "mixAmount", p.mixAmount), 0.0, 1.0);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         for (const QJsonValue& v : o.value("quellen").toArray())
         {
             if (!v.isObject()) continue;

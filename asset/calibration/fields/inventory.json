@@ -1,7 +1,7 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 782,
+        "felder": 788,
         "typen": 91
     },
     "typen": [
@@ -2249,6 +2249,11 @@
         {
             "felder": [
                 {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
                     "art": "zahl",
                     "default": 0,
                     "name": "blend"
@@ -2257,6 +2262,11 @@
                     "art": "text",
                     "default": "",
                     "name": "fragCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
                 },
                 {
                     "art": "zahl",
@@ -2272,6 +2282,11 @@
                     "art": "zahl",
                     "default": 48,
                     "name": "gridY"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
                 },
                 {
                     "art": "zahl",
@@ -3620,6 +3635,21 @@
                     "art": "zahl",
                     "default": 128,
                     "name": "adjustAlpha"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
                 },
                 {
                     "art": "zahl",

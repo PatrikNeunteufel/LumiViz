@@ -4311,6 +4311,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                  "Sub (c-fb)", "Multiply", "Adjustable", "XOR (~Add)", "Minimum"},
                 [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).lineBlend = v; });
         addInt("adjustAlpha", tr("Adjustable alpha"), p->adjustAlpha, 0, 255, [](ChainNode& n, int v) { std::get<SetRenderModeParams>(n.params).adjustAlpha = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<SetRenderModeParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<SetRenderModeParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<SetRenderModeParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<RenderScaleParams>(&params))
     {
@@ -5362,6 +5365,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 [](ChainNode& n, int v) {
                     std::get<IsfFilterParams>(n.params).blend = v;
                 });
+        // Block E (S79): Regler per Formel — Namen = key der Regler oben.
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<IsfFilterParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<IsfFilterParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<IsfFilterParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<GpuParticlesParams>(&params))
     {

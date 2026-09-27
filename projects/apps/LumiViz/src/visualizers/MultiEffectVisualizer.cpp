@@ -2708,6 +2708,16 @@ struct FarbKopie
     }
 };
 
+/// Skriptname eines ISF-Reglers (Block E, S79): der `key` selbst — ausser er
+/// kollidiert mit einem Namen, den der Skript-Host belegt; dann `in_<key>`.
+std::string isfSkriptName(const std::string& key)
+{
+    static const std::set<std::string> kBelegt = {
+        "b", "w", "h", "bass", "mid", "treb", "treble", "vol", "beat", "time",
+        "blend", "mixamount"};
+    return kBelegt.count(key) != 0 ? "in_" + key : key;
+}
+
 /// Fuer Module mit eigenem Skript-Host (Fraktale, 3D): `<name>_r/_g/_b` setzen
 /// bzw. nach dem Lauf zuruecklesen.
 void setzeFarbe(lumi::scripting::LuaScriptEngine& e, const std::string& name,
@@ -4009,7 +4019,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const RotoBlitterParams& params) const { self.runRotoBlitter(node, params); }
         void operator()(const BufferSaveParams& params) const { self.runBufferSave(node, params); }
         void operator()(const CustomBpmParams& params) const { self.runCustomBpm(node, params); }
-        void operator()(const SetRenderModeParams& params) const { self.runSetRenderMode(params); }
+        void operator()(const SetRenderModeParams& params) const { self.runSetRenderMode(node, params); }
         void operator()(const SuperScopeParams& params) const { self.runSuperScope(node, params); }
         void operator()(const MosaicParams& params) const { self.runMosaic(node, params); }
         void operator()(const GrainParams& params) const { self.runGrain(node, params); }
@@ -5686,16 +5696,30 @@ void MultiEffectVisualizer::runCustomBpm(const ChainNode& node,
     // Keine Betriebsart aktiv: der Beat laeuft unveraendert weiter (return 0).
 }
 
-void MultiEffectVisualizer::runSetRenderMode(const SetRenderModeParams& params)
+void MultiEffectVisualizer::runSetRenderMode(const ChainNode& node,
+                                             const SetRenderModeParams& params)
 {
     // No visual output — sets the host render mode for the following render
     // effects (AVS r_linemode). A disabled node leaves the current blend
     // UNCHANGED (r_linemode.cpp:96-104 writes only when bit31 is set); a width
     // of 0 leaves each effect's own line width.
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // Strang D auf einer Frame-Kopie (Block E, S79: LumiViz-Erweiterung).
+    double vWidth = params.lineWidth, vBlend = params.lineBlend;
+    double vAlpha = params.adjustAlpha, vOverride = params.enabled ? 1.0 : 0.0;
+    runParamScript(rt, "setrendermode", params.initCode, params.frameCode,
+                   params.beatCode,
+                   {{"linewidth", &vWidth},
+                    {"lineblend", &vBlend},
+                    {"adjustalpha", &vAlpha},
+                    {"overrideblend", &vOverride}});
+    const int width = static_cast<int>(vWidth);
+
     m_renderMode.set = true;
-    if (params.lineWidth > 0) m_renderMode.lineWidth = params.lineWidth;
-    if (params.enabled) m_renderMode.lineBlend = std::clamp(params.lineBlend, 0, 9);
-    m_renderMode.alpha = std::clamp(params.adjustAlpha, 0, 255);
+    if (width > 0) m_renderMode.lineWidth = std::min(width, 255);
+    if (vOverride > 0.5) m_renderMode.lineBlend = std::clamp(static_cast<int>(vBlend), 0, 9);
+    m_renderMode.alpha = std::clamp(static_cast<int>(vAlpha), 0, 255);
 }
 
 void MultiEffectVisualizer::applyLineBlend(int mode, int adjustAlpha)
@@ -13691,6 +13715,53 @@ void MultiEffectVisualizer::runIsfFilter(const ChainNode& node,
 
     sorgeFuerIsfZiele(rt, params);
 
+    // Block E (S79): Regler, blend und mixamount als Frame-Kopien fuer das
+    // Parameter-Skript. Vektoren zerfallen in Komponenten; die Reihenfolge ist
+    // die der Regler — die Uniform-Schleife unten liest in derselben Folge.
+    std::vector<std::string> isfNamen;
+    std::vector<double> isfWerte;
+    for (const auto& w : params.parameter.werte)
+    {
+        if (w.key.empty()) continue;
+        const std::string n = isfSkriptName(w.key);
+        switch (w.typ)
+        {
+            case lumi::multieffect::ParamTyp::Text: break;
+            case lumi::multieffect::ParamTyp::Bool:
+                isfNamen.push_back(n);
+                isfWerte.push_back(w.ja ? 1.0 : 0.0);
+                break;
+            case lumi::multieffect::ParamTyp::Punkt2D:
+                isfNamen.push_back(n + "_x");
+                isfWerte.push_back(w.vektor[0]);
+                isfNamen.push_back(n + "_y");
+                isfWerte.push_back(w.vektor[1]);
+                break;
+            case lumi::multieffect::ParamTyp::Farbe:
+                for (int c = 0; c < 4; ++c)
+                {
+                    isfNamen.push_back(n + "_" + "rgba"[c]);
+                    isfWerte.push_back(w.vektor[static_cast<std::size_t>(c)]);
+                }
+                break;
+            default:
+                isfNamen.push_back(n);
+                isfWerte.push_back(w.zahl);
+                break;
+        }
+    }
+    double vBlend = params.blend, vMix = params.mixAmount;
+    {
+        std::vector<ParamVar> vars;
+        vars.reserve(isfNamen.size() + 2);
+        for (std::size_t i = 0; i < isfNamen.size(); ++i)
+            vars.push_back({isfNamen[i].c_str(), &isfWerte[i]});
+        vars.push_back({"blend", &vBlend});
+        vars.push_back({"mixamount", &vMix});
+        runParamScript(rt, "isffilter", params.initCode, params.frameCode,
+                       params.beatCode, vars);
+    }
+
     // Quelle lesen, Partner beschreiben, tauschen (transformPass-Muster).
     SurfacePair& pair = active();
     pair.current()->release();
@@ -13715,12 +13786,14 @@ void MultiEffectVisualizer::runIsfFilter(const ChainNode& node,
     p.setUniformValue("treb", treb);
     p.setUniformValue("vol", m_audioLevel);
     p.setUniformValue("beat", m_frameBeat ? 1.0f : 0.0f);
-    p.setUniformValue("_lumiBlend", std::clamp(params.blend, 0, 2));
-    p.setUniformValue("_lumiMixAmount",
-                      static_cast<float>(std::clamp(params.mixAmount, 0.0, 1.0)));
+    p.setUniformValue("_lumiBlend", std::clamp(static_cast<int>(vBlend), 0, 2));  // Strang D
+    p.setUniformValue("_lumiMixAmount", static_cast<float>(std::clamp(vMix, 0.0, 1.0)));
 
     // Regler: der `key` IST der Uniform-Name. Ein Wert, den der Shader gar
     // nicht liest, wegoptimiert der Treiber — setUniformValue schadet nicht.
+    // Die Werte kommen aus den Frame-Kopien (isfWerte, gleiche Reihenfolge).
+    std::size_t k = 0;
+    const auto kopie = [&isfWerte, &k] { return isfWerte[k++]; };
     for (const auto& w : params.parameter.werte)
     {
         if (w.key.empty()) continue;
@@ -13732,26 +13805,32 @@ void MultiEffectVisualizer::runIsfFilter(const ChainNode& node,
         switch (w.typ)
         {
             case lumi::multieffect::ParamTyp::Bool:
-                p.setUniformValue(name, w.ja);
+                p.setUniformValue(name, kopie() > 0.5);
                 break;
             case lumi::multieffect::ParamTyp::Ganzzahl:
             case lumi::multieffect::ParamTyp::Auswahl:
-                p.setUniformValue(name, static_cast<int>(w.zahl));
+                p.setUniformValue(name, static_cast<int>(kopie()));
                 break;
             case lumi::multieffect::ParamTyp::Punkt2D:
-                p.setUniformValue(name, QVector2D(static_cast<float>(w.vektor[0]),
-                                                  static_cast<float>(w.vektor[1])));
+            {
+                const auto x = static_cast<float>(kopie());
+                const auto y = static_cast<float>(kopie());
+                p.setUniformValue(name, QVector2D(x, y));
                 break;
+            }
             case lumi::multieffect::ParamTyp::Farbe:
-                p.setUniformValue(name, QVector4D(static_cast<float>(w.vektor[0]),
-                                                  static_cast<float>(w.vektor[1]),
-                                                  static_cast<float>(w.vektor[2]),
-                                                  static_cast<float>(w.vektor[3])));
+            {
+                const auto r = static_cast<float>(kopie());
+                const auto g = static_cast<float>(kopie());
+                const auto bl = static_cast<float>(kopie());
+                const auto a = static_cast<float>(kopie());
+                p.setUniformValue(name, QVector4D(r, g, bl, a));
                 break;
+            }
             case lumi::multieffect::ParamTyp::Text:
                 break;  // hat in GLSL keine Entsprechung
             default:
-                p.setUniformValue(name, static_cast<float>(w.zahl));
+                p.setUniformValue(name, static_cast<float>(kopie()));
                 break;
         }
     }
@@ -13873,9 +13952,8 @@ void MultiEffectVisualizer::runIsfFilter(const ChainNode& node,
                       params.passes.empty()
                           ? 0
                           : static_cast<int>(params.passes.size() - 1));
-    p.setUniformValue("_lumiBlend", std::clamp(params.blend, 0, 2));
-    p.setUniformValue("_lumiMixAmount",
-                      static_cast<float>(std::clamp(params.mixAmount, 0.0, 1.0)));
+    p.setUniformValue("_lumiBlend", std::clamp(static_cast<int>(vBlend), 0, 2));  // Strang D
+    p.setUniformValue("_lumiMixAmount", static_cast<float>(std::clamp(vMix, 0.0, 1.0)));
     bindeAlleQuellen();
     zeichne();
 

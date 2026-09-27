@@ -33,6 +33,7 @@
 #include <QGuiApplication>
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
+#include <QImage>
 #include <QOpenGLFunctions>
 #include <QSurfaceFormat>
 
@@ -169,4 +170,71 @@ TEST_CASE("ScriptVariables: jede Tabellenvariable wird von der Laufzeit gebunden
     }
     // Schutz gegen einen Test, der still nichts prueft.
     CHECK(checked > 60);
+}
+
+TEST_CASE("ScriptVariables: ISF-Regler lassen sich unter ihrem key per Skript setzen")
+{
+    // Block E (S79). Die Sonde oben kann die Regler nicht pruefen — ihre Namen
+    // stehen erst im Preset. Deshalb hier die Wirkung: der Shader gibt seine
+    // Regler als Farbe aus, das Skript setzt sie, das Bild muss folgen.
+    static int argc = 1;
+    static char arg0[] = "UnitTests";
+    static char* argv[] = {arg0, nullptr};
+    QGuiApplication app(argc, argv);
+
+    QSurfaceFormat fmt;
+    fmt.setVersion(3, 3);
+    fmt.setProfile(QSurfaceFormat::CoreProfile);
+    QOpenGLContext ctx;
+    ctx.setFormat(fmt);
+    if (!ctx.create())
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    QOffscreenSurface surface;
+    surface.setFormat(ctx.format());
+    surface.create();
+    REQUIRE(surface.isValid());
+    REQUIRE(ctx.makeCurrent(&surface));
+
+    IsfFilterParams isf;
+    isf.fragCode = "void main() { gl_FragColor = vec4(gain, pos.x, pos.y, 1.0); }";
+    ParamWert gain;
+    gain.key = "gain";
+    gain.typ = ParamTyp::Zahl;
+    gain.zahl = 0.0;
+    ParamWert pos;
+    pos.key = "pos";
+    pos.typ = ParamTyp::Punkt2D;
+    isf.parameter.werte = {gain, pos};
+
+    auto renderCenter = [](IsfFilterParams p) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        leaf.params = std::move(p);
+        root.children.push_back(std::move(leaf));
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.initialize();
+        vis.resize(QSize(kSize, kSize));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, kSize, kSize);
+        vis.render(1.0f / 60.0f);
+        const QImage img = vis.debugGrabRootSurface();
+        REQUIRE_FALSE(img.isNull());
+        return img.pixelColor(kSize / 2, kSize / 2);
+    };
+
+    // Ohne Skript: alle Regler 0 -> schwarz.
+    const QColor ohne = renderCenter(isf);
+    CHECK(ohne.redF() < 0.05);
+    CHECK(ohne.greenF() < 0.05);
+
+    // Mit Skript: gain und die x-Komponente des Punkts auf 1.
+    isf.frameCode = "gain = 1; pos_x = 1; pos_y = 0;";
+    const QColor mit = renderCenter(isf);
+    CHECK(mit.redF() > 0.95);
+    CHECK(mit.greenF() > 0.95);
+    CHECK(mit.blueF() < 0.05);
 }

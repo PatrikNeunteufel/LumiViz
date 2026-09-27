@@ -1,9 +1,9 @@
 # LumiViz — Formelfelder je Modul (Inventar und Vorschläge)
 
-> **Version:** 1.3.0
+> **Version:** 1.4.0
 > **Datum:** 2026-09-27
 > **Typ:** Arbeitsdokument — Bestandsaufnahme aller 84 Palettenmodule + Vorschlagsliste
-> **Status:** Aktiv — Blöcke A–D umgesetzt (S79), E–F offen
+> **Status:** Aktiv — Blöcke A–D umgesetzt, E teilweise (S79); F offen
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Knoten_Parameter_Konzept.md](Knoten_Parameter_Konzept.md) (Strang D, §6) ·
 > [Skript_Variablen_Konzept.md](Skript_Variablen_Konzept.md) ·
@@ -254,12 +254,12 @@ Kopie erst ab der Rückleseposition — Terrains Neuaufbau des Gitters liest
 echten MilkDrop laufen); Color-Map-Verlaufsstopps (Liste, keine Einzelwerte —
 gehört zu F).
 
-### E — Module ganz ohne Formelzugang
+### E — Module ganz ohne Formelzugang (teilweise ✅, S79)
 
-| Modul | Vorschlag |
+| Modul | Stand |
 |---|---|
-| Set Render Mode | PS mit `linewidth`, `adjustalpha` (Linienbreite im Takt — klassischer AVS-Kniff) |
-| ISF Filter | jeder ISF-INPUT als Skriptvariable (größter Hebel: jeder importierte Filter wird modulierbar) |
+| Set Render Mode | ✅ Parameter-Skript mit `linewidth`, `lineblend`, `adjustalpha`, `overrideblend`. Nebenbei behoben: der Serializer schrieb `adjustAlpha` nie (Wert fiel beim Speichern auf 128) — Regressionstest in `test_ParamScript.cpp` |
+| ISF Filter | ✅ Parameter-Skript: **jeder Regler unter seinem `key`** (Vertrag von `ParamWert::key`); Punkt2D als `<key>_x/_y`, Farbe als `<key>_r/_g/_b/_a`, Bool 0/1; kollidiert ein key mit einem Host-Namen (`b`, `w`, `h`, Audio-Satz, `blend`, `mixamount`), heißt er `in_<key>`. Dazu `blend`, `mixamount`. Die Regler waren schon Uniforms (je Frame gesetzt) — kein Neukompilieren. Wirkungstest: `test_ScriptVariablesGl.cpp` |
 | Shadertoy / Pixel Filter | `blend` + eigene Uniforms, die ein Skript setzt |
 | Host Group | `crossfadeseconds`, `outadjustalpha` |
 | Text (Import) | `fontheight`, Farbe, `xshift`/`yshift` |

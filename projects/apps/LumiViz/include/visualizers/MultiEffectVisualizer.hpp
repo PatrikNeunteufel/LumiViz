@@ -934,7 +934,8 @@ private:
                         const lumi::multieffect::Tentacles3DParams& params);
     void runCustomBpm(const lumi::multieffect::ChainNode& node,
                       const lumi::multieffect::CustomBpmParams& params);
-    void runSetRenderMode(const lumi::multieffect::SetRenderModeParams& params);
+    void runSetRenderMode(const lumi::multieffect::ChainNode& node,
+                          const lumi::multieffect::SetRenderModeParams& params);
     void runSuperScope(const lumi::multieffect::ChainNode& node,
                        const lumi::multieffect::SuperScopeParams& params);
     void runDebugBars(const lumi::multieffect::DebugBarsParams& params);

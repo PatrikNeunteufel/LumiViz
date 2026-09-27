@@ -1251,6 +1251,13 @@ struct SetRenderModeParams
     int lineWidth = 1;      ///< line width for following scopes (px, 0 = leave)
     int lineBlend = 1;      ///< AVS BLEND_LINE mode 0..9 (S9)
     int adjustAlpha = 128;  ///< Adjustable-blend alpha 0..255
+    /// Parameter-Skript (Strang D, Block E S79): `linewidth`, `lineblend`,
+    /// `adjustalpha`, `overrideblend` + `b`/`w`/`h` + Audio-Satz — etwa die
+    /// Linienbreite im Takt. Leer = kein Skript (LumiViz-Erweiterung, AVS
+    /// kennt hier keinen Code).
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -2605,9 +2612,9 @@ struct IsfFilterParams
     std::vector<IsfBildQuelle> quellen;
     /// Durchgänge eines Multipass-Shaders (`PASSES`). Leer = ein Durchgang.
     std::vector<IsfPassZiel> passes;
-    /// Eigene Regler des Shaders (ISF-`INPUTS`) — s. `ParamGruppe`. Ihre
-    /// Werte fließen als `const`-Block in `fragCode` (Nahtstelle: die
-    /// Sentinel in IsfImport.hpp).
+    /// Eigene Regler des Shaders (ISF-`INPUTS`) — s. `ParamGruppe`. Jeder
+    /// Regler ist ein Uniform, dessen Name der `key` ist; der Wert wird je
+    /// Frame gesetzt (kein Neukompilieren beim Drehen).
     ParamGruppe parameter;
     /// Herkunft/Lizenz des Imports — s. `Herkunft`. Wird im Panel angezeigt.
     Herkunft herkunft;
@@ -2623,6 +2630,13 @@ struct IsfFilterParams
     int blend = 0;
     /// Anteil des Ergebnisses 0..1 (1 = ersetzen).
     double mixAmount = 1.0;
+    /// Parameter-Skript (Strang D, Block E S79): jeder Regler unter seinem
+    /// `key` (Punkt2D als `<key>_x`/`_y`, Farbe als `<key>_r`/`_g`/`_b`/`_a`,
+    /// Kollision mit einem Host-Namen → `in_<key>`), dazu `blend`,
+    /// `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /// Klemm-Grenzen des Video-/Kamera-Quellknotens — SSOT fuer Leser, Panel und

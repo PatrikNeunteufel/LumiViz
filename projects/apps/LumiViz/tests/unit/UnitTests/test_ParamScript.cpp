@@ -153,3 +153,22 @@ TEST_CASE("Altname: `bilinear` in einer bestehenden .lvfx wird weiter gelesen")
     CHECK(raus.contains("subpixel"));
     CHECK_FALSE(raus.contains("bilinear"));
 }
+
+TEST_CASE("Set Render Mode: adjustAlpha und Skript ueberleben das Speichern")
+{
+    // Bis S79 schrieb der Serializer `adjustAlpha` nicht — der Leser kannte den
+    // Schluessel, ein gespeicherter Wert fiel still auf 128 zurueck. Mit der
+    // Vorgabe 128 faellt das in keinem Roundtrip auf, deshalb ein Nicht-Vorgabewert.
+    using namespace lumi::multieffect;
+    ChainNode n;
+    SetRenderModeParams p;
+    p.adjustAlpha = 37;
+    p.frameCode = "linewidth = 1 + bass*4";
+    n.params = p;
+
+    QStringList report;
+    const ChainNode back = nodeFromJson(nodeToJson(n), &report);
+    const auto& q = std::get<SetRenderModeParams>(back.params);
+    CHECK(q.adjustAlpha == 37);
+    CHECK(q.frameCode == "linewidth = 1 + bass*4");
+}
