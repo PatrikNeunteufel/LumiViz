@@ -56,6 +56,10 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
 - **Parameter-Editor** je selektiertem Knoten: Spinner/Checkbox/Farbwähler/
   Enum + **EEL-Skript-Textfelder** (Init/Frame/Beat/Point bzw. Level) für alle
   Effekt-Typen (inkl. Mosaic); Passthrough-Knoten zeigen nur ihre Konserven-Notiz.
+  Die **Variablenreferenz** (ⓘ bzw. neben dem Groß-Editor) kommt seit Session 79
+  aus [`ScriptVariables.hpp`](../../visualizers/multieffect/ScriptVariables.hpp) —
+  je Knotentyp dieselbe Tabelle, die `test_ScriptVariablesGl` gegen die Laufzeit
+  prüft (vorher handgeschrieben, bei rund vierzig Modulen leer).
 - **Groß-Editor (⤢) mit Apply + Beautify (Session 69, Offene_Punkte §7):** alle
   Skriptfelder (EEL, Shadertoy-GLSL, Milkdrop-HLSL) öffnen den Dialog aus
   [EelScriptEditing](EelScriptEditing.hpp) (1.1.0, `ScriptEditorHooks`).

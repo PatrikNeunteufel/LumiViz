@@ -99,7 +99,9 @@ Drei Stellen verhindern verschachtelte Host-Gruppen:
 
 1. **Add-Dropdown/Palette:** Der Eintrag „Host-Gruppe" wird ausgeblendet
    bzw. deaktiviert, wenn die Einfüge-Position innerhalb einer Host-Gruppe
-   liegt.
+   liegt. *(Umsetzung, Stand S79: das Palettenfenster zeigt den Eintrag
+   immer; das Einfügen — per Button wie per Drop — wird am Einfüge-Ort
+   abgewiesen, `insertPaletteNode` → `pathTouchesHostGroup`.)*
 2. **Drag&Drop:** Die Move-Validierung (`moveNodesLocked`) lehnt Drops ab,
    deren Zielpfad durch eine Host-Gruppe führt, wenn der bewegte Teilbaum
    selbst eine Host-Gruppe enthält.

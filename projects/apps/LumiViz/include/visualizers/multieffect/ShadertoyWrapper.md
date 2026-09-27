@@ -1,7 +1,7 @@
 # ShadertoyWrapper — GLSL-ES→330-Wrapper des Shadertoy-Nodes
 
-> **Version:** 1.2.0
-> **Datum:** 2026-08-04
+> **Version:** 1.3.0
+> **Datum:** 2026-09-27
 > **Typ:** CppModuleDoc
 > **Status:** Implementiert (Strang S, S1–S4 — Session 65)
 > **Modul:** `lumi::shadertoy` (header-only, GL-frei)
@@ -62,6 +62,8 @@ S3-Netz-Abnahme. Fürs Skripten steht dieselbe Skala als
 `getspecdb(band, breite, kanal)` bereit (Idee Patrik, LuaScriptEngine;
 kein AVS-/MilkDrop-Builtin).
 
+**Parameter-Skript (Block E, S79):** der Knoten hat Init/Frame/Beat mit `blend`. Dazu jedes Uniform, das Image- oder Buffer-Code **selbst deklariert** (`uniform float wobble;` → Skriptvariable `wobble`; `int`/`bool` direkt, `vec2..4` als `_x/_y/_z/_w`; Kollision mit Host-Namen oder einem Regler → `in_<name>`; Startwert 0) — Block E, Entscheid 1a (S79), Parser `EigeneUniforms.hpp`. Gesetzt wird in **jedem** Pass (`setupPass`).
+
 ## 2. Tests
 
 `test_ShadertoyWrapper.cpp`: Prälude-Vertrag (Uniform-Satz, #line-Positionen),
@@ -74,6 +76,7 @@ y-up korrekt, Zeit-Puls deterministisch, Ringe audio-moduliert).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.3.0 | 2026-09-27 | Session 79 — Parameter-Skript (Init/Frame/Beat, `blend`) und eigene Uniforms aus Image- und Buffer-Code (Block E, Entscheid 1a) |
 | 1.1.0 | 2026-08-02 | S4 Multipass (Session 65): `wrapBufferFragment` (roher Epilog), `ShadertoyPass` + Kanal-Bindungs-Kodierung (SSOT imageInput/input, audioChannel nur noch Lese-Migration), RGBA32F-Ping-Pong je Buffer im Host (Swap nach jedem Pass = Original-Lese-Semantik), Import löst Buffer-Topologie über Output-Ids, common in allen Pässen; Panel: 4 Bindungs-Combos je Pass + Buffer-Editoren (hinzufügen/entfernen). Sonde shadertoy_feedback.lvfx (Lissajous-Trail beweist das Vorframe-Lesen) |
 | 1.2.0 | 2026-08-04 | **Audio-Skala dB (Session 67, Sonde dB-vs-linear):** FFT-Zeile der 512×2-Audio-Textur nach WebAudio-Vertrag (Magnitude-Glättung τ=0,8, dann 20·log10 auf [−100,−30] dB) statt linearer App-Skala — Zahlensonde: Magnitude 0,001 ⇒ linear Byte 0 vs. dB Byte 146; Sichtbeweis `01_audio_ringpulse` mean 0,116→0,294 (satte Ringe statt dünner Linien). Waveform-Zeile unverändert (0,5+0,5·x war schon Vertrag). NEU `getspecdb(band, breite, kanal)` in der LuaScriptEngine (Idee Patrik): dieselbe dB-Skala für eigene Chain-Skripte; EelTranspiler-Whitelist + Editor-Referenz/-Highlight ergänzt. Absolut-Offset vs. WebAudio-Normalisierung = dokumentierte Annahme (Feinabgleich S3-Netz-Abnahme) |
 | 1.0.0 | 2026-08-02 | Erstfassung (Session 65, Strang S1+S2): Prälude/Epilog/Starter, #line-Vertrag, Blend-Epilog; Host-Integration als Chain-Node (`ShadertoyParams`, Serializer-Typ „shadertoy", Panel-Editor mit Fehleranzeige, 512×2-Audio-Textur + LumiViz-Uniforms) |

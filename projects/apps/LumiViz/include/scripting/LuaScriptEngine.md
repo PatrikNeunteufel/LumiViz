@@ -1,7 +1,7 @@
 # LuaScriptEngine — Sandboxed Lua 5.4 für Visualizer-Skripte
 
-> **Version:** 1.2.0  
-> **Datum:** 2026-07-24  
+> **Version:** 1.3.0  
+> **Datum:** 2026-09-27  
 > **Typ:** CppModuleDoc  
 > **Status:** Implementiert (Import-Phase Roadmap 1 — Keimzelle Superscope)  
 > **Modul:** lumi::scripting::LuaScriptEngine  
@@ -74,6 +74,7 @@ Lua-Skripte aus (Superscope).
 | `run(slot)` | Slot ausführen; Laufzeitfehler deaktiviert den Slot (kein Fehler-Spam) |
 | `has(slot)` / `clear(slot)` | Slot-Status / Slot räumen |
 | `setNumber(name, v)` / `number(name)` | Env-Variablen (Zahlen — das Skript-Datenmodell) |
+| `setNameProbe(sink)` (static) | Test-Sonde (S79): sammelt jeden Namen, den `setNumber`/`number` anfasst — über alle Engines; `nullptr` = aus (Betrieb: ein Vergleich) |
 | `evalNumber(expr, out)` | Ausdruck in der Sandbox auswerten (Tests/Diagnose) |
 | `seedRandom(seed)` | PRNG deterministisch seeden (Default: Basis-Seed `0x4141f00d` ⊕ Instanz-Nonce, S14) |
 | `lastError()` / `clearError()` | letzter Compile-/Laufzeitfehler |
@@ -154,6 +155,7 @@ sind DIESELBE Variable (Lissajous-`b`- und Hypocycloid-`R/r`-Bug, Session 32).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.3.0 | 2026-09-27 | **S79:** `setNameProbe` — Test-Sonde für `test_ScriptVariablesGl` (prüft die Variablenreferenz gegen die Laufzeit) |
 | 1.2.0 | 2026-07-24 | **S14:** Default-Seed mischt je Instanz einen Nonce (0x4141f00d ⊕ Zähler) — Engines ziehen verschiedene rand()-Folgen wie AVS' globaler Strom; explizites seedRandom() unverändert (Session 45) |
 | 1.1.0 | 2026-07-20 | Roadmap 4.1: Konstruktor nimmt shared ScriptContext; gmegabuf wandert in den Kontext; Superscope läuft über ScriptSlotHost (Session 33) |
 | 1.0.0 | 2026-07-20 | Erstfassung — Sandbox, eel-Prelude, 4-Slot-Modell, app-globales Atomic-Register-Set, Superscope-Anbindung (Session 32) |

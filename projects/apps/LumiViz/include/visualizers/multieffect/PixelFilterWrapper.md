@@ -1,7 +1,7 @@
 # PixelFilterWrapper — GLSL-Fragment-Wrapper des Pixel-Filter-Nodes
 
-> **Version:** 1.0.0
-> **Datum:** 2026-08-06
+> **Version:** 1.1.0
+> **Datum:** 2026-09-27
 > **Typ:** CppModuleDoc
 > **Status:** Implementiert (Stilfilter-Strang, Session 70)
 > **Modul:** lumi::pixelfilter (freie Funktionen)
@@ -57,7 +57,7 @@ Swap; Draw über den geteilten Quad-VAO. Programm-Rebuild nur bei
 Code-Wechsel (Snapshot `pfCompiled`). Kompilierfehler landen im geteilten
 `stError` → `shadertoyError(nodeId)` versorgt Panel-Anzeige und den
 Apply-Poll des Groß-Editors (S69); Fehler ⇒ Passthrough.
-Parameter-Skript (Strang D): `mixamount`.
+Parameter-Skript (Strang D): `mixamount`. Dazu jedes Uniform, das der Code **selbst deklariert** (`uniform float wobble;` → Skriptvariable `wobble`; `int`/`bool` direkt, `vec2..4` als `_x/_y/_z/_w`; Kollision mit Host-Namen oder einem Regler → `in_<name>`; Startwert 0) — Block E, Entscheid 1a (S79), Parser `EigeneUniforms.hpp`.
 
 ## 4. Werks-Voreinstellungen (asset/nodepresets/pixelFilter/)
 
@@ -81,4 +81,5 @@ Take-On-Me.lvfx` (Sichtprüfung: Papier, Konturen, Schraffur, Tusche-Band).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.1.0 | 2026-09-27 | Session 79 — eigene Uniforms des Codes als Skriptvariablen (Block E, Entscheid 1a) |
 | 1.0.0 | 2026-08-06 | Session 70 — Erstfassung (farbe()-Vertrag wegen GLSL-Reserviert-Wort `filter`, Starter, 12 Werks-Voreinstellungen) |

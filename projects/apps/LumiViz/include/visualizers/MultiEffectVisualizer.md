@@ -140,6 +140,30 @@ nach dem AVS-Render-Modell (Analyse §5.1). Import-Ziel für .avs-Presets
   (rein kosmetisch, Details MilkdropVisualizer.md 1.23.0).
 - GL-Freigabe des Kerns via `cleanup()` in `resetRuntimes` (Kontext current).
 
+## Skriptvariablen der Knoten (Session 79)
+
+Welche Variablen ein Knoten-Skript lesen/schreiben darf, steht **einmal** in
+[`ScriptVariables.hpp`](multieffect/ScriptVariables.hpp) (SSOT der Referenz im
+Panel). Die Bindungen selbst stehen in den `run*`-Funktionen:
+
+- **Parameter-Skript** (`runParamScript`): Liste aus `ParamVar` (Name +
+  Frame-Kopie); Vorbelegung nur beim ersten Frame bzw. nach einer
+  Reglerbewegung, danach schreibt das Skript fort.
+- **Eigene Hosts** (Fraktale, 3D, Bump): Werte beim Kompilieren gesetzt und im
+  Compile-Schnappschuss (Reglerbewegung = neu seeden), nach Frame/Beat
+  zurückgelesen; die Kopie gilt erst ab dort.
+- **Farben** als `<feld>_r/_g/_b` (0..1) über `FarbKopie` — geklemmt erst beim
+  Zeichnen; Fraktal-Paletten zusätzlich `colorscale`, `colorcycle` und die
+  laufende `colorphase`.
+- **Shader-Werte:** ISF-Regler unter ihrem `key`, bei Shadertoy/Pixel
+  Filter/Mesh Warp/GPU-Partikel jedes selbst deklarierte Uniform
+  (`EigeneUniformKopien`); Kollision → `in_<name>`.
+
+Wächter: `test_ScriptVariablesGl.cpp` rendert jeden Knoten mit Skript und
+prüft über die Namens-Sonde der LuaScriptEngine, dass jeder Tabellenname
+gebunden ist; Wirkungstests für ISF-Regler und eigene Uniforms. Inventar:
+[`docs/visuals/Formelfelder_Inventar.md`](../../docs/visuals/Formelfelder_Inventar.md).
+
 ## Absicherung
 
 Datenmodell: `test_EffectChain.cpp` (GL-frei). GL-Pfad: Sichttest

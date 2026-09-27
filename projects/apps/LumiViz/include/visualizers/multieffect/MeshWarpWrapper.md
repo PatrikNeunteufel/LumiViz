@@ -1,7 +1,7 @@
 # MeshWarpWrapper — GPU-Vertex-Warp des Mesh-Warp-Nodes
 
-> **Version:** 1.0.0
-> **Datum:** 2026-08-06
+> **Version:** 1.1.0
+> **Datum:** 2026-09-27
 > **Typ:** CppModuleDoc
 > **Status:** Implementiert (Strang G1, Session 69)
 > **Modul:** lumi::meshwarp (freie Funktionen)
@@ -55,7 +55,7 @@ Draw wird der Quell-Filter auf LINEAR gestellt und danach WIEDERHERGESTELLT
 (geteilte Surface — AVS-treue Effekte verlassen sich auf ihre Abtastung).
 Kompilierfehler landen im geteilten `stError` → `shadertoyError(nodeId)`
 versorgt Panel-Anzeige und den Apply-Poll des Groß-Editors (S69).
-Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount`.
+Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount`. Dazu jedes Uniform, das der Code **selbst deklariert** (`uniform float wobble;` → Skriptvariable `wobble`; `int`/`bool` direkt, `vec2..4` als `_x/_y/_z/_w`; Kollision mit Host-Namen oder einem Regler → `in_<name>`; Startwert 0) — Block E, Entscheid 1a (S79), Parser `EigeneUniforms.hpp`.
 
 ## 4. Tests
 
@@ -69,4 +69,5 @@ AvsStandalone `out/meshwarp_sonde_s69/`, Warnungen=0).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.1.0 | 2026-09-27 | Session 79 — eigene Uniforms des Codes als Skriptvariablen (Block E, Entscheid 1a) |
 | 1.0.0 | 2026-08-06 | Erstfassung — Strang G1 (Session 69) |

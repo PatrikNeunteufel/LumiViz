@@ -1,7 +1,7 @@
 # IsfImport — ISF-Filter auf den pixelFilter-Vertrag übersetzen
 
-> **Version:** 1.0.0
-> **Datum:** 2026-08-07
+> **Version:** 1.1.0
+> **Datum:** 2026-09-27
 > **Typ:** CppModuleDoc
 > **Status:** Implementiert (Filter-Strang Stufe 1, Session 72)
 > **Modul:** lumi::isf (freie Funktionen)
@@ -113,7 +113,14 @@ Bleibt danach eine `in`/`varying`-Deklaration übrig, die niemand füllen
 kann, **bricht der Import mit Klartext ab** — ein Linkerfehler tief im
 Treiber wäre für den Nutzer unbrauchbar.
 
-## 6. Parameter in Stufe 1: der `const`-Block
+## 6. Parameter in Stufe 1: der `const`-Block (überholt)
+
+> **Überholt (Stand S79):** Seit Stufe 2/3 (Parameter-Baum, S72) sind die
+> Regler **Uniforms** (`IsfFilterWrapper::uniformDeklarationen`), deren
+> Werte der Renderer je Frame setzt — der `const`-Block und seine Sentinel
+> existieren nicht mehr. Seit S79 (Block E) setzt sie auch das
+> Parameter-Skript des Knotens, jeder Regler unter seinem `key`. Der
+> Abschnitt bleibt als Entwurfsgeschichte stehen.
 
 `INPUTS` werden als `const`-Deklarationen mit ihren Vorgabewerten vor den
 Code gesetzt, eingefasst von Sentinel-Kommentaren:
@@ -166,4 +173,5 @@ Ergebnis — und nie `filter` als Bezeichner (GLSL-reserviert, Befund S70).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.1.0 | 2026-09-27 | Session 79 — §6 als überholt markiert (Regler sind Uniforms, per Skript setzbar) |
 | 1.0.0 | 2026-08-07 | Erstfassung (Session 72, Filter-Strang Stufe 1). Befund: 38 Dateien brauchen ihren `.vs`-Begleiter, sonst linkt der Shader nicht |

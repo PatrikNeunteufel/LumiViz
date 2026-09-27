@@ -104,7 +104,10 @@ Bereits umgesetzt (Session 37): der **ⓘ-Button** je Code-Feld zeigt die Refere
 für das **aktive Modul** (`scriptReferenceHtml`), der **⤢-Button** öffnet den
 großen Editor mit Referenz daneben. **Erweiterung:** die Symboltabelle (§3) wird
 zur SSOT; `scriptReferenceHtml` und der Highlighter (§4) ziehen aus **derselben**
-Tabelle (heute ist die Referenz noch hartkodierter HTML-Text pro Modul).
+Tabelle. **Stand S79:** die Referenz zieht aus `ScriptVariables.hpp` (je
+Knotentyp, gegen die Laufzeit getestet); der Highlighter klassifiziert noch
+global (`EelScriptEditing.hpp::symbolCategory`) — ihn an dieselbe Tabelle zu
+hängen, ist offen (Formelfelder-Inventar, Block F).
 
 ---
 

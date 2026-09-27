@@ -1,7 +1,7 @@
 # GpuParticlesWrapper — Shader-Bausteine des GPU-Partikel-Nodes
 
-> **Version:** 1.0.0
-> **Datum:** 2026-08-06
+> **Version:** 1.1.0
+> **Datum:** 2026-09-27
 > **Typ:** CppModuleDoc
 > **Status:** Implementiert (Strang G2, Session 69)
 > **Modul:** lumi::gpuparticles (freie Funktionen)
@@ -61,7 +61,7 @@ beschreiben, aktuellen lesen, Swap. Render: `bindActive()`, Blend additiv
 (`SRC_ALPHA, ONE`) oder Alpha, `glDrawArraysInstanced` über den geteilten
 Quad-VAO, danach Blend aus. Kompilierfehler im geteilten `stError` →
 `shadertoyError(nodeId)` (Panel-Anzeige + Apply-Poll). Parameter-Skript
-(Strang D): `spawnx spawny spread speed dir fan gravx gravy drag life size`.
+(Strang D): `spawnx spawny spread speed dir fan gravx gravy drag life size`, seit S79 auch `colorstart_r/_g/_b`, `colorend_r/_g/_b` (Block B), `sizeendfactor`, `lifejitter` (Block D). Dazu jedes Uniform, das das Kraftfeld **selbst deklariert** (`uniform float wobble;` → Skriptvariable `wobble`; `int`/`bool` direkt, `vec2..4` als `_x/_y/_z/_w`; Kollision mit Host-Namen oder einem Regler → `in_<name>`; Startwert 0) — Block E, Entscheid 1a (S79), Parser `EigeneUniforms.hpp`.
 
 ## 4. Tests
 
@@ -76,4 +76,5 @@ Warnungen=0).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.1.0 | 2026-09-27 | Session 79 — Farben (B), sizeendfactor/lifejitter (D), eigene Uniforms des Kraftfelds (E, 1a) im Parameter-Skript |
 | 1.0.0 | 2026-08-06 | Erstfassung — Strang G2 (Session 69) |
