@@ -107,4 +107,14 @@ public:
      * Override to suggest initial position.
      */
     [[nodiscard]] virtual int preferredArea() const { return 0; }
+
+    /**
+     * @brief Does the panel manage its own scrolling?
+     * @return true = the dock inserts it as is (no automatic QScrollArea)
+     *
+     * Qt-ADS wraps every dock content in a QScrollArea by default. A panel that
+     * brings its own scroll areas returns true, so they are not nested in a
+     * second one and the panel's own minimum width becomes the dock's.
+     */
+    [[nodiscard]] virtual bool scrollsItself() const { return false; }
 };

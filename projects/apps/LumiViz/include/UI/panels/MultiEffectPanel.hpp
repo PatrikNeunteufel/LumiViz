@@ -73,9 +73,24 @@ public:
         onDrop;
     std::function<void()> onDeleteKey;  ///< Delete/Backspace pressed
 
+    /// Spalten-Mindestbreiten (S78, Entscheid 2a): keine Spalte wird schmaler
+    /// als ihr Eintrag; die letzte fuellt den Rest. Passt die Summe nicht mehr
+    /// in den Viewport, scrollt NUR der Baum mit seinem eigenen Balken — das
+    /// Panel wird dadurch nie breiter. Einmal nach dem Setzen der Spalten rufen.
+    void setColumnMinimums(const QList<int>& minimums);
+
 protected:
     void dropEvent(QDropEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
+
+private:
+    /// Klemmt die verstellbaren Spalten auf ihr Minimum und dehnt die letzte
+    /// auf den Rest des Viewports (nie unter ihr Minimum).
+    void fitColumns();
+
+    QList<int> m_columnMinimums;
+    bool m_fitting = false;  ///< Rekursionssperre (resizeSection -> sectionResized)
 };
 
 /**
@@ -89,6 +104,10 @@ class MultiEffectPanel : public PanelBase
 public:
     explicit MultiEffectPanel(ServiceContainer& services, QWidget* parent = nullptr);
     ~MultiEffectPanel() override = default;
+
+    /// Das Panel bringt seine Scrollareas selbst mit (aussen waagrecht, Baum
+    /// und Editor senkrecht) — keine zweite von Qt-ADS darum (S78).
+    [[nodiscard]] bool scrollsItself() const override { return true; }
 
 private:
     void setupUI();
@@ -159,6 +178,20 @@ private:
     // Property editor
     void buildPropertyEditor(const QList<int>& path);
     void clearPropertyEditor();
+    /// Breiten-Vertrag des Editors (S78), zentral fuer JEDEN Knotentyp — laeuft
+    /// am Ende von buildPropertyEditor ueber die fertige Seite: Felder bekommen
+    /// die Mindestbreite, Combos richten sich nicht mehr nach ihrem laengsten
+    /// Eintrag, Beschreibungstexte brechen um und duerfen die Seite nicht
+    /// verbreitern,
+    /// Code-Felder scrollen in sich. Doku: MultiEffectPanel.md §Feldbreiten.
+    void begrenzeFeldbreiten(QFormLayout* form);
+    /// Mindestbreite des Editor-Bereichs = Mindestbreite der aktuellen Seite;
+    /// ist das Dock schmaler, scrollt die aeussere Scrollarea seitlich (S78).
+    /// Queued nach dem Aufbau: neue Kinder zaehlen erst, wenn sie gezeigt sind.
+    void aktualisiereMindestbreite();
+    /// Breite zwischen Feld und Aussenkante des Editors (Innenrand, Rahmen,
+    /// senkrechter Balken) — Baustein beider Mindestbreiten.
+    [[nodiscard]] int editorRahmen() const;
     /// Zeile „Voreinstellung" (Laden/Speichern/Loeschen) — gilt fuer jeden
     /// Knotentyp, s. `NodePresetStore` und Knoten-Parameter-Konzept §3.
     void addPresetRow(QFormLayout* form, const QList<int>& path,

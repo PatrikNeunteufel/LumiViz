@@ -1,0 +1,119 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "",
+                "blend": 0,
+                "color": 0,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Clear",
+                "onlyFirst": false,
+                "type": "clear"
+            },
+            {
+                "blendIn": 4,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                    {
+                        "audioChannel": 2,
+                        "beatCode": "",
+                        "colorBlend": 1,
+                        "colorCycleFrames": 60,
+                        "colors": [
+                            16777215,
+                            127,
+                            11141120,
+                            0,
+                            0
+                        ],
+                        "dotSize": 4,
+                        "enabled": true,
+                        "frameCode": "",
+                        "gradientPreset": "[Custom]",
+                        "initCode": "n=256",
+                        "lineBlend": 1,
+                        "lineWidth": 2,
+                        "name": "SuperScope",
+                        "pointCode": "x=i*2-1; y=v*0.8",
+                        "pointCount": 256,
+                        "renderMode": 2,
+                        "spectrumSource": false,
+                        "type": "superScope"
+                    },
+                    {
+                        "beatCode": "",
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Blur",
+                        "roundUp": false,
+                        "strength": 3,
+                        "type": "blur"
+                    },
+                    {
+                        "beatCode": "",
+                        "code": "// Mesh-Warp: vec2 warp(vec2 uv) liefert die QUELL-UV je Gitterpunkt.\n// Uniforms: uTime, uDelta, uFrame, uResolution, bass, mid, treb, vol, beat\nvec2 warp(vec2 uv)\n{\n    vec2 d = uv - 0.5;\n    float winkel = 0.30 * sin(uTime * 0.3) + 1.2 * bass * exp(-6.0 * dot(d, d));\n    float s = sin(winkel);\n    float c = cos(winkel);\n    float zoom = 1.0 + 0.03 * sin(uTime * 0.9) + 0.05 * treb;\n    return 0.5 + mat2(c, -s, s, c) * d / zoom;\n}\n",
+                        "enabled": true,
+                        "frameCode": "",
+                        "gridX": 96,
+                        "gridY": 72,
+                        "initCode": "",
+                        "mixAmount": 1,
+                        "name": "Mesh Warp",
+                        "type": "meshWarp",
+                        "wrapUv": true
+                    }
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            },
+            {
+                "beatCode": "",
+                "blend": false,
+                "color": 0,
+                "enabled": true,
+                "everyNBeats": 4,
+                "frameCode": "",
+                "initCode": "",
+                "name": "OnBeat Clear",
+                "type": "onBeatClear"
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

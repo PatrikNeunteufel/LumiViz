@@ -80,8 +80,12 @@
 #include <QNetworkRequest>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <BasicLogger.h>
+#include <QResizeEvent>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QSpinBox>
+#include <QTimer>
 #include <QToolButton>
 #include <QTreeWidget>
 #include <QVBoxLayout>
@@ -95,6 +99,34 @@
 using namespace lumi::multieffect;
 
 namespace {
+
+// --- Breiten-Vertrag des Panels (S78, Vorgabe Patrik) ---------------------
+// Jedes Feld hat mindestens kFeldMinBreite, keines wird breiter als das Panel,
+// und zum Panelrand bleiben mindestens kPanelRand. Doku: MultiEffectPanel.md.
+constexpr int kFeldMinBreite = 120;   ///< Mindestbreite jedes Editor-Felds
+constexpr int kPanelRand = 5;         ///< Abstand Inhalt <-> Panelrand
+/// Schmalste Dock-Stellung: Inhaltsbreite ohne Raender/Balken (etwa doppelte
+/// Feldbreite, Vorgabe Patrik S78 — Beschriftung + Feld nebeneinander).
+constexpr int kPanelMinInhalt = 2 * kFeldMinBreite;
+constexpr int kSeitenInnenrand = 4;   ///< Luft zwischen Scroll-Rahmen und Feldern
+constexpr int kComboZeichen = 3;      ///< Combo-Mindestbreite in Zeichen (Zeilen aus
+                                      ///< Combo + Knoepfen muessen auf 120 px passen)
+constexpr int kBaumNameMin = 120;     ///< Effektliste: Spalte Name
+constexpr int kBaumTypMin = 90;       ///< Effektliste: Spalte Typ
+constexpr int kBaumBeschreibungMin = 80;  ///< Effektliste: Spalte Beschreibung
+
+/// Combo nicht nach ihrem laengsten Eintrag bemessen (Qt-Vorgabe), sondern
+/// nach kComboZeichen — Dateinamen, Geraete-IDs oder Preset-Namen trieben die
+/// Seite sonst beliebig breit. Die aufgeklappte Liste zeigt die Eintraege
+/// trotzdem voll: sie darf breiter als die Combo sein.
+void begrenzeCombo(QComboBox* combo)
+{
+    combo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    combo->setMinimumContentsLength(kComboZeichen);
+    QAbstractItemView* view = combo->view();
+    view->setMinimumWidth(view->sizeHintForColumn(0) +
+                          view->verticalScrollBar()->sizeHint().width());
+}
 
 // The palette of effects that "Add" can insert (name -> default params). Entries
 // with make == nullptr are non-selectable category headers (grouped in the combo).
@@ -1126,6 +1158,45 @@ void ChainTreeWidget::keyPressEvent(QKeyEvent* event)
     QTreeWidget::keyPressEvent(event);
 }
 
+void ChainTreeWidget::setColumnMinimums(const QList<int>& minimums)
+{
+    m_columnMinimums = minimums;
+    // Die letzte Spalte dehnt fitColumns selbst — stretchLastSection wuerde sie
+    // bis auf minimumSectionSize stauchen und die Mindestbreite unterlaufen.
+    header()->setStretchLastSection(false);
+    connect(header(), &QHeaderView::sectionResized, this,
+            [this](int, int, int) { fitColumns(); });
+    fitColumns();
+}
+
+void ChainTreeWidget::resizeEvent(QResizeEvent* event)
+{
+    QTreeWidget::resizeEvent(event);
+    fitColumns();
+}
+
+void ChainTreeWidget::fitColumns()
+{
+    const int count = std::min(static_cast<int>(m_columnMinimums.size()), columnCount());
+    if (m_fitting || count == 0) return;
+    m_fitting = true;
+    QHeaderView* h = header();
+    const int last = count - 1;
+    int belegt = 0;
+    for (int c = 0; c < last; ++c)
+    {
+        if (h->sectionSize(c) < m_columnMinimums[c])
+            h->resizeSection(c, m_columnMinimums[c]);
+        belegt += h->sectionSize(c);
+    }
+    // Die letzte Spalte fuellt den Rest; reicht der nicht fuer ihr Minimum,
+    // wird der Baum breiter als sein Viewport — dann scrollt er (eigener Balken).
+    const int rest = viewport()->width() - belegt;
+    const int ziel = std::max(m_columnMinimums[last], rest);
+    if (h->sectionSize(last) != ziel) h->resizeSection(last, ziel);
+    m_fitting = false;
+}
+
 MultiEffectPanel::MultiEffectPanel(ServiceContainer& services, QWidget* parent)
     : PanelBase(services, "multieffect_chain", tr("Effect Chain"), parent)
 {
@@ -1135,8 +1206,28 @@ MultiEffectPanel::MultiEffectPanel(ServiceContainer& services, QWidget* parent)
 
 void MultiEffectPanel::setupUI()
 {
-    auto* root = new QVBoxLayout(this);
-    root->setContentsMargins(4, 4, 4, 4);
+    // Aeussere Scrollarea (S78, Vorgabe Patrik): die Felder schrumpfen mit dem
+    // Dock bis auf kFeldMinBreite; wird das Dock noch schmaler, scrollt der
+    // ganze Inhalt seitlich — von den Beschriftungen zu den Feldern. Das Dock
+    // selbst geht bis kFeldMinBreite herunter. Senkrecht scrollen Baum und
+    // Editor je fuer sich, deshalb hier nur waagrecht.
+    auto* aussen = new QVBoxLayout(this);
+    aussen->setContentsMargins(0, 0, 0, 0);
+    auto* aussenScroll = new QScrollArea(this);
+    aussenScroll->setFrameShape(QFrame::NoFrame);
+    aussenScroll->setWidgetResizable(true);
+    aussenScroll->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    aussenScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    auto* inhalt = new QWidget();
+    aussenScroll->setWidget(inhalt);
+    aussen->addWidget(aussenScroll);
+    // Die Mindestbreite des Panels (ein Feld + Raender) setzt
+    // aktualisiereMindestbreite, sobald die Rahmenmasse bekannt sind.
+
+    auto* root = new QVBoxLayout(inhalt);
+    // Rand zum Panel: Baum, Toolbar und Editor halten mindestens kPanelRand
+    // Abstand — nirgends sonst ein Aussenrand.
+    root->setContentsMargins(kPanelRand, kPanelRand, kPanelRand, kPanelRand);
 
     m_hint = new QLabel(tr("Select the \"Multi Effect\" visualizer to edit its chain."),
                         this);
@@ -1179,6 +1270,9 @@ void MultiEffectPanel::setupUI()
     // Start on the first selectable (non-header) entry, not a category title.
     for (size_t i = 0; i < palette.size(); ++i)
         if (!palette[i].isHeader()) { m_addTypeCombo->setCurrentIndex(static_cast<int>(i)); break; }
+    // Nicht nach dem laengsten Paletteneintrag bemessen — der triebe sonst die
+    // Mindestbreite des ganzen Panels (S78); die Liste klappt voll breit auf.
+    begrenzeCombo(m_addTypeCombo);
     toolbar->addWidget(m_addTypeCombo, 1);
 
     auto makeButton = [this](const QString& text, const QString& tip) {
@@ -1206,9 +1300,14 @@ void MultiEffectPanel::setupUI()
     m_tree = new ChainTreeWidget(this);
     m_tree->setHeaderLabels({tr("Name"), QString(), tr("Type"), tr("Description")});
     m_tree->setColumnCount(4);
+    m_tree->setColumnWidth(0, 160);
     m_tree->setColumnWidth(1, 30);  // narrow eye toggle column (col 1)
+    m_tree->setColumnWidth(2, 110);
     m_tree->header()->setSectionResizeMode(1, QHeaderView::Fixed);
-    m_tree->header()->setStretchLastSection(true);
+    // Entscheid 2a (S78): Mindestbreiten je Spalte; reicht der Platz nicht,
+    // scrollt der Baum mit eigenem Balken, das Panel bleibt, wie es ist.
+    m_tree->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
+    m_tree->setColumnMinimums({kBaumNameMin, 30, kBaumTypMin, kBaumBeschreibungMin});
     // Column 0 (Name) is the tree column: show the expand decoration + a clear
     // per-level indent so nested Effect Lists read as nested across levels.
     m_tree->setRootIsDecorated(true);
@@ -1229,8 +1328,14 @@ void MultiEffectPanel::setupUI()
 
     m_propScroll = new QScrollArea(this);
     m_propScroll->setWidgetResizable(true);
+    // Hier nie seitlich: die Seite folgt der Viewport-Breite, und
+    // aktualisiereMindestbreite haelt den Viewport mindestens so breit wie die
+    // Seite. Seitlich scrollt die aeussere Scrollarea — EIN Balken fuers Panel.
+    m_propScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_propContainer = new QWidget();
     m_propLayout = new QVBoxLayout(m_propContainer);
+    m_propLayout->setContentsMargins(kSeitenInnenrand, kSeitenInnenrand,
+                                     kSeitenInnenrand, kSeitenInnenrand);
     m_propLayout->setAlignment(Qt::AlignTop);
     m_propScroll->setWidget(m_propContainer);
 
@@ -1254,10 +1359,16 @@ void MultiEffectPanel::setupUI()
     });
     root->addWidget(split, 1);
 
-    // Mindestbreite: darunter beginnen die Formularfelder zu quetschen — die
-    // Felder selbst folgen der Panelbreite (AllNonFixedFieldsGrow + resizable
-    // ScrollArea), brauchen aber einen sinnvollen Boden.
-    setMinimumWidth(420);
+    // Schmalste Dock-Stellung = kPanelMinInhalt samt Raendern (Vorgabe Patrik
+    // S78: etwa doppelte Feldbreite — Platz fuer Beschriftung + Feld); was
+    // breiter ist, erreicht man per Seitwaerts-Scrollen. JETZT setzen, nicht
+    // queued: Qt-ADS liest das Minimum beim Einhaengen ins Dock und bekommt
+    // spaetere Aenderungen nicht mit (Sichttest S78: sonst Dock bis 0 px).
+    setMinimumWidth(kPanelMinInhalt + editorRahmen() + 2 * kPanelRand);
+
+    // Keine feste Inhaltsbreite mehr (bis S77: 420 am Panel). Die Breite, ab der
+    // seitlich gescrollt wird, ergibt sich aus Toolbar und Editor-Seite (S78).
+    aktualisiereMindestbreite();
 
     connect(m_addButton, &QToolButton::clicked, this, &MultiEffectPanel::onAddEffect);
     connect(m_removeButton, &QToolButton::clicked, this, &MultiEffectPanel::onRemove);
@@ -2592,6 +2703,7 @@ void MultiEffectPanel::clearPropertyEditor()
     // nested QFormLayout's widgets alive (they stacked up → overlap + lag).
     delete m_propPage;
     m_propPage = nullptr;
+    aktualisiereMindestbreite();
 }
 
 #if defined(_MSC_VER)
@@ -2906,8 +3018,10 @@ void MultiEffectPanel::addPresetRow(QFormLayout* form, const QList<int>& path,
                          "Loading replaces every parameter including the scripts."));
 
     auto* saveBtn = new QToolButton(row);
-    saveBtn->setText(tr("Save as…"));
-    saveBtn->setToolTip(tr("Store the current parameters under a name"));
+    // Symbol statt „Save as…" (S78): die Zeile muss auf kFeldMinBreite
+    // schrumpfen koennen — Combo + zwei Symbolknoepfe passen, Text nicht.
+    saveBtn->setText(QString::fromUtf8("💾"));
+    saveBtn->setToolTip(tr("Save as… — store the current parameters under a name"));
     auto* delBtn = new QToolButton(row);
     delBtn->setText(QString::fromUtf8("🗑"));
     delBtn->setToolTip(tr("Delete the selected preset (your own only)"));
@@ -3038,6 +3152,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     m_propPage = new QWidget(m_propContainer);
     auto* form = new QFormLayout(m_propPage);
     form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    // Beschriftung und Feld bleiben nebeneinander; ist das Dock zu schmal,
+    // scrollt man von den Beschriftungen zu den Feldern (S78, Vorgabe Patrik).
+    // Aussenrand kommt von m_propLayout, nicht von hier.
+    form->setRowWrapPolicy(QFormLayout::DontWrapRows);
+    form->setContentsMargins(0, 0, 0, 0);
 
     // Voreinstellungen (Knoten-Parameter-Konzept §3, Etappe 1): eine Zeile fuer
     // JEDEN Knotentyp — der Store arbeitet ueber effectTypeKey + nodeToJson und
@@ -3209,8 +3328,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                              std::function<std::vector<uint32_t>&(ChainNode&)> access,
                              const QString& toolTip) {
         auto* colorsWidget = new QWidget(m_propContainer);
-        auto* row = new QHBoxLayout(colorsWidget);
-        row->setContentsMargins(0, 0, 0, 0);
+        // Raster statt Zeile (S78): N Farbfelder in EINER Zeile machten die
+        // Seite mit jeder Farbe breiter. Je kFarbenJeZeile ein Umbruch, die
+        // +/−-Knoepfe in einer eigenen Zeile darunter.
+        constexpr int kFarbenJeZeile = 4;  // 4x24 + 3x3 < kFeldMinBreite
+        auto* grid = new QGridLayout(colorsWidget);
+        grid->setContentsMargins(0, 0, 0, 0);
+        grid->setSpacing(3);
         for (int ci = 0; ci < static_cast<int>(colors.size()); ++ci)
         {
             const uint32_t initC = colors[static_cast<size_t>(ci)];
@@ -3230,7 +3354,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                 cs[static_cast<size_t>(ci)] = c;
                         });
                     });
-            row->addWidget(sw);
+            grid->addWidget(sw, ci / kFarbenJeZeile, ci % kFarbenJeZeile);
         }
         auto* addC = new QToolButton(colorsWidget);
         addC->setText("+");
@@ -3251,9 +3375,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             QMetaObject::invokeMethod(
                 this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
         });
-        row->addWidget(addC);
-        row->addWidget(delC);
-        row->addStretch();
+        auto* knoepfe = new QHBoxLayout();
+        knoepfe->addWidget(addC);
+        knoepfe->addWidget(delC);
+        knoepfe->addStretch();
+        const int zeilen = (static_cast<int>(colors.size()) + kFarbenJeZeile - 1) /
+                           kFarbenJeZeile;
+        grid->addLayout(knoepfe, zeilen, 0, 1, kFarbenJeZeile);
+        grid->setColumnStretch(kFarbenJeZeile, 1);  // Felder links buendig
         addRow(field, label, colorsWidget, toolTip);
     };
     // Milkdrop-Sektionen tauschen die Referenz unten gegen ihr Original-Set
@@ -4786,9 +4915,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 QStringLiteral("https://www.shadertoy.com/view/... oder ID"));
             if (!p->herkunft.url.empty())
                 urlEdit->setText(QString::fromStdString(p->herkunft.url));
-            auto* importBtn = new QPushButton(tr("Importieren"), row);
+            // Symbol statt „Importieren" (S78): die Zeile muss wie jedes Feld
+            // auf kFeldMinBreite schrumpfen koennen; der Text steht im Tooltip.
+            auto* importBtn = new QToolButton(row);
+            importBtn->setText(QString::fromUtf8("⤓"));
             importBtn->setToolTip(
-                tr("Lädt den Shader über die offizielle API (nur Sichtbarkeit "
+                tr("Importieren: lädt den Shader über die offizielle API (nur Sichtbarkeit "
                    "'public+api'). Braucht einen API-Key (Feld darunter)."));
             auto* openBtn = new QToolButton(row);
             openBtn->setText(QStringLiteral("🌐"));
@@ -4832,7 +4964,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             });
             form->addRow(tr("API-Key"), keyEdit);
 
-            connect(importBtn, &QPushButton::clicked, this,
+            connect(importBtn, &QToolButton::clicked, this,
                     [this, path, urlEdit, keyEdit]() {
                         const QString id =
                             lumi::shadertoy::extractShaderId(urlEdit->text());
@@ -6848,7 +6980,104 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             m_propContainer));
     }
 
+    begrenzeFeldbreiten(form);
     m_propLayout->addWidget(m_propPage);
+    aktualisiereMindestbreite();
+}
+
+void MultiEffectPanel::begrenzeFeldbreiten(QFormLayout* form)
+{
+    // Texte (Beschreibungen, Hinweise, Fehler): umbrechen und die Seite nie
+    // verbreitern. Mindestbreite 1 statt der Qt-Vorgabe (= laengstes Wort):
+    // eine URL, ein Pfad oder eine lange Log-Zeile hat kein Leerzeichen und
+    // schob die Seite sonst beliebig auf — jetzt wird so ein Wort am Rand
+    // abgeschnitten, der Rest bricht um. Die Beschriftungen der Label-Spalte
+    // bleiben einzeilig: zu ihnen scrollt man, wenn das Dock schmal ist.
+    QSet<QWidget*> beschriftungen;
+    for (int r = 0; r < form->rowCount(); ++r)
+        if (QLayoutItem* it = form->itemAt(r, QFormLayout::LabelRole))
+            if (QWidget* w = it->widget()) beschriftungen.insert(w);
+    for (QLabel* label : m_propPage->findChildren<QLabel*>())
+    {
+        if (beschriftungen.contains(label)) continue;
+        label->setWordWrap(true);
+        label->setMinimumWidth(1);
+    }
+
+    // Combos: nicht nach dem laengsten Eintrag bemessen.
+    for (QComboBox* combo : m_propPage->findChildren<QComboBox*>()) begrenzeCombo(combo);
+
+    // Code- und Textfelder: an die Panelbreite gebunden, scrollen in sich
+    // (Vorgabe Patrik S78) — ihre Qt-Mindestbreite ist ohnehin klein, hier nur
+    // der gemeinsame Boden. Dasselbe fuer eingebettete Listen/Baeume (ISF).
+    for (QAbstractScrollArea* area : m_propPage->findChildren<QAbstractScrollArea*>())
+        if (qobject_cast<QPlainTextEdit*>(area) != nullptr ||
+            qobject_cast<QAbstractItemView*>(area) != nullptr)
+            area->setMinimumWidth(kFeldMinBreite);
+
+    // Felder: gemeinsame Mindestbreite. Einfache Bedienelemente bekommen sie
+    // fest (das deckelt zugleich breite Qt-Vorgaben, etwa Spinboxen mit
+    // grossem Wertebereich). Zusammengesetzte Zeilen (eigenes Layout) nur, wenn
+    // ihr Inhalt schmaler waere — eine feste Breite UNTER dem Inhalt wuerde
+    // ihre Knoepfe uebereinanderschieben.
+    for (int r = 0; r < form->rowCount(); ++r)
+    {
+        for (const auto rolle : {QFormLayout::FieldRole, QFormLayout::SpanningRole})
+        {
+            QLayoutItem* it = form->itemAt(r, rolle);
+            QWidget* w = it != nullptr ? it->widget() : nullptr;
+            if (w == nullptr || qobject_cast<QLabel*>(w) != nullptr) continue;
+            if (w->layout() == nullptr)
+                w->setMinimumWidth(kFeldMinBreite);
+            else if (w->minimumSizeHint().width() < kFeldMinBreite)
+                w->setMinimumWidth(kFeldMinBreite);
+        }
+    }
+}
+
+int MultiEffectPanel::editorRahmen() const
+{
+    // Alles, was im Editor zwischen Feld und Scrollarea-Aussenkante liegt. Den
+    // senkrechten Balken immer einrechnen: sonst wuerde das Panel beim
+    // Auftauchen des Balkens um dessen Breite zu schmal.
+    const QMargins innen = m_propLayout->contentsMargins();
+    return innen.left() + innen.right() + 2 * m_propScroll->frameWidth() +
+           m_propScroll->verticalScrollBar()->sizeHint().width();
+}
+
+void MultiEffectPanel::aktualisiereMindestbreite()
+{
+    // Queued: eben eingefuegte Kinder zaehlen im Layout erst, wenn Qt sie
+    // gezeigt hat (das passiert selbst queued nach addWidget).
+    QTimer::singleShot(0, this, [this]() {
+        if (m_propScroll == nullptr) return;
+        // Waechter: jede Zeile, die nicht auf kFeldMinBreite schrumpfen kann,
+        // haelt die ganze Feldspalte offen (Sichttest S78: die Preset-Zeile mit
+        // „Save as…"). Ins Log, damit ein neues Modul nicht unbemerkt ausschert.
+        if (m_propPage != nullptr)
+            if (auto* form = qobject_cast<QFormLayout*>(m_propPage->layout()))
+                for (int r = 0; r < form->rowCount(); ++r)
+                {
+                    QLayoutItem* it = form->itemAt(r, QFormLayout::FieldRole);
+                    QWidget* w = it != nullptr ? it->widget() : nullptr;
+                    if (w == nullptr) continue;
+                    const int breite = std::max(w->minimumWidth(),
+                                                w->minimumSizeHint().width());
+                    if (breite <= kFeldMinBreite) continue;
+                    QString name;
+                    if (QLayoutItem* l = form->itemAt(r, QFormLayout::LabelRole))
+                        if (auto* lbl = qobject_cast<QLabel*>(l->widget()))
+                            name = lbl->text();
+                    BasicLogger::logInfo(
+                        "Effect Chain: Feldzeile '" + name.toStdString() +
+                        "' braucht " + std::to_string(breite) + " px (> " +
+                        std::to_string(kFeldMinBreite) + ")");
+                }
+        const int seite = m_propPage != nullptr
+                              ? std::max(kFeldMinBreite, m_propPage->minimumSizeHint().width())
+                              : kFeldMinBreite;
+        m_propScroll->setMinimumWidth(seite + editorRahmen());
+    });
 }
 #if defined(_MSC_VER)
 #pragma warning(pop)

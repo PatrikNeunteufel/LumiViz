@@ -177,6 +177,57 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
 - **Navigation** über Index-Pfade (`QList<int>` im Item), nicht über rohe
   Zeiger — übersteht Baum-Rebuilds.
 
+### Feldbreiten (Session 78, Vorgabe Patrik)
+
+Jedes Feld jedes Moduls folgt der Dockbreite bis auf **mindestens 120 px**
+(`kFeldMinBreite`); zum Panelrand bleiben **mindestens 5 px** (`kPanelRand`).
+Ist das Dock schmaler als der Inhalt, **scrollt das Panel seitlich** — von den
+Beschriftungen zu den Feldern. Die **schmalste Dock-Stellung** ist
+`kPanelMinInhalt` = 2 × Feldbreite (240) samt Rändern (2×5 Panelrand +
+Editor-Innenrand/-Rahmen + senkrechter Balken, `editorRahmen()`) — gesetzt
+**synchron in `setupUI`**: Qt-ADS liest das Minimum beim Einhängen und bekommt
+spätere Änderungen nicht mit (Sichttest S78: queued gesetzt → Dock bis 0 px).
+Konstanten oben in `MultiEffectPanel.cpp`.
+
+- **Aufbau:** Panel → äußere Scrollarea (nur waagrecht, rahmenlos) → Inhalt
+  (Hinweis, Toolbar, Splitter aus Baum und Editor). Das Panel meldet
+  `scrollsItself()`, `PanelManager` hängt es **ohne** die automatische
+  Qt-ADS-Scrollarea ein (`ForceNoScrollArea`) — keine doppelte Verschachtelung,
+  die Mindestbreite des Panels gilt direkt fürs Dock — dafür zusätzlich
+  `MinimumSizeHintFromContentMinimumSize`, sonst meldet Qt-ADS fest 60×40 als
+  Minimum und das Panel ließ sich schmaler als 120 px ziehen (Sichttest S78).
+  Das feste Minimum 420 px (bis S77) ist weg.
+- **Ab wann seitlich gescrollt wird**, ergibt sich aus Toolbar und aktueller
+  Editor-Seite (`aktualisiereMindestbreite`, queued nach jedem Aufbau;
+  senkrechter Balken immer eingerechnet). Breite Module wie der 7×7-Kernel
+  scrollen früher — sie verbreitern das Dock nicht.
+- **Editor-Scrollarea** nur senkrecht; Beschriftung und Feld bleiben
+  nebeneinander (`DontWrapRows`), Beschriftungen einzeilig.
+- **Zentraler Nachlauf** `begrenzeFeldbreiten` am Ende von
+  `buildPropertyEditor`, gilt für jeden Knotentyp ohne Zutun:
+  - Beschreibungs-/Hinweis-/Fehlertexte brechen um, Mindestbreite 1 —
+    ein Wort ohne Leerzeichen (URL, Pfad, Log-Zeile) wird am Rand
+    **abgeschnitten**, statt die Seite zu verbreitern.
+  - Combos nach 8 Zeichen bemessen, nicht nach dem längsten Eintrag; die
+    aufgeklappte Liste zeigt die Einträge voll (`begrenzeCombo`).
+  - Code-/Textfelder und eingebettete Listen: an die Panelbreite gebunden,
+    **scrollen in sich**.
+  - Einfache Felder bekommen 120 px fest (deckelt auch breite Qt-Vorgaben);
+    zusammengesetzte Zeilen nur, wenn ihr Inhalt schmaler wäre.
+  - **Die Feldspalte ist so breit wie ihre breiteste Zeile** — eine einzige
+    Zeile über 120 px hält alle Felder offen. Zusammengesetzte Zeilen müssen
+    deshalb selbst auf 120 px passen: Symbolknöpfe statt Text (Preset 💾,
+    Shadertoy-Import ⤓, Text im Tooltip), Combos nur 3 Zeichen Boden.
+    Ausnahme bewusst: der 7×7-Kernel (scrollt früher). **Wächter:**
+    `aktualisiereMindestbreite` schreibt jede Feldzeile über 120 px ins Log
+    (`Effect Chain: Feldzeile '…' braucht N px`).
+- **Farbtafel** als Raster (5 je Zeile, +/− darunter) statt einer Zeile, die mit
+  jeder Farbe breiter wurde.
+- **Effektliste (Baum):** Spalten-Mindestbreiten Name 120 · Auge 30 · Typ 90 ·
+  Beschreibung 80; die letzte füllt den Rest (`ChainTreeWidget::fitColumns`
+  statt `stretchLastSection`). Passt die Summe nicht, scrollt **nur der Baum**
+  mit eigenem Balken (Entscheid 2a).
+
 ## Bekannte Rauheiten (Sichttest-Nachzug)
 
 - Skript-Textfelder committen bei **jedem Tastendruck** (der Render-Thread

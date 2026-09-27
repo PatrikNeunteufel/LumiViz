@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.73.0
-> **Datum:** 2026-09-23 (Session 77)
+> **Version:** 1.74.0
+> **Datum:** 2026-09-27 (Session 78)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -1742,6 +1742,17 @@ Visualizer" oder Neustart. Für den **ersten** Visualizer wäre Ausblenden
 (ohne Delete) konsistenter mit den Panels. Entscheid offen; Details
 `include/UI/managers/DockManager.md` §5.6.
 
+### ⬜ Feldbreiten-Vertrag nur in der Effektkette (S78)
+
+Seit S78 gilt in der Effektkette: Felder ≥ 120 px, 5 px Panelrand,
+seitliches Scrollen statt Überbreite, Dock-Minimum 240 px + Ränder
+(`include/UI/panels/MultiEffectPanel.md` §Feldbreiten). Die übrigen Panels
+(ConfigPanel, Settings, Playlist …) folgen dem noch nicht — sie hängen weiter
+in der automatischen Qt-ADS-Scrollarea, ConfigPanel mit eigenen festen
+Mindestbreiten. Übertragen nur auf Wunsch. Offen außerdem: die Log-Zeilen
+`Effect Chain: Feldzeile '…' braucht N px` einmal durch alle Module sichten
+(bekannt breit: 7×7-Kernel, bewusst).
+
 ### ➜ Shadertoy-Modul (Entscheid Patrik S64 — geplant, Strang S)
 
 Eigener Node-Typ mit **modernem Regelwerk**, inkl. **URL-/ID-Import**
@@ -2523,6 +2534,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.74.0 | 2026-09-27 | Session 78 (Vorgabe Patrik: Feldbreiten der Effektkette) — Bestandsaufnahme aller ~90 Modul-Editoren, dann zentraler Breiten-Vertrag in `MultiEffectPanel`: Felder ≥ 120 px, 5 px Panelrand, seitliches Scrollen des Panels statt Überbreite, Dock-Minimum 240 px + Ränder, Effektliste mit Spalten-Mindestbreiten und eigenem Balken. Von Patrik abgenommen. Neu in §7: Vertrag nur in der Effektkette |
 | 1.73.0 | 2026-09-23 | Session 77 (Bugfix, Meldung Patrik: Visualizer nach einer Mausbewegung verschwunden, auch nach Neustart) — im gespeicherten Dock-Layout fehlte `visualizer` (nur ein leerer Floating-Container), Qt-ADS versteckte ihn deshalb als *unassigned*; Reset Layout spielte dasselbe Layout ab, View > Panels kannte ihn nicht. Behoben in `DockManager` 2.2.0 (§5.6): fehlende Visualizer nach Restore/Reset andocken, Reset aufs Werks-Layout, Visualizer im Panels-Menü. Neu in §7: Tab-X löscht den Visualizer (Entscheid offen) |
 | 1.72.0 | 2026-08-09 | Session 74 (das Pruefsignal, Auftrag Patrik: „fuer Vergleiche synthetisch, aber aus dem MP3 intensiver synthetisiert") — **das synthetische Signal kommt jetzt aus EINER Quelle** (`projects/exec/common/SynthAudio.hpp`) statt aus vier Kopien. Bis S74 stand die Formel in AvsStandalone, MilkdropStandalone, `tools/AvsRef` und `tools/MilkdropRef` je einmal, jedes Mal mit dem Kommentar „formelgleich zu …" — genau die Sorte Abmachung, die still auseinanderlaeuft. Der Kopf ist bewusst Qt-frei und C++14-tauglich, damit das 32-bit-AvsRef und der D3D9-MilkdropRef ihn uebersetzen. Dabei festgehalten, was vorher unausgesprochen war: die WELLENFORM war in allen vier gleich, das SPEKTRUM nicht — der AVS-Pfad legt einen Beat-Faktor ueber alle Bins, der MilkDrop-Pfad gibt Bass/Mitten/Hoehen eigene Huellkurven (S64, sonst 0/0-NaN bei Banddifferenzen). Beide Fassungen bleiben, `Geschmack` waehlt aus; Zusammenlegen waere ein Eingriff in Messreihen und gehoert eigens entschieden. **NEU `--audio-muster klassisch|musik` an ALLEN VIER Werkzeugen** plus `compare_avsref.py`: `musik` traegt acht log-verteilte Bandhuellkurven je Bild und eine Beat-Spur, gewonnen aus 20 s echter Aufnahme, und synthetisiert daraus NEU (acht Sinus mit musikalisch bewegten Amplituden). Es wird keine Musik abgespielt, das Profil laesst sich nicht zurueckrechnen — und weil beide Seiten dieselbe Datei einbinden, **bleiben Referenzvergleiche gueltig**, anders als bei `--audio-datei`. Erzeugt wird das Profil mit `AvsStandalone --audio-profil-schreiben` (Analyse: FFT je Bild, Bandnormierung je Band, Onset-Erkennung, Tempo per Autokorrelation mit 120-BPM-Prior — ohne den Prior landete die Schaetzung zweimal eine Oktave daneben, 257 dann 63 statt ~129 BPM). **REGRESSION BELEGT:** `klassisch` ist bit-identisch zu vor dem Umbau (gleicher PNG-Hash), und der Referenzvergleich liefert exakt die S73-Zahlen (`09_rotating_things` MAE 0,010 / `02_flowers` 0,015). Im AVS-Pfad kommt der Beat im Musik-Muster aus der Beat-SPUR — dafuer `MultiEffectVisualizer::setBeatTrackOverride()` als Geschwister des vorhandenen `setBeatPeriodOverride()` (Test-Hook, wie dieser). **ZWEI BEFUNDE NEBENBEI**, beide in §8: `02_flowers` verliert im Musik-Muster seinen dMaxLuma-Befund (0,150 → 0,017) — noch kein Freispruch, der Beat unterscheidet sich zwischen den Laeufen; und **MilkdropRef liess sich seit S67 nicht mehr voll neu bauen** (`/FI ref_msgbox.h` zog `<cstdio>` und namenlose Parameter in die neun `.c`-Dateien des ns-eel2-Kerns), gefunden und behoben. Tests 593 gruen, alle vier Werkzeuge gebaut |
 | 1.71.0 | 2026-08-09 | Session 74 (echte Musik in den Standalones) — **Aufgabe 6 des Kalibrier-Plans umgesetzt, vorgezogen auf Wunsch Patriks:** beide Standalones nehmen jetzt eine Audiodatei statt des synthetischen Sinus (`--audio-datei`, `--audio-start`, `--audio-gain`, `--audio-stumm`). Gemeinsames Bauteil `projects/exec/common/AudioDateiQuelle.{hpp,cpp}` — dekodiert die Datei per `QAudioDecoder` EINMAL komplett (kein BASS noetig, Qt Multimedia lag schon dabei), liefert je Bild 576 Stereo-Rahmen PCM plus 512 Baender aus einer Hann-gefensterten 1024-Punkt-FFT, linear 0..22050 Hz — **dasselbe Bandmodell, das `MilkdropVisualizer::updateAudio` fuer die MilkLoudness-Terzen (200/761,2/2897,1/11025 Hz) voraussetzt**. Abgetastet wird nach BILD-INDEX (`t = Bild/60`), nicht nach Echtzeit: zwei Laeufe mit derselben Datei und derselben Bildzahl sind bitgleich — **belegt an einer Sequenz: 7 von 7 Bildern identisch** (90 Frames, `--save-every 15`). Interaktiv laeuft die Datei zusaetzlich HOERBAR mit (QAudioSink im Pull-Betrieb ueber das dekodierte PCM); `--auto` und `--ab` bleiben still, damit Stapellaeufe deterministisch bleiben. **DREIFACH ABGESICHERT, weil echte Musik jeden Referenzvergleich wertlos macht** (AvsRef/MilkdropRef erzeugen ihr Audio selbst): `[Audio] ACHTUNG`-Zeile bei jedem Lauf, harte Sperre in `compare_avsref.py` (`run_lumi` wirft bei `--audio-datei`), und die hoerbare Ausgabe schaltet sich im Stapellauf selbst ab. **EIGENER FEHLER, gefunden und behoben:** der erste Kopierpfad rief `QAudioBuffer::constData<T>()` je Sample (~21 Mio. Aufrufe bei vier Minuten) — Ladezeit **68 s**, und der Standalone sah dabei aus wie aufgehaengt, dieselbe Taeuschung wie beim Debug-Build. Basiszeiger und Formatverzweigung aus der Schleife gezogen: **3,8 s**. Werkzeug-Wegleitung 1.1.0 (siebte Falle + Rezept), Kalibrier-Plan 1.1.0 (Aufgabe 6 ✅) |

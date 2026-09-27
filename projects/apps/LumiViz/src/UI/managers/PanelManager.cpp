@@ -278,7 +278,20 @@ ads::CDockWidget* PanelManager::createDockWidget(const QString& panelId,
     // Use Qt-ADS 4.4.x Factory API
     auto* dockWidget = m_dockManager->createDockWidget(title);
     dockWidget->setObjectName(panelId);
-    dockWidget->setWidget(content);
+    // Panels mit eigenen Scrollareas ohne die automatische ADS-Scrollarea
+    // einhaengen — keine doppelte Verschachtelung, und die Mindestbreite des
+    // Panels gilt direkt fuers Dock (S78).
+    const auto* panel = qobject_cast<PanelBase*>(content);
+    const bool eigeneScrollareas = panel != nullptr && panel->scrollsItself();
+    dockWidget->setWidget(content, eigeneScrollareas
+                                       ? ads::CDockWidget::ForceNoScrollArea
+                                       : ads::CDockWidget::AutoScrollArea);
+    // Qt-ADS meldet sonst fest 60x40 als Minimum, gleich was das Panel
+    // verlangt — die Mindestbreite des Panels (setMinimumWidth) gilt dann
+    // nicht fuers Dock (Sichttest S78: Effektkette schmaler als 120 px).
+    if (eigeneScrollareas)
+        dockWidget->setMinimumSizeHintMode(
+            ads::CDockWidget::MinimumSizeHintFromContentMinimumSize);
 
     // Configure dock widget features
     dockWidget->setFeature(ads::CDockWidget::DockWidgetClosable, true);
