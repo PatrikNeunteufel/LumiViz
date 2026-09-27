@@ -1,9 +1,9 @@
 # LumiViz — Formelfelder je Modul (Inventar und Vorschläge)
 
-> **Version:** 1.4.0
+> **Version:** 1.5.0
 > **Datum:** 2026-09-27
 > **Typ:** Arbeitsdokument — Bestandsaufnahme aller 84 Palettenmodule + Vorschlagsliste
-> **Status:** Aktiv — Blöcke A–D umgesetzt, E teilweise (S79); F offen
+> **Status:** Aktiv — Blöcke A–E umgesetzt (S79); F offen (eigene Konzept-Session)
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Knoten_Parameter_Konzept.md](Knoten_Parameter_Konzept.md) (Strang D, §6) ·
 > [Skript_Variablen_Konzept.md](Skript_Variablen_Konzept.md) ·
@@ -65,14 +65,14 @@ Block A (S79).
 | Modul | Herkunft | Slots | Variablen | Kandidaten |
 |---|---|---|---|---|
 | Effect List | AVS | init/frame (`useCode`) | enabled, clear, beat, alphain, alphaout, w, h | blendIn/Out-Modus, onBeatFrames |
-| Host Group | LumiViz | — | — | crossfadeSeconds, outAdjustAlpha |
+| Host Group | LumiViz | PS (nach den Kindern) | outadjustalpha ✚ | — (crossfadeSeconds bewusst Regler, Sync-Regel) |
 | Clear | AVS | PS | blend | **color** |
 | Fadeout | AVS | PS | fadelen | **color** (Zielfarbe) |
 | OnBeat Clear | AVS | PS | everynbeats | color, blend |
 | Buffer Save | AVS | PS | slot, dir, adjustalpha | Blend-Modus |
 | Buffer Blend | APE | PS | buffera, bufferb, mode | — |
 | Custom BPM | AVS | PS | arbitraryms, skipcount, skipfirst ✚ | invert |
-| Set Render Mode | AVS | — | — | **lineWidth, adjustAlpha**, lineBlend |
+| Set Render Mode | AVS | PS ✚ | linewidth, lineblend, adjustalpha, overrideblend ✚ | — |
 | Render Scale | LumiViz | — | — | divisor |
 | Global Variables | APE | init/frame/beat | reg00..99, gmegabuf | — |
 | Video Delay | APE | PS | delay | useBeats |
@@ -80,11 +80,11 @@ Block A (S79).
 | Debug Bars | LumiViz | — | — | color, orbitSpeed |
 | Milkdrop (Preset-Pipeline) | MilkDrop | per-frame-init/per-frame/per-pixel + HLSL | voller MilkDrop-Satz | meshX/Y, Puffer-Fading; warpAnimSpeed, warpScale |
 | Custom Wave / Shape / Sprite | MilkDrop | init/frame/point bzw. init/frame | MilkDrop-Wave-/Shape-Satz | Wave: samples, sep, scaling, smoothing · Shape: instances, texZoom |
-| Shadertoy (GLSL) | LumiViz | GLSL Image + Buffer A–D | iTime …, bass…beat, Audio-Textur | **blend**, eigene Uniforms |
-| Mesh Warp (GLSL) | LumiViz | GLSL `warp()` + PS | gridx, gridy, mixamount | wrapUv |
-| GPU-Partikel | LumiViz | GLSL `kraft()` + PS | spawnx/y, spread, speed, dir, fan, gravx/y, drag, life, size | **colorStart/End**, sizeEndFactor, lifeJitter |
-| Pixel Filter (GLSL) | LumiViz | GLSL `farbe()` + PS | mixamount | eigene Uniforms |
-| ISF Filter | LumiViz (ISF) | GLSL frag + vertex | ISF-Builtins + Audio | **jeder ISF-INPUT**, blend, mixAmount |
+| Shadertoy (GLSL) | LumiViz | GLSL Image + Buffer A–D + PS ✚ | blend ✚, eigene Uniforms ✚; GLSL: iTime …, bass…beat, Audio-Textur | — |
+| Mesh Warp (GLSL) | LumiViz | GLSL `warp()` + PS | gridx, gridy, mixamount, eigene Uniforms ✚ | wrapUv |
+| GPU-Partikel | LumiViz | GLSL `kraft()` + PS | spawnx/y, spread, speed, dir, fan, gravx/y, drag, life, size, colorstart/end_* ✚, sizeendfactor ✚, lifejitter ✚, eigene Uniforms ✚ | — |
+| Pixel Filter (GLSL) | LumiViz | GLSL `farbe()` + PS | mixamount, eigene Uniforms ✚ | — |
+| ISF Filter | LumiViz (ISF) | GLSL frag + vertex + PS ✚ | jeder Regler unter seinem key ✚, blend ✚, mixamount ✚ | — |
 | Video/Kamera | LumiViz | PS | speed, opacity | fit, blend |
 | SuperScope | AVS | init/frame/beat/point | n, i, v, b, w, h, t, x, y, red/green/blue, linesize, skip, drawmode | colorCycleFrames, Farbtafel |
 | Simple (Scope) | AVS | PS | mode, channel, position | Farben |
@@ -254,15 +254,15 @@ Kopie erst ab der Rückleseposition — Terrains Neuaufbau des Gitters liest
 echten MilkDrop laufen); Color-Map-Verlaufsstopps (Liste, keine Einzelwerte —
 gehört zu F).
 
-### E — Module ganz ohne Formelzugang (teilweise ✅, S79)
+### E — Module ganz ohne Formelzugang ✅ (S79)
 
 | Modul | Stand |
 |---|---|
 | Set Render Mode | ✅ Parameter-Skript mit `linewidth`, `lineblend`, `adjustalpha`, `overrideblend`. Nebenbei behoben: der Serializer schrieb `adjustAlpha` nie (Wert fiel beim Speichern auf 128) — Regressionstest in `test_ParamScript.cpp` |
 | ISF Filter | ✅ Parameter-Skript: **jeder Regler unter seinem `key`** (Vertrag von `ParamWert::key`); Punkt2D als `<key>_x/_y`, Farbe als `<key>_r/_g/_b/_a`, Bool 0/1; kollidiert ein key mit einem Host-Namen (`b`, `w`, `h`, Audio-Satz, `blend`, `mixamount`), heißt er `in_<key>`. Dazu `blend`, `mixamount`. Die Regler waren schon Uniforms (je Frame gesetzt) — kein Neukompilieren. Wirkungstest: `test_ScriptVariablesGl.cpp` |
-| Shadertoy / Pixel Filter | `blend` + eigene Uniforms, die ein Skript setzt |
-| Host Group | `crossfadeseconds`, `outadjustalpha` |
-| Text (Import) | `fontheight`, Farbe, `xshift`/`yshift` |
+| Shadertoy, Pixel Filter, Mesh Warp, GPU-Partikel | ✅ **Entscheid 1a:** jedes Uniform, das der Code **selbst deklariert** (`uniform float wobble;`), ist Skriptvariable gleichen Namens; `float`/`int`/`bool` direkt, `vec2..4` als `_x/_y/_z/_w`; Sampler, Arrays, Matrizen nicht. Kollision mit Host-Namen oder einem Regler des Knotens → `in_<name>`. Startwert 0, die Fortschreibung hält ihn. Shadertoy bekommt dafür Init/Frame/Beat (+ `blend`) und sammelt aus Image- **und** Buffer-Code; gesetzt wird in jedem Pass. Parser: `EigeneUniforms.hpp` (GL-frei, `test_EigeneUniforms.cpp`); Wirkung: `test_ScriptVariablesGl.cpp` |
+| Host Group | ✅ **Entscheid 2a:** Parameter-Skript nur mit `outadjustalpha` — die Crossfade-Dauer bleibt Regler (Sync-Regel §2.4). Läuft **nach den Kindern im gruppeneigenen ScriptContext**, sieht also deren `reg`/`gmegabuf` dieses Frames |
+| Text (Import) | offen — nur per Import erreichbar; bei Bedarf `fontheight`, Farbe, `xshift`/`yshift` |
 
 ### F — Generischer Weg (Konzept offen)
 

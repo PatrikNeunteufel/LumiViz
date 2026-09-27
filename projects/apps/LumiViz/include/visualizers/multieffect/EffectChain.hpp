@@ -282,6 +282,14 @@ struct HostGroupParams
     double crossfadeSeconds = 2.0;  ///< Blend-Dauer beim Gruppen-Wechsel
     int curveIn = 0;                ///< 0 = linear (weitere Kurven mit HG2)
     int curveOut = 0;               ///< 0 = linear
+    /// Parameter-Skript (Strang D, Block E S79): nur `outadjustalpha` (+
+    /// `b`/`w`/`h` + Audio-Satz) — die Crossfade-Dauer bleibt Regler, weil sie
+    /// fuer alle Gruppen synchron gilt (Entwurf §2.4). Laeuft nach den Kindern
+    /// im gruppeneigenen ScriptContext (sieht deren reg/gmegabuf dieses
+    /// Frames). Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 
     std::string sourceFile;  ///< importierte .lvfx-Quelle ("" = leer angelegt)
 };
@@ -2395,6 +2403,13 @@ struct ShadertoyParams
     /// Woher der Shader stammt (S3-Import; Panel zeigt es an). Seit S72 die
     /// gemeinsame `Herkunft` statt vier eigener Felder — s. dort.
     Herkunft herkunft;
+    /// Parameter-Skript (Strang D, Block E S79): `blend` und jedes Uniform,
+    /// das der Code selbst deklariert (`uniform float wobble;` → `wobble`,
+    /// vecN → `_x/_y/_z/_w`; aus Image- und Buffer-Code) + `b`/`w`/`h` +
+    /// Audio-Satz. Leer = kein Skript.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /// iChannel-Index der Audio-Textur in einer Bindungs-Liste (-1 = keiner)

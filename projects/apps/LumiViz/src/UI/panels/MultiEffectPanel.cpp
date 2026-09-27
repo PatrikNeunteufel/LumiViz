@@ -4847,6 +4847,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 [](ChainNode& n, int v) {
                     std::get<ShadertoyParams>(n.params).blend = v;
                 });
+        // Block E (S79, Entscheid 1a): `blend` + eigene Uniforms per Formel.
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ShadertoyParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ShadertoyParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ShadertoyParams>(n.params).beatCode = std::move(v); });
 
         // --- Buffer A..D (S4): je ein Code-Editor + Bindungen + Entfernen ----
         for (int bi = 0; bi < static_cast<int>(p->buffers.size()) && bi < 4; ++bi)
@@ -5518,6 +5522,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                [](ChainNode& n, int v) {
                    std::get<HostGroupParams>(n.params).outAdjustAlpha = v;
                });
+        // Block E (S79, Entscheid 2a): nur `outadjustalpha` per Formel.
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<HostGroupParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<HostGroupParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<HostGroupParams>(n.params).beatCode = std::move(v); });
 
         auto* syncNote = new QLabel(
             tr("Hinweis: Die Crossfade-Dauer gilt synchron fuer ALLE "

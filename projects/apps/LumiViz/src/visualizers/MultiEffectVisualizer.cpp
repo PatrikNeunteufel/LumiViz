@@ -12,6 +12,7 @@
 #include "visualizers/MultiEffectVisualizer.hpp"
 
 #include "visualizers/multieffect/AvsChainTranslator.hpp"
+#include "visualizers/multieffect/EigeneUniforms.hpp"  // Block E (S79)
 #include "visualizers/multieffect/ChainSerializer.hpp"
 #include "visualizers/multieffect/ShadertoyWrapper.hpp"
 #include "visualizers/multieffect/MeshWarpWrapper.hpp"      // Mesh-Warp-Node (G1, S69)
@@ -2708,15 +2709,103 @@ struct FarbKopie
     }
 };
 
-/// Skriptname eines ISF-Reglers (Block E, S79): der `key` selbst — ausser er
-/// kollidiert mit einem Namen, den der Skript-Host belegt; dann `in_<key>`.
+/// Skriptname eines Shader-Werts (Block E, S79): der Name selbst — ausser er
+/// kollidiert mit einem Namen des Skript-Hosts (`b`, `w`, `h`, Audio-Satz)
+/// oder einem Regler des Knotens (`belegt`); dann `in_<name>`.
+std::string skriptNameOhneKollision(const std::string& key,
+                                    const std::set<std::string>& belegt)
+{
+    static const std::set<std::string> kHost = {"b",    "w",   "h",   "bass",
+                                                "mid",  "treb", "treble", "vol",
+                                                "beat", "time"};
+    return (kHost.count(key) != 0 || belegt.count(key) != 0) ? "in_" + key : key;
+}
+
+/// Skriptname eines ISF-Reglers (Block E, S79).
 std::string isfSkriptName(const std::string& key)
 {
-    static const std::set<std::string> kBelegt = {
-        "b", "w", "h", "bass", "mid", "treb", "treble", "vol", "beat", "time",
-        "blend", "mixamount"};
-    return kBelegt.count(key) != 0 ? "in_" + key : key;
+    return skriptNameOhneKollision(key, {"blend", "mixamount"});
 }
+
+/// Block E (S79, Entscheid 1a): die Uniforms, die der Code eines GLSL-Knotens
+/// selbst deklariert (`uniform float wobble;`), als Frame-Kopien fuer sein
+/// Parameter-Skript. Startwert 0 (GLSL-Vorgabe); die Fortschreibung des
+/// Parameter-Skripts haelt den Wert von Frame zu Frame.
+class EigeneUniformKopien
+{
+public:
+    /// Uniforms eines Codes aufnehmen (mehrere Codes: je Name einmal).
+    void sammle(const std::string& code, const std::set<std::string>& belegt)
+    {
+        for (const auto& u : lumi::multieffect::eigeneUniforms(code))
+        {
+            bool schon = false;
+            for (const auto& e : m_uniforms) schon = schon || e.name == u.name;
+            if (schon) continue;
+            m_uniforms.push_back(u);
+            const std::string basis = skriptNameOhneKollision(u.name, belegt);
+            if (u.typ == lumi::multieffect::EigenesUniform::Typ::Vec)
+            {
+                for (int c = 0; c < u.komponenten; ++c)
+                {
+                    m_namen.push_back(basis + "_" + "xyzw"[c]);
+                    m_werte.push_back(0.0);
+                }
+            }
+            else
+            {
+                m_namen.push_back(basis);
+                m_werte.push_back(0.0);
+            }
+        }
+    }
+
+    /// Bindungen an die Liste des Parameter-Skripts haengen. Erst nach dem
+    /// letzten `sammle` rufen — die Zeiger zeigen in `m_werte`.
+    template <class ParamVarT>
+    void haengeAn(std::vector<ParamVarT>& vars)
+    {
+        for (std::size_t i = 0; i < m_namen.size(); ++i)
+            vars.push_back({m_namen[i].c_str(), &m_werte[i]});
+    }
+
+    /// Die (vom Skript gerechneten) Werte auf ein gebundenes Programm setzen.
+    /// Ein Programm ohne dieses Uniform ignoriert den Aufruf.
+    void setze(QOpenGLShaderProgram& p) const
+    {
+        using Typ = lumi::multieffect::EigenesUniform::Typ;
+        std::size_t k = 0;
+        for (const auto& u : m_uniforms)
+        {
+            const char* n = u.name.c_str();
+            switch (u.typ)
+            {
+                case Typ::Int:
+                case Typ::Bool:
+                    p.setUniformValue(n, static_cast<GLint>(std::lround(m_werte[k++])));
+                    break;
+                case Typ::Vec:
+                {
+                    float v[4] = {0, 0, 0, 0};
+                    for (int c = 0; c < u.komponenten; ++c)
+                        v[c] = static_cast<float>(m_werte[k++]);
+                    if (u.komponenten == 2) p.setUniformValue(n, QVector2D(v[0], v[1]));
+                    else if (u.komponenten == 3) p.setUniformValue(n, QVector3D(v[0], v[1], v[2]));
+                    else p.setUniformValue(n, QVector4D(v[0], v[1], v[2], v[3]));
+                    break;
+                }
+                case Typ::Float:
+                    p.setUniformValue(n, static_cast<float>(m_werte[k++]));
+                    break;
+            }
+        }
+    }
+
+private:
+    std::vector<lumi::multieffect::EigenesUniform> m_uniforms;
+    std::vector<std::string> m_namen;  ///< Skriptname je Komponente
+    std::vector<double> m_werte;
+};
 
 /// Fuer Module mit eigenem Skript-Host (Fraktale, 3D): `<name>_r/_g/_b` setzen
 /// bzw. nach dem Lauf zuruecklesen.
@@ -4366,6 +4455,14 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
     }
 
     m_activePool = prevPool;
+    // Block E (S79, Entscheid 2a): Parameter-Skript der Gruppe — NACH den
+    // Kindern und noch im gruppeneigenen ScriptContext, damit es deren
+    // reg/gmegabuf dieses Frames sieht. Nur die Ausgangs-Deckkraft.
+    double vOutAlpha = params.outAdjustAlpha;
+    runParamScript(m_leafRuntimes[node.nodeId], "hostgroup", params.initCode,
+                   params.frameCode, params.beatCode, {{"outadjustalpha", &vOutAlpha}});
+    const int outAlpha = static_cast<int>(std::clamp(vOutAlpha, 0.0, 255.0));
+
     m_activeContext = prevCtx;
     m_groupActiveSeconds = prevGroupSeconds;
 
@@ -4381,7 +4478,7 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
         if (curved >= 0.999)
         {
             blendPass(active(), runtime.surface.current()->texture(),
-                      params.blendOut, params.outAdjustAlpha, 0, false);
+                      params.blendOut, outAlpha, 0, false);  // Strang D
         }
         else
         {
@@ -13120,6 +13217,20 @@ void MultiEffectVisualizer::runShadertoy(const ChainNode& node,
     auto* f = QOpenGLContext::currentContext()->functions();
     const int nBuffers = static_cast<int>(std::min<std::size_t>(params.buffers.size(), 4));
 
+    // Parameter-Skript (Block E, S79): `blend` und die selbst deklarierten
+    // Uniforms aller Paesse (Image + Buffer A..D) — Entscheid 1a.
+    double vBlend = params.blend;
+    EigeneUniformKopien eigene;
+    eigene.sammle(params.code, {"blend"});
+    for (int i = 0; i < nBuffers; ++i)
+        eigene.sammle(params.buffers[static_cast<std::size_t>(i)].code, {"blend"});
+    {
+        std::vector<ParamVar> vars = {{"blend", &vBlend}};
+        eigene.haengeAn(vars);
+        runParamScript(rt, "shadertoy", params.initCode, params.frameCode,
+                       params.beatCode, vars);
+    }
+
     // Kompilieren nur bei Code-Wechsel (Snapshot-Vertrag wie fracCompiled) —
     // der Snapshot umfasst ALLE Pässe; Bindungs-Änderungen brauchen keinen
     // Rebuild (Texturen/Uniforms je Draw). `#line 1` zeigt Nutzer-Zeilen.
@@ -13226,6 +13337,7 @@ void MultiEffectVisualizer::runShadertoy(const ChainNode& node,
         p.setUniformValue(
             "iDate", QVector4D(2026.0f, 1.0f, 1.0f, static_cast<float>(m_scriptClock)));
         p.setUniformValue("iSampleRate", 44100.0f);
+        eigene.setze(p);  // Block E: eigene Uniforms, in jedem Pass
         for (int c = 0; c < 4; ++c)
         {
             const int bind = input[static_cast<std::size_t>(c)];
@@ -13314,7 +13426,7 @@ void MultiEffectVisualizer::runShadertoy(const ChainNode& node,
     p.setUniformValue("_lumiPrev", 4);
     f->glActiveTexture(GL_TEXTURE4);
     f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
-    p.setUniformValue("_lumiBlend", std::clamp(params.blend, 0, 2));
+    p.setUniformValue("_lumiBlend", std::clamp(static_cast<int>(vBlend), 0, 2));  // Strang D
     f->glActiveTexture(GL_TEXTURE0);
 
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -13337,9 +13449,14 @@ void MultiEffectVisualizer::runMeshWarp(const ChainNode& node,
     double gridX = params.gridX;
     double gridY = params.gridY;
     double mixAmount = params.mixAmount;
+    // Block E (S79, Entscheid 1a): selbst deklarierte Uniforms des Codes
+    // sind Skriptvariablen gleichen Namens.
+    EigeneUniformKopien eigene;
+    eigene.sammle(params.code, {"gridx", "gridy", "mixamount"});
+    std::vector<ParamVar> vars = {{"gridx", &gridX}, {"gridy", &gridY}, {"mixamount", &mixAmount}};
+    eigene.haengeAn(vars);
     runParamScript(rt, "meshwarp", params.initCode, params.frameCode,
-                   params.beatCode,
-                   {{"gridx", &gridX}, {"gridy", &gridY}, {"mixamount", &mixAmount}});
+                   params.beatCode, vars);
     const int gx = std::clamp(static_cast<int>(std::lround(gridX)),
                               lumi::meshwarp::kMinGrid, lumi::meshwarp::kMaxGridX);
     const int gy = std::clamp(static_cast<int>(std::lround(gridY)),
@@ -13418,6 +13535,7 @@ void MultiEffectVisualizer::runMeshWarp(const ChainNode& node,
     p.setUniformValue("uMixAmount",
                       static_cast<float>(std::clamp(mixAmount, 0.0, 1.0)));
     p.setUniformValue("uWrap", params.wrapUv ? 1 : 0);
+    eigene.setze(p);  // Block E
     p.setUniformValue("bass", bass);
     p.setUniformValue("mid", mid);
     p.setUniformValue("treb", treb);
@@ -13458,8 +13576,14 @@ void MultiEffectVisualizer::runPixelFilter(const ChainNode& node,
 
     // Parameter-Skript (Strang D): Regler je Frame rechenbar.
     double mixAmount = params.mixAmount;
+    // Block E (S79, Entscheid 1a): selbst deklarierte Uniforms des Codes
+    // sind Skriptvariablen gleichen Namens.
+    EigeneUniformKopien eigene;
+    eigene.sammle(params.code, {"mixamount"});
+    std::vector<ParamVar> vars = {{"mixamount", &mixAmount}};
+    eigene.haengeAn(vars);
     runParamScript(rt, "pixelfilter", params.initCode, params.frameCode,
-                   params.beatCode, {{"mixamount", &mixAmount}});
+                   params.beatCode, vars);
 
     // Kompilieren nur bei Code-Wechsel (Shadertoy-Muster; #line 1 = Nutzer-
     // Zeilen im Treiber-Log). Fehler ins geteilte stError — der Panel-Dialog
@@ -13506,6 +13630,7 @@ void MultiEffectVisualizer::runPixelFilter(const ChainNode& node,
     p.setUniformValue("uFrame", rt.pfFrame);
     p.setUniformValue("uMixAmount",
                       static_cast<float>(std::clamp(mixAmount, 0.0, 1.0)));
+    eigene.setze(p);  // Block E
     p.setUniformValue("bass", bass);
     p.setUniformValue("mid", mid);
     p.setUniformValue("treb", treb);
@@ -13983,9 +14108,11 @@ void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,
     // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
     double dynSizeEndFactor = params.sizeEndFactor;
     double dynLifeJitter = params.lifeJitter;
-    runParamScript(rt, "gpuparticles", params.initCode, params.frameCode,
-                   params.beatCode,
-                   {{"spawnx", &spawnX},
+    // Block E (S79, Entscheid 1a): selbst deklarierte Uniforms des Codes
+    // sind Skriptvariablen gleichen Namens.
+    EigeneUniformKopien eigene;
+    eigene.sammle(params.forceCode, {"spawnx", "spawny", "spread", "speed", "dir", "fan", "gravx", "gravy", "drag", "life", "size", "sizeendfactor", "lifejitter"});
+    std::vector<ParamVar> vars = {{"spawnx", &spawnX},
                     {"spawny", &spawnY},
                     {"spread", &spread},
                     {"speed", &speed},
@@ -14003,7 +14130,10 @@ void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,
                     {"colorend_g", &farbeEnde.g},
                     {"colorend_b", &farbeEnde.b},
                     {"sizeendfactor", &dynSizeEndFactor},
-                    {"lifejitter", &dynLifeJitter}});
+                    {"lifejitter", &dynLifeJitter}};
+    eigene.haengeAn(vars);
+    runParamScript(rt, "gpuparticles", params.initCode, params.frameCode,
+                   params.beatCode, vars);
     const int count = std::clamp(params.count, lumi::gpuparticles::kMinCount,
                                  lumi::gpuparticles::kMaxCount);
 
@@ -14078,6 +14208,7 @@ void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,
         p.setUniformValue("treb", treb);
         p.setUniformValue("vol", m_audioLevel);
         p.setUniformValue("beat", m_frameBeat ? 1.0f : 0.0f);
+        eigene.setze(p);  // Block E: eigene Uniforms des Kraftfelds
     };
 
     // --- Update-Pass: Partner-Zustand beschreiben, aktuellen lesen ----------

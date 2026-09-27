@@ -33,6 +33,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/multieffect/IsfImport.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/multieffect/IsfFilterWrapper.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/multieffect/ScriptVariables.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/multieffect/EigeneUniforms.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/OscilloscopeVisualizer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PipelineKeys.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PulsingVisualizer.hpp"

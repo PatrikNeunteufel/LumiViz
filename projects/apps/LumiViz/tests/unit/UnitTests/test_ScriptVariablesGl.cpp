@@ -237,4 +237,43 @@ TEST_CASE("ScriptVariables: ISF-Regler lassen sich unter ihrem key per Skript se
     CHECK(mit.redF() > 0.95);
     CHECK(mit.greenF() > 0.95);
     CHECK(mit.blueF() < 0.05);
+
+    // Block E, Entscheid 1a: eigene Uniforms in Shadertoy und Pixel Filter —
+    // was der Code mit `uniform` deklariert, setzt das Skript unter dem Namen.
+    const auto renderNode = [](EffectParams params) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        leaf.params = std::move(params);
+        root.children.push_back(std::move(leaf));
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.initialize();
+        vis.resize(QSize(kSize, kSize));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, kSize, kSize);
+        vis.render(1.0f / 60.0f);
+        const QImage img = vis.debugGrabRootSurface();
+        REQUIRE_FALSE(img.isNull());
+        return img.pixelColor(kSize / 2, kSize / 2);
+    };
+
+    ShadertoyParams st;
+    st.code =
+        "uniform float wobble;\n"
+        "uniform vec2 tint;\n"
+        "void mainImage(out vec4 c, in vec2 p) { c = vec4(wobble, tint.x, tint.y, 1.0); }\n";
+    CHECK(renderNode(st).redF() < 0.05);  // ohne Skript: 0
+    st.frameCode = "wobble = 1; tint_x = 1;";
+    const QColor stMit = renderNode(st);
+    CHECK(stMit.redF() > 0.95);
+    CHECK(stMit.greenF() > 0.95);
+    CHECK(stMit.blueF() < 0.05);
+
+    PixelFilterParams pf;
+    pf.code =
+        "uniform float hell;\n"
+        "vec4 farbe(vec2 uv, vec4 src) { return vec4(hell, hell, hell, 1.0); }\n";
+    CHECK(renderNode(pf).redF() < 0.05);
+    pf.frameCode = "hell = 1;";
+    CHECK(renderNode(pf).redF() > 0.95);
 }

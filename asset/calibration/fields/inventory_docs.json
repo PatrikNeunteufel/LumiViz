@@ -7,7 +7,7 @@
   },
   "summe": {
     "typen": 91,
-    "felder": 788,
+    "felder": 794,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -3992,6 +3992,50 @@
             "drag",
             "life",
             "size",
+            "colorstart_r",
+            "colorstart_g",
+            "colorstart_b",
+            "colorend_r",
+            "colorend_g",
+            "colorend_b",
+            "sizeendfactor",
+            "lifejitter",
+            "spawnx",
+            "spawny",
+            "spread",
+            "speed",
+            "dir",
+            "fan",
+            "gravx",
+            "gravy",
+            "drag",
+            "life",
+            "size",
+            "colorstart_r",
+            "colorstart_g",
+            "colorstart_b",
+            "colorend_r",
+            "colorend_g",
+            "colorend_b",
+            "sizeendfactor",
+            "lifejitter",
+            "spawnx",
+            "spawny",
+            "spread",
+            "speed",
+            "dir",
+            "fan",
+            "gravx",
+            "gravy",
+            "drag",
+            "life",
+            "size",
+            "colorstart_r",
+            "colorstart_g",
+            "colorstart_b",
+            "colorend_r",
+            "colorend_g",
+            "colorend_b",
             "sizeendfactor",
             "lifejitter"
           ]
@@ -4076,6 +4120,31 @@
             "drag",
             "life",
             "size",
+            "colorstart_r",
+            "colorstart_g",
+            "colorstart_b",
+            "colorend_r",
+            "colorend_g",
+            "colorend_b",
+            "sizeendfactor",
+            "lifejitter",
+            "spawnx",
+            "spawny",
+            "spread",
+            "speed",
+            "dir",
+            "fan",
+            "gravx",
+            "gravy",
+            "drag",
+            "life",
+            "size",
+            "colorstart_r",
+            "colorstart_g",
+            "colorstart_b",
+            "colorend_r",
+            "colorend_g",
+            "colorend_b",
             "sizeendfactor",
             "lifejitter"
           ]
@@ -4119,6 +4188,12 @@
             "drag",
             "life",
             "size",
+            "colorstart_r",
+            "colorstart_g",
+            "colorstart_b",
+            "colorend_r",
+            "colorend_g",
+            "colorend_b",
             "sizeendfactor",
             "lifejitter"
           ]
@@ -4278,6 +4353,17 @@
       "struct": "HostGroupParams",
       "felder": [
         {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D, Block E S79): nur `outadjustalpha` (+ `b`/`w`/`h` + Audio-Satz) — die Crossfade-Dauer bleibt Regler, weil sie fuer alle Gruppen synchron gilt (Entwurf §2.4). Laeuft nach den Kindern im gruppeneigenen ScriptContext (sieht deren reg/gmegabuf dieses Frames). Leer = kein Skript.",
+          "skriptvars": [
+            "outadjustalpha"
+          ]
+        },
+        {
           "art": "zahl",
           "default": 1,
           "name": "blendOut",
@@ -4313,6 +4399,28 @@
           "helfer": "addEnum",
           "enumWerte": 0,
           "doc": "0 = linear"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D, Block E S79): nur `outadjustalpha` (+ `b`/`w`/`h` + Audio-Satz) — die Crossfade-Dauer bleibt Regler, weil sie fuer alle Gruppen synchron gilt (Entwurf §2.4). Laeuft nach den Kindern im gruppeneigenen ScriptContext (sieht deren reg/gmegabuf dieses Frames). Leer = kein Skript.",
+          "skriptvars": [
+            "outadjustalpha"
+          ]
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D, Block E S79): nur `outadjustalpha` (+ `b`/`w`/`h` + Audio-Satz) — die Crossfade-Dauer bleibt Regler, weil sie fuer alle Gruppen synchron gilt (Entwurf §2.4). Laeuft nach den Kindern im gruppeneigenen ScriptContext (sieht deren reg/gmegabuf dieses Frames). Leer = kein Skript.",
+          "skriptvars": [
+            "outadjustalpha"
+          ]
         },
         {
           "art": "zahl",
@@ -5291,6 +5399,12 @@
           "skriptvars": [
             "gridx",
             "gridy",
+            "mixamount",
+            "gridx",
+            "gridy",
+            "mixamount",
+            "gridx",
+            "gridy",
             "mixamount"
           ]
         },
@@ -5299,12 +5413,7 @@
           "default": "",
           "name": "code",
           "panel": "sonderzeile",
-          "doc": "GLSL: definiert `vec2 warp(vec2 uv)` (uv 0..1, Rückgabe = Quell-UV). Uniforms: uTime, uDelta, uFrame, uResolution, bass, mid, treb, vol, beat. Leer = Identität (Passthrough)",
-          "skriptvars": [
-            "gridx",
-            "gridy",
-            "mixamount"
-          ]
+          "doc": "GLSL: definiert `vec2 warp(vec2 uv)` (uv 0..1, Rückgabe = Quell-UV). Uniforms: uTime, uDelta, uFrame, uResolution, bass, mid, treb, vol, beat. Leer = Identität (Passthrough)"
         },
         {
           "art": "text",
@@ -5314,6 +5423,9 @@
           "helfer": "addScript",
           "doc": "Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `gridx`, `gridy`, `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
+            "gridx",
+            "gridy",
+            "mixamount",
             "gridx",
             "gridy",
             "mixamount"
@@ -6722,6 +6834,8 @@
           "helfer": "addScript",
           "doc": "Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
+            "mixamount",
+            "mixamount",
             "mixamount"
           ]
         },
@@ -6730,10 +6844,7 @@
           "default": "",
           "name": "code",
           "panel": "sonderzeile",
-          "doc": "GLSL: definiert `vec4 farbe(vec2 uv, vec4 src)` (uv 0..1, src = Quellpixel; Nachbarn via texture(uTex, ...); `filter` ist in GLSL reserviert). Uniforms: uTime, uDelta, uFrame, uResolution, bass, mid, treb, vol, beat. Leer = Identität (Passthrough)",
-          "skriptvars": [
-            "mixamount"
-          ]
+          "doc": "GLSL: definiert `vec4 farbe(vec2 uv, vec4 src)` (uv 0..1, src = Quellpixel; Nachbarn via texture(uTex, ...); `filter` ist in GLSL reserviert). Uniforms: uTime, uDelta, uFrame, uResolution, bass, mid, treb, vol, beat. Leer = Identität (Passthrough)"
         },
         {
           "art": "text",
@@ -6743,6 +6854,7 @@
           "helfer": "addScript",
           "doc": "Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Parameter-Skript (Strang D): `mixamount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
           "skriptvars": [
+            "mixamount",
             "mixamount"
           ]
         },
@@ -7327,6 +7439,18 @@
       "struct": "ShadertoyParams",
       "felder": [
         {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D, Block E S79): `blend` und jedes Uniform, das der Code selbst deklariert (`uniform float wobble;` → `wobble`, vecN → `_x/_y/_z/_w`; aus Image- und Buffer-Code) + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "blend",
+            "wobble"
+          ]
+        },
+        {
           "art": "zahl",
           "default": 0,
           "name": "blend",
@@ -7343,6 +7467,18 @@
           "doc": "mainImage-Quelltext des Image-Passes (leer = Starter)"
         },
         {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D, Block E S79): `blend` und jedes Uniform, das der Code selbst deklariert (`uniform float wobble;` → `wobble`, vecN → `_x/_y/_z/_w`; aus Image- und Buffer-Code) + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "blend",
+            "wobble"
+          ]
+        },
+        {
           "art": "liste",
           "default": [
             4,
@@ -7354,6 +7490,18 @@
           "name": "imageInput",
           "panel": "sonderzeile",
           "doc": "Kanal-Bindungen des Image-Passes (Kodierung s. kShadertoyInput* — SSOT; ein frühes `audioChannel`-Feld wird beim Laden migriert)."
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter-Skript (Strang D, Block E S79): `blend` und jedes Uniform, das der Code selbst deklariert (`uniform float wobble;` → `wobble`, vecN → `_x/_y/_z/_w`; aus Image- und Buffer-Code) + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript.",
+          "skriptvars": [
+            "blend",
+            "wobble"
+          ]
         }
       ]
     },

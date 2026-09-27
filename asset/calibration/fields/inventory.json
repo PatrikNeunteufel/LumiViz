@@ -1,7 +1,7 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 788,
+        "felder": 794,
         "typen": 91
     },
     "typen": [
@@ -2059,6 +2059,11 @@
         {
             "felder": [
                 {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
                     "art": "zahl",
                     "default": 1,
                     "name": "blendOut"
@@ -2077,6 +2082,16 @@
                     "art": "zahl",
                     "default": 0,
                     "name": "curveOut"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
                 },
                 {
                     "art": "zahl",
@@ -3673,6 +3688,11 @@
         {
             "felder": [
                 {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
                     "art": "zahl",
                     "default": 0,
                     "name": "blend"
@@ -3681,6 +3701,11 @@
                     "art": "text",
                     "default": "",
                     "name": "code"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
                 },
                 {
                     "art": "liste",
@@ -3692,6 +3717,11 @@
                     ],
                     "laenge": 4,
                     "name": "imageInput"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
                 }
             ],
             "name": "Shadertoy",

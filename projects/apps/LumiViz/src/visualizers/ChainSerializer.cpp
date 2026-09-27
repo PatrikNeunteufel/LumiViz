@@ -272,6 +272,9 @@ struct WriteVisitor
         o["crossfadeSeconds"] = p.crossfadeSeconds;
         o["curveIn"] = p.curveIn;
         o["curveOut"] = p.curveOut;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
         if (!p.sourceFile.empty())
             o["sourceFile"] = QString::fromStdString(p.sourceFile);
     }
@@ -1354,6 +1357,9 @@ struct WriteVisitor
         }
         // Herkunft (S3-Import) — flach am Knoten, leere Felder weglassen
         schreibeHerkunft(o, p.herkunft);
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const MeshWarpParams& p) const
     {
@@ -1497,6 +1503,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.crossfadeSeconds = o.value("crossfadeSeconds").toDouble(2.0);
         p.curveIn = getInt(o, "curveIn", p.curveIn);
         p.curveOut = getInt(o, "curveOut", p.curveOut);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         p.sourceFile = getStr(o, "sourceFile", p.sourceFile);
         return p;
     }
@@ -2776,6 +2785,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         // Alt-Format-Lesen kommt gratis: die Schluessel sind dieselben wie vor
         // S72, als die vier Felder noch direkt an ShadertoyParams hingen.
         leseHerkunft(o, p.herkunft);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "gpuParticles")
