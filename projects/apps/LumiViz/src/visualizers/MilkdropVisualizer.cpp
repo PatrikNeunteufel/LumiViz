@@ -24,6 +24,7 @@
 #include "visualizers/milkdrop/MilkdropBlur.hpp"
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/milkdrop/MilkdropSamplerName.hpp"
+#include "visualizers/milkdrop/MilkdropZufall.hpp"
 #include "visualizers/milkdrop/MilkdropTextureResolve.hpp"
 #include "visualizers/milkdrop/MilkdropTrace.hpp"
 
@@ -781,6 +782,16 @@ void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringLi
 void MilkdropVisualizer::rebuildScripts(QStringList* report)
 {
     m_context = std::make_shared<ScriptContext>();
+    // Diagnose (S80): LUMIVIZ_MILKDROP_EEL_RAND=original schaltet rand() auf
+    // den ns-eel2-Generator (MT19937, Kommazahl — NseelZufall.hpp). Messschalter
+    // bis zum Entscheid, ob und wie das ein Preset-Schalter wird.
+    if (qgetenv("LUMIVIZ_MILKDROP_EEL_RAND") == "original")
+    {
+        m_context->setMilkdropRand(true);
+        // Messhilfe: k Zuege vorab verbrauchen (Stromversatz zur Referenz suchen)
+        const int skip = qEnvironmentVariableIntValue("LUMIVIZ_MILKDROP_EEL_RAND_SKIP");
+        for (int i = 0; i < skip; ++i) (void)m_context->nextMilkRand(1.0);
+    }
     m_script = std::make_unique<ScriptSlotHost>("milkdrop", m_context,
                                                 ScriptSlotHost::Dialect::Milkdrop);
     m_script->setSource(Slot::Init, m_state.perFrameInit);
@@ -1841,26 +1852,28 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
 
     // rand_preset: einmal je Preset-Ladung (engine-lokaler PRNG, Entscheid §10)
     m_randSeed = m_randSeed * 1664525u + 1013904223u;
+    {
+        const auto rp = lumi::zufall::randPreset(m_randSeed);
+        // Abgleich mit MilkdropRef --zufall-lumiviz (S80): dieselben vier Zahlen
+        // muessen dort im Log stehen
+        trace::log(QStringLiteral("Zufall: Ladungs-Seed 0x%1, rand_preset %2 %3 %4 %5")
+                       .arg(m_randSeed, 8, 16, QLatin1Char('0'))
+                       .arg(rp[0], 0, 'f', 6).arg(rp[1], 0, 'f', 6)
+                       .arg(rp[2], 0, 'f', 6).arg(rp[3], 0, 'f', 6));
+    }
 
     // Rotationsmatrizen: Basiswinkel/Geschwindigkeit/Verschiebung je Preset
-    // (state.cpp:RandomizePresetVars). Die Drehgeschwindigkeit waechst mit dem
-    // Index — 0.9*(k/8)^3.2 macht rot_s1 praktisch statisch und rot_uf4 schnell.
+    // (state.cpp:RandomizePresetVars) — Formel in MilkdropZufall.hpp, geteilt
+    // mit MilkdropRef (S80).
     {
-        unsigned int seed = m_randSeed;
-        const auto frand = [&seed]() {
-            seed = seed * 1664525u + 1013904223u;
-            return static_cast<float>(seed >> 8) / 16777216.0f;
-        };
+        const auto werte = lumi::zufall::rotWerte(m_randSeed);
         for (std::size_t k = 0; k < m_rotParams.size(); ++k)
         {
-            const float rotMult =
-                0.9f * std::pow(static_cast<float>(k) / 8.0f, 3.2f);
-            RotParams& p = m_rotParams[k];
-            for (int a = 0; a < 3; ++a)
+            for (int ax = 0; ax < 3; ++ax)
             {
-                p.xlate[a] = frand() * 2.0f - 1.0f;
-                p.base[a] = frand() * 6.28f;
-                p.speed[a] = (frand() * 2.0f - 1.0f) * rotMult;
+                m_rotParams[k].xlate[ax] = werte[k].xlate[ax];
+                m_rotParams[k].base[ax] = werte[k].base[ax];
+                m_rotParams[k].speed[ax] = werte[k].speed[ax];
             }
         }
     }
@@ -2225,174 +2238,35 @@ bool MilkdropVisualizer::ensureNoiseTextures()
     QOpenGLFunctions* f = ctx->functions();
     QOpenGLExtraFunctions* ef = ctx->extraFunctions();
 
-    // AddNoiseTex-Port (C2, plugin.cpp:2427-2540): Zufallsbytes im Bereich
-    // [RANGE/2, RANGE*1.5) mod 256 (RANGE 216 bei zoom>1, sonst 256), dann fuer
-    // zoom>1 kubische Interpolation — erst X auf den Hauptzeilen, dann Y auf
-    // allen Spalten (Catmull-Rom mit Klemme; PORT: dwCubicInterpolate-Naeherung).
+    // Rausch-Texturen (AddNoiseTex/AddNoiseVol-Port, C2/C3): die Bytes kommen
+    // aus MilkdropZufall.hpp — GETEILT mit MilkdropRef, damit dessen Host sie
+    // mit --zufall-lumiviz in den Original-Kern schreiben kann (S80).
+    const auto bilder = lumi::zufall::rauschbilder();
     f->glGenTextures(static_cast<GLsizei>(m_noiseTex.size()), m_noiseTex.data());
-    unsigned int seed = 0x1234567u;
-    const auto nextRand = [&seed]() {
-        seed = seed * 1664525u + 1013904223u;
-        return seed >> 8;
-    };
-    const auto catmull = [](int p0, int p1, int p2, int p3, float t) {
-        const float y = p1 + 0.5f * t *
-                                 (p2 - p0 +
-                                  t * (2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3 +
-                                       t * (3.0f * (p1 - p2) + p3 - p0)));
-        return static_cast<unsigned char>(std::clamp(static_cast<int>(y + 0.5f), 0, 255));
-    };
-    struct Spec
-    {
-        int size;
-        int zoom;
-    };
-    const std::array<Spec, 4> specs = {{{256, 1}, {32, 1}, {256, 4}, {256, 8}}};
-    std::vector<unsigned char> pixels;
     for (std::size_t i = 0; i < m_noiseTex.size(); ++i)
     {
-        const int n = specs[i].size;
-        const int zoom = specs[i].zoom;
-        const unsigned int range = (zoom > 1) ? 216u : 256u;
-        pixels.resize(static_cast<std::size_t>(n) * n * 4);
-        for (unsigned char& p : pixels)
-        {
-            p = static_cast<unsigned char>((nextRand() % range + range / 2) & 0xFFu);
-        }
-        if (zoom > 1)
-        {
-            const auto px = [&](int x, int y, int c) -> unsigned char& {
-                return pixels[(static_cast<std::size_t>(y) * n + x) * 4 +
-                              static_cast<std::size_t>(c)];
-            };
-            // X-Pass nur auf den Hauptzeilen (y % zoom == 0)
-            for (int y = 0; y < n; y += zoom)
-            {
-                for (int x = 0; x < n; ++x)
-                {
-                    if (x % zoom == 0) continue;
-                    const int baseX = (x / zoom) * zoom + n;
-                    const float t = static_cast<float>(x % zoom) / zoom;
-                    for (int c = 0; c < 4; ++c)
-                    {
-                        px(x, y, c) = catmull(px((baseX - zoom) % n, y, c),
-                                              px(baseX % n, y, c),
-                                              px((baseX + zoom) % n, y, c),
-                                              px((baseX + zoom * 2) % n, y, c), t);
-                    }
-                }
-            }
-            // Y-Pass auf allen Spalten
-            for (int x = 0; x < n; ++x)
-            {
-                for (int y = 0; y < n; ++y)
-                {
-                    if (y % zoom == 0) continue;
-                    const int baseY = (y / zoom) * zoom + n;
-                    const float t = static_cast<float>(y % zoom) / zoom;
-                    for (int c = 0; c < 4; ++c)
-                    {
-                        px(x, y, c) = catmull(px(x, (baseY - zoom) % n, c),
-                                              px(x, baseY % n, c),
-                                              px(x, (baseY + zoom) % n, c),
-                                              px(x, (baseY + zoom * 2) % n, c), t);
-                    }
-                }
-            }
-        }
+        const int n = bilder[i].groesse;
         f->glBindTexture(GL_TEXTURE_2D, m_noiseTex[i]);
         f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, n, n, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                        pixels.data());
+                        bilder[i].rgba.data());
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
-
-    // AddNoiseVol-Port (C3, plugin.cpp:2561-2717): 32^3-Volumen, zoom 1 (LQ)
-    // und 4 (HQ). Bytes wie 2D; kubische Glaettung fuer zoom>1: X auf den
-    // Hauptzeilen der Haupt-Slices, Y auf den Haupt-Slices, Z ueberall.
     f->glGenTextures(static_cast<GLsizei>(m_noiseVolTex.size()), m_noiseVolTex.data());
+    for (std::size_t i = 0; i < m_noiseVolTex.size(); ++i)
     {
-        const std::array<Spec, 2> volSpecs = {{{32, 1}, {32, 4}}};
-        std::vector<unsigned char> voxels;
-        for (std::size_t i = 0; i < m_noiseVolTex.size(); ++i)
-        {
-            const int n = volSpecs[i].size;
-            const int zoom = volSpecs[i].zoom;
-            const unsigned int range = (zoom > 1) ? 216u : 256u;
-            voxels.resize(static_cast<std::size_t>(n) * n * n * 4);
-            for (unsigned char& p : voxels)
-            {
-                p = static_cast<unsigned char>((nextRand() % range + range / 2) & 0xFFu);
-            }
-            if (zoom > 1)
-            {
-                const auto vx = [&](int x, int y, int z, int c) -> unsigned char& {
-                    return voxels[((static_cast<std::size_t>(z) * n + y) * n + x) * 4 +
-                                  static_cast<std::size_t>(c)];
-                };
-                // X-Pass: Hauptzeilen (y % zoom == 0) der Haupt-Slices (z % zoom == 0)
-                for (int z = 0; z < n; z += zoom)
-                    for (int y = 0; y < n; y += zoom)
-                        for (int x = 0; x < n; ++x)
-                        {
-                            if (x % zoom == 0) continue;
-                            const int baseX = (x / zoom) * zoom + n;
-                            const float t = static_cast<float>(x % zoom) / zoom;
-                            for (int c = 0; c < 4; ++c)
-                            {
-                                vx(x, y, z, c) =
-                                    catmull(vx((baseX - zoom) % n, y, z, c),
-                                            vx(baseX % n, y, z, c),
-                                            vx((baseX + zoom) % n, y, z, c),
-                                            vx((baseX + zoom * 2) % n, y, z, c), t);
-                            }
-                        }
-                // Y-Pass: Haupt-Slices (z % zoom == 0), alle Spalten
-                for (int z = 0; z < n; z += zoom)
-                    for (int x = 0; x < n; ++x)
-                        for (int y = 0; y < n; ++y)
-                        {
-                            if (y % zoom == 0) continue;
-                            const int baseY = (y / zoom) * zoom + n;
-                            const float t = static_cast<float>(y % zoom) / zoom;
-                            for (int c = 0; c < 4; ++c)
-                            {
-                                vx(x, y, z, c) =
-                                    catmull(vx(x, (baseY - zoom) % n, z, c),
-                                            vx(x, baseY % n, z, c),
-                                            vx(x, (baseY + zoom) % n, z, c),
-                                            vx(x, (baseY + zoom * 2) % n, z, c), t);
-                            }
-                        }
-                // Z-Pass: ueberall
-                for (int x = 0; x < n; ++x)
-                    for (int y = 0; y < n; ++y)
-                        for (int z = 0; z < n; ++z)
-                        {
-                            if (z % zoom == 0) continue;
-                            const int baseZ = (z / zoom) * zoom + n;
-                            const float t = static_cast<float>(z % zoom) / zoom;
-                            for (int c = 0; c < 4; ++c)
-                            {
-                                vx(x, y, z, c) =
-                                    catmull(vx(x, y, (baseZ - zoom) % n, c),
-                                            vx(x, y, baseZ % n, c),
-                                            vx(x, y, (baseZ + zoom) % n, c),
-                                            vx(x, y, (baseZ + zoom * 2) % n, c), t);
-                            }
-                        }
-            }
-            f->glBindTexture(GL_TEXTURE_3D, m_noiseVolTex[i]);
-            ef->glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, n, n, n, 0, GL_RGBA,
-                             GL_UNSIGNED_BYTE, voxels.data());
-            f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
-        }
+        const auto& vol = bilder[4 + i];
+        const int n = vol.groesse;
+        f->glBindTexture(GL_TEXTURE_3D, m_noiseVolTex[i]);
+        ef->glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, n, n, n, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                         vol.rgba.data());
+        f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        f->glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
     }
 
     f->glGenTextures(1, &m_placeholderTex);
@@ -2544,16 +2418,12 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
     program.setUniformValue("vol_att", static_cast<float>(engine.number("vol")));
 
     // rand_frame je Frame, rand_preset je Ladung (LCG, deterministisch genug)
-    unsigned int rs = m_randSeed;
-    const auto rand01 = [](unsigned int& s) {
-        s = s * 1664525u + 1013904223u;
-        return static_cast<float>(s >> 8) / 16777216.0f;
-    };
-    program.setUniformValue("rand_preset",
-                            QVector4D(rand01(rs), rand01(rs), rand01(rs), rand01(rs)));
+    // rand_preset: Formel in MilkdropZufall.hpp, geteilt mit MilkdropRef (S80)
+    const auto rp = lumi::zufall::randPreset(m_randSeed);
+    program.setUniformValue("rand_preset", QVector4D(rp[0], rp[1], rp[2], rp[3]));
     unsigned int fs = m_randSeed ^ (static_cast<unsigned int>(m_frame) * 2654435761u);
-    program.setUniformValue("rand_frame",
-                            QVector4D(rand01(fs), rand01(fs), rand01(fs), rand01(fs)));
+    const auto rf = lumi::zufall::vierRueckwaerts(fs);
+    program.setUniformValue("rand_frame", QVector4D(rf[0], rf[1], rf[2], rf[3]));
 
     // --- Rotationsmatrizen rot_s/d/f/vf/uf/rand 1..4 (milkdropfs.cpp:4016-4050) ---
     // Basiswinkel, Drehgeschwindigkeit und Verschiebung sind JE PRESET zufaellig
@@ -2616,11 +2486,16 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
             else
             {
                 // Die letzten vier sind jeden Frame vollstaendig zufaellig.
-                const float ax = rand01(frameSeed) * 6.28f;
-                const float ay = rand01(frameSeed) * 6.28f;
-                const float az = rand01(frameSeed) * 6.28f;
-                m = mul43(rx(ax), xlate(rand01(frameSeed), rand01(frameSeed),
-                                        rand01(frameSeed)));
+                const float ax = lumi::zufall::rand01(frameSeed) * 6.28f;
+                const float ay = lumi::zufall::rand01(frameSeed) * 6.28f;
+                const float az = lumi::zufall::rand01(frameSeed) * 6.28f;
+                // Einzeln ziehen (S80): als Funktionsargumente war die
+                // Reihenfolge nur Compiler-Gewohnheit (MSVC-ABI: rechts nach
+                // links). Festgeschrieben wie bisher: z zuerst, dann y, dann x.
+                const float tz = lumi::zufall::rand01(frameSeed);
+                const float ty = lumi::zufall::rand01(frameSeed);
+                const float tx = lumi::zufall::rand01(frameSeed);
+                m = mul43(rx(ax), xlate(tx, ty, tz));
                 m = mul43(m, rz(az));
                 m = mul43(m, ry(ay));
             }

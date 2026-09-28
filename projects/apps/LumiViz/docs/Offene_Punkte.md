@@ -1544,6 +1544,43 @@ Ursache der Abweichung. Die eigentliche Abweichung ist viel größer
 
 Montagen (Referenz | neu | alt): Scratchpad S80 `strato/out/`.
 
+**Untersuchung S80 — vier Zufallsquellen, zwei davon gelöst:**
+
+1. ✅ **Rausch-Texturen** würfelt das Original aus der **Uhr**
+   (`plugin.cpp:2480`), **`rand_preset`/`rot_*`** bei jeder Ladung aus
+   `rand()` (`state.cpp:1875`). Die Referenz war bei diesem Preset damit
+   selbst nicht reproduzierbar (Ref↔Ref MAE 0,05–0,08). **Neu:**
+   `MilkdropRef --zufall-lumiviz` schreibt dieselben Werte wie LumiViz in den
+   Kern (gemeinsamer Header `milkdrop/MilkdropZufall.hpp`, Kern unangetastet)
+   → Ref↔Ref **0,003–0,009**. LumiViz rechnet nach dem Umzug in den Header
+   bitgleich (belegt f10/f120). Nebenbefund: `rand_preset`, `rand_frame` und
+   `rot_rand*` zogen ihre Zahlen als Funktionsargumente — Reihenfolge nur
+   Compiler-Gewohnheit (MSVC-ABI: rechts nach links); jetzt festgeschrieben.
+2. ⚠️ **`rand_frame`** würfelt der Kern mitten im Frame — für den Host
+   unerreichbar. Dieses Preset nutzt es nicht.
+3. 🟠 **EEL-`rand()` im MilkDrop-Dialekt ist bei uns falsch.** Das Original
+   (ns-eel2, gebaut **ohne** `NSEEL_EEL1_COMPAT_MODE`,
+   `vis_milk2/plugin.vcxproj`) liefert eine **Kommazahl** in
+   [0, ⌊max(x,1)⌋] aus einem Mersenne-Twister mit festem Startwert
+   `0x4141f00d` (`nseel-cfunc.c:42/101`). Wir liefern ganze Zahlen aus dem
+   AVS-Strom — `rand(1)` ist bei uns immer 0, im Original gleichverteilt.
+   Nachgebaut in `scripting/NseelZufall.hpp`, vorerst nur per Diagnose
+   `LUMIVIZ_MILKDROP_EEL_RAND=original`. Wirkung an `stratospheric`: Blick
+   jetzt **mittig in den Tunnel** wie im Original (vorher schräg oben rechts),
+   MAE 0,122 → 0,112 (f10), 0,155 → 0,141 (f120); Röhren aber noch diagonal
+   statt waagrecht. **Messreihe (22 Presets, gegen dieselben Referenzbilder):
+   gemischt** — `Dancing Hearts` 0,223 → 0,157 und `Supernova-Lens` 0,068 →
+   0,003 (f120, 640), aber alle drei `Rock The House` +0,033…+0,036. Deutung:
+   die Semantik (Kommazahl) stimmt, der **Stromstand** nicht — ein Suchlauf
+   über 0…39 übersprungene Züge fand kein klares Minimum (0,096…0,117).
+   Vermutlich ziehen die Skripte im Original in anderer Reihenfolge oder der
+   Kern verbraucht Züge beim Hochfahren. **Nächster Schritt:** den Strom in
+   der Referenz sichtbar machen (Zähler/Log an `genrand_int32`), dann
+   angleichen — erst danach über den Standard entscheiden.
+4. ⬜ **Helligkeit etwa halb, gelbe Lichtkugeln fehlen** — noch nicht
+   untersucht; sinnvoll erst, wenn 3 steht (die Kugeln hängen an Shapes, deren
+   Code `rand()` zieht).
+
 ### ✅ Y-Achse war invertiert — Shapes, Wellenformen und Comp-Shader (S75, behoben)
 
 **Das ist die Ursache hinter dem „Modus 7"-Befund unten — und sie ist global,

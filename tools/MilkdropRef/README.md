@@ -42,7 +42,7 @@ cmake --build tools/MilkdropRef/build --config Release
 ## Nutzung
 
 ```bash
-tools/MilkdropRef/build/Release/MilkdropRef.exe <preset.milk|ordner> [--frames N] [--out DIR] [--size WxH] [--silence] [--show]
+tools/MilkdropRef/build/Release/MilkdropRef.exe <preset.milk|ordner> [--frames N] [--out DIR] [--size WxH] [--silence] [--show] [--audio-muster klassisch|musik] [--saat N] [--zufall-lumiviz]
 ```
 
 - **Audio:** synthetisch, formelgleich zu `MilkdropStandalone::feedSyntheticAudio`
@@ -63,4 +63,29 @@ tools/MilkdropRef/build/Release/MilkdropRef.exe <preset.milk|ordner> [--frames N
   windowed auf 60 fps, damit Sim-Zeit ≈ frame/60 bleibt. Unter Last driftet
   das — Langzeitvergleiche entsprechend einordnen.
 - `warand()`/Preset-Zufall sind nicht gesät — Läufe sind untereinander nicht
-  bit-stabil (wie AvsRef, dort `rand()`).
+  bit-stabil (wie AvsRef, dort `rand()`). **Ausnahme ab S80:** `--zufall-lumiviz`.
+
+## `--zufall-lumiviz` (S80): gleicher Zufall wie LumiViz
+
+Der Kern würfelt an drei Stellen, die ein Preset sichtbar prägen: die
+Rausch-Texturen `noise_*`/`noisevol_*` aus der **Uhr**
+(`plugin.cpp:2480`, `srand(QueryPerformanceCounter ^ rand())`), dazu
+`rand_preset` und die `rot_*`-Parameter bei jeder Ladung
+(`state.cpp:1875`). Bei Presets, die davon leben, zeigen zwei Läufe
+verschiedene Bilder — der Vergleich misst dann den Würfel (Befund S80 an
+`martin - stratospheric turbulences`: Ref↔Ref MAE 0,05–0,08).
+
+Mit `--zufall-lumiviz` schreibt der Host nach dem Hochfahren die sechs
+Rausch-Texturen und vor jedem Frame `rand_preset`/`rot_*` mit **denselben**
+Werten, die LumiViz benutzt (gemeinsamer Header
+`projects/apps/LumiViz/include/visualizers/milkdrop/MilkdropZufall.hpp`).
+Der Kern selbst bleibt unangetastet — derselbe Weg wie `--saat`. Das Log
+nennt den Ladungs-Seed und `rand_preset`; LumiViz schreibt dieselbe Zeile ins
+Trace-Log. Wirkung am Befund-Preset: Ref↔Ref 0,003–0,009.
+
+**Grenzen:** `rand_frame` würfelt der Kern mitten im Frame neu (für den Host
+unerreichbar). Das EEL-`rand()` der Skripte ist im Kern ohnehin
+deterministisch (Mersenne-Twister, fester Startwert `0x4141f00d`,
+`nseel-cfunc.c:42`) — LumiViz bildet es nach (`NseelZufall.hpp`), der
+Stromstand beim ersten Preset ist aber noch nicht abgeglichen
+(`Offene_Punkte.md` §3).

@@ -186,6 +186,14 @@ std::int64_t bufIndex(double i)
 int LuaScriptEngine::lRand(lua_State* L)
 {
     auto* self = static_cast<LuaScriptEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
+    // MilkDrop-Dialekt (S80): ns-eel2 wuerfelt anders als AVS — MT19937 mit
+    // festem Startwert und KOMMAZAHL in [0, floor(max(x,1))] (NseelZufall.hpp).
+    // Der Host schaltet das je Preset am geteilten Kontext ein.
+    if (!self->m_ownRandom && self->m_context != nullptr && self->m_context->milkdropRand())
+    {
+        lua_pushnumber(L, self->m_context->nextMilkRand(luaL_optnumber(L, 1, 0.0)));
+        return 1;
+    }
     // EEL rand(x) = rand()%max(x,1) (nseel-cfunc.c:54) — der Strom liegt im
     // geteilten ScriptContext, damit alle Skripte eines Presets DENSELBEN
     // MSVC-Strom teilen wie im Original (S49). seedRandom() schaltet auf den

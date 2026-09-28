@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "scripting/NseelZufall.hpp"
+
 #include <array>
 #include <cstdint>
 #include <unordered_map>
@@ -160,6 +162,18 @@ public:
         m_randState = ra * m_randState + rc;
     }
 
+    // =========================================================================
+    // rand() im MilkDrop-Dialekt (S80) — ns-eel2: MT19937 + Kommazahl
+    // =========================================================================
+
+    /// @brief Nutzt dieser Kontext das MilkDrop-`rand()` (NseelZufall.hpp)
+    ///        statt des AVS-Stroms? Setzt der MilkDrop-Host je Preset.
+    [[nodiscard]] bool milkdropRand() const { return m_milkdropRand; }
+    void setMilkdropRand(bool an) { m_milkdropRand = an; }
+
+    /// @brief `rand(x)` wie ns-eel2: Kommazahl in [0, floor(max(x,1))]
+    [[nodiscard]] double nextMilkRand(double x) { return m_nseel.rand(x); }
+
     void reset()
     {
         m_regs.fill(0.0);
@@ -168,10 +182,13 @@ public:
         m_qFrame.fill(0.0);
         m_gmegabuf.clear();
         resetRandom();
+        m_nseel.zuruecksetzen();
     }
 
 private:
     std::uint32_t m_randState = 1u;
+    bool m_milkdropRand = false;
+    NseelZufall m_nseel;
     std::array<double, kRegCount> m_regs{};
     std::array<double, kQCount> m_q{};
     std::array<double, kQCount> m_qInit{};

@@ -46,6 +46,7 @@
 
 // Kaltstart-Saat, geteilt mit der App (S75) — siehe saatEinspeisen().
 #include "visualizers/KaltstartSaat.hpp"
+#include "visualizers/milkdrop/MilkdropZufall.hpp"
 
 // --- Globals, die der Kern erwartet (Vorbild Milkdrop2PcmVisualizer.cpp) ---------------
 CPlugin g_plugin;
@@ -332,6 +333,91 @@ static bool saatEinspeisen(unsigned int seed, int& outW, int& outH)
     return ok;
 }
 
+// =============================================================================
+// --zufall-lumiviz (S80): dieselben Zufallsdaten wie LumiViz in den Kern
+// =============================================================================
+//
+// Das Original wuerfelt Rausch-Texturen aus der UHR und rand_preset/rot_* aus
+// rand() — zwei Referenzlaeufe zeigen dann verschiedene Bilder, und ein
+// Vergleich mit LumiViz misst vor allem den Wuerfel (Befund S80, `martin -
+// stratospheric turbulences`). Der Host schreibt deshalb nach dem Hochfahren
+// bzw. vor jedem Frame genau die Werte hinein, die LumiViz benutzt
+// (MilkdropZufall.hpp). Der Kern selbst bleibt unangetastet — derselbe Weg
+// wie --saat. Grenze: rand_frame wuerfelt der Kern MITTEN im Frame neu.
+
+/// Rausch-Texturen des Kerns mit den LumiViz-Bytes ueberschreiben.
+/// Liefert die Zahl der ersetzten Texturen (erwartet: 6).
+static int zufallTexturenSchreiben()
+{
+    static const wchar_t* kNamen[6] = {L"noise_lq", L"noise_lq_lite", L"noise_mq",
+                                       L"noise_hq", L"noisevol_lq", L"noisevol_hq"};
+    const auto bilder = lumi::zufall::rauschbilder();
+    int ersetzt = 0;
+    for (TexInfo& t : g_plugin.m_textures)
+    {
+        for (int i = 0; i < 6; ++i)
+        {
+            if (wcscmp(t.texname, kNamen[i]) != 0 || t.texptr == nullptr) continue;
+            const lumi::zufall::Rauschbild& b = bilder[static_cast<size_t>(i)];
+            const int n = b.groesse;
+            // RGBA (LumiViz, Byte 0 = R) -> A8R8G8B8 im Speicher: B, G, R, A
+            const auto kopiere = [&](unsigned char* dst, const unsigned char* src,
+                                     int pixel) {
+                for (int p = 0; p < pixel; ++p)
+                {
+                    dst[p * 4 + 0] = src[p * 4 + 2];
+                    dst[p * 4 + 1] = src[p * 4 + 1];
+                    dst[p * 4 + 2] = src[p * 4 + 0];
+                    dst[p * 4 + 3] = src[p * 4 + 3];
+                }
+            };
+            if (i < 4)
+            {
+                auto* tex = static_cast<IDirect3DTexture9*>(t.texptr);
+                D3DLOCKED_RECT r;
+                if (tex->LockRect(0, &r, nullptr, D3DLOCK_DISCARD) != D3D_OK) continue;
+                for (int y = 0; y < n; ++y)
+                    kopiere(static_cast<unsigned char*>(r.pBits) + y * r.Pitch,
+                            b.rgba.data() + static_cast<size_t>(y) * n * 4, n);
+                tex->UnlockRect(0);
+                tex->GenerateMipSubLevels();
+            }
+            else
+            {
+                auto* vol = static_cast<IDirect3DVolumeTexture9*>(t.texptr);
+                D3DLOCKED_BOX box;
+                if (vol->LockBox(0, &box, nullptr, D3DLOCK_DISCARD) != D3D_OK) continue;
+                for (int z = 0; z < n; ++z)
+                    for (int y = 0; y < n; ++y)
+                        kopiere(static_cast<unsigned char*>(box.pBits) + z * box.SlicePitch +
+                                    y * box.RowPitch,
+                                b.rgba.data() + (static_cast<size_t>(z) * n + y) * n * 4, n);
+                vol->UnlockBox(0);
+            }
+            ++ersetzt;
+        }
+    }
+    return ersetzt;
+}
+
+/// rand_preset und rot_*-Parameter des aktuellen Zustands auf die LumiViz-Werte
+/// setzen. Vor JEDEM Frame gerufen: LoadPreset laedt verzoegert (Shader-Compile
+/// ueber mehrere Frames) und wuerfelt erst beim Umschalten des Zustands.
+static void zufallZustandSetzen(unsigned int ladungsSeed)
+{
+    CState* s = g_plugin.m_pState;
+    if (s == nullptr) return;
+    const auto rp = lumi::zufall::randPreset(ladungsSeed);
+    s->m_rand_preset = D3DXVECTOR4(rp[0], rp[1], rp[2], rp[3]);
+    const auto rot = lumi::zufall::rotWerte(ladungsSeed);
+    for (int k = 0; k < 20; ++k)
+    {
+        s->m_xlate[k] = D3DXVECTOR3(rot[k].xlate[0], rot[k].xlate[1], rot[k].xlate[2]);
+        s->m_rot_base[k] = D3DXVECTOR3(rot[k].base[0], rot[k].base[1], rot[k].base[2]);
+        s->m_rot_speed[k] = D3DXVECTOR3(rot[k].speed[0], rot[k].speed[1], rot[k].speed[2]);
+    }
+}
+
 int main(int argc, char** argv)
 {
     namespace fs = std::filesystem;
@@ -343,6 +429,7 @@ int main(int argc, char** argv)
     bool silence = false;
     bool show = false;
     unsigned int saat = lumi::saat::kSeedAus;  // Vorgabe: wie bisher ohne Saat
+    bool zufallLumiviz = false;  // S80: Zufallsdaten wie LumiViz (s. oben)
     // --audio-muster (S74): klassisch = Sinus+Beat-Puls wie bisher, musik =
     // aus einer Aufnahme abgeleitete Huellkurven. Beides aus SynthAudio.hpp,
     // die MilkdropStandalone genauso einbindet.
@@ -355,6 +442,7 @@ int main(int argc, char** argv)
         else if (arg == "--out" && i + 1 < argc) outDir = argv[++i];
         else if (arg == "--silence") silence = true;
         else if (arg == "--show") show = true;
+        else if (arg == "--zufall-lumiviz") zufallLumiviz = true;
         else if (arg == "--saat" && i + 1 < argc)
         {
             // Startwert des Feedback-Puffers; 0 = aus (Bestandsverhalten).
@@ -387,7 +475,7 @@ int main(int argc, char** argv)
         std::fprintf(stderr,
                      "Aufruf: MilkdropRef <preset.milk|ordner> [--frames N] [--out DIR] "
                      "[--size WxH] [--silence] [--show] "
-                     "[--audio-muster klassisch|musik]\n");
+                     "[--audio-muster klassisch|musik] [--zufall-lumiviz]\n");
         return 2;
     }
 
@@ -480,6 +568,16 @@ int main(int argc, char** argv)
         std::fprintf(stderr, "FEHLER: PluginInitialize\n");
         return 3;
     }
+    if (zufallLumiviz)
+    {
+        const int n = zufallTexturenSchreiben();
+        std::printf("[MilkdropRef] Zufall wie LumiViz: %d von 6 Rausch-Texturen "
+                    "ersetzt\n", n);
+        std::fflush(stdout);
+        if (n != 6) return 7;  // Messgeraet nicht im zugesagten Zustand
+    }
+    // Ladungs-Seed wie LumiViz: je Ladung ein LCG-Schritt ab kRandSeedInit
+    unsigned int ladungsSeed = lumi::zufall::kRandSeedInit;
 
     // --- Batch -------------------------------------------------------------------------
     unsigned char pcmL[kSamples];
@@ -492,6 +590,14 @@ int main(int argc, char** argv)
         g_plugin.m_bInitialPresetSelected = true;  // kein Zufalls-Startpreset
         g_plugin.m_UI_mode = UI_REGULAR;
         g_plugin.LoadPreset(preset.wstring().c_str(), 0.0f);
+        ladungsSeed = lumi::zufall::lcg(ladungsSeed);
+        if (zufallLumiviz)
+        {
+            const auto rp = lumi::zufall::randPreset(ladungsSeed);
+            std::printf("[MilkdropRef] Zufall: Ladungs-Seed 0x%08x, rand_preset "
+                        "%.6f %.6f %.6f %.6f\n", ladungsSeed, rp[0], rp[1], rp[2], rp[3]);
+            std::fflush(stdout);
+        }
 
         // Abnahme des Messmittels (S75): scheitert LoadPreset, faellt der Kern
         // in seinen Preset-BROWSER — und der zeichnet ein Verzeichnis-Overlay
@@ -539,6 +645,7 @@ int main(int argc, char** argv)
             synthOpt.geschmack = lumi::synth::Geschmack::Milkdrop;
             synthOpt.stille = silence;
             buildPcm(f, synthOpt, pcmL, pcmR);
+            if (zufallLumiviz) zufallZustandSetzen(ladungsSeed);
             if (g_plugin.PluginRender(pcmL, pcmR) == 0)
             {
                 std::fprintf(stderr, "[MilkdropRef] RENDER-ABBRUCH bei Frame %d\n", f);
