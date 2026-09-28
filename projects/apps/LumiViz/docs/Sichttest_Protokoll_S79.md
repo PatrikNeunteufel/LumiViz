@@ -12,7 +12,8 @@
 
 - **Exe:** `out\build\windows-ninja-release-clang\exec\LumiViz\bin\Release\LumiViz.exe`
   (nicht die Testing-Exe — die läuft auf der 610M und ruckelt).
-  Für Teil C muss sie **nach S80 neu gebaut** sein.
+  Für Teil C und D7/D8 muss es der **Build von S80** sein (liegt seit
+  2026-09-28 dort).
 - **Ausgangslage:** Visualizer **Multi Effect**, Panel **Effect Chain** offen,
   Musik läuft (Bass-Wirkungen sieht man sonst nicht).
 - **Ergebnis-Spalte:** `✅` wie erwartet · `❌` weicht ab (dann Notiz) ·
@@ -81,6 +82,8 @@ eintragen, Apply.
 | D4 | „Motion-Vector-Overlay“ an und aus | Raster erscheint bzw. verschwindet | | |
 | D5 | Sprite-Bereich im Panel ansehen | Felder abgeschnitten? Panel-Breite ok? | | |
 | D6 | Ein importiertes `.milk`-Preset laden (Import Browser) | Sieht aus wie vor S76 | | |
+| D7 | `asset/effectchain/202609_g_milk.lvfx` laden (neuer Build S80) | Die Shape zieht **keine** Spur mehr nach oben links und blendet nicht von selbst aus | | |
+| D8 | Zwei, drei vertraute `.milk`-Presets ansehen | Wirken wie gewohnt — höchstens etwas schärfer (das Weichzeichnen je Frame ist weg) | | |
 
 ## Teil E — Befunde, die schon beim Testen aufgefallen sind (S80)
 
@@ -89,7 +92,7 @@ eintragen, Apply.
 | E1 | Im Editor war `b` anders eingefärbt als `r`/`g` (im Shape-Code ist `b` Blau, der Editor kannte nur „Beat“) | ✅ behoben S80 → Prüfung C1 |
 | E2 | Wunsch: `r = r2 = red;` | ✅ ging schon; Test + Referenzsatz S80 → Prüfung C2/C3 |
 | E3 | Weißliches Diagonalenkreuz bei Shapes, wenn `a` ≠ `a2` | Kein Fehler: Shapes sind Dreiecksfächer (wie im Original, `D3DPT_TRIANGLEFAN`); die Deckkraft verläuft je Dreieck, auf den Diagonalen knickt der Verlauf. Für eine gleichmäßige Fläche Innen- und Randwerte gleich setzen |
-| E4 | Leere Milkdrop-Kette mit nur einer Shape (`asset/effectchain/202609_g_milk.lvfx`): Bild **blendet aus** und **wandert nach oben links**, obwohl `decay=1`, `zoom=1`, `dx=dy=0` | 🔴 dringend → [Offene_Punkte §3](Offene_Punkte.md) |
+| E4 | Leere Milkdrop-Kette mit nur einer Shape (`asset/effectchain/202609_g_milk.lvfx`): Bild **blendet aus** und **wandert nach oben links**, obwohl `decay=1`, `zoom=1`, `dx=dy=0` | ✅ behoben S80 (Halbtexel-Versatz im Warp, gegen MilkdropRef belegt) → Prüfung D7, [Offene_Punkte §3](Offene_Punkte.md) |
 | E5 | Drop auf die freie Fläche unter der Kette wird nicht angenommen | → A14, [Offene_Punkte §7](Offene_Punkte.md) |
 | E6 | Wunsch: Vorlagen („Einstiegspunkte“) für Shape, Wave, Sprite und Shader — z. B. ein **gewolltes** Ausblenden oder eine Drift, aber erklärt | → [Offene_Punkte §7](Offene_Punkte.md) |
 

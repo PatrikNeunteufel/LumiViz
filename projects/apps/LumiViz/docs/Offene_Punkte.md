@@ -1441,7 +1441,7 @@ Winamp-Komfort).
 
 ## 3. MilkDrop
 
-### 🔴 Blanke Pipeline blendet aus und driftet nach oben links (Befund S80, dringend)
+### ✅ Blanke Pipeline blendete aus und driftete nach oben links (Befund S80, behoben S80)
 
 **Befund Patrik (S80):** Neue Kette → Milkdrop → eine Custom Shape
 (`asset/effectchain/202609_g_milk.lvfx`). Das Bild blendet von selbst aus und
@@ -1449,8 +1449,28 @@ wandert stetig nach **oben links** — obwohl der Knoten nichts davon verlangt:
 `decay=1`, `zoom=1`, `rot=0`, `dx=dy=0`, `warp=0`, `sx=sy=1`, keine
 Warp-/Comp-Shader.
 
-**Verdacht (nicht belegt):** der Halbtexel-Versatz im Warp-Mesh,
-`MilkdropVisualizer.cpp:3089-3090` (`u += 0.5/width; v += 0.5/height`). Im
+**Sonde S80 — belegt: unser Fehler, nicht das Original.** Preset ohne jede
+Bewegung (`PSVERSION=0`, `decay=1`, `zoom=1`, `warp=0`, keine Wave), eine
+weiße Shape blitzt nur in den Frames 1–3 auf; danach je Frame-Marke ein
+eigener Prozess je Seite, saatlos, 640×480, `--silence`:
+
+| Frame | Referenz: Schwerpunkt · Energie · Spitze | LumiViz: Schwerpunkt · Energie · Spitze |
+|---|---|---|
+| 3 | (320,5 / 240,5) · 1093 · 1,000 | (319,0 / 239,0) · 1223 · 1,000 |
+| 10 | unverändert | (315,5 / 235,5) · 1220 · 1,000 |
+| 30 | unverändert | (305,5 / 225,5) · 1176 · 1,000 |
+| 60 | unverändert | (290,5 / 210,5) · 1077 · 0,953 |
+| 120 | unverändert | (260,5 / 180,5) · 872 · 0,835 |
+
+Die Referenz steht über 120 Frames **pixelgenau still**. Bei uns wandert das
+Nachbild **exakt 0,5 Pixel je Frame** in x **und** y nach oben links (60 px in
+120 Frames) und verliert dabei 29 % Energie durch Weichzeichnen. Das ist genau
+die Signatur des Halbtexel-Versatzes. Sonde als Regressionsprobe:
+`asset/calibration/milkdrop/drift/` (`python drift_sonde.py`, urteilt selbst
+STEHT/DRIFTET).
+
+**Ursache (durch die Gegenprobe belegt):** der Halbtexel-Versatz im Warp-Mesh,
+`MilkdropVisualizer.cpp` (`u += 0.5/width; v += 0.5/height`). Im
 Original gleicht er die D3D9-Pixelmitten-Konvention aus (dort liegen
 Pixelmitten auf ganzen Koordinaten) und verschiebt **nichts**. Unter OpenGL
 liegen die Pixelmitten schon auf +0,5 — derselbe Versatz verschiebt das Bild
@@ -1459,17 +1479,36 @@ dann **je Frame um ein halbes Pixel** (Drift diagonal) und mischt bei
 aussieht). Beides passt zum Befund, beides fällt bei importierten Presets kaum
 auf, weil deren eigene Bewegung und `decay<1` es überdecken.
 
-**Bedingung Patrik:** Die Korrektur darf **importierte Presets nicht
-verändern**. Darum erst messen, dann ändern:
+**Fix (Entscheid Patrik a, S80):** Versatz entfernt. Die Bedingung
+„importierte Presets nicht verändern" war als Treue-Schutz gemeint — die
+Sonde zeigte, dass sie heute schon genau um diese Drift vom Original
+abweichen; der Fix bringt sie näher heran. **Gegenprobe:** Sonde nachher
+0,00 px Wanderung, 0,0 % Energieverlust (Referenz ebenso).
 
-1. Sonde: `Blank.milk` + eine Shape, einmal bei uns, einmal in `MilkdropRef`
-   (`compare_ref.py`) — driftet die Referenz? Wenn nein, ist die Drift unser
-   Fehler.
-2. Versatz testweise weg (oder auf GL-Konvention umgerechnet) und die
-   MilkDrop-Messreihe (OK 295) gegen den Stand davor fahren. Ändert sich dort
-   etwas, entscheidet der Vergleich mit der Referenz, welcher Stand treuer ist.
-3. Achtung: das Browser-Overlay von `MilkdropRef` (unten, Strang S75) stellt
-   Saat-Modus-Zahlen unter Vorbehalt — für die Sonde ohne Saat messen.
+**Messreihe** (22 mitgelieferte Presets, saatlos, Marken 10/30/120, 320×240
+und 640×480; Vorher- und Nachher-Stand beide gegen **dieselben**
+Referenzbilder gerechnet, damit das Wanduhr-Rauschen der Referenz nicht
+mitmisst):
+
+| Größe | Frame 10 | Frame 30 | Frame 120 |
+|---|---|---|---|
+| 320×240 | Δ −0,0015 · 2 besser / 0 schlechter | Δ −0,0014 · 4 / 3 | **Δ −0,0070 · 6 / 1** |
+| 640×480 | Δ −0,0006 · 1 / 0 | Δ +0,0012 · 0 / 2 | **Δ −0,0065 · 4 / 0** |
+
+Größte Gewinne bei Frame 120: `Playaround` 0,417 → 0,329 (320) bzw.
+0,396 → 0,341 (640), `Twisted`/`Twisted b` −0,016 bis −0,030,
+`Supernova-Lens` 0,094 → 0,068, `Neomtwister` −0,021. Schlechter nur knapp:
+`Twisted` bei Frame 30 (+0,008 bis +0,018 — dort streut die Referenz selbst
+0,014–0,021), `In The Spotlight V1` f120 +0,006, `Dancing Hearts (2nd edit)`
+f30 +0,006. Urteile: 320×240 **3 OK / 10 Befunde** (vorher 3 / 11 —
+`Dancing Hearts (2nd edit)` BEFUND → PRÜFEN), 640×480 **2 OK / 11 Befunde**
+(vorher 2 / 12). Alle Einzelwerte: `asset/calibration/milkdrop/drift/Messreihe_S80.md`.
+
+**Rest, klein und getrennt:** die Shape selbst liegt bei uns **1 px** weiter
+oben links als in der Referenz (Schwerpunkt 319,5 statt 320,5) und ist etwa
+6 % flächiger (Energie 1156 statt 1093). Das ist die Rasterung der Shape,
+nicht der Warp — sie wandert nicht mehr. ⚪ offen, nur bei Pixelvergleichen
+relevant.
 
 Verwandt: E3 im [Sichttest-Protokoll](Sichttest_Protokoll_S79.md)
 (Diagonalenkreuz bei `a`≠`a2` — dort kein Fehler, aber das Weichzeichnen
@@ -1784,7 +1823,8 @@ links“ — also genau die Effekte, die jetzt **unerklärt** auftreten (§3, ob
 aber **gewollt und benannt**. Anknüpfung: die Werks-Voreinstellungen der
 Module (Versionen 1.45.0/1.46.0 dieser Liste — dort sind milkdrop/shadertoy
 bewusst ausgenommen).
-Voraussetzung: erst den §3-Befund klären, sonst erbt jede Vorlage die Drift.
+Die Voraussetzung (§3-Drift klären) ist seit S80 erfüllt — Drift und
+Ausblenden gibt es jetzt nur noch, wenn ein Preset sie verlangt.
 
 ### ⬜ Visualizer-Tab-X löscht statt ausblenden (Befund S77)
 
@@ -2629,7 +2669,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 1.76.0 | 2026-09-28 | Session 80 (Sichttest S79 begonnen) — **NEU 🔴 §3: blanke Pipeline blendet aus und driftet nach oben links** (Verdacht Halbtexel-Versatz im Warp-Mesh; Bedingung: importierte Presets bleiben unverändert — erst Sonde gegen MilkdropRef). NEU §7: Drop auf die Leerfläche des Kettenbaums · Vorlagen für Milkdrop-Elemente/Shader. Editor: `b` als in/out gefärbt wie `r`/`g` (Entscheid a); Mehrfachzuweisung `r = r2 = red;` getestet + Referenzsatz. Prüfprotokoll [Sichttest_Protokoll_S79.md](Sichttest_Protokoll_S79.md). Tests 610/610 |
+| 1.76.0 | 2026-09-28 | Session 80 (Sichttest S79 begonnen) — **✅ §3: blanke Pipeline blendete aus und driftete nach oben links** — Sonde gegen MilkdropRef belegt (Referenz steht, wir 0,5 px/Frame + Weichzeichnen), Ursache Halbtexel-Versatz im Warp-Mesh, entfernt (Entscheid a); Messreihe vorher/nachher gegen dieselben Referenzbilder: Frame 120 Δ −0,007 (320) / −0,0065 (640), 10 besser / 1 schlechter; Sonde als Regressionsprobe `asset/calibration/milkdrop/drift/`. NEU §7: Drop auf die Leerfläche des Kettenbaums · Vorlagen für Milkdrop-Elemente/Shader. Editor: `b` als in/out gefärbt wie `r`/`g` (Entscheid a); Mehrfachzuweisung `r = r2 = red;` getestet + Referenzsatz. Prüfprotokoll [Sichttest_Protokoll_S79.md](Sichttest_Protokoll_S79.md). Tests 610/610 |
 | 1.75.0 | 2026-09-27 | Session 79 (Auftrag Patrik: Modulauswahl + Formelfelder) — **Palettenfenster umgesetzt** (nicht-modal; Suche über Name/Originalname/Beschreibung, Chips Herkunft AVS/APE/MilkDrop/LumiViz + Rolle, ★ Favoriten + Zuletzt, Detailzeile mit Formelfeldern, Add/Enter/Doppelklick + Drag & Drop in den Kettenbaum; Palettendaten nach `EffectPalette.{hpp,cpp}` ausgelagert, je Eintrag Rolle/Kurzbeschreibung/Originalname; Test `test_EffectPalette`; Sichttest offen). **Formelfelder Block B:** Farben per Skript als `<feldname>_r/_g/_b` in 16 Modulen (`FarbKopie`, Referenz + Struct-Doku + Tooltips nachgezogen). **Block C:** Farbpaletten der sieben Fraktale per Skript (`colorscale`, `colorcycle`, `colorphase`, Innen-/Hintergrund-/Negativfarbe). **Block E:** Set Render Mode + ISF Filter mit Parameter-Skript (ISF-Regler unter ihrem key); selbst deklarierte Uniforms in Shadertoy/Pixel Filter/Mesh Warp/GPU-Partikel als Skriptvariablen (Entscheid 1a, Shadertoy neu mit Init/Frame/Beat); Host Group `outadjustalpha` (Entscheid 2a); Fix: Set Render Mode schrieb `adjustAlpha` nicht. **Block D:** 43 weitere Felder in 14 Modulen skriptbar (Fraktal-Details, Bump-Tiefe, 3D-Profile, Interferences-Beatziele, GPU-Partikel, Water-Bump-Tropfenort). **Formelfelder:** Inventar aller 84 Module (`visuals/Formelfelder_Inventar.md`); Block A umgesetzt — `distance` (Brightness), `skipfirst` (Custom BPM), `x2`/`y2` (Interleave), `blend` (Timescope, Dot Grid), `edgemode` (Convolution), `p`/`q` (Kleinian), `variation`/`scale` (Flame) gebunden; Variablenreferenz aus der SSOT `ScriptVariables.hpp`, geprüft durch `test_ScriptVariablesGl` (Namens-Sonde in `LuaScriptEngine`). Neu in §7: Palettenfenster, Formelfelder B–F |
 | 1.74.0 | 2026-09-27 | Session 78 (Vorgabe Patrik: Feldbreiten der Effektkette) — Bestandsaufnahme aller ~90 Modul-Editoren, dann zentraler Breiten-Vertrag in `MultiEffectPanel`: Felder ≥ 120 px, 5 px Panelrand, seitliches Scrollen des Panels statt Überbreite, Dock-Minimum 240 px + Ränder, Effektliste mit Spalten-Mindestbreiten und eigenem Balken. Von Patrik abgenommen. Neu in §7: Vertrag nur in der Effektkette |
 | 1.73.0 | 2026-09-23 | Session 77 (Bugfix, Meldung Patrik: Visualizer nach einer Mausbewegung verschwunden, auch nach Neustart) — im gespeicherten Dock-Layout fehlte `visualizer` (nur ein leerer Floating-Container), Qt-ADS versteckte ihn deshalb als *unassigned*; Reset Layout spielte dasselbe Layout ab, View > Panels kannte ihn nicht. Behoben in `DockManager` 2.2.0 (§5.6): fehlende Visualizer nach Restore/Reset andocken, Reset aufs Werks-Layout, Visualizer im Panels-Menü. Neu in §7: Tab-X löscht den Visualizer (Entscheid offen) |

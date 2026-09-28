@@ -2993,9 +2993,6 @@ void MilkdropVisualizer::computeWarpMesh(const FrameVars& fv)
     const double f2 = 10.54 + 3.0 * std::cos(warpTime * 1.233 + 3.0);
     const double f3 = 11.49 + 4.0 * std::cos(warpTime * 0.933 + 5.0);
 
-    const double texelX = 0.5 / std::max(1, width());
-    const double texelY = 0.5 / std::max(1, height());
-
     m_vertexUv.assign(static_cast<std::size_t>(vertsX * vertsY) * 2, 0.0);
 
     const bool perVertex = m_script != nullptr && m_script->has(Slot::Point);
@@ -3081,13 +3078,17 @@ void MilkdropVisualizer::computeWarpMesh(const FrameVars& fv)
             u = u2 * cosRot - v2 * sinRot + cx;
             v = u2 * sinRot + v2 * cosRot + cy;
 
-            // translation + aspect undo + half-texel alignment
+            // translation + aspect undo. KEIN Halbtexel-Versatz (S80): das
+            // Original addiert `texel_offset` (milkdropfs.cpp:1836), weil D3D9
+            // Pixelmitten auf ganze Koordinaten legt — dort verschiebt er
+            // nichts. Unter GL liegen die Pixelmitten schon auf +0,5; derselbe
+            // Versatz schob das Bild je Frame ein halbes Pixel nach oben links
+            // und zeichnete es weich (Sonde `drift/`: Referenz steht 120 Frames
+            // still, wir wanderten 60 px und verloren 29 % Energie).
             u -= dx;
             v -= dy;
             u = (u - 0.5) / m_aspectX + 0.5;
             v = (v - 0.5) / m_aspectY + 0.5;
-            u += texelX;
-            v += texelY;
 
             // UV-Sanitize (S64, R211-Klasse — q-lose per_pixel-Divisionen):
             // nicht-endlich → 0 (D3D9-Konvertierungsregel NaN→0). Riesen-UVs
