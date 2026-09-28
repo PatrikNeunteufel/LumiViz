@@ -255,6 +255,18 @@ TEST_CASE("EelTranspiler: verschachtelte Zuweisung wird gehoisted")
     CHECK(runner.var("x") == doctest::Approx(10.0));
 }
 
+TEST_CASE("EelTranspiler: Mehrfachzuweisung r = r2 = wert (rechtsassoziativ)")
+{
+    // Wunsch Patrik S80: Shape-Code setzt Innen- und Randfarbe in einem Zug.
+    EelRunner runner("red = 0.25; r = r2 = red; a = a2 = b = 1", Dialect::Milkdrop);
+    runner.run();
+    CHECK(runner.var("r") == doctest::Approx(0.25));
+    CHECK(runner.var("r2") == doctest::Approx(0.25));
+    CHECK(runner.var("a") == doctest::Approx(1.0));
+    CHECK(runner.var("a2") == doctest::Approx(1.0));
+    CHECK(runner.var("b") == doctest::Approx(1.0));
+}
+
 TEST_CASE("EelTranspiler: Kompound-Zuweisungen")
 {
     CHECK(evalEel("y = 1; y += 2; r = y", "r", Dialect::Milkdrop) == doctest::Approx(3.0));
@@ -383,6 +395,16 @@ TEST_CASE("EelTranspiler: Zuweisung in Klammern wird gemeldet (AVS)")
     const auto result = transpile("q=0; r=(q=3)+1", Dialect::Avs);
     REQUIRE(result.ok);
     CHECK(hatZuweisungsWarnung(result.warnings));
+}
+
+TEST_CASE("EelTranspiler: Mehrfachzuweisung laeuft in AVS, wird aber gemeldet")
+{
+    // Das Original-AVS lehnt die Form ab (Zuweisung als Wert) — wir rechnen
+    // sie trotzdem richtig, weisen aber darauf hin (Referenzsatz S80).
+    const auto result = transpile("red=0.5; r=r2=red", Dialect::Avs);
+    REQUIRE(result.ok);
+    CHECK(hatZuweisungsWarnung(result.warnings));
+    CHECK(evalEel("red=0.5; r=r2=red", "r2", Dialect::Avs) == doctest::Approx(0.5));
 }
 
 TEST_CASE("EelTranspiler: gewoehnliche Anweisungsfolge loest KEINE Warnung aus")

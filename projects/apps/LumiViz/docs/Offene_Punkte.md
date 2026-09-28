@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.75.0
-> **Datum:** 2026-09-27 (Session 79)
+> **Version:** 1.76.0
+> **Datum:** 2026-09-28 (Session 80)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -1441,6 +1441,40 @@ Winamp-Komfort).
 
 ## 3. MilkDrop
 
+### 🔴 Blanke Pipeline blendet aus und driftet nach oben links (Befund S80, dringend)
+
+**Befund Patrik (S80):** Neue Kette → Milkdrop → eine Custom Shape
+(`asset/effectchain/202609_g_milk.lvfx`). Das Bild blendet von selbst aus und
+wandert stetig nach **oben links** — obwohl der Knoten nichts davon verlangt:
+`decay=1`, `zoom=1`, `rot=0`, `dx=dy=0`, `warp=0`, `sx=sy=1`, keine
+Warp-/Comp-Shader.
+
+**Verdacht (nicht belegt):** der Halbtexel-Versatz im Warp-Mesh,
+`MilkdropVisualizer.cpp:3089-3090` (`u += 0.5/width; v += 0.5/height`). Im
+Original gleicht er die D3D9-Pixelmitten-Konvention aus (dort liegen
+Pixelmitten auf ganzen Koordinaten) und verschiebt **nichts**. Unter OpenGL
+liegen die Pixelmitten schon auf +0,5 — derselbe Versatz verschiebt das Bild
+dann **je Frame um ein halbes Pixel** (Drift diagonal) und mischt bei
+`GL_LINEAR` je Frame vier Nachbarn (Weichzeichnen, das wie Ausblenden
+aussieht). Beides passt zum Befund, beides fällt bei importierten Presets kaum
+auf, weil deren eigene Bewegung und `decay<1` es überdecken.
+
+**Bedingung Patrik:** Die Korrektur darf **importierte Presets nicht
+verändern**. Darum erst messen, dann ändern:
+
+1. Sonde: `Blank.milk` + eine Shape, einmal bei uns, einmal in `MilkdropRef`
+   (`compare_ref.py`) — driftet die Referenz? Wenn nein, ist die Drift unser
+   Fehler.
+2. Versatz testweise weg (oder auf GL-Konvention umgerechnet) und die
+   MilkDrop-Messreihe (OK 295) gegen den Stand davor fahren. Ändert sich dort
+   etwas, entscheidet der Vergleich mit der Referenz, welcher Stand treuer ist.
+3. Achtung: das Browser-Overlay von `MilkdropRef` (unten, Strang S75) stellt
+   Saat-Modus-Zahlen unter Vorbehalt — für die Sonde ohne Saat messen.
+
+Verwandt: E3 im [Sichttest-Protokoll](Sichttest_Protokoll_S79.md)
+(Diagonalenkreuz bei `a`≠`a2` — dort kein Fehler, aber das Weichzeichnen
+verstärkt es).
+
 ### ✅ Y-Achse war invertiert — Shapes, Wellenformen und Comp-Shader (S75, behoben)
 
 **Das ist die Ursache hinter dem „Modus 7"-Befund unten — und sie ist global,
@@ -1733,6 +1767,24 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   (Composer-Spuren) ist Fernziel.
 
 ## 7. Backlog (bewusst nichts tun)
+
+### ⬜ Drop auf die freie Fläche unter der Kette (Befund S80)
+
+Aus der Palette gezogen, wird ein Modul nur angenommen, wenn man es
+**unmittelbar** unter den letzten Eintrag fallen lässt. Weiter unten in der
+freien Fläche des Kettenbaums passiert nichts. Erwartet: jeder Drop auf die
+Leerfläche hängt ans Ende an (`ChainTreeWidget`, Paletten-MIME). Protokoll A14.
+
+### ⬜ Vorlagen für Milkdrop-Elemente und Shader (Wunsch S80)
+
+Wer eine Shape, Wave, Sprite oder einen Shader neu anlegt, bekommt heute nur
+neutrale Werte — ein schneller „Einstiegspunkt“ fehlt. Wunsch Patrik: Vorlagen
+wie „Shape pulsiert mit Bass“, „langsames Ausblenden“, „Drift nach oben
+links“ — also genau die Effekte, die jetzt **unerklärt** auftreten (§3, oben),
+aber **gewollt und benannt**. Anknüpfung: die Werks-Voreinstellungen der
+Module (Versionen 1.45.0/1.46.0 dieser Liste — dort sind milkdrop/shadertoy
+bewusst ausgenommen).
+Voraussetzung: erst den §3-Befund klären, sonst erbt jede Vorlage die Drift.
 
 ### ⬜ Visualizer-Tab-X löscht statt ausblenden (Befund S77)
 
@@ -2577,6 +2629,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.76.0 | 2026-09-28 | Session 80 (Sichttest S79 begonnen) — **NEU 🔴 §3: blanke Pipeline blendet aus und driftet nach oben links** (Verdacht Halbtexel-Versatz im Warp-Mesh; Bedingung: importierte Presets bleiben unverändert — erst Sonde gegen MilkdropRef). NEU §7: Drop auf die Leerfläche des Kettenbaums · Vorlagen für Milkdrop-Elemente/Shader. Editor: `b` als in/out gefärbt wie `r`/`g` (Entscheid a); Mehrfachzuweisung `r = r2 = red;` getestet + Referenzsatz. Prüfprotokoll [Sichttest_Protokoll_S79.md](Sichttest_Protokoll_S79.md). Tests 610/610 |
 | 1.75.0 | 2026-09-27 | Session 79 (Auftrag Patrik: Modulauswahl + Formelfelder) — **Palettenfenster umgesetzt** (nicht-modal; Suche über Name/Originalname/Beschreibung, Chips Herkunft AVS/APE/MilkDrop/LumiViz + Rolle, ★ Favoriten + Zuletzt, Detailzeile mit Formelfeldern, Add/Enter/Doppelklick + Drag & Drop in den Kettenbaum; Palettendaten nach `EffectPalette.{hpp,cpp}` ausgelagert, je Eintrag Rolle/Kurzbeschreibung/Originalname; Test `test_EffectPalette`; Sichttest offen). **Formelfelder Block B:** Farben per Skript als `<feldname>_r/_g/_b` in 16 Modulen (`FarbKopie`, Referenz + Struct-Doku + Tooltips nachgezogen). **Block C:** Farbpaletten der sieben Fraktale per Skript (`colorscale`, `colorcycle`, `colorphase`, Innen-/Hintergrund-/Negativfarbe). **Block E:** Set Render Mode + ISF Filter mit Parameter-Skript (ISF-Regler unter ihrem key); selbst deklarierte Uniforms in Shadertoy/Pixel Filter/Mesh Warp/GPU-Partikel als Skriptvariablen (Entscheid 1a, Shadertoy neu mit Init/Frame/Beat); Host Group `outadjustalpha` (Entscheid 2a); Fix: Set Render Mode schrieb `adjustAlpha` nicht. **Block D:** 43 weitere Felder in 14 Modulen skriptbar (Fraktal-Details, Bump-Tiefe, 3D-Profile, Interferences-Beatziele, GPU-Partikel, Water-Bump-Tropfenort). **Formelfelder:** Inventar aller 84 Module (`visuals/Formelfelder_Inventar.md`); Block A umgesetzt — `distance` (Brightness), `skipfirst` (Custom BPM), `x2`/`y2` (Interleave), `blend` (Timescope, Dot Grid), `edgemode` (Convolution), `p`/`q` (Kleinian), `variation`/`scale` (Flame) gebunden; Variablenreferenz aus der SSOT `ScriptVariables.hpp`, geprüft durch `test_ScriptVariablesGl` (Namens-Sonde in `LuaScriptEngine`). Neu in §7: Palettenfenster, Formelfelder B–F |
 | 1.74.0 | 2026-09-27 | Session 78 (Vorgabe Patrik: Feldbreiten der Effektkette) — Bestandsaufnahme aller ~90 Modul-Editoren, dann zentraler Breiten-Vertrag in `MultiEffectPanel`: Felder ≥ 120 px, 5 px Panelrand, seitliches Scrollen des Panels statt Überbreite, Dock-Minimum 240 px + Ränder, Effektliste mit Spalten-Mindestbreiten und eigenem Balken. Von Patrik abgenommen. Neu in §7: Vertrag nur in der Effektkette |
 | 1.73.0 | 2026-09-23 | Session 77 (Bugfix, Meldung Patrik: Visualizer nach einer Mausbewegung verschwunden, auch nach Neustart) — im gespeicherten Dock-Layout fehlte `visualizer` (nur ein leerer Floating-Container), Qt-ADS versteckte ihn deshalb als *unassigned*; Reset Layout spielte dasselbe Layout ab, View > Panels kannte ihn nicht. Behoben in `DockManager` 2.2.0 (§5.6): fehlende Visualizer nach Restore/Reset andocken, Reset aufs Werks-Layout, Visualizer im Panels-Menü. Neu in §7: Tab-X löscht den Visualizer (Entscheid offen) |

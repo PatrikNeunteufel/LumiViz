@@ -82,8 +82,12 @@ enum class SymCat
     // gewoehnliche Variablen. Im Korpus ist `e` in 128 Presets genau das (S54).
     static const QSet<QString> kConstant = {"pi", "pi2"};
     // MilkDrop-Namen (M2-Skript-Vertrag): read-only Frame-Infos + Point-Inputs
+    // `b` steht NICHT hier, obwohl es im AVS-Superscope der Beat ist: im
+    // MilkDrop-Wave-/Shape-Code ist es Blau (i/o, neben r/g) und muss dort
+    // wie seine Geschwister aussehen (Befund S80). Die Tabelle kennt je Name
+    // nur EINE Kategorie — kontextabhaengig faerben ist Stoff fuer Block F.
     static const QSet<QString> kInput = {
-        "i",    "v",        "b",        "bass",     "mid",      "treb",
+        "i",    "v",        "bass",     "mid",      "treb",
         "treble", "vol",    "beat",     "time",
         "bass_att", "mid_att", "treb_att", "fps",   "frame",    "progress",
         "meshx", "meshy",   "pixelsx",  "pixelsy",  "aspectx",  "aspecty",
@@ -111,7 +115,7 @@ enum class SymCat
         "blur3_max", "blur1_edge_darken",
         // MilkDrop Wave-/Shape-Code (M2): g steht dort fuer Gruen (i/o);
         // t1-t8 sind wave-/shape-LOKALE Snapshot-Akkus (nicht preset-global)
-        "g", "samples", "rad", "ang", "r2", "g2", "b2", "a2",
+        "g", "b", "samples", "rad", "ang", "r2", "g2", "b2", "a2",
         "border_r", "border_g", "border_b", "border_a",
         "sides", "textured", "tex_ang", "tex_zoom", "additive", "thick",
         "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8"};
@@ -333,7 +337,10 @@ private:
                "the preset value above.</p>"
                "<p style='color:#888'>All values are floating-point. Assignment: "
                "<code>x = expr;</code> — statements separated by <code>;</code>. "
-               "Comments: <code>// …</code></p>")
+               "Comments: <code>// …</code></p>"
+               "<p style='color:#888'>Chained assignment: <code>r = r2 = red;</code> "
+               "sets both (right to left). Fine in MilkDrop code; in AVS-style "
+               "scripts it runs too, but is flagged — original AVS rejects it.</p>")
         .arg(math).arg(logic).arg(mem).arg(ctrl).arg(audio);
 }
 

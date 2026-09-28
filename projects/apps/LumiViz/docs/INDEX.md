@@ -28,7 +28,8 @@ und wie sie abgenommen werden.
 **Was ist noch zu tun:** [**Offene Punkte**](Offene_Punkte.md) — die Arbeitsliste
 (Kalibrier-Befunde, offene Urteile, Sichttests, Entscheide, Backlog). Ein Ort;
 löst die früheren `Offene_Implementierungen.md` + `Offene_Sichttests.md` ab, die
-auf Session 37 stehengeblieben waren.
+auf Session 37 stehengeblieben waren. Laufendes Prüfprotokoll zum Ausfüllen:
+[Sichttest S79/S80](Sichttest_Protokoll_S79.md) (Effekt-Palette, Formelfelder).
 
 | Domäne | Inhalt |
 |---|---|
