@@ -477,11 +477,13 @@ exakten MD1-Pfad).
 **Audio** (Session 80): woraus `bass`/`mid`/`treb` (samt `_att`) und die Werte
 der Custom-Waves (`value1`/`value2`) entstehen.
 
-- **Original (MilkDrop)** — die Aufbereitung von MilkDrop 2: aus der
-  8-bit-Wellenform ein eigenes FFT (mit Hüllkurve und Entzerrung), die Welle
-  am Vorbild ausgerichtet, daraus die Bandenergien. Gegen den Original-Kern
-  geprüft (identische Werte).
-- **LumiViz (bisher)** — das Spektrum der App mit geschätzten Faktoren.
+- **Original (MilkDrop)** — **Standard**, auch für ältere gespeicherte
+  Ketten. Die Aufbereitung von MilkDrop 2: aus der 8-bit-Wellenform ein
+  eigenes FFT (mit Hüllkurve und Entzerrung), die Welle am Vorframe
+  ausgerichtet, daraus die Bandenergien. Gegen den Original-Kern geprüft
+  (identische Werte).
+- **LumiViz (bisher)** — das Spektrum der App mit geschätzten Faktoren; der
+  Klang, den MilkDrop-Presets in LumiViz bis Session 80 hatten.
 
 ### Gestaltung: Drift und Weichzeichnen (kein Original-Verhalten)
 

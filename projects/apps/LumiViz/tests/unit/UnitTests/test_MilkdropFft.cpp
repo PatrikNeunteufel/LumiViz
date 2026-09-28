@@ -62,9 +62,15 @@ TEST_CASE("MilkdropFft: Quantisierung wie Winamp — lround(x*127), Zweierkomple
     CHECK(w8[4] == 0.0f);
 }
 
-TEST_CASE("MilkdropFft: Schalter Wave-Audio — Speichern/Laden")
+TEST_CASE("MilkdropFft: Schalter Audio — Standard Original, Speichern/Laden")
 {
     lumi::milkdrop::PresetState a;
+    CHECK(a.audioOriginal);  // Entscheid Patrik a (S80)
+    QJsonObject alt = lumi::milkdrop::presetToJson({});
+    QJsonObject inner = alt.value("preset").toObject();
+    inner.remove("audioOriginal");
+    alt.insert("preset", inner);
+    CHECK(lumi::milkdrop::presetFromJson(alt, nullptr).audioOriginal);  // Altbestand
     a.audioOriginal = !a.audioOriginal;
     CHECK(lumi::milkdrop::presetFromJson(lumi::milkdrop::presetToJson(a), nullptr)
               .audioOriginal == a.audioOriginal);

@@ -5667,7 +5667,7 @@
             },
             "preset": {
               "additiveWaves": false,
-              "audioOriginal": false,
+              "audioOriginal": true,
               "basicWaveEnabled": true,
               "blur1EdgeDarken": 0.25,
               "blur1Max": 1,

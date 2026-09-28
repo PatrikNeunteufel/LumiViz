@@ -5864,8 +5864,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                        "(value1/value2) entstehen. Original = wie MilkDrop 2: eigene "
                        "Aufbereitung aus der 8-bit-Wellenform — FFT mit Hüllkurve und "
                        "Entzerrung, Ausrichtung der Welle am Vorbild, Bandenergien; "
-                       "gegen den Original-Kern geprüft. Bisher = Spektrum der App mit "
-                       "geschätzten Faktoren (Session 39/43)."));
+                       "gegen den Original-Kern geprüft (Standard). Bisher = Spektrum "
+                       "der App mit geschätzten Faktoren (Session 39/43), der Klang bis "
+                       "Session 80."));
                 connect(audioCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
                         this, [this, path, milkOf](int idx) {
                             mutate(path, [&](ChainNode& n) {

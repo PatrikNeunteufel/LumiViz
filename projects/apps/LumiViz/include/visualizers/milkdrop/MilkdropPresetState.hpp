@@ -274,8 +274,10 @@ struct PresetState
     /// 8-bit-Wellenform (MilkdropAudio.hpp: FFT, AlignWaves, Bandenergien) fuer
     /// Custom-Waves (Faktoren 0.15/0.004, milkdropfs.cpp:2555) UND bass/mid/treb;
     /// false = LumiViz bisher (App-Spektrum, geschaetzte Faktoren S39/S43).
-    /// Standard bisher bis zum Entscheid nach der Messreihe.
-    bool audioOriginal = false;
+    /// Standard Original, auch fuer gespeicherte Ketten ohne das Feld
+    /// (Entscheid Patrik a, S80 — Messreihe: mitgelieferte Presets f10
+    /// 0,087 → 0,055, f120 0,144 → 0,118).
+    bool audioOriginal = true;
 
     // --- Kaltstart (S76; Grundstein der S75-Idee "Preset-Seed") ---------------------------
     bool kaltstartSaat = true;      ///< Rausch-Saat beim Kaltstart (heutiges
