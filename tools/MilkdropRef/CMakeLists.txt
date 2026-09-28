@@ -48,7 +48,8 @@ set(MD3_SOURCES
     ${VIS}/utility.cpp
     ${VIS}/wasabi.cpp
     ${NSEEL}/nseel-caltab.c
-    ${NSEEL}/nseel-cfunc.c
+    # nseel-cfunc: Messkopie (S80) — zaehlt/loggt die rand()-Zuege, Verhalten gleich
+    patched/nseel-cfunc.c
     # nseel-compiler: gepatchte Kopie — __floor-Intrinsic-Kollision (s. patched/)
     patched/nseel-compiler.c
     ${NSEEL}/nseel-eval.c

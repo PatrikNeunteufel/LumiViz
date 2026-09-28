@@ -1573,10 +1573,26 @@ Montagen (Referenz | neu | alt): Scratchpad S80 `strato/out/`.
    0,003 (f120, 640), aber alle drei `Rock The House` +0,033…+0,036. Deutung:
    die Semantik (Kommazahl) stimmt, der **Stromstand** nicht — ein Suchlauf
    über 0…39 übersprungene Züge fand kein klares Minimum (0,096…0,117).
-   Vermutlich ziehen die Skripte im Original in anderer Reihenfolge oder der
-   Kern verbraucht Züge beim Hochfahren. **Nächster Schritt:** den Strom in
-   der Referenz sichtbar machen (Zähler/Log an `genrand_int32`), dann
-   angleichen — erst danach über den Standard entscheiden.
+   **Aufgeklärt (S80, Messkopie `tools/MilkdropRef/patched/nseel-cfunc.c`,
+   zählt/loggt die Züge, Verhalten gleich):** der Kern lädt beim Hochfahren
+   schon ein Startpreset, dessen `per_frame_init` Züge verbraucht (hier 8).
+   `--zufall-lumiviz` setzt den Strom jetzt vor `LoadPreset` auf den
+   Prozessstart. **Unser Nachbau trifft die ersten acht Originalwerte exakt**
+   (`test_NseelZufall`). Mit abgeglichenem Strom zeigt `stratospheric`
+   **dieselbe Szene** wie das Original (Röhren, Fenster, Farben); Rest:
+   einige Grad Drehung (Phase/Wanduhr?), gelbe Leuchtkugeln bei uns grün
+   (Comp-Shader, `GetPixel`/`GetBlur2` × `float3(0.8,0.8,0)` — eingegrenzt:
+   ohne Comp-Shader stimmt die Szene auf 0,004–0,012).
+   **Messreihe mit abgeglichenem Strom** (22 Presets, `compare_milkref.py
+   --zufall-lumiviz`): weiterhin gemischt. `Supernova-Lens` f10 0,043 →
+   0,002, aber `Rock The House` (alle drei) f120 0,030 → 0,066. RTH würfelt
+   **je Gitterpunkt** (`per_pixel`: `zoom=1+0.1*sin(…)*(rand(3)-1)`, 825
+   Züge/Frame bei 32×24); die Referenz zieht dort nachweislich Kommazahlen
+   wie wir. Das Mesh gleichzuziehen (`MilkdropRef --mesh 32x24` — MilkDrop3
+   legt 64×64 fest, Winamp und wir 32×24) ändert nichts (Mittel 0,0858 vs.
+   0,0861). **Verdacht:** die REIHENFOLGE, in der die Gitterpunkte ziehen —
+   unser Mesh läuft laut S75 zeilengespiegelt; dann bekommt jeder Punkt die
+   Zahl eines anderen. Eigener Strang.
 4. ⬜ **Helligkeit etwa halb, gelbe Lichtkugeln fehlen** — noch nicht
    untersucht; sinnvoll erst, wenn 3 steht (die Kugeln hängen an Shapes, deren
    Code `rand()` zieht).

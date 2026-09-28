@@ -66,6 +66,9 @@ DEFAULT_PRESETS = (REPO / "asset/presets/milkdrop").resolve()
 # Software-Rasterizer nebeneinander, hier D3D9 gegen OpenGL — schon
 # Texturfilterung und Rundung trennen die Seiten sichtbar, ohne dass ein
 # Port-Fehler vorliegt.
+# --zufall-lumiviz (S80): wird von main() gesetzt, run_ref reicht es weiter
+ZUFALL_LUMIVIZ = False
+
 OK_MAE = 0.08
 BEFUND_MAE = 0.15
 
@@ -126,6 +129,10 @@ def run_ref(milk: Path, frames: int, size: str, out: Path, refroot: Path,
     if silence:
         extra.append("--silence")
     extra += ["--saat", hex(seed)]
+    # S80: gleicher Zufall wie LumiViz (Rausch-Texturen, rand_preset/rot_*,
+    # EEL-rand-Strom ab Prozessstart) — sonst misst der Vergleich den Wuerfel
+    if ZUFALL_LUMIVIZ:
+        extra.append("--zufall-lumiviz")
     out.mkdir(parents=True, exist_ok=True)
     proc = subprocess.run(
         [str(REF_EXE), str(kopie), "--frames", str(frames), "--size", size,
@@ -339,8 +346,14 @@ def main() -> int:
                          "zeigen, ob ein Preset ueberhaupt ein "
                          "startzustands-unabhaengiges Bild hat")
     ap.add_argument("--timeout", type=int, default=180, help="Sekunden je Lauf")
+    ap.add_argument("--zufall-lumiviz", action="store_true",
+                    help="Referenz wuerfelt wie LumiViz (MilkdropRef --zufall-lumiviz, "
+                         "S80): Rausch-Texturen, rand_preset/rot_*, EEL-rand ab "
+                         "Prozessstart. Macht Presets mit Zufall erst vergleichbar")
     ap.add_argument("--out", type=Path, default=REPO / "out/milkref_compare")
     args = ap.parse_args()
+    global ZUFALL_LUMIVIZ
+    ZUFALL_LUMIVIZ = args.zufall_lumiviz
 
     for exe, name in ((REF_EXE, "MilkdropRef (tools/MilkdropRef, -A Win32)"),
                       (LUMI_EXE, "MilkdropStandalone (build-ninja-release-clang)")):

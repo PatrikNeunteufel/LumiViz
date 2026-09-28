@@ -83,9 +83,18 @@ Der Kern selbst bleibt unangetastet — derselbe Weg wie `--saat`. Das Log
 nennt den Ladungs-Seed und `rand_preset`; LumiViz schreibt dieselbe Zeile ins
 Trace-Log. Wirkung am Befund-Preset: Ref↔Ref 0,003–0,009.
 
+Zusätzlich setzt `--zufall-lumiviz` den EEL-`rand()`-Strom direkt vor
+`LoadPreset` auf den Prozessstart zurück: der Kern lädt beim Hochfahren schon
+ein Startpreset, dessen `per_frame_init` Züge verbraucht. Dafür gibt es die
+Messkopie `patched/nseel-cfunc.c` (zählt die Züge, `MILKDROPREF_RAND_LOG=N`
+loggt die ersten N; einziger Eingriff `lumi_rand_reset()`).
+
+`--mesh WxH` (S80) setzt das Warp-Mesh: MilkDrop3 legt 64×64 fest im Code
+fest, das Winamp-Original und LumiViz rechnen 32×24.
+
 **Grenzen:** `rand_frame` würfelt der Kern mitten im Frame neu (für den Host
 unerreichbar). Das EEL-`rand()` der Skripte ist im Kern ohnehin
 deterministisch (Mersenne-Twister, fester Startwert `0x4141f00d`,
-`nseel-cfunc.c:42`) — LumiViz bildet es nach (`NseelZufall.hpp`), der
-Stromstand beim ersten Preset ist aber noch nicht abgeglichen
-(`Offene_Punkte.md` §3).
+`nseel-cfunc.c:42`) — LumiViz bildet es nach (`NseelZufall.hpp`, die ersten
+Werte stimmen exakt); offen ist, in welcher Reihenfolge die Gitterpunkte im
+`per_pixel`-Code ziehen (`Offene_Punkte.md` §3).

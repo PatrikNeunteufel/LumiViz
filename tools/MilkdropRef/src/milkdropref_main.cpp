@@ -345,6 +345,10 @@ static bool saatEinspeisen(unsigned int seed, int& outW, int& outH)
 // (MilkdropZufall.hpp). Der Kern selbst bleibt unangetastet — derselbe Weg
 // wie --saat. Grenze: rand_frame wuerfelt der Kern MITTEN im Frame neu.
 
+// Zug-Zaehler des EEL-rand() (Messkopie patched/nseel-cfunc.c, S80)
+extern "C" unsigned int lumi_rand_zaehler;
+extern "C" void lumi_rand_reset(void);
+
 /// Rausch-Texturen des Kerns mit den LumiViz-Bytes ueberschreiben.
 /// Liefert die Zahl der ersetzten Texturen (erwartet: 6).
 static int zufallTexturenSchreiben()
@@ -430,6 +434,8 @@ int main(int argc, char** argv)
     bool show = false;
     unsigned int saat = lumi::saat::kSeedAus;  // Vorgabe: wie bisher ohne Saat
     bool zufallLumiviz = false;  // S80: Zufallsdaten wie LumiViz (s. oben)
+    int meshX = 0;               // S80: 0 = Kern-Vorgabe (64x64)
+    int meshY = 0;
     // --audio-muster (S74): klassisch = Sinus+Beat-Puls wie bisher, musik =
     // aus einer Aufnahme abgeleitete Huellkurven. Beides aus SynthAudio.hpp,
     // die MilkdropStandalone genauso einbindet.
@@ -443,6 +449,20 @@ int main(int argc, char** argv)
         else if (arg == "--silence") silence = true;
         else if (arg == "--show") show = true;
         else if (arg == "--zufall-lumiviz") zufallLumiviz = true;
+        else if (arg == "--mesh" && i + 1 < argc)
+        {
+            // Warp-Mesh (S80): MilkDrop3 legt 64x64 fest im Code fest
+            // (plugin.cpp:1205), das Winamp-Original und LumiViz rechnen 32x24.
+            // Bei per_pixel-Code mit rand() zieht jeder Gitterpunkt einen Wert
+            // — verschiedene Meshes ergeben dann verschiedene Bilder.
+            const std::string wh = argv[++i];
+            const size_t x = wh.find('x');
+            if (x != std::string::npos)
+            {
+                meshX = std::atoi(wh.substr(0, x).c_str());
+                meshY = std::atoi(wh.substr(x + 1).c_str());
+            }
+        }
         else if (arg == "--saat" && i + 1 < argc)
         {
             // Startwert des Feedback-Puffers; 0 = aus (Bestandsverhalten).
@@ -554,6 +574,12 @@ int main(int argc, char** argv)
     g_plugin.m_fTimeBetweenPresetsRand = 0.0f;
     g_plugin.m_bHardCutsDisabled = true;
     g_plugin.m_bSequentialPresetOrder = true;
+    if (meshX > 0 && meshY > 0)
+    {
+        g_plugin.m_nGridX = meshX;  // vor PluginInitialize: dort wird allokiert
+        g_plugin.m_nGridY = meshY;
+    }
+    std::printf("[MilkdropRef] Warp-Mesh %dx%d\n", g_plugin.m_nGridX, g_plugin.m_nGridY);
 
     // Asset-Layout: <basis>/presets/*.milk mit <basis>/{textures,sprites} —
     // der Kern sucht unter m_szMilkdrop2Path\textures und m_szPresetDir
@@ -589,7 +615,12 @@ int main(int argc, char** argv)
         std::fflush(stdout);
         g_plugin.m_bInitialPresetSelected = true;  // kein Zufalls-Startpreset
         g_plugin.m_UI_mode = UI_REGULAR;
+        std::printf("[MilkdropRef] EEL-rand: %u Zuege vor LoadPreset\n", lumi_rand_zaehler);
+        // Strom auf den Prozessstart: „frischer Prozess, dieses Preset zuerst"
+        // (das Startpreset beim Hochfahren hat schon gezogen, S80)
+        if (zufallLumiviz) lumi_rand_reset();
         g_plugin.LoadPreset(preset.wstring().c_str(), 0.0f);
+        std::printf("[MilkdropRef] EEL-rand: %u Zuege nach LoadPreset\n", lumi_rand_zaehler);
         ladungsSeed = lumi::zufall::lcg(ladungsSeed);
         if (zufallLumiviz)
         {
@@ -646,12 +677,16 @@ int main(int argc, char** argv)
             synthOpt.stille = silence;
             buildPcm(f, synthOpt, pcmL, pcmR);
             if (zufallLumiviz) zufallZustandSetzen(ladungsSeed);
+            const unsigned int zuegeVorher = lumi_rand_zaehler;
             if (g_plugin.PluginRender(pcmL, pcmR) == 0)
             {
                 std::fprintf(stderr, "[MilkdropRef] RENDER-ABBRUCH bei Frame %d\n", f);
                 rc2 = 4;
                 break;
             }
+            if (f < 5)
+                std::printf("[MilkdropRef] EEL-rand: Frame %d zog %u (Stand %u)\n", f,
+                            lumi_rand_zaehler - zuegeVorher, lumi_rand_zaehler);
             // Saat NACH dem ersten Frame: der Kern nullt `m_lpVS[0]` genau dort
             // ausdruecklich (`milkdropfs.cpp`, "on first frame, clear OLD VS",
             // bei m_nFramesSinceResize == 0). Davor eingestreutes Rauschen ist
