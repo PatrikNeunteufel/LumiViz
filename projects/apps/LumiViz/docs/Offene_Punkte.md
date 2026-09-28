@@ -1659,10 +1659,34 @@ Montagen (Referenz | neu | alt): Scratchpad S80 `strato/out/`.
    und wurde gegen die verzerrte Referenz kalibriert. Das Original nimmt sein
    eigenes FFT (`pluginshell.cpp:1690ff`), das jetzt exakt portiert ist.
 
-   ⬜ **Neu offen:** (a) `AlignWaves()` (`pluginshell.cpp:2342`) — das
-   Original verschiebt die Wellenform nach der Analyse so, dass sie zum
-   Vorframe passt (ruhig stehende Wellen); Custom-Waves mit `bSpectrum=0`
-   sehen die ausgerichtete Wellenform, wir nicht. (b) In der
+   ✅ **Umgesetzt (S80, Entscheid Patrik a): bass/mid/treb aus der
+   Original-Aufbereitung** — `milkdrop/MilkdropAudio.hpp`: je Frame
+   AnalyzeNewSound (Welle, Wave-Spektrum), **AlignWaves** (Port
+   `pluginshell.cpp:2342`, Ausrichtung am Vorframe) und
+   DoCustomSoundAnalysis (zweites FFT der ausgerichteten LINKEN Welle ohne
+   Dämpfung, Bänder = Sechstel-Summen; Original-Eigenheit
+   `myfft.Init(576,512,-1)`: −1 ist wahr, Entzerrung läuft). MilkLoudness
+   bleibt, bekommt nur das neue `imm`. EIN Schalter „Audio“ (Waves + Lautheit).
+   **Beleg `test_MilkdropAudio`:** 12 Frames des Original-Kerns nachgespielt —
+   ausgerichtete Welle in beiden Kanälen **identisch**, `imm` auf 1e-5.
+   Custom-Waves mit `bSpectrum=0` sehen jetzt die ausgerichtete Welle.
+   **Messreihe S80 „Audio“** (gegen dieselben, korrigierten Referenzbilder,
+   `--zufall-lumiviz`; Skript-Zufall Original):
+
+   | Gruppe | Frame 10 | Frame 30 | Frame 120 |
+   |---|---|---|---|
+   | 20 mitgelieferte, 320×240 | 0,087 → **0,055** (5 besser / 0 schlechter) | 0,107 → **0,088** (11/0) | 0,144 → **0,118** (11/1) |
+   | 20 mitgelieferte, 640×480 | 0,088 → **0,057** (4/2) | 0,101 → **0,084** (10/0) | 0,155 → **0,128** (13/0) |
+   | 20 mit Custom-Wave, 320×240 | 0,203 → 0,202 (3/5) | 0,259 → 0,254 (6/1) | 0,291 → **0,274** (8/3) |
+
+   Größte Gewinne (f120): `Gin Tonic on Ice 003` 0,865 → 0,514,
+   `Playaround` 0,237 → 0,109, `Dancing Hearts` 0,185 → 0,099,
+   `Neomtwister` 0,150 → 0,073. Schlechter: `MilkDrop2077.R030` 0,178 →
+   0,274, `Pixies Party (Hakan mash-up) 8.4` 0,161 → 0,212. Die
+   Custom-Wave-Gruppe liegt insgesamt noch hoch — dort wirken weitere,
+   ungeklärte Abweichungen (u. a. die y-Grundlinie der Waves, s. unten).
+
+   ⬜ **Neu offen:** (b) In der
    Spektrum-Wave-Sonde liegt die Grundlinie der Original-Kurve tiefer als
    bei uns, bei gleicher Form — y-Abbildung der Custom-Waves prüfen (die
    Spektrumwerte selbst sind per Test exakt).

@@ -270,10 +270,11 @@ struct PresetState
     /// Original, auch fuer gespeicherte Ketten ohne das Feld (Entscheid Patrik
     /// a, S80) — belegt durch die Gitter-Sonde (Korrelation +0,98 gegen ≈0).
     bool eelRandOriginal = true;
-    /// Audio-Werte der Custom-Waves (S80): true = wie MilkDrop 2 — eigenes FFT
-    /// aus der 8-bit-Wellenform (MilkdropFft.hpp), Faktoren 0.15/0.004 wie
-    /// milkdropfs.cpp:2555; false = LumiViz bisher (App-Spektrum mit den
-    /// geschaetzten Faktoren aus S39). Standard bisher bis zur Messreihe.
+    /// Audio (S80): true = wie MilkDrop 2 — eigene Aufbereitung aus der
+    /// 8-bit-Wellenform (MilkdropAudio.hpp: FFT, AlignWaves, Bandenergien) fuer
+    /// Custom-Waves (Faktoren 0.15/0.004, milkdropfs.cpp:2555) UND bass/mid/treb;
+    /// false = LumiViz bisher (App-Spektrum, geschaetzte Faktoren S39/S43).
+    /// Standard bisher bis zum Entscheid nach der Messreihe.
     bool audioOriginal = false;
 
     // --- Kaltstart (S76; Grundstein der S75-Idee "Preset-Seed") ---------------------------

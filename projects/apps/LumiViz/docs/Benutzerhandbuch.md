@@ -474,6 +474,15 @@ exakten MD1-Pfad).
 - **LumiViz (bisher)** — ganze Zahlen, `rand(1)` ist dann immer 0. Holt den
   Look zurück, den MilkDrop-Presets in LumiViz bis Session 80 hatten.
 
+**Audio** (Session 80): woraus `bass`/`mid`/`treb` (samt `_att`) und die Werte
+der Custom-Waves (`value1`/`value2`) entstehen.
+
+- **Original (MilkDrop)** — die Aufbereitung von MilkDrop 2: aus der
+  8-bit-Wellenform ein eigenes FFT (mit Hüllkurve und Entzerrung), die Welle
+  am Vorbild ausgerichtet, daraus die Bandenergien. Gegen den Original-Kern
+  geprüft (identische Werte).
+- **LumiViz (bisher)** — das Spektrum der App mit geschätzten Faktoren.
+
 ### Gestaltung: Drift und Weichzeichnen (kein Original-Verhalten)
 
 In der **Parameter**-Sektion eines Milkdrop-Nodes, Gruppe **„Gestaltung"**

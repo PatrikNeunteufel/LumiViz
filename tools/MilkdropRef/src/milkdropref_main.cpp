@@ -706,6 +706,38 @@ int main(int argc, char** argv)
             if (f < 5)
                 std::printf("[MilkdropRef] EEL-rand: Frame %d zog %u (Stand %u)\n", f,
                             lumi_rand_zaehler - zuegeVorher, lumi_rand_zaehler);
+            // Audio-Folge (S80): PCM aller Frames < N, im letzten zusaetzlich die
+            // ausgerichtete Welle (AlignWaves) und mysound.imm — Sollwerte fuer
+            // MilkdropAudio (Ausrichtung haengt am Vorframe, darum eine FOLGE)
+            {
+                static const int seqFrames = [] {
+                    const char* e = std::getenv("MILKDROPREF_AUDIO_SEQ");
+                    return e ? std::atoi(e) : 0;
+                }();
+                if (f < seqFrames)
+                {
+                    std::printf("[MilkdropRef] SEQ f%d pcmL:", f);
+                    for (int i = 0; i < 576; ++i)
+                        std::printf(" %d", static_cast<int>(static_cast<signed char>(pcmL[i])));
+                    std::printf("\n[MilkdropRef] SEQ f%d pcmR:", f);
+                    for (int i = 0; i < 576; ++i)
+                        std::printf(" %d", static_cast<int>(static_cast<signed char>(pcmR[i])));
+                    std::printf("\n");
+                    if (f == seqFrames - 1)
+                    {
+                        for (int ch = 0; ch < 2; ++ch)
+                        {
+                            std::printf("[MilkdropRef] SEQ aligned%d:", ch);
+                            for (int i = 0; i < 576; ++i)
+                                std::printf(" %.0f", g_plugin.m_sound.fWaveform[ch][i]);
+                            std::printf("\n");
+                        }
+                        std::printf("[MilkdropRef] SEQ imm: %.6f %.6f %.6f\n",
+                                    g_plugin.mysound.imm[0], g_plugin.mysound.imm[1],
+                                    g_plugin.mysound.imm[2]);
+                    }
+                }
+            }
             // Audio-Ausgabe (S80): Wellenform + Spektrum des Kerns fuer einen
             // Frame — Sollwerte fuer den MilkdropFft-Port
             {

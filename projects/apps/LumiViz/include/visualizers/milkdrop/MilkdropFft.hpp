@@ -107,6 +107,14 @@ public:
         zeitZuFrequenz(gedaempft.data(), aus.data());
     }
 
+    /// Spektrum OHNE die Daempfung davor — `DoCustomSoundAnalysis`
+    /// (plugin.cpp:8720) gibt die Welle direkt ins FFT (Quelle von bass/mid/treb)
+    void spektrumOhneDaempfung(const std::array<float, kEingang>& welle,
+                               std::array<float, kBaender>& aus)
+    {
+        zeitZuFrequenz(welle.data(), aus.data());
+    }
+
 private:
     /// time_to_frequency_domain (fft.cpp), Huellkurve + Entzerrung aktiv
     void zeitZuFrequenz(const float* ein, float* aus)

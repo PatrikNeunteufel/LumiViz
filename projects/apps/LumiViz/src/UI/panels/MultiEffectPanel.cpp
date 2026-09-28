@@ -5854,24 +5854,25 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                         });
                 form->addRow(tr("Skript-Zufall"), randCombo);
 
-                // Audio der Custom-Waves (S80): eigenes MilkDrop-FFT statt des
-                // App-Spektrums mit geschaetzten Faktoren (MilkdropFft.hpp)
+                // Audio (S80, Entscheid Patrik a): EIN Schalter fuer alles, was aus
+                // dem Audio kommt — Custom-Waves UND bass/mid/treb (MilkdropAudio.hpp)
                 auto* audioCombo = new QComboBox(m_propContainer);
-                audioCombo->addItems({tr("LumiViz (bisher)"), tr("Original (MilkDrop-FFT)")});
+                audioCombo->addItems({tr("LumiViz (bisher)"), tr("Original (MilkDrop)")});
                 audioCombo->setCurrentIndex(p->preset.audioOriginal ? 1 : 0);
                 audioCombo->setToolTip(
-                    tr("Welche Werte Custom-Waves als value1/value2 sehen. Original = "
-                       "wie MilkDrop 2: eigenes FFT aus der 8-bit-Wellenform (Hüllkurve, "
-                       "Entzerrung), Faktoren 0,15/0,004 — Presets, die aus dem Spektrum "
-                       "rechnen, verhalten sich wie im Original. Bisher = App-Spektrum mit "
-                       "geschätzten Faktoren (Session 39)."));
+                    tr("Woraus bass/mid/treb (und _att) und die Custom-Waves "
+                       "(value1/value2) entstehen. Original = wie MilkDrop 2: eigene "
+                       "Aufbereitung aus der 8-bit-Wellenform — FFT mit Hüllkurve und "
+                       "Entzerrung, Ausrichtung der Welle am Vorbild, Bandenergien; "
+                       "gegen den Original-Kern geprüft. Bisher = Spektrum der App mit "
+                       "geschätzten Faktoren (Session 39/43)."));
                 connect(audioCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
                         this, [this, path, milkOf](int idx) {
                             mutate(path, [&](ChainNode& n) {
                                 milkOf(n).preset.audioOriginal = idx == 1;
                             });
                         });
-                form->addRow(tr("Wave-Audio"), audioCombo);
+                form->addRow(tr("Audio"), audioCombo);
             }
 
             // --- Puffer-Wechsel (S66) --------------------------------------------

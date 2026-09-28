@@ -878,7 +878,31 @@ void MilkdropVisualizer::updateAudio(float deltaTime)
             spec[i] = 0.5f * (spec[i] + specR[i]);
     }
     double imm[3] = {0.0, 0.0, 0.0};
-    if (!spec.empty())
+    if (m_state.audioOriginal)
+    {
+        // Audio wie MilkDrop 2 (S80): die Aufbereitung des Kerns je Frame —
+        // 8-bit-Welle, Spektrum, Ausrichtung, Bandenergien (MilkdropAudio.hpp)
+        std::array<std::array<float, 576>, 2> roh{};
+        for (int ch = 0; ch < 2; ++ch)
+        {
+            const std::vector<float> w = getWaveformChannel(ch);
+            const int n = static_cast<int>(w.size());
+            for (int i = 0; i < 576 && n >= 2; ++i)
+            {
+                const double pos = static_cast<double>(i) * (n - 1) / 575.0;
+                const int i0 = static_cast<int>(pos);
+                const int i1 = std::min(i0 + 1, n - 1);
+                const double frac = pos - i0;
+                roh[static_cast<std::size_t>(ch)][static_cast<std::size_t>(i)] =
+                    static_cast<float>(w[static_cast<std::size_t>(i0)] * (1.0 - frac) +
+                                       w[static_cast<std::size_t>(i1)] * frac);
+            }
+        }
+        m_milkAudio.frame(roh[0].data(), roh[1].data());
+        for (int i = 0; i < 3; ++i)
+            imm[i] = m_milkAudio.imm()[static_cast<std::size_t>(i)];
+    }
+    else if (!spec.empty())
     {
         // PORT: bin mapping assumes the spectrum spans 0..22050 Hz linearly;
         // only the ratios matter for the relative loudness model.
@@ -968,13 +992,6 @@ void MilkdropVisualizer::updateAudio(float deltaTime)
             rawDst[static_cast<std::size_t>(i)] = static_cast<float>(
                 raw[static_cast<std::size_t>(i0)] * (1.0 - frac) +
                 raw[static_cast<std::size_t>(i1)] * frac);
-        }
-        // Audio wie MilkDrop 2 (S80): 8-bit-Wellenform + eigenes FFT fuer die
-        // Custom-Waves — dieselbe Eingabe wie im MilkdropRef-Host
-        if (m_state.audioOriginal)
-        {
-            lumi::milkdrop::MilkdropFft::quantisiere(rawDst.data(), m_wave8[ch]);
-            m_fft.spektrum(m_wave8[ch], m_specOrig[ch]);
         }
         // basic wave gets the §0-smoothed copy; custom waves filter the RAW data
         // themselves (own smoothing coefficients, spec 1.4).
@@ -3573,10 +3590,12 @@ void MilkdropVisualizer::drawCustomWaves()
         const auto sourceSample = [&](int channel, int refIndex) -> double {
             if (original)
             {
-                const std::size_t c = channel == 0 ? 0 : 1;
                 if (d.spectrum)
-                    return m_specOrig[c][static_cast<std::size_t>(std::clamp(refIndex, 0, 511))];
-                return m_wave8[c][static_cast<std::size_t>(std::clamp(refIndex, 0, 575))];
+                    return m_milkAudio.spektrum(channel)[static_cast<std::size_t>(
+                        std::clamp(refIndex, 0, 511))];
+                // ausgerichtete Welle (nach AlignWaves), wie fWaveform im Original
+                return m_milkAudio.welle(channel)[static_cast<std::size_t>(
+                    std::clamp(refIndex, 0, 575))];
             }
             if (d.spectrum)
             {
