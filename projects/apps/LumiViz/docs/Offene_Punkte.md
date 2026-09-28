@@ -1606,9 +1606,24 @@ Montagen (Referenz | neu | alt): Scratchpad S80 `strato/out/`.
    das bisherige RTH-Bild war schlicht dunkler, nicht treuer). Schalter
    „Skript-Zufall" im Milkdrop-Knoten umgesetzt (Standard bisher, Entscheid
    Patrik a); Standard-Frage offen (s. Session 80).
-4. ⬜ **Helligkeit etwa halb, gelbe Lichtkugeln fehlen** — noch nicht
-   untersucht; sinnvoll erst, wenn 3 steht (die Kugeln hängen an Shapes, deren
-   Code `rand()` zieht).
+4. 🟠 **Helligkeit etwa halb, gelbe Lichtkugeln fehlen — Ursache gefunden
+   (S80):** nicht der Comp-Shader. Comp-Quellen-Sonde
+   (`asset/calibration/milkdrop/comp_quellen.py`, Comp-Shader durch je eine
+   Quelle ersetzt): schon das rohe Feedback-Bild (`GetPixel`) hat bei uns fast
+   kein Rot/Grün (R 0,002 / G 0,003 gegen 0,023 / 0,013; Blau gleich) — die
+   gelb-orangen Shapes 1 und 3 fehlen. Die zeichnen an Positionen aus
+   `gmegabuf(1000…)`, die `per_frame` aus einer **unsichtbaren Spektrum-Wave**
+   baut (`wave_0`, `bSpectrum=1`, schreibt `value1+value2` nach
+   `gmegabuf(0…127)`). **Spektrum-Wave-Sonde**
+   (`asset/calibration/milkdrop/spektrum_wave.py`, dieselbe Wave sichtbar):
+   das Original liefert ein flaches Profil um 0,3, wir eine steile Kurve
+   (0,93 links → 0,28 rechts). **Ursache:** unsere Custom-Waves nehmen das
+   Spektrum der App (BASS-FFT) mit einem per Auge geschätzten Faktor
+   (`kSpecPortScale = 8`, S39); das Original rechnet ein EIGENES FFT aus den
+   576 PCM-Samples (`fft.cpp`: Hüllkurve, Entzerrung, 512 Bänder). Das
+   betrifft **jedes Preset mit Spektrum-Wave** — nächster Strang, Entscheid
+   offen (Session 80). Auch die Wellenform-Werte (`bSpectrum=0`) weichen ab
+   (geschätzter Faktor `kWavePortScale = 192`) — mit prüfen.
 
 ### ✅ Y-Achse war invertiert — Shapes, Wellenformen und Comp-Shader (S75, behoben)
 

@@ -501,7 +501,7 @@ PresetState presetFromJson(const QJsonObject& doc, QStringList* report)
     s.qGarbageEpsilon = getBool(p, "qGarbageEpsilon", s.qGarbageEpsilon);
     s.uvSanitize = getBool(p, "uvSanitize", s.uvSanitize);
     s.kaltstartSaat = getBool(p, "kaltstartSaat", s.kaltstartSaat);
-    s.eelRandOriginal = getBool(p, "eelRandOriginal", s.eelRandOriginal);  // fehlt = bisher
+    s.eelRandOriginal = getBool(p, "eelRandOriginal", s.eelRandOriginal);  // fehlt = Original
     // Gestaltung (S80): fehlende Felder ⇒ aus (original-treu); Werte geklemmt
     s.gestaltLinAn = getBool(p, "gestaltLinAn", s.gestaltLinAn);
     s.gestaltLinStaerke =

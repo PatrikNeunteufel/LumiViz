@@ -466,11 +466,13 @@ exakten MD1-Pfad).
 
 **Skript-Zufall** (Session 80): wie `rand()` im Code des Presets würfelt.
 
-- **LumiViz (bisher)** — ganze Zahlen; `rand(1)` ist dann immer 0.
-- **Original (ns-eel2)** — wie MilkDrop 2: eine Kommazahl zwischen 0 und x,
-  aus einem Generator mit festem Startwert. Presets, die im Init würfeln
-  (z. B. *martin – stratospheric turbulences*), zeigen damit dieselbe Szene
-  wie das Original; Zufall je Gitterpunkt wirkt nachweislich wie im Original.
+- **Original (ns-eel2)** — **Standard**, auch für ältere gespeicherte
+  Ketten. Wie MilkDrop 2: eine Kommazahl zwischen 0 und x, aus einem
+  Generator mit festem Startwert. Presets, die im Init würfeln (z. B.
+  *martin – stratospheric turbulences*), zeigen damit dieselbe Szene wie das
+  Original; Zufall je Gitterpunkt wirkt nachweislich wie im Original.
+- **LumiViz (bisher)** — ganze Zahlen, `rand(1)` ist dann immer 0. Holt den
+  Look zurück, den MilkDrop-Presets in LumiViz bis Session 80 hatten.
 
 ### Gestaltung: Drift und Weichzeichnen (kein Original-Verhalten)
 

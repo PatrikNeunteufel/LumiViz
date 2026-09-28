@@ -63,14 +63,19 @@ TEST_CASE("NseelZufall: Zuruecksetzen = Prozessstart; ueber 624 Zuege hinweg sta
     CHECK(z.rand(100) == doctest::Approx(erster));
 }
 
-TEST_CASE("NseelZufall: Preset-Schalter Skript-Zufall — Speichern/Laden, fehlt = bisher")
+TEST_CASE("NseelZufall: Preset-Schalter Skript-Zufall — Standard Original, bisher bleibt")
 {
     lumi::milkdrop::PresetState a;
-    a.eelRandOriginal = true;
-    CHECK(lumi::milkdrop::presetFromJson(lumi::milkdrop::presetToJson(a), nullptr)
-              .eelRandOriginal);
-    CHECK_FALSE(lumi::milkdrop::presetFromJson(lumi::milkdrop::presetToJson({}), nullptr)
+    CHECK(a.eelRandOriginal);  // Entscheid Patrik a (S80)
+    a.eelRandOriginal = false;
+    CHECK_FALSE(lumi::milkdrop::presetFromJson(lumi::milkdrop::presetToJson(a), nullptr)
                     .eelRandOriginal);
+    // Altbestand ohne das Feld: Original
+    QJsonObject alt = lumi::milkdrop::presetToJson({});
+    QJsonObject inner = alt.value("preset").toObject();
+    inner.remove("eelRandOriginal");
+    alt.insert("preset", inner);
+    CHECK(lumi::milkdrop::presetFromJson(alt, nullptr).eelRandOriginal);
 }
 
 TEST_CASE("NseelZufall: ScriptContext schaltet je Kontext, reset() setzt den Strom zurueck")

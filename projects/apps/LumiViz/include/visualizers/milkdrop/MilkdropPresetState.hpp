@@ -264,11 +264,12 @@ struct PresetState
     bool uvSanitize = true;
     PsOverride psWarp = PsOverride::Auto;
     PsOverride psComp = PsOverride::Auto;
-    /// Skript-Zufall (S80): false = LumiViz bisher (ganze Zahlen aus dem
-    /// AVS-Strom), true = Original ns-eel2 (Mersenne-Twister, Startwert
-    /// 0x4141f00d, Kommazahl — NseelZufall.hpp). Standard bisher, bis die
-    /// Reihenfolge der Gitterpunkte im per_pixel-Code geklaert ist.
-    bool eelRandOriginal = false;
+    /// Skript-Zufall (S80): true = Original ns-eel2 (Mersenne-Twister,
+    /// Startwert 0x4141f00d, Kommazahl — NseelZufall.hpp), false = LumiViz
+    /// bisher (ganze Zahlen aus dem AVS-Strom, der Look bis S80). Standard
+    /// Original, auch fuer gespeicherte Ketten ohne das Feld (Entscheid Patrik
+    /// a, S80) — belegt durch die Gitter-Sonde (Korrelation +0,98 gegen ≈0).
+    bool eelRandOriginal = true;
 
     // --- Kaltstart (S76; Grundstein der S75-Idee "Preset-Seed") ---------------------------
     bool kaltstartSaat = true;      ///< Rausch-Saat beim Kaltstart (heutiges
