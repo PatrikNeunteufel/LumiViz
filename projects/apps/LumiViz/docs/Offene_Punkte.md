@@ -1590,9 +1590,22 @@ Montagen (Referenz | neu | alt): Scratchpad S80 `strato/out/`.
    Züge/Frame bei 32×24); die Referenz zieht dort nachweislich Kommazahlen
    wie wir. Das Mesh gleichzuziehen (`MilkdropRef --mesh 32x24` — MilkDrop3
    legt 64×64 fest, Winamp und wir 32×24) ändert nichts (Mittel 0,0858 vs.
-   0,0861). **Verdacht:** die REIHENFOLGE, in der die Gitterpunkte ziehen —
-   unser Mesh läuft laut S75 zeilengespiegelt; dann bekommt jeder Punkt die
-   Zahl eines anderen. Eigener Strang.
+   0,0861). Verdacht war die Reihenfolge der Gitterpunkte — **widerlegt und
+   der Zufall je Gitterpunkt belegt (S80, Gitter-Sonde
+   `asset/calibration/milkdrop/gitter/gitter_sonde.py`):** (1) ein Schub nur
+   an Punkt K landet bei 13 geprüften K auf beiden Seiten an derselben
+   Stelle (±1 px; Punkt 0 links unten, zeilenweise nach oben); (2) Züge je
+   Frame gleich (1650 bei 2×rand je Punkt, Log `LUMIVIZ_MILKDROP_EEL_RAND_LOG`
+   gegen die Messkopie); (3) **Wirkung von `dx/dy=0.004*(rand(3)-1)` je Punkt,
+   Korrelation mit dem Original: Original-rand +0,85 / +0,97 / +0,98 (5/10/30
+   Frames), bisher −0,03 / +0,03 / −0,04** — das bisherige Muster hat mit dem
+   Original nichts zu tun. Obergrenze: ein Muster ohne Zufall erreicht
+   +0,82…+0,89 (Rest = Abgriff D3D9↔GL). **Folgerung:** Generator, Strom und
+   Reihenfolge stimmen; die schlechtere MAE bei `Rock The House` stammt aus
+   dessen anderen, bekannten Abweichungen (und MAE bevorzugt dunkle Bilder —
+   das bisherige RTH-Bild war schlicht dunkler, nicht treuer). Schalter
+   „Skript-Zufall" im Milkdrop-Knoten umgesetzt (Standard bisher, Entscheid
+   Patrik a); Standard-Frage offen (s. Session 80).
 4. ⬜ **Helligkeit etwa halb, gelbe Lichtkugeln fehlen** — noch nicht
    untersucht; sinnvoll erst, wenn 3 steht (die Kugeln hängen an Shapes, deren
    Code `rand()` zieht).

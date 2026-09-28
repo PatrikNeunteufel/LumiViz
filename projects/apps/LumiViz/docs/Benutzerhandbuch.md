@@ -464,6 +464,14 @@ Dazu je Shader-Stufe ein **PS-Version-Override** (Auto/PS2/PS3/„MD1
 erzwingen" — Letzteres ignoriert den Custom-Shader-Text und rendert den
 exakten MD1-Pfad).
 
+**Skript-Zufall** (Session 80): wie `rand()` im Code des Presets würfelt.
+
+- **LumiViz (bisher)** — ganze Zahlen; `rand(1)` ist dann immer 0.
+- **Original (ns-eel2)** — wie MilkDrop 2: eine Kommazahl zwischen 0 und x,
+  aus einem Generator mit festem Startwert. Presets, die im Init würfeln
+  (z. B. *martin – stratospheric turbulences*), zeigen damit dieselbe Szene
+  wie das Original; Zufall je Gitterpunkt wirkt nachweislich wie im Original.
+
 ### Gestaltung: Drift und Weichzeichnen (kein Original-Verhalten)
 
 In der **Parameter**-Sektion eines Milkdrop-Nodes, Gruppe **„Gestaltung"**

@@ -264,6 +264,11 @@ struct PresetState
     bool uvSanitize = true;
     PsOverride psWarp = PsOverride::Auto;
     PsOverride psComp = PsOverride::Auto;
+    /// Skript-Zufall (S80): false = LumiViz bisher (ganze Zahlen aus dem
+    /// AVS-Strom), true = Original ns-eel2 (Mersenne-Twister, Startwert
+    /// 0x4141f00d, Kommazahl — NseelZufall.hpp). Standard bisher, bis die
+    /// Reihenfolge der Gitterpunkte im per_pixel-Code geklaert ist.
+    bool eelRandOriginal = false;
 
     // --- Kaltstart (S76; Grundstein der S75-Idee "Preset-Seed") ---------------------------
     bool kaltstartSaat = true;      ///< Rausch-Saat beim Kaltstart (heutiges

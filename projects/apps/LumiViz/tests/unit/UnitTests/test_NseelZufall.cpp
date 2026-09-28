@@ -17,6 +17,8 @@
 
 #include "scripting/NseelZufall.hpp"
 #include "scripting/ScriptContext.hpp"
+#include "visualizers/milkdrop/MilkdropPresetState.hpp"
+#include "visualizers/milkdrop/MilkdropSerializer.hpp"
 
 using lumi::scripting::NseelZufall;
 
@@ -59,6 +61,16 @@ TEST_CASE("NseelZufall: Zuruecksetzen = Prozessstart; ueber 624 Zuege hinweg sta
     for (int i = 0; i < 2000; ++i) (void)z.rand(1);  // Blockwechsel bei 624
     z.zuruecksetzen();
     CHECK(z.rand(100) == doctest::Approx(erster));
+}
+
+TEST_CASE("NseelZufall: Preset-Schalter Skript-Zufall — Speichern/Laden, fehlt = bisher")
+{
+    lumi::milkdrop::PresetState a;
+    a.eelRandOriginal = true;
+    CHECK(lumi::milkdrop::presetFromJson(lumi::milkdrop::presetToJson(a), nullptr)
+              .eelRandOriginal);
+    CHECK_FALSE(lumi::milkdrop::presetFromJson(lumi::milkdrop::presetToJson({}), nullptr)
+                    .eelRandOriginal);
 }
 
 TEST_CASE("NseelZufall: ScriptContext schaltet je Kontext, reset() setzt den Strom zurueck")

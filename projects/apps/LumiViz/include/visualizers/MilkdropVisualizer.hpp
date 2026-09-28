@@ -355,6 +355,8 @@ private:
     /// (MilkdropGestaltung.hpp). Laeuft ueber Edits weiter, damit ein Regler-
     /// Zug das Bild nicht springen laesst.
     lumi::milkdrop::GestaltungsLauf m_gestaltLauf;
+    /// Stromabgleich-Log (S80): Zugstand am Ende des vorigen Frames
+    std::uint64_t m_randLogStand = 0;
     /// Lade-Diagnose (S66): >0 = noch so viele Frames Audio-Futter tracen
     int m_traceLoadFrames = 0;
     /// Zeit-Ausblendung (S66): Restzeit/Dauer in Sekunden (<=0 = inaktiv).

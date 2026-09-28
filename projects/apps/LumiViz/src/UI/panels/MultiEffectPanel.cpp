@@ -5834,6 +5834,26 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 };
                 makePsCombo(tr("PS-Version Warp"), p->preset.psWarp, &PS::psWarp);
                 makePsCombo(tr("PS-Version Comp"), p->preset.psComp, &PS::psComp);
+
+                // Skript-Zufall (S80, Entscheid Patrik a): eigener Schalter, NICHT
+                // Teil der Betriebsart — Standard bleibt „LumiViz (bisher)", bis
+                // die Reihenfolge der Gitterpunkte im per_pixel-Code geklaert ist.
+                auto* randCombo = new QComboBox(m_propContainer);
+                randCombo->addItems({tr("LumiViz (bisher)"), tr("Original (ns-eel2)")});
+                randCombo->setCurrentIndex(p->preset.eelRandOriginal ? 1 : 0);
+                randCombo->setToolTip(
+                    tr("rand() im Skript. Original = wie MilkDrop 2: Kommazahl in "
+                       "[0, x], fester Startwert — Presets wie „stratospheric "
+                       "turbulences“ sehen damit aus wie im Original; bei Zufall "
+                       "je Gitterpunkt (per_pixel) noch Abweichungen. Bisher = "
+                       "ganze Zahlen (rand(1) ist dann immer 0)."));
+                connect(randCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                        this, [this, path, milkOf](int idx) {
+                            mutate(path, [&](ChainNode& n) {
+                                milkOf(n).preset.eelRandOriginal = idx == 1;
+                            });
+                        });
+                form->addRow(tr("Skript-Zufall"), randCombo);
             }
 
             // --- Puffer-Wechsel (S66) --------------------------------------------

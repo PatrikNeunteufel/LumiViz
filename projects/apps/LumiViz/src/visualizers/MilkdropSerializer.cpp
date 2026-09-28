@@ -356,6 +356,7 @@ QJsonObject presetToJson(const PresetState& state)
     p["psWarp"] = psOverrideKey(state.psWarp);
     p["psComp"] = psOverrideKey(state.psComp);
     p["kaltstartSaat"] = state.kaltstartSaat;
+    p["eelRandOriginal"] = state.eelRandOriginal;  // S80: Skript-Zufall
     // Gestaltung (S80): Drift/Weichzeichnen je Frame, kein Original-Verhalten
     p["gestaltLinAn"] = state.gestaltLinAn;
     p["gestaltLinStaerke"] = state.gestaltLinStaerke;
@@ -500,6 +501,7 @@ PresetState presetFromJson(const QJsonObject& doc, QStringList* report)
     s.qGarbageEpsilon = getBool(p, "qGarbageEpsilon", s.qGarbageEpsilon);
     s.uvSanitize = getBool(p, "uvSanitize", s.uvSanitize);
     s.kaltstartSaat = getBool(p, "kaltstartSaat", s.kaltstartSaat);
+    s.eelRandOriginal = getBool(p, "eelRandOriginal", s.eelRandOriginal);  // fehlt = bisher
     // Gestaltung (S80): fehlende Felder ⇒ aus (original-treu); Werte geklemmt
     s.gestaltLinAn = getBool(p, "gestaltLinAn", s.gestaltLinAn);
     s.gestaltLinStaerke =

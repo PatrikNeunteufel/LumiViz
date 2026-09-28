@@ -174,6 +174,9 @@ public:
     /// @brief `rand(x)` wie ns-eel2: Kommazahl in [0, floor(max(x,1))]
     [[nodiscard]] double nextMilkRand(double x) { return m_nseel.rand(x); }
 
+    /// @brief Zuege des MilkDrop-Stroms seit Preset-Start (Stromabgleich S80)
+    [[nodiscard]] std::uint64_t milkRandZuege() const { return m_nseel.zuege(); }
+
     void reset()
     {
         m_regs.fill(0.0);

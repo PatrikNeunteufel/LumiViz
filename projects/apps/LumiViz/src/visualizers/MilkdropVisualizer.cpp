@@ -782,10 +782,11 @@ void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringLi
 void MilkdropVisualizer::rebuildScripts(QStringList* report)
 {
     m_context = std::make_shared<ScriptContext>();
-    // Diagnose (S80): LUMIVIZ_MILKDROP_EEL_RAND=original schaltet rand() auf
-    // den ns-eel2-Generator (MT19937, Kommazahl — NseelZufall.hpp). Messschalter
-    // bis zum Entscheid, ob und wie das ein Preset-Schalter wird.
-    if (qgetenv("LUMIVIZ_MILKDROP_EEL_RAND") == "original")
+    // Skript-Zufall (S80, Entscheid Patrik a): Preset-Schalter eelRandOriginal
+    // schaltet rand() auf den ns-eel2-Generator (MT19937, Kommazahl —
+    // NseelZufall.hpp). LUMIVIZ_MILKDROP_EEL_RAND=original erzwingt es fuer
+    // Messlaeufe an .milk-Dateien (die den Schalter nicht tragen).
+    if (m_state.eelRandOriginal || qgetenv("LUMIVIZ_MILKDROP_EEL_RAND") == "original")
     {
         m_context->setMilkdropRand(true);
         // Messhilfe: k Zuege vorab verbrauchen (Stromversatz zur Referenz suchen)
@@ -2883,6 +2884,20 @@ void MilkdropVisualizer::onRender(float deltaTime)
         }
     }
     m_feedback.swapOnly();
+
+    // Stromabgleich (S80): wie MilkdropRef „EEL-rand: Frame f zog n" — nur mit
+    // LUMIVIZ_MILKDROP_EEL_RAND_LOG, die ersten fuenf Frames je Ladung
+    static const bool kRandLog = qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_EEL_RAND_LOG");
+    if (kRandLog && m_context != nullptr && m_context->milkdropRand())
+    {
+        const std::uint64_t stand = m_context->milkRandZuege();
+        if (m_frame < 5)
+            std::printf("[LumiViz] EEL-rand: Frame %d zog %llu (Stand %llu)\n",
+                        static_cast<int>(m_frame),
+                        static_cast<unsigned long long>(stand - m_randLogStand),
+                        static_cast<unsigned long long>(stand));
+        m_randLogStand = stand;
+    }
 
     ++m_frame;
 }

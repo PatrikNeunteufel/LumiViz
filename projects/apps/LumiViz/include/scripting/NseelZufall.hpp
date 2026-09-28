@@ -77,6 +77,7 @@ public:
             m_mt[N - 1] = m_mt[M - 1] ^ (y >> 1) ^ mag01[y & 0x1u];
             m_mti = 0;
         }
+        ++m_zuege;
         std::uint32_t y = m_mt[m_mti++];
         y ^= (y >> 11);
         y ^= (y << 7) & 0x9d2c5680u;
@@ -99,7 +100,12 @@ public:
     {
         m_mti = 0;
         m_init = false;
+        m_zuege = 0;
     }
+
+    /// Zahl der Zuege seit dem Start — Gegenstueck zum Zaehler der
+    /// MilkdropRef-Messkopie (`lumi_rand_zaehler`), zum Abgleich des Stroms
+    [[nodiscard]] std::uint64_t zuege() const { return m_zuege; }
 
 private:
     // Im Original ist `mti` beim Prozessstart 0 und wird beim ersten Aufruf auf
@@ -108,6 +114,7 @@ private:
     std::array<std::uint32_t, 624> m_mt{};
     int m_mti = 0;
     bool m_init = false;
+    std::uint64_t m_zuege = 0;
 };
 
 } // namespace lumi::scripting
