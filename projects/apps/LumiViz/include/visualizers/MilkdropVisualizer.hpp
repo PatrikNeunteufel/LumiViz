@@ -41,6 +41,7 @@
 
 #include "scripting/ScriptContext.hpp"
 #include "scripting/ScriptSlotHost.hpp"
+#include "visualizers/milkdrop/MilkdropFft.hpp"
 #include "visualizers/milkdrop/MilkdropGestaltung.hpp"
 #include "visualizers/milkdrop/MilkdropPresetState.hpp"
 #include "visualizers/modules/IModule.hpp"
@@ -357,6 +358,11 @@ private:
     lumi::milkdrop::GestaltungsLauf m_gestaltLauf;
     /// Stromabgleich-Log (S80): Zugstand am Ende des vorigen Frames
     std::uint64_t m_randLogStand = 0;
+    /// Audio wie MilkDrop 2 (S80, PresetState::audioOriginal): 8-bit-Wellenform
+    /// (−128…127) und daraus das eigene FFT — Quelle der Custom-Waves
+    lumi::milkdrop::MilkdropFft m_fft;
+    std::array<std::array<float, 576>, 2> m_wave8{};
+    std::array<std::array<float, 512>, 2> m_specOrig{};
     /// Lade-Diagnose (S66): >0 = noch so viele Frames Audio-Futter tracen
     int m_traceLoadFrames = 0;
     /// Zeit-Ausblendung (S66): Restzeit/Dauer in Sekunden (<=0 = inaktiv).

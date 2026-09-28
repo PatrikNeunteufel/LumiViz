@@ -5853,6 +5853,25 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             });
                         });
                 form->addRow(tr("Skript-Zufall"), randCombo);
+
+                // Audio der Custom-Waves (S80): eigenes MilkDrop-FFT statt des
+                // App-Spektrums mit geschaetzten Faktoren (MilkdropFft.hpp)
+                auto* audioCombo = new QComboBox(m_propContainer);
+                audioCombo->addItems({tr("LumiViz (bisher)"), tr("Original (MilkDrop-FFT)")});
+                audioCombo->setCurrentIndex(p->preset.audioOriginal ? 1 : 0);
+                audioCombo->setToolTip(
+                    tr("Welche Werte Custom-Waves als value1/value2 sehen. Original = "
+                       "wie MilkDrop 2: eigenes FFT aus der 8-bit-Wellenform (Hüllkurve, "
+                       "Entzerrung), Faktoren 0,15/0,004 — Presets, die aus dem Spektrum "
+                       "rechnen, verhalten sich wie im Original. Bisher = App-Spektrum mit "
+                       "geschätzten Faktoren (Session 39)."));
+                connect(audioCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                        this, [this, path, milkOf](int idx) {
+                            mutate(path, [&](ChainNode& n) {
+                                milkOf(n).preset.audioOriginal = idx == 1;
+                            });
+                        });
+                form->addRow(tr("Wave-Audio"), audioCombo);
             }
 
             // --- Puffer-Wechsel (S66) --------------------------------------------

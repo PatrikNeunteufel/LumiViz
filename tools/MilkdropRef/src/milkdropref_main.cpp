@@ -29,8 +29,6 @@
 #include <windows.h>
 #include <d3d9.h>
 
-#include "plugin.h"
-
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -38,6 +36,15 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+
+// Messzugriff (S80): `m_sound` (Wellenform + Spektrum des Kerns) ist in
+// CPluginShell `protected`. Fuer die Audio-Ausgabe (MILKDROPREF_AUDIO_DUMP)
+// wird die Sichtbarkeit NUR in dieser Uebersetzungseinheit geoeffnet — die
+// Speicheranordnung bleibt gleich, der Kern wird nicht veraendert. Die
+// Standard-Header stehen bewusst DAVOR, damit das nicht in sie hineinwirkt.
+#define protected public
+#include "plugin.h"
+#undef protected
 
 // Der synthetische Klang kommt seit S74 aus der GEMEINSAMEN Quelle, die auch
 // die beiden LumiViz-Standalones und AvsRef einbinden — vorher stand die
@@ -113,18 +120,30 @@ void buildPcm(int frame, const lumi::synth::Optionen& opt, unsigned char* left,
 {
     if (opt.stille)
     {
-        std::memset(left, 128, kSamples);
-        std::memset(right, 128, kSamples);
+        // Stille = 0 (Zweierkomplement, s. unten). Bis S80 stand hier 128 —
+        // der Kern las das als −128, also volles negatives Gleichsignal.
+        std::memset(left, 0, kSamples);
+        std::memset(right, 0, kSamples);
         return;
     }
     static lumi::synth::Frame klang;
     lumi::synth::erzeuge(frame, opt, klang);
+    // BEFUND S80: Winamp liefert VORZEICHENBEHAFTETE 8-bit-Werte (das obere
+    // Byte der 16-bit-Samples, `VIS.cpp:766/774`), und der Kern wandelt mit
+    // `(pcm ^ 128) - 128` (pluginshell.cpp:1668) — er erwartet Zweierkomplement.
+    // Bis S80 stand hier `+ 128` (Mitte 128): der Kern sah dann v-128 fuer
+    // positive und v+128 fuer negative Werte, eine zerhackte Wellenform mit viel
+    // Breitband — in Custom-Waves, Spektrum und bass/mid/treb. AvsRef macht es
+    // richtig (`sw & 0xFF`). Alle MilkDrop-Referenzzahlen davor stehen unter
+    // diesem Vorbehalt.
+    const auto zuByte = [](float x) {
+        const long v = std::lround(static_cast<double>(x) * 127.0);
+        return static_cast<unsigned char>(static_cast<unsigned long>(v) & 0xFFu);
+    };
     for (int i = 0; i < kSamples; ++i)
     {
-        left[i] = static_cast<unsigned char>(
-            std::lround(klang.wave[i * 2 + 0] * 127.0) + 128);
-        right[i] = static_cast<unsigned char>(
-            std::lround(klang.wave[i * 2 + 1] * 127.0) + 128);
+        left[i] = zuByte(klang.wave[i * 2 + 0]);
+        right[i] = zuByte(klang.wave[i * 2 + 1]);
     }
 }
 
@@ -687,6 +706,30 @@ int main(int argc, char** argv)
             if (f < 5)
                 std::printf("[MilkdropRef] EEL-rand: Frame %d zog %u (Stand %u)\n", f,
                             lumi_rand_zaehler - zuegeVorher, lumi_rand_zaehler);
+            // Audio-Ausgabe (S80): Wellenform + Spektrum des Kerns fuer einen
+            // Frame — Sollwerte fuer den MilkdropFft-Port
+            {
+                static const int dumpFrame = [] {
+                    const char* e = std::getenv("MILKDROPREF_AUDIO_DUMP");
+                    return e ? std::atoi(e) : -1;
+                }();
+                if (f == dumpFrame)
+                {
+                    // Eingang des FFT = das PCM dieses Frames (vorzeichenbehaftet).
+                    // NICHT m_sound.fWaveform: das hat AlignWaves() nach der
+                    // Analyse schon verschoben (pluginshell.cpp:1324).
+                    std::printf("[MilkdropRef] AUDIO f%d wave0:", f);
+                    for (int i = 0; i < 576; ++i)
+                        std::printf(" %d", static_cast<int>(static_cast<signed char>(pcmL[i])));
+                    std::printf("\n[MilkdropRef] AUDIO f%d aligned0:", f);
+                    for (int i = 0; i < 576; ++i)
+                        std::printf(" %.0f", g_plugin.m_sound.fWaveform[0][i]);
+                    std::printf("\n[MilkdropRef] AUDIO f%d spec0:", f);
+                    for (int i = 0; i < 512; ++i)
+                        std::printf(" %.6f", g_plugin.m_sound.fSpectrum[0][i]);
+                    std::printf("\n");
+                }
+            }
             // Saat NACH dem ersten Frame: der Kern nullt `m_lpVS[0]` genau dort
             // ausdruecklich (`milkdropfs.cpp`, "on first frame, clear OLD VS",
             // bei m_nFramesSinceResize == 0). Davor eingestreutes Rauschen ist

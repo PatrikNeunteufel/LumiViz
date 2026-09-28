@@ -671,6 +671,10 @@ void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringLi
         m_state.gestaltWeichAn = true;
         m_state.gestaltWeich = 1.0;
     }
+    // Diagnose (S80): LUMIVIZ_MILKDROP_AUDIO=original|bisher erzwingt die Audio-
+    // Werte der Custom-Waves fuer .milk-Messungen (Feld audioOriginal)
+    if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_AUDIO"))
+        m_state.audioOriginal = qgetenv("LUMIVIZ_MILKDROP_AUDIO") == "original";
     if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_REGELWERK"))
     {
         const QByteArray v = qgetenv("LUMIVIZ_MILKDROP_REGELWERK").toLower();
@@ -964,6 +968,13 @@ void MilkdropVisualizer::updateAudio(float deltaTime)
             rawDst[static_cast<std::size_t>(i)] = static_cast<float>(
                 raw[static_cast<std::size_t>(i0)] * (1.0 - frac) +
                 raw[static_cast<std::size_t>(i1)] * frac);
+        }
+        // Audio wie MilkDrop 2 (S80): 8-bit-Wellenform + eigenes FFT fuer die
+        // Custom-Waves — dieselbe Eingabe wie im MilkdropRef-Host
+        if (m_state.audioOriginal)
+        {
+            lumi::milkdrop::MilkdropFft::quantisiere(rawDst.data(), m_wave8[ch]);
+            m_fft.spektrum(m_wave8[ch], m_specOrig[ch]);
         }
         // basic wave gets the §0-smoothed copy; custom waves filter the RAW data
         // themselves (own smoothing coefficients, spec 1.4).
@@ -3546,8 +3557,12 @@ void MilkdropVisualizer::drawCustomWaves()
         const double frameA = e.number("a");
 
         // --- sample data (spec 1.4): source, sep shift, forward+backward IIR ---------
-        const double mult = (d.spectrum ? 0.15 * kSpecPortScale
-                                        : 0.004 * kWavePortScale) *
+        // Audio wie MilkDrop 2 (S80): Faktoren des Originals (milkdropfs.cpp:2555)
+        // auf eigenem FFT bzw. 8-bit-Wellenform — ohne die geschaetzten
+        // Port-Faktoren aus S39
+        const bool original = m_state.audioOriginal;
+        const double mult = (d.spectrum ? 0.15 * (original ? 1.0 : kSpecPortScale)
+                                        : 0.004 * (original ? 1.0 : kWavePortScale)) *
                             d.scaling * m_state.waveScale;
         const double mix1 = std::sqrt(clampd(d.smoothing, 0.0, 1.0) * 0.98);
         const double mix2 = 1.0 - mix1;
@@ -3556,6 +3571,13 @@ void MilkdropVisualizer::drawCustomWaves()
         const int specN0 = static_cast<int>(m_spectrumL.size());
         const int specN1 = static_cast<int>(m_spectrumR.size());
         const auto sourceSample = [&](int channel, int refIndex) -> double {
+            if (original)
+            {
+                const std::size_t c = channel == 0 ? 0 : 1;
+                if (d.spectrum)
+                    return m_specOrig[c][static_cast<std::size_t>(std::clamp(refIndex, 0, 511))];
+                return m_wave8[c][static_cast<std::size_t>(std::clamp(refIndex, 0, 575))];
+            }
             if (d.spectrum)
             {
                 const int n = (channel == 0) ? specN0 : specN1;

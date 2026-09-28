@@ -46,8 +46,15 @@ tools/MilkdropRef/build/Release/MilkdropRef.exe <preset.milk|ordner> [--frames N
 ```
 
 - **Audio:** synthetisch, formelgleich zu `MilkdropStandalone::feedSyntheticAudio`
-  (t = frame/60, Sinus 220 Hz + 120-BPM-Puls), als 576-Sample-8-bit-PCM mit
-  128-Mitte (`AnalyzeNewSound`-Kontrakt). `--silence` = Null-Signal.
+  (t = frame/60, Sinus 220 Hz + 120-BPM-Puls), als 576-Sample-8-bit-PCM im
+  **Zweierkomplement** — so liefert Winamp (`VIS.cpp:766/774`), und so wandelt
+  der Kern (`(pcm ^ 128) - 128`, `pluginshell.cpp:1668`). **Bis S80 stand hier
+  „128-Mitte“ — falsch:** der Kern sah eine zerhackte Wellenform (Befund S80,
+  `Offene_Punkte.md` §3); alle MilkDrop-Referenzzahlen davor stehen unter
+  Vorbehalt. `--silence` = Null-Signal (Bytes 0).
+- **Audio-Ausgabe:** `MILKDROPREF_AUDIO_DUMP=N` gibt für Frame N das PCM
+  (FFT-Eingang), die ausgerichtete Wellenform (nach `AlignWaves`) und das
+  Spektrum des Kerns aus — Quelle der Sollwerte von `test_MilkdropFft`.
 - **Ausgabe:** je Preset der letzte Frame als 32-bpp-BMP (top-down, BGRX,
   Alpha genullt) + `mean RGB`/`Luma min/max` im AvsStandalone-Format.
 - **Texturen/Sprites:** `m_szMilkdrop2Path` zeigt auf den Großeltern-Ordner

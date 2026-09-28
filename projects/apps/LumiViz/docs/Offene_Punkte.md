@@ -1621,9 +1621,51 @@ Montagen (Referenz | neu | alt): Scratchpad S80 `strato/out/`.
    Spektrum der App (BASS-FFT) mit einem per Auge geschätzten Faktor
    (`kSpecPortScale = 8`, S39); das Original rechnet ein EIGENES FFT aus den
    576 PCM-Samples (`fft.cpp`: Hüllkurve, Entzerrung, 512 Bänder). Das
-   betrifft **jedes Preset mit Spektrum-Wave** — nächster Strang, Entscheid
-   offen (Session 80). Auch die Wellenform-Werte (`bSpectrum=0`) weichen ab
-   (geschätzter Faktor `kWavePortScale = 192`) — mit prüfen.
+   betrifft **jedes Preset mit Spektrum-Wave**. Auch die Wellenform-Werte
+   (`bSpectrum=0`) hingen an einem geschätzten Faktor (`kWavePortScale = 192`).
+   **Umgesetzt (S80, Entscheid Patrik a):** `milkdrop/MilkdropFft.hpp` — Port
+   von `fft.cpp` (Dämpfung, Sinus-Hüllkurve, Entzerrung, 1024-FFT, float wie
+   im Original) auf der 8-bit-Wellenform (`lround(x·127)`); Custom-Waves mit
+   den Original-Faktoren 0,15/0,004. Schalter **„Wave-Audio“** je
+   Milkdrop-Knoten (`PresetState.audioOriginal`, Standard bisher bis zum
+   Entscheid nach der Messreihe; Diagnose `LUMIVIZ_MILKDROP_AUDIO`).
+   **Beleg:** `test_MilkdropFft` — dieselbe Wellenform ergibt das Spektrum
+   des Original-Kerns bis auf 5·10⁻⁷ (alle 512 Bänder; Sollwerte aus
+   `MILKDROPREF_AUDIO_DUMP`).
+
+   🔴 **Dabei gefunden — Fehler im MESSGERÄT:** `MilkdropRef` gab dem Kern
+   das PCM mit **128 als Mitte** (`lround(x·127)+128`). Winamp liefert aber
+   **vorzeichenbehaftete** 8-bit-Werte (oberes Byte der 16-bit-Samples,
+   `winamp_orig/…/VIS.cpp:766/774`), und der Kern wandelt mit
+   `(pcm ^ 128) - 128` (`pluginshell.cpp:1668`). Der Kern sah dadurch
+   `v−128` bzw. `v+128` — eine zerhackte Wellenform voller Breitband, in
+   Custom-Waves, Spektrum **und `bass`/`mid`/`treb`**; Stille (`128`) war
+   volles negatives Gleichsignal (−128). `AvsRef` machte es richtig
+   (`sw & 0xFF`). **Behoben** (Zweierkomplement, Stille = 0). **Alle
+   MilkDrop-Referenzzahlen seit S63 stehen unter diesem Vorbehalt** — die
+   Messreihe S80 läuft schon gegen die korrigierte Referenz.
+
+   **Messreihe S80 gegen die korrigierte Referenz** (22 mitgelieferte
+   Presets, `--zufall-lumiviz`): über „Wave-Audio“ sagt sie **nichts** —
+   keines der 22 hat eine aktive Custom-Wave (alle Bilder bitgleich); dafür
+   braucht es eine eigene Auswahl. Sie zeigt aber, was der PCM-Fix an der
+   Referenz verschiebt: Mittel kaum verändert (320: 0,107 → 0,108), einzeln
+   stark — besser `Neomtwister` f120 0,306 → 0,184, `Playaround` 0,326 →
+   0,234; **schlechter `Magma 2` f120 0,002 → 0,160, `Magma` 0,022 → 0,161,
+   `Rock The House` f10 0,12 → 0,22.** `Magma` hat weder `rand()` noch
+   Custom-Waves — der Einbruch kommt allein aus dem jetzt richtigen Audio der
+   Referenz. **Deutung:** unser `bass/mid/treb` (MilkLoudness, S43) rechnet
+   das Verfahren des Originals nach, speist es aber mit dem App-Spektrum —
+   und wurde gegen die verzerrte Referenz kalibriert. Das Original nimmt sein
+   eigenes FFT (`pluginshell.cpp:1690ff`), das jetzt exakt portiert ist.
+
+   ⬜ **Neu offen:** (a) `AlignWaves()` (`pluginshell.cpp:2342`) — das
+   Original verschiebt die Wellenform nach der Analyse so, dass sie zum
+   Vorframe passt (ruhig stehende Wellen); Custom-Waves mit `bSpectrum=0`
+   sehen die ausgerichtete Wellenform, wir nicht. (b) In der
+   Spektrum-Wave-Sonde liegt die Grundlinie der Original-Kurve tiefer als
+   bei uns, bei gleicher Form — y-Abbildung der Custom-Waves prüfen (die
+   Spektrumwerte selbst sind per Test exakt).
 
 ### ✅ Y-Achse war invertiert — Shapes, Wellenformen und Comp-Shader (S75, behoben)
 
