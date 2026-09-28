@@ -271,6 +271,23 @@ struct PresetState
                                     ///< brauchen sie); aus = definiert
                                     ///< schwarzer Start (blanke Pipeline)
 
+    // --- Gestaltung (S80) — KEIN Original-Verhalten ------------------------------------------
+    // Linear-Drift, Radial-Drift und Weichzeichnen je Frame im Warp-Abgriff
+    // (MilkdropGestaltung.hpp). Je Werkzeug ein Schalter; die Werte bleiben beim
+    // Ausschalten stehen. Default aus = original-treu. Winkel hier in GRAD (Panel);
+    // im per_frame-Skript heissen sie drift_dir/drift_ang und sind Bogenmass.
+    // „Weicher Sog ↖" = Linear 0,7071 px bei 135° + Weich 1 = Stand vor S80.
+    bool gestaltLinAn = false;          ///< Linear-Drift wirkt
+    double gestaltLinStaerke = 0.0;     ///< Pixel je Frame (0..4)
+    double gestaltLinRichtung = 0.0;    ///< Grad, 0 = rechts, 90 = oben
+    bool gestaltRadAn = false;          ///< Radial-Drift wirkt
+    double gestaltRadStaerke = 0.0;     ///< Pixel je Frame (0..4)
+    double gestaltRadWinkel = 0.0;      ///< Grad, 0 = aussen, 90 = Wirbel ↺, 180 = innen
+    double gestaltRadCx = 0.5;          ///< Zentrum 0..1, 0 = links
+    double gestaltRadCy = 0.5;          ///< Zentrum 0..1, 0 = unten
+    bool gestaltWeichAn = false;        ///< Weichzeichnen wirkt
+    double gestaltWeich = 0.0;          ///< 0..1, 1 = volles Halbpixel-Pendel
+
     // --- meta ------------------------------------------------------------------------------
     int generation = 1;             ///< 1/2/3 (MilkParser)
     int psVersion = -1;             ///< -1 = shaderless (MD1 path is exact, not a fallback)

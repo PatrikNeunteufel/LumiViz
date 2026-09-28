@@ -11,6 +11,8 @@
 
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 
+#include <algorithm>
+
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -354,6 +356,17 @@ QJsonObject presetToJson(const PresetState& state)
     p["psWarp"] = psOverrideKey(state.psWarp);
     p["psComp"] = psOverrideKey(state.psComp);
     p["kaltstartSaat"] = state.kaltstartSaat;
+    // Gestaltung (S80): Drift/Weichzeichnen je Frame, kein Original-Verhalten
+    p["gestaltLinAn"] = state.gestaltLinAn;
+    p["gestaltLinStaerke"] = state.gestaltLinStaerke;
+    p["gestaltLinRichtung"] = state.gestaltLinRichtung;
+    p["gestaltRadAn"] = state.gestaltRadAn;
+    p["gestaltRadStaerke"] = state.gestaltRadStaerke;
+    p["gestaltRadWinkel"] = state.gestaltRadWinkel;
+    p["gestaltRadCx"] = state.gestaltRadCx;
+    p["gestaltRadCy"] = state.gestaltRadCy;
+    p["gestaltWeichAn"] = state.gestaltWeichAn;
+    p["gestaltWeich"] = state.gestaltWeich;
 
     // meta
     p["generation"] = state.generation;
@@ -487,6 +500,19 @@ PresetState presetFromJson(const QJsonObject& doc, QStringList* report)
     s.qGarbageEpsilon = getBool(p, "qGarbageEpsilon", s.qGarbageEpsilon);
     s.uvSanitize = getBool(p, "uvSanitize", s.uvSanitize);
     s.kaltstartSaat = getBool(p, "kaltstartSaat", s.kaltstartSaat);
+    // Gestaltung (S80): fehlende Felder ⇒ aus (original-treu); Werte geklemmt
+    s.gestaltLinAn = getBool(p, "gestaltLinAn", s.gestaltLinAn);
+    s.gestaltLinStaerke =
+        std::clamp(getDouble(p, "gestaltLinStaerke", s.gestaltLinStaerke), 0.0, 4.0);
+    s.gestaltLinRichtung = getDouble(p, "gestaltLinRichtung", s.gestaltLinRichtung);
+    s.gestaltRadAn = getBool(p, "gestaltRadAn", s.gestaltRadAn);
+    s.gestaltRadStaerke =
+        std::clamp(getDouble(p, "gestaltRadStaerke", s.gestaltRadStaerke), 0.0, 4.0);
+    s.gestaltRadWinkel = getDouble(p, "gestaltRadWinkel", s.gestaltRadWinkel);
+    s.gestaltRadCx = getDouble(p, "gestaltRadCx", s.gestaltRadCx);
+    s.gestaltRadCy = getDouble(p, "gestaltRadCy", s.gestaltRadCy);
+    s.gestaltWeichAn = getBool(p, "gestaltWeichAn", s.gestaltWeichAn);
+    s.gestaltWeich = std::clamp(getDouble(p, "gestaltWeich", s.gestaltWeich), 0.0, 1.0);
     s.psWarp = psOverrideFromKey(p.value("psWarp").toString());
     s.psComp = psOverrideFromKey(p.value("psComp").toString());
 

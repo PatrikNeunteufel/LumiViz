@@ -85,6 +85,11 @@ public:
     /// Panel wird dadurch nie breiter. Einmal nach dem Setzen der Spalten rufen.
     void setColumnMinimums(const QList<int>& minimums);
 
+    /// Drag-&-Drop-Einstellungen des Kettenbaums an EINER Stelle (S80): das
+    /// Panel ruft sie beim Aufbau, der UI-Test (`test_PaletteUi`) ebenso —
+    /// sonst prueft der Test eine Konfiguration, die es im Panel nicht gibt.
+    void configureDragDrop();
+
 protected:
     /// Neben den eigenen Zeilen auch Paletteneintraege (`lumi::ui::kPaletteMime`)
     /// annehmen — erst dadurch zeigt Qt beim Ziehen den Einfuege-Indikator.

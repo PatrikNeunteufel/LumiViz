@@ -465,6 +465,13 @@ QString milkSectionReferenceHtml(int section)
                 refRow("darken_center / wrap / invert / brighten / darken / solarize", "in/out", "0/1", "composite flags") +
                 refRow("blur1_min..blur3_max", "in/out", "0..1", "blur pyramid ranges") +
                 refRow("monitor", "in/out", "any", "persists across frames (debug scratch)") +
+                refRow("drift_lin / drift_dir", "in/out", "px/frame / rad",
+                       "LumiViz extra (Gestaltung): linear drift strength / direction "
+                       "(0 = right, π/2 = up). Acts only while its switch is on") +
+                refRow("drift_rad / drift_ang / drift_cx / drift_cy", "in/out",
+                       "px/frame / rad / 0..1", "LumiViz extra: radial drift strength, "
+                       "angle (0 = out, π/2 = swirl ↺, π = in), centre (y: 0 = bottom)") +
+                refRow("weich", "in/out", "0..1", "LumiViz extra: per-frame softening") +
                 refRow("x / y / rad / ang", "in", "0..1 / rad", "per_pixel only: vertex position (rect + polar)"));
             break;
         case 1:  // Custom waves
@@ -774,6 +781,22 @@ QStringList ChainTreeWidget::mimeTypes() const
 }
 
 namespace {
+/// Pfad des LETZTEN Milkdrop-Knotens in Baumreihenfolge (tiefe zuerst), leer =
+/// keiner. Ziel eines Milkdrop-Elements, das auf die Leerflaeche faellt (S80).
+QList<int> letzterMilkdropPfad(const ChainNode& node, const QList<int>& pfad = {})
+{
+    QList<int> treffer;
+    if (!pfad.isEmpty() && std::holds_alternative<MilkdropNodeParams>(node.params))
+        treffer = pfad;
+    for (size_t i = 0; i < node.children.size(); ++i)
+    {
+        const QList<int> kind =
+            letzterMilkdropPfad(node.children[i], pfad + QList<int>{static_cast<int>(i)});
+        if (!kind.isEmpty()) treffer = kind;
+    }
+    return treffer;
+}
+
 /// Eigene Zeilen oder ein Paletteneintrag — sonst (Zeilen fremder Baeume,
 /// Dateien) nimmt der Kettenbaum nichts an.
 bool chainAccepts(const QDropEvent* event, const QObject* self)
@@ -828,6 +851,19 @@ void ChainTreeWidget::dropEvent(QDropEvent* event)
     // source rows after our rebuild already replaced every item.
     event->setDropAction(Qt::IgnoreAction);
     event->accept();
+}
+
+void ChainTreeWidget::configureDragDrop()
+{
+    setSelectionMode(QAbstractItemView::ExtendedSelection);  // Shift/Ctrl multi
+    setDragEnabled(true);
+    setAcceptDrops(true);
+    setDropIndicatorShown(true);
+    // DragDrop statt InternalMove (S79): nur so nimmt der Baum auch Eintraege
+    // aus dem Palettenfenster an. Eigene Zeilen werden weiterhin verschoben
+    // (dropEvent), nie kopiert.
+    setDragDropMode(QAbstractItemView::DragDrop);
+    setDefaultDropAction(Qt::MoveAction);
 }
 
 void ChainTreeWidget::keyPressEvent(QKeyEvent* event)
@@ -965,15 +1001,7 @@ void MultiEffectPanel::setupUI()
                             QAbstractItemView::EditKeyPressed);
     // Drag & drop re-parents/reorders effects (into / out of groups). We handle
     // the drop ourselves (onDrop) and rebuild from the model.
-    m_tree->setSelectionMode(QAbstractItemView::ExtendedSelection);  // Shift/Ctrl multi
-    m_tree->setDragEnabled(true);
-    m_tree->setAcceptDrops(true);
-    m_tree->setDropIndicatorShown(true);
-    // DragDrop statt InternalMove (S79): nur so nimmt der Baum auch Eintraege
-    // aus dem Palettenfenster an. Eigene Zeilen werden weiterhin verschoben
-    // (dropEvent), nie kopiert.
-    m_tree->setDragDropMode(QAbstractItemView::DragDrop);
-    m_tree->setDefaultDropAction(Qt::MoveAction);
+    m_tree->configureDragDrop();
     m_tree->onDrop = [this](QTreeWidgetItem* s, QTreeWidgetItem* t, ChainDrop w) {
         onDropRequested(s, t, w);
     };
@@ -1531,7 +1559,17 @@ void MultiEffectPanel::onPaletteDrop(int paletteIndex, QTreeWidgetItem* target,
             {
                 // Wave/Shape/Sprite: das Ziel muss ein Milkdrop-Node sein (oder
                 // eine seiner Sektionen/Elemente) — sonst passiert nichts.
-                ok = insertMilkElement(paletteIndex, targetPath);
+                // Leerflaeche (Befund S80): gemeint ist der Milkdrop-Knoten
+                // direkt darueber, also der letzte in Baumreihenfolge. Vorher
+                // ging das Element dort still verloren; nur „direkt unter der
+                // letzten Zeile" traf zufaellig dessen Sprites-Sektion.
+                QList<int> anker = targetPath;
+                if (anker.isEmpty() || where == ChainDrop::Viewport)
+                {
+                    QMutexLocker lock(m_mutex);
+                    anker = letzterMilkdropPfad(m_host->chain());
+                }
+                ok = insertMilkElement(paletteIndex, anker);
             }
             else
             {
@@ -6381,6 +6419,137 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             addBool("darken", tr("Darken"), p->preset.darken, setB(&PS::darken));
             addBool("solarize", tr("Solarize"), p->preset.solarize, setB(&PS::solarize));
             addBool("invert", tr("Invert"), p->preset.invert, setB(&PS::invert));
+
+            // --- Gestaltung (S80) — KEIN Original-Verhalten --------------------
+            // Linear-Drift, Radial-Drift, Weichzeichnen (MilkdropGestaltung.hpp),
+            // je Werkzeug ein eigener Schalter (Wunsch Patrik). Winkel im Panel in
+            // GRAD; das per_frame-Skript sieht dieselben Werte in Bogenmass
+            // (drift_lin/drift_dir, drift_rad/drift_ang/drift_cx/drift_cy, weich).
+            // Zwei Knoepfe setzen bekannte Stellungen: „Original" = alles aus,
+            // „Weicher Sog ↖" = der Look bis S80 (Halbtexel-Versatz unter GL).
+            group(tr("Gestaltung (kein Original-Verhalten)"));
+            {
+                const auto makeCheck = [&](const char* field, const QString& label,
+                                           bool value, bool PS::* member,
+                                           const QString& tip) {
+                    auto* cb = new QCheckBox(m_propContainer);
+                    cb->setChecked(value);
+                    connect(cb, &QCheckBox::toggled, this, [this, path, milkOf, member](bool v) {
+                        mutate(path, [&](ChainNode& n) { milkOf(n).preset.*member = v; });
+                    });
+                    addRow(field, label, cb, tip);
+                    return cb;
+                };
+                const auto makeSpin = [&](const char* field, const QString& label,
+                                          double value, double lo, double hi, double step,
+                                          int decimals, double PS::* member,
+                                          const QString& tip) {
+                    auto* spin = new QDoubleSpinBox(m_propContainer);
+                    spin->setRange(lo, hi);
+                    spin->setSingleStep(step);
+                    spin->setDecimals(decimals);
+                    spin->setValue(value);
+                    connect(spin, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+                            [this, path, milkOf, member](double v) {
+                                mutate(path, [&](ChainNode& n) {
+                                    milkOf(n).preset.*member = v;
+                                });
+                            });
+                    addRow(field, label, spin, tip);
+                    return spin;
+                };
+                const QString skriptHinweis =
+                    tr(" Im per_frame-Code als %1 (Bogenmass) les- und schreibbar.");
+
+                auto* cbLin = makeCheck(
+                    "gestaltLinAn", tr("Linear-Drift"), p->preset.gestaltLinAn,
+                    &PS::gestaltLinAn,
+                    tr("Das ganze Bild wandert je Frame SCHARF in eine Richtung "
+                       "(Bruchteile werden aufgespart: 0,5 px = jeden zweiten Frame "
+                       "ein ganzes Pixel). Das Original kennt das nicht."));
+                auto* spLinS = makeSpin(
+                    "gestaltLinStaerke", tr("  Stärke (px/Frame)"),
+                    p->preset.gestaltLinStaerke, 0.0, 4.0, 0.05, 4, &PS::gestaltLinStaerke,
+                    tr("1 px/Frame = 60 px/s bei 60 fps.") +
+                        skriptHinweis.arg(QStringLiteral("drift_lin")));
+                auto* spLinR = makeSpin(
+                    "gestaltLinRichtung", tr("  Richtung (°)"),
+                    p->preset.gestaltLinRichtung, 0.0, 360.0, 5.0, 1,
+                    &PS::gestaltLinRichtung,
+                    tr("0 = rechts, 90 = oben, 180 = links, 270 = unten.") +
+                        skriptHinweis.arg(QStringLiteral("drift_dir")));
+
+                auto* cbRad = makeCheck(
+                    "gestaltRadAn", tr("Radial-Drift"), p->preset.gestaltRadAn,
+                    &PS::gestaltRadAn,
+                    tr("Jeder Punkt wandert gleich schnell, die Richtung haengt von "
+                       "seiner Lage zum Zentrum ab: nach aussen, Wirbel oder Sog. "
+                       "Anders als zoom/rot ueberall gleich schnell. Zeichnet immer "
+                       "etwas weich. Das Original kennt das nicht."));
+                makeSpin(
+                    "gestaltRadStaerke", tr("  Stärke (px/Frame)"),
+                    p->preset.gestaltRadStaerke, 0.0, 4.0, 0.05, 4, &PS::gestaltRadStaerke,
+                    tr("1 px/Frame = 60 px/s bei 60 fps.") +
+                        skriptHinweis.arg(QStringLiteral("drift_rad")));
+                makeSpin(
+                    "gestaltRadWinkel", tr("  Winkel (°)"),
+                    p->preset.gestaltRadWinkel, 0.0, 360.0, 5.0, 1, &PS::gestaltRadWinkel,
+                    tr("0 = nach aussen, 90 = Wirbel gegen den Uhrzeigersinn, "
+                       "180 = Sog nach innen, 270 = Wirbel im Uhrzeigersinn; "
+                       "dazwischen Spiralen.") +
+                        skriptHinweis.arg(QStringLiteral("drift_ang")));
+                makeSpin("gestaltRadCx", tr("  Zentrum X (0–1)"), p->preset.gestaltRadCx,
+                         0.0, 1.0, 0.05, 3, &PS::gestaltRadCx,
+                         tr("0 = linker Rand, 1 = rechter Rand.") +
+                             skriptHinweis.arg(QStringLiteral("drift_cx")));
+                makeSpin("gestaltRadCy", tr("  Zentrum Y (0–1)"), p->preset.gestaltRadCy,
+                         0.0, 1.0, 0.05, 3, &PS::gestaltRadCy,
+                         tr("0 = unterer Rand, 1 = oberer Rand.") +
+                             skriptHinweis.arg(QStringLiteral("drift_cy")));
+
+                auto* cbWeich = makeCheck(
+                    "gestaltWeichAn", tr("Weichzeichnen"), p->preset.gestaltWeichAn,
+                    &PS::gestaltWeichAn,
+                    tr("Mischt das Bild je Frame mit dem Nachbarpixel (pendelt um "
+                       "±½ Pixel, verschiebt also nichts). Bei decay=1 wirkt das "
+                       "wie ein langsames Ausblenden. Das Original kennt das nicht."));
+                auto* spW = makeSpin(
+                    "gestaltWeich", tr("  Stärke (0–1)"), p->preset.gestaltWeich, 0.0, 1.0,
+                    0.05, 2, &PS::gestaltWeich,
+                    tr("0 = scharf, 1 = volles Halbpixel-Pendel.") +
+                        skriptHinweis.arg(QStringLiteral("weich")));
+
+                auto* knoepfe = new QWidget(m_propContainer);
+                auto* kl = new QHBoxLayout(knoepfe);
+                kl->setContentsMargins(0, 0, 0, 0);
+                auto* bOriginal = new QPushButton(tr("Original"), knoepfe);
+                bOriginal->setToolTip(tr("Alle drei Werkzeuge aus — wie das Original: "
+                                         "das Bild steht still und scharf."));
+                auto* bSog = new QPushButton(QString::fromUtf8("Weicher Sog ↖"), knoepfe);
+                bSog->setToolTip(tr("Linear-Drift 0,7071 px bei 135° und Weichzeichnen 1: "
+                                    "das Bild zieht weich nach oben links weg — der Look, "
+                                    "den LumiViz bis Session 80 hatte."));
+                kl->addWidget(bOriginal);
+                kl->addWidget(bSog);
+                kl->addStretch();
+                form->addRow(tr("Stellung"), knoepfe);
+                // Die Knoepfe setzen nur die Bedienelemente — deren Signale
+                // schreiben wie bei Handbedienung in die Kette.
+                connect(bOriginal, &QPushButton::clicked, this, [cbLin, cbRad, cbWeich] {
+                    cbLin->setChecked(false);
+                    cbRad->setChecked(false);
+                    cbWeich->setChecked(false);
+                });
+                connect(bSog, &QPushButton::clicked, this,
+                        [cbLin, cbRad, cbWeich, spLinS, spLinR, spW] {
+                            spLinS->setValue(0.7071);
+                            spLinR->setValue(135.0);
+                            spW->setValue(1.0);
+                            cbLin->setChecked(true);
+                            cbRad->setChecked(false);
+                            cbWeich->setChecked(true);
+                        });
+            }
 
             group(tr("Basis-Waveform"));
             {

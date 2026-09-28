@@ -51,6 +51,8 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_ParamScript.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ScriptVariablesGl.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_EffectPalette.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_PaletteUi.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_MilkdropGestaltung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_EigeneUniforms.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ScriptContext.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ScriptFormatter.cpp"

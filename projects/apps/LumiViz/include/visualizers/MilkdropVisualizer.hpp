@@ -41,6 +41,7 @@
 
 #include "scripting/ScriptContext.hpp"
 #include "scripting/ScriptSlotHost.hpp"
+#include "visualizers/milkdrop/MilkdropGestaltung.hpp"
 #include "visualizers/milkdrop/MilkdropPresetState.hpp"
 #include "visualizers/modules/IModule.hpp"
 #include "visualizers/modules/processing/MilkLoudness.hpp"
@@ -202,6 +203,12 @@ private:
         std::array<double, 3> blurMax{1.0, 1.0, 1.0};
         double blurEdgeDarken = 0.25;
         std::array<double, 32> qVals{};                 ///< q1-q32 (custom shaders, C1)
+        // Gestaltung (S80, kein Original-Verhalten): Preset-Werte, per_frame
+        // darf sie ueberschreiben (drift_lin/dir/rad/ang/cx/cy, weich). Winkel
+        // hier in Bogenmass; ob sie wirken, entscheiden die Schalter im Preset.
+        double linStaerke = 0.0, linRichtung = 0.0;
+        double radStaerke = 0.0, radWinkel = 0.0, radCx = 0.5, radCy = 0.5;
+        double weich = 0.0;
     };
 
     /// One custom wave/shape at runtime: definition + its own script host
@@ -344,6 +351,10 @@ private:
     /// Kaltstart-Saat steht aus — sie wird erst NACH dem ersten Bild gelegt,
     /// weil der Original-Kern den Puffer im ersten Frame nullt (S75).
     bool m_saatOffen = false;
+    /// Gestaltung (S80): Aufspar-Konto + Pendel-Phase fuer Drift/Weichzeichnen
+    /// (MilkdropGestaltung.hpp). Laeuft ueber Edits weiter, damit ein Regler-
+    /// Zug das Bild nicht springen laesst.
+    lumi::milkdrop::GestaltungsLauf m_gestaltLauf;
     /// Lade-Diagnose (S66): >0 = noch so viele Frames Audio-Futter tracen
     int m_traceLoadFrames = 0;
     /// Zeit-Ausblendung (S66): Restzeit/Dauer in Sekunden (<=0 = inaktiv).

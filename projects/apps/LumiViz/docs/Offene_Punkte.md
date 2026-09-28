@@ -1504,6 +1504,16 @@ f30 +0,006. Urteile: 320×240 **3 OK / 10 Befunde** (vorher 3 / 11 —
 `Dancing Hearts (2nd edit)` BEFUND → PRÜFEN), 640×480 **2 OK / 11 Befunde**
 (vorher 2 / 12). Alle Einzelwerte: `asset/calibration/milkdrop/drift/Messreihe_S80.md`.
 
+**Der alte Look bleibt wählbar — und mehr (S80, Wunsch Patrik):** Gruppe
+„Gestaltung (kein Original-Verhalten)" im Milkdrop-Node — Linear-Drift
+(Stärke + Richtung), Radial-Drift (Stärke, Winkel außen/Wirbel/Sog, Zentrum)
+und Weichzeichnen, je Werkzeug ein Schalter, Winkel in Grad; per `per_frame`
+steuerbar (`drift_lin/dir/rad/ang/cx/cy`, `weich`, Bogenmaß). Knöpfe
+„Original" / „Weicher Sog ↖" (bitgleich der Stand vor dem Fix). Richtungen am
+Bild geprüft (`sichttest_auto.py` G1). Details: Benutzerhandbuch §11,
+MilkdropVisualizer.md 1.27.0. **Offen:** Sichttest am Panel (Knöpfe, Gefühl
+der Regler) — Protokoll Teil F.
+
 **Rest, klein und getrennt:** die Shape selbst liegt bei uns **1 px** weiter
 oben links als in der Referenz (Schwerpunkt 319,5 statt 320,5) und ist etwa
 6 % flächiger (Energie 1156 statt 1093). Das ist die Rasterung der Shape,
@@ -1513,6 +1523,26 @@ relevant.
 Verwandt: E3 im [Sichttest-Protokoll](Sichttest_Protokoll_S79.md)
 (Diagonalenkreuz bei `a`≠`a2` — dort kein Fehler, aber das Weichzeichnen
 verstärkt es).
+
+### 🟠 `martin - stratospheric turbulences` (1 und 2) weicht grob ab (Befund S80)
+
+Aufgefallen, weil sich der Look mit dem Halbtexel-Fix sichtbar änderte (Frage
+Patrik: „ist er jetzt näher am Original?"). Gemessen gegen MilkdropRef, 640×480,
+Marken 10/30/120/300, derselbe Referenzlauf gegen beide Stände
+(`LUMIVIZ_MILKDROP_HALBTEXEL=1` = alter Versatz): **neu ist in allen acht
+Messungen näher, aber nur um 0,001–0,004 MAE** — der Fix ist hier nicht die
+Ursache der Abweichung. Die eigentliche Abweichung ist viel größer
+(MAE 0,11–0,16) und hat drei sichtbare Anteile:
+
+1. **Helligkeit etwa halb** (Referenz 0,14–0,21, wir 0,07–0,09).
+2. **Gelb-orange Lichtkugeln fehlen** bei uns ganz.
+3. **Tunnelzentrum:** bei Frame 10 sitzt es bei uns oben rechts, in der
+   Referenz mittig; die farbigen „Fenster" liegen oben/unten vertauscht. Kann
+   Phasenversatz sein (die Referenz taktet an der Wanduhr) oder dieselbe
+   Y-Frage wie die offene `warp_1`-Sonde (unten, Strang S75) — dort zuerst
+   nachsehen.
+
+Montagen (Referenz | neu | alt): Scratchpad S80 `strato/out/`.
 
 ### ✅ Y-Achse war invertiert — Shapes, Wellenformen und Comp-Shader (S75, behoben)
 
@@ -1807,12 +1837,16 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 
 ## 7. Backlog (bewusst nichts tun)
 
-### ⬜ Drop auf die freie Fläche unter der Kette (Befund S80)
+### ✅ Drop auf die freie Fläche unter der Kette (Befund S80, behoben S80)
 
-Aus der Palette gezogen, wird ein Modul nur angenommen, wenn man es
-**unmittelbar** unter den letzten Eintrag fallen lässt. Weiter unten in der
-freien Fläche des Kettenbaums passiert nichts. Erwartet: jeder Drop auf die
-Leerfläche hängt ans Ende an (`ChainTreeWidget`, Paletten-MIME). Protokoll A14.
+Nachgestellt im neuen UI-Test am echten Panel (`test_PaletteUi`): gewöhnliche
+Module landeten auf der Leerfläche schon immer am Ende. Verloren ging eine
+**Custom Shape/Wave/Sprite** — sie braucht einen Milkdrop-Knoten als Ziel, und
+die Leerfläche hat keins. „Direkt unter der letzten Zeile" klappte nur, weil
+die letzte Zeile die Sprites-Sektion des Milkdrop-Knotens war. Fix: auf der
+Leerfläche geht das Element in den **letzten Milkdrop-Knoten in
+Baumreihenfolge** (`letzterMilkdropPfad`, `MultiEffectPanel.cpp`). Test
+`PaletteUi Panel A14b`.
 
 ### ⬜ Vorlagen für Milkdrop-Elemente und Shader (Wunsch S80)
 
@@ -2669,7 +2703,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 1.76.0 | 2026-09-28 | Session 80 (Sichttest S79 begonnen) — **✅ §3: blanke Pipeline blendete aus und driftete nach oben links** — Sonde gegen MilkdropRef belegt (Referenz steht, wir 0,5 px/Frame + Weichzeichnen), Ursache Halbtexel-Versatz im Warp-Mesh, entfernt (Entscheid a); Messreihe vorher/nachher gegen dieselben Referenzbilder: Frame 120 Δ −0,007 (320) / −0,0065 (640), 10 besser / 1 schlechter; Sonde als Regressionsprobe `asset/calibration/milkdrop/drift/`. NEU §7: Drop auf die Leerfläche des Kettenbaums · Vorlagen für Milkdrop-Elemente/Shader. Editor: `b` als in/out gefärbt wie `r`/`g` (Entscheid a); Mehrfachzuweisung `r = r2 = red;` getestet + Referenzsatz. Prüfprotokoll [Sichttest_Protokoll_S79.md](Sichttest_Protokoll_S79.md). Tests 610/610 |
+| 1.76.0 | 2026-09-28 | Session 80 (Sichttest S79 begonnen) — **✅ §3: blanke Pipeline blendete aus und driftete nach oben links** — Sonde gegen MilkdropRef belegt (Referenz steht, wir 0,5 px/Frame + Weichzeichnen), Ursache Halbtexel-Versatz im Warp-Mesh, entfernt (Entscheid a); Messreihe vorher/nachher gegen dieselben Referenzbilder: Frame 120 Δ −0,007 (320) / −0,0065 (640), 10 besser / 1 schlechter; Sonde als Regressionsprobe `asset/calibration/milkdrop/drift/`. **Sichttest automatisiert:** `test_PaletteUi` (21 UI-Tests offscreen, Palette + echtes Panel mit Host, Screenshots per `LUMIVIZ_UI_SCHNAPPSCHUSS`) und `asset/calibration/sichttest/sichttest_auto.py` (12 Ketten-Stichproben B/D mit Kontaktbögen) — dabei **✅ §7 Drop auf die Leerfläche behoben** (betraf nur Milkdrop-Elemente). NEU §7: Vorlagen für Milkdrop-Elemente/Shader. Editor: `b` als in/out gefärbt wie `r`/`g` (Entscheid a); Mehrfachzuweisung `r = r2 = red;` getestet + Referenzsatz. Prüfprotokoll [Sichttest_Protokoll_S79.md](Sichttest_Protokoll_S79.md). Tests 610/610 |
 | 1.75.0 | 2026-09-27 | Session 79 (Auftrag Patrik: Modulauswahl + Formelfelder) — **Palettenfenster umgesetzt** (nicht-modal; Suche über Name/Originalname/Beschreibung, Chips Herkunft AVS/APE/MilkDrop/LumiViz + Rolle, ★ Favoriten + Zuletzt, Detailzeile mit Formelfeldern, Add/Enter/Doppelklick + Drag & Drop in den Kettenbaum; Palettendaten nach `EffectPalette.{hpp,cpp}` ausgelagert, je Eintrag Rolle/Kurzbeschreibung/Originalname; Test `test_EffectPalette`; Sichttest offen). **Formelfelder Block B:** Farben per Skript als `<feldname>_r/_g/_b` in 16 Modulen (`FarbKopie`, Referenz + Struct-Doku + Tooltips nachgezogen). **Block C:** Farbpaletten der sieben Fraktale per Skript (`colorscale`, `colorcycle`, `colorphase`, Innen-/Hintergrund-/Negativfarbe). **Block E:** Set Render Mode + ISF Filter mit Parameter-Skript (ISF-Regler unter ihrem key); selbst deklarierte Uniforms in Shadertoy/Pixel Filter/Mesh Warp/GPU-Partikel als Skriptvariablen (Entscheid 1a, Shadertoy neu mit Init/Frame/Beat); Host Group `outadjustalpha` (Entscheid 2a); Fix: Set Render Mode schrieb `adjustAlpha` nicht. **Block D:** 43 weitere Felder in 14 Modulen skriptbar (Fraktal-Details, Bump-Tiefe, 3D-Profile, Interferences-Beatziele, GPU-Partikel, Water-Bump-Tropfenort). **Formelfelder:** Inventar aller 84 Module (`visuals/Formelfelder_Inventar.md`); Block A umgesetzt — `distance` (Brightness), `skipfirst` (Custom BPM), `x2`/`y2` (Interleave), `blend` (Timescope, Dot Grid), `edgemode` (Convolution), `p`/`q` (Kleinian), `variation`/`scale` (Flame) gebunden; Variablenreferenz aus der SSOT `ScriptVariables.hpp`, geprüft durch `test_ScriptVariablesGl` (Namens-Sonde in `LuaScriptEngine`). Neu in §7: Palettenfenster, Formelfelder B–F |
 | 1.74.0 | 2026-09-27 | Session 78 (Vorgabe Patrik: Feldbreiten der Effektkette) — Bestandsaufnahme aller ~90 Modul-Editoren, dann zentraler Breiten-Vertrag in `MultiEffectPanel`: Felder ≥ 120 px, 5 px Panelrand, seitliches Scrollen des Panels statt Überbreite, Dock-Minimum 240 px + Ränder, Effektliste mit Spalten-Mindestbreiten und eigenem Balken. Von Patrik abgenommen. Neu in §7: Vertrag nur in der Effektkette |
 | 1.73.0 | 2026-09-23 | Session 77 (Bugfix, Meldung Patrik: Visualizer nach einer Mausbewegung verschwunden, auch nach Neustart) — im gespeicherten Dock-Layout fehlte `visualizer` (nur ein leerer Floating-Container), Qt-ADS versteckte ihn deshalb als *unassigned*; Reset Layout spielte dasselbe Layout ab, View > Panels kannte ihn nicht. Behoben in `DockManager` 2.2.0 (§5.6): fehlende Visualizer nach Restore/Reset andocken, Reset aufs Werks-Layout, Visualizer im Panels-Menü. Neu in §7: Tab-X löscht den Visualizer (Entscheid offen) |

@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.10.0
-> **Datum:** 2026-08-06
+> **Version:** 1.11.0
+> **Datum:** 2026-09-28
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -464,6 +464,59 @@ Dazu je Shader-Stufe ein **PS-Version-Override** (Auto/PS2/PS3/„MD1
 erzwingen" — Letzteres ignoriert den Custom-Shader-Text und rendert den
 exakten MD1-Pfad).
 
+### Gestaltung: Drift und Weichzeichnen (kein Original-Verhalten)
+
+In der **Parameter**-Sektion eines Milkdrop-Nodes, Gruppe **„Gestaltung"**
+(Session 80). Nichts davon kennt das Original — es sind Gestaltungsmittel.
+Bei jedem Import und jedem neuen Node steht alles **aus**. Jedes Werkzeug hat
+einen eigenen Schalter; ausgeschaltet bleiben seine Werte stehen.
+
+| Werkzeug | Regler | Wirkung |
+|---|---|---|
+| **Linear-Drift** | Stärke 0 … 4 px/Frame · Richtung 0 … 360° (0 = rechts, 90 = oben, 180 = links, 270 = unten) | Das ganze Bild wandert in eine Richtung, Nachbilder ziehen Schlieren. Bleibt **scharf**: Bruchteile werden aufgespart (0,5 px = jeden zweiten Frame ein ganzes Pixel) |
+| **Radial-Drift** | Stärke 0 … 4 px/Frame · Winkel 0 … 360° · Zentrum X/Y 0 … 1 (0 = links bzw. unten) | Jeder Punkt wandert **gleich schnell**, die Richtung hängt von seiner Lage zum Zentrum ab: **0° nach außen**, **90° Wirbel gegen den Uhrzeigersinn**, **180° Sog nach innen**, **270° Wirbel im Uhrzeigersinn**, dazwischen Spiralen. Anders als `zoom`/`rot` (am Rand schneller) überall gleich schnell. Zeichnet immer etwas weich |
+| **Weichzeichnen** | Stärke 0 … 1 | Jeder Frame wird mit dem Nachbarpixel gemischt, ohne das Bild zu verschieben. Bei `decay = 1` wirkt das wie ein langsames Ausblenden |
+
+1 px/Frame sind bei 60 fps 60 Pixel je Sekunde. Linear und radial lassen sich
+kombinieren (z. B. Wirbel, der langsam nach oben abdriftet).
+
+Zwei Knöpfe setzen bekannte Stellungen:
+
+- **Original** — alle drei aus: das Bild steht still und scharf, wie im
+  Original-MilkDrop.
+- **Weicher Sog ↖** — Linear-Drift 0,7071 px bei 135° plus Weichzeichnen 1:
+  das Bild zieht weich nach oben links weg. Das ist der Look, den LumiViz **bis
+  Session 80** bei jedem Milkdrop-Preset hatte — damals ungewollt (ein
+  Portierungsfehler, der den D3D9-Halbpixel-Ausgleich unter OpenGL doppelt
+  anwandte). Bitgleich nachgebildet: wer ein Preset „wie früher" sehen will,
+  drückt diesen Knopf.
+
+**Per Skript steuerbar.** Im `per_frame`-Code des Nodes stehen die Werte als
+Variablen bereit — jeder Frame beginnt mit den Panel-Werten, das Skript darf
+sie ändern (wie `zoom` oder `rot`). **Winkel dort in Bogenmaß** (wie `rot`,
+`ang`): 90° = π/2 ≈ 1,5708.
+
+| Variable | Bedeutung |
+|---|---|
+| `drift_lin`, `drift_dir` | Linear-Drift: Stärke (px/Frame), Richtung (rad, 0 = rechts, π/2 = oben) |
+| `drift_rad`, `drift_ang` | Radial-Drift: Stärke, Winkel (rad, 0 = außen, π/2 = Wirbel ↺, π = innen) |
+| `drift_cx`, `drift_cy` | Zentrum der Radial-Drift (0 … 1, y: 0 = unten) |
+| `weich` | Weichzeichnen (0 … 1) |
+
+Wirksam ist ein Wert nur, solange der Schalter seines Werkzeugs an ist. Im
+Skript sind auch negative Stärken erlaubt (bis ±8; negativ = Gegenrichtung).
+Beispiele:
+
+```
+drift_dir = time * 0.5;                  // Linear-Drift dreht langsam im Kreis
+drift_ang = 1.5708 + bass_att * 0.8;     // Wirbel, der bei Bass zum Sog aufzieht
+drift_rad = if(above(bass, 1.3), 3, 0.5); // Stoss nach aussen auf Bass-Spitzen
+drift_cx = 0.5 + 0.3 * sin(time);        // Zentrum pendelt links/rechts
+```
+
+Einen eigenen Beat-Slot hat MilkDrop nicht — Beat-Reaktionen laufen über
+`bass`, `bass_att` & Co. im `per_frame`-Code.
+
 ### Host-Gruppen & Crossfade
 
 Eine **Host-Gruppe** (Dropdown „Host Group") kapselt ein komplettes Visual —
@@ -660,6 +713,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.11.0 | 2026-09-28 | Session 80. §11 NEU „Gestaltung: Drift und Weichzeichnen" — Linear-Drift (Stärke + Richtung), Radial-Drift (Stärke, Winkel außen/Wirbel/Sog, Zentrum) und Weichzeichnen je Milkdrop-Node, je Werkzeug ein Schalter, Winkel im Panel in Grad; per `per_frame` steuerbar (`drift_lin/dir/rad/ang/cx/cy`, `weich`, Bogenmaß); Knöpfe „Original" und „Weicher Sog ↖" (= der Look bis S80) |
 | 1.10.0 | 2026-08-07 | Session 72 (Filter-Strang). **§12: Tabelle „Was an einem `iChannel` hängen kann"** — die beiden neuen Quellen **Ketten-Eingang** (macht Shadertoy-Bildfilter direkt lauffähig) und **AVS-Buffer 1–8** (Buffer-Save-Slots als Textur, Stand beim Lauf des Knotens, Host-Gruppen-Trennung) je mit Anwendungsbeispiel. **§14 NEU „ISF-Filter laden"** — Import von `.fs`-Dateien, Parameter-Baum mit typrichtigen Bedienelementen, was abgelehnt wird (Generator/Übergang/Geometrie) und warum manche Filter eine `.vs` brauchen. §14 Lizenz-Absatz: Herkunft wandert jetzt auch in die **exportierte Datei** |
 | 1.9.0 | 2026-08-07 | NEU §14 „Filter als Datei laden und weitergeben" (S71): Import…/Export… an allen Shader-Feldern erklärt (Namensschema `<Preset>[.<Feld>].<Vertrag>.glsl`, automatisch hochzählender Vorschlag, eigener Ordner je Feld, `.hlsl` für MilkDrop), Warnung bei falschem Shader-Vertrag, Lizenz-Hinweis für fremde Shader. Schließt eine Doku-Lücke seit S69 |
 | 1.8.0 | 2026-08-06 | NEU §14 „Stilfilter (Pixel Filter)" (S70): skriptbarer Pixel-Filter (farbe()-Vertrag, Mix, Stapeln als Knoten) + 12 Werks-Looks inkl. Take-On-Me-Comic |

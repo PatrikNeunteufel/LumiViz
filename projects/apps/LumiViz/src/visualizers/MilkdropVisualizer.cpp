@@ -659,6 +659,17 @@ void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringLi
     // modern|legacy erzwingt die Betriebsart unabhängig vom Dokument — reiner
     // Werkzeug-Schalter wie NOSEED/DUMP_WARP, kein App-Zustand (wird nicht
     // persistiert; m_state ist eine Kopie des Node-Zustands).
+    // Diagnose-Override (Prüfstand S80): LUMIVIZ_MILKDROP_HALBTEXEL=1 setzt die
+    // Gestaltung auf „Weicher Sog ↖" = den Stand vor S80 — fuer Vorher/Nachher-
+    // Messungen an .milk-Dateien, die selbst kein Gestaltungsfeld tragen.
+    if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_HALBTEXEL"))
+    {
+        m_state.gestaltLinAn = true;
+        m_state.gestaltLinStaerke = 0.7071;
+        m_state.gestaltLinRichtung = 135.0;
+        m_state.gestaltWeichAn = true;
+        m_state.gestaltWeich = 1.0;
+    }
     if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_REGELWERK"))
     {
         const QByteArray v = qgetenv("LUMIVIZ_MILKDROP_REGELWERK").toLower();
@@ -1059,12 +1070,29 @@ void MilkdropVisualizer::pushFrameInputs()
     e.setNumber("blur2_max", s.blur2Max);
     e.setNumber("blur3_max", s.blur3Max);
     e.setNumber("blur1_edge_darken", s.blur1EdgeDarken);
+    // Gestaltung (S80, LumiViz-Erweiterung): Panel in Grad, Skript in Bogenmass
+    constexpr double kGrad = 3.14159265358979323846 / 180.0;
+    e.setNumber("drift_lin", s.gestaltLinStaerke);
+    e.setNumber("drift_dir", s.gestaltLinRichtung * kGrad);
+    e.setNumber("drift_rad", s.gestaltRadStaerke);
+    e.setNumber("drift_ang", s.gestaltRadWinkel * kGrad);
+    e.setNumber("drift_cx", s.gestaltRadCx);
+    e.setNumber("drift_cy", s.gestaltRadCy);
+    e.setNumber("weich", s.gestaltWeich);
 }
 
 void MilkdropVisualizer::pullFrameOutputs(FrameVars& fv)
 {
     // defaults straight from the preset (also the no-script path)
     const lumi::milkdrop::PresetState& s = m_state;
+    constexpr double kGrad = 3.14159265358979323846 / 180.0;
+    fv.linStaerke = s.gestaltLinStaerke;
+    fv.linRichtung = s.gestaltLinRichtung * kGrad;
+    fv.radStaerke = s.gestaltRadStaerke;
+    fv.radWinkel = s.gestaltRadWinkel * kGrad;
+    fv.radCx = s.gestaltRadCx;
+    fv.radCy = s.gestaltRadCy;
+    fv.weich = s.gestaltWeich;
     fv.zoom = s.zoom;
     fv.zoomExp = s.zoomExponent;
     fv.rot = s.rot;
@@ -1180,6 +1208,15 @@ void MilkdropVisualizer::pullFrameOutputs(FrameVars& fv)
     fv.blurMin = {e.number("blur1_min"), e.number("blur2_min"), e.number("blur3_min")};
     fv.blurMax = {e.number("blur1_max"), e.number("blur2_max"), e.number("blur3_max")};
     fv.blurEdgeDarken = e.number("blur1_edge_darken");
+    // Gestaltung (S80): Skript darf aendern — Staerken geklemmt (negativ =
+    // Gegenrichtung), Winkel frei (Bogenmass), weich 0..1
+    fv.linStaerke = clampd(e.number("drift_lin"), -8.0, 8.0);
+    fv.linRichtung = e.number("drift_dir");
+    fv.radStaerke = clampd(e.number("drift_rad"), -8.0, 8.0);
+    fv.radWinkel = e.number("drift_ang");
+    fv.radCx = e.number("drift_cx");
+    fv.radCy = e.number("drift_cy");
+    fv.weich = clampd(e.number("weich"), 0.0, 1.0);
     if (!m_warpCustomSrc.empty() || !m_compCustomSrc.empty())
     {
         for (int i = 0; i < 32; ++i)
@@ -3001,6 +3038,22 @@ void MilkdropVisualizer::computeWarpMesh(const FrameVars& fv)
     // Regelwerk-Schalter (Strang R): einmal je Mesh-Lauf ableiten
     const bool uvSanitize = lumi::milkdrop::effektiveSchalter(m_state).uvSanitize;
 
+    // Gestaltung (S80): Linear-Drift + Weichzeichnen — ein Versatz fuer den
+    // ganzen Mesh, einmal je Frame fortgeschrieben; Radial-Drift je Vertex
+    // (MilkdropGestaltung.hpp). Alle Schalter aus = kein Versatz = original-treu.
+    const double breite = static_cast<double>(std::max(1, width()));
+    const double hoehe = static_cast<double>(std::max(1, height()));
+    const auto lin = m_state.gestaltLinAn
+                         ? lumi::milkdrop::polar(fv.linStaerke, fv.linRichtung)
+                         : lumi::milkdrop::GestaltungsVersatz{};
+    const auto gestalt = lumi::milkdrop::naechsterVersatz(
+        m_gestaltLauf, lin.u, lin.v, m_state.gestaltWeichAn ? fv.weich : 0.0);
+    const double gestaltU = gestalt.u / breite;
+    const double gestaltV = gestalt.v / hoehe;
+    const bool radial = m_state.gestaltRadAn && fv.radStaerke != 0.0;
+    const double zentrumX = fv.radCx * breite;
+    const double zentrumY = fv.radCy * hoehe;
+
     int n = 0;
     for (int iy = 0; iy < vertsY; ++iy)
     {
@@ -3089,6 +3142,20 @@ void MilkdropVisualizer::computeWarpMesh(const FrameVars& fv)
             v -= dy;
             u = (u - 0.5) / m_aspectX + 0.5;
             v = (v - 0.5) / m_aspectY + 0.5;
+            u += gestaltU;
+            v += gestaltV;
+            if (radial)
+            {
+                // Lage des Vertex auf dem Schirm (Pixel, y nach oben) aus seinem
+                // unverzerrten Abgriff (u0 nach rechts, v0 nach unten)
+                const double u0 = vx * 0.5 + 0.5;
+                const double v0 = -vy * 0.5 + 0.5;
+                const auto r = lumi::milkdrop::radialVersatz(
+                    u0 * breite, (1.0 - v0) * hoehe, zentrumX, zentrumY, fv.radStaerke,
+                    fv.radWinkel);
+                u += r.u / breite;
+                v += r.v / hoehe;
+            }
 
             // UV-Sanitize (S64, R211-Klasse — q-lose per_pixel-Divisionen):
             // nicht-endlich → 0 (D3D9-Konvertierungsregel NaN→0). Riesen-UVs

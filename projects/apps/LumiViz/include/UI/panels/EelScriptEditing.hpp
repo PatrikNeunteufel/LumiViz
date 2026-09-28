@@ -113,6 +113,8 @@ enum class SymCat
         "mv_x", "mv_y", "mv_dx", "mv_dy", "mv_l", "mv_r", "mv_g", "mv_b", "mv_a",
         "blur1_min", "blur2_min", "blur3_min", "blur1_max", "blur2_max",
         "blur3_max", "blur1_edge_darken",
+        // LumiViz-Gestaltung im Milkdrop-per_frame (S80; Bogenmass)
+        "drift_lin", "drift_dir", "drift_rad", "drift_ang", "drift_cx", "drift_cy", "weich",
         // MilkDrop Wave-/Shape-Code (M2): g steht dort fuer Gruen (i/o);
         // t1-t8 sind wave-/shape-LOKALE Snapshot-Akkus (nicht preset-global)
         "g", "b", "samples", "rad", "ang", "r2", "g2", "b2", "a2",
