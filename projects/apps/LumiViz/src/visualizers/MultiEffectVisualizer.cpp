@@ -49,6 +49,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cmath>
 #include <filesystem>
 
@@ -3845,6 +3846,8 @@ void MultiEffectVisualizer::resetRuntimes()
     m_listRuntimes.clear();  // slot hosts / FBOs die with their GL-frame owner
     m_leafRuntimes.clear();
     m_groupRuntimes.clear();  // HG1: Gruppen-Surfaces/-Pools sterben mit
+    m_switcherRuntimes.clear();  // S82: neue Kette startet bei der Startgruppe
+    m_groupOverride.clear();
     m_bufferPool.clear();
     for (auto& ring : m_mdRing) ring.clear();  // Multi Delay shared rings
     for (int& head : m_mdHead) head = 0;
@@ -4002,6 +4005,12 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     for (auto& [id, runtime] : m_listRuntimes) runtime.seenThisFrame = false;
     for (auto& [id, runtime] : m_groupRuntimes) runtime.seenThisFrame = false;
 
+    // Host Switcher (S82) VOR dem Gewichtsscan: er legt fest, welche Gruppe
+    // diesen Frame laeuft. Die Audiodaten (getspec im Switcher-Skript) werden
+    // deshalb schon hier aufbereitet statt erst vor dem Ketten-Walk.
+    buildVisData();  // audio for getspec/getosc, shared by all scripts
+    runHostSwitchers();
+
     // HG2: Vorab-Summe der BLENDENDEN Gruppen-Gewichte dieses Frames. Der
     // Gruppen-Mix normalisiert damit das sequentielle Adjustable-Compositing
     // auf den exakten paarweisen Mix (B*t + A*(1-t)) — unabhaengig von der
@@ -4016,7 +4025,7 @@ void MultiEffectVisualizer::onRender(float deltaTime)
                     if (it != m_groupRuntimes.end())
                     {
                         const double c = applyBlendCurve(
-                            n.enabled ? hg->curveIn : hg->curveOut,
+                            effectiveEnabled(n) ? hg->curveIn : hg->curveOut,
                             it->second.blendWeight);
                         if (c > 0.0 && c < 0.999) total += c;
                     }
@@ -4029,7 +4038,6 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     m_renderMode = RenderMode{};  // Set Render Mode is per-frame, reset before the walk
     m_camera3d = Camera3D{};      // 3D-Kamera je Frame auf die Fallback-Kamera
     m_depth3dCleared = false;     // gemeinsames Depth-RT je Frame frisch loeschen
-    buildVisData();               // audio for getspec/getosc, shared by all scripts
     bindActive();
 
     const auto& rootList = std::get<ListParams>(m_root.params);
@@ -4147,6 +4155,10 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     {
         it = it->second.seenThisFrame ? std::next(it) : m_groupRuntimes.erase(it);
     }
+    for (auto it = m_switcherRuntimes.begin(); it != m_switcherRuntimes.end();)
+    {
+        it = it->second.seenThisFrame ? std::next(it) : m_switcherRuntimes.erase(it);
+    }
 
     if (blendWasEnabled == GL_TRUE) f->glEnable(GL_BLEND);
     m_firstFrame = false;
@@ -4154,7 +4166,9 @@ void MultiEffectVisualizer::onRender(float deltaTime)
 
 void MultiEffectVisualizer::renderNode(const ChainNode& node)
 {
-    if (!node.enabled)
+    // effectiveEnabled (S82): eine vom Host Switcher gefuehrte Gruppe laeuft
+    // nach dessen Wahl, nicht nach ihrem gespeicherten Auge
+    if (!effectiveEnabled(node))
     {
         // r_list fake_enabled (r_list.h:162): a statically DISABLED list with
         // "on beat render" still activates for N frames after each beat — the
@@ -4278,6 +4292,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const VideoSourceParams& params) const { self.runVideoSource(node, params); }
         void operator()(const PixelFilterParams& params) const { self.runPixelFilter(node, params); }
         void operator()(const IsfFilterParams& params) const { self.runIsfFilter(node, params); }
+        void operator()(const HostSwitcherParams&) const { /* laeuft vorab: runHostSwitchers */ }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
     std::visit(Visitor{*this, node}, node.params);
@@ -4458,13 +4473,15 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
 
     GroupRuntime& runtime = m_groupRuntimes[node.nodeId];
     runtime.seenThisFrame = true;
+    // S82: laeuft die Gruppe? Auge ODER Wahl des Host Switchers
+    const bool laeuft = effectiveEnabled(node);
 
     // --- HG2: Blend-Gewicht Richtung Soll bewegen (enabled=1, disabled=0).
     // Ein Wechsel A→B ist "A deaktivieren + B aktivieren": beide leben
     // waehrend des Blends (echtes Doppel-Rendering, Entscheid E5); ein
     // erneuter Toggle mitten im Blend kehrt einfach die Richtung um.
     {
-        const double target = node.enabled ? 1.0 : 0.0;
+        const double target = laeuft ? 1.0 : 0.0;
         const double dur = params.crossfadeSeconds;
         if (dur <= 1e-6)
         {
@@ -4478,7 +4495,7 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
             else
                 runtime.blendWeight = std::max(target, runtime.blendWeight - step);
         }
-        if (!node.enabled && runtime.blendWeight <= 0.0)
+        if (!laeuft && runtime.blendWeight <= 0.0)
         {
             // Fertig ausgeblendet: Buffer fuers naechste Einblenden frisch
             // starten (Milkdrop-Verhalten: der alte Zustand stirbt mit A)
@@ -4486,7 +4503,7 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
             runtime.activeSeconds = 0.0;  // HG3: progress startet neu
             return;
         }
-        if (node.enabled)
+        if (laeuft)
         {
             runtime.activeSeconds += static_cast<double>(m_deltaTime);
         }
@@ -4535,7 +4552,7 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
     // statt beide Visuals voll zu rechnen. Schwelle ~30 fps.
     constexpr double kFreezeDeltaSeconds = 1.0 / 30.0;
     const bool freezeFrame =
-        !node.enabled && static_cast<double>(m_deltaTime) > kFreezeDeltaSeconds;
+        !laeuft && static_cast<double>(m_deltaTime) > kFreezeDeltaSeconds;
 
     if (!freezeFrame)
     {
@@ -4575,7 +4592,7 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
     if (params.blendOut != BlendMode::Ignore)
     {
         const double curved = applyBlendCurve(
-            node.enabled ? params.curveIn : params.curveOut, runtime.blendWeight);
+            laeuft ? params.curveIn : params.curveOut, runtime.blendWeight);
         if (curved >= 0.999)
         {
             blendPass(active(), runtime.surface.current()->texture(),
@@ -8860,6 +8877,161 @@ void MultiEffectVisualizer::runOscRing(const ChainNode& node, const OscRingParam
         rp.glowEnabled = false;
         m_scopeRenderer.draw(pts, rp);
         resetLineBlend();
+    }
+}
+
+// =============================================================================
+// Host Switcher (S82)
+// =============================================================================
+
+namespace {
+/// Prozessweiter Songwechsel-Zaehler (notifySongChanged) — jeder Leser merkt
+/// sich den zuletzt gesehenen Stand, ein Wechsel wirkt so genau einmal.
+std::atomic<uint64_t> g_songWechsel{0};
+}  // namespace
+
+void MultiEffectVisualizer::notifySongChanged()
+{
+    g_songWechsel.fetch_add(1, std::memory_order_relaxed);
+}
+
+bool MultiEffectVisualizer::effectiveEnabled(const ChainNode& node) const
+{
+    if (node.isHostGroup())
+    {
+        const auto it = m_groupOverride.find(node.nodeId);
+        if (it != m_groupOverride.end()) return it->second;
+    }
+    return node.enabled;
+}
+
+int MultiEffectVisualizer::debugSwitcherIndex(uint64_t nodeId) const
+{
+    const auto it = m_switcherRuntimes.find(nodeId);
+    return it == m_switcherRuntimes.end() ? 0 : it->second.index + 1;
+}
+
+void MultiEffectVisualizer::runHostSwitchers()
+{
+    m_groupOverride.clear();
+    for (auto& [id, rt] : m_switcherRuntimes) rt.seenThisFrame = false;
+    const uint64_t song = g_songWechsel.load(std::memory_order_relaxed);
+
+    for (const ChainNode& node : m_root.children)
+    {
+        const auto* sw = std::get_if<HostSwitcherParams>(&node.params);
+        if (sw == nullptr || !node.enabled) continue;
+        SwitcherRuntime& rt = m_switcherRuntimes[node.nodeId];
+        rt.seenThisFrame = true;
+        const int anzahl = static_cast<int>(sw->groups.size());
+
+        if (rt.index < 0 && anzahl > 0)  // frisch: Startgruppe; alte Songwechsel zaehlen nicht
+        {
+            rt.index = std::clamp(sw->startIndex - 1, 0, anzahl - 1);
+            rt.songGesehen = song;
+        }
+        rt.index = std::min(rt.index, anzahl - 1);  // Liste kann geschrumpft sein (-1 = leer)
+        const bool songNeu = song != rt.songGesehen;
+        rt.songGesehen = song;
+        rt.sekunden += static_cast<double>(m_deltaTime);
+        if (m_frameBeat) ++rt.beats;
+
+        int ziel = -1;       // 0-basiert, vom Skript gewaehlt
+        bool weiter = false; // naechste Gruppe nach `order`
+
+        // --- Skript: Init / Frame / Beat / Song (Song = vierter Slot der
+        // Engine, dort sonst „Point"). Ausgaben `switch`/`nextgroup` gelten
+        // nur fuer DIESEN Frame — anders als runParamScript, das Werte
+        // fortschreibt (ein einmal gesetztes nextgroup schaltete sonst ewig).
+        const bool hatSkript = !sw->initCode.empty() || !sw->frameCode.empty() ||
+                               !sw->beatCode.empty() || !sw->songCode.empty();
+        if (hatSkript)
+        {
+            const std::string combined = sw->initCode + '\n' + sw->frameCode + '\n' +
+                                         sw->beatCode + '\n' + sw->songCode;
+            const bool fresh = rt.host == nullptr || rt.compiled != combined;
+            if (fresh)
+            {
+                rt.host = std::make_unique<ScriptSlotHost>("hostswitcher", activeContext(),
+                                                           ScriptSlotHost::Dialect::Avs);
+                rt.host->setSource(Slot::Init, sw->initCode);
+                rt.host->setSource(Slot::Frame, sw->frameCode);
+                rt.host->setSource(Slot::Beat, sw->beatCode);
+                rt.host->setSource(Slot::Point, sw->songCode);
+                if (!rt.host->compileAll())
+                {
+                    rt.error = rt.host->lastError();
+                    BasicLogger::logWarning("MultiEffect: Host Switcher: " + rt.error);
+                }
+                else
+                {
+                    rt.error.clear();
+                }
+                rt.compiled = combined;
+            }
+            auto& engine = rt.host->engine();
+            engine.setNumber("index", rt.index + 1.0);
+            engine.setNumber("count", static_cast<double>(anzahl));
+            engine.setNumber("seconds", rt.sekunden);
+            engine.setNumber("beatcount", static_cast<double>(rt.beats));
+            engine.setNumber("switch", 0.0);
+            engine.setNumber("nextgroup", 0.0);
+            engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
+            engine.setNumber("w", static_cast<double>(m_surfaceWidth));
+            engine.setNumber("h", static_cast<double>(m_surfaceHeight));
+            feedAudio(engine);
+
+            if (fresh && rt.host->has(Slot::Init)) rt.host->run(Slot::Init);
+            if (rt.host->has(Slot::Frame)) rt.host->run(Slot::Frame);
+            if (m_frameBeat && rt.host->has(Slot::Beat)) rt.host->run(Slot::Beat);
+            if (songNeu && rt.host->has(Slot::Point)) rt.host->run(Slot::Point);
+
+            if (const std::string& err = rt.host->lastError(); !err.empty() && err != rt.error)
+            {
+                rt.error = err;
+                BasicLogger::logWarning("MultiEffect: Host Switcher: " + err);
+            }
+            const double s = engine.number("switch");
+            if (s >= 1.0 && s <= anzahl) ziel = static_cast<int>(s) - 1;
+            if (engine.number("nextgroup") > 0.0) weiter = true;
+        }
+
+        if (anzahl == 0) continue;  // leere Liste: Skript lief, geschaltet wird nichts
+        if (sw->intervalSeconds > 0.0 && rt.sekunden >= sw->intervalSeconds) weiter = true;
+        if (songNeu && sw->nextOnSongChange) weiter = true;
+
+        if (ziel < 0 && weiter)
+        {
+            if (sw->order == 1 && anzahl > 1)  // zufaellig, aber nie dieselbe
+            {
+                rt.zufall ^= rt.zufall << 13;
+                rt.zufall ^= rt.zufall >> 17;
+                rt.zufall ^= rt.zufall << 5;
+                ziel = (rt.index + 1 + static_cast<int>(rt.zufall % (anzahl - 1))) % anzahl;
+            }
+            else
+            {
+                ziel = (rt.index + 1) % anzahl;
+            }
+        }
+        if (ziel >= 0)
+        {
+            // Auch ein „Wechsel" auf dieselbe Gruppe (count = 1) setzt Zeit und
+            // Beats zurueck — sonst feuerte das Intervall ab da jeden Frame
+            rt.index = ziel;
+            rt.sekunden = 0.0;
+            rt.beats = 0;
+        }
+
+        // Gruppen dieser Liste: genau die laufende ist an, die anderen aus
+        for (int i = 0; i < anzahl; ++i)
+        {
+            for (const ChainNode& g : m_root.children)
+            {
+                if (g.isHostGroup() && g.displayName == sw->groups[static_cast<size_t>(i)])
+                    m_groupOverride[g.nodeId] = (i == rt.index);
+            }
+        }
     }
 }
 

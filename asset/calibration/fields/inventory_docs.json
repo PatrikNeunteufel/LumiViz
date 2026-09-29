@@ -6,8 +6,8 @@
     "beschreibung": "EffectChain.hpp (Doxygen)"
   },
   "summe": {
-    "typen": 91,
-    "felder": 794,
+    "typen": 92,
+    "felder": 803,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -4344,6 +4344,88 @@
           "panel": "bool",
           "helfer": "addBool",
           "doc": "frozen noise vs. per-frame shimmer"
+        }
+      ]
+    },
+    {
+      "typkey": "hostSwitcher",
+      "name": "Host Switcher",
+      "struct": "HostSwitcherParams",
+      "felder": [
+        {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "EEL, bei jedem Beat"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "EEL, jeden Frame"
+        },
+        {
+          "art": "liste",
+          "default": [],
+          "laenge": 0,
+          "name": "groups",
+          "panel": "sonderzeile",
+          "doc": "geschaltete Host-Gruppen (Namen), Reihenfolge = Index 1..count"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "EEL, einmal nach dem Laden"
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "intervalSeconds",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 3600.0,
+          "doc": "nach so vielen Sekunden weiterschalten; 0 = aus"
+        },
+        {
+          "art": "bool",
+          "default": false,
+          "name": "nextOnSongChange",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "beim Songwechsel weiterschalten"
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "order",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 2,
+          "doc": "Weiterschalten: 0 = Listenreihenfolge, 1 = zufaellig"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "songCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "EEL, einmal bei jedem Songwechsel"
+        },
+        {
+          "art": "zahl",
+          "default": 1,
+          "name": "startIndex",
+          "panel": "int",
+          "helfer": "addInt",
+          "doc": "Gruppe beim Start (1..count)"
         }
       ]
     },

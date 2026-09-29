@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     794>
+                     803>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter-Skript (Strang D): `size` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript. Farben per Skript (Block B, S79): `color_r`, `color_g`, `color_b` (0..1)."},
@@ -718,6 +718,24 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "Parameter-Skript (Strang D): `amount` + `b`/`w`/`h` + Audio-Satz. Leer = kein Skript."},
     {"grain.staticGrain",
      "frozen noise vs. per-frame shimmer"},
+    {"hostSwitcher.beatCode",
+     "EEL, bei jedem Beat"},
+    {"hostSwitcher.frameCode",
+     "EEL, jeden Frame"},
+    {"hostSwitcher.groups",
+     "geschaltete Host-Gruppen (Namen), Reihenfolge = Index 1..count"},
+    {"hostSwitcher.initCode",
+     "EEL, einmal nach dem Laden"},
+    {"hostSwitcher.intervalSeconds",
+     "nach so vielen Sekunden weiterschalten; 0 = aus"},
+    {"hostSwitcher.nextOnSongChange",
+     "beim Songwechsel weiterschalten"},
+    {"hostSwitcher.order",
+     "Weiterschalten: 0 = Listenreihenfolge, 1 = zufaellig"},
+    {"hostSwitcher.songCode",
+     "EEL, einmal bei jedem Songwechsel"},
+    {"hostSwitcher.startIndex",
+     "Gruppe beim Start (1..count)"},
     {"hostgroup.beatCode",
      "Parameter-Skript (Strang D, Block E S79): nur `outadjustalpha` (+ `b`/`w`/`h` + Audio-Satz) \342\200\224 die Crossfade-Dauer bleibt Regler, weil sie fuer alle Gruppen synchron gilt (Entwurf \302\2472.4). Laeuft nach den Kindern im gruppeneigenen ScriptContext (sieht deren reg/gmegabuf dieses Frames). Leer = kein Skript."},
     {"hostgroup.blendOut",

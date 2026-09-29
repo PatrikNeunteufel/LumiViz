@@ -147,6 +147,10 @@ void begrenzeCombo(QComboBox* combo)
 /// (N3.1/N3.3): [.., kMilkSectionBase+s, i] = Element i der Sektion s.
 constexpr int kMilkSectionBase = 1000000;
 
+/// Baum-Rolle mit der nodeId eines Ketten-Items (S82) — Schluessel fuer den
+/// Aufklapp-Zustand ueber einen Neuaufbau hinweg (Pfade verschieben sich).
+constexpr int kNodeIdRole = Qt::UserRole + 20;
+
 /// Element-Sentinel unter der Waves-Sektion: die BASIS-Waveform des Presets
 /// (nWaveMode/fWaveAlpha/…). Sie existiert immer genau einmal und ist KEIN
 /// Index in preset.waves — nicht loesch-/klonbar (Sichttest-Befund S43:
@@ -1117,8 +1121,51 @@ void MultiEffectPanel::setHost(MultiEffectVisualizer* host, QMutex* mutex)
 // Tree <-> chain
 // =============================================================================
 
-void MultiEffectPanel::rebuildTree()
+namespace
 {
+/// Aufklapp-Schluessel eines Baum-Items (S82): die nodeId des Knotens (ueber
+/// Neukompilieren stabil, anders als der Pfad) bzw. fuer Milkdrop-Sektionen
+/// Eltern-Schluessel + Sektion. Leer = kein merkbares Item.
+QString aufklappSchluessel(const QTreeWidgetItem* item)
+{
+    const QVariant id = item->data(0, kNodeIdRole);
+    if (id.isValid()) return QStringLiteral("n%1").arg(id.toULongLong());
+    if (item->parent() == nullptr) return QString();
+    const QString eltern = aufklappSchluessel(item->parent());
+    if (eltern.isEmpty()) return QString();
+    return eltern + QStringLiteral("/") + item->text(0);
+}
+
+void eingeklappteSammeln(const QTreeWidgetItem* item, QSet<QString>& zu)
+{
+    if (item->childCount() > 0 && !item->isExpanded())
+    {
+        const QString k = aufklappSchluessel(item);
+        if (!k.isEmpty()) zu.insert(k);
+    }
+    for (int i = 0; i < item->childCount(); ++i) eingeklappteSammeln(item->child(i), zu);
+}
+
+void eingeklappteAnwenden(QTreeWidgetItem* item, const QSet<QString>& zu)
+{
+    if (item->childCount() > 0 && zu.contains(aufklappSchluessel(item)))
+        item->setExpanded(false);
+    for (int i = 0; i < item->childCount(); ++i) eingeklappteAnwenden(item->child(i), zu);
+}
+}  // namespace
+
+void MultiEffectPanel::rebuildTree(bool aufklappZustandBehalten)
+{
+    // Eingeklappte Container ueber den Neuaufbau retten (Befund Patrik S82:
+    // „Zu dieser Gruppe wechseln" klappte die ganze Kette wieder auf). Neue
+    // Knoten und eine frisch geladene Kette kommen weiterhin aufgeklappt.
+    QSet<QString> eingeklappt;
+    if (aufklappZustandBehalten)
+    {
+        for (int i = 0; i < m_tree->topLevelItemCount(); ++i)
+            eingeklappteSammeln(m_tree->topLevelItem(i), eingeklappt);
+    }
+
     m_updating = true;
     m_tree->clear();
     if (m_host != nullptr && m_mutex != nullptr)
@@ -1131,6 +1178,11 @@ void MultiEffectPanel::rebuildTree()
         }
     }
     m_tree->expandAll();
+    if (!eingeklappt.isEmpty())
+    {
+        for (int i = 0; i < m_tree->topLevelItemCount(); ++i)
+            eingeklappteAnwenden(m_tree->topLevelItem(i), eingeklappt);
+    }
     m_updating = false;
     // Kamera-Freigabe-Dialog queued NACH dem Aufbau (kein Modal-Dialog mitten
     // im Tree-Umbau) — fragt nur, wenn die Kette eine Kamera-Quelle traegt.
@@ -1205,6 +1257,7 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
     item->setFlags((item->flags() | Qt::ItemIsEditable | Qt::ItemIsDragEnabled |
                     Qt::ItemIsDropEnabled));
     item->setData(0, Qt::UserRole, pathToVariant(path));
+    if (node.nodeId != 0) item->setData(0, kNodeIdRole, QVariant::fromValue(node.nodeId));
 
     if (parentItem != nullptr) parentItem->addChild(item);
     else m_tree->addTopLevelItem(item);
@@ -1480,7 +1533,7 @@ void MultiEffectPanel::mutateStructure(const std::function<void()>& fn)
         fn();
         m_host->recompileChain();
     }
-    rebuildTree();
+    rebuildTree(/*aufklappZustandBehalten=*/true);
     clearPropertyEditor();
 }
 
@@ -2441,6 +2494,23 @@ void MultiEffectPanel::syncMilkEyes(const QList<int>& nodePath)
     m_updating = false;
 }
 
+void MultiEffectPanel::umbenennenLocked(ChainNode& n, std::string neu)
+{
+    if (!n.isHostGroup() || m_host == nullptr)
+    {
+        n.displayName = std::move(neu);
+        return;
+    }
+    // Host-Gruppe (S82): Name ist die ID fuer den Host Switcher — eindeutig
+    // halten (belegt → naechster freier Zaehler) und wie ein IDE-Refactoring
+    // in jede Switcher-Liste nachtragen
+    if (neu.empty()) neu = effectTypeName(n.params);
+    const std::string alt = n.displayName;
+    const std::string frei = freierHostGruppenName(m_host->chain(), neu, &n);
+    n.displayName = frei;
+    if (alt != frei) (void)hostGruppeUmbenennenInSwitchern(m_host->chain(), alt, frei);
+}
+
 void MultiEffectPanel::onItemChanged(QTreeWidgetItem* item, int column)
 {
     if (m_updating || item == nullptr) return;
@@ -2449,7 +2519,7 @@ void MultiEffectPanel::onItemChanged(QTreeWidgetItem* item, int column)
     {
         // Column 0 is the editable name (enable lives on the eye toggle now).
         const std::string name = item->text(0).toStdString();
-        mutate(path, [&](ChainNode& n) { n.displayName = name; });
+        mutate(path, [&](ChainNode& n) { umbenennenLocked(n, name); });
     }
     else if (column == 3)
     {
@@ -3009,7 +3079,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         form->addRow(label, edit);
     };
     addLine(tr("Name"), QString::fromStdString(nodeName),
-            [](ChainNode& n, std::string v) { n.displayName = std::move(v); });
+            [this](ChainNode& n, std::string v) { umbenennenLocked(n, v); });
     addLine(tr("Description"), QString::fromStdString(nodeDesc),
             [](ChainNode& n, std::string v) { n.description = std::move(v); });
 
@@ -5740,6 +5810,147 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         connect(importBtn, &QPushButton::clicked, this,
                 [inhaltErsetzen]() { inhaltErsetzen(QString()); });
         form->addRow(importBtn);
+    }
+    else if (auto* p = std::get_if<HostSwitcherParams>(&params))
+    {
+        // Host Switcher (S82): Liste der geschalteten Gruppen (Index = Position),
+        // Ausloeser Zeit / Songwechsel / Skript. Schaltet nur zur Laufzeit.
+        auto* info = new QLabel(
+            tr("Schaltet zwischen den Host-Gruppen der Liste um — nach Zeit, beim "
+               "Songwechsel oder per Skript (`switch = n`, `nextgroup = 1`). Der "
+               "Uebergang ist der Crossfade der Gruppen. Gespeichert wird die Kette "
+               "wie eingestellt; das Umschalten gilt nur zur Laufzeit."),
+            m_propContainer);
+        info->setWordWrap(true);
+        form->addRow(info);
+
+        // Gruppen der aktiven Kette (oberste Ebene) — Quelle fuer „Hinzufuegen"
+        // und fuer die Markierung fehlender Eintraege
+        QStringList vorhanden;
+        uint64_t switcherId = 0;
+        {
+            QMutexLocker lock(m_mutex);
+            for (const ChainNode& c : m_host->chain().children)
+                if (c.isHostGroup()) vorhanden << QString::fromStdString(c.displayName);
+            if (const ChainNode* self = nodeAtPath(path)) switcherId = self->nodeId;
+        }
+        const auto neuAufbauen = [this, path]() {
+            QMetaObject::invokeMethod(
+                this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
+        };
+
+        auto* liste = new QListWidget(m_propContainer);
+        liste->setObjectName(QStringLiteral("hostSwitcherGroups"));
+        for (size_t i = 0; i < p->groups.size(); ++i)
+        {
+            const QString name = QString::fromStdString(p->groups[i]);
+            auto* item = new QListWidgetItem(
+                QStringLiteral("%1   %2").arg(i + 1).arg(name) +
+                    (vorhanden.contains(name) ? QString() : tr("   (fehlt in der Kette)")),
+                liste);
+            item->setData(Qt::UserRole, static_cast<int>(i));
+        }
+        liste->setMaximumHeight(140);
+        form->addRow(tr("Gruppen"), liste);
+
+        // Aendern der Liste: eine Operation auf `groups`, danach Editor neu
+        const auto listeAendern = [this, path, neuAufbauen](
+                                      std::function<void(std::vector<std::string>&)> fn) {
+            mutate(path, [&](ChainNode& n) { fn(std::get<HostSwitcherParams>(n.params).groups); });
+            neuAufbauen();
+        };
+
+        auto* knoepfe = new QWidget(m_propContainer);
+        auto* reihe = new QHBoxLayout(knoepfe);
+        reihe->setContentsMargins(0, 0, 0, 0);
+        auto* auswahl = new QComboBox(knoepfe);
+        for (const QString& name : vorhanden)
+        {
+            if (std::find(p->groups.begin(), p->groups.end(), name.toStdString()) ==
+                p->groups.end())
+                auswahl->addItem(name);
+        }
+        auto* dazu = new QPushButton(tr("Hinzufuegen"), knoepfe);
+        dazu->setEnabled(auswahl->count() > 0);
+        auto* hoch = new QPushButton(QStringLiteral("▲"), knoepfe);
+        auto* runter = new QPushButton(QStringLiteral("▼"), knoepfe);
+        auto* weg = new QPushButton(tr("Entfernen"), knoepfe);
+        hoch->setToolTip(tr("Markierte Gruppe eine Position nach oben (Index - 1)"));
+        runter->setToolTip(tr("Markierte Gruppe eine Position nach unten (Index + 1)"));
+        reihe->addWidget(auswahl, 1);
+        reihe->addWidget(dazu);
+        reihe->addWidget(hoch);
+        reihe->addWidget(runter);
+        reihe->addWidget(weg);
+        form->addRow(QString(), knoepfe);
+
+        connect(dazu, &QPushButton::clicked, this, [auswahl, listeAendern]() {
+            const std::string name = auswahl->currentText().toStdString();
+            if (name.empty()) return;
+            listeAendern([&](std::vector<std::string>& g) { g.push_back(name); });
+        });
+        const auto verschieben = [liste, listeAendern](int delta) {
+            const int i = liste->currentRow();
+            if (i < 0) return;
+            listeAendern([&](std::vector<std::string>& g) {
+                const int j = i + delta;
+                if (j < 0 || j >= static_cast<int>(g.size())) return;
+                std::swap(g[static_cast<size_t>(i)], g[static_cast<size_t>(j)]);
+            });
+        };
+        connect(hoch, &QPushButton::clicked, this, [verschieben]() { verschieben(-1); });
+        connect(runter, &QPushButton::clicked, this, [verschieben]() { verschieben(+1); });
+        connect(weg, &QPushButton::clicked, this, [liste, listeAendern]() {
+            const int i = liste->currentRow();
+            if (i < 0) return;
+            listeAendern([&](std::vector<std::string>& g) {
+                if (i < static_cast<int>(g.size())) g.erase(g.begin() + i);
+            });
+        });
+
+        // Laufende Gruppe (Laufzeitwert, halbsekuendlich nachgefuehrt)
+        auto* laeuft = new QLabel(m_propContainer);
+        form->addRow(tr("Laeuft"), laeuft);
+        // Kopie der Namen: `p` zeigt in die lokale Editor-Kopie der Params, die
+        // mit diesem Aufruf endet — der Timer lebt laenger
+        const std::vector<std::string> namen = p->groups;
+        const auto laeuftAktualisieren = [this, laeuft, switcherId, namen]() {
+            int idx = 0;
+            {
+                QMutexLocker lock(m_mutex);
+                if (m_host != nullptr) idx = m_host->debugSwitcherIndex(switcherId);
+            }
+            if (idx < 1 || idx > static_cast<int>(namen.size()))
+            {
+                laeuft->setText(tr("—"));
+                return;
+            }
+            laeuft->setText(QStringLiteral("%1 — %2").arg(idx).arg(
+                QString::fromStdString(namen[static_cast<size_t>(idx - 1)])));
+        };
+        auto* takt = new QTimer(laeuft);
+        connect(takt, &QTimer::timeout, laeuft, laeuftAktualisieren);
+        takt->start(500);
+        laeuftAktualisieren();
+
+        addInt("startIndex", tr("Startgruppe"), p->startIndex, 1,
+               std::max(1, static_cast<int>(p->groups.size())),
+               [](ChainNode& n, int v) { std::get<HostSwitcherParams>(n.params).startIndex = v; });
+        addDouble("intervalSeconds", tr("Wechsel nach (s)"), p->intervalSeconds, 0.0, 3600.0, 1.0,
+                  [](ChainNode& n, double v) {
+                      std::get<HostSwitcherParams>(n.params).intervalSeconds = v;
+                  });
+        addBool("nextOnSongChange", tr("Bei Songwechsel weiter"), p->nextOnSongChange,
+                [](ChainNode& n, bool v) {
+                    std::get<HostSwitcherParams>(n.params).nextOnSongChange = v;
+                });
+        addEnum("order", tr("Reihenfolge"), std::clamp(p->order, 0, 1),
+                {tr("Listenreihenfolge"), tr("Zufaellig")},
+                [](ChainNode& n, int v) { std::get<HostSwitcherParams>(n.params).order = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<HostSwitcherParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<HostSwitcherParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<HostSwitcherParams>(n.params).beatCode = std::move(v); });
+        addScript("songCode", tr("Song"), p->songCode, [](ChainNode& n, std::string v) { std::get<HostSwitcherParams>(n.params).songCode = std::move(v); });
     }
     else if (auto* p = std::get_if<MilkdropNodeParams>(&params))
     {

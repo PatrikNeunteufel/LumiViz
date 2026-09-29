@@ -31,6 +31,7 @@
 #include <array>
 #include <cstdint>
 #include <map>
+#include <set>
 #include <string>
 #include <variant>
 #include <vector>
@@ -292,6 +293,27 @@ struct HostGroupParams
     std::string beatCode;
 
     std::string sourceFile;  ///< importierte .lvfx-Quelle ("" = leer angelegt)
+};
+
+/**
+ * Host Switcher (S82): schaltet zwischen Host-Gruppen um — nach Zeit, beim
+ * Songwechsel oder per Skript; der Uebergang ist der Crossfade der Gruppen
+ * (HG2). Geschaltet wird NUR zur Laufzeit (Entscheid Patrik S82, 2a): das
+ * persistierte `enabled` der Gruppen bleibt, wie gespeichert. Die Gruppen
+ * werden ueber ihren (eindeutigen) Namen angesprochen; Umbenennen zieht die
+ * Liste mit. Index im Skript = Listenposition 1..count.
+ */
+struct HostSwitcherParams
+{
+    std::vector<std::string> groups;  ///< geschaltete Host-Gruppen (Namen), Reihenfolge = Index 1..count
+    int startIndex = 1;               ///< Gruppe beim Start (1..count)
+    double intervalSeconds = 0.0;     ///< nach so vielen Sekunden weiterschalten; 0 = aus
+    bool nextOnSongChange = false;    ///< beim Songwechsel weiterschalten
+    int order = 0;                    ///< Weiterschalten: 0 = Listenreihenfolge, 1 = zufaellig
+    std::string initCode;             ///< EEL, einmal nach dem Laden
+    std::string frameCode;            ///< EEL, jeden Frame
+    std::string beatCode;             ///< EEL, bei jedem Beat
+    std::string songCode;             ///< EEL, einmal bei jedem Songwechsel
 };
 
 /** AVS "Render / Clear screen" (ID 25), reduced to the 5.1 core. */
@@ -2820,7 +2842,7 @@ using EffectParams =
                  SuperScope3DParams, Terrain3DParams, GlowOrbsParams,
                  ShadertoyParams, MeshWarpParams, GpuParticlesParams,
                  VideoSourceParams, PixelFilterParams, IsfFilterParams,
-                 PassthroughParams>;
+                 HostSwitcherParams, PassthroughParams>;
 
 /**
  * Die Herkunft eines Knotens — oder `nullptr`, wenn sein Typ keine trägt.
@@ -2909,6 +2931,7 @@ struct CompileResult
     {
         const char* operator()(const ListParams&) const { return "Effect List"; }
         const char* operator()(const HostGroupParams&) const { return "Host Group"; }
+        const char* operator()(const HostSwitcherParams&) const { return "Host Switcher"; }
         const char* operator()(const ClearParams&) const { return "Clear"; }
         const char* operator()(const FadeoutParams&) const { return "Fadeout"; }
         const char* operator()(const InvertParams&) const { return "Invert"; }
@@ -3220,6 +3243,14 @@ inline void compileNode(ChainNode& node, const std::string& path,
         warnFallbackBlend(group->blendOut, "out", path, result);
     }
 
+    if (auto* sw = std::get_if<HostSwitcherParams>(&node.params))
+    {
+        const int anzahl = static_cast<int>(sw->groups.size());
+        sw->startIndex = std::clamp(sw->startIndex, 1, std::max(anzahl, 1));
+        sw->intervalSeconds = std::clamp(sw->intervalSeconds, 0.0, 3600.0);
+        sw->order = std::clamp(sw->order, 0, 1);
+    }
+
     if (node.isContainer())
     {
         const bool childInGroup = inHostGroup || node.isHostGroup();
@@ -3229,6 +3260,58 @@ inline void compileNode(ChainNode& node, const std::string& path,
                         nextId, childInGroup);
         }
     }
+}
+
+/// Alle Host-Gruppen in Baumreihenfolge (nach compileNode: nur noch oberste Ebene).
+template <class Node, class Fn>
+void jedeHostGruppe(Node& node, Fn&& fn)
+{
+    if (node.isHostGroup()) fn(node);
+    for (auto& child : node.children) jedeHostGruppe(child, fn);
+}
+
+/// „Host Group 3" → „Host Group" (Zaehler am Ende weg).
+inline std::string nameOhneZaehler(const std::string& name)
+{
+    size_t ende = name.size();
+    while (ende > 0 && name[ende - 1] >= '0' && name[ende - 1] <= '9') --ende;
+    if (ende < name.size() && ende > 0 && name[ende - 1] == ' ') return name.substr(0, ende - 1);
+    return name;
+}
+
+/// Kleinster freier Name „<basis> N" (N >= 2), der in `belegt` fehlt.
+inline std::string freierName(const std::string& wunsch, const std::set<std::string>& belegt)
+{
+    if (belegt.count(wunsch) == 0) return wunsch;
+    const std::string basis = nameOhneZaehler(wunsch);
+    for (int n = 2;; ++n)
+    {
+        std::string kandidat = basis + " " + std::to_string(n);
+        if (belegt.count(kandidat) == 0) return kandidat;
+    }
+}
+
+/// Namen der Host-Gruppen eindeutig machen (S82): der Host Switcher spricht
+/// Gruppen ueber den Namen an. Die ERSTE Gruppe eines Namens behaelt ihn,
+/// spaetere bekommen den naechsten freien Zaehler („Host Group 2") — so
+/// entstehen beim Einfuegen, Klonen und Laden alter Dateien eindeutige Namen.
+inline void hostGruppenNamenEindeutig(ChainNode& root, CompileResult& result)
+{
+    std::set<std::string> alle;
+    jedeHostGruppe(root, [&](ChainNode& g) { alle.insert(g.displayName); });
+    std::set<std::string> gesehen;
+    jedeHostGruppe(root, [&](ChainNode& g) {
+        if (gesehen.insert(g.displayName).second) return;
+        std::set<std::string> belegt = alle;
+        belegt.insert(gesehen.begin(), gesehen.end());
+        const std::string neu = freierName(g.displayName, belegt);
+        result.warnings.push_back({"root", "host group name \"" + g.displayName +
+                                               "\" was not unique - renamed to \"" +
+                                               neu + "\""});
+        g.displayName = neu;
+        alle.insert(neu);
+        gesehen.insert(neu);
+    });
 }
 
 } // namespace detail
@@ -3254,7 +3337,48 @@ inline CompileResult compileChain(ChainNode& root)
     }
     uint64_t nextId = detail::maxNodeId(root) + 1;
     detail::compileNode(root, "root", result, nextId);
+    detail::hostGruppenNamenEindeutig(root, result);
     return result;
+}
+
+/**
+ * Freier Name fuer eine Host-Gruppe (S82): `wunsch` selbst, wenn keine ANDERE
+ * Gruppe ihn traegt, sonst „<wunsch ohne Zaehler> N". `selbst` = die Gruppe,
+ * die umbenannt wird (ihr eigener Name gilt nicht als belegt).
+ */
+[[nodiscard]] inline std::string freierHostGruppenName(const ChainNode& root,
+                                                     const std::string& wunsch,
+                                                     const ChainNode* selbst = nullptr)
+{
+    std::set<std::string> belegt;
+    detail::jedeHostGruppe(root, [&](const ChainNode& g) {
+        if (&g != selbst) belegt.insert(g.displayName);
+    });
+    return detail::freierName(wunsch, belegt);
+}
+
+/**
+ * Umbenennen wie ein IDE-Refactoring (S82): jeder Host Switcher, der `alt`
+ * listet, fuehrt danach `neu`. Rueckgabe = Anzahl ersetzter Eintraege.
+ */
+inline int hostGruppeUmbenennenInSwitchern(ChainNode& node, const std::string& alt,
+                                           const std::string& neu)
+{
+    int ersetzt = 0;
+    if (auto* sw = std::get_if<HostSwitcherParams>(&node.params))
+    {
+        for (std::string& name : sw->groups)
+        {
+            if (name == alt)
+            {
+                name = neu;
+                ++ersetzt;
+            }
+        }
+    }
+    for (ChainNode& child : node.children)
+        ersetzt += hostGruppeUmbenennenInSwitchern(child, alt, neu);
+    return ersetzt;
 }
 
 /** true, wenn irgendwo im Baum eine Host-Gruppe sitzt (Persistenz: .lvfx2). */

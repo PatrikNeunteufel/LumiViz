@@ -34,6 +34,7 @@
 #include "services/events/UIEvents.hpp"
 
 // Audio Services
+#include "audio/AudioEvents.hpp"  // TrackChangedEvent -> Host Switcher (S82)
 #include "audio/IAudioEngine.hpp"
 #include "audio/BassEngine.hpp"
 #include "audio/IAudioPlayer.hpp"
@@ -735,6 +736,12 @@ void MainWindow::setupEventHandlers()
             }
             reportProblem(tr("Import MilkDrop Preset"), warnings);
         });
+
+    // Songwechsel -> Renderer (S82, Host Switcher: Song-Slot, „bei Songwechsel
+    // weiter"). Bis hierher erreichte TrackChangedEvent nur Player- und
+    // Playlist-Panel. Der Zaehler ist prozessweit und atomar — kein Lock.
+    pEventBus->subscribe<TrackChangedEvent>(
+        [](const TrackChangedEvent&) { MultiEffectVisualizer::notifySongChanged(); });
 
     pEventBus->subscribe<NewEffectChainEvent>(
         [this, findMultiEffect, pEventBus](const NewEffectChainEvent&) {

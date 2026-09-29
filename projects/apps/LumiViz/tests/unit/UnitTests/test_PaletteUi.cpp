@@ -620,6 +620,33 @@ TEST_CASE("PaletteUi Panel A14b: Custom Shape auf die Leerflaeche landet im Milk
     CHECK(mp->preset.shapes.size() == vorher + 1);
 }
 
+TEST_CASE("PaletteUi Panel B1: Eingeklapptes bleibt nach einer Strukturaenderung zu (S82)")
+{
+    // Befund Patrik S82: „Zu dieser Gruppe wechseln" (= Strukturaenderung)
+    // klappte die ganze Kette wieder auf.
+    UiUmgebung env;
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    REQUIRE(p.oben(1)->childCount() > 0);
+    REQUIRE(p.oben(2)->childCount() > 0);  // Milkdrop: Sektionen
+    // eine Milkdrop-Sektion MIT Kindern (Waves traegt immer die Basis-Wave)
+    int s = 0;
+    while (s < p.oben(2)->childCount() && p.oben(2)->child(s)->childCount() == 0) ++s;
+    REQUIRE(s < p.oben(2)->childCount());
+    p.oben(1)->setExpanded(false);             // Effect List zu
+    p.oben(2)->child(s)->setExpanded(false);   // Milkdrop-Sektion zu
+    const QString sektion = p.oben(2)->child(s)->text(0);
+
+    const QPoint weitUnten(60, p.tree->viewport()->height() - 10);
+    REQUIRE(p.ziehe("Clear", weitUnten));  // Neuaufbau des Baums
+    REQUIRE(p.tree->topLevelItemCount() == 4);
+
+    CHECK_FALSE(p.oben(1)->isExpanded());
+    CHECK(p.oben(2)->isExpanded());  // war offen, bleibt offen
+    CHECK(p.oben(2)->child(s)->text(0) == sektion);
+    CHECK_FALSE(p.oben(2)->child(s)->isExpanded());
+}
+
 TEST_CASE("PaletteUi Panel A12: Drop auf die Liste legt IN die Liste")
 {
     UiUmgebung env;

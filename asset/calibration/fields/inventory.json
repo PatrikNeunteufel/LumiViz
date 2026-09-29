@@ -1,8 +1,8 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 794,
-        "typen": 91
+        "felder": 803,
+        "typen": 92
     },
     "typen": [
         {
@@ -2055,6 +2055,59 @@
             ],
             "name": "Grain",
             "typkey": "grain"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                    ],
+                    "laenge": 0,
+                    "name": "groups"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "intervalSeconds"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "nextOnSongChange"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "order"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "songCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "startIndex"
+                }
+            ],
+            "name": "Host Switcher",
+            "typkey": "hostSwitcher"
         },
         {
             "felder": [

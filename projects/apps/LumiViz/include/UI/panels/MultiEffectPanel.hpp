@@ -131,7 +131,10 @@ private:
     void setHost(MultiEffectVisualizer* host, QMutex* mutex);
 
     // Tree <-> chain
-    void rebuildTree();
+    /// Baum neu aufbauen. `aufklappZustandBehalten` (S82): eingeklappte
+    /// Container bleiben zu (Strukturaenderung); false = alles offen
+    /// (frisch geladene Kette).
+    void rebuildTree(bool aufklappZustandBehalten = false);
     /// Kamera-Freigabe-Dialog (S70): fragt EINMAL je geladener Kette nach,
     /// wenn sie eine Kamera-Quelle enthaelt und die Freigabe dieses App-Laufs
     /// noch fehlt — der Dialog selbst ist die ausdrueckliche Nutzeraktion
@@ -187,6 +190,9 @@ private:
     /// dialog (setzt `datei`). false = abgebrochen oder unlesbar.
     bool presetGruppeLaden(QString& datei,
                            std::vector<lumi::multieffect::ChainNode>& outInhalt);
+    /// Knoten umbenennen (S82) — unter dem Render-Mutex (aus mutate). Host-
+    /// Gruppen bleiben eindeutig benannt, Host-Switcher-Listen ziehen mit.
+    void umbenennenLocked(lumi::multieffect::ChainNode& n, std::string neu);
     void onRemove();
     void onClone();
     void onMove(int delta);

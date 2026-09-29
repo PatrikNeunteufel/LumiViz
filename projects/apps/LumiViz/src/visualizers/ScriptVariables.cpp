@@ -63,6 +63,21 @@ const std::unordered_map<std::size_t, ScriptVarTable>& tables()
           {{"outadjustalpha", "in/out", "0..255",
             "output opacity of the group (Blend Out = Adjustable); runs after the "
             "children, sees the group's registers"}}}},
+        // Host Switcher (S82): eigener Skriptlauf (runHostSwitchers) — Init /
+        // Frame / Beat / Song; switch/nextgroup gelten nur fuer den Frame.
+        {ix<HostSwitcherParams>,
+         {kParam,
+          {{"index", "in", "1..count", "the running group (position in the list)"},
+           {"count", "in", ">=0", "number of groups in the list"},
+           {"seconds", "in", "s",
+            "time since the last switch — 0 right after a switch, so the Frame slot "
+            "can tell that a switch just happened"},
+           {"beatcount", "in", ">=0",
+            "beats since the last switch — 0 right after a switch (e.g. "
+            "nextgroup=above(beatcount,31) switches every 32 beats)"},
+           {"switch", "out", "1..count", "switch to this group now (0 = no change)"},
+           {"nextgroup", "out", "0/1",
+            "1 = go to the next group (list order or random, see Order)"}}}},
         {ix<ClearParams>,
          {kParam,
           {{"blend", "in/out", "0..3", kBlend4}, {"color_r / color_g / color_b", "in/out", "0..1", "clear colour"}}}},

@@ -278,6 +278,20 @@ struct WriteVisitor
         if (!p.sourceFile.empty())
             o["sourceFile"] = QString::fromStdString(p.sourceFile);
     }
+    void operator()(const HostSwitcherParams& p) const  // S82
+    {
+        QJsonArray gruppen;
+        for (const std::string& name : p.groups) gruppen.append(QString::fromStdString(name));
+        o["groups"] = gruppen;
+        o["startIndex"] = p.startIndex;
+        o["intervalSeconds"] = p.intervalSeconds;
+        o["nextOnSongChange"] = p.nextOnSongChange;
+        o["order"] = p.order;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+        o["songCode"] = QString::fromStdString(p.songCode);
+    }
     void operator()(const ClearParams& p) const
     {
         o["color"] = static_cast<double>(p.color);
@@ -1507,6 +1521,21 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.frameCode = getStr(o, "frameCode", p.frameCode);
         p.beatCode = getStr(o, "beatCode", p.beatCode);
         p.sourceFile = getStr(o, "sourceFile", p.sourceFile);
+        return p;
+    }
+    if (type == "hostSwitcher")  // S82
+    {
+        HostSwitcherParams p;
+        for (const QJsonValue& v : o.value("groups").toArray())
+            p.groups.push_back(v.toString().toStdString());
+        p.startIndex = getInt(o, "startIndex", p.startIndex);
+        p.intervalSeconds = o.value("intervalSeconds").toDouble(p.intervalSeconds);
+        p.nextOnSongChange = getBool(o, "nextOnSongChange", p.nextOnSongChange);
+        p.order = getInt(o, "order", p.order);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        p.songCode = getStr(o, "songCode", p.songCode);
         return p;
     }
     if (type == "clear")
@@ -3011,6 +3040,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const VideoSourceParams&) const { return "videoSource"; }
         QString operator()(const PixelFilterParams&) const { return "pixelFilter"; }
         QString operator()(const IsfFilterParams&) const { return "isfFilter"; }
+        QString operator()(const HostSwitcherParams&) const { return "hostSwitcher"; }
         QString operator()(const PassthroughParams&) const { return "passthrough"; }
     };
     return std::visit(Visitor{}, params);

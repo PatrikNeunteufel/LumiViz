@@ -239,6 +239,27 @@ public:
      */
     [[nodiscard]] QImage debugGrabRootSurface() const;
 
+    /**
+     * @brief Songwechsel melden (S82) — Host Switcher (Song-Slot, „bei
+     *        Songwechsel weiter"). Ein prozessweiter Zaehler statt eines Flags
+     *        je Instanz: jeder Visualizer sieht den Wechsel genau einmal, egal
+     *        wie viele Fenster laufen. Thread-sicher, kein Lock noetig.
+     *        Allgemein gehalten: weitere Module koennen denselben Zaehler lesen.
+     */
+    static void notifySongChanged();
+
+    /**
+     * @brief Test-Hook (S82): laufende Gruppe eines Host Switchers (Index
+     *        1..count), 0 = noch nicht gelaufen / unbekannt.
+     */
+    [[nodiscard]] int debugSwitcherIndex(uint64_t nodeId) const;
+
+    /**
+     * @brief Laeuft eine Host-Gruppe gerade (S82)? Das persistierte `enabled`,
+     *        solange kein Host Switcher sie fuehrt — sonst dessen Wahl.
+     */
+    [[nodiscard]] bool effectiveEnabled(const lumi::multieffect::ChainNode& node) const;
+
 protected:
     void onInitialize() override;
     void onRender(float deltaTime) override;
@@ -1150,6 +1171,28 @@ private:
     std::vector<SurfacePair*> m_surfaceStack;
     std::unordered_map<uint64_t, ListRuntime> m_listRuntimes;
     std::unordered_map<uint64_t, GroupRuntime> m_groupRuntimes;  ///< HG1
+
+    /// Host Switcher (S82): Laufzeit je Switcher-Knoten — laufende Gruppe,
+    /// Zeit/Beats seit dem letzten Wechsel, gesehener Songwechsel, Skript.
+    struct SwitcherRuntime
+    {
+        int index = -1;          ///< laufende Gruppe 0-basiert; -1 = frisch
+        double sekunden = 0.0;   ///< seit dem letzten Wechsel
+        int beats = 0;           ///< seit dem letzten Wechsel
+        uint64_t songGesehen = 0;
+        bool seenThisFrame = false;
+        uint32_t zufall = 0x5EED82u;  ///< xorshift-Zustand fuer „zufaellig"
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> host;
+        std::string compiled;
+        std::string error;
+    };
+    std::unordered_map<uint64_t, SwitcherRuntime> m_switcherRuntimes;
+    /// Gruppen-nodeId -> laeuft (true) / ruht (false), je Frame von den
+    /// Switchern neu gesetzt; fehlt eine Gruppe, gilt ihr `enabled`.
+    std::unordered_map<uint64_t, bool> m_groupOverride;
+    /// Alle Host Switcher der obersten Ebene einen Frame weiterrechnen und
+    /// m_groupOverride setzen — VOR dem HG2-Gewichtsscan (onRender).
+    void runHostSwitchers();
     /// HG2: laufende Gewichtssumme des normalisierten Gruppen-Mixes — startet
     /// je Frame beim Hintergrund-Anteil max(0, 1 - Summe blendender Gruppen)
     double m_blendRunningSum = 1.0;

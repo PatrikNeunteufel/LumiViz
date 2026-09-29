@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.13.0
+> **Version:** 1.14.0
 > **Datum:** 2026-09-29
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -596,6 +596,39 @@ Gruppen dürfen gleichzeitig aktiv sein und mischen sich über ihren
   frame"), bleibt sie als eine Effect List in der Gruppe erhalten.
 - **„Preset in diese Gruppe laden (.avs, .milk, .lvfx)…"** macht dasselbe
   für eine bestehende Gruppe (ersetzt deren Inhalt).
+- **Namen sind eindeutig:** Der Name einer Gruppe ist ihre ID für den Host
+  Switcher. Eine zweite „Host Group" heißt deshalb automatisch „Host Group 2"
+  (auch beim Klonen und beim Laden älterer Dateien). Benennst du eine Gruppe
+  um, ziehen alle Switcher-Listen mit; ist der Name schon vergeben, bekommt
+  er den nächsten freien Zähler.
+
+#### Host Switcher — Gruppen automatisch wechseln
+
+Der **Host Switcher** (Palette, *Structure & Control*) schaltet zwischen
+Host-Gruppen um; der Übergang ist der Crossfade der Gruppen. Er gehört auf
+die oberste Ebene der Kette.
+
+- **Gruppen:** Aus der Auswahl die Gruppen des geladenen Presets
+  **hinzufügen**, mit ▲/▼ **umsortieren**, **entfernen**. Die Nummer vor dem
+  Namen ist der **Index** (1, 2, …), den Skripte benutzen. Eine Gruppe, die
+  es in der Kette nicht mehr gibt, ist als „fehlt" markiert. *Läuft* zeigt
+  die gerade aktive Gruppe.
+- **Startgruppe:** die Gruppe beim Laden.
+- **Wechsel nach (s):** nach so vielen Sekunden zur nächsten Gruppe (0 = aus).
+- **Bei Songwechsel weiter:** beim nächsten Titel zur nächsten Gruppe.
+- **Reihenfolge:** nächste Gruppe nach Liste oder **zufällig** (nie dieselbe).
+- **Skripte** Init / Frame / Beat / **Song** (läuft einmal bei jedem
+  Songwechsel). Lesen: `index`, `count`, `seconds` und `beatcount` (beide
+  **0 direkt nach einem Wechsel** — so erkennt der Frame-Slot, dass gerade
+  umgeschaltet wurde), dazu `bass`/`mid`/`treb`, `getspec` usw. Schreiben:
+  `switch = n` (Gruppe n) oder `nextgroup = 1` (nächste). Beide gelten nur
+  für den Frame, in dem sie gesetzt werden. Beispiel alle 32 Beats:
+  `nextgroup = above(beatcount, 31);`
+- **Gespeichert wird, was du eingestellt hast:** Der Switcher schaltet nur
+  zur Laufzeit; die Augen der Gruppen in der Datei bleiben unverändert.
+  Solange ein Switcher eine Gruppe führt, entscheidet er — ihr Auge und
+  „Zu dieser Gruppe wechseln" wirken erst wieder, wenn der Switcher aus ist
+  (sein Auge) oder die Gruppe nicht in seiner Liste steht.
 - **Speichern:** Ketten mit Host-Gruppe(n) werden automatisch als
   **`.lvfx2`** gespeichert, flache Ketten bleiben `.lvfx`; laden kann die
   App beides.
@@ -776,6 +809,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.14.0 | 2026-09-29 | Session 82. §11 NEU **Host Switcher** (Gruppenliste mit Index, Startgruppe, Wechsel nach Zeit/Songwechsel/zufällig, Skripte Init/Frame/Beat/Song mit `switch`/`nextgroup`, schaltet nur zur Laufzeit); Gruppennamen eindeutig mit Zähler, Umbenennen zieht Switcher-Listen mit. Eingeklappte Gruppen bleiben beim Wechsel zu |
 | 1.13.0 | 2026-09-29 | Session 82. §11 Host-Gruppen: **„Preset as Group…"** in der Effekt-Palette (`.avs`/`.milk`/`.lvfx` als Kopie in eine neue Gruppe, Quelle + „Aus Quelle neu laden", Grenzen), Gruppen-Knopf lädt jetzt alle drei Formate. „Import Browser" heißt **Effect Browser** (§8, §9, §11) |
 | 1.11.0 | 2026-09-28 | Session 80. §11 NEU „Gestaltung: Drift und Weichzeichnen" — Linear-Drift (Stärke + Richtung), Radial-Drift (Stärke, Winkel außen/Wirbel/Sog, Zentrum) und Weichzeichnen je Milkdrop-Node, je Werkzeug ein Schalter, Winkel im Panel in Grad; per `per_frame` steuerbar (`drift_lin/dir/rad/ang/cx/cy`, `weich`, Bogenmaß); Knöpfe „Original" und „Weicher Sog ↖" (= der Look bis S80) |
 | 1.10.0 | 2026-08-07 | Session 72 (Filter-Strang). **§12: Tabelle „Was an einem `iChannel` hängen kann"** — die beiden neuen Quellen **Ketten-Eingang** (macht Shadertoy-Bildfilter direkt lauffähig) und **AVS-Buffer 1–8** (Buffer-Save-Slots als Textur, Stand beim Lauf des Knotens, Host-Gruppen-Trennung) je mit Anwendungsbeispiel. **§14 NEU „ISF-Filter laden"** — Import von `.fs`-Dateien, Parameter-Baum mit typrichtigen Bedienelementen, was abgelehnt wird (Generator/Übergang/Geometrie) und warum manche Filter eine `.vs` brauchen. §14 Lizenz-Absatz: Herkunft wandert jetzt auch in die **exportierte Datei** |

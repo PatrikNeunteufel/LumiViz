@@ -125,6 +125,9 @@ const std::vector<EffectType>& effectPalette()
          "Loads an .avs, .milk or .lvfx preset as a Host Group: a copy you can edit, "
          "reloadable from its source file.",
          "", MilkElement::None, true},
+        {"Host Switcher", &makeDefault<HostSwitcherParams>, K, Lumi,
+         "Switches between Host Groups by time, on song change or by script; the "
+         "groups crossfade. Does not change the saved chain."},
         {"Clear", &makeDefault<ClearParams>, R, Avs, "Fills the frame with a colour.",
          "Render / Clear screen"},
         {"Fadeout", &makeDefault<FadeoutParams>, C, Avs,
