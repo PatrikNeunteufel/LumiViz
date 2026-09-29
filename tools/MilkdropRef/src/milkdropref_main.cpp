@@ -13,8 +13,12 @@
  * @details
  * Aufruf:
  *   MilkdropRef <preset.milk|ordner> [--frames N] [--out DIR] [--size WxH]
- *               [--silence] [--show]
+ *               [--silence] [--show] [--audio-muster klassisch|musik]
+ *               [--zufall-lumiviz] [--saat N] [--mesh WxH]
+ *   (vollstaendige Referenz inkl. Umgebungsvariablen: README.md)
  *
+ * - Fenster: `LUMIVIZ_REF_BILDSCHIRM=DISPLAYn` legt es auf einen festen
+ *   Monitor (S81, RefBildschirm.hpp) — ohne Variable Standardort.
  * - Audio: synthetisch, formelgleich zu MilkdropStandalone::feedSyntheticAudio
  *   (t = frame/60, 576 Samples 8-bit-PCM, 128-Mitte) — `--silence` liefert
  *   Null-Signal (Hunger-Test).
@@ -50,6 +54,9 @@
 // die beiden LumiViz-Standalones und AvsRef einbinden — vorher stand die
 // Formel hier als Kopie mit dem Kommentar "formelgleich zu ...".
 #include "SynthAudio.hpp"
+
+// Fester Monitor fuer Referenzlaeufe (S81), geteilt mit MilkdropStandalone.
+#include "RefBildschirm.hpp"
 
 // Kaltstart-Saat, geteilt mit der App (S75) — siehe saatEinspeisen().
 #include "visualizers/KaltstartSaat.hpp"
@@ -514,7 +521,10 @@ int main(int argc, char** argv)
         std::fprintf(stderr,
                      "Aufruf: MilkdropRef <preset.milk|ordner> [--frames N] [--out DIR] "
                      "[--size WxH] [--silence] [--show] "
-                     "[--audio-muster klassisch|musik] [--zufall-lumiviz]\n");
+                     "[--audio-muster klassisch|musik] [--zufall-lumiviz] "
+                     "[--saat N] [--mesh WxH]\n"
+                     "Umgebung: LUMIVIZ_REF_BILDSCHIRM=DISPLAYn|Index (fester Monitor), "
+                     "MILKDROPREF_AUDIO_DUMP=N, MILKDROPREF_AUDIO_SEQ=N\n");
         return 2;
     }
 
@@ -560,8 +570,18 @@ int main(int argc, char** argv)
     RECT rc;
     SetRect(&rc, 0, 0, width, height);
     AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
+    // Fester Monitor (S81): LUMIVIZ_REF_BILDSCHIRM, oben links im
+    // Arbeitsbereich; ohne Variable der Standardort wie bisher
+    int posX = CW_USEDEFAULT;
+    int posY = CW_USEDEFAULT;
+    lumi::werkzeug::RefMonitor refMon;
+    if (lumi::werkzeug::refBildschirmSuchen(refMon, "[MilkdropRef]"))
+    {
+        posX = refMon.arbeit.left;
+        posY = refMon.arbeit.top;
+    }
     HWND hwnd = CreateWindowW(L"MilkdropRefWindow", L"MilkdropRef", WS_OVERLAPPEDWINDOW,
-                              CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left,
+                              posX, posY, rc.right - rc.left,
                               rc.bottom - rc.top, nullptr, nullptr, inst, nullptr);
     if (hwnd == nullptr)
     {

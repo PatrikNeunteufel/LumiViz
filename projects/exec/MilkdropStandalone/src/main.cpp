@@ -55,6 +55,7 @@
 #include "visualizers/milkdrop/MilkdropTrace.hpp"
 
 #include "AudioDateiQuelle.hpp"
+#include "RefBildschirm.hpp"
 #include "SynthAudio.hpp"
 
 #include <QAudioDevice>
@@ -70,6 +71,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QOpenGLWindow>
+#include <QScreen>
 #include <QStringList>
 #include <QSurfaceFormat>
 #include <QTimer>
@@ -83,6 +85,30 @@
 
 namespace
 {
+
+/// Fester Monitor fuer Referenzlaeufe (S81, `LUMIVIZ_REF_BILDSCHIRM`,
+/// RefBildschirm.hpp — derselbe Wert wie bei MilkdropRef). Zuordnung zum
+/// QScreen ueber die linke obere Ecke: mit QT_ENABLE_HIGHDPI_SCALING=0 (main)
+/// sind Qt-Koordinaten physische Pixel, wie die von Win32.
+void refBildschirmAnwenden(QWindow& window)
+{
+#ifdef _WIN32
+    lumi::werkzeug::RefMonitor mon;
+    if (!lumi::werkzeug::refBildschirmSuchen(mon, "[Standalone]")) return;
+    const QPoint ecke(mon.monitor.left, mon.monitor.top);
+    for (QScreen* screen : QGuiApplication::screens())
+    {
+        if (screen->geometry().topLeft() != ecke) continue;
+        window.setScreen(screen);
+        window.setFramePosition(screen->availableGeometry().topLeft());
+        return;
+    }
+    std::fprintf(stderr, "[Standalone] WARNUNG: kein QScreen an (%d,%d) — Standardort\n",
+                 ecke.x(), ecke.y());
+#else
+    (void)window;
+#endif
+}
 
 /// c1-Kalibrier-Satz vom Exe-Verzeichnis aufwaerts suchen (Repo-Layout)
 QString locateCalibrationDir()
@@ -834,6 +860,7 @@ int main(int argc, char* argv[])
         // bliebe der ganze Audio-Block im Puffer stehen
         std::fflush(stdout);
     }
+    refBildschirmAnwenden(window);  // vor resize: setScreen kann die Groesse anfassen
     window.resize(w, h);
     window.show();
 

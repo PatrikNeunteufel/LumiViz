@@ -42,8 +42,55 @@ cmake --build tools/MilkdropRef/build --config Release
 ## Nutzung
 
 ```bash
-tools/MilkdropRef/build/Release/MilkdropRef.exe <preset.milk|ordner> [--frames N] [--out DIR] [--size WxH] [--silence] [--show] [--audio-muster klassisch|musik] [--saat N] [--zufall-lumiviz]
+tools/MilkdropRef/build/Release/MilkdropRef.exe <preset.milk|ordner> [--frames N] [--out DIR] [--size WxH] [--silence] [--show] [--audio-muster klassisch|musik] [--saat N] [--zufall-lumiviz] [--mesh WxH]
 ```
+
+Ohne Preset-Argument gibt die Exe die Kurzform dieser Liste aus.
+
+### Argumente
+
+| Argument | Vorgabe | Wirkung |
+|---|---|---|
+| `<preset.milk\|ordner>` | — (Pflicht) | ein Preset oder alle `.milk` eines Ordners (sortiert) |
+| `--frames N` | 240 | Frames je Preset; der letzte wird als BMP gespeichert |
+| `--out DIR` | `out_milkdropref` | Zielordner für `<stem>_ref.bmp` |
+| `--size WxH` | 640x480 | Client-Größe = Rendergröße (min. 64) |
+| `--silence` | aus | Null-Signal statt synthetischem Audio (Hunger-Test) |
+| `--show` | aus | Fenster sichtbar (sonst unsichtbar) |
+| `--audio-muster klassisch\|musik` | klassisch | Muster des synthetischen Signals (`SynthAudio.hpp`, gemeinsam mit MilkdropStandalone) |
+| `--saat N` | 0 = aus | Startwert des Feedback-Puffers (`0x…` = hex); gleicher Wert wie `LUMIVIZ_MILKDROP_SEED` auf unserer Seite |
+| `--zufall-lumiviz` | aus | Zufallsdaten wie LumiViz (S80, Abschnitt unten) |
+| `--mesh WxH` | 64×64 (Kern) | Warp-Mesh; `32x24` = Winamp-Original und LumiViz |
+
+### Umgebungsvariablen
+
+| Variable | Wirkung |
+|---|---|
+| `LUMIVIZ_REF_BILDSCHIRM` | Fenster auf einen **festen Monitor** (S81): `DISPLAY2` (Gerätename, bevorzugt) oder Index `1` (0-basiert). Oben links im Arbeitsbereich. Unbekannter Wert → Warnung mit Monitorliste, Standardort. Wird genauso von MilkdropStandalone gelesen (`projects/exec/common/RefBildschirm.hpp`) |
+| `MILKDROPREF_AUDIO_DUMP=N` | für Frame N: PCM, ausgerichtete Wellenform, Spektrum des Kerns auf stdout |
+| `MILKDROPREF_AUDIO_SEQ=N` | PCM der Frames 0…N−1, im letzten zusätzlich AlignWaves-Ergebnis + `mysound.imm` |
+| `MILKDROPREF_RAND_LOG=N` | die ersten N EEL-`rand()`-Züge loggen (Messkopie `patched/nseel-cfunc.c`) |
+
+**Den Monitor bestimmen:** Windows-Einstellungen → System → Anzeige →
+„Identifizieren“ — die angezeigte Ziffer n entspricht `DISPLAYn`. Oder als
+Liste:
+
+```bash
+powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::AllScreens | ft DeviceName,Primary,Bounds"
+```
+
+Für alle Läufe einer Shell-Sitzung einmal setzen (die Python-Harnesse reichen
+die Umgebung an beide Exes weiter):
+
+```bash
+export LUMIVIZ_REF_BILDSCHIRM=DISPLAY2
+```
+
+PowerShell: `$env:LUMIVIZ_REF_BILDSCHIRM = "DISPLAY2"`. Dauerhaft für neu
+gestartete Programme: `setx LUMIVIZ_REF_BILDSCHIRM DISPLAY2` (bereits
+laufende Shells und Apps sehen das erst nach einem Neustart).
+
+Die Platzierung ändert nur den Ort, nicht die Rendergröße oder das Bild.
 
 - **Audio:** synthetisch, formelgleich zu `MilkdropStandalone::feedSyntheticAudio`
   (t = frame/60, Sinus 220 Hz + 120-BPM-Puls), als 576-Sample-8-bit-PCM im
@@ -54,7 +101,8 @@ tools/MilkdropRef/build/Release/MilkdropRef.exe <preset.milk|ordner> [--frames N
   Vorbehalt. `--silence` = Null-Signal (Bytes 0).
 - **Audio-Ausgabe:** `MILKDROPREF_AUDIO_DUMP=N` gibt für Frame N das PCM
   (FFT-Eingang), die ausgerichtete Wellenform (nach `AlignWaves`) und das
-  Spektrum des Kerns aus — Quelle der Sollwerte von `test_MilkdropFft`.
+  Spektrum des Kerns aus — Quelle der Sollwerte von `test_MilkdropFft`
+  (`MILKDROPREF_AUDIO_SEQ` entsprechend für `test_MilkdropAudio`).
 - **Ausgabe:** je Preset der letzte Frame als 32-bpp-BMP (top-down, BGRX,
   Alpha genullt) + `mean RGB`/`Luma min/max` im AvsStandalone-Format.
 - **Texturen/Sprites:** `m_szMilkdrop2Path` zeigt auf den Großeltern-Ordner

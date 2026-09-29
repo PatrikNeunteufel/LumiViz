@@ -1,9 +1,10 @@
 # Werkzeug-Wegleitung — welches Programm wofür, und welche Fallen es hat
 
-> **Version:** 1.2.0
+> **Version:** 1.3.0
 > **Datum:** 2026-08-09 (Session 73; 1.1.0: Session 74 — echte Musik als
 > Audioquelle, Falle 2.7; 1.2.0: Session 74 — das synthetische Signal hat zwei
-> Muster und kommt aus EINER Quelle)
+> Muster und kommt aus EINER Quelle; 1.3.0: Session 81 — Argument-Referenzen
+> je Werkzeug, fester Bildschirm für Referenzläufe)
 > **Typ:** Guide
 > **Status:** Aktiv
 > **Sprache:** Deutsch
@@ -31,6 +32,11 @@ einmal echte Arbeitszeit gekostet, mehrere davon an einem einzigen Nachmittag.
 | **MilkdropStandalone** | `.milk` im Milkdrop-Knoten, Preset-Wechsel-Wächter (`--ab`), Frame-Hashes | AVS-Presets |
 | **tools/AvsRef** | Der **originale** Winamp-AVS-Renderer als Vergleichsmaßstab | Alles, was LumiViz eigen ist |
 | **tools/MilkdropRef** | Der **originale** MilkDrop3-Renderer als Vergleichsmaßstab | s. o. |
+
+**Alle Argumente und Umgebungsvariablen** stehen je Werkzeug in dessen README:
+[MilkdropRef](../../../../tools/MilkdropRef/README.md) ·
+[MilkdropStandalone](../../../exec/MilkdropStandalone/README.md) ·
+[MilkDrop-Harnesse und Sonden](../../../../asset/calibration/milkdrop/README.md).
 
 **Merksatz:** Die Standalones stellen die App *nach*. Sie sind nicht die App —
 was die App aus Einstellungen zieht, müssen sie als Schalter bekommen.
@@ -283,6 +289,21 @@ Nicht die Standalones vergleichen, sondern gegen die Referenz-Renderer:
 `tools/AvsRef` bzw. `tools/MilkdropRef`. Das Vorgehen samt Sondenformen,
 Bisektion und Verifikationsgürtel steht in
 [AVS-Kalibrier-Methodik](visuals/AVS_Kalibrier_Methodik.md).
+
+### Referenzläufe auf einem festen Bildschirm
+
+MilkdropRef und MilkdropStandalone öffnen ihr Fenster sonst dort, wo Windows
+bzw. Qt es hinlegen — meist mitten auf den Arbeitsbildschirm. Seit S81 lesen
+beide `LUMIVIZ_REF_BILDSCHIRM`:
+
+```bash
+LUMIVIZ_REF_BILDSCHIRM=DISPLAY2 python asset/calibration/milkdrop/compare_milkref.py
+```
+
+Wert: `DISPLAYn` — die Ziffer, die Windows unter Einstellungen → System →
+Anzeige → „Identifizieren“ zeigt — oder ein Index (0-basiert). Dauerhaft:
+`setx LUMIVIZ_REF_BILDSCHIRM DISPLAY2`. Die Platzierung ändert nur den Ort,
+nicht Größe oder Bild. AvsRef und AvsStandalone lesen die Variable (noch) nicht.
 
 **Wichtig:** In zwei Größen vergleichen. Eine kleine Fläche (320×240) versteckt
 größenabhängige Fehler — genau die Klasse Fehler, die auch Falle 2.2 erzeugt.
