@@ -1718,31 +1718,35 @@ Montagen (Referenz | neu | alt): Scratchpad S80 `strato/out/`.
    **Kalibrierlauf S81 — die 22 mitgelieferten, neu gegen die PCM-korrigierte
    Referenz** (`compare_milkref.py --formate aspekt --zufall-lumiviz`, Marken
    10/30/120; ersetzt alle MilkDrop-Zahlen mit PCM-Vorbehalt). Gültig ist nur
-   der **saatlose** Teil: `MilkdropRef` speist `--saat` nicht ein (INDEX
-   §2.3), der mitgefahrene 0x5EED63-Lauf verglich gesät gegen ungesät und ist
-   verworfen. Urteile daraus neu gebildet (`out/milkref_kalibrierung_S81/
-   formate_s0.md`):
+   der **saatlose** Teil: der mitgefahrene 0x5EED63-Lauf ist verworfen — die
+   Referenz säte einen Frame zu spät (danach behoben, INDEX §2.3). Urteile
+   daraus neu gebildet, mit der geschärften Anlaufregel
+   (`out/milkref_kalibrierung_S81/formate_s0.md`):
 
    | Format | MAE f10 / f30 / f120 | OK / PRUEFEN / BEFUND |
    |---|---|---|
    | 1:1 560×560 | 0,077 / 0,086 / 0,116 | 5 / 7 / 10 |
-   | 4:3 640×480 | 0,064 / 0,077 / 0,112 | 4 / 8 / 10 |
-   | 16:9 736×416 | 0,056 / 0,067 / 0,098 | 5 / 8 / 9 |
-   | 3,4:1 1024×304 | 0,045 / 0,055 / 0,084 | 8 / 5 / 9 |
+   | 4:3 640×480 | 0,064 / 0,077 / 0,112 | 4 / 7 / 11 |
+   | 16:9 736×416 | 0,056 / 0,067 / 0,098 | 5 / 7 / 10 |
+   | 3,4:1 1024×304 | 0,045 / 0,055 / 0,084 | 8 / 4 / 10 |
    | 3:4 hoch 480×640 | 0,062 / 0,104 / 0,123 | 6 / 5 / 11 |
+
+   (Anlaufregel: `Playaround` wechselt von PRUEFEN zu BEFUND — sein grünes
+   f10 war nur der Warmlauf der Referenz, das erste echte Urteil ist f30
+   0,25.)
 
    Je Preset (4:3, f10/f30/f120):
    - **OK in allen Formaten:** `Rock The House` (+ `_2024`, `_newmove`)
      0,016/0,019/0,026 — nach dem PCM-Fix, vor dem Audio-Fix S80 lag f10
      bei 0,22; `Starfield`
      0,002/0,004/0,001.
-   - **Warmlauf, kein Port-Fehler:** Starfield-2-Familie (3 Presets) meldet
-     „FORMATABHAENGIG" (f10 1:1 0,197 … hoch 0,003), ab f30 überall ≤ 0,008.
-     Montage: die Referenz ist in f10 *fast* schwarz (knapp über
-     `TOT_MAX`, darum nicht als Anlauf verworfen), wir zeigen je nach Format
-     schon die Sonne. → Harness: Anlauf-Erkennung an „fast schwarz“ prüfen.
-   - **Referenz stumm, wir zeichnen** (bekannt): `Helix`, `Starfield (…edit)`,
-     `The Beauty and the Math(s)` (f120 0,497).
+   - **Referenz stumm, wir zeichnen:** `Helix`, `Starfield (…edit)` samt
+     Starfield-2-Familie, `The Beauty and the Math(s)` (f120 0,497). Die
+     Referenz ist in **allen** Marken ganz schwarz (mean 0, max 0), auch
+     gesät. Gemeinsam: `PSVERSION=4` (ps_3_0). Das „FORMATABHAENGIG“ der
+     Starfield-2-Familie (f10 1:1 0,197 … hoch 0,003) misst nur, wie viel
+     WIR je Format schon zeichnen — kein Urteil möglich. Ursache vermutlich
+     im Messgerät (INDEX §2.3 Punkt 3: vs_1_1 + ps_3_0 auf der 610M).
    - **Große Abweichung, formatunabhängig:** `Twisted`/`Twisted b` f30
      0,29 (breiter = kleiner: 3,4:1 0,10), `Playaround` f30 0,25,
      `Dancing Hearts` f10 0,21 (Farben, Aufgabe 3), `Neomtwister`

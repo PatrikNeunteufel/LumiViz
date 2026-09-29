@@ -258,12 +258,26 @@ Eigenheiten der Referenz, beide im Bild belegt:
    unverändert (bit-identisch gegengeprüft).
    **Offen:** `MilkdropRef` muss die Saat noch in `m_lpVS` bekommen
    (lockbare Offscreen-Surface + `StretchRect`), und `compare_milkref.py` muss
-   über die Reihe schleifen. **Stand S81:** Die Schleife gibt es, die
-   Einspeisung nicht — `saatEinspeisen()` ist gebaut, wird aber nur mit
-   `kSeedAus` (Vermessen) aufgerufen. `--saat` erscheint nur im Log. Der
-   Kalibrierlauf S81 mit der damaligen Vorgabe `--saaten 0,0x5EED63` verglich
-   deshalb gesät gegen ungesät (Frame 10 ≈ 0,33, STARTABHAENGIG überall);
-   Vorgabe jetzt `0`, der Harness warnt bei Werten ≠ 0.
+   über die Reihe schleifen. **Stand S81 — erledigt, mit drei Befunden:**
+   1. Die Saat kam einen Frame zu spät (nach Frame 0; der Kern löscht VS0 im
+      ersten Frame selbst, `milkdropfs.cpp:971`). Jetzt vor dem ersten Warp,
+      die Erstlöschung übersprungen (`m_nFramesSinceResize = 1`). Beleg:
+      Rock The House gesät 0,05, die Referenz streut über die Startwerte wie
+      wir (0,260 / 0,246).
+   2. **Die Anzeige der Referenz streckt ihren Puffer um 1 px** und tastet
+      bilinear ab: oben links exakt, zur Mitte 2×2-Mittel, unten rechts ein
+      ganzer Pixel versetzt (Saat-Sonde, Kern je Bildbereich geschätzt). Der
+      Puffer selbst bleibt exakt. Gesätes Rauschen wirkt dadurch weich —
+      MAE ~0,2 bei identischem Puffer. **Offener Treue-Befund** für unseren
+      Anzeige-Durchgang.
+   3. **Shader-Obergrenze:** der Kern setzt `m_nMaxPSVersion_ConfigPanel = 3`
+      vor (Kommentar „ps_3_0", im Enum aber `MD2_PS_2_X`) — `PSVERSION=4`-
+      Presets liefen gekappt. Jetzt `-1` (auto → ps_3_0). `Helix`, `Beauty`
+      und die Starfield-edit-Familie bleiben trotzdem schwarz, auch gesät:
+      der Kern paart ps_3_0 mit `vs_1_1` (`plugin.cpp:3350`), was D3D9 nicht
+      erlaubt; die Referenz läuft auf der **AMD Radeon 610M** (Log-Zeile
+      „Adapter“). Verdacht: strenger Treiber zeichnet still nichts —
+      Gegenprobe auf der 4090 steht aus.
 
 Bis dahin gilt für MilkDrop: Urteile nur an der **Montage**, und nur dort, wo
 beide Seiten sichtbar zeichnen.
@@ -342,7 +356,7 @@ Danach **alle vier Werkzeuge neu bauen** — die Tabelle ist einkompiliert.
 | Format | Messbar | Stand |
 |---|---|---|
 | **AVS** | ✅ vollständig | Methodik, Harness, Bisektion, Raster, Listen-Prüfstand. Laufende Runde über die 10 Schaufenster-Presets |
-| **MilkDrop** | ⚠️ Harness ja, Referenz noch nicht abgenommen | `compare_milkref.py` (§2.2) löst das Stapel-Problem. Aber **`MilkdropRef` liefert noch keine verlässlichen Bilder** — sporadisches Browser-Overlay + Erlöschen (§2.3). Die Zahlen des ersten Laufs (3 OK / 12 BEFUND / 4 PRUEFEN) sind deshalb **kein Treuestand**. **S81:** neu gefahren gegen die PCM-korrigierte Referenz, 22 Presets × 5 Formate (`--formate aspekt`, saatlos, `--zufall-lumiviz`) — 4:3: 4 OK / 8 PRUEFEN / 10 BEFUND, MAE f10/f30/f120 0,064 / 0,077 / 0,112 (Tabelle: `Offene_Punkte.md` §3, „Kalibrierlauf S81"). Weiter **nicht abgenommen**: `--saat` wird nicht eingespeist (§2.3, Saat-Läufe ungültig), die Referenz ist in Frame 10 oft nur *fast* schwarz (Warmlauf wird dann nicht verworfen) |
+| **MilkDrop** | ⚠️ Harness ja, Referenz noch nicht abgenommen | `compare_milkref.py` (§2.2) löst das Stapel-Problem. Aber **`MilkdropRef` liefert noch keine verlässlichen Bilder** — sporadisches Browser-Overlay + Erlöschen (§2.3). Die Zahlen des ersten Laufs (3 OK / 12 BEFUND / 4 PRUEFEN) sind deshalb **kein Treuestand**. **S81:** neu gefahren gegen die PCM-korrigierte Referenz, 22 Presets × 5 Formate (`--formate aspekt`, saatlos, `--zufall-lumiviz`) — 4:3: 4 OK / 8 PRUEFEN / 10 BEFUND, MAE f10/f30/f120 0,064 / 0,077 / 0,112 (Tabelle: `Offene_Punkte.md` §3, „Kalibrierlauf S81"). Danach an der Referenz behoben (§2.3): Saat einen Frame zu spät, Shader-Grenze ps_2_x; Anlaufregel auch für *fast* schwarz. Weiter **nicht abgenommen**: `PSVERSION=4`-Presets schwarz (vs_1_1 + ps_3_0 auf der 610M?), Anzeige 1 px gestreckt |
 | **Shadertoy** | ❌ | nur GL-Smoke, kein Treue-Urteil |
 | **ISF** | ❌ | nur GL-Smoke, kein Treue-Urteil |
 

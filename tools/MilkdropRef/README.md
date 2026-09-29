@@ -58,7 +58,7 @@ Ohne Preset-Argument gibt die Exe die Kurzform dieser Liste aus.
 | `--silence` | aus | Null-Signal statt synthetischem Audio (Hunger-Test) |
 | `--show` | aus | Fenster sichtbar (sonst unsichtbar) |
 | `--audio-muster klassisch\|musik` | klassisch | Muster des synthetischen Signals (`SynthAudio.hpp`, gemeinsam mit MilkdropStandalone) |
-| `--saat N` | 0 = aus | Startwert des Feedback-Puffers (`0x…` = hex); gleicher Wert wie `LUMIVIZ_MILKDROP_SEED` auf unserer Seite. ⚠️ **Wird derzeit NICHT eingespeist** (S81): `saatEinspeisen()` läuft nur zum Vermessen der Puffergröße; der Wert erscheint lediglich im Log. Vergleiche mit Saat ≠ 0 sind ungültig |
+| `--saat N` | 0 = aus | Startwert des Feedback-Puffers (`0x…` = hex); gleicher Wert wie `LUMIVIZ_MILKDROP_SEED` auf unserer Seite. Seit S81 **vor** dem ersten Frame eingespeist, die Erstlöschung des Kerns (`milkdropfs.cpp:971`) wird dafür übersprungen — der erste Warp liest die Saat wie bei LumiViz (vorher nach Frame 0, einen Frame zu spät) |
 | `--zufall-lumiviz` | aus | Zufallsdaten wie LumiViz (S80, Abschnitt unten) |
 | `--mesh WxH` | 64×64 (Kern) | Warp-Mesh; `32x24` = Winamp-Original und LumiViz |
 

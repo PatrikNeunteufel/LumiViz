@@ -50,7 +50,7 @@ Ein Prozess je Preset und Seite, mehrere Frame-Marken, Montage
 | `--formate LISTE` | — (ein Format, `--size`) | derselbe Vergleich in mehreren Formaten, Abschnitt unten; ersetzt `--size` |
 | `--audio-muster klassisch\|musik` | klassisch | synthetisches Signal (beide Seiten gleich) |
 | `--silence` | aus | Null-Signal |
-| `--saaten LISTE` | 0 | Startwerte des Feedback-Puffers; 0 = saatlos. **Werte ≠ 0 sind ungültig** (S81): MilkdropRef nimmt `--saat` an, speist die Saat aber nicht ein — nur unsere Seite säte, der Lauf meldete STARTABHAENGIG überall. Bis das behoben ist, warnt der Harness |
+| `--saaten LISTE` | 0,0x5EED63 | Startwerte des Feedback-Puffers, auf beiden Seiten gesetzt; 0 = saatlos. Seit S81 speist MilkdropRef die Saat vor dem ersten Warp ein (vorher einen Frame zu spät). Vorbehalt: die Anzeige der Referenz zeichnet ihren Puffer leicht weich (1 px gestreckt, bilinear) — gesätes Rauschen früher Marken an der Montage beurteilen |
 | `--zufall-lumiviz` | aus | Referenz würfelt wie LumiViz — für Presets mit Zufall Pflicht |
 | `--timeout S` | 180 | Sekunden je Lauf |
 | `--out DIR` | `out/milkref_compare` | Ausgabe |

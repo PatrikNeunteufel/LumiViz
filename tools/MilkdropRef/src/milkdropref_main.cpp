@@ -109,6 +109,13 @@ bool initD3d(HWND hwnd, int width, int height)
         std::fprintf(stderr, "FEHLER: CreateDevice 0x%08lx\n", hr);
         return false;
     }
+    // Welche Grafikkarte misst (S81)? Der Kern paart ps_3_0 mit vs_1_1
+    // (plugin.cpp:3350) — D3D9 verlangt vs_3_0 dazu; strenge Treiber zeichnen
+    // dann still nichts. Das Log nennt den Adapter, damit ein „stummes“ Preset
+    // nicht dem Port angelastet wird.
+    D3DADAPTER_IDENTIFIER9 id;
+    if (SUCCEEDED(g_d3d9->GetAdapterIdentifier(D3DADAPTER_DEFAULT, 0, &id)))
+        std::printf("[MilkdropRef] Adapter: %s\n", id.Description);
     return true;
 }
 
@@ -613,6 +620,13 @@ int main(int argc, char** argv)
     g_plugin.m_fTimeBetweenPresetsRand = 0.0f;
     g_plugin.m_bHardCutsDisabled = true;
     g_plugin.m_bSequentialPresetOrder = true;
+    // Shader-Obergrenze (S81): der Kern setzt m_nMaxPSVersion_ConfigPanel = 3
+    // vor (plugin.cpp:982, Kommentar „3 = ps_3_0") — im Enum ist 3 aber
+    // MD2_PS_2_X (plugin.h:95). Jedes Preset mit PSVERSION=4 (= ps_3_0) blieb
+    // dadurch schwarz: `Helix`, `The Beauty and the Math`, die Starfield-edit-
+    // Familie — die „stummen“ Presets seit S75. -1 = auto: die Grafikkarte
+    // entscheidet (hier ps_3_0), wie es die Autoren unter MilkDrop3 sahen.
+    g_plugin.m_nMaxPSVersion_ConfigPanel = -1;
     if (meshX > 0 && meshY > 0)
     {
         g_plugin.m_nGridX = meshX;  // vor PluginInitialize: dort wird allokiert
@@ -693,9 +707,27 @@ int main(int argc, char** argv)
         // einen Scheinbefund ueber jedes rueckgekoppelte Preset (Frage Patrik).
         int saatW = 0;
         int saatH = 0;
-        bool saatOk = saatEinspeisen(lumi::saat::kSeedAus, saatW, saatH);
+        // Saat VOR dem ersten Frame (S81; bis dahin nach Frame 0, einen Frame
+        // spaeter als LumiViz). Der Kern loescht VS0 im ersten Frame nach einem
+        // Resize selbst, MITTEN in RenderFrame und direkt vor dem Warp
+        // (`milkdropfs.cpp:971`, m_nFramesSinceResize == 0) — eine vorher
+        // gestreute Saat waere weg. Deshalb den Zaehler auf 1: der erste Warp
+        // liest die Saat wie bei LumiViz. Sonst haengt am Zaehler nur
+        // ClearErrors in LoadPreset (> 4, plugin.cpp:7206) — kein Einfluss aufs
+        // Bild.
+        const bool saatOk = saatEinspeisen(saat, saatW, saatH);
+        if (saat != lumi::saat::kSeedAus)
+        {
+            if (!saatOk)
+            {
+                std::fprintf(stderr, "[MilkdropRef] FEHLER: Saat nicht eingespeist\n");
+                return 8;  // Messgeraet nicht im zugesagten Zustand
+            }
+            g_plugin.m_nFramesSinceResize = 1;
+        }
         std::printf("[MilkdropRef] Feedback-Puffer: %dx%d (Fenster %dx%d), "
-                    "Saat 0x%X\n", saatW, saatH, width, height, saat);
+                    "Saat 0x%X%s\n", saatW, saatH, width, height, saat,
+                    saat != lumi::saat::kSeedAus ? " eingespeist" : "");
         std::fflush(stdout);
 
         int uiKipp = 0;
@@ -782,21 +814,22 @@ int main(int argc, char** argv)
                     std::printf("\n");
                 }
             }
-            // Saat NACH dem ersten Frame: der Kern nullt `m_lpVS[0]` genau dort
-            // ausdruecklich (`milkdropfs.cpp`, "on first frame, clear OLD VS",
-            // bei m_nFramesSinceResize == 0). Davor eingestreutes Rauschen ist
-            // damit weg. Ab Frame 1 bleibt der Puffer stehen — das ist die
-            // Stelle, an der eine Saat wirkt.
-            if (f == 0 && saat != lumi::saat::kSeedAus)
+            // Shader-Diagnose (S81): welche Stufe hat der Kern gewaehlt, und
+            // sind Warp-/Comp-Shader uebersetzt? Nach Frame 2, weil der Kern
+            // Presets ueber LoadPresetTick in mehreren Frames laedt.
+            if (f == 2)
             {
-                if (!saatEinspeisen(saat, saatW, saatH))
-                {
-                    std::fprintf(stderr, "[MilkdropRef] SAAT-EINSPEISUNG "
-                                         "FEHLGESCHLAGEN\n");
-                    saatOk = false;
-                    rc2 = 6;
-                }
+                std::printf("[MilkdropRef] Shader: max %d, Preset warp %d comp %d, "
+                            "warp %s comp %s\n", g_plugin.m_nMaxPSVersion,
+                            g_plugin.m_pState->m_nWarpPSVersion,
+                            g_plugin.m_pState->m_nCompPSVersion,
+                            g_plugin.m_shaders.warp.ptr ? "ok" : "FEHLT",
+                            g_plugin.m_shaders.comp.ptr ? "ok" : "FEHLT");
+                std::fflush(stdout);
             }
+            // (Bis S81 stand hier die Saat NACH Frame 0 — einen Frame spaeter als
+            // bei LumiViz, deren erster Warp die Saat schon liest. Jetzt vor
+            // der Schleife, mit uebersprungener Erstloeschung, s. oben.)
             pumpMessages();
         }
 

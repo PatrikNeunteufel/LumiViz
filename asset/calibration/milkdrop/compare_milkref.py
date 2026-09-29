@@ -85,6 +85,9 @@ BEFUND_MAE = 0.15
 # Bedingungen: die eine Seite praktisch schwarz UND die andere deutlich hell.
 TOT_MAX = 0.02
 LEBT_MAX = 0.20
+# Anlauf der Referenz (S81): Mittel unter diesem Anteil einer spaeteren,
+# hellen Marke — siehe urteil_bilden()
+ANLAUF_ANTEIL = 0.10
 
 
 def ist_tot(m: dict) -> bool:
@@ -243,9 +246,17 @@ def urteil_bilden(marken: list[dict]) -> tuple[str, str]:
     # 0/19 OK im ersten Durchgang). Verworfen wird nur, wenn eine SPAETERE
     # Marke zeigt, dass die Referenz danach zeichnet — bleibt sie durchgehend
     # stumm, ist der Unterschied echt.
+    # S81 geschaerft: nicht nur „tot" (lumaMax < TOT_MAX) zaehlt als Anlauf,
+    # sondern auch FAST schwarz — `Playaround` 4:3 f10: mean 0,0000, max
+    # 0,023, knapp ueber TOT_MAX, danach mean 0,33. Anlauf heisst: die
+    # Referenz ist hier nicht hell UND ihr Mittel liegt unter ANLAUF_ANTEIL
+    # einer SPAETEREN hellen Marke. Twisted (f10 30 % von f30) und Rock The
+    # House (42 %) zeichnen dagegen schon — dort bleibt die Marke Messung.
     ausgewertet = []
     for i, m in enumerate(marken):
-        if m["tot_ref"] and any(x["hell_ref"] for x in marken[i + 1:]):
+        if not m["hell_ref"] and any(
+                x["hell_ref"] and m["ref_mean"] < ANLAUF_ANTEIL * x["ref_mean"]
+                for x in marken[i + 1:]):
             continue  # Anlauf der Referenz
         ausgewertet.append(m)
     if not ausgewertet:
@@ -350,15 +361,18 @@ def main() -> int:
     ap.add_argument("--silence", action="store_true",
                     help="Null-Signal (Hunger-Test: was zeichnet ein Preset "
                          "ohne Ton)")
-    # Vorgabe seit S81 nur 0: MilkdropRef nimmt --saat an, speist die Saat
-    # aber NICHT ein (saatEinspeisen() laeuft nur zum Vermessen, INDEX §2.3
-    # „Offen"). Mit 0x5EED63 saete nur unsere Seite — der Kalibrierlauf S81
-    # meldete dadurch Frame 10 ≈ 0,33 und STARTABHAENGIG ueberall.
-    ap.add_argument("--saaten", default="0",
-                    help="Startwerte des Feedback-Puffers (Komma). 0 = saatlos "
-                         "(Kaltstart des Originals). ACHTUNG: Werte != 0 sind "
-                         "ungueltig, solange MilkdropRef die Saat nicht "
-                         "einspeist — nur unsere Seite saet dann")
+    # S81: MilkdropRef speist die Saat jetzt VOR dem ersten Warp ein (vorher
+    # einen Frame zu spaet); gesaete Laeufe sind damit vergleichbar. Vorbehalt:
+    # die Anzeige der Referenz tastet ihren Puffer um 1 px gestreckt und
+    # bilinear ab — scharfes Saat-Rauschen erscheint dort weichgezeichnet
+    # (Saat-Sonde: MAE ~0,2 bei identischem Puffer). Fruehe Marken gesaeter
+    # Laeufe deshalb an der Montage beurteilen.
+    ap.add_argument("--saaten", default="0,0x5EED63",
+                    help="Startwerte des Feedback-Puffers (Komma), auf BEIDEN "
+                         "Seiten gesetzt. 0 = saatlos (Kaltstart des "
+                         "Originals), 0x5EED63 = App-Vorgabe. Mehr Werte "
+                         "zeigen, ob ein Preset ueberhaupt ein "
+                         "startzustands-unabhaengiges Bild hat")
     ap.add_argument("--timeout", type=int, default=180, help="Sekunden je Lauf")
     ap.add_argument("--zufall-lumiviz", action="store_true",
                     help="Referenz wuerfelt wie LumiViz (MilkdropRef --zufall-lumiviz, "
@@ -389,10 +403,6 @@ def main() -> int:
 
     marken = [int(f) for f in str(args.frames).split(",") if f.strip()]
     saaten = [int(s, 0) for s in str(args.saaten).split(",") if s.strip()]
-    if any(s != 0 for s in saaten):
-        print("WARNUNG: MilkdropRef speist --saat nicht ein (S81) — Laeufe "
-              "mit Startwert != 0 vergleichen gesaet gegen ungesaet; ihre "
-              "Zahlen und STARTABHAENGIG-Urteile sind ungueltig", flush=True)
     out: Path = args.out.resolve()
     if not args.formate:
         _, fehler = lauf(presets, args.size, marken, saaten, args, out)
@@ -527,6 +537,7 @@ def lauf(presets: list, size: str, marken: list, saaten: list, args,
                         "tot_lumi": ist_tot(kl),
                         "hell_ref": kr["lumaMax"] > LEBT_MAX,
                         "hell_lumi": kl["lumaMax"] > LEBT_MAX,
+                        "ref_mean": kr["lumaMean"],
                         "ref_stumm": ref_stumm,
                         # S81: der Kern rundet krumme Kanten (734 -> 736);
                         # der Format-Bericht nennt das je Format
