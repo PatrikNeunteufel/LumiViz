@@ -58,9 +58,13 @@ public:
         Init = 0,   ///< Once after (re)compile or reset
         Beat,       ///< On detected beat
         Frame,      ///< Once per frame
-        Point       ///< Once per point (hot path)
+        Point,      ///< Once per point (hot path)
+        Song        ///< Einmal je Songwechsel (S82), vor dem Frame-Slot
     };
-    static constexpr int kSlotCount = 4;
+    static constexpr int kSlotCount = 5;
+
+    /// Test-Zaehler (S82): wie oft irgendein Song-Slot lief (prozessweit).
+    [[nodiscard]] static std::uint64_t songRunCount();
 
     /// Capacity clamp for megabuf/gmegabuf indices (original: 8M doubles max)
     static constexpr std::int64_t kBufCapacity = 8'388'608;

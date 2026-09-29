@@ -20,7 +20,7 @@ namespace lumi::scripting {
 namespace {
 
 constexpr std::array<const char*, LuaScriptEngine::kSlotCount> kSlotNames = {
-    "init", "beat", "frame", "point"};
+    "init", "beat", "frame", "point", "song"};
 
 bool isIdentChar(char c)
 {

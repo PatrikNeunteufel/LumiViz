@@ -67,6 +67,14 @@ struct ScriptVarTable
 /// Die gemeinsamen Zeilen einer Basis (leer fuer `None`).
 [[nodiscard]] const std::vector<ScriptVar>& scriptVarBaseRows(ScriptVarBase base);
 
+/**
+ * Hat der Knotentyp einen Song-Slot (S82)? Genau dann, wenn er einen Frame-
+ * Slot (`frameCode`) hat — der Song-Slot laeuft in derselben Engine, einmal je
+ * Songwechsel VOR dem Frame-Slot. Nicht dabei: Movement (nur Pixel-Skript),
+ * Milkdrop (eigene Skript-Pipeline). Effect List: nur mit „Listen-Code".
+ */
+[[nodiscard]] bool hatSongSlot(const EffectParams& params);
+
 /// Zerlegt `ScriptVar::names` in einzelne Bezeichner ("a / b" -> {"a","b"}).
 [[nodiscard]] std::vector<std::string> splitScriptVarNames(const char* names);
 

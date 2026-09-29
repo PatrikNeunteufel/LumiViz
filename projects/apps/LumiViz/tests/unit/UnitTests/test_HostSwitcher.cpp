@@ -121,8 +121,8 @@ TEST_SUITE("HostSwitcher")
         sp.initCode = "n=0;";
         sp.frameCode = "nextgroup=above(beatcount,31);";
         sp.beatCode = "n=n+1;";
-        sp.songCode = "switch=1;";
         sw.params = sp;
+        sw.songCode = "switch=1;";  // Song-Slot am Knoten (allgemein, S82)
         root.children.push_back(std::move(sw));
         compileChain(root);
 
@@ -137,7 +137,7 @@ TEST_SUITE("HostSwitcher")
         CHECK(p->intervalSeconds == doctest::Approx(12.5));
         CHECK(p->nextOnSongChange);
         CHECK(p->order == 1);
-        CHECK(p->songCode == "switch=1;");
+        CHECK(zurueck.children[0].songCode == "switch=1;");
         CHECK(p->frameCode == sp.frameCode);
 
         // Startindex jenseits der Liste wird beim Kompilieren geklemmt
@@ -176,10 +176,12 @@ TEST_SUITE("HostSwitcher")
             double luma = 0.0;
         };
         const auto laufen = [&](HostSwitcherParams sp, int frames,
-                                bool songDazwischen = false) -> Lauf {
+                                bool songDazwischen = false,
+                                const std::string& songCode = {}) -> Lauf {
             ChainNode root = wurzel();
             ChainNode sw;
             sw.params = std::move(sp);
+            sw.songCode = songCode;
             root.children.push_back(std::move(sw));
             // beide Gruppen GESPEICHERT aus — nur der Switcher schaltet sie
             root.children.push_back(gruppe("Hell", 0xFFFFFF));
@@ -248,8 +250,7 @@ TEST_SUITE("HostSwitcher")
             CHECK(laufen(s, 4, true).index == 2);
             HostSwitcherParams skript = basis;
             skript.startIndex = 2;
-            skript.songCode = "switch=1;";
-            CHECK(laufen(skript, 4, true).index == 1);
+            CHECK(laufen(skript, 4, true, "switch=1;").index == 1);
         }
         SUBCASE("Ausgeschalteter Switcher schaltet nichts: gespeicherter Zustand gilt")
         {

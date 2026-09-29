@@ -88,6 +88,9 @@ SAMMELWIDGETS = [
     ("PictureIIParams", ["filename", "imageData"], "bild"),
     ("TexerParams", ["filename", "imageData"], "bild"),
     ("TexerIIParams", ["filename", "imageData"], "bild"),
+    # S82: Quell-Block der Host-Gruppe — Checkbox „Presetverweis", Pfadzeile
+    # mit Oeffnen/Neu laden bzw. Quelle + „Aus Quelle neu laden"
+    ("HostGroupParams", ["sourceFile", "verweis"], "quelle"),
 ]
 
 

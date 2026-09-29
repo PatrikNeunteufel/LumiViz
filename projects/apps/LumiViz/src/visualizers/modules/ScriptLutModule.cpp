@@ -56,6 +56,12 @@ void ScriptLutModule::setLevelCode(const std::string& code)
     m_compiled = false;
 }
 
+void ScriptLutModule::setSongCode(const std::string& code)
+{
+    m_songCode = code;
+    m_compiled = false;
+}
+
 // =============================================================================
 // Execution
 // =============================================================================
@@ -74,6 +80,7 @@ void ScriptLutModule::initializeScripts()
     m_script->setSource(Slot::Beat, m_beatCode);
     m_script->setSource(Slot::Frame, m_frameCode);
     m_script->setSource(Slot::Point, m_levelCode);
+    m_script->setSource(Slot::Song, m_songCode);
     if (!m_script->compileAll())
     {
         m_lastScriptError = m_script->lastError();
@@ -108,6 +115,15 @@ void ScriptLutModule::execute(bool isBeat, float deltaTime)
     if (isBeat && m_script->has(Slot::Beat) && !m_script->run(Slot::Beat))
     {
         m_lastScriptError = m_script->lastError();
+    }
+    if (m_songPending)  // Song-Slot (S82): einmal je Songwechsel, vor Frame
+    {
+        m_songPending = false;
+        if (m_script->has(Slot::Song))
+        {
+            if (!m_script->run(Slot::Song)) m_lastScriptError = m_script->lastError();
+            m_lutBuilt = false;  // die Tabelle kann sich geaendert haben
+        }
     }
     if (m_script->has(Slot::Frame) && !m_script->run(Slot::Frame))
     {

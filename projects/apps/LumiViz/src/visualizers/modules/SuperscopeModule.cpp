@@ -116,6 +116,12 @@ void SuperscopeModule::setPointCode(const std::string& code)
     m_preset = SuperscopePreset::Custom;
 }
 
+void SuperscopeModule::setSongCode(const std::string& code)
+{
+    m_songCode = code;
+    m_initExecuted = false;
+}
+
 // =============================================================================
 // Lua Script Mode
 // =============================================================================
@@ -145,6 +151,7 @@ void SuperscopeModule::initializeLuaScripts()
     m_script->setSource(Slot::Beat, m_beatCode);
     m_script->setSource(Slot::Frame, m_frameCode);
     m_script->setSource(Slot::Point, m_pointCode);
+    m_script->setSource(Slot::Song, m_songCode);
     if (!m_script->compileAll())
     {
         m_lastScriptError = m_script->lastError();
@@ -579,6 +586,12 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
 
         // r_sscope.cpp:272-273: FRAME zuerst, dann Beat — der Frame-Code
         // rechnet mit den Beat-Werten des VORHERIGEN Frames (S47).
+        if (m_songPending)  // Song-Slot (S82): einmal je Songwechsel, vor Frame
+        {
+            m_songPending = false;
+            if (m_script->has(Slot::Song) && !m_script->run(Slot::Song))
+                m_lastScriptError = m_script->lastError();
+        }
         if (m_script->has(Slot::Frame) && !m_script->run(Slot::Frame))
         {
             m_lastScriptError = m_script->lastError();

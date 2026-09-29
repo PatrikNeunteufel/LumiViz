@@ -4412,14 +4412,6 @@
           "doc": "Weiterschalten: 0 = Listenreihenfolge, 1 = zufaellig"
         },
         {
-          "art": "text",
-          "default": "",
-          "name": "songCode",
-          "panel": "skript",
-          "helfer": "addScript",
-          "doc": "EEL, einmal bei jedem Songwechsel"
-        },
-        {
           "art": "zahl",
           "default": 1,
           "name": "startIndex",
@@ -4513,6 +4505,13 @@
           "lo": 0.0,
           "hi": 255.0,
           "doc": "Adjustable out-alpha 0..255"
+        },
+        {
+          "art": "bool",
+          "default": false,
+          "name": "verweis",
+          "panel": "quelle",
+          "doc": "Presetverweis (S82): der Inhalt kommt beim Laden aus `sourceFile` und wird NICHT mitgespeichert — die Gruppe ist ein Link, keine Kopie. Aus = Kopie (Inhalt steht in der Kette, `sourceFile` nur Herkunft)."
         }
       ]
     },

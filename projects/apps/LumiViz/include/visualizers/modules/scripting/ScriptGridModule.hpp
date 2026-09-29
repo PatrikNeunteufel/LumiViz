@@ -83,6 +83,10 @@ public:
     void setBeatCode(const std::string& code);
     void setFrameCode(const std::string& code);
     void setPointCode(const std::string& code);
+    /// Song-Slot (S82): laeuft beim naechsten execute() nach songWechsel()
+    void setSongCode(const std::string& code);
+    /// Songwechsel melden — Song-Slot im naechsten execute() VOR dem Frame-Slot
+    void songWechsel() { m_songPending = true; }
 
     // =========================================================================
     // Configuration
@@ -171,6 +175,8 @@ private:
     std::string m_beatCode;
     std::string m_frameCode;
     std::string m_pointCode;
+    std::string m_songCode;
+    bool m_songPending = false;
 
     int m_xres = kDefaultResX;
     int m_yres = kDefaultResY;

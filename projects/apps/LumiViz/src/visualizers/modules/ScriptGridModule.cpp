@@ -61,6 +61,12 @@ void ScriptGridModule::setPointCode(const std::string& code)
     m_compiled = false;
 }
 
+void ScriptGridModule::setSongCode(const std::string& code)
+{
+    m_songCode = code;
+    m_compiled = false;
+}
+
 // =============================================================================
 // Configuration
 // =============================================================================
@@ -89,6 +95,7 @@ void ScriptGridModule::initializeScripts()
     m_script->setSource(Slot::Beat, m_beatCode);
     m_script->setSource(Slot::Frame, m_frameCode);
     m_script->setSource(Slot::Point, m_pointCode);
+    m_script->setSource(Slot::Song, m_songCode);
     if (!m_script->compileAll())
     {
         m_lastScriptError = m_script->lastError();
@@ -142,6 +149,12 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
 
     // r_dmove.cpp:297-298 / r_trans.cpp: FRAME zuerst, dann Beat — der
     // Frame-Code rechnet mit den Beat-Werten des VORHERIGEN Frames (S47).
+    if (m_songPending)  // Song-Slot (S82): einmal je Songwechsel, vor Frame
+    {
+        m_songPending = false;
+        if (m_script->has(Slot::Song) && !m_script->run(Slot::Song))
+            m_lastScriptError = m_script->lastError();
+    }
     if (m_script->has(Slot::Frame) && !m_script->run(Slot::Frame))
     {
         m_lastScriptError = m_script->lastError();

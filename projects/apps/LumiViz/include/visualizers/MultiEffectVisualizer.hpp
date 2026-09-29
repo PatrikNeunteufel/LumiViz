@@ -160,6 +160,16 @@ public:
     presetGroupChildren(lumi::multieffect::ChainNode root);
 
     /**
+     * @brief Presetverweise (S82) im Teilbaum aufloesen: jede Host-Gruppe mit
+     *        `verweis` bekommt ihren Inhalt frisch aus `sourceFile` (relativ =
+     *        gegen `baseDir`). Laeuft beim Laden jeder .lvfx von selbst; der
+     *        Editor ruft es nach Pfadwechsel / „Neu laden". Reine Funktion.
+     * @param report Nicht ladbare Verweise, Zyklen, Probleme der Quelle.
+     */
+    static void resolvePresetReferences(lumi::multieffect::ChainNode& node,
+                                        const QString& baseDir, QStringList* report);
+
+    /**
      * @brief Divisor des Render-Scale-Knotens, den loadAvsFile automatisch als
      *        erstes Kind einfuegt (Entscheid S47, Variante 2): Der Wert kommt
      *        aus der App-Einstellung und wirkt NUR im Moment des Imports —
@@ -768,6 +778,7 @@ private:
         std::unique_ptr<lumi::scripting::ScriptSlotHost> slotHost;
         std::string compiledInit;   ///< sources the current compile is based on
         std::string compiledFrame;
+        std::string compiledSong;   ///< Song-Slot (S82)
     };
 
     /**
@@ -1173,13 +1184,12 @@ private:
     std::unordered_map<uint64_t, GroupRuntime> m_groupRuntimes;  ///< HG1
 
     /// Host Switcher (S82): Laufzeit je Switcher-Knoten — laufende Gruppe,
-    /// Zeit/Beats seit dem letzten Wechsel, gesehener Songwechsel, Skript.
+    /// Zeit/Beats seit dem letzten Wechsel, Skript.
     struct SwitcherRuntime
     {
         int index = -1;          ///< laufende Gruppe 0-basiert; -1 = frisch
         double sekunden = 0.0;   ///< seit dem letzten Wechsel
         int beats = 0;           ///< seit dem letzten Wechsel
-        uint64_t songGesehen = 0;
         bool seenThisFrame = false;
         uint32_t zufall = 0x5EED82u;  ///< xorshift-Zustand fuer „zufaellig"
         std::unique_ptr<lumi::scripting::ScriptSlotHost> host;
@@ -1187,6 +1197,26 @@ private:
         std::string error;
     };
     std::unordered_map<uint64_t, SwitcherRuntime> m_switcherRuntimes;
+
+    // --- Song-Slot (S82): einmal je Songwechsel, fuer alle Skript-Knoten ---
+    /// Songwechsel in DIESEM Frame (Zaehler notifySongChanged gegen den
+    /// zuletzt gesehenen Stand, je Frame in onRender).
+    bool m_frameSong = false;
+    /// ~0 = noch kein Frame: der erste Frame uebernimmt den Stand, ohne dass
+    /// fruehere Songwechsel als neu gelten
+    uint64_t m_songGesehen = ~uint64_t{0};
+    /// Song-Code des Knotens, den renderNode gerade laeuft (Scope wie
+    /// activeContext; Listen setzen ihn fuer ihre Kinder neu und zurueck).
+    const std::string* m_nodeSong = nullptr;
+    /// Anhang an die Kompilier-Vergleiche der Skriptstellen: aendert sich nur
+    /// der Song-Code, wird trotzdem neu kompiliert.
+    [[nodiscard]] std::string songSchluessel() const;
+    /// Song-Quelle in einen frisch angelegten Host setzen (neben Init/Frame/Beat).
+    void setzeSong(lumi::scripting::ScriptSlotHost& host) const;
+    /// Traegt der laufende Knoten Song-Code? (Stellen mit „nur wenn Skript")
+    [[nodiscard]] bool hatSongCode() const { return m_nodeSong != nullptr && !m_nodeSong->empty(); }
+    /// Song-Slot ausfuehren, wenn in diesem Frame ein Songwechsel war — VOR Frame.
+    void laufeSong(lumi::scripting::ScriptSlotHost& host) const;
     /// Gruppen-nodeId -> laeuft (true) / ruht (false), je Frame von den
     /// Switchern neu gesetzt; fehlt eine Gruppe, gilt ihr `enabled`.
     std::unordered_map<uint64_t, bool> m_groupOverride;

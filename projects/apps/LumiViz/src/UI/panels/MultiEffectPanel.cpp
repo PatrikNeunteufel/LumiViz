@@ -1279,7 +1279,20 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
     });
     m_tree->setItemWidget(item, 1, eye);
 
-    if (node.isContainer())  // Listen + Host-Gruppen (HG1)
+    // Presetverweis (S82): Inhalt NICHT zeigen — er ist geliehen, jede
+    // Aenderung daran ginge beim Speichern verloren. Statt dessen der Pfad.
+    if (node.isReference())
+    {
+        const QString quelle =
+            QString::fromStdString(std::get<HostGroupParams>(node.params).sourceFile);
+        item->setText(2, tr("Preset Reference"));
+        item->setToolTip(0, tr("Presetverweis auf %1 — %2 Knoten, beim Laden frisch "
+                               "aus der Datei (nicht gespeichert)")
+                                .arg(quelle)
+                                .arg(node.children.size()));
+        item->setFlags(item->flags() & ~Qt::ItemIsDropEnabled);
+    }
+    else if (node.isContainer())  // Listen + Host-Gruppen (HG1)
     {
         for (int i = 0; i < static_cast<int>(node.children.size()); ++i)
         {
@@ -1577,7 +1590,7 @@ void MultiEffectPanel::onAddEffect(int paletteIndex)
         {
             QMutexLocker lock(m_mutex);
             const ChainNode* target = nodeAtPath(sel);
-            if (target != nullptr && target->isContainer())
+            if (target != nullptr && target->acceptsChildren())  // kein Verweis (S82)
             {
                 elternPfad = sel;
             }
@@ -1640,7 +1653,7 @@ void MultiEffectPanel::onPaletteDrop(int paletteIndex, QTreeWidgetItem* target,
                     const ChainNode* tnode = nodeAtPath(ziel);
                     elternPfad = ziel;
                     const int idx = elternPfad.takeLast();
-                    if (wo == ChainDrop::OnItem && tnode != nullptr && tnode->isContainer())
+                    if (wo == ChainDrop::OnItem && tnode != nullptr && tnode->acceptsChildren())
                         elternPfad = ziel;  // hinein, ans Ende
                     else if (wo == ChainDrop::Above)
                         pos = idx;
@@ -1682,7 +1695,9 @@ bool MultiEffectPanel::insertPaletteNode(int paletteIndex, const QList<int>& par
         if (!presetGruppeLaden(datei, inhalt)) return false;
         fresh.children = std::move(inhalt);
         fresh.displayName = QFileInfo(datei).completeBaseName().toStdString();
-        std::get<HostGroupParams>(fresh.params).sourceFile = datei.toStdString();
+        auto& hg = std::get<HostGroupParams>(fresh.params);
+        hg.sourceFile = datei.toStdString();
+        hg.verweis = chosen.asReference;  // Presetverweis: nur der Pfad wird gespeichert
     }
 
     QList<int> neuerPfad;
@@ -2170,7 +2185,7 @@ bool MultiEffectPanel::moveNodesLocked(const QList<QList<int>>& srcPaths,
         if (where == ChainDrop::OnItem)
         {
             ChainNode* tnode = nodeAtPath(targetPath);
-            if (tnode != nullptr && tnode->isContainer())
+            if (tnode != nullptr && tnode->acceptsChildren())
             {
                 dstParentPath = targetPath;
                 dstIndex = static_cast<int>(tnode->children.size());
@@ -2271,7 +2286,7 @@ bool MultiEffectPanel::moveNodeLocked(const QList<int>& srcPath,
         if (where == ChainDrop::OnItem)
         {
             ChainNode* tnode = nodeAtPath(targetPath);
-            if (tnode != nullptr && tnode->isContainer())
+            if (tnode != nullptr && tnode->acceptsChildren())
             {
                 dstParentPath = targetPath;  // drop INTO the group (append)
                 dstIndex = static_cast<int>(tnode->children.size());
@@ -3044,6 +3059,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     EffectParams params;
     std::string nodeName;
     std::string nodeDesc;
+    std::string nodeSong;
     {
         QMutexLocker lock(m_mutex);
         ChainNode* node = nodeAtPath(path);
@@ -3051,6 +3067,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         params = node->params;
         nodeName = node->displayName;
         nodeDesc = node->description;
+        nodeSong = node->songCode;
     }
 
     m_propPage = new QWidget(m_propContainer);
@@ -5756,7 +5773,118 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         });
         form->addRow(switchBtn);
 
-        if (!p->sourceFile.empty())
+        const auto editorNeu = [this, path]() {
+            QMetaObject::invokeMethod(
+                this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
+        };
+
+        // --- Presetverweis (S82): der Inhalt kommt aus der Datei und wird
+        // nicht gespeichert. Gelesen wird AUSSERHALB des Render-Locks, erst
+        // das Einsetzen laeuft unter mutateStructure.
+        const auto verweisLaden = [this, path, editorNeu](const QString& datei) {
+            ChainNode probe;
+            HostGroupParams hp;
+            hp.verweis = true;
+            hp.sourceFile = datei.toStdString();
+            probe.params = hp;
+            QStringList report;
+            MultiEffectVisualizer::resolvePresetReferences(probe, QString(), &report);
+            if (!report.isEmpty())
+            {
+                QMessageBox::information(this, tr("Presetverweis"), report.join('\n'));
+            }
+            mutateStructure([&] {
+                ChainNode* ziel = nodeAtPath(path);
+                auto* hg = ziel != nullptr ? std::get_if<HostGroupParams>(&ziel->params)
+                                           : nullptr;
+                if (hg == nullptr) return;
+                hg->sourceFile = datei.toStdString();
+                hg->verweis = true;
+                ziel->children = std::move(probe.children);
+            });
+            editorNeu();
+        };
+
+        auto* verweisBox = new QCheckBox(tr("Presetverweis (nur den Pfad speichern)"),
+                                         m_propContainer);
+        verweisBox->setChecked(p->verweis);
+        verweisBox->setToolTip(
+            tr("An: die Kette speichert nur den Pfad; der Inhalt wird bei jedem Laden "
+               "frisch aus der Datei gelesen und erscheint nicht im Baum.\n"
+               "Aus: der Inhalt ist eine Kopie in der Kette und frei bearbeitbar."));
+        const std::string quelleJetzt = p->sourceFile;
+        connect(verweisBox, &QCheckBox::toggled, this,
+                [this, path, quelleJetzt, verweisLaden, editorNeu](bool an) {
+                    if (an)
+                    {
+                        if (quelleJetzt.empty())
+                        {
+                            QMessageBox::information(
+                                this, tr("Presetverweis"),
+                                tr("Die Gruppe hat noch keine Quelldatei — erst ein "
+                                   "Preset laden, dann zum Verweis machen."));
+                            editorNeu();
+                            return;
+                        }
+                        if (QMessageBox::question(
+                                this, tr("Presetverweis"),
+                                tr("Zum Verweis machen? Der Inhalt wird aus der Datei neu "
+                                   "gelesen; eigene Aenderungen daran gehen verloren.")) !=
+                            QMessageBox::Yes)
+                        {
+                            editorNeu();
+                            return;
+                        }
+                        verweisLaden(QString::fromStdString(quelleJetzt));
+                        return;
+                    }
+                    // Aus: der geladene Inhalt bleibt — jetzt als Kopie in der Kette
+                    mutateStructure([&] {
+                        ChainNode* ziel = nodeAtPath(path);
+                        if (auto* hg = ziel != nullptr
+                                           ? std::get_if<HostGroupParams>(&ziel->params)
+                                           : nullptr)
+                            hg->verweis = false;
+                    });
+                    editorNeu();
+                });
+        form->addRow(verweisBox);
+
+        if (p->verweis)
+        {
+            // Pfad eintippen oder waehlen; „Neu laden" liest die Datei erneut
+            auto* zeile = new QWidget(m_propContainer);
+            auto* reihe = new QHBoxLayout(zeile);
+            reihe->setContentsMargins(0, 0, 0, 0);
+            auto* pfadEdit = new QLineEdit(QString::fromStdString(p->sourceFile), zeile);
+            pfadEdit->setObjectName(QStringLiteral("presetVerweisPfad"));
+            auto* oeffnen = new QPushButton(tr("Öffnen…"), zeile);
+            auto* neu = new QPushButton(tr("Neu laden"), zeile);
+            reihe->addWidget(pfadEdit, 1);
+            reihe->addWidget(oeffnen);
+            reihe->addWidget(neu);
+            form->addRow(tr("Verweis auf"), zeile);
+            if (!QFileInfo::exists(pfadEdit->text()))
+                pfadEdit->setToolTip(tr("Datei nicht gefunden — die Gruppe bleibt leer."));
+            connect(pfadEdit, &QLineEdit::editingFinished, this, [pfadEdit, verweisLaden,
+                                                                  alt = p->sourceFile]() {
+                if (pfadEdit->text().toStdString() == alt) return;  // nur Fokuswechsel
+                verweisLaden(pfadEdit->text());
+            });
+            connect(oeffnen, &QPushButton::clicked, this, [this, verweisLaden]() {
+                QSettings settings;
+                const QString schluessel = QStringLiteral("effectPalette/presetGroupDir");
+                const QString datei = QFileDialog::getOpenFileName(
+                    this, tr("Presetverweis"), settings.value(schluessel).toString(),
+                    tr("Presets (*.avs *.milk *.lvfx *.lvfx2)"));
+                if (datei.isEmpty()) return;
+                settings.setValue(schluessel, QFileInfo(datei).absolutePath());
+                verweisLaden(datei);
+            });
+            connect(neu, &QPushButton::clicked, this,
+                    [pfadEdit, verweisLaden]() { verweisLaden(pfadEdit->text()); });
+        }
+        else if (!p->sourceFile.empty())
         {
             auto* src = new QLabel(tr("Quelle: %1").arg(QString::fromStdString(
                                        p->sourceFile)),
@@ -5792,7 +5920,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 hg->sourceFile = datei.toStdString();
             });
         };
-        if (!p->sourceFile.empty())
+        if (!p->verweis && !p->sourceFile.empty())
         {
             const QString quelle = QString::fromStdString(p->sourceFile);
             auto* reloadBtn = new QPushButton(tr("Aus Quelle neu laden"), m_propContainer);
@@ -5805,11 +5933,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     [inhaltErsetzen, quelle]() { inhaltErsetzen(quelle); });
             form->addRow(reloadBtn);
         }
-        auto* importBtn = new QPushButton(
-            tr("Preset in diese Gruppe laden (.avs, .milk, .lvfx)..."), m_propContainer);
-        connect(importBtn, &QPushButton::clicked, this,
-                [inhaltErsetzen]() { inhaltErsetzen(QString()); });
-        form->addRow(importBtn);
+        if (!p->verweis)
+        {
+            auto* importBtn = new QPushButton(
+                tr("Preset in diese Gruppe laden (.avs, .milk, .lvfx)..."), m_propContainer);
+            connect(importBtn, &QPushButton::clicked, this,
+                    [inhaltErsetzen]() { inhaltErsetzen(QString()); });
+            form->addRow(importBtn);
+        }
     }
     else if (auto* p = std::get_if<HostSwitcherParams>(&params))
     {
@@ -5950,7 +6081,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<HostSwitcherParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<HostSwitcherParams>(n.params).frameCode = std::move(v); });
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<HostSwitcherParams>(n.params).beatCode = std::move(v); });
-        addScript("songCode", tr("Song"), p->songCode, [](ChainNode& n, std::string v) { std::get<HostSwitcherParams>(n.params).songCode = std::move(v); });
+        // Song-Slot: allgemeine Zeile am Ende des Editors (ChainNode::songCode)
     }
     else if (auto* p = std::get_if<MilkdropNodeParams>(&params))
     {
@@ -7236,6 +7367,15 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 .arg(p->sourceId)
                 .arg(QString::fromStdString(p->note)),
             m_propContainer));
+    }
+
+    // Song-Slot (S82) — fuer JEDEN Knoten mit Frame-Slot, am Ende des Editors:
+    // laeuft einmal je Songwechsel vor dem Frame-Slot, in derselben Engine
+    // (sieht und setzt dieselben Variablen). Ein Feld am Knoten, nicht je Typ.
+    if (milkSection < 0 && milkElem < 0 && hatSongSlot(params))
+    {
+        addScript("songCode", tr("Song"), nodeSong,
+                  [](ChainNode& n, std::string v) { n.songCode = std::move(v); });
     }
 
     begrenzeFeldbreiten(form);

@@ -641,6 +641,11 @@ const std::vector<ScriptVar>& scriptVarBaseRows(ScriptVarBase base)
     return kNoRows;
 }
 
+bool hatSongSlot(const EffectParams& params)
+{
+    return std::visit([](const auto& p) { return requires { p.frameCode; }; }, params);
+}
+
 std::vector<std::string> splitScriptVarNames(const char* names)
 {
     std::vector<std::string> out;

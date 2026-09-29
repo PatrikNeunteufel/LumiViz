@@ -71,6 +71,9 @@ struct EffectType
     /// (.avs/.milk/.lvfx) — `make` liefert die Host-Gruppe, ihr Inhalt kommt
     /// aus der Datei (MultiEffectVisualizer::buildPresetTree).
     bool fromFile = false;
+    /// „Preset Reference" (S82): wie fromFile, aber als Presetverweis — die
+    /// Kette speichert nur den Pfad (HostGroupParams::verweis)
+    bool asReference = false;
 
     [[nodiscard]] bool isHeader() const
     {

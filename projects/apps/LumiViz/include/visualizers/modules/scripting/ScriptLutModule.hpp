@@ -57,6 +57,11 @@ public:
     void setBeatCode(const std::string& code);
     void setFrameCode(const std::string& code);
     void setLevelCode(const std::string& code);  ///< runs per LUT entry
+    /// Song-Slot (S82): laeuft beim naechsten execute() nach songWechsel()
+    void setSongCode(const std::string& code);
+    /// Songwechsel melden — der Song-Slot laeuft im naechsten execute() VOR
+    /// dem Frame-Slot, danach wird die LUT neu gebaut
+    void songWechsel() { m_songPending = true; }
 
     // =========================================================================
     // Configuration
@@ -103,6 +108,8 @@ private:
     std::string m_beatCode;
     std::string m_frameCode;
     std::string m_levelCode;
+    std::string m_songCode;
+    bool m_songPending = false;
 
     bool m_recompute = false;
     bool m_compiled = false;

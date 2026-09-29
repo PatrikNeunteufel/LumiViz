@@ -292,7 +292,11 @@ struct HostGroupParams
     std::string frameCode;
     std::string beatCode;
 
-    std::string sourceFile;  ///< importierte .lvfx-Quelle ("" = leer angelegt)
+    std::string sourceFile;  ///< Quelle (.avs/.milk/.lvfx; "" = leer angelegt)
+    /// Presetverweis (S82): der Inhalt kommt beim Laden aus `sourceFile` und
+    /// wird NICHT mitgespeichert — die Gruppe ist ein Link, keine Kopie. Aus =
+    /// Kopie (Inhalt steht in der Kette, `sourceFile` nur Herkunft).
+    bool verweis = false;
 };
 
 /**
@@ -313,7 +317,7 @@ struct HostSwitcherParams
     std::string initCode;             ///< EEL, einmal nach dem Laden
     std::string frameCode;            ///< EEL, jeden Frame
     std::string beatCode;             ///< EEL, bei jedem Beat
-    std::string songCode;             ///< EEL, einmal bei jedem Songwechsel
+    // Song-Slot: ChainNode::songCode (allgemein fuer alle Skript-Knoten)
 };
 
 /** AVS "Render / Clear screen" (ID 25), reduced to the 5.1 core. */
@@ -2870,6 +2874,11 @@ struct ChainNode
 {
     std::string displayName;         ///< editor label ("" = derive from type)
     std::string description;         ///< free-text note (editor convenience, optional)
+    /// Song-Slot (S82): EEL, laeuft einmal je Songwechsel VOR dem Frame-Slot,
+    /// in derselben Skript-Engine wie die uebrigen Slots des Knotens (sieht
+    /// und setzt deren Variablen). Ein Feld fuer ALLE skriptfaehigen Knoten
+    /// statt je Parameter-Struct; wirkt nur, wo der Knoten Skripte ausfuehrt.
+    std::string songCode;
     bool enabled = true;             ///< disabled nodes are skipped entirely
     EffectParams params;             ///< effect type + its parameters
     std::vector<ChainNode> children; ///< child effects (lists only)
@@ -2905,6 +2914,17 @@ struct ChainNode
 
     /// Container = darf children tragen (Liste oder Host-Gruppe).
     [[nodiscard]] bool isContainer() const { return isList() || isHostGroup(); }
+
+    /// Presetverweis (S82): Host-Gruppe, deren Inhalt aus einer Datei kommt.
+    [[nodiscard]] bool isReference() const
+    {
+        const auto* hg = std::get_if<HostGroupParams>(&params);
+        return hg != nullptr && hg->verweis;
+    }
+
+    /// Darf der Editor hier Knoten hineinlegen? Container, aber kein Verweis —
+    /// dessen Inhalt ist geliehen und ginge beim Speichern verloren.
+    [[nodiscard]] bool acceptsChildren() const { return isContainer() && !isReference(); }
 };
 
 // =============================================================================

@@ -52,9 +52,10 @@ TEST_CASE("EffectPalette: jeder Eintrag ist beschrieben und eindeutig")
     CHECK(entries >= 85);
 }
 
-TEST_CASE("EffectPalette: Preset as Group baut eine Host-Gruppe (S82)")
+TEST_CASE("EffectPalette: Preset as Group / Preset Reference bauen eine Host-Gruppe (S82)")
 {
     int ausDatei = 0;
+    int verweise = 0;
     for (const EffectType& t : effectPalette())
     {
         if (!t.fromFile) continue;
@@ -64,6 +65,11 @@ TEST_CASE("EffectPalette: Preset as Group baut eine Host-Gruppe (S82)")
         CHECK(std::holds_alternative<lumi::multieffect::HostGroupParams>(t.make()));
         // Herkunft eines Gruppenknotens bleibt die des Host-Group-Eintrags
         CHECK(originForParams(t.make()) == Origin::Native);
+        if (t.asReference) ++verweise;
     }
-    CHECK(ausDatei == 1);
+    CHECK(ausDatei == 2);  // Kopie + Verweis
+    CHECK(verweise == 1);
+    // asReference nur zusammen mit fromFile
+    for (const EffectType& t : effectPalette())
+        if (t.asReference) CHECK(t.fromFile);
 }

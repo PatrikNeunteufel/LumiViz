@@ -2341,3 +2341,106 @@ TEST_SUITE("PresetAlsGruppe")
         CHECK(baum.displayName == "unberuehrt");
     }
 }
+
+// Presetverweis (S82): Host-Gruppe mit `verweis` — die Kette speichert nur
+// den Pfad, der Inhalt kommt beim Laden frisch aus der Datei
+TEST_SUITE("Presetverweis")
+{
+    namespace
+    {
+    std::filesystem::path tempDatei(const char* name)
+    {
+        return std::filesystem::temp_directory_path() / "lumiviz_verweis_test" / name;
+    }
+
+    ChainNode verweisAuf(const std::string& pfad)
+    {
+        ChainNode g;
+        HostGroupParams hp;
+        hp.verweis = true;
+        hp.sourceFile = pfad;
+        g.params = hp;
+        return g;
+    }
+
+    ChainNode kette(std::vector<ChainNode> kinder)
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        root.children = std::move(kinder);
+        compileChain(root);
+        return root;
+    }
+
+    QString q(const std::filesystem::path& p) { return QString::fromStdWString(p.wstring()); }
+    }  // namespace
+
+    TEST_CASE("Speichern: Verweis traegt Pfad und Schalter, aber keinen Inhalt")
+    {
+        ChainNode g = verweisAuf("irgendwo/intro.lvfx");
+        ChainNode clear;
+        clear.params = ClearParams{};
+        g.children.push_back(std::move(clear));  // geladener Inhalt
+        const ChainNode root = kette({std::move(g)});
+
+        const QJsonObject json = nodeToJson(root.children[0]);
+        CHECK(json.value("verweis").toBool());
+        CHECK(json.value("sourceFile").toString() == QStringLiteral("irgendwo/intro.lvfx"));
+        CHECK_FALSE(json.contains("children"));
+    }
+
+    TEST_CASE("Laden: relativer Verweis holt den Inhalt aus der Nachbardatei")
+    {
+        std::filesystem::create_directories(tempDatei(""));
+        // Quelle: zwei Knoten, neutrale Wurzel
+        ChainNode fade;
+        fade.params = FadeoutParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        const ChainNode quelle = kette({std::move(fade), std::move(clear)});
+        REQUIRE(saveChainToFile(quelle, q(tempDatei("intro.lvfx"))));
+        // Kette mit Verweis per RELATIVEM Pfad
+        const ChainNode mitVerweis = kette({verweisAuf("intro.lvfx")});
+        REQUIRE(saveChainToFile(mitVerweis, q(tempDatei("show.lvfx"))));
+
+        ChainNode geladen;
+        QStringList report;
+        REQUIRE(MultiEffectVisualizer::buildPresetTree(q(tempDatei("show.lvfx")), geladen,
+                                                       &report));
+        REQUIRE(geladen.children.size() == 1);
+        CHECK(geladen.children[0].isReference());
+        CHECK(geladen.children[0].children.size() == 2);  // frisch aus intro.lvfx
+        CHECK(report.isEmpty());
+        std::filesystem::remove_all(tempDatei(""));
+    }
+
+    TEST_CASE("Zyklus und fehlende Datei: Meldung statt Endlosschleife, Gruppe leer")
+    {
+        std::filesystem::create_directories(tempDatei(""));
+        const ChainNode selbst = kette({verweisAuf("selbst.lvfx")});
+        REQUIRE(saveChainToFile(selbst, q(tempDatei("selbst.lvfx"))));
+        ChainNode geladen;
+        QStringList report;
+        REQUIRE(MultiEffectVisualizer::buildPresetTree(q(tempDatei("selbst.lvfx")), geladen,
+                                                       &report));
+        CHECK(report.join(QStringLiteral(" | ")).contains(QStringLiteral("Zyklus")));
+
+        ChainNode fehlt = verweisAuf("gibt/es/nicht.milk");
+        QStringList r2;
+        MultiEffectVisualizer::resolvePresetReferences(fehlt, QString(), &r2);
+        CHECK(fehlt.children.empty());
+        CHECK(r2.join(QStringLiteral(" | ")).contains(QStringLiteral("nicht ladbar")));
+        std::filesystem::remove_all(tempDatei(""));
+    }
+
+    TEST_CASE("Ein Verweis nimmt im Editor keine Kinder an, eine Gruppe schon")
+    {
+        ChainNode g;
+        g.params = HostGroupParams{};
+        CHECK(g.acceptsChildren());
+        std::get<HostGroupParams>(g.params).verweis = true;
+        CHECK(g.isReference());
+        CHECK_FALSE(g.acceptsChildren());
+        CHECK(g.isContainer());  // Laufzeit und Kompilieren sehen ihn weiter als Container
+    }
+}

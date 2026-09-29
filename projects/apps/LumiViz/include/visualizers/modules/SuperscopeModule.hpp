@@ -211,6 +211,10 @@ public:
 
     void setPointCode(const std::string& code);
     [[nodiscard]] const std::string& pointCode() const { return m_pointCode; }
+    /// Song-Slot (S82, Lua-Modus): laeuft beim naechsten execute() nach songWechsel()
+    void setSongCode(const std::string& code);
+    /// Songwechsel melden — Song-Slot im naechsten execute() VOR dem Frame-Slot
+    void songWechsel() { m_songPending = true; }
 
     // =========================================================================
     // Lua Script Mode (Import-Phase Roadmap 1 — Keimzelle)
@@ -466,6 +470,8 @@ private:
     std::string m_beatCode;
     std::string m_frameCode;
     std::string m_pointCode;
+    std::string m_songCode;
+    bool m_songPending = false;
 
     // =========================================================================
     // Preset

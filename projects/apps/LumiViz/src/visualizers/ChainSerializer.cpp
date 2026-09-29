@@ -277,6 +277,7 @@ struct WriteVisitor
         o["beatCode"] = QString::fromStdString(p.beatCode);
         if (!p.sourceFile.empty())
             o["sourceFile"] = QString::fromStdString(p.sourceFile);
+        o["verweis"] = p.verweis;  // S82: Inhalt NICHT gespeichert (nodeToJson)
     }
     void operator()(const HostSwitcherParams& p) const  // S82
     {
@@ -290,7 +291,7 @@ struct WriteVisitor
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
-        o["songCode"] = QString::fromStdString(p.songCode);
+        // Song-Slot: ChainNode::songCode (nodeToJson), gleicher Schluessel
     }
     void operator()(const ClearParams& p) const
     {
@@ -1521,6 +1522,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.frameCode = getStr(o, "frameCode", p.frameCode);
         p.beatCode = getStr(o, "beatCode", p.beatCode);
         p.sourceFile = getStr(o, "sourceFile", p.sourceFile);
+        p.verweis = getBool(o, "verweis", p.verweis);
         return p;
     }
     if (type == "hostSwitcher")  // S82
@@ -1535,7 +1537,6 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.initCode = getStr(o, "initCode", p.initCode);
         p.frameCode = getStr(o, "frameCode", p.frameCode);
         p.beatCode = getStr(o, "beatCode", p.beatCode);
-        p.songCode = getStr(o, "songCode", p.songCode);
         return p;
     }
     if (type == "clear")
@@ -3054,9 +3055,13 @@ QJsonObject nodeToJson(const ChainNode& node)
     o["name"] = QString::fromStdString(node.displayName);
     if (!node.description.empty())
         o["description"] = QString::fromStdString(node.description);
+    // Song-Slot (S82): nur wenn belegt — Dateien ohne Song-Code bleiben gleich
+    if (!node.songCode.empty()) o["songCode"] = QString::fromStdString(node.songCode);
     std::visit(WriteVisitor{o}, node.params);
 
-    if (node.isContainer())  // Listen + Host-Gruppen (HG1) tragen children
+    // Listen + Host-Gruppen (HG1) tragen children — ein Presetverweis (S82)
+    // nicht: sein Inhalt kommt beim Laden frisch aus der Datei
+    if (node.isContainer() && !node.isReference())
     {
         QJsonArray children;
         for (const ChainNode& child : node.children)
@@ -3076,6 +3081,7 @@ ChainNode nodeFromJson(const QJsonObject& obj, QStringList* report)
     node.enabled = obj.value("enabled").toBool(true);
     node.displayName = obj.value("name").toString().toStdString();
     node.description = obj.value("description").toString().toStdString();
+    node.songCode = obj.value("songCode").toString().toStdString();  // S82
 
     if (report != nullptr && !obj.contains("type"))
     {

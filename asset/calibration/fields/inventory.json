@@ -2096,11 +2096,6 @@
                     "name": "order"
                 },
                 {
-                    "art": "text",
-                    "default": "",
-                    "name": "songCode"
-                },
-                {
                     "art": "zahl",
                     "default": 1,
                     "name": "startIndex"
@@ -2150,6 +2145,11 @@
                     "art": "zahl",
                     "default": 128,
                     "name": "outAdjustAlpha"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "verweis"
                 }
             ],
             "name": "Host Group",

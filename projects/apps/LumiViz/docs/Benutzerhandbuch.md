@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.14.0
+> **Version:** 1.16.0
 > **Datum:** 2026-09-29
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -336,6 +336,19 @@ es `b` (Beat), `w`/`h` (Bildmaße) und den Audio-Satz (`bass`, `mid`, `treb`,
 
 Ein leeres Feld kostet nichts: ohne Formel läuft kein Skript.
 
+**Song** — ganz unten im Editor jedes Knotens mit Frame-Feld: läuft **einmal
+bei jedem Songwechsel**, direkt vor dem Frame-Feld, und sieht dieselben
+Variablen wie die anderen Felder des Knotens. Damit reagiert ein Preset auf
+einen neuen Titel — etwa eine neue Farbe würfeln oder einen Zähler
+zurücksetzen:
+
+```
+Song:   farbe = rand(6); zaehler = 0;
+```
+
+Bei der Effect List wirkt das Song-Feld nur mit eingeschaltetem Listen-Code
+(wie Init und Frame). Movement und Milkdrop-Nodes haben (noch) keins.
+
 > **Movement ist die Ausnahme.** Es baut eine *statische* Tabelle — sein
 > Point-Code läuft nur, wenn sich Größe oder Text ändern. Ein Wert, der sich
 > über die Zeit ändert (ein Beat-Zähler etwa), kann das Bild dort nicht bewegen.
@@ -596,6 +609,19 @@ Gruppen dürfen gleichzeitig aktiv sein und mischen sich über ihren
   frame"), bleibt sie als eine Effect List in der Gruppe erhalten.
 - **„Preset in diese Gruppe laden (.avs, .milk, .lvfx)…"** macht dasselbe
   für eine bestehende Gruppe (ersetzt deren Inhalt).
+- **Presetverweis statt Kopie:** **„Preset Reference…"** in der Palette legt
+  eine Gruppe an, die nur **auf die Datei verweist**. Gespeichert wird nur
+  der Pfad; beim Laden der Kette wird das Preset jedes Mal frisch aus der
+  Datei gelesen — so baust du z. B. eine Show-Datei aus fertigen Presets, die
+  du weiter einzeln pflegst. Der Inhalt erscheint nicht im Baum (Änderungen
+  daran gingen beim Speichern verloren); alle Gruppen-Einstellungen (Blend,
+  Crossfade, Kurven, Skripte) gelten wie gewohnt, und der **Host Switcher**
+  schaltet Verweise wie jede andere Gruppe. Im Editor: Pfad eintippen oder
+  **Öffnen…**, **Neu laden** liest die Datei erneut. Ein relativer Pfad gilt
+  ab dem Ordner der Kettendatei. Der Schalter **„Presetverweis"** wandelt
+  eine kopierte Gruppe in einen Verweis um (Inhalt wird neu gelesen) und
+  zurück (der geladene Inhalt bleibt als Kopie). Verweist eine Datei über
+  Umwege auf sich selbst, bricht das Laden dort mit einer Meldung ab.
 - **Namen sind eindeutig:** Der Name einer Gruppe ist ihre ID für den Host
   Switcher. Eine zweite „Host Group" heißt deshalb automatisch „Host Group 2"
   (auch beim Klonen und beim Laden älterer Dateien). Benennst du eine Gruppe
@@ -809,6 +835,8 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.16.0 | 2026-09-29 | Session 82. §11 Host-Gruppen: NEU **Presetverweis** („Preset Reference…", nur Pfad gespeichert, Inhalt beim Laden frisch; Schalter Kopie ↔ Verweis; vom Host Switcher schaltbar) |
+| 1.15.0 | 2026-09-29 | Session 82. §11 „Werte per Formel steuern": NEU **Song-Feld** in jedem Knoten mit Frame-Feld (einmal je Songwechsel, vor Frame) |
 | 1.14.0 | 2026-09-29 | Session 82. §11 NEU **Host Switcher** (Gruppenliste mit Index, Startgruppe, Wechsel nach Zeit/Songwechsel/zufällig, Skripte Init/Frame/Beat/Song mit `switch`/`nextgroup`, schaltet nur zur Laufzeit); Gruppennamen eindeutig mit Zähler, Umbenennen zieht Switcher-Listen mit. Eingeklappte Gruppen bleiben beim Wechsel zu |
 | 1.13.0 | 2026-09-29 | Session 82. §11 Host-Gruppen: **„Preset as Group…"** in der Effekt-Palette (`.avs`/`.milk`/`.lvfx` als Kopie in eine neue Gruppe, Quelle + „Aus Quelle neu laden", Grenzen), Gruppen-Knopf lädt jetzt alle drei Formate. „Import Browser" heißt **Effect Browser** (§8, §9, §11) |
 | 1.11.0 | 2026-09-28 | Session 80. §11 NEU „Gestaltung: Drift und Weichzeichnen" — Linear-Drift (Stärke + Richtung), Radial-Drift (Stärke, Winkel außen/Wirbel/Sog, Zentrum) und Weichzeichnen je Milkdrop-Node, je Werkzeug ein Schalter, Winkel im Panel in Grad; per `per_frame` steuerbar (`drift_lin/dir/rad/ang/cx/cy`, `weich`, Bogenmaß); Knöpfe „Original" und „Weicher Sog ↖" (= der Look bis S80) |

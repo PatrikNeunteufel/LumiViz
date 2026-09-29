@@ -70,6 +70,10 @@ using Slot = lumi::scripting::LuaScriptEngine::Slot;
 
 namespace {
 
+/// Prozessweiter Songwechsel-Zaehler (S82, notifySongChanged) — jeder Leser
+/// merkt sich den zuletzt gesehenen Stand, ein Wechsel wirkt so genau einmal.
+std::atomic<uint64_t> g_songWechsel{0};
+
 // Defined further down; forward-declared for the earlier render handlers.
 void computeAudioBands(const std::vector<float>& spec, float& bass, float& mid,
                        float& treble);
@@ -3095,11 +3099,62 @@ bool baueAvsBaum(const QString& path, ChainNode& outRoot, QStringList& problems)
     return parsed.ok;
 }
 
+/// Dateien, deren Verweise gerade aufgeloest werden (Zyklus-Schutz, S82).
+thread_local std::vector<QString> t_verweisStapel;
+
+/// Presetverweise (S82) aufloesen: jede Verweis-Gruppe bekommt ihren Inhalt
+/// frisch aus `sourceFile` (relativ = gegen `baseDir`, den Ordner der
+/// ladenden Datei). Verweise IN der geladenen Datei loesen sich ueber
+/// buildPresetTree → baueLvfxBaum rekursiv auf; ein Zyklus bricht ab.
+void verweiseAufloesen(ChainNode& node, const QString& baseDir, QStringList* report)
+{
+    if (auto* hg = std::get_if<HostGroupParams>(&node.params); hg != nullptr && hg->verweis)
+    {
+        node.children.clear();
+        QString pfad = QString::fromStdString(hg->sourceFile);
+        if (pfad.isEmpty()) return;
+        if (QFileInfo(pfad).isRelative() && !baseDir.isEmpty())
+            pfad = QDir(baseDir).filePath(pfad);
+        const QString kanon = QFileInfo(pfad).absoluteFilePath();
+        if (std::find(t_verweisStapel.begin(), t_verweisStapel.end(), kanon) !=
+            t_verweisStapel.end())
+        {
+            if (report != nullptr)
+                report->append(QStringLiteral("Presetverweis-Zyklus: %1 verweist (ueber "
+                                              "Umwege) auf sich selbst").arg(kanon));
+            return;
+        }
+        t_verweisStapel.push_back(kanon);
+        ChainNode baum;
+        QStringList r;
+        const bool ok = MultiEffectVisualizer::buildPresetTree(kanon, baum, &r);
+        t_verweisStapel.pop_back();
+        if (!ok)
+        {
+            if (report != nullptr)
+                report->append(QStringLiteral("Presetverweis nicht ladbar: %1").arg(pfad));
+            return;
+        }
+        if (report != nullptr)
+        {
+            for (const QString& zeile : r)
+            {
+                if (!zeile.startsWith(QStringLiteral("ℹ")))
+                    report->append(QFileInfo(kanon).fileName() + QStringLiteral(": ") + zeile);
+            }
+        }
+        node.children = MultiEffectVisualizer::presetGroupChildren(std::move(baum));
+        return;
+    }
+    for (ChainNode& child : node.children) verweiseAufloesen(child, baseDir, report);
+}
+
 /// .lvfx → Baum mit aufgeloesten Video-/AVI-Pfaden (S82 aus loadChainFile).
 bool baueLvfxBaum(const QString& path, ChainNode& outRoot, QStringList* outReport)
 {
     ChainNode loaded;
     if (!loadChainFromFile(path, loaded, outReport)) return false;
+    verweiseAufloesen(loaded, QFileInfo(path).absolutePath(), outReport);
     // videoSource (S70): relative Videopfade gegen den Preset-Ordner aufloesen
     resolveVideoSourcePaths(loaded, QFileInfo(path).absolutePath());
     // avi (S73): dasselbe fuer den AVI-Knoten. Bis hierher lief die Aufloesung
@@ -3349,6 +3404,12 @@ bool MultiEffectVisualizer::buildPresetTree(const QString& path, ChainNode& outR
     if (!ok || !std::holds_alternative<ListParams>(baum.params)) return false;
     outRoot = std::move(baum);
     return true;
+}
+
+void MultiEffectVisualizer::resolvePresetReferences(ChainNode& node, const QString& baseDir,
+                                                    QStringList* report)
+{
+    verweiseAufloesen(node, baseDir, report);
 }
 
 std::vector<ChainNode> MultiEffectVisualizer::presetGroupChildren(ChainNode root)
@@ -4009,6 +4070,13 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     // diesen Frame laeuft. Die Audiodaten (getspec im Switcher-Skript) werden
     // deshalb schon hier aufbereitet statt erst vor dem Ketten-Walk.
     buildVisData();  // audio for getspec/getosc, shared by all scripts
+    // Song-Slot (S82): Songwechsel seit dem letzten Frame? Gilt fuer den
+    // ganzen Frame — jeder Skript-Knoten fuehrt seinen Song-Slot genau einmal aus.
+    {
+        const uint64_t song = g_songWechsel.load(std::memory_order_relaxed);
+        m_frameSong = m_songGesehen != ~uint64_t{0} && song != m_songGesehen;
+        m_songGesehen = song;
+    }
     runHostSwitchers();
 
     // HG2: Vorab-Summe der BLENDENDEN Gruppen-Gewichte dieses Frames. Der
@@ -4295,7 +4363,12 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const HostSwitcherParams&) const { /* laeuft vorab: runHostSwitchers */ }
         void operator()(const PassthroughParams&) const { /* conserved, no-op */ }
     };
+    // Song-Slot (S82): der Song-Code gehoert zum Knoten, nicht zu den Params —
+    // die Skriptstellen holen ihn ueber m_nodeSong (Scope wie activeContext)
+    const std::string* vorherSong = m_nodeSong;
+    m_nodeSong = &node.songCode;
     std::visit(Visitor{*this, node}, node.params);
+    m_nodeSong = vorherSong;
 }
 
 // =============================================================================
@@ -4337,15 +4410,19 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
     if (params.useCode)
     {
         if (runtime.slotHost == nullptr || runtime.compiledInit != params.initCode ||
-            runtime.compiledFrame != params.frameCode)
+            runtime.compiledFrame != params.frameCode ||
+            runtime.compiledSong != songSchluessel())
         {
             runtime.slotHost = std::make_unique<ScriptSlotHost>(
                 "effectlist", activeContext(), ScriptSlotHost::Dialect::Avs);
             runtime.slotHost->setSource(Slot::Init, params.initCode);
             runtime.slotHost->setSource(Slot::Frame, params.frameCode);
+            // Song-Slot (S82) — wie Init/Frame nur mit „Listen-Code" an
+            setzeSong(*runtime.slotHost);
             runtime.slotHost->compileAll();
             runtime.compiledInit = params.initCode;
             runtime.compiledFrame = params.frameCode;
+            runtime.compiledSong = songSchluessel();
             auto& engine = runtime.slotHost->engine();
             engine.setNumber("enabled", 1.0);
             engine.setNumber("clear", 0.0);
@@ -4354,6 +4431,7 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
             engine.setNumber("alphaout", static_cast<double>(alphaOut) / 255.0);
             runtime.slotHost->run(Slot::Init);
         }
+        laufeSong(*runtime.slotHost);
         if (runtime.slotHost->has(Slot::Frame))
         {
             auto& engine = runtime.slotHost->engine();
@@ -5035,7 +5113,8 @@ void MultiEffectVisualizer::runColorModifier(const ChainNode& node,
 
     // (Re)build the LUT module when its sources change (render-thread compile).
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + '\n' + params.levelCode;
+                                 params.beatCode + '\n' + params.levelCode +
+                                 songSchluessel();
     if (rt.lut == nullptr || rt.lutCompiled != combined)
     {
         rt.lut = std::make_unique<lumi::modules::ScriptLutModule>(activeContext());
@@ -5043,8 +5122,10 @@ void MultiEffectVisualizer::runColorModifier(const ChainNode& node,
         rt.lut->setFrameCode(params.frameCode);
         rt.lut->setBeatCode(params.beatCode);
         rt.lut->setLevelCode(params.levelCode);
+        rt.lut->setSongCode(node.songCode);
         rt.lutCompiled = combined;
     }
+    if (m_frameSong) rt.lut->songWechsel();  // Song-Slot (S82)
     rt.lut->setRecompute(params.recompute);
     rt.lut->setVisData(m_visdata.data(), m_scriptClock);  // getspec/getosc for the level code
     {
@@ -5329,7 +5410,7 @@ void MultiEffectVisualizer::runDynamicMovement(const ChainNode& node,
     const std::string combined = "D:" + std::to_string(params.xres) + "x" +
                                  std::to_string(params.yres) + "\n" + params.initCode +
                                  '\n' + params.frameCode + '\n' + params.beatCode +
-                                 '\n' + params.pointCode;
+                                 '\n' + params.pointCode + songSchluessel();
     if (rt.grid == nullptr || rt.gridCompiled != combined)
     {
         rt.grid = std::make_unique<lumi::modules::ScriptGridModule>(activeContext());
@@ -5337,10 +5418,12 @@ void MultiEffectVisualizer::runDynamicMovement(const ChainNode& node,
         rt.grid->setFrameCode(params.frameCode);
         rt.grid->setBeatCode(params.beatCode);
         rt.grid->setPointCode(params.pointCode);
+        rt.grid->setSongCode(node.songCode);
         rt.grid->setGridSize(params.xres, params.yres);
         rt.grid->setAvsGridPositions(true);  // r_dmove-Stuetzstellen (trunkiert)
         rt.gridCompiled = combined;
     }
+    if (m_frameSong) rt.grid->songWechsel();  // Song-Slot (S82)
     rt.grid->setRectCoords(params.rectCoords);
 
     GridWarpOptions opt;
@@ -6011,7 +6094,8 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
                                    : params.lineWidth;
 
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + '\n' + params.pointCode;
+                                 params.beatCode + '\n' + params.pointCode +
+                                 songSchluessel();
     if (rt.scope == nullptr || rt.scopeCompiled != combined)
     {
         // Geteilter Kontext wie bei Grid/Texer/Liste: AVS haelt reg00..reg99
@@ -6028,9 +6112,11 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
         rt.scope->setBeatCode(params.beatCode);
         rt.scope->setFrameCode(params.frameCode);
         rt.scope->setPointCode(params.pointCode);
+        rt.scope->setSongCode(node.songCode);
         rt.scopeCompiled = combined;
         rt.scopeGradientLoaded.clear();  // fresh module defaults to Neon -> reload
     }
+    if (m_frameSong) rt.scope->songWechsel();  // Song-Slot (S82)
     rt.scope->setPointCount(params.pointCount);
     rt.scope->setRenderMode(
         static_cast<lumi::modules::SuperscopeRenderMode>(params.renderMode));
@@ -6614,15 +6700,16 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
                                  params.beatCode + "|" +
                                  std::to_string(params.depth) + ',' +
                                  std::to_string(params.depth2);
-    if (rt.bumpHost == nullptr || rt.bumpCompiled != combined)
+    if (rt.bumpHost == nullptr || rt.bumpCompiled != combined + songSchluessel())
     {
         rt.bumpHost = std::make_unique<ScriptSlotHost>("bump", activeContext(),
                                                        ScriptSlotHost::Dialect::Avs);
         rt.bumpHost->setSource(Slot::Init, params.initCode);
+        setzeSong(*rt.bumpHost);
         rt.bumpHost->setSource(Slot::Frame, params.frameCode);
         rt.bumpHost->setSource(Slot::Beat, params.beatCode);
         rt.bumpHost->compileAll();
-        rt.bumpCompiled = combined;
+        rt.bumpCompiled = combined + songSchluessel();
         auto& engine = rt.bumpHost->engine();
         engine.setNumber("x", 0.5);
         engine.setNumber("y", 0.5);
@@ -6638,6 +6725,7 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
         engine.setNumber("isbeat", m_frameBeat ? -1.0 : 1.0);
         engine.setNumber("islbeat", rt.bumpFramesLeft > 0 ? -1.0 : 1.0);
         feedAudio(rt.bumpHost->engine());
+        laufeSong(*rt.bumpHost);
         if (rt.bumpHost->has(Slot::Frame)) rt.bumpHost->run(Slot::Frame);
         if (m_frameBeat && rt.bumpHost->has(Slot::Beat)) rt.bumpHost->run(Slot::Beat);
         dynDepth = rt.bumpHost->engine().number("depth");
@@ -6713,15 +6801,16 @@ void MultiEffectVisualizer::runDynamicShift(const ChainNode& node,
     // Global-offset script (init/frame/beat -> x, y in pixels). Errors disable a slot.
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode;
-    if (rt.shiftHost == nullptr || rt.shiftCompiled != combined)
+    if (rt.shiftHost == nullptr || rt.shiftCompiled != combined + songSchluessel())
     {
         rt.shiftHost = std::make_unique<ScriptSlotHost>("dshift", activeContext(),
                                                         ScriptSlotHost::Dialect::Avs);
         rt.shiftHost->setSource(Slot::Init, params.initCode);
+        setzeSong(*rt.shiftHost);
         rt.shiftHost->setSource(Slot::Frame, params.frameCode);
         rt.shiftHost->setSource(Slot::Beat, params.beatCode);
         rt.shiftHost->compileAll();
-        rt.shiftCompiled = combined;
+        rt.shiftCompiled = combined + songSchluessel();
         auto& engine = rt.shiftHost->engine();
         engine.setNumber("x", 0.0);
         engine.setNumber("y", 0.0);
@@ -6740,6 +6829,7 @@ void MultiEffectVisualizer::runDynamicShift(const ChainNode& node,
         engine.setNumber("h", static_cast<double>(m_surfaceHeight));
         engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
         feedAudio(rt.shiftHost->engine());
+        laufeSong(*rt.shiftHost);
         if (rt.shiftHost->has(Slot::Frame)) rt.shiftHost->run(Slot::Frame);
         if (m_frameBeat && rt.shiftHost->has(Slot::Beat)) rt.shiftHost->run(Slot::Beat);
         ox = engine.number("x");
@@ -8275,16 +8365,17 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
 
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + '\n' + params.pointCode;
-    if (rt.texerHost == nullptr || rt.texerCompiled != combined)
+    if (rt.texerHost == nullptr || rt.texerCompiled != combined + songSchluessel())
     {
         rt.texerHost = std::make_unique<ScriptSlotHost>("texer2", activeContext(),
                                                         ScriptSlotHost::Dialect::Avs);
         rt.texerHost->setSource(Slot::Init, params.initCode);
+        setzeSong(*rt.texerHost);
         rt.texerHost->setSource(Slot::Frame, params.frameCode);
         rt.texerHost->setSource(Slot::Beat, params.beatCode);
         rt.texerHost->setSource(Slot::Point, params.pointCode);
         rt.texerHost->compileAll();
-        rt.texerCompiled = combined;
+        rt.texerCompiled = combined + songSchluessel();
         // Vorbelegung 0, NICHT 100: setzt das Skript kein `n`, zeichnet Texer II
         // gar nichts. Gemessen (S50): ein Knoten mit leerem Init liefert in
         // AvsRef 0 Pixel, unsere 100er-Vorbelegung 4124 — mit explizitem n=100
@@ -8327,6 +8418,7 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
     engine.setNumber("green", 1.0);
     engine.setNumber("blue", 1.0);
     feedAudio(rt.texerHost->engine());
+    laufeSong(*rt.texerHost);
     if (rt.texerHost->has(Slot::Frame)) rt.texerHost->run(Slot::Frame);
     if (m_frameBeat && rt.texerHost->has(Slot::Beat)) rt.texerHost->run(Slot::Beat);
     // n=0 heisst NULL Sprites, nicht eines: die Sprite-Schleife laeuft
@@ -8554,16 +8646,17 @@ void MultiEffectVisualizer::runTriangle(const ChainNode& node, const TrianglePar
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + '\n' + params.pointCode;
-    if (rt.triHost == nullptr || rt.triCompiled != combined)
+    if (rt.triHost == nullptr || rt.triCompiled != combined + songSchluessel())
     {
         rt.triHost = std::make_unique<ScriptSlotHost>("triangle", activeContext(),
                                                       ScriptSlotHost::Dialect::Avs);
         rt.triHost->setSource(Slot::Init, params.initCode);
+        setzeSong(*rt.triHost);
         rt.triHost->setSource(Slot::Frame, params.frameCode);
         rt.triHost->setSource(Slot::Beat, params.beatCode);
         rt.triHost->setSource(Slot::Point, params.pointCode);
         rt.triHost->compileAll();
-        rt.triCompiled = combined;
+        rt.triCompiled = combined + songSchluessel();
         rt.triHost->engine().setNumber("n", 1.0);
         rt.triHost->engine().setNumber("w", static_cast<double>(m_surfaceWidth));
         rt.triHost->engine().setNumber("h", static_cast<double>(m_surfaceHeight));
@@ -8576,6 +8669,7 @@ void MultiEffectVisualizer::runTriangle(const ChainNode& node, const TrianglePar
     engine.setNumber("w", static_cast<double>(m_surfaceWidth));
     engine.setNumber("h", static_cast<double>(m_surfaceHeight));
     feedAudio(rt.triHost->engine());
+    laufeSong(*rt.triHost);
     if (rt.triHost->has(Slot::Frame)) rt.triHost->run(Slot::Frame);
     if (m_frameBeat && rt.triHost->has(Slot::Beat)) rt.triHost->run(Slot::Beat);
     const int n = std::clamp(static_cast<int>(engine.number("n")), 0, 4096);
@@ -8884,12 +8978,6 @@ void MultiEffectVisualizer::runOscRing(const ChainNode& node, const OscRingParam
 // Host Switcher (S82)
 // =============================================================================
 
-namespace {
-/// Prozessweiter Songwechsel-Zaehler (notifySongChanged) — jeder Leser merkt
-/// sich den zuletzt gesehenen Stand, ein Wechsel wirkt so genau einmal.
-std::atomic<uint64_t> g_songWechsel{0};
-}  // namespace
-
 void MultiEffectVisualizer::notifySongChanged()
 {
     g_songWechsel.fetch_add(1, std::memory_order_relaxed);
@@ -8905,6 +8993,22 @@ bool MultiEffectVisualizer::effectiveEnabled(const ChainNode& node) const
     return node.enabled;
 }
 
+std::string MultiEffectVisualizer::songSchluessel() const
+{
+    if (m_nodeSong == nullptr || m_nodeSong->empty()) return {};
+    return "\n#song\n" + *m_nodeSong;
+}
+
+void MultiEffectVisualizer::setzeSong(ScriptSlotHost& host) const
+{
+    host.setSource(Slot::Song, m_nodeSong != nullptr ? *m_nodeSong : std::string());
+}
+
+void MultiEffectVisualizer::laufeSong(ScriptSlotHost& host) const
+{
+    if (m_frameSong && host.has(Slot::Song)) host.run(Slot::Song);
+}
+
 int MultiEffectVisualizer::debugSwitcherIndex(uint64_t nodeId) const
 {
     const auto it = m_switcherRuntimes.find(nodeId);
@@ -8915,7 +9019,6 @@ void MultiEffectVisualizer::runHostSwitchers()
 {
     m_groupOverride.clear();
     for (auto& [id, rt] : m_switcherRuntimes) rt.seenThisFrame = false;
-    const uint64_t song = g_songWechsel.load(std::memory_order_relaxed);
 
     for (const ChainNode& node : m_root.children)
     {
@@ -8925,30 +9028,28 @@ void MultiEffectVisualizer::runHostSwitchers()
         rt.seenThisFrame = true;
         const int anzahl = static_cast<int>(sw->groups.size());
 
-        if (rt.index < 0 && anzahl > 0)  // frisch: Startgruppe; alte Songwechsel zaehlen nicht
+        if (rt.index < 0 && anzahl > 0)  // frisch: Startgruppe
         {
             rt.index = std::clamp(sw->startIndex - 1, 0, anzahl - 1);
-            rt.songGesehen = song;
         }
         rt.index = std::min(rt.index, anzahl - 1);  // Liste kann geschrumpft sein (-1 = leer)
-        const bool songNeu = song != rt.songGesehen;
-        rt.songGesehen = song;
+        const bool songNeu = m_frameSong;
         rt.sekunden += static_cast<double>(m_deltaTime);
         if (m_frameBeat) ++rt.beats;
 
         int ziel = -1;       // 0-basiert, vom Skript gewaehlt
         bool weiter = false; // naechste Gruppe nach `order`
 
-        // --- Skript: Init / Frame / Beat / Song (Song = vierter Slot der
-        // Engine, dort sonst „Point"). Ausgaben `switch`/`nextgroup` gelten
+        // --- Skript: Init / Frame / Beat / Song (Song-Slot = ChainNode::
+        // songCode, wie bei allen Knoten). Ausgaben `switch`/`nextgroup` gelten
         // nur fuer DIESEN Frame — anders als runParamScript, das Werte
         // fortschreibt (ein einmal gesetztes nextgroup schaltete sonst ewig).
         const bool hatSkript = !sw->initCode.empty() || !sw->frameCode.empty() ||
-                               !sw->beatCode.empty() || !sw->songCode.empty();
+                               !sw->beatCode.empty() || !node.songCode.empty();
         if (hatSkript)
         {
             const std::string combined = sw->initCode + '\n' + sw->frameCode + '\n' +
-                                         sw->beatCode + '\n' + sw->songCode;
+                                         sw->beatCode + '\n' + node.songCode;
             const bool fresh = rt.host == nullptr || rt.compiled != combined;
             if (fresh)
             {
@@ -8957,7 +9058,7 @@ void MultiEffectVisualizer::runHostSwitchers()
                 rt.host->setSource(Slot::Init, sw->initCode);
                 rt.host->setSource(Slot::Frame, sw->frameCode);
                 rt.host->setSource(Slot::Beat, sw->beatCode);
-                rt.host->setSource(Slot::Point, sw->songCode);
+                rt.host->setSource(Slot::Song, node.songCode);
                 if (!rt.host->compileAll())
                 {
                     rt.error = rt.host->lastError();
@@ -8982,9 +9083,9 @@ void MultiEffectVisualizer::runHostSwitchers()
             feedAudio(engine);
 
             if (fresh && rt.host->has(Slot::Init)) rt.host->run(Slot::Init);
+            if (songNeu && rt.host->has(Slot::Song)) rt.host->run(Slot::Song);
             if (rt.host->has(Slot::Frame)) rt.host->run(Slot::Frame);
             if (m_frameBeat && rt.host->has(Slot::Beat)) rt.host->run(Slot::Beat);
-            if (songNeu && rt.host->has(Slot::Point)) rt.host->run(Slot::Point);
 
             if (const std::string& err = rt.host->lastError(); !err.empty() && err != rt.error)
             {
@@ -9042,9 +9143,9 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
                                            const std::vector<ParamVar>& vars)
 {
     // Opt-in: ein Knoten ohne Skript darf keinen Cent Rechenzeit kosten.
-    if (init.empty() && frame.empty() && beat.empty()) return;
+    if (init.empty() && frame.empty() && beat.empty() && !hatSongCode()) return;
 
-    const std::string combined = init + '\n' + frame + '\n' + beat;
+    const std::string combined = init + '\n' + frame + '\n' + beat + songSchluessel();
     const bool fresh = (rt.paramHost == nullptr || rt.paramCompiled != combined);
     if (fresh)
     {
@@ -9053,6 +9154,7 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
         rt.paramHost->setSource(Slot::Init, init);
         rt.paramHost->setSource(Slot::Frame, frame);
         rt.paramHost->setSource(Slot::Beat, beat);
+        setzeSong(*rt.paramHost);
         // Ein Uebersetzungsfehler darf NICHT still bleiben: bis S54 fragte
         // niemand `lastError()` ab, ein Skript mit Tippfehler verhielt sich
         // damit exakt wie ein leeres — die Probe mit absichtlichem Unsinn kam
@@ -9096,6 +9198,7 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
     feedAudio(engine);
 
     if (fresh && rt.paramHost->has(Slot::Init)) rt.paramHost->run(Slot::Init);
+    laufeSong(*rt.paramHost);
     if (rt.paramHost->has(Slot::Frame)) rt.paramHost->run(Slot::Frame);
     if (m_frameBeat && rt.paramHost->has(Slot::Beat)) rt.paramHost->run(Slot::Beat);
 
@@ -9558,15 +9661,16 @@ void MultiEffectVisualizer::runJherikoGlobal(const ChainNode& node,
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode;
-    if (rt.jherikoHost == nullptr || rt.jherikoCompiled != combined)
+    if (rt.jherikoHost == nullptr || rt.jherikoCompiled != combined + songSchluessel())
     {
         rt.jherikoHost = std::make_unique<ScriptSlotHost>("jheriko", activeContext(),
                                                           ScriptSlotHost::Dialect::Avs);
         rt.jherikoHost->setSource(Slot::Init, params.initCode);
+        setzeSong(*rt.jherikoHost);
         rt.jherikoHost->setSource(Slot::Frame, params.frameCode);
         rt.jherikoHost->setSource(Slot::Beat, params.beatCode);
         rt.jherikoHost->compileAll();
-        rt.jherikoCompiled = combined;
+        rt.jherikoCompiled = combined + songSchluessel();
         rt.jherikoInited = false;
     }
     // load 0 none / 1 once / 2 code / 3 every-frame (file reload not imported —
@@ -9577,6 +9681,7 @@ void MultiEffectVisualizer::runJherikoGlobal(const ChainNode& node,
     }
     rt.jherikoInited = true;
     feedAudio(rt.jherikoHost->engine());
+    laufeSong(*rt.jherikoHost);
     if (rt.jherikoHost->has(Slot::Frame)) rt.jherikoHost->run(Slot::Frame);
     if (m_frameBeat && rt.jherikoHost->has(Slot::Beat)) rt.jherikoHost->run(Slot::Beat);
     // No visual output — globals are shared through the ScriptContext.
@@ -9589,16 +9694,17 @@ void MultiEffectVisualizer::runDynamicDistanceModifier(
 
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + '\n' + params.pixelCode;
-    if (rt.ddmHost == nullptr || rt.ddmCompiled != combined)
+    if (rt.ddmHost == nullptr || rt.ddmCompiled != combined + songSchluessel())
     {
         rt.ddmHost = std::make_unique<ScriptSlotHost>("ddm", activeContext(),
                                                       ScriptSlotHost::Dialect::Avs);
         rt.ddmHost->setSource(Slot::Init, params.initCode);
+        setzeSong(*rt.ddmHost);
         rt.ddmHost->setSource(Slot::Frame, params.frameCode);
         rt.ddmHost->setSource(Slot::Beat, params.beatCode);
         rt.ddmHost->setSource(Slot::Point, params.pixelCode);
         rt.ddmHost->compileAll();
-        rt.ddmCompiled = combined;
+        rt.ddmCompiled = combined + songSchluessel();
         rt.ddmHost->engine().setNumber("d", 0.0);
         rt.ddmHost->engine().setNumber("b", 0.0);
         rt.ddmHost->run(Slot::Init);
@@ -9607,6 +9713,7 @@ void MultiEffectVisualizer::runDynamicDistanceModifier(
     auto& engine = rt.ddmHost->engine();
     engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
     feedAudio(rt.ddmHost->engine());
+    laufeSong(*rt.ddmHost);
     if (rt.ddmHost->has(Slot::Frame)) rt.ddmHost->run(Slot::Frame);
     if (m_frameBeat && rt.ddmHost->has(Slot::Beat)) rt.ddmHost->run(Slot::Beat);
 
@@ -10096,7 +10203,7 @@ void MultiEffectVisualizer::runCamera3D(const ChainNode& node,
     FarbKopie nebel(params.fogColor);
 
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
-                          !params.beatCode.empty();
+                          !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
         LeafRuntime& rt = m_leafRuntimes[node.nodeId];
@@ -10108,15 +10215,16 @@ void MultiEffectVisualizer::runCamera3D(const ChainNode& node,
                                  std::to_string(roll) + ',' + std::to_string(fogStart) +
                                  ',' + std::to_string(fogEnd) + ',' +
                                  std::to_string(params.fogColor);
-        if (rt.cam3dHost == nullptr || rt.cam3dCompiled != snap)
+        if (rt.cam3dHost == nullptr || rt.cam3dCompiled != snap + songSchluessel())
         {
             rt.cam3dHost = std::make_unique<ScriptSlotHost>("camera3d", activeContext(),
                                                             ScriptSlotHost::Dialect::Avs);
             rt.cam3dHost->setSource(Slot::Init, params.initCode);
+            setzeSong(*rt.cam3dHost);
             rt.cam3dHost->setSource(Slot::Frame, params.frameCode);
             rt.cam3dHost->setSource(Slot::Beat, params.beatCode);
             rt.cam3dHost->compileAll();
-            rt.cam3dCompiled = snap;
+            rt.cam3dCompiled = snap + songSchluessel();
             auto& engine = rt.cam3dHost->engine();
             feedAudio(engine);  // S47-Regel: visdata muss den Erst-Lauf erreichen
             engine.setNumber("px", px);
@@ -10136,6 +10244,7 @@ void MultiEffectVisualizer::runCamera3D(const ChainNode& node,
         engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
         feedAudio(engine);
         // Slot-Ordnung Frame VOR Beat (S47-Konvention, r_sscope:272)
+        laufeSong(*rt.cam3dHost);
         if (rt.cam3dHost->has(Slot::Frame)) rt.cam3dHost->run(Slot::Frame);
         if (m_frameBeat && rt.cam3dHost->has(Slot::Beat)) rt.cam3dHost->run(Slot::Beat);
         px = engine.number("px");
@@ -10175,16 +10284,17 @@ void MultiEffectVisualizer::runSuperScope3D(const ChainNode& node,
                              params.beatCode + '\n' + params.pointCode + "\n#" +
                              std::to_string(params.pointCount) + "|" +
                                  std::to_string(params.falloff);
-    if (rt.scope3dHost == nullptr || rt.scope3dCompiled != snap)
+    if (rt.scope3dHost == nullptr || rt.scope3dCompiled != snap + songSchluessel())
     {
         rt.scope3dHost = std::make_unique<ScriptSlotHost>(
             "superscope3d", activeContext(), ScriptSlotHost::Dialect::Avs);
         rt.scope3dHost->setSource(Slot::Init, params.initCode);
+        setzeSong(*rt.scope3dHost);
         rt.scope3dHost->setSource(Slot::Frame, params.frameCode);
         rt.scope3dHost->setSource(Slot::Beat, params.beatCode);
         rt.scope3dHost->setSource(Slot::Point, params.pointCode);
         rt.scope3dHost->compileAll();
-        rt.scope3dCompiled = snap;
+        rt.scope3dCompiled = snap + songSchluessel();
         auto& engine = rt.scope3dHost->engine();
         feedAudio(engine);  // S47-Regel: visdata muss den Erst-Lauf erreichen
         engine.setNumber("n", params.pointCount);
@@ -10197,6 +10307,7 @@ void MultiEffectVisualizer::runSuperScope3D(const ChainNode& node,
     engine.setNumber("h", m_surfaceHeight);
     feedAudio(engine);
     // Slot-Ordnung Frame VOR Beat (S47-Konvention)
+    laufeSong(*rt.scope3dHost);
     if (rt.scope3dHost->has(Slot::Frame)) rt.scope3dHost->run(Slot::Frame);
     if (m_frameBeat && rt.scope3dHost->has(Slot::Beat)) rt.scope3dHost->run(Slot::Beat);
     dynFalloff = rt.scope3dHost->engine().number("falloff");
@@ -10399,7 +10510,8 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
     double dynDotSize = params.dotSize;
     double dynFalloff = params.falloff;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
-                          !params.beatCode.empty() || !params.pointCode.empty();
+                          !params.beatCode.empty() || !params.pointCode.empty() ||
+                          hatSongCode();
     bool pointColors = false;
     if (scripted)
     {
@@ -10417,16 +10529,17 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
                                  std::to_string(params.extent) + ',' +
                                  std::to_string(params.dotSize) + ',' +
                                  std::to_string(params.falloff);
-        if (rt.terrainHost == nullptr || rt.terrainCompiled != snap)
+        if (rt.terrainHost == nullptr || rt.terrainCompiled != snap + songSchluessel())
         {
             rt.terrainHost = std::make_unique<ScriptSlotHost>(
                 "terrain3d", activeContext(), ScriptSlotHost::Dialect::Avs);
             rt.terrainHost->setSource(Slot::Init, params.initCode);
+            setzeSong(*rt.terrainHost);
             rt.terrainHost->setSource(Slot::Frame, params.frameCode);
             rt.terrainHost->setSource(Slot::Beat, params.beatCode);
             rt.terrainHost->setSource(Slot::Point, params.pointCode);
             rt.terrainHost->compileAll();
-            rt.terrainCompiled = snap;
+            rt.terrainCompiled = snap + songSchluessel();
             auto& engine = rt.terrainHost->engine();
             feedAudio(engine);  // S47-Regel: visdata vor dem Erst-Lauf
             engine.setNumber("res", res);
@@ -10458,6 +10571,7 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
                 engine.setMegabufValue(i, rt.terrainH[static_cast<std::size_t>(i)]);
         }
         // Slot-Ordnung Frame VOR Beat (S47-Konvention)
+        laufeSong(*rt.terrainHost);
         if (rt.terrainHost->has(Slot::Frame)) rt.terrainHost->run(Slot::Frame);
         if (m_frameBeat && rt.terrainHost->has(Slot::Beat))
             rt.terrainHost->run(Slot::Beat);
@@ -10713,16 +10827,17 @@ void MultiEffectVisualizer::runGlowOrbs(const ChainNode& node,
                                  std::to_string(params.haloScale) + ',' +
                                  std::to_string(params.haloIntensity) + ',' +
                                  std::to_string(params.falloff);
-    if (rt.orbsHost == nullptr || rt.orbsCompiled != snap)
+    if (rt.orbsHost == nullptr || rt.orbsCompiled != snap + songSchluessel())
     {
         rt.orbsHost = std::make_unique<ScriptSlotHost>("glowOrbs", activeContext(),
                                                        ScriptSlotHost::Dialect::Avs);
         rt.orbsHost->setSource(Slot::Init, params.initCode);
+        setzeSong(*rt.orbsHost);
         rt.orbsHost->setSource(Slot::Frame, params.frameCode);
         rt.orbsHost->setSource(Slot::Beat, params.beatCode);
         rt.orbsHost->setSource(Slot::Point, params.pointCode);
         rt.orbsHost->compileAll();
-        rt.orbsCompiled = snap;
+        rt.orbsCompiled = snap + songSchluessel();
         auto& engine = rt.orbsHost->engine();
         feedAudio(engine);  // S47-Regel: visdata vor dem Erst-Lauf
         engine.setNumber("n", params.orbCount);
@@ -10735,6 +10850,7 @@ void MultiEffectVisualizer::runGlowOrbs(const ChainNode& node,
     engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
     feedAudio(engine);
     // Slot-Ordnung Frame VOR Beat (S47-Konvention)
+    laufeSong(*rt.orbsHost);
     if (rt.orbsHost->has(Slot::Frame)) rt.orbsHost->run(Slot::Frame);
     if (m_frameBeat && rt.orbsHost->has(Slot::Beat)) rt.orbsHost->run(Slot::Beat);
     dynHaloScale = rt.orbsHost->engine().number("haloscale");
@@ -12115,7 +12231,7 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
     double dynMaxIter = params.maxIter;
     double dynEscapeR = params.escapeR;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
-                          !params.beatCode.empty();
+                          !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
         // Snapshot includes the seed values: editing a seed re-seeds the engine.
@@ -12129,11 +12245,12 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
                                  std::to_string(params.insideColor) + "|" +
                                  std::to_string(params.maxIter) + ',' +
                                  std::to_string(params.escapeR);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("fractal2d", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
+            setzeSong(*rt.fracHost);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
@@ -12148,13 +12265,14 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
             rt.fracHost->engine().setNumber("maxiter", dynMaxIter);
             rt.fracHost->engine().setNumber("escaper", dynEscapeR);
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap;
+            rt.fracCompiled = snap + songSchluessel();
         }
 
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
         rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         dynMaxIter = rt.fracHost->engine().number("maxiter");
@@ -12270,7 +12388,7 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
     double dynGain = params.gain;
     double dynOctaves = params.octaves;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
-                          !params.beatCode.empty();
+                          !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
@@ -12283,11 +12401,12 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
                                  std::to_string(params.lacunarity) + ',' +
                                  std::to_string(params.gain) + ',' +
                                  std::to_string(params.octaves);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("domainwarp", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
+            setzeSong(*rt.fracHost);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
@@ -12302,13 +12421,14 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
             rt.fracHost->engine().setNumber("gain", dynGain);
             rt.fracHost->engine().setNumber("octaves", dynOctaves);
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap;
+            rt.fracCompiled = snap + songSchluessel();
         }
 
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
         rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         dynWarpScale = rt.fracHost->engine().number("warpscale");
@@ -12513,7 +12633,7 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
     double dynLightPitch = params.lightPitch;
     double dynAmbient = params.ambient;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
-                          !params.beatCode.empty();
+                          !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
@@ -12532,11 +12652,12 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
                                  std::to_string(params.lightYaw) + ',' +
                                  std::to_string(params.lightPitch) + ',' +
                                  std::to_string(params.ambient);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("fractal3d", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
+            setzeSong(*rt.fracHost);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
@@ -12556,12 +12677,13 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
             rt.fracHost->engine().setNumber("lightpitch", dynLightPitch);
             rt.fracHost->engine().setNumber("ambient", dynAmbient);
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap;
+            rt.fracCompiled = snap + songSchluessel();
         }
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
         rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         dynFov = rt.fracHost->engine().number("fov");
@@ -12646,7 +12768,7 @@ void MultiEffectVisualizer::runLyapunov(const ChainNode& node,
     float palScale = params.colorScale, palCycle = params.colorCycle;
     FarbKopie negativ(params.negColor);
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
-                          !params.beatCode.empty();
+                          !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
@@ -12656,11 +12778,12 @@ void MultiEffectVisualizer::runLyapunov(const ChainNode& node,
                                  "|" + std::to_string(params.colorScale) + ',' +
                                  std::to_string(params.colorCycle) + ',' +
                                  std::to_string(params.negColor);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("lyapunov", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
+            setzeSong(*rt.fracHost);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
@@ -12671,12 +12794,13 @@ void MultiEffectVisualizer::runLyapunov(const ChainNode& node,
             rt.fracHost->engine().setNumber("colorcycle", palCycle);
             setzeFarbe(rt.fracHost->engine(), "negcolor", negativ);
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap;
+            rt.fracCompiled = snap + songSchluessel();
         }
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
         rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         aMin = static_cast<float>(e.number("amin"));
@@ -12739,7 +12863,7 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
     // Farbpalette als Skriptvariablen (Block C, S79)
     float palScale = params.colorScale, palCycle = params.colorCycle;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
-                          !params.beatCode.empty();
+                          !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
@@ -12748,11 +12872,12 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
                                  std::to_string(params.p) + ',' + std::to_string(params.q) +
                                  "|" + std::to_string(params.colorScale) + ',' +
                                  std::to_string(params.colorCycle);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("kleinian", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
+            setzeSong(*rt.fracHost);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
@@ -12762,12 +12887,13 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
             rt.fracHost->engine().setNumber("colorscale", palScale);
             rt.fracHost->engine().setNumber("colorcycle", palCycle);
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap;
+            rt.fracCompiled = snap + songSchluessel();
         }
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
         rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         morph = static_cast<float>(e.number("morph"));
@@ -12829,7 +12955,7 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
     double dynJuliaX = params.juliaX;
     double dynJuliaY = params.juliaY;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
-                          !params.beatCode.empty();
+                          !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
@@ -12842,11 +12968,12 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
                                  std::to_string(params.feedback) + ',' +
                                  std::to_string(params.juliaX) + ',' +
                                  std::to_string(params.juliaY);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("fractalzoom", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
+            setzeSong(*rt.fracHost);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
@@ -12860,12 +12987,13 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
             rt.fracHost->engine().setNumber("juliax", dynJuliaX);
             rt.fracHost->engine().setNumber("juliay", dynJuliaY);
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap;
+            rt.fracCompiled = snap + songSchluessel();
         }
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
         rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         dynFeedback = rt.fracHost->engine().number("feedback");
@@ -12944,7 +13072,7 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
     double dynRotationSpeed = params.rotationSpeed;
     double dynDotSize = params.dotSize;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
-                          !params.beatCode.empty();
+                          !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
@@ -12954,11 +13082,12 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
                                  std::to_string(params.scale) + ',' +
                                  std::to_string(params.rotationSpeed) + ',' +
                                  std::to_string(params.dotSize);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("attractor", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
+            setzeSong(*rt.fracHost);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
@@ -12970,10 +13099,11 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
             rt.fracHost->engine().setNumber("rotationspeed", dynRotationSpeed);
             rt.fracHost->engine().setNumber("dotsize", dynDotSize);
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap;
+            rt.fracCompiled = snap + songSchluessel();
         }
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
+        laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         dynScale = rt.fracHost->engine().number("scale");
@@ -13084,7 +13214,7 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
     double dynRotationSpeed = params.rotationSpeed;
     double dynDotSize = params.dotSize;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
-                          !params.beatCode.empty();
+                          !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
@@ -13093,11 +13223,12 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
                                  std::to_string(scale) + "|" +
                                  std::to_string(params.rotationSpeed) + ',' +
                                  std::to_string(params.dotSize);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("flame", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
+            setzeSong(*rt.fracHost);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
@@ -13107,10 +13238,11 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
             rt.fracHost->engine().setNumber("rotationspeed", dynRotationSpeed);
             rt.fracHost->engine().setNumber("dotsize", dynDotSize);
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap;
+            rt.fracCompiled = snap + songSchluessel();
         }
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
+        laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         dynRotationSpeed = rt.fracHost->engine().number("rotationspeed");
@@ -13214,7 +13346,7 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
     double dynDiffB = params.diffB;
     double dynStepsPerFrame = params.stepsPerFrame;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
-                          !params.beatCode.empty();
+                          !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
@@ -13225,11 +13357,12 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
                                  std::to_string(params.diffA) + ',' +
                                  std::to_string(params.diffB) + ',' +
                                  std::to_string(params.stepsPerFrame);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap)
+        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("reactdiff", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
             rt.fracHost->setSource(Slot::Init, params.initCode);
+            setzeSong(*rt.fracHost);
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
@@ -13241,12 +13374,13 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
             rt.fracHost->engine().setNumber("diffb", dynDiffB);
             rt.fracHost->engine().setNumber("stepsperframe", dynStepsPerFrame);
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap;
+            rt.fracCompiled = snap + songSchluessel();
         }
         feedAudio(rt.fracHost->engine());
         auto& e = rt.fracHost->engine();
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
         rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
         dynDiffA = rt.fracHost->engine().number("diffa");

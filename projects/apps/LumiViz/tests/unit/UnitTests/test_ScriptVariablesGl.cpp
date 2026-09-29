@@ -172,6 +172,64 @@ TEST_CASE("ScriptVariables: jede Tabellenvariable wird von der Laufzeit gebunden
     CHECK(checked > 60);
 }
 
+TEST_CASE("Song-Slot (S82): laeuft bei JEDEM Knoten mit Frame-Slot genau einmal je Songwechsel")
+{
+    // Der Song-Slot ist ein Feld am Knoten, nicht je Typ — und rund 25
+    // Skriptstellen im Renderer muessen ihn einzeln setzen und ausfuehren.
+    // Dieser Test haelt jede davon fest: fehlt eine, faellt ihr Typ hier auf.
+    static int argc = 1;
+    static char arg0[] = "UnitTests";
+    static char* argv[] = {arg0, nullptr};
+    QGuiApplication app(argc, argv);
+
+    QSurfaceFormat fmt;
+    fmt.setVersion(3, 3);
+    fmt.setProfile(QSurfaceFormat::CoreProfile);
+    QOpenGLContext ctx;
+    ctx.setFormat(fmt);
+    if (!ctx.create())
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    QOffscreenSurface surface;
+    surface.setFormat(ctx.format());
+    surface.create();
+    REQUIRE(surface.isValid());
+    REQUIRE(ctx.makeCurrent(&surface));
+
+    int checked = 0;
+    for (EffectParams params :
+         allAlternatives(std::make_index_sequence<std::variant_size_v<EffectParams>>{}))
+    {
+        if (!hatSongSlot(params)) continue;
+        fillCodeSlots(params);
+
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        leaf.params = params;
+        leaf.songCode = "zz_song=1;";
+        root.children.push_back(std::move(leaf));
+
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.initialize();
+        vis.resize(QSize(kSize, kSize));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, kSize, kSize);
+        vis.render(1.0f / 60.0f);  // kein Songwechsel: Song-Slot ruht
+        const std::uint64_t vorher = LuaScriptEngine::songRunCount();
+        MultiEffectVisualizer::notifySongChanged();
+        vis.render(1.0f / 60.0f);  // hier genau einmal
+        vis.render(1.0f / 60.0f);  // und nicht wieder
+        const std::uint64_t laeufe = LuaScriptEngine::songRunCount() - vorher;
+        CHECK_MESSAGE(laeufe == 1, std::string(effectTypeName(params))
+                                       << ": Song-Slot lief " << laeufe << "-mal statt einmal");
+        ++checked;
+    }
+    CHECK(checked > 70);  // Schutz gegen einen Test, der still nichts prueft
+}
+
 TEST_CASE("ScriptVariables: ISF-Regler lassen sich unter ihrem key per Skript setzen")
 {
     // Block E (S79). Die Sonde oben kann die Regler nicht pruefen — ihre Namen
