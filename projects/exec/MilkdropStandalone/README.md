@@ -37,6 +37,7 @@ S Screenshot · G Kalibrier-Raster · Esc beenden.
 | `--out DIR` | `%TEMP%/lumiviz_standalone` | Screenshot-Verzeichnis |
 | `--size WxH` | 800x600 | Fenster- = Rendergröße (physische Pixel; High-DPI-Skalierung ist im Werkzeug abgeschaltet) |
 | `--dump-shaders` | aus | übersetzte GLSL-Quellen nach `--out` |
+| `--fps-grenze N` | 0 = nur vsync | Bilder/s-Obergrenze (S81). Messläufe: 60 — am 240-Hz-Schirm sonst viermal mehr Last; das Bild hängt nur an der Bildnummer (dt fix 1/60), mit und ohne Grenze bitgleich geprüft |
 
 ### Startzustand
 

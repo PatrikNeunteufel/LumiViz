@@ -63,6 +63,7 @@
 #include <QAudioSink>
 #include <QCommandLineParser>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QImage>
@@ -182,6 +183,9 @@ public:
         setTitle(QStringLiteral("LumiViz MilkdropStandalone"));
     }
 
+    /// Bilder/s-Obergrenze (S81, --fps-grenze); 0 = nur vsync
+    void setFpsGrenze(int fps) { m_fpsGrenze = std::max(0, fps); }
+
     /// A/B-Wechsellauf (S67) aktivieren — Details im Datei-Kopf
     void configureAbRun(bool loeschen, int abFrames, bool audioNeustart)
     {
@@ -243,6 +247,7 @@ protected:
     void paintGL() override
     {
         if (m_viz == nullptr) return;
+        m_frameTakt.start();
         feedAudio();
         m_viz->render(1.0f / 60.0f);
         ++m_frameInPreset;
@@ -257,7 +262,22 @@ protected:
         {
             finishAutoPreset();
         }
-        if (!m_closing) update();  // Dauerschleife (vsync-getaktet)
+        if (m_closing) return;
+        // Dauerschleife, vsync-getaktet — auf einem 240-Hz-Schirm also bis 240
+        // Bilder/s. --fps-grenze (S81) bremst Messlaeufe auf das Noetige: das
+        // Bild haengt nur an der Bildnummer (dt fix 1/60), nicht an der Uhr —
+        // die Grenze spart Last, ohne die Messung zu aendern.
+        if (m_fpsGrenze > 0)
+        {
+            const qint64 rest = 1000 / m_fpsGrenze - m_frameTakt.elapsed();
+            QTimer::singleShot(static_cast<int>(std::max<qint64>(0, rest)), this, [this] {
+                if (!m_closing) update();
+            });
+        }
+        else
+        {
+            update();
+        }
     }
 
     bool event(QEvent* ev) override
@@ -579,6 +599,8 @@ private:
     int m_index = 0;
     bool m_auto = false;
     int m_autoFrames = 120;
+    int m_fpsGrenze = 0;           ///< S81: Bilder/s-Obergrenze, 0 = nur vsync
+    QElapsedTimer m_frameTakt;     ///< Dauer des laufenden Frames (fuer die Grenze)
     QString m_shotDir;
     int m_frameInPreset = 0;
     double m_time = 0.0;
@@ -736,6 +758,13 @@ int main(int argc, char* argv[])
     parser.addOption(optAudioGain);
     parser.addOption(optAudioStumm);
     parser.addOption(optMuster);
+    const QCommandLineOption optFpsGrenze(
+        QStringLiteral("fps-grenze"),
+        QStringLiteral("Bilder/s-Obergrenze (S81), 0 = nur vsync. Messlaeufe: 60 — "
+                       "auf einem 240-Hz-Schirm sonst 4x mehr Last; das Bild "
+                       "aendert sich nicht (dt fix 1/60)"),
+        QStringLiteral("N"), QStringLiteral("0"));
+    parser.addOption(optFpsGrenze);
     parser.process(app);
 
     lumi::synth::Muster muster = lumi::synth::Muster::Klassisch;
@@ -820,6 +849,7 @@ int main(int argc, char* argv[])
                               parser.isSet(optAudioNeustart));
     }
     window.setBlende(parser.isSet(optBlende));
+    window.setFpsGrenze(parser.value(optFpsGrenze).toInt());
     window.setAudioBeat(parser.isSet(optAudioBeat));
     window.setBeatHz(parser.value(optBeatHz).toDouble());
     window.setKlangfarbe(parser.isSet(optKlangfarbe));

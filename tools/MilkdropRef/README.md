@@ -62,6 +62,23 @@ Ohne Preset-Argument gibt die Exe die Kurzform dieser Liste aus.
 | `--zufall-lumiviz` | aus | Zufallsdaten wie LumiViz (S80, Abschnitt unten) |
 | `--mesh WxH` | 64×64 (Kern) | Warp-Mesh; `32x24` = Winamp-Original und LumiViz |
 
+### Log-Zeilen für den Harness (S81)
+
+- `[MilkdropRef] Adapter: <Grafikkarte>` — nach dem Anlegen des Geräts. Der
+  Harness prüft daran, dass Referenz und Prüfling auf derselben Karte laufen.
+- `[MilkdropRef] Shader: karte K, max M, Preset warp W comp C, warp ok comp ok`
+  — nach Frame 2 (der Kern lädt Presets über mehrere Frames). K = was das Gerät
+  kann, M = was der Kern nutzt, W/C = was das Preset verlangt (2 = ps_2_0,
+  3 = ps_2_x, 4 = ps_3_0).
+- `Feedback-Puffer: WxH (Fenster WxH), Saat 0x… [eingespeist]`.
+
+**Shader-Obergrenze:** Der Kern stellt `m_nMaxPSVersion_ConfigPanel = 3`
+voreingestellt (Kommentar „ps_3_0“, im Enum aber `MD2_PS_2_X`) — MilkdropRef
+setzt sie auf `-1` (auto: die Karte entscheidet). **Grafikkarte:** der Kern
+kompiliert Vertex-Shader immer als `vs_1_1`; die Radeon 610M zeichnet ps_3_0
+damit nicht. MilkdropRef steht deshalb dauerhaft auf der 4090
+(`UserGpuPreferences`, `GpuPreference=2`).
+
 ### Umgebungsvariablen
 
 | Variable | Wirkung |

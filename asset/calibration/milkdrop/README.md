@@ -7,6 +7,12 @@ Die Skripte in diesem Ordner stellen **MilkdropRef** (originaler MilkDrop3-Kern,
 nebeneinander. Methodik, Regeln und Vorbehalte:
 `projects/apps/LumiViz/docs/kalibrierung/INDEX.md` (§2.2 MilkDrop-Lauf).
 
+**Python:** Die Mess-Skripte mit dem **normalen** Python starten,
+`C:\Users\patri\AppData\Local\Programs\Python\Python312\python.exe` — nicht mit
+der Store-Fassung (`…\WindowsApps\…python.exe`, Standard im PATH). Die reicht
+die GPU-Wahl nicht an die gestarteten Werkzeuge weiter; der Harness bricht mit
+ihr ab.
+
 **Voraussetzungen:** beide Exes gebaut — MilkdropRef als Win32-Release
 (`tools/MilkdropRef/build/Release/`), der Standalone als Release-clang
 (`out/build/windows-ninja-release-clang/exec/MilkdropStandalone/bin/Release/`).
@@ -52,8 +58,49 @@ Ein Prozess je Preset und Seite, mehrere Frame-Marken, Montage
 | `--silence` | aus | Null-Signal |
 | `--saaten LISTE` | 0,0x5EED63 | Startwerte des Feedback-Puffers, auf beiden Seiten gesetzt; 0 = saatlos. Seit S81 speist MilkdropRef die Saat vor dem ersten Warp ein (vorher einen Frame zu spät). Vorbehalt: die Anzeige der Referenz zeichnet ihren Puffer leicht weich (1 px gestreckt, bilinear) — gesätes Rauschen früher Marken an der Montage beurteilen |
 | `--zufall-lumiviz` | aus | Referenz würfelt wie LumiViz — für Presets mit Zufall Pflicht |
+| `--karte 4090\|610m` | 4090 | Grafikkarte für Referenz **und** Prüfling (immer beide gleich), Abschnitt unten |
+| `--fortsetzen` | aus | abgebrochenen Lauf mit derselben `--out` fortsetzen: Marken mit Bild **und** Begleitdatei (`*_ref.json`/`*_auto.json`, gleiche Karte) werden übernommen |
+
+**Jeder Lauf zusätzlich (S81):** hält das Gerät wach (kein Standby, solange
+er läuft — Vorsorge), schreibt `gpu_protokoll_<Datum_Zeit>.csv` (je Sekunde Temperatur,
+Leistung, Takt, Auslastung, Drosselgründe; dazu CPU-Temperatur Tctl,
+CPU-Paketleistung, CPU-Last und GPU-Hotspot aus **LibreHardwareMonitor**, wenn
+dessen Webserver läuft — `C:\Users\patri\LibreHardwareMonitor`, als
+Administrator starten, Options → Remote Web Server → Run, Port 8085; sonst
+bleiben diese Spalten leer. Jede Zeile sofort auf die Platte, überlebt also
+einen Absturz) und bremst den Prüfling auf 60 Bilder/s
+(`--fps-grenze 60`; sonst bis 240 am 240-Hz-Schirm, Bild bitgleich).
+Anlass: harter Absturz mitten im Kalibrierlauf (29.09. 16:21, Kernel-Power 41
+ohne Bugcheck, im Betrieb unter Last auf der 4090, kein Standby) — Verdacht
+Notabschaltung durch Hitze/Stromversorgung; die 4090 meldet schon bei
+geringer Last „SW Thermal Slowdown“.
 | `--timeout S` | 180 | Sekunden je Lauf |
 | `--out DIR` | `out/milkref_compare` | Ausgabe |
+
+#### Grafikkarte und Shader-Stufen (`--karte`, S81)
+
+Referenz und Prüfling laufen **immer auf derselben Karte**, Standard ist die
+RTX 4090. Beide Exes (`MilkdropRef.exe`, der Release-clang-
+`MilkdropStandalone.exe`) stehen dafür dauerhaft auf `GpuPreference=2` in
+`HKCU\Software\Microsoft\DirectX\UserGpuPreferences`. `--karte 610m` stellt
+beide für den Lauf auf die Radeon 610M und danach zurück.
+
+Jeder Werkzeugstart prüft seine Karte an der Log-Zeile (Referenz
+„Adapter:“, Standalone „GL initialisiert: … | Renderer“). Läuft eine Seite auf
+der falschen Karte, **bricht der ganze Lauf ab** (Exit 3) — keine Zahlen aus
+gemischten Karten. Der Bericht nennt die gesehenen Adapter.
+
+Die Referenz meldet ihre Shader-Stufen (`Shader: karte K, max M, Preset warp
+W comp C`; 2 = ps_2_0, 3 = ps_2_x, 4 = ps_3_0). Spalte „Shader Ref“ im
+Bericht. **`REF-SHADER`** (kein Urteil) heißt: das Preset verlangt mehr, als der
+Kern nutzt oder die Karte kann, ein Shader fehlt — oder die Karte zeichnet
+ps_3_0 mit dem vs_1_1 des Kerns nicht (bekannt: Radeon 610M; dort blieben
+`Helix`, `Beauty` und die Starfield-edit-Familie schwarz, die 4090 zeichnet
+sie).
+
+Die Sonden (`spektrum_wave.py`, `comp_quellen.py`, `gitter_sonde.py`,
+`drift_sonde.py`) starten die Referenz über dieselbe Prüfung
+(`cm.ref_starten`) und erwarten die Standardkarte 4090.
 
 #### Formate als Messachse (`--formate`, S81)
 
@@ -64,7 +111,7 @@ lag die Abweichung bei 0,003, bei 4:3 bei 0,122. Ein Lauf in einem Format
 hätte das nie gezeigt.
 
 ```bash
-LUMIVIZ_REF_BILDSCHIRM=DISPLAY2 python asset/calibration/milkdrop/compare_milkref.py --formate aspekt,monitor --zufall-lumiviz
+LUMIVIZ_REF_BILDSCHIRM=DISPLAY2 /c/Users/patri/AppData/Local/Programs/Python/Python312/python.exe asset/calibration/milkdrop/compare_milkref.py --formate aspekt,monitor --zufall-lumiviz
 ```
 
 | Baustein | Formate | Was es aufdeckt |

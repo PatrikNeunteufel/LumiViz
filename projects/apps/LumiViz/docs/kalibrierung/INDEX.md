@@ -48,6 +48,7 @@ Messwerten belegt. Sie gelten formatübergreifend.
 | 11 | **Beide Seiten müssen im selben STARTZUSTAND beginnen.** | Bei MilkDrop streuen wir beim Kaltstart Rauschen in den Feedback-Puffer (`seedFeedbackNoise`, S63 — Verstärker-Presets sterben sonst), die Referenz startet mit genulltem VRAM. In den ersten Frames zeichnen wir also, während sie noch schwarz ist. Das erzeugt einen scheinbaren Befund pro Preset. Gemessen wird deshalb über eine **Reihe von Startwerten** auf beiden Seiten (`compare_milkref.py --saaten`, §2.2). ⚠️ **Falle:** `MilkdropStandalone` setzt `LUMIVIZ_MILKDROP_NOSEED` **selbst**, solange `--seed` fehlt (sein Prüfstands-Vertrag seit S64) — eine Env-Variable allein bleibt wirkungslos. In S75 waren dadurch drei „verschiedene" Seeds bit-identisch, und eine erste Messung meldete fälschlich „die Saat ändert nichts (≤0,006)". Erst `--seed` **plus** `LUMIVIZ_MILKDROP_SEED` wirkt; abgenommen an `Magma`: ohne/mit Saat 0,274, zwei Seeds untereinander 0,044 |
 | 12 | **Die Warmlaufphase der Referenz ist keine Messung.** | Der MilkDrop-Kern braucht Frames, bis überhaupt etwas im Bild steht: `Starfield` ist bei Frame 10 noch schwarz und liefert ab Frame 30 MAE 0,005. Wer die frühe Marke als Befund wertet, bekommt eine Liste von Scheinfunden (S75, erster Durchgang: 0 von 19 OK). `compare_milkref.py` verwirft eine Marke, in der die Referenz nicht zeichnet — **aber nur**, wenn eine spätere zeigt, dass sie danach zeichnet. Bleibt sie durchgehend stumm, ist der Unterschied echt |
 | 13 | **Das Format ist eine Messachse wie die Frame-Marke — Form und Größe getrennt variieren.** | Den Custom-Waves fehlte seit S39 der Aspect-Faktor des Originals (`m_fInvAspectY`). Jeder Lauf fand in 4:3 statt; dort war die Abweichung nur eine von vielen, und ein Sichttest in 16:9 hielt die Original-Streckung sogar für den Fehler. Erst der Vergleich 480×480 (0,003) gegen 640×480 (0,122) zeigte die Ursache in Minuten (S81). Gegenmittel: `compare_milkref.py --formate aspekt,monitor` (§2.2) — die Aspekt-Reihe bei gleicher Pixelzahl trennt Form-Fehler, das Monitorformat Größen-Fehler (dort rundet der Kern z. B. 734 auf 736) |
+| 14 | **Referenz und Prüfling laufen auf DERSELBEN Karte — und jede Messung prüft sie.** | Die „stummen“ Presets seit S75 (`Helix`, `Beauty`, Starfield-edit) waren kein Port-Fehler: MilkdropRef lief auf der Radeon 610M, die ps_3_0 mit dem vs_1_1 des Kerns still nicht zeichnet; auf der 4090 ist `Beauty` OK. Und die Store-Python reichte den GPU-Eintrag nicht weiter — trotz Eintrag landete die Referenz auf der 610M. Gegenmittel (S81): beide Exes stehen fest auf der 4090, `--karte` stellt beide gemeinsam um, jeder Start prüft seine Adapter-Zeile (Abbruch bei falscher Karte), die Referenz meldet ihre Shader-Stufen (`REF-SHADER`), Harness nur mit dem normalen Python (§2.2, Harness-README) |
 
 > Regel 1, 5 und 6 sind dieselbe Regel aus drei Richtungen: **die Metrik lügt
 > bei dünnen Inhalten.** Das Urteil fällt über Bild + Metrik + Verhalten über
@@ -276,8 +277,17 @@ Eigenheiten der Referenz, beide im Bild belegt:
       und die Starfield-edit-Familie bleiben trotzdem schwarz, auch gesät:
       der Kern paart ps_3_0 mit `vs_1_1` (`plugin.cpp:3350`), was D3D9 nicht
       erlaubt; die Referenz läuft auf der **AMD Radeon 610M** (Log-Zeile
-      „Adapter“). Verdacht: strenger Treiber zeichnet still nichts —
-      Gegenprobe auf der 4090 steht aus.
+      „Adapter“). **Gegenprobe auf der 4090 (S81, Registry-Eintrag nur für
+      den Lauf):** alle drei zeichnen, ohne Saat. Urteile: `The Beauty and
+      the Math(s)` **OK** (0,055/0,014/0,038, vorher 0,497 „stumm“), `Helix`
+      und Starfield-edit-Familie STARTABHAENGIG (beide Seiten streuen gleich,
+      saatlos gut: Helix 0,000/0,013/0,083). **Die „stummen“ Presets seit S75
+      waren ein Treiberfehler der 610M, kein Port-Fehler.**
+      ⚠️ **Falle:** Die Store-Fassung von Python
+      (`…\WindowsApps\PythonSoftwareFoundation…`) reicht den GPU-Eintrag
+      NICHT an gestartete Prozesse weiter (Paket-Kontext) — die Referenz
+      landete aus dem Harness trotz Eintrag auf der 610M. Mit dem normalen
+      Python (`…\Programs\Python\Python312\python.exe`) greift er.
 
 Bis dahin gilt für MilkDrop: Urteile nur an der **Montage**, und nur dort, wo
 beide Seiten sichtbar zeichnen.
@@ -356,7 +366,7 @@ Danach **alle vier Werkzeuge neu bauen** — die Tabelle ist einkompiliert.
 | Format | Messbar | Stand |
 |---|---|---|
 | **AVS** | ✅ vollständig | Methodik, Harness, Bisektion, Raster, Listen-Prüfstand. Laufende Runde über die 10 Schaufenster-Presets |
-| **MilkDrop** | ⚠️ Harness ja, Referenz noch nicht abgenommen | `compare_milkref.py` (§2.2) löst das Stapel-Problem. Aber **`MilkdropRef` liefert noch keine verlässlichen Bilder** — sporadisches Browser-Overlay + Erlöschen (§2.3). Die Zahlen des ersten Laufs (3 OK / 12 BEFUND / 4 PRUEFEN) sind deshalb **kein Treuestand**. **S81:** neu gefahren gegen die PCM-korrigierte Referenz, 22 Presets × 5 Formate (`--formate aspekt`, saatlos, `--zufall-lumiviz`) — 4:3: 4 OK / 8 PRUEFEN / 10 BEFUND, MAE f10/f30/f120 0,064 / 0,077 / 0,112 (Tabelle: `Offene_Punkte.md` §3, „Kalibrierlauf S81"). Danach an der Referenz behoben (§2.3): Saat einen Frame zu spät, Shader-Grenze ps_2_x; Anlaufregel auch für *fast* schwarz. Weiter **nicht abgenommen**: `PSVERSION=4`-Presets schwarz (vs_1_1 + ps_3_0 auf der 610M?), Anzeige 1 px gestreckt |
+| **MilkDrop** | ⚠️ Harness ja, Referenz noch nicht abgenommen | `compare_milkref.py` (§2.2) löst das Stapel-Problem. Aber **`MilkdropRef` liefert noch keine verlässlichen Bilder** — sporadisches Browser-Overlay + Erlöschen (§2.3). Die Zahlen des ersten Laufs (3 OK / 12 BEFUND / 4 PRUEFEN) sind deshalb **kein Treuestand**. **S81:** neu gefahren gegen die PCM-korrigierte Referenz, 22 Presets × 5 Formate (`--formate aspekt`, saatlos, `--zufall-lumiviz`) — 4:3: 4 OK / 8 PRUEFEN / 10 BEFUND, MAE f10/f30/f120 0,064 / 0,077 / 0,112 (Tabelle: `Offene_Punkte.md` §3, „Kalibrierlauf S81"). Danach an der Referenz behoben (§2.3): Saat einen Frame zu spät, Shader-Grenze ps_2_x; Anlaufregel auch für *fast* schwarz. Weiter **nicht abgenommen**: `PSVERSION=4`-Presets zeichnen nur auf der 4090 (vs_1_1 + ps_3_0, die 610M zeichnet nichts), Anzeige 1 px gestreckt |
 | **Shadertoy** | ❌ | nur GL-Smoke, kein Treue-Urteil |
 | **ISF** | ❌ | nur GL-Smoke, kein Treue-Urteil |
 

@@ -41,6 +41,8 @@ Hinweise:
   Zahlen ordnen ein.
 """
 import argparse
+import json
+import time
 import os
 import re
 import shutil
@@ -72,6 +74,8 @@ DEFAULT_PRESETS = (REPO / "asset/presets/milkdrop").resolve()
 # Port-Fehler vorliegt.
 # --zufall-lumiviz (S80): wird von main() gesetzt, run_ref reicht es weiter
 ZUFALL_LUMIVIZ = False
+# --fortsetzen (S81): vorhandene Bilder mit passender Begleitdatei uebernehmen
+FORTSETZEN = False
 
 OK_MAE = 0.08
 BEFUND_MAE = 0.15
@@ -124,6 +128,81 @@ def refwurzel_bauen(ziel: Path) -> Path:
     return presets
 
 
+# --- Grafikkarte und Shader-Stufen (S81) -------------------------------------------------
+# Referenz und Pruefling laufen auf DERSELBEN Karte; jeder Start prueft das an
+# seiner Log-Zeile. Erwartet wird die Kennung aus messlauf.KARTEN — Vorgabe
+# 4090 (Eintrag dauerhaft gesetzt), `--karte 610m` stellt beide Exes fuer den
+# Lauf um. Die Sonden starten die Referenz ueber ref_starten() und sind damit
+# ebenfalls abgesichert.
+ERWARTETE_KARTE = messlauf.KARTEN["4090"][0]
+MD2_PS = {0: "keine", 2: "ps_2_0", 3: "ps_2_x", 4: "ps_3_0", 5: "ps_4_0"}
+KARTEN_GESEHEN: dict[str, set] = {}   # Werkzeug -> gesehene Adapter (Bericht)
+LETZTE_REF_SHADER: dict | None = None  # Shader-Befund des letzten Referenzlaufs
+LETZTER_REF_ADAPTER = ""
+# Karten, die ps_3_0 zusammen mit vs_1_1 still NICHT zeichnen (der Kern
+# kompiliert Vertex-Shader immer als vs_1_1, plugin.cpp:3350). Die Stufen
+# selbst sehen dort unauffaellig aus (Karte ps_3_0, Shader uebersetzt) — nur
+# das Bild bleibt schwarz. Belegt S81: Radeon 610M (Helix, Beauty,
+# Starfield-edit), die 4090 zeichnet sie.
+PS3_MIT_VS11_SCHWARZ = ("610M",)
+
+
+class KartenFehler(RuntimeError):
+    """Ein Werkzeug lief auf der falschen Karte — der ganze Lauf ist ungueltig."""
+
+
+def karte_pruefen(wer: str, adapter: str | None) -> None:
+    if adapter is None:
+        raise KartenFehler(f"{wer}: keine Adapter-Zeile im Log — Karte unbekannt")
+    KARTEN_GESEHEN.setdefault(wer, set()).add(adapter.strip())
+    if ERWARTETE_KARTE not in adapter:
+        raise KartenFehler(
+            f"{wer} lief auf '{adapter.strip()}', erwartet '{ERWARTETE_KARTE}' "
+            "— GPU-Eintrag (UserGpuPreferences) pruefen; Store-Python?")
+
+
+def ref_starten(argumente: list, **kw) -> subprocess.CompletedProcess:
+    """MilkdropRef starten (ohne Konsole) und die Karte pruefen. Einzige
+    Startstelle der Referenz — der Harness und die Sonden nutzen sie."""
+    messlauf.pruefe_python()
+    kw.setdefault("capture_output", True)
+    kw.setdefault("text", True)
+    kw.setdefault("encoding", "utf-8")
+    kw.setdefault("errors", "replace")
+    proc = messlauf.run([str(REF_EXE)] + [str(a) for a in argumente], **kw)
+    m = re.search(r"\[MilkdropRef\] Adapter: (.*)", proc.stdout or "")
+    karte_pruefen("MilkdropRef", m.group(1) if m else None)
+    global LETZTER_REF_ADAPTER
+    LETZTER_REF_ADAPTER = m.group(1).strip()
+    return proc
+
+
+def shader_lesen(stdout: str) -> dict | None:
+    """„Shader: karte K, max M, Preset warp W comp C, warp ok comp ok" →
+    Stufen und Befund. `problem` ist gesetzt, wenn das Preset mehr verlangt,
+    als der Kern nutzt oder die Karte kann, oder ein Shader fehlt — dann
+    zeichnet die Referenz nicht das Original, und es gibt kein Urteil."""
+    m = re.search(r"Shader: karte (\d+), max (\d+), Preset warp (\d+) comp (\d+), "
+                  r"warp (\w+) comp (\w+)", stdout or "")
+    if not m:
+        return None
+    karte, mx, warp, comp = (int(m.group(i)) for i in range(1, 5))
+    problem = []
+    if max(warp, comp) > mx:
+        problem.append(f"Preset {MD2_PS.get(max(warp, comp))} > genutzt {MD2_PS.get(mx)}")
+    if mx > karte:
+        problem.append(f"genutzt {MD2_PS.get(mx)} > Karte {MD2_PS.get(karte)}")
+    for teil, ok in (("warp", m.group(5)), ("comp", m.group(6))):
+        if ok != "ok" and ((warp if teil == "warp" else comp) > 0):
+            problem.append(f"{teil}-Shader fehlt")
+    if max(warp, comp) >= 4 and any(k in LETZTER_REF_ADAPTER for k in PS3_MIT_VS11_SCHWARZ):
+        problem.append(f"ps_3_0 mit vs_1_1 zeichnet auf '{LETZTER_REF_ADAPTER}' nicht "
+                       "(--karte 4090)")
+    return {"karte": karte, "max": mx, "warp": warp, "comp": comp,
+            "text": f"w{warp}/c{comp} ≤{mx} (Karte {karte})",
+            "problem": "; ".join(problem)}
+
+
 def run_ref(milk: Path, frames: int, size: str, out: Path, refroot: Path,
             muster: str, silence: bool, timeout: int,
             seed: int = 0) -> Path:
@@ -141,12 +220,22 @@ def run_ref(milk: Path, frames: int, size: str, out: Path, refroot: Path,
     if ZUFALL_LUMIVIZ:
         extra.append("--zufall-lumiviz")
     out.mkdir(parents=True, exist_ok=True)
-    proc = messlauf.run(
-        [str(REF_EXE), str(kopie), "--frames", str(frames), "--size", size,
-         "--out", str(out)] + extra,
-        capture_output=True, text=True, encoding="utf-8", errors="replace",
-        timeout=timeout)
+    global LETZTE_REF_SHADER
     bmp = out / f"{milk.stem}_ref.bmp"
+    begleit = out / f"{milk.stem}_ref.json"
+    # --fortsetzen (S81): schon gerenderte Marke uebernehmen — aber nur, wenn
+    # ihre Begleitdatei dieselbe Karte nennt (sonst waere es ein Kartenmix)
+    if FORTSETZEN and bmp.exists() and begleit.exists():
+        info = json.loads(begleit.read_text(encoding="utf-8"))
+        if ERWARTETE_KARTE in info.get("adapter", ""):
+            KARTEN_GESEHEN.setdefault("MilkdropRef", set()).add(info["adapter"])
+            LETZTE_REF_SHADER = info.get("shader")
+            puffer = tuple(info["puffer"]) if info.get("puffer") else None
+            return bmp, info.get("stumm", False), puffer
+    proc = ref_starten(
+        [kopie, "--frames", frames, "--size", size, "--out", out] + extra,
+        timeout=timeout)
+    LETZTE_REF_SHADER = shader_lesen(proc.stdout)
     if not bmp.exists():
         raise RuntimeError(f"MilkdropRef rc={proc.returncode}, BMP fehlt\n"
                            f"{proc.stdout}{proc.stderr}")
@@ -162,6 +251,11 @@ def run_ref(milk: Path, frames: int, size: str, out: Path, refroot: Path,
     m = re.search(r"Feedback-Puffer: (\d+)x(\d+)", proc.stdout or "")
     if m:
         puffer = (int(m.group(1)), int(m.group(2)))
+    # Begleitdatei fuer --fortsetzen: was sonst nur im Log stand
+    begleit.write_text(json.dumps({
+        "adapter": LETZTER_REF_ADAPTER, "shader": LETZTE_REF_SHADER,
+        "stumm": stumm, "puffer": list(puffer) if puffer else None}),
+        encoding="utf-8")
     return bmp, stumm, puffer
 
 
@@ -192,15 +286,29 @@ def run_lumi(milk: Path, frames: int, size: str, out: Path, muster: str,
     if silence:
         extra.append("--silence")
     out.mkdir(parents=True, exist_ok=True)
+    png = out / f"{milk.stem}_auto.png"
+    begleit = out / f"{milk.stem}_auto.json"
+    if FORTSETZEN and png.exists() and begleit.exists():
+        info = json.loads(begleit.read_text(encoding="utf-8"))
+        if ERWARTETE_KARTE in info.get("renderer", ""):
+            KARTEN_GESEHEN.setdefault("MilkdropStandalone", set()).add(info["renderer"])
+            return png
+    # --fps-grenze 60 (S81): der Pruefling ist sonst an den 240-Hz-Schirm
+    # gekoppelt — viermal mehr Last ohne Nutzen; das Bild haengt nur an der
+    # Bildnummer. Die Referenz taktet ohnehin auf 60 (max_fps_w).
     proc = messlauf.run(
         [str(LUMI_EXE), str(milk), "--auto", "--frames", str(frames),
-         "--size", size, "--out", str(out)] + extra + saat_args,
+         "--size", size, "--out", str(out), "--fps-grenze", "60"]
+        + extra + saat_args,
         capture_output=True, text=True, encoding="utf-8", errors="replace",
         timeout=timeout, env=env)
-    png = out / f"{milk.stem}_auto.png"
+    # Gleiche Karte wie die Referenz (S81): „GL initialisiert: <Version> | <Renderer>"
+    m = re.search(r"GL initialisiert: .*\| (.*)", proc.stdout or "")
+    karte_pruefen("MilkdropStandalone", m.group(1) if m else None)
     if not png.exists():
         raise RuntimeError(f"MilkdropStandalone rc={proc.returncode}, PNG fehlt\n"
                            f"{proc.stdout}{proc.stderr}")
+    begleit.write_text(json.dumps({"renderer": m.group(1).strip()}), encoding="utf-8")
     return png
 
 
@@ -230,6 +338,13 @@ def urteil_bilden(marken: list[dict]) -> tuple[str, str]:
     if any(m["ref_stumm"] for m in marken):
         return "REF-STUMM", ("MilkdropRef hat das Preset nicht geladen — "
                              "kein Referenzbild, kein Urteil")
+    # S81: verlangt das Preset mehr Shader-Stufe, als der Kern nutzt oder die
+    # Karte kann (oder fehlt ein Shader), zeichnet die Referenz nicht das
+    # Original — Helix & Co. blieben so auf der 610M schwarz
+    for m in marken:
+        sh = m.get("ref_shader")
+        if sh and sh["problem"]:
+            return "REF-SHADER", f"Referenz-Shader: {sh['problem']} — kein Urteil"
     # Zeigt KEINE Seite etwas, prueft die Probe nichts. Das ist ausdruecklich
     # kein Bestehen: ein untauglicher Pruefstand sieht aus wie ein gruener.
     if all(m["tot_ref"] and m["tot_lumi"] for m in marken):
@@ -327,7 +442,8 @@ def gesamturteil(je_saat: dict, bilder: dict, saaten: list,
                 f"Renderer ({unterschied:.3f}) — kein Treue-Urteil moeglich")
 
     # Sonst das schlechteste Einzelurteil, mit dem Startwert, der es ausloest.
-    rang = ["FEHLER", "REF-STUMM", "BEFUND", "PRUEFEN", "BEIDE-STUMM", "OK"]
+    rang = ["FEHLER", "REF-STUMM", "REF-SHADER", "BEFUND", "PRUEFEN",
+            "BEIDE-STUMM", "OK"]
     schlecht = min(urteile, key=lambda u: rang.index(u) if u in rang else 0)
     for s in saaten:
         if s in je_saat and je_saat[s][0] == schlecht:
@@ -379,9 +495,20 @@ def main() -> int:
                          "S80): Rausch-Texturen, rand_preset/rot_*, EEL-rand ab "
                          "Prozessstart. Macht Presets mit Zufall erst vergleichbar")
     ap.add_argument("--out", type=Path, default=REPO / "out/milkref_compare")
+    ap.add_argument("--fortsetzen", action="store_true",
+                    help="S81: abgebrochenen Lauf mit derselben --out fortsetzen — "
+                         "Marken, deren Bilder samt Begleitdatei (gleiche Karte) "
+                         "schon da sind, werden uebernommen statt neu gerendert")
+    ap.add_argument("--karte", default="4090", choices=sorted(messlauf.KARTEN),
+                    help="S81: Grafikkarte fuer Referenz UND Pruefling (beide "
+                         "gleich). 4090 = Vorgabe; 610m bei Bedarf — der Lauf "
+                         "stellt beide Exes um und danach zurueck. Auf der 610M "
+                         "zeichnet der Kern ps_3_0-Presets nicht (REF-SHADER "
+                         "bzw. schwarz)")
     args = ap.parse_args()
-    global ZUFALL_LUMIVIZ
+    global ZUFALL_LUMIVIZ, FORTSETZEN
     ZUFALL_LUMIVIZ = args.zufall_lumiviz
+    FORTSETZEN = args.fortsetzen
 
     for exe, name in ((REF_EXE, "MilkdropRef (tools/MilkdropRef, -A Win32)"),
                       (LUMI_EXE, "MilkdropStandalone (build-ninja-release-clang)")):
@@ -404,6 +531,32 @@ def main() -> int:
     marken = [int(f) for f in str(args.frames).split(",") if f.strip()]
     saaten = [int(s, 0) for s in str(args.saaten).split(",") if s.strip()]
     out: Path = args.out.resolve()
+
+    # Karte (S81): beide Exes fuer den Lauf auf dieselbe Karte stellen, danach
+    # den vorherigen Eintrag wiederherstellen; jeder Start prueft seinen
+    # Adapter. Falsche Karte = ganzer Lauf ungueltig → Abbruch statt Zahlen.
+    messlauf.pruefe_python()
+    global ERWARTETE_KARTE
+    try:
+        out.mkdir(parents=True, exist_ok=True)
+        # Je Start eine eigene Datei — nvidia-smi ueberschreibt sonst den Verlauf
+        # eines abgebrochenen Laufs, sobald --fortsetzen startet
+        protokoll_datei = out / f"gpu_protokoll_{time.strftime('%Y%m%d_%H%M%S')}.csv"
+        with messlauf.karte(args.karte, [REF_EXE, LUMI_EXE]) as kennung, \
+                messlauf.wach_halten(), \
+                messlauf.gpu_protokoll(protokoll_datei) as protokoll:
+            ERWARTETE_KARTE = kennung
+            print(f"Karte: {args.karte} (Referenz und Pruefling)"
+                  + (f" — GPU-Protokoll: {protokoll_datei.name}" if protokoll else ""),
+                  flush=True)
+            return vergleichen(presets, marken, saaten, args, out)
+    except KartenFehler as e:
+        print(f"ABBRUCH: {e}", flush=True)
+        return 3
+
+
+def vergleichen(presets: list, marken: list, saaten: list, args, out: Path) -> int:
+    """Ein Format (`--size`) oder mehrere (`--formate`) — Rueckgabe = Exit-Code."""
     if not args.formate:
         _, fehler = lauf(presets, args.size, marken, saaten, args, out)
         return 1 if fehler else 0
@@ -452,7 +605,8 @@ def formatbericht(presets: list, formate: list, ergebnisse: dict, saaten: list,
             _stem, je_saat, urteil, _grund = z
             mae = fruehe_mae(je_saat, saaten)
             zellen.append(f"{urteil} {mae:.3f}" if mae is not None else urteil)
-            if mae is not None and urteil not in ("FEHLER", "REF-STUMM", "BEIDE-STUMM"):
+            if mae is not None and urteil not in ("FEHLER", "REF-STUMM", "REF-SHADER",
+                                                  "BEIDE-STUMM"):
                 maes.append(mae)
             for s in saaten:
                 for w in (je_saat[s][2] if s in je_saat else []):
@@ -539,6 +693,7 @@ def lauf(presets: list, size: str, marken: list, saaten: list, args,
                         "hell_lumi": kl["lumaMax"] > LEBT_MAX,
                         "ref_mean": kr["lumaMean"],
                         "ref_stumm": ref_stumm,
+                        "ref_shader": LETZTE_REF_SHADER,
                         # S81: der Kern rundet krumme Kanten (734 -> 736);
                         # der Format-Bericht nennt das je Format
                         "puffer_ref": ref_puffer,
@@ -549,6 +704,8 @@ def lauf(presets: list, size: str, marken: list, saaten: list, args,
                             out / "montage" / f"{milk.stem}_s{seed:x}_f{n}.png")
                 je_saat[seed] = urteil_bilden(werte) + (werte,)
             urteil, grund = gesamturteil(je_saat, bilder, saaten, marken)
+        except KartenFehler:
+            raise  # falsche Karte: nicht je Preset weitermachen, ganzer Lauf ungueltig
         except Exception as e:  # noqa: BLE001 — je Preset weitermachen
             fehler += 1
             urteil, grund = "FEHLER", str(e).splitlines()[0]
@@ -573,23 +730,33 @@ def lauf(presets: list, size: str, marken: list, saaten: list, args,
         f.write("`STARTABHAENGIG` heisst: das Bild haengt staerker am "
                 "Startzustand als die Renderer voneinander abweichen — dort "
                 "ist kein Treue-Urteil zu holen.\n\n")
+        # S81: Karte beider Seiten (geprueft) und Shader-Stufen der Referenz
+        f.write(f"Karte `{args.karte}` — gesehen: " + "; ".join(
+            f"{wer}: {', '.join(sorted(a))}" for wer, a in sorted(KARTEN_GESEHEN.items()))
+            + ". Shader-Spalte: Preset-Stufen warp/comp ≤ vom Kern genutzt "
+              "(Karte kann) — 2 = ps_2_0, 3 = ps_2_x, 4 = ps_3_0. "
+              "`REF-SHADER` = die Referenz zeichnet nicht das Original.\n\n")
         kopf = [f"MAE 0x{s:X} f{n}" for s in saaten for n in marken]
-        f.write("| Preset | " + " | ".join(kopf) + " | Urteil | Anmerkung |\n")
-        f.write("|---" * (len(kopf) + 3) + "|\n")
+        f.write("| Preset | " + " | ".join(kopf) + " | Shader Ref | Urteil | Anmerkung |\n")
+        f.write("|---" * (len(kopf) + 4) + "|\n")
         for stem, je_saat, urteil, grund in zeilen:
             spalten = []
+            shader = "–"
             for s in saaten:
                 maes = ({w["frames"]: w["mae"] for w in je_saat[s][2]}
                         if s in je_saat else {})
                 spalten += [f"{maes[n]:.3f}" if n in maes else "–"
                             for n in marken]
+                for w in (je_saat[s][2] if s in je_saat else []):
+                    if w.get("ref_shader"):
+                        shader = w["ref_shader"]["text"]
             f.write(f"| {stem} | " + " | ".join(spalten)
-                    + f" | {urteil} | {grund} |\n")
+                    + f" | {shader} | {urteil} | {grund} |\n")
         f.write("\nMontagen (ref | lumiviz | 4x-Diff): `montage/`\n")
     print(f"\nReport: {report}")
     ok = sum(1 for z in zeilen if z[2] == "OK")
     befunde = sum(1 for z in zeilen if z[2] == "BEFUND")
-    stumm = sum(1 for z in zeilen if z[2] in ("REF-STUMM", "BEIDE-STUMM"))
+    stumm = sum(1 for z in zeilen if z[2] in ("REF-STUMM", "REF-SHADER", "BEIDE-STUMM"))
     print(f"{ok}/{len(zeilen)} OK, {befunde} Befunde, {stumm} ohne Urteil "
           f"(stumm), {fehler} Fehler")
     return zeilen, fehler

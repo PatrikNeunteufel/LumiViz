@@ -1745,14 +1745,25 @@ Montagen (Referenz | neu | alt): Scratchpad S80 `strato/out/`.
      Referenz ist in **allen** Marken ganz schwarz (mean 0, max 0), auch
      gesät. Gemeinsam: `PSVERSION=4` (ps_3_0). Das „FORMATABHAENGIG“ der
      Starfield-2-Familie (f10 1:1 0,197 … hoch 0,003) misst nur, wie viel
-     WIR je Format schon zeichnen — kein Urteil möglich. Ursache vermutlich
-     im Messgerät (INDEX §2.3 Punkt 3: vs_1_1 + ps_3_0 auf der 610M).
+     WIR je Format schon zeichnen — kein Urteil möglich. **Ursache
+     gefunden (S81): Treiber der 610M** — der Kern paart ps_3_0 mit vs_1_1,
+     die 610M zeichnet dann nichts. Auf der 4090 (INDEX §2.3 Punkt 3):
+     `Beauty` **OK** (f120 0,038), `Helix`/Starfield-edit STARTABHAENGIG,
+     saatlos gut (Helix 0,000/0,013/0,083).
    - **Große Abweichung, formatunabhängig:** `Twisted`/`Twisted b` f30
      0,29 (breiter = kleiner: 3,4:1 0,10), `Playaround` f30 0,25,
      `Dancing Hearts` f10 0,21 (Farben, Aufgabe 3), `Neomtwister`
      0,196/0,096/0,071, `Lasershow` f10 0,12.
    - **Schwankend:** `Magma`/`Magma 2` f120 0,01–0,15 je Format (f10/f30
      ≈ 0).
+
+   ⬜ **Neu fahren auf der 4090 (Entscheid Patrik S81: 4090 = Standard-
+   Referenz, Referenz und Prüfling auf derselben Karte).** Stand Ende S81:
+   4:3 für die ersten 11 Presets fertig (beide Startwerte), 1:1 zu 80 / 132
+   Marken; Rest in Teilläufen zu 11 Presets (Hitzewächter — die CPU dieses
+   Geräts läuft schon im Leerlauf bei 85–97 °C). Ausgabe
+   `out/milkref_kalibrierung_S81_4090/`, Plan im Handover. Die 610M-Tabelle
+   oben bleibt bis dahin stehen.
 
    Beobachtung: Die MAE fällt mit der Breite (16:9, 3,4:1 kleiner) — bei den
    meisten Presets liegt der Inhalt in der Mitte, breite Formate haben mehr

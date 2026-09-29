@@ -147,7 +147,7 @@ def ref(milk: Path) -> np.ndarray:
     shutil.copy2(milk, kopie)
     out = OUT / "ref"
     out.mkdir(parents=True, exist_ok=True)
-    cm.messlauf.run([str(cm.REF_EXE), str(kopie), "--frames", str(FRAMES), "--size", SIZE,
+    cm.ref_starten([str(kopie), "--frames", str(FRAMES), "--size", SIZE,
                     "--out", str(out), "--zufall-lumiviz", "--mesh", "32x24"],
                    capture_output=True)
     return cm.load_rgb(out / f"{milk.stem}_ref.bmp")

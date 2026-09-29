@@ -819,8 +819,11 @@ int main(int argc, char** argv)
             // Presets ueber LoadPresetTick in mehreren Frames laedt.
             if (f == 2)
             {
-                std::printf("[MilkdropRef] Shader: max %d, Preset warp %d comp %d, "
-                            "warp %s comp %s\n", g_plugin.m_nMaxPSVersion,
+                // Stufen als MD2_PS_*: 2 = ps_2_0, 3 = ps_2_x, 4 = ps_3_0.
+                // „karte" = was das Geraet meldet, „max" = was der Kern nutzt
+                std::printf("[MilkdropRef] Shader: karte %d, max %d, Preset warp %d "
+                            "comp %d, warp %s comp %s\n", g_plugin.m_nMaxPSVersion_DX9,
+                            g_plugin.m_nMaxPSVersion,
                             g_plugin.m_pState->m_nWarpPSVersion,
                             g_plugin.m_pState->m_nCompPSVersion,
                             g_plugin.m_shaders.warp.ptr ? "ok" : "FEHLT",
