@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.11.0
-> **Datum:** 2026-09-28
+> **Version:** 1.12.0
+> **Datum:** 2026-09-29
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -484,6 +484,36 @@ der Custom-Waves (`value1`/`value2`) entstehen.
   (identische Werte).
 - **LumiViz (bisher)** — das Spektrum der App mit geschätzten Faktoren; der
   Klang, den MilkDrop-Presets in LumiViz bis Session 80 hatten.
+
+**Seitenverhältnis (Waves)** (Session 81): wie die Custom-Waves ihre
+x/y-Werte aufs Bild legen.
+
+- **Original (MilkDrop)** — **Standard**, auch für ältere gespeicherte
+  Ketten. Wie MilkDrop: Auf einem Breitbild wird die Kurve senkrecht um das
+  Seitenverhältnis gestreckt, um die Bildmitte (4:3 um 4/3, 16:9 um 16/9).
+  Ein Wert `y = 0.1` liegt dann schon unter dem unteren Rand. So haben die
+  Autoren ihre Presets gesehen; auf quadratischem Bild ändert sich nichts.
+- **LumiViz (bisher)** — x/y sind Anteile des Bildes (0 = linker/unterer,
+  1 = rechter/oberer Rand), die Kurve bleibt ungestreckt im Bild. Der Look
+  von Session 39 bis 80.
+
+### Alte Verhaltensweisen zurückholen („bisher"-Schalter)
+
+Wenn LumiViz einem Original-Verhalten näherkommt und sich das Bild dadurch
+sichtbar ändert, wird das neue Verhalten **Standard** — das alte bleibt über
+einen Schalter erreichbar, damit eigene Ketten ihren gewohnten Look behalten
+können. Alle diese Schalter im Überblick (Milkdrop-Node, **Parameter**-Sektion):
+
+| Schalter | Standard | „Bisher" holt zurück | Seit |
+|---|---|---|---|
+| **Skript-Zufall** | Original (ns-eel2) | LumiViz (bisher): ganze Zahlen aus `rand()` | Session 80 |
+| **Audio** | Original (MilkDrop) | LumiViz (bisher): App-Spektrum mit geschätzten Faktoren | Session 80 |
+| **Seitenverhältnis (Waves)** | Original (MilkDrop) | LumiViz (bisher): Custom-Waves ungestreckt, bildfüllend | Session 81 |
+| **Gestaltung → Voreinstellung „Weicher Sog ↖"** | aus | den leichten Sog nach oben links samt Weichzeichnen, den jedes MilkDrop-Preset bis Session 80 hatte (damals ein Versatzfehler, heute ein Gestaltungsmittel) | Session 80 |
+
+**Nicht verwechseln:** Das **Regelwerk „Legacy"** oben ist *kein* „bisher"-
+Schalter — es ist die original-treue Betriebsart (D3D9-Verhalten nachgebildet)
+und ohnehin Standard.
 
 ### Gestaltung: Drift und Weichzeichnen (kein Original-Verhalten)
 

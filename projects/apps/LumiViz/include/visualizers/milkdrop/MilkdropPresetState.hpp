@@ -278,6 +278,14 @@ struct PresetState
     /// (Entscheid Patrik a, S80 — Messreihe: mitgelieferte Presets f10
     /// 0,087 → 0,055, f120 0,144 → 0,118).
     bool audioOriginal = true;
+    /// Seitenverhaeltnis der Custom-Waves (S81): true = wie das Original —
+    /// x/y um 1/aspect gestreckt (`milkdropfs.cpp:2612`, m_fInvAspectX/Y), bei
+    /// 4:3 y um 4/3, bei 16:9 um 16/9 um die Bildmitte; false = LumiViz bisher
+    /// (bildschirmfuellend, x/y = Bildschirm-Anteile 0..1, Stand S39–S80).
+    /// Standard Original, auch fuer gespeicherte Ketten ohne das Feld
+    /// (Entscheid Patrik a, S81 — Spektrum-Wave-Sonde 640x480: Hoehe 0,021
+    /// Original gegen 0,100 bisher, 0,023 mit Streckung; quadratisch 0,003).
+    bool aspektOriginal = true;
 
     // --- Kaltstart (S76; Grundstein der S75-Idee "Preset-Seed") ---------------------------
     bool kaltstartSaat = true;      ///< Rausch-Saat beim Kaltstart (heutiges

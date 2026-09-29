@@ -2718,6 +2718,7 @@
                         },
                         "preset": {
                             "additiveWaves": false,
+                            "aspektOriginal": true,
                             "audioOriginal": true,
                             "basicWaveEnabled": true,
                             "blur1EdgeDarken": 0.25,

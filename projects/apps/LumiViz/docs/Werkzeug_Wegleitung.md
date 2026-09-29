@@ -36,7 +36,10 @@ einmal echte Arbeitszeit gekostet, mehrere davon an einem einzigen Nachmittag.
 **Alle Argumente und Umgebungsvariablen** stehen je Werkzeug in dessen README:
 [MilkdropRef](../../../../tools/MilkdropRef/README.md) ·
 [MilkdropStandalone](../../../exec/MilkdropStandalone/README.md) ·
-[MilkDrop-Harnesse und Sonden](../../../../asset/calibration/milkdrop/README.md).
+[MilkDrop-Harnesse und Sonden](../../../../asset/calibration/milkdrop/README.md) ·
+[AvsRef](../../../../tools/AvsRef/README.md) ·
+[AvsStandalone](../../../exec/AvsStandalone/README.md) ·
+[AVS-Harnesse und Kalibrier-Presets](../../../../asset/calibration/avs/README.md).
 
 **Merksatz:** Die Standalones stellen die App *nach*. Sie sind nicht die App —
 was die App aus Einstellungen zieht, müssen sie als Schalter bekommen.
@@ -292,18 +295,21 @@ Bisektion und Verifikationsgürtel steht in
 
 ### Referenzläufe auf einem festen Bildschirm
 
-MilkdropRef und MilkdropStandalone öffnen ihr Fenster sonst dort, wo Windows
-bzw. Qt es hinlegen — meist mitten auf den Arbeitsbildschirm. Seit S81 lesen
-beide `LUMIVIZ_REF_BILDSCHIRM`:
+Die Referenz-Werkzeuge öffnen ihr Fenster sonst dort, wo Windows bzw. Qt es
+hinlegen — meist mitten auf den Arbeitsbildschirm. Seit S81 lesen alle vier
+`LUMIVIZ_REF_BILDSCHIRM`:
 
 ```bash
 LUMIVIZ_REF_BILDSCHIRM=DISPLAY2 python asset/calibration/milkdrop/compare_milkref.py
+LUMIVIZ_REF_BILDSCHIRM=DISPLAY2 python asset/calibration/avs/compare_avsref.py
 ```
 
 Wert: `DISPLAYn` — die Ziffer, die Windows unter Einstellungen → System →
 Anzeige → „Identifizieren“ zeigt — oder ein Index (0-basiert). Dauerhaft:
 `setx LUMIVIZ_REF_BILDSCHIRM DISPLAY2`. Die Platzierung ändert nur den Ort,
-nicht Größe oder Bild. AvsRef und AvsStandalone lesen die Variable (noch) nicht.
+nicht Größe oder Bild. MilkdropRef, MilkdropStandalone und AvsStandalone
+platzieren ihr Fenster danach; AvsRef rendert fensterlos und meldet die
+Variable nur als „ohne Wirkung".
 
 **Wichtig:** In zwei Größen vergleichen. Eine kleine Fläche (320×240) versteckt
 größenabhängige Fehler — genau die Klasse Fehler, die auch Falle 2.2 erzeugt.

@@ -20,8 +20,35 @@ cmake --build tools/AvsRef/build --config Release
 ## Nutzung
 
 ```bash
-tools/AvsRef/build/Release/AvsRef.exe <preset.avs|ordner> [--frames N] [--out DIR] [--size WxH] [--save-every M] [--beat-period N]
+tools/AvsRef/build/Release/AvsRef.exe <preset.avs|ordner> [--frames N] [--out DIR] [--size WxH] [--save-every M] [--beat-period N] [--tick-hz N] [--silence] [--ape-dir DIR] [--audio-muster klassisch|musik]
 ```
+
+Ohne Preset-Argument gibt die Exe eine Kurzform der Liste aus. Die
+Mess-Skripte, die diese Exe aufrufen:
+[`asset/calibration/avs/README.md`](../../asset/calibration/avs/README.md).
+
+### Argumente
+
+| Argument | Vorgabe | Wirkung |
+|---|---|---|
+| `<preset.avs\|ordner>` | — (Pflicht) | ein Preset oder alle `.avs` eines Ordners (sortiert). ANSI-Programm: Pfade außerhalb cp1252 kommen als `?` an (`compare_avsref.py` legt dafür ASCII-Kopien an) |
+| `--frames N` | 120 | Frames je Preset; der letzte wird als BMP gespeichert |
+| `--out DIR` | `.` | Zielordner für `<datei_mit_unterstrich>_f<NNNN>_ref.bmp` |
+| `--size WxH` | 800x600 | Rendergröße (min. 64×64) |
+| `--save-every M` | 0 = nur letzter | zusätzlich jeden M-ten Frame speichern (0-basiert gezählt, Dateiname 1-basiert — wie AvsStandalone) |
+| `--beat-period N` | 0 = Detektor | exakt alle N Frames ein Beat statt Original-Onset + `refineBeat`; schlägt auch die Beat-Spur des Musters `musik` |
+| `--tick-hz N` | 0 = Wanduhr | EEL-`gettime()` und AVI-Vorschub als Frame-Uhr (`frame·1000/N` ms) — ohne sie messen gettime-Presets die Batch-Geschwindigkeit (S59/S60) |
+| `--silence` | aus | Stille statt Kalibrier-Signal |
+| `--ape-dir DIR` | `<exe>\ape` (leer) | APE-Sammlung, deren Plugin-DLLs der Kern lädt; ohne sie rendert die Referenz keine APEs |
+| `--audio-muster klassisch\|musik` | klassisch | Muster des synthetischen Signals (`SynthAudio.hpp`, gemeinsam mit AvsStandalone); im Muster `musik` kommt der Beat aus der Beat-Spur der Vorlage |
+
+### Umgebungsvariablen
+
+| Variable | Wirkung |
+|---|---|
+| `LUMIVIZ_REF_BILDSCHIRM` | **ohne Wirkung** (S81): AvsRef rendert fensterlos, es gibt nichts zu platzieren. Ist die Variable gesetzt, meldet das Log `LUMIVIZ_REF_BILDSCHIRM=… ohne Wirkung: AvsRef rendert fensterlos`. Die Gegenseite AvsStandalone legt ihr Fenster danach auf den festen Monitor; Wert und Bestimmung des Monitors: [`tools/MilkdropRef/README.md`](../MilkdropRef/README.md) |
+| `AVSREF_DEBUG` | Diagnose auf stderr: Lade-Trace, Frame-Trace, EEL-Selbsttest (`n=200`) |
+| `AVSREF_EELTEST` | Funktions-Selbsttest aller ns-eel-Funktionen (Compile + JIT gegen die C-Bibliothek), vorab die Fragmentgrößen der JIT-Tabelle. Eigener Schalter, weil er den Prozess bei einem JIT-Schaden absichtlich sterben lässt |
 
 - **Audio:** synthetisch, byte-identisch zur LumiViz-Seite — Signal wie
   `AvsStandalone::feedSyntheticAudio` (frame-getaktet, t = frame/60), Byte-
@@ -32,7 +59,6 @@ tools/AvsRef/build/Release/AvsRef.exe <preset.avs|ordner> [--frames N] [--out DI
   erzwingt exakt alle N Frames einen Beat.
 - **Ausgabe:** je Preset der letzte Frame als 32-bpp-BMP (top-down, BGRX,
   Alpha genullt) + `mean RGB`/`Luma min/max` im AvsStandalone-Format.
-- `AVSREF_DEBUG=1` aktiviert Diagnose auf stderr (Lade-Trace, EEL-Selbsttest).
 
 ## patched/ — warum welche Datei
 

@@ -100,6 +100,9 @@ void refBildschirmAnwenden(QWindow& window)
     {
         if (screen->geometry().topLeft() != ecke) continue;
         window.setScreen(screen);
+        // create() zuerst: erst das native Fenster kennt seine Rahmenmasse —
+        // sonst ragt die Titelleiste 31 px ueber den Monitor hinaus (S81)
+        window.create();
         window.setFramePosition(screen->availableGeometry().topLeft());
         return;
     }

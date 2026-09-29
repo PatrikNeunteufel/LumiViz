@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.76.0
-> **Datum:** 2026-09-29 (Session 80)
+> **Version:** 1.77.0
+> **Datum:** 2026-09-29 (Session 81)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -1686,10 +1686,34 @@ Montagen (Referenz | neu | alt): Scratchpad S80 `strato/out/`.
    Custom-Wave-Gruppe liegt insgesamt noch hoch — dort wirken weitere,
    ungeklärte Abweichungen (u. a. die y-Grundlinie der Waves, s. unten).
 
-   ⬜ **Neu offen:** (b) In der
-   Spektrum-Wave-Sonde liegt die Grundlinie der Original-Kurve tiefer als
-   bei uns, bei gleicher Form — y-Abbildung der Custom-Waves prüfen (die
-   Spektrumwerte selbst sind per Test exakt).
+   ✅ **Geklärt und umgesetzt (S81, Entscheid Patrik a): (b) y-Grundlinie
+   der Custom-Waves** — das Original streckt x/y um `m_fInvAspectX/Y`
+   (`milkdropfs.cpp:2612`), bei 4:3 y um 4/3 um die Bildmitte; wir liessen
+   den Faktor seit S39 bewusst weg (Kommentar „Referenz rechnet quadratisch"
+   war falsch, der Puffer des Originals ist fenstergross). Beleg
+   `spektrum_wave.py`: 480×480 Abweichung 0,003 (kein Unterschied), 640×480
+   Wellenform-Probe 0,122 → **0,003** mit Streckung. Schalter
+   `PresetState.aspektOriginal` „Seitenverhältnis (Waves)“, Standard
+   Original. **Messreihe S81** (22 Presets mit Custom-Wave = die ersten 20
+   aus `asset/Milkdrop3/presets` + R030 + Pixies Party 8.4; saatlos,
+   `--zufall-lumiviz`), bisher → Original:
+
+   | Größe | Frame 10 | Frame 30 | Frame 120 |
+   |---|---|---|---|
+   | 320×240 | 0,171 → 0,174 (0/3) | 0,235 → 0,235 (3/1) | 0,196 → 0,194 (3/2) |
+   | 640×480 | 0,150 → 0,157 (0/2) | 0,225 → 0,225 (4/1) | 0,179 → 0,177 (2/1) |
+
+   In dieser Gruppe **kaum messbar** — die meisten Waves liegen nahe der
+   Mitte oder bewegen sich im Rückkopplungsrauschen; die Gruppe wird von
+   anderen Abweichungen beherrscht (10 BEFUND, schon ab Frame 10). Einzelfälle
+   streuen gegenläufig (`R030` f120 320: 0,281 → 0,248, 640: 0,356 → 0,405;
+   `Gin Tonic on Ice 004` f10 640: 0,101 → 0,186 — Montage: Unterschied in
+   Ringen/Echo, die Wave selbst liegt bei y ≈ 0,48). Der Treue-Beleg ist die
+   Sonde, nicht diese Gruppe.
+
+   ⬜ **Neu offen (S81):** `fishbrain and flexi - lovecraft [mr understatement]
+   [organic aftermath]` — MilkdropRef bricht mit rc=2 ab (BMP fehlt), in
+   beiden Größen; Ursache nicht untersucht.
 
 ### ✅ Y-Achse war invertiert — Shapes, Wellenformen und Comp-Shader (S75, behoben)
 

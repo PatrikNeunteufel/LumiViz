@@ -12,6 +12,66 @@ Minimal-Presets je Befund-Cluster aus `docs/visuals/AVS_Sichttest_Protokoll.md`
   gegen den Zwilling. Abweichung = Übersetzung hat sich geändert — gewollt
   (Fix → nach Review `--refreeze`) oder Regression.
 
+## Referenzläufe — Harnesse
+
+Die Harnesse stellen **AvsRef** (originaler vis_avs-Kern,
+[`tools/AvsRef/README.md`](../../../tools/AvsRef/README.md)) und
+**AvsStandalone** (unser Renderpfad,
+[`projects/exec/AvsStandalone/README.md`](../../../projects/exec/AvsStandalone/README.md))
+nebeneinander. Methodik: `projects/apps/LumiViz/docs/visuals/AVS_Kalibrier_Methodik.md`.
+
+**Voraussetzungen:** beide Exes gebaut — AvsRef als Win32-Release
+(`tools/AvsRef/build/Release/`), der Standalone als Release-clang
+(`out/build/windows-ninja-release-clang/exec/AvsStandalone/bin/Release/`).
+Die Pfade stehen in `compare_avsref.py` (`REF_EXE`, `LUMI_EXE`);
+`run_matrix.py` und `run_module_probes.py` importieren sie von dort.
+
+### Fester Bildschirm für alle Läufe
+
+AvsStandalone liest `LUMIVIZ_REF_BILDSCHIRM` (S81) und öffnet sein Fenster
+dann oben links auf diesem Monitor. AvsRef rendert fensterlos und meldet die
+Variable nur („ohne Wirkung"). Die Skripte reichen die Umgebung durch —
+einmal setzen genügt:
+
+```bash
+LUMIVIZ_REF_BILDSCHIRM=DISPLAY2 python asset/calibration/avs/compare_avsref.py
+```
+
+Wert: Gerätename `DISPLAYn` (Ziffer aus Windows „Anzeige → Identifizieren“)
+oder Index (0-basiert). Unbekannter Wert → Warnung mit Monitorliste,
+Standardort. Einzelheiten in der MilkdropRef-README
+([`tools/MilkdropRef/README.md`](../../../tools/MilkdropRef/README.md)).
+
+### `compare_avsref.py` — der Vergleichslauf
+
+Je Preset ein AvsRef- und ein AvsStandalone-Prozess, Endbild-Vergleich
+(dMean, dMaxLuma, MAE), Montage (Referenz | LumiViz | Differenz×4),
+`report.md` im Ausgabeordner.
+
+| Argument | Vorgabe | Wirkung |
+|---|---|---|
+| `presets …` | alle `s*/**/*.avs` hier | einzelne `.avs`-Dateien |
+| `--tests` | aus | zusätzlich `../tests/*.avs` (P-Presets) |
+| `--frames N` | 120 | Frames je Preset |
+| `--size WxH` | 320x240 | Rendergröße beider Seiten |
+| `--ape-dir DIR` | `…\cmake\VisualsPresets\avs` | APE-Sammlung für AvsRef (leer = keine APEs) |
+| `--beat-period N` | 30 | deterministischer Beat auf beiden Seiten; 0 = eigene Detektoren (**nicht reproduzierbar**) |
+| `--tick-hz N` | 60 | gettime()-Frame-Uhr für AvsRef; 0 = Wanduhr (bei gettime-Presets nicht vergleichbar) |
+| `--audio-muster klassisch\|musik` | klassisch | synthetisches Signal (beide Seiten gleich) |
+| `--out DIR` | `out/avsref_compare` | Ausgabe |
+
+### Weitere Läufe gegen AvsRef
+
+| Skript | Zweck | Argumente |
+|---|---|---|
+| `run_matrix.py` | Modul-Matrix (`matrix/`) in **zwei** Größen (320x240 + 740x460) | `[präfixe …]` (Matrix-Ordner, z. B. `29`), `--frames N` (120), `--beat-period N` (20), `--out DIR` (`out/matrix_compare`) |
+| `run_module_probes.py` | Modul-Sonden (`probes/`), Urteil über Vordergrund-Pixel statt dMean | `[ordner …]` (Unterordner von `probes/`), `--frames N` (60), `--size WxH` (320x240), `--beat-period N` (30), `--out DIR` (`out/module_probes`) |
+| `analyse_colormap.py` | Color-Map-Kennlinie je Renderer messen | keine |
+| `bisect_avs.py` | Teil-Presets eines `.avs` erzeugen (kumulativ oder `--solo`), danach durch `compare_avsref.py` | `<preset.avs> <zielordner> [indexpfad] [--solo] [--raster raster.avs]` |
+
+Die Erzeuger (`make_*.py`) und `freeze_lvfx_twins.py` stehen unten unter
+„Werkzeuge"; Aufrufe jeweils im Kopfkommentar.
+
 ## Werkzeuge
 
 ```

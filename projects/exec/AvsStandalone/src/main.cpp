@@ -40,6 +40,9 @@
  *   **Nur fuer Schaufenster und Augenschein:** AvsRef erzeugt sein Audio
  *   selbst, gegen echte Musik vergleicht man zwei verschiedene Eingaben.
  *
+ * - Fenster: `LUMIVIZ_REF_BILDSCHIRM=DISPLAYn` legt es auf einen festen
+ *   Monitor (S81, RefBildschirm.hpp); Argumente und Variablen: README.md.
+ *
  * Der Host laeuft hier im GUI-Thread (paintGL) — dieselben Methoden, die in
  * der App der Render-Thread aufruft. Audio kommt synthetisch (Sinus +
  * Beat-Puls), damit Scopes/Beat-Effekte leben — oder aus einer Datei
@@ -52,6 +55,7 @@
 #include "services/LiveVideoFeed.hpp"  // Kamera-Freigabe + Teardown-Messung (S71)
 
 #include "AudioDateiQuelle.hpp"
+#include "RefBildschirm.hpp"
 #include "SynthAudio.hpp"
 
 #include <QAudioDevice>
@@ -69,6 +73,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QOpenGLWindow>
+#include <QScreen>
 #include <QStringList>
 #include <QSurfaceFormat>
 #include <QTimer>
@@ -98,6 +103,36 @@ int disableApeNodes(lumi::multieffect::ChainNode& node)
     for (lumi::multieffect::ChainNode& child : node.children)
         count += disableApeNodes(child);
     return count;
+}
+
+/// Fester Monitor fuer Referenzlaeufe (S81, `LUMIVIZ_REF_BILDSCHIRM`,
+/// RefBildschirm.hpp — derselbe Wert wie bei MilkdropRef/MilkdropStandalone).
+/// Zuordnung zum QScreen ueber die linke obere Ecke. Anders als der
+/// MilkdropStandalone schaltet dieses Werkzeug die High-DPI-Skalierung NICHT
+/// selbst ab (das tut compare_avsref.py per QT_ENABLE_HIGHDPI_SCALING=0) —
+/// die Zuordnung haelt trotzdem: Qt skaliert beim Mapping nur die GROESSE
+/// eines Bildschirms, sein Ursprung bleibt in physischen Pixeln stehen.
+void refBildschirmAnwenden(QWindow& window)
+{
+#ifdef _WIN32
+    lumi::werkzeug::RefMonitor mon;
+    if (!lumi::werkzeug::refBildschirmSuchen(mon, "[Standalone]")) return;
+    const QPoint ecke(mon.monitor.left, mon.monitor.top);
+    for (QScreen* screen : QGuiApplication::screens())
+    {
+        if (screen->geometry().topLeft() != ecke) continue;
+        window.setScreen(screen);
+        // create() zuerst: erst das native Fenster kennt seine Rahmenmasse —
+        // sonst ragt die Titelleiste 31 px ueber den Monitor hinaus (S81)
+        window.create();
+        window.setFramePosition(screen->availableGeometry().topLeft());
+        return;
+    }
+    std::fprintf(stderr, "[Standalone] WARNUNG: kein QScreen an (%d,%d) — Standardort\n",
+                 ecke.x(), ecke.y());
+#else
+    (void)window;
+#endif
 }
 
 /// Referenz-Korpus vom Exe-Verzeichnis aufwaerts suchen (../ref neben dem Repo)
@@ -854,6 +889,7 @@ int main(int argc, char* argv[])
         // bliebe der ganze Audio-Block im Puffer stehen
         std::fflush(stdout);
     }
+    refBildschirmAnwenden(window);  // vor resize: setScreen kann die Groesse anfassen
     window.resize(w, h);
     window.show();
 

@@ -75,3 +75,17 @@ TEST_CASE("MilkdropFft: Schalter Audio — Standard Original, Speichern/Laden")
     CHECK(lumi::milkdrop::presetFromJson(lumi::milkdrop::presetToJson(a), nullptr)
               .audioOriginal == a.audioOriginal);
 }
+
+TEST_CASE("Milkdrop: Schalter Seitenverhaeltnis (Waves) — Standard Original, Speichern/Laden")
+{
+    lumi::milkdrop::PresetState a;
+    CHECK(a.aspektOriginal);  // Entscheid Patrik a (S81)
+    QJsonObject alt = lumi::milkdrop::presetToJson({});
+    QJsonObject inner = alt.value("preset").toObject();
+    inner.remove("aspektOriginal");
+    alt.insert("preset", inner);
+    CHECK(lumi::milkdrop::presetFromJson(alt, nullptr).aspektOriginal);  // Altbestand
+    a.aspektOriginal = false;
+    CHECK_FALSE(lumi::milkdrop::presetFromJson(lumi::milkdrop::presetToJson(a), nullptr)
+                    .aspektOriginal);
+}

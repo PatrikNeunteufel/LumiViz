@@ -5874,6 +5874,27 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             });
                         });
                 form->addRow(tr("Audio"), audioCombo);
+
+                // Seitenverhaeltnis der Custom-Waves (S81, Entscheid Patrik a)
+                auto* aspektCombo = new QComboBox(m_propContainer);
+                aspektCombo->addItems({tr("LumiViz (bisher)"), tr("Original (MilkDrop)")});
+                aspektCombo->setCurrentIndex(p->preset.aspektOriginal ? 1 : 0);
+                aspektCombo->setToolTip(
+                    tr("Wie Custom-Waves ihre x/y-Werte aufs Bild legen. Original "
+                       "(Standard) = wie MilkDrop: auf einem Breitbild wird die Kurve "
+                       "senkrecht um das Seitenverhältnis gestreckt (4:3 um 4/3, 16:9 "
+                       "um 16/9), y = 0.1 liegt dann unter dem Bildrand — so haben "
+                       "die Autoren ihre Presets gesehen. Bisher = x/y sind Anteile "
+                       "des Bildes (0 = linker/unterer, 1 = rechter/oberer Rand), die "
+                       "Kurve bleibt ungestreckt im Bild; der Look von Session 39 "
+                       "bis 80."));
+                connect(aspektCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                        this, [this, path, milkOf](int idx) {
+                            mutate(path, [&](ChainNode& n) {
+                                milkOf(n).preset.aspektOriginal = idx == 1;
+                            });
+                        });
+                form->addRow(tr("Seitenverhältnis (Waves)"), aspektCombo);
             }
 
             // --- Puffer-Wechsel (S66) --------------------------------------------

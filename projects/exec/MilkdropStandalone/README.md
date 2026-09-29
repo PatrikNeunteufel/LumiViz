@@ -80,6 +80,7 @@ haben ein Gegenstück in MilkdropRef. `--audio-beat`, `--beat-hz` und
 | `LUMIVIZ_MILKDROP_SEED=0x…` | Startwert der Saat — wirkt nur zusammen mit `--seed` |
 | `LUMIVIZ_MILKDROP_NOSEED` | Saat aus (setzt der Standalone ohne `--seed` selbst) |
 | `LUMIVIZ_MILKDROP_AUDIO=original\|bisher` | Audio der Custom-Waves erzwingen (Feld `audioOriginal`, Standard original seit S80) |
+| `LUMIVIZ_MILKDROP_ASPEKT=original\|bisher` | Seitenverhältnis der Custom-Waves erzwingen (Feld `aspektOriginal`, Standard original seit S81) |
 | `LUMIVIZ_MILKDROP_EEL_RAND=original` | ns-eel2-`rand()` erzwingen (Standard seit S80 ohnehin) |
 | `LUMIVIZ_MILKDROP_EEL_RAND_SKIP=k` | k Zufallszüge vorab verbrauchen (Stromversatz zur Referenz suchen) |
 | `LUMIVIZ_MILKDROP_EEL_RAND_LOG` | Züge je Frame loggen (erste fünf Frames je Ladung), Gegenstück zu `MILKDROPREF_RAND_LOG` |

@@ -66,7 +66,7 @@ Ohne Preset-Argument gibt die Exe die Kurzform dieser Liste aus.
 
 | Variable | Wirkung |
 |---|---|
-| `LUMIVIZ_REF_BILDSCHIRM` | Fenster auf einen **festen Monitor** (S81): `DISPLAY2` (Gerätename, bevorzugt) oder Index `1` (0-basiert). Oben links im Arbeitsbereich. Unbekannter Wert → Warnung mit Monitorliste, Standardort. Wird genauso von MilkdropStandalone gelesen (`projects/exec/common/RefBildschirm.hpp`) |
+| `LUMIVIZ_REF_BILDSCHIRM` | Fenster auf einen **festen Monitor** (S81): `DISPLAY2` (Gerätename, bevorzugt) oder Index `1` (0-basiert). Oben links im Arbeitsbereich. Unbekannter Wert → Warnung mit Monitorliste, Standardort. Wird genauso von MilkdropStandalone und AvsStandalone gelesen (`projects/exec/common/RefBildschirm.hpp`); AvsRef ist fensterlos und meldet sie nur |
 | `MILKDROPREF_AUDIO_DUMP=N` | für Frame N: PCM, ausgerichtete Wellenform, Spektrum des Kerns auf stdout |
 | `MILKDROPREF_AUDIO_SEQ=N` | PCM der Frames 0…N−1, im letzten zusätzlich AlignWaves-Ergebnis + `mysound.imm` |
 | `MILKDROPREF_RAND_LOG=N` | die ersten N EEL-`rand()`-Züge loggen (Messkopie `patched/nseel-cfunc.c`) |

@@ -2,7 +2,8 @@
  ****************************************************************************************
  * @file   RefBildschirm.hpp
  * @brief  Fester Bildschirm für Referenzläufe — `LUMIVIZ_REF_BILDSCHIRM`
- *         (MilkdropRef, MilkdropStandalone)
+ *         (MilkdropRef, MilkdropStandalone, AvsStandalone; AvsRef liest sie
+ *         nur mit — es rendert fensterlos)
  *
  * @author Patrik Neunteufel
  * @date   September 2026 (Session 81)
@@ -12,7 +13,11 @@
  * Ohne Vorgabe legt Windows (`CW_USEDEFAULT`) bzw. Qt die Fenster der
  * Referenzläufe irgendwohin — meist auf den Arbeitsbildschirm. Mit der
  * Umgebungsvariable landen beide Seiten oben links im Arbeitsbereich EINES
- * festen Monitors:
+ * festen Monitors. Gilt für alle vier Referenz-Werkzeuge: MilkdropRef,
+ * MilkdropStandalone und AvsStandalone platzieren ihr Fenster; AvsRef hat
+ * keines (Speicher-Framebuffer) und meldet bei gesetzter Variable nur, dass
+ * sie dort ohne Wirkung bleibt — es bindet diesen Kopf NICHT ein (baut mit
+ * dem MSVC-Default C++14, hier steht eine C++17-inline-Variable):
  *
  * - `LUMIVIZ_REF_BILDSCHIRM=DISPLAY2` — Gerätename, wie ihn Windows unter
  *   Einstellungen → System → Anzeige → „Identifizieren" als Ziffer zeigt
@@ -56,7 +61,8 @@
 namespace lumi::werkzeug
 {
 
-/// Name der Umgebungsvariable (eine Stelle für beide Werkzeuge und die Doku)
+/// Name der Umgebungsvariable (eine Stelle für die Werkzeuge und die Doku;
+/// einzige Kopie als Literal: tools/AvsRef/src/avsref_main.cpp, C++14)
 inline constexpr const char* kRefBildschirmVar = "LUMIVIZ_REF_BILDSCHIRM";
 
 /// Ein Monitor, wie ihn `EnumDisplayMonitors` liefert

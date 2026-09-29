@@ -675,6 +675,10 @@ void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringLi
     // Werte der Custom-Waves fuer .milk-Messungen (Feld audioOriginal)
     if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_AUDIO"))
         m_state.audioOriginal = qgetenv("LUMIVIZ_MILKDROP_AUDIO") == "original";
+    // Diagnose (S81): LUMIVIZ_MILKDROP_ASPEKT=original|bisher erzwingt das
+    // Seitenverhaeltnis der Custom-Waves (Feld aspektOriginal)
+    if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_ASPEKT"))
+        m_state.aspektOriginal = qgetenv("LUMIVIZ_MILKDROP_ASPEKT") == "original";
     if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_REGELWERK"))
     {
         const QByteArray v = qgetenv("LUMIVIZ_MILKDROP_REGELWERK").toLower();
@@ -3686,12 +3690,16 @@ void MilkdropVisualizer::drawCustomWaves()
                 pa = e.number("a");
             }
             SuperscopePoint& pt = pts[static_cast<std::size_t>(j)];
-            // PORT: KEINE InvAspect-Faktoren — die Referenz rechnet auf einer
-            // QUADRATISCHEN Leinwand (Faktoren dort = 1); unser Buffer ist
-            // fenstergross, Skript-x/y sind Bildschirm-Anteile 0..1
-            // (Sichttest-Befund Session 39: 1.73x-Streckung ohne diesen Fix)
-            pt.x = static_cast<float>(px * 2.0 - 1.0);
-            pt.y = static_cast<float>(py * 2.0 - 1.0);  // Y-FLIP S75, s. cyN
+            // Seitenverhaeltnis (S81, PresetState::aspektOriginal): das Original
+            // streckt um 1/aspect (milkdropfs.cpp:2612, m_fInvAspectX/Y) — sein
+            // Puffer ist fenstergross wie unserer, bei 4:3 wandert y = 0.1 also
+            // unter den Rand. Die Streckung, die der Sichttest S39 als Fehler
+            // sah (1.73x bei 16:9), IST das Original. „Bisher" = Skript-x/y als
+            // Bildschirm-Anteile 0..1 (Stand S39–S80).
+            const double sx = m_state.aspektOriginal ? 1.0 / m_aspectX : 1.0;
+            const double sy = m_state.aspektOriginal ? 1.0 / m_aspectY : 1.0;
+            pt.x = static_cast<float>((px * 2.0 - 1.0) * sx);
+            pt.y = static_cast<float>((py * 2.0 - 1.0) * sy);  // Y-FLIP S75, s. cyN
             pt.r = static_cast<float>(clampd(pr, 0.0, 1.0));
             pt.g = static_cast<float>(clampd(pg, 0.0, 1.0));
             pt.b = static_cast<float>(clampd(pb, 0.0, 1.0));

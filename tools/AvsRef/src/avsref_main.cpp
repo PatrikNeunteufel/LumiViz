@@ -347,6 +347,20 @@ int main(int argc, char** argv)
     printf("[AvsRef] %d Preset(s), %dx%d, %d Frames\n",
            static_cast<int>(presets.size()), width, height, frames);
 
+    // Fester Monitor (S81): MilkdropRef und die beiden Standalones legen ihr
+    // Fenster nach LUMIVIZ_REF_BILDSCHIRM auf einen festen Monitor. AvsRef
+    // rendert FENSTERLOS in einen Speicher-Framebuffer — es gibt nichts zu
+    // platzieren. Die Variable wird nur gelesen, damit ein Harness-Lauf mit
+    // gesetzter Variable im Log sagt, warum hier nichts wandert. Der Name
+    // steht als Literal: RefBildschirm.hpp braucht C++17 (inline-Variable),
+    // dieses Alt-Projekt baut mit dem MSVC-Default.
+    {
+        const char* refBildschirm = getenv("LUMIVIZ_REF_BILDSCHIRM");
+        if (refBildschirm != NULL && *refBildschirm != '\0')
+            printf("[AvsRef] LUMIVIZ_REF_BILDSCHIRM=%s ohne Wirkung: AvsRef "
+                   "rendert fensterlos\n", refBildschirm);
+    }
+
     CreateDirectoryA(outDir.c_str(), NULL);
 
     // --- Kern-Init (Pendant zu Render_Init, ohne Winamp) -----------------------------------
