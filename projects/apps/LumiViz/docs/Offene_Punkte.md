@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.77.0
-> **Datum:** 2026-09-29 (Session 81)
+> **Version:** 1.78.0
+> **Datum:** 2026-09-29 (Session 82)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -1757,13 +1757,47 @@ Montagen (Referenz | neu | alt): Scratchpad S80 `strato/out/`.
    - **Schwankend:** `Magma`/`Magma 2` f120 0,01–0,15 je Format (f10/f30
      ≈ 0).
 
-   ⬜ **Neu fahren auf der 4090 (Entscheid Patrik S81: 4090 = Standard-
-   Referenz, Referenz und Prüfling auf derselben Karte).** Stand Ende S81:
-   4:3 für die ersten 11 Presets fertig (beide Startwerte), 1:1 zu 80 / 132
-   Marken; Rest in Teilläufen zu 11 Presets (Hitzewächter — die CPU dieses
-   Geräts läuft schon im Leerlauf bei 85–97 °C). Ausgabe
-   `out/milkref_kalibrierung_S81_4090/`, Plan im Handover. Die 610M-Tabelle
-   oben bleibt bis dahin stehen.
+   ✅ **Neu gefahren auf der 4090 (S82; Entscheid Patrik S81: 4090 =
+   Standard-Referenz, Referenz und Prüfling auf derselben Karte).** Alle
+   22 × 5 Formate × beide Startwerte (0 und 0x5EED63 — seit dem Saat-Fix
+   S81 gültig), `--zufall-lumiviz`, Ausgabe
+   `out/milkref_kalibrierung_S81_4090/formate.md`. **Diese Tabelle ersetzt
+   die 610M-Tabelle oben** (die bleibt als Kartenvergleich stehen):
+
+   | Format | MAE saatlos f10 / f30 / f120 | MAE gesät f10 / f30 / f120 | OK / PRUEFEN / BEFUND / STARTABH. |
+   |---|---|---|---|
+   | 1:1 560×560 | 0,082 / 0,070 / 0,086 | 0,118 / 0,136 / 0,217 | 2 / 2 / 3 / 15 |
+   | 4:3 640×480 | 0,062 / 0,061 / 0,081 | 0,122 / 0,113 / 0,218 | 2 / 0 / 4 / 16 |
+   | 16:9 736×416 | 0,058 / 0,051 / 0,066 | 0,115 / 0,154 / 0,220 | 2 / 1 / 2 / 17 |
+   | 3,4:1 1024×304 | 0,049 / 0,038 / 0,047 | 0,108 / 0,139 / 0,239 | 2 / 0 / 2 / 18 |
+   | 3:4 hoch 480×640 | 0,065 / 0,092 / 0,107 | 0,128 / 0,124 / 0,234 | 1 / 1 / 4 / 16 |
+
+   **Kartenvergleich 610M ↔ 4090** (saatlose Früh-MAE je Preset):
+   - **Gleich auf beiden Karten** (Abstand ≤ 0,005 in allen Formaten): alle
+     ps_2-Presets — `Dancing Hearts` (+ 2nd edit), `Lasershow`, `Magma`
+     (+ 2), `Playaround`, `Rock The House`-Familie, `Starfield`,
+     `Twisted` (+ b), `In The Spotlight V1/V2`. Die Karte ist für sie
+     kein Messfaktor.
+   - **Nur auf der 4090 messbar** (610M: Referenz schwarz, ps_3_0):
+     `The Beauty and the Math(s)` **OK** in allen Formaten (f10 0,055;
+     3:4 hoch `Maths` PRUEFEN wegen f120 0,175 saatlos, gesät 0,033),
+     `Helix` und Starfield-edit-Familie jetzt STARTABHAENGIG statt BEFUND.
+     Die FORMATABHAENGIG-Markierung der Starfield-2-Familie (f10 1:1
+     0,186 … hoch 0,006) bleibt auch auf der 4090 — jetzt ein echtes
+     Urteil, nicht mehr nur „wie viel WIR zeichnen“.
+   - **`Neomtwister`:** auf der 4090 deutlich näher (4:3 0,196 → 0,122,
+     16:9 0,200 → 0,133, hoch 0,233 → 0,141), aber weiter BEFUND/PRUEFEN.
+   - **Echte Befunde, kartenunabhängig:** `Dancing Hearts` (Farben,
+     Aufgabe 3), `Lasershow` f10 0,12 in allen Formaten, `Neomtwister`.
+
+   **Vorbehalt Früh-MAE 0,000:** `Helix`, `Magma`, `Magma 2`,
+   `Playaround` sind saatlos in f10 auf **beiden** Seiten ganz schwarz
+   (mean 0, max 0) — die 0,000 in `formate.md` ist kein Treuebeleg. Das
+   Urteil trägt dort der gesäte Lauf.
+
+   Messbetrieb (S82): CPU im Mittel 98–99 °C, 11–23 % der Zeit ≥ 100 °C,
+   Spitze 101,3 °C, kein Absturz. Die Last liegt auf CCD1 (97–99 °C),
+   CCD2 bleibt bei 66–70 °C — Tctl zeigt den heißeren CCD.
 
    Beobachtung: Die MAE fällt mit der Breite (16:9, 3,4:1 kleiner) — bei den
    meisten Presets liegt der Inhalt in der Mitte, breite Formate haben mehr
