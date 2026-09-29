@@ -26,6 +26,7 @@ Aufruf:
   python compare_milkref.py pfad/preset.milk ...     # einzelne Presets
   python compare_milkref.py --presets DIR            # ganzer Ordner
   python compare_milkref.py --frames 10,30,120 --size 640x480 --out DIR
+  python compare_milkref.py --formate aspekt,monitor   # Formate nebeneinander (S81)
 
 Hinweise:
 - Die Referenz braucht die MilkDrop-Ordnerstruktur (`<wurzel>/data/include.fx`
@@ -56,6 +57,9 @@ for _stream in (sys.stdout, sys.stderr):
 
 ROOT = Path(__file__).parent
 REPO = (ROOT / "../../..").resolve()
+# Gemeinsame Bausteine (S81): Start ohne Konsolenfenster, Formate
+sys.path.insert(0, str(ROOT.parent))
+import messlauf  # noqa: E402
 LUMI_EXE = (REPO / "out/build/windows-ninja-release-clang/exec/"
             "MilkdropStandalone/bin/Release/MilkdropStandalone.exe").resolve()
 REF_EXE = (REPO / "tools/MilkdropRef/build/Release/MilkdropRef.exe").resolve()
@@ -134,7 +138,7 @@ def run_ref(milk: Path, frames: int, size: str, out: Path, refroot: Path,
     if ZUFALL_LUMIVIZ:
         extra.append("--zufall-lumiviz")
     out.mkdir(parents=True, exist_ok=True)
-    proc = subprocess.run(
+    proc = messlauf.run(
         [str(REF_EXE), str(kopie), "--frames", str(frames), "--size", size,
          "--out", str(out)] + extra,
         capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -185,7 +189,7 @@ def run_lumi(milk: Path, frames: int, size: str, out: Path, muster: str,
     if silence:
         extra.append("--silence")
     out.mkdir(parents=True, exist_ok=True)
-    proc = subprocess.run(
+    proc = messlauf.run(
         [str(LUMI_EXE), str(milk), "--auto", "--frames", str(frames),
          "--size", size, "--out", str(out)] + extra + saat_args,
         capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -332,6 +336,13 @@ def main() -> int:
                     help="Frame-Marken je Preset (Komma). Frueh wiegt schwerer: "
                          "dort ist der Phasenversatz noch klein")
     ap.add_argument("--size", default="640x480")
+    ap.add_argument("--formate", default=None,
+                    help="S81: denselben Vergleich in mehreren Formaten, dazu "
+                         "formate.md mit Format-Urteil (FORMATABHAENGIG). "
+                         "Bausteine, Komma: aspekt (1:1, 4:3, 16:9, 3,4:1, "
+                         "3:4 hoch bei ~gleicher Pixelzahl), monitor (physische "
+                         "Groesse des Monitors aus LUMIVIZ_REF_BILDSCHIRM), "
+                         "monitor:DISPLAYn, WxH. Ersetzt --size")
     ap.add_argument("--audio-muster", default="klassisch",
                     choices=["klassisch", "musik"],
                     help="synthetisches Signal; beide Seiten binden dieselbe "
@@ -376,7 +387,95 @@ def main() -> int:
     marken = [int(f) for f in str(args.frames).split(",") if f.strip()]
     saaten = [int(s, 0) for s in str(args.saaten).split(",") if s.strip()]
     out: Path = args.out.resolve()
-    refroot = out / "_refwurzel"
+    if not args.formate:
+        _, fehler = lauf(presets, args.size, marken, saaten, args, out)
+        return 1 if fehler else 0
+
+    # --formate (S81): derselbe Vergleich je Format, danach EIN Bericht, der
+    # die Formate nebeneinanderstellt (messlauf.py erklaert die Reihe)
+    try:
+        formate = messlauf.formate_aufloesen(args.formate)
+    except ValueError as e:
+        print(f"FEHLER: {e}")
+        return 2
+    ergebnisse = {}
+    fehler = 0
+    for bez, groesse in formate:
+        print(f"\n=== Format {bez} ({groesse})", flush=True)
+        zeilen, f = lauf(presets, groesse, marken, saaten, args, out / groesse)
+        fehler += f
+        ergebnisse[groesse] = {z[0]: z for z in zeilen}
+    formatbericht(presets, formate, ergebnisse, saaten, out)
+    return 1 if fehler else 0
+
+
+def fruehe_mae(je_saat: dict, saaten: list) -> float | None:
+    """MAE der fruehesten Marke beim ersten Startwert (None = nicht gemessen)."""
+    for s in saaten:
+        if s in je_saat and je_saat[s][2]:
+            return je_saat[s][2][0]["mae"]
+    return None
+
+
+def formatbericht(presets: list, formate: list, ergebnisse: dict, saaten: list,
+                  out: Path) -> None:
+    """Formate nebeneinander: Urteil + frueheste MAE je Format, dazu das
+    Format-Urteil. FORMATABHAENGIG = in mindestens einem Format gruen
+    (<= OK_MAE), in einem anderen ein Befund (> BEFUND_MAE) — der Fehler
+    haengt an Form oder Groesse, nicht am Preset allein."""
+    zeilen_md = []
+    abh = 0
+    for milk in presets:
+        zellen, maes, puffer = [], [], []
+        for _bez, groesse in formate:
+            z = ergebnisse.get(groesse, {}).get(milk.stem)
+            if z is None:
+                zellen.append("–")
+                continue
+            _stem, je_saat, urteil, _grund = z
+            mae = fruehe_mae(je_saat, saaten)
+            zellen.append(f"{urteil} {mae:.3f}" if mae is not None else urteil)
+            if mae is not None and urteil not in ("FEHLER", "REF-STUMM", "BEIDE-STUMM"):
+                maes.append(mae)
+            for s in saaten:
+                for w in (je_saat[s][2] if s in je_saat else []):
+                    pr = w.get("puffer_ref")
+                    if pr and tuple(pr) != tuple(w["puffer_lumi"]):
+                        puffer.append(f"{groesse}: Ref-Puffer {pr[0]}x{pr[1]}")
+        if len(maes) >= 2 and min(maes) <= OK_MAE and max(maes) > BEFUND_MAE:
+            fu, abh = "FORMATABHAENGIG", abh + 1
+        elif len(maes) >= 2:
+            fu = f"Spanne {max(maes) - min(maes):.3f}"
+        else:
+            fu = "–"
+        hinweis = "; ".join(sorted(set(puffer)))
+        zeilen_md.append(f"| {milk.stem} | " + " | ".join(zellen)
+                         + f" | {fu} | {hinweis} |")
+        print(f"  {fu:16s} {milk.stem}  " + " · ".join(zellen), flush=True)
+    bericht = out / "formate.md"
+    with bericht.open("w", encoding="utf-8") as f:
+        f.write("# MilkdropRef-Vergleich über Formate\n\n")
+        f.write("Je Zelle: Urteil des Einzellaufs und MAE der frühesten Marke "
+                "(erster Startwert). **FORMATABHAENGIG** = in einem Format grün "
+                f"(≤ {OK_MAE}), in einem anderen Befund (> {BEFUND_MAE}): der "
+                "Fehler hängt an Form oder Größe. Einzelberichte je Format in "
+                "den Unterordnern.\n\n")
+        f.write("| Preset | " + " | ".join(f"{b} ({g})" for b, g in formate)
+                + " | Format-Urteil | Puffer |\n")
+        f.write("|---" * (len(formate) + 3) + "|\n")
+        f.write("\n".join(zeilen_md) + "\n")
+    print(f"\nFormat-Bericht: {bericht} — {abh} formatabhaengig")
+
+
+def lauf(presets: list, size: str, marken: list, saaten: list, args,
+         out: Path) -> tuple[list, int]:
+    """EIN Vergleichslauf in EINEM Format; schreibt report.md.
+
+    @return (zeilen, fehler) — zeilen = [(stem, je_saat, urteil, grund)].
+    """
+    # Die Referenzwurzel (Kopie von data/textures/sprites) teilen sich alle
+    # Formate — sie haengt nicht an der Groesse
+    refroot = args.out.resolve() / "_refwurzel"
     (out / "montage").mkdir(parents=True, exist_ok=True)
 
     zeilen = []
@@ -390,12 +489,12 @@ def main() -> int:
                 werte = []
                 for n in marken:
                     ref_bmp, ref_stumm, ref_puffer = run_ref(
-                        milk, n, args.size, out / f"ref_s{seed:x}_f{n}",
+                        milk, n, size, out / f"ref_s{seed:x}_f{n}",
                         refroot, args.audio_muster, args.silence,
                         args.timeout, seed)
                     ref_img = load_rgb(ref_bmp)
                     lumi_img = load_rgb(run_lumi(
-                        milk, n, args.size, out / f"lumi_s{seed:x}_f{n}",
+                        milk, n, size, out / f"lumi_s{seed:x}_f{n}",
                         args.audio_muster, args.silence, args.timeout, seed))
                     if ref_img.shape != lumi_img.shape:
                         raise RuntimeError(
@@ -422,6 +521,10 @@ def main() -> int:
                         "hell_ref": kr["lumaMax"] > LEBT_MAX,
                         "hell_lumi": kl["lumaMax"] > LEBT_MAX,
                         "ref_stumm": ref_stumm,
+                        # S81: der Kern rundet krumme Kanten (734 -> 736);
+                        # der Format-Bericht nennt das je Format
+                        "puffer_ref": ref_puffer,
+                        "puffer_lumi": (lumi_img.shape[1], lumi_img.shape[0]),
                     })
                     bilder[(seed, n)] = (ref_img, lumi_img)
                     montage(ref_img, lumi_img,
@@ -440,7 +543,7 @@ def main() -> int:
 
     report = out / "report.md"
     with report.open("w", encoding="utf-8") as f:
-        f.write(f"# MilkdropRef-Vergleich — Marken {marken}, {args.size}, "
+        f.write(f"# MilkdropRef-Vergleich — Marken {marken}, {size}, "
                 f"Muster {args.audio_muster}\n\n")
         f.write("Ein Prozess je Preset, Marke und Startwert (Aufgabe 1 des "
                 "Kalibrier-Plans). Urteil an der Montage, Zahlen ordnen ein.\n\n")
@@ -471,7 +574,7 @@ def main() -> int:
     stumm = sum(1 for z in zeilen if z[2] in ("REF-STUMM", "BEIDE-STUMM"))
     print(f"{ok}/{len(zeilen)} OK, {befunde} Befunde, {stumm} ohne Urteil "
           f"(stumm), {fehler} Fehler")
-    return 1 if fehler else 0
+    return zeilen, fehler
 
 
 if __name__ == "__main__":

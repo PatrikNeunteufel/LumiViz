@@ -1,7 +1,8 @@
 # Kalibrierung — Einstieg für alle Importformate
 
-> **Version:** 1.2.0
-> **Datum:** 2026-08-10 (Session 75; 1.2.0: Regeln 9–12, MilkDrop-Harness §2.2)
+> **Version:** 1.3.0
+> **Datum:** 2026-08-10 (Session 75; 1.2.0: Regeln 9–12, MilkDrop-Harness §2.2;
+> 1.3.0: Session 81 — Regel 13, Formate als Messachse)
 > **Typ:** Guide / Einstieg
 > **Status:** Aktiv
 > **Sprache:** Deutsch
@@ -46,6 +47,7 @@ Messwerten belegt. Sie gelten formatübergreifend.
 | 10 | **Ein Verstärker im Pfad macht einen fremden Fehler zum eigenen Befund.** | Bei `07_movin wall` ist jeder Einzelknoten grün (≤0,012) und das Ganze bei 0,073. Der Movement dehnt das Bild stark: er hebt den 1-Pixel-Kantenversatz eines SuperScope von 0,009 auf 0,109 — über den Wert des Gesamt-Presets. Die kumulative Bisektion zeigt dann auf den Verstärker, nicht auf die Quelle. Gegenmittel: **Knoten paarweise messen** (Verdächtiger + Verstärker), nicht nur solo und kumulativ |
 | 11 | **Beide Seiten müssen im selben STARTZUSTAND beginnen.** | Bei MilkDrop streuen wir beim Kaltstart Rauschen in den Feedback-Puffer (`seedFeedbackNoise`, S63 — Verstärker-Presets sterben sonst), die Referenz startet mit genulltem VRAM. In den ersten Frames zeichnen wir also, während sie noch schwarz ist. Das erzeugt einen scheinbaren Befund pro Preset. Gemessen wird deshalb über eine **Reihe von Startwerten** auf beiden Seiten (`compare_milkref.py --saaten`, §2.2). ⚠️ **Falle:** `MilkdropStandalone` setzt `LUMIVIZ_MILKDROP_NOSEED` **selbst**, solange `--seed` fehlt (sein Prüfstands-Vertrag seit S64) — eine Env-Variable allein bleibt wirkungslos. In S75 waren dadurch drei „verschiedene" Seeds bit-identisch, und eine erste Messung meldete fälschlich „die Saat ändert nichts (≤0,006)". Erst `--seed` **plus** `LUMIVIZ_MILKDROP_SEED` wirkt; abgenommen an `Magma`: ohne/mit Saat 0,274, zwei Seeds untereinander 0,044 |
 | 12 | **Die Warmlaufphase der Referenz ist keine Messung.** | Der MilkDrop-Kern braucht Frames, bis überhaupt etwas im Bild steht: `Starfield` ist bei Frame 10 noch schwarz und liefert ab Frame 30 MAE 0,005. Wer die frühe Marke als Befund wertet, bekommt eine Liste von Scheinfunden (S75, erster Durchgang: 0 von 19 OK). `compare_milkref.py` verwirft eine Marke, in der die Referenz nicht zeichnet — **aber nur**, wenn eine spätere zeigt, dass sie danach zeichnet. Bleibt sie durchgehend stumm, ist der Unterschied echt |
+| 13 | **Das Format ist eine Messachse wie die Frame-Marke — Form und Größe getrennt variieren.** | Den Custom-Waves fehlte seit S39 der Aspect-Faktor des Originals (`m_fInvAspectY`). Jeder Lauf fand in 4:3 statt; dort war die Abweichung nur eine von vielen, und ein Sichttest in 16:9 hielt die Original-Streckung sogar für den Fehler. Erst der Vergleich 480×480 (0,003) gegen 640×480 (0,122) zeigte die Ursache in Minuten (S81). Gegenmittel: `compare_milkref.py --formate aspekt,monitor` (§2.2) — die Aspekt-Reihe bei gleicher Pixelzahl trennt Form-Fehler, das Monitorformat Größen-Fehler (dort rundet der Kern z. B. 734 auf 736) |
 
 > Regel 1, 5 und 6 sind dieselbe Regel aus drei Richtungen: **die Metrik lügt
 > bei dünnen Inhalten.** Das Urteil fällt über Bild + Metrik + Verhalten über

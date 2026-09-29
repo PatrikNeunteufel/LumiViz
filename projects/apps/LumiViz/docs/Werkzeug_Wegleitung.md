@@ -1,10 +1,11 @@
 # Werkzeug-Wegleitung — welches Programm wofür, und welche Fallen es hat
 
-> **Version:** 1.3.0
+> **Version:** 1.4.0
 > **Datum:** 2026-08-09 (Session 73; 1.1.0: Session 74 — echte Musik als
 > Audioquelle, Falle 2.7; 1.2.0: Session 74 — das synthetische Signal hat zwei
 > Muster und kommt aus EINER Quelle; 1.3.0: Session 81 — Argument-Referenzen
-> je Werkzeug, fester Bildschirm für Referenzläufe)
+> je Werkzeug, fester Bildschirm für Referenzläufe; 1.4.0: Session 81 — alle
+> vier Werkzeuge, keine Konsolenfenster, Formate als Messachse)
 > **Typ:** Guide
 > **Status:** Aktiv
 > **Sprache:** Deutsch
@@ -311,5 +312,15 @@ nicht Größe oder Bild. MilkdropRef, MilkdropStandalone und AvsStandalone
 platzieren ihr Fenster danach; AvsRef rendert fensterlos und meldet die
 Variable nur als „ohne Wirkung".
 
+**Keine Konsolenfenster:** Laufen die Skripte ohne eigene Konsole (etwa aus
+der Claude-Shell), öffnet Windows sonst für jedes gestartete Werkzeug ein
+leeres Konsolenfenster am Standardort. Alle Mess-Skripte starten deshalb über
+`asset/calibration/messlauf.py` (`messlauf.run`, `CREATE_NO_WINDOW`) — neue
+Skripte ebenso.
+
 **Wichtig:** In zwei Größen vergleichen. Eine kleine Fläche (320×240) versteckt
 größenabhängige Fehler — genau die Klasse Fehler, die auch Falle 2.2 erzeugt.
+Und die **Form** ist eine eigene Achse: `--formate aspekt,monitor` fährt
+denselben Vergleich bei 1:1, 4:3, 16:9, 3,4:1 und 3:4 hoch (gleiche
+Pixelzahl) sowie in der Größe des Monitors und stellt die Urteile
+nebeneinander (Kalibrier-INDEX Regel 13, Harness-READMEs).

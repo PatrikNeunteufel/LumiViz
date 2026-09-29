@@ -16,7 +16,6 @@ Aufruf:  python comp_quellen.py [preset.milk] [--frames N]
 import argparse
 import re
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -55,7 +54,7 @@ def ref(milk: Path, frames: int, size: str) -> np.ndarray:
     shutil.copy2(milk, kopie)
     out = OUT / f"ref_f{frames}"
     out.mkdir(parents=True, exist_ok=True)
-    subprocess.run([str(cm.REF_EXE), str(kopie), "--frames", str(frames), "--size", size,
+    cm.messlauf.run([str(cm.REF_EXE), str(kopie), "--frames", str(frames), "--size", size,
                     "--out", str(out), "--zufall-lumiviz"], capture_output=True)
     return cm.load_rgb(out / f"{milk.stem}_ref.bmp")
 

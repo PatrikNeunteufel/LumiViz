@@ -27,6 +27,13 @@ Wert: Gerätename `DISPLAYn` (Ziffer aus Windows „Anzeige → Identifizieren�
 oder Index (0-basiert). Unbekannter Wert → Warnung mit Monitorliste,
 Standardort. Einzelheiten in der MilkdropRef-README.
 
+**Keine Konsolenfenster (S81):** Alle Skripte starten die Exes über
+`asset/calibration/messlauf.py` (`messlauf.run`) mit `CREATE_NO_WINDOW`. Ohne
+das Flag öffnet Windows für jedes Konsolenprogramm ein eigenes Fenster, wenn
+das Skript selbst keine Konsole hat (Claude-Shell, geplante Aufgaben) — am
+Standardort, also nicht auf dem gewählten Monitor. Neue Skripte starten
+Werkzeuge deshalb nur über `messlauf.run`.
+
 ## Harnesse
 
 ### `compare_milkref.py` — der Vergleichslauf
@@ -40,12 +47,44 @@ Ein Prozess je Preset und Seite, mehrere Frame-Marken, Montage
 | `--presets DIR` | — | ganzen Ordner vergleichen |
 | `--frames 10,30,120` | 10,30,120 | Frame-Marken (Komma); früh wiegt schwerer |
 | `--size WxH` | 640x480 | Rendergröße beider Seiten |
+| `--formate LISTE` | — (ein Format, `--size`) | derselbe Vergleich in mehreren Formaten, Abschnitt unten; ersetzt `--size` |
 | `--audio-muster klassisch\|musik` | klassisch | synthetisches Signal (beide Seiten gleich) |
 | `--silence` | aus | Null-Signal |
 | `--saaten 0,0x5EED63` | 0,0x5EED63 | Startwerte des Feedback-Puffers, auf beiden Seiten gesetzt; 0 = saatlos |
 | `--zufall-lumiviz` | aus | Referenz würfelt wie LumiViz — für Presets mit Zufall Pflicht |
 | `--timeout S` | 180 | Sekunden je Lauf |
 | `--out DIR` | `out/milkref_compare` | Ausgabe |
+
+#### Formate als Messachse (`--formate`, S81)
+
+Mehrere Frame-Marken trennen Phasenversatz von echtem Fehler — mehrere
+**Formate** trennen Fehler im Umgang mit Form und Größe von allen anderen.
+Anlass: den Custom-Waves fehlte der Aspect-Faktor des Originals; quadratisch
+lag die Abweichung bei 0,003, bei 4:3 bei 0,122. Ein Lauf in einem Format
+hätte das nie gezeigt.
+
+```bash
+LUMIVIZ_REF_BILDSCHIRM=DISPLAY2 python asset/calibration/milkdrop/compare_milkref.py --formate aspekt,monitor --zufall-lumiviz
+```
+
+| Baustein | Formate | Was es aufdeckt |
+|---|---|---|
+| `aspekt` | 1:1 560×560 · 4:3 640×480 · 16:9 736×416 · 3,4:1 1024×304 · 3:4 hoch 480×640 | Fehler an der **Form**: Aspect-Faktoren (Waves, Shapes, `aspectx/y`, `rad`/`ang`), Hochformat-Zweig (`aspectX < 1`). Alle mit ~gleicher Pixelzahl (~307 000), damit sich nur die Form ändert; Kanten Vielfache von 16 |
+| `monitor` | physische Größe des Monitors aus `LUMIVIZ_REF_BILDSCHIRM` (hier 2560×734) | Fehler an der **Größe**: feste Pixelmaße (Versatz, Blur-Radius, Punkt- und Liniengröße), krumme Kanten (der Kern rundet 734 → 736) |
+| `monitor:DISPLAYn` | ein bestimmter Monitor | wie oben, anderer Monitor |
+| `WxH` | ein festes Format | frei |
+
+Ausgabe: je Format ein Unterordner mit eigenem `report.md` und Montagen, dazu
+`formate.md` — je Preset Urteil und MAE der frühesten Marke in jedem Format.
+**FORMATABHAENGIG** heißt: in einem Format grün (≤ 0,08), in einem anderen
+Befund (> 0,15). Die Spalte „Puffer“ meldet, wo der Kern seinen Puffer anders
+groß anlegt als wir.
+
+**Vorbehalte:** Große Formate kosten Zeit (jede Marke ist ein Prozess je
+Seite). Der Kern taktet an der Wanduhr — schafft er in großen Formaten keine
+60 fps, läuft seine Zeit langsamer, und Unterschiede in späten Marken können
+daher rühren. Ein Format, in dem beide Seiten nichts zeigen (`BEIDE-STUMM`,
+z. B. weil eine Kurve aus dem Bild gestreckt wird), zählt nicht mit.
 
 ### `triage_presets.py` — Stapel über eine Sammlung (nur LumiViz)
 

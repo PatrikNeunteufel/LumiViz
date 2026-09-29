@@ -19,7 +19,6 @@ Lage von Punkt K auf dem Schirm. Beide Seiten: Referenz mit `--mesh 32x24`.
 Aufruf:  python gitter_sonde.py            -> Tabelle Referenz | LumiViz je K
 """
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -148,7 +147,7 @@ def ref(milk: Path) -> np.ndarray:
     shutil.copy2(milk, kopie)
     out = OUT / "ref"
     out.mkdir(parents=True, exist_ok=True)
-    subprocess.run([str(cm.REF_EXE), str(kopie), "--frames", str(FRAMES), "--size", SIZE,
+    cm.messlauf.run([str(cm.REF_EXE), str(kopie), "--frames", str(FRAMES), "--size", SIZE,
                     "--out", str(out), "--zufall-lumiviz", "--mesh", "32x24"],
                    capture_output=True)
     return cm.load_rgb(out / f"{milk.stem}_ref.bmp")

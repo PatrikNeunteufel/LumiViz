@@ -8,7 +8,6 @@ so stoert es nicht, wenn die Farbwolke selbst minimal anders gezeichnet wird.
 
   python analyse_colormap.py            # rendert beide Seiten und vergleicht
 """
-import subprocess
 import sys
 from pathlib import Path
 
@@ -22,6 +21,9 @@ for _stream in (sys.stdout, sys.stderr):
         _stream.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).parent
+# Gemeinsame Bausteine (S81): Start ohne Konsolenfenster
+sys.path.insert(0, str(ROOT.parent))
+import messlauf  # noqa: E402
 PROBES = ROOT / "colormap_probe"
 OUT = (ROOT / "../../../out/colormap_probe").resolve()
 LUMI_EXE = (ROOT / "../../../out/build/windows-ninja-release-clang/exec/"
@@ -44,9 +46,9 @@ KEYS = {
 def render_ref(name: str) -> np.ndarray:
     out = OUT / "ref"
     out.mkdir(parents=True, exist_ok=True)
-    subprocess.run([str(REF_EXE), str(PROBES / f"{name}.avs"), "--frames", str(FRAMES),
-                    "--size", SIZE, "--out", str(out), "--ape-dir", str(APE_DIR)],
-                   capture_output=True, text=True, timeout=300, check=True)
+    messlauf.run([str(REF_EXE), str(PROBES / f"{name}.avs"), "--frames", str(FRAMES),
+                  "--size", SIZE, "--out", str(out), "--ape-dir", str(APE_DIR)],
+                 capture_output=True, text=True, timeout=300, check=True)
     return np.asarray(Image.open(out / f"{name}_avs_f{FRAMES:04d}_ref.bmp")
                       .convert("RGB")).astype(int)
 
@@ -54,9 +56,9 @@ def render_ref(name: str) -> np.ndarray:
 def render_lumi(name: str) -> np.ndarray:
     out = OUT / "lumi"
     out.mkdir(parents=True, exist_ok=True)
-    subprocess.run([str(LUMI_EXE), str(PROBES / f"{name}.avs"), "--auto",
-                    "--frames", str(FRAMES), "--size", SIZE, "--out", str(out)],
-                   capture_output=True, text=True, timeout=300, check=True)
+    messlauf.run([str(LUMI_EXE), str(PROBES / f"{name}.avs"), "--auto",
+                  "--frames", str(FRAMES), "--size", SIZE, "--out", str(out)],
+                 capture_output=True, text=True, timeout=300, check=True)
     png = next(out.glob(f"{name}_avs*.png"))
     return np.asarray(Image.open(png).convert("RGB")).astype(int)
 

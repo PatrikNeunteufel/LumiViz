@@ -25,6 +25,9 @@ import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
+# Start ohne Konsolenfenster (S81, asset/calibration/messlauf.py)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import messlauf  # noqa: E402
 DEFAULT_EXE = (REPO / "out/build/windows-ninja-release-clang/exec/MilkdropStandalone"
                     / "bin/Release/MilkdropStandalone.exe")
 DEFAULT_PRESETS = REPO / "asset/Milkdrop3/presets"
@@ -43,7 +46,7 @@ def run_one(exe: Path, preset: Path, out_dir: Path, frames: int, size: str,
     row: dict = {"preset": preset.name, "frames": frames}
     t0 = time.monotonic()
     try:
-        proc = subprocess.run(
+        proc = messlauf.run(
             [str(exe), str(preset), "--auto", "--frames", str(frames),
              "--out", str(out_dir), "--size", size],
             capture_output=True, text=True, errors="replace", timeout=timeout_s)

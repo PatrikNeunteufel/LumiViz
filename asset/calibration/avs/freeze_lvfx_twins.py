@@ -17,7 +17,6 @@ Hinweis: AvsStandalone braucht ein SICHTBARES Fenster (Merkregel Session 44) —
 beim Lauf blitzen kurz Fenster auf.
 """
 import json
-import subprocess
 import sys
 from pathlib import Path
 
@@ -28,13 +27,16 @@ for _stream in (sys.stdout, sys.stderr):
         _stream.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).parent
+# Gemeinsame Bausteine (S81): Start ohne Konsolenfenster
+sys.path.insert(0, str(ROOT.parent))
+import messlauf  # noqa: E402
 EXE = (ROOT / "../../../out/build/windows-ninja-release-clang/exec/AvsStandalone/"
        "bin/Release/AvsStandalone.exe").resolve()
 
 
 def dump_chain(avs: Path) -> dict:
     """Ein Preset laden, [Chain]-JSON aus stdout extrahieren."""
-    proc = subprocess.run(
+    proc = messlauf.run(
         [str(EXE), str(avs), "--dump", "--auto", "--frames", "2",
          "--size", "320x240"],
         capture_output=True, text=True, encoding="utf-8", errors="replace",

@@ -42,6 +42,17 @@ oder Index (0-basiert). Unbekannter Wert → Warnung mit Monitorliste,
 Standardort. Einzelheiten in der MilkdropRef-README
 ([`tools/MilkdropRef/README.md`](../../../tools/MilkdropRef/README.md)).
 
+### Start ohne Konsolenfenster
+
+Alle Werkzeugstarts der Skripte hier und unter `../fields/` laufen über
+`messlauf.run` ([`../messlauf.py`](../messlauf.py), S81) — `subprocess.run`
+mit `CREATE_NO_WINDOW`. Ohne das öffnet Windows für jedes gestartete
+Konsolenprogramm (AvsRef, AvsStandalone) ein leeres Konsolenfenster, sobald
+das Skript selbst ohne Konsole läuft (Claude-Shell, geplante Aufgabe). Das
+Renderfenster des Standalones bleibt sichtbar (Merkregel S44). Neue Skripte:
+`messlauf.run` statt `subprocess.run`; wer `compare_avsref as ca` importiert
+und dessen `run_ref`/`run_lumi` benutzt, ist schon abgedeckt.
+
 ### `compare_avsref.py` — der Vergleichslauf
 
 Je Preset ein AvsRef- und ein AvsStandalone-Prozess, Endbild-Vergleich
@@ -54,11 +65,43 @@ Je Preset ein AvsRef- und ein AvsStandalone-Prozess, Endbild-Vergleich
 | `--tests` | aus | zusätzlich `../tests/*.avs` (P-Presets) |
 | `--frames N` | 120 | Frames je Preset |
 | `--size WxH` | 320x240 | Rendergröße beider Seiten |
+| `--formate LISTE` | aus | S81: derselbe Vergleich in mehreren Formaten (ersetzt `--size`), s. u. |
 | `--ape-dir DIR` | `…\cmake\VisualsPresets\avs` | APE-Sammlung für AvsRef (leer = keine APEs) |
 | `--beat-period N` | 30 | deterministischer Beat auf beiden Seiten; 0 = eigene Detektoren (**nicht reproduzierbar**) |
 | `--tick-hz N` | 60 | gettime()-Frame-Uhr für AvsRef; 0 = Wanduhr (bei gettime-Presets nicht vergleichbar) |
 | `--audio-muster klassisch\|musik` | klassisch | synthetisches Signal (beide Seiten gleich) |
 | `--out DIR` | `out/avsref_compare` | Ausgabe |
+
+**Formate (S81).** `--formate` nimmt Komma-getrennte Bausteine aus
+[`../messlauf.py`](../messlauf.py): `aspekt` (1:1, 4:3, 16:9, 3,4:1, 3:4 hoch
+bei ~gleicher Pixelzahl — nur die Form ändert sich), `monitor` (physische
+Größe des Monitors aus `LUMIVIZ_REF_BILDSCHIRM`), `monitor:DISPLAYn`, `WxH`.
+Je Format ein vollständiger Lauf mit `report.md` in `<out>/<WxH>/`, danach
+`<out>/formate.md`: Preset × Format mit Urteil und MAE, dazu das
+Format-Urteil — **FORMATABHAENGIG**, wenn ein Format grün ist
+(MAE ≤ `OK_MAE` 0,03) und ein anderes ein Befund (MAE > `BEFUND_MAE` 0,06),
+sonst die Spanne der MAE; Fehlergründe je Format in der Spalte Hinweise.
+Ohne `--formate` verhält sich das Skript wie vorher.
+
+```bash
+LUMIVIZ_REF_BILDSCHIRM=DISPLAY2 python asset/calibration/avs/compare_avsref.py <presets …> --formate aspekt,monitor
+```
+
+- **Kein Render-Scale-Divisor.** Beide Seiten rendern nativ in der
+  verlangten Größe; AvsRef kennt keinen Divisor, AvsStandalone bleibt bei
+  `--render-scale 1`. Das ist Absicht — die Falle 2.2 der Werkzeug-Wegleitung
+  betrifft den Nachbau des *App*-Bildes, nicht den Vergleich mit dem Original.
+- **Größen werden geprüft.** Jedes Bild muss genau die verlangte Größe
+  haben, sonst `FEHLER` mit Grund statt einer Zahl. Gemessene Grenzen (S81):
+  AvsRef verlangt mindestens 64×64 und hat nach oben keine Grenze
+  (2560×734 läuft); AvsStandalone kann schmale Fenster nicht — Windows
+  verbreitert sie auf die Mindestbreite der Titelleiste (96×64 kam als
+  184×64 an, 192×64 geht). 2560×734 auf dem gleich großen DISPLAY2 kommt
+  pixelgenau an.
+- **Laufzeit.** Bei 120 Frames rund 1,5 s je Preset in 320×240 und rund
+  4 s in 2560×734 (beide Seiten zusammen, vier Matrix-Presets, S81); die
+  volle Reihe `aspekt,monitor` kostet grob das Sieben- bis Neunfache eines
+  320×240-Laufs (Probe: zwei Presets, 60 Frames, `aspekt,monitor` = 21 s).
 
 ### Weitere Läufe gegen AvsRef
 

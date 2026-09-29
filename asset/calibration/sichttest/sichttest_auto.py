@@ -38,6 +38,8 @@ for _s in (sys.stdout, sys.stderr):
 HIER = Path(__file__).parent
 REPO = (HIER / "../../..").resolve()
 sys.path.insert(0, str(HIER.parent / "fields"))
+sys.path.insert(0, str(HIER.parent))  # messlauf: Start ohne Konsole (S81)
+import messlauf  # noqa: E402
 import lvfx_lib as L  # noqa: E402
 
 EXE = (REPO / "out/build/windows-ninja-release-clang/exec/AvsStandalone/bin/"
@@ -84,7 +86,7 @@ def rendern(name: str, doc: dict, frames: int, jede: int) -> list[Path]:
     lvfx = ordner / f"{name}.lvfx"
     L.write(lvfx, doc)
     env = dict(os.environ, QT_ENABLE_HIGHDPI_SCALING="0")
-    proc = subprocess.run(
+    proc = messlauf.run(
         [str(EXE), str(lvfx), "--auto", "--frames", str(frames), "--save-every",
          str(jede), "--beat-period", str(BEAT), "--size", SIZE, "--out", str(ordner)],
         capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -406,7 +408,7 @@ def ui_tests() -> list[Ergebnis]:
         return [Ergebnis("A/C", "(UI-Tests)", False, f"{TESTS.name} fehlt — bauen")]
     xml = OUT / "ui_tests.xml"
     env = dict(os.environ, LUMIVIZ_UI_SCHNAPPSCHUSS=str(OUT / "ui"))
-    subprocess.run([str(TESTS), "-tc=PaletteUi*", "-r=junit", f"--out={xml}"],
+    messlauf.run([str(TESTS), "-tc=PaletteUi*", "-r=junit", f"--out={xml}"],
                    capture_output=True, text=True, encoding="utf-8", errors="replace",
                    timeout=600, env=env)
     if not xml.exists():
