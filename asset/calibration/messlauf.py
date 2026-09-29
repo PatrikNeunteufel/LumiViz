@@ -112,6 +112,9 @@ LHM_SENSOREN = {
     "cpu_package_W": "/amdcpu/0/power/0",
     "cpu_last_pct": "/amdcpu/0/load/0",
     "gpu_hotspot_C": "/gpu-nvidia/0/temperature/2",
+    # S82: je CCD — Tctl zeigt nur den heisseren (Kernwahl `kerne()`)
+    "ccd1_C": "/amdcpu/0/temperature/3",
+    "ccd2_C": "/amdcpu/0/temperature/4",
 }
 LHM_SPALTEN = list(LHM_SENSOREN)
 
@@ -180,6 +183,78 @@ def gpu_protokoll(ziel):
     finally:
         stopp.set()
         faden.join(timeout=10)
+
+
+# --- Kerne (S82) ------------------------------------------------------------------------
+# Windows legt die (leichte, fast einfaedige) Last der Werkzeuge auf die
+# Vorzugskerne von CCD1; der laeuft an der Regelgrenze (97–99 °C), CCD2 bleibt
+# bei 66–70 °C, und Tctl meldet den heisseren. `kerne("ccd2")` beschraenkt den
+# Harness-Prozess — gestartete Werkzeuge ERBEN die Affinitaet (CreateProcess).
+# Die CCDs kommen aus den L3-Caches (je CCD einer), nicht aus festen Nummern.
+KERNE_WAHL = ("alle", "ccd1", "ccd2")
+
+
+def ccd_masken() -> list[int]:
+    """Affinitaetsmasken der L3-Caches (Prozessorgruppe 0), aufsteigend —
+    auf dem Ryzen 9 7945HX = [CCD1, CCD2]. Leer ausserhalb von Windows."""
+    if os.name != "nt":
+        return []
+    import ctypes
+    import struct
+    k32 = ctypes.windll.kernel32
+    relation_cache = 2
+    laenge = ctypes.c_uint32(0)
+    k32.GetLogicalProcessorInformationEx(relation_cache, None, ctypes.byref(laenge))
+    puffer = ctypes.create_string_buffer(laenge.value)
+    if not k32.GetLogicalProcessorInformationEx(relation_cache, puffer,
+                                                ctypes.byref(laenge)):
+        return []
+    daten, pos, masken = puffer.raw, 0, []
+    while pos < laenge.value:
+        _, groesse = struct.unpack_from("<II", daten, pos)
+        # CACHE_RELATIONSHIP: Level @+8 · GroupMask.Mask @+40 · Group @+48
+        stufe = daten[pos + 8]
+        maske, gruppe = struct.unpack_from("<QH", daten, pos + 40)
+        if stufe == 3 and gruppe == 0:
+            masken.append(maske)
+        pos += groesse
+    return sorted(masken)
+
+
+def maske_text(maske: int) -> str:
+    """Maske → „16–31" (zusammenhaengend) bzw. Liste."""
+    bits = [i for i in range(64) if maske >> i & 1]
+    if bits and bits == list(range(bits[0], bits[-1] + 1)):
+        return f"{bits[0]}–{bits[-1]}"
+    return ",".join(map(str, bits))
+
+
+@contextlib.contextmanager
+def kerne(name: str):
+    """Harness (und damit alle Werkzeuge) fuer die Dauer des Blocks auf
+    `name` beschraenken; liefert die Beschreibung fuer Log und Bericht."""
+    if name not in KERNE_WAHL:
+        raise ValueError(f"unbekannte Kernwahl '{name}' (bekannt: {', '.join(KERNE_WAHL)})")
+    if name == "alle" or os.name != "nt":
+        yield "alle (Windows verteilt)"
+        return
+    masken = ccd_masken()
+    nummer = int(name[-1])
+    if len(masken) < nummer:
+        raise SystemExit(f"FEHLER: --kerne {name}, aber nur {len(masken)} L3-Cache(s) gefunden")
+    import ctypes
+    k32 = ctypes.windll.kernel32
+    k32.GetCurrentProcess.restype = ctypes.c_void_p
+    ich = ctypes.c_void_p(k32.GetCurrentProcess())
+    alt, system = ctypes.c_size_t(), ctypes.c_size_t()
+    k32.GetProcessAffinityMask(ich, ctypes.byref(alt), ctypes.byref(system))
+    neu = masken[nummer - 1]
+    if not k32.SetProcessAffinityMask(ich, ctypes.c_size_t(neu)):
+        raise SystemExit(f"FEHLER: Affinitaet {name} ({maske_text(neu)}) nicht setzbar")
+    try:
+        yield f"{name} (Prozessoren {maske_text(neu)})"
+    finally:
+        k32.SetProcessAffinityMask(ich, alt)
 
 
 @contextlib.contextmanager

@@ -505,6 +505,11 @@ def main() -> int:
                          "stellt beide Exes um und danach zurueck. Auf der 610M "
                          "zeichnet der Kern ps_3_0-Presets nicht (REF-SHADER "
                          "bzw. schwarz)")
+    ap.add_argument("--kerne", default="alle", choices=messlauf.KERNE_WAHL,
+                    help="S82: Referenz UND Pruefling auf einen CCD beschraenken "
+                         "(Affinitaet, von den Werkzeugen geerbt). ccd2 = den "
+                         "kuehlen CCD nutzen — Windows legt die Last sonst auf "
+                         "die Vorzugskerne von CCD1. Vorgabe: alle")
     args = ap.parse_args()
     global ZUFALL_LUMIVIZ, FORTSETZEN
     ZUFALL_LUMIVIZ = args.zufall_lumiviz
@@ -543,10 +548,11 @@ def main() -> int:
         # eines abgebrochenen Laufs, sobald --fortsetzen startet
         protokoll_datei = out / f"gpu_protokoll_{time.strftime('%Y%m%d_%H%M%S')}.csv"
         with messlauf.karte(args.karte, [REF_EXE, LUMI_EXE]) as kennung, \
+                messlauf.kerne(args.kerne) as kerne_text, \
                 messlauf.wach_halten(), \
                 messlauf.gpu_protokoll(protokoll_datei) as protokoll:
             ERWARTETE_KARTE = kennung
-            print(f"Karte: {args.karte} (Referenz und Pruefling)"
+            print(f"Karte: {args.karte} (Referenz und Pruefling) — Kerne: {kerne_text}"
                   + (f" — GPU-Protokoll: {protokoll_datei.name}" if protokoll else ""),
                   flush=True)
             return vergleichen(presets, marken, saaten, args, out)

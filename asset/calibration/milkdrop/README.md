@@ -60,6 +60,9 @@ Ein Prozess je Preset und Seite, mehrere Frame-Marken, Montage
 | `--zufall-lumiviz` | aus | Referenz würfelt wie LumiViz — für Presets mit Zufall Pflicht |
 | `--karte 4090\|610m` | 4090 | Grafikkarte für Referenz **und** Prüfling (immer beide gleich), Abschnitt unten |
 | `--fortsetzen` | aus | abgebrochenen Lauf mit derselben `--out` fortsetzen: Marken mit Bild **und** Begleitdatei (`*_ref.json`/`*_auto.json`, gleiche Karte) werden übernommen |
+| `--kerne alle\|ccd1\|ccd2` | alle | Referenz **und** Prüfling auf einen CCD beschränken, Abschnitt unten |
+| `--timeout S` | 180 | Sekunden je Lauf |
+| `--out DIR` | `out/milkref_compare` | Ausgabe |
 
 **Jeder Lauf zusätzlich (S81):** hält das Gerät wach (kein Standby, solange
 er läuft — Vorsorge), schreibt `gpu_protokoll_<Datum_Zeit>.csv` (je Sekunde Temperatur,
@@ -74,8 +77,6 @@ Anlass: harter Absturz mitten im Kalibrierlauf (29.09. 16:21, Kernel-Power 41
 ohne Bugcheck, im Betrieb unter Last auf der 4090, kein Standby) — Verdacht
 Notabschaltung durch Hitze/Stromversorgung; die 4090 meldet schon bei
 geringer Last „SW Thermal Slowdown“.
-| `--timeout S` | 180 | Sekunden je Lauf |
-| `--out DIR` | `out/milkref_compare` | Ausgabe |
 
 #### Grafikkarte und Shader-Stufen (`--karte`, S81)
 
@@ -101,6 +102,27 @@ sie).
 Die Sonden (`spektrum_wave.py`, `comp_quellen.py`, `gitter_sonde.py`,
 `drift_sonde.py`) starten die Referenz über dieselbe Prüfung
 (`cm.ref_starten`) und erwarten die Standardkarte 4090.
+
+#### Kernwahl (`--kerne`, S82)
+
+Windows legt die leichte, fast einfädige Last beider Werkzeuge auf die
+Vorzugskerne von CCD1; der läuft dann an der Regelgrenze, CCD2 bleibt kühl, und
+Tctl meldet den heißeren. `--kerne ccd2` beschränkt den Harness per Affinität
+auf CCD2 — die gestarteten Werkzeuge erben sie. Die CCDs kommen aus den
+L3-Caches (`messlauf.ccd_masken()`; 7945HX: 0–15 / 16–31). Die Wahl steht in
+der Zeile „Karte: … — Kerne: …“; das Protokoll führt `ccd1_C`/`ccd2_C`.
+
+Kontrollmessung S82 (`Lasershow` + `Beauty and the Math`, 4:3, je ~50 s):
+
+| Lauf | Tctl Mittel/Max | CCD1 Mittel | CCD2 Mittel | MAE |
+|---|---|---|---|---|
+| alle (1) | 98,4 / 100,0 | 92,6 | 70,0 | Referenz |
+| **ccd2** | **95,5** / 100,1 | 88,4 | 78,2 | Abstand ≤ 0,002 |
+| alle (2) | 99,3 / 101,0 | 95,2 | 73,7 | Abstand ≤ 0,035 (Lasershow f120 saatlos) |
+
+Die Zahlen ändern sich nicht (Abstand kleiner als zwischen zwei gleichen
+Läufen); die Entlastung ist **mäßig** (Tctl im Mittel etwa 3–4 °C tiefer): CCD1
+bleibt durch den Rest des Systems warm. Vorgabe bleibt `alle`.
 
 #### Formate als Messachse (`--formate`, S81)
 
