@@ -1609,6 +1609,29 @@ bool MultiEffectPanel::insertPaletteNode(int paletteIndex, const QList<int>& par
     ChainNode fresh;
     fresh.params = chosen.make();
 
+    if (chosen.fromFile)
+    {
+        // Tiefenregel VOR dem Dateidialog — sonst waehlt man umsonst eine Datei
+        {
+            QMutexLocker lock(m_mutex);
+            if (pathTouchesHostGroup(m_host->chain(), parentPath))
+            {
+                QMessageBox::information(
+                    this, tr("Preset als Gruppe"),
+                    tr("Eine Host-Gruppe kann nicht in einer Host-Gruppe liegen "
+                       "(Tiefenregel) — bitte eine Stelle ausserhalb jeder Gruppe "
+                       "markieren."));
+                return false;
+            }
+        }
+        QString datei;
+        std::vector<ChainNode> inhalt;
+        if (!presetGruppeLaden(datei, inhalt)) return false;
+        fresh.children = std::move(inhalt);
+        fresh.displayName = QFileInfo(datei).completeBaseName().toStdString();
+        std::get<HostGroupParams>(fresh.params).sourceFile = datei.toStdString();
+    }
+
     QList<int> neuerPfad;
     mutateStructure([&] {
         ChainNode* eltern = nodeAtPath(parentPath);
@@ -1638,6 +1661,54 @@ bool MultiEffectPanel::insertPaletteNode(int paletteIndex, const QList<int>& par
     if (neuerPfad.isEmpty()) return false;
     selectByPath(neuerPfad);
     buildPropertyEditor(neuerPfad);
+    return true;
+}
+
+bool MultiEffectPanel::presetGruppeLaden(QString& datei, std::vector<ChainNode>& outInhalt)
+{
+    const QString titel = tr("Preset als Gruppe");
+    if (datei.isEmpty())
+    {
+        QSettings settings;
+        const QString schluessel = QStringLiteral("effectPalette/presetGroupDir");
+        datei = QFileDialog::getOpenFileName(
+            this, titel, settings.value(schluessel).toString(),
+            tr("Presets (*.avs *.milk *.lvfx *.lvfx2);;AVS Presets (*.avs);;"
+               "MilkDrop Presets (*.milk);;LumiViz Effect Chains (*.lvfx *.lvfx2)"));
+        if (datei.isEmpty()) return false;
+        settings.setValue(schluessel, QFileInfo(datei).absolutePath());
+    }
+
+    ChainNode baum;
+    QStringList report;
+    if (!MultiEffectVisualizer::buildPresetTree(datei, baum, &report))
+    {
+        QString text = tr("Konnte nicht laden:\n%1").arg(datei);
+        if (!report.isEmpty()) text += QStringLiteral("\n\n") + report.join('\n');
+        QMessageBox::warning(this, titel, text);
+        return false;
+    }
+    // Tiefenregel: die Quelle darf selbst Gruppen haben — sie werden beim
+    // Kompilieren zur Effect List degradiert (wie beim .lvfx-Import)
+    if (chainHasHostGroup(baum))
+    {
+        QMessageBox::information(
+            this, titel,
+            tr("Die Quelle enthaelt selbst Host-Gruppen — sie laufen in dieser "
+               "Gruppe als Effect List (Tiefenregel)."));
+    }
+    // "ℹ"-Zeilen sind reine Bestaetigungen — nur echte Probleme melden
+    QStringList probleme;
+    for (const QString& zeile : report)
+    {
+        if (!zeile.startsWith(QStringLiteral("ℹ"))) probleme.append(zeile);
+    }
+    if (!probleme.isEmpty())
+    {
+        QMessageBox::information(this, titel,
+                                 tr("Geladen, mit Hinweisen:\n\n%1").arg(probleme.join('\n')));
+    }
+    outInhalt = MultiEffectVisualizer::presetGroupChildren(std::move(baum));
     return true;
 }
 
@@ -5623,45 +5694,51 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             src->setWordWrap(true);
             form->addRow(src);
         }
-        auto* importBtn = new QPushButton(
-            tr(".lvfx in diese Gruppe importieren..."), m_propContainer);
-        connect(importBtn, &QPushButton::clicked, this, [this, path]() {
-            const QString file = QFileDialog::getOpenFileName(
-                this, tr("Import .lvfx in Host-Gruppe"), QString(),
-                tr("LumiViz Effect Chain (*.lvfx)"));
-            if (file.isEmpty()) return;
-            ChainNode loaded;
-            QStringList report;
-            if (!lumi::multieffect::loadChainFromFile(file, loaded, &report))
+        // Preset laden / aus der Quelle neu laden (S82, vorher nur .lvfx): der
+        // Inhalt ist eine KOPIE (Entscheid Patrik S82, 2a) — die Quelle wird
+        // nur auf Knopfdruck neu gelesen, eigene Aenderungen gehen dabei verloren.
+        const auto inhaltErsetzen = [this, path](QString datei) {
+            bool hatInhalt = false;
             {
-                QMessageBox::warning(this, tr("Import .lvfx"),
-                                     tr("Konnte nicht laden:\n%1").arg(file));
+                QMutexLocker lock(m_mutex);
+                const ChainNode* gruppe = nodeAtPath(path);
+                hatInhalt = gruppe != nullptr && !gruppe->children.empty();
+            }
+            if (hatInhalt &&
+                QMessageBox::question(
+                    this, tr("Preset in Gruppe laden"),
+                    tr("Den bisherigen Inhalt der Gruppe ersetzen? Eigene "
+                       "Aenderungen daran gehen verloren.")) != QMessageBox::Yes)
                 return;
-            }
-            if (chainHasHostGroup(loaded))
-            {
-                QMessageBox::information(
-                    this, tr("Import .lvfx"),
-                    tr("Die Quelle enthaelt selbst Host-Gruppen — sie werden "
-                       "beim Uebernehmen zur Effect List degradiert "
-                       "(Tiefenregel)."));
-            }
+            std::vector<ChainNode> inhalt;
+            if (!presetGruppeLaden(datei, inhalt)) return;
             mutateStructure([&] {
-                ChainNode* node = nodeAtPath(path);
-                auto* hg = node != nullptr
-                               ? std::get_if<HostGroupParams>(&node->params)
+                ChainNode* ziel = nodeAtPath(path);
+                auto* hg = ziel != nullptr
+                               ? std::get_if<HostGroupParams>(&ziel->params)
                                : nullptr;
                 if (hg == nullptr) return;
-                // Frische IDs — compileChain vergibt nur an nodeId==0
-                std::function<void(ChainNode&)> clearIds = [&](ChainNode& n) {
-                    n.nodeId = 0;
-                    for (ChainNode& c : n.children) clearIds(c);
-                };
-                clearIds(loaded);
-                node->children = std::move(loaded.children);
-                hg->sourceFile = file.toStdString();
+                ziel->children = std::move(inhalt);
+                hg->sourceFile = datei.toStdString();
             });
-        });
+        };
+        if (!p->sourceFile.empty())
+        {
+            const QString quelle = QString::fromStdString(p->sourceFile);
+            auto* reloadBtn = new QPushButton(tr("Aus Quelle neu laden"), m_propContainer);
+            reloadBtn->setEnabled(QFileInfo::exists(quelle));
+            reloadBtn->setToolTip(QFileInfo::exists(quelle)
+                                      ? tr("Liest %1 erneut ein und ersetzt den "
+                                           "Inhalt der Gruppe.").arg(quelle)
+                                      : tr("Quelldatei nicht gefunden: %1").arg(quelle));
+            connect(reloadBtn, &QPushButton::clicked, this,
+                    [inhaltErsetzen, quelle]() { inhaltErsetzen(quelle); });
+            form->addRow(reloadBtn);
+        }
+        auto* importBtn = new QPushButton(
+            tr("Preset in diese Gruppe laden (.avs, .milk, .lvfx)..."), m_propContainer);
+        connect(importBtn, &QPushButton::clicked, this,
+                [inhaltErsetzen]() { inhaltErsetzen(QString()); });
         form->addRow(importBtn);
     }
     else if (auto* p = std::get_if<MilkdropNodeParams>(&params))

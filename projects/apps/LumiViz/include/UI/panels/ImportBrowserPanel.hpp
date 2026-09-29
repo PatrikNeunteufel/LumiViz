@@ -1,17 +1,22 @@
 /**
  ****************************************************************************************
  * @file   ImportBrowserPanel.hpp
- * @brief  Directory browser for importing AVS/MilkDrop presets
+ * @brief  Directory browser for AVS/MilkDrop/LumiViz presets („Effect Browser")
  *
  * @author Patrik Neunteufel
  * @date   July 2026
  * @version 1.0.0
  *
  * @details
- * ## ImportBrowserPanel
+ * ## ImportBrowserPanel — Titel „Effect Browser" (seit S82)
+ *
+ * Sichtbar heisst das Panel seit S82 „Effect Browser": es laedt nebst .avs und
+ * .milk auch die eigenen .lvfx (geladene .avs/.milk speichern als .lvfx). Klasse
+ * und Panel-id `import_browser` bleiben — an der id haengen Dock-Layout und
+ * gespeicherter Ordner.
  *
  * A file-browser panel (styled like the Playlist) for quickly checking imports:
- * - Shows the contents of a folder, filtered to `*.avs` / `*.milk` / both.
+ * - Shows the contents of a folder, filtered to `*.avs` / `*.milk` / `*.lvfx` / all.
  * - Double-click a folder to descend, ".." or the Up button to ascend.
  * - Double-click a preset to import it into the Multi Effect host.
  *

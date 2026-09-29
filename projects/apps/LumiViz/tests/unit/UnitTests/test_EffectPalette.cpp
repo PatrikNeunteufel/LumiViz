@@ -44,8 +44,26 @@ TEST_CASE("EffectPalette: jeder Eintrag ist beschrieben und eindeutig")
         CHECK(names.insert(t.name).second);  // Name eindeutig
         CHECK(std::string(t.summary).size() > 10);
         if (t.origin == Origin::Avs) CHECK_FALSE(std::string(t.originalName).empty());
-        if (t.make != nullptr)
-            CHECK(variantIndices.insert(t.make().index()).second);  // Typ nur einmal
+        // Typ nur einmal — ausser „aus Datei"-Eintraegen (S82), die bewusst
+        // eine Host-Gruppe bauen und sie aus einer Preset-Datei fuellen
+        if (t.make != nullptr && !t.fromFile)
+            CHECK(variantIndices.insert(t.make().index()).second);
     }
-    CHECK(entries >= 84);
+    CHECK(entries >= 85);
+}
+
+TEST_CASE("EffectPalette: Preset as Group baut eine Host-Gruppe (S82)")
+{
+    int ausDatei = 0;
+    for (const EffectType& t : effectPalette())
+    {
+        if (!t.fromFile) continue;
+        ++ausDatei;
+        INFO(t.name);
+        REQUIRE(t.make != nullptr);
+        CHECK(std::holds_alternative<lumi::multieffect::HostGroupParams>(t.make()));
+        // Herkunft eines Gruppenknotens bleibt die des Host-Group-Eintrags
+        CHECK(originForParams(t.make()) == Origin::Native);
+    }
+    CHECK(ausDatei == 1);
 }

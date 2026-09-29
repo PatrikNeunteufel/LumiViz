@@ -133,6 +133,33 @@ public:
     bool loadChainFile(const QString& path, QStringList* outReport = nullptr);
 
     /**
+     * @brief Preset-Datei als Knotenbaum bauen, OHNE die laufende Kette
+     *        anzufassen (S82, „Preset as Group"): .avs, .milk, .lvfx und die
+     *        Milkdrop-Schwester-.lvfx — dieselben Uebersetzer und Pfad-
+     *        Aufloesungen wie die load*-Funktionen oben, aber kein
+     *        Render-Scale-Knoten (der wirkt global, Entwurf §5) und kein
+     *        Runtime-Reset. Die Wurzel ist immer eine ListParams-Liste.
+     *        Reine Funktion, kein Lock noetig.
+     * @param outReport Probleme; Zeilen mit „ℹ" sind Bestaetigungen.
+     * @return false = Datei unlesbar/unbekannt (outRoot unveraendert).
+     */
+    [[nodiscard]] static bool buildPresetTree(const QString& path,
+                                              lumi::multieffect::ChainNode& outRoot,
+                                              QStringList* outReport = nullptr);
+
+    /**
+     * @brief Inhalt einer Host-Gruppe aus einem buildPresetTree-Baum (S82):
+     *        alle nodeIds auf 0 (compileChain vergibt neue). Traegt die Wurzel
+     *        eigene Einstellungen (Clear, Blend, OnBeat, Listen-Code — bei AVS
+     *        etwa „clear every frame"), bleibt sie als EINE innere Effect List
+     *        erhalten; sonst werden ihre Kinder direkt zum Gruppeninhalt.
+     *        Vorher (Knopf „.lvfx in diese Gruppe importieren") gingen diese
+     *        Einstellungen still verloren.
+     */
+    [[nodiscard]] static std::vector<lumi::multieffect::ChainNode>
+    presetGroupChildren(lumi::multieffect::ChainNode root);
+
+    /**
      * @brief Divisor des Render-Scale-Knotens, den loadAvsFile automatisch als
      *        erstes Kind einfuegt (Entscheid S47, Variante 2): Der Wert kommt
      *        aus der App-Einstellung und wirkt NUR im Moment des Imports —

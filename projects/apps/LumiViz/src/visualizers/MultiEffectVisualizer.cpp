@@ -3031,9 +3031,11 @@ void resolveVideoSourcePaths(ChainNode& node, const QString& baseDir)
     for (ChainNode& child : node.children)
         resolveVideoSourcePaths(child, baseDir);
 }
-}  // namespace
 
-bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outReport)
+/// .avs → Baum (S82 aus loadAvsFile geloest, gemeinsam mit buildPresetTree):
+/// Uebersetzung, eingebettete Bilder, AVI-Pfade, Import-Notes-Knoten — alles
+/// ausser dem Render-Scale-Knoten und dem Einsetzen. Rueckgabe = parsed.ok.
+bool baueAvsBaum(const QString& path, ChainNode& outRoot, QStringList& problems)
 {
     const lumi::avs::ParseResult parsed =
         lumi::avs::parseFile(std::filesystem::path(path.toStdWString()));
@@ -3042,7 +3044,7 @@ bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outRep
     // PROBLEME sammeln (Parser, Passthrough, fehlende Dateien). Die planmaessigen
     // HINWEISE (translated.notes) bleiben bewusst draussen: sie gehen in den
     // Import-Notes-Knoten, nicht in den Dialog (Entscheid Patrik S51).
-    QStringList problems;
+    problems.clear();
     for (const std::string& line : translated.report)
     {
         problems.append(QString::fromStdString(line));
@@ -3051,7 +3053,6 @@ bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outRep
     // "image not found" notes after the translation report).
     embedPictureImages(translated.root, QFileInfo(path).absolutePath(), &problems);
     resolveAviPaths(translated.root, QFileInfo(path).absolutePath(), &problems);
-    if (outReport != nullptr) *outReport = problems;
 
     // Das vollstaendige Protokoll als Knoten IN der Kette — Zusammenfassung,
     // dann Probleme, dann Hinweise. Bewusst OHNE Zeitstempel: das JSON eines
@@ -3089,21 +3090,50 @@ bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outRep
         translated.root.children.insert(translated.root.children.begin(),
                                         std::move(notes));
     }
+    outRoot = std::move(translated.root);
+    return parsed.ok;
+}
+
+/// .lvfx → Baum mit aufgeloesten Video-/AVI-Pfaden (S82 aus loadChainFile).
+bool baueLvfxBaum(const QString& path, ChainNode& outRoot, QStringList* outReport)
+{
+    ChainNode loaded;
+    if (!loadChainFromFile(path, loaded, outReport)) return false;
+    // videoSource (S70): relative Videopfade gegen den Preset-Ordner aufloesen
+    resolveVideoSourcePaths(loaded, QFileInfo(path).absolutePath());
+    // avi (S73): dasselbe fuer den AVI-Knoten. Bis hierher lief die Aufloesung
+    // NUR beim .avs-Import (loadAvsFile) — eine .lvfx trug den absoluten Pfad
+    // des Erstellers und war auf jedem anderen Rechner tot. `resolveAviPaths`
+    // sucht ueber den blanken Dateinamen, repariert also auch Altbestand mit
+    // absolutem `filename`. Ein bereits gesetzter `resolvedPath` bleibt
+    // unangetastet (die Sonde `avi.resolvedPath` haengt daran).
+    resolveAviPaths(loaded, QFileInfo(path).absolutePath(), nullptr);
+    outRoot = std::move(loaded);
+    return true;
+}
+}  // namespace
+
+bool MultiEffectVisualizer::loadAvsFile(const QString& path, QStringList* outReport)
+{
+    ChainNode root;
+    QStringList problems;
+    const bool ok = baueAvsBaum(path, root, problems);
+    if (outReport != nullptr) *outReport = problems;
+
     // Entscheid S47 (Variante 2): jeder AVS-Import bekommt einen Render-Scale-
     // Knoten als erstes Kind — Wert aus der App-Einstellung (1 = neutral, wie
     // ohne). Danach ist der Knoten im Preset die einzige Wahrheit.
     {
         ChainNode scale;
         scale.params = RenderScaleParams{m_importRenderScaleDivisor, 0};
-        translated.root.children.insert(translated.root.children.begin(),
-                                        std::move(scale));
+        root.children.insert(root.children.begin(), std::move(scale));
     }
     // The new tree reuses node ids 1..N, colliding with the old runtimes; flag
     // a reset so the render thread frees their GL objects and starts fresh.
     m_pendingRuntimeReset = true;
     m_beatPeriodFrame = 0;  // --beat-period zaehlt je Preset ab 0 (wie AvsRef)
-    setChain(std::move(translated.root));
-    return parsed.ok;
+    setChain(std::move(root));
+    return ok;
 }
 
 bool MultiEffectVisualizer::replaceMilkdropPresetInPlace(
@@ -3179,9 +3209,9 @@ ChainNode makeMilkdropRoot(lumi::milkdrop::PresetState state, const QString& pre
     return root;
 }
 
-} // namespace
-
-bool MultiEffectVisualizer::loadMilkFile(const QString& path, QStringList* outReport)
+/// .milk → PresetState samt Import-Meldungen (S82 aus loadMilkFile geloest).
+bool baueMilkState(const QString& path, lumi::milkdrop::PresetState& outState,
+                   QStringList* outReport)
 {
     if (outReport != nullptr) outReport->clear();
     const lumi::milk::ParseResult parsed =
@@ -3209,18 +3239,43 @@ bool MultiEffectVisualizer::loadMilkFile(const QString& path, QStringList* outRe
         }
     }
 
-    lumi::milkdrop::PresetState state = lumi::milkdrop::translate(parsed);
-    state.name = QFileInfo(path).completeBaseName().toStdString();
-    const QString dir = QFileInfo(path).absolutePath();
+    outState = lumi::milkdrop::translate(parsed);
+    outState.name = QFileInfo(path).completeBaseName().toStdString();
 
     // Report-Paritaet zum frueheren Standalone-Import: eine GL-freie Wegwerf-
     // Instanz erzeugt dieselben Klassifikations-/Transpile-/Textur-Meldungen
     // (der Render-Thread uebernimmt den Node-State spaeter still per Revision)
     {
         MilkdropVisualizer probe;
-        probe.applyPresetState(state, dir, outReport);
+        probe.applyPresetState(outState, QFileInfo(path).absolutePath(), outReport);
     }
+    return true;
+}
 
+/// Milkdrop-Schwester-.lvfx (M6.1) → PresetState (S82 aus loadMilkDocument).
+bool baueMilkDokument(const QString& path, lumi::milkdrop::PresetState& outState,
+                      QStringList* outReport)
+{
+    if (outReport != nullptr) outReport->clear();
+    if (!lumi::milkdrop::loadPresetFromFile(path, outState, outReport)) return false;
+    if (outState.name.empty())
+    {
+        outState.name = QFileInfo(path).completeBaseName().toStdString();
+    }
+    {
+        MilkdropVisualizer probe;
+        probe.applyPresetState(outState, QFileInfo(path).absolutePath(), outReport);
+    }
+    return true;
+}
+
+} // namespace
+
+bool MultiEffectVisualizer::loadMilkFile(const QString& path, QStringList* outReport)
+{
+    lumi::milkdrop::PresetState state;
+    if (!baueMilkState(path, state, outReport)) return false;
+    const QString dir = QFileInfo(path).absolutePath();
     if (replaceMilkdropPresetInPlace(state, dir, {})) return true;
     m_pendingRuntimeReset = true;  // neue Node-Ids — alte GL-Runtimes freigeben
     setChain(makeMilkdropRoot(std::move(state), dir));
@@ -3229,18 +3284,9 @@ bool MultiEffectVisualizer::loadMilkFile(const QString& path, QStringList* outRe
 
 bool MultiEffectVisualizer::loadMilkDocument(const QString& path, QStringList* outReport)
 {
-    if (outReport != nullptr) outReport->clear();
     lumi::milkdrop::PresetState state;
-    if (!lumi::milkdrop::loadPresetFromFile(path, state, outReport)) return false;
-    if (state.name.empty())
-    {
-        state.name = QFileInfo(path).completeBaseName().toStdString();
-    }
+    if (!baueMilkDokument(path, state, outReport)) return false;
     const QString dir = QFileInfo(path).absolutePath();
-    {
-        MilkdropVisualizer probe;
-        probe.applyPresetState(state, dir, outReport);
-    }
     if (replaceMilkdropPresetInPlace(state, dir, {})) return true;
     m_pendingRuntimeReset = true;
     setChain(makeMilkdropRoot(std::move(state), dir));
@@ -3260,20 +3306,75 @@ QImage MultiEffectVisualizer::debugGrabRootSurface() const
 bool MultiEffectVisualizer::loadChainFile(const QString& path, QStringList* outReport)
 {
     ChainNode loaded;
-    if (!loadChainFromFile(path, loaded, outReport)) return false;
-    // videoSource (S70): relative Videopfade gegen den Preset-Ordner aufloesen
-    resolveVideoSourcePaths(loaded, QFileInfo(path).absolutePath());
-    // avi (S73): dasselbe fuer den AVI-Knoten. Bis hierher lief die Aufloesung
-    // NUR beim .avs-Import (loadAvsFile) — eine .lvfx trug den absoluten Pfad
-    // des Erstellers und war auf jedem anderen Rechner tot. `resolveAviPaths`
-    // sucht ueber den blanken Dateinamen, repariert also auch Altbestand mit
-    // absolutem `filename`. Ein bereits gesetzter `resolvedPath` bleibt
-    // unangetastet (die Sonde `avi.resolvedPath` haengt daran).
-    resolveAviPaths(loaded, QFileInfo(path).absolutePath(), nullptr);
+    if (!baueLvfxBaum(path, loaded, outReport)) return false;
     m_pendingRuntimeReset = true;  // new node ids — free old GL runtimes (render thread)
     m_beatPeriodFrame = 0;  // --beat-period zaehlt je Preset ab 0 (wie AvsRef)
     m_root = std::move(loaded);
     return true;
+}
+
+bool MultiEffectVisualizer::buildPresetTree(const QString& path, ChainNode& outRoot,
+                                            QStringList* outReport)
+{
+    const QString endung = QFileInfo(path).suffix().toLower();
+    ChainNode baum;
+    bool ok = false;
+    if (endung == QLatin1String("avs"))
+    {
+        QStringList probleme;
+        ok = baueAvsBaum(path, baum, probleme);
+        if (outReport != nullptr) *outReport = probleme;
+    }
+    else if (endung == QLatin1String("milk"))
+    {
+        lumi::milkdrop::PresetState state;
+        ok = baueMilkState(path, state, outReport);
+        if (ok) baum = makeMilkdropRoot(std::move(state), QFileInfo(path).absolutePath());
+    }
+    else if (endung == QLatin1String("lvfx") || endung == QLatin1String("lvfx2"))
+    {
+        if (lumi::milkdrop::isMilkdropFile(path))
+        {
+            lumi::milkdrop::PresetState state;
+            ok = baueMilkDokument(path, state, outReport);
+            if (ok) baum = makeMilkdropRoot(std::move(state), QFileInfo(path).absolutePath());
+        }
+        else
+        {
+            ok = baueLvfxBaum(path, baum, outReport);
+        }
+    }
+    // Die Wurzel ist vertraglich eine Liste (Muster aller Loader)
+    if (!ok || !std::holds_alternative<ListParams>(baum.params)) return false;
+    outRoot = std::move(baum);
+    return true;
+}
+
+std::vector<ChainNode> MultiEffectVisualizer::presetGroupChildren(ChainNode root)
+{
+    std::function<void(ChainNode&)> idsLoeschen = [&](ChainNode& n) {
+        n.nodeId = 0;
+        for (ChainNode& c : n.children) idsLoeschen(c);
+    };
+    idsLoeschen(root);
+
+    const auto* lp = std::get_if<ListParams>(&root.params);
+    const ListParams neutral{};
+    const bool wurzelNeutral =
+        lp == nullptr ||
+        (lp->clearEveryFrame == neutral.clearEveryFrame && lp->blendIn == neutral.blendIn &&
+         lp->blendOut == neutral.blendOut && lp->inAdjustAlpha == neutral.inAdjustAlpha &&
+         lp->outAdjustAlpha == neutral.outAdjustAlpha && lp->bufferIn == neutral.bufferIn &&
+         lp->bufferOut == neutral.bufferOut && lp->bufferInInvert == neutral.bufferInInvert &&
+         lp->bufferOutInvert == neutral.bufferOutInvert &&
+         lp->onBeatRender == neutral.onBeatRender && lp->useCode == neutral.useCode &&
+         lp->initCode.empty() && lp->frameCode.empty());
+    if (wurzelNeutral) return std::move(root.children);
+
+    if (root.displayName.empty()) root.displayName = "Preset Root";
+    std::vector<ChainNode> inhalt;
+    inhalt.push_back(std::move(root));
+    return inhalt;
 }
 
 // =============================================================================

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.12.0
+> **Version:** 1.13.0
 > **Datum:** 2026-09-29
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -153,7 +153,7 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   Der Wert landet in der Windows-Grafikeinstellung und greift erst beim
   Prozessstart, deshalb **startet die App bei einer Änderung sofort neu**.
   Darunter zeigt *Active GPU* die tatsächlich benutzte Karte.
-- **Panels:** Startordner des Import-Browsers zurücksetzen — er springt danach in
+- **Panels:** Startordner des Effect Browsers zurücksetzen — er springt danach in
   den **Programmordner**, wo der mitgelieferte Ordner `presets/` liegt · Render-Scale-Divisor
   für AVS-Importe · **Bilder-Suchordner** — wird beim Import durchsucht, wenn
   neben dem Preset kein Bild für Picture/Texer liegt, und ist der Startordner der
@@ -194,12 +194,12 @@ Bedienung entkoppelt.
 
 | Kürzel | Aktion |
 |---|---|
-| Bild ab | Nächstes Preset im **aktiven Ordner des Import-Browsers** |
+| Bild ab | Nächstes Preset im **aktiven Ordner des Effect Browsers** |
 | Bild auf | Voriges Preset |
 
 `Bild ab` geht in der Liste nach unten, also **vorwärts**.
 
-Geblättert wird über die Presets des Ordners, der im Import-Browser offen ist —
+Geblättert wird über die Presets des Ordners, der im Effect Browser offen ist —
 Unterordner werden übersprungen, am Ende des Ordners hält es an. Das Panel muss
 dafür **nicht** sichtbar oder fokussiert sein. Während in einem Textfeld oder
 Skript-Editor getippt wird, blättern die Tasten nicht, sondern verhalten sich
@@ -269,8 +269,9 @@ vergeben.
 
 Der Visualizer **„Multi Effect"** rendert eine frei editierbare Effektkette.
 Bearbeitet wird sie im Panel **View → Panels → Effect Chain**; Presets lädt
-der **Import Browser** (Panel rechts) per Doppelklick — `.avs`, `.milk`,
-`.lvfx` und `.lvfx2`.
+der **Effect Browser** (Panel rechts, bis Session 82 „Import Browser") per
+Doppelklick — `.avs`, `.milk`, `.lvfx` und `.lvfx2`. Geladene `.avs`/`.milk`
+werden beim Speichern zur `.lvfx`.
 
 ### Ketten-Editor
 
@@ -582,8 +583,19 @@ Gruppen dürfen gleichzeitig aktiv sein und mischen sich über ihren
   Exponentiell). Beide Visuals laufen während des Übergangs live weiter.
 - **„Zu dieser Gruppe wechseln (Crossfade)"** im Gruppen-Editor blendet die
   gewählte Gruppe ein und alle anderen aus — der schnelle Preset-Wechsel.
-- **„.lvfx in diese Gruppe importieren…"** übernimmt eine gespeicherte
-  Kette als Gruppeninhalt.
+- **Ein fertiges Preset als Gruppe:** In der Effekt-Palette legt
+  **„Preset as Group…"** eine neue Host-Gruppe an und fragt nach der Datei —
+  `.avs`, `.milk` oder `.lvfx`. Der Inhalt ist eine **Kopie**: du kannst ihn
+  im Baum frei ändern, die Datei bleibt unberührt. Der Gruppen-Editor zeigt
+  die **Quelle**; **„Aus Quelle neu laden"** liest die Datei erneut ein
+  (ersetzt den Inhalt, fragt vorher). Grenzen: Beat/BPM, Multi-Delay und
+  Render Scale gelten für die ganze Kette, nicht je Gruppe — ein AVS-Preset
+  bekommt in der Gruppe deshalb **keinen** eigenen Render-Scale-Knoten; eine
+  `.lvfx` mit eigenen Host-Gruppen läuft in der Gruppe als Effect List.
+  Hatte die Wurzel des Presets eigene Einstellungen (etwa AVS „clear every
+  frame"), bleibt sie als eine Effect List in der Gruppe erhalten.
+- **„Preset in diese Gruppe laden (.avs, .milk, .lvfx)…"** macht dasselbe
+  für eine bestehende Gruppe (ersetzt deren Inhalt).
 - **Speichern:** Ketten mit Host-Gruppe(n) werden automatisch als
   **`.lvfx2`** gespeichert, flache Ketten bleiben `.lvfx`; laden kann die
   App beides.
@@ -764,6 +776,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.13.0 | 2026-09-29 | Session 82. §11 Host-Gruppen: **„Preset as Group…"** in der Effekt-Palette (`.avs`/`.milk`/`.lvfx` als Kopie in eine neue Gruppe, Quelle + „Aus Quelle neu laden", Grenzen), Gruppen-Knopf lädt jetzt alle drei Formate. „Import Browser" heißt **Effect Browser** (§8, §9, §11) |
 | 1.11.0 | 2026-09-28 | Session 80. §11 NEU „Gestaltung: Drift und Weichzeichnen" — Linear-Drift (Stärke + Richtung), Radial-Drift (Stärke, Winkel außen/Wirbel/Sog, Zentrum) und Weichzeichnen je Milkdrop-Node, je Werkzeug ein Schalter, Winkel im Panel in Grad; per `per_frame` steuerbar (`drift_lin/dir/rad/ang/cx/cy`, `weich`, Bogenmaß); Knöpfe „Original" und „Weicher Sog ↖" (= der Look bis S80) |
 | 1.10.0 | 2026-08-07 | Session 72 (Filter-Strang). **§12: Tabelle „Was an einem `iChannel` hängen kann"** — die beiden neuen Quellen **Ketten-Eingang** (macht Shadertoy-Bildfilter direkt lauffähig) und **AVS-Buffer 1–8** (Buffer-Save-Slots als Textur, Stand beim Lauf des Knotens, Host-Gruppen-Trennung) je mit Anwendungsbeispiel. **§14 NEU „ISF-Filter laden"** — Import von `.fs`-Dateien, Parameter-Baum mit typrichtigen Bedienelementen, was abgelehnt wird (Generator/Übergang/Geometrie) und warum manche Filter eine `.vs` brauchen. §14 Lizenz-Absatz: Herkunft wandert jetzt auch in die **exportierte Datei** |
 | 1.9.0 | 2026-08-07 | NEU §14 „Filter als Datei laden und weitergeben" (S71): Import…/Export… an allen Shader-Feldern erklärt (Namensschema `<Preset>[.<Feld>].<Vertrag>.glsl`, automatisch hochzählender Vorschlag, eigener Ordner je Feld, `.hlsl` für MilkDrop), Warnung bei falschem Shader-Vertrag, Lizenz-Hinweis für fremde Shader. Schließt eine Doku-Lücke seit S69 |

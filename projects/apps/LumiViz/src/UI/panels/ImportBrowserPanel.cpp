@@ -63,7 +63,7 @@ QString defaultPresetPath()
 // =============================================================================
 
 ImportBrowserPanel::ImportBrowserPanel(ServiceContainer& services, QWidget* parent)
-    : PanelBase(services, QStringLiteral("import_browser"), tr("Import Browser"), parent)
+    : PanelBase(services, QStringLiteral("import_browser"), tr("Effect Browser"), parent)
 {
     // Restore last folder + filter before the UI reads them (settingsPrefix() is
     // valid once the base constructor has run).

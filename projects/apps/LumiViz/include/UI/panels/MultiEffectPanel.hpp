@@ -182,6 +182,11 @@ private:
     bool insertPaletteNode(int paletteIndex, const QList<int>& parentPath, int pos);
     /// Milkdrop-Element (Wave/Shape/Sprite) in den Milkdrop-Node an `anchorPath`.
     bool insertMilkElement(int paletteIndex, const QList<int>& anchorPath);
+    /// „Preset as Group" (S82): Preset-Datei → Inhalt einer Host-Gruppe, mit
+    /// Meldungen (Probleme, verschachtelte Gruppen). Leeres `datei` = Datei-
+    /// dialog (setzt `datei`). false = abgebrochen oder unlesbar.
+    bool presetGruppeLaden(QString& datei,
+                           std::vector<lumi::multieffect::ChainNode>& outInhalt);
     void onRemove();
     void onClone();
     void onMove(int delta);

@@ -103,14 +103,16 @@ void initPanelDefaults(PanelRegistry& registry)
         false);
     
     // =========================================================================
-    // IMPORT BROWSER PANEL (AVS/MilkDrop preset folder browser)
+    // EFFECT BROWSER PANEL (.avs/.milk/.lvfx preset folder browser)
     // =========================================================================
-    // Browse a folder of .avs/.milk presets; double-click imports into the host.
+    // Browse a folder of presets; double-click loads into the host. Titel seit
+    // S82 „Effect Browser" (laedt auch eigene .lvfx) — die id bleibt
+    // "import_browser": an ihr haengen Dock-Layout und gespeicherter Ordner.
 
     registry.registerPanel(
         PanelDescriptor{
-            "import_browser",   // id
-            "Import Browser",   // title
+            "import_browser",   // id (bewusst unveraendert, s. o.)
+            "Effect Browser",   // title
             250,                // order
             false,              // defaultVisible (hidden by default)
             "View/Panels"       // menuPath

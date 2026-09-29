@@ -2243,3 +2243,101 @@ TEST_SUITE("MilkdropNode")
         }
     }
 }
+
+// „Preset as Group" (S82): Preset-Datei → Baum ohne die laufende Kette, und
+// daraus der Inhalt einer Host-Gruppe (Entscheid Patrik S82: Kopie, 1a/2a)
+TEST_SUITE("PresetAlsGruppe")
+{
+    namespace
+    {
+    bool alleIdsNull(const ChainNode& n)
+    {
+        if (n.nodeId != 0) return false;
+        for (const ChainNode& c : n.children)
+            if (!alleIdsNull(c)) return false;
+        return true;
+    }
+
+    bool hatRenderScale(const ChainNode& n)
+    {
+        if (std::holds_alternative<RenderScaleParams>(n.params)) return true;
+        for (const ChainNode& c : n.children)
+            if (hatRenderScale(c)) return true;
+        return false;
+    }
+    }  // namespace
+
+    TEST_CASE(".milk: ein Milkdrop-Node, neutrale Wurzel faellt weg")
+    {
+        const std::filesystem::path preset = repoRoot() / "asset" / "calibration" /
+                                             "milkdrop" / "c1" / "01_warp_drift.milk";
+        REQUIRE(std::filesystem::exists(preset));
+
+        ChainNode baum;
+        QStringList report;
+        REQUIRE(MultiEffectVisualizer::buildPresetTree(
+            QString::fromStdWString(preset.wstring()), baum, &report));
+        REQUIRE(baum.isList());
+        REQUIRE(baum.children.size() == 1);
+        CHECK(std::holds_alternative<MilkdropNodeParams>(baum.children[0].params));
+
+        const auto inhalt = MultiEffectVisualizer::presetGroupChildren(std::move(baum));
+        REQUIRE(inhalt.size() == 1);
+        CHECK(std::holds_alternative<MilkdropNodeParams>(inhalt[0].params));
+    }
+
+    TEST_CASE(".avs: wie loadAvsFile, aber ohne Render-Scale-Knoten")
+    {
+        const std::filesystem::path preset = repoRoot() / "asset" / "avs" /
+                                             "Community Picks" /
+                                             "amphirion - Ex Deux Mechanica.avs";
+        REQUIRE(std::filesystem::exists(preset));
+        const QString pfad = QString::fromStdWString(preset.wstring());
+
+        ChainNode baum;
+        REQUIRE(MultiEffectVisualizer::buildPresetTree(pfad, baum));
+        CHECK_FALSE(hatRenderScale(baum));  // wirkt global — nicht in eine Gruppe
+
+        // Paritaet: loadAvsFile = derselbe Baum + genau ein Render-Scale vorn
+        MultiEffectVisualizer host;
+        (void)host.loadAvsFile(pfad);
+        REQUIRE(host.chain().children.size() == baum.children.size() + 1);
+        CHECK(std::holds_alternative<RenderScaleParams>(host.chain().children[0].params));
+        for (std::size_t i = 0; i < baum.children.size(); ++i)
+        {
+            CHECK(effectTypeKey(baum.children[i].params) ==
+                  effectTypeKey(host.chain().children[i + 1].params));
+        }
+    }
+
+    TEST_CASE(".lvfx: Wurzel mit eigenen Einstellungen bleibt als innere Liste")
+    {
+        const ChainNode quelle = buildRichChain();  // clearEveryFrame, kompiliert
+        const std::filesystem::path datei =
+            std::filesystem::temp_directory_path() / "lumiviz_preset_als_gruppe.lvfx";
+        const QString pfad = QString::fromStdWString(datei.wstring());
+        REQUIRE(saveChainToFile(quelle, pfad));
+
+        ChainNode baum;
+        REQUIRE(MultiEffectVisualizer::buildPresetTree(pfad, baum));
+        std::filesystem::remove(datei);
+
+        const auto inhalt = MultiEffectVisualizer::presetGroupChildren(std::move(baum));
+        REQUIRE(inhalt.size() == 1);  // die Wurzel als EINE Liste
+        const auto* lp = std::get_if<ListParams>(&inhalt[0].params);
+        REQUIRE(lp != nullptr);
+        CHECK(lp->clearEveryFrame);
+        CHECK(inhalt[0].children.size() == quelle.children.size());
+        CHECK(alleIdsNull(inhalt[0]));  // compileChain vergibt neue
+    }
+
+    TEST_CASE("Unbekannte Endung oder fehlende Datei: false, Ziel unveraendert")
+    {
+        ChainNode baum;
+        baum.displayName = "unberuehrt";
+        CHECK_FALSE(MultiEffectVisualizer::buildPresetTree(QStringLiteral("x.txt"), baum));
+        CHECK_FALSE(MultiEffectVisualizer::buildPresetTree(
+            QStringLiteral("gibt/es/nicht.lvfx"), baum));
+        CHECK(baum.displayName == "unberuehrt");
+    }
+}

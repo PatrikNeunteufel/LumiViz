@@ -67,6 +67,10 @@ struct EffectType
     const char* summary = "";       ///< ein Satz, Englisch (UI-Sprache)
     const char* originalName = "";  ///< Name im Original (AVS-Menue, APE-Titel)
     MilkElement milkElement = MilkElement::None;
+    /// „Preset as Group" (S82): vor dem Einfuegen eine Preset-Datei waehlen
+    /// (.avs/.milk/.lvfx) — `make` liefert die Host-Gruppe, ihr Inhalt kommt
+    /// aus der Datei (MultiEffectVisualizer::buildPresetTree).
+    bool fromFile = false;
 
     [[nodiscard]] bool isHeader() const
     {

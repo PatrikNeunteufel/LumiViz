@@ -494,14 +494,14 @@ QWidget* SettingsPanel::createPanelsTab()
     auto* layout = new QFormLayout(widget);
     layout->setSpacing(8);
 
-    // Import Browser: forget the persisted start folder (back to the exe dir,
-    // where the bundled presets/ folder lives — S73)
+    // Effect Browser (bis S82 „Import Browser"): forget the persisted start
+    // folder (back to the exe dir, where the bundled presets/ folder lives — S73)
     m_pResetImportDirButton = new QPushButton(tr("Reset Start Folder"), widget);
     m_pResetImportDirButton->setToolTip(
-        tr("Forget the Import Browser's saved folder and start in the "
+        tr("Forget the Effect Browser's saved folder and start in the "
            "application folder again — that is where the bundled presets/ "
            "folder lives"));
-    layout->addRow(tr("Import Browser:"), m_pResetImportDirButton);
+    layout->addRow(tr("Effect Browser:"), m_pResetImportDirButton);
 
     // AVS-Import: Divisor des automatisch eingefuegten Render-Scale-Knotens.
     // Wirkt NUR im Moment des Imports — danach ist der Knoten im Preset die

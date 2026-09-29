@@ -121,6 +121,10 @@ const std::vector<EffectType>& effectPalette()
          "Misc / Effect List"},
         {"Host Group", &makeDefault<HostGroupParams>, K, Lumi,
          "Container for a complete visual with its own runtime; crossfades between groups."},
+        {"Preset as Group…", &makeDefault<HostGroupParams>, K, Lumi,
+         "Loads an .avs, .milk or .lvfx preset as a Host Group: a copy you can edit, "
+         "reloadable from its source file.",
+         "", MilkElement::None, true},
         {"Clear", &makeDefault<ClearParams>, R, Avs, "Fills the frame with a colour.",
          "Render / Clear screen"},
         {"Fadeout", &makeDefault<FadeoutParams>, C, Avs,
