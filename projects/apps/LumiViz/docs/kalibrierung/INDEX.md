@@ -258,7 +258,12 @@ Eigenheiten der Referenz, beide im Bild belegt:
    unverändert (bit-identisch gegengeprüft).
    **Offen:** `MilkdropRef` muss die Saat noch in `m_lpVS` bekommen
    (lockbare Offscreen-Surface + `StretchRect`), und `compare_milkref.py` muss
-   über die Reihe schleifen.
+   über die Reihe schleifen. **Stand S81:** Die Schleife gibt es, die
+   Einspeisung nicht — `saatEinspeisen()` ist gebaut, wird aber nur mit
+   `kSeedAus` (Vermessen) aufgerufen. `--saat` erscheint nur im Log. Der
+   Kalibrierlauf S81 mit der damaligen Vorgabe `--saaten 0,0x5EED63` verglich
+   deshalb gesät gegen ungesät (Frame 10 ≈ 0,33, STARTABHAENGIG überall);
+   Vorgabe jetzt `0`, der Harness warnt bei Werten ≠ 0.
 
 Bis dahin gilt für MilkDrop: Urteile nur an der **Montage**, und nur dort, wo
 beide Seiten sichtbar zeichnen.
@@ -337,7 +342,7 @@ Danach **alle vier Werkzeuge neu bauen** — die Tabelle ist einkompiliert.
 | Format | Messbar | Stand |
 |---|---|---|
 | **AVS** | ✅ vollständig | Methodik, Harness, Bisektion, Raster, Listen-Prüfstand. Laufende Runde über die 10 Schaufenster-Presets |
-| **MilkDrop** | ⚠️ Harness ja, Referenz noch nicht abgenommen | `compare_milkref.py` (§2.2) löst das Stapel-Problem. Aber **`MilkdropRef` liefert noch keine verlässlichen Bilder** — sporadisches Browser-Overlay + Erlöschen (§2.3). Die Zahlen des ersten Laufs (3 OK / 12 BEFUND / 4 PRUEFEN) sind deshalb **kein Treuestand** |
+| **MilkDrop** | ⚠️ Harness ja, Referenz noch nicht abgenommen | `compare_milkref.py` (§2.2) löst das Stapel-Problem. Aber **`MilkdropRef` liefert noch keine verlässlichen Bilder** — sporadisches Browser-Overlay + Erlöschen (§2.3). Die Zahlen des ersten Laufs (3 OK / 12 BEFUND / 4 PRUEFEN) sind deshalb **kein Treuestand**. **S81:** neu gefahren gegen die PCM-korrigierte Referenz, 22 Presets × 5 Formate (`--formate aspekt`, saatlos, `--zufall-lumiviz`) — 4:3: 4 OK / 8 PRUEFEN / 10 BEFUND, MAE f10/f30/f120 0,064 / 0,077 / 0,112 (Tabelle: `Offene_Punkte.md` §3, „Kalibrierlauf S81"). Weiter **nicht abgenommen**: `--saat` wird nicht eingespeist (§2.3, Saat-Läufe ungültig), die Referenz ist in Frame 10 oft nur *fast* schwarz (Warmlauf wird dann nicht verworfen) |
 | **Shadertoy** | ❌ | nur GL-Smoke, kein Treue-Urteil |
 | **ISF** | ❌ | nur GL-Smoke, kein Treue-Urteil |
 

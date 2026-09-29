@@ -107,7 +107,7 @@ LUMIVIZ_REF_BILDSCHIRM=DISPLAY2 python asset/calibration/avs/compare_avsref.py <
 
 | Skript | Zweck | Argumente |
 |---|---|---|
-| `run_matrix.py` | Modul-Matrix (`matrix/`) in **zwei** Größen (320x240 + 740x460) | `[präfixe …]` (Matrix-Ordner, z. B. `29`), `--frames N` (120), `--beat-period N` (20), `--out DIR` (`out/matrix_compare`) |
+| `run_matrix.py` | Modul-Matrix (`matrix/`) in **zwei** Größen (320x240 + 740x460) oder in Formaten; Spalte Format-Urteil (FORMATABHAENGIG wie `compare_avsref.py`) | `[präfixe …]` (Matrix-Ordner, z. B. `29`), `--frames N` (120), `--beat-period N` (20), `--formate LISTE` (S81, statt der zwei Größen, mindestens zwei Formate), `--out DIR` (`out/matrix_compare`) |
 | `run_module_probes.py` | Modul-Sonden (`probes/`), Urteil über Vordergrund-Pixel statt dMean | `[ordner …]` (Unterordner von `probes/`), `--frames N` (60), `--size WxH` (320x240), `--beat-period N` (30), `--out DIR` (`out/module_probes`) |
 | `analyse_colormap.py` | Color-Map-Kennlinie je Renderer messen | keine |
 | `bisect_avs.py` | Teil-Presets eines `.avs` erzeugen (kumulativ oder `--solo`), danach durch `compare_avsref.py` | `<preset.avs> <zielordner> [indexpfad] [--solo] [--raster raster.avs]` |

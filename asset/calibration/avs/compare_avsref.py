@@ -65,6 +65,8 @@ OK_MAE = 0.03
 # Nur fuer das Format-Urteil (S81): ab hier ist ein Format ein Befund. Der
 # AVS-Lauf kennt sonst nur OK/PRUEFEN; doppelte OK-Schwelle, damit ein
 # knappes PRUEFEN neben einem knappen OK nicht schon als formatabhaengig gilt.
+# Entscheid Patrik a (S81): 0,06 bleibt, bis Formatlaeufe viele knappe Faelle
+# zwischen 0,03 und 0,06 zeigen — dann aus einer Messreihe ableiten.
 BEFUND_MAE = 0.06
 
 STATS_RE = re.compile(

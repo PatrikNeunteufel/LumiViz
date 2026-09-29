@@ -350,12 +350,15 @@ def main() -> int:
     ap.add_argument("--silence", action="store_true",
                     help="Null-Signal (Hunger-Test: was zeichnet ein Preset "
                          "ohne Ton)")
-    ap.add_argument("--saaten", default="0,0x5EED63",
-                    help="Startwerte des Feedback-Puffers (Komma), auf BEIDEN "
-                         "Seiten gesetzt. 0 = saatlos (Kaltstart des "
-                         "Originals), 0x5EED63 = App-Vorgabe. Mehr Werte "
-                         "zeigen, ob ein Preset ueberhaupt ein "
-                         "startzustands-unabhaengiges Bild hat")
+    # Vorgabe seit S81 nur 0: MilkdropRef nimmt --saat an, speist die Saat
+    # aber NICHT ein (saatEinspeisen() laeuft nur zum Vermessen, INDEX §2.3
+    # „Offen"). Mit 0x5EED63 saete nur unsere Seite — der Kalibrierlauf S81
+    # meldete dadurch Frame 10 ≈ 0,33 und STARTABHAENGIG ueberall.
+    ap.add_argument("--saaten", default="0",
+                    help="Startwerte des Feedback-Puffers (Komma). 0 = saatlos "
+                         "(Kaltstart des Originals). ACHTUNG: Werte != 0 sind "
+                         "ungueltig, solange MilkdropRef die Saat nicht "
+                         "einspeist — nur unsere Seite saet dann")
     ap.add_argument("--timeout", type=int, default=180, help="Sekunden je Lauf")
     ap.add_argument("--zufall-lumiviz", action="store_true",
                     help="Referenz wuerfelt wie LumiViz (MilkdropRef --zufall-lumiviz, "
@@ -386,6 +389,10 @@ def main() -> int:
 
     marken = [int(f) for f in str(args.frames).split(",") if f.strip()]
     saaten = [int(s, 0) for s in str(args.saaten).split(",") if s.strip()]
+    if any(s != 0 for s in saaten):
+        print("WARNUNG: MilkdropRef speist --saat nicht ein (S81) — Laeufe "
+              "mit Startwert != 0 vergleichen gesaet gegen ungesaet; ihre "
+              "Zahlen und STARTABHAENGIG-Urteile sind ungueltig", flush=True)
     out: Path = args.out.resolve()
     if not args.formate:
         _, fehler = lauf(presets, args.size, marken, saaten, args, out)
