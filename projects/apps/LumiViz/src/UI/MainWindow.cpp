@@ -53,6 +53,7 @@
 #include <QKeyEvent>
 #include <QCloseEvent>
 #include <QTimer>
+#include <QElapsedTimer>
 #include <QPointer>
 #include <QSettings>
 #include <QStandardPaths>
@@ -1254,18 +1255,30 @@ void MainWindow::enterFullscreen(VisualizerWidget* requested)
     // The main window stays untouched behind it. The GL surface is recreated
     // by the reparenting; the render thread handles that (Entwurf §4).
     // Hide BEFORE reparenting: no transient top-level flash / stale regions.
+    // Diagnose (S84, Befund „Freeze beim Vollbild-Wechsel"): Dauer je Schritt.
+    QElapsedTimer uhr;
+    uhr.start();
+    std::string schritte;
+    const auto mark = [&](const char* name) {
+        schritte += std::string(" ") + name + "=" + std::to_string(uhr.restart()) + "ms";
+    };
     visualizer->hide();
+    mark("hide");
     dock->takeWidget();
+    mark("takeWidget");
     visualizer->setParent(nullptr);
+    mark("setParent");
     visualizer->showFullScreen();
+    mark("showFullScreen");
 
     // Keyboard focus must land in the embedded GL window, otherwise Esc
     // never reaches it (the reparented native child starts unfocused)
     visualizer->activateWindow();
     visualizer->setFocus();
     visualizer->activateGLWindow();
+    mark("focus");
 
-    BasicLogger::logInfo("Entered fullscreen mode (top-level visualizer)");
+    BasicLogger::logInfo("Entered fullscreen mode (top-level visualizer);" + schritte);
 }
 
 void MainWindow::reportProblem(const QString& title, const QString& problem)
@@ -1308,13 +1321,25 @@ void MainWindow::exitFullscreen()
     // drop the fullscreen state invisibly — showNormal() on the still
     // top-level widget briefly showed a plain window and left stale
     // native-window regions behind.
+    // Diagnose (S84, Befund „Freeze beim Vollbild-Wechsel"): Dauer je Schritt.
+    QElapsedTimer uhr;
+    uhr.start();
+    std::string schritte;
+    const auto mark = [&](const char* name) {
+        schritte += std::string(" ") + name + "=" + std::to_string(uhr.restart()) + "ms";
+    };
     if (m_pFullscreenVisualizer != nullptr && m_pFullscreenDock != nullptr)
     {
         m_pFullscreenVisualizer->hide();
+        mark("hide");
         m_pFullscreenVisualizer->setWindowState(Qt::WindowNoState);
+        mark("windowState");
         m_pFullscreenDock->setWidget(m_pFullscreenVisualizer);
+        mark("setWidget");
         m_pFullscreenVisualizer->show();
+        mark("show");
         m_pFullscreenDock->raise();
+        mark("raise");
 
         // Native handle resync: after reparenting FROM top-level, Qt leaves
         // the facade's native window at a stale absolute position (measured
@@ -1325,7 +1350,11 @@ void MainWindow::exitFullscreen()
         QTimer::singleShot(0, this, [viz]() {
             if (viz != nullptr)
             {
+                QElapsedTimer t;
+                t.start();
                 viz->recreateNativeWindow();
+                BasicLogger::logInfo("Fullscreen exit: recreateNativeWindow=" +
+                                     std::to_string(t.elapsed()) + "ms");
             }
         });
     }
@@ -1333,7 +1362,7 @@ void MainWindow::exitFullscreen()
     m_pFullscreenVisualizer = nullptr;
     m_pFullscreenDock = nullptr;
 
-    BasicLogger::logInfo("Exited fullscreen mode");
+    BasicLogger::logInfo("Exited fullscreen mode;" + schritte);
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* event)

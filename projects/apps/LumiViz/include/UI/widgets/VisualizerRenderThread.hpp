@@ -200,6 +200,9 @@ private:
     QOpenGLContext& m_context;
     QMutex& m_renderMutex;
 
+    /// Diagnose (S84): Runden, in denen makeCurrent scheiterte (nur Render-Thread).
+    int m_wartendeFrames = 0;
+
     // Loop state (m_mutex)
     QMutex m_mutex;
     QWaitCondition m_cond;                 ///< wakes the render loop

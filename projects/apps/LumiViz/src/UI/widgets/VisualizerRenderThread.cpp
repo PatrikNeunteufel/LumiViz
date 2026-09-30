@@ -21,6 +21,10 @@
 #include <QMouseEvent>
 #include <QPlatformSurfaceEvent>
 #include <QElapsedTimer>
+
+#include <BasicLogger.h>
+
+#include <string>
 #include <QGuiApplication>
 #include <QSurfaceFormat>
 
@@ -353,10 +357,16 @@ void VisualizerRenderThread::run()
         // ---------------------------------------------------------------------
         // Frame
         // ---------------------------------------------------------------------
+        // Diagnose (S84, Befund „Freeze beim Vollbild-Wechsel"): Schritte, die
+        // laenger als kLangMs dauern, landen im Log — sonst nichts.
+        constexpr qint64 kLangMs = 50;
+        QElapsedTimer schritt;
+        schritt.start();
         if (!m_context.makeCurrent(&m_window))
         {
             // Surface not ready (yet) — retreat briefly. Re-queue popped
             // commands so they are not lost.
+            ++m_wartendeFrames;
             QMutexLocker lock(&m_mutex);
             if (doAdopt && !m_hasAdopt)
             {
@@ -374,6 +384,19 @@ void VisualizerRenderThread::run()
             lock.unlock();
             QThread::msleep(20);
             continue;
+        }
+
+        if (m_wartendeFrames > 0)
+        {
+            BasicLogger::logInfo("RenderThread: Flaeche wieder bereit nach " +
+                                 std::to_string(m_wartendeFrames) +
+                                 " Warterunden (je 20 ms)");
+            m_wartendeFrames = 0;
+        }
+        if (schritt.elapsed() > kLangMs)
+        {
+            BasicLogger::logInfo("RenderThread: makeCurrent " +
+                                 std::to_string(schritt.elapsed()) + " ms");
         }
 
         if (pacingDirty)
@@ -415,7 +438,12 @@ void VisualizerRenderThread::run()
             {
                 gl->glViewport(0, 0, pendingSize.width(), pendingSize.height());
             }
+            schritt.restart();
             m_current->resize(pendingSize);
+            BasicLogger::logInfo("RenderThread: resize auf " +
+                                 std::to_string(pendingSize.width()) + "x" +
+                                 std::to_string(pendingSize.height()) + " in " +
+                                 std::to_string(schritt.elapsed()) + " ms");
         }
 
         const float currentTime = frameTimer.elapsed() / 1000.0f;
@@ -454,7 +482,13 @@ void VisualizerRenderThread::run()
                     m_stereoDirty = false;
                 }
             }
+            schritt.restart();
             m_current->render(deltaTime);
+            if (schritt.elapsed() > kLangMs)
+            {
+                BasicLogger::logInfo("RenderThread: render " +
+                                     std::to_string(schritt.elapsed()) + " ms");
+            }
         }
         else
         {
@@ -494,7 +528,13 @@ void VisualizerRenderThread::run()
 
         // swapBuffers OUTSIDE the render mutex: the VSync wait must never
         // block UI accessors (Entwurf §2.1)
+        schritt.restart();
         m_context.swapBuffers(&m_window);
+        if (schritt.elapsed() > kLangMs)
+        {
+            BasicLogger::logInfo("RenderThread: swapBuffers " +
+                                 std::to_string(schritt.elapsed()) + " ms");
+        }
 
         // Pacing (Limited): sleep until the next slot of the absolute schedule
         if (pacing == RenderPacing::Limited)
