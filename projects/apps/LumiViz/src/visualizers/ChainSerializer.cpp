@@ -3059,6 +3059,24 @@ QJsonObject nodeToJson(const ChainNode& node)
     if (!node.songCode.empty()) o["songCode"] = QString::fromStdString(node.songCode);
     // „Script active" (S83): nur der Ausnahmefall steht in der Datei.
     if (!node.scriptsActive) o["scriptsActive"] = false;
+    // Modulation (F4, S85): nur wenn belegt bzw. abgeschaltet
+    if (!node.mods.empty())
+    {
+        QJsonArray mods;
+        for (const FeldModulation& m : node.mods)
+        {
+            QJsonObject j;
+            j["field"] = QString::fromStdString(m.feld);
+            j["source"] = QString::fromLatin1(modQuelleKey(m.quelle));
+            j["depth"] = m.tiefe;
+            if (istLfo(m.quelle)) j["rateHz"] = m.rateHz;
+            if (m.glaettung != 0.0) j["smoothing"] = m.glaettung;
+            if (!m.aktiv) j["active"] = false;
+            mods.append(j);
+        }
+        o["mods"] = mods;
+    }
+    if (!node.modsActive) o["modulationActive"] = false;
     std::visit(WriteVisitor{o}, node.params);
 
     // Listen + Host-Gruppen (HG1) tragen children — ein Presetverweis (S82)
@@ -3085,6 +3103,25 @@ ChainNode nodeFromJson(const QJsonObject& obj, QStringList* report)
     node.description = obj.value("description").toString().toStdString();
     node.songCode = obj.value("songCode").toString().toStdString();  // S82
     node.scriptsActive = obj.value("scriptsActive").toBool(true);    // S83
+    // Modulation (F4, S85) — Leser klemmt, unbekannte Quelle meldet
+    node.modsActive = obj.value("modulationActive").toBool(true);
+    for (const QJsonValue& v : obj.value("mods").toArray())
+    {
+        const QJsonObject j = v.toObject();
+        FeldModulation m;
+        m.feld = j.value("field").toString().toStdString();
+        if (m.feld.empty()) continue;
+        const QString quelle = j.value("source").toString();
+        if (!modQuelleAusKey(quelle.toStdString(), m.quelle) && report != nullptr)
+            report->append(QStringLiteral("modulation of '%1': unknown source '%2' - using %3")
+                               .arg(QString::fromStdString(m.feld), quelle,
+                                    QString::fromLatin1(modQuelleKey(m.quelle))));
+        m.tiefe = std::clamp(j.value("depth").toDouble(m.tiefe), -4.0, 4.0);
+        m.rateHz = std::clamp(j.value("rateHz").toDouble(m.rateHz), 0.0, 100.0);
+        m.glaettung = std::clamp(j.value("smoothing").toDouble(0.0), 0.0, 60.0);
+        m.aktiv = j.value("active").toBool(true);
+        node.mods.push_back(std::move(m));
+    }
 
     if (report != nullptr && !obj.contains("type"))
     {

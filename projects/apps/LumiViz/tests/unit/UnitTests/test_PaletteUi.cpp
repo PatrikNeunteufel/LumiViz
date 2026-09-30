@@ -43,6 +43,9 @@
 #include "visualizers/multieffect/NodePresetStore.hpp"
 
 #include <QApplication>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QTimer>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QCoreApplication>
@@ -1683,6 +1686,94 @@ TEST_CASE("PaletteUi S84 F5: Highlighter faerbt Modulfelder nach der Modul-Refer
     REQUIRE(farbeBei(referenz, 0, 0).isValid());
     CHECK(farbeBei(mit, 0, 0) == farbeBei(referenz, 0, 0));
     CHECK_FALSE(farbeBei(ohne, 0, 0).isValid());
+}
+
+// Block F, F4 (S85): „~"-Knopf an modulierbaren Feldzeilen — Dialog setzt die
+// Modulation am Knoten, danach erscheint „Modulation active", Entfernen raeumt ab.
+TEST_CASE("PaletteUi S85 F4: Modulation per ~-Knopf setzen, schalten, entfernen")
+{
+    UiUmgebung env;
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    const auto warte = [] {
+        for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+    };
+    // Erster Knoten wird ein Bloom: intensity (modulierbar), post (Schalter),
+    // downsample (Struktur) — die beiden letzten bekommen keinen Knopf
+    p.vis.chain().children[0].params = lumi::multieffect::BloomParams{};
+    p.tree->setCurrentItem(p.oben(0));
+    warte();
+    auto* knopf = p.panel->findChild<QToolButton*>(QStringLiteral("mod_intensity"));
+    REQUIRE(knopf != nullptr);
+    CHECK_FALSE(knopf->isChecked());
+    CHECK(p.panel->findChild<QToolButton*>(QStringLiteral("mod_post")) == nullptr);
+    CHECK(p.panel->findChild<QToolButton*>(QStringLiteral("mod_downsample")) == nullptr);
+    CHECK(p.panel->findChild<QCheckBox*>(QStringLiteral("modulationActive")) == nullptr);
+    // Das Feld selbst ist weiter unter seinem Vertragsnamen zu finden
+    CHECK(p.panel->findChild<QDoubleSpinBox*>(QStringLiteral("intensity")) != nullptr);
+
+    // Dialog: Quelle LFO square, Tiefe 0.2, OK
+    // Im Timer keine REQUIRE/CHECK: eine Ausnahme quer durch die Qt-Schleife
+    // beendet den Prozess. Gefunden wird der Dialog ueber seinen Namen; das
+    // Ergebnis prueft der Test danach am Knoten.
+    static bool dialogGesehen = false;
+    const auto bediene = [](int quelle, double tiefe, const char* knopfName) {
+        dialogGesehen = false;
+        QTimer::singleShot(50, [=] {
+            QDialog* dlg = nullptr;
+            for (QWidget* w : QApplication::topLevelWidgets())
+                if (w->objectName() == QStringLiteral("modulationDialog") && w->isVisible())
+                    dlg = qobject_cast<QDialog*>(w);
+            if (dlg == nullptr) return;
+            dialogGesehen = true;
+            if (auto* c = dlg->findChild<QComboBox*>(QStringLiteral("modSource")); c && quelle >= 0)
+                c->setCurrentIndex(quelle);
+            if (auto* s = dlg->findChild<QDoubleSpinBox*>(QStringLiteral("modDepth")); s && tiefe != 0.0)
+                s->setValue(tiefe);
+            QAbstractButton* b = nullptr;
+            if (knopfName != nullptr)
+                b = dlg->findChild<QPushButton*>(QString::fromLatin1(knopfName));
+            else if (auto* box = dlg->findChild<QDialogButtonBox*>())
+                b = box->button(QDialogButtonBox::Ok);
+            if (b != nullptr)
+                b->click();
+            else
+                dlg->reject();
+        });
+    };
+    bediene(static_cast<int>(lumi::multieffect::ModQuelle::LfoRechteck), 0.2, nullptr);
+    knopf->click();
+    warte();
+    CHECK(dialogGesehen);
+    {
+        const auto& mods = p.root().children[0].mods;
+        REQUIRE(mods.size() == 1);
+        CHECK(mods[0].feld == "intensity");
+        CHECK(mods[0].quelle == lumi::multieffect::ModQuelle::LfoRechteck);
+        CHECK(mods[0].tiefe == doctest::Approx(0.2));
+    }
+    // Seite neu aufbauen (Knoten erneut waehlen): Knopf markiert, Schalter da
+    p.tree->setCurrentItem(p.oben(1));
+    warte();
+    p.tree->setCurrentItem(p.oben(0));
+    warte();
+    knopf = p.panel->findChild<QToolButton*>(QStringLiteral("mod_intensity"));
+    REQUIRE(knopf != nullptr);
+    CHECK(knopf->isChecked());
+    auto* schalter = p.panel->findChild<QCheckBox*>(QStringLiteral("modulationActive"));
+    REQUIRE(schalter != nullptr);
+    schalter->setChecked(false);
+    warte();
+    CHECK_FALSE(p.root().children[0].modsActive);
+
+    // Entfernen (Knopf frisch suchen — der Schalter kann die Seite neu gebaut haben)
+    knopf = p.panel->findChild<QToolButton*>(QStringLiteral("mod_intensity"));
+    REQUIRE(knopf != nullptr);
+    bediene(-1, 0.0, "modRemove");
+    knopf->click();
+    warte();
+    CHECK(dialogGesehen);
+    CHECK(p.root().children[0].mods.empty());
 }
 
 // S85 (Wunsch Patrik): die Info-Seite eines Skript-Slots beginnt mit seinem

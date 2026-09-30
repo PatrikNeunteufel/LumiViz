@@ -33,6 +33,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -2922,6 +2923,68 @@ using EffectParams =
 }
 
 // =============================================================================
+// Modulation (Block F, F4 — Feldsteuerung_Konzept.md)
+// =============================================================================
+
+/// Quelle einer Modulation. Audio/Beat einseitig 0..1, LFOs beidseitig -1..1.
+enum class ModQuelle : std::uint8_t
+{
+    Bass,
+    Mid,
+    Treble,
+    Pegel,       ///< Gesamtpegel (`vol`)
+    BeatHuelle,  ///< springt beim Beat auf 1, klingt mit `glaettung` ab
+    LfoSinus,
+    LfoDreieck,
+    LfoSaege,
+    LfoRechteck,
+    LfoZufall,   ///< je Periode ein neuer Zufallswert (Sample & Hold)
+};
+
+/// JSON-Schluessel der Quellen (Datei-Vertrag, englisch wie alle Schluessel).
+inline constexpr std::array<const char*, 10> kModQuelleKeys = {
+    "bass", "mid", "treble", "level", "beatEnvelope",
+    "lfoSine", "lfoTriangle", "lfoSaw", "lfoSquare", "lfoRandom"};
+
+[[nodiscard]] inline const char* modQuelleKey(ModQuelle q)
+{
+    return kModQuelleKeys[static_cast<std::size_t>(q)];
+}
+
+/// Schluessel -> Quelle; unbekannt = false (Aufrufer behaelt die Vorgabe).
+[[nodiscard]] inline bool modQuelleAusKey(std::string_view key, ModQuelle& out)
+{
+    for (std::size_t i = 0; i < kModQuelleKeys.size(); ++i)
+    {
+        if (key == kModQuelleKeys[i])
+        {
+            out = static_cast<ModQuelle>(i);
+            return true;
+        }
+    }
+    return false;
+}
+
+[[nodiscard]] inline bool istLfo(ModQuelle q) { return q >= ModQuelle::LfoSinus; }
+
+/**
+ * Block F, F4 (S85): ein Feld bewegt sich ohne Formel um seinen Reglerwert.
+ * Angewendet auf die Frame-Kopie VOR den Skripten (Entscheid E5: Basis ->
+ * Modulation -> Skript); der Reglerwert selbst bleibt unberuehrt.
+ * Wert = Regler + tiefe * Quelle * Spanne; Spanne = Bereich des Felds
+ * (hi - lo), ohne bekannten Bereich der Betrag des Reglerwerts (Entscheid 2a).
+ */
+struct FeldModulation
+{
+    std::string feld;               ///< JSON-Feldname (wie in der Datei), z. B. "zoom"
+    ModQuelle quelle = ModQuelle::LfoSinus;
+    double tiefe = 0.25;            ///< Anteil der Spanne, +-
+    double rateHz = 0.5;            ///< LFO-Frequenz (Hz)
+    double glaettung = 0.0;         ///< s — Glaettung der Audio-Quellen, Abklingzeit der Beat-Huelle
+    bool aktiv = true;              ///< eigenes Haekchen je Modulation
+};
+
+// =============================================================================
 // Chain node
 // =============================================================================
 
@@ -2943,6 +3006,11 @@ struct ChainNode
     /// bleibt gespeichert. Ein Feld am Knoten wie `songCode`, nicht je Typ.
     /// Die Effect List hat dafuer weiterhin ihr eigenes `useCode` (AVS-Feld).
     bool scriptsActive = true;
+    /// Block F, F4 (S85): Modulationen der Felder dieses Knotens (Datei:
+    /// `mods`, nur wenn belegt) und ihr Knotenschalter „Modulation active"
+    /// (Datei: `modulationActive`, nur wenn aus) — Entscheid E5.
+    std::vector<FeldModulation> mods;
+    bool modsActive = true;
     bool enabled = true;             ///< disabled nodes are skipped entirely
     EffectParams params;             ///< effect type + its parameters
     std::vector<ChainNode> children; ///< child effects (lists only)

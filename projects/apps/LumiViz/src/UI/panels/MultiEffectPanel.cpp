@@ -33,6 +33,7 @@
 #include "visualizers/multieffect/IsfImport.hpp"            // ISF-Filter-Import (S72)
 #include "visualizers/multieffect/IsfFilterWrapper.hpp"     // Starter-Shader ISF (S72)
 #include "visualizers/multieffect/ScriptVariables.hpp"      // Variablenreferenz (SSOT, S79)
+#include "visualizers/multieffect/FieldBindings.hpp"        // modulierbar (F4, S85)
 #include "scripting/ScriptFormatter.hpp"                // Beautify-Kerne (S69)
 #include <EelTranspiler.hpp>                            // Apply-Syntaxprobe EEL (S69)
 #include <HlslTranspiler.hpp>                           // Apply-Syntaxprobe HLSL (S69)
@@ -91,6 +92,7 @@
 #include <QResizeEvent>
 #include <QScrollArea>
 #include <QScrollBar>
+#include <QPointer>
 #include <QSpinBox>
 #include <QTimer>
 #include <QToolButton>
@@ -104,6 +106,7 @@
 #include <utility>
 
 using namespace lumi::multieffect;
+namespace ft = lumi::multieffect::feldtabelle;  // F4: modulierbare Felder
 using lumi::ui::EffectType;
 using lumi::ui::MilkElement;
 using lumi::ui::Origin;
@@ -345,6 +348,108 @@ QHash<QString, lumi::scriptedit::SymCat> modulKategorien(const EffectParams& par
 // Module-specific variable table — rendered from the SSOT in
 // ScriptVariables.hpp (S79; vorher eine handgeschriebene Kette, die fuer rund
 // vierzig Knoten "No dedicated variable reference" zeigte).
+/// Block F, F4 (S85): Dialog einer Feld-Modulation. `m` rein und raus;
+/// Rueckgabe: 0 = abgebrochen, 1 = uebernehmen, 2 = entfernen.
+int modulationBearbeiten(QWidget* parent, const QString& feldLabel, FeldModulation& m)
+{
+    QDialog dlg(parent);
+    dlg.setObjectName(QStringLiteral("modulationDialog"));
+    dlg.setWindowTitle(QObject::tr("Modulation — %1").arg(feldLabel));
+    auto* form = new QFormLayout(&dlg);
+
+    auto* quelle = new QComboBox(&dlg);
+    quelle->setObjectName(QStringLiteral("modSource"));
+    const QStringList namen = {
+        QObject::tr("Bass"),          QObject::tr("Mid"),          QObject::tr("Treble"),
+        QObject::tr("Level"),         QObject::tr("Beat envelope"), QObject::tr("LFO sine"),
+        QObject::tr("LFO triangle"),  QObject::tr("LFO saw"),      QObject::tr("LFO square"),
+        QObject::tr("LFO random (sample & hold)")};
+    quelle->addItems(namen);
+    quelle->setCurrentIndex(static_cast<int>(m.quelle));
+    quelle->setToolTip(QObject::tr("Audio sources and the beat envelope move 0..1 (one-sided); "
+                                   "LFOs swing -1..1 around the slider value."));
+    form->addRow(QObject::tr("Source"), quelle);
+
+    auto* tiefe = new QDoubleSpinBox(&dlg);
+    tiefe->setObjectName(QStringLiteral("modDepth"));
+    tiefe->setRange(-4.0, 4.0);
+    tiefe->setSingleStep(0.05);
+    tiefe->setDecimals(3);
+    tiefe->setValue(m.tiefe);
+    tiefe->setToolTip(QObject::tr("Share of the field's range (1 = full range, negative = "
+                                  "inverted). Fields without a known range: share of the "
+                                  "slider value. The result stays inside the range."));
+    form->addRow(QObject::tr("Depth"), tiefe);
+
+    auto* rate = new QDoubleSpinBox(&dlg);
+    rate->setObjectName(QStringLiteral("modRate"));
+    rate->setRange(0.0, 100.0);
+    rate->setSingleStep(0.1);
+    rate->setDecimals(3);
+    rate->setSuffix(QStringLiteral(" Hz"));
+    rate->setValue(m.rateHz);
+    rate->setToolTip(QObject::tr("LFO speed in cycles per second (on the simulation clock)."));
+    form->addRow(QObject::tr("Rate"), rate);
+
+    auto* glatt = new QDoubleSpinBox(&dlg);
+    glatt->setObjectName(QStringLiteral("modSmoothing"));
+    glatt->setRange(0.0, 60.0);
+    glatt->setSingleStep(0.05);
+    glatt->setDecimals(3);
+    glatt->setSuffix(QStringLiteral(" s"));
+    glatt->setValue(m.glaettung);
+    form->addRow(QObject::tr("Smoothing"), glatt);
+
+    auto* aktiv = new QCheckBox(&dlg);
+    aktiv->setObjectName(QStringLiteral("modActive"));
+    aktiv->setChecked(m.aktiv);
+    form->addRow(QObject::tr("Active"), aktiv);
+
+    // Rate nur fuer LFOs; Glaettung heisst beim Beat „Decay"
+    const auto passeAn = [&, rate, glatt, quelle, form]() {
+        const auto q = static_cast<ModQuelle>(quelle->currentIndex());
+        rate->setEnabled(istLfo(q));
+        glatt->setEnabled(!istLfo(q));
+        if (QWidget* l = form->labelForField(glatt))
+            if (auto* lbl = qobject_cast<QLabel*>(l))
+                lbl->setText(q == ModQuelle::BeatHuelle ? QObject::tr("Decay")
+                                                        : QObject::tr("Smoothing"));
+        glatt->setToolTip(q == ModQuelle::BeatHuelle
+                              ? QObject::tr("Time for the envelope to fall to about a third "
+                                            "after a beat (0 = one frame).")
+                              : QObject::tr("Smooths the audio value (time constant, 0 = "
+                                            "none)."));
+    };
+    passeAn();
+    QObject::connect(quelle, QOverload<int>::of(&QComboBox::currentIndexChanged), &dlg,
+                     [passeAn](int) { passeAn(); });
+
+    auto* knoepfe = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
+    auto* entfernen = knoepfe->addButton(QObject::tr("Remove"), QDialogButtonBox::DestructiveRole);
+    entfernen->setObjectName(QStringLiteral("modRemove"));
+    int ergebnis = 0;
+    QObject::connect(knoepfe, &QDialogButtonBox::accepted, &dlg, [&] {
+        ergebnis = 1;
+        dlg.accept();
+    });
+    QObject::connect(knoepfe, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+    QObject::connect(entfernen, &QPushButton::clicked, &dlg, [&] {
+        ergebnis = 2;
+        dlg.accept();
+    });
+    form->addRow(knoepfe);
+    dlg.exec();
+    if (ergebnis == 1)
+    {
+        m.quelle = static_cast<ModQuelle>(quelle->currentIndex());
+        m.tiefe = tiefe->value();
+        m.rateHz = rate->value();
+        m.glaettung = glatt->value();
+        m.aktiv = aktiv->isChecked();
+    }
+    return ergebnis;
+}
+
 QString scriptReferenceHtml(const EffectParams& params)
 {
     const char* title = effectTypeName(params);
@@ -3325,6 +3430,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     std::string nodeDesc;
     std::string nodeSong;
     bool nodeScriptsActive = true;
+    std::vector<FeldModulation> nodeMods;  // F4 (S85)
+    bool nodeModsActive = true;
+    uint64_t nodeId = 0;
     {
         QMutexLocker lock(m_mutex);
         ChainNode* node = nodeAtPath(path);
@@ -3334,6 +3442,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         nodeDesc = node->description;
         nodeSong = node->songCode;
         nodeScriptsActive = node->scriptsActive;
+        nodeMods = node->mods;
+        nodeModsActive = node->modsActive;
+        nodeId = node->nodeId;
     }
 
     m_propPage = new QWidget(m_propContainer);
@@ -3396,6 +3507,25 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         if (QWidget* l = form->labelForField(box)) l->setToolTip(tip);
     }
 
+    // Schalter „Modulation active" (F4, S85, Entscheid E5): eigener
+    // Knotenschalter neben „Script active" — sichtbar, sobald der Knoten
+    // Modulationen traegt (die setzt der „~"-Knopf an der Feldzeile).
+    if (milkSection < 0 && milkElem < 0 && !nodeMods.empty())
+    {
+        auto* box = new QCheckBox(m_propContainer);
+        box->setObjectName(QStringLiteral("modulationActive"));
+        box->setChecked(nodeModsActive);
+        const QString tip = tr("Off: all modulations of this node rest, every field shows its "
+                               "slider value. The modulations stay stored.");
+        box->setToolTip(tip);
+        connect(box, &QCheckBox::toggled, this, [this, path](bool v) {
+            mutate(path, [v](ChainNode& n) { n.modsActive = v; },
+                   /*aendertVoreinstellung=*/false);
+        });
+        form->addRow(tr("Modulation active"), box);
+        if (QWidget* l = form->labelForField(box)) l->setToolTip(tip);
+    }
+
     // --- row helpers (each connects to a typed mutation) ---------------------
     //
     // Jede Feldzeile nennt ihren FELDNAMEN als erstes Argument (§10). Er ist
@@ -3415,6 +3545,91 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         // Feldname als objectName (S83): Tests und Sonden finden das Feld
         // ueber den Vertragsnamen statt ueber die Position im Formular.
         if (widget->objectName().isEmpty()) widget->setObjectName(QLatin1String(field));
+        // Block F, F4 (S85): modulierbare Felder bekommen rechts einen „~"-
+        // Knopf (hervorgehoben, wenn belegt) und die Live-Anzeige des
+        // modulierten Werts. Nur in der echten Knotenansicht.
+        const ft::Typ* modTyp = ft::typ(params);
+        const ft::Feld* modFeld =
+            modTyp != nullptr ? ft::feldNachJson(*modTyp, field) : nullptr;
+        if (milkSection < 0 && milkElem < 0 && modFeld != nullptr &&
+            ft::modulierbar(*modTyp, *modFeld))
+        {
+            const std::string feldName(field);
+            auto* zeile = new QWidget(m_propPage);
+            auto* hl = new QHBoxLayout(zeile);
+            hl->setContentsMargins(0, 0, 0, 0);
+            hl->setSpacing(4);
+            hl->addWidget(widget, 1);
+            auto* live = new QLabel(zeile);
+            live->setObjectName(QStringLiteral("modLive_") + QLatin1String(field));
+            live->setToolTip(tr("Current value with modulation"));
+            QFont klein = live->font();
+            klein.setPointSizeF(klein.pointSizeF() * 0.85);
+            live->setFont(klein);
+            hl->addWidget(live);
+            auto* knopf = new QToolButton(zeile);
+            knopf->setObjectName(QStringLiteral("mod_") + QLatin1String(field));
+            knopf->setText(QStringLiteral("~"));
+            knopf->setCheckable(true);
+            bool belegt = false;
+            for (const FeldModulation& m : nodeMods) belegt = belegt || m.feld == feldName;
+            knopf->setChecked(belegt);
+            knopf->setToolTip(tr("Modulate this field without a formula (audio, beat or LFO)"));
+            hl->addWidget(knopf);
+            // QPointer: mutate kann die Seite neu bauen, dann ist der Knopf weg
+            connect(knopf, &QToolButton::clicked, this,
+                    [this, path, feldName, label, knopf = QPointer<QToolButton>(knopf)](bool) {
+                        FeldModulation m;
+                        m.feld = feldName;
+                        bool vorhanden = false;
+                        {
+                            QMutexLocker lock(m_mutex);
+                            if (const ChainNode* n = nodeAtPath(path))
+                                for (const FeldModulation& x : n->mods)
+                                    if (x.feld == feldName)
+                                    {
+                                        m = x;
+                                        vorhanden = true;
+                                    }
+                        }
+                        const int e = modulationBearbeiten(this, label, m);
+                        if (e == 1)
+                        {
+                            mutate(path, [&](ChainNode& n) {
+                                for (FeldModulation& x : n.mods)
+                                    if (x.feld == feldName)
+                                    {
+                                        x = m;
+                                        return;
+                                    }
+                                n.mods.push_back(m);
+                            }, /*aendertVoreinstellung=*/false);
+                        }
+                        else if (e == 2 && vorhanden)
+                        {
+                            mutate(path, [&](ChainNode& n) {
+                                std::erase_if(n.mods, [&](const FeldModulation& x) {
+                                    return x.feld == feldName;
+                                });
+                            }, /*aendertVoreinstellung=*/false);
+                        }
+                        if (knopf) knopf->setChecked(e == 1 || (e == 0 && vorhanden));
+                    });
+            // Live-Anzeige: liest nur, was die Laufzeit ohnehin rechnet (~10 Hz)
+            auto* uhr = new QTimer(zeile);
+            uhr->setInterval(100);
+            connect(uhr, &QTimer::timeout, live, [this, live, nodeId, feldName]() {
+                if (m_host == nullptr || m_mutex == nullptr) return;
+                std::optional<double> w;
+                {
+                    QMutexLocker lock(m_mutex);
+                    w = m_host->modulierterWert(nodeId, feldName);
+                }
+                live->setText(w ? QStringLiteral("→ %1").arg(*w, 0, 'g', 4) : QString());
+            });
+            uhr->start();
+            widget = zeile;
+        }
         form->addRow(label, widget);
         // Der Hinweis gehoert auch an die Beschriftung — wer den Namen nicht
         // versteht, faehrt zuerst dorthin, nicht auf das Bedienelement.

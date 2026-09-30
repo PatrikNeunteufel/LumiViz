@@ -112,6 +112,25 @@ struct Typ
            (typKey == "terrain3d" && (name == "res" || name == "resolution"));
 }
 
+/// Block F, F4 (S85, Entscheid 1a/1b): modulierbar sind die Live-Zahlfelder
+/// (Kommazahl, Ganzzahl) der Typen mit Parameter-Skript oder eigenem Host —
+/// keine Farben, Schalter, Aufzaehlungen, Strukturfelder, keine Renderer-
+/// eigenen Namen. SSOT fuer Laufzeit, „~"-Knopf und Tests.
+[[nodiscard]] inline bool modulierbar(const Typ& t, const Feld& f)
+{
+    return t.traeger != Traeger::Keiner && f.klasse == Klasse::Live &&
+           (f.art == Art::Kommazahl || f.art == Art::Ganzzahl) &&
+           !rendererEigen(t.typKey, f.name);
+}
+
+/// Feld eines Typs nach seinem JSON-Namen (wie in der Datei); nullptr = keins.
+[[nodiscard]] inline const Feld* feldNachJson(const Typ& t, std::string_view json)
+{
+    for (const Feld& f : t.felder)
+        if (f.feld == json) return &f;
+    return nullptr;
+}
+
 // --- Typpflege: Feldwert <-> double ------------------------------------------
 
 template <typename F>

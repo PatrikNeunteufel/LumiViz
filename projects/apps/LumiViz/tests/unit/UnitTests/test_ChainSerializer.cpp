@@ -2344,6 +2344,81 @@ TEST_SUITE("PresetAlsGruppe")
     }
 }
 
+// Block F, F4 (S85): Modulationen am Knoten — nur wenn belegt in der Datei
+TEST_SUITE("Modulation F4")
+{
+    TEST_CASE("Rundlauf: Quelle, Tiefe, Rate, Glaettung, Haekchen, Knotenschalter")
+    {
+        ChainNode n;
+        n.params = BloomParams{};
+        FeldModulation lfo;
+        lfo.feld = "intensity";
+        lfo.quelle = ModQuelle::LfoDreieck;
+        lfo.tiefe = -0.3;
+        lfo.rateHz = 2.5;
+        FeldModulation beat;
+        beat.feld = "threshold";
+        beat.quelle = ModQuelle::BeatHuelle;
+        beat.tiefe = 0.5;
+        beat.glaettung = 0.4;
+        beat.aktiv = false;
+        n.mods = {lfo, beat};
+        n.modsActive = false;
+
+        const QJsonObject j = nodeToJson(n);
+        REQUIRE(j.value("mods").isArray());
+        CHECK_FALSE(j.value("modulationActive").toBool(true));
+        const QJsonObject jb = j.value("mods").toArray().at(1).toObject();
+        CHECK(jb.value("source").toString() == QStringLiteral("beatEnvelope"));
+        CHECK_FALSE(jb.contains("rateHz"));  // Rate nur bei LFOs
+
+        const ChainNode r = nodeFromJson(j, nullptr);
+        REQUIRE(r.mods.size() == 2);
+        CHECK_FALSE(r.modsActive);
+        CHECK(r.mods[0].feld == "intensity");
+        CHECK(r.mods[0].quelle == ModQuelle::LfoDreieck);
+        CHECK(r.mods[0].tiefe == doctest::Approx(-0.3));
+        CHECK(r.mods[0].rateHz == doctest::Approx(2.5));
+        CHECK(r.mods[0].aktiv);
+        CHECK(r.mods[1].quelle == ModQuelle::BeatHuelle);
+        CHECK(r.mods[1].glaettung == doctest::Approx(0.4));
+        CHECK_FALSE(r.mods[1].aktiv);
+    }
+
+    TEST_CASE("Ohne Modulation bleibt die Datei wie bisher; unbekannte Quelle wird gemeldet")
+    {
+        ChainNode n;
+        n.params = BloomParams{};
+        const QJsonObject j = nodeToJson(n);
+        CHECK_FALSE(j.contains("mods"));
+        CHECK_FALSE(j.contains("modulationActive"));
+
+        QJsonObject kaputt = j;
+        QJsonObject m;
+        m["field"] = QStringLiteral("intensity");
+        m["source"] = QStringLiteral("gibtEsNicht");
+        kaputt["mods"] = QJsonArray{m};
+        QStringList report;
+        const ChainNode r = nodeFromJson(kaputt, &report);
+        REQUIRE(r.mods.size() == 1);
+        CHECK(r.mods[0].quelle == ModQuelle::LfoSinus);  // Vorgabe bleibt
+        CHECK(report.join(QStringLiteral(" | ")).contains(QStringLiteral("unknown source")));
+    }
+
+    TEST_CASE("Jede Quelle hat einen eindeutigen Schluessel und kommt zurueck")
+    {
+        std::set<std::string> keys;
+        for (std::size_t i = 0; i < kModQuelleKeys.size(); ++i)
+        {
+            ModQuelle q{};
+            REQUIRE(modQuelleAusKey(modQuelleKey(static_cast<ModQuelle>(i)), q));
+            CHECK(static_cast<std::size_t>(q) == i);
+            keys.insert(kModQuelleKeys[i]);
+        }
+        CHECK(keys.size() == kModQuelleKeys.size());
+    }
+}
+
 // Presetverweis (S82): Host-Gruppe mit `verweis` — die Kette speichert nur
 // den Pfad, der Inhalt kommt beim Laden frisch aus der Datei
 TEST_SUITE("Presetverweis")

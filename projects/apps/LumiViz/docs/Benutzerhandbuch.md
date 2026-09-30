@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.18.1
+> **Version:** 1.19.0
 > **Datum:** 2026-09-30
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -403,6 +403,13 @@ es `b` (Beat), `w`/`h` (Bildmaße) und den Audio-Satz (`bass`, `mid`, `treb`,
 
 Ein leeres Feld kostet nichts: ohne Formel läuft kein Skript.
 
+Seit Session 85 lässt sich **jedes Zahl-, Schalter- und Auswahlfeld** eines
+Knotens so steuern — auch bei Fraktalen, 3D-Knoten, Glow Orbs, Texer II &
+Co. (dort etwa `type`, `smooth`, `blend`). Die ⓘ-Seite listet alle Namen.
+Bewegst du einen Regler, während ein Skript läuft, **gilt ab da der Regler**
+und das Skript rechnet von diesem Wert weiter — sein Zustand (Zähler, Phasen)
+bleibt erhalten; früher begann das Skript bei jeder Reglerbewegung von vorn.
+
 **Script active** — gleich unter Name und Beschreibung, bei jedem Knoten mit
 Formelfeldern: ausgeschaltet läuft der Knoten, **als stünden seine Felder
 leer** (Init, Frame, Beat, Point, Song). Der Code bleibt gespeichert — zum
@@ -429,6 +436,32 @@ Bei der Effect List wirkt das Song-Feld nur mit eingeschaltetem Listen-Code
 > über die Zeit ändert (ein Beat-Zähler etwa), kann das Bild dort nicht bewegen.
 > Für Zeitabhängiges ist **Dynamic Movement** der richtige Knoten; der Editor
 > weist darauf hin.
+
+### Werte ohne Formel bewegen (Modulation)
+
+Neben vielen Zahlfeldern steht ein kleiner **~**-Knopf. Er lässt das Feld um
+seinen Reglerwert schwingen oder pumpen — ganz ohne Formel:
+
+| Einstellung | Bedeutung |
+|---|---|
+| **Source** | **Bass**, **Mid**, **Treble**, **Level** (Lautstärke) und **Beat envelope** (springt beim Beat hoch und klingt ab) bewegen das Feld nur in eine Richtung (0..1). Die **LFOs** (sine, triangle, saw, square, random) schwingen nach oben und unten (−1..1). |
+| **Depth** | Wie weit: 1 = der ganze Bereich des Felds, 0,1 = ein Zehntel. Negativ kehrt die Richtung um. Felder ohne festen Bereich bewegen sich um den entsprechenden Anteil ihres Reglerwerts. Der Wert bleibt immer im erlaubten Bereich. |
+| **Rate** | Nur LFOs: Schwingungen pro Sekunde (Hz). |
+| **Smoothing** / **Decay** | Audio-Quellen: wie stark geglättet wird (Sekunden). Beat envelope: wie schnell sie nach einem Beat abklingt. |
+| **Active** | Diese eine Modulation ein/aus. |
+
+Ist eine Modulation gesetzt, ist der **~**-Knopf hervorgehoben, und daneben
+steht der aktuelle Wert (**→ 0.73**). **Remove** im Dialog löscht sie.
+Sobald ein Knoten Modulationen trägt, erscheint oben der Schalter
+**Modulation active** — aus, und alle Felder stehen auf ihrem Reglerwert.
+
+Die Reihenfolge je Bild: **Regler → Modulation → Formel.** Eine Formel sieht
+den modulierten Wert und darf ihn überschreiben. Modulationen wirken auch bei
+ausgeschaltetem *Script active*. Sie werden mit der Kette gespeichert.
+
+Modulierbar sind die Zahlfelder der Knoten mit Formelfeldern. Noch **nicht**:
+Farben, Schalter und Auswahlfelder, sowie SuperScope, Movement, Dynamic
+Movement, Effect List und Host-Gruppen; LFO-Tempo in Beats kommt später.
 
 ### Bilder in Picture, Picture II und Texer
 
@@ -955,6 +988,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.19.0 | 2026-09-30 | Session 85. §11 NEU **Werte ohne Formel bewegen (Modulation)**: „~"-Knopf an Zahlfeldern (Audio, Beat-Hüllkurve, LFOs), Live-Wert, Schalter **Modulation active**. §11 „Werte per Formel steuern": jedes Feld skriptbar, auch bei Fraktalen/3D/Glow Orbs/Texer II; eine Reglerbewegung setzt das Skript nicht mehr zurück. Die ⓘ-Seite jedes Skriptfelds beginnt mit seinem Takt (einmal/je Frame/je Beat/je Punkt …) |
 | 1.18.1 | 2026-09-30 | Session 84. Vorlagen-Zeile im Groß-Editor zeigt den Zustand (Name / „(unsaved) – Name" / „(none)") statt zurückzuspringen; §11 Presets aus dem Effect Browser/Explorer in die Kette ziehen = Presetverweis; §2/§3 Ziehen zum Abspielen (Player, Visualisierung), Playlist nimmt Dateien an und sortiert im Dienst um, NEU **Audio Browser** (Albumcover als Icon, Fallback Ordnerbild/Formaticon); Feld-Tooltips englisch; §13 Kamera-Clips heißen `camera_clip_…` |
 | 1.18.0 | 2026-09-30 | Session 83. Zitierte Oberflächen-Beschriftungen auf die englische Oberfläche gezogen (§8 Einstellungen/Kamera, §9 Tastenkürzel, §11 Milkdrop/Host-Gruppen/Host Switcher, §12–§14); „Testaufnahme" heißt **Camera Clip** |
 | 1.17.0 | 2026-09-30 | Session 83. Namen **aller** mitgelieferten Presets, Beispiele und Vorlagen englisch (§11, §14); NEU Presets für die Milkdrop-Sektionen **Code** und **Parameter** (u. a. *Original*, *Old LumiViz Look (pre-S80)*). §11 Voreinstellungen: Combo behält den geladenen Namen, **„(unsaved) – Name"** nach einer Änderung, **(none)** ohne Voreinstellung, 🗑 zielt auf die Quelle; NEU Voreinstellungen je **Milkdrop-Element** (Wave/Shape/Sprite); Template-Listen von SuperScope 3D/3D Camera sind jetzt Voreinstellungen. §11 NEU Schalter **Script active**. §14 NEU **Vorlagen im großen Editor** (Leer + einfache Vorlagen je Shader-Feld, eigene speichern) |

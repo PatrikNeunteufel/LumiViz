@@ -2050,9 +2050,12 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   (erzeugt, Zeiger-auf-Member) als SSOT, ein generischer Läufer in
   `renderNode`, Strukturfelder, Modulation ohne Formel; Entscheide E1–E6
   gefallen (S84, E6 präzisiert S85: Ganzzahlen abgeschnitten). **Stand S85:**
-  F1, F2, F5, F2-Migration (51 Renderer ohne Feld-Hand-Listen) und F2b (alle
-  19 eigenen Hosts an der Tabelle, Regler kompilieren nicht mehr neu) ✅ —
-  **offen: F4 Modulation**, danach F6 (MIDI/OSC-Adresse, mit der Idee).
+  F1, F2, F5, F2-Migration (51 Renderer ohne Feld-Hand-Listen), F2b (alle
+  19 eigenen Hosts an der Tabelle, Regler kompilieren nicht mehr neu) und F4
+  (Modulation ohne Formel, „~"-Knopf, 257 Felder in 56 Modulen) ✅ — **offen:** F4b
+  Farbfelder modulieren, F4c Typen ohne Skriptträger (SuperScope, Effect List
+  zuerst), F4d LFO-Rate in Beats (Entscheide Patrik S85: je a), F6
+  (MIDI/OSC-Adresse, mit der Idee).
   Farbtafeln/Stützstellen (`colors[i]`) weiter §7 des Konzepts.
   Die Tabelle unten ist der Stand VOR Block F (Historie). **Vorarbeit S83 —
   Bestandsaufnahme über alle Palettentypen:** was im Editor steht, aber keine

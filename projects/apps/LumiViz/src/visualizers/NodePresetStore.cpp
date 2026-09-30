@@ -201,6 +201,7 @@ const QStringList& knotenRahmen()
     static const QStringList kRahmen = {
         QStringLiteral("type"),    QStringLiteral("name"),     QStringLiteral("description"),
         QStringLiteral("enabled"), QStringLiteral("children"), QStringLiteral("scriptsActive"),
+        QStringLiteral("mods"),    QStringLiteral("modulationActive"),  // F4 (S85)
     };
     return kRahmen;
 }

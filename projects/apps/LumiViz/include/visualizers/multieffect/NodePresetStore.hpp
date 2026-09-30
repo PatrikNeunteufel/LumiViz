@@ -79,7 +79,8 @@ struct Entry
 /**
  * Der Knoten-Rahmen: Schluessel aus `nodeToJson`, die NIE in eine
  * Voreinstellung gehoeren (`type`, `name`, `description`, `enabled`,
- * `children`, seit S83 `scriptsActive`). SSOT fuer Store und Panel.
+ * `children`, seit S83 `scriptsActive`, seit S85 `mods`/`modulationActive`).
+ * SSOT fuer Store und Panel.
  */
 [[nodiscard]] const QStringList& knotenRahmen();
 

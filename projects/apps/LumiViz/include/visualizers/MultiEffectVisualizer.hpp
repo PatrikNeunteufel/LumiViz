@@ -57,7 +57,9 @@
 #include <functional>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <set>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -1276,6 +1278,41 @@ private:
     void feldHostVor(LeafRuntime& rt, lumi::scripting::LuaScriptEngine& engine, bool fresh,
                      const std::set<std::string>& hand = {});
     void feldHostNach(LeafRuntime& rt, lumi::scripting::LuaScriptEngine& engine, bool fresh);
+
+    // --- Block F, Stufe F4: Modulation ohne Formel (S85) ---------------------
+    /// Laufzeit einer Modulation (je Knoten und Feld): LFO-Phase, gehaltener
+    /// Zufallswert, geglaettete Audio-Quelle, Beat-Huelle.
+    struct ModZustand
+    {
+        double phase = 0.0;
+        double halt = 0.0;
+        double glatt = 0.0;
+        double huelle = 0.0;
+        uint32_t zufall = 0;  ///< 0 = noch nicht gesaet
+    };
+    std::unordered_map<uint64_t, std::unordered_map<std::string, ModZustand>> m_modZustand;
+    /// Zuletzt angewendeter Wert je Knoten und Feld — fuer die Anzeige im Panel
+    std::unordered_map<uint64_t, std::unordered_map<std::string, double>> m_modWerte;
+    /// Audio-Baender einmal je Frame (die Modulation fragt sie je Feld)
+    bool m_modBaenderGueltig = false;
+    float m_modBass = 0.0f, m_modMid = 0.0f, m_modTreble = 0.0f;
+    /// true, wenn der Knoten mindestens eine aktive Modulation traegt und sein
+    /// Knotenschalter an ist
+    [[nodiscard]] static bool moduliert(const lumi::multieffect::ChainNode& node);
+    /// Modulationen des Knotens auf die Frame-Kopie `kopie` anwenden (vor den Skripten, E5)
+    void wendeModulationAn(const lumi::multieffect::ChainNode& node,
+                           lumi::multieffect::EffectParams& kopie);
+    [[nodiscard]] double modQuellwert(const lumi::multieffect::FeldModulation& m, ModZustand& z,
+                                      uint64_t nodeId);
+
+public:
+    /// F4: zuletzt angewendeter Modulationswert eines Felds (Panel-Anzeige);
+    /// leer, wenn das Feld in diesem Frame nicht moduliert war. Aufrufer haelt
+    /// den Render-Mutex.
+    [[nodiscard]] std::optional<double> modulierterWert(uint64_t nodeId,
+                                                        const std::string& feld) const;
+
+private:
 
 public:
     /// Nur fuer Tests: sieht nach jedem gesteuerten Knoten die fertige

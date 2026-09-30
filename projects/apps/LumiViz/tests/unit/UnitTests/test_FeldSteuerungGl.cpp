@@ -232,6 +232,134 @@ TEST_CASE("Feldsteuerung F2b: auch Module mit eigenem Skript-Host setzen jedes L
     CHECK(felder > 120);
 }
 
+namespace
+{
+/// F4: einen Knoten (mit Modulationen) zwei Frames laufen lassen; liefert die
+/// letzte gesehene Frame-Kopie.
+std::optional<EffectParams> laufeKnoten(ChainNode leaf)
+{
+    const std::size_t index = leaf.params.index();
+    ChainNode root;
+    root.params = ListParams{};
+    root.children.push_back(std::move(leaf));
+    std::optional<EffectParams> gesehen;
+    MultiEffectVisualizer::setzeParamBeobachter(
+        [&](const ChainNode&, const EffectParams& kopie) {
+            if (kopie.index() == index) gesehen = kopie;
+        });
+    MultiEffectVisualizer vis;
+    vis.setChain(std::move(root));
+    vis.initialize();
+    vis.resize(QSize(kSize, kSize));
+    QOpenGLContext::currentContext()->functions()->glViewport(0, 0, kSize, kSize);
+    vis.render(1.0f / 60.0f);
+    vis.render(1.0f / 60.0f);
+    MultiEffectVisualizer::setzeParamBeobachter({});
+    return gesehen;
+}
+
+FeldModulation mod(const char* feld, ModQuelle q, double tiefe, double rate = 0.0)
+{
+    FeldModulation m;
+    m.feld = feld;
+    m.quelle = q;
+    m.tiefe = tiefe;
+    m.rateHz = rate;
+    return m;
+}
+}  // namespace
+
+TEST_CASE("Modulation F4: Tiefe, Spanne, Klemmen, Ganzzahl, nicht modulierbare Felder")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    // Rechteck-LFO mit Rate 0 steht fest auf +1: Wert = Regler + Tiefe * Spanne
+    ChainNode leaf;
+    leaf.params = BloomParams{};  // intensity 1 (0..8), radius 8 (1..32), threshold 0 (0..1)
+    leaf.mods = {mod("intensity", ModQuelle::LfoRechteck, 0.1),
+                 mod("radius", ModQuelle::LfoRechteck, -0.1),
+                 mod("threshold", ModQuelle::LfoRechteck, 2.0),
+                 mod("vignetteStrength", ModQuelle::LfoRechteck, 0.0),
+                 mod("post", ModQuelle::LfoRechteck, 1.0)};
+    const BloomParams vorgabe{};
+    const auto k = laufeKnoten(leaf);
+    REQUIRE(k.has_value());
+    const auto& b = std::get<BloomParams>(*k);
+    CHECK(b.intensity == doctest::Approx(1.0 + 0.1 * 8.0));  // Spanne = Bereich 0..8
+    CHECK(b.radius == 4);                                     // 8 - 3.1 = 4.9 -> abgeschnitten (E6)
+    CHECK(b.threshold == doctest::Approx(1.0));               // geklemmt auf hi
+    CHECK(b.vignetteStrength == doctest::Approx(vorgabe.vignetteStrength));  // Tiefe 0
+    CHECK(b.post == vorgabe.post);                            // Schalter: nicht modulierbar
+
+    // Gegenprobe: Knotenschalter aus bzw. Haekchen aus -> Reglerwert. Ein
+    // wirkungsloses Frame-Skript sorgt fuer die Frame-Kopie, die wir sehen.
+    ChainNode aus = leaf;
+    std::get<BloomParams>(aus.params).frameCode = "zz = 0;";
+    aus.modsActive = false;
+    const auto kAus = laufeKnoten(aus);
+    REQUIRE(kAus.has_value());
+    CHECK(std::get<BloomParams>(*kAus).intensity == doctest::Approx(vorgabe.intensity));
+    ChainNode haken = leaf;
+    std::get<BloomParams>(haken.params).frameCode = "zz = 0;";
+    for (FeldModulation& m : haken.mods) m.aktiv = false;
+    const auto kHaken = laufeKnoten(haken);
+    REQUIRE(kHaken.has_value());
+    CHECK(std::get<BloomParams>(*kHaken).radius == vorgabe.radius);
+}
+
+TEST_CASE("Modulation F4: Reihenfolge E5 — das Skript sieht den Wert und darf ueberschreiben")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    ChainNode leaf;
+    BloomParams b;
+    b.frameCode = "intensity = 0.5; vignettestrength = threshold;";
+    leaf.params = b;
+    leaf.mods = {mod("intensity", ModQuelle::LfoRechteck, 0.1),
+                 mod("threshold", ModQuelle::LfoRechteck, 0.25)};
+    const auto k = laufeKnoten(leaf);
+    REQUIRE(k.has_value());
+    const auto& e = std::get<BloomParams>(*k);
+    CHECK(e.intensity == doctest::Approx(0.5));          // Skript ueberschreibt
+    CHECK(e.threshold == doctest::Approx(0.25));         // Modulation ohne Skript-Eingriff
+    CHECK(e.vignetteStrength == doctest::Approx(0.25));  // Skript sah den modulierten Wert
+}
+
+TEST_CASE("Modulation F4: LFOs laufen auf der Sim-Uhr, Zufall ist je Preset gleich")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    // Saege 15 Hz, zwei Frames zu 1/60 s: Phase 0.5 -> Wert 0 -> Reglerwert.
+    // Sinus 15 Hz: Phase 0.5 -> sin(pi) = 0 ebenso; Dreieck: 3 - 4*0.5 = 1.
+    ChainNode leaf;
+    leaf.params = BloomParams{};
+    leaf.mods = {mod("intensity", ModQuelle::LfoSaege, 0.1, 15.0),
+                 mod("threshold", ModQuelle::LfoDreieck, 0.5, 15.0),
+                 mod("vignetteStrength", ModQuelle::LfoZufall, 0.4, 1.0)};
+    const auto a = laufeKnoten(leaf);
+    const auto b = laufeKnoten(leaf);
+    REQUIRE(a.has_value());
+    REQUIRE(b.has_value());
+    const auto& ea = std::get<BloomParams>(*a);
+    CHECK(ea.intensity == doctest::Approx(1.0).epsilon(1e-5));
+    CHECK(ea.threshold == doctest::Approx(0.5).epsilon(1e-5));
+    // Zufall: deterministisch (gleiche Saat je Knoten und Feld) und bewegt
+    CHECK(std::get<BloomParams>(*b).vignetteStrength == ea.vignetteStrength);
+    CHECK(ea.vignetteStrength != doctest::Approx(BloomParams{}.vignetteStrength));
+}
+
 TEST_CASE("Feldsteuerung F2b: ein Regler kompiliert nicht neu — der Skriptzustand bleibt")
 {
     GlUmgebung gl;

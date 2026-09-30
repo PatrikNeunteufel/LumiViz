@@ -3948,6 +3948,8 @@ void MultiEffectVisualizer::resetRuntimes()
     m_groupRuntimes.clear();  // HG1: Gruppen-Surfaces/-Pools sterben mit
     m_switcherRuntimes.clear();  // S82: neue Kette startet bei der Startgruppe
     m_groupOverride.clear();
+    m_modZustand.clear();  // F4: LFO-Phasen und Huellen beginnen neu
+    m_modWerte.clear();
     m_bufferPool.clear();
     for (auto& ring : m_mdRing) ring.clear();  // Multi Delay shared rings
     for (int& head : m_mdHead) head = 0;
@@ -4000,6 +4002,7 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     m_scriptClockAccum += static_cast<double>(deltaTime);
     m_time += deltaTime;
     m_deltaTime = deltaTime;
+    m_modBaenderGueltig = false;  // F4: Audio-Baender neu je Frame
 
     // A freshly installed chain (loadAvsFile) reuses node ids — free the old
     // per-node GL runtimes here on the render thread before walking the new tree.
@@ -4424,12 +4427,19 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
     // Liste setzen ihre eigene (oder keine) und stellen danach zurueck.
     lumi::multieffect::EffectParams* vorherKopie = m_gesteuerteKopie;
     m_gesteuerteKopie = nullptr;
+    // Block F, F4 (S85): Modulation wirkt auch bei abgeschalteten Skripten —
+    // sie ist kein Skript (eigener Schalter „Modulation active", E5)
+    const bool mitModulation = moduliert(node);
+    if (!mitModulation && !m_modWerte.empty()) m_modWerte.erase(node.nodeId);  // Anzeige leeren
     if (!node.scriptsActive && hatSkriptSchalter(node.params))
     {
         EffectParams ohneSkript = node.params;
         leereSkriptSlots(ohneSkript);
+        if (mitModulation) wendeModulationAn(node, ohneSkript);
         m_nodeSong = &kKeinSong;
         std::visit(Visitor{*this, node}, ohneSkript);
+        if (mitModulation)
+            if (const auto& beobachter = paramBeobachterFuerTest()) beobachter(node, ohneSkript);
     }
     else
     {
@@ -4459,9 +4469,12 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         using lumi::multieffect::feldtabelle::Traeger;
         if (typ != nullptr &&
             (typ->traeger == Traeger::ParamSkript || typ->traeger == Traeger::EigenerHost) &&
-            hatCode())
+            (hatCode() || mitModulation))
         {
             EffectParams kopie = node.params;
+            // F4: Basis -> Modulation -> Skript (E5) — die Skripte sehen den
+            // modulierten Wert als Reglerwert und duerfen ihn ueberschreiben
+            if (mitModulation) wendeModulationAn(node, kopie);
             m_gesteuerteKopie = &kopie;
             std::visit(Visitor{*this, node}, kopie);
             m_gesteuerteKopie = nullptr;
@@ -9558,6 +9571,129 @@ void MultiEffectVisualizer::feldHostNach(LeafRuntime& rt,
     // Die Strukturregel kann einen Wert auf den geltenden zurueckziehen — der
     // Host rechnet dann von DIESEM Wert fort, nicht vom verworfenen.
     for (const ParamVar& v : vars) engine.setNumber(v.name, *v.value);
+}
+
+// =============================================================================
+// Block F, Stufe F4: Modulation ohne Formel (S85)
+// =============================================================================
+
+bool MultiEffectVisualizer::moduliert(const ChainNode& node)
+{
+    if (!node.modsActive) return false;
+    for (const lumi::multieffect::FeldModulation& m : node.mods)
+        if (m.aktiv) return true;
+    return false;
+}
+
+double MultiEffectVisualizer::modQuellwert(const lumi::multieffect::FeldModulation& m,
+                                           ModZustand& z, uint64_t nodeId)
+{
+    using lumi::multieffect::ModQuelle;
+    const double dt = static_cast<double>(m_deltaTime);
+    // Glaettung als Zeitkonstante: 0 = sofort
+    const auto glaette = [&](double x) {
+        if (m.glaettung <= 0.0) return z.glatt = x;
+        z.glatt += (x - z.glatt) * (1.0 - std::exp(-dt / m.glaettung));
+        return z.glatt;
+    };
+    const auto baender = [this] {
+        if (m_modBaenderGueltig) return;
+        computeAudioBands(getSpectrum(), m_modBass, m_modMid, m_modTreble);
+        m_modBaenderGueltig = true;
+    };
+    switch (m.quelle)
+    {
+    case ModQuelle::Bass:
+        baender();
+        return glaette(std::clamp(static_cast<double>(m_modBass), 0.0, 1.0));
+    case ModQuelle::Mid:
+        baender();
+        return glaette(std::clamp(static_cast<double>(m_modMid), 0.0, 1.0));
+    case ModQuelle::Treble:
+        baender();
+        return glaette(std::clamp(static_cast<double>(m_modTreble), 0.0, 1.0));
+    case ModQuelle::Pegel:
+        return glaette(std::clamp(static_cast<double>(m_audioLevel), 0.0, 1.0));
+    case ModQuelle::BeatHuelle:
+        if (m_frameBeat)
+            z.huelle = 1.0;
+        else
+            z.huelle = m.glaettung > 0.0 ? z.huelle * std::exp(-dt / m.glaettung) : 0.0;
+        return z.huelle;
+    default:
+        break;
+    }
+    // LFOs: Phase 0..1 auf der Sim-Uhr (deterministisch), Wert -1..1
+    if (z.zufall == 0)
+    {
+        // Saat je Knoten und Feld: gleiches Preset -> gleiche Folge
+        uint32_t h = 2166136261u ^ static_cast<uint32_t>(nodeId);
+        for (const char c : m.feld) h = (h ^ static_cast<unsigned char>(c)) * 16777619u;
+        z.zufall = h != 0 ? h : 1u;
+        z.halt = 0.0;
+    }
+    const double vorher = z.phase;
+    z.phase += std::max(0.0, m.rateHz) * dt;
+    const bool neuePeriode = z.phase >= 1.0;
+    z.phase -= std::floor(z.phase);
+    const double p = z.phase;
+    switch (m.quelle)
+    {
+    case ModQuelle::LfoSinus:
+        return std::sin(2.0 * 3.14159265358979323846 * p);
+    case ModQuelle::LfoDreieck:
+        return p < 0.5 ? 4.0 * p - 1.0 : 3.0 - 4.0 * p;
+    case ModQuelle::LfoSaege:
+        return 2.0 * p - 1.0;
+    case ModQuelle::LfoRechteck:
+        return p < 0.5 ? 1.0 : -1.0;
+    case ModQuelle::LfoZufall:
+        if (neuePeriode || vorher == 0.0)
+        {
+            z.zufall ^= z.zufall << 13;
+            z.zufall ^= z.zufall >> 17;
+            z.zufall ^= z.zufall << 5;
+            z.halt = static_cast<double>(z.zufall) / 4294967295.0 * 2.0 - 1.0;
+        }
+        return z.halt;
+    default:
+        return 0.0;
+    }
+}
+
+void MultiEffectVisualizer::wendeModulationAn(const ChainNode& node, EffectParams& kopie)
+{
+    const ft::Typ* typ = ft::typ(kopie);
+    if (typ == nullptr) return;
+    auto& zustaende = m_modZustand[node.nodeId];
+    auto& werte = m_modWerte[node.nodeId];
+    werte.clear();
+    for (const lumi::multieffect::FeldModulation& m : node.mods)
+    {
+        if (!m.aktiv) continue;
+        const ft::Feld* f = ft::feldNachJson(*typ, m.feld);
+        if (f == nullptr || !ft::modulierbar(*typ, *f)) continue;
+        const double quelle = modQuellwert(m, zustaende[m.feld], node.nodeId);
+        const double basis = f->lesen(kopie);
+        // Spanne (Entscheid 2a): Bereich des Felds; ohne Bereich der Betrag
+        // des Reglerwerts (0 -> 1, sonst bewegte sich ein Feld auf 0 nie)
+        const bool bereich = !std::isnan(f->lo) && !std::isnan(f->hi) && f->hi > f->lo;
+        const double spanne = bereich ? f->hi - f->lo : (basis != 0.0 ? std::abs(basis) : 1.0);
+        double wert = basis + m.tiefe * quelle * spanne;
+        if (bereich) wert = std::clamp(wert, f->lo, f->hi);
+        f->schreiben(kopie, wert);  // Typpflege (Ganzzahl abgeschnitten, E6)
+        werte[m.feld] = f->lesen(kopie);
+    }
+}
+
+std::optional<double> MultiEffectVisualizer::modulierterWert(uint64_t nodeId,
+                                                              const std::string& feld) const
+{
+    const auto k = m_modWerte.find(nodeId);
+    if (k == m_modWerte.end()) return std::nullopt;
+    const auto w = k->second.find(feld);
+    if (w == k->second.end()) return std::nullopt;
+    return w->second;
 }
 
 void MultiEffectVisualizer::runRotatingStars(const ChainNode& node,
