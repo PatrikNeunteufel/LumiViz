@@ -51,6 +51,9 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
 
+#include <QVector3D>
+
+#include <array>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -653,6 +656,13 @@ private:
         bool fracInited = false;       ///< init slot has run once
         unsigned int fracLut = 0;      ///< GL 256x1 RGB palette (deleted in onCleanup)
         std::string fracLutSnapshot;   ///< gradient preset the LUT was baked from
+        /// CPU-Farbtabelle der Punktwolken (Strange Attractor, Flame) — nur neu,
+        /// wenn sich der Verlauf aendert. Bis S84 entstand sie JEDEN Frame neu,
+        /// und jedes Mal las ein frisches ColorGradientModule alle eigenen
+        /// Verlaufsdateien von der Platte (Befund S84: ~36 Ladungen je Sekunde).
+        std::array<QVector3D, 256> cpuLut{};
+        std::string cpuLutSnapshot;
+        bool cpuLutGueltig = false;
         float fracColorPhase = 0.0f;   ///< accumulated palette drift (colorCycle)
         float fracTime = 0.0f;         ///< accumulated animation phase (Domain Warp / Zoomer log-zoom)
         float fracRot = 0.0f;          ///< Fractal Zoomer: akkumulierte Rotation (S48: eigenes Feld, war rotoAngle)

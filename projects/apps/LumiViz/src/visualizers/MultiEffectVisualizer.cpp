@@ -13393,8 +13393,13 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
     rt.saRot += static_cast<float>(dynRotationSpeed) * m_deltaTime;
     const float rc = std::cos(rt.saRot + rotation), rs = std::sin(rt.saRot + rotation);
 
-    std::array<QVector3D, 256> cpuLut{};
-    if (params.useGradient) buildCpuGradientLut(params.gradientPreset, cpuLut);
+    if (params.useGradient && (!rt.cpuLutGueltig || rt.cpuLutSnapshot != params.gradientPreset))
+    {
+        buildCpuGradientLut(params.gradientPreset, rt.cpuLut);  // nur bei Wechsel (S84)
+        rt.cpuLutSnapshot = params.gradientPreset;
+        rt.cpuLutGueltig = true;
+    }
+    const std::array<QVector3D, 256>& cpuLut = rt.cpuLut;
     const QVector3D fixedCol = farbe.vec();  // Skript-Kopie
 
     const int n = std::clamp(params.points, 1, 100000);
@@ -13551,8 +13556,13 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
         }
     };
 
-    std::array<QVector3D, 256> cpuLut{};
-    buildCpuGradientLut(params.gradientPreset, cpuLut);
+    if (!rt.cpuLutGueltig || rt.cpuLutSnapshot != params.gradientPreset)
+    {
+        buildCpuGradientLut(params.gradientPreset, rt.cpuLut);  // nur bei Wechsel (S84)
+        rt.cpuLutSnapshot = params.gradientPreset;
+        rt.cpuLutGueltig = true;
+    }
+    const std::array<QVector3D, 256>& cpuLut = rt.cpuLut;
 
     const int n = std::clamp(params.points, 1, 200000);
     std::vector<lumi::modules::SuperscopePoint> pts;
