@@ -175,13 +175,15 @@ TEST_SUITE("FieldBindings")
         CHECK(x == doctest::Approx(0.25));
     }
 
-    TEST_CASE("Referenz (F5): jedes Feld eines ParamSkript-Typs steht in scriptVariables")
+    // F2b (S85): auch die Module mit eigenem Skript-Host — ausser den
+    // Renderer-eigenen Namen (ft::rendererEigen), die bewusst kein Feld sind.
+    TEST_CASE("Referenz (F5/F2b): jedes Feld eines skriptbaren Typs steht in scriptVariables")
     {
         int typen = 0;
         for (std::size_t i = 0; i < std::variant_size_v<EffectParams>; ++i)
         {
             const ft::Typ* t = ft::typ(i);
-            if (t == nullptr || t->traeger != ft::Traeger::ParamSkript) continue;
+            if (t == nullptr || t->traeger == ft::Traeger::Keiner) continue;
             EffectParams p;
             [&]<std::size_t... I>(std::index_sequence<I...>) {
                 ((I == i ? (p.emplace<I>(), true) : false) || ...);
@@ -193,6 +195,7 @@ TEST_SUITE("FieldBindings")
                 for (const std::string& n : splitScriptVarNames(v.names)) namen.insert(n);
             for (const ft::Feld& f : t->felder)
             {
+                if (ft::rendererEigen(t->typKey, f.name)) continue;
                 const std::string n(f.name);
                 const std::string probe = f.art == ft::Art::Farbe ? n + "_r" : n;
                 CHECK_MESSAGE(namen.count(probe) == 1,
@@ -200,7 +203,7 @@ TEST_SUITE("FieldBindings")
             }
             ++typen;
         }
-        CHECK(typen > 45);
+        CHECK(typen > 45 + 18);  // 54 ParamSkript + 19 eigene Hosts (Stand S85)
     }
 
     TEST_CASE("Klassen und Traeger: die Stichproben aus dem Konzept")

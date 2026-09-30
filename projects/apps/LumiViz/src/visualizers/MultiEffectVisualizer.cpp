@@ -4446,13 +4446,20 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
                     if constexpr (requires { p.initCode; }) code = code || !p.initCode.empty();
                     if constexpr (requires { p.frameCode; }) code = code || !p.frameCode.empty();
                     if constexpr (requires { p.beatCode; }) code = code || !p.beatCode.empty();
+                    // F2b (S85): eigene Hosts mit nur Punkt-/Pixel-Code
+                    if constexpr (requires { p.pointCode; }) code = code || !p.pointCode.empty();
+                    if constexpr (requires { p.pixelCode; }) code = code || !p.pixelCode.empty();
                     return code;
                 },
                 node.params);
         };
+        // F2b (S85): auch Module mit eigenem Skript-Host (Fraktale, 3D …)
+        // rechnen auf der Kopie — feldHostVor/-Nach schreiben hinein.
         const auto* typ = lumi::multieffect::feldtabelle::typ(node.params);
+        using lumi::multieffect::feldtabelle::Traeger;
         if (typ != nullptr &&
-            typ->traeger == lumi::multieffect::feldtabelle::Traeger::ParamSkript && hatCode())
+            (typ->traeger == Traeger::ParamSkript || typ->traeger == Traeger::EigenerHost) &&
+            hatCode())
         {
             EffectParams kopie = node.params;
             m_gesteuerteKopie = &kopie;
@@ -6759,14 +6766,13 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
     // Light-position script (init/frame/beat -> x, y). Errors disable a slot.
-    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
-    double dynDepth = params.depth;
-    double dynDepth2 = params.depth2;
+    // Block F (F2b, S85): alle Tabellenfelder sind Skriptvariablen; der
+    // Schnappschuss ist nur noch der Code (vorher auch depth/depth2 — ein
+    // Regler kompilierte neu und liess Init erneut laufen).
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + "|" +
-                                 std::to_string(params.depth) + ',' +
-                                 std::to_string(params.depth2);
-    if (rt.bumpHost == nullptr || rt.bumpCompiled != combined + songSchluessel())
+                                 params.beatCode + songSchluessel();
+    const bool fresh = rt.bumpHost == nullptr || rt.bumpCompiled != combined;
+    if (fresh)
     {
         rt.bumpHost = std::make_unique<ScriptSlotHost>("bump", activeContext(),
                                                        ScriptSlotHost::Dialect::Avs);
@@ -6775,15 +6781,14 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
         rt.bumpHost->setSource(Slot::Frame, params.frameCode);
         rt.bumpHost->setSource(Slot::Beat, params.beatCode);
         rt.bumpHost->compileAll();
-        rt.bumpCompiled = combined + songSchluessel();
+        rt.bumpCompiled = combined;
         auto& engine = rt.bumpHost->engine();
         engine.setNumber("x", 0.5);
         engine.setNumber("y", 0.5);
         engine.setNumber("bi", 1.0);
-        rt.bumpHost->engine().setNumber("depth", dynDepth);
-        rt.bumpHost->engine().setNumber("depth2", dynDepth2);
-        rt.bumpHost->run(Slot::Init);
     }
+    feldHostVor(rt, rt.bumpHost->engine(), fresh);
+    if (fresh) rt.bumpHost->run(Slot::Init);
     double scriptBi = 1.0;
     {
         auto& engine = rt.bumpHost->engine();
@@ -6794,8 +6799,7 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
         laufeSong(*rt.bumpHost);
         if (rt.bumpHost->has(Slot::Frame)) rt.bumpHost->run(Slot::Frame);
         if (m_frameBeat && rt.bumpHost->has(Slot::Beat)) rt.bumpHost->run(Slot::Beat);
-        dynDepth = rt.bumpHost->engine().number("depth");
-        dynDepth2 = rt.bumpHost->engine().number("depth2");
+        feldHostNach(rt, engine, fresh);
         double lx = engine.number("x");
         double ly = engine.number("y");
         if (params.oldStyle) { lx /= 100.0; ly /= 100.0; }
@@ -6811,20 +6815,20 @@ void MultiEffectVisualizer::runBump(const ChainNode& node, const BumpParams& par
     // haelt hart bis nF abgelaufen ist (der S46-Sonderfall).
     if (params.onBeat && m_frameBeat)
     {
-        rt.bumpDepth = static_cast<float>(static_cast<int>(dynDepth2));
+        rt.bumpDepth = static_cast<float>(static_cast<int>(params.depth2));
         rt.bumpFramesLeft = std::max(1, params.durationFrames);
     }
     else if (rt.bumpFramesLeft == 0)
     {
-        rt.bumpDepth = static_cast<float>(static_cast<int>(dynDepth));
+        rt.bumpDepth = static_cast<float>(static_cast<int>(params.depth));
     }
     // r_bump.cpp:295-299: die Skript-Variable bi (0..1) skaliert die Tiefe
     const float thisDepth = rt.bumpDepth * static_cast<float>(scriptBi);
     if (rt.bumpFramesLeft > 0 && --rt.bumpFramesLeft > 0)
     {
-        const int a = std::abs(static_cast<int>(dynDepth) - static_cast<int>(dynDepth2)) /
+        const int a = std::abs(static_cast<int>(params.depth) - static_cast<int>(params.depth2)) /
                       std::max(1, params.durationFrames);
-        const bool steigt = static_cast<int>(dynDepth2) > static_cast<int>(dynDepth);
+        const bool steigt = static_cast<int>(params.depth2) > static_cast<int>(params.depth);
         rt.bumpDepth += static_cast<float>(a) * (steigt ? -1.0f : 1.0f);
     }
 
@@ -6867,7 +6871,8 @@ void MultiEffectVisualizer::runDynamicShift(const ChainNode& node,
     // Global-offset script (init/frame/beat -> x, y in pixels). Errors disable a slot.
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode;
-    if (rt.shiftHost == nullptr || rt.shiftCompiled != combined + songSchluessel())
+    const bool fresh = rt.shiftHost == nullptr || rt.shiftCompiled != combined + songSchluessel();
+    if (fresh)
     {
         rt.shiftHost = std::make_unique<ScriptSlotHost>("dshift", activeContext(),
                                                         ScriptSlotHost::Dialect::Avs);
@@ -6883,8 +6888,9 @@ void MultiEffectVisualizer::runDynamicShift(const ChainNode& node,
         engine.setNumber("w", static_cast<double>(m_surfaceWidth));
         engine.setNumber("h", static_cast<double>(m_surfaceHeight));
         engine.setNumber("alpha", 0.5);
-        rt.shiftHost->run(Slot::Init);
     }
+    feldHostVor(rt, rt.shiftHost->engine(), fresh);  // Block F (F2b, S85)
+    if (fresh) rt.shiftHost->run(Slot::Init);
 
     double ox = 0.0;
     double oy = 0.0;
@@ -6898,6 +6904,7 @@ void MultiEffectVisualizer::runDynamicShift(const ChainNode& node,
         laufeSong(*rt.shiftHost);
         if (rt.shiftHost->has(Slot::Frame)) rt.shiftHost->run(Slot::Frame);
         if (m_frameBeat && rt.shiftHost->has(Slot::Beat)) rt.shiftHost->run(Slot::Beat);
+        feldHostNach(rt, rt.shiftHost->engine(), fresh);
         ox = engine.number("x");
         oy = engine.number("y");
         alpha = engine.number("alpha");
@@ -8414,7 +8421,8 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
 
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + '\n' + params.pointCode;
-    if (rt.texerHost == nullptr || rt.texerCompiled != combined + songSchluessel())
+    const bool fresh = rt.texerHost == nullptr || rt.texerCompiled != combined + songSchluessel();
+    if (fresh)
     {
         rt.texerHost = std::make_unique<ScriptSlotHost>("texer2", activeContext(),
                                                         ScriptSlotHost::Dialect::Avs);
@@ -8435,8 +8443,9 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
         // dieselben 6526 Pixel wie das Literal n=32 (S51).
         rt.texerHost->engine().setNumber("w", static_cast<double>(m_surfaceWidth));
         rt.texerHost->engine().setNumber("h", static_cast<double>(m_surfaceHeight));
-        rt.texerHost->run(Slot::Init);
     }
+    feldHostVor(rt, rt.texerHost->engine(), fresh);  // Block F (F2b, S85)
+    if (fresh) rt.texerHost->run(Slot::Init);
     auto& engine = rt.texerHost->engine();
     engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
     // Bildschirmmasse: Texer-II-Skripte rechnen Sprite-Zahl UND -Groesse daraus.
@@ -8470,6 +8479,7 @@ void MultiEffectVisualizer::runTexerII(const ChainNode& node, const TexerIIParam
     laufeSong(*rt.texerHost);
     if (rt.texerHost->has(Slot::Frame)) rt.texerHost->run(Slot::Frame);
     if (m_frameBeat && rt.texerHost->has(Slot::Beat)) rt.texerHost->run(Slot::Beat);
+    feldHostNach(rt, rt.texerHost->engine(), fresh);
     // n=0 heisst NULL Sprites, nicht eines: die Sprite-Schleife laeuft
     // "for (i=0; i<n; i++)" und faellt dann sofort durch. Unsere alte
     // Untergrenze 1 zeichnete ein zusaetzliches Sprite in der Bildmitte —
@@ -8695,7 +8705,8 @@ void MultiEffectVisualizer::runTriangle(const ChainNode& node, const TrianglePar
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + '\n' + params.pointCode;
-    if (rt.triHost == nullptr || rt.triCompiled != combined + songSchluessel())
+    const bool fresh = rt.triHost == nullptr || rt.triCompiled != combined + songSchluessel();
+    if (fresh)
     {
         rt.triHost = std::make_unique<ScriptSlotHost>("triangle", activeContext(),
                                                       ScriptSlotHost::Dialect::Avs);
@@ -8709,8 +8720,9 @@ void MultiEffectVisualizer::runTriangle(const ChainNode& node, const TrianglePar
         rt.triHost->engine().setNumber("n", 1.0);
         rt.triHost->engine().setNumber("w", static_cast<double>(m_surfaceWidth));
         rt.triHost->engine().setNumber("h", static_cast<double>(m_surfaceHeight));
-        rt.triHost->run(Slot::Init);
     }
+    feldHostVor(rt, rt.triHost->engine(), fresh);  // Block F (F2b, S85)
+    if (fresh) rt.triHost->run(Slot::Init);
     auto& engine = rt.triHost->engine();
     engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
     // Wie Texer II: die Bildschirmmasse fehlten, "n=w*0.05" ergab 0 Dreiecke.
@@ -8721,6 +8733,7 @@ void MultiEffectVisualizer::runTriangle(const ChainNode& node, const TrianglePar
     laufeSong(*rt.triHost);
     if (rt.triHost->has(Slot::Frame)) rt.triHost->run(Slot::Frame);
     if (m_frameBeat && rt.triHost->has(Slot::Beat)) rt.triHost->run(Slot::Beat);
+    feldHostNach(rt, rt.triHost->engine(), fresh);
     const int n = std::clamp(static_cast<int>(engine.number("n")), 0, 4096);
 
     // Triangle zeichnet GEFUELLTE Dreiecke, nicht Umrisse: die Sonde
@@ -9472,6 +9485,81 @@ void MultiEffectVisualizer::feldBindungNach(LeafRuntime& rt, bool fresh,
     }
 }
 
+namespace
+{
+/// Startwert einer Tabellenvariable aus der Frame-Kopie (Farbkanal, Alias-Skala).
+double feldStart(const FeldVorlage& v, const lumi::multieffect::EffectParams& kopie)
+{
+    const double basis = v.feld->lesen(kopie);
+    return v.komponente >= 0 ? farbKanal(basis, v.komponente)
+           : v.alias         ? basis * v.feld->aliasSkala
+                             : basis;
+}
+}  // namespace
+
+/// F2b (S85): hat sich der Reglerwert einer HAND-Bindung (Farbe eines eigenen
+/// Hosts) seit dem letzten Frame bewegt? Beim Start immer ja. Ersetzt den
+/// frueheren Neustart ueber den Kompilier-Schnappschuss.
+static bool reglerNeu(std::unordered_map<std::string, double>& seen, const std::string& key,
+                      double wert, bool fresh)
+{
+    const auto it = seen.find(key);
+    if (!fresh && it != seen.end() && it->second == wert) return false;
+    seen[key] = wert;
+    return true;
+}
+
+void MultiEffectVisualizer::feldHostVor(LeafRuntime& rt,
+                                        lumi::scripting::LuaScriptEngine& engine, bool fresh,
+                                        const std::set<std::string>& hand)
+{
+    if (m_gesteuerteKopie == nullptr) return;
+    const ft::Typ* typ = ft::typ(*m_gesteuerteKopie);
+    if (typ == nullptr) return;
+    for (const FeldVorlage& v : feldVorlagen(*typ))
+    {
+        if (hand.count(v.name) != 0 || ft::rendererEigen(typ->typKey, v.name)) continue;
+        const double start = feldStart(v, *m_gesteuerteKopie);
+        const auto seen = rt.feldHostSeen.find(v.name);
+        if (fresh || seen == rt.feldHostSeen.end() || seen->second != start)
+        {
+            engine.setNumber(v.name.c_str(), start);  // Start oder Regler bewegt
+            rt.feldHostSeen[v.name] = start;
+        }
+    }
+}
+
+void MultiEffectVisualizer::feldHostNach(LeafRuntime& rt,
+                                         lumi::scripting::LuaScriptEngine& engine, bool fresh)
+{
+    // Auch die Hand-Farben kommen in die Kopie (wie bei F2 die verknuepften
+    // Hand-Bindungen) — der Renderer nimmt sie weiter stufenlos aus FarbKopie.
+    // Renderer-eigene Namen (ft::rendererEigen) bleiben aussen vor.
+    if (m_gesteuerteKopie == nullptr) return;
+    const ft::Typ* typ = ft::typ(*m_gesteuerteKopie);
+    if (typ == nullptr) return;
+    const std::vector<FeldVorlage>& vorlagen = feldVorlagen(*typ);
+    std::vector<double> werte;
+    std::vector<ParamVar> vars;
+    std::vector<FeldBindung> plan;
+    // VOR dem ersten push_back reservieren: ParamVar zeigt in `werte`.
+    werte.reserve(vorlagen.size());
+    vars.reserve(vorlagen.size());
+    plan.reserve(vorlagen.size());
+    for (const FeldVorlage& v : vorlagen)
+    {
+        if (ft::rendererEigen(typ->typKey, v.name)) continue;
+        werte.push_back(engine.number(v.name.c_str()));
+        vars.push_back({v.name.c_str(), &werte.back()});
+        plan.push_back({v.feld, v.komponente, v.alias, vars.size() - 1,
+                        feldStart(v, *m_gesteuerteKopie)});
+    }
+    feldBindungNach(rt, fresh, vars, plan);
+    // Die Strukturregel kann einen Wert auf den geltenden zurueckziehen — der
+    // Host rechnet dann von DIESEM Wert fort, nicht vom verworfenen.
+    for (const ParamVar& v : vars) engine.setNumber(v.name, *v.value);
+}
+
 void MultiEffectVisualizer::runRotatingStars(const ChainNode& node,
                                              const RotatingStarsParams& params)
 {
@@ -9905,7 +9993,9 @@ void MultiEffectVisualizer::runJherikoGlobal(const ChainNode& node,
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode;
-    if (rt.jherikoHost == nullptr || rt.jherikoCompiled != combined + songSchluessel())
+    const bool fresh =
+        rt.jherikoHost == nullptr || rt.jherikoCompiled != combined + songSchluessel();
+    if (fresh)
     {
         rt.jherikoHost = std::make_unique<ScriptSlotHost>("jheriko", activeContext(),
                                                           ScriptSlotHost::Dialect::Avs);
@@ -9917,6 +10007,7 @@ void MultiEffectVisualizer::runJherikoGlobal(const ChainNode& node,
         rt.jherikoCompiled = combined + songSchluessel();
         rt.jherikoInited = false;
     }
+    feldHostVor(rt, rt.jherikoHost->engine(), fresh);  // Block F (F2b, S85)
     // load 0 none / 1 once / 2 code / 3 every-frame (file reload not imported —
     // here it only governs when Init re-runs).
     if ((!rt.jherikoInited || params.loadMode == 3) && rt.jherikoHost->has(Slot::Init))
@@ -9928,6 +10019,7 @@ void MultiEffectVisualizer::runJherikoGlobal(const ChainNode& node,
     laufeSong(*rt.jherikoHost);
     if (rt.jherikoHost->has(Slot::Frame)) rt.jherikoHost->run(Slot::Frame);
     if (m_frameBeat && rt.jherikoHost->has(Slot::Beat)) rt.jherikoHost->run(Slot::Beat);
+    feldHostNach(rt, rt.jherikoHost->engine(), fresh);
     // No visual output — globals are shared through the ScriptContext.
 }
 
@@ -9938,7 +10030,8 @@ void MultiEffectVisualizer::runDynamicDistanceModifier(
 
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + '\n' + params.pixelCode;
-    if (rt.ddmHost == nullptr || rt.ddmCompiled != combined + songSchluessel())
+    const bool fresh = rt.ddmHost == nullptr || rt.ddmCompiled != combined + songSchluessel();
+    if (fresh)
     {
         rt.ddmHost = std::make_unique<ScriptSlotHost>("ddm", activeContext(),
                                                       ScriptSlotHost::Dialect::Avs);
@@ -9951,8 +10044,9 @@ void MultiEffectVisualizer::runDynamicDistanceModifier(
         rt.ddmCompiled = combined + songSchluessel();
         rt.ddmHost->engine().setNumber("d", 0.0);
         rt.ddmHost->engine().setNumber("b", 0.0);
-        rt.ddmHost->run(Slot::Init);
     }
+    feldHostVor(rt, rt.ddmHost->engine(), fresh);  // Block F (F2b, S85)
+    if (fresh) rt.ddmHost->run(Slot::Init);
 
     auto& engine = rt.ddmHost->engine();
     engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
@@ -9960,6 +10054,7 @@ void MultiEffectVisualizer::runDynamicDistanceModifier(
     laufeSong(*rt.ddmHost);
     if (rt.ddmHost->has(Slot::Frame)) rt.ddmHost->run(Slot::Frame);
     if (m_frameBeat && rt.ddmHost->has(Slot::Beat)) rt.ddmHost->run(Slot::Beat);
+    feldHostNach(rt, rt.ddmHost->engine(), fresh);
 
     // 1-D distance LUT: input ring distance (0..1) -> output distance (0..1).
     std::array<float, 256> lut{};
@@ -10433,13 +10528,9 @@ void MultiEffectVisualizer::runCamera3D(const ChainNode& node,
                                         const Camera3DParams& params)
 {
     // Startwerte aus den Params; die EEL-Slots duerfen sie ueberschreiben
-    // (erster Fall der dynamischen Modulparameter, Entwurf Modul 2). Die
-    // Parameterwerte stecken im Compile-Snapshot: eine Panel-Aenderung
-    // kompiliert neu und seedet die Skript-Variablen frisch (wie Fractal 3D).
-    double px = params.px, py = params.py, pz = params.pz;
-    double tx = params.tx, ty = params.ty, tz = params.tz;
-    double fov = params.fov, roll = params.roll;
-    double fogStart = params.fogStart, fogEnd = params.fogEnd;
+    // (erster Fall der dynamischen Modulparameter, Entwurf Modul 2). Block F
+    // (F2b, S85): der Schnappschuss ist nur noch der Code — die Regler speist
+    // feldHostVor ein, die Ergebnisse stehen danach in `params` (Frame-Kopie).
     FarbKopie nebel(params.fogColor);
 
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
@@ -10447,15 +10538,11 @@ void MultiEffectVisualizer::runCamera3D(const ChainNode& node,
     if (scripted)
     {
         LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+        static const std::set<std::string> kHand = {"fogcolor_r", "fogcolor_g", "fogcolor_b"};
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + "\n#" + std::to_string(px) + ',' +
-                                 std::to_string(py) + ',' + std::to_string(pz) + ',' +
-                                 std::to_string(tx) + ',' + std::to_string(ty) + ',' +
-                                 std::to_string(tz) + ',' + std::to_string(fov) + ',' +
-                                 std::to_string(roll) + ',' + std::to_string(fogStart) +
-                                 ',' + std::to_string(fogEnd) + ',' +
-                                 std::to_string(params.fogColor);
-        if (rt.cam3dHost == nullptr || rt.cam3dCompiled != snap + songSchluessel())
+                                 params.beatCode + songSchluessel();
+        const bool fresh = rt.cam3dHost == nullptr || rt.cam3dCompiled != snap;
+        if (fresh)
         {
             rt.cam3dHost = std::make_unique<ScriptSlotHost>("camera3d", activeContext(),
                                                             ScriptSlotHost::Dialect::Avs);
@@ -10464,41 +10551,30 @@ void MultiEffectVisualizer::runCamera3D(const ChainNode& node,
             rt.cam3dHost->setSource(Slot::Frame, params.frameCode);
             rt.cam3dHost->setSource(Slot::Beat, params.beatCode);
             rt.cam3dHost->compileAll();
-            rt.cam3dCompiled = snap + songSchluessel();
-            auto& engine = rt.cam3dHost->engine();
-            feedAudio(engine);  // S47-Regel: visdata muss den Erst-Lauf erreichen
-            engine.setNumber("px", px);
-            engine.setNumber("py", py);
-            engine.setNumber("pz", pz);
-            engine.setNumber("tx", tx);
-            engine.setNumber("ty", ty);
-            engine.setNumber("tz", tz);
-            engine.setNumber("fov", fov);
-            engine.setNumber("roll", roll);
-            engine.setNumber("fogstart", fogStart);
-            engine.setNumber("fogend", fogEnd);
-            setzeFarbe(engine, "fogcolor", nebel);
-            rt.cam3dHost->run(Slot::Init);
+            rt.cam3dCompiled = snap;
         }
         auto& engine = rt.cam3dHost->engine();
+        feldHostVor(rt, engine, fresh, kHand);
+        if (reglerNeu(rt.feldHostSeen, "#fogcolor", params.fogColor, fresh))
+            setzeFarbe(engine, "fogcolor", nebel);  // stufenlos: Hand-Bindung
+        if (fresh)
+        {
+            feedAudio(engine);  // S47-Regel: visdata muss den Erst-Lauf erreichen
+            rt.cam3dHost->run(Slot::Init);
+        }
         engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
         feedAudio(engine);
         // Slot-Ordnung Frame VOR Beat (S47-Konvention, r_sscope:272)
         laufeSong(*rt.cam3dHost);
         if (rt.cam3dHost->has(Slot::Frame)) rt.cam3dHost->run(Slot::Frame);
         if (m_frameBeat && rt.cam3dHost->has(Slot::Beat)) rt.cam3dHost->run(Slot::Beat);
-        px = engine.number("px");
-        py = engine.number("py");
-        pz = engine.number("pz");
-        tx = engine.number("tx");
-        ty = engine.number("ty");
-        tz = engine.number("tz");
-        fov = engine.number("fov");
-        roll = engine.number("roll");
-        fogStart = engine.number("fogstart");
-        fogEnd = engine.number("fogend");
+        feldHostNach(rt, engine, fresh);
         leseFarbe(engine, "fogcolor", nebel);
     }
+    const double px = params.px, py = params.py, pz = params.pz;
+    const double tx = params.tx, ty = params.ty, tz = params.tz;
+    const double fov = params.fov, roll = params.roll;
+    const double fogStart = params.fogStart, fogEnd = params.fogEnd;
 
     m_camera3d.pos = QVector3D(static_cast<float>(px), static_cast<float>(py),
                                static_cast<float>(pz));
@@ -10517,14 +10593,13 @@ void MultiEffectVisualizer::runSuperScope3D(const ChainNode& node,
     if (m_sprite3dShader == nullptr) return;
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
-    // EEL-Quartett; Parameterwerte im Snapshot (Panel-Aenderung -> Re-Seed).
-    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
-    double dynFalloff = params.falloff;
+    // EEL-Quartett. Block F (F2b, S85): der Schnappschuss ist nur noch der
+    // Code; die Regler speist feldHostVor ein (alle Tabellenfelder, `n` als
+    // Alias von pointCount), die Ergebnisse stehen danach in `params`.
     const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
-                             params.beatCode + '\n' + params.pointCode + "\n#" +
-                             std::to_string(params.pointCount) + "|" +
-                                 std::to_string(params.falloff);
-    if (rt.scope3dHost == nullptr || rt.scope3dCompiled != snap + songSchluessel())
+                             params.beatCode + '\n' + params.pointCode + songSchluessel();
+    const bool fresh = rt.scope3dHost == nullptr || rt.scope3dCompiled != snap;
+    if (fresh)
     {
         rt.scope3dHost = std::make_unique<ScriptSlotHost>(
             "superscope3d", activeContext(), ScriptSlotHost::Dialect::Avs);
@@ -10534,14 +10609,15 @@ void MultiEffectVisualizer::runSuperScope3D(const ChainNode& node,
         rt.scope3dHost->setSource(Slot::Beat, params.beatCode);
         rt.scope3dHost->setSource(Slot::Point, params.pointCode);
         rt.scope3dHost->compileAll();
-        rt.scope3dCompiled = snap + songSchluessel();
-        auto& engine = rt.scope3dHost->engine();
-        feedAudio(engine);  // S47-Regel: visdata muss den Erst-Lauf erreichen
-        engine.setNumber("n", params.pointCount);
-        rt.scope3dHost->engine().setNumber("falloff", dynFalloff);
-        rt.scope3dHost->run(Slot::Init);
+        rt.scope3dCompiled = snap;
     }
     auto& engine = rt.scope3dHost->engine();
+    feldHostVor(rt, engine, fresh);  // `size` je Punkt: ft::rendererEigen
+    if (fresh)
+    {
+        feedAudio(engine);  // S47-Regel: visdata muss den Erst-Lauf erreichen
+        rt.scope3dHost->run(Slot::Init);
+    }
     engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
     engine.setNumber("w", m_surfaceWidth);
     engine.setNumber("h", m_surfaceHeight);
@@ -10550,8 +10626,10 @@ void MultiEffectVisualizer::runSuperScope3D(const ChainNode& node,
     laufeSong(*rt.scope3dHost);
     if (rt.scope3dHost->has(Slot::Frame)) rt.scope3dHost->run(Slot::Frame);
     if (m_frameBeat && rt.scope3dHost->has(Slot::Beat)) rt.scope3dHost->run(Slot::Beat);
-    dynFalloff = rt.scope3dHost->engine().number("falloff");
-    const int n = std::clamp(static_cast<int>(engine.number("n")), 1, 4096);
+    feldHostNach(rt, engine, fresh);
+    const double dynFalloff = params.falloff;
+    // Mit Code steht das Skript-`n` in der Frame-Kopie, ohne Code gilt der Regler
+    const int n = std::clamp(params.pointCount, 1, 4096);
 
     // Kamera (camera3d-Knoten oder Fallback) -> View/Proj einmal je Knoten.
     const Camera3D& cam = m_camera3d;
@@ -10743,33 +10821,24 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
     float flattenF = params.flatten;
     FarbKopie netzFarbe(params.meshColor), tiefFarbe(params.colorLow),
         hochFarbe(params.colorHigh);
-    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
-    double dynBaseAmp = params.baseAmp;
-    double dynYOffset = params.yOffset;
-    double dynExtent = params.extent;
-    double dynDotSize = params.dotSize;
-    double dynFalloff = params.falloff;
     const bool scripted = !params.initCode.empty() || !params.frameCode.empty() ||
                           !params.beatCode.empty() || !params.pointCode.empty() ||
                           hatSongCode();
     bool pointColors = false;
     if (scripted)
     {
+        // Block F (F2b, S85): Schnappschuss nur noch Code (+ Aufloesung, die
+        // den Puffer bestimmt); die Regler speist feldHostVor ein. `res`/
+        // `resolution` bleiben Eingabe: der Renderer baut Raster und
+        // megabuf-Spiegel VOR dem Skript — ein Skriptwert kaeme nie an.
+        static const std::set<std::string> kHand = {
+            "meshcolor_r", "meshcolor_g", "meshcolor_b", "colorlow_r", "colorlow_g",
+            "colorlow_b",  "colorhigh_r", "colorhigh_g", "colorhigh_b"};
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + '\n' + params.pointCode + "\n#" +
-                                 std::to_string(res) + ',' +
-                                 std::to_string(params.ringAmp) + ',' +
-                                 std::to_string(params.relax) + ',' +
-                                 std::to_string(params.flatten) + ',' +
-                                 std::to_string(params.meshColor) + ',' +
-                                 std::to_string(params.colorLow) + ',' +
-                                 std::to_string(params.colorHigh) + "|" +
-                                 std::to_string(params.baseAmp) + ',' +
-                                 std::to_string(params.yOffset) + ',' +
-                                 std::to_string(params.extent) + ',' +
-                                 std::to_string(params.dotSize) + ',' +
-                                 std::to_string(params.falloff);
-        if (rt.terrainHost == nullptr || rt.terrainCompiled != snap + songSchluessel())
+                                 std::to_string(res) + songSchluessel();
+        const bool fresh = rt.terrainHost == nullptr || rt.terrainCompiled != snap;
+        if (fresh)
         {
             rt.terrainHost = std::make_unique<ScriptSlotHost>(
                 "terrain3d", activeContext(), ScriptSlotHost::Dialect::Avs);
@@ -10779,25 +10848,24 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
             rt.terrainHost->setSource(Slot::Beat, params.beatCode);
             rt.terrainHost->setSource(Slot::Point, params.pointCode);
             rt.terrainHost->compileAll();
-            rt.terrainCompiled = snap + songSchluessel();
+            rt.terrainCompiled = snap;
             auto& engine = rt.terrainHost->engine();
-            feedAudio(engine);  // S47-Regel: visdata vor dem Erst-Lauf
             engine.setNumber("res", res);
             engine.setNumber("n", cells);
-            engine.setNumber("rings", params.ringAmp);
-            engine.setNumber("relax", params.relax);
-            engine.setNumber("flatten", params.flatten);
-            setzeFarbe(engine, "meshcolor", netzFarbe);
-            setzeFarbe(engine, "colorlow", tiefFarbe);
-            setzeFarbe(engine, "colorhigh", hochFarbe);
-            rt.terrainHost->engine().setNumber("baseamp", dynBaseAmp);
-            rt.terrainHost->engine().setNumber("yoffset", dynYOffset);
-            rt.terrainHost->engine().setNumber("extent", dynExtent);
-            rt.terrainHost->engine().setNumber("dotsize", dynDotSize);
-            rt.terrainHost->engine().setNumber("falloff", dynFalloff);
-            rt.terrainHost->run(Slot::Init);
         }
         auto& engine = rt.terrainHost->engine();
+        feldHostVor(rt, engine, fresh, kHand);  // res/resolution: ft::rendererEigen
+        if (reglerNeu(rt.feldHostSeen, "#meshcolor", params.meshColor, fresh))
+            setzeFarbe(engine, "meshcolor", netzFarbe);  // stufenlos: Hand-Bindung
+        if (reglerNeu(rt.feldHostSeen, "#colorlow", params.colorLow, fresh))
+            setzeFarbe(engine, "colorlow", tiefFarbe);
+        if (reglerNeu(rt.feldHostSeen, "#colorhigh", params.colorHigh, fresh))
+            setzeFarbe(engine, "colorhigh", hochFarbe);
+        if (fresh)
+        {
+            feedAudio(engine);  // S47-Regel: visdata vor dem Erst-Lauf
+            rt.terrainHost->run(Slot::Init);
+        }
         engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
         feedAudio(engine);
         // Hoehen nur spiegeln, wenn die Slots megabuf ueberhaupt anfassen.
@@ -10815,26 +10883,27 @@ void MultiEffectVisualizer::runTerrain3D(const ChainNode& node,
         if (rt.terrainHost->has(Slot::Frame)) rt.terrainHost->run(Slot::Frame);
         if (m_frameBeat && rt.terrainHost->has(Slot::Beat))
             rt.terrainHost->run(Slot::Beat);
-        dynBaseAmp = rt.terrainHost->engine().number("baseamp");
-        dynYOffset = rt.terrainHost->engine().number("yoffset");
-        dynExtent = rt.terrainHost->engine().number("extent");
-        dynDotSize = rt.terrainHost->engine().number("dotsize");
-        dynFalloff = rt.terrainHost->engine().number("falloff");
+        feldHostNach(rt, engine, fresh);
         if (wantsBuf)
         {
             for (int i = 0; i < cells; ++i)
                 rt.terrainH[static_cast<std::size_t>(i)] = static_cast<float>(
                     engine.megabufValue(i));
         }
-        ringsF = std::clamp(static_cast<float>(engine.number("rings")), 0.0f, 10.0f);
-        relaxF = std::clamp(static_cast<float>(engine.number("relax")), 0.0f, 1.0f);
-        flattenF =
-            std::clamp(static_cast<float>(engine.number("flatten")), 0.0f, 1.0f);
+        ringsF = std::clamp(params.ringAmp, 0.0f, 10.0f);
+        relaxF = std::clamp(params.relax, 0.0f, 1.0f);
+        flattenF = std::clamp(params.flatten, 0.0f, 1.0f);
         leseFarbe(engine, "meshcolor", netzFarbe);
         leseFarbe(engine, "colorlow", tiefFarbe);
         leseFarbe(engine, "colorhigh", hochFarbe);
         pointColors = rt.terrainHost->has(Slot::Point);
     }
+    // Block F (F2b): die Kommazahl-Felder aus der Frame-Kopie
+    const double dynBaseAmp = params.baseAmp;
+    const double dynYOffset = params.yOffset;
+    const double dynExtent = params.extent;
+    const double dynDotSize = params.dotSize;
+    const double dynFalloff = params.falloff;
 
     // --- Simulation (Lights-Terrain-Rezept, TerrainDisplacement.js) ----------
     // updateSpectrum SETZT: h = h0 + spectrum[floor(dist)] (radiale Ringe);
@@ -11057,17 +11126,13 @@ void MultiEffectVisualizer::runGlowOrbs(const ChainNode& node,
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     auto* f = QOpenGLContext::currentContext()->functions();
 
-    // Block D (S79): weitere Felder als Skriptvariablen (Frame-Kopien)
-    double dynHaloScale = params.haloScale;
-    double dynHaloIntensity = params.haloIntensity;
-    double dynFalloff = params.falloff;
+    // Block F (F2b, S85): der Schnappschuss ist nur noch der Code; die Regler
+    // speist feldHostVor ein (alle Tabellenfelder, `n` als Alias von
+    // orbCount), die Ergebnisse stehen danach in `params`.
     const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
-                             params.beatCode + '\n' + params.pointCode + "\n#" +
-                             std::to_string(params.orbCount) + "|" +
-                                 std::to_string(params.haloScale) + ',' +
-                                 std::to_string(params.haloIntensity) + ',' +
-                                 std::to_string(params.falloff);
-    if (rt.orbsHost == nullptr || rt.orbsCompiled != snap + songSchluessel())
+                             params.beatCode + '\n' + params.pointCode + songSchluessel();
+    const bool fresh = rt.orbsHost == nullptr || rt.orbsCompiled != snap;
+    if (fresh)
     {
         rt.orbsHost = std::make_unique<ScriptSlotHost>("glowOrbs", activeContext(),
                                                        ScriptSlotHost::Dialect::Avs);
@@ -11077,26 +11142,27 @@ void MultiEffectVisualizer::runGlowOrbs(const ChainNode& node,
         rt.orbsHost->setSource(Slot::Beat, params.beatCode);
         rt.orbsHost->setSource(Slot::Point, params.pointCode);
         rt.orbsHost->compileAll();
-        rt.orbsCompiled = snap + songSchluessel();
-        auto& engine = rt.orbsHost->engine();
-        feedAudio(engine);  // S47-Regel: visdata vor dem Erst-Lauf
-        engine.setNumber("n", params.orbCount);
-        rt.orbsHost->engine().setNumber("haloscale", dynHaloScale);
-        rt.orbsHost->engine().setNumber("halointensity", dynHaloIntensity);
-        rt.orbsHost->engine().setNumber("falloff", dynFalloff);
-        rt.orbsHost->run(Slot::Init);
+        rt.orbsCompiled = snap;
     }
     auto& engine = rt.orbsHost->engine();
+    feldHostVor(rt, engine, fresh);
+    if (fresh)
+    {
+        feedAudio(engine);  // S47-Regel: visdata vor dem Erst-Lauf
+        rt.orbsHost->run(Slot::Init);
+    }
     engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
     feedAudio(engine);
     // Slot-Ordnung Frame VOR Beat (S47-Konvention)
     laufeSong(*rt.orbsHost);
     if (rt.orbsHost->has(Slot::Frame)) rt.orbsHost->run(Slot::Frame);
     if (m_frameBeat && rt.orbsHost->has(Slot::Beat)) rt.orbsHost->run(Slot::Beat);
-    dynHaloScale = rt.orbsHost->engine().number("haloscale");
-    dynHaloIntensity = rt.orbsHost->engine().number("halointensity");
-    dynFalloff = rt.orbsHost->engine().number("falloff");
-    const int n = std::clamp(static_cast<int>(engine.number("n")), 1, 64);
+    feldHostNach(rt, engine, fresh);
+    const double dynHaloScale = params.haloScale;
+    const double dynHaloIntensity = params.haloIntensity;
+    const double dynFalloff = params.falloff;
+    // Mit Code steht das Skript-`n` in der Frame-Kopie, ohne Code gilt der Regler
+    const int n = std::clamp(params.orbCount, 1, 64);
 
     QMatrix4x4 view;
     QMatrix4x4 proj;
@@ -12459,18 +12525,18 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
                           !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
-        // Snapshot includes the seed values: editing a seed re-seeds the engine.
+        // Block F (F2b, S85): der Schnappschuss ist nur noch der Code. Die
+        // Regler speist feldHostVor ein (Start oder Reglerbewegung) — vorher
+        // stand jeder Reglerwert im Schnappschuss, jede Bewegung kompilierte
+        // neu und liess Init erneut laufen. Alle Tabellenfelder sind jetzt
+        // Skriptvariablen (auch `type`, `smooth`, `blend`), die bisherigen
+        // Namen `cx`/`cy`/`jx`/`jy`/`rot` als Alias.
+        static const std::set<std::string> kHand = {"insidecolor_r", "insidecolor_g",
+                                                    "insidecolor_b"};
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + "\n#" + std::to_string(cx) + ',' +
-                                 std::to_string(cy) + ',' + std::to_string(zoom) + ',' +
-                                 std::to_string(rot) + ',' + std::to_string(jx) + ',' +
-                                 std::to_string(jy) + ',' + std::to_string(power) +
-                                 "|" + std::to_string(params.colorScale) + ',' +
-                                 std::to_string(params.colorCycle) + ',' +
-                                 std::to_string(params.insideColor) + "|" +
-                                 std::to_string(params.maxIter) + ',' +
-                                 std::to_string(params.escapeR);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
+                                 params.beatCode + songSchluessel();
+        const bool fresh = rt.fracHost == nullptr || rt.fracCompiled != snap;
+        if (fresh)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("fractal2d", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
@@ -12479,42 +12545,39 @@ void MultiEffectVisualizer::runFractal2D(const ChainNode& node,
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
-            auto& e = rt.fracHost->engine();
-            e.setNumber("cx", cx);      e.setNumber("cy", cy);
-            e.setNumber("zoom", zoom);  e.setNumber("rot", rot);
-            e.setNumber("jx", jx);      e.setNumber("jy", jy);
-            e.setNumber("power", power);
-            rt.fracHost->engine().setNumber("colorscale", palScale);
-            rt.fracHost->engine().setNumber("colorcycle", palCycle);
-            setzeFarbe(rt.fracHost->engine(), "insidecolor", innen);
-            rt.fracHost->engine().setNumber("maxiter", dynMaxIter);
-            rt.fracHost->engine().setNumber("escaper", dynEscapeR);
+        }
+        auto& e = rt.fracHost->engine();
+        feldHostVor(rt, e, fresh, kHand);
+        if (reglerNeu(rt.feldHostSeen, "#insidecolor", params.insideColor, fresh))
+            setzeFarbe(e, "insidecolor", innen);  // Farbe stufenlos: Hand-Bindung
+        if (fresh)
+        {
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap + songSchluessel();
+            rt.fracCompiled = snap;
         }
 
-        feedAudio(rt.fracHost->engine());
-        auto& e = rt.fracHost->engine();
+        feedAudio(e);
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
-        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        e.setNumber("colorphase", rt.fracColorPhase);
         laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
-        dynMaxIter = rt.fracHost->engine().number("maxiter");
-        dynEscapeR = rt.fracHost->engine().number("escaper");
+        feldHostNach(rt, e, fresh);
 
-        cx = static_cast<float>(e.number("cx"));
-        cy = static_cast<float>(e.number("cy"));
-        zoom = static_cast<float>(e.number("zoom"));
-        rot = static_cast<float>(e.number("rot"));
-        jx = static_cast<float>(e.number("jx"));
-        jy = static_cast<float>(e.number("jy"));
-        power = static_cast<float>(e.number("power"));
-        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
-        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
-        rt.fracColorPhase =
-            static_cast<float>(rt.fracHost->engine().number("colorphase"));
-        leseFarbe(rt.fracHost->engine(), "insidecolor", innen);
+        // Die Felder stehen jetzt in der Frame-Kopie (`params`).
+        cx = params.centerX;
+        cy = params.centerY;
+        zoom = params.zoom;
+        rot = params.rotation;
+        jx = params.juliaX;
+        jy = params.juliaY;
+        power = params.power;
+        palScale = params.colorScale;
+        palCycle = params.colorCycle;
+        dynMaxIter = params.maxIter;
+        dynEscapeR = params.escapeR;
+        rt.fracColorPhase = static_cast<float>(e.number("colorphase"));
+        leseFarbe(e, "insidecolor", innen);
     }
     else
     {
@@ -12616,17 +12679,13 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
                           !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
+        // Block F (F2b, S85): Schnappschuss nur noch der Code; die Regler
+        // speist feldHostVor ein, alle Tabellenfelder sind Skriptvariablen.
+        static const std::set<std::string> kHand;
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + "\n#" + std::to_string(scale) + ',' +
-                                 std::to_string(warp) + ',' + std::to_string(speed) + ',' +
-                                 std::to_string(ox) + ',' + std::to_string(oy) +
-                                 "|" + std::to_string(params.colorScale) + ',' +
-                                 std::to_string(params.colorCycle) + "|" +
-                                 std::to_string(params.warpScale) + ',' +
-                                 std::to_string(params.lacunarity) + ',' +
-                                 std::to_string(params.gain) + ',' +
-                                 std::to_string(params.octaves);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
+                                 params.beatCode + songSchluessel();
+        const bool fresh = rt.fracHost == nullptr || rt.fracCompiled != snap;
+        if (fresh)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("domainwarp", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
@@ -12635,39 +12694,34 @@ void MultiEffectVisualizer::runDomainWarp(const ChainNode& node,
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
-            auto& e = rt.fracHost->engine();
-            e.setNumber("scale", scale);  e.setNumber("warp", warp);
-            e.setNumber("speed", speed);  e.setNumber("ox", ox);
-            e.setNumber("oy", oy);
-            rt.fracHost->engine().setNumber("colorscale", palScale);
-            rt.fracHost->engine().setNumber("colorcycle", palCycle);
-            rt.fracHost->engine().setNumber("warpscale", dynWarpScale);
-            rt.fracHost->engine().setNumber("lacunarity", dynLacunarity);
-            rt.fracHost->engine().setNumber("gain", dynGain);
-            rt.fracHost->engine().setNumber("octaves", dynOctaves);
+        }
+        auto& e = rt.fracHost->engine();
+        feldHostVor(rt, e, fresh, kHand);
+        if (fresh)
+        {
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap + songSchluessel();
+            rt.fracCompiled = snap;
         }
 
         feedAudio(rt.fracHost->engine());
-        auto& e = rt.fracHost->engine();
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
-        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        e.setNumber("colorphase", rt.fracColorPhase);
         laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
-        dynWarpScale = rt.fracHost->engine().number("warpscale");
-        dynLacunarity = rt.fracHost->engine().number("lacunarity");
-        dynGain = rt.fracHost->engine().number("gain");
-        dynOctaves = rt.fracHost->engine().number("octaves");
+        feldHostNach(rt, e, fresh);
+        dynWarpScale = params.warpScale;
+        dynLacunarity = params.lacunarity;
+        dynGain = params.gain;
+        dynOctaves = params.octaves;
 
-        scale = static_cast<float>(e.number("scale"));
-        warp = static_cast<float>(e.number("warp"));
-        speed = static_cast<float>(e.number("speed"));
-        ox = static_cast<float>(e.number("ox"));
-        oy = static_cast<float>(e.number("oy"));
-        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
-        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
+        scale = params.scale;
+        warp = params.warp;
+        speed = params.speed;
+        ox = params.offsetX;
+        oy = params.offsetY;
+        palScale = params.colorScale;
+        palCycle = params.colorCycle;
         rt.fracColorPhase =
             static_cast<float>(rt.fracHost->engine().number("colorphase"));
     }
@@ -12861,23 +12915,13 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
                           !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
+        // Block F (F2b, S85): Schnappschuss nur noch der Code; die Regler
+        // speist feldHostVor ein, alle Tabellenfelder sind Skriptvariablen.
+        static const std::set<std::string> kHand = {"background_r", "background_g", "background_b"};
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + "\n#" + std::to_string(yaw) + ',' +
-                                 std::to_string(pitch) + ',' + std::to_string(dist) + ',' +
-                                 std::to_string(power) + ',' + std::to_string(scale) + ',' +
-                                 std::to_string(fold) +
-                                 "|" + std::to_string(params.colorScale) + ',' +
-                                 std::to_string(params.colorCycle) + ',' +
-                                 std::to_string(params.background) + "|" +
-                                 std::to_string(params.fov) + ',' +
-                                 std::to_string(params.juliaX) + ',' +
-                                 std::to_string(params.juliaY) + ',' +
-                                 std::to_string(params.juliaZ) + ',' +
-                                 std::to_string(params.juliaW) + ',' +
-                                 std::to_string(params.lightYaw) + ',' +
-                                 std::to_string(params.lightPitch) + ',' +
-                                 std::to_string(params.ambient);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
+                                 params.beatCode + songSchluessel();
+        const bool fresh = rt.fracHost == nullptr || rt.fracCompiled != snap;
+        if (fresh)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("fractal3d", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
@@ -12886,47 +12930,39 @@ void MultiEffectVisualizer::runFractal3D(const ChainNode& node,
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
-            auto& e = rt.fracHost->engine();
-            e.setNumber("yaw", yaw);      e.setNumber("pitch", pitch);
-            e.setNumber("dist", dist);    e.setNumber("power", power);
-            e.setNumber("scale", scale);  e.setNumber("fold", fold);
-            rt.fracHost->engine().setNumber("colorscale", palScale);
-            rt.fracHost->engine().setNumber("colorcycle", palCycle);
-            setzeFarbe(rt.fracHost->engine(), "background", hinter);
-            rt.fracHost->engine().setNumber("fov", dynFov);
-            rt.fracHost->engine().setNumber("juliax", dynJuliaX);
-            rt.fracHost->engine().setNumber("juliay", dynJuliaY);
-            rt.fracHost->engine().setNumber("juliaz", dynJuliaZ);
-            rt.fracHost->engine().setNumber("juliaw", dynJuliaW);
-            rt.fracHost->engine().setNumber("lightyaw", dynLightYaw);
-            rt.fracHost->engine().setNumber("lightpitch", dynLightPitch);
-            rt.fracHost->engine().setNumber("ambient", dynAmbient);
+        }
+        auto& e = rt.fracHost->engine();
+        feldHostVor(rt, e, fresh, kHand);
+        if (reglerNeu(rt.feldHostSeen, "#background", params.background, fresh))
+            setzeFarbe(e, "background", hinter);  // stufenlos: Hand-Bindung
+        if (fresh)
+        {
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap + songSchluessel();
+            rt.fracCompiled = snap;
         }
         feedAudio(rt.fracHost->engine());
-        auto& e = rt.fracHost->engine();
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
-        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        e.setNumber("colorphase", rt.fracColorPhase);
         laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
-        dynFov = rt.fracHost->engine().number("fov");
-        dynJuliaX = rt.fracHost->engine().number("juliax");
-        dynJuliaY = rt.fracHost->engine().number("juliay");
-        dynJuliaZ = rt.fracHost->engine().number("juliaz");
-        dynJuliaW = rt.fracHost->engine().number("juliaw");
-        dynLightYaw = rt.fracHost->engine().number("lightyaw");
-        dynLightPitch = rt.fracHost->engine().number("lightpitch");
-        dynAmbient = rt.fracHost->engine().number("ambient");
-        yaw = static_cast<float>(e.number("yaw"));
-        pitch = static_cast<float>(e.number("pitch"));
-        dist = static_cast<float>(e.number("dist"));
-        power = static_cast<float>(e.number("power"));
-        scale = static_cast<float>(e.number("scale"));
-        fold = static_cast<float>(e.number("fold"));
-        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
-        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
+        feldHostNach(rt, e, fresh);
+        dynFov = params.fov;
+        dynJuliaX = params.juliaX;
+        dynJuliaY = params.juliaY;
+        dynJuliaZ = params.juliaZ;
+        dynJuliaW = params.juliaW;
+        dynLightYaw = params.lightYaw;
+        dynLightPitch = params.lightPitch;
+        dynAmbient = params.ambient;
+        yaw = params.yaw;
+        pitch = params.pitch;
+        dist = params.dist;
+        power = params.power;
+        scale = params.scale;
+        fold = params.fold;
+        palScale = params.colorScale;
+        palCycle = params.colorCycle;
         rt.fracColorPhase =
             static_cast<float>(rt.fracHost->engine().number("colorphase"));
         leseFarbe(rt.fracHost->engine(), "background", hinter);
@@ -12996,14 +13032,13 @@ void MultiEffectVisualizer::runLyapunov(const ChainNode& node,
                           !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
+        // Block F (F2b, S85): Schnappschuss nur noch der Code; die Regler
+        // speist feldHostVor ein, alle Tabellenfelder sind Skriptvariablen.
+        static const std::set<std::string> kHand = {"negcolor_r", "negcolor_g", "negcolor_b"};
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + "\n#" + std::to_string(aMin) + ',' +
-                                 std::to_string(aMax) + ',' + std::to_string(bMin) + ',' +
-                                 std::to_string(bMax) +
-                                 "|" + std::to_string(params.colorScale) + ',' +
-                                 std::to_string(params.colorCycle) + ',' +
-                                 std::to_string(params.negColor);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
+                                 params.beatCode + songSchluessel();
+        const bool fresh = rt.fracHost == nullptr || rt.fracCompiled != snap;
+        if (fresh)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("lyapunov", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
@@ -13012,28 +13047,29 @@ void MultiEffectVisualizer::runLyapunov(const ChainNode& node,
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
-            auto& e = rt.fracHost->engine();
-            e.setNumber("amin", aMin); e.setNumber("amax", aMax);
-            e.setNumber("bmin", bMin); e.setNumber("bmax", bMax);
-            rt.fracHost->engine().setNumber("colorscale", palScale);
-            rt.fracHost->engine().setNumber("colorcycle", palCycle);
-            setzeFarbe(rt.fracHost->engine(), "negcolor", negativ);
+        }
+        auto& e = rt.fracHost->engine();
+        feldHostVor(rt, e, fresh, kHand);
+        if (reglerNeu(rt.feldHostSeen, "#negcolor", params.negColor, fresh))
+            setzeFarbe(e, "negcolor", negativ);  // stufenlos: Hand-Bindung
+        if (fresh)
+        {
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap + songSchluessel();
+            rt.fracCompiled = snap;
         }
         feedAudio(rt.fracHost->engine());
-        auto& e = rt.fracHost->engine();
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
-        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        e.setNumber("colorphase", rt.fracColorPhase);
         laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
-        aMin = static_cast<float>(e.number("amin"));
-        aMax = static_cast<float>(e.number("amax"));
-        bMin = static_cast<float>(e.number("bmin"));
-        bMax = static_cast<float>(e.number("bmax"));
-        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
-        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
+        feldHostNach(rt, e, fresh);
+        aMin = params.aMin;
+        aMax = params.aMax;
+        bMin = params.bMin;
+        bMax = params.bMax;
+        palScale = params.colorScale;
+        palCycle = params.colorCycle;
         rt.fracColorPhase =
             static_cast<float>(rt.fracHost->engine().number("colorphase"));
         leseFarbe(rt.fracHost->engine(), "negcolor", negativ);
@@ -13091,13 +13127,13 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
                           !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
+        // Block F (F2b, S85): Schnappschuss nur noch der Code; die Regler
+        // speist feldHostVor ein, alle Tabellenfelder sind Skriptvariablen.
+        static const std::set<std::string> kHand;
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + "\n#" + std::to_string(morph) + ',' +
-                                 std::to_string(zoom) + ',' + std::to_string(rot) + ',' +
-                                 std::to_string(params.p) + ',' + std::to_string(params.q) +
-                                 "|" + std::to_string(params.colorScale) + ',' +
-                                 std::to_string(params.colorCycle);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
+                                 params.beatCode + songSchluessel();
+        const bool fresh = rt.fracHost == nullptr || rt.fracCompiled != snap;
+        if (fresh)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("kleinian", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
@@ -13106,28 +13142,28 @@ void MultiEffectVisualizer::runKleinian(const ChainNode& node,
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
-            auto& e = rt.fracHost->engine();
-            e.setNumber("morph", morph); e.setNumber("zoom", zoom); e.setNumber("rot", rot);
-            e.setNumber("p", pVal); e.setNumber("q", qVal);
-            rt.fracHost->engine().setNumber("colorscale", palScale);
-            rt.fracHost->engine().setNumber("colorcycle", palCycle);
+        }
+        auto& e = rt.fracHost->engine();
+        feldHostVor(rt, e, fresh, kHand);
+        if (fresh)
+        {
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap + songSchluessel();
+            rt.fracCompiled = snap;
         }
         feedAudio(rt.fracHost->engine());
-        auto& e = rt.fracHost->engine();
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
-        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        e.setNumber("colorphase", rt.fracColorPhase);
         laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
-        morph = static_cast<float>(e.number("morph"));
-        zoom = static_cast<float>(e.number("zoom"));
-        rot = static_cast<float>(e.number("rot"));
-        pVal = static_cast<float>(e.number("p"));
-        qVal = static_cast<float>(e.number("q"));
-        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
-        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
+        feldHostNach(rt, e, fresh);
+        morph = params.morph;
+        zoom = params.zoom;
+        rot = params.rotation;
+        pVal = params.p;
+        qVal = params.q;
+        palScale = params.colorScale;
+        palCycle = params.colorCycle;
         rt.fracColorPhase =
             static_cast<float>(rt.fracHost->engine().number("colorphase"));
     }
@@ -13183,17 +13219,13 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
                           !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
+        // Block F (F2b, S85): Schnappschuss nur noch der Code; die Regler
+        // speist feldHostVor ein, alle Tabellenfelder sind Skriptvariablen.
+        static const std::set<std::string> kHand = {"insidecolor_r", "insidecolor_g", "insidecolor_b"};
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + "\n#" + std::to_string(cx) + ',' +
-                                 std::to_string(cy) + ',' + std::to_string(zoomSpeed) + ',' +
-                                 std::to_string(rotSpeed) +
-                                 "|" + std::to_string(params.colorScale) + ',' +
-                                 std::to_string(params.colorCycle) + ',' +
-                                 std::to_string(params.insideColor) + "|" +
-                                 std::to_string(params.feedback) + ',' +
-                                 std::to_string(params.juliaX) + ',' +
-                                 std::to_string(params.juliaY);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
+                                 params.beatCode + songSchluessel();
+        const bool fresh = rt.fracHost == nullptr || rt.fracCompiled != snap;
+        if (fresh)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("fractalzoom", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
@@ -13202,34 +13234,32 @@ void MultiEffectVisualizer::runFractalZoomer(const ChainNode& node,
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
-            auto& e = rt.fracHost->engine();
-            e.setNumber("cx", cx); e.setNumber("cy", cy);
-            e.setNumber("zoomspeed", zoomSpeed); e.setNumber("rotspeed", rotSpeed);
-            rt.fracHost->engine().setNumber("colorscale", palScale);
-            rt.fracHost->engine().setNumber("colorcycle", palCycle);
-            setzeFarbe(rt.fracHost->engine(), "insidecolor", innen);
-            rt.fracHost->engine().setNumber("feedback", dynFeedback);
-            rt.fracHost->engine().setNumber("juliax", dynJuliaX);
-            rt.fracHost->engine().setNumber("juliay", dynJuliaY);
+        }
+        auto& e = rt.fracHost->engine();
+        feldHostVor(rt, e, fresh, kHand);
+        if (reglerNeu(rt.feldHostSeen, "#insidecolor", params.insideColor, fresh))
+            setzeFarbe(e, "insidecolor", innen);  // stufenlos: Hand-Bindung
+        if (fresh)
+        {
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap + songSchluessel();
+            rt.fracCompiled = snap;
         }
         feedAudio(rt.fracHost->engine());
-        auto& e = rt.fracHost->engine();
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
-        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        e.setNumber("colorphase", rt.fracColorPhase);
         laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
-        dynFeedback = rt.fracHost->engine().number("feedback");
-        dynJuliaX = rt.fracHost->engine().number("juliax");
-        dynJuliaY = rt.fracHost->engine().number("juliay");
-        cx = static_cast<float>(e.number("cx"));
-        cy = static_cast<float>(e.number("cy"));
-        zoomSpeed = static_cast<float>(e.number("zoomspeed"));
-        rotSpeed = static_cast<float>(e.number("rotspeed"));
-        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
-        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
+        feldHostNach(rt, e, fresh);
+        dynFeedback = params.feedback;
+        dynJuliaX = params.juliaX;
+        dynJuliaY = params.juliaY;
+        cx = params.centerX;
+        cy = params.centerY;
+        zoomSpeed = params.zoomSpeed;
+        rotSpeed = params.rotationSpeed;
+        palScale = params.colorScale;
+        palCycle = params.colorCycle;
         rt.fracColorPhase =
             static_cast<float>(rt.fracHost->engine().number("colorphase"));
         leseFarbe(rt.fracHost->engine(), "insidecolor", innen);
@@ -13300,14 +13330,13 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
                           !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
+        // Block F (F2b, S85): Schnappschuss nur noch der Code; die Regler
+        // speist feldHostVor ein, alle Tabellenfelder sind Skriptvariablen.
+        static const std::set<std::string> kHand = {"color_r", "color_g", "color_b"};
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + "\n#" + std::to_string(a) + ',' +
-                                 std::to_string(b) + ',' + std::to_string(c) + ',' +
-                                 std::to_string(d) + ',' + std::to_string(params.color) + "|" +
-                                 std::to_string(params.scale) + ',' +
-                                 std::to_string(params.rotationSpeed) + ',' +
-                                 std::to_string(params.dotSize);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
+                                 params.beatCode + songSchluessel();
+        const bool fresh = rt.fracHost == nullptr || rt.fracCompiled != snap;
+        if (fresh)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("attractor", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
@@ -13316,27 +13345,27 @@ void MultiEffectVisualizer::runStrangeAttractor(const ChainNode& node,
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
-            auto& e = rt.fracHost->engine();
-            e.setNumber("a", a); e.setNumber("b", b); e.setNumber("c", c);
-            e.setNumber("d", d); e.setNumber("rotation", rotation);
-            setzeFarbe(e, "color", farbe);
-            rt.fracHost->engine().setNumber("scale", dynScale);
-            rt.fracHost->engine().setNumber("rotationspeed", dynRotationSpeed);
-            rt.fracHost->engine().setNumber("dotsize", dynDotSize);
+        }
+        auto& e = rt.fracHost->engine();
+        feldHostVor(rt, e, fresh, kHand);
+        if (reglerNeu(rt.feldHostSeen, "#color", params.color, fresh))
+            setzeFarbe(e, "color", farbe);  // stufenlos: Hand-Bindung
+        if (fresh)
+        {
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap + songSchluessel();
+            rt.fracCompiled = snap;
         }
         feedAudio(rt.fracHost->engine());
-        auto& e = rt.fracHost->engine();
         laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
-        dynScale = rt.fracHost->engine().number("scale");
-        dynRotationSpeed = rt.fracHost->engine().number("rotationspeed");
-        dynDotSize = rt.fracHost->engine().number("dotsize");
-        a = static_cast<float>(e.number("a")); b = static_cast<float>(e.number("b"));
-        c = static_cast<float>(e.number("c")); d = static_cast<float>(e.number("d"));
-        rotation = static_cast<float>(e.number("rotation"));
+        feldHostNach(rt, e, fresh);
+        dynScale = params.scale;
+        dynRotationSpeed = params.rotationSpeed;
+        dynDotSize = params.dotSize;
+        a = params.a; b = params.b;
+        c = params.c; d = params.d;
+        rotation = params.rotation;
         leseFarbe(e, "color", farbe);
     }
     else
@@ -13447,13 +13476,13 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
                           !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
+        // Block F (F2b, S85): Schnappschuss nur noch der Code; die Regler
+        // speist feldHostVor ein, alle Tabellenfelder sind Skriptvariablen.
+        static const std::set<std::string> kHand;
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + "\n#" + std::to_string(rotation) + ',' +
-                                 std::to_string(params.variation) + ',' +
-                                 std::to_string(scale) + "|" +
-                                 std::to_string(params.rotationSpeed) + ',' +
-                                 std::to_string(params.dotSize);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
+                                 params.beatCode + songSchluessel();
+        const bool fresh = rt.fracHost == nullptr || rt.fracCompiled != snap;
+        if (fresh)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("flame", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
@@ -13462,24 +13491,24 @@ void MultiEffectVisualizer::runFlame(const ChainNode& node, const FlameParams& p
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
-            rt.fracHost->engine().setNumber("rotation", rotation);
-            rt.fracHost->engine().setNumber("variation", variationVal);
-            rt.fracHost->engine().setNumber("scale", scale);
-            rt.fracHost->engine().setNumber("rotationspeed", dynRotationSpeed);
-            rt.fracHost->engine().setNumber("dotsize", dynDotSize);
+        }
+        auto& e = rt.fracHost->engine();
+        feldHostVor(rt, e, fresh, kHand);
+        if (fresh)
+        {
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap + songSchluessel();
+            rt.fracCompiled = snap;
         }
         feedAudio(rt.fracHost->engine());
-        auto& e = rt.fracHost->engine();
         laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
-        dynRotationSpeed = rt.fracHost->engine().number("rotationspeed");
-        dynDotSize = rt.fracHost->engine().number("dotsize");
-        rotation = static_cast<float>(e.number("rotation"));
-        variationVal = static_cast<float>(e.number("variation"));
-        scale = static_cast<float>(e.number("scale"));
+        feldHostNach(rt, e, fresh);
+        dynRotationSpeed = params.rotationSpeed;
+        dynDotSize = params.dotSize;
+        rotation = params.rotation;
+        variationVal = params.variation;
+        scale = params.scale;
     }
     else
     {
@@ -13584,15 +13613,13 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
                           !params.beatCode.empty() || hatSongCode();
     if (scripted)
     {
+        // Block F (F2b, S85): Schnappschuss nur noch der Code; die Regler
+        // speist feldHostVor ein, alle Tabellenfelder sind Skriptvariablen.
+        static const std::set<std::string> kHand;
         const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
-                                 params.beatCode + "\n#" + std::to_string(feed) + ',' +
-                                 std::to_string(kill) +
-                                 "|" + std::to_string(params.colorScale) + ',' +
-                                 std::to_string(params.colorCycle) + "|" +
-                                 std::to_string(params.diffA) + ',' +
-                                 std::to_string(params.diffB) + ',' +
-                                 std::to_string(params.stepsPerFrame);
-        if (rt.fracHost == nullptr || rt.fracCompiled != snap + songSchluessel())
+                                 params.beatCode + songSchluessel();
+        const bool fresh = rt.fracHost == nullptr || rt.fracCompiled != snap;
+        if (fresh)
         {
             rt.fracHost = std::make_unique<ScriptSlotHost>("reactdiff", activeContext(),
                                                            ScriptSlotHost::Dialect::Avs);
@@ -13601,30 +13628,28 @@ void MultiEffectVisualizer::runReactionDiffusion(const ChainNode& node,
             rt.fracHost->setSource(Slot::Frame, params.frameCode);
             rt.fracHost->setSource(Slot::Beat, params.beatCode);
             rt.fracHost->compileAll();
-            rt.fracHost->engine().setNumber("feed", feed);
-            rt.fracHost->engine().setNumber("kill", kill);
-            rt.fracHost->engine().setNumber("colorscale", palScale);
-            rt.fracHost->engine().setNumber("colorcycle", palCycle);
-            rt.fracHost->engine().setNumber("diffa", dynDiffA);
-            rt.fracHost->engine().setNumber("diffb", dynDiffB);
-            rt.fracHost->engine().setNumber("stepsperframe", dynStepsPerFrame);
+        }
+        auto& e = rt.fracHost->engine();
+        feldHostVor(rt, e, fresh, kHand);
+        if (fresh)
+        {
             rt.fracHost->run(Slot::Init);
-            rt.fracCompiled = snap + songSchluessel();
+            rt.fracCompiled = snap;
         }
         feedAudio(rt.fracHost->engine());
-        auto& e = rt.fracHost->engine();
         // Die Phase ist Laufzeitzustand: je Frame hinein und wieder heraus.
-        rt.fracHost->engine().setNumber("colorphase", rt.fracColorPhase);
+        e.setNumber("colorphase", rt.fracColorPhase);
         laufeSong(*rt.fracHost);
         if (rt.fracHost->has(Slot::Frame)) rt.fracHost->run(Slot::Frame);
         if (m_frameBeat && rt.fracHost->has(Slot::Beat)) rt.fracHost->run(Slot::Beat);
-        dynDiffA = rt.fracHost->engine().number("diffa");
-        dynDiffB = rt.fracHost->engine().number("diffb");
-        dynStepsPerFrame = rt.fracHost->engine().number("stepsperframe");
-        feed = static_cast<float>(e.number("feed"));
-        kill = static_cast<float>(e.number("kill"));
-        palScale = static_cast<float>(rt.fracHost->engine().number("colorscale"));
-        palCycle = static_cast<float>(rt.fracHost->engine().number("colorcycle"));
+        feldHostNach(rt, e, fresh);
+        dynDiffA = params.diffA;
+        dynDiffB = params.diffB;
+        dynStepsPerFrame = params.stepsPerFrame;
+        feed = params.feed;
+        kill = params.kill;
+        palScale = params.colorScale;
+        palCycle = params.colorCycle;
         rt.fracColorPhase =
             static_cast<float>(rt.fracHost->engine().number("colorphase"));
     }

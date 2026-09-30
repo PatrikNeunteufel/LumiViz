@@ -28,10 +28,14 @@
 #include <QSurfaceFormat>
 
 #include <cmath>
+#include <functional>
 #include <iomanip>
 #include <optional>
+#include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <variant>
 
 using namespace lumi::multieffect;
@@ -152,26 +156,27 @@ std::string zahl(double v)
 
 }  // namespace
 
-TEST_CASE("Feldsteuerung F2: jedes Live-Feld wirkt per Frame-Skript in der Frame-Kopie")
+namespace
 {
-    GlUmgebung gl;
-    if (!gl.ok)
-    {
-        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
-        return;
-    }
+/// Jedes Live-Feld der Typen, die `nimmt` annimmt, per Frame-Skript setzen und
+/// in der Frame-Kopie wiederfinden. Liefert (Typen, Felder).
+std::pair<int, int> pruefeLiveFelder(const std::function<bool(const ft::Typ&)>& nimmt)
+{
     int typen = 0;
     int felder = 0;
     for (std::size_t i = 0; i < std::variant_size_v<EffectParams>; ++i)
     {
         const ft::Typ* typ = ft::typ(i);
-        if (typ == nullptr || typ->traeger != ft::Traeger::ParamSkript) continue;
+        if (typ == nullptr || !nimmt(*typ)) continue;
         EffectParams p = alternative(i);
         std::string code;
         std::vector<std::pair<const ft::Feld*, double>> soll;
         for (const ft::Feld& f : typ->felder)
         {
             if (f.klasse != ft::Klasse::Live) continue;
+            // F2b: Renderer-eigene Namen (Punkt-Ausgabe, feste Eingabe) sind
+            // bewusst nicht per Frame-Skript steuerbar
+            if (ft::rendererEigen(typ->typKey, f.name)) continue;
             const double v = gegenwert(f, f.lesen(p));
             if (std::isnan(v)) continue;
             const std::string n(f.name);
@@ -195,8 +200,79 @@ TEST_CASE("Feldsteuerung F2: jedes Live-Feld wirkt per Frame-Skript in der Frame
         }
         ++typen;
     }
+    return {typen, felder};
+}
+}  // namespace
+
+TEST_CASE("Feldsteuerung F2: jedes Live-Feld wirkt per Frame-Skript in der Frame-Kopie")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    const auto [typen, felder] = pruefeLiveFelder(
+        [](const ft::Typ& t) { return t.traeger == ft::Traeger::ParamSkript; });
     CHECK(typen > 45);   // Schutz gegen einen Test, der still nichts prueft
     CHECK(felder > 200);
+}
+
+TEST_CASE("Feldsteuerung F2b: auch Module mit eigenem Skript-Host setzen jedes Live-Feld")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    const auto [typen, felder] = pruefeLiveFelder(
+        [](const ft::Typ& t) { return t.traeger == ft::Traeger::EigenerHost; });
+    CHECK(typen == 19);  // alle Module mit eigenem Skript-Host (Stand S85)
+    CHECK(felder > 120);
+}
+
+TEST_CASE("Feldsteuerung F2b: ein Regler kompiliert nicht neu — der Skriptzustand bleibt")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    // Fractal 2D zaehlt im Skript Frames mit und schreibt sie nach `power`.
+    // Bis S85 stand jeder Reglerwert im Kompilier-Schnappschuss: ein Regler
+    // baute den Host neu, Init lief wieder, der Zaehler begann bei 0.
+    Fractal2DParams fr;
+    fr.initCode = "k = 0;";
+    fr.frameCode = "k = k + 1; power = 1 + k;";
+    ChainNode root;
+    root.params = ListParams{};
+    ChainNode leaf;
+    leaf.params = fr;
+    root.children.push_back(std::move(leaf));
+
+    std::optional<EffectParams> gesehen;
+    MultiEffectVisualizer::setzeParamBeobachter(
+        [&](const ChainNode&, const EffectParams& kopie) { gesehen = kopie; });
+    MultiEffectVisualizer vis;
+    vis.setChain(std::move(root));
+    vis.initialize();
+    vis.resize(QSize(kSize, kSize));
+    QOpenGLContext::currentContext()->functions()->glViewport(0, 0, kSize, kSize);
+    vis.render(1.0f / 60.0f);
+    vis.render(1.0f / 60.0f);
+    REQUIRE(gesehen.has_value());
+    CHECK(std::get<Fractal2DParams>(*gesehen).power == doctest::Approx(3.0));
+
+    // Regler bewegen wie das Panel: Wert aendern + recompileChain
+    std::get<Fractal2DParams>(vis.chain().children[0].params).colorScale = 7.5f;
+    vis.recompileChain();
+    vis.render(1.0f / 60.0f);
+    MultiEffectVisualizer::setzeParamBeobachter({});
+    const auto& k = std::get<Fractal2DParams>(*gesehen);
+    CHECK(k.power == doctest::Approx(4.0));         // Zaehler lief weiter (kein Init)
+    CHECK(k.colorScale == doctest::Approx(7.5));    // der bewegte Regler gilt
 }
 
 TEST_CASE("Feldsteuerung F2: Strukturfeld folgt dem Frame-Slot nicht (E3), Live-Feld schon")

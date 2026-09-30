@@ -447,6 +447,11 @@ private:
             double basis = 0.0;
         };
         std::unordered_map<std::string, StrukturWert> strukturWert;
+        /// Block F (F2b, S85): zuletzt eingespeister Reglerwert je
+        /// Tabellenvariable eines EIGENEN Skript-Hosts (Fraktale, 3D …) —
+        /// dieselbe Rolle wie `paramSeen`: bewegt der Benutzer den Regler,
+        /// gewinnt der Regler; sonst rechnet das Skript den Wert fort.
+        std::unordered_map<std::string, double> feldHostSeen;
 
         /**
          * Bloom: die vom Parameter-Skript gerechneten Werte, damit sie den
@@ -1259,6 +1264,18 @@ private:
                         std::vector<FeldBindung>& plan, std::vector<double>& werte) const;
     void feldBindungNach(LeafRuntime& rt, bool fresh, const std::vector<ParamVar>& vars,
                          const std::vector<FeldBindung>& plan);
+    /// Block F (F2b, S85): dasselbe fuer Module mit EIGENEM Skript-Host.
+    /// `feldHostVor` speist VOR den Slots die Reglerwerte ein — beim Start
+    /// (`fresh`) und wenn der Regler bewegt wurde; sonst rechnet das Skript
+    /// fort. `feldHostNach` liest NACH den Slots zurueck in m_gesteuerteKopie
+    /// (Typpflege, Strukturregel E3). `hand` = Namen, die der Renderer selbst
+    /// einspeist (Farben stufenlos) — feldHostVor laesst sie aus; ihr
+    /// Skriptwert landet trotzdem in der Kopie. Renderer-eigene Namen
+    /// (`feldtabelle::rendererEigen`, etwa SuperScope 3D `size` je Punkt)
+    /// werden weder eingespeist noch zurueckgelesen.
+    void feldHostVor(LeafRuntime& rt, lumi::scripting::LuaScriptEngine& engine, bool fresh,
+                     const std::set<std::string>& hand = {});
+    void feldHostNach(LeafRuntime& rt, lumi::scripting::LuaScriptEngine& engine, bool fresh);
 
 public:
     /// Nur fuer Tests: sieht nach jedem gesteuerten Knoten die fertige

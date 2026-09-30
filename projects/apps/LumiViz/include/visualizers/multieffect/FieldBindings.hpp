@@ -100,6 +100,18 @@ struct Typ
 /// Alle Typen mit Eintraegen (fuer Tests, Referenz).
 [[nodiscard]] const std::vector<const Typ*>& alle();
 
+/// Block F (F2b, S85): Skriptnamen eines Tabellenfelds, die in einem EIGENEN
+/// Skript-Host dem Renderer gehoeren — Punkt-Ausgaben, die wie ein Feld
+/// heissen (SuperScope 3D `size` je Punkt), oder Eingaben, die der Renderer
+/// vor dem Skript festlegt (Terrain 3D `res`/`resolution`: Raster und
+/// megabuf-Spiegel entstehen vor dem Lauf). Die Tabelle speist sie nicht ein,
+/// liest sie nicht zurueck, und die Referenz fuehrt sie nicht als Feld.
+[[nodiscard]] inline bool rendererEigen(std::string_view typKey, std::string_view name)
+{
+    return (typKey == "superScope3d" && name == "size") ||
+           (typKey == "terrain3d" && (name == "res" || name == "resolution"));
+}
+
 // --- Typpflege: Feldwert <-> double ------------------------------------------
 
 template <typename F>

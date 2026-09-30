@@ -671,7 +671,9 @@ const ScriptVarTable* gemischt(std::size_t index)
     const auto& hand = tables();
     const auto h = hand.find(index);
     const ft::Typ* typ = ft::typ(index);
-    const bool generisch = typ != nullptr && typ->traeger == ft::Traeger::ParamSkript;
+    // F2b (S85): auch Module mit eigenem Skript-Host binden jedes Tabellenfeld
+    const bool generisch = typ != nullptr && (typ->traeger == ft::Traeger::ParamSkript ||
+                                              typ->traeger == ft::Traeger::EigenerHost);
     if (h == hand.end() && !generisch) return nullptr;
 
     ScriptVarTable t = h != hand.end() ? h->second : ScriptVarTable{ScriptVarBase::ParamScript, {}};
@@ -682,6 +684,7 @@ const ScriptVarTable* gemischt(std::size_t index)
         const auto merke = [&](std::string s) { return texte.emplace_back(std::move(s)).c_str(); };
         for (const ft::Feld& f : typ->felder)
         {
+            if (ft::rendererEigen(typ->typKey, f.name)) continue;  // F2b: kein Feld im Skript
             const std::string n(f.name);
             std::vector<std::string> namen;
             if (f.art == ft::Art::Farbe)

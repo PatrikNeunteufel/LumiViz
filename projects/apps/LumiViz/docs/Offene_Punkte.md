@@ -2048,8 +2048,13 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   `ScriptVariables.cpp`, sondern gleich der allgemeine Weg). **Konzept S84:**
   [Feldsteuerung_Konzept.md](visuals/Feldsteuerung_Konzept.md) — Feldtabelle
   (erzeugt, Zeiger-auf-Member) als SSOT, ein generischer Läufer in
-  `renderNode`, Strukturfelder, Modulation ohne Formel; **Entscheide E1–E6
-  offen**. **Vorarbeit S83 —
+  `renderNode`, Strukturfelder, Modulation ohne Formel; Entscheide E1–E6
+  gefallen (S84, E6 präzisiert S85: Ganzzahlen abgeschnitten). **Stand S85:**
+  F1, F2, F5, F2-Migration (51 Renderer ohne Feld-Hand-Listen) und F2b (alle
+  19 eigenen Hosts an der Tabelle, Regler kompilieren nicht mehr neu) ✅ —
+  **offen: F4 Modulation**, danach F6 (MIDI/OSC-Adresse, mit der Idee).
+  Farbtafeln/Stützstellen (`colors[i]`) weiter §7 des Konzepts.
+  Die Tabelle unten ist der Stand VOR Block F (Historie). **Vorarbeit S83 —
   Bestandsaufnahme über alle Palettentypen:** was im Editor steht, aber keine
   Skriptvariable hat (Stand `HEAD` 80201b3):
 
@@ -2140,6 +2145,17 @@ Knoten-IDs (seit S82), alle Szenen von `list.lvfx2` liefen auf einer
 gemeinsamen Laufzeit. Behoben in `baueLvfxBaum`; Vollbild läuft laut Patrik
 wieder sauber. Messung, Ursache, Lehre:
 **[Regression_S84_Tempo_Vollbild.md](Regression_S84_Tempo_Vollbild.md)** §7.
+
+### ⚪ Wunsch: Shader-Uniforms im Skript-Editor einfärben (Patrik S85)
+
+Eigene Uniforms (Shadertoy, MeshWarp, PixelFilter, GpuParticles) und
+ISF-Eingänge sind Skriptvariablen (Block E, S79; bei Feld-Kollision
+`in_<name>`, S85), der Highlighter kennt sie aber nicht — er färbt nur die
+Referenz-Variablen des Moduls (`modulKategorien`, F5). Weg: die Namen, die
+`EigeneUniformKopien::sammle` bzw. `isfSkriptName` bilden, als eigene
+Kategorie in `modulKategorien` aufnehmen (gleiche Namensregel an einer
+Stelle, sonst färbt der Editor anders, als das Skript bindet) und in der
+ⓘ-Seite auflisten.
 
 ### ⚪ Beobachtung: erster Wechsel auf ein Preset hakt kurz (Patrik S85)
 
