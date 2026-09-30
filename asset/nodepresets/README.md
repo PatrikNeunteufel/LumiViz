@@ -228,6 +228,11 @@ die Quell-Presets und ihre Autoren stehen je Zeile in Klammern.
 
 ## Umbenennung S83 (deutsch → englisch)
 
+Auch Kommentare im Code, Beschreibungen und Knotennamen sind englisch. Ein
+Wächter-Test prüft Dateinamen und Texte gegen eine Liste bekannter deutscher
+Namen und Wörter (`projects/apps/LumiViz/tests/unit/UnitTests/deutsche_woerter.txt`)
+— wer eine Vorlage mitliefert, schreibt sie englisch.
+
 Seit Session 83 heißen alle mitgelieferten Voreinstellungen und Beispiele
 englisch (Entscheid Patrik). Ältere Changelogs, Protokolle und Session-Reports
 nennen noch die alten Namen — diese Tabelle führt sie zusammen. Mit „nur

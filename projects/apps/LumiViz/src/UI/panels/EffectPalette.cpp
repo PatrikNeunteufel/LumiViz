@@ -171,10 +171,10 @@ const std::vector<EffectType>& effectPalette()
         {"Shadertoy (GLSL)", &makeShadertoy, R, Lumi,
          "Runs a Shadertoy GLSL shader (Image + Buffer A–D), audio-reactive."},
 
-        {"— GPU-Module —"},
+        {"— GPU Modules —"},
         {"Mesh Warp (GLSL)", &makeMeshWarp, T, Lumi,
          "Warps the image with a GLSL function over a vertex grid."},
-        {"GPU-Partikel (Instancing)", &makeGpuParticles, R, Lumi,
+        {"GPU Particles (Instancing)",&makeGpuParticles, R, Lumi,
          "Tens of thousands of GPU particles with a scriptable force field."},
         {"Pixel Filter (GLSL)", &makePixelFilter, C, Lumi,
          "Per-pixel GLSL filter with factory looks (e.g. comic)."},
@@ -182,7 +182,7 @@ const std::vector<EffectType>& effectPalette()
          "Runs an ISF shader file (fragment + vertex stage) as filter or generator."},
 
         {"— Scopes & Sources —"},
-        {"Video/Kamera (Quelle)", &makeDefault<VideoSourceParams>, R, Lumi,
+        {"Video/Camera (Source)",&makeDefault<VideoSourceParams>, R, Lumi,
          "Draws frames from a video file or a camera."},
         {"SuperScope", &makeDefault<SuperScopeParams>, R, Avs,
          "Scripted scope: draws dots or lines from per-point code.", "Render / SuperScope"},
@@ -329,7 +329,7 @@ const std::vector<EffectType>& effectPalette()
 
         // Milkdrop-Node-Inhalte (N3.1/N3.3): keine Chain-Effekte — sie landen im
         // PresetState des gewaehlten Milkdrop-Nodes.
-        {"— Milkdrop-Node-Inhalte —"},
+        {"— Milkdrop Node Content —"},
         {"Custom Wave", nullptr, R, Milk,
          "Adds a custom wave to the selected Milkdrop node.", "", MilkElement::Wave},
         {"Custom Shape", nullptr, R, Milk,

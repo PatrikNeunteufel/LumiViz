@@ -26,7 +26,7 @@
                         "fadeLen": 4,
                         "frameCode": "",
                         "initCode": "",
-                        "name": "Nachleuchten",
+                        "name": "Afterglow",
                         "type": "fadeout"
                     },
                     {
@@ -36,7 +36,7 @@
                         "colorCycleFrames": 60,
                         "colors": [
                         ],
-                        "description": "Rotierende Spirale, Tempo folgt dem Bass - Futter fuer die Vierfach-Faltung.",
+                        "description": "A rotating spiral, speed follows the bass - feed for the fourfold fold.",
                         "dotSize": 4,
                         "enabled": true,
                         "frameCode": "t=t+0.02; dreh=dreh+0.01+0.03*bass;",
@@ -44,7 +44,7 @@
                         "initCode": "n=320; t=0; dreh=0;",
                         "lineBlend": 1,
                         "lineWidth": 4,
-                        "name": "Bass-Spirale",
+                        "name": "Bass Spiral",
                         "pointCode": "r=i*0.45; w=i*18.85+dreh; x=cos(w)*r; y=sin(w)*r; red=0.8+0.2*sin(w); green=0.5+0.4*sin(t*1.7); blue=1;",
                         "pointCount": 320,
                         "renderMode": 1,
@@ -69,8 +69,8 @@
                     },
                     {
                         "beatCode": "",
-                        "code": "// Tunnel Pull: zieht das Bild je Frame zur Mitte und dreht leicht -\n// uebers Feedback entsteht der klassische Tunnel (Quelle davor noetig).\nvec2 warp(vec2 uv)\n{\n    vec2 d = uv - 0.5;\n    float winkel = 0.06 + 0.05 * bass;\n    float s = sin(winkel);\n    float c = cos(winkel);\n    float sog = 0.97 - 0.04 * bass;\n    return 0.5 + mat2(c, -s, s, c) * d * sog;\n}\n",
-                        "description": "Kaleidoskop: erst drehen (Zeit + Hoehen), dann vierfach falten, leichtes Auswaertsatmen kaskadiert uebers Feedback.",
+                        "code": "// Tunnel Pull: pulls the image towards the centre each frame and turns it slightly -\n// the feedback builds the classic tunnel (needs a source in front).\nvec2 warp(vec2 uv)\n{\n    vec2 d = uv - 0.5;\n    float winkel = 0.06 + 0.05 * bass;\n    float s = sin(winkel);\n    float c = cos(winkel);\n    float sog = 0.97 - 0.04 * bass;\n    return 0.5 + mat2(c, -s, s, c) * d * sog;\n}\n",
+                        "description": "Kaleidoscope: rotate first (time + highs), then fold fourfold, a slight outward breathing cascades through the feedback.",
                         "enabled": true,
                         "frameCode": "",
                         "gridX": 96,
@@ -83,8 +83,8 @@
                     },
                     {
                         "beatCode": "",
-                        "code": "// Bass Swirl (Palette-Starter): Drehung um die Mitte, Bass verstaerkt\nvec2 warp(vec2 uv)\n{\n    vec2 d = uv - 0.5;\n    float winkel = 0.30 * sin(uTime * 0.4) + 1.2 * bass * exp(-6.0 * dot(d, d));\n    float s = sin(winkel);\n    float c = cos(winkel);\n    float zoom = 1.0 + 0.03 * sin(uTime * 0.9) + 0.05 * treb;\n    return 0.5 + mat2(c, -s, s, c) * d / zoom;\n}\n",
-                        "description": "Kaleidoskop: erst drehen (Zeit + Hoehen), dann vierfach falten, leichtes Auswaertsatmen kaskadiert uebers Feedback.",
+                        "code": "// Bass Swirl (palette starter): rotation around the centre, amplified by the bass\nvec2 warp(vec2 uv)\n{\n    vec2 d = uv - 0.5;\n    float winkel = 0.30 * sin(uTime * 0.4) + 1.2 * bass * exp(-6.0 * dot(d, d));\n    float s = sin(winkel);\n    float c = cos(winkel);\n    float zoom = 1.0 + 0.03 * sin(uTime * 0.9) + 0.05 * treb;\n    return 0.5 + mat2(c, -s, s, c) * d / zoom;\n}\n",
+                        "description": "Kaleidoscope: rotate first (time + highs), then fold fourfold, a slight outward breathing cascades through the feedback.",
                         "enabled": true,
                         "frameCode": "",
                         "gridX": 96,
@@ -97,8 +97,8 @@
                     },
                     {
                         "beatCode": "",
-                        "code": "// Swell: gekreuzte Sinuswellen, Mitten heben die Amplitude\nvec2 warp(vec2 uv)\n{\n    float amp = 0.015 + 0.03 * mid;\n    uv.x += amp * sin(uv.y * 12.0 + uTime * 1.6);\n    uv.y += amp * sin(uv.x * 9.0 - uTime * 1.1);\n    return uv;\n}\n",
-                        "description": "Kaleidoskop: erst drehen (Zeit + Hoehen), dann vierfach falten, leichtes Auswaertsatmen kaskadiert uebers Feedback.",
+                        "code": "// Swell: crossed sine waves, the mids raise the amplitude\nvec2 warp(vec2 uv)\n{\n    float amp = 0.015 + 0.03 * mid;\n    uv.x += amp * sin(uv.y * 12.0 + uTime * 1.6);\n    uv.y += amp * sin(uv.x * 9.0 - uTime * 1.1);\n    return uv;\n}\n",
+                        "description": "Kaleidoscope: rotate first (time + highs), then fold fourfold, a slight outward breathing cascades through the feedback.",
                         "enabled": true,
                         "frameCode": "",
                         "gridX": 96,

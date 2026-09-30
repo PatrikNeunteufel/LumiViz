@@ -30,12 +30,17 @@
 #include <QDir>
 #include <QFile>
 #include <QJsonDocument>
+#include <QJsonArray>
 #include <QJsonObject>
+#include <QRegularExpression>
+#include <QSet>
 #include <QString>
 #include <QStringList>
 #include <QTemporaryDir>
 
+#include <cstdlib>
 #include <filesystem>
+#include <vector>
 
 using namespace lumi::multieffect;
 namespace np = lumi::multieffect::nodepresets;
@@ -412,28 +417,271 @@ TEST_CASE("NodePresetStore: die SuperScope-Figuren decken die Modul-Bibliothek")
     }
 }
 
-TEST_CASE("Mitgelieferte Namen sind englisch: keine Umlaute/ss in Dateinamen (S83)")
+namespace
+{
+
+/// Die Liste bekannter deutscher Namen/Woerter (S83) — neben dieser Datei.
+struct DeutscheWoerter
+{
+    QSet<QString> namen;    ///< alte Preset-/Beispielnamen, klein geschrieben
+    QSet<QString> woerter;  ///< deutsche Woerter ohne englische Doppelgaenger
+};
+
+DeutscheWoerter ladeDeutscheWoerter()
+{
+    DeutscheWoerter d;
+    const std::filesystem::path pfad =
+        std::filesystem::path(__FILE__).parent_path() / "deutsche_woerter.txt";
+    QFile f(QString::fromStdWString(pfad.wstring()));
+    REQUIRE(f.open(QIODevice::ReadOnly | QIODevice::Text));
+    QSet<QString>* ziel = nullptr;
+    for (const QString& roh : QString::fromUtf8(f.readAll()).split(QLatin1Char('\n')))
+    {
+        const QString z = roh.trimmed();
+        if (z.isEmpty() || z.startsWith(QLatin1Char('#'))) continue;
+        if (z == QLatin1String("[namen]")) ziel = &d.namen;
+        else if (z == QLatin1String("[woerter]")) ziel = &d.woerter;
+        else if (ziel != nullptr) ziel->insert(z.toLower());
+    }
+    return d;
+}
+
+/// Kommentar-Anteile eines Codes: alles hinter `//` und in `/* … */`.
+QString kommentareIn(const QString& code)
+{
+    QString out;
+    static const QRegularExpression kBlock(QStringLiteral("/\\*.*?\\*/"),
+                                           QRegularExpression::DotMatchesEverythingOption);
+    for (auto it = kBlock.globalMatch(code); it.hasNext();)
+        out += it.next().captured(0) + QLatin1Char('\n');
+    for (const QString& zeile : code.split(QLatin1Char('\n')))
+    {
+        const int pos = zeile.indexOf(QStringLiteral("//"));
+        if (pos >= 0) out += zeile.mid(pos + 2) + QLatin1Char('\n');
+    }
+    return out;
+}
+
+/// Menschenlesbarer Text einer Preset-/Kettendatei: `name`/`description`
+/// ganz, alle anderen Strings nur mit ihren Kommentaren.
+void sammleText(const QJsonValue& v, const QString& schluessel, QString& out)
+{
+    if (v.isObject())
+    {
+        const QJsonObject o = v.toObject();
+        for (auto it = o.constBegin(); it != o.constEnd(); ++it)
+            sammleText(it.value(), it.key(), out);
+    }
+    else if (v.isArray())
+    {
+        for (const QJsonValue& e : v.toArray()) sammleText(e, schluessel, out);
+    }
+    else if (v.isString())
+    {
+        const QString s = v.toString();
+        out += (schluessel == QLatin1String("name") || schluessel == QLatin1String("description"))
+                   ? s
+                   : kommentareIn(s);
+        out += QLatin1Char('\n');
+    }
+}
+
+/// Deutsche Treffer in einem Text: Umlaute/ß und Woerter der Liste.
+QStringList deutschIn(const QString& text, const DeutscheWoerter& d)
+{
+    QStringList treffer;
+    for (const QChar c : text)
+        if (QStringLiteral("äöüÄÖÜß").contains(c)) treffer << QString(c);
+    static const QRegularExpression kWort(QStringLiteral("[A-Za-zÄÖÜäöüß]+"));
+    for (auto it = kWort.globalMatch(text); it.hasNext();)
+    {
+        const QString w = it.next().captured(0).toLower();
+        if (d.woerter.contains(w)) treffer << w;
+    }
+    treffer.removeDuplicates();
+    return treffer;
+}
+
+}  // namespace
+
+TEST_CASE("Mitgelieferte Namen und Texte sind englisch (S83, Liste deutscher Woerter)")
 {
     // Entscheid Patrik S83: alle mitgelieferten Presets, Beispiele und
-    // Shader-Vorlagen heissen englisch, wie die Oberflaeche. Die Sprache selbst
-    // kann ein Test nicht pruefen — Umlaute und ss sind aber das sichere
-    // Zeichen eines deutschen Namens und fallen hier auf.
+    // Shader-Vorlagen heissen englisch und sind englisch kommentiert. Die
+    // Sprache selbst kann ein Test nicht erkennen — dieser prueft gegen eine
+    // Liste bekannter deutscher Namen und Woerter (deutsche_woerter.txt) und
+    // gegen Umlaute. Neue deutsche Woerter, die auffallen, gehoeren in die Liste.
+    const DeutscheWoerter d = ladeDeutscheWoerter();
+    REQUIRE(d.namen.size() > 100);
+    REQUIRE(d.woerter.size() > 100);
+
     const std::filesystem::path asset = repoRoot() / "asset";
-    int geprueft = 0;
+    int dateien = 0;
+    int texte = 0;
     for (const char* ordner : {"nodepresets", "examples", "shadertemplates"})
     {
         REQUIRE(std::filesystem::exists(asset / ordner));
         for (const auto& e : std::filesystem::recursive_directory_iterator(asset / ordner))
         {
             if (!e.is_regular_file() || e.path().filename() == "README.md") continue;
-            const QString name = QString::fromStdWString(e.path().filename().wstring());
-            CAPTURE(name.toStdString());
-            for (const QChar c : name)
-                CHECK_FALSE(QStringLiteral("äöüÄÖÜß").contains(c));
-            ++geprueft;
+            const QString datei = QString::fromStdWString(e.path().filename().wstring());
+            const QString stamm = QString::fromStdWString(e.path().stem().wstring());
+            CAPTURE(datei.toStdString());
+            // (1) Dateiname
+            CHECK_MESSAGE(!d.namen.contains(stamm.toLower()), "alter deutscher Name");
+            const QString nameOhneTyp = stamm.section(QStringLiteral(" - "), -1);
+            CHECK_MESSAGE(!d.namen.contains(nameOhneTyp.toLower()), "alter deutscher Name");
+            const QStringList imNamen = deutschIn(stamm, d);
+            CHECK_MESSAGE(imNamen.isEmpty(), "deutsch im Dateinamen: "
+                                                 << imNamen.join(QLatin1Char(',')).toStdString());
+            ++dateien;
+
+            // (2)/(3) Inhalt: Kommentare, Beschreibungen, Knotennamen
+            const QString ext = QString::fromStdWString(e.path().extension().wstring());
+            if (ext == QLatin1String(".avs")) continue;  // binaer
+            QFile f(QString::fromStdWString(e.path().wstring()));
+            REQUIRE(f.open(QIODevice::ReadOnly));
+            const QByteArray roh = f.readAll();
+            QString text;
+            if (ext == QLatin1String(".json") || ext == QLatin1String(".lvfx"))
+            {
+                const QJsonDocument doc = QJsonDocument::fromJson(roh);
+                REQUIRE(doc.isObject());
+                sammleText(doc.object(), QString(), text);
+            }
+            else
+            {
+                text = kommentareIn(QString::fromUtf8(roh));
+            }
+            const QStringList imText = deutschIn(text, d);
+            CHECK_MESSAGE(imText.isEmpty(), "deutsch im Text: "
+                                                << imText.join(QLatin1Char(',')).toStdString());
+            ++texte;
         }
     }
-    CHECK(geprueft > 300);  // Schutz gegen einen Test, der still nichts prueft
+    CHECK(dateien > 300);  // Schutz gegen einen Test, der still nichts prueft
+    CHECK(texte > 150);
+}
+
+namespace
+{
+
+/// Die Zeichenketten-Literale eines C++-Quelltexts, Kommentare uebersprungen.
+/// `vorher` = der Code direkt vor dem Literal (fuer die tr()-Erkennung).
+struct Literal
+{
+    QString text;
+    QString vorher;
+    int zeile = 0;
+};
+
+std::vector<Literal> literaleIn(const QString& s)
+{
+    std::vector<Literal> out;
+    int zeile = 1;
+    for (int i = 0; i < s.size(); ++i)
+    {
+        const QChar c = s[i];
+        if (c == QLatin1Char('\n')) ++zeile;
+        if (c == QLatin1Char('/') && i + 1 < s.size() && s[i + 1] == QLatin1Char('/'))
+        {
+            while (i < s.size() && s[i] != QLatin1Char('\n')) ++i;
+            --i;  // das \n zaehlt die naechste Runde
+            continue;
+        }
+        if (c == QLatin1Char('/') && i + 1 < s.size() && s[i + 1] == QLatin1Char('*'))
+        {
+            const int ende = s.indexOf(QStringLiteral("*/"), i + 2);
+            const int bis = ende < 0 ? s.size() : ende + 2;
+            zeile += s.mid(i, bis - i).count(QLatin1Char('\n'));
+            i = bis - 1;
+            continue;
+        }
+        if (c == QLatin1Char('\'') && i + 2 < s.size())
+        {
+            // Zeichenliteral ('"', '\'') ueberspringen
+            i += (s[i + 1] == QLatin1Char('\\')) ? 3 : 2;
+            continue;
+        }
+        if (c == QLatin1Char('"'))
+        {
+            // Rohstring R"(...)" — Inhalt ist Code (GLSL-Wrapper), kein UI-Text
+            if (i > 0 && s[i - 1] == QLatin1Char('R'))
+            {
+                const int ende = s.indexOf(QStringLiteral(")\""), i);
+                const int bis = ende < 0 ? s.size() : ende + 2;
+                zeile += s.mid(i, bis - i).count(QLatin1Char('\n'));
+                i = bis - 1;
+                continue;
+            }
+            Literal l;
+            l.zeile = zeile;
+            l.vorher = s.mid(std::max(0, i - 60), std::min(60, i));
+            int j = i + 1;
+            while (j < s.size() && s[j] != QLatin1Char('"'))
+            {
+                if (s[j] == QLatin1Char('\\')) ++j;
+                ++j;
+            }
+            l.text = s.mid(i + 1, j - i - 1);
+            out.push_back(l);
+            i = j;
+        }
+    }
+    return out;
+}
+
+}  // namespace
+
+TEST_CASE("Oberflaechentexte sind englisch (S83, tr() + Referenzseiten)")
+{
+    // Entscheid Patrik S83: die Oberflaeche ist englisch. Geprueft werden alle
+    // tr()-Texte der UI-Quellen und die HTML-Referenzseiten (ⓘ) gegen die
+    // Liste bekannter deutscher Woerter und gegen Umlaute. Nicht geprueft:
+    // Kommentare (bleiben deutsch, Projekt-Konvention), Log-Meldungen und die
+    // Feld-Tooltips (FieldDocs.cpp — erzeugt aus EffectChain.hpp).
+    const DeutscheWoerter d = ladeDeutscheWoerter();
+    const std::filesystem::path app = repoRoot() / "projects" / "apps" / "LumiViz";
+    static const QRegularExpression kTrVorher(QStringLiteral("\\btr\\(\\s*(\"[^\"]*\"\\s*)*$"));
+    static const QRegularExpression kHtml(QStringLiteral("<(p|h2|h3|td|th|tr|b|code|table)[ >]"));
+    int geprueft = 0;
+    for (const char* ordner : {"src/UI", "include/UI"})
+    {
+        for (const auto& e : std::filesystem::recursive_directory_iterator(app / ordner))
+        {
+            const auto ext = e.path().extension();
+            if (!e.is_regular_file() || (ext != ".cpp" && ext != ".hpp")) continue;
+            if (e.path().filename() == "FieldDocs.cpp") continue;  // eigener Punkt (§8)
+            QFile f(QString::fromStdWString(e.path().wstring()));
+            REQUIRE(f.open(QIODevice::ReadOnly));
+            const QString s = QString::fromUtf8(f.readAll());
+            const QString datei = QString::fromStdWString(e.path().filename().wstring());
+            // Referenzseiten bestehen aus vielen Teil-Literalen: im Umfeld eines
+            // HTML-Literals zaehlen die Nachbarn mit (dieselbe Funktion).
+            const std::vector<Literal> lits = literaleIn(s);
+            for (std::size_t k = 0; k < lits.size(); ++k)
+            {
+                const Literal& l = lits[k];
+                const bool istTr = kTrVorher.match(l.vorher).hasMatch();
+                bool istHtml = kHtml.match(l.text).hasMatch();
+                for (std::size_t n = (k >= 3 ? k - 3 : 0); !istHtml && n < std::min(lits.size(), k + 4); ++n)
+                    istHtml = kHtml.match(lits[n].text).hasMatch() &&
+                              std::abs(lits[n].zeile - l.zeile) <= 3;
+                if (!istTr && !istHtml) continue;
+                // Log-Meldungen sind keine Oberflaeche, auch neben einer Referenzseite
+                static const QRegularExpression kLog(
+                    QStringLiteral("\\b(log(Info|Warning|Error|Debug)|f?printf)\\s*\\([^;]*$"));
+                if (!istTr && kLog.match(l.vorher).hasMatch()) continue;
+                const QStringList treffer = deutschIn(l.text, d);
+                CHECK_MESSAGE(treffer.isEmpty(),
+                              datei.toStdString() << ":" << l.zeile << " deutsch: "
+                                                  << treffer.join(QLatin1Char(',')).toStdString()
+                                                  << " in '" << l.text.left(80).toStdString() << "'");
+                ++geprueft;
+            }
+        }
+    }
+    CHECK(geprueft > 1000);  // Schutz gegen einen Test, der still nichts prueft
 }
 
 TEST_CASE("NodePresetStore: Dateinamen werden bereinigt")

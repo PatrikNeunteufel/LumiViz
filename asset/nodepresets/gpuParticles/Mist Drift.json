@@ -20,6 +20,6 @@
         "colorStart": 2110842,
         "colorEnd": 4327807,
         "additive": false,
-        "forceCode": "// traege Stroemung, Pegel schiebt sanft\nvec2 kraft(vec2 pos, vec2 vel, float alter)\n{\n    vec2 d = pos - vec2(0.5);\n    return vec2(-d.y, d.x) * 0.05 + vec2(0.02 * sin(uTime * 0.3), 0.01 * vol);\n}\n"
+        "forceCode": "// slow current, the level pushes gently\nvec2 kraft(vec2 pos, vec2 vel, float alter)\n{\n    vec2 d = pos - vec2(0.5);\n    return vec2(-d.y, d.x) * 0.05 + vec2(0.02 * sin(uTime * 0.3), 0.01 * vol);\n}\n"
     }
 }

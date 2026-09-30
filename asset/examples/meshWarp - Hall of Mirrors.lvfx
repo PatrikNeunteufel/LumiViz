@@ -9,13 +9,13 @@
         "children": [
             {
                 "type": "fadeout",
-                "name": "Nachleuchten",
+                "name": "Afterglow",
                 "fadeLen": 4
             },
             {
                 "type": "superScope",
-                "name": "Bass-Spirale",
-                "description": "Rotierende Spirale, Tempo folgt dem Bass - Futter fuer die Vierfach-Faltung.",
+                "name": "Bass Spiral",
+                "description": "A rotating spiral, speed follows the bass - feed for the fourfold fold.",
                 "initCode": "n=320; t=0; dreh=0;",
                 "frameCode": "t=t+0.02; dreh=dreh+0.01+0.03*bass;",
                 "pointCode": "r=i*0.45; w=i*18.85+dreh; x=cos(w)*r; y=sin(w)*r; red=0.8+0.2*sin(w); green=0.5+0.4*sin(t*1.7); blue=1;",
@@ -26,7 +26,7 @@
             {
                 "type": "meshWarp",
                 "name": "Hall of Mirrors",
-                "description": "Kaleidoskop: erst drehen (Zeit + Hoehen), dann vierfach falten, leichtes Auswaertsatmen kaskadiert uebers Feedback.",
+                "description": "Kaleidoscope: rotate first (time + highs), then fold fourfold, a slight outward breathing cascades through the feedback.",
                 "gridX": 96,
                 "gridY": 72,
                 "mixAmount": 1.0,

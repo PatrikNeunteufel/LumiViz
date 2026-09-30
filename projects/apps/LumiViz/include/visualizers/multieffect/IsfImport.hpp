@@ -136,10 +136,10 @@ struct ImportErgebnis
 /// Quelle ist ein Generator.
 [[nodiscard]] inline QString sortenName(int quellen)
 {
-    if (quellen <= 0) return QStringLiteral("Generator (erzeugt ein Bild)");
-    if (quellen == 1) return QStringLiteral("Filter (ein Quellbild)");
-    if (quellen == 2) return QStringLiteral("Übergang (zwei Quellbilder)");
-    return QStringLiteral("Mehrfach-Quelle (%1 Bilder)").arg(quellen);
+    if (quellen <= 0) return QStringLiteral("Generator (creates an image)");
+    if (quellen == 1) return QStringLiteral("Filter (one source image)");
+    if (quellen == 2) return QStringLiteral("Transition (two source images)");
+    return QStringLiteral("Multi-source (%1 images)").arg(quellen);
 }
 
 namespace detail {
@@ -395,14 +395,15 @@ private:
     if (kopfText.isEmpty() || !kopfText.startsWith(QLatin1Char('{')))
     {
         r.error = QStringLiteral(
-            "Kein ISF-Shader: der JSON-Kopf `/*{ … }*/` am Dateianfang fehlt.");
+            "Not an ISF shader: the JSON header `/*{ … }*/` at the start "
+            "of the file is missing.");
         return r;
     }
     QJsonParseError perr{};
     const QJsonDocument doc = QJsonDocument::fromJson(kopfText.toUtf8(), &perr);
     if (perr.error != QJsonParseError::NoError || !doc.isObject())
     {
-        r.error = QStringLiteral("ISF-Kopf ist kein gültiges JSON: %1")
+        r.error = QStringLiteral("ISF header is not valid JSON: %1")
                       .arg(perr.errorString());
         return r;
     }
@@ -469,8 +470,8 @@ private:
         }
         if (p.typ == IsfTyp::Unbekannt)
         {
-            r.report << QStringLiteral("ℹ Unbekannter INPUT-Typ bei „%1\" — "
-                                       "übersprungen.")
+            r.report << QStringLiteral("ℹ Unknown INPUT type for '%1' — "
+                                       "skipped.")
                             .arg(p.name);
             continue;
         }
@@ -519,8 +520,8 @@ private:
     if (kopf.contains(QStringLiteral("IMPORTED")))
     {
         r.report << QStringLiteral(
-            "ℹ IMPORTED-Texturen werden nicht geladen — die betroffenen "
-            "Abtastungen liefern Schwarz.");
+            "ℹ IMPORTED textures are not loaded — the affected "
+            "samples return black.");
     }
     // Ebenso KEINE Zeile fuer die Sorte — die steht als Info-Zeile im Panel
     // (`sortenName`) und aendert sich dort mit, wenn Quellen dazukommen.

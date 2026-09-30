@@ -2129,6 +2129,188 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 
 ## 7. Backlog (bewusst nichts tun)
 
+### 🟡 Nächste Session (S84): Drag aus Effect Browser/Playlist, Audio Browser — Weg zur Timeline (Wunsch Patrik S83)
+
+- **Effect Browser wird Drag-Quelle:** einen Effekt/ein Preset aus dem Effect
+  Browser in die **Effect Chain** ziehen → landet dort als **Presetverweis**
+  (Host-Gruppe mit `verweis`, S82 — nur der Pfad wird gespeichert). Später
+  auch ins **Timeline-Panel**.
+- **Playlist wird Drag-Quelle:** Titel aus der Playlist ziehen — Ziel ist das
+  spätere Timeline-Panel.
+- **Audio Browser (neu):** wie der Effect Browser, nur für Audiodateien
+  (Ordner, Filter, Suche); Icons je Audiotyp (WAV, MP3, FLAC …) wie die
+  Format-Icons im Effect Browser. Drag-Quelle für die Timeline.
+- **Ausblick Timeline-Panel / Composit** (noch auszuarbeiten, eigene
+  Konzept-Session): *n* Audiokanäle und *n* Visual-Kanäle zum Mischen;
+  Einblenden/Ausblenden im Prinzip wie bei der Host-Gruppe (Crossfade,
+  Kurven), aber **in der Timeline verwaltet** statt über Host Switcher.
+  Anknüpfungen: Presetverweis (Visual-Clips als Verweis), Host-Gruppen-
+  Crossfade (Kurven), Visual-Playlist P2, Idee „Video aufnehmen" (ein
+  Timeline-Arrangement offline rendern).
+
+### 🟡 Nächste Session (S84): Umstellung auf Englisch fortsetzen (Entscheide Patrik S83)
+
+- **Feld-Tooltips — Entscheid 1a:** die Feld-Kommentare in `EffectChain.hpp`
+  werden englisch (bleiben SSOT der Tooltips; übrige Code-Kommentare
+  vorerst deutsch), `asset/calibration/fields/harvest_field_docs.py` auf das
+  englische Muster umstellen, `FieldDocs.cpp` + Inventar neu erzeugen, Wächter
+  auch über `FieldDocs.cpp`.
+- **Kamera-Clip-Dateiname — Entscheid 2a:** neue Clips heißen
+  `camera_clip_<Datum>.mp4`, vorhandene bleiben (der Knoten merkt sich den
+  Dateinamen). Vorher prüfen, ob Skripte/Sonden nach `testaufnahme_*` suchen.
+- Handbuch-Screenshots mit alter Oberfläche neu aufnehmen
+  (`milkdrop_puffer_wechsel.png`, `settings_milkdrop_wechsel.png`).
+
+### ⚪ Später: Code-Kommentare englisch (eigene Session, geringe Priorität)
+
+Entscheid Patrik S83: alles wird englisch — die Code-Kommentare auch, aber in
+einer separaten Session und ohne Eile. Die Projekt-Konvention „Kommentare
+deutsch" ändert sich damit; bis dahin gilt sie weiter.
+
+### ⚪ Später: Sprachwahl der Oberfläche (i18n)
+
+Idee Patrik S83: Oberflächenbegriffe in mehreren Sprachen, dann auch wieder
+Deutsch. Voraussetzung ist erfüllt: alle Oberflächentexte laufen über
+`tr()` und sind englisch (Quellsprache). Weg: Qt Linguist (`lupdate` →
+`.ts` je Sprache → `lrelease` → `.qm`, `QTranslator` beim Start/Umschalten).
+Offen: was nicht über `tr()` läuft (Referenzseiten als `QStringLiteral`,
+Feld-Tooltips aus `FieldDocs.cpp`) braucht einen eigenen Weg.
+
+### ⚪ Idee: Video Source — nur die Felder der gewählten Quelle zeigen (Befund S83)
+
+Der Editor des Video-Source-Knotens zeigt die Felder **aller drei Quellen
+gleichzeitig** (Videodatei + „Videodatei wählen…", Kamera + „Kamera
+freigeben", Testaufnahme), obwohl immer nur eine gilt — man sieht nicht, dass
+etwa „Videodatei" bei Quelle *Kamera* nichts bewirkt. Ebenso wirken *Tempo*
+nur ohne Echtzeit-Streaming und *Schleife* nur bei Datei/Testaufnahme.
+Vorschlag: unwirksame Felder ausgrauen (Wert bleibt sichtbar) oder
+ausblenden; Tooltip nennt den Grund. Anmerkung Patrik S83: der Knoten ist ein
+**fertiges Modul, kein Prüfstand** — „Testaufnahme" ist darum ein
+irreführender Name für die Kamera-Clips (Umbenennung in §8, Oberflächentexte).
+
+### ⚪ Idee: Bild an andere Programme weitergeben — Spout / NDI (Wunsch S83)
+
+Anlass: Einordnung neben VDMX und MadMapper (S83). LumiViz ist dort die
+**Quelle** — es erzeugt das Bild, VDMX mischt, MadMapper mappt. Die Brücke
+fehlt: **Stand S83 gibt es weder Spout noch NDI** (Suche im Code: nichts;
+einzige Spur der Konzeptabschnitt „SpoutSyphonNode" im Referenzhandbuch des
+Vorgängers, `harvest/konzepte/viz_2025_node_reference_manual_visualizer_pipeline.md`
+§9.4 — Eingang Image, Parameter Stream Name).
+- **Spout** (Windows, GPU-Textur-Teilen ohne Kopie, Latenz nahe null) — der
+  naheliegende erste Schritt; Gegenstück Syphon wäre nur für macOS.
+- **NDI** (Netzwerk, auch rechnerübergreifend; SDK mit eigener Lizenz —
+  vor dem Einbau prüfen, wie die Lizenz zu BASS/Lua/Qt passt).
+- Offen: als **Knoten** in der Kette (Abgriff an beliebiger Stelle, wie der
+  harvest-Entwurf) oder als **Ausgang des Visualizer-Fensters** (immer das
+  Endbild) — oder beides. Auflösung/Bildrate des Ausgangs getrennt vom Fenster?
+- Umgekehrt denkbar: Spout/NDI als **Quelle** (neben Video/Kamera, §13 im
+  Handbuch) — Bild aus VDMX/Resolume in die Kette holen.
+
+### ⚪ Idee: Steuerung per MIDI / OSC (Wunsch S83)
+
+Anlass: Vergleich mit Synesthesia (S83) — dort liegen Regler, Szenenwechsel und
+Effekte auf MIDI-Controllern oder kommen per OSC aus anderer Software. **Stand
+S83:** nichts davon im Code; Bedienung nur über Maus und Tastenkürzel
+(`ShortcutManager`, Hotkey-Konzept).
+- **MIDI-Learn:** Regler im Editor anklicken, Controller bewegen → gebunden.
+  Ziel sind dieselben Felder, die ein Skript setzen kann — Anknüpfung an
+  **Block F** (generischer Weg für Modulparameter), damit MIDI, OSC und Skript
+  eine gemeinsame Adressierung der Felder nutzen statt dreier eigener.
+- **Aktionen:** Preset/Host-Gruppe wechseln, Host Switcher anstoßen
+  (`nextgroup`), Tap-Tempo, Script active umschalten.
+- **OSC:** dieselben Adressen über UDP (z. B. `/lumiviz/<knoten>/<feld>`),
+  in beide Richtungen denkbar (Rückmeldung an Controller-Apps).
+- Zu klären: Bibliothek (Qt hat kein MIDI — RtMidi o. ä.; OSC ist über
+  `QUdpSocket` klein), Speicherort der Belegung (je Kette oder global),
+  Glättung/Wertebereich je Feld.
+
+### ⚪ Idee: Video aufnehmen — Bild + Ton als Datei (Wunsch S39/S83)
+
+Bisher nur als Stichwort in der Aufzählung unten („Video-Capture-Modul").
+**Stand S83, genau geprüft:** die App kann das Bild **nicht** als Video
+aufnehmen. Vorhanden sind Bausteine:
+- **Screenshot** in der App (Tastenkürzel): EIN Bild, per `requestCapture()`
+  auf dem Render-Thread (`glReadPixels`), `VisualizerRenderThread`.
+- **Bildfolgen** nur im Entwickler-Werkzeug `AvsStandalone`:
+  `--auto --save-every M` schreibt jeden M-ten Frame als PNG (für Sequenz-/
+  GIF-Vergleiche mit AvsRef, S46) — ohne Ton, mit synthetischem oder
+  Datei-Audio, nicht in der App. `MilkdropStandalone` hat das nicht.
+- **Aufnahme mit `QMediaRecorder`** gibt es schon — aber nur für die
+  **Kamera-Testaufnahmen** (Einstellungen → Kamera, S70): sie nimmt das
+  Kamerabild auf, nicht das Visual.
+- **Der Weg ist in Qt da:** installiert ist Qt 6.10.1; seit 6.8 nehmen
+  `QVideoFrameInput` + `QAudioBufferInput` in einer `QMediaCaptureSession`
+  selbst erzeugte Bilder und Audio-Puffer an und schreiben sie über
+  `QMediaRecorder` (FFmpeg-Backend, das wir für Video-Quellen ohnehin nutzen)
+  in eine Datei.
+
+**Wozu** (Wunsch S39 + S83): Visuals teilen (Clip für Social Media, Demo,
+README-Schaufenster), ganze **Sets** festhalten (Playlist mit Host Switcher,
+passt zur Visual-Playlist P2), Material für den Videoschnitt, und — nebenbei
+— Belege für Sichttests und Kalibrier-Befunde (heute Screenshots/GIFs).
+
+**Zwei Aufnahmearten** — beide gebraucht, sie lösen verschiedene Aufgaben:
+
+| | **Live-Aufnahme** | **Song rendern (offline)** |
+|---|---|---|
+| Was | nimmt auf, was gerade läuft — samt Bedienung, Szenenwechseln, Kamera | rechnet einen Titel Bild für Bild mit fester Bildrate durch, schneller oder langsamer als Echtzeit |
+| Takt | Uhr/Vsync; Ruckler landen im Video | Sim-Uhr, deterministisch — dieselbe Technik wie `AvsStandalone --audio-datei` |
+| Ton | Player-Strom (BASS), mitgeschnitten | Audiodatei dekodiert, jede Bildzeit bekommt genau ihr Audio-Fenster |
+| Auflösung | Fenster- oder eigenes Zielformat | frei wählbar, auch 4K auf schwacher Karte (dauert nur länger) |
+| Live-Quellen | Kamera, externes Audio möglich | nur Datei-Quellen (Kamera ist nicht wiederholbar) |
+
+**Bedienung (Vorschlag):** Start/Stopp per Menü + Tastenkürzel, sichtbare
+REC-Anzeige mit Laufzeit und Dateigröße; aufgenommen wird **nur die
+Visualizer-Fläche** (keine Panels). Dialog je Aufnahme: Auflösung, Bildrate,
+Qualität (Voreinstellungen „Teilen / Hoch / Schnitt"), Zielordner, Dateiname
+aus Preset/Titel. „Song rendern" im Kontextmenü der Playlist (ein Titel oder
+die ganze Liste → je Titel eine Datei oder ein Film).
+
+**Technik:**
+- Bild vom **Render-Thread** abgreifen (GL nur dort, wie der Screenshot);
+  **asynchron** über Pixel-Buffer-Objekte (PBO), damit `glReadPixels` den
+  Frame nicht blockiert; Kodieren in einem eigenen Thread, Warteschlange mit
+  Grenze — Live: lieber ein Bild doppeln als die Anzeige bremsen.
+- Eigenes Render-Ziel in Aufnahmegröße (FBO), unabhängig vom Fenster.
+- Schreiben über `QVideoFrameInput`/`QAudioBufferInput` → `QMediaRecorder`
+  (Qt ≥ 6.8, FFmpeg-Backend). Ausweichweg: FFmpeg als externer Prozess per
+  Pipe (volle Codec-Kontrolle, aber eigene Beschaffung).
+- **Derselbe Bild-Abgriff trägt Spout/NDI** (Idee oben) — einmal bauen,
+  dreimal nutzen (Datei, Spout, NDI).
+
+**Formate und Lizenz:** H.264/MP4 ist der Teilen-Standard, trägt aber
+Patentfragen (Encoder über FFmpeg/OS); lizenzarm sind VP9/AV1 in WebM. Für
+den Schnitt ein verlustarmes Format (etwa ProRes/MJPEG, groß). Vor dem
+Einbau prüfen, welche Encoder das FFmpeg-Backend von Qt unter Windows
+mitbringt und was davon wir weitergeben dürfen (THIRD_PARTY_NOTICES).
+
+**Tests:** Offline-Render zweimal → identische Bilder (Prüfsumme je Frame);
+Bild-Ton-Versatz messen: ein Kick-Signal aus `TestAudio` (07–09, 60/120/180
+BPM, S45) gegen einen Knoten, der auf dem Beat weiß blitzt; Live-Aufnahme: keine verlorenen Frames bei 60 fps in
+1080p auf der Referenzkarte, Frametime der Anzeige unverändert.
+
+**Offen:** Ton auch bei externem Audio-Eingang (Idee unten) · Aufnahme
+eines einzelnen Knotens statt des Endbilds (Zwischenstand der Kette) ·
+Alpha-Kanal für Overlays (nur mit passendem Codec).
+
+### ⚪ Idee: externer Audio-Eingang — Loopback, Line-in, Mikrofon (Wunsch S83)
+
+Heute analysiert LumiViz nur, was der **eigene Player** abspielt. Für Live-
+Einsatz (DJ-Pult, Band, Musik aus einem anderen Programm) braucht es einen
+Eingang von außen. **Stand S83:** angelegt, nicht gebaut —
+`IAudioEngine::createLoopbackStream()` ist deklariert, `BassEngine` findet das
+Loopback-Gerät, bricht dann aber mit „Loopback not implemented" ab
+(`BassEngine.cpp`, braucht **BASSWASAPI**). Für Line-in/Mikrofon gibt es noch
+keinen Pfad (BASS: `BASS_RecordInit`/`BASS_RecordStart`).
+- **Loopback** (WASAPI): „was gerade aus den Lautsprechern kommt" — jedes
+  Programm als Quelle, ohne Kabel.
+- **Aufnahmegerät** (Line-in, Mikrofon, Audio-Interface).
+- Zu klären: Umschalten Player ↔ extern (Einstellung? automatisch?), Latenz
+  und Puffergröße, Wirkung auf **Beat-Erkennung** und die kalibrierten
+  Audio-Werte (MilkdropAudio/FFT sind auf den Player-Pfad abgeglichen, S80),
+  Song-Slot und Host Switcher ohne Songwechsel-Signal (Stille-Erkennung als
+  Ersatz?). Lizenz: BASSWASAPI gehört zur un4seen-Familie wie BASS selbst.
+
 ### ✅ Drop auf die freie Fläche unter der Kette (Befund S80, behoben S80)
 
 Nachgestellt im neuen UI-Test am echten Panel (`test_PaletteUi`): gewöhnliche
@@ -2804,6 +2986,53 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 ## 8. Werkzeug- und Doku-Schulden
 
+- 🟡 **Oberflächentexte englisch — erledigt bis auf die Feld-Tooltips** (S83,
+  Entscheid Patrik a). **Umgesetzt:** ~220 `tr()`-Texte + ~150 sichtbare
+  Nicht-`tr()`-Texte (ⓘ-Referenzseiten, Import-Meldungen ISF/Shadertoy,
+  Groß-Editor-Dialog, Tastenkürzel-Namen, Palette) englisch; „Testaufnahme"
+  → **Camera Clip**, Reiter „Kamera" → „Camera". **Wächter:**
+  `test_NodePresetStore` „Oberflaechentexte sind englisch" prüft alle `tr()`-
+  Texte und die HTML-Referenzseiten unter `src/UI` + `include/UI` gegen
+  `deutsche_woerter.txt` (Kommentare und Log-Meldungen ausgenommen;
+  Gegenprobe S83 bestanden). Nebenfund: die `row()`-Lambda der vier
+  Shader-Referenzen las ihre Texte per `QLatin1String` — Nicht-ASCII (auch die
+  früheren Umlaute) erschien dort als Zeichensalat; mit englischem ASCII-Text
+  erledigt. **Offen:**
+  - **Feld-Tooltips** (`FieldDocs.cpp`, 383 von 803 deutsch, 227 verschiedene
+    Texte) — erzeugt aus den Doxygen-Kommentaren in `EffectChain.hpp` durch
+    `asset/calibration/fields/harvest_field_docs.py`; der Ernter liest daraus
+    auch die Skriptvariablen für die Feld-Sonden (Muster „Parameter-Skript
+    (Strang D): …"). **Entscheid Patrik S83: 1a** — Kommentare englisch +
+    Ernter anpassen; Umsetzung S84 (§7).
+  - Dateiname der Kamera-Clips `testaufnahme_<Datum>.mp4` (sichtbar in der
+    Clip-Liste). **Entscheid Patrik S83: 2a** — neue Clips `camera_clip_…`,
+    vorhandene bleiben; Umsetzung S84 (§7).
+  - Log-Meldungen bleiben deutsch (keine Oberfläche).
+
+  *Bestandsaufnahme (Stand vor der Umsetzung):* **mindestens 239** `tr()`-Texte waren deutsch (Suche über
+  Umlaute + `deutsche_woerter.txt` + UI-Wörter — eine **Untergrenze**, reine
+  Fachwörter wie „Echo-Zoom", „Aussen-Groesse" rutschen durch). Verteilung:
+
+  | Bereich | Texte | Beispiel |
+  |---|---|---|
+  | Ketten-Editor `MultiEffectPanel.cpp` | 196 | — |
+  | · Milkdrop *Parameter* (Sektion 5, inkl. Gestaltung) | 31 | „Startwerte des Presets …", „Stärke (px/Frame)" |
+  | · Video Source | 25 | „Quelle", „Einpassung", „Kamera freigeben" |
+  | · Host-Gruppe / Host Switcher | 17 + 6 | Hinweistexte, Wechsel-Modi |
+  | · Milkdrop-Knoten (Kopf, Sektionen 0–4) | 17 + 33 | „(aus)", „Keine Custom-Shapes im Preset" |
+  | · ISF-Filter / Shadertoy | 16 + 14 | „ISF-Datei importieren…" |
+  | · Baum-Beschriftungen, Dialoge, Rest | ~37 | „Waves (%1 Custom aktiv)", „Presetverweis auf …" |
+  | Einstellungen (Tab Kamera) `SettingsPanel.cpp` | 19 | „Testaufnahme starten", „Geräte neu suchen" |
+  | Shader-Editor-Dialog `EelScriptEditing.hpp` | 12 | „Übernommen — keine Fehler.", Import-Warnungen |
+  | Shadertoy-Browser `ShadertoyBrowserPanel.cpp` | 11 | „Suche läuft …" |
+  | Parameter-Baum `ParameterBaum.hpp` | 1 | „Farbe wählen" |
+
+  Mitzunehmen: **„Testaufnahme" → „Camera Clip"** (Knoten + Einstellungen +
+  Handbuch — Patrik S83: der Video-Source-Knoten ist kein Test-Werkzeug).
+  Danach denkbar: der Wächter aus `test_NodePresetStore` auch über die
+  `tr()`-Texte (dieselbe Wortliste). Werkzeug der Zählung:
+  Scratch-Skript S83, Methode im Session-Report.
+
 - 🟡 **Milkdrop-Variablentabelle unvollständig** (Befund S83, Bestandsaufnahme):
   `ScriptVariables.cpp` listet für den Milkdrop-Node nur einen Teil dessen, was
   `MilkdropVisualizer.cpp` (per_frame-Bindung, etwa Z. 1050–1125) wirklich
@@ -3031,7 +3260,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 1.79.0 | 2026-09-30 | Session 83 — **§4:** Sichttests S82 (Presetverweis, Song-Slot, Host Switcher, Preset as Group) abgenommen; neue Zeile S83. **Preset-Zeile:** Combo behält die Wahl, „(unsaved) – Name" nach echter Änderung (Vergleich vorher/nachher, nur solange sauber), 🗑 zielt auf die Quelle (Entscheid a); Name/Beschreibung zählen nicht. **§7 ✅ Vorlagen für Milkdrop-Elemente und Shader** (Element-Presets, 3D-Template-Listen → nodepresets, Shader-Vorlagen im Groß-Editor mit Kompiliertest). **Schalter „Script active"** am Knoten (E1a, zentral in `renderNode`, 79 Typen per Test mit Gegenprobe). **§6 NEU Block F** mit der Bestandsaufnahme als Eingang (E2b). **§8:** Milkdrop-Variablentabelle unvollständig (neu), ISF-Referenz ✅. **Nachtrag:** Namen englisch (Vorgabe Patrik) — **alle** mitgelieferten Presets (≈ 150), Beispiele (134) und Shader-Vorlagen; Zuordnung alt → neu in `asset/nodepresets/README.md` (ältere Einträge dieser Liste nennen noch die alten Namen), Wächter-Test gegen Umlaute/ß in Dateinamen. Presets für Milkdrop *Code* und *Parameter* inkl. *Old LumiViz Look (pre-S80)*; Feld-Wache im Ladbarkeitstest. Tests 676 |
+| 1.79.0 | 2026-09-30 | Session 83 — **§4:** Sichttests S82 (Presetverweis, Song-Slot, Host Switcher, Preset as Group) abgenommen; neue Zeile S83. **Preset-Zeile:** Combo behält die Wahl, „(unsaved) – Name" nach echter Änderung (Vergleich vorher/nachher, nur solange sauber), 🗑 zielt auf die Quelle (Entscheid a); Name/Beschreibung zählen nicht. **§7 ✅ Vorlagen für Milkdrop-Elemente und Shader** (Element-Presets, 3D-Template-Listen → nodepresets, Shader-Vorlagen im Groß-Editor mit Kompiliertest). **Schalter „Script active"** am Knoten (E1a, zentral in `renderNode`, 79 Typen per Test mit Gegenprobe). **§6 NEU Block F** mit der Bestandsaufnahme als Eingang (E2b). **§8:** Milkdrop-Variablentabelle unvollständig (neu), ISF-Referenz ✅. **§7 NEU (Ideen):** Bild an andere Programme (Spout/NDI — Stand: nicht vorhanden) · externer Audio-Eingang (Loopback angelegt, nicht gebaut; Line-in/Mikrofon fehlt) · MIDI/OSC (nicht vorhanden; Anknüpfung Block F) · Video aufnehmen (App: nur Screenshot; PNG-Folgen nur im AvsStandalone; Qt 6.10 bietet den Weg) · Video Source: nur Felder der gewählten Quelle zeigen. **§7 NEU:** S84-Plan (Drag aus Effect Browser/Playlist, Audio Browser, Timeline-Ausblick; Englisch fortsetzen mit Entscheiden 1a/2a) · später Code-Kommentare englisch · später Sprachwahl (i18n). **§8:** Oberflächentexte englisch (≈ 370 Texte, „Testaufnahme" → „Camera Clip", Wächter über `tr()` + Referenzseiten); offen Feld-Tooltips (FieldDocs, Entscheid) und Clip-Dateiname. Tests 677. **Nachtrag:** Namen englisch (Vorgabe Patrik) — **alle** mitgelieferten Presets (≈ 150), Beispiele (134) und Shader-Vorlagen; Zuordnung alt → neu in `asset/nodepresets/README.md` (ältere Einträge dieser Liste nennen noch die alten Namen), Kommentare, Beschreibungen und Knotennamen darin ebenfalls englisch (74 Kommentar-/Beschreibungszeilen, 7 Knotennamen). **Wächter** gegen eine Liste bekannter deutscher Namen und Wörter (`tests/unit/UnitTests/deutsche_woerter.txt`: 147 alte Namen + 148 Wörter ohne englische Doppelgänger) plus Umlaute — prüft Dateinamen, Code-Kommentare, `description`/`name`; neue deutsche Wörter, die auffallen, kommen in die Liste. Presets für Milkdrop *Code* und *Parameter* inkl. *Old LumiViz Look (pre-S80)*; Feld-Wache im Ladbarkeitstest. Tests 676 |
 | 1.78.0 | 2026-09-29 | Session 82 — **§3 Kalibrierlauf 4090 komplett** (22 × 5 Formate × 2 Saaten, ersetzt die 610M-Tabelle; Kartenvergleich: ps_2-Presets kartenunabhängig, `Beauty` OK, `Neomtwister` näher; Vorbehalt Früh-MAE 0,000 = beide schwarz). Harness `--kerne ccd2` (Affinität, Kontrollmessung: Zahlen gleich, Tctl −3–4 °C). **Preset as Group** (Palette, `.avs`/`.milk`/`.lvfx` als Kopie in eine Host-Gruppe, „Aus Quelle neu laden", Wurzel-Einstellungen bleiben erhalten) — Sichttest in §4. „Import Browser" → **Effect Browser**. **Host Switcher** (Stufe Host-Gruppen des Szenen-Wechslers, §7) + eindeutige Gruppennamen + Songwechsel-Signal an den Renderer; Fix: eingeklappte Container bleiben nach Strukturänderungen zu. **Song-Slot für alle Skript-Knoten** (§6 `onChange`-Slot ✅; Engine-Slot 5, `ChainNode::songCode`, 79 Typen per Test). **Presetverweis** (Host-Gruppe mit `verweis`: nur Pfad gespeichert, Auflösung beim Laden mit Zyklus-Schutz, Palette „Preset Reference…"). Tests 665 |
 | 1.76.0 | 2026-09-29 | Session 80 — **MilkDrop-Treue gemessen statt geschätzt (§3):** Gestaltung (Linear-/Radial-Drift, Weichzeichnen, skriptfähig; „Weicher Sog ↖“ bitgleich zum alten Look); `stratospheric turbulences` → vier Zufallsquellen, `MilkdropRef --zufall-lumiviz`, **Skript-Zufall ns-eel2** (exakt, Standard Original), Gitter-Sonde (+0,98); gelbe Kugeln → Spektrum der Waves → **MilkdropFft/MilkdropAudio** (FFT, AlignWaves, bass/mid/treb exakt gegen den Kern; **Audio Standard Original**; Messreihe mitgelieferte f10 0,087 → 0,055); **🔴 MilkdropRef-PCM-Format seit S63 falsch — behoben**, alle MilkDrop-Referenzzahlen davor unter Vorbehalt. Offen: y-Grundlinie der Custom-Waves (nächste Session). Tests 648. — **✅ §3: blanke Pipeline blendete aus und driftete nach oben links** — Sonde gegen MilkdropRef belegt (Referenz steht, wir 0,5 px/Frame + Weichzeichnen), Ursache Halbtexel-Versatz im Warp-Mesh, entfernt (Entscheid a); Messreihe vorher/nachher gegen dieselben Referenzbilder: Frame 120 Δ −0,007 (320) / −0,0065 (640), 10 besser / 1 schlechter; Sonde als Regressionsprobe `asset/calibration/milkdrop/drift/`. **Sichttest automatisiert:** `test_PaletteUi` (21 UI-Tests offscreen, Palette + echtes Panel mit Host, Screenshots per `LUMIVIZ_UI_SCHNAPPSCHUSS`) und `asset/calibration/sichttest/sichttest_auto.py` (12 Ketten-Stichproben B/D mit Kontaktbögen) — dabei **✅ §7 Drop auf die Leerfläche behoben** (betraf nur Milkdrop-Elemente). NEU §7: Vorlagen für Milkdrop-Elemente/Shader. Editor: `b` als in/out gefärbt wie `r`/`g` (Entscheid a); Mehrfachzuweisung `r = r2 = red;` getestet + Referenzsatz. Prüfprotokoll [Sichttest_Protokoll_S79.md](Sichttest_Protokoll_S79.md). Tests 610/610 |
 | 1.75.0 | 2026-09-27 | Session 79 (Auftrag Patrik: Modulauswahl + Formelfelder) — **Palettenfenster umgesetzt** (nicht-modal; Suche über Name/Originalname/Beschreibung, Chips Herkunft AVS/APE/MilkDrop/LumiViz + Rolle, ★ Favoriten + Zuletzt, Detailzeile mit Formelfeldern, Add/Enter/Doppelklick + Drag & Drop in den Kettenbaum; Palettendaten nach `EffectPalette.{hpp,cpp}` ausgelagert, je Eintrag Rolle/Kurzbeschreibung/Originalname; Test `test_EffectPalette`; Sichttest offen). **Formelfelder Block B:** Farben per Skript als `<feldname>_r/_g/_b` in 16 Modulen (`FarbKopie`, Referenz + Struct-Doku + Tooltips nachgezogen). **Block C:** Farbpaletten der sieben Fraktale per Skript (`colorscale`, `colorcycle`, `colorphase`, Innen-/Hintergrund-/Negativfarbe). **Block E:** Set Render Mode + ISF Filter mit Parameter-Skript (ISF-Regler unter ihrem key); selbst deklarierte Uniforms in Shadertoy/Pixel Filter/Mesh Warp/GPU-Partikel als Skriptvariablen (Entscheid 1a, Shadertoy neu mit Init/Frame/Beat); Host Group `outadjustalpha` (Entscheid 2a); Fix: Set Render Mode schrieb `adjustAlpha` nicht. **Block D:** 43 weitere Felder in 14 Modulen skriptbar (Fraktal-Details, Bump-Tiefe, 3D-Profile, Interferences-Beatziele, GPU-Partikel, Water-Bump-Tropfenort). **Formelfelder:** Inventar aller 84 Module (`visuals/Formelfelder_Inventar.md`); Block A umgesetzt — `distance` (Brightness), `skipfirst` (Custom BPM), `x2`/`y2` (Interleave), `blend` (Timescope, Dot Grid), `edgemode` (Convolution), `p`/`q` (Kleinian), `variation`/`scale` (Flame) gebunden; Variablenreferenz aus der SSOT `ScriptVariables.hpp`, geprüft durch `test_ScriptVariablesGl` (Namens-Sonde in `LuaScriptEngine`). Neu in §7: Palettenfenster, Formelfelder B–F |

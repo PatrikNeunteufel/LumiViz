@@ -20,6 +20,6 @@
         "colorStart": 16755232,
         "colorEnd": 10494976,
         "additive": true,
-        "forceCode": "// leichter Seitenwind, Hoehen ruetteln\nvec2 kraft(vec2 pos, vec2 vel, float alter)\n{\n    return vec2(0.05 * sin(uTime * 0.7 + pos.y * 6.0) + 0.04 * treb, 0.0);\n}\n"
+        "forceCode": "// light crosswind, the highs shake it\nvec2 kraft(vec2 pos, vec2 vel, float alter)\n{\n    return vec2(0.05 * sin(uTime * 0.7 + pos.y * 6.0) + 0.04 * treb, 0.0);\n}\n"
     }
 }

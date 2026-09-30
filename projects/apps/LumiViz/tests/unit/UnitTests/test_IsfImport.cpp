@@ -126,7 +126,7 @@ TEST_CASE("IsfImport: Generator und Uebergang werden ANGENOMMEN, nicht abgelehnt
     REQUIRE(ru.bildInputs.size() == 2);  // zwei Quellen = Uebergang
     CHECK(ru.bildInputs.at(0) == QStringLiteral("startImage"));
     CHECK(ru.bildInputs.at(1) == QStringLiteral("endImage"));
-    CHECK(lumi::isf::sortenName(2).contains(QString::fromUtf8("Übergang")));
+    CHECK(lumi::isf::sortenName(2).contains(QStringLiteral("Transition")));
     // `progress` ist ein gewoehnlicher Regler, kein Sonderfall.
     const bool hatProgress =
         std::any_of(ru.parameter.begin(), ru.parameter.end(),
@@ -148,7 +148,7 @@ TEST_CASE("IsfImport: nur was gar kein ISF ist, wird zurueckgewiesen")
     const auto rk = lumi::isf::importiereIsf(
         QStringLiteral("void main() { gl_FragColor = vec4(1.0); }"));
     CHECK_FALSE(rk.ok);
-    CHECK(rk.error.contains(QStringLiteral("JSON-Kopf")));
+    CHECK(rk.error.contains(QStringLiteral("JSON header")));
 
     // Kopf da, aber kaputtes JSON.
     const auto rj = lumi::isf::importiereIsf(

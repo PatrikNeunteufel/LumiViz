@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.17.0
+> **Version:** 1.18.0
 > **Datum:** 2026-09-30
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -144,25 +144,30 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
 
 ## 8. Einstellungen & Frame-Modus
 
-**Settings-Panel** (Seitentab) mit vier Reitern:
+**Settings-Panel** (Seitentab) mit sechs Reitern:
 
 - **Audio:** Ausgabegerät wählen; Puffergröße (kleiner = weniger Latenz,
   größer = stabiler) und Samplerate.
 - **Performance:** Frame-Modus und Ziel-FPS · **Graphics Card** — welche
-  Grafikkarte LumiViz rendert (Automatisch / High Performance / Power Saving).
+  Grafikkarte LumiViz rendert (Automatic (Windows decides) / High Performance / Power Saving).
   Der Wert landet in der Windows-Grafikeinstellung und greift erst beim
   Prozessstart, deshalb **startet die App bei einer Änderung sofort neu**.
   Darunter zeigt *Active GPU* die tatsächlich benutzte Karte.
-- **Panels:** Startordner des Effect Browsers zurücksetzen — er springt danach in
+- **Panels:** **Effect Browser: Reset Start Folder** (Startordner zurücksetzen) — er springt danach in
   den **Programmordner**, wo der mitgelieferte Ordner `presets/` liegt · Render-Scale-Divisor
-  für AVS-Importe · **Bilder-Suchordner** — wird beim Import durchsucht, wenn
+  für AVS-Importe · **Image Search Folder** (Bilder-Suchordner) — wird beim Import durchsucht, wenn
   neben dem Preset kein Bild für Picture/Texer liegt, und ist der Startordner der
-  Bildauswahl in der Effektkette · **Benutzerdaten-Ordner öffnen** — dort liegen
+  Bildauswahl in der Effektkette · **User Data: Open Folder** (Benutzerdaten-Ordner) — dort liegen
   deine eigenen Knoten-Voreinstellungen (`nodepresets/<typ>/`); der Ordner wird
   beim ersten Öffnen angelegt · **MilkDrop Preset Switch** + **MilkDrop Fade
   Amount** — der App-Standard dafür, was beim MilkDrop-Preset-Wechsel mit dem
   geerbten Bild passiert (Details und die Regeln je Node: §11,
   „Preset-Wechsel: das geerbte Bild").
+- **Editor:** wie **Beautify** im großen Code-Editor formatiert —
+  *Beautify Indent Width* (Einzug), *Spaces around Operators* (nur EEL) und
+  *Max. Blank Lines* (so viele Leerzeilen hintereinander bleiben stehen).
+- **Camera:** Kamera-Clips aufnehmen und verwalten (Gerät, Dauer,
+  *● Record Camera Clip*, Liste der *Camera clips*) — Details in §13.
 - **Hotkeys:** Tastenbelegung je Aktion (siehe §9).
 
 Der **Frame-Modus** (auch über *Settings → Frame Mode* im Menü) bestimmt die
@@ -182,20 +187,20 @@ Bedienung entkoppelt.
 | Kürzel | Aktion |
 |---|---|
 | Ctrl+N | Neues Visualizer-Fenster |
-| F11 | Vollbild ein/aus (Haupt-Visualizer) |
+| F11 | *Fullscreen* ein/aus (Haupt-Visualizer) |
 | Esc | Vollbild verlassen |
 | Ctrl+Z / Ctrl+Y | Parameter-Änderung rückgängig / wiederherstellen |
 | Ctrl+O | *Open Audio…* (derzeit ohne Funktion, siehe §10) |
 | Ctrl+Shift+N | *File → New Effect Chain* — leere Kette als Ausgangspunkt für ein neues Preset (fragt vorher nach) |
-| F1 | Über LumiViz |
+| F1 | *About LumiViz* |
 | Alt+F4 | Beenden |
 
 ### Presets durchblättern
 
 | Kürzel | Aktion |
 |---|---|
-| Bild ab | Nächstes Preset im **aktiven Ordner des Effect Browsers** |
-| Bild auf | Voriges Preset |
+| Bild ab | *Next Preset* im **aktiven Ordner des Effect Browsers** |
+| Bild auf | *Previous Preset* |
 
 `Bild ab` geht in der Liste nach unten, also **vorwärts**.
 
@@ -207,16 +212,19 @@ normal.
 
 ### Musikwiedergabe
 
+In der Hotkey-Liste stehen diese Aktionen unter der Kategorie *Playback*, Vollbild
+und Screenshot unter *View*.
+
 | Kürzel | Aktion |
 |---|---|
-| Leertaste | Wiedergabe / Pause |
-| Ctrl+→ / Ctrl+← | Nächster / voriger Song |
-| Ctrl+↑ / Ctrl+↓ | Lauter / leiser (5 % je Anschlag) |
+| Leertaste | *Play / Pause* |
+| Ctrl+→ / Ctrl+← | *Next Song* / *Previous Song* |
+| Ctrl+↑ / Ctrl+↓ | *Volume Up* / *Volume Down* (5 % je Anschlag) |
 
 Diese Tasten wirken wie die Knöpfe des Player-Panels und funktionieren auch, wenn
 das Panel nicht sichtbar ist.
 
-### Screenshot des Visuals
+### Screenshot of the Visual
 
 `Druck` legt ein Bild **des Visuals** (ohne Panels) ab — in einem Ordner je
 Programmlauf, benannt nach dem Startzeitpunkt:
@@ -232,7 +240,7 @@ Zielordner lässt sich über den Einstellungsschlüssel `screenshot/baseDir`
 verlegen; ohne Eintrag sucht die App den Projekt-Ordner `asset/calibration`.
 
 > Öffnet `Druck` bei Dir das Windows-Snipping-Tool, ist das eine
-> Windows-Einstellung. Dann in *Einstellungen → Hotkeys* eine andere Taste
+> Windows-Einstellung. Dann in *Settings → Hotkeys* eine andere Taste
 > vergeben.
 
 **Im Vollbild** erscheint bei einem Fehler **kein** Meldungsfenster mehr:
@@ -241,8 +249,8 @@ stattdessen wird automatisch ein Screenshot aufgenommen und die Meldung an
 
 ### Eigene Belegung
 
-*Einstellungen → Hotkeys*: jede Aktion hat ein Aufnahmefeld, ein
-*Standard*-Knopf je Zeile und *Alle auf Standard* für die ganze Liste. Eine
+*Settings → Hotkeys*: jede Aktion hat ein Aufnahmefeld, ein
+*Default*-Knopf je Zeile und *All to defaults* für die ganze Liste. Eine
 Taste, die schon vergeben ist, wird **abgelehnt** statt still umgehängt — erst
 die andere Zuweisung freimachen. Die Transporttasten (Leertaste, Ctrl+Pfeile)
 sind für die Musikwiedergabe reserviert und lassen sich nicht an Preset-Aktionen
@@ -309,13 +317,13 @@ Ganz oben im Eigenschafts-Editor steht die Zeile **Preset**. Sie gilt für
   sind z. B. *Oscilloscope Line*, *Spectrum Circle* (Waves) und *Pulse With
   Bass*, *Slow Fade* (Shapes). Nummer und An/Aus des Elements bleiben beim
   Laden, wie sie sind.
-- Auch die Milkdrop-Sektionen **Code** und **Parameter** tragen eine eigene
+- Auch die Milkdrop-Sektionen **Code** und **Parameters** tragen eine eigene
   Zeile. *Code*: kleine per_frame-/per_pixel-Bausteine (*Slow Rotation*,
   *Beat Zoom*, *Ripple (per pixel)* …) — ein Baustein setzt nur die Felder,
-  die er braucht. *Parameter*: Stellungen der Basiswerte, der Gestaltung und
-  der „bisher"-Schalter, z. B. **Original** (Gestaltung aus, alle drei
+  die er braucht. *Parameters*: Stellungen der Basiswerte, der Gruppe *Styling* und
+  der „bisher"-Schalter, z. B. **Original** (*Styling* aus, alle drei
   „bisher"-Schalter auf Original), **Old LumiViz Look (pre-S80)** (weicher Sog
-  nach oben links samt Weichzeichnen und die drei „bisher"-Stellungen — der
+  nach oben links samt *Soften* und die drei „bisher"-Stellungen — der
   Look bis Session 80 in einem Zug), *Soft Pull Up-Left*, *Radial Swirl*,
   *Mirror Echo*, *Modern Rules (IEEE)*.
 - **Namen** der mitgelieferten Presets und Vorlagen sind englisch — wie die
@@ -340,8 +348,8 @@ Ganz oben im Eigenschafts-Editor steht die Zeile **Preset**. Sie gilt für
   vollständige Katalog mit Erklärung je Vorlage steht in
   `asset/nodepresets/README.md`.
 
-Eigene Voreinstellungen liegen im Benutzerdaten-Ordner (*Einstellungen →
-Panels → Benutzerdaten: Open Folder*), mitgelieferte unter
+Eigene Voreinstellungen liegen im Benutzerdaten-Ordner (*Settings →
+Panels → User Data: Open Folder*), mitgelieferte unter
 `asset/nodepresets/`. Wer eine eigene weitergeben will, kopiert die Datei
 dorthin.
 
@@ -405,7 +413,7 @@ Einstellungen (§8).
 
 Ein geladenes `.milk` erscheint als **Milkdrop-Node** mit sechs Sektionen im
 Baum: **Code** (Init/Frame/Point-EEL) · **Waves** · **Shapes** · **Shader**
-(Warp/Comp-HLSL) · **Sprites** · **Parameter** (alle numerischen Basiswerte:
+(Warp/Comp-HLSL) · **Sprites** · **Parameters (base values)** (alle numerischen Basiswerte:
 Decay, Gamma, Echo, fShader-Farbwash, Waveform, Motion, Borders, Motion
 Vectors, Blur).
 
@@ -433,40 +441,40 @@ Preset kann nach Vorgänger A also anders aussehen als nach Vorgänger B oder
 nach einem App-Start — das ist kein Fehler, sondern Original-Verhalten.
 
 Seit Session 66 ist das Verhalten einstellbar. Im Milkdrop-Node (Sektion
-**Parameter**) steht **„Puffer bei Preset-Wechsel"**:
+**Parameters**) steht **„Buffer on preset change"** (Puffer bei Preset-Wechsel):
 
 | Einstellung | Wirkung beim Laden des nächsten Presets |
 |---|---|
-| **App-Einstellung** | folgt dem Standard aus *Einstellungen → Panels* (Vorgabe: Behalten) |
-| **Behalten (Original)** | das Bild bleibt vollständig — Original-MilkDrop-Semantik |
-| **Löschen** | frischer Start: deterministische Rausch-Saat + neu gewürfelte Preset-Zufallswerte (Rotations-/Farbphasen wie bei einer frischen Instanz). Die Audio-Analyse läuft bewusst eingeschwungen weiter (ein Reset ließe laufende Musik auf der leeren Rampe zu extremen Beat-Spitzen explodieren). **Wichtig:** Was die Musik gerade liefert, prägt ein reaktives Preset immer — leiser App-Start und volle Musik ergeben zwangsläufig verschiedene Bilder; das ist Eingabe, kein geerbter Zustand |
-| **Fading (einmaliger Mix)** | Mix **im Moment des Wechsels**: der Regler **Fading-Erbe (%)** bestimmt, wie viel vom alten Bild als Startpunkt überlebt (0 % = Löschen, 100 % = Behalten) — kein zeitlicher Verlauf |
-| **Ausblenden (über Zeit)** | das geerbte Bild **stirbt über die Ausblend-Dauer weg**: das Echo wird jedes Bild zusätzlich gedämpft und nicht nachgespeist; was das neue Preset frisch zeichnet, bleibt. Nach Ablauf ist nur noch das neue Preset zu sehen |
+| **App setting** | folgt dem Standard aus *Settings → Panels* (Vorgabe: *Keep image (original)*) |
+| **Keep (original)** | das Bild bleibt vollständig — Original-MilkDrop-Semantik |
+| **Clear** | frischer Start: deterministische Rausch-Saat + neu gewürfelte Preset-Zufallswerte (Rotations-/Farbphasen wie bei einer frischen Instanz). Die Audio-Analyse läuft bewusst eingeschwungen weiter (ein Reset ließe laufende Musik auf der leeren Rampe zu extremen Beat-Spitzen explodieren). **Wichtig:** Was die Musik gerade liefert, prägt ein reaktives Preset immer — leiser App-Start und volle Musik ergeben zwangsläufig verschiedene Bilder; das ist Eingabe, kein geerbter Zustand |
+| **Fading (one-off mix)** | Mix **im Moment des Wechsels**: der Regler **Fading inheritance (%)** bestimmt, wie viel vom alten Bild als Startpunkt überlebt (0 % = *Clear*, 100 % = *Keep*) — kein zeitlicher Verlauf |
+| **Fade out (over time)** | das geerbte Bild **stirbt über die Ausblend-Dauer (*Fade-out duration*) weg**: das Echo wird jedes Bild zusätzlich gedämpft und nicht nachgespeist; was das neue Preset frisch zeichnet, bleibt. Nach Ablauf ist nur noch das neue Preset zu sehen |
 
-> **„Löschen" ist nicht Schwarz:** Der frische Start ist die Rausch-Saat des
+> **„Clear" ist nicht Schwarz:** Der frische Start ist die Rausch-Saat des
 > Kaltstarts — mit Schwarz blieben „Verstärker"-Presets ohne eigene
 > Energiequelle für immer dunkel. Presets wie *Rock The House* zünden aus der
 > Saat in unter einer Sekunde wieder ein Vollbild; entscheidend ist, dass es
 > **ihr eigenes** Bild ist und nicht die Farben/Formen des Vorgängers trägt.
 >
 > Damit die Saat selbst nicht als Rausch-Blitz zu sehen ist, blendet
-> **„MilkDrop Start Fade-in"** (*Einstellungen → Panels*, Vorgabe: an) das
-> Bild nach jedem frischen Saat-Start (App-Start, Größenwechsel, Löschen)
+> **„MilkDrop Start Fade-in"** (*Settings → Panels*, Vorgabe: an) das
+> Bild nach jedem frischen Saat-Start (App-Start, Größenwechsel, *Clear*)
 > etwa eine halbe Sekunde von Schwarz ein — rein kosmetisch, die Preset-
 > Dynamik und die Saat-Energie bleiben unangetastet.
 
 Die Einstellung gehört zum **Node**, nicht zum Preset — sie überlebt das
 Durchblättern von Presets (Bild auf/ab) und wird mit der Kette gespeichert.
 
-![Milkdrop-Node: Puffer bei Preset-Wechsel](bilder/handbuch/milkdrop_puffer_wechsel.png)
+![Milkdrop-Node: Buffer on preset change](bilder/handbuch/milkdrop_puffer_wechsel.png)
 
-Der App-Standard dazu steht in *Einstellungen → Panels* („MilkDrop Preset
+Der App-Standard dazu steht in *Settings → Panels* („MilkDrop Preset
 Switch" + „MilkDrop Fade Amount" — der Prozentwert ist nur im Fade-Modus
 aktiv):
 
 ![Settings: MilkDrop Preset Switch](bilder/handbuch/settings_milkdrop_wechsel.png)
 
-**Was bei „Behalten" genau erhalten bleibt** — die Erbschaft ist bewusst
+**Was bei „Keep" genau erhalten bleibt** — die Erbschaft ist bewusst
 klein:
 
 - **Das Bild im Feedback-Puffer** (beide Hälften des Doppelpuffers). Es ist
@@ -494,33 +502,33 @@ gibt es kein Erbe, unabhängig vom Schalter. Und der Prüfstand-Schalter
 `LUMIVIZ_MILKDROP_NOSEED` macht die „frische Saat" schwarz statt verrauscht
 (Kalibrier-Werkzeug, kein App-Zustand).
 
-### Regelwerk: Legacy / Modern / Benutzerdefiniert
+### Regelwerk (Rule set): Legacy / Modern / Custom
 
-Jeder Milkdrop-Node deklariert in der **Parameter**-Sektion seine Betriebsart
-(**Regelwerk**, Session 65):
+Jeder Milkdrop-Node deklariert in der **Parameters**-Sektion seine Betriebsart
+(**Rule set**, Session 65):
 
-- **Legacy (original-treu)** — Standard bei jedem Import: alle vier
+- **Legacy (faithful to original)** — Standard bei jedem Import: alle vier
   D3D9-Emulationen sind aktiv, das Bild entspricht dem kalibrierten
   Original-Verhalten.
 - **Modern (IEEE)** — reines IEEE/GL-Rechnen ohne die Legacy-Krücken; für
   eigene, neue Presets.
-- **Benutzerdefiniert** — die vier Einzelschalter zählen:
-  D3D9-Divisionsvertrag (0/0 = 0), UNORM-Trunkierung im Feedback-Pfad,
-  q-Garbage-Epsilon für Presets ohne `per_frame_init`, UV-Sanitize
+- **Custom** — die vier Einzelschalter zählen:
+  **D3D9 division contract** (0/0 = 0), **UNORM8 truncation** im Feedback-Pfad,
+  **q garbage epsilon** für Presets ohne `per_frame_init`, **UV sanitize**
   (NaN→0 + Riesen-UV-Wrap). Jeder Tooltip nennt den Beweis-Fall.
 
-Dazu je Shader-Stufe ein **PS-Version-Override** (Auto/PS2/PS3/„MD1
-erzwingen" — Letzteres ignoriert den Custom-Shader-Text und rendert den
-exakten MD1-Pfad).
+Dazu je Shader-Stufe ein **PS-Version-Override** (**PS version Warp** /
+**PS version Comp**: Auto (.milk)/PS2/PS3/„Force MD1" — Letzteres ignoriert
+den Custom-Shader-Text und rendert den exakten MD1-Pfad).
 
-**Skript-Zufall** (Session 80): wie `rand()` im Code des Presets würfelt.
+**Script random** (Skript-Zufall, Session 80): wie `rand()` im Code des Presets würfelt.
 
 - **Original (ns-eel2)** — **Standard**, auch für ältere gespeicherte
   Ketten. Wie MilkDrop 2: eine Kommazahl zwischen 0 und x, aus einem
   Generator mit festem Startwert. Presets, die im Init würfeln (z. B.
   *martin – stratospheric turbulences*), zeigen damit dieselbe Szene wie das
   Original; Zufall je Gitterpunkt wirkt nachweislich wie im Original.
-- **LumiViz (bisher)** — ganze Zahlen, `rand(1)` ist dann immer 0. Holt den
+- **LumiViz (previous)** — ganze Zahlen, `rand(1)` ist dann immer 0. Holt den
   Look zurück, den MilkDrop-Presets in LumiViz bis Session 80 hatten.
 
 **Audio** (Session 80): woraus `bass`/`mid`/`treb` (samt `_att`) und die Werte
@@ -531,10 +539,10 @@ der Custom-Waves (`value1`/`value2`) entstehen.
   eigenes FFT (mit Hüllkurve und Entzerrung), die Welle am Vorframe
   ausgerichtet, daraus die Bandenergien. Gegen den Original-Kern geprüft
   (identische Werte).
-- **LumiViz (bisher)** — das Spektrum der App mit geschätzten Faktoren; der
+- **LumiViz (previous)** — das Spektrum der App mit geschätzten Faktoren; der
   Klang, den MilkDrop-Presets in LumiViz bis Session 80 hatten.
 
-**Seitenverhältnis (Waves)** (Session 81): wie die Custom-Waves ihre
+**Aspect ratio (waves)** (Seitenverhältnis, Session 81): wie die Custom-Waves ihre
 x/y-Werte aufs Bild legen.
 
 - **Original (MilkDrop)** — **Standard**, auch für ältere gespeicherte
@@ -542,7 +550,7 @@ x/y-Werte aufs Bild legen.
   Seitenverhältnis gestreckt, um die Bildmitte (4:3 um 4/3, 16:9 um 16/9).
   Ein Wert `y = 0.1` liegt dann schon unter dem unteren Rand. So haben die
   Autoren ihre Presets gesehen; auf quadratischem Bild ändert sich nichts.
-- **LumiViz (bisher)** — x/y sind Anteile des Bildes (0 = linker/unterer,
+- **LumiViz (previous)** — x/y sind Anteile des Bildes (0 = linker/unterer,
   1 = rechter/oberer Rand), die Kurve bleibt ungestreckt im Bild. Der Look
   von Session 39 bis 80.
 
@@ -551,40 +559,40 @@ x/y-Werte aufs Bild legen.
 Wenn LumiViz einem Original-Verhalten näherkommt und sich das Bild dadurch
 sichtbar ändert, wird das neue Verhalten **Standard** — das alte bleibt über
 einen Schalter erreichbar, damit eigene Ketten ihren gewohnten Look behalten
-können. Alle diese Schalter im Überblick (Milkdrop-Node, **Parameter**-Sektion):
+können. Alle diese Schalter im Überblick (Milkdrop-Node, **Parameters**-Sektion):
 
 | Schalter | Standard | „Bisher" holt zurück | Seit |
 |---|---|---|---|
-| **Skript-Zufall** | Original (ns-eel2) | LumiViz (bisher): ganze Zahlen aus `rand()` | Session 80 |
-| **Audio** | Original (MilkDrop) | LumiViz (bisher): App-Spektrum mit geschätzten Faktoren | Session 80 |
-| **Seitenverhältnis (Waves)** | Original (MilkDrop) | LumiViz (bisher): Custom-Waves ungestreckt, bildfüllend | Session 81 |
-| **Gestaltung → Voreinstellung „Weicher Sog ↖"** | aus | den leichten Sog nach oben links samt Weichzeichnen, den jedes MilkDrop-Preset bis Session 80 hatte (damals ein Versatzfehler, heute ein Gestaltungsmittel) | Session 80 |
+| **Script random** | Original (ns-eel2) | LumiViz (previous): ganze Zahlen aus `rand()` | Session 80 |
+| **Audio** | Original (MilkDrop) | LumiViz (previous): App-Spektrum mit geschätzten Faktoren | Session 80 |
+| **Aspect ratio (waves)** | Original (MilkDrop) | LumiViz (previous): Custom-Waves ungestreckt, bildfüllend | Session 81 |
+| **Styling → Setting „Soft pull ↖"** | aus | den leichten Sog nach oben links samt Weichzeichnen, den jedes MilkDrop-Preset bis Session 80 hatte (damals ein Versatzfehler, heute ein Gestaltungsmittel) | Session 80 |
 
-**Nicht verwechseln:** Das **Regelwerk „Legacy"** oben ist *kein* „bisher"-
+**Nicht verwechseln:** Das **Regelwerk** (*Rule set*) **„Legacy"** oben ist *kein* „bisher"-
 Schalter — es ist die original-treue Betriebsart (D3D9-Verhalten nachgebildet)
 und ohnehin Standard.
 
-### Gestaltung: Drift und Weichzeichnen (kein Original-Verhalten)
+### Styling: Drift und Weichzeichnen (kein Original-Verhalten)
 
-In der **Parameter**-Sektion eines Milkdrop-Nodes, Gruppe **„Gestaltung"**
-(Session 80). Nichts davon kennt das Original — es sind Gestaltungsmittel.
+In der **Parameters**-Sektion eines Milkdrop-Nodes, Gruppe **„Styling (not
+original behaviour)"** (Gestaltung, Session 80). Nichts davon kennt das Original — es sind Gestaltungsmittel.
 Bei jedem Import und jedem neuen Node steht alles **aus**. Jedes Werkzeug hat
 einen eigenen Schalter; ausgeschaltet bleiben seine Werte stehen.
 
 | Werkzeug | Regler | Wirkung |
 |---|---|---|
-| **Linear-Drift** | Stärke 0 … 4 px/Frame · Richtung 0 … 360° (0 = rechts, 90 = oben, 180 = links, 270 = unten) | Das ganze Bild wandert in eine Richtung, Nachbilder ziehen Schlieren. Bleibt **scharf**: Bruchteile werden aufgespart (0,5 px = jeden zweiten Frame ein ganzes Pixel) |
-| **Radial-Drift** | Stärke 0 … 4 px/Frame · Winkel 0 … 360° · Zentrum X/Y 0 … 1 (0 = links bzw. unten) | Jeder Punkt wandert **gleich schnell**, die Richtung hängt von seiner Lage zum Zentrum ab: **0° nach außen**, **90° Wirbel gegen den Uhrzeigersinn**, **180° Sog nach innen**, **270° Wirbel im Uhrzeigersinn**, dazwischen Spiralen. Anders als `zoom`/`rot` (am Rand schneller) überall gleich schnell. Zeichnet immer etwas weich |
-| **Weichzeichnen** | Stärke 0 … 1 | Jeder Frame wird mit dem Nachbarpixel gemischt, ohne das Bild zu verschieben. Bei `decay = 1` wirkt das wie ein langsames Ausblenden |
+| **Linear drift** | Strength 0 … 4 px/Frame · Direction 0 … 360° (0 = rechts, 90 = oben, 180 = links, 270 = unten) | Das ganze Bild wandert in eine Richtung, Nachbilder ziehen Schlieren. Bleibt **scharf**: Bruchteile werden aufgespart (0,5 px = jeden zweiten Frame ein ganzes Pixel) |
+| **Radial drift** | Strength 0 … 4 px/Frame · Angle 0 … 360° · Centre X/Y 0 … 1 (0 = links bzw. unten) | Jeder Punkt wandert **gleich schnell**, die Richtung hängt von seiner Lage zum Zentrum ab: **0° nach außen**, **90° Wirbel gegen den Uhrzeigersinn**, **180° Sog nach innen**, **270° Wirbel im Uhrzeigersinn**, dazwischen Spiralen. Anders als `zoom`/`rot` (am Rand schneller) überall gleich schnell. Zeichnet immer etwas weich |
+| **Soften** (Weichzeichnen) | Strength 0 … 1 | Jeder Frame wird mit dem Nachbarpixel gemischt, ohne das Bild zu verschieben. Bei `decay = 1` wirkt das wie ein langsames Ausblenden |
 
 1 px/Frame sind bei 60 fps 60 Pixel je Sekunde. Linear und radial lassen sich
 kombinieren (z. B. Wirbel, der langsam nach oben abdriftet).
 
-Zwei Knöpfe setzen bekannte Stellungen:
+Zwei Knöpfe in der Zeile **Setting** setzen bekannte Stellungen:
 
 - **Original** — alle drei aus: das Bild steht still und scharf, wie im
   Original-MilkDrop.
-- **Weicher Sog ↖** — Linear-Drift 0,7071 px bei 135° plus Weichzeichnen 1:
+- **Soft pull ↖** (weicher Sog) — Linear drift 0,7071 px bei 135° plus Soften 1:
   das Bild zieht weich nach oben links weg. Das ist der Look, den LumiViz **bis
   Session 80** bei jedem Milkdrop-Preset hatte — damals ungewollt (ein
   Portierungsfehler, der den D3D9-Halbpixel-Ausgleich unter OpenGL doppelt
@@ -598,10 +606,10 @@ sie ändern (wie `zoom` oder `rot`). **Winkel dort in Bogenmaß** (wie `rot`,
 
 | Variable | Bedeutung |
 |---|---|
-| `drift_lin`, `drift_dir` | Linear-Drift: Stärke (px/Frame), Richtung (rad, 0 = rechts, π/2 = oben) |
-| `drift_rad`, `drift_ang` | Radial-Drift: Stärke, Winkel (rad, 0 = außen, π/2 = Wirbel ↺, π = innen) |
-| `drift_cx`, `drift_cy` | Zentrum der Radial-Drift (0 … 1, y: 0 = unten) |
-| `weich` | Weichzeichnen (0 … 1) |
+| `drift_lin`, `drift_dir` | Linear drift: Strength (px/Frame), Direction (rad, 0 = rechts, π/2 = oben) |
+| `drift_rad`, `drift_ang` | Radial drift: Strength, Angle (rad, 0 = außen, π/2 = Wirbel ↺, π = innen) |
+| `drift_cx`, `drift_cy` | Centre X/Y der Radial drift (0 … 1, y: 0 = unten) |
+| `weich` | Soften (0 … 1) |
 
 Wirksam ist ein Wert nur, solange der Schalter seines Werkzeugs an ist. Im
 Skript sind auch negative Stärken erlaubt (bis ±8; negativ = Gegenrichtung).
@@ -626,23 +634,23 @@ Gruppen dürfen gleichzeitig aktiv sein und mischen sich über ihren
 **Blend Out**; eine Gruppe in einer Gruppe ist nicht erlaubt.
 
 - **Crossfade:** Das Auge einer Gruppe blendet sie **weich** ein/aus
-  (Dauer: „Crossfade-Dauer (s)" — gilt synchron für alle Gruppen;
-  **Ein-/Ausgangskurve** je Gruppe: Linear, S-Kurve, Ease-In, Ease-Out,
-  Exponentiell). Beide Visuals laufen während des Übergangs live weiter.
-- **„Zu dieser Gruppe wechseln (Crossfade)"** im Gruppen-Editor blendet die
+  (Dauer: „Crossfade duration (s)" — gilt synchron für alle Gruppen;
+  **Fade-in curve** / **Fade-out curve** je Gruppe: Linear, S-curve (smooth),
+  Ease-In, Ease-Out, Exponential). Beide Visuals laufen während des Übergangs live weiter.
+- **„Switch to this group (crossfade)"** im Gruppen-Editor blendet die
   gewählte Gruppe ein und alle anderen aus — der schnelle Preset-Wechsel.
 - **Ein fertiges Preset als Gruppe:** In der Effekt-Palette legt
   **„Preset as Group…"** eine neue Host-Gruppe an und fragt nach der Datei —
   `.avs`, `.milk` oder `.lvfx`. Der Inhalt ist eine **Kopie**: du kannst ihn
   im Baum frei ändern, die Datei bleibt unberührt. Der Gruppen-Editor zeigt
-  die **Quelle**; **„Aus Quelle neu laden"** liest die Datei erneut ein
+  die Quelle (**Source:**); **„Reload from source"** liest die Datei erneut ein
   (ersetzt den Inhalt, fragt vorher). Grenzen: Beat/BPM, Multi-Delay und
   Render Scale gelten für die ganze Kette, nicht je Gruppe — ein AVS-Preset
   bekommt in der Gruppe deshalb **keinen** eigenen Render-Scale-Knoten; eine
   `.lvfx` mit eigenen Host-Gruppen läuft in der Gruppe als Effect List.
   Hatte die Wurzel des Presets eigene Einstellungen (etwa AVS „clear every
   frame"), bleibt sie als eine Effect List in der Gruppe erhalten.
-- **„Preset in diese Gruppe laden (.avs, .milk, .lvfx)…"** macht dasselbe
+- **„Load preset into this group (.avs, .milk, .lvfx)..."** macht dasselbe
   für eine bestehende Gruppe (ersetzt deren Inhalt).
 - **Presetverweis statt Kopie:** **„Preset Reference…"** in der Palette legt
   eine Gruppe an, die nur **auf die Datei verweist**. Gespeichert wird nur
@@ -652,8 +660,9 @@ Gruppen dürfen gleichzeitig aktiv sein und mischen sich über ihren
   daran gingen beim Speichern verloren); alle Gruppen-Einstellungen (Blend,
   Crossfade, Kurven, Skripte) gelten wie gewohnt, und der **Host Switcher**
   schaltet Verweise wie jede andere Gruppe. Im Editor: Pfad eintippen oder
-  **Öffnen…**, **Neu laden** liest die Datei erneut. Ein relativer Pfad gilt
-  ab dem Ordner der Kettendatei. Der Schalter **„Presetverweis"** wandelt
+  **Open…**, **Reload** liest die Datei erneut. Ein relativer Pfad gilt
+  ab dem Ordner der Kettendatei. Der Schalter **„Preset reference (save the
+  path only)"** wandelt
   eine kopierte Gruppe in einen Verweis um (Inhalt wird neu gelesen) und
   zurück (der geladene Inhalt bleibt als Kopie). Verweist eine Datei über
   Umwege auf sich selbst, bricht das Laden dort mit einer Meldung ab.
@@ -669,15 +678,15 @@ Der **Host Switcher** (Palette, *Structure & Control*) schaltet zwischen
 Host-Gruppen um; der Übergang ist der Crossfade der Gruppen. Er gehört auf
 die oberste Ebene der Kette.
 
-- **Gruppen:** Aus der Auswahl die Gruppen des geladenen Presets
-  **hinzufügen**, mit ▲/▼ **umsortieren**, **entfernen**. Die Nummer vor dem
+- **Groups:** Aus der Auswahl die Gruppen des geladenen Presets
+  hinzufügen (**Add**), mit ▲/▼ umsortieren, entfernen (**Remove**). Die Nummer vor dem
   Namen ist der **Index** (1, 2, …), den Skripte benutzen. Eine Gruppe, die
-  es in der Kette nicht mehr gibt, ist als „fehlt" markiert. *Läuft* zeigt
-  die gerade aktive Gruppe.
-- **Startgruppe:** die Gruppe beim Laden.
-- **Wechsel nach (s):** nach so vielen Sekunden zur nächsten Gruppe (0 = aus).
-- **Bei Songwechsel weiter:** beim nächsten Titel zur nächsten Gruppe.
-- **Reihenfolge:** nächste Gruppe nach Liste oder **zufällig** (nie dieselbe).
+  es in der Kette nicht mehr gibt, ist als „(missing in the chain)" markiert.
+  *Running* zeigt die gerade aktive Gruppe.
+- **Start group:** die Gruppe beim Laden.
+- **Switch after (s):** nach so vielen Sekunden zur nächsten Gruppe (0 = aus).
+- **Next on song change:** beim nächsten Titel zur nächsten Gruppe.
+- **Order:** nächste Gruppe nach Liste (*List order*) oder zufällig (*Random*, nie dieselbe).
 - **Skripte** Init / Frame / Beat / **Song** (läuft einmal bei jedem
   Songwechsel). Lesen: `index`, `count`, `seconds` und `beatcount` (beide
   **0 direkt nach einem Wechsel** — so erkennt der Frame-Slot, dass gerade
@@ -688,7 +697,7 @@ die oberste Ebene der Kette.
 - **Gespeichert wird, was du eingestellt hast:** Der Switcher schaltet nur
   zur Laufzeit; die Augen der Gruppen in der Datei bleiben unverändert.
   Solange ein Switcher eine Gruppe führt, entscheidet er — ihr Auge und
-  „Zu dieser Gruppe wechseln" wirken erst wieder, wenn der Switcher aus ist
+  „Switch to this group" wirken erst wieder, wenn der Switcher aus ist
   (sein Auge) oder die Gruppe nicht in seiner Liste steht.
 - **Speichern:** Ketten mit Host-Gruppe(n) werden automatisch als
   **`.lvfx2`** gespeichert, flache Ketten bleiben `.lvfx`; laden kann die
@@ -710,23 +719,23 @@ im Image-Pass und in jedem Buffer-Pass getrennt.
 
 | Quelle | Was ankommt | Wofür |
 |---|---|---|
-| **Nichts** | schwarz | Kanal bewusst leer lassen |
+| **None** | schwarz | Kanal bewusst leer lassen |
 | **Buffer A–D** | Ausgang des jeweiligen Puffers | Multipass wie auf shadertoy.com. Eine Referenz auf sich selbst oder einen **späteren** Puffer liest das **Vorframe** (Feedback), eine auf einen früheren das frische Bild dieses Frames. |
 | **Audio** | 512×2-Textur im Shadertoy-Layout (Zeile 0 = Spektrum, Zeile 1 = Waveform) | alles Audioreaktive — dazu gibt es `bass`/`mid`/`treb`/`vol`/`beat` auch als einfache Zahlen |
-| **Ketten-Eingang** *(neu, S72)* | das Bild, das dieser Knoten von der Kette vorfindet | **Shadertoy-Bildfilter laufen damit direkt.** Sehr viele Shader auf shadertoy.com erwarten an `iChannel0` ein Bild und verzerren/färben es — ohne diese Quelle blieb das schwarz. Beispiel: einen Blur-/Glitch-Shader hinter einen Superscope hängen. |
-| **AVS-Buffer 1–8** *(neu, S72)* | der Inhalt eines „Buffer Save"-Slots | ein **eingefrorenes** Bild als Textur weiterverwenden: irgendwo in der Kette mit „Buffer Save" in Slot 3 schreiben, hier Slot 3 lesen. Der Stand ist der **beim Lauf dieses Knotens** — die Reihenfolge in der Kette zählt also, genau wie bei Buffer Save selbst. Ein nie beschriebener Slot ist schwarz. |
+| **Chain input** (Ketten-Eingang) *(neu, S72)* | das Bild, das dieser Knoten von der Kette vorfindet | **Shadertoy-Bildfilter laufen damit direkt.** Sehr viele Shader auf shadertoy.com erwarten an `iChannel0` ein Bild und verzerren/färben es — ohne diese Quelle blieb das schwarz. Beispiel: einen Blur-/Glitch-Shader hinter einen Superscope hängen. |
+| **AVS buffer 1–8** *(neu, S72)* | der Inhalt eines „Buffer Save"-Slots | ein **eingefrorenes** Bild als Textur weiterverwenden: irgendwo in der Kette mit „Buffer Save" in Slot 3 schreiben, hier Slot 3 lesen. Der Stand ist der **beim Lauf dieses Knotens** — die Reihenfolge in der Kette zählt also, genau wie bei Buffer Save selbst. Ein nie beschriebener Slot ist schwarz. |
 
 In Host-Gruppen greifen die AVS-Buffer automatisch auf die Puffer **der
 eigenen Gruppe** zu — dieselbe Trennung wie bei Buffer Save.
 
-- **Blend:** Ersetzen, Additiv oder 50:50 mit dem Ketten-Bild darunter.
-- **Fehler:** Kompilierfehler zeigen die Zeilennummern **deines** Codes; der
+- **Blend:** Replace, Additive oder 50/50 mit dem Ketten-Bild darunter.
+- **Fehler:** Kompilierfehler (**⚠ Compile error**) zeigen die Zeilennummern **deines** Codes; der
   Knoten reicht das Bild solange unverändert durch.
 - **Editor-Komfort:** Groß-Editor und ⓘ-Referenz (Uniforms, Audio-Layout,
   Buffer) an jedem GLSL-Feld.
 
-**Import von shadertoy.com:** Im Knoten-Editor eine Shadertoy-URL oder -ID
-eintragen und **Importieren** drücken (Netzzugriff nur auf Knopfdruck; dafür
+**Import von shadertoy.com:** Im Knoten-Editor unter **Shadertoy URL / ID** eine
+Shadertoy-URL oder -ID eintragen und den Import-Knopf **⤓** drücken (Netzzugriff nur auf Knopfdruck; dafür
 ist ein Shadertoy-**API-Key** in den Einstellungen nötig — die API liefert
 nur Shader der Sichtbarkeit „public + api"). Der **Shadertoy-Browser**
 (Panel) sucht mit Stichwort und Sortierung, zeigt Thumbnails, und ein
@@ -740,49 +749,55 @@ fertige Ketten unter `asset/effectchain/shadertoys/` — jeder mit einem
 
 ## 13. Video & Kamera als Quelle
 
-Seit Session 70 gibt es den Ketten-Knoten **„Video/Kamera (Quelle)"**
+Seit Session 70 gibt es den Ketten-Knoten **„Video/Camera (Source)"**
 (Palette, Rubrik „Scopes & Sources"): er zeichnet Videobilder auf das
 Ketten-Bild — als Startpunkt einer Kette oder als Ebene mitten drin.
 
-**Drei Quellen** (Umschalter im Knoten):
+**Drei Quellen** (Umschalter **Source** im Knoten):
 
-- **Datei** — MP4, MKV, WebM, MOV, WMV, AVI (über das FFmpeg-Backend von
-  Qt Multimedia). Der Pfad bleibt im Preset stehen; Videos werden **nicht**
+- **File** — MP4, MKV, WebM, MOV, WMV, AVI (über das FFmpeg-Backend von
+  Qt Multimedia); Feld **Video file** bzw. Knopf **Choose video file…**.
+  Der Pfad bleibt im Preset stehen; Videos werden **nicht**
   eingebettet. Relative Pfade werden beim Laden gegen den Preset-Ordner
   aufgelöst.
-- **Kamera (live)** — Gerät aus der Liste wählen. **Eine Kamera startet nie
-  von selbst:** erst der Knopf „Kamera freigeben (dieser App-Lauf)" schaltet
+- **Camera (live)** — Gerät unter **Camera** wählen. **Eine Kamera startet nie
+  von selbst:** erst der Knopf „Allow camera (this app run)" schaltet
   sie frei (dann fragt Windows ggf. nach der Berechtigung). Beim Laden eines
-  Presets mit Kamera-Quelle fragt die App einmal per Dialog, ob sie freigeben
-  soll — ohne Freigabe bleibt der Knoten schwarz.
-- **Testaufnahme** — ein kurzer Kamera-Clip aus den Einstellungen (s. u.),
-  der wie eine Datei abgespielt wird: der reproduzierbare Kamera-Ersatz,
-  auch als Ausweich, wenn gerade keine Kamera angeschlossen ist.
+  Presets mit Kamera-Quelle fragt die App einmal per Dialog
+  („Camera source in preset"), ob sie freigeben soll — ohne Freigabe bleibt
+  der Knoten schwarz.
+- **Camera Clip** — ein kurzer, aufgezeichneter Kamera-Clip aus den
+  Einstellungen (s. u.), der wie eine Datei abgespielt wird: eine
+  reproduzierbare Kamera-Quelle — auch dann nutzbar, wenn gerade keine
+  Kamera angeschlossen ist.
 
 **Abspielverhalten:**
 
-- **Echtzeit-Streaming** (Schalter): an = die Datei streamt uhrgetrieben
+- **Real-time streaming** (Schalter): an = die Datei streamt uhrgetrieben
   (beliebig lange Videos, wenig Speicher); aus = **Frame-Schritt** — die
   Datei wird einmal komplett dekodiert und läuft dann deterministisch mit
   der Sim-Uhr (kurze Clips; zwei Läufe sind bit-identisch).
-- **Tempo** (0,05–20×), **Schleife** (aus = letztes Bild halten),
-  **Deckkraft** und **Blend** (Ersetzen/Additiv/50:50).
-- **Einpassung:** Strecken · Einpassen (Balken zeigen das Ketten-Bild
-  darunter) · Füllen (beschneiden).
+- **Speed** (0,05–20×), **Loop** (aus = letztes Bild halten),
+  **Opacity** und **Blend** (Replace/Additive/50/50).
+- **Fit** (Einpassung): Stretch · Fit (letterbox) (Balken zeigen das
+  Ketten-Bild darunter) · Fill (crop).
 - **Parameter-Skripte** `init`/`frame`/`beat` können `speed` und `opacity`
   audio-reaktiv steuern (`bass`, `mid`, `treb`, `vol`, `beat`).
 
-**Testaufnahmen (Einstellungen → Kamera):** Gerät wählen, Dauer einstellen,
-**„● Testaufnahme starten"** — der Clip landet benutzerlokal (nicht im
-Projekt) und erscheint danach im Knoten unter Quelle „Testaufnahme". Der
-Aufnahme-Klick erteilt zugleich die Kamera-Freigabe des App-Laufs.
+**Camera Clips (Settings → Camera):** Gerät wählen (**Camera**, ggf.
+**Rescan Devices**), **Duration** einstellen, **„● Record Camera Clip"** —
+der Clip landet benutzerlokal (nicht im Projekt) und erscheint danach im
+Knoten unter Source „Camera Clip". Der Aufnahme-Klick erteilt zugleich die
+Kamera-Freigabe des App-Laufs. Die Liste **Camera clips** zeigt die
+vorhandenen Clips; **Delete Selected Clip** löscht einen, **Open Folder**
+öffnet den Ordner.
 
 ---
 
 ## 14. Stilfilter (Pixel Filter)
 
 Seit Session 70 gibt es den Ketten-Knoten **„Pixel Filter (GLSL)"**
-(Palette, Rubrik „GPU-Module"): ein frei skriptbarer Stilfilter, der je
+(Palette, Rubrik „GPU Modules"): ein frei skriptbarer Stilfilter, der je
 Pixel über das Ketten-Bild läuft — und damit auf **jede** Quelle wirkt:
 Video, Kamera, Scopes, MilkDrop, Shadertoy.
 
@@ -803,7 +818,7 @@ Video, Kamera, Scopes, MilkDrop, Shadertoy.
   umsortieren, ein-/ausschalten und gruppieren wie jeden anderen Knoten.
   Ein Knoten ist genau EIN Render-Pass; Looks mit echtem Multipass
   (Blur-Pyramiden) baut man im Shadertoy-Knoten mit Buffer A–D.
-- **Mix-Regler:** blendet zwischen Original und Filter (per Skript
+- **Regler Mix:** blendet zwischen Original und Filter (per Skript
   `mixamount` auch audio-gesteuert — z. B. Comic nur auf dem Beat).
 - **Klassiker-Kombi:** Video-/Kamera-Quelle (§13) + *Take On Me Comic* =
   das Musikvideo-Gefühl live; Demo: `asset/examples/pixelFilter -
@@ -825,9 +840,10 @@ Der Groß-Editor (⤢) hat an allen Shader-Feldern **„Import…"** und
 - **Warnung bei falschem Vertrag:** Die Shader-Sorten sind nicht
   austauschbar — ein Stilfilter erwartet `farbe(uv, src)`, ein Shadertoy
   `mainImage(...)`, ein Mesh-Warp `warp(uv)`. Lädst du versehentlich das
-  Falsche, sagt LumiViz das im Klartext und nennt den zuständigen Knoten,
-  statt dich in einen unverständlichen Shader-Fehler laufen zu lassen. Laden
-  kannst du trotzdem — etwa wenn du nur einzelne Hilfsfunktionen übernehmen
+  Falsche, sagt LumiViz das im Klartext (Dialog **„Different Shader
+  Contract"**) und nennt den zuständigen Knoten, statt dich in einen
+  unverständlichen Shader-Fehler laufen zu lassen. Laden kannst du trotzdem
+  (**Load Anyway**) — etwa wenn du nur einzelne Hilfsfunktionen übernehmen
   willst.
 - **Fremde Shader:** Wer Filter aus dem Netz übernimmt (Shadertoy, ISF &
   Co.), sollte die **Lizenz des jeweiligen Shaders** beachten. Jeder Import
@@ -851,7 +867,7 @@ Oben im Groß-Editor (⤢) jedes Shader-Feldes steht **Template:**. Die Auswahl
 - **Save as template…** legt den Editor-Inhalt als eigene Vorlage ab
   (in der Liste mit `*`).
 - Die ISF-Vorlagen sind **Generatoren ohne Bildquelle**: Bildquellen und
-  Regler eines ISF-Shaders kommen über „ISF-Datei importieren…" in den
+  Regler eines ISF-Shaders kommen über „Import ISF file…" in den
   Knoten, eine Vorlage ersetzt nur den Code.
 
 Mitgelieferte Vorlagen liegen unter `asset/shadertemplates/`, eigene im
@@ -892,6 +908,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.18.0 | 2026-09-30 | Session 83. Zitierte Oberflächen-Beschriftungen auf die englische Oberfläche gezogen (§8 Einstellungen/Kamera, §9 Tastenkürzel, §11 Milkdrop/Host-Gruppen/Host Switcher, §12–§14); „Testaufnahme" heißt **Camera Clip** |
 | 1.17.0 | 2026-09-30 | Session 83. Namen **aller** mitgelieferten Presets, Beispiele und Vorlagen englisch (§11, §14); NEU Presets für die Milkdrop-Sektionen **Code** und **Parameter** (u. a. *Original*, *Old LumiViz Look (pre-S80)*). §11 Voreinstellungen: Combo behält den geladenen Namen, **„(unsaved) – Name"** nach einer Änderung, **(none)** ohne Voreinstellung, 🗑 zielt auf die Quelle; NEU Voreinstellungen je **Milkdrop-Element** (Wave/Shape/Sprite); Template-Listen von SuperScope 3D/3D Camera sind jetzt Voreinstellungen. §11 NEU Schalter **Script active**. §14 NEU **Vorlagen im großen Editor** (Leer + einfache Vorlagen je Shader-Feld, eigene speichern) |
 | 1.16.0 | 2026-09-29 | Session 82. §11 Host-Gruppen: NEU **Presetverweis** („Preset Reference…", nur Pfad gespeichert, Inhalt beim Laden frisch; Schalter Kopie ↔ Verweis; vom Host Switcher schaltbar) |
 | 1.15.0 | 2026-09-29 | Session 82. §11 „Werte per Formel steuern": NEU **Song-Feld** in jedem Knoten mit Frame-Feld (einmal je Songwechsel, vor Frame) |

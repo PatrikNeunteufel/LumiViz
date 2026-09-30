@@ -9,13 +9,13 @@
         "children": [
             {
                 "type": "fadeout",
-                "name": "Nachleuchten",
+                "name": "Afterglow",
                 "fadeLen": 6
             },
             {
                 "type": "superScope",
-                "name": "Waveform-Band",
-                "description": "Waveform quer uebers Bild - der Swell-Warp macht die Spuren wellig.",
+                "name": "Waveform Band",
+                "description": "Waveform across the image - the Swell warp makes the trails wavy.",
                 "initCode": "n=400;",
                 "pointCode": "x=2*i-1; y=v*0.55; red=0.2+0.8*i; green=0.5+0.3*v; blue=1-0.6*i;",
                 "pointCount": 400,
@@ -25,7 +25,7 @@
             {
                 "type": "meshWarp",
                 "name": "Swell",
-                "description": "Gekreuzte Sinuswellen, Mitten heben die Amplitude (Werks-Voreinstellung Swell).",
+                "description": "Crossed sine waves, the mids raise the amplitude (built-in preset Swell).",
                 "gridX": 128,
                 "gridY": 96,
                 "mixAmount": 1.0,

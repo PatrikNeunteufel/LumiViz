@@ -124,7 +124,7 @@ struct QueryResult
     const QJsonDocument doc = QJsonDocument::fromJson(bytes, &err);
     if (err.error != QJsonParseError::NoError || !doc.isObject())
     {
-        r.error = QStringLiteral("Antwort ist kein JSON (%1)").arg(err.errorString());
+        r.error = QStringLiteral("Reply is not JSON (%1)").arg(err.errorString());
         return r;
     }
     const QJsonObject root = doc.object();
@@ -163,15 +163,15 @@ struct ImportResult
     const QJsonDocument doc = QJsonDocument::fromJson(bytes, &err);
     if (err.error != QJsonParseError::NoError || !doc.isObject())
     {
-        r.error = QStringLiteral("Antwort ist kein JSON (%1)").arg(err.errorString());
+        r.error = QStringLiteral("Reply is not JSON (%1)").arg(err.errorString());
         return r;
     }
     const QJsonObject root = doc.object();
     if (root.contains(QStringLiteral("Error")))
     {
         // typisch: "Shader not found" — auch bei Sichtbarkeit ohne "+api"
-        r.error = QStringLiteral("API: %1 (Shader existiert nicht oder ist nicht "
-                                 "'public+api' — dann bleibt Code-Einfügen)")
+        r.error = QStringLiteral("API: %1 (shader does not exist or is not "
+                                 "'public+api' — then pasting the code is the way)")
                       .arg(root.value(QStringLiteral("Error")).toString());
         return r;
     }
@@ -180,7 +180,7 @@ struct ImportResult
     const QJsonArray passes = shader.value(QStringLiteral("renderpass")).toArray();
     if (passes.isEmpty())
     {
-        r.error = QStringLiteral("Antwort ohne renderpass-Liste");
+        r.error = QStringLiteral("Reply has no renderpass list");
         return r;
     }
 
@@ -231,7 +231,7 @@ struct ImportResult
     }
     if (imageCode.isEmpty())
     {
-        r.error = QStringLiteral("kein image-Pass in der Antwort (Sound-only?)");
+        r.error = QStringLiteral("no image pass in the reply (sound only?)");
         return r;
     }
 
@@ -249,7 +249,7 @@ struct ImportResult
     p.herkunft.url =
         (QStringLiteral("https://www.shadertoy.com/view/") + shaderId).toStdString();
     // Die API liefert keine Lizenz — Shadertoy-Default gilt (Plan §S3)
-    p.herkunft.license = "CC BY-NC-SA 3.0 (Shadertoy-Default)";
+    p.herkunft.license = "CC BY-NC-SA 3.0 (Shadertoy default)";
 
     // Kanal-Bindungen: music → Audio, buffer → Buffer-Index (über die
     // Output-Id), alles andere = Platzhalter-Meldung
@@ -277,8 +277,8 @@ struct ImportResult
             {
                 out[static_cast<std::size_t>(channel)] =
                     lumi::multieffect::kShadertoyInputAudio;
-                r.report << QStringLiteral("ℹ %1: Audio-Input auf iChannel%2 — mit "
-                                           "der LumiViz-Audio-Textur belegt")
+                r.report << QStringLiteral("ℹ %1: audio input on iChannel%2 — bound "
+                                           "to the LumiViz audio texture")
                                 .arg(passLabel)
                                 .arg(channel);
             }
@@ -292,16 +292,16 @@ struct ImportResult
                 }
                 else
                 {
-                    r.report << QStringLiteral("ℹ %1: iChannel%2-Buffer-Referenz "
-                                               "nicht auflösbar — Platzhalter")
+                    r.report << QStringLiteral("ℹ %1: iChannel%2 buffer reference "
+                                               "cannot be resolved — placeholder")
                                     .arg(passLabel)
                                     .arg(channel);
                 }
             }
             else if (!ctype.isEmpty())
             {
-                r.report << QStringLiteral("ℹ %1: iChannel%2-Input '%3' wird noch "
-                                           "nicht unterstützt — Platzhalter (schwarz)")
+                r.report << QStringLiteral("ℹ %1: iChannel%2 input '%3' is not "
+                                           "supported yet — placeholder (black)")
                                 .arg(passLabel)
                                 .arg(channel)
                                 .arg(ctype);
@@ -322,13 +322,13 @@ struct ImportResult
     }
     if (!p.buffers.empty())
     {
-        r.report << QStringLiteral("ℹ Multipass: %1 Buffer-Pass/Pässe übernommen "
-                                   "(S4; Selbst-Referenz liest das Vorframe)")
+        r.report << QStringLiteral("ℹ Multipass: %1 buffer pass(es) imported "
+                                   "(self-reference reads the previous frame)")
                         .arg(p.buffers.size());
     }
     if (!skippedPasses.isEmpty())
     {
-        r.report << QStringLiteral("ℹ Nicht unterstützte Pässe übersprungen: %1")
+        r.report << QStringLiteral("ℹ Unsupported passes skipped: %1")
                         .arg(skippedPasses.join(QStringLiteral(", ")));
     }
 

@@ -473,24 +473,24 @@ struct ShaderVertrag
 [[nodiscard]] inline const QList<ShaderVertrag>& shaderVertraege()
 {
     static const QList<ShaderVertrag> kVertraege = {
-        {QStringLiteral("pixelfilter"), QStringLiteral("Stilfilter"),
+        {QStringLiteral("pixelfilter"), QStringLiteral("Pixel Filter"),
          QStringLiteral("farbe"), QStringLiteral("vec4 farbe(vec2 uv, vec4 src)"),
          QStringLiteral("glsl")},
         // ISF-Filter (S72, Entscheid Patrik): eigener Knoten mit BEIDEN
         // Shader-Stufen. `main()` ist hier der Einstieg — ISF-Dateien werden
         // NICHT auf einen eigenen Vertrag umgeschrieben, sie laufen wie sie
         // sind. `*.fs` gehoert darum in die Vorauswahl des Dateidialogs.
-        {QStringLiteral("isffilter"), QStringLiteral("ISF-Filter"),
+        {QStringLiteral("isffilter"), QStringLiteral("ISF Filter"),
          QStringLiteral("main"), QStringLiteral("void main()"),
          QStringLiteral("fs"), QStringLiteral("*.fs")},
         {QStringLiteral("shadertoy"), QStringLiteral("Shadertoy"),
          QStringLiteral("mainImage"),
          QStringLiteral("void mainImage(out vec4 fragColor, in vec2 fragCoord)"),
          QStringLiteral("glsl")},
-        {QStringLiteral("meshwarp"), QStringLiteral("Mesh-Warp"),
+        {QStringLiteral("meshwarp"), QStringLiteral("Mesh Warp"),
          QStringLiteral("warp"), QStringLiteral("vec2 warp(vec2 uv)"),
          QStringLiteral("glsl")},
-        {QStringLiteral("gpuparticles"), QStringLiteral("GPU-Partikel"),
+        {QStringLiteral("gpuparticles"), QStringLiteral("GPU Particles"),
          QStringLiteral("kraft"),
          QStringLiteral("vec2 kraft(vec2 pos, vec2 vel, float alter)"),
          QStringLiteral("glsl")},
@@ -550,10 +550,10 @@ struct ShaderVertrag
     if (istIsfDatei(text))
     {
         return QObject::tr(
-            "Diese Datei ist ein <b>ISF-Shader</b> (Parameter-Deklaration als "
-            "JSON im Kopf).<br>Der Vertrag hier lautet <code>%1</code>.<br><br>"
-            "ISF-Dateien lassen sich noch nicht automatisch übersetzen — der "
-            "Code kann aber als Vorlage dienen. Trotzdem laden?")
+            "This file is an <b>ISF shader</b> (parameter declaration as "
+            "JSON in the header).<br>The contract here is <code>%1</code>.<br><br>"
+            "ISF files cannot be translated automatically yet — the "
+            "code can still serve as a template. Load anyway?")
             .arg(eigen->signatur);
     }
     for (const auto& fremd : shaderVertraege())
@@ -566,9 +566,9 @@ struct ShaderVertrag
         if (fremd.funktion == QLatin1String("main")) continue;
         if (!nenntFunktion(text, fremd.funktion)) continue;
         return QObject::tr(
-            "Diese Datei sieht nach einem <b>%1</b>-Shader aus "
-            "(<code>%2</code>).<br>Hier wird aber <code>%3</code> erwartet.<br><br>"
-            "Dafür ist der <b>%1</b>-Knoten zuständig. Trotzdem laden?")
+            "This file looks like a <b>%1</b> shader "
+            "(<code>%2</code>).<br>But <code>%3</code> is expected here.<br><br>"
+            "The <b>%1</b> node is responsible for it. Load anyway?")
             .arg(fremd.anzeige, fremd.funktion, eigen->signatur);
     }
     return {};  // nichts Bekanntes erkannt — Fragment/Hilfsfunktionen erlauben
@@ -641,7 +641,7 @@ struct ShaderVertrag
 {
     if (name.isEmpty() && autor.isEmpty() && url.isEmpty() && lizenz.isEmpty())
         return {};
-    QString k = QStringLiteral("/* LumiViz-Export — Herkunft des Inhalts\n");
+    QString k = QStringLiteral("/* LumiViz export — origin of the content\n");
     const auto zeile = [&k](const char* feld, const QString& wert) {
         if (!wert.isEmpty())
             k += QStringLiteral("   %1: %2\n")
@@ -649,11 +649,11 @@ struct ShaderVertrag
                                                        QStringLiteral("*/"),
                                                        QStringLiteral("*_/")));
     };
-    zeile("Titel", name);
-    zeile("Autor", autor);
-    zeile("Quelle", url);
-    zeile("Lizenz", lizenz);
-    k += QStringLiteral("   Beim Weitergeben gilt diese Lizenz.\n*/\n");
+    zeile("Title", name);
+    zeile("Author", autor);
+    zeile("Source", url);
+    zeile("License", lizenz);
+    k += QStringLiteral("   This license applies when passing it on.\n*/\n");
     return k;
 }
 
@@ -764,7 +764,7 @@ struct ShaderVertrag
         if (err.isEmpty())
         {
             status->setStyleSheet(QStringLiteral("color:#7fbf7f"));
-            status->setText(QObject::tr("✓ Übernommen — keine Fehler."));
+            status->setText(QObject::tr("✓ Applied — no errors."));
         }
         else
         {
@@ -796,12 +796,12 @@ struct ShaderVertrag
             passend += QLatin1Char(' ') + vertrag->importZusatz;
         const QString kRest =
             QObject::tr(";;Shader (*.glsl *.hlsl *.frag *.vert *.fs *.vs *.txt)"
-                        ";;Alle Dateien (*)");
-        const QString filter = QObject::tr("Passende Shader (%1)").arg(passend) + kRest;
+                        ";;All Files (*)");
+        const QString filter = QObject::tr("Matching Shaders (%1)").arg(passend) + kRest;
         // Beim EXPORT ohne den Import-Zusatz: wir schreiben nie ISF, `*.fs`
         // waere dort ein falsches Versprechen.
         const QString exportFilter =
-            QObject::tr("Passende Shader (*.%1.%2)")
+            QObject::tr("Matching Shaders (*.%1.%2)")
                 .arg(hooks.vertragKey.isEmpty() ? QStringLiteral("*")
                                                 : hooks.vertragKey,
                      eigeneEndung) +
@@ -826,13 +826,13 @@ struct ShaderVertrag
         auto* importBtn =
             bb->addButton(QObject::tr("Import…"), QDialogButtonBox::ActionRole);
         importBtn->setToolTip(
-            QObject::tr("Shader-Datei laden — ersetzt den Editor-Inhalt "
-                        "(übernommen wird erst mit Apply/OK)."));
+            QObject::tr("Load a shader file — replaces the editor content "
+                        "(takes effect only with Apply/OK)."));
         QObject::connect(
             importBtn, &QPushButton::clicked, &dlg,
             [editor, filter, vertragKey, rememberedDir, rememberDir, &dlg]() {
                 const QString path = QFileDialog::getOpenFileName(
-                    &dlg, QObject::tr("Shader importieren"), rememberedDir(),
+                    &dlg, QObject::tr("Import Shader"), rememberedDir(),
                     filter);
                 if (path.isEmpty()) return;
                 QFile f(path);
@@ -840,7 +840,7 @@ struct ShaderVertrag
                 {
                     QMessageBox::warning(
                         &dlg, QObject::tr("Import"),
-                        QObject::tr("Datei nicht lesbar: %1").arg(path));
+                        QObject::tr("File not readable: %1").arg(path));
                     return;
                 }
                 const QString inhalt = QString::fromUtf8(f.readAll());
@@ -855,14 +855,14 @@ struct ShaderVertrag
                 {
                     QMessageBox box(&dlg);
                     box.setIcon(QMessageBox::Warning);
-                    box.setWindowTitle(QObject::tr("Anderer Shader-Vertrag"));
+                    box.setWindowTitle(QObject::tr("Different Shader Contract"));
                     box.setTextFormat(Qt::RichText);
                     box.setText(warnung);
                     box.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
                     box.setDefaultButton(QMessageBox::No);
                     box.button(QMessageBox::Yes)
-                        ->setText(QObject::tr("Trotzdem laden"));
-                    box.button(QMessageBox::No)->setText(QObject::tr("Abbrechen"));
+                        ->setText(QObject::tr("Load Anyway"));
+                    box.button(QMessageBox::No)->setText(QObject::tr("Cancel"));
                     if (box.exec() != QMessageBox::Yes) return;
                 }
                 editor->setPlainText(inhalt);
@@ -873,7 +873,7 @@ struct ShaderVertrag
         auto* exportBtn =
             bb->addButton(QObject::tr("Export…"), QDialogButtonBox::ActionRole);
         exportBtn->setToolTip(
-            QObject::tr("Editor-Inhalt als Datei speichern (Vorschlag: %1).")
+            QObject::tr("Save the editor content as a file (suggested: %1).")
                 .arg(exportName));
         QObject::connect(
             exportBtn, &QPushButton::clicked, &dlg,
@@ -886,7 +886,7 @@ struct ShaderVertrag
                 QString start =
                     dir.isEmpty() ? name : dir + QLatin1Char('/') + name;
                 const QString path = QFileDialog::getSaveFileName(
-                    &dlg, QObject::tr("Shader exportieren"), start, exportFilter);
+                    &dlg, QObject::tr("Export Shader"), start, exportFilter);
                 if (path.isEmpty()) return;
                 QFile f(path);
                 if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate |
@@ -894,13 +894,14 @@ struct ShaderVertrag
                 {
                     QMessageBox::warning(
                         &dlg, QObject::tr("Export"),
-                        QObject::tr("Datei nicht schreibbar: %1").arg(path));
+                        QObject::tr("File not writable: %1").arg(path));
                     return;
                 }
                 // Herkunft VORANSTELLEN (S72) — nur, wenn der Code sie nicht
                 // ohnehin schon traegt (Export einer zuvor exportierten Datei).
                 QString inhalt = editor->toPlainText();
                 if (!kopf.isEmpty() &&
+                    !inhalt.contains(QStringLiteral("LumiViz export")) &&
                     !inhalt.contains(QStringLiteral("LumiViz-Export")))
                 {
                     inhalt = kopf + inhalt;
@@ -914,8 +915,8 @@ struct ShaderVertrag
         auto* beautifyBtn =
             bb->addButton(QObject::tr("Beautify"), QDialogButtonBox::ActionRole);
         beautifyBtn->setToolTip(
-            QObject::tr("Code neu formatieren (nur Weißraum — Einstellungen "
-                        "unter Settings → Editor). Übernimmt noch nichts."));
+            QObject::tr("Reformat the code (whitespace only — settings "
+                        "under Settings → Editor). Does not apply anything yet."));
         const auto beautifyFn = hooks.beautify;
         QObject::connect(beautifyBtn, &QPushButton::clicked, &dlg,
                          [editor, beautifyFn]() {
@@ -932,8 +933,8 @@ struct ShaderVertrag
     {
         auto* applyBtn = bb->button(QDialogButtonBox::Apply);
         applyBtn->setToolTip(
-            QObject::tr("Übernehmen ohne Schließen — die Chain recompiliert, "
-                        "der Viewport zeigt den Stand sofort."));
+            QObject::tr("Apply without closing — the chain recompiles, "
+                        "the viewport shows the result immediately."));
         const auto applyFn = hooks.apply;
         const auto pollFn = hooks.pollError;
         QObject::connect(

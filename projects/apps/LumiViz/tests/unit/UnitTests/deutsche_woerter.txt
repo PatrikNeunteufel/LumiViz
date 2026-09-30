@@ -1,0 +1,308 @@
+# Bekannte deutsche Namen und Woerter — Waechter „Mitgelieferte Namen sind englisch" (S83).
+# Gelesen von test_NodePresetStore.cpp. Eine Zeile = ein Eintrag, # = Kommentar.
+#
+# [namen]   die alten deutschen Preset-/Beispielnamen (Umbenennung S83, Zuordnung
+#           in asset/nodepresets/README.md). Kein Dateiname darf wieder so heissen.
+# [woerter] deutsche Woerter, die es im Englischen NICHT gibt. Sie duerfen weder in
+#           Dateinamen noch in Kommentaren, Beschreibungen oder Knotennamen stehen.
+#           Bewusst NICHT hier, weil englisch oder Code: die, hell, stern, rand (EEL),
+#           rot (MilkDrop), farbe/kraft (Shader-Einstiege), alter (Parameter), relief,
+#           strudel, raster, spur, klein, gross, blitz, art, war, also, an, so, man, in, am.
+
+[namen]
+AB-Wechsler
+Abklingender Trail
+Analyzer-Balken
+Atmender Ring
+Atmendes Fenster
+Bass-Blende
+Bass-Boost
+Bass-Explosion
+Bass-Fresser
+Bass-Swirl
+Bass-Tunnel
+Bass-Woge
+Beat-Blitz
+Beat-Echo
+Beat-Gate
+Beat-Gitter
+Beat-Glut
+Beat-Kachel
+Beat-Kachelwerk
+Beat-Puls
+Beat-Richtungsdrift
+Beat-Rotation
+Beat-Schub
+Beat-Sprung
+Beat-Wende
+Beat-Woge
+Beben
+Blaues Nachgluehen
+Bleistift-Skizze
+Burning-Ship-Kueste
+Chrome-Beat
+Clifford-Schleier
+CRT-Monitor
+De-Jong-Gespinst
+Diagonal-Drift
+Dichtes Flimmern
+Doppelbild
+Duotone-Neon
+Echo-Speicher
+Eingefrorenes Korn
+Eisblau
+Elefanten-Tal
+Farbdrift
+Feiner Regen
+Feiner Stern
+Feuer
+Feuerfontaene
+Feuerwirbel
+Filmkorn
+Fischauge
+Fischaugen-Atmung
+Fontaene
+Funkenregen
+Galaxien-Drall
+Gamma-Atmung
+Gauss 3x3
+Goldton
+Graustufen invertiert
+Grosse Show-Sterne
+Halbe Sekunde
+Halbes Tempo
+Hufeisen-Nebel
+Hyperbolische Blume
+Julia-Puls
+Julia-Strudel
+Kalter Schwarm
+Kanal-Atmung
+Kanten (Laplace)
+Kissen-Welle
+Kontrast-Pump
+Korallenwachstum
+Kreisende Lampe
+Kuwahara-Oelbild
+Langsame Drehung
+Leichter Drall
+Lights-Referenz
+Linien-Oszi
+Lorenz-Schmetterling
+Mandelbulb-Orbit
+Menger-Flug
+Metronom 500ms
+Molekuel-Raster
+Nachtblau-Schleier
+Nebel-Drift
+Nebelkammer
+Noir-Schwarzweiss
+Ozean
+Pixel-Art
+Posterize-PopArt
+Puls-Layer
+Puls-Rahmen
+Puls-Ring
+Punktwolke
+Qualle
+Quaternion-Puls
+Relief
+Rotierender Sog
+Ruhige Sternfahrt
+Ruhiges Raster
+Sanfter Schimmer
+Sanfter Sog
+Schaerfen
+Schneller Ausklang
+Schwebedrift
+Schwerer Tropfen
+Sechser-Echo
+Seepferdchen-Tal
+Sepia-Nostalgie
+Sinus-Flechtwerk
+Sog nach innen
+Sog zur Mitte
+Spektral-Vorhang
+Spektrum-Ring
+Spiegel-Quartett
+Spiegelkabinett
+Spiegelkabinett2
+Spiegelkabinett3
+Stehender Weichzeichner
+Sternenkranz
+Strudel
+Take-On-Me
+Take-On-Me-Comic
+Takt-Spirale
+Tintenstrom
+Traege Wellen
+Tunnel-Sog
+Tunnelflug
+VHS-Band
+Vierer-Reset
+Viertel-Beat
+Waermebild
+Wandernde Linse
+Warp auf Beat
+Wasser-Wobble
+Weichzeichner 3x3
+Wellengang
+Wellenringe
+Wenige grosse Kugeln
+Wilder Stern
+Wirbelnebel
+Wirbelsturm
+Wurmspur
+Zeitungsdruck-Halftone
+Zellteilung
+Zoom-Echo
+Zufallsspiegel
+
+[woerter]
+alle
+atmung
+auch
+auf
+aus
+bei
+beim
+beispiel
+bild
+bilder
+bleiben
+bleibt
+bleistift
+damit
+dann
+das
+dass
+dem
+den
+der
+des
+drehung
+dunkel
+dunkle
+dunklen
+durch
+ein
+eine
+einem
+einen
+einer
+eines
+erst
+etwas
+farben
+farbton
+fein
+feine
+feiner
+feuer
+flackern
+flaechen
+flug
+flächen
+fuer
+für
+gegen
+gibt
+grosse
+große
+harte
+harter
+helligkeit
+hier
+im
+immer
+ist
+je
+jede
+jeder
+jedes
+jetzt
+kachel
+kante
+kanten
+kein
+keine
+kleine
+korn
+kraeftig
+kraeftige
+kräftig
+kugel
+kugeln
+langsam
+langsame
+leicht
+leichte
+leichter
+macht
+mehr
+mit
+mitte
+nach
+nebel
+nicht
+noch
+nur
+oder
+ohne
+papier
+punkte
+quelle
+rauschen
+regen
+ruhig
+ruhige
+ruhiges
+sanft
+sanfte
+sanfter
+schatten
+schleier
+schnell
+schnelle
+schon
+schraffur
+sehr
+sich
+sind
+sog
+sonst
+sowie
+spiegel
+spuren
+statt
+strich
+tal
+tinte
+tropfen
+ueber
+und
+unter
+verzerrung
+vom
+voreinstellung
+vorlage
+weich
+weiche
+weicher
+weil
+welle
+wellen
+weniger
+wenn
+werden
+werks
+wie
+wirbel
+wird
+wurde
+zeile
+zeilen
+zeitungsdruck
+zum
+zur
+zwischen
+über

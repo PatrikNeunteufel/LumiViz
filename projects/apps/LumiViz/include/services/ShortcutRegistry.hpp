@@ -62,15 +62,15 @@ struct ShortcutAction
 {
     static const std::vector<ShortcutAction> kActions = {
         // --- Transport: reserviert (§2), seit Stufe 2 verdrahtet --------------
-        {"transport.playPause", "Wiedergabe / Pause", ShortcutCategory::Transport,
+        {"transport.playPause", "Play / Pause", ShortcutCategory::Transport,
          "Space", true},
-        {"transport.next", "Nächster Song", ShortcutCategory::Transport,
+        {"transport.next", "Next Song", ShortcutCategory::Transport,
          "Ctrl+Right", true},
-        {"transport.previous", "Voriger Song", ShortcutCategory::Transport,
+        {"transport.previous", "Previous Song", ShortcutCategory::Transport,
          "Ctrl+Left", true},
-        {"transport.volumeUp", "Lauter", ShortcutCategory::Transport,
+        {"transport.volumeUp", "Volume Up", ShortcutCategory::Transport,
          "Ctrl+Up", true},
-        {"transport.volumeDown", "Leiser", ShortcutCategory::Transport,
+        {"transport.volumeDown", "Volume Down", ShortcutCategory::Transport,
          "Ctrl+Down", true},
 
         // --- Preset: Stufe 1, wirkt auf das aktive Verzeichnis ----------------
@@ -79,15 +79,15 @@ struct ShortcutAction
         // nach §2 Transport). ACHTUNG: die Sequenzen sind QKeySequence-Text —
         // Qt kennt diese Tasten als "PgDown"/"PgUp", "PageDown" ergibt
         // Key_unknown und damit eine tote Vorbelegung (Session 52).
-        {"preset.next", "Nächstes Preset", ShortcutCategory::Preset, "PgDown"},
-        {"preset.previous", "Voriges Preset", ShortcutCategory::Preset, "PgUp"},
+        {"preset.next", "Next Preset", ShortcutCategory::Preset, "PgDown"},
+        {"preset.previous", "Previous Preset", ShortcutCategory::Preset, "PgUp"},
 
         // --- Ansicht ----------------------------------------------------------
-        {"view.fullscreen", "Vollbild", ShortcutCategory::View, "F11", false, false},
+        {"view.fullscreen", "Fullscreen", ShortcutCategory::View, "F11", false, false},
         // Druck: nimmt das Visual auf statt des Bildschirms. Windows oeffnet auf
         // dieselbe Taste eventuell das Snipping Tool — das ist eine
         // Windows-Einstellung und liegt ausserhalb der App.
-        {"view.screenshot", "Screenshot des Visuals", ShortcutCategory::View, "Print"},
+        {"view.screenshot", "Screenshot of the Visual", ShortcutCategory::View, "Print"},
     };
     return kActions;
 }
@@ -107,9 +107,9 @@ struct ShortcutAction
 {
     switch (c)
     {
-        case ShortcutCategory::Transport: return "Wiedergabe";
+        case ShortcutCategory::Transport: return "Playback";
         case ShortcutCategory::Preset: return "Presets";
-        case ShortcutCategory::View: return "Ansicht";
+        case ShortcutCategory::View: return "View";
     }
     return "";
 }

@@ -85,13 +85,13 @@ void ShadertoyBrowserPanel::setupUI()
 
     auto* searchRow = new QHBoxLayout();
     m_searchEdit = new QLineEdit(this);
-    m_searchEdit->setPlaceholderText(tr("Suchbegriff (leer = Top der Sortierung)"));
+    m_searchEdit->setPlaceholderText(tr("Search term (empty = top of the sort order)"));
     m_sortCombo = new QComboBox(this);
-    m_sortCombo->addItems({tr("Beliebt"), tr("Neu"), tr("Hot"), tr("Geliebt")});
-    m_searchButton = new QPushButton(tr("Suchen"), this);
+    m_sortCombo->addItems({tr("Popular"), tr("Newest"), tr("Hot"), tr("Loved")});
+    m_searchButton = new QPushButton(tr("Search"), this);
     m_openButton = new QToolButton(this);
     m_openButton->setText(QStringLiteral("🌐"));
-    m_openButton->setToolTip(tr("shadertoy.com im Browser öffnen"));
+    m_openButton->setToolTip(tr("Open shadertoy.com in the browser"));
     searchRow->addWidget(m_searchEdit, 1);
     searchRow->addWidget(m_sortCombo);
     searchRow->addWidget(m_searchButton);
@@ -100,10 +100,10 @@ void ShadertoyBrowserPanel::setupUI()
 
     m_keyEdit = new QLineEdit(this);
     m_keyEdit->setEchoMode(QLineEdit::Password);
-    m_keyEdit->setPlaceholderText(tr("Shadertoy-API-Key (lokal gespeichert)"));
+    m_keyEdit->setPlaceholderText(tr("Shadertoy API key (stored locally)"));
     m_keyEdit->setToolTip(
-        tr("Kostenlos unter shadertoy.com → Profile → Apps. Geteilter "
-           "Schlüssel mit dem Node-Editor; wird NUR lokal gespeichert."));
+        tr("Free at shadertoy.com → Profile → Apps. Key shared with the "
+           "node editor; stored ONLY locally."));
     {
         QSettings settings;
         m_keyEdit->setText(
@@ -123,12 +123,12 @@ void ShadertoyBrowserPanel::setupUI()
     m_results->setUniformItemSizes(true);
     m_results->setWordWrap(true);
     m_results->setToolTip(
-        tr("Doppelklick lädt den Shader als aktives Visual (Ein-Node-Chain, "
-           "gespeichert unter AppData/shadertoy — Inhalte bleiben lokal, "
-           "Shadertoy-Default-Lizenz CC BY-NC-SA)."));
+        tr("Double-click loads the shader as the active visual (one-node chain, "
+           "saved under AppData/shadertoy — content stays local, "
+           "Shadertoy default license CC BY-NC-SA)."));
     layout->addWidget(m_results, 1);
 
-    m_status = new QLabel(tr("Bereit — die API sieht nur 'public+api'-Shader."), this);
+    m_status = new QLabel(tr("Ready — the API only sees 'public+api' shaders."), this);
     m_status->setWordWrap(true);
     layout->addWidget(m_status);
 
@@ -162,8 +162,8 @@ void ShadertoyBrowserPanel::onSearchClicked()
     const QString key = apiKey();
     if (key.isEmpty())
     {
-        setStatus(tr("⚠ API-Key fehlt — kostenlos anlegen: shadertoy.com → "
-                     "Profile → Apps, dann oben eintragen."));
+        setStatus(tr("⚠ API key missing — create one for free: shadertoy.com → "
+                     "Profile → Apps, then enter it above."));
         return;
     }
     if (m_net == nullptr)
@@ -174,7 +174,7 @@ void ShadertoyBrowserPanel::onSearchClicked()
     ++m_generation;
     const int generation = m_generation;
     m_results->clear();
-    setStatus(tr("Suche läuft …"));
+    setStatus(tr("Searching …"));
 
     const QUrl url = lumi::shadertoy::queryRequestUrl(
         m_searchEdit->text(), QString::fromLatin1(sortKeyForIndex(m_sortCombo->currentIndex())),
@@ -185,7 +185,7 @@ void ShadertoyBrowserPanel::onSearchClicked()
         if (generation != m_generation) return;  // längst eine neuere Suche
         if (reply->error() != QNetworkReply::NoError)
         {
-            setStatus(tr("⚠ Netzwerkfehler: %1").arg(reply->errorString()));
+            setStatus(tr("⚠ Network error: %1").arg(reply->errorString()));
             return;
         }
         const auto result = lumi::shadertoy::parseQueryReply(reply->readAll());
@@ -196,7 +196,7 @@ void ShadertoyBrowserPanel::onSearchClicked()
         }
         if (result.ids.isEmpty())
         {
-            setStatus(tr("Keine Treffer."));
+            setStatus(tr("No results."));
             return;
         }
         for (const QString& id : result.ids)
@@ -206,7 +206,7 @@ void ShadertoyBrowserPanel::onSearchClicked()
             item->setSizeHint(QSize(176, 128));
             fetchThumbnail(id, generation, item);
         }
-        setStatus(tr("%1 Treffer, %2 angezeigt — Doppelklick lädt den Shader.")
+        setStatus(tr("%1 results, %2 shown — double-click loads the shader.")
                       .arg(result.total)
                       .arg(result.ids.size()));
     });
@@ -246,14 +246,14 @@ void ShadertoyBrowserPanel::importShader(const QString& id)
 {
     const QString key = apiKey();
     if (key.isEmpty() || m_net == nullptr) return;
-    setStatus(tr("Lade Shader %1 …").arg(id));
+    setStatus(tr("Loading shader %1 …").arg(id));
     QNetworkReply* reply =
         m_net->get(QNetworkRequest(lumi::shadertoy::apiRequestUrl(id, key)));
     connect(reply, &QNetworkReply::finished, this, [this, reply, id]() {
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError)
         {
-            setStatus(tr("⚠ Netzwerkfehler: %1").arg(reply->errorString()));
+            setStatus(tr("⚠ Network error: %1").arg(reply->errorString()));
             return;
         }
         const auto result = lumi::shadertoy::parseApiReply(reply->readAll(), id);
@@ -281,7 +281,7 @@ void ShadertoyBrowserPanel::importShader(const QString& id)
         QFile file(path);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
-            setStatus(tr("⚠ Konnte %1 nicht schreiben.").arg(path));
+            setStatus(tr("⚠ Could not write %1.").arg(path));
             return;
         }
         file.write(
@@ -293,7 +293,7 @@ void ShadertoyBrowserPanel::importShader(const QString& id)
             bus->publish(LoadEffectChainEvent{path.toStdString()});
         }
         QString note =
-            tr("%1 von %2 geladen (%3).")
+            tr("%1 by %2 loaded (%3).")
                 .arg(QString::fromStdString(result.params.herkunft.name),
                      QString::fromStdString(result.params.herkunft.author),
                      QString::fromStdString(result.params.herkunft.license));

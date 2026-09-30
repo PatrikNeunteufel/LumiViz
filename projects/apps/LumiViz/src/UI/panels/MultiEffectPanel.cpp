@@ -393,7 +393,7 @@ QString milkSectionReferenceHtml(int section)
                 refRow("blur1_min..blur3_max", "in/out", "0..1", "blur pyramid ranges") +
                 refRow("monitor", "in/out", "any", "persists across frames (debug scratch)") +
                 refRow("drift_lin / drift_dir", "in/out", "px/frame / rad",
-                       "LumiViz extra (Gestaltung): linear drift strength / direction "
+                       "LumiViz extra (Styling): linear drift strength / direction "
                        "(0 = right, π/2 = up). Acts only while its switch is on") +
                 refRow("drift_rad / drift_ang / drift_cx / drift_cy", "in/out",
                        "px/frame / rad / 0..1", "LumiViz extra: radial drift strength, "
@@ -506,8 +506,8 @@ QString shadertoyReferenceHtml()
         return QStringLiteral(
                    "<table cellspacing='0' cellpadding='4' "
                    "style='border-collapse:collapse'>"
-                   "<tr><th align='left'>Name</th><th align='left'>Typ</th>"
-                   "<th align='left'>Bedeutung</th></tr>%1</table>")
+                   "<tr><th align='left'>Name</th><th align='left'>Type</th>"
+                   "<th align='left'>Meaning</th></tr>%1</table>")
             .arg(rows);
     };
     auto row = [](const char* n, const char* t, const char* m) {
@@ -515,44 +515,44 @@ QString shadertoyReferenceHtml()
             .arg(QLatin1String(n), QLatin1String(t), QLatin1String(m));
     };
     const QString uniforms = table(
-        row("iResolution", "vec3", "Auflösung in Pixeln (x, y, 1)") +
-        row("iTime", "float", "Sekunden seit Start (deterministische Sim-Uhr)") +
-        row("iTimeDelta", "float", "Sekunden seit dem letzten Frame") +
-        row("iFrame", "int", "Frames seit (Re-)Kompilierung") +
-        row("iFrameRate", "float", "aktuelle Bildrate") +
-        row("iMouse", "vec4", "immer 0 (keine Maus im Node)") +
-        row("iDate", "vec4", "deterministisch: (2026, 1, 1, Sim-Sekunden)") +
+        row("iResolution", "vec3", "resolution in pixels (x, y, 1)") +
+        row("iTime", "float", "seconds since start (deterministic sim clock)") +
+        row("iTimeDelta", "float", "seconds since the last frame") +
+        row("iFrame", "int", "frames since (re)compilation") +
+        row("iFrameRate", "float", "current frame rate") +
+        row("iMouse", "vec4", "always 0 (no mouse in the node)") +
+        row("iDate", "vec4", "deterministic: (2026, 1, 1, sim seconds)") +
         row("iSampleRate", "float", "44100") +
-        row("iChannel0..3", "sampler2D", "Kanal-Bindungen laut Combos (s. unten)") +
-        row("iChannelResolution[4]", "vec3", "Auflösung je Kanal (Audio: 512×2)") +
-        row("iChannelTime[4]", "float", "immer 0 (Video-Inputs kommen später)"));
+        row("iChannel0..3", "sampler2D", "channel bindings as set in the combos (see below)") +
+        row("iChannelResolution[4]", "vec3", "resolution per channel (audio: 512x2)") +
+        row("iChannelTime[4]", "float", "always 0 (video inputs come later)"));
     const QString audio = table(
         row("texture(iChannelN, vec2(f, 0.25)).x", "float 0..1",
-            "FFT-Spektrum: f 0..1 = tief..hoch (Zeile 0 der 512×2-Textur)") +
+            "FFT spectrum: f 0..1 = low..high (row 0 of the 512x2 texture)") +
         row("texture(iChannelN, vec2(t, 0.75)).x", "float 0..1",
-            "Waveform: 0,5 = Nulllinie (Zeile 1); t = Sample-Position") +
-        row("bass, mid, treb", "float", "LumiViz-Extra: Band-Lautstärken (~0..1)") +
-        row("vol, beat", "float", "LumiViz-Extra: Pegel · Beat-Impuls (0/1)"));
+            "waveform: 0.5 = zero line (row 1); t = sample position") +
+        row("bass, mid, treb", "float", "LumiViz extra: band loudness (~0..1)") +
+        row("vol, beat", "float", "LumiViz extra: level · beat pulse (0/1)"));
     return QStringLiteral(
                "<h2>Shadertoy — mainImage(out vec4, in vec2)</h2>"
-               "<p>GLSL (ES-3.0-kompatibel). <code>fragCoord</code> = Pixel ab "
-               "links-unten; <code>fragCoord / iResolution.xy</code> = 0..1-UV. "
-               "Der Alpha-Wert wird im Image-Pass ignoriert (Blend-Regler des "
-               "Nodes), in Buffer-Pässen bleibt er erhalten (RGBA32F).</p>"
+               "<p>GLSL (ES 3.0 compatible). <code>fragCoord</code> = pixel from "
+               "bottom left; <code>fragCoord / iResolution.xy</code> = 0..1 UV. "
+               "The alpha value is ignored in the image pass (the node's blend "
+               "control applies); in buffer passes it is kept (RGBA32F).</p>"
                "<h3>Uniforms</h3>%1"
-               "<h3>Audio (512×2-Textur am gewählten Kanal)</h3>%2"
-               "<h3>Buffer A–D (Multipass)</h3>"
-               "<p>Buffer sind eigene Renderziele je Node (RGBA32F, "
-               "Chain-Auflösung), die je Frame VOR dem Image-Pass in der "
-               "Reihenfolge A→D rendern. Ein Kanal, der auf den EIGENEN oder "
-               "einen SPÄTEREN Buffer zeigt, liest das Bild des VORHERIGEN "
-               "Frames (Feedback: Trails, Simulationen, Historien); ein Kanal "
-               "auf einen FRÜHEREN Buffer liest das frische Bild dieses Frames. "
-               "Nicht angelegte Buffer liefern Schwarz. Beim Veröffentlichen "
-               "auf Shadertoy entspricht das exakt den Buffer-Tabs.</p>"
-               "<p style='color:#888'>LumiViz-Extras (bass/mid/treb/vol/beat) "
-               "laufen NICHT auf shadertoy.com — für portable Shader nur die "
-               "Audio-Textur benutzen.</p>")
+               "<h3>Audio (512×2 texture on the selected channel)</h3>%2"
+               "<h3>Buffer A–D (multipass)</h3>"
+               "<p>Buffers are the node's own render targets (RGBA32F, "
+               "chain resolution), rendered every frame BEFORE the image pass in "
+               "the order A→D. A channel pointing at its OWN or a LATER "
+               "buffer reads the image of the PREVIOUS frame (feedback: "
+               "trails, simulations, histories); a channel pointing at an "
+               "EARLIER buffer reads that buffer's fresh image of this frame. "
+               "Buffers that do not exist deliver black. When publishing "
+               "on Shadertoy this matches the buffer tabs exactly.</p>"
+               "<p style='color:#888'>LumiViz extras (bass/mid/treb/vol/beat) "
+               "do NOT run on shadertoy.com — for portable shaders use only the "
+               "audio texture.</p>")
         .arg(uniforms, audio);
 }
 
@@ -564,8 +564,8 @@ QString gpuParticlesReferenceHtml()
         return QStringLiteral(
                    "<table cellspacing='0' cellpadding='4' "
                    "style='border-collapse:collapse'>"
-                   "<tr><th align='left'>Name</th><th align='left'>Typ</th>"
-                   "<th align='left'>Bedeutung</th></tr>%1</table>")
+                   "<tr><th align='left'>Name</th><th align='left'>Type</th>"
+                   "<th align='left'>Meaning</th></tr>%1</table>")
             .arg(rows);
     };
     auto row = [](const char* n, const char* t, const char* m) {
@@ -573,34 +573,34 @@ QString gpuParticlesReferenceHtml()
             .arg(QLatin1String(n), QLatin1String(t), QLatin1String(m));
     };
     const QString uniforms = table(
-        row("uResolution", "vec2", "Chain-Auflösung in Pixeln") +
-        row("uTime", "float", "Sekunden seit Start (deterministische Sim-Uhr)") +
-        row("uDelta", "float", "Sekunden seit dem letzten Frame") +
-        row("bass, mid, treb", "float", "Band-Lautstärken (~0..1)") +
-        row("vol", "float", "Gesamt-Pegel") +
-        row("beat", "float", "Beat-Impuls (0/1)"));
+        row("uResolution", "vec2", "chain resolution in pixels") +
+        row("uTime", "float", "seconds since start (deterministic sim clock)") +
+        row("uDelta", "float", "seconds since the last frame") +
+        row("bass, mid, treb", "float", "band loudness (~0..1)") +
+        row("vol", "float", "overall level") +
+        row("beat", "float", "beat pulse (0/1)"));
     return QStringLiteral(
-               "<h2>GPU-Partikel — vec2 kraft(vec2 pos, vec2 vel, float alter)</h2>"
-               "<p>RENDER-Modul (zeichnet auf das Chain-Bild): zehntausende "
-               "Partikel per Instancing — die moderne Antwort auf die "
-               "searchlight-Klasse. Das optionale GLSL-Kraftfeld liefert eine "
-               "ZUSATZ-Beschleunigung in UV/s² (zu Schwerkraft und Drag); "
-               "<code>pos</code>/<code>vel</code> in UV bzw. UV/s, "
-               "<code>alter</code> läuft 0..1 über die Lebensdauer. Leer = "
-               "nur Schwerkraft/Drag.</p>"
+               "<h2>GPU Particles — vec2 kraft(vec2 pos, vec2 vel, float alter)</h2>"
+               "<p>RENDER module (draws onto the chain image): tens of thousands "
+               "of particles via instancing — the modern answer to the "
+               "searchlight class. The optional GLSL force field returns an "
+               "ADDITIONAL acceleration in UV/s² (on top of gravity and drag); "
+               "<code>pos</code>/<code>vel</code> in UV and UV/s respectively, "
+               "<code>alter</code> (age) runs 0..1 over the lifetime. Empty = "
+               "gravity/drag only.</p>"
                "<h3>Uniforms</h3>%1"
-               "<h3>Lebenslauf</h3>"
-               "<p>Alter und Respawn sind HASH-basiert ohne Speicher: jedes "
-               "Partikel hat feste Phase und Lebensdauer (±Streuung), am "
-               "Zyklusende startet es frisch am Spawn — mit neuer "
-               "Zufallsrichtung aus dem Hash des Zyklus. Mit der Sim-Uhr ist "
-               "der Lauf voll reproduzierbar (kein rand()).</p>"
-               "<h3>Regler</h3>"
-               "<p><b>Anzahl</b> baut den Zustand neu (frischer Start). "
-               "<b>Richtung/Fächer</b>: 0° = rechts, 90° = oben; Fächer 360° "
-               "= radial. <b>Drag</b> bremst exponentiell. Die "
-               "Parameter-Skripte (Init/Frame/Beat) können alle Bewegungs-"
-               "Regler je Frame rechnen (<code>spawnx</code>, "
+               "<h3>Life cycle</h3>"
+               "<p>Age and respawn are HASH-based without memory: every "
+               "particle has a fixed phase and lifetime (±spread); at the end "
+               "of its cycle it starts fresh at the spawn point — with a new "
+               "random direction from the hash of the cycle. With the sim clock "
+               "the run is fully reproducible (no rand()).</p>"
+               "<h3>Controls</h3>"
+               "<p><b>Count</b> rebuilds the state (fresh start). "
+               "<b>Direction/Fan</b>: 0° = right, 90° = up; fan 360° "
+               "= radial. <b>Drag</b> brakes exponentially. The "
+               "parameter scripts (Init/Frame/Beat) can compute all motion "
+               "controls per frame (<code>spawnx</code>, "
                "<code>speed</code>, <code>dir</code>, …).</p>")
         .arg(uniforms);
 }
@@ -613,8 +613,8 @@ QString meshWarpReferenceHtml()
         return QStringLiteral(
                    "<table cellspacing='0' cellpadding='4' "
                    "style='border-collapse:collapse'>"
-                   "<tr><th align='left'>Name</th><th align='left'>Typ</th>"
-                   "<th align='left'>Bedeutung</th></tr>%1</table>")
+                   "<tr><th align='left'>Name</th><th align='left'>Type</th>"
+                   "<th align='left'>Meaning</th></tr>%1</table>")
             .arg(rows);
     };
     auto row = [](const char* n, const char* t, const char* m) {
@@ -622,31 +622,31 @@ QString meshWarpReferenceHtml()
             .arg(QLatin1String(n), QLatin1String(t), QLatin1String(m));
     };
     const QString uniforms = table(
-        row("uResolution", "vec2", "Chain-Auflösung in Pixeln") +
-        row("uTime", "float", "Sekunden seit Start (deterministische Sim-Uhr)") +
-        row("uDelta", "float", "Sekunden seit dem letzten Frame") +
-        row("uFrame", "int", "Frames seit (Re-)Kompilierung") +
-        row("bass, mid, treb", "float", "Band-Lautstärken (~0..1)") +
-        row("vol", "float", "Gesamt-Pegel") +
-        row("beat", "float", "Beat-Impuls (0/1)"));
+        row("uResolution", "vec2", "chain resolution in pixels") +
+        row("uTime", "float", "seconds since start (deterministic sim clock)") +
+        row("uDelta", "float", "seconds since the last frame") +
+        row("uFrame", "int", "frames since (re)compilation") +
+        row("bass, mid, treb", "float", "band loudness (~0..1)") +
+        row("vol", "float", "overall level") +
+        row("beat", "float", "beat pulse (0/1)"));
     return QStringLiteral(
                "<h2>Mesh Warp — vec2 warp(vec2 uv)</h2>"
-               "<p>GLSL-Funktion, die je GITTER-VERTEX im Vertex-Shader läuft "
-               "(GPU-Antwort auf die Movement-Klasse — modernes Regelwerk). "
-               "<code>uv</code> ist die Gitter-Position 0..1; die Rückgabe ist "
-               "die QUELL-UV, an der das aktuelle Chain-Bild abgetastet wird "
-               "(MilkDrop-Warp-Semantik: das Gitter bleibt, die Quelle "
-               "wandert). Identität <code>return uv;</code> = Passthrough.</p>"
+               "<p>GLSL function that runs per GRID VERTEX in the vertex shader "
+               "(the GPU answer to the Movement class — modern rule set). "
+               "<code>uv</code> is the grid position 0..1; the return value is "
+               "the SOURCE UV at which the current chain image is sampled "
+               "(MilkDrop warp semantics: the grid stays, the source "
+               "moves). Identity <code>return uv;</code> = passthrough.</p>"
                "<h3>Uniforms</h3>%1"
-               "<h3>Regler</h3>"
-               "<p><b>Gitter X/Y</b>: Auflösung des Warp-Gitters — zwischen "
-               "den Vertizes wird linear interpoliert, grobe Gitter machen "
-               "den Warp kantig (als Stilmittel nutzbar). <b>Mix</b>: Anteil "
-               "des gewarpten Bilds (1 = ersetzen). <b>Wrap</b>: Quell-UV "
-               "außerhalb 0..1 wiederholen statt klemmen.</p>"
-               "<p style='color:#888'>Ohne Clear/Decay in der Kette koppelt "
-               "der Warp aufs eigene Vorbild (Feedback) — gewollt für Trails, "
-               "sonst einen Clear-/Fadeout-Knoten davorschalten.</p>")
+               "<h3>Controls</h3>"
+               "<p><b>Grid X/Y</b>: resolution of the warp grid — between "
+               "the vertices values are interpolated linearly; coarse grids make "
+               "the warp angular (usable as a stylistic device). <b>Mix</b>: share "
+               "of the warped image (1 = replace). <b>Wrap</b>: repeat source UVs "
+               "outside 0..1 instead of clamping.</p>"
+               "<p style='color:#888'>Without Clear/Decay in the chain the warp "
+               "feeds back on its own previous image (feedback) — intended for trails, "
+               "otherwise put a Clear/Fadeout node in front.</p>")
         .arg(uniforms);
 }
 
@@ -658,8 +658,8 @@ QString pixelFilterReferenceHtml()
         return QStringLiteral(
                    "<table cellspacing='0' cellpadding='4' "
                    "style='border-collapse:collapse'>"
-                   "<tr><th align='left'>Name</th><th align='left'>Typ</th>"
-                   "<th align='left'>Bedeutung</th></tr>%1</table>")
+                   "<tr><th align='left'>Name</th><th align='left'>Type</th>"
+                   "<th align='left'>Meaning</th></tr>%1</table>")
             .arg(rows);
     };
     auto row = [](const char* n, const char* t, const char* m) {
@@ -667,34 +667,34 @@ QString pixelFilterReferenceHtml()
             .arg(QLatin1String(n), QLatin1String(t), QLatin1String(m));
     };
     const QString uniforms = table(
-        row("uTex", "sampler2D", "das aktuelle Chain-Bild (für Nachbar-Abtastung)") +
-        row("uResolution", "vec2", "Chain-Auflösung in Pixeln") +
-        row("uTime", "float", "Sekunden seit Start (deterministische Sim-Uhr)") +
-        row("uDelta", "float", "Sekunden seit dem letzten Frame") +
-        row("uFrame", "int", "Frames seit (Re-)Kompilierung") +
-        row("bass, mid, treb", "float", "Band-Lautstärken (~0..1)") +
-        row("vol", "float", "Gesamt-Pegel") +
-        row("beat", "float", "Beat-Impuls (0/1)"));
+        row("uTex", "sampler2D", "the current chain image (for neighbour sampling)") +
+        row("uResolution", "vec2", "chain resolution in pixels") +
+        row("uTime", "float", "seconds since start (deterministic sim clock)") +
+        row("uDelta", "float", "seconds since the last frame") +
+        row("uFrame", "int", "frames since (re)compilation") +
+        row("bass, mid, treb", "float", "band loudness (~0..1)") +
+        row("vol", "float", "overall level") +
+        row("beat", "float", "beat pulse (0/1)"));
     return QStringLiteral(
                "<h2>Pixel Filter — vec4 farbe(vec2 uv, vec4 src)</h2>"
-               "<p>GLSL-Funktion, die je PIXEL im Fragment-Shader läuft — das "
-               "skriptbare Stilfilter-Modul (Comic, Posterize, Halftone, "
-               "CRT/VHS, Kuwahara …). <code>uv</code> ist die Pixel-Position "
-               "0..1, <code>src</code> das Quellpixel; Nachbarn holt "
-               "<code>texture(uTex, uv + …)</code> (Kantenzüge!). Identität "
-               "<code>return src;</code> = Passthrough. Der Filter wirkt auf "
-               "das GANZE Chain-Bild darunter — Video, Kamera, Scopes, "
-               "MilkDrop gleichermaßen. (<code>filter</code> selbst ist in "
-               "GLSL ein reserviertes Wort — daher <code>farbe</code>.)</p>"
+               "<p>GLSL function that runs per PIXEL in the fragment shader — the "
+               "scriptable style filter module (comic, posterize, halftone, "
+               "CRT/VHS, Kuwahara …). <code>uv</code> is the pixel position "
+               "0..1, <code>src</code> the source pixel; neighbours are fetched with "
+               "<code>texture(uTex, uv + …)</code> (edge strokes!). Identity "
+               "<code>return src;</code> = passthrough. The filter acts on "
+               "the WHOLE chain image below it — video, camera, scopes, "
+               "MilkDrop alike. (<code>filter</code> itself is a reserved "
+               "word in GLSL — hence <code>farbe</code>, German for colour.)</p>"
                "<h3>Uniforms</h3>%1"
-               "<h3>Regler</h3>"
-               "<p><b>Mix</b>: Anteil des gefilterten Bilds (1 = ersetzen); "
-               "per Parameter-Skript <code>mixamount</code> auch audio-reaktiv."
+               "<h3>Controls</h3>"
+               "<p><b>Mix</b>: share of the filtered image (1 = replace); "
+               "audio-reactive too via the parameter script <code>mixamount</code>."
                "</p>"
-               "<p style='color:#888'>Ein Knoten = EIN Pass. Mehrere Filter "
-               "stapelst du als mehrere Knoten in der Kette (umsortierbar); "
-               "echte Multipass-Looks (Blur-Pyramiden u. ä.) laufen über den "
-               "Shadertoy-Knoten mit Buffer A–D.</p>")
+               "<p style='color:#888'>One node = ONE pass. Stack several filters "
+               "as several nodes in the chain (reorderable); "
+               "true multipass looks (blur pyramids etc.) run through the "
+               "Shadertoy node with Buffer A–D.</p>")
         .arg(uniforms);
 }
 
@@ -706,8 +706,8 @@ QString isfReferenceHtml()
         return QStringLiteral(
                    "<table cellspacing='0' cellpadding='4' "
                    "style='border-collapse:collapse'>"
-                   "<tr><th align='left'>Name</th><th align='left'>Typ</th>"
-                   "<th align='left'>Bedeutung</th></tr>%1</table>")
+                   "<tr><th align='left'>Name</th><th align='left'>Type</th>"
+                   "<th align='left'>Meaning</th></tr>%1</table>")
             .arg(rows);
     };
     auto row = [](const char* n, const char* t, const char* m) {
@@ -715,30 +715,30 @@ QString isfReferenceHtml()
             .arg(QString::fromUtf8(n), QString::fromUtf8(t), QString::fromUtf8(m));
     };
     const QString sprache = table(
-        row("RENDERSIZE", "vec2", "Größe des Ziels in Pixeln") +
-        row("TIME, TIMEDELTA", "float", "Sekunden seit Start / seit dem letzten Frame") +
-        row("FRAMEINDEX", "int", "Frames seit (Re-)Kompilierung") +
-        row("PASSINDEX", "int", "Nummer des Durchgangs (Multipass)") +
-        row("isf_FragNormCoord", "vec2", "Pixel-Position 0..1") +
-        row("IMG_THIS_PIXEL(img)", "vec4", "Bildquelle an dieser Position") +
-        row("IMG_NORM_PIXEL(img, uv)", "vec4", "Bildquelle an uv (0..1)") +
-        row("IMG_PIXEL(img, px)", "vec4", "Bildquelle an Pixelkoordinate") +
-        row("IMG_SIZE(img)", "vec2", "Größe einer Bildquelle"));
+        row("RENDERSIZE", "vec2", "size of the target in pixels") +
+        row("TIME, TIMEDELTA", "float", "seconds since start / since the last frame") +
+        row("FRAMEINDEX", "int", "frames since (re)compilation") +
+        row("PASSINDEX", "int", "number of the pass (multipass)") +
+        row("isf_FragNormCoord", "vec2", "pixel position 0..1") +
+        row("IMG_THIS_PIXEL(img)", "vec4", "image input at this position") +
+        row("IMG_NORM_PIXEL(img, uv)", "vec4", "image input at uv (0..1)") +
+        row("IMG_PIXEL(img, px)", "vec4", "image input at pixel coordinate") +
+        row("IMG_SIZE(img)", "vec2", "size of an image input"));
     const QString extras = table(
-        row("getosc(band, breite, kanal) / getspec(…)", "float", "LumiViz: Wellenform / Spektrum wie in AVS (band 0..1)") +
-        row("bass, mid, treb, vol, beat", "float", "LumiViz: Band-Pegel · Beat-Impuls"));
+        row("getosc(band, breite, kanal) / getspec(…)", "float", "LumiViz: waveform / spectrum as in AVS (band 0..1; breite = width, kanal = channel)") +
+        row("bass, mid, treb, vol, beat", "float", "LumiViz: band level · beat pulse"));
     return QStringLiteral(
-               "<h2>ISF-Filter — void main()</h2>"
-               "<p>Interactive Shader Format: der Code läuft unverändert. "
-               "Bildquellen und Regler stehen im JSON-Kopf der <code>.fs</code> und "
-               "kommen über <b>ISF-Datei importieren…</b> in den Knoten — der Code "
-               "hier benutzt sie unter ihrem Namen (<code>inputImage</code> …). Ein "
-               "frischer Knoten hat keine Bildquelle.</p>"
-               "<h3>ISF-Sprache</h3>%1<h3>LumiViz-Extras</h3>%2"
+               "<h2>ISF Filter — void main()</h2>"
+               "<p>Interactive Shader Format: the code runs unchanged. "
+               "Image inputs and controls are declared in the JSON header of the <code>.fs</code> and "
+               "reach the node via <b>Import ISF file…</b> — the code "
+               "here uses them by their name (<code>inputImage</code> …). A "
+               "fresh node has no image input.</p>"
+               "<h3>ISF language</h3>%1<h3>LumiViz extras</h3>%2"
                "<h3>Vertex (.vs)</h3>"
-               "<p>Optional. <code>isf_vertShaderInit()</code> setzt Position und "
-               "Koordinate; danach darf der Shader eigene Varyings vorrechnen "
-               "(Nachbar-Koordinaten). Leer = Standard.</p>")
+               "<p>Optional. <code>isf_vertShaderInit()</code> sets position and "
+               "coordinate; after that the shader may precompute its own varyings "
+               "(neighbour coordinates). Empty = default.</p>")
         .arg(sprache, extras);
 }
 
@@ -1192,12 +1192,12 @@ void MultiEffectPanel::pruefeKameraFreigabe()
     QWidget* eltern = QApplication::activeWindow() != nullptr
                           ? QApplication::activeWindow()
                           : static_cast<QWidget*>(this);
-    QMessageBox frage(QMessageBox::Question, tr("Kamera-Quelle im Preset"),
-                      tr("Dieses Preset enthält eine Kamera-Quelle. Kameras "
-                         "starten nie automatisch — jetzt für diesen App-Lauf "
-                         "freigeben?\n\n(Windows fragt danach ggf. nach der "
-                         "Kameraberechtigung. Ohne Freigabe bleibt der "
-                         "Video-Knoten schwarz.)"),
+    QMessageBox frage(QMessageBox::Question, tr("Camera source in preset"),
+                      tr("This preset contains a camera source. Cameras "
+                         "never start automatically — allow it for this app run "
+                         "now?\n\n(Windows may then ask for camera "
+                         "permission. Without permission the "
+                         "video node stays black.)"),
                       QMessageBox::Yes | QMessageBox::No, eltern);
     frage.setWindowFlag(Qt::WindowStaysOnTopHint, true);
     if (frage.exec() == QMessageBox::Yes) feed.erlaubeKamera();
@@ -1253,8 +1253,8 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
         const QString quelle =
             QString::fromStdString(std::get<HostGroupParams>(node.params).sourceFile);
         item->setText(2, tr("Preset Reference"));
-        item->setToolTip(0, tr("Presetverweis auf %1 — %2 Knoten, beim Laden frisch "
-                               "aus der Datei (nicht gespeichert)")
+        item->setToolTip(0, tr("Preset reference to %1 — %2 nodes, read fresh from the "
+                               "file on load (not saved)")
                                 .arg(quelle)
                                 .arg(node.children.size()));
         item->setFlags(item->flags() & ~Qt::ItemIsDropEnabled);
@@ -1295,17 +1295,17 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
         // Waves-Sektionslabel: die Basis-Welle zaehlt nur, wenn sie an ist
         // (seit S76 schaltbar — die blanke Pipeline startet ohne sie).
         const auto wavesLabel = [this](bool basisOn, int custom) {
-            return basisOn ? tr("Waves (Basis + %1 Custom aktiv)").arg(custom)
-                           : tr("Waves (%1 Custom aktiv)").arg(custom);
+            return basisOn ? tr("Waves (base + %1 custom active)").arg(custom)
+                           : tr("Waves (%1 custom active)").arg(custom);
         };
         const QList<QPair<int, QString>> sections = {
-            {5, tr("Parameter (Basiswerte)")},
+            {5, tr("Parameters (base values)")},
             {0, tr("Code (per_frame / per_pixel)")},
             {3, tr("Shader Warp (HLSL)")},
-            {2, tr("Shapes (%1 aktiv)").arg(shapesOn)},
+            {2, tr("Shapes (%1 active)").arg(shapesOn)},
             {1, wavesLabel(milk->preset.basicWaveEnabled, wavesOn)},
             {6, tr("Shader Comp (HLSL)")},
-            {4, tr("Sprites (%1 aktiv)").arg(spritesOn)}};
+            {4, tr("Sprites (%1 active)").arg(spritesOn)}};
         const bool haveMilkIcons = !lumi::ui::presetIconDir().isEmpty();
         const QIcon& milkIcon =
             lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::MilkDrop);
@@ -1390,8 +1390,8 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
                 const bool basisOn = milk->preset.basicWaveEnabled;
                 auto* basisEl = addElement(
                     kMilkBasisWaveElement,
-                    tr("Basis-Waveform") +
-                        (basisOn ? QString() : tr(" (aus)")));
+                    tr("Base waveform") +
+                        (basisOn ? QString() : tr(" (off)")));
                 addMilkEye(basisEl, 1, kMilkBasisWaveElement, basisOn);
                 for (int i = 0; i < static_cast<int>(milk->preset.waves.size()); ++i)
                 {
@@ -1399,7 +1399,7 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
                     auto* el = addElement(
                         i, tr("Wave %1%2")
                                .arg(w.index)
-                               .arg(w.enabled ? QString() : tr(" (aus)")));
+                               .arg(w.enabled ? QString() : tr(" (off)")));
                     addMilkEye(el, 1, i, w.enabled);
                 }
             }
@@ -1411,7 +1411,7 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
                     auto* el = addElement(
                         i, tr("Shape %1%2")
                                .arg(sh.index)
-                               .arg(sh.enabled ? QString() : tr(" (aus)")));
+                               .arg(sh.enabled ? QString() : tr(" (off)")));
                     addMilkEye(el, 2, i, sh.enabled);
                 }
             }
@@ -1425,7 +1425,7 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
                             .arg(sp.index)
                             .arg(QString::fromStdString(sp.imageName));
                     auto* el = addElement(
-                        i, base + (sp.enabled ? QString() : tr(" (aus)")));
+                        i, base + (sp.enabled ? QString() : tr(" (off)")));
                     addMilkEye(el, 4, i, sp.enabled);
                 }
             }
@@ -1674,10 +1674,9 @@ bool MultiEffectPanel::insertPaletteNode(int paletteIndex, const QList<int>& par
             if (pathTouchesHostGroup(m_host->chain(), parentPath))
             {
                 QMessageBox::information(
-                    this, tr("Preset als Gruppe"),
-                    tr("Eine Host-Gruppe kann nicht in einer Host-Gruppe liegen "
-                       "(Tiefenregel) — bitte eine Stelle ausserhalb jeder Gruppe "
-                       "markieren."));
+                    this, tr("Preset as Group"),
+                    tr("A host group cannot sit inside a host group "
+                       "(depth rule) — please select a position outside every group."));
                 return false;
             }
         }
@@ -1725,7 +1724,7 @@ bool MultiEffectPanel::insertPaletteNode(int paletteIndex, const QList<int>& par
 
 bool MultiEffectPanel::presetGruppeLaden(QString& datei, std::vector<ChainNode>& outInhalt)
 {
-    const QString titel = tr("Preset als Gruppe");
+    const QString titel = tr("Preset as Group");
     if (datei.isEmpty())
     {
         QSettings settings;
@@ -1742,7 +1741,7 @@ bool MultiEffectPanel::presetGruppeLaden(QString& datei, std::vector<ChainNode>&
     QStringList report;
     if (!MultiEffectVisualizer::buildPresetTree(datei, baum, &report))
     {
-        QString text = tr("Konnte nicht laden:\n%1").arg(datei);
+        QString text = tr("Could not load:\n%1").arg(datei);
         if (!report.isEmpty()) text += QStringLiteral("\n\n") + report.join('\n');
         QMessageBox::warning(this, titel, text);
         return false;
@@ -1753,8 +1752,8 @@ bool MultiEffectPanel::presetGruppeLaden(QString& datei, std::vector<ChainNode>&
     {
         QMessageBox::information(
             this, titel,
-            tr("Die Quelle enthaelt selbst Host-Gruppen — sie laufen in dieser "
-               "Gruppe als Effect List (Tiefenregel)."));
+            tr("The source itself contains host groups — inside this "
+               "group they run as Effect Lists (depth rule)."));
     }
     // "ℹ"-Zeilen sind reine Bestaetigungen — nur echte Probleme melden
     QStringList probleme;
@@ -1765,7 +1764,7 @@ bool MultiEffectPanel::presetGruppeLaden(QString& datei, std::vector<ChainNode>&
     if (!probleme.isEmpty())
     {
         QMessageBox::information(this, titel,
-                                 tr("Geladen, mit Hinweisen:\n\n%1").arg(probleme.join('\n')));
+                                 tr("Loaded, with notes:\n\n%1").arg(probleme.join('\n')));
     }
     outInhalt = MultiEffectVisualizer::presetGroupChildren(std::move(baum));
     return true;
@@ -2404,14 +2403,14 @@ void MultiEffectPanel::syncMilkEyes(const QList<int>& nodePath)
         return itemAtPath(p);
     };
     const auto aus = [this](bool on) {
-        return on ? QString() : tr(" (aus)");
+        return on ? QString() : tr(" (off)");
     };
 
     m_updating = true;
     int wavesOn = 0;
     if (QTreeWidgetItem* el = elemItem(1, kMilkBasisWaveElement))
     {
-        el->setText(0, tr("Basis-Waveform") + aus(basisOn));
+        el->setText(0, tr("Base waveform") + aus(basisOn));
         setEye(el, basisOn);
     }
     for (int i = 0; i < static_cast<int>(waves.size()); ++i)
@@ -2426,8 +2425,8 @@ void MultiEffectPanel::syncMilkEyes(const QList<int>& nodePath)
     }
     if (QTreeWidgetItem* sec = sectionItem(1))
         sec->setText(0, basisOn
-                            ? tr("Waves (Basis + %1 Custom aktiv)").arg(wavesOn)
-                            : tr("Waves (%1 Custom aktiv)").arg(wavesOn));
+                            ? tr("Waves (base + %1 custom active)").arg(wavesOn)
+                            : tr("Waves (%1 custom active)").arg(wavesOn));
 
     int shapesOn = 0;
     for (int i = 0; i < static_cast<int>(shapes.size()); ++i)
@@ -2441,7 +2440,7 @@ void MultiEffectPanel::syncMilkEyes(const QList<int>& nodePath)
         }
     }
     if (QTreeWidgetItem* sec = sectionItem(2))
-        sec->setText(0, tr("Shapes (%1 aktiv)").arg(shapesOn));
+        sec->setText(0, tr("Shapes (%1 active)").arg(shapesOn));
 
     int spritesOn = 0;
     for (int i = 0; i < static_cast<int>(sprites.size()); ++i)
@@ -2456,7 +2455,7 @@ void MultiEffectPanel::syncMilkEyes(const QList<int>& nodePath)
         }
     }
     if (QTreeWidgetItem* sec = sectionItem(4))
-        sec->setText(0, tr("Sprites (%1 aktiv)").arg(spritesOn));
+        sec->setText(0, tr("Sprites (%1 active)").arg(spritesOn));
     m_updating = false;
 }
 
@@ -3529,21 +3528,21 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     // fremde Shader unbemerkt in weitergegebene `.lvfx` (Vorgabe Patrik S71).
     auto addHerkunft = [&](const Herkunft& h) {
         if (h.leer()) return;
-        const QString name = h.name.empty() ? tr("(ohne Titel)")
+        const QString name = h.name.empty() ? tr("(untitled)")
                                             : QString::fromStdString(h.name);
-        const QString autor = h.author.empty() ? tr("unbekannt")
+        const QString autor = h.author.empty() ? tr("unknown")
                                                : QString::fromStdString(h.author);
         const QString lizenz = h.license.empty()
-                                   ? tr("unbekannt")
+                                   ? tr("unknown")
                                    : QString::fromStdString(h.license);
-        QString text = tr("%1 von %2 — Lizenz: %3").arg(name, autor, lizenz);
+        QString text = tr("%1 by %2 — licence: %3").arg(name, autor, lizenz);
         if (!h.url.empty())
             text += QStringLiteral("\n") + QString::fromStdString(h.url);
         auto* meta = new QLabel(text, m_propContainer);
         meta->setWordWrap(true);
         meta->setTextInteractionFlags(Qt::TextBrowserInteraction);
-        meta->setToolTip(tr("Herkunft des importierten Inhalts. Beim Weitergeben "
-                            "des Presets gilt diese Lizenz."));
+        meta->setToolTip(tr("Origin of the imported content. This licence applies "
+                            "when passing the preset on."));
         form->addRow(meta);
     };
 
@@ -3684,10 +3683,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         hl->addStretch(1);
         auto* refBtn = new QToolButton(header);
         refBtn->setText(QString::fromUtf8("ⓘ"));
-        refBtn->setToolTip(tr("Referenz anzeigen (Uniforms, Audio, Buffer)"));
+        refBtn->setToolTip(tr("Show reference (uniforms, audio, buffers)"));
         auto* expandBtn = new QToolButton(header);
         expandBtn->setText(QString::fromUtf8("⤢"));
-        expandBtn->setToolTip(tr("In großem, größenveränderbarem Editor öffnen"));
+        expandBtn->setToolTip(tr("Open in large, resizable editor"));
         hl->addWidget(refBtn);
         hl->addWidget(expandBtn);
         connect(refBtn, &QToolButton::clicked, this,
@@ -3886,11 +3885,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool("blend", tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).blend = v; });
         addBool("subpixel", tr("Bilinear filtering"), p->subpixel,
                 [](ChainNode& n, bool v) { std::get<MovementParams>(n.params).subpixel = v; },
-                tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
-                   "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
-                   "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
-                   "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
-                   "sichtbar vor allem beim Dehnen und Stauchen."));
+                tr("Intermediate values when sampling — in the preset the field is "
+                   "called `subpixel`, the AVS dialog shows the same label. "
+                   "Off: the nearest pixel, hard edges. On: the "
+                   "four neighbours blended like AVS BLEND4, smooth transitions — "
+                   "visible mainly when stretching and squeezing."));
         const QStringList kSourceMappedNames = {tr("Off"), tr("On (scatter)"),
                                                 tr("Off, toggle on beat"),
                                                 tr("On, toggle on beat")};
@@ -3930,11 +3929,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool("nomove", tr("No move"), p->nomove, [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).nomove = v; });
         addBool("subpixel", tr("Bilinear filtering"), p->subpixel,
                 [](ChainNode& n, bool v) { std::get<DynamicMovementParams>(n.params).subpixel = v; },
-                tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
-                   "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
-                   "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
-                   "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
-                   "sichtbar vor allem beim Dehnen und Stauchen."));
+                tr("Intermediate values when sampling — in the preset the field is "
+                   "called `subpixel`, the AVS dialog shows the same label. "
+                   "Off: the nearest pixel, hard edges. On: the "
+                   "four neighbours blended like AVS BLEND4, smooth transitions — "
+                   "visible mainly when stretching and squeezing."));
         addInt("buffern", tr("Source buffer (0 = frame)"), p->buffern, 0, 8, [](ChainNode& n, int v) { std::get<DynamicMovementParams>(n.params).buffern = v; });
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicMovementParams>(n.params).frameCode = std::move(v); });
@@ -3946,11 +3945,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool("blend", tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicShiftParams>(n.params).blend = v; });
         addBool("subpixel", tr("Bilinear filtering"), p->subpixel,
                 [](ChainNode& n, bool v) { std::get<DynamicShiftParams>(n.params).subpixel = v; },
-                tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
-                   "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
-                   "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
-                   "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
-                   "sichtbar vor allem beim Dehnen und Stauchen."));
+                tr("Intermediate values when sampling — in the preset the field is "
+                   "called `subpixel`, the AVS dialog shows the same label. "
+                   "Off: the nearest pixel, hard edges. On: the "
+                   "four neighbours blended like AVS BLEND4, smooth transitions — "
+                   "visible mainly when stretching and squeezing."));
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame (x,y shift)"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).frameCode = std::move(v); });
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicShiftParams>(n.params).beatCode = std::move(v); });
@@ -3960,11 +3959,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool("blend", tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<DynamicDistanceModifierParams>(n.params).blend = v; });
         addBool("subpixel", tr("Bilinear filtering"), p->subpixel,
                 [](ChainNode& n, bool v) { std::get<DynamicDistanceModifierParams>(n.params).subpixel = v; },
-                tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
-                   "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
-                   "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
-                   "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
-                   "sichtbar vor allem beim Dehnen und Stauchen."));
+                tr("Intermediate values when sampling — in the preset the field is "
+                   "called `subpixel`, the AVS dialog shows the same label. "
+                   "Off: the nearest pixel, hard edges. On: the "
+                   "four neighbours blended like AVS BLEND4, smooth transitions — "
+                   "visible mainly when stretching and squeezing."));
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).frameCode = std::move(v); });
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<DynamicDistanceModifierParams>(n.params).beatCode = std::move(v); });
@@ -4251,11 +4250,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool("blend", tr("Blend (50/50)"), p->blend, [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).blend = v; });
         addBool("subpixel", tr("Bilinear filtering"), p->subpixel,
                 [](ChainNode& n, bool v) { std::get<BlitterFeedbackParams>(n.params).subpixel = v; },
-                tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
-                   "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
-                   "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
-                   "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
-                   "sichtbar vor allem beim Dehnen und Stauchen."));
+                tr("Intermediate values when sampling — in the preset the field is "
+                   "called `subpixel`, the AVS dialog shows the same label. "
+                   "Off: the nearest pixel, hard edges. On: the "
+                   "four neighbours blended like AVS BLEND4, smooth transitions — "
+                   "visible mainly when stretching and squeezing."));
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).frameCode = std::move(v); });
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<BlitterFeedbackParams>(n.params).beatCode = std::move(v); });
@@ -4271,11 +4270,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addBool("beatZoomJump", tr("Beat zoom jump"), p->beatZoomJump, [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).beatZoomJump = v; });
         addBool("subpixel", tr("Bilinear filtering"), p->subpixel,
                 [](ChainNode& n, bool v) { std::get<RotoBlitterParams>(n.params).subpixel = v; },
-                tr("Zwischenwerte beim Abtasten — im Preset heisst das Feld "
-                   "`subpixel`, im AVS-Dialog steht dieselbe Beschriftung. "
-                   "Aus: der naechstgelegene Bildpunkt, harte Kanten. An: die "
-                   "vier Nachbarn gemischt wie AVS BLEND4, weiche Uebergaenge — "
-                   "sichtbar vor allem beim Dehnen und Stauchen."));
+                tr("Intermediate values when sampling — in the preset the field is "
+                   "called `subpixel`, the AVS dialog shows the same label. "
+                   "Off: the nearest pixel, hard edges. On: the "
+                   "four neighbours blended like AVS BLEND4, smooth transitions — "
+                   "visible mainly when stretching and squeezing."));
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).frameCode = std::move(v); });
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<RotoBlitterParams>(n.params).beatCode = std::move(v); });
@@ -4983,7 +4982,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         if (!stErr.empty())
         {
             auto* err = new QLabel(
-                tr("⚠ Kompilierfehler:\n%1")
+                tr("⚠ Compile error:\n%1")
                     .arg(QString::fromStdString(stErr).left(600)),
                 m_propContainer);
             err->setWordWrap(true);
@@ -4998,7 +4997,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             hl->setContentsMargins(0, 0, 0, 0);
             auto* urlEdit = new QLineEdit(row);
             urlEdit->setPlaceholderText(
-                QStringLiteral("https://www.shadertoy.com/view/... oder ID"));
+                QStringLiteral("https://www.shadertoy.com/view/... or ID"));
             if (!p->herkunft.url.empty())
                 urlEdit->setText(QString::fromStdString(p->herkunft.url));
             // Symbol statt „Importieren" (S78): die Zeile muss wie jedes Feld
@@ -5006,17 +5005,17 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             auto* importBtn = new QToolButton(row);
             importBtn->setText(QString::fromUtf8("⤓"));
             importBtn->setToolTip(
-                tr("Importieren: lädt den Shader über die offizielle API (nur Sichtbarkeit "
-                   "'public+api'). Braucht einen API-Key (Feld darunter)."));
+                tr("Import: loads the shader through the official API (visibility "
+                   "'public+api' only). Needs an API key (field below)."));
             auto* openBtn = new QToolButton(row);
             openBtn->setText(QStringLiteral("🌐"));
             openBtn->setToolTip(
-                tr("Shadertoy im Browser öffnen — die Seite dieses Shaders, "
-                   "sonst shadertoy.com zum Stöbern."));
+                tr("Open Shadertoy in the browser — this shader's page, "
+                   "otherwise shadertoy.com for browsing."));
             hl->addWidget(urlEdit, 1);
             hl->addWidget(importBtn);
             hl->addWidget(openBtn);
-            form->addRow(tr("Shadertoy-URL / ID"), row);
+            form->addRow(tr("Shadertoy URL / ID"), row);
 
             const std::string nodeUrl = p->herkunft.url;
             connect(openBtn, &QToolButton::clicked, this, [urlEdit, nodeUrl]() {
@@ -5034,21 +5033,21 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
 
             auto* keyEdit = new QLineEdit(row->parentWidget());
             keyEdit->setEchoMode(QLineEdit::Password);
-            keyEdit->setPlaceholderText(tr("Shadertoy-API-Key (lokal gespeichert)"));
+            keyEdit->setPlaceholderText(tr("Shadertoy API key (stored locally)"));
             {
                 QSettings settings;
                 keyEdit->setText(
                     settings.value(QStringLiteral("shadertoy/apiKey")).toString());
             }
             keyEdit->setToolTip(
-                tr("Kostenlos unter shadertoy.com → Profile → Apps. Wird NUR "
-                   "lokal gespeichert (QSettings) — nie im Preset oder Repo."));
+                tr("Free at shadertoy.com → Profile → Apps. Stored ONLY "
+                   "locally (QSettings) — never in the preset or repo."));
             connect(keyEdit, &QLineEdit::editingFinished, this, [keyEdit]() {
                 QSettings settings;
                 settings.setValue(QStringLiteral("shadertoy/apiKey"),
                                   keyEdit->text().trimmed());
             });
-            form->addRow(tr("API-Key"), keyEdit);
+            form->addRow(tr("API key"), keyEdit);
 
             connect(importBtn, &QToolButton::clicked, this,
                     [this, path, urlEdit, keyEdit]() {
@@ -5057,20 +5056,19 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                         if (id.isEmpty())
                         {
                             QMessageBox::warning(
-                                this, tr("Shadertoy-Import"),
-                                tr("Keine Shader-ID erkennbar — URL im Format "
-                                   "shadertoy.com/view/<ID> oder die ID selbst "
-                                   "eingeben."));
+                                this, tr("Shadertoy import"),
+                                tr("No shader ID recognised — enter a URL in the form "
+                                   "shadertoy.com/view/<ID> or the ID itself."));
                             return;
                         }
                         const QString key = keyEdit->text().trimmed();
                         if (key.isEmpty())
                         {
                             QMessageBox::warning(
-                                this, tr("Shadertoy-Import"),
-                                tr("API-Key fehlt. Kostenlos anlegen: "
-                                   "shadertoy.com → Profile → Apps, dann hier "
-                                   "eintragen (bleibt lokal)."));
+                                this, tr("Shadertoy import"),
+                                tr("API key missing. Create one for free: "
+                                   "shadertoy.com → Profile → Apps, then enter "
+                                   "it here (stays local)."));
                             return;
                         }
                         if (m_netManager == nullptr)
@@ -5086,8 +5084,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                     if (reply->error() != QNetworkReply::NoError)
                                     {
                                         QMessageBox::warning(
-                                            this, tr("Shadertoy-Import"),
-                                            tr("Netzwerkfehler: %1")
+                                            this, tr("Shadertoy import"),
+                                            tr("Network error: %1")
                                                 .arg(reply->errorString()));
                                         return;
                                     }
@@ -5096,7 +5094,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                     if (!result.ok)
                                     {
                                         QMessageBox::warning(this,
-                                                             tr("Shadertoy-Import"),
+                                                             tr("Shadertoy import"),
                                                              result.error);
                                         return;
                                     }
@@ -5112,14 +5110,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                             n.displayName = sp->herkunft.name;
                                     });
                                     QString note =
-                                        tr("Shader '%1' importiert.")
+                                        tr("Shader '%1' imported.")
                                             .arg(QString::fromStdString(
                                                 result.params.herkunft.name));
                                     if (!result.report.isEmpty())
                                         note += QStringLiteral("\n\n") +
                                                 result.report.join(QStringLiteral("\n"));
                                     QMessageBox::information(
-                                        this, tr("Shadertoy-Import"), note);
+                                        this, tr("Shadertoy import"), note);
                                     // Editor neu aufbauen: Code/Metadaten anzeigen
                                     QMetaObject::invokeMethod(
                                         this, [this, path] { buildPropertyEditor(path); },
@@ -5136,12 +5134,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                          ? QString::fromStdString(nodeName)
                                          : QStringLiteral("shadertoy");
         addCodeEditor(
-            tr("Shader-Code (Image)"), p->code,
+            tr("Shader code (Image)"), p->code,
             tr("void mainImage(out vec4 fragColor, in vec2 fragCoord) { ... }"),
             shadertoyReferenceHtml(),
-            tr("mainImage in Shadertoy-Konvention; fragCoord = Pixel ab "
-               "links-unten. ⓘ zeigt Uniforms, Audio-Layout und "
-               "Buffer-Semantik; ⤢ öffnet den großen Editor."),
+            tr("mainImage in Shadertoy convention; fragCoord = pixel from "
+               "bottom left. ⓘ shows uniforms, audio layout and "
+               "buffer semantics; ⤢ opens the large editor."),
             160,
             lumi::scriptedit::shaderExportName(stExportBase,
                                                QStringLiteral("shadertoy"),
@@ -5154,11 +5152,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         // Ketten-Eingang und AVS-Global-Buffer 1–8 (S72). Kodierung s.
         // kShadertoyInput* (SSOT); Combo-Index = Wert + 1 — die Liste MUSS
         // darum lückenlos in der Reihenfolge der Werte stehen.
-        QStringList kInputNames = {tr("Nichts"),   tr("Buffer A"), tr("Buffer B"),
+        QStringList kInputNames = {tr("None"),     tr("Buffer A"), tr("Buffer B"),
                                    tr("Buffer C"), tr("Buffer D"), tr("Audio"),
-                                   tr("Ketten-Eingang")};
+                                   tr("Chain input")};
         for (int n = 1; n <= lumi::multieffect::kShadertoyInputAvsCount; ++n)
-            kInputNames << tr("AVS-Buffer %1").arg(n);
+            kInputNames << tr("AVS buffer %1").arg(n);
         const int kInputMax = lumi::multieffect::kShadertoyInputMax + 1;
         const auto inputToIndex = [kInputMax](int v) {
             return std::clamp(v + 1, 0, kInputMax);
@@ -5177,14 +5175,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     combo->setCurrentIndex(
                         inputToIndex(input[static_cast<std::size_t>(c)]));
                     combo->setToolTip(
-                        tr("Audio = 512x2-Textur (Zeile 0 Spektrum, Zeile 1 "
-                           "Waveform). Buffer-Referenz auf sich selbst oder "
-                           "spaeter liest das Vorframe (Feedback).\n"
-                           "Ketten-Eingang = das Bild, das dieser Knoten "
-                           "vorfindet — damit laufen Shadertoy-Bildfilter "
-                           "direkt.\nAVS-Buffer 1–8 = die Slots von "
-                           "„Buffer Save\", Stand beim Lauf dieses Knotens "
-                           "(nie beschrieben = schwarz)."));
+                        tr("Audio = 512x2 texture (row 0 spectrum, row 1 "
+                           "waveform). A buffer reference to itself or a "
+                           "later buffer reads the previous frame (feedback).\n"
+                           "Chain input = the image this node "
+                           "receives — lets Shadertoy image filters run "
+                           "directly.\nAVS buffer 1–8 = the slots of "
+                           "'Buffer Save', as they are when this node runs "
+                           "(never written = black)."));
                     connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
                             this, [this, path, access, c, indexToInput](int idx) {
                                 mutate(path, [&](ChainNode& n) {
@@ -5201,7 +5199,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                        },
                        tr("Image iChannel%1"));
         addEnum("blend", tr("Blend"), std::clamp(p->blend, 0, 2),
-                {tr("Ersetzen"), tr("Additiv"), tr("50/50")},
+                {tr("Replace"), tr("Additive"), tr("50/50")},
                 [](ChainNode& n, int v) {
                     std::get<ShadertoyParams>(n.params).blend = v;
                 });
@@ -5222,8 +5220,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             hh->addStretch(1);
             auto* removeBtn = new QToolButton(head);
             removeBtn->setText(QStringLiteral("✕"));
-            removeBtn->setToolTip(tr("Buffer entfernen (folgende rücken auf — "
-                                     "Referenzen ggf. anpassen)"));
+            removeBtn->setToolTip(tr("Remove buffer (the following ones move up — "
+                                     "adjust references if needed)"));
             connect(removeBtn, &QToolButton::clicked, this, [this, path, bi]() {
                 mutate(path, [&](ChainNode& n) {
                     auto& sp = std::get<ShadertoyParams>(n.params);
@@ -5242,9 +5240,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 buf.code,
                 tr("void mainImage(out vec4 fragColor, in vec2 fragCoord) { ... }"),
                 shadertoyReferenceHtml(),
-                tr("Buffer-Pass: schreibt roh in ein RGBA32F-Ziel (kein "
-                   "Blend/Clamp, Alpha bleibt). Eine Bindung auf sich selbst "
-                   "liest das Vorframe (Feedback)."),
+                tr("Buffer pass: writes raw into an RGBA32F target (no "
+                   "blend/clamp, alpha is kept). A binding to itself "
+                   "reads the previous frame (feedback)."),
                 120,
                 lumi::scriptedit::shaderExportName(
                     stExportBase, QStringLiteral("shadertoy"),
@@ -5266,10 +5264,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         }
         if (p->buffers.size() < 4)
         {
-            auto* addBtn = new QPushButton(tr("Buffer hinzufügen"), m_propContainer);
+            auto* addBtn = new QPushButton(tr("Add buffer"), m_propContainer);
             addBtn->setToolTip(
-                tr("Neuer Buffer-Pass (A–D): rendert VOR dem Image-Pass in ein "
-                   "eigenes RGBA32F-Ziel; Selbst-Referenz liest das Vorframe."));
+                tr("New buffer pass (A–D): renders BEFORE the image pass into its "
+                   "own RGBA32F target; a self-reference reads the previous frame."));
             connect(addBtn, &QPushButton::clicked, this, [this, path]() {
                 mutate(path, [&](ChainNode& n) {
                     auto& sp = std::get<ShadertoyParams>(n.params);
@@ -5287,10 +5285,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         }
 
         auto* hint = new QLabel(
-            tr("Uniforms: voller Shadertoy-Satz (iTime, iResolution, iChannel0-3, "
-               "...) + bass/mid/treb/vol/beat. Audio-Bindung = 512x2-Textur "
-               "(Zeile 0 Spektrum, Zeile 1 Waveform); Buffer rendern A→D vor "
-               "dem Image-Pass."),
+            tr("Uniforms: full Shadertoy set (iTime, iResolution, iChannel0-3, "
+               "...) + bass/mid/treb/vol/beat. Audio binding = 512x2 texture "
+               "(row 0 spectrum, row 1 waveform); buffers render A→D before "
+               "the image pass."),
             m_propContainer);
         hint->setWordWrap(true);
         form->addRow(hint);
@@ -5310,7 +5308,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         if (!mwErr.empty())
         {
             auto* err = new QLabel(
-                tr("⚠ Kompilierfehler:\n%1")
+                tr("⚠ Compile error:\n%1")
                     .arg(QString::fromStdString(mwErr).left(600)),
                 m_propContainer);
             err->setWordWrap(true);
@@ -5322,11 +5320,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                          ? QString::fromStdString(nodeName)
                                          : QStringLiteral("meshwarp");
         addCodeEditor(
-            tr("Warp-Funktion (GLSL)"), p->code,
+            tr("Warp function (GLSL)"), p->code,
             tr("vec2 warp(vec2 uv) { return uv; }"), meshWarpReferenceHtml(),
-            tr("Läuft je Gitter-Vertex im Vertex-Shader; Rückgabe = Quell-UV "
-               "der Abtastung. ⓘ zeigt den Vertrag und die Uniforms; ⤢ öffnet "
-               "den großen Editor."),
+            tr("Runs per grid vertex in the vertex shader; return value = source UV "
+               "to sample. ⓘ shows the contract and the uniforms; ⤢ opens "
+               "the large editor."),
             160,
             lumi::scriptedit::shaderExportName(mwExportBase,
                                                QStringLiteral("meshwarp")),
@@ -5334,11 +5332,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             [](ChainNode& n, std::string v) {
                 std::get<MeshWarpParams>(n.params).code = std::move(v);
             });
-        addInt("gridX", tr("Gitter X"), p->gridX, lumi::meshwarp::kMinGrid,
+        addInt("gridX", tr("Grid X"), p->gridX, lumi::meshwarp::kMinGrid,
                lumi::meshwarp::kMaxGridX, [](ChainNode& n, int v) {
                    std::get<MeshWarpParams>(n.params).gridX = v;
                });
-        addInt("gridY", tr("Gitter Y"), p->gridY, lumi::meshwarp::kMinGrid,
+        addInt("gridY", tr("Grid Y"), p->gridY, lumi::meshwarp::kMinGrid,
                lumi::meshwarp::kMaxGridY, [](ChainNode& n, int v) {
                    std::get<MeshWarpParams>(n.params).gridY = v;
                });
@@ -5346,7 +5344,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                   [](ChainNode& n, double v) {
                       std::get<MeshWarpParams>(n.params).mixAmount = v;
                   });
-        addBool("wrapUv", tr("UV wiederholen (Wrap)"), p->wrapUv,
+        addBool("wrapUv", tr("Repeat UV (wrap)"), p->wrapUv,
                 [](ChainNode& n, bool v) {
                     std::get<MeshWarpParams>(n.params).wrapUv = v;
                 });
@@ -5378,7 +5376,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         if (!pfErr.empty())
         {
             auto* err = new QLabel(
-                tr("⚠ Kompilierfehler:\n%1")
+                tr("⚠ Compile error:\n%1")
                     .arg(QString::fromStdString(pfErr).left(600)),
                 m_propContainer);
             err->setWordWrap(true);
@@ -5390,12 +5388,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                          ? QString::fromStdString(nodeName)
                                          : QStringLiteral("pixelfilter");
         addCodeEditor(
-            tr("Filter-Funktion (GLSL)"), p->code,
+            tr("Filter function (GLSL)"), p->code,
             tr("vec4 farbe(vec2 uv, vec4 src) { return src; }"),
             pixelFilterReferenceHtml(),
-            tr("Läuft je Pixel im Fragment-Shader; src = Quellpixel, Nachbarn "
-               "über texture(uTex, …). ⓘ zeigt den Vertrag und die Uniforms; "
-               "⤢ öffnet den großen Editor."),
+            tr("Runs per pixel in the fragment shader; src = source pixel, neighbours "
+               "via texture(uTex, …). ⓘ shows the contract and the uniforms; "
+               "⤢ opens the large editor."),
             160,
             lumi::scriptedit::shaderExportName(pfExportBase,
                                                QStringLiteral("pixelfilter")),
@@ -5436,25 +5434,25 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         //     S72). Er lädt die `.fs` samt gleichnamiger `.vs` und schreibt
         //     Code, Quellen, Regler und Herkunft in EINEM Zug in den Knoten.
         {
-            auto* importBtn = new QPushButton(tr("ISF-Datei importieren…"),
+            auto* importBtn = new QPushButton(tr("Import ISF file…"),
                                               m_propContainer);
             importBtn->setToolTip(
-                tr("Lädt einen Shader im Interactive Shader Format (.fs). "
-                   "Eine gleichnamige .vs wird automatisch mitgenommen."));
+                tr("Loads a shader in Interactive Shader Format (.fs). "
+                   "A .vs file of the same name is picked up automatically."));
             connect(importBtn, &QPushButton::clicked, this, [this, path]() {
                 QSettings s;
                 const QString dirKey =
                     QStringLiteral("editor/shaderFileDir/isffilter");
                 const QString pfad = QFileDialog::getOpenFileName(
-                    this, tr("ISF-Filter importieren"),
+                    this, tr("Import ISF filter"),
                     s.value(dirKey, QString()).toString(),
-                    tr("ISF-Shader (*.fs);;Alle Dateien (*)"));
+                    tr("ISF shaders (*.fs);;All files (*)"));
                 if (pfad.isEmpty()) return;
                 QFile f(pfad);
                 if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
                 {
-                    QMessageBox::warning(this, tr("ISF-Import"),
-                                         tr("Datei nicht lesbar: %1").arg(pfad));
+                    QMessageBox::warning(this, tr("ISF import"),
+                                         tr("File not readable: %1").arg(pfad));
                     return;
                 }
                 const QString inhalt = QString::fromUtf8(f.readAll());
@@ -5471,7 +5469,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     inhalt, fi.completeBaseName(), vertex);
                 if (!r.ok)
                 {
-                    QMessageBox::warning(this, tr("ISF-Import"), r.error);
+                    QMessageBox::warning(this, tr("ISF import"), r.error);
                     return;
                 }
                 s.setValue(dirKey, fi.absolutePath());
@@ -5542,10 +5540,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     ++bilder;
             }
             auto* info = new QLabel(
-                tr("Sorte: %1").arg(lumi::isf::sortenName(bilder)),
+                tr("Kind: %1").arg(lumi::isf::sortenName(bilder)),
                 m_propContainer);
-            info->setToolTip(tr("Ergibt sich aus der Zahl der Bildquellen — "
-                                "Quellen hinzufügen oder entfernen ändert sie."));
+            info->setToolTip(tr("Follows from the number of image inputs — "
+                                "adding or removing inputs changes it."));
             form->addRow(info);
         }
 
@@ -5559,7 +5557,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             m_host != nullptr ? m_host->shadertoyError(isfNodeId) : std::string();
         if (!isfErr.empty())
         {
-            auto* err = new QLabel(tr("⚠ Kompilierfehler:\n%1")
+            auto* err = new QLabel(tr("⚠ Compile error:\n%1")
                                        .arg(QString::fromStdString(isfErr).left(600)),
                                    m_propContainer);
             err->setWordWrap(true);
@@ -5571,10 +5569,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         //     "+" und "✕". Ein selbst geschriebener Knoten bekommt seine
         //     Eingänge so von Hand; beim Import füllt der Parser sie.
         {
-            QStringList bindungen = {tr("Ketten-Bild"), tr("schwarz"),
-                                     tr("Audio (Waveform)"), tr("Audio (Spektrum)")};
+            QStringList bindungen = {tr("Chain image"), tr("black"),
+                                     tr("Audio (waveform)"), tr("Audio (spectrum)")};
             for (int n = 1; n <= ic::kQuelleBufferAnzahl; ++n)
-                bindungen << tr("AVS-Buffer %1").arg(n);
+                bindungen << tr("AVS buffer %1").arg(n);
             // Kodierung -> Combo-Index (die Werte sind nicht lückenlos).
             const auto zuIndex = [](int b) {
                 if (b == ic::kQuelleKette) return 0;
@@ -5599,18 +5597,18 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 hl->setContentsMargins(0, 0, 0, 0);
                 auto* nameEdit = new QLineEdit(QString::fromStdString(q.name), row);
                 nameEdit->setToolTip(
-                    tr("Bezeichner, unter dem der Shader diese Quelle abtastet "
-                       "(z. B. inputImage)."));
+                    tr("Identifier under which the shader samples this input "
+                       "(e.g. inputImage)."));
                 auto* combo = new QComboBox(row);
                 combo->addItems(bindungen);
                 combo->setCurrentIndex(zuIndex(q.bindung));
                 auto* del = new QToolButton(row);
                 del->setText(QStringLiteral("✕"));
-                del->setToolTip(tr("Diese Quelle entfernen"));
+                del->setToolTip(tr("Remove this input"));
                 hl->addWidget(nameEdit, 1);
                 hl->addWidget(combo, 1);
                 hl->addWidget(del);
-                form->addRow(tr("Quelle %1").arg(qi + 1), row);
+                form->addRow(tr("Input %1").arg(qi + 1), row);
 
                 connect(nameEdit, &QLineEdit::editingFinished, this,
                         [this, path, qi, nameEdit]() {
@@ -5641,9 +5639,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                         Qt::QueuedConnection);
                 });
             }
-            auto* addBtn = new QPushButton(tr("+ Quelle"), m_propContainer);
-            addBtn->setToolTip(tr("Einen weiteren Bild-Eingang anlegen. Der Name "
-                                  "muss dem Sampler im Shader entsprechen."));
+            auto* addBtn = new QPushButton(tr("+ Input"), m_propContainer);
+            addBtn->setToolTip(tr("Add another image input. The name "
+                                  "must match the sampler in the shader."));
             connect(addBtn, &QPushButton::clicked, this, [this, path]() {
                 mutate(path, [](ChainNode& n) {
                     auto& ip = std::get<IsfFilterParams>(n.params);
@@ -5682,8 +5680,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             tr("Fragment (.fs)"), p->fragCode,
             tr("void main() { gl_FragColor = IMG_THIS_PIXEL(inputImage); }"),
             isfReferenceHtml(),
-            tr("ISF-Code, unverändert ausgeführt: IMG_*-Makros, RENDERSIZE, "
-               "TIME, PASSINDEX sowie getosc()/getspec() stehen bereit."),
+            tr("ISF code, executed unchanged: IMG_* macros, RENDERSIZE, "
+               "TIME, PASSINDEX and getosc()/getspec() are available."),
             160,
             lumi::scriptedit::shaderExportName(isfBase, QStringLiteral("isffilter"),
                                                QStringLiteral("fs")),
@@ -5694,9 +5692,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addCodeEditor(
             tr("Vertex (.vs) — optional"), p->vertexCode,
             tr("void main() { isf_vertShaderInit(); }"), isfReferenceHtml(),
-            tr("Leer = Standard. Hier rechnen ISF-Filter ihre Nachbar-"
-               "Koordinaten vor; isf_vertShaderInit() setzt Position und "
-               "Koordinate."),
+            tr("Empty = default. This is where ISF filters precompute their "
+               "neighbour coordinates; isf_vertShaderInit() sets position and "
+               "coordinate."),
             110,
             lumi::scriptedit::shaderExportName(isfBase, QStringLiteral("isffilter"),
                                                QStringLiteral("vs")),
@@ -5705,16 +5703,16 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 std::get<IsfFilterParams>(n.params).vertexCode = std::move(v);
             });
 
-        addEnum("geometrie", tr("Geometrie"), std::clamp(p->geometrie, 0, 2),
-                {tr("Quad (ISF-treu)"), tr("Ein Dreieck"), tr("Gitter")},
+        addEnum("geometrie", tr("Geometry"), std::clamp(p->geometrie, 0, 2),
+                {tr("Quad (faithful to ISF)"), tr("Single triangle"), tr("Grid")},
                 [](ChainNode& n, int v) {
                     std::get<IsfFilterParams>(n.params).geometrie = v;
                 });
-        addInt("gridX", tr("Gitter X"), p->gridX, ic::kGridMin, ic::kGridMax,
+        addInt("gridX", tr("Grid X"), p->gridX, ic::kGridMin, ic::kGridMax,
                [](ChainNode& n, int v) {
                    std::get<IsfFilterParams>(n.params).gridX = v;
                });
-        addInt("gridY", tr("Gitter Y"), p->gridY, ic::kGridMin, ic::kGridMax,
+        addInt("gridY", tr("Grid Y"), p->gridY, ic::kGridMin, ic::kGridMax,
                [](ChainNode& n, int v) {
                    std::get<IsfFilterParams>(n.params).gridY = v;
                });
@@ -5723,7 +5721,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                       std::get<IsfFilterParams>(n.params).mixAmount = v;
                   });
         addEnum("blend", tr("Blend"), std::clamp(p->blend, 0, 2),
-                {tr("Ersetzen"), tr("Additiv"), tr("50/50")},
+                {tr("Replace"), tr("Additive"), tr("50/50")},
                 [](ChainNode& n, int v) {
                     std::get<IsfFilterParams>(n.params).blend = v;
                 });
@@ -5747,7 +5745,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         if (!gpErr.empty())
         {
             auto* err = new QLabel(
-                tr("⚠ Kompilierfehler:\n%1")
+                tr("⚠ Compile error:\n%1")
                     .arg(QString::fromStdString(gpErr).left(600)),
                 m_propContainer);
             err->setWordWrap(true);
@@ -5755,7 +5753,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             form->addRow(err);
         }
 
-        addInt("count", tr("Anzahl"), p->count, lumi::gpuparticles::kMinCount,
+        addInt("count", tr("Count"), p->count, lumi::gpuparticles::kMinCount,
                lumi::gpuparticles::kMaxCount, [](ChainNode& n, int v) {
                    std::get<GpuParticlesParams>(n.params).count = v;
                });
@@ -5767,27 +5765,27 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                   [](ChainNode& n, double v) {
                       std::get<GpuParticlesParams>(n.params).spawnY = v;
                   });
-        addDouble("spawnSpread", tr("Spawn-Streuung"), p->spawnSpread, 0.0, 1.0,
+        addDouble("spawnSpread", tr("Spawn spread"), p->spawnSpread, 0.0, 1.0,
                   0.005, [](ChainNode& n, double v) {
                       std::get<GpuParticlesParams>(n.params).spawnSpread = v;
                   });
-        addDouble("speed", tr("Tempo (UV/s)"), p->speed, 0.0, 5.0, 0.01,
+        addDouble("speed", tr("Speed (UV/s)"), p->speed, 0.0, 5.0, 0.01,
                   [](ChainNode& n, double v) {
                       std::get<GpuParticlesParams>(n.params).speed = v;
                   });
-        addDouble("direction", tr("Richtung (°)"), p->direction, -360.0, 360.0,
+        addDouble("direction", tr("Direction (°)"), p->direction, -360.0, 360.0,
                   1.0, [](ChainNode& n, double v) {
                       std::get<GpuParticlesParams>(n.params).direction = v;
                   });
-        addDouble("fan", tr("Fächer (°)"), p->fan, 0.0, 360.0, 1.0,
+        addDouble("fan", tr("Fan (°)"), p->fan, 0.0, 360.0, 1.0,
                   [](ChainNode& n, double v) {
                       std::get<GpuParticlesParams>(n.params).fan = v;
                   });
-        addDouble("gravityX", tr("Schwerkraft X"), p->gravityX, -5.0, 5.0, 0.01,
+        addDouble("gravityX", tr("Gravity X"), p->gravityX, -5.0, 5.0, 0.01,
                   [](ChainNode& n, double v) {
                       std::get<GpuParticlesParams>(n.params).gravityX = v;
                   });
-        addDouble("gravityY", tr("Schwerkraft Y"), p->gravityY, -5.0, 5.0, 0.01,
+        addDouble("gravityY", tr("Gravity Y"), p->gravityY, -5.0, 5.0, 0.01,
                   [](ChainNode& n, double v) {
                       std::get<GpuParticlesParams>(n.params).gravityY = v;
                   });
@@ -5795,31 +5793,31 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                   [](ChainNode& n, double v) {
                       std::get<GpuParticlesParams>(n.params).drag = v;
                   });
-        addDouble("lifeSeconds", tr("Lebensdauer (s)"), p->lifeSeconds, 0.1, 30.0,
+        addDouble("lifeSeconds", tr("Lifetime (s)"), p->lifeSeconds, 0.1, 30.0,
                   0.1, [](ChainNode& n, double v) {
                       std::get<GpuParticlesParams>(n.params).lifeSeconds = v;
                   });
-        addDouble("lifeJitter", tr("Lebensdauer-Streuung"), p->lifeJitter, 0.0,
+        addDouble("lifeJitter", tr("Lifetime spread"), p->lifeJitter, 0.0,
                   1.0, 0.05, [](ChainNode& n, double v) {
                       std::get<GpuParticlesParams>(n.params).lifeJitter = v;
                   });
-        addDouble("sizePx", tr("Größe (px)"), p->sizePx, 0.5, 128.0, 0.5,
+        addDouble("sizePx", tr("Size (px)"), p->sizePx, 0.5, 128.0, 0.5,
                   [](ChainNode& n, double v) {
                       std::get<GpuParticlesParams>(n.params).sizePx = v;
                   });
-        addDouble("sizeEndFactor", tr("End-Größenfaktor"), p->sizeEndFactor, 0.0,
+        addDouble("sizeEndFactor", tr("End size factor"), p->sizeEndFactor, 0.0,
                   4.0, 0.05, [](ChainNode& n, double v) {
                       std::get<GpuParticlesParams>(n.params).sizeEndFactor = v;
                   });
-        addColor("colorStart", tr("Farbe Spawn"), p->colorStart,
+        addColor("colorStart", tr("Colour at spawn"), p->colorStart,
                  [](ChainNode& n, uint32_t v) {
                      std::get<GpuParticlesParams>(n.params).colorStart = v;
                  });
-        addColor("colorEnd", tr("Farbe Ende"), p->colorEnd,
+        addColor("colorEnd", tr("Colour at end"), p->colorEnd,
                  [](ChainNode& n, uint32_t v) {
                      std::get<GpuParticlesParams>(n.params).colorEnd = v;
                  });
-        addBool("additive", tr("Additiv (Glow)"), p->additive,
+        addBool("additive", tr("Additive (glow)"), p->additive,
                 [](ChainNode& n, bool v) {
                     std::get<GpuParticlesParams>(n.params).additive = v;
                 });
@@ -5827,12 +5825,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                          ? QString::fromStdString(nodeName)
                                          : QStringLiteral("particles");
         addCodeEditor(
-            tr("Kraftfeld (GLSL, optional)"), p->forceCode,
+            tr("Force field (GLSL, optional)"), p->forceCode,
             tr("vec2 kraft(vec2 pos, vec2 vel, float alter) { return vec2(0.0); }"),
             gpuParticlesReferenceHtml(),
-            tr("Zusatz-Beschleunigung je Partikel in UV/s² (zu Schwerkraft "
-               "und Drag). ⓘ zeigt den Vertrag und die Uniforms; ⤢ öffnet "
-               "den großen Editor. Leer = keine Zusatzkraft."),
+            tr("Additional acceleration per particle in UV/s² (on top of gravity "
+               "and drag). ⓘ shows the contract and the uniforms; ⤢ opens "
+               "the large editor. Empty = no additional force."),
             120,
             lumi::scriptedit::shaderExportName(gpExportBase,
                                                QStringLiteral("gpuparticles")),
@@ -5863,10 +5861,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         // HG1 (HostGruppen_Crossfade_Entwurf.md): Level-1-Host — eigener
         // persistenter Buffer (Feedback), eigener Buffer-Pool + ScriptContext.
         auto* info = new QLabel(
-            tr("Host-Gruppe: kapselt ein komplettes Visual (eigener "
-               "Feedback-Buffer, eigene Buffer-Save-Slots und Skript-Globals). "
-               "Mehrere aktive Gruppen stapeln sich ueber Blend Out; der "
-               "Crossfade (HG2) blendet beim Wechsel."),
+            tr("Host group: encapsulates a complete visual (its own "
+               "feedback buffer, its own Buffer Save slots and script globals). "
+               "Several active groups stack via Blend Out; the "
+               "crossfade (HG2) blends on switching."),
             m_propContainer);
         info->setWordWrap(true);
         form->addRow(info);
@@ -5886,13 +5884,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<HostGroupParams>(n.params).beatCode = std::move(v); });
 
         auto* syncNote = new QLabel(
-            tr("Hinweis: Die Crossfade-Dauer gilt synchron fuer ALLE "
-               "Host-Gruppen — eine Aenderung hier wird auf alle uebertragen "
-               "(Entwurf-Regel). Die Kurven sind je Gruppe individuell."),
+            tr("Note: the crossfade duration applies to ALL host groups "
+               "in sync — a change here is carried over to all of them "
+               "(design rule). The curves are individual per group."),
             m_propContainer);
         syncNote->setWordWrap(true);
         form->addRow(syncNote);
-        addDouble("crossfadeSeconds", tr("Crossfade-Dauer (s)"), p->crossfadeSeconds, 0.0, 60.0, 0.1,
+        addDouble("crossfadeSeconds", tr("Crossfade duration (s)"), p->crossfadeSeconds, 0.0, 60.0, 0.1,
                   [this](ChainNode& n, double v) {
                       std::get<HostGroupParams>(n.params).crossfadeSeconds = v;
                       // Sync-Regel (Entwurf §2.4) — laeuft unter dem
@@ -5905,14 +5903,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                       };
                       sync(m_host->chain());
                   });
-        const QStringList curveNames = {tr("Linear"), tr("S-Kurve (smooth)"),
+        const QStringList curveNames = {tr("Linear"), tr("S-curve (smooth)"),
                                         tr("Ease-In"), tr("Ease-Out"),
-                                        tr("Exponentiell")};
-        addEnum("curveIn", tr("Eingangskurve"), std::clamp(p->curveIn, 0, 4), curveNames,
+                                        tr("Exponential")};
+        addEnum("curveIn", tr("Fade-in curve"), std::clamp(p->curveIn, 0, 4), curveNames,
                 [](ChainNode& n, int v) {
                     std::get<HostGroupParams>(n.params).curveIn = v;
                 });
-        addEnum("curveOut", tr("Ausgangskurve"), std::clamp(p->curveOut, 0, 4), curveNames,
+        addEnum("curveOut", tr("Fade-out curve"), std::clamp(p->curveOut, 0, 4), curveNames,
                 [](ChainNode& n, int v) {
                     std::get<HostGroupParams>(n.params).curveOut = v;
                 });
@@ -5920,7 +5918,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         // Manueller Wechsel-Trigger (Vorstufe der Visual-Playlist E6): diese
         // Gruppe einblenden, alle anderen Host-Gruppen ausblenden lassen.
         auto* switchBtn = new QPushButton(
-            tr("Zu dieser Gruppe wechseln (Crossfade)"), m_propContainer);
+            tr("Switch to this group (crossfade)"), m_propContainer);
         connect(switchBtn, &QPushButton::clicked, this, [this, path]() {
             if (m_host == nullptr) return;
             mutateStructure([&] {
@@ -5953,7 +5951,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             MultiEffectVisualizer::resolvePresetReferences(probe, QString(), &report);
             if (!report.isEmpty())
             {
-                QMessageBox::information(this, tr("Presetverweis"), report.join('\n'));
+                QMessageBox::information(this, tr("Preset reference"), report.join('\n'));
             }
             mutateStructure([&] {
                 ChainNode* ziel = nodeAtPath(path);
@@ -5967,13 +5965,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             editorNeu();
         };
 
-        auto* verweisBox = new QCheckBox(tr("Presetverweis (nur den Pfad speichern)"),
+        auto* verweisBox = new QCheckBox(tr("Preset reference (save the path only)"),
                                          m_propContainer);
         verweisBox->setChecked(p->verweis);
         verweisBox->setToolTip(
-            tr("An: die Kette speichert nur den Pfad; der Inhalt wird bei jedem Laden "
-               "frisch aus der Datei gelesen und erscheint nicht im Baum.\n"
-               "Aus: der Inhalt ist eine Kopie in der Kette und frei bearbeitbar."));
+            tr("On: the chain saves only the path; the content is read fresh from "
+               "the file on every load and does not appear in the tree.\n"
+               "Off: the content is a copy in the chain and freely editable."));
         const std::string quelleJetzt = p->sourceFile;
         connect(verweisBox, &QCheckBox::toggled, this,
                 [this, path, quelleJetzt, verweisLaden, editorNeu](bool an) {
@@ -5982,16 +5980,16 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                         if (quelleJetzt.empty())
                         {
                             QMessageBox::information(
-                                this, tr("Presetverweis"),
-                                tr("Die Gruppe hat noch keine Quelldatei — erst ein "
-                                   "Preset laden, dann zum Verweis machen."));
+                                this, tr("Preset reference"),
+                                tr("The group has no source file yet — load a "
+                                   "preset first, then turn it into a reference."));
                             editorNeu();
                             return;
                         }
                         if (QMessageBox::question(
-                                this, tr("Presetverweis"),
-                                tr("Zum Verweis machen? Der Inhalt wird aus der Datei neu "
-                                   "gelesen; eigene Aenderungen daran gehen verloren.")) !=
+                                this, tr("Preset reference"),
+                                tr("Turn into a reference? The content is re-read from "
+                                   "the file; your own changes to it will be lost.")) !=
                             QMessageBox::Yes)
                         {
                             editorNeu();
@@ -6020,14 +6018,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             reihe->setContentsMargins(0, 0, 0, 0);
             auto* pfadEdit = new QLineEdit(QString::fromStdString(p->sourceFile), zeile);
             pfadEdit->setObjectName(QStringLiteral("presetVerweisPfad"));
-            auto* oeffnen = new QPushButton(tr("Öffnen…"), zeile);
-            auto* neu = new QPushButton(tr("Neu laden"), zeile);
+            auto* oeffnen = new QPushButton(tr("Open…"), zeile);
+            auto* neu = new QPushButton(tr("Reload"), zeile);
             reihe->addWidget(pfadEdit, 1);
             reihe->addWidget(oeffnen);
             reihe->addWidget(neu);
-            form->addRow(tr("Verweis auf"), zeile);
+            form->addRow(tr("Reference to"), zeile);
             if (!QFileInfo::exists(pfadEdit->text()))
-                pfadEdit->setToolTip(tr("Datei nicht gefunden — die Gruppe bleibt leer."));
+                pfadEdit->setToolTip(tr("File not found — the group stays empty."));
             connect(pfadEdit, &QLineEdit::editingFinished, this, [pfadEdit, verweisLaden,
                                                                   alt = p->sourceFile]() {
                 if (pfadEdit->text().toStdString() == alt) return;  // nur Fokuswechsel
@@ -6037,7 +6035,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 QSettings settings;
                 const QString schluessel = QStringLiteral("effectPalette/presetGroupDir");
                 const QString datei = QFileDialog::getOpenFileName(
-                    this, tr("Presetverweis"), settings.value(schluessel).toString(),
+                    this, tr("Preset reference"), settings.value(schluessel).toString(),
                     tr("Presets (*.avs *.milk *.lvfx *.lvfx2)"));
                 if (datei.isEmpty()) return;
                 settings.setValue(schluessel, QFileInfo(datei).absolutePath());
@@ -6048,7 +6046,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         }
         else if (!p->sourceFile.empty())
         {
-            auto* src = new QLabel(tr("Quelle: %1").arg(QString::fromStdString(
+            auto* src = new QLabel(tr("Source: %1").arg(QString::fromStdString(
                                        p->sourceFile)),
                                    m_propContainer);
             src->setWordWrap(true);
@@ -6066,9 +6064,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             }
             if (hatInhalt &&
                 QMessageBox::question(
-                    this, tr("Preset in Gruppe laden"),
-                    tr("Den bisherigen Inhalt der Gruppe ersetzen? Eigene "
-                       "Aenderungen daran gehen verloren.")) != QMessageBox::Yes)
+                    this, tr("Load preset into group"),
+                    tr("Replace the group's current content? Your own "
+                       "changes to it will be lost.")) != QMessageBox::Yes)
                 return;
             std::vector<ChainNode> inhalt;
             if (!presetGruppeLaden(datei, inhalt)) return;
@@ -6085,12 +6083,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         if (!p->verweis && !p->sourceFile.empty())
         {
             const QString quelle = QString::fromStdString(p->sourceFile);
-            auto* reloadBtn = new QPushButton(tr("Aus Quelle neu laden"), m_propContainer);
+            auto* reloadBtn = new QPushButton(tr("Reload from source"), m_propContainer);
             reloadBtn->setEnabled(QFileInfo::exists(quelle));
             reloadBtn->setToolTip(QFileInfo::exists(quelle)
-                                      ? tr("Liest %1 erneut ein und ersetzt den "
-                                           "Inhalt der Gruppe.").arg(quelle)
-                                      : tr("Quelldatei nicht gefunden: %1").arg(quelle));
+                                      ? tr("Reads %1 again and replaces the "
+                                           "group's content.").arg(quelle)
+                                      : tr("Source file not found: %1").arg(quelle));
             connect(reloadBtn, &QPushButton::clicked, this,
                     [inhaltErsetzen, quelle]() { inhaltErsetzen(quelle); });
             form->addRow(reloadBtn);
@@ -6098,7 +6096,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         if (!p->verweis)
         {
             auto* importBtn = new QPushButton(
-                tr("Preset in diese Gruppe laden (.avs, .milk, .lvfx)..."), m_propContainer);
+                tr("Load preset into this group (.avs, .milk, .lvfx)..."), m_propContainer);
             connect(importBtn, &QPushButton::clicked, this,
                     [inhaltErsetzen]() { inhaltErsetzen(QString()); });
             form->addRow(importBtn);
@@ -6109,10 +6107,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         // Host Switcher (S82): Liste der geschalteten Gruppen (Index = Position),
         // Ausloeser Zeit / Songwechsel / Skript. Schaltet nur zur Laufzeit.
         auto* info = new QLabel(
-            tr("Schaltet zwischen den Host-Gruppen der Liste um — nach Zeit, beim "
-               "Songwechsel oder per Skript (`switch = n`, `nextgroup = 1`). Der "
-               "Uebergang ist der Crossfade der Gruppen. Gespeichert wird die Kette "
-               "wie eingestellt; das Umschalten gilt nur zur Laufzeit."),
+            tr("Switches between the host groups in the list — by time, on a "
+               "song change or by script (`switch = n`, `nextgroup = 1`). The "
+               "transition is the groups' crossfade. The chain is saved as "
+               "configured; switching only applies at runtime."),
             m_propContainer);
         info->setWordWrap(true);
         form->addRow(info);
@@ -6139,12 +6137,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             const QString name = QString::fromStdString(p->groups[i]);
             auto* item = new QListWidgetItem(
                 QStringLiteral("%1   %2").arg(i + 1).arg(name) +
-                    (vorhanden.contains(name) ? QString() : tr("   (fehlt in der Kette)")),
+                    (vorhanden.contains(name) ? QString() : tr("   (missing in the chain)")),
                 liste);
             item->setData(Qt::UserRole, static_cast<int>(i));
         }
         liste->setMaximumHeight(140);
-        form->addRow(tr("Gruppen"), liste);
+        form->addRow(tr("Groups"), liste);
 
         // Aendern der Liste: eine Operation auf `groups`, danach Editor neu
         const auto listeAendern = [this, path, neuAufbauen](
@@ -6163,13 +6161,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 p->groups.end())
                 auswahl->addItem(name);
         }
-        auto* dazu = new QPushButton(tr("Hinzufuegen"), knoepfe);
+        auto* dazu = new QPushButton(tr("Add"), knoepfe);
         dazu->setEnabled(auswahl->count() > 0);
         auto* hoch = new QPushButton(QStringLiteral("▲"), knoepfe);
         auto* runter = new QPushButton(QStringLiteral("▼"), knoepfe);
-        auto* weg = new QPushButton(tr("Entfernen"), knoepfe);
-        hoch->setToolTip(tr("Markierte Gruppe eine Position nach oben (Index - 1)"));
-        runter->setToolTip(tr("Markierte Gruppe eine Position nach unten (Index + 1)"));
+        auto* weg = new QPushButton(tr("Remove"), knoepfe);
+        hoch->setToolTip(tr("Move the selected group up one position (index - 1)"));
+        runter->setToolTip(tr("Move the selected group down one position (index + 1)"));
         reihe->addWidget(auswahl, 1);
         reihe->addWidget(dazu);
         reihe->addWidget(hoch);
@@ -6203,7 +6201,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
 
         // Laufende Gruppe (Laufzeitwert, halbsekuendlich nachgefuehrt)
         auto* laeuft = new QLabel(m_propContainer);
-        form->addRow(tr("Laeuft"), laeuft);
+        form->addRow(tr("Running"), laeuft);
         // Kopie der Namen: `p` zeigt in die lokale Editor-Kopie der Params, die
         // mit diesem Aufruf endet — der Timer lebt laenger
         const std::vector<std::string> namen = p->groups;
@@ -6226,19 +6224,19 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         takt->start(500);
         laeuftAktualisieren();
 
-        addInt("startIndex", tr("Startgruppe"), p->startIndex, 1,
+        addInt("startIndex", tr("Start group"), p->startIndex, 1,
                std::max(1, static_cast<int>(p->groups.size())),
                [](ChainNode& n, int v) { std::get<HostSwitcherParams>(n.params).startIndex = v; });
-        addDouble("intervalSeconds", tr("Wechsel nach (s)"), p->intervalSeconds, 0.0, 3600.0, 1.0,
+        addDouble("intervalSeconds", tr("Switch after (s)"), p->intervalSeconds, 0.0, 3600.0, 1.0,
                   [](ChainNode& n, double v) {
                       std::get<HostSwitcherParams>(n.params).intervalSeconds = v;
                   });
-        addBool("nextOnSongChange", tr("Bei Songwechsel weiter"), p->nextOnSongChange,
+        addBool("nextOnSongChange", tr("Next on song change"), p->nextOnSongChange,
                 [](ChainNode& n, bool v) {
                     std::get<HostSwitcherParams>(n.params).nextOnSongChange = v;
                 });
-        addEnum("order", tr("Reihenfolge"), std::clamp(p->order, 0, 1),
-                {tr("Listenreihenfolge"), tr("Zufaellig")},
+        addEnum("order", tr("Order"), std::clamp(p->order, 0, 1),
+                {tr("List order"), tr("Random")},
                 [](ChainNode& n, int v) { std::get<HostSwitcherParams>(n.params).order = v; });
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<HostSwitcherParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<HostSwitcherParams>(n.params).frameCode = std::move(v); });
@@ -6271,9 +6269,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         if (milkSection < 0)  // Node selbst = Preset-Uebersicht
         {
             auto* info = new QLabel(
-                tr("MilkDrop-Preset '%1' — PS%2 · Warp: %3 · Comp: %4 · %5 Sprite(s)\n"
-                   "Sektionen als Kinder im Baum, in Render-Reihenfolge: Code → "
-                   "Warp → Shapes → Waves → Comp → Sprites (Parameter = Rahmen)")
+                tr("MilkDrop preset '%1' — PS%2 · Warp: %3 · Comp: %4 · %5 sprite(s)\n"
+                   "Sections as children in the tree, in render order: Code → "
+                   "Warp → Shapes → Waves → Comp → Sprites (Parameters = frame)")
                     .arg(QString::fromStdString(p->preset.name))
                     .arg(p->preset.psVersion)
                     .arg(className(p->preset.warpInfo.shaderClass))
@@ -6286,13 +6284,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                    [milkOf](ChainNode& n, int v) { milkOf(n).meshX = v; });
             addInt("meshY", tr("Mesh Y"), p->meshY, 6, 72,
                    [milkOf](ChainNode& n, int v) { milkOf(n).meshY = v; });
-            addBool("debugGrid", tr("Kalibrier-Raster"), p->debugGrid,
+            addBool("debugGrid", tr("Calibration grid"), p->debugGrid,
                     [milkOf](ChainNode& n, bool v) { milkOf(n).debugGrid = v; });
-            addBool("debugMotionVectors", tr("Motion-Vector-Overlay"),
+            addBool("debugMotionVectors", tr("Motion vector overlay"),
                     p->debugMotionVectors, [milkOf](ChainNode& n, bool v) {
                         milkOf(n).debugMotionVectors = v;
                     });
-            addText("presetDir", tr("Textur-Basisordner"), p->presetDir,
+            addText("presetDir", tr("Texture base folder"), p->presetDir,
                     [milkOf](ChainNode& n, std::string v) {
                         milkOf(n).presetDir = std::move(v);
                     });
@@ -6308,14 +6306,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 using PS = lumi::milkdrop::PresetState;
 
                 auto* rwCombo = new QComboBox(m_propContainer);
-                rwCombo->addItems({tr("Legacy (original-treu)"), tr("Modern (IEEE)"),
-                                   tr("Benutzerdefiniert")});
+                rwCombo->addItems({tr("Legacy (faithful to original)"), tr("Modern (IEEE)"),
+                                   tr("Custom")});
                 rwCombo->setCurrentIndex(static_cast<int>(p->preset.regelwerk));
                 rwCombo->setToolTip(
-                    tr("Legacy = alle D3D9-Emulationen AN (Import-Default, "
-                       "original-treu). Modern = IEEE/GL pur, keine Legacy-"
-                       "Kruecken. Benutzerdefiniert = die Einzelschalter zaehlen."));
-                form->addRow(tr("Regelwerk"), rwCombo);
+                    tr("Legacy = all D3D9 emulations ON (import default, "
+                       "faithful to the original). Modern = pure IEEE/GL, no legacy "
+                       "crutches. Custom = the individual switches count."));
+                form->addRow(tr("Rule set"), rwCombo);
 
                 const auto effektiv = lumi::milkdrop::effektiveSchalter(p->preset);
                 const bool custom = p->preset.regelwerk == Regelwerk::Benutzerdefiniert;
@@ -6335,27 +6333,27 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     return cb;
                 };
                 auto* cbDiv = makeSwitch(
-                    tr("D3D9-Divisionsvertrag"),
-                    tr("D3D9 rechnet Legacy-Float: 0/0 = 0, x/0 bleibt endlich — "
-                       "IEEE-NaN wuerde Summen schwaerzen (S64, Rainbow Attack NEON)."),
+                    tr("D3D9 division contract"),
+                    tr("D3D9 computes legacy float: 0/0 = 0, x/0 stays finite — "
+                       "IEEE NaN would blacken sums (S64, Rainbow Attack NEON)."),
                     &PS::divVertragD3d9, effektiv.divVertragD3d9);
                 auto* cbUnorm = makeSwitch(
-                    tr("UNORM8-Trunkierung"),
-                    tr("D3D9 schneidet beim 8-bit-Write ab, GL rundet — ohne "
-                       "Trunkierung stallt der Decay bei v*(1-d) < 0,5/255 "
-                       "(S64, R211-Grauboden)."),
+                    tr("UNORM8 truncation"),
+                    tr("D3D9 truncates on 8-bit writes, GL rounds — without "
+                       "truncation the decay stalls at v*(1-d) < 0.5/255 "
+                       "(S64, R211 grey floor)."),
                     &PS::unormTrunkierung, effektiv.unormTrunkierung);
                 auto* cbQ = makeSwitch(
-                    tr("q-Garbage-Epsilon"),
-                    tr("Ohne per_frame_init liest das Original uninitialisierten "
-                       "Heap (q = 1e-6 statt 0) — Divisionen bleiben endlich "
-                       "(S64, R-Serie)."),
+                    tr("q garbage epsilon"),
+                    tr("Without per_frame_init the original reads uninitialised "
+                       "heap (q = 1e-6 instead of 0) — divisions stay finite "
+                       "(S64, R series)."),
                     &PS::qGarbageEpsilon, effektiv.qGarbageEpsilon);
                 auto* cbUv = makeSwitch(
-                    tr("UV-Sanitize"),
-                    tr("NaN-UVs → 0 (D3D9-Konvertierungsregel) und Riesen-UVs in "
-                       "double in die Kachel gewrappt (Fixpunkt behaelt Bits — "
-                       "S64, 2077-Look)."),
+                    tr("UV sanitize"),
+                    tr("NaN UVs → 0 (D3D9 conversion rule) and huge UVs wrapped "
+                       "into the tile in double precision (fixed point keeps bits — "
+                       "S64, 2077 look)."),
                     &PS::uvSanitize, effektiv.uvSanitize);
 
                 connect(rwCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -6396,14 +6394,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                              PsOverride PS::* member) {
                     auto* combo = new QComboBox(m_propContainer);
                     combo->addItems({tr("Auto (.milk)"), tr("PS2"), tr("PS3"),
-                                     tr("MD1 erzwingen")});
+                                     tr("Force MD1")});
                     combo->setCurrentIndex(static_cast<int>(value));
                     combo->setToolTip(
-                        tr("Auto folgt den PSVERSION-Feldern der .milk. PS2/PS3 "
-                           "ueberschreiben nur die Angabe (die GLSL-Emission ist "
-                           "fuer beide Stufen identisch). MD1 erzwingen ignoriert "
-                           "den Custom-Shader-Text und rendert den exakten "
-                           "MD1-Pfad (S64-Strip-Bisektion als Feature)."));
+                        tr("Auto follows the PSVERSION fields of the .milk. PS2/PS3 "
+                           "only override the declaration (the GLSL emission is "
+                           "identical for both levels). Force MD1 ignores "
+                           "the custom shader text and renders the exact "
+                           "MD1 path (S64 strip bisection as a feature)."));
                     connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
                             this, [this, path, milkOf, member](int idx) {
                                 mutate(path, [&](ChainNode& n) {
@@ -6413,41 +6411,41 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             });
                     form->addRow(label, combo);
                 };
-                makePsCombo(tr("PS-Version Warp"), p->preset.psWarp, &PS::psWarp);
-                makePsCombo(tr("PS-Version Comp"), p->preset.psComp, &PS::psComp);
+                makePsCombo(tr("PS version Warp"), p->preset.psWarp, &PS::psWarp);
+                makePsCombo(tr("PS version Comp"), p->preset.psComp, &PS::psComp);
 
                 // Skript-Zufall (S80): eigener Schalter, NICHT Teil der
                 // Betriebsart. Standard Original (Entscheid Patrik a) — die
                 // Gitter-Sonde belegt es; „bisher" holt den alten Look zurueck.
                 auto* randCombo = new QComboBox(m_propContainer);
-                randCombo->addItems({tr("LumiViz (bisher)"), tr("Original (ns-eel2)")});
+                randCombo->addItems({tr("LumiViz (previous)"), tr("Original (ns-eel2)")});
                 randCombo->setCurrentIndex(p->preset.eelRandOriginal ? 1 : 0);
                 randCombo->setToolTip(
-                    tr("rand() im Skript. Original (Standard) = wie MilkDrop 2: "
-                       "Kommazahl in [0, x], fester Startwert — Presets sehen damit "
-                       "aus wie im Original. Bisher = ganze Zahlen (rand(1) ist "
-                       "dann immer 0), der Look bis Session 80."));
+                    tr("rand() in scripts. Original (default) = like MilkDrop 2: "
+                       "decimal number in [0, x], fixed seed — presets then look "
+                       "as in the original. Previous = whole numbers (rand(1) is "
+                       "then always 0), the look up to session 80."));
                 connect(randCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
                         this, [this, path, milkOf](int idx) {
                             mutate(path, [&](ChainNode& n) {
                                 milkOf(n).preset.eelRandOriginal = idx == 1;
                             });
                         });
-                form->addRow(tr("Skript-Zufall"), randCombo);
+                form->addRow(tr("Script random"), randCombo);
 
                 // Audio (S80, Entscheid Patrik a): EIN Schalter fuer alles, was aus
                 // dem Audio kommt — Custom-Waves UND bass/mid/treb (MilkdropAudio.hpp)
                 auto* audioCombo = new QComboBox(m_propContainer);
-                audioCombo->addItems({tr("LumiViz (bisher)"), tr("Original (MilkDrop)")});
+                audioCombo->addItems({tr("LumiViz (previous)"), tr("Original (MilkDrop)")});
                 audioCombo->setCurrentIndex(p->preset.audioOriginal ? 1 : 0);
                 audioCombo->setToolTip(
-                    tr("Woraus bass/mid/treb (und _att) und die Custom-Waves "
-                       "(value1/value2) entstehen. Original = wie MilkDrop 2: eigene "
-                       "Aufbereitung aus der 8-bit-Wellenform — FFT mit Hüllkurve und "
-                       "Entzerrung, Ausrichtung der Welle am Vorbild, Bandenergien; "
-                       "gegen den Original-Kern geprüft (Standard). Bisher = Spektrum "
-                       "der App mit geschätzten Faktoren (Session 39/43), der Klang bis "
-                       "Session 80."));
+                    tr("Where bass/mid/treb (and _att) and the custom waves "
+                       "(value1/value2) come from. Original = like MilkDrop 2: its own "
+                       "processing of the 8-bit waveform — FFT with envelope and "
+                       "equalisation, alignment of the wave to the previous one, band energies; "
+                       "checked against the original core (default). Previous = the app's "
+                       "spectrum with estimated factors (sessions 39/43), the sound up to "
+                       "session 80."));
                 connect(audioCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
                         this, [this, path, milkOf](int idx) {
                             mutate(path, [&](ChainNode& n) {
@@ -6458,24 +6456,24 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
 
                 // Seitenverhaeltnis der Custom-Waves (S81, Entscheid Patrik a)
                 auto* aspektCombo = new QComboBox(m_propContainer);
-                aspektCombo->addItems({tr("LumiViz (bisher)"), tr("Original (MilkDrop)")});
+                aspektCombo->addItems({tr("LumiViz (previous)"), tr("Original (MilkDrop)")});
                 aspektCombo->setCurrentIndex(p->preset.aspektOriginal ? 1 : 0);
                 aspektCombo->setToolTip(
-                    tr("Wie Custom-Waves ihre x/y-Werte aufs Bild legen. Original "
-                       "(Standard) = wie MilkDrop: auf einem Breitbild wird die Kurve "
-                       "senkrecht um das Seitenverhältnis gestreckt (4:3 um 4/3, 16:9 "
-                       "um 16/9), y = 0.1 liegt dann unter dem Bildrand — so haben "
-                       "die Autoren ihre Presets gesehen. Bisher = x/y sind Anteile "
-                       "des Bildes (0 = linker/unterer, 1 = rechter/oberer Rand), die "
-                       "Kurve bleibt ungestreckt im Bild; der Look von Session 39 "
-                       "bis 80."));
+                    tr("How custom waves map their x/y values onto the image. Original "
+                       "(default) = like MilkDrop: on a widescreen image the curve is "
+                       "stretched vertically by the aspect ratio (4:3 by 4/3, 16:9 "
+                       "by 16/9), y = 0.1 then lies below the image edge — this is how "
+                       "the authors saw their presets. Previous = x/y are fractions "
+                       "of the image (0 = left/bottom, 1 = right/top edge), the "
+                       "curve stays unstretched in the image; the look of sessions 39 "
+                       "to 80."));
                 connect(aspektCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
                         this, [this, path, milkOf](int idx) {
                             mutate(path, [&](ChainNode& n) {
                                 milkOf(n).preset.aspektOriginal = idx == 1;
                             });
                         });
-                form->addRow(tr("Seitenverhältnis (Waves)"), aspektCombo);
+                form->addRow(tr("Aspect ratio (waves)"), aspektCombo);
             }
 
             // --- Puffer-Wechsel (S66) --------------------------------------------
@@ -6485,26 +6483,26 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             // Preset nicht neu starten.
             {
                 auto* pwCombo = new QComboBox(m_propContainer);
-                pwCombo->addItems({tr("App-Einstellung"),
-                                   tr("Behalten (Original)"), tr("Löschen"),
-                                   tr("Fading (einmaliger Mix)"),
-                                   tr("Ausblenden (über Zeit)")});
+                pwCombo->addItems({tr("App setting"),
+                                   tr("Keep (original)"), tr("Clear"),
+                                   tr("Fading (one-off mix)"),
+                                   tr("Fade out (over time)")});
                 pwCombo->setCurrentIndex(
                     static_cast<int>(p->pufferWechsel));
                 pwCombo->setToolTip(
-                    tr("Was beim Laden des NAECHSTEN Presets mit dem geerbten "
-                       "Bild passiert. Behalten = Original-MilkDrop (jedes "
-                       "Preset erbt das Bild des Vorgaengers — chaotische "
-                       "Feedback-Presets kippen je nach Vorgaenger in andere "
-                       "Aeste). Löschen = frischer Start wie beim App-Start "
-                       "(deterministische Rausch-Saat, NICHT schwarz — sonst "
-                       "blieben Verstärker-Presets tot). Fading = EINMALIGER "
-                       "Mix aus Erbe und Saat im Moment des Wechsels (Anteil "
-                       "unten). Ausblenden = das Erbe stirbt über die "
-                       "eingestellte Zeit weg, was das neue Preset zeichnet "
-                       "bleibt. App-Einstellung folgt dem Default aus dem "
-                       "Settings-Panel."));
-                form->addRow(tr("Puffer bei Preset-Wechsel"), pwCombo);
+                    tr("What happens to the inherited image when the NEXT preset "
+                       "is loaded. Keep = original MilkDrop (every "
+                       "preset inherits the previous preset's image — chaotic "
+                       "feedback presets tip into different branches depending "
+                       "on their predecessor). Clear = fresh start as at app start "
+                       "(deterministic noise seed, NOT black — otherwise "
+                       "amplifier presets would stay dead). Fading = ONE-OFF "
+                       "mix of inheritance and seed at the moment of the switch (share "
+                       "below). Fade out = the inherited image dies away over the "
+                       "set time, whatever the new preset draws "
+                       "stays. App setting follows the default from the "
+                       "Settings panel."));
+                form->addRow(tr("Buffer on preset change"), pwCombo);
 
                 auto* fadeSlider = new QSlider(Qt::Horizontal, m_propContainer);
                 fadeSlider->setRange(0, 100);
@@ -6513,9 +6511,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 fadeSlider->setEnabled(p->pufferWechsel ==
                                        PufferWechsel::Fading);
                 fadeSlider->setToolTip(
-                    tr("Erbe-Anteil beim Fading: 0 % = wie Löschen, "
-                       "100 % = wie Behalten."));
-                form->addRow(tr("Fading-Erbe (%)"), fadeSlider);
+                    tr("Share of the inherited image when fading: 0 % = like Clear, "
+                       "100 % = like Keep."));
+                form->addRow(tr("Fading inheritance (%)"), fadeSlider);
 
                 auto* ausblendSpin = new QDoubleSpinBox(m_propContainer);
                 ausblendSpin->setRange(0.1, 60.0);
@@ -6525,11 +6523,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 ausblendSpin->setEnabled(p->pufferWechsel ==
                                          PufferWechsel::Ausblenden);
                 ausblendSpin->setToolTip(
-                    tr("Ausblenden: Dauer, bis das geerbte Bild vollständig "
-                       "verschwunden ist (das Echo wird je Frame zusätzlich "
-                       "gedämpft; frische Zeichnungen des neuen Presets "
-                       "bleiben)."));
-                form->addRow(tr("Ausblend-Dauer"), ausblendSpin);
+                    tr("Fade out: time until the inherited image has fully "
+                       "disappeared (the echo is additionally damped every "
+                       "frame; fresh drawings of the new preset "
+                       "stay)."));
+                form->addRow(tr("Fade-out duration"), ausblendSpin);
 
                 connect(pwCombo,
                         QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -6598,44 +6596,44 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 };
             };
             auto* hint = new QLabel(
-                tr("Die eingebaute Standard-Welle des Presets (in MilkDrop "
-                   "immer an). Startwerte — per_frame-Code kann wave_* je "
-                   "Frame ueberschreiben."),
+                tr("The preset's built-in standard wave (always on in "
+                   "MilkDrop). Start values — per_frame code can override wave_* "
+                   "every frame."),
                 m_propContainer);
             hint->setWordWrap(true);
             form->addRow(hint);
-            addBool("basicWaveEnabled", tr("Basis-Waveform aktiv"),
+            addBool("basicWaveEnabled", tr("Base waveform active"),
                     p->preset.basicWaveEnabled, setB(&PS::basicWaveEnabled),
-                    tr("LumiViz-Schalter: aus = Welle wird nicht gerendert. "
-                       "MilkDrop-Presets kennen nur Alpha 0."),
+                    tr("LumiViz switch: off = the wave is not rendered. "
+                       "MilkDrop presets only know alpha 0."),
                     [this, path] { syncMilkEyes(path); });
-            addInt("waveMode", tr("Wave-Modus (0-7)"), p->preset.waveMode, 0, 7, setI(&PS::waveMode));
-            addBool("additiveWaves", tr("Additiv"), p->preset.additiveWaves, setB(&PS::additiveWaves));
-            addBool("waveDots", tr("Punkte statt Linien"), p->preset.waveDots, setB(&PS::waveDots));
-            addBool("waveThick", tr("Dick"), p->preset.waveThick, setB(&PS::waveThick));
-            addBool("modWaveAlphaByVolume", tr("Alpha nach Lautstaerke"), p->preset.modWaveAlphaByVolume, setB(&PS::modWaveAlphaByVolume));
-            addBool("maximizeWaveColor", tr("Farbe maximieren"), p->preset.maximizeWaveColor, setB(&PS::maximizeWaveColor));
+            addInt("waveMode", tr("Wave mode (0-7)"), p->preset.waveMode, 0, 7, setI(&PS::waveMode));
+            addBool("additiveWaves", tr("Additive"), p->preset.additiveWaves, setB(&PS::additiveWaves));
+            addBool("waveDots", tr("Dots instead of lines"), p->preset.waveDots, setB(&PS::waveDots));
+            addBool("waveThick", tr("Thick"), p->preset.waveThick, setB(&PS::waveThick));
+            addBool("modWaveAlphaByVolume", tr("Alpha by volume"), p->preset.modWaveAlphaByVolume, setB(&PS::modWaveAlphaByVolume));
+            addBool("maximizeWaveColor", tr("Maximise colour"), p->preset.maximizeWaveColor, setB(&PS::maximizeWaveColor));
             addDouble("waveAlpha", tr("Alpha"), p->preset.waveAlpha, 0.0, 10.0, 0.01, setD(&PS::waveAlpha));
-            addDouble("waveScale", tr("Skalierung"), p->preset.waveScale, 0.0, 100.0, 0.01, setD(&PS::waveScale));
-            addDouble("waveSmoothing", tr("Glaettung"), p->preset.waveSmoothing, 0.0, 0.95, 0.01, setD(&PS::waveSmoothing));
+            addDouble("waveScale", tr("Scale"), p->preset.waveScale, 0.0, 100.0, 0.01, setD(&PS::waveScale));
+            addDouble("waveSmoothing", tr("Smoothing"), p->preset.waveSmoothing, 0.0, 0.95, 0.01, setD(&PS::waveSmoothing));
             addDouble("waveMystery", tr("Mystery (wave_mystery)"), p->preset.waveMystery, -2.0, 2.0, 0.01, setD(&PS::waveMystery));
-            addDouble("modWaveAlphaStart", tr("Mod-Alpha Start"), p->preset.modWaveAlphaStart, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaStart));
-            addDouble("modWaveAlphaEnd", tr("Mod-Alpha Ende"), p->preset.modWaveAlphaEnd, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaEnd));
-            addDouble("waveR", tr("Rot"), p->preset.waveR, 0.0, 1.0, 0.01, setD(&PS::waveR));
-            addDouble("waveG", tr("Gruen"), p->preset.waveG, 0.0, 1.0, 0.01, setD(&PS::waveG));
-            addDouble("waveB", tr("Blau"), p->preset.waveB, 0.0, 1.0, 0.01, setD(&PS::waveB));
+            addDouble("modWaveAlphaStart", tr("Mod alpha start"), p->preset.modWaveAlphaStart, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaStart));
+            addDouble("modWaveAlphaEnd", tr("Mod alpha end"), p->preset.modWaveAlphaEnd, 0.0, 2.0, 0.01, setD(&PS::modWaveAlphaEnd));
+            addDouble("waveR", tr("Red"), p->preset.waveR, 0.0, 1.0, 0.01, setD(&PS::waveR));
+            addDouble("waveG", tr("Green"), p->preset.waveG, 0.0, 1.0, 0.01, setD(&PS::waveG));
+            addDouble("waveB", tr("Blue"), p->preset.waveB, 0.0, 1.0, 0.01, setD(&PS::waveB));
             addDouble("waveX", tr("Position X"), p->preset.waveX, 0.0, 1.0, 0.01, setD(&PS::waveX));
             addDouble("waveY", tr("Position Y"), p->preset.waveY, 0.0, 1.0, 0.01, setD(&PS::waveY));
         }
         else if (milkSection == 1)  // Custom Waves (Sektion oder Einzel-Element)
         {
             if (p->preset.waves.empty())
-                form->addRow(new QLabel(tr("Keine Custom-Waves im Preset"),
+                form->addRow(new QLabel(tr("No custom waves in the preset"),
                                         m_propContainer));
             if (milkElem < 0)
                 form->addRow(new QLabel(
-                    tr("Neu anlegen: 'Custom Wave' im Dropdown + '+'. "
-                       "Entfernen/Klonen: Wave im Baum markieren."),
+                    tr("Create new: 'Custom Wave' in the dropdown + '+'. "
+                       "Remove/clone: select the wave in the tree."),
                     m_propContainer));
             const std::size_t nWaves = p->preset.waves.size();
             const std::size_t wBegin =
@@ -6646,7 +6644,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             for (std::size_t i = wBegin; i < wEnd; ++i)
             {
                 const auto& w = p->preset.waves[i];
-                addBool("enabled", tr("Wave %1 aktiv").arg(w.index), w.enabled,
+                addBool("enabled", tr("Wave %1 active").arg(w.index), w.enabled,
                         [milkOf, i](ChainNode& n, bool v) {
                             auto& mp = milkOf(n);
                             if (i < mp.preset.waves.size())
@@ -6684,16 +6682,16 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                         };
                     };
                     addInt("samples", tr("Samples"), w.samples, 2, 512, wI(&WS::samples));
-                    addInt("sep", tr("L/R-Versatz (sep)"), w.sep, 0, 256, wI(&WS::sep));
-                    addBool("spectrum", tr("Spektrum statt Waveform"), w.spectrum, wB(&WS::spectrum));
-                    addBool("useDots", tr("Punkte"), w.useDots, wB(&WS::useDots));
-                    addBool("drawThick", tr("Dick"), w.drawThick, wB(&WS::drawThick));
-                    addBool("additive", tr("Additiv"), w.additive, wB(&WS::additive));
-                    addDouble("scaling", tr("Skalierung"), w.scaling, 0.0, 100.0, 0.01, wD(&WS::scaling));
-                    addDouble("smoothing", tr("Glaettung"), w.smoothing, 0.0, 1.0, 0.01, wD(&WS::smoothing));
-                    addDouble("r", tr("Rot"), w.r, 0.0, 1.0, 0.01, wD(&WS::r));
-                    addDouble("g", tr("Gruen"), w.g, 0.0, 1.0, 0.01, wD(&WS::g));
-                    addDouble("b", tr("Blau"), w.b, 0.0, 1.0, 0.01, wD(&WS::b));
+                    addInt("sep", tr("L/R offset (sep)"), w.sep, 0, 256, wI(&WS::sep));
+                    addBool("spectrum", tr("Spectrum instead of waveform"), w.spectrum, wB(&WS::spectrum));
+                    addBool("useDots", tr("Dots"), w.useDots, wB(&WS::useDots));
+                    addBool("drawThick", tr("Thick"), w.drawThick, wB(&WS::drawThick));
+                    addBool("additive", tr("Additive"), w.additive, wB(&WS::additive));
+                    addDouble("scaling", tr("Scale"), w.scaling, 0.0, 100.0, 0.01, wD(&WS::scaling));
+                    addDouble("smoothing", tr("Smoothing"), w.smoothing, 0.0, 1.0, 0.01, wD(&WS::smoothing));
+                    addDouble("r", tr("Red"), w.r, 0.0, 1.0, 0.01, wD(&WS::r));
+                    addDouble("g", tr("Green"), w.g, 0.0, 1.0, 0.01, wD(&WS::g));
+                    addDouble("b", tr("Blue"), w.b, 0.0, 1.0, 0.01, wD(&WS::b));
                     addDouble("a", tr("Alpha"), w.a, 0.0, 1.0, 0.01, wD(&WS::a));
                 }
                 addScript("milkdrop", tr("Wave %1 · Init").arg(w.index), w.initCode,
@@ -6707,12 +6705,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         else if (milkSection == 2)  // Custom Shapes (Sektion oder Einzel-Element)
         {
             if (p->preset.shapes.empty())
-                form->addRow(new QLabel(tr("Keine Custom-Shapes im Preset"),
+                form->addRow(new QLabel(tr("No custom shapes in the preset"),
                                         m_propContainer));
             if (milkElem < 0)
                 form->addRow(new QLabel(
-                    tr("Neu anlegen: 'Custom Shape' im Dropdown + '+'. "
-                       "Entfernen/Klonen: Shape im Baum markieren."),
+                    tr("Create new: 'Custom Shape' in the dropdown + '+'. "
+                       "Remove/clone: select the shape in the tree."),
                     m_propContainer));
             const std::size_t nShapes = p->preset.shapes.size();
             const std::size_t sBegin =
@@ -6723,7 +6721,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             for (std::size_t i = sBegin; i < sEnd; ++i)
             {
                 const auto& s = p->preset.shapes[i];
-                addBool("enabled", tr("Shape %1 aktiv").arg(s.index), s.enabled,
+                addBool("enabled", tr("Shape %1 active").arg(s.index), s.enabled,
                         [milkOf, i](ChainNode& n, bool v) {
                             auto& mp = milkOf(n);
                             if (i < mp.preset.shapes.size())
@@ -6759,25 +6757,25 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             if (i < mp.preset.shapes.size()) mp.preset.shapes[i].*m = v;
                         };
                     };
-                    addInt("sides", tr("Seiten"), s.sides, 3, 100, sI(&SS::sides));
-                    addInt("instances", tr("Instanzen (num_inst)"), s.instances, 1, 1024, sI(&SS::instances));
-                    addBool("additive", tr("Additiv"), s.additive, sB(&SS::additive));
-                    addBool("thickOutline", tr("Dicker Rand"), s.thickOutline, sB(&SS::thickOutline));
-                    addBool("textured", tr("Texturiert (Vorframe)"), s.textured, sB(&SS::textured));
-                    addDouble("texZoom", tr("Textur-Zoom"), s.texZoom, 0.01, 10.0, 0.01, sD(&SS::texZoom));
-                    addDouble("texAng", tr("Textur-Winkel"), s.texAng, -6.3, 6.3, 0.01, sD(&SS::texAng));
+                    addInt("sides", tr("Sides"), s.sides, 3, 100, sI(&SS::sides));
+                    addInt("instances", tr("Instances (num_inst)"), s.instances, 1, 1024, sI(&SS::instances));
+                    addBool("additive", tr("Additive"), s.additive, sB(&SS::additive));
+                    addBool("thickOutline", tr("Thick outline"), s.thickOutline, sB(&SS::thickOutline));
+                    addBool("textured", tr("Textured (previous frame)"), s.textured, sB(&SS::textured));
+                    addDouble("texZoom", tr("Texture zoom"), s.texZoom, 0.01, 10.0, 0.01, sD(&SS::texZoom));
+                    addDouble("texAng", tr("Texture angle"), s.texAng, -6.3, 6.3, 0.01, sD(&SS::texAng));
                     addDouble("x", tr("Position X"), s.x, 0.0, 1.0, 0.001, sD(&SS::x));
                     addDouble("y", tr("Position Y"), s.y, 0.0, 1.0, 0.001, sD(&SS::y));
                     addDouble("rad", tr("Radius"), s.rad, 0.0, 2.0, 0.001, sD(&SS::rad));
-                    addDouble("ang", tr("Winkel"), s.ang, -6.3, 6.3, 0.01, sD(&SS::ang));
-                    addDouble("r", tr("Zentrum R"), s.r, 0.0, 1.0, 0.01, sD(&SS::r));
-                    addDouble("g", tr("Zentrum G"), s.g, 0.0, 1.0, 0.01, sD(&SS::g));
-                    addDouble("b", tr("Zentrum B"), s.b, 0.0, 1.0, 0.01, sD(&SS::b));
-                    addDouble("a", tr("Zentrum A"), s.a, 0.0, 1.0, 0.01, sD(&SS::a));
-                    addDouble("r2", tr("Rand R (r2)"), s.r2, 0.0, 1.0, 0.01, sD(&SS::r2));
-                    addDouble("g2", tr("Rand G (g2)"), s.g2, 0.0, 1.0, 0.01, sD(&SS::g2));
-                    addDouble("b2", tr("Rand B (b2)"), s.b2, 0.0, 1.0, 0.01, sD(&SS::b2));
-                    addDouble("a2", tr("Rand A (a2)"), s.a2, 0.0, 1.0, 0.01, sD(&SS::a2));
+                    addDouble("ang", tr("Angle"), s.ang, -6.3, 6.3, 0.01, sD(&SS::ang));
+                    addDouble("r", tr("Centre R"), s.r, 0.0, 1.0, 0.01, sD(&SS::r));
+                    addDouble("g", tr("Centre G"), s.g, 0.0, 1.0, 0.01, sD(&SS::g));
+                    addDouble("b", tr("Centre B"), s.b, 0.0, 1.0, 0.01, sD(&SS::b));
+                    addDouble("a", tr("Centre A"), s.a, 0.0, 1.0, 0.01, sD(&SS::a));
+                    addDouble("r2", tr("Edge R (r2)"), s.r2, 0.0, 1.0, 0.01, sD(&SS::r2));
+                    addDouble("g2", tr("Edge G (g2)"), s.g2, 0.0, 1.0, 0.01, sD(&SS::g2));
+                    addDouble("b2", tr("Edge B (b2)"), s.b2, 0.0, 1.0, 0.01, sD(&SS::b2));
+                    addDouble("a2", tr("Edge A (a2)"), s.a2, 0.0, 1.0, 0.01, sD(&SS::a2));
                     addDouble("borderR", tr("Border R"), s.borderR, 0.0, 1.0, 0.01, sD(&SS::borderR));
                     addDouble("borderG", tr("Border G"), s.borderG, 0.0, 1.0, 0.01, sD(&SS::borderG));
                     addDouble("borderB", tr("Border B"), s.borderB, 0.0, 1.0, 0.01, sD(&SS::borderB));
@@ -6799,7 +6797,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                bool isWarp) {
                 auto* edit = new QPlainTextEdit(m_propContainer);
                 edit->setPlainText(QString::fromStdString(value));
-                edit->setPlaceholderText(tr("HLSL shader_body (leer = MD1-Pfad)"));
+                edit->setPlaceholderText(tr("HLSL shader_body (empty = MD1 path)"));
                 edit->setLineWrapMode(QPlainTextEdit::NoWrap);
                 edit->setMinimumHeight(80);
                 edit->setMaximumHeight(260);
@@ -6838,11 +6836,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 auto* refBtn = new QToolButton(header);
                 refBtn->setText(QString::fromUtf8("ⓘ"));
                 refBtn->setToolTip(
-                    tr("Shader-Referenz (Inputs, Konstanten, Sampler, Funktionen)"));
+                    tr("Shader reference (inputs, constants, samplers, functions)"));
                 auto* expandBtn = new QToolButton(header);
                 expandBtn->setText(QString::fromUtf8("⤢"));
                 expandBtn->setToolTip(
-                    tr("In großem, größenveränderbarem Editor öffnen"));
+                    tr("Open in large, resizable editor"));
                 hl->addWidget(refBtn);
                 hl->addWidget(expandBtn);
                 connect(refBtn, &QToolButton::clicked, this, [this]() {
@@ -6897,19 +6895,19 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 form->addRow(edit);
             };
             if (milkSection == 3)
-                addHlsl(tr("Warp-Shader (HLSL)"), p->preset.warpShaderText, true);
+                addHlsl(tr("Warp shader (HLSL)"), p->preset.warpShaderText, true);
             else
-                addHlsl(tr("Comp-Shader (HLSL)"), p->preset.compShaderText, false);
+                addHlsl(tr("Comp shader (HLSL)"), p->preset.compShaderText, false);
         }
         else if (milkSection == 4)  // Sprites (N3.3 — Sektion oder Einzel-Element)
         {
             if (p->preset.sprites.empty())
-                form->addRow(new QLabel(tr("Keine Sprites im Preset"),
+                form->addRow(new QLabel(tr("No sprites in the preset"),
                                         m_propContainer));
             if (milkElem < 0)
                 form->addRow(new QLabel(
-                    tr("Neu anlegen: 'Sprite' im Dropdown + '+'. "
-                       "Entfernen/Klonen: Sprite im Baum markieren."),
+                    tr("Create new: 'Sprite' in the dropdown + '+'. "
+                       "Remove/clone: select the sprite in the tree."),
                     m_propContainer));
             const std::size_t nSprites = p->preset.sprites.size();
             const std::size_t bBegin =
@@ -6930,7 +6928,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     };
                 };
                 const QString t = tr("Sprite %1").arg(sp.index);
-                addBool("enabled", t + tr(" aktiv"), sp.enabled,
+                addBool("enabled", t + tr(" active"), sp.enabled,
                         spriteSet([](SpriteState& s, bool v) { s.enabled = v; }),
                         QString(), [this, path] { syncMilkEyes(path); });
                 // N3.2 nachgezogen (S76): numerische Startwerte nur in der
@@ -6939,20 +6937,20 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 // im Tooltip (Panel-Breite folgt der Label-Spalte).
                 if (milkElem >= 0)
                 {
-                    addText("imageName", tr("Bild"), sp.imageName,
+                    addText("imageName", tr("Image"), sp.imageName,
                             spriteSet([](SpriteState& s, std::string v) {
                                 s.imageName = std::move(v);
                             }),
-                            tr("Dateiname, relativ zum Textur-Ordner des "
-                               "Presets"));
+                            tr("File name, relative to the preset's "
+                               "texture folder"));
                     addColor("colorKey", tr("Colorkey"), sp.colorKey,
                              spriteSet([](SpriteState& s, uint32_t v) {
                                  s.colorKey = v;
                              }));
                     addInt("layer", tr("Layer"), sp.layer, -100, 100,
                            spriteSet([](SpriteState& s, int v) { s.layer = v; }),
-                           tr("Zeichenreihenfolge — klein zuerst"));
-                    addInt("blendMode", tr("Blend-Modus"), sp.blendMode, 0, 4,
+                           tr("Drawing order — lowest first"));
+                    addInt("blendMode", tr("Blend mode"), sp.blendMode, 0, 4,
                            spriteSet([](SpriteState& s, int v) {
                                s.blendMode = v;
                            }),
@@ -6966,19 +6964,19 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                               spriteSet([](SpriteState& s, double v) { s.x = v; }));
                     addDouble("y", tr("Position Y"), sp.y, -5.0, 5.0, 0.01,
                               spriteSet([](SpriteState& s, double v) { s.y = v; }));
-                    addDouble("sx", tr("Skalierung X"), sp.sx, -10.0, 10.0, 0.01,
+                    addDouble("sx", tr("Scale X"), sp.sx, -10.0, 10.0, 0.01,
                               spriteSet([](SpriteState& s, double v) { s.sx = v; }),
-                              tr("Negativ = gespiegelt"));
-                    addDouble("sy", tr("Skalierung Y"), sp.sy, -10.0, 10.0, 0.01,
+                              tr("Negative = mirrored"));
+                    addDouble("sy", tr("Scale Y"), sp.sy, -10.0, 10.0, 0.01,
                               spriteSet([](SpriteState& s, double v) { s.sy = v; }),
-                              tr("Negativ = gespiegelt"));
+                              tr("Negative = mirrored"));
                     addDouble("rot", tr("Rotation (rad)"), sp.rot, -10.0, 10.0, 0.01,
                               spriteSet([](SpriteState& s, double v) { s.rot = v; }));
                     addDouble("speed", tr("Speed"), sp.speed, 0.0, 10.0, 0.1,
                               spriteSet([](SpriteState& s, double v) {
                                   s.speed = v;
                               }),
-                              tr("Skaliert die sprite-lokale `time`"));
+                              tr("Scales the sprite-local `time`"));
                     addDouble("repeatX", tr("Repeat X"), sp.repeatX, 0.01, 100.0, 0.1,
                               spriteSet([](SpriteState& s, double v) {
                                   s.repeatX = v;
@@ -7023,8 +7021,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             };
 
             auto* hint = new QLabel(
-                tr("Startwerte des Presets — per_frame-Code kann viele davon "
-                   "je Frame ueberschreiben (zoom/rot/wave_*/…)."),
+                tr("Start values of the preset — per_frame code can override many "
+                   "of them every frame (zoom/rot/wave_*/…)."),
                 m_propContainer);
             hint->setWordWrap(true);
             form->addRow(hint);
@@ -7034,30 +7032,30 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             if (bakedComp || p->preset.compInfo.shaderClass == lumi::milk::ShaderClass::Custom)
             {
                 auto* baked = new QLabel(
-                    tr("Hinweis: Dieses Preset hat einen Comp-Shader — Gamma/"
-                       "Echo/Filter/fShader sind dort EINGEBACKEN und wirken "
-                       "hier nicht (Baked-Vertrag; Shader leeren, um sie zu "
-                       "aktivieren)."),
+                    tr("Note: this preset has a comp shader — gamma/"
+                       "echo/filter/fShader are BAKED IN there and have no effect "
+                       "here (baked contract; empty the shader to activate "
+                       "them)."),
                     m_propContainer);
                 baked->setWordWrap(true);
                 form->addRow(baked);
             }
 
             group(tr("General / Composite"));
-            addBool("kaltstartSaat", tr("Kaltstart-Rauschsaat"),
+            addBool("kaltstartSaat", tr("Cold-start noise seed"),
                     p->preset.kaltstartSaat, setB(&PS::kaltstartSaat),
-                    tr("An = Feedback-Puffer startet mit deterministischem "
-                       "Rauschen (MilkDrop-Verhalten; Verstaerker-Presets "
-                       "brauchen es). Aus = definiert schwarzer Start."));
+                    tr("On = the feedback buffer starts with deterministic "
+                       "noise (MilkDrop behaviour; amplifier presets "
+                       "need it). Off = defined black start."));
             addDouble("decay", tr("Decay"), p->preset.decay, 0.0, 1.0, 0.001, setD(&PS::decay));
             addDouble("gammaAdj", tr("Gamma"), p->preset.gammaAdj, 0.0, 8.0, 0.01, setD(&PS::gammaAdj));
-            addDouble("videoEchoZoom", tr("Echo-Zoom"), p->preset.videoEchoZoom, 0.001, 1000.0, 0.01, setD(&PS::videoEchoZoom));
-            addDouble("videoEchoAlpha", tr("Echo-Alpha"), p->preset.videoEchoAlpha, 0.0, 1.0, 0.01, setD(&PS::videoEchoAlpha));
-            addEnum("videoEchoOrientation", tr("Echo-Orientierung"), p->preset.videoEchoOrientation,
-                    {tr("Keine"), tr("H-Spiegel"), tr("V-Spiegel"), tr("Beide")},
+            addDouble("videoEchoZoom", tr("Echo zoom"), p->preset.videoEchoZoom, 0.001, 1000.0, 0.01, setD(&PS::videoEchoZoom));
+            addDouble("videoEchoAlpha", tr("Echo alpha"), p->preset.videoEchoAlpha, 0.0, 1.0, 0.01, setD(&PS::videoEchoAlpha));
+            addEnum("videoEchoOrientation", tr("Echo orientation"), p->preset.videoEchoOrientation,
+                    {tr("None"), tr("H mirror"), tr("V mirror"), tr("Both")},
                     setI(&PS::videoEchoOrientation));
-            addDouble("shader", tr("fShader-Farbwash"), p->preset.shader, 0.0, 1.0, 0.01, setD(&PS::shader));
-            addBool("texWrap", tr("Textur-Wrap"), p->preset.texWrap, setB(&PS::texWrap));
+            addDouble("shader", tr("fShader colour wash"), p->preset.shader, 0.0, 1.0, 0.01, setD(&PS::shader));
+            addBool("texWrap", tr("Texture wrap"), p->preset.texWrap, setB(&PS::texWrap));
             addBool("darkenCenter", tr("Darken Center"), p->preset.darkenCenter, setB(&PS::darkenCenter));
             addBool("brighten", tr("Brighten"), p->preset.brighten, setB(&PS::brighten));
             addBool("darken", tr("Darken"), p->preset.darken, setB(&PS::darken));
@@ -7071,7 +7069,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             // (drift_lin/drift_dir, drift_rad/drift_ang/drift_cx/drift_cy, weich).
             // Zwei Knoepfe setzen bekannte Stellungen: „Original" = alles aus,
             // „Weicher Sog ↖" = der Look bis S80 (Halbtexel-Versatz unter GL).
-            group(tr("Gestaltung (kein Original-Verhalten)"));
+            group(tr("Styling (not original behaviour)"));
             {
                 const auto makeCheck = [&](const char* field, const QString& label,
                                            bool value, bool PS::* member,
@@ -7103,80 +7101,80 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     return spin;
                 };
                 const QString skriptHinweis =
-                    tr(" Im per_frame-Code als %1 (Bogenmass) les- und schreibbar.");
+                    tr(" Readable and writable in per_frame code as %1 (radians).");
 
                 auto* cbLin = makeCheck(
-                    "gestaltLinAn", tr("Linear-Drift"), p->preset.gestaltLinAn,
+                    "gestaltLinAn", tr("Linear drift"), p->preset.gestaltLinAn,
                     &PS::gestaltLinAn,
-                    tr("Das ganze Bild wandert je Frame SCHARF in eine Richtung "
-                       "(Bruchteile werden aufgespart: 0,5 px = jeden zweiten Frame "
-                       "ein ganzes Pixel). Das Original kennt das nicht."));
+                    tr("The whole image moves SHARPLY in one direction every frame "
+                       "(fractions are saved up: 0.5 px = one whole pixel every "
+                       "second frame). The original does not have this."));
                 auto* spLinS = makeSpin(
-                    "gestaltLinStaerke", tr("  Stärke (px/Frame)"),
+                    "gestaltLinStaerke", tr("  Strength (px/frame)"),
                     p->preset.gestaltLinStaerke, 0.0, 4.0, 0.05, 4, &PS::gestaltLinStaerke,
-                    tr("1 px/Frame = 60 px/s bei 60 fps.") +
+                    tr("1 px/frame = 60 px/s at 60 fps.") +
                         skriptHinweis.arg(QStringLiteral("drift_lin")));
                 auto* spLinR = makeSpin(
-                    "gestaltLinRichtung", tr("  Richtung (°)"),
+                    "gestaltLinRichtung", tr("  Direction (°)"),
                     p->preset.gestaltLinRichtung, 0.0, 360.0, 5.0, 1,
                     &PS::gestaltLinRichtung,
-                    tr("0 = rechts, 90 = oben, 180 = links, 270 = unten.") +
+                    tr("0 = right, 90 = up, 180 = left, 270 = down.") +
                         skriptHinweis.arg(QStringLiteral("drift_dir")));
 
                 auto* cbRad = makeCheck(
-                    "gestaltRadAn", tr("Radial-Drift"), p->preset.gestaltRadAn,
+                    "gestaltRadAn", tr("Radial drift"), p->preset.gestaltRadAn,
                     &PS::gestaltRadAn,
-                    tr("Jeder Punkt wandert gleich schnell, die Richtung haengt von "
-                       "seiner Lage zum Zentrum ab: nach aussen, Wirbel oder Sog. "
-                       "Anders als zoom/rot ueberall gleich schnell. Zeichnet immer "
-                       "etwas weich. Das Original kennt das nicht."));
+                    tr("Every point moves equally fast, the direction depends on "
+                       "its position relative to the centre: outwards, swirl or pull. "
+                       "Unlike zoom/rot, equally fast everywhere. Always draws "
+                       "somewhat soft. The original does not have this."));
                 makeSpin(
-                    "gestaltRadStaerke", tr("  Stärke (px/Frame)"),
+                    "gestaltRadStaerke", tr("  Strength (px/frame)"),
                     p->preset.gestaltRadStaerke, 0.0, 4.0, 0.05, 4, &PS::gestaltRadStaerke,
-                    tr("1 px/Frame = 60 px/s bei 60 fps.") +
+                    tr("1 px/frame = 60 px/s at 60 fps.") +
                         skriptHinweis.arg(QStringLiteral("drift_rad")));
                 makeSpin(
-                    "gestaltRadWinkel", tr("  Winkel (°)"),
+                    "gestaltRadWinkel", tr("  Angle (°)"),
                     p->preset.gestaltRadWinkel, 0.0, 360.0, 5.0, 1, &PS::gestaltRadWinkel,
-                    tr("0 = nach aussen, 90 = Wirbel gegen den Uhrzeigersinn, "
-                       "180 = Sog nach innen, 270 = Wirbel im Uhrzeigersinn; "
-                       "dazwischen Spiralen.") +
+                    tr("0 = outwards, 90 = counter-clockwise swirl, "
+                       "180 = pull inwards, 270 = clockwise swirl; "
+                       "spirals in between.") +
                         skriptHinweis.arg(QStringLiteral("drift_ang")));
-                makeSpin("gestaltRadCx", tr("  Zentrum X (0–1)"), p->preset.gestaltRadCx,
+                makeSpin("gestaltRadCx", tr("  Centre X (0–1)"), p->preset.gestaltRadCx,
                          0.0, 1.0, 0.05, 3, &PS::gestaltRadCx,
-                         tr("0 = linker Rand, 1 = rechter Rand.") +
+                         tr("0 = left edge, 1 = right edge.") +
                              skriptHinweis.arg(QStringLiteral("drift_cx")));
-                makeSpin("gestaltRadCy", tr("  Zentrum Y (0–1)"), p->preset.gestaltRadCy,
+                makeSpin("gestaltRadCy", tr("  Centre Y (0–1)"), p->preset.gestaltRadCy,
                          0.0, 1.0, 0.05, 3, &PS::gestaltRadCy,
-                         tr("0 = unterer Rand, 1 = oberer Rand.") +
+                         tr("0 = bottom edge, 1 = top edge.") +
                              skriptHinweis.arg(QStringLiteral("drift_cy")));
 
                 auto* cbWeich = makeCheck(
-                    "gestaltWeichAn", tr("Weichzeichnen"), p->preset.gestaltWeichAn,
+                    "gestaltWeichAn", tr("Soften"), p->preset.gestaltWeichAn,
                     &PS::gestaltWeichAn,
-                    tr("Mischt das Bild je Frame mit dem Nachbarpixel (pendelt um "
-                       "±½ Pixel, verschiebt also nichts). Bei decay=1 wirkt das "
-                       "wie ein langsames Ausblenden. Das Original kennt das nicht."));
+                    tr("Blends the image with the neighbouring pixel every frame (oscillates by "
+                       "±½ pixel, so nothing is shifted). With decay=1 this acts "
+                       "like a slow fade-out. The original does not have this."));
                 auto* spW = makeSpin(
-                    "gestaltWeich", tr("  Stärke (0–1)"), p->preset.gestaltWeich, 0.0, 1.0,
+                    "gestaltWeich", tr("  Strength (0–1)"), p->preset.gestaltWeich, 0.0, 1.0,
                     0.05, 2, &PS::gestaltWeich,
-                    tr("0 = scharf, 1 = volles Halbpixel-Pendel.") +
+                    tr("0 = sharp, 1 = full half-pixel oscillation.") +
                         skriptHinweis.arg(QStringLiteral("weich")));
 
                 auto* knoepfe = new QWidget(m_propContainer);
                 auto* kl = new QHBoxLayout(knoepfe);
                 kl->setContentsMargins(0, 0, 0, 0);
                 auto* bOriginal = new QPushButton(tr("Original"), knoepfe);
-                bOriginal->setToolTip(tr("Alle drei Werkzeuge aus — wie das Original: "
-                                         "das Bild steht still und scharf."));
-                auto* bSog = new QPushButton(QString::fromUtf8("Weicher Sog ↖"), knoepfe);
-                bSog->setToolTip(tr("Linear-Drift 0,7071 px bei 135° und Weichzeichnen 1: "
-                                    "das Bild zieht weich nach oben links weg — der Look, "
-                                    "den LumiViz bis Session 80 hatte."));
+                bOriginal->setToolTip(tr("All three tools off — like the original: "
+                                         "the image stands still and sharp."));
+                auto* bSog = new QPushButton(QString::fromUtf8("Soft pull ↖"), knoepfe);
+                bSog->setToolTip(tr("Linear drift 0.7071 px at 135° and Soften 1: "
+                                    "the image drifts softly away to the upper left — the look "
+                                    "LumiViz had up to session 80."));
                 kl->addWidget(bOriginal);
                 kl->addWidget(bSog);
                 kl->addStretch();
-                form->addRow(tr("Stellung"), knoepfe);
+                form->addRow(tr("Setting"), knoepfe);
                 // Die Knoepfe setzen nur die Bedienelemente — deren Signale
                 // schreiben wie bei Handbedienung in die Kette.
                 connect(bOriginal, &QPushButton::clicked, this, [cbLin, cbRad, cbWeich] {
@@ -7195,56 +7193,56 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                         });
             }
 
-            group(tr("Basis-Waveform"));
+            group(tr("Base waveform"));
             {
                 // S43: eigene Ansicht im Baum (Waves -> Basis-Waveform) —
                 // hier nur der Wegweiser, keine doppelte Regler-Flaeche.
                 auto* basisRef = new QLabel(
-                    tr("Eigene Ansicht: Sektion \"Waves\" → "
-                       "\"Basis-Waveform\" im Baum."),
+                    tr("Own view: section 'Waves' → "
+                       "'Base waveform' in the tree."),
                     m_propContainer);
                 basisRef->setWordWrap(true);
                 form->addRow(basisRef);
             }
 
-            group(tr("Motion (Warp-Mesh)"));
+            group(tr("Motion (warp mesh)"));
             addDouble("zoom", tr("Zoom"), p->preset.zoom, 0.01, 10.0, 0.001, setD(&PS::zoom));
-            addDouble("zoomExponent", tr("Zoom-Exponent"), p->preset.zoomExponent, 0.01, 10.0, 0.01, setD(&PS::zoomExponent));
+            addDouble("zoomExponent", tr("Zoom exponent"), p->preset.zoomExponent, 0.01, 10.0, 0.01, setD(&PS::zoomExponent));
             addDouble("rot", tr("Rotation"), p->preset.rot, -2.0, 2.0, 0.001, setD(&PS::rot));
             addDouble("warp", tr("Warp"), p->preset.warp, 0.0, 10.0, 0.01, setD(&PS::warp));
-            addDouble("warpAnimSpeed", tr("Warp-Anim-Speed"), p->preset.warpAnimSpeed, 0.01, 10.0, 0.01, setD(&PS::warpAnimSpeed));
-            addDouble("warpScale", tr("Warp-Scale"), p->preset.warpScale, 0.01, 10.0, 0.01, setD(&PS::warpScale));
-            addDouble("cx", tr("Zentrum X (cx)"), p->preset.cx, 0.0, 1.0, 0.001, setD(&PS::cx));
-            addDouble("cy", tr("Zentrum Y (cy)"), p->preset.cy, 0.0, 1.0, 0.001, setD(&PS::cy));
+            addDouble("warpAnimSpeed", tr("Warp anim speed"), p->preset.warpAnimSpeed, 0.01, 10.0, 0.01, setD(&PS::warpAnimSpeed));
+            addDouble("warpScale", tr("Warp scale"), p->preset.warpScale, 0.01, 10.0, 0.01, setD(&PS::warpScale));
+            addDouble("cx", tr("Centre X (cx)"), p->preset.cx, 0.0, 1.0, 0.001, setD(&PS::cx));
+            addDouble("cy", tr("Centre Y (cy)"), p->preset.cy, 0.0, 1.0, 0.001, setD(&PS::cy));
             addDouble("dx", tr("Drift X (dx)"), p->preset.dx, -1.0, 1.0, 0.001, setD(&PS::dx));
             addDouble("dy", tr("Drift Y (dy)"), p->preset.dy, -1.0, 1.0, 0.001, setD(&PS::dy));
             addDouble("sx", tr("Stretch X (sx)"), p->preset.sx, 0.01, 10.0, 0.001, setD(&PS::sx));
             addDouble("sy", tr("Stretch Y (sy)"), p->preset.sy, 0.01, 10.0, 0.001, setD(&PS::sy));
 
             group(tr("Borders"));
-            addDouble("obSize", tr("Aussen-Groesse"), p->preset.obSize, 0.0, 0.5, 0.001, setD(&PS::obSize));
-            addDouble("obR", tr("Aussen R"), p->preset.obR, 0.0, 1.0, 0.01, setD(&PS::obR));
-            addDouble("obG", tr("Aussen G"), p->preset.obG, 0.0, 1.0, 0.01, setD(&PS::obG));
-            addDouble("obB", tr("Aussen B"), p->preset.obB, 0.0, 1.0, 0.01, setD(&PS::obB));
-            addDouble("obA", tr("Aussen A"), p->preset.obA, 0.0, 1.0, 0.01, setD(&PS::obA));
-            addDouble("ibSize", tr("Innen-Groesse"), p->preset.ibSize, 0.0, 0.5, 0.001, setD(&PS::ibSize));
-            addDouble("ibR", tr("Innen R"), p->preset.ibR, 0.0, 1.0, 0.01, setD(&PS::ibR));
-            addDouble("ibG", tr("Innen G"), p->preset.ibG, 0.0, 1.0, 0.01, setD(&PS::ibG));
-            addDouble("ibB", tr("Innen B"), p->preset.ibB, 0.0, 1.0, 0.01, setD(&PS::ibB));
-            addDouble("ibA", tr("Innen A"), p->preset.ibA, 0.0, 1.0, 0.01, setD(&PS::ibA));
+            addDouble("obSize", tr("Outer size"), p->preset.obSize, 0.0, 0.5, 0.001, setD(&PS::obSize));
+            addDouble("obR", tr("Outer R"), p->preset.obR, 0.0, 1.0, 0.01, setD(&PS::obR));
+            addDouble("obG", tr("Outer G"), p->preset.obG, 0.0, 1.0, 0.01, setD(&PS::obG));
+            addDouble("obB", tr("Outer B"), p->preset.obB, 0.0, 1.0, 0.01, setD(&PS::obB));
+            addDouble("obA", tr("Outer A"), p->preset.obA, 0.0, 1.0, 0.01, setD(&PS::obA));
+            addDouble("ibSize", tr("Inner size"), p->preset.ibSize, 0.0, 0.5, 0.001, setD(&PS::ibSize));
+            addDouble("ibR", tr("Inner R"), p->preset.ibR, 0.0, 1.0, 0.01, setD(&PS::ibR));
+            addDouble("ibG", tr("Inner G"), p->preset.ibG, 0.0, 1.0, 0.01, setD(&PS::ibG));
+            addDouble("ibB", tr("Inner B"), p->preset.ibB, 0.0, 1.0, 0.01, setD(&PS::ibB));
+            addDouble("ibA", tr("Inner A"), p->preset.ibA, 0.0, 1.0, 0.01, setD(&PS::ibA));
 
             group(tr("Motion Vectors"));
-            addDouble("mvX", tr("Raster X (mv_x)"), p->preset.mvX, 0.0, 64.0, 0.1, setD(&PS::mvX));
-            addDouble("mvY", tr("Raster Y (mv_y)"), p->preset.mvY, 0.0, 48.0, 0.1, setD(&PS::mvY));
-            addDouble("mvDX", tr("Versatz X (mv_dx)"), p->preset.mvDX, -1.0, 1.0, 0.001, setD(&PS::mvDX));
-            addDouble("mvDY", tr("Versatz Y (mv_dy)"), p->preset.mvDY, -1.0, 1.0, 0.001, setD(&PS::mvDY));
-            addDouble("mvL", tr("Laenge (mv_l)"), p->preset.mvL, 0.0, 10.0, 0.01, setD(&PS::mvL));
-            addDouble("mvR", tr("Rot (mv_r)"), p->preset.mvR, 0.0, 1.0, 0.01, setD(&PS::mvR));
-            addDouble("mvG", tr("Gruen (mv_g)"), p->preset.mvG, 0.0, 1.0, 0.01, setD(&PS::mvG));
-            addDouble("mvB", tr("Blau (mv_b)"), p->preset.mvB, 0.0, 1.0, 0.01, setD(&PS::mvB));
+            addDouble("mvX", tr("Grid X (mv_x)"), p->preset.mvX, 0.0, 64.0, 0.1, setD(&PS::mvX));
+            addDouble("mvY", tr("Grid Y (mv_y)"), p->preset.mvY, 0.0, 48.0, 0.1, setD(&PS::mvY));
+            addDouble("mvDX", tr("Offset X (mv_dx)"), p->preset.mvDX, -1.0, 1.0, 0.001, setD(&PS::mvDX));
+            addDouble("mvDY", tr("Offset Y (mv_dy)"), p->preset.mvDY, -1.0, 1.0, 0.001, setD(&PS::mvDY));
+            addDouble("mvL", tr("Length (mv_l)"), p->preset.mvL, 0.0, 10.0, 0.01, setD(&PS::mvL));
+            addDouble("mvR", tr("Red (mv_r)"), p->preset.mvR, 0.0, 1.0, 0.01, setD(&PS::mvR));
+            addDouble("mvG", tr("Green (mv_g)"), p->preset.mvG, 0.0, 1.0, 0.01, setD(&PS::mvG));
+            addDouble("mvB", tr("Blue (mv_b)"), p->preset.mvB, 0.0, 1.0, 0.01, setD(&PS::mvB));
             addDouble("mvA", tr("Alpha (mv_a)"), p->preset.mvA, 0.0, 1.0, 0.01, setD(&PS::mvA));
 
-            group(tr("Blur-Pyramide"));
+            group(tr("Blur Pyramid"));
             addDouble("blur1Min", tr("Blur1 Min"), p->preset.blur1Min, 0.0, 1.0, 0.01, setD(&PS::blur1Min));
             addDouble("blur1Max", tr("Blur1 Max"), p->preset.blur1Max, 0.0, 1.0, 0.01, setD(&PS::blur1Max));
             addDouble("blur2Min", tr("Blur2 Min"), p->preset.blur2Min, 0.0, 1.0, 0.01, setD(&PS::blur2Min));
@@ -7268,7 +7266,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 std::get<TextParams>(n.params).text = text;
             });
         });
-        form->addRow(tr("Text (';' trennt)"), edit);
+        form->addRow(tr("Text (';' separates)"), edit);
         addText("fontFace", tr("Font"), p->fontFace,
                 [](ChainNode& n, std::string v) { std::get<TextParams>(n.params).fontFace = std::move(v); });
         addInt("fontHeight", tr("Height (px)"), std::abs(p->fontHeight), 4, 400,
@@ -7336,26 +7334,26 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         namespace vs = lumi::multieffect::videosource;
         // videoSource (S70): LumiViz-Quellknoten — Datei/Kamera/Testaufnahme.
         // Der AVS-`avi`-Knoten bleibt daneben unangetastet (Kalibrierung).
-        addEnum("source", tr("Quelle"), std::clamp(p->source, 0, vs::kSourceMax),
-                {tr("Datei"), tr("Kamera (live)"), tr("Testaufnahme")},
+        addEnum("source", tr("Source"), std::clamp(p->source, 0, vs::kSourceMax),
+                {tr("File"), tr("Camera (live)"), tr("Camera Clip")},
                 [](ChainNode& n, int v) {
                     std::get<VideoSourceParams>(n.params).source = v;
                 });
-        addText("filePath", tr("Videodatei"), p->filePath,
+        addText("filePath", tr("Video file"), p->filePath,
                 [](ChainNode& n, std::string v) {
                     std::get<VideoSourceParams>(n.params).filePath = std::move(v);
                 });
         {
             auto* browseBtn =
-                new QPushButton(tr("Videodatei wählen…"), m_propContainer);
+                new QPushButton(tr("Choose video file…"), m_propContainer);
             browseBtn->setToolTip(
-                tr("Setzt das Feld Videodatei. Der Pfad bleibt im Preset stehen "
-                   "— Videos werden nicht eingebettet."));
+                tr("Sets the Video file field. The path stays in the preset "
+                   "— videos are not embedded."));
             connect(browseBtn, &QPushButton::clicked, this, [this, path]() {
                 const QString file = QFileDialog::getOpenFileName(
-                    this, tr("Videodatei wählen"), QString(),
+                    this, tr("Choose video file"), QString(),
                     tr("Videos (*.mp4 *.mkv *.webm *.mov *.wmv *.avi);;"
-                       "Alle Dateien (*)"));
+                       "All files (*)"));
                 if (file.isEmpty()) return;
                 mutate(path, [&](ChainNode& n) {
                     std::get<VideoSourceParams>(n.params).filePath =
@@ -7372,7 +7370,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             // Geraet startet erst nach der Freigabe (Knopf darunter) und nur,
             // wenn die Quelle "Kamera" gewaehlt ist — Vertrag Offene_Punkte §7.
             auto* combo = new QComboBox(m_propContainer);
-            combo->addItem(tr("— keine —"), QString());
+            combo->addItem(tr("— none —"), QString());
             int selected = 0;
             const QString aktuelleId = QString::fromStdString(p->cameraId);
             const auto geraete = QMediaDevices::videoInputs();
@@ -7386,14 +7384,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             {
                 // Gespeicherte, gerade abwesende Kamera sichtbar halten —
                 // sonst wuerde ein Panel-Besuch die Wahl still loeschen.
-                combo->addItem(tr("(nicht angeschlossen) %1").arg(aktuelleId),
+                combo->addItem(tr("(not connected) %1").arg(aktuelleId),
                                aktuelleId);
                 selected = combo->count() - 1;
             }
             combo->setCurrentIndex(selected);
             combo->setToolTip(
-                tr("Kameragerät für die Quelle „Kamera“. Gestartet wird erst "
-                   "nach der Freigabe unten — nie beim Preset-Laden."));
+                tr("Camera device for the source 'Camera'. It only starts "
+                   "after the permission below — never when a preset is loaded."));
             connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
                     this, [this, path, combo](int idx) {
                         const std::string id =
@@ -7402,14 +7400,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             std::get<VideoSourceParams>(n.params).cameraId = id;
                         });
                     });
-            form->addRow(tr("Kamera"), combo);
+            form->addRow(tr("Camera"), combo);
 
             auto* camBtn = new QPushButton(
-                tr("Kamera freigeben (dieser App-Lauf)"), m_propContainer);
+                tr("Allow camera (this app run)"), m_propContainer);
             camBtn->setToolTip(
-                tr("Ausdrückliche Freigabe: erst danach startet die gewählte "
-                   "Kamera (Windows fragt ggf. nach der Berechtigung). Gilt bis "
-                   "zum Beenden der App."));
+                tr("Explicit permission: only then does the selected "
+                   "camera start (Windows may ask for permission). Valid until "
+                   "the app is closed."));
             camBtn->setEnabled(
                 !lumi::services::LiveVideoFeed::instance().kameraErlaubt());
             connect(camBtn, &QPushButton::clicked, this, [camBtn]() {
@@ -7422,7 +7420,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             // Testaufnahmen: Clips aus dem benutzerlokalen Ordner
             // (Settings-Tab „Kamera") — deterministischer Kamera-Stellvertreter.
             auto* combo = new QComboBox(m_propContainer);
-            combo->addItem(tr("— keine —"), QString());
+            combo->addItem(tr("— none —"), QString());
             int selected = 0;
             const QString aktuell = QString::fromStdString(p->recordingName);
             const QDir ordner(
@@ -7435,13 +7433,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             }
             if (selected == 0 && !aktuell.isEmpty())
             {
-                combo->addItem(tr("(fehlt) %1").arg(aktuell), aktuell);
+                combo->addItem(tr("(missing) %1").arg(aktuell), aktuell);
                 selected = combo->count() - 1;
             }
             combo->setCurrentIndex(selected);
             combo->setToolTip(
-                tr("Kamera-Testaufnahme als deterministische Quelle — läuft "
-                   "wie eine Datei (Frame-Schritt, sondentauglich)."));
+                tr("Camera clip as a deterministic source — runs "
+                   "like a file (frame stepping, usable for probes)."));
             connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
                     this, [this, path, combo](int idx) {
                         const std::string name =
@@ -7451,22 +7449,22 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                 name;
                         });
                     });
-            form->addRow(tr("Testaufnahme"), combo);
+            form->addRow(tr("Camera Clip"), combo);
         }
-        addBool("streaming", tr("Echtzeit-Streaming"), p->streaming,
+        addBool("streaming", tr("Real-time streaming"), p->streaming,
                 [](ChainNode& n, bool v) {
                     std::get<VideoSourceParams>(n.params).streaming = v;
                 });
-        addDouble("speed", tr("Tempo"), p->speed, vs::kMinSpeed, vs::kMaxSpeed,
+        addDouble("speed", tr("Speed"), p->speed, vs::kMinSpeed, vs::kMaxSpeed,
                   0.05, [](ChainNode& n, double v) {
                       std::get<VideoSourceParams>(n.params).speed = v;
                   });
-        addBool("loop", tr("Schleife"), p->loop, [](ChainNode& n, bool v) {
+        addBool("loop", tr("Loop"), p->loop, [](ChainNode& n, bool v) {
             std::get<VideoSourceParams>(n.params).loop = v;
         });
-        addEnum("fit", tr("Einpassung"), std::clamp(p->fit, 0, vs::kFitMax),
-                {tr("Strecken"), tr("Einpassen (Balken)"),
-                 tr("Füllen (beschneiden)")},
+        addEnum("fit", tr("Fit"), std::clamp(p->fit, 0, vs::kFitMax),
+                {tr("Stretch"), tr("Fit (letterbox)"),
+                 tr("Fill (crop)")},
                 [](ChainNode& n, int v) {
                     std::get<VideoSourceParams>(n.params).fit = v;
                 });
@@ -7475,7 +7473,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 [](ChainNode& n, int v) {
                     std::get<VideoSourceParams>(n.params).blend = v;
                 });
-        addDouble("opacity", tr("Deckkraft"), p->opacity, 0.0, 1.0, 0.01,
+        addDouble("opacity", tr("Opacity"), p->opacity, 0.0, 1.0, 0.01,
                   [](ChainNode& n, double v) {
                       std::get<VideoSourceParams>(n.params).opacity = v;
                   });

@@ -109,7 +109,7 @@ struct Pfad
 
     auto* baum = new QTreeWidget(parent);
     baum->setColumnCount(2);
-    baum->setHeaderLabels({QObject::tr("Parameter"), QObject::tr("Wert")});
+    baum->setHeaderLabels({QObject::tr("Parameter"), QObject::tr("Value")});
     baum->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     baum->header()->setStretchLastSection(true);
     baum->setRootIsDecorated(true);
@@ -233,7 +233,7 @@ struct Pfad
                                 if (z == nullptr) return;
                                 const QColor alt = detail::alsQColor(z->vektor);
                                 const QColor neu = QColorDialog::getColor(
-                                    alt, baum, QObject::tr("Farbe wählen"),
+                                    alt, baum, QObject::tr("Choose Colour"),
                                     QColorDialog::ShowAlphaChannel);
                                 if (!neu.isValid()) return;
                                 z->vektor = {{neu.redF(), neu.greenF(),

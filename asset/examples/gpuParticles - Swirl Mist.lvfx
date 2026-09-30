@@ -9,13 +9,13 @@
         "children": [
             {
                 "type": "fadeout",
-                "name": "Nachleuchten",
+                "name": "Afterglow",
                 "fadeLen": 10
             },
             {
                 "type": "gpuParticles",
                 "name": "Cyclone",
-                "description": "32768 Partikel im Bass-getriebenen Wirbel mit Sog zur Mitte (Werks-Voreinstellung Cyclone).",
+                "description": "32768 particles in a bass-driven swirl pulling to the centre (built-in preset Cyclone).",
                 "count": 16384,
                 "spawnX": 0.5,
                 "spawnY": 0.5,
@@ -37,8 +37,8 @@
             },
             {
                 "type": "meshWarp",
-                "name": "Schmier-Swirl",
-                "description": "Beide GPU-Module zusammen: sanfter Mesh-Warp verschmiert die Partikelspuren im Feedback (mixAmount 0.85).",
+                "name": "Smear Swirl",
+                "description": "Both GPU modules together: a gentle mesh warp smears the particle trails in the feedback (mixAmount 0.85).",
                 "gridX": 96,
                 "gridY": 72,
                 "mixAmount": 0.85,

@@ -9,13 +9,13 @@
         "children": [
             {
                 "type": "fadeout",
-                "name": "Nachleuchten",
+                "name": "Afterglow",
                 "fadeLen": 12
             },
             {
                 "type": "gpuParticles",
                 "name": "Fire Fountain",
-                "description": "Fountain aus 8192 Partikeln - Tempo folgt dem Bass, warme Farben, additiver Glow (Werks-Voreinstellung Fountain).",
+                "description": "Fountain of 8192 particles - speed follows the bass, warm colours, additive glow (built-in preset Fountain).",
                 "count": 8192,
                 "spawnX": 0.5,
                 "spawnY": 0.12,

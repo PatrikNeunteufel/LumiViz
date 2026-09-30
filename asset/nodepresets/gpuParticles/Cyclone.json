@@ -20,6 +20,6 @@
         "colorStart": 4259839,
         "colorEnd": 16724991,
         "additive": true,
-        "forceCode": "// Wirbel + leichter Sog zur Mitte; Bass beschleunigt die Rotation\nvec2 kraft(vec2 pos, vec2 vel, float alter)\n{\n    vec2 d = pos - vec2(0.5);\n    vec2 wirbel = vec2(-d.y, d.x) * (0.9 + 1.6 * bass);\n    vec2 sog = -d * 0.25;\n    return wirbel + sog;\n}\n"
+        "forceCode": "// Swirl + slight pull to the centre; bass speeds up the rotation\nvec2 kraft(vec2 pos, vec2 vel, float alter)\n{\n    vec2 d = pos - vec2(0.5);\n    vec2 wirbel = vec2(-d.y, d.x) * (0.9 + 1.6 * bass);\n    vec2 sog = -d * 0.25;\n    return wirbel + sog;\n}\n"
     }
 }

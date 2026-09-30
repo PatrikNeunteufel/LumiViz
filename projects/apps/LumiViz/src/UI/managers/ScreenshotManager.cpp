@@ -180,7 +180,7 @@ void ScreenshotManager::reportProblem(const QString& context,
             out << QDateTime::currentDateTime().toString(Qt::ISODate) << "  ["
                 << context << "]\n";
             out << "  Preset: "
-                << (m_presetPath.isEmpty() ? QStringLiteral("(eigene Kette)")
+                << (m_presetPath.isEmpty() ? QStringLiteral("(own chain)")
                                            : m_presetPath)
                 << '\n';
             for (const QString& line : problems) out << "  " << line << '\n';
@@ -238,7 +238,7 @@ void ScreenshotManager::onFrameCaptured(const QImage& image)
         QTextStream out(&note);
         out.setEncoding(QStringConverter::Utf8);
         out << (pending.presetPath.isEmpty()
-                    ? QStringLiteral("(eigene Kette, kein Preset geladen)")
+                    ? QStringLiteral("(own chain, no preset loaded)")
                     : QDir::toNativeSeparators(pending.presetPath))
             << '\n';
     }
