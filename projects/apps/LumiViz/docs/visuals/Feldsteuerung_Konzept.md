@@ -1,7 +1,7 @@
 # LumiViz — Block F: jedes Feld steuerbar (Konzept)
 
-> **Version:** 0.1.0
-> **Datum:** 2026-09-30 (Session 84)
+> **Version:** 0.2.0
+> **Datum:** 2026-09-30 (Session 84; F2-Migration + E6-Präzisierung S85)
 > **Typ:** Konzept — **Entscheide E1–E6 gefallen (S84: alle a**, E3 um den
 > Beat-Slot erweitert, E5 präzisiert); Umsetzung ab F1
 > **Status:** Aktiv
@@ -172,7 +172,7 @@ Tabelle, dieselbe Typpflege beim Schreiben. Gebaut wird es mit der MIDI/OSC-Idee
 |---|---|---|
 | **F1 ✅ S84** | Ernter erzeugt `src/visualizers/FieldBindings.cpp` (494 Felder, 84 Typen; Träger: 54 ParamSkript, 19 eigener Host, 11 keiner); API `include/visualizers/multieffect/FieldBindings.hpp`; `KLASSEN`/`ALIASSE` im Ernter | `test_FieldBindings`: Gegenwert über die Tabelle setzen → steht **genau** unter dem JSON-Namen, kein anderes Feld bewegt sich (Gegenprobe: vertauschter Member fällt auf); Index↔Typschlüssel; Namen eindeutig |
 | **F2 ✅ S84** | `runParamScript` bindet selbst **alle** Tabellenfelder (Hand-Bindungen gleichen Namens werden verknüpft, Nicht-Felder wie ISF-Schlüssel bleiben) und schreibt in eine Frame-Kopie, die `renderNode` für Typen mit Träger ParamSkript **und** Code anlegt (`m_gesteuerteKopie`). Typpflege (Farbe aus `_r/_g/_b`, Aufzählung/Schalter gerundet und geklemmt, Alias mit Skala), Strukturregel E3 mit Speicher je Knoten (`LeafRuntime::strukturWert`, Regler gewinnt), einmalige Log-Meldung | `test_FeldSteuerungGl`: 238 Live-Felder in allen ParamSkript-Typen wirken (Gegenprobe: ohne Rückschreiben 240 Fehler); Strukturfeld `gridx` folgt dem Frame-Slot nicht, `mixamount` schon; `test_ScriptVariablesGl` grün |
-| F2-Migration | `ParamVar`-Listen typweise entfernen | derselbe Wirkungstest je Typ |
+| **F2-Migration ✅ S85** | Hand-Listen aller 51 Renderer mit `runParamScript` umgestellt: skalare Felder kommen über die Tabelle in `params` (ganzzahlig gelesene per `static_cast<int>(params.x)`, Kommazahlen nach dem Lauf als `const double vX = params.x`). **Von Hand gebunden bleiben** nur (1) Nicht-Felder (ISF-Eingänge, eigene Shader-Uniforms), (2) Farben `_r/_g/_b` über `FarbKopie` — der Shader bekommt sie stufenlos, die Tabelle hält 8 Bit, (3) 30 Ganzzahl-/Schalter-Bindungen, die der Renderer stufenlos oder gerundet liest (`fadelen`, Blitter-/Roto-`scale`, `rotdir`, Mosaic-`quality`, Interferences-`rotation`, ColorMap-`adjustblend`, OscStar-`rot`, ColorClip-`distance`, Interleave `x/y/x2/y2`, Convolution-`scale`, MovingParticle-`size/size2/maxdistance`, Starfield-`maxstars`, DotPlane/DotFountain-`rotvel/angle`, Video-/MultiDelay-`delay`, SetRenderMode-`overrideblend`, MeshWarp `gridx/gridy`) — ein Skript steuert dort feiner, als das Feld speichert; jede Stelle trägt einen Kommentar | **Bildvergleich** vorher/nachher: 49 Migrations-Sonden (`out/migr_f2/`, jedes hand-gebundene Feld krumm und zeitlich wandernd, Frame- und Beat-Slot) + 5 für die dynamischen Listen gegen den HEAD-Build: alle bitgleich außer OscStar-Endbild (MAE 0,0004 — `rotscale` jetzt `float` statt `double`, Aufsummierung über 120 Frames; unterhalb der Feldgenauigkeit, hingenommen). Ohne Bildbeweis (Skript im Bild unsichtbar): clear, colorClip, customBpm, multiDelay, picture, pictureII, setRenderMode, videoSource, shadertoy, meshWarp, pixelFilter — dort Code-Durchsicht + Unit-Tests. Regressionsliste S84 (14 Presets) bitgleich; 713/713 |
 | **F2b** | Eigene Hosts/Effekt-Skripte an die Tabelle | Kompilier-Zähler bleibt bei Live-Feldern stehen |
 | **F4** | Modulation (Daten, Läufer, Editor-Knopf) | Test: LFO bewegt Feld, Tiefe 0 = unverändert; Sichttest |
 | **F5 ✅ S84** | `scriptVariables()` mischt die Tabellenfelder (Träger ParamSkript) in die Handtabelle — Handzeilen gewinnen bei gleichem Namen; erzeugte Zeilen tragen `ScriptVar::feld`, die ⓘ-Seite stellt den Feld-Tooltip (erster Satz) dazu, Klasse und alter Name im Kleingedruckten. Highlighter modulbewusst: `EelHighlighter(…, modul)` mit den Kategorien aus derselben Referenz (Inline-Feld und Groß-Editor), Milkdrop bleibt global | `test_FieldBindings` „Referenz (F5)": jedes Feld steht drin; `test_ScriptVariablesGl` prüft damit jeden neuen Namen gegen die Laufzeit; `PaletteUi S84 F5`: Modulfeld gefärbt, Gegenprobe ohne Modul ungefärbt |
@@ -323,6 +323,15 @@ gehört sie ans Ende.
   1 additive …')."*
 - **b:** *„Zusätzlich benannte Konstanten je Aufzählung
   (`blend_additive = 1` …)."*
+
+**Entscheid Patrik S85 (Präzisierung zu a):** Ganzzahlen und Aufzählungen
+werden **abgeschnitten** (Richtung 0, wie `(int)` in EEL/AVS), nicht gerundet —
+so lasen die Renderer ihre Hand-Variablen, und die F2-Migration bleibt damit
+bitgleich nachweisbar. Aufzählungen danach auf ihren Bereich geklemmt,
+Schalter an ab 0,5, nicht-endliche Werte lassen das Feld stehen, zu große
+werden auf den Typbereich begrenzt (`feldtabelle::setze`/`ganzzahl`,
+`feldBindungNach`). Im Skript selbst bleibt alles Kommazahl; abgeschnitten
+wird erst beim Zurückschreiben in ein ganzzahliges Feld.
 
 *Warum a:* Passt zu EEL/AVS (dort ist alles Zahl) und kostet nichts. b liest
 sich besser, bläht aber den Namensraum um hunderte Konstanten auf und kollidiert

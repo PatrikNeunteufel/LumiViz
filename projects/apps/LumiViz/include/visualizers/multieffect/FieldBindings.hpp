@@ -32,9 +32,11 @@
 
 #include "visualizers/multieffect/EffectChain.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <string_view>
 #include <type_traits>
 #include <vector>
@@ -109,17 +111,40 @@ template <typename F>
         return static_cast<double>(x);
 }
 
+/// Ganzzahl aus einem Skriptwert: ABGESCHNITTEN Richtung 0, wie `(int)` in
+/// EEL/AVS und wie die Renderer vor der F2-Migration (Entscheid Patrik S85).
+/// Nicht-endliche Werte lassen das Feld stehen; zu grosse werden begrenzt.
+template <typename I>
+[[nodiscard]] bool ganzzahl(double v, I& out)
+{
+    if (!std::isfinite(v)) return false;
+    const double lo = static_cast<double>(std::numeric_limits<I>::lowest());
+    const double hi = static_cast<double>(std::numeric_limits<I>::max());
+    out = static_cast<I>(std::clamp(std::trunc(v), lo, hi));
+    return true;
+}
+
 template <typename F>
 void setze(F& x, double v)
 {
     if constexpr (std::is_same_v<F, bool>)
+    {
         x = v >= 0.5;
+    }
     else if constexpr (std::is_enum_v<F>)
-        x = static_cast<F>(static_cast<std::underlying_type_t<F>>(std::llround(v)));
+    {
+        std::underlying_type_t<F> u{};
+        if (ganzzahl(v, u)) x = static_cast<F>(u);
+    }
     else if constexpr (std::is_integral_v<F>)
-        x = static_cast<F>(std::llround(v));
+    {
+        F u{};
+        if (ganzzahl(v, u)) x = u;
+    }
     else
+    {
         x = static_cast<F>(v);
+    }
 }
 
 }  // namespace lumi::multieffect::feldtabelle

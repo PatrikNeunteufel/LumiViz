@@ -2133,14 +2133,25 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 
 ## 7. Backlog (bewusst nichts tun)
 
-### 🔴 Nächste Session (S85): Regression S84 finden — Tempo, Lag, Vollbild-Freeze
+### ✅ Regression S84 — Tempo, Lag, Vollbild-Freeze (gelöst S85)
 
-Patrik meldet am Ende von S84: manche Presets (MilkDrop **und** AVS) laufen
-**schneller oder langsamer**, **Lag**, **Vollbild-Wechsel friert ~1 s**.
-Ursache unbekannt, **nichts gemessen**. Befund, Zeitachse der Commits
-(`968df01` → `cc16a80` → `6154972` → `6808317` → uncommitted), Hypothesen und
-Suchplan mit Worktrees: **[Regression_S84_Tempo_Vollbild.md](Regression_S84_Tempo_Vollbild.md)**.
-Vor allem anderen; Block F ruht bis zum Entscheid.
+Keine Regression aus S84: Presetverweise bekamen beim Laden keine eigenen
+Knoten-IDs (seit S82), alle Szenen von `list.lvfx2` liefen auf einer
+gemeinsamen Laufzeit. Behoben in `baueLvfxBaum`; Vollbild läuft laut Patrik
+wieder sauber. Messung, Ursache, Lehre:
+**[Regression_S84_Tempo_Vollbild.md](Regression_S84_Tempo_Vollbild.md)** §7.
+
+### ⚪ Beobachtung: erster Wechsel auf ein Preset hakt kurz (Patrik S85)
+
+Beim **ersten** Wechsel auf ein Preset bleibt das Bild manchmal kurz stehen,
+beim erneuten Wechsel auf dasselbe Preset nicht mehr. **Beobachtet beim
+Wechsel auf ein AVS-Preset** (Nachtrag Patrik S85) — Kandidaten dort: der
+.avs-Import selbst (Parser + Übersetzer; ob zwischengespeichert: ungeprüft), das
+erste Kompilieren der EEL→Lua-Slots, APE-/Bild-Laden. Kein Killer; später
+strategisch untersuchen. Verdacht (ungeprüft): einmalige Kosten beim ersten
+Laden — Shader-/Skript-Kompilat, Textur-Upload, Datei-Cache. Messpunkte im
+Render-Thread (> 50 ms, S84) zeigen den Schritt, wenn er dort sitzt. Verwandt:
+Idee Preset-Warmup/Pre-Roll.
 
 ### ✅ Drag aus Effect Browser/Playlist, Audio Browser — Weg zur Timeline (Wunsch Patrik S83, umgesetzt S84, Sichttest bestätigt)
 

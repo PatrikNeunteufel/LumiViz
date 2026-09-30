@@ -25,6 +25,7 @@
 #include <QString>
 
 #include <cmath>
+#include <limits>
 #include <set>
 #include <string>
 #include <variant>
@@ -147,18 +148,27 @@ TEST_SUITE("FieldBindings")
         CHECK(geprueft > 400);
     }
 
-    TEST_CASE("Typpflege: runden, Schalter-Schwelle, Aufzaehlung als Index")
+    // Entscheid Patrik S85: Ganzzahlen und Aufzaehlungen werden ABGESCHNITTEN
+    // (Richtung 0, wie `(int)` in EEL/AVS und wie die Renderer vor der
+    // F2-Migration) — bis S85 rundete die Tabelle (2.6 -> 3).
+    TEST_CASE("Typpflege: abschneiden, Schalter-Schwelle, Aufzaehlung als Index")
     {
         int i = 0;
         ft::setze(i, 2.6);
-        CHECK(i == 3);
+        CHECK(i == 2);
+        ft::setze(i, -2.6);
+        CHECK(i == -2);
+        ft::setze(i, std::numeric_limits<double>::quiet_NaN());
+        CHECK(i == -2);  // nicht-endlich: Feld bleibt stehen
+        ft::setze(i, 1e300);
+        CHECK(i == std::numeric_limits<int>::max());
         bool b = false;
         ft::setze(b, 0.49);
         CHECK_FALSE(b);
         ft::setze(b, 0.5);
         CHECK(b);
         BlendMode m = BlendMode::Replace;
-        ft::setze(m, 1.2);
+        ft::setze(m, 1.9);
         CHECK(ft::lese(m) == doctest::Approx(1.0));
         float x = 0.0F;
         ft::setze(x, 0.25);
