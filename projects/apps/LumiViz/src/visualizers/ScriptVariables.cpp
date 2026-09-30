@@ -14,6 +14,12 @@
  */
 
 #include "visualizers/multieffect/ScriptVariables.hpp"
+#include "visualizers/multieffect/FieldBindings.hpp"  // Block F (F5): generierte Zeilen
+
+#include <cmath>
+#include <deque>
+#include <set>
+#include <sstream>
 
 #include <type_traits>
 #include <unordered_map>
@@ -608,11 +614,98 @@ const std::unordered_map<std::size_t, ScriptVarTable>& tables()
 
 }  // namespace
 
+namespace
+{
+namespace ft = lumi::multieffect::feldtabelle;
+
+/// Namen einer Zeile ("a / b / c") als Menge.
+void namenVon(const ScriptVar& v, std::set<std::string>& out)
+{
+    for (const std::string& n : splitScriptVarNames(v.names)) out.insert(n);
+}
+
+std::string bereichText(const ft::Feld& f)
+{
+    const auto zahl = [](double x) {
+        std::ostringstream s;
+        s << x;
+        return s.str();
+    };
+    switch (f.art)
+    {
+        case ft::Art::Schalter: return "0/1";
+        case ft::Art::Farbe: return "0..1 each";
+        default: break;
+    }
+    if (std::isnan(f.lo) || std::isnan(f.hi)) return "any";
+    return zahl(f.lo) + ".." + zahl(f.hi);
+}
+
+std::string bedeutungText(const ft::Feld& f)
+{
+    std::string t = "field `" + std::string(f.feld) + "`";
+    switch (f.art)
+    {
+        case ft::Art::Aufzaehlung: t += " (index)"; break;
+        case ft::Art::Ganzzahl: t += " (rounded)"; break;
+        default: break;
+    }
+    if (f.klasse == ft::Klasse::Struktur)
+        t += " — takes effect from init/song/beat only (rebuilds)";
+    else if (f.klasse == ft::Klasse::Zustand)
+        t += " — resets its running state when changed";
+    if (!f.alias.empty()) t += "; old name `" + std::string(f.alias) + "` still works";
+    return t;
+}
+
+/// Block F (F5, S84): Handtabelle + alle Felder der Feldtabelle, die der Knoten
+/// ueber das Parameter-Skript bindet (Traeger ParamSkript). Handzeilen gewinnen
+/// bei gleichem Namen — ihre Texte sind oft genauer. Einmal je Typ gebaut.
+const ScriptVarTable* gemischt(std::size_t index)
+{
+    static std::unordered_map<std::size_t, ScriptVarTable> cache;
+    static std::deque<std::string> texte;  // haelt die const char* der Zeilen
+    const auto it = cache.find(index);
+    if (it != cache.end()) return &it->second;
+
+    const auto& hand = tables();
+    const auto h = hand.find(index);
+    const ft::Typ* typ = ft::typ(index);
+    const bool generisch = typ != nullptr && typ->traeger == ft::Traeger::ParamSkript;
+    if (h == hand.end() && !generisch) return nullptr;
+
+    ScriptVarTable t = h != hand.end() ? h->second : ScriptVarTable{ScriptVarBase::ParamScript, {}};
+    if (generisch)
+    {
+        std::set<std::string> vorhanden;
+        for (const ScriptVar& v : t.vars) namenVon(v, vorhanden);
+        const auto merke = [&](std::string s) { return texte.emplace_back(std::move(s)).c_str(); };
+        for (const ft::Feld& f : typ->felder)
+        {
+            const std::string n(f.name);
+            std::vector<std::string> namen;
+            if (f.art == ft::Art::Farbe)
+                namen = {n + "_r", n + "_g", n + "_b"};
+            else
+                namen = {n};
+            if (!f.alias.empty()) namen.emplace_back(f.alias);
+            bool neu = false;
+            for (const std::string& x : namen) neu = neu || vorhanden.count(x) == 0;
+            if (!neu) continue;
+            std::string liste;
+            for (const std::string& x : namen) liste += (liste.empty() ? "" : " / ") + x;
+            ScriptVar v{merke(liste), "in/out", merke(bereichText(f)), merke(bedeutungText(f))};
+            v.feld = merke(std::string(f.feld));
+            t.vars.push_back(v);
+        }
+    }
+    return &cache.emplace(index, std::move(t)).first->second;
+}
+}  // namespace
+
 const ScriptVarTable* scriptVariables(const EffectParams& params)
 {
-    const auto& t = tables();
-    const auto it = t.find(params.index());
-    return it != t.end() ? &it->second : nullptr;
+    return gemischt(params.index());
 }
 
 const std::vector<ScriptVar>& scriptVarBaseRows(ScriptVarBase base)

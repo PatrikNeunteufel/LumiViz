@@ -2133,6 +2133,15 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 
 ## 7. Backlog (bewusst nichts tun)
 
+### 🔴 Nächste Session (S85): Regression S84 finden — Tempo, Lag, Vollbild-Freeze
+
+Patrik meldet am Ende von S84: manche Presets (MilkDrop **und** AVS) laufen
+**schneller oder langsamer**, **Lag**, **Vollbild-Wechsel friert ~1 s**.
+Ursache unbekannt, **nichts gemessen**. Befund, Zeitachse der Commits
+(`968df01` → `cc16a80` → `6154972` → `6808317` → uncommitted), Hypothesen und
+Suchplan mit Worktrees: **[Regression_S84_Tempo_Vollbild.md](Regression_S84_Tempo_Vollbild.md)**.
+Vor allem anderen; Block F ruht bis zum Entscheid.
+
 ### ✅ Drag aus Effect Browser/Playlist, Audio Browser — Weg zur Timeline (Wunsch Patrik S83, umgesetzt S84, Sichttest bestätigt)
 
 - ✅ **Effect Browser → Effect Chain** als **Presetverweis** (auch aus dem

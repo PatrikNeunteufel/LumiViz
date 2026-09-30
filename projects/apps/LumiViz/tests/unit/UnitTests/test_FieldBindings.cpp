@@ -18,6 +18,7 @@
 
 #include "visualizers/multieffect/ChainSerializer.hpp"
 #include "visualizers/multieffect/FieldBindings.hpp"
+#include "visualizers/multieffect/ScriptVariables.hpp"
 
 #include <QJsonObject>
 #include <QJsonValue>
@@ -162,6 +163,34 @@ TEST_SUITE("FieldBindings")
         float x = 0.0F;
         ft::setze(x, 0.25);
         CHECK(x == doctest::Approx(0.25));
+    }
+
+    TEST_CASE("Referenz (F5): jedes Feld eines ParamSkript-Typs steht in scriptVariables")
+    {
+        int typen = 0;
+        for (std::size_t i = 0; i < std::variant_size_v<EffectParams>; ++i)
+        {
+            const ft::Typ* t = ft::typ(i);
+            if (t == nullptr || t->traeger != ft::Traeger::ParamSkript) continue;
+            EffectParams p;
+            [&]<std::size_t... I>(std::index_sequence<I...>) {
+                ((I == i ? (p.emplace<I>(), true) : false) || ...);
+            }(std::make_index_sequence<std::variant_size_v<EffectParams>>{});
+            const ScriptVarTable* tab = scriptVariables(p);
+            REQUIRE(tab != nullptr);
+            std::set<std::string> namen;
+            for (const ScriptVar& v : tab->vars)
+                for (const std::string& n : splitScriptVarNames(v.names)) namen.insert(n);
+            for (const ft::Feld& f : t->felder)
+            {
+                const std::string n(f.name);
+                const std::string probe = f.art == ft::Art::Farbe ? n + "_r" : n;
+                CHECK_MESSAGE(namen.count(probe) == 1,
+                              std::string(t->typKey) << ": " << probe << " fehlt in der Referenz");
+            }
+            ++typen;
+        }
+        CHECK(typen > 45);
     }
 
     TEST_CASE("Klassen und Traeger: die Stichproben aus dem Konzept")

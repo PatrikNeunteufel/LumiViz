@@ -1656,3 +1656,29 @@ TEST_CASE("PaletteUi S84: Audio Browser zeigt das eingebettete Cover, sonst das 
     CHECK(mitte(eintrag("ohne.mp3")) != QColor(Qt::red));
     schnappschuss(browser, "S84_audio_browser_cover");
 }
+
+TEST_CASE("PaletteUi S84 F5: Highlighter faerbt Modulfelder nach der Modul-Referenz")
+{
+    // Block F (F5): seit F2 ist jedes Feld skriptbar — der Highlighter kennt
+    // die Namen aus der Referenz des Moduls. Gegenprobe: ohne Modul-Kategorien
+    // bleibt `onbeatrandom` ungefaerbt (unbekannter Bezeichner).
+    UiUmgebung env;
+    const auto kat = lumi::scriptedit::SymCat::InOut;
+    QTextDocument mit;
+    mit.setPlainText(QStringLiteral("onbeatrandom = 1;"));
+    lumi::scriptedit::EelHighlighter hlMit(&mit, {}, {{QStringLiteral("onbeatrandom"), kat}});
+    hlMit.rehighlight();
+    QTextDocument ohne;
+    ohne.setPlainText(QStringLiteral("onbeatrandom = 1;"));
+    lumi::scriptedit::EelHighlighter hlOhne(&ohne);
+    hlOhne.rehighlight();
+
+    QTextDocument referenz;  // eine global bekannte In/Out-Variable
+    referenz.setPlainText(QStringLiteral("zoom = 1;"));
+    lumi::scriptedit::EelHighlighter hlRef(&referenz);
+    hlRef.rehighlight();
+
+    REQUIRE(farbeBei(referenz, 0, 0).isValid());
+    CHECK(farbeBei(mit, 0, 0) == farbeBei(referenz, 0, 0));
+    CHECK_FALSE(farbeBei(ohne, 0, 0).isValid());
+}

@@ -308,6 +308,39 @@ void collectInitGlobalsExcept(const ChainNode& node, const ChainNode* skip,
 }
 
 
+/// Kategorien der Skriptvariablen DIESES Moduls fuer den Highlighter (Block F,
+/// F5, S84) — aus derselben Referenz wie die ⓘ-Seite. Milkdrop bleibt global:
+/// dort hat jede Sektion ihren eigenen Vertrag (b = Blau im Wave-Code).
+QHash<QString, lumi::scriptedit::SymCat> modulKategorien(const EffectParams& params)
+{
+    using lumi::scriptedit::SymCat;
+    QHash<QString, SymCat> out;
+    if (std::holds_alternative<MilkdropNodeParams>(params)) return out;
+    const auto* table = lumi::multieffect::scriptVariables(params);
+    if (table == nullptr) return out;
+    const auto aufnehmen = [&out](const std::vector<lumi::multieffect::ScriptVar>& rows) {
+        for (const auto& v : rows)
+        {
+            const std::string dir(v.dir);
+            const SymCat cat = dir == "in"       ? SymCat::Input
+                               : dir == "out"    ? SymCat::Output
+                               : dir == "in/out" ? SymCat::InOut
+                                                 : SymCat::None;
+            if (cat == SymCat::None) continue;  // "own": gehoert dem Skript
+            for (const std::string& n : lumi::multieffect::splitScriptVarNames(v.names))
+            {
+                const QString name = QString::fromStdString(n);
+                // Schreibschutz der globalen Tabelle (w, h, dt) bleibt bestehen
+                if (lumi::scriptedit::symbolCategory(name) == SymCat::ReadOnly) continue;
+                out.insert(name, cat);
+            }
+        }
+    };
+    aufnehmen(table->vars);
+    aufnehmen(lumi::multieffect::scriptVarBaseRows(table->base));
+    return out;
+}
+
 // Module-specific variable table — rendered from the SSOT in
 // ScriptVariables.hpp (S79; vorher eine handgeschriebene Kette, die fuer rund
 // vierzig Knoten "No dedicated variable reference" zeigte).
@@ -315,10 +348,31 @@ QString scriptReferenceHtml(const EffectParams& params)
 {
     const char* title = effectTypeName(params);
     QString vars;
-    auto rowsOf = [](const std::vector<lumi::multieffect::ScriptVar>& list) {
+    const QString typeKey = lumi::multieffect::effectTypeKey(params);
+    auto rowsOf = [&typeKey](const std::vector<lumi::multieffect::ScriptVar>& list) {
         QString rows;
         for (const auto& v : list)
-            rows += refRow(v.names, v.dir, v.range, v.meaning);
+        {
+            if (v.feld == nullptr)
+            {
+                rows += refRow(v.names, v.dir, v.range, v.meaning);
+                continue;
+            }
+            // Block F (F5, S84): aus der Feldtabelle erzeugte Zeile — Text aus
+            // dem Feld-Tooltip (erster Satz), Backticks als Code gesetzt.
+            static const QRegularExpression kBacktick(QStringLiteral("`([^`]*)`"));
+            QString text = QString::fromUtf8(v.meaning).toHtmlEscaped();
+            text.replace(kBacktick, QStringLiteral("<code>\\1</code>"));
+            QString tip = lumi::multieffect::fielddocs::tooltip(typeKey, QString::fromUtf8(v.feld));
+            const int ende = tip.indexOf(QStringLiteral(". "));
+            if (ende > 0) tip = tip.left(ende + 1);
+            if (!tip.isEmpty())
+                text = tip.toHtmlEscaped().replace(kBacktick, QStringLiteral("<code>\\1</code>")) +
+                       QStringLiteral("<br><small>") + text + QStringLiteral("</small>");
+            rows += QStringLiteral("<tr><td><b>%1</b></td><td><i>%2</i></td><td>%3</td><td>%4</td></tr>")
+                        .arg(QString::fromUtf8(v.names), QString::fromUtf8(v.dir),
+                             QString::fromUtf8(v.range), text);
+        }
         return rows;
     };
     if (const auto* table = lumi::multieffect::scriptVariables(params))
@@ -3553,6 +3607,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     // Milkdrop-Sektionen tauschen die Referenz unten gegen ihr Original-Set
     // aus (Befund S42: eine generische Tabelle passte zu keinem Slot richtig)
     QString scriptRef = scriptReferenceHtml(params);
+    const QHash<QString, lumi::scriptedit::SymCat> modulKat = modulKategorien(params);
 
     // Global conflict set: globals this node's init declares that another node's
     // init also declares (Skript_Variablen_Konzept §6.3) — flagged red in init.
@@ -3608,7 +3663,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         QFont mono(QStringLiteral("Consolas"));
         mono.setStyleHint(QFont::Monospace);
         edit->setFont(mono);
-        new EelHighlighter(edit->document(), conflicts);
+        new EelHighlighter(edit->document(), conflicts, modulKat);
         connect(edit, &QPlainTextEdit::textChanged, this, [this, path, set, edit]() {
             const std::string text = edit->toPlainText().toStdString();
             mutate(path, [&](ChainNode& n) { set(n, text); });
@@ -3635,8 +3690,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         // synchron im Dialekt des Knotens (Milkdrop vs. AVS — eel.div-Grenze).
         const bool milkDialekt = fieldTypeKey == QLatin1String("milkdrop");
         connect(expandBtn, &QToolButton::clicked, this,
-                [this, edit, label, scriptRef, conflicts, milkDialekt]() {
+                [this, edit, label, scriptRef, conflicts, milkDialekt, modulKat]() {
                     lumi::scriptedit::ScriptEditorHooks hooks;
+                    hooks.modulKategorien = modulKat;
                     hooks.apply = [edit, milkDialekt](const QString& t) -> QString {
                         edit->setPlainText(t);  // textChanged -> mutate
                         const auto probe = lumi::eel::transpile(

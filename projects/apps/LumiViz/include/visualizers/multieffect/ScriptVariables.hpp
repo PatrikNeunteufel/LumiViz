@@ -45,6 +45,10 @@ struct ScriptVar
     /// false = nicht einzeln pruefbar (Bereichsnamen wie `reg00..reg99`,
     /// Funktionen wie `gmegabuf(i)`) — nur Doku.
     bool probe = true;
+    /// Block F (F5, S84): Zeile aus der Feldtabelle erzeugt — JSON-Name des
+    /// Feldes, damit die Referenz den Feld-Tooltip dazustellen kann. nullptr =
+    /// von Hand gepflegte Zeile.
+    const char* feld = nullptr;
 };
 
 /// Welche gemeinsamen Zeilen die Referenz unter die knotenspezifischen haengt.

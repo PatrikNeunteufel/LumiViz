@@ -37,6 +37,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFont>
+#include <QHash>
 #include <QHBoxLayout>
 #include <QInputDialog>
 #include <QLabel>
@@ -151,8 +152,13 @@ enum class SymCat
 class EelHighlighter : public QSyntaxHighlighter
 {
 public:
-    explicit EelHighlighter(QTextDocument* doc, QSet<QString> conflicts = {})
-        : QSyntaxHighlighter(doc), m_conflicts(std::move(conflicts))
+    /// `modul` (Block F, F5, S84): Kategorien der Variablen DIESES Moduls aus
+    /// seiner Referenz (`scriptVariables`) — sie gehen der globalen Tabelle
+    /// vor. So erscheinen alle skriptbaren Felder eines Knotens gefaerbt, und
+    /// ein Name wie `b` ist im Parameter-Skript der Beat, im Wave-Code Blau.
+    explicit EelHighlighter(QTextDocument* doc, QSet<QString> conflicts = {},
+                            QHash<QString, SymCat> modul = {})
+        : QSyntaxHighlighter(doc), m_conflicts(std::move(conflicts)), m_modul(std::move(modul))
     {
         m_func.setForeground(QColor(0x4F, 0xC1, 0xFF));
         m_num.setForeground(QColor(0xB5, 0xCE, 0xA8));
@@ -193,7 +199,7 @@ protected:
             const QRegularExpressionMatch m = ids.next();
             const QString name = m.captured();
             if (m_funcNames.contains(name)) continue;
-            const SymCat cat = symbolCategory(name);
+            const SymCat cat = kategorie(name);
             if (cat != SymCat::None)
                 setFormat(static_cast<int>(m.capturedStart()),
                           static_cast<int>(m.capturedLength()),
@@ -218,7 +224,7 @@ protected:
         {
             const QRegularExpressionMatch m = as.next();
             const QString name = m.captured(1);
-            const SymCat cat = symbolCategory(name);
+            const SymCat cat = kategorie(name);
             // Eine Konstante zu ueberschreiben ist KEIN Fehler: `$PI` kam in
             // AVS erst spaeter, aeltere Presets setzen `pi` selbst — im Korpus
             // 629 Stueck, mehr als die 469 mit `$PI` (Befund Patrik, S54). Die
@@ -234,10 +240,18 @@ protected:
     }
 
 private:
+    /// Modul-Kategorie vor der globalen (F5).
+    [[nodiscard]] SymCat kategorie(const QString& name) const
+    {
+        const auto it = m_modul.constFind(name);
+        return it != m_modul.constEnd() ? *it : symbolCategory(name);
+    }
+
     QTextCharFormat m_func, m_num, m_comment, m_error;
     std::array<QTextCharFormat, 7> m_cat;  // indexed by SymCat
     QSet<QString> m_funcNames;
     QSet<QString> m_conflicts;  // globals double-declared elsewhere (init slot)
+    QHash<QString, SymCat> m_modul;  // Kategorien dieses Moduls (F5)
     QRegularExpression m_funcRe, m_numRe, m_identRe, m_assignRe, m_commentRe;
 };
 
@@ -445,6 +459,9 @@ struct ScriptEditorHooks
     /// die Zeile „Template:" mit „Empty", den Vorlagen und „Save as
     /// template…". Die Auswahl gibt es NUR hier, nicht im Panel.
     QString vorlagenKey;
+    /// Kategorien der Variablen des Moduls (F5, S84) fuer den Highlighter im
+    /// Groß-Editor — dieselben wie im Inline-Feld. Leer = nur global.
+    QHash<QString, SymCat> modulKategorien;
 };
 
 /**
@@ -802,7 +819,7 @@ struct ShaderVertrag
     QFont mono(QStringLiteral("Consolas"));
     mono.setStyleHint(QFont::Monospace);
     editor->setFont(mono);
-    if (eelHighlight) new EelHighlighter(editor->document(), conflicts);
+    if (eelHighlight) new EelHighlighter(editor->document(), conflicts, hooks.modulKategorien);
     auto* ref = new QTextBrowser(split);
     ref->setHtml(refHtml);
     split->addWidget(editor);

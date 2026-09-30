@@ -175,7 +175,7 @@ Tabelle, dieselbe Typpflege beim Schreiben. Gebaut wird es mit der MIDI/OSC-Idee
 | F2-Migration | `ParamVar`-Listen typweise entfernen | derselbe Wirkungstest je Typ |
 | **F2b** | Eigene Hosts/Effekt-Skripte an die Tabelle | Kompilier-Zähler bleibt bei Live-Feldern stehen |
 | **F4** | Modulation (Daten, Läufer, Editor-Knopf) | Test: LFO bewegt Feld, Tiefe 0 = unverändert; Sichttest |
-| **F5** | Referenz/Highlighter aus der Tabelle | Referenz-Test: jede Tabellenzeile erscheint |
+| **F5 ✅ S84** | `scriptVariables()` mischt die Tabellenfelder (Träger ParamSkript) in die Handtabelle — Handzeilen gewinnen bei gleichem Namen; erzeugte Zeilen tragen `ScriptVar::feld`, die ⓘ-Seite stellt den Feld-Tooltip (erster Satz) dazu, Klasse und alter Name im Kleingedruckten. Highlighter modulbewusst: `EelHighlighter(…, modul)` mit den Kategorien aus derselben Referenz (Inline-Feld und Groß-Editor), Milkdrop bleibt global | `test_FieldBindings` „Referenz (F5)": jedes Feld steht drin; `test_ScriptVariablesGl` prüft damit jeden neuen Namen gegen die Laufzeit; `PaletteUi S84 F5`: Modulfeld gefärbt, Gegenprobe ohne Modul ungefärbt |
 
 ## 5. Tests und Wächter
 

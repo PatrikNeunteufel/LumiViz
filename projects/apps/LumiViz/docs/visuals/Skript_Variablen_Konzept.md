@@ -107,7 +107,12 @@ zur SSOT; `scriptReferenceHtml` und der Highlighter (§4) ziehen aus **derselben
 Tabelle. **Stand S79:** die Referenz zieht aus `ScriptVariables.hpp` (je
 Knotentyp, gegen die Laufzeit getestet); der Highlighter klassifiziert noch
 global (`EelScriptEditing.hpp::symbolCategory`) — ihn an dieselbe Tabelle zu
-hängen, ist offen (Formelfelder-Inventar, Block F).
+hängen, ist offen (Formelfelder-Inventar, Block F). **Stand S84 (Block F, F5):**
+erledigt — die Referenz enthält zusätzlich jedes Feld der Feldtabelle
+(`FieldBindings`), und der Highlighter färbt mit den Kategorien des aktiven
+Moduls aus derselben Referenz (modulbewusst; globale Tabelle als Rückfall,
+Milkdrop-Sektionen weiter global). Siehe
+[Feldsteuerung_Konzept.md](Feldsteuerung_Konzept.md).
 
 ---
 
