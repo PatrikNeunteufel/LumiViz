@@ -21,6 +21,7 @@
 #include "visualizers/multieffect/IsfFilterWrapper.hpp"     // ISF-Filter (S72)
 #include "visualizers/multieffect/IsfImport.hpp"            // passGroesse (PASSES, S72)
 #include "visualizers/multieffect/ScriptVariables.hpp"      // Schalter Script active (S83)
+#include "visualizers/multieffect/FieldBindings.hpp"        // Feldtabelle (Block F, S84)
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 #include "services/LiveVideoFeed.hpp"  // videoSource: Kamera/Streaming (S70)
@@ -52,6 +53,7 @@
 #include <array>
 #include <atomic>
 #include <cmath>
+#include <cstring>
 #include <filesystem>
 
 // AVI effect (r_avi.cpp port): decoded via Video for Windows — the same API the
@@ -4233,6 +4235,16 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     m_firstFrame = false;
 }
 
+namespace
+{
+/// Test-Beobachter der gesteuerten Frame-Kopien (Block F, F2); leer = aus.
+MultiEffectVisualizer::ParamBeobachter& paramBeobachterFuerTest()
+{
+    static MultiEffectVisualizer::ParamBeobachter b;
+    return b;
+}
+}  // namespace
+
 void MultiEffectVisualizer::renderNode(const ChainNode& node)
 {
     // effectiveEnabled (S82): eine vom Host Switcher gefuehrte Gruppe laeuft
@@ -4372,6 +4384,10 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
     // Vergleiche der Skriptstellen sehen neuen Text und bauen ohne Skript neu,
     // beim Wiedereinschalten ebenso. Kosten nur, solange der Schalter aus ist.
     static const std::string kKeinSong;
+    // Block F (F2): die Frame-Kopie gilt nur fuer DIESEN Knoten — Kinder einer
+    // Liste setzen ihre eigene (oder keine) und stellen danach zurueck.
+    lumi::multieffect::EffectParams* vorherKopie = m_gesteuerteKopie;
+    m_gesteuerteKopie = nullptr;
     if (!node.scriptsActive && hatSkriptSchalter(node.params))
     {
         EffectParams ohneSkript = node.params;
@@ -4382,8 +4398,38 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
     else
     {
         m_nodeSong = &node.songCode;
-        std::visit(Visitor{*this, node}, node.params);
+        // Block F (F2): traegt der Knoten ein Parameter-Skript, laeuft der
+        // Renderer auf einer Frame-Kopie — `runParamScript` bindet alle Felder
+        // der Feldtabelle und schreibt die Ergebnisse dort hinein. Ohne Code
+        // keine Kopie (opt-in, null Kosten).
+        const auto hatCode = [&node] {
+            if (!node.songCode.empty()) return true;
+            return std::visit(
+                [](const auto& p) {
+                    bool code = false;
+                    if constexpr (requires { p.initCode; }) code = code || !p.initCode.empty();
+                    if constexpr (requires { p.frameCode; }) code = code || !p.frameCode.empty();
+                    if constexpr (requires { p.beatCode; }) code = code || !p.beatCode.empty();
+                    return code;
+                },
+                node.params);
+        };
+        const auto* typ = lumi::multieffect::feldtabelle::typ(node.params);
+        if (typ != nullptr &&
+            typ->traeger == lumi::multieffect::feldtabelle::Traeger::ParamSkript && hatCode())
+        {
+            EffectParams kopie = node.params;
+            m_gesteuerteKopie = &kopie;
+            std::visit(Visitor{*this, node}, kopie);
+            m_gesteuerteKopie = nullptr;
+            if (const auto& beobachter = paramBeobachterFuerTest()) beobachter(node, kopie);
+        }
+        else
+        {
+            std::visit(Visitor{*this, node}, node.params);
+        }
     }
+    m_gesteuerteKopie = vorherKopie;
     m_nodeSong = vorherSong;
 }
 
@@ -9155,14 +9201,33 @@ void MultiEffectVisualizer::runHostSwitchers()
     }
 }
 
+/// Block F (F2): eine Variable eines Tabellenfelds im laufenden Skript.
+struct MultiEffectVisualizer::FeldBindung
+{
+    const lumi::multieffect::feldtabelle::Feld* feld;
+    int komponente;   ///< -1 = der Wert selbst, 0/1/2 = r/g/b einer Farbe
+    bool alias;       ///< bisheriger Name (Skala feld->aliasSkala)
+    std::size_t var;  ///< Index in der Variablenliste des Laufs
+    double start;     ///< Wert vor dem Lauf (Aenderungserkennung beim Alias)
+};
+
 void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
                                            const std::string& init,
                                            const std::string& frame,
                                            const std::string& beat,
-                                           const std::vector<ParamVar>& vars)
+                                           const std::vector<ParamVar>& handVars)
 {
     // Opt-in: ein Knoten ohne Skript darf keinen Cent Rechenzeit kosten.
     if (init.empty() && frame.empty() && beat.empty() && !hatSongCode()) return;
+
+    // Block F (F2): zu den Hand-Bindungen des Renderers kommen ALLE Felder der
+    // Feldtabelle — geschrieben wird in die Frame-Kopie, die renderNode dem
+    // Renderer als `params` gibt. Hand-Bindungen bleiben fuer Nicht-Felder
+    // (ISF-Schluessel, eigene Uniforms); gleichnamige werden verknuepft.
+    std::vector<ParamVar> vars(handVars);
+    std::vector<FeldBindung> feldPlan;
+    std::vector<double> feldWerte;
+    feldBindungVor(rt, vars, feldPlan, feldWerte);
 
     const std::string combined = init + '\n' + frame + '\n' + beat + songSchluessel();
     const bool fresh = (rt.paramHost == nullptr || rt.paramCompiled != combined);
@@ -9237,6 +9302,186 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
     {
         *v.value = engine.number(v.name);
         rt.paramState[v.name] = *v.value;
+    }
+    feldBindungNach(rt, fresh, vars, feldPlan);
+}
+
+// =============================================================================
+// Block F, Stufe F2: generische Feldsteuerung (docs/visuals/Feldsteuerung_Konzept.md)
+// =============================================================================
+
+namespace
+{
+namespace ft = lumi::multieffect::feldtabelle;
+
+/// Eine Skriptvariable eines Tabellenfelds (ein Feld hat 1–3 davon plus Alias).
+struct FeldVorlage
+{
+    const ft::Feld* feld;
+    int komponente;  ///< -1 = der Wert selbst, 0/1/2 = r/g/b einer Farbe
+    bool alias;      ///< Name ist der bisherige Alias (Skala feld->aliasSkala)
+    std::string name;
+};
+
+/// Variablen je Knotentyp, einmal gebaut. Die Namen leben hier — ParamVar
+/// haelt nur `const char*`.
+const std::vector<FeldVorlage>& feldVorlagen(const ft::Typ& typ)
+{
+    static std::unordered_map<const ft::Typ*, std::vector<FeldVorlage>> cache;
+    auto it = cache.find(&typ);
+    if (it != cache.end()) return it->second;
+    std::vector<FeldVorlage> out;
+    for (const ft::Feld& f : typ.felder)
+    {
+        const std::string name(f.name);
+        if (f.art == ft::Art::Farbe)
+        {
+            out.push_back({&f, 0, false, name + "_r"});
+            out.push_back({&f, 1, false, name + "_g"});
+            out.push_back({&f, 2, false, name + "_b"});
+        }
+        else
+        {
+            out.push_back({&f, -1, false, name});
+            if (!f.alias.empty()) out.push_back({&f, -1, true, std::string(f.alias)});
+        }
+    }
+    return cache.emplace(&typ, std::move(out)).first->second;
+}
+
+double farbKanal(double packed, int k)
+{
+    const auto c = static_cast<uint32_t>(packed);
+    return static_cast<double>((c >> (16 - 8 * k)) & 0xFF) / 255.0;
+}
+}  // namespace
+
+void MultiEffectVisualizer::setzeParamBeobachter(ParamBeobachter beobachter)
+{
+    paramBeobachterFuerTest() = std::move(beobachter);
+}
+
+void MultiEffectVisualizer::feldBindungVor(LeafRuntime& /*rt*/, std::vector<ParamVar>& vars,
+                                           std::vector<FeldBindung>& plan,
+                                           std::vector<double>& werte) const
+{
+    if (m_gesteuerteKopie == nullptr) return;
+    const ft::Typ* typ = ft::typ(*m_gesteuerteKopie);
+    if (typ == nullptr) return;
+    const std::vector<FeldVorlage>& vorlagen = feldVorlagen(*typ);
+    // VOR dem ersten push_back reservieren: ParamVar zeigt in diesen Vektor.
+    werte.reserve(vorlagen.size());
+    plan.reserve(vorlagen.size());
+    for (const FeldVorlage& v : vorlagen)
+    {
+        const double basis = v.feld->lesen(*m_gesteuerteKopie);
+        const double start = v.komponente >= 0 ? farbKanal(basis, v.komponente)
+                             : v.alias           ? basis * v.feld->aliasSkala
+                                                 : basis;
+        std::size_t index = vars.size();
+        for (std::size_t i = 0; i < vars.size(); ++i)
+        {
+            if (std::strcmp(vars[i].name, v.name.c_str()) == 0)
+            {
+                index = i;  // der Renderer bindet den Namen selbst: verknuepfen
+                break;
+            }
+        }
+        if (index == vars.size())
+        {
+            werte.push_back(start);
+            vars.push_back({v.name.c_str(), &werte.back()});
+        }
+        plan.push_back({v.feld, v.komponente, v.alias, index, start});
+    }
+}
+
+void MultiEffectVisualizer::feldBindungNach(LeafRuntime& rt, bool fresh,
+                                            const std::vector<ParamVar>& vars,
+                                            const std::vector<FeldBindung>& plan)
+{
+    if (m_gesteuerteKopie == nullptr || plan.empty()) return;
+    EffectParams& kopie = *m_gesteuerteKopie;
+    // Strukturfelder (E3, S84): Aenderungen wirken aus Init, Song und Beat —
+    // nie aus dem Frame-Slot allein (sonst Neuaufbau je Frame).
+    const bool strukturFrei = fresh || m_frameBeat || m_frameSong;
+
+    for (std::size_t i = 0; i < plan.size();)
+    {
+        // Die Eintraege eines Feldes stehen hintereinander (feldVorlagen).
+        std::size_t ende = i;
+        while (ende < plan.size() && plan[ende].feld == plan[i].feld) ++ende;
+        const ft::Feld& f = *plan[i].feld;
+        const double basis = f.lesen(kopie);
+
+        double neu = basis;
+        if (f.art == ft::Art::Farbe)
+        {
+            uint32_t packed = 0;
+            for (std::size_t k = i; k < ende; ++k)
+            {
+                const double v = std::clamp(*vars[plan[k].var].value, 0.0, 1.0);
+                packed |= static_cast<uint32_t>(std::lround(v * 255.0))
+                          << (16 - 8 * plan[k].komponente);
+            }
+            neu = static_cast<double>(packed);
+        }
+        else
+        {
+            for (std::size_t k = i; k < ende; ++k)
+            {
+                const double v = *vars[plan[k].var].value;
+                if (!plan[k].alias)
+                    neu = v;
+                else if (v != plan[k].start)  // bisheriger Name wurde beschrieben
+                {
+                    neu = v / f.aliasSkala;
+                    break;
+                }
+            }
+            if ((f.art == ft::Art::Aufzaehlung || f.art == ft::Art::Schalter) &&
+                !std::isnan(f.lo) && !std::isnan(f.hi))
+                neu = std::clamp(std::round(neu), f.lo, f.hi);
+        }
+
+        if (f.klasse == ft::Klasse::Struktur)
+        {
+            const std::string schluessel(f.feld);
+            auto gemerkt = rt.strukturWert.find(schluessel);
+            if (gemerkt != rt.strukturWert.end() && gemerkt->second.basis != basis)
+            {
+                rt.strukturWert.erase(gemerkt);  // Regler bewegt: der Regler gilt
+                gemerkt = rt.strukturWert.end();
+            }
+            const double geltend =
+                gemerkt != rt.strukturWert.end() ? gemerkt->second.wert : basis;
+            if (neu != geltend)
+            {
+                if (strukturFrei)
+                {
+                    rt.strukturWert[schluessel] = {neu, basis};
+                }
+                else
+                {
+                    if (rt.strukturGemeldet.insert(schluessel).second)
+                    {
+                        BasicLogger::logInfo(
+                            "MultiEffect: Feld '" + schluessel +
+                            "' baut bei Aenderung neu auf — es folgt dem Skript nur "
+                            "aus Init, Song und Beat, nicht aus dem Frame-Slot (Block F, E3)");
+                    }
+                    neu = geltend;
+                }
+            }
+            // Hand-Bindung des Renderers auf den geltenden Wert ziehen — sonst
+            // wirkte die Regel erst, wenn die Hand-Liste entfernt ist.
+            if (f.art != ft::Art::Farbe)
+                for (std::size_t k = i; k < ende; ++k)
+                    *vars[plan[k].var].value = plan[k].alias ? neu * f.aliasSkala : neu;
+        }
+
+        if (neu != basis) f.schreiben(kopie, neu);
+        i = ende;
     }
 }
 

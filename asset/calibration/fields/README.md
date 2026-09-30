@@ -18,7 +18,9 @@ Wirkung.
 ## Ablauf
 
 ```bash
-python harvest_field_docs.py     # inventory.json -> inventory_docs.json
+python harvest_field_docs.py     # inventory.json -> inventory_docs.json,
+                                 #   FieldDocs.cpp (Tooltips) und
+                                 #   FieldBindings.cpp (Feldtabelle, Block F, S84)
 python make_field_probes.py      # erzeugt probes/<typkey>/*.lvfx
 python run_field_probes.py       # rendert, urteilt, schreibt den Report
 ```

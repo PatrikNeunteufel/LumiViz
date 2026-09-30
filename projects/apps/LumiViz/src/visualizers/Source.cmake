@@ -14,6 +14,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/ChainSerializer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/NodePresetStore.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/ShaderVorlagen.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/FieldBindings.cpp"  # ERZEUGT (harvest_field_docs.py)
     "${CMAKE_CURRENT_LIST_DIR}/MilkdropSerializer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/MilkdropVisualizer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/EqualizerVisualizer.cpp"

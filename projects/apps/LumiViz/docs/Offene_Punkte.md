@@ -2045,7 +2045,11 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 
 - 🟡 **Block F — Modulparameter auf dem generischen Weg skriptbar machen**
   (angesetzt direkt nach S83, Entscheid Patrik E2b: kein Einzel-Nachtrag in
-  `ScriptVariables.cpp`, sondern gleich der allgemeine Weg). **Vorarbeit S83 —
+  `ScriptVariables.cpp`, sondern gleich der allgemeine Weg). **Konzept S84:**
+  [Feldsteuerung_Konzept.md](visuals/Feldsteuerung_Konzept.md) — Feldtabelle
+  (erzeugt, Zeiger-auf-Member) als SSOT, ein generischer Läufer in
+  `renderNode`, Strukturfelder, Modulation ohne Formel; **Entscheide E1–E6
+  offen**. **Vorarbeit S83 —
   Bestandsaufnahme über alle Palettentypen:** was im Editor steht, aber keine
   Skriptvariable hat (Stand `HEAD` 80201b3):
 
@@ -2363,6 +2367,45 @@ AVS-Import bleibt damit treu, alles Neue sind zusätzliche Felder.
 **Zusammen mit dem Cover-Modul** ergibt das eine „Now playing"-Einblendung
 (Cover + Titel/Interpret, fährt beim Titelwechsel herein, blendet nach n
 Sekunden aus) — als mitgeliefertes Preset statt fest eingebaut.
+
+### ⚪ Idee: gemeinsame Farbquelle — Tafel, Verlauf, Zeitbasis (Wunsch S84)
+
+Anlass SuperScope: die Grundfarbe kommt aus zwei Quellen, gemischt über
+`colorBlend` — einer AVS-Farbtafel (`colors`), die alle `colorCycleFrames`
+**Frames** einen Schritt weiterspringt, und einem Verlauf (`gradientPreset`),
+der über die **Punkte** läuft. Patrik: der Verlauf könnte auch **über die Zeit**
+laufen (gleichbleibendes dt, nur die Periode ist festzulegen), und die Tafel
+wechselt in Frame-Einheiten, die man nicht als Zeit einstellen kann. Und das
+gilt nicht nur für SuperScope: Bass Spinner und andere Module mit einer Farbe
+oder Tafel könnten dieselbe Farbquelle haben, haben sie aber nicht.
+
+Vorschlag (Claude S84):
+- Ein **Farbquellen-Baustein** für alle Module mit Farbe: Modus *fest · Tafel ·
+  Verlauf · Tafel+Verlauf gemischt*; **Lauf über** *Punkte · Zeit · Beats*;
+  **Periode** in Sekunden oder Beats (statt Frames — dann unabhängig von der
+  Bildrate); Richtung/Pingpong; Phase per Skript/Modulation (Block F).
+- Alte Felder bleiben lesbar: `colorCycleFrames` wird beim Laden in eine
+  Periode umgerechnet (bei 60 fps) oder als „bisher"-Einstellung geführt
+  (Treue-Muster S81).
+- Gehört zur **Vereinheitlichung V5** (Gradient-Parameter-Typ + LUT-Baustein)
+  und nutzt die Feldtabelle aus Block F (Farben `_r/_g/_b`, Tafeln später als
+  `colors_<i>_r` …).
+- **Betroffen: fast alle Zeichen-Module** (Patrik S84). Bestandsaufnahme S84 über
+  die 36 Palette-Einträge mit Rolle „Render" (Felder aus dem Inventar):
+
+  | Farbquelle heute | Module |
+  |---|---|
+  | **Tafel + Verlauf** (1) | SuperScope |
+  | **nur Tafel** (9, AVS-Takt je Frame) | Dot Fountain, Dot Grid, Dot Plane, Metaballs 3D, Oscilloscope Star, Ring, Rotating Stars, Simple (Scope), Tentacles 3D |
+  | **nur Verlauf** (10, mit `colorScale/colorCycle`) | Domain Warp, Flame, Fractal 2D, Fractal 3D, Fractal Zoomer, Kleinian, Lyapunov, Reaction Diffusion, Strange Attractor (+ `useGradient`) — plus feste `insideColor`/`negColor` |
+  | **nur feste Farbe(n)** (8) | Bass Spin (links/rechts), Clear, Debug Bars, Moving Particle, OnBeat Clear, Starfield, Terrain 3D (3 Farben), Timescope |
+  | **keine Farbfelder** (8) | FyrewurX (`hueDrift`), Glow Orbs, SuperScope 3D, Triangle (Farbe nur per Skript) · Picture, Picture II, Texer, Texer II, Video (Bildquellen — Farbquelle nicht sinnvoll, höchstens Tönung) |
+
+  Kandidaten für die Farbquelle also rund **28 Module** (alle außer den
+  Bildquellen); Clear/OnBeat Clear eher eine feste Farbe mit optionalem
+  Zeitverlauf.
+- Zu klären: ob die AVS-Importe ihre Originalfarbe behalten (Vorgabe =
+  heutiges Verhalten, neue Möglichkeiten nur als Zusatz).
 
 ### ⚪ Idee: externer Audio-Eingang — Loopback, Line-in, Mikrofon (Wunsch S83)
 

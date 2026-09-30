@@ -310,6 +310,255 @@ def schreibe_fielddocs(typen_out: list[dict]) -> int:
     return len(eintraege)
 
 
+# --- Block F, Stufe F1: Feldtabelle (docs/visuals/Feldsteuerung_Konzept.md) -----
+#
+# Welche Felder bei einer Aenderung teure Arbeit ausloesen (Bestandsaufnahme
+# S84, Belege im Konzept §2). Vorgabe fuer alle anderen: live. Schluessel sind
+# die JSON-Namen wie im Inventar. Ein unbekannter Schluessel ist ein Fehler —
+# sonst verwaiste die Liste still, wenn ein Feld umbenannt wird.
+KLASSEN = {
+    # Puffer, Mesh, FBO, Tabellen neu anlegen
+    "movement.rectCoords": "Struktur", "movement.wrap": "Struktur",
+    "movement.subpixel": "Struktur",
+    "dynamicMovement.xres": "Struktur", "dynamicMovement.yres": "Struktur",
+    "terrain3d.resolution": "Struktur",
+    "meshWarp.gridX": "Struktur", "meshWarp.gridY": "Struktur",
+    "isfFilter.geometrie": "Struktur", "isfFilter.gridX": "Struktur",
+    "isfFilter.gridY": "Struktur",
+    "gpuParticles.count": "Struktur",
+    "bloom.downsample": "Struktur",
+    "videoDelay.delay": "Struktur", "videoDelay.useBeats": "Struktur",
+    "starfield.maxStars": "Struktur",
+    "videoSource.source": "Struktur", "videoSource.streaming": "Struktur",
+    # Text wird bei jeder dieser Aenderungen neu gerastert
+    "text.color": "Struktur", "text.fontHeight": "Struktur",
+    "text.fontWeight": "Struktur", "text.italic": "Struktur",
+    "text.underline": "Struktur", "text.hAlign": "Struktur",
+    "text.vAlign": "Struktur", "text.xShift": "Struktur", "text.yShift": "Struktur",
+    "text.outline": "Struktur", "text.outlineColor": "Struktur",
+    "text.outlineSize": "Struktur", "text.shadow": "Struktur",
+    "text.randomPos": "Struktur",
+    # Startwert: billig, setzt aber Laufzeitzustand neu
+    "interferences.rotation": "Zustand",
+    "dotPlane.startRotation": "Zustand", "dotFountain.startRotation": "Zustand",
+    "channelShift.mode": "Zustand", "movement.sourceMapped": "Zustand",
+}
+
+# Bisherige Skriptnamen, die NICHT dem Schema "JSON-Name klein" folgen und in
+# Presets im Umlauf sind (Entscheid E2a: bleiben gueltig). Wert: (alias, skala)
+# mit Skriptwert = Feldwert * skala.
+ALIASSE = {
+    "fractal2D.centerX": ("cx", 1.0), "fractal2D.centerY": ("cy", 1.0),
+    "fractal2D.rotation": ("rot", 1.0),
+    "fractal2D.juliaX": ("jx", 1.0), "fractal2D.juliaY": ("jy", 1.0),
+    "fractalZoomer.centerX": ("cx", 1.0), "fractalZoomer.centerY": ("cy", 1.0),
+    "fractalZoomer.rotationSpeed": ("rotspeed", 1.0),
+    "domainWarp.offsetX": ("ox", 1.0), "domainWarp.offsetY": ("oy", 1.0),
+    "kleinian.rotation": ("rot", 1.0),
+    "superScope3d.pointCount": ("n", 1.0),
+    "glowOrbs.orbCount": ("n", 1.0),
+    "terrain3d.resolution": ("res", 1.0), "terrain3d.ringAmp": ("rings", 1.0),
+    "fyrewurx.lifeSeconds": ("life", 1.0),
+    "gpuParticles.spawnSpread": ("spread", 1.0),
+    "gpuParticles.direction": ("dir", 1.0),
+    "gpuParticles.gravityX": ("gravx", 1.0), "gpuParticles.gravityY": ("gravy", 1.0),
+    "gpuParticles.lifeSeconds": ("life", 1.0), "gpuParticles.sizePx": ("size", 1.0),
+    "list.inAdjustAlpha": ("alphain", 1.0 / 255.0),
+    "list.outAdjustAlpha": ("alphaout", 1.0 / 255.0),
+}
+
+# Skalare Felder, die im Editor in einer Sonderzeile stehen (keine eigene
+# Panel-Art) — trotzdem skriptbar: (Art, lo, hi).
+ZUSATZ_FELDER = {
+    "mirror.mode": ("Ganzzahl", 0, 15),  # Richtungs-Bits (4 Haekchen im Editor)
+}
+
+# Panel-Art -> Art der Tabelle (nur skalare Felder).
+PANEL_ART = {"int": "Ganzzahl", "double": "Kommazahl", "bool": "Schalter",
+             "enum": "Aufzaehlung", "farbe": "Farbe"}
+FIELDBINDINGS_CPP = ROOT / "projects/apps/LumiViz/src/visualizers/FieldBindings.cpp"
+
+
+def geschweift(src: str, open_pos: int) -> str:
+    """Inhalt der `{`-Klammer bei `open_pos` (Literale und Kommentare uebersprungen)."""
+    depth, i, n = 0, open_pos, len(src)
+    while i < n:
+        c = src[i]
+        if src.startswith("//", i):
+            i = src.find("\n", i)
+            if i < 0:
+                return ""
+            continue
+        if src.startswith("/*", i):
+            i = src.find("*/", i) + 2
+            continue
+        if c in "\"'":
+            quote, i = c, i + 1
+            while i < n and src[i] != quote:
+                i += 2 if src[i] == "\\" else 1
+        elif c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return src[open_pos + 1:i]
+        i += 1
+    return ""
+
+
+def harvest_traeger() -> dict[str, str]:
+    """Struct -> Traeger: wer faehrt heute das Parameter-Skript des Knotens?"""
+    src = VISUALIZER.read_text(encoding="utf-8")
+    out: dict[str, str] = {}
+    for m in re.finditer(r"void\s+MultiEffectVisualizer::run\w+\s*\(([^)]*)\)\s*\{", src):
+        sm = re.search(r"const\s+(\w+Params)\s*&", m.group(1))
+        if not sm:
+            continue
+        body = geschweift(src, m.end() - 1)
+        if "runParamScript(" in body:
+            art = "ParamSkript"
+        elif "setNumber(" in body or "ScriptSlotHost" in body or "paramHost" in body:
+            art = "EigenerHost"
+        else:
+            art = "Keiner"
+        # Mehrere run*-Funktionen je Struct: die staerkste Aussage gewinnt.
+        rang = {"ParamSkript": 2, "EigenerHost": 1, "Keiner": 0}
+        if rang[art] >= rang.get(out.get(sm.group(1), "Keiner"), 0):
+            out[sm.group(1)] = art
+    return out
+
+
+def zahl_cpp(x) -> str:
+    if x is None:
+        return "kNaN"
+    return repr(float(x))
+
+
+def schreibe_fieldbindings(typen_out: list[dict]) -> tuple[int, int, list[str]]:
+    """Die Feldtabelle als C++ erzeugen (Block F, F1). -> (Typen, Felder, Fehler)."""
+    traeger = harvest_traeger()
+    fehler: list[str] = []
+    bekannt = {f"{t['typkey']}.{f['name']}" for t in typen_out for f in t["felder"]}
+    for k in list(KLASSEN) + list(ALIASSE) + list(ZUSATZ_FELDER):
+        if k not in bekannt:
+            fehler.append(f"Klassen-/Alias-Liste nennt unbekanntes Feld {k}")
+
+    bloecke, n_felder = [], 0
+    for t in sorted(typen_out, key=lambda t: t["typkey"]):
+        struct = t["struct"]
+        if not struct:
+            continue
+        zeilen = []
+        for f in sorted(t["felder"], key=lambda f: f["name"]):
+            voll = f"{t['typkey']}.{f['name']}"
+            art = PANEL_ART.get(f.get("panel"))
+            zusatz = ZUSATZ_FELDER.get(voll)
+            if zusatz:
+                art = zusatz[0]
+            if art is None or f.get("art") not in ("zahl", "bool"):
+                continue
+            if zusatz:
+                lo, hi = zusatz[1], zusatz[2]
+            elif art == "Aufzaehlung":
+                lo = f.get("enumVersatz", 0)
+                hi = lo + max(1, f.get("enumWerte", 1)) - 1
+            elif art == "Schalter":
+                lo, hi = 0, 1
+            elif art == "Farbe":
+                lo = hi = None
+            else:
+                lo, hi = f.get("lo"), f.get("hi")
+            alias, skala = ALIASSE.get(voll, ("", 1.0))
+            zeilen.append(
+                f"        LV_FELD({struct}, {f.get('feld', f['name'])}, "
+                f"{cpp_literal(f['name'])}, {cpp_literal(f['name'].lower())}, "
+                f"{cpp_literal(alias)}, {skala!r}, {art}, "
+                f"{KLASSEN.get(voll, 'Live')}, {zahl_cpp(lo)}, {zahl_cpp(hi)}),\n")
+        if not zeilen:
+            continue
+        n_felder += len(zeilen)
+        bloecke.append(
+            f"    out.push_back({{ix<{struct}>(), Typ{{{cpp_literal(t['typkey'])}, "
+            f"Traeger::{traeger.get(struct, 'Keiner')}, {{\n" + "".join(zeilen) + "    }}});\n")
+
+    FIELDBINDINGS_CPP.write_text(
+        "// ERZEUGT von asset/calibration/fields/harvest_field_docs.py — nicht\n"
+        "// von Hand aendern. Quelle: Inventar (Felder), Panel (Art, Bereich),\n"
+        "// KLASSEN/ALIASSE im Ernter. Block F, Stufe F1\n"
+        "// (docs/visuals/Feldsteuerung_Konzept.md).\n"
+        "\n"
+        '#include "visualizers/multieffect/FieldBindings.hpp"\n'
+        "\n"
+        "#include <limits>\n"
+        "#include <utility>\n"
+        "#include <variant>\n"
+        "\n"
+        "namespace lumi::multieffect::feldtabelle\n"
+        "{\n"
+        "namespace\n"
+        "{\n"
+        "constexpr double kNaN = std::numeric_limits<double>::quiet_NaN();\n"
+        "\n"
+        "// Zugriff ueber std::get<T>(p).member: ein umbenanntes Feld bricht den Build.\n"
+        "#define LV_FELD(T, member, json, name, alias, skala, art, klasse, lo, hi)      \\\n"
+        "    Feld{json, name, alias, skala, Art::art, Klasse::klasse, lo, hi,           \\\n"
+        "         [](const EffectParams& p) { return lese(std::get<T>(p).member); },   \\\n"
+        "         [](EffectParams& p, double v) { setze(std::get<T>(p).member, v); }}\n"
+        "\n"
+        "template <typename T>\n"
+        "std::size_t ix()\n"
+        "{\n"
+        "    return EffectParams(std::in_place_type<T>).index();\n"
+        "}\n"
+        "\n"
+        "std::vector<std::pair<std::size_t, Typ>> baue()\n"
+        "{\n"
+        "    std::vector<std::pair<std::size_t, Typ>> out;\n"
+        + "".join(bloecke) +
+        "    return out;\n"
+        "}\n"
+        "#undef LV_FELD\n"
+        "\n"
+        "struct Tabelle\n"
+        "{\n"
+        "    std::vector<std::pair<std::size_t, Typ>> daten;\n"
+        "    std::vector<const Typ*> nachIndex;\n"
+        "    std::vector<const Typ*> alle;\n"
+        "};\n"
+        "\n"
+        "const Tabelle& tabelle()\n"
+        "{\n"
+        "    static const Tabelle t = [] {\n"
+        "        Tabelle x;\n"
+        "        x.daten = baue();\n"
+        "        x.nachIndex.assign(std::variant_size_v<EffectParams>, nullptr);\n"
+        "        for (const auto& [index, typ] : x.daten)\n"
+        "        {\n"
+        "            x.nachIndex[index] = &typ;\n"
+        "            x.alle.push_back(&typ);\n"
+        "        }\n"
+        "        return x;\n"
+        "    }();\n"
+        "    return t;\n"
+        "}\n"
+        "}  // namespace\n"
+        "\n"
+        "const Typ* typ(std::size_t index)\n"
+        "{\n"
+        "    const auto& t = tabelle().nachIndex;\n"
+        "    return index < t.size() ? t[index] : nullptr;\n"
+        "}\n"
+        "\n"
+        "const std::vector<const Typ*>& alle()\n"
+        "{\n"
+        "    return tabelle().alle;\n"
+        "}\n"
+        "\n"
+        "}  // namespace lumi::multieffect::feldtabelle\n",
+        encoding="utf-8", newline="")
+    return len(bloecke), n_felder, fehler
+
+
 def pruefe_vorgabe_literale() -> list[str]:
     """Vorgabe-Literale im Deserialisierer — die abgeschaffte zweite Quelle.
 
@@ -781,6 +1030,7 @@ def main() -> int:
            "typen": typen_out}
     OUT.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     n_cpp = schreibe_fielddocs(typen_out)
+    n_bind_typen, n_bind_felder, bind_fehler = schreibe_fieldbindings(typen_out)
     felder_je_struct = {t["struct"]: {f["name"] for f in t["felder"]}
                         for t in typen_out if t["struct"]}
     falsche_schluessel = pruefe_panel_schluessel(felder_je_struct)
@@ -789,6 +1039,10 @@ def main() -> int:
     print(f"Inventar angereichert: {doc['summe']['typen']} Typen, "
           f"{doc['summe']['felder']} Felder -> {OUT.name}")
     print(f"  Tooltip-Tabelle: {n_cpp} Eintraege -> {FIELDDOCS_CPP.name}")
+    print(f"  Feldtabelle (Block F): {n_bind_felder} Felder in {n_bind_typen} Typen "
+          f"-> {FIELDBINDINGS_CPP.name}")
+    for x in bind_fehler:
+        print(f"    FEHLER: {x}")
     print(f"  ohne Panel-Zeile (nicht bedienbar): {len(ohne_panel)}")
     print(f"  ohne Beschreibung (§10-Luecke):     {len(ohne_doc)}")
     print(f"  Panel-Schluessel ohne Feld:         {len(falsche_schluessel)}")
@@ -809,7 +1063,7 @@ def main() -> int:
             print("\n-- ohne Beschreibung --")
             for x in ohne_doc:
                 print("   ", x)
-    return 0
+    return 1 if bind_fehler else 0
 
 
 if __name__ == "__main__":

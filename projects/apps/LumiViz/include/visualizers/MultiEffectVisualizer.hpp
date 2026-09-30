@@ -51,8 +51,10 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
 
+#include <functional>
 #include <limits>
 #include <memory>
+#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -427,6 +429,21 @@ private:
         /// Letzte Fehlermeldung des Parameter-Skripts ("" = fehlerfrei).
         /// Zugleich die Sperre gegen eine Meldung je Frame (S54).
         std::string paramError;
+        /// Block F (F2): Strukturfelder, deren Aenderung aus dem Frame-Slot
+        /// schon einmal verworfen und gemeldet wurde (eine Meldung je Feld).
+        std::set<std::string> strukturGemeldet;
+        /// Block F (F2, E3): zuletzt angenommener Skriptwert eines
+        /// Strukturfelds (aus Init/Song/Beat) samt dem Reglerwert, zu dem er
+        /// gehoert. Die Frame-Kopie entsteht jeden Frame neu aus den Params —
+        /// ohne diesen Speicher fiele das Feld zwischen zwei Beats auf den
+        /// Regler zurueck und loeste gerade dadurch Neuaufbauten aus. Dreht
+        /// der Benutzer am Regler, gilt wieder der Regler (wie paramSeen).
+        struct StrukturWert
+        {
+            double wert = 0.0;
+            double basis = 0.0;
+        };
+        std::unordered_map<std::string, StrukturWert> strukturWert;
 
         /**
          * Bloom: die vom Parameter-Skript gerechneten Werte, damit sie den
@@ -1217,6 +1234,31 @@ private:
     [[nodiscard]] bool hatSongCode() const { return m_nodeSong != nullptr && !m_nodeSong->empty(); }
     /// Song-Slot ausfuehren, wenn in diesem Frame ein Songwechsel war — VOR Frame.
     void laufeSong(lumi::scripting::ScriptSlotHost& host) const;
+
+    // --- Block F, Stufe F2: generische Feldsteuerung (Feldsteuerung_Konzept.md) ---
+    /// Frame-Kopie der Params des Knotens, den renderNode gerade laeuft — nur
+    /// gesetzt, wenn der Knotentyp ueber `runParamScript` skriptet und Code
+    /// traegt. `runParamScript` bindet dann ALLE Felder der Feldtabelle und
+    /// schreibt die Ergebnisse hier hinein; der Renderer liest genau diese
+    /// Kopie (er bekommt sie als `params`). Scope wie m_nodeSong.
+    lumi::multieffect::EffectParams* m_gesteuerteKopie = nullptr;
+    /// Tabellenfelder in die Variablenliste eines Parameter-Skripts und nach
+    /// dem Lauf zurueck in m_gesteuerteKopie (Typpflege, Strukturregel E3).
+    struct FeldBindung;
+    void feldBindungVor(LeafRuntime& rt, std::vector<ParamVar>& vars,
+                        std::vector<FeldBindung>& plan, std::vector<double>& werte) const;
+    void feldBindungNach(LeafRuntime& rt, bool fresh, const std::vector<ParamVar>& vars,
+                         const std::vector<FeldBindung>& plan);
+
+public:
+    /// Nur fuer Tests: sieht nach jedem gesteuerten Knoten die fertige
+    /// Frame-Kopie (Wirkungstest Block F). Leer = aus.
+    using ParamBeobachter =
+        std::function<void(const lumi::multieffect::ChainNode&,
+                           const lumi::multieffect::EffectParams&)>;
+    static void setzeParamBeobachter(ParamBeobachter beobachter);
+
+private:
     /// Gruppen-nodeId -> laeuft (true) / ruht (false), je Frame von den
     /// Switchern neu gesetzt; fehlt eine Gruppe, gilt ihr `enabled`.
     std::unordered_map<uint64_t, bool> m_groupOverride;
