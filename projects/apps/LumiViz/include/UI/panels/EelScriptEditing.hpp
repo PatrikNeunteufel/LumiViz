@@ -389,6 +389,92 @@ private:
 // =============================================================================
 
 /// Read-only reference popup (resizable window).
+/// Wann und wie oft ein Skript-Slot laeuft (Wunsch Patrik S85) — der Kopf der
+/// ⓘ-Seite, die aus DIESEM Slot geoeffnet wird. `field` ist der JSON-Name des
+/// Slots, `label` die Beschriftung (Milkdrop-Wave/Shape teilen sich ein Feld).
+[[nodiscard]] inline QString slotScopeHtml(const QString& typeKey, const QString& field, const QString& label)
+{
+    // Einheit des Point-Slots je Modul (Texte wie die Feld-Tooltips)
+    static const QHash<QString, QString> kPunkt = {
+        {QStringLiteral("superScope"), QStringLiteral("once per <b>point</b> (<code>n</code> points; <code>i</code> runs 0..1)")},
+        {QStringLiteral("superScope3d"), QStringLiteral("once per <b>point</b> (<code>n</code> points; <code>i</code> runs 0..1)")},
+        {QStringLiteral("texerII"), QStringLiteral("once per <b>sprite</b> (<code>n</code> sprites; <code>i</code> runs 0..1)")},
+        {QStringLiteral("triangle"), QStringLiteral("once per <b>triangle</b> (<code>n</code> triangles)")},
+        {QStringLiteral("dynamicMovement"), QStringLiteral("once per <b>grid node</b>, every frame")},
+        {QStringLiteral("terrain3d"), QStringLiteral("once per <b>grid point</b>")},
+        {QStringLiteral("glowOrbs"), QStringLiteral("once per <b>orb</b> (<code>i</code> = orb index)")},
+    };
+
+    QString wann;
+    QString rest;
+    const bool milk = typeKey == QLatin1String("milkdrop");
+    if (field == QLatin1String("initCode") || field == QLatin1String("perFrameInit") ||
+        (milk && label.endsWith(QLatin1String("Init"))))
+    {
+        wann = QStringLiteral("<b>once</b> — when the node starts: on load, after any "
+                              "change to one of its scripts, and on reset");
+        rest = QStringLiteral("Sets start values. Variables keep their values afterwards; "
+                              "the other slots continue from them.");
+    }
+    else if (field == QLatin1String("songCode"))
+    {
+        wann = QStringLiteral("<b>once per song change</b>, before the Frame slot of that frame");
+    }
+    else if (field == QLatin1String("beatCode"))
+    {
+        wann = QStringLiteral("<b>once per beat</b> — in each frame with a beat, after the "
+                              "Frame slot");
+    }
+    else if (field == QLatin1String("frameCode") || field == QLatin1String("perFrame") ||
+             (milk && label.endsWith(QLatin1String("Frame"))))
+    {
+        wann = milk && label.startsWith(QLatin1String("Shape"))
+                   ? QStringLiteral("<b>once per frame and shape instance</b> "
+                                    "(<code>instance</code> counts up)")
+                   : QStringLiteral("<b>once per frame</b>, before the node draws");
+    }
+    else if (field == QLatin1String("perPixel"))
+    {
+        wann = QStringLiteral("<b>once per mesh vertex</b>, every frame (not per screen pixel)");
+    }
+    else if (milk && label.endsWith(QLatin1String("Point")))
+    {
+        wann = QStringLiteral("<b>once per sample point</b> of the wave, every frame "
+                              "(<code>sample</code> runs 0..1)");
+    }
+    else if (field == QLatin1String("pointCode"))
+    {
+        wann = kPunkt.value(typeKey, QStringLiteral("once per <b>point</b>")) +
+               QStringLiteral(", after Init/Frame/Beat of the same frame");
+        rest = QStringLiteral("The most frequent slot — keep it short.");
+    }
+    else if (field == QLatin1String("levelCode"))
+    {
+        wann = QStringLiteral("once per <b>table entry</b> (256 levels per channel) — when "
+                              "the table is built, or every frame with <i>Recompute</i>");
+    }
+    else if (field == QLatin1String("pixelCode"))
+    {
+        wann = QStringLiteral("once per <b>distance value</b> <code>d</code> of the lookup "
+                              "table, every frame");
+    }
+    else if (field == QLatin1String("code") && milk)
+    {
+        wann = QStringLiteral("<b>once per frame</b> for this sprite, before it is drawn");
+    }
+    else if (field == QLatin1String("code") && typeKey == QLatin1String("movement"))
+    {
+        wann = QStringLiteral("once per <b>grid point</b>, only when the table is built "
+                              "(a static table — it does not change per frame)");
+    }
+    if (wann.isEmpty()) return {};
+    return QStringLiteral("<h3>This slot: %1</h3><p>Runs %2.%3</p>"
+                          "<p><small>Order within a frame: Init (once) → Song → Frame → "
+                          "Beat → per-point slot.</small></p><hr>")
+        .arg(label.toHtmlEscaped(), wann,
+             rest.isEmpty() ? QString() : QStringLiteral(" ") + rest);
+}
+
 inline void showScriptReference(QWidget* parent, const QString& html)
 {
     QDialog dlg(parent);

@@ -53,6 +53,7 @@
 #include <QDragMoveEvent>
 #include <QDropEvent>
 #include <QKeyEvent>
+#include <QRegularExpression>
 #include <QBuffer>
 #include <QElapsedTimer>
 #include <QImage>
@@ -79,6 +80,7 @@
 #include <QAbstractButton>
 #include <QMutex>
 
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <set>
@@ -1681,4 +1683,52 @@ TEST_CASE("PaletteUi S84 F5: Highlighter faerbt Modulfelder nach der Modul-Refer
     REQUIRE(farbeBei(referenz, 0, 0).isValid());
     CHECK(farbeBei(mit, 0, 0) == farbeBei(referenz, 0, 0));
     CHECK_FALSE(farbeBei(ohne, 0, 0).isValid());
+}
+
+// S85 (Wunsch Patrik): die Info-Seite eines Skript-Slots beginnt mit seinem
+// Takt (einmal, je Frame, je Beat, je Punkt …). Waechter: JEDES Slot-Feld, das
+// das Panel mit addScript anlegt, bekommt einen Text — ein neuer Slot ohne
+// Beschreibung faellt hier auf.
+TEST_CASE("PaletteUi S85: jeder Skript-Slot nennt auf der Info-Seite seinen Takt")
+{
+    using lumi::scriptedit::slotScopeHtml;
+    const std::filesystem::path app =
+        std::filesystem::path(__FILE__).parent_path().parent_path().parent_path().parent_path();
+    QFile f(QString::fromStdWString(
+        (app / "src" / "UI" / "panels" / "MultiEffectPanel.cpp").wstring()));
+    REQUIRE(f.open(QIODevice::ReadOnly));
+    const QString text = QString::fromUtf8(f.readAll());
+
+    static const QRegularExpression kSlot(
+        QStringLiteral("addScript\\(\"(\\w+)\",\\s*(?:t \\+ )?tr\\(\"([^\"]*)\"\\)"));
+    int gefunden = 0;
+    for (auto it = kSlot.globalMatch(text); it.hasNext();)
+    {
+        const auto m = it.next();
+        const QString field = m.captured(1);
+        QString label = m.captured(2);
+        label.replace(QStringLiteral("%1"), QStringLiteral("1"));
+        const bool milk = field == QLatin1String("milkdrop") ||
+                          field.startsWith(QLatin1String("per")) ||
+                          label.contains(QLatin1String("per Frame"));
+        const QString typ = milk                              ? QStringLiteral("milkdrop")
+                            : field == QLatin1String("code") ? QStringLiteral("movement")
+                                                              : QStringLiteral("clear");
+        CHECK_MESSAGE(slotScopeHtml(typ, field, label).contains(QLatin1String("Runs")),
+                      "ohne Takt: " << field.toStdString() << " / " << label.toStdString());
+        ++gefunden;
+    }
+    CHECK(gefunden > 200);  // der Scan greift (Stand S85: rund 250 Aufrufe)
+
+    // Punkt-Slot nennt die Einheit des Moduls
+    CHECK(slotScopeHtml(QStringLiteral("superScope"), QStringLiteral("pointCode"),
+                        QStringLiteral("Point"))
+              .contains(QLatin1String("point")));
+    CHECK(slotScopeHtml(QStringLiteral("texerII"), QStringLiteral("pointCode"),
+                        QStringLiteral("Point"))
+              .contains(QLatin1String("sprite")));
+    // Gegenprobe: ein unbekanntes Feld bekommt keinen Kopf
+    CHECK(slotScopeHtml(QStringLiteral("clear"), QStringLiteral("gibtEsNicht"),
+                        QStringLiteral("X"))
+              .isEmpty());
 }

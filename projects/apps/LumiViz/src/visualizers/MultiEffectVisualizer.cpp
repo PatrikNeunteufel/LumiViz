@@ -2729,10 +2729,41 @@ std::string skriptNameOhneKollision(const std::string& key,
     return (kHost.count(key) != 0 || belegt.count(key) != 0) ? "in_" + key : key;
 }
 
-/// Skriptname eines ISF-Reglers (Block E, S79).
+/// Block F (S85): die Skriptnamen ALLER Tabellenfelder eines Typs — Name,
+/// Alias, Farben als `_r/_g/_b`. Ein eigenes Uniform oder ein ISF-Regler
+/// gleichen Namens weicht auf `in_<name>` aus; sonst baenden Feld und Uniform
+/// dieselbe Skriptvariable (bis S85 zaehlte nur die alte Hand-Liste).
+template <class T>
+const std::set<std::string>& feldSkriptNamen()
+{
+    static const std::set<std::string> namen = [] {
+        namespace ftab = lumi::multieffect::feldtabelle;
+        std::set<std::string> out;
+        const ftab::Typ* typ =
+            ftab::typ(lumi::multieffect::EffectParams(std::in_place_type<T>).index());
+        if (typ == nullptr) return out;
+        for (const ftab::Feld& f : typ->felder)
+        {
+            const std::string name(f.name);
+            if (f.art == ftab::Art::Farbe)
+            {
+                for (const char* k : {"_r", "_g", "_b"}) out.insert(name + k);
+            }
+            else
+            {
+                out.insert(name);
+                if (!f.alias.empty()) out.insert(std::string(f.alias));
+            }
+        }
+        return out;
+    }();
+    return namen;
+}
+
+/// Skriptname eines ISF-Reglers (Block E, S79; Kollision mit Feldern S85).
 std::string isfSkriptName(const std::string& key)
 {
-    return skriptNameOhneKollision(key, {"blend", "mixamount"});
+    return skriptNameOhneKollision(key, feldSkriptNamen<IsfFilterParams>());
 }
 
 /// Block E (S79, Entscheid 1a): die Uniforms, die der Code eines GLSL-Knotens
@@ -13833,9 +13864,9 @@ void MultiEffectVisualizer::runShadertoy(const ChainNode& node,
     // `blend` kommt ueber die Feldtabelle in `params`; von Hand gebunden
     // bleiben nur die eigenen Uniforms (keine Felder).
     EigeneUniformKopien eigene;
-    eigene.sammle(params.code, {"blend"});
+    eigene.sammle(params.code, feldSkriptNamen<ShadertoyParams>());
     for (int i = 0; i < nBuffers; ++i)
-        eigene.sammle(params.buffers[static_cast<std::size_t>(i)].code, {"blend"});
+        eigene.sammle(params.buffers[static_cast<std::size_t>(i)].code, feldSkriptNamen<ShadertoyParams>());
     {
         std::vector<ParamVar> vars;
         eigene.haengeAn(vars);
@@ -14066,7 +14097,7 @@ void MultiEffectVisualizer::runMeshWarp(const ChainNode& node,
     // Block E (S79, Entscheid 1a): selbst deklarierte Uniforms des Codes
     // sind Skriptvariablen gleichen Namens.
     EigeneUniformKopien eigene;
-    eigene.sammle(params.code, {"gridx", "gridy", "mixamount"});
+    eigene.sammle(params.code, feldSkriptNamen<MeshWarpParams>());
     std::vector<ParamVar> vars = {{"gridx", &gridX}, {"gridy", &gridY}};
     eigene.haengeAn(vars);
     runParamScript(rt, "meshwarp", params.initCode, params.frameCode,
@@ -14195,7 +14226,7 @@ void MultiEffectVisualizer::runPixelFilter(const ChainNode& node,
     // Block E (S79, Entscheid 1a): selbst deklarierte Uniforms des Codes
     // sind Skriptvariablen gleichen Namens.
     EigeneUniformKopien eigene;
-    eigene.sammle(params.code, {"mixamount"});
+    eigene.sammle(params.code, feldSkriptNamen<PixelFilterParams>());
     std::vector<ParamVar> vars;
     eigene.haengeAn(vars);
     runParamScript(rt, "pixelfilter", params.initCode, params.frameCode,
@@ -14722,7 +14753,7 @@ void MultiEffectVisualizer::runGpuParticles(const ChainNode& node,
     // Block E (S79, Entscheid 1a): selbst deklarierte Uniforms des Codes
     // sind Skriptvariablen gleichen Namens.
     EigeneUniformKopien eigene;
-    eigene.sammle(params.forceCode, {"spawnx", "spawny", "spread", "speed", "dir", "fan", "gravx", "gravy", "drag", "life", "size", "sizeendfactor", "lifejitter"});
+    eigene.sammle(params.forceCode, feldSkriptNamen<GpuParticlesParams>());
     std::vector<ParamVar> vars = {{"colorstart_r", &farbeStart.r},
                     {"colorstart_g", &farbeStart.g},
                     {"colorstart_b", &farbeStart.b},

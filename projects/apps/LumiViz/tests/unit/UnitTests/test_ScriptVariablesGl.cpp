@@ -298,6 +298,19 @@ TEST_CASE("ScriptVariables: ISF-Regler lassen sich unter ihrem key per Skript se
     CHECK(mit.greenF() > 0.95);
     CHECK(mit.blueF() < 0.05);
 
+    // S85: ein ISF-Regler, der wie ein Feld des Knotens heisst (`gridx`),
+    // weicht auf `in_gridx` aus — sonst baende das Skript Feld und Regler
+    // unter einem Namen (bis S85 zaehlten nur `blend`/`mixamount`).
+    IsfFilterParams kollision;
+    kollision.fragCode = "void main() { gl_FragColor = vec4(gridx, 0.0, 0.0, 1.0); }";
+    ParamWert gridx;
+    gridx.key = "gridx";
+    gridx.typ = ParamTyp::Zahl;
+    gridx.zahl = 0.0;
+    kollision.parameter.werte = {gridx};
+    kollision.frameCode = "in_gridx = 1;";
+    CHECK(renderCenter(kollision).redF() > 0.95);
+
     // Block E, Entscheid 1a: eigene Uniforms in Shadertoy und Pixel Filter —
     // was der Code mit `uniform` deklariert, setzt das Skript unter dem Namen.
     const auto renderNode = [](EffectParams params) {
@@ -336,6 +349,15 @@ TEST_CASE("ScriptVariables: ISF-Regler lassen sich unter ihrem key per Skript se
     CHECK(renderNode(pf).redF() < 0.05);
     pf.frameCode = "hell = 1;";
     CHECK(renderNode(pf).redF() > 0.95);
+
+    // S85: eigenes Uniform mit Feldnamen (`blend`) -> `in_blend`; die Namen
+    // kommen jetzt aus der Feldtabelle statt aus der alten Hand-Liste.
+    ShadertoyParams stKoll;
+    stKoll.code =
+        "uniform float blend;\n"
+        "void mainImage(out vec4 c, in vec2 p) { c = vec4(blend, 0.0, 0.0, 1.0); }\n";
+    stKoll.frameCode = "in_blend = 1;";
+    CHECK(renderNode(stKoll).redF() > 0.95);
 }
 
 TEST_CASE("Script active (S83): aus = kein Slot laeuft, auch der Song-Slot nicht")

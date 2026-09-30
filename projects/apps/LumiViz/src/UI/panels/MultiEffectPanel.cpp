@@ -270,6 +270,7 @@ using lumi::scriptedit::highlightLegendHtml;
 using lumi::scriptedit::openScriptEditor;
 using lumi::scriptedit::refRow;
 using lumi::scriptedit::showScriptReference;
+using lumi::scriptedit::slotScopeHtml;
 
 // Detect an `initCode` member generically, so nodeInitCode covers every effect
 // type that has one without a per-type switch.
@@ -3654,6 +3655,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                          std::function<void(ChainNode&, std::string)> set) {
         const bool isInit = label.startsWith(QLatin1String("Init"));
         const QSet<QString> conflicts = isInit ? initConflicts : QSet<QString>{};
+        // S85: die ⓘ-Seite beginnt mit dem Takt DIESES Slots
+        const QString slotRef =
+            slotScopeHtml(fieldTypeKey, QLatin1String(field), label) + scriptRef;
         auto* edit = new QPlainTextEdit(m_propContainer);
         edit->setPlainText(QString::fromStdString(value));
         edit->setPlaceholderText(tr("EEL expression"));
@@ -3684,13 +3688,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         hl->addWidget(varsBtn);
         hl->addWidget(expandBtn);
         connect(varsBtn, &QToolButton::clicked, this,
-                [this, scriptRef]() { showScriptReference(this, scriptRef); });
+                [this, slotRef]() { showScriptReference(this, slotRef); });
         // Groß-Editor mit Apply/Beautify (S69): Apply schreibt ins Inline-Feld
         // (textChanged -> mutate -> recompileChain) und probt die EEL-Syntax
         // synchron im Dialekt des Knotens (Milkdrop vs. AVS — eel.div-Grenze).
         const bool milkDialekt = fieldTypeKey == QLatin1String("milkdrop");
         connect(expandBtn, &QToolButton::clicked, this,
-                [this, edit, label, scriptRef, conflicts, milkDialekt, modulKat]() {
+                [this, edit, label, slotRef, conflicts, milkDialekt, modulKat]() {
                     lumi::scriptedit::ScriptEditorHooks hooks;
                     hooks.modulKategorien = modulKat;
                     hooks.apply = [edit, milkDialekt](const QString& t) -> QString {
@@ -3708,7 +3712,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             lumi::scriptedit::formatOptionsFromSettings()));
                     };
                     QString out;
-                    if (openScriptEditor(this, label, edit->toPlainText(), scriptRef,
+                    if (openScriptEditor(this, label, edit->toPlainText(), slotRef,
                                          out, conflicts, /*eelHighlight=*/true,
                                          hooks))
                     {
