@@ -3,8 +3,9 @@
 > **Version:** 1.0.0
 > **Datum:** 2026-09-30 (Ende Session 84)
 > **Typ:** Befund + Suchplan
-> **Status:** **Offen — Ursache nicht gefunden, nicht gemessen.** Erste Aufgabe
-> der nächsten Sitzung (S85).
+> **Status:** **Ursache gefunden und behoben (S85, §7)** — keine Regression aus
+> S84, sondern ein Ladefehler der Presetverweise seit S82. Vollbild-Freeze:
+> Sichttest mit dem Fix steht aus.
 > **Sprache:** Deutsch
 
 ## 1. Symptome (Meldung Patrik, 30.09.2026 abends)
@@ -199,3 +200,43 @@ Ein Umbau im Render-Pfad (hier: jede Frame-Kopie und jede Skriptbindung aller
 Knoten) braucht **vor dem Commit** einen Vergleichslauf der Kalibrier-
 Harnesse gegen den vorigen Stand — Unit-Tests prüfen Bindung und Wirkung
 einzelner Felder, nicht Tempo, Bild und Laufzeit ganzer Presets.
+
+## 7. Auflösung (S85)
+
+**Messung A (fünf Builds `80201b3` S82 · `968df01` · `cc16a80` · `6154972` ·
+`6808317`, AvsStandalone, 14 Presets × 6 Bilder, Sim-Uhr):** jeder Übergang
+**bitgleich**. Gegenproben: Doppellauf desselben Builds bitgleich (84/84),
+fünf verschiedene Exes, 13 verschiedene Endbilder. Damit ist H1 widerlegt, und
+kein Commit von S83/S84 ändert die Berechnung. Daneben: Keine der am Abend
+geladenen Ketten (aus dem Log: `202609_g2*`, `_g_milk`, `_mixed*`, `3ds`,
+`list`) trägt einen F2-Knoten (Träger ParamSkript + Code); der F2-Pfad lief
+bei ihnen nie.
+
+**Fund Patrik:** Nur `asset/effectchain/list.lvfx2` spinnt — Host Switcher über
+15 Presetverweise (AVS und MilkDrop). Nach dem Laden laufen die Szenen zu
+schnell oder zu langsam; ein Klick auf den Host Switcher im Panel heilt alle,
+bis zum nächsten Laden.
+
+**Ursache:** `loadChainFromFile` ruft `compileChain` **vor** dem Auflösen der
+Verweise; `verweiseAufloesen` hängt den Inhalt mit `nodeId 0` ein
+(`presetGroupChildren` löscht die IDs), und `loadChainFile` übernimmt den Baum
+ohne zweites `compileChain`. Alle Knoten aller Verweise teilten sich so die
+Laufzeit zur ID 0. Der Panel-Klick löst `recompileChain()` aus und vergibt die
+IDs — deshalb die Heilung. Seit Einführung der Presetverweise (S82) vorhanden;
+S84 hat nichts damit zu tun, bemerkt wurde es erst mit `list.lvfx2`.
+
+**Fix:** `compileChain(loaded)` in `baueLvfxBaum` nach `verweiseAufloesen`
+(`MultiEffectVisualizer.cpp`). Test `Presetverweis / Laden: aufgeloeste
+Verweise tragen eindeutige IDs ungleich 0` — ohne Fix rot (4 von 7 Knoten
+ID 0), mit Fix grün; 713/713. Vergleichslauf gegen S82: 13 von 14 Presets
+bitgleich, nur `list` ändert sich; `list` braucht für 300 Frames 2,7 s statt
+35,8 s (der Lag).
+
+**Nebenbei:** `AvsStandalone` war seit S83 nicht baubar (`ScriptVariables.cpp`
+und `FieldBindings.cpp` fehlten in `projects/exec/AvsStandalone/src/Source.cmake`)
+— nachgetragen.
+
+**Lehre:** Ein Fehler, der nur nach dem **Laden** auftritt und durch einen
+**Panel-Edit** verschwindet, deutet auf Zustand, den `recompileChain` herstellt
+und der Ladepfad nicht — zuerst Lade- gegen Editierpfad vergleichen, bevor
+Builds bisektiert werden.

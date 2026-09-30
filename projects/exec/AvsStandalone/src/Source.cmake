@@ -30,6 +30,8 @@ set(_local_sources
     "${_myviz_src}/visualizers/VisualizerBase.cpp"
     "${_myviz_src}/visualizers/FeedbackBuffer.cpp"
     "${_myviz_src}/visualizers/ScopeRenderer.cpp"
+    "${_myviz_src}/visualizers/ScriptVariables.cpp"
+    "${_myviz_src}/visualizers/FieldBindings.cpp"
     "${_myviz_src}/visualizers/modules/ColorGradientModule.cpp"
     "${_myviz_src}/visualizers/modules/SuperscopeModule.cpp"
     "${_myviz_src}/visualizers/modules/ScriptGridModule.cpp"

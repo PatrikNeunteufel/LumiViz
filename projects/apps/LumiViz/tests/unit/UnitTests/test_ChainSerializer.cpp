@@ -19,6 +19,8 @@
 #include <QStringList>
 
 #include <filesystem>
+#include <functional>
+#include <set>
 
 using namespace lumi::multieffect;
 
@@ -2411,6 +2413,42 @@ TEST_SUITE("Presetverweis")
         CHECK(geladen.children[0].isReference());
         CHECK(geladen.children[0].children.size() == 2);  // frisch aus intro.lvfx
         CHECK(report.isEmpty());
+        std::filesystem::remove_all(tempDatei(""));
+    }
+
+    // S85: loadChainFromFile vergab die IDs VOR dem Aufloesen — der Inhalt der
+    // Verweise kam mit nodeId 0 an, alle seine Knoten teilten sich eine
+    // Laufzeit (Presets liefen zu schnell/zu langsam, bis ein Panel-Klick
+    // recompileChain ausloeste). Zwei Verweise auf dieselbe Datei wie in
+    // asset/effectchain/list.lvfx2.
+    TEST_CASE("Laden: aufgeloeste Verweise tragen eindeutige IDs ungleich 0")
+    {
+        std::filesystem::create_directories(tempDatei(""));
+        ChainNode fade;
+        fade.params = FadeoutParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        REQUIRE(saveChainToFile(kette({std::move(fade), std::move(clear)}),
+                                q(tempDatei("szene.lvfx"))));
+        ChainNode a = verweisAuf("szene.lvfx");
+        a.displayName = "A";
+        ChainNode b = verweisAuf("szene.lvfx");
+        b.displayName = "B";
+        REQUIRE(saveChainToFile(kette({std::move(a), std::move(b)}), q(tempDatei("show.lvfx2"))));
+
+        ChainNode geladen;
+        REQUIRE(MultiEffectVisualizer::buildPresetTree(q(tempDatei("show.lvfx2")), geladen));
+        std::set<std::uint64_t> ids;
+        int knoten = 0;
+        std::function<void(const ChainNode&)> sammle = [&](const ChainNode& n) {
+            ++knoten;
+            CHECK(n.nodeId != 0);
+            ids.insert(n.nodeId);
+            for (const ChainNode& c : n.children) sammle(c);
+        };
+        sammle(geladen);
+        CHECK(knoten == 7);  // Wurzel + 2 Gruppen + je 2 Knoten
+        CHECK(ids.size() == static_cast<std::size_t>(knoten));
         std::filesystem::remove_all(tempDatei(""));
     }
 

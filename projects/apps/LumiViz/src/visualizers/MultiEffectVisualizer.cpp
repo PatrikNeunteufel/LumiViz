@@ -3158,6 +3158,11 @@ bool baueLvfxBaum(const QString& path, ChainNode& outRoot, QStringList* outRepor
     ChainNode loaded;
     if (!loadChainFromFile(path, loaded, outReport)) return false;
     verweiseAufloesen(loaded, QFileInfo(path).absolutePath(), outReport);
+    // S85: loadChainFromFile hat die IDs VOR dem Aufloesen vergeben — der
+    // Inhalt der Verweise kommt mit nodeId 0 (presetGroupChildren) und
+    // braucht eigene, sonst teilen sich alle seine Knoten eine Laufzeit
+    // (Tempo falsch, bis ein Panel-Edit recompileChain ausloeste).
+    compileChain(loaded);
     // videoSource (S70): relative Videopfade gegen den Preset-Ordner aufloesen
     resolveVideoSourcePaths(loaded, QFileInfo(path).absolutePath());
     // avi (S73): dasselbe fuer den AVI-Knoten. Bis hierher lief die Aufloesung
