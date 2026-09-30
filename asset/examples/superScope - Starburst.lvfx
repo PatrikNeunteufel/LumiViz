@@ -7,7 +7,7 @@
         "type": "list",
         "enabled": true,
         "name": "root",
-        "description": "Beispiel fuer Voreinstellung 'Starburst' (superScope)",
+        "description": "Example for preset 'Starburst' (superScope)",
         "clearEveryFrame": true,
         "children": [
             {

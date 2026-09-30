@@ -1,0 +1,27 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Example for preset 'Fire Swirl' (flame)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "flame",
+                "enabled": true,
+                "name": "Fire Swirl (flame)",
+                "variation": 3,
+                "functions": 3,
+                "points": 20000,
+                "scale": 0.5,
+                "rotationSpeed": 0.04,
+                "dotSize": 1.5,
+                "blend": 1
+            }
+        ]
+    }
+}

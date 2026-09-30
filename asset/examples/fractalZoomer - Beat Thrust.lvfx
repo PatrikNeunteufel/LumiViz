@@ -1,0 +1,23 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Example for preset 'Beat Thrust' (fractalZoomer)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "fractalZoomer",
+                "enabled": true,
+                "name": "Beat Thrust (fractalZoomer)",
+                "initCode": "zs=1.003",
+                "frameCode": "zs=zs+(1.003-zs)*0.06;zoomspeed=zs",
+                "beatCode": "zs=1.03"
+            }
+        ]
+    }
+}

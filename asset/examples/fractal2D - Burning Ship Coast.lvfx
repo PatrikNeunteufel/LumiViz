@@ -1,0 +1,27 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Example for preset 'Burning Ship Coast' (fractal2D)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "fractal2D",
+                "enabled": true,
+                "name": "Burning Ship Coast (fractal2D)",
+                "ftype": 2,
+                "centerX": -1.7548,
+                "centerY": -0.0338,
+                "zoom": 26.0,
+                "maxIter": 250,
+                "smooth": true,
+                "colorScale": 0.03
+            }
+        ]
+    }
+}

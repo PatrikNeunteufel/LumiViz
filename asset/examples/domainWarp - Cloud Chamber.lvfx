@@ -1,0 +1,28 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Example for preset 'Cloud Chamber' (domainWarp)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "domainWarp",
+                "enabled": true,
+                "name": "Cloud Chamber (domainWarp)",
+                "octaves": 5,
+                "scale": 2.2,
+                "warp": 0.65,
+                "warpScale": 1.0,
+                "speed": 0.35,
+                "initCode": "puls=0",
+                "frameCode": "puls=puls*0.92;\nwarp=0.65+puls*0.9;\nspeed=0.35+mid*0.4",
+                "beatCode": "puls=1;"
+            }
+        ]
+    }
+}

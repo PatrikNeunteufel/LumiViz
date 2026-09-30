@@ -1,0 +1,24 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Example for preset 'Coral Growth' (reactionDiffusion)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "reactionDiffusion",
+                "enabled": true,
+                "name": "Coral Growth (reactionDiffusion)",
+                "feed": 0.0545,
+                "kill": 0.062,
+                "stepsPerFrame": 8,
+                "seedOnBeat": true
+            }
+        ]
+    }
+}

@@ -401,7 +401,7 @@ RENDER_TYPES = {"superScope", "simpleScope", "oscStar", "oscRing",
                 "rotatingStars", "dotGrid", "starfield", "timescope"}
 TRAIL_TYPES = {"movement", "dynamicMovement", "rotoBlitter",
                "blitterFeedback", "fadeout", "blur"}
-SCENE_OVERRIDE = {("blur", "Stehender Weichzeichner"): "filter"}
+SCENE_OVERRIDE = {("blur", "Static Blur"): "filter"}  # Namen englisch seit S83
 
 
 def avs_scene(typ: str, name: str, node_entry: bytes) -> bytes:
@@ -464,7 +464,7 @@ def lvfx_scene(typ: str, name: str, node: dict) -> dict:
     return {
         "header": {"formatVersion": 1, "generator": "LumiViz MultiEffect"},
         "root": {"type": "list", "enabled": True, "name": "root",
-                 "description": f"Beispiel fuer Voreinstellung "
+                 "description": f"Example for preset "
                                 f"'{name}' ({typ})",
                  "clearEveryFrame": clear, "children": children},
     }

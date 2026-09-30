@@ -412,6 +412,30 @@ TEST_CASE("NodePresetStore: die SuperScope-Figuren decken die Modul-Bibliothek")
     }
 }
 
+TEST_CASE("Mitgelieferte Namen sind englisch: keine Umlaute/ss in Dateinamen (S83)")
+{
+    // Entscheid Patrik S83: alle mitgelieferten Presets, Beispiele und
+    // Shader-Vorlagen heissen englisch, wie die Oberflaeche. Die Sprache selbst
+    // kann ein Test nicht pruefen — Umlaute und ss sind aber das sichere
+    // Zeichen eines deutschen Namens und fallen hier auf.
+    const std::filesystem::path asset = repoRoot() / "asset";
+    int geprueft = 0;
+    for (const char* ordner : {"nodepresets", "examples", "shadertemplates"})
+    {
+        REQUIRE(std::filesystem::exists(asset / ordner));
+        for (const auto& e : std::filesystem::recursive_directory_iterator(asset / ordner))
+        {
+            if (!e.is_regular_file() || e.path().filename() == "README.md") continue;
+            const QString name = QString::fromStdWString(e.path().filename().wstring());
+            CAPTURE(name.toStdString());
+            for (const QChar c : name)
+                CHECK_FALSE(QStringLiteral("äöüÄÖÜß").contains(c));
+            ++geprueft;
+        }
+    }
+    CHECK(geprueft > 300);  // Schutz gegen einen Test, der still nichts prueft
+}
+
 TEST_CASE("NodePresetStore: Dateinamen werden bereinigt")
 {
     CHECK(np::sanitize(QStringLiteral("Spiral 2")) == QStringLiteral("Spiral 2"));

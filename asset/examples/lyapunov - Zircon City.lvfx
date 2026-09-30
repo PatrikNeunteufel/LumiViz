@@ -7,7 +7,7 @@
         "type": "list",
         "enabled": true,
         "name": "root",
-        "description": "Beispiel fuer Voreinstellung 'Zircon City' (lyapunov)",
+        "description": "Example for preset 'Zircon City' (lyapunov)",
         "clearEveryFrame": true,
         "children": [
             {

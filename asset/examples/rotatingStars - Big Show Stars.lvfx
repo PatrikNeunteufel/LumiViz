@@ -1,0 +1,23 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Example for preset 'Big Show Stars' (rotatingStars)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "rotatingStars",
+                "enabled": true,
+                "name": "Big Show Stars (rotatingStars)",
+                "baseRadius": 0.18,
+                "audioGain": 1.2,
+                "rotSpeed": 0.1
+            }
+        ]
+    }
+}

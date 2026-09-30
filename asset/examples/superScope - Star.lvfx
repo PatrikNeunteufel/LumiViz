@@ -7,7 +7,7 @@
         "type": "list",
         "enabled": true,
         "name": "root",
-        "description": "Beispiel fuer Voreinstellung 'Star' (superScope)",
+        "description": "Example for preset 'Star' (superScope)",
         "clearEveryFrame": true,
         "children": [
             {

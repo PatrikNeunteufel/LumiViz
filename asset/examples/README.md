@@ -3,7 +3,8 @@
 Für **jede** mitgelieferte Knoten-Voreinstellung (`asset/nodepresets/`) liegt
 hier genau ein Beispiel-Preset mit passendem Render-Material, damit der Effekt
 sauber sichtbar ist. Dateiname = `<typkey> - <Vorlagenname>` — Typ und Name der
-Voreinstellung stehen im Namen, keine Unterordner (Vorgabe S61).
+Voreinstellung stehen im Namen, keine Unterordner (Vorgabe S61). Namen sind
+seit S83 englisch (wie die Oberfläche).
 
 **Erzeugt** von `asset/calibration/avs/make_example_presets.py` — nach einer
 Vorlagen-Änderung dort neu laufen lassen, nicht von Hand editieren.
@@ -32,8 +33,8 @@ Akkumulations-Effekte (Movement, Blitter, Fadeout …) laufen als Trail VOR den
 Quellen, alle übrigen Trans-Effekte als Filter HINTER der Static-Szene.
 Custom-BPM-Beispiele zeigen den gefilterten Beat als abklingenden Weiß-Blitz.
 
-Erwartbar „dünne" Bilder (kein Fehler): Starfield, Spektral-Vorhang,
-Spektrum-Ring, Sternenkranz — wenige helle Pixel auf Schwarz.
-`rand()`-basierte Effekte (Grain, Starfield, Zufallsspiegel) sind zwischen
+Erwartbar „dünne" Bilder (kein Fehler): Starfield, Spectral Curtain,
+Spectrum Ring, Star Wreath — wenige helle Pixel auf Schwarz.
+`rand()`-basierte Effekte (Grain, Starfield, Random Mirror) sind zwischen
 den Renderern nicht bit-stabil — Urteil dort über die Montage, nicht die
 Metrik.

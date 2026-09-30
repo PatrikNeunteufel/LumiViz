@@ -1,0 +1,26 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Example for preset 'Elephant Valley' (fractalZoomer)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "fractalZoomer",
+                "enabled": true,
+                "name": "Elephant Valley (fractalZoomer)",
+                "ftype": 0,
+                "centerX": 0.2869319,
+                "centerY": 0.0142869,
+                "maxIter": 260,
+                "zoomSpeed": 1.01,
+                "feedback": 0.5
+            }
+        ]
+    }
+}

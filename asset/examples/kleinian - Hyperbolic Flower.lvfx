@@ -1,0 +1,24 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Example for preset 'Hyperbolic Flower' (kleinian)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "kleinian",
+                "enabled": true,
+                "name": "Hyperbolic Flower (kleinian)",
+                "p": 7,
+                "q": 3,
+                "colorScale": 0.17,
+                "frameCode": "rot=rot+0.002"
+            }
+        ]
+    }
+}

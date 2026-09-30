@@ -86,142 +86,299 @@ ausdrücklich Teil der Vorlage.
 | `milkParams` | Original · Old LumiViz Look (pre-S80) · Soft Pull Up-Left · No Drift or Blur | Stellungen von Gestaltung und „bisher"-Schaltern (Skript-Zufall, Audio, Seitenverhältnis) — *Original* = alles original-treu, *Old LumiViz Look* = der Look bis S80 in einem Zug (S83) |
 | | Radial Swirl · Radial Pull · Slow Fade · Mirror Echo · Gentle Zoom | einzelne Gestaltungs-/Basiswerte |
 | | Modern Rules (IEEE) · Legacy Rules (D3D9) | Regelwerk — *Legacy* ist die original-treue Betriebsart, **kein** „bisher"-Schalter |
-| `metaballs3d` | Kalter Schwarm · Wenige grosse Kugeln | Host-eigene Kugel-Sets (seit S53) |
-| `tentacles3d` | Qualle | Host-eigenes Tentakel-Set (seit S53) |
-| `dynamicMovement` | Sanfter Sog | 5 %-Sog je Frame — der klassische Zoom-Trail-Motor |
-| | Beat-Puls | Dauer-Zoom + Beat-Kick mit weicher amp-Feder |
-| | Strudel | innen stärker drehend als außen, leichter Sog |
-| | Wasser-Wobble | laufende radiale Welle (sin über d und t) |
-| | Tunnelflug | langsamer Sog + stetige Rotation |
-| | Kissen-Welle | rechteckige Stauchung mit wandernder Querwelle |
-| `movement` | Sog zur Mitte | statischer 8 %-Zoom als Tabelle (billigster Feedback-Sog) |
-| | Leichter Drall | konstante Drehung + milder Sog |
-| | Fischauge | Mitte aufgewölbt, Rand gestaucht (pow d) |
-| | Wellenringe | feste konzentrische Verzerrungsringe |
-| `convolution` | Weichzeichner 3x3 · Gauss 3x3 | flacher bzw. gewichteter Blur (Referenz-Ganzzahlkerne) |
-| | Schaerfen | Zentrum 5, Kreuz −1 |
-| | Kanten (Laplace) | nur Konturen bleiben (der Kalibrier-Kern) |
-| | Relief | Emboss — diagonale Licht-/Schattenkanten |
-| `colorMap` | Feuer · Ozean · Neon · Graustufen invertiert | Verlaufs-Paletten über `stopPos`/`stopColor` |
-| `waterBump` | Feiner Regen | kleine flache Zufallstropfen je Beat |
-| | Schwerer Tropfen | ein großer Mitteltropfen je Beat |
-| | Traege Wellen | Referenztropfen, langsamer Abkling (density 8) |
-| `dotGrid` | Ruhiges Raster · Diagonal-Drift · Dichtes Flimmern | Punktgitter von dezent bis vibrierend (8.8-Festkomma-Drift) |
-| `blitterFeedback` | Zoom-Echo | leichtes Raus-Zoomen mit 50/50-Echo |
-| | Beat-Sprung | Beat springt nach innen (scale2) und federt zurück |
-| | Sog nach innen | dauerhaftes Rein-Zoomen, subpixel-weich |
-| `rotatingStars` | Sternenkranz | sechs Sterne auf der Bahn, halbes Tempo |
-| | Grosse Show-Sterne | groß + kräftige Audio-Reaktion (Bühnen-Variante) |
-| `oscStar` | Feiner Stern · Wilder Stern | kompakt/langsam bzw. bildfüllend/schnell |
-| `oscRing` | Puls-Ring · Spektrum-Ring | Waveform- bzw. Spektrum-getriebener Ring |
-| `grain` | Filmkorn | lebendiges Korn, additiv |
-| | Eingefrorenes Korn | statisches Kornmuster (AVS static grain) |
-| `fadeout` | Schneller Ausklang | kräftig nach Schwarz — kurze Trails |
-| | Blaues Nachgluehen | langsam auf Tiefblau — lange, kalte Trails |
-| `bump` | Kreisende Lampe | Lichtquelle kreist per EEL über dem Relief |
-| | Beat-Blitz | Tiefe springt je Beat hoch und fällt zurück |
+| `metaballs3d` | Cold Swarm · Few Large Balls | Host-eigene Kugel-Sets (seit S53) |
+| `tentacles3d` | Jellyfish | Host-eigenes Tentakel-Set (seit S53) |
+| `dynamicMovement` | Gentle Pull | 5 %-Sog je Frame — der klassische Zoom-Trail-Motor |
+| | Beat Pulse | Dauer-Zoom + Beat-Kick mit weicher amp-Feder |
+| | Whirlpool | innen stärker drehend als außen, leichter Sog |
+| | Water Wobble | laufende radiale Welle (sin über d und t) |
+| | Tunnel Flight | langsamer Sog + stetige Rotation |
+| | Pillow Wave | rechteckige Stauchung mit wandernder Querwelle |
+| `movement` | Pull To Center | statischer 8 %-Zoom als Tabelle (billigster Feedback-Sog) |
+| | Slight Twist | konstante Drehung + milder Sog |
+| | Fisheye | Mitte aufgewölbt, Rand gestaucht (pow d) |
+| | Wave Rings | feste konzentrische Verzerrungsringe |
+| `convolution` | Blur 3x3 · Gaussian 3x3 | flacher bzw. gewichteter Blur (Referenz-Ganzzahlkerne) |
+| | Sharpen | Zentrum 5, Kreuz −1 |
+| | Edges (Laplace) | nur Konturen bleiben (der Kalibrier-Kern) |
+| | Emboss | Emboss — diagonale Licht-/Schattenkanten |
+| `colorMap` | Fire · Ocean · Neon · Inverted Grayscale | Verlaufs-Paletten über `stopPos`/`stopColor` |
+| `waterBump` | Fine Rain | kleine flache Zufallstropfen je Beat |
+| | Heavy Drop | ein großer Mitteltropfen je Beat |
+| | Slow Waves | Referenztropfen, langsamer Abkling (density 8) |
+| `dotGrid` | Calm Grid · Diagonal Drift · Dense Flicker | Punktgitter von dezent bis vibrierend (8.8-Festkomma-Drift) |
+| `blitterFeedback` | Zoom Echo | leichtes Raus-Zoomen mit 50/50-Echo |
+| | Beat Jump | Beat springt nach innen (scale2) und federt zurück |
+| | Inward Pull | dauerhaftes Rein-Zoomen, subpixel-weich |
+| `rotatingStars` | Star Wreath | sechs Sterne auf der Bahn, halbes Tempo |
+| | Big Show Stars | groß + kräftige Audio-Reaktion (Bühnen-Variante) |
+| `oscStar` | Fine Star · Wild Star | kompakt/langsam bzw. bildfüllend/schnell |
+| `oscRing` | Pulse Ring · Spectrum Ring | Waveform- bzw. Spektrum-getriebener Ring |
+| `grain` | Film Grain | lebendiges Korn, additiv |
+| | Frozen Grain | statisches Kornmuster (AVS static grain) |
+| `fadeout` | Quick Fade-Out | kräftig nach Schwarz — kurze Trails |
+| | Blue Afterglow | langsam auf Tiefblau — lange, kalte Trails |
+| `bump` | Circling Lamp | Lichtquelle kreist per EEL über dem Relief |
+| | Beat Flash | Tiefe springt je Beat hoch und fällt zurück |
 | `movement` (AVS-Originale) | AVS Big Swirl Out · Sunburster · Swirl To Center · Bubbling Outward · Tunneling · Spinny Tube · Gridley · 6-way Kaleida | die wörtlichen Builtin-Formeln aus `r_trans.cpp` als benannte Vorlagen |
-| `dynamicShift` | Beben | Beat-Ruck in Zufallsrichtung mit Auspendeln (Kamera-Shake) |
-| | Schwebedrift | langsame Lissajous-Schwebung des ganzen Bildes |
-| `dynamicDistanceModifier` | Beat-Woge | Radius federt je Beat nach außen |
-| | Atmender Ring | sin-Atmung auf d |
-| `rotoBlitter` | Langsame Drehung | reine Rotation (Zoom neutral = 31) |
-| | Rotierender Sog | die kalibrierten Matrix-Werte (28/40) — der klassische Wirbel |
-| | Beat-Wende | jeder Beat kehrt die Drehrichtung weich um |
-| `mirror` | Spiegel-Quartett | alle vier Achsen — vierfache Symmetrie |
-| | Zufallsspiegel | je Beat neue Spiegelkombination, weich geblendet |
-| `interferences` | Doppelbild | zwei rotierende Halbtransparenz-Kopien |
-| | Sechser-Echo | sechs Kopien im Kreis — rotierende Blume |
-| `starfield` | Ruhige Sternfahrt | gleichmäßiger Untergrund-Flug |
-| | Warp auf Beat | Beat zündet einen abklingenden Warp-Schub |
-| `uniqueTone` | Goldton · Eisblau | Helligkeit auf Warm-Gold bzw. Kaltblau umgefärbt |
+| `dynamicShift` | Quake | Beat-Ruck in Zufallsrichtung mit Auspendeln (Kamera-Shake) |
+| | Floating Drift | langsame Lissajous-Schwebung des ganzen Bildes |
+| `dynamicDistanceModifier` | Beat Surge | Radius federt je Beat nach außen |
+| | Breathing Ring | sin-Atmung auf d |
+| `rotoBlitter` | Slow Rotation | reine Rotation (Zoom neutral = 31) |
+| | Rotating Pull | die kalibrierten Matrix-Werte (28/40) — der klassische Wirbel |
+| | Beat Reverse | jeder Beat kehrt die Drehrichtung weich um |
+| `mirror` | Mirror Quartet | alle vier Achsen — vierfache Symmetrie |
+| | Random Mirror | je Beat neue Spiegelkombination, weich geblendet |
+| `interferences` | Double Image | zwei rotierende Halbtransparenz-Kopien |
+| | Six-Fold Echo | sechs Kopien im Kreis — rotierende Blume |
+| `starfield` | Calm Star Ride | gleichmäßiger Untergrund-Flug |
+| | Warp On Beat | Beat zündet einen abklingenden Warp-Schub |
+| `uniqueTone` | Gold Tone · Ice Blue | Helligkeit auf Warm-Gold bzw. Kaltblau umgefärbt |
 | `interleave` | Scanlines | jede zweite Zeile schwarz (Röhren-Look) |
-| | Beat-Gitter | Gitter reißt je Beat grob auf und schließt sich |
-| `videoDelay` | Halbe Sekunde | Bild von vor 30 Frames (Echo-Baustein) |
-| | Beat-Echo | Verzögerung um genau einen Beat |
-| `timescope` | Spektral-Vorhang | wandernde Spektrum-Spalten |
-| `bloom` | Lights-Referenz | die Referenzwerte aus `lights_demo` (sigma 8, Intensity 1,3, Vignette 0,3) |
-| | Sanfter Schimmer | dezenter Glanz nur auf Glanzlichtern (Threshold 0,35) |
-| | Beat-Glut | Glow-Intensität zündet je Beat und klingt weich ab |
-| `fractal2D` | Seepferdchen-Tal | klassischer Mandelbrot-Ausschnitt (Seahorse Valley, Zoom 90) |
-| | Julia-Puls | Julia-Menge; Beat stößt den Zoom an, langsame Drehung |
-| | Burning-Ship-Kueste | das „kleine Schiff" des Burning-Ship-Fraktals |
-| `fractal3D` | Mandelbulb-Orbit | Kamera umkreist den Bulb, Pitch atmet mit der Zeit |
-| | Menger-Flug | Menger-Schwamm; Bass zieht die Kamera heran |
-| | Quaternion-Puls | Quaternion-Julia; Beat holt die Kamera kurz nah heran |
-| `domainWarp` | Nebelkammer | ruhiges Plasma — mittlere Verwerfung, langsame Drift |
-| | Bass-Woge | Verwerfung hängt am Bass, Tempo an der Lautstärke |
-| | Tintenstrom | starke, feine Verwerfung — marmorierter Tintenfluss |
-| `fractalZoomer` | Elefanten-Tal | Endlos-Zoom auf das Elephant Valley der Mandelbrot-Menge |
-| | Julia-Strudel | rotierender Julia-Zoom mit kräftiger Feedback-Schleife |
-| | Beat-Schub | Zoomtempo springt je Beat und pendelt zurück |
+| | Beat Grid | Gitter reißt je Beat grob auf und schließt sich |
+| `videoDelay` | Half Second | Bild von vor 30 Frames (Echo-Baustein) |
+| | Beat Echo | Verzögerung um genau einen Beat |
+| `timescope` | Spectral Curtain | wandernde Spektrum-Spalten |
+| `bloom` | Lights Reference | die Referenzwerte aus `lights_demo` (sigma 8, Intensity 1,3, Vignette 0,3) |
+| | Soft Shimmer | dezenter Glanz nur auf Glanzlichtern (Threshold 0,35) |
+| | Beat Glow | Glow-Intensität zündet je Beat und klingt weich ab |
+| `fractal2D` | Seahorse Valley | klassischer Mandelbrot-Ausschnitt (Seahorse Valley, Zoom 90) |
+| | Julia Pulse | Julia-Menge; Beat stößt den Zoom an, langsame Drehung |
+| | Burning Ship Coast | das „kleine Schiff" des Burning-Ship-Fraktals |
+| `fractal3D` | Mandelbulb Orbit | Kamera umkreist den Bulb, Pitch atmet mit der Zeit |
+| | Menger Flight | Menger-Schwamm; Bass zieht die Kamera heran |
+| | Quaternion Pulse | Quaternion-Julia; Beat holt die Kamera kurz nah heran |
+| `domainWarp` | Cloud Chamber | ruhiges Plasma — mittlere Verwerfung, langsame Drift |
+| | Bass Surge | Verwerfung hängt am Bass, Tempo an der Lautstärke |
+| | Ink Flow | starke, feine Verwerfung — marmorierter Tintenfluss |
+| `fractalZoomer` | Elephant Valley | Endlos-Zoom auf das Elephant Valley der Mandelbrot-Menge |
+| | Julia Whirl | rotierender Julia-Zoom mit kräftiger Feedback-Schleife |
+| | Beat Thrust | Zoomtempo springt je Beat und pendelt zurück |
 | `lyapunov` | Zircon City | die berühmte BBBBBBAAAAAA-Ansicht (Markus/Dewdney) |
-| | Atmendes Fenster | der Ausschnitt atmet langsam über sin/cos der Zeit |
-| `kleinian` | Hyperbolische Blume | {7,3}-Kachelung, langsam drehend |
-| | Beat-Kachelwerk | {5,4}; jeder Beat schiebt die Morph-Phase weiter |
-| `strangeAttractor` | Lorenz-Schmetterling | der klassische Lorenz-Attraktor, dicht gezeichnet |
-| | Clifford-Schleier | Clifford-Attraktor (a −1,4 · b 1,6 · c 1 · d 0,7) |
-| | De-Jong-Gespinst | Peter-de-Jong-Attraktor (1,4 · −2,3 · 2,4 · −2,1) |
-| `flame` | Feuerwirbel | Swirl-Variation, drei Abbildungen — rotierende Glut |
-| | Hufeisen-Nebel | Horseshoe-Variation, drei Abbildungen (mit vier kollabiert die Bahn) |
-| `reactionDiffusion` | Korallenwachstum | Gray-Scott „Coral" (feed 0,0545 / kill 0,062) |
-| | Zellteilung | „Mitosis" (0,0367 / 0,0649) — teilende Zellen |
-| | Wurmspur | „Worms" (0,078 / 0,061) — wandernde Bänder |
-| `blur` | Abklingender Trail | strength 1 ohne round-up — das Bild klingt je Anwendung ab (Trail-Motor) |
-| | Stehender Weichzeichner | strength 2 mit round-up — weichzeichnen ohne Abklingen |
-| `simpleScope` | Analyzer-Balken | solid analyzer unten — die klassischen Spektrum-Balken |
-| | Linien-Oszi | line scope mittig — das klassische Oszilloskop |
-| | Punktwolke | dot scope mittig — die Waveform als Punktstaub |
-| `customBpm` | Halbes Tempo | lässt jeden zweiten Beat durch |
-| | Viertel-Beat | lässt jeden vierten Beat durch |
-| | Metronom 500ms | fester Kunst-Beat alle 500 ms (unabhängig vom Audio) |
-| `meshWarp` (GPU-Module S69) | Bass-Swirl | Drehung um die Mitte, Bass verstärkt — der Palette-Starter als Vorlage |
-| | Tunnel-Sog | dauerhafter Sog zur Mitte mit Rotations-Drall (Feedback-Tunnel) |
-| | Wellengang | laufende Sinus-Wellen quer durchs Bild (Waveform-Wasser) |
-| | Fischaugen-Atmung | Fischaugen-Wölbung, die mit der Zeit/dem Bass atmet |
-| | Spiegelkabinett | Kaleido-Faltung der UV — Inhalt gehört zentriert (Stimm-Befund S69) |
-| `gpuParticles` (GPU-Module S69) | Fontaene | klassische Partikel-Fontäne (Schwerkraft + Fächer) |
-| | Funkenregen | fallende Funken über die Bildbreite |
-| | Bass-Explosion | radiale Explosion, vom Bass gezündet |
-| | Nebel-Drift | große, langsame, halbtransparente Partikel |
-| | Wirbelsturm | Kraftfeld-Wirbel um die Mitte (kraft()-GLSL) |
-| `list` (Batch 1, S69) | Beat-Gate | Liste nur im Beat-Fenster aktiv (Slot-Akkumulator statt `time`) |
-| | Bass-Blende | Listen-Blend folgt dem Bass |
-| | Puls-Layer | Layer pulst periodisch über den eigenen Akkumulator |
-| | AB-Wechsler | Liste schaltet je Beat ein/aus — zwei versetzte Kopien ergeben den A/B-Wechsel |
-| `brightness` | Bass-Boost | Helligkeit folgt dem Bass |
-| | Kanal-Atmung | R/G/B atmen phasenversetzt |
-| `colorfade` | Beat-Blitz | Fader zündet je Beat und klingt ab |
-| | Farbdrift | langsame Dauerdrift der Farbkanäle |
-| `colorModifier` | Kontrast-Pump | Kontrast pumpt mit dem Bass (Level-Code, recompute) |
-| | Gamma-Atmung | Gamma atmet langsam über die Zeit |
-| `mosaic` | Beat-Kachel | Kachelgröße springt je Beat und federt zurück |
-| `channelShift` | Beat-Rotation | Kanal-Rotation schaltet je Beat weiter |
-| `colorClip` | Bass-Fresser | Clip-Distanz folgt dem Bass |
-| `multiFilter` | Chrome-Beat | Chrome-Filter je Beat |
-| `addBorders` | Puls-Rahmen | Rahmenbreite pulst mit dem Bass (weißer Rahmen) |
-| `onBeatClear` | Vierer-Reset | löscht jeden vierten Beat |
-| `clear` | Nachtblau-Schleier | halbtransparentes Tiefblau je Frame (weicher Trail-Deckel) |
-| `bufferSave` | Echo-Speicher | Speichern/Wiederherstellen im Wechsel (dir 2, Slot 0) — Echo-Baustein |
-| `pixelFilter` (Stilfilter S70) | Take-On-Me-Comic | Bleistift-Rotoskopie à la a-ha: Sobel-Kantenzug, Papier/Tinte, Beat-zitternde Schraffur |
-| | Bleistift-Skizze | XDoG-Strich (Difference-of-Gaussians) + Papierkorn |
-| | Posterize-PopArt | kräftige Sättigung, wenige Farbstufen — Stufenzahl atmet mit dem Bass |
-| | Zeitungsdruck-Halftone | Halftone-Punkte auf 45°-Raster, Punktgröße = Dunkelheit |
-| | CRT-Monitor | Tonnen-Verzerrung, Scanlines, RGB-Lochmaske, Vignette |
-| | VHS-Band | Chroma-Versatz, Zeilen-Zittern, wanderndes Störband — Beat verstärkt den Glitch |
-| | Kuwahara-Oelbild | Varianz-ärmster 3×3-Quadrant gewinnt — malerische Flächen, stehende Kanten |
-| | Sepia-Nostalgie | Sepia-Matrix + Vignette + Korn + Projektor-Flackern |
-| | Noir-Schwarzweiss | harte Kontrastkurve, Korn, Vignette — Bass drückt den Kontrast |
-| | Waermebild | Helligkeit auf Thermal-Palette (blau→grün→gelb→rot→weiß), Pegel hebt die Temperatur |
-| | Pixel-Art | grobe Blöcke + reduzierte Palette, Blockgröße pulsiert mit dem Beat |
-| | Duotone-Neon | Helligkeit auf zwei driftende Neonfarben, Höhen hellen die Lichter |
-| `dynamicMovement` (Import-Ernte S61) | Galaxien-Drall | Beat-getriebener Spiralen-Twist (aus „UnConeD — Milkyway") |
-| | Wandernde Linse | horizontale Zerr-Linse, Ziel wandert je Beat (aus „amphirion — nebulous, skupers remix") |
-| | Beat-Richtungsdrift | konstanter Drift, Richtung würfelt je Beat (aus „L1quid — Take the Veil") |
-| | Molekuel-Raster | gefaltetes Sinus-Raster, Beat stößt den Impuls an (aus „EL-VIS — Molecules, S_KuPeRS Remix") |
-| | Sinus-Flechtwerk | gekreuzte Sinus-Verwerfung, je Beat neu gestimmt (aus „amphirion — nebulous") |
-| | Takt-Spirale | Rotation/Zoom im gemessenen Beat-Takt (aus „D&L — Life Is Violated") |
+| | Breathing Window | der Ausschnitt atmet langsam über sin/cos der Zeit |
+| `kleinian` | Hyperbolic Flower | {7,3}-Kachelung, langsam drehend |
+| | Beat Tiling | {5,4}; jeder Beat schiebt die Morph-Phase weiter |
+| `strangeAttractor` | Lorenz Butterfly | der klassische Lorenz-Attraktor, dicht gezeichnet |
+| | Clifford Veil | Clifford-Attraktor (a −1,4 · b 1,6 · c 1 · d 0,7) |
+| | De Jong Web | Peter-de-Jong-Attraktor (1,4 · −2,3 · 2,4 · −2,1) |
+| `flame` | Fire Swirl | Swirl-Variation, drei Abbildungen — rotierende Glut |
+| | Horseshoe Nebula | Horseshoe-Variation, drei Abbildungen (mit vier kollabiert die Bahn) |
+| `reactionDiffusion` | Coral Growth | Gray-Scott „Coral" (feed 0,0545 / kill 0,062) |
+| | Cell Division | „Mitosis" (0,0367 / 0,0649) — teilende Zellen |
+| | Worm Trail | „Worms" (0,078 / 0,061) — wandernde Bänder |
+| `blur` | Fading Trail | strength 1 ohne round-up — das Bild klingt je Anwendung ab (Trail-Motor) |
+| | Static Blur | strength 2 mit round-up — weichzeichnen ohne Abklingen |
+| `simpleScope` | Analyzer Bars | solid analyzer unten — die klassischen Spektrum-Balken |
+| | Line Scope | line scope mittig — das klassische Oszilloskop |
+| | Dot Cloud | dot scope mittig — die Waveform als Punktstaub |
+| `customBpm` | Half Tempo | lässt jeden zweiten Beat durch |
+| | Quarter Beat | lässt jeden vierten Beat durch |
+| | Metronome 500ms | fester Kunst-Beat alle 500 ms (unabhängig vom Audio) |
+| `meshWarp` (GPU-Module S69) | Bass Swirl | Drehung um die Mitte, Bass verstärkt — der Palette-Starter als Vorlage |
+| | Tunnel Pull | dauerhafter Sog zur Mitte mit Rotations-Drall (Feedback-Tunnel) |
+| | Swell | laufende Sinus-Wellen quer durchs Bild (Waveform-Wasser) |
+| | Fisheye Breathing | Fischaugen-Wölbung, die mit der Zeit/dem Bass atmet |
+| | Hall of Mirrors | Kaleido-Faltung der UV — Inhalt gehört zentriert (Stimm-Befund S69) |
+| `gpuParticles` (GPU-Module S69) | Fountain | klassische Partikel-Fontäne (Schwerkraft + Fächer) |
+| | Spark Rain | fallende Funken über die Bildbreite |
+| | Bass Explosion | radiale Explosion, vom Bass gezündet |
+| | Mist Drift | große, langsame, halbtransparente Partikel |
+| | Cyclone | Kraftfeld-Wirbel um die Mitte (kraft()-GLSL) |
+| `list` (Batch 1, S69) | Beat Gate | Liste nur im Beat-Fenster aktiv (Slot-Akkumulator statt `time`) |
+| | Bass Blend | Listen-Blend folgt dem Bass |
+| | Pulse Layer | Layer pulst periodisch über den eigenen Akkumulator |
+| | A-B Switcher | Liste schaltet je Beat ein/aus — zwei versetzte Kopien ergeben den A/B-Wechsel |
+| `brightness` | Bass Boost | Helligkeit folgt dem Bass |
+| | Channel Breathing | R/G/B atmen phasenversetzt |
+| `colorfade` | Beat Flash | Fader zündet je Beat und klingt ab |
+| | Color Drift | langsame Dauerdrift der Farbkanäle |
+| `colorModifier` | Contrast Pump | Kontrast pumpt mit dem Bass (Level-Code, recompute) |
+| | Gamma Breathing | Gamma atmet langsam über die Zeit |
+| `mosaic` | Beat Tiles | Kachelgröße springt je Beat und federt zurück |
+| `channelShift` | Beat Rotation | Kanal-Rotation schaltet je Beat weiter |
+| `colorClip` | Bass Eater | Clip-Distanz folgt dem Bass |
+| `multiFilter` | Chrome Beat | Chrome-Filter je Beat |
+| `addBorders` | Pulse Frame | Rahmenbreite pulst mit dem Bass (weißer Rahmen) |
+| `onBeatClear` | Every-Fourth Reset | löscht jeden vierten Beat |
+| `clear` | Midnight Blue Veil | halbtransparentes Tiefblau je Frame (weicher Trail-Deckel) |
+| `bufferSave` | Echo Buffer | Speichern/Wiederherstellen im Wechsel (dir 2, Slot 0) — Echo-Baustein |
+| `pixelFilter` (Stilfilter S70) | Take On Me Comic | Bleistift-Rotoskopie à la a-ha: Sobel-Kantenzug, Papier/Tinte, Beat-zitternde Schraffur |
+| | Pencil Sketch | XDoG-Strich (Difference-of-Gaussians) + Papierkorn |
+| | Posterize Pop Art | kräftige Sättigung, wenige Farbstufen — Stufenzahl atmet mit dem Bass |
+| | Newsprint Halftone | Halftone-Punkte auf 45°-Raster, Punktgröße = Dunkelheit |
+| | CRT Monitor | Tonnen-Verzerrung, Scanlines, RGB-Lochmaske, Vignette |
+| | VHS Tape | Chroma-Versatz, Zeilen-Zittern, wanderndes Störband — Beat verstärkt den Glitch |
+| | Kuwahara Oil Painting | Varianz-ärmster 3×3-Quadrant gewinnt — malerische Flächen, stehende Kanten |
+| | Sepia Nostalgia | Sepia-Matrix + Vignette + Korn + Projektor-Flackern |
+| | Noir Black and White | harte Kontrastkurve, Korn, Vignette — Bass drückt den Kontrast |
+| | Thermal Image | Helligkeit auf Thermal-Palette (blau→grün→gelb→rot→weiß), Pegel hebt die Temperatur |
+| | Pixel Art | grobe Blöcke + reduzierte Palette, Blockgröße pulsiert mit dem Beat |
+| | Duotone Neon | Helligkeit auf zwei driftende Neonfarben, Höhen hellen die Lichter |
+| `dynamicMovement` (Import-Ernte S61) | Galaxy Twist | Beat-getriebener Spiralen-Twist (aus „UnConeD — Milkyway") |
+| | Wandering Lens | horizontale Zerr-Linse, Ziel wandert je Beat (aus „amphirion — nebulous, skupers remix") |
+| | Beat Direction Drift | konstanter Drift, Richtung würfelt je Beat (aus „L1quid — Take the Veil") |
+| | Molecule Grid | gefaltetes Sinus-Raster, Beat stößt den Impuls an (aus „EL-VIS — Molecules, S_KuPeRS Remix") |
+| | Sine Weave | gekreuzte Sinus-Verwerfung, je Beat neu gestimmt (aus „amphirion — nebulous") |
+| | Beat Spiral | Rotation/Zoom im gemessenen Beat-Takt (aus „D&L — Life Is Violated") |
 
 Die Zeilen „Import-Ernte S61" sind wörtlich aus Presets der Sammlung
 `VisualsPresets` übernommen (Entscheid S60: Quelle = Sammlung via Import);
 die Quell-Presets und ihre Autoren stehen je Zeile in Klammern.
+
+## Umbenennung S83 (deutsch → englisch)
+
+Seit Session 83 heißen alle mitgelieferten Voreinstellungen und Beispiele
+englisch (Entscheid Patrik). Ältere Changelogs, Protokolle und Session-Reports
+nennen noch die alten Namen — diese Tabelle führt sie zusammen. Mit „nur
+Beispiel“ markierte Zeilen gibt es nur unter `asset/examples/`.
+
+| Typ | alt | neu |
+|---|---|---|
+| `addBorders` | Puls-Rahmen | Pulse Frame |
+| `blitterFeedback` | Beat-Sprung | Beat Jump |
+| `blitterFeedback` | Sog nach innen | Inward Pull |
+| `blitterFeedback` | Zoom-Echo | Zoom Echo |
+| `bloom` | Beat-Glut | Beat Glow |
+| `bloom` | Lights-Referenz | Lights Reference |
+| `bloom` | Sanfter Schimmer | Soft Shimmer |
+| `blur` | Abklingender Trail | Fading Trail |
+| `blur` | Stehender Weichzeichner | Static Blur |
+| `brightness` | Bass-Boost | Bass Boost |
+| `brightness` | Kanal-Atmung | Channel Breathing |
+| `bufferSave` | Echo-Speicher | Echo Buffer |
+| `bump` | Beat-Blitz | Beat Flash |
+| `bump` | Kreisende Lampe | Circling Lamp |
+| `channelShift` | Beat-Rotation | Beat Rotation |
+| `clear` | Nachtblau-Schleier | Midnight Blue Veil |
+| `colorClip` | Bass-Fresser | Bass Eater |
+| `colorfade` | Beat-Blitz | Beat Flash |
+| `colorfade` | Farbdrift | Color Drift |
+| `colorMap` | Feuer | Fire |
+| `colorMap` | Graustufen invertiert | Inverted Grayscale |
+| `colorMap` | Ozean | Ocean |
+| `colorModifier` | Gamma-Atmung | Gamma Breathing |
+| `colorModifier` | Kontrast-Pump | Contrast Pump |
+| `convolution` | Gauss 3x3 | Gaussian 3x3 |
+| `convolution` | Kanten (Laplace) | Edges (Laplace) |
+| `convolution` | Relief | Emboss |
+| `convolution` | Schaerfen | Sharpen |
+| `convolution` | Weichzeichner 3x3 | Blur 3x3 |
+| `customBpm` | Halbes Tempo | Half Tempo |
+| `customBpm` | Metronom 500ms | Metronome 500ms |
+| `customBpm` | Viertel-Beat | Quarter Beat |
+| `domainWarp` | Bass-Woge | Bass Surge |
+| `domainWarp` | Nebelkammer | Cloud Chamber |
+| `domainWarp` | Tintenstrom | Ink Flow |
+| `dotGrid` | Diagonal-Drift | Diagonal Drift |
+| `dotGrid` | Dichtes Flimmern | Dense Flicker |
+| `dotGrid` | Ruhiges Raster | Calm Grid |
+| `dynamicDistanceModifier` | Atmender Ring | Breathing Ring |
+| `dynamicDistanceModifier` | Beat-Woge | Beat Surge |
+| `dynamicMovement` | Beat-Puls | Beat Pulse |
+| `dynamicMovement` | Beat-Richtungsdrift | Beat Direction Drift |
+| `dynamicMovement` | Galaxien-Drall | Galaxy Twist |
+| `dynamicMovement` | Kissen-Welle | Pillow Wave |
+| `dynamicMovement` | Molekuel-Raster | Molecule Grid |
+| `dynamicMovement` | Sanfter Sog | Gentle Pull |
+| `dynamicMovement` | Sinus-Flechtwerk | Sine Weave |
+| `dynamicMovement` | Strudel | Whirlpool |
+| `dynamicMovement` | Takt-Spirale | Beat Spiral |
+| `dynamicMovement` | Tunnelflug | Tunnel Flight |
+| `dynamicMovement` | Wandernde Linse | Wandering Lens |
+| `dynamicMovement` | Wasser-Wobble | Water Wobble |
+| `dynamicShift` | Beben | Quake |
+| `dynamicShift` | Schwebedrift | Floating Drift |
+| `fadeout` | Blaues Nachgluehen | Blue Afterglow |
+| `fadeout` | Schneller Ausklang | Quick Fade-Out |
+| `flame` | Feuerwirbel | Fire Swirl |
+| `flame` | Hufeisen-Nebel | Horseshoe Nebula |
+| `fractal2D` | Burning-Ship-Kueste | Burning Ship Coast |
+| `fractal2D` | Julia-Puls | Julia Pulse |
+| `fractal2D` | Seepferdchen-Tal | Seahorse Valley |
+| `fractal3D` | Mandelbulb-Orbit | Mandelbulb Orbit |
+| `fractal3D` | Menger-Flug | Menger Flight |
+| `fractal3D` | Quaternion-Puls | Quaternion Pulse |
+| `fractalZoomer` | Beat-Schub | Beat Thrust |
+| `fractalZoomer` | Elefanten-Tal | Elephant Valley |
+| `fractalZoomer` | Julia-Strudel | Julia Whirl |
+| `gpuParticles` | Bass-Explosion | Bass Explosion |
+| `gpuParticles` | Feuerfontaene | Fire Fountain (nur Beispiel) |
+| `gpuParticles` | Fontaene | Fountain |
+| `gpuParticles` | Funkenregen | Spark Rain |
+| `gpuParticles` | Nebel-Drift | Mist Drift |
+| `gpuParticles` | Wirbelnebel | Swirl Mist (nur Beispiel) |
+| `gpuParticles` | Wirbelsturm | Cyclone |
+| `grain` | Eingefrorenes Korn | Frozen Grain |
+| `grain` | Filmkorn | Film Grain |
+| `interferences` | Doppelbild | Double Image |
+| `interferences` | Sechser-Echo | Six-Fold Echo |
+| `interleave` | Beat-Gitter | Beat Grid |
+| `kleinian` | Beat-Kachelwerk | Beat Tiling |
+| `kleinian` | Hyperbolische Blume | Hyperbolic Flower |
+| `list` | AB-Wechsler | A-B Switcher |
+| `list` | Bass-Blende | Bass Blend |
+| `list` | Beat-Gate | Beat Gate |
+| `list` | Puls-Layer | Pulse Layer |
+| `lyapunov` | Atmendes Fenster | Breathing Window |
+| `meshWarp` | Bass-Swirl | Bass Swirl |
+| `meshWarp` | Bass-Tunnel | Bass Tunnel (nur Beispiel) |
+| `meshWarp` | Fischaugen-Atmung | Fisheye Breathing |
+| `meshWarp` | Spiegelkabinett | Hall of Mirrors |
+| `meshWarp` | Spiegelkabinett2 | Hall of Mirrors 2 (nur Beispiel) |
+| `meshWarp` | Spiegelkabinett3 | Hall of Mirrors 3 (nur Beispiel) |
+| `meshWarp` | Tunnel-Sog | Tunnel Pull |
+| `meshWarp` | Wellengang | Swell |
+| `metaballs3d` | Kalter Schwarm | Cold Swarm |
+| `metaballs3d` | Wenige grosse Kugeln | Few Large Balls |
+| `mirror` | Spiegel-Quartett | Mirror Quartet |
+| `mirror` | Zufallsspiegel | Random Mirror |
+| `mosaic` | Beat-Kachel | Beat Tiles |
+| `movement` | Fischauge | Fisheye |
+| `movement` | Leichter Drall | Slight Twist |
+| `movement` | Sog zur Mitte | Pull To Center |
+| `movement` | Wellenringe | Wave Rings |
+| `multiFilter` | Chrome-Beat | Chrome Beat |
+| `onBeatClear` | Vierer-Reset | Every-Fourth Reset |
+| `oscRing` | Puls-Ring | Pulse Ring |
+| `oscRing` | Spektrum-Ring | Spectrum Ring |
+| `oscStar` | Feiner Stern | Fine Star |
+| `oscStar` | Wilder Stern | Wild Star |
+| `pixelFilter` | Bleistift-Skizze | Pencil Sketch |
+| `pixelFilter` | CRT-Monitor | CRT Monitor |
+| `pixelFilter` | Duotone-Neon | Duotone Neon |
+| `pixelFilter` | Kuwahara-Oelbild | Kuwahara Oil Painting |
+| `pixelFilter` | Noir-Schwarzweiss | Noir Black and White |
+| `pixelFilter` | Pixel-Art | Pixel Art |
+| `pixelFilter` | Posterize-PopArt | Posterize Pop Art |
+| `pixelFilter` | Sepia-Nostalgie | Sepia Nostalgia |
+| `pixelFilter` | Take-On-Me | Take On Me (nur Beispiel) |
+| `pixelFilter` | Take-On-Me-Comic | Take On Me Comic |
+| `pixelFilter` | VHS-Band | VHS Tape |
+| `pixelFilter` | Waermebild | Thermal Image |
+| `pixelFilter` | Zeitungsdruck-Halftone | Newsprint Halftone |
+| `reactionDiffusion` | Korallenwachstum | Coral Growth |
+| `reactionDiffusion` | Wurmspur | Worm Trail |
+| `reactionDiffusion` | Zellteilung | Cell Division |
+| `rotatingStars` | Grosse Show-Sterne | Big Show Stars |
+| `rotatingStars` | Sternenkranz | Star Wreath |
+| `rotoBlitter` | Beat-Wende | Beat Reverse |
+| `rotoBlitter` | Langsame Drehung | Slow Rotation |
+| `rotoBlitter` | Rotierender Sog | Rotating Pull |
+| `simpleScope` | Analyzer-Balken | Analyzer Bars |
+| `simpleScope` | Linien-Oszi | Line Scope |
+| `simpleScope` | Punktwolke | Dot Cloud |
+| `starfield` | Ruhige Sternfahrt | Calm Star Ride |
+| `starfield` | Warp auf Beat | Warp On Beat |
+| `strangeAttractor` | Clifford-Schleier | Clifford Veil |
+| `strangeAttractor` | De-Jong-Gespinst | De Jong Web |
+| `strangeAttractor` | Lorenz-Schmetterling | Lorenz Butterfly |
+| `tentacles3d` | Qualle | Jellyfish |
+| `timescope` | Spektral-Vorhang | Spectral Curtain |
+| `uniqueTone` | Eisblau | Ice Blue |
+| `uniqueTone` | Goldton | Gold Tone |
+| `videoDelay` | Beat-Echo | Beat Echo |
+| `videoDelay` | Halbe Sekunde | Half Second |
+| `waterBump` | Feiner Regen | Fine Rain |
+| `waterBump` | Schwerer Tropfen | Heavy Drop |
+| `waterBump` | Traege Wellen | Slow Waves |

@@ -330,8 +330,8 @@ Ganz oben im Eigenschafts-Editor steht die Zeile **Preset**. Sie gilt für
 - Seit Session 60/61 liefert die App einen **Grundkatalog von 125
   Voreinstellungen für 39 Knotentypen** mit: Bewegungs-Klassiker (u. a. die
   acht originalen AVS-Movement-Formeln wie *Big Swirl Out* und *6-way
-  Kaleida*), Faltungskerne (Weichzeichner, Schärfen, Kanten, Relief),
-  Farbverläufe (Feuer, Ozean, Neon), Wasser-, Gitter-, Zoom-, Spiegel- und
+  Kaleida*), Faltungskerne (*Blur*, *Sharpen*, *Edges*, *Emboss*),
+  Farbverläufe (*Fire*, *Ocean*, *Neon*), Wasser-, Gitter-, Zoom-, Spiegel- und
   Beat-Vorlagen, die **Fraktal-Familie** (Mandelbrot-Ausschnitte, Mandelbulb,
   Plasma, Attraktoren, Reaktions-Diffusion), **Bloom** (inkl. der
   Lights-Referenzwerte) sowie sechs aus der Preset-Sammlung **geerntete
@@ -792,11 +792,12 @@ Video, Kamera, Scopes, MilkDrop, Shadertoy.
   Der Audio-Satz (`bass`, `mid`, `treb`, `vol`, `beat`) steht als Uniforms
   bereit. Groß-Editor, Apply und ⓘ-Referenz wie bei Shadertoy.
   (*Warum „farbe"? `filter` ist in GLSL ein reserviertes Wort.*)
-- **Werks-Looks:** 12 Voreinstellungen liegen bei — **Take-On-Me-Comic**
+- **Werks-Looks:** 12 Voreinstellungen liegen bei — **Take On Me Comic**
   (der a-ha-Rotoskopie-Look: Tusche-Konturen, Papier, beat-zitternde
-  Schraffur), Bleistift-Skizze, Posterize, Zeitungsdruck, CRT, VHS,
-  Kuwahara-Ölbild, Sepia, Noir-Schwarzweiß, Wärmebild, Pixel-Art,
-  Duotone-Neon. Laden über die Zeile „Voreinstellung"; eigene Filter
+  Schraffur), *Pencil Sketch*, *Posterize Pop Art*, *Newsprint Halftone*,
+  *CRT Monitor*, *VHS Tape*, *Kuwahara Oil Painting*, *Sepia Nostalgia*,
+  *Noir Black and White*, *Thermal Image*, *Pixel Art*, *Duotone Neon*.
+  Laden über die Zeile „Preset"; eigene Filter
   speichert **„Save as…"** in dieselbe Sammlung.
 - **Filter stapeln:** mehrere Filter = mehrere Knoten hintereinander —
   umsortieren, ein-/ausschalten und gruppieren wie jeden anderen Knoten.
@@ -804,9 +805,9 @@ Video, Kamera, Scopes, MilkDrop, Shadertoy.
   (Blur-Pyramiden) baut man im Shadertoy-Knoten mit Buffer A–D.
 - **Mix-Regler:** blendet zwischen Original und Filter (per Skript
   `mixamount` auch audio-gesteuert — z. B. Comic nur auf dem Beat).
-- **Klassiker-Kombi:** Video-/Kamera-Quelle (§13) + Take-On-Me-Comic =
+- **Klassiker-Kombi:** Video-/Kamera-Quelle (§13) + *Take On Me Comic* =
   das Musikvideo-Gefühl live; Demo: `asset/examples/pixelFilter -
-  Take-On-Me.lvfx`.
+  Take On Me.lvfx`.
 
 ### Filter als Datei laden und weitergeben
 
@@ -891,7 +892,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
-| 1.17.0 | 2026-09-30 | Session 83. Namen der mitgelieferten Presets/Vorlagen englisch; NEU Presets für die Milkdrop-Sektionen **Code** und **Parameter** (u. a. *Original*, *Old LumiViz Look (pre-S80)*). §11 Voreinstellungen: Combo behält den geladenen Namen, **„(unsaved) – Name"** nach einer Änderung, **(none)** ohne Voreinstellung, 🗑 zielt auf die Quelle; NEU Voreinstellungen je **Milkdrop-Element** (Wave/Shape/Sprite); Template-Listen von SuperScope 3D/3D Camera sind jetzt Voreinstellungen. §11 NEU Schalter **Script active**. §14 NEU **Vorlagen im großen Editor** (Leer + einfache Vorlagen je Shader-Feld, eigene speichern) |
+| 1.17.0 | 2026-09-30 | Session 83. Namen **aller** mitgelieferten Presets, Beispiele und Vorlagen englisch (§11, §14); NEU Presets für die Milkdrop-Sektionen **Code** und **Parameter** (u. a. *Original*, *Old LumiViz Look (pre-S80)*). §11 Voreinstellungen: Combo behält den geladenen Namen, **„(unsaved) – Name"** nach einer Änderung, **(none)** ohne Voreinstellung, 🗑 zielt auf die Quelle; NEU Voreinstellungen je **Milkdrop-Element** (Wave/Shape/Sprite); Template-Listen von SuperScope 3D/3D Camera sind jetzt Voreinstellungen. §11 NEU Schalter **Script active**. §14 NEU **Vorlagen im großen Editor** (Leer + einfache Vorlagen je Shader-Feld, eigene speichern) |
 | 1.16.0 | 2026-09-29 | Session 82. §11 Host-Gruppen: NEU **Presetverweis** („Preset Reference…", nur Pfad gespeichert, Inhalt beim Laden frisch; Schalter Kopie ↔ Verweis; vom Host Switcher schaltbar) |
 | 1.15.0 | 2026-09-29 | Session 82. §11 „Werte per Formel steuern": NEU **Song-Feld** in jedem Knoten mit Frame-Feld (einmal je Songwechsel, vor Frame) |
 | 1.14.0 | 2026-09-29 | Session 82. §11 NEU **Host Switcher** (Gruppenliste mit Index, Startgruppe, Wechsel nach Zeit/Songwechsel/zufällig, Skripte Init/Frame/Beat/Song mit `switch`/`nextgroup`, schaltet nur zur Laufzeit); Gruppennamen eindeutig mit Zähler, Umbenennen zieht Switcher-Listen mit. Eingeklappte Gruppen bleiben beim Wechsel zu |

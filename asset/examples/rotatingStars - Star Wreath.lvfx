@@ -1,0 +1,23 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "type": "list",
+        "enabled": true,
+        "name": "root",
+        "description": "Example for preset 'Star Wreath' (rotatingStars)",
+        "clearEveryFrame": true,
+        "children": [
+            {
+                "type": "rotatingStars",
+                "enabled": true,
+                "name": "Star Wreath (rotatingStars)",
+                "stars": 6,
+                "rotSpeed": 0.05,
+                "orbit": 0.6
+            }
+        ]
+    }
+}
