@@ -830,7 +830,9 @@ der Clip landet benutzerlokal (nicht im Projekt) und erscheint danach im
 Knoten unter Source „Camera Clip". Der Aufnahme-Klick erteilt zugleich die
 Kamera-Freigabe des App-Laufs. Die Liste **Camera clips** zeigt die
 vorhandenen Clips; **Delete Selected Clip** löscht einen, **Open Folder**
-öffnet den Ordner.
+öffnet den Ordner. Neue Clips heißen seit Session 84
+`camera_clip_<Datum>_<Uhrzeit>.mp4`; ältere `testaufnahme_…`-Clips bleiben
+gültig und stehen in derselben Liste.
 
 ---
 
@@ -953,7 +955,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
-| 1.18.1 | 2026-09-30 | Session 84. Vorlagen-Zeile im Groß-Editor zeigt den Zustand (Name / „(unsaved) – Name" / „(none)") statt zurückzuspringen; §11 Presets aus dem Effect Browser/Explorer in die Kette ziehen = Presetverweis; §2/§3 Ziehen zum Abspielen (Player, Visualisierung), Playlist nimmt Dateien an und sortiert im Dienst um, NEU **Audio Browser** (Albumcover als Icon, Fallback Ordnerbild/Formaticon) |
+| 1.18.1 | 2026-09-30 | Session 84. Vorlagen-Zeile im Groß-Editor zeigt den Zustand (Name / „(unsaved) – Name" / „(none)") statt zurückzuspringen; §11 Presets aus dem Effect Browser/Explorer in die Kette ziehen = Presetverweis; §2/§3 Ziehen zum Abspielen (Player, Visualisierung), Playlist nimmt Dateien an und sortiert im Dienst um, NEU **Audio Browser** (Albumcover als Icon, Fallback Ordnerbild/Formaticon); Feld-Tooltips englisch; §13 Kamera-Clips heißen `camera_clip_…` |
 | 1.18.0 | 2026-09-30 | Session 83. Zitierte Oberflächen-Beschriftungen auf die englische Oberfläche gezogen (§8 Einstellungen/Kamera, §9 Tastenkürzel, §11 Milkdrop/Host-Gruppen/Host Switcher, §12–§14); „Testaufnahme" heißt **Camera Clip** |
 | 1.17.0 | 2026-09-30 | Session 83. Namen **aller** mitgelieferten Presets, Beispiele und Vorlagen englisch (§11, §14); NEU Presets für die Milkdrop-Sektionen **Code** und **Parameter** (u. a. *Original*, *Old LumiViz Look (pre-S80)*). §11 Voreinstellungen: Combo behält den geladenen Namen, **„(unsaved) – Name"** nach einer Änderung, **(none)** ohne Voreinstellung, 🗑 zielt auf die Quelle; NEU Voreinstellungen je **Milkdrop-Element** (Wave/Shape/Sprite); Template-Listen von SuperScope 3D/3D Camera sind jetzt Voreinstellungen. §11 NEU Schalter **Script active**. §14 NEU **Vorlagen im großen Editor** (Leer + einfache Vorlagen je Shader-Feld, eigene speichern) |
 | 1.16.0 | 2026-09-29 | Session 82. §11 Host-Gruppen: NEU **Presetverweis** („Preset Reference…", nur Pfad gespeichert, Inhalt beim Laden frisch; Schalter Kopie ↔ Verweis; vom Host Switcher schaltbar) |

@@ -2129,17 +2129,21 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 
 ## 7. Backlog (bewusst nichts tun)
 
-### 🟡 Nächste Session (S84): Drag aus Effect Browser/Playlist, Audio Browser — Weg zur Timeline (Wunsch Patrik S83)
+### ✅ Drag aus Effect Browser/Playlist, Audio Browser — Weg zur Timeline (Wunsch Patrik S83, umgesetzt S84, Sichttest bestätigt)
 
-- **Effect Browser wird Drag-Quelle:** einen Effekt/ein Preset aus dem Effect
-  Browser in die **Effect Chain** ziehen → landet dort als **Presetverweis**
-  (Host-Gruppe mit `verweis`, S82 — nur der Pfad wird gespeichert). Später
-  auch ins **Timeline-Panel**.
-- **Playlist wird Drag-Quelle:** Titel aus der Playlist ziehen — Ziel ist das
-  spätere Timeline-Panel.
-- **Audio Browser (neu):** wie der Effect Browser, nur für Audiodateien
-  (Ordner, Filter, Suche); Icons je Audiotyp (WAV, MP3, FLAC …) wie die
-  Format-Icons im Effect Browser. Drag-Quelle für die Timeline.
+- ✅ **Effect Browser → Effect Chain** als **Presetverweis** (auch aus dem
+  Explorer, mehrere Dateien; Einfüge-Regeln wie bei der Palette, `dropOrt`).
+- ✅ **Playlist** nimmt Audiodateien an (an der Stelle) und gibt Einträge als
+  Datei-URL + Zeilennummern ab; **Befund behoben:** Umsortieren änderte vorher
+  nur die Anzeige (Doppelklick spielte danach den falschen Titel).
+- ✅ **Drop auf Player-Panel / Visualisierung** = abspielen bzw. zum
+  Playlist-Eintrag springen (Wunsch Patrik S84).
+- ✅ **Audio Browser** (neu): Endungen von der Engine, Doppelklick = anhängen
+  + abspielen; Icon = **Albumcover** (eingebettet ID3/FLAC/MP4 → Ordnerbild
+  → SVG je Formatfamilie), Laden im Hintergrund.
+- Gemeinsame Bausteine: `UI/widgets/DateiDrag.hpp`, `DateiListe.hpp`,
+  `AudioDateien.hpp`, `audio/AlbumCover.hpp` — die Timeline nimmt dieselben
+  Datei-URLs an.
 - **Ausblick Timeline-Panel / Composit** (noch auszuarbeiten, eigene
   Konzept-Session): *n* Audiokanäle und *n* Visual-Kanäle zum Mischen;
   Einblenden/Ausblenden im Prinzip wie bei der Host-Gruppe (Crossfade,
@@ -2148,16 +2152,20 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   Crossfade (Kurven), Visual-Playlist P2, Idee „Video aufnehmen" (ein
   Timeline-Arrangement offline rendern).
 
-### 🟡 Nächste Session (S84): Umstellung auf Englisch fortsetzen (Entscheide Patrik S83)
+### 🟡 Umstellung auf Englisch fortsetzen (Entscheide Patrik S83; S84 bis auf die Screenshots erledigt)
 
-- **Feld-Tooltips — Entscheid 1a:** die Feld-Kommentare in `EffectChain.hpp`
-  werden englisch (bleiben SSOT der Tooltips; übrige Code-Kommentare
-  vorerst deutsch), `asset/calibration/fields/harvest_field_docs.py` auf das
-  englische Muster umstellen, `FieldDocs.cpp` + Inventar neu erzeugen, Wächter
-  auch über `FieldDocs.cpp`.
-- **Kamera-Clip-Dateiname — Entscheid 2a:** neue Clips heißen
-  `camera_clip_<Datum>.mp4`, vorhandene bleiben (der Knoten merkt sich den
-  Dateinamen). Vorher prüfen, ob Skripte/Sonden nach `testaufnahme_*` suchen.
+- ✅ **Feld-Tooltips — Entscheid 1a (S84):** die Doku-Kommentare an den Feldern
+  der 92 `…Params`-Structs sind englisch (673 Kommentare, `//`-Notizen bleiben
+  deutsch); Muster „Parameter script (Strang D): …", „Script (Block B, S79): …".
+  Der Ernter erkennt Skriptvariablen an der Muster-Form `script (…):`
+  (`SKRIPT_MUSTER`) — ein beiläufiges „the script's alpha" zählt nicht mehr;
+  dadurch entfallen zwei Zufallstreffer der alten Regel (`dynamicMovement.nomove`:
+  `alpha`; `superScope.pointCount`: n/i/v/…, für den Lint fallen bei SuperScope
+  `i`/`v` weg — beides Eingaben, keine gelesenen Variablen). `FieldDocs.cpp` +
+  Inventar neu, Wächter-Test „Feld-Tooltips sind englisch" (mit Gegenprobe).
+- ✅ **Kamera-Clip-Dateiname — Entscheid 2a (S84):** neue Clips
+  `camera_clip_<Datum>_<Zeit>.mp4`; kein Skript/keine Sonde suchte nach
+  `testaufnahme_*`; Ordner `testaufnahmen` bleibt (vorhandene Clips gültig).
 - Handbuch-Screenshots mit alter Oberfläche neu aufnehmen
   (`milkdrop_puffer_wechsel.png`, `settings_milkdrop_wechsel.png`).
 

@@ -11,7 +11,8 @@ die nur im Quelltext stehen:
   2. **Beschreibung + schreibbare Skriptvariablen** — stehen als Doxygen an den
      Struct-Feldern in `EffectChain.hpp`. Fuer Strang F (§10) ist das die
      Tooltip-Quelle, fuer Strang E die Formel-Quelle: steht im Kommentar
-     "Parameter-Skript (Strang D): `strength` + `b`/`w`/`h`", dann ist
+     "Parameter script (Strang D): `strength` + `b`/`w`/`h`" (bis S83
+     deutsch "Parameter-Skript"), dann ist
      `strength = <gegenwert>` eine Formel, deren Wirkung man SIEHT.
 
 Zuordnung Feld -> Panel-Zeile bewusst ueber den **Setter**, nicht ueber das
@@ -54,6 +55,12 @@ INVENTORY = Path(__file__).parent / "inventory.json"
 OUT = Path(__file__).parent / "inventory_docs.json"
 # Die Tooltip-Tabelle des Panels (§10) — erzeugt, nicht von Hand gepflegt.
 FIELDDOCS_CPP = ROOT / "projects/apps/LumiViz/src/UI/panels/FieldDocs.cpp"
+
+# Kennzeichen eines Kommentars, der schreibbare Skriptvariablen aufzaehlt:
+# "Parameter script (Strang D):", "Script (Block B, S79):", "Script variables:"
+# (bis S83 deutsch: "Parameter-Skript …", "Skript-Variablen:").
+SKRIPT_MUSTER = re.compile(
+    r"\bs[ck]ript(?:[-\s]*variab\w*)?\s*(?:\([^)]*\))?\s*:", re.IGNORECASE)
 
 # Panel-Helfer, die einen Wertebereich tragen (Argument 3 und 4 sind lo/hi).
 RANGED = {"addInt": "int", "addDouble": "double", "addRefDouble": "double"}
@@ -486,8 +493,13 @@ def harvest_header() -> dict[tuple[str, str], dict]:
             if doc:
                 entry["doc"] = doc
             # Schreibbare Variablen des Strang-D-Kommentars: "…: `a`, `b` + `w`/`h`"
+            # Seit S84 englisch ("Parameter script (Strang D): …", Entscheid 1a);
+            # "Skript" bleibt erkannt, falls ein alter Kommentar stehen blieb.
+            # Nur die MUSTER-Form "script (…):" / "Script variables:" zaehlt —
+            # ein beilaeufiges "the script's alpha" nannte sonst Flags als
+            # Skriptvariablen (dynamicMovement.blend, S84).
             vars_ = re.findall(r"`(\w+)`", doc)
-            if vars_ and ("Parameter-Skript" in doc or "Skript" in doc):
+            if vars_ and SKRIPT_MUSTER.search(doc):
                 entry["skriptvars"] = [v for v in vars_ if v not in ("b", "w", "h")]
             if entry:
                 out[(struct, field)] = entry

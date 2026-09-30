@@ -939,9 +939,12 @@ void SettingsPanel::starteTestaufnahme()
 
     const int sek = m_pKamDauerSpin->value();
     QSettings().setValue(QStringLiteral("kamera/aufnahmeDauer"), sek);
+    // Dateiname englisch seit S84 (Entscheid 2a); vorhandene `testaufnahme_*`
+    // bleiben gueltig — der Knoten merkt sich den Dateinamen, und der Ordner
+    // (`testaufnahmen`) bleibt derselbe.
     const QString datei =
         lumi::services::LiveVideoFeed::testaufnahmenOrdner() +
-        QStringLiteral("/testaufnahme_") +
+        QStringLiteral("/camera_clip_") +
         QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd_HHmmss")) +
         QStringLiteral(".mp4");
 

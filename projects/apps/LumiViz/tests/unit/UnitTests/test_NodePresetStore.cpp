@@ -20,6 +20,7 @@
 
 #include <doctest.h>
 
+#include "UI/panels/FieldDocs.hpp"
 #include "visualizers/modules/SuperscopeModule.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 #include "visualizers/multieffect/NodePresetStore.hpp"
@@ -639,7 +640,7 @@ TEST_CASE("Oberflaechentexte sind englisch (S83, tr() + Referenzseiten)")
     // tr()-Texte der UI-Quellen und die HTML-Referenzseiten (ⓘ) gegen die
     // Liste bekannter deutscher Woerter und gegen Umlaute. Nicht geprueft:
     // Kommentare (bleiben deutsch, Projekt-Konvention), Log-Meldungen und die
-    // Feld-Tooltips (FieldDocs.cpp — erzeugt aus EffectChain.hpp).
+    // Feld-Tooltips (FieldDocs.cpp — eigener Test unten, S84).
     const DeutscheWoerter d = ladeDeutscheWoerter();
     const std::filesystem::path app = repoRoot() / "projects" / "apps" / "LumiViz";
     static const QRegularExpression kTrVorher(QStringLiteral("\\btr\\(\\s*(\"[^\"]*\"\\s*)*$"));
@@ -682,6 +683,31 @@ TEST_CASE("Oberflaechentexte sind englisch (S83, tr() + Referenzseiten)")
         }
     }
     CHECK(geprueft > 1000);  // Schutz gegen einen Test, der still nichts prueft
+}
+
+TEST_CASE("Feld-Tooltips sind englisch (S84, FieldDocs aus EffectChain.hpp)")
+{
+    // Entscheid Patrik S83 (1a), umgesetzt S84: die Feld-Kommentare in
+    // EffectChain.hpp sind englisch — sie sind die Quelle der Tooltips
+    // (FieldDocs.cpp, erzeugt). Backtick-Inhalte sind Bezeichner (`farbe`,
+    // `Herkunft` …) und bleiben aussen vor.
+    const DeutscheWoerter d = ladeDeutscheWoerter();
+    static const QRegularExpression kBacktick(QStringLiteral("`[^`]*`"));
+    const QStringList schluessel = lumi::multieffect::fielddocs::documentedKeys();
+    REQUIRE(schluessel.size() > 700);  // Schutz gegen einen Test, der still nichts prueft
+    for (const QString& k : schluessel)
+    {
+        const int punkt = k.indexOf(QLatin1Char('.'));
+        REQUIRE(punkt > 0);
+        QString text = lumi::multieffect::fielddocs::tooltip(k.left(punkt), k.mid(punkt + 1));
+        CHECK_MESSAGE(!text.isEmpty(), k.toStdString());
+        text.remove(kBacktick);
+        const QStringList treffer = deutschIn(text, d);
+        CHECK_MESSAGE(treffer.isEmpty(), k.toStdString() << " deutsch: "
+                                                         << treffer.join(QLatin1Char(',')).toStdString()
+                                                         << " in '" << text.left(100).toStdString()
+                                                         << "'");
+    }
 }
 
 TEST_CASE("NodePresetStore: Dateinamen werden bereinigt")
