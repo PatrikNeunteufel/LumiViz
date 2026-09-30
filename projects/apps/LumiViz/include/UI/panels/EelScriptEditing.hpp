@@ -60,6 +60,7 @@
 
 #include <array>
 #include <functional>
+#include <memory>
 #include <utility>
 
 namespace lumi::scriptedit {
@@ -657,6 +658,127 @@ struct ShaderVertrag
     return k;
 }
 
+/**
+ * @brief Zeile „Template:" des Groß-Editors (S83, Zustand S84)
+ *
+ * Die Wahl ERSETZT den Text ueber den Cursor, damit Strg+Z sie zuruecknimmt.
+ * Die Combo zeigt danach den Zustand wie die Preset-Zeile im Panel (Wunsch
+ * Patrik S84 — vorher sprang sie auf „— choose a template —" zurueck):
+ * der Name, solange der Text der Vorlage gleicht; „(unsaved) – Name", sobald
+ * er davon abweicht; „(none)", wenn der Text von keiner Vorlage stammt. Beim
+ * Oeffnen wird ein Text, der einer Vorlage gleicht, als diese erkannt; kehrt
+ * der Text (Strg+Z) zum Ausgangsstand zurueck, gilt wieder dessen Zustand.
+ *
+ * Ausgelagert, damit der UI-Test die Zeile ohne modalen Dialog pruefen kann.
+ * Widgets haengen an `parent`; Combo `shaderVorlage`, Knopf `shaderVorlageSpeichern`.
+ */
+[[nodiscard]] inline QHBoxLayout* vorlagenZeile(QWidget* parent, QPlainTextEdit* editor,
+                                                const QString& key)
+{
+    namespace sv = lumi::multieffect::shadervorlagen;
+    constexpr int kTextRolle = Qt::UserRole;
+    constexpr int kNameRolle = Qt::UserRole + 1;
+
+    auto* row = new QHBoxLayout();
+    row->addWidget(new QLabel(QObject::tr("Template:"), parent));
+    auto* vorlagen = new QComboBox(parent);
+    vorlagen->setObjectName(QStringLiteral("shaderVorlage"));
+    vorlagen->setToolTip(
+        QObject::tr("Replaces the editor content (Ctrl+Z takes it back). "
+                    "Empty = just the required function body; * = your own; "
+                    "(unsaved) = changed since the template was chosen."));
+    row->addWidget(vorlagen, 1);
+    auto* speichern = new QPushButton(QObject::tr("Save as template…"), parent);
+    speichern->setObjectName(QStringLiteral("shaderVorlageSpeichern"));
+    speichern->setToolTip(QObject::tr("Store the editor content as your own template."));
+    row->addWidget(speichern);
+
+    // Marke = Name der Vorlage, von der der Text stammt (leer = keine).
+    auto marke = std::make_shared<QString>();
+    const QString ausgangsText = editor->toPlainText();
+    auto ausgangsMarke = std::make_shared<QString>();
+
+    const auto fuelle = [vorlagen, key]() {
+        const QSignalBlocker blocker(vorlagen);
+        vorlagen->clear();
+        vorlagen->addItem(QString());  // Zustand: „(none)" / „(unsaved) – Name"
+        for (const sv::Eintrag& e : sv::liste(key))
+        {
+            vorlagen->addItem(e.builtin ? e.name : e.name + QStringLiteral(" *"), e.text);
+            vorlagen->setItemData(vorlagen->count() - 1, e.name, kNameRolle);
+        }
+    };
+    // Combo an den Text angleichen. Die Vorlage der Marke hat Vorrang vor
+    // anderen mit gleichem Text (eigene Kopie einer mitgelieferten).
+    const auto abgleichen = [vorlagen, editor, marke, ausgangsText, ausgangsMarke]() {
+        const QString text = editor->toPlainText();
+        if (text == ausgangsText) *marke = *ausgangsMarke;
+        int treffer = marke->isEmpty() ? -1 : vorlagen->findData(*marke, kNameRolle);
+        if (treffer > 0 && vorlagen->itemData(treffer, kTextRolle).toString() != text)
+            treffer = -1;
+        for (int i = 1; treffer < 0 && i < vorlagen->count(); ++i)
+            if (vorlagen->itemData(i, kTextRolle).toString() == text) treffer = i;
+        const QSignalBlocker blocker(vorlagen);
+        if (treffer > 0) *marke = vorlagen->itemData(treffer, kNameRolle).toString();
+        vorlagen->setItemText(0, treffer < 0 && !marke->isEmpty()
+                                     ? QObject::tr("(unsaved) – %1").arg(*marke)
+                                     : QObject::tr("(none)"));
+        vorlagen->setCurrentIndex(treffer > 0 ? treffer : 0);
+    };
+    fuelle();
+    abgleichen();
+    *ausgangsMarke = *marke;
+
+    QObject::connect(editor, &QPlainTextEdit::textChanged, vorlagen, abgleichen);
+    QObject::connect(vorlagen, &QComboBox::activated, vorlagen,
+                     [editor, vorlagen, marke, abgleichen](int idx) {
+                         if (idx <= 0)
+                         {
+                             abgleichen();  // Zustandszeile ist keine Wahl
+                             return;
+                         }
+                         *marke = vorlagen->itemData(idx, kNameRolle).toString();
+                         QTextCursor c(editor->document());
+                         c.select(QTextCursor::Document);
+                         c.insertText(vorlagen->itemData(idx, kTextRolle).toString());
+                         abgleichen();  // gleicher Text loest kein textChanged aus
+                     });
+    QObject::connect(
+        speichern, &QPushButton::clicked, parent,
+        [editor, key, fuelle, abgleichen, marke, ausgangsText, ausgangsMarke, parent]() {
+            bool ok = false;
+            const QString name = QInputDialog::getText(
+                parent, QObject::tr("Save as template"), QObject::tr("Template name:"),
+                QLineEdit::Normal, QString(), &ok).trimmed();
+            if (!ok || name.isEmpty()) return;
+            // Derselbe Dateiname, den speichere() schreibt (bereinigt).
+            const QString ziel = sv::userDir(key) + QLatin1Char('/') +
+                                 lumi::multieffect::nodepresets::sanitize(name) +
+                                 QLatin1Char('.') + sv::endung(key);
+            if (QFileInfo::exists(ziel) &&
+                QMessageBox::question(parent, QObject::tr("Save as template"),
+                                      QObject::tr("Your template '%1' already exists. "
+                                                  "Overwrite it?")
+                                          .arg(name)) != QMessageBox::Yes)
+                return;
+            QString pfad;
+            if (!sv::speichere(key, name, editor->toPlainText(), &pfad))
+            {
+                QMessageBox::warning(parent, QObject::tr("Save as template"),
+                                     QObject::tr("Template '%1' could not be saved.")
+                                         .arg(name));
+                return;
+            }
+            // Marke = der GESCHRIEBENE (bereinigte) Name, nicht der eingetippte.
+            const QString datei = QFileInfo(pfad).fileName();
+            *marke = datei.left(datei.size() - sv::endung(key).size() - 1);
+            if (editor->toPlainText() == ausgangsText) *ausgangsMarke = *marke;
+            fuelle();
+            abgleichen();
+        });
+    return row;
+}
+
 /// Full, resizable editor: big code pane + the module's reference side-by-side.
 /// Returns true and fills `out` when accepted. `eelHighlight = false` lässt den
 /// EEL-Highlighter weg — für Fremdsprachen-Felder (HLSL/GLSL, Strang S/S42),
@@ -689,69 +811,9 @@ struct ShaderVertrag
     split->setStretchFactor(1, 2);
     lay->addWidget(split, 1);
 
-    // Vorlagen (S83, Entscheid Patrik E4a): nur im Groß-Editor. Die Wahl
-    // ERSETZT den Text ueber den Cursor, damit Strg+Z sie zuruecknimmt; die
-    // Combo ist eine Aktion, kein Zustand — sie springt danach zurueck.
+    // Vorlagen (S83, Entscheid Patrik E4a): nur im Groß-Editor.
     if (!hooks.vorlagenKey.isEmpty())
-    {
-        namespace sv = lumi::multieffect::shadervorlagen;
-        const QString key = hooks.vorlagenKey;
-        auto* row = new QHBoxLayout();
-        row->addWidget(new QLabel(QObject::tr("Template:"), &dlg));
-        auto* vorlagen = new QComboBox(&dlg);
-        vorlagen->setObjectName(QStringLiteral("shaderVorlage"));
-        vorlagen->setToolTip(
-            QObject::tr("Replaces the editor content (Ctrl+Z takes it back). "
-                        "Empty = just the required function body; * = your own."));
-        const auto fuelle = [vorlagen, key]() {
-            const QSignalBlocker blocker(vorlagen);
-            vorlagen->clear();
-            vorlagen->addItem(QObject::tr("— choose a template —"));
-            for (const sv::Eintrag& e : sv::liste(key))
-                vorlagen->addItem(e.builtin ? e.name : e.name + QStringLiteral(" *"), e.text);
-        };
-        fuelle();
-        row->addWidget(vorlagen, 1);
-        auto* speichern = new QPushButton(QObject::tr("Save as template…"), &dlg);
-        speichern->setObjectName(QStringLiteral("shaderVorlageSpeichern"));
-        speichern->setToolTip(QObject::tr("Store the editor content as your own template."));
-        row->addWidget(speichern);
-        lay->insertLayout(0, row);
-
-        QObject::connect(vorlagen, &QComboBox::activated, &dlg, [editor, vorlagen](int idx) {
-            if (idx <= 0) return;
-            QTextCursor c(editor->document());
-            c.select(QTextCursor::Document);
-            c.insertText(vorlagen->itemData(idx).toString());
-            const QSignalBlocker blocker(vorlagen);
-            vorlagen->setCurrentIndex(0);
-        });
-        QObject::connect(speichern, &QPushButton::clicked, &dlg, [editor, key, fuelle, &dlg]() {
-            bool ok = false;
-            const QString name = QInputDialog::getText(
-                &dlg, QObject::tr("Save as template"), QObject::tr("Template name:"),
-                QLineEdit::Normal, QString(), &ok).trimmed();
-            if (!ok || name.isEmpty()) return;
-            // Derselbe Dateiname, den speichere() schreibt (bereinigt).
-            const QString ziel = sv::userDir(key) + QLatin1Char('/') +
-                                 lumi::multieffect::nodepresets::sanitize(name) +
-                                 QLatin1Char('.') + sv::endung(key);
-            if (QFileInfo::exists(ziel) &&
-                QMessageBox::question(&dlg, QObject::tr("Save as template"),
-                                      QObject::tr("Your template '%1' already exists. "
-                                                  "Overwrite it?")
-                                          .arg(name)) != QMessageBox::Yes)
-                return;
-            if (!sv::speichere(key, name, editor->toPlainText()))
-            {
-                QMessageBox::warning(&dlg, QObject::tr("Save as template"),
-                                     QObject::tr("Template '%1' could not be saved.")
-                                         .arg(name));
-                return;
-            }
-            fuelle();
-        });
-    }
+        lay->insertLayout(0, vorlagenZeile(&dlg, editor, hooks.vorlagenKey));
 
     // Status-/Fehlerzeile (S69): zeigt das Apply-Ergebnis IM Dialog — nicht
     // nur im Panel dahinter (Offene_Punkte §7 Punkt 1).

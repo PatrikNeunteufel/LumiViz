@@ -36,6 +36,8 @@
 
 #include "PanelBase.hpp"
 
+#include <QList>
+
 #include <vector>
 
 class QListWidget;
@@ -57,6 +59,20 @@ public:
     ~PlaylistPanel() override = default;
 
     [[nodiscard]] int preferredArea() const override;
+
+    /**
+     * @brief Reihenfolge nach dem Verschieben von `zeilen` vor die Zeile `ziel`
+     *        (S84; `ziel` = anzahl heisst ans Ende)
+     * @return alte Indizes in neuer Reihenfolge; die gezogenen bleiben
+     *         untereinander in ihrer Reihenfolge. Frei von Widgets, pruefbar.
+     */
+    [[nodiscard]] static std::vector<int> neueReihenfolge(int anzahl, const QList<int>& zeilen,
+                                                          int ziel);
+
+    /// Gezogene Zeilen vor `ziel` stellen — im DIENST (moveTrack); die Liste
+    /// folgt ueber das PlaylistChangedEvent (S84). Vorher sortierte Qt nur die
+    /// Anzeige um, und ein Doppelklick spielte danach den falschen Titel.
+    static void verschiebeZeilen(IPlaylist& playlist, const QList<int>& zeilen, int ziel);
 
 protected:
     void onActivate() override;

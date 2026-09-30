@@ -16,6 +16,7 @@
 #include "UI/panels/EffectPaletteWindow.hpp"              // Palettenfenster (S79)
 #include "UI/panels/FieldDocs.hpp"                       // Tooltip je Feld (§10)
 #include "UI/panels/ParameterBaum.hpp"                   // generischer Parameter-Baum (S72)
+#include "UI/widgets/DateiDrag.hpp"                       // Preset-Dateien im Drag (S84)
 #include "UI/widgets/GradientPresetDelegate.hpp"          // gradient combo previews
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
@@ -747,7 +748,7 @@ QString isfReferenceHtml()
 QStringList ChainTreeWidget::mimeTypes() const
 {
     QStringList types = QTreeWidget::mimeTypes();
-    types << QString::fromUtf8(lumi::ui::kPaletteMime);
+    types << QString::fromUtf8(lumi::ui::kPaletteMime) << QStringLiteral("text/uri-list");
     return types;
 }
 
@@ -768,12 +769,13 @@ QList<int> letzterMilkdropPfad(const ChainNode& node, const QList<int>& pfad = {
     return treffer;
 }
 
-/// Eigene Zeilen oder ein Paletteneintrag — sonst (Zeilen fremder Baeume,
-/// Dateien) nimmt der Kettenbaum nichts an.
+/// Eigene Zeilen, ein Paletteneintrag oder Preset-Dateien (S84) — sonst
+/// (Zeilen fremder Baeume, andere Dateien) nimmt der Kettenbaum nichts an.
 bool chainAccepts(const QDropEvent* event, const QObject* self)
 {
     return event->source() == self ||
-           event->mimeData()->hasFormat(QString::fromUtf8(lumi::ui::kPaletteMime));
+           event->mimeData()->hasFormat(QString::fromUtf8(lumi::ui::kPaletteMime)) ||
+           !lumi::ui::presetDateien(event->mimeData()).isEmpty();
 }
 }  // namespace
 
@@ -810,6 +812,11 @@ void ChainTreeWidget::dropEvent(QDropEvent* event)
         bool ok = false;
         const int index = event->mimeData()->data(paletteMime).toInt(&ok);
         if (ok && onPaletteDrop) onPaletteDrop(index, target, where);
+    }
+    else if (event->source() != this)
+    {
+        const QStringList dateien = lumi::ui::presetDateien(event->mimeData());
+        if (!dateien.isEmpty() && onFileDrop) onFileDrop(dateien, target, where);
     }
     else
     {
@@ -978,6 +985,9 @@ void MultiEffectPanel::setupUI()
     };
     m_tree->onPaletteDrop = [this](int idx, QTreeWidgetItem* t, ChainDrop w) {
         onPaletteDrop(idx, t, w);
+    };
+    m_tree->onFileDrop = [this](const QStringList& files, QTreeWidgetItem* t, ChainDrop w) {
+        onPresetFileDrop(files, t, w);
     };
     m_tree->onDeleteKey = [this] { onRemove(); };
 
@@ -1630,27 +1640,9 @@ void MultiEffectPanel::onPaletteDrop(int paletteIndex, QTreeWidgetItem* target,
             }
             else
             {
-                // Ziel auf eine Milkdrop-Sektion/-Element: gemeint ist der Node.
-                const MilkPathInfo mp = splitMilkPath(targetPath);
-                QList<int> ziel = mp.nodePath;
-                ChainDrop wo = mp.section >= 0 ? ChainDrop::Below : where;
-
-                // Dieselben Regeln wie beim Verschieben (moveNodesLocked).
                 QList<int> elternPfad;
                 int pos = -1;
-                if (!ziel.isEmpty() && wo != ChainDrop::Viewport)
-                {
-                    QMutexLocker lock(m_mutex);
-                    const ChainNode* tnode = nodeAtPath(ziel);
-                    elternPfad = ziel;
-                    const int idx = elternPfad.takeLast();
-                    if (wo == ChainDrop::OnItem && tnode != nullptr && tnode->acceptsChildren())
-                        elternPfad = ziel;  // hinein, ans Ende
-                    else if (wo == ChainDrop::Above)
-                        pos = idx;
-                    else
-                        pos = idx + 1;
-                }
+                dropOrt(targetPath, where, elternPfad, pos);
                 ok = insertPaletteNode(paletteIndex, elternPfad, pos);
             }
             if (ok && m_palette != nullptr) m_palette->noteUsed(paletteIndex);
@@ -1658,8 +1650,64 @@ void MultiEffectPanel::onPaletteDrop(int paletteIndex, QTreeWidgetItem* target,
         Qt::QueuedConnection);
 }
 
+void MultiEffectPanel::dropOrt(const QList<int>& targetPath, ChainDrop where,
+                               QList<int>& elternPfad, int& pos)
+{
+    // Ziel auf eine Milkdrop-Sektion/-Element: gemeint ist der Node.
+    const MilkPathInfo mp = splitMilkPath(targetPath);
+    const QList<int> ziel = mp.nodePath;
+    const ChainDrop wo = mp.section >= 0 ? ChainDrop::Below : where;
+
+    // Dieselben Regeln wie beim Verschieben (moveNodesLocked).
+    elternPfad.clear();
+    pos = -1;
+    if (ziel.isEmpty() || wo == ChainDrop::Viewport) return;
+    QMutexLocker lock(m_mutex);
+    const ChainNode* tnode = nodeAtPath(ziel);
+    elternPfad = ziel;
+    const int idx = elternPfad.takeLast();
+    if (wo == ChainDrop::OnItem && tnode != nullptr && tnode->acceptsChildren())
+        elternPfad = ziel;  // hinein, ans Ende
+    else if (wo == ChainDrop::Above)
+        pos = idx;
+    else
+        pos = idx + 1;
+}
+
+void MultiEffectPanel::onPresetFileDrop(const QStringList& files, QTreeWidgetItem* target,
+                                        ChainDrop where)
+{
+    if (m_host == nullptr || files.isEmpty()) return;
+    // Der Paletteneintrag „Preset Reference…" ist der eine Weg, einen Verweis
+    // anzulegen — der Drop gibt ihm nur die Datei vor (kein Dateidialog).
+    const auto& palette = effectPalette();
+    int verweisIndex = -1;
+    for (size_t i = 0; i < palette.size() && verweisIndex < 0; ++i)
+        if (palette[i].fromFile && palette[i].asReference) verweisIndex = static_cast<int>(i);
+    if (verweisIndex < 0) return;
+    QList<int> targetPath;
+    if (target != nullptr) targetPath = pathFromVariant(target->data(0, Qt::UserRole));
+
+    // Wie onPaletteDrop: erst nach dem dropEvent des Baums einfuegen.
+    QMetaObject::invokeMethod(
+        this,
+        [this, files, verweisIndex, targetPath, where] {
+            QList<int> elternPfad;
+            int pos = -1;
+            dropOrt(targetPath, where, elternPfad, pos);
+            for (const QString& datei : files)
+            {
+                // Erster Fehlschlag (Tiefenregel, unlesbare Datei) beendet den
+                // Zug — sonst kaeme dieselbe Meldung einmal je Datei.
+                if (!insertPaletteNode(verweisIndex, elternPfad, pos, datei)) break;
+                if (pos >= 0) ++pos;
+            }
+        },
+        Qt::QueuedConnection);
+}
+
 bool MultiEffectPanel::insertPaletteNode(int paletteIndex, const QList<int>& parentPath,
-                                         int pos)
+                                         int pos, const QString& datei)
 {
     const EffectType& chosen = effectPalette()[static_cast<size_t>(paletteIndex)];
     if (chosen.make == nullptr) return false;
@@ -1680,13 +1728,13 @@ bool MultiEffectPanel::insertPaletteNode(int paletteIndex, const QList<int>& par
                 return false;
             }
         }
-        QString datei;
+        QString quelle = datei;  // leer = Dateidialog
         std::vector<ChainNode> inhalt;
-        if (!presetGruppeLaden(datei, inhalt)) return false;
+        if (!presetGruppeLaden(quelle, inhalt)) return false;
         fresh.children = std::move(inhalt);
-        fresh.displayName = QFileInfo(datei).completeBaseName().toStdString();
+        fresh.displayName = QFileInfo(quelle).completeBaseName().toStdString();
         auto& hg = std::get<HostGroupParams>(fresh.params);
-        hg.sourceFile = datei.toStdString();
+        hg.sourceFile = quelle.toStdString();
         hg.verweis = chosen.asReference;  // Presetverweis: nur der Pfad wird gespeichert
     }
 

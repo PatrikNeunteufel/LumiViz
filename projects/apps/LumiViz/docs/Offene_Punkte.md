@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.79.0
-> **Datum:** 2026-09-30 (Session 83)
+> **Version:** 1.80.0
+> **Datum:** 2026-09-30 (Session 84)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2292,6 +2292,69 @@ BPM, S45) gegen einen Knoten, der auf dem Beat weiß blitzt; Live-Aufnahme: kein
 **Offen:** Ton auch bei externem Audio-Eingang (Idee unten) · Aufnahme
 eines einzelnen Knotens statt des Endbilds (Zwischenstand der Kette) ·
 Alpha-Kanal für Overlays (nur mit passendem Codec).
+
+### ⚪ Idee: Cover-Modul — mit dem Albumcover arbeiten (Wunsch S84)
+
+Anlass: seit S84 zeigt der Audio Browser eingebettete Cover als Icon (Lesen
+aus ID3/FLAC/MP4, sonst `cover.jpg`/`folder.jpg` im Ordner, sonst eigenes
+Icon). Dieselbe Quelle kann das **Bild** speisen. Fallback, wenn es kein Cover
+gibt: Ordnerbild → (optional, nur mit Freigabe) Online-Suche → LumiViz-Logo
+oder ein aus dem Titel erzeugtes Muster — nie ein leeres Bild.
+
+Vorschläge (Claude S84):
+- **Cover als Bildquelle statt eigenem Knoten** — zuerst eine Quelle
+  „Current cover" für alle vorhandenen Bild-Eingänge: Picture/Picture II,
+  Texer, Milkdrop-Sprites, Shadertoy-`iChannel`, ISF-Bildeingang. Ein Weg,
+  jeder Knoten kann es (SSOT), und die Kette wechselt das Bild beim
+  Titelwechsel von selbst.
+- **Cover-Knoten** darüber für das Typische: zentriert / füllend / „Vinyl"
+  (rund, dreht mit dem Tempo), **unscharfer Hintergrund + scharfes Cover
+  davor**, Puls mit dem Bass, Kacheln/Mosaik, Zerfall in Partikel beim
+  Titelwechsel (Anbindung an Song-Slot und Crossfade der Host-Gruppen).
+- **Farben aus dem Cover**: dominante Farben (k-means über ein kleines Bild)
+  als Farbverlauf und Skriptvariablen (`cover_r/g/b`, `cover_hue` …) — die
+  ganze Kette färbt sich passend zum Album, auch ohne das Bild zu zeigen.
+- **Online-Cover** (MusicBrainz Cover Art Archive o. ä.) nur als Opt-in:
+  sendet Titeldaten nach außen (Datenschutz), Cache im Benutzerordner.
+- Zu klären: Ogg/Opus (`METADATA_BLOCK_PICTURE`, Base64 im Kommentar), WMA,
+  mehrere Bilder je Datei (Vorder-/Rückseite, Typ 3 = Front bevorzugen).
+
+### ⚪ Idee: Text-Knoten ausbauen — Listen, Tags, Schrift (Wunsch S84)
+
+Es gibt den Knoten **Text** schon (AVS „Render / Text", `TextParams`): Wörter
+mit `;` getrennt, Wechsel nach Frames oder auf den Beat, zufällige Position,
+Schrift (Name, Höhe, fett/kursiv), Kontur/Schatten. Ausbau statt neuem Modul —
+AVS-Import bleibt damit treu, alles Neue sind zusätzliche Felder.
+
+**Quellen des Textes:**
+- **Listen** — eine Zeile je Eintrag (im Feld oder als Datei), Wechsel wie
+  beim Host Switcher: nach Zeit, auf den Beat (jeder n-te), beim Titelwechsel,
+  per Skript (`textnext`, `textindex`); der Reihe nach, zufällig, ohne
+  Wiederholung.
+- **Tags** des laufenden Titels (ID3 „mp3tags", Vorbis-Kommentare, MP4):
+  Titel, Interpret, Album, Jahr, Genre, Tracknummer, BPM, Kommentar — als
+  **Vorlage** `{artist} – {title} ({year})`, damit fehlende Tags nicht
+  „– ()" hinterlassen (leere Teile samt Trennzeichen weglassen).
+- **Songtexte**: eingebettete Lyrics (ID3 `USLT`) und **zeitsynchron**
+  (`SYLT` oder `.lrc` neben der Datei) — Karaoke-Zeile, die mitläuft.
+- **Laufzeit-Werte**: Zeit gespielt/übrig, Preset-/Gruppenname, Uhrzeit,
+  BPM der Beat-Erkennung, fps.
+
+**Darstellung:**
+- Schrift aus allen installierten Schriften (`QFontDatabase`) **und** aus
+  mitgelieferten Dateien (`.ttf/.otf` in `asset/fonts/`, damit ein Preset auf
+  jedem Rechner gleich aussieht); Größe relativ zur Bildhöhe.
+- Farbe oder Farbverlauf, Kontur, Schatten, Leuchten; Ausrichtung/Anker.
+- **Animationen**: Ein-/Ausblenden, Schreibmaschine, Laufschrift (Ticker),
+  Wort für Wort, Buchstaben tanzen auf dem Beat, Zoom beim Titelwechsel,
+  Größe/Helligkeit mit Bass oder Pegel.
+- Technik: Text ändert sich selten → per `QPainter` in eine Textur, nur bei
+  Änderung neu; für Effekte je Buchstabe ein Glyphen-Atlas (SDF), damit
+  Skalieren/Leuchten im Shader scharf bleibt.
+
+**Zusammen mit dem Cover-Modul** ergibt das eine „Now playing"-Einblendung
+(Cover + Titel/Interpret, fährt beim Titelwechsel herein, blendet nach n
+Sekunden aus) — als mitgeliefertes Preset statt fest eingebaut.
 
 ### ⚪ Idee: externer Audio-Eingang — Loopback, Line-in, Mikrofon (Wunsch S83)
 

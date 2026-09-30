@@ -65,6 +65,12 @@ protected:
     void onActivate() override;
     void onDeactivate() override;
 
+    /// Audiodatei oder Playlist-Eintrag fallen lassen = abspielen bzw. zu
+    /// diesem Eintrag springen (S84, `UI/widgets/AudioDateien.hpp`).
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dragMoveEvent(QDragMoveEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
+
 private Q_SLOTS:
     // Button handlers
     void onPlayClicked();

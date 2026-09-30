@@ -10,6 +10,7 @@
  */
 
 #include "UI/panels/ImportBrowserPanel.hpp"
+#include "UI/widgets/DateiListe.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
@@ -281,11 +282,16 @@ void ImportBrowserPanel::refresh()
     const QIcon upIcon = style()->standardIcon(QStyle::SP_FileDialogToParent);
 
     // Parent entry (unless at a filesystem root).
+    // Nur Preset-Dateien sind ziehbar (S84), Ordner und ".." nicht.
+    const auto nichtZiehbar = [](QListWidgetItem* item) {
+        item->setFlags(item->flags() & ~Qt::ItemIsDragEnabled);
+    };
     if (!m_dir.isRoot())
     {
         auto* up = new QListWidgetItem(upIcon, QStringLiteral(".."), m_pListWidget);
         up->setData(Qt::UserRole, m_dir.absolutePath());
         up->setData(Qt::UserRole + 1, Type_Up);
+        nichtZiehbar(up);
     }
 
     // Sub-folders first (always shown, regardless of the preset filter).
@@ -297,6 +303,7 @@ void ImportBrowserPanel::refresh()
         item->setData(Qt::UserRole, fi.absoluteFilePath());
         item->setData(Qt::UserRole + 1, Type_Dir);
         item->setToolTip(fi.absoluteFilePath());
+        nichtZiehbar(item);
     }
 
     // Matching preset files — Format-Icon je Endung (avs/milkdrop/lumiviz,
@@ -590,7 +597,17 @@ void ImportBrowserPanel::setupUI()
     mainLayout->addLayout(filterLayout);
 
     // Entry list
-    m_pListWidget = new QListWidget(this);
+    // Presets in die Effect Chain ziehen (S84): als Datei-URL, dort ein
+    // Presetverweis. Ordner und ".." sind nicht ziehbar (Flags in refresh()).
+    auto* liste = new lumi::ui::DateiListe(this);
+    liste->pfadZumZiehen = [](const QListWidgetItem* item) {
+        const int type = item->data(Qt::UserRole + 1).toInt();
+        return type == Type_Avs || type == Type_Milk || type == Type_Lvfx
+                   ? item->data(Qt::UserRole).toString()
+                   : QString();
+    };
+    m_pListWidget = liste;
+    m_pListWidget->setObjectName(QStringLiteral("effectBrowserListe"));
     m_pListWidget->setAlternatingRowColors(true);
     m_pListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     mainLayout->addWidget(m_pListWidget, 1);

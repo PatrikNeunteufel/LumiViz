@@ -78,6 +78,10 @@ public:
     /// Ein Eintrag aus dem Palettenfenster wurde abgelegt (S79).
     std::function<void(int paletteIndex, QTreeWidgetItem* target, ChainDrop where)>
         onPaletteDrop;
+    /// Preset-Dateien wurden abgelegt (S84): aus dem Effect Browser oder dem
+    /// Explorer, als Datei-URLs (`UI/widgets/DateiDrag.hpp`).
+    std::function<void(const QStringList& files, QTreeWidgetItem* target, ChainDrop where)>
+        onFileDrop;
     std::function<void()> onDeleteKey;  ///< Delete/Backspace pressed
 
     /// Spalten-Mindestbreiten (S78, Entscheid 2a): keine Spalte wird schmaler
@@ -93,7 +97,8 @@ public:
 
 protected:
     /// Neben den eigenen Zeilen auch Paletteneintraege (`lumi::ui::kPaletteMime`)
-    /// annehmen — erst dadurch zeigt Qt beim Ziehen den Einfuege-Indikator.
+    /// und Preset-Dateien (`text/uri-list`, S84) annehmen — erst dadurch zeigt
+    /// Qt beim Ziehen den Einfuege-Indikator.
     [[nodiscard]] QStringList mimeTypes() const override;
     void dragEnterEvent(QDragEnterEvent* event) override;
     void dragMoveEvent(QDragMoveEvent* event) override;
@@ -206,9 +211,19 @@ private:
     void onAddEffect(int paletteIndex);
     /// Paletteneintrag an der Drop-Stelle einfuegen (Drag aus dem Fenster).
     void onPaletteDrop(int paletteIndex, QTreeWidgetItem* target, ChainDrop where);
+    /// Preset-Dateien an der Drop-Stelle als Presetverweise einfuegen (S84,
+    /// Drag aus dem Effect Browser/Explorer) — in gezogener Reihenfolge.
+    void onPresetFileDrop(const QStringList& files, QTreeWidgetItem* target, ChainDrop where);
+    /// Einfuegeort eines Drops (Eltern-Pfad + Position, -1 = anhaengen) nach
+    /// denselben Regeln wie beim Verschieben. Unter dem Render-Mutex.
+    void dropOrt(const QList<int>& targetPath, ChainDrop where, QList<int>& elternPfad,
+                 int& pos);
     /// Gemeinsamer Kern: neuen Knoten als `pos`-tes Kind von `parentPath`
     /// einfuegen (pos < 0 = anhaengen), markieren, Editor aufbauen.
-    bool insertPaletteNode(int paletteIndex, const QList<int>& parentPath, int pos);
+    /// `datei` (S84): Preset-Datei fuer Eintraege mit `fromFile` — nicht leer
+    /// = kein Dateidialog.
+    bool insertPaletteNode(int paletteIndex, const QList<int>& parentPath, int pos,
+                           const QString& datei = {});
     /// Milkdrop-Element (Wave/Shape/Sprite) in den Milkdrop-Node an `anchorPath`.
     bool insertMilkElement(int paletteIndex, const QList<int>& anchorPath);
     /// „Preset as Group" (S82): Preset-Datei → Inhalt einer Host-Gruppe, mit

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.18.0
+> **Version:** 1.18.1
 > **Datum:** 2026-09-30
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -71,6 +71,13 @@ Das **Player-Panel** steuert die Wiedergabe:
 Musik kommt über die Playlist (§3) in die App — Titel dort doppelklicken
 startet die Wiedergabe.
 
+**Ziehen zum Abspielen** (seit Session 84): Zieh eine Audiodatei (aus dem
+Audio Browser oder dem Explorer) oder einen **Playlist-Eintrag** auf das
+Player-Panel **oder auf das Bild der Visualisierung**. Ein Playlist-Eintrag
+wird direkt angesprungen; eine Datei, die schon in der Playlist steht, ebenso
+— sonst wird sie angehängt und gespielt. Der Eintrag bleibt dabei in der
+Playlist (es wird nie verschoben).
+
 ## 3. Playlist verwalten
 
 Das **Playlist-Panel** führt die Titelliste:
@@ -83,6 +90,30 @@ Das **Playlist-Panel** führt die Titelliste:
 - **Shuffle-Modus** — nächster Titel wird zufällig gewählt (mischt die Liste
   nicht um).
 - **Loop-Playlist** — nach dem letzten Titel geht es vorn weiter.
+- **Ziehen** (seit Session 84): Titel in der Liste verschieben (auch
+  mehrere), Audiodateien aus dem **Audio Browser** oder dem Explorer an eine
+  bestimmte Stelle fallen lassen, Titel hinaus auf Player oder Visualisierung
+  ziehen (§2). *Behoben:* Verschieben änderte früher nur die Anzeige — danach
+  spielte ein Doppelklick den falschen Titel.
+
+### Audio Browser
+
+**View → Panels → Audio Browser** zeigt einen Ordner mit Musik, wie der
+Effect Browser die Presets: Unterordner zum Hineingehen, darunter alle Dateien,
+die die Audio-Engine abspielen kann (samt den Formaten der geladenen
+BASS-Plugins). Als Icon steht das **Albumcover**: zuerst das in der Datei
+eingebettete (MP3/ID3, FLAC, M4A — bei mehreren Bildern das Frontcover),
+sonst ein Cover-Bild im Ordner (`cover`, `folder`, `front`, `albumart…` als
+`.jpg`/`.png`), sonst ein Icon der Formatfamilie (MP3, WAV/AIFF, FLAC u. ä.,
+OGG/Opus, M4A/AAC, sonstige). Die Cover erscheinen nach und nach — ein großer
+Ordner bleibt dabei bedienbar. Ogg/Opus-Cover werden noch nicht gelesen.
+
+- **Doppelklick** — an die Playlist hängen und abspielen (steht der Titel
+  schon drin: dorthin springen).
+- **Ziehen** — in die Playlist (an die Stelle), auf Player oder
+  Visualisierung (abspielen). Mehrfachauswahl geht.
+- Der zuletzt geöffnete Ordner wird gemerkt; beim ersten Mal öffnet der
+  Musik-Ordner von Windows.
 
 **Session-Playlist:** Beim Beenden wird die aktuelle Playlist automatisch
 gespeichert und beim nächsten Start wiederhergestellt (inklusive Position in
@@ -279,7 +310,8 @@ Der Visualizer **„Multi Effect"** rendert eine frei editierbare Effektkette.
 Bearbeitet wird sie im Panel **View → Panels → Effect Chain**; Presets lädt
 der **Effect Browser** (Panel rechts, bis Session 82 „Import Browser") per
 Doppelklick — `.avs`, `.milk`, `.lvfx` und `.lvfx2`. Geladene `.avs`/`.milk`
-werden beim Speichern zur `.lvfx`.
+werden beim Speichern zur `.lvfx`. Ein Preset aus dem Browser in den Baum
+**gezogen** wird dort ein Presetverweis (s. Host-Gruppen).
 
 ### Ketten-Editor
 
@@ -666,6 +698,14 @@ Gruppen dürfen gleichzeitig aktiv sein und mischen sich über ihren
   eine kopierte Gruppe in einen Verweis um (Inhalt wird neu gelesen) und
   zurück (der geladene Inhalt bleibt als Kopie). Verweist eine Datei über
   Umwege auf sich selbst, bricht das Laden dort mit einer Meldung ab.
+- **Presets in die Kette ziehen** (seit Session 84): Zieh eine `.avs`,
+  `.milk` oder `.lvfx` aus dem **Effect Browser** — oder aus dem
+  Windows-Explorer — in den Baum der Effect Chain. Sie wird dort, wo du sie
+  fallen lässt, ein **Presetverweis** (wie „Preset Reference…", nur ohne
+  Dateidialog): auf eine Liste = hinein, an eine Kante = dazwischen, auf die
+  Leerfläche = ans Ende. Mehrere Dateien auf einmal landen in ihrer
+  Reihenfolge. Ordner lassen sich nicht ziehen; die Datei selbst wird dabei
+  nie verschoben. Innerhalb einer Host-Gruppe gilt die Tiefenregel wie sonst.
 - **Namen sind eindeutig:** Der Name einer Gruppe ist ihre ID für den Host
   Switcher. Eine zweite „Host Group" heißt deshalb automatisch „Host Group 2"
   (auch beim Klonen und beim Laden älterer Dateien). Benennst du eine Gruppe
@@ -864,8 +904,13 @@ Oben im Groß-Editor (⤢) jedes Shader-Feldes steht **Template:**. Die Auswahl
   *Rings* (Shadertoy), *Swirl* und *Bass Zoom* (Mesh Warp), *Grayscale* und
   *Edges* (Pixel Filter), *Slow Fade* (MilkDrop Warp), *Bass Brightness*
   (MilkDrop Comp).
+- Die Zeile zeigt, wovon der Text stammt, wie die Preset-Zeile im Panel:
+  den **Namen der Vorlage**, solange du nichts änderst; **(unsaved) – Name**,
+  sobald du danach etwas änderst; **(none)**, wenn der Text von keiner
+  Vorlage kommt. Gleicht der Text beim Öffnen einer Vorlage, steht ihr Name
+  gleich da.
 - **Save as template…** legt den Editor-Inhalt als eigene Vorlage ab
-  (in der Liste mit `*`).
+  (in der Liste mit `*`); die Zeile zeigt danach diese Vorlage.
 - Die ISF-Vorlagen sind **Generatoren ohne Bildquelle**: Bildquellen und
   Regler eines ISF-Shaders kommen über „Import ISF file…" in den
   Knoten, eine Vorlage ersetzt nur den Code.
@@ -908,6 +953,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.18.1 | 2026-09-30 | Session 84. Vorlagen-Zeile im Groß-Editor zeigt den Zustand (Name / „(unsaved) – Name" / „(none)") statt zurückzuspringen; §11 Presets aus dem Effect Browser/Explorer in die Kette ziehen = Presetverweis; §2/§3 Ziehen zum Abspielen (Player, Visualisierung), Playlist nimmt Dateien an und sortiert im Dienst um, NEU **Audio Browser** (Albumcover als Icon, Fallback Ordnerbild/Formaticon) |
 | 1.18.0 | 2026-09-30 | Session 83. Zitierte Oberflächen-Beschriftungen auf die englische Oberfläche gezogen (§8 Einstellungen/Kamera, §9 Tastenkürzel, §11 Milkdrop/Host-Gruppen/Host Switcher, §12–§14); „Testaufnahme" heißt **Camera Clip** |
 | 1.17.0 | 2026-09-30 | Session 83. Namen **aller** mitgelieferten Presets, Beispiele und Vorlagen englisch (§11, §14); NEU Presets für die Milkdrop-Sektionen **Code** und **Parameter** (u. a. *Original*, *Old LumiViz Look (pre-S80)*). §11 Voreinstellungen: Combo behält den geladenen Namen, **„(unsaved) – Name"** nach einer Änderung, **(none)** ohne Voreinstellung, 🗑 zielt auf die Quelle; NEU Voreinstellungen je **Milkdrop-Element** (Wave/Shape/Sprite); Template-Listen von SuperScope 3D/3D Camera sind jetzt Voreinstellungen. §11 NEU Schalter **Script active**. §14 NEU **Vorlagen im großen Editor** (Leer + einfache Vorlagen je Shader-Feld, eigene speichern) |
 | 1.16.0 | 2026-09-29 | Session 82. §11 Host-Gruppen: NEU **Presetverweis** („Preset Reference…", nur Pfad gespeichert, Inhalt beim Laden frisch; Schalter Kopie ↔ Verweis; vom Host Switcher schaltbar) |

@@ -316,4 +316,10 @@ public:
      * @brief Get last error code
      */
     [[nodiscard]] virtual int getLastErrorCode() const = 0;
+
+    /**
+     * @brief Abspielbare Dateiendungen, klein, ohne Punkt (S84: Audio Browser,
+     *        Drops). Leer = unbekannt — die Oberflaeche nimmt dann ihre Vorgabe.
+     */
+    [[nodiscard]] virtual QStringList supportedExtensions() const { return {}; }
 };

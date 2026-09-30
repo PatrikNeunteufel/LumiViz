@@ -23,14 +23,23 @@
 
 #include <doctest.h>
 
+#include "UI/panels/AudioBrowserPanel.hpp"
 #include "UI/panels/EelScriptEditing.hpp"
 #include "UI/panels/EffectPalette.hpp"
 #include "UI/panels/EffectPaletteWindow.hpp"
+#include "UI/panels/ImportBrowserPanel.hpp"
 #include "UI/panels/MultiEffectPanel.hpp"
+#include "UI/panels/PlayerPanel.hpp"
+#include "UI/panels/PlaylistPanel.hpp"
+#include "UI/widgets/AudioDateien.hpp"
+#include "UI/widgets/DateiDrag.hpp"
+#include "audio/IAudioPlayer.hpp"
+#include "audio/Playlist.hpp"
 #include "services/EventBus.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/events/UIEvents.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
+#include "visualizers/multieffect/ChainSerializer.hpp"
 #include "visualizers/multieffect/NodePresetStore.hpp"
 
 #include <QApplication>
@@ -44,8 +53,14 @@
 #include <QDragMoveEvent>
 #include <QDropEvent>
 #include <QKeyEvent>
+#include <QBuffer>
+#include <QElapsedTimer>
+#include <QImage>
 #include <QLabel>
+#include <QSet>
+#include <QThread>
 #include <QLineEdit>
+#include <QListWidget>
 #include <QMimeData>
 #include <QPlainTextEdit>
 #include <QPushButton>
@@ -58,6 +73,8 @@
 #include <QToolButton>
 #include <QTreeWidget>
 #include <QTreeWidgetItemIterator>
+#include <QUrl>
+#include <QVBoxLayout>
 
 #include <QAbstractButton>
 #include <QMutex>
@@ -1023,4 +1040,619 @@ TEST_CASE("PaletteUi Panel D3: Milkdrop-Parameter tragen Presets (Stellung + bis
     decay->setValue(decay->value() > 0.5 ? 0.5 : 0.9);
     warte();
     CHECK(combo()->currentText() == QString::fromUtf8("(unsaved) – Old Look"));
+}
+
+// --- Shader-Vorlagen-Zeile im Gross-Editor (S84) ----------------------------
+//
+// Befund Patrik S84: die Combo sprang nach der Wahl auf „— choose a template —"
+// zurueck, wie vorher die Preset-Zeile. Jetzt zeigt sie den Zustand.
+
+namespace
+{
+
+struct VorlagenWurzel
+{
+    QTemporaryDir dir;
+    VorlagenWurzel()
+    {
+        namespace sv = lumi::multieffect::shadervorlagen;
+        const auto schreibe = [this](const QString& rel, const QByteArray& text) {
+            const QString pfad = dir.filePath(rel);
+            QDir().mkpath(QFileInfo(pfad).absolutePath());
+            QFile f(pfad);
+            REQUIRE(f.open(QIODevice::WriteOnly));
+            f.write(text);
+        };
+        schreibe(QStringLiteral("asset/pixelfilter/Alpha.glsl"), "vec4 farbe(vec2 uv, vec4 src) { return src; }");
+        schreibe(QStringLiteral("asset/pixelfilter/Beta.glsl"), "vec4 farbe(vec2 uv, vec4 src) { return 1.0 - src; }");
+        sv::setRootForTesting(dir.path());
+    }
+    ~VorlagenWurzel() { lumi::multieffect::shadervorlagen::setRootForTesting(QString()); }
+};
+
+/// Text wie beim Tippen/Einfuegen ersetzen (ueber den Cursor, loest textChanged aus).
+void ersetzeText(QPlainTextEdit& e, const QString& text)
+{
+    QTextCursor c(e.document());
+    c.select(QTextCursor::Document);
+    c.insertText(text);
+}
+
+}  // namespace
+
+TEST_CASE("PaletteUi S84: Vorlagen-Zeile behaelt die Wahl und zeigt (unsaved) nach Aenderung")
+{
+    UiUmgebung umgebung;
+    VorlagenWurzel wurzel;
+    QWidget dlg;
+    auto* editor = new QPlainTextEdit(&dlg);
+    editor->setPlainText(QStringLiteral("// eigener Code"));
+    auto* lay = new QVBoxLayout(&dlg);
+    lay->addLayout(lumi::scriptedit::vorlagenZeile(&dlg, editor, QStringLiteral("pixelfilter")));
+    lay->addWidget(editor);
+    zeigen(dlg);
+    auto* combo = dlg.findChild<QComboBox*>(QStringLiteral("shaderVorlage"));
+    REQUIRE(combo != nullptr);
+    CHECK(combo->currentText() == QStringLiteral("(none)"));
+
+    const int alpha = combo->findText(QStringLiteral("Alpha"));
+    REQUIRE(alpha > 0);
+    combo->setCurrentIndex(alpha);
+    emit combo->activated(alpha);
+    CHECK(editor->toPlainText().startsWith(QStringLiteral("vec4 farbe")));
+    CHECK(combo->currentText() == QStringLiteral("Alpha"));  // vorher: Rueckfall auf Index 0
+
+    ersetzeText(*editor, editor->toPlainText() + QStringLiteral(" // x"));
+    CHECK(combo->currentText() == QString::fromUtf8("(unsaved) – Alpha"));
+
+    // Zurueck auf den Vorlagen-Text => wieder sauber.
+    ersetzeText(*editor, combo->itemData(alpha).toString());
+    CHECK(combo->currentText() == QStringLiteral("Alpha"));
+
+    // Strg+Z bis zum Ausgangstext => Zustand beim Oeffnen, nicht „(unsaved) – Alpha".
+    while (editor->document()->isUndoAvailable()) editor->undo();
+    CHECK(editor->toPlainText() == QStringLiteral("// eigener Code"));
+    CHECK(combo->currentText() == QStringLiteral("(none)"));
+
+    // Die Zustandszeile ist keine Wahl: sie aendert den Text nicht.
+    emit combo->activated(0);
+    CHECK(editor->toPlainText() == QStringLiteral("// eigener Code"));
+}
+
+TEST_CASE("PaletteUi S84: Vorlagen-Zeile erkennt beim Oeffnen den Text einer Vorlage")
+{
+    UiUmgebung umgebung;
+    VorlagenWurzel wurzel;
+    QWidget dlg;
+    auto* editor = new QPlainTextEdit(&dlg);
+    editor->setPlainText(QStringLiteral("vec4 farbe(vec2 uv, vec4 src) { return 1.0 - src; }"));
+    auto* lay = new QVBoxLayout(&dlg);
+    lay->addLayout(lumi::scriptedit::vorlagenZeile(&dlg, editor, QStringLiteral("pixelfilter")));
+    auto* combo = dlg.findChild<QComboBox*>(QStringLiteral("shaderVorlage"));
+    REQUIRE(combo != nullptr);
+    CHECK(combo->currentText() == QStringLiteral("Beta"));
+    ersetzeText(*editor, QStringLiteral("x"));
+    CHECK(combo->currentText() == QString::fromUtf8("(unsaved) – Beta"));
+}
+
+// --- Preset-Dateien ziehen: Effect Browser -> Effect Chain (S84) ---------------
+//
+// Plan S84 Punkt 1: ein Preset aus dem Effect Browser in die Kette ziehen legt
+// einen Presetverweis an. Die Datei reist als Datei-URL — dieselbe Form wie aus
+// dem Explorer.
+
+namespace
+{
+
+/// Legt eine kleine, ladbare Kette als .lvfx ab (ein Clear-Knoten).
+QString schreibeLvfx(const QTemporaryDir& dir, const QString& name)
+{
+    ChainNode root;
+    root.params = lumi::multieffect::ListParams{};
+    root.children.push_back(PanelUmgebung::knoten("Clear"));
+    const QString pfad = dir.filePath(name);
+    REQUIRE(lumi::multieffect::saveChainToFile(root, pfad));
+    return pfad;
+}
+
+/// Drag-Folge an den Viewport; false = der Baum hat den Zug abgewiesen.
+bool sendeDrop(QWidget* vp, QMimeData& data, QPoint pos)
+{
+    QDragEnterEvent enter(pos, Qt::CopyAction, &data, Qt::LeftButton, Qt::NoModifier);
+    QCoreApplication::sendEvent(vp, &enter);
+    QDragMoveEvent move(pos, Qt::CopyAction, &data, Qt::LeftButton, Qt::NoModifier);
+    QCoreApplication::sendEvent(vp, &move);
+    if (!move.isAccepted()) return false;
+    QDropEvent drop(QPointF(pos), Qt::CopyAction, &data, Qt::LeftButton, Qt::NoModifier);
+    QCoreApplication::sendEvent(vp, &drop);
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+    return drop.isAccepted();
+}
+
+const lumi::multieffect::HostGroupParams* gruppe(const ChainNode& n)
+{
+    return std::get_if<lumi::multieffect::HostGroupParams>(&n.params);
+}
+
+}  // namespace
+
+TEST_CASE("PaletteUi S84: presetDateien nimmt nur lokale Preset-Dateien, in Reihenfolge")
+{
+    UiUmgebung env;
+    QTemporaryDir dir;
+    const QString lvfx = schreibeLvfx(dir, QStringLiteral("b.lvfx"));
+    const QString txt = dir.filePath(QStringLiteral("notiz.txt"));
+    REQUIRE(QFile::copy(lvfx, txt));
+    const QString avs = dir.filePath(QStringLiteral("a.AVS"));  // Grossschreibung zaehlt nicht
+    REQUIRE(QFile::copy(lvfx, avs));
+    REQUIRE(QDir(dir.path()).mkdir(QStringLiteral("ordner.milk")));  // Ordner mit Preset-Endung
+
+    QMimeData data;
+    data.setUrls({QUrl::fromLocalFile(lvfx), QUrl::fromLocalFile(txt),
+                  QUrl(QStringLiteral("https://example.org/x.milk")),
+                  QUrl::fromLocalFile(dir.filePath(QStringLiteral("ordner.milk"))),
+                  QUrl::fromLocalFile(avs)});
+    const QStringList treffer = lumi::ui::presetDateien(&data);
+    REQUIRE(treffer.size() == 2);
+    CHECK(QFileInfo(treffer[0]) == QFileInfo(lvfx));
+    CHECK(QFileInfo(treffer[1]) == QFileInfo(avs));
+
+    QMimeData nurText;
+    nurText.setUrls({QUrl::fromLocalFile(txt)});
+    CHECK(lumi::ui::presetDateien(&nurText).isEmpty());
+    CHECK(lumi::ui::dateiMime({}) == nullptr);
+}
+
+TEST_CASE("PaletteUi S84: Kettenbaum meldet abgelegte Preset-Dateien, weist andere ab")
+{
+    UiUmgebung env;
+    QTemporaryDir dir;
+    const QString lvfx = schreibeLvfx(dir, QStringLiteral("show.lvfx"));
+    Kettenbaum k;
+    QStringList gemeldet;
+    QTreeWidgetItem* ziel = nullptr;
+    k.tree.onFileDrop = [&](const QStringList& files, QTreeWidgetItem* t, ChainDrop) {
+        gemeldet = files;
+        ziel = t;
+    };
+    std::unique_ptr<QMimeData> data(lumi::ui::dateiMime({lvfx}));
+    CHECK(sendeDrop(k.tree.viewport(), *data, k.tree.visualItemRect(k.a).center()));
+    REQUIRE(gemeldet.size() == 1);
+    CHECK(QFileInfo(gemeldet[0]) == QFileInfo(lvfx));
+    CHECK(ziel == k.a);
+    CHECK_FALSE(k.letzter.paletteIndex.has_value());  // kein Paletten-Drop
+
+    // Gegenprobe: eine Datei ohne Preset-Endung nimmt der Baum nicht an.
+    const QString txt = dir.filePath(QStringLiteral("notiz.txt"));
+    REQUIRE(QFile::copy(lvfx, txt));
+    gemeldet.clear();
+    std::unique_ptr<QMimeData> fremd(lumi::ui::dateiMime({txt}));
+    CHECK_FALSE(sendeDrop(k.tree.viewport(), *fremd, k.tree.visualItemRect(k.a).center()));
+    CHECK(gemeldet.isEmpty());
+}
+
+TEST_CASE("PaletteUi S84 Panel: Preset-Datei in die Kette gezogen wird ein Presetverweis")
+{
+    UiUmgebung env;
+    QTemporaryDir dir;
+    const QString lvfx = schreibeLvfx(dir, QStringLiteral("Intro.lvfx"));
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+
+    // Auf die Kante zwischen Clear und Liste: an Position 1
+    const QRect zweite = p.tree->visualItemRect(p.oben(1));
+    std::unique_ptr<QMimeData> data(lumi::ui::dateiMime({lvfx}));
+    CHECK(sendeDrop(p.tree->viewport(), *data, QPoint(zweite.center().x(), zweite.top() + 1)));
+    REQUIRE(p.root().children.size() == 4);
+    const ChainNode& neu = p.root().children[1];
+    const auto* hg = gruppe(neu);
+    REQUIRE(hg != nullptr);
+    CHECK(hg->verweis);  // Verweis, keine Kopie
+    CHECK(QFileInfo(QString::fromStdString(hg->sourceFile)) == QFileInfo(lvfx));
+    CHECK(neu.displayName == "Intro");
+    CHECK(ist<lumi::multieffect::ListParams>(p.root().children[2]));  // alte Liste rutscht
+}
+
+TEST_CASE("PaletteUi S84 Panel: mehrere Dateien auf die Leerflaeche -> Verweise am Ende, in Reihenfolge")
+{
+    UiUmgebung env;
+    QTemporaryDir dir;
+    const QString eins = schreibeLvfx(dir, QStringLiteral("Eins.lvfx"));
+    const QString zwei = schreibeLvfx(dir, QStringLiteral("Zwei.lvfx"));
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    std::unique_ptr<QMimeData> data(lumi::ui::dateiMime({eins, zwei}));
+    CHECK(sendeDrop(p.tree->viewport(), *data, QPoint(60, p.tree->viewport()->height() - 10)));
+    REQUIRE(p.root().children.size() == 5);
+    CHECK(p.root().children[3].displayName == "Eins");
+    CHECK(p.root().children[4].displayName == "Zwei");
+    CHECK(gruppe(p.root().children[4]) != nullptr);
+}
+
+TEST_CASE("PaletteUi S84: Effect Browser gibt Presets als Datei-URL mit, Ordner nicht")
+{
+    UiUmgebung env;
+    QTemporaryDir dir;
+    const QString lvfx = schreibeLvfx(dir, QStringLiteral("Intro.lvfx"));
+    REQUIRE(QDir(dir.path()).mkdir(QStringLiteral("Unterordner")));
+    ServiceContainer services;
+    services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+    ImportBrowserPanel browser(services);
+    zeigen(browser);
+
+    QLineEdit* pfad = nullptr;
+    for (QLineEdit* e : browser.findChildren<QLineEdit*>())
+        if (e->placeholderText().startsWith(QStringLiteral("Folder path"))) pfad = e;
+    REQUIRE(pfad != nullptr);
+    pfad->setText(dir.path());
+    emit pfad->returnPressed();
+    auto* liste = browser.findChild<QListWidget*>(QStringLiteral("effectBrowserListe"));
+    REQUIRE(liste != nullptr);
+    CHECK(liste->dragEnabled());
+
+    QListWidgetItem* datei = nullptr;
+    QListWidgetItem* ordner = nullptr;
+    for (int i = 0; i < liste->count(); ++i)
+    {
+        if (liste->item(i)->text() == QStringLiteral("Intro.lvfx")) datei = liste->item(i);
+        if (liste->item(i)->text() == QStringLiteral("Unterordner")) ordner = liste->item(i);
+    }
+    REQUIRE(datei != nullptr);
+    REQUIRE(ordner != nullptr);
+    CHECK(datei->flags().testFlag(Qt::ItemIsDragEnabled));
+    CHECK_FALSE(ordner->flags().testFlag(Qt::ItemIsDragEnabled));
+    CHECK(liste->model()->supportedDragActions() == Qt::CopyAction);  // nie verschieben
+
+    std::unique_ptr<QMimeData> data(liste->model()->mimeData({liste->indexFromItem(datei)}));
+    REQUIRE(data != nullptr);
+    const QStringList treffer = lumi::ui::presetDateien(data.get());
+    REQUIRE(treffer.size() == 1);
+    CHECK(QFileInfo(treffer[0]) == QFileInfo(lvfx));
+    // Ordner allein ergibt keine Drag-Daten.
+    std::unique_ptr<QMimeData> leer(liste->model()->mimeData({liste->indexFromItem(ordner)}));
+    CHECK(leer == nullptr);
+}
+
+// --- Audio ziehen: Audio Browser, Playlist, Player, Visualisierung (S84) -------
+//
+// Entscheide Patrik S84: 1a Playlist nimmt an und gibt ab; Drop auf Player/
+// Visualisierung springt zum Eintrag (fehlt er, wird er angehaengt);
+// 2a Doppelklick im Audio Browser = anhaengen + abspielen; 3a Icons je Familie.
+
+namespace
+{
+
+/// Player-Attrappe: schreibt nur mit, welcher Eintrag gespielt werden soll.
+class PlayerAttrappe : public IAudioPlayer
+{
+public:
+    QList<int> gespielt;
+
+    bool load(const QString&) override { return true; }
+    void play() override {}
+    void pause() override {}
+    void togglePlayPause() override {}
+    void stop() override {}
+    bool next() override { return false; }
+    bool previous() override { return false; }
+    bool playIndex(int index) override
+    {
+        gespielt.append(index);
+        return true;
+    }
+    void seek(int) override {}
+    void seekFraction(float) override {}
+    void seekRelative(int) override {}
+    [[nodiscard]] float volume() const override { return 1.0F; }
+    void setVolume(float) override {}
+    [[nodiscard]] bool isMuted() const override { return false; }
+    void setMuted(bool) override {}
+    void toggleMute() override {}
+    [[nodiscard]] PlaybackState state() const override { return PlaybackState{}; }
+    [[nodiscard]] bool isPlaying() const override { return false; }
+    [[nodiscard]] bool isPaused() const override { return false; }
+    [[nodiscard]] bool isStopped() const override { return true; }
+    [[nodiscard]] int positionMs() const override { return 0; }
+    [[nodiscard]] int durationMs() const override { return 0; }
+    [[nodiscard]] float positionFraction() const override { return 0.0F; }
+    [[nodiscard]] TrackInfo currentTrack() const override { return {}; }
+    [[nodiscard]] bool hasTrack() const override { return false; }
+    void setPlaylist(IPlaylist*) override {}
+    [[nodiscard]] IPlaylist* playlist() const override { return nullptr; }
+    [[nodiscard]] int playlistIndex() const override { return -1; }
+    [[nodiscard]] RepeatMode repeatMode() const override { return RepeatMode::None; }
+    void setRepeatMode(RepeatMode) override {}
+    [[nodiscard]] bool shuffle() const override { return false; }
+    void setShuffle(bool) override {}
+    void update() override {}
+};
+
+/// Dienste mit echter Playlist und Player-Attrappe, dazu Dateien in einem
+/// Temp-Ordner (Inhalt egal: die Playlist prueft nur, ob die Datei existiert).
+struct AudioUmgebung
+{
+    ServiceContainer services;
+    QTemporaryDir dir;
+    IPlaylist* playlist = nullptr;
+    PlayerAttrappe* player = nullptr;
+
+    AudioUmgebung()
+    {
+        services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+        auto pl = std::make_unique<Playlist>(*services.tryResolve<IEventBus>());
+        playlist = pl.get();
+        services.registerInstance<IPlaylist>(std::move(pl));
+        auto p = std::make_unique<PlayerAttrappe>();
+        player = p.get();
+        services.registerInstance<IAudioPlayer>(std::move(p));
+    }
+
+    QString datei(const QString& name)
+    {
+        const QString pfad = QFileInfo(dir.filePath(name)).absoluteFilePath();
+        QFile f(pfad);
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write("x");
+        return pfad;
+    }
+};
+
+QStringList playlistPfade(const IPlaylist& pl)
+{
+    return pl.filePaths();
+}
+
+}  // namespace
+
+TEST_CASE("PaletteUi S84: neueReihenfolge — Zeilen vor das Ziel, gezogene in Reihenfolge")
+{
+    using V = std::vector<int>;
+    CHECK(PlaylistPanel::neueReihenfolge(5, {1}, 4) == V{0, 2, 3, 1, 4});
+    CHECK(PlaylistPanel::neueReihenfolge(5, {1}, 5) == V{0, 2, 3, 4, 1});   // ans Ende
+    CHECK(PlaylistPanel::neueReihenfolge(5, {3, 4}, 0) == V{3, 4, 0, 1, 2});
+    CHECK(PlaylistPanel::neueReihenfolge(5, {0, 2}, 5) == V{1, 3, 4, 0, 2});
+    CHECK(PlaylistPanel::neueReihenfolge(5, {1, 2}, 2) == V{0, 1, 2, 3, 4});  // auf sich selbst
+    CHECK(PlaylistPanel::neueReihenfolge(3, {}, 1) == V{0, 1, 2});
+}
+
+TEST_CASE("PaletteUi S84: Audio-Icons — jede Familie hat ein eigenes, sichtbares Icon")
+{
+    UiUmgebung env;
+    REQUIRE_FALSE(lumi::ui::presetIconDir().isEmpty());
+    CHECK(lumi::ui::audioFamilie(QStringLiteral("MP3")) == QStringLiteral("mp3"));
+    CHECK(lumi::ui::audioFamilie(QStringLiteral("opus")) == QStringLiteral("ogg"));
+    CHECK(lumi::ui::audioFamilie(QStringLiteral("xyz")).isEmpty());
+    QSet<qint64> gesehen;
+    for (const char* e : {"mp3", "wav", "flac", "ogg", "m4a", "mid"})
+    {
+        INFO("Endung " << e);
+        const QIcon icon = lumi::ui::audioTypIcon(QString::fromUtf8(e));
+        REQUIRE_FALSE(icon.isNull());
+        const QImage bild = icon.pixmap(64, 64).toImage();
+        REQUIRE_FALSE(bild.isNull());
+        CHECK(qAlpha(bild.pixel(32, 32)) > 0);  // gezeichnet, nicht leer
+        gesehen.insert(icon.pixmap(64, 64).cacheKey());
+        const QString d = schnappschussOrdner();
+        if (!d.isEmpty()) bild.save(d + QStringLiteral("/audio_icon_%1.png").arg(e));
+    }
+    CHECK(gesehen.size() == 6);  // keine zwei Familien teilen ein Bild
+}
+
+TEST_CASE("PaletteUi S84: spieleDateien springt zu Vorhandenem, haengt Fehlendes an")
+{
+    UiUmgebung env;
+    AudioUmgebung a;
+    const QString eins = a.datei(QStringLiteral("eins.mp3"));
+    const QString zwei = a.datei(QStringLiteral("zwei.wav"));
+    REQUIRE(a.playlist->addTrack(eins) == 0);
+
+    CHECK(lumi::ui::spieleDateien(a.services, {zwei}));
+    CHECK(playlistPfade(*a.playlist) == QStringList{eins, zwei});
+    CHECK(a.player->gespielt == QList<int>{1});
+
+    CHECK(lumi::ui::spieleDateien(a.services, {eins}));
+    CHECK(a.playlist->count() == 2);  // nicht doppelt angehaengt
+    CHECK(a.player->gespielt == QList<int>{1, 0});
+}
+
+TEST_CASE("PaletteUi S84: spieleDrop — Playlist-Zeile gilt genau, fremde Dateien nichts")
+{
+    UiUmgebung env;
+    AudioUmgebung a;
+    const QString lied = a.datei(QStringLiteral("lied.mp3"));
+    a.playlist->addTrack(lied);
+    a.playlist->addTrack(a.datei(QStringLiteral("anderes.mp3")));
+    a.playlist->addTrack(lied);  // Doppel an Zeile 2
+
+    std::unique_ptr<QMimeData> zeile(lumi::ui::dateiMime({lied}));
+    zeile->setData(QString::fromUtf8(lumi::ui::kPlaylistZeilenMime), "2");
+    CHECK(lumi::ui::spieleDrop(zeile.get(), a.services));
+    CHECK(a.player->gespielt == QList<int>{2});  // nicht der erste Treffer (0)
+
+    // Gegenprobe: keine Audiodatei -> nichts abgespielt, nichts angehaengt.
+    std::unique_ptr<QMimeData> fremd(lumi::ui::dateiMime({a.datei(QStringLiteral("notiz.txt"))}));
+    CHECK_FALSE(lumi::ui::hatAbspielbares(fremd.get(), a.services));
+    CHECK_FALSE(lumi::ui::spieleDrop(fremd.get(), a.services));
+    CHECK(a.playlist->count() == 3);
+    CHECK(a.player->gespielt == QList<int>{2});
+}
+
+TEST_CASE("PaletteUi S84: Drop auf das Player-Panel spielt die Datei")
+{
+    UiUmgebung env;
+    AudioUmgebung a;
+    const QString lied = a.datei(QStringLiteral("lied.flac"));
+    PlayerPanel panel(a.services);
+    panel.resize(400, 200);
+    zeigen(panel);
+    CHECK(panel.acceptDrops());
+
+    std::unique_ptr<QMimeData> data(lumi::ui::dateiMime({lied}));
+    CHECK(sendeDrop(&panel, *data, QPoint(20, 20)));
+    CHECK(playlistPfade(*a.playlist) == QStringList{lied});
+    CHECK(a.player->gespielt == QList<int>{0});
+
+    std::unique_ptr<QMimeData> fremd(lumi::ui::dateiMime({a.datei(QStringLiteral("x.txt"))}));
+    CHECK_FALSE(sendeDrop(&panel, *fremd, QPoint(20, 20)));
+}
+
+TEST_CASE("PaletteUi S84: Playlist — Umsortieren per Drag landet im Dienst, Dateien an der Stelle")
+{
+    UiUmgebung env;
+    AudioUmgebung a;
+    const QString s0 = a.datei(QStringLiteral("a.mp3"));
+    const QString s1 = a.datei(QStringLiteral("b.mp3"));
+    const QString s2 = a.datei(QStringLiteral("c.mp3"));
+    for (const QString& s : {s0, s1, s2}) a.playlist->addTrack(s);
+    PlaylistPanel panel(a.services);
+    panel.resize(400, 400);
+    zeigen(panel);
+    auto* liste = panel.findChild<QListWidget*>(QStringLiteral("playlistListe"));
+    REQUIRE(liste != nullptr);
+    REQUIRE(liste->count() == 3);
+
+    // Hinausziehen: Datei-URLs + Zeilennummern (fuer Doppel)
+    std::unique_ptr<QMimeData> data(liste->model()->mimeData(
+        {liste->model()->index(2, 0), liste->model()->index(0, 0)}));
+    REQUIRE(data != nullptr);
+    CHECK(lumi::ui::playlistZeilen(data.get()) == QList<int>{0, 2});
+    CHECK(lumi::ui::audioDateien(data.get(), a.services) == QStringList{s0, s2});
+
+    // Dateien von aussen: vor Zeile 1 einfuegen
+    const QString neu = a.datei(QStringLiteral("neu.wav"));
+    std::unique_ptr<QMimeData> aussen(lumi::ui::dateiMime({neu}));
+    const QRect zweite = liste->visualItemRect(liste->item(1));
+    CHECK(sendeDrop(liste->viewport(), *aussen, QPoint(zweite.center().x(), zweite.top() + 1)));
+    CHECK(playlistPfade(*a.playlist) == QStringList{s0, neu, s1, s2});
+    CHECK(liste->count() == 4);  // Liste aus dem Dienst neu aufgebaut
+    CHECK(a.player->gespielt.isEmpty());  // in die Playlist ziehen spielt nicht
+
+    // Umsortieren (Befund S84: vorher nur in der Anzeige): Zeile 0 ans Ende —
+    // im DIENST, die Liste folgt.
+    PlaylistPanel::verschiebeZeilen(*a.playlist, {0}, 4);
+    CHECK(playlistPfade(*a.playlist) == QStringList{neu, s1, s2, s0});
+    REQUIRE(liste->count() == 4);
+    CHECK(liste->item(3)->data(Qt::UserRole).toString() == s0);
+    PlaylistPanel::verschiebeZeilen(*a.playlist, {2, 3}, 0);
+    CHECK(playlistPfade(*a.playlist) == QStringList{s2, s0, neu, s1});
+}
+
+TEST_CASE("PaletteUi S84: Audio Browser — Icons, Drag als Datei-URL, Doppelklick spielt")
+{
+    UiUmgebung env;
+    AudioUmgebung a;
+    const QString lied = a.datei(QStringLiteral("lied.mp3"));
+    a.datei(QStringLiteral("notiz.txt"));
+    REQUIRE(QDir(a.dir.path()).mkdir(QStringLiteral("Alben")));
+    AudioBrowserPanel browser(a.services);
+    zeigen(browser);
+
+    QLineEdit* pfad = nullptr;
+    for (QLineEdit* e : browser.findChildren<QLineEdit*>())
+        if (e->placeholderText().startsWith(QStringLiteral("Folder path"))) pfad = e;
+    REQUIRE(pfad != nullptr);
+    pfad->setText(a.dir.path());
+    emit pfad->returnPressed();
+    auto* liste = browser.findChild<QListWidget*>(QStringLiteral("audioBrowserListe"));
+    REQUIRE(liste != nullptr);
+
+    QListWidgetItem* datei = nullptr;
+    QListWidgetItem* ordner = nullptr;
+    for (int i = 0; i < liste->count(); ++i)
+    {
+        const QString t = liste->item(i)->text();
+        CHECK(t != QStringLiteral("notiz.txt"));  // nur Abspielbares
+        if (t == QStringLiteral("lied.mp3")) datei = liste->item(i);
+        if (t == QStringLiteral("Alben")) ordner = liste->item(i);
+    }
+    REQUIRE(datei != nullptr);
+    REQUIRE(ordner != nullptr);
+    CHECK_FALSE(datei->icon().isNull());
+    CHECK_FALSE(ordner->flags().testFlag(Qt::ItemIsDragEnabled));
+    CHECK(liste->model()->supportedDragActions() == Qt::CopyAction);
+
+    std::unique_ptr<QMimeData> data(liste->model()->mimeData({liste->indexFromItem(datei)}));
+    REQUIRE(data != nullptr);
+    CHECK(lumi::ui::audioDateien(data.get(), a.services) == QStringList{lied});
+
+    emit liste->itemDoubleClicked(datei);
+    CHECK(playlistPfade(*a.playlist) == QStringList{lied});
+    CHECK(a.player->gespielt == QList<int>{0});
+    schnappschuss(browser, "S84_audio_browser");
+}
+
+TEST_CASE("PaletteUi S84: Audio Browser zeigt das eingebettete Cover, sonst das Typ-Icon")
+{
+    UiUmgebung env;
+    AudioUmgebung a;
+    // Rotes PNG als Frontcover in einem ID3v2.3-Tag
+    QImage rot(16, 16, QImage::Format_RGB32);
+    rot.fill(Qt::red);
+    QByteArray png;
+    {
+        QBuffer puffer(&png);
+        REQUIRE(puffer.open(QIODevice::WriteOnly));
+        REQUIRE(rot.save(&puffer, "PNG"));
+    }
+    QByteArray rahmen;
+    rahmen.append('\0');
+    rahmen.append("image/png");
+    rahmen.append('\0');
+    rahmen.append(static_cast<char>(3));
+    rahmen.append('\0');
+    rahmen.append(png);
+    const auto be32 = [](qsizetype v) {
+        QByteArray b(4, '\0');
+        for (int i = 0; i < 4; ++i) b[i] = static_cast<char>((v >> (24 - 8 * i)) & 0xFF);
+        return b;
+    };
+    QByteArray koerper = QByteArray("APIC") + be32(rahmen.size()) + QByteArray(2, '\0') + rahmen;
+    const qsizetype n = koerper.size();
+    QByteArray tag("ID3\x03\x00\x00", 6);
+    for (int s : {21, 14, 7, 0}) tag.append(static_cast<char>((n >> s) & 0x7F));
+    const QString mitCover = QFileInfo(a.dir.filePath(QStringLiteral("mit.mp3"))).absoluteFilePath();
+    {
+        QFile f(mitCover);
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write(tag + koerper + QByteArray("MPEG"));
+    }
+    a.datei(QStringLiteral("ohne.mp3"));
+
+    AudioBrowserPanel browser(a.services);
+    zeigen(browser);
+    QLineEdit* pfad = nullptr;
+    for (QLineEdit* e : browser.findChildren<QLineEdit*>())
+        if (e->placeholderText().startsWith(QStringLiteral("Folder path"))) pfad = e;
+    REQUIRE(pfad != nullptr);
+    pfad->setText(a.dir.path());
+    emit pfad->returnPressed();
+    auto* liste = browser.findChild<QListWidget*>(QStringLiteral("audioBrowserListe"));
+    REQUIRE(liste != nullptr);
+    CHECK(liste->iconSize() == QSize(AudioBrowserPanel::kIconKante, AudioBrowserPanel::kIconKante));
+
+    const auto eintrag = [liste](const char* name) -> QListWidgetItem* {
+        for (int i = 0; i < liste->count(); ++i)
+            if (liste->item(i)->text() == QString::fromUtf8(name)) return liste->item(i);
+        return nullptr;
+    };
+    const auto mitte = [](const QListWidgetItem* item) {
+        const QImage b = item->icon().pixmap(32, 32).toImage();
+        return b.pixelColor(b.width() / 2, b.height() / 2);
+    };
+    // Der Lader laeuft im Hintergrund: bis zu 5 s auf das Cover warten.
+    QElapsedTimer uhr;
+    uhr.start();
+    while (uhr.elapsed() < 5000 && mitte(eintrag("mit.mp3")) != QColor(Qt::red))
+    {
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+        QThread::msleep(10);
+    }
+    REQUIRE(eintrag("mit.mp3") != nullptr);
+    CHECK(mitte(eintrag("mit.mp3")) == QColor(Qt::red));
+    // Gegenprobe: ohne Cover bleibt das Typ-Icon (nicht rot, nicht leer)
+    REQUIRE(eintrag("ohne.mp3") != nullptr);
+    CHECK_FALSE(eintrag("ohne.mp3")->icon().isNull());
+    CHECK(mitte(eintrag("ohne.mp3")) != QColor(Qt::red));
+    schnappschuss(browser, "S84_audio_browser_cover");
 }

@@ -15,6 +15,7 @@ set(_local_headers
     # (headers - *.h; *.hpp)
     "${CMAKE_CURRENT_LIST_DIR}/IPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PanelBase.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/AudioBrowserPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/ConfigPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/EelScriptEditing.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/EffectPalette.hpp"

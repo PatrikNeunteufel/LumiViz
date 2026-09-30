@@ -45,6 +45,7 @@
 // Panel Headers
 #include "UI/panels/PlayerPanel.hpp"
 #include "UI/panels/PlaylistPanel.hpp"
+#include "UI/panels/AudioBrowserPanel.hpp"
 #include "UI/panels/ImportBrowserPanel.hpp"
 #include "UI/panels/ShadertoyBrowserPanel.hpp"
 #include "UI/panels/ConfigPanel.hpp"
@@ -119,6 +120,24 @@ void initPanelDefaults(PanelRegistry& registry)
         },
         [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
             return std::make_unique<ImportBrowserPanel>(svc);
+        },
+        false);
+
+    // =========================================================================
+    // AUDIO BROWSER PANEL (S84) — Ordner mit Musik, Gegenstueck zum Effect
+    // Browser: Doppelklick spielt, Ziehen in Playlist/Player/Visualisierung.
+    // =========================================================================
+
+    registry.registerPanel(
+        PanelDescriptor{
+            "audio_browser",    // id
+            "Audio Browser",    // title
+            240,                // order (vor dem Effect Browser)
+            false,              // defaultVisible (hidden by default)
+            "View/Panels"       // menuPath
+        },
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<AudioBrowserPanel>(svc);
         },
         false);
 

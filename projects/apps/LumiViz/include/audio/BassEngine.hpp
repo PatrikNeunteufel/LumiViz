@@ -126,7 +126,7 @@ public:
     /**
      * @brief Get list of supported file extensions
      */
-    [[nodiscard]] QStringList supportedExtensions() const;
+    [[nodiscard]] QStringList supportedExtensions() const override;
 
 private:
     struct Impl;

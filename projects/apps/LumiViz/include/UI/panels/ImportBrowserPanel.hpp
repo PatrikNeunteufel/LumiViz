@@ -19,6 +19,9 @@
  * - Shows the contents of a folder, filtered to `*.avs` / `*.milk` / `*.lvfx` / all.
  * - Double-click a folder to descend, ".." or the Up button to ascend.
  * - Double-click a preset to import it into the Multi Effect host.
+ * - Drag a preset into the Effect Chain (S84): it travels as a file URL
+ *   (`UI/widgets/DateiListe.hpp`) and becomes a preset reference there. Copy
+ *   only — dragging into Explorer never moves the file; folders don't drag.
  *
  * ## Integration
  *

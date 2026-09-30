@@ -15,7 +15,12 @@
 #include "audio/IPlaylist.hpp"
 #include "audio/IAudioPlayer.hpp"
 #include "audio/AudioEvents.hpp"
+#include "UI/widgets/AudioDateien.hpp"
 
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
+#include <QMimeData>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QListWidget>
@@ -31,6 +36,128 @@
 
 #include <algorithm>
 #include <functional>
+#include <numeric>
+
+namespace
+{
+
+/**
+ * Liste der Playlist mit eigener Drag-&-Drop-Behandlung (S84).
+ *
+ * Vorher `InternalMove`: Qt sortierte nur die ANZEIGE um, der Playlist-Dienst
+ * erfuhr davon nichts — danach spielte ein Doppelklick den Titel, der im Dienst
+ * an dieser Zeile stand, also einen anderen. Jetzt gilt wie im Kettenbaum: der
+ * Dienst ordnet, die Liste wird aus ihm neu aufgebaut (PlaylistChangedEvent).
+ *
+ * Gezogen wird als Datei-URL + Zeilennummern (`kPlaylistZeilenMime`), die
+ * Form, die Player, Visualisierung und spaeter die Timeline annehmen.
+ */
+class PlaylistListe : public QListWidget
+{
+public:
+    using QListWidget::QListWidget;
+
+    std::function<QStringList(const QMimeData*)> audioAus;  ///< Audiodateien eines Drags
+    std::function<void(const QList<int>& zeilen, int ziel)> onZeilenDrop;
+    std::function<void(const QStringList& dateien, int ziel)> onDateiDrop;
+
+protected:
+    [[nodiscard]] QStringList mimeTypes() const override
+    {
+        return {QStringLiteral("text/uri-list"),
+                QString::fromUtf8(lumi::ui::kPlaylistZeilenMime)};
+    }
+
+    [[nodiscard]] QMimeData* mimeData(const QList<QListWidgetItem*>& items) const override
+    {
+        QList<int> zeilen;
+        for (const QListWidgetItem* item : items) zeilen.append(row(item));
+        std::sort(zeilen.begin(), zeilen.end());
+        QStringList pfade;
+        QByteArray liste;
+        for (int z : zeilen)
+        {
+            pfade.append(item(z)->data(Qt::UserRole).toString());
+            if (!liste.isEmpty()) liste += ',';
+            liste += QByteArray::number(z);
+        }
+        QMimeData* data = lumi::ui::dateiMime(pfade);
+        if (data != nullptr)
+            data->setData(QString::fromUtf8(lumi::ui::kPlaylistZeilenMime), liste);
+        return data;
+    }
+
+    [[nodiscard]] Qt::DropActions supportedDropActions() const override
+    {
+        return Qt::CopyAction | Qt::MoveAction;
+    }
+
+    void dragEnterEvent(QDragEnterEvent* event) override
+    {
+        if (!nimmtAn(event)) { event->ignore(); return; }
+        QListWidget::dragEnterEvent(event);
+    }
+
+    void dragMoveEvent(QDragMoveEvent* event) override
+    {
+        if (!nimmtAn(event)) { event->ignore(); return; }
+        QListWidget::dragMoveEvent(event);  // setzt den Einfuege-Indikator
+        if (event->isAccepted())
+            event->setDropAction(event->source() == this ? Qt::MoveAction : Qt::CopyAction);
+    }
+
+    void dropEvent(QDropEvent* event) override
+    {
+        if (!nimmtAn(event)) { event->ignore(); return; }
+        const int ziel = zielZeile(event->position().toPoint());
+        if (event->source() == this)
+        {
+            const QList<int> zeilen = lumi::ui::playlistZeilen(event->mimeData());
+            if (onZeilenDrop && !zeilen.isEmpty()) onZeilenDrop(zeilen, ziel);
+        }
+        else if (onDateiDrop && audioAus)
+        {
+            const QStringList dateien = audioAus(event->mimeData());
+            if (!dateien.isEmpty()) onDateiDrop(dateien, ziel);
+        }
+        // Wie im Kettenbaum: nie selbst verschieben (die Liste entsteht aus dem
+        // Dienst neu), und IgnoreAction, damit startDrag keine Zeilen loescht.
+        event->setDropAction(Qt::IgnoreAction);
+        event->accept();
+    }
+
+private:
+    [[nodiscard]] bool nimmtAn(const QDropEvent* event) const
+    {
+        if (event->source() == this) return true;
+        return audioAus && !audioAus(event->mimeData()).isEmpty();
+    }
+
+    /// Einfuegestelle = Zeile, VOR der eingefuegt wird (count() = ans Ende).
+    [[nodiscard]] int zielZeile(QPoint pos) const
+    {
+        const QListWidgetItem* item = itemAt(pos);
+        if (item == nullptr) return count();
+        const int zeile = row(item);
+        return dropIndicatorPosition() == QAbstractItemView::AboveItem ? zeile : zeile + 1;
+    }
+};
+
+}  // namespace
+
+std::vector<int> PlaylistPanel::neueReihenfolge(int anzahl, const QList<int>& zeilen, int ziel)
+{
+    std::vector<int> rest;
+    std::vector<int> gezogen;
+    for (int i = 0; i < anzahl; ++i)
+        (zeilen.contains(i) ? gezogen : rest).push_back(i);
+    // Einfuegestelle in der Liste OHNE die gezogenen Zeilen
+    int stelle = 0;
+    for (int i = 0; i < std::min(ziel, anzahl); ++i)
+        if (!zeilen.contains(i)) ++stelle;
+    rest.insert(rest.begin() + stelle, gezogen.begin(), gezogen.end());
+    return rest;
+}
 
 // =============================================================================
 // Construction
@@ -231,6 +358,25 @@ void PlaylistPanel::onItemDoubleClicked(QListWidgetItem* item)
     if (player != nullptr)
     {
         player->playIndex(index);
+    }
+}
+
+void PlaylistPanel::verschiebeZeilen(IPlaylist& playlist, const QList<int>& zeilen, int ziel)
+{
+    const std::vector<int> soll = neueReihenfolge(playlist.count(), zeilen, ziel);
+    // Stelle fuer Stelle herstellen: vorne ist nach Schritt i alles fertig,
+    // der gesuchte Titel liegt also immer HINTER i.
+    std::vector<int> ist(soll.size());
+    std::iota(ist.begin(), ist.end(), 0);
+    for (int i = 0; i < static_cast<int>(soll.size()); ++i)
+    {
+        const auto it = std::find(ist.begin() + i, ist.end(), soll[static_cast<size_t>(i)]);
+        const int von = static_cast<int>(it - ist.begin());
+        if (von == i) continue;
+        playlist.moveTrack(von, i);
+        const int titel = *it;
+        ist.erase(it);
+        ist.insert(ist.begin() + i, titel);
     }
 }
 
@@ -540,9 +686,28 @@ void PlaylistPanel::setupUI()
     mainLayout->addWidget(m_pSearchEdit);
 
     // List
-    m_pListWidget = new QListWidget(this);
+    auto* liste = new PlaylistListe(this);
+    liste->setObjectName(QStringLiteral("playlistListe"));
+    liste->audioAus = [this](const QMimeData* data) {
+        return lumi::ui::audioDateien(data, services());
+    };
+    liste->onZeilenDrop = [this](const QList<int>& zeilen, int ziel) {
+        if (auto* playlist = services().tryResolve<IPlaylist>())
+            verschiebeZeilen(*playlist, zeilen, ziel);
+    };
+    liste->onDateiDrop = [this](const QStringList& dateien, int ziel) {
+        auto* playlist = services().tryResolve<IPlaylist>();
+        if (playlist == nullptr) return;
+        for (const QString& datei : dateien)
+            if (playlist->insertTrack(std::min(ziel, playlist->count()), datei)) ++ziel;
+    };
+    m_pListWidget = liste;
     m_pListWidget->setAlternatingRowColors(true);
-    m_pListWidget->setDragDropMode(QAbstractItemView::InternalMove);
+    // Umsortieren, Hineinziehen (Audio Browser, Explorer) und Hinausziehen
+    // (Player, Visualisierung) — s. PlaylistListe (S84).
+    m_pListWidget->setDragDropMode(QAbstractItemView::DragDrop);
+    m_pListWidget->setDefaultDropAction(Qt::MoveAction);
+    m_pListWidget->setDropIndicatorShown(true);
     m_pListWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
     mainLayout->addWidget(m_pListWidget, 1);
 

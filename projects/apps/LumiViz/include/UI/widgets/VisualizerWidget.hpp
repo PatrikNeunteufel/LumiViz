@@ -254,6 +254,13 @@ protected:
      */
     void keyPressEvent(QKeyEvent* event) override;
 
+    /// Audiodatei oder Playlist-Eintrag auf das Bild fallen lassen = abspielen
+    /// bzw. zu diesem Eintrag springen (S84). Das eingebettete GL-Fenster nimmt
+    /// selbst nichts an; Qt reicht den Drop vom Container hierher weiter.
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dragMoveEvent(QDragMoveEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
+
 private:
     // =========================================================================
     // Private Methods

@@ -19,8 +19,13 @@
 #include "services/VisualizerRegistry.hpp"
 #include "services/IEventBus.hpp"
 #include "services/events/UIEvents.hpp"
+#include "UI/widgets/AudioDateien.hpp"
 
 // Qt
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
+#include <QMimeData>
 #include <QOpenGLContext>
 #include <QCoreApplication>
 #include <QVBoxLayout>
@@ -74,6 +79,9 @@ VisualizerWidget::VisualizerWidget(ServiceContainer& services, QWidget* parent)
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(container);
+
+    // Audiodatei / Playlist-Eintrag aufs Bild ziehen = abspielen (S84)
+    setAcceptDrops(true);
 
     // -------------------------------------------------------------------------
     // Signal wiring (all on the GUI thread; fpsMeasured arrives queued)
@@ -294,6 +302,25 @@ void VisualizerWidget::keyPressEvent(QKeyEvent* event)
         return;
     }
     StandardWidgetBase::keyPressEvent(event);
+}
+
+// =============================================================================
+// Drop = abspielen (S84) — gleiche Regeln wie im Player-Panel
+// =============================================================================
+
+void VisualizerWidget::dragEnterEvent(QDragEnterEvent* event)
+{
+    dragMoveEvent(event);
+}
+
+void VisualizerWidget::dragMoveEvent(QDragMoveEvent* event)
+{
+    lumi::ui::nimmAbspielbaresAn(event, services());
+}
+
+void VisualizerWidget::dropEvent(QDropEvent* event)
+{
+    lumi::ui::legeAbspielbaresAb(event, services());
 }
 
 // =============================================================================

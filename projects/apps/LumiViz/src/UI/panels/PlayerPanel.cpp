@@ -14,6 +14,12 @@
 #include "services/IEventBus.hpp"
 #include "audio/IAudioPlayer.hpp"
 #include "audio/AudioEvents.hpp"
+#include "UI/widgets/AudioDateien.hpp"
+
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
+#include <QMimeData>
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -40,6 +46,9 @@ PlayerPanel::PlayerPanel(ServiceContainer& services, QWidget* parent)
     updatePlayButton(false);
     updateMuteButton(false);
 
+    // Audiodatei / Playlist-Eintrag hierher ziehen = abspielen (S84)
+    setAcceptDrops(true);
+
     // PERMANENTES Abo (ueberlebt onDeactivate): die Transport-Hotkeys sollen
     // wirken, ohne dass dieses Panel sichtbar ist oder den Fokus hat —
     // dieselbe Bauweise wie das Preset-Blaettern im Import-Browser
@@ -49,6 +58,25 @@ PlayerPanel::PlayerPanel(ServiceContainer& services, QWidget* parent)
         m_transportSubscription = bus->subscribeScoped<TransportCommandEvent>(
             [this](const TransportCommandEvent& e) { onTransportCommand(e.action); });
     }
+}
+
+// =============================================================================
+// Drop = abspielen (S84)
+// =============================================================================
+
+void PlayerPanel::dragEnterEvent(QDragEnterEvent* event)
+{
+    dragMoveEvent(event);
+}
+
+void PlayerPanel::dragMoveEvent(QDragMoveEvent* event)
+{
+    lumi::ui::nimmAbspielbaresAn(event, services());
+}
+
+void PlayerPanel::dropEvent(QDropEvent* event)
+{
+    lumi::ui::legeAbspielbaresAb(event, services());
 }
 
 // =============================================================================
