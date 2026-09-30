@@ -6,7 +6,7 @@
  * @details
  * Jedes Shader-Feld erwartet einen festen Einstieg (`mainImage`, `warp`,
  * `farbe`, `kraft`, ISF-`main`, MilkDrop-`shader_body`). Wer ein Feld neu
- * fuellt, bekommt hier einen Startpunkt: **„Leer"** (nur der Funktionsrumpf —
+ * fuellt, bekommt hier einen Startpunkt: **„Empty"** (nur der Funktionsrumpf —
  * kommt aus dem Code und fehlt darum nie) und einfache Vorlagen als Dateien.
  *
  * Schluessel = Vertrag, bei Feldern mit zwei Stufen um die Stufe ergaenzt:
@@ -34,7 +34,7 @@ namespace lumi::multieffect::shadervorlagen {
 
 struct Eintrag
 {
-    QString name;        ///< Anzeigename (= Dateiname ohne Endung; „Leer" fuer den Rumpf)
+    QString name;        ///< Anzeigename (= Dateiname ohne Endung; „Empty" fuer den Rumpf)
     QString text;        ///< Shader-Text
     QString pfad;        ///< Datei (leer beim Rumpf aus dem Code)
     bool builtin{true};  ///< false = eigene Vorlage im Benutzerordner
@@ -50,7 +50,7 @@ struct Eintrag
 [[nodiscard]] QString endung(const QString& key);
 
 /**
- * Vorlagen eines Schluessels: zuerst „Leer" (aus dem Code), dann die Dateien
+ * Vorlagen eines Schluessels: zuerst „Empty" (aus dem Code), dann die Dateien
  * nach Namen sortiert. Unbekannter Schluessel → leere Liste.
  */
 [[nodiscard]] std::vector<Eintrag> liste(const QString& key);

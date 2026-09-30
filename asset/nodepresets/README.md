@@ -18,10 +18,13 @@ asset/nodepresets/<typkey>/<Name>.json
 gespeicherten Kette (`.lvfx`) unter `"type"` steht: `superScope`, `movement`,
 `dynamicMovement`, `metaballs3d`, `list` …
 
-**Milkdrop-Elemente** (seit S83) sind keine Knoten, tragen aber dasselbe Format
-unter eigenen Schlüsseln: `milkWave` (Custom Wave), `milkShape` (Custom Shape),
-`milkSprite` (Sprite). Ihr Feldsatz ist der des Milkdrop-Serializers
-(`waveToJson` …) ohne den Rahmen `index`/`enabled`.
+**Milkdrop-Elemente und -Sektionen** (seit S83) sind keine Knoten, tragen aber
+dasselbe Format unter eigenen Schlüsseln: `milkWave` (Custom Wave), `milkShape`
+(Custom Shape), `milkSprite` (Sprite) — Feldsatz des Milkdrop-Serializers
+(`waveToJson` …) ohne den Rahmen `index`/`enabled`; `milkCode` (`perFrameInit`,
+`perFrame`, `perPixel`) und `milkParams` (alle skalaren Felder des Preset-
+Dokuments außer Code, Shadern, Element-Listen und Meta). Ein Test prüft jedes
+Feld jeder Datei gegen den Serializer — ein Tippfehler fällt dort auf.
 
 Selbst gespeicherte Voreinstellungen landen **nicht** hier, sondern im Benutzerordner
 (`<AppData>/LumiViz/nodepresets/<typkey>/`). Bei gleichem Namen gewinnt der
@@ -77,8 +80,12 @@ ausdrücklich Teil der Vorlage.
 | `superScope` | 13 Figuren (Circle, Spiral, Heart, …) | Die klassischen Figure-Dropdown-Formen: nur die vier EEL-Slots + `pointCount` (seit S53) |
 | `superScope3d` | 7 Figuren (Spiral Galaxy, Sphere Cloud, Wave Ribbon, Star Flight, Beat Pulse Orb, Lissajous 3D, Spectrum Ring) | Die früheren „Template"-Einträge (S48), seit S83 hier: vier EEL-Slots + `pointCount` |
 | `camera3d` | 6 Fahrten (Orbit, Beat Zoom, Handheld Sway, Fly Forward (Fog), Bass Shake, Top-Down Spin) | Die früheren „Template"-Einträge (S48), seit S83 hier: nur Init/Frame/Beat |
-| `milkWave` | Oszilloskop-Linie · Spektrum-Kreis · Farbwechsel | Form + Punkt-Code; Farbwechsel nur Frame-Code (S83) |
-| `milkShape` | Pulsiert mit Bass · Langsam drehend · Langsames Ausblenden | Frame-Code, bei Bedarf `sides`/`rad` (S83, Wunschliste S80) |
+| `milkWave` | Oscilloscope Line · Spectrum Circle · Color Cycle | Form + Punkt-Code; Color Cycle nur Frame-Code (S83) |
+| `milkShape` | Pulse With Bass · Slow Spin · Slow Fade | Frame-Code, bei Bedarf `sides`/`rad` (S83, Wunschliste S80) |
+| `milkCode` | Slow Rotation · Beat Zoom · Wave Color Cycle · Ripple (per pixel) · Twist (per pixel) | Bausteine für per_frame/per_pixel — setzen nur ihr eigenes Feld (S83) |
+| `milkParams` | Original · Old LumiViz Look (pre-S80) · Soft Pull Up-Left · No Drift or Blur | Stellungen von Gestaltung und „bisher"-Schaltern (Skript-Zufall, Audio, Seitenverhältnis) — *Original* = alles original-treu, *Old LumiViz Look* = der Look bis S80 in einem Zug (S83) |
+| | Radial Swirl · Radial Pull · Slow Fade · Mirror Echo · Gentle Zoom | einzelne Gestaltungs-/Basiswerte |
+| | Modern Rules (IEEE) · Legacy Rules (D3D9) | Regelwerk — *Legacy* ist die original-treue Betriebsart, **kein** „bisher"-Schalter |
 | `metaballs3d` | Kalter Schwarm · Wenige grosse Kugeln | Host-eigene Kugel-Sets (seit S53) |
 | `tentacles3d` | Qualle | Host-eigenes Tentakel-Set (seit S53) |
 | `dynamicMovement` | Sanfter Sog | 5 %-Sog je Frame — der klassische Zoom-Trail-Motor |

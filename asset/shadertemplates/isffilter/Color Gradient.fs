@@ -1,4 +1,4 @@
-// Generator ohne Bildquelle — laeuft auch im frischen Knoten.
+// Generator without an image input — runs in a fresh node too.
 void main()
 {
     vec2 uv = isf_FragNormCoord;

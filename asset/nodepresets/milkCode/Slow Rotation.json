@@ -1,0 +1,8 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "perFrame": "rot = rot + 0.02 * sin(time * 0.3);",
+        "type": "milkCode"
+    }
+}

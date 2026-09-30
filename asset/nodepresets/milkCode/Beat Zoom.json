@@ -1,0 +1,8 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "perFrame": "zoom = zoom + 0.04 * min(bass_att, 2);",
+        "type": "milkCode"
+    }
+}

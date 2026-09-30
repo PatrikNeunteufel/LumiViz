@@ -264,11 +264,31 @@ TEST_CASE("NodePresetStore: jede MITGELIEFERTE Voreinstellung ist ladbar")
         const auto entries = np::list(typeKey);
         CAPTURE(typeKey.toStdString());
         CHECK(!entries.empty());  // ein Ordner ohne ladbare Datei ist ein Fehler
-        // Milkdrop-Elemente (S83) sind keine Knoten: JSON-Ebene + Element-Leser,
-        // und jeder Code-Slot muss als MilkDrop-EEL uebersetzbar sein.
-        const bool element = typeKey == QLatin1String(np::kMilkWave) ||
-                             typeKey == QLatin1String(np::kMilkShape) ||
-                             typeKey == QLatin1String(np::kMilkSprite);
+        // Milkdrop-Elemente und -Sektionen (S83) sind keine Knoten: JSON-Ebene,
+        // jedes Feld muss der Serializer kennen (sonst ist es ein stiller
+        // Tippfehler), und jeder Code-Slot muss als MilkDrop-EEL uebersetzbar sein.
+        QStringList bekannt;
+        if (typeKey == QLatin1String(np::kMilkWave))
+            bekannt = lumi::milkdrop::waveToJson({}).keys();
+        else if (typeKey == QLatin1String(np::kMilkShape))
+            bekannt = lumi::milkdrop::shapeToJson({}).keys();
+        else if (typeKey == QLatin1String(np::kMilkSprite))
+            bekannt = lumi::milkdrop::spriteToJson({}).keys();
+        else if (typeKey == QLatin1String(np::kMilkCode))
+            bekannt = {QStringLiteral("perFrameInit"), QStringLiteral("perFrame"),
+                       QStringLiteral("perPixel")};
+        else if (typeKey == QLatin1String(np::kMilkParams))
+        {
+            bekannt = lumi::milkdrop::presetToJson({})
+                          .value(QStringLiteral("preset"))
+                          .toObject()
+                          .keys();
+            for (const char* k : {"perFrameInit", "perFrame", "perPixel", "warpShader",
+                                  "compShader", "waves", "shapes", "sprites", "name",
+                                  "generation", "psVersion"})
+                bekannt.removeAll(QLatin1String(k));
+        }
+        const bool element = !bekannt.isEmpty();
         for (const np::Entry& e : entries)
         {
             CAPTURE(e.name.toStdString());
@@ -279,7 +299,10 @@ TEST_CASE("NodePresetStore: jede MITGELIEFERTE Voreinstellung ist ladbar")
                 QStringList report;
                 REQUIRE(np::loadJson(e.path, typeKey, felder, &report));
                 CHECK_FALSE(felder.contains(QStringLiteral("type")));
-                for (const char* slot : {"initCode", "frameCode", "pointCode", "code"})
+                for (const QString& k : felder.keys())
+                    CHECK_MESSAGE(bekannt.contains(k), "unbekanntes Feld: " << k.toStdString());
+                for (const char* slot : {"initCode", "frameCode", "pointCode", "code",
+                                         "perFrameInit", "perFrame", "perPixel"})
                 {
                     const std::string code =
                         felder.value(QLatin1String(slot)).toString().toStdString();

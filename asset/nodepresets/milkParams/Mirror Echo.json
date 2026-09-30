@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "milkParams",
+        "videoEchoAlpha": 0.5,
+        "videoEchoOrientation": 1,
+        "videoEchoZoom": 1.0
+    }
+}

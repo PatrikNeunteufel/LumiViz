@@ -1,6 +1,6 @@
 shader_body
 {
-    // Halb scharf, halb aus der ersten Blur-Stufe — weiche Nachzieher.
+    // Half sharp, half from the first blur level — soft trails.
     ret = lerp(tex2D(sampler_main, uv).xyz, GetBlur1(uv), 0.5);
     ret *= 0.98;
 }

@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "rot": 0.005,
+        "type": "milkParams",
+        "zoom": 1.01
+    }
+}

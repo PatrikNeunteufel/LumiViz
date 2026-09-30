@@ -6,8 +6,8 @@
  * @details
  * Eine Vorlage, die nicht kompiliert, ist schlimmer als keine — sie ist der
  * Startpunkt, von dem aus jemand weiterschreibt. Deshalb:
- * - Store: „Leer" steht immer vorn, eigene verdraengen gleichnamige mitgelieferte.
- * - Jede Vorlage (auch „Leer") nennt den Einstieg ihres Vertrags.
+ * - Store: „Empty" steht immer vorn, eigene verdraengen gleichnamige mitgelieferte.
+ * - Jede Vorlage (auch „Empty") nennt den Einstieg ihres Vertrags.
  * - Jede HLSL-Vorlage uebersetzt der HlslTranspiler.
  * - Jede GLSL-Vorlage kompiliert im echten Knoten (GL-Kontext; ohne Kontext
  *   wird dieser Teil uebersprungen, wie in test_ScriptVariablesGl).
@@ -99,7 +99,7 @@ std::optional<EffectParams> knotenMit(const QString& key, const std::string& cod
 
 }  // namespace
 
-TEST_CASE("ShaderVorlagen: Leer steht vorn und nennt den Einstieg jedes Schluessels")
+TEST_CASE("ShaderVorlagen: Empty steht vorn und nennt den Einstieg jedes Schluessels")
 {
     TestWurzel wurzel;
     for (const QString& key : sv::schluessel())
@@ -107,7 +107,7 @@ TEST_CASE("ShaderVorlagen: Leer steht vorn und nennt den Einstieg jedes Schluess
         INFO(key.toStdString());
         const auto eintraege = sv::liste(key);
         REQUIRE_FALSE(eintraege.empty());
-        CHECK(eintraege.front().name == QStringLiteral("Leer"));
+        CHECK(eintraege.front().name == QStringLiteral("Empty"));
         CHECK(eintraege.front().text == sv::leererRumpf(key));
         const auto* vertrag =
             lumi::scriptedit::shaderVertrag(key.section(QLatin1Char('/'), 0, 0));
@@ -122,18 +122,18 @@ TEST_CASE("ShaderVorlagen: eigene Vorlage verdraengt die gleichnamige mitgeliefe
 {
     TestWurzel wurzel;
     const QString asset = QDir(wurzel.dir.path()).filePath(QStringLiteral("asset/pixelfilter"));
-    schreibe(asset + QStringLiteral("/Graustufen.glsl"), QStringLiteral("// werk"));
+    schreibe(asset + QStringLiteral("/Grayscale.glsl"), QStringLiteral("// werk"));
     schreibe(asset + QStringLiteral("/Posterize.glsl"), QStringLiteral("// werk"));
     schreibe(asset + QStringLiteral("/falsch.hlsl"), QStringLiteral("// andere Endung"));
 
     QString pfad;
-    REQUIRE(sv::speichere(QStringLiteral("pixelfilter"), QStringLiteral("Graustufen"),
+    REQUIRE(sv::speichere(QStringLiteral("pixelfilter"), QStringLiteral("Grayscale"),
                           QStringLiteral("// eigen"), &pfad));
-    CHECK(pfad.endsWith(QStringLiteral("user/pixelfilter/Graustufen.glsl")));
+    CHECK(pfad.endsWith(QStringLiteral("user/pixelfilter/Grayscale.glsl")));
 
     const auto e = sv::liste(QStringLiteral("pixelfilter"));
-    REQUIRE(e.size() == 3);  // Leer + Graustufen (eigen) + Posterize
-    CHECK(e[1].name == QStringLiteral("Graustufen"));
+    REQUIRE(e.size() == 3);  // Empty + Grayscale (eigen) + Posterize
+    CHECK(e[1].name == QStringLiteral("Grayscale"));
     CHECK_FALSE(e[1].builtin);
     CHECK(e[1].text == QStringLiteral("// eigen"));
     CHECK(e[2].name == QStringLiteral("Posterize"));

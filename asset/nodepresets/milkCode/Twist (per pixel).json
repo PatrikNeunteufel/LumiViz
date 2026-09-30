@@ -1,0 +1,8 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "perPixel": "rot = rot + 0.05 * (1 - rad) * sin(time * 0.5);",
+        "type": "milkCode"
+    }
+}

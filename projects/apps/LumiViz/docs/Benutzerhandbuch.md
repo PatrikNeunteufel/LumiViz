@@ -306,9 +306,20 @@ Ganz oben im Eigenschafts-Editor steht die Zeile **Preset**. Sie gilt für
 - **Milkdrop-Elemente** haben seit Session 83 eine eigene Zeile: Markiere im
   Baum eine einzelne **Custom Wave**, **Custom Shape** oder ein **Sprite** —
   oben im Editor steht dann *Preset* für genau dieses Element. Mitgeliefert
-  sind z. B. *Oszilloskop-Linie*, *Spektrum-Kreis* (Waves) und *Pulsiert mit
-  Bass*, *Langsames Ausblenden* (Shapes). Nummer und An/Aus des Elements
-  bleiben beim Laden, wie sie sind.
+  sind z. B. *Oscilloscope Line*, *Spectrum Circle* (Waves) und *Pulse With
+  Bass*, *Slow Fade* (Shapes). Nummer und An/Aus des Elements bleiben beim
+  Laden, wie sie sind.
+- Auch die Milkdrop-Sektionen **Code** und **Parameter** tragen eine eigene
+  Zeile. *Code*: kleine per_frame-/per_pixel-Bausteine (*Slow Rotation*,
+  *Beat Zoom*, *Ripple (per pixel)* …) — ein Baustein setzt nur die Felder,
+  die er braucht. *Parameter*: Stellungen der Basiswerte, der Gestaltung und
+  der „bisher"-Schalter, z. B. **Original** (Gestaltung aus, alle drei
+  „bisher"-Schalter auf Original), **Old LumiViz Look (pre-S80)** (weicher Sog
+  nach oben links samt Weichzeichnen und die drei „bisher"-Stellungen — der
+  Look bis Session 80 in einem Zug), *Soft Pull Up-Left*, *Radial Swirl*,
+  *Mirror Echo*, *Modern Rules (IEEE)*.
+- **Namen** der mitgelieferten Presets und Vorlagen sind englisch — wie die
+  übrige Oberfläche.
 - Die früheren **Template**-Listen bei **SuperScope 3D** und **3D Camera**
   sind jetzt ebenfalls Voreinstellungen dieser Zeile (gleiche Namen, z. B.
   *Spiral Galaxy*, *Orbit*) — und damit um eigene erweiterbar.
@@ -826,17 +837,17 @@ Der Groß-Editor (⤢) hat an allen Shader-Feldern **„Import…"** und
 
 ### Vorlagen im großen Editor
 
-Oben im Groß-Editor (⤢) jedes Shader-Feldes steht **Vorlage:**. Die Auswahl
+Oben im Groß-Editor (⤢) jedes Shader-Feldes steht **Template:**. Die Auswahl
 **ersetzt** den Editor-Inhalt — **Strg+Z** holt den alten Text zurück;
 übernommen wird wie immer erst mit **Apply** oder **OK**.
 
-- **Leer** gibt es immer: nur der Funktionsrumpf, den das Feld erwartet
+- **Empty** gibt es immer: nur der Funktionsrumpf, den das Feld erwartet
   (`mainImage`, `warp`, `farbe`, `kraft`, ISF-`main`, MilkDrop-`shader_body`).
-- Dazu je Feld zwei bis drei einfache Vorlagen — etwa *Farbverlauf* und
-  *Ringe* (Shadertoy), *Wirbel* und *Zoom mit Bass* (Mesh Warp), *Graustufen*
-  und *Kanten* (Pixel Filter), *Langsames Ausblenden* (MilkDrop Warp),
-  *Bass-Helligkeit* (MilkDrop Comp).
-- **Als Vorlage speichern…** legt den Editor-Inhalt als eigene Vorlage ab
+- Dazu je Feld zwei bis drei einfache Vorlagen — etwa *Color Gradient* und
+  *Rings* (Shadertoy), *Swirl* und *Bass Zoom* (Mesh Warp), *Grayscale* und
+  *Edges* (Pixel Filter), *Slow Fade* (MilkDrop Warp), *Bass Brightness*
+  (MilkDrop Comp).
+- **Save as template…** legt den Editor-Inhalt als eigene Vorlage ab
   (in der Liste mit `*`).
 - Die ISF-Vorlagen sind **Generatoren ohne Bildquelle**: Bildquellen und
   Regler eines ISF-Shaders kommen über „ISF-Datei importieren…" in den
@@ -880,7 +891,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
-| 1.17.0 | 2026-09-30 | Session 83. §11 Voreinstellungen: Combo behält den geladenen Namen, **„(unsaved) – Name"** nach einer Änderung, **(none)** ohne Voreinstellung, 🗑 zielt auf die Quelle; NEU Voreinstellungen je **Milkdrop-Element** (Wave/Shape/Sprite); Template-Listen von SuperScope 3D/3D Camera sind jetzt Voreinstellungen. §11 NEU Schalter **Script active**. §14 NEU **Vorlagen im großen Editor** (Leer + einfache Vorlagen je Shader-Feld, eigene speichern) |
+| 1.17.0 | 2026-09-30 | Session 83. Namen der mitgelieferten Presets/Vorlagen englisch; NEU Presets für die Milkdrop-Sektionen **Code** und **Parameter** (u. a. *Original*, *Old LumiViz Look (pre-S80)*). §11 Voreinstellungen: Combo behält den geladenen Namen, **„(unsaved) – Name"** nach einer Änderung, **(none)** ohne Voreinstellung, 🗑 zielt auf die Quelle; NEU Voreinstellungen je **Milkdrop-Element** (Wave/Shape/Sprite); Template-Listen von SuperScope 3D/3D Camera sind jetzt Voreinstellungen. §11 NEU Schalter **Script active**. §14 NEU **Vorlagen im großen Editor** (Leer + einfache Vorlagen je Shader-Feld, eigene speichern) |
 | 1.16.0 | 2026-09-29 | Session 82. §11 Host-Gruppen: NEU **Presetverweis** („Preset Reference…", nur Pfad gespeichert, Inhalt beim Laden frisch; Schalter Kopie ↔ Verweis; vom Host Switcher schaltbar) |
 | 1.15.0 | 2026-09-29 | Session 82. §11 „Werte per Formel steuern": NEU **Song-Feld** in jedem Knoten mit Frame-Feld (einmal je Songwechsel, vor Frame) |
 | 1.14.0 | 2026-09-29 | Session 82. §11 NEU **Host Switcher** (Gruppenliste mit Index, Startgruppe, Wechsel nach Zeit/Songwechsel/zufällig, Skripte Init/Frame/Beat/Song mit `switch`/`nextgroup`, schaltet nur zur Laufzeit); Gruppennamen eindeutig mit Zähler, Umbenennen zieht Switcher-Listen mit. Eingeklappte Gruppen bleiben beim Wechsel zu |

@@ -171,7 +171,7 @@ std::vector<Eintrag> liste(const QString& key)
     if (!bekannt(key)) return out;
 
     Eintrag leer;
-    leer.name = QStringLiteral("Leer");
+    leer.name = QStringLiteral("Empty");  // Namen englisch (Vorgabe Patrik S83)
     leer.text = leererRumpf(key);
     out.push_back(std::move(leer));
 

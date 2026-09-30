@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "gestaltRadAn": true,
+        "gestaltRadCx": 0.5,
+        "gestaltRadCy": 0.5,
+        "gestaltRadStaerke": 0.5,
+        "gestaltRadWinkel": 180.0,
+        "type": "milkParams"
+    }
+}

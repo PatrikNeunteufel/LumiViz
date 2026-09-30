@@ -2880,9 +2880,10 @@ QString presetStatusText(const QString& geaenderteVoreinstellung)
 
 // --- Sicht einer Preset-Zeile (S83) -------------------------------------------
 //
-// Eine Preset-Zeile gilt dem ganzen Knoten (section < 0) oder einem
-// Milkdrop-Element: Sektion 1 = Custom Wave, 2 = Custom Shape, 4 = Sprite,
-// `element` = Index im jeweiligen Vektor (Zaehlung wie splitMilkPath).
+// Eine Preset-Zeile gilt dem ganzen Knoten (section < 0) oder einem Teil
+// eines Milkdrop-Nodes: Sektion 1 = Custom Wave, 2 = Custom Shape, 4 = Sprite
+// (`element` = Index im jeweiligen Vektor, Zaehlung wie splitMilkPath) oder
+// die Sektionen 0 = Code und 5 = Parameter (`element` = -1).
 
 /// Typ-Schluessel der Sicht (leer = kein Preset-Pfad).
 QString sichtTypKey(const EffectParams& params, int section)
@@ -2894,8 +2895,35 @@ QString sichtTypKey(const EffectParams& params, int section)
     case 1: return QString::fromLatin1(np::kMilkWave);
     case 2: return QString::fromLatin1(np::kMilkShape);
     case 4: return QString::fromLatin1(np::kMilkSprite);
+    case 0: return QString::fromLatin1(np::kMilkCode);
+    case 5: return QString::fromLatin1(np::kMilkParams);
     default: return {};
     }
+}
+
+/// Felder der Milkdrop-Sektionen Code (0) und Parameter (5) aus dem
+/// Preset-Dokument. Parameter = alle skalaren Felder AUSSER Code, Shadern,
+/// Element-Listen und Meta — also Basiswerte, Basis-Waveform, Gestaltung,
+/// „bisher"-Schalter, Regelwerk.
+QJsonObject milkSektionLesen(const lumi::milkdrop::PresetState& preset, int section)
+{
+    const QJsonObject alles =
+        lumi::milkdrop::presetToJson(preset).value(QStringLiteral("preset")).toObject();
+    static const QStringList kCode = {QStringLiteral("perFrameInit"),
+                                      QStringLiteral("perFrame"), QStringLiteral("perPixel")};
+    QJsonObject o;
+    if (section == 0)
+    {
+        for (const QString& k : kCode) o[k] = alles.value(k);
+        return o;
+    }
+    static const QStringList kKeineParameter = {
+        QStringLiteral("warpShader"), QStringLiteral("compShader"), QStringLiteral("waves"),
+        QStringLiteral("shapes"),     QStringLiteral("sprites"),    QStringLiteral("name"),
+        QStringLiteral("generation"), QStringLiteral("psVersion")};
+    o = alles;
+    for (const QString& k : kCode + kKeineParameter) o.remove(k);
+    return o;
 }
 
 /// Die Felder der Sicht, OHNE Rahmen (Knoten: type/name/description/enabled/
@@ -2913,7 +2941,9 @@ QJsonObject sichtLesen(const ChainNode& n, int section, int element)
         return o;
     }
     const auto* mp = std::get_if<MilkdropNodeParams>(&n.params);
-    if (mp == nullptr || element < 0) return {};
+    if (mp == nullptr) return {};
+    if (section == 0 || section == 5) return milkSektionLesen(mp->preset, section);
+    if (element < 0) return {};
     const auto e = static_cast<std::size_t>(element);
     if (section == 1 && e < mp->preset.waves.size()) o = md::waveToJson(mp->preset.waves[e]);
     else if (section == 2 && e < mp->preset.shapes.size())
@@ -2939,7 +2969,21 @@ void sichtSchreiben(ChainNode& n, int section, int element, const QJsonObject& f
         return;
     }
     auto* mp = std::get_if<MilkdropNodeParams>(&n.params);
-    if (mp == nullptr || element < 0) return;
+    if (mp == nullptr) return;
+    if (section == 0 || section == 5)
+    {
+        // Ueber das ganze Preset-Dokument: die Felder der Sektion darueber,
+        // alles andere (Waves, Shader, Name …) reist unveraendert mit.
+        QJsonObject doc = md::presetToJson(mp->preset);
+        QJsonObject pr = doc.value(QStringLiteral("preset")).toObject();
+        for (auto it = felder.constBegin(); it != felder.constEnd(); ++it)
+            pr[it.key()] = it.value();
+        doc[QStringLiteral("preset")] = pr;
+        mp->preset = md::presetFromJson(doc, report);
+        ++mp->revision;
+        return;
+    }
+    if (element < 0) return;
     const auto e = static_cast<std::size_t>(element);
     const auto ueber = [&felder](QJsonObject o) {
         for (auto it = felder.constBegin(); it != felder.constEnd(); ++it)
@@ -3207,6 +3251,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     // Milkdrop-Elemente (S83, Entscheid Patrik E3a): eigene Typ-Schluessel
     // milkWave/milkShape/milkSprite — nur in der Einzel-Ansicht.
     else if (milkElem >= 0) addPresetRow(form, path, rawPath, params, milkSection, milkElem);
+    // Milkdrop-Sektionen Code und Parameter (S83, Wunsch Patrik): per_frame-/
+    // per_pixel-Vorlagen und Stellungen wie Gestaltung/„bisher"-Schalter.
+    else if (milkSection == 0 || milkSection == 5)
+        addPresetRow(form, path, rawPath, params, milkSection, -1);
 
     // Editable name + free-text description (commit on Enter / focus-out).
     auto addLine = [&](const QString& label, const QString& value,

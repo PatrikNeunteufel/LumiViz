@@ -1,4 +1,4 @@
-// Drehung, die zur Mitte hin staerker wird.
+// Rotation that gets stronger towards the centre.
 vec2 warp(vec2 uv)
 {
     vec2 d = uv - 0.5;

@@ -26,6 +26,7 @@
 #pragma once
 
 #include "scripting/ScriptFormatter.hpp"
+#include "visualizers/multieffect/NodePresetStore.hpp"  // sanitize (Vorlagen-Dateiname)
 #include "visualizers/multieffect/ShaderVorlagen.hpp"
 
 #include <QColor>
@@ -440,8 +441,8 @@ struct ScriptEditorHooks
     QString vertragKey;
     /// Schluessel der Shader-Vorlagen (S83, s. `ShaderVorlagen.hpp`), z. B.
     /// "pixelfilter" oder "milkdrop/warp". Nicht leer = der Dialog zeigt oben
-    /// die Zeile „Vorlage:" mit „Leer", den Vorlagen und „Als Vorlage
-    /// speichern…". Die Auswahl gibt es NUR hier, nicht im Panel.
+    /// die Zeile „Template:" mit „Empty", den Vorlagen und „Save as
+    /// template…". Die Auswahl gibt es NUR hier, nicht im Panel.
     QString vorlagenKey;
 };
 
@@ -696,24 +697,24 @@ struct ShaderVertrag
         namespace sv = lumi::multieffect::shadervorlagen;
         const QString key = hooks.vorlagenKey;
         auto* row = new QHBoxLayout();
-        row->addWidget(new QLabel(QObject::tr("Vorlage:"), &dlg));
+        row->addWidget(new QLabel(QObject::tr("Template:"), &dlg));
         auto* vorlagen = new QComboBox(&dlg);
         vorlagen->setObjectName(QStringLiteral("shaderVorlage"));
         vorlagen->setToolTip(
-            QObject::tr("Ersetzt den Editor-Inhalt (Strg+Z nimmt es zurück). "
-                        "„Leer“ = nur der Funktionsrumpf; * = eigene Vorlage."));
+            QObject::tr("Replaces the editor content (Ctrl+Z takes it back). "
+                        "Empty = just the required function body; * = your own."));
         const auto fuelle = [vorlagen, key]() {
             const QSignalBlocker blocker(vorlagen);
             vorlagen->clear();
-            vorlagen->addItem(QObject::tr("— Vorlage wählen —"));
+            vorlagen->addItem(QObject::tr("— choose a template —"));
             for (const sv::Eintrag& e : sv::liste(key))
                 vorlagen->addItem(e.builtin ? e.name : e.name + QStringLiteral(" *"), e.text);
         };
         fuelle();
         row->addWidget(vorlagen, 1);
-        auto* speichern = new QPushButton(QObject::tr("Als Vorlage speichern…"), &dlg);
+        auto* speichern = new QPushButton(QObject::tr("Save as template…"), &dlg);
         speichern->setObjectName(QStringLiteral("shaderVorlageSpeichern"));
-        speichern->setToolTip(QObject::tr("Den Editor-Inhalt als eigene Vorlage ablegen."));
+        speichern->setToolTip(QObject::tr("Store the editor content as your own template."));
         row->addWidget(speichern);
         lay->insertLayout(0, row);
 
@@ -728,22 +729,24 @@ struct ShaderVertrag
         QObject::connect(speichern, &QPushButton::clicked, &dlg, [editor, key, fuelle, &dlg]() {
             bool ok = false;
             const QString name = QInputDialog::getText(
-                &dlg, QObject::tr("Als Vorlage speichern"), QObject::tr("Name der Vorlage:"),
+                &dlg, QObject::tr("Save as template"), QObject::tr("Template name:"),
                 QLineEdit::Normal, QString(), &ok).trimmed();
             if (!ok || name.isEmpty()) return;
-            const QString ziel = sv::userDir(key) + QLatin1Char('/') + name +
+            // Derselbe Dateiname, den speichere() schreibt (bereinigt).
+            const QString ziel = sv::userDir(key) + QLatin1Char('/') +
+                                 lumi::multieffect::nodepresets::sanitize(name) +
                                  QLatin1Char('.') + sv::endung(key);
             if (QFileInfo::exists(ziel) &&
-                QMessageBox::question(&dlg, QObject::tr("Als Vorlage speichern"),
-                                      QObject::tr("Die eigene Vorlage „%1“ gibt es "
-                                                  "schon. Überschreiben?")
+                QMessageBox::question(&dlg, QObject::tr("Save as template"),
+                                      QObject::tr("Your template '%1' already exists. "
+                                                  "Overwrite it?")
                                           .arg(name)) != QMessageBox::Yes)
                 return;
             if (!sv::speichere(key, name, editor->toPlainText()))
             {
-                QMessageBox::warning(&dlg, QObject::tr("Als Vorlage speichern"),
-                                     QObject::tr("Vorlage „%1“ konnte nicht gespeichert "
-                                                 "werden.").arg(name));
+                QMessageBox::warning(&dlg, QObject::tr("Save as template"),
+                                     QObject::tr("Template '%1' could not be saved.")
+                                         .arg(name));
                 return;
             }
             fuelle();

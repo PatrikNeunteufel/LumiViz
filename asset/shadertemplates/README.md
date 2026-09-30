@@ -1,12 +1,12 @@
 # Shader-Vorlagen (mitgeliefert)
 
 Startpunkte für die Shader-Felder der Effektkette. Ausgewählt werden sie im
-**großen Editor** (⤢) über die Zeile „Vorlage:“, nicht im Panel. Die Wahl ersetzt
+**großen Editor** (⤢) über die Zeile „Template:“, nicht im Panel. Die Wahl ersetzt
 den Editor-Inhalt; Strg+Z nimmt sie zurück.
 
 > **Diese Datei ist der Anker der Verzeichnissuche.** `ShaderVorlagen` sucht vom
 > Programmordner aufwärts nach `asset/shadertemplates/README.md`. Wird sie entfernt,
-> findet die App die mitgelieferten Vorlagen nicht mehr („Leer“ gibt es trotzdem —
+> findet die App die mitgelieferten Vorlagen nicht mehr („Empty“ gibt es trotzdem —
 > es kommt aus dem Code).
 
 ## Aufbau
@@ -33,7 +33,9 @@ ISF-Shaders stehen in seinem JSON-Kopf und kommen über „ISF-Datei importieren
 den Knoten — eine Vorlage ersetzt nur den Code, und ein frischer Knoten hat kein
 `inputImage`.
 
-Eigene Vorlagen („Als Vorlage speichern…“) landen **nicht** hier, sondern im
+Namen und Kommentare der Vorlagen sind **englisch** (wie die Oberfläche).
+
+Eigene Vorlagen („Save as template…“) landen **nicht** hier, sondern im
 Benutzerordner `<AppData>/LumiViz/shadertemplates/<schlüssel>/`. Bei gleichem Namen
 gewinnt die eigene Datei.
 

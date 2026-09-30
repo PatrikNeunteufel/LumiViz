@@ -1,0 +1,8 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "perPixel": "zoom = zoom + 0.02 * sin(rad * 12 - time * 3) * bass_att;",
+        "type": "milkCode"
+    }
+}

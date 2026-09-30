@@ -1,0 +1,8 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "decay": 0.97,
+        "type": "milkParams"
+    }
+}

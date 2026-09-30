@@ -1,4 +1,4 @@
-// Kreisende Kraft um die Bildmitte.
+// A force circling the image centre.
 vec2 kraft(vec2 pos, vec2 vel, float alter)
 {
     vec2 d = pos - vec2(0.5);

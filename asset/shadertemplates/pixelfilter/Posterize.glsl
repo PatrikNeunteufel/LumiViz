@@ -1,6 +1,6 @@
-// Wenige Farbstufen je Kanal — Plakat-Look.
+// Few colour steps per channel — poster look.
 vec4 farbe(vec2 uv, vec4 src)
 {
-    const float stufen = 5.0;
-    return vec4(floor(src.rgb * stufen + 0.5) / stufen, src.a);
+    const float steps = 5.0;
+    return vec4(floor(src.rgb * steps + 0.5) / steps, src.a);
 }

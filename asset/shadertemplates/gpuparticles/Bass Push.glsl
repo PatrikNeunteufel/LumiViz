@@ -1,4 +1,4 @@
-// Der Bass stoesst die Partikel von der Mitte weg.
+// The bass pushes the particles away from the centre.
 vec2 kraft(vec2 pos, vec2 vel, float alter)
 {
     vec2 d = pos - vec2(0.5);

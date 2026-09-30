@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "gestaltLinAn": false,
+        "gestaltRadAn": false,
+        "gestaltWeichAn": false,
+        "type": "milkParams"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "aspektOriginal": true,
+        "audioOriginal": true,
+        "eelRandOriginal": true,
+        "gestaltLinAn": false,
+        "gestaltRadAn": false,
+        "gestaltWeichAn": false,
+        "type": "milkParams"
+    }
+}

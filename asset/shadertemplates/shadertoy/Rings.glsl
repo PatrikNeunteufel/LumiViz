@@ -1,4 +1,4 @@
-// Konzentrische Ringe, die nach aussen laufen.
+// Concentric rings travelling outwards.
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
     vec2 p = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;

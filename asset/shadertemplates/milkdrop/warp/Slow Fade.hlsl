@@ -1,6 +1,6 @@
 shader_body
 {
-    // Bild bleibt stehen und verblasst langsam (Decay).
+    // The image stands still and fades slowly (decay).
     ret = tex2D(sampler_main, uv).xyz;
     ret -= 0.004;
 }

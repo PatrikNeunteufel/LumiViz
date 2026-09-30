@@ -1,0 +1,8 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "regelwerk": "modern",
+        "type": "milkParams"
+    }
+}

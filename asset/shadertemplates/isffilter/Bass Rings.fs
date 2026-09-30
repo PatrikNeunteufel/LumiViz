@@ -1,4 +1,4 @@
-// Generator: Ringe, deren Helligkeit dem Bass folgt.
+// Generator: rings whose brightness follows the bass.
 void main()
 {
     vec2 p = isf_FragNormCoord - 0.5;

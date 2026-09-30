@@ -1,0 +1,8 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "perFrame": "wave_r = 0.5 + 0.5 * sin(time * 1.13);\nwave_g = 0.5 + 0.5 * sin(time * 1.37 + 2);\nwave_b = 0.5 + 0.5 * sin(time * 1.71 + 4);",
+        "type": "milkCode"
+    }
+}

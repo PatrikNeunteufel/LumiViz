@@ -50,6 +50,7 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSettings>
+#include <QDoubleSpinBox>
 #include <QSpinBox>
 #include <QTextBlock>
 #include <QTextDocument>
@@ -958,4 +959,68 @@ TEST_CASE("PaletteUi Panel D2: Custom Wave traegt eine eigene Preset-Zeile (S83)
     warte();
     CHECK(welle().samples == 128);
     CHECK(combo()->currentText() == QString::fromUtf8("(unsaved) – Linie"));
+}
+
+TEST_CASE("PaletteUi Panel D3: Milkdrop-Parameter tragen Presets (Stellung + bisher-Schalter)")
+{
+    // Wunsch Patrik S83: auch Code und Parameter des Milkdrop-Nodes bekommen
+    // Presets — etwa den alten LumiViz-Look (Drift + Weichzeichnen + die
+    // „bisher"-Schalter) in einem Zug. Laden setzt die Felder, Waves & Co.
+    // bleiben unberuehrt.
+    namespace np = lumi::multieffect::nodepresets;
+    UiUmgebung env;
+    QTemporaryDir root;
+    REQUIRE(root.isValid());
+    np::setRootForTesting(root.path());
+    struct Zurueck
+    {
+        ~Zurueck() { np::setRootForTesting(QString()); }
+    } zurueck;
+    const QString dir = QDir(root.path()).filePath(QStringLiteral("asset/milkParams"));
+    REQUIRE(QDir().mkpath(dir));
+    {
+        QFile f(QDir(dir).filePath(QStringLiteral("Old Look.json")));
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write(R"({"format":"lumiviz-nodepreset","formatVersion":1,"node":{"type":"milkParams",)"
+                R"("gestaltLinAn":true,"gestaltLinStaerke":0.7071,"gestaltLinRichtung":135.0,)"
+                R"("gestaltWeichAn":true,"gestaltWeich":1.0,"audioOriginal":false}})");
+    }
+
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    const auto preset = [&p]() -> const lumi::milkdrop::PresetState& {
+        return std::get<lumi::multieffect::MilkdropNodeParams>(p.root().children[2].params)
+            .preset;
+    };
+    const std::size_t wellen = preset().waves.size();
+
+    QTreeWidgetItem* item = nullptr;  // Sektion Parameter: Pfad {2, Basis + 5}
+    for (QTreeWidgetItemIterator it(p.tree); *it != nullptr; ++it)
+    {
+        const QVariantList v = (*it)->data(0, Qt::UserRole).toList();
+        if (v.size() == 2 && v[0].toInt() == 2 && v[1].toInt() == 1000000 + 5) item = *it;
+    }
+    REQUIRE(item != nullptr);
+    const auto warte = [] {
+        for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+    };
+    const auto combo = [&p] { return p.panel->findChild<QComboBox*>(QStringLiteral("knotenPreset")); };
+    p.tree->setCurrentItem(item);
+    warte();
+    REQUIRE(combo() != nullptr);
+    combo()->setCurrentIndex(combo()->findText(QStringLiteral("Old Look")));
+    warte();
+    CHECK(preset().gestaltLinAn);
+    CHECK(preset().gestaltLinRichtung == doctest::Approx(135.0));
+    CHECK(preset().gestaltWeichAn);
+    CHECK_FALSE(preset().audioOriginal);
+    CHECK(preset().waves.size() == wellen);  // der Rest des Presets bleibt
+    REQUIRE(combo() != nullptr);             // Editor steht noch in der Sektion
+    CHECK(combo()->currentText() == QStringLiteral("Old Look"));
+
+    auto* decay = p.panel->findChild<QDoubleSpinBox*>(QStringLiteral("decay"));
+    REQUIRE(decay != nullptr);
+    decay->setValue(decay->value() > 0.5 ? 0.5 : 0.9);
+    warte();
+    CHECK(combo()->currentText() == QString::fromUtf8("(unsaved) – Old Look"));
 }

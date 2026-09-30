@@ -117,6 +117,11 @@ struct Entry
 inline constexpr const char* kMilkWave = "milkWave";      ///< Custom Wave
 inline constexpr const char* kMilkShape = "milkShape";    ///< Custom Shape
 inline constexpr const char* kMilkSprite = "milkSprite";  ///< Sprite (MD3)
+/// Milkdrop-Sektion „Code": per_frame_init / per_frame / per_pixel (S83)
+inline constexpr const char* kMilkCode = "milkCode";
+/// Milkdrop-Sektion „Parameter": Basiswerte, Gestaltung, „bisher"-Schalter,
+/// Regelwerk (S83) — alle skalaren Felder des PresetState
+inline constexpr const char* kMilkParams = "milkParams";
 
 /**
  * Wie `load`, aber auf JSON: die Felder der Datei werden UEBER `inOut` gelegt
