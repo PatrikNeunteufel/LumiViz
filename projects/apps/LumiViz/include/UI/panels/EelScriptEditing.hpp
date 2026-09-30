@@ -26,15 +26,20 @@
 #pragma once
 
 #include "scripting/ScriptFormatter.hpp"
+#include "visualizers/multieffect/ShaderVorlagen.hpp"
 
 #include <QColor>
+#include <QComboBox>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFont>
+#include <QHBoxLayout>
+#include <QInputDialog>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
@@ -42,11 +47,13 @@
 #include <QScrollBar>
 #include <QSet>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QSplitter>
 #include <QString>
 #include <QSyntaxHighlighter>
 #include <QTextBrowser>
 #include <QTextCharFormat>
+#include <QTextCursor>
 #include <QTimer>
 #include <QVBoxLayout>
 
@@ -431,6 +438,11 @@ struct ScriptEditorHooks
     /// (`editor/shaderFileDir/<vertrag>`) und die Vertragsprüfung beim
     /// Import. Leer = keine Prüfung, gemeinsamer Ordner.
     QString vertragKey;
+    /// Schluessel der Shader-Vorlagen (S83, s. `ShaderVorlagen.hpp`), z. B.
+    /// "pixelfilter" oder "milkdrop/warp". Nicht leer = der Dialog zeigt oben
+    /// die Zeile „Vorlage:" mit „Leer", den Vorlagen und „Als Vorlage
+    /// speichern…". Die Auswahl gibt es NUR hier, nicht im Panel.
+    QString vorlagenKey;
 };
 
 /**
@@ -675,6 +687,68 @@ struct ShaderVertrag
     split->setStretchFactor(0, 3);
     split->setStretchFactor(1, 2);
     lay->addWidget(split, 1);
+
+    // Vorlagen (S83, Entscheid Patrik E4a): nur im Groß-Editor. Die Wahl
+    // ERSETZT den Text ueber den Cursor, damit Strg+Z sie zuruecknimmt; die
+    // Combo ist eine Aktion, kein Zustand — sie springt danach zurueck.
+    if (!hooks.vorlagenKey.isEmpty())
+    {
+        namespace sv = lumi::multieffect::shadervorlagen;
+        const QString key = hooks.vorlagenKey;
+        auto* row = new QHBoxLayout();
+        row->addWidget(new QLabel(QObject::tr("Vorlage:"), &dlg));
+        auto* vorlagen = new QComboBox(&dlg);
+        vorlagen->setObjectName(QStringLiteral("shaderVorlage"));
+        vorlagen->setToolTip(
+            QObject::tr("Ersetzt den Editor-Inhalt (Strg+Z nimmt es zurück). "
+                        "„Leer“ = nur der Funktionsrumpf; * = eigene Vorlage."));
+        const auto fuelle = [vorlagen, key]() {
+            const QSignalBlocker blocker(vorlagen);
+            vorlagen->clear();
+            vorlagen->addItem(QObject::tr("— Vorlage wählen —"));
+            for (const sv::Eintrag& e : sv::liste(key))
+                vorlagen->addItem(e.builtin ? e.name : e.name + QStringLiteral(" *"), e.text);
+        };
+        fuelle();
+        row->addWidget(vorlagen, 1);
+        auto* speichern = new QPushButton(QObject::tr("Als Vorlage speichern…"), &dlg);
+        speichern->setObjectName(QStringLiteral("shaderVorlageSpeichern"));
+        speichern->setToolTip(QObject::tr("Den Editor-Inhalt als eigene Vorlage ablegen."));
+        row->addWidget(speichern);
+        lay->insertLayout(0, row);
+
+        QObject::connect(vorlagen, &QComboBox::activated, &dlg, [editor, vorlagen](int idx) {
+            if (idx <= 0) return;
+            QTextCursor c(editor->document());
+            c.select(QTextCursor::Document);
+            c.insertText(vorlagen->itemData(idx).toString());
+            const QSignalBlocker blocker(vorlagen);
+            vorlagen->setCurrentIndex(0);
+        });
+        QObject::connect(speichern, &QPushButton::clicked, &dlg, [editor, key, fuelle, &dlg]() {
+            bool ok = false;
+            const QString name = QInputDialog::getText(
+                &dlg, QObject::tr("Als Vorlage speichern"), QObject::tr("Name der Vorlage:"),
+                QLineEdit::Normal, QString(), &ok).trimmed();
+            if (!ok || name.isEmpty()) return;
+            const QString ziel = sv::userDir(key) + QLatin1Char('/') + name +
+                                 QLatin1Char('.') + sv::endung(key);
+            if (QFileInfo::exists(ziel) &&
+                QMessageBox::question(&dlg, QObject::tr("Als Vorlage speichern"),
+                                      QObject::tr("Die eigene Vorlage „%1“ gibt es "
+                                                  "schon. Überschreiben?")
+                                          .arg(name)) != QMessageBox::Yes)
+                return;
+            if (!sv::speichere(key, name, editor->toPlainText()))
+            {
+                QMessageBox::warning(&dlg, QObject::tr("Als Vorlage speichern"),
+                                     QObject::tr("Vorlage „%1“ konnte nicht gespeichert "
+                                                 "werden.").arg(name));
+                return;
+            }
+            fuelle();
+        });
+    }
 
     // Status-/Fehlerzeile (S69): zeigt das Apply-Ergebnis IM Dialog — nicht
     // nur im Panel dahinter (Offene_Punkte §7 Punkt 1).

@@ -625,15 +625,18 @@ bool LuaScriptEngine::has(Slot slot) const
 
 namespace {
 std::atomic<std::uint64_t> g_songRuns{0};  // Test-Zaehler Song-Slot (S82)
+std::atomic<std::uint64_t> g_slotRuns{0};  // Test-Zaehler uebrige Slots (S83)
 }  // namespace
 
 std::uint64_t LuaScriptEngine::songRunCount() { return g_songRuns.load(); }
+std::uint64_t LuaScriptEngine::slotRunCount() { return g_slotRuns.load(); }
 
 bool LuaScriptEngine::run(Slot slot)
 {
     const int ref = m_slotRefs[static_cast<int>(slot)];
     if (m_state == nullptr || ref == LUA_NOREF) return false;
     if (slot == Slot::Song) g_songRuns.fetch_add(1, std::memory_order_relaxed);
+    else g_slotRuns.fetch_add(1, std::memory_order_relaxed);
 
     lua_State* L = m_state;
     lua_rawgeti(L, LUA_REGISTRYINDEX, ref);

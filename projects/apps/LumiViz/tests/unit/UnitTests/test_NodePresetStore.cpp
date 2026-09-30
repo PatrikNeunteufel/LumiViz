@@ -23,6 +23,9 @@
 #include "visualizers/modules/SuperscopeModule.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 #include "visualizers/multieffect/NodePresetStore.hpp"
+#include "visualizers/milkdrop/MilkdropSerializer.hpp"
+
+#include <EelTranspiler.hpp>
 
 #include <QDir>
 #include <QFile>
@@ -261,10 +264,31 @@ TEST_CASE("NodePresetStore: jede MITGELIEFERTE Voreinstellung ist ladbar")
         const auto entries = np::list(typeKey);
         CAPTURE(typeKey.toStdString());
         CHECK(!entries.empty());  // ein Ordner ohne ladbare Datei ist ein Fehler
+        // Milkdrop-Elemente (S83) sind keine Knoten: JSON-Ebene + Element-Leser,
+        // und jeder Code-Slot muss als MilkDrop-EEL uebersetzbar sein.
+        const bool element = typeKey == QLatin1String(np::kMilkWave) ||
+                             typeKey == QLatin1String(np::kMilkShape) ||
+                             typeKey == QLatin1String(np::kMilkSprite);
         for (const np::Entry& e : entries)
         {
             CAPTURE(e.name.toStdString());
             CHECK(e.builtin);  // im Repo gibt es nur Mitgeliefertes
+            if (element)
+            {
+                QJsonObject felder;
+                QStringList report;
+                REQUIRE(np::loadJson(e.path, typeKey, felder, &report));
+                CHECK_FALSE(felder.contains(QStringLiteral("type")));
+                for (const char* slot : {"initCode", "frameCode", "pointCode", "code"})
+                {
+                    const std::string code =
+                        felder.value(QLatin1String(slot)).toString().toStdString();
+                    const auto r = lumi::eel::transpile(code, lumi::eel::Dialect::Milkdrop);
+                    CHECK_MESSAGE(r.ok, slot << ": " << r.error);
+                }
+                ++checked;
+                continue;
+            }
             EffectParams out;
             QStringList report;
             CHECK(np::load(e.path, typeKey, out, &report));
@@ -273,6 +297,50 @@ TEST_CASE("NodePresetStore: jede MITGELIEFERTE Voreinstellung ist ladbar")
         }
     }
     CHECK(checked > 0);
+}
+
+TEST_CASE("NodePresetStore: Element-Preset (Custom Wave) — Rahmen bleibt, Teil-Preset mischt")
+{
+    // S83, Entscheid Patrik E3a: Waves/Shapes/Sprites tragen Voreinstellungen
+    // ueber die JSON-Ebene. `index`/`enabled` sind der Rahmen des Elements
+    // und gehoeren nicht in die Datei.
+    ScopedRoot root;
+    lumi::milkdrop::WaveState w;
+    w.index = 3;
+    w.enabled = true;
+    w.r = 0.25;
+    w.samples = 256;
+    w.pointCode = "x = sample; y = 0.5;";
+    QJsonObject felder = lumi::milkdrop::waveToJson(w);
+    felder.remove(QStringLiteral("index"));
+    felder.remove(QStringLiteral("enabled"));
+
+    QString written;
+    REQUIRE(np::saveJson(QStringLiteral("Linie"), QString::fromLatin1(np::kMilkWave), felder,
+                         {QStringLiteral("samples"), QStringLiteral("pointCode")}, &written));
+    const auto entries = np::list(QString::fromLatin1(np::kMilkWave));
+    REQUIRE(entries.size() == 1);
+
+    // Laden auf eine ANDERE Wave: nur samples + pointCode wandern, Farbe bleibt.
+    lumi::milkdrop::WaveState ziel;
+    ziel.index = 7;
+    ziel.enabled = false;
+    ziel.r = 0.9;
+    QJsonObject z = lumi::milkdrop::waveToJson(ziel);
+    REQUIRE(np::loadJson(entries[0].path, QString::fromLatin1(np::kMilkWave), z, nullptr));
+    const lumi::milkdrop::WaveState out = lumi::milkdrop::waveFromJson(z);
+    CHECK(out.index == 7);
+    CHECK_FALSE(out.enabled);
+    CHECK(out.r == doctest::Approx(0.9));
+    CHECK(out.samples == 256);
+    CHECK(out.pointCode == "x = sample; y = 0.5;");
+
+    // Falscher Typ wird abgelehnt, `inOut` bleibt unberuehrt.
+    QJsonObject shape = lumi::milkdrop::shapeToJson({});
+    const QJsonObject vorher = shape;
+    CHECK_FALSE(np::loadJson(entries[0].path, QString::fromLatin1(np::kMilkShape), shape,
+                             nullptr));
+    CHECK(shape == vorher);
 }
 
 TEST_CASE("NodePresetStore: die SuperScope-Figuren decken die Modul-Bibliothek")

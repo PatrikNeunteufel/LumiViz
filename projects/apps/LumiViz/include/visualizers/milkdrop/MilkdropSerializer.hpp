@@ -53,4 +53,16 @@ namespace lumi::milkdrop {
 /** Cheap peek: does this .lvfx carry a milkdrop document (header.type)? */
 [[nodiscard]] bool isMilkdropFile(const QString& path);
 
+/**
+ * Einzelne Elemente (S83) — dieselben Felder wie im Dokument, damit die
+ * Knoten-Voreinstellungen einer Custom Wave/Shape/Sprite nichts Eigenes
+ * erfinden. Fehlende Felder behalten die Vorgaben der State-Struktur.
+ */
+[[nodiscard]] QJsonObject waveToJson(const WaveState& w);
+[[nodiscard]] WaveState waveFromJson(const QJsonObject& o);
+[[nodiscard]] QJsonObject shapeToJson(const ShapeState& s);
+[[nodiscard]] ShapeState shapeFromJson(const QJsonObject& o);
+[[nodiscard]] QJsonObject spriteToJson(const SpriteState& s);
+[[nodiscard]] SpriteState spriteFromJson(const QJsonObject& o);
+
 } // namespace lumi::milkdrop

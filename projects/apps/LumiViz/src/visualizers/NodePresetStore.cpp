@@ -148,8 +148,8 @@ std::vector<Entry> list(const QString& typeKey)
     return merged;
 }
 
-bool load(const QString& path, const QString& expectKey, EffectParams& inOut,
-          QStringList* report)
+bool loadJson(const QString& path, const QString& expectKey, QJsonObject& inOut,
+              QStringList* report)
 {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) return false;
@@ -174,17 +174,35 @@ bool load(const QString& path, const QString& expectKey, EffectParams& inOut,
         return false;
     }
 
-    // Merge statt Ersatz: die aktuellen Parameter als Grundlage, darueber die
-    // Felder der Datei. Ein Teil-Preset (SuperScope-Figur: nur die EEL-Slots)
-    // laesst damit Farbe/Breite/Blend des Knotens unangetastet.
+    // Merge statt Ersatz: die aktuellen Felder als Grundlage, darueber die der
+    // Datei. Ein Teil-Preset (SuperScope-Figur: nur die EEL-Slots) laesst damit
+    // Farbe/Breite/Blend unangetastet.
+    for (auto it = node.constBegin(); it != node.constEnd(); ++it)
+        if (it.key() != QLatin1String("type")) inOut[it.key()] = it.value();
+    return true;
+}
+
+bool load(const QString& path, const QString& expectKey, EffectParams& inOut,
+          QStringList* report)
+{
     ChainNode base;
     base.params = inOut;
     QJsonObject merged = nodeToJson(base);
-    for (auto it = node.constBegin(); it != node.constEnd(); ++it)
-        merged[it.key()] = it.value();
-
+    if (!loadJson(path, expectKey, merged, report)) return false;
+    // loadJson reicht `type` nicht durch — hier ist er geprueft (== expectKey)
+    // und bestimmt die Art: ein frischer `inOut` traegt sonst den Vorgabetyp.
+    merged[QStringLiteral("type")] = expectKey;
     inOut = nodeFromJson(merged, report).params;
     return true;
+}
+
+const QStringList& knotenRahmen()
+{
+    static const QStringList kRahmen = {
+        QStringLiteral("type"),    QStringLiteral("name"),     QStringLiteral("description"),
+        QStringLiteral("enabled"), QStringLiteral("children"), QStringLiteral("scriptsActive"),
+    };
+    return kRahmen;
 }
 
 QStringList fieldNames(const EffectParams& params)
@@ -192,8 +210,7 @@ QStringList fieldNames(const EffectParams& params)
     ChainNode tmp;
     tmp.params = params;
     QJsonObject node = nodeToJson(tmp);
-    for (const char* frame : {"type", "name", "description", "enabled", "children"})
-        node.remove(QLatin1String(frame));
+    for (const QString& frame : knotenRahmen()) node.remove(frame);
     QStringList out = node.keys();
     out.sort(Qt::CaseInsensitive);
     return out;
@@ -202,8 +219,19 @@ QStringList fieldNames(const EffectParams& params)
 bool save(const QString& name, const EffectParams& params, const QStringList& fields,
           QString* outPath)
 {
+    // Nur die params: der Knoten-Rahmen (Name, Beschreibung, Kinder, enabled)
+    // gehoert nicht in eine Voreinstellung (Konzept §8.2).
+    ChainNode tmp;
+    tmp.params = params;
+    QJsonObject node = nodeToJson(tmp);
+    for (const QString& frame : knotenRahmen()) node.remove(frame);
+    return saveJson(name, effectTypeKey(params), node, fields, outPath);
+}
+
+bool saveJson(const QString& name, const QString& typeKey, const QJsonObject& felder,
+              const QStringList& auswahl, QString* outPath)
+{
     const QString clean = sanitize(name);
-    const QString typeKey = effectTypeKey(params);
     if (clean.isEmpty() || typeKey.isEmpty()) return false;
 
     const QString dirPath = userDir(typeKey);
@@ -211,26 +239,13 @@ bool save(const QString& name, const EffectParams& params, const QStringList& fi
     QDir dir;
     if (!dir.mkpath(dirPath)) return false;
 
-    // Nur die params: der Knoten-Rahmen (Name, Beschreibung, Kinder, enabled)
-    // gehoert nicht in eine Voreinstellung (Konzept §8.2).
-    ChainNode tmp;
-    tmp.params = params;
-    QJsonObject node = nodeToJson(tmp);
-    node.remove(QStringLiteral("name"));
-    node.remove(QStringLiteral("description"));
-    node.remove(QStringLiteral("enabled"));
-    node.remove(QStringLiteral("children"));
-
-    // Abgewaehlte Felder fallen raus — `type` bleibt IMMER (der Typwaechter
+    // Abgewaehlte Felder fallen raus — `type` kommt IMMER dazu (der Typwaechter
     // beim Laden haengt daran). Leere Auswahl = alles.
-    if (!fields.isEmpty())
-    {
+    QJsonObject node = felder;
+    if (!auswahl.isEmpty())
         for (const QString& key : node.keys())
-        {
-            if (key == QStringLiteral("type")) continue;
-            if (!fields.contains(key)) node.remove(key);
-        }
-    }
+            if (!auswahl.contains(key)) node.remove(key);
+    node[QStringLiteral("type")] = typeKey;
 
     QJsonObject root;
     root[QStringLiteral("format")] = QLatin1String(kFormatTag);

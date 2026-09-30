@@ -22,6 +22,7 @@
 #include "visualizers/modules/SuperscopeModule.hpp"      // figure preset library (SSOT)
 #include "visualizers/modules/ColorGradientModule.hpp"   // fractal palette presets
 #include "visualizers/multieffect/ChainSerializer.hpp"  // effectTypeKey
+#include "visualizers/milkdrop/MilkdropSerializer.hpp"    // Element-Presets (S83)
 #include "visualizers/multieffect/NodePresetStore.hpp"  // Voreinstellungen je Knoten
 #include "visualizers/multieffect/ShadertoyImport.hpp"  // URL-/ID-Import (Strang S3)
 #include "visualizers/multieffect/ShadertoyWrapper.hpp" // Starter-Shader (Strang S)
@@ -79,6 +80,7 @@
 #include <QLineEdit>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QSignalBlocker>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -238,88 +240,9 @@ QString imageStartDir()
 // `asset/nodepresets/superScope/` und laufen ueber die allgemeine
 // Voreinstellungs-Zeile — die Liste und ihr Dropdown sind hier entfallen.
 
-// Vorlagen fuer SuperScope 3D + 3D Camera (S48, Lights-Etappe 1) — kleine
-// EEL-Startpunkte im Stil der SuperScope-Figuren. SSOT hier im Panel: anders
-// als beim SuperScope steht kein Standalone-Modul mit Preset-Bibliothek
-// dahinter. Welt-Konvention: x+ rechts, y+ oben, z+ zum Betrachter;
-// Fallback-Kamera bei z=+3,732 sieht y in [-1,1] bei z=0.
-struct Scope3DPresetDef
-{
-    const char* name;
-    const char* init;
-    const char* frame;
-    const char* beat;
-    const char* point;
-    int pointCount;
-};
-
-const std::vector<Scope3DPresetDef>& scope3dPresets()
-{
-    static const std::vector<Scope3DPresetDef> kList = {
-        {"Spiral Galaxy", "n=700", "t=t+0.008", "",
-         "d=i*2.5;a=i*25+t;x=sin(a)*d;z=cos(a)*d;y=v*0.3;"
-         "size=0.03+0.05*(1-i);red=1;green=0.6+0.4*sin(t+i*6);blue=1-i*0.5",
-         700},
-        {"Sphere Cloud", "n=500", "t=t+0.005", "",
-         "y=(i*2-1)*1.2;rad=sqrt(abs(1.44-y*y));th=i*97+t;"
-         "x=rad*cos(th);z=rad*sin(th);size=0.05;"
-         "red=0.5+0.5*sin(th);green=0.7;blue=1",
-         500},
-        {"Wave Ribbon", "n=256", "t=t+0.01", "",
-         "x=(i*2-1)*1.6;y=v*0.6;z=sin(i*6.28319+t)*0.5;size=0.04;"
-         "red=0.4+0.6*i;green=1-i;blue=1",
-         256},
-        {"Star Flight", "n=400", "t=t+0.015+bass*0.05", "",
-         "sx=sin(i*127.1)*43758.55;sx=sx-floor(sx);"
-         "sy=sin(i*269.5)*24634.63;sy=sy-floor(sy);"
-         "x=(sx*2-1)*3;y=(sy*2-1)*2;zz=i*8+t;zz=zz-floor(zz/8)*8;z=zz-5;"
-         "size=0.05;red=0.8+0.2*sy;green=0.9;blue=1",
-         400},
-        {"Beat Pulse Orb", "n=350;r=1", "t=t+0.01;r=r+(1-r)*0.1", "r=1.6",
-         "y=i*2-1;rad=sqrt(abs(1-y*y));a=i*88+t*2;"
-         "x=rad*cos(a)*r;z=rad*sin(a)*r;y=y*r;size=0.04+treb*0.05;"
-         "red=1;green=0.4+0.6*(r-1);blue=0.3",
-         350},
-        {"Lissajous 3D", "n=512", "t=t+0.006", "",
-         "a=i*6.28319;x=sin(a*3+t)*1.2;y=sin(a*4+t*1.3)*0.9;"
-         "z=sin(a*5+t*0.7)*1.2;size=0.04+v*0.03;"
-         "red=0.5+0.5*sin(a+t);green=0.5+0.5*sin(a*2);blue=1",
-         512},
-        {"Spectrum Ring", "n=180", "t=t+0.004", "",
-         "a=i*6.28319;s=getspec(i*0.7,0.05,0);x=cos(a+t)*(1+s);"
-         "z=sin(a+t)*(1+s);y=s*1.5-0.4;size=0.05+s*0.1;"
-         "red=0.2+s*2;green=0.4+0.6*s;blue=1-s",
-         180},
-    };
-    return kList;
-}
-
-struct Camera3DPresetDef
-{
-    const char* name;
-    const char* init;
-    const char* frame;
-    const char* beat;
-};
-
-const std::vector<Camera3DPresetDef>& camera3dPresets()
-{
-    static const std::vector<Camera3DPresetDef> kList = {
-        {"Orbit", "",
-         "a=time*0.4;px=sin(a)*4;pz=cos(a)*4;py=1.2;tx=0;ty=0;tz=0", ""},
-        {"Beat Zoom", "d=3.732", "d=d+(3.732-d)*0.08;pz=d", "d=2.6"},
-        {"Handheld Sway", "",
-         "px=sin(time*0.5)*0.4;py=0.3+sin(time*0.33)*0.25;"
-         "pz=3.732+sin(time*0.21)*0.3;tx=sin(time*0.27)*0.2", ""},
-        {"Fly Forward (Fog)", "fogstart=2;fogend=9",
-         "pz=3.732-sin(time*0.2)*3;py=0.5;tz=pz-4;roll=sin(time*0.3)*8", ""},
-        {"Bass Shake", "",
-         "px=sin(time*13)*bass*0.3;py=cos(time*17)*bass*0.2;pz=3.732", ""},
-        {"Top-Down Spin", "",
-         "px=0;py=4.5;pz=0;tx=0;ty=0;tz=0;roll=time*40", ""},
-    };
-    return kList;
-}
+// Ebenso die Vorlagen fuer SuperScope 3D + 3D Camera (S48): seit S83 in
+// `asset/nodepresets/superScope3d/` und `.../camera3d/` als Teil-Voreinstellungen
+// (nur die Skripte, beim Scope dazu `pointCount`; Entscheid Patrik E3a).
 
 QVariantList pathToVariant(const QList<int>& path)
 {
@@ -773,6 +696,50 @@ QString pixelFilterReferenceHtml()
                "echte Multipass-Looks (Blur-Pyramiden u. ä.) laufen über den "
                "Shadertoy-Knoten mit Buffer A–D.</p>")
         .arg(uniforms);
+}
+
+/// Referenz des ISF-Filter-Nodes (S83). Vorher zeigten beide ISF-Editoren die
+/// Pixel-Filter-Seite — mit `uTex` und `farbe()`, die es in ISF nicht gibt.
+QString isfReferenceHtml()
+{
+    auto table = [](const QString& rows) {
+        return QStringLiteral(
+                   "<table cellspacing='0' cellpadding='4' "
+                   "style='border-collapse:collapse'>"
+                   "<tr><th align='left'>Name</th><th align='left'>Typ</th>"
+                   "<th align='left'>Bedeutung</th></tr>%1</table>")
+            .arg(rows);
+    };
+    auto row = [](const char* n, const char* t, const char* m) {
+        return QStringLiteral("<tr><td><code>%1</code></td><td>%2</td><td>%3</td></tr>")
+            .arg(QString::fromUtf8(n), QString::fromUtf8(t), QString::fromUtf8(m));
+    };
+    const QString sprache = table(
+        row("RENDERSIZE", "vec2", "Größe des Ziels in Pixeln") +
+        row("TIME, TIMEDELTA", "float", "Sekunden seit Start / seit dem letzten Frame") +
+        row("FRAMEINDEX", "int", "Frames seit (Re-)Kompilierung") +
+        row("PASSINDEX", "int", "Nummer des Durchgangs (Multipass)") +
+        row("isf_FragNormCoord", "vec2", "Pixel-Position 0..1") +
+        row("IMG_THIS_PIXEL(img)", "vec4", "Bildquelle an dieser Position") +
+        row("IMG_NORM_PIXEL(img, uv)", "vec4", "Bildquelle an uv (0..1)") +
+        row("IMG_PIXEL(img, px)", "vec4", "Bildquelle an Pixelkoordinate") +
+        row("IMG_SIZE(img)", "vec2", "Größe einer Bildquelle"));
+    const QString extras = table(
+        row("getosc(band, breite, kanal) / getspec(…)", "float", "LumiViz: Wellenform / Spektrum wie in AVS (band 0..1)") +
+        row("bass, mid, treb, vol, beat", "float", "LumiViz: Band-Pegel · Beat-Impuls"));
+    return QStringLiteral(
+               "<h2>ISF-Filter — void main()</h2>"
+               "<p>Interactive Shader Format: der Code läuft unverändert. "
+               "Bildquellen und Regler stehen im JSON-Kopf der <code>.fs</code> und "
+               "kommen über <b>ISF-Datei importieren…</b> in den Knoten — der Code "
+               "hier benutzt sie unter ihrem Namen (<code>inputImage</code> …). Ein "
+               "frischer Knoten hat keine Bildquelle.</p>"
+               "<h3>ISF-Sprache</h3>%1<h3>LumiViz-Extras</h3>%2"
+               "<h3>Vertex (.vs)</h3>"
+               "<p>Optional. <code>isf_vertShaderInit()</code> setzt Position und "
+               "Koordinate; danach darf der Shader eigene Varyings vorrechnen "
+               "(Nachbar-Koordinaten). Leer = Standard.</p>")
+        .arg(sprache, extras);
 }
 
 } // namespace
@@ -1506,17 +1473,41 @@ QList<int> MultiEffectPanel::currentPath() const
 // Mutations
 // =============================================================================
 
+namespace
+{
+// Sicht einer Preset-Zeile — Definition bei addPresetRow (S83).
+QJsonObject sichtLesen(const ChainNode& n, int section, int element);
+}  // namespace
+
 void MultiEffectPanel::mutate(const QList<int>& path,
-                              const std::function<void(ChainNode&)>& fn)
+                              const std::function<void(ChainNode&)>& fn,
+                              bool aendertVoreinstellung)
 {
     if (m_host == nullptr || m_mutex == nullptr) return;
+    QStringList geaendert;
     {
         QMutexLocker lock(m_mutex);
         ChainNode* node = nodeAtPath(path);
         if (node == nullptr) return;
+        // Nur saubere Preset-Marken dieses Knotens (Knoten + Milkdrop-Elemente)
+        // vorher/nachher vergleichen: Felder melden editingFinished auch ohne
+        // Aenderung (Fokuswechsel). Ist eine Marke „(unsaved)", entfaellt ihr
+        // Vergleich — beim Reglerziehen kostet das also nichts.
+        std::vector<std::pair<QString, QJsonObject>> vorher;
+        if (aendertVoreinstellung)
+            for (auto it = m_presetMarken.cbegin(); it != m_presetMarken.cend(); ++it)
+                if (it->nodeId == node->nodeId && !it->geaendert)
+                    vorher.emplace_back(it.key(),
+                                        sichtLesen(*node, it->section, it->element));
         fn(*node);
+        for (const auto& [schluessel, json] : vorher)
+        {
+            const PresetMarke& m = m_presetMarken[schluessel];
+            if (sichtLesen(*node, m.section, m.element) != json) geaendert.append(schluessel);
+        }
         m_host->recompileChain();
     }
+    for (const QString& schluessel : geaendert) markierePresetGeaendert(schluessel);
     // Refresh the affected item's label (name/clamps may have changed).
     // Milk-Sektions-/Element-Items (Sentinel-Pfade) NICHT umbenennen — sie
     // tragen ihre eigenen Labels, nicht den Node-Namen.
@@ -2066,46 +2057,6 @@ void MultiEffectPanel::setNodeEnabled(const QList<int>& path, bool enabled)
     }
 }
 
-void MultiEffectPanel::applyScope3DPreset(const QList<int>& path, int presetIndex)
-{
-    const auto& defs = scope3dPresets();
-    if (presetIndex < 0 || presetIndex >= static_cast<int>(defs.size())) return;
-    if (m_host == nullptr || m_mutex == nullptr) return;
-    const Scope3DPresetDef& def = defs[static_cast<std::size_t>(presetIndex)];
-
-    QMutexLocker lock(m_mutex);
-    ChainNode* node = nodeAtPath(path);
-    if (node == nullptr) return;
-    if (auto* p = std::get_if<SuperScope3DParams>(&node->params))
-    {
-        p->initCode = def.init;
-        p->frameCode = def.frame;
-        p->beatCode = def.beat;
-        p->pointCode = def.point;
-        p->pointCount = def.pointCount;
-        m_host->recompileChain();
-    }
-}
-
-void MultiEffectPanel::applyCamera3DPreset(const QList<int>& path, int presetIndex)
-{
-    const auto& defs = camera3dPresets();
-    if (presetIndex < 0 || presetIndex >= static_cast<int>(defs.size())) return;
-    if (m_host == nullptr || m_mutex == nullptr) return;
-    const Camera3DPresetDef& def = defs[static_cast<std::size_t>(presetIndex)];
-
-    QMutexLocker lock(m_mutex);
-    ChainNode* node = nodeAtPath(path);
-    if (node == nullptr) return;
-    if (auto* p = std::get_if<Camera3DParams>(&node->params))
-    {
-        p->initCode = def.init;
-        p->frameCode = def.frame;
-        p->beatCode = def.beat;
-        m_host->recompileChain();
-    }
-}
-
 // --- Drag & drop re-parenting ------------------------------------------------
 
 void MultiEffectPanel::onDropRequested(QTreeWidgetItem* src, QTreeWidgetItem* target,
@@ -2534,12 +2485,14 @@ void MultiEffectPanel::onItemChanged(QTreeWidgetItem* item, int column)
     {
         // Column 0 is the editable name (enable lives on the eye toggle now).
         const std::string name = item->text(0).toStdString();
-        mutate(path, [&](ChainNode& n) { umbenennenLocked(n, name); });
+        mutate(path, [&](ChainNode& n) { umbenennenLocked(n, name); },
+               /*aendertVoreinstellung=*/false);
     }
     else if (column == 3)
     {
         const std::string desc = item->text(3).toStdString();
-        mutate(path, [&](ChainNode& n) { n.description = desc; });
+        mutate(path, [&](ChainNode& n) { n.description = desc; },
+               /*aendertVoreinstellung=*/false);
     }
 }
 
@@ -2846,12 +2799,9 @@ void MultiEffectPanel::addGradientStops(QFormLayout* form, const QList<int>& pat
     form->addRow(tr("Gradient stops"), box);
 }
 
-bool MultiEffectPanel::askPresetToSave(const EffectParams& params, QString& outName,
+bool MultiEffectPanel::askPresetToSave(const QStringList& all, QString& outName,
                                        QStringList& outFields)
 {
-    namespace np = lumi::multieffect::nodepresets;
-    const QStringList all = np::fieldNames(params);
-
     QDialog dlg(this);
     dlg.setWindowTitle(tr("Save preset"));
     auto* lay = new QVBoxLayout(&dlg);
@@ -2865,8 +2815,8 @@ bool MultiEffectPanel::askPresetToSave(const EffectParams& params, QString& outN
            "loaded (that is how a figure keeps the node's colour):"),
         &dlg));
 
-    // Ein Kaestchen je Parameter des Knotens; die Liste kommt generisch aus
-    // `nodeToJson`, gilt also fuer jeden Typ ohne Zutun.
+    // Ein Kaestchen je Feld; die Liste kommt generisch aus dem Serializer
+    // (Knoten: `nodeToJson`, Milkdrop-Element: `waveToJson` …).
     auto* listWidget = new QListWidget(&dlg);
     for (const QString& key : all)
     {
@@ -2917,24 +2867,177 @@ bool MultiEffectPanel::askPresetToSave(const EffectParams& params, QString& outN
     return true;
 }
 
-void MultiEffectPanel::addPresetRow(QFormLayout* form, const QList<int>& path,
-                                    const EffectParams& params)
+namespace
+{
+/// Zustandszeile der Preset-Combo (Index 0): ohne Namen „(none)", sonst die
+/// bearbeitete Voreinstellung.
+QString presetStatusText(const QString& geaenderteVoreinstellung)
+{
+    return geaenderteVoreinstellung.isEmpty()
+               ? MultiEffectPanel::tr("(none)")
+               : MultiEffectPanel::tr("(unsaved) – %1").arg(geaenderteVoreinstellung);
+}
+
+// --- Sicht einer Preset-Zeile (S83) -------------------------------------------
+//
+// Eine Preset-Zeile gilt dem ganzen Knoten (section < 0) oder einem
+// Milkdrop-Element: Sektion 1 = Custom Wave, 2 = Custom Shape, 4 = Sprite,
+// `element` = Index im jeweiligen Vektor (Zaehlung wie splitMilkPath).
+
+/// Typ-Schluessel der Sicht (leer = kein Preset-Pfad).
+QString sichtTypKey(const EffectParams& params, int section)
 {
     namespace np = lumi::multieffect::nodepresets;
-    const QString typeKey = effectTypeKey(params);
+    switch (section)
+    {
+    case -1: return effectTypeKey(params);
+    case 1: return QString::fromLatin1(np::kMilkWave);
+    case 2: return QString::fromLatin1(np::kMilkShape);
+    case 4: return QString::fromLatin1(np::kMilkSprite);
+    default: return {};
+    }
+}
+
+/// Die Felder der Sicht, OHNE Rahmen (Knoten: type/name/description/enabled/
+/// children, Element: index/enabled) — genau das, was eine Datei traegt.
+/// Leer = das Element gibt es (nicht mehr).
+QJsonObject sichtLesen(const ChainNode& n, int section, int element)
+{
+    namespace md = lumi::milkdrop;
+    QJsonObject o;
+    if (section < 0)
+    {
+        o = nodeToJson(n);
+        for (const QString& rahmen : lumi::multieffect::nodepresets::knotenRahmen())
+            o.remove(rahmen);
+        return o;
+    }
+    const auto* mp = std::get_if<MilkdropNodeParams>(&n.params);
+    if (mp == nullptr || element < 0) return {};
+    const auto e = static_cast<std::size_t>(element);
+    if (section == 1 && e < mp->preset.waves.size()) o = md::waveToJson(mp->preset.waves[e]);
+    else if (section == 2 && e < mp->preset.shapes.size())
+        o = md::shapeToJson(mp->preset.shapes[e]);
+    else if (section == 4 && e < mp->preset.sprites.size())
+        o = md::spriteToJson(mp->preset.sprites[e]);
+    else return {};
+    o.remove(QStringLiteral("index"));
+    o.remove(QStringLiteral("enabled"));
+    return o;
+}
+
+/// Schreibt `felder` in die Sicht zurueck; der Rahmen bleibt, wie er ist.
+void sichtSchreiben(ChainNode& n, int section, int element, const QJsonObject& felder,
+                    QStringList* report)
+{
+    namespace md = lumi::milkdrop;
+    if (section < 0)
+    {
+        QJsonObject o = felder;
+        o[QStringLiteral("type")] = effectTypeKey(n.params);
+        n.params = nodeFromJson(o, report).params;
+        return;
+    }
+    auto* mp = std::get_if<MilkdropNodeParams>(&n.params);
+    if (mp == nullptr || element < 0) return;
+    const auto e = static_cast<std::size_t>(element);
+    const auto ueber = [&felder](QJsonObject o) {
+        for (auto it = felder.constBegin(); it != felder.constEnd(); ++it)
+            o[it.key()] = it.value();
+        return o;
+    };
+    if (section == 1 && e < mp->preset.waves.size())
+        mp->preset.waves[e] = md::waveFromJson(ueber(md::waveToJson(mp->preset.waves[e])));
+    else if (section == 2 && e < mp->preset.shapes.size())
+        mp->preset.shapes[e] = md::shapeFromJson(ueber(md::shapeToJson(mp->preset.shapes[e])));
+    else if (section == 4 && e < mp->preset.sprites.size())
+        mp->preset.sprites[e] =
+            md::spriteFromJson(ueber(md::spriteToJson(mp->preset.sprites[e])));
+    else return;
+    ++mp->revision;  // wie milkOf: der Renderer uebernimmt nur neue Revisionen
+}
+
+QString markenSchluessel(std::uint64_t nodeId, int section, int element)
+{
+    return QStringLiteral("%1/%2/%3").arg(nodeId).arg(section).arg(element);
+}
+}  // namespace
+
+void MultiEffectPanel::markierePresetGeaendert(const QString& schluessel)
+{
+    auto it = m_presetMarken.find(schluessel);
+    if (it == m_presetMarken.end() || it->geaendert) return;
+    it->geaendert = true;
+    if (m_presetCombo == nullptr || m_presetComboSchluessel != schluessel) return;
+    const QSignalBlocker blocker(m_presetCombo.data());
+    m_presetCombo->setItemText(0, presetStatusText(it->name));
+    m_presetCombo->setCurrentIndex(0);
+}
+
+void MultiEffectPanel::addPresetRow(QFormLayout* form, const QList<int>& path,
+                                    const QList<int>& rawPath, const EffectParams& params,
+                                    int section, int element)
+{
+    namespace np = lumi::multieffect::nodepresets;
+    const QString typeKey = sichtTypKey(params, section);
     if (typeKey.isEmpty()) return;
+
+    std::uint64_t nodeId = 0;
+    {
+        QMutexLocker lock(m_mutex);
+        const ChainNode* node = nodeAtPath(path);
+        if (node == nullptr) return;
+        // Basis-Welle & Co. sind keine Elemente mit eigenem Feldsatz.
+        if (section >= 0 && sichtLesen(*node, section, element).isEmpty()) return;
+        nodeId = node->nodeId;
+    }
+    const QString schluessel = markenSchluessel(nodeId, section, element);
+    // Neu aufbauen ueber den VOLLEN Baum-Pfad — sonst verliesse der Editor
+    // nach dem Laden die Element-Ansicht.
+    const auto neuAufbauen = [this, rawPath] {
+        QMetaObject::invokeMethod(
+            this, [this, rawPath] { buildPropertyEditor(rawPath); }, Qt::QueuedConnection);
+    };
 
     auto* row = new QWidget(m_propContainer);
     auto* hl = new QHBoxLayout(row);
     hl->setContentsMargins(0, 0, 0, 0);
 
-    auto* combo = new QComboBox(row);
-    combo->addItem(tr("(unchanged)"));  // Index 0 = kein Preset, nur Beschriftung
     const std::vector<np::Entry> entries = np::list(typeKey);
+    const auto eintragNamens = [entries](const QString& name) {
+        if (name.isEmpty()) return -1;
+        for (std::size_t i = 0; i < entries.size(); ++i)
+            if (entries[i].name == name) return static_cast<int>(i);
+        return -1;
+    };
+    // Marke der Sicht (S83): eine inzwischen geloeschte Voreinstellung
+    // vergessen, sonst zeigte die Combo einen Namen ohne Datei.
+    PresetMarke marke = m_presetMarken.value(schluessel);
+    const int markeIdx = eintragNamens(marke.name);
+    if (markeIdx < 0 && !marke.name.isEmpty())
+    {
+        m_presetMarken.remove(schluessel);
+        marke = {};
+    }
+
+    auto* combo = new QComboBox(row);
+    combo->setObjectName(QStringLiteral("knotenPreset"));
+    // Index 0 = Zustand ohne passenden Eintrag: „(none)" oder, sobald eine
+    // geladene Voreinstellung bearbeitet wurde, „(unsaved) – Name".
+    combo->addItem(presetStatusText(marke.geaendert ? marke.name : QString()));
     for (const np::Entry& e : entries)
         combo->addItem(e.builtin ? e.name : e.name + QStringLiteral(" *"));
-    combo->setToolTip(tr("Named parameter sets for this node type (* = your own). "
-                         "Loading replaces every parameter including the scripts."));
+    {
+        const QSignalBlocker blocker(combo);
+        combo->setCurrentIndex(markeIdx >= 0 && !marke.geaendert ? markeIdx + 1 : 0);
+    }
+    m_presetCombo = combo;
+    m_presetComboSchluessel = schluessel;
+    combo->setToolTip(section < 0
+                          ? tr("Named parameter sets for this node type (* = your own). "
+                               "Loading replaces every stored field including the scripts.")
+                          : tr("Named parameter sets for this element type (* = your own). "
+                               "Loading replaces every stored field including the scripts."));
 
     auto* saveBtn = new QToolButton(row);
     // Symbol statt „Save as…" (S78): die Zeile muss auf kFeldMinBreite
@@ -2942,36 +3045,44 @@ void MultiEffectPanel::addPresetRow(QFormLayout* form, const QList<int>& path,
     saveBtn->setText(QString::fromUtf8("💾"));
     saveBtn->setToolTip(tr("Save as… — store the current parameters under a name"));
     auto* delBtn = new QToolButton(row);
+    delBtn->setObjectName(QStringLiteral("knotenPresetLoeschen"));
     delBtn->setText(QString::fromUtf8("🗑"));
     delBtn->setToolTip(tr("Delete the selected preset (your own only)"));
-    delBtn->setEnabled(false);
+    // Ziel des Loeschens: der gewaehlte Eintrag, bei „(unsaved) – Name" die
+    // Voreinstellung, von der der Stand stammt.
+    const auto zielEintrag = [this, combo, schluessel, eintragNamens]() {
+        const int i = combo->currentIndex() - 1;
+        return i >= 0 ? i : eintragNamens(m_presetMarken.value(schluessel).name);
+    };
+    const auto loeschbar = [entries](int i) {
+        return i >= 0 && i < static_cast<int>(entries.size()) &&
+               !entries[static_cast<std::size_t>(i)].builtin;
+    };
+    delBtn->setEnabled(loeschbar(zielEintrag()));
 
     hl->addWidget(combo, 1);
     hl->addWidget(saveBtn);
     hl->addWidget(delBtn);
 
     connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-            [this, path, typeKey, entries, delBtn](int idx) {
-                const int i = idx - 1;  // Index 0 ist die Beschriftung
-                if (i < 0 || i >= static_cast<int>(entries.size()))
-                {
-                    delBtn->setEnabled(false);
-                    return;
-                }
+            [this, path, section, element, nodeId, schluessel, typeKey, entries, delBtn,
+             zielEintrag, loeschbar, neuAufbauen](int idx) {
+                delBtn->setEnabled(loeschbar(zielEintrag()));
+                const int i = idx - 1;  // Index 0 ist die Zustandszeile
+                if (i < 0 || i >= static_cast<int>(entries.size())) return;
                 const np::Entry& e = entries[static_cast<std::size_t>(i)];
-                delBtn->setEnabled(!e.builtin);
 
                 // Frisch aus dem Modell: die Datei wird DARUEBER gelegt, ein
-                // Teil-Preset (Figur) laesst den Rest der Parameter stehen.
-                EffectParams loaded;
+                // Teil-Preset (Figur) laesst den Rest der Felder stehen.
+                QJsonObject felder;
                 {
                     QMutexLocker lock(m_mutex);
                     const ChainNode* node = nodeAtPath(path);
                     if (node == nullptr) return;
-                    loaded = node->params;
+                    felder = sichtLesen(*node, section, element);
                 }
                 QStringList report;
-                if (!np::load(e.path, typeKey, loaded, &report))
+                if (!np::loadJson(e.path, typeKey, felder, &report))
                 {
                     // Dialog direkt (wie ConfigPanel): Panels sind nur im
                     // Fensterbetrieb bedienbar — die Vollbild-Regel aus S52
@@ -2983,44 +3094,51 @@ void MultiEffectPanel::addPresetRow(QFormLayout* form, const QList<int>& path,
                     return;
                 }
                 // Eine Mutation: unter renderMutex + recompileChain, undo-faehig.
-                mutate(path, [&](ChainNode& n) { n.params = loaded; });
+                mutate(path, [&](ChainNode& n) {
+                    sichtSchreiben(n, section, element, felder, &report);
+                });
+                // Nach mutate: das hat die Marke eben als geaendert gesetzt.
+                m_presetMarken[schluessel] = PresetMarke{e.name, false, nodeId, section, element};
                 // Die Werte haben sich alle geaendert — Editor neu aufbauen (nicht
                 // aus dem Signal heraus, sonst stirbt das Widget unter uns).
-                QMetaObject::invokeMethod(
-                    this, [this, path] { buildPropertyEditor(path); },
-                    Qt::QueuedConnection);
+                neuAufbauen();
             });
 
-    connect(saveBtn, &QToolButton::clicked, this, [this, path]() {
-        // Frisch aus dem Modell lesen: der `params`-Schnappschuss des Editors ist
-        // vom Aufbau, zwischenzeitliche Reglerbewegungen fehlen darin.
-        EffectParams current;
-        {
-            QMutexLocker lock(m_mutex);
-            const ChainNode* node = nodeAtPath(path);
-            if (node == nullptr) return;
-            current = node->params;
-        }
+    connect(saveBtn, &QToolButton::clicked, this,
+            [this, path, section, element, nodeId, schluessel, typeKey, neuAufbauen]() {
+                // Frisch aus dem Modell lesen: der Schnappschuss des Editors ist
+                // vom Aufbau, zwischenzeitliche Reglerbewegungen fehlen darin.
+                QJsonObject felder;
+                {
+                    QMutexLocker lock(m_mutex);
+                    const ChainNode* node = nodeAtPath(path);
+                    if (node == nullptr) return;
+                    felder = sichtLesen(*node, section, element);
+                }
+                QStringList alle = felder.keys();
+                alle.sort(Qt::CaseInsensitive);
 
-        QString name;
-        QStringList fields;
-        if (!askPresetToSave(current, name, fields)) return;
+                QString name;
+                QStringList fields;
+                if (!askPresetToSave(alle, name, fields)) return;
 
-        QString written;
-        if (!np::save(name, current, fields, &written))
-        {
-            QMessageBox::warning(this, tr("Preset"),
-                                 tr("Preset '%1' could not be saved.").arg(name));
-            return;
-        }
-        QMetaObject::invokeMethod(
-            this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
-    });
+                QString written;
+                if (!np::saveJson(name, typeKey, felder, fields, &written))
+                {
+                    QMessageBox::warning(this, tr("Preset"),
+                                         tr("Preset '%1' could not be saved.").arg(name));
+                    return;
+                }
+                // Der Dateiname ist bereinigt (sanitize) — die Combo listet ihn so.
+                m_presetMarken[schluessel] = PresetMarke{
+                    QFileInfo(written).completeBaseName(), false, nodeId, section, element};
+                neuAufbauen();
+            });
 
     connect(delBtn, &QToolButton::clicked, this,
-            [this, path, entries, combo]() {
-                const int i = combo->currentIndex() - 1;
-                if (i < 0 || i >= static_cast<int>(entries.size())) return;
+            [this, schluessel, entries, zielEintrag, loeschbar, neuAufbauen]() {
+                const int i = zielEintrag();
+                if (!loeschbar(i)) return;
                 const np::Entry& e = entries[static_cast<std::size_t>(i)];
                 if (QMessageBox::question(
                         this, tr("Delete preset"),
@@ -3034,9 +3152,9 @@ void MultiEffectPanel::addPresetRow(QFormLayout* form, const QList<int>& path,
                         tr("Preset '%1' could not be deleted.").arg(e.name));
                     return;
                 }
-                QMetaObject::invokeMethod(
-                    this, [this, path] { buildPropertyEditor(path); },
-                    Qt::QueuedConnection);
+                if (m_presetMarken.value(schluessel).name == e.name)
+                    m_presetMarken.remove(schluessel);
+                neuAufbauen();
             });
 
     form->addRow(tr("Preset"), row);
@@ -3060,6 +3178,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     std::string nodeName;
     std::string nodeDesc;
     std::string nodeSong;
+    bool nodeScriptsActive = true;
     {
         QMutexLocker lock(m_mutex);
         ChainNode* node = nodeAtPath(path);
@@ -3068,6 +3187,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         nodeName = node->displayName;
         nodeDesc = node->description;
         nodeSong = node->songCode;
+        nodeScriptsActive = node->scriptsActive;
     }
 
     m_propPage = new QWidget(m_propContainer);
@@ -3083,7 +3203,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     // JEDEN Knotentyp — der Store arbeitet ueber effectTypeKey + nodeToJson und
     // kennt keinen einzigen Typ beim Namen. Nur in der echten Knotenansicht:
     // Milkdrop-Sektionen/-Elemente sind Navigations-Items ohne eigene params.
-    if (milkSection < 0 && milkElem < 0) addPresetRow(form, path, params);
+    if (milkSection < 0 && milkElem < 0) addPresetRow(form, path, rawPath, params);
+    // Milkdrop-Elemente (S83, Entscheid Patrik E3a): eigene Typ-Schluessel
+    // milkWave/milkShape/milkSprite — nur in der Einzel-Ansicht.
+    else if (milkElem >= 0) addPresetRow(form, path, rawPath, params, milkSection, milkElem);
 
     // Editable name + free-text description (commit on Enter / focus-out).
     auto addLine = [&](const QString& label, const QString& value,
@@ -3091,7 +3214,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         auto* edit = new QLineEdit(value, m_propPage);
         connect(edit, &QLineEdit::editingFinished, this, [this, path, set, edit]() {
             const std::string t = edit->text().toStdString();
-            mutate(path, [&](ChainNode& n) { set(n, t); });
+            // Name/Beschreibung: nicht Teil einer Knoten-Voreinstellung
+            mutate(path, [&](ChainNode& n) { set(n, t); },
+                   /*aendertVoreinstellung=*/false);
         });
         form->addRow(label, edit);
     };
@@ -3099,6 +3224,27 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             [this](ChainNode& n, std::string v) { umbenennenLocked(n, v); });
     addLine(tr("Description"), QString::fromStdString(nodeDesc),
             [](ChainNode& n, std::string v) { n.description = std::move(v); });
+
+    // Schalter „Script active" (S83, Entscheid Patrik E1a): EIN Feld am Knoten
+    // fuer alle Typen mit EEL-Slots. Die Effect List behaelt ihr „Use list
+    // code" (AVS-Feld), Milkdrop hat seine Skripte im Preset.
+    if (milkSection < 0 && milkElem < 0 && hatSkriptSchalter(params))
+    {
+        auto* box = new QCheckBox(m_propContainer);
+        box->setObjectName(QStringLiteral("scriptsActive"));
+        box->setChecked(nodeScriptsActive);
+        const QString tip =
+            tr("Off: the node runs as if its script slots (Init/Frame/Beat/Point, "
+               "Song) were empty. The code stays stored; shaders are not affected.");
+        box->setToolTip(tip);
+        connect(box, &QCheckBox::toggled, this, [this, path](bool v) {
+            // Rahmen des Knotens, nicht Teil einer Voreinstellung
+            mutate(path, [v](ChainNode& n) { n.scriptsActive = v; },
+                   /*aendertVoreinstellung=*/false);
+        });
+        form->addRow(tr("Script active"), box);
+        if (QWidget* l = form->labelForField(box)) l->setToolTip(tip);
+    }
 
     // --- row helpers (each connects to a typed mutation) ---------------------
     //
@@ -3116,6 +3262,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 ? fielddocs::tooltip(fieldTypeKey, QLatin1String(field))
                 : explicitTip;
         if (!tip.isEmpty()) widget->setToolTip(tip);
+        // Feldname als objectName (S83): Tests und Sonden finden das Feld
+        // ueber den Vertragsnamen statt ueber die Position im Formular.
+        if (widget->objectName().isEmpty()) widget->setObjectName(QLatin1String(field));
         form->addRow(label, widget);
         // Der Hinweis gehoert auch an die Beschriftung — wer den Namen nicht
         // versteht, faehrt zuerst dorthin, nicht auf das Bedienelement.
@@ -3459,11 +3608,13 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     // und ⤢-Groß-Editor, aber OHNE EEL-Highlighter (falsche Einfärbung) und
     // mit frei wählbarer Referenzseite + Tooltip. `exportName` (S69) =
     // Dateinamens-Vorschlag `preset_name.modul.glsl` für Import…/Export…
+    // `vorlagenKey` (S83) = `<vertrag>[/<stufe>]`: der Teil vor dem `/` ist der
+    // Shader-Vertrag, das Ganze der Schluessel der Shader-Vorlagen.
     auto addCodeEditor = [&](const QString& label, const std::string& value,
                              const QString& placeholder, const QString& refHtml,
                              const QString& toolTip, int minHeight,
                              const QString& exportName,
-                             const QString& vertragKey,
+                             const QString& vorlagenKey,
                              std::function<void(ChainNode&, std::string)> set) {
         auto* edit = new QPlainTextEdit(m_propContainer);
         edit->setPlainText(QString::fromStdString(value));
@@ -3497,10 +3648,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         // Render-Thread — der Dialog pollt den Treiber-Fehler des Knotens
         // nach (#line 1: Zeilennummern des Nutzer-Codes, wie im Panel).
         connect(expandBtn, &QToolButton::clicked, this,
-                [this, edit, label, refHtml, path, exportName, vertragKey]() {
+                [this, edit, label, refHtml, path, exportName, vorlagenKey]() {
                     lumi::scriptedit::ScriptEditorHooks hooks;
                     hooks.exportFileName = exportName;
-                    hooks.vertragKey = vertragKey;
+                    hooks.vertragKey = vorlagenKey.section(QLatin1Char('/'), 0, 0);
+                    hooks.vorlagenKey = vorlagenKey;
                     // Herkunft JETZT holen, nicht beim Aufbau der Zeile: ein
                     // zwischenzeitlicher Import soll im Export stehen (S72).
                     hooks.herkunftKopf = herkunftKopfFuer(path);
@@ -4549,25 +4701,6 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                    "Mode). Scripts may override px..pz, tx..tz, "
                                    "fov, roll, fogstart, fogend."),
                                 m_propContainer));
-        // Vorlagen-Dropdown (S48): laedt die EEL-Slots der Vorlage in die
-        // Code-Felder unten (Quelle: camera3dPresets). Index 0 ist das Label.
-        auto* presetCombo = new QComboBox(m_propContainer);
-        presetCombo->addItem(tr("— Load template —"));
-        for (const Camera3DPresetDef& def : camera3dPresets())
-            presetCombo->addItem(def.name);
-        connect(presetCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-                [this, path](int idx) {
-                    if (idx <= 0) return;  // the label row
-                    // Defer: applying rebuilds this editor (deletes the combo).
-                    QMetaObject::invokeMethod(
-                        this,
-                        [this, path, idx] {
-                            applyCamera3DPreset(path, idx - 1);
-                            buildPropertyEditor(path);
-                        },
-                        Qt::QueuedConnection);
-                });
-        form->addRow(tr("Template"), presetCombo);
 
         addDouble("px", tr("Position X"), p->px, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).px = static_cast<float>(v); });
         addDouble("py", tr("Position Y"), p->py, -1000.0, 1000.0, 0.1, [](ChainNode& n, double v) { std::get<Camera3DParams>(n.params).py = static_cast<float>(v); });
@@ -4592,25 +4725,6 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                    "active 3D camera (or the built-in default), "
                                    "drawn as additive soft sprites."),
                                 m_propContainer));
-        // Vorlagen-Dropdown (S48): laedt das EEL-Quartett der Vorlage in die
-        // Code-Felder unten (Quelle: scope3dPresets). Index 0 ist das Label.
-        auto* presetCombo = new QComboBox(m_propContainer);
-        presetCombo->addItem(tr("— Load template —"));
-        for (const Scope3DPresetDef& def : scope3dPresets())
-            presetCombo->addItem(def.name);
-        connect(presetCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
-                [this, path](int idx) {
-                    if (idx <= 0) return;  // the label row
-                    // Defer: applying rebuilds this editor (deletes the combo).
-                    QMetaObject::invokeMethod(
-                        this,
-                        [this, path, idx] {
-                            applyScope3DPreset(path, idx - 1);
-                            buildPropertyEditor(path);
-                        },
-                        Qt::QueuedConnection);
-                });
-        form->addRow(tr("Template"), presetCombo);
 
         addInt("pointCount", tr("Points (n)"), p->pointCount, 1, 4096, [](ChainNode& n, int v) { std::get<SuperScope3DParams>(n.params).pointCount = v; });
         addEnum("renderMode", tr("Draw mode"), p->renderMode, {"Soft sprites", "Lines"},
@@ -5519,7 +5633,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addCodeEditor(
             tr("Fragment (.fs)"), p->fragCode,
             tr("void main() { gl_FragColor = IMG_THIS_PIXEL(inputImage); }"),
-            pixelFilterReferenceHtml(),
+            isfReferenceHtml(),
             tr("ISF-Code, unverändert ausgeführt: IMG_*-Makros, RENDERSIZE, "
                "TIME, PASSINDEX sowie getosc()/getspec() stehen bereit."),
             160,
@@ -5531,14 +5645,14 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             });
         addCodeEditor(
             tr("Vertex (.vs) — optional"), p->vertexCode,
-            tr("void main() { isf_vertShaderInit(); }"), pixelFilterReferenceHtml(),
+            tr("void main() { isf_vertShaderInit(); }"), isfReferenceHtml(),
             tr("Leer = Standard. Hier rechnen ISF-Filter ihre Nachbar-"
                "Koordinaten vor; isf_vertShaderInit() setzt Position und "
                "Koordinate."),
             110,
             lumi::scriptedit::shaderExportName(isfBase, QStringLiteral("isffilter"),
                                                QStringLiteral("vs")),
-            QStringLiteral("isffilter"),
+            QStringLiteral("isffilter/vs"),
             [](ChainNode& n, std::string v) {
                 std::get<IsfFilterParams>(n.params).vertexCode = std::move(v);
             });
@@ -6704,6 +6818,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                     isWarp ? QStringLiteral("warp")
                                            : QStringLiteral("comp"));
                             hooks.vertragKey = QStringLiteral("milkdrop");
+                            hooks.vorlagenKey = isWarp ? QStringLiteral("milkdrop/warp")
+                                                       : QStringLiteral("milkdrop/comp");
                             hooks.apply = [edit, isWarp](const QString& t) -> QString {
                                 edit->setPlainText(t);  // textChanged -> mutate
                                 if (t.trimmed().isEmpty()) return {};

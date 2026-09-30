@@ -3057,6 +3057,8 @@ QJsonObject nodeToJson(const ChainNode& node)
         o["description"] = QString::fromStdString(node.description);
     // Song-Slot (S82): nur wenn belegt — Dateien ohne Song-Code bleiben gleich
     if (!node.songCode.empty()) o["songCode"] = QString::fromStdString(node.songCode);
+    // „Script active" (S83): nur der Ausnahmefall steht in der Datei.
+    if (!node.scriptsActive) o["scriptsActive"] = false;
     std::visit(WriteVisitor{o}, node.params);
 
     // Listen + Host-Gruppen (HG1) tragen children — ein Presetverweis (S82)
@@ -3082,6 +3084,7 @@ ChainNode nodeFromJson(const QJsonObject& obj, QStringList* report)
     node.displayName = obj.value("name").toString().toStdString();
     node.description = obj.value("description").toString().toStdString();
     node.songCode = obj.value("songCode").toString().toStdString();  // S82
+    node.scriptsActive = obj.value("scriptsActive").toBool(true);    // S83
 
     if (report != nullptr && !obj.contains("type"))
     {

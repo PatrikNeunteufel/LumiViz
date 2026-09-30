@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.16.0
-> **Datum:** 2026-09-29
+> **Version:** 1.17.0
+> **Datum:** 2026-09-30
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -290,12 +290,28 @@ Ganz oben im Eigenschafts-Editor steht die Zeile **Preset**. Sie gilt für
 **jeden** Knotentyp — auch für Effect List, Movement oder eine Host-Gruppe.
 
 - **Auswählen** lädt einen benannten Parametersatz. Mitgeliefertes steht ohne
-  Zusatz in der Liste, Selbstgespeichertes mit `*`.
+  Zusatz in der Liste, Selbstgespeichertes mit `*`. Der Name **bleibt stehen**,
+  solange du nichts änderst; ohne geladene Voreinstellung steht dort
+  **(none)**.
+- Sobald du danach etwas änderst (Regler, Formel, Farbe), zeigt die Zeile
+  **(unsaved) – Name**: der Stand stammt von dieser Voreinstellung, ist aber
+  nicht mehr derselbe. Name und Beschreibung des Knotens zählen nicht — sie
+  gehören nicht zur Voreinstellung.
 - **Save as…** fragt nach einem Namen und zeigt **jedes Feld des Knotens mit
   einem Häkchen**. Was du abwählst, kommt nicht in die Datei — und bleibt beim
   Laden unangetastet. So speicherst du „nur die Formeln, nicht die Farbe".
-- **🗑** löscht eine eigene Voreinstellung; mitgelieferte lassen sich nicht
+- **🗑** löscht eine eigene Voreinstellung — die gewählte oder, bei
+  „(unsaved)", die, von der der Stand stammt. Mitgelieferte lassen sich nicht
   löschen.
+- **Milkdrop-Elemente** haben seit Session 83 eine eigene Zeile: Markiere im
+  Baum eine einzelne **Custom Wave**, **Custom Shape** oder ein **Sprite** —
+  oben im Editor steht dann *Preset* für genau dieses Element. Mitgeliefert
+  sind z. B. *Oszilloskop-Linie*, *Spektrum-Kreis* (Waves) und *Pulsiert mit
+  Bass*, *Langsames Ausblenden* (Shapes). Nummer und An/Aus des Elements
+  bleiben beim Laden, wie sie sind.
+- Die früheren **Template**-Listen bei **SuperScope 3D** und **3D Camera**
+  sind jetzt ebenfalls Voreinstellungen dieser Zeile (gleiche Namen, z. B.
+  *Spiral Galaxy*, *Orbit*) — und damit um eigene erweiterbar.
 - Die **SuperScope-Figuren** (Spiral, Butterfly, Hypocycloid …) sind seit
   Session 53 solche Voreinstellungen — das frühere Dropdown „Figure" ist
   entfallen. Da sie nur die Formeln enthalten, behältst du beim Laden deine
@@ -335,6 +351,14 @@ es `b` (Beat), `w`/`h` (Bildmaße) und den Audio-Satz (`bass`, `mid`, `treb`,
 `reg00..reg99`, `q1..q64` und `gmegabuf`.
 
 Ein leeres Feld kostet nichts: ohne Formel läuft kein Skript.
+
+**Script active** — gleich unter Name und Beschreibung, bei jedem Knoten mit
+Formelfeldern: ausgeschaltet läuft der Knoten, **als stünden seine Felder
+leer** (Init, Frame, Beat, Point, Song). Der Code bleibt gespeichert — zum
+Vergleichen mit und ohne Skript, ohne etwas zu löschen. Shader (GLSL/HLSL)
+sind davon nicht betroffen. Die Effect List hat dafür wie bisher ihr eigenes
+„Use list code", Milkdrop-Nodes haben ihre Skripte im Preset. Ein Host
+Switcher mit abgeschaltetem Skript wechselt weiter nach Zeit und Songwechsel.
 
 **Song** — ganz unten im Editor jedes Knotens mit Frame-Feld: läuft **einmal
 bei jedem Songwechsel**, direkt vor dem Frame-Feld, und sieht dieselben
@@ -800,6 +824,27 @@ Der Groß-Editor (⤢) hat an allen Shader-Feldern **„Import…"** und
   Kommentarblock an den Anfang der Datei — die Herkunft geht also beim
   Weitergeben nicht mehr verloren.
 
+### Vorlagen im großen Editor
+
+Oben im Groß-Editor (⤢) jedes Shader-Feldes steht **Vorlage:**. Die Auswahl
+**ersetzt** den Editor-Inhalt — **Strg+Z** holt den alten Text zurück;
+übernommen wird wie immer erst mit **Apply** oder **OK**.
+
+- **Leer** gibt es immer: nur der Funktionsrumpf, den das Feld erwartet
+  (`mainImage`, `warp`, `farbe`, `kraft`, ISF-`main`, MilkDrop-`shader_body`).
+- Dazu je Feld zwei bis drei einfache Vorlagen — etwa *Farbverlauf* und
+  *Ringe* (Shadertoy), *Wirbel* und *Zoom mit Bass* (Mesh Warp), *Graustufen*
+  und *Kanten* (Pixel Filter), *Langsames Ausblenden* (MilkDrop Warp),
+  *Bass-Helligkeit* (MilkDrop Comp).
+- **Als Vorlage speichern…** legt den Editor-Inhalt als eigene Vorlage ab
+  (in der Liste mit `*`).
+- Die ISF-Vorlagen sind **Generatoren ohne Bildquelle**: Bildquellen und
+  Regler eines ISF-Shaders kommen über „ISF-Datei importieren…" in den
+  Knoten, eine Vorlage ersetzt nur den Code.
+
+Mitgelieferte Vorlagen liegen unter `asset/shadertemplates/`, eigene im
+Benutzerdaten-Ordner unter `shadertemplates/`.
+
 ### ISF-Filter laden (fertige Filter aus dem Netz)
 
 **ISF** („Interactive Shader Format", *isf.video*) ist so etwas wie
@@ -835,6 +880,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.17.0 | 2026-09-30 | Session 83. §11 Voreinstellungen: Combo behält den geladenen Namen, **„(unsaved) – Name"** nach einer Änderung, **(none)** ohne Voreinstellung, 🗑 zielt auf die Quelle; NEU Voreinstellungen je **Milkdrop-Element** (Wave/Shape/Sprite); Template-Listen von SuperScope 3D/3D Camera sind jetzt Voreinstellungen. §11 NEU Schalter **Script active**. §14 NEU **Vorlagen im großen Editor** (Leer + einfache Vorlagen je Shader-Feld, eigene speichern) |
 | 1.16.0 | 2026-09-29 | Session 82. §11 Host-Gruppen: NEU **Presetverweis** („Preset Reference…", nur Pfad gespeichert, Inhalt beim Laden frisch; Schalter Kopie ↔ Verweis; vom Host Switcher schaltbar) |
 | 1.15.0 | 2026-09-29 | Session 82. §11 „Werte per Formel steuern": NEU **Song-Feld** in jedem Knoten mit Frame-Feld (einmal je Songwechsel, vor Frame) |
 | 1.14.0 | 2026-09-29 | Session 82. §11 NEU **Host Switcher** (Gruppenliste mit Index, Startgruppe, Wechsel nach Zeit/Songwechsel/zufällig, Skripte Init/Frame/Beat/Song mit `switch`/`nextgroup`, schaltet nur zur Laufzeit); Gruppennamen eindeutig mit Zähler, Umbenennen zieht Switcher-Listen mit. Eingeklappte Gruppen bleiben beim Wechsel zu |

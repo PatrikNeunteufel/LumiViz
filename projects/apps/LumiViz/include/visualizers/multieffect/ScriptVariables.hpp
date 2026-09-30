@@ -75,6 +75,18 @@ struct ScriptVarTable
  */
 [[nodiscard]] bool hatSongSlot(const EffectParams& params);
 
+/**
+ * Traegt der Knotentyp den Schalter „Script active" (S83)? Genau dann, wenn er
+ * EEL-Slots hat (`initCode`/`frameCode`/`beatCode`/`pointCode`/`pixelCode`/
+ * `levelCode`, Movement: `code`). Nicht dabei: die Effect List (eigenes
+ * `useCode`) und Milkdrop (Skripte im Preset). GLSL/HLSL-Felder sind Shader,
+ * keine Skripte — sie bleiben vom Schalter unberuehrt.
+ */
+[[nodiscard]] bool hatSkriptSchalter(const EffectParams& params);
+
+/// Leert alle EEL-Slots, die der Schalter „Script active" abschaltet (S83).
+void leereSkriptSlots(EffectParams& params);
+
 /// Zerlegt `ScriptVar::names` in einzelne Bezeichner ("a / b" -> {"a","b"}).
 [[nodiscard]] std::vector<std::string> splitScriptVarNames(const char* names);
 

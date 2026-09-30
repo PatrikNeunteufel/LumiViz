@@ -31,10 +31,15 @@
 #include "services/ServiceContainer.hpp"
 #include "services/events/UIEvents.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
+#include "visualizers/multieffect/NodePresetStore.hpp"
 
 #include <QApplication>
+#include <QCheckBox>
+#include <QComboBox>
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
+#include <QTemporaryDir>
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
 #include <QDropEvent>
@@ -45,6 +50,7 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSettings>
+#include <QSpinBox>
 #include <QTextBlock>
 #include <QTextDocument>
 #include <QTextLayout>
@@ -786,4 +792,170 @@ TEST_CASE("PaletteUi C3: die Skript-Referenz erklaert die Mehrfachzuweisung")
     const QString html = lumi::scriptedit::builtinsHtml();
     CHECK(html.contains(QStringLiteral("Chained assignment")));
     CHECK(html.contains(QStringLiteral("r = r2 = red;")));
+}
+
+// =============================================================================
+// Teil D — Knoten-Voreinstellungen im Editor (S83)
+// =============================================================================
+
+TEST_CASE("PaletteUi Panel D1: Preset-Combo behaelt die Wahl, Bearbeiten -> (unsaved) – Name")
+{
+    // Befund Patrik S83: nach der Auswahl sprang die Combo auf „(unchanged)"
+    // zurueck (der Editor wird nach dem Laden neu gebaut) — „Delete selected"
+    // konnte so nie greifen. Soll: Name bleibt stehen, erste Aenderung zeigt
+    // „(unsaved) – Name" (Entscheid a), Loeschen zielt weiter auf die Quelle.
+    namespace np = lumi::multieffect::nodepresets;
+    UiUmgebung env;
+    QTemporaryDir root;
+    REQUIRE(root.isValid());
+    np::setRootForTesting(root.path());
+    struct Zurueck
+    {
+        ~Zurueck() { np::setRootForTesting(QString()); }
+    } zurueck;
+
+    const QString werkDir = QDir(root.path()).filePath(QStringLiteral("asset/clear"));
+    REQUIRE(QDir().mkpath(werkDir));
+    {
+        QFile f(QDir(werkDir).filePath(QStringLiteral("Werk.json")));
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write(R"({"format":"lumiviz-nodepreset","formatVersion":1,)"
+                R"("node":{"type":"clear","blend":2,"color":1057856,"onlyFirst":false}})");
+    }
+    lumi::multieffect::ClearParams eigen;
+    eigen.color = 0x123456;
+    eigen.onlyFirst = false;
+    QString geschrieben;
+    REQUIRE(np::save(QStringLiteral("Eigen"), lumi::multieffect::EffectParams{eigen}, {},
+                     &geschrieben));
+
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    const auto warte = [] {
+        for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+    };
+    const auto combo = [&p] { return p.panel->findChild<QComboBox*>(QStringLiteral("knotenPreset")); };
+    const auto loeschen = [&p] {
+        return p.panel->findChild<QToolButton*>(QStringLiteral("knotenPresetLoeschen"));
+    };
+    const auto onlyFirst = [&p] { return p.panel->findChild<QCheckBox*>(QStringLiteral("onlyFirst")); };
+    const auto clearFarbe = [&p] {
+        return std::get<lumi::multieffect::ClearParams>(p.root().children[0].params).color;
+    };
+
+    p.tree->setCurrentItem(p.oben(0));  // Clear
+    warte();
+    REQUIRE(combo() != nullptr);
+    CHECK(combo()->currentIndex() == 0);
+    CHECK(combo()->currentText() == QStringLiteral("(none)"));
+    CHECK_FALSE(loeschen()->isEnabled());
+
+    // Werks-Voreinstellung laden: Name bleibt nach dem Neuaufbau stehen
+    combo()->setCurrentIndex(combo()->findText(QStringLiteral("Werk")));
+    warte();
+    CHECK(clearFarbe() == 1057856u);
+    CHECK(combo()->currentText() == QStringLiteral("Werk"));
+    CHECK_FALSE(loeschen()->isEnabled());  // mitgeliefert: nicht loeschbar
+
+    // erste Aenderung -> „(unsaved) – Werk"
+    REQUIRE(onlyFirst() != nullptr);
+    onlyFirst()->setChecked(true);
+    warte();
+    CHECK(combo()->currentIndex() == 0);
+    CHECK(combo()->currentText() == QString::fromUtf8("(unsaved) – Werk"));
+
+    // eigene Voreinstellung: Loeschen aktiv, auch nach einer Aenderung
+    combo()->setCurrentIndex(combo()->findText(QStringLiteral("Eigen *")));
+    warte();
+    CHECK(clearFarbe() == 0x123456u);
+    CHECK(combo()->currentText() == QStringLiteral("Eigen *"));
+    CHECK(loeschen()->isEnabled());
+    onlyFirst()->setChecked(true);
+    warte();
+    CHECK(combo()->currentText() == QString::fromUtf8("(unsaved) – Eigen"));
+    CHECK(loeschen()->isEnabled());
+
+    // Knotenwechsel und zurueck: die Marke ueberlebt den Neuaufbau
+    p.tree->setCurrentItem(p.oben(1));
+    warte();
+    p.tree->setCurrentItem(p.oben(0));
+    warte();
+    CHECK(combo()->currentText() == QString::fromUtf8("(unsaved) – Eigen"));
+    CHECK(loeschen()->isEnabled());
+
+    // Name/Beschreibung gehoeren nicht zur Voreinstellung: kein „(unsaved)"
+    combo()->setCurrentIndex(combo()->findText(QStringLiteral("Eigen *")));
+    warte();
+    REQUIRE(combo()->currentText() == QStringLiteral("Eigen *"));
+    p.oben(0)->setText(3, QStringLiteral("nur eine Notiz"));  // Spalte Beschreibung
+    warte();
+    CHECK(combo()->currentText() == QStringLiteral("Eigen *"));
+}
+
+TEST_CASE("PaletteUi Panel D2: Custom Wave traegt eine eigene Preset-Zeile (S83)")
+{
+    // Entscheid Patrik E3a: Waves/Shapes/Sprites bekommen Voreinstellungen.
+    // Die Zeile sitzt in der Einzel-Ansicht des Elements; nach dem Laden
+    // bleibt der Editor dort (Neuaufbau ueber den vollen Baum-Pfad).
+    namespace np = lumi::multieffect::nodepresets;
+    UiUmgebung env;
+    QTemporaryDir root;
+    REQUIRE(root.isValid());
+    np::setRootForTesting(root.path());
+    struct Zurueck
+    {
+        ~Zurueck() { np::setRootForTesting(QString()); }
+    } zurueck;
+    const QString dir = QDir(root.path()).filePath(QStringLiteral("asset/milkWave"));
+    REQUIRE(QDir().mkpath(dir));
+    {
+        QFile f(QDir(dir).filePath(QStringLiteral("Linie.json")));
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write(R"({"format":"lumiviz-nodepreset","formatVersion":1,)"
+                R"("node":{"type":"milkWave","samples":300,"pointCode":"x = sample;"}})");
+    }
+
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    REQUIRE(p.ziehe("Custom Wave", p.tree->visualItemRect(p.oben(2)).center()));
+    const auto welle = [&p]() -> const lumi::milkdrop::WaveState& {
+        return std::get<lumi::multieffect::MilkdropNodeParams>(p.root().children[2].params)
+            .preset.waves.front();
+    };
+    REQUIRE(wellenIn(p.root().children[2]) >= 1);
+    const int index = welle().index;
+
+    // Element-Item der ersten Custom Wave: Pfad {2, Sektion 1, Element 0}.
+    QTreeWidgetItem* item = nullptr;
+    for (QTreeWidgetItemIterator it(p.tree); *it != nullptr; ++it)
+    {
+        const QVariantList v = (*it)->data(0, Qt::UserRole).toList();
+        if (v.size() == 3 && v[0].toInt() == 2 && v[1].toInt() == 1000000 + 1 &&
+            v[2].toInt() == 0)
+            item = *it;
+    }
+    REQUIRE(item != nullptr);
+    const auto warte = [] {
+        for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+    };
+    const auto combo = [&p] { return p.panel->findChild<QComboBox*>(QStringLiteral("knotenPreset")); };
+    p.tree->setCurrentItem(item);
+    warte();
+    REQUIRE(combo() != nullptr);
+    CHECK(combo()->currentText() == QStringLiteral("(none)"));
+
+    combo()->setCurrentIndex(combo()->findText(QStringLiteral("Linie")));
+    warte();
+    CHECK(welle().samples == 300);
+    CHECK(welle().pointCode == "x = sample;");
+    CHECK(welle().index == index);  // Rahmen bleibt
+    REQUIRE(combo() != nullptr);    // Editor steht noch in der Element-Ansicht
+    CHECK(combo()->currentText() == QStringLiteral("Linie"));
+
+    auto* samples = p.panel->findChild<QSpinBox*>(QStringLiteral("samples"));
+    REQUIRE(samples != nullptr);
+    samples->setValue(128);
+    warte();
+    CHECK(welle().samples == 128);
+    CHECK(combo()->currentText() == QString::fromUtf8("(unsaved) – Linie"));
 }

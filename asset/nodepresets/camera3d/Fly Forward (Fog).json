@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "beatCode": "",
+        "frameCode": "pz=3.732-sin(time*0.2)*3;py=0.5;tz=pz-4;roll=sin(time*0.3)*8",
+        "initCode": "fogstart=2;fogend=9",
+        "type": "camera3d"
+    }
+}

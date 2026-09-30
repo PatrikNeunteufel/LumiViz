@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "frameCode": "",
+        "initCode": "",
+        "pointCode": "x = sample;\ny = 0.5 + value1 * 0.4;",
+        "samples": 512,
+        "scaling": 1.0,
+        "smoothing": 0.5,
+        "spectrum": false,
+        "type": "milkWave"
+    }
+}

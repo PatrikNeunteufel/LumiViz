@@ -65,6 +65,9 @@ public:
 
     /// Test-Zaehler (S82): wie oft irgendein Song-Slot lief (prozessweit).
     [[nodiscard]] static std::uint64_t songRunCount();
+    /// Test-Zaehler (S83): wie oft irgendein ANDERER Slot lief (prozessweit) —
+    /// Beleg fuer den Schalter „Script active" (aus = 0 Laeufe).
+    [[nodiscard]] static std::uint64_t slotRunCount();
 
     /// Capacity clamp for megabuf/gmegabuf indices (original: 8M doubles max)
     static constexpr std::int64_t kBufCapacity = 8'388'608;

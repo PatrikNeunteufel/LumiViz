@@ -2879,6 +2879,11 @@ struct ChainNode
     /// und setzt deren Variablen). Ein Feld fuer ALLE skriptfaehigen Knoten
     /// statt je Parameter-Struct; wirkt nur, wo der Knoten Skripte ausfuehrt.
     std::string songCode;
+    /// Schalter „Script active" (S83, Entscheid Patrik E1a): aus = der Knoten
+    /// laeuft, als staenden seine EEL-Slots (samt Song-Slot) leer — der Code
+    /// bleibt gespeichert. Ein Feld am Knoten wie `songCode`, nicht je Typ.
+    /// Die Effect List hat dafuer weiterhin ihr eigenes `useCode` (AVS-Feld).
+    bool scriptsActive = true;
     bool enabled = true;             ///< disabled nodes are skipped entirely
     EffectParams params;             ///< effect type + its parameters
     std::vector<ChainNode> children; ///< child effects (lists only)

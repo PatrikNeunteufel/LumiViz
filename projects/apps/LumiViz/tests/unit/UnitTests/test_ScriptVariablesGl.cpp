@@ -28,6 +28,8 @@
 
 #include "scripting/LuaScriptEngine.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
+#include "visualizers/multieffect/ChainSerializer.hpp"
+#include "visualizers/multieffect/NodePresetStore.hpp"
 #include "visualizers/multieffect/ScriptVariables.hpp"
 
 #include <QGuiApplication>
@@ -334,4 +336,100 @@ TEST_CASE("ScriptVariables: ISF-Regler lassen sich unter ihrem key per Skript se
     CHECK(renderNode(pf).redF() < 0.05);
     pf.frameCode = "hell = 1;";
     CHECK(renderNode(pf).redF() > 0.95);
+}
+
+TEST_CASE("Script active (S83): aus = kein Slot laeuft, auch der Song-Slot nicht")
+{
+    // Der Schalter greift zentral in renderNode (Kopie der params mit leeren
+    // EEL-Slots). Dieser Test haelt fest, dass das fuer JEDEN Typ mit Schalter
+    // wirkt — eine Skriptstelle, die am params-Argument vorbei liest, fiele hier auf.
+    static int argc = 1;
+    static char arg0[] = "UnitTests";
+    static char* argv[] = {arg0, nullptr};
+    QGuiApplication app(argc, argv);
+
+    QSurfaceFormat fmt;
+    fmt.setVersion(3, 3);
+    fmt.setProfile(QSurfaceFormat::CoreProfile);
+    QOpenGLContext ctx;
+    ctx.setFormat(fmt);
+    if (!ctx.create())
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    QOffscreenSurface surface;
+    surface.setFormat(ctx.format());
+    surface.create();
+    REQUIRE(surface.isValid());
+    REQUIRE(ctx.makeCurrent(&surface));
+
+    // Laeuft der Knoten zwei Frames samt Songwechsel: wie oft liefen Slots,
+    // wie oft der Song-Slot? (Die Namens-Sonde taugt hier nicht — sie sieht nur
+    // Namen, die die LAUFZEIT bindet, nie skriptinterne wie zz_probe.)
+    const auto lauf = [](const EffectParams& params, bool aktiv) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode leaf;
+        leaf.params = params;
+        leaf.songCode = "zz_song=1;";
+        leaf.scriptsActive = aktiv;
+        root.children.push_back(std::move(leaf));
+
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.initialize();
+        vis.resize(QSize(kSize, kSize));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, kSize, kSize);
+        const std::uint64_t slotsVorher = LuaScriptEngine::slotRunCount();
+        const std::uint64_t songsVorher = LuaScriptEngine::songRunCount();
+        vis.render(1.0f / 60.0f);
+        MultiEffectVisualizer::notifySongChanged();
+        vis.render(1.0f / 60.0f);
+        return std::pair{LuaScriptEngine::slotRunCount() - slotsVorher,
+                         LuaScriptEngine::songRunCount() - songsVorher};
+    };
+
+    int checked = 0;
+    int gegenprobe = 0;  // Schalter an: das Skript laeuft wirklich
+    for (EffectParams params :
+         allAlternatives(std::make_index_sequence<std::variant_size_v<EffectParams>>{}))
+    {
+        if (!hatSkriptSchalter(params)) continue;
+        fillCodeSlots(params);
+        if (auto* m = std::get_if<MovementParams>(&params)) m->code = kProbeCode;
+
+        // Nicht `slots`: das ist in Qt ein Makro.
+        const auto [slotLaeufe, songLaeufe] = lauf(params, false);
+        CHECK_MESSAGE(slotLaeufe == 0,
+                      std::string(effectTypeName(params)) << ": " << slotLaeufe
+                                                          << " Slot-Laeufe trotz Schalter aus");
+        CHECK_MESSAGE(songLaeufe == 0,
+                      std::string(effectTypeName(params)) << ": Song-Slot lief trotz Schalter aus");
+        const auto [slotsAn, songsAn] = lauf(params, true);
+        if (slotsAn > 0 && songsAn == 1) ++gegenprobe;
+        ++checked;
+    }
+    CHECK(checked > 70);  // Schutz gegen einen Test, der still nichts prueft
+    MESSAGE("Script active: " << checked << " Typen, Gegenprobe (an) lief bei " << gegenprobe);
+    CHECK(gegenprobe > 60);
+}
+
+TEST_CASE("Script active (S83): nur 'aus' steht in der Datei, nie in einer Voreinstellung")
+{
+    ChainNode n;
+    n.params = SuperScopeParams{};
+    CHECK_FALSE(nodeToJson(n).contains(QStringLiteral("scriptsActive")));
+    n.scriptsActive = false;
+    const QJsonObject o = nodeToJson(n);
+    REQUIRE(o.contains(QStringLiteral("scriptsActive")));
+    CHECK_FALSE(nodeFromJson(o, nullptr).scriptsActive);
+    CHECK(nodeFromJson(nodeToJson(ChainNode{}), nullptr).scriptsActive);  // Vorgabe an
+    CHECK(lumi::multieffect::nodepresets::knotenRahmen().contains(QStringLiteral("scriptsActive")));
+    CHECK_FALSE(lumi::multieffect::nodepresets::fieldNames(n.params).contains(
+        QStringLiteral("scriptsActive")));
+    // Effect List und Milkdrop tragen den Schalter nicht (eigene Mechanik).
+    CHECK_FALSE(hatSkriptSchalter(ListParams{}));
+    CHECK_FALSE(hatSkriptSchalter(MilkdropNodeParams{}));
+    CHECK(hatSkriptSchalter(MovementParams{}));
 }

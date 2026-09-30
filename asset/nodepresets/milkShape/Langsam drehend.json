@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "frameCode": "ang = time * 0.3;",
+        "initCode": "",
+        "sides": 5,
+        "type": "milkShape"
+    }
+}

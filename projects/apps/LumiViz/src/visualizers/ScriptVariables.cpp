@@ -646,6 +646,34 @@ bool hatSongSlot(const EffectParams& params)
     return std::visit([](const auto& p) { return requires { p.frameCode; }; }, params);
 }
 
+bool hatSkriptSchalter(const EffectParams& params)
+{
+    if (std::holds_alternative<ListParams>(params)) return false;  // eigenes useCode
+    if (std::holds_alternative<MovementParams>(params)) return true;  // `code` = EEL
+    return std::visit(
+        [](const auto& p) {
+            return requires { p.initCode; } || requires { p.frameCode; } ||
+                   requires { p.beatCode; } || requires { p.pointCode; } ||
+                   requires { p.pixelCode; } || requires { p.levelCode; };
+        },
+        params);
+}
+
+void leereSkriptSlots(EffectParams& params)
+{
+    if (auto* m = std::get_if<MovementParams>(&params)) m->code.clear();
+    std::visit(
+        [](auto& p) {
+            if constexpr (requires { p.initCode; }) p.initCode.clear();
+            if constexpr (requires { p.frameCode; }) p.frameCode.clear();
+            if constexpr (requires { p.beatCode; }) p.beatCode.clear();
+            if constexpr (requires { p.pointCode; }) p.pointCode.clear();
+            if constexpr (requires { p.pixelCode; }) p.pixelCode.clear();
+            if constexpr (requires { p.levelCode; }) p.levelCode.clear();
+        },
+        params);
+}
+
 std::vector<std::string> splitScriptVarNames(const char* names)
 {
     std::vector<std::string> out;

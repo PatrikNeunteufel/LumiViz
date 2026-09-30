@@ -84,6 +84,10 @@ PsOverride psOverrideFromKey(const QString& key)
     return PsOverride::Auto;
 }
 
+} // namespace
+
+// Element-Ebene oeffentlich (S83): die Knoten-Voreinstellungen der Custom
+// Waves/Shapes/Sprites benutzen genau diese Felder.
 QJsonObject waveToJson(const WaveState& w)
 {
     QJsonObject o;
@@ -242,8 +246,6 @@ ShapeState shapeFromJson(const QJsonObject& o)
     s.frameCode = getStr(o, "frameCode");
     return s;
 }
-
-} // namespace
 
 QJsonObject presetToJson(const PresetState& state)
 {

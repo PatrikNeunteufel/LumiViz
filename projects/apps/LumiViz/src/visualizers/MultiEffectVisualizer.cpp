@@ -20,6 +20,7 @@
 #include "visualizers/multieffect/PixelFilterWrapper.hpp"   // Pixel-Filter (Stilfilter, S70)
 #include "visualizers/multieffect/IsfFilterWrapper.hpp"     // ISF-Filter (S72)
 #include "visualizers/multieffect/IsfImport.hpp"            // passGroesse (PASSES, S72)
+#include "visualizers/multieffect/ScriptVariables.hpp"      // Schalter Script active (S83)
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 #include "services/LiveVideoFeed.hpp"  // videoSource: Kamera/Streaming (S70)
@@ -4366,8 +4367,23 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
     // Song-Slot (S82): der Song-Code gehoert zum Knoten, nicht zu den Params —
     // die Skriptstellen holen ihn ueber m_nodeSong (Scope wie activeContext)
     const std::string* vorherSong = m_nodeSong;
-    m_nodeSong = &node.songCode;
-    std::visit(Visitor{*this, node}, node.params);
+    // Schalter „Script active" (S83): aus = der Knoten laeuft mit geleerten
+    // EEL-Slots und ohne Song-Slot. Eine Kopie der params — die Kompilier-
+    // Vergleiche der Skriptstellen sehen neuen Text und bauen ohne Skript neu,
+    // beim Wiedereinschalten ebenso. Kosten nur, solange der Schalter aus ist.
+    static const std::string kKeinSong;
+    if (!node.scriptsActive && hatSkriptSchalter(node.params))
+    {
+        EffectParams ohneSkript = node.params;
+        leereSkriptSlots(ohneSkript);
+        m_nodeSong = &kKeinSong;
+        std::visit(Visitor{*this, node}, ohneSkript);
+    }
+    else
+    {
+        m_nodeSong = &node.songCode;
+        std::visit(Visitor{*this, node}, node.params);
+    }
     m_nodeSong = vorherSong;
 }
 
@@ -5122,7 +5138,7 @@ void MultiEffectVisualizer::runColorModifier(const ChainNode& node,
         rt.lut->setFrameCode(params.frameCode);
         rt.lut->setBeatCode(params.beatCode);
         rt.lut->setLevelCode(params.levelCode);
-        rt.lut->setSongCode(node.songCode);
+        rt.lut->setSongCode(m_nodeSong != nullptr ? *m_nodeSong : std::string());
         rt.lutCompiled = combined;
     }
     if (m_frameSong) rt.lut->songWechsel();  // Song-Slot (S82)
@@ -5418,7 +5434,7 @@ void MultiEffectVisualizer::runDynamicMovement(const ChainNode& node,
         rt.grid->setFrameCode(params.frameCode);
         rt.grid->setBeatCode(params.beatCode);
         rt.grid->setPointCode(params.pointCode);
-        rt.grid->setSongCode(node.songCode);
+        rt.grid->setSongCode(m_nodeSong != nullptr ? *m_nodeSong : std::string());
         rt.grid->setGridSize(params.xres, params.yres);
         rt.grid->setAvsGridPositions(true);  // r_dmove-Stuetzstellen (trunkiert)
         rt.gridCompiled = combined;
@@ -6112,7 +6128,7 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
         rt.scope->setBeatCode(params.beatCode);
         rt.scope->setFrameCode(params.frameCode);
         rt.scope->setPointCode(params.pointCode);
-        rt.scope->setSongCode(node.songCode);
+        rt.scope->setSongCode(m_nodeSong != nullptr ? *m_nodeSong : std::string());
         rt.scopeCompiled = combined;
         rt.scopeGradientLoaded.clear();  // fresh module defaults to Neon -> reload
     }
@@ -9044,8 +9060,11 @@ void MultiEffectVisualizer::runHostSwitchers()
         // songCode, wie bei allen Knoten). Ausgaben `switch`/`nextgroup` gelten
         // nur fuer DIESEN Frame — anders als runParamScript, das Werte
         // fortschreibt (ein einmal gesetztes nextgroup schaltete sonst ewig).
-        const bool hatSkript = !sw->initCode.empty() || !sw->frameCode.empty() ||
-                               !sw->beatCode.empty() || !node.songCode.empty();
+        // „Script active" aus (S83): Zeit/Songwechsel schalten weiter, nur die
+        // Skripte ruhen — der Switcher laeuft ausserhalb von renderNode.
+        const bool hatSkript = node.scriptsActive &&
+                               (!sw->initCode.empty() || !sw->frameCode.empty() ||
+                                !sw->beatCode.empty() || !node.songCode.empty());
         if (hatSkript)
         {
             const std::string combined = sw->initCode + '\n' + sw->frameCode + '\n' +

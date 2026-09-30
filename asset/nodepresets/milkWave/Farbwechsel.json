@@ -1,0 +1,9 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "frameCode": "r = 0.5 + 0.5 * sin(time * 1.13);\ng = 0.5 + 0.5 * sin(time * 1.37 + 2);\nb = 0.5 + 0.5 * sin(time * 1.71 + 4);",
+        "initCode": "",
+        "type": "milkWave"
+    }
+}

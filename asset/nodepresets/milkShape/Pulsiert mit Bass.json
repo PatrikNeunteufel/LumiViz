@@ -1,0 +1,11 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "frameCode": "rad = 0.08 + 0.12 * min(bass_att, 2);",
+        "initCode": "",
+        "rad": 0.1,
+        "sides": 48,
+        "type": "milkShape"
+    }
+}

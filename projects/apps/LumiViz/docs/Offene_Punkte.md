@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.78.0
-> **Datum:** 2026-09-29 (Session 82)
+> **Version:** 1.79.0
+> **Datum:** 2026-09-30 (Session 83)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2020,9 +2020,10 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 | **Multi-Drag zwischen Listen** | Block-Reparenting, Index-Mathematik nur compile-verifiziert; bei Bugs auf „Reorder in gleicher Ebene" beschränken | ⬜ |
 | **Stereo `getspec`/`getosc`** | ch=1 (L) vs. ch=2 (R) getrennt? Nur compile-verifiziert. ⚠ **Hörtest**. Stellschrauben: `BASS_DATA_FFT_INDIVIDUAL`-Layout (`bin*chans+ch`) + Waveform-Interleaving | ⬜ |
 | **Reset Start Folder** (S73) | Einstellungen › Panels › *Reset Start Folder* zeigt jetzt in den **Programmordner** statt in den Benutzerordner. Der Startordner-Weg ist am laufenden Programm belegt (Log), der **Knopf selbst wurde nie gedrückt**. Zwei Klicks: drücken, Browser muss im Programmordner stehen und `presets/` zeigen | ⬜ |
-| **Presetverweis + Song-Slot** (S82) | Palette „Preset Reference…" mit .avs/.milk/.lvfx; Kette speichern → Datei enthält nur den Pfad; Quelle ändern → Kette neu laden zeigt die Änderung; relativer Pfad; Verweis im Host Switcher; Schalter Kopie ↔ Verweis. Song-Feld: z. B. SuperScope `Song: n=rand(200)+50;`, Titel im Player wechseln. Unit-Tests grün (4 + 1 neu), **Sichttest offen** | ⬜ |
-| **Host Switcher** (S82) | Zwei bis drei Gruppen in die Liste, umsortieren, Startgruppe · Wechsel nach Zeit (Crossfade sichtbar?) · Songwechsel im Player mit und ohne Haken · Skript `nextgroup = above(beatcount,31)` und Song-Slot `switch = 1` · Gruppe umbenennen → Liste zieht mit, doppelter Name → Zähler · Speichern während des Laufs → Datei unverändert · Switcher-Auge aus → gespeicherter Zustand gilt. Unit-Tests grün (5 neu, davon 1 GL), **Sichttest offen** | ⬜ |
-| **Preset as Group** (S82) | Palette „Preset as Group…" mit je einer `.avs`, `.milk`, `.lvfx` (mit und ohne eigene Host-Gruppen): Bild der Gruppe = Bild des Presets allein? AVS mit „clear every frame" (innere Liste) · „Aus Quelle neu laden" nach Änderung der Datei · Tiefenregel-Meldung beim Einfügen in eine Gruppe · Crossfade zwischen zwei Preset-Gruppen. Unit-Tests grün (5 neu), **GL-Sichttest offen** | ⬜ |
+| **Presetverweis + Song-Slot** (S82) | Palette „Preset Reference…" mit .avs/.milk/.lvfx; Kette speichern → Datei enthält nur den Pfad; Quelle ändern → Kette neu laden zeigt die Änderung; relativer Pfad; Verweis im Host Switcher; Schalter Kopie ↔ Verweis. Song-Feld: z. B. SuperScope `Song: n=rand(200)+50;`, Titel im Player wechseln. Unit-Tests grün (4 + 1 neu). **✅ abgenommen S83** (Patrik: „die Sichttests sind gut, die Switch funktionieren so wie erwartet, auch mit den Preset-Referenzen") | ✅ |
+| **Host Switcher** (S82) | Zwei bis drei Gruppen in die Liste, umsortieren, Startgruppe · Wechsel nach Zeit (Crossfade sichtbar?) · Songwechsel im Player mit und ohne Haken · Skript `nextgroup = above(beatcount,31)` und Song-Slot `switch = 1` · Gruppe umbenennen → Liste zieht mit, doppelter Name → Zähler · Speichern während des Laufs → Datei unverändert · Switcher-Auge aus → gespeicherter Zustand gilt. Unit-Tests grün (5 neu, davon 1 GL). **✅ abgenommen S83** (s. Zeile oben) | ✅ |
+| **Preset as Group** (S82) | Palette „Preset as Group…" mit je einer `.avs`, `.milk`, `.lvfx` (mit und ohne eigene Host-Gruppen): Bild der Gruppe = Bild des Presets allein? AVS mit „clear every frame" (innere Liste) · „Aus Quelle neu laden" nach Änderung der Datei · Tiefenregel-Meldung beim Einfügen in eine Gruppe · Crossfade zwischen zwei Preset-Gruppen. Unit-Tests grün (5 neu). **✅ abgenommen S82** (Patrik: „funktioniert wie erwartet") | ✅ |
+| **Preset-Zeile, Element-Presets, Shader-Vorlagen, Script active** (S83) | (1) Knoten-Preset wählen → Name bleibt; Regler ziehen → „(unsaved) – Name"; 🗑 bei eigenem Preset auch im „(unsaved)"-Zustand; Name/Beschreibung ändern → bleibt sauber. (2) Custom Wave/Shape einzeln markieren → Zeile *Preset*, z. B. *Pulsiert mit Bass*, Editor bleibt in der Element-Ansicht. (3) SuperScope 3D/3D Camera: frühere Template-Namen stehen in der Preset-Zeile. (4) ⤢ an jedem Shader-Feld: *Vorlage:* → Leer/Vorlagen, Strg+Z, *Als Vorlage speichern…*. (5) *Script active* aus → Bild wie ohne Skript, an → wie vorher; Host Switcher wechselt ohne Skript weiter nach Zeit. Unit-Tests grün (9 neu), **Sichttest offen** | ⬜ |
 | **Die 60 neuen Feld-Sonden** (S73) | Sonden für `gpuParticles`, `isfFilter`, `meshWarp`, `pixelFilter`, `shadertoy`, `videoSource`, `dotFountain`/`dotPlane`-`startRotation`, `milkdrop/puffer*` sind erzeugt und committet, aber **nie gelaufen**. Ein Sondenlauf zeigt, welche Felder wirken und welche STUMM melden — erwartungsgemäß findet sich dabei auch Testaufbau-Rauschen (§1c) | ⬜ |
 
 ## 5. Offene Entscheide
@@ -2040,6 +2041,24 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 | ~~[Config_Pipeline_Umsetzungsplan](visuals/Config_Pipeline_Umsetzungsplan.md)~~ | ✅ **entschieden + umgesetzt (S60):** die Abnahme-Tabellen A1–A8/N1–N7 sind **als erledigt gestrichen** (Vermerk im Dokument; die `⬜` bleiben als Historie stehen) — Schritte 0–7 ✅ seit S30, Sichttests 5.1–5.5 abgenommen | ✅ |
 
 ## 6. Konzept-Phasen, noch nicht begonnen
+
+- 🟡 **Block F — Modulparameter auf dem generischen Weg skriptbar machen**
+  (angesetzt direkt nach S83, Entscheid Patrik E2b: kein Einzel-Nachtrag in
+  `ScriptVariables.cpp`, sondern gleich der allgemeine Weg). **Vorarbeit S83 —
+  Bestandsaufnahme über alle Palettentypen:** was im Editor steht, aber keine
+  Skriptvariable hat (Stand `HEAD` 80201b3):
+
+  | Gruppe | Typen · nicht skriptbare Felder |
+  |---|---|
+  | Modus-/Beat-Schalter | customBpm `arbitrary/skip/invert` · onBeatClear `blend` · starfield/blitterFeedback/mosaic/bump/interferences/multiFilter/channelShift/interleave `onBeat` · mirror `onBeatRandom/smooth` · colorfade `slowFade/onBeatRandom` · waterBump `randomDrop` · reactionDiffusion `seedOnBeat` · rotoBlitter `beatReverse/beatReverseSpeed/beatZoomJump` · videoDelay/multiDelay `useBeats` |
+  | Blend/Subpixel/Wrap | `blend` bei bufferSave, movingParticle, starfield, metaballs3d, tentacles3d, dynamicShift, dynamicDistanceModifier, blitterFeedback, rotoBlitter, mosaic, bump, interferences, interleave, grain, fractal2D/3D, domainWarp, lyapunov, kleinian, strangeAttractor, flame, reactionDiffusion · `subpixel`/`wrap`/`rectCoords` bei den Movement-Typen |
+  | Typ-/Qualitätswahl | fractal2D `type/smooth` · fractal3D `type/maxSteps/maxIter/ao` · fractalZoomer `type/maxIter` · lyapunov `sequence/warmup/iterations` · kleinian `iterations` · strangeAttractor `type/points/useGradient` · flame `functions/points` · multiDelay `mode` · renderScale `divisor/filter` · jherikoGlobal `loadMode` · terrain3d `resolution/drawMesh/drawDots` · superScope3d `renderMode/audioChannel/spectrumSource` · bloom `downsample/vignette/post` |
+  | Farben/Verläufe | `gradientPreset` überall (Fraktal-Familie, SuperScope) · Farbtafeln `colors` (superScope, simpleScope, oscStar, oscRing, rotatingStars, metaballs3d, tentacles3d, dotGrid, dotPlane, dotFountain) · colorMap Stützstellen · convolution Kern |
+  | Quellen/Kanäle | superScope `audioChannel/spectrumSource/lineBlend/colorBlend/dotSize/colorCycleFrames` · oscStar/oscRing/timescope `channel/position/source` · rotatingStars `bandLo/bandHi` · bassSpin `left/right` · shadertoy `imageInput[0..3]`, Buffer-Eingänge · isfFilter Quellen/Geometrie/Passes · videoSource alles · picture/texer Bild |
+  | Sonstiges | clear `onlyFirst` · brightness `exclude` · blur `roundUp` · uniqueTone `invert` · colorClip `mode` · colorModifier `recompute` · texerII `resizing/wrapAround/colorFiltering` · triangle `filled/lineWidth` · dotPlane/dotFountain `startRotation` · hostSwitcher Liste/Intervall/Reihenfolge |
+
+  Ohne Skript-Slots: renderScale, debugBars, water, scatter, invert, normalise.
+  Nebenbefund dazu in §8 (Milkdrop-Tabelle unvollständig).
 
 - 🟡 **Mash-Up-Sätze für 0.5.0 freigeben** (S75) — `GreatWho + Flexi - Rock The
   House [Caturday Night]` (93) und `GreatWho + Martin + Geiss + Flexi -
@@ -2120,7 +2139,18 @@ Leerfläche geht das Element in den **letzten Milkdrop-Knoten in
 Baumreihenfolge** (`letzterMilkdropPfad`, `MultiEffectPanel.cpp`). Test
 `PaletteUi Panel A14b`.
 
-### ⬜ Vorlagen für Milkdrop-Elemente und Shader (Wunsch S80)
+### ✅ Vorlagen für Milkdrop-Elemente und Shader (Wunsch S80, umgesetzt S83)
+
+**Umgesetzt S83** (Entscheide Patrik E3a/E4a): Custom Wave/Shape/Sprite tragen
+eine eigene Preset-Zeile (Typ-Schlüssel `milkWave`/`milkShape`/`milkSprite`,
+JSON-Ebene im NodePresetStore); Werks-Presets *Oszilloskop-Linie*,
+*Spektrum-Kreis*, *Farbwechsel* (Waves) und *Pulsiert mit Bass*, *Langsam
+drehend*, *Langsames Ausblenden* (Shapes). Die fest verdrahteten Vorlagen von
+SuperScope 3D (7) und 3D Camera (6) sind nach `asset/nodepresets/` gewandert.
+Shader: Vorlagen **nur im Groß-Editor** (Zeile „Vorlage:"), „Leer" aus dem Code,
+21 Dateien unter `asset/shadertemplates/`, jede im echten Knoten kompiliert
+(Test). Offen: Sprite-Werks-Presets (brauchen ein mitgeliefertes Bild).
+
 
 Wer eine Shape, Wave, Sprite oder einen Shader neu anlegt, bekommt heute nur
 neutrale Werte — ein schneller „Einstiegspunkt“ fehlt. Wunsch Patrik: Vorlagen
@@ -2771,6 +2801,18 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 ## 8. Werkzeug- und Doku-Schulden
 
+- 🟡 **Milkdrop-Variablentabelle unvollständig** (Befund S83, Bestandsaufnahme):
+  `ScriptVariables.cpp` listet für den Milkdrop-Node nur einen Teil dessen, was
+  `MilkdropVisualizer.cpp` (per_frame-Bindung, etwa Z. 1050–1125) wirklich
+  bindet — es fehlen u. a. `echo_*`, `ob_*`/`ib_*`, `mv_*`,
+  `wave_mode/usedots/thick/additive/brighten`, `darken_center`, `wrap`,
+  `invert`, `brighten`, `darken`, `solarize`, `blur*_min/max`,
+  `blur1_edge_darken`, `zoomexp`, `wave_mystery`, `drift_*`, `weich`. Alle
+  Milkdrop-Zeilen stehen auf `probe=false` — der Bindungstest deckt sie nicht.
+  Gehört zu Block F (§6).
+- ✅ **ISF-Editoren zeigten die Pixel-Filter-Referenz** (`uTex`, `farbe()`) —
+  behoben S83, eigene ISF-Seite (Sprache, Makros, LumiViz-Extras, `.vs`).
+
 - 🟠 **Die AVS-Befundlage hängt stark am Prüfsignal** (Messung S74). Alle 10
   mitgelieferten Presets, 120 Frames, 320×240, **`--beat-period 30` in beiden
   Läufen** — der Beat ist damit konstant, es unterscheidet sich nur das
@@ -2986,6 +3028,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.79.0 | 2026-09-30 | Session 83 — **§4:** Sichttests S82 (Presetverweis, Song-Slot, Host Switcher, Preset as Group) abgenommen; neue Zeile S83. **Preset-Zeile:** Combo behält die Wahl, „(unsaved) – Name" nach echter Änderung (Vergleich vorher/nachher, nur solange sauber), 🗑 zielt auf die Quelle (Entscheid a); Name/Beschreibung zählen nicht. **§7 ✅ Vorlagen für Milkdrop-Elemente und Shader** (Element-Presets, 3D-Template-Listen → nodepresets, Shader-Vorlagen im Groß-Editor mit Kompiliertest). **Schalter „Script active"** am Knoten (E1a, zentral in `renderNode`, 79 Typen per Test mit Gegenprobe). **§6 NEU Block F** mit der Bestandsaufnahme als Eingang (E2b). **§8:** Milkdrop-Variablentabelle unvollständig (neu), ISF-Referenz ✅. Tests 674 |
 | 1.78.0 | 2026-09-29 | Session 82 — **§3 Kalibrierlauf 4090 komplett** (22 × 5 Formate × 2 Saaten, ersetzt die 610M-Tabelle; Kartenvergleich: ps_2-Presets kartenunabhängig, `Beauty` OK, `Neomtwister` näher; Vorbehalt Früh-MAE 0,000 = beide schwarz). Harness `--kerne ccd2` (Affinität, Kontrollmessung: Zahlen gleich, Tctl −3–4 °C). **Preset as Group** (Palette, `.avs`/`.milk`/`.lvfx` als Kopie in eine Host-Gruppe, „Aus Quelle neu laden", Wurzel-Einstellungen bleiben erhalten) — Sichttest in §4. „Import Browser" → **Effect Browser**. **Host Switcher** (Stufe Host-Gruppen des Szenen-Wechslers, §7) + eindeutige Gruppennamen + Songwechsel-Signal an den Renderer; Fix: eingeklappte Container bleiben nach Strukturänderungen zu. **Song-Slot für alle Skript-Knoten** (§6 `onChange`-Slot ✅; Engine-Slot 5, `ChainNode::songCode`, 79 Typen per Test). **Presetverweis** (Host-Gruppe mit `verweis`: nur Pfad gespeichert, Auflösung beim Laden mit Zyklus-Schutz, Palette „Preset Reference…"). Tests 665 |
 | 1.76.0 | 2026-09-29 | Session 80 — **MilkDrop-Treue gemessen statt geschätzt (§3):** Gestaltung (Linear-/Radial-Drift, Weichzeichnen, skriptfähig; „Weicher Sog ↖“ bitgleich zum alten Look); `stratospheric turbulences` → vier Zufallsquellen, `MilkdropRef --zufall-lumiviz`, **Skript-Zufall ns-eel2** (exakt, Standard Original), Gitter-Sonde (+0,98); gelbe Kugeln → Spektrum der Waves → **MilkdropFft/MilkdropAudio** (FFT, AlignWaves, bass/mid/treb exakt gegen den Kern; **Audio Standard Original**; Messreihe mitgelieferte f10 0,087 → 0,055); **🔴 MilkdropRef-PCM-Format seit S63 falsch — behoben**, alle MilkDrop-Referenzzahlen davor unter Vorbehalt. Offen: y-Grundlinie der Custom-Waves (nächste Session). Tests 648. — **✅ §3: blanke Pipeline blendete aus und driftete nach oben links** — Sonde gegen MilkdropRef belegt (Referenz steht, wir 0,5 px/Frame + Weichzeichnen), Ursache Halbtexel-Versatz im Warp-Mesh, entfernt (Entscheid a); Messreihe vorher/nachher gegen dieselben Referenzbilder: Frame 120 Δ −0,007 (320) / −0,0065 (640), 10 besser / 1 schlechter; Sonde als Regressionsprobe `asset/calibration/milkdrop/drift/`. **Sichttest automatisiert:** `test_PaletteUi` (21 UI-Tests offscreen, Palette + echtes Panel mit Host, Screenshots per `LUMIVIZ_UI_SCHNAPPSCHUSS`) und `asset/calibration/sichttest/sichttest_auto.py` (12 Ketten-Stichproben B/D mit Kontaktbögen) — dabei **✅ §7 Drop auf die Leerfläche behoben** (betraf nur Milkdrop-Elemente). NEU §7: Vorlagen für Milkdrop-Elemente/Shader. Editor: `b` als in/out gefärbt wie `r`/`g` (Entscheid a); Mehrfachzuweisung `r = r2 = red;` getestet + Referenzsatz. Prüfprotokoll [Sichttest_Protokoll_S79.md](Sichttest_Protokoll_S79.md). Tests 610/610 |
 | 1.75.0 | 2026-09-27 | Session 79 (Auftrag Patrik: Modulauswahl + Formelfelder) — **Palettenfenster umgesetzt** (nicht-modal; Suche über Name/Originalname/Beschreibung, Chips Herkunft AVS/APE/MilkDrop/LumiViz + Rolle, ★ Favoriten + Zuletzt, Detailzeile mit Formelfeldern, Add/Enter/Doppelklick + Drag & Drop in den Kettenbaum; Palettendaten nach `EffectPalette.{hpp,cpp}` ausgelagert, je Eintrag Rolle/Kurzbeschreibung/Originalname; Test `test_EffectPalette`; Sichttest offen). **Formelfelder Block B:** Farben per Skript als `<feldname>_r/_g/_b` in 16 Modulen (`FarbKopie`, Referenz + Struct-Doku + Tooltips nachgezogen). **Block C:** Farbpaletten der sieben Fraktale per Skript (`colorscale`, `colorcycle`, `colorphase`, Innen-/Hintergrund-/Negativfarbe). **Block E:** Set Render Mode + ISF Filter mit Parameter-Skript (ISF-Regler unter ihrem key); selbst deklarierte Uniforms in Shadertoy/Pixel Filter/Mesh Warp/GPU-Partikel als Skriptvariablen (Entscheid 1a, Shadertoy neu mit Init/Frame/Beat); Host Group `outadjustalpha` (Entscheid 2a); Fix: Set Render Mode schrieb `adjustAlpha` nicht. **Block D:** 43 weitere Felder in 14 Modulen skriptbar (Fraktal-Details, Bump-Tiefe, 3D-Profile, Interferences-Beatziele, GPU-Partikel, Water-Bump-Tropfenort). **Formelfelder:** Inventar aller 84 Module (`visuals/Formelfelder_Inventar.md`); Block A umgesetzt — `distance` (Brightness), `skipfirst` (Custom BPM), `x2`/`y2` (Interleave), `blend` (Timescope, Dot Grid), `edgemode` (Convolution), `p`/`q` (Kleinian), `variation`/`scale` (Flame) gebunden; Variablenreferenz aus der SSOT `ScriptVariables.hpp`, geprüft durch `test_ScriptVariablesGl` (Namens-Sonde in `LuaScriptEngine`). Neu in §7: Palettenfenster, Formelfelder B–F |

@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "beatCode": "r=1.6",
+        "frameCode": "t=t+0.01;r=r+(1-r)*0.1",
+        "initCode": "n=350;r=1",
+        "pointCode": "y=i*2-1;rad=sqrt(abs(1-y*y));a=i*88+t*2;x=rad*cos(a)*r;z=rad*sin(a)*r;y=y*r;size=0.04+treb*0.05;red=1;green=0.4+0.6*(r-1);blue=0.3",
+        "pointCount": 350,
+        "type": "superScope3d"
+    }
+}

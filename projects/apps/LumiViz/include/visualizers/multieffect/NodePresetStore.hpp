@@ -34,6 +34,7 @@
 
 #include "visualizers/multieffect/EffectChain.hpp"
 
+#include <QJsonObject>
 #include <QString>
 #include <QStringList>
 
@@ -76,6 +77,13 @@ struct Entry
                         EffectParams& inOut, QStringList* report);
 
 /**
+ * Der Knoten-Rahmen: Schluessel aus `nodeToJson`, die NIE in eine
+ * Voreinstellung gehoeren (`type`, `name`, `description`, `enabled`,
+ * `children`, seit S83 `scriptsActive`). SSOT fuer Store und Panel.
+ */
+[[nodiscard]] const QStringList& knotenRahmen();
+
+/**
  * Die Parameter-Feldnamen eines Knotentyps, so wie sie in einer Datei stehen —
  * ohne den Knoten-Rahmen (`type`/`name`/`description`/`enabled`/`children`).
  * Generisch aus `nodeToJson` gewonnen, also fuer jeden Typ verfuegbar; Grundlage
@@ -97,6 +105,34 @@ struct Entry
  */
 [[nodiscard]] bool save(const QString& name, const EffectParams& params,
                         const QStringList& fields, QString* outPath);
+
+// --- JSON-Ebene (S83) --------------------------------------------------------
+//
+// Dieselben Dateien, aber ohne den Umweg ueber `EffectParams`: so tragen auch
+// die Milkdrop-Elemente (Custom Wave/Shape/Sprite) Voreinstellungen, obwohl sie
+// keine Knoten sind. Ihre Typ-Schluessel stehen unten; der Rahmen eines
+// Elements (`index`, `enabled`) gehoert — wie `name`/`enabled` beim Knoten —
+// nicht in die Datei.
+
+inline constexpr const char* kMilkWave = "milkWave";      ///< Custom Wave
+inline constexpr const char* kMilkShape = "milkShape";    ///< Custom Shape
+inline constexpr const char* kMilkSprite = "milkSprite";  ///< Sprite (MD3)
+
+/**
+ * Wie `load`, aber auf JSON: die Felder der Datei werden UEBER `inOut` gelegt
+ * (Teil-Presets lassen den Rest stehen). `type` wird geprueft und nicht nach
+ * `inOut` uebernommen. false = unlesbar oder falscher Typ; `inOut` bleibt dann.
+ */
+[[nodiscard]] bool loadJson(const QString& path, const QString& expectKey,
+                            QJsonObject& inOut, QStringList* report);
+
+/**
+ * Wie `save`, aber auf JSON: `felder` ist der fertige Feldsatz (ohne Rahmen),
+ * `auswahl` die zu speichernden Schluessel (leer = alle). `type` setzt der Store.
+ */
+[[nodiscard]] bool saveJson(const QString& name, const QString& typeKey,
+                            const QJsonObject& felder, const QStringList& auswahl,
+                            QString* outPath);
 
 /** Loescht eine Benutzer-Voreinstellung. Asset-Dateien werden NICHT geloescht. */
 [[nodiscard]] bool remove(const Entry& entry);

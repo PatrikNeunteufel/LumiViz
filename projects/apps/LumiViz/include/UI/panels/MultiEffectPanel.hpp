@@ -26,6 +26,7 @@
 #include "visualizers/modules/ColorGradientModule.hpp"  // gradient combo delegate backing
 
 #include <QList>
+#include <QPointer>
 #include <QTreeWidget>
 
 class QFormLayout;
@@ -154,6 +155,27 @@ private:
     /// Klickorgie. Bewusst nur zur Laufzeit: die Hinweise gelten dem eben
     /// geladenen Shader, nicht dem Preset.
     QHash<std::uint64_t, QString> m_isfHinweise;
+    /// Zuletzt geladene/gespeicherte Knoten-Voreinstellung je Knoten (S83):
+    /// die Preset-Combo zeigt sie nach dem Neuaufbau des Editors wieder an,
+    /// nach der ersten Aenderung als „(unsaved) – Name" (Entscheid Patrik a).
+    /// Nur zur Laufzeit, wie m_isfHinweise.
+    /// Schluessel `nodeId/section/element` — section −1 = der Knoten selbst,
+    /// sonst ein Milkdrop-Element (1 Wave, 2 Shape, 4 Sprite).
+    struct PresetMarke
+    {
+        QString name;
+        bool geaendert{false};
+        std::uint64_t nodeId{0};
+        int section{-1};
+        int element{-1};
+    };
+    QHash<QString, PresetMarke> m_presetMarken;
+    /// Combo der Preset-Zeile im offenen Editor (lebt mit m_propPage).
+    QPointer<QComboBox> m_presetCombo;
+    QString m_presetComboSchluessel;
+    /// Markiert die Voreinstellung als geaendert und zieht die Combo nach.
+    /// Aufrufer: `mutate` (jede Parameter-Mutation laeuft dort durch).
+    void markierePresetGeaendert(const QString& schluessel);
     [[nodiscard]] QList<int> currentPath() const;
     /// All selected item paths (same parent, sorted by index). Falls back to the
     /// current item when the selection is empty.
@@ -170,8 +192,12 @@ private:
     void enforceSameLevelSelection();
 
     // Mutations (all lock the render mutex + recompile)
+    /// `aendertVoreinstellung = false` fuer Felder, die keine Knoten-
+    /// Voreinstellung speichert (Name, Beschreibung) — sonst springt die
+    /// Preset-Combo auf „(unsaved)".
     void mutate(const QList<int>& path,
-                const std::function<void(lumi::multieffect::ChainNode&)>& fn);
+                const std::function<void(lumi::multieffect::ChainNode&)>& fn,
+                bool aendertVoreinstellung = true);
     void mutateStructure(const std::function<void()>& fn);
     void setNodeEnabled(const QList<int>& path, bool enabled);
     /// „+": Palettenfenster oeffnen bzw. nach vorn holen (S79).
@@ -196,10 +222,6 @@ private:
     void onRemove();
     void onClone();
     void onMove(int delta);
-    /// Load a SuperScope-3D template's EEL quartet into the node at `path`.
-    void applyScope3DPreset(const QList<int>& path, int presetIndex);
-    /// Load a 3D-Camera template's EEL slots into the node at `path`.
-    void applyCamera3DPreset(const QList<int>& path, int presetIndex);
     void onDropRequested(QTreeWidgetItem* src, QTreeWidgetItem* target,
                          ChainDrop where);
     /// Move src to the drop destination while the render mutex is held (called
@@ -231,12 +253,15 @@ private:
     [[nodiscard]] int editorRahmen() const;
     /// Zeile „Voreinstellung" (Laden/Speichern/Loeschen) — gilt fuer jeden
     /// Knotentyp, s. `NodePresetStore` und Knoten-Parameter-Konzept §3.
-    void addPresetRow(QFormLayout* form, const QList<int>& path,
-                      const lumi::multieffect::EffectParams& params);
+    /// `section`/`element` (S83): −1 = der Knoten; sonst ein Milkdrop-Element
+    /// (Zaehlung wie splitMilkPath). `rawPath` = Baum-Pfad fuer den Neuaufbau.
+    void addPresetRow(QFormLayout* form, const QList<int>& path, const QList<int>& rawPath,
+                      const lumi::multieffect::EffectParams& params, int section = -1,
+                      int element = -1);
     /// Speichern-Dialog: Name + abwaehlbare Felder. false = abgebrochen.
     /// Abgewaehlte Felder fehlen in der Datei und bleiben beim Laden stehen.
-    bool askPresetToSave(const lumi::multieffect::EffectParams& params,
-                         QString& outName, QStringList& outFields);
+    /// `all` = die waehlbaren Felder (Knoten oder Milkdrop-Element, S83).
+    bool askPresetToSave(const QStringList& all, QString& outName, QStringList& outFields);
     /// Bild-Zeile der Bild-Knoten: Status + „Choose…"/„Clear" (S50-Vorgabe).
     /// `set(node, filename, base64)` schreibt beide Felder in einem Zug.
     void addImageRow(
