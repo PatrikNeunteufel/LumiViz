@@ -26,6 +26,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/ShadertoyBrowserPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/MultiEffectPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PlayerPanel.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/TagViewPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PlaylistPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/SettingsPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualSelectPanel.hpp"

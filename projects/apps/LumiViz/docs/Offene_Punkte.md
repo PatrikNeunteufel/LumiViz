@@ -2424,6 +2424,15 @@ Dateien geprüft:** das Lesen von Jahr/Genre/Track je Format (ID3v2.2/2.3/2.4,
 ID3v1.1, Vorbis, APE, MP4) — nur nach dem Format gebaut; Sichttest Patrik.
 Offen: Laufzeitwerte (Zeit, BPM, Presetname), Ein-/Ausblenden beim
 Titelwechsel.
+**Panel „Tag View" (✅ S86, Wunsch Patrik):** zeigt Tags, Datei, Dauer und
+Cover (256 px) des laufenden Titels — das Prüfwerkzeug für das Tag-Lesen
+(`TagViewPanel`, id `tag_view`). Abtastrate, Kanäle und Bitrate bleiben leer:
+`AudioPlayer` füllt diese `TrackInfo`-Felder nicht. **Ideen Patrik S86
+(nichts gebaut):** Tags im Panel **nachträglich eintragen** (Schreiben in die
+Datei — braucht eine Tag-Bibliothek, BASS liest nur; Kandidat TagLib,
+Lizenz LGPL/MPL prüfen) und **Online-Datenbank durchsuchen** wie beim
+CD-Rippen (Kandidat MusicBrainz; früher freedb/CDDB — nur als Opt-in, sendet
+Titeldaten nach außen).
 **Songtexte — Fragen Patrik S86 (Konzept offen, noch nichts entschieden):**
 Online-Quellen? Ablage bei den Songs oder getrennt, Suchreihenfolge? Wie wird
 der Zeilenwechsel koordiniert? Karaoke-Modus, Duette? Vorschlag Claude S86

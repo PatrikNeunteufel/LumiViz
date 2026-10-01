@@ -31,6 +31,7 @@
 #include "UI/panels/MultiEffectPanel.hpp"
 #include "UI/panels/PlayerPanel.hpp"
 #include "UI/panels/PlaylistPanel.hpp"
+#include "UI/panels/TagViewPanel.hpp"
 #include "UI/widgets/AudioDateien.hpp"
 #include "UI/widgets/DateiDrag.hpp"
 #include "audio/IAudioPlayer.hpp"
@@ -1832,6 +1833,38 @@ TEST_CASE("PaletteUi S86 F4c: ~-Knopf an SuperScope- und Listenfeldern")
 // Takt (einmal, je Frame, je Beat, je Punkt …). Waechter: JEDES Slot-Feld, das
 // das Panel mit addScript anlegt, bekommt einen Text — ein neuer Slot ohne
 // Beschreibung faellt hier auf.
+// S86 (Wunsch Patrik): Panel „Tag View" zeigt die Tags des laufenden Titels;
+// ein fehlender Tag ist als „—" zu sehen, ohne Titel steht der Hinweis da.
+TEST_CASE("PaletteUi S86: Tag View zeigt die Tags des Titels")
+{
+    UiUmgebung env;
+    ServiceContainer dienste;
+    TagViewPanel panel(dienste);
+    const auto text = [&](const char* name) {
+        auto* l = panel.findChild<QLabel*>(QLatin1String(name));
+        REQUIRE(l != nullptr);
+        return l->text();
+    };
+    CHECK(text("tagCover") == QStringLiteral("No track loaded"));
+    CHECK(text("tagTitle") == QStringLiteral("—"));
+
+    TrackInfo t;
+    t.filePath = QStringLiteral("C:/Musik/gibt es nicht.mp3");
+    t.title = QStringLiteral("Blue Monday");
+    t.artist = QStringLiteral("New Order");
+    t.year = QStringLiteral("1983");
+    t.trackNumber = QStringLiteral("7");
+    t.durationMs = 449000;
+    panel.zeige(t);
+    CHECK(text("tagTitle") == QStringLiteral("Blue Monday"));
+    CHECK(text("tagArtist") == QStringLiteral("New Order"));
+    CHECK(text("tagAlbum") == QStringLiteral("—"));  // fehlt: sichtbar als fehlend
+    CHECK(text("tagYear") == QStringLiteral("1983"));
+    CHECK(text("tagTrack") == QStringLiteral("7"));
+    CHECK(text("tagFormat").startsWith(QStringLiteral("7:29")));
+    CHECK(text("tagCover") == QStringLiteral("No cover"));  // Datei existiert nicht
+}
+
 // S86 (Wunsch Patrik): der Text-Knoten waehlt die Schrift aus einer Liste und
 // hat ein Haekchen Bold, das mit dem Zahlfeld Weight im Gleichschritt bleibt.
 TEST_CASE("PaletteUi S86: Text — Schrift-Auswahlliste und Bold")

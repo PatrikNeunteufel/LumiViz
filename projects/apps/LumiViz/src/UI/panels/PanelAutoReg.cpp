@@ -46,6 +46,7 @@
 #include "UI/panels/PlayerPanel.hpp"
 #include "UI/panels/PlaylistPanel.hpp"
 #include "UI/panels/AudioBrowserPanel.hpp"
+#include "UI/panels/TagViewPanel.hpp"
 #include "UI/panels/ImportBrowserPanel.hpp"
 #include "UI/panels/ShadertoyBrowserPanel.hpp"
 #include "UI/panels/ConfigPanel.hpp"
@@ -138,6 +139,23 @@ void initPanelDefaults(PanelRegistry& registry)
         },
         [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
             return std::make_unique<AudioBrowserPanel>(svc);
+        },
+        false);
+
+    // =========================================================================
+    // TAG VIEW PANEL (S86) — Tags und Cover des laufenden Titels, nur Anzeige
+    // =========================================================================
+
+    registry.registerPanel(
+        PanelDescriptor{
+            "tag_view",         // id
+            "Tag View",         // title
+            245,                // order (nach dem Audio Browser)
+            false,              // defaultVisible (hidden by default)
+            "View/Panels"       // menuPath
+        },
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<TagViewPanel>(svc);
         },
         false);
 

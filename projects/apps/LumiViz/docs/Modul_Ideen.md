@@ -54,6 +54,7 @@ in der Spalte „Offen").
 
 | Idee | Was es wäre | Stand | Offen | Einzelheiten |
 |---|---|---|---|---|
+| **Tag View: Tags bearbeiten und online suchen** | Im Panel „Tag View" Tags nachträglich eintragen (in die Datei schreiben) und eine Online-Datenbank durchsuchen, wie beim CD-Rippen | 🟡 | gebaut S86: das Panel als reine Anzeige (Tags, Cover). Offen: Schreiben (braucht eine Tag-Bibliothek), Online-Suche (Opt-in) | `Offene_Punkte` §7 „Text-Knoten ausbauen", Absatz „Panel Tag View" |
 | **Timeline / Composit** | Zeitleiste, die Visuals und Übergänge je Titel anordnet (statt Host Switcher), bis hin zum Offline-Rendern | ⚪ | Konzept-Session; Vorarbeit S84 (Ziehen aus Browser/Playlist) | `Offene_Punkte` §7 „Drag … Weg zur Timeline", Ausblick |
 | **Visual-Playlist** | Abfolge von Visuals wie eine Musik-Playlist | ⚪ | hängt an offenen Entscheiden | `Offene_Punkte` §6 (P2), §5 |
 | **Preset-Warmup / Pre-Roll** | Beim Laden, Resize und Vollbildwechsel einige hundert Frames vorrechnen — kein Schwarz-Start | ⚪ | alles | `Offene_Punkte` §7 (Sammelzeile) |

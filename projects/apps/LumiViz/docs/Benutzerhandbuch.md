@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.27.0
+> **Version:** 1.28.0
 > **Datum:** 2026-10-01
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -95,6 +95,17 @@ Das **Playlist-Panel** führt die Titelliste:
   bestimmte Stelle fallen lassen, Titel hinaus auf Player oder Visualisierung
   ziehen (§2). *Behoben:* Verschieben änderte früher nur die Anzeige — danach
   spielte ein Doppelklick den falschen Titel.
+
+### Tag View
+
+**View → Panels → Tag View** zeigt, was LumiViz aus dem laufenden Titel liest:
+**Title**, **Artist**, **Album**, **Year**, **Genre**, **Track**, dazu **File**
+und **Format** (Dauer) — und darüber das **Cover** in größerer Vorschau
+(eingebettet, sonst das Ordnerbild). Ein fehlender Tag steht als „—" da. Die
+Werte lassen sich markieren und kopieren. Es sind dieselben, die der
+Text-Knoten in seine Vorlagen einsetzt (`{title}`, `{artist}` …) — das Panel
+zeigt also auch, warum eine Vorlage leer bleibt. Ändern lassen sich die Tags
+hier nicht.
 
 ### Audio Browser
 
@@ -1074,6 +1085,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.28.0 | 2026-10-01 | Session 86. §2 NEU Panel **Tag View**: Tags, Datei, Dauer und Cover des laufenden Titels (nur Anzeige) |
 | 1.27.0 | 2026-10-01 | Session 86. §11 NEU „Text: Titel und Interpret anzeigen": Platzhalter `{title}` `{artist}` `{album}` `{year}` `{genre}` `{track}` `{file}`, wahlfreie Teile in eckigen Klammern, Knopf **Insert tag**, Voreinstellung **Now Playing** |
 | 1.26.0 | 2026-10-01 | Session 86. §11 Text: **Font** ist eine Auswahlliste der installierten Schriften (weiter editierbar), NEU Häkchen **Bold**. §11 NEU „Fenstergröße ändern": das Bild von Kette, Effect List und Host-Gruppe bleibt beim Größenwechsel erhalten — Blur und Trails brechen nicht mehr ab |
 | 1.25.0 | 2026-10-01 | Session 86. §11 Modulation: NEU **Beat sync** — LFOs im Takt der Musik (Länge einer Schwingung in Beats). §11 Voreinstellungen: 7 für **Text** (Beat Words, Slideshow, Random Flash, Subtitle, Beat Colours, Bass Tempo, Beat Jump) und 5 für **AVI** |
