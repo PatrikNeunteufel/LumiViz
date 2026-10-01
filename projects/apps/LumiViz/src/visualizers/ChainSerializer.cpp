@@ -3084,6 +3084,8 @@ QJsonObject nodeToJson(const ChainNode& node)
             j["source"] = QString::fromLatin1(modQuelleKey(m.quelle));
             j["depth"] = m.tiefe;
             if (istLfo(m.quelle)) j["rateHz"] = m.rateHz;
+            // F4d (S86): nur wenn der LFO im Takt laeuft
+            if (istLfo(m.quelle) && m.rateBeats > 0.0) j["rateBeats"] = m.rateBeats;
             if (m.glaettung != 0.0) j["smoothing"] = m.glaettung;
             if (!m.aktiv) j["active"] = false;
             // F4b (S86): Ziel nur an Farbfeldern — Dateien mit Zahlfeld-
@@ -3135,6 +3137,7 @@ ChainNode nodeFromJson(const QJsonObject& obj, QStringList* report)
                                     QString::fromLatin1(modQuelleKey(m.quelle))));
         m.tiefe = std::clamp(j.value("depth").toDouble(m.tiefe), -4.0, 4.0);
         m.rateHz = std::clamp(j.value("rateHz").toDouble(m.rateHz), 0.0, 100.0);
+        m.rateBeats = std::clamp(j.value("rateBeats").toDouble(0.0), 0.0, 256.0);
         m.glaettung = std::clamp(j.value("smoothing").toDouble(0.0), 0.0, 60.0);
         m.aktiv = j.value("active").toBool(true);
         if (j.contains("target"))

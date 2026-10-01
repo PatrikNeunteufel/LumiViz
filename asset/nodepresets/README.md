@@ -221,6 +221,20 @@ ausdrücklich Teil der Vorlage.
 | | Molecule Grid | gefaltetes Sinus-Raster, Beat stößt den Impuls an (aus „EL-VIS — Molecules, S_KuPeRS Remix") |
 | | Sine Weave | gekreuzte Sinus-Verwerfung, je Beat neu gestimmt (aus „amphirion — nebulous") |
 | | Beat Spiral | Rotation/Zoom im gemessenen Beat-Takt (aus „D&L — Life Is Violated") |
+| `text` (S86) | Beat Words | großes, fettes Wort je Beat, additiv, mittig |
+| | Slideshow | Wörter im Zeittakt mit Leerbild dazwischen |
+| | Random Flash | kurzes Aufblitzen je Beat an zufälliger Stelle, zufälliges Wort |
+| | Subtitle | unten mittig, mit Kontur — bleibt auf jedem Bild lesbar |
+| | Beat Colours | Beat-Skript würfelt je Wort eine neue Farbe (`color_r/_g/_b`) |
+| | Bass Tempo | Frame-Skript: lauter Bass = schnellerer Wortwechsel (`normspeed`) |
+| | Beat Jump | Beat-Skript versetzt den Text je Beat (`xshift`, `yshift`) |
+| `avi` (S86) | Beat Blend | beat-adaptiv: additiv im Beat-Fenster, sonst 50/50 |
+| | Slow Motion | Bildwechsel höchstens alle 90 ms |
+| | Additive Overlay | Video additiv über dem Bild |
+| | Beat Stutter | Beat-Skript würfelt die Bildzeit neu (`speedms`) |
+| | Bass Persist | Frame-Skript: Beat-Fenster wächst mit dem Bass (`persist`) |
+
+Die Text- und AVI-Vorlagen lassen den Text bzw. die Videodatei unberührt.
 
 Die Zeilen „Import-Ernte S61" sind wörtlich aus Presets der Sammlung
 `VisualsPresets` übernommen (Entscheid S60: Quelle = Sammlung via Import);

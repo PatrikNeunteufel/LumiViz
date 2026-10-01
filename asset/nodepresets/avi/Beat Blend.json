@@ -1,0 +1,11 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "avi",
+        "adapt": true,
+        "persist": 8,
+        "blend": 2,
+        "speedMs": 0
+    }
+}

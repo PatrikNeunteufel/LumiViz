@@ -51,6 +51,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QFontComboBox>
 #include <QTemporaryDir>
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
@@ -1831,6 +1832,41 @@ TEST_CASE("PaletteUi S86 F4c: ~-Knopf an SuperScope- und Listenfeldern")
 // Takt (einmal, je Frame, je Beat, je Punkt …). Waechter: JEDES Slot-Feld, das
 // das Panel mit addScript anlegt, bekommt einen Text — ein neuer Slot ohne
 // Beschreibung faellt hier auf.
+// S86 (Wunsch Patrik): der Text-Knoten waehlt die Schrift aus einer Liste und
+// hat ein Haekchen Bold, das mit dem Zahlfeld Weight im Gleichschritt bleibt.
+TEST_CASE("PaletteUi S86: Text — Schrift-Auswahlliste und Bold")
+{
+    UiUmgebung env;
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    const auto warte = [] {
+        for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+    };
+    lumi::multieffect::TextParams t;
+    t.text = "A;B";
+    t.fontFace = "Schrift Die Es Nicht Gibt";
+    p.vis.chain().children[0].params = t;
+    p.tree->setCurrentItem(p.oben(1));
+    warte();
+    p.tree->setCurrentItem(p.oben(0));
+    warte();
+
+    auto* font = p.panel->findChild<QFontComboBox*>(QStringLiteral("fontFace"));
+    REQUIRE(font != nullptr);
+    CHECK(font->count() > 0);  // installierte Schriften
+    // ein importierter, hier nicht installierter Name bleibt stehen
+    CHECK(font->currentText() == QStringLiteral("Schrift Die Es Nicht Gibt"));
+
+    auto* bold = p.panel->findChild<QCheckBox*>(QStringLiteral("fontBold"));
+    auto* gewicht = p.panel->findChild<QSpinBox*>(QStringLiteral("fontWeight"));
+    REQUIRE(bold != nullptr);
+    REQUIRE(gewicht != nullptr);
+    CHECK_FALSE(bold->isChecked());
+    bold->setChecked(true);
+    warte();
+    CHECK(std::get<lumi::multieffect::TextParams>(p.root().children[0].params).fontWeight == 700);
+}
+
 // S86 (Fund Patrik): Text, AVI und Comment standen nie in der Effekt-Palette —
 // nur der Import konnte sie anlegen. Waechter: jeder Knotentyp der Variante
 // kommt in EffectPalette.cpp vor, ausser den bewusst internen.

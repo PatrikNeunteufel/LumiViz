@@ -1,0 +1,20 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "text",
+        "onBeat": false,
+        "normSpeed": 90,
+        "fontHeight": -36,
+        "fontWeight": 400,
+        "hAlign": 1,
+        "vAlign": 2,
+        "randomPos": false,
+        "outline": true,
+        "outlineColor": 0,
+        "outlineSize": 2,
+        "shadow": false,
+        "color": 16777215,
+        "blend": 0
+    }
+}

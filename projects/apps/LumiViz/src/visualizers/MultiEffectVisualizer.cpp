@@ -3896,7 +3896,16 @@ bool MultiEffectVisualizer::ensureSurfacePair(SurfacePair& pair, int width,
         return true;
     }
 
-    // Resize policy 5.2: discard content (list-buffer blit is a later polish).
+    // Groessenwechsel (S86, Befund Patrik): das bisherige Bild wird in die neue
+    // Groesse uebernommen statt verworfen — wie AVS mit „reuse image on window
+    // resize" (config_reuseonresize, Vorgabe an; draw.cpp:185, r_list.cpp:542).
+    // Vorher brach bei jedem Zug am Fensterrand jeder Nachzug ab (Blur, Trails)
+    // und baute sich neu auf: sichtbares Flackern. Ohne altes Bild oder ohne
+    // Blit bleibt es beim Verwerfen (`outResized` = true -> der Aufrufer loescht).
+    std::unique_ptr<QOpenGLFramebufferObject> alt;
+    if (pair.ready() && QOpenGLFramebufferObject::hasOpenGLFramebufferBlit())
+        alt = std::move(pair.fbo[pair.currentIndex]);
+
     QOpenGLFramebufferObjectFormat format;
     format.setAttachment(QOpenGLFramebufferObject::NoAttachment);
     for (auto& fbo : pair.fbo)
@@ -3909,7 +3918,22 @@ bool MultiEffectVisualizer::ensureSurfacePair(SurfacePair& pair, int width,
         }
     }
     pair.currentIndex = 0;
-    if (outResized != nullptr) *outResized = true;
+    bool uebernommen = false;
+    if (alt != nullptr && alt->isValid())
+    {
+        auto* f = QOpenGLContext::currentContext()->functions();
+        GLint vorher = 0;
+        f->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &vorher);
+        // beide Puffer fuellen: der Partner wird je nach Effekt nur teilweise
+        // ueberschrieben und traegt sonst frisches, ungeloeschtes VRAM
+        for (auto& fbo : pair.fbo)
+            QOpenGLFramebufferObject::blitFramebuffer(
+                fbo.get(), QRect(0, 0, width, height), alt.get(),
+                QRect(0, 0, alt->width(), alt->height()), GL_COLOR_BUFFER_BIT, GL_LINEAR);
+        f->glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(vorher));
+        uebernommen = true;
+    }
+    if (outResized != nullptr) *outResized = !uebernommen;
     return true;
 }
 
@@ -3951,6 +3975,10 @@ void MultiEffectVisualizer::resetRuntimes()
     m_groupOverride.clear();
     m_modZustand.clear();  // F4: LFO-Phasen und Huellen beginnen neu
     m_modWerte.clear();
+    m_modBeatLage = 0.0;   // F4d: Beat-Uhr beginnt neu
+    m_modBeatSeit = 0.0;
+    m_modBeatPeriode = 0.5;
+    m_modBeatErster = true;
     m_bufferPool.clear();
     for (auto& ring : m_mdRing) ring.clear();  // Multi Delay shared rings
     for (int& head : m_mdHead) head = 0;
@@ -4062,6 +4090,26 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         const bool onset = m_beat.updateAvsOnset(level);
         m_frameBeat =
             m_beatEstimator.refine(onset, lumi::modules::BeatEstimator::steadyNowMs());
+    }
+
+    // F4d (S86): Beat-Uhr fuer LFOs mit Rate in Beats — auf der Sim-Uhr, aus
+    // dem Beat der Wurzel (Listen-Skripte und Custom BPM aendern ihn erst
+    // spaeter in der Kette). `m_modBeatLage` zaehlt Beats mit Bruchteil: sie
+    // laeuft im gemessenen Abstand frei weiter (auch ueber ausgefallene
+    // Beats) und rastet bei jedem echten Beat auf die naechste ganze Zahl.
+    {
+        const double dt = static_cast<double>(m_deltaTime);
+        m_modBeatSeit += dt;
+        m_modBeatLage += dt / m_modBeatPeriode;
+        if (m_frameBeat)
+        {
+            // Abstand nur aus plausiblen Beats (30..300 BPM), halb geglaettet
+            if (!m_modBeatErster && m_modBeatSeit >= 0.2 && m_modBeatSeit <= 2.0)
+                m_modBeatPeriode += (m_modBeatSeit - m_modBeatPeriode) * 0.5;
+            m_modBeatLage = m_modBeatErster ? 0.0 : std::round(m_modBeatLage);
+            m_modBeatErster = false;
+            m_modBeatSeit = 0.0;
+        }
     }
 
     // Working surface in physical pixels (the GL viewport is authoritative).
@@ -9809,10 +9857,25 @@ double MultiEffectVisualizer::modQuellwert(const lumi::multieffect::FeldModulati
         z.zufall = h != 0 ? h : 1u;
         z.halt = 0.0;
     }
-    const double vorher = z.phase;
-    z.phase += std::max(0.0, m.rateHz) * dt;
-    const bool neuePeriode = z.phase >= 1.0;
-    z.phase -= std::floor(z.phase);
+    double vorher = z.phase;
+    bool neuePeriode = false;
+    if (m.rateBeats > 0.0)
+    {
+        // F4d (S86): eine Schwingung je `rateBeats` Beats, an die Beat-Uhr
+        // gebunden — alle Beat-LFOs laufen phasengleich und beginnen auf dem Beat
+        const double lage = m_modBeatLage / m.rateBeats;
+        const double zyklus = std::floor(lage);
+        neuePeriode = zyklus != z.zyklus;
+        vorher = z.zyklus < 0.0 ? 0.0 : 1.0;  // erster Aufruf zieht einen Zufallswert
+        z.zyklus = zyklus;
+        z.phase = lage - zyklus;
+    }
+    else
+    {
+        z.phase += std::max(0.0, m.rateHz) * dt;
+        neuePeriode = z.phase >= 1.0;
+        z.phase -= std::floor(z.phase);
+    }
     const double p = z.phase;
     switch (m.quelle)
     {

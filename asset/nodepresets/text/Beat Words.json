@@ -1,0 +1,17 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "text",
+        "onBeat": true,
+        "onBeatSpeed": 12,
+        "fontHeight": -96,
+        "fontWeight": 700,
+        "hAlign": 1,
+        "vAlign": 1,
+        "blend": 1,
+        "randomPos": false,
+        "randomWord": false,
+        "insertBlank": false
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "text",
+        "onBeat": true,
+        "onBeatSpeed": 10,
+        "randomPos": false,
+        "fontHeight": -56,
+        "initCode": "",
+        "frameCode": "",
+        "beatCode": "xshift = rand(60) - 30;\r\nyshift = rand(40) - 20;"
+    }
+}

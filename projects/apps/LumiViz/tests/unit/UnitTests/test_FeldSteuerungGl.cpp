@@ -484,6 +484,135 @@ TEST_CASE("Modulation F4c: SuperScope und Effect List ohne Skripttraeger, uebrig
           doctest::Approx(hv.intervalSeconds + 36.0));
 }
 
+// S86 (Befund Patrik): beim Ziehen am Fensterrand brach der Blur-Nachzug ab und
+// der Text flackerte — jeder Groessenwechsel verwarf den Bildspeicher der Liste.
+// Jetzt wird das Bild in die neue Groesse uebernommen (wie AVS „reuse image on
+// window resize").
+TEST_CASE("Groessenwechsel S86: Liste und Wurzel behalten ihr Bild (Nachzug bleibt)")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    ChainNode root;
+    root.params = ListParams{};
+    ChainNode clear;
+    clear.params = ClearParams{};
+    ChainNode liste;
+    liste.params = ListParams{};
+    ChainNode text;
+    TextParams tp;
+    tp.text = "LumiViz";
+    tp.fontHeight = -40;
+    text.params = tp;
+    ChainNode blur;
+    blur.params = BlurParams{};
+    ChainNode stern;
+    stern.params = OscStarParams{};
+    liste.children = {text, blur, stern};
+    root.children = {clear, liste};
+
+    MultiEffectVisualizer vis;
+    vis.setChain(std::move(root));
+    vis.initialize();
+    auto* f = QOpenGLContext::currentContext()->functions();
+    const auto messe = [&](int w, int h, int frames) {
+        vis.resize(QSize(w, h));
+        f->glViewport(0, 0, w, h);
+        for (int i = 0; i < frames; ++i) vis.render(1.0f / 60.0f);
+        const QImage img = vis.debugGrabRootSurface();
+        int maxChroma = 0;
+        double luma = 0.0;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+            {
+                const QRgb p = img.pixel(x, y);
+                maxChroma = std::max({maxChroma, std::abs(qRed(p) - qGreen(p)),
+                                      std::abs(qGreen(p) - qBlue(p))});
+                luma += qGray(p);
+            }
+        luma /= std::max(1, img.width() * img.height());
+        CHECK(maxChroma == 0);  // weisse Kette: nirgends Farbe
+        return luma;
+    };
+    // Nachzug aufbauen, dann in kleinen Schritten die Groesse aendern: das
+    // Bild bleibt hell. Vor S86 fiel es bei jedem Schritt auf rund ein Viertel.
+    const double aufgebaut = messe(320, 240, 30);
+    REQUIRE(aufgebaut > 5.0);
+    for (const auto& [w, h] : {std::pair{321, 240}, {322, 241}, {310, 233}, {333, 251}})
+    {
+        CAPTURE(w);
+        CHECK(messe(w, h, 1) > aufgebaut * 0.8);
+    }
+}
+
+TEST_CASE("Modulation F4d: LFO-Rate in Beats — im Takt, phasengleich, folgt dem Tempo")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    // Bloom.intensity (Regler 1, Bereich 0..8), Tiefe 0.1 -> Ausschlag +-0.8.
+    // Fester Beat alle `periode` Frames bei 60 fps; gelesen wird nach `frames`.
+    const auto wert = [](ModQuelle q, double beats, int periode, int frames) {
+        ChainNode leaf;
+        leaf.params = BloomParams{};
+        FeldModulation m = mod("intensity", q, 0.1, 7.0);  // rateHz ruht im Takt
+        m.rateBeats = beats;
+        leaf.mods = {m};
+        ChainNode root;
+        root.params = ListParams{};
+        root.children.push_back(std::move(leaf));
+        std::optional<EffectParams> gesehen;
+        MultiEffectVisualizer::setzeParamBeobachter(
+            [&](const ChainNode&, const EffectParams& kopie) {
+                if (std::holds_alternative<BloomParams>(kopie)) gesehen = kopie;
+            });
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(periode);
+        vis.initialize();
+        vis.resize(QSize(kSize, kSize));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, kSize, kSize);
+        for (int i = 0; i < frames; ++i) vis.render(1.0f / 60.0f);
+        MultiEffectVisualizer::setzeParamBeobachter({});
+        return gesehen ? static_cast<double>(std::get<BloomParams>(*gesehen).intensity)
+                       : -1.0;
+    };
+    // Beat alle 30 Frames (120 BPM = der Startwert der Beat-Uhr). Nach 16
+    // Frames steht die Uhr bei einem halben Beat.
+    CHECK(wert(ModQuelle::LfoSaege, 1.0, 30, 16) == doctest::Approx(1.0).epsilon(1e-4));
+    CHECK(wert(ModQuelle::LfoDreieck, 1.0, 30, 16) == doctest::Approx(1.8).epsilon(1e-4));
+    CHECK(wert(ModQuelle::LfoSaege, 2.0, 30, 16) == doctest::Approx(0.6).epsilon(1e-4));
+    // auf dem Beat beginnt die Schwingung: Saege ganz unten
+    CHECK(wert(ModQuelle::LfoSaege, 1.0, 30, 31) == doctest::Approx(0.2).epsilon(1e-4));
+    // Rechteck ueber zwei Beats: erster Beat oben, zweiter unten
+    CHECK(wert(ModQuelle::LfoRechteck, 2.0, 30, 16) == doctest::Approx(1.8).epsilon(1e-4));
+    CHECK(wert(ModQuelle::LfoRechteck, 2.0, 30, 46) == doctest::Approx(0.2).epsilon(1e-4));
+    // anderes Tempo (Beat alle 20 Frames): nach einigen Beats hat die Uhr den
+    // Abstand gelernt — ein halber Beat nach dem siebten Beat ist wieder Mitte
+    CHECK(wert(ModQuelle::LfoSaege, 1.0, 20, 20 * 7 + 11) ==
+          doctest::Approx(1.0).epsilon(0.03));
+    // Gegenprobe: ohne Takt (rateBeats 0) laeuft derselbe LFO frei mit 7 Hz
+    CHECK(wert(ModQuelle::LfoSaege, 0.0, 30, 16) != doctest::Approx(1.0).epsilon(1e-3));
+
+    // Datei: rateBeats laeuft mit und fehlt, wenn der LFO frei laeuft
+    ChainNode n;
+    n.params = BloomParams{};
+    FeldModulation m = mod("intensity", ModQuelle::LfoSinus, 0.1, 2.0);
+    m.rateBeats = 4.0;
+    n.mods = {m, mod("radius", ModQuelle::LfoSinus, 0.1, 2.0)};
+    ChainNode root;
+    root.params = ListParams{};
+    root.children = {n};
+    QStringList bericht;
+    const ChainNode gelesen = chainFromJson(chainToJson(root), &bericht);
+    REQUIRE(gelesen.children.size() == 1);
+    REQUIRE(gelesen.children[0].mods.size() == 2);
+    CHECK(gelesen.children[0].mods[0].rateBeats == doctest::Approx(4.0));
+    CHECK(gelesen.children[0].mods[1].rateBeats == doctest::Approx(0.0));
+}
+
 TEST_CASE("Modulation F4b: Farbfelder — Helligkeit, Farbton, Kanal")
 {
     GlUmgebung gl;

@@ -1305,7 +1305,14 @@ private:
         double glatt = 0.0;
         double huelle = 0.0;
         uint32_t zufall = 0;  ///< 0 = noch nicht gesaet
+        double zyklus = -1.0; ///< F4d: zuletzt gesehener Beat-Zyklus (Zufall-halten)
     };
+    /// F4d (S86): Beat-Uhr der Modulation — Lage in Beats (mit Bruchteil),
+    /// Sekunden seit dem letzten Beat, gemessener Beat-Abstand.
+    double m_modBeatLage = 0.0;
+    double m_modBeatSeit = 0.0;
+    double m_modBeatPeriode = 0.5;
+    bool m_modBeatErster = true;
     std::unordered_map<uint64_t, std::unordered_map<std::string, ModZustand>> m_modZustand;
     /// Zuletzt angewendeter Wert je Knoten und Feld — fuer die Anzeige im Panel
     std::unordered_map<uint64_t, std::unordered_map<std::string, double>> m_modWerte;

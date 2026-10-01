@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "text",
+        "onBeat": true,
+        "onBeatSpeed": 12,
+        "fontHeight": -80,
+        "fontWeight": 700,
+        "initCode": "",
+        "frameCode": "",
+        "beatCode": "color_r = 0.3 + rand(70)/100;\r\ncolor_g = 0.3 + rand(70)/100;\r\ncolor_b = 0.3 + rand(70)/100;"
+    }
+}

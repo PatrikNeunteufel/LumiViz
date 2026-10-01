@@ -1,0 +1,11 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "avi",
+        "adapt": true,
+        "initCode": "",
+        "beatCode": "",
+        "frameCode": "persist = 2 + bass*24;"
+    }
+}

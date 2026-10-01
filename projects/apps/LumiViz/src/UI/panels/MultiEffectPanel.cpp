@@ -64,6 +64,7 @@
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
 #include <QFont>
+#include <QFontComboBox>
 #include <QRegularExpression>
 #include <QSet>
 #include <QSettings>
@@ -410,6 +411,20 @@ int modulationBearbeiten(QWidget* parent, const QString& feldLabel, FeldModulati
     rate->setToolTip(QObject::tr("LFO speed in cycles per second (on the simulation clock)."));
     form->addRow(QObject::tr("Rate"), rate);
 
+    // F4d (S86): LFO im Takt — Laenge einer Schwingung in Beats, 0 = freie Rate
+    auto* beats = new QDoubleSpinBox(&dlg);
+    beats->setObjectName(QStringLiteral("modBeats"));
+    beats->setRange(0.0, 256.0);
+    beats->setSingleStep(0.5);
+    beats->setDecimals(3);
+    beats->setSuffix(QObject::tr(" beats"));
+    beats->setSpecialValueText(QObject::tr("off (use Rate)"));
+    beats->setValue(m.rateBeats);
+    beats->setToolTip(QObject::tr("LFO in time with the music: one cycle lasts this many "
+                                  "beats (4 = one bar, 0.5 = two per beat) and starts on a "
+                                  "beat. Off: the free rate in Hz applies."));
+    form->addRow(QObject::tr("Beat sync"), beats);
+
     auto* glatt = new QDoubleSpinBox(&dlg);
     glatt->setObjectName(QStringLiteral("modSmoothing"));
     glatt->setRange(0.0, 60.0);
@@ -425,9 +440,10 @@ int modulationBearbeiten(QWidget* parent, const QString& feldLabel, FeldModulati
     form->addRow(QObject::tr("Active"), aktiv);
 
     // Rate nur fuer LFOs; Glaettung heisst beim Beat „Decay"
-    const auto passeAn = [&, rate, glatt, quelle, form]() {
+    const auto passeAn = [&, rate, beats, glatt, quelle, form]() {
         const auto q = static_cast<ModQuelle>(quelle->currentIndex());
-        rate->setEnabled(istLfo(q));
+        beats->setEnabled(istLfo(q));
+        rate->setEnabled(istLfo(q) && beats->value() <= 0.0);
         glatt->setEnabled(!istLfo(q));
         if (QWidget* l = form->labelForField(glatt))
             if (auto* lbl = qobject_cast<QLabel*>(l))
@@ -442,6 +458,8 @@ int modulationBearbeiten(QWidget* parent, const QString& feldLabel, FeldModulati
     passeAn();
     QObject::connect(quelle, QOverload<int>::of(&QComboBox::currentIndexChanged), &dlg,
                      [passeAn](int) { passeAn(); });
+    QObject::connect(beats, QOverload<double>::of(&QDoubleSpinBox::valueChanged), &dlg,
+                     [passeAn](double) { passeAn(); });
 
     auto* knoepfe = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
     auto* entfernen = knoepfe->addButton(QObject::tr("Remove"), QDialogButtonBox::DestructiveRole);
@@ -463,6 +481,7 @@ int modulationBearbeiten(QWidget* parent, const QString& feldLabel, FeldModulati
         m.quelle = static_cast<ModQuelle>(quelle->currentIndex());
         m.tiefe = tiefe->value();
         m.rateHz = rate->value();
+        m.rateBeats = beats->value();
         m.glaettung = glatt->value();
         m.aktiv = aktiv->isChecked();
         m.ziel = ziel != nullptr ? static_cast<ModZiel>(ziel->currentIndex() + 1)
@@ -7619,12 +7638,67 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             });
         });
         form->addRow(tr("Text (';' separates)"), edit);
-        addText("fontFace", tr("Font"), p->fontFace,
-                [](ChainNode& n, std::string v) { std::get<TextParams>(n.params).fontFace = std::move(v); });
+        {
+            // Schrift-Auswahlliste (S86, Wunsch Patrik): alle installierten
+            // Schriften, weiter frei editierbar — importierte Presets tragen
+            // Namen, die hier nicht installiert sein muessen. Leer = Standard.
+            auto* font = new QFontComboBox(m_propContainer);
+            font->setEditable(true);
+            font->setInsertPolicy(QComboBox::NoInsert);
+            font->lineEdit()->setPlaceholderText(tr("(default font)"));
+            {
+                const QSignalBlocker ruhe(font);
+                if (p->fontFace.empty())
+                {
+                    font->setCurrentIndex(-1);
+                    font->clearEditText();
+                }
+                else
+                {
+                    font->setCurrentText(QString::fromStdString(p->fontFace));
+                }
+            }
+            const auto setze = [this, path](const QString& name) {
+                mutate(path, [&](ChainNode& n) {
+                    std::get<TextParams>(n.params).fontFace = name.trimmed().toStdString();
+                });
+            };
+            connect(font, &QComboBox::textActivated, this, setze);
+            connect(font->lineEdit(), &QLineEdit::editingFinished, this,
+                    [font, setze]() { setze(font->currentText()); });
+            addRow("fontFace", tr("Font"), font);
+        }
         addInt("fontHeight", tr("Height (px)"), std::abs(p->fontHeight), 4, 400,
                [](ChainNode& n, int v) { std::get<TextParams>(n.params).fontHeight = -v; });
         addInt("fontWeight", tr("Weight"), p->fontWeight, 100, 900,
                [](ChainNode& n, int v) { std::get<TextParams>(n.params).fontWeight = v; });
+        {
+            // Haekchen Bold (S86): der Renderer kennt nur normal und fett
+            // (ab Weight 600) — das Haekchen setzt 700 bzw. 400 und haelt
+            // sich mit dem Zahlfeld im Gleichschritt.
+            auto* bold = new QCheckBox(m_propContainer);
+            bold->setObjectName(QStringLiteral("fontBold"));
+            bold->setChecked(p->fontWeight >= 600);
+            auto* gewicht = m_propContainer->findChild<QSpinBox*>(QStringLiteral("fontWeight"));
+            connect(bold, &QCheckBox::toggled, this, [this, path, gewicht](bool an) {
+                const int w = an ? 700 : 400;
+                mutate(path, [w](ChainNode& n) { std::get<TextParams>(n.params).fontWeight = w; });
+                if (gewicht != nullptr)
+                {
+                    const QSignalBlocker ruhe(gewicht);
+                    gewicht->setValue(w);
+                }
+            });
+            if (gewicht != nullptr)
+                connect(gewicht, QOverload<int>::of(&QSpinBox::valueChanged), bold,
+                        [bold](int v) {
+                            const QSignalBlocker ruhe(bold);
+                            bold->setChecked(v >= 600);
+                        });
+            form->addRow(tr("Bold"), bold);
+            bold->setToolTip(tr("Bold: sets Weight to 700 (off: 400). The renderer draws "
+                                "bold from Weight 600 upwards."));
+        }
         addBool("italic", tr("Italic"), p->italic,
                 [](ChainNode& n, bool v) { std::get<TextParams>(n.params).italic = v; });
         addBool("underline", tr("Underline"), p->underline,

@@ -2072,7 +2072,8 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   Scratchpad S86 — bisher nur SuperScope, Effect List, Dynamic Movement
   geprüft; Fund: DM `blend`); einmalige Bildabweichung bei
   `fUk - afterburner remix` (1 von 12 Läufen, nicht reproduziert);
-  F4d LFO-Rate in Beats (Entscheide Patrik S85: je a), F6
+  F4d ✅ (S86) — LFO-Rate in Beats („Beat sync", eigene Beat-Uhr; Sichttest
+  mit echter Musik offen); Voreinstellungen für Text (7) und AVI (5); F6
   (MIDI/OSC-Adresse, mit der Idee).
   Farbtafeln/Stützstellen (`colors[i]`) weiter §7 des Konzepts.
   Die Tabelle unten ist der Stand VOR Block F (Historie). **Vorarbeit S83 —
@@ -2394,6 +2395,31 @@ Es gibt den Knoten **Text** schon (AVS „Render / Text", `TextParams`): Wörter
 mit `;` getrennt, Wechsel nach Frames oder auf den Beat, zufällige Position,
 Schrift (Name, Höhe, fett/kursiv), Kontur/Schatten. Ausbau statt neuem Modul —
 AVS-Import bleibt damit treu, alles Neue sind zusätzliche Felder.
+
+**Stand S86:** der Knoten steht in der Effekt-Palette, hat Init/Frame/Beat-
+Felder und mitgelieferte Voreinstellungen. **Nachfragen Patrik S86:**
+(1) *Schrifttyp wählen* — heute ein freies Textfeld „Font" (Name eintippen);
+fett gibt es nur als Zahl „Weight" (700), kein Häkchen neben Italic/Underline.
+**✅ S86 umgesetzt:** Schrift-Auswahlliste der installierten Schriften
+(`QFontComboBox`, weiter frei editierbar für importierte Namen) + Häkchen
+**Bold** (700/400, im Gleichschritt mit Weight). Offen: mitgelieferte
+Schriftdateien, echte Zwischengewichte (der Renderer kennt nur normal/fett).
+**Befund Patrik S86 — Größenwechsel:** beim Ziehen am Fensterrand verlor der
+Oscilloscope Star den Blur-Nachzug und der Text flackerte. Ursache: jeder
+Größenwechsel verwarf den Bildspeicher (`ensureSurfacePair`, „Resize policy
+5.2: discard"). **✅ behoben:** das Bild wird in die neue Größe übernommen
+(Blit, wie AVS `config_reuseonresize`) — Wurzel, Effect List, Host-Gruppe;
+Test „Größenwechsel S86". Das gemeldete Flackern „in anderen Farben" ließ
+sich im Renderer nicht messen (weiße Kette: nirgends Farbe, auch während
+des Größenwechsels) — vermutlich der Wechsel zwischen scharfem und
+verwischtem Text; **Sichttest Patrik offen**. Nicht erfasst: Puffer
+einzelner Knoten (Milkdrop-Node, Feedback-Puffer, Buffer Save). (2) *Titel/Interpret aus den ID3-Tags* — abgemacht ist nur die
+Richtung unten („Tags … als Vorlage `{artist} – {title}`", im Text-Knoten,
+kein neues Modul); gebaut ist nichts, das Lesen der Tags gibt es bisher nur
+für das Cover im Audio Browser. (3) **Neue Idee S86: Text als Milkdrop-
+Element** — neben Wave, Shape und Sprite ein Text-Element im Milkdrop-Node,
+das in dessen Pipeline (vor Warp/Composite) gezeichnet wird und so mit dem
+Feedback verschmiert; Quelle und Schrift wie beim Text-Knoten.
 
 **Quellen des Textes:**
 - **Listen** — eine Zeile je Eintrag (im Feld oder als Datei), Wechsel wie

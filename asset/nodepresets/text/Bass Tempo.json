@@ -1,0 +1,12 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "text",
+        "onBeat": false,
+        "normSpeed": 40,
+        "initCode": "",
+        "beatCode": "",
+        "frameCode": "// loud bass = faster words\r\nnormspeed = 40 - bass*32;"
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "avi",
+        "adapt": false,
+        "initCode": "",
+        "frameCode": "",
+        "beatCode": "// a new frame time on every beat\r\nspeedms = rand(140);"
+    }
+}

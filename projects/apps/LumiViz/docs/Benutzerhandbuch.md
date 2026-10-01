@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.24.0
+> **Version:** 1.26.0
 > **Datum:** 2026-10-01
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -443,6 +443,17 @@ Seit Session 86 gilt das auch für **SuperScope** und **Effect List**:
 Ohne Formelfelder und deshalb nicht per Skript steuerbar bleiben Movement
 (nur die Bewegungsformel), Render Scale und Debug Bars.
 
+**Text: Schrift wählen.** Das Feld **Font** ist eine Auswahlliste aller
+installierten Schriften; ein Name lässt sich weiterhin eintippen (importierte
+Presets nennen Schriften, die nicht installiert sein müssen — dann nimmt das
+System die nächstliegende). Leer = Standardschrift. Das Häkchen **Bold** setzt
+**Weight** auf 700 (aus: 400); gezeichnet wird fett ab Weight 600.
+
+**Fenstergröße ändern.** Das Bild der Effektkette und jeder Effect List bzw.
+Host-Gruppe wird beim Größenwechsel in die neue Größe übernommen (wie in AVS
+„reuse image on window resize"). Nachzüge — Blur, Fadeout, Trails — laufen beim
+Ziehen am Fensterrand weiter, statt abzubrechen und sich neu aufzubauen.
+
 **Script active** — gleich unter Name und Beschreibung, bei jedem Knoten mit
 Formelfeldern: ausgeschaltet läuft der Knoten, **als stünden seine Felder
 leer** (Init, Frame, Beat, Point, Song). Der Code bleibt gespeichert — zum
@@ -480,6 +491,7 @@ seinen Reglerwert schwingen oder pumpen — ganz ohne Formel:
 | **Source** | **Bass**, **Mid**, **Treble**, **Level** (Lautstärke) und **Beat envelope** (springt beim Beat hoch und klingt ab) bewegen das Feld nur in eine Richtung (0..1). Die **LFOs** (sine, triangle, saw, square, random) schwingen nach oben und unten (−1..1). |
 | **Depth** | Wie weit: 1 = der ganze Bereich des Felds, 0,1 = ein Zehntel. Negativ kehrt die Richtung um. Felder ohne festen Bereich bewegen sich um den entsprechenden Anteil ihres Reglerwerts. Der Wert bleibt immer im erlaubten Bereich. |
 | **Rate** | Nur LFOs: Schwingungen pro Sekunde (Hz). |
+| **Beat sync** | Nur LFOs: schwingt **im Takt der Musik** statt frei. Der Wert ist die Länge einer Schwingung in Beats — 4 = ein Takt, 1 = je Beat, 0,5 = zweimal je Beat. Die Schwingung beginnt auf dem Beat; alle Takt-LFOs laufen gleich. **off** = es gilt **Rate**. Das Tempo misst LumiViz aus den erkannten Beats; fällt ein Beat aus, läuft der LFO im letzten Tempo weiter. |
 | **Smoothing** / **Decay** | Audio-Quellen: wie stark geglättet wird (Sekunden). Beat envelope: wie schnell sie nach einem Beat abklingt. |
 | **Active** | Diese eine Modulation ein/aus. |
 
@@ -516,8 +528,7 @@ laufende Wert steht als `#RRGGBB` daneben. Je Farbfeld gibt es eine
 Modulation; Farbtafeln (etwa die Farbliste des SuperScope) und Farben, die
 den Knoten neu aufbauen (Text), sind nicht modulierbar.
 
-Noch **nicht** modulierbar: Schalter und Auswahlfelder, sowie Render Scale;
-LFO-Tempo in Beats kommt später.
+Noch **nicht** modulierbar: Schalter und Auswahlfelder, sowie Render Scale.
 
 ### Bilder in Picture, Picture II und Texer
 
@@ -1044,6 +1055,8 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.26.0 | 2026-10-01 | Session 86. §11 Text: **Font** ist eine Auswahlliste der installierten Schriften (weiter editierbar), NEU Häkchen **Bold**. §11 NEU „Fenstergröße ändern": das Bild von Kette, Effect List und Host-Gruppe bleibt beim Größenwechsel erhalten — Blur und Trails brechen nicht mehr ab |
+| 1.25.0 | 2026-10-01 | Session 86. §11 Modulation: NEU **Beat sync** — LFOs im Takt der Musik (Länge einer Schwingung in Beats). §11 Voreinstellungen: 7 für **Text** (Beat Words, Slideshow, Random Flash, Subtitle, Beat Colours, Bass Tempo, Beat Jump) und 5 für **AVI** |
 | 1.24.0 | 2026-10-01 | Session 86. §11 Modulation: **Farbfelder** modulierbar (Target Brightness / Hue / Red / Green / Blue, Live-Wert als `#RRGGBB`). §11 Effekt-Palette: **Text**, **AVI** und **Comment** stehen jetzt in der Palette |
 | 1.23.0 | 2026-10-01 | Session 86. §11 „Werte per Formel steuern": **Text** und **AVI** haben jetzt Init/Frame/Beat-Felder; bei Text folgen Schrift, Farbe, Lage und Kontur dem Skript nur aus Init, Song und Beat |
 | 1.22.0 | 2026-10-01 | Session 86. §11 „Werte per Formel steuern": auch **Dynamic Movement** (`wrap`, `nomove`, `subpixel`, `rectcoords`, `buffern`), **Host-Gruppe** (`blendout`, `curvein`, `curveout`, `crossfadeseconds`) und **Host Switcher** (`intervalseconds`, `order`, `nextonsongchange`); Host Switcher → Switch after (s) modulierbar. Liste der Knoten ohne Formelfelder |

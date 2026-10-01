@@ -1,0 +1,10 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "avi",
+        "adapt": false,
+        "blend": 0,
+        "speedMs": 90
+    }
+}

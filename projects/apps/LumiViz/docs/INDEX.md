@@ -31,6 +31,10 @@ löst die früheren `Offene_Implementierungen.md` + `Offene_Sichttests.md` ab, d
 auf Session 37 stehengeblieben waren. Laufendes Prüfprotokoll zum Ausfüllen:
 [Sichttest S79/S80](Sichttest_Protokoll_S79.md) (Effekt-Palette, Formelfelder).
 
+**Was könnte noch kommen:** [**Modul-Ideen**](Modul_Ideen.md) — alle notierten
+Ideen für neue Module und den Ausbau bestehender auf einer Seite, je mit Stand
+und Verweis auf die Einzelheiten.
+
 | Domäne | Inhalt |
 |---|---|
 | [core-services/](core-services/) | Service-Fundament: [Event-System](core-services/Event_System.md) · [Registries](core-services/Registries.md) (inkl. Lazy-Init) · [Bootstrap/DI-Verdrahtung](core-services/Bootstrap_Integration.md) |

@@ -8768,8 +8768,7 @@
           "art": "text",
           "default": "",
           "name": "fontFace",
-          "panel": "text",
-          "helfer": "addText",
+          "panel": "sonderzeile",
           "doc": "LOGFONT lfFaceName (\"\" = default font)"
         },
         {

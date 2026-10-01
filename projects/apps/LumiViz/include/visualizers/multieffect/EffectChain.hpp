@@ -3029,6 +3029,10 @@ struct FeldModulation
     ModQuelle quelle = ModQuelle::LfoSinus;
     double tiefe = 0.25;            ///< Anteil der Spanne, +-
     double rateHz = 0.5;            ///< LFO-Frequenz (Hz)
+    /// F4d (S86): > 0 = LFO im Takt — eine Schwingung dauert so viele Beats
+    /// (4 = ein Takt, 0.5 = zwei je Beat) und beginnt auf dem Beat; `rateHz`
+    /// ruht dann. 0 = freie Rate in Hz.
+    double rateBeats = 0.0;
     double glaettung = 0.0;         ///< s — Glaettung der Audio-Quellen, Abklingzeit der Beat-Huelle
     bool aktiv = true;              ///< eigenes Haekchen je Modulation
     /// F4b (S86): Ziel an einem Farbfeld; an Zahlfeldern ohne Bedeutung. Steht
