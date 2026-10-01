@@ -101,7 +101,10 @@ void PlayerPanel::onActivate()
     {
         updatePlayButton(player->isPlaying());
         onVolumeChangedEvent(player->volume(), player->isMuted());
-        
+        // S87: Repeat kommt gespeichert aus dem Player (wie Shuffle/Loop der Playlist)
+        m_loopEnabled = (player->repeatMode() == IAudioPlayer::RepeatMode::One);
+        updateLoopButton(m_loopEnabled);
+
         if (player->hasTrack())
         {
             auto track = player->currentTrack();

@@ -1,0 +1,26 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "lyrics",
+        "fontHeight": -40,
+        "fontWeight": 700,
+        "italic": false,
+        "previewLines": 1,
+        "hAlign": 1,
+        "vAlign": 2,
+        "xShift": 0,
+        "yShift": -6,
+        "outline": true,
+        "outlineColor": 0,
+        "outlineSize": 2,
+        "color": 16777215,
+        "colorNext": 8421504,
+        "blend": 0,
+        "beatsPerLine": 0,
+        "initCode": "",
+        "frameCode": "",
+        "beatCode": "// a new bright colour for the running line on every beat\ncolor_r = 0.4 + rand(60)/100;\ncolor_g = 0.4 + rand(60)/100;\ncolor_b = 0.4 + rand(60)/100;",
+        "songCode": ""
+    }
+}

@@ -21,6 +21,7 @@
 #include "services/events/UIEvents.hpp"
 #include "audio/IAudioEngine.hpp"
 #include "audio/SongtextQuelle.hpp"  // Benutzerordner der Songtexte (S86)
+#include "UI/dialogs/LyricsAlternativesDialog.hpp"  // Sperrliste der Songtexte (S87)
 
 #include <QVBoxLayout>
 #include <QFormLayout>
@@ -437,6 +438,17 @@ QWidget* SettingsPanel::createAudioTab()
                     QSettings().setValue(QStringLiteral("lyrics/saveLocation"), index);
                 });
         layout->addRow(tr("Save fetched lyrics:"), ablage);
+
+        // S87: Eintraege, die mit „Wrong lyrics" verworfen wurden — einsehen
+        // und wieder freigeben
+        auto* sperren = new QPushButton(tr("Show…"), widget);
+        sperren->setObjectName(QStringLiteral("lyricsBlockedShow"));
+        sperren->setToolTip(
+            tr("Lyrics entries you marked as wrong. They are not fetched again; unblock an "
+               "entry here to allow it again."));
+        connect(sperren, &QPushButton::clicked, this,
+                [this]() { zeigeLyricsSperrliste(this); });
+        layout->addRow(tr("Blocked lyrics:"), sperren);
     }
 
     layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));

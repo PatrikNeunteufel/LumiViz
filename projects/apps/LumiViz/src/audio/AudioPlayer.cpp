@@ -18,6 +18,7 @@
 #include <BasicLogger.h>
 
 #include <QFileInfo>
+#include <QSettings>
 #include <algorithm>
 #include <random>
 
@@ -67,6 +68,15 @@ AudioPlayer::AudioPlayer(IAudioEngine& engine,
     : QObject(parent)
     , m_impl(std::make_unique<Impl>(engine, eventBus))
 {
+    // S87 (Befund Patrik): Shuffle, Loop und Repeat waren nach einem Neustart
+    // weg — sie gehoeren zum Zustand des Players und bleiben jetzt erhalten.
+    // Die Panels lesen den Stand beim Aktivieren vom Player.
+    const QSettings settings;
+    m_impl->shuffle = settings.value(QStringLiteral("player/shuffle"), false).toBool();
+    const int modus = settings.value(QStringLiteral("player/repeatMode"), 0).toInt();
+    m_impl->repeatMode = modus == 1   ? RepeatMode::One
+                         : modus == 2 ? RepeatMode::All
+                                      : RepeatMode::None;
     BasicLogger::logDebug("AudioPlayer created");
 }
 
@@ -478,6 +488,7 @@ void AudioPlayer::setRepeatMode(RepeatMode mode)
     if (m_impl->repeatMode == mode) return;
     
     m_impl->repeatMode = mode;
+    QSettings().setValue(QStringLiteral("player/repeatMode"), static_cast<int>(mode));
     publishPlaybackModeChanged();
 }
 
@@ -491,6 +502,7 @@ void AudioPlayer::setShuffle(bool enabled)
     if (m_impl->shuffle == enabled) return;
     
     m_impl->shuffle = enabled;
+    QSettings().setValue(QStringLiteral("player/shuffle"), enabled);
     publishPlaybackModeChanged();
 }
 

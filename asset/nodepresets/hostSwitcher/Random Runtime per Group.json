@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "hostSwitcher",
+        "intervalSeconds": 0,
+        "nextOnSongChange": false,
+        "order": 1,
+        "initCode": "// how long a group stays, in beats: set the range here\nmin_runtime = 5;\nmax_runtime = 35;\nthreshold = min_runtime + rand(max_runtime - min_runtime);",
+        "frameCode": "",
+        "beatCode": "// beatcount = beats since the last switch\nnextgroup = above(beatcount, threshold);\n// every group draws its own runtime\nthreshold = if(nextgroup, min_runtime + rand(max_runtime - min_runtime), threshold);",
+        "songCode": ""
+    }
+}

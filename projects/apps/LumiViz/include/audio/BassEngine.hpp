@@ -90,6 +90,7 @@ public:
     [[nodiscard]] int getPositionMs(AudioStreamHandle stream) const override;
     bool setPositionMs(AudioStreamHandle stream, int positionMs) override;
     [[nodiscard]] int getDurationMs(AudioStreamHandle stream) const override;
+    [[nodiscard]] int probeDurationMs(const QString& filePath) override;
     [[nodiscard]] float getVolume(AudioStreamHandle stream) const override;
     bool setVolume(AudioStreamHandle stream, float volume) override;
 

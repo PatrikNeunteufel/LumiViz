@@ -70,6 +70,39 @@ QString songtextName(const TrackInfo& track)
     return name;
 }
 
+bool songtextPasst(const Songtext& text, const TrackInfo& track)
+{
+    if (text.laengeMs <= 0 || track.durationMs <= 0) return true;
+    const std::int64_t diff = text.laengeMs - static_cast<std::int64_t>(track.durationMs);
+    return diff >= -2500 && diff <= 2500;
+}
+
+namespace
+{
+/// Name der Fassung: `<Interpret> - <Titel> [m-ss]`.
+QString fassungsName(const QString& name, const TrackInfo& track)
+{
+    const int sek = (track.durationMs + 500) / 1000;
+    return QStringLiteral("%1 [%2-%3]").arg(name).arg(sek / 60).arg(sek % 60, 2, 10, QLatin1Char('0'));
+}
+}  // namespace
+
+QString songtextBenutzerBasis(const TrackInfo& track, const QString& benutzerOrdner)
+{
+    const QString name = songtextName(track);
+    if (name.isEmpty() || benutzerOrdner.isEmpty()) return QString();
+    const QString basis = benutzerOrdner + QLatin1Char('/') + name;
+    // Der gemeinsame Name ist von einer ANDEREN Fassung belegt (Dauer in der
+    // Datei passt nicht): diese bekommt ihren eigenen Namen.
+    for (const char* endung : {".lrc", ".txt"})
+    {
+        const Songtext s = lese(liesText(basis + QLatin1String(endung)), QString());
+        if (!s.leer() && !songtextPasst(s, track))
+            return benutzerOrdner + QLatin1Char('/') + fassungsName(name, track);
+    }
+    return basis;
+}
+
 Songtext findeSongtext(const TrackInfo& track, const QString& benutzerOrdner)
 {
     if (track.filePath.isEmpty()) return {};
@@ -106,12 +139,25 @@ Songtext findeSongtext(const TrackInfo& track, const QString& benutzerOrdner)
     Songtext lrcNeben =
         leseDatei(neben + QStringLiteral(".lrc"), song.completeBaseName() + QStringLiteral(".lrc"));
     if (lrcNeben.synchron) return lrcNeben;
+    // Benutzerordner (S87): der gemeinsame Name `<Interpret> - <Titel>` gilt
+    // nur, wenn seine Dauerangabe zu diesem Titel passt (oder fehlt); sonst
+    // die Datei dieser Fassung `… [m-ss]`. Zwei Fassungen eines Songs
+    // ueberschrieben sich sonst gegenseitig (Befund Patrik: „Gettin' Over"
+    // auf zwei Alben, Titel nur in feat./Feat. verschieden).
+    const auto ausBenutzerordner = [&](const QString& endung) -> Songtext {
+        for (const QString& stamm : {name, fassungsName(name, track)})
+        {
+            Songtext s = leseDatei(benutzerOrdner + QLatin1Char('/') + stamm + endung,
+                                   QStringLiteral("user folder: ") + stamm + endung);
+            if (!s.leer() && songtextPasst(s, track)) return s;
+        }
+        return {};
+    };
     // 3 — .lrc im Benutzerordner
     Songtext lrcFern;
     if (!fern.isEmpty())
     {
-        lrcFern = leseDatei(fern + QStringLiteral(".lrc"),
-                            QStringLiteral("user folder: ") + name + QStringLiteral(".lrc"));
+        lrcFern = ausBenutzerordner(QStringLiteral(".lrc"));
         if (lrcFern.synchron) return lrcFern;
     }
     // 4 — eingebettet unsynchron
@@ -124,8 +170,7 @@ Songtext findeSongtext(const TrackInfo& track, const QString& benutzerOrdner)
     // 6 — .txt im Benutzerordner, sonst die .lrc dort ohne Zeitmarken
     if (!fern.isEmpty())
     {
-        txt = leseDatei(fern + QStringLiteral(".txt"),
-                        QStringLiteral("user folder: ") + name + QStringLiteral(".txt"));
+        txt = ausBenutzerordner(QStringLiteral(".txt"));
         if (!txt.leer()) return txt;
         if (!lrcFern.leer()) return lrcFern;
     }

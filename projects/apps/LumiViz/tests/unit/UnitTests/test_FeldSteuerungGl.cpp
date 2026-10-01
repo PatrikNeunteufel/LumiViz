@@ -20,8 +20,12 @@
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 #include "visualizers/multieffect/FieldBindings.hpp"
+#include "visualizers/multieffect/NodePresetStore.hpp"
 
+#include <QFile>
 #include <QGuiApplication>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
@@ -667,6 +671,23 @@ TEST_CASE("Lyrics S86: laufende Zeile an der Abspielposition, Vorschau, unsynchr
     CHECK(halb > 0);
     CHECK(ganz > halb * 1.6);
 
+    // S87 (Befund Patrik): dieselbe Zeile zweimal hintereinander — gegen Ende
+    // des ersten Durchgangs blendet sie zur Vorschau-Farbe, mit der zweiten
+    // Zeitmarke ist sie wieder voll da. Eine ANDERE Folgezeile blendet nicht.
+    MultiEffectVisualizer::setSongtext(
+        ly::leseLrc("[00:10.00]MMMM\n[00:13.00]MMMM\n[00:16.00]IIII\n"));
+    MultiEffectVisualizer::notifyPlayPosition(11000);
+    const int voll = hell(lp);
+    CHECK(voll > 0);
+    MultiEffectVisualizer::notifyPlayPosition(12990);  // 10 ms vor der Wiederholung
+    CHECK(hell(lp) == 0);                              // ausgeblendet (Vorschau-Farbe ist dunkel)
+    MultiEffectVisualizer::notifyPlayPosition(12700);  // mitten in der Blende
+    CHECK(hell(lp) < voll);
+    MultiEffectVisualizer::notifyPlayPosition(13000);  // die Wiederholung setzt ein
+    CHECK(hell(lp) == voll);
+    MultiEffectVisualizer::notifyPlayPosition(15990);  // danach folgt eine andere Zeile
+    CHECK(hell(lp) == voll);
+
     // Unsynchron: der Block steht — die Position spielt keine Rolle
     MultiEffectVisualizer::setSongtext(ly::leseLrc("I\nMMMMMMMM\n"));
     lp.showSyncMark = false;
@@ -677,6 +698,101 @@ TEST_CASE("Lyrics S86: laufende Zeile an der Abspielposition, Vorschau, unsynchr
     CHECK(block == doctest::Approx(schmal).epsilon(0.05));  // erste Zeile
 
     MultiEffectVisualizer::setSongtext(ly::Songtext{});  // Zustand zuruecksetzen
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
+TEST_CASE("Lyrics S87: jede mitgelieferte Voreinstellung zeichnet; die Skripte tun, was sie sagen")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    namespace np = lumi::multieffect::nodepresets;
+
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM MMMM\n[00:20.00]MMMM\n"));
+    MultiEffectVisualizer::notifyPlayPosition(12000);
+
+    const auto eintraege = np::list(QStringLiteral("lyrics"));
+    REQUIRE(eintraege.size() >= 13);
+    for (const np::Entry& e : eintraege)
+    {
+        CAPTURE(e.name.toStdString());
+        EffectParams params = LyricsParams{};
+        REQUIRE(np::load(e.path, QStringLiteral("lyrics"), params, nullptr));
+        // der Song-Slot liegt am Knoten — aus der Datei dazulesen
+        QFile f(e.path);
+        REQUIRE(f.open(QIODevice::ReadOnly));
+        const std::string song = QJsonDocument::fromJson(f.readAll())
+                                     .object()
+                                     .value(QStringLiteral("node"))
+                                     .toObject()
+                                     .value(QStringLiteral("songCode"))
+                                     .toString()
+                                     .toStdString();
+
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        lyr.params = params;
+        lyr.songCode = song;
+        root.children = {clear, lyr};
+
+        std::set<std::uint32_t> farben;
+        std::set<int> xs, ys, lagen;
+        MultiEffectVisualizer::setzeParamBeobachter(
+            [&](const ChainNode&, const EffectParams& kopie) {
+                if (const auto* lp = std::get_if<LyricsParams>(&kopie))
+                {
+                    farben.insert(lp->color);
+                    xs.insert(lp->xShift);
+                    ys.insert(lp->yShift);
+                    lagen.insert(lp->vAlign);
+                }
+            });
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        vis.setBeatPeriodOverride(2);  // jeder zweite Frame ein Beat
+        for (int i = 0; i < 80; ++i) vis.render(1.0f / 60.0f);
+        MultiEffectVisualizer::setzeParamBeobachter({});
+
+        // (1) es steht Text im Bild
+        const QImage img = vis.debugGrabRootSurface();
+        int hell = 0;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+                if (qGray(img.pixel(x, y)) > 90) ++hell;
+        CHECK(hell > 50);
+
+        // (2) die bewegten Varianten bewegen wirklich etwas
+        if (e.name == QLatin1String("Karaoke Beat Colours"))
+        {
+            CHECK(farben.size() > 5);  // je Beat eine neue Farbe
+        }
+        else if (e.name == QLatin1String("Karaoke Song Colours"))
+        {
+            CHECK(farben.size() == 1);  // eine Farbe je Song, kein Wechsel im Lauf
+            CHECK(*farben.begin() != 0xFFFFFFu);
+        }
+        else if (e.name == QLatin1String("Karaoke Bounce"))
+        {
+            CHECK(xs.size() > 1);
+            CHECK(ys.size() > 1);
+            CHECK(*xs.begin() >= -2);
+            CHECK(*xs.rbegin() <= 2);
+            CHECK(*ys.begin() >= -9);
+            CHECK(*ys.rbegin() <= -6);
+        }
+        else if (e.name == QLatin1String("Karaoke Flip"))
+        {
+            CHECK(lagen == std::set<int>{0, 2});  // unten und oben, nie Mitte
+        }
+    }
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 

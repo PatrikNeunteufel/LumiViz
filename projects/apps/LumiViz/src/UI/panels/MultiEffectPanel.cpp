@@ -42,6 +42,8 @@
 #include "services/LiveVideoFeed.hpp"                   // videoSource: Kamera/Testaufnahmen (S70)
 #include "services/events/UIEvents.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
+#include "UI/dialogs/LyricsAlternativesDialog.hpp"      // Lyrics: andere Fassung suchen (S87)
+#include "audio/SongtextOnline.hpp"                     // laufender Titel, Sperrliste (S87)
 
 #include <QCameraDevice>                                // videoSource: Geraeteliste (S70)
 #include <QMediaDevices>
@@ -3216,6 +3218,11 @@ void sichtSchreiben(ChainNode& n, int section, int element, const QJsonObject& f
         QJsonObject o = felder;
         o[QStringLiteral("type")] = effectTypeKey(n.params);
         n.params = nodeFromJson(o, report).params;
+        // Der Song-Slot liegt am Knoten, nicht in den params (S82) — sichtLesen
+        // gibt ihn mit, also muss er hier auch zurueck (S87: sonst verlor eine
+        // Voreinstellung mit Song-Skript genau dieses Skript).
+        if (felder.contains(QStringLiteral("songCode")))
+            n.songCode = felder.value(QStringLiteral("songCode")).toString().toStdString();
         return;
     }
     auto* mp = std::get_if<MilkdropNodeParams>(&n.params);
@@ -7787,46 +7794,144 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         // gefunden wurde. Die Zeile laeuft mit (Titelwechsel, ein Online-Fund
         // kommt spaeter nach): bis S86-Befund Patrik stand sie auf dem Stand
         // beim Oeffnen der Seite und meldete „not found" neben laufendem Text.
+        // S87 (Wunsch Patrik S86): die Angaben als Tabelle statt einer langen
+        // Zeile, und der Stand eines laufenden Online-Abrufs („…downloading…").
         {
-            auto* zeile = new QWidget(m_propContainer);
-            auto* hl = new QHBoxLayout(zeile);
-            hl->setContentsMargins(0, 0, 0, 0);
-            auto* quelle = new QLabel(zeile);
-            quelle->setObjectName(QStringLiteral("lyricsSource"));
-            quelle->setWordWrap(true);
+            namespace ly = lumi::multieffect::lyrics;
+            auto* tabelle = new QWidget(m_propContainer);
+            tabelle->setObjectName(QStringLiteral("lyricsTable"));
+            auto* gl = new QGridLayout(tabelle);
+            gl->setContentsMargins(0, 0, 0, 0);
+            gl->setHorizontalSpacing(8);
+            gl->setVerticalSpacing(2);
+            gl->setColumnStretch(1, 1);
+            int reihe = 0;
+            const auto wert = [tabelle, gl, &reihe](const QString& titel, const char* name) {
+                auto* kopf = new QLabel(titel, tabelle);
+                kopf->setEnabled(false);  // gedaempft wie eine Spaltenueberschrift
+                auto* w = new QLabel(tabelle);
+                w->setObjectName(QLatin1String(name));
+                w->setWordWrap(true);
+                w->setTextInteractionFlags(Qt::TextSelectableByMouse);
+                gl->addWidget(kopf, reihe, 0, Qt::AlignTop);
+                gl->addWidget(w, reihe, 1);
+                ++reihe;
+                return w;
+            };
+            auto* status = wert(tr("Status"), "lyricsStatus");
+            auto* quelle = wert(tr("Source"), "lyricsSource");
+            auto* takt = wert(tr("Timing"), "lyricsTiming");
+            auto* zeilen = wert(tr("Lines"), "lyricsLines");
+            auto* herkunft = wert(tr("Origin"), "lyricsOrigin");
+            auto* datei = wert(tr("File"), "lyricsFile");
             quelle->setToolTip(
                 tr("Search order: embedded synced lyrics, <song>.lrc next to the song, "
                    "<artist> - <title>.lrc in the user folder, embedded unsynced lyrics, "
                    "<song>.txt next to the song, .txt in the user folder."));
-            hl->addWidget(quelle, 1);
+            herkunft->setToolTip(
+                tr("Where fetched lyrics came from — written into the file as [source:…]."));
             // Ordner der gelesenen Datei oeffnen (Wunsch Patrik S86) — nur bei
             // einer eigenen Datei, nicht bei eingebettetem Text
-            auto* ordner = new QToolButton(zeile);
+            auto* ordner = new QToolButton(tabelle);
             ordner->setObjectName(QStringLiteral("lyricsOpenFolder"));
             ordner->setText(tr("Open folder"));
             ordner->setToolTip(tr("Opens the folder of the lyrics file that is being shown."));
-            hl->addWidget(ordner);
-            connect(ordner, &QToolButton::clicked, zeile, []() {
-                const QString datei =
+            gl->addWidget(ordner, reihe - 1, 2, Qt::AlignTop);
+            connect(ordner, &QToolButton::clicked, tabelle, []() {
+                const QString pfad =
                     QString::fromStdString(MultiEffectVisualizer::songtextDatei());
-                if (!datei.isEmpty())
+                if (!pfad.isEmpty())
                     QDesktopServices::openUrl(
-                        QUrl::fromLocalFile(QFileInfo(datei).absolutePath()));
+                        QUrl::fromLocalFile(QFileInfo(pfad).absolutePath()));
             });
-            const auto zeige = [quelle, ordner]() {
-                const std::string info = MultiEffectVisualizer::songtextInfo();
-                const QString text = info.empty()
-                                         ? tr("No lyrics found for the playing track.")
-                                         : QString::fromStdString(info);
-                if (quelle->text() != text) quelle->setText(text);
-                ordner->setEnabled(!MultiEffectVisualizer::songtextDatei().empty());
+            // S87 (Wunsch Patrik): eine andere Fassung suchen bzw. den
+            // gezeigten Text als falsch verwerfen (loeschen + sperren)
+            auto* knopfZeile = new QWidget(tabelle);
+            auto* kl = new QHBoxLayout(knopfZeile);
+            kl->setContentsMargins(0, 2, 0, 0);
+            auto* andere = new QToolButton(knopfZeile);
+            andere->setObjectName(QStringLiteral("lyricsAlternatives"));
+            andere->setText(tr("Alternatives…"));
+            andere->setToolTip(
+                tr("Search lrclib.net for other versions of the lyrics — with your own search "
+                   "terms if the tags do not fit. The version shown now is replaced, not "
+                   "blocked."));
+            auto* falsch = new QToolButton(knopfZeile);
+            falsch->setObjectName(QStringLiteral("lyricsWrong"));
+            falsch->setText(tr("Wrong lyrics"));
+            falsch->setToolTip(
+                tr("Discards the lyrics shown: deletes the fetched file and blocks this entry, "
+                   "so it is not fetched again. Only for lyrics fetched online. The block list "
+                   "is in Settings → Audio."));
+            kl->addWidget(andere);
+            kl->addWidget(falsch);
+            kl->addStretch(1);
+            gl->addWidget(knopfZeile, reihe, 0, 1, 3);
+            const auto oeffneAlternativen = [this]() {
+                const TrackInfo titel = lumi::audio::laufenderTitel();
+                if (titel.filePath.isEmpty()) return;
+                const auto a = MultiEffectVisualizer::songtextAngaben();
+                // nicht modal: der Player bleibt bedienbar, der Balken im
+                // Dialog laeuft mit dem Titel
+                auto* dlg = new LyricsAlternativesDialog(
+                    titel, lumi::audio::lrclibKennung(a.herkunft), this);
+                dlg->setAttribute(Qt::WA_DeleteOnClose);
+                dlg->show();
+            };
+            connect(andere, &QToolButton::clicked, tabelle, oeffneAlternativen);
+            connect(falsch, &QToolButton::clicked, tabelle, [this, oeffneAlternativen]() {
+                const TrackInfo titel = lumi::audio::laufenderTitel();
+                const auto a = MultiEffectVisualizer::songtextAngaben();
+                if (titel.filePath.isEmpty() || a.herkunft.empty()) return;
+                if (QMessageBox::question(
+                        this, tr("Wrong lyrics"),
+                        tr("Discard these lyrics and block this entry?\n\nThe fetched file is "
+                           "deleted. You can lift the block in Settings → Audio.")) !=
+                    QMessageBox::Yes)
+                    return;
+                if (!lumi::audio::verwerfeSongtext(titel, a.herkunft, a.datei)) return;
+                MultiEffectVisualizer::setSongtext({});
+                MultiEffectVisualizer::setSongtextAbruf(lumi::audio::SongtextAbruf::Ruhe);
+                oeffneAlternativen();
+            });
+            const auto zeige = [status, quelle, takt, zeilen, herkunft, datei, ordner, andere,
+                                falsch]() {
+                const auto a = MultiEffectVisualizer::songtextAngaben();
+                andere->setEnabled(!lumi::audio::laufenderTitel().filePath.isEmpty());
+                falsch->setEnabled(a.vorhanden && lumi::audio::lrclibKennung(a.herkunft) > 0);
+                const QString strich = QStringLiteral("—");
+                const auto setze = [](QLabel* l, const QString& t) {
+                    if (l->text() != t) l->setText(t);
+                };
+                QString st;
+                if (a.vorhanden)
+                    st = tr("Lyrics loaded");
+                else if (a.abruf == ly::Abruf::Laedt)
+                    st = tr("…downloading…");
+                else if (a.abruf == ly::Abruf::Wartet)
+                    st = tr("…downloading… (service busy, trying again)");
+                else if (a.abruf == ly::Abruf::NichtGefunden)
+                    st = tr("No lyrics found — not online either.");
+                else if (a.abruf == ly::Abruf::Fehlgeschlagen)
+                    st = tr("No lyrics found — the online search failed.");
+                else
+                    st = tr("No lyrics found for the playing track.");
+                setze(status, st);
+                setze(quelle, a.vorhanden ? QString::fromStdString(a.quelle) : strich);
+                setze(takt, !a.vorhanden ? strich : a.synchron ? tr("synced") : tr("not synced"));
+                setze(zeilen, a.vorhanden ? QString::number(a.zeilen) : strich);
+                setze(herkunft, a.herkunft.empty() ? strich : QString::fromStdString(a.herkunft));
+                const QString pfad = QString::fromStdString(a.datei);
+                setze(datei, pfad.isEmpty() ? strich : QFileInfo(pfad).fileName());
+                if (datei->toolTip() != pfad) datei->setToolTip(pfad);
+                ordner->setEnabled(!pfad.isEmpty());
             };
             zeige();
-            auto* uhr = new QTimer(zeile);
+            auto* uhr = new QTimer(tabelle);
             uhr->setInterval(500);
-            connect(uhr, &QTimer::timeout, zeile, zeige);
+            connect(uhr, &QTimer::timeout, tabelle, zeige);
             uhr->start();
-            form->addRow(tr("Lyrics"), zeile);
+            form->addRow(tr("Lyrics"), tabelle);
         }
         addFontFace("fontFace", tr("Font"), p->fontFace,
                     [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).fontFace = std::move(v); });

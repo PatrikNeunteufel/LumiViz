@@ -1,0 +1,26 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "lyrics",
+        "fontHeight": -30,
+        "fontWeight": 700,
+        "italic": false,
+        "previewLines": 2,
+        "hAlign": 2,
+        "vAlign": 1,
+        "xShift": -3,
+        "yShift": 0,
+        "outline": true,
+        "outlineColor": 0,
+        "outlineSize": 1,
+        "color": 16777215,
+        "colorNext": 8421504,
+        "blend": 0,
+        "beatsPerLine": 0,
+        "initCode": "",
+        "frameCode": "",
+        "beatCode": "",
+        "songCode": ""
+    }
+}

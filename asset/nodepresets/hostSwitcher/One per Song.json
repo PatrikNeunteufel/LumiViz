@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "hostSwitcher",
+        "intervalSeconds": 0,
+        "nextOnSongChange": true,
+        "order": 1,
+        "initCode": "",
+        "frameCode": "",
+        "beatCode": "",
+        "songCode": ""
+    }
+}

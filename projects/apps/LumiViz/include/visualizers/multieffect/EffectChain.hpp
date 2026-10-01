@@ -3578,8 +3578,13 @@ inline void hostGruppenNamenEindeutig(ChainNode& root, CompileResult& result)
  * re-propagated on every edit).
  *
  * @param root Root node; must be a list (warning + ok=false otherwise).
+ * @param idHochwasser Optional: die naechste noch nie vergebene Id des
+ *        Besitzers der Kette. Neue Knoten bekommen Ids ab dort, und der Wert
+ *        wird fortgeschrieben — so traegt ein neuer Knoten nie die Id eines
+ *        eben entfernten (S87: die Laufzeiten haengen an der Id; ein neuer
+ *        Presetverweis zeigte sonst das Preset des entfernten).
  */
-inline CompileResult compileChain(ChainNode& root)
+inline CompileResult compileChain(ChainNode& root, uint64_t* idHochwasser = nullptr)
 {
     CompileResult result;
     if (!root.isList())
@@ -3589,7 +3594,9 @@ inline CompileResult compileChain(ChainNode& root)
         return result;
     }
     uint64_t nextId = detail::maxNodeId(root) + 1;
+    if (idHochwasser != nullptr) nextId = std::max(nextId, *idHochwasser);
     detail::compileNode(root, "root", result, nextId);
+    if (idHochwasser != nullptr) *idHochwasser = nextId;
     detail::hostGruppenNamenEindeutig(root, result);
     return result;
 }

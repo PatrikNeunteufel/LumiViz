@@ -5,13 +5,22 @@
         "type": "lyrics",
         "fontHeight": -28,
         "fontWeight": 400,
+        "italic": false,
         "previewLines": 2,
         "hAlign": 0,
         "vAlign": 2,
         "xShift": 3,
         "yShift": -4,
         "outline": true,
+        "outlineColor": 0,
         "outlineSize": 1,
-        "blend": 0
+        "color": 16777215,
+        "colorNext": 8421504,
+        "blend": 0,
+        "beatsPerLine": 0,
+        "initCode": "",
+        "frameCode": "",
+        "beatCode": "",
+        "songCode": ""
     }
 }

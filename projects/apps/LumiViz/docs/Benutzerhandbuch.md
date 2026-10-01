@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.30.0
+> **Version:** 1.31.0
 > **Datum:** 2026-10-01
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -494,9 +494,17 @@ fern:
 6. `<Interpret> - <Titel>.txt` im Benutzerordner
 
 Synchron ist ein Text, sobald er Zeitmarken trägt (`[01:23.45]`) — die Endung
-entscheidet nicht. Oben im Editor steht laufend, was gefunden wurde (Quelle,
-synchron oder nicht, Zeilenzahl); **Open folder** öffnet den Ordner der
-gelesenen Textdatei (bei eingebettetem Text gibt es keinen).
+entscheidet nicht. Oben im Editor steht laufend als kleine Tabelle, was
+gefunden wurde:
+
+| Zeile | Inhalt |
+|---|---|
+| **Status** | *Lyrics loaded*, *No lyrics found …* oder, solange ein Online-Abruf läuft, *…downloading…* |
+| **Source** | woher der Text stammt (eingebettet, Datei neben dem Song, Benutzerordner, LRCLIB) |
+| **Timing** | *synced* oder *not synced* |
+| **Lines** | Zeilenzahl |
+| **Origin** | Herkunftsvermerk eines aus dem Netz geholten Texts |
+| **File** | Name der gelesenen Datei (voller Pfad im Tooltip); **Open folder** öffnet ihren Ordner — bei eingebettetem Text gibt es keinen |
 
 | Feld | Bedeutung |
 |---|---|
@@ -510,20 +518,67 @@ Synchroner Text läuft an der **Abspielposition** des Players, auch nach dem
 Springen im Titel. Trägt die Datei Wort-Zeiten (`<01:23.80>` im Text), füllt
 sich die laufende Zeile **Wort für Wort**. Zu lange Zeilen werden kleiner
 gesetzt, bis sie passen. Schrift, Lage, Kontur und Formelfelder wie beim
-Text-Knoten. Voreinstellungen: **Karaoke Bottom**, **Big Centre**, **Three
-Lines Left**.
+Text-Knoten. Voreinstellungen: feste Lagen (**Karaoke Bottom**, **Karaoke
+Top**, **Karaoke Classic**, **Karaoke Neon**, **Big Centre**, **Three Lines
+Left**, **Side Right**, **Subtitle Small**, **Verse Sheet**) und bewegte
+Karaoke-Varianten, die per Skript arbeiten: **Karaoke Beat Colours** (neue
+Farbe je Beat), **Karaoke Song Colours** (eine Farbe je Song), **Karaoke
+Bounce** (Sprung je Beat, Weite im Init) und **Karaoke Flip** (wechselt alle
+`flip_beats` Beats zwischen unten und oben). Eine Lyrics-Voreinstellung
+ersetzt auch die Skriptfelder des Knotens.
 
 **Songtexte aus dem Netz** (aus, bis du es einschaltest): **Settings → Audio →
 Search lyrics online**. Findet LumiViz lokal keinen Text, fragt es dann den
 Dienst lrclib.net — dabei gehen **Interpret, Titel, Album und Dauer** des
 laufenden Titels an diesen Dienst. Gefragt wird nur, wenn Titel und Interpret
-bekannt sind; ein Treffer verlangt, dass die Dauer auf zwei Sekunden passt. Ein
+bekannt sind; ein Treffer verlangt, dass die Dauer auf zwei Sekunden passt.
+Der Dienst ist oft beschäftigt und bittet dann um einen neuen Versuch: LumiViz
+fragt für den laufenden Titel von selbst wieder (nach 2, 5, 10, 20 und 40
+Sekunden) — so lange steht in der Tabelle *…downloading…*, der Text erscheint,
+sobald er da ist. Ein
 Fund wird gespeichert, damit beim nächsten Mal nichts mehr hinausgeht:
 **Save fetched lyrics** wählt den Ort — **User folder**
 (`%APPDATA%\LumiViz Project\LumiViz\lyrics`, Vorgabe) oder **Next to the song** (gleicher Name
 wie der Song, `.lrc` für synchronen, `.txt` für unsynchronen Text; ist der
 Ordner schreibgeschützt, landet der Fund im Benutzerordner). Die Rechte an den
 Texten liegen bei Dritten; sie sind für den eigenen Gebrauch gedacht.
+
+**Falscher Text?** Unter der Tabelle im Editor stehen zwei Knöpfe:
+
+- **Alternatives…** sucht bei lrclib.net nach anderen Fassungen. Titel und
+  Interpret sind aus den Tags vorbelegt und lassen sich ändern — nützlich bei
+  Zusätzen wie „(Feat. …)" oder „(album version)". Die Liste zeigt Album,
+  Dauer (mit Abweichung zur Datei), ob der Text synchron ist und die
+  Zeilenzahl; die Fassung mit der passendsten Dauer steht oben, die gerade
+  gezeigte ist **fett** und trägt den Vermerk *shown now*. Darunter steht der
+  Text mit seinen Zeitmarken (farbig abgesetzt). Markierst du bis zu **drei**
+  Einträge (Ctrl oder Shift), stehen sie nebeneinander. Läuft der Titel,
+  zeigt ein Balken in jeder Spalte, wo der Song gerade ist (**Follow
+  playback** hält die Stelle im Blick) — so siehst du, welche Fassung zum
+  Gesang passt. Der Griff zwischen Liste und Texten teilt die Höhe.
+  **Use these lyrics** über einer Spalte ersetzt die gespeicherte Fassung;
+  die bisherige wird dabei nicht gesperrt, das Fenster bleibt offen. Die
+  Suche sendet die beiden Suchbegriffe an den Dienst, auch wenn die
+  selbsttätige Online-Suche aus ist.
+- **Wrong lyrics** verwirft den gezeigten Text: die geholte Datei wird
+  gelöscht und der Eintrag **gesperrt**, er wird nicht wieder geholt. Danach
+  öffnen sich die Alternativen. Der Knopf gilt nur für online geholte Texte;
+  eine selbst angelegte Datei wird nie gelöscht.
+
+Die Sperrliste steht unter **Settings → Audio → Blocked lyrics** (**Show…**);
+**Unblock** gibt einen Eintrag wieder frei. Sie liegt als `blocked.json` im
+Benutzerordner der Songtexte.
+
+**Zwei Fassungen desselben Songs.** Im Benutzerordner heißt die Datei
+`<Interpret> - <Titel>`. Geholte Texte tragen dazu die Dauer des Titels
+(`[length:…]`); passt sie nicht zum laufenden Titel (mehr als 2,5 s
+Unterschied), gilt die Datei für ihn nicht, und sein Text liegt unter
+`<Interpret> - <Titel> [m-ss]`. So überschreiben sich Album- und
+Single-Fassung nicht mehr. Dateien ohne Dauerangabe gelten für jede Fassung.
+
+**Wiederholte Zeilen.** Folgt dieselbe Zeile mehrmals hintereinander, blendet
+sie kurz vor jeder Wiederholung zur Vorschau-Farbe und ist mit dem Einsatz
+wieder da — so sieht man, wann die Wiederholung beginnt.
 
 Jede so gespeicherte Datei trägt oben ihren **Herkunftsvermerk** — Dienst,
 Kennung des Eintrags und Datum:
@@ -533,9 +588,9 @@ Kennung des Eintrags und Datum:
 [source:LRCLIB id 3396226, fetched 2026-10-01]
 ```
 
-Die beiden Kopfzeilen erscheinen nicht im Bild. Die Quellzeile im Editor des
-Lyrics-Knotens zeigt den Vermerk an (`… — source: LRCLIB id …`), auch nach
-einem Neustart. Dateien, die du selbst anlegst, bekommen keinen Vermerk.
+Die beiden Kopfzeilen erscheinen nicht im Bild. Die Tabelle im Editor des
+Lyrics-Knotens zeigt den Vermerk in der Zeile **Origin**, auch nach einem
+Neustart. Dateien, die du selbst anlegst, bekommen keinen Vermerk.
 
 **Fenstergröße ändern.** Das Bild der Effektkette und jeder Effect List bzw.
 Host-Gruppe wird beim Größenwechsel in die neue Größe übernommen (wie in AVS
@@ -1143,6 +1198,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.31.0 | 2026-10-01 | Session 87. §11 Lyrics: Angaben im Editor als **Tabelle** mit Status (*…downloading…*); Online-Abruf **wiederholt sich von selbst**, wenn der Dienst beschäftigt ist; zehn neue Voreinstellungen, darunter bewegte Karaoke-Varianten; **Alternatives…** (andere Fassung suchen, eigene Suchbegriffe), **Wrong lyrics** mit Sperrliste (Settings → Audio); wiederholte Zeilen blenden vor dem Einsatz; Fassungen eines Songs getrennt nach Dauer. Playlist: Dauer je Titel; Shuffle, Loop und Repeat bleiben über den Neustart erhalten |
 | 1.30.0 | 2026-10-01 | Session 86. §11 Lyrics: NEU **Songtexte aus dem Netz** (Opt-in „Search lyrics online", Dienst lrclib.net, was gesendet wird; „Save fetched lyrics": User folder / Next to the song) |
 | 1.29.0 | 2026-10-01 | Session 86. §11 NEU Knoten **Lyrics**: Songtext zum laufenden Titel (eingebettet, `.lrc`/`.txt` neben dem Song oder im Benutzerordner; Suchreihenfolge), synchron an der Abspielposition mit Vorschau-Zeilen und Wort-für-Wort-Füllung, Duett-Farben, unsynchroner Block, drei Voreinstellungen |
 | 1.28.0 | 2026-10-01 | Session 86. §2 NEU Panel **Tag View**: Tags, Datei, Dauer und Cover des laufenden Titels (nur Anzeige) |

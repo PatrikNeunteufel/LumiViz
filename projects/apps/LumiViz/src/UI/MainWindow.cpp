@@ -753,6 +753,11 @@ void MainWindow::setupEventHandlers()
                             const lumi::multieffect::lyrics::Songtext& text, const QString&) {
                 if (songPfad == *laufenderSong) MultiEffectVisualizer::setSongtext(text);
             });
+    // S87: Stand des Abrufs fuer die Lyrics-Tabelle im Editor („…downloading…")
+    connect(songtextOnline, &lumi::audio::SongtextOnline::zustand, this,
+            [laufenderSong](const QString& songPfad, lumi::audio::SongtextAbruf stand) {
+                if (songPfad == *laufenderSong) MultiEffectVisualizer::setSongtextAbruf(stand);
+            });
     pEventBus->subscribe<TrackChangedEvent>(
         [songtextOnline, laufenderSong](const TrackChangedEvent& e) {
             // S86: die Tags des Titels gehen mit — der Text-Knoten setzt sie in
@@ -772,6 +777,9 @@ void MainWindow::setupEventHandlers()
             MultiEffectVisualizer::setSongtext(lokal);
             MultiEffectVisualizer::notifyPlayPosition(0);
             *laufenderSong = e.track.filePath;
+            lumi::audio::setzeLaufendenTitel(e.track);  // S87: fuer „Alternatives…"
+            // neuer Titel: der Stand des vorigen Abrufs gilt nicht mehr
+            MultiEffectVisualizer::setSongtextAbruf(lumi::audio::SongtextAbruf::Ruhe);
             // nichts Lokales: online fragen — die Suche prueft die Einstellung
             // selbst und bricht eine noch laufende Anfrage ab
             if (lokal.leer())

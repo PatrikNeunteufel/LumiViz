@@ -237,6 +237,26 @@ ausdrücklich Teil der Vorlage.
 | `lyrics` (S86) | Karaoke Bottom | laufende Zeile unten mittig mit Kontur, eine Vorschau-Zeile |
 | | Big Centre | eine große Zeile in der Bildmitte, additiv, ohne Vorschau |
 | | Three Lines Left | linksbündig unten, laufende Zeile plus zwei Vorschau-Zeilen |
+| `lyrics` (S87) | Karaoke Top | wie Karaoke Bottom, am oberen Rand |
+| | Karaoke Classic | gelbe laufende Zeile, weiße Vorschau (zwei Zeilen), kräftige Kontur |
+| | Karaoke Neon | additiv ohne Kontur, Cyan vor gedämpftem Magenta |
+| | Karaoke Beat Colours | Beat-Skript: die laufende Zeile bekommt bei jedem Beat eine neue helle Farbe |
+| | Karaoke Song Colours | Init- und Song-Skript: jeder Song bekommt seine eigene Farbe |
+| | Karaoke Bounce | Beat-Skript: der Text springt bei jedem Beat ein Stück (`jump_x`, `jump_y` in Prozent) |
+| | Karaoke Flip | Beat-Skript: der Text wechselt alle `flip_beats` Beats zwischen unten und oben |
+| | Subtitle Small | kleine Untertitel-Zeile ohne Vorschau |
+| | Verse Sheet | Textblatt oben links mit vier Vorschau-Zeilen; unsynchroner Text rückt alle 8 Beats eine Zeile weiter |
+| | Side Right | rechtsbündig auf halber Höhe, zwei Vorschau-Zeilen |
+
+Alle Lyrics-Vorlagen tragen seit S87 den vollen Satz aus Lage, Farben und
+Skriptfeldern (auch leere) — ein Wechsel von einer bewegten Variante auf eine
+feste lässt kein Skript der vorigen stehen.
+| `hostSwitcher` (S87) | Random Runtime | Gruppe wechselt nach einer zufälligen Zahl Beats zwischen `min_runtime` und `max_runtime` (im Init einstellen); jeder Song würfelt neu, Reihenfolge zufällig. Die Gruppenliste bleibt unberührt |
+| | Random Runtime per Group | wie Random Runtime, aber jede Gruppe würfelt ihre eigene Laufzeit |
+| | Random Seconds | dasselbe in Sekunden statt Beats (`min_seconds`, `max_seconds`) — läuft auch ohne erkannten Beat |
+| | Every 16 Beats | fester Takt: alle `beats_per_group` Beats weiter, Gruppen der Reihe nach |
+| | Bass Drop | wechselt bei einem Bass-Schlag deutlich über dem laufenden Mittel (`kick`), frühestens nach `min_seconds`, spätestens nach `max_seconds` |
+| | One per Song | ohne Skript: jeder Song bekommt eine andere Gruppe |
 
 Die Text- und AVI-Vorlagen lassen den Text bzw. die Videodatei unberührt —
 außer „Now Playing", das die Tag-Vorlage als Text mitbringt.

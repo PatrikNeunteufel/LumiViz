@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "hostSwitcher",
+        "intervalSeconds": 0,
+        "nextOnSongChange": false,
+        "order": 0,
+        "initCode": "// four bars of 4/4 - change the number for longer or shorter scenes\nbeats_per_group = 16;",
+        "frameCode": "",
+        "beatCode": "// beatcount = beats since the last switch\nnextgroup = above(beatcount, beats_per_group - 1);",
+        "songCode": ""
+    }
+}

@@ -227,6 +227,14 @@ public:
     [[nodiscard]] virtual int getDurationMs(AudioStreamHandle stream) const = 0;
 
     /**
+     * @brief Dauer einer Datei in ms, ohne sie abzuspielen (S87: Playlist
+     *        zeigt die Laenge je Titel). 0 = unbekannt / nicht lesbar.
+     *        Schnell statt genau: ohne Vorab-Durchlauf der Datei — bei MP3
+     *        mit variabler Bitrate ohne Laengenangabe eine Schaetzung.
+     */
+    [[nodiscard]] virtual int probeDurationMs(const QString& /*filePath*/) { return 0; }
+
+    /**
      * @brief Get/Set volume (0.0 - 1.0)
      */
     [[nodiscard]] virtual float getVolume(AudioStreamHandle stream) const = 0;

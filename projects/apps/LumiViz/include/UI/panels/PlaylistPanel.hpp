@@ -36,10 +36,13 @@
 
 #include "PanelBase.hpp"
 
+#include <QHash>
 #include <QList>
+#include <QString>
 
 #include <vector>
 
+class QTimer;
 class QListWidget;
 class QListWidgetItem;
 class QPushButton;
@@ -73,6 +76,13 @@ public:
     /// folgt ueber das PlaylistChangedEvent (S84). Vorher sortierte Qt nur die
     /// Anzeige um, und ein Doppelklick spielte danach den falschen Titel.
     static void verschiebeZeilen(IPlaylist& playlist, const QList<int>& zeilen, int ziel);
+
+    /// Rolle der Listeneintraege, unter der die Dauer in ms liegt (S87);
+    /// 0 / ungesetzt = noch nicht gelesen oder nicht lesbar.
+    static constexpr int kDauerRolle = 0x0101;  // Qt::UserRole + 1
+
+    /// `3:07` bzw. `1:02:03` — die Anzeige der Dauer rechts in der Zeile.
+    [[nodiscard]] static QString dauerText(int ms);
 
 protected:
     void onActivate() override;
@@ -120,6 +130,12 @@ private:
     QPushButton* m_pShuffleButton = nullptr;
     QPushButton* m_pLoopButton = nullptr;
     
+    // S87: Dauer je Titel — nach und nach gelesen, damit eine lange Liste
+    // die Oberflaeche nicht anhaelt (Pfad -> ms, 0 = nicht lesbar)
+    void fuelleDauern();
+    QTimer* m_dauerUhr = nullptr;
+    QHash<QString, int> m_dauern;
+
     // State
     int m_currentPlayingIndex = -1;
     bool m_shuffleEnabled = false;

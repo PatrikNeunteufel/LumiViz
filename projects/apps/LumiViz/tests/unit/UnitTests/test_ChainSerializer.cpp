@@ -2527,6 +2527,43 @@ TEST_SUITE("Presetverweis")
         std::filesystem::remove_all(tempDatei(""));
     }
 
+    // S87, Befund Patrik: einen Verweis entfernt, einen neuen an die Stelle
+    // gezogen — gezeigt wurde weiter das alte Preset. Die Ids wurden als
+    // `max + 1` vergeben, der neue Knoten erbte also die Id des entfernten
+    // und damit dessen Laufzeit.
+    TEST_CASE("Entfernen + Einfuegen: ein neuer Knoten bekommt nie die Id eines entfernten")
+    {
+        ChainNode a;
+        a.params = ClearParams{};
+        ChainNode b;
+        b.params = FadeoutParams{};
+        MultiEffectVisualizer vis;
+        vis.setChain(kette({std::move(a), std::move(b)}));
+        const std::uint64_t alt = vis.chain().children[1].nodeId;
+        REQUIRE(alt != 0);
+
+        // entfernen, kompilieren, einfuegen (wie zwei Panel-Schritte)
+        vis.chain().children.pop_back();
+        vis.recompileChain();
+        ChainNode neu;
+        neu.params = FadeoutParams{};
+        vis.chain().children.push_back(std::move(neu));
+        vis.recompileChain();
+        const std::uint64_t zweite = vis.chain().children[1].nodeId;
+        CHECK(zweite != 0);
+        CHECK(zweite != alt);
+
+        // und noch einmal: auch die zweite Id kommt nicht wieder
+        vis.chain().children.pop_back();
+        ChainNode dritte;
+        dritte.params = FadeoutParams{};
+        vis.chain().children.push_back(std::move(dritte));
+        vis.recompileChain();
+        CHECK(vis.chain().children[1].nodeId != alt);
+        CHECK(vis.chain().children[1].nodeId != zweite);
+        CHECK(vis.chain().children[0].nodeId != vis.chain().children[1].nodeId);
+    }
+
     TEST_CASE("Zyklus und fehlende Datei: Meldung statt Endlosschleife, Gruppe leer")
     {
         std::filesystem::create_directories(tempDatei(""));

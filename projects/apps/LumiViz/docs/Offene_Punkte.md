@@ -2480,32 +2480,50 @@ wie in `.txt`; der Leser überspringt sie, die Quellzeile im Editor zeigt sie.
 Die sechs vor dieser Änderung gespeicherten Dateien tragen keinen Vermerk.
 `[source:]` ist eine eigene Festlegung, keine Norm — ein fremder Player
 zeigt die Kopfzeilen einer `.txt` womöglich als Text.
-**🔴 Befund Patrik S86 (Lauf 16:29–16:31, Exe von 16:24) — offen:** wird ein
-Songtext online geholt, bleibt die Quellzeile auf „No lyrics found", und der
-Text erscheint im Bild erst beim nächsten Abspielen des Titels. Gespeichert
-wird der Fund (Dateien im Benutzerordner vorhanden) — `SongtextOnline::fertig`
-läuft also durch, aber der Empfänger in `MainWindow.cpp` (`gefunden` →
-`setSongtext`, nur wenn `songPfad == *laufenderSong`) wirkt nicht. Spuren
-für die Suche: (1) läuft der `TrackChangedEvent`-Handler auf dem GUI-Thread?
-Wenn nicht, entsteht der `QNetworkAccessManager` im falschen Thread und
-`laufenderSong` wird über Threads gelesen; (2) stimmt der Pfadvergleich
-(Schreibweise des Pfads im Ereignis gegen den beim Abruf); (3) kommt ein
-zweites `TrackChangedEvent` für denselben Titel und setzt den Text wieder
-auf leer. Zuerst mit einer Log-Zeile im Empfänger nachstellen, dann beheben;
-Test, der den Weg Ereignis → Abruf-Ergebnis → Anzeige mit einer
-nachgestellten Antwort abdeckt (heute ungetestet). **Dazu ungeprüft:** ob
-das Spulen im Titel den Text mitnimmt.
-**Wünsche Patrik S86 für die nächste Sitzung:** (a) die Lyrics-Angaben im
-Editor als **Tabelle** statt einer langen Zeile (Quelle, synchron, Zeilen,
-Herkunft, Datei); (b) Zustand **„…downloading…"**, solange ein Online-Abruf
-läuft, bis der Text da ist; (c) Panel zum Nachsynchronisieren (unsynchron →
-synchron) und alles Weitere.
-Die Dokumentation sagt nichts zur Lizenz der Texte.
-**Offen:** Versatz **je Titel** speichern (heute: Feld am Knoten und
+**✅ Befund Patrik S86 „online geholter Text erscheint erst beim nächsten
+Abspielen" — in S87 geklärt und behoben.** Keine der drei vermuteten Spuren
+(Thread, Pfadvergleich, zweites Ereignis) traf zu: der Lauf mit Diagnose-
+Zeilen (62 Anfragen) zeigte 19-mal **HTTP 503 mit `Retry-After: 1`** — der
+Dienst ist beschäftigt, und LumiViz fragte danach nicht wieder. Die
+Dokumentation nennt das selbst („503 ServerOverloaded … retry after the
+Retry-After header (usually 1 second)"). Jetzt: Wiederholung für den laufenden
+Titel nach 2/5/10/20/40 s (`songtextWartezeitMs`), 400 ms Atempause vor der
+ersten Anfrage („Request Throttling"), Zustand des Abrufs (`lyrics::Abruf`).
+**✅ S87 gebaut:** Lyrics-Angaben als **Tabelle** mit Status
+(„…downloading…"); **Alternatives…** (Suche `/api/search` mit eigenen
+Begriffen, Zeilenzahl, Zeitmarken farbig, bis zu drei Fassungen nebeneinander,
+Balken an der Abspielposition, nicht modal); **Wrong lyrics** mit Sperrliste
+(`blocked.json`, Settings → Audio); zweite Suchstufe ohne Zusätze in Titel
+und Interpret („(Video Version)", „feat. …"), übernommen nur bei passender
+Dauer; Fassungen eines Songs im Benutzerordner nach Dauer getrennt
+(`[length:]`, `… [m-ss]`); wiederholte Zeilen blenden vor dem Einsatz.
+**Notiz Patrik S87 — nicht weiterverfolgen:** zu „Gettin' Over" (David
+Guetta, auf *Greatest Hits* und *One Love*) führt LRCLIB offenbar keine
+Fassung, die wirklich passt. Bewusst liegengelassen („Phantome jagen bringt
+nichts").
+**Nicht geprüft (S87):** eine echte Suche über den Dialog gegen den Dienst
+durch Claude (nur nachgestellte Antworten); das Verhalten bei 429; ob das
+Spulen im Titel den Text mitnimmt.
+**Idee Patrik S87 — Satellit „Lyrics Trail":** die eben beendete Zeile nicht
+einfach verschwinden lassen, sondern an anderer Stelle der Kette noch einmal
+zeichnen (nach oben geschoben), sodass die Effekte dahinter (Fadeout, Blur,
+Movement, Rückkopplung) sie verblassen oder wegziehen. Vorschlag: eigener
+Knoten in der Palette, der sich über den Namen auf einen Lyrics-Knoten
+bezieht (wie der Host Switcher auf seine Gruppen) — kein eigener Puffer
+nötig. Geplant nach dem Panel zum Nachsynchronisieren.
+**Möglich, nicht gebaut:** falsche Texte an den Dienst melden (`POST
+/api/flag`, verlangt je Meldung einen Rechen-Nachweis wie `/api/publish`);
+selbst synchronisierte Texte veröffentlichen (`/api/publish`) — beides nur
+auf ausdrücklichen Wunsch, es geht etwas hinaus.
+**Offen:** **Panel zum Nachsynchronisieren** (unsynchron → synchron; Entwurf
+S87: Dock-Panel „Lyrics Sync", Zeilenliste mit Zeiten, Mitklopfen, ±100 ms je
+Zeile / ab hier, Vorhören per Doppelklick, Speichern als `.lrc` neben der
+Quelle); Versatz **je Titel** speichern (heute: Feld am Knoten und
 `[offset:]` in der Datei); Knopf „Lyrics file…" zum Zuweisen; Tag View zeigt
 den gefundenen Songtext; Wort-Zeiten des Dienstes (`hasWordSync`, Feld
-`lyricsfile`) werden nicht gelesen; Suche über `/api/search`, wenn die Dauer
-nicht passt.
+`lyricsfile`) werden nicht gelesen; Titel ohne Text (instrumental) und 404
+werden bei jedem Abspielen neu angefragt (kein Merker).
+Die Dokumentation sagt nichts zur Lizenz der Texte.
 **Datei-Icons (S86, Wunsch Patrik):** `.lrc`-Icon erzeugt; alle Icons liegen
 als `.ico` in `asset/img/logo/icons/` (Zuordnung Endung → Icon und Bauskript
 dort im README). **Notiz für einen späteren Installer:** Dateitypen und

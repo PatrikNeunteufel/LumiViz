@@ -19,6 +19,8 @@
 #include <QFile>
 #include <QTemporaryDir>
 
+#include <vector>
+
 using lumi::audio::findeSongtext;
 
 namespace
@@ -222,4 +224,384 @@ TEST_CASE("SongtextOnline: Speicherort nach Einstellung, Ausweichen bei gesperrt
     CHECK(songtextZiel(t, true, SongtextAblage::NebenDemSong, nutzer, &ausgewichen) ==
           nutzer + "/Wer - Lied.lrc");
     CHECK(ausgewichen);
+}
+
+// --- S87: Alternativen, Uebernehmen, Sperrliste (Wunsch Patrik)
+
+TEST_CASE("SongtextOnline: Suche — freie Begriffe, Kandidaten mit Dauer und Text")
+{
+    using lumi::audio::lrclibSuchUrl;
+    CHECK(lrclibSuchUrl("", "Wer").isEmpty());  // ohne Titel keine Suche
+    const QString url = lrclibSuchUrl("Gettin' Over You", "David Guetta")
+                            .toString(QUrl::FullyEncoded);
+    CHECK(url.startsWith("https://lrclib.net/api/search?"));
+    CHECK(url.contains("track_name=Gettin'%20Over%20You"));
+    CHECK(url.contains("artist_name=David%20Guetta"));
+    CHECK_FALSE(lrclibSuchUrl("Nur Titel", "").toString().contains("artist_name"));
+
+    const auto k = lumi::audio::kandidatenAusLrclib(
+        R"([{"id":11,"trackName":"Lied","artistName":"Wer","albumName":"Eins","duration":181.4,)"
+        R"("instrumental":false,"plainLyrics":"a\nb\n","syncedLyrics":"[00:01.00] a\n[00:02.00] b\n"},)"
+        R"({"id":12,"trackName":"Lied - Remix","artistName":"Wer","albumName":"Zwei","duration":240,)"
+        R"("instrumental":false,"plainLyrics":"a\n","syncedLyrics":null},)"
+        R"({"id":13,"trackName":"Lied","artistName":"Wer","albumName":"Drei","duration":200,)"
+        R"("instrumental":true,"plainLyrics":null,"syncedLyrics":null},)"
+        R"({"trackName":"ohne Kennung"}])");
+    REQUIRE(k.size() == 3);  // der Eintrag ohne Kennung faellt weg
+    CHECK(k[0].id == 11);
+    CHECK(k[0].album == "Eins");
+    CHECK(k[0].dauerSek == 181);
+    CHECK(k[0].text.synchron);
+    CHECK(k[0].text.herkunft == "LRCLIB id 11");
+    CHECK_FALSE(k[1].text.synchron);
+    CHECK(k[1].text.zeilen.size() == 1);
+    CHECK(k[2].instrumental);
+    CHECK(k[2].text.leer());
+    CHECK(lumi::audio::kandidatenAusLrclib("kein json").empty());
+
+    CHECK(lumi::audio::lrclibKennung("LRCLIB id 3396226, fetched 2026-10-01") == 3396226);
+    CHECK(lumi::audio::lrclibKennung("LRCLIB") == 0);
+    CHECK(lumi::audio::lrclibKennung("") == 0);
+}
+
+TEST_CASE("SongtextOnline: Uebernehmen ersetzt die geholte Fassung, nie eine eigene Datei")
+{
+    namespace ly = lumi::multieffect::lyrics;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    const QString nutzer = tmp.path() + "/nutzer";
+    TrackInfo t;
+    t.filePath = tmp.path() + "/musik/07 - Lied.mp3";
+    t.title = "Lied";
+    t.artist = "Wer";
+
+    // zuerst eine synchrone Fassung, dann eine unsynchrone: die alte .lrc muss
+    // weg, sonst gewoenne sie in der Suchreihenfolge gegen die neue .txt
+    ly::Songtext sync = ly::leseLrc("[00:01.00]falsch\n");
+    sync.herkunft = "LRCLIB id 1";
+    const ly::Songtext erster = lumi::audio::uebernehmeSongtext(t, sync, nutzer);
+    CHECK(QFile::exists(nutzer + "/Wer - Lied.lrc"));
+    CHECK(erster.datei == (nutzer + "/Wer - Lied.lrc").toStdString());
+    CHECK(erster.herkunft.starts_with("LRCLIB id 1, fetched "));
+
+    ly::Songtext plain = ly::leseLrc("richtig\n");
+    plain.herkunft = "LRCLIB id 2";
+    const ly::Songtext zweiter = lumi::audio::uebernehmeSongtext(t, plain, nutzer);
+    CHECK(QFile::exists(nutzer + "/Wer - Lied.txt"));
+    CHECK_FALSE(QFile::exists(nutzer + "/Wer - Lied.lrc"));
+    CHECK(findeSongtext(t, nutzer).zeilen.at(0).text == "richtig");
+    CHECK(zweiter.quelle == "LRCLIB, saved: Wer - Lied.txt");
+
+    // eine SELBST angelegte .lrc (ohne Vermerk) bleibt liegen
+    QFile::remove(nutzer + "/Wer - Lied.txt");
+    schreibe(nutzer + "/Wer - Lied.lrc", kSync);
+    (void)lumi::audio::uebernehmeSongtext(t, plain, nutzer);
+    CHECK(QFile::exists(nutzer + "/Wer - Lied.lrc"));
+}
+
+TEST_CASE("SongtextOnline: Wrong lyrics — Datei weg, Kennung gesperrt, Abruf nimmt sie nicht mehr")
+{
+    namespace ly = lumi::multieffect::lyrics;
+    using lumi::audio::SongtextAbruf;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    const QString nutzer = tmp.path() + "/nutzer";
+    TrackInfo t;
+    t.filePath = tmp.path() + "/x.mp3";
+    t.title = "Lied";
+    t.artist = "Wer";
+
+    CHECK(lumi::audio::songtextSperrliste(nutzer).empty());
+    ly::Songtext s = ly::leseLrc("[00:01.00]falsch\n");
+    s.herkunft = "LRCLIB id 7";
+    const ly::Songtext geholt = lumi::audio::uebernehmeSongtext(t, s, nutzer);
+    REQUIRE(QFile::exists(QString::fromStdString(geholt.datei)));
+
+    REQUIRE(lumi::audio::verwerfeSongtext(t, geholt.herkunft, geholt.datei, nutzer));
+    CHECK_FALSE(QFile::exists(QString::fromStdString(geholt.datei)));
+    CHECK(lumi::audio::songtextGesperrt(7, nutzer));
+    const auto liste = lumi::audio::songtextSperrliste(nutzer);
+    REQUIRE(liste.size() == 1);
+    CHECK(liste[0].id == 7);
+    CHECK(liste[0].titel == "Wer - Lied");
+    lumi::audio::sperreSongtext(7, "doppelt", nutzer);  // kein zweiter Eintrag
+    CHECK(lumi::audio::songtextSperrliste(nutzer).size() == 1);
+
+    // der selbsttaetige Abruf liefert denselben Eintrag: nicht wieder nehmen
+    lumi::audio::SongtextOnline online;
+    online.setBenutzerOrdner(nutzer);
+    SongtextAbruf stand = SongtextAbruf::Ruhe;
+    int funde = 0;
+    QObject::connect(&online, &lumi::audio::SongtextOnline::zustand, &online,
+                     [&](const QString&, SongtextAbruf z) { stand = z; });
+    QObject::connect(&online, &lumi::audio::SongtextOnline::gefunden, &online,
+                     [&](const QString&, const ly::Songtext&, const QString&) { ++funde; });
+    const QByteArray antwort =
+        R"({"id":7,"instrumental":false,"plainLyrics":"falsch\n","syncedLyrics":null})";
+    online.antwort(t, 200, -1, antwort);
+    CHECK(funde == 0);
+    // gesperrt: die Suche koennte eine andere Fassung kennen — zweite Stufe
+    CHECK(stand == SongtextAbruf::Laedt);
+    // … sie liefert nur denselben, gesperrten Eintrag: nichts
+    online.antwort(t, 200, -1, "[" + antwort + "]");
+    CHECK(funde == 0);
+    CHECK(stand == SongtextAbruf::NichtGefunden);
+    CHECK_FALSE(QFile::exists(nutzer + "/Wer - Lied.txt"));
+
+    // freigegeben (Settings → Audio): er kommt wieder
+    lumi::audio::entsperreSongtext(7, nutzer);
+    CHECK_FALSE(lumi::audio::songtextGesperrt(7, nutzer));
+    online.suche(TrackInfo{});  // neuer Anlauf: wieder erste Stufe
+    online.antwort(t, 200, -1, antwort);
+    CHECK(funde == 1);
+
+    // eine eigene Datei (ohne Vermerk) wird nie verworfen
+    schreibe(nutzer + "/eigen.lrc", kSync);
+    CHECK_FALSE(lumi::audio::verwerfeSongtext(t, "", (nutzer + "/eigen.lrc").toStdString(),
+                                              nutzer));
+    CHECK(QFile::exists(nutzer + "/eigen.lrc"));
+}
+
+// S87, Befund Patrik: „Try (Video Version)" von „Schiller feat. Nadia Ali" fand
+// der Dienst nie — ohne die Zusaetze schon. Zweite Stufe: Suche ohne sie,
+// uebernommen wird nur ein Eintrag mit passender Dauer.
+TEST_CASE("SongtextOnline: nicht gefunden -> Suche ohne Zusaetze, nur bei passender Dauer")
+{
+    using lumi::audio::SongtextAbruf;
+    using lumi::audio::songtextInterpretOhneZusatz;
+    using lumi::audio::songtextTitelOhneZusatz;
+    CHECK(songtextTitelOhneZusatz("Try (Video Version)") == "Try");
+    CHECK(songtextTitelOhneZusatz("Creep [live]") == "Creep");
+    CHECK(songtextTitelOhneZusatz("Gettin' Over (Feat. Chris Willis) (Remix)") == "Gettin' Over");
+    CHECK(songtextTitelOhneZusatz("Lied") == "Lied");
+    CHECK(songtextTitelOhneZusatz("(Intro)") == "(Intro)");  // sonst bliebe nichts
+    CHECK(songtextInterpretOhneZusatz("Schiller feat. Nadia Ali") == "Schiller");
+    CHECK(songtextInterpretOhneZusatz("David Guetta ft Akon") == "David Guetta");
+    CHECK(songtextInterpretOhneZusatz("Republica;Jonny Male;Dave Arch") == "Republica");
+    CHECK(songtextInterpretOhneZusatz("Daft Punk") == "Daft Punk");
+    CHECK(songtextInterpretOhneZusatz("Featherstone") == "Featherstone");  // kein „feat"
+    CHECK(songtextInterpretOhneZusatz("Earth, Wind & Fire") == "Earth, Wind & Fire");
+
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    const QString nutzer = tmp.path() + "/nutzer";
+    TrackInfo t;
+    t.filePath = tmp.path() + "/x.mp3";
+    t.title = "Try (Video Version)";
+    t.artist = "Schiller feat. Nadia Ali";
+    t.durationMs = 215000;
+
+    lumi::audio::SongtextOnline online;
+    online.setBenutzerOrdner(nutzer);
+    SongtextAbruf stand = SongtextAbruf::Ruhe;
+    lumi::multieffect::lyrics::Songtext fund;
+    int funde = 0;
+    QObject::connect(&online, &lumi::audio::SongtextOnline::zustand, &online,
+                     [&](const QString&, SongtextAbruf z) { stand = z; });
+    QObject::connect(&online, &lumi::audio::SongtextOnline::gefunden, &online,
+                     [&](const QString&, const lumi::multieffect::lyrics::Songtext& s,
+                         const QString&) {
+                         ++funde;
+                         fund = s;
+                     });
+
+    const QByteArray suche =
+        R"([{"id":21,"trackName":"Try","artistName":"Schiller","albumName":"Remix","duration":420,)"
+        R"("instrumental":false,"plainLyrics":"remix\n","syncedLyrics":null},)"
+        R"({"id":22,"trackName":"Try","artistName":"Schiller","albumName":"Single","duration":214,)"
+        R"("instrumental":false,"plainLyrics":"single\n","syncedLyrics":null},)"
+        R"({"id":23,"trackName":"Try","artistName":"Schiller","albumName":"Album","duration":216,)"
+        R"("instrumental":false,"plainLyrics":"album\n","syncedLyrics":"[00:01.00] album\n"}])";
+
+    // 404 zum vollen Titel: nicht aufgeben, sondern ohne Zusaetze suchen
+    online.antwort(t, 404, -1, QByteArray());
+    CHECK(stand == SongtextAbruf::Laedt);
+    CHECK(funde == 0);
+    // die Suche: Remix (420 s) faellt durch, von den passenden gewinnt die synchrone
+    online.antwort(t, 200, -1, suche);
+    REQUIRE(funde == 1);
+    CHECK(stand == SongtextAbruf::Gefunden);
+    CHECK(lumi::audio::lrclibKennung(fund.herkunft) == 23);
+    CHECK(fund.synchron);
+
+    // keine Fassung mit passender Dauer: nichts uebernehmen — das entscheidet der Mensch
+    TrackInfo lang = t;
+    lang.filePath = tmp.path() + "/y.mp3";
+    lang.durationMs = 300000;
+    online.suche(TrackInfo{});
+    online.antwort(lang, 404, -1, QByteArray());
+    online.antwort(lang, 200, -1, suche);
+    CHECK(funde == 1);
+    CHECK(stand == SongtextAbruf::NichtGefunden);
+
+    // ein Titel OHNE Zusaetze: 404 bleibt 404, keine zweite Anfrage
+    TrackInfo schlicht = t;
+    schlicht.title = "Try";
+    schlicht.artist = "Schiller";
+    online.suche(TrackInfo{});
+    online.antwort(schlicht, 404, -1, QByteArray());
+    CHECK(stand == SongtextAbruf::NichtGefunden);
+}
+
+// S87, Befund Patrik: derselbe Song auf zwei Alben („feat." gegen „Feat." —
+// unter Windows derselbe Dateiname). Wer fuer die eine Fassung einen Text
+// waehlte, ueberschrieb den der anderen; beim naechsten Laden stand wieder
+// der alte da. Die Dauer in der Datei haelt die Fassungen auseinander.
+TEST_CASE("SongtextQuelle: zwei Fassungen eines Songs teilen sich den Namen nicht mehr")
+{
+    namespace ly = lumi::multieffect::lyrics;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    const QString nutzer = tmp.path() + "/nutzer";
+    TrackInfo kurz;
+    kurz.filePath = tmp.path() + "/a/lied.mp3";
+    kurz.title = "Lied (feat. X)";
+    kurz.artist = "Wer";
+    kurz.durationMs = 181000;
+    TrackInfo lang = kurz;
+    lang.filePath = tmp.path() + "/b/lied.mp3";
+    lang.title = "Lied (Feat. X)";
+    lang.durationMs = 242000;
+
+    ly::Songtext a = ly::leseLrc("[00:01.00]kurze Fassung\n");
+    a.herkunft = "LRCLIB id 1";
+    ly::Songtext b = ly::leseLrc("[00:01.00]lange Fassung\n");
+    b.herkunft = "LRCLIB id 2";
+
+    // die erste bekommt den gemeinsamen Namen, mit ihrer Dauer in der Datei
+    const ly::Songtext ersteDatei = lumi::audio::uebernehmeSongtext(kurz, a, nutzer);
+    CHECK(QFileInfo(QString::fromStdString(ersteDatei.datei)).fileName() ==
+          "Wer - Lied (feat. X).lrc");
+    CHECK(findeSongtext(kurz, nutzer).laengeMs == 181000);
+    // fuer die zweite gilt diese Datei NICHT (61 s Unterschied) …
+    CHECK(findeSongtext(lang, nutzer).leer());
+    // … und ihr Text landet unter dem Namen der Fassung
+    const ly::Songtext zweiteDatei = lumi::audio::uebernehmeSongtext(lang, b, nutzer);
+    CHECK(QFileInfo(QString::fromStdString(zweiteDatei.datei)).fileName() ==
+          "Wer - Lied (Feat. X) [4-02].lrc");
+    CHECK(findeSongtext(kurz, nutzer).zeilen.at(0).text == "kurze Fassung");
+    CHECK(findeSongtext(lang, nutzer).zeilen.at(0).text == "lange Fassung");
+
+    // eine neue Wahl fuer die lange Fassung laesst die kurze unberuehrt
+    ly::Songtext c = ly::leseLrc("[00:01.00]bessere lange Fassung\n");
+    c.herkunft = "LRCLIB id 3";
+    (void)lumi::audio::uebernehmeSongtext(lang, c, nutzer);
+    CHECK(findeSongtext(kurz, nutzer).zeilen.at(0).text == "kurze Fassung");
+    CHECK(findeSongtext(lang, nutzer).zeilen.at(0).text == "bessere lange Fassung");
+
+    // gleiche Dauer (±2,5 s) = dieselbe Aufnahme: sie teilen sich den Text
+    TrackInfo zwilling = kurz;
+    zwilling.filePath = tmp.path() + "/c/lied.mp3";
+    zwilling.durationMs = 182500;
+    CHECK(findeSongtext(zwilling, nutzer).zeilen.at(0).text == "kurze Fassung");
+
+    // eine Datei OHNE Dauerangabe (selbst angelegt, aelter) gilt fuer alle
+    schreibe(nutzer + "/Wer - Anderes.lrc", kSync);
+    TrackInfo x;
+    x.filePath = tmp.path() + "/x.mp3";
+    x.title = "Anderes";
+    x.artist = "Wer";
+    x.durationMs = 99000;
+    CHECK(lumi::audio::songtextPasst(findeSongtext(x, nutzer), x));
+    CHECK_FALSE(findeSongtext(x, nutzer).leer());
+}
+
+// --- S87: der Dienst antwortet oft mit 503 „gleich noch einmal" — ohne
+// Wiederholung erschien der Text erst beim naechsten Abspielen
+
+TEST_CASE("SongtextOnline: Wartezeit waechst, Retry-After geht vor, nach fuenf ist Schluss")
+{
+    using lumi::audio::songtextWartezeitMs;
+    CHECK(songtextWartezeitMs(1, 1) == 2000);
+    CHECK(songtextWartezeitMs(2, 1) == 5000);
+    CHECK(songtextWartezeitMs(5, -1) == 40000);
+    CHECK(songtextWartezeitMs(6, 1) == -1);   // aufgeben
+    CHECK(songtextWartezeitMs(0, 1) == -1);
+    CHECK(songtextWartezeitMs(1, 30) == 30000);  // der Dienst will laenger Ruhe
+    CHECK(songtextWartezeitMs(1, 600) == -1);    // so lange wartet niemand
+}
+
+TEST_CASE("SongtextOnline: 503 setzt die Wiederholung an, die naechste Antwort liefert den Text")
+{
+    using lumi::audio::SongtextAbruf;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    TrackInfo t;
+    t.filePath = tmp.path() + "/musik/07 - Lied.mp3";
+    t.title = "Lied";
+    t.artist = "Wer";
+
+    lumi::audio::SongtextOnline online;
+    online.setBenutzerOrdner(tmp.path() + "/nutzer");
+    std::vector<SongtextAbruf> staende;
+    int funde = 0;
+    QString fundPfad;
+    lumi::multieffect::lyrics::Songtext fund;
+    QObject::connect(&online, &lumi::audio::SongtextOnline::zustand, &online,
+                     [&](const QString& pfad, SongtextAbruf s) {
+                         CHECK(pfad == t.filePath);
+                         staende.push_back(s);
+                     });
+    QObject::connect(&online, &lumi::audio::SongtextOnline::gefunden, &online,
+                     [&](const QString& pfad, const lumi::multieffect::lyrics::Songtext& text,
+                         const QString&) {
+                         ++funde;
+                         fundPfad = pfad;
+                         fund = text;
+                     });
+
+    // beschaeftigt: kein Fund, aber auch kein Ende — es wird gewartet
+    online.antwort(t, 503, 1, QByteArray());
+    REQUIRE(staende.size() == 1);
+    CHECK(staende.back() == SongtextAbruf::Wartet);
+    CHECK(funde == 0);
+
+    // die Wiederholung gelingt: Fund fuer DENSELBEN Titel, gespeichert, gemeldet
+    online.antwort(t, 200, -1,
+                   R"({"id":7,"instrumental":false,"plainLyrics":"eins\n",)"
+                   R"("syncedLyrics":"[00:01.00] eins\n"})");
+    CHECK(funde == 1);
+    CHECK(fundPfad == t.filePath);
+    CHECK(fund.synchron);
+    CHECK(staende.back() == SongtextAbruf::Gefunden);
+    CHECK(QFile::exists(tmp.path() + "/nutzer/Wer - Lied.lrc"));
+}
+
+TEST_CASE("SongtextOnline: 404 und instrumental = nicht gefunden; Dauer-503 gibt auf")
+{
+    using lumi::audio::SongtextAbruf;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    TrackInfo t;
+    t.filePath = tmp.path() + "/x.mp3";
+    t.title = "Lied";
+    t.artist = "Wer";
+
+    lumi::audio::SongtextOnline online;
+    online.setBenutzerOrdner(tmp.path());
+    SongtextAbruf stand = SongtextAbruf::Ruhe;
+    int funde = 0;
+    QObject::connect(&online, &lumi::audio::SongtextOnline::zustand, &online,
+                     [&](const QString&, SongtextAbruf s) { stand = s; });
+    QObject::connect(&online, &lumi::audio::SongtextOnline::gefunden, &online,
+                     [&](const QString&, const lumi::multieffect::lyrics::Songtext&,
+                         const QString&) { ++funde; });
+
+    online.antwort(t, 404, -1, R"({"message":"Failed to find specified track","statusCode":404})");
+    CHECK(stand == SongtextAbruf::NichtGefunden);
+    online.antwort(t, 200, -1, R"({"instrumental":true,"plainLyrics":null,"syncedLyrics":null})");
+    CHECK(stand == SongtextAbruf::NichtGefunden);
+    online.antwort(t, 0, -1, QByteArray());  // kein Netz
+    CHECK(stand == SongtextAbruf::Fehlgeschlagen);
+
+    // fuenf Wiederholungen werden angesetzt, die sechste Absage beendet die Suche
+    for (int i = 0; i < 5; ++i)
+    {
+        online.antwort(t, 503, 1, QByteArray());
+        CHECK(stand == SongtextAbruf::Wartet);
+    }
+    online.antwort(t, 503, 1, QByteArray());
+    CHECK(stand == SongtextAbruf::Fehlgeschlagen);
+    CHECK(funde == 0);
+    CHECK(QDir(tmp.path()).entryList(QDir::Files).isEmpty());
 }

@@ -43,6 +43,19 @@ namespace lumi::audio
 /// Leer, wenn der Titel fehlt.
 [[nodiscard]] QString songtextName(const TrackInfo& track);
 
+/// Gilt `text` fuer diesen Titel? Traegt die Datei eine Dauer (`[length:]`),
+/// muss sie auf ±2,5 s passen; ohne Angabe (selbst angelegt, aeltere Datei)
+/// gilt der Text immer.
+[[nodiscard]] bool songtextPasst(const lumi::multieffect::lyrics::Songtext& text,
+                                 const TrackInfo& track);
+
+/// Pfad OHNE Endung, unter dem ein Text fuer `track` im Benutzerordner liegt
+/// bzw. abgelegt wird: `<Interpret> - <Titel>` — oder, wenn dieser Name von
+/// einer anderen Fassung des Songs belegt ist, `<Interpret> - <Titel> [m-ss]`
+/// mit der Dauer dieses Titels. Leer, wenn kein Name zu bilden ist.
+[[nodiscard]] QString songtextBenutzerBasis(const TrackInfo& track,
+                                            const QString& benutzerOrdner = songtextOrdner());
+
 /// Songtext nach der Reihenfolge oben; leer (`leer()`), wenn nichts gefunden.
 /// `Songtext::quelle` nennt die Herkunft (englisch, fuer die Anzeige).
 [[nodiscard]] lumi::multieffect::lyrics::Songtext findeSongtext(

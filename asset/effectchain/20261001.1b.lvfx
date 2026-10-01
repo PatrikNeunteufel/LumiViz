@@ -69,6 +69,78 @@
                         "roundUp": false,
                         "strength": 1,
                         "type": "blur"
+                    },
+                    {
+                        "audioScale": 0.8999999761581421,
+                        "baseScale": 0.10000000149011612,
+                        "beatCode": "",
+                        "channel": 2,
+                        "colors": [
+                            16777215
+                        ],
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Ring",
+                        "position": 2,
+                        "segments": 80,
+                        "size": 8,
+                        "source": 0,
+                        "type": "oscRing"
+                    },
+                    {
+                        "additive": true,
+                        "beatCode": "",
+                        "colorEnd": 4202688,
+                        "colorStart": 16765056,
+                        "count": 4096,
+                        "direction": 90,
+                        "drag": 0.6,
+                        "enabled": true,
+                        "fan": 360,
+                        "forceCode": "// GPU-Partikel: vec2 kraft(vec2 pos, vec2 vel, float alter) — Zusatz-\n// Beschleunigung in UV/s². Uniforms: uTime, uDelta, uResolution,\n// bass, mid, treb, vol, beat. alter laeuft 0..1 ueber die Lebensdauer.\nvec2 kraft(vec2 pos, vec2 vel, float alter)\n{\n    vec2 d = pos - vec2(0.5);\n    vec2 wirbel = vec2(-d.y, d.x) * (0.35 + 0.8 * treb);\n    vec2 auftrieb = vec2(0.0, 0.25 * bass);\n    return wirbel + auftrieb;\n}\n",
+                        "frameCode": "",
+                        "gravityX": 0,
+                        "gravityY": -0.15,
+                        "initCode": "",
+                        "lifeJitter": 0.35,
+                        "lifeSeconds": 2.5,
+                        "name": "GPU Particles",
+                        "sizeEndFactor": 0.4,
+                        "sizePx": 6,
+                        "spawnSpread": 0.03,
+                        "spawnX": 0.5,
+                        "spawnY": 0.35,
+                        "speed": 0.25,
+                        "type": "gpuParticles"
+                    },
+                    {
+                        "blend": false,
+                        "builtinRemap": 0,
+                        "code": "r = r + 0.04;\nd = d * (0.96 + cos(d * $PI) * 0.05);",
+                        "enabled": true,
+                        "name": "Movement",
+                        "rectCoords": true,
+                        "sourceMapped": 0,
+                        "subpixel": true,
+                        "type": "movement",
+                        "wrap": false
+                    },
+                    {
+                        "beatCode": "",
+                        "beatReverse": false,
+                        "beatReverseSpeed": 0,
+                        "beatZoomJump": false,
+                        "blend": false,
+                        "enabled": true,
+                        "frameCode": "",
+                        "initCode": "",
+                        "name": "Roto Blitter",
+                        "rotDir": 31,
+                        "subpixel": true,
+                        "type": "rotoBlitter",
+                        "zoomScale": 31,
+                        "zoomScale2": 31
                     }
                 ],
                 "clearEveryFrame": false,
@@ -82,6 +154,30 @@
                 "outAdjustAlpha": 128,
                 "type": "list",
                 "useCode": false
+            },
+            {
+                "beatCode": "",
+                "beatSpeed": 20,
+                "blend": 0,
+                "color": 16777215,
+                "durationFrames": 30,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "maxStars": 700,
+                "mods": [
+                    {
+                        "depth": 0.25,
+                        "field": "color",
+                        "rateHz": 0.5,
+                        "source": "lfoSine",
+                        "target": "brightness"
+                    }
+                ],
+                "name": "Starfield",
+                "onBeat": true,
+                "type": "starfield",
+                "warpSpeed": 5
             },
             {
                 "beatCode": "",

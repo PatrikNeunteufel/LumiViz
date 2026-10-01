@@ -85,6 +85,7 @@ std::atomic<uint64_t> g_songWechsel{0};
 std::mutex g_songTagsMutex;
 lumi::multieffect::texttags::SongTags g_songTags;
 lumi::multieffect::lyrics::Songtext g_songtext;  ///< S86, unter g_songTagsMutex
+std::atomic<int> g_songtextAbruf{0};             ///< S87, lyrics::Abruf des laufenden Titels
 
 /// Abspielposition des Players (S86): zuletzt gemeldeter Wert, die Wanduhr
 /// dazu und ob er laeuft — dazwischen zaehlt playPositionMs() weiter.
@@ -2950,7 +2951,12 @@ CompileResult MultiEffectVisualizer::setChain(ChainNode root)
 
 CompileResult MultiEffectVisualizer::recompileChain()
 {
-    return compileChain(m_root);
+    // Ids nie wiederverwenden (S87, Befund Patrik): `max + 1` gab einem neuen
+    // Knoten die Id des zuletzt entfernten, und die Laufzeiten haengen an der
+    // Id — ein neuer Presetverweis an der Stelle eines entfernten zeigte
+    // dessen Preset weiter (Milkdrop: gleiche Id, gleiche `revision`), bis
+    // die Kette neu geladen wurde.
+    return compileChain(m_root, &m_idHochwasser);
 }
 
 namespace {
@@ -8212,6 +8218,29 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
             const ly::Zeile& zl = s.zeilen[static_cast<std::size_t>(idx)];
             Anzeige a;
             a.farbe = stimmFarbe(zl.stimme);
+            // S87 (Befund Patrik): dieselbe Zeile mehrmals hintereinander —
+            // sie blieb durchgehend aktiv, der Einsatz der Wiederholung war
+            // nicht zu sehen. Gegen Ende des Durchgangs blendet die Farbe zur
+            // Vorschau-Farbe; mit der naechsten Zeitmarke ist sie wieder da.
+            if (idx + 1 < anzahl && !zl.text.empty() &&
+                s.zeilen[static_cast<std::size_t>(idx + 1)].text == zl.text)
+            {
+                const std::int64_t jetzt = pos + s.versatzMs;
+                const std::int64_t ende = s.zeilen[static_cast<std::size_t>(idx + 1)].zeitMs;
+                const std::int64_t blende =
+                    std::min<std::int64_t>(600, (ende - zl.zeitMs) / 3);
+                if (blende > 0 && ende - jetzt < blende)
+                {
+                    // in acht Stufen: die Glyphen werden nur je Stufe neu gezeichnet
+                    const int stufe = static_cast<int>(8 * (blende - (ende - jetzt)) / blende) + 1;
+                    const auto kanal = [&](int schub) {
+                        const int von = static_cast<int>((a.farbe >> schub) & 0xFF);
+                        const int nach = static_cast<int>((params.colorNext >> schub) & 0xFF);
+                        return static_cast<std::uint32_t>(von + (nach - von) * stufe / 8) << schub;
+                    };
+                    a.farbe = kanal(16) | kanal(8) | kanal(0);
+                }
+            }
             if (zl.worte.empty())
             {
                 a.vorn = zl.text;
@@ -9524,17 +9553,33 @@ void MultiEffectVisualizer::setSongtext(const lumi::multieffect::lyrics::Songtex
     g_songTagsStand.fetch_add(1, std::memory_order_release);
 }
 
-std::string MultiEffectVisualizer::songtextInfo()
+MultiEffectVisualizer::SongtextAngaben MultiEffectVisualizer::songtextAngaben()
 {
+    SongtextAngaben a;
+    a.abruf = static_cast<lumi::multieffect::lyrics::Abruf>(
+        g_songtextAbruf.load(std::memory_order_relaxed));
     const std::lock_guard<std::mutex> lock(g_songTagsMutex);
-    if (g_songtext.leer()) return {};
-    std::string info = g_songtext.quelle +
-                       (g_songtext.synchron ? " — synced, " : " — not synced, ") +
-                       std::to_string(g_songtext.zeilen.size()) + " lines";
+    a.vorhanden = !g_songtext.leer();
+    if (!a.vorhanden) return a;
+    a.synchron = g_songtext.synchron;
+    a.zeilen = static_cast<int>(g_songtext.zeilen.size());
+    a.quelle = g_songtext.quelle;
     // Herkunftsvermerk aus der Datei (aus dem Netz geholt) — auch nach einem
     // Neustart, wenn nur noch der Dateiname die Quelle ist
-    if (!g_songtext.herkunft.empty()) info += " — source: " + g_songtext.herkunft;
-    return info;
+    a.herkunft = g_songtext.herkunft;
+    a.datei = g_songtext.datei;
+    return a;
+}
+
+lumi::multieffect::lyrics::Songtext MultiEffectVisualizer::songtext()
+{
+    const std::lock_guard<std::mutex> lock(g_songTagsMutex);
+    return g_songtext;
+}
+
+void MultiEffectVisualizer::setSongtextAbruf(lumi::multieffect::lyrics::Abruf stand)
+{
+    g_songtextAbruf.store(static_cast<int>(stand), std::memory_order_relaxed);
 }
 
 std::string MultiEffectVisualizer::songtextDatei()
@@ -9605,6 +9650,12 @@ int MultiEffectVisualizer::debugSwitcherIndex(uint64_t nodeId) const
 {
     const auto it = m_switcherRuntimes.find(nodeId);
     return it == m_switcherRuntimes.end() ? 0 : it->second.index + 1;
+}
+
+std::string MultiEffectVisualizer::debugSwitcherError(uint64_t nodeId) const
+{
+    const auto it = m_switcherRuntimes.find(nodeId);
+    return it == m_switcherRuntimes.end() ? std::string() : it->second.error;
 }
 
 void MultiEffectVisualizer::runHostSwitchers()

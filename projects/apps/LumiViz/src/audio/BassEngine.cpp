@@ -447,6 +447,21 @@ int BassEngine::getDurationMs(AudioStreamHandle stream) const
     return static_cast<int>(seconds * 1000.0);
 }
 
+int BassEngine::probeDurationMs(const QString& filePath)
+{
+    if (!m_impl->initialized) return 0;
+    // Nur dekodieren, nichts ausgeben, kein PRESCAN: die Playlist fragt das
+    // fuer jede Zeile — ein Durchlauf der ganzen Datei waere dafuer zu teuer.
+    const std::string path = filePath.toLocal8Bit().constData();
+    const HSTREAM stream = BASS_StreamCreateFile(FALSE, path.c_str(), 0, 0, BASS_STREAM_DECODE);
+    if (stream == 0) return 0;
+    const QWORD bytes = BASS_ChannelGetLength(stream, BASS_POS_BYTE);
+    const double seconds =
+        bytes == static_cast<QWORD>(-1) ? 0.0 : BASS_ChannelBytes2Seconds(stream, bytes);
+    BASS_StreamFree(stream);
+    return seconds > 0.0 ? static_cast<int>(seconds * 1000.0) : 0;
+}
+
 float BassEngine::getVolume(AudioStreamHandle stream) const
 {
     if (stream == INVALID_STREAM) return 0.0f;

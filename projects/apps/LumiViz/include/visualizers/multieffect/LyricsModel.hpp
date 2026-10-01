@@ -94,12 +94,30 @@ struct Songtext
     /// Eintrags, Datum — z. B. "LRCLIB id 3396226, fetched 2026-10-01". Leer =
     /// kein Vermerk (selbst angelegt, eingebettet).
     std::string herkunft;
+    /// Dauer des Titels, fuer den der Text gilt (LRC-Kopfzeile `[length:mm:ss]`),
+    /// 0 = nicht angegeben. S87: zwei Fassungen eines Songs tragen im
+    /// Benutzerordner denselben Namen `<Interpret> - <Titel>` — die Dauer
+    /// haelt sie auseinander (`audio/SongtextQuelle`).
+    std::int64_t laengeMs = 0;
     /// Absoluter Pfad der Datei, aus der der Text stammt; leer = eingebettet
     /// oder ohne Datei. Fuer „Ordner oeffnen" im Editor des Lyrics-Knotens.
     std::string datei;
 
     [[nodiscard]] bool leer() const { return zeilen.empty(); }
     [[nodiscard]] bool operator==(const Songtext&) const = default;
+};
+
+/// Stand eines Online-Abrufs fuer den laufenden Titel (S87). Steht beim
+/// Modell, weil ihn der Abruf (`audio/SongtextOnline`) setzt und die
+/// Oberflaeche ihn zeigt — beide kennen sonst nur dieses Modell.
+enum class Abruf : std::uint8_t
+{
+    Ruhe,           ///< es wird nicht gefragt (lokal gefunden, abgeschaltet, Angaben fehlen)
+    Laedt,          ///< Anfrage unterwegs
+    Wartet,         ///< der Dienst bat um Geduld — die Wiederholung ist angesetzt
+    Gefunden,       ///< Text da
+    NichtGefunden,  ///< der Dienst kennt den Titel nicht oder fuehrt ihn ohne Text
+    Fehlgeschlagen  ///< kein Netz, Fehler, oder nach allen Wiederholungen aufgegeben
 };
 
 namespace detail
@@ -278,6 +296,11 @@ inline void worte(std::string_view roh, std::int64_t zeilenZeit, Zeile& z)
                 {
                     out.herkunft = std::string(detail::trim(innen.substr(dp + 1)));
                 }
+                else if (name == "length")
+                {
+                    out.laengeMs = std::max<std::int64_t>(
+                        0, detail::zeit(detail::trim(innen.substr(dp + 1))));
+                }
             }
             zeile = detail::trim(zeile.substr(zu + 1));
         }
@@ -325,6 +348,7 @@ inline void worte(std::string_view roh, std::int64_t zeilenZeit, Zeile& z)
     std::string out;
     // Herkunftsvermerk zuerst — Kopfzeilen, die kein Leser als Text zeigt
     if (!s.herkunft.empty()) out += "[re:LumiViz]\n[source:" + s.herkunft + "]\n";
+    if (s.laengeMs > 0) out += "[length:" + detail::zeitText(s.laengeMs) + "]\n";
     if (s.versatzMs != 0) out += "[offset:" + std::to_string(s.versatzMs) + "]\n";
     Stimme zuletzt = Stimme::Keine;
     for (const Zeile& z : s.zeilen)

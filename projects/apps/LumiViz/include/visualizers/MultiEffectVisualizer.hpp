@@ -276,9 +276,24 @@ public:
     /// Songwechsel (nach der Suche, `audio/SongtextQuelle`), spaeter auch
     /// von Werkzeugen (Online-Abruf, Nachsynchronisieren). Thread-sicher.
     static void setSongtext(const lumi::multieffect::lyrics::Songtext& text);
-    /// Kurzbeschreibung des gesetzten Songtexts fuer die Oberflaeche:
-    /// Quelle, synchron/unsynchron, Zeilenzahl; leer = keiner.
-    [[nodiscard]] static std::string songtextInfo();
+    /// Angaben zum gesetzten Songtext fuer die Oberflaeche (S87: als Tabelle
+    /// statt einer langen Zeile — Wunsch Patrik S86).
+    struct SongtextAngaben
+    {
+        bool vorhanden = false;  ///< es gibt einen Text
+        bool synchron = false;
+        int zeilen = 0;
+        std::string quelle;    ///< "embedded", "user folder: x.lrc", "LRCLIB, saved: x.lrc" …
+        std::string herkunft;  ///< Vermerk aus der Datei ("LRCLIB id 7, fetched …"), leer = keiner
+        std::string datei;     ///< absoluter Pfad, leer = eingebettet / nicht gespeichert
+        lumi::multieffect::lyrics::Abruf abruf = lumi::multieffect::lyrics::Abruf::Ruhe;
+    };
+    [[nodiscard]] static SongtextAngaben songtextAngaben();
+    /// Kopie des gesetzten Songtexts (S87: Vergleich im Alternativen-Dialog).
+    [[nodiscard]] static lumi::multieffect::lyrics::Songtext songtext();
+    /// Stand des Online-Abrufs fuer den laufenden Titel (S87) — das Fenster
+    /// reicht ihn von `audio/SongtextOnline` durch. Thread-sicher.
+    static void setSongtextAbruf(lumi::multieffect::lyrics::Abruf stand);
     /// Absoluter Pfad der Datei des gesetzten Songtexts; leer = eingebettet,
     /// nicht gespeichert oder kein Text.
     [[nodiscard]] static std::string songtextDatei();
@@ -294,6 +309,9 @@ public:
      *        1..count), 0 = noch nicht gelaufen / unbekannt.
      */
     [[nodiscard]] int debugSwitcherIndex(uint64_t nodeId) const;
+
+    /** @brief Test-Hook (S87): letzter Skriptfehler eines Host Switchers, leer = keiner. */
+    [[nodiscard]] std::string debugSwitcherError(uint64_t nodeId) const;
 
     /**
      * @brief Laeuft eine Host-Gruppe gerade (S82)? Das persistierte `enabled`,
@@ -1401,6 +1419,7 @@ private:
     int m_surfaceHeight = 0;
     bool m_firstFrame = true;
     bool m_pendingRuntimeReset = false;  ///< a new chain was installed (loadAvsFile)
+    uint64_t m_idHochwasser = 1;         ///< naechste nie vergebene Knoten-Id (recompileChain)
 
     /** Free all per-node GL runtimes (render thread, context current). */
     void resetRuntimes();

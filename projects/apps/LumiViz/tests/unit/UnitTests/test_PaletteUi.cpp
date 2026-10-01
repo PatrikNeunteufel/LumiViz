@@ -23,6 +23,7 @@
 
 #include <doctest.h>
 
+#include "UI/dialogs/LyricsAlternativesDialog.hpp"
 #include "UI/panels/AudioBrowserPanel.hpp"
 #include "UI/panels/EelScriptEditing.hpp"
 #include "UI/panels/EffectPalette.hpp"
@@ -59,6 +60,7 @@
 #include <QDropEvent>
 #include <QKeyEvent>
 #include <QRegularExpression>
+#include <QScrollBar>
 #include <QBuffer>
 #include <QElapsedTimer>
 #include <QImage>
@@ -73,6 +75,7 @@
 #include <QSettings>
 #include <QDoubleSpinBox>
 #include <QSpinBox>
+#include <QTableWidget>
 #include <QTextBlock>
 #include <QTextDocument>
 #include <QTextLayout>
@@ -915,6 +918,58 @@ TEST_CASE("PaletteUi Panel D1: Preset-Combo behaelt die Wahl, Bearbeiten -> (uns
     p.oben(0)->setText(3, QStringLiteral("nur eine Notiz"));  // Spalte Beschreibung
     warte();
     CHECK(combo()->currentText() == QStringLiteral("Eigen *"));
+}
+
+TEST_CASE("PaletteUi Panel D1b: eine Voreinstellung bringt ihr Song-Skript mit (S87)")
+{
+    // Der Song-Slot liegt am Knoten (ChainNode::songCode), nicht in den params.
+    // Gespeichert wurde er schon immer, geladen nie — aufgefallen an der
+    // Host-Switcher-Vorlage „Random Runtime", die im Song-Skript wuerfelt.
+    namespace np = lumi::multieffect::nodepresets;
+    UiUmgebung env;
+    QTemporaryDir root;
+    REQUIRE(root.isValid());
+    np::setRootForTesting(root.path());
+    struct Zurueck
+    {
+        ~Zurueck() { np::setRootForTesting(QString()); }
+    } zurueck;
+
+    const QString werkDir = QDir(root.path()).filePath(QStringLiteral("asset/clear"));
+    REQUIRE(QDir().mkpath(werkDir));
+    {
+        QFile f(QDir(werkDir).filePath(QStringLiteral("Mit Song.json")));
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write(R"({"format":"lumiviz-nodepreset","formatVersion":1,)"
+                R"("node":{"type":"clear","blend":2,"songCode":"x = 1;"}})");
+    }
+    {
+        QFile f(QDir(werkDir).filePath(QStringLiteral("Ohne Song.json")));
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write(R"({"format":"lumiviz-nodepreset","formatVersion":1,)"
+                R"("node":{"type":"clear","blend":1}})");
+    }
+
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    const auto warte = [] {
+        for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+    };
+    const auto combo = [&p] { return p.panel->findChild<QComboBox*>(QStringLiteral("knotenPreset")); };
+
+    p.tree->setCurrentItem(p.oben(0));  // Clear
+    warte();
+    REQUIRE(combo() != nullptr);
+    CHECK(p.root().children[0].songCode.empty());
+
+    combo()->setCurrentIndex(combo()->findText(QStringLiteral("Mit Song")));
+    warte();
+    CHECK(p.root().children[0].songCode == "x = 1;");
+
+    // Teil-Preset ohne Song-Skript: das vorhandene bleibt stehen (Merge)
+    combo()->setCurrentIndex(combo()->findText(QStringLiteral("Ohne Song")));
+    warte();
+    CHECK(p.root().children[0].songCode == "x = 1;");
 }
 
 TEST_CASE("PaletteUi Panel D2: Custom Wave traegt eine eigene Preset-Zeile (S83)")
@@ -1836,7 +1891,7 @@ TEST_CASE("PaletteUi S86 F4c: ~-Knopf an SuperScope- und Listenfeldern")
 // S86 (Befund Patrik): die Zeile „Lyrics" im Editor stand auf dem Stand beim
 // Oeffnen der Seite und meldete „not found", waehrend laengst ein Text lief.
 // Sie laeuft jetzt mit; „Open folder" ist nur bei einer eigenen Datei aktiv.
-TEST_CASE("PaletteUi S86: Lyrics — Quellzeile laeuft mit, Ordner-Knopf nur mit Datei")
+TEST_CASE("PaletteUi S86/S87: Lyrics — Tabelle laeuft mit, Abruf-Stand, Ordner-Knopf nur mit Datei")
 {
     UiUmgebung env;
     PanelUmgebung p;
@@ -1853,39 +1908,232 @@ TEST_CASE("PaletteUi S86: Lyrics — Quellzeile laeuft mit, Ordner-Knopf nur mit
     warte(20);
     p.tree->setCurrentItem(p.oben(0));
     warte(20);
-    auto* quelle = p.panel->findChild<QLabel*>(QStringLiteral("lyricsSource"));
+    // S87 (Wunsch Patrik): die Angaben stehen als Tabelle — je Angabe ein Feld
+    const auto feld = [&p](const char* name) {
+        auto* l = p.panel->findChild<QLabel*>(QLatin1String(name));
+        REQUIRE(l != nullptr);
+        return l;
+    };
+    auto* status = feld("lyricsStatus");
+    auto* quelle = feld("lyricsSource");
+    auto* takt = feld("lyricsTiming");
+    auto* zeilen = feld("lyricsLines");
+    auto* herkunft = feld("lyricsOrigin");
+    auto* datei = feld("lyricsFile");
     auto* ordner = p.panel->findChild<QToolButton*>(QStringLiteral("lyricsOpenFolder"));
-    REQUIRE(quelle != nullptr);
     REQUIRE(ordner != nullptr);
-    CHECK(quelle->text().startsWith(QStringLiteral("No lyrics")));
+    const QString strich = QStringLiteral("—");
+    MultiEffectVisualizer::setSongtextAbruf(ly::Abruf::Ruhe);
+    warte(700);
+    CHECK(status->text().startsWith(QStringLiteral("No lyrics")));
+    CHECK(quelle->text() == strich);
+    CHECK(takt->text() == strich);
+    CHECK(zeilen->text() == strich);
+    CHECK(datei->text() == strich);
     CHECK_FALSE(ordner->isEnabled());
+
+    // S87: solange ein Online-Abruf laeuft, steht das da — auch waehrend der
+    // Dienst um Geduld bittet; danach das Ergebnis
+    MultiEffectVisualizer::setSongtextAbruf(ly::Abruf::Laedt);
+    warte(700);
+    CHECK(status->text() == QString::fromUtf8("…downloading…"));
+    MultiEffectVisualizer::setSongtextAbruf(ly::Abruf::Wartet);
+    warte(700);
+    CHECK(status->text().startsWith(QString::fromUtf8("…downloading…")));
+    CHECK(status->text().contains(QStringLiteral("busy")));
+    MultiEffectVisualizer::setSongtextAbruf(ly::Abruf::NichtGefunden);
+    warte(700);
+    CHECK(status->text().contains(QStringLiteral("not online either")));
+    MultiEffectVisualizer::setSongtextAbruf(ly::Abruf::Fehlgeschlagen);
+    warte(700);
+    CHECK(status->text().contains(QStringLiteral("failed")));
 
     // der Text kommt NACH dem Oeffnen der Seite (Titelwechsel, Online-Fund)
     ly::Songtext s = ly::leseLrc("[00:01.00]eins\n[00:02.00]zwei\n");
     s.quelle = "lied.lrc";
     s.datei = "C:/Musik/lied.lrc";
     MultiEffectVisualizer::setSongtext(s);
+    MultiEffectVisualizer::setSongtextAbruf(ly::Abruf::Gefunden);
     warte(700);
-    CHECK(quelle->text().startsWith(QStringLiteral("lied.lrc")));
-    CHECK(quelle->text().contains(QStringLiteral("2 lines")));
+    CHECK(status->text() == QStringLiteral("Lyrics loaded"));
+    CHECK(quelle->text() == QStringLiteral("lied.lrc"));
+    CHECK(takt->text() == QStringLiteral("synced"));
+    CHECK(zeilen->text() == QStringLiteral("2"));
+    CHECK(herkunft->text() == strich);
+    CHECK(datei->text() == QStringLiteral("lied.lrc"));
+    CHECK(datei->toolTip() == QStringLiteral("C:/Musik/lied.lrc"));
     CHECK(ordner->isEnabled());
 
-    // aus dem Netz geholt: der Vermerk aus der Datei steht mit in der Zeile
+    // aus dem Netz geholt: der Vermerk aus der Datei hat sein eigenes Feld
     s.herkunft = "LRCLIB id 7, fetched 2026-10-01";
     MultiEffectVisualizer::setSongtext(s);
     warte(700);
-    CHECK(quelle->text().contains(QStringLiteral("source: LRCLIB id 7, fetched 2026-10-01")));
+    CHECK(herkunft->text() == QStringLiteral("LRCLIB id 7, fetched 2026-10-01"));
     s.herkunft.clear();
 
-    // eingebetteter Text: Zeile nennt ihn, aber es gibt keinen Ordner zu oeffnen
+    // eingebetteter, unsynchroner Text: keine Datei, kein Ordner zu oeffnen
+    s = ly::leseLrc("eins\nzwei\ndrei\n");
     s.quelle = "embedded";
-    s.datei.clear();
     MultiEffectVisualizer::setSongtext(s);
     warte(700);
-    CHECK(quelle->text().startsWith(QStringLiteral("embedded")));
+    CHECK(quelle->text() == QStringLiteral("embedded"));
+    CHECK(takt->text() == QStringLiteral("not synced"));
+    CHECK(zeilen->text() == QStringLiteral("3"));
+    CHECK(datei->text() == strich);
     CHECK_FALSE(ordner->isEnabled());
 
+    // ein vorhandener Text geht vor: der Stand eines Abrufs ueberschreibt ihn nicht
+    MultiEffectVisualizer::setSongtextAbruf(ly::Abruf::Laedt);
+    warte(700);
+    CHECK(status->text() == QStringLiteral("Lyrics loaded"));
+
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::setSongtextAbruf(ly::Abruf::Ruhe);
+}
+
+// S87 (Wunsch Patrik): die Playlist zeigt die Laenge je Titel
+TEST_CASE("PaletteUi S87: Playlist — Dauer als m:ss, ab einer Stunde h:mm:ss")
+{
+    CHECK(PlaylistPanel::dauerText(0).isEmpty());   // noch nicht gelesen / nicht lesbar
+    CHECK(PlaylistPanel::dauerText(-5).isEmpty());
+    CHECK(PlaylistPanel::dauerText(7000) == QStringLiteral("0:07"));
+    CHECK(PlaylistPanel::dauerText(187400) == QStringLiteral("3:07"));
+    CHECK(PlaylistPanel::dauerText(187600) == QStringLiteral("3:08"));  // gerundet
+    CHECK(PlaylistPanel::dauerText(3723000) == QStringLiteral("1:02:03"));
+}
+
+// S87 (Befund Patrik): bei schmaler Playlist stand die Dauer rechts ausserhalb
+// des Sichtbaren, weil die Zeile so breit war wie der laengste Name. Die Zeile
+// folgt jetzt der Breite der Liste — schmal wie breit.
+TEST_CASE("PaletteUi S87: Playlist — die Zeile ist so breit wie die Liste, nie breiter")
+{
+    UiUmgebung env;
+    ServiceContainer dienste;
+    PlaylistPanel panel(dienste);
+    auto* liste = panel.findChild<QListWidget*>(QStringLiteral("playlistListe"));
+    REQUIRE(liste != nullptr);
+    panel.show();  // baut die Liste aus dem Dienst neu auf — erst danach fuellen
+    for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+    auto* item = new QListWidgetItem(
+        QStringLiteral("ein sehr langer Dateiname, der in keine schmale Liste passt und "
+                       "frueher die Zeile verbreitert hat.mp3"),
+        liste);
+    item->setData(PlaylistPanel::kDauerRolle, 187000);
+    for (const int breite : {180, 520})
+    {
+        CAPTURE(breite);
+        panel.resize(breite, 300);
+        for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+        const QRect zeile = liste->visualItemRect(item);
+        CHECK(zeile.width() > 0);
+        CHECK(zeile.right() <= liste->viewport()->width());  // rechter Rand sichtbar
+        CHECK(zeile.width() >= liste->viewport()->width() - 2);  // und sie fuellt die Breite
+        CHECK_FALSE(liste->horizontalScrollBar()->isVisible());
+    }
+}
+
+// S87 (Wunsch Patrik): andere Fassungen eines Songtexts — die Kandidaten
+// stehen nach Naehe der Dauer sortiert, die Vorschau zeigt den Text, und
+// „Use these lyrics" speichert und zeigt die gewaehlte Fassung.
+TEST_CASE("PaletteUi S87: Lyrics Alternatives — Sortierung, Vorschau, Uebernehmen")
+{
+    UiUmgebung env;
+    namespace ly = lumi::multieffect::lyrics;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    TrackInfo t;
+    t.filePath = tmp.path() + "/lied.mp3";
+    t.title = "Lied";
+    t.artist = "Wer";
+    t.durationMs = 240000;
+    lumi::audio::setzeLaufendenTitel(t);
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+
+    LyricsAlternativesDialog::setzeSucheBeimOeffnen(false);  // kein Netz im Test
+    LyricsAlternativesDialog dlg(t, 11);
+    LyricsAlternativesDialog::setzeSucheBeimOeffnen(true);
+    dlg.setBenutzerOrdner(tmp.path() + "/nutzer");
+    lumi::audio::sperreSongtext(13, "Wer - Lied", tmp.path() + "/nutzer");
+
+    auto* titel = dlg.findChild<QLineEdit*>(QStringLiteral("lyricsAltTitle"));
+    auto* tabelle = dlg.findChild<QTableWidget*>(QStringLiteral("lyricsAltTable"));
+    auto* vorschau = dlg.findChild<QPlainTextEdit*>(QStringLiteral("lyricsAltPreview"));
+    auto* nehmen = dlg.findChild<QPushButton*>(QStringLiteral("lyricsAltUse"));
+    REQUIRE(titel != nullptr);
+    REQUIRE(tabelle != nullptr);
+    REQUIRE(vorschau != nullptr);
+    REQUIRE(nehmen != nullptr);
+    CHECK(titel->text() == QStringLiteral("Lied"));  // aus den Tags vorbelegt, aenderbar
+    CHECK_FALSE(nehmen->isEnabled());
+
+    dlg.zeigeKandidaten(lumi::audio::kandidatenAusLrclib(
+        R"([{"id":11,"trackName":"Lied","artistName":"Wer","albumName":"Kurz","duration":181,)"
+        R"("instrumental":false,"plainLyrics":"kurz\n","syncedLyrics":null},)"
+        R"({"id":12,"trackName":"Lied","artistName":"Wer","albumName":"Lang","duration":241,)"
+        R"("instrumental":false,"plainLyrics":"lang\nmehr\n","syncedLyrics":"[00:01.00] lang\n[00:03.00] mehr\n"},)"
+        R"({"id":13,"trackName":"Lied","artistName":"Wer","albumName":"Instr","duration":300,)"
+        R"("instrumental":true,"plainLyrics":null,"syncedLyrics":null}])"));
+    REQUIRE(tabelle->rowCount() == 3);
+    // die Fassung mit der passenden Dauer (241 gegen 240 s) steht oben und ist gewaehlt
+    CHECK(tabelle->item(0, 2)->text() == QStringLiteral("Lang"));
+    CHECK(tabelle->item(0, 3)->text() == QStringLiteral("4:01 (+1 s)"));
+    CHECK(tabelle->item(0, 4)->text() == QStringLiteral("synced"));
+    CHECK(tabelle->item(0, 5)->text() == QStringLiteral("2"));  // Zeilenzahl (Befund Patrik)
+    CHECK(tabelle->item(1, 2)->text() == QStringLiteral("Kurz"));
+    CHECK(tabelle->item(1, 5)->text() == QStringLiteral("1"));
+    // die gezeigte Fassung: Vermerk UND fette Zeile
+    CHECK(tabelle->item(1, 6)->text() == QStringLiteral("shown now"));
+    CHECK(tabelle->item(1, 0)->font().bold());
+    CHECK_FALSE(tabelle->item(0, 0)->font().bold());
+    CHECK(tabelle->item(2, 4)->text() == QStringLiteral("instrumental"));
+    CHECK(tabelle->item(2, 6)->text() == QStringLiteral("blocked"));
+    // der Text steht MIT Zeitmarken da
+    CHECK(vorschau->toPlainText() == QStringLiteral("[00:01.00] lang\n[00:03.00] mehr\n"));
+    CHECK(nehmen->isEnabled());
+
+    // Balken an der Abspielposition: 2 s liegt in der ersten Zeile, 4 s in der zweiten
+    dlg.zeigePosition(2000);
+    REQUIRE(vorschau->extraSelections().size() == 1);
+    CHECK(vorschau->extraSelections().first().cursor.blockNumber() == 0);
+    dlg.zeigePosition(4000);
+    CHECK(vorschau->extraSelections().first().cursor.blockNumber() == 1);
+    dlg.zeigePosition(-1);  // der Titel laeuft nicht (mehr): kein Balken
+    CHECK(vorschau->extraSelections().isEmpty());
+
+    // zwei markiert: sie stehen nebeneinander, die dritte Spalte bleibt zu
+    auto* vorschau2 = dlg.findChild<QPlainTextEdit*>(QStringLiteral("lyricsAltPreview1"));
+    auto* vorschau3 = dlg.findChild<QPlainTextEdit*>(QStringLiteral("lyricsAltPreview2"));
+    REQUIRE(vorschau2 != nullptr);
+    REQUIRE(vorschau3 != nullptr);
+    CHECK(vorschau2->parentWidget()->isHidden());
+    tabelle->selectionModel()->select(
+        tabelle->model()->index(1, 0),
+        QItemSelectionModel::Select | QItemSelectionModel::Rows);
+    CHECK_FALSE(vorschau2->parentWidget()->isHidden());
+    CHECK(vorschau3->parentWidget()->isHidden());
+    CHECK(vorschau2->toPlainText() == QStringLiteral("kurz\n"));  // unsynchron: ohne Marken
+
+    // ein Eintrag ohne Text laesst sich nicht uebernehmen
+    tabelle->selectRow(2);
+    CHECK_FALSE(nehmen->isEnabled());
+
+    // uebernehmen: gespeichert, angezeigt — der Dialog bleibt offen und
+    // kennzeichnet jetzt DIESE Fassung als die gezeigte
+    tabelle->selectRow(0);
+    dlg.uebernehmen();
+    CHECK(QFile::exists(tmp.path() + "/nutzer/Wer - Lied.lrc"));
+    const auto a = MultiEffectVisualizer::songtextAngaben();
+    CHECK(a.vorhanden);
+    CHECK(a.synchron);
+    CHECK(lumi::audio::lrclibKennung(a.herkunft) == 12);
+    CHECK(tabelle->item(0, 6)->text() == QStringLiteral("shown now"));
+    CHECK(tabelle->item(0, 0)->font().bold());
+    CHECK(tabelle->item(1, 6)->text().isEmpty());
+    CHECK_FALSE(tabelle->item(1, 0)->font().bold());
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::setSongtextAbruf(ly::Abruf::Ruhe);
+    lumi::audio::setzeLaufendenTitel(TrackInfo{});
 }
 
 // S86 (Wunsch Patrik): Panel „Tag View" zeigt die Tags des laufenden Titels;

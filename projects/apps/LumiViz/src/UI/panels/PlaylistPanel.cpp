@@ -15,8 +15,13 @@
 #include "audio/IPlaylist.hpp"
 #include "audio/IAudioPlayer.hpp"
 #include "audio/AudioEvents.hpp"
+#include "audio/IAudioEngine.hpp"  // Dauer je Titel (S87)
 #include "UI/widgets/AudioDateien.hpp"
 
+#include <QApplication>
+#include <QPainter>
+#include <QStyledItemDelegate>
+#include <QTimer>
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
 #include <QDropEvent>
@@ -40,6 +45,65 @@
 
 namespace
 {
+
+/**
+ * Zeichnet die Zeile wie gewohnt und setzt die Dauer des Titels rechts daneben
+ * (S87). Der Text des Eintrags bleibt der Dateiname — Suche, Drag und Tests
+ * sehen keine Aenderung; die Dauer liegt unter `PlaylistPanel::kDauerRolle`.
+ */
+class DauerDelegate : public QStyledItemDelegate
+{
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+    /// Die Zeile ist so breit wie die Liste, nicht wie ihr laengster Name —
+    /// sonst stuende die Dauer rechts ausserhalb des Sichtbaren (Befund
+    /// Patrik S87). Der Name wird gekuerzt, die Dauer bleibt am rechten Rand.
+    [[nodiscard]] QSize sizeHint(const QStyleOptionViewItem& option,
+                                 const QModelIndex& index) const override
+    {
+        return {1, QStyledItemDelegate::sizeHint(option, index).height()};
+    }
+
+    void paint(QPainter* painter, const QStyleOptionViewItem& option,
+               const QModelIndex& index) const override
+    {
+        QStyleOptionViewItem opt = option;
+        initStyleOption(&opt, index);
+        const QString dauer =
+            PlaylistPanel::dauerText(index.data(PlaylistPanel::kDauerRolle).toInt());
+        const QStyle* style = opt.widget != nullptr ? opt.widget->style() : QApplication::style();
+        if (dauer.isEmpty())
+        {
+            style->drawControl(QStyle::CE_ItemViewItem, &opt, painter, opt.widget);
+            return;
+        }
+        // Hintergrund ueber die ganze Zeile, der Name davor in der verkuerzten
+        const int breite = opt.fontMetrics.horizontalAdvance(dauer) + 14;
+        QStyleOptionViewItem grund = opt;
+        grund.text.clear();
+        style->drawControl(QStyle::CE_ItemViewItem, &grund, painter, opt.widget);
+        QStyleOptionViewItem name = opt;
+        name.rect.adjust(0, 0, -breite, 0);
+        name.backgroundBrush = Qt::NoBrush;
+        painter->save();
+        painter->setFont(opt.font);  // der laufende Titel steht fett
+        style->drawItemText(painter,
+                            name.rect.adjusted(4, 0, 0, 0),
+                            Qt::AlignLeft | Qt::AlignVCenter, opt.palette, true,
+                            opt.fontMetrics.elidedText(opt.text, Qt::ElideRight,
+                                                       name.rect.width() - 4),
+                            (opt.state & QStyle::State_Selected) != 0 ? QPalette::HighlightedText
+                                                                     : QPalette::Text);
+        QColor farbe = opt.palette.color((opt.state & QStyle::State_Selected) != 0
+                                             ? QPalette::HighlightedText
+                                             : QPalette::Text);
+        farbe.setAlpha(170);  // zurueckgenommen: der Name ist die Hauptsache
+        painter->setPen(farbe);
+        painter->drawText(opt.rect.adjusted(0, 0, -6, 0), Qt::AlignRight | Qt::AlignVCenter, dauer);
+        painter->restore();
+    }
+};
 
 /**
  * Liste der Playlist mit eigener Drag-&-Drop-Behandlung (S84).
@@ -634,13 +698,55 @@ void PlaylistPanel::refreshPlaylist()
         auto* item = new QListWidgetItem(fi.fileName(), m_pListWidget);
         item->setData(Qt::UserRole, filePath);
         item->setToolTip(filePath);
+        // schon gelesene Dauer gleich wieder zeigen; der Rest kommt nach
+        if (const auto it = m_dauern.constFind(filePath); it != m_dauern.constEnd())
+            item->setData(kDauerRolle, it.value());
     }
-    
+    if (m_dauerUhr != nullptr) m_dauerUhr->start();
+
     // Restore highlight
     highlightCurrentTrack(m_currentPlayingIndex);
     
     BasicLogger::logDebug("PlaylistPanel: Refreshed playlist with " + 
                           std::to_string(count) + " tracks");
+}
+
+QString PlaylistPanel::dauerText(int ms)
+{
+    if (ms <= 0) return QString();
+    const int sek = (ms + 500) / 1000;
+    const QString rest = QStringLiteral("%1:%2")
+                             .arg((sek / 60) % 60, sek >= 3600 ? 2 : 1, 10, QLatin1Char('0'))
+                             .arg(sek % 60, 2, 10, QLatin1Char('0'));
+    return sek >= 3600 ? QStringLiteral("%1:%2").arg(sek / 3600).arg(rest) : rest;
+}
+
+void PlaylistPanel::fuelleDauern()
+{
+    // je Takt nur ein paar Dateien: das Oeffnen kostet, die Liste soll
+    // waehrenddessen bedienbar bleiben
+    auto* engine = services().tryResolve<IAudioEngine>();
+    int gelesen = 0;
+    bool offen = false;
+    for (int i = 0; i < m_pListWidget->count(); ++i)
+    {
+        QListWidgetItem* item = m_pListWidget->item(i);
+        const QString pfad = item->data(Qt::UserRole).toString();
+        if (pfad.isEmpty() || m_dauern.contains(pfad)) continue;
+        if (engine == nullptr || gelesen >= 6)
+        {
+            offen = engine != nullptr;
+            break;
+        }
+        const int ms = engine->probeDurationMs(pfad);
+        m_dauern.insert(pfad, ms);
+        ++gelesen;
+        // derselbe Titel kann mehrfach in der Liste stehen
+        for (int k = i; k < m_pListWidget->count(); ++k)
+            if (m_pListWidget->item(k)->data(Qt::UserRole).toString() == pfad)
+                m_pListWidget->item(k)->setData(kDauerRolle, ms);
+    }
+    if (!offen && m_dauerUhr != nullptr) m_dauerUhr->stop();
 }
 
 void PlaylistPanel::highlightCurrentTrack(int index)
@@ -703,6 +809,15 @@ void PlaylistPanel::setupUI()
     };
     m_pListWidget = liste;
     m_pListWidget->setAlternatingRowColors(true);
+    // S87 (Wunsch Patrik): die Laenge je Titel, rechts in der Zeile
+    m_pListWidget->setItemDelegate(new DauerDelegate(m_pListWidget));
+    // kein waagrechtes Rollen: die Zeile folgt der Breite des Panels, der
+    // volle Pfad steht im Tooltip
+    m_pListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_pListWidget->setResizeMode(QListView::Adjust);
+    m_dauerUhr = new QTimer(this);
+    m_dauerUhr->setInterval(30);
+    connect(m_dauerUhr, &QTimer::timeout, this, &PlaylistPanel::fuelleDauern);
     // Umsortieren, Hineinziehen (Audio Browser, Explorer) und Hinausziehen
     // (Player, Visualisierung) — s. PlaylistListe (S84).
     m_pListWidget->setDragDropMode(QAbstractItemView::DragDrop);

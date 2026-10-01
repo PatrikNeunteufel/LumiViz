@@ -1,0 +1,26 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "lyrics",
+        "fontHeight": -40,
+        "fontWeight": 700,
+        "italic": false,
+        "previewLines": 1,
+        "hAlign": 1,
+        "vAlign": 2,
+        "xShift": 0,
+        "yShift": -6,
+        "outline": true,
+        "outlineColor": 0,
+        "outlineSize": 2,
+        "color": 16777215,
+        "colorNext": 8421504,
+        "blend": 0,
+        "beatsPerLine": 0,
+        "initCode": "// the text changes between bottom and top every flip_beats beats\nflip_beats = 16;\nn = 0;",
+        "frameCode": "",
+        "beatCode": "n = n + 1;\ntop = above(n % (2*flip_beats), flip_beats - 1);\nvalign = if(top, 0, 2);\nyshift = if(top, 6, -6);",
+        "songCode": ""
+    }
+}

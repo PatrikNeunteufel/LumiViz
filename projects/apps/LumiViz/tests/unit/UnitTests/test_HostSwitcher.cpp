@@ -19,8 +19,12 @@
 
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
+#include "visualizers/multieffect/NodePresetStore.hpp"
 
+#include <QFile>
 #include <QGuiApplication>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QImage>
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
@@ -251,6 +255,68 @@ TEST_SUITE("HostSwitcher")
             HostSwitcherParams skript = basis;
             skript.startIndex = 2;
             CHECK(laufen(skript, 4, true, "switch=1;").index == 1);
+        }
+        SUBCASE("Mitgelieferte Voreinstellungen (S87): Skripte laufen fehlerfrei")
+        {
+            namespace np = lumi::multieffect::nodepresets;
+            const auto eintraege = np::list(QStringLiteral("hostSwitcher"));
+            REQUIRE(eintraege.size() >= 6);
+            for (const np::Entry& e : eintraege)
+            {
+                CAPTURE(e.name.toStdString());
+                EffectParams params = basis;
+                REQUIRE(np::load(e.path, QStringLiteral("hostSwitcher"), params, nullptr));
+                // der Song-Slot liegt am Knoten — aus der Datei dazulesen
+                QFile f(e.path);
+                REQUIRE(f.open(QIODevice::ReadOnly));
+                const std::string song = QJsonDocument::fromJson(f.readAll())
+                                             .object()
+                                             .value(QStringLiteral("node"))
+                                             .toObject()
+                                             .value(QStringLiteral("songCode"))
+                                             .toString()
+                                             .toStdString();
+                // die Gruppenliste gehoert nicht zur Voreinstellung: sie bleibt
+                CHECK(std::get<HostSwitcherParams>(params).groups == basis.groups);
+
+                ChainNode root = wurzel();
+                ChainNode sw;
+                sw.params = params;
+                sw.songCode = song;
+                root.children.push_back(std::move(sw));
+                root.children.push_back(gruppe("Hell", 0xFFFFFF));
+                root.children.push_back(gruppe("Grau", 0x404040));
+                MultiEffectVisualizer vis;
+                vis.setChain(std::move(root));
+                vis.initialize();
+                vis.resize(QSize(kGroesse, kGroesse));
+                QOpenGLContext::currentContext()->functions()->glViewport(0, 0, kGroesse,
+                                                                          kGroesse);
+                const uint64_t id = vis.chain().children[0].nodeId;
+                vis.render(1.0f / 60.0f);
+                MultiEffectVisualizer::notifySongChanged();
+                vis.render(1.0f / 60.0f);
+                CHECK(vis.debugSwitcherError(id).empty());
+                const int vorher = vis.debugSwitcherIndex(id);
+                if (e.name == QLatin1String("One per Song"))
+                {
+                    CHECK(vorher == 2);  // der Songwechsel hat geschaltet
+                }
+                else if (e.name == QLatin1String("Random Seconds"))
+                {
+                    // hoechstens max_seconds = 40: ein Frame von 50 s schaltet sicher,
+                    // der naechste (wieder 50 s seit dem Wechsel) schaltet zurueck
+                    CHECK(vorher == 1);
+                    vis.render(50.0f);
+                    CHECK(vis.debugSwitcherIndex(id) == 2);
+                    vis.render(50.0f);
+                    CHECK(vis.debugSwitcherIndex(id) == 1);
+                }
+                else
+                {
+                    CHECK(vorher == 1);  // ohne Beat und ohne Zeit bleibt die Startgruppe
+                }
+            }
         }
         SUBCASE("Ausgeschalteter Switcher schaltet nichts: gespeicherter Zustand gilt")
         {
