@@ -4467,9 +4467,15 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         // rechnen auf der Kopie — feldHostVor/-Nach schreiben hinein.
         const auto* typ = lumi::multieffect::feldtabelle::typ(node.params);
         using lumi::multieffect::feldtabelle::Traeger;
-        if (typ != nullptr &&
-            (typ->traeger == Traeger::ParamSkript || typ->traeger == Traeger::EigenerHost) &&
-            (hatCode() || mitModulation))
+        // F4c (S86): Typen ohne Skripttraeger (SuperScope, Effect List)
+        // bekommen die Kopie NUR bei Modulation — ihr Code laeuft im eigenen
+        // Modul bzw. Listen-Host und braucht sie nicht.
+        const bool traegt = typ != nullptr && (typ->traeger == Traeger::ParamSkript ||
+                                               typ->traeger == Traeger::EigenerHost);
+        const bool ohneTraeger =
+            typ != nullptr && mitModulation &&
+            lumi::multieffect::feldtabelle::modulationOhneTraeger(typ->typKey);
+        if ((traegt && (hatCode() || mitModulation)) || ohneTraeger)
         {
             EffectParams kopie = node.params;
             // F4: Basis -> Modulation -> Skript (E5) — die Skripte sehen den
@@ -4527,6 +4533,7 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
     int alphaOut = params.outAdjustAlpha;
     if (params.useCode)
     {
+        bool frisch = false;  // in diesem Frame kompiliert: Init hat die Alphas schon gesehen
         if (runtime.slotHost == nullptr || runtime.compiledInit != params.initCode ||
             runtime.compiledFrame != params.frameCode ||
             runtime.compiledSong != songSchluessel())
@@ -4548,6 +4555,7 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
             engine.setNumber("alphain", static_cast<double>(alphaIn) / 255.0);
             engine.setNumber("alphaout", static_cast<double>(alphaOut) / 255.0);
             runtime.slotHost->run(Slot::Init);
+            frisch = true;
         }
         laufeSong(*runtime.slotHost);
         if (runtime.slotHost->has(Slot::Frame))
@@ -4562,6 +4570,16 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
             // Erst danach darf das Skript sie umschreiben (:419-420).
             engine.setNumber("enabled", node.enabled ? 1.0 : 0.0);
             engine.setNumber("clear", params.clearEveryFrame ? 1.0 : 0.0);
+            // r_list.cpp:365-366/404-405 (S86, Entscheid a): auch die Alphas
+            // kommen JE FRAME aus dem gespeicherten Wert — ein Skript schreibt
+            // sie nicht fort, der Regler wirkt ohne Neukompilieren, und die
+            // Modulation (F4c) erreicht das Skript (E5). Im Kompilier-Frame
+            // stehen sie schon, dort hat Init sie gesehen und ggf. gesetzt.
+            if (!frisch)
+            {
+                engine.setNumber("alphain", static_cast<double>(alphaIn) / 255.0);
+                engine.setNumber("alphaout", static_cast<double>(alphaOut) / 255.0);
+            }
             runtime.slotHost->run(Slot::Frame);
             scriptEnabled = engine.number("enabled") != 0.0;
             scriptClear = engine.number("clear") != 0.0;

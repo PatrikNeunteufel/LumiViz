@@ -360,6 +360,163 @@ TEST_CASE("Modulation F4: LFOs laufen auf der Sim-Uhr, Zufall ist je Preset glei
     CHECK(ea.vignetteStrength != doctest::Approx(BloomParams{}.vignetteStrength));
 }
 
+TEST_CASE("Modulation F4c: SuperScope und Effect List ohne Skripttraeger, uebrige Typen zu")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    // Rechteck-LFO mit Rate 0 steht fest auf +1: Wert = Regler + Tiefe * Spanne
+    ChainNode scope;
+    scope.params = SuperScopeParams{};  // pointCount 256 (1..4096), lineWidth 2 (1..20),
+                                        // dotSize 4 (1..50), colorCycleFrames 60 (1..600)
+    scope.mods = {mod("pointCount", ModQuelle::LfoRechteck, 0.1),
+                  mod("lineWidth", ModQuelle::LfoRechteck, 0.5),
+                  mod("dotSize", ModQuelle::LfoRechteck, -1.0),
+                  mod("colorCycleFrames", ModQuelle::LfoRechteck, 0.0),
+                  mod("renderMode", ModQuelle::LfoRechteck, 1.0)};
+    const SuperScopeParams sv{};
+    const auto ks = laufeKnoten(scope);
+    REQUIRE(ks.has_value());
+    const auto& s = std::get<SuperScopeParams>(*ks);
+    CHECK(s.pointCount == 665);                           // 256 + 409.5 -> abgeschnitten (E6)
+    CHECK(s.lineWidth == doctest::Approx(2.0 + 0.5 * 19.0));
+    CHECK(s.dotSize == doctest::Approx(1.0));             // geklemmt auf lo
+    CHECK(s.colorCycleFrames == sv.colorCycleFrames);     // Tiefe 0
+    CHECK(s.renderMode == sv.renderMode);                 // Aufzaehlung: nicht modulierbar
+
+    // Effect List als Kind der Wurzel: die Wurzel selbst traegt keine Modulation
+    ChainNode liste;
+    liste.params = ListParams{};  // in/outAdjustAlpha 128 (0..255), onBeatFrames 1 (1..200)
+    liste.mods = {mod("inAdjustAlpha", ModQuelle::LfoRechteck, 0.25),
+                  mod("outAdjustAlpha", ModQuelle::LfoRechteck, -1.0),
+                  mod("bufferOut", ModQuelle::LfoRechteck, 0.5),
+                  mod("onBeatFrames", ModQuelle::LfoRechteck, 0.0)};
+    const auto kl = laufeKnoten(liste);
+    REQUIRE(kl.has_value());
+    const auto& l = std::get<ListParams>(*kl);
+    CHECK(l.inAdjustAlpha == 191);   // 128 + 63.75 -> abgeschnitten
+    CHECK(l.outAdjustAlpha == 0);    // geklemmt auf lo
+    CHECK(l.bufferOut == 3);         // 0 + 3.5 -> abgeschnitten
+    CHECK(l.onBeatFrames == 1);      // Tiefe 0
+
+    // Gegenprobe: Knotenschalter aus -> keine Kopie, der Renderer laeuft auf
+    // den Reglerwerten (ohne Traeger gibt es die Kopie nur bei Modulation)
+    ChainNode aus = scope;
+    aus.modsActive = false;
+    CHECK(!laufeKnoten(aus).has_value());
+
+    // Teil 2: Text, AVI, Dynamic Movement, Debug Bars
+    ChainNode text;
+    text.params = TextParams{};
+    text.mods = {mod("normSpeed", ModQuelle::LfoRechteck, 0.1),      // 1..600
+                 mod("fontHeight", ModQuelle::LfoRechteck, 0.5)};    // Struktur: zu
+    const TextParams tv{};
+    const auto kt = laufeKnoten(text);
+    REQUIRE(kt.has_value());
+    CHECK(std::get<TextParams>(*kt).normSpeed ==
+          std::min(600, static_cast<int>(tv.normSpeed + 0.1 * 599.0)));
+    CHECK(std::get<TextParams>(*kt).fontHeight == tv.fontHeight);
+
+    ChainNode dm;
+    dm.params = DynamicMovementParams{};
+    dm.mods = {mod("buffern", ModQuelle::LfoRechteck, 0.5),          // 0..8
+               mod("xres", ModQuelle::LfoRechteck, 0.5)};            // Struktur: zu
+    const DynamicMovementParams dv{};
+    const auto kd = laufeKnoten(dm);
+    REQUIRE(kd.has_value());
+    CHECK(std::get<DynamicMovementParams>(*kd).buffern ==
+          std::min(8, static_cast<int>(dv.buffern + 4.0)));
+    CHECK(std::get<DynamicMovementParams>(*kd).xres == dv.xres);
+
+    ChainNode bars;
+    bars.params = DebugBarsParams{};
+    bars.mods = {mod("orbitSpeed", ModQuelle::LfoRechteck, 0.1)};    // -10..10
+    const auto kb = laufeKnoten(bars);
+    REQUIRE(kb.has_value());
+    CHECK(std::get<DebugBarsParams>(*kb).orbitSpeed ==
+          doctest::Approx(std::min(10.0, DebugBarsParams{}.orbitSpeed + 2.0)));
+
+    ChainNode gruppe;
+    gruppe.params = HostGroupParams{};  // outAdjustAlpha 128 (0..255)
+    gruppe.mods = {mod("outAdjustAlpha", ModQuelle::LfoRechteck, 0.25),
+                   mod("crossfadeSeconds", ModQuelle::LfoRechteck, 0.5)};  // 0..60
+    const auto kg = laufeKnoten(gruppe);
+    REQUIRE(kg.has_value());
+    CHECK(std::get<HostGroupParams>(*kg).outAdjustAlpha == 191);
+    CHECK(std::get<HostGroupParams>(*kg).crossfadeSeconds ==
+          doctest::Approx(std::min(60.0, HostGroupParams{}.crossfadeSeconds + 30.0)));
+
+    ChainNode avi;
+    avi.params = AviParams{};
+    avi.mods = {mod("persist", ModQuelle::LfoRechteck, 0.5)};  // 0..32
+    const auto ka = laufeKnoten(avi);
+    REQUIRE(ka.has_value());
+    CHECK(std::get<AviParams>(*ka).persist ==
+          std::min(32, static_cast<int>(AviParams{}.persist + 16.0)));
+
+    // Offen sind genau diese Typen ohne Traeger; Host Switcher und Render
+    // Scale laufen vor dem Frame und bleiben zu, Movement hat kein Zahlfeld
+    std::set<std::string_view> offen;
+    for (const ft::Typ* t : ft::alle())
+    {
+        if (t->traeger != ft::Traeger::Keiner) continue;
+        for (const ft::Feld& f : t->felder)
+            if (ft::modulierbar(*t, f)) offen.insert(t->typKey);
+    }
+    CHECK(offen == std::set<std::string_view>{"superScope", "list", "dynamicMovement",
+                                              "hostgroup", "text", "avi", "debugBars"});
+}
+
+TEST_CASE("Effect List S86: alphain/alphaout kommen je Frame aus dem Regler (r_list:404)")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    // Das Skript schreibt alphaout fort und spiegelt den gesehenen Wert nach
+    // reg10. AVS belegt alphaout jeden Frame neu vor: nach beliebig vielen
+    // Frames steht 128/255 * 0.5 — nicht (0.5)^n.
+    ListParams lp;
+    lp.useCode = true;
+    lp.frameCode = "reg10 = alphaout; alphaout = alphaout * 0.5;";
+    ChainNode liste;
+    liste.params = lp;
+    ChainNode sonde;  // liest reg10 ueber ein Parameter-Skript in ein Feld
+    BloomParams b;
+    b.frameCode = "threshold = reg10;";
+    sonde.params = b;
+    ChainNode root;
+    root.params = ListParams{};
+    root.children.push_back(liste);
+    root.children.push_back(sonde);
+
+    std::optional<EffectParams> gesehen;
+    MultiEffectVisualizer::setzeParamBeobachter(
+        [&](const ChainNode&, const EffectParams& kopie) {
+            if (std::holds_alternative<BloomParams>(kopie)) gesehen = kopie;
+        });
+    MultiEffectVisualizer vis;
+    vis.setChain(std::move(root));
+    vis.initialize();
+    vis.resize(QSize(kSize, kSize));
+    QOpenGLContext::currentContext()->functions()->glViewport(0, 0, kSize, kSize);
+    for (int i = 0; i < 4; ++i) vis.render(1.0f / 60.0f);
+    REQUIRE(gesehen.has_value());
+    CHECK(std::get<BloomParams>(*gesehen).threshold == doctest::Approx(128.0 / 255.0));
+
+    // Mit Modulation sieht das Skript den modulierten Wert (E5)
+    vis.chain().children[0].mods = {mod("outAdjustAlpha", ModQuelle::LfoRechteck, 0.25)};
+    vis.recompileChain();
+    for (int i = 0; i < 2; ++i) vis.render(1.0f / 60.0f);
+    MultiEffectVisualizer::setzeParamBeobachter({});
+    CHECK(std::get<BloomParams>(*gesehen).threshold == doctest::Approx(191.0 / 255.0));
+}
+
 TEST_CASE("Feldsteuerung F2b: ein Regler kompiliert nicht neu — der Skriptzustand bleibt")
 {
     GlUmgebung gl;

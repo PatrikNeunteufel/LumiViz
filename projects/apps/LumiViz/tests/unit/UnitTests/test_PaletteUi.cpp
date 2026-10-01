@@ -1776,6 +1776,48 @@ TEST_CASE("PaletteUi S85 F4: Modulation per ~-Knopf setzen, schalten, entfernen"
     CHECK(p.root().children[0].mods.empty());
 }
 
+// Block F, F4c (S86): SuperScope und Effect List haben keinen Skripttraeger,
+// ihre Zahlfelder tragen trotzdem den „~"-Knopf — Auswahlfelder und Schalter nicht.
+TEST_CASE("PaletteUi S86 F4c: ~-Knopf an SuperScope- und Listenfeldern")
+{
+    UiUmgebung env;
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    const auto warte = [] {
+        for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+    };
+    const auto hatKnopf = [&](const char* feld) {
+        return p.panel->findChild<QToolButton*>(QStringLiteral("mod_") +
+                                                QLatin1String(feld)) != nullptr;
+    };
+    p.vis.chain().children[0].params = lumi::multieffect::SuperScopeParams{};
+    p.tree->setCurrentItem(p.oben(1));
+    warte();
+    p.tree->setCurrentItem(p.oben(0));
+    warte();
+    for (const char* feld : {"pointCount", "lineWidth", "dotSize", "colorCycleFrames"})
+    {
+        CAPTURE(feld);
+        CHECK(hatKnopf(feld));
+    }
+    CHECK_FALSE(hatKnopf("renderMode"));
+    CHECK_FALSE(hatKnopf("spectrumSource"));
+
+    p.vis.chain().children[0].params = lumi::multieffect::ListParams{};
+    p.tree->setCurrentItem(p.oben(1));
+    warte();
+    p.tree->setCurrentItem(p.oben(0));
+    warte();
+    for (const char* feld :
+         {"inAdjustAlpha", "outAdjustAlpha", "bufferIn", "bufferOut", "onBeatFrames"})
+    {
+        CAPTURE(feld);
+        CHECK(hatKnopf(feld));
+    }
+    CHECK_FALSE(hatKnopf("blendOut"));
+    CHECK_FALSE(hatKnopf("clearEveryFrame"));
+}
+
 // S85 (Wunsch Patrik): die Info-Seite eines Skript-Slots beginnt mit seinem
 // Takt (einmal, je Frame, je Beat, je Punkt …). Waechter: JEDES Slot-Feld, das
 // das Panel mit addScript anlegt, bekommt einen Text — ein neuer Slot ohne

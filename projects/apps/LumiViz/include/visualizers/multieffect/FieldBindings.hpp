@@ -112,13 +112,28 @@ struct Typ
            (typKey == "terrain3d" && (name == "res" || name == "resolution"));
 }
 
+/// Block F, F4c (S86, Entscheid 1c a): Typen OHNE Skripttraeger, deren Renderer
+/// trotzdem auf der Frame-Kopie laeuft — je Typ einzeln geoeffnet, sobald der
+/// Bildvergleich ohne Modulation bitgleich ist. Zu bleiben hostSwitcher
+/// (laeuft vor dem Frame in `runHostSwitchers`, nicht ueber `renderNode`) und
+/// renderScale (`divisor` wird vor dem Frame aus der Kette gelesen und baut
+/// die Puffer um); movement hat kein Live-Zahlfeld.
+[[nodiscard]] inline bool modulationOhneTraeger(std::string_view typKey)
+{
+    return typKey == "superScope" || typKey == "list" || typKey == "dynamicMovement" ||
+           typKey == "hostgroup" || typKey == "text" || typKey == "avi" ||
+           typKey == "debugBars";
+}
+
 /// Block F, F4 (S85, Entscheid 1a/1b): modulierbar sind die Live-Zahlfelder
-/// (Kommazahl, Ganzzahl) der Typen mit Parameter-Skript oder eigenem Host —
+/// (Kommazahl, Ganzzahl) der Typen mit Parameter-Skript oder eigenem Host,
+/// seit F4c auch der geoeffneten Typen ohne Traeger (`modulationOhneTraeger`) —
 /// keine Farben, Schalter, Aufzaehlungen, Strukturfelder, keine Renderer-
 /// eigenen Namen. SSOT fuer Laufzeit, „~"-Knopf und Tests.
 [[nodiscard]] inline bool modulierbar(const Typ& t, const Feld& f)
 {
-    return t.traeger != Traeger::Keiner && f.klasse == Klasse::Live &&
+    return (t.traeger != Traeger::Keiner || modulationOhneTraeger(t.typKey)) &&
+           f.klasse == Klasse::Live &&
            (f.art == Art::Kommazahl || f.art == Art::Ganzzahl) &&
            !rendererEigen(t.typKey, f.name);
 }

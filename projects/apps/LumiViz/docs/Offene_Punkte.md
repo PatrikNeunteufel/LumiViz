@@ -2052,9 +2052,17 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   gefallen (S84, E6 präzisiert S85: Ganzzahlen abgeschnitten). **Stand S85:**
   F1, F2, F5, F2-Migration (51 Renderer ohne Feld-Hand-Listen), F2b (alle
   19 eigenen Hosts an der Tabelle, Regler kompilieren nicht mehr neu) und F4
-  (Modulation ohne Formel, „~"-Knopf, 257 Felder in 56 Modulen) ✅ — **offen:** F4b
-  Farbfelder modulieren, F4c Typen ohne Skriptträger (SuperScope, Effect List
-  zuerst), F4d LFO-Rate in Beats (Entscheide Patrik S85: je a), F6
+  (Modulation ohne Formel, „~"-Knopf, 257 Felder in 56 Modulen) ✅; **S86:**
+  F4c ✅ — SuperScope, Effect List, Host-Gruppe, Dynamic Movement, Text, AVI,
+  Debug Bars modulierbar (17 Felder, Vergleichslauf 84/84 bitgleich); Effect
+  List belegt `alphain/alphaout` je Frame vor wie AVS (35 Presets 210/210
+  bitgleich) — **offen:** F4c-Rest Host Switcher `intervalSeconds` (läuft vor
+  dem Frame) und die Einstufung von `startIndex`/Render Scale `divisor` als
+  Zustand/Struktur im Ernter; **Skript-Zugriff auf die Tabellenfelder der 11
+  Typen ohne Parameter-Skript** (SuperScope, Effect List, Movement, Dynamic
+  Movement, Host Switcher, Text, AVI, Render Scale, Debug Bars … — Patriks
+  eigentliches Ziel von Block F, S86 klargestellt); F4b Farbfelder modulieren,
+  F4d LFO-Rate in Beats (Entscheide Patrik S85: je a), F6
   (MIDI/OSC-Adresse, mit der Idee).
   Farbtafeln/Stützstellen (`colors[i]`) weiter §7 des Konzepts.
   Die Tabelle unten ist der Stand VOR Block F (Historie). **Vorarbeit S83 —

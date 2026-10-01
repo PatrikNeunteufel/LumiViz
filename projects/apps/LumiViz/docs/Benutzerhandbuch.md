@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.19.0
-> **Datum:** 2026-09-30
+> **Version:** 1.20.0
+> **Datum:** 2026-10-01
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -459,9 +459,23 @@ Die Reihenfolge je Bild: **Regler → Modulation → Formel.** Eine Formel sieht
 den modulierten Wert und darf ihn überschreiben. Modulationen wirken auch bei
 ausgeschaltetem *Script active*. Sie werden mit der Kette gespeichert.
 
-Modulierbar sind die Zahlfelder der Knoten mit Formelfeldern. Noch **nicht**:
-Farben, Schalter und Auswahlfelder, sowie SuperScope, Movement, Dynamic
-Movement, Effect List und Host-Gruppen; LFO-Tempo in Beats kommt später.
+Modulierbar sind die Zahlfelder der Knoten mit Formelfeldern, dazu
+**SuperScope** (Point count, Line width, Dot size, Cycle frames), **Effect
+List** (In/Out Alpha, In/Out Buffer, OnBeat frames), **Host-Gruppe** (Out
+Alpha, Crossfade duration), **Dynamic Movement** (Source buffer), **Text**
+(Word time, Beat hold), **AVI** (Persist, Frame time) und Debug Bars (Orbit
+speed). Zwei Besonderheiten:
+
+- **SuperScope, Point count:** jede Änderung des modulierten Werts setzt `n`
+  im Skript neu — wie eine Reglerbewegung. Ein Skript, das `n` selbst setzt,
+  gewinnt nur in den Slots, die danach laufen.
+- **Effect List mit Listen-Code:** `alphain` und `alphaout` stehen zu Beginn
+  jedes Bilds auf dem Reglerwert bzw. dem modulierten Wert (wie in AVS). Der
+  Frame-Code sieht ihn und darf ihn überschreiben; er schreibt ihn aber nicht
+  von Bild zu Bild fort.
+
+Noch **nicht** modulierbar: Farben, Schalter und Auswahlfelder, sowie Host
+Switcher und Render Scale; LFO-Tempo in Beats kommt später.
 
 ### Bilder in Picture, Picture II und Texer
 
@@ -988,6 +1002,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.20.0 | 2026-10-01 | Session 86. §11 Modulation: jetzt auch **SuperScope** (Point count, Line width, Dot size, Cycle frames) und **Effect List** (In/Out Alpha, In/Out Buffer, OnBeat frames), Host-Gruppe, Dynamic Movement, Text, AVI, Debug Bars; Point count setzt `n` neu. Effect List: `alphain`/`alphaout` stehen im Listen-Code zu Beginn jedes Bilds auf dem Reglerwert (wie in AVS) — der Alpha-Regler wirkt jetzt auch bei laufendem Listen-Code sofort |
 | 1.19.0 | 2026-09-30 | Session 85. §11 NEU **Werte ohne Formel bewegen (Modulation)**: „~"-Knopf an Zahlfeldern (Audio, Beat-Hüllkurve, LFOs), Live-Wert, Schalter **Modulation active**. §11 „Werte per Formel steuern": jedes Feld skriptbar, auch bei Fraktalen/3D/Glow Orbs/Texer II; eine Reglerbewegung setzt das Skript nicht mehr zurück. Die ⓘ-Seite jedes Skriptfelds beginnt mit seinem Takt (einmal/je Frame/je Beat/je Punkt …) |
 | 1.18.1 | 2026-09-30 | Session 84. Vorlagen-Zeile im Groß-Editor zeigt den Zustand (Name / „(unsaved) – Name" / „(none)") statt zurückzuspringen; §11 Presets aus dem Effect Browser/Explorer in die Kette ziehen = Presetverweis; §2/§3 Ziehen zum Abspielen (Player, Visualisierung), Playlist nimmt Dateien an und sortiert im Dienst um, NEU **Audio Browser** (Albumcover als Icon, Fallback Ordnerbild/Formaticon); Feld-Tooltips englisch; §13 Kamera-Clips heißen `camera_clip_…` |
 | 1.18.0 | 2026-09-30 | Session 83. Zitierte Oberflächen-Beschriftungen auf die englische Oberfläche gezogen (§8 Einstellungen/Kamera, §9 Tastenkürzel, §11 Milkdrop/Host-Gruppen/Host Switcher, §12–§14); „Testaufnahme" heißt **Camera Clip** |
