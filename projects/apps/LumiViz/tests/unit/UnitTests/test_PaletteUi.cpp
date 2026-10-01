@@ -2305,8 +2305,48 @@ TEST_CASE("PaletteUi S87: Lyrics Alternatives — Sortierung, Vorschau, Ueberneh
     CHECK(tabelle->item(1, 6)->text().isEmpty());
     CHECK_FALSE(tabelle->item(1, 0)->font().bold());
 
+    // S87 (Wunsch Patrik): der Kopf nennt die Laenge des Titels — der Massstab
+    // fuer die Spalte Duration — und die Spielzeit
+    auto* kopf = dlg.findChild<QLabel*>(QStringLiteral("lyricsAltHeader"));
+    auto* wechsel = dlg.findChild<QWidget*>(QStringLiteral("lyricsAltSwitch"));
+    auto* wechselKnopf = dlg.findChild<QPushButton*>(QStringLiteral("lyricsAltSwitchButton"));
+    REQUIRE(kopf != nullptr);
+    REQUIRE(wechsel != nullptr);
+    REQUIRE(wechselKnopf != nullptr);
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::notifyPlayPosition(83000);
+    dlg.aktualisiere();
+    CHECK(kopf->text().contains(QString::fromUtf8("Wer — Lied")));
+    CHECK(kopf->text().contains(QStringLiteral("length 4:00")));
+    CHECK(kopf->text().contains(QStringLiteral("playing at 1:23")));
+    CHECK(wechsel->isHidden());
+
+    // Songwechsel: nicht stillschweigend umschalten — sagen und anbieten
+    TrackInfo neu;
+    neu.filePath = tmp.path() + "/anderes.mp3";
+    neu.title = "Anderes";
+    neu.artist = "Wer";
+    neu.durationMs = 185000;
+    lumi::audio::setzeLaufendenTitel(neu);
+    dlg.aktualisiere();
+    CHECK_FALSE(wechsel->isHidden());
+    CHECK(titel->text() == QStringLiteral("Lied"));           // noch der alte Titel
+    CHECK(tabelle->rowCount() == 3);                           // und seine Liste
+    CHECK_FALSE(kopf->text().contains(QStringLiteral("playing at")));  // er laeuft nicht mehr
+    CHECK(vorschau->extraSelections().isEmpty());              // kein Balken
+
+    // der Knopf nimmt den laufenden Titel: Begriffe neu, Liste leer, Hinweis weg
+    LyricsAlternativesDialog::setzeSucheBeimOeffnen(false);
+    wechselKnopf->click();
+    LyricsAlternativesDialog::setzeSucheBeimOeffnen(true);
+    CHECK(titel->text() == QStringLiteral("Anderes"));
+    CHECK(tabelle->rowCount() == 0);
+    CHECK(wechsel->isHidden());
+    CHECK(kopf->text().contains(QStringLiteral("length 3:05")));
+
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
     MultiEffectVisualizer::setSongtextAbruf(ly::Abruf::Ruhe);
+    MultiEffectVisualizer::notifyPlayPosition(0);
     lumi::audio::setzeLaufendenTitel(TrackInfo{});
 }
 

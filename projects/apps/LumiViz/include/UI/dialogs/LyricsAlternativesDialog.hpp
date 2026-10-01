@@ -19,6 +19,11 @@
  * nicht, und laesst den Dialog offen (weiter vergleichen). Wer einen
  * gesperrten Eintrag uebernimmt, hebt die Sperre auf.
  *
+ * **Kopfzeile:** Titel, Laenge der Datei und laufende Spielzeit — die Laenge
+ * ist der Massstab fuer die Spalte Duration. **Songwechsel:** laeuft ein
+ * anderer Titel als der, fuer den der Dialog offen ist, sagt er das und bietet
+ * an, auf den laufenden zu wechseln (wie Lyrics Sync: nie stillschweigend).
+ *
  * Die Suche ist eine ausdrueckliche Handlung: sie sendet die beiden
  * Suchbegriffe an den Dienst, auch wenn die selbsttaetige Online-Suche in den
  * Einstellungen aus ist. Der Dialog sagt das. Er ist nicht modal — der Player
@@ -68,6 +73,14 @@ public:
     /// oeffentlich fuer Tests).
     void zeigePosition(std::int64_t posMs);
 
+    /// Kopfzeile (Titel, Laenge, Spielzeit), Balken und Titelwechsel nachfuehren
+    /// — vom Zeitgeber gerufen; oeffentlich fuer Tests.
+    void aktualisiere();
+
+    /// Auf den Titel wechseln, der jetzt laeuft (Knopf im Hinweis nach einem
+    /// Songwechsel): Suchbegriffe, Liste und Suche beginnen neu.
+    void nimmLaufendenTitel();
+
     /// Benutzerordner ersetzen (Tests — der echte bleibt unberuehrt).
     void setBenutzerOrdner(const QString& ordner) { m_ordner = ordner; }
 
@@ -98,6 +111,9 @@ private:
     QString m_ordner;
     std::vector<lumi::audio::SongtextKandidat> m_kandidaten;
 
+    QLabel* m_kopf = nullptr;         ///< Titel, Laenge und Spielzeit
+    QWidget* m_wechsel = nullptr;     ///< Hinweis „ein anderer Titel laeuft" + Knopf
+    QLabel* m_wechselText = nullptr;
     QLineEdit* m_titel = nullptr;
     QLineEdit* m_interpret = nullptr;
     QPushButton* m_suchen = nullptr;

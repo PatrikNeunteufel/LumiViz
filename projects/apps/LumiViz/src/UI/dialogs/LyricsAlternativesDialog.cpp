@@ -126,6 +126,32 @@ LyricsAlternativesDialog::LyricsAlternativesDialog(const TrackInfo& track, qint6
     resize(980, 680);
     auto* vl = new QVBoxLayout(this);
 
+    // --- Kopf: fuer welchen Titel, wie lang er ist, wo er gerade spielt
+    m_kopf = new QLabel(this);
+    m_kopf->setObjectName(QStringLiteral("lyricsAltHeader"));
+    m_kopf->setWordWrap(true);
+    QFont kopfSchrift = m_kopf->font();
+    kopfSchrift.setBold(true);
+    m_kopf->setFont(kopfSchrift);
+    vl->addWidget(m_kopf);
+
+    // --- Songwechsel: nie stillschweigend umschalten, sondern anbieten
+    m_wechsel = new QWidget(this);
+    m_wechsel->setObjectName(QStringLiteral("lyricsAltSwitch"));
+    auto* wl = new QHBoxLayout(m_wechsel);
+    wl->setContentsMargins(0, 0, 0, 0);
+    m_wechselText = new QLabel(m_wechsel);
+    m_wechselText->setWordWrap(true);
+    auto* wechseln = new QPushButton(tr("Switch to the playing track"), m_wechsel);
+    wechseln->setObjectName(QStringLiteral("lyricsAltSwitchButton"));
+    wechseln->setToolTip(tr("Searches the lyrics of the track that is playing now. Until then "
+                            "this window keeps working for the track it was opened for."));
+    wl->addWidget(m_wechselText, 1);
+    wl->addWidget(wechseln);
+    m_wechsel->setVisible(false);
+    vl->addWidget(m_wechsel);
+    connect(wechseln, &QPushButton::clicked, this, &LyricsAlternativesDialog::nimmLaufendenTitel);
+
     // --- Suchbegriffe: aus den Tags vorbelegt, frei aenderbar
     auto* form = new QFormLayout();
     m_titel = new QLineEdit(track.title, this);
@@ -219,17 +245,63 @@ LyricsAlternativesDialog::LyricsAlternativesDialog(const TrackInfo& track, qint6
     connect(knoepfe, &QDialogButtonBox::rejected, this, &QDialog::reject);
     m_timer.setSingleShot(true);
     connect(&m_timer, &QTimer::timeout, this, &LyricsAlternativesDialog::sende);
-    // Abspielposition: nur solange dieser Titel laeuft
+    // Kopfzeile, Balken und Titelwechsel laufen mit dem Player
     m_marke.setInterval(200);
-    connect(&m_marke, &QTimer::timeout, this, [this]() {
-        if (lumi::audio::laufenderTitel().filePath == m_track.filePath)
-            zeigePosition(MultiEffectVisualizer::playPositionMs());
-        else
-            zeigePosition(-1);
-    });
+    connect(&m_marke, &QTimer::timeout, this, &LyricsAlternativesDialog::aktualisiere);
     m_marke.start();
+    aktualisiere();
 
     if (sucheBeimOeffnen() && !track.title.trimmed().isEmpty()) suche();
+}
+
+void LyricsAlternativesDialog::aktualisiere()
+{
+    const TrackInfo laufend = lumi::audio::laufenderTitel();
+    const bool dieser = laufend.filePath == m_track.filePath;
+    const auto name = [](const TrackInfo& t) {
+        return t.artist.isEmpty() ? t.title : QStringLiteral("%1 — %2").arg(t.artist, t.title);
+    };
+
+    // Kopf: Titel · Laenge · Spielzeit (nur solange dieser Titel laeuft)
+    QString kopf = name(m_track);
+    const int soll = (m_track.durationMs + 500) / 1000;
+    if (soll > 0) kopf += QStringLiteral("  ·  ") + tr("length %1").arg(dauerText(soll));
+    if (dieser)
+    {
+        const int pos = static_cast<int>(
+            std::max<std::int64_t>(0, MultiEffectVisualizer::playPositionMs()) / 1000);
+        kopf += QStringLiteral("  ·  ") + tr("playing at %1").arg(dauerText(pos));
+    }
+    if (m_kopf->text() != kopf) m_kopf->setText(kopf);
+
+    // ein anderer Titel laeuft: sagen und den Wechsel anbieten
+    const bool fremd = !dieser && !laufend.filePath.isEmpty();
+    if (fremd)
+    {
+        const QString text = tr("Now playing: %1 — this window still shows the lyrics "
+                                "search for the track above.")
+                                 .arg(name(laufend));
+        if (m_wechselText->text() != text) m_wechselText->setText(text);
+    }
+    if (m_wechsel->isVisibleTo(this) != fremd) m_wechsel->setVisible(fremd);
+
+    zeigePosition(dieser ? MultiEffectVisualizer::playPositionMs() : -1);
+}
+
+void LyricsAlternativesDialog::nimmLaufendenTitel()
+{
+    const TrackInfo laufend = lumi::audio::laufenderTitel();
+    if (laufend.filePath.isEmpty() || laufend.filePath == m_track.filePath) return;
+    m_track = laufend;
+    m_aktuelleId =
+        lumi::audio::lrclibKennung(MultiEffectVisualizer::songtextAngaben().herkunft);
+    setWindowTitle(tr("Lyrics Alternatives — %1").arg(m_track.title));
+    m_titel->setText(m_track.title);
+    m_interpret->setText(m_track.artist);
+    zeigeKandidaten({});  // die Liste gehoerte zum vorigen Titel
+    m_status->clear();
+    aktualisiere();
+    if (sucheBeimOeffnen() && !m_track.title.trimmed().isEmpty()) suche();
 }
 
 QString LyricsAlternativesDialog::ordner() const

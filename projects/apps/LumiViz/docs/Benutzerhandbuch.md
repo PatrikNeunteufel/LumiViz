@@ -556,6 +556,10 @@ Texten liegen bei Dritten; sie sind für den eigenen Gebrauch gedacht.
   zeigt ein Balken in jeder Spalte, wo der Song gerade ist (**Follow
   playback** hält die Stelle im Blick) — so siehst du, welche Fassung zum
   Gesang passt. Der Griff zwischen Liste und Texten teilt die Höhe.
+  Ganz oben stehen Titel, **Länge** der Datei und die laufende Spielzeit —
+  die Länge ist der Maßstab für die Spalte Duration. Wechselt der Song,
+  bleibt das Fenster beim bisherigen Titel, sagt aber, was jetzt läuft, und
+  bietet **Switch to the playing track** an.
   **Use these lyrics** über einer Spalte ersetzt die gespeicherte Fassung;
   die bisherige wird dabei nicht gesperrt, das Fenster bleibt offen. Die
   Suche sendet die beiden Suchbegriffe an den Dienst, auch wenn die
