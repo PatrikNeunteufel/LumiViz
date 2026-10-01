@@ -298,6 +298,23 @@ public:
                              QString& artist,
                              QString& album) = 0;
 
+    /**
+     * @brief Further tags of the track (S86, Text node templates)
+     *
+     * @param[out] year Year (four digits where the tag allows)
+     * @param[out] genre Genre name
+     * @param[out] track Track number without the total
+     * @return true if at least one of them was found
+     */
+    virtual bool getMetadataExtra(AudioStreamHandle /*stream*/, QString& year, QString& genre,
+                                  QString& track)
+    {
+        year.clear();
+        genre.clear();
+        track.clear();
+        return false;
+    }
+
     // =========================================================================
     // Engine Info
     // =========================================================================

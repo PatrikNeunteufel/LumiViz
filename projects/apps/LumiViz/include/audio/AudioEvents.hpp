@@ -63,6 +63,9 @@ struct TrackInfo
     QString title;          ///< Track title (from metadata or filename)
     QString artist;         ///< Artist name
     QString album;          ///< Album name
+    QString year;           ///< Year (S86; empty if the file carries none)
+    QString genre;          ///< Genre (S86)
+    QString trackNumber;    ///< Track number without the total ("3" of "3/12", S86)
     int durationMs = 0;     ///< Duration in milliseconds
     int sampleRate = 0;     ///< Sample rate (e.g., 44100)
     int channels = 0;       ///< Number of channels (1=mono, 2=stereo)

@@ -2413,10 +2413,36 @@ Test „Größenwechsel S86". Das gemeldete Flackern „in anderen Farben" ließ
 sich im Renderer nicht messen (weiße Kette: nirgends Farbe, auch während
 des Größenwechsels) — vermutlich der Wechsel zwischen scharfem und
 verwischtem Text; **Sichttest Patrik offen**. Nicht erfasst: Puffer
-einzelner Knoten (Milkdrop-Node, Feedback-Puffer, Buffer Save). (2) *Titel/Interpret aus den ID3-Tags* — abgemacht ist nur die
-Richtung unten („Tags … als Vorlage `{artist} – {title}`", im Text-Knoten,
-kein neues Modul); gebaut ist nichts, das Lesen der Tags gibt es bisher nur
-für das Cover im Audio Browser. (3) **Neue Idee S86: Text als Milkdrop-
+einzelner Knoten (Milkdrop-Node, Feedback-Puffer, Buffer Save).
+(2) *Titel/Interpret aus den ID3-Tags* — **✅ S86 umgesetzt:**
+Platzhalter `{title} {artist} {album} {year} {genre} {track} {file}` im
+Textfeld, wahlfreie Abschnitte `[ … ]` (entfallen bei leerem Tag), Knopf
+„Insert tag", Voreinstellung „Now Playing" (`TextTags.hpp`; Tags laufen mit
+`TrackChangedEvent` über `notifySongChanged(tags)` zum Renderer; Jahr, Genre
+und Tracknummer liest `BassEngine::getMetadataExtra` neu). **Nicht an echten
+Dateien geprüft:** das Lesen von Jahr/Genre/Track je Format (ID3v2.2/2.3/2.4,
+ID3v1.1, Vorbis, APE, MP4) — nur nach dem Format gebaut; Sichttest Patrik.
+Offen: Laufzeitwerte (Zeit, BPM, Presetname), Ein-/Ausblenden beim
+Titelwechsel.
+**Songtexte — Fragen Patrik S86 (Konzept offen, noch nichts entschieden):**
+Online-Quellen? Ablage bei den Songs oder getrennt, Suchreihenfolge? Wie wird
+der Zeilenwechsel koordiniert? Karaoke-Modus, Duette? Vorschlag Claude S86
+(aus dem Gedächtnis, Formate und Dienste vor dem Bauen nachprüfen):
+*Reihenfolge* eingebettet synchron (ID3 `SYLT`) → `.lrc` neben der Datei →
+`.lrc` im Benutzerordner (`<AppData>/LumiViz/lyrics/`, Name aus Interpret –
+Titel) → eingebettet unsynchron (ID3 `USLT`, Vorbis `LYRICS`) → `.txt` neben
+der Datei → online nur als Opt-in mit Cache im Benutzerordner (sendet
+Titeldaten nach außen, wie beim Cover; Kandidat LRCLIB, weil frei und mit
+Zeitstempeln — Lizenzlage je Dienst klären). *Koordination:* synchrone Texte
+laufen an der **Abspielposition** des Players (nicht an Frames oder Beats),
+mit einstellbarem Versatz je Titel; unsynchrone Texte nur als Block oder im
+festen Takt (Zeilen je n Beats), nie als vorgetäuschte Synchronität.
+*Karaoke:* Zeile vorab zeigen, laufende Zeile hervorheben; Wort-für-Wort nur,
+wenn die Datei Wort-Zeitstempel trägt (erweitertes LRC). *Duette:* keine
+einheitliche Norm — gängig sind Stimm-Marken am Zeilenanfang; Umsetzung als
+Farbe je Stimme. Eigener Knoten „Lyrics" oder Quelle des Text-Knotens: offen
+(für einen eigenen Knoten sprechen Zeitachse, Vorschau-Zeile, Hervorhebung).
+(3) **Neue Idee S86: Text als Milkdrop-
 Element** — neben Wave, Shape und Sprite ein Text-Element im Milkdrop-Node,
 das in dessen Pipeline (vor Warp/Composite) gezeichnet wird und so mit dem
 Feedback verschmiert; Quelle und Schrift wie beim Text-Knoten.

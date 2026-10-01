@@ -1,0 +1,21 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "text",
+        "text": "[{artist} – ]{title}",
+        "onBeat": false,
+        "normSpeed": 600,
+        "insertBlank": false,
+        "randomPos": false,
+        "fontHeight": -40,
+        "fontWeight": 700,
+        "hAlign": 1,
+        "vAlign": 2,
+        "outline": true,
+        "outlineColor": 0,
+        "outlineSize": 2,
+        "color": 16777215,
+        "blend": 0
+    }
+}

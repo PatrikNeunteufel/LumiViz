@@ -33,6 +33,7 @@
 #include "visualizers/VisualizerBase.hpp"
 #include "visualizers/MilkdropVisualizer.hpp"
 #include "visualizers/multieffect/EffectChain.hpp"
+#include "visualizers/multieffect/TextTags.hpp"
 #include "visualizers/modules/processing/BeatEstimator.hpp"
 #include "visualizers/modules/processing/BeatModule.hpp"
 #include "visualizers/modules/SuperscopeModule.hpp"
@@ -264,6 +265,11 @@ public:
      *        Allgemein gehalten: weitere Module koennen denselben Zaehler lesen.
      */
     static void notifySongChanged();
+    /// S86: Songwechsel MIT den Tags des neuen Titels — der Text-Knoten setzt
+    /// sie in Vorlagen wie `[{artist} – ]{title}` ein (TextTags.hpp). Die Tags
+    /// bleiben stehen, bis der naechste Titel sie ersetzt; ein spaeter
+    /// angelegter Visualizer sieht sie ebenfalls. Thread-sicher.
+    static void notifySongChanged(const lumi::multieffect::texttags::SongTags& tags);
 
     /**
      * @brief Test-Hook (S82): laufende Gruppe eines Host Switchers (Index
@@ -1309,6 +1315,10 @@ private:
     };
     /// F4d (S86): Beat-Uhr der Modulation — Lage in Beats (mit Bruchteil),
     /// Sekunden seit dem letzten Beat, gemessener Beat-Abstand.
+    /// S86: Tags des laufenden Titels (Kopie fuer den Render-Thread) und der
+    /// Stand, zu dem sie gehoeren.
+    lumi::multieffect::texttags::SongTags m_songTags;
+    uint64_t m_songTagsStand = 0;
     double m_modBeatLage = 0.0;
     double m_modBeatSeit = 0.0;
     double m_modBeatPeriode = 0.5;

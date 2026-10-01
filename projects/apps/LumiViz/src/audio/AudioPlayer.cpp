@@ -120,6 +120,10 @@ bool AudioPlayer::load(const QString& filePath)
         QFileInfo info(filePath);
         m_impl->currentTrack.title = info.completeBaseName();
     }
+    // Weitere Tags fuer die Text-Vorlagen (S86)
+    m_impl->engine.getMetadataExtra(m_impl->currentStream, m_impl->currentTrack.year,
+                                    m_impl->currentTrack.genre,
+                                    m_impl->currentTrack.trackNumber);
     
     // Apply current volume
     m_impl->engine.setVolume(m_impl->currentStream, m_impl->muted ? 0.0f : m_impl->volume);

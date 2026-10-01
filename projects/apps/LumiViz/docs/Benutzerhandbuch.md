@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.26.0
+> **Version:** 1.27.0
 > **Datum:** 2026-10-01
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -448,6 +448,25 @@ installierten Schriften; ein Name lässt sich weiterhin eintippen (importierte
 Presets nennen Schriften, die nicht installiert sein müssen — dann nimmt das
 System die nächstliegende). Leer = Standardschrift. Das Häkchen **Bold** setzt
 **Weight** auf 700 (aus: 400); gezeichnet wird fett ab Weight 600.
+
+**Text: Titel und Interpret anzeigen.** Im Textfeld stehen Platzhalter für die
+Tags des laufenden Titels — der Knopf **Insert tag** fügt sie an der
+Schreibmarke ein:
+
+| Platzhalter | Inhalt |
+|---|---|
+| `{title}` | Titel (ohne Tag: der Dateiname) |
+| `{artist}` `{album}` `{year}` `{genre}` `{track}` | Interpret, Album, Jahr, Genre, Tracknummer |
+| `{file}` | Dateiname ohne Pfad und Endung |
+
+Eckige Klammern machen einen Teil **wahlfrei**: er verschwindet, wenn ein Tag
+darin leer ist. `[{artist} – ]{title}[ ({year})]` ergibt „New Order – Blue
+Monday (1983)", ohne Jahr „New Order – Blue Monday", ohne Interpret „Blue
+Monday". Das `;` trennt weiterhin die Wörter: `{title};{artist};{album}` zeigt
+die drei nacheinander. Gelesen werden ID3v2/ID3v1 (MP3), Vorbis-Kommentare
+(Ogg, FLAC), APE und MP4. Ist kein Titel geladen, zeichnet eine reine
+Tag-Vorlage nichts. Die Voreinstellung **Now Playing** bringt eine fertige
+Zeile unten im Bild mit.
 
 **Fenstergröße ändern.** Das Bild der Effektkette und jeder Effect List bzw.
 Host-Gruppe wird beim Größenwechsel in die neue Größe übernommen (wie in AVS
@@ -1055,6 +1074,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.27.0 | 2026-10-01 | Session 86. §11 NEU „Text: Titel und Interpret anzeigen": Platzhalter `{title}` `{artist}` `{album}` `{year}` `{genre}` `{track}` `{file}`, wahlfreie Teile in eckigen Klammern, Knopf **Insert tag**, Voreinstellung **Now Playing** |
 | 1.26.0 | 2026-10-01 | Session 86. §11 Text: **Font** ist eine Auswahlliste der installierten Schriften (weiter editierbar), NEU Häkchen **Bold**. §11 NEU „Fenstergröße ändern": das Bild von Kette, Effect List und Host-Gruppe bleibt beim Größenwechsel erhalten — Blur und Trails brechen nicht mehr ab |
 | 1.25.0 | 2026-10-01 | Session 86. §11 Modulation: NEU **Beat sync** — LFOs im Takt der Musik (Länge einer Schwingung in Beats). §11 Voreinstellungen: 7 für **Text** (Beat Words, Slideshow, Random Flash, Subtitle, Beat Colours, Bass Tempo, Beat Jump) und 5 für **AVI** |
 | 1.24.0 | 2026-10-01 | Session 86. §11 Modulation: **Farbfelder** modulierbar (Target Brightness / Hue / Red / Green / Blue, Live-Wert als `#RRGGBB`). §11 Effekt-Palette: **Text**, **AVI** und **Comment** stehen jetzt in der Palette |

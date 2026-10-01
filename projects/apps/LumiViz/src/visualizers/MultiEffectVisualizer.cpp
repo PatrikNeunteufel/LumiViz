@@ -53,6 +53,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <mutex>
 #include <cmath>
 #include <cstring>
 #include <filesystem>
@@ -77,6 +78,12 @@ namespace {
 /// Prozessweiter Songwechsel-Zaehler (S82, notifySongChanged) — jeder Leser
 /// merkt sich den zuletzt gesehenen Stand, ein Wechsel wirkt so genau einmal.
 std::atomic<uint64_t> g_songWechsel{0};
+
+/// Tags des laufenden Titels (S86) — gesetzt vom Hauptthread beim
+/// Songwechsel, gelesen vom Render-Thread, sobald der Stand sich aendert.
+std::mutex g_songTagsMutex;
+lumi::multieffect::texttags::SongTags g_songTags;
+std::atomic<uint64_t> g_songTagsStand{0};
 
 // Defined further down; forward-declared for the earlier render handlers.
 void computeAudioBands(const std::vector<float>& spec, float& bass, float& mid,
@@ -4167,6 +4174,14 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         const uint64_t song = g_songWechsel.load(std::memory_order_relaxed);
         m_frameSong = m_songGesehen != ~uint64_t{0} && song != m_songGesehen;
         m_songGesehen = song;
+        // S86: Tags des Titels nachziehen (nur wenn sich der Stand geaendert hat)
+        if (const uint64_t stand = g_songTagsStand.load(std::memory_order_acquire);
+            stand != m_songTagsStand)
+        {
+            const std::lock_guard<std::mutex> lock(g_songTagsMutex);
+            m_songTags = g_songTags;
+            m_songTagsStand = stand;
+        }
     }
     runHostSwitchers();
 
@@ -7950,7 +7965,14 @@ void MultiEffectVisualizer::runText(const ChainNode& node, const TextParams& par
     // Feldtabelle; Felder, die neu rastern (Schrift, Farbe, Lage, Kontur),
     // folgen dem Skript nur aus Init, Song und Beat (E3).
     runParamScript(rt, "text", params.initCode, params.frameCode, params.beatCode, {});
-    const int words = textSeparators(params.text) + 1;
+    // Vorlagen (S86): `{title}`, `[{artist} – ]` … werden mit den Tags des
+    // laufenden Titels gefuellt — vor dem Zerlegen in Woerter, damit jedes
+    // Wort seine eigene Vorlage tragen kann. Ohne Platzhalter keine Kosten.
+    namespace tt = lumi::multieffect::texttags;
+    const std::string gefuellt =
+        tt::hatPlatzhalter(params.text) ? tt::ersetze(params.text, m_songTags) : std::string();
+    const std::string& text = tt::hatPlatzhalter(params.text) ? gefuellt : params.text;
+    const int words = textSeparators(text) + 1;
 
     // --- word cycling (r_text render:544-600)
     const bool switchNow =
@@ -7981,7 +8003,7 @@ void MultiEffectVisualizer::runText(const ChainNode& node, const TextParams& par
     }
     ++rt.textNf;
 
-    std::string word = textWord(params.text, rt.textCurWord);
+    std::string word = textWord(text, rt.textCurWord);
     if (params.insertBlank && rt.textOddEven == 0) word.clear();
     if (word.empty()) return;  // nothing to draw this phase
 
@@ -9247,6 +9269,16 @@ void MultiEffectVisualizer::runOscRing(const ChainNode& node, const OscRingParam
 void MultiEffectVisualizer::notifySongChanged()
 {
     g_songWechsel.fetch_add(1, std::memory_order_relaxed);
+}
+
+void MultiEffectVisualizer::notifySongChanged(const lumi::multieffect::texttags::SongTags& tags)
+{
+    {
+        const std::lock_guard<std::mutex> lock(g_songTagsMutex);
+        g_songTags = tags;
+    }
+    g_songTagsStand.fetch_add(1, std::memory_order_release);
+    notifySongChanged();
 }
 
 bool MultiEffectVisualizer::effectiveEnabled(const ChainNode& node) const

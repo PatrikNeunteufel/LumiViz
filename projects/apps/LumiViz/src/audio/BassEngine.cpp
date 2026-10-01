@@ -22,6 +22,7 @@
 #include <QFileInfo>
 #include <QByteArray>
 #include <QCoreApplication>
+#include <QRegularExpression>
 
 #include <cmath>
 #include <algorithm>
@@ -651,7 +652,9 @@ QString parseId3v2TextFrame(const char* data, int size)
  * - Header (10 bytes): "ID3" + version + flags + size
  * - Frames: Frame ID (4 bytes) + Size (4 bytes) + Flags (2 bytes) + Data
  */
-bool parseId3v2Tags(const char* data, QString& title, QString& artist, QString& album)
+bool parseId3v2Tags(const char* data, QString& title, QString& artist, QString& album,
+                    QString* year = nullptr, QString* genre = nullptr,
+                    QString* track = nullptr)
 {
     if (data == nullptr) return false;
     
@@ -754,6 +757,21 @@ bool parseId3v2Tags(const char* data, QString& title, QString& artist, QString& 
         {
             album = parseId3v2TextFrame(frameData, frameSize);
             if (!album.isEmpty()) foundAny = true;
+        }
+        // S86: Jahr (TYER v2.3, TDRC v2.4, TYE v2.2), Genre, Tracknummer
+        else if (year != nullptr &&
+                 (frameIdStr == "TYER" || frameIdStr == "TDRC" || frameIdStr == "TYE"))
+        {
+            const QString v = parseId3v2TextFrame(frameData, frameSize);
+            if (!v.isEmpty()) *year = v;
+        }
+        else if (genre != nullptr && (frameIdStr == "TCON" || frameIdStr == "TCO"))
+        {
+            *genre = parseId3v2TextFrame(frameData, frameSize);
+        }
+        else if (track != nullptr && (frameIdStr == "TRCK" || frameIdStr == "TRK"))
+        {
+            *track = parseId3v2TextFrame(frameData, frameSize);
         }
         
         pos += headerSize + frameSize;
@@ -909,6 +927,69 @@ bool BassEngine::getMetadata(AudioStreamHandle stream,
     }
     
     return false;
+}
+
+/// S86: Jahr, Genre, Tracknummer — dieselben Quellen wie getMetadata. Die Werte
+/// werden geputzt: Jahr = die ersten vier Ziffern ("2020-05-01" -> "2020"),
+/// Track ohne Gesamtzahl ("3/12" -> "3"), ID3-Genre ohne Nummernverweis
+/// ("(17)Rock" -> "Rock", ein reines "(17)" bleibt leer).
+bool BassEngine::getMetadataExtra(AudioStreamHandle stream, QString& year, QString& genre,
+                                  QString& track)
+{
+    year.clear();
+    genre.clear();
+    track.clear();
+    if (stream == INVALID_STREAM) return false;
+    HSTREAM hStream = static_cast<HSTREAM>(stream);
+
+    QString t, a, al;
+    if (const char* id3v2 = BASS_ChannelGetTags(hStream, BASS_TAG_ID3V2))
+        parseId3v2Tags(id3v2, t, a, al, &year, &genre, &track);
+
+    if (const auto* id3v1 = reinterpret_cast<const TAG_ID3*>(
+            BASS_ChannelGetTags(hStream, BASS_TAG_ID3)))
+    {
+        if (year.isEmpty()) year = QString::fromLatin1(id3v1->year, 4).trimmed();
+        // ID3v1.1: comment[28] == 0 und comment[29] = Tracknummer
+        if (track.isEmpty() && id3v1->comment[28] == 0 && id3v1->comment[29] != 0)
+            track = QString::number(static_cast<unsigned char>(id3v1->comment[29]));
+    }
+
+    // Vorbis/FLAC, APE und MP4: Listen aus "KEY=wert", nullgetrennt
+    for (const DWORD art : {DWORD(BASS_TAG_OGG), DWORD(BASS_TAG_APE), DWORD(BASS_TAG_MP4)})
+    {
+        const char* p = BASS_ChannelGetTags(hStream, art);
+        while (p != nullptr && *p)
+        {
+            const QString tag = QString::fromUtf8(p);
+            const int eq = tag.indexOf(QLatin1Char('='));
+            if (eq > 0)
+            {
+                const QString key = tag.left(eq).toUpper();
+                const QString value = tag.mid(eq + 1).trimmed();
+                if (year.isEmpty() &&
+                    (key == QStringLiteral("DATE") || key == QStringLiteral("YEAR") ||
+                     key == QChar(0x00A9) + QStringLiteral("DAY")))  // MP4 \u201E\u00A9day"
+                    year = value;
+                else if (genre.isEmpty() && (key == QStringLiteral("GENRE") ||
+                                             key == QChar(0x00A9) + QStringLiteral("GEN")))
+                    genre = value;
+                else if (track.isEmpty() &&
+                         (key == QStringLiteral("TRACKNUMBER") ||
+                          key == QStringLiteral("TRACK") || key == QStringLiteral("TRKN")))
+                    track = value;
+            }
+            p += strlen(p) + 1;
+        }
+    }
+
+    static const QRegularExpression kJahr(QStringLiteral("(\\d{4})"));
+    const QRegularExpressionMatch m = kJahr.match(year);
+    year = m.hasMatch() ? m.captured(1) : QString();
+    track = track.section(QLatin1Char('/'), 0, 0).trimmed();
+    static const QRegularExpression kGenreNr(QStringLiteral("^\\(\\d+\\)"));
+    genre = genre.remove(kGenreNr).trimmed();
+    return !year.isEmpty() || !genre.isEmpty() || !track.isEmpty();
 }
 
 // =============================================================================

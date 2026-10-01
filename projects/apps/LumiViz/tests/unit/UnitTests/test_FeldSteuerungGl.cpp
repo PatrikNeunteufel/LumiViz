@@ -544,6 +544,56 @@ TEST_CASE("Groessenwechsel S86: Liste und Wurzel behalten ihr Bild (Nachzug blei
     }
 }
 
+TEST_CASE("Text S86: Tags des Titels kommen vom Songwechsel bis ins Bild")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace tt = lumi::multieffect::texttags;
+    const auto hell = [](const std::string& vorlage) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode text;
+        TextParams tp;
+        tp.text = vorlage;
+        tp.fontHeight = -24;
+        text.params = tp;
+        root.children = {clear, text};
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.initialize();
+        vis.resize(QSize(160, 80));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 160, 80);
+        vis.render(1.0f / 60.0f);
+        vis.render(1.0f / 60.0f);
+        const QImage img = vis.debugGrabRootSurface();
+        int n = 0;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+                if (qGray(img.pixel(x, y)) > 128) ++n;
+        return n;
+    };
+    // kein Titel: die Vorlage ergibt ein leeres Wort — es wird nichts gezeichnet
+    MultiEffectVisualizer::notifySongChanged(tt::SongTags{});
+    CHECK(hell("[{artist} - ]{title}") == 0);
+    // fester Text zeichnet unabhaengig davon
+    const int fest = hell("MMMM");
+    CHECK(fest > 20);
+
+    tt::SongTags t;
+    t.title = "MMMM";
+    MultiEffectVisualizer::notifySongChanged(t);
+    // dieselben Glyphen wie der feste Text
+    CHECK(hell("[{artist} - ]{title}") == fest);
+    // mit Interpret wird die Zeile laenger
+    t.artist = "MM";
+    MultiEffectVisualizer::notifySongChanged(t);
+    CHECK(hell("[{artist} - ]{title}") > fest);
+
+    MultiEffectVisualizer::notifySongChanged(tt::SongTags{});  // Zustand zuruecksetzen
+}
+
 TEST_CASE("Modulation F4d: LFO-Rate in Beats — im Takt, phasengleich, folgt dem Tempo")
 {
     GlUmgebung gl;

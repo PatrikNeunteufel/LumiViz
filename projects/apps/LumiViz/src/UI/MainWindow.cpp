@@ -742,7 +742,19 @@ void MainWindow::setupEventHandlers()
     // weiter"). Bis hierher erreichte TrackChangedEvent nur Player- und
     // Playlist-Panel. Der Zaehler ist prozessweit und atomar — kein Lock.
     pEventBus->subscribe<TrackChangedEvent>(
-        [](const TrackChangedEvent&) { MultiEffectVisualizer::notifySongChanged(); });
+        [](const TrackChangedEvent& e) {
+            // S86: die Tags des Titels gehen mit — der Text-Knoten setzt sie in
+            // Vorlagen ein ({title}, {artist} …)
+            lumi::multieffect::texttags::SongTags tags;
+            tags.title = e.track.title.toStdString();
+            tags.artist = e.track.artist.toStdString();
+            tags.album = e.track.album.toStdString();
+            tags.year = e.track.year.toStdString();
+            tags.genre = e.track.genre.toStdString();
+            tags.track = e.track.trackNumber.toStdString();
+            tags.file = QFileInfo(e.track.filePath).completeBaseName().toStdString();
+            MultiEffectVisualizer::notifySongChanged(tags);
+        });
 
     pEventBus->subscribe<NewEffectChainEvent>(
         [this, findMultiEffect, pEventBus](const NewEffectChainEvent&) {

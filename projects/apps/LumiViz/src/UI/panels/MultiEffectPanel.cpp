@@ -33,6 +33,7 @@
 #include "visualizers/multieffect/IsfImport.hpp"            // ISF-Filter-Import (S72)
 #include "visualizers/multieffect/IsfFilterWrapper.hpp"     // Starter-Shader ISF (S72)
 #include "visualizers/multieffect/ScriptVariables.hpp"      // Variablenreferenz (SSOT, S79)
+#include "visualizers/multieffect/TextTags.hpp"            // Tag-Platzhalter (S86)
 #include "visualizers/multieffect/FieldBindings.hpp"        // modulierbar (F4, S85)
 #include "scripting/ScriptFormatter.hpp"                // Beautify-Kerne (S69)
 #include <EelTranspiler.hpp>                            // Apply-Syntaxprobe EEL (S69)
@@ -81,6 +82,7 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMenu>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QSignalBlocker>
@@ -7638,6 +7640,40 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             });
         });
         form->addRow(tr("Text (';' separates)"), edit);
+        edit->setToolTip(
+            tr("Words separated by ';'. Tags of the playing track: {title} {artist} {album} "
+               "{year} {genre} {track} {file}. Square brackets make a part optional — it "
+               "disappears when a tag inside is empty, e.g. [{artist} – ]{title}[ ({year})]."));
+        {
+            // Tags des laufenden Titels (S86): Menue fuegt den Platzhalter an
+            // der Schreibmarke ein — der Text bleibt Vorlage, eingesetzt wird
+            // beim Zeichnen (TextTags.hpp).
+            auto* tagKnopf = new QToolButton(m_propContainer);
+            tagKnopf->setObjectName(QStringLiteral("textInsertTag"));
+            tagKnopf->setText(tr("Insert tag"));
+            tagKnopf->setPopupMode(QToolButton::InstantPopup);
+            tagKnopf->setToolTip(tr("Inserts a tag of the playing track at the cursor."));
+            auto* menue = new QMenu(tagKnopf);
+            const auto eintrag = [menue, edit](const QString& titel, const QString& text) {
+                QAction* a = menue->addAction(titel);
+                a->setData(text);
+                QObject::connect(a, &QAction::triggered, edit,
+                                 [edit, text]() { edit->insertPlainText(text); });
+            };
+            for (const std::string_view name : lumi::multieffect::texttags::kNamen)
+            {
+                const QString n = QString::fromUtf8(name.data(), static_cast<int>(name.size()));
+                eintrag(QStringLiteral("{%1}").arg(n), QStringLiteral("{%1}").arg(n));
+            }
+            menue->addSeparator();
+            eintrag(tr("Artist – Title"), QStringLiteral("[{artist} – ]{title}"));
+            eintrag(tr("Artist – Title (Year)"),
+                    QStringLiteral("[{artist} – ]{title}[ ({year})]"));
+            eintrag(tr("Title; Artist; Album (one after another)"),
+                    QStringLiteral("{title};{artist};{album}"));
+            tagKnopf->setMenu(menue);
+            form->addRow(QString(), tagKnopf);
+        }
         {
             // Schrift-Auswahlliste (S86, Wunsch Patrik): alle installierten
             // Schriften, weiter frei editierbar — importierte Presets tragen

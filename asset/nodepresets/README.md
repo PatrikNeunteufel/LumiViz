@@ -228,13 +228,15 @@ ausdrücklich Teil der Vorlage.
 | | Beat Colours | Beat-Skript würfelt je Wort eine neue Farbe (`color_r/_g/_b`) |
 | | Bass Tempo | Frame-Skript: lauter Bass = schnellerer Wortwechsel (`normspeed`) |
 | | Beat Jump | Beat-Skript versetzt den Text je Beat (`xshift`, `yshift`) |
+| | Now Playing | **setzt den Text**: `[{artist} – ]{title}` — Interpret und Titel des laufenden Stücks, unten mittig mit Kontur |
 | `avi` (S86) | Beat Blend | beat-adaptiv: additiv im Beat-Fenster, sonst 50/50 |
 | | Slow Motion | Bildwechsel höchstens alle 90 ms |
 | | Additive Overlay | Video additiv über dem Bild |
 | | Beat Stutter | Beat-Skript würfelt die Bildzeit neu (`speedms`) |
 | | Bass Persist | Frame-Skript: Beat-Fenster wächst mit dem Bass (`persist`) |
 
-Die Text- und AVI-Vorlagen lassen den Text bzw. die Videodatei unberührt.
+Die Text- und AVI-Vorlagen lassen den Text bzw. die Videodatei unberührt —
+außer „Now Playing", das die Tag-Vorlage als Text mitbringt.
 
 Die Zeilen „Import-Ernte S61" sind wörtlich aus Presets der Sammlung
 `VisualsPresets` übernommen (Entscheid S60: Quelle = Sammlung via Import);
