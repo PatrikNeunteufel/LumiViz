@@ -462,6 +462,49 @@ int BassEngine::probeDurationMs(const QString& filePath)
     return seconds > 0.0 ? static_cast<int>(seconds * 1000.0) : 0;
 }
 
+std::vector<float> BassEngine::probePeaks(const QString& filePath, int msProWert,
+                                          const std::atomic<bool>* abbruch)
+{
+    std::vector<float> out;
+    if (!m_impl->initialized || msProWert <= 0) return out;
+    // Eigener Dekodier-Kanal (kein Ton): unabhaengig vom spielenden Stream,
+    // deshalb auch aus einem Arbeits-Thread benutzbar.
+    const std::string path = filePath.toLocal8Bit().constData();
+    const HSTREAM stream = BASS_StreamCreateFile(FALSE, path.c_str(), 0, 0,
+                                                 BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT);
+    if (stream == 0) return out;
+    BASS_CHANNELINFO info{};
+    BASS_ChannelGetInfo(stream, &info);
+    const int kanaele = std::max<int>(1, static_cast<int>(info.chans));
+    const int proWert = std::max<int>(1, static_cast<int>(info.freq) * msProWert / 1000);  // Frames
+    std::vector<float> puffer(static_cast<std::size_t>(proWert) * static_cast<std::size_t>(kanaele) * 64);
+    float spitze = 0.0f;
+    int imWert = 0;
+    while (abbruch == nullptr || !abbruch->load(std::memory_order_relaxed))
+    {
+        const DWORD gelesen = BASS_ChannelGetData(
+            stream, puffer.data(),
+            static_cast<DWORD>(puffer.size() * sizeof(float)) | BASS_DATA_FLOAT);
+        if (gelesen == static_cast<DWORD>(-1) || gelesen == 0) break;
+        const std::size_t werte = gelesen / sizeof(float);
+        for (std::size_t i = 0; i + static_cast<std::size_t>(kanaele) <= werte;
+             i += static_cast<std::size_t>(kanaele))
+        {
+            for (int k = 0; k < kanaele; ++k)
+                spitze = std::max(spitze, std::abs(puffer[i + static_cast<std::size_t>(k)]));
+            if (++imWert >= proWert)
+            {
+                out.push_back(std::min(1.0f, spitze));
+                spitze = 0.0f;
+                imWert = 0;
+            }
+        }
+    }
+    if (imWert > 0) out.push_back(std::min(1.0f, spitze));
+    BASS_StreamFree(stream);
+    return out;
+}
+
 float BassEngine::getVolume(AudioStreamHandle stream) const
 {
     if (stream == INVALID_STREAM) return 0.0f;

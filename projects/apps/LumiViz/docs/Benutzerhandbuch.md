@@ -572,7 +572,11 @@ Benutzerordner der Songtexte.
 **Nachsynchronisieren: Panel „Lyrics Sync"** (View → Panels). Macht aus einem
 unsynchronen Text einen synchronen, oder stellt einen synchronen nach. Das
 Panel zeigt den Text des laufenden Titels als Liste mit den Spalten **Time**
-und **Text**; die Zeile an der Abspielposition steht fett.
+und **Text**; die Zeile an der Abspielposition steht fett. Darüber läuft die
+**Spielzeit** mit, und eine **Wellenform** zeigt vier Sekunden vor und nach
+der Abspielposition (rote Marke in der Mitte). Die senkrechten Striche darin
+sind die Zeiten der Zeilen, die markierte ist hervorgehoben — so siehst du, ob
+ein Strich auf dem Einsatz sitzt.
 
 | Bedienung | Wirkung |
 |---|---|
@@ -582,6 +586,8 @@ und **Text**; die Zeile an der Abspielposition steht fett.
 | **Clear time** | nimmt den markierten Zeilen die Zeit |
 | F2 in der Spalte **Time** | Zeit von Hand eintragen (`mm:ss.xx`) |
 | Doppelklick auf eine Zeile | springt im Titel 1,5 s vor die Zeile (Vorhören) |
+| **▶** in der Spalte **Go** | springt genau auf die Zeit der Zeile |
+| Klick in die Wellenform | springt an diese Stelle |
 | **Reload** | nimmt den Text des laufenden Titels neu — ungespeicherte Zeiten gehen dabei verloren |
 | **Save** | schreibt eine `.lrc` neben die Textdatei (gleicher Name); bei eingebettetem Text dorthin, wo geholte Texte landen |
 

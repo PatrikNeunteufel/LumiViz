@@ -39,6 +39,7 @@
 
 #include <QString>
 #include <QStringList>
+#include <atomic>
 #include <vector>
 #include <cstdint>
 #include <functional>
@@ -233,6 +234,20 @@ public:
      *        mit variabler Bitrate ohne Laengenangabe eine Schaetzung.
      */
     [[nodiscard]] virtual int probeDurationMs(const QString& /*filePath*/) { return 0; }
+
+    /**
+     * @brief Huellkurve einer Datei: je `msProWert` Millisekunden der groesste
+     *        Betrag ueber alle Kanaele (0..1). Dekodiert die ganze Datei —
+     *        darf aus einem eigenen Thread gerufen werden; `abbruch` (optional)
+     *        beendet die Arbeit vorzeitig. Leer = nicht lesbar. (S87: Wellenform
+     *        im Panel „Lyrics Sync".)
+     */
+    [[nodiscard]] virtual std::vector<float> probePeaks(const QString& /*filePath*/,
+                                                        int /*msProWert*/,
+                                                        const std::atomic<bool>* /*abbruch*/ = nullptr)
+    {
+        return {};
+    }
 
     /**
      * @brief Get/Set volume (0.0 - 1.0)

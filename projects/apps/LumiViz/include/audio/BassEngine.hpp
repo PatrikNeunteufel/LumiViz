@@ -91,6 +91,8 @@ public:
     bool setPositionMs(AudioStreamHandle stream, int positionMs) override;
     [[nodiscard]] int getDurationMs(AudioStreamHandle stream) const override;
     [[nodiscard]] int probeDurationMs(const QString& filePath) override;
+    [[nodiscard]] std::vector<float> probePeaks(const QString& filePath, int msProWert,
+                                                const std::atomic<bool>* abbruch) override;
     [[nodiscard]] float getVolume(AudioStreamHandle stream) const override;
     bool setVolume(AudioStreamHandle stream, float volume) override;
 

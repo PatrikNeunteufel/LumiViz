@@ -2117,7 +2117,9 @@ TEST_CASE("PaletteUi S87: Lyrics Sync — klopfen, verschieben, speichern als .l
     REQUIRE(stand != nullptr);
     REQUIRE(liste->rowCount() == 4);
     CHECK(liste->item(0, 0)->text().isEmpty());
-    CHECK(liste->item(0, 1)->text() == QStringLiteral("eins"));
+    CHECK(liste->item(0, 2)->text() == QStringLiteral("eins"));
+    CHECK(liste->alternatingRowColors());
+    CHECK(liste->cellWidget(0, 1) == nullptr);  // ohne Zeit kein Sprung-Knopf
     CHECK(panel.offeneZeilen() == 3);  // die Leerzeile zaehlt nicht
     CHECK(stand->text().contains(QStringLiteral("3")));
     CHECK_FALSE(speichern->isEnabled());
@@ -2166,6 +2168,23 @@ TEST_CASE("PaletteUi S87: Lyrics Sync — klopfen, verschieben, speichern als .l
     // vorhoeren: Doppelklick springt kurz vor die Zeile
     Q_EMIT liste->cellDoubleClicked(1, 1);
     CHECK(audio.player->letzterSprung == 20500 - LyricsSyncPanel::kVorlaufMs);
+    // der Knopf der Zeile springt GENAU auf ihre Zeit; flach, damit die
+    // (abwechselnde) Zeilenfarbe in seiner Zelle steht
+    auto* sprung = qobject_cast<QToolButton*>(liste->cellWidget(1, 1));
+    REQUIRE(sprung != nullptr);
+    CHECK(sprung->autoRaise());
+    sprung->click();
+    CHECK(audio.player->letzterSprung == 20500);
+    CHECK(liste->cellWidget(2, 1) == nullptr);  // die Leerzeile hat keine Zeit
+    CHECK_FALSE(panel.springeZu(2, 0));
+
+    // die Spielzeit steht als Text da
+    CHECK(LyricsSyncPanel::spielzeitText(83450, 225000) == QStringLiteral("1:23.4 / 3:45"));
+    CHECK(LyricsSyncPanel::spielzeitText(0, 0) == QStringLiteral("0:00.0"));
+    REQUIRE(panel.findChild<QLabel*>(QStringLiteral("lyricsSyncTime")) != nullptr);
+    REQUIRE(panel.findChild<QWidget*>(QStringLiteral("lyricsSyncWave")) != nullptr);
+    panel.resize(460, 420);
+    schnappschuss(panel, "lyrics_sync");
 
     // speichern: .lrc neben der .txt, die Suche findet ab jetzt die .lrc
     REQUIRE(panel.speichere());

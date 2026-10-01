@@ -12,7 +12,12 @@
  *   markierten Zeile die Abspielposition und rueckt zur naechsten Textzeile.
  * - **Nachstellen:** markierte Zeilen ±100 ms, „ab hier" ±100 ms, Zeit
  *   loeschen, Zeit von Hand eintragen (F2 in der Spalte Time).
- * - **Vorhoeren:** Doppelklick auf eine Zeile springt im Titel kurz davor.
+ * - **Vorhoeren:** Doppelklick auf eine Zeile springt im Titel kurz davor; der
+ *   Knopf „▶" der Zeile springt genau auf ihre Zeit.
+ * - **Spielzeit und Wellenform:** oben laeuft die Spielzeit mit; die Wellenform
+ *   zeigt einen Ausschnitt von einigen Sekunden um die Abspielposition (Marke
+ *   in der Mitte) mit den Zeiten der Zeilen als Striche — der Einsatz ist zu
+ *   sehen, bevor er zu hoeren ist. Ein Klick in die Wellenform springt dorthin.
  * - **Vorschau:** jede Aenderung geht sofort an den Lyrics-Knoten — man sieht
  *   im Bild, was man tut. Gespeichert ist damit noch nichts.
  * - **Speichern** schreibt eine `.lrc` ueber `audio::speichereSongtext`: neben
@@ -40,7 +45,10 @@
 
 #include <QString>
 
+#include <atomic>
 #include <cstdint>
+#include <memory>
+#include <thread>
 
 class QCheckBox;
 class QLabel;
@@ -54,7 +62,14 @@ class LyricsSyncPanel : public PanelBase
 
 public:
     explicit LyricsSyncPanel(ServiceContainer& services, QWidget* parent = nullptr);
-    ~LyricsSyncPanel() override = default;
+    ~LyricsSyncPanel() override;
+
+    /// Zur Zeile springen: genau auf ihre Zeit (`vorlaufMs` = 0, Knopf „▶" der
+    /// Zeile) oder kurz davor (Doppelklick). false = die Zeile hat keine Zeit.
+    bool springeZu(int reihe, int vorlaufMs);
+
+    /// Spielzeit als Text: `1:23.4 / 3:45`.
+    [[nodiscard]] static QString spielzeitText(std::int64_t posMs, int dauerMs);
 
     [[nodiscard]] int preferredArea() const override;
 
@@ -116,7 +131,14 @@ private:
     int m_laufend = -1;     ///< Reihe an der Abspielposition
     QString m_ordner;
 
+    void ladeWellenform(const QString& pfad);
+
     QLabel* m_kopf = nullptr;
+    QLabel* m_zeit = nullptr;            ///< laufende Spielzeit
+    class LyricsWellenform* m_welle = nullptr;  ///< Ausschnitt um die Abspielposition
+    QString m_wellePfad;                 ///< Datei, deren Huellkurve geladen ist / wird
+    std::thread m_ladeFaden;             ///< dekodiert die Huellkurve
+    std::shared_ptr<std::atomic<bool>> m_abbruch;
     QLabel* m_stand = nullptr;
     QTableWidget* m_liste = nullptr;
     QPushButton* m_tap = nullptr;

@@ -7,6 +7,7 @@
 
 #include "UI/panels/LyricsSyncPanel.hpp"
 
+#include "audio/IAudioEngine.hpp"
 #include "audio/IAudioPlayer.hpp"
 #include "audio/SongtextOnline.hpp"
 #include "audio/SongtextQuelle.hpp"
@@ -16,8 +17,13 @@
 
 #include <BasicLogger.h>
 
+#include <QApplication>
 #include <QCheckBox>
 #include <QFileInfo>
+#include <QMouseEvent>
+#include <QPainter>
+#include <QPointer>
+#include <QToolButton>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QKeyEvent>
@@ -28,12 +34,17 @@
 #include <QVBoxLayout>
 
 #include <algorithm>
+#include <functional>
+#include <vector>
 
 namespace
 {
 namespace ly = lumi::multieffect::lyrics;
 
-enum Spalte { kZeit, kText };
+enum Spalte { kZeit, kSprung, kText };
+
+constexpr int kMsProWert = 10;      ///< Aufloesung der Huellkurve
+constexpr int kFensterMs = 4000;    ///< so viel zeigt die Wellenform vor und nach der Marke
 
 QString zeitText(std::int64_t ms)
 {
@@ -41,11 +52,183 @@ QString zeitText(std::int64_t ms)
 }
 }  // namespace
 
+/**
+ * Ausschnitt der Wellenform um die Abspielposition (S87, Wunsch Patrik): die
+ * Marke steht in der Mitte, das Bild laeuft darunter durch. Senkrechte Striche
+ * sind die Zeiten der Zeilen (die markierte hervorgehoben) — so sieht man, ob
+ * ein Strich auf dem Einsatz sitzt. Klick = dorthin springen.
+ */
+class LyricsWellenform : public QWidget
+{
+public:
+    explicit LyricsWellenform(QWidget* parent) : QWidget(parent)
+    {
+        setMinimumHeight(64);
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        setToolTip(tr("Waveform around the playback position (marker in the middle). The "
+                      "lines are the times of the lyrics lines. Click to jump there."));
+    }
+
+    std::function<void(std::int64_t)> onSprung;
+
+    void setHuelle(std::vector<float> huelle)
+    {
+        m_huelle = std::move(huelle);
+        update();
+    }
+    void setPosition(std::int64_t posMs)
+    {
+        if (posMs == m_pos) return;
+        m_pos = posMs;
+        update();
+    }
+    void setMarken(std::vector<std::int64_t> marken, std::int64_t gewaehlt)
+    {
+        m_marken = std::move(marken);
+        m_gewaehlt = gewaehlt;
+        update();
+    }
+    [[nodiscard]] bool hatHuelle() const { return !m_huelle.empty(); }
+
+    /// Zeit unter der x-Koordinate (Mitte = Abspielposition).
+    [[nodiscard]] std::int64_t zeitBei(int x) const
+    {
+        const double proPixel = 2.0 * kFensterMs / std::max(1, width());
+        return m_pos + static_cast<std::int64_t>((x - width() / 2.0) * proPixel);
+    }
+
+protected:
+    void paintEvent(QPaintEvent*) override
+    {
+        QPainter p(this);
+        p.fillRect(rect(), palette().color(QPalette::Base));
+        const int w = width();
+        const int h = height();
+        const double mitteY = h / 2.0;
+        const double msProPixel = 2.0 * kFensterMs / std::max(1, w);
+        // Textfarbe, zurueckgenommen: `Mid` ist im dunklen Thema kaum vom
+        // Grund zu unterscheiden (am Schnappschuss gesehen)
+        QColor welle = palette().color(QPalette::Text);
+        welle.setAlpha(150);
+
+        // Huellkurve: je Pixelspalte der groesste Wert ihres Zeitabschnitts
+        if (!m_huelle.empty())
+        {
+            p.setPen(welle);
+            for (int x = 0; x < w; ++x)
+            {
+                const double t0 = m_pos + (x - w / 2.0) * msProPixel;
+                const auto i0 = static_cast<std::int64_t>(t0 / kMsProWert);
+                const auto i1 = static_cast<std::int64_t>((t0 + msProPixel) / kMsProWert);
+                float spitze = 0.0f;
+                for (std::int64_t i = std::max<std::int64_t>(0, i0);
+                     i <= i1 && i < static_cast<std::int64_t>(m_huelle.size()); ++i)
+                    spitze = std::max(spitze, m_huelle[static_cast<std::size_t>(i)]);
+                if (i0 < 0 && i1 < 0) continue;  // vor dem Anfang des Titels
+                const double hoehe = std::max(0.5, static_cast<double>(spitze) * (h / 2.0 - 2.0));
+                p.drawLine(QPointF(x, mitteY - hoehe), QPointF(x, mitteY + hoehe));
+            }
+        }
+        else
+        {
+            p.setPen(welle);
+            p.drawText(rect(), Qt::AlignCenter, tr("No waveform"));
+        }
+
+        // Zeiten der Zeilen
+        for (const std::int64_t t : m_marken)
+        {
+            const double x = w / 2.0 + static_cast<double>(t - m_pos) / msProPixel;
+            if (x < 0.0 || x > w) continue;
+            const bool gewaehlt = t == m_gewaehlt;
+            p.setPen(QPen(palette().color(gewaehlt ? QPalette::Highlight : QPalette::Text),
+                          gewaehlt ? 2.0 : 1.0));
+            p.drawLine(QPointF(x, 0.0), QPointF(x, h));
+        }
+        // Abspielposition
+        p.setPen(QPen(QColor(0xE0, 0x40, 0x40), 2.0));
+        p.drawLine(QPointF(w / 2.0, 0.0), QPointF(w / 2.0, h));
+    }
+
+    void mousePressEvent(QMouseEvent* event) override
+    {
+        if (event->button() == Qt::LeftButton && onSprung)
+            onSprung(std::max<std::int64_t>(0, zeitBei(static_cast<int>(event->position().x()))));
+    }
+
+private:
+    std::vector<float> m_huelle;
+    std::vector<std::int64_t> m_marken;
+    std::int64_t m_pos = 0;
+    std::int64_t m_gewaehlt = -1;
+};
+
 LyricsSyncPanel::LyricsSyncPanel(ServiceContainer& services, QWidget* parent)
     : PanelBase(services, QStringLiteral("lyrics_sync"), tr("Lyrics Sync"), parent)
 {
     setupUI();
     lade(TrackInfo{}, ly::Songtext{});
+}
+
+LyricsSyncPanel::~LyricsSyncPanel()
+{
+    // der Dekodier-Thread haelt nur den Abbruch-Schalter und die Engine;
+    // er wird hier beendet, bevor das Panel (und danach die Dienste) gehen
+    if (m_abbruch) m_abbruch->store(true);
+    if (m_ladeFaden.joinable()) m_ladeFaden.join();
+}
+
+QString LyricsSyncPanel::spielzeitText(std::int64_t posMs, int dauerMs)
+{
+    const auto teil = [](std::int64_t ms, bool zehntel) {
+        ms = std::max<std::int64_t>(0, ms);
+        QString s = QStringLiteral("%1:%2").arg(ms / 60000).arg((ms / 1000) % 60, 2, 10,
+                                                                QLatin1Char('0'));
+        if (zehntel) s += QStringLiteral(".%1").arg((ms % 1000) / 100);
+        return s;
+    };
+    return dauerMs > 0 ? teil(posMs, true) + QStringLiteral(" / ") + teil(dauerMs, false)
+                       : teil(posMs, true);
+}
+
+void LyricsSyncPanel::ladeWellenform(const QString& pfad)
+{
+    if (pfad == m_wellePfad) return;
+    m_wellePfad = pfad;
+    if (m_abbruch) m_abbruch->store(true);
+    if (m_ladeFaden.joinable()) m_ladeFaden.join();
+    m_welle->setHuelle({});
+    auto* engine = services().tryResolve<IAudioEngine>();
+    if (pfad.isEmpty() || engine == nullptr) return;
+
+    // Die ganze Datei zu dekodieren dauert spuerbar — in einem eigenen Thread;
+    // das Ergebnis kommt ueber die Ereignisschleife zurueck und gilt nur, wenn
+    // inzwischen kein anderer Titel verlangt wurde.
+    m_abbruch = std::make_shared<std::atomic<bool>>(false);
+    const auto abbruch = m_abbruch;
+    const QPointer<LyricsSyncPanel> panel(this);
+    m_ladeFaden = std::thread([engine, pfad, abbruch, panel]() {
+        std::vector<float> huelle = engine->probePeaks(pfad, kMsProWert, abbruch.get());
+        if (abbruch->load()) return;
+        QMetaObject::invokeMethod(
+            qApp,
+            [panel, pfad, abbruch, huelle = std::move(huelle)]() mutable {
+                if (panel && !abbruch->load() && panel->m_wellePfad == pfad)
+                    panel->m_welle->setHuelle(std::move(huelle));
+            },
+            Qt::QueuedConnection);
+    });
+}
+
+bool LyricsSyncPanel::springeZu(int reihe, int vorlaufMs)
+{
+    if (reihe < 0 || reihe >= static_cast<int>(m_text.zeilen.size())) return false;
+    const std::int64_t zeit = m_text.zeilen[static_cast<std::size_t>(reihe)].zeitMs;
+    if (zeit < 0) return false;
+    // Zeiten stehen wie in der Datei: Abspielposition = Zeit − Versatz
+    const std::int64_t ziel = std::max<std::int64_t>(0, zeit - m_text.versatzMs - vorlaufMs);
+    if (auto* player = services().tryResolve<IAudioPlayer>()) player->seek(static_cast<int>(ziel));
+    return true;
 }
 
 int LyricsSyncPanel::preferredArea() const
@@ -62,9 +245,30 @@ void LyricsSyncPanel::setupUI()
     m_kopf->setWordWrap(true);
     vl->addWidget(m_kopf);
 
-    m_liste = new QTableWidget(0, 2, this);
+    // laufende Spielzeit und Wellenform um die Abspielposition (S87)
+    m_zeit = new QLabel(this);
+    m_zeit->setObjectName(QStringLiteral("lyricsSyncTime"));
+    QFont zeitSchrift = m_zeit->font();
+    zeitSchrift.setPointSizeF(zeitSchrift.pointSizeF() * 1.3);
+    zeitSchrift.setBold(true);
+    m_zeit->setFont(zeitSchrift);
+    m_zeit->setToolTip(tr("Playback position / length of the track."));
+    m_zeit->setText(QStringLiteral("—"));
+    vl->addWidget(m_zeit);
+    m_welle = new LyricsWellenform(this);
+    m_welle->setObjectName(QStringLiteral("lyricsSyncWave"));
+    m_welle->onSprung = [this](std::int64_t ms) {
+        if (auto* player = this->services().tryResolve<IAudioPlayer>())
+            player->seek(static_cast<int>(ms));
+    };
+    vl->addWidget(m_welle);
+
+    m_liste = new QTableWidget(0, 3, this);
     m_liste->setObjectName(QStringLiteral("lyricsSyncList"));
-    m_liste->setHorizontalHeaderLabels({tr("Time"), tr("Text")});
+    m_liste->setHorizontalHeaderLabels({tr("Time"), tr("Go"), tr("Text")});
+    // abwechselnd gefaerbte Zeilen; die Sprung-Knoepfe sind flach, damit die
+    // Farbe der Zeile auch in ihrer Zelle steht
+    m_liste->setAlternatingRowColors(true);
     m_liste->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_liste->setSelectionMode(QAbstractItemView::ExtendedSelection);
     // Doppelklick gehoert dem Vorhoeren; die Zeit aendert man mit F2
@@ -137,12 +341,11 @@ void LyricsSyncPanel::setupUI()
     connect(m_speichern, &QPushButton::clicked, this, &LyricsSyncPanel::speichere);
 
     // Vorhoeren: kurz vor die Zeile springen
-    connect(m_liste, &QTableWidget::cellDoubleClicked, this, [this](int reihe, int) {
-        if (reihe < 0 || reihe >= static_cast<int>(m_text.zeilen.size())) return;
-        const std::int64_t zeit = m_text.zeilen[static_cast<std::size_t>(reihe)].zeitMs;
-        if (zeit < 0) return;
-        if (auto* player = this->services().tryResolve<IAudioPlayer>())
-            player->seek(static_cast<int>(std::max<std::int64_t>(0, zeit - kVorlaufMs)));
+    connect(m_liste, &QTableWidget::cellDoubleClicked, this,
+            [this](int reihe, int) { springeZu(reihe, kVorlaufMs); });
+    // die markierte Zeile in der Wellenform hervorheben
+    connect(m_liste, &QTableWidget::itemSelectionChanged, this, [this]() {
+        if (!m_fuellt) zeigeStand();
     });
     // Zeit von Hand (F2): mm:ss.xx; leer = ohne Zeit; Unlesbares wird verworfen
     connect(m_liste, &QTableWidget::itemChanged, this, [this](QTableWidgetItem* item) {
@@ -165,7 +368,7 @@ void LyricsSyncPanel::setupUI()
     });
 
     m_uhr = new QTimer(this);
-    m_uhr->setInterval(200);
+    m_uhr->setInterval(50);  // die Wellenform soll fliessen, nicht ruckeln
     connect(m_uhr, &QTimer::timeout, this, &LyricsSyncPanel::zeigePosition);
 }
 
@@ -188,6 +391,7 @@ void LyricsSyncPanel::lade(const TrackInfo& track, const ly::Songtext& text)
     fuelleListe();
     if (m_liste->rowCount() > 0) m_liste->selectRow(0);
     zeigeStand();
+    ladeWellenform(track.filePath);
 }
 
 void LyricsSyncPanel::fuelleListe()
@@ -196,7 +400,11 @@ void LyricsSyncPanel::fuelleListe()
     m_liste->setRowCount(static_cast<int>(m_text.zeilen.size()));
     for (int r = 0; r < m_liste->rowCount(); ++r)
     {
+        m_liste->removeCellWidget(r, kSprung);  // Knoepfe der vorigen Fuellung
         m_liste->setItem(r, kZeit, new QTableWidgetItem());
+        auto* sprung = new QTableWidgetItem();
+        sprung->setFlags(sprung->flags() & ~Qt::ItemIsEditable);
+        m_liste->setItem(r, kSprung, sprung);
         auto* text = new QTableWidgetItem();
         text->setFlags(text->flags() & ~Qt::ItemIsEditable);
         m_liste->setItem(r, kText, text);
@@ -204,6 +412,7 @@ void LyricsSyncPanel::fuelleListe()
     }
     m_liste->resizeColumnToContents(kZeit);
     if (m_liste->columnWidth(kZeit) < 80) m_liste->setColumnWidth(kZeit, 80);
+    m_liste->setColumnWidth(kSprung, 34);
     m_fuellt = false;
 }
 
@@ -215,11 +424,27 @@ void LyricsSyncPanel::zeigeZeile(int reihe)
     m_fuellt = true;
     m_liste->item(reihe, kZeit)->setText(zeitText(z.zeitMs));
     m_liste->item(reihe, kText)->setText(QString::fromStdString(z.text));
-    for (int s = 0; s < 2; ++s)
+    for (const int s : {static_cast<int>(kZeit), static_cast<int>(kText)})
     {
         QFont f = m_liste->item(reihe, s)->font();
         f.setBold(reihe == m_laufend);  // die Zeile an der Abspielposition
         m_liste->item(reihe, s)->setFont(f);
+    }
+    // Sprung-Knopf: nur wo es eine Zeit gibt, zu der man springen kann
+    const bool hatKnopf = m_liste->cellWidget(reihe, kSprung) != nullptr;
+    if (z.zeitMs >= 0 && !hatKnopf)
+    {
+        auto* knopf = new QToolButton(m_liste);
+        knopf->setObjectName(QStringLiteral("lyricsSyncJump"));
+        knopf->setText(QString::fromUtf8("▶"));
+        knopf->setAutoRaise(true);  // flach: die Zeilenfarbe scheint durch
+        knopf->setToolTip(tr("Jump to the time of this line."));
+        connect(knopf, &QToolButton::clicked, this, [this, reihe]() { springeZu(reihe, 0); });
+        m_liste->setCellWidget(reihe, kSprung, knopf);
+    }
+    else if (z.zeitMs < 0 && hatKnopf)
+    {
+        m_liste->removeCellWidget(reihe, kSprung);
     }
     m_fuellt = war;
 }
@@ -255,6 +480,18 @@ void LyricsSyncPanel::zeigeStand()
     else
         stand = tr("All lines have a time.");
     m_stand->setText(stand);
+
+    // Striche in der Wellenform: Zeiten als Abspielpositionen (Zeit − Versatz)
+    std::vector<std::int64_t> marken;
+    for (const ly::Zeile& z : m_text.zeilen)
+        if (z.zeitMs >= 0) marken.push_back(z.zeitMs - m_text.versatzMs);
+    const QList<int> gewaehlt = markierteReihen();
+    std::int64_t gewaehlteZeit = -1;
+    if (!gewaehlt.isEmpty() && gewaehlt.first() < static_cast<int>(m_text.zeilen.size()) &&
+        m_text.zeilen[static_cast<std::size_t>(gewaehlt.first())].zeitMs >= 0)
+        gewaehlteZeit =
+            m_text.zeilen[static_cast<std::size_t>(gewaehlt.first())].zeitMs - m_text.versatzMs;
+    m_welle->setMarken(std::move(marken), gewaehlteZeit);
 
     m_tap->setEnabled(!m_text.leer() && !fremd);
     m_speichern->setEnabled(m_geaendert && !m_text.leer() && offen == 0 && !zielPfad().isEmpty());
@@ -395,7 +632,14 @@ void LyricsSyncPanel::zeigePosition()
 {
     // ein neuer Titel: uebernehmen, solange hier nichts Ungespeichertes liegt
     uebernimmLaufenden(false);
-    if (m_text.leer() || lumi::audio::laufenderTitel().filePath != m_track.filePath) return;
+    // Spielzeit und Wellenform laufen immer mit dem Player
+    const std::int64_t pos = MultiEffectVisualizer::playPositionMs();
+    const TrackInfo laufend = lumi::audio::laufenderTitel();
+    const QString zeit =
+        laufend.filePath.isEmpty() ? QStringLiteral("—") : spielzeitText(pos, laufend.durationMs);
+    if (m_zeit->text() != zeit) m_zeit->setText(zeit);
+    m_welle->setPosition(laufend.filePath == m_track.filePath ? pos : 0);
+    if (m_text.leer() || laufend.filePath != m_track.filePath) return;
 
     // die Zeile an der Abspielposition: die spaeteste, deren Zeit erreicht ist
     const std::int64_t jetzt = MultiEffectVisualizer::playPositionMs() + m_text.versatzMs;
