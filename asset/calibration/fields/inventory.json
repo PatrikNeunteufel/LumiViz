@@ -1,7 +1,7 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 803,
+        "felder": 809,
         "typen": 92
     },
     "typen": [
@@ -44,6 +44,11 @@
                     "name": "adapt"
                 },
                 {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
                     "art": "zahl",
                     "default": 0,
                     "name": "blend"
@@ -52,6 +57,16 @@
                     "art": "text",
                     "default": "",
                     "name": "filename"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
                 },
                 {
                     "art": "zahl",
@@ -4388,6 +4403,11 @@
         {
             "felder": [
                 {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
                     "art": "zahl",
                     "default": 0,
                     "name": "blend"
@@ -4413,9 +4433,19 @@
                     "name": "fontWeight"
                 },
                 {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
                     "art": "zahl",
                     "default": 1,
                     "name": "hAlign"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
                 },
                 {
                     "art": "bool",

@@ -1,0 +1,59 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "",
+                "blend": 0,
+                "color": 0,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Clear",
+                "onlyFirst": false,
+                "type": "clear"
+            },
+            {
+                "blendIn": 0,
+                "blendOut": 1,
+                "bufferIn": 0,
+                "bufferInInvert": false,
+                "bufferOut": 0,
+                "bufferOutInvert": false,
+                "children": [
+                ],
+                "clearEveryFrame": false,
+                "enabled": true,
+                "frameCode": "",
+                "inAdjustAlpha": 128,
+                "initCode": "",
+                "name": "Effect List",
+                "onBeatFrames": 1,
+                "onBeatRender": false,
+                "outAdjustAlpha": 128,
+                "type": "list",
+                "useCode": false
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

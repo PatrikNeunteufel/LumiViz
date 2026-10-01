@@ -1051,6 +1051,10 @@ struct WriteVisitor
         o["outlineColor"] = static_cast<double>(p.outlineColor);
         o["outlineSize"] = p.outlineSize;
         o["shadow"] = p.shadow;
+        // Parameter-Skript (S86) — immer geschrieben wie bei allen Skript-Knoten (Feld-Inventar)
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const AviParams& p) const
     {
@@ -1060,6 +1064,10 @@ struct WriteVisitor
         o["adapt"] = p.adapt;
         o["persist"] = p.persist;
         o["speedMs"] = p.speedMs;
+        // Parameter-Skript (S86) — immer geschrieben wie bei allen Skript-Knoten (Feld-Inventar)
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
     }
     void operator()(const CommentParams& p) const
     {
@@ -2479,6 +2487,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.outlineColor = getColor(o, "outlineColor", p.outlineColor);
         p.outlineSize = getInt(o, "outlineSize", p.outlineSize);
         p.shadow = getBool(o, "shadow", p.shadow);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "avi")
@@ -2490,6 +2501,9 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.adapt = getBool(o, "adapt", p.adapt);
         p.persist = getInt(o, "persist", p.persist);
         p.speedMs = getInt(o, "speedMs", p.speedMs);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
     if (type == "comment")
@@ -3072,6 +3086,9 @@ QJsonObject nodeToJson(const ChainNode& node)
             if (istLfo(m.quelle)) j["rateHz"] = m.rateHz;
             if (m.glaettung != 0.0) j["smoothing"] = m.glaettung;
             if (!m.aktiv) j["active"] = false;
+            // F4b (S86): Ziel nur an Farbfeldern — Dateien mit Zahlfeld-
+            // Modulationen bleiben gleich
+            if (m.ziel != ModZiel::Wert) j["target"] = QString::fromLatin1(modZielKey(m.ziel));
             mods.append(j);
         }
         o["mods"] = mods;
@@ -3120,6 +3137,15 @@ ChainNode nodeFromJson(const QJsonObject& obj, QStringList* report)
         m.rateHz = std::clamp(j.value("rateHz").toDouble(m.rateHz), 0.0, 100.0);
         m.glaettung = std::clamp(j.value("smoothing").toDouble(0.0), 0.0, 60.0);
         m.aktiv = j.value("active").toBool(true);
+        if (j.contains("target"))
+        {
+            const QString ziel = j.value("target").toString();
+            if (!modZielAusKey(ziel.toStdString(), m.ziel) && report != nullptr)
+                report->append(
+                    QStringLiteral("modulation of '%1': unknown target '%2' - using %3")
+                        .arg(QString::fromStdString(m.feld), ziel,
+                             QString::fromLatin1(modZielKey(m.ziel))));
+        }
         node.mods.push_back(std::move(m));
     }
 

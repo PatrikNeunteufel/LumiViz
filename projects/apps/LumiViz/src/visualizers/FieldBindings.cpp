@@ -34,7 +34,7 @@ std::vector<std::pair<std::size_t, Typ>> baue()
         LV_FELD(AddBordersParams, color, "color", "color", "", 1.0, Farbe, Live, kNaN, kNaN),
         LV_FELD(AddBordersParams, size, "size", "size", "", 1.0, Ganzzahl, Live, 0.0, 200.0),
     }}});
-    out.push_back({ix<AviParams>(), Typ{"avi", Traeger::Keiner, {
+    out.push_back({ix<AviParams>(), Typ{"avi", Traeger::ParamSkript, {
         LV_FELD(AviParams, adapt, "adapt", "adapt", "", 1.0, Schalter, Live, 0.0, 1.0),
         LV_FELD(AviParams, blend, "blend", "blend", "", 1.0, Aufzaehlung, Live, 0.0, 2.0),
         LV_FELD(AviParams, persist, "persist", "persist", "", 1.0, Ganzzahl, Live, 0.0, 32.0),
@@ -633,7 +633,7 @@ std::vector<std::pair<std::size_t, Typ>> baue()
         LV_FELD(TexerIIParams, resizing, "resizing", "resizing", "", 1.0, Schalter, Live, 0.0, 1.0),
         LV_FELD(TexerIIParams, wrapAround, "wrapAround", "wraparound", "", 1.0, Schalter, Live, 0.0, 1.0),
     }}});
-    out.push_back({ix<TextParams>(), Typ{"text", Traeger::Keiner, {
+    out.push_back({ix<TextParams>(), Typ{"text", Traeger::ParamSkript, {
         LV_FELD(TextParams, blend, "blend", "blend", "", 1.0, Aufzaehlung, Live, 0.0, 2.0),
         LV_FELD(TextParams, color, "color", "color", "", 1.0, Farbe, Struktur, kNaN, kNaN),
         LV_FELD(TextParams, fontHeight, "fontHeight", "fontheight", "", 1.0, Ganzzahl, Struktur, 4.0, 400.0),

@@ -1007,6 +1007,14 @@ struct TextParams
     std::uint32_t outlineColor = 0;  ///< outline color 0x00RRGGBB
     int outlineSize = 1;           ///< outline width in pixels
     bool shadow = false;           ///< shadow variant (outline wins if both)
+
+    /// Parameter script (S86): every field of this node (`normspeed`,
+    /// `onbeatspeed`, `blend`, `onbeat` …) + `b`/`w`/`h` + audio set. Fields
+    /// that re-render the glyphs (font, color, position, outline) follow the
+    /// script from Init, Song and Beat only, not from Frame. Empty = no script.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -1021,6 +1029,12 @@ struct AviParams
     bool adapt = false;            ///< beat-adaptive: additive on beat window, else 50/50
     int persist = 6;               ///< beat window length in frames
     int speedMs = 0;               ///< min milliseconds between frame advances
+
+    /// Parameter script (S86): every field of this node (`blend`, `adapt`,
+    /// `persist`, `speedms`) + `b`/`w`/`h` + audio set. Empty = no script.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
 };
 
 /**
@@ -2967,6 +2981,41 @@ inline constexpr std::array<const char*, 10> kModQuelleKeys = {
 
 [[nodiscard]] inline bool istLfo(ModQuelle q) { return q >= ModQuelle::LfoSinus; }
 
+/// Block F, F4b (S86, Entscheid 1b a): was eine Modulation an einem FARBFELD
+/// bewegt. Zahlfelder kennen nur `Wert`.
+enum class ModZiel : std::uint8_t
+{
+    Wert,        ///< Zahlfeld: der Wert selbst
+    Helligkeit,  ///< HSV-Helligkeit += tiefe * Quelle (0..1)
+    Farbton,     ///< HSV-Farbton += tiefe * Quelle (1 = ein voller Umlauf)
+    Rot,         ///< Kanal += tiefe * Quelle (0..1)
+    Gruen,
+    Blau
+};
+
+/// Datei-Schluessel der Ziele (Reihenfolge = ModZiel).
+inline constexpr std::array<const char*, 6> kModZielKeys = {
+    "value", "brightness", "hue", "red", "green", "blue"};
+
+[[nodiscard]] inline const char* modZielKey(ModZiel z)
+{
+    return kModZielKeys[static_cast<std::size_t>(z)];
+}
+
+/// Schluessel -> Ziel; unbekannt = false (Aufrufer behaelt die Vorgabe).
+[[nodiscard]] inline bool modZielAusKey(std::string_view key, ModZiel& out)
+{
+    for (std::size_t i = 0; i < kModZielKeys.size(); ++i)
+    {
+        if (key == kModZielKeys[i])
+        {
+            out = static_cast<ModZiel>(i);
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Block F, F4 (S85): ein Feld bewegt sich ohne Formel um seinen Reglerwert.
  * Angewendet auf die Frame-Kopie VOR den Skripten (Entscheid E5: Basis ->
@@ -2982,6 +3031,9 @@ struct FeldModulation
     double rateHz = 0.5;            ///< LFO-Frequenz (Hz)
     double glaettung = 0.0;         ///< s — Glaettung der Audio-Quellen, Abklingzeit der Beat-Huelle
     bool aktiv = true;              ///< eigenes Haekchen je Modulation
+    /// F4b (S86): Ziel an einem Farbfeld; an Zahlfeldern ohne Bedeutung. Steht
+    /// an einem Farbfeld `Wert`, gilt Helligkeit.
+    ModZiel ziel = ModZiel::Wert;
 };
 
 // =============================================================================

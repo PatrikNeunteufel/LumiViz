@@ -98,6 +98,15 @@ EffectParams makeIsfFilter()
     return EffectParams{p};
 }
 
+// Text (S86): ein frisch eingefuegter Knoten zeigt gleich etwas — mit leerem
+// Text zeichnet er nichts.
+EffectParams makeText()
+{
+    TextParams p;
+    p.text = "LumiViz;Text";
+    return EffectParams{p};
+}
+
 constexpr Role R = Role::Render;
 constexpr Role T = Role::Transform;
 constexpr Role C = Role::Color;
@@ -161,6 +170,8 @@ const std::vector<EffectType>& effectPalette()
          "Holden05: Multi Delay"},
         {"Debug Bars", &makeDefault<DebugBarsParams>, R, Lumi,
          "Audio-reactive test quad — a debugging aid."},
+        {"Comment", &makeDefault<CommentParams>, K, Avs,
+         "A note inside the chain — draws nothing.", "Misc / Comment"},
 
         {"— MilkDrop —"},
         {"Milkdrop (Preset-Pipeline)", &makeMilkdrop, R, Milk,
@@ -239,6 +250,11 @@ const std::vector<EffectType>& effectPalette()
          "Render / Picture"},
         {"Picture II", &makeDefault<PictureIIParams>, R, Ape,
          "Draws an embedded image stretched to fill the frame.", "Picture II"},
+        // S86: Text, AVI und Comment fehlten in der Palette (nur per Import erreichbar)
+        {"Text", &makeText, R, Avs,
+         "Draws words one after another, timed by frames or beats.", "Render / Text"},
+        {"AVI", &makeDefault<AviParams>, R, Avs,
+         "Plays an AVI video file onto the frame.", "Render / AVI"},
         {"Texer", &makeDefault<TexerParams>, R, Ape,
          "Sprites of an image along the waveform.", "Texer"},
         {"Texer II", &makeDefault<TexerIIParams>, R, Ape,

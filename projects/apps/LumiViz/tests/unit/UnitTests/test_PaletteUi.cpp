@@ -1816,12 +1816,57 @@ TEST_CASE("PaletteUi S86 F4c: ~-Knopf an SuperScope- und Listenfeldern")
     }
     CHECK_FALSE(hatKnopf("blendOut"));
     CHECK_FALSE(hatKnopf("clearEveryFrame"));
+
+    // F4b (S86): Farbfelder tragen den Knopf ebenfalls
+    p.vis.chain().children[0].params = lumi::multieffect::ClearParams{};
+    p.tree->setCurrentItem(p.oben(1));
+    warte();
+    p.tree->setCurrentItem(p.oben(0));
+    warte();
+    CHECK(hatKnopf("color"));
+    CHECK_FALSE(hatKnopf("onlyFirst"));
 }
 
 // S85 (Wunsch Patrik): die Info-Seite eines Skript-Slots beginnt mit seinem
 // Takt (einmal, je Frame, je Beat, je Punkt …). Waechter: JEDES Slot-Feld, das
 // das Panel mit addScript anlegt, bekommt einen Text — ein neuer Slot ohne
 // Beschreibung faellt hier auf.
+// S86 (Fund Patrik): Text, AVI und Comment standen nie in der Effekt-Palette —
+// nur der Import konnte sie anlegen. Waechter: jeder Knotentyp der Variante
+// kommt in EffectPalette.cpp vor, ausser den bewusst internen.
+TEST_CASE("PaletteUi S86: jeder Knotentyp steht in der Effekt-Palette")
+{
+    const std::filesystem::path app =
+        std::filesystem::path(__FILE__).parent_path().parent_path().parent_path().parent_path();
+    const auto lies = [&](const std::filesystem::path& rel) {
+        QFile f(QString::fromStdWString((app / rel).wstring()));
+        REQUIRE(f.open(QIODevice::ReadOnly));
+        return QString::fromUtf8(f.readAll());
+    };
+    const QString kette =
+        lies(std::filesystem::path("include") / "visualizers" / "multieffect" / "EffectChain.hpp");
+    const QString palette =
+        lies(std::filesystem::path("src") / "UI" / "panels" / "EffectPalette.cpp");
+
+    const int start = kette.indexOf(QStringLiteral("using EffectParams"));
+    REQUIRE(start >= 0);
+    const QString variante = kette.mid(start, kette.indexOf(QLatin1Char(';'), start) - start);
+    // Import-Protokoll und Platzhalter fuer nicht umgesetzte Effekte legt nur
+    // der Import an
+    const QStringList intern = {QStringLiteral("ImportNotesParams"),
+                                QStringLiteral("PassthroughParams")};
+    static const QRegularExpression kTyp(QStringLiteral("\\b(\\w+Params)\\b"));
+    int gefunden = 0;
+    for (auto it = kTyp.globalMatch(variante); it.hasNext();)
+    {
+        const QString typ = it.next().captured(1);
+        if (typ == QStringLiteral("EffectParams") || intern.contains(typ)) continue;
+        ++gefunden;
+        CHECK_MESSAGE(palette.contains(typ), "fehlt in der Palette: " << typ.toStdString());
+    }
+    CHECK(gefunden > 85);  // Schutz gegen einen Test, der still nichts prueft
+}
+
 TEST_CASE("PaletteUi S85: jeder Skript-Slot nennt auf der Info-Seite seinen Takt")
 {
     using lumi::scriptedit::slotScopeHtml;

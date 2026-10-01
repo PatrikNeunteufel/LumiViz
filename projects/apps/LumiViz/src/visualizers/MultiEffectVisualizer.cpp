@@ -33,6 +33,7 @@
 #include <QOpenGLFramebufferObjectFormat>
 #include <QOpenGLFunctions>
 #include <QByteArray>
+#include <QColor>
 #include <QMatrix4x4>
 #include <QQuaternion>
 #include <QVector2D>
@@ -7897,6 +7898,10 @@ int textSeparators(const std::string& text)
 void MultiEffectVisualizer::runText(const ChainNode& node, const TextParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    // Parameter-Skript (S86) auf der Frame-Kopie: alle Felder ueber die
+    // Feldtabelle; Felder, die neu rastern (Schrift, Farbe, Lage, Kontur),
+    // folgen dem Skript nur aus Init, Song und Beat (E3).
+    runParamScript(rt, "text", params.initCode, params.frameCode, params.beatCode, {});
     const int words = textSeparators(params.text) + 1;
 
     // --- word cycling (r_text render:544-600)
@@ -8131,6 +8136,8 @@ void MultiEffectVisualizer::runAvi(const ChainNode& node, const AviParams& param
     Q_UNUSED(params);
 #else
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    // Parameter-Skript (S86) auf der Frame-Kopie: blend, adapt, persist, speedms
+    runParamScript(rt, "avi", params.initCode, params.frameCode, params.beatCode, {});
     const std::string& path =
         params.resolvedPath.empty() ? params.filename : params.resolvedPath;
 
@@ -9845,6 +9852,56 @@ void MultiEffectVisualizer::wendeModulationAn(const ChainNode& node, EffectParam
         if (f == nullptr || !ft::modulierbar(*typ, *f)) continue;
         const double quelle = modQuellwert(m, zustaende[m.feld], node.nodeId);
         const double basis = f->lesen(kopie);
+        if (f->art == ft::Art::Farbe)
+        {
+            // F4b (S86): Helligkeit/Farbton ueber HSV, Kanaele direkt; die
+            // Kopie haelt 8 Bit je Kanal (wie der Regler)
+            const auto packed = static_cast<uint32_t>(basis);
+            QColor c(static_cast<int>((packed >> 16) & 0xFF),
+                     static_cast<int>((packed >> 8) & 0xFF), static_cast<int>(packed & 0xFF));
+            const double d = m.tiefe * quelle;
+            if (d == 0.0)  // der HSV-Rundweg darf den Reglerwert nicht anfassen
+            {
+                werte[m.feld] = basis;
+                continue;
+            }
+            using lumi::multieffect::ModZiel;
+            switch (m.ziel)
+            {
+            case ModZiel::Farbton:
+            {
+                float h = 0.0f, s = 0.0f, v = 0.0f;
+                c.getHsvF(&h, &s, &v);
+                double hn = (h < 0.0f ? 0.0 : static_cast<double>(h)) + d;
+                hn -= std::floor(hn);  // Umlauf
+                c = QColor::fromHsvF(static_cast<float>(hn), s, v);
+                break;
+            }
+            case ModZiel::Rot:
+                c.setRedF(static_cast<float>(std::clamp(c.redF() + d, 0.0, 1.0)));
+                break;
+            case ModZiel::Gruen:
+                c.setGreenF(static_cast<float>(std::clamp(c.greenF() + d, 0.0, 1.0)));
+                break;
+            case ModZiel::Blau:
+                c.setBlueF(static_cast<float>(std::clamp(c.blueF() + d, 0.0, 1.0)));
+                break;
+            default:  // Helligkeit (auch fuer `Wert` an einem Farbfeld)
+            {
+                float h = 0.0f, s = 0.0f, v = 0.0f;
+                c.getHsvF(&h, &s, &v);
+                c = QColor::fromHsvF(h < 0.0f ? 0.0f : h, s,
+                                     static_cast<float>(std::clamp(v + d, 0.0, 1.0)));
+                break;
+            }
+            }
+            const double neu = static_cast<double>((static_cast<uint32_t>(c.red()) << 16) |
+                                                   (static_cast<uint32_t>(c.green()) << 8) |
+                                                   static_cast<uint32_t>(c.blue()));
+            f->schreiben(kopie, neu);
+            werte[m.feld] = neu;
+            continue;
+        }
         // Spanne (Entscheid 2a): Bereich des Felds; ohne Bereich der Betrag
         // des Reglerwerts (0 -> 1, sonst bewegte sich ein Feld auf 0 nie)
         const bool bereich = !std::isnan(f->lo) && !std::isnan(f->hi) && f->hi > f->lo;

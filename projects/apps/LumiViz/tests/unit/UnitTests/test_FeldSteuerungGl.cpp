@@ -470,7 +470,7 @@ TEST_CASE("Modulation F4c: SuperScope und Effect List ohne Skripttraeger, uebrig
         for (const ft::Feld& f : t->felder)
             if (ft::modulierbar(*t, f)) offen.insert(t->typKey);
     }
-    CHECK(offen == std::set<std::string_view>{"text", "avi", "debugBars"});
+    CHECK(offen == std::set<std::string_view>{"debugBars"});
 
     // Host Switcher: laeuft vorab in runHostSwitchers mit eigener Kopie
     ChainNode sw;
@@ -482,6 +482,107 @@ TEST_CASE("Modulation F4c: SuperScope und Effect List ohne Skripttraeger, uebrig
     REQUIRE(kw.has_value());
     CHECK(std::get<HostSwitcherParams>(*kw).intervalSeconds ==
           doctest::Approx(hv.intervalSeconds + 36.0));
+}
+
+TEST_CASE("Modulation F4b: Farbfelder — Helligkeit, Farbton, Kanal")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    // Rechteck-LFO mit Rate 0 steht fest auf +1: Aenderung = Tiefe
+    const auto farbe = [](std::uint32_t start, ModZiel ziel, double tiefe) {
+        ClearParams c;
+        c.color = start;
+        ChainNode n;
+        n.params = c;
+        FeldModulation m = mod("color", ModQuelle::LfoRechteck, tiefe);
+        m.ziel = ziel;
+        n.mods = {m};
+        const auto k = laufeKnoten(n);
+        REQUIRE(k.has_value());
+        return static_cast<std::uint32_t>(std::get<ClearParams>(*k).color);
+    };
+    const auto kanal = [](std::uint32_t c, int k) {
+        return static_cast<int>((c >> (16 - 8 * k)) & 0xFF);
+    };
+    // Kanal: nur dieser bewegt sich, geklemmt
+    CHECK(farbe(0x804020, ModZiel::Rot, 0.25) == 0xC04020);
+    CHECK(farbe(0x804020, ModZiel::Blau, 2.0) == 0x8040FF);
+    CHECK(farbe(0x804020, ModZiel::Gruen, -1.0) == 0x800020);
+    // Farbton: ein Drittel Umlauf macht aus Rot Gruen, ein ganzer nichts
+    const std::uint32_t gruen = farbe(0xFF0000, ModZiel::Farbton, 1.0 / 3.0);
+    CHECK(kanal(gruen, 1) == 255);
+    CHECK(kanal(gruen, 0) <= 1);
+    CHECK(kanal(gruen, 2) <= 1);
+    // Helligkeit: bis zum Anschlag hell, Verhaeltnis der Kanaele bleibt
+    const std::uint32_t hell = farbe(0x804020, ModZiel::Helligkeit, 1.0);
+    CHECK(kanal(hell, 0) == 255);
+    CHECK(kanal(hell, 1) == doctest::Approx(128).epsilon(0.02));
+    CHECK(kanal(hell, 2) == doctest::Approx(64).epsilon(0.04));
+    CHECK(farbe(0x804020, ModZiel::Helligkeit, -1.0) == 0x000000);
+    // `Wert` an einem Farbfeld gilt als Helligkeit
+    CHECK(farbe(0x804020, ModZiel::Wert, -1.0) == 0x000000);
+    // Gegenprobe: Tiefe 0 laesst die Farbe bitgenau stehen
+    CHECK(farbe(0x804021, ModZiel::Helligkeit, 0.0) == 0x804021);
+    CHECK(farbe(0x804021, ModZiel::Farbton, 0.0) == 0x804021);
+
+    // Datei: das Ziel laeuft mit, an Zahlfeldern steht es nicht
+    ChainNode n;
+    n.params = ClearParams{};
+    FeldModulation m = mod("color", ModQuelle::Bass, 0.5);
+    m.ziel = ModZiel::Farbton;
+    n.mods = {m};
+    ChainNode root;
+    root.params = ListParams{};
+    root.children = {n};
+    const QJsonObject json = chainToJson(root);
+    QStringList bericht;
+    const ChainNode gelesen = chainFromJson(json, &bericht);
+    REQUIRE(gelesen.children.size() == 1);
+    REQUIRE(gelesen.children[0].mods.size() == 1);
+    CHECK(gelesen.children[0].mods[0].ziel == ModZiel::Farbton);
+}
+
+TEST_CASE("Feldsteuerung S86: Text und AVI tragen ein Parameter-Skript")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    // Text: Live-Feld folgt dem Frame-Slot, die Lage (rastert neu) nur Init/Beat (E3)
+    TextParams t;
+    t.text = "EINS;ZWEI";
+    t.xShift = 5;
+    t.initCode = "yshift = 12;";
+    t.frameCode = "normspeed = 33; xshift = xshift + 1;";
+    EffectParams p = t;
+    const auto k = laufe(p, p.index());
+    REQUIRE(k.has_value());
+    const auto& kt = std::get<TextParams>(*k);
+    CHECK(kt.normSpeed == 33);
+    CHECK(kt.yShift == 12);  // aus Init angenommen
+    CHECK(kt.xShift == 6);   // Frame 1 (frisch) angenommen, Frame 2 verworfen
+
+    // Datei: die Skripte laufen mit
+    AviParams a;
+    a.frameCode = "persist = 3;";
+    ChainNode n;
+    n.params = a;
+    ChainNode n2;
+    n2.params = t;
+    ChainNode root;
+    root.params = ListParams{};
+    root.children = {n, n2};
+    QStringList bericht;
+    const ChainNode gelesen = chainFromJson(chainToJson(root), &bericht);
+    REQUIRE(gelesen.children.size() == 2);
+    CHECK(std::get<AviParams>(gelesen.children[0].params).frameCode == "persist = 3;");
+    CHECK(std::get<TextParams>(gelesen.children[1].params).initCode == "yshift = 12;");
 }
 
 TEST_CASE("Feldsteuerung S86: Dynamic Movement — blend bleibt eine freie Skriptvariable")

@@ -7,7 +7,7 @@
   },
   "summe": {
     "typen": 92,
-    "felder": 803,
+    "felder": 809,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -93,6 +93,20 @@
           "doc": "beat-adaptive: additive on beat window, else 50/50"
         },
         {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter script (S86): every field of this node (`blend`, `adapt`, `persist`, `speedms`) + `b`/`w`/`h` + audio set. Empty = no script.",
+          "skriptvars": [
+            "blend",
+            "adapt",
+            "persist",
+            "speedms"
+          ]
+        },
+        {
           "art": "zahl",
           "default": 0,
           "name": "blend",
@@ -108,6 +122,34 @@
           "panel": "text",
           "helfer": "addText",
           "doc": "as stored in the preset (bare name)"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter script (S86): every field of this node (`blend`, `adapt`, `persist`, `speedms`) + `b`/`w`/`h` + audio set. Empty = no script.",
+          "skriptvars": [
+            "blend",
+            "adapt",
+            "persist",
+            "speedms"
+          ]
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter script (S86): every field of this node (`blend`, `adapt`, `persist`, `speedms`) + `b`/`w`/`h` + audio set. Empty = no script.",
+          "skriptvars": [
+            "blend",
+            "adapt",
+            "persist",
+            "speedms"
+          ]
         },
         {
           "art": "zahl",
@@ -8692,6 +8734,20 @@
       "struct": "TextParams",
       "felder": [
         {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter script (S86): every field of this node (`normspeed`, `onbeatspeed`, `blend`, `onbeat` …) + `b`/`w`/`h` + audio set. Fields that re-render the glyphs (font, color, position, outline) follow the script from Init, Song and Beat only, not from Frame. Empty = no script.",
+          "skriptvars": [
+            "normspeed",
+            "onbeatspeed",
+            "blend",
+            "onbeat"
+          ]
+        },
+        {
           "art": "zahl",
           "default": 0,
           "name": "blend",
@@ -8737,6 +8793,20 @@
           "doc": "400 normal, 700 bold"
         },
         {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter script (S86): every field of this node (`normspeed`, `onbeatspeed`, `blend`, `onbeat` …) + `b`/`w`/`h` + audio set. Fields that re-render the glyphs (font, color, position, outline) follow the script from Init, Song and Beat only, not from Frame. Empty = no script.",
+          "skriptvars": [
+            "normspeed",
+            "onbeatspeed",
+            "blend",
+            "onbeat"
+          ]
+        },
+        {
           "art": "zahl",
           "default": 1,
           "name": "hAlign",
@@ -8744,6 +8814,20 @@
           "helfer": "addEnum",
           "enumWerte": 3,
           "doc": "0 left, 1 center, 2 right"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter script (S86): every field of this node (`normspeed`, `onbeatspeed`, `blend`, `onbeat` …) + `b`/`w`/`h` + audio set. Fields that re-render the glyphs (font, color, position, outline) follow the script from Init, Song and Beat only, not from Frame. Empty = no script.",
+          "skriptvars": [
+            "normspeed",
+            "onbeatspeed",
+            "blend",
+            "onbeat"
+          ]
         },
         {
           "art": "bool",

@@ -2061,14 +2061,17 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   bei Auswahlfeldern ohne Tabellenbereich behoben; `startIndex` = Zustand,
   Render Scale `divisor` = Struktur; F2d ✅ — Dynamic Movement, Host-Gruppe
   und Host Switcher skriptbar (Vergleichslauf 294/294), Host Switcher
-  `intervalSeconds` modulierbar — **offen:** Text, AVI, Movement, Render
-  Scale, Debug Bars haben keine Formelfelder (Entscheid Patrik: Slots
-  nachrüsten?); Color Modifier `recompute`; **Namensfang-Prüfung über die
+  `intervalSeconds` modulierbar; F2e ✅ — Text und AVI mit eigenen
+  Init/Frame/Beat-Feldern — **offen:** Sichttest Text-/AVI-Skript (AVI ohne
+  Bildsonde); Movement, Render Scale, Debug Bars, Color Modifier `recompute`
+  bleiben ohne (Entscheid Patrik S86); F4b ✅ — Farbfelder modulierbar
+  (26 Felder, Helligkeit/Farbton/Kanal; im Bild nur am Clear-Knoten geprüft
+  — Sichttest an weiteren Knoten offen); Effekt-Palette um Text, AVI,
+  Comment ergänzt (Fund Patrik S86, Wächter-Test); **Namensfang-Prüfung über die
   ganze Sammlung für alle seit S84 gebundenen Typen** (`namensfang.py` im
   Scratchpad S86 — bisher nur SuperScope, Effect List, Dynamic Movement
   geprüft; Fund: DM `blend`); einmalige Bildabweichung bei
-  `fUk - afterburner remix` (1 von 12 Läufen, nicht reproduziert); F4b
-  Farbfelder modulieren,
+  `fUk - afterburner remix` (1 von 12 Läufen, nicht reproduziert);
   F4d LFO-Rate in Beats (Entscheide Patrik S85: je a), F6
   (MIDI/OSC-Adresse, mit der Idee).
   Farbtafeln/Stützstellen (`colors[i]`) weiter §7 des Konzepts.

@@ -124,21 +124,23 @@ struct Typ
 /// die Puffer um); movement hat kein Live-Zahlfeld.
 [[nodiscard]] inline bool modulationOhneTraeger(std::string_view typKey)
 {
-    // SuperScope, Effect List, Dynamic Movement, Host-Gruppe und Host Switcher
-    // tragen seit S86 einen Skripttraeger und brauchen diese Ausnahme nicht mehr.
-    return typKey == "text" || typKey == "avi" || typKey == "debugBars";
+    // SuperScope, Effect List, Dynamic Movement, Host-Gruppe, Host Switcher,
+    // Text und AVI tragen seit S86 einen Skripttraeger und brauchen diese
+    // Ausnahme nicht mehr.
+    return typKey == "debugBars";
 }
 
 /// Block F, F4 (S85, Entscheid 1a/1b): modulierbar sind die Live-Zahlfelder
 /// (Kommazahl, Ganzzahl) der Typen mit Parameter-Skript oder eigenem Host,
 /// seit F4c auch der geoeffneten Typen ohne Traeger (`modulationOhneTraeger`) —
-/// keine Farben, Schalter, Aufzaehlungen, Strukturfelder, keine Renderer-
-/// eigenen Namen. SSOT fuer Laufzeit, „~"-Knopf und Tests.
+/// seit F4b (S86) auch die Live-Farbfelder (Helligkeit, Farbton oder ein
+/// Kanal, `ModZiel`) — keine Schalter, Aufzaehlungen, Strukturfelder, keine
+/// Renderer-eigenen Namen. SSOT fuer Laufzeit, „~"-Knopf und Tests.
 [[nodiscard]] inline bool modulierbar(const Typ& t, const Feld& f)
 {
     return (t.traeger != Traeger::Keiner || modulationOhneTraeger(t.typKey)) &&
            f.klasse == Klasse::Live &&
-           (f.art == Art::Kommazahl || f.art == Art::Ganzzahl) &&
+           (f.art == Art::Kommazahl || f.art == Art::Ganzzahl || f.art == Art::Farbe) &&
            !rendererEigen(t.typKey, f.name);
 }
 

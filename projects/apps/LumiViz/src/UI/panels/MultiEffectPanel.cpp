@@ -350,12 +350,28 @@ QHash<QString, lumi::scriptedit::SymCat> modulKategorien(const EffectParams& par
 // vierzig Knoten "No dedicated variable reference" zeigte).
 /// Block F, F4 (S85): Dialog einer Feld-Modulation. `m` rein und raus;
 /// Rueckgabe: 0 = abgebrochen, 1 = uebernehmen, 2 = entfernen.
-int modulationBearbeiten(QWidget* parent, const QString& feldLabel, FeldModulation& m)
+int modulationBearbeiten(QWidget* parent, const QString& feldLabel, FeldModulation& m,
+                         bool farbe)
 {
     QDialog dlg(parent);
     dlg.setObjectName(QStringLiteral("modulationDialog"));
     dlg.setWindowTitle(QObject::tr("Modulation — %1").arg(feldLabel));
     auto* form = new QFormLayout(&dlg);
+
+    // F4b (S86): an einem Farbfeld waehlt „Target", was sich bewegt
+    QComboBox* ziel = nullptr;
+    if (farbe)
+    {
+        ziel = new QComboBox(&dlg);
+        ziel->setObjectName(QStringLiteral("modTarget"));
+        ziel->addItems({QObject::tr("Brightness"), QObject::tr("Hue"), QObject::tr("Red"),
+                        QObject::tr("Green"), QObject::tr("Blue")});
+        // ModZiel::Wert (0) gilt an Farbfeldern als Helligkeit
+        ziel->setCurrentIndex(std::max(0, static_cast<int>(m.ziel) - 1));
+        ziel->setToolTip(QObject::tr("What moves: brightness or hue of the colour, or one "
+                                     "channel. Hue has no effect on grey colours."));
+        form->addRow(QObject::tr("Target"), ziel);
+    }
 
     auto* quelle = new QComboBox(&dlg);
     quelle->setObjectName(QStringLiteral("modSource"));
@@ -376,9 +392,12 @@ int modulationBearbeiten(QWidget* parent, const QString& feldLabel, FeldModulati
     tiefe->setSingleStep(0.05);
     tiefe->setDecimals(3);
     tiefe->setValue(m.tiefe);
-    tiefe->setToolTip(QObject::tr("Share of the field's range (1 = full range, negative = "
-                                  "inverted). Fields without a known range: share of the "
-                                  "slider value. The result stays inside the range."));
+    tiefe->setToolTip(
+        farbe ? QObject::tr("How far: 1 = the full brightness or channel range, or one full "
+                            "turn of the hue circle. Negative = inverted.")
+              : QObject::tr("Share of the field's range (1 = full range, negative = "
+                            "inverted). Fields without a known range: share of the "
+                            "slider value. The result stays inside the range."));
     form->addRow(QObject::tr("Depth"), tiefe);
 
     auto* rate = new QDoubleSpinBox(&dlg);
@@ -446,6 +465,8 @@ int modulationBearbeiten(QWidget* parent, const QString& feldLabel, FeldModulati
         m.rateHz = rate->value();
         m.glaettung = glatt->value();
         m.aktiv = aktiv->isChecked();
+        m.ziel = ziel != nullptr ? static_cast<ModZiel>(ziel->currentIndex() + 1)
+                                 : ModZiel::Wert;
     }
     return ergebnis;
 }
@@ -3555,6 +3576,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             ft::modulierbar(*modTyp, *modFeld))
         {
             const std::string feldName(field);
+            const bool istFarbe = modFeld->art == ft::Art::Farbe;  // F4b (S86)
             auto* zeile = new QWidget(m_propPage);
             auto* hl = new QHBoxLayout(zeile);
             hl->setContentsMargins(0, 0, 0, 0);
@@ -3578,7 +3600,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             hl->addWidget(knopf);
             // QPointer: mutate kann die Seite neu bauen, dann ist der Knopf weg
             connect(knopf, &QToolButton::clicked, this,
-                    [this, path, feldName, label, knopf = QPointer<QToolButton>(knopf)](bool) {
+                    [this, path, feldName, label, istFarbe,
+                     knopf = QPointer<QToolButton>(knopf)](bool) {
                         FeldModulation m;
                         m.feld = feldName;
                         bool vorhanden = false;
@@ -3592,7 +3615,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                         vorhanden = true;
                                     }
                         }
-                        const int e = modulationBearbeiten(this, label, m);
+                        const int e = modulationBearbeiten(this, label, m, istFarbe);
                         if (e == 1)
                         {
                             mutate(path, [&](ChainNode& n) {
@@ -3618,14 +3641,20 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             // Live-Anzeige: liest nur, was die Laufzeit ohnehin rechnet (~10 Hz)
             auto* uhr = new QTimer(zeile);
             uhr->setInterval(100);
-            connect(uhr, &QTimer::timeout, live, [this, live, nodeId, feldName]() {
+            connect(uhr, &QTimer::timeout, live, [this, live, nodeId, feldName, istFarbe]() {
                 if (m_host == nullptr || m_mutex == nullptr) return;
                 std::optional<double> w;
                 {
                     QMutexLocker lock(m_mutex);
                     w = m_host->modulierterWert(nodeId, feldName);
                 }
-                live->setText(w ? QStringLiteral("→ %1").arg(*w, 0, 'g', 4) : QString());
+                if (!w)
+                    live->setText(QString());
+                else if (istFarbe)  // Farbe: als #RRGGBB
+                    live->setText(QStringLiteral("→ #%1").arg(
+                        static_cast<uint>(*w) & 0xFFFFFFu, 6, 16, QLatin1Char('0')));
+                else
+                    live->setText(QStringLiteral("→ %1").arg(*w, 0, 'g', 4));
             });
             uhr->start();
             widget = zeile;
@@ -7635,6 +7664,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                [](ChainNode& n, int v) { std::get<TextParams>(n.params).outlineSize = v; });
         addBool("shadow", tr("Shadow"), p->shadow,
                 [](ChainNode& n, bool v) { std::get<TextParams>(n.params).shadow = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TextParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TextParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TextParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<AviParams>(&params))
     {
@@ -7651,6 +7683,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                [](ChainNode& n, int v) { std::get<AviParams>(n.params).persist = v; });
         addInt("speedMs", tr("Frame time (ms)"), p->speedMs, 0, 1000,
                [](ChainNode& n, int v) { std::get<AviParams>(n.params).speedMs = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<AviParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<AviParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<AviParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<VideoSourceParams>(&params))
     {

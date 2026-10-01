@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.22.0
+> **Version:** 1.24.0
 > **Datum:** 2026-10-01
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -433,8 +433,15 @@ Seit Session 86 gilt das auch für **SuperScope** und **Effect List**:
 - **Host Switcher** — `intervalseconds`, `order` und `nextonsongchange`;
   **Switch after (s)** lässt sich auch mit dem **~**-Knopf modulieren.
 
-Ohne Formelfelder und deshalb nicht per Skript steuerbar bleiben Text, AVI,
-Movement (nur die Bewegungsformel), Render Scale und Debug Bars.
+- **Text** und **AVI** — haben jetzt eigene Felder **Init**, **Frame** und
+  **Beat** (und Song). Text: `normspeed`, `onbeatspeed`, `onbeat`, `blend`,
+  `randomword`, `insertblank` wirken sofort; Schrift, Farbe (`color_r/_g/_b`),
+  Lage (`xshift`, `yshift`, `halign`, `valign`) und Kontur lassen den Text neu
+  zeichnen und folgen dem Skript deshalb nur aus Init, Song und Beat. AVI:
+  `blend`, `adapt`, `persist`, `speedms`.
+
+Ohne Formelfelder und deshalb nicht per Skript steuerbar bleiben Movement
+(nur die Bewegungsformel), Render Scale und Debug Bars.
 
 **Script active** — gleich unter Name und Beschreibung, bei jedem Knoten mit
 Formelfeldern: ausgeschaltet läuft der Knoten, **als stünden seine Felder
@@ -501,8 +508,16 @@ speed). Zwei Besonderheiten:
   Frame-Code sieht ihn und darf ihn überschreiben; er schreibt ihn aber nicht
   von Bild zu Bild fort.
 
-Noch **nicht** modulierbar: Farben, Schalter und Auswahlfelder, sowie Render
-Scale; LFO-Tempo in Beats kommt später.
+**Farbfelder** tragen den **~**-Knopf ebenfalls. Dort wählt **Target**, was
+sich bewegt: **Brightness** (Helligkeit), **Hue** (Farbton — Depth 1 ist ein
+voller Umlauf im Farbkreis; bei Grau ohne Wirkung) oder ein einzelner Kanal
+**Red**, **Green**, **Blue**. Depth 1 ist jeweils der ganze Bereich. Der
+laufende Wert steht als `#RRGGBB` daneben. Je Farbfeld gibt es eine
+Modulation; Farbtafeln (etwa die Farbliste des SuperScope) und Farben, die
+den Knoten neu aufbauen (Text), sind nicht modulierbar.
+
+Noch **nicht** modulierbar: Schalter und Auswahlfelder, sowie Render Scale;
+LFO-Tempo in Beats kommt später.
 
 ### Bilder in Picture, Picture II und Texer
 
@@ -1029,6 +1044,8 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.24.0 | 2026-10-01 | Session 86. §11 Modulation: **Farbfelder** modulierbar (Target Brightness / Hue / Red / Green / Blue, Live-Wert als `#RRGGBB`). §11 Effekt-Palette: **Text**, **AVI** und **Comment** stehen jetzt in der Palette |
+| 1.23.0 | 2026-10-01 | Session 86. §11 „Werte per Formel steuern": **Text** und **AVI** haben jetzt Init/Frame/Beat-Felder; bei Text folgen Schrift, Farbe, Lage und Kontur dem Skript nur aus Init, Song und Beat |
 | 1.22.0 | 2026-10-01 | Session 86. §11 „Werte per Formel steuern": auch **Dynamic Movement** (`wrap`, `nomove`, `subpixel`, `rectcoords`, `buffern`), **Host-Gruppe** (`blendout`, `curvein`, `curveout`, `crossfadeseconds`) und **Host Switcher** (`intervalseconds`, `order`, `nextonsongchange`); Host Switcher → Switch after (s) modulierbar. Liste der Knoten ohne Formelfelder |
 | 1.21.0 | 2026-10-01 | Session 86. §11 „Werte per Formel steuern": die Felder von **SuperScope** (`linewidth`, `dotsize`, `rendermode` …) und **Effect List** (`blendout`, `bufferin`, `outadjustalpha` …) sind jetzt Skriptvariablen; AVS-Namen (`n`, `linesize`, `drawmode`, `alphain`, `alphaout`) behalten Vorrang. Behoben: Auswahlfelder mit im Panel gebauter Liste (z. B. Clear → Blend) sprangen auf den ersten Eintrag, sobald der Knoten ein Skript trug |
 | 1.20.0 | 2026-10-01 | Session 86. §11 Modulation: jetzt auch **SuperScope** (Point count, Line width, Dot size, Cycle frames) und **Effect List** (In/Out Alpha, In/Out Buffer, OnBeat frames), Host-Gruppe, Dynamic Movement, Text, AVI, Debug Bars; Point count setzt `n` neu. Effect List: `alphain`/`alphaout` stehen im Listen-Code zu Beginn jedes Bilds auf dem Reglerwert (wie in AVS) — der Alpha-Regler wirkt jetzt auch bei laufendem Listen-Code sofort |

@@ -438,6 +438,9 @@ const std::unordered_map<std::size_t, ScriptVarTable>& tables()
           {{"zoomscale", "in/out", "any", "zoom target (31 = neutral)"},
            {"zoomscale2", "in/out", "any", "on-beat zoom"},
            {"rotdir", "in/out", "any", "rotation: (rotdir-32) degrees per frame"}}}},
+        // S86: Text und AVI — alle Namen kommen aus der Feldtabelle
+        {ix<TextParams>, {kParam, {}}},
+        {ix<AviParams>, {kParam, {}}},
         {ix<MosaicParams>,
          {kParam,
           {{"quality", "in/out", "1..100", "block resolution (100 = off)"},
