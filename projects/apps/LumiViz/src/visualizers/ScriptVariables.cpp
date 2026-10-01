@@ -442,6 +442,7 @@ const std::unordered_map<std::size_t, ScriptVarTable>& tables()
         {ix<TextParams>, {kParam, {}}},
         {ix<AviParams>, {kParam, {}}},
         {ix<LyricsParams>, {kParam, {}}},
+        {ix<LyricsTrailParams>, {kParam, {}}},
         {ix<MosaicParams>,
          {kParam,
           {{"quality", "in/out", "1..100", "block resolution (100 = off)"},

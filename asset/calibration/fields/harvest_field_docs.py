@@ -349,6 +349,9 @@ KLASSEN = {
     "lyrics.yShift": "Struktur", "lyrics.outline": "Struktur",
     "lyrics.outlineColor": "Struktur", "lyrics.outlineSize": "Struktur",
     "lyrics.previewLines": "Struktur",
+    # Lyrics Trail (S87): dieselbe Regel
+    "lyricsTrail.color": "Struktur", "lyricsTrail.useOwnColor": "Struktur",
+    "lyricsTrail.xShift": "Struktur", "lyricsTrail.yShift": "Struktur",
     # Startwert: billig, setzt aber Laufzeitzustand neu
     "interferences.rotation": "Zustand",
     "dotPlane.startRotation": "Zustand", "dotFountain.startRotation": "Zustand",

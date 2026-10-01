@@ -4481,6 +4481,10 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const TextParams& params) const { self.runText(node, params); }
         void operator()(const AviParams& params) const { self.runAvi(node, params); }
         void operator()(const LyricsParams& params) const { self.runLyrics(node, params); }
+        void operator()(const LyricsTrailParams& params) const
+        {
+            self.runLyricsTrail(node, params);
+        }
         void operator()(const CommentParams&) const { /* annotation, no-op */ }
         void operator()(const ImportNotesParams&) const { /* Import-Protokoll, no-op */ }
         void operator()(const RenderScaleParams&) const { /* pre-frame state, no-op */ }
@@ -8193,13 +8197,7 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
 
     // Eine Bildzeile: `vorn` in der Stimmfarbe (laufende Zeile bzw. schon
     // gesungene Worte), `hinten` in der Vorschau-Farbe.
-    struct Anzeige
-    {
-        std::string vorn;
-        std::string hinten;
-        std::uint32_t farbe = 0;
-        bool klein = false;
-    };
+    using Anzeige = LyricsAnzeige;
     std::vector<Anzeige> zeilen;
     const auto stimmFarbe = [&params](ly::Stimme st) {
         return st == ly::Stimme::Zwei    ? params.color2
@@ -8287,6 +8285,78 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
         }
     }
 
+    zeichneLyricsZeilen(rt, params, zeilen);
+}
+
+const ChainNode* MultiEffectVisualizer::findeLyricsKnoten(const std::string& name) const
+{
+    // der benannte Lyrics-Knoten, sonst (leerer Name) der erste der Kette —
+    // in Baumreihenfolge, auch in Listen und Gruppen
+    const std::function<const ChainNode*(const ChainNode&)> suche =
+        [&](const ChainNode& n) -> const ChainNode* {
+        if (std::holds_alternative<LyricsParams>(n.params) &&
+            (name.empty() || n.displayName == name))
+            return &n;
+        for (const ChainNode& kind : n.children)
+            if (const ChainNode* fund = suche(kind)) return fund;
+        return nullptr;
+    };
+    return suche(m_root);
+}
+
+void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
+                                           const LyricsTrailParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    runParamScript(rt, "lyricstrail", params.initCode, params.frameCode, params.beatCode, {});
+
+    namespace ly = lumi::multieffect::lyrics;
+    const ChainNode* quelle = findeLyricsKnoten(params.source);
+    const ly::Songtext& s = m_songtext;
+    if (quelle == nullptr || !s.synchron) return;  // nur an echten Zeiten zu erkennen
+    const LyricsParams& lp = std::get<LyricsParams>(quelle->params);
+
+    const std::int64_t pos = playPositionMs() + static_cast<std::int64_t>(lp.offsetMs);
+    const int idx = ly::zeileBei(s, pos);
+    if (idx < 1) return;
+    // seit wann die laufende Zeile laeuft = seit wann die vorige zu Ende ist
+    const std::int64_t seit = pos + s.versatzMs - s.zeilen[static_cast<std::size_t>(idx)].zeitMs;
+    if (seit < 0 || seit > std::clamp(static_cast<int>(params.holdMs), 0, 5000)) return;
+    // die Zeile, die eben zu Ende ging: die letzte MIT Text vor der laufenden
+    int vor = idx - 1;
+    while (vor >= 0 && s.zeilen[static_cast<std::size_t>(vor)].text.empty()) --vor;
+    if (vor < 0) return;
+    const ly::Zeile& alt = s.zeilen[static_cast<std::size_t>(vor)];
+
+    // Dieselbe Geometrie wie der Lyrics-Knoten in diesem Augenblick: so viele
+    // Reihen wie er zeigt (laufende Zeile + Vorschau), nur traegt die erste
+    // die alte Zeile und die uebrigen bleiben leer — damit steht sie genau
+    // dort, wo sie eben noch stand, verschoben um den eigenen Versatz.
+    const int anzahl = static_cast<int>(s.zeilen.size());
+    const int vorschau = std::clamp(static_cast<int>(lp.previewLines), 0, 4);
+    std::vector<LyricsAnzeige> zeilen;
+    const std::uint32_t farbe = params.useOwnColor                  ? params.color
+                                : alt.stimme == ly::Stimme::Zwei    ? lp.color2
+                                : alt.stimme == ly::Stimme::Beide   ? lp.colorBoth
+                                                                    : lp.color;
+    zeilen.push_back({alt.text, std::string(), farbe, false});
+    for (int i = idx + 1, k = 0; i < anzahl && k < vorschau; ++i)
+    {
+        if (s.zeilen[static_cast<std::size_t>(i)].text.empty()) continue;
+        zeilen.push_back({});
+        ++k;
+    }
+    LyricsParams lage = lp;
+    lage.xShift = lp.xShift + params.xShift;
+    lage.yShift = lp.yShift + params.yShift;
+    lage.blend = params.blend;
+    zeichneLyricsZeilen(rt, lage, zeilen);
+}
+
+void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsParams& params,
+                                                const std::vector<LyricsAnzeige>& zeilen)
+{
+    using Anzeige = LyricsAnzeige;
     // --- Glyphen-Ebene: nur neu zeichnen, wenn sich der Zustand aendert
     std::string snapshot = params.fontFace + '\x1f' + std::to_string(params.fontHeight) + ':' +
                            std::to_string(params.fontWeight) + std::to_string(params.italic) +

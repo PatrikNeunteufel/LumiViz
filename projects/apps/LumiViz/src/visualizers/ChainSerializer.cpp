@@ -1056,6 +1056,19 @@ struct WriteVisitor
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
     }
+    void operator()(const LyricsTrailParams& p) const  // S87
+    {
+        o["source"] = QString::fromStdString(p.source);
+        o["holdMs"] = p.holdMs;
+        o["xShift"] = p.xShift;
+        o["yShift"] = p.yShift;
+        o["useOwnColor"] = p.useOwnColor;
+        o["color"] = static_cast<double>(p.color);
+        o["blend"] = p.blend;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
     void operator()(const LyricsParams& p) const  // S86
     {
         o["fontFace"] = QString::fromStdString(p.fontFace);
@@ -2518,6 +2531,21 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
+    if (type == "lyricsTrail")  // S87
+    {
+        LyricsTrailParams p;
+        p.source = getStr(o, "source", p.source);
+        p.holdMs = getInt(o, "holdMs", p.holdMs);
+        p.xShift = getInt(o, "xShift", p.xShift);
+        p.yShift = getInt(o, "yShift", p.yShift);
+        p.useOwnColor = getBool(o, "useOwnColor", p.useOwnColor);
+        p.color = getColor(o, "color", p.color);
+        p.blend = getInt(o, "blend", p.blend);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        return p;
+    }
     if (type == "lyrics")  // S86
     {
         LyricsParams p;
@@ -3111,6 +3139,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const IsfFilterParams&) const { return "isfFilter"; }
         QString operator()(const HostSwitcherParams&) const { return "hostSwitcher"; }
         QString operator()(const LyricsParams&) const { return "lyrics"; }
+        QString operator()(const LyricsTrailParams&) const { return "lyricsTrail"; }
         QString operator()(const PassthroughParams&) const { return "passthrough"; }
     };
     return std::visit(Visitor{}, params);

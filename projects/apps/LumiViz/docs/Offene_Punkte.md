@@ -2504,13 +2504,23 @@ nichts").
 **Nicht geprüft (S87):** eine echte Suche über den Dialog gegen den Dienst
 durch Claude (nur nachgestellte Antworten); das Verhalten bei 429; ob das
 Spulen im Titel den Text mitnimmt.
-**Idee Patrik S87 — Satellit „Lyrics Trail":** die eben beendete Zeile nicht
-einfach verschwinden lassen, sondern an anderer Stelle der Kette noch einmal
-zeichnen (nach oben geschoben), sodass die Effekte dahinter (Fadeout, Blur,
-Movement, Rückkopplung) sie verblassen oder wegziehen. Vorschlag: eigener
-Knoten in der Palette, der sich über den Namen auf einen Lyrics-Knoten
-bezieht (wie der Host Switcher auf seine Gruppen) — kein eigener Puffer
-nötig. Geplant nach dem Panel zum Nachsynchronisieren.
+**✅ S87 gebaut — Knoten „Lyrics Trail"** (Idee Patrik S87, Typ `lyricsTrail`,
+`LyricsTrailParams` am Ende der Variante): zeichnet die eben beendete Zeile
+für `holdMs` noch einmal an seiner Stelle der Kette; Schrift und Lage vom
+Lyrics-Knoten (`source` = Name, leer = der erste), eigener Versatz, optional
+eigene Farbe, Formelfelder. Kein eigener Puffer — das Verschwinden machen die
+Effekte danach. Rastern teilt er mit dem Lyrics-Knoten
+(`zeichneLyricsZeilen`). Beispiel im Mix `20261001.mix.lvfx2`: Effect List
+(Additive, behält ihr Bild) mit Blitter Feedback `scale` 35, Fadeout 4,
+Trail. **Befund bei der Abstimmung:** `scale` 33 bewegt die Zeile unter einem
+Pixel je Frame, das Fadeout frisst die Vorderkante — sie schrumpft zum Strich;
+Blur taugt dabei nicht (ohne `roundUp` löscht er dünne Striche, mit `roundUp`
+bleibt ein Grauschleier über der ganzen Liste). **Nur synchroner Text;**
+unsynchron (Zeilenwechsel alle n Beats) kennt der Trail nicht. **Der Trail
+liest die gespeicherten Felder des Lyrics-Knotens**, nicht dessen
+skriptgesteuerte Werte — mit „Karaoke Bounce" steht die alte Zeile an der
+Grundposition. **Sichttest offen (Patrik):** Wirkung im Mix über laufendem
+Bild (geprüft nur auf Schwarz, an gerenderten Bildern).
 **Möglich, nicht gebaut:** falsche Texte an den Dienst melden (`POST
 /api/flag`, verlangt je Meldung einen Rechen-Nachweis wie `/api/publish`);
 selbst synchronisierte Texte veröffentlichen (`/api/publish`) — beides nur

@@ -1,8 +1,8 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 832,
-        "typen": 93
+        "felder": 842,
+        "typen": 94
     },
     "typen": [
         {
@@ -2759,6 +2759,62 @@
             ],
             "name": "Lyrics",
             "typkey": "lyrics"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16777215,
+                    "name": "color"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 300,
+                    "name": "holdMs"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "source"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "useOwnColor"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "xShift"
+                },
+                {
+                    "art": "zahl",
+                    "default": -8,
+                    "name": "yShift"
+                }
+            ],
+            "name": "Lyrics Trail",
+            "typkey": "lyricsTrail"
         },
         {
             "felder": [

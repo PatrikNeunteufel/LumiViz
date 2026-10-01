@@ -988,6 +988,25 @@ private:
                  const lumi::multieffect::TextParams& params);
     void runLyrics(const lumi::multieffect::ChainNode& node,
                    const lumi::multieffect::LyricsParams& params);
+    /// Eine Bildzeile der Lyrics: `vorn` in `farbe` (laufende Zeile bzw. schon
+    /// gesungene Worte), `hinten` in der Vorschau-Farbe; `klein` = halbe Hoehe.
+    struct LyricsAnzeige
+    {
+        std::string vorn;
+        std::string hinten;
+        std::uint32_t farbe = 0;
+        bool klein = false;
+    };
+    /// Reihen rastern (nur bei geaendertem Zustand) und ueber das Bild legen —
+    /// gemeinsam fuer Lyrics und Lyrics Trail (S87).
+    void zeichneLyricsZeilen(LeafRuntime& rt, const lumi::multieffect::LyricsParams& params,
+                             const std::vector<LyricsAnzeige>& zeilen);
+    /// Lyrics Trail (S87): die eben beendete Zeile an dieser Stelle der Kette
+    /// noch einmal zeichnen; Schrift und Lage vom Lyrics-Knoten `source`.
+    void runLyricsTrail(const lumi::multieffect::ChainNode& node,
+                        const lumi::multieffect::LyricsTrailParams& params);
+    [[nodiscard]] const lumi::multieffect::ChainNode* findeLyricsKnoten(
+        const std::string& name) const;
     /// Glyphen-Textur `texture` ueber das laufende Bild legen (S86; derselbe
     /// Pass wie im Text-Knoten). blend: 0 ersetzen, 1 additiv, 2 50/50.
     void composeGlyphLayer(unsigned int texture, int blend);

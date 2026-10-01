@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.32.0
+> **Version:** 1.33.0
 > **Datum:** 2026-10-01
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -591,6 +591,33 @@ Zeit hat (Leerzeilen brauchen keine). Die bisherige `.txt` bleibt liegen; die
 Suche nimmt ab dann die `.lrc`. Wechselt der Titel, während ungespeicherte
 Zeiten da sind, bleibt deine Arbeit im Panel stehen, bis du speicherst oder
 **Reload** drückst.
+
+**Lyrics Trail: die alte Zeile verwehen lassen.** Der Knoten **Lyrics Trail**
+(Effekt-Palette → Images) zeichnet die Zeile, die eben zu Ende ging, noch
+einmal — an seiner eigenen Stelle der Kette. Er hat keinen eigenen Text und
+keine eigene Schrift: beides leiht er sich vom Lyrics-Knoten. Was in der Kette
+*nach* ihm kommt, lässt die Zeile verschwinden. Das Muster:
+
+```
+Effect List            (Clear every frame aus, Input: Ignore, Output: Additive)
+├─ Blitter Feedback    scale 35 — zieht das Bild der Liste zur Mitte, „nach hinten"
+├─ Fadeout             4 — lässt es verblassen
+└─ Lyrics Trail        zeichnet die alte Zeile frisch hinein
+Lyrics                 die laufende Zeile, wie gewohnt
+```
+
+| Feld | Bedeutung |
+|---|---|
+| **Lyrics node** | Name des Lyrics-Knotens, dem der Trail folgt; leer = der erste der Kette |
+| **Hold (ms)** | so lange wird die alte Zeile gezeichnet; danach tragen die Effekte sie weg |
+| **X shift / Y shift (%)** | Versatz gegen die Stelle, an der die Zeile stand (negativ = nach oben) |
+| **Own color** / **Color** | eigene Farbe statt der, die die Zeile hatte |
+| **Blend** | wie beim Lyrics-Knoten |
+
+Der Trail arbeitet nur mit synchronem Text. Eine zu langsame Drift (Blitter
+Feedback **scale** 33) lässt die Zeile zu einem Strich schrumpfen, statt sie
+wegzutragen — 35 und mehr wirkt. Ein fertiges Beispiel steht in
+`asset/effectchain/20261001.mix.lvfx2` (Liste „Lyrics Trail List").
 
 **Zwei Fassungen desselben Songs.** Im Benutzerordner heißt die Datei
 `<Interpret> - <Titel>`. Geholte Texte tragen dazu die Dauer des Titels
@@ -1221,6 +1248,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.33.0 | 2026-10-01 | Session 87. §11 Lyrics: NEU Knoten **Lyrics Trail** (die eben beendete Zeile noch einmal zeichnen, damit Effekte sie verwehen lassen; Muster mit Effect List, Blitter Feedback und Fadeout) |
 | 1.32.0 | 2026-10-01 | Session 87. §11 Lyrics: NEU Panel **Lyrics Sync** (Zeiten je Zeile mitklopfen, nachstellen, vorhören, als `.lrc` speichern) |
 | 1.31.0 | 2026-10-01 | Session 87. §11 Lyrics: Angaben im Editor als **Tabelle** mit Status (*…downloading…*); Online-Abruf **wiederholt sich von selbst**, wenn der Dienst beschäftigt ist; zehn neue Voreinstellungen, darunter bewegte Karaoke-Varianten; **Alternatives…** (andere Fassung suchen, eigene Suchbegriffe), **Wrong lyrics** mit Sperrliste (Settings → Audio); wiederholte Zeilen blenden vor dem Einsatz; Fassungen eines Songs getrennt nach Dauer. Playlist: Dauer je Titel; Shuffle, Loop und Repeat bleiben über den Neustart erhalten |
 | 1.30.0 | 2026-10-01 | Session 86. §11 Lyrics: NEU **Songtexte aus dem Netz** (Opt-in „Search lyrics online", Dienst lrclib.net, was gesendet wird; „Save fetched lyrics": User folder / Next to the song) |

@@ -433,6 +433,14 @@ std::vector<std::pair<std::size_t, Typ>> baue()
         LV_FELD(LyricsParams, xShift, "xShift", "xshift", "", 1.0, Ganzzahl, Struktur, -100.0, 100.0),
         LV_FELD(LyricsParams, yShift, "yShift", "yshift", "", 1.0, Ganzzahl, Struktur, -100.0, 100.0),
     }}});
+    out.push_back({ix<LyricsTrailParams>(), Typ{"lyricsTrail", Traeger::ParamSkript, {
+        LV_FELD(LyricsTrailParams, blend, "blend", "blend", "", 1.0, Aufzaehlung, Live, 0.0, 2.0),
+        LV_FELD(LyricsTrailParams, color, "color", "color", "", 1.0, Farbe, Struktur, kNaN, kNaN),
+        LV_FELD(LyricsTrailParams, holdMs, "holdMs", "holdms", "", 1.0, Ganzzahl, Live, 0.0, 5000.0),
+        LV_FELD(LyricsTrailParams, useOwnColor, "useOwnColor", "useowncolor", "", 1.0, Schalter, Struktur, 0.0, 1.0),
+        LV_FELD(LyricsTrailParams, xShift, "xShift", "xshift", "", 1.0, Ganzzahl, Struktur, -100.0, 100.0),
+        LV_FELD(LyricsTrailParams, yShift, "yShift", "yshift", "", 1.0, Ganzzahl, Struktur, -100.0, 100.0),
+    }}});
     out.push_back({ix<MeshWarpParams>(), Typ{"meshWarp", Traeger::ParamSkript, {
         LV_FELD(MeshWarpParams, gridX, "gridX", "gridx", "", 1.0, Ganzzahl, Struktur, kNaN, kNaN),
         LV_FELD(MeshWarpParams, gridY, "gridY", "gridy", "", 1.0, Ganzzahl, Struktur, kNaN, kNaN),

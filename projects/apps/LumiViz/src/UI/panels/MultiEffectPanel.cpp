@@ -7980,6 +7980,39 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).frameCode = std::move(v); });
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).beatCode = std::move(v); });
     }
+    else if (auto* p = std::get_if<LyricsTrailParams>(&params))
+    {
+        // Lyrics Trail (S87): zeichnet die eben beendete Zeile noch einmal —
+        // was in der Kette danach kommt, laesst sie verschwinden.
+        {
+            auto* hinweis = new QLabel(
+                tr("Draws the lyrics line that just ended once more, at this place in the "
+                   "chain. Put a Fadeout, Blur or Movement after it (in a list that keeps its "
+                   "picture) to let the line fade or drift away. Font and position come from "
+                   "the Lyrics node. Synced lyrics only."),
+                m_propContainer);
+            hinweis->setWordWrap(true);
+            form->addRow(hinweis);
+        }
+        addText("source", tr("Lyrics node"), p->source,
+                [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).source = std::move(v); });
+        addInt("holdMs", tr("Hold (ms)"), p->holdMs, 0, 5000,
+               [](ChainNode& n, int v) { std::get<LyricsTrailParams>(n.params).holdMs = v; });
+        addInt("xShift", tr("X shift (%)"), p->xShift, -100, 100,
+               [](ChainNode& n, int v) { std::get<LyricsTrailParams>(n.params).xShift = v; });
+        addInt("yShift", tr("Y shift (%)"), p->yShift, -100, 100,
+               [](ChainNode& n, int v) { std::get<LyricsTrailParams>(n.params).yShift = v; });
+        addBool("useOwnColor", tr("Own color"), p->useOwnColor,
+                [](ChainNode& n, bool v) { std::get<LyricsTrailParams>(n.params).useOwnColor = v; });
+        addColor("color", tr("Color"), p->color,
+                 [](ChainNode& n, uint32_t v) { std::get<LyricsTrailParams>(n.params).color = v; });
+        addEnum("blend", tr("Blend"), std::clamp(p->blend, 0, 2),
+                {tr("Replace"), tr("Additive"), tr("50/50")},
+                [](ChainNode& n, int v) { std::get<LyricsTrailParams>(n.params).blend = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).beatCode = std::move(v); });
+    }
     else if (auto* p = std::get_if<AviParams>(&params))
     {
         addText("filename", tr("File"), p->filename,

@@ -2934,6 +2934,32 @@ struct LyricsParams
     std::string beatCode;
 };
 
+/**
+ * LumiViz "Lyrics Trail" (S87): draws the lyrics line that has just ended once
+ * more — at this node's place in the chain. Whatever follows it (Fadeout,
+ * Blur, Movement, a list with feedback) makes the line fade, drift or
+ * dissolve. The node borrows font, alignment and position from a Lyrics node
+ * and has no text of its own. Synchronised lyrics only.
+ */
+struct LyricsTrailParams
+{
+    /// Name of the Lyrics node to follow ("" = the first Lyrics node of the chain).
+    std::string source;
+    int holdMs = 300;              ///< how long the ended line is drawn, in milliseconds (0..5000)
+    int xShift = 0;                ///< offset from the place of the line, percent of width
+    int yShift = -8;               ///< offset from the place of the line, percent of height (negative = up)
+    bool useOwnColor = false;      ///< draw in `color` instead of the color the line had
+    std::uint32_t color = 0xFFFFFF;  ///< own color 0x00RRGGBB (with `useOwnColor`)
+    int blend = 0;                 ///< 0 replace, 1 additive, 2 50/50 (glyphs only)
+
+    /// Parameter script (S87): every field of this node + `b`/`w`/`h` + audio
+    /// set. Fields that re-render the glyphs follow the script from Init, Song
+    /// and Beat only. Empty = no script.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+};
+
 using EffectParams =
     std::variant<ListParams, ClearParams, FadeoutParams, InvertParams,
                  BrightnessParams, FastBrightnessParams, BlurParams, MirrorParams,
@@ -2964,7 +2990,8 @@ using EffectParams =
                  ShadertoyParams, MeshWarpParams, GpuParticlesParams,
                  VideoSourceParams, PixelFilterParams, IsfFilterParams,
                  HostSwitcherParams, PassthroughParams,
-                 LyricsParams>;  // neue Typen ans ENDE (Indizes bleiben stehen)
+                 LyricsParams,
+                 LyricsTrailParams>;  // neue Typen ans ENDE (Indizes bleiben stehen)
 
 /**
  * Die Herkunft eines Knotens — oder `nullptr`, wenn sein Typ keine trägt.
@@ -3185,6 +3212,7 @@ struct CompileResult
         const char* operator()(const HostGroupParams&) const { return "Host Group"; }
         const char* operator()(const HostSwitcherParams&) const { return "Host Switcher"; }
         const char* operator()(const LyricsParams&) const { return "Lyrics"; }
+        const char* operator()(const LyricsTrailParams&) const { return "Lyrics Trail"; }
         const char* operator()(const ClearParams&) const { return "Clear"; }
         const char* operator()(const FadeoutParams&) const { return "Fadeout"; }
         const char* operator()(const InvertParams&) const { return "Invert"; }

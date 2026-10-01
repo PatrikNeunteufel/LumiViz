@@ -701,6 +701,212 @@ TEST_CASE("Lyrics S86: laufende Zeile an der Abspielposition, Vorschau, unsynchr
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+TEST_CASE("Lyrics Trail S87: die eben beendete Zeile, fuer die Haltezeit, an der Stelle des Lyrics-Knotens")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+
+    // Helle Pixel und ihr Schwerpunkt in y — der Lyrics-Knoten selbst ist
+    // ausgeschaltet (das Auge), der Trail leiht sich nur Schrift und Lage.
+    struct Bild
+    {
+        int hell = 0;
+        double y = 0.0;
+    };
+    const auto zeichne = [](const LyricsTrailParams& tp, bool lyricsAn, bool trailAn,
+                            const std::string& lyricsName = "Lyrics") {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        LyricsParams lp;
+        lp.fontHeight = -24;
+        lp.outline = false;
+        lp.previewLines = 0;
+        lp.colorNext = 0x202020;
+        lyr.params = lp;
+        lyr.displayName = lyricsName;
+        lyr.enabled = lyricsAn;
+        ChainNode trail;
+        trail.params = tp;
+        trail.enabled = trailAn;
+        root.children = {clear, lyr, trail};
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        vis.render(1.0f / 60.0f);
+        vis.render(1.0f / 60.0f);
+        const QImage img = vis.debugGrabRootSurface();
+        Bild b;
+        double summe = 0.0;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+                if (qGray(img.pixel(x, y)) > 200)
+                {
+                    ++b.hell;
+                    summe += y;
+                }
+        if (b.hell > 0) b.y = summe / b.hell;
+        return b;
+    };
+
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM\n[00:13.00]IIII\n"));
+    LyricsTrailParams tp;  // Vorgaben: 300 ms, 8 % nach oben
+
+    // die erste Zeile laeuft noch: nichts ist zu Ende
+    MultiEffectVisualizer::notifyPlayPosition(12000);
+    CHECK(zeichne(tp, false, true).hell == 0);
+    // 100 ms nach dem Wechsel: die ALTE Zeile („MMMM", breit) steht da
+    MultiEffectVisualizer::notifyPlayPosition(13100);
+    const Bild alt = zeichne(tp, false, true);
+    CHECK(alt.hell > 0);
+    // … und zwar oberhalb der Stelle, an der der Lyrics-Knoten zeichnet
+    const Bild neu = zeichne(tp, true, false);  // nur Lyrics: die neue Zeile „IIII"
+    REQUIRE(neu.hell > 0);
+    CHECK(alt.hell > neu.hell * 2);  // „MMMM" ist breiter als „IIII"
+    CHECK(alt.y < neu.y - 10.0);     // 8 % von 240 px = 19 px hoeher
+    // ohne Versatz steht sie genau dort, wo sie eben noch stand
+    LyricsTrailParams ohne = tp;
+    ohne.yShift = 0;
+    CHECK(zeichne(ohne, false, true).y == doctest::Approx(neu.y).epsilon(0.02));
+    // die Haltezeit ist um: nichts mehr (das Verschwinden machen die Effekte danach)
+    MultiEffectVisualizer::notifyPlayPosition(13500);
+    CHECK(zeichne(tp, false, true).hell == 0);
+    LyricsTrailParams lang = tp;
+    lang.holdMs = 1000;
+    CHECK(zeichne(lang, false, true).hell == alt.hell);
+
+    // Bezug ueber den Namen: ein falscher Name findet keinen Lyrics-Knoten
+    MultiEffectVisualizer::notifyPlayPosition(13100);
+    LyricsTrailParams benannt = tp;
+    benannt.source = "Karaoke";
+    CHECK(zeichne(benannt, false, true).hell == 0);
+    CHECK(zeichne(benannt, false, true, "Karaoke").hell == alt.hell);
+
+    // eigene Farbe statt der Zeilenfarbe
+    LyricsTrailParams dunkel = tp;
+    dunkel.useOwnColor = true;
+    dunkel.color = 0x303030;
+    CHECK(zeichne(dunkel, false, true).hell == 0);
+
+    // unsynchroner Text hat keine Zeiten: der Trail zeichnet nichts
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("MMMM\nIIII\n"));
+    CHECK(zeichne(tp, false, true).hell == 0);
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
+// Wunsch Patrik S87: der Trail in einer Effect List, die ihr Bild behaelt —
+// Blitter Feedback zieht die alte Zeile nach hinten (zur Bildmitte, kleiner),
+// Fadeout laesst sie verblassen. Genau diese Liste steht in
+// asset/effectchain/20261001.mix.lvfx2.
+//
+// Abstimmung an gerenderten Bildern: `scale` 33 ist zu langsam — die Zeile
+// wandert dann weniger als ein Pixel je Frame, das Fadeout frisst ihre
+// Vorderkante schneller, als sie vorankommt, und sie schrumpft zu einem
+// Strich. 35 traegt sie sichtbar weg. Ein Blur dazu hilft nicht: ohne
+// `roundUp` loescht er duenne Striche, mit `roundUp` bleibt ein Grauschleier.
+TEST_CASE("Lyrics Trail S87: in einer Liste mit Rueckkopplung verweht die Zeile nach hinten")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setSongtext(
+        ly::leseLrc("[00:10.00]MMMM MMMM MMMM\n[00:13.00]IIII\n[00:30.00]ende\n"));
+
+    const QJsonObject liste = QJsonDocument::fromJson(R"({
+        "type": "list", "name": "Lyrics Trail", "enabled": true,
+        "clearEveryFrame": false, "blendIn": 0, "blendOut": 4,
+        "inAdjustAlpha": 128, "outAdjustAlpha": 128,
+        "bufferIn": 0, "bufferOut": 0, "bufferInInvert": false, "bufferOutInvert": false,
+        "onBeatRender": false, "onBeatFrames": 1, "useCode": false,
+        "initCode": "", "frameCode": "",
+        "children": [
+            {"type": "blitterFeedback", "name": "Drift back", "enabled": true,
+             "scale": 35, "scale2": 35, "onBeat": false, "blend": false, "subpixel": true,
+             "initCode": "", "frameCode": "", "beatCode": ""},
+            {"type": "fadeout", "name": "Fadeout", "enabled": true, "fadeLen": 4, "color": 0,
+             "initCode": "", "frameCode": "", "beatCode": ""},
+            {"type": "lyricsTrail", "name": "Lyrics Trail", "enabled": true,
+             "source": "", "holdMs": 120, "xShift": 0, "yShift": -7,
+             "useOwnColor": false, "color": 16777215, "blend": 0,
+             "initCode": "", "frameCode": "", "beatCode": ""}
+        ]})").object();
+    REQUIRE_FALSE(liste.isEmpty());
+
+    ChainNode root;
+    root.params = ListParams{};
+    ChainNode clear;
+    clear.params = ClearParams{};
+    ChainNode lyr;
+    LyricsParams lp;
+    lp.previewLines = 0;
+    lp.fontHeight = -28;
+    lyr.params = lp;
+    lyr.enabled = false;  // nur die Spur zaehlen, nicht die laufende Zeile
+    QStringList bericht;
+    root.children = {clear, nodeFromJson(liste, &bericht), lyr};
+    CHECK(bericht.isEmpty());
+    REQUIRE(root.children[1].children.size() == 3);
+    REQUIRE(std::holds_alternative<LyricsTrailParams>(root.children[1].children[2].params));
+
+    MultiEffectVisualizer vis;
+    vis.setChain(std::move(root));
+    vis.initialize();
+    vis.resize(QSize(480, 270));
+    QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 480, 270);
+
+    struct Bild
+    {
+        double summe = 0.0;  ///< Helligkeit ueber alles
+        double y = 0.0;      ///< Schwerpunkt in y
+    };
+    const QString schnapp = qEnvironmentVariable("LUMIVIZ_TRAIL_SNAP");
+    const auto bildBei = [&](int frame) {
+        const QImage img = vis.debugGrabRootSurface();
+        if (!schnapp.isEmpty()) img.save(schnapp + QStringLiteral("/trail_%1.png").arg(frame, 3, 10, QLatin1Char('0')));
+        Bild b;
+        double gewichtet = 0.0;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+            {
+                const int g = qGray(img.pixel(x, y));
+                b.summe += g;
+                gewichtet += static_cast<double>(g) * y;
+            }
+        if (b.summe > 0.0) b.y = gewichtet / b.summe;
+        return b;
+    };
+
+    // ab 12,95 s in Schritten von 1/60 s; die Zeile wechselt bei 13,00 s (Frame 3)
+    std::vector<Bild> bilder;
+    for (int frame = 0; frame <= 120; ++frame)
+    {
+        MultiEffectVisualizer::notifyPlayPosition(12950 + frame * 1000 / 60);
+        vis.render(1.0f / 60.0f);
+        bilder.push_back(bildBei(frame));
+    }
+    CHECK(bilder[1].summe == 0.0);  // vor dem Wechsel: nichts
+    const Bild& frisch = bilder[8];  // waehrend der Haltezeit: die Zeile steht da
+    const Bild& spaeter = bilder[40];  // 0,5 s nach der Haltezeit: sie haengt noch nach …
+    const Bild& ende = bilder[120];
+    CHECK(frisch.summe > 0.0);
+    CHECK(spaeter.summe > 0.0);
+    CHECK(spaeter.summe < frisch.summe);       // … aber schwaecher
+    CHECK(spaeter.y < frisch.y - 3.0);         // und zur Bildmitte hin gewandert (nach hinten)
+    CHECK(ende.summe < frisch.summe * 0.05);   // nach 2 s ist sie weg
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 TEST_CASE("Lyrics S87: jede mitgelieferte Voreinstellung zeichnet; die Skripte tun, was sie sagen")
 {
     GlUmgebung gl;

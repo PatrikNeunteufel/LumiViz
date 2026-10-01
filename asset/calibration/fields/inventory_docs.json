@@ -6,8 +6,8 @@
     "beschreibung": "EffectChain.hpp (Doxygen)"
   },
   "summe": {
-    "typen": 93,
-    "felder": 832,
+    "typen": 94,
+    "felder": 842,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -5537,6 +5537,103 @@
           "lo": -100.0,
           "hi": 100.0,
           "doc": "percent of height (negative = up)"
+        }
+      ]
+    },
+    {
+      "typkey": "lyricsTrail",
+      "name": "Lyrics Trail",
+      "struct": "LyricsTrailParams",
+      "felder": [
+        {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter script (S87): every field of this node + `b`/`w`/`h` + audio set. Fields that re-render the glyphs follow the script from Init, Song and Beat only. Empty = no script.",
+          "skriptvars": []
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "blend",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 3,
+          "doc": "0 replace, 1 additive, 2 50/50 (glyphs only)"
+        },
+        {
+          "art": "zahl",
+          "default": 16777215,
+          "name": "color",
+          "panel": "farbe",
+          "helfer": "addColor",
+          "doc": "own color 0x00RRGGBB (with `useOwnColor`)"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter script (S87): every field of this node + `b`/`w`/`h` + audio set. Fields that re-render the glyphs follow the script from Init, Song and Beat only. Empty = no script.",
+          "skriptvars": []
+        },
+        {
+          "art": "zahl",
+          "default": 300,
+          "name": "holdMs",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 0.0,
+          "hi": 5000.0,
+          "doc": "how long the ended line is drawn, in milliseconds (0..5000)"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter script (S87): every field of this node + `b`/`w`/`h` + audio set. Fields that re-render the glyphs follow the script from Init, Song and Beat only. Empty = no script.",
+          "skriptvars": []
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "source",
+          "panel": "text",
+          "helfer": "addText",
+          "doc": "Name of the Lyrics node to follow (\"\" = the first Lyrics node of the chain)."
+        },
+        {
+          "art": "bool",
+          "default": false,
+          "name": "useOwnColor",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "draw in `color` instead of the color the line had"
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "xShift",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": -100.0,
+          "hi": 100.0,
+          "doc": "offset from the place of the line, percent of width"
+        },
+        {
+          "art": "zahl",
+          "default": -8,
+          "name": "yShift",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": -100.0,
+          "hi": 100.0,
+          "doc": "offset from the place of the line, percent of height (negative = up)"
         }
       ]
     },
