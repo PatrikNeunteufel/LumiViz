@@ -12,6 +12,7 @@ set(_local_sources
     # (sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/AlbumCover.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/SongtextQuelle.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/SongtextOnline.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/AudioPlayer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/BassEngine.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Playlist.cpp"

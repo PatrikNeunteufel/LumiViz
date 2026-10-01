@@ -16,6 +16,7 @@ set(_local_headers
     # "${CMAKE_CURRENT_LIST_DIR}/.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/AlbumCover.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/SongtextQuelle.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/SongtextOnline.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/AudioEvents.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/AudioPlayer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/BassEngine.hpp"

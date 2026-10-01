@@ -404,6 +404,39 @@ QWidget* SettingsPanel::createAudioTab()
     m_pSampleRateSpinBox->setToolTip(tr("Audio sample rate"));
     layout->addRow(tr("Sample Rate:"), m_pSampleRateSpinBox);
 
+    // Songtexte (S86, Entscheide Patrik 3a/4a): Online-Suche als Opt-in und
+    // der Speicherort eines Funds. Beide wirken sofort (QSettings), gelesen
+    // werden sie beim naechsten Titelwechsel (audio/SongtextOnline).
+    {
+        auto* online = new QCheckBox(tr("Enable"), widget);
+        online->setObjectName(QStringLiteral("lyricsOnlineSearch"));
+        online->setChecked(
+            QSettings().value(QStringLiteral("lyrics/onlineSearch"), false).toBool());
+        online->setToolTip(
+            tr("When no lyrics are found locally, ask lrclib.net. This sends artist, title, "
+               "album and duration of the playing track to that service. Off: nothing "
+               "leaves this computer."));
+        connect(online, &QCheckBox::toggled, this, [](bool an) {
+            QSettings().setValue(QStringLiteral("lyrics/onlineSearch"), an);
+        });
+        layout->addRow(tr("Search lyrics online:"), online);
+
+        auto* ablage = new QComboBox(widget);
+        ablage->setObjectName(QStringLiteral("lyricsSaveLocation"));
+        ablage->addItems({tr("User folder"), tr("Next to the song")});
+        ablage->setCurrentIndex(
+            QSettings().value(QStringLiteral("lyrics/saveLocation"), 0).toInt() == 1 ? 1 : 0);
+        ablage->setToolTip(
+            tr("Where lyrics fetched online are saved. User folder: "
+               "%APPDATA%/LumiViz/lyrics. Next to the song: same name as the song with "
+               ".lrc or .txt — if that folder is not writable, the user folder is used."));
+        connect(ablage, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+                [](int index) {
+                    QSettings().setValue(QStringLiteral("lyrics/saveLocation"), index);
+                });
+        layout->addRow(tr("Save fetched lyrics:"), ablage);
+    }
+
     layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
     return widget;

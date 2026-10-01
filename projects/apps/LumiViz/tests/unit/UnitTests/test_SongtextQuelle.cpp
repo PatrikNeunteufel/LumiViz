@@ -12,6 +12,7 @@
 
 #include <doctest.h>
 
+#include "audio/SongtextOnline.hpp"
 #include "audio/SongtextQuelle.hpp"
 
 #include <QDir>
@@ -122,4 +123,82 @@ TEST_CASE("SongtextQuelle: Name im Benutzerordner und Speichern")
     REQUIRE(gefunden.zeilen.size() == 2);
     CHECK(gefunden.synchron);
     CHECK(gefunden.zeilen[1].zeitMs == 9500);
+}
+
+// --- Online-Abruf (Entscheide 3a/4a): Anfrage, Antwort, Speicherort — ohne Netz
+
+TEST_CASE("SongtextOnline: Anfrage nur mit Titel UND Interpret, Dauer in Sekunden")
+{
+    TrackInfo t;
+    t.title = "I Want to Live";
+    CHECK(lumi::audio::lrclibUrl(t).isEmpty());  // Interpret fehlt: gar nicht fragen
+    t.artist = "Borislav Slavov";
+    t.album = "Baldur's Gate 3";
+    t.durationMs = 233400;
+    const QString url = lumi::audio::lrclibUrl(t).toString(QUrl::FullyEncoded);
+    CHECK(url.startsWith("https://lrclib.net/api/get?"));
+    CHECK(url.contains("track_name=I%20Want%20to%20Live"));
+    CHECK(url.contains("artist_name=Borislav%20Slavov"));
+    CHECK(url.contains("duration=233"));
+    // Sonderzeichen: & und + duerfen die Anfrage nicht zerlegen
+    t.title = "Rock & Roll + More";
+    const QString u2 = lumi::audio::lrclibUrl(t).toString(QUrl::FullyEncoded);
+    CHECK(u2.contains("track_name=Rock%20%26%20Roll%20%2B%20More"));
+    // Dauer ausserhalb 1..3600 s wird weggelassen statt abgewiesen
+    t.durationMs = 4000 * 1000;
+    CHECK_FALSE(lumi::audio::lrclibUrl(t).toString().contains("duration="));
+}
+
+TEST_CASE("SongtextOnline: Antwort — synchron vor unsynchron, instrumental leer")
+{
+    using lumi::audio::songtextAusLrclib;
+    const auto beide = songtextAusLrclib(
+        R"({"instrumental":false,"plainLyrics":"eins\nzwei\n",)"
+        R"("syncedLyrics":"[00:17.12] eins\n[00:21.00] zwei\n"})");
+    REQUIRE(beide.zeilen.size() == 2);
+    CHECK(beide.synchron);
+    CHECK(beide.zeilen[0].zeitMs == 17120);
+    CHECK(beide.zeilen[0].text == "eins");
+    CHECK(beide.quelle == "LRCLIB");
+
+    const auto nurText = songtextAusLrclib(
+        R"({"instrumental":false,"plainLyrics":"eins\nzwei\n","syncedLyrics":null})");
+    CHECK_FALSE(nurText.synchron);
+    CHECK(nurText.zeilen.size() == 2);
+
+    CHECK(songtextAusLrclib(R"({"instrumental":true,"plainLyrics":null,"syncedLyrics":null})")
+              .leer());
+    CHECK(songtextAusLrclib(R"({"message":"Failed to find specified track","statusCode":404})")
+              .leer());
+    CHECK(songtextAusLrclib("kein json").leer());
+}
+
+TEST_CASE("SongtextOnline: Speicherort nach Einstellung, Ausweichen bei gesperrtem Ordner")
+{
+    using lumi::audio::SongtextAblage;
+    using lumi::audio::songtextZiel;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    TrackInfo t;
+    t.filePath = tmp.path() + "/musik/07 - Lied.mp3";
+    t.title = "Lied";
+    t.artist = "Wer";
+    QDir().mkpath(tmp.path() + "/musik");
+    const QString nutzer = tmp.path() + "/nutzer";
+
+    // Vorgabe Benutzerordner: Name aus Interpret und Titel; synchron .lrc, sonst .txt
+    CHECK(songtextZiel(t, true, SongtextAblage::Benutzerordner, nutzer) ==
+          nutzer + "/Wer - Lied.lrc");
+    CHECK(songtextZiel(t, false, SongtextAblage::Benutzerordner, nutzer) ==
+          nutzer + "/Wer - Lied.txt");
+    // neben dem Song: der Name des Songs
+    bool ausgewichen = true;
+    CHECK(songtextZiel(t, true, SongtextAblage::NebenDemSong, nutzer, &ausgewichen) ==
+          tmp.path() + "/musik/07 - Lied.lrc");
+    CHECK_FALSE(ausgewichen);
+    // Ordner des Songs gibt es nicht (nicht beschreibbar): Benutzerordner, gemeldet
+    t.filePath = tmp.path() + "/gibt-es-nicht/07 - Lied.mp3";
+    CHECK(songtextZiel(t, true, SongtextAblage::NebenDemSong, nutzer, &ausgewichen) ==
+          nutzer + "/Wer - Lied.lrc");
+    CHECK(ausgewichen);
 }

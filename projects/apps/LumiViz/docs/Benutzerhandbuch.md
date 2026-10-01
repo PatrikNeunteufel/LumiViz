@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.29.0
+> **Version:** 1.30.0
 > **Datum:** 2026-10-01
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -509,7 +509,19 @@ Springen im Titel. Trägt die Datei Wort-Zeiten (`<01:23.80>` im Text), füllt
 sich die laufende Zeile **Wort für Wort**. Zu lange Zeilen werden kleiner
 gesetzt, bis sie passen. Schrift, Lage, Kontur und Formelfelder wie beim
 Text-Knoten. Voreinstellungen: **Karaoke Bottom**, **Big Centre**, **Three
-Lines Left**. Noch nicht gebaut: Songtexte aus dem Netz holen.
+Lines Left**.
+
+**Songtexte aus dem Netz** (aus, bis du es einschaltest): **Settings → Audio →
+Search lyrics online**. Findet LumiViz lokal keinen Text, fragt es dann den
+Dienst lrclib.net — dabei gehen **Interpret, Titel, Album und Dauer** des
+laufenden Titels an diesen Dienst. Gefragt wird nur, wenn Titel und Interpret
+bekannt sind; ein Treffer verlangt, dass die Dauer auf zwei Sekunden passt. Ein
+Fund wird gespeichert, damit beim nächsten Mal nichts mehr hinausgeht:
+**Save fetched lyrics** wählt den Ort — **User folder**
+(`%APPDATA%\LumiViz\lyrics`, Vorgabe) oder **Next to the song** (gleicher Name
+wie der Song, `.lrc` für synchronen, `.txt` für unsynchronen Text; ist der
+Ordner schreibgeschützt, landet der Fund im Benutzerordner). Die Rechte an den
+Texten liegen bei Dritten; sie sind für den eigenen Gebrauch gedacht.
 
 **Fenstergröße ändern.** Das Bild der Effektkette und jeder Effect List bzw.
 Host-Gruppe wird beim Größenwechsel in die neue Größe übernommen (wie in AVS
@@ -1117,6 +1129,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.30.0 | 2026-10-01 | Session 86. §11 Lyrics: NEU **Songtexte aus dem Netz** (Opt-in „Search lyrics online", Dienst lrclib.net, was gesendet wird; „Save fetched lyrics": User folder / Next to the song) |
 | 1.29.0 | 2026-10-01 | Session 86. §11 NEU Knoten **Lyrics**: Songtext zum laufenden Titel (eingebettet, `.lrc`/`.txt` neben dem Song oder im Benutzerordner; Suchreihenfolge), synchron an der Abspielposition mit Vorschau-Zeilen und Wort-für-Wort-Füllung, Duett-Farben, unsynchroner Block, drei Voreinstellungen |
 | 1.28.0 | 2026-10-01 | Session 86. §2 NEU Panel **Tag View**: Tags, Datei, Dauer und Cover des laufenden Titels (nur Anzeige) |
 | 1.27.0 | 2026-10-01 | Session 86. §11 NEU „Text: Titel und Interpret anzeigen": Platzhalter `{title}` `{artist}` `{album}` `{year}` `{genre}` `{track}` `{file}`, wahlfreie Teile in eckigen Klammern, Knopf **Insert tag**, Voreinstellung **Now Playing** |

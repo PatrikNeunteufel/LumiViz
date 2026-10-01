@@ -2455,11 +2455,30 @@ Wanduhr weiter). Tests: Modell, Suchreihenfolge an Dateien, Bild.
 Millisekunden. LRC-`[offset:]` als „positiv = früher" angenommen (aus dem
 Gedächtnis; gegen echte Dateien prüfen). Die Duett-Marken (`v1:`/`v2:`/
 `v1+v2:`, `M:`/`F:`/`D:`) sind eine eigene Festlegung, keine Norm.
-**Offen (Stufe 2):** Online-Abruf (3a) samt Einstellung für den Speicherort
-(4a) — eigener Schritt, weil die Schnittstelle des Dienstes erst gegen dessen
-Dokumentation zu prüfen ist; Versatz **je Titel** speichern (heute: Feld am
-Knoten und `[offset:]` in der Datei); Knopf „Lyrics file…" zum Zuweisen;
-Tag View zeigt den gefundenen Songtext.
+**✅ S86 gebaut (Stufe 2): Online-Abruf** (3a/4a) — `audio/SongtextOnline`,
+Dienst LRCLIB `GET /api/get` (Dokumentation https://lrclib.net/docs gelesen
+am 2026-10-01: kein Schlüssel, `User-Agent` mit Name/Version/Projektseite
+verlangt, Pflicht `track_name` + `artist_name`, Treffer nur bei Dauer ±2 s,
+Antwort `syncedLyrics`/`plainLyrics`, 404 = kein Text, 429 mit `Retry-After`
+ist zu befolgen). Einstellungen `lyrics/onlineSearch` (Vorgabe aus) und
+`lyrics/saveLocation` (Settings → Audio); gefragt wird nur, wenn lokal nichts
+gefunden wurde; der Fund wird als `.lrc` (synchron) oder `.txt` gespeichert,
+bei gesperrtem Song-Ordner im Benutzerordner. Die dokumentierte
+Beispielanfrage lieferte am 2026-10-01 genau die erwartete Form. Tests ohne
+Netz: Anfrage, Antwort, Speicherort. **Nicht geprüft:** der Abruf aus der
+laufenden App (Signalweg, Speichern, Anzeige) und das Verhalten bei 429.
+Die Dokumentation sagt nichts zur Lizenz der Texte.
+**Offen:** Versatz **je Titel** speichern (heute: Feld am Knoten und
+`[offset:]` in der Datei); Knopf „Lyrics file…" zum Zuweisen; Tag View zeigt
+den gefundenen Songtext; Wort-Zeiten des Dienstes (`hasWordSync`, Feld
+`lyricsfile`) werden nicht gelesen; Suche über `/api/search`, wenn die Dauer
+nicht passt.
+**Datei-Icons (S86, Wunsch Patrik):** `.lrc`-Icon erzeugt; alle Icons liegen
+als `.ico` in `asset/img/logo/icons/` (Zuordnung Endung → Icon und Bauskript
+dort im README). **Notiz für einen späteren Installer:** Dateitypen und
+Icons wählbar registrieren — eigene Formate mit „Öffnen mit", fremde nur auf
+Wunsch, Audioformate nicht umbiegen; Einzelheiten und Registry-Pfade im
+selben README. Vorher prüfen, ob `LumiViz.exe <datei>` die Datei öffnet.
 **Idee Patrik S86 — unsynchron zu synchron machen:** von Hand mitklopfen
 (Taste je Zeile, während der Titel läuft), per Skript grob verteilen, per KI
 ausrichten — und danach von Hand nachjustieren. **Die Schnittstelle dafür

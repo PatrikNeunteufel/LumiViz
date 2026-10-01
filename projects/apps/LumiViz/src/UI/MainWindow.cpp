@@ -61,6 +61,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include "audio/SongtextOnline.hpp"  // Lyrics online (S86)
 #include "audio/SongtextQuelle.hpp"  // Lyrics (S86)
 #include <QFileDialog>
 #include <QMessageBox>
@@ -742,8 +743,18 @@ void MainWindow::setupEventHandlers()
     // Songwechsel -> Renderer (S82, Host Switcher: Song-Slot, „bei Songwechsel
     // weiter"). Bis hierher erreichte TrackChangedEvent nur Player- und
     // Playlist-Panel. Der Zaehler ist prozessweit und atomar — kein Lock.
+    // S86 (Entscheide 3a/4a): Online-Suche nach dem Songtext — Opt-in in den
+    // Einstellungen, erst wenn keine lokale Quelle etwas liefert; der Fund wird
+    // gespeichert und gilt nur, wenn derselbe Titel noch laeuft.
+    auto* songtextOnline = new lumi::audio::SongtextOnline(this);
+    auto laufenderSong = std::make_shared<QString>();
+    connect(songtextOnline, &lumi::audio::SongtextOnline::gefunden, this,
+            [laufenderSong](const QString& songPfad,
+                            const lumi::multieffect::lyrics::Songtext& text, const QString&) {
+                if (songPfad == *laufenderSong) MultiEffectVisualizer::setSongtext(text);
+            });
     pEventBus->subscribe<TrackChangedEvent>(
-        [](const TrackChangedEvent& e) {
+        [songtextOnline, laufenderSong](const TrackChangedEvent& e) {
             // S86: die Tags des Titels gehen mit — der Text-Knoten setzt sie in
             // Vorlagen ein ({title}, {artist} …)
             lumi::multieffect::texttags::SongTags tags;
@@ -757,8 +768,16 @@ void MainWindow::setupEventHandlers()
             MultiEffectVisualizer::notifySongChanged(tags);
             // S86: Songtext suchen (lokale Quellen in fester Reihenfolge) und
             // die Abspielposition auf Anfang — der Lyrics-Knoten laeuft an ihr
-            MultiEffectVisualizer::setSongtext(lumi::audio::findeSongtext(e.track));
+            const auto lokal = lumi::audio::findeSongtext(e.track);
+            MultiEffectVisualizer::setSongtext(lokal);
             MultiEffectVisualizer::notifyPlayPosition(0);
+            *laufenderSong = e.track.filePath;
+            // nichts Lokales: online fragen — die Suche prueft die Einstellung
+            // selbst und bricht eine noch laufende Anfrage ab
+            if (lokal.leer())
+                songtextOnline->suche(e.track);
+            else
+                songtextOnline->suche(TrackInfo{});  // nur abbrechen
         });
     pEventBus->subscribe<PlaybackPositionEvent>([](const PlaybackPositionEvent& e) {
         MultiEffectVisualizer::notifyPlayPosition(e.positionMs);
