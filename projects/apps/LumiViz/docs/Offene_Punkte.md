@@ -2480,8 +2480,26 @@ wie in `.txt`; der Leser überspringt sie, die Quellzeile im Editor zeigt sie.
 Die sechs vor dieser Änderung gespeicherten Dateien tragen keinen Vermerk.
 `[source:]` ist eine eigene Festlegung, keine Norm — ein fremder Player
 zeigt die Kopfzeilen einer `.txt` womöglich als Text.
-**Nächste Sitzung (Entscheid Patrik S86):** Panel zum Nachsynchronisieren
-(unsynchron → synchron) und alles Weitere.
+**🔴 Befund Patrik S86 (Lauf 16:29–16:31, Exe von 16:24) — offen:** wird ein
+Songtext online geholt, bleibt die Quellzeile auf „No lyrics found", und der
+Text erscheint im Bild erst beim nächsten Abspielen des Titels. Gespeichert
+wird der Fund (Dateien im Benutzerordner vorhanden) — `SongtextOnline::fertig`
+läuft also durch, aber der Empfänger in `MainWindow.cpp` (`gefunden` →
+`setSongtext`, nur wenn `songPfad == *laufenderSong`) wirkt nicht. Spuren
+für die Suche: (1) läuft der `TrackChangedEvent`-Handler auf dem GUI-Thread?
+Wenn nicht, entsteht der `QNetworkAccessManager` im falschen Thread und
+`laufenderSong` wird über Threads gelesen; (2) stimmt der Pfadvergleich
+(Schreibweise des Pfads im Ereignis gegen den beim Abruf); (3) kommt ein
+zweites `TrackChangedEvent` für denselben Titel und setzt den Text wieder
+auf leer. Zuerst mit einer Log-Zeile im Empfänger nachstellen, dann beheben;
+Test, der den Weg Ereignis → Abruf-Ergebnis → Anzeige mit einer
+nachgestellten Antwort abdeckt (heute ungetestet). **Dazu ungeprüft:** ob
+das Spulen im Titel den Text mitnimmt.
+**Wünsche Patrik S86 für die nächste Sitzung:** (a) die Lyrics-Angaben im
+Editor als **Tabelle** statt einer langen Zeile (Quelle, synchron, Zeilen,
+Herkunft, Datei); (b) Zustand **„…downloading…"**, solange ein Online-Abruf
+läuft, bis der Text da ist; (c) Panel zum Nachsynchronisieren (unsynchron →
+synchron) und alles Weitere.
 Die Dokumentation sagt nichts zur Lizenz der Texte.
 **Offen:** Versatz **je Titel** speichern (heute: Feld am Knoten und
 `[offset:]` in der Datei); Knopf „Lyrics file…" zum Zuweisen; Tag View zeigt
