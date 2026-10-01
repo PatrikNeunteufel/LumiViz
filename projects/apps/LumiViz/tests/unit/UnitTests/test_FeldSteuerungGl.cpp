@@ -230,7 +230,9 @@ TEST_CASE("Feldsteuerung F2b: auch Module mit eigenem Skript-Host setzen jedes L
     }
     const auto [typen, felder] = pruefeLiveFelder(
         [](const ft::Typ& t) { return t.traeger == ft::Traeger::EigenerHost; });
-    CHECK(typen == 21);  // alle Module mit eigenem Skript-Host (S86: + SuperScope, Effect List)
+    // alle Module mit eigenem Skript-Host (S86: + SuperScope, Effect List,
+    // Dynamic Movement, Host Switcher)
+    CHECK(typen == 23);
     CHECK(felder > 120);
 }
 
@@ -468,8 +470,40 @@ TEST_CASE("Modulation F4c: SuperScope und Effect List ohne Skripttraeger, uebrig
         for (const ft::Feld& f : t->felder)
             if (ft::modulierbar(*t, f)) offen.insert(t->typKey);
     }
-    CHECK(offen == std::set<std::string_view>{"dynamicMovement", "hostgroup", "text", "avi",
-                                              "debugBars"});
+    CHECK(offen == std::set<std::string_view>{"text", "avi", "debugBars"});
+
+    // Host Switcher: laeuft vorab in runHostSwitchers mit eigener Kopie
+    ChainNode sw;
+    sw.params = HostSwitcherParams{};  // intervalSeconds 0..3600
+    sw.mods = {mod("intervalSeconds", ModQuelle::LfoRechteck, 0.01)};
+    HostSwitcherParams hv;
+    std::get<HostSwitcherParams>(sw.params).frameCode = "zz = 1;";  // Beobachter laeuft mit Skript
+    const auto kw = laufeKnoten(sw);
+    REQUIRE(kw.has_value());
+    CHECK(std::get<HostSwitcherParams>(*kw).intervalSeconds ==
+          doctest::Approx(hv.intervalSeconds + 36.0));
+}
+
+TEST_CASE("Feldsteuerung S86: Dynamic Movement — blend bleibt eine freie Skriptvariable")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    // 18 Presets der Sammlung fuehren in Dynamic-Movement-Skripten eine eigene
+    // Variable `blend`. Sie darf den Schalter „Blend" nicht umlegen; `wrap`
+    // dagegen ist Feld und folgt dem Skript.
+    DynamicMovementParams dm;
+    dm.blend = false;
+    dm.wrap = false;
+    dm.frameCode = "blend = 1; wrap = 1;";
+    EffectParams p = dm;
+    const auto k = laufe(p, p.index());
+    REQUIRE(k.has_value());
+    CHECK(std::get<DynamicMovementParams>(*k).blend == false);
+    CHECK(std::get<DynamicMovementParams>(*k).wrap == true);
 }
 
 TEST_CASE("Feldsteuerung S86: SuperScope — pointcount reicht an n weiter, n bleibt der Herr")

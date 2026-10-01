@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.21.0
+> **Version:** 1.22.0
 > **Datum:** 2026-10-01
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -423,6 +423,18 @@ Seit Session 86 gilt das auch für **SuperScope** und **Effect List**:
   `cleareveryframe`, `onbeatrender`, `onbeatframes` sowie `inadjustalpha` und
   `outadjustalpha` (0..255) schreibbar. `alphain`/`alphaout` (0..1) bleiben wie
   in AVS und gewinnen, wenn das Skript beide Schreibweisen benutzt.
+- **Dynamic Movement** — in Init, Frame und Beat sind `wrap`, `nomove`,
+  `subpixel`, `rectcoords` und `buffern` schreibbar. **Nicht** `blend` (viele
+  AVS-Presets benutzen den Namen als eigene Variable) und nicht die
+  Gittergröße `xres`/`yres`.
+- **Host-Gruppe** — im Parameter-Skript der Gruppe zusätzlich zu
+  `outadjustalpha` jetzt `blendout`, `curvein`, `curveout` und
+  `crossfadeseconds` (wirkt ab dem nächsten Bild).
+- **Host Switcher** — `intervalseconds`, `order` und `nextonsongchange`;
+  **Switch after (s)** lässt sich auch mit dem **~**-Knopf modulieren.
+
+Ohne Formelfelder und deshalb nicht per Skript steuerbar bleiben Text, AVI,
+Movement (nur die Bewegungsformel), Render Scale und Debug Bars.
 
 **Script active** — gleich unter Name und Beschreibung, bei jedem Knoten mit
 Formelfeldern: ausgeschaltet läuft der Knoten, **als stünden seine Felder
@@ -476,7 +488,8 @@ ausgeschaltetem *Script active*. Sie werden mit der Kette gespeichert.
 Modulierbar sind die Zahlfelder der Knoten mit Formelfeldern, dazu
 **SuperScope** (Point count, Line width, Dot size, Cycle frames), **Effect
 List** (In/Out Alpha, In/Out Buffer, OnBeat frames), **Host-Gruppe** (Out
-Alpha, Crossfade duration), **Dynamic Movement** (Source buffer), **Text**
+Alpha, Crossfade duration), **Dynamic Movement** (Source buffer), **Host
+Switcher** (Switch after), **Text**
 (Word time, Beat hold), **AVI** (Persist, Frame time) und Debug Bars (Orbit
 speed). Zwei Besonderheiten:
 
@@ -488,8 +501,8 @@ speed). Zwei Besonderheiten:
   Frame-Code sieht ihn und darf ihn überschreiben; er schreibt ihn aber nicht
   von Bild zu Bild fort.
 
-Noch **nicht** modulierbar: Farben, Schalter und Auswahlfelder, sowie Host
-Switcher und Render Scale; LFO-Tempo in Beats kommt später.
+Noch **nicht** modulierbar: Farben, Schalter und Auswahlfelder, sowie Render
+Scale; LFO-Tempo in Beats kommt später.
 
 ### Bilder in Picture, Picture II und Texer
 
@@ -1016,6 +1029,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.22.0 | 2026-10-01 | Session 86. §11 „Werte per Formel steuern": auch **Dynamic Movement** (`wrap`, `nomove`, `subpixel`, `rectcoords`, `buffern`), **Host-Gruppe** (`blendout`, `curvein`, `curveout`, `crossfadeseconds`) und **Host Switcher** (`intervalseconds`, `order`, `nextonsongchange`); Host Switcher → Switch after (s) modulierbar. Liste der Knoten ohne Formelfelder |
 | 1.21.0 | 2026-10-01 | Session 86. §11 „Werte per Formel steuern": die Felder von **SuperScope** (`linewidth`, `dotsize`, `rendermode` …) und **Effect List** (`blendout`, `bufferin`, `outadjustalpha` …) sind jetzt Skriptvariablen; AVS-Namen (`n`, `linesize`, `drawmode`, `alphain`, `alphaout`) behalten Vorrang. Behoben: Auswahlfelder mit im Panel gebauter Liste (z. B. Clear → Blend) sprangen auf den ersten Eintrag, sobald der Knoten ein Skript trug |
 | 1.20.0 | 2026-10-01 | Session 86. §11 Modulation: jetzt auch **SuperScope** (Point count, Line width, Dot size, Cycle frames) und **Effect List** (In/Out Alpha, In/Out Buffer, OnBeat frames), Host-Gruppe, Dynamic Movement, Text, AVI, Debug Bars; Point count setzt `n` neu. Effect List: `alphain`/`alphaout` stehen im Listen-Code zu Beginn jedes Bilds auf dem Reglerwert (wie in AVS) — der Alpha-Regler wirkt jetzt auch bei laufendem Listen-Code sofort |
 | 1.19.0 | 2026-09-30 | Session 85. §11 NEU **Werte ohne Formel bewegen (Modulation)**: „~"-Knopf an Zahlfeldern (Audio, Beat-Hüllkurve, LFOs), Live-Wert, Schalter **Modulation active**. §11 „Werte per Formel steuern": jedes Feld skriptbar, auch bei Fraktalen/3D/Glow Orbs/Texer II; eine Reglerbewegung setzt das Skript nicht mehr zurück. Die ⓘ-Seite jedes Skriptfelds beginnt mit seinem Takt (einmal/je Frame/je Beat/je Punkt …) |

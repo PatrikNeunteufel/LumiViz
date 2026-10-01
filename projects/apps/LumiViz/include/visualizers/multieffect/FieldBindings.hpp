@@ -108,8 +108,12 @@ struct Typ
 /// liest sie nicht zurueck, und die Referenz fuehrt sie nicht als Feld.
 [[nodiscard]] inline bool rendererEigen(std::string_view typKey, std::string_view name)
 {
+    // dynamicMovement (S86): das Gitter steht vor dem Skript (`xres`/`yres`),
+    // und `blend` fuehren 18 Presets der Sammlung als eigene Variable.
     return (typKey == "superScope3d" && name == "size") ||
-           (typKey == "terrain3d" && (name == "res" || name == "resolution"));
+           (typKey == "terrain3d" && (name == "res" || name == "resolution")) ||
+           (typKey == "dynamicMovement" &&
+            (name == "xres" || name == "yres" || name == "blend"));
 }
 
 /// Block F, F4c (S86, Entscheid 1c a): Typen OHNE Skripttraeger, deren Renderer
@@ -120,10 +124,9 @@ struct Typ
 /// die Puffer um); movement hat kein Live-Zahlfeld.
 [[nodiscard]] inline bool modulationOhneTraeger(std::string_view typKey)
 {
-    // SuperScope und Effect List tragen seit S86 einen eigenen Host (Traeger
-    // EigenerHost) und brauchen diese Ausnahme nicht mehr.
-    return typKey == "dynamicMovement" || typKey == "hostgroup" || typKey == "text" ||
-           typKey == "avi" || typKey == "debugBars";
+    // SuperScope, Effect List, Dynamic Movement, Host-Gruppe und Host Switcher
+    // tragen seit S86 einen Skripttraeger und brauchen diese Ausnahme nicht mehr.
+    return typKey == "text" || typKey == "avi" || typKey == "debugBars";
 }
 
 /// Block F, F4 (S85, Entscheid 1a/1b): modulierbar sind die Live-Zahlfelder

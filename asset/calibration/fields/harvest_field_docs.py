@@ -413,9 +413,11 @@ def harvest_traeger() -> dict[str, str]:
     """Struct -> Traeger: wer faehrt heute das Parameter-Skript des Knotens?"""
     src = VISUALIZER.read_text(encoding="utf-8")
     out: dict[str, str] = {}
-    # renderList (S86): die Effect List bindet ihre Felder an den Listen-Host
+    # renderList/renderHostGroup (S86): Effect List und Host-Gruppe binden ihre
+    # Felder im Listen-Host bzw. ueber das Parameter-Skript der Gruppe
     for m in re.finditer(
-            r"void\s+MultiEffectVisualizer::(?:run\w+|renderList)\s*\(([^)]*)\)\s*\{", src):
+            r"void\s+MultiEffectVisualizer::(?:run\w+|renderList|renderHostGroup)"
+            r"\s*\(([^)]*)\)\s*\{", src):
         sm = re.search(r"const\s+(\w+Params)\s*&", m.group(1))
         if not sm:
             continue
@@ -431,6 +433,9 @@ def harvest_traeger() -> dict[str, str]:
         rang = {"ParamSkript": 2, "EigenerHost": 1, "Keiner": 0}
         if rang[art] >= rang.get(out.get(sm.group(1), "Keiner"), 0):
             out[sm.group(1)] = art
+    # Der Host Switcher laeuft vorab in runHostSwitchers() (ohne Params-Argument)
+    # und bindet seine Felder dort an den eigenen Host (S86).
+    out["HostSwitcherParams"] = "EigenerHost"
     return out
 
 

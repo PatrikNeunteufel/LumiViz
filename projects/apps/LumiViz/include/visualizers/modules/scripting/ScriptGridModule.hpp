@@ -32,11 +32,12 @@
 
 #include "scripting/ScriptContext.hpp"
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace lumi::scripting { class ScriptSlotHost; }
+namespace lumi::scripting { class ScriptSlotHost; class LuaScriptEngine; }
 
 namespace lumi::modules {
 
@@ -87,6 +88,18 @@ public:
     void setSongCode(const std::string& code);
     /// Songwechsel melden — Song-Slot im naechsten execute() VOR dem Frame-Slot
     void songWechsel() { m_songPending = true; }
+
+    /// Block F (S86): Einhaenge-Punkte des Hosts fuer die Feldtabelle, wie
+    /// `SuperscopeModule::setFeldHooks`. `vor` laeuft unmittelbar VOR dem
+    /// Init-Slot (`fresh` = true) und in jedem execute() vor Song/Frame/Beat;
+    /// `nach` unmittelbar NACH dem Beat-Slot, vor dem Punkt-Lauf. Der Host
+    /// setzt sie vor execute() und raeumt sie danach wieder ab.
+    using FeldHook = std::function<void(scripting::LuaScriptEngine&, bool fresh)>;
+    void setFeldHooks(FeldHook vor, FeldHook nach)
+    {
+        m_feldVor = std::move(vor);
+        m_feldNach = std::move(nach);
+    }
 
     // =========================================================================
     // Configuration
@@ -177,6 +190,9 @@ private:
     std::string m_pointCode;
     std::string m_songCode;
     bool m_songPending = false;
+    FeldHook m_feldVor;        ///< Block F (S86), s. setFeldHooks
+    FeldHook m_feldNach;
+    bool m_feldFresh = false;  ///< Init lief seit dem letzten `nach` neu
 
     int m_xres = kDefaultResX;
     int m_yres = kDefaultResY;

@@ -2059,11 +2059,14 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   bitgleich); F2c ✅ — **SuperScope und Effect List: alle Tabellenfelder per
   Skript** (Vergleichslauf 294/294 bitgleich, +1,5 % Laufzeit); Klemmfehler
   bei Auswahlfeldern ohne Tabellenbereich behoben; `startIndex` = Zustand,
-  Render Scale `divisor` = Struktur — **offen:** Skript-Zugriff für die
-  übrigen Typen ohne Parameter-Skript (Host-Gruppe über ihr vorhandenes
-  Parameter-Skript, Movement, Dynamic Movement, Host Switcher, Text, AVI,
-  Color Modifier, Debug Bars — Patriks eigentliches Ziel von Block F);
-  Host Switcher `intervalSeconds` modulierbar; einmalige Bildabweichung bei
+  Render Scale `divisor` = Struktur; F2d ✅ — Dynamic Movement, Host-Gruppe
+  und Host Switcher skriptbar (Vergleichslauf 294/294), Host Switcher
+  `intervalSeconds` modulierbar — **offen:** Text, AVI, Movement, Render
+  Scale, Debug Bars haben keine Formelfelder (Entscheid Patrik: Slots
+  nachrüsten?); Color Modifier `recompute`; **Namensfang-Prüfung über die
+  ganze Sammlung für alle seit S84 gebundenen Typen** (`namensfang.py` im
+  Scratchpad S86 — bisher nur SuperScope, Effect List, Dynamic Movement
+  geprüft; Fund: DM `blend`); einmalige Bildabweichung bei
   `fUk - afterburner remix` (1 von 12 Läufen, nicht reproduziert); F4b
   Farbfelder modulieren,
   F4d LFO-Rate in Beats (Entscheide Patrik S85: je a), F6

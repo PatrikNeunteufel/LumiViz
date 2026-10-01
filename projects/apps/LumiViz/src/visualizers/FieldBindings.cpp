@@ -203,7 +203,7 @@ std::vector<std::pair<std::size_t, Typ>> baue()
         LV_FELD(DynamicDistanceModifierParams, blend, "blend", "blend", "", 1.0, Schalter, Live, 0.0, 1.0),
         LV_FELD(DynamicDistanceModifierParams, subpixel, "subpixel", "subpixel", "", 1.0, Schalter, Live, 0.0, 1.0),
     }}});
-    out.push_back({ix<DynamicMovementParams>(), Typ{"dynamicMovement", Traeger::Keiner, {
+    out.push_back({ix<DynamicMovementParams>(), Typ{"dynamicMovement", Traeger::EigenerHost, {
         LV_FELD(DynamicMovementParams, blend, "blend", "blend", "", 1.0, Schalter, Live, 0.0, 1.0),
         LV_FELD(DynamicMovementParams, buffern, "buffern", "buffern", "", 1.0, Ganzzahl, Live, 0.0, 8.0),
         LV_FELD(DynamicMovementParams, nomove, "nomove", "nomove", "", 1.0, Schalter, Live, 0.0, 1.0),
@@ -328,13 +328,13 @@ std::vector<std::pair<std::size_t, Typ>> baue()
         LV_FELD(GrainParams, blend, "blend", "blend", "", 1.0, Aufzaehlung, Live, 0.0, 2.0),
         LV_FELD(GrainParams, staticGrain, "staticGrain", "staticgrain", "", 1.0, Schalter, Live, 0.0, 1.0),
     }}});
-    out.push_back({ix<HostSwitcherParams>(), Typ{"hostSwitcher", Traeger::Keiner, {
+    out.push_back({ix<HostSwitcherParams>(), Typ{"hostSwitcher", Traeger::EigenerHost, {
         LV_FELD(HostSwitcherParams, intervalSeconds, "intervalSeconds", "intervalseconds", "", 1.0, Kommazahl, Live, 0.0, 3600.0),
         LV_FELD(HostSwitcherParams, nextOnSongChange, "nextOnSongChange", "nextonsongchange", "", 1.0, Schalter, Live, 0.0, 1.0),
         LV_FELD(HostSwitcherParams, order, "order", "order", "", 1.0, Aufzaehlung, Live, 0.0, 1.0),
         LV_FELD(HostSwitcherParams, startIndex, "startIndex", "startindex", "", 1.0, Ganzzahl, Zustand, kNaN, kNaN),
     }}});
-    out.push_back({ix<HostGroupParams>(), Typ{"hostgroup", Traeger::Keiner, {
+    out.push_back({ix<HostGroupParams>(), Typ{"hostgroup", Traeger::ParamSkript, {
         LV_FELD(HostGroupParams, blendOut, "blendOut", "blendout", "", 1.0, Aufzaehlung, Live, 0.0, 0.0),
         LV_FELD(HostGroupParams, crossfadeSeconds, "crossfadeSeconds", "crossfadeseconds", "", 1.0, Kommazahl, Live, 0.0, 60.0),
         LV_FELD(HostGroupParams, curveIn, "curveIn", "curvein", "", 1.0, Aufzaehlung, Live, 0.0, 0.0),

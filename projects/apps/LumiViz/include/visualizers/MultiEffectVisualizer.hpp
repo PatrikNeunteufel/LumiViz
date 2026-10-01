@@ -840,6 +840,11 @@ private:
         /// (0 startend = frisch aktivierte Gruppen blenden EIN); eine
         /// deaktivierte Gruppe rendert weiter, bis das Gewicht 0 erreicht.
         double blendWeight = 0.0;
+        /// Block F (S86): `crossfadeSeconds` nach dem Parameter-Skript des
+        /// letzten Frames (< 0 = keiner). Das Skript laeuft NACH den Kindern,
+        /// das Blend-Gewicht wird davor bewegt — ein Skriptwert gilt deshalb
+        /// ab dem naechsten Frame.
+        double crossfadeSkript = -1.0;
         /// HG3: Laufzeit seit (Re-)Aktivierung der Gruppe — progress-Quelle
         /// fuer Milkdrop-Nodes in der Gruppe (Playlist liefert spaeter die
         /// echte Slot-Dauer); Reset beim Frischstart nach vollem Ausblenden.

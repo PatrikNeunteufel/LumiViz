@@ -120,6 +120,11 @@ void ScriptGridModule::initializeScripts()
     // (persistent like every EEL var, NOT reset per point).
     engine.setNumber("alpha", 0.5);
 
+    // Block F (S86): die Feldtabelle des Hosts speist ihre Reglerwerte ein,
+    // bevor Init sie sieht.
+    m_feldFresh = true;
+    if (m_feldVor) m_feldVor(engine, true);
+
     if (m_script->has(Slot::Init) && !m_script->run(Slot::Init) &&
         m_lastScriptError.empty())
     {
@@ -146,6 +151,7 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
     engine.setNumber("time", static_cast<double>(m_totalTime));
     engine.setNumber("dt", static_cast<double>(deltaTime));
     engine.setNumber("b", isBeat ? 1.0 : 0.0);
+    if (m_feldVor) m_feldVor(engine, false);  // Block F (S86): Regler bewegt?
 
     // r_dmove.cpp:297-298 / r_trans.cpp: FRAME zuerst, dann Beat — der
     // Frame-Code rechnet mit den Beat-Werten des VORHERIGEN Frames (S47).
@@ -163,6 +169,9 @@ void ScriptGridModule::execute(float width, float height, bool isBeat, float del
     {
         m_lastScriptError = m_script->lastError();
     }
+    // Block F (S86): Feldtabelle zuruecklesen — vor dem Punkt-Lauf
+    if (m_feldNach) m_feldNach(engine, m_feldFresh);
+    m_feldFresh = false;
 
     const int w = std::max(1, static_cast<int>(width));
     const int h = std::max(1, static_cast<int>(height));

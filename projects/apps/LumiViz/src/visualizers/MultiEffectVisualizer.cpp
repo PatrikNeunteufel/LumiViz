@@ -4316,6 +4316,9 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
             }
         }
     }
+    // Der Host Switcher laeuft vorab in runHostSwitchers und fuehrt dort seine
+    // eigene Frame-Kopie samt Modulation (S86) — hier ist er leer.
+    if (std::holds_alternative<HostSwitcherParams>(node.params)) return;
 
     struct Visitor
     {
@@ -4729,7 +4732,9 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
     // erneuter Toggle mitten im Blend kehrt einfach die Richtung um.
     {
         const double target = laeuft ? 1.0 : 0.0;
-        const double dur = params.crossfadeSeconds;
+        const double dur = m_gesteuerteKopie != nullptr && runtime.crossfadeSkript >= 0.0
+                               ? runtime.crossfadeSkript
+                               : params.crossfadeSeconds;
         if (dur <= 1e-6)
         {
             runtime.blendWeight = target;
@@ -4827,6 +4832,10 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
     runParamScript(m_leafRuntimes[node.nodeId], "hostgroup", params.initCode,
                    params.frameCode, params.beatCode, {{"outadjustalpha", &vOutAlpha}});
     const int outAlpha = static_cast<int>(std::clamp(vOutAlpha, 0.0, 255.0));
+    // Block F (S86): mit Frame-Kopie stehen jetzt alle Tabellenfelder als
+    // Skriptwerte in `params` — blendOut/curveIn/curveOut wirken unten sofort,
+    // crossfadeSeconds ab dem naechsten Frame (s. GroupRuntime).
+    runtime.crossfadeSkript = m_gesteuerteKopie != nullptr ? params.crossfadeSeconds : -1.0;
 
     m_activeContext = prevCtx;
     m_groupActiveSeconds = prevGroupSeconds;
@@ -5587,8 +5596,40 @@ void MultiEffectVisualizer::runDynamicMovement(const ChainNode& node,
         if (pool == nullptr) return;
         opt.srcTexture = pool->texture();
     }
-    if (applyGridWarpFx(rt, params.xres, params.yres, opt)) return;
-    applyGridWarp(rt, params.xres, params.yres, opt);
+    // Block F (S86): die Tabellenfelder sind Skriptvariablen von Init/Frame/
+    // Beat. Die Slots laufen IM Modul (execute, s. applyGridWarp*), die
+    // Optionen stehen aber schon — der Rueck-Hook zieht sie deshalb nach den
+    // Slots auf die Skriptwerte der Frame-Kopie. Nicht skriptbar
+    // (ft::rendererEigen): `xres`/`yres` (das Gitter steht vor dem Skript) und
+    // `blend` (18 Presets der Sammlung fuehren `blend` als eigene Variable).
+    if (m_gesteuerteKopie != nullptr)
+    {
+        rt.grid->setFeldHooks(
+            [this, &rt](lumi::scripting::LuaScriptEngine& engine, bool fresh) {
+                feldHostVor(rt, engine, fresh);
+            },
+            [this, &rt, &params, &opt](lumi::scripting::LuaScriptEngine& engine, bool fresh) {
+                feldHostNach(rt, engine, fresh);
+                rt.grid->setRectCoords(params.rectCoords);
+                opt.wrap = params.wrap;
+                opt.nomove = params.nomove;
+                opt.subpixel = params.subpixel;
+                if (params.buffern > 0)
+                {
+                    // fehlt der Puffer, bleibt die Quelle dieses Frames stehen
+                    if (QOpenGLFramebufferObject* pool = activePool().get(
+                            params.buffern - 1, m_surfaceWidth, m_surfaceHeight, false))
+                        opt.srcTexture = pool->texture();
+                }
+                else
+                {
+                    opt.srcTexture = 0;
+                }
+            });
+    }
+    const bool fertig = applyGridWarpFx(rt, params.xres, params.yres, opt);
+    if (!fertig) applyGridWarp(rt, params.xres, params.yres, opt);
+    rt.grid->setFeldHooks({}, {});  // die Hooks zeigen auf diesen Frame
 }
 
 bool MultiEffectVisualizer::applyGridWarpFx(LeafRuntime& rt, int xres, int yres,
@@ -9219,6 +9260,21 @@ void MultiEffectVisualizer::runHostSwitchers()
         const bool hatSkript = node.scriptsActive &&
                                (!sw->initCode.empty() || !sw->frameCode.empty() ||
                                 !sw->beatCode.empty() || !node.songCode.empty());
+        // Block F (S86): der Switcher laeuft ausserhalb von renderNode und
+        // fuehrt deshalb seine eigene Frame-Kopie — Modulation zuerst, dann
+        // die Skripte (E5); alles Folgende liest die Kopie.
+        const bool mitModulation = moduliert(node);
+        std::optional<EffectParams> kopie;
+        if (hatSkript || mitModulation)
+        {
+            kopie = node.params;
+            if (mitModulation) wendeModulationAn(node, *kopie);
+            sw = &std::get<HostSwitcherParams>(*kopie);
+        }
+        else if (!m_modWerte.empty())
+        {
+            m_modWerte.erase(node.nodeId);  // Anzeige leeren
+        }
         if (hatSkript)
         {
             const std::string combined = sw->initCode + '\n' + sw->frameCode + '\n' +
@@ -9255,10 +9311,21 @@ void MultiEffectVisualizer::runHostSwitchers()
             engine.setNumber("h", static_cast<double>(m_surfaceHeight));
             feedAudio(engine);
 
+            // Block F (S86): Tabellenfelder (intervalseconds, order,
+            // nextonsongchange, startindex) als Skriptvariablen
+            LeafRuntime& feldRt = m_leafRuntimes[node.nodeId];
+            EffectParams* vorherKopie = m_gesteuerteKopie;
+            m_gesteuerteKopie = &*kopie;
+            feldHostVor(feldRt, engine, fresh);
+
             if (fresh && rt.host->has(Slot::Init)) rt.host->run(Slot::Init);
             if (songNeu && rt.host->has(Slot::Song)) rt.host->run(Slot::Song);
             if (rt.host->has(Slot::Frame)) rt.host->run(Slot::Frame);
             if (m_frameBeat && rt.host->has(Slot::Beat)) rt.host->run(Slot::Beat);
+
+            feldHostNach(feldRt, engine, fresh);
+            m_gesteuerteKopie = vorherKopie;
+            if (const auto& beobachter = paramBeobachterFuerTest()) beobachter(node, *kopie);
 
             if (const std::string& err = rt.host->lastError(); !err.empty() && err != rt.error)
             {
