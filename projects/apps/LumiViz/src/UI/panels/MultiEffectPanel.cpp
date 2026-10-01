@@ -98,6 +98,7 @@
 #include <QPointer>
 #include <QSpinBox>
 #include <QTimer>
+#include <QUrl>
 #include <QToolButton>
 #include <QTreeWidget>
 #include <QVBoxLayout>
@@ -7782,21 +7783,50 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
     }
     else if (auto* p = std::get_if<LyricsParams>(&params))
     {
-        // Lyrics (S86): der Text kommt vom laufenden Titel — hier steht nur,
-        // was gefunden wurde (Stand beim Oeffnen dieser Seite).
+        // Lyrics (S86): der Text kommt vom laufenden Titel — hier steht, was
+        // gefunden wurde. Die Zeile laeuft mit (Titelwechsel, ein Online-Fund
+        // kommt spaeter nach): bis S86-Befund Patrik stand sie auf dem Stand
+        // beim Oeffnen der Seite und meldete „not found" neben laufendem Text.
         {
-            const std::string info = MultiEffectVisualizer::songtextInfo();
-            auto* quelle = new QLabel(
-                info.empty() ? tr("No lyrics found for the playing track.")
-                             : QString::fromStdString(info),
-                m_propContainer);
+            auto* zeile = new QWidget(m_propContainer);
+            auto* hl = new QHBoxLayout(zeile);
+            hl->setContentsMargins(0, 0, 0, 0);
+            auto* quelle = new QLabel(zeile);
             quelle->setObjectName(QStringLiteral("lyricsSource"));
             quelle->setWordWrap(true);
             quelle->setToolTip(
                 tr("Search order: embedded synced lyrics, <song>.lrc next to the song, "
                    "<artist> - <title>.lrc in the user folder, embedded unsynced lyrics, "
                    "<song>.txt next to the song, .txt in the user folder."));
-            form->addRow(tr("Lyrics"), quelle);
+            hl->addWidget(quelle, 1);
+            // Ordner der gelesenen Datei oeffnen (Wunsch Patrik S86) — nur bei
+            // einer eigenen Datei, nicht bei eingebettetem Text
+            auto* ordner = new QToolButton(zeile);
+            ordner->setObjectName(QStringLiteral("lyricsOpenFolder"));
+            ordner->setText(tr("Open folder"));
+            ordner->setToolTip(tr("Opens the folder of the lyrics file that is being shown."));
+            hl->addWidget(ordner);
+            connect(ordner, &QToolButton::clicked, zeile, []() {
+                const QString datei =
+                    QString::fromStdString(MultiEffectVisualizer::songtextDatei());
+                if (!datei.isEmpty())
+                    QDesktopServices::openUrl(
+                        QUrl::fromLocalFile(QFileInfo(datei).absolutePath()));
+            });
+            const auto zeige = [quelle, ordner]() {
+                const std::string info = MultiEffectVisualizer::songtextInfo();
+                const QString text = info.empty()
+                                         ? tr("No lyrics found for the playing track.")
+                                         : QString::fromStdString(info);
+                if (quelle->text() != text) quelle->setText(text);
+                ordner->setEnabled(!MultiEffectVisualizer::songtextDatei().empty());
+            };
+            zeige();
+            auto* uhr = new QTimer(zeile);
+            uhr->setInterval(500);
+            connect(uhr, &QTimer::timeout, zeile, zeige);
+            uhr->start();
+            form->addRow(tr("Lyrics"), zeile);
         }
         addFontFace("fontFace", tr("Font"), p->fontFace,
                     [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).fontFace = std::move(v); });

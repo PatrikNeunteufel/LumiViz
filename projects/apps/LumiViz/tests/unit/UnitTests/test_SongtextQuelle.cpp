@@ -70,9 +70,14 @@ TEST_CASE("SongtextQuelle: Reihenfolge — synchron vor unsynchron, nah vor fern
     // 2: .lrc neben dem Song schlaegt 3
     schreibe(neben + ".lrc", kSync);
     CHECK(findeSongtext(t, nutzer).quelle == "07 - Blue Monday.lrc");
+    // der Fund aus einer Datei nennt ihren Pfad (Knopf „Open folder" im Editor) …
+    CHECK(QString::fromStdString(findeSongtext(t, nutzer).datei) ==
+          QFileInfo(neben + ".lrc").absoluteFilePath());
     // 1: eingebettet synchron schlaegt 2
     t.lyricsSynced = "[00:02.00]sylt\n";
     CHECK(findeSongtext(t, nutzer).quelle == "embedded (synced)");
+    // … eingebetteter Text hat keine Datei
+    CHECK(findeSongtext(t, nutzer).datei.empty());
 }
 
 TEST_CASE("SongtextQuelle: synchron ist, was Zeitmarken traegt — nicht die Endung")
@@ -153,13 +158,29 @@ TEST_CASE("SongtextOnline: Antwort — synchron vor unsynchron, instrumental lee
 {
     using lumi::audio::songtextAusLrclib;
     const auto beide = songtextAusLrclib(
-        R"({"instrumental":false,"plainLyrics":"eins\nzwei\n",)"
+        R"({"id":3396226,"instrumental":false,"plainLyrics":"eins\nzwei\n",)"
         R"("syncedLyrics":"[00:17.12] eins\n[00:21.00] zwei\n"})");
     REQUIRE(beide.zeilen.size() == 2);
     CHECK(beide.synchron);
     CHECK(beide.zeilen[0].zeitMs == 17120);
     CHECK(beide.zeilen[0].text == "eins");
     CHECK(beide.quelle == "LRCLIB");
+    // Herkunft fuer die Datei: Dienst und Kennung (das Datum haengt der Abruf an)
+    CHECK(beide.herkunft == "LRCLIB id 3396226");
+    // gespeichert und ueber die lokale Suche wiedergefunden, traegt der Text den
+    // Vermerk weiter — auch nach einem Neustart ist die Herkunft bekannt
+    {
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        TrackInfo lied;
+        lied.filePath = tmp.path() + "/x.mp3";
+        lied.title = "Titel";
+        lied.artist = "Wer";
+        REQUIRE(lumi::audio::speichereSongtext(beide, tmp.path() + "/Wer - Titel.lrc"));
+        const auto gefunden = findeSongtext(lied, tmp.path());
+        CHECK(gefunden.herkunft == "LRCLIB id 3396226");
+        CHECK(gefunden.zeilen.size() == 2);
+    }
 
     const auto nurText = songtextAusLrclib(
         R"({"instrumental":false,"plainLyrics":"eins\nzwei\n","syncedLyrics":null})");

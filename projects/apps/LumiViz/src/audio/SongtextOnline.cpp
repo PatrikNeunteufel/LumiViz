@@ -12,6 +12,7 @@
 #include <BasicLogger.h>
 
 #include <QCoreApplication>
+#include <QDate>
 #include <QDir>
 #include <QFileInfo>
 #include <QJsonDocument>
@@ -79,6 +80,10 @@ Songtext songtextAusLrclib(const QByteArray& json)
         Songtext s = lumi::multieffect::lyrics::leseLrc(text.toStdString());
         if (s.leer()) continue;
         s.quelle = "LRCLIB";
+        // Herkunft fuer die Datei: Dienst und Kennung des Eintrags; das Datum
+        // haengt der Abruf an (fertig)
+        const qint64 id = static_cast<qint64>(o.value(QStringLiteral("id")).toDouble());
+        s.herkunft = id > 0 ? "LRCLIB id " + std::to_string(id) : std::string("LRCLIB");
         return s;
     }
     return {};
@@ -149,6 +154,8 @@ void SongtextOnline::fertig(QNetworkReply* reply, const TrackInfo& track)
 
     Songtext text = songtextAusLrclib(reply->readAll());
     if (text.leer()) return;
+    text.herkunft += ", fetched " +
+                     QDate::currentDate().toString(Qt::ISODate).toStdString();
     bool ausgewichen = false;
     const QString ziel =
         songtextZiel(track, text.synchron, songtextAblage(), songtextOrdner(), &ausgewichen);
@@ -160,6 +167,7 @@ void SongtextOnline::fertig(QNetworkReply* reply, const TrackInfo& track)
     text.quelle = gespeichert.isEmpty()
                       ? "LRCLIB (not saved)"
                       : "LRCLIB, saved: " + QFileInfo(gespeichert).fileName().toStdString();
+    text.datei = gespeichert.toStdString();
     Q_EMIT gefunden(track.filePath, text, gespeichert);
 }
 

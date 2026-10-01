@@ -29,6 +29,8 @@
  * - Zeilen-Zeitmarken `[mm:ss]`, `[mm:ss.xx]`, `[mm:ss.xxx]`, `[mm:ss:xx]`,
  *   mehrere je Zeile (Wiederholungen).
  * - Wort-Zeitmarken `<mm:ss.xx>` im Text (erweitertes LRC) -> `Zeile::worte`.
+ * - `[source:…]` -> `Songtext::herkunft` (eigene Kopfzeile von LumiViz fuer
+ *   aus dem Netz geholte Texte; beim Schreiben steht `[re:LumiViz]` davor).
  * - `[offset:±ms]` -> `Songtext::versatzMs`; ein positiver Wert laesst den Text
  *   FRUEHER erscheinen (wirksame Zeit = Marke − Versatz). Uebrige Kopfzeilen
  *   (`[ar:]`, `[ti:]`, `[al:]`, `[by:]`, `[length:]` …) werden uebergangen.
@@ -87,6 +89,14 @@ struct Songtext
     bool synchron = false;       ///< mindestens eine Zeile traegt eine Zeit
     std::int64_t versatzMs = 0;  ///< `[offset:]` — positiv = Text frueher
     std::string quelle;          ///< Herkunft fuer die Anzeige ("file.lrc", "embedded" …)
+    /// Herkunft eines aus dem Netz geholten Texts, wie sie in der Datei steht
+    /// (Kopfzeile `[source:…]`, Entscheid Patrik S86): Dienst, Kennung des
+    /// Eintrags, Datum — z. B. "LRCLIB id 3396226, fetched 2026-10-01". Leer =
+    /// kein Vermerk (selbst angelegt, eingebettet).
+    std::string herkunft;
+    /// Absoluter Pfad der Datei, aus der der Text stammt; leer = eingebettet
+    /// oder ohne Datei. Fuer „Ordner oeffnen" im Editor des Lyrics-Knotens.
+    std::string datei;
 
     [[nodiscard]] bool leer() const { return zeilen.empty(); }
     [[nodiscard]] bool operator==(const Songtext&) const = default;
@@ -264,6 +274,10 @@ inline void worte(std::string_view roh, std::int64_t zeilenZeit, Zeile& z)
                     const std::string wert(detail::trim(innen.substr(dp + 1)));
                     out.versatzMs = std::atoll(wert.c_str());
                 }
+                else if (name == "source")
+                {
+                    out.herkunft = std::string(detail::trim(innen.substr(dp + 1)));
+                }
             }
             zeile = detail::trim(zeile.substr(zu + 1));
         }
@@ -309,6 +323,8 @@ inline void worte(std::string_view roh, std::int64_t zeilenZeit, Zeile& z)
 [[nodiscard]] inline std::string schreibeLrc(const Songtext& s)
 {
     std::string out;
+    // Herkunftsvermerk zuerst — Kopfzeilen, die kein Leser als Text zeigt
+    if (!s.herkunft.empty()) out += "[re:LumiViz]\n[source:" + s.herkunft + "]\n";
     if (s.versatzMs != 0) out += "[offset:" + std::to_string(s.versatzMs) + "]\n";
     Stimme zuletzt = Stimme::Keine;
     for (const Zeile& z : s.zeilen)

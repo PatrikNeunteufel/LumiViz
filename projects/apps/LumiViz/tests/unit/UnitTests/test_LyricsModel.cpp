@@ -142,6 +142,32 @@ TEST_CASE("LyricsModel: schreiben und wieder lesen ergibt dasselbe")
     CHECK(zeileBei(fertig, 2000) == 0);
 }
 
+TEST_CASE("LyricsModel: Herkunftsvermerk steht in der Datei und nicht im Text")
+{
+    // synchron: Kopfzeilen vorweg, die Zeilen bleiben unberuehrt
+    Songtext s = leseLrc("[00:05.00]eins\n[00:09.00]zwei\n");
+    s.herkunft = "LRCLIB id 3396226, fetched 2026-10-01";
+    const std::string lrc = schreibeLrc(s);
+    CHECK(lrc.find("[re:LumiViz]\n[source:LRCLIB id 3396226, fetched 2026-10-01]\n") == 0);
+    const Songtext wieder = leseLrc(lrc);
+    CHECK(wieder.herkunft == "LRCLIB id 3396226, fetched 2026-10-01");
+    REQUIRE(wieder.zeilen.size() == 2);  // die Kopfzeilen sind KEINE Textzeilen
+    CHECK(wieder.zeilen[0].text == "eins");
+    CHECK(wieder == s);
+
+    // unsynchron (.txt): derselbe Vermerk, der Block beginnt weiter mit der ersten Zeile
+    Songtext roh = leseLrc("erste Zeile\nzweite Zeile\n");
+    roh.herkunft = "LRCLIB id 7, fetched 2026-10-01";
+    const Songtext txt = leseLrc(schreibeLrc(roh));
+    CHECK_FALSE(txt.synchron);
+    REQUIRE(txt.zeilen.size() == 2);
+    CHECK(txt.zeilen[0].text == "erste Zeile");
+    CHECK(txt.herkunft == "LRCLIB id 7, fetched 2026-10-01");
+
+    // ohne Vermerk wird nichts geschrieben — selbst angelegte Dateien bleiben, wie sie sind
+    CHECK(schreibeLrc(leseLrc("[00:05.00]eins\n")).find("[re:") == std::string::npos);
+}
+
 TEST_CASE("LyricsModel: UTF-8-BOM und kaputte Marken")
 {
     const Songtext s = leseLrc("\xEF\xBB\xBF[00:01.00]mit BOM\n[00:99.00]keine Zeit\n[xx]\n");

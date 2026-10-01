@@ -39,6 +39,14 @@ Songtext lese(const QString& text, const QString& quelle)
     if (!s.leer()) s.quelle = quelle.toStdString();
     return s;
 }
+
+/// Datei lesen und ihren Pfad am Ergebnis festhalten („Ordner oeffnen").
+Songtext leseDatei(const QString& pfad, const QString& quelle)
+{
+    Songtext s = lese(liesText(pfad), quelle);
+    if (!s.leer()) s.datei = QFileInfo(pfad).absoluteFilePath().toStdString();
+    return s;
+}
 }  // namespace
 
 QString songtextOrdner()
@@ -96,28 +104,28 @@ Songtext findeSongtext(const TrackInfo& track, const QString& benutzerOrdner)
     }
     // 2 — .lrc neben dem Song
     Songtext lrcNeben =
-        lese(liesText(neben + QStringLiteral(".lrc")), song.completeBaseName() + QStringLiteral(".lrc"));
+        leseDatei(neben + QStringLiteral(".lrc"), song.completeBaseName() + QStringLiteral(".lrc"));
     if (lrcNeben.synchron) return lrcNeben;
     // 3 — .lrc im Benutzerordner
     Songtext lrcFern;
     if (!fern.isEmpty())
     {
-        lrcFern = lese(liesText(fern + QStringLiteral(".lrc")),
-                       QStringLiteral("user folder: ") + name + QStringLiteral(".lrc"));
+        lrcFern = leseDatei(fern + QStringLiteral(".lrc"),
+                            QStringLiteral("user folder: ") + name + QStringLiteral(".lrc"));
         if (lrcFern.synchron) return lrcFern;
     }
     // 4 — eingebettet unsynchron
     if (!eingebettet.leer()) return eingebettet;
     // 5 — .txt neben dem Song, sonst die .lrc dort ohne Zeitmarken
     Songtext txt =
-        lese(liesText(neben + QStringLiteral(".txt")), song.completeBaseName() + QStringLiteral(".txt"));
+        leseDatei(neben + QStringLiteral(".txt"), song.completeBaseName() + QStringLiteral(".txt"));
     if (!txt.leer()) return txt;
     if (!lrcNeben.leer()) return lrcNeben;
     // 6 — .txt im Benutzerordner, sonst die .lrc dort ohne Zeitmarken
     if (!fern.isEmpty())
     {
-        txt = lese(liesText(fern + QStringLiteral(".txt")),
-                   QStringLiteral("user folder: ") + name + QStringLiteral(".txt"));
+        txt = leseDatei(fern + QStringLiteral(".txt"),
+                        QStringLiteral("user folder: ") + name + QStringLiteral(".txt"));
         if (!txt.leer()) return txt;
         if (!lrcFern.leer()) return lrcFern;
     }

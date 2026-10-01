@@ -2465,8 +2465,23 @@ ist zu befolgen). Einstellungen `lyrics/onlineSearch` (Vorgabe aus) und
 gefunden wurde; der Fund wird als `.lrc` (synchron) oder `.txt` gespeichert,
 bei gesperrtem Song-Ordner im Benutzerordner. Die dokumentierte
 Beispielanfrage lieferte am 2026-10-01 genau die erwartete Form. Tests ohne
-Netz: Anfrage, Antwort, Speicherort. **Nicht geprüft:** der Abruf aus der
-laufenden App (Signalweg, Speichern, Anzeige) und das Verhalten bei 429.
+Netz: Anfrage, Antwort, Speicherort. **Abruf aus der laufenden App belegt
+(Lauf Patrik 2026-10-01 15:58–16:00):** sechs gespeicherte Dateien im
+Benutzerordner `%APPDATA%\LumiViz Project\LumiViz\lyrics` (zwei `.lrc`, vier
+`.txt`). **Nicht geprüft:** das Verhalten bei 429.
+**Befund Patrik S86, behoben:** die Zeile „Lyrics" im Editor meldete „No
+lyrics found", während ein Text lief — sie wurde nur beim Öffnen der Seite
+gefüllt. Sie läuft jetzt mit (500 ms); neu Knopf **Open folder** für den
+Ordner der gelesenen Datei (`Songtext::datei`).
+**Herkunftsvermerk (Entscheid Patrik S86: in der Datei, keine `source.txt`):**
+ein online geholter Text trägt die Kopfzeilen `[re:LumiViz]` und
+`[source:LRCLIB id <n>, fetched <Datum>]` (`Songtext::herkunft`), in `.lrc`
+wie in `.txt`; der Leser überspringt sie, die Quellzeile im Editor zeigt sie.
+Die sechs vor dieser Änderung gespeicherten Dateien tragen keinen Vermerk.
+`[source:]` ist eine eigene Festlegung, keine Norm — ein fremder Player
+zeigt die Kopfzeilen einer `.txt` womöglich als Text.
+**Nächste Sitzung (Entscheid Patrik S86):** Panel zum Nachsynchronisieren
+(unsynchron → synchron) und alles Weitere.
 Die Dokumentation sagt nichts zur Lizenz der Texte.
 **Offen:** Versatz **je Titel** speichern (heute: Feld am Knoten und
 `[offset:]` in der Datei); Knopf „Lyrics file…" zum Zuweisen; Tag View zeigt

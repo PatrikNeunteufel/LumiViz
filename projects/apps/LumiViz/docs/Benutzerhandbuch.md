@@ -488,13 +488,15 @@ fern:
    mit Zeitmarken)
 2. `<Song>.lrc` neben dem Song
 3. `<Interpret> - <Titel>.lrc` im Benutzerordner
-   (`%APPDATA%\LumiViz\lyrics`)
+   (`%APPDATA%\LumiViz Project\LumiViz\lyrics`)
 4. eingebetteter unsynchroner Text (ID3 `USLT`, Vorbis `LYRICS`)
 5. `<Song>.txt` neben dem Song
 6. `<Interpret> - <Titel>.txt` im Benutzerordner
 
 Synchron ist ein Text, sobald er Zeitmarken trägt (`[01:23.45]`) — die Endung
-entscheidet nicht. Oben im Editor steht, was gefunden wurde.
+entscheidet nicht. Oben im Editor steht laufend, was gefunden wurde (Quelle,
+synchron oder nicht, Zeilenzahl); **Open folder** öffnet den Ordner der
+gelesenen Textdatei (bei eingebettetem Text gibt es keinen).
 
 | Feld | Bedeutung |
 |---|---|
@@ -518,10 +520,22 @@ laufenden Titels an diesen Dienst. Gefragt wird nur, wenn Titel und Interpret
 bekannt sind; ein Treffer verlangt, dass die Dauer auf zwei Sekunden passt. Ein
 Fund wird gespeichert, damit beim nächsten Mal nichts mehr hinausgeht:
 **Save fetched lyrics** wählt den Ort — **User folder**
-(`%APPDATA%\LumiViz\lyrics`, Vorgabe) oder **Next to the song** (gleicher Name
+(`%APPDATA%\LumiViz Project\LumiViz\lyrics`, Vorgabe) oder **Next to the song** (gleicher Name
 wie der Song, `.lrc` für synchronen, `.txt` für unsynchronen Text; ist der
 Ordner schreibgeschützt, landet der Fund im Benutzerordner). Die Rechte an den
 Texten liegen bei Dritten; sie sind für den eigenen Gebrauch gedacht.
+
+Jede so gespeicherte Datei trägt oben ihren **Herkunftsvermerk** — Dienst,
+Kennung des Eintrags und Datum:
+
+```
+[re:LumiViz]
+[source:LRCLIB id 3396226, fetched 2026-10-01]
+```
+
+Die beiden Kopfzeilen erscheinen nicht im Bild. Die Quellzeile im Editor des
+Lyrics-Knotens zeigt den Vermerk an (`… — source: LRCLIB id …`), auch nach
+einem Neustart. Dateien, die du selbst anlegst, bekommen keinen Vermerk.
 
 **Fenstergröße ändern.** Das Bild der Effektkette und jeder Effect List bzw.
 Host-Gruppe wird beim Größenwechsel in die neue Größe übernommen (wie in AVS

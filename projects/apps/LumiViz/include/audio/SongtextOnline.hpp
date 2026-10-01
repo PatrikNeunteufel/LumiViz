@@ -47,7 +47,7 @@ namespace lumi::audio
 /// Wohin ein Online-Fund gespeichert wird (Entscheid 4a). Werte = QSettings.
 enum class SongtextAblage
 {
-    Benutzerordner = 0,  ///< `<AppData>/LumiViz/lyrics/<Interpret> - <Titel>` (Vorgabe)
+    Benutzerordner = 0,  ///< `songtextOrdner()/<Interpret> - <Titel>` (Vorgabe)
     NebenDemSong = 1     ///< `<Song>` mit `.lrc`/`.txt`
 };
 

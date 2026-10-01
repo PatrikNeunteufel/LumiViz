@@ -20,6 +20,7 @@
 #include "services/ShortcutRegistry.hpp"
 #include "services/events/UIEvents.hpp"
 #include "audio/IAudioEngine.hpp"
+#include "audio/SongtextQuelle.hpp"  // Benutzerordner der Songtexte (S86)
 
 #include <QVBoxLayout>
 #include <QFormLayout>
@@ -427,9 +428,10 @@ QWidget* SettingsPanel::createAudioTab()
         ablage->setCurrentIndex(
             QSettings().value(QStringLiteral("lyrics/saveLocation"), 0).toInt() == 1 ? 1 : 0);
         ablage->setToolTip(
-            tr("Where lyrics fetched online are saved. User folder: "
-               "%APPDATA%/LumiViz/lyrics. Next to the song: same name as the song with "
-               ".lrc or .txt — if that folder is not writable, the user folder is used."));
+            tr("Where lyrics fetched online are saved. User folder: %1. Next to the song: "
+               "same name as the song with .lrc or .txt — if that folder is not writable, "
+               "the user folder is used.")
+                .arg(QDir::toNativeSeparators(lumi::audio::songtextOrdner())));
         connect(ablage, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
                 [](int index) {
                     QSettings().setValue(QStringLiteral("lyrics/saveLocation"), index);

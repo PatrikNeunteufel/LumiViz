@@ -279,6 +279,9 @@ public:
     /// Kurzbeschreibung des gesetzten Songtexts fuer die Oberflaeche:
     /// Quelle, synchron/unsynchron, Zeilenzahl; leer = keiner.
     [[nodiscard]] static std::string songtextInfo();
+    /// Absoluter Pfad der Datei des gesetzten Songtexts; leer = eingebettet,
+    /// nicht gespeichert oder kein Text.
+    [[nodiscard]] static std::string songtextDatei();
     /// Abspielposition des Players in ms (S86): der Player meldet sie
     /// 10–30-mal je Sekunde, dazwischen wird auf der Wanduhr weitergezaehlt,
     /// solange er laeuft (`notifyPlayState`). Thread-sicher.

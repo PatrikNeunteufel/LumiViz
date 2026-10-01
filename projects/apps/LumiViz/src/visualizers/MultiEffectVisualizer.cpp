@@ -9528,8 +9528,19 @@ std::string MultiEffectVisualizer::songtextInfo()
 {
     const std::lock_guard<std::mutex> lock(g_songTagsMutex);
     if (g_songtext.leer()) return {};
-    return g_songtext.quelle + (g_songtext.synchron ? " — synced, " : " — not synced, ") +
-           std::to_string(g_songtext.zeilen.size()) + " lines";
+    std::string info = g_songtext.quelle +
+                       (g_songtext.synchron ? " — synced, " : " — not synced, ") +
+                       std::to_string(g_songtext.zeilen.size()) + " lines";
+    // Herkunftsvermerk aus der Datei (aus dem Netz geholt) — auch nach einem
+    // Neustart, wenn nur noch der Dateiname die Quelle ist
+    if (!g_songtext.herkunft.empty()) info += " — source: " + g_songtext.herkunft;
+    return info;
+}
+
+std::string MultiEffectVisualizer::songtextDatei()
+{
+    const std::lock_guard<std::mutex> lock(g_songTagsMutex);
+    return g_songtext.datei;
 }
 
 namespace

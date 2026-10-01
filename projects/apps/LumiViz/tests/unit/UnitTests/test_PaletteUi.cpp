@@ -1833,6 +1833,61 @@ TEST_CASE("PaletteUi S86 F4c: ~-Knopf an SuperScope- und Listenfeldern")
 // Takt (einmal, je Frame, je Beat, je Punkt …). Waechter: JEDES Slot-Feld, das
 // das Panel mit addScript anlegt, bekommt einen Text — ein neuer Slot ohne
 // Beschreibung faellt hier auf.
+// S86 (Befund Patrik): die Zeile „Lyrics" im Editor stand auf dem Stand beim
+// Oeffnen der Seite und meldete „not found", waehrend laengst ein Text lief.
+// Sie laeuft jetzt mit; „Open folder" ist nur bei einer eigenen Datei aktiv.
+TEST_CASE("PaletteUi S86: Lyrics — Quellzeile laeuft mit, Ordner-Knopf nur mit Datei")
+{
+    UiUmgebung env;
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    namespace ly = lumi::multieffect::lyrics;
+    const auto warte = [](int ms) {
+        QElapsedTimer t;
+        t.start();
+        while (t.elapsed() < ms) QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+    };
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    p.vis.chain().children[0].params = lumi::multieffect::LyricsParams{};
+    p.tree->setCurrentItem(p.oben(1));
+    warte(20);
+    p.tree->setCurrentItem(p.oben(0));
+    warte(20);
+    auto* quelle = p.panel->findChild<QLabel*>(QStringLiteral("lyricsSource"));
+    auto* ordner = p.panel->findChild<QToolButton*>(QStringLiteral("lyricsOpenFolder"));
+    REQUIRE(quelle != nullptr);
+    REQUIRE(ordner != nullptr);
+    CHECK(quelle->text().startsWith(QStringLiteral("No lyrics")));
+    CHECK_FALSE(ordner->isEnabled());
+
+    // der Text kommt NACH dem Oeffnen der Seite (Titelwechsel, Online-Fund)
+    ly::Songtext s = ly::leseLrc("[00:01.00]eins\n[00:02.00]zwei\n");
+    s.quelle = "lied.lrc";
+    s.datei = "C:/Musik/lied.lrc";
+    MultiEffectVisualizer::setSongtext(s);
+    warte(700);
+    CHECK(quelle->text().startsWith(QStringLiteral("lied.lrc")));
+    CHECK(quelle->text().contains(QStringLiteral("2 lines")));
+    CHECK(ordner->isEnabled());
+
+    // aus dem Netz geholt: der Vermerk aus der Datei steht mit in der Zeile
+    s.herkunft = "LRCLIB id 7, fetched 2026-10-01";
+    MultiEffectVisualizer::setSongtext(s);
+    warte(700);
+    CHECK(quelle->text().contains(QStringLiteral("source: LRCLIB id 7, fetched 2026-10-01")));
+    s.herkunft.clear();
+
+    // eingebetteter Text: Zeile nennt ihn, aber es gibt keinen Ordner zu oeffnen
+    s.quelle = "embedded";
+    s.datei.clear();
+    MultiEffectVisualizer::setSongtext(s);
+    warte(700);
+    CHECK(quelle->text().startsWith(QStringLiteral("embedded")));
+    CHECK_FALSE(ordner->isEnabled());
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+}
+
 // S86 (Wunsch Patrik): Panel „Tag View" zeigt die Tags des laufenden Titels;
 // ein fehlender Tag ist als „—" zu sehen, ohne Titel steht der Hinweis da.
 TEST_CASE("PaletteUi S86: Tag View zeigt die Tags des Titels")

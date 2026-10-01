@@ -34,7 +34,8 @@
 namespace lumi::audio
 {
 
-/// Benutzerordner fuer Songtexte: `<AppData>/LumiViz/lyrics` (wird nicht angelegt).
+/// Benutzerordner fuer Songtexte: `<AppDataLocation>/lyrics`, unter Windows
+/// `%APPDATA%\LumiViz Project\LumiViz\lyrics` (wird hier nicht angelegt).
 [[nodiscard]] QString songtextOrdner();
 
 /// Dateiname OHNE Endung im Benutzerordner: `<Interpret> - <Titel>`, fehlt der
