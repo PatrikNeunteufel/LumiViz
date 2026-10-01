@@ -25,7 +25,10 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `size` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "size"
+            "size",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -44,7 +47,10 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `size` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "size"
+            "size",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -55,7 +61,10 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `size` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "size"
+            "size",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -145,7 +154,14 @@
           "skriptvars": [
             "mode",
             "smoothing",
-            "spinstep"
+            "spinstep",
+            "DotPlaneParams",
+            "colorleft_r",
+            "colorleft_g",
+            "colorleft_b",
+            "colorright_r",
+            "colorright_g",
+            "colorright_b"
           ]
         },
         {
@@ -174,7 +190,14 @@
           "skriptvars": [
             "mode",
             "smoothing",
-            "spinstep"
+            "spinstep",
+            "DotPlaneParams",
+            "colorleft_r",
+            "colorleft_g",
+            "colorleft_b",
+            "colorright_r",
+            "colorright_g",
+            "colorright_b"
           ]
         },
         {
@@ -187,7 +210,14 @@
           "skriptvars": [
             "mode",
             "smoothing",
-            "spinstep"
+            "spinstep",
+            "DotPlaneParams",
+            "colorleft_r",
+            "colorleft_g",
+            "colorleft_b",
+            "colorright_r",
+            "colorright_g",
+            "colorright_b"
           ]
         },
         {
@@ -337,9 +367,9 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `radius`, `intensity`, `threshold`, `vignettestrength` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
+            "radius",
             "intensity",
             "threshold",
-            "radius",
             "vignettestrength"
           ]
         },
@@ -361,9 +391,9 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `radius`, `intensity`, `threshold`, `vignettestrength` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
+            "radius",
             "intensity",
             "threshold",
-            "radius",
             "vignettestrength"
           ]
         },
@@ -375,9 +405,9 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `radius`, `intensity`, `threshold`, `vignettestrength` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
+            "radius",
             "intensity",
             "threshold",
-            "radius",
             "vignettestrength"
           ]
         },
@@ -513,7 +543,10 @@
             "red",
             "green",
             "blue",
-            "distance"
+            "distance",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -563,7 +596,10 @@
             "red",
             "green",
             "blue",
-            "distance"
+            "distance",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -587,7 +623,10 @@
             "red",
             "green",
             "blue",
-            "distance"
+            "distance",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -775,8 +814,6 @@
             "x",
             "y",
             "bi",
-            "depth",
-            "depth2",
             "isbeat",
             "islbeat"
           ],
@@ -845,8 +882,6 @@
             "x",
             "y",
             "bi",
-            "depth",
-            "depth2",
             "isbeat",
             "islbeat"
           ],
@@ -866,8 +901,6 @@
             "x",
             "y",
             "bi",
-            "depth",
-            "depth2",
             "isbeat",
             "islbeat"
           ],
@@ -916,15 +949,16 @@
           "doc": "EEL slots (order: frame BEFORE beat): may override `px`..`pz`, `tx`..`tz`, `fov`, `roll`, `fogstart`, `fogend`. The field values above are the initial values at translation time. Colors via script (Block B, S79): `fogcolor_r`, `fogcolor_g`, `fogcolor_b` (0..1).",
           "skriptvars": [
             "px",
-            "py",
             "pz",
             "tx",
-            "ty",
             "tz",
             "fov",
             "roll",
             "fogstart",
-            "fogend"
+            "fogend",
+            "fogcolor_r",
+            "fogcolor_g",
+            "fogcolor_b"
           ]
         },
         {
@@ -974,15 +1008,16 @@
           "doc": "EEL slots (order: frame BEFORE beat): may override `px`..`pz`, `tx`..`tz`, `fov`, `roll`, `fogstart`, `fogend`. The field values above are the initial values at translation time. Colors via script (Block B, S79): `fogcolor_r`, `fogcolor_g`, `fogcolor_b` (0..1).",
           "skriptvars": [
             "px",
-            "py",
             "pz",
             "tx",
-            "ty",
             "tz",
             "fov",
             "roll",
             "fogstart",
-            "fogend"
+            "fogend",
+            "fogcolor_r",
+            "fogcolor_g",
+            "fogcolor_b"
           ]
         },
         {
@@ -994,15 +1029,16 @@
           "doc": "EEL slots (order: frame BEFORE beat): may override `px`..`pz`, `tx`..`tz`, `fov`, `roll`, `fogstart`, `fogend`. The field values above are the initial values at translation time. Colors via script (Block B, S79): `fogcolor_r`, `fogcolor_g`, `fogcolor_b` (0..1).",
           "skriptvars": [
             "px",
-            "py",
             "pz",
             "tx",
-            "ty",
             "tz",
             "fov",
             "roll",
             "fogstart",
-            "fogend"
+            "fogend",
+            "fogcolor_r",
+            "fogcolor_g",
+            "fogcolor_b"
           ]
         },
         {
@@ -1147,7 +1183,10 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `blend` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "blend"
+            "blend",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -1175,7 +1214,10 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `blend` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "blend"
+            "blend",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -1186,7 +1228,10 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `blend` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "blend"
+            "blend",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -1298,8 +1343,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `key`, `blendmode`, `adjustblend` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "key",
-            "blendmode",
             "adjustblend"
           ]
         },
@@ -1320,8 +1363,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `key`, `blendmode`, `adjustblend` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "key",
-            "blendmode",
             "adjustblend"
           ]
         },
@@ -1333,8 +1374,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `key`, `blendmode`, `adjustblend` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "key",
-            "blendmode",
             "adjustblend"
           ]
         },
@@ -1661,9 +1700,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `bias`, `scale`, `edgemode` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "bias",
-            "scale",
-            "edgemode"
+            "scale"
           ]
         },
         {
@@ -1693,9 +1730,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `bias`, `scale`, `edgemode` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "bias",
-            "scale",
-            "edgemode"
+            "scale"
           ]
         },
         {
@@ -1706,9 +1741,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `bias`, `scale`, `edgemode` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "bias",
-            "scale",
-            "edgemode"
+            "scale"
           ]
         },
         {
@@ -1927,17 +1960,6 @@
           "helfer": "addScript",
           "doc": "EEL, on beat",
           "skriptvars": [
-            "scale",
-            "warp",
-            "speed",
-            "ox",
-            "oy",
-            "colorscale",
-            "colorcycle",
-            "warpscale",
-            "lacunarity",
-            "gain",
-            "octaves",
             "colorphase"
           ]
         },
@@ -1978,17 +2000,6 @@
           "helfer": "addScript",
           "doc": "EEL, per frame (audio-reactive field)",
           "skriptvars": [
-            "scale",
-            "warp",
-            "speed",
-            "ox",
-            "oy",
-            "colorscale",
-            "colorcycle",
-            "warpscale",
-            "lacunarity",
-            "gain",
-            "octaves",
             "colorphase"
           ]
         },
@@ -2017,17 +2028,6 @@
           "helfer": "addScript",
           "doc": "EEL, once",
           "skriptvars": [
-            "scale",
-            "warp",
-            "speed",
-            "ox",
-            "oy",
-            "colorscale",
-            "colorcycle",
-            "warpscale",
-            "lacunarity",
-            "gain",
-            "octaves",
             "colorphase"
           ]
         },
@@ -2324,9 +2324,7 @@
           "doc": "Parameter script (Strang D): `rotvel`, `angle`, `camdistance`, `settle`. WARNING class A — a script here leaves the reference; the editor says so, because the ⚠ markers on the sliders can only check fixed values.",
           "skriptvars": [
             "rotvel",
-            "angle",
-            "camdistance",
-            "settle"
+            "angle"
           ]
         },
         {
@@ -2363,9 +2361,7 @@
           "doc": "Parameter script (Strang D): `rotvel`, `angle`, `camdistance`, `settle`. WARNING class A — a script here leaves the reference; the editor says so, because the ⚠ markers on the sliders can only check fixed values.",
           "skriptvars": [
             "rotvel",
-            "angle",
-            "camdistance",
-            "settle"
+            "angle"
           ]
         },
         {
@@ -2377,9 +2373,7 @@
           "doc": "Parameter script (Strang D): `rotvel`, `angle`, `camdistance`, `settle`. WARNING class A — a script here leaves the reference; the editor says so, because the ⚠ markers on the sliders can only check fixed values.",
           "skriptvars": [
             "rotvel",
-            "angle",
-            "camdistance",
-            "settle"
+            "angle"
           ]
         },
         {
@@ -2800,9 +2794,9 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `variation` (0..4), `scale` and `rotation` + audio set. Empty = no script. More fields via script (Block D, S79): `rotationspeed`, `dotsize`.",
           "skriptvars": [
-            "rotation",
             "variation",
             "scale",
+            "rotation",
             "rotationspeed",
             "dotsize"
           ]
@@ -2834,9 +2828,9 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `variation` (0..4), `scale` and `rotation` + audio set. Empty = no script. More fields via script (Block D, S79): `rotationspeed`, `dotsize`.",
           "skriptvars": [
-            "rotation",
             "variation",
             "scale",
+            "rotation",
             "rotationspeed",
             "dotsize"
           ]
@@ -2867,9 +2861,9 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `variation` (0..4), `scale` and `rotation` + audio set. Empty = no script. More fields via script (Block D, S79): `rotationspeed`, `dotsize`.",
           "skriptvars": [
-            "rotation",
             "variation",
             "scale",
+            "rotation",
             "rotationspeed",
             "dotsize"
           ]
@@ -2938,17 +2932,6 @@
           "helfer": "addScript",
           "doc": "EEL, on beat",
           "skriptvars": [
-            "cx",
-            "cy",
-            "zoom",
-            "rot",
-            "jx",
-            "jy",
-            "power",
-            "colorscale",
-            "colorcycle",
-            "maxiter",
-            "escaper",
             "colorphase"
           ]
         },
@@ -3019,17 +3002,6 @@
           "helfer": "addScript",
           "doc": "EEL, per frame (audio-reactive view)",
           "skriptvars": [
-            "cx",
-            "cy",
-            "zoom",
-            "rot",
-            "jx",
-            "jy",
-            "power",
-            "colorscale",
-            "colorcycle",
-            "maxiter",
-            "escaper",
             "colorphase"
           ]
         },
@@ -3058,17 +3030,6 @@
           "helfer": "addScript",
           "doc": "EEL, once (seed cx,cy,zoom,…)",
           "skriptvars": [
-            "cx",
-            "cy",
-            "zoom",
-            "rot",
-            "jx",
-            "jy",
-            "power",
-            "colorscale",
-            "colorcycle",
-            "maxiter",
-            "escaper",
             "colorphase"
           ]
         },
@@ -3189,22 +3150,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + audio set — camera and shape live. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`. More fields via script (Block D, S79): `fov`, `juliax`, `juliay`, `juliaz`, `juliaw`, `lightyaw`, `lightpitch`, `ambient`.",
           "skriptvars": [
-            "yaw",
-            "pitch",
-            "dist",
-            "power",
-            "scale",
-            "fold",
-            "colorscale",
-            "colorcycle",
-            "fov",
-            "juliax",
-            "juliay",
-            "juliaz",
-            "juliaw",
-            "lightyaw",
-            "lightpitch",
-            "ambient",
             "colorphase"
           ]
         },
@@ -3275,22 +3220,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + audio set — camera and shape live. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`. More fields via script (Block D, S79): `fov`, `juliax`, `juliay`, `juliaz`, `juliaw`, `lightyaw`, `lightpitch`, `ambient`.",
           "skriptvars": [
-            "yaw",
-            "pitch",
-            "dist",
-            "power",
-            "scale",
-            "fold",
-            "colorscale",
-            "colorcycle",
-            "fov",
-            "juliax",
-            "juliay",
-            "juliaz",
-            "juliaw",
-            "lightyaw",
-            "lightpitch",
-            "ambient",
             "colorphase"
           ]
         },
@@ -3320,22 +3249,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `yaw`, `pitch`, `dist`, `power`, `scale`, `fold` + audio set — camera and shape live. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `background_r`, `background_g`, `background_b`. More fields via script (Block D, S79): `fov`, `juliax`, `juliay`, `juliaz`, `juliaw`, `lightyaw`, `lightpitch`, `ambient`.",
           "skriptvars": [
-            "yaw",
-            "pitch",
-            "dist",
-            "power",
-            "scale",
-            "fold",
-            "colorscale",
-            "colorcycle",
-            "fov",
-            "juliax",
-            "juliay",
-            "juliaz",
-            "juliaw",
-            "lightyaw",
-            "lightpitch",
-            "ambient",
             "colorphase"
           ]
         },
@@ -3474,15 +3387,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + audio set. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`. More fields via script (Block D, S79): `feedback`, `juliax`, `juliay`.",
           "skriptvars": [
-            "cx",
-            "cy",
-            "zoomspeed",
-            "rotspeed",
-            "colorscale",
-            "colorcycle",
-            "feedback",
-            "juliax",
-            "juliay",
             "colorphase"
           ]
         },
@@ -3544,15 +3448,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + audio set. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`. More fields via script (Block D, S79): `feedback`, `juliax`, `juliay`.",
           "skriptvars": [
-            "cx",
-            "cy",
-            "zoomspeed",
-            "rotspeed",
-            "colorscale",
-            "colorcycle",
-            "feedback",
-            "juliax",
-            "juliay",
             "colorphase"
           ]
         },
@@ -3582,15 +3477,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `centerX`, `centerY`, `zoomSpeed`, `rotationSpeed` + audio set. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `insidecolor_r`, `insidecolor_g`, `insidecolor_b`. More fields via script (Block D, S79): `feedback`, `juliax`, `juliay`.",
           "skriptvars": [
-            "cx",
-            "cy",
-            "zoomspeed",
-            "rotspeed",
-            "colorscale",
-            "colorcycle",
-            "feedback",
-            "juliax",
-            "juliay",
             "colorphase"
           ]
         },
@@ -3795,10 +3681,6 @@
           "helfer": "addScript",
           "doc": "EEL quartet. init/frame/beat run once per build/frame/beat and set, among other things, `n` (number of orbs); the point code runs per orb. More fields via script (Block D, S79): `haloscale`, `halointensity`, `falloff`.",
           "skriptvars": [
-            "n",
-            "haloscale",
-            "halointensity",
-            "falloff",
             "i",
             "x",
             "y",
@@ -3837,10 +3719,6 @@
           "helfer": "addScript",
           "doc": "EEL quartet. init/frame/beat run once per build/frame/beat and set, among other things, `n` (number of orbs); the point code runs per orb. More fields via script (Block D, S79): `haloscale`, `halointensity`, `falloff`.",
           "skriptvars": [
-            "n",
-            "haloscale",
-            "halointensity",
-            "falloff",
             "i",
             "x",
             "y",
@@ -3889,10 +3767,6 @@
           "helfer": "addScript",
           "doc": "EEL quartet. init/frame/beat run once per build/frame/beat and set, among other things, `n` (number of orbs); the point code runs per orb. More fields via script (Block D, S79): `haloscale`, `halointensity`, `falloff`.",
           "skriptvars": [
-            "n",
-            "haloscale",
-            "halointensity",
-            "falloff",
             "i",
             "x",
             "y",
@@ -3931,10 +3805,6 @@
           "helfer": "addScript",
           "doc": "per orb (i = orb index)",
           "skriptvars": [
-            "n",
-            "haloscale",
-            "halointensity",
-            "falloff",
             "i",
             "x",
             "y",
@@ -4558,12 +4428,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `points`, `distance`, `alpha`, `rotation`, `rotationinc`, `speed` + `b`/`w`/`h` + audio set. Empty = no script. More fields via script (Block D, S79): `distance2`, `alpha2`, `rotationinc2`.",
           "skriptvars": [
-            "points",
-            "distance",
-            "alpha",
             "rotation",
-            "rotationinc",
-            "speed",
             "distance2",
             "alpha2",
             "rotationinc2"
@@ -4606,12 +4471,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `points`, `distance`, `alpha`, `rotation`, `rotationinc`, `speed` + `b`/`w`/`h` + audio set. Empty = no script. More fields via script (Block D, S79): `distance2`, `alpha2`, `rotationinc2`.",
           "skriptvars": [
-            "points",
-            "distance",
-            "alpha",
             "rotation",
-            "rotationinc",
-            "speed",
             "distance2",
             "alpha2",
             "rotationinc2"
@@ -4625,12 +4485,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `points`, `distance`, `alpha`, `rotation`, `rotationinc`, `speed` + `b`/`w`/`h` + audio set. Empty = no script. More fields via script (Block D, S79): `distance2`, `alpha2`, `rotationinc2`.",
           "skriptvars": [
-            "points",
-            "distance",
-            "alpha",
             "rotation",
-            "rotationinc",
-            "speed",
             "distance2",
             "alpha2",
             "rotationinc2"
@@ -5003,13 +4858,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `p`, `q` (as numbers), `morph`, `zoom`, `rot` (= `rotation`) + audio set. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.",
           "skriptvars": [
-            "morph",
-            "zoom",
-            "rot",
-            "p",
-            "q",
-            "colorscale",
-            "colorcycle",
             "colorphase"
           ]
         },
@@ -5050,13 +4898,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `p`, `q` (as numbers), `morph`, `zoom`, `rot` (= `rotation`) + audio set. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.",
           "skriptvars": [
-            "morph",
-            "zoom",
-            "rot",
-            "p",
-            "q",
-            "colorscale",
-            "colorcycle",
             "colorphase"
           ]
         },
@@ -5076,13 +4917,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `p`, `q` (as numbers), `morph`, `zoom`, `rot` (= `rotation`) + audio set. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`.",
           "skriptvars": [
-            "morph",
-            "zoom",
-            "rot",
-            "p",
-            "q",
-            "colorscale",
-            "colorcycle",
             "colorphase"
           ]
         },
@@ -5227,6 +5061,10 @@
             "clear",
             "alphain",
             "alphaout"
+          ],
+          "skriptvars_wirkungslos": [
+            "alphain",
+            "alphaout"
           ]
         },
         {
@@ -5249,6 +5087,10 @@
           "skriptvars": [
             "enabled",
             "clear",
+            "alphain",
+            "alphaout"
+          ],
+          "skriptvars_wirkungslos": [
             "alphain",
             "alphaout"
           ]
@@ -5324,12 +5166,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — the view — + audio set. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `negcolor_r`, `negcolor_g`, `negcolor_b`.",
           "skriptvars": [
-            "amin",
-            "amax",
-            "bmin",
-            "bmax",
-            "colorscale",
-            "colorcycle",
             "colorphase"
           ]
         },
@@ -5390,12 +5226,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — the view — + audio set. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `negcolor_r`, `negcolor_g`, `negcolor_b`.",
           "skriptvars": [
-            "amin",
-            "amax",
-            "bmin",
-            "bmax",
-            "colorscale",
-            "colorcycle",
             "colorphase"
           ]
         },
@@ -5415,12 +5245,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `aMin`, `aMax`, `bMin`, `bMax` — the view — + audio set. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`, `negcolor_r`, `negcolor_g`, `negcolor_b`.",
           "skriptvars": [
-            "amin",
-            "amax",
-            "bmin",
-            "bmax",
-            "colorscale",
-            "colorcycle",
             "colorphase"
           ]
         },
@@ -6131,9 +5955,7 @@
           "skriptvars": [
             "size",
             "size2",
-            "maxdistance",
-            "spring",
-            "damping"
+            "maxdistance"
           ]
         },
         {
@@ -6173,9 +5995,7 @@
           "skriptvars": [
             "size",
             "size2",
-            "maxdistance",
-            "spring",
-            "damping"
+            "maxdistance"
           ]
         },
         {
@@ -6188,9 +6008,7 @@
           "skriptvars": [
             "size",
             "size2",
-            "maxdistance",
-            "spring",
-            "damping"
+            "maxdistance"
           ]
         },
         {
@@ -6256,8 +6074,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `delay`, `buffer` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "delay",
-            "buffer"
+            "delay"
           ]
         },
         {
@@ -6288,8 +6105,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `delay`, `buffer` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "delay",
-            "buffer"
+            "delay"
           ]
         },
         {
@@ -6300,8 +6116,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `delay`, `buffer` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "delay",
-            "buffer"
+            "delay"
           ]
         },
         {
@@ -6448,7 +6263,10 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `everyNBeats` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "everynbeats"
+            "everyNBeats",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -6485,7 +6303,10 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `everyNBeats` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "everynbeats"
+            "everyNBeats",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -6496,7 +6317,10 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `everyNBeats` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "everynbeats"
+            "everyNBeats",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         }
       ]
@@ -6651,11 +6475,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `size`, `rot`, `spokes`, `rotscale`, `amplitude` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "size",
-            "rot",
-            "spokes",
-            "rotscale",
-            "amplitude"
+            "rot"
           ]
         },
         {
@@ -6686,11 +6506,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `size`, `rot`, `spokes`, `rotscale`, `amplitude` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "size",
-            "rot",
-            "spokes",
-            "rotscale",
-            "amplitude"
+            "rot"
           ]
         },
         {
@@ -6701,11 +6517,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `size`, `rot`, `spokes`, `rotscale`, `amplitude` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "size",
-            "rot",
-            "spokes",
-            "rotscale",
-            "amplitude"
+            "rot"
           ]
         },
         {
@@ -6985,13 +6797,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `feed`, `kill` + audio set — this makes the pattern wander while running. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`. More fields via script (Block D, S79): `diffa`, `diffb`, `stepsperframe`.",
           "skriptvars": [
-            "feed",
-            "kill",
-            "colorscale",
-            "colorcycle",
-            "diffa",
-            "diffb",
-            "stepsperframe",
             "colorphase"
           ]
         },
@@ -7062,13 +6867,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `feed`, `kill` + audio set — this makes the pattern wander while running. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`. More fields via script (Block D, S79): `diffa`, `diffb`, `stepsperframe`.",
           "skriptvars": [
-            "feed",
-            "kill",
-            "colorscale",
-            "colorcycle",
-            "diffa",
-            "diffb",
-            "stepsperframe",
             "colorphase"
           ]
         },
@@ -7088,13 +6886,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `feed`, `kill` + audio set — this makes the pattern wander while running. Empty = no script. Color palette via script (Block C, S79): `colorscale`, `colorcycle`, `colorphase`. More fields via script (Block D, S79): `diffa`, `diffb`, `stepsperframe`.",
           "skriptvars": [
-            "feed",
-            "kill",
-            "colorscale",
-            "colorcycle",
-            "diffa",
-            "diffb",
-            "stepsperframe",
             "colorphase"
           ]
         },
@@ -7460,9 +7251,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D, Block E S79): `linewidth`, `lineblend`, `adjustalpha`, `overrideblend` + `b`/`w`/`h` + audio set — e.g. the line width on the beat. Empty = no script (LumiViz extension, AVS has no code here).",
           "skriptvars": [
-            "linewidth",
-            "lineblend",
-            "adjustalpha",
             "overrideblend"
           ]
         },
@@ -7474,9 +7262,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D, Block E S79): `linewidth`, `lineblend`, `adjustalpha`, `overrideblend` + `b`/`w`/`h` + audio set — e.g. the line width on the beat. Empty = no script (LumiViz extension, AVS has no code here).",
           "skriptvars": [
-            "linewidth",
-            "lineblend",
-            "adjustalpha",
             "overrideblend"
           ]
         },
@@ -7488,9 +7273,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D, Block E S79): `linewidth`, `lineblend`, `adjustalpha`, `overrideblend` + `b`/`w`/`h` + audio set — e.g. the line width on the beat. Empty = no script (LumiViz extension, AVS has no code here).",
           "skriptvars": [
-            "linewidth",
-            "lineblend",
-            "adjustalpha",
             "overrideblend"
           ]
         },
@@ -7693,10 +7475,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `maxstars`, `warpspeed`, `beatspeed`, `durationframes` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "maxstars",
-            "warpspeed",
-            "beatspeed",
-            "durationframes"
+            "maxstars"
           ]
         },
         {
@@ -7744,10 +7523,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `maxstars`, `warpspeed`, `beatspeed`, `durationframes` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "maxstars",
-            "warpspeed",
-            "beatspeed",
-            "durationframes"
+            "maxstars"
           ]
         },
         {
@@ -7758,10 +7534,7 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `maxstars`, `warpspeed`, `beatspeed`, `durationframes` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "maxstars",
-            "warpspeed",
-            "beatspeed",
-            "durationframes"
+            "maxstars"
           ]
         },
         {
@@ -7828,10 +7601,12 @@
           "doc": "Parameter script (Strang D): `a`, `b`, `c`, `d`, `rotation` + audio set. Empty = no script. Caution: changing the coefficients in the panel resets the carrier and runs the init slot again. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1). More fields via script (Block D, S79): `scale`, `rotationspeed`, `dotsize`.",
           "skriptvars": [
             "a",
-            "b",
             "c",
             "d",
             "rotation",
+            "color_r",
+            "color_g",
+            "color_b",
             "scale",
             "rotationspeed",
             "dotsize"
@@ -7893,10 +7668,12 @@
           "doc": "Parameter script (Strang D): `a`, `b`, `c`, `d`, `rotation` + audio set. Empty = no script. Caution: changing the coefficients in the panel resets the carrier and runs the init slot again. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1). More fields via script (Block D, S79): `scale`, `rotationspeed`, `dotsize`.",
           "skriptvars": [
             "a",
-            "b",
             "c",
             "d",
             "rotation",
+            "color_r",
+            "color_g",
+            "color_b",
             "scale",
             "rotationspeed",
             "dotsize"
@@ -7929,10 +7706,12 @@
           "doc": "Parameter script (Strang D): `a`, `b`, `c`, `d`, `rotation` + audio set. Empty = no script. Caution: changing the coefficients in the panel resets the carrier and runs the init slot again. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1). More fields via script (Block D, S79): `scale`, `rotationspeed`, `dotsize`.",
           "skriptvars": [
             "a",
-            "b",
             "c",
             "d",
             "rotation",
+            "color_r",
+            "color_g",
+            "color_b",
             "scale",
             "rotationspeed",
             "dotsize"
@@ -8010,15 +7789,11 @@
           "helfer": "addScript",
           "doc": "EEL quartet. init/frame/beat run once per setup/frame/beat and set, among other things, `n` (point count); the point code runs per point.",
           "skriptvars": [
-            "blue",
-            "drawmode",
-            "green",
-            "linesize",
             "n",
-            "red",
-            "skip",
-            "x",
-            "y"
+            "pointcount"
+          ],
+          "skriptvars_wirkungslos": [
+            "n"
           ]
         },
         {
@@ -8065,15 +7840,11 @@
           "helfer": "addScript",
           "doc": "EEL quartet. init/frame/beat run once per setup/frame/beat and set, among other things, `n` (point count); the point code runs per point.",
           "skriptvars": [
-            "blue",
-            "drawmode",
-            "green",
-            "linesize",
             "n",
-            "red",
-            "skip",
-            "x",
-            "y"
+            "pointcount"
+          ],
+          "skriptvars_wirkungslos": [
+            "n"
           ]
         },
         {
@@ -8091,15 +7862,11 @@
           "helfer": "addScript",
           "doc": "EEL quartet. init/frame/beat run once per setup/frame/beat and set, among other things, `n` (point count); the point code runs per point.",
           "skriptvars": [
-            "blue",
-            "drawmode",
-            "green",
-            "linesize",
             "n",
-            "red",
-            "skip",
-            "x",
-            "y"
+            "pointcount"
+          ],
+          "skriptvars_wirkungslos": [
+            "n"
           ]
         },
         {
@@ -8129,15 +7896,11 @@
           "helfer": "addScript",
           "doc": "EEL quartet. init/frame/beat run once per setup/frame/beat and set, among other things, `n` (point count); the point code runs per point. Runs per point: `i` 0..1 and `v` (audio) come in; `x`/`y` (-1..1), `red`/`green`/`blue`, `linesize`, `skip` and `drawmode` are read back.",
           "skriptvars": [
-            "blue",
-            "drawmode",
-            "green",
-            "linesize",
             "n",
-            "red",
-            "skip",
-            "x",
-            "y"
+            "pointcount"
+          ],
+          "skriptvars_wirkungslos": [
+            "n"
           ]
         },
         {
@@ -8191,8 +7954,6 @@
           "helfer": "addScript",
           "doc": "EEL quartet. init/frame/beat run once per build/frame/beat and set, among other things, `n`; the point code runs per point. More fields via script (Block D, S79): `falloff`.",
           "skriptvars": [
-            "n",
-            "falloff",
             "i",
             "v",
             "x",
@@ -8227,8 +7988,6 @@
           "helfer": "addScript",
           "doc": "EEL quartet. init/frame/beat run once per build/frame/beat and set, among other things, `n`; the point code runs per point. More fields via script (Block D, S79): `falloff`.",
           "skriptvars": [
-            "n",
-            "falloff",
             "i",
             "v",
             "x",
@@ -8253,8 +8012,6 @@
           "helfer": "addScript",
           "doc": "EEL quartet. init/frame/beat run once per build/frame/beat and set, among other things, `n`; the point code runs per point. More fields via script (Block D, S79): `falloff`.",
           "skriptvars": [
-            "n",
-            "falloff",
             "i",
             "v",
             "x",
@@ -8279,8 +8036,6 @@
           "helfer": "addScript",
           "doc": "EEL quartet. init/frame/beat run once per build/frame/beat and set, among other things, `n`; the point code runs per point. More fields via script (Block D, S79): `falloff`. Runs per point: `i` 0..1 and `v` (audio) come in; `x`, `y`, `z` (world coordinates), `red`/`green`/`blue` and `size` are read.",
           "skriptvars": [
-            "n",
-            "falloff",
             "i",
             "v",
             "x",
@@ -8522,14 +8277,6 @@
           "skriptvars": [
             "res",
             "n",
-            "rings",
-            "relax",
-            "flatten",
-            "baseamp",
-            "yoffset",
-            "extent",
-            "dotsize",
-            "falloff",
             "blue",
             "green",
             "red"
@@ -8621,14 +8368,6 @@
           "skriptvars": [
             "res",
             "n",
-            "rings",
-            "relax",
-            "flatten",
-            "baseamp",
-            "yoffset",
-            "extent",
-            "dotsize",
-            "falloff",
             "blue",
             "green",
             "red"
@@ -8648,14 +8387,6 @@
           "skriptvars": [
             "res",
             "n",
-            "rings",
-            "relax",
-            "flatten",
-            "baseamp",
-            "yoffset",
-            "extent",
-            "dotsize",
-            "falloff",
             "blue",
             "green",
             "red"
@@ -8683,14 +8414,6 @@
           "skriptvars": [
             "res",
             "n",
-            "rings",
-            "relax",
-            "flatten",
-            "baseamp",
-            "yoffset",
-            "extent",
-            "dotsize",
-            "falloff",
             "blue",
             "green",
             "red"
@@ -8755,8 +8478,8 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `blend`, `particles` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "particles",
-            "blend"
+            "blend",
+            "particles"
           ]
         },
         {
@@ -8783,8 +8506,8 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `blend`, `particles` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "particles",
-            "blend"
+            "blend",
+            "particles"
           ]
         },
         {
@@ -8802,8 +8525,8 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `blend`, `particles` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
-            "particles",
-            "blend"
+            "blend",
+            "particles"
           ]
         },
         {
@@ -9187,7 +8910,10 @@
           "skriptvars": [
             "bands",
             "channel",
-            "blend"
+            "blend",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -9226,7 +8952,10 @@
           "skriptvars": [
             "bands",
             "channel",
-            "blend"
+            "blend",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -9239,7 +8968,10 @@
           "skriptvars": [
             "bands",
             "channel",
-            "blend"
+            "blend",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -9362,7 +9094,10 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `blend` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "blend"
+            "blend",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -9390,7 +9125,10 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `blend` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "blend"
+            "blend",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -9401,7 +9139,10 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `blend` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1).",
           "skriptvars": [
-            "blend"
+            "blend",
+            "color_r",
+            "color_g",
+            "color_b"
           ]
         },
         {
@@ -9486,6 +9227,10 @@
           "doc": "Parameter script (Strang D): `speed`, `opacity` + `b`/`w`/`h` + audio set. Empty = no script. Parameter script (Strang D): `speed`, `opacity` + `b`/`w`/`h` + audio set. Empty = no script. Parameter script (Strang D): `speed`, `opacity` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
             "speed",
+            "opacity",
+            "speed",
+            "opacity",
+            "speed",
             "opacity"
           ]
         },
@@ -9530,6 +9275,8 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `speed`, `opacity` + `b`/`w`/`h` + audio set. Empty = no script. Parameter script (Strang D): `speed`, `opacity` + `b`/`w`/`h` + audio set. Empty = no script.",
           "skriptvars": [
+            "speed",
+            "opacity",
             "speed",
             "opacity"
           ]
@@ -9617,10 +9364,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `density`, `depth`, `dropradius`, `displacescale` + `b`/`w`/`h` + audio set. Empty = no script. More fields via script (Block D, S79): `dropx`, `dropy`.",
           "skriptvars": [
-            "density",
-            "depth",
-            "dropradius",
-            "displacescale",
             "dropx",
             "dropy"
           ]
@@ -9691,10 +9434,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `density`, `depth`, `dropradius`, `displacescale` + `b`/`w`/`h` + audio set. Empty = no script. More fields via script (Block D, S79): `dropx`, `dropy`.",
           "skriptvars": [
-            "density",
-            "depth",
-            "dropradius",
-            "displacescale",
             "dropx",
             "dropy"
           ]
@@ -9707,10 +9446,6 @@
           "helfer": "addScript",
           "doc": "Parameter script (Strang D): `density`, `depth`, `dropradius`, `displacescale` + `b`/`w`/`h` + audio set. Empty = no script. More fields via script (Block D, S79): `dropx`, `dropy`.",
           "skriptvars": [
-            "density",
-            "depth",
-            "dropradius",
-            "displacescale",
             "dropx",
             "dropy"
           ]

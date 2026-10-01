@@ -187,6 +187,8 @@ std::pair<int, int> pruefeLiveFelder(const std::function<bool(const ft::Typ&)>& 
             soll.emplace_back(&f, v);
         }
         if (soll.empty() || !setzeSkript(p, code)) continue;
+        // Effect List (S86): ihr Code laeuft nur mit „Use list code"
+        if (auto* lp = std::get_if<ListParams>(&p)) lp->useCode = true;
         CAPTURE(std::string(typ->typKey));
         const auto kopie = laufe(p, i);
         REQUIRE_MESSAGE(kopie.has_value(), "keine gesteuerte Frame-Kopie gesehen");
@@ -228,7 +230,7 @@ TEST_CASE("Feldsteuerung F2b: auch Module mit eigenem Skript-Host setzen jedes L
     }
     const auto [typen, felder] = pruefeLiveFelder(
         [](const ft::Typ& t) { return t.traeger == ft::Traeger::EigenerHost; });
-    CHECK(typen == 19);  // alle Module mit eigenem Skript-Host (Stand S85)
+    CHECK(typen == 21);  // alle Module mit eigenem Skript-Host (S86: + SuperScope, Effect List)
     CHECK(felder > 120);
 }
 
@@ -466,8 +468,108 @@ TEST_CASE("Modulation F4c: SuperScope und Effect List ohne Skripttraeger, uebrig
         for (const ft::Feld& f : t->felder)
             if (ft::modulierbar(*t, f)) offen.insert(t->typKey);
     }
-    CHECK(offen == std::set<std::string_view>{"superScope", "list", "dynamicMovement",
-                                              "hostgroup", "text", "avi", "debugBars"});
+    CHECK(offen == std::set<std::string_view>{"dynamicMovement", "hostgroup", "text", "avi",
+                                              "debugBars"});
+}
+
+TEST_CASE("Feldsteuerung S86: SuperScope — pointcount reicht an n weiter, n bleibt der Herr")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    // Das Punkt-Skript zaehlt seine Laeufe in reg20; ein Bloom-Skript dahinter
+    // liest den Zaehler des Frames in ein Feld (radius 1..32).
+    const auto punkte = [](const std::string& init, const std::string& frame) {
+        SuperScopeParams sp;
+        sp.pointCount = 8;
+        sp.initCode = init;
+        sp.frameCode = "reg20 = 0; " + frame;
+        sp.pointCode = "reg20 = reg20 + 1; x = i; y = 0;";
+        ChainNode scope;
+        scope.params = sp;
+        BloomParams b;
+        b.frameCode = "radius = reg20;";
+        ChainNode sonde;
+        sonde.params = b;
+        ChainNode root;
+        root.params = ListParams{};
+        root.children.push_back(scope);
+        root.children.push_back(sonde);
+        std::optional<EffectParams> gesehen;
+        MultiEffectVisualizer::setzeParamBeobachter(
+            [&](const ChainNode&, const EffectParams& kopie) {
+                if (std::holds_alternative<BloomParams>(kopie)) gesehen = kopie;
+            });
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.initialize();
+        vis.resize(QSize(kSize, kSize));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, kSize, kSize);
+        for (int i = 0; i < 3; ++i) vis.render(1.0f / 60.0f);
+        MultiEffectVisualizer::setzeParamBeobachter({});
+        return gesehen ? std::get<BloomParams>(*gesehen).radius : -1;
+    };
+    CHECK(punkte("", "") == 8);                    // Regler
+    CHECK(punkte("n = 5;", "") == 5);              // n aus Init (AVS)
+    CHECK(punkte("", "pointcount = 12;") == 12);   // Feldname wirkt
+    CHECK(punkte("pointcount = 12;", "n = 6;") == 6);  // n hat das letzte Wort
+}
+
+TEST_CASE("Feldsteuerung S86: Auswahlfeld ohne bekannten Bereich bleibt, wenn ein Skript laeuft")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    // Clear.blend steht mit 0..0 in der Tabelle (Liste entsteht im Panel). Bis
+    // S86 klemmte das Zuruecklesen jedes solche Feld auf 0, sobald der Knoten
+    // irgendein Skript trug (bei der Liste: blendOut = Ignore = kein Bild).
+    ClearParams c;
+    c.blend = 2;
+    c.frameCode = "zz = 1;";
+    EffectParams p = c;
+    const auto k = laufe(p, p.index());
+    REQUIRE(k.has_value());
+    CHECK(std::get<ClearParams>(*k).blend == 2);
+    // … und laesst sich weiter per Skript setzen
+    c.frameCode = "blend = 3;";
+    p = c;
+    const auto k2 = laufe(p, p.index());
+    REQUIRE(k2.has_value());
+    CHECK(std::get<ClearParams>(*k2).blend == 3);
+}
+
+TEST_CASE("Feldsteuerung S86: Effect List — Felder per Listen-Code, Alphas nach r_list")
+{
+    GlUmgebung gl;
+    if (!gl.ok)
+    {
+        MESSAGE("Kein GL-Kontext moeglich (Headless?) — Test uebersprungen");
+        return;
+    }
+    const auto liste = [](const std::string& frame) {
+        ListParams lp;
+        lp.useCode = true;
+        lp.frameCode = frame;
+        EffectParams p = lp;
+        // Wurzel und Blatt sind beide Listen — nur das Blatt traegt Code
+        const auto k = laufe(p, p.index());
+        REQUIRE(k.has_value());
+        return std::get<ListParams>(*k);
+    };
+    // Feldname 0..255 wirkt, solange alphain unberuehrt bleibt
+    CHECK(liste("inadjustalpha = 200; bufferout = 3; onbeatframes = 7;").inAdjustAlpha == 200);
+    CHECK(liste("inadjustalpha = 200; bufferout = 3; onbeatframes = 7;").bufferOut == 3);
+    CHECK(liste("inadjustalpha = 200; bufferout = 3; onbeatframes = 7;").onBeatFrames == 7);
+    // alphain (0..1) gewinnt, abgeschnitten wie (int)(alphain*255)
+    CHECK(liste("inadjustalpha = 200; alphain = 0.5;").inAdjustAlpha == 127);
+    // unberuehrt: Reglerwert
+    CHECK(liste("zz = 1;").outAdjustAlpha == 128);
 }
 
 TEST_CASE("Effect List S86: alphain/alphaout kommen je Frame aus dem Regler (r_list:404)")

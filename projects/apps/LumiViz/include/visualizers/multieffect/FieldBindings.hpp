@@ -120,9 +120,10 @@ struct Typ
 /// die Puffer um); movement hat kein Live-Zahlfeld.
 [[nodiscard]] inline bool modulationOhneTraeger(std::string_view typKey)
 {
-    return typKey == "superScope" || typKey == "list" || typKey == "dynamicMovement" ||
-           typKey == "hostgroup" || typKey == "text" || typKey == "avi" ||
-           typKey == "debugBars";
+    // SuperScope und Effect List tragen seit S86 einen eigenen Host (Traeger
+    // EigenerHost) und brauchen diese Ausnahme nicht mehr.
+    return typKey == "dynamicMovement" || typKey == "hostgroup" || typKey == "text" ||
+           typKey == "avi" || typKey == "debugBars";
 }
 
 /// Block F, F4 (S85, Entscheid 1a/1b): modulierbar sind die Live-Zahlfelder

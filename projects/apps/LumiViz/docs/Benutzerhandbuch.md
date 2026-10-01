@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.20.0
+> **Version:** 1.21.0
 > **Datum:** 2026-10-01
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -409,6 +409,20 @@ Co. (dort etwa `type`, `smooth`, `blend`). Die ⓘ-Seite listet alle Namen.
 Bewegst du einen Regler, während ein Skript läuft, **gilt ab da der Regler**
 und das Skript rechnet von diesem Wert weiter — sein Zustand (Zähler, Phasen)
 bleibt erhalten; früher begann das Skript bei jeder Reglerbewegung von vorn.
+
+Seit Session 86 gilt das auch für **SuperScope** und **Effect List**:
+
+- **SuperScope** — in Init, Frame und Beat sind `linewidth`, `dotsize`,
+  `rendermode`, `lineblend`, `audiochannel`, `spectrumsource`,
+  `colorcycleframes` und `pointcount` schreibbar. Die AVS-Namen behalten
+  Vorrang: `n` bestimmt die Punktzahl (ein Schreiben auf `pointcount` wird an
+  `n` weitergereicht), `linesize` und `drawmode` schlagen `linewidth` und
+  `rendermode`. `colorcycleframes` wirkt ab dem nächsten Bild.
+- **Effect List** — im Listen-Code (mit **Use list code**) sind `blendin`,
+  `blendout`, `bufferin`, `bufferout`, `bufferininvert`, `bufferoutinvert`,
+  `cleareveryframe`, `onbeatrender`, `onbeatframes` sowie `inadjustalpha` und
+  `outadjustalpha` (0..255) schreibbar. `alphain`/`alphaout` (0..1) bleiben wie
+  in AVS und gewinnen, wenn das Skript beide Schreibweisen benutzt.
 
 **Script active** — gleich unter Name und Beschreibung, bei jedem Knoten mit
 Formelfeldern: ausgeschaltet läuft der Knoten, **als stünden seine Felder
@@ -1002,6 +1016,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.21.0 | 2026-10-01 | Session 86. §11 „Werte per Formel steuern": die Felder von **SuperScope** (`linewidth`, `dotsize`, `rendermode` …) und **Effect List** (`blendout`, `bufferin`, `outadjustalpha` …) sind jetzt Skriptvariablen; AVS-Namen (`n`, `linesize`, `drawmode`, `alphain`, `alphaout`) behalten Vorrang. Behoben: Auswahlfelder mit im Panel gebauter Liste (z. B. Clear → Blend) sprangen auf den ersten Eintrag, sobald der Knoten ein Skript trug |
 | 1.20.0 | 2026-10-01 | Session 86. §11 Modulation: jetzt auch **SuperScope** (Point count, Line width, Dot size, Cycle frames) und **Effect List** (In/Out Alpha, In/Out Buffer, OnBeat frames), Host-Gruppe, Dynamic Movement, Text, AVI, Debug Bars; Point count setzt `n` neu. Effect List: `alphain`/`alphaout` stehen im Listen-Code zu Beginn jedes Bilds auf dem Reglerwert (wie in AVS) — der Alpha-Regler wirkt jetzt auch bei laufendem Listen-Code sofort |
 | 1.19.0 | 2026-09-30 | Session 85. §11 NEU **Werte ohne Formel bewegen (Modulation)**: „~"-Knopf an Zahlfeldern (Audio, Beat-Hüllkurve, LFOs), Live-Wert, Schalter **Modulation active**. §11 „Werte per Formel steuern": jedes Feld skriptbar, auch bei Fraktalen/3D/Glow Orbs/Texer II; eine Reglerbewegung setzt das Skript nicht mehr zurück. Die ⓘ-Seite jedes Skriptfelds beginnt mit seinem Takt (einmal/je Frame/je Beat/je Punkt …) |
 | 1.18.1 | 2026-09-30 | Session 84. Vorlagen-Zeile im Groß-Editor zeigt den Zustand (Name / „(unsaved) – Name" / „(none)") statt zurückzuspringen; §11 Presets aus dem Effect Browser/Explorer in die Kette ziehen = Presetverweis; §2/§3 Ziehen zum Abspielen (Player, Visualisierung), Playlist nimmt Dateien an und sortiert im Dienst um, NEU **Audio Browser** (Albumcover als Icon, Fallback Ordnerbild/Formaticon); Feld-Tooltips englisch; §13 Kamera-Clips heißen `camera_clip_…` |

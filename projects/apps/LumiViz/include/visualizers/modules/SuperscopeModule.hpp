@@ -31,7 +31,7 @@
 #include <unordered_map>
 #include <cmath>
 
-namespace lumi::scripting { class ScriptSlotHost; class ScriptContext; }
+namespace lumi::scripting { class ScriptSlotHost; class ScriptContext; class LuaScriptEngine; }
 
 namespace lumi::modules {
 
@@ -215,6 +215,19 @@ public:
     void setSongCode(const std::string& code);
     /// Songwechsel melden — Song-Slot im naechsten execute() VOR dem Frame-Slot
     void songWechsel() { m_songPending = true; }
+
+    /// Block F (S86, Lua-Modus): Einhaenge-Punkte des Hosts fuer die
+    /// Feldtabelle. `vor` laeuft unmittelbar VOR dem Init-Slot (`fresh` = true)
+    /// und in jedem Frame vor Song/Frame/Beat; `nach` unmittelbar NACH dem
+    /// Beat-Slot, bevor `n` gelesen und die Punkte gerechnet werden (`fresh` =
+    /// true im ersten Frame nach dem Kompilieren). Der Host setzt sie vor
+    /// jedem execute() und raeumt sie danach wieder ab.
+    using FeldHook = std::function<void(scripting::LuaScriptEngine&, bool fresh)>;
+    void setFeldHooks(FeldHook vor, FeldHook nach)
+    {
+        m_feldVor = std::move(vor);
+        m_feldNach = std::move(nach);
+    }
 
     // =========================================================================
     // Lua Script Mode (Import-Phase Roadmap 1 — Keimzelle)
@@ -472,6 +485,9 @@ private:
     std::string m_pointCode;
     std::string m_songCode;
     bool m_songPending = false;
+    FeldHook m_feldVor;         ///< Block F (S86), s. setFeldHooks
+    FeldHook m_feldNach;
+    bool m_feldFresh = false;   ///< Init lief seit dem letzten `nach` neu
 
     // =========================================================================
     // Preset

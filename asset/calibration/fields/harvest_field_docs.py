@@ -330,6 +330,8 @@ KLASSEN = {
     "videoDelay.delay": "Struktur", "videoDelay.useBeats": "Struktur",
     "starfield.maxStars": "Struktur",
     "videoSource.source": "Struktur", "videoSource.streaming": "Struktur",
+    # wird vor dem Frame aus der Kette gelesen und baut die Puffer um (S86)
+    "renderScale.divisor": "Struktur",
     # Text wird bei jeder dieser Aenderungen neu gerastert
     "text.color": "Struktur", "text.fontHeight": "Struktur",
     "text.fontWeight": "Struktur", "text.italic": "Struktur",
@@ -342,6 +344,7 @@ KLASSEN = {
     "interferences.rotation": "Zustand",
     "dotPlane.startRotation": "Zustand", "dotFountain.startRotation": "Zustand",
     "channelShift.mode": "Zustand", "movement.sourceMapped": "Zustand",
+    "hostSwitcher.startIndex": "Zustand",  # nur beim Start gelesen (S86)
 }
 
 # Bisherige Skriptnamen, die NICHT dem Schema "JSON-Name klein" folgen und in
@@ -410,14 +413,17 @@ def harvest_traeger() -> dict[str, str]:
     """Struct -> Traeger: wer faehrt heute das Parameter-Skript des Knotens?"""
     src = VISUALIZER.read_text(encoding="utf-8")
     out: dict[str, str] = {}
-    for m in re.finditer(r"void\s+MultiEffectVisualizer::run\w+\s*\(([^)]*)\)\s*\{", src):
+    # renderList (S86): die Effect List bindet ihre Felder an den Listen-Host
+    for m in re.finditer(
+            r"void\s+MultiEffectVisualizer::(?:run\w+|renderList)\s*\(([^)]*)\)\s*\{", src):
         sm = re.search(r"const\s+(\w+Params)\s*&", m.group(1))
         if not sm:
             continue
         body = geschweift(src, m.end() - 1)
         if "runParamScript(" in body:
             art = "ParamSkript"
-        elif "setNumber(" in body or "ScriptSlotHost" in body or "paramHost" in body:
+        elif ("setNumber(" in body or "ScriptSlotHost" in body or "paramHost" in body
+              or "feldHostVor(" in body):
             art = "EigenerHost"
         else:
             art = "Keiner"

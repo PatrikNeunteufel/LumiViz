@@ -454,6 +454,14 @@ private:
         /// dieselbe Rolle wie `paramSeen`: bewegt der Benutzer den Regler,
         /// gewinnt der Regler; sonst rechnet das Skript den Wert fort.
         std::unordered_map<std::string, double> feldHostSeen;
+        /// SuperScope (S86): `colorCycleFrames` nach den Slots des letzten
+        /// Frames (0 = keiner) — das Modul braucht den Wert VOR den Slots,
+        /// ein Skriptwert wirkt deshalb einen Frame spaeter.
+        int scopeCycleNach = 0;
+        /// SuperScope (S86): zuletzt an `n` weitergereichter Skriptwert von
+        /// `pointcount` — `n` bleibt der Herr, ein Schreiben auf `pointcount`
+        /// wird einmal uebernommen.
+        double scopePcWeiter = std::numeric_limits<double>::quiet_NaN();
 
         /**
          * Bloom: die vom Parameter-Skript gerechneten Werte, damit sie den
@@ -1274,10 +1282,13 @@ private:
     /// einspeist (Farben stufenlos) — feldHostVor laesst sie aus; ihr
     /// Skriptwert landet trotzdem in der Kopie. Renderer-eigene Namen
     /// (`feldtabelle::rendererEigen`, etwa SuperScope 3D `size` je Punkt)
-    /// werden weder eingespeist noch zurueckgelesen.
+    /// werden weder eingespeist noch zurueckgelesen. `ohne` (S86) nimmt Namen
+    /// auch vom Zuruecklesen aus — fuer Variablen, die der Renderer nach
+    /// eigener Regel auswertet (Effect List `alphain`/`alphaout`).
     void feldHostVor(LeafRuntime& rt, lumi::scripting::LuaScriptEngine& engine, bool fresh,
                      const std::set<std::string>& hand = {});
-    void feldHostNach(LeafRuntime& rt, lumi::scripting::LuaScriptEngine& engine, bool fresh);
+    void feldHostNach(LeafRuntime& rt, lumi::scripting::LuaScriptEngine& engine, bool fresh,
+                      const std::set<std::string>& ohne = {});
 
     // --- Block F, Stufe F4: Modulation ohne Formel (S85) ---------------------
     /// Laufzeit einer Modulation (je Knoten und Feld): LFO-Phase, gehaltener

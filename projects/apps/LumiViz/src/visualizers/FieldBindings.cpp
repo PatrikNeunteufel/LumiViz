@@ -332,7 +332,7 @@ std::vector<std::pair<std::size_t, Typ>> baue()
         LV_FELD(HostSwitcherParams, intervalSeconds, "intervalSeconds", "intervalseconds", "", 1.0, Kommazahl, Live, 0.0, 3600.0),
         LV_FELD(HostSwitcherParams, nextOnSongChange, "nextOnSongChange", "nextonsongchange", "", 1.0, Schalter, Live, 0.0, 1.0),
         LV_FELD(HostSwitcherParams, order, "order", "order", "", 1.0, Aufzaehlung, Live, 0.0, 1.0),
-        LV_FELD(HostSwitcherParams, startIndex, "startIndex", "startindex", "", 1.0, Ganzzahl, Live, kNaN, kNaN),
+        LV_FELD(HostSwitcherParams, startIndex, "startIndex", "startindex", "", 1.0, Ganzzahl, Zustand, kNaN, kNaN),
     }}});
     out.push_back({ix<HostGroupParams>(), Typ{"hostgroup", Traeger::Keiner, {
         LV_FELD(HostGroupParams, blendOut, "blendOut", "blendout", "", 1.0, Aufzaehlung, Live, 0.0, 0.0),
@@ -386,7 +386,7 @@ std::vector<std::pair<std::size_t, Typ>> baue()
         LV_FELD(KleinianParams, rotation, "rotation", "rotation", "rot", 1.0, Kommazahl, Live, -6.2832, 6.2832),
         LV_FELD(KleinianParams, zoom, "zoom", "zoom", "", 1.0, Kommazahl, Live, 0.1, 8.0),
     }}});
-    out.push_back({ix<ListParams>(), Typ{"list", Traeger::Keiner, {
+    out.push_back({ix<ListParams>(), Typ{"list", Traeger::EigenerHost, {
         LV_FELD(ListParams, blendIn, "blendIn", "blendin", "", 1.0, Aufzaehlung, Live, 0.0, 0.0),
         LV_FELD(ListParams, blendOut, "blendOut", "blendout", "", 1.0, Aufzaehlung, Live, 0.0, 0.0),
         LV_FELD(ListParams, bufferIn, "bufferIn", "bufferin", "", 1.0, Ganzzahl, Live, 0.0, 7.0),
@@ -517,7 +517,7 @@ std::vector<std::pair<std::size_t, Typ>> baue()
         LV_FELD(ReactionDiffusionParams, stepsPerFrame, "stepsPerFrame", "stepsperframe", "", 1.0, Ganzzahl, Live, 1.0, 64.0),
     }}});
     out.push_back({ix<RenderScaleParams>(), Typ{"renderScale", Traeger::Keiner, {
-        LV_FELD(RenderScaleParams, divisor, "divisor", "divisor", "", 1.0, Ganzzahl, Live, 1.0, 8.0),
+        LV_FELD(RenderScaleParams, divisor, "divisor", "divisor", "", 1.0, Ganzzahl, Struktur, 1.0, 8.0),
         LV_FELD(RenderScaleParams, filter, "filter", "filter", "", 1.0, Aufzaehlung, Live, 0.0, 1.0),
     }}});
     out.push_back({ix<RotatingStarsParams>(), Typ{"rotatingStars", Traeger::ParamSkript, {
@@ -579,7 +579,7 @@ std::vector<std::pair<std::size_t, Typ>> baue()
         LV_FELD(StrangeAttractorParams, scale, "scale", "scale", "", 1.0, Kommazahl, Live, 0.01, 4.0),
         LV_FELD(StrangeAttractorParams, useGradient, "useGradient", "usegradient", "", 1.0, Schalter, Live, 0.0, 1.0),
     }}});
-    out.push_back({ix<SuperScopeParams>(), Typ{"superScope", Traeger::Keiner, {
+    out.push_back({ix<SuperScopeParams>(), Typ{"superScope", Traeger::EigenerHost, {
         LV_FELD(SuperScopeParams, audioChannel, "audioChannel", "audiochannel", "", 1.0, Aufzaehlung, Live, 0.0, 4.0),
         LV_FELD(SuperScopeParams, colorCycleFrames, "colorCycleFrames", "colorcycleframes", "", 1.0, Ganzzahl, Live, 1.0, 600.0),
         LV_FELD(SuperScopeParams, dotSize, "dotSize", "dotsize", "", 1.0, Kommazahl, Live, 1.0, 50.0),

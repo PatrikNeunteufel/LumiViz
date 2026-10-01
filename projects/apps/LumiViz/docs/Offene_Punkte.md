@@ -2056,12 +2056,16 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   F4c ✅ — SuperScope, Effect List, Host-Gruppe, Dynamic Movement, Text, AVI,
   Debug Bars modulierbar (17 Felder, Vergleichslauf 84/84 bitgleich); Effect
   List belegt `alphain/alphaout` je Frame vor wie AVS (35 Presets 210/210
-  bitgleich) — **offen:** F4c-Rest Host Switcher `intervalSeconds` (läuft vor
-  dem Frame) und die Einstufung von `startIndex`/Render Scale `divisor` als
-  Zustand/Struktur im Ernter; **Skript-Zugriff auf die Tabellenfelder der 11
-  Typen ohne Parameter-Skript** (SuperScope, Effect List, Movement, Dynamic
-  Movement, Host Switcher, Text, AVI, Render Scale, Debug Bars … — Patriks
-  eigentliches Ziel von Block F, S86 klargestellt); F4b Farbfelder modulieren,
+  bitgleich); F2c ✅ — **SuperScope und Effect List: alle Tabellenfelder per
+  Skript** (Vergleichslauf 294/294 bitgleich, +1,5 % Laufzeit); Klemmfehler
+  bei Auswahlfeldern ohne Tabellenbereich behoben; `startIndex` = Zustand,
+  Render Scale `divisor` = Struktur — **offen:** Skript-Zugriff für die
+  übrigen Typen ohne Parameter-Skript (Host-Gruppe über ihr vorhandenes
+  Parameter-Skript, Movement, Dynamic Movement, Host Switcher, Text, AVI,
+  Color Modifier, Debug Bars — Patriks eigentliches Ziel von Block F);
+  Host Switcher `intervalSeconds` modulierbar; einmalige Bildabweichung bei
+  `fUk - afterburner remix` (1 von 12 Läufen, nicht reproduziert); F4b
+  Farbfelder modulieren,
   F4d LFO-Rate in Beats (Entscheide Patrik S85: je a), F6
   (MIDI/OSC-Adresse, mit der Idee).
   Farbtafeln/Stützstellen (`colors[i]`) weiter §7 des Konzepts.

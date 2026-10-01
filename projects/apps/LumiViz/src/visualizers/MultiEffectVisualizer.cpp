@@ -4533,6 +4533,9 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
     int alphaOut = params.outAdjustAlpha;
     if (params.useCode)
     {
+        // Block F (S86): Speicher der Feldbindung (Regler gesehen, Strukturregel)
+        LeafRuntime& feldRt = m_leafRuntimes[node.nodeId];
+        static const std::set<std::string> kAlphaHand{"alphain", "alphaout"};
         bool frisch = false;  // in diesem Frame kompiliert: Init hat die Alphas schon gesehen
         if (runtime.slotHost == nullptr || runtime.compiledInit != params.initCode ||
             runtime.compiledFrame != params.frameCode ||
@@ -4554,13 +4557,16 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
             // EEL contract uses 0.0..1.0 (r_list.cpp:404 use_inblendval/255.0)
             engine.setNumber("alphain", static_cast<double>(alphaIn) / 255.0);
             engine.setNumber("alphaout", static_cast<double>(alphaOut) / 255.0);
+            feldHostVor(feldRt, engine, true, kAlphaHand);  // Block F (S86)
             runtime.slotHost->run(Slot::Init);
             frisch = true;
         }
         laufeSong(*runtime.slotHost);
-        if (runtime.slotHost->has(Slot::Frame))
+        auto& engine = runtime.slotHost->engine();
+        feldHostVor(feldRt, engine, false, kAlphaHand);  // Regler bewegt?
+        const bool hatFrame = runtime.slotHost->has(Slot::Frame);
+        if (hatFrame)
         {
-            auto& engine = runtime.slotHost->engine();
             feedAudio(engine);
             engine.setNumber("beat", m_frameBeat ? 1.0 : 0.0);
             engine.setNumber("w", static_cast<double>(m_surfaceWidth));
@@ -4584,11 +4590,38 @@ void MultiEffectVisualizer::renderList(const ChainNode& node,
             scriptEnabled = engine.number("enabled") != 0.0;
             scriptClear = engine.number("clear") != 0.0;
             m_frameBeat = engine.number("beat") != 0.0;  // beat is mutable (§5.1)
-            // Back from the EEL 0..1 scale (r_list.cpp:413 alphain*255)
-            alphaIn = std::clamp(
-                static_cast<int>(engine.number("alphain") * 255.0), 0, 255);
-            alphaOut = std::clamp(
-                static_cast<int>(engine.number("alphaout") * 255.0), 0, 255);
+        }
+        // Block F (S86): die Tabellenfelder der Liste sind Skriptvariablen —
+        // nach den Slots stehen die Skriptwerte in `params` (Frame-Kopie), aus
+        // der alles Folgende liest. Die Alphas wertet die Liste selbst aus:
+        // `alphain`/`alphaout` (0..1, je Frame vorbelegt) wie r_list.cpp:413,
+        // bitgenau wie bisher; nur wenn das Skript sie NICHT anfasst, gilt ein
+        // geschriebenes `inadjustalpha`/`outadjustalpha` (0..255).
+        feldHostNach(feldRt, engine, frisch, kAlphaHand);
+        const auto alpha = [&](const char* name, int regler, int feld) {
+            int neu = regler;
+            bool geschrieben = false;
+            if (hatFrame)
+            {
+                const double v = engine.number(name);
+                geschrieben = v != static_cast<double>(regler) / 255.0;
+                // Back from the EEL 0..1 scale (r_list.cpp:413 alphain*255)
+                neu = std::clamp(static_cast<int>(v * 255.0), 0, 255);
+            }
+            if (!geschrieben && feld != regler) neu = std::clamp(feld, 0, 255);
+            return neu;
+        };
+        const int neuIn = alpha("alphain", alphaIn, params.inAdjustAlpha);
+        const int neuOut = alpha("alphaout", alphaOut, params.outAdjustAlpha);
+        alphaIn = neuIn;
+        alphaOut = neuOut;
+        if (m_gesteuerteKopie != nullptr)
+        {
+            if (auto* lp = std::get_if<ListParams>(m_gesteuerteKopie))
+            {
+                lp->inAdjustAlpha = alphaIn;
+                lp->outAdjustAlpha = alphaOut;
+            }
         }
     }
     if (!scriptEnabled) return;
@@ -6195,16 +6228,20 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
 
     // A preceding Set Render Mode node overrides line width + blend (AVS state).
-    const int effLineBlend = m_renderMode.set ? m_renderMode.lineBlend : params.lineBlend;
-    const float effLineWidth = (m_renderMode.set && m_renderMode.lineWidth > 0)
-                                   ? static_cast<float>(m_renderMode.lineWidth)
-                                   : params.lineWidth;
+    // Block F (S86): `params` ist die Frame-Kopie — nach den Slots tragen ihre
+    // Felder die Skriptwerte, deshalb werden beide NACH execute() neu gelesen.
+    int effLineBlend = m_renderMode.set ? m_renderMode.lineBlend : params.lineBlend;
+    float effLineWidth = (m_renderMode.set && m_renderMode.lineWidth > 0)
+                             ? static_cast<float>(m_renderMode.lineWidth)
+                             : params.lineWidth;
 
     const std::string combined = params.initCode + '\n' + params.frameCode + '\n' +
                                  params.beatCode + '\n' + params.pointCode +
                                  songSchluessel();
     if (rt.scope == nullptr || rt.scopeCompiled != combined)
     {
+        rt.scopeCycleNach = 0;
+        rt.scopePcWeiter = std::numeric_limits<double>::quiet_NaN();
         // Geteilter Kontext wie bei Grid/Texer/Liste: AVS haelt reg00..reg99
         // GLOBAL, und dieses Pack koppelt Kamera und Scopes ausschliesslich
         // darueber (Befund S50).
@@ -6245,7 +6282,41 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     // red/green/blue with it before the point script runs (AVS r_sscope).
     rt.scope->setColorTable(params.colors);
     rt.scope->setColorBlend(params.colorBlend);
-    rt.scope->setColorCycleFrames(params.colorCycleFrames);
+    // Das Modul schaltet die Farbtafel VOR den Slots weiter (r_sscope:250-266)
+    // — ein Skriptwert fuer colorcycleframes gilt deshalb ab dem naechsten Frame.
+    rt.scope->setColorCycleFrames(m_gesteuerteKopie != nullptr && rt.scopeCycleNach > 0
+                                      ? rt.scopeCycleNach
+                                      : params.colorCycleFrames);
+
+    // Block F (S86): jedes Tabellenfeld ist Skriptvariable des Quartetts. Die
+    // Regler speist feldHostVor ein (Start oder Reglerbewegung), feldHostNach
+    // liest nach Frame/Beat in die Frame-Kopie zurueck. `n` bleibt der Herr
+    // der Punktzahl (r_sscope); ein Schreiben auf `pointcount` wird an `n`
+    // weitergereicht. `linesize`/`drawmode` gewinnen wie bisher gegen
+    // linewidth/rendermode.
+    if (m_gesteuerteKopie != nullptr)
+    {
+        rt.scope->setFeldHooks(
+            [this, &rt](lumi::scripting::LuaScriptEngine& engine, bool fresh) {
+                feldHostVor(rt, engine, fresh);
+            },
+            [this, &rt, &params](lumi::scripting::LuaScriptEngine& engine, bool fresh) {
+                feldHostNach(rt, engine, fresh);
+                const double pc = engine.number("pointcount");
+                const auto seen = rt.feldHostSeen.find("pointcount");
+                const bool geschrieben = seen == rt.feldHostSeen.end() || seen->second != pc;
+                if (geschrieben && pc != rt.scopePcWeiter)
+                {
+                    engine.setNumber("n", std::trunc(pc));
+                    rt.scopePcWeiter = pc;
+                }
+                rt.scope->setAudioChannel(
+                    static_cast<lumi::modules::SuperscopeAudioChannel>(params.audioChannel));
+                rt.scope->setAudioSource(params.spectrumSource
+                                             ? lumi::modules::SuperscopeAudioSource::Spectrum
+                                             : lumi::modules::SuperscopeAudioSource::Waveform);
+            });
+    }
 
     // Audio: mono waveform/spectrum fed to both channels (host has no L/R split
     // yet); a zero buffer keeps the base shape visible without a track.
@@ -6273,6 +6344,15 @@ void MultiEffectVisualizer::runSuperScope(const ChainNode& node,
     const std::vector<lumi::modules::SuperscopePoint> points = rt.scope->execute(
         w, w, s, s, sampleCount, m_surfaceWidth, m_surfaceHeight, m_frameBeat,
         m_deltaTime);
+    rt.scope->setFeldHooks({}, {});  // die Hooks zeigen auf diesen Frame
+    if (m_gesteuerteKopie != nullptr)
+    {
+        rt.scopeCycleNach = params.colorCycleFrames;
+        effLineBlend = m_renderMode.set ? m_renderMode.lineBlend : params.lineBlend;
+        effLineWidth = (m_renderMode.set && m_renderMode.lineWidth > 0)
+                           ? static_cast<float>(m_renderMode.lineWidth)
+                           : params.lineWidth;
+    }
 
     // Blend onto the working buffer: full AVS BLEND_LINE table (S9); a
     // preceding Set Render Mode overrides the mode (params.lineBlend).
@@ -9469,8 +9549,12 @@ void MultiEffectVisualizer::feldBindungNach(LeafRuntime& rt, bool fresh,
             }
             // Aufzaehlung abgeschnitten wie `(int)` (Entscheid Patrik S85,
             // wie die Renderer vor der F2-Migration); Schalter an ab 0.5 (E6).
+            // Nur mit bekanntem Bereich klemmen: fuer Auswahlfelder, deren
+            // Liste das Panel zur Laufzeit baut, steht 0..0 in der Tabelle
+            // (list.blendOut, hostgroup.curveIn …) — geklemmt wuerde daraus
+            // immer 0, bei der Liste also „Ignore" = kein Bild (S86).
             if ((f.art == ft::Art::Aufzaehlung || f.art == ft::Art::Schalter) &&
-                !std::isnan(f.lo) && !std::isnan(f.hi) && std::isfinite(neu))
+                !std::isnan(f.lo) && !std::isnan(f.hi) && f.hi > f.lo && std::isfinite(neu))
                 neu = std::clamp(f.art == ft::Art::Schalter ? std::round(neu) : std::trunc(neu),
                                  f.lo, f.hi);
         }
@@ -9561,7 +9645,8 @@ void MultiEffectVisualizer::feldHostVor(LeafRuntime& rt,
 }
 
 void MultiEffectVisualizer::feldHostNach(LeafRuntime& rt,
-                                         lumi::scripting::LuaScriptEngine& engine, bool fresh)
+                                         lumi::scripting::LuaScriptEngine& engine, bool fresh,
+                                         const std::set<std::string>& ohne)
 {
     // Auch die Hand-Farben kommen in die Kopie (wie bei F2 die verknuepften
     // Hand-Bindungen) — der Renderer nimmt sie weiter stufenlos aus FarbKopie.
@@ -9579,7 +9664,7 @@ void MultiEffectVisualizer::feldHostNach(LeafRuntime& rt,
     plan.reserve(vorlagen.size());
     for (const FeldVorlage& v : vorlagen)
     {
-        if (ft::rendererEigen(typ->typKey, v.name)) continue;
+        if (ft::rendererEigen(typ->typKey, v.name) || ohne.count(v.name) != 0) continue;
         werte.push_back(engine.number(v.name.c_str()));
         vars.push_back({v.name.c_str(), &werte.back()});
         plan.push_back({v.feld, v.komponente, v.alias, vars.size() - 1,

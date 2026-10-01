@@ -201,6 +201,11 @@ void SuperscopeModule::initializeLuaScripts()
                                     mentionsOutsidePoint("green") ||
                                     mentionsOutsidePoint("blue");
 
+    // Block F (S86): die Feldtabelle des Hosts speist ihre Reglerwerte ein,
+    // bevor Init sie sieht.
+    m_feldFresh = true;
+    if (m_feldVor) m_feldVor(engine, true);
+
     if (m_script->has(Slot::Init) && !m_script->run(Slot::Init) &&
         m_lastScriptError.empty())
     {
@@ -584,6 +589,8 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
             engine.setNumber("blue", static_cast<double>(base0[2]));
         }
 
+        if (m_feldVor) m_feldVor(engine, false);  // Block F (S86): Regler bewegt?
+
         // r_sscope.cpp:272-273: FRAME zuerst, dann Beat — der Frame-Code
         // rechnet mit den Beat-Werten des VORHERIGEN Frames (S47).
         if (m_songPending)  // Song-Slot (S82): einmal je Songwechsel, vor Frame
@@ -600,6 +607,11 @@ std::vector<SuperscopePoint> SuperscopeModule::execute(
         {
             m_lastScriptError = m_script->lastError();
         }
+
+        // Block F (S86): Feldtabelle zuruecklesen — VOR `n` und dem Punkt-Lauf,
+        // damit Kanal, Quelle und Punktzahl dieses Frames schon gelten.
+        if (m_feldNach) m_feldNach(engine, m_feldFresh);
+        m_feldFresh = false;
 
         effectiveCount =
             std::clamp(static_cast<int>(engine.number("n")), 1, kMaxPointCount);
