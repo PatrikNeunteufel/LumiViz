@@ -29,6 +29,8 @@
 #include "UI/panels/EffectPalette.hpp"
 #include "UI/panels/EffectPaletteWindow.hpp"
 #include "UI/panels/ImportBrowserPanel.hpp"
+#include "UI/panels/LyricsSyncPanel.hpp"
+#include "audio/SongtextQuelle.hpp"
 #include "UI/panels/MultiEffectPanel.hpp"
 #include "UI/panels/PlayerPanel.hpp"
 #include "UI/panels/PlaylistPanel.hpp"
@@ -1403,7 +1405,8 @@ public:
         gespielt.append(index);
         return true;
     }
-    void seek(int) override {}
+    int letzterSprung = -1;  ///< S87: wohin zuletzt gesprungen wurde
+    void seek(int ms) override { letzterSprung = ms; }
     void seekFraction(float) override {}
     void seekRelative(int) override {}
     [[nodiscard]] float volume() const override { return 1.0F; }
@@ -2030,6 +2033,158 @@ TEST_CASE("PaletteUi S87: Playlist — die Zeile ist so breit wie die Liste, nie
         CHECK(zeile.width() >= liste->viewport()->width() - 2);  // und sie fuellt die Breite
         CHECK_FALSE(liste->horizontalScrollBar()->isVisible());
     }
+}
+
+// S87 (Befund Patrik): der Suchbegriff blieb nach Aus- und Einblenden im Feld
+// stehen, gefiltert war aber nichts mehr — die Liste wird beim Einblenden neu
+// gebaut und vergass dabei den Filter.
+TEST_CASE("PaletteUi S87: Playlist — der Suchfilter ueberlebt den Neuaufbau der Liste")
+{
+    UiUmgebung env;
+    AudioUmgebung audio;
+    audio.playlist->addTrack(audio.datei(QStringLiteral("alpha.mp3")));
+    audio.playlist->addTrack(audio.datei(QStringLiteral("beta.mp3")));
+    PlaylistPanel panel(audio.services);
+    panel.show();
+    for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+    auto* liste = panel.findChild<QListWidget*>(QStringLiteral("playlistListe"));
+    auto* suche = panel.findChild<QLineEdit*>();
+    REQUIRE(liste != nullptr);
+    REQUIRE(suche != nullptr);
+    REQUIRE(liste->count() == 2);
+    const auto sichtbar = [liste] {
+        QStringList namen;
+        for (int i = 0; i < liste->count(); ++i)
+            if (!liste->item(i)->isHidden()) namen << liste->item(i)->text();
+        return namen;
+    };
+
+    suche->setText(QStringLiteral("bet"));
+    for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+    CHECK(sichtbar() == QStringList{QStringLiteral("beta.mp3")});
+
+    // aus- und wieder einblenden: Begriff UND Filter stehen noch
+    panel.hide();
+    for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+    panel.show();
+    for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+    CHECK(suche->text() == QStringLiteral("bet"));
+    CHECK(sichtbar() == QStringList{QStringLiteral("beta.mp3")});
+
+    // die Playlist aendert sich (Liste wird neu gebaut): der Filter gilt weiter
+    audio.playlist->addTrack(audio.datei(QStringLiteral("gamma.mp3")));
+    for (int i = 0; i < 3; ++i) QCoreApplication::processEvents();
+    CHECK(liste->count() == 3);
+    CHECK(sichtbar() == QStringList{QStringLiteral("beta.mp3")});
+}
+
+// S87 (Idee Patrik S86): Songtext nachsynchronisieren — mitklopfen,
+// nachstellen, vorhoeren, speichern.
+TEST_CASE("PaletteUi S87: Lyrics Sync — klopfen, verschieben, speichern als .lrc neben der Quelle")
+{
+    UiUmgebung env;
+    AudioUmgebung audio;
+    namespace ly = lumi::multieffect::lyrics;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+
+    // ein unsynchroner Text aus einer Datei, mit einer Leerzeile dazwischen
+    const QString quelle = tmp.path() + "/Wer - Lied.txt";
+    {
+        QFile f(quelle);
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write("eins\nzwei\n\ndrei\n");
+    }
+    TrackInfo t;
+    t.filePath = tmp.path() + "/lied.mp3";
+    t.title = "Lied";
+    t.artist = "Wer";
+    t.durationMs = 200000;
+    ly::Songtext text = ly::leseLrc("eins\nzwei\n\ndrei\n");
+    text.datei = quelle.toStdString();
+    lumi::audio::setzeLaufendenTitel(t);
+    MultiEffectVisualizer::setSongtext(text);
+    MultiEffectVisualizer::notifyPlayState(false);
+
+    LyricsSyncPanel panel(audio.services);
+    panel.setBenutzerOrdner(tmp.path() + "/nutzer");
+    panel.lade(t, text);
+    auto* liste = panel.findChild<QTableWidget*>(QStringLiteral("lyricsSyncList"));
+    auto* speichern = panel.findChild<QPushButton*>(QStringLiteral("lyricsSyncSave"));
+    auto* stand = panel.findChild<QLabel*>(QStringLiteral("lyricsSyncStatus"));
+    REQUIRE(liste != nullptr);
+    REQUIRE(speichern != nullptr);
+    REQUIRE(stand != nullptr);
+    REQUIRE(liste->rowCount() == 4);
+    CHECK(liste->item(0, 0)->text().isEmpty());
+    CHECK(liste->item(0, 1)->text() == QStringLiteral("eins"));
+    CHECK(panel.offeneZeilen() == 3);  // die Leerzeile zaehlt nicht
+    CHECK(stand->text().contains(QStringLiteral("3")));
+    CHECK_FALSE(speichern->isEnabled());
+    CHECK(panel.zielPfad() == tmp.path() + "/Wer - Lied.lrc");  // neben der Quelle
+
+    // klopfen: Zeit an die markierte Zeile, weiter zur naechsten TEXTzeile
+    CHECK(liste->currentRow() == 0);
+    REQUIRE(panel.tippe(10000));
+    CHECK(liste->item(0, 0)->text() == QStringLiteral("00:10.00"));
+    CHECK(liste->currentRow() == 1);
+    REQUIRE(panel.tippe(20000));
+    CHECK(liste->currentRow() == 3);  // die Leerzeile wird uebersprungen
+    CHECK(panel.geaendert());
+    CHECK_FALSE(speichern->isEnabled());  // „drei" hat noch keine Zeit
+    // Vorschau: der Knoten sieht schon die beiden geklopften Zeilen
+    CHECK(MultiEffectVisualizer::songtext().synchron);
+    CHECK(MultiEffectVisualizer::songtext().zeilen.size() == 2);
+    REQUIRE(panel.tippe(30000));
+    CHECK(panel.offeneZeilen() == 0);
+    CHECK(speichern->isEnabled());
+
+    // nachstellen: eine Zeile, dann alles ab der zweiten
+    liste->selectRow(0);
+    panel.verschiebe(-LyricsSyncPanel::kSchrittMs, false);
+    CHECK(liste->item(0, 0)->text() == QStringLiteral("00:09.90"));
+    liste->selectRow(1);
+    panel.verschiebe(500, true);
+    CHECK(liste->item(0, 0)->text() == QStringLiteral("00:09.90"));  // davor: unberuehrt
+    CHECK(liste->item(1, 0)->text() == QStringLiteral("00:20.50"));
+    CHECK(liste->item(3, 0)->text() == QStringLiteral("00:30.50"));
+    CHECK(liste->item(2, 0)->text().isEmpty());  // Leerzeile bleibt ohne Zeit
+
+    // Zeit von Hand (F2): gueltig wird uebernommen, Unlesbares verworfen
+    liste->item(3, 0)->setText(QStringLiteral("00:31.25"));
+    CHECK(liste->item(3, 0)->text() == QStringLiteral("00:31.25"));
+    liste->item(3, 0)->setText(QStringLiteral("quatsch"));
+    CHECK(liste->item(3, 0)->text() == QStringLiteral("00:31.25"));
+
+    // Zeit loeschen macht die Zeile wieder offen — Speichern geht dann nicht
+    liste->selectRow(3);
+    panel.loescheZeit();
+    CHECK(panel.offeneZeilen() == 1);
+    CHECK_FALSE(panel.speichere());
+    REQUIRE(panel.tippe(31250));
+
+    // vorhoeren: Doppelklick springt kurz vor die Zeile
+    Q_EMIT liste->cellDoubleClicked(1, 1);
+    CHECK(audio.player->letzterSprung == 20500 - LyricsSyncPanel::kVorlaufMs);
+
+    // speichern: .lrc neben der .txt, die Suche findet ab jetzt die .lrc
+    REQUIRE(panel.speichere());
+    CHECK_FALSE(panel.geaendert());
+    CHECK(QFile::exists(tmp.path() + "/Wer - Lied.lrc"));
+    CHECK(QFile::exists(quelle));  // die .txt bleibt
+    const ly::Songtext gefunden = lumi::audio::findeSongtext(t, tmp.path());
+    REQUIRE(gefunden.synchron);
+    REQUIRE(gefunden.zeilen.size() == 3);
+    CHECK(gefunden.zeilen[0].zeitMs == 9900);
+    CHECK(gefunden.zeilen[1].zeitMs == 20500);
+    CHECK(gefunden.zeilen[2].zeitMs == 31250);
+    CHECK(gefunden.zeilen[2].text == "drei");
+    CHECK(gefunden.laengeMs == 200000);
+    CHECK(liste->rowCount() == 3);  // wie in der Datei: ohne die Leerzeile
+    CHECK(MultiEffectVisualizer::songtext().zeilen.size() == 3);
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    lumi::audio::setzeLaufendenTitel(TrackInfo{});
 }
 
 // S87 (Wunsch Patrik): andere Fassungen eines Songtexts — die Kandidaten

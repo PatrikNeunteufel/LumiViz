@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.31.0
+> **Version:** 1.32.0
 > **Datum:** 2026-10-01
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -568,6 +568,29 @@ Texten liegen bei Dritten; sie sind für den eigenen Gebrauch gedacht.
 Die Sperrliste steht unter **Settings → Audio → Blocked lyrics** (**Show…**);
 **Unblock** gibt einen Eintrag wieder frei. Sie liegt als `blocked.json` im
 Benutzerordner der Songtexte.
+
+**Nachsynchronisieren: Panel „Lyrics Sync"** (View → Panels). Macht aus einem
+unsynchronen Text einen synchronen, oder stellt einen synchronen nach. Das
+Panel zeigt den Text des laufenden Titels als Liste mit den Spalten **Time**
+und **Text**; die Zeile an der Abspielposition steht fett.
+
+| Bedienung | Wirkung |
+|---|---|
+| **Tap** (oder Enter bzw. T in der Liste) | gibt der markierten Zeile die Abspielposition und rückt zur nächsten Textzeile |
+| **−100 ms** / **+100 ms** | verschiebt die markierten Zeilen |
+| **From here −** / **From here +** | verschiebt alle Zeilen ab der ersten markierten |
+| **Clear time** | nimmt den markierten Zeilen die Zeit |
+| F2 in der Spalte **Time** | Zeit von Hand eintragen (`mm:ss.xx`) |
+| Doppelklick auf eine Zeile | springt im Titel 1,5 s vor die Zeile (Vorhören) |
+| **Reload** | nimmt den Text des laufenden Titels neu — ungespeicherte Zeiten gehen dabei verloren |
+| **Save** | schreibt eine `.lrc` neben die Textdatei (gleicher Name); bei eingebettetem Text dorthin, wo geholte Texte landen |
+
+Jede Änderung geht sofort an den Lyrics-Knoten — du siehst im Bild, was du
+klopfst. Gespeichert wird erst mit **Save**, und nur, wenn jede Textzeile eine
+Zeit hat (Leerzeilen brauchen keine). Die bisherige `.txt` bleibt liegen; die
+Suche nimmt ab dann die `.lrc`. Wechselt der Titel, während ungespeicherte
+Zeiten da sind, bleibt deine Arbeit im Panel stehen, bis du speicherst oder
+**Reload** drückst.
 
 **Zwei Fassungen desselben Songs.** Im Benutzerordner heißt die Datei
 `<Interpret> - <Titel>`. Geholte Texte tragen dazu die Dauer des Titels
@@ -1198,6 +1221,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.32.0 | 2026-10-01 | Session 87. §11 Lyrics: NEU Panel **Lyrics Sync** (Zeiten je Zeile mitklopfen, nachstellen, vorhören, als `.lrc` speichern) |
 | 1.31.0 | 2026-10-01 | Session 87. §11 Lyrics: Angaben im Editor als **Tabelle** mit Status (*…downloading…*); Online-Abruf **wiederholt sich von selbst**, wenn der Dienst beschäftigt ist; zehn neue Voreinstellungen, darunter bewegte Karaoke-Varianten; **Alternatives…** (andere Fassung suchen, eigene Suchbegriffe), **Wrong lyrics** mit Sperrliste (Settings → Audio); wiederholte Zeilen blenden vor dem Einsatz; Fassungen eines Songs getrennt nach Dauer. Playlist: Dauer je Titel; Shuffle, Loop und Repeat bleiben über den Neustart erhalten |
 | 1.30.0 | 2026-10-01 | Session 86. §11 Lyrics: NEU **Songtexte aus dem Netz** (Opt-in „Search lyrics online", Dienst lrclib.net, was gesendet wird; „Save fetched lyrics": User folder / Next to the song) |
 | 1.29.0 | 2026-10-01 | Session 86. §11 NEU Knoten **Lyrics**: Songtext zum laufenden Titel (eingebettet, `.lrc`/`.txt` neben dem Song oder im Benutzerordner; Suchreihenfolge), synchron an der Abspielposition mit Vorschau-Zeilen und Wort-für-Wort-Füllung, Duett-Farben, unsynchroner Block, drei Voreinstellungen |

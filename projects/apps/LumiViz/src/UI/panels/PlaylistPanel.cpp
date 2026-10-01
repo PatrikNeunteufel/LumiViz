@@ -703,6 +703,11 @@ void PlaylistPanel::refreshPlaylist()
             item->setData(kDauerRolle, it.value());
     }
     if (m_dauerUhr != nullptr) m_dauerUhr->start();
+    // Der Suchbegriff steht noch im Feld — die neu gebaute Liste muss ihm
+    // folgen (Befund Patrik S87: nach Aus- und Einblenden war der Filter weg,
+    // der Begriff aber noch da; dasselbe nach jeder Aenderung der Playlist).
+    if (m_pSearchEdit != nullptr && !m_pSearchEdit->text().isEmpty())
+        onSearchChanged(m_pSearchEdit->text());
 
     // Restore highlight
     highlightCurrentTrack(m_currentPlayingIndex);

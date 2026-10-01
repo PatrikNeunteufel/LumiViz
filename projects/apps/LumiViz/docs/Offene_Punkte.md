@@ -2515,10 +2515,16 @@ nötig. Geplant nach dem Panel zum Nachsynchronisieren.
 /api/flag`, verlangt je Meldung einen Rechen-Nachweis wie `/api/publish`);
 selbst synchronisierte Texte veröffentlichen (`/api/publish`) — beides nur
 auf ausdrücklichen Wunsch, es geht etwas hinaus.
-**Offen:** **Panel zum Nachsynchronisieren** (unsynchron → synchron; Entwurf
-S87: Dock-Panel „Lyrics Sync", Zeilenliste mit Zeiten, Mitklopfen, ±100 ms je
-Zeile / ab hier, Vorhören per Doppelklick, Speichern als `.lrc` neben der
-Quelle); Versatz **je Titel** speichern (heute: Feld am Knoten und
+**✅ S87 gebaut: Panel „Lyrics Sync"** (`UI/panels/LyricsSyncPanel`, id
+`lyrics_sync`, View → Panels): Zeilenliste mit Zeiten, Tap (Knopf, Enter, T),
+±100 ms je Zeile / ab hier, Zeit löschen, Zeit von Hand (F2), Vorhören per
+Doppelklick (1,5 s Vorlauf), Vorschau sofort am Knoten, Speichern als `.lrc`
+neben der Quelle — nur wenn jede Textzeile eine Zeit hat (der LRC-Leser
+verwirft Zeilen ohne Zeit). Ungespeicherte Arbeit bleibt beim Titelwechsel
+stehen. **Nicht gebaut:** Wort-Zeiten, automatisches Verteilen, Rückgängig.
+**Sichttest offen (Patrik):** das Panel im Betrieb — ob Enter/T beim Klopfen
+ankommen (die Leertaste gehört dem Player), Bedienfluss, Breite der Knöpfe.
+**Offen:** Versatz **je Titel** speichern (heute: Feld am Knoten und
 `[offset:]` in der Datei); Knopf „Lyrics file…" zum Zuweisen; Tag View zeigt
 den gefundenen Songtext; Wort-Zeiten des Dienstes (`hasWordSync`, Feld
 `lyricsfile`) werden nicht gelesen; Titel ohne Text (instrumental) und 404

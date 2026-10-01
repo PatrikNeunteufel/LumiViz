@@ -47,6 +47,7 @@
 #include "UI/panels/PlaylistPanel.hpp"
 #include "UI/panels/AudioBrowserPanel.hpp"
 #include "UI/panels/TagViewPanel.hpp"
+#include "UI/panels/LyricsSyncPanel.hpp"
 #include "UI/panels/ImportBrowserPanel.hpp"
 #include "UI/panels/ShadertoyBrowserPanel.hpp"
 #include "UI/panels/ConfigPanel.hpp"
@@ -156,6 +157,23 @@ void initPanelDefaults(PanelRegistry& registry)
         },
         [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
             return std::make_unique<TagViewPanel>(svc);
+        },
+        false);
+
+    // =========================================================================
+    // LYRICS SYNC PANEL (S87) — Songtext nachsynchronisieren (Zeiten je Zeile)
+    // =========================================================================
+
+    registry.registerPanel(
+        PanelDescriptor{
+            "lyrics_sync",      // id
+            "Lyrics Sync",      // title
+            246,                // order (nach Tag View)
+            false,              // defaultVisible (hidden by default)
+            "View/Panels"       // menuPath
+        },
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<LyricsSyncPanel>(svc);
         },
         false);
 
